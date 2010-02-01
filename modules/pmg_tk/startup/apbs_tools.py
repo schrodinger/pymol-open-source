@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+
+# TODO:
+#  - get_default_location has a hack for apbs.exe breaking on newer Macs
+#  - provide diff for pdb2pqr freemol
+#  - use remove_alt to count alternate atom locations and warn the user
+
+### (all) and resn glu and resi 154+157
+### flag ignore, atom-selection, clear
+
 # APBS TOOLS Copyright Notice
 # ============================
 #
@@ -6,7 +16,7 @@
 # notices.
 #
 # ----------------------------------------------------------------------
-# APBS TOOLS is Copyright (C) 2005 by Michael G. Lerner
+# APBS TOOLS is Copyright (C) 2009 by Michael G. Lerner
 #
 #                        All Rights Reserved
 #
@@ -29,688 +39,630 @@
 # ----------------------------------------------------------------------
 
 """
-Recent changes:
-Switched to new APBS input format
- - changed sfrm 1 to srfm smol
- - changed bcfl to use words instead of numbers
- - changed chgm to use words instead of numbers
- - added sdens parameter (default to APBS default of 10.0)
- - tweaked 'max grid points' to give an acceptable number .. we assume nlev == 4.  see comments in the source .. it's still possible to exceed max grid points by a little bit.
+
+A NOTE TO USERS:
+
+You can change the default locations for the APBS and PDB2PQR binaries
+as well as the default temporary file directory below. If you set them
+in this file, they will be preserved each time you load up the
+plugin. Scroll down to the section entitled "Global config variables"
+(no quotes) below.
+
+A NOTE TO OTHER DEVELOPERS:
+
+I understand that I'm giving this code away for Free, and that there's
+not a ton of great sample PyMOL plugin code out there, so you're
+certainly encouraged to use this as a template.  However, please
+acknowledge me in some way if you do (somewhere in the comments if you
+only use a little bit of code or something more if you use a lot).
+
+Thanks.
+
+-Michael
+
+Features under consideration:
+
+ - Use 'acc' to calculate solvent-accessible surface areas. We'll use
+   the PyMOL 'standard' method and store this data as B-factors.
+ - Show the field lines. Relevant code from menu.py:
+
+    def map_gradient(self_cmd, sele):
+        return [[ 2, 'Gradient:',  '' ],
+                [ 1, 'default'         , 'cmd.gradient("'+sele+'_grad","'+sele+'");cmd.ramp_new("'+sele+
+                  '_grad_ramp","'+sele+'");cmd.color("'+sele+'_grad_ramp","'+sele+'_grad");' ]
+                ]
 """
 
 
 from __future__ import division
 from __future__ import generators
 
-import os,math
+APBS_DEFAULT=True
+
+import os,math,re
+import string
 import Tkinter
 from Tkinter import *
 import Pmw
 import distutils.spawn # used for find_executable
 import traceback
+import pymol
+
+try:
+    import freemol
+    from freemol import apbs
+# This should be done as a patch in apbs, but we'll do it here for now TODO: FIXME:
+except ImportError:
+    class apbs:
+        pass
+    apbs = apbs()
+    
+
+if 0:
+    # This should go directly into freemol/apbs.
+    def validate():
+        '''
+        make sure that the FREEMOL environment variable is defined and
+        that it contains a valid directory path
+
+        returns 1 if valid, 0 if not
+        '''
+        
+        ok = 0
+        global _apbs_exe, _psize_py, _pdb2pdb_py
+
+        if 'FREEMOL' in os.environ:
+            freeMOLFromEnv = os.environ["FREEMOL"]
+        else:
+            freeMOLFromEnv = None
+
+        if _apbs_exe != None: # _apbs_exe assigned, so presume valid
+            ok = 1
+        elif freeMOLFromEnv != None:
+            test_path = os.path.join(freeMOLFromEnv,"bin","apbs.exe")
+            if os.path.exists(test_path) and os.path.isfile(test_path):
+                _apbs_exe = freemol.quote_exe(test_path)
+                ok = 1
+                
+        if _psize_py != None: # _psize_py assigned, so presume valid
+            ok = 1
+        elif freeMOLFromEnv != None:
+            test_path = os.path.join(freeMOLFromEnv,"share","apbs","psize.py")
+            if os.path.exists(test_path) and os.path.isfile(test_path):
+                _psize_py = test_path
+                ok = 1
+                
+        if _pdb2pqr_py != None: # _pdb2pqr_py assigned, so presume valid
+            ok = 1
+        elif freeMOLFromEnv != None:
+            test_path = os.path.join(freeMOLFromEnv,"share","pdb2pqr","pdb2pqr.py")
+            if os.path.exists(test_path) and os.path.isfile(test_path):
+                _pdb2pqr_py = test_path
+                ok = 1
+        return ok
+    def get_pdb2pqr_path():
+        if _pdb2pqr_py == None:
+            validate()
+        return _pdb2pqr_py
+    apbs.get_pdb2pqr_path = get_pdb2pqr_path
+    apbs.validate = validate
+
+    try:
+        apbs.get_pdb2pqr_path
+    except NameError:
+        def get_pdb2pqr_path():
+            _pdb2pqr_py = None
+            if "FREEMOL" in os.environ:
+                test_path = os.path.join(os.environ['FREEMOL'],"share","pdb2pqr","pdb2pqr.py")
+                if os.path.exists(test_path) and os.path.isfile(test_path):
+                    _pdb2pqr_py = test_path
+                    ok = 1
+                else:
+                    print "trouble with",test_path
+            return _pdb2pqr_py
+        apbs.get_pdb2pqr_path = get_pdb2pqr_path
+        
 
 #
 # Global config variables
 #
+# To change the default locations, change these to something like
+# APBS_BINARY_LOCATION = '/opt/bin/apbs'
+#
+
 APBS_BINARY_LOCATION = None
 APBS_PSIZE_LOCATION = None
-
-# Python backward-compatibility...
-try:
-    True
-except:
-    True = 1
-try:
-    False
-except:
-    False = 0
-#
-# Cheap hack for testing purposes
-#
-try:
-    import pymol
-    REAL_PYMOL = True
-except ImportError:
-    REAL_PYMOL = False
-    class pymol:
-        class cmd:
-            def load(self,name,sel=''):
-                pass
-            def get_names(self):
-                return ['mol1','mol2','map1','map2']
-            def get_type(self,thing):
-                if thing.startswith('mol'):
-                    return 'object:molecule'
-                else:
-                    return 'object:map'
-            def save(self,fname,selection):
-                f = file(fname,'w')
-                if fname.endswith('.pqr'):
-                    f.write("""HEADER   this is a header, kids
-REMARK    Format:                  x       y       z        charge  radius
-ATOM      1    N MET     1    0.551 11.263 11.815 -0.300 1.8240
-ATOM      2   CA MET     1    0.930 12.648 11.845 0.250 1.9643
-ATOM      3    C MET     1    2.423 12.834 11.663 0.500 2.1046
-ATOM      4    O MET     1    3.286 11.970 11.947 -0.500 1.6612
-ATOM      5   CB MET     1    0.580 13.368 13.143 -0.120 1.9643
-ATOM      6   CG MET     1    1.661 12.986 14.098 0.098 1.9643
-ATOM      7   SD MET     1    1.441 13.562 15.776 -0.435 1.9924
-ATOM      8   CE MET     1    2.528 12.285 16.478 0.037 1.9643
-ATOM      9    N ILE     2    2.656 14.070 11.163 -0.500 1.8240
-ATOM     10   CA ILE     2    3.942 14.570 10.821 0.140 1.9643
-ATOM     11    C ILE     2    4.414 15.563 11.777 0.500 2.1046
-ATOM     12    O ILE     2    3.666 16.500 12.106 -0.500 1.6612
-ATOM     13   CB ILE     2    3.780 15.262 9.428 -0.060 1.9643
-ATOM     14  CG1 ILE     2    3.485 14.180 8.372 -0.120 1.9643
-ATOM     15  CG2 ILE     2    4.987 16.173 9.033 -0.180 1.9643
-ATOM     16   CD ILE     2    2.969 14.795 7.082 -0.180 1.9643
-ATOM     17    N SER     3    5.637 15.334 12.115 -0.500 1.8240
-ATOM     18   CA SER     3    6.368 16.180 13.050 0.140 1.9643
-ATOM     19    C SER     3    7.703 16.646 12.468 0.500 2.1046
-ATOM     20    O SER     3    8.363 15.914 11.750 -0.500 1.6612
-ATOM     21   CB SER     3    6.751 15.301 14.298 0.145 1.9643
-ATOM     22   OG SER     3    5.544 14.967 14.987 -0.683 1.7510
-ATOM     23    N LEU     4    8.112 17.862 12.816 -0.500 1.8240
-ATOM     24   CA LEU     4    9.370 18.301 12.353 0.140 1.9643
-ATOM     25    C LEU     4    10.283 18.416 13.583 0.500 2.1046
-ATOM     26    O LEU     4    9.765 18.812 14.627 -0.500 1.6612
-ATOM     27   CB LEU     4    9.230 19.754 11.875 -0.120 1.9643
-ATOM     28   CG LEU     4    8.684 19.996 10.452 -0.060 1.9643
-ATOM     29  CD1 LEU     4    7.569 19.115 9.957 -0.180 1.9643
-ATOM     30  CD2 LEU     4    8.477 21.499 10.173 -0.180 1.9643
-ATOM     31    N ILE     5    11.555 18.104 13.495 -0.500 1.8240
-ATOM     32   CA ILE     5    12.465 18.230 14.624 0.140 1.9643
-ATOM     33    C ILE     5    13.636 19.013 14.159 0.500 2.1046
-ATOM     34    O ILE     5    14.222 18.681 13.116 -0.500 1.6612
-ATOM     35   CB ILE     5    12.811 16.919 15.273 -0.060 1.9643
-ATOM     36  CG1 ILE     5    13.886 17.156 16.315 -0.120 1.9643
-ATOM     37  CG2 ILE     5    13.298 15.880 14.184 -0.180 1.9643
-ATOM     38   CD ILE     5    13.981 15.939 17.251 -0.180 1.9643
-ATOM     39    N ALA     6    14.012 20.093 14.895 -0.500 1.8240
-ATOM     40   CA ALA     6    15.137 20.934 14.463 0.140 1.9643
-ATOM     41    C ALA     6    15.851 21.640 15.619 0.500 2.1046
-ATOM     42    O ALA     6    15.235 21.839 16.668 -0.500 1.6612
-ATOM     43   CB ALA     6    14.449 22.032 13.594 -0.180 1.9643
-ATOM     44    N ALA     7    17.119 21.996 15.415 -0.500 1.8240
-ATOM     45   CA ALA     7    17.962 22.700 16.346 0.140 1.9643
-ATOM     46    C ALA     7    18.099 24.081 15.714 0.500 2.1046
-ATOM     47    O ALA     7    18.503 24.190 14.577 -0.500 1.6612
-ATOM     48   CB ALA     7    19.279 22.022 16.626 -0.180 1.9643
-ATOM     49    N LEU     8    17.738 25.159 16.435 -0.500 1.8240
-ATOM     50   CA LEU     8    17.767 26.510 15.918 0.140 1.9643
-ATOM     51    C LEU     8    18.542 27.441 16.789 0.500 2.1046
-ATOM     52    O LEU     8    18.344 27.380 17.993 -0.500 1.6612
-ATOM     53   CB LEU     8    16.306 27.133 16.150 -0.120 1.9643
-ATOM     54   CG LEU     8    15.245 26.745 15.191 -0.060 1.9643
-ATOM     55  CD1 LEU     8    14.714 25.361 15.532 -0.180 1.9643
-ATOM     56  CD2 LEU     8    14.133 27.753 15.245 -0.180 1.9643
-ATOM     57    N ALA     9    19.354 28.324 16.136 -0.500 1.8240
-ATOM     58   CA ALA     9    20.109 29.322 16.859 0.140 1.9643
-ATOM     59    C ALA     9    19.268 30.562 16.781 0.500 2.1046
-ATOM     60    O ALA     9    18.052 30.512 16.395 -0.500 1.6612
-ATOM     61   CB ALA     9    21.496 29.499 16.312 -0.180 1.9643
-ATOM     62    N VAL    10    19.908 31.695 17.172 -0.500 1.8240
-ATOM     63   CA VAL    10    19.182 32.944 17.121 0.140 1.9643
-ATOM     64    C VAL    10    18.853 33.270 15.681 0.500 2.1046
-ATOM     65    O VAL    10    19.589 32.940 14.704 -0.500 1.6612
-ATOM     66   CB VAL    10    19.896 34.147 17.775 -0.060 1.9643
-ATOM     67  CG1 VAL    10    20.668 33.742 19.022 -0.180 1.9643
-ATOM     68  CG2 VAL    10    20.692 34.984 16.815 -0.180 1.9643
-ATOM     69    N ASP    11    17.742 33.900 15.528 -0.500 1.8240
-ATOM     70   CA ASP    11    17.367 34.231 14.199 0.140 1.9643
-ATOM     71    C ASP    11    16.970 33.019 13.371 0.500 2.1046
-ATOM     72    O ASP    11    16.959 33.131 12.206 -0.500 1.6612
-ATOM     73   CB ASP    11    18.378 35.124 13.467 -0.220 1.9643
-ATOM     74   CG ASP    11    18.356 36.564 14.035 0.700 2.1046
-ATOM     75  OD1 ASP    11    17.333 37.176 14.327 -0.800 1.6612
-ATOM     76  OD2 ASP    11    19.538 37.099 14.146 -0.800 1.6612
-ATOM     77    N ARG    12    16.634 31.897 13.959 -0.500 1.8240
-ATOM     78   CA ARG    12    16.193 30.711 13.247 0.140 1.9643
-ATOM     79    C ARG    12    17.224 30.074 12.351 0.500 2.1046
-ATOM     80    O ARG    12    16.841 29.226 11.518 -0.500 1.6612
-ATOM     81   CB ARG    12    14.891 30.911 12.489 -0.120 1.9643
-ATOM     82   CG ARG    12    13.770 31.437 13.345 -0.050 1.9643
-ATOM     83   CD ARG    12    12.435 31.161 12.721 0.190 1.9643
-ATOM     84   NE ARG    12    12.462 31.677 11.381 -0.700 1.8240
-ATOM     85   CZ ARG    12    12.456 32.954 11.069 0.640 1.2628
-ATOM     86  NH1 ARG    12    12.421 33.916 11.940 -0.800 1.8240
-ATOM     87  NH2 ARG    12    12.494 33.278 9.801 -0.800 1.8240
-ATOM     88    N VAL    13    18.498 30.450 12.518 -0.500 1.8240
-ATOM     89   CA VAL    13    19.531 29.853 11.712 0.140 1.9643
-ATOM     90    C VAL    13    19.672 28.345 12.064 0.500 2.1046
-ATOM     91    O VAL    13    19.821 27.968 13.233 -0.500 1.6612
-ATOM     92   CB VAL    13    20.863 30.533 11.990 -0.060 1.9643
-ATOM     93  CG1 VAL    13    22.042 29.742 11.406 -0.180 1.9643
-ATOM     94  CG2 VAL    13    20.797 31.998 11.467 -0.180 1.9643
-ATOM     95    N ILE    14    19.629 27.482 11.056 -0.500 1.8240
-ATOM     96   CA ILE    14    19.767 26.011 11.271 0.140 1.9643
-ATOM     97    C ILE    14    20.995 25.409 10.552 0.500 2.1046
-ATOM     98    O ILE    14    21.399 24.278 10.747 -0.500 1.6612
-ATOM     99   CB ILE    14    18.506 25.235 10.843 -0.060 1.9643
-ATOM    100  CG1 ILE    14    18.151 25.494 9.365 -0.120 1.9643
-ATOM    101  CG2 ILE    14    17.307 25.571 11.723 -0.180 1.9643
-ATOM    102   CD ILE    14    16.862 24.785 8.834 -0.180 1.9643
-ATOM    103    N GLY    15    21.623 26.185 9.656 -0.500 1.8240
-ATOM    104   CA GLY    15    22.773 25.644 8.908 0.080 1.9643
-ATOM    105    C GLY    15    23.579 26.679 8.113 0.500 2.1046
-ATOM    106    O GLY    15    23.216 27.824 8.023 -0.500 1.6612
-ATOM    107    N MET    16    24.685 26.243 7.585 -0.500 1.8240
-ATOM    108   CA MET    16    25.630 27.043 6.835 0.140 1.9643
-ATOM    109    C MET    16    26.562 26.064 6.140 0.500 2.1046
-ATOM    110    O MET    16    26.419 24.841 6.284 -0.500 1.6612
-ATOM    111   CB MET    16    26.454 27.903 7.783 -0.120 1.9643
-ATOM    112   CG MET    16    27.215 27.034 8.748 0.098 1.9643
-ATOM    113   SD MET    16    28.614 27.916 9.432 -0.435 1.9924
-ATOM    114   CE MET    16    29.524 27.955 7.874 0.037 1.9643
-ATOM    115    N GLU    17    27.509 26.591 5.380 -0.500 1.8240
-ATOM    116   CA GLU    17    28.375 25.714 4.685 0.140 1.9643
-ATOM    117    C GLU    17    29.197 24.820 5.561 0.500 2.1046
-ATOM    118    O GLU    17    29.293 23.610 5.320 -0.500 1.6612
-ATOM    119   CB GLU    17    29.332 26.532 3.738 -0.120 1.9643
-ATOM    120   CG GLU    17    28.646 27.132 2.520 -0.220 1.9643
-ATOM    121   CD GLU    17    28.159 26.083 1.541 0.700 2.1046
-ATOM    122  OE1 GLU    17    28.336 24.880 1.823 -0.800 1.6612
-ATOM    123  OE2 GLU    17    27.599 26.466 0.492 -0.800 1.6612
-ATOM    124    N ASN    18    29.817 25.419 6.557 -0.500 1.8240
-ATOM    125   CA ASN    18    30.671 24.623 7.428 0.140 1.9643
-ATOM    126    C ASN    18    29.968 24.072 8.644 0.500 2.1046
-ATOM    127    O ASN    18    28.800 24.344 8.861 -0.500 1.6612
-ATOM    128   CB ASN    18    31.891 25.429 7.870 -0.120 1.9643
-ATOM    129   CG ASN    18    32.673 26.009 6.672 0.500 2.1046
-ATOM    130  ND2 ASN    18    32.793 25.192 5.612 -0.760 1.8240
-ATOM    131  OD1 ASN    18    33.131 27.181 6.693 -0.500 1.6612
-ATOM    132    N ALA    19    30.721 23.301 9.419 -0.500 1.8240
-ATOM    133   CA ALA    19    30.158 22.732 10.649 0.140 1.9643
-ATOM    134    C ALA    19    29.808 23.892 11.608 0.500 2.1046
-ATOM    135    O ALA    19    30.553 24.855 11.718 -0.500 1.6612
-ATOM    136   CB ALA    19    31.208 21.851 11.326 -0.180 1.9643
-ATOM    137    N MET    20    28.661 23.767 12.282 -0.500 1.8240
-ATOM    138   CA MET    20    28.173 24.753 13.256 0.140 1.9643
-ATOM    139    C MET    20    29.215 24.880 14.367 0.500 2.1046
-ATOM    140    O MET    20    29.858 23.879 14.759 -0.500 1.6612
-ATOM    141   CB MET    20    26.859 24.207 13.808 -0.120 1.9643
-ATOM    142   CG MET    20    25.790 24.287 12.739 0.098 1.9643
-ATOM    143   SD MET    20    25.744 25.961 12.033 -0.435 1.9924
-ATOM    144   CE MET    20    24.199 26.587 12.680 0.037 1.9643
-ATOM   1257    N ARG    21    -2.365 24.238 17.120 -0.500 1.8240
-ATOM   1258   CA ARG    21    -3.722 24.429 17.637 0.040 1.9643
-ATOM   1259    C ARG    21    -4.816 24.158 16.587 0.700 2.1046
-ATOM   1260   O1 ARG    21    -4.718 24.783 15.486 -0.800 1.6612
-ATOM   1261   CB ARG    21    -3.918 25.826 18.162 -0.120 1.9643
-ATOM   1262   CG ARG    21    -3.019 26.176 19.341 -0.050 1.9643
-ATOM   1263   CD ARG    21    -3.363 27.548 19.971 0.190 1.9643
-ATOM   1264   NE ARG    21    -2.493 27.864 21.095 -0.700 1.8240
-ATOM   1265   CZ ARG    21    -2.590 28.986 21.801 0.640 1.2628
-ATOM   1266  NH1 ARG    21    -3.514 29.885 21.492 -0.800 1.8240
-ATOM   1267  NH2 ARG    21    -1.762 29.206 22.813 -0.800 1.8240
-ATOM   1268   O2 ARG    21    -5.807 23.410 16.918 -0.800 1.6612
-END
-
-""")
-                    
-                elif fname.endswith('.pdb'):
-                    f.write("""ATOM      1  N   MET     1       0.551  11.263  11.815  1.00 32.15           N
-ATOM      2  CA  MET     1       0.930  12.648  11.845  1.00 25.55           C
-ATOM      3  C   MET     1       2.423  12.834  11.663  1.00 20.72           C
-ATOM      4  O   MET     1       3.286  11.970  11.947  1.00 24.07           O
-ATOM      5  CB  MET     1       0.580  13.368  13.143  1.00 31.39           C
-ATOM      6  CG  MET     1       1.661  12.986  14.098  1.00 46.81           C
-ATOM      7  SD  MET     1       1.441  13.562  15.776  1.00 59.99           S
-ATOM      8  CE  MET     1       2.528  12.285  16.478  1.00 57.80           C
-ATOM      9  N   ILE     2       2.656  14.070  11.163  1.00 20.22           N
-ATOM     10  CA  ILE     2       3.942  14.570  10.821  1.00 20.46           C
-ATOM     11  C   ILE     2       4.414  15.563  11.777  1.00 11.61           C
-ATOM     12  O   ILE     2       3.666  16.500  12.106  1.00 16.02           O
-ATOM     13  CB  ILE     2       3.780  15.262   9.428  1.00 27.69           C
-ATOM     14  CG1 ILE     2       3.485  14.180   8.372  1.00 27.14           C
-ATOM     15  CG2 ILE     2       4.987  16.173   9.033  1.00 21.01           C
-ATOM     16  CD1 ILE     2       2.969  14.795   7.082  1.00 28.78           C
-ATOM     17  N   SER     3       5.637  15.334  12.115  1.00 13.62           N
-ATOM     18  CA  SER     3       6.368  16.180  13.050  1.00 19.09           C
-ATOM     19  C   SER     3       7.703  16.646  12.468  1.00 17.57           C
-ATOM     20  O   SER     3       8.363  15.914  11.750  1.00 15.93           O
-ATOM     21  CB  SER     3       6.751  15.301  14.298  1.00 14.43           C
-ATOM     22  OG  SER     3       5.544  14.967  14.987  1.00 15.13           O
-ATOM     23  N   LEU     4       8.112  17.862  12.816  1.00 10.24           N
-ATOM     24  CA  LEU     4       9.370  18.301  12.353  1.00 11.22           C
-ATOM     25  C   LEU     4      10.283  18.416  13.583  1.00 12.15           C
-ATOM     26  O   LEU     4       9.765  18.812  14.627  1.00 19.68           O
-ATOM     27  CB  LEU     4       9.230  19.754  11.875  1.00 18.64           C
-ATOM     28  CG  LEU     4       8.684  19.996  10.452  1.00 19.41           C
-ATOM     29  CD1 LEU     4       7.569  19.115   9.957  1.00 16.26           C
-ATOM     30  CD2 LEU     4       8.477  21.499  10.173  1.00 17.49           C
-ATOM     31  N   ILE     5      11.555  18.104  13.495  1.00 11.49           N
-ATOM     32  CA  ILE     5      12.465  18.230  14.624  1.00  9.79           C
-ATOM     33  C   ILE     5      13.636  19.013  14.159  1.00 15.10           C
-ATOM     34  O   ILE     5      14.222  18.681  13.116  1.00 17.21           O
-ATOM     35  CB  ILE     5      12.811  16.919  15.273  1.00 13.29           C
-ATOM     36  CG1 ILE     5      13.886  17.156  16.315  1.00 11.26           C
-ATOM     37  CG2 ILE     5      13.298  15.880  14.184  1.00 16.94           C
-ATOM     38  CD1 ILE     5      13.981  15.939  17.251  1.00 11.88           C
-ATOM     39  N   ALA     6      14.012  20.093  14.895  1.00 10.27           N
-ATOM     40  CA  ALA     6      15.137  20.934  14.463  1.00 11.73           C
-ATOM     41  C   ALA     6      15.851  21.640  15.619  1.00 17.85           C
-ATOM     42  O   ALA     6      15.235  21.839  16.668  1.00 16.34           O
-ATOM     43  CB  ALA     6      14.449  22.032  13.594  1.00 11.92           C
-ATOM     44  N   ALA     7      17.119  21.996  15.415  1.00 12.95           N
-ATOM     45  CA  ALA     7      17.962  22.700  16.346  1.00 11.97           C
-ATOM     46  C   ALA     7      18.099  24.081  15.714  1.00 26.40           C
-ATOM     47  O   ALA     7      18.503  24.190  14.577  1.00 16.56           O
-ATOM     48  CB  ALA     7      19.279  22.022  16.626  1.00 13.38           C
-ATOM     49  N   LEU     8      17.738  25.159  16.435  1.00 13.46           N
-ATOM     50  CA  LEU     8      17.767  26.510  15.918  1.00 11.94           C
-ATOM     51  C   LEU     8      18.542  27.441  16.789  1.00 23.46           C
-ATOM     52  O   LEU     8      18.344  27.380  17.993  1.00 15.97           O
-ATOM     53  CB  LEU     8      16.306  27.133  16.150  1.00 17.43           C
-ATOM     54  CG  LEU     8      15.245  26.745  15.191  1.00 26.42           C
-ATOM     55  CD1 LEU     8      14.714  25.361  15.532  1.00 35.76           C
-ATOM     56  CD2 LEU     8      14.133  27.753  15.245  1.00 21.53           C
-ATOM     57  N   ALA     9      19.354  28.324  16.136  1.00 16.75           N
-ATOM     58  CA  ALA     9      20.109  29.322  16.859  1.00 11.74           C
-ATOM     59  C   ALA     9      19.268  30.562  16.781  1.00 14.87           C
-ATOM     60  O   ALA     9      18.052  30.512  16.395  1.00 16.15           O
-ATOM     61  CB  ALA     9      21.496  29.499  16.312  1.00 18.58           C
-ATOM     62  N   VAL    10      19.908  31.695  17.172  1.00 19.77           N
-ATOM     63  CA  VAL    10      19.182  32.944  17.121  1.00 28.89           C
-ATOM     64  C   VAL    10      18.853  33.270  15.681  1.00 24.80           C
-ATOM     65  O   VAL    10      19.589  32.940  14.704  1.00 24.85           O
-ATOM     66  CB  VAL    10      19.896  34.147  17.775  1.00 35.16           C
-ATOM     67  CG1 VAL    10      20.668  33.742  19.022  1.00 30.41           C
-ATOM     68  CG2 VAL    10      20.692  34.984  16.815  1.00 35.93           C
-ATOM     69  N   ASP    11      17.742  33.900  15.528  1.00 25.72           N
-ATOM     70  CA  ASP    11      17.367  34.231  14.199  1.00 31.44           C
-ATOM     71  C   ASP    11      16.970  33.019  13.371  1.00 28.60           C
-ATOM     72  O   ASP    11      16.959  33.131  12.206  1.00 26.55           O
-ATOM     73  CB  ASP    11      18.378  35.124  13.467  1.00 29.36           C
-ATOM     74  CG  ASP    11      18.356  36.564  14.035  1.00 33.87           C
-ATOM     75  OD1 ASP    11      17.333  37.176  14.327  1.00 36.53           O
-ATOM     76  OD2 ASP    11      19.538  37.099  14.146  1.00 34.31           O
-ATOM     77  N   ARG    12      16.634  31.897  13.959  1.00 15.13           N
-ATOM     78  CA  ARG    12      16.193  30.711  13.247  1.00 13.52           C
-ATOM     79  C   ARG    12      17.224  30.074  12.351  1.00 15.81           C
-ATOM     80  O   ARG    12      16.841  29.226  11.518  1.00 19.91           O
-ATOM     81  CB  ARG    12      14.891  30.911  12.489  1.00 14.72           C
-ATOM     82  CG  ARG    12      13.770  31.437  13.345  1.00 24.78           C
-ATOM     83  CD  ARG    12      12.435  31.161  12.721  1.00 27.21           C
-ATOM     84  NE  ARG    12      12.462  31.677  11.381  1.00 36.54           N
-ATOM     85  CZ  ARG    12      12.456  32.954  11.069  1.00 37.11           C
-ATOM     86  NH1 ARG    12      12.421  33.916  11.940  1.00 36.05           N
-ATOM     87  NH2 ARG    12      12.494  33.278   9.801  1.00 46.75           N
-ATOM     88  N   VAL    13      18.498  30.450  12.518  1.00 14.21           N
-ATOM     89  CA  VAL    13      19.531  29.853  11.712  1.00 12.04           C
-ATOM     90  C   VAL    13      19.672  28.345  12.064  1.00 22.54           C
-ATOM     91  O   VAL    13      19.821  27.968  13.233  1.00 14.87           O
-ATOM     92  CB  VAL    13      20.863  30.533  11.990  1.00 16.62           C
-ATOM     93  CG1 VAL    13      22.042  29.742  11.406  1.00 14.11           C
-ATOM     94  CG2 VAL    13      20.797  31.998  11.467  1.00 16.15           C
-ATOM     95  N   ILE    14      19.629  27.482  11.056  1.00 14.13           N
-ATOM     96  CA  ILE    14      19.767  26.011  11.271  1.00 14.28           C
-ATOM     97  C   ILE    14      20.995  25.409  10.552  1.00 17.38           C
-ATOM     98  O   ILE    14      21.399  24.278  10.747  1.00 16.61           O
-ATOM     99  CB  ILE    14      18.506  25.235  10.843  1.00 19.53           C
-ATOM    100  CG1 ILE    14      18.151  25.494   9.365  1.00 22.73           C
-ATOM    101  CG2 ILE    14      17.307  25.571  11.723  1.00 14.60           C
-ATOM    102  CD1 ILE    14      16.862  24.785   8.834  1.00 17.31           C
-ATOM    103  N   GLY    15      21.623  26.185   9.656  1.00 21.60           N
-ATOM    104  CA  GLY    15      22.773  25.644   8.908  1.00 17.53           C
-ATOM    105  C   GLY    15      23.579  26.679   8.113  1.00 18.53           C
-ATOM    106  O   GLY    15      23.216  27.824   8.023  1.00 16.92           O
-ATOM    107  N   MET    16      24.685  26.243   7.585  1.00 22.71           N
-ATOM    108  CA  MET    16      25.630  27.043   6.835  1.00 23.71           C
-ATOM    109  C   MET    16      26.562  26.064   6.140  1.00 28.63           C
-ATOM    110  O   MET    16      26.419  24.841   6.284  1.00 19.96           O
-ATOM    111  CB  MET    16      26.454  27.903   7.783  1.00 28.96           C
-ATOM    112  CG  MET    16      27.215  27.034   8.748  1.00 39.22           C
-ATOM    113  SD  MET    16      28.614  27.916   9.432  1.00 47.53           S
-ATOM    114  CE  MET    16      29.524  27.955   7.874  1.00 33.80           C
-ATOM    115  N   GLU    17      27.509  26.591   5.380  1.00 28.41           N
-ATOM    116  CA  GLU    17      28.375  25.714   4.685  1.00 29.16           C
-ATOM    117  C   GLU    17      29.197  24.820   5.561  1.00 24.40           C
-ATOM    118  O   GLU    17      29.293  23.610   5.320  1.00 25.76           O
-ATOM    119  CB  GLU    17      29.332  26.532   3.738  0.00 20.00           C
-ATOM    120  CG  GLU    17      28.646  27.132   2.520  0.00 20.00           C
-ATOM    121  CD  GLU    17      28.159  26.083   1.541  0.00 20.00           C
-ATOM    122  OE1 GLU    17      28.336  24.880   1.823  0.00 20.00           O
-ATOM    123  OE2 GLU    17      27.599  26.466   0.492  0.00 20.00           O
-ATOM    124  N   ASN    18      29.817  25.419   6.557  1.00 20.87           N
-ATOM    125  CA  ASN    18      30.671  24.623   7.428  1.00 18.24           C
-ATOM    126  C   ASN    18      29.968  24.072   8.644  1.00 25.72           C
-ATOM    127  O   ASN    18      28.800  24.344   8.861  1.00 22.25           O
-ATOM    128  CB  ASN    18      31.891  25.429   7.870  1.00 24.80           C
-ATOM    129  CG  ASN    18      32.673  26.009   6.672  1.00 35.68           C
-ATOM    130  ND2 ASN    18      32.793  25.192   5.612  1.00 21.02           N
-ATOM    131  OD1 ASN    18      33.131  27.181   6.693  1.00 43.36           O
-ATOM    132  N   ALA    19      30.721  23.301   9.419  1.00 24.77           N
-ATOM    133  CA  ALA    19      30.158  22.732  10.649  1.00 23.26           C
-ATOM    134  C   ALA    19      29.808  23.892  11.608  1.00 16.44           C
-ATOM    135  O   ALA    19      30.553  24.855  11.718  1.00 19.16           O
-ATOM    136  CB  ALA    19      31.208  21.851  11.326  1.00 17.26           C
-ATOM    137  N   MET    20      28.661  23.767  12.282  1.00 22.16           N
-ATOM    138  CA  MET    20      28.173  24.753  13.256  1.00 27.06           C
-ATOM    139  C   MET    20      29.215  24.880  14.367  1.00 16.21           C
-ATOM    140  O   MET    20      29.858  23.879  14.759  1.00 20.00           O
-ATOM    141  CB  MET    20      26.859  24.207  13.808  1.00 25.41           C
-ATOM    142  CG  MET    20      25.790  24.287  12.739  1.00 29.82           C
-ATOM    143  SD  MET    20      25.744  25.961  12.033  1.00 41.04           S
-ATOM    144  CE  MET    20      24.199  26.587  12.680  1.00 55.69           C
-ATOM   1257  N   ARG    21      -2.365  24.238  17.120  1.00 26.07           N
-ATOM   1258  CA  ARG    21      -3.722  24.429  17.637  1.00 38.04           C
-ATOM   1259  C   ARG    21      -4.816  24.158  16.587  1.00 52.67           C
-ATOM   1260  O   ARG    21      -4.718  24.783  15.486  1.00 56.66           O
-ATOM   1261  CB  ARG    21      -3.918  25.826  18.162  1.00 35.05           C
-ATOM   1262  CG  ARG    21      -3.019  26.176  19.341  1.00 32.34           C
-ATOM   1263  CD  ARG    21      -3.363  27.548  19.971  1.00 27.62           C
-ATOM   1264  NE  ARG    21      -2.493  27.864  21.095  0.00 20.00           N
-ATOM   1265  CZ  ARG    21      -2.590  28.986  21.801  0.00 20.00           C
-ATOM   1266  NH1 ARG    21      -3.514  29.885  21.492  0.00 20.00           N
-ATOM   1267  NH2 ARG    21      -1.762  29.206  22.813  0.00 20.00           N
-ATOM   1268  OXT ARG    21      -5.807  23.410  16.918  1.00 51.94           O
-END
-""")
-                f.close()
-        cmd = cmd()
-    pymol = pymol()
-
-def __init__(self):
-    if 0:
-        self.menuBar.addcascademenu('Plugin', 'APBSTools', 'APBS Tools',
-                                    label='APBS Tools')
-
-        self.menuBar.addmenuitem('APBSTools', 'command',
-                                 'Launch APBS Tools',
-                                 label='APBS Tools...',
-                                 command = lambda s=self: APBSTools(s))
-
-
-        self.menuBar.addmenuitem('APBSTools', 'command',
-                                 'Electrostatics Wizard',
-                                 label='Electrostatics Wizard',
-                                 command = lambda : pymol.cmd.wizard("electrostatics"))
-    else:
-        self.menuBar.addmenuitem('Plugin', 'command',
-                                 'Launch APBS Tools',
-                                 label='APBS Tools...',
-                                 command = lambda s=self: APBSTools(s))
-        
-
-   
-
-defaults = {
-    "interior_dielectric" : 2.0,# ###
-    "solvent_dielectric" : 80.0,# ###
-    "solvent_radius" : 1.4,# ###
-    "system_temp" : 310.0,# ###
-    "apbs_mode" : 'Nonlinear Poisson-Boltzmann Equation',# ###
-    "ion_plus_one_conc" : 0.0,# ###
-    "ion_plus_one_rad" : 2.0,# ###
-    "ion_plus_two_conc" : 0.0,# ###
-    "ion_plus_two_rad" : 2.0,# ###
-    "ion_minus_one_conc" : 0.0,# ###
-    "ion_minus_one_rad" : 2.0,# ###
-    "ion_minus_two_conc" : 0.0,# ###
-    "ion_minus_two_rad" : 2.0,# ###
-    "max_grid_points" : 1200000,
-    "potential_at_sas" : 0,
-    "surface_solvent" : 0,
-    #"grid_buffer" : 0,
-    #"grid_buffer" : 20,
-    "bcfl" : 'Single DH sphere', # Boundary condition flag for APBS ###
-    "sdens": 10.0, # Specify the number of grid points per square-angstrom to use in Vacc object. Ignored when srad is 0.0 (see srad) or srfm is spl2 (see srfm). There is a direct correlation between the value used for the Vacc sphere density, the accuracy of the Vacc object, and the APBS calculation time. APBS default value is 10.0.
-    "chgm" : 'Cubic b-splines', # Charge disc method for APBS ###
-    }
-
-class FileDialogButtonClassFactory:
-    def get(fn,filter='*'):
-        """This returns a FileDialogButton class that will
-        call the specified function with the resulting file.
-        """
-        class FileDialogButton(Tkinter.Button):
-            # This is just an ordinary button with special colors.
-
-            def __init__(self, master=None, cnf={}, **kw):
-                '''when we get a file, we call fn(filename)'''
-                self.fn = fn
-                self.__toggle = 0
-                apply(Tkinter.Button.__init__, (self, master, cnf), kw)
-                self.configure(command=self.set)
-            def set(self):
-                fd = PmwFileDialog(self.master,filter=filter)
-                fd.title('Please choose a file')
-                n=fd.askfilename()
-                if n is not None:
-                    self.fn(n)
-        return FileDialogButton
-    get = staticmethod(get)
+APBS_PDB2PQR_LOCATION = None
+TEMPORARY_FILE_DIR = None
 
 apbs_plea = ("IMPORTANT REQUEST: If you have not already done so, please register\n"
              "your use of the open-source Adaptive Poisson-Boltzmann Solver (APBS) at\n"
              "-> http://agave.wustl.edu/apbs/download\n"
              "Such proof of usage is vital in securing funding for APBS development!\n")
 
+pdb2pqr_plea = ("IMPORTANT REQUEST: If you have not already done so, please register\n"
+             "your use of the open-source PDB2PQR at\n"
+             "-> http://www.poissonboltzmann.org/pdb2pqr/d\n"
+             "Such proof of usage is vital in securing funding for PDB2PQR development!\n")
+global apbs_message, pdb2pqr_message
 apbs_message = """You must have APBS installed on your system."""
+pdb2pqr_message = """PDB2PQR can be used to generate .PQR files."""
+if APBS_BINARY_LOCATION is None:
+    found = 0
+    if 'APBS_BINARY' in os.environ:
+        APBS_BINARY_LOCATION = os.environ['APBS_BINARY']
+        found = 1
+    if not found and sys.platform != 'darwin':
+        # try FreeMOL-provided apbs
+        try:
+            from freemol import apbs
+            APBS_BINARY_LOCATION = apbs.get_exe_path()
+            if APBS_BINARY_LOCATION is not None:
+                if os.path.isfile(APBS_BINARY_LOCATION):
+                    found = 1
+                elif os.path.isfile(APBS_BINARY_LOCATION.replace('"','')):
+                    APBS_BINARY_LOCATION = APBS_BINARY_LOCATION.replace('"','')
+                    found = 1
+            if found:
+                print "Located Open-Source APBS inside the FreeMOL bundle (http://freemol.org).\n"+apbs_plea
+                apbs_message = apbs_plea
+        except ImportError:
+            pass
+    if not found:
+        APBS_BINARY_LOCATION = distutils.spawn.find_executable('apbs')
+        if APBS_BINARY_LOCATION is not None:
+            found = 1 
+    if (not found) or (APBS_BINARY_LOCATION is None):
+        APBS_BINARY_LOCATION = ''
 
-class VisualizationGroup(Pmw.Group):
-    def __init__(self,*args,**kwargs):
-        Pmw.Group.__init__(self,*args,**kwargs)
-        self.refresh()
-        self.show_ms = False
-        self.show_pi = False
-        self.show_ni = False
-    def refresh(self):
-        things_to_kill = 'error_label update_buttonbox mm_group ms_group pi_group ni_group'.split()
-        for thing in things_to_kill:
-            try:
-                getattr(self,thing).destroy()
-                #print "destroyed",thing
-            except AttributeError:
-                #print "couldn't destroy",thing
+if APBS_PSIZE_LOCATION is None:
+    found = 0
+    if 'APBS_PSIZE' in os.environ:
+        APBS_PSIZE_LOCATION = os.environ['APBS_PSIZE']
+        found = 1
+    if not found:
+        # try FreeMOL-provided apbs
+        try:
+            from freemol import apbs
+            APBS_PSIZE_LOCATION = apbs.get_psize_path()
+            if APBS_PSIZE_LOCATION is not None:
+                if os.path.isfile(APBS_PSIZE_LOCATION):
+                    found = 1 
+        except:
+            import traceback
+            traceback.print_exc()
+            pass
+    if (not found) or (APBS_PSIZE_LOCATION is None):
+        APBS_PSIZE_LOCATION = ''
 
-                # note: this attributeerror will also hit if getattr(self,thing) misses.
-                # another note: both halves of the if/else make an update_buttonbox.
-                # if you rename the one in the top half to something else, you'll cause nasty Pmw errors.
-                pass
+if APBS_PDB2PQR_LOCATION is None:
+    found = 0
+    if 'APBS_PDB2PQR' in os.environ:
+        APBS_PDB2PQR_LOCATION = os.environ['APBS_PDB2PQR']
+        found = 1
+    if not found:
+        # try FreeMOL-provided apbs
+        try:
+            from freemol import apbs
+            APBS_PDB2PQR_LOCATION = apbs.get_pdb2pqr_path()
+            if APBS_PDB2PQR_LOCATION is not None:
+                if os.path.isfile(APBS_PDB2PQR_LOCATION):
+                    found = 1
+                elif os.path.isfile(APBS_PDB2PQR_LOCATION.replace('"','')):
+                    APBS_PDB2PQR_LOCATION = APBS_PDB2PQR_LOCATION.replace('"','')
+                    found = 1
+            if found:
+                print "Located Open-Source PDB2PQR inside the FreeMOL bundle (http://freemol.org).\n"+pdb2pqr_plea
+                pdb2pqr_message = pdb2pqr_plea
+        except:
+            pass
+    if not found:
+        APBS_PDB2PQR_LOCATION = distutils.spawn.find_executable('apbs')
+        if APBS_PDB2PQR_LOCATION is not None:
+            found = 1 
+    if (not found) or (APBS_PDB2PQR_LOCATION is None):
+        APBS_PDB2PQR_LOCATION = ''
 
-        if [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'] and [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule']:
 
-            self.mm_group = Pmw.Group(self.interior(),tag_text = 'Maps and Molecules')
-            self.map = Pmw.OptionMenu(self.mm_group.interior(),
-                                      labelpos = 'w',
-                                      label_text = 'Map',
-                                      items = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'],
-                                      )
-            self.map.pack(padx=4,side=LEFT)
+#
+# Default locations for programs are searched in this order:
+#
+# 1) environment variables
+# 2) the global config variables above
+# 3) something in the PATH
+# 4) known default locations, in order
+#
+# These are defined in the tuples below, in that order.
+#
+default_locations = {'apbs_binary':(
+        'APBS_BINARY',
+        APBS_BINARY_LOCATION,
+        'apbs',
+        '/sw/bin/apbs',
+        '/opt/local/bin/apbs',
+        os.path.join(os.environ['PYMOL_PATH'],'ext/bin/apbs'),
+        ),
+        'apbs_psize': (
+        'APBS_PSIZE',
+        APBS_PSIZE_LOCATION,
+        'psize.py',
+        '/sw/share/apbs/tools/manip/psize.py',
+        os.path.join(os.environ['PYMOL_PATH'],'ext/bin/psize.py'),
+        ),
+        'pdb2pqr':    (
+        'APBS_PDB2PQR',
+        APBS_PDB2PQR_LOCATION,
+        'pdb2pqr.py',
+        # Note: subprocess.call really doesn't like
+        # the way /sw/bin/pdb2pqr wraps pdb2pqr.py
+        #'/sw/bin/pdb2pqr',
+        '/sw/share/pdb2pqr/pdb2pqr.py',
+        '/opt/local/share/pdb2pqr/pdb2pqr.py',
+        os.path.join(os.environ['PYMOL_PATH'],'ext/bin/pdb2pqr'),
+        ),
+        'temp':       (
+        'TEMP',
+        TEMPORARY_FILE_DIR,
+        None, # None means don't look for an executable
+        #os.path.abspath(os.path.curdir),
+        './', #avoid long filenames that break apbs
+        ),
+                     }
 
-            self.molecule = Pmw.OptionMenu(self.mm_group.interior(),
-                                           labelpos = 'w',
-                                           label_text = 'Molecule',
-                                           items = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule'],
-                                           )
-            self.molecule.pack(padx=4,side=LEFT)
-            self.update_buttonbox = Pmw.ButtonBox(self.mm_group.interior(), padx=0)
-            self.update_buttonbox.pack(side=LEFT)
-            self.update_buttonbox.add('Update',command=self.refresh)
-            self.mm_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=TOP)
+def jv_get_default_location(name):
+    searchDirs = string.split(os.environ["PATH"], ":")
+    if "FREEMOL" in os.environ:
+        searchDirs.append(os.environ["FREEMOL"])
+    if "PYMOL_PATH" in os.environ:
+        searchDirs.append(os.path.join(os.environ["PYMOL_PATH"], "ext", "bin"))
+        searchDirs.append(os.path.join(os.environ["PYMOL_PATH"], "freemol", "bin"))
+        searchDirs.append(os.path.join(os.environ["PYMOL_PATH"], "freemol", "share", "apbs"))
+        searchDirs.append(os.path.join(os.environ["PYMOL_PATH"], "freemol", "share", "pdb2pqr"))
+    for x in (APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION, APBS_PDB2PQR_LOCATION):
+        if x != None and x != "":
+            searchDirs.append(x)
+    if name=="temp":
+        searchDirs = []
+        if TEMPORARY_FILE_DIR != None and TEMPORARY_FILE_DIR != "":
+            searchDirs.append(TEMPORARY_FILE_DIR)
+        searchDirs.append("/tmp")
+        searchDirs.append(".")
 
-            self.ms_group = Pmw.Group(self.interior(),tag_text='Molecular Surface')
-            self.ms_buttonbox = Pmw.ButtonBox(self.ms_group.interior(), padx=0)
-            self.ms_buttonbox.pack()
-            self.ms_buttonbox.add('Show',command=self.showMolSurface)
-            self.ms_buttonbox.add('Hide',command=self.hideMolSurface)
-            self.ms_buttonbox.add('Update',command=self.updateMolSurface)
-            self.ms_buttonbox.alignbuttons()
-            self.surface_solvent = IntVar()
-            self.surface_solvent.set(defaults['surface_solvent'])
-            self.sol_checkbutton = Checkbutton(self.ms_group.interior(),
-                                               text = "Solvent accesssible surface",
-                                               variable = self.surface_solvent)
-            self.sol_checkbutton.pack()            
-            self.potential_at_sas = IntVar()
-            self.potential_at_sas.set(defaults['potential_at_sas'])
-            self.pot_checkbutton = Checkbutton(self.ms_group.interior(),
-                                               text = "Color by potential on sol. acc. surf.",
-                                               variable = self.potential_at_sas)
-            self.pot_checkbutton.pack()
-            self.mol_surf_low = Pmw.Counter(self.ms_group.interior(),
-                                            labelpos = 'w',
-                                            label_text = 'Low',
-                                            orient = 'vertical',
-                                            entry_width = 4,
-                                            entryfield_value = -1,
-                                            datatype = 'real',
-                                            entryfield_validate = {'validator' : 'real'},
-                                            )
-            self.mol_surf_middle = Pmw.Counter(self.ms_group.interior(),
-                                            labelpos = 'w',
-                                            label_text = 'Middle',
-                                            orient = 'vertical',
-                                            entry_width = 4,
-                                            entryfield_value = 0,
-                                            datatype = 'real',
-                                            entryfield_validate = {'validator' : 'real'}
-                                            )
-            self.mol_surf_high = Pmw.Counter(self.ms_group.interior(),
-                                            labelpos = 'w',
-                                            label_text = 'High',
-                                            orient = 'vertical',
-                                            entry_width = 4,
-                                            entryfield_value = 1,
-                                            datatype = 'real',
-                                            entryfield_validate = {'validator' : 'real'}
-                                            )
-            bars = (self.mol_surf_low,self.mol_surf_middle,self.mol_surf_high)
-            Pmw.alignlabels(bars)
-            for bar in bars: bar.pack(side=LEFT)
-            self.ms_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=LEFT)
-
-            self.pi_group = Pmw.Group(self.interior(),tag_text='Positive Isosurface')
-            self.pi_buttonbox = Pmw.ButtonBox(self.pi_group.interior(), padx=0)
-            self.pi_buttonbox.pack()
-            self.pi_buttonbox.add('Show',command=self.showPosSurface)
-            self.pi_buttonbox.add('Hide',command=self.hidePosSurface)
-            self.pi_buttonbox.add('Update',command=self.updatePosSurface)
-            self.pi_buttonbox.alignbuttons()
-            self.pos_surf_val = Pmw.Counter(self.pi_group.interior(),
-                                            labelpos = 'w',
-                                            label_text = 'Contour (kT)',
-                                            orient = 'vertical',
-                                            entry_width = 4,
-                                            entryfield_value = 1,
-                                            datatype = 'real',
-                                            entryfield_validate = {'validator' : 'real', 'min':0}
-                                            )
-            self.pos_surf_val.pack(side=LEFT)
-            self.pi_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=LEFT)
-
-            self.ni_group = Pmw.Group(self.interior(),tag_text='Negative Isosurface')
-            self.ni_buttonbox = Pmw.ButtonBox(self.ni_group.interior(), padx=0)
-            self.ni_buttonbox.pack()
-            self.ni_buttonbox.add('Show',command=self.showNegSurface)
-            self.ni_buttonbox.add('Hide',command=self.hideNegSurface)
-            self.ni_buttonbox.add('Update',command=self.updateNegSurface)
-            self.ni_buttonbox.alignbuttons()
-            self.neg_surf_val = Pmw.Counter(self.ni_group.interior(),
-                                            labelpos = 'w',
-                                            label_text = 'Contour (kT)',
-                                            orient = 'vertical',
-                                            entry_width = 4,
-                                            entryfield_value = -1,
-                                            datatype = 'real',
-                                            entryfield_validate = {'validator' : 'real', 'max':0}
-                                            )
-            self.neg_surf_val.pack(side=LEFT)
-            self.ni_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=LEFT)
-
+    #if DEBUG:
+    #    print "jv_get_default_location will search the following: ", searchDirs
+    for d in searchDirs:
+        if name=="temp":
+            f = d           # just search for the directory
         else:
-            self.error_label = Tkinter.Label(self.interior(),
-                                  pady = 10,
-                                  justify=LEFT,
-                                  text = '''You must have at least a molecule and a map loaded.
-If you have a molecule and a map loaded, please click "Update"''',
-                                  )
-            self.error_label.pack()
-            self.update_buttonbox = Pmw.ButtonBox(self.interior(), padx=0)
-            self.update_buttonbox.pack()
-            self.update_buttonbox.add('Update',command=self.refresh)
-
-    def showMolSurface(self):
-        self.updateMolSurface()
-            
-    def hideMolSurface(self):
-        pymol.cmd.hide('surface',self.molecule.getvalue())
-
-    def updateMolSurface(self):
-        ramp_name = 'e_lvl'
-        map_name = self.map.getvalue()
-        molecule_name = self.molecule.getvalue()
-        low = float(self.mol_surf_low.getvalue())
-        mid = float(self.mol_surf_middle.getvalue())
-        high = float(self.mol_surf_high.getvalue())
-        range = [low,mid,high]
-        print " APBS Tools: range is",range
-        pymol.cmd.delete(ramp_name)
-        pymol.cmd.ramp_new(ramp_name,map_name,range)
-        pymol.cmd.set('surface_color',ramp_name,molecule_name)
-        if self.surface_solvent.get()==1:
-            pymol.cmd.set('surface_solvent',1,molecule_name)
-            pymol.cmd.set('surface_ramp_above_mode',0,molecule_name)
-        else:
-            pymol.cmd.set('surface_solvent',0,molecule_name)
-            pymol.cmd.set('surface_ramp_above_mode',self.potential_at_sas.get(),molecule_name)
-        pymol.cmd.show('surface',molecule_name)
-        pymol.cmd.refresh()
-        pymol.cmd.recolor()
+            f = os.path.join( d, name )  # make path/name.py
+        if os.path.exists(f):
+            print "Found %s in %s" % (name,f)
+            return f
         
-    def showPosSurface(self):
-        self.updatePosSurface()
-    def hidePosSurface(self):
-        pymol.cmd.hide('everything','iso_pos')
-    def updatePosSurface(self):
-        pymol.cmd.delete('iso_pos')
-        pymol.cmd.isosurface('iso_pos',self.map.getvalue(),float(self.pos_surf_val.getvalue()))
-        pymol.cmd.color('blue','iso_pos')
-        pymol.cmd.show('everything','iso_pos')
-    def showNegSurface(self):
-        self.updateNegSurface()
-    def hideNegSurface(self):
-        pymol.cmd.hide('everything','iso_neg')
-    def updateNegSurface(self):
-        pymol.cmd.delete('iso_neg')
-        pymol.cmd.isosurface('iso_neg',self.map.getvalue(),float(self.neg_surf_val.getvalue()))
-        pymol.cmd.color('red','iso_neg')
-        pymol.cmd.show('everything','iso_neg')
+    print "Could not find default location for file: %s" % name
+    return ""
         
-class APBSTools:
+    
+    
+def get_default_location(name,fileordir='file',default_locations=default_locations):
+    """
+    This searches through a tuple.  In order, the elements of the tuple are
+    1) The name of an environment variable
+    2) A global config variable
+    3) The name of an executable.  We search PATH for it.
+    3-whatever) known default locations, searched in order
 
+    If any of those are set to None, they'll be skipped.  E.g. we set 3) to
+    None for the temporary file directory, as there's no executable
+    associated with it.
+
+    This isn't a perfectly elegant solution, but I don't think the problem
+    warrants anything more heavyweight than this.
+    """
+    verbose = True
+    choices = default_locations[name]
+    correct = {'file':os.path.isfile,
+               'dir':os.path.isdir,}[fileordir]
+    if (choices[0] in os.environ) and correct(choices[0]):
+        if verbose: print "default location for",name,os.environ[choices[0]],"environment var"
+        return os.environ[choices[0]]
+    elif (choices[1] is not None) and correct(choices[1]):
+        if verbose: print "default location for",name,choices[1],"global var"
+        return choices[1]
+    elif choices[2] is not None:
+        result = distutils.spawn.find_executable(choices[2])
+        if (result is not None) and correct(result):
+            if verbose: print "default location for",name,result,"in path"
+            return result
+    for choice in choices[3:]:
+        if correct(choice):
+            if verbose: print "default location for",name,choice,"found default installation"
+            return choice
+    if verbose: print "default location for",name,"is not found"
+    return ''
+
+def __init__(self):
+    self.menuBar.addmenuitem('Plugin', 'command',
+                             'Launch APBS Tools2',
+                             label='APBS Tools2...',
+                             command = lambda s=self: APBSTools2(s))
+
+def run(prog,args):
+    '''
+    wrapper to handle spaces on windows.
+    prog is the full path to the program.
+    args is a string that we will split up for you.
+        or a tuple.  or a list. your call.
+
+    return value is (retval,prog_out)
+
+    e.g.
+
+    (retval,prog_out) = run("/bin/ls","-al /tmp/myusername")
+    '''
+    verbose=True
+    import subprocess,tempfile
+
+    if type(args) == type(''):
+        args = tuple(args.split())
+    elif type(args) in (type([]),type(())):
+        args = tuple(args)
+    args = (prog,) + args
+    print "Args is %s" % str(args)
+    output_file = tempfile.TemporaryFile(mode="w+")
+    if verbose:
+        print "Running",args
+    retcode = subprocess.call(args,stdout=output_file.fileno(),stderr=subprocess.STDOUT)
+    output_file.seek(0)
+    prog_out = output_file.read()
+    output_file.close() #windows doesn't do this automatically
+    if verbose:
+        print "Results were:"
+        print "Return value:",retcode
+        print "Output:"
+        print prog_out
+    return (retcode,prog_out)
+
+class util:
+    """
+    A quick collection of utility functions.
+    """
+    #@staticmethod
+    def getMolecules():
+        """returns all molecules that PyMOL knows about"""
+        return [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule']
+    getMolecules = staticmethod(getMolecules)
+    #@staticmethod
+    def getMaps():
+        """returns all maps that PyMOL knows about"""
+        return [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map']
+    getMaps = staticmethod(getMaps)
+util = util()
+
+##############################################################################
+##############################################################################
+###                                                                        ###
+###       ApbsInterface                                                    ###
+###                                                                        ###
+##############################################################################
+##############################################################################
+
+def getApbsInputFile(pqr_filename,
+                     grid_points,
+                     cglen,
+                     fglen,
+                     cent,
+                     apbs_mode,
+                     bcfl,
+                     ion_plus_one_conc,ion_plus_one_rad,
+                     ion_minus_one_conc,ion_minus_one_rad,
+                     ion_plus_two_conc,ion_plus_two_rad,
+                     ion_minus_two_conc,ion_minus_two_rad,
+                     interior_dielectric, solvent_dielectric,
+                     chgm,
+                     srfm,
+                     solvent_radius,
+                     system_temp,
+                     sdens,
+                     dx_filename,
+                     ):
+    print "Getting APBS input"
+    #print "system_temp",system_temp,type(system_temp)
+    #print "sdens",sdens,type(sdens)
+    #
+    # How shall we set up the grid?  We'll use cglen, fglen, cgcent, fgcent
+    # and dime.
+    # This allows people to automate things (e.g. "Alanine scanning")
+    #
+    
+    #
+    # New template using mg-auto
+    # See http://agave.wustl.edu/apbs/doc/api/html/#mg-auto
+    #
+
+    apbs_template = """#
+# Note that most of the comments here were taken from sample
+# input files that came with APBS.  You can find APBS at
+# http://agave.wustl.edu/apbs/
+# Note that APBS is GPL'd code.
+#
+read
+    mol pqr %s       # read molecule 1
+end
+elec
+    mg-auto
+    dime   %d %d %d  # number of find grid points
+                     # calculated by psize.py
+    cglen   %f %f %f # coarse mesh lengths (A)
+    fglen   %f %f %f # fine mesh lengths (A)
+                     # calculated by psize.py
+    cgcent %f %f %f  # (could also give (x,y,z) form psize.py) #known center
+    fgcent %f %f %f  # (could also give (x,y,z) form psize.py) #known center
+    %s               # solve the full nonlinear PBE with npbe
+    #lpbe            # solve the linear PBE with lpbe
+    bcfl %s          # Boundary condition flag
+                     #  0 => Zero
+                     #  1 => Single DH sphere
+                     #  2 => Multiple DH spheres
+                     #  4 => Focusing
+                     #
+    #ion 1 0.000 2.0 # Counterion declaration:
+    ion  1 %f %f     # Counterion declaration:
+    ion -1 %f %f     # ion <charge> <conc (M)> <radius>
+    ion  2 %f %f     # ion <charge> <conc (M)> <radius>
+    ion -2 %f %f     # ion <charge> <conc (M)> <radius>
+    pdie %f          # Solute dielectric
+    sdie %f          # Solvent dielectric
+    chgm %s          # Charge disc method
+                     # 0 is linear splines
+                     # 1 is cubic b-splines
+    mol 1            # which molecule to use
+    srfm smol        # Surface calculation method
+                     #  0 => Mol surface for epsilon;
+                     #       inflated VdW for kappa; no
+                     #       smoothing
+                     #  1 => As 0 with harmoic average
+                     #       smoothing
+                     #  2 => Cubic spline 
+    srad %f          # Solvent radius (1.4 for water)
+    swin 0.3         # Surface cubic spline window .. default 0.3
+    temp %f          # System temperature (298.15 default)
+    sdens %f         # Specify the number of grid points per square-angstrom to use in Vacc object. Ignored when srad is 0.0 (see srad) or srfm is spl2 (see srfm). There is a direct correlation between the value used for the Vacc sphere density, the accuracy of the Vacc object, and the APBS calculation time. APBS default value is 10.0.
+    gamma 0.105      # Surface tension parameter for apolar forces (in kJ/mol/A^2)
+                     # only used for force calculations, so we don't care, but
+                     # it's always required, and 0.105 is the default
+    calcenergy no    # Energy I/O to stdout
+                     #  0 => don't write out energy
+                     #  1 => write out total energy
+                     #  2 => write out total energy and all
+                     #       components
+    calcforce no     # Atomic forces I/O (to stdout)
+                     #  0 => don't write out forces
+                     #  1 => write out net forces on molecule
+                     #  2 => write out atom-level forces
+    write pot dx %s  # What to write .. this says write the potential in dx
+                     # format to a file.
+end
+quit
+
+"""
+    return apbs_template % (pqr_filename,
+                            grid_points[0], grid_points[1], grid_points[2],
+                            cglen[0],cglen[1],cglen[2],
+                            fglen[0],fglen[1],fglen[2],
+                            cent[0],cent[1],cent[2],
+                            cent[0],cent[1],cent[2],
+                            apbs_mode,
+                            bcfl,
+                            ion_plus_one_conc,ion_plus_one_rad,
+                            ion_minus_one_conc,ion_minus_one_rad,
+                            ion_plus_two_conc,ion_plus_two_rad,
+                            ion_minus_two_conc,ion_minus_two_rad,
+                            interior_dielectric, solvent_dielectric,
+                            chgm,
+                            solvent_radius,
+                            system_temp,
+                            sdens,
+                            dx_filename,
+                            )
+
+
+
+##############################################################################
+##############################################################################
+###                                                                        ###
+###       PluginCode                                                       ###
+###                                                                        ###
+##############################################################################
+##############################################################################
+
+
+
+class APBSTools2:
+    # The current goal is to factor all of the APBS-specific code into
+    # an ApbsInterface class.  The functions defined here before
+    # __init__, as well as the functions defined on the various
+    # Panels/Panes, will call through to self.ApbsInterface.
     def setPqrFile(self,name):
         print " APBS Tools: set pqr file to",name
         self.pqr_to_use.setvalue(name)
+        self.radiobuttons.setvalue('Use another PQR')
     def getPqrFilename(self):
         if self.radiobuttons.getvalue() != 'Use another PQR':
-#            print 'radiobutton said to generate it',self.radiobuttons.getvalue(),'so i am returning',self.pymol_generated_pqr_filename.getvalue()
             return self.pymol_generated_pqr_filename.getvalue()
         else:
-#            print 'radiobutton told me to use another',self.radiobuttons.getvalue(),'so i am returning',self.pqr_to_use.getvalue()
             return self.pqr_to_use.getvalue()
     def setPsizeLocation(self,value):
         self.psize.setvalue(value)
     def setBinaryLocation(self,value):
         self.binary.setvalue(value)
+    def setPdb2pqrLocation(self,value):
+        self.pdb2pqr.setvalue(value)
+
+    def setPymolGeneratedPqrFilename(self,value):
+        self.pymol_generated_pqr_filename.setvalue(value)
+    def setPymolGeneratedPdbFilename(self,value):
+        self.pymol_generated_pdb_filename.setvalue(value)
+    def setPymolGeneratedDxFilename(self,value):
+        self.pymol_generated_dx_filename.setvalue(value)
+    def setPymolGeneratedInFilename(self,value):
+        self.pymol_generated_in_filename.setvalue(value)
+
+
+    def getPymolGeneratedPqrFilename(self):
+        return self.pymol_generated_pqr_filename.getvalue()
+    def getPymolGeneratedPdbFilename(self):
+        return self.pymol_generated_pdb_filename.getvalue()
+    def getPymolGeneratedDxFilename(self):
+        return self.pymol_generated_dx_filename.getvalue()
+    def getPymolGeneratedInFilename(self):
+        return self.pymol_generated_in_filename.getvalue()
+    defaults = {
+        "interior_dielectric" : 2.0,
+        "solvent_dielectric" : 78.0,
+        "solvent_radius" : 1.4,
+        "system_temp" : 310.0,
+        "apbs_mode" : 'Linearized Poisson-Boltzmann Equation',
+        "ion_plus_one_conc" : 0.15,
+        "ion_plus_one_rad" : 2.0,
+        "ion_plus_two_conc" : 0.0,
+        "ion_plus_two_rad" : 2.0,
+        "ion_minus_one_conc" : 0.15,
+        "ion_minus_one_rad" : 1.8,
+        "ion_minus_two_conc" : 0.0,
+        "ion_minus_two_rad" : 2.0,
+        #"max_mem_allowed" : 400,
+        "max_mem_allowed" : 1500,
+        "potential_at_sas" : 0,
+        "surface_solvent" : 1,
+        "show_surface_for_scanning" : 1,
+        #"grid_buffer" : 0,
+        #"grid_buffer" : 20,
+        "bcfl" : 'Single DH sphere', # Boundary condition flag for APBS
+        "sdens": 10.0, # Specify the number of grid points per
+                       # square-angstrom to use in Vacc
+                       # object. Ignored when srad is 0.0 (see srad)
+                       # or srfm is spl2 (see srfm). There is a direct
+                       # correlation between the value used for the
+                       # Vacc sphere density, the accuracy of the Vacc
+                       # object, and the APBS calculation time. APBS
+                       # default value is 10.0.
+        "chgm" : 'Cubic B-splines', # Charge disc method for APBS
+        }
 
     def __init__(self,app):
-        parent = app.root
-        self.parent = parent
+        self.parent = app.root
         
         # Create the dialog.
-        self.dialog = Pmw.Dialog(parent,
-                                 buttons = ('Register APBS Use', 'Set grid', 'Run APBS', 'Exit APBS tools'),
-                                 #defaultbutton = 'Run APBS',
+        self.dialog = Pmw.Dialog(self.parent,
+                                 buttons = ('Register APBS Use', 'Register PDB2PQR Use', 'Set grid', 'Run APBS', 'Exit APBS tools'),
                                  title = 'PyMOL APBS Tools',
                                  command = self.execute)
         self.dialog.withdraw()
         Pmw.setbusycursorattributes(self.dialog.component('hull'))
 
         w = Tkinter.Label(self.dialog.interior(),
-                                text = 'PyMOL APBS Tools\nMichael Lerner, 2004 - www.umich.edu/~mlerner/Pymol\n(incorporates modifications by Warren L. DeLano)',
+                                text = 'PyMOL APBS Tools\nMichael G. Lerner, Heather A. Carlson, 2009 - http://pymolwiki.org/index.php/APBS\n(incorporates modifications by Warren L. DeLano)',
                                 background = 'black',
                                 foreground = 'white',
                                 #pady = 20,
@@ -741,18 +693,25 @@ class APBSTools:
                                             )
         for text in ('Use PyMOL generated PQR and existing Hydrogens and termini',
                      'Use PyMOL generated PQR and PyMOL generated Hydrogens and termini',
-                     'Use another PQR'):
+                     'Use another PQR',
+                     'Use PDB2PQR',):
             self.radiobuttons.add(text)
         self.radiobuttons.setvalue('Use PyMOL generated PQR and PyMOL generated Hydrogens and termini')
 
+        self.pdb2pqr_options = Pmw.EntryField(group.interior(),
+                                              labelpos='w',
+                                              label_text='pdb2pqr command line options: ',
+                                              value='--ff=AMBER',
+                                              )
         self.pqr_to_use = Pmw.EntryField(group.interior(),
                                          labelpos='w',
                                          label_pyclass = FileDialogButtonClassFactory.get(self.setPqrFile,'*.pqr'),
                                          label_text='\tChoose Externally Generated PQR:',
                                          )
+
         
 
-        for entry in (self.selection,self.map,self.radiobuttons,self.pqr_to_use):
+        for entry in (self.selection,self.map,self.radiobuttons,self.pdb2pqr_options,self.pqr_to_use):
         #for entry in (self.selection,self.map,self.radiobuttons,):
             entry.pack(fill='x',padx=4,pady=1) # vertical
         
@@ -760,19 +719,18 @@ class APBSTools:
         # Set up the main "Calculation" page
         page = self.notebook.add('Configuration')
 
-
         group = Pmw.Group(page,tag_text='Dielectric Constants')
         group.pack(fill = 'both', expand = 1, padx = 4, pady = 5)
         group.grid(column=0, row=0)
         self.interior_dielectric = Pmw.EntryField(group.interior(),labelpos='w',
                                    label_text = 'Protein Dielectric:',
-                                   value = str(defaults['interior_dielectric']),
+                                   value = str(APBSTools2.defaults['interior_dielectric']),
                                    validate = {'validator' : 'real',
                                                'min':0,}
                                    )
         self.solvent_dielectric = Pmw.EntryField(group.interior(),labelpos='w',
                                    label_text = 'Solvent Dielectric:',
-                                   value = str(defaults['solvent_dielectric']),
+                                   value = str(APBSTools2.defaults['solvent_dielectric']),
                                    validate = {'validator' : 'real',
                                                'min':0,}
                                    )
@@ -780,21 +738,20 @@ class APBSTools:
         for entry in entries:
             #entry.pack(side='left',fill='both',expand=1,padx=4) # side-by-side
             entry.pack(fill='x',expand=1,padx=4,pady=1) # vertical
-
         group = Pmw.Group(page,tag_text='Other')
         group.pack(fill='both',expand=1, padx=4, pady=5)
         group.grid(column=1, row=1,columnspan=4)
-        self.max_grid_points = Pmw.EntryField(group.interior(),labelpos='w',
-                                              label_text = 'Maximum Grid Points:',
-                                              value = str(defaults['max_grid_points']),
+        self.max_mem_allowed = Pmw.EntryField(group.interior(),labelpos='w',
+                                              label_text = 'Maximum Memory Allowed (MB):',
+                                              value = str(APBSTools2.defaults['max_mem_allowed']),
                                               validate = {'validator' : 'real',
                                                           'min':1,}
                                               )
         self.apbs_mode = Pmw.OptionMenu(group.interior(),
                                         labelpos = 'w',
                                         label_text = 'APBS Mode',
-                                        items = ('Nonlinear Poisson-Boltzmann Equation','Linear Poisson-Boltzmann Equation',),
-                                        initialitem = defaults['apbs_mode'],
+                                        items = ('Nonlinear Poisson-Boltzmann Equation','Linearized Poisson-Boltzmann Equation',),
+                                        initialitem = APBSTools2.defaults['apbs_mode'],
                                         )
         self.apbs_mode.pack(fill='x',expand=1,padx=4)
         #self.apbs_mode.grid(column=0,row=0,columnspan=3)
@@ -802,40 +759,40 @@ class APBSTools:
                               labelpos = 'w',
                               label_text = 'Solvent Radius:',
                               validate = {'validator':'real','min':0},
-                              value = str(defaults['solvent_radius']),
+                              value = str(APBSTools2.defaults['solvent_radius']),
                               )
         self.system_temp = Pmw.EntryField(group.interior(),
                               labelpos = 'w',
                               label_text = 'System Temperature:',
                               validate = {'validator':'real','min':0},
-                              value = str(defaults['system_temp']),
+                              value = str(APBSTools2.defaults['system_temp']),
                               )
         self.sdens = Pmw.EntryField(group.interior(),
                                     labelpos = 'w',
                                     label_text = 'Vacc sphere density (grid points/A^2)',
                                     validate = {'validator':'real','min':0},
-                                    value = str(defaults['sdens']),
+                                    value = str(APBSTools2.defaults['sdens']),
                                     )
         self.bcfl = Pmw.OptionMenu(group.interior(),
                                    labelpos = 'w',
                                    label_text = 'Boundary Condition',
-                                   items = ('Zero','Single DH sphere','Multiple DH spheres','Focusing',),
-                                   initialitem = defaults['bcfl'],
+                                   items = ('Zero','Single DH sphere','Multiple DH spheres',), #'Focusing',),
+                                   initialitem = APBSTools2.defaults['bcfl'],
                                    )
         self.chgm = Pmw.OptionMenu(group.interior(),
                                    labelpos = 'w',
                                    label_text = 'Charge disc method',
-                                   items = ('Linear','Cubic b-splines',),
-                                   initialitem = defaults['chgm'],
+                                   items = ('Linear','Cubic B-splines','Quintic B-splines',),
+                                   initialitem = APBSTools2.defaults['chgm'],
                                    )
         self.srfm = Pmw.OptionMenu(group.interior(),
                                    labelpos = 'w',
                                    label_text = 'Surface Calculation Method',
-                                   items = ('Mol surf for epsilon; inflated VdW for kappa, no smoothing','Same, but with harmonic average smoothing','Cubic spline',),
+                                   items = ('Mol surf for epsilon; inflated VdW for kappa, no smoothing','Same, but with harmonic average smoothing','Cubic spline','Similar to cubic spline, but with 7th order polynomial'),
                                    initialitem = 'Same, but with harmonic average smoothing',
                                    )
         #for entry in (self.apbs_mode,self.system_temp,self.solvent_radius,):
-        for entry in (self.max_grid_points,self.solvent_radius,self.system_temp,self.sdens,self.apbs_mode,self.bcfl,self.chgm,self.srfm):
+        for entry in (self.max_mem_allowed,self.solvent_radius,self.system_temp,self.sdens,self.apbs_mode,self.bcfl,self.chgm,self.srfm):
             entry.pack(fill='x',expand=1,padx=4,pady=1) # vertical
 
 
@@ -844,51 +801,51 @@ class APBSTools:
         group.grid(column=0, row=1, )
         self.ion_plus_one_conc = Pmw.EntryField(group.interior(),
                                                 labelpos='w',
-                                                label_text='Ion Concentration (+1):',
+                                                label_text='Ion Concentration (M) (+1):',
                                                 validate={'validator':'real','min':0},
-                                                value = str(defaults['ion_plus_one_conc']),
+                                                value = str(APBSTools2.defaults['ion_plus_one_conc']),
                                                 )
         self.ion_plus_one_rad = Pmw.EntryField(group.interior(),
                                                labelpos='w',
                                                label_text='Ion Radius (+1):',
                                                validate={'validator':'real','min':0},
-                                               value = str(defaults['ion_plus_one_rad']),
+                                               value = str(APBSTools2.defaults['ion_plus_one_rad']),
                                                )
         self.ion_minus_one_conc = Pmw.EntryField(group.interior(),
                                                  labelpos='w',
-                                                 label_text='Ion Concentration (-1):',
+                                                 label_text='Ion Concentration (M) (-1):',
                                                  validate={'validator':'real','min':0},
-                                                 value = str(defaults['ion_minus_one_conc']),
+                                                 value = str(APBSTools2.defaults['ion_minus_one_conc']),
                                                  )
         self.ion_minus_one_rad = Pmw.EntryField(group.interior(),
                                                 labelpos='w',
                                                 label_text='Ion Radius (-1):',
                                                 validate={'validator':'real','min':0},
-                                                value = str(defaults['ion_minus_one_rad']),
+                                                value = str(APBSTools2.defaults['ion_minus_one_rad']),
                                                 )
         self.ion_plus_two_conc = Pmw.EntryField(group.interior(),
                                                 labelpos='w',
-                                                label_text='Ion Concentration (+2):',
+                                                label_text='Ion Concentration (M) (+2):',
                                                 validate={'validator':'real','min':0},
-                                                value = str(defaults['ion_plus_two_conc']),
+                                                value = str(APBSTools2.defaults['ion_plus_two_conc']),
                                                 )
         self.ion_plus_two_rad = Pmw.EntryField(group.interior(),
                                                labelpos='w',
                                                label_text='Ion Radius (+2):',
                                                validate={'validator':'real','min':0},
-                                               value = str(defaults['ion_plus_two_rad']),
+                                               value = str(APBSTools2.defaults['ion_plus_two_rad']),
                                                )
         self.ion_minus_two_conc = Pmw.EntryField(group.interior(),
                                                  labelpos='w',
-                                                 label_text='Ion Concentration (-2):',
+                                                 label_text='Ion Concentration (M) (-2):',
                                                  validate={'validator':'real','min':0},
-                                                 value = str(defaults['ion_minus_two_conc']),
+                                                 value = str(APBSTools2.defaults['ion_minus_two_conc']),
                                                  )
         self.ion_minus_two_rad = Pmw.EntryField(group.interior(),
                                                 labelpos='w',
                                                 label_text='Ion Radius (-2):',
                                                 validate={'validator':'real','min':0},
-                                                value = str(defaults['ion_minus_two_rad']),
+                                                value = str(APBSTools2.defaults['ion_minus_two_rad']),
                                                 )
         entries = (self.ion_plus_one_conc,self.ion_plus_one_rad,
                       self.ion_minus_one_conc,self.ion_minus_one_rad,
@@ -959,186 +916,216 @@ class APBSTools:
 
         page.grid_rowconfigure(2,weight=1)
         page.grid_columnconfigure(5,weight=1)
-        page = self.notebook.add('APBS Location')
+        page = self.notebook.add('Program Locations')
         group = Pmw.Group(page,tag_text='Locations')
         group.pack(fill = 'both', expand = 1, padx = 10, pady = 5)
+
         def quickFileValidation(s):
             if s == '': return Pmw.PARTIAL
             elif os.path.isfile(s): return Pmw.OK
             elif os.path.exists(s): return Pmw.PARTIAL
             else: return Pmw.PARTIAL
-
-        global APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION
-        if APBS_BINARY_LOCATION is None:
-            found = 0
-            if 'APBS_BINARY' in os.environ:
-                APBS_BINARY_LOCATION = os.environ['APBS_BINARY']
-                found = 1
-            if not found:
-                # try FreeMOL-provided apbs
-                try:
-                    from freemol import apbs
-                    APBS_BINARY_LOCATION = apbs.get_exe_path()
-                    if APBS_BINARY_LOCATION is not None:
-                        if os.path.isfile(APBS_BINARY_LOCATION):
-                            found = 1
-                        elif os.path.isfile(APBS_BINARY_LOCATION.replace('"','')):
-                            APBS_BINARY_LOCATION = APBS_BINARY_LOCATION.replace('"','')
-                            found = 1
-                    if found:
-                        print "Located Open-Source APBS inside the FreeMOL bundle (http://freemol.org).\n"+apbs_plea
-                        global apbs_message
-                        apbs_message = apbs_plea
-                        
-                except:
-                    pass
-            if not found:
-                APBS_BINARY_LOCATION = distutils.spawn.find_executable('apbs')
-                if APBS_BINARY_LOCATION is not None:
-                    found = 1 
-            if (not found) or (APBS_BINARY_LOCATION is None):
-                APBS_BINARY_LOCATION = ''
-
-        if APBS_PSIZE_LOCATION is None:
-            found = 0
-            if 'APBS_PSIZE' in os.environ:
-                APBS_PSIZE_LOCATION = os.environ['APBS_PSIZE']
-                found = 1
-            if not found:
-                # try FreeMOL-provided apbs
-                try:
-                    from freemol import apbs
-                    APBS_PSIZE_LOCATION = apbs.get_psize_path()
-                    if APBS_PSIZE_LOCATION is not None:
-                        if os.path.isfile(APBS_PSIZE_LOCATION):
-                            found = 1 
-                except:
-                    pass
-            if (not found) or (APBS_PSIZE_LOCATION is None):
-                APBS_PSIZE_LOCATION = ''
+        def quickFileDirValidation(s):
+            '''
+            assumes s ends in filename
+            '''
+            if os.path.exists(s) and not os.path.isfile(s):
+                return Pmw.PARTIAL
+            if os.path.isdir(os.path.split(s)[0]):
+                return Pmw.OK
+            return Pmw.PARTIAL
         self.binary = Pmw.EntryField(group.interior(),
                                      labelpos='w',
                                      label_pyclass = FileDialogButtonClassFactory.get(self.setBinaryLocation),
                                      validate = {'validator':quickFileValidation,},
-                                     value = APBS_BINARY_LOCATION,
-                                     label_text = 'APBS binary location:')
+                                     value = jv_get_default_location('apbs.exe'),
+                                     label_text = 'APBS binary location:',
+                                     )
         self.binary.pack(fill = 'x', padx = 20, pady = 10)
         self.psize =  Pmw.EntryField(group.interior(),
                                      labelpos='w',
                                      label_pyclass = FileDialogButtonClassFactory.get(self.setPsizeLocation),
                                      validate = {'validator':quickFileValidation,},
                                      #value = '/usr/local/apbs-0.3.1/tools/manip/psize.py',
-                                     value = APBS_PSIZE_LOCATION,
+                                     value = jv_get_default_location('psize.py'),
                                      label_text = 'APBS psize.py location:',
                                      )
         self.psize.pack(fill = 'x', padx = 20, pady = 10)
+        self.pdb2pqr =  Pmw.EntryField(group.interior(),
+                                       labelpos='w',
+                                       label_pyclass = FileDialogButtonClassFactory.get(self.setPdb2pqrLocation),
+                                       validate = {'validator':quickFileValidation,},
+                                       value = jv_get_default_location('pdb2pqr.py'),
+                                       label_text = 'pdb2pqr location:',
+                                       )
+        self.pdb2pqr.pack(fill = 'x', padx = 20, pady = 10)
 
-                
         label = Tkinter.Label(group.interior(),
                               pady = 10,
                               justify=LEFT,
-                              text = apbs_message + """
-The PyMOL APBS tools can calculate proper grid dimensions and spacing (we ensure the the
-fine mesh spacing is 0.5A or finer).  If you wish to use APBS's psize.py to set up the
-grid, make sure that the path is set correctly above.
+                              text = """
+The PyMOL APBS tools can calculate proper grid dimensions and spacing (we attempt to make
+the fine mesh spacing 0.5A or finer, but we will make it coarser if forced to by the
+Maximum Grid Points setting in the configuration pane).  If you wish to use APBS's psize.py
+to set up the grid, make sure that the path is set correctly above.
 
-If PyMOL does not automatically find apbs or psize.py, you may set the environment variables
-APBS_BINARY and APBS_PSIZE to point to them respectively.
+PyMOL can generate PQR files using standard protein residues and AMBER charges.  If you
+wish to use PDB2PQR instead, make sure that it is installed and that the path is set
+correctly above.
+
+If PyMOL does not automatically find apbs, psize.py, or pdb2pqr, you may set the environment
+variables APBS_BINARY, APBS_PSIZE and APBS_PDB2PQR to point to them respectively.
 """,
                               )
         label.pack()
+
         
-        page = self.notebook.add('Temporary File Locations')
+        page = self.notebook.add('Temp File Locations')
         group = Pmw.Group(page,tag_text='Locations')
         group.pack(fill = 'both', expand = 1, padx = 10, pady = 5)
         self.pymol_generated_pqr_filename = Pmw.EntryField(group.interior(),
                                                            labelpos = 'w',
+                                                           label_pyclass = FileDialogButtonClassFactory.get(self.setPymolGeneratedPqrFilename),
+                                                           validate = {'validator':quickFileDirValidation,},
                                                            label_text = 'Temporary PQR file: ',
-                                                           value = 'pymol-generated.pqr',
+                                                           value = os.path.join(jv_get_default_location('temp'),'pymol-generated.pqr'),
                                                            )
         self.pymol_generated_pqr_filename.pack(fill = 'x', padx = 20, pady = 10)
         
         self.pymol_generated_pdb_filename = Pmw.EntryField(group.interior(),
                                                            labelpos = 'w',
+                                                           label_pyclass = FileDialogButtonClassFactory.get(self.setPymolGeneratedPdbFilename),
+                                                           validate = {'validator':quickFileDirValidation,},
                                                            label_text = 'Temporary PDB file: ',
-                                                           value = 'pymol-generated.pdb',
+                                                           value = os.path.join(jv_get_default_location('temp'),'pymol-generated.pdb'),
                                                            )
         self.pymol_generated_pdb_filename.pack(fill = 'x', padx = 20, pady = 10)
 
         self.pymol_generated_dx_filename = Pmw.EntryField(group.interior(),
                                                           labelpos = 'w',
+                                                          label_pyclass = FileDialogButtonClassFactory.get(self.setPymolGeneratedDxFilename),
+                                                          validate = {'validator':quickFileDirValidation,},
                                                           label_text = 'Temporary DX file: ',
-                                                          value = 'pymol-generated.dx',
+                                                          value = os.path.join(jv_get_default_location('temp'),'pymol-generated.dx'),
                                                           )
         self.pymol_generated_dx_filename.pack(fill = 'x', padx = 20, pady = 10)
 
-        self.pymol_generated_in_filename = Pmw.EntryField(group.interior(),
-                                                          labelpos = 'w',
-                                                          label_text = 'APBS input file: ',
-                                                          value = 'pymol-generated.in',
-                                                          )
-        self.pymol_generated_in_filename.pack(fill = 'x', padx = 20, pady = 10)
 
-        # Create a visualization page
-        page = self.notebook.add('Visualization')
-        #group = Pmw.Group(page,tag_text='Visualization')
-        #group.pack(fill = 'both', expand = 1, padx = 10, pady = 5)
-        group = VisualizationGroup(page,tag_text='Visualization')
+        self.pymol_generated_in_filename  = Pmw.EntryField(group.interior(),
+                                                           labelpos='w',
+                                                           label_pyclass = FileDialogButtonClassFactory.get(self.setPymolGeneratedInFilename),
+                                                           validate = {'validator':quickFileDirValidation,},
+                                                           value = os.path.join(jv_get_default_location('temp'),'pymol-generated.in'),
+                                                           label_text = 'APBS input file:')
+        self.pymol_generated_in_filename.pack(fill = 'x', padx = 20, pady = 10)
+        label = Tkinter.Label(group.interior(),
+                              pady = 10,
+                              justify=LEFT,
+                              text = """You can automatically set the default location of temporary files
+by setting the environment variable TEMP.
+""",
+                              )
+        label.pack()
+        # Create the visualization pages
+        page = self.notebook.add('Visualization (1)')
+        group = VisualizationGroup(page,tag_text='Visualization',visgroup_num=1)
+        self.visualization_group_1 = group
         group.pack(fill = 'both', expand = 1, padx = 10, pady = 5)
-        
-        
+
+        page = self.notebook.add('Visualization (2)')
+        group = VisualizationGroup(page,tag_text='Visualization',visgroup_num=2)
+        self.visualization_group_2 = group
+        group.pack(fill = 'both', expand = 1, padx = 10, pady = 5)
 
         # Create a couple of other empty pages
         page = self.notebook.add('About')
         group = Pmw.Group(page, tag_text='About PyMOL APBS Tools')
         group.pack(fill = 'both', expand = 1, padx = 10, pady = 5)
-        label = Tkinter.Label(group.interior(),
-                              pady = 10,
-                              justify=LEFT,
-                              text = """
-This plugin integrates PyMOL (http://pymol.org/) with APBS (http://agave.wustl.edu/apbs/).
+        text = """This plugin integrates PyMOL (http://PyMOL.org/) with APBS (http://www.poissonboltzmann.org/apbs/).
 
-It should be fairly self-explanatory.  In the simplest case,
+Documentation may be found at
+http://pymolwiki.org/index.php/APBS
+and
+http://apbs.wustl.edu/MediaWiki/index.php/APBS_electrostatics_in_PyMOL
+
+It requires APBS version >= 0.5.0.
+
+In the simplest case,
 
 1) Load a structure into PyMOL.
 2) Start this plugin.
-3) Make sure that the path to the APBS binary is correct on the "APBS Location" tab.
+3) Make sure that the path to the APBS binary is correct on the "Program Locations" tab.
 4) Click the "Set grid" button to set up the grid.
 5) Click the "Run APBS" button.
 
 Many thanks to
- - Warren DeLano for everything involving PyMOL
- - Nathan Baker and Todd Dolinsky for everything involving APBS
+ - Warren DeLano and Jason Vertrees for everything involving PyMOL
+ - Nathan Baker, Todd Dolinsky and David Gohara for everything involving APBS
+ - William G. Scott for help with several APBS+PyMOL issues and documentation
 
-Created by Michael Lerner <http://www.umich.edu/~mlerner/Pymol/> mglerner@gmail.com
-Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
-""")
-        label.pack()
+Created by Michael Lerner (http://pymolwiki.org/index.php/User:Mglerner) mglerner@gmail.com
+Carlson Group, University of Michigan (http://www.umich.edu/~carlsonh/)
+
+Please contact the author and cite this plugin if you use it in a publication.
+
+Citation for this plugin:
+    MG Lerner and HA Carlson. APBS plugin for PyMOL, 2006,
+    University of Michigan, Ann Arbor.
+
+Citation for PyMOL may be found here:
+    http://pymol.sourceforge.net/faq.html#CITE
+
+Citation for APBS:
+    Baker NA, Sept D, Joseph S, Holst MJ, McCammon JA. Electrostatics of
+    nanosystems: application to microtubules and the ribosome. Proc.
+    Natl. Acad. Sci. USA 98, 10037-10041 2001.
+
+Citation for PDB2PQR:
+    Dolinsky TJ, Nielsen JE, McCammon JA, Baker NA.
+    PDB2PQR: an automated pipeline for the setup, execution,
+    and analysis of Poisson-Boltzmann electrostatics calculations.
+    Nucleic Acids Research 32 W665-W667 (2004).
+"""
+        #
+        # Add this as text in a scrollable pane.
+        # Code based on Caver plugin
+        # http://loschmidt.chemi.muni.cz/caver/index.php
+        #
+        interior_frame=Frame(group.interior())
+        bar=Scrollbar(interior_frame,)
+        text_holder=Text(interior_frame,yscrollcommand=bar.set,background="#ddddff",font="Times 14")
+        bar.config(command=text_holder.yview)
+        text_holder.insert(END,text)
+        text_holder.pack(side=LEFT,expand="yes",fill="both")
+        bar.pack(side=LEFT,expand="yes",fill="y")
+        interior_frame.pack(expand="yes",fill="both")
 
         self.notebook.setnaturalsize()
-
-
-
-
-
         self.showAppModal()
-         
-    def showAppModal(self):
-        self.dialog.activate(geometry = 'centerscreenfirst', globalMode = 'nograb')
-        self.dialog.show()
-        #self.dialog.activate(geometry = 'centerscreenalways')
 
-    def execute(self, result):
+    def showAppModal(self):
+        #self.dialog.activate(geometry = 'centerscreenfirst', globalMode = 'nograb')
+        self.dialog.show()
+    def execute(self, result, refocus=True):
         if result == 'Register APBS Use':
             import webbrowser
             webbrowser.open("http://agave.wustl.edu/apbs/download")
-            
+        elif result == 'Register PDB2PQR Use':
+            import webbrowser
+            webbrowser.open("http://www.poissonboltzmann.org/pdb2pqr/d/downloads")
         elif result == 'Run APBS':
             good = self.generateApbsInputFile()
             if not good:
+                print "generateApbsInputFile failed."
                 return False
-            if self.radiobuttons.getvalue() != 'Use another PQR':
-                good = self.generatePqrFile()
+            if self.radiobuttons.getvalue() == 'Use another PQR':
+                pass
+            elif self.radiobuttons.getvalue() == 'Use PDB2PQR':
+                good = self.generatePdb2pqrPqrFile()
+                if not good:
+                    return False
+            else: # it's one of the pymol-generated options
+                good = self.generatePymolPqrFile()
                 if not good:
                     return False
             if os.path.exists(self.pymol_generated_dx_filename.getvalue()):
@@ -1147,13 +1134,21 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
                 except:
                     traceback.print_exc()
                     pass
-            exe = self.binary.getvalue()
-            if ' ' in exe:
-                if sys.platform == 'win32': 
-                    exe = '"' + exe + '"'
-            command = "%s %s" % (exe, self.pymol_generated_in_filename.getvalue())
-            os.system(command)
-            pymol.cmd.load(self.pymol_generated_dx_filename.getvalue(),self.map.getvalue())
+            #command = "%s %s" % (self.binary.getvalue(),self.pymol_generated_in_filename.getvalue())
+            #os.system(command)
+
+            #
+            # NOTE: if there are spaces in the directory name that contains pymol_generated_in_filename,
+            #       our run command will want to split it up into several arguments if we pass it as a
+            #       string.  So, we pass it as a tuple.
+            #
+            (retval,progout) = run(self.binary.getvalue(),(self.pymol_generated_in_filename.getvalue(),))
+            if refocus:
+                pymol.cmd.load(self.pymol_generated_dx_filename.getvalue(),self.map.getvalue())
+                self.visualization_group_1.refresh()
+                self.visualization_group_2.refresh()
+                self.notebook.tab('Visualization (1)').focus_set()
+                self.notebook.selectpage('Visualization (1)')
         elif result == 'Set grid':
             self.runPsize()
         else:
@@ -1165,13 +1160,20 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
                 #
                 # dies with traceback, but who cares
                 #
-                self.parent.destroy()
+                self.parent.destroy()  # <--- wouldn't this kill PyMOL?
             else:
                 #self.dialog.deactivate(result)
                 global APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION
                 APBS_BINARY_LOCATION = self.binary.getvalue()
                 APBS_PSIZE_LOCATION = self.psize.getvalue()
-                self.dialog.withdraw()
+                #self.dialog.withdraw()
+                self.dialog.destroy() # stops CPU hogging, perhaps fixes Ubuntu bug MGL
+                self.quit()
+    def quit(self):
+        self.dialog.quit()
+        self.parent.quit()
+        #self.dialog.withdraw()
+        #self.dialog.destroy()
 
     def runPsize(self):
         class NoPsize(Exception):
@@ -1199,14 +1201,16 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             pymol.cmd.save(pqr_filename,sel)
             f.close()
             size = psize.Psize()
+            size.setConstant('gmemceil',int(self.max_mem_allowed.getvalue()))
             size.runPsize(pqr_filename)
             coarsedim = size.getCoarseGridDims() # cglen
             finedim = size.getFineGridDims() # fglen
             # could use procgrid for multiprocessors
             finegridpoints = size.getFineGridPoints() # dime
             center = size.getCenter() # cgcent and fgcent
-            
+            print "APBS's psize.py was used to calculated grid dimensions"
         except (NoPsize,ImportError):
+            print "This plugin was used to calculated grid dimensions"
             #
             # First, we need to get the dimensions of the molecule
             #
@@ -1290,10 +1294,16 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             return False
 
         if (finegridpoints[0]>0) and (finegridpoints[1]>0) and (finegridpoints[2]>0):
-            max_grid_points = float(self.max_grid_points.getvalue())
-            product = float(finegridpoints[0] * finegridpoints[1] * finegridpoints[2])
-            if product>max_grid_points:
-                print "Maximum number of grid points exceeded.  Old grid dimensions were",finegridpoints
+            max_mem_allowed = float(self.max_mem_allowed.getvalue())
+            def memofgrid(finegridpoints):
+                return 200. * float(finegridpoints[0] * finegridpoints[1] * finegridpoints[2]) / 1024. / 1024
+            def gridofmem(mem):
+                return mem * 1024. * 1024. / 200.
+            max_grid_points = gridofmem(max_mem_allowed)
+            print "Estimated memory usage",memofgrid(finegridpoints),'MB out of maximum allowed',max_mem_allowed
+            if memofgrid(finegridpoints) > max_mem_allowed:
+                print "Maximum memory usage exceeded.  Old grid dimensions were",finegridpoints
+                product = float(finegridpoints[0] * finegridpoints[1] * finegridpoints[2])
                 factor = pow(max_grid_points/product,0.333333333)
                 finegridpoints[0] = (int(factor*finegridpoints[0]/2))*2+1
                 finegridpoints[1] = (int(factor*finegridpoints[1]/2))*2+1
@@ -1346,9 +1356,100 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
         self.grid_points_x.setvalue(finegridpoints[0])
         self.grid_points_y.setvalue(finegridpoints[1])
         self.grid_points_z.setvalue(finegridpoints[2])
+
+    def fixColumns(self,sel):
+        """
+        Make sure that everything fits into the correct columns.
+        This means doing some rounding. It also means getting rid of
+        chain, occupancy and b-factor information.
+        """
+        #pymol.cmd.alter_state(1,'all','(x,y,z)=(int(x*1000)/1000.0, int(y*1000)/1000.0, int(z*1000)/1000.0)')
+        #pymol.cmd.alter_state(1,'all','(x,y,z)=float("%.2f"%x),float("%.2f"%y),float("%.2f"%z)')
+        pymol.cmd.alter_state(1,'all','(x,y,z)=float("%.3f"%x),float("%.3f"%y),float("%.3f"%z)')
+        pymol.cmd.alter(sel,'chain=""')
+        pymol.cmd.alter(sel,'b=0')
+        pymol.cmd.alter(sel,'q=0')
+
+    def cleanupGeneratedPdbOrPqrFile(self,filename):
+        """
+        More cleanup on PQR files.
+
+        pdb2pqr will happily write out a file where the coordinate
+        columns overlap if you have -100.something as one of the
+        coordinates, like
+
+        90.350  97.230-100.010
+
+        and so will PyMOL. We can't just assume that it's 0-1
+        because pdb2pqr will debump things and write them out with
+        3 digits post-decimal. Bleh.
+        """
+        f = file(filename,'r')
+        txt = f.read()
+        f.close()
+        f = file(filename,'w')
+        # APBS accepts whitespace-delimited columns
+        # it doesn't care about non-coord lines, so there's not need to be careful about
+        # where we replace dashes.
+        txt = txt.replace('-',' -')
+        f.write(txt)
+        f.close()
+                
+    def getUnassignedAtomsFromPqr(self,fname):
+        """
+        Here is a comment from Todd Dolinsky via email:
+
+        There's a couple of different errors which can be printed out via REMARK 5 lines; a good sample is:
+
+        REMARK   1 PQR file generated by PDB2PQR (Version 1.2.0)
+        REMARK   1
+        REMARK   1 Forcefield Used: charmm
+        REMARK   1
+        REMARK   1 pKas calculated by propka and assigned using pH 7.00
+        REMARK   1
+        REMARK   5 WARNING: Propka determined the following residues to be
+        REMARK   5          in a protonation state not supported by the
+        REMARK   5          charmm forcefield!
+        REMARK   5          All were reset to their standard pH 7.0 state.
+        REMARK   5 
+        REMARK   5              CYS 61 2 (negative)
+        REMARK   5              CYS 79 2 (negative)
+        REMARK   5 
+        REMARK   5 WARNING: Unable to debump ALA 1 19
+        REMARK   5 WARNING: Unable to debump MET 1 151
+        REMARK   5 WARNING: Unable to debump PRO 1 258
+        REMARK   5 WARNING: Unable to debump GLY 2 8
+        REMARK   5 WARNING: Unable to debump THR 3 118
+        REMARK   5
+        REMARK   5 WARNING: PDB2PQR was unable to assign charges
+        REMARK   5          to the following atoms (omitted below):
+        REMARK   5              6657 O1 in TRS 900
+        REMARK   5              6658 C2 in TRS 900
+        REMARK   5              6659 C3 in TRS 900
+        REMARK   5              6660 C4 in TRS 900
+        REMARK   5              6661 O5 in TRS 900
+        REMARK   5              6662 C6 in TRS 900
+        REMARK   5              6663 O7 in TRS 900
+        REMARK   5              6664 N8 in TRS 900
+        REMARK   5
+        REMARK   6 Total charge on this protein: -1.0000 e
+        REMARK   6
+
+        If all you care about is the atom number, you can probably regexp match on the 'in' field, something like
+
+        >>> re.compile('REMARK   5 *(\d)* \w* in').findall(text)  # Text contains PQR output string
+        ['6657', '6658', '6659', '6660', '6661', '6662', '6663', '6664']
+
+        Or you can grab any other useful information - I'd say that using a regular expression like this would be the best option to ensure you don't get false positives. 
+        """
+        f = file(fname)
+        unassigned = re.compile('REMARK   5 *(\d+) \w* in').findall(f.read())  # Text contains PQR output string
+        f.close()
+        return '+'.join(unassigned)
+        
             
     def generateApbsInputFile(self):
-        if self.checkInput(silent=True):
+        if self.checkInput(silent=False):
             #
             # set up our variables
             #
@@ -1368,45 +1469,45 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             bcflmap = {'Zero': 'zero',
                        'Single DH sphere': 'sdh',
                        'Multiple DH spheres': 'mdh',
-                       'Focusing': 'focus',
+                       #'Focusing': 'focus',
                        }
             bcfl = bcflmap[self.bcfl.getvalue()]
 
             chgmmap = {'Linear':'spl0',
-                       'Cubic b-splines':'spl2',
+                       'Cubic B-splines':'spl2',
+                       'Quintic B-splines':'spl4',
                        }
             chgm = chgmmap[self.chgm.getvalue()]
+
+            srfmmap =  {'Mol surf for epsilon; inflated VdW for kappa, no smoothing':'mol',
+                        'Same, but with harmonic average smoothing':'smol',
+                        'Cubic spline':'spl2',
+                        'Similar to cubic spline, but with 7th order polynomial':'spl4',}
+
+            srfm = srfmmap[self.srfm.getvalue()]
 
             dx_filename = self.pymol_generated_dx_filename.getvalue()
             if dx_filename.endswith('.dx'):
                 dx_filename = dx_filename[:-3]
-
-            #
-            # get the input text
-            #
-
-            apbs_input_text = _getApbsInputFile(pqr_filename,
-                                                grid_points,
-                                                cglen,
-                                                fglen,
-                                                cent,
-                                                apbs_mode,
-                                                bcfl,
-                                                float(self.ion_plus_one_conc.getvalue()), float(self.ion_plus_one_rad.getvalue()),
-                                                float(self.ion_minus_one_conc.getvalue()), float(self.ion_minus_one_rad.getvalue()),
-                                                float(self.ion_plus_two_conc.getvalue()), float(self.ion_plus_two_rad.getvalue()),
-                                                float(self.ion_minus_two_conc.getvalue()), float(self.ion_minus_two_rad.getvalue()),
-                                                float(self.interior_dielectric.getvalue()),
-                                                float(self.solvent_dielectric.getvalue()),
-                                                chgm,
-                                                float(self.solvent_radius.getvalue()),
-                                                float(self.system_temp.getvalue()),
-                                                float(self.sdens.getvalue()),
-                                                dx_filename,
-                                                )
-                                                
-                                                
-
+            apbs_input_text = getApbsInputFile(pqr_filename,
+                                               grid_points,
+                                               cglen,
+                                               fglen,
+                                               cent,
+                                               apbs_mode,
+                                               bcfl,
+                                               float(self.ion_plus_one_conc.getvalue()), float(self.ion_plus_one_rad.getvalue()),
+                                               float(self.ion_minus_one_conc.getvalue()), float(self.ion_minus_one_rad.getvalue()),
+                                               float(self.ion_plus_two_conc.getvalue()), float(self.ion_plus_two_rad.getvalue()),
+                                               float(self.ion_minus_two_conc.getvalue()), float(self.ion_minus_two_rad.getvalue()),
+                                               float(self.interior_dielectric.getvalue()), float(self.solvent_dielectric.getvalue()),
+                                               chgm,
+                                               srfm,
+                                               float(self.solvent_radius.getvalue()),
+                                               float(self.system_temp.getvalue()),
+                                               float(self.sdens.getvalue()),
+                                               dx_filename,
+                                               )
             #
             # write out the input text
             #
@@ -1503,10 +1604,77 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
                 return False
 
         return True
+
+
+    def generatePdb2pqrPqrFile(self,silent=False):
+        """use pdb2pqr to generate a pqr file
+        """
+        if not silent:
+            def show_error(message):
+                error_dialog = Pmw.MessageDialog(self.parent,
+                                                 title = 'Error',
+                                                 message_text = message,
+                                                 )
+                junk = error_dialog.activate()
+        else:
+            def show_error(message):
+                pass
+        
+        #
+        # First, generate a PDB file
+        #
+        pdb_filename = self.pymol_generated_pdb_filename.getvalue()
+        try:
+            f = file(pdb_filename,'w')
+            f.close()
+        except:
+            show_error('Please set a temporary PDB file location that you have permission to edit')
+            return False
+        # copied from WLD code
+        sel = "((%s) or (neighbor (%s) and hydro))"%(
+                       self.selection.getvalue(), self.selection.getvalue())
+        self.fixColumns(sel)
+        pymol.cmd.save(pdb_filename,sel)
+        self.cleanupGeneratedPdbOrPqrFile(pdb_filename)
+
+        #
+        # Now, generate a PQR file
+        #
+##        command_line = '%s %s %s %s'%(self.pdb2pqr.getvalue(),
+##                                      self.pdb2pqr_options.getvalue(),
+##                                      pdb_filename,
+##                                      self.pymol_generated_pqr_filename.getvalue(),
+##                                      )
+##        print "RAN",command_line
+##        result = os.system(command_line)
+        #
+        # We have to be a little cute about args, because pdb2pqr_options could have several options in it.
+        args = '%s %s %s' %(self.pdb2pqr_options.getvalue(),
+                            pdb_filename,
+                            self.pymol_generated_pqr_filename.getvalue(),
+                            ) 
+        (retval,progout) = run(self.pdb2pqr.getvalue(),args)
+        
+
+        if retval != 0:
+            show_error('Could not run pdb2pqr: %s %s\n\n%s'%(self.pdb2pqr.getvalue(),
+                                                             args,
+                                                             progout)
+                       )
+            return False
+        self.cleanupGeneratedPdbOrPqrFile(self.pymol_generated_pqr_filename.getvalue())
+        unassigned_atoms = self.getUnassignedAtomsFromPqr(self.pymol_generated_pqr_filename.getvalue())
+        if unassigned_atoms:
+            pymol.cmd.select('unassigned','ID %s'%unassigned_atoms)
+            message_text = "Unable to assign parameters for the %s atoms in selection 'unassigned'.\nPlease either remove these unassigned atoms and re-start the calculation\nor fix their parameters in the generated PQR file and run the calculation\nusing the modified PQR file (select 'Use another PQR' in 'Main')."%len(unassigned_atoms.split('+'))
+            print "Unassigned atom IDs",unassigned_atoms
+            show_error(message_text)
+            return False
+        return True
         
         
-    def generatePqrFile(self):
-        """generate a pqr file
+    def generatePymolPqrFile(self):
+        """generate a pqr file from pymol
 
         This will also call through to champ to set the Hydrogens and charges
         if it needs to.  If it does that, it may change the value self.selection
@@ -1531,28 +1699,29 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             junk = error_dialog.activate()
             return False
             
-        if REAL_PYMOL:
-            # PyMOL + champ == pqr
-            from chempy.champ import assign
-            if self.radiobuttons.getvalue() == 'Use PyMOL generated PQR and PyMOL generated Hydrogens and termini':
-                pymol.cmd.remove('hydro and %s'%sel)
-                assign.missing_c_termini(sel)
-                assign.formal_charges(sel)
-                pymol.cmd.h_add(sel)
-# WLD (code now unnecessary)
-#                new_hydros = '(hydro and neighbor %s)'%sel
-#                sel = '%s or %s' % (sel,new_hydros)
-            assign.amber99(sel)
-# WLD (code now unnecessary)
-#            if not self.selection.getvalue() in '(all) all'.split():
-#                self.selection.setvalue(sel)
+        # PyMOL + champ == pqr
+        from chempy.champ import assign
+        if self.radiobuttons.getvalue() == 'Use PyMOL generated PQR and PyMOL generated Hydrogens and termini':
+            pymol.cmd.remove('hydro and %s'%sel)
+            assign.missing_c_termini(sel)
+            assign.formal_charges(sel)
+            pymol.cmd.h_add(sel)
+            # WLD (code now unnecessary)
+            # new_hydros = '(hydro and neighbor %s)'%sel
+            # sel = '%s or %s' % (sel,new_hydros)
+        assign.amber99(sel)
+        # WLD (code now unnecessary)
+        # if not self.selection.getvalue() in '(all) all'.split():
+        #     self.selection.setvalue(sel)
                 
         #
         # Get rid of chain information
         #
-# WLD -- PyMOL now does this automatically with PQR files        
-#        pymol.cmd.alter(sel,'chain = ""')
+        # WLD -- PyMOL now does this automatically with PQR files        
+        # pymol.cmd.alter(sel,'chain = ""')
+        self.fixColumns(sel)
         pymol.cmd.save(pqr_filename,sel)
+        self.cleanupGeneratedPdbOrPqrFile(pqr_filename)
         missed_count = pymol.cmd.count_atoms("("+sel+") and flag 23")
         if missed_count > 0:
             pymol.cmd.select("unassigned","("+sel+") and flag 23")
@@ -1564,6 +1733,28 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             return False
         return True
 
+
+############################################################
+############################################################
+############################################################
+##                                                        ##
+##         PmwExtensions                                  ##
+##                                                        ##
+############################################################
+############################################################
+############################################################
+
+"""
+This contains all of the visualization groups that we'll use for our
+PMW interface.
+"""
+
+#
+# Generically useful PMW extensions
+
+import os,fnmatch,time
+import Tkinter,Pmw
+#Pmw.setversion("0.8.5")
 
 #
 # The classes PmwFileDialog and PmwExistingFileDialog and the _errorpop function
@@ -1585,9 +1776,6 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
 # Please send bug-fixes/patches/features to <r.hooft@euromail.com>
 #
 ################################################################################
-import os,fnmatch,time
-import Tkinter,Pmw
-#Pmw.setversion("0.8.5")
 
 def _errorpop(master,text):
     d=Pmw.MessageDialog(master,
@@ -1905,6 +2093,7 @@ class PmwFileDialog(Pmw.Dialog):
            exist"""
 	return 1
 
+
 class PmwExistingFileDialog(PmwFileDialog):
     def filevalidate(self,string):
         if os.path.isfile(string):
@@ -1922,147 +2111,243 @@ class PmwExistingFileDialog(PmwFileDialog):
             _errorpop(self.interior(),"Please select an existing file")
             return 0
 
-##############################################################################
-##############################################################################
-###                                                                        ###
-###       Now the actual APBS code                                         ###
-###                                                                        ###
-##############################################################################
-##############################################################################
+class FileDialogButtonClassFactory:
+    def get(fn,filter='*'):
+        """This returns a FileDialogButton class that will
+        call the specified function with the resulting file.
+        """
+        class FileDialogButton(Tkinter.Button):
+            # This is just an ordinary button with special colors.
 
-def _getApbsInputFile(pqr_filename,
-                      grid_points,
-                      cglen,
-                      fglen,
-                      cent,
-                      apbs_mode,
-                      bcfl,
-                      ion_plus_one_conc,ion_plus_one_rad,
-                      ion_minus_one_conc,ion_minus_one_rad,
-                      ion_plus_two_conc,ion_plus_two_rad,
-                      ion_minus_two_conc,ion_minus_two_rad,
-                      interior_dielectric, solvent_dielectric,
-                      chgm,
-                      solvent_radius,
-                      system_temp,
-                      sdens,
-                      dx_filename,
-                      ):
-    #print "system_temp",system_temp,type(system_temp)
-    #print "sdens",sdens,type(sdens)
-    #
-    # How shall we set up the grid?  We'll use cglen, fglen, cgcent, fgcent
-    # and dime.
-    # This allows people to automate things (e.g. "Alanine scanning")
-    #
-    
-    #
-    # New template using mg-auto
-    # See http://agave.wustl.edu/apbs/doc/api/html/#mg-auto
-    #
+            def __init__(self, master=None, cnf={}, **kw):
+                '''when we get a file, we call fn(filename)'''
+                self.fn = fn
+                self.__toggle = 0
+                apply(Tkinter.Button.__init__, (self, master, cnf), kw)
+                self.configure(command=self.set)
+            def set(self):
+                fd = PmwFileDialog(self.master,filter=filter)
+                fd.title('Please choose a file')
+                n=fd.askfilename()
+                if n is not None:
+                    self.fn(n)
+        return FileDialogButton
+    get = staticmethod(get)
 
-    apbs_template = """#
-# Note that most of the comments here were taken from sample
-# input files that came with APBS.  You can find APBS at
-# http://agave.wustl.edu/apbs/
-# Note that APBS is GPL'd code.
-#
-read
-    mol pqr %s       # read molecule 1
-end
-elec
-    mg-auto
-    dime   %d %d %d  # number of find grid points
-                     # calculated by psize.py
-    cglen   %f %f %f # coarse mesh lengths (A)
-    fglen   %f %f %f # fine mesh lengths (A)
-                     # calculated by psize.py
-    cgcent %f %f %f  # (could also give (x,y,z) form psize.py) #known center
-    fgcent %f %f %f  # (could also give (x,y,z) form psize.py) #known center
-    %s               # solve the full nonlinear PBE with npbe
-    #lpbe            # solve the linear PBE with lpbe
-    bcfl %s          # Boundary condition flag
-                     #  0 => Zero
-                     #  1 => Single DH sphere
-                     #  2 => Multiple DH spheres
-                     #  4 => Focusing
-                     #
-    #ion 1 0.000 2.0 # Counterion declaration:
-    ion  1 %f %f     # Counterion declaration:
-    ion -1 %f %f     # ion <charge> <conc (M)> <radius>
-    ion  2 %f %f     # ion <charge> <conc (M)> <radius>
-    ion -2 %f %f     # ion <charge> <conc (M)> <radius>
-    pdie %f          # Solute dielectric
-    sdie %f          # Solvent dielectric
-    chgm %s          # Charge disc method
-                     # 0 is linear splines
-                     # 1 is cubic b-splines
-    mol 1            # which molecule to use
-    srfm smol        # Surface calculation method
-                     #  0 => Mol surface for epsilon;
-                     #       inflated VdW for kappa; no
-                     #       smoothing
-                     #  1 => As 0 with harmoic average
-                     #       smoothing
-                     #  2 => Cubic spline 
-    srad %f          # Solvent radius (1.4 for water)
-    swin 0.3         # Surface cubic spline window .. default 0.3
-    temp %f          # System temperature (298.15 default)
-    sdens %f         # Specify the number of grid points per square-angstrom to use in Vacc object. Ignored when srad is 0.0 (see srad) or srfm is spl2 (see srfm). There is a direct correlation between the value used for the Vacc sphere density, the accuracy of the Vacc object, and the APBS calculation time. APBS default value is 10.0.
-    gamma 0.105      # Surface tension parameter for apolar forces (in kJ/mol/A^2)
-                     # only used for force calculations, so we don't care, but
-                     # it's always required, and 0.105 is the default
-    calcenergy no    # Energy I/O to stdout
-                     #  0 => don't write out energy
-                     #  1 => write out total energy
-                     #  2 => write out total energy and all
-                     #       components
-    calcforce no     # Atomic forces I/O (to stdout)
-                     #  0 => don't write out forces
-                     #  1 => write out net forces on molecule
-                     #  2 => write out atom-level forces
-    write pot dx %s  # What to write .. this says write the potential in dx
-                     # format to a file.
-end
-quit
+############################################################
+############################################################
+############################################################
+##                                                        ##
+##         PmwGroups                                      ##
+##                                                        ##
+############################################################
+############################################################
+############################################################
+class VisualizationGroup(Pmw.Group):
+    def __init__(self,*args,**kwargs):
+        my_options = 'visgroup_num'.split()
+        for option in my_options:
+            # use these options as attributes of this class
+            # and remove them from the kwargs dict before
+            # passing on to Pmw.Group.__init__().
+            setattr(self,option,kwargs.pop(option))
+        kwargs['tag_text'] = kwargs['tag_text'] + ' (%s)'%self.visgroup_num
+        Pmw.Group.__init__(self,*args,**kwargs)
+        self.refresh()
+        self.show_ms = False
+        self.show_pi = False
+        self.show_ni = False
+    def refresh(self):
+        things_to_kill = 'error_label update_buttonbox mm_group ms_group pi_group ni_group'.split()
+        for thing in things_to_kill:
+            try:
+                getattr(self,thing).destroy()
+                #print "destroyed",thing
+            except AttributeError:
+                #print "couldn't destroy",thing
 
-"""
-    return apbs_template % (pqr_filename,
-                            grid_points[0], grid_points[1], grid_points[2],
-                            cglen[0],cglen[1],cglen[2],
-                            fglen[0],fglen[1],fglen[2],
-                            cent[0],cent[1],cent[2],
-                            cent[0],cent[1],cent[2],
-                            apbs_mode,
-                            bcfl,
-                            ion_plus_one_conc,ion_plus_one_rad,
-                            ion_minus_one_conc,ion_minus_one_rad,
-                            ion_plus_two_conc,ion_plus_two_rad,
-                            ion_minus_two_conc,ion_minus_two_rad,
-                            interior_dielectric, solvent_dielectric,
-                            chgm,
-                            solvent_radius,
-                            system_temp,
-                            sdens,
-                            dx_filename,
-                            )                            
-                            
+                # note: this attributeerror will also hit if getattr(self,thing) misses.
+                # another note: both halves of the if/else make an update_buttonbox.
+                # if you rename the one in the top half to something else, you'll cause nasty Pmw errors.
+                pass
+        if [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'] and [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule']:
+            self.mm_group = Pmw.Group(self.interior(),tag_text = 'Maps and Molecules')
+            self.map = Pmw.OptionMenu(self.mm_group.interior(),
+                                      labelpos = 'w',
+                                      label_text = 'Map',
+                                      items = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'],
+                                      )
+            self.map.pack(padx=4,side=LEFT)
 
+            self.molecule = Pmw.OptionMenu(self.mm_group.interior(),
+                                           labelpos = 'w',
+                                           label_text = 'Molecule',
+                                           items = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule'],
+                                           )
+            self.molecule.pack(padx=4,side=LEFT)
+            self.update_buttonbox = Pmw.ButtonBox(self.mm_group.interior(), padx=0)
+            self.update_buttonbox.pack(side=LEFT)
+            self.update_buttonbox.add('Update',command=self.refresh)
+            self.mm_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=TOP)
 
+            self.ms_group = Pmw.Group(self.interior(),tag_text='Molecular Surface')
+            self.ms_buttonbox = Pmw.ButtonBox(self.ms_group.interior(), padx=0)
+            self.ms_buttonbox.pack()
+            self.ms_buttonbox.add('Show',command=self.showMolSurface)
+            self.ms_buttonbox.add('Hide',command=self.hideMolSurface)
+            self.ms_buttonbox.add('Update',command=self.updateMolSurface)
+            self.ms_buttonbox.alignbuttons()
+            self.surface_solvent = IntVar()
+            self.surface_solvent.set(APBSTools2.defaults['surface_solvent'])
+            self.sol_checkbutton = Checkbutton(self.ms_group.interior(),
+                                               text = "Solvent accessible surface",
+                                               variable = self.surface_solvent)
+            self.sol_checkbutton.pack()            
+            self.potential_at_sas = IntVar()
+            self.potential_at_sas.set(APBSTools2.defaults['potential_at_sas'])
+            self.pot_checkbutton = Checkbutton(self.ms_group.interior(),
+                                               text = "Color by potential on sol. acc. surf.",
+                                               variable = self.potential_at_sas)
+            self.pot_checkbutton.pack()
+            self.mol_surf_low = Pmw.Counter(self.ms_group.interior(),
+                                            labelpos = 'w',
+                                            label_text = 'Low',
+                                            orient = 'vertical',
+                                            entry_width = 4,
+                                            entryfield_value = -1,
+                                            datatype = 'real',
+                                            entryfield_validate = {'validator' : 'real'},
+                                            )
+            self.mol_surf_middle = Pmw.Counter(self.ms_group.interior(),
+                                            labelpos = 'w',
+                                            label_text = 'Middle',
+                                            orient = 'vertical',
+                                            entry_width = 4,
+                                            entryfield_value = 0,
+                                            datatype = 'real',
+                                            entryfield_validate = {'validator' : 'real'}
+                                            )
+            self.mol_surf_high = Pmw.Counter(self.ms_group.interior(),
+                                            labelpos = 'w',
+                                            label_text = 'High',
+                                            orient = 'vertical',
+                                            entry_width = 4,
+                                            entryfield_value = 1,
+                                            datatype = 'real',
+                                            entryfield_validate = {'validator' : 'real'}
+                                            )
+            bars = (self.mol_surf_low,self.mol_surf_middle,self.mol_surf_high)
+            Pmw.alignlabels(bars)
+            for bar in bars: bar.pack(side=LEFT)
+            self.ms_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=LEFT)
 
+            self.pi_group = Pmw.Group(self.interior(),tag_text='Positive Isosurface')
+            self.pi_buttonbox = Pmw.ButtonBox(self.pi_group.interior(), padx=0)
+            self.pi_buttonbox.pack()
+            self.pi_buttonbox.add('Show',command=self.showPosSurface)
+            self.pi_buttonbox.add('Hide',command=self.hidePosSurface)
+            self.pi_buttonbox.add('Update',command=self.updatePosSurface)
+            self.pi_buttonbox.alignbuttons()
+            self.pos_surf_val = Pmw.Counter(self.pi_group.interior(),
+                                            labelpos = 'w',
+                                            label_text = 'Contour (kT/e)',
+                                            orient = 'vertical',
+                                            entry_width = 4,
+                                            entryfield_value = 1,
+                                            datatype = 'real',
+                                            entryfield_validate = {'validator' : 'real', 'min':0}
+                                            )
+            self.pos_surf_val.pack(side=LEFT)
+            self.pi_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=LEFT)
 
+            self.ni_group = Pmw.Group(self.interior(),tag_text='Negative Isosurface')
+            self.ni_buttonbox = Pmw.ButtonBox(self.ni_group.interior(), padx=0)
+            self.ni_buttonbox.pack()
+            self.ni_buttonbox.add('Show',command=self.showNegSurface)
+            self.ni_buttonbox.add('Hide',command=self.hideNegSurface)
+            self.ni_buttonbox.add('Update',command=self.updateNegSurface)
+            self.ni_buttonbox.alignbuttons()
+            self.neg_surf_val = Pmw.Counter(self.ni_group.interior(),
+                                            labelpos = 'w',
+                                            label_text = 'Contour (kT/e)',
+                                            orient = 'vertical',
+                                            entry_width = 4,
+                                            entryfield_value = -1,
+                                            datatype = 'real',
+                                            entryfield_validate = {'validator' : 'real', 'max':0}
+                                            )
+            self.neg_surf_val.pack(side=LEFT)
+            self.ni_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=LEFT)
 
-# Create demo in root window for testing.
-if __name__ == '__main__':
-    class App:
-        def my_show(self,*args,**kwargs):
-            pass
-    app = App()
-    app.root = Tkinter.Tk()
-    Pmw.initialise(app.root)
-    app.root.title('Some Title')
-    
-    widget = APBSTools(app)
-    exitButton = Tkinter.Button(app.root, text = 'Exit', command = app.root.destroy)
-    exitButton.pack()
-    app.root.mainloop()
+        else:
+            self.error_label = Tkinter.Label(self.interior(),
+                                  pady = 10,
+                                  justify=LEFT,
+                                  text = '''You must have at least a molecule and a map loaded.
+If you have a molecule and a map loaded, please click "Update"''',
+                                  )
+            self.error_label.pack()
+            self.update_buttonbox = Pmw.ButtonBox(self.interior(), padx=0)
+            self.update_buttonbox.pack()
+            self.update_buttonbox.add('Update',command=self.refresh)
+
+    def showMolSurface(self):
+        self.updateMolSurface()
+            
+    def hideMolSurface(self):
+        pymol.cmd.hide('surface',self.molecule.getvalue())
+
+    def getRampName(self):
+        #return 'e_lvl'
+        idx = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule'].index(self.molecule.getvalue())
+        return '_'.join(('e_lvl',str(idx),str(self.visgroup_num)))
+
+    def getIsoPosName(self):
+        idx = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'].index(self.map.getvalue())
+        return '_'.join(('iso_pos',str(idx),str(self.visgroup_num)))
+
+    def getIsoNegName(self):
+        idx = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'].index(self.map.getvalue())
+        return '_'.join(('iso_neg',str(idx),str(self.visgroup_num)))
+        
+    def updateMolSurface(self):
+        molecule_name = self.molecule.getvalue()
+        ramp_name = self.getRampName()
+        map_name = self.map.getvalue()
+        low = float(self.mol_surf_low.getvalue())
+        mid = float(self.mol_surf_middle.getvalue())
+        high = float(self.mol_surf_high.getvalue())
+        range = [low,mid,high]
+        print " APBS Tools: range is",range
+        pymol.cmd.delete(ramp_name)
+        pymol.cmd.ramp_new(ramp_name,map_name,range)
+        pymol.cmd.set('surface_color',ramp_name,molecule_name)
+        if self.surface_solvent.get()==1:
+            pymol.cmd.set('surface_solvent',1,molecule_name)
+            pymol.cmd.set('surface_ramp_above_mode',0,molecule_name)
+        else:
+            pymol.cmd.set('surface_solvent',0,molecule_name)
+            pymol.cmd.set('surface_ramp_above_mode',self.potential_at_sas.get(),molecule_name)
+        pymol.cmd.show('surface',molecule_name)
+        pymol.cmd.refresh()
+        pymol.cmd.recolor(molecule_name)
+        
+    def showPosSurface(self):
+        self.updatePosSurface()
+    def hidePosSurface(self):
+        pymol.cmd.hide('everything',self.getIsoPosName())
+    def updatePosSurface(self):
+        pymol.cmd.delete(self.getIsoPosName())
+        pymol.cmd.isosurface(self.getIsoPosName(),self.map.getvalue(),float(self.pos_surf_val.getvalue()))
+        pymol.cmd.color('blue',self.getIsoPosName())
+        pymol.cmd.show('everything',self.getIsoPosName())
+    def showNegSurface(self):
+        self.updateNegSurface()
+    def hideNegSurface(self):
+        pymol.cmd.hide('everything',self.getIsoNegName())
+    def updateNegSurface(self):
+        pymol.cmd.delete(self.getIsoNegName())
+        pymol.cmd.isosurface(self.getIsoNegName(),self.map.getvalue(),float(self.neg_surf_val.getvalue()))
+        pymol.cmd.color('red',self.getIsoNegName())
+        pymol.cmd.show('everything',self.getIsoNegName())
+        
