@@ -805,6 +805,7 @@ typedef struct _CPyMOL {
   ov_word lex_motion_hand;
   ov_word lex_pdb_ignore_conect;
   ov_word lex_editor_bond_cycle_mode;
+  ov_word lex_movie_quality;
 } _CPyMOL;
 
 
@@ -1598,6 +1599,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(motion_hand, 631);
   LEX_SETTING(pdb_ignore_conect, 632);
   LEX_SETTING(editor_bond_cycle_mode, 633);
+  LEX_SETTING(movie_quality, 634);
   return_OVstatus_SUCCESS;
 }
 
@@ -1735,6 +1737,7 @@ PyMOLreturn_float_array PyMOL_CmdGetView(CPyMOL * I, int quiet)
   }
   PYMOL_API_UNLOCK return result;
 }
+
 
 PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL * I, char *source, char *target,
                                        float cutoff, int cycles, float gap, float extend,
