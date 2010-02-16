@@ -44,10 +44,11 @@ class Normal(PMGSkin):
     
     appname        = 'The PyMOL Molecular Graphics System'
     appversion     = '1.2'
-    copyright      = ('Copyright (C) Schrodinger, LLC \n' +
+    copyright      = ('Copyright (C) 2003-2010 \n' +
+                      'Schrodinger LLC.\n'+
                       'All rights reserved.')
     contactweb     = 'http://www.pymol.org'
-    contactemail   = 'help@schrodinger.com'
+    contactemail   = 'sales@pymol.org'
     
     # responsible for setup and takedown of the normal skin
 
@@ -757,9 +758,10 @@ class Normal(PMGSkin):
                                       filetypes=[("MPEG movie file","*.mpg")])
             if len(sfile):
                 self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
-                self.cmd.log("movie.produce %s,quiet=0\n"%sfile,
-                             "cmd.movie.produce('''%s''',quiet=0)\n"%sfile)
-                self.cmd.movie.produce(sfile,quiet=0)
+                mQual = self.cmd.get_setting_int("movie_quality")
+                self.cmd.log("movie.produce %s,quality=%d,quiet=0\n"%(sfile,mQual),
+                             "cmd.movie.produce('''%s''',quality=%d,quiet=0)\n"%(sfile,mQual))
+                self.cmd.movie.produce(sfile,quality=mQual, quiet=0)  #quality=quality
         
     def file_save_mpng(self):
         sfile = asksaveasfilename(initialdir = self.initialdir,
@@ -876,48 +878,48 @@ class Normal(PMGSkin):
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Introductory Screencasts',
                                      label='Introductory Screencasts',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/id/media:intro"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/id/media:intro"))
 
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Core Commands',
                                      label='Core Commands',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/id/command:core_set"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/id/command:core_set"))
 
             self.menuBar.addmenuitem('Topics', 'separator', '')
 
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Settings',
                                      label='Settings',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/id/setting"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/id/setting"))
 
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Atom Selections',
                                      label='Atom Selections',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/id/selection"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/id/selection"))
                                     
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Commands',
                                      label='Commands',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/id/command"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/id/command"))
             
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Launching',
                                      label='Launching',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/id/launch"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/id/launch"))
             
             self.menuBar.addmenuitem('Topics', 'separator', '')
             
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Concepts',
                                      label='Concepts',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/id/concept"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/id/concept"))
 
             self.menuBar.addmenuitem('Topics', 'separator', '')
             
             self.menuBar.addmenuitem('Topics', 'command',
                                      'A.P.I. Methods',
                                      label='A.P.I. Methods',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/id/api"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/id/api"))
 
             self.menuBar.addmenuitem('Help', 'separator', '')
             
@@ -939,8 +941,8 @@ class Normal(PMGSkin):
             self.menuBar.addmenuitem('Help', 'separator', '')
             
             self.menuBar.addmenuitem('Help', 'command',
-                                     'Email help@schrodinger.com',
-                                     label='Email help@schrodinger.com',
+                                     'Email PyMOL Help',
+                                     label='Email PyMOL Help',
                                      command = lambda bo=browser_open:bo("mailto:help@schrodinger.com?subject=PyMOL%20Question"))
 
             self.menuBar.addmenuitem('Help', 'separator', '')        
@@ -959,12 +961,12 @@ class Normal(PMGSkin):
                                      'Learn How to Cite PyMOL', 
                                      label='How to Cite PyMOL', command = lambda bo=browser_open:bo("http://pymol.org/citing"))
             
-            self.menuBar.addmenuitem('Help', 'separator', '')
+            #self.menuBar.addmenuitem('Help', 'separator', '')
 
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Output License Terms',
-                                     label='Output License Terms',
-                                     command = lambda s=self:s.cat_terms())
+            #self.menuBar.addmenuitem('Help', 'command',
+            #                         'Output License Terms',
+            #                         label='Output License Terms',
+            #                         command = lambda s=self:s.cat_terms())
 
 
         except ImportError:

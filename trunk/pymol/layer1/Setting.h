@@ -867,6 +867,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_motion_hand                631
 #define cSetting_pdb_ignore_conect          632
 #define cSetting_editor_bond_cycle_mode     633
+#define cSetting_movie_quality              634
 
 /* when you add a new setting also remember:
    layer1/Setting.c
