@@ -521,8 +521,6 @@ OV_STATIC ov_status CacheCreateEntry(PyObject ** result, PyObject * input)
         } else {
           hash_long = 0;        /* None doesn't hash consistently from Python version to version */
         }
-        if(PyErr_Occurred())
-          PyErr_Print();
         PyTuple_SetItem(hash_code, i, PyInt_FromLong(hash_long));
         if(PyTuple_Check(item)) {
           tot_size += PyTuple_Size(item);
@@ -1565,17 +1563,17 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
         lpcbData = sizeof(OrthoLineType) - 1;
         r1 = RegOpenKeyEx(HKEY_CLASSES_ROOT,
 #ifdef PYMOL_EVAL
-			"Software\\DeLano Scientific\\PyMOL Eval\\PYMOL_PATH",
+			"Software\\PyMOL\\PyMOL Eval\\PYMOL_PATH",
 #else
-			"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+			"Software\\PyMOL\\PyMOL\\PYMOL_PATH",
 #endif
                           0, KEY_EXECUTE, &phkResult);
         if(r1 != ERROR_SUCCESS) {
           r1 = RegOpenKeyEx(HKEY_CURRENT_USER,
 #ifdef PYMOL_EVAL
-			"Software\\DeLano Scientific\\PyMOL Eval\\PYMOL_PATH",
+			"Software\\PyMOL\\PyMOL Eval\\PYMOL_PATH",
 #else
-			"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+			"Software\\PyMOL\\PyMOL\\PYMOL_PATH",
 #endif
                             0, KEY_EXECUTE, &phkResult);
         }

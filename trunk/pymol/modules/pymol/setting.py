@@ -669,7 +669,8 @@ if __name__=='pymol.setting':
         motion_hand                        = 631
         pdb_ignore_conect                  = 632
         editor_bond_cycle_mode             = 633
-        movie_quality                      = 634
+        movie_quality                      = 634	# 0--100, controls movie.produce
+        label_anchor                       = 635	# 'CA' or 'CB' or any backbone atom name; bb atoms suggestged
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

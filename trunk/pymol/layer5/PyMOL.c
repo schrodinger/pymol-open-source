@@ -806,6 +806,7 @@ typedef struct _CPyMOL {
   ov_word lex_pdb_ignore_conect;
   ov_word lex_editor_bond_cycle_mode;
   ov_word lex_movie_quality;
+  ov_word lex_label_anchor;
 } _CPyMOL;
 
 
@@ -1600,6 +1601,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(pdb_ignore_conect, 632);
   LEX_SETTING(editor_bond_cycle_mode, 633);
   LEX_SETTING(movie_quality, 634);
+  LEX_SETTING(label_anchor, 635);
   return_OVstatus_SUCCESS;
 }
 
