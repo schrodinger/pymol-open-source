@@ -1253,6 +1253,8 @@ def label_props(self_cmd, sele):
               [ 0, ''               , ''                                  ],
               [ 1, 'text type'      , 'cmd.label("'+sele+'","text_type")'    ],
               [ 1, 'numeric type'   , 'cmd.label("'+sele+'","numeric_type")' ],
+              [ 0, ''               , ''                                  ],
+              [ 1, 'stereochemistry', 'cmd.label("'+sele+'","numeric_type")' ],  # -- TODO
               ]
 
 def label_ids(self_cmd, sele):
@@ -1266,8 +1268,8 @@ def mol_labels(self_cmd, sele):
     return [[ 2, 'Label:'        , ''                                  ],
               [ 1, 'clear'          , 'cmd.label("'+sele+'","\'\'")'         ],
               [ 0, ''               , ''                                  ],
-              [ 1, 'residues'       ,
-  """cmd.label('''(name ca+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
+              [ 1, 'residues'       , """cmd.label('''(name """+self_cmd.get("label_anchor")+"""+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
+#              [ 1, 'residues'       , """cmd.label('''(name ca+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
               [ 1, 'chains'       ,   'util.label_chains("'+sele+'",_self=cmd)'  ],
               [ 1, 'segments'       ,   'util.label_segments("'+sele+'",_self=cmd)'  ],           
               [ 0, ''               , ''                                  ],           
