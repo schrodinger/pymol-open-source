@@ -68,7 +68,12 @@ elif sys.platform=='darwin':
                   "/System/Library/Frameworks/IOKit.framework/Headers",
                   "/sw/lib/freetype2/include",
                   "/sw/lib/freetype2/include/freetype2",
-                  "/sw/include"]
+                  "/sw/include",
+		  "modules/cealign/src",
+		  "modules/cealign/src/tnt",
+		  #"contrib/uiuc/plugins/include/",
+		  #"contrib/uiuc/plugins/molfile_plugin/src",
+	]
         libs=[]
         pyogl_libs = []
         lib_dirs=[]
@@ -102,6 +107,8 @@ elif sys.platform=='darwin':
                   EXT+"/include",
                   EXT+"/include/GL",
                   EXT+"/include/freetype2",
+		  "modules/cealign/src",
+		  "modules/cealign/src/tnt",
                   ]
         libs=[]
         pyogl_libs = []
@@ -125,7 +132,8 @@ else: # linux or other unix
 # VMD plugin support
 #              "contrib/uiuc/plugins/include",
 #              "contrib/uiuc/plugins/molfile_plugin/src",
-              ]
+              "modules/cealign/src",
+	      "modules/cealign/src/tnt", ]
     libs=["GL","GLU","glut","png","z","freetype",
 #          "Xxf86vm"
           ]	
@@ -172,6 +180,7 @@ setup ( # Distribution meta-data
                 'pymol/wizard'],
 	ext_modules = [
     Extension("pymol._cmd", [
+    "modules/cealign/src/ccealignmodule.cpp",
     "ov/src/OVContext.c",
     "ov/src/OVHeapArray.c",
     "ov/src/OVHeap.c",
