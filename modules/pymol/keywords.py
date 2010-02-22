@@ -15,7 +15,7 @@ def get_command_keywords(self_cmd=cmd):
         'alias'         : [ self_cmd.alias             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
         'align'         : [ self_cmd.align             , 0 , 0 , ''  , parsing.STRICT ],
         'alter'         : [ self_cmd.alter             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
-        '_alt'          : [ self_cmd._alt             , 0 , 0 , ''  , parsing.STRICT ],                
+        '_alt'          : [ self_cmd._alt              , 0 , 0 , ''  , parsing.STRICT ],                
         'alter_state'   : [ self_cmd.alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
         'angle'         : [ self_cmd.angle             , 0 , 0 , ''  , parsing.STRICT ],          
         'as'            : [ self_cmd.show_as           , 0 , 0 , ''  , parsing.STRICT ],          
@@ -29,6 +29,7 @@ def get_command_keywords(self_cmd=cmd):
         'cache'         : [ self_cmd.cache             , 0 , 0 , ''  , parsing.STRICT ],
         'cartoon'       : [ self_cmd.cartoon           , 0 , 0 , ''  , parsing.STRICT ],
         'capture'       : [ self_cmd.capture           , 0 , 0 , ''  , parsing.STRICT ],
+        'cealign'       : [ self_cmd.cealign	       , 0 , 0 , ''  , parsing.STRICT ],
         'cd'            : [ self_cmd.cd                , 0 , 0 , ''  , parsing.STRICT ],
         'center'        : [ self_cmd.center            , 0 , 0 , ''  , parsing.STRICT ],     
         'check'         : [ self_cmd.check             , 0 , 0 , ''  , parsing.STRICT ],
