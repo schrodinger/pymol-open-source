@@ -61,12 +61,14 @@ unix: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) -f Makefile.delsci
 	cd contrib/uiuc/plugins/molfile_plugin/src;$(MAKE) -f Makefile.delsci
+	cd modules/cealign/src; g++ -c ccealignmodule.cpp -o ccealignmodule.o -Itnt -I. $(PYTHON_INC_DIR) -I$(PYMOL_PATH)/layer0 -I$(PYMOL_PATH)/ov/src 
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) -f Makefile.delsci static
 	cd contrib/uiuc/plugins/molfile_plugin/src;$(MAKE) -f Makefile.delsci
+	cd modules/cealign/src; g++ -c ccealignmodule.cpp -o ccealignmodule.o -Itnt -I. $(PYTHON_INC_DIR) -I$(PYMOL_PATH)/layer0 -I$(PYMOL_PATH)/ov/src 
 	g++ $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
 
 free:
