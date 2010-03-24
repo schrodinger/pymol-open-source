@@ -1242,16 +1242,31 @@ PYMOL API
         import string
         import time
         
+        fetchHosts = {  "pdb" : "http://www.rcsb.org/pdb/files/",
+                        "pdbe" : "http://www.ebi.ac.uk/pdbe-srv/view/files/",
+                        "pdbj" : "ftp://ftp.pdbj.org/pdb/pdb" }
+        
         fobj = None
         fname = None
         auto_close_file = 1
         if path and not file:
             file = 1
-        if (file==1) or (file=='1') or (file=='auto'):
+        if (file==1) or (file=='1') or (file=='auto'): 
             if path:
-                fname = os.path.join(path,string.lower(code)+"."+type)
+                fname = os.path.join(path,string.lower(code))
             else:
-                fname = string.lower(code)+"."+type
+                fname = string.lower(code)
+                
+            if type=="fofc":
+                fname += ".omap"
+                if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
+                    name = name + "_" + type
+            elif type=="2fofc":
+                fname += "_diff.omap"
+                if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
+                    name = name + "_" + type
+            else:
+                fname += "." + type
         elif is_string(file):
             fname = file
         elif file:
@@ -1259,30 +1274,48 @@ PYMOL API
             auto_close_file = 0
         if fname and not fobj:
             if os.path.exists(fname):
-                return _self.load(fname,name,state,'pdb',finish,discrete,quiet,
+                if type in ("fofc", "2fofc"):
+                    return _self.load(fname,name,state,'brix',finish,discrete,quiet,
+                                  multiplex,zoom)
+                else:                    
+                    return _self.load(fname,name,state,'pdb',finish,discrete,quiet,
                                   multiplex,zoom)
         tries = 0
         r = DEFAULT_ERROR
         done = 0
+        
         while (done == 0) and (tries<3): # try loading URL up to 3 times
             tries = tries + 1
             if (type=='pdb') or (type=='pdb1'):
-                remoteCode = string.upper(code)
+
+                fetch_host = setting.get("fetch_host", _self=_self)
+                if (type=="pdb1"):  # pdbe/pdbj do not server biological units
+                    fetch_host = "pdb"
+                    if not quiet: 
+                        print "WARNING: pdbe/pdbj do not serve biological units, using default RCSB server."
+                remotePre, remoteCode, remotePost = None, None, None
+                if fetch_host == "pdbe":
+                    remotePre = fetchHosts[fetch_host]
+                    remoteCode = string.lower(code)
+                    remotePost = ".ent.gz"
+                elif fetch_host == "pdbj":
+                    remotePre = fetchHosts[fetch_host]
+                    remoteCode = string.lower(code)
+                    remotePost = ".ent.gz"
+                else:  # "pdb" and anything else
+                    remotePre = fetchHosts[fetch_host]
+                    remoteCode = string.upper(code)
+                    if type=="pdb1":
+                        remotePost = ".pdb1.gz"
+                    else:
+                        remotePost = ".pdb.gz"
                 try:
-                    url = None
-                    if type=='pdb':
-#                        filename = urllib.urlretrieve(
-#                            'http://www.rcsb.org/pdb/cgi/export.cgi/' +
-#                            remoteCode + '.pdb.gz?format=PDB&pdbId=' +
-#                            remoteCode + '&compression=gz')[0]
-#                        url = ('http://www.rcsb.org/pdb/download/downloadFile.do?' +
-#                               'fileFormat=PDB&structureId=' +
-#                               remoteCode + '&compression=GZIP')
-                        url = ('http://www.rcsb.org/pdb/files/'+
-                               remoteCode + '.pdb.gz')
-                    elif type=='pdb1':
-                        url = ('http://www.rcsb.org/pdb/files/' +
-                               remoteCode + '.pdb1.gz')
+                    #print "remotePre: %s" % remotePre
+                    #print "remoteCode: %s" % remoteCode
+                    #print "remotePost: %s" % remotePost
+                    url = remotePre + remoteCode + remotePost
+                    #print url
+                    
                     if url!=None:
                         filename = urllib.urlretrieve(url)[0]
                 except:
@@ -1314,6 +1347,64 @@ PYMOL API
                             os.remove(filename)
                         except:
                             pass
+            elif type in ("fofc" ,"2fofc"):
+            # for ED maps,
+            # http://eds.bmc.uu.se/eds/dfs/cb/1cbs/1cbs.omap
+            # http://eds.bmc.uu.se/eds/dfs/cb/1cbs/1cbs_diff.omap
+                url = None
+                remoteCode = string.lower(code)
+                if len(remoteCode)<4:
+                    pass
+                else:
+                    url = "http://eds.bmc.uu.se/eds/dfs/" + remoteCode[1:3] + "/" + remoteCode + "/" + remoteCode
+                    if type=="2fofc":
+                        url += "_diff.omap"
+                    else:  # default to fofc
+                        url += ".omap"
+
+                if url == None:
+                    pass
+                else:
+                    try:
+                        filename = urllib.urlretrieve(url)[0]
+                    except:
+                        pass
+                    else:
+                        if os.path.exists(filename):
+                            if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
+                                try:
+                                    abort = 0
+                                    map_str = open(filename,'rb').read()
+                                    if map_str[0]=='<':  # file not found
+                                        print "Electron density map for %s not found on server." % remoteCode
+                                        os.remove(filename)
+                                        break
+                                    if fname and not fobj:
+                                        fobj = open(fname,'wb')
+                                    if fobj:
+                                        #print "Wrote to fname: %s" % fname
+                                        #print "Name is: %s" % name
+                                        fobj.write(map_str)
+                                        fobj.flush()
+                                        if auto_close_file:
+                                            fobj.close()
+                                    if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
+                                        name = name + "_" + type
+                                    r = _self.load(fname, name, state, loadable.brix, finish, discrete, quiet, multiplex, zoom)
+                                    done = 1
+                                except IOError:
+    #                                print traceback.print_exc()
+                                    pass
+                            else:
+    #                            print traceback.print_exc()
+                                pass
+                            try:
+                                os.remove(filename)
+                            except:
+                                pass
+                        
+                
+                        
             if done == 0:
                 time.sleep(0.1)
         if done == 0:

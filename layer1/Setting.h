@@ -869,6 +869,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_editor_bond_cycle_mode     633
 #define cSetting_movie_quality              634
 #define cSetting_label_anchor               635
+#define cSetting_fetch_host                 636
 
 /* when you add a new setting also remember:
    layer1/Setting.c
