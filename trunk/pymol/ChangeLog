@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2010-03-24 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* fetch_host setting (use 'pdb', 'pdbe', or 'pdbj')
+
+	* map fetching from EDS (eg. fetch 1cll, async=0; fetch 1cll, type=2fofc; fetch 1cll, type=fofc)
+
 2010-02-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* label_anchor setting
