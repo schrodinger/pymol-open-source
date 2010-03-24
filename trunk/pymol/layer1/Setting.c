@@ -3774,6 +3774,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_i(I, cSetting_sculpt_avd_excl, 7);
     set_b(I, cSetting_async_builds, 0);
     set_s(I, cSetting_fetch_path, ".");
+    set_s(I, cSetting_fetch_host, "pdb");
     set_f(I, cSetting_cartoon_ring_radius, -1.0F);
     set_b(I, cSetting_ray_color_ramps, 0);
     set_f(I, cSetting_ray_hint_camera, 2.15F);

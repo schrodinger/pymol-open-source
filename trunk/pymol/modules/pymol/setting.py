@@ -671,6 +671,7 @@ if __name__=='pymol.setting':
         editor_bond_cycle_mode             = 633
         movie_quality                      = 634	# 0--100, controls movie.produce
         label_anchor                       = 635	# 'CA' or 'CB' or any backbone atom name; bb atoms suggestged
+        fetch_host                         = 636        # one of, "pdb", "pdbe" or "pdbj"
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
