@@ -240,6 +240,7 @@ from wizarding import \
 #--------------------------------------------------------------------
 from fitting import \
       align,             \
+      alignto,		 \
       fit,               \
       super,             \
       rms,               \
