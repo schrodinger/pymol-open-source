@@ -31,19 +31,23 @@ DESCRIPTION
 
 	NOTE: This feature is experimental and unsupported.
 	
-	"ccealign" aligns two proteins using the CEalign algorithm.
+	"cealign" aligns two proteins using the CE algorithm.
 
 USAGE 
 
-	ccealign target, mobile
+	cealign target, mobile
 
 NOTES
 
 	Options coming soon.
 	
-EXAMPLE
+EXAMPLES
 
-	ccealign protA////CA, protB////CA
+	cealign protA////CA, protB////CA
+
+	# fetch two proteins and align them
+	fetch 1rlw 1rsy
+	cealign 1rlw, 1rsy
 
 SEE ALSO
 
@@ -123,6 +127,36 @@ SEE ALSO
 			_self.unlock(r,_self)
 		if _self._raising(r,_self): raise pymol.CmdException		 
 		return ( {"alignment_length": aliLen, "RMSD" : RMSD, "rotation_matrix" : rotMat } )
+
+
+	def alignto(sel1,verbose=None):
+		"""
+DESCRIPTION
+
+	NOTE: This feature is experimental and unsuspported.
+
+	"alignto" aligns all other loaded objects to the given selected object
+	using the CEalign algorithm.
+
+USAGE
+
+	alignto target [, verbose=False]
+
+EXAMPLE
+
+        # fetch some calmodulins
+	fetch 1cll 1sra 1ggz 1k95, async=0
+	alignto 1cll
+
+SEE ALSO
+
+        align, super, cealign, fit, rms, rms_cur, intra_fit
+		"""
+		for x in cmd.get_names("objects"):
+			if verbose != None:
+        	        	print "Aligning %s to %s" % (x, sel1)
+			cealign( sel1, x )
+				
 
 
 	def super(mobile, target, cutoff=2.0, cycles=5,
