@@ -679,7 +679,7 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "hide" turns of atom and bond representations.
+    "hide" turns off atom and bond representations.
 
 
 USAGE
