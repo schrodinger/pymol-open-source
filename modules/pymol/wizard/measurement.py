@@ -45,11 +45,25 @@ class Measurement(Wizard):
             'angle':'Angles',
             'dihed':'Dihedrals',
             }
+        # users can now specify how they're finding neighbors
+        self.neighbor_modes = [
+            'same',
+            'other',
+            'enabled',
+            'all',
+            'in_object',
+            'in_selection'
+            ]
+        
+        self.neighbor_target = ""
 
         smm = []
         smm.append([ 2, 'Measurement Mode', '' ])
         for a in self.modes:
-            smm.append([ 1, self.mode_name[a], 'cmd.get_wizard().set_mode("'+a+'")'])
+            if a in ("neigh", "polar", "heavy"):
+                smm.append([ 1, self.mode_name[a], self.neighbor_submenu(a)])
+            else:
+                smm.append([ 1, self.mode_name[a], 'cmd.get_wizard().set_mode("'+a+'")'])
         self.menu['mode']=smm
 
         # overwrite mode selection subsystem
@@ -70,10 +84,37 @@ class Measurement(Wizard):
         smm.append([ 2, 'New Measurements?', '' ])
         for a in self.object_modes:
             smm.append([ 1, self.object_mode_name[a], 'cmd.get_wizard().set_object_mode("'+a+'")'])
+
         self.menu['object_mode']=smm
         self.selection_mode = self.cmd.get_setting_legacy("mouse_selection_mode")
         self.cmd.set("mouse_selection_mode",0) # set selection mode to atomic
         self.cmd.deselect() # disable the active selection (if any)
+
+    def neighbor_objects(self,a):
+        list = self.cmd.get_names("public_objects",1)[0:25] # keep this practical
+        list = filter(lambda x:self.cmd.get_type(x)=="object:molecule",list)
+        result = [[ 2, 'Object: ', '']]
+        for b in list:
+            result.append( [ 1, b,  'self.set_neighbor_target("%s","%s")' % (a,b)])
+        return result
+        
+    def neighbor_selections(self,a):
+        list = self.cmd.get_names("public_selections",1)[0:25] # keep this practical
+        list = filter(lambda x:self.cmd.get_type(x)=="selection",list)
+        result = [[ 2, 'Selections: ', '']]
+        for b in list:
+            result.append( [ 1, b,  'self.set_neighbor_target("%s","%s")' % (a,b)])
+        return result
+
+    def neighbor_submenu(self,a):
+        return [ [2, self.mode_name[a]+": ", ''],
+                 [1, "in same molecule",  'cmd.get_wizard().set_neighbor_target("'+a+'", "same")'],
+                 [1, "in other molecules",  'cmd.get_wizard().set_neighbor_target("'+a+'","other")'],
+                 [1, "in enabled molecules",  'cmd.get_wizard().set_neighbor_target("'+a+'","enabled")'],
+                 [1, "in all molecules",  'cmd.get_wizard().set_neighbor_target("'+a+'","all")'],
+                 [1, "in object", self.neighbor_objects(a) ],               # while this is a submenu this is also a command, so [1, ...]
+                 [1, "in selection", self.neighbor_selections(a) ],         # not [2, ...]
+            ]
 
     def _validate_instance(self):
         Wizard._validate_instance(self)
@@ -96,6 +137,13 @@ class Measurement(Wizard):
     
 # generic set routines
 
+    def set_neighbor_target(self,mode,target):
+        self.set_mode(mode)
+        self.neighbor_target=target
+        self.status = 0
+        self.clear_input()
+        self.cmd.refresh_wizard()
+        
     def set_mode(self,mode):
         if mode in self.modes:
             self.mode = mode
@@ -252,18 +300,31 @@ class Measurement(Wizard):
                 if self.object_mode=='merge':
                     reset = 0
                 cnt = 0
+                sel_mod = ""
+                if self.mode in ('neigh', 'polar', 'heavy'):
+                    if self.neighbor_target=="same":
+                        sel_mod = "bm. pk1"
+                    elif self.neighbor_target=="other":
+                        sel_mod = "(not bm. pk1)"
+                    elif self.neighbor_target=="enabled":
+                        sel_mod = "(enabled)"
+                    elif self.neighbor_target=="all":
+                        sel_mod = "all"
+                    else:
+                        sel_mod = "(%s)" % self.neighbor_target
+
                 if self.mode == 'neigh':
                     cnt = self.cmd.select(sele_prefix,
-"(v. and (pk1 a; %f) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"
-                                          %self.__class__.cutoff)
+"(v. and (pk1 a; %f) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))) and (%s))"
+                                          %(self.__class__.cutoff, sel_mod))
                 elif self.mode == 'polar':
                     cnt = self.cmd.select(sele_prefix,
-"(v. and (pk1 a; %f) and (e. n,o) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"
-                    %self.__class__.cutoff)            
+"(v. and (pk1 a; %f) and (e. n,o) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))) and (%s))"
+                    %(self.__class__.cutoff, sel_mod))            
                 elif self.mode == 'heavy':
                     cnt = self.cmd.select(sele_prefix,
-"(v. and (pk1 a; %f) and (not h.) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"
-                    %self.__class__.cutoff)            
+"(v. and (pk1 a; %f) and (not h.) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))) and (%s))"
+                    %(self.__class__.cutoff, sel_mod))            
                 if cnt:
                     self.cmd.dist(obj_name,"(pk1)",sele_prefix,reset=reset)
                 else:
