@@ -244,7 +244,7 @@ Rep *RepAngleNew(DistSet * ds)
 
       length = (float) (angle * radius * 2);
 
-      /* figure out dash/gap phasing that will lead to nicely space dashes and gaps */
+      /* figure out dash/gap phasing that will lead to nicely spaced dashes and gaps */
 
       phase = dash_sum - (float) fmod(length / 2 + (dash_gap / 2), dash_sum);
       pos = -phase;

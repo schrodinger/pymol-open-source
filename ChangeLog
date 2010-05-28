@@ -2,6 +2,20 @@
 CHANGE LOG
 =========================================================================
 
+2010-05-28 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* dynamic_measures setting, for dynamic distances
+	
+	* more complete neighbor finding and concomitant settings:
+		- neighbor_cutoff
+		- polar_neighbor_cutoff
+		- heavy_neighbor cutoff
+
+	* versioning
+
+	* new (internal) build system
+
+
 2010-03-24 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* fixed a cealign bug

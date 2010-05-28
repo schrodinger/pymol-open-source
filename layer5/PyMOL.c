@@ -808,6 +808,10 @@ typedef struct _CPyMOL {
   ov_word lex_movie_quality;
   ov_word lex_label_anchor;
   ov_word lex_fetch_host;
+  ov_word lex_dynamic_measures;
+  ov_word lex_neighbor_cutoff;
+  ov_word lex_heavy_neighbor_cutoff;
+  ov_word lex_polar_neighbor_cutoff;
 } _CPyMOL;
 
 
@@ -1604,6 +1608,10 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(movie_quality, 634);
   LEX_SETTING(label_anchor, 635);
   LEX_SETTING(fetch_host, 636);
+  LEX_SETTING(dynamic_measures, 637);
+  LEX_SETTING(neighbor_cutoff, 638);
+  LEX_SETTING(heavy_neighbor_cutoff, 639);
+  LEX_SETTING(polar_neighbor_cutoff, 640);
   return_OVstatus_SUCCESS;
 }
 

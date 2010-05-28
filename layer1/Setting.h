@@ -870,6 +870,10 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_movie_quality              634
 #define cSetting_label_anchor               635
 #define cSetting_fetch_host                 636
+#define cSetting_dynamic_measures           637
+#define cSetting_neighbor_cutoff            638
+#define cSetting_heavy_neighbor_cutoff      639
+#define cSetting_polar_neighbor_cutoff      640
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -880,6 +884,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       634
+#define cSetting_INIT                       641
+
 
 #endif

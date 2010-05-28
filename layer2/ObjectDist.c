@@ -30,6 +30,8 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"ObjectMolecule.h"
 #include"Feedback.h"
+#include"DistSet.h"
+#include"ListMacros.h"
 
 void ObjectDistFree(ObjectDist * I);
 void ObjectDistUpdate(ObjectDist * I);
@@ -93,6 +95,68 @@ int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode
   return (result);
 }
 
+/* -- JV */
+int ObjectDistMove(ObjectDist * I, int state, int index, float *v, int mode, int log) {
+	
+	int result = 0;
+	int i;
+	DistSet* ds;
+	if (!I) {
+	  /*printf("ObjectDist-Move: ERROR: ObjectDist passed in was NULL.  Line %d, file %s\n", __LINE__, __FILE__);*/
+	  return 0;
+	}
+	if (!I->Obj.G) { /*printf("\t\tNo I->Object.G\n")*/; return 0; }
+	/*PRINTFD(I->Obj.G, FB_ObjectDist) "ObjectDist-Move: In Move in order to move Atom=%d\n", index ENDFD;*/
+	
+	if (!&I->NDSet) { 
+	  PRINTFD(I->Obj.G, FB_ObjectDist) "I->NDSet was null.\n" ENDFD;
+	  return 0;
+	}
+	
+	/* set the current state */
+	if (state<0 || I->NDSet==1) {
+	  state=0;
+	}
+	/* lazy bounds checking */
+	if (I->NDSet>0) 
+		state = state % I->NDSet;
+	else {
+		/*printf("ObjectDist-DistMove: I->NDSet was 0 or negative.  Blank or bad distance set.\n");*/
+		return 0;
+	}
+
+	/* check for the all_states setting on invalid state */
+	if (!&I->Obj) { PRINTFD(I->Obj.G, FB_ObjectDist) "\t\tNo I->Object!\n" ENDFD; return 0; }
+
+	/*if (!I->Obj.Setting)	{ printf("\t\tNo I->Obj.Setting\n"); return 0; }*/
+	if (!I->DSet) { PRINTFD(I->Obj.G, FB_ObjectDist) "\t\tNo I->DSet" ENDFD; return 0;}
+	if (!I->DSet[state]) { PRINTFD(I->Obj.G, FB_ObjectDist) "\t\tNo I->DSet[state]" ENDFD; return 0;}
+	
+	if ( (!I->DSet[state]) && SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_all_states)) {
+	  state = 0;
+	}
+	
+	/* ask each DistSet to move itself, if required */
+	for (i=0; i<I->NDSet; i++) {
+	  ds = I->DSet[i];
+	  if (ds) {
+	    result |= DistSetMove(ds, index, v, mode);
+	    if (result) {
+	      ds->fInvalidateRep(ds, cRepDash, cRepInvCoord);
+	      ds->fInvalidateRep(ds, cRepLabel, cRepInvCoord);
+	    } else {
+	      ; /*printf("DistSetMove failed to move anything\n"); */
+	    }
+	  } else {
+	    ; /*printf("Object did not have any distance sets\n");*/
+	  }
+	}
+	
+	PRINTFD(I->Obj.G, FB_ObjectDist) "ObjectDist-Move: Out of Move\n" ENDFD;
+	return result;
+}
+/* -- JV end */
+		
 static DistSet *ObjectDistGetDistSetFromM4XBond(PyMOLGlobals * G,
                                                 ObjectMolecule * obj,
                                                 M4XBondType * hb, int n_hb,
@@ -496,6 +560,7 @@ ObjectDist *ObjectDistNew(PyMOLGlobals * G)
   I->Obj.fDescribeElement = NULL;
   I->CurDSet = 0;
   I->Obj.Color = ColorGetIndex(G, "dash");
+	I->next = NULL;
   return (I);
 }
 
@@ -503,6 +568,7 @@ ObjectDist *ObjectDistNew(PyMOLGlobals * G)
 /*========================================================================*/
 static void ObjectDistReset(PyMOLGlobals * G, ObjectDist * I)
 {
+	/* This wipes out all the distance sets and clears the state */
   int a;
   for(a = 0; a < I->NDSet; a++)
     if(I->DSet[a]) {
@@ -511,6 +577,8 @@ static void ObjectDistReset(PyMOLGlobals * G, ObjectDist * I)
       I->DSet[a] = NULL;
     }
   I->NDSet = 0;
+	I->CurDSet = 0; /* -- JV */
+	I->next = NULL;
 }
 
 
@@ -524,6 +592,16 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int dist_cnt = 0;
   int n_state1, n_state2, state1, state2;
   ObjectDist *I;
+  ObjectMolecule** vla;	/* -- JV */
+  int nvla = 0; /* -- JV */
+	int v;
+	ObjectMolecule *om;
+	
+	/* if the distance name we presented exists and is an object, just
+	 * overwrite it by resetting it; otherwise intialize the
+	 * objectDistance and its base class */
+	
+	/* I = new ObjectDist(G); -- created the new object dist here */
   if(!oldObj)
     I = ObjectDistNew(G);
   else {
@@ -532,8 +610,10 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
       ObjectDistReset(G, I);
   }
   *result = 0.0;
+	/* max number of states */
   mn = 0;
   SelectorUpdateTable(G, state, -1);
+	/* here we determine the highest number of states with which we need to concern ourselves */
   n_state1 = SelectorGetSeleNCSet(G, sele1);
   n_state2 = SelectorGetSeleNCSet(G, sele2);
   mn = n_state1;
@@ -541,6 +621,7 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
     mn = n_state2;
   if(mn) {
     for(a = 0; a < mn; a++) {
+			/* set the current state */
       if(state >= 0) {
         if(state >= mn)
           break;
@@ -548,27 +629,35 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
       }
 
       VLACheck(I->DSet, DistSet *, a);
-      if(n_state1 > 1)
-        state1 = a;
-      else
-        state1 = 0;
-      if(n_state2 > 1)
-        state2 = a;
-      else
-        state2 = 0;
+			state1 = (n_state1>1) ? a : 0;
+			state2 = (n_state2>1) ? a : 0;
 
-      I->DSet[a] = SelectorGetDistSet(G, I->DSet[a], sele1, state1, sele2,
-                                      state2, mode, cutoff, &dist);
+			/* this does the actual work of creating the distances for this state */
+			/* I->DSet[a] = new DistSet(G, selections, states, etc) -- created this new DistSet */
+      I->DSet[a] = SelectorGetDistSet(G, I->DSet[a], sele1, state1, sele2, state2, mode, cutoff, &dist);
 
+			/* if the distances are valid, then tally the total and set the ObjectMolecule pointer as necessary */
       if(I->DSet[a]) {
-        dist_sum += dist;
+        dist_sum += dist;	/* average distance over N states */
         dist_cnt++;
-        I->DSet[a]->Obj = I;
+        I->DSet[a]->Obj = I;	/* point to the ObjectMolecule for this state's DistanceSet */
         I->NDSet = a + 1;
       }
 
-      if(state >= 0)
-        break;
+	  /* Assign I to sele1 and sele2's objectMolecule */
+	  vla = SelectorGetObjectMoleculeVLA(G, sele1);
+	  nvla = VLAGetSize(vla);
+		
+	  for (v=0; v<nvla; v++) {
+		  /* set vla[v]->DistList[NDistList++] = I; */
+		  if (vla[v]) om = vla[v];
+			/* if the DistList is empty, init it */
+			if (!om->DistList) DListInit(om->DistList, prev, next, ObjectDist); 
+			DListInsert(om->DistList, I, prev, next);
+	  }
+		
+    if(state >= 0)
+      break;
     }
   }
   ObjectDistUpdateExtents(I);
@@ -773,6 +862,7 @@ void ObjectDistFree(ObjectDist * I)
         I->DSet[a]->fFree(I->DSet[a]);
       I->DSet[a] = NULL;
     }
+	DListRemove(I,prev,next);
   VLAFreeP(I->DSet);
   ObjectPurge(&I->Obj);
   OOFreeP(I);

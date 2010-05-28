@@ -147,8 +147,6 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
       CoordSet *cs_tmpl = obj->CSet[0];
 
       timestep.coords = NULL;
-      timestep.velocities = NULL;
-
       file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
       if(!file_handle) {
         PRINTFB(G, FB_Errors, FB_ObjectMolecule)

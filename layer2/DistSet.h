@@ -43,6 +43,10 @@ typedef struct DistSet {
   int NAngleIndex;
   float *DihedralCoord;
   int NDihedralIndex;
+  /* -- JV */
+  int* AtomIndices;
+  int NAtomIndices;
+  /* -- JV end */
 } DistSet;
 
 #include"ObjectDist.h"
@@ -53,5 +57,7 @@ int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs);
 int DistSetGetExtent(DistSet * I, float *mn, float *mx);
 int DistSetMoveLabel(DistSet * I, int at, float *v, int mode);
 int DistSetGetLabelVertex(DistSet * I, int at, float *v);
-
+/* -- JV */
+int DistSetMove(DistSet* I, int at, float* v, int mode);
+/* -- JV end */
 #endif

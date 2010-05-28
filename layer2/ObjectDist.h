@@ -26,10 +26,17 @@ Z* -------------------------------------------------------------------
 /* NOTE: "Dist" names & symbols should be updated to "Measurement" */
 
 typedef struct ObjectDist {
+	/* base class, this IS-A CObject */
   CObject Obj;
+	/* Array of pointers to DistSets */
   struct DistSet **DSet;
+	/* number of dist sets */
   int NDSet;
+	/* current dist set */
   int CurDSet;
+	/* ptr to next, if in list */
+	struct ObjectDist* next;
+	struct ObjectDist* prev;
 } ObjectDist;
 
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
@@ -48,6 +55,9 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
 int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v);
 int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode,
                         int log);
+/* -- JV */
+int ObjectDistMove( ObjectDist* I, int state, int index, float* v, int mode, int log);
+/* -- JV end */
 
 ObjectDist *ObjectDistNew(PyMOLGlobals * G);
 void ObjectDistInvalidateRep(ObjectDist * I, int rep);

@@ -50,6 +50,7 @@ Z* -------------------------------------------------------------------
 #include"OVContext.h"
 #include"OVOneToOne.h"
 #include"OVLexicon.h"
+#include"ListMacros.h"
 
 #define cMaxNegResi 100
 
@@ -10362,6 +10363,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
     case OMOP_SUMC:            /* performance optimized to speed center & zoom actions */
       {
+				/* given a selection, sum up all the coordinates (for centering) */
         register float *op_v1 = op->v1;
         register int op_i1 = op->i1;
         register int op_i2 = op->i2;
@@ -10378,7 +10380,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         ai = I->AtomInfo;
         for(a = 0; a < i_NAtom; a++) {
           s = ai->selEntry;
+					/* for each atom, if this current atom is in the selection */
           if(SelectorIsMember(G, s, sele)) {
+						/* loop over all atoms; regardless of state */
             for(b = 0; b < i_NCSet; b++) {
               if(i_DiscreteFlag) {
                 if((cs = I->DiscreteCSet[a]))
@@ -10387,6 +10391,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 if((cs = i_CSet[b]))
                   a1 = cs->AtmToIdx[a];
               }
+							/* if valid coordinate set and atom info for this atom */
               if(cs && (a1 >= 0)) {
                 coord = cs->Coord + 3 * a1;
                 if(op_i2) {     /* do we want transformed coordinates? */
@@ -10401,13 +10406,16 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     coord = v1;
                   }
                 }
+								/* op_v1 += coord */
                 add3f(op_v1, coord, op_v1);
+								/* count += 1 */
                 op_i1++;
               }
               if(i_DiscreteFlag)
                 break;
             }
           }
+					/* next atom */
           ai++;
         }
         op->i1 = op_i1;
@@ -10978,6 +10986,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     }
                     break;
                   case OMOP_VERT:
+										/* get the atom index whether it's discrete or not */
                     if(I->DiscreteFlag) {
                       if(cs == I->DiscreteCSet[a])
                         a1 = I->DiscreteAtmToIdx[a];
@@ -10986,6 +10995,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     } else
                       a1 = cs->AtmToIdx[a];
                     if(a1 >= 0) {
+											/* if a1 is a valid atom index, then copy it's xyz coordinates
+											 * into vv1; increment the counter, nvv1 */
                       VLACheck(op->vv1, float, (op->nvv1 * 3) + 2);
                       vv2 = cs->Coord + (3 * a1);
                       vv1 = op->vv1 + (op->nvv1 * 3);
@@ -11529,7 +11540,48 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float 
   return (result);
 }
 
+/*========================================================================*/
+/* -- JV */
+int ObjectMoleculeMoveDist(ObjectMolecule * I, int state, int index, float *v, int mode, int log)
+{
+  ObjectDist* dist;
+	int result = 0;
 
+	
+	/*printf("Molecule-MoveDist: In MoveDist\n");*/
+
+	if (!I) {
+		/*printf("Molecule-MoveDist: Quiet error, object I was NULL.  Not crashing.\n");*/
+		return 0;
+	}
+	
+	if (I->AtomInfo[index].protekted != 1) {
+		/* state boundary or single state */
+		if (state < 0 || I->NCSet==1 ) {
+			state = 0;
+		}
+		/* more bounds checking */
+		if (I->NCSet!=0) state = state % I->NCSet;
+		
+		if ((I->CSet[state]==0) && (SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_all_states)))
+			state = 0;
+
+		dist = NULL;
+
+		/* this macro expands to a for loop */
+		DListIterate(I->DistList,dist,next)
+		  if(dist)
+			  result = ObjectDistMove(dist, state, index, v, mode, log);
+			/*else {
+			  printf("Dist was NULL, moving on.\n");
+		  }*/
+	}	
+	
+	/*printf("Molecule-MoveDist: Out of MoveDist\n");*/
+	return result;
+		}
+/* -- JV end */
+						 
 /*========================================================================*/
 int ObjectMoleculeInitBondPath(ObjectMolecule * I, ObjectMoleculeBPRec * bp)
 {
@@ -11982,6 +12034,10 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
     I->UndoState[a] = -1;
   }
   I->UndoIter = 0;
+  /* -- JV */
+  I->DistList = NULL;
+  /*I->NDistList = 0;*/
+  /* -- JV end */
   return (I);
 }
 

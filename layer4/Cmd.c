@@ -84,6 +84,7 @@ Z* -------------------------------------------------------------------
 #include"PlugIOManager.h"
 #include"Seeker.h"
 
+/* refactor this out like the other commands */
 #include"ce_types.h"
 extern double** calcDM(pcePoint coords, int len);
 extern double** calcS(double** d1, double** d2, int lenA, int lenB, double winSize);

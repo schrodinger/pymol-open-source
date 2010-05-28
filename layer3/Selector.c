@@ -11378,6 +11378,10 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   int bonds_only = 0;
   int from_proton = SettingGetGlobal_b(G, cSetting_h_bond_from_proton);
 
+	int na = 0;												
+	int *aIdx = NULL, *taIdx = NULL;	/* -- JV */
+	
+	/* if we're creating hydrogen bonds, then set some distance cutoffs */
   switch (mode) {
   case 1:
     bonds_only = 1;
@@ -11392,22 +11396,37 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 
   hbc = &hbcRec;
   *result = 0.0;
+	/* if the dist set exists, get info from it, otherwise get a new one */
   if(!ds) {
     ds = DistSetNew(G);
   } else {
     vv = ds->Coord;
     nv = ds->NIndex;
+		aIdx = ds->AtomIndices; /* -- JV */
+		na = ds->NAtomIndices; /* -- JV */
   }
+	/* make sure we have memory to hold the vertex info for this distance set */
   if(!vv) {
     vv = VLAlloc(float, 10);
   }
+	/* -- JV -- make sure we have room to hold the atom indices */
+	if (!aIdx) {
+		/*printf("aIdx was blank, making space for 4 new ints...\n");*/
+		aIdx = VLAlloc(int, 4);
+		if (!aIdx) {
+/*			printf("Error: in %s:%d -- I couldn't make space for four new ints for tracking atoms in distances\n", __FILE__, __LINE__);*/
+			return NULL;
+		}
+	}
 
+	/* update states: if the two are the same, update that one state, else update all states */
   if((state1 < 0) || (state2 < 0) || (state1 != state2)) {
     SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
   } else {
     SelectorUpdateTable(G, state1, -1);
   }
 
+	/* coverage determines how many times a given atom appears in sel1 or sel2 */
   coverage = Calloc(int, I->NAtom);
 
   for(a = cNDummyAtoms; a < I->NAtom; a++) {
@@ -11424,8 +11443,9 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
     int max_n_atom = I->NAtom;
     lastObj = NULL;
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
+			/* foreach atom in the session, get its identifier and ObjectMolecule to which it belongs */
       at = I->Table[a].atom;
-      obj = I->Obj[I->Table[a].model];
+      obj = I->Obj[I->Table[a].model];		/* -- JV -- quick way to get an object from an atom */
       s = obj->AtomInfo[at].selEntry;
       if(obj != lastObj) {
         if(max_n_atom < obj->NAtom)
@@ -11438,10 +11458,12 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
         }
       }
     }
+		/* prepare these for the next round */
     zero = Calloc(int, max_n_atom);
     scratch = Alloc(int, max_n_atom);
   }
 
+	/* if we're hydrogen bonding, setup the cutoff */
   if(mode == 2) {
     ObjectMoleculeInitHBondCriteria(G, hbc);
     if(cutoff < 0.0F) {
@@ -11453,29 +11475,40 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   }
   if(cutoff < 0)
     cutoff = 1000.0;
+	
+	/* this creates an interwoven list of ints for mapping ids to states within a given neighborhood */
   c = SelectorGetInterstateVLA(G, sele1, state1, sele2, state2, cutoff, &vla);
+	/* for each state */
   for(a = 0; a < c; a++) {
+		/* get the interstate atom identifier for the two atoms to distance */
     a1 = vla[a * 2];
     a2 = vla[a * 2 + 1];
 
+		/* check their coverage to avoid duplicates */
     if((a1 != a2) && ((!((coverage[a1] == 2) && (coverage[a2] == 2))) || (a1 < a2))) {  /* eliminate reverse duplicates */
+			/* get the object-local atom ID */
       at1 = I->Table[a1].atom;
       at2 = I->Table[a2].atom;
-
+			
+			/* get the object for this global atom ID */
       obj1 = I->Obj[I->Table[a1].model];
       obj2 = I->Obj[I->Table[a2].model];
 
+			/* the states are valid for these two atoms */
       if((state1 < obj1->NCSet) && (state2 < obj2->NCSet)) {
+				/* get the coordinate sets for both atoms */
         cs1 = obj1->CSet[state1];
         cs2 = obj2->CSet[state2];
         if(cs1 && cs2) {
-
+					/* for bonding */
           float *don_vv = NULL;
           float *acc_vv = NULL;
 
+					/* grab the appropriate atom information for this object-local atom */
           ai1 = obj1->AtomInfo + at1;
           ai2 = obj2->AtomInfo + at2;
 
+					/* if the objects were loaded as discrete, then bump their atom indices as necessary */
           if(obj1->DiscreteFlag) {
             if(cs1 == obj1->DiscreteCSet[at1]) {
               idx1 = obj1->DiscreteAtmToIdx[at1];
@@ -11498,10 +11531,11 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
           }
 
           if((idx1 >= 0) && (idx2 >= 0)) {
+						/* actual distance calculation from ptA to ptB */
             dist = (float) diff3f(cs1->Coord + 3 * idx1, cs2->Coord + 3 * idx2);
 
+						/* if we pass the boding cutoff */
             if(dist < cutoff) {
-
               float h_crd[3];
               int h_real = false;
 
@@ -11538,7 +11572,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
                       don_vv = h_crd;
                     else
                       don_vv = cs2->Coord + 3 * idx2;
-                    acc_vv = cs1->Coord + 3 * idx1;
+                      acc_vv = cs1->Coord + 3 * idx1;
                   }
                 } else {
                   a_keeper = false;
@@ -11548,11 +11582,20 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
                 a_keeper = false;
 
               if(a_keeper) {
-
+								/* we have a distance we want to keep */
                 dist_cnt++;
                 dist_sum += dist;
+								/* see if vv has room at another 6 floats */
                 VLACheck(vv, float, (nv * 3) + 6);
                 vv0 = vv + (nv * 3);
+								
+								/* see if aIdx has room for another 2 ints; if not make it so */
+								VLACheck( aIdx, int, na+2 );
+								/* temp pointer gets bumped by number of atoms in the list: tempIndex = original + len(original) */
+								taIdx = aIdx + na;
+								*(taIdx++) = at1;		/* at1 and at2 are atom indices */
+								*(taIdx++) = at2;		/* but offset by one: at1+1 = label "%s" % index */
+								na += 2;
 
                 if((mode == 2) && (don_vv) && (acc_vv)) {
                   *(vv0++) = *(don_vv++);
@@ -11590,6 +11633,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
     VLASize(vv, float, (nv + 1) * 3);
   ds->NIndex = nv;
   ds->Coord = vv;
+	ds->NAtomIndices = na;		/* -- JV */
+	ds->AtomIndices = aIdx;		/* -- JV */
   return (ds);
 }
 
