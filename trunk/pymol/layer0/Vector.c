@@ -636,7 +636,7 @@ void copy33f44f(float *src, float *dst)
   *(dst++) = _0;
   *(dst++) = _1;
 }
-
+/* Transformation: MatMult( (3x3), (3x1) = (3x1) ) */
 void transform33f3f(float *m1, float *m2, float *m3)
 {
   float m2r0 = m2[0];
@@ -728,7 +728,8 @@ void transform33Tf3f(float *m1, float *m2, float *m3)
   m3[1] = m1[1] * m2r0 + m1[4] * m2r1 + m1[7] * m2r2;
   m3[2] = m1[2] * m2r0 + m1[5] * m2r1 + m1[8] * m2r2;
 }
-
+/* multiply the upper-left 3x3 of a 4x4, m, by m2 and put result into m3:
+ * m3 = A x m2 */
 void transform44f3f(float *m1, float *m2, float *m3)
 {
   register float m2r0 = m2[0];
@@ -738,7 +739,7 @@ void transform44f3f(float *m1, float *m2, float *m3)
   m3[1] = m1[4] * m2r0 + m1[5] * m2r1 + m1[6] * m2r2 + m1[7];
   m3[2] = m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2 + m1[11];
 }
-
+/* Multi the upper left 3x3 of a 4x4 by a 3x1 vector; so effectively, [3x3]*[3x1] = [3x1] */
 void transform44d3f(double *m1, float *m2, float *m3)
 {
   register double m2r0 = m2[0];

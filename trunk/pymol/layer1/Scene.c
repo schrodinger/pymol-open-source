@@ -5521,6 +5521,10 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
                   ObjectMoleculeMoveAtom((ObjectMolecule *) obj,
                                          SettingGetGlobal_i(G, cSetting_state) - 1,
                                          I->LastPicked.src.index, v2, 1, log_trans);
+									/* -- JV - if this object knows about distances, then move them if necessary */
+									/* check the dynamic_measures setting and make sure the object has a distance measure, first  */
+									if (SettingGetGlobal_i(G, cSetting_dynamic_measures)) 
+										ObjectMoleculeMoveDist( (ObjectMolecule *) obj, SettingGetGlobal_i(G, cSetting_state)-1, I->LastPicked.src.index, v2, 1, log_trans);
                   SceneInvalidate(G);
                 }
               } else {

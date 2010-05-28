@@ -136,4 +136,79 @@ if(!(Elem)) \
 
 #define ListElemFree(Elem) { mfree(Elem); Elem = NULL; }
 
-#endif
+
+
+/* -- JV
+ * Doubly linked list macros
+ * -- JV
+ */
+
+/* Create the circular, doubly linked list w/a sentinel node */
+#define DListInit(List, Pre, Post, ElemType) \
+do { \
+	List = (ElemType*)malloc(sizeof(ElemType)); \
+	(List)->Pre = (List)->Post = List; \
+} while (0)
+
+/* DListInsert -- Insert Elem at head of list
+ * List -- any structure with previous and next pointers (a doubly linked list)
+ * Elem -- the Element to add
+ * Pre  -- pointer to previous element in list
+ * Post -- pointer to next element in list
+ */
+#define DListInsert(List,Elem,Pre,Post) \
+do { \
+	(Elem)->Post = List; \
+	(Elem)->Pre = (List)->Pre; \
+	(Elem)->Post->Pre = (Elem); \
+	(Elem)->Pre->Post = (Elem); \
+} while (0)
+
+/* DListRemove -- remove Element from the list
+ * Elem -- the element to remove
+ * Pre  -- the link to the previous element 
+ * Post -- the link to the next element
+ */
+#define DListRemove(Elem,Pre,Post) \
+do { \
+	if ((Elem)->Pre!=(Elem)->Post) { \
+		(Elem)->Pre->Post = (Elem)->Post; \
+		(Elem)->Post->Pre = (Elem)->Pre; \
+	} \
+	(Elem)->Pre = (Elem)->Post = NULL; \
+	/*mfree(Elem);*/ \
+	/*Elem=NULL;*/ \
+} while (0)
+
+/* DListIterate -- Iterate Elem across all items in List using Post as the link to next */
+#define DListIterate(List,Elem,Post) \
+  for((Elem) = (List)->Post; (Elem) != (List); (Elem) = (Elem)->Post)
+
+/* Can similarly do reverse iteration w/Post=Pre */
+
+
+#define DListElemAlloc(G,Elem,ElemType) ListElemAlloc(G,Elem,ElemType)
+
+#define DListElemCalloc(G,Elem,ElemType) ListElemCalloc(G,Elem,ElemType)
+
+#define DListElemInit(List,Pre,Post) (List)->(Pre) = (List)->(Post) = NULL
+
+#define DListElemFree(Elem) { mfree(Elem); Elem = NULL; }
+
+
+#endif /* _H_ListMacros */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

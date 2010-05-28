@@ -672,7 +672,7 @@ if __name__=='pymol.setting':
         movie_quality                      = 634	# 0--100, controls movie.produce
         label_anchor                       = 635	# 'CA' or 'CB' or any backbone atom name; bb atoms suggestged
         fetch_host                         = 636        # one of, "pdb", "pdbe" or "pdbj"
-        
+        dynamic_measures                   = 637        # do measurements update with atom movements?
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

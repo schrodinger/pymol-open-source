@@ -139,7 +139,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
           c -= 2;
         }
         glEnd();
-        glEnable(GL_LIGHTING);
 
         glEnable(GL_LIGHTING);
         if(use_dlst && I->R.displayList) {

@@ -78,6 +78,48 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
   return (result);
 }
 
+
+/* -- JV */
+int DistSetMove(DistSet * I, int at, float* v, int mode)
+{
+  int i;
+  int result = 0;
+  
+  if (!I) {
+    /*printf("DistSet-Move: Error: DistSet passed in was NULL\n");*/
+    return result;
+  }
+
+  
+  if (at>=0) {
+/*    printf("I has %d Distance Atom Indices\n", I->NAtomIndices);*/
+    for (i=0; i<I->NAtomIndices; i++) {
+/*      printf("Looping over NAtomIndices(%d) this atom index is: %d\n", I->NAtomIndices, I->AtomIndices[i]); */
+      if (!I->AtomIndices[i]) {
+/*	printf("DistSet-Move: Error: AtomIndices claimed to have more atoms, but it lied: NAatomIndices=%d, i=%d and is invalid\n", I->NAtomIndices, i); */
+	/*return 0;*/
+      }
+      if (at==I->AtomIndices[i]) {
+/*	printf("DistSet-Move: Found distance object for this atom index\n"); */
+	if (mode) {
+	  add3f(v, I->Coord + 3*i, I->Coord + 3*i);
+	  result = 1;
+	}
+	else {
+	  copy3f(v, I->Coord + 3*i);
+	  result = 1;
+	}
+      }
+    }
+  } else {
+/*    printf("Invalid atom identifier\n"); */
+    return result;
+  }
+  
+/*  printf("DistSet-Move: Out of DistSet::Move\n"); */
+  return result;
+}
+
 int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
 {
 #ifdef _PYMOL_NOPY
@@ -349,6 +391,10 @@ DistSet *DistSetNew(PyMOLGlobals * G)
   I->NLabel = 0;
   for(a = 0; a < I->NRep; a++)
     I->Rep[a] = NULL;
+  /* -- JV */
+  I->AtomIndices = VLAlloc(int, 2);
+  I->NAtomIndices = 0;
+  /* -- JV end */
   return (I);
 }
 
@@ -379,6 +425,8 @@ static void DistSetFree(DistSet * I)
     VLAFreeP(I->LabPos);
     VLAFreeP(I->Coord);
     VLAFreeP(I->Rep);
+    VLAFreeP(I->AtomIndices); /* -- JV */
+		/* need to find and decrement the number of dist sets on the objects */
     SettingFreeP(I->Setting);
     OOFreeP(I);
   }

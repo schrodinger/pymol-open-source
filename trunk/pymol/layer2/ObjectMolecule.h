@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Symmetry.h"
 #include"Raw.h"
+#include"DistSet.h"
 
 #define cKeywordAll "all"
 #define cKeywordNone "none"
@@ -41,14 +42,21 @@ typedef struct ObjectMoleculeBPRec {
 } ObjectMoleculeBPRec;
 
 typedef struct ObjectMolecule {
+	/* base Object class */
   CObject Obj;
+	/* array of pointers to coordinate sets; one set per state */
   struct CoordSet **CSet;
+	/* number of coordinate sets */
   int NCSet;
   struct CoordSet *CSTmpl;      /* template for trajectories, etc. */
+	/* array of bonds */
   BondType *Bond;
+	/* array of atoms (infos) */
   AtomInfoType *AtomInfo;
+	/* number of atoms and bonds */
   int NAtom;
   int NBond;
+	/* is this object loaded as a discrete object? if so, number of states */
   int DiscreteFlag, NDiscrete;
   int *DiscreteAtmToIdx;
   struct CoordSet **DiscreteCSet;
@@ -65,6 +73,7 @@ typedef struct ObjectMolecule {
   CGO *UnitCellCGO;
   int BondCounter;
   int AtomCounter;
+  ObjectDist* DistList;	/* -- JV; head pointer to a doubly linked list of ObjectDistances for this molecule */
   /* not stored */
   struct CSculpt *Sculpt;
   int RepVisCacheValid;
@@ -72,6 +81,7 @@ typedef struct ObjectMolecule {
 
 } ObjectMolecule;
 
+/* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
 typedef struct ObjectMoleculeOpRec {
   unsigned int code;
   Vector3f v1, v2;

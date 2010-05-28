@@ -9090,12 +9090,14 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, char *nam,
   ObjectDist *obj;
   CObject *anyObj = NULL;
   *result = 0.0F;
+	/* shortcut for duplicate selections */
   sele1 = SelectorIndexByName(G, s1);
   if(!WordMatch(G, s2, "same", true))
     sele2 = SelectorIndexByName(G, s2);
   else {
     sele2 = sele1;
   }
+	/* if the distance 'name' we provided exists, overwrite it, by deleting it by its base class */
   if((sele1 >= 0) && (sele2 >= 0)) {
     anyObj = ExecutiveFindObjectByName(G, nam);
     if(anyObj)
@@ -9103,8 +9105,11 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, char *nam,
         ExecutiveDelete(G, nam);
         anyObj = NULL;
       }
+		/* create a new distance from the two selections */
     obj = ObjectDistNewFromSele(G, (ObjectDist *) anyObj,
                                 sele1, sele2, mode, cutoff, labels, reset, result, state);
+		/* if the distance was created, add it to the object list and manage it
+		 * otherwise, complain and do nothing */
     if(!obj) {
       if(!quiet)
         ErrMessage(G, "ExecutiveDistance", "No such distances found.");
@@ -12631,10 +12636,13 @@ void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op)
   ObjectMolecule *obj = NULL;
   int update_table = true;
 
+	/* if we're given a valid selection */
   if(sele >= 0) {
+		/* iterate over all the objects in the global list */
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
+					/* if the objects are valid molecules, then perform the operation in op_code */
           obj = (ObjectMolecule *) rec->obj;
           switch (op->code) {
           case OMOP_RenameAtoms:
@@ -12646,6 +12654,7 @@ void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op)
             }
             break;
           default:
+						/* all other cases, perform the operation on obj */
             ObjectMoleculeSeleOp(obj, sele, op);
             break;
           }
@@ -14278,10 +14287,15 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
   PRINTFD(G, FB_Executive)
     " ExecutiveSymExp: entered.\n" ENDFD;
 
-  auto_save = SettingGet(G, cSetting_auto_zoom);
+  /* controls whether we zoom in on newly created objects or not */
+	auto_save = SettingGet(G, cSetting_auto_zoom);
   SettingSet(G, cSetting_auto_zoom, 0);
+
   sele = SelectorIndexByName(G, s1);
+
+	/* object to expand */
   ob = ExecutiveFindObjectByName(G, oname);
+	/* make sure it's a "molecule" type and that it had valid symmetry info */
   if(ob->type == cObjectMolecule)
     obj = (ObjectMolecule *) ob;
   if(!(obj && sele)) {
@@ -14295,6 +14309,9 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
       PRINTFB(G, FB_Executive, FB_Actions)
         " ExecutiveSymExp: Generating symmetry mates...\n" ENDFB(G);
     }
+
+		/* 1.  Get the center of mass for this object/selection */
+		/* the object and selection are valid, so initialize the NEW object */
     ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_SUMC;
     op.i1 = 0;
@@ -14303,42 +14320,50 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
     op.v1[1] = 0.0;
     op.v1[2] = 0.0;
     ExecutiveObjMolSeleOp(G, sele, &op);
+		/* op.v1 is now the complete sum over all coordinates in this selection */
     tc[0] = op.v1[0];
     tc[1] = op.v1[1];
     tc[2] = op.v1[2];
+		/* calculate center of mass.  op.i1 is the number of atoms we counter over in the
+		 * previous ExecutiveObjMolSeleOp, so this is the average coordinate or center of mass */
     if(op.i1) {
       tc[0] /= op.i1;
       tc[1] /= op.i1;
       tc[2] /= op.i1;
     }
+		/* Transformation: RealToFrac (3x3) * tc (3x1) = (3x1) */
     transform33f3f(obj->Symmetry->Crystal->RealToFrac, tc, tc);
 
+		/* 2.  Copy the coordinates for the atoms in this selection into op */
     op.code = OMOP_VERT;
     op.nvv1 = 0;
     op.vv1 = VLAlloc(float, 10000);
     ExecutiveObjMolSeleOp(G, sele, &op);
 
+		/* op.nvv1 is the number of atom coordinates we copied in the previous step */
     if(!op.nvv1) {
       ErrMessage(G, "ExecutiveSymExp", "No atoms indicated!");
     } else {
       map = MapNew(G, -cutoff, op.vv1, op.nvv1, NULL);
       if(map) {
         MapSetupExpress(map);
-        /* go out no more than one lattice step in each direction */
+        /* go out no more than one lattice step in each direction: -1, 0, +1 */
         for(x = -1; x < 2; x++)
           for(y = -1; y < 2; y++)
             for(z = -1; z < 2; z++)
               for(a = 0; a < obj->Symmetry->NSymMat; a++) {
+								/* make a copy of the original */
                 new_obj = ObjectMoleculeCopy(obj);
 
                 keepFlag = false;
                 for(b = 0; b < new_obj->NCSet; b++)
                   if(new_obj->CSet[b]) {
+										/* get the new and original coordinate sets for this state */
                     cs = new_obj->CSet[b];
                     os = obj->CSet[b];
+										/* convert coordinates into fractional, based on unit cell */
                     CoordSetRealToFrac(cs, obj->Symmetry->Crystal);
                     CoordSetTransform44f(cs, obj->Symmetry->SymMatVLA + (a * 16));
-
                     CoordSetGetAverage(cs, ts);
                     identity44f(m);
                     /* compute the effective translation resulting
@@ -14346,6 +14371,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
                        that we can shift it into the cell of the
                        target selection */
                     for(c = 0; c < 3; c++) {    /* manual rounding - rint broken */
+											/* here, we subtract the center of mass of the selection from tc */
                       ts[c] = tc[c] - ts[c];
                       if(ts[c] < 0)
                         ts[c] -= 0.5;
@@ -14353,12 +14379,18 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
                         ts[c] += 0.5;
                       tt[c] = (int) ts[c];
                     }
+										/* translate the coordinate set by adding Tx, Ty, Tz from the symmetry matrix */
+										/* Now we're at the center of mass and can make an non-affine rotation */
                     m[3] = (float) tt[0] + x;
                     m[7] = (float) tt[1] + y;
                     m[11] = (float) tt[2] + z;
+										/* cs = m x cs, for rotation matrix, m and coordinate set cs */
                     CoordSetTransform44f(cs, m);
+										
+										/* this steps through the coordinate list until it finds a vertex close enough */
                     CoordSetFracToReal(cs, obj->Symmetry->Crystal);
                     if(!keepFlag) {
+											/* for each coordinate in this coordinate set */
                       v2 = cs->Coord;
                       n = cs->NIndex;
                       while(n--) {
@@ -14367,6 +14399,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
                         if(i) {
                           j = map->EList[i++];
                           while(j >= 0) {
+														/* if op.vv1+3*j (a vertex) is within cutoff angstroms of v2, keep it and break */
                             if(within3f(op.vv1 + 3 * j, v2, cutoff)) {
                               keepFlag = true;
                               break;
@@ -14380,8 +14413,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
                       }
                     }
                     if(keepFlag) {
-                      /* make sure that we don't aren't simply 
-                         duplicating the template coordinates */
+                      /* make sure that we aren't simply duplicating the template coordinates */
                       keepFlag = false;
                       v1 = os->Coord;
                       v2 = cs->Coord;
@@ -14400,13 +14432,18 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
 
                   /* TODO: should also transform the U tensor at this point... */
 
+									/* make and manage the new object; update the scene for the new object */
+									printf("new_name before: %s\n", new_name);
                   sprintf(new_name, "%s%02d%02d%02d%02d", name, a, x, y, z);
+									printf("Making new object: %s from name=%s, a=%d, x=%d, y=%d, z=%d\n", new_name, name, a, x, y, z); /* remove me -- JV */
                   ObjectSetName((CObject *) new_obj, new_name);
                   ExecutiveDelete(G, new_name);
                   ExecutiveManageObject(G, (CObject *) new_obj, -1, quiet);
                   SceneChanged(G);
+									
                   if(segi == 1) {
                     SegIdent seg;
+										/* a == index of this symmetryMatrix */
                     if(a > 35) {
                       seg[0] = 'a' + (a - 36);
                     } else if(a > 25) {
