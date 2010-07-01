@@ -862,7 +862,7 @@ void ObjectDistFree(ObjectDist * I)
         I->DSet[a]->fFree(I->DSet[a]);
       I->DSet[a] = NULL;
     }
-	DListRemove(I,prev,next);
+  DListRemove(I,prev,next);
   VLAFreeP(I->DSet);
   ObjectPurge(&I->Obj);
   OOFreeP(I);

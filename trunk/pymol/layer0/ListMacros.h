@@ -171,9 +171,11 @@ do { \
  */
 #define DListRemove(Elem,Pre,Post) \
 do { \
-	if ((Elem)->Pre!=(Elem)->Post) { \
-		(Elem)->Pre->Post = (Elem)->Post; \
-		(Elem)->Post->Pre = (Elem)->Pre; \
+	if ((Elem)->Pre && (Elem)->Post) { \
+		if ((Elem)->Pre!=(Elem)->Post) { \
+			(Elem)->Pre->Post = (Elem)->Post; \
+			(Elem)->Post->Pre = (Elem)->Pre; \
+		} \
 	} \
 	(Elem)->Pre = (Elem)->Post = NULL; \
 	/*mfree(Elem);*/ \
