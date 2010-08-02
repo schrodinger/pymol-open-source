@@ -43,7 +43,7 @@ class Normal(PMGSkin):
     pad = ' ' # extra space in menus
     
     appname        = 'The PyMOL Molecular Graphics System'
-    appversion     = '1.2'
+    appversion     = '1.3'
     copyright      = ('Copyright (C) 2003-2010 \n' +
                       'Schrodinger LLC.\n'+
                       'All rights reserved.')
@@ -642,21 +642,40 @@ class Normal(PMGSkin):
             return 1
         else:
             return 0
-    
+
+
     def file_save(self):
-        lst = self.cmd.get_names('all')
-        lst = filter(lambda x:x[0]!="_",lst)
-        self.dialog = Pmw.SelectionDialog(self.root,title="Save",
-                                  buttons = ('OK', 'Cancel'),
-                                              defaultbutton='OK',
-                                  scrolledlist_labelpos=N,
-                                  scrolledlist_listbox_selectmode=EXTENDED,
-                                  label_text='Which object or selection would you like to save?',
-                                  scrolledlist_items = lst,
-                                  command = self.file_save2)
-        if len(lst):
+        """
+        File->Save Molecule, now with filtering
+        """
+        self.dialog = Pmw.SelectionDialog(self.root,
+                                          title="Save",
+                                          buttons = ('OK', 'Cancel'),
+                                          defaultbutton='OK',
+                                          scrolledlist_labelpos=N,
+                                          scrolledlist_listbox_selectmode=EXTENDED,
+                                          label_text='Which object or selection would you like to save?',
+                                          scrolledlist_items = (),  # used to be 'lst'
+                                          command = self.file_save2)
+
+
+        self.filter_entry = Pmw.EntryField(self.dialog.interior(),
+                                     command=self.filter_names,
+                                     labelpos='w',
+                                     modifiedcommand=self.update_save_listbox,
+                                     validate=None,
+                                     value="",
+                                     label_text="Filter:")
+        self.filter_entry.pack(pady=6, fill='x', expand=0, padx=10)
+
+        # The listbox is created empty.  Fill it now.
+        self.update_save_listbox()
+
+        if len(self.dialog.component('scrolledlist').get()):
+            # set focus on the first item
             listbox = self.dialog.component('scrolledlist')      
             listbox.selection_set(0)
+
         self.my_show(self.dialog)
         
     def file_save2(self,result):
@@ -685,6 +704,31 @@ class Normal(PMGSkin):
                         self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
                                   "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
                         self.cmd.save(sfile,"(%s)"%save_sele,quiet=0)
+
+    def update_save_listbox(self):
+        """
+        Update the scrolled list box to represent the filtered
+        names after a change to the EntryField is caught
+        """
+        self.dialog.component("scrolledlist").setlist(self.filter_names())
+        
+
+    def filter_names(self):
+        """
+        Filter names out of the dialog box if they don't match
+        """
+        #
+        # Because this function is a callback for the modified
+        # EntryField, it must be FAST
+        #
+        groups = self.cmd.get_names_of_type("object:group")
+        lst = filter(lambda x:x[0]!="_", self.cmd.get_names('all'))
+
+        # if the field for filtering is empty, return all names
+        if self.filter_entry.getvalue()=="":
+            return lst
+        else:
+            return filter( lambda x: self.filter_entry.getvalue() in x, lst )
 
     def hide_sele(self):
         self.cmd.log("util.hide_sele()\n","util.hide_sele()\n")
