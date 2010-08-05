@@ -2,6 +2,21 @@
 CHANGE LOG
 =========================================================================
 
+2010-08-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+	
+	* For r1.3r1 (mostly due to fetch command)
+
+	* filtering on File > Save Molecule
+
+	* Mouse modes now tracked on measurement wizard
+
+	* Measurement wizard has surface area (beta!)
+
+	* typos
+
+	* fixed and cleaned up the fetch command
+
+
 2010-05-28 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* dynamic_measures setting, for dynamic distances

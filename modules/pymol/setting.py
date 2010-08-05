@@ -35,6 +35,7 @@ if __name__=='pymol.setting':
     
     class SettingIndex: # number, description, range, notes
         bonding_vdw_cutoff                 = 0
+
         min_mesh_spacing                   = 1
         dot_density                        = 2
         dot_mode                           = 3
@@ -673,6 +674,10 @@ if __name__=='pymol.setting':
         label_anchor                       = 635	# 'CA' or 'CB' or any backbone atom name; bb atoms suggestged
         fetch_host                         = 636        # one of, "pdb", "pdbe" or "pdbj"
         dynamic_measures                   = 637        # do measurements update with atom movements?
+        neighbor_cutoff                    = 638	# see wizard/measurement.py
+        heavy_neighbor_cutoff              = 639	# see wizard/measurement.py
+        polar_neighbor_cutoff              = 640	# see wizard/measurement.py
+        
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []
