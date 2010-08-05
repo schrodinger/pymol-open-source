@@ -697,7 +697,7 @@ USAGE
 
 NOTES
 
-    Thee newly objects are labeled using the prefix provided along with
+    The newly objects are labeled using the prefix provided along with
     their crystallographic symmetry operation and translation.
 
 SEE ALSO

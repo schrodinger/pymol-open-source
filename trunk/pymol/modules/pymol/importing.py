@@ -1241,14 +1241,39 @@ PYMOL API
         import os
         import string
         import time
-        
-        fetchHosts = {  "pdb" : "http://www.rcsb.org/pdb/files/",
-                        "pdbe" : "http://www.ebi.ac.uk/pdbe-srv/view/files/",
-                        "pdbj" : "ftp://ftp.pdbj.org/pdb/pdb" }
-        
+
+        # prepare for server insonsistency; each server gets its own config
+        fetchHosts = {  "pdb"  : "ftp://ftp.wwpdb.org/pub/pdb/",
+                        "pdbe" : "ftp://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/", 
+                        "pdbj" : "ftp://pdb.protein.osaka-u.ac.jp/pub/pdb/" }
+        # as of this editing, pdb/pdbe/pdbj all have common subpaths; prepare for when they dont...
+        hostPaths = { "pdb" :
+                      { "pdb1" : "data/biounit/coordinates/divided/",
+                        "pdb"  : "data/structures/divided/pdb/" },
+                      "pdbe" :
+                      { "pdb1" : "data/biounit/coordinates/divided/",
+                        "pdb"  : "data/structures/divided/pdb/" },
+                      "pdbj" :
+                      { "pdb1" : "data/biounit/coordinates/divided/",
+                        "pdb"  : "data/structures/divided/pdb/" }
+                    }
+        hostPost = { "pdb" : { "pdb" : ".ent.gz",
+                               "pdb1": ".pdb1.gz" },
+                     "pdbe": { "pdb" : ".ent.gz",
+                               "pdb1": ".pdb1.gz" },
+                     "pdbj": { "pdb" : ".ent.gz",
+                               "pdb1": ".pdb1.gz" }
+                   }
+
+        # users could set this to something nonsensical
+        fetch_host = setting.get("fetch_host", _self=_self)
+        if fetch_host not in ( "pdb", "pdbe", "pdbj" ):
+            fetch_host = "pdb"
+                        
         fobj = None
         fname = None
         auto_close_file = 1
+
         if path and not file:
             file = 1
         if (file==1) or (file=='1') or (file=='auto'): 
@@ -1257,11 +1282,11 @@ PYMOL API
             else:
                 fname = string.lower(code)
                 
-            if type=="fofc":
+            if type=="2fofc":
                 fname += ".omap"
                 if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
                     name = name + "_" + type
-            elif type=="2fofc":
+            elif type=="fofc":
                 fname += "_diff.omap"
                 if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
                     name = name + "_" + type
@@ -1287,34 +1312,24 @@ PYMOL API
         while (done == 0) and (tries<3): # try loading URL up to 3 times
             tries = tries + 1
             if (type=='pdb') or (type=='pdb1'):
+                # pdb files are: pdb1XYZ whereas pdb1 files are 1XYZ.pdb1
+                prePDB = ''
+                if type=='pdb':
+                    prePDB = 'pdb'
 
-                fetch_host = setting.get("fetch_host", _self=_self)
-                if (type=="pdb1"):  # pdbe/pdbj do not server biological units
-                    fetch_host = "pdb"
-                    if not quiet: 
-                        print "WARNING: pdbe/pdbj do not serve biological units, using default RCSB server."
-                remotePre, remoteCode, remotePost = None, None, None
-                if fetch_host == "pdbe":
-                    remotePre = fetchHosts[fetch_host]
-                    remoteCode = string.lower(code)
-                    remotePost = ".ent.gz"
-                elif fetch_host == "pdbj":
-                    remotePre = fetchHosts[fetch_host]
-                    remoteCode = string.lower(code)
-                    remotePost = ".ent.gz"
-                else:  # "pdb" and anything else
-                    remotePre = fetchHosts[fetch_host]
-                    remoteCode = string.upper(code)
-                    if type=="pdb1":
-                        remotePost = ".pdb1.gz"
-                    else:
-                        remotePost = ".pdb.gz"
+                # eg, ftp://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/data/structures/divided/pdb/
+                remotePre = fetchHosts[fetch_host] + hostPaths[fetch_host][type]
+                # eg, fo/pdb1foo
+                remoteCode = string.lower(code)[1:3] + "/" + prePDB + string.lower(code)
+                # eg, .pdb1.gz
+                remotePost = hostPost[fetch_host][type]
+                
                 try:
                     #print "remotePre: %s" % remotePre
                     #print "remoteCode: %s" % remoteCode
                     #print "remotePost: %s" % remotePost
                     url = remotePre + remoteCode + remotePost
-                    #print url
+#                    print url
                     
                     if url!=None:
                         filename = urllib.urlretrieve(url)[0]
@@ -1371,7 +1386,7 @@ PYMOL API
                         pass
                     else:
                         if os.path.exists(filename):
-                            if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
+                            if (os.path.getsize(filename) > 0): # If 0, then map doesn't exist
                                 try:
                                     abort = 0
                                     map_str = open(filename,'rb').read()
@@ -1390,6 +1405,7 @@ PYMOL API
                                             fobj.close()
                                     if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
                                         name = name + "_" + type
+                                    print "r = _self.load(",fname, name, state, loadable.brix, finish, discrete, quiet, multiplex, zoom, ")"
                                     r = _self.load(fname, name, state, loadable.brix, finish, discrete, quiet, multiplex, zoom)
                                     done = 1
                                 except IOError:
@@ -1402,9 +1418,7 @@ PYMOL API
                                 os.remove(filename)
                             except:
                                 pass
-                        
-                
-                        
+                          
             if done == 0:
                 time.sleep(0.1)
         if done == 0:
@@ -1475,6 +1489,8 @@ NOTES
         r = DEFAULT_SUCCESS
         if path==None:
             path = setting.get('fetch_path',_self=_self)
+            # blank paths need to be reset to '.'
+            if path=='': path='.'
         if async<0: # by default, run asynch when interactive, sync when not
             async = not quiet
         if not int(async):

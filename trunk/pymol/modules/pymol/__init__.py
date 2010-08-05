@@ -356,9 +356,9 @@ if pymol_launch != 3: # if this isn't a dry run
                         cmd.set('ati_bugs',1) 
                         
                 if 'Radeon HD' in renderer:
-                    print " Note: Radeon HD cards tend not to run PyMOL well."
-                    print " Use nVidia or Intel instead, if OpenGL glitches occur."
-                    print " Attempting to compensate for known issues..."
+                    #print " Note: Radeon HD cards tend not to run PyMOL well."
+                    #print " Use nVidia or Intel instead, if OpenGL glitches occur."
+                    print " Adjusting settings to improve performance for ATI cards."
 
                     # use display lists to minimize use of OpenGL
                     # immediate mode rendering (unreasonably slow on
