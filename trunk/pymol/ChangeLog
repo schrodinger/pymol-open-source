@@ -3,6 +3,11 @@ CHANGE LOG
 =========================================================================
 
 2010-08-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Better support for biological units.
+
+
+2010-08-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 	
 	* For r1.3r1 (mostly due to fetch command)
 
