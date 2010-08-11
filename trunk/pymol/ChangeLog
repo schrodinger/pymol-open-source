@@ -2,6 +2,23 @@
 CHANGE LOG
 =========================================================================
 
+2010-08-11 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixed small bug with fetch.
+
+	* Moved surface area calculations to Compute > Surface area; these values still need to be validated!
+
+	* A > Action > Generate > Selection > Surface Residues
+
+	* New "surface_residue_cutoff" setting
+
+	* Removed one redundant option from Measurement wizard
+
+	* Added C > Color > Element > 6/H now colors by hydrogens, not carbons
+
+	* Yay for the new PyMOL website!
+
+
 2010-08-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Better support for biological units.

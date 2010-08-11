@@ -71,6 +71,73 @@ _color_cycle = [
 
 _color_cycle_len = len(_color_cycle)
 
+
+def find_surface_residues(sele, _self=cmd):
+	"""
+	findSurfaceResidues
+		finds those residues on the surface of a protein
+		that have at least 'cutoff' exposed A**2 surface area.
+
+	PARAMS
+		objSel (string)
+			the object or selection in which to find
+			exposed residues
+	RETURNS
+		(list: (chain, resv ) )
+			A Python list of residue numbers corresponding
+			to those residues w/more exposure than the cutoff.
+
+	"""
+        from pymol import stored
+
+        z = _self.get("auto_zoom")
+        d = _self.get("dot_solvent")
+	tmpObj=_self.get_unused_name("__tmp")
+	_self.create( tmpObj, sele + " and polymer");
+	_self.set("dot_solvent");
+        _self.set("auto_zoom", 0)
+	_self.get_area(selection=tmpObj, load_b=1)
+
+	# threshold on what one considers an "exposed" atom (in A**2):
+        surface_residue_cutoff = _self.get("surface_residue_cutoff")
+	_self.remove( tmpObj + " and b < " + str(surface_residue_cutoff) )
+
+	stored.tmp_dict = {}
+	_self.iterate(tmpObj, "stored.tmp_dict[(chain,resv)]=1")
+	exposed = stored.tmp_dict.keys()
+	exposed.sort()
+
+	selName = _self.get_unused_name("exposed")
+	_self.select(selName, sele + " in " + tmpObj )
+
+        # clean up
+	_self.delete(tmpObj)
+        _self.set("dot_solvent", d)
+        _self.set("auto_zoom", z)
+
+	return exposed
+
+
+def get_sasa(sele, _self=cmd):
+    """
+    get solvent accesible surface area
+    """
+    # get user settings before we change them, so we can restore them later
+    z = _self.get("auto_zoom")
+    d = _self.get("dot_density")
+    s = _self.get("dot_solvent")
+    _self.set("auto_zoom", 0)
+    _self.set("dot_solvent", 1)
+    _self.set("dot_density", 5)
+    n = _self.get_unused_name("_")
+    _self.create(n, sele, quiet=1)
+    _self.alter(n, 'vdw=vdw+1.4')
+    _self.get_area(n, quiet=0, _self=_self)
+    _self.delete(n)
+    _self.set("auto_zoom", z)
+    _self.set("dot_density", d)
+    _self.set("dot_solvent", s)
+    
 def mass_align(target,enabled_only=0,max_gap=50,_self=cmd):
     pymol=_self._pymol
     cmd=_self
@@ -301,6 +368,14 @@ def cba(color,selection="(all)",quiet=1,_self=cmd):
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
     cmd.color(color,"(elem C and ("+s+"))",quiet=quiet)
+    cmd.color(color,s,flags=1,quiet=quiet)
+
+def cbh(color,selection="(all)",quiet=1,_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
+    s = str(selection)
+    cmd.color("atomic","(("+s+") and not elem H)",quiet=quiet)
+    cmd.color(color,"(elem H and ("+s+"))",quiet=quiet)
     cmd.color(color,s,flags=1,quiet=quiet)
 
 def performance(mode,_self=cmd):

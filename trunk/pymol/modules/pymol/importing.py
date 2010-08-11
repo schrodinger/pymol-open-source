@@ -1255,7 +1255,7 @@ PYMOL API
             typeExt = '_diff.omap'
         elif type == 'pdb':
             bioType = type
-            typeExt = ''
+            typeExt = '.pdb'
         elif re.search("^pdb\d+$", type) != None:
             bioType = 'bio'
             typeExt = re.search("^pdb\d+$", type).group()
@@ -1308,7 +1308,7 @@ PYMOL API
                 if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
                     name = name + "_" + bioType
             else:
-                fname += "." + typeExt
+                fname += typeExt
         elif is_string(file):
             fname = file
         elif file:
