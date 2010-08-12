@@ -1,4 +1,3 @@
-
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -34,7 +33,6 @@ class Measurement(Wizard):
             'polar',
             'heavy',
             'neigh',
-            'surf'
             ]
         
         self.mode_name = {
@@ -44,7 +42,6 @@ class Measurement(Wizard):
             'pairs':'Distances',
             'angle':'Angles',
             'dihed':'Dihedrals',
-            'surf' :'Surface Area'
             }
         # users can now specify how they're finding neighbors
         self.neighbor_modes = [
@@ -58,6 +55,9 @@ class Measurement(Wizard):
         
         self.neighbor_target = ""
 
+        # TODO: 
+        # make this a function, and call it when we call refresh wizard
+        # to update the object/selection list
         smm = []
         smm.append([ 2, 'Measurement Mode', '' ])
         for a in self.modes:
@@ -123,12 +123,11 @@ class Measurement(Wizard):
 
     def neighbor_submenu(self,a,_self=cmd):
         return [ [2, self.mode_name[a]+": ", ''],
-                 [1, "in same molecule",  'cmd.get_wizard().set_neighbor_target("'+a+'", "same")'],
-                 [1, "in other molecules",  'cmd.get_wizard().set_neighbor_target("'+a+'","other")'],
-                 [1, "in enabled molecules",  'cmd.get_wizard().set_neighbor_target("'+a+'","enabled")'],
-                 [1, "in all molecules",  'cmd.get_wizard().set_neighbor_target("'+a+'","all")'],
+                 [1, "in all objects",  'cmd.get_wizard().set_neighbor_target("'+a+'","all")'],
                  [1, "in object", self.neighbor_objects(a) ],               # while this is a submenu this is also a command, so [1, ...]
                  [1, "in selection", self.neighbor_selections(a) ],         # not [2, ...]
+                 [1, "in other objects",  'cmd.get_wizard().set_neighbor_target("'+a+'","other")'],
+                 [1, "in same object",  'cmd.get_wizard().set_neighbor_target("'+a+'", "same")'],
             ]
 
     def _validate_instance(self):
@@ -302,22 +301,7 @@ class Measurement(Wizard):
         else:
             reset = 1
             sele_name = sele_prefix + str(self.status)
-            if self.mode == "surf":
-                the_area = cmd.get_area("(pk1)", quiet=1)
-                ## self.cmd.wizard("message",
-                ##                 [ "Surface Area = %.3f A^2" % the_area),
-                ##                   "Please press Dismiss to close this message." ] )
-                obj_name = self.get_name( (self.object_mode=="append"),
-                                          (self.object_mode=="append"))
-                if self.object_mode=='merge':
-                    reset=0
-                self.cmd.pseudoatom( obj_name, pos=self.cmd.get_atom_coords("first (pk1)"), quiet=1)
-                self.cmd.hide("nonbonded", obj_name)
-                self.cmd.label(obj_name, "'Surface Area = %.3f A^2'" % the_area)
-                self.cmd.enable(obj_name)
-                self.clear_input()
-                self.cmd.refresh_wizard()
-            elif self.mode == 'pairs':
+            if self.mode == 'pairs':
                 if self.status==0:
                     self.cmd.select(sele_name,"(pk1)")
                     self.cmd.select(indi_sele, sele_name)
@@ -329,7 +313,7 @@ class Measurement(Wizard):
                                               (self.object_mode=='append'))
                     if self.object_mode=='merge':
                         reset = 0
-                    self.cmd.dist(obj_name,sele_prefix+"0","(pk1)",reset=reset)
+                    self.cmd.dist(obj_name,"(v. and " + sele_prefix+"0)","(v. and (pk1))",reset=reset)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
@@ -347,8 +331,8 @@ class Measurement(Wizard):
                                              (self.object_mode=='append'))
                     if self.object_mode=='merge':
                         reset = 0
-                    self.cmd.angle(obj_name, sele_prefix+"0", sele_prefix+"1",
-                                 "(pk1)", reset=reset)
+                    self.cmd.angle(obj_name, "(v. and " + sele_prefix+"0)", "(v. and " + sele_prefix+"1)",
+                                 "(v. and (pk1))", reset=reset)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
@@ -366,8 +350,8 @@ class Measurement(Wizard):
                                              (self.object_mode=='append'))
                     if self.object_mode=='merge':
                         reset = 0
-                    self.cmd.dihedral(obj_name, sele_prefix+"0", sele_prefix+"1",
-                                     sele_prefix+"2", "(pk1)", reset=reset)
+                    self.cmd.dihedral(obj_name, "(v. and " + sele_prefix+"0)", "(v. and " + sele_prefix+"1)",
+                                                "(v. and " + sele_prefix+"2)", "(v. and + (pk1))", reset=reset)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
@@ -375,7 +359,7 @@ class Measurement(Wizard):
             elif self.mode in ['neigh','polar','heavy']:
                 reset = 1
                 obj_name = self.get_name((self.object_mode=='append'),
-                                             (self.object_mode=='append'))
+                                         (self.object_mode=='append'))
                 if self.object_mode=='merge':
                     reset = 0
                 cnt = 0

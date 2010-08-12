@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2010-08-12 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Added visibililty flag for Measurement Wizard
+
+
 2010-08-11 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Fixed small bug with fetch.
