@@ -1249,10 +1249,10 @@ PYMOL API
         # typeExt is the file name extension based on type
         if type == 'fofc':
             bioType = type
-            typeExt = '.omap'
+            typeExt = '_fofc.omap'
         elif type == '2fofc':
             bioType = type
-            typeExt = '_diff.omap'
+            typeExt = '_2fofc.omap'
         elif type == 'pdb':
             bioType = type
             typeExt = '.pdb'
@@ -1391,9 +1391,9 @@ PYMOL API
                 else:
                     url = "http://eds.bmc.uu.se/eds/dfs/" + remoteCode[1:3] + "/" + remoteCode + "/" + remoteCode
                     if type=="2fofc":
-                        url += "_diff.omap"
-                    else:  # default to fofc
                         url += ".omap"
+                    else:  # default to fofc
+                        url += "_diff.omap"
 
                 if url == None:
                     pass
