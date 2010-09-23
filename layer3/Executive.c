@@ -7292,13 +7292,19 @@ int ExecutiveAlign(PyMOLGlobals * G, char *s1, char *s2, char *mat_file, float g
               ok = MatchPreScore(match, vla1, na, vla2, nb, quiet);
           }
           if(use_structure) {
-            if(ok)
+	    /* avoid degenerate alignments */
+	    ok = ((na>1) && (nb>1) && ok);
+            if(ok) {
               ok = SelectorResidueVLAsTo3DMatchScores(G, match,
                                                       vla1, na, state1,
                                                       vla2, nb, state2, seq_wt,
                                                       radius, scale, base,
                                                       coord_wt, expect);
-          }
+	    } else {
+	      PRINTFB(G, FB_Executive, FB_Errors)
+		" ExecutiveAlign: No alignment found.\n", na, nb ENDFB(G);
+	    }
+	  }
           if(ok)
             ok = MatchAlign(match, gap, extend, max_gap, max_skip, quiet, window, ante);
           if(ok) {
@@ -8032,6 +8038,7 @@ float ExecutiveGetArea(PyMOLGlobals * G, char *s0, int sta0, int load_b)
   float *area;
   AtomInfoType *ai = NULL;
   ObjectMoleculeOpRec op;
+  /* get the index of the temporary selection just created */
   sele0 = SelectorIndexByName(G, s0);
   if(sele0 < 0) {
     ErrMessage(G, "Area", "Invalid selection.");
