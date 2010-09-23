@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2010-09-23 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixed degenerate super bug.
+
+
 2010-08-12 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Fixed the map fetching, again.
