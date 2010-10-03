@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2010-10-02 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Measurement wizard dihedral fix
+
 2010-09-23 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Fixed degenerate super bug.

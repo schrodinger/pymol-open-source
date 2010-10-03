@@ -332,7 +332,7 @@ class Measurement(Wizard):
                     if self.object_mode=='merge':
                         reset = 0
                     self.cmd.angle(obj_name, "(v. and " + sele_prefix+"0)", "(v. and " + sele_prefix+"1)",
-                                 "(v. and (pk1))", reset=reset)
+                                   "(v. and (pk1))", reset=reset)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
@@ -351,7 +351,7 @@ class Measurement(Wizard):
                     if self.object_mode=='merge':
                         reset = 0
                     self.cmd.dihedral(obj_name, "(v. and " + sele_prefix+"0)", "(v. and " + sele_prefix+"1)",
-                                                "(v. and " + sele_prefix+"2)", "(v. and + (pk1))", reset=reset)
+                                      "(v. and " + sele_prefix+"2)", "(v. and (pk1))", reset=reset)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
