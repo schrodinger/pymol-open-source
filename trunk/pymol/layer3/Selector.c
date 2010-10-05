@@ -47,6 +47,8 @@ Z* -------------------------------------------------------------------
 #include"OVOneToAny.h"
 #include"Parse.h"
 
+#include"ListMacros.h"
+
 #define SelectorWordLength 1024
 typedef char SelectorWordType[SelectorWordLength];
 
@@ -163,6 +165,21 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * o
                                             int req_state,
                                             int no_dummies, int *idx,
                                             int n_idx, int numbered_tags);
+
+
+void DDListInsert(CMeasureInfo* List, CMeasureInfo* Elem) {
+  Elem->next = List;			
+  Elem->prev = List->prev;		
+  List->prev = Elem;		
+  Elem->prev->next = Elem;	
+}
+void DDListElemInit(CMeasureInfo* ptr) {
+  if (!ptr) return;
+	ptr->prev = NULL;
+	ptr->next = NULL;
+
+}
+
 
 static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offset)
 {
@@ -3701,10 +3718,12 @@ int SelectorCreateAlignments(PyMOLGlobals * G,
   int cmp;
   PRINTFD(G, FB_Selector)
     " SelectorCreateAlignments-DEBUG: entry.\n" ENDFD cnt = 0;
+  /* number of pairs of atoms */
   np = VLAGetSize(pair) / 2;
   if(np) {
 
     SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);  /* unnecessary? */
+    /* flags initialized to false */
     flag1 = Calloc(int, I->NAtom);
     flag2 = Calloc(int, I->NAtom);
 
@@ -3716,7 +3735,8 @@ int SelectorCreateAlignments(PyMOLGlobals * G,
       vi2 = *(p++);
 
       /* find positions in the selection arrays */
-
+      /* SelectorGetResidueVLA returns a VLA with 3 entries per atom, index0=model,
+       * index1=atom#, hence: *3, and *3+1 */
       mod1 = vla1[vi1 * 3];
       at1 = vla1[vi1 * 3 + 1];
 
@@ -3891,8 +3911,10 @@ int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
   int mod1 = 0;
   ObjectMolecule *obj;
 
+  /* update the selector's table */
   SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
 
+  /* make room for model#, at#, rcode, per atom */
   result = VLAlloc(int, I->NAtom * 3);
 
   r = result;
@@ -4235,7 +4257,14 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals * G, int sele,
 }
 
 
-/*========================================================================*/
+/*========================================================================
+ * SelectorGetSingleObjectMolecule -- get a ptr to the molecule indiecated
+ *    by the selection parameter
+ * PARAMS
+ *   (int) selection #
+ * RETURNS
+ *   (ptr) pts to the ObjectMolecule or NULL if not found
+ */
 ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals * G, int sele)
 {
   /* slow way */
@@ -5251,6 +5280,8 @@ static int SelectorGetInterstateVLA(PyMOLGlobals * G,
   n1 = 0;
 
   for(a = 0; a < I->NAtom; a++) {
+    /* foreach atom, grab its atom ID, object ID, selection ID,
+     * and current state's coordinate set */
     I->Flag1[a] = false;
     at = I->Table[a].atom;
     obj = I->Obj[I->Table[a].model];
@@ -5262,12 +5293,18 @@ static int SelectorGetInterstateVLA(PyMOLGlobals * G,
         cs = NULL;
       if(cs) {
         if(obj->DiscreteFlag) {
+	  /* if we have a valid coordinate set, and the discrete flag is set,
+	   * and the current coordinate set equals this atom's discrete cset,
+	   * then we grab the atom index from the cset using Selectors->DiscreteAtmToIdx
+	   * otherwise, idx = -1 */
           if(cs == obj->DiscreteCSet[at])
             idx = obj->DiscreteAtmToIdx[at];
           else
             idx = -1;
         } else
           idx = cs->AtmToIdx[at];
+	/* above: if not using DiscreteFlag, then the index doesn't need to be remapped,
+	 * just use the current cset's index */
         if(idx >= 0) {
           copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * a);
           I->Flag1[a] = true;
@@ -7260,7 +7297,13 @@ int SelectorSetName(PyMOLGlobals * G, char *new_name, char *old_name)
 }
 
 
-/*========================================================================*/
+/*========================================================================
+ * SelectorIndexByName -- fetch the global selector's ID for sname
+ * PARAMS
+ *  (string) sname, object name
+ * RETURNS
+ *   (int) index #, or -1 if not found
+ */
 int SelectorIndexByName(PyMOLGlobals * G, char *sname)
 {
   OrthoLineType name;
@@ -7417,6 +7460,7 @@ int SelectorGetTmp(PyMOLGlobals * G, char *input, char *store)
     OVreturn_word result;
 
     while(*p) {
+      /* copy first word/token of p into "word", remainder of string in p */
       p = ParseWord(word, p, sizeof(OrthoLineType));
       /* see a paren? then this must be a selection */
 
@@ -7523,10 +7567,14 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
   /*  printf("I->NMember %d I->FreeMember %d\n",I->NMember,I->FreeMember); */
 
   n = I->NActive;
+  /* make sure there's enough space for n+1 SelectorWordTypes
+   * and SelectorInfoRecs in the Selector */
   VLACheck(I->Name, SelectorWordType, n + 1);
   VLACheck(I->Info, SelectionInfoRec, n + 1);
+  /* copy the name and null terminate it */
   strcpy(I->Name[n], name);
   I->Name[n + 1][0] = 0;
+  /* This name is in Name, so now set it in the OVLexicon hash */
   SelectorAddName(G, n);
   sele = I->NSelection++;
   SelectionInfoInit(I->Info + n);
@@ -7540,6 +7588,7 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
   }
   for(a = start; a < I->NAtom; a++) {
     tag = false;
+    /* set tag based on passed in atom list or on global atom table */
     if(atom) {
       if(atom[a])
         tag = atom[a];
@@ -7548,10 +7597,13 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
         tag = 1;
     }
     if(tag) {
+      /* if this this atom is tagged, grab its object
+       * index, and info record */
       selObj = I->Obj[I->Table[a].model];
       index = I->Table[a].atom;
       ai = selObj->AtomInfo + index;
 
+      /* update whether or not this is a selection w/only one object */
       if(singleObjectFlag) {
         if(singleObject) {
           if(selObj != singleObject) {
@@ -7561,7 +7613,7 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
           singleObject = selObj;
         }
       }
-
+      /* update whether or not this is a selection w/only one atom */
       if(singleAtomFlag) {
         if(singleAtom >= 0) {
           if(index != singleAtom) {
@@ -7572,6 +7624,7 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
         }
       }
 
+      /* store this is the Selectors->Member table, so make sure there's room */
       c++;
       if(I->FreeMember > 0) {
         m = I->FreeMember;
@@ -7590,8 +7643,8 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
     }
   }
 
-  if(c) {                       /* if selection contains just one atom/object, then take note */
-
+  /* after scanning, update whether or not we touched multiple objects/atoms */
+  if(c) {                       
     SelectionInfoRec *info = I->Info + (I->NActive - 1);
     if(singleObjectFlag) {
       info->justOneObjectFlag = true;
@@ -7726,6 +7779,8 @@ static int _SelectorCreate(PyMOLGlobals * G, char *sname, char *sele,
   PRINTFD(G, FB_Selector)
     "SelectorCreate-Debug: entered...\n" ENDFD;
 
+  /* copy sname into name and check if it's a keyword; abort on 
+   * the selection name == keyword: eg. "select all, none" */
   if(sname[0] == '%')
     strcpy(name, &sname[1]);
   else
@@ -7734,6 +7789,7 @@ static int _SelectorCreate(PyMOLGlobals * G, char *sname, char *sele,
     name[0] = 0;                /* force error */
   }
   UtilCleanStr(name);
+  /* name was invalid, output error msg to user */
   if(!name[0]) {
     PRINTFB(G, FB_Selector, FB_Errors)
       "Selector-Error: Invalid selection name \"%s\".\n", sname ENDFB(G);
@@ -7772,7 +7828,9 @@ static int _SelectorCreate(PyMOLGlobals * G, char *sname, char *sele,
     c = SelectorEmbedSelection(G, atom, name, embed_obj, false, executive_manage);
   FreeP(atom);
   SelectorClean(G);
+  /* ignore reporting on quiet */
   if(!quiet) {
+    /* ignore reporting on internal/private names */
     if(name[0] != '_') {
       if(ok) {
         PRINTFB(G, FB_Selector, FB_Actions)
@@ -8047,6 +8105,7 @@ int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain)
 
   register CSelector *I = G->Selector;
 
+  /* Origin and Center are dummy objects */
   if(!I->Origin)
     I->Origin = ObjectMoleculeDummyNew(G, cObjectMoleculeDummyOrigin);
 
@@ -8056,6 +8115,8 @@ int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain)
   SelectorClean(G);
   I->NCSet = 0;
 
+  /* take a summary of PyMOL's current state; foreach molecular object
+   * sum up the number of atoms, count how many models, states, etc... */
   modelCnt = cNDummyModels;
   c = cNDummyAtoms;
   while(ExecutiveIterateObjectMolecule(G, &obj, &iterator)) {
@@ -8064,6 +8125,7 @@ int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain)
       I->NCSet = obj->NCSet;
     modelCnt++;
   }
+  /* allocate space for each atom, in the record table */
   I->Table = Calloc(TableRec, c);
   ErrChkPtr(G, I->Table);
   I->Obj = Calloc(ObjectMolecule *, modelCnt);
@@ -8081,6 +8143,7 @@ int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain)
   c = 0;
   modelCnt = 0;
 
+  /* update the origin and center dummies */
   obj = I->Origin;
   if(obj) {
     I->Obj[modelCnt] = I->Origin;
@@ -8135,6 +8198,7 @@ int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain)
     }
 
     if(!skip_flag) {
+      /* fill in the table */
       I->Obj[modelCnt] = obj;
       {
         register int n_atom = obj->NAtom;
@@ -10715,6 +10779,8 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state)
   char *np;
 
   register int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
+  /* CFGs can efficiently be parsed by stacks; use a clean stack w/space
+   * for 100 elements */
   EvalElem *Stack = NULL, *e;
   SelectorWordType tmpKW;
   Stack = VLAlloc(EvalElem, 100);
@@ -10734,12 +10800,14 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state)
     case 0:
       break;
     case '(':
+      /* increase stack depth on open parens: (selection ((and token) blah)) */
       if(valueFlag)
         ok = ErrMessage(G, "Selector", "Misplaced (.");
       if(ok)
         level++;
       break;
     case ')':
+      /* decrease stack depth */
       if(valueFlag)
         ok = ErrMessage(G, "Selector", "Misplaced ).");
       if(ok) {
@@ -11377,11 +11445,10 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   int exclusion = 0;
   int bonds_only = 0;
   int from_proton = SettingGetGlobal_b(G, cSetting_h_bond_from_proton);
-
-	int na = 0;												
-	int *aIdx = NULL, *taIdx = NULL;	/* -- JV */
 	
-	/* if we're creating hydrogen bonds, then set some distance cutoffs */
+  CMeasureInfo *atom1Info=NULL, *atom2Info=NULL; 
+
+  /* if we're creating hydrogen bonds, then set some distance cutoffs */
   switch (mode) {
   case 1:
     bonds_only = 1;
@@ -11396,37 +11463,27 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 
   hbc = &hbcRec;
   *result = 0.0;
-	/* if the dist set exists, get info from it, otherwise get a new one */
+  /* if the dist set exists, get info from it, otherwise get a new one */
   if(!ds) {
     ds = DistSetNew(G);
   } else {
-    vv = ds->Coord;
-    nv = ds->NIndex;
-		aIdx = ds->AtomIndices; /* -- JV */
-		na = ds->NAtomIndices; /* -- JV */
+    vv = ds->Coord;  /* vertices */
+    nv = ds->NIndex; /* number of vertices */
+    if (!ds->MeasureInfo) DListInit(ds->MeasureInfo,prev,next,CMeasureInfo);
   }
-	/* make sure we have memory to hold the vertex info for this distance set */
+  /* make sure we have memory to hold the vertex info for this distance set */
   if(!vv) {
     vv = VLAlloc(float, 10);
   }
-	/* -- JV -- make sure we have room to hold the atom indices */
-	if (!aIdx) {
-		/*printf("aIdx was blank, making space for 4 new ints...\n");*/
-		aIdx = VLAlloc(int, 4);
-		if (!aIdx) {
-/*			printf("Error: in %s:%d -- I couldn't make space for four new ints for tracking atoms in distances\n", __FILE__, __LINE__);*/
-			return NULL;
-		}
-	}
 
-	/* update states: if the two are the same, update that one state, else update all states */
+  /* update states: if the two are the same, update that one state, else update all states */
   if((state1 < 0) || (state2 < 0) || (state1 != state2)) {
     SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
   } else {
     SelectorUpdateTable(G, state1, -1);
   }
 
-	/* coverage determines how many times a given atom appears in sel1 or sel2 */
+  /* coverage determines how many times a given atom appears in sel1 or sel2 */
   coverage = Calloc(int, I->NAtom);
 
   for(a = cNDummyAtoms; a < I->NAtom; a++) {
@@ -11439,31 +11496,34 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
       coverage[a]++;
   }
 
+  /* find and prepare (neighbortables) in any participating Molecular objects */
   if((mode == 1) || (mode == 2) || (mode == 3)) {       /* fill in all the neighbor tables */
     int max_n_atom = I->NAtom;
     lastObj = NULL;
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
-			/* foreach atom in the session, get its identifier and ObjectMolecule to which it belongs */
-      at = I->Table[a].atom;
+      /* foreach atom in the session, get its identifier and ObjectMolecule to which it belongs */
+      at = I->Table[a].atom;  /* grab the atom ID from the Selectors->Table */
       obj = I->Obj[I->Table[a].model];		/* -- JV -- quick way to get an object from an atom */
-      s = obj->AtomInfo[at].selEntry;
+      s = obj->AtomInfo[at].selEntry;  /* grab the selection entry# from this Atoms Info */
       if(obj != lastObj) {
         if(max_n_atom < obj->NAtom)
           max_n_atom = obj->NAtom;
+	/* if the current atom is in sele1 or sele2 then update it's object's neighbor table */
         if(SelectorIsMember(G, s, sele1) || SelectorIsMember(G, s, sele2)) {
           ObjectMoleculeUpdateNeighbors(obj);
+	  /* if hbonds (so, more than just distance) */
           if(mode == 2)
             ObjectMoleculeVerifyChemistry(obj, -1);
           lastObj = obj;
         }
       }
     }
-		/* prepare these for the next round */
+    /* prepare these for the next round */
     zero = Calloc(int, max_n_atom);
     scratch = Alloc(int, max_n_atom);
   }
 
-	/* if we're hydrogen bonding, setup the cutoff */
+  /* if we're hydrogen bonding, setup the cutoff */
   if(mode == 2) {
     ObjectMoleculeInitHBondCriteria(G, hbc);
     if(cutoff < 0.0F) {
@@ -11476,39 +11536,39 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   if(cutoff < 0)
     cutoff = 1000.0;
 	
-	/* this creates an interwoven list of ints for mapping ids to states within a given neighborhood */
+  /* this creates an interleaved list of ints for mapping ids to states within a given neighborhood */
   c = SelectorGetInterstateVLA(G, sele1, state1, sele2, state2, cutoff, &vla);
-	/* for each state */
+  /* for each state */
   for(a = 0; a < c; a++) {
-		/* get the interstate atom identifier for the two atoms to distance */
+    atom1Info = atom2Info = NULL;
+    /* get the interstate atom identifier for the two atoms to distance */
     a1 = vla[a * 2];
     a2 = vla[a * 2 + 1];
 
-		/* check their coverage to avoid duplicates */
+    /* check their coverage to avoid duplicates */
     if((a1 != a2) && ((!((coverage[a1] == 2) && (coverage[a2] == 2))) || (a1 < a2))) {  /* eliminate reverse duplicates */
-			/* get the object-local atom ID */
+      /* get the object-local atom ID */
       at1 = I->Table[a1].atom;
       at2 = I->Table[a2].atom;
-			
-			/* get the object for this global atom ID */
+      /* get the object for this global atom ID */
       obj1 = I->Obj[I->Table[a1].model];
       obj2 = I->Obj[I->Table[a2].model];
 
-			/* the states are valid for these two atoms */
+      /* the states are valid for these two atoms */
       if((state1 < obj1->NCSet) && (state2 < obj2->NCSet)) {
-				/* get the coordinate sets for both atoms */
+	/* get the coordinate sets for both atoms */
         cs1 = obj1->CSet[state1];
         cs2 = obj2->CSet[state2];
         if(cs1 && cs2) {
-					/* for bonding */
+	  /* for bonding */
           float *don_vv = NULL;
           float *acc_vv = NULL;
 
-					/* grab the appropriate atom information for this object-local atom */
+	  /* grab the appropriate atom information for this object-local atom */
           ai1 = obj1->AtomInfo + at1;
           ai2 = obj2->AtomInfo + at2;
-
-					/* if the objects were loaded as discrete, then bump their atom indices as necessary */
+	  
+	  /* if the objects were loaded as discrete, then bump their atom indices as necessary */
           if(obj1->DiscreteFlag) {
             if(cs1 == obj1->DiscreteCSet[at1]) {
               idx1 = obj1->DiscreteAtmToIdx[at1];
@@ -11531,10 +11591,10 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
           }
 
           if((idx1 >= 0) && (idx2 >= 0)) {
-						/* actual distance calculation from ptA to ptB */
+	    /* actual distance calculation from ptA to ptB */
             dist = (float) diff3f(cs1->Coord + 3 * idx1, cs2->Coord + 3 * idx2);
 
-						/* if we pass the boding cutoff */
+	    /* if we pass the boding cutoff */
             if(dist < cutoff) {
               float h_crd[3];
               int h_real = false;
@@ -11582,21 +11642,37 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
                 a_keeper = false;
 
               if(a_keeper) {
-								/* we have a distance we want to keep */
+
+		/* Insert DistInfo records for updating distances */
+		/* Init/Add the elem to the DistInfo list */
+		DListElemAlloc(G, atom1Info, CMeasureInfo);
+		DListElemAlloc(G, atom2Info, CMeasureInfo);
+		DDListElemInit(atom1Info);
+		DDListElemInit(atom2Info);
+		atom1Info->id = ai1->id;  /* unique, object-local atom ID */
+		atom2Info->id = ai2->id;
+		atom1Info->offset = nv;  /* offset into this DSet's Coord */
+		atom2Info->offset = nv+1;
+		atom1Info->obj = obj1;  /* first atom in this measure's ObjMol */
+		atom2Info->obj = obj2;
+		atom1Info->state = state1;  /* state1 of sel1 */
+		atom2Info->state = state2;
+		atom1Info->selection = -1; /* unused? */
+		atom2Info->selection = -1; /* unused? */
+		atom1Info->measureType = cRepDash; // DISTANCE-dash
+		atom2Info->measureType = cRepDash; // DISTANCE-dash
+//		DDListInsert(ds->MeasureInfo, atom1Info, prev, next);
+//		DDListInsert(ds->MeasureInfo, atom2Info, prev, next);
+		DDListInsert(ds->MeasureInfo, atom1Info);
+		DDListInsert(ds->MeasureInfo, atom2Info);
+
+		/* we have a distance we want to keep */
                 dist_cnt++;
                 dist_sum += dist;
-								/* see if vv has room at another 6 floats */
+		/* see if vv has room at another 6 floats */
                 VLACheck(vv, float, (nv * 3) + 6);
                 vv0 = vv + (nv * 3);
-								
-								/* see if aIdx has room for another 2 ints; if not make it so */
-								VLACheck( aIdx, int, na+2 );
-								/* temp pointer gets bumped by number of atoms in the list: tempIndex = original + len(original) */
-								taIdx = aIdx + na;
-								*(taIdx++) = at1;		/* at1 and at2 are atom indices */
-								*(taIdx++) = at2;		/* but offset by one: at1+1 = label "%s" % index */
-								na += 2;
-
+		
                 if((mode == 2) && (don_vv) && (acc_vv)) {
                   *(vv0++) = *(don_vv++);
                   *(vv0++) = *(don_vv++);
@@ -11633,8 +11709,6 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
     VLASize(vv, float, (nv + 1) * 3);
   ds->NIndex = nv;
   ds->Coord = vv;
-	ds->NAtomIndices = na;		/* -- JV */
-	ds->AtomIndices = aIdx;		/* -- JV */
   return (ds);
 }
 
@@ -11654,6 +11728,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
   } else {
     vv = ds->AngleCoord;
     nv = ds->NAngleIndex;
+    if (!ds->MeasureInfo) DListInit(ds->MeasureInfo, prev, next, CMeasureInfo);
   }
   if(!vv)
     vv = VLAlloc(float, 10);
@@ -11750,6 +11825,8 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
         float d1[3], d2[3];
         float *v1, *v2, *v3, *vv0;
 
+        CMeasureInfo *atom1Info=NULL, *atom2Info=NULL, *atom3Info = NULL; 
+
         for(i1 = 0; i1 < n1; i1++) {
           a1 = list1[i1];
           at1 = I->Table[a1].atom;
@@ -11792,7 +11869,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
                       }
 
                       if(idx2 >= 0) {
-
+			/* neighbor table like BPRec */
                         bonded12 = ObjectMoleculeAreAtomsBonded2(obj1, at1, obj2, at2);
 
                         for(i3 = 0; i3 < n3; i3++) {
@@ -11835,6 +11912,33 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
 
                                       subtract3f(v1, v2, d1);
                                       subtract3f(v3, v2, d2);
+
+				      /* Insert DistInfo records for updating distances */
+				      /* Init/Add the elem to the DistInfo list */
+				      DListElemCalloc(G, atom1Info, CMeasureInfo);
+				      DListElemCalloc(G, atom2Info, CMeasureInfo);
+				      DListElemCalloc(G, atom3Info, CMeasureInfo);
+				      atom1Info->id = obj1->AtomInfo[at1].id;  /* unique, object-local atom ID */
+				      atom2Info->id = obj2->AtomInfo[at2].id;
+				      atom3Info->id = obj3->AtomInfo[at3].id;
+				      atom1Info->offset = nv;  /* offset into this DSet's Coord */
+				      atom2Info->offset = nv+1;
+				      atom3Info->offset = nv+2;
+				      atom1Info->obj = obj1;  /* first atom in this measure's ObjMol */
+				      atom2Info->obj = obj2;
+				      atom3Info->obj = obj3;
+				      atom1Info->state = state1;  /* state1 of sel1 */
+				      atom2Info->state = state2;
+				      atom3Info->state = state3;
+				      atom1Info->selection = -1; /* unused? */
+				      atom2Info->selection = -1; /* unused? */
+				      atom3Info->selection = -1; /* unused? */
+				      atom1Info->measureType = cRepAngle;
+				      atom2Info->measureType = cRepAngle;
+				      atom3Info->measureType = cRepAngle;
+				      DListInsert(ds->MeasureInfo, atom1Info, prev, next);
+				      DListInsert(ds->MeasureInfo, atom2Info, prev, next);
+				      DListInsert(ds->MeasureInfo, atom3Info, prev, next);
 
                                       angle = get_angle3f(d1, d2);
 
@@ -11904,11 +12008,14 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
   ObjectMolecule *just_one_object = NULL;
   int just_one_atom[4] = { -1, -1, -1, -1 };
 
+  CMeasureInfo *atom1Info=NULL, *atom2Info=NULL, * atom3Info = NULL, * atom4Info = NULL; 
+
   if(!ds) {
     ds = DistSetNew(G);
   } else {
     vv = ds->DihedralCoord;
     nv = ds->NDihedralIndex;
+    if (!ds->MeasureInfo) DListInit(ds->MeasureInfo, prev, next, CMeasureInfo);
   }
   if(!vv)
     vv = VLAlloc(float, 10);
@@ -12175,6 +12282,48 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
                                                   v2 = cs2->Coord + 3 * idx2;
                                                   v3 = cs3->Coord + 3 * idx3;
                                                   v4 = cs4->Coord + 3 * idx4;
+
+						  /* Insert DistInfo records for updating distances */
+						  /* Init/Add the elem to the DistInfo list */
+						  DListElemCalloc(G, atom1Info, CMeasureInfo);
+						  DListElemCalloc(G, atom2Info, CMeasureInfo);
+						  DListElemCalloc(G, atom3Info, CMeasureInfo);
+						  DListElemCalloc(G, atom4Info, CMeasureInfo);
+						  atom1Info->id = obj1->AtomInfo[at1].id;  /* unique, object-local atom ID */
+						  atom2Info->id = obj2->AtomInfo[at2].id;
+						  atom3Info->id = obj3->AtomInfo[at3].id;
+						  atom4Info->id = obj4->AtomInfo[at4].id;
+
+						  atom1Info->offset = nv;  /* offset into this DSet's Coord */
+						  atom2Info->offset = nv+1;
+						  atom3Info->offset = nv+2;
+						  atom4Info->offset = nv+3;
+
+						  atom1Info->obj = obj1;  /* first atom in this measure's ObjMol */
+						  atom2Info->obj = obj2;
+						  atom3Info->obj = obj3;
+						  atom4Info->obj = obj4;
+
+						  atom1Info->state = state1;  /* state1 of sel1 */
+						  atom2Info->state = state2;
+						  atom3Info->state = state3;
+						  atom4Info->state = state4;
+
+						  atom1Info->selection = -1; /* unused? */
+						  atom2Info->selection = -1; /* unused? */
+						  atom3Info->selection = -1; /* unused? */
+						  atom4Info->selection = -1; /* unused? */
+
+						  atom1Info->measureType = cRepDihedral;
+						  atom2Info->measureType = cRepDihedral;
+						  atom3Info->measureType = cRepDihedral;
+						  atom4Info->measureType = cRepDihedral;
+
+						  DListInsert(ds->MeasureInfo, atom1Info, prev, next);
+						  DListInsert(ds->MeasureInfo, atom2Info, prev, next);
+						  DListInsert(ds->MeasureInfo, atom3Info, prev, next);
+						  DListInsert(ds->MeasureInfo, atom4Info, prev, next);
+
 
                                                   angle = get_dihedral3f(v1, v2, v3, v4);
 

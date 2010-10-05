@@ -677,6 +677,7 @@ if __name__=='pymol.setting':
         neighbor_cutoff                    = 638	# see wizard/measurement.py
         heavy_neighbor_cutoff              = 639	# see wizard/measurement.py
         polar_neighbor_cutoff              = 640	# see wizard/measurement.py
+        surface_residue_cutoff             = 641        # see menu.py
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

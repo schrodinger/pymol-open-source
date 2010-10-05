@@ -2325,6 +2325,7 @@ static PyObject *CmdGetArea(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     if(str1[0])
+      /* create a temporary name in the global selector */
       c1 = SelectorGetTmp(G, str1, s1);
     if(c1 >= 0)
       result = ExecutiveGetArea(G, s1, int1, int2);

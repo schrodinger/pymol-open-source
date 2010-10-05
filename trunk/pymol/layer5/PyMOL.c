@@ -812,6 +812,7 @@ typedef struct _CPyMOL {
   ov_word lex_neighbor_cutoff;
   ov_word lex_heavy_neighbor_cutoff;
   ov_word lex_polar_neighbor_cutoff;
+  ov_word lex_surface_residue_cutoff;
 } _CPyMOL;
 
 
@@ -1612,6 +1613,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(neighbor_cutoff, 638);
   LEX_SETTING(heavy_neighbor_cutoff, 639);
   LEX_SETTING(polar_neighbor_cutoff, 640);
+  LEX_SETTING(surface_residue_cutoff, 641);
   return_OVstatus_SUCCESS;
 }
 

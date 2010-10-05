@@ -6842,6 +6842,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
                                      int sele, float *matrix, int log,
                                      char *sname, int homogenous, int global)
 {
+  // called from "translate [5,5,5], objSele"
   /* if sele == -1, then the whole object state is transformed */
   PyMOLGlobals *G = I->Obj.G;
   int a, s;
@@ -7085,7 +7086,24 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule * I)
      n+m+5   bond index
      etc.
 
-     NOTE: all atoms have an offset and a terminator whether or not they have any bonds 
+     NOTE: all atoms have an offset and a terminator whether or not they have any bonds:
+
+     Here's an example of an ALA
+     [ offet for atom1, offset for atom2, ..., offset for atom9, \
+     {10, 16, 26, 32, 36, 46, 50, 54, 58, 62, \
+     (atom1)  nbonds=2, neighbor index1=5, bond index=1, neighbor index2=1, bond index=0, null terminator=-1 \
+     2, 5, 1, 1, 0, -1, 
+     (atom2) nbonds=4, nbr index1=6, bond id=4; nbr idx2=4, bond idx=3; nbr index3=2, bond idx=2; nbr index=0, bond index=0, null=-1 \
+     4, 6, 4, 4, 3, 2, 2, 0, 0, -1,
+     (atom3) ...
+     2, 3, 5, 1, 2, -1, 1, 2, 5, -1,
+     4, 9, 8, 8, 7, 7, 6, 1, 3, -1,
+     1, 0, 1, -1,
+     1, 1, 4, -1,
+     1, 4, 6, -1,
+     1, 4, 7, -1,
+     1, 4, 8, -1 }
+
    */
 
   int size;
@@ -11314,13 +11332,15 @@ static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals * G,
 /*========================================================================*/
 void ObjectMoleculeUpdate(ObjectMolecule * I)
 {
-  int a;
+  int a; /*, ok; */
   PyMOLGlobals *G = I->Obj.G;
   OrthoBusyPrime(G);
+  /* if the cached representation is invalid, reset state */
   if(!I->RepVisCacheValid) {
     /* note which representations are active */
     register int b;
     register signed char *repVisCache = I->RepVisCache;
+    /* for each atom in each coordset, blank out the representation cache */
     if(I->NCSet > 1) {
       register AtomInfoType *ai = I->AtomInfo;
       for(b = 0; b < cRepCnt; b++)
@@ -11343,9 +11363,10 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
   }
 
   {
+    /* determine the start/stop states */
     int start = 0;
     int stop = I->NCSet;
-
+    /* set start and stop given an object */
     ObjectAdjustStateRebuildRange(&I->Obj, &start, &stop);
     if((I->NCSet == 1)
        && (SettingGet_b(G, I->Obj.Setting, NULL, cSetting_static_singletons))) {
@@ -11355,6 +11376,7 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
     if(stop > I->NCSet)
       stop = I->NCSet;
 
+    /* single and multithreaded coord set updates */
     {
 #ifndef _PYMOL_NOPY
       int n_thread = SettingGetGlobal_i(G, cSetting_max_threads);
@@ -11392,6 +11414,7 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
       {                         /* single thread */
         for(a = start; a < stop; a++) {
           if((a<I->NCSet) && I->CSet[a] && (!G->Interrupt)) {
+	    /* status bar */
             OrthoBusySlow(G, a, I->NCSet);
             PRINTFB(G, FB_ObjectMolecule, FB_Blather)
               " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n",
@@ -11403,6 +11426,7 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
         }
       }
     }
+    /* if the unit cell is shown, redraw it */
     if(I->Obj.RepVis[cRepCell]) {
       if(I->Symmetry) {
         if(I->Symmetry->Crystal) {
@@ -11411,6 +11435,27 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
           I->UnitCellCGO = CrystalGetUnitCellCGO(I->Symmetry->Crystal);
         }
       }
+    }
+  } /* end block */
+
+  /* JV--dyndist */
+  PRINTFD(G, FB_ObjectMolecule)
+    " ObjectMolecule: update distances here for object %s.\n", I->Obj.Name ENDFD;
+  /* this can be broken up into N-threads for N-distance measures. */
+
+  /* move measurement objects if the user wants */
+  if (SettingGet_b(G, I->Obj.Setting, NULL, cSetting_dynamic_measures)) {
+    // get all distance objects
+    ObjectDist** measureList = (ObjectDist**) ExecutiveFindObjectsByType(G, cObjectMeasurement);
+	if (measureList) {
+	  int len = VLAGetSize(measureList);
+      int cur = 0;
+      // should I just call rep->invalidate instead and put this 
+      // in the ObjectDistUpdate...?
+      while(len && cur < len) {
+	    ObjectDistMoveWithObject((ObjectDist*) measureList[cur++], I);
+      }
+      VLAFree(measureList);
     }
   }
 
@@ -11540,48 +11585,7 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float 
   return (result);
 }
 
-/*========================================================================*/
-/* -- JV */
-int ObjectMoleculeMoveDist(ObjectMolecule * I, int state, int index, float *v, int mode, int log)
-{
-  ObjectDist* dist;
-	int result = 0;
-
-	
-	/*printf("Molecule-MoveDist: In MoveDist\n");*/
-
-	if (!I) {
-		/*printf("Molecule-MoveDist: Quiet error, object I was NULL.  Not crashing.\n");*/
-		return 0;
-	}
-	
-	if (I->AtomInfo[index].protekted != 1) {
-		/* state boundary or single state */
-		if (state < 0 || I->NCSet==1 ) {
-			state = 0;
-		}
-		/* more bounds checking */
-		if (I->NCSet!=0) state = state % I->NCSet;
-		
-		if ((I->CSet[state]==0) && (SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_all_states)))
-			state = 0;
-
-		dist = NULL;
-
-		/* this macro expands to a for loop */
-		DListIterate(I->DistList,dist,next)
-		  if(dist)
-			  result = ObjectDistMove(dist, state, index, v, mode, log);
-			/*else {
-			  printf("Dist was NULL, moving on.\n");
-		  }*/
-	}	
-	
-	/*printf("Molecule-MoveDist: Out of MoveDist\n");*/
-	return result;
-		}
-/* -- JV end */
-						 
+				 
 /*========================================================================*/
 int ObjectMoleculeInitBondPath(ObjectMolecule * I, ObjectMoleculeBPRec * bp)
 {
@@ -12034,10 +12038,6 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
     I->UndoState[a] = -1;
   }
   I->UndoIter = 0;
-  /* -- JV */
-  I->DistList = NULL;
-  /*I->NDistList = 0;*/
-  /* -- JV end */
   return (I);
 }
 

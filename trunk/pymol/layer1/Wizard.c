@@ -131,18 +131,25 @@ void WizardPurgeStack(PyMOLGlobals * G)
 
 int WizardDoSelect(PyMOLGlobals * G, char *name)
 {
+/**
+ * Run when user selects something with the mouse, in a wizard
+ */
 #ifdef _PYMOL_NOPY
   return 0;
 #else
+  // grab 'this'
   OrthoLineType buf;
   register CWizard *I = G->Wizard;
   int result = false;
 
+  // if the event is a selection and we're listening for selections
   if(I->EventMask & cWizEventSelect)
     if(I->Stack >= 0)
       if(I->Wiz[I->Stack]) {
+	// log if necessary
         sprintf(buf, "cmd.get_wizard().do_select('''%s''')", name);
         PLog(G, buf, cPLog_pym);
+	// block and call (in Python) the wizard's do_select
         PBlock(G);
         if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_select")) {
           result = PTruthCallStr(I->Wiz[I->Stack], "do_select", name);
@@ -314,11 +321,15 @@ Block *WizardGetBlock(PyMOLGlobals * G)
 /*========================================================================*/
 int WizardDoPick(PyMOLGlobals * G, int bondFlag)
 {
+  /**
+   * Run when user picks something in the wizard
+   */
 #ifdef _PYMOL_NOPY
   return 0;
 #else
   register CWizard *I = G->Wizard;
   int result = false;
+  // process the pick if it happened and we're listening for it
   if(I->EventMask & cWizEventPick)
     if(I->Stack >= 0)
       if(I->Wiz[I->Stack]) {

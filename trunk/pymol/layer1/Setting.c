@@ -3907,5 +3907,6 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_f(I, cSetting_neighbor_cutoff, 3.5F);
     set_f(I, cSetting_heavy_neighbor_cutoff, 3.5F);
     set_f(I, cSetting_polar_neighbor_cutoff, 3.5F);
+    set_f(I, cSetting_surface_residue_cutoff, 2.5F);
   }
 }

@@ -207,6 +207,8 @@ __inline__ static int SelectorIsMember(PyMOLGlobals * G, int s, int sele)
   /* this is the most heavily called routine in interactive PyMOL */
   register int s_reg;
   if((s_reg = s) && (sele > 1)) {
+    /* the first entry of a Selector is the Member (list) pointer, so
+     * we access it via a ptr, and cast it to the MemberType */
     register MemberType *member = *((MemberType **) (G->Selector));
     register int sele_reg = sele;
     register MemberType *mem = member + s_reg;

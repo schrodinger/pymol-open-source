@@ -35,6 +35,9 @@ Z* -------------------------------------------------------------------
 
 #define cUndoMask 0xF
 
+/*
+ * ObjectMolecule's Bond Path (BP) Record
+ */
 typedef struct ObjectMoleculeBPRec {
   int *dist;
   int *list;
@@ -73,7 +76,7 @@ typedef struct ObjectMolecule {
   CGO *UnitCellCGO;
   int BondCounter;
   int AtomCounter;
-  ObjectDist* DistList;	/* -- JV; head pointer to a doubly linked list of ObjectDistances for this molecule */
+  //  ObjectDist* DistList;	/* -- JV; head pointer to a doubly linked list of ObjectDistances for this molecule */
   /* not stored */
   struct CSculpt *Sculpt;
   int RepVisCacheValid;
@@ -415,6 +418,8 @@ void ObjectMoleculeSculptImprint(ObjectMolecule * I, int state, int match_state,
 float ObjectMoleculeSculptIterate(ObjectMolecule * I, int state, int n_cycle,
                                   float *center);
 void ObjectMoleculeSculptClear(ObjectMolecule * I);
+
+/* bond paths */
 int ObjectMoleculeGetBondPaths(ObjectMolecule * I, int atom, int max,
                                ObjectMoleculeBPRec * bp);
 int ObjectMoleculeInitBondPath(ObjectMolecule * I, ObjectMoleculeBPRec * bp);
