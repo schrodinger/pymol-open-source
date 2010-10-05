@@ -115,21 +115,22 @@ Z* -------------------------------------------------------------------
 
 /* Elem handling routines */
 
-#define ListElemAlloc(G,Elem,ElemType) \
-{ \
-if(!(Elem)) \
-  { \
-	 (Elem) = (ElemType*)mmalloc(sizeof(ElemType)); \
-	 ErrChkPtr(G,Elem); \
-  } \
+#define ListElemAlloc(G,Elem,ElemType)		\
+{						\
+    if(!(Elem))					\
+      {							\
+	(Elem) = (ElemType*)mmalloc(sizeof(ElemType));	\
+	ErrChkPtr(G,Elem);				\
+      }							\
 }
+
 #define ListElemCalloc(G,Elem,ElemType) \
-{ \
-if(!(Elem)) \
-  { \
-	 (Elem) = (ElemType*)mcalloc(sizeof(ElemType),1); \
-	 ErrChkPtr(G,Elem); \
-  } \
+{						\
+  if(!(Elem))						  \
+    {							  \
+      (Elem) = (ElemType*)mcalloc(sizeof(ElemType),1);	  \
+      ErrChkPtr(G,Elem);				  \
+    }							  \
 }
 
 #define ListElemInit(List,Link) (List)->Link = NULL
@@ -144,11 +145,11 @@ if(!(Elem)) \
  */
 
 /* Create the circular, doubly linked list w/a sentinel node */
-#define DListInit(List, Pre, Post, ElemType) \
+#define DListInit(List, Pre, Post, ElemType)	    \
 do { \
-	List = (ElemType*)malloc(sizeof(ElemType)); \
-	(List)->Pre = (List)->Post = List; \
-} while (0)
+  List = (ElemType*)malloc(sizeof(ElemType));	    \
+  (List)->Pre = (List)->Post = List;		    \
+} while(0)
 
 /* DListInsert -- Insert Elem at head of list
  * List -- any structure with previous and next pointers (a doubly linked list)
@@ -157,46 +158,58 @@ do { \
  * Post -- pointer to next element in list
  */
 #define DListInsert(List,Elem,Pre,Post) \
-do { \
-	(Elem)->Post = List; \
-	(Elem)->Pre = (List)->Pre; \
-	(Elem)->Post->Pre = (Elem); \
-	(Elem)->Pre->Post = (Elem); \
-} while (0)
+do {\
+  (Elem)->Post = List;			\
+  (Elem)->Pre = (List)->Pre;		\
+  (List)->Pre = (Elem);		\
+  (Elem)->Pre->Post = (Elem);	\
+} while(0)
 
-/* DListRemove -- remove Element from the list
+/* DListRemove -- remove Element from the list, do not delete it
  * Elem -- the element to remove
  * Pre  -- the link to the previous element 
  * Post -- the link to the next element
  */
 #define DListRemove(Elem,Pre,Post) \
 do { \
-	if ((Elem)->Pre && (Elem)->Post) { \
-		if ((Elem)->Pre!=(Elem)->Post) { \
-			(Elem)->Pre->Post = (Elem)->Post; \
-			(Elem)->Post->Pre = (Elem)->Pre; \
-		} \
-	} \
-	(Elem)->Pre = (Elem)->Post = NULL; \
-	/*mfree(Elem);*/ \
-	/*Elem=NULL;*/ \
+  if ((Elem)->Pre && (Elem)->Post) {			  \
+      (Elem)->Pre->Post = (Elem)->Post;			  \
+      (Elem)->Post->Pre = (Elem)->Pre;			  \
+  }							  \
+  (Elem)->Pre = (Elem)->Post = NULL;			  \
 } while (0)
 
 /* DListIterate -- Iterate Elem across all items in List using Post as the link to next */
 #define DListIterate(List,Elem,Post) \
-  for((Elem) = (List)->Post; (Elem) != (List); (Elem) = (Elem)->Post)
+    for((Elem) = (List)->Post; (Elem) != (List); (Elem) = (Elem)->Post) 
 
 /* Can similarly do reverse iteration w/Post=Pre */
 
+/* For all these ElemAlloc macros, it calls if(!Elem)
+ * indicating thta all blank incoming Elem's must be initialized
+ * to NULL.  Just calling :ElemType* foo;" won't do.
+ */
+#define DListElemAlloc(G,Elem,ElemType) \
+do {						\
+ if(!(Elem))						\
+   {							\
+     (Elem) = (ElemType*)mmalloc(sizeof(ElemType));	\
+     ErrChkPtr(G,Elem);					\
+   }							\
+ } while (0)
 
-#define DListElemAlloc(G,Elem,ElemType) ListElemAlloc(G,Elem,ElemType)
+#define DListElemCalloc(G,Elem,ElemType) \
+do {							  \
+  if(!(Elem))						  \
+    {							  \
+      (Elem) = (ElemType*)mcalloc(sizeof(ElemType),1);	  \
+      ErrChkPtr(G,Elem);				  \
+    }							  \
+} while (0)
 
-#define DListElemCalloc(G,Elem,ElemType) ListElemCalloc(G,Elem,ElemType)
-
-#define DListElemInit(List,Pre,Post) (List)->(Pre) = (List)->(Post) = NULL
+#define DListElemInit(Elem,Pre,Post) (Elem)->Pre = (Elem)->Post = NULL
 
 #define DListElemFree(Elem) { mfree(Elem); Elem = NULL; }
-
 
 #endif /* _H_ListMacros */
 

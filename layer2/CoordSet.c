@@ -238,9 +238,11 @@ void CoordSetMerge(CoordSet * I, CoordSet * cs)
   int nIndex;
   int a, i0;
 
+  /* calculate new size and make room for new data */
   nIndex = I->NIndex + cs->NIndex;
   I->IdxToAtm = Realloc(I->IdxToAtm, int, nIndex);
   VLACheck(I->Coord, float, nIndex * 3);
+
   for(a = 0; a < cs->NIndex; a++) {
     i0 = a + I->NIndex;
     I->IdxToAtm[i0] = cs->IdxToAtm[a];
@@ -436,6 +438,8 @@ int CoordSetMoveAtom(CoordSet * I, int at, float *v, int mode)
   int result = 0;
   float *v1;
 
+  /* grab the CoordSet's MolecularObject and query
+   * for a discrete load; if so, adjust index. */
   obj = I->Obj;
   if(obj->DiscreteFlag) {
     if(I == obj->DiscreteCSet[at])
@@ -443,6 +447,7 @@ int CoordSetMoveAtom(CoordSet * I, int at, float *v, int mode)
   } else
     a1 = I->AtmToIdx[at];
 
+  /* valid index, then set the new coord */
   if(a1 >= 0) {
     result = 1;
     v1 = I->Coord + 3 * a1;
@@ -465,6 +470,7 @@ int CoordSetMoveAtomLabel(CoordSet * I, int at, float *v, int mode)
   int result = 0;
   LabPosType *lp;
 
+  /* discrete index adjustments  */
   obj = I->Obj;
   if(obj->DiscreteFlag) {
     if(I == obj->DiscreteCSet[at])
@@ -472,6 +478,8 @@ int CoordSetMoveAtomLabel(CoordSet * I, int at, float *v, int mode)
   } else
     a1 = I->AtmToIdx[at];
 
+  /* if label is valid, get the label offset
+   * and set the new position relative to that */
   if(a1 >= 0) {
     if(!I->LabPos)
       I->LabPos = VLACalloc(LabPosType, I->NIndex);
@@ -1010,7 +1018,9 @@ void CoordSetInvalidateRep(CoordSet * I, int type, int level)
   if(level >= cRepInvVisib) {
     I->Obj->RepVisCacheValid = false;
   }
+  /* graphical representations need redrawing */
   if(level == cRepInvVisib) {
+    /* cartoon_side_chain_helper */
     if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
                     cSetting_cartoon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
@@ -1021,6 +1031,7 @@ void CoordSetInvalidateRep(CoordSet * I, int type, int level)
         CoordSetInvalidateRep(I, cRepSphere, cRepInvVisib2);
       }
     }
+    /* ribbon_side_chain_helper */
     if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
                     cSetting_ribbon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
@@ -1031,6 +1042,7 @@ void CoordSetInvalidateRep(CoordSet * I, int type, int level)
         CoordSetInvalidateRep(I, cRepSphere, cRepInvVisib2);
       }
     }
+    /* line_stick helper  */
     if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
                     cSetting_line_stick_helper)) {
       if(type == cRepCyl)
@@ -1050,6 +1062,7 @@ void CoordSetInvalidateRep(CoordSet * I, int type, int level)
   if(level >= cRepInvColor)
     VLAFreeP(I->Color);
 
+  /* invalidate basd on one representation, 'type' */
   if(type >= 0) {               /* representation specific */
     if(type < cRepCnt) {
       int eff_level = level;
@@ -1109,6 +1122,8 @@ void CoordSetInvalidateRep(CoordSet * I, int type, int level)
   if(level >= cRepInvCoord) {   /* if coordinates change, then this map becomes invalid */
     MapFree(I->Coord2Idx);
     I->Coord2Idx = NULL;
+    /* invalidate distances */
+    
   }
   SceneChanged(I->State.G);
 }

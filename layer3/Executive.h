@@ -214,6 +214,7 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name);
 Block *ExecutiveGetBlock(PyMOLGlobals * G);
 CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, char *name);
 ObjectMolecule *ExecutiveFindObjectMoleculeByName(PyMOLGlobals * G, char *name);
+CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType);
 int ExecutiveIterateObject(PyMOLGlobals * G, CObject ** obj, void **hidden);
 void ExecutiveDelete(PyMOLGlobals * G, char *name);
 void ExecutiveDump(PyMOLGlobals * G, char *fname, char *obj);

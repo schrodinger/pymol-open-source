@@ -30,6 +30,9 @@ Z* -------------------------------------------------------------------
 #include"RepAngle.h"
 #include"RepDihedral.h"
 #include"PConv.h"
+#include"ObjectMolecule.h"
+#include"ListMacros.h"
+#include"Selector.h"
 
 static void DistSetUpdate(DistSet * I, int state);
 static void DistSetFree(DistSet * I);
@@ -80,44 +83,85 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
 
 
 /* -- JV */
-int DistSetMove(DistSet * I, int at, float* v, int mode)
+// really, MeasureSetMoveWithObject
+int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule * O)
 {
-  int i;
-  int result = 0;
-  
-  if (!I) {
-    /*printf("DistSet-Move: Error: DistSet passed in was NULL\n");*/
-    return result;
-  }
+  /* TODO:
+   *  3.  Make this multi-threaded
+   */
+  PyMOLGlobals * G = I->State.G;
 
-  
-  if (at>=0) {
-/*    printf("I has %d Distance Atom Indices\n", I->NAtomIndices);*/
-    for (i=0; i<I->NAtomIndices; i++) {
-/*      printf("Looping over NAtomIndices(%d) this atom index is: %d\n", I->NAtomIndices, I->AtomIndices[i]); */
-      if (!I->AtomIndices[i]) {
-/*	printf("DistSet-Move: Error: AtomIndices claimed to have more atoms, but it lied: NAatomIndices=%d, i=%d and is invalid\n", I->NAtomIndices, i); */
-	/*return 0;*/
-      }
-      if (at==I->AtomIndices[i]) {
-/*	printf("DistSet-Move: Found distance object for this atom index\n"); */
-	if (mode) {
-	  add3f(v, I->Coord + 3*i, I->Coord + 3*i);
-	  result = 1;
-	}
-	else {
-	  copy3f(v, I->Coord + 3*i);
-	  result = 1;
+  int a, idx, rVal=0;
+  float *src, *dst;
+  CMeasureInfo * memb = NULL;
+  CoordSet * cs;
+
+  PRINTFD(G, FB_DistSet)
+    " DistSet: adjusting distance vertex\n" ENDFD;
+
+  /* If the user doesn't provide the Object O, we should consider
+   * looping over all atoms in Selector->Table instead of bailing */
+  if (!I || !O) return 0;
+
+  DListIterate(I->MeasureInfo, memb, next)
+    {
+      /* if this distance set belongs to this object */
+      if (memb && memb->obj==O) {
+	for (a=0; a<O->NAtom; a++ ) {
+	  /* matched on OBJ above and now ATOM ID within the object */
+	  if (O->AtomInfo[a].id == memb->id) {
+
+	    /* if the state we found in our record could be right */
+	    if (memb->state < O->NCSet) {
+	      /* get the coordinate set for this state */
+	      cs = O->CSet[memb->state];
+	      
+	      /* get proper index based on state and discrete flags */
+	      if (O->DiscreteFlag) {
+		if (cs==O->DiscreteCSet[a]) {
+		  idx = O->DiscreteAtmToIdx[a];
+		} else {
+		  idx = -1;
+		}
+	      } else {
+		idx = cs->AtmToIdx[a];
+	      }
+
+	      /* given a valid index, update the coordinate, finally */
+	      if (idx>=0) {
+		/* valid offset */
+		float * varDst = NULL;
+		if (memb->measureType==cRepDash && memb->offset < I->NIndex) {
+		  varDst = I->Coord;
+		  I->fInvalidateRep(I, cRepDash, cRepInvCoord);
+		} else if (memb->measureType==cRepAngle && memb->offset < I->NAngleIndex) {
+		  varDst = I->AngleCoord;
+		  I->fInvalidateRep(I, cRepAngle, cRepInvCoord);
+		} else if (memb->measureType==cRepDihedral && memb->offset < I->NDihedralIndex) {
+		  varDst = I->DihedralCoord;
+		  I->fInvalidateRep(I, cRepDihedral, cRepInvCoord);
+		}
+		// update the coordinates
+		if (varDst) {
+		  src = cs->Coord + 3 * idx;
+		  dst = varDst + 3 * memb->offset;
+		  copy3f(src,dst);
+		  
+		  // no matter what, update labels
+		  I->fInvalidateRep(I, cRepLabel, cRepInvCoord);
+		  rVal |= 1;
+		}
+	      }
+	    }
+	  }
 	}
       }
     }
-  } else {
-/*    printf("Invalid atom identifier\n"); */
-    return result;
-  }
   
-/*  printf("DistSet-Move: Out of DistSet::Move\n"); */
-  return result;
+  PRINTFD(G, FB_DistSet)
+    " DistSet: done updating distance set's vertex\n" ENDFD;
+
+  return rVal;
 }
 
 int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
@@ -268,6 +312,7 @@ static void DistSetInvalidateRep(DistSet * I, int type, int level)
   int a;
   PRINTFD(I->State.G, FB_DistSet)
     " DistSetInvalidateRep: entered.\n" ENDFD;
+  /* if representation type is specified, adjust it */
   if(type >= 0) {
     if(type < I->NRep) {
       SceneChanged(I->State.G);
@@ -277,6 +322,7 @@ static void DistSetInvalidateRep(DistSet * I, int type, int level)
       }
     }
   } else {
+    /* reset all representation types */
     for(a = 0; a < I->NRep; a++) {
       SceneChanged(I->State.G);
       if(I->Rep[a]) {
@@ -303,24 +349,33 @@ static void DistSetInvalidateRep(DistSet * I, int type, int level)
 /*========================================================================*/
 static void DistSetUpdate(DistSet * I, int state)
 {
-
+  /* status bar 0% */
   OrthoBusyFast(I->State.G, 0, I->NRep);
   if(!I->Rep[cRepDash]) {
+    /* query the dist set looking for the selected atoms for this distance,
+     * then update the *coords */
     I->Rep[cRepDash] = RepDistDashNew(I);
     SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepLabel]) {
+    /* query the dist set looking for the selected atoms for this distance,
+     * then update the *coords */
     I->Rep[cRepLabel] = RepDistLabelNew(I, state);
     SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepAngle]) {
+    /* query the angle set looking for the selected atoms for this distance,
+     * then update the *coords */
     I->Rep[cRepAngle] = RepAngleNew(I);
     SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepDihedral]) {
+    /* query the dihedral set looking for the selected atoms for this distance,
+     * then update the *coords */
     I->Rep[cRepDihedral] = RepDihedralNew(I);
     SceneInvalidate(I->State.G);
   }
+  /* status bar 100% */
   OrthoBusyFast(I->State.G, 1, 1);
 }
 
@@ -391,10 +446,7 @@ DistSet *DistSetNew(PyMOLGlobals * G)
   I->NLabel = 0;
   for(a = 0; a < I->NRep; a++)
     I->Rep[a] = NULL;
-  /* -- JV */
-  I->AtomIndices = VLAlloc(int, 2);
-  I->NAtomIndices = 0;
-  /* -- JV end */
+  DListInit(I->MeasureInfo, prev, next, CMeasureInfo);
   return (I);
 }
 
@@ -415,6 +467,7 @@ static void DistSetStrip(DistSet * I)
 static void DistSetFree(DistSet * I)
 {
   int a;
+  CMeasureInfo * ptr, *target;
   for(a = 0; a < I->NRep; a++)
     if(I->Rep[a])
       I->Rep[a]->fFree(I->Rep[a]);
@@ -425,8 +478,17 @@ static void DistSetFree(DistSet * I)
     VLAFreeP(I->LabPos);
     VLAFreeP(I->Coord);
     VLAFreeP(I->Rep);
-    VLAFreeP(I->AtomIndices); /* -- JV */
-		/* need to find and decrement the number of dist sets on the objects */
+    if (I->MeasureInfo) {
+      ptr = I->MeasureInfo->next;
+      while(ptr != I->MeasureInfo) {
+	target = ptr;
+	ptr = ptr->next;
+	DListRemove(target,prev,next);
+	DListElemFree(target);
+	target = NULL;
+      }	
+    }
+      /* need to find and decrement the number of dist sets on the objects */
     SettingFreeP(I->Setting);
     OOFreeP(I);
   }

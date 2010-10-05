@@ -22,21 +22,20 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Color.h"
 
-
 /* NOTE: "Dist" names & symbols should be updated to "Measurement" */
 
 typedef struct ObjectDist {
-	/* base class, this IS-A CObject */
+  /* base class, this IS-A CObject */
   CObject Obj;
-	/* Array of pointers to DistSets */
+  /* Array of pointers to DistSets */
   struct DistSet **DSet;
-	/* number of dist sets */
+  /* number of dist sets */
   int NDSet;
-	/* current dist set */
+  /* current dist set */
   int CurDSet;
-	/* ptr to next, if in list */
-	struct ObjectDist* next;
-	struct ObjectDist* prev;
+  /* ptr to next, if in list */
+  //  struct ObjectDist* next;
+  //  struct ObjectDist* prev;
 } ObjectDist;
 
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
@@ -55,18 +54,18 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
 int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v);
 int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode,
                         int log);
-/* -- JV */
-int ObjectDistMove( ObjectDist* I, int state, int index, float* v, int mode, int log);
-/* -- JV end */
 
 ObjectDist *ObjectDistNew(PyMOLGlobals * G);
 void ObjectDistInvalidateRep(ObjectDist * I, int rep);
 PyObject *ObjectDistAsPyList(ObjectDist * I);
 int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** result);
 
-struct M4XBondType;
+/* -- JV -- dyndist */
+/* An ObjectMolecule moved, causing this function to be called */
 struct ObjectMolecule;
+int ObjectDistMoveWithObject(ObjectDist * I, struct ObjectMolecule * O);
 
+struct M4XBondType;
 ObjectDist *ObjectDistNewFromM4XBond(PyMOLGlobals * G, ObjectDist * oldObj,
                                      struct ObjectMolecule *objMol,
                                      struct M4XBondType *hbond, int n_hbond,

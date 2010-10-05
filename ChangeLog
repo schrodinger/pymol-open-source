@@ -4,7 +4,16 @@ CHANGE LOG
 
 2010-10-02 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* Fully implemented dynamic measures; enable by turning on
+	"dynamic_measures"--disabled by default for testing
+
+	* Setting for surface residues
+
+
+2010-10-02 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* Measurement wizard dihedral fix
+
 
 2010-09-23 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 

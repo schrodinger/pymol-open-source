@@ -201,15 +201,30 @@ char *ParseWordNumberCopy(char *q, char *p, int n)
 }
 
 
-/*========================================================================*/
+/*========================================================================
+ * ParseWord
+ *  Copy first word from p into q with fewer than n letters
+ * PARAMS
+ *  char* q
+ *    destination; will contain the first word from p
+ *  char* p
+ *    source; comes in as a string of tokens
+ *  RETURNS
+ *    p modified so it points to one character past the end of the first
+ *    word of p.  Eg.  "im a temp selection" => " a temp selection" and
+ *    the return value *q = "im"
+ */
 char *ParseWord(char *q, char *p, int n)
 {                               /* word copy, across lines */
+  /* increment ptr past non character input, like spaces and line feeds, bells. */
   while(*p) {
     if(*p <= 32)
       p++;
     else
       break;
   }
+  /* copy p to q stopping when we hit a space, or run out of 
+   * space (memory) according to the limit n */
   while(*p) {
     if(*p <= 32)
       break;

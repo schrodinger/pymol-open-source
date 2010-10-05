@@ -3063,11 +3063,12 @@ void SceneDraw(Block * block) /* returns true if scene was drawn (using a cached
 
     I->ButtonsShown = false;
 
+    /* is the text/overlay (ESC) on? */
     overlay = OrthoGetOverlayStatus(G);
     text = (int) SettingGet(G, cSetting_text);
 
     if(((!text) || overlay) && (I->CopyType == true) && I->Image && I->Image->data) {
-
+      /* show transparent bg as checkboard? */
       int show_alpha = SettingGetGlobal_b(G, cSetting_show_alpha_checker);
       float *bg_color = SettingGetfv(G, cSetting_bg_rgb);
       unsigned int bg_rr, bg_r = (unsigned int) (255 * bg_color[0]);
@@ -5521,10 +5522,12 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
                   ObjectMoleculeMoveAtom((ObjectMolecule *) obj,
                                          SettingGetGlobal_i(G, cSetting_state) - 1,
                                          I->LastPicked.src.index, v2, 1, log_trans);
-									/* -- JV - if this object knows about distances, then move them if necessary */
-									/* check the dynamic_measures setting and make sure the object has a distance measure, first  */
-									if (SettingGetGlobal_i(G, cSetting_dynamic_measures)) 
-										ObjectMoleculeMoveDist( (ObjectMolecule *) obj, SettingGetGlobal_i(G, cSetting_state)-1, I->LastPicked.src.index, v2, 1, log_trans);
+		  /* -- JV - if this object knows about distances, then move them if necessary */
+		  /* check the dynamic_measures setting and make sure the object has a distance measure, first  */
+		  /* obviated by new method
+		  if (SettingGetGlobal_i(G, cSetting_dynamic_measures)) 
+		    ObjectMoleculeMoveDist( (ObjectMolecule *) obj, SettingGetGlobal_i(G, cSetting_state)-1, I->LastPicked.src.index, v2, 1, log_trans);
+		  */
                   SceneInvalidate(G);
                 }
               } else {
@@ -7254,6 +7257,8 @@ void SceneUpdate(PyMOLGlobals * G, int force)
             if(rec->obj->fGetNFrame) {
               stop = rec->obj->fGetNFrame(rec->obj);
             }
+	    /* set start/stop to define the range for this object
+	     * depending upon various build settings */
             ObjectAdjustStateRebuildRange(rec->obj, &start, &stop);
             if(min_start < 0) {
               min_start = start;

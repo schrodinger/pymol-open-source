@@ -874,6 +874,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_neighbor_cutoff            638
 #define cSetting_heavy_neighbor_cutoff      639
 #define cSetting_polar_neighbor_cutoff      640
+#define cSetting_surface_residue_cutoff     641
 
 /* when you add a new setting also remember:
    layer1/Setting.c

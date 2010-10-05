@@ -194,6 +194,7 @@ Rep *RepDistDashNew(DistSet * ds)
       v1 = ds->Coord + 3 * a;
       v2 = ds->Coord + 3 * (a + 1);
 
+      /* vector from v2->v1 */
       subtract3f(v2, v1, d);
 
       l = (float) length3f(d);
@@ -201,6 +202,7 @@ Rep *RepDistDashNew(DistSet * ds)
       if(l > R_SMALL4) {
 
         copy3f(v1, d1);
+	/* this makes d the direction vector of the distance measure from v2->v1 */
         normalize3f(d);
 
         if(dash_gap > R_SMALL4) {

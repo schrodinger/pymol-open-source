@@ -22,6 +22,23 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"PyMOLObject.h"
 
+typedef struct CMeasureInfo {
+  /* ObjectMolecule-level atom ID */
+  int id;
+  /* offset into this distance set's Coord list */
+  int offset;
+  /* The ObjectMolecule in which this atom lives */
+  struct ObjectMolecule* obj;
+  /* save object state */
+  int state;
+  /* Global selection ID */
+  int selection;
+  /* distance, angle, or dihedral */
+  int measureType;
+  struct CMeasureInfo* prev;
+  struct CMeasureInfo* next;
+} CMeasureInfo;
+
 typedef struct DistSet {
   void (*fUpdate) (struct DistSet * I, int state);
   void (*fRender) (struct DistSet * I, RenderInfo *);
@@ -44,8 +61,7 @@ typedef struct DistSet {
   float *DihedralCoord;
   int NDihedralIndex;
   /* -- JV */
-  int* AtomIndices;
-  int NAtomIndices;
+  CMeasureInfo* MeasureInfo;
   /* -- JV end */
 } DistSet;
 
@@ -58,6 +74,6 @@ int DistSetGetExtent(DistSet * I, float *mn, float *mx);
 int DistSetMoveLabel(DistSet * I, int at, float *v, int mode);
 int DistSetGetLabelVertex(DistSet * I, int at, float *v);
 /* -- JV */
-int DistSetMove(DistSet* I, int at, float* v, int mode);
+int DistSetMoveWithObject(DistSet* I, struct ObjectMolecule * O);
 /* -- JV end */
 #endif

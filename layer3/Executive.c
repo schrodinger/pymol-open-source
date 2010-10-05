@@ -9097,14 +9097,14 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, char *nam,
   ObjectDist *obj;
   CObject *anyObj = NULL;
   *result = 0.0F;
-	/* shortcut for duplicate selections */
+  /* shortcut for duplicate selections */
   sele1 = SelectorIndexByName(G, s1);
   if(!WordMatch(G, s2, "same", true))
     sele2 = SelectorIndexByName(G, s2);
   else {
     sele2 = sele1;
   }
-	/* if the distance 'name' we provided exists, overwrite it, by deleting it by its base class */
+  /* if the distance 'name' we provided exists, overwrite it, by deleting it by its base class */
   if((sele1 >= 0) && (sele2 >= 0)) {
     anyObj = ExecutiveFindObjectByName(G, nam);
     if(anyObj)
@@ -9112,11 +9112,12 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, char *nam,
         ExecutiveDelete(G, nam);
         anyObj = NULL;
       }
-		/* create a new distance from the two selections */
+    /* create a new distance from the two selections */
     obj = ObjectDistNewFromSele(G, (ObjectDist *) anyObj,
                                 sele1, sele2, mode, cutoff, labels, reset, result, state);
-		/* if the distance was created, add it to the object list and manage it
-		 * otherwise, complain and do nothing */
+    /* could insert obj into sele1's mol's object's DistList and sele2's mol's object's DistList */
+    /* if the distance was created, add it to the object list and manage it
+     * otherwise, complain and do nothing */
     if(!obj) {
       if(!quiet)
         ErrMessage(G, "ExecutiveDistance", "No such distances found.");
@@ -14227,6 +14228,35 @@ CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, char *name)
   return (obj);
 }
 
+/*========================================================================*/
+/* returns NULL if none found */
+CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType) {
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  CObject *obj = NULL;
+  int n = 0;
+  CObject** rVal = VLAlloc(CObject*, 1);
+
+  // loop over all known objects
+  while(ListIterate(I->Spec,rec,next)) {
+    // make sure it exists and is the right type
+    if (rec->obj && rec->type==cExecObject) {
+      if(rec->obj->type==objType) {
+	// this could be optimized
+	VLACheck(rVal, CObject*, n);
+	*(rVal+n) = rec->obj;
+	n++;
+      }
+    }
+  }
+  VLASize(rVal, CObject*, n);
+  if (n==0) {
+	VLAFree(rVal);
+    return NULL;
+  }
+  else
+    return rVal;
+}
 
 /*========================================================================*/
 ObjectMap *ExecutiveFindObjectMapByName(PyMOLGlobals * G, char *name)
