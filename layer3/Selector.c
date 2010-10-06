@@ -167,20 +167,6 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * o
                                             int n_idx, int numbered_tags);
 
 
-void DDListInsert(CMeasureInfo* List, CMeasureInfo* Elem) {
-  Elem->next = List;			
-  Elem->prev = List->prev;		
-  List->prev = Elem;		
-  Elem->prev->next = Elem;	
-}
-void DDListElemInit(CMeasureInfo* ptr) {
-  if (!ptr) return;
-	ptr->prev = NULL;
-	ptr->next = NULL;
-
-}
-
-
 static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offset)
 {
   if(I->SeleBaseOffsetsValid) {
@@ -11647,8 +11633,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 		/* Init/Add the elem to the DistInfo list */
 		DListElemAlloc(G, atom1Info, CMeasureInfo);
 		DListElemAlloc(G, atom2Info, CMeasureInfo);
-		DDListElemInit(atom1Info);
-		DDListElemInit(atom2Info);
+		DListElemInit(atom1Info,prev,next);
+		DListElemInit(atom2Info,prev,next);
 		atom1Info->id = ai1->id;  /* unique, object-local atom ID */
 		atom2Info->id = ai2->id;
 		atom1Info->offset = nv;  /* offset into this DSet's Coord */
@@ -11661,10 +11647,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 		atom2Info->selection = -1; /* unused? */
 		atom1Info->measureType = cRepDash; // DISTANCE-dash
 		atom2Info->measureType = cRepDash; // DISTANCE-dash
-//		DDListInsert(ds->MeasureInfo, atom1Info, prev, next);
-//		DDListInsert(ds->MeasureInfo, atom2Info, prev, next);
-		DDListInsert(ds->MeasureInfo, atom1Info);
-		DDListInsert(ds->MeasureInfo, atom2Info);
+		DListInsert(ds->MeasureInfo, atom1Info, prev, next);
+		DListInsert(ds->MeasureInfo, atom2Info, prev, next);
 
 		/* we have a distance we want to keep */
                 dist_cnt++;
@@ -11873,6 +11857,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
                         bonded12 = ObjectMoleculeAreAtomsBonded2(obj1, at1, obj2, at2);
 
                         for(i3 = 0; i3 < n3; i3++) {
+			  atom1Info = atom2Info = atom3Info = NULL;
                           a3 = list3[i3];
 
                           if((a1 != a2) && (a2 != a3) && (a1 != a3)) {
@@ -12172,7 +12157,6 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
           a1 = list1[i1];
           at1 = I->Table[a1].atom;
           obj1 = I->Obj[I->Table[a1].model];
-
           if(state1 < obj1->NCSet) {
             cs1 = obj1->CSet[state1];
 
@@ -12240,6 +12224,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
                                     ObjectMoleculeAreAtomsBonded2(obj2, at2, obj3, at3);
                                   if(!mode || ((mode == 1) && bonded23))
                                     for(i4 = 0; i4 < n4; i4++) {
+				      atom1Info = atom2Info = atom3Info = atom4Info = NULL;
                                       a4 = list4[i4];
 
                                       if((a1 != a2) && (a1 != a3) && (a1 != a4)
