@@ -29,8 +29,6 @@ if __name__=='pymol.fitting':
 		'''
 DESCRIPTION
 
-	NOTE: This feature is experimental and unsupported.
-	
 	"cealign" aligns two proteins using the CE algorithm.
 
 USAGE 
@@ -38,8 +36,9 @@ USAGE
 	cealign target, mobile
 
 NOTES
+        The original algorithm has two settings (D0, and D1) for cutoffs and one window size.  We use their default settings (D0=3.0 Angstroms; D1=4.0 Angstroms; Window size=8) which were empircally determined through tests for speed and accuracy.
+	Reference: Shindyalov IN, Bourne PE (1998) Protein structure alignment by incremental combinatorial extension (CE) of the optimal path. Protein Engineering 11(9) 739-747.
 
-	Options coming soon.
 	
 EXAMPLES
 
