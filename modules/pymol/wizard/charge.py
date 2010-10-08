@@ -47,6 +47,8 @@ class Charge(Wizard):
         self.menu['mode']=smm
         
         self.memory = 0
+
+        _self.edit_mode()
             
 
     def get_panel(self):

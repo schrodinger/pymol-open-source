@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2010-10-08 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* charge wizard fix
+
+
 2010-10-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* memory fix on angles and dihedrals
