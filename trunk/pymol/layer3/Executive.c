@@ -5513,7 +5513,9 @@ int ExecutiveSmooth(PyMOLGlobals * G, char *name, int cycles,
 
   sele = SelectorIndexByName(G, name);
 
+  /* given a valid selection */
   if(sele >= 0) {
+    /* count the number of states over which to smooth */
     int max_state = ExecutiveCountStates(G, name) - 1;
     if(last < 0)
       last = max_state;
@@ -5635,6 +5637,7 @@ int ExecutiveSmooth(PyMOLGlobals * G, char *name, int cycles,
                 /*if(c==0) printf("averaging from slot %d\n",st); */
                 cnt += flag0[(n_atom * st) + c];
                 v0 = coord0 + 3 * (n_atom * st + c);
+		/* atom's avg position */
                 add3f(sum, v0, sum);
               }
               if(cnt) {
@@ -14233,7 +14236,6 @@ CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, char *name)
 CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType) {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
-  CObject *obj = NULL;
   int n = 0;
   CObject** rVal = VLAlloc(CObject*, 1);
 

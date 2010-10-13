@@ -139,7 +139,6 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
       PRINTFB(G, FB_Errors, FB_ObjectMolecule)
         " ObjectMolecule: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
     } else {
-
       int natoms;
       molfile_timestep_t timestep;
       void *file_handle;
@@ -150,10 +149,15 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
       timestep.velocities = NULL;
 
       file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
+
       if(!file_handle) {
         PRINTFB(G, FB_Errors, FB_ObjectMolecule)
           " ObjectMolecule: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
+      } else if (natoms!=obj->NAtom) {
+	PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+          " ObjectMolecule: plugin '%s' cannot open file because the number of atoms in the object (%d) did not equal the number of atoms in the '%s' (%d) file.\n", plugin_type, obj->NAtom, plugin_type, natoms, fname ENDFB(G);
       } else if(cs_tmpl) {
+	/* by this point, we have opened the DCD file, and we have a valid topology file (obj->CSet[0] exists) */
         CoordSet *cs = CoordSetCopy(cs_tmpl);
         /*        printf("%p\n",file_handle); */
         timestep.coords = (float *) cs->Coord;
@@ -163,9 +167,12 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
           int n_avg = 0;
           int ncnt = 0;
 
+	  /* read_next_timestep fills in &timestep for each iteration; we need
+	   * to copy that out to a new CoordSet, each time. */
           while(!plugin->read_next_timestep(file_handle, natoms, &timestep)) {
             cnt++;
-
+	    /* start at the 'start'-th frame; skip 'start' frames,
+	     * and skip every interval/icnt frames */
             if(cnt >= start) {
               icnt--;
               if(icnt > 0) {
@@ -175,7 +182,6 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                 icnt = interval;
                 n_avg++;
               }
-
               if(icnt == interval) {
                 if(n_avg < average) {
                   PRINTFB(G, FB_Details, FB_ObjectMolecule)
@@ -192,24 +198,20 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                       *(fp++) /= n_avg;
                     }
                   }
-
                   /* add new coord set */
-                  if(cs->fInvalidateRep)
-                    cs->fInvalidateRep(cs, cRepAll, cRepInvRep);
-                  if(frame < 0)
-                    frame = obj->NCSet;
-                  if(!obj->NCSet) {
-                    zoom_flag = true;
-                  }
+                  if(cs->fInvalidateRep) cs->fInvalidateRep(cs, cRepAll, cRepInvRep);
+                  if(frame < 0) frame = obj->NCSet;
+                  if(!obj->NCSet) zoom_flag = true;
 
-                  VLACheck(obj->CSet, CoordSet *, frame);
-                  if(obj->NCSet <= frame)
-                    obj->NCSet = frame + 1;
-                  if(obj->CSet[frame])
-                    obj->CSet[frame]->fFree(obj->CSet[frame]);
+		  /* make sure we have room for 'frame' CoordSet*'s in obj->CSet */
+                  VLACheck(obj->CSet, CoordSet, frame); // was CoordSet*
+		  /* bump the object's state count */
+                  if(obj->NCSet <= frame) obj->NCSet = frame + 1;
+		  /* if there's data in this state's coordset, emtpy it */
+                  if(obj->CSet[frame]) obj->CSet[frame]->fFree(obj->CSet[frame]);
+		  /* set this state's coordset to cs */
                   obj->CSet[frame] = cs;
                   ncnt++;
-
                   if(average < 2) {
                     PRINTFB(G, FB_Details, FB_ObjectMolecule)
                       " ObjectMolecule: read set %d into state %d...\n", cnt, frame + 1
@@ -221,12 +223,11 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                       " ObjectMolecule: average loaded into state %d...\n", frame + 1
                       ENDFB(G);
                   }
+                  if((stop > 0) && (cnt >= stop)) break;
+                  if((max > 0) && (ncnt >= max))  break;
                   frame++;
+		  /* make a new cs */
                   cs = CoordSetCopy(cs);        /* otherwise, we need a place to put the next set */
-                  if((stop > 0) && (cnt >= stop))
-                    break;
-                  if((max > 0) && (ncnt >= max))
-                    break;
                   timestep.coords = (float *) cs->Coord;
                   n_avg = 0;
                 }
@@ -235,11 +236,10 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
               PRINTFB(G, FB_Details, FB_ObjectMolecule)
                 " ObjectMolecule: skipping set %d...\n", cnt ENDFB(G);
             }
-          }
+          } /* end while */
         }
         plugin->close_file_read(file_handle);
-        if(cs)
-          cs->fFree(cs);
+        if(cs) cs->fFree(cs);
         SceneChanged(G);
         SceneCountFrames(G);
         if(zoom_flag)
