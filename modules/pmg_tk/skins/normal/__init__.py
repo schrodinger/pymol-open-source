@@ -1386,7 +1386,7 @@ class Normal(PMGSkin):
             "_ editor.attach_amino_acid('pk1','glu')"))
 
         self.menuBar.addmenuitem('Residue', 'command', 'Glutamine',
-                                         label='Glutamine [Alt-N]',
+                                         label='Glutamine [Alt-Q]',
                                          command = lambda s=self: s.cmd.do(
             "_ editor.attach_amino_acid('pk1','gln')"))
 
