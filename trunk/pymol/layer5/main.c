@@ -22,6 +22,7 @@
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #include <signal.h>
+#include <stdafx.h>
 #endif
 
 /* END PROPRIETARY CODE SEGMENT */
@@ -1687,9 +1688,10 @@ static void launch(CPyMOLOptions * options, int own_the_options)
 
     /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-    SetConsoleCtrlHandler(HandlerRoutine,       /* address of handler function */
-                          true  /* handler to add or remove */
+    SetConsoleCtrlHandler(HandlerRoutine,       // address of handler function
+                          true  // handler to add or remove
       );
+    SetConsoleTitle(_T("PyMOL"));
 #endif
 
 #ifdef _PYMOL_SHARP3D
