@@ -76,7 +76,6 @@ typedef struct ObjectMolecule {
   CGO *UnitCellCGO;
   int BondCounter;
   int AtomCounter;
-  //  ObjectDist* DistList;	/* -- JV; head pointer to a doubly linked list of ObjectDistances for this molecule */
   /* not stored */
   struct CSculpt *Sculpt;
   int RepVisCacheValid;
