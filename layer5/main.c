@@ -320,7 +320,7 @@ static void DrawBlueLine(PyMOLGlobals * G)
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef _PYMOL_OSX
-    //glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
+    /*glDisable(GL_SHARED_TEXTURE_PALETTE_EXT); */
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_3D);
@@ -1631,7 +1631,7 @@ void MainCheckWindowFit(PyMOLGlobals * G)
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-BOOL WINAPI HandlerRoutine(DWORD dwCtrlType     //  control signal type
+BOOL WINAPI HandlerRoutine(DWORD dwCtrlType     /*  control signal type */
   )
 {
   switch (dwCtrlType) {
@@ -1687,8 +1687,8 @@ static void launch(CPyMOLOptions * options, int own_the_options)
 
     /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-    SetConsoleCtrlHandler(HandlerRoutine,       // address of handler function
-                          true  // handler to add or remove
+    SetConsoleCtrlHandler(HandlerRoutine,       /* address of handler function */
+                          true  /* handler to add or remove */
       );
 #endif
 

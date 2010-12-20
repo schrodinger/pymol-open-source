@@ -34,8 +34,6 @@ typedef struct ObjectDist {
   /* current dist set */
   int CurDSet;
   /* ptr to next, if in list */
-  //  struct ObjectDist* next;
-  //  struct ObjectDist* prev;
 } ObjectDist;
 
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,

@@ -14239,12 +14239,12 @@ CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType) {
   int n = 0;
   CObject** rVal = VLAlloc(CObject*, 1);
 
-  // loop over all known objects
+  /* loop over all known objects */
   while(ListIterate(I->Spec,rec,next)) {
-    // make sure it exists and is the right type
+    /* make sure it exists and is the right type */
     if (rec->obj && rec->type==cExecObject) {
       if(rec->obj->type==objType) {
-	// this could be optimized
+	/* this could be optimized */
 	VLACheck(rVal, CObject*, n);
 	*(rVal+n) = rec->obj;
 	n++;

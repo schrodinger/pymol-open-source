@@ -2115,6 +2115,16 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL * I, char *color, char *selection, int 
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
+/* -- JV */
+PyMOLreturn_status PyMOL_CmdBackgroundColor(CPyMOL * I, char *value) {
+  int ok = true;
+  PYMOL_API_LOCK {
+    OVreturn_word setting_id;
+  	ExecutiveSetSettingFromString(I->G, cSetting_bg_rgb, value, "", 0, 1, 0);
+  }
+  PYMOL_API_UNLOCK return return_status_ok(ok);
+}
+
 PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I, char *what, char *object_name)
 {
   int ok = true;

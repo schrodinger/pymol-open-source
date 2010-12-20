@@ -83,7 +83,6 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
 
 
 /* -- JV */
-// really, MeasureSetMoveWithObject
 int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule * O)
 {
   /* TODO:
@@ -141,13 +140,13 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule * O)
 		  varDst = I->DihedralCoord;
 		  I->fInvalidateRep(I, cRepDihedral, cRepInvCoord);
 		}
-		// update the coordinates
+		/* update the coordinates */
 		if (varDst) {
 		  src = cs->Coord + 3 * idx;
 		  dst = varDst + 3 * memb->offset;
 		  copy3f(src,dst);
 		  
-		  // no matter what, update labels
+		  /* no matter what, update labels */
 		  I->fInvalidateRep(I, cRepLabel, cRepInvCoord);
 		  rVal |= 1;
 		}

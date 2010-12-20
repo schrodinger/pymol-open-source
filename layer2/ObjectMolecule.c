@@ -6842,7 +6842,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
                                      int sele, float *matrix, int log,
                                      char *sname, int homogenous, int global)
 {
-  // called from "translate [5,5,5], objSele"
+  /* called from "translate [5,5,5], objSele" */
   /* if sele == -1, then the whole object state is transformed */
   PyMOLGlobals *G = I->Obj.G;
   int a, s;
@@ -11445,13 +11445,13 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
 
   /* move measurement objects if the user wants */
   if (SettingGet_b(G, I->Obj.Setting, NULL, cSetting_dynamic_measures)) {
-    // get all distance objects
+    /* get all distance objects */
     ObjectDist** measureList = (ObjectDist**) ExecutiveFindObjectsByType(G, cObjectMeasurement);
 	if (measureList) {
 	  int len = VLAGetSize(measureList);
       int cur = 0;
-      // should I just call rep->invalidate instead and put this 
-      // in the ObjectDistUpdate...?
+      /* should I just call rep->invalidate instead and put this  */
+      /* in the ObjectDistUpdate...? */
       while(len && cur < len) {
 	    ObjectDistMoveWithObject((ObjectDist*) measureList[cur++], I);
       }

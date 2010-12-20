@@ -542,7 +542,6 @@ ObjectDist *ObjectDistNew(PyMOLGlobals * G)
   I->Obj.fDescribeElement = NULL;
   I->CurDSet = 0;
   I->Obj.Color = ColorGetIndex(G, "dash");
-  //  I->next = NULL;
   return (I);
 }
 
@@ -560,7 +559,6 @@ static void ObjectDistReset(PyMOLGlobals * G, ObjectDist * I)
     }
   I->NDSet = 0;
   I->CurDSet = 0; /* -- JV */
-  //  I->next = NULL;
 }
 
 
@@ -574,8 +572,6 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int dist_cnt = 0;
   int n_state1, n_state2, state1, state2;
   ObjectDist *I;
-  int v;
-  ObjectMolecule *om;
   
   /* if the distance name we presented exists and is an object, just
    * overwrite it by resetting it; otherwise intialize the
@@ -832,7 +828,7 @@ void ObjectDistFree(ObjectDist * I)
         I->DSet[a]->fFree(I->DSet[a]);
       I->DSet[a] = NULL;
     }
-  //  VLAFreeP(I->DSet);
+  /*  VLAFreeP(I->DSet); */
   ObjectPurge(&I->Obj);
-  OOFreeP(I); // from OOAlloc
+  OOFreeP(I); /* from OOAlloc */
 }

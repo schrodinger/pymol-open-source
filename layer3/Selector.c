@@ -11645,8 +11645,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 		atom2Info->state = state2;
 		atom1Info->selection = -1; /* unused? */
 		atom2Info->selection = -1; /* unused? */
-		atom1Info->measureType = cRepDash; // DISTANCE-dash
-		atom2Info->measureType = cRepDash; // DISTANCE-dash
+		atom1Info->measureType = cRepDash; /* DISTANCE-dash */
+		atom2Info->measureType = cRepDash; /* DISTANCE-dash */
 		DListInsert(ds->MeasureInfo, atom1Info, prev, next);
 		DListInsert(ds->MeasureInfo, atom2Info, prev, next);
 

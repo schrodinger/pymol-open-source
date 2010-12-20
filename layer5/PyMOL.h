@@ -297,6 +297,8 @@ int PyMOL_DelG3DStream(CPyMOL * I, int *array_ptr);
 
 /* Command API */
 
+PyMOLreturn_status PyMOL_CmdBackgroundColor(CPyMOL * I, char *value);
+
 PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I, char *what, char *object_name);
 
 PyMOLreturn_status PyMOL_CmdLoad(CPyMOL * I, char *content,

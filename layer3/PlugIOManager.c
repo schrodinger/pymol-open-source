@@ -204,7 +204,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                   if(!obj->NCSet) zoom_flag = true;
 
 		  /* make sure we have room for 'frame' CoordSet*'s in obj->CSet */
-                  VLACheck(obj->CSet, CoordSet, frame); // was CoordSet*
+                  VLACheck(obj->CSet, CoordSet, frame); /* was CoordSet* */
 		  /* bump the object's state count */
                   if(obj->NCSet <= frame) obj->NCSet = frame + 1;
 		  /* if there's data in this state's coordset, emtpy it */
