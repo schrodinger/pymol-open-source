@@ -1435,31 +1435,32 @@ CoordSet *CoordSetNew(PyMOLGlobals * G)
 CoordSet *CoordSetCopy(CoordSet * cs)
 {
   int nAtom;
-
+  /* OOAlloc declares and defines, I:
+   * I = ... */
   OOAlloc(cs->State.G, CoordSet);
-
+  /* shallow copy */
   (*I) = (*cs);                 /* NOTE: must deep-copy all pointers in this struct */
-
+  /* deep copy state struct */
   ObjectStateCopy(&cs->State, &I->State);
-
+  /* deep copy & return ptr to new symmetry */
   I->Symmetry = SymmetryCopy(cs->Symmetry);
 
   if(I->PeriodicBox)
     I->PeriodicBox = CrystalCopy(I->PeriodicBox);
-
+  /* copy the coords */
   I->Coord = VLAlloc(float, I->NIndex * 3);
   UtilCopyMem(I->Coord, cs->Coord, sizeof(float) * 3 * I->NIndex);
-
+  /* copy label positions if present in source */
   if(cs->LabPos) {
     I->LabPos = VLACalloc(LabPosType, I->NIndex);
     UtilCopyMem(I->LabPos, cs->LabPos, sizeof(LabPosType) * I->NIndex);
   }
-
+  /* copy ref pos if in source */
   if(cs->RefPos) {
     I->RefPos = VLACalloc(RefPosType, I->NIndex);
     UtilCopyMem(I->RefPos, cs->RefPos, sizeof(RefPosType) * I->NIndex);
   }
-
+  /* copy atom to index mapping, if shallow copied from source */
   if(I->AtmToIdx) {
     nAtom = cs->Obj->NAtom;
     I->AtmToIdx = Alloc(int, nAtom);
@@ -1617,7 +1618,7 @@ void CoordSetFree(CoordSet * I)
     CGOFree(I->SculptCGO);
     VLAFreeP(I->LabPos);
     VLAFreeP(I->RefPos);
-
+    /* free and make null */
     OOFreeP(I);
   }
 }

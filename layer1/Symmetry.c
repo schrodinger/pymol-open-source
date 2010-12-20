@@ -191,11 +191,11 @@ CSymmetry *SymmetryNew(PyMOLGlobals * G)
 
 CSymmetry *SymmetryCopy(CSymmetry * other)
 {
-  OOAlloc(other->G, CSymmetry);
   if(!other) {
-    OOFreeP(I);
+    /*OOFreeP(I);*/
     return NULL;
   }
+  OOAlloc(other->G, CSymmetry);
   UtilCopyMem(I, other, sizeof(CSymmetry));
   I->Crystal = CrystalCopy(I->Crystal);
   I->SymMatVLA = VLACopy(I->SymMatVLA, float);
@@ -209,5 +209,4 @@ void SymmetryUpdate(CSymmetry * I)
 
 void SymmetryDump(CSymmetry * I)
 {
-
 }

@@ -1252,9 +1252,13 @@ void ObjectStateInit(PyMOLGlobals * G, CObjectState * I)
   I->Matrix = NULL;
 }
 
+/* ObjectStateCopy -- deep copy the State struct from src to dst */
 void ObjectStateCopy(CObjectState * dst, CObjectState * src)
 {
+  /* State is a ptr to globals and an array of matrices. */
+  /* Shallow cpy; good enough for G */
   *dst = *src;
+  /* deep copy matrices if necessary */
   if(src->Matrix) {
     dst->Matrix = Alloc(double, 16);
     if(dst->Matrix) {
