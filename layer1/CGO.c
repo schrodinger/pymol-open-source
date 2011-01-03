@@ -1267,14 +1267,14 @@ void CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting *
   float white[] = { 1.0, 1.0, 1.0 };
   float zee[] = { 0.0, 0.0, 1.0 };
   
+  float *n0 = NULL, *n1 = NULL, *n2 = NULL, *v0 = NULL, *v1 = NULL, *v2 = NULL, *c0 =
+    NULL, *c1 = NULL, *c2 = NULL;
+  int mode = -1;
+
   /* workaround; multi-state ray-trace bug */
   if (I)
     pc = I->op;
   else return;
-
-  float *n0 = NULL, *n1 = NULL, *n2 = NULL, *v0 = NULL, *v1 = NULL, *v2 = NULL, *c0 =
-    NULL, *c1 = NULL, *c2 = NULL;
-  int mode = -1;
 
   I->G->CGORenderer->alpha =
     1.0F - SettingGet_f(I->G, set1, set2, cSetting_cgo_transparency);
