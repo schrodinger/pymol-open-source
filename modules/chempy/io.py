@@ -19,6 +19,7 @@ from chempy.lst import LST
 from chempy.pdb import PDB
 from chempy.xyz import XYZ
 from chempy.mol import MOL
+from chempy.mol2 import MOL2
 from chempy.arc import ARC
 from chempy.gms import GMS
 from chempy.mmd import MMD
@@ -33,6 +34,7 @@ lst = LST() # general string-list io
 pdb = PDB()
 xyz = XYZ()
 mol = MOL()
+mol2 = MOL2()
 arc = ARC()
 gms = GMS() # OBSOLETE - PLEASE DO NOT USE
 mmd = MMD()

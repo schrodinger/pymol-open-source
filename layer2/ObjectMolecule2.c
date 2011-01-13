@@ -3831,9 +3831,10 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
 
   if(connect_mode == 2) {       /* force use of distance-based connectivity,
                                    ignoring that provided with file */
-    bondSearchMode = true;
+    bondSearchMode = true;      /* if connect_mode==2 and loading a MOL2, crash! */
     cs->NTmpBond = 0;
-    FreeP(cs->TmpBond);
+    if (cs->TmpBond)
+      FreeP(cs->TmpBond);
   }
 
   /*  FeedbackMask[FB_ObjectMolecule]=0xFF; */

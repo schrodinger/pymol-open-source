@@ -8452,9 +8452,9 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
 
           if(ok) {
             p = ParseWordCopy(cc, p, MAXLINELEN);
-
-            if(sscanf(cc, "%d", &ai->id) != 1)
+            if(sscanf(cc, "%d", &ai->id) != 1) {
               ok = ErrMessage(G, "ReadMOL2File", "bad atom id");
+	    }
           }
           if(ok) {
             p = ParseWordCopy(cc, p, MAXLINELEN);
