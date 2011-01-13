@@ -1,5 +1,4 @@
 
-
 import sys, string
 import re
 import threading
@@ -37,6 +36,17 @@ def _def_ext(ext): # platform-specific default extension handling
     if sys.platform != 'win32': 
         ext = None # default extensions don't work right under X11/Tcl/Tk
     return ext
+
+
+
+## class askfileopenfilter(askopenfilename):
+##     """
+##     Subclasses open file dialog to include filename filtering
+##     """
+##     def __init__(self, initialdir = initdir, filetypes=ftypes, multiple=1):
+##         super(askfileopen, self).__init__( initialdir, filetypes, multiple=multiple)
+        
+
 
 class Normal(PMGSkin):
 
@@ -668,6 +678,34 @@ class Normal(PMGSkin):
                                      label_text="Filter:")
         self.filter_entry.pack(pady=6, fill='x', expand=0, padx=10)
 
+        self.multiple_files_option = Pmw.RadioSelect( self.dialog.interior(),
+                                                      labelpos='w',
+                                                      orient='vertical',
+                                                      selectmode='single',
+                                                      label_text="Save to...",
+                                                      buttontype="radiobutton",
+                                                      )
+        self.multiple_files_option.add("one file")
+        self.multiple_files_option.add("multiple files")
+        self.multiple_files_option.invoke("one file")
+        self.multiple_files_option.pack(side='left', pady=8)
+                                                      
+                                                 
+        self.states_option = Pmw.RadioSelect( self.dialog.interior(),
+                                              labelpos='w',
+                                              orient='vertical',
+                                              selectmode='single',
+                                              label_text='Saved state...',
+                                              buttontype="radiobutton"
+                                              )
+        self.states_option.add("all")
+        self.states_option.add("global")
+        self.states_option.add("object's current")
+        self.states_option.invoke("global")
+        self.states_option.pack(side='right', pady=8)
+                                               
+                                                
+
         # The listbox is created empty.  Fill it now.
         self.update_save_listbox()
 
@@ -679,31 +717,123 @@ class Normal(PMGSkin):
         self.my_show(self.dialog)
         
     def file_save2(self,result):
+        # user hit [CANCEL] button
         if result!='OK':
             self.my_withdraw(self.dialog)
             del self.dialog
+        # user hit [OK] button
         else:
+            # saves multiple as one file
             sels = self.dialog.getcurselection()
-            if len(sels)!=0:
-                sfile = string.join(sels,"_") # +".pdb"
+
+            # save N>1 objects to ONE file
+            if self.multiple_files_option.getvalue()=="one file" and len(sels)>1:
+                # save one or more objects to ONE file
+                if self.multiple_files_option.getvalue()=="one file":
+                    sfile = string.join(sels,"_") # +".pdb"
+                    self.my_withdraw(self.dialog)
+                    del self.dialog
+                    if result=='OK':
+                        sfile = asksaveasfilename(defaultextension = _def_ext(".pdb"),
+                                                  initialfile = sfile,
+                                                  initialdir = self.initialdir,
+                                                  filetypes=[
+                                                      ("PDB File","*.pdb"),
+                                                      ("MOL File","*.mol"),
+                                                      ("MOL2 File","*.mol2"),
+                                                      ("MMD File","*.mmd"),
+                                                      ("PKL File","*.pkl"),
+                                                      ])
+                        if len(sfile):
+                            # maybe use PDBSTRs for saving multiple files to multiple states
+                            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+                            save_sele = string.join(map(lambda x:"("+str(x)+")",sels)," or ")
+                            self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
+                                         "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
+                            self.cmd.save(sfile,"(%s)"%save_sele,quiet=0)
+                            return
+            else:
+                # save to many files
                 self.my_withdraw(self.dialog)
                 del self.dialog
-                if result=='OK':
-                    sfile = asksaveasfilename(defaultextension = _def_ext(".pdb"),
-                                              initialfile = sfile,
-                                              initialdir = self.initialdir,
-                                              filetypes=[
-                        ("PDB File","*.pdb"),
-                        ("MOL File","*.mol"),
-                        ("MMD File","*.mmd"),
-                        ("PKL File","*.pkl"),
-                        ])
-                    if len(sfile):
-                        self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
-                        save_sele = string.join(map(lambda x:"("+str(x)+")",sels)," or ")
-                        self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
-                                  "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
-                        self.cmd.save(sfile,"(%s)"%save_sele,quiet=0)
+
+                state_flag = self.states_option.getvalue()
+
+                for curName in sels:
+                    ## print "Result is: ", result
+                    ## print "Sels is: ", sels
+                    ## print "CurName is: ", curName
+                    ## print "State flag is: ", state_flag
+
+                    # The only special case for saving files is when the user selects a multi-state object
+                    # and wants to save that to multiple files, each state in one file.
+                    doSplit=False
+                    if state_flag=='all':
+                        stateSave = "0"
+                        if len(sels)==1:
+#                            print "User wants to split a file"
+                            doSplit=True
+                    elif state_flag=='global':
+                        stateSave = self.cmd.get_state()
+                    elif state_flag=="object's current":
+                        stateSave = int(self.cmd.get("state",curName))
+#                        print "Saving curren't object's state as: ", stateSave
+                    else: # default to current global
+                        stateSave = "state=", self.cmd.get_state()
+
+                    if result=='OK':
+                        sfile = asksaveasfilename(defaultextension = _def_ext(".pdb"),
+                                                  initialfile = curName,
+                                                  initialdir = self.initialdir,
+                                                  filetypes = [
+                                                      ("PDB File", "*.pdb"),
+                                                      ("MOL File","*.mol"),
+                                                      ("MOL2 File","*.mol2"),
+                                                      ("MMD File","*.mmd"),
+                                                      ("PKL File","*.pkl"),
+                                                      ])
+                        # now save the file (customizing states as necessary)
+#                        print "sfile is: ", sfile
+
+                        if len(sfile):
+                            # maybe use PDBSTRs for saving multiple files to multiple states
+                            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+                            save_sele = str("("+curName+")")
+
+                            if doSplit:
+                                # save each state in "save_sele" to file "sfile" as 'sfile_stateXYZ.pdb'
+                                s = self.cmd.count_states(save_sele)
+#                                print "Nstates to save= %s" % s
+                                for stateSave in range(1,int(s)+1):
+                                    save_file = sfile
+                                    # _state004
+                                    inter = "_state" + string.zfill(str(stateSave), len(str(s))+1)
+#                                    print "inter: ", inter
+                                    # g either MATCHES *.pdb or not.  If so, save, name_stateXYZ.pdb
+                                    g = re.search("(.*)(\..*)$", save_file)
+                                    if g!=None:
+                                        # 1PDB_state004.pdb
+                                        save_file = g.groups()[0] + inter + g.groups()[1]
+#                                        print "g!=None: save_file=> %s" % save_file
+                                    else:
+                                        # user entered a file w/o an extension name: eg, '1abc'
+                                        # this saves to, '1abc_state00XYZ'
+                                        save_file = save_file + inter
+#                                        print "g==None: save_file=> %s" % save_file
+
+#                                    print "Saving to: %s in state %s" % (save_file, stateSave)
+
+                                    self.cmd.log("save %s,(%s)\n"%(save_file,save_sele),
+                                                 "cmd.save('%s','(%s)', state='%s')\n"%(save_file,save_sele,stateSave))
+                                    self.cmd.save(save_file,"(%s)"%save_sele,state=stateSave,quiet=0)
+                            else:
+                                save_file = sfile
+#                                print "Saving one state from one file."
+                                # just save current selection to one file
+                                self.cmd.log("save %s,(%s)\n"%(save_file,save_sele),
+                                             "cmd.save('%s','(%s)', state='%s')\n"%(save_file,save_sele,stateSave))
+                                self.cmd.save(save_file,"(%s)"%save_sele,state=stateSave,quiet=0)
+
 
     def update_save_listbox(self):
         """
