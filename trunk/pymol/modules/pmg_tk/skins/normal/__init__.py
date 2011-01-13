@@ -727,7 +727,7 @@ class Normal(PMGSkin):
             sels = self.dialog.getcurselection()
 
             # save N>1 objects to ONE file
-            if self.multiple_files_option.getvalue()=="one file" and len(sels)>1:
+            if self.multiple_files_option.getvalue()=="one file" and len(sels)>=1:
                 # save one or more objects to ONE file
                 if self.multiple_files_option.getvalue()=="one file":
                     sfile = string.join(sels,"_") # +".pdb"
@@ -750,7 +750,10 @@ class Normal(PMGSkin):
                             save_sele = string.join(map(lambda x:"("+str(x)+")",sels)," or ")
                             self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
                                          "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
-                            self.cmd.save(sfile,"(%s)"%save_sele,quiet=0)
+			    if self.states_option.getvalue()=="all":
+                                self.cmd.save(sfile,"(%s)"%save_sele,state=0,quiet=0)
+			    else:
+                                self.cmd.save(sfile,"(%s)"%save_sele,quiet=0)
                             return
             else:
                 # save to many files
