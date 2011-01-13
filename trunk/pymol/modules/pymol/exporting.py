@@ -25,6 +25,7 @@ if __name__=='pymol.exporting':
     from cmd import _cmd,lock,unlock,Shortcut,QuietException
     from chempy import io
     from chempy.sdf import SDF,SDFRec
+    from chempy.mol2 import MOL2
     from cmd import _feedback,fb_module,fb_mask, \
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
                      is_list, is_dict, is_tuple, loadable
@@ -478,6 +479,8 @@ SEE ALSO
                 format = 'wrl'
             elif re.search("\.idtf$",lc_filename):
                 format = 'idtf'
+            elif re.search("\.mol2$",lc_filename):
+                format = 'mol2'
             else:
                 format = str(format)
         if format=='unknown':
@@ -587,11 +590,27 @@ SEE ALSO
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote %d states to \"%s\"."%(1+last_state-first_state,filename)
-        elif format=='mol': 
+        elif format=='mol':
             io.mol.toFile(_self.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
+        elif format=="mol2":
+            state = int(state)
+            if state==0:
+                first_state = 1
+                last_state = cmd.count_states(selection)
+            else:
+                first_state = state
+                last_state = state
+            recList=[]
+            for state in range(first_state, last_state+1):
+                recList.extend(io.mol2.toList(_self.get_model(selection,state,ref,ref_state),selection=selection,state=state))
+            m = MOL2(cmd=cmd)
+            m.strToFile(recList,filename)
+            r = DEFAULT_SUCCESS
+            if not quiet:
+                print " Save: wrote %d states to \"%s\"."%(1+last_state-first_state,filename)
         elif format=='png':
             r = _self.png(filename,quiet=quiet)
         # refactor below to lift repeated code
