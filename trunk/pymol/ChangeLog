@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2011-01-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* mol2 atom types
+
 2011-01-11 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* mol2 multi-state save bugfix

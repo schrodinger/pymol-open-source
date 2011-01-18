@@ -78,11 +78,11 @@ class MOL2(Storage):
                     "mmff94"        : "MMFF94_CHARGES\n",
                     "user"          : "USER_CHARGES\n" }
 
-    _bondTypes = { "single"         : "1",
-                   "double"         : "2",
-                   "triple"         : "3",
+    _bondTypes = { 1         : "1",
+                   2         : "2",
+                   3         : "3",
                    "amide"          : "am",
-                   "aromatic"       : "ar",
+                   4       : "ar",
                    "dummy"          : "du",
                    "unknown"        : "un",
                    "not_connected"  : "nc" }
@@ -164,14 +164,15 @@ class MOL2(Storage):
             at = model.atom[a]
             molList.append("%d\t%4s\t%.3f\t%.3f\t%.3f\t%2s\t%.3f\n" %
                            (at.index,at.name,at.coord[0],at.coord[1],at.coord[2],
-                            at.symbol, at.q))
+                            at.text_type, at.q))
 
         # RTI BOND
             bt = MOL2._bondTypes
         molList.append(f["bond"])
         for b in range(len(model.bond)):
             bo = model.bond[b]
-            molList.append("%d %d %d %d\n" % (b,1+bo.index[0],1+bo.index[1],bo.order))
+            bOrder = MOL2._bondTypes[bo.order]
+            molList.append("%d %d %d %s\n" % (b,1+bo.index[0],1+bo.index[1],str(bOrder)))
         molList.append("\n")
         return molList
 
