@@ -4,6 +4,10 @@ CHANGE LOG
 
 2011-01-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* Cygwin build fix (thanks Alex)
+
+2011-01-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* mol2 atom types
 
 2011-01-11 Jason Vertrees <Jason.Vertrees@schrodinger.com>

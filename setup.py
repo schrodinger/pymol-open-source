@@ -30,7 +30,9 @@ elif sys.platform=='cygwin':
     # NOTE: this branch not tested in years and may not work...
     inc_dirs=["ov/src",
               "layer0","layer1","layer2",
-              "layer3","layer4","layer5"]
+              "layer3","layer4","layer5",
+	      "modules/cealign/src", 
+	      "modules/cealign/src/tnt" ]
     libs=["glut32","opengl32","glu32","png"]
     pyogl_libs = ["glut32","opengl32","glu32"]
     lib_dirs=["/usr/lib/w32api"]
