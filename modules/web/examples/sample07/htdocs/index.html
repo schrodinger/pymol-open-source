@@ -1,0 +1,168 @@
+<html>
+<head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="-1" />
+<title>Web Services - Sample 07: Using a FORM with PyMOL Web Services </title>
+
+<style><!--
+a
+{ text-decoration:none;
+  padding: 1px;
+  background-color: #dddddd
+}
+span.highlight
+{
+  background-color: yellow
+}
+-->
+</style>
+<script type="text/javascript">
+
+// convenience function for issuing PyMOL methods (one per javascript event);
+
+// for toggling visibility of the IFRAME
+
+function toggle() {
+  var iframe = document.getElementById("pymol_response_iframe");
+  if (iframe.width!=0) {
+    iframe.width=0; iframe.height=0; iframe.frameBorder=0;
+  } else {
+    iframe.width="100%"; iframe.height=100; iframe.frameBorder=1;
+  }
+}
+
+function show(cb) {
+  // reset the action of this form to the appropriate command show or hide
+  if (cb.checked) {
+    cb.form.action = "/apply/pymol.cmd.show";
+  } else {
+    cb.form.action = "/apply/pymol.cmd.hide";
+  }
+  // "representation" is the operative PyMOL keyword; be sure to set its value
+  cb.form.representation.value = cb.value;
+  cb.form.submit();
+}
+
+</script>
+</head>
+<body>
+<h3>Web Services - Sample 07: Using a FORM with PyMOL Web Services</h3>
+
+<a href="javascript:void(0)" onclick="toggle()">toggle iframe</a>
+
+<a href="/apply/_quit">quit pymol</a>
+
+(FireFox only: <a href="javascript:void(0)" onclick="window.open('view-source:' + location.href)">view page source</a>)
+
+<p>
+Here we use an HTML FORM to show how buttons, checkboxes and other
+INPUT elements can be used with PyMOL Web Services.
+This load button is displayed by the following HTML code.
+</p>
+<FORM ACTION="/apply/pymol.cmd.load" TARGET=pymol_response_iframe>
+<INPUT TYPE=SUBMIT VALUE="load"> pept
+<INPUT TYPE=HIDDEN NAME="filename" value="$PYMOL_PATH/test/dat/pept.pdb">
+</FORM>
+<pre>
+&lt;FORM ACTION="/apply/pymol.cmd.load" TARGET=pymol_response_iframe&gt;
+&lt;INPUT TYPE=HIDDEN NAME=filename value="$PYMOL_PATH/test/dat/pept.pdb"&gt;
+&lt;INPUT TYPE=SUBMIT VALUE="load"&gt; pept
+&lt;/FORM&gt;
+</pre>
+In a FORM, the PyMOL command is the FORM's ACTION,
+and each PyMOL command argument is a seperate INPUT element.
+Here are a few other uses.  Use the "view page source" link above
+to see the details of how this is done.
+</p>
+<!-- the ACTION may be changed in show() function, depending on the chekced value -->
+<FORM NAME=checks ACTION="/apply/pymol.cmd.show" TARGET=pymol_response_iframe>
+Show pept as: 
+<INPUT TYPE=HIDDEN NAME="selection" VALUE="pept">
+<INPUT TYPE=HIDDEN NAME="representation" VALUE="">
+<!-- using unique names for each checkbox makes show() javascript easier,
+     but we need to use NAMEs like _sticks, with underscore, to alert
+     PyMOL that these arguments names are to be ignored -->
+<INPUT TYPE=CHECKBOX NAME="_sticks"  VALUE="sticks"  onClick=show(this)>sticks
+<INPUT TYPE=CHECKBOX NAME="_lines"   VALUE="lines"   onClick=show(this) checked>lines
+<INPUT TYPE=CHECKBOX NAME="_spheres" VALUE="spheres" onClick=show(this)>spheres
+<INPUT TYPE=CHECKBOX NAME="_cartoon" VALUE="cartoon" onClick=show(this)>cartoon
+</FORM>
+<FORM ACTION="/apply/pymol.cmd.delete" TARGET=pymol_response_iframe>
+<INPUT TYPE=HIDDEN NAME="name" VALUE="pept">
+<INPUT TYPE=SUBMIT VALUE="delete"> pept
+</FORM>
+<p>
+The previous example had a hard-coded filename, but the filename
+could be selected from a menu, as in:
+<FORM ACTION="/apply/pymol.cmd.load" TARGET=pymol_response_iframe>
+	<INPUT TYPE=SUBMIT VALUE="load">
+	<SELECT NAME=filename>
+	<option value="$PYMOL_PATH/test/dat/1tii.pdb">1tii.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/3al1.pdb">3al1.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/helix_amber.pdb">helix_amber.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/il2.pdb">il2.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/names.pdb">names.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/odd01.pdb">odd01.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/odd02.pdb">odd02.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/pept.pdb">pept.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/small02.pdb">small02.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/tiny.pdb">tiny.pdb</option>
+	<option value="$PYMOL_PATH/test/dat/water.pdb">water.pdb</option>
+	</SELECT>
+	</FORM>
+
+<FORM NAME=checks ACTION="/apply/pymol.cmd.show" TARGET=pymol_response_iframe>
+Show all as: 
+<INPUT TYPE=HIDDEN NAME="representation" VALUE="">
+<INPUT TYPE=CHECKBOX NAME="_lines"   VALUE="lines"   onClick=show(this) checked>lines
+<INPUT TYPE=CHECKBOX NAME="_sticks"  VALUE="ribbon"  onClick=show(this)>ribbon
+<INPUT TYPE=CHECKBOX NAME="_cartoon" VALUE="cartoon" onClick=show(this)>cartoon
+<INPUT TYPE=CHECKBOX NAME="_spheres" VALUE="nonbonded" onClick=show(this) checked>water
+</FORM>
+<FORM ACTION="/apply/pymol.cmd.reinitialize" TARGET=pymol_response_iframe>
+<INPUT TYPE=SUBMIT VALUE="reinitialize">
+</FORM>
+</p>
+
+<p>
+Finally, we see how a file can be uploaded to PyMOL.  Using a
+FORM is currently the only way a file can be read from the local
+machine to be loaded into PyMOL using a web page.
+There are several essential differences when using a FORM intended to
+upload a file to PyMOL.  These are:<UL>
+<LI>The METHOD=POST is required.</LI>
+<LI>The ENCTYPE=multipart/form-data is required.</LI>
+<LI>The command is read_pdbstr instead of load.</LI>
+<LI>Two arguments are required: pdb (the pdb "string") and name (the name to be used for the object).</LI>
+</UL>
+<pre>
+&lt;FORM ACTION="/apply/pymol.cmd.<span class=highlight>read_pdbstr"</span> TARGET=pymol_response_iframe
+ <span class=highlight>METHOD=POST</span> <span class=highlight>ENCTYPE="multipart/form-data"</span>
+PDB File: &lt;INPUT TYPE=FILE <span class=highlight>NAME="pdb"</span>&gt;
+Name: &lt;INPUT TYPE=TEXT <span class=highlight>NAME="name"</span> VALUE="mypdb"&gt;
+&lt;INPUT TYPE=SUBMIT VALUE="load"&gt;
+&lt;/FORM&gt;
+</pre>  
+<p>
+The above HTML displays the form below.
+</p>
+<FORM ACTION="/apply/pymol.cmd.read_pdbstr" TARGET=pymol_response_iframe
+  METHOD=POST ENCTYPE="multipart/form-data">
+PDB File: <INPUT TYPE=FILE NAME="pdb">
+Name: <INPUT TYPE=TEXT NAME="name" VALUE="mypdb">
+<INPUT TYPE=SUBMIT VALUE="load">
+</FORM>
+The checkboxes above that "Show all as:" will also continue to work.
+They have been coded to NOT use a selection keyword, and so they apply to all
+objects in PyMOL.  However, they may not be in sync with the current PyMOL
+display. 
+They can be toggled on and off to get them in sync.
+</p>
+<pre></pre>
+<iframe id="pymol_response_iframe"  name="pymol_response_iframe"
+ src="/apply"
+ width="100%" height="100" frameborder="1"
+ scrolling="auto"></iframe>
+</body>
+</html>

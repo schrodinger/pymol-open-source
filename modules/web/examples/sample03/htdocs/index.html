@@ -1,0 +1,136 @@
+<html>
+<head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="-1" />
+<title>Web Services - Sample 03: Sending Multiple Requests - IFRAME plus JavaScript</title>
+
+<style><!--
+a{text-decoration:none;
+  padding: 1px;
+  background-color: #dddddd}
+--></style>
+
+<script type="text/javascript">
+
+// queue used for sending multiple requests to PyMOL (in order)
+
+var pymol_queue = []
+
+// semaphore for restarting the queue flush cycle
+
+var pymol_active = false;
+
+// method for flushing the queue
+
+function pymol_queue_flush() {
+   if (pymol_queue.length>0) {
+      document.getElementById("pymol_response_iframe").src = pymol_queue.shift(); 
+      pymol_active = true;
+   } else {
+      pymol_active = false;
+   }
+}
+
+// convenience function for populating the queue
+
+function cmd() {
+    for(var i=0; i < arguments.length; i++) {
+        pymol_queue.push( "/apply/pymol.cmd."+ arguments[i] + 
+                          ( arguments[i].indexOf('?') < 0 ? '?' : '&' ) + 
+                          "_ts=" + new Date().getTime());
+    }
+    if(!pymol_active) { 
+        pymol_queue_flush();
+    } 
+}
+
+// for toggling display of output in the IFRAME
+
+function toggle() {
+  var iframe = document.getElementById("pymol_response_iframe");
+  if (iframe.width!=0) {
+    iframe.width=0; iframe.height=0;
+  } else {
+    iframe.width="100%"; iframe.height=100;
+  }
+}
+
+</script>
+
+</head>
+<body>
+<h3>Web Services - Sample 03: Using an IFRAME with JavaScript</h3>
+
+<a href="javascript:void(0)" onclick="toggle()">toggle iframe</a>
+
+<a href="/apply/_quit">quit pymol</a>
+
+(FireFox only: <a href="javascript:void(0)" onclick="window.open('view-source:' + location.href)">view page source</a>)
+
+<p>In order to make it possible to issue multiple PyMOL command from a
+single JavaScript event, we create a queue and use the IFRAME's onload
+method to iteratively request every URL placed on the queue.</p>
+
+<pre>var pymol_queue = [];
+
+var pymol_active = false;
+
+function pymol_queue_flush() {
+   if (pymol_queue.length>0) {
+      document.getElementById("pymol_response_iframe").src = pymol_queue.shift(); 
+      pymol_active = true;
+   } else {
+      pymol_active = false;
+   }
+}</pre>
+
+<p>We then modify the Javascript "cmd" function to accept a list of
+query suffixes, each of which is converted to a unique URL and placed
+on the queue.</p>
+
+<pre>function cmd() {
+    for(var i=0; i < arguments.length; i++) {
+        pymol_queue.push( "/apply/pymol.cmd."+ arguments[i] + 
+                          ( arguments[i].indexOf('?') < 0 ? '?' : '&' ) + 
+                          "_ts=" + new Date().getTime());
+    }
+    if(!pymol_active) {
+        pymol_queue_flush();
+    }
+}</pre>
+
+<p>This approach is probably the simplest practical way to call
+multiple PyMOL methods from a web page without doing JavaScript
+development or relying upon XMLHttpRequest (AJAX).  The downside is
+that you need to manually encode your requests as URL query strings
+with keyword arguments and (where necessary) URL escaping.</p>
+
+<pre><a href="javascript:void(0)" onclick="cmd('set?name=suspend_updates','delete?name=all','reset','load?filename=$PYMOL_PATH/test/dat/1tii.pdb','show?representation=cartoon','show_as?representation=sticks&selection=chain A','orient?selection=chain A&animate=5','unset?name=suspend_updates')">cmd('set?name=suspend_updates',
+    'delete?name=all',
+    'reset',
+    'load?filename=$PYMOL_PATH/test/dat/1tii.pdb',
+    'show?representation=cartoon',
+    'show_as?representation=sticks&amp;selection=chain A',
+    'orient?selection=chain A&amp;animate=5',
+    'unset?name=suspend_updates')</a>
+
+<a href="javascript:void(0)" onclick="cmd('count_atoms')">cmd('count_atoms')</a>
+
+<a href="javascript:void(0)" onclick="cmd('reinitialize')">cmd('reinitialize')</a>
+</pre>
+
+
+<!-- IFRAME for holding the response.  
+  -- Note use of "onload" to flush the queue -->
+
+<iframe id="pymol_response_iframe" 
+ src="/apply"
+ width="100%" height="100" frameborder="0"
+ marginheight="0" marginwidth="0"
+ scrolling="auto"
+ onload="pymol_queue_flush()"></iframe>
+
+</body>
+
+</html>

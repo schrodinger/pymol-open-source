@@ -1,0 +1,126 @@
+<html>
+<head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="-1" />
+<title>Web Services - Sample 11: Multi-Origin with an IFRAME plus JavaScript</title>
+<style><!--
+a{text-decoration:none;
+  padding: 1px;
+  background-color: #dddddd}
+--></style>
+
+<script type="text/javascript">
+
+// queue used for sending multiple requests to PyMOL (in order)
+
+var pymol_queue = []
+
+// semaphore 
+
+var pymol_active = false;
+
+// method for flushing the queue
+
+function pymol_queue_flush() {
+   if (pymol_queue.length>0) {
+      document.getElementById("pymol_response").src = pymol_queue.shift(); 
+      pymol_active = true;
+   } else {
+      pymol_active = false;
+   }
+}
+
+// convenience function for populating the queue
+
+function cmd() {
+    for(var i=0; i < arguments.length; i++) {
+        pymol_queue.push( "http://localhost:8081/apply/pymol.cmd."+ arguments[i] + 
+                          ( arguments[i].indexOf('?') < 0 ? '?' : '&' ) + 
+                          "_ts=" + new Date().getTime());
+    }
+    if(!pymol_active) { 
+        pymol_queue_flush();
+    } 
+}
+
+// for toggling display of output in the IFRAME
+
+function toggle() {
+  var iframe = document.getElementById("pymol_response");
+  if (iframe.width!=0) {
+    iframe.width=0; iframe.height=0;
+  } else {
+    iframe.width="100%"; iframe.height=100;
+  }
+}
+
+</script>
+</head>
+<body>
+
+<h3>Web Services - Sample 11: Multi-Origin with an IFRAME plus JavaScript</h3>
+
+<a href="javascript:void(0)" onclick="toggle()">toggle iframe</a>
+
+<a href="http://localhost:8081/apply/_quit?href">quit pymol</a>
+
+(FireFox only: <a href="javascript:void(0)" onclick="window.open('view-source:' + location.href)">view page source</a>)
+
+<p>This sample application resembles Sample 03, but there are a couple
+of important differences, reflect the fact that we are working with
+multiple origins.</p>
+
+<p>Note that is page should have launched PyMOL when it opened,
+instead of being served up into a new browser window hosted by PyMOL's
+own web server, which should now be running on port 8081.</p>
+
+<p>The port number of the PyMOL web server is controlled by the
+contents of the PWG file which is used as the source content for the
+IFRAME.</p>
+
+<p>The command queuing infrastructure is the same as Sample 03, so we
+have not repeated it here. What has changed, however, is that we now
+need to direct our PyMOL command links at PyMOL's web server instead
+of at the web server hosting this page.  The required change is
+hilighted below in red.</p>
+
+<pre>function cmd() {
+    for(var i=0; i < arguments.length; i++) {
+        pymol_queue.push( "<font color="red">http://localhost:8081</font>/apply/pymol.cmd."+ arguments[i] + 
+                          ( arguments[i].indexOf('?') < 0 ? '?' : '&' ) + 
+                          "_ts=" + new Date().getTime());
+    }
+    if(!pymol_active) {
+        pymol_queue_flush();
+    }
+}</pre>
+
+
+<pre><a href="javascript:void(0)" onclick="cmd('set?name=suspend_updates','delete?name=all','reset','load?filename=$PYMOL_PATH/test/dat/1tii.pdb','show?representation=cartoon','show_as?representation=sticks&selection=chain A','orient?selection=chain A&animate=5','unset?name=suspend_updates')">cmd('set?name=suspend_updates',
+    'delete?name=all',
+    'reset',
+    'load?filename=$PYMOL_PATH/test/dat/1tii.pdb',
+    'show?representation=cartoon',
+    'show_as?representation=sticks&amp;selection=chain A',
+    'orient?selection=chain A&amp;animate=5',
+    'unset?name=suspend_updates')</a>
+
+<a href="javascript:void(0)" onclick="cmd('count_atoms')">cmd('count_atoms')</a>
+
+<a href="javascript:void(0)" onclick="cmd('reinitialize')">cmd('reinitialize')</a>
+</pre>
+
+
+<!-- IFRAME for holding the response.  
+  -- Note use of "onload" to flush the queue -->
+
+<iframe id="pymol_response" name="pymol_response"
+ src="start8081.pwg"
+ width="100%" height="100" frameborder="0"
+ marginheight="0" marginwidth="0"
+ scrolling="auto"
+ onload="pymol_queue_flush()"></iframe>
+</body>
+
+</html>

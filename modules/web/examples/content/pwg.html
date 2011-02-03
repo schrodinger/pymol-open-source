@@ -1,0 +1,81 @@
+<html><head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="0" />
+<title>PyMOL Web Services</title>
+</head>
+<body>
+
+<h3>PyMOL Web GUI (PWG) Files</h3>
+
+<p>We have invented PyMOL Web GUI (PWG) files in order to enable users
+to automatically launch PyMOL on their desktop when they click a link
+or open a web page with a frame referencing a PWG file.</p>
+
+<p>PWG files are associated with a new MIME type (application/x-pymol)
+which binds the PyMOL desktop application to the (.pwg) file
+extension.  This approach works much like other web helper
+applications, such as binding Acrobat Reader for opening .pdf files
+(via the application/x-pdf MIME type).  </p>
+
+<p>Using PyMOL Web GUI files provides a simple way of firing up a
+PyMOL instance for use with the web-based GUI.  This can be done via a
+PWG file stored on the desktop, or via a PWG file linked on a
+web-page.</p>
+
+<p>Normally, the first time a user clicks to download a .pwg file, a
+standard popup appears asking the which application should be
+associated with this file type.  On some platforms (Windows & Mac)
+.pwg files should pre-associated with PyMOL, and thus, the user may
+simply need to confirm this choice (or perhaps choose which copy of
+PyMOL to open).  Once the association has been made, subsequent PWG
+files linked from web pages should automatically start PyMOL.</p>
+
+<p>Using Firefox on Windows, the "Opening start.pwg" popup appears,
+with the "Choose Helper Application" popup appearing after selecting
+"Open with" and "Other..." from the pull down.  You will probably also
+want to select "Do this automatically from now on."
+<br>
+<IMG SRC=mime1.jpg>
+<br>
+After clicking OK on the "Choose Helper Application"  popup, the following popup remains.
+Clicking OK causes PyMOL to open properly using the contents of the PWG file.
+<br>
+<IMG SRC=mime2.jpg>
+</p>
+
+<p>PWG files contain only the minimal amount of information necessary
+for the server to launch and successfully connect with a web browser.</p>
+
+<p>For example, the PWG file which launches Sample11 is merely:</p>
+<pre>
+port 8081
+</pre>
+<p>which tells PyMOL to launch its PyMOL web server on port 8081.
+This assumption in such a scerario is that the current web page will
+direct content to that PyMOL server (and thus, will be subject to the
+browser's multi-origin security restrictions).</p>
+
+<p>In contrast, the PWG file which launches the Sample 01 application is:</p>
+<pre>
+root $PYMOL_PATH/modules/web/examples/sample01/htdocs
+browser
+</pre>
+
+<p>which tells PyMOL to (1) launch its internal web server on a
+dynamically assigned port with a root content directory of
+$PYMOL_PATH/modules/web/examples/sample01/htdocs and (2) open
+up a local browser window pointing at that server instance.  The
+assumption in this scenario is that this newly-opened web page will be
+responsible for sending requests to the PyMOL server (and thus, will
+not be subject to the browser's multi-origin security
+restrictions).</p>
+
+<p>We are considering adding some additional tags into the PWG files
+for purpose of configuring PyMOL's window location and size at the
+time of launch, and for perhaps selectively hiding the various user
+interface elements (when they are not needed).</p>
+
+</body>
+</html>
+

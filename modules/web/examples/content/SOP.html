@@ -1,0 +1,121 @@
+<html><head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="0" />
+<title>PyMOL Web Services</title>
+</head>
+<body>
+<h3>Content and Scripting: Same-origin versus multi-origin (cross-domain)</h3>
+
+<p>
+For simple HTTP requests, it does not matter whether your web pages
+come from the PyMOL server or from another server at your site.  So if
+you are using PyMOL web applications that contain only simple HTTP
+requests, or if you do not need to get results back from PyMOL, then
+this same-origin (same-origin) versus multi-origin issue will not affect you.
+</p>
+
+<p>However, if you need to get results back from PyMOL, typically via
+AJAX and API requests, then there are some limitations.  For security
+reasons, most (if not all) modern browsers do not allow content 
+from one server to interact with content from another server.  For
+AJAX and API requests, this Same-Origin Policy (SOP) requires some attention.</p>
+
+<p>If you want to develop more interactive PyMOL web applications that make use of
+results from PyMOL, this document will give you some background on how to do this
+using a central web server to serve the application.
+<p><b>Same-origin Policy</b> </p>
+<p>
+Web pages routinely contain links to resources
+ (html documents, images, javascript, web-services, etc.)
+from the same server as well as links to resources from remote servers located anywhere on the web.
+While a single web page may even be composed of resources from various servers (sometimes called
+a mashup), JavaScript code from one server is not allowed to interact with
+resources from a different server.
+This <a href="http://en.wikipedia.org/wiki/Same_origin_policy" target=_blank>
+SOP</a>
+ is inherent in most (if not all) modern browsers.
+<blockquote>
+"Simply stated, the SOP states that JavaScript code running on a web page may not interact with any resource not originating from the same web site.  The reason this security policy exists is to prevent malicious web coders from creating pages that steal web users' information or compromise their privacy.  While very necessary, this policy also has the side effect of making web developers' lives difficult."
+</blockquote>
+</p>
+
+<p><b>Same-origin PyMOL web applications</b></p>
+<p>
+Since PyMOL and its web server are running on the user's desktop (localhost), a
+same-origin PyMOL web application would also be run on the desktop.  This can be
+accomplished by writing a web application (html files and associated JavaScript)
+and placing them in a folder accessible by the PyMOL server.
+The first seven
+<a href="../index.html#sample01" target="_blank"> sample applications</a>
+ are implemented like this, residing in folders at
+<code>$PYMOL_PATH/modules/web/examples/sample[0-7]</code> There
+may be future PyMOL web applications delivered with new versions of
+PyMOL.  Of course, you are free to write your own PyMOL web
+applications and store them on each user's machine, or perhaps on a
+central file server accessible to each user's machine.
+</p>
+
+<p><b>Multi-origin PyMOL web applications</b><p>
+<p>
+You can also develop PyMOL web applications that reside on a central server at
+your site. 
+The application will be started by loading a web page from that server.
+The links, AJAX requests or API requests on that page will send requests to
+PyMOL running on the user's desktop (localhost).  PyMOL will execute the command
+and send back a result.  That result can be displayed in a
+FRAME, ignored, or used by the JavaScript in your application.
+However, for PyMOL web applications that come from another server,
+a JavaScript callback approach is necessary to conform to the SOP.
+Several <a href="../index.html#sample11" target="_blank">sample applications</a>
+illustrate this multi-origin approach.
+</p>
+
+<p><b>Information flow and JavaScript callbacks</b></p>
+<p>
+The basic function of an HTTP server is to listen for requests (GET/URL requests
+and POST/FORM requests) and send back HTML documents, images, etc.
+These documents are rendered by the browser, typically on a new page or tab or into
+an existing FRAME.  Using AJAX, it is possible to process the "documents" using
+JavaScript, possibly causing the web page to change dynamically instead of refreshing
+completely.  While the "A" in AJAX stands for asynchronous, it is possible to use
+the AJAX's underlying JavaScript XMLHTTPRequest synchronously, but only when
+the JavaScript issuing the XMLHTTPRequest originates from the same server to which
+the XMLHTTPRequest is being made (same-origin).  A synchronous request means that
+the XMLHTTPRequest will not return until the server has answered the request.
+An asynchronous request means that the call to XMLHTTPRequest will send
+the request to the server and return immediately, before the request is answered.  The document
+or information from the server can be processed by a callback function supplied to
+the XMLHTTPRequest or simply ignored.
+If you are using AJAX directly, or through
+<a href="http://jquery.com/" target="_blank"> JQuery</a> or another JavaScript library, you
+should be familiar with the callback mechanism.
+<p>
+The PyMOL JavaScript API uses XMLHTTPRequest in either synchronous or ansynchronous mode.
+Synchronous mode can only be effectively used for same-origin web applications.
+Asynchronous mode with callbacks can be used for same-origin or multi-origin
+web applications.
+ </p>
+
+<p>Same-origin advantages</p><ul>
+<li>No need to explicitly include host and port in URL links.</li>
+<li>PyMOL results can be handled synchronously in JavaScript using
+simpler programming techniques and avoiding callbacks.</li>
+</ul>
+<p>Same-origin disadvantages</p><ul>
+<li>Application content must be served up from the local machine (localhost).</li>
+</ul>
+
+<p>Multi-origin advantages</p><ul>
+<li>Allows development of PyMOL web applications maintained and run from one central server.</li>
+<li>No need to update files on users' machines when web application is updated.</li>
+</ul>
+
+<p>Multi-origin disadvantages</p><ul>
+<li>Must explicitly include the hostname (localhost) and port number in URL links.</li>
+<li>PyMOL results must be handled asynchronously in JavaScript using callbacks.</li>
+<li>The execution order of pending requests is random on certain browers (e.g. IE6).</li>
+</ul>
+
+</body>
+</html>

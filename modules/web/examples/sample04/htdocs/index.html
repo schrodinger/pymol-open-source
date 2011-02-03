@@ -1,0 +1,250 @@
+<HTML>
+<HEAD>
+<style type="text/css">
+table.inner
+{
+    /*width: 100%;*/
+    border-spacing: 4px;
+}
+td.inner
+{
+    /*font-family: courier;*/
+    text-align: right;
+    border-style: none;
+    background-color: #dfd;
+    padding: 4px;
+}
+table.outer
+{
+    border-style: solid;
+    border-width: 0 0 1px 1px;
+    border-collapse: collapse;
+}
+td.outer
+{
+    border-style: solid;
+    border-width: 1px 1px 0 0;
+    margin: 0;
+    padding: 4px;
+}
+tr.odd
+{
+    background-color: #fff
+}
+tr.even
+{
+    background-color: #fff
+}
+td.pdbname
+{
+    margin: 2;
+    padding: 2;
+}
+span.pdbname
+{
+    font-family: courier
+}
+input.pdbname
+{
+    padding: 0 0;
+    margin: 0 0 0 0; 
+    border: 0;
+}
+a:link
+{
+    text-decoration: none
+}
+a:visited
+{
+    text-decoration: none
+}
+</style>
+</HEAD>
+<script src=hash.js></script>
+<script src=pdbshow.js></script>
+<script>
+var pymol_queue = [];
+var pymol_active = false;
+
+function pymol_queue_flush() { 
+   if (pymol_queue.length>0) {
+      document.getElementById("pymol_response").src = pymol_queue.shift();
+      pymol_active = true;
+   } else {
+      pymol_active = false;
+   }
+}
+
+function cmd() {
+    for(var i=0; i < arguments.length; i++) {
+        pymol_queue.push( "/apply/pymol.cmd."+ arguments[i] + 
+                          ( arguments[i].indexOf('?') < 0 ? '?' : '&' ) + 
+                          "_ts=" + new Date().getTime());
+    }
+    if(!pymol_active) {
+       pymol_queue_flush(); 
+    }
+}
+</script>
+<BODY>
+<H1>Kinase explorer</H1>
+<IFRAME ID=pymol_response HEIGHT=0 WIDTH=0 onLoad='pymol_queue_flush()'></IFRAME>
+<!--<INPUT TYPE=BUTTON
+ onClick="alert(document.getElementById('pymol_response').innerHTML)"
+ VALUE="Show PyMOL log">-->
+
+<INPUT TYPE=BUTTON onClick="reinitialize()"
+ VALUE="Start Over">
+<INPUT TYPE=BUTTON onClick="document.location.replace('/apply/_quit')"
+ VALUE="Quit PyMOL">
+<FORM NAME=jtable>
+
+<TABLE class='outer' width=100%>
+<TR class=even>
+<TD class='outer'>structure</TD>
+<TD class='outer'>PdbId</TD>
+<TD class='outer'>
+
+<TABLE class='inner' width=100%>
+<TR class=even>
+<TD class='inner'>PdbFile</TD>
+<TD class='inner'>Activity</TD>
+</TR>
+</TABLE>
+
+</TD>
+<TD class='outer'>MolWt</TD>
+</TR>
+<TR class=odd>
+<TD class='outer'><IMG SRC='626.jpg'></TD>
+<TD class='outer'>626</TD>
+<TD class='outer'>
+
+<TABLE class='inner' width=100%>
+<TR class=even>
+<TD class='inner'><span class=pdbname>2owb</span>
+<span title=ligand><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ligand("2owb")></span>
+<span title="active site"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_active_site("2owb")></span>
+<span title="H-bonds"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_hb("2owb")></span>
+<span title=water><INPUT TYPE=CHECKBOX  class=pdbname onClick=toggle_nonbonded("2owb")></span>
+<span title=surface><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_surface("2owb")></span>
+<span title=protein><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ribbon("2owb")></span>
+<span title=cartoon><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_cartoon("2owb")></span>
+</TD>
+<TD class='inner'>IC50 = 0.34 uM</TD>
+</TR>
+<TR class=odd>
+<TD class='inner'><span class=pdbname>2j4z_AZ</span>
+<span title=ligand><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ligand("2j4z_AZ")></span>
+<span title="active site"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_active_site("2j4z_AZ")></span>
+<span title="H-bonds"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_hb("2j4z_AZ")></span>
+<span title=water><INPUT TYPE=CHECKBOX  class=pdbname onClick=toggle_nonbonded("2j4z_AZ")></span>
+<span title=surface><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_surface("2j4z_AZ")></span>
+<span title=protein><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ribbon("2j4z_AZ")></span>
+<span title=cartoon><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_cartoon("2j4z_AZ")></span>
+</TD>
+<TD class='inner'>IC50 = 65 nM</TD>
+</TR>
+<TR class=even>
+<TD class='inner'><span class=pdbname>2j4z_BY</span>
+<span title=ligand><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ligand("2j4z_BY")></span>
+<span title="active site"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_active_site("2j4z_BY")></span>
+<span title="H-bonds"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_hb("2j4z_BY")></span>
+<span title=water><INPUT TYPE=CHECKBOX  class=pdbname onClick=toggle_nonbonded("2j4z_BY")></span>
+<span title=surface><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_surface("2j4z_BY")></span>
+<span title=protein><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ribbon("2j4z_BY")></span>
+<span title=cartoon><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_cartoon("2j4z_BY")></span>
+</TD>
+<TD class='inner'>IC50 = 65 nM</TD>
+</TR>
+</TABLE>
+
+</TD>
+<TD class='outer'>448.541</TD>
+</TR>
+<TR class=even>
+<TD class='outer'><IMG SRC='R69.jpg'></TD>
+<TD class='outer'>R69</TD>
+<TD class='outer'>
+
+<TABLE class='inner' width=100%>
+<TR class=even>
+<TD class='inner'><span class=pdbname>1xh9</span>
+<span title=ligand><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ligand("1xh9")></span>
+<span title="active site"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_active_site("1xh9")></span>
+<span title="H-bonds"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_hb("1xh9")></span>
+<span title=water><INPUT TYPE=CHECKBOX  class=pdbname onClick=toggle_nonbonded("1xh9")></span>
+<span title=surface><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_surface("1xh9")></span>
+<span title=protein><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ribbon("1xh9")></span>
+<span title=cartoon><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_cartoon("1xh9")></span>
+</TD>
+<TD class='inner'>Kd = 17 nM</TD>
+</TR>
+<TR class=odd>
+<TD class='inner'><span class=pdbname>1xh4</span>
+<span title=ligand><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ligand("1xh4")></span>
+<span title="active site"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_active_site("1xh4")></span>
+<span title="H-bonds"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_hb("1xh4")></span>
+<span title=water><INPUT TYPE=CHECKBOX  class=pdbname onClick=toggle_nonbonded("1xh4")></span>
+<span title=surface><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_surface("1xh4")></span>
+<span title=protein><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ribbon("1xh4")></span>
+<span title=cartoon><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_cartoon("1xh4")></span>
+</TD>
+<TD class='inner'>Kd = 34 nM</TD>
+</TR>
+</TABLE>
+
+</TD>
+<TD class='outer'>501.5768</TD>
+</TR>
+<TR class=odd>
+<TD class='outer'><IMG SRC='I5S.jpg'></TD>
+<TD class='outer'>I5S</TD>
+<TD class='outer'>
+
+<TABLE class='inner' width=100%>
+<TR class=even>
+<TD class='inner'><span class=pdbname>2jdo</span>
+<span title=ligand><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ligand("2jdo")></span>
+<span title="active site"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_active_site("2jdo")></span>
+<span title="H-bonds"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_hb("2jdo")></span>
+<span title=water><INPUT TYPE=CHECKBOX  class=pdbname onClick=toggle_nonbonded("2jdo")></span>
+<span title=surface><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_surface("2jdo")></span>
+<span title=protein><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ribbon("2jdo")></span>
+<span title=cartoon><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_cartoon("2jdo")></span>
+</TD>
+<TD class='inner'>IC50 = 0.23 uM</TD>
+</TR>
+<TR class=odd>
+<TD class='inner'><span class=pdbname>2jdt</span>
+<span title=ligand><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ligand("2jdt")></span>
+<span title="active site"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_active_site("2jdt")></span>
+<span title="H-bonds"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_hb("2jdt")></span>
+<span title=water><INPUT TYPE=CHECKBOX  class=pdbname onClick=toggle_nonbonded("2jdt")></span>
+<span title=surface><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_surface("2jdt")></span>
+<span title=protein><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ribbon("2jdt")></span>
+<span title=cartoon><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_cartoon("2jdt")></span>
+</TD>
+<TD class='inner'>?</TD>
+</TR>
+<TR class=even>
+<TD class='inner'><span class=pdbname>2c1a</span>
+<span title=ligand><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ligand("2c1a")></span>
+<span title="active site"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_active_site("2c1a")></span>
+<span title="H-bonds"><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_hb("2c1a")></span>
+<span title=water><INPUT TYPE=CHECKBOX  class=pdbname onClick=toggle_nonbonded("2c1a")></span>
+<span title=surface><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_surface("2c1a")></span>
+<span title=protein><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_ribbon("2c1a")></span>
+<span title=cartoon><INPUT TYPE=CHECKBOX class=pdbname onClick=toggle_cartoon("2c1a")></span>
+</TD>
+<TD class='inner'>IC50 = 0.17 uM</TD>
+</TR>
+</TABLE>
+
+</TD>
+<TD class='outer'>419.925</TD>
+</TR>
+</TABLE>
+
+</FORM NAME=jtable>
+</BODY></HTML>
