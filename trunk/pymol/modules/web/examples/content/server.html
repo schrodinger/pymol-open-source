@@ -1,0 +1,86 @@
+<html><head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="0" />
+<title>PyMOL Web Services</title>
+</head>
+<body>
+
+<h3>The PyMOL HTTP Server Daemon (PyMOLHTTPd)</h3>
+
+<p>The PyMOL HTTP server is a "pure" python module based off of the
+<A HREF="http://docs.python.org/library/basehttpserver.html" TARGET=_blank>BaseHTTPServer</A> module
+ from the Python Standard Library.</p>
+
+<p>For security reasons, PyMOL's HTTP server is currently restricted
+to only handling requests which originate on the local host
+(presumably from clicked links or JavaScript running inside an open
+browser window).</p>
+
+<p>The source code is located at
+<code>$PYMOL_PATH/modules/web/pymolhttpd.py</code>,
+and this file serves as a python module that can be imported by any
+python script running inside of PyMOL. </p>
+
+<p><b>Using PWG files to launch the PyMOL web server</b></p>
+<p>
+The simplest way to start a web-service capable PyMOL, is for a user
+to follow a PyMOL Web GUI (<A HREF="pwg.html" TARGET=_blank">PWG</A>)
+link from a browser running on the local machine.</p>
+
+<p><b>Running the PyMOL web server as the main pymol script</b></p>
+
+<p>Alternatively, pymolhttpd.py can be used as the start-up script
+when you launch PyMOL.</p>
+
+<pre>pymol $PYMOL_PATH/modules/web/pymolhttpd.py</pre>
+
+<p>This will cause PyMOL to start serving requests on the default port
+(8080, assuming of course that the port is not already claimed by
+another application).</p>
+
+<p><b>Running the PyMOL web server from your own Python scripts</b></p>
+
+<p>
+The PyMOL web server module can be imported into and launched using code like this.
+<pre>
+from web import pymolhttpd
+httpd = pymolhttpd.PymolHttpd("htdocs", 8080)
+httpd.start()
+</pre>
+This will cause PyMOL to respond to HTTP requests on port 8080.
+Furthermore, this server will also serve up ordinary web content from
+an "htdocs" folder in the current working directory.</p>
+
+<p>PyMOL requests are in the standard URL syntax, for example:
+<pre>http://localhost:8080/apply/pymol.cmd.load?filename=$TUT/1hpv.pdb</pre>
+Following this link from a browser will have the
+same effect as calling the PyMOL method:
+<pre>cmd.load("$TUT/1hpv.pdb")</pre>
+
+<p><b>Exposing your own Python methods</b></p>
+
+<p>If your script wishes to expose its own method to the web services
+API, it can do so by calling the "expose" method of the associated
+PymolHttpd instance.  For example</p>
+
+<pre>def my_func(arg1,arg2,arg3="World!"):
+    print arg1, arg2, arg3
+
+httpd.expose("my_func", my_func)</pre>
+
+<p>will make it possible for your "my_func" method to be called via an
+HTTP request such as:</p>
+
+<pre>http://localhost:8080/apply/my_func?arg1=Hello&arg2=there</pre>
+
+<p>which would print</p>
+<pre>Hello there World!</pre>
+
+<p>into the PyMOL output window.  You can thus use the PyMOL Web
+Services interface to build applications which include functionality
+beyond that of PyMOL itself.</p>
+
+</body>
+</html>
+

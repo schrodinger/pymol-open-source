@@ -1,0 +1,72 @@
+<html>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="0" />
+<title>PyMOL Web Services</title>
+</head>
+<body>
+<h3>Running the sample applictions</h3>
+
+<p>We are currently using the "Helper Application" approach to
+automatically launch the PyMOL HTTP server from a web browser.  This
+approach works reliably with Internet Explorer and Firefox, but it
+does not work well with Safari due to (insurmountable?) security
+restrictions built into that browser.  Therefore, if using Mac OS X,
+we recommend using FireFox instead of Safari.</p>
+
+<p>The sample links to <a href="pwg.html" target="_blank">PWG
+files</a> should cause PyMOL to launch on your desktop.  The first
+time you click on these links, your browser will ask how it should
+handle this file type.  You must select THE EXACT COPY OF PYMOL
+INCLUDED WITH THIS DELIVERABLE as the helper application for .pwg
+files in order to get PyMOL to launch with the Web Services interface.
+Otherwise, if you select another copy of PyMOL, then PyMOL may indeed
+launch, but the sample applications will fail to work.</p>
+
+<p>For each sample application, a new tab (or new page, depending on
+how you have your browser set up) will open explaining how this sample
+application works.</p>
+
+<p>Each page consists of some explanatory text and links that will
+cause PyMOL to respond: perhaps loading a protein, highlighting an
+active site, or aligning multiple proteins and orienting the view.
+Don't forget to click on the "view page source" link at the top of
+each sample application page.
+</p>
+
+<p>The main index file with sample application links is located at</p>
+
+<pre>./modules/web/examples/index.html</pre>
+
+<p>If you are reading this file from within a browser, then you may
+<a href="../index.html">return to it now</a> in order to try the sample
+applications.
+</p>
+
+<p>However, if for some reason you are reading this file from a text
+editor, then to run the demonstration applications, you can either
+open the above file directly inside a browser or start a local web
+server which will mimic the role of your remote enterprise web server
+in delivering that file to your browser.</p>
+
+<p>A simple python script with an HTTP server (justhttpd.py) is
+included for this purpose, and it will automatically open up a web
+browser pointing at the server it launches.</p>
+
+<pre># from within the PyMOL folder
+
+cd ./modules/web/examples
+
+# then
+
+python justhttpd.py 
+
+# or, if python is not handy, you can use PyMOL as a command-line Python interpreter:
+
+../../../../pymol -qc justhttpd.py
+</pre>
+
+<p>This will start a web browser that will automatically load the index.html file.</p>
+
+</body>
+</html>

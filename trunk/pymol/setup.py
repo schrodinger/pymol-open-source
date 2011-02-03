@@ -160,7 +160,7 @@ else: # linux or other unix
   
 setup ( # Distribution meta-data
     name = "pymol",
-	version = "1.2.0", # see layer0/Version.h for updated version
+	version = "1.4.0", # see layer0/Version.h for updated version
 	package_dir = {'' : 'modules'},
 	packages = ['chempy',
                 'chempy/bmin',
@@ -179,7 +179,10 @@ setup ( # Distribution meta-data
                 'pymol/opengl/gl',
                 'pymol/opengl/glu',
                 'pymol/opengl/glut',
-                'pymol/wizard'],
+                'pymol/wizard',
+		'web',
+		'web/examples',
+		'web/javascript', ],
 	ext_modules = [
     Extension("pymol._cmd", [
     "modules/cealign/src/ccealignmodule.cpp",

@@ -1,0 +1,445 @@
+<html><head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="-1" />
+<title>PyMOL Web Services: Compact API Reference</title>
+<style type="text/css">
+td{
+    font-family: Courier;
+    font-size: 14;    
+}
+</style>
+
+</head>
+<h3>PyMOL Web Services Compact API Reference</h3>
+<body>
+
+<table cellspacing=4>
+
+<tr><td valign="top"><b>align</b></td><td><td valign="top"><i>mobile, target, cutoff</i>=2.0<i>, cycles</i>=5<i>, gap</i>=-10.0<i>, extend</i>=-0.5<i>, max_gap</i>=50<i>, object</i>=None<i>, matrix</i>='BLOSUM62'<i>, mobile_state</i>=0<i>, target_state</i>=0<i>, quiet</i>=1<i>, max_skip</i>=0<i>, transform</i>=1<i>, reset</i>=0<i></i></td>
+
+<tr><td valign="top"><b>angle</b></td><td><td valign="top"><i>name</i>=None<i>, selection1</i>='(pk1)'<i>, selection2</i>='(pk2)'<i>, selection3</i>='(pk3)'<i>, mode</i>=None<i>, label</i>=1<i>, reset</i>=0<i>, zoom</i>=0<i>, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>attach</b></td><td><td valign="top"><i>element, geometry, valence, name</i>=''<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>backward</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>bg_color</b></td><td><td valign="top"><i>color</i>='black'<i></i></td>
+
+<tr><td valign="top"><b>bond</b></td><td><td valign="top"><i>atom1</i>='(pk1)'<i>, atom2</i>='(pk2)'<i>, order</i>=1<i>, edit</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>button</b></td><td><td valign="top"><i>button, modifier, action</i></td>
+
+<tr><td valign="top"><b>cartoon</b></td><td><td valign="top"><i>type, selection</i>='(all)'<i></i></td>
+
+<tr><td valign="top"><b>center</b></td><td><td valign="top"><i>selection</i>='all'<i>, state</i>=0<i>, origin</i>=1<i>, animate</i>=0<i></i></td>
+
+<tr><td valign="top"><b>clean</b></td><td><td valign="top"><i>selection, present</i>=''<i>, state</i>=-1<i>, fix</i>=''<i>, restrain</i>=''<i>, method</i>='mmff'<i>, async</i>=0<i>, save_undo</i>=1<i>, message</i>=None<i></i></td>
+
+<tr><td valign="top"><b>clip</b></td><td><td valign="top"><i>mode, distance, selection</i>=None<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>color</b></td><td><td valign="top"><i>color, selection</i>='(all)'<i>, quiet</i>=1<i>, flags</i>=0<i></i></td>
+
+<tr><td valign="top"><b>config_mouse</b></td><td><td valign="top"><i>ring</i>='three_button'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>copy</b></td><td><td valign="top"><i>target, source, zoom</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>count_atoms</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i>, state</i>=0<i>, domain</i>=''<i></i></td>
+
+<tr><td valign="top"><b>count_frames</b></td><td><td valign="top"><i>quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>count_states</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>create</b></td><td><td valign="top"><i>name, selection, source_state</i>=0<i>, target_state</i>=0<i>, discrete</i>=0<i>, zoom</i>=-1<i>, quiet</i>=1<i>, singletons</i>=0<i>, extract</i>=None<i></i></td>
+
+<tr><td valign="top"><b>cycle_valence</b></td><td><td valign="top"><i>h_fill</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>delete</b></td><td><td valign="top"><i>name</i></td>
+
+<tr><td valign="top"><b>deprotect</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>deselect</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>dihedral</b></td><td><td valign="top"><i>name</i>=None<i>, selection1</i>='(pk1)'<i>, selection2</i>='(pk2)'<i>, selection3</i>='(pk3)'<i>, selection4</i>='(pk4)'<i>, mode</i>=None<i>, label</i>=1<i>, reset</i>=0<i>, zoom</i>=0<i>, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>disable</b></td><td><td valign="top"><i>name</i>='all'<i></i></td>
+
+<tr><td valign="top"><b>dist</b></td><td><td valign="top">&nbsp;</i></td>
+
+<tr><td valign="top"><b>distance</b></td><td><td valign="top"><i>name</i>=None<i>, selection1</i>='(pk1)'<i>, selection2</i>='(pk2)'<i>, cutoff</i>=None<i>, mode</i>=None<i>, zoom</i>=0<i>, width</i>=None<i>, length</i>=None<i>, gap</i>=None<i>, label</i>=1<i>, quiet</i>=1<i>, reset</i>=0<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>drag</b></td><td><td valign="top"><i>selection</i>=None<i>, wizard</i>=1<i>, edit</i>=1<i>, quiet</i>=1<i>, mode</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>draw</b></td><td><td valign="top"><i>width</i>=0<i>, height</i>=0<i>, antialias</i>=-1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>dss</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, state</i>=0<i>, context</i>=None<i>, preserve</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>edit</b></td><td><td valign="top"><i>selection1</i>=''<i>, selection2</i>='none'<i>, selection3</i>='none'<i>, selection4</i>='none'<i>, pkresi</i>=0<i>, pkbond</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>edit_mode</b></td><td><td valign="top"><i>active</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>enable</b></td><td><td valign="top"><i>name</i>='all'<i>, parents</i>=0<i></i></td>
+
+<tr><td valign="top"><b>ending</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>extract</b></td><td><td valign="top">&nbsp;</i></td>
+
+<tr><td valign="top"><b>fab</b></td><td><td valign="top"><i>input, name</i>=None<i>, mode</i>='peptide'<i>, resi</i>=1<i>, chain</i>=''<i>, segi</i>=''<i>, state</i>=-1<i>, dir</i>=1<i>, hydro</i>=-1<i>, ss</i>=0<i>, async</i>=-1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>fetch</b></td><td><td valign="top"><i>code, name</i>=''<i>, state</i>=0<i>, finish</i>=1<i>, discrete</i>=-1<i>, multiplex</i>=-2<i>, zoom</i>=-1<i>, type</i>='pdb'<i>, async</i>=-1<i>, path</i>=None<i>, file</i>=None<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>fit</b></td><td><td valign="top"><i>mobile, target, mobile_state</i>=0<i>, target_state</i>=0<i>, quiet</i>=1<i>, matchmaker</i>=0<i>, cutoff</i>=2.0<i>, cycles</i>=0<i>, object</i>=None<i></i></td>
+
+<tr><td valign="top"><b>fix_chemistry</b></td><td><td valign="top"><i>selection1</i>='all'<i>, selection2</i>='all'<i>, invalidate</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>flag</b></td><td><td valign="top"><i>flag, selection, action</i>='reset'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>forward</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>fragment</b></td><td><td valign="top"><i>name, object</i>=None<i>, origin</i>=1<i>, zoom</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>frame</b></td><td><td valign="top"><i>frame, trigger</i>=-1<i>, scene</i>=0<i></i></td>
+
+<tr><td valign="top"><b>full_screen</b></td><td><td valign="top"><i>toggle</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>fuse</b></td><td><td valign="top"><i>selection1</i>='(pk1)'<i>, selection2</i>='(pk2)'<i>, mode</i>=0<i>, recolor</i>=1<i>, move</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get</b></td><td><td valign="top"><i>name, selection</i>=''<i>, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_angle</b></td><td><td valign="top"><i>atom1</i>='pk1'<i>, atom2</i>='pk2'<i>, atom3</i>='pk3'<i>, state</i>=-1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_area</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, state</i>=1<i>, load_b</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_atom_coords</b></td><td><td valign="top"><i>selection, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_chains</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_color_index</b></td><td><td valign="top"><i>color</i></td>
+
+<tr><td valign="top"><b>get_color_indices</b></td><td><td valign="top"><i>all</i>=0<i></i></td>
+
+<tr><td valign="top"><b>get_color_tuple</b></td><td><td valign="top"><i>name, mode</i>=0<i></i></td>
+
+<tr><td valign="top"><b>get_dihedral</b></td><td><td valign="top"><i>atom1</i>='pk1'<i>, atom2</i>='pk2'<i>, atom3</i>='pk3'<i>, atom4</i>='pk4'<i>, state</i>=-1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_distance</b></td><td><td valign="top"><i>atom1</i>='pk1'<i>, atom2</i>='pk2'<i>, state</i>=-1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_editor_scheme</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>get_extent</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_fastastr</b></td><td><td valign="top"><i>selection</i>='all'<i>, state</i>=-1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_frame</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>get_legal_name</b></td><td><td valign="top"><i>name</i></td>
+
+<tr><td valign="top"><b>get_movie_playing</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>get_names</b></td><td><td valign="top"><i>type</i>='public_objects'<i>, enabled_only</i>=0<i>, selection</i>=''<i></i></td>
+
+<tr><td valign="top"><b>get_names_of_type</b></td><td><td valign="top"><i>type</i></td>
+
+<tr><td valign="top"><b>get_object_color_index</b></td><td><td valign="top"><i>name</i></td>
+
+<tr><td valign="top"><b>get_object_list</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_object_matrix</b></td><td><td valign="top"><i>object, state</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_pdbstr</b></td><td><td valign="top"><i>selection</i>='all'<i>, state</i>=-1<i>, ref</i>=''<i>, ref_state</i>=-1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_phipsi</b></td><td><td valign="top"><i>selection</i>='(name ca)'<i>, state</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>get_position</b></td><td><td valign="top"><i>quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_raw_alignment</b></td><td><td valign="top"><i>name</i>=''<i>, active_only</i>=0<i></i></td>
+
+<tr><td valign="top"><b>get_renderer</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>get_scene_dict</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>get_scene_list</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>get_setting_boolean</b></td><td><td valign="top"><i>name, object</i>=''<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>get_setting_float</b></td><td><td valign="top"><i>name, object</i>=''<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>get_setting_int</b></td><td><td valign="top"><i>name, object</i>=''<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>get_setting_legacy</b></td><td><td valign="top"><i>name</i></td>
+
+<tr><td valign="top"><b>get_setting_text</b></td><td><td valign="top"><i>name, object</i>=''<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>get_setting_tuple</b></td><td><td valign="top"><i>name, object</i>=''<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>get_state</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>get_symmetry</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_title</b></td><td><td valign="top"><i>object, state, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_type</b></td><td><td valign="top"><i>name, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_unused_name</b></td><td><td valign="top"><i>prefix</i>='tmp'<i>, alwaysnumber</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_version</b></td><td><td valign="top"><i>quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>get_view</b></td><td><td valign="top"><i>output</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>gradient</b></td><td><td valign="top"><i>name, map, minimum</i>=1.0<i>, maximum</i>=-1.0<i>, selection</i>=''<i>, buffer</i>=0.0<i>, state</i>=0<i>, carve</i>=None<i>, source_state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>group</b></td><td><td valign="top"><i>name, members</i>=''<i>, action</i>='auto'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>h_add</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>h_fill</b></td><td><td valign="top"><i>quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>h_fix</b></td><td><td valign="top"><i>selection</i>=''<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>hide</b></td><td><td valign="top"><i>representation</i>=''<i>, selection</i>=''<i></i></td>
+
+<tr><td valign="top"><b>id_atom</b></td><td><td valign="top"><i>selection, mode</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>identify</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, mode</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>index</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>indicate</b></td><td><td valign="top"><i>selection</i>='(all)'<i></i></td>
+
+<tr><td valign="top"><b>intra_fit</b></td><td><td valign="top"><i>selection, state</i>=1<i>, quiet</i>=1<i>, mix</i>=0<i></i></td>
+
+<tr><td valign="top"><b>intra_rms</b></td><td><td valign="top"><i>selection, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>intra_rms_cur</b></td><td><td valign="top"><i>selection, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>invert</b></td><td><td valign="top"><i>quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>isodot</b></td><td><td valign="top"><i>name, map, level</i>=1.0<i>, selection</i>=''<i>, buffer</i>=0.0<i>, state</i>=0<i>, carve</i>=None<i>, source_state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>isolevel</b></td><td><td valign="top"><i>name, level</i>=1.0<i>, state</i>=0<i>, query</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>isomesh</b></td><td><td valign="top"><i>name, map, level</i>=1.0<i>, selection</i>=''<i>, buffer</i>=0.0<i>, state</i>=1<i>, carve</i>=None<i>, source_state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>isosurface</b></td><td><td valign="top"><i>name, map, level</i>=1.0<i>, selection</i>=''<i>, buffer</i>=0.0<i>, state</i>=1<i>, carve</i>=None<i>, source_state</i>=0<i>, side</i>=1<i>, mode</i>=3<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>label</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, expression</i>=''<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>load</b></td><td><td valign="top"><i>filename, object</i>=''<i>, state</i>=0<i>, format</i>=''<i>, finish</i>=1<i>, discrete</i>=-1<i>, quiet</i>=1<i>, multiplex</i>=None<i>, zoom</i>=-1<i>, partial</i>=0<i>, mimic</i>=1<i></i></td>
+
+<tr><td valign="top"><b>load_png</b></td><td><td valign="top"><i>filename, movie</i>=1<i>, stereo</i>=-1<i>, quiet</i>=0<i></i></td>
+
+<tr><td valign="top"><b>load_traj</b></td><td><td valign="top"><i>filename, object</i>=''<i>, state</i>=0<i>, format</i>=''<i>, interval</i>=1<i>, average</i>=1<i>, start</i>=1<i>, stop</i>=-1<i>, max</i>=-1<i>, selection</i>='all'<i>, image</i>=1<i>, shift</i>='[0.0,0.0,0.0]'<i>, plugin</i>=''<i></i></td>
+
+<tr><td valign="top"><b>madd</b></td><td><td valign="top"><i>specification</i>=''<i>, frame</i>=0<i>, freeze</i>=0<i></i></td>
+
+<tr><td valign="top"><b>map_double</b></td><td><td valign="top"><i>name, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>map_halve</b></td><td><td valign="top"><i>name, state</i>=0<i>, smooth</i>=1<i></i></td>
+
+<tr><td valign="top"><b>map_new</b></td><td><td valign="top"><i>name, type</i>='gaussian'<i>, grid</i>=None<i>, selection</i>='(all)'<i>, buffer</i>=None<i>, box</i>=None<i>, state</i>=0<i>, quiet</i>=1<i>, zoom</i>=0<i>, normalize</i>=-1<i>, clamp</i>=[1.0, -1.0]<i>, resolution</i>=0.0<i></i></td>
+
+<tr><td valign="top"><b>map_set</b></td><td><td valign="top"><i>name, operator, operands</i>=''<i>, target_state</i>=0<i>, source_state</i>=0<i>, zoom</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>map_set_border</b></td><td><td valign="top"><i>name, level</i>=0.0<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>map_trim</b></td><td><td valign="top"><i>name, selection, buffer</i>=0.0<i>, map_state</i>=0<i>, sele_state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>mask</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>matrix_copy</b></td><td><td valign="top"><i>source_name</i>=''<i>, target_name</i>=''<i>, source_mode</i>=-1<i>, target_mode</i>=-1<i>, source_state</i>=1<i>, target_state</i>=1<i>, target_undo</i>=1<i>, log</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>matrix_reset</b></td><td><td valign="top"><i>name, state</i>=1<i>, mode</i>=-1<i>, log</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>mclear</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>mdump</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>middle</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>mmatrix</b></td><td><td valign="top"><i>action</i></td>
+
+<tr><td valign="top"><b>mouse</b></td><td><td valign="top"><i>action</i>=None<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>move</b></td><td><td valign="top"><i>axis, distance</i></td>
+
+<tr><td valign="top"><b>mplay</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>mset</b></td><td><td valign="top"><i>specification</i>=''<i>, frame</i>=1<i>, freeze</i>=0<i></i></td>
+
+<tr><td valign="top"><b>mstop</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>mtoggle</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>mview</b></td><td><td valign="top"><i>action</i>='store'<i>, first</i>=0<i>, last</i>=0<i>, power</i>=0.0<i>, bias</i>=-1.0<i>, simple</i>=-1<i>, linear</i>=0.0<i>, object</i>=''<i>, wrap</i>=-1<i>, hand</i>=0<i>, window</i>=5<i>, cycles</i>=1<i>, scene</i>=''<i>, cut</i>=0.5<i>, quiet</i>=1<i>, auto</i>=-1<i>, state</i>=0<i>, freeze</i>=0<i></i></td>
+
+<tr><td valign="top"><b>order</b></td><td><td valign="top"><i>names, sort</i>=0<i>, location</i>='current'<i></i></td>
+
+<tr><td valign="top"><b>orient</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, state</i>=0<i>, animate</i>=0<i></i></td>
+
+<tr><td valign="top"><b>origin</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, object</i>=None<i>, position</i>=None<i>, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>pair_fit</b></td><td><td valign="top">&nbsp;</i></td>
+
+<tr><td valign="top"><b>phi_psi</b></td><td><td valign="top"><i>selection</i>='(byres pk1)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>pop</b></td><td><td valign="top"><i>name, source, enable</i>=-1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>protect</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>pseudoatom</b></td><td><td valign="top"><i>object</i>=''<i>, selection</i>=''<i>, name</i>='PS1'<i>, resn</i>='PSD'<i>, resi</i>='1'<i>, chain</i>='P'<i>, segi</i>='PSDO'<i>, elem</i>='PS'<i>, vdw</i>=-1.0<i>, hetatm</i>=1<i>, b</i>=0.0<i>, q</i>=0.0<i>, color</i>=''<i>, label</i>=''<i>, pos</i>=None<i>, state</i>=0<i>, mode</i>='rms'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>push_undo</b></td><td><td valign="top"><i>selection, state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>quit</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>ramp_new</b></td><td><td valign="top"><i>name, map_name, range</i>=[-1.0, 0.0, 1.0]<i>, color</i>=['red', [1.0, 1.0, 1.0], 'blue']<i>, state</i>=0<i>, selection</i>=''<i>, beyond</i>=2.0<i>, within</i>=6.0<i>, sigma</i>=2.0<i>, zero</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>ray</b></td><td><td valign="top"><i>width</i>=0<i>, height</i>=0<i>, antialias</i>=-1<i>, angle</i>=0.0<i>, shift</i>=0.0<i>, renderer</i>=-1<i>, quiet</i>=1<i>, async</i>=0<i></i></td>
+
+<tr><td valign="top"><b>read_mmodstr</b></td><td><td valign="top">&nbsp;</i></td>
+
+<tr><td valign="top"><b>read_molstr</b></td><td><td valign="top"><i>molstr, name, state</i>=0<i>, finish</i>=1<i>, discrete</i>=1<i>, quiet</i>=1<i>, zoom</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>read_pdbstr</b></td><td><td valign="top"><i>pdb, name, state</i>=0<i>, finish</i>=1<i>, discrete</i>=0<i>, quiet</i>=1<i>, zoom</i>=-1<i>, multiplex</i>=-2<i></i></td>
+
+<tr><td valign="top"><b>read_sdfstr</b></td><td><td valign="top"><i>sdfstr, name, state</i>=0<i>, finish</i>=1<i>, discrete</i>=1<i>, quiet</i>=1<i>, zoom</i>=-1<i>, multiplex</i>=-2<i></i></td>
+
+<tr><td valign="top"><b>read_xplorstr</b></td><td><td valign="top"><i>xplor, name, state</i>=0<i>, finish</i>=1<i>, discrete</i>=0<i>, quiet</i>=1<i>, zoom</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>rebuild</b></td><td><td valign="top"><i>selection</i>='all'<i>, representation</i>='everything'<i></i></td>
+
+<tr><td valign="top"><b>recolor</b></td><td><td valign="top"><i>selection</i>='all'<i>, representation</i>='everything'<i></i></td>
+
+<tr><td valign="top"><b>redo</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>reference</b></td><td><td valign="top"><i>action</i>='validate'<i>, selection</i>='(all)'<i>, state</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>refresh</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>reinitialize</b></td><td><td valign="top"><i>what</i>='everything'<i>, object</i>=''<i></i></td>
+
+<tr><td valign="top"><b>remove</b></td><td><td valign="top"><i>selection, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>remove_picked</b></td><td><td valign="top"><i>hydrogens</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>rename</b></td><td><td valign="top"><i>selection</i>='all'<i>, force</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>replace</b></td><td><td valign="top"><i>element, geometry, valence, h_fill</i>=1<i>, name</i>=''<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>replace_wizard</b></td><td><td valign="top"><i>name</i>=None<i></i></td>
+
+<tr><td valign="top"><b>reset</b></td><td><td valign="top"><i>object</i>=''<i></i></td>
+
+<tr><td valign="top"><b>rewind</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>rms</b></td><td><td valign="top"><i>mobile, target, mobile_state</i>=0<i>, target_state</i>=0<i>, quiet</i>=1<i>, matchmaker</i>=0<i>, cutoff</i>=2.0<i>, cycles</i>=0<i>, object</i>=None<i></i></td>
+
+<tr><td valign="top"><b>rms_cur</b></td><td><td valign="top"><i>mobile, target, mobile_state</i>=0<i>, target_state</i>=0<i>, quiet</i>=1<i>, matchmaker</i>=0<i>, cutoff</i>=2.0<i>, cycles</i>=0<i>, object</i>=None<i></i></td>
+
+<tr><td valign="top"><b>rock</b></td><td><td valign="top"><i>mode</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>rotate</b></td><td><td valign="top"><i>axis</i>='x'<i>, angle</i>=0.0<i>, selection</i>='all'<i>, state</i>=-1<i>, camera</i>=1<i>, object</i>=None<i>, origin</i>=None<i>, object_mode</i>=0<i></i></td>
+
+<tr><td valign="top"><b>scene</b></td><td><td valign="top"><i>key</i>='auto'<i>, action</i>='recall'<i>, message</i>=None<i>, view</i>=1<i>, color</i>=1<i>, active</i>=1<i>, rep</i>=1<i>, frame</i>=1<i>, animate</i>=-1<i>, new_key</i>=None<i>, hand</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>scene_order</b></td><td><td valign="top"><i>names, sort</i>=0<i>, location</i>='current'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>sculpt_activate</b></td><td><td valign="top"><i>object, state</i>=0<i>, match_state</i>=-1<i>, match_by_segment</i>=0<i></i></td>
+
+<tr><td valign="top"><b>sculpt_deactivate</b></td><td><td valign="top"><i>object</i></td>
+
+<tr><td valign="top"><b>sculpt_iterate</b></td><td><td valign="top"><i>object, state</i>=0<i>, cycles</i>=10<i></i></td>
+
+<tr><td valign="top"><b>sculpt_purge</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>select</b></td><td><td valign="top"><i>name, selection</i>=''<i>, enable</i>=-1<i>, quiet</i>=1<i>, merge</i>=0<i>, state</i>=0<i>, domain</i>=''<i></i></td>
+
+<tr><td valign="top"><b>select_list</b></td><td><td valign="top"><i>name, object, id_list, state</i>=0<i>, mode</i>='id'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>set</b></td><td><td valign="top"><i>name, value</i>=1<i>, selection</i>=''<i>, state</i>=0<i>, updates</i>=1<i>, log</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>set_bond</b></td><td><td valign="top"><i>name, value, selection1, selection2</i>=None<i>, state</i>=0<i>, updates</i>=1<i>, log</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>set_color</b></td><td><td valign="top"><i>name, rgb, mode</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>set_dihedral</b></td><td><td valign="top"><i>atom1, atom2, atom3, atom4, angle, state</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>set_geometry</b></td><td><td valign="top"><i>selection, geometry, valence</i></td>
+
+<tr><td valign="top"><b>set_name</b></td><td><td valign="top"><i>old_name, new_name</i></td>
+
+<tr><td valign="top"><b>set_object_color</b></td><td><td valign="top"><i>name, color, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>set_object_ttt</b></td><td><td valign="top"><i>object, ttt, state</i>=0<i>, quiet</i>=1<i>, homogenous</i>=0<i></i></td>
+
+<tr><td valign="top"><b>set_symmetry</b></td><td><td valign="top"><i>selection, a, b, c, alpha, beta, gamma, spacegroup</i>='P1'<i></i></td>
+
+<tr><td valign="top"><b>set_title</b></td><td><td valign="top"><i>object, state, text</i></td>
+
+<tr><td valign="top"><b>set_view</b></td><td><td valign="top"><i>view, animate</i>=0<i>, quiet</i>=1<i>, hand</i>=1<i></i></td>
+
+<tr><td valign="top"><b>show</b></td><td><td valign="top"><i>representation</i>=''<i>, selection</i>=''<i></i></td>
+
+<tr><td valign="top"><b>show_as</b></td><td><td valign="top"><i>representation</i>=''<i>, selection</i>=''<i></i></td>
+
+<tr><td valign="top"><b>slice_new</b></td><td><td valign="top"><i>name, map, state</i>=1<i>, source_state</i>=0<i></i></td>
+
+<tr><td valign="top"><b>smooth</b></td><td><td valign="top"><i>selection</i>='all'<i>, passes</i>=1<i>, window</i>=5<i>, first</i>=1<i>, last</i>=0<i>, ends</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>sort</b></td><td><td valign="top"><i>object</i>=''<i></i></td>
+
+<tr><td valign="top"><b>space</b></td><td><td valign="top"><i>space</i>=''<i>, gamma</i>=1.0<i>, quiet</i>=0<i></i></td>
+
+<tr><td valign="top"><b>spectrum</b></td><td><td valign="top"><i>expression</i>='count'<i>, palette</i>='rainbow'<i>, selection</i>='(all)'<i>, minimum</i>=None<i>, maximum</i>=None<i>, byres</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>split_states</b></td><td><td valign="top"><i>object, first</i>=1<i>, last</i>=0<i>, prefix</i>=None<i></i></td>
+
+<tr><td valign="top"><b>stereo</b></td><td><td valign="top"><i>toggle</i>='on'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>super</b></td><td><td valign="top"><i>mobile, target, cutoff</i>=2.0<i>, cycles</i>=5<i>, gap</i>=-1.5<i>, extend</i>=-0.69999999999999996<i>, max_gap</i>=50<i>, object</i>=None<i>, matrix</i>='BLOSUM62'<i>, mobile_state</i>=0<i>, target_state</i>=0<i>, quiet</i>=1<i>, max_skip</i>=0<i>, transform</i>=1<i>, reset</i>=0<i>, seq</i>=0.0<i>, radius</i>=12.0<i>, scale</i>=17.0<i>, base</i>=0.65000000000000002<i>, coord</i>=0.0<i>, expect</i>=6.0<i>, window</i>=3<i>, ante</i>=-1.0<i></i></td>
+
+<tr><td valign="top"><b>symexp</b></td><td><td valign="top"><i>prefix, object, selection, cutoff, segi</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>torsion</b></td><td><td valign="top"><i>angle</i></td>
+
+<tr><td valign="top"><b>transform_object</b></td><td><td valign="top"><i>name, matrix, state</i>=-1<i>, log</i>=0<i>, selection</i>=''<i>, homogenous</i>=0<i>, transpose</i>=0<i></i></td>
+
+<tr><td valign="top"><b>transform_selection</b></td><td><td valign="top"><i>selection, matrix, state</i>=-1<i>, log</i>=0<i>, homogenous</i>=0<i>, transpose</i>=0<i></i></td>
+
+<tr><td valign="top"><b>translate</b></td><td><td valign="top"><i>vector</i>=[0.0, 0.0, 0.0]<i>, selection</i>='all'<i>, state</i>=-1<i>, camera</i>=1<i>, object</i>=None<i>, object_mode</i>=0<i></i></td>
+
+<tr><td valign="top"><b>translate_atom</b></td><td><td valign="top"><i>sele1, v0, v1, v2, state</i>=0<i>, mode</i>=0<i>, log</i>=0<i></i></td>
+
+<tr><td valign="top"><b>turn</b></td><td><td valign="top"><i>axis, angle</i></td>
+
+<tr><td valign="top"><b>unbond</b></td><td><td valign="top"><i>atom1</i>='(pk1)'<i>, atom2</i>='(pk2)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>undo</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>ungroup</b></td><td><td valign="top"><i>name, members</i>=''<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>unmask</b></td><td><td valign="top"><i>selection</i>='(all)'<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>unpick</b></td><td><td valign="top"><i></i></td>
+
+<tr><td valign="top"><b>unset</b></td><td><td valign="top"><i>name, selection</i>=''<i>, state</i>=0<i>, updates</i>=1<i>, log</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>unset_bond</b></td><td><td valign="top"><i>name, selection1, selection2</i>=None<i>, state</i>=0<i>, updates</i>=1<i>, log</i>=0<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>update</b></td><td><td valign="top"><i>target, source, target_state</i>=0<i>, source_state</i>=0<i>, matchmaker</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>valence</b></td><td><td valign="top"><i>order, selection1</i>=None<i>, selection2</i>=None<i>, source</i>=''<i>, target_state</i>=0<i>, source_state</i>=0<i>, reset</i>=1<i>, quiet</i>=1<i></i></td>
+
+<tr><td valign="top"><b>view</b></td><td><td valign="top"><i>key, action</i>='recall'<i>, animate</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>viewport</b></td><td><td valign="top"><i>width</i>=-1<i>, height</i>=-1<i></i></td>
+
+<tr><td valign="top"><b>window</b></td><td><td valign="top"><i>action</i>='show'<i>, x</i>=0<i>, y</i>=0<i>, width</i>=0<i>, height</i>=0<i></i></td>
+
+<tr><td valign="top"><b>wizard</b></td><td><td valign="top"><i>name</i>=None<i></i></td>
+
+<tr><td valign="top"><b>zoom</b></td><td><td valign="top"><i>selection</i>='all'<i>, buffer</i>=0.0<i>, state</i>=0<i>, complete</i>=0<i>, animate</i>=0<i></i></td>
+
+</table>
+<p><a href="index.html">Back</a></p></body></html>
+

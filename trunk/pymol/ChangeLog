@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2011-02-03 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Added PyMOL Web Services API; for information run
+	  firefox pymol/modules/web/examples/index.html
+
 2011-01-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Cygwin build fix (thanks Alex)

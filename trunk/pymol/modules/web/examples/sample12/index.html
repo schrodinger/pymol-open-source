@@ -1,0 +1,117 @@
+<html>
+<head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="-1" />
+<title>Web Services - Sample 12: Multi-Origin with JavaScript API</title>
+
+<style><!--
+a{text-decoration:none;
+  padding: 1px;
+  background-color: #dddddd}
+--></style>
+
+<script src="json2.js"></script> 
+<script src="pymol.js"></script>
+
+<script type="text/javascript">
+
+// This page assumes that PyMOL is running on localhost:8082
+
+var pymol = new PyMOL('localhost',8082); // create PyMOL object instance for server of this page
+
+var cmd = pymol.cmd; // assign a global symbol for the PyMOL cmd API
+
+function part4(list) {
+    for(var i=0;i<list.length;i++) {
+        cmd.color("auto","chain "+list[i]);
+    }
+}
+
+function part3(list) {
+    cmd.show_as("cartoon");
+    cmd.get_chains(part4, "polymer");
+}
+
+function part2() {
+    cmd.load(part3, "$PYMOL_PATH/test/dat/1tii.pdb");
+}
+
+function part1() {
+    cmd.reinitialize(part2);
+}
+</script>
+
+</head>
+<body>
+
+<h3>Web Services - Sample 12: Multi-Origin with JavaScript API</h3>
+
+<a href="http://localhost:8082/apply/_quit?href">quit pymol</a>
+
+(FireFox only: <a href="javascript:void(0)" onclick="window.open('view-source:' + location.href)">view page source</a>)
+
+<p>PyMOL should open up automatically when this page is loaded because
+we have an hidden IFRAME referencing a PWG file which tells PyMOL
+to launch and listen on port 8082.</p>
+
+<p>In the multi-origin scenario, the host and port of the PyMOL server
+must be specified when creating the PyMOL object inside
+JavaScript: </p>
+
+<pre>
+var pymol = new PyMOL('localhost',8082); // create PyMOL object instance for server of this page
+
+var cmd = pymol.cmd; // assign a global symbol for the PyMOL cmd API
+</pre>
+
+<p>The other main difference is that in the multi-origin
+(cross-domain) scenario, all PyMOL requests run <i>asynchronously</i>
+and in an <i>undefined</i> order (in certain browsers).  Any results
+to be acted on must be procesed through a call-back mechanism, and any
+dependencies of PyMOL state which exist must be broken out across
+separate function calls.  See sample 14 for a practical to this problem
+of asynchronous execution.</p>
+
+<p>The convention we have adopted for doing this is quite simple: you
+merely provide the callback function as the first argument to the
+method.  The Javascript API automatically recognizes this pattern and
+removes that argument before sending the remaining arguments over to
+PyMOL.</p>
+
+<pre>
+function part4(list) { for(var i=0;i&lt;list.length;i++) {
+    cmd.color("auto","chain "+list[i]); } }
+
+function part3(list) {
+    cmd.show_as("cartoon");
+    cmd.get_chains(part4, "polymer");
+}
+
+function part2() {
+    cmd.load(part3, "$PYMOL_PATH/test/dat/1tii.pdb");
+}
+
+function part1() {
+    cmd.reinitialize(part2);
+}
+
+Start the cascade with a call to <a href="javascript:part1()">part1()</a>
+</pre>
+
+<p>For a solution to the awkward complexity presented by the above
+example, please see Sample 14.</p>
+
+<p>Also, exceptions which occur in PyMOL are not presently returned to
+the JavaScript layer (though this may change).</p>
+
+<!-- the only purpose of this IFRAME is to launch PyMOL via the PWG
+  -- helper mechanism -->
+
+<iframe src="start8082.pwg"
+ width="0" height="0" frameborder="0"
+ marginheight="0" marginwidth="0"
+ scrolling="auto"></iframe>
+
+</body>
+</html>

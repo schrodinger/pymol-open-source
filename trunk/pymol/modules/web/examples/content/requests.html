@@ -1,0 +1,104 @@
+<html><head>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<meta http-equiv="Expires" content="0" />
+<title>PyMOL Web Services</title>
+</head>
+<body>
+<h3>Request Generation Methods</h3>
+
+<p>The original PyMOL web-services specification described only HTTP
+query-based requests for controlling PyMOL.  In developing that
+interface, we achieved a better understanding of optimal web
+application structure and have consequently added two additional
+approaches for controlling PyMOL from a web page.  Thus, there are now
+three different approaches to consider for generating requests:</p>
+
+<ol><li><a href="#simple">Simple HTTP Requests</a></li>
+<li><a href="#ajax">JSON-based AJAX Requests</a></li>
+<li><a href="#api">The PyMOL JavaScript API</a></li>
+</ol>
+
+<p>Simple HTTP requests allow you to control PyMOL by embedding PyMOL
+commands in a URL or an HTML &lt;FORM&gt;.  AJAX and API requests
+allow PyMOL control as well, but also allow you to receive results
+back from PyMOL.  This capability can be used to develop interactive
+web applications, with certain limitations imposed by the browser and
+transport protocol.
+</p>
+
+<a name="simple">
+<b>Simple HTTP requests to PyMOL</b>
+<p>
+The simplest way to control PyMOL from a web page is to make a simple
+HTTP request, for example with &lt;A&gt; links as shown in
+<A HREF="../index.html#sample01">Sample 01</A>
+This approach is suitable for simple, "quick and dirty" web pages that don't need
+much flexibility or user interaction, except for clicking links.
+This might be suitable for writing a report that provides links that
+activate PyMOL and illustrate some results.
+Such a link might be written as:
+<p>
+&lt;A HREF="/pymol.cmd.show?representation=sticks&selection=chain A"&gt;sticks&lt;/A&gt;
+</p>
+There are other ways to make simple HTTP requests
+(<A HREF="../index.html#sample02">Samples 02, 03, 04 and 07</A>),
+for example by having a button click call a JavaScript function.
+Such a link might be written as:
+<p>
+&lt;INPUT TYPE=BUTTON onClick='show_sticks("chain A")' NAME=sticks&gt;
+</p>
+
+<p>Using JavaScript allows for greater interactivity on the web page
+and could allow you to develop complete web applications to control
+PyMOL.  However, simple HTTP requests, whether hard-coded into links
+or wrapped in JavaScript, only allow you to control PyMOL, not get
+results back.  Results sent back from PyMOL can be displayed, say in
+an IFRAME, but simple HTTP approach does not enable you to dynamically
+change your web application in response to the results sent back from
+PyMOL.
+</p>
+<A NAME=ajax>
+<b>AJAX requests to PyMOL</b>
+<p>
+Using AJAX requires a bit more setup than
+simple HTTP requests, but opens up the possibility of real interaction
+with PyMOL.  Using AJAX requests, you send PyMOL commands and also
+receive any results in JavaScript Object Notation
+(<A HREF="http://www.json.org/" target=_blank>JSON</A>).
+Using JavaScript, you can use those results to dynamically change your
+web application.
+There is sample code you can explore in
+<A HREF="../index.html#sample05">Sample 05</A>.
+You can also use JQuery and JSONP.  They use an underlying AJAX approach
+entirely compatible with our PyMOL web server.  This allows you to develop
+complex web applications with even greater ease and interactivity.
+The use of JQuery and JSONP is shown in
+<A HREF="../index.html#sample13">Sample 13</A>.
+</p>
+<A NAME=api>
+<b>JavaScript API for PyMOL</b>
+<p>
+The JavaScript API for PyMOL provides a new JavaScript Object, PyMOL.
+It contains functions that correspond to nearly 200 PyMOL commands via
+their Python method counterparts.
+While this API is still experimental, our goal is to provide a
+well-documented, stable interface to PyMOL that frees you from the underlying
+implementation details, such as AJAX.
+Using the API is as simple as including the pymol.js and json2.js scripts in your
+HTML documents and issuing PyMOL requests via simple native JavaScript statements.
+</p>
+<p>
+The JavaScript API for PyMOL provides a new JavaScript Object type called PyMOL.
+Once a new instance of a PyMOL JavaScript object is created (here, named "pymol"):
+<pre>pymol = new PyMOL("localhost", 8081)</pre>
+then
+<pre>pymol.cmd.show("sticks", "chain A")</pre>
+in JavaScript works the same as if
+you had typed the command <pre>show sticks, chain A</pre> into PyMOL or called the 
+<pre>cmd.show("sticks", "chain A")</pre> native Python method.
+</p>
+
+</body>
+</html>
+

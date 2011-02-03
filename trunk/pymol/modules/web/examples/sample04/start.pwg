@@ -1,0 +1,2 @@
+root $PYMOL_PATH/modules/web/examples/sample04/htdocs
+browser
