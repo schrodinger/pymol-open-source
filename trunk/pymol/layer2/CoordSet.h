@@ -83,6 +83,7 @@ typedef struct CoordSet {
   /* temporary / optimization */
 
   int objMolOpInvalidated;
+  short int noInvalidateMMStereoAndTextType;
 } CoordSet;
 
 typedef void (*fUpdateFn) (CoordSet *, int);

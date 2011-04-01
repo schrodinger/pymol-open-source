@@ -40,7 +40,7 @@ struct _CVFont {
   int NFont;
 };
 
-#ifndef _PYMOL_NOPY
+//#ifndef _PYMOL_NOPY
 static VFontRec *VFontRecNew(PyMOLGlobals * G)
 {
   int a;
@@ -52,7 +52,7 @@ static VFontRec *VFontRecNew(PyMOLGlobals * G)
   I->pen = VLAlloc(float, 1000);
   return (I);
 }
-#endif
+//#endif
 
 int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
                     char *text, float *pos, float *scale, float *matrix)
@@ -224,6 +224,36 @@ static int VFontRecLoad(PyMOLGlobals * G, VFontRec * I, PyObject * dict)
   }
   return (ok);
 }
+#else
+#include "vfontdata.h"
+
+static int VFontRecLoad(PyMOLGlobals * G, VFontRec * I)
+{
+  ov_diff used = 0;
+  int ok = true;
+  int chidx, n_float, i, off;
+  float adv;
+  
+  for (chidx=0;chidx<VFONT_NUMBER_OF_CHARS; chidx++){
+    adv = advs[chidx];
+    n_float = n_floats[chidx];
+    VLACheck(I->pen, float, n_float + used + 1);
+    off = stroke_list_place[chidx];
+    for (i=0;i<n_float;i++){
+      *(I->pen + used + i) = stroke_lists[off+i];
+    }
+    I->offset[ch[chidx]] = used;
+    I->advance[ch[chidx]] = adv;
+    I->pen[used + n_float] = -1.0F;       /* sentinel */
+    PRINTFD(G, FB_VFont)
+      " VFontRecLoad-Debug: Added '%c' adv: %0.3f n_float: %d\n", ch[chidx], adv,
+      (int)n_float ENDFD;
+    if(ok)
+      used += n_float + 1;
+  }
+  return (ok);
+}
+
 #endif
 
 static void VFontRecFree(PyMOLGlobals * G, VFontRec * I)
@@ -277,15 +307,20 @@ int VFontLoad(PyMOLGlobals * G, float size, int face, int style, int can_load_ne
       break;
     }
   }
-#ifndef _PYMOL_NOPY
   if(!result) {
     if(can_load_new) {
+#ifndef _PYMOL_NOPY
       vfont = PGetFontDict(G, size, face, style);
       if(vfont) {
         if(PyDict_Check(vfont)) {
+#endif
           VLACheck(I->Font, VFontRec *, I->NFont + 1);
           fr = VFontRecNew(G);
+#ifndef _PYMOL_NOPY
           if(!VFontRecLoad(G, fr, vfont))
+#else
+          if(!VFontRecLoad(G, fr))
+#endif
             VFontRecFree(G, fr);
           else {
             I->NFont++;         /* always start at 1 */
@@ -295,12 +330,13 @@ int VFontLoad(PyMOLGlobals * G, float size, int face, int style, int can_load_ne
             fr->face = face;
             fr->style = style;
           }
+#ifndef _PYMOL_NOPY
         }
         Py_DECREF(vfont);
       }
+#endif
     }
   }
-#endif
   PRINTFD(G, FB_VFont)
     " VFontLoad-Debug: Leaving with result %d  (0 = failure)\n", result ENDFD;
   return (result);

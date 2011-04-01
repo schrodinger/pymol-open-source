@@ -136,10 +136,10 @@ else: # linux or other unix
 #              "contrib/uiuc/plugins/molfile_plugin/src",
               "modules/cealign/src",
 	      "modules/cealign/src/tnt", ]
-    libs=["GL","GLU","glut","png","z","freetype",
+    libs=["GL","GLU","glut","png","z","freetype", "GLEW",
 #          "Xxf86vm"
           ]	
-    pyogl_libs = ["GL","GLU","glut"]
+    pyogl_libs = ["GL","GLU","glut", "GLEW"]
     lib_dirs=[
         "/usr/X11R6/lib",
 #        "/users/warren/pymol/ext/lib"
@@ -149,11 +149,12 @@ else: # linux or other unix
                 ("_PYMOL_FREETYPE",None),
                 ("_PYMOL_LIBPNG",None),
 # OpenGL shaders
-#               ("_PYMOL_OPENGL_SHADERS",None),
+               ("_PYMOL_OPENGL_SHADERS",None),
 # Numeric Python support                    
 #                ("_PYMOL_NUMPY",None),
 # VMD plugin support           
 #               ("_PYMOL_VMD_PLUGINS",None)
+		("NO_MMLIBS",None),
                 ]
     ext_comp_args=["-ffast-math","-funroll-loops","-O3"]
     ext_link_args=[]
@@ -213,6 +214,7 @@ setup ( # Distribution meta-data
     "layer0/Queue.c",
     "layer0/Raw.c",
     "layer0/Sphere.c",
+    "layer0/ShaderMgr.c",
     "layer0/Tetsurf.c",
     "layer0/Texture.c",
     "layer0/Tracker.c",
@@ -268,6 +270,7 @@ setup ( # Distribution meta-data
     "layer2/ObjectMolecule2.c",
     "layer2/ObjectSurface.c",
     "layer2/ObjectSlice.c",
+    "layer2/ObjectVolume.c",
     "layer2/RepCartoon.c",
     "layer2/RepCylBond.c",
     "layer2/RepDistDash.c",

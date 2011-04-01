@@ -30,6 +30,8 @@ Z* -------------------------------------------------------------------
 #define cPLog_pym       2
 #define cPLog_no_flush  3
 
+int PLabelExprUsesVariable(PyMOLGlobals * G, char *expr, char *var);
+
 int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr,
                   int index);
 

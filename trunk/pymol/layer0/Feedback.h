@@ -111,6 +111,8 @@ function name.
 #define FB_Isosurface                8
 #define FB_OpenGL                    9
 
+// FB_Shader; no room here
+
 
 /* layer 1 */
 
@@ -146,6 +148,7 @@ function name.
 #define FB_ObjectSurface             36
 #define FB_ObjectGadget              37
 #define FB_ObjectSlice               38
+#define FB_ObjectVolume              39
 
 #define FB_RepAngle                  43
 #define FB_RepDihedral               44
@@ -165,7 +168,10 @@ function name.
 #define FB_RepCartoon                58
 #define FB_Sculpt                    59
 #define FB_VFont                     60
-
+// in layer0
+#define FB_Shader                    61
+#define FB_ShaderMgr                 62
+#define FB_ShaderPrg                 63
 
 /* layer 3 */
 

@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"PConv.h"
 #include"Selector.h"
+#include"ShaderMgr.h"
 
 #ifdef NT
 #undef NT
@@ -179,6 +180,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
   int *vi = I->Vis;
   float alpha;
   int t_mode;
+  CShaderPrg * prg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
 
   if((I->Type != 1) && (!s)) {
     return;
@@ -970,9 +972,15 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
           }
         } else {                /* opaque */
 
-          int use_dlst, simplify = 0;
+          int use_dlst, simplify = 0, use_shader;
           use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
           simplify = (int) SettingGet(G, cSetting_simplify_display_lists);
+          use_shader = (int) SettingGet(G, cSetting_surface_use_shader) & 
+                           (int) SettingGet(G, cSetting_use_shaders);
+          if (use_shader) {
+	    /*              ShaderEnable(G);*/
+	    CShaderPrg_Enable(prg);
+          }
           if(use_dlst && I->R.displayList) {
             glCallList(I->R.displayList);
           } else {
@@ -1139,6 +1147,10 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             if(use_dlst && I->R.displayList) {
               glEndList();
             }
+          }
+          if (use_shader) {
+            /*ShaderDisable(G);*/
+	    CShaderPrg_Disable(prg);
           }
         }
       }

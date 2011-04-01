@@ -2125,9 +2125,9 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_two_sided_lighting:
   case cSetting_transparency_mode:
   case cSetting_transparency_global_sort:
-
   case cSetting_dot_normals:
   case cSetting_mesh_normals:
+  case cSetting_use_shaders:
     SceneInvalidate(G);
     break;
   case cSetting_stereo_shift:
@@ -2191,6 +2191,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_stick_transparency:
   case cSetting_line_stick_helper:
   case cSetting_hide_long_bonds:
+  case cSetting_line_use_shader:
     ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
     SceneChanged(G);
@@ -2271,6 +2272,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
   case cSetting_stick_color:
+  case cSetting_stick_use_shader:
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
     SceneChanged(G);
     break;
@@ -2345,6 +2347,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_sphere_mode:
   case cSetting_sphere_point_max_size:
   case cSetting_sphere_point_size:
+  case cSetting_sphere_use_shader:
     ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
     SceneChanged(G);
     break;
@@ -2399,6 +2402,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_surface_cavity_mode:   
   case cSetting_surface_cavity_radius:
   case cSetting_surface_cavity_cutoff:   
+  case cSetting_surface_use_shader:
   case cSetting_cavity_cull:
     ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvRep);
     SceneChanged(G);
@@ -2507,7 +2511,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_cartoon_smooth_last:
   case cSetting_cartoon_smooth_cycles:
   case cSetting_cartoon_flat_cycles:
-
+  case cSetting_cartoon_use_shader:
     ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
     SceneChanged(G);
     break;
@@ -2608,6 +2612,44 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_movie_loop:
     if(SettingGetGlobal_b(G, cSetting_movie_auto_interpolate)) {
       ExecutiveMotionReinterpolate(G);
+    }
+    break;
+  case cSetting_volume_bit_depth:
+    ExecutiveInvalidateRep(G, inv_sele, cRepVolume, cRepInvColor);
+    SceneInvalidate(G);
+    break;
+  case cSetting_volume_data_range:
+    ExecutiveInvalidateRep(G, inv_sele, cRepVolume, cRepInvAll);
+    SceneInvalidate(G);
+    break;
+  case cSetting_volume_layers:
+    ExecutiveInvalidateRep(G, inv_sele, cRepVolume, cRepInvAll);
+    SceneInvalidate(G);
+    break;
+  case cSetting_atom_type_format:
+    {
+      char *setting;
+      char *lsetting;
+      int i;
+      setting = SettingGetGlobal_s(G, cSetting_atom_type_format);
+      lsetting = mmalloc(strlen(setting)+1);
+      for (i=0; i<=strlen(setting); i++){
+	lsetting[i] = tolower(setting[i]);
+      }
+      if (strcmp(lsetting, "mol2") && 
+	  strcmp(lsetting, "sybyl") && 
+	  strcmp(lsetting, "macromodel") &&
+	  strcmp(lsetting, "mmd")){
+	printf("lsetting='%s'\n", lsetting);
+	PRINTFB(G, FB_Setting, FB_Warnings)
+	  "Setting-Warning: atom_type_format needs to be either mol2/sybyl or macromodel/mmd setting back to default mol2\n"
+	  ENDFB(G);
+	SettingSet_s(G->Setting, cSetting_atom_type_format, "mol2");	
+      } else if (strcmp(setting, lsetting)){
+	SettingSet_s(G->Setting, cSetting_atom_type_format, lsetting);
+      }
+      mfree(lsetting);
+      ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvAll);
     }
     break;
   default:
@@ -3908,5 +3950,26 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_f(I, cSetting_heavy_neighbor_cutoff, 3.5F);
     set_f(I, cSetting_polar_neighbor_cutoff, 3.5F);
     set_f(I, cSetting_surface_residue_cutoff, 2.5F);
+    set_b(I, cSetting_surface_use_shader, 1);
+    set_b(I, cSetting_cartoon_use_shader, 1);
+    set_b(I, cSetting_stick_use_shader, 1);
+    set_b(I, cSetting_line_use_shader, 1);
+    set_b(I, cSetting_sphere_use_shader, 1);
+    set_b(I, cSetting_use_shaders, 0);  /* disable by default until optimized shaders present; doesn't effect vol */
+    set_s(I, cSetting_shader_path, "data/shaders");
+    set_i(I, cSetting_volume_bit_depth, 8);
+    set_color(I, cSetting_volume_color, "-1");
+    set_f(I, cSetting_volume_layers, 256);
+    set_f(I, cSetting_volume_data_range, 5.0);
+    set_i(I, cSetting_auto_defer_atom_count, 1000);
+    set_s(I, cSetting_default_refmac_names, "FWT PHWT DELFWT PHDELWT");
+    set_s(I, cSetting_default_phenix_names, "2FOFCWT PH2FOFCWT FOFCWT PHFOFCWT");
+    set_s(I, cSetting_default_phenix_no_fill_names, "2FOFCWT_no_fil PH2FOFCWT_no_fill None None");
+    set_s(I, cSetting_default_buster_names, "2FOFCWT PH2FOFCWT FOFCWT PHFOFCWT");
+    set_s(I, cSetting_default_fofc_map_rep, "volume");
+    set_s(I, cSetting_default_2fofc_map_rep, "volume");
+    set_s(I, cSetting_atom_type_format, "mol2");
+
+    set_b(I, cSetting_autoclose_dialogs, 1);
   }
 }

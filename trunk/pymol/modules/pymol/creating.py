@@ -21,10 +21,15 @@ if __name__=='pymol.creating':
     import cmd
     import string
     import re
+    import gzip
+    import os
     from cmd import _cmd, Shortcut, is_list, is_string, \
           file_ext_re, safe_list_eval, safe_alpha_list_eval, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
           is_tuple
+    import tempfile
+    from colorramping import ColorRamp
+    import sys
 
     from chempy import fragments
 
@@ -67,6 +72,13 @@ if __name__=='pymol.creating':
         }
 
     group_action_sc =  Shortcut(group_action_dict.keys())
+
+    # must correspond to the driver's constants
+    reflection_format_dict = {
+        "cns" : 1,
+        "mtz" : 2,
+        "cif" : 3
+        }
     
     def group(name, members="", action='auto', quiet=1,_self=cmd):
         '''
@@ -148,7 +160,6 @@ SEE ALSO
     group
     
     '''
-        
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -157,7 +168,8 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
-    
+
+
     def map_new(name, type='gaussian', grid=None, selection="(all)",
                 buffer=None, box=None, state=0, quiet=1, zoom=0,
                 normalize=-1, clamp=[1.0,-1.0], resolution=0.0, _self=cmd):
@@ -177,7 +189,7 @@ ARGUMENTS
 
     name = string: name of the map object to create or modify
 	
-	type = vdw, gaussian, gaussian_max, coulomb, coulomb_neutral, coulomb_local
+    type = vdw, gaussian, gaussian_max, coulomb, coulomb_neutral, coulomb_local
 
     grid = float: grid spacing
 
@@ -242,7 +254,7 @@ NOTES
         return r
 
     def ramp_new(name, map_name, range=[-1.0,0.0,1.0],
-                 color=['red',[1.0,1.0,1.0],'blue'], state=0,
+                 color=['red',[1.0,1.0,1.0],'blue'], state=1,
                  selection='', beyond=2.0, within=6.0, sigma=2.0,
                  zero=1, quiet=1, _self=cmd):
 
@@ -424,6 +436,125 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
+
+
+    def get_volume_palette(name):
+        r = ColorRamp(360)
+        r.addColor(0, (0,0,0,0))
+        r.addColor(359, (0,0,0,0))
+        print "Get volume pallete number: %d\n", name
+        if name==-1:
+            r.addColor(345, (0, 0.2, 0.7, 0.4))
+            r.addColor(315, (0, 0.2, 0.7, 0.1))
+        elif name==-2:
+            pass
+        elif name==-3:
+            pass
+        elif name==-4:
+            pass
+        elif name==-5:
+            pass
+
+        return r.getRamp()
+
+
+
+    def volume_color(name, colors, _self=cmd):
+        """
+DESCRIPTION -- untested do not use
+ALSO -- this belongs in a different module
+        """
+        if not (is_list(colors) or is_tuple(colors)):
+            colors = safe_list_eval(colors)
+        # tuple of tuples to list of float
+        cList = []
+        map(lambda x: cList.extend(x), colors)
+        cList = map(lambda x: float(x), cList)
+
+        try:
+            _self.lock(_self)
+            r = _cmd.volume_color(_self._COb, str(name), cList)
+        finally:
+            _self.unlock(r,_self)
+        
+        if _self._raising(r,_self): raise pymol.CmdException
+
+        # unlock and then use this to differentiate our viz
+        return r        
+
+
+    def volume(name, map, level=1.0, selection='', buffer=0.0,
+                state=1, carve=None, source_state=0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "volume" creates a volume object from a map object.
+
+USAGE
+
+    volume name, map, [, selection [, carve ]]]]
+
+ARGUMENTS
+
+    name = the name for the new volume object.
+
+    map = the name of the map object to use for computing the volume.
+
+    selection = an atom selection about which to display the mesh with
+        an additional "buffer" (if provided).
+
+    carve = a radius about each atom in the selection for which to
+        include density. If "carve" is not provided, then the whole
+        brick is displayed.
+
+NOTES
+
+    If the volume object already exists, then the new volume will 
+    overwrite the existing object.
+
+EXAMPLE
+
+    fetch 1oky, async=0
+    fetch 1oky, type=2fofc, async=0
+    volume 1okyVol, 1oky_2fofc
+
+SEE ALSO
+
+    map_new, isosurface, isomesh
+
+'''
+        r = DEFAULT_ERROR
+        
+        if selection!='':
+            region = 1 # about a selection
+        else:
+            region = 0 # render the whole map
+        # preprocess selection
+        selection = selector.process(selection)
+        if selection not in [ 'center', 'origin' ]:
+            selection = "("+selection+")"
+
+        if carve==None:
+            carve=0.0
+        
+        try:
+            _self.lock(_self)
+
+            r = _cmd.volume(_self._COb,str(name),str(map),int(region),
+                            selection,float(buffer),
+                            float(level),0,int(state)-1,float(carve),
+                            int(source_state)-1,int(quiet),
+                            float(level))
+
+        finally:
+            _self.unlock(r,_self)
+        
+        if _self._raising(r,_self): raise pymol.CmdException
+
+        # unlock and then use this to differentiate our viz
+        return r
+
+
 
     def slice_new(name, map, state=1, source_state=0, _self=cmd):
         '''

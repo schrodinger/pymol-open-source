@@ -30,8 +30,8 @@ if __name__=='pymol.viewing':
           _feedback,fb_module,fb_mask, \
           repres,repres_sc, is_string, is_list, is_ok, is_error, \
           toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
-          palette_dict ,palette_sc, window_dict, window_sc, \
-          safe_list_eval,  safe_alpha_list_eval, \
+          palette_dict, palette_sc, window_dict, window_sc, \
+          safe_list_eval, safe_alpha_list_eval, \
           location_code, location_sc, boolean_dict, boolean_sc, \
           DEFAULT_ERROR, DEFAULT_SUCCESS
         
@@ -39,7 +39,7 @@ if __name__=='pymol.viewing':
     
     rep_list = [ "lines", "sticks", "spheres", "dots", "surface",
                  "mesh", "nonbonded", "nb_spheres", "cartoon",
-                 "ribbon", "labels", "slice", "ellipsoids"]
+                 "ribbon", "labels", "slice", "ellipsoids", "volume" ]
 
     scene_action_sc = Shortcut(['store','recall','clear','insert_before',
                                 'insert_after','next','previous',
@@ -1817,7 +1817,7 @@ NOTES
         name, resi, resn, resv, chain, segi, model, alt, q, b, type,
         index, rank, ID, ss, vdw, elec_radius, label, elem, geom,
         flags, color, cartoon, valence, formal_charge, partial_charge,
-        numeric_type, text_type
+        numeric_type, text_type, stereo
 
     All strings in the expression must be explicitly quoted.
 

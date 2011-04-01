@@ -1,5 +1,4 @@
 
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -58,6 +57,21 @@ Z* -------------------------------------------------------------------
 #define nextline ParseNextLine
 #define ncopy ParseNCopy
 #define nskip ParseNSkip
+
+int OVLexicon_IsEmpty(OVLexicon * uk, ov_word id){
+  char null_st[1] = "";
+  char *st = null_st;
+  int i = 0, stlen, is_empty = 1;
+  st = OVLexicon_FetchCString(uk, id);
+  stlen = strlen(st);
+  for (i=0; i<stlen; i++){
+    if (st[i] != ' ' && st[i] != '\t'){
+      is_empty = 0;
+      break;
+    }
+  }
+  return is_empty;
+}
 
 void ObjectMoleculeCylinders(ObjectMolecule * I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, char *buffer,
@@ -5410,7 +5424,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
   ObservedInfo *obs_atom = NULL;
   ObservedInfo *obs_bond = NULL;
   int *flag = NULL;
-
+  int warning1 = 0, warning2 = 0;
 
 /* WORKAROUND of a possible -funroll-loops inlining optimizer bug in gcc 3.3.3 */
 
@@ -5592,6 +5606,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
         escape:
           escape_count = ESCAPE_MAX;    /* don't get bogged down with structures 
                                            that have unreasonable connectivity */
+	  warning1 = 1;
         }
       }
     }
@@ -6087,7 +6102,9 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
                         while(((mem[5] = neighbor[nbr[4]]) >= 0) &&
                               ((!atmToIdx) || (atmToIdx[mem[4]] >= 0))) {
                           if(!(escape_count--))
-                            goto escape;
+                            goto escape2; /* BUG FIX: need a new escape2, instead of 
+					     mistakenly going back to the first escape,
+					     which is in the loop above */
                           if((mem[5] != mem[3]) && (mem[5] != mem[2])
                              && (mem[5] != mem[1])) {
                             if(mem[5] == mem[0] && (!ai->chemFlag)) {
@@ -6165,9 +6182,18 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
             }
             nbr[0] += 2;
           }
+        escape2:           /* BUG FIX: Need separate escape for this loop */
+          escape_count = ESCAPE_MAX;    /* don't get bogged down with structures 
+                                           that have unreasonable connectivity */
+	  warning2 = 1;
         }
       }
     }
+  }
+  if (warning1 || warning2){
+	  PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Warnings)
+	    " ObjectMoleculeGuessValences(%d,%d): Unreasonable connectivity in heteroatom,\n  unsuccessful in guessing valences.\n", warning1, warning2
+	     ENDFB(I->Obj.G);
   }
   FreeP(obs_bond);
   FreeP(obs_atom);
@@ -8361,6 +8387,142 @@ static CoordSet *ObjectMoleculeSDF2Str2CoordSet(PyMOLGlobals * G, char *buffer,
   return result;
 }
 
+int isRegularRes( const char *resname )
+{
+
+  if( strcmp( resname, "ALA" ) == 0 )
+    return 1;
+  if( strcmp( resname, "ARG" ) == 0 )
+    return 1;
+  if( strcmp( resname, "ASN" ) == 0 )
+    return 1;
+  if( strcmp( resname, "ASP" ) == 0 )
+    return 1;
+  if( strcmp( resname, "CYS" ) == 0 )
+    return 1;
+  if( strcmp( resname, "GLU" ) == 0 )
+    return 1;
+  if( strcmp( resname, "GLN" ) == 0 )
+    return 1;
+  if( strcmp( resname, "GLY" ) == 0 )
+    return 1;
+  if( strcmp( resname, "HIS" ) == 0 )
+    return 1;
+  if( strcmp( resname, "ILE" ) == 0 )
+    return 1;
+  if( strcmp( resname, "LEU" ) == 0 )
+    return 1;
+  if( strcmp( resname, "LYS" ) == 0 )
+    return 1;
+  if( strcmp( resname, "MET" ) == 0 )
+    return 1;
+  if( strcmp( resname, "MSE" ) == 0 )
+    return 1;
+  if( strcmp( resname, "PHE" ) == 0 )
+    return 1;
+  if( strcmp( resname, "PRO" ) == 0 )
+    return 1;
+  if( strcmp( resname, "SER" ) == 0 )
+    return 1;
+  if( strcmp( resname, "THR" ) == 0 )
+    return 1;
+  if( strcmp( resname, "TRP" ) == 0 )
+    return 1;
+  if( strcmp( resname, "TYR" ) == 0 )
+    return 1;
+  if( strcmp( resname, "VAL" ) == 0 )
+    return 1;
+  return ( 0 );
+}
+
+static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *obj){
+  /* this code is from mmmol2_mol2file_get_ct() in mmmol2.c */
+  /* goes through each atom, and sets the formal charge */
+  int a, nAtom, state;
+  CoordSet *cset;
+  ObjectMoleculeUpdateNeighbors(obj);
+  for (state=0; state<obj->NCSet; state++){
+    if (obj->DiscreteFlag){
+      cset = obj->DiscreteCSet[state];
+    } else {
+      cset = obj->CSet[state];
+    }
+    nAtom = cset->NIndex;
+    for(a = 0; a < nAtom; a++) {
+      int at, fcharge = 0, isProtein = 0, k, n;
+      AtomInfoType *ai;
+      char *atom_type = 0;
+      char *atom_name = 0;
+      char resname_temp[4];
+      BondType *bt;
+      at = cset->IdxToAtm[a];
+      ai = &obj->AtomInfo[at];
+      strcpy( resname_temp, "" );
+      resname_temp[3] = 0;
+      if(ai->textType){
+	atom_type = OVLexicon_FetchCString(G->Lexicon, ai->textType);
+      } else {
+	PRINTFB(G, FB_Executive, FB_Warnings)
+	  "ObjectMoleculeMOL2SetFormalCharges-Warning: textType invalidated, not setting formal charges\n"
+	  ENDFB(G);
+	return;
+      }
+      atom_name = ai->name;
+      strncpy( resname_temp, ai->resn, 3);
+      if( isRegularRes( resname_temp ) ) {
+	isProtein = 1;
+      }
+
+      if( strcmp( atom_type, "N.pl3" ) == 0 ) {
+	if(getenv("CORRECT_NATOM_TYPE")) {
+	  if (obj->Neighbor[obj->Neighbor[at]]>0){
+	    for (k=obj->Neighbor[at]+1;obj->Neighbor[k]!=-1; k+=2){
+	      n = obj->Neighbor[k];
+	      bt = &obj->Bond[obj->Neighbor[k+1]];
+	      if (bt->order == 2){
+		fcharge = 1;
+	      } else if (!isProtein && bt->order == 4){
+		fcharge = 0;
+		break;
+	      }
+	    }
+	  }
+	} else {
+	  if (obj->Neighbor[obj->Neighbor[at]]>0){
+	    for (k=obj->Neighbor[at]+1;obj->Neighbor[k]!=-1; k+=2){
+	      n = obj->Neighbor[k];
+	      bt = &obj->Bond[obj->Neighbor[k+1]];
+	      if (bt->order == 2 || 
+		  (!isProtein && bt->order == 4)){
+		fcharge = 1;
+		break;
+	      }
+	    }
+	  }
+	}
+      }
+      if( strcmp( atom_type, "N.4" ) == 0 ) {
+	fcharge = 1;
+      } // N sp3 positively charged
+      if( strcmp( atom_type, "O.co2" ) == 0 ) {
+	if( strcmp( atom_name, "OE2" ) == 0 || strcmp( atom_name, "OD2" ) == 0 )
+	  fcharge = -1;
+	else if( obj->Neighbor[obj->Neighbor[at]] == 1){
+	  if (obj->Bond[obj->Neighbor[obj->Neighbor[at]+2]].order == 1){
+	    fcharge = -1;
+	  }
+	}
+      }
+      if( strcmp( atom_name, "OXT" ) == 0 )
+	fcharge = -1;
+      if( isProtein && a == 0 && strcmp( atom_type, "N.am" ) == 0 ) {
+	fcharge = 1;
+      }
+      ai->formalCharge = fcharge;
+    }
+  }
+  cset->noInvalidateMMStereoAndTextType = 0;
+}
 
 /*========================================================================*/
 
@@ -8640,6 +8802,9 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                   break;
                 case '3':
                   ii->order = 3;
+                  break;
+                case '4':
+                  ii->order = 4;
                   break;
                 }
               } else if(WordMatchExact(G, "ar", cc, true)) {
@@ -8992,6 +9157,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
   int deferred_tasks = false;
   int skip_out;
   int connect = false;
+  int set_formal_charges = false;
   *next_entry = NULL;
 
   start = st;
@@ -9020,6 +9186,10 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
     case cLoadTypeMOL2:
     case cLoadTypeMOL2Str:
       cset = ObjectMoleculeMOL2Str2CoordSet(G, start, &atInfo, &restart);
+      if (cset){
+	cset->noInvalidateMMStereoAndTextType = 1;
+	set_formal_charges = true;
+      }
       break;
     case cLoadTypeMOL:
     case cLoadTypeMOLStr:
@@ -9042,6 +9212,8 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(!isNew)
         VLAFreeP(atInfo);
       if(!successCnt) {
+	if (isNew)
+	  I->AtomInfo = atInfo;
         ObjectMoleculeFree(I);
         I = NULL;
         ok = false;
@@ -9122,7 +9294,6 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
           }
         }
       }
-
       if(multiplex > 0) {
         UtilNCopy(new_name, tmpName, WordLength);
         if(restart) {
@@ -9136,6 +9307,9 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
     }
   }
   if(deferred_tasks && I) {     /* defer time-consuming tasks until all states have been loaded */
+    if (set_formal_charges){
+      ObjectMoleculeMOL2SetFormalCharges(G, I);
+    }
     SceneCountFrames(G);
     ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
     ObjectMoleculeUpdateIDNumbers(I);
@@ -10516,6 +10690,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
     default:
       {
         int inv_flag;
+#ifndef NO_MMLIBS
+	int use_stereo = 0, use_text_type = 0;
+#endif
         switch (op->code) {
         case OMOP_INVA:
           /* set up an important optimization... */
@@ -10529,6 +10706,12 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         use_matrices = SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
         if(use_matrices<0) use_matrices = 0;
         ai = I->AtomInfo;
+#ifndef NO_MMLIBS
+	if (op->code == OMOP_LABL){
+	  use_stereo = PLabelExprUsesVariable(G, op->s1, "stereo");
+	  use_text_type = PLabelExprUsesVariable(G, op->s1, "text_type");
+	}
+#endif
         for(a = 0; a < I->NAtom; a++) {
           switch (op->code) {
           case OMOP_Flag:
@@ -10587,35 +10770,69 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 hit_flag = true;
                 break;
               case OMOP_LABL:
+#ifndef NO_MMLIBS
+		if (use_stereo){
+		  /* for now, for each atom in selection, check ObjectMolecule to
+		     see if mmstereo needs to be recalculated */
+		  if (I->DiscreteFlag){
+		    ObjectMoleculeUpdateMMStereoInfoForState(G, I, ai->discrete_state-1 , 1);
+		  } else {
+		    int state;
+		    for (state=0; state<I->NCSet; state++){
+		      ObjectMoleculeUpdateMMStereoInfoForState(G, I, state , 1);
+		    }
+		  }
+		}
+		if (use_text_type){
+		  if (I->DiscreteFlag){
+		    ObjectMoleculeUpdateAtomTypeInfoForState(G, I, ai->discrete_state-1, 1, 0);
+		  } else {
+		    int state;
+		    for (state=0; state<I->NCSet; state++){
+		      ObjectMoleculeUpdateAtomTypeInfoForState(G, I, state, 1, 0);
+		    }
+		  }
+		}
+#endif
                 if(ok) {
                   if(!op->s1[0]) {
                     if(ai->label) {
+		      if (!OVLexicon_IsEmpty(G->Lexicon, ai->label)){
+			op->i1--; /* negative if unlabelling */
+		      }
                       OVLexicon_DecRef(I->Obj.G->Lexicon, ai->label);
                       ai->label = 0;
                     }
-                    op->i1++;
                     ai->visRep[cRepLabel] = false;
                     hit_flag = true;
                   } else {
                     switch (op->i2) {
                     case cExecutiveLabelEvalOn:
-                      /* python label expression evaluation */
-                      if(PLabelAtom(I->Obj.G, &I->AtomInfo[a], I->Obj.Name, op->s1, a)) {
-                        op->i1++;
-                        ai->visRep[cRepLabel] = true;
-                        hit_flag = true;
-                      } else {
-                        ok = false;
-                      }
+		      {
+			/* python label expression evaluation */
+			if(PLabelAtom(I->Obj.G, &I->AtomInfo[a], I->Obj.Name, op->s1, a)) {
+			  if (ai->label && !OVLexicon_IsEmpty(G->Lexicon, ai->label)){
+			    op->i1++; /* only if the string has been set, report labelled */
+			  }
+			  ai->visRep[cRepLabel] = true;
+			  hit_flag = true;
+			} else {
+			  ok = false;
+			}
+		      }
                       break;
                     case cExecutiveLabelEvalAlt:
-                      if(PLabelAtomAlt(I->Obj.G, &I->AtomInfo[a], I->Obj.Name, op->s1, a)) {
-                        op->i1++;
-                        ai->visRep[cRepLabel] = true;
-                        hit_flag = true;
-                      } else {
-                        ok = false;
-                      }
+		      {
+			if(PLabelAtomAlt(I->Obj.G, &I->AtomInfo[a], I->Obj.Name, op->s1, a)) {
+			  if (ai->label && !OVLexicon_IsEmpty(G->Lexicon, ai->label)){
+			    op->i1++; /* only if the string has been set, report labelled */
+			  }
+			  ai->visRep[cRepLabel] = true;
+			  hit_flag = true;
+			} else {
+			  ok = false;
+			}
+		      }
                       break;
                     case cExecutiveLabelEvalOff:
                       {
@@ -11463,6 +11680,15 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
     " ObjectMolecule: updates complete for object %s.\n", I->Obj.Name ENDFD;
 }
 
+AtomInfoType *get_atom_info_type(ObjectMolecule *obj, int state, int idx){
+  int atm;
+  if (state>=0 && state < obj->NCSet){   
+    atm = obj->CSet[state]->IdxToAtm[idx];
+    return &obj->AtomInfo[atm];
+  } else {
+    return 0;
+  }
+}
 
 /*========================================================================*/
 void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
@@ -11500,19 +11726,69 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
     if(stop > I->NCSet)
       stop = I->NCSet;
     for(a = start; a < stop; a++) {
-      if(I->CSet[a]) {
-        if(I->CSet[a]->fInvalidateRep) {
-          I->CSet[a]->fInvalidateRep(I->CSet[a], rep, level);
+      CoordSet *cset = 0;
+      cset = I->CSet[a];
+      if(cset) {
+        if(cset->fInvalidateRep) {
+          cset->fInvalidateRep(cset, rep, level);
         }
+	if (!cset->noInvalidateMMStereoAndTextType){
+	  /* update mmstereo */
+	  int ai, atm;
+	  AtomInfoType *at;
+	  if (state < 0){
+	    for (ai=0; ai < I->NAtom; ai++){
+	      at = &I->AtomInfo[ai];
+	      at->mmstereo = 0;
+	      at->textType = 0;
+	    }
+	  } else {
+	    if (cset->AtmToIdx){
+	      for (ai=0; ai < cset->NIndex; ai++){
+		atm = cset->AtmToIdx[ai];
+		if (atm>=0){
+		  at = &I->AtomInfo[ai];
+		  at->mmstereo = 0;
+		  at->textType = 0;
+		}
+	      }
+	    }
+	  }
+	} else {
+	  PRINTFD(I->Obj.G, FB_ObjectMolecule)
+	    "ObjectMoleculeInvalidate: state=%d not setting mmstereo or textType\n", a
+	    ENDFD;
+	}
       }
     }
   }
-
+  
   PRINTFD(I->Obj.G, FB_ObjectMolecule)
     " ObjectMoleculeInvalidate: leaving...\n" ENDFD;
 
 }
 
+void ObjectMoleculeInvalidateAtomType(ObjectMolecule *I, int state){
+  CoordSet *cset = 0;
+  int ai, atm, a;
+  AtomInfoType *at;
+  cset = I->CSet[state];
+  a = state;
+  if (state < 0){
+    for (ai=0; ai < I->NAtom; ai++){
+      at = &I->AtomInfo[ai];
+      at->textType = 0;
+    }
+  } else {
+    for (ai=0; ai < cset->NIndex; ai++){
+      atm = cset->IdxToAtm[ai];
+      if (atm>=0){
+	at = &I->AtomInfo[ai];
+	at->textType = 0;
+      }
+    }
+  }
+}
 
 /*========================================================================*/
 int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, float *v, int mode,
@@ -12988,3 +13264,9 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals * G, ObjectMolecule * obj
   return (I);
 }
 #endif
+
+/* create stubs for MMLIBS functions; */
+int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize, int format)
+{
+  return 0;
+}

@@ -57,6 +57,7 @@ typedef struct _CTexture CTexture;
 typedef struct _CType CType;
 typedef struct _CMain CMain;
 typedef struct _CPlugIOManager CPlugIOManager;
+typedef struct _CShaderMgr CShaderMgr;
 
 #ifndef _PYMOL_NOPY
 typedef struct _CP_inst CP_inst;
@@ -137,6 +138,7 @@ struct _PyMOLGlobals {
   CPyMOL *PyMOL;                /* the instance */
   OVLexicon *Lexicon;           /* lexicon for data (e.g. label) strings */
   CPlugIOManager *PlugIOManager;
+  CShaderMgr* ShaderMgr;
 
 #ifndef _PYMOL_NOPY
   CP_inst *P_inst;
@@ -170,6 +172,10 @@ struct _PyMOLGlobals {
 
   int DragDirtyFlag;            /* do we need an extra callback to handle a mouse drag? */
 
+#ifdef _PYMOL_LIB
+  void *CallbackObject;
+  void (*visibilityCallback)(void *, const char *, int );
+#endif
 };
 
 

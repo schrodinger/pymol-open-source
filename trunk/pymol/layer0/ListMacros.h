@@ -186,7 +186,7 @@ do { \
 /* Can similarly do reverse iteration w/Post=Pre */
 
 /* For all these ElemAlloc macros, it calls if(!Elem)
- * indicating thta all blank incoming Elem's must be initialized
+ * indicating that all blank incoming Elem's must be initialized
  * to NULL.  Just calling :ElemType* foo;" won't do.
  */
 #define DListElemAlloc(G,Elem,ElemType) \

@@ -126,8 +126,13 @@ COMMANDS
 
 Try "help <command-name>".  Also see the following extra topics:
 
-    "movies", "keyboard", "mouse", "selections",
-    "examples", "launching", "editing", and "api".
+    "api", "editing", "edit_keys", "examples", "faster", "keyboard",
+    "launching", "mouse", "movies", "python", "povray", "release",
+    "selections", "skip", "sync", "stereochemistry", "text_type",
+    "transparency", "@".
+
+
+
     '''
         _self.help('commands')
 
@@ -169,7 +174,7 @@ so long as one of these representation is present underneath.
 RELEASE NOTES
 
 PyMOL is a free, open, and expandable molecular graphics system
-written by a computational scientist to enable molecular modeling from
+written by computational scientists to enable molecular modeling from
 directly within Python.  It will be of most benefit to hybrid
 scientist/developers in the fields of structural biology,
 computational chemistry, and informatics who seek an open and
@@ -178,21 +183,13 @@ programs.  PyMOL will also be of benefit to advanced non-developers
 familiar with similar programs such as Midas, O, Grasp, X-PLOR and
 CNS.
 
-Due to PyMOL's current "user-unfriendliness", this release is most
-appropriate for those who prefer to use text commands and scripts, and
-for developers who want to integrate PyMOL's visualization and
-molecular editing capabilities with their own work.
-
 PyMOL currently includes a diverse command language, a powerful
 application programmers interface (API), and a variety of mouse and
 keyboard driven functionality for viewing, animation, rendering, and
 molecular editing.  A partial manual is now available on the web.
 
 Two external GUI development options are supported for PyMOL:
-"Tkinter" and "wxPython".  Developers can take their pick.  I am
-committed to insuring that PyMOL will work with both of them, but it
-is unlikely that I will have time to develop a complete external GUI
-myself any time soon using either toolkit.
+"Tkinter" and "wxPython".  Developers can take their pick.
 
 Note that only Tkinter is supported under Windows with the default
 PyMOL and Python distributions, so for maximum ease of installation
@@ -201,6 +198,7 @@ Tkinter-based GUI is going to be the default GUI for standard PyMOL
 despite its drawbacks.
 
 Warren L. DeLano (5/1/2001), warren@delanoscientific.com
+Jason Vertrees (3/7/2011), jason.vertrees@schrodinger.com (update)
     '''
         _self.help('release')
 
@@ -636,6 +634,81 @@ DESCRIPTION
         '''
         _self.help('povray')
 
+
+    def stereochemistry(_self=cmd):
+        """
+PYMOL STEREOCHEMISTRY
+
+      PyMOL can label chiral centers; however, due to the recursive and
+      dependent nature of the determination, PyMOL will refuse to
+      label structures with alternate coordinates.
+
+      To determine stereochemistry for a structure that has alternate
+      coordinates, you either need to clear the alternate coordinates
+      field in the target object using:
+
+     	   alter objName, alt=''
+
+     or you need to create a new object from the old object selecting
+     just one set of coordinates per atom.  For example, to create a
+     new object called 'newObj' from 'oldObj' using the only those
+     atoms with no alternate coordinates or those atoms with an
+     alternate coordinate label 'A' one types:
+
+     	  create newObj, oldObj and alt ''+alt 'A'
+
+      Similarly, to create an object from just alternate coordinates
+      'G' one types:
+
+      	  create newObj, oldObj and alt 'G'
+
+      PyMOL labels chiral centers using the IUPAC symbols 'R' for
+      rectus, 'S' for sinister, 'r' for pseudoasymmetric rectus and
+      's' for pseudoasymmetric sinister.
+      
+SEE ALSO
+
+    label, select    
+
+        """
+        help('stereochemistry')
+
+
+    def text_type(_self=cmd):
+        """
+PYMOL ATOM TYPING
+
+      PyMOL can label atom types with formats mol2/sybyl or macromodel/mmd.
+      The global setting atom_type_format is used to determine which type
+      is labelled.  Due to the recursive and dependent nature of the
+      determination, PyMOL will refuse to label structures with alternate
+      coordinates.
+
+      To determine atom types for a structure that has alternate
+      coordinates, you either need to clear the alternate coordinates
+      field in the target object using:
+
+     	   alter objName, alt=''
+
+     or you need to create a new object from the old object selecting
+     just one set of coordinates per atom.  For example, to create a
+     new object called 'newObj' from 'oldObj' using the only those
+     atoms with no alternate coordinates or those atoms with an
+     alternate coordinate label 'A' one types:
+
+     	  create newObj, oldObj and alt ''+alt 'A'
+
+      Similarly, to create an object from just alternate coordinates
+      'G' one types:
+
+      	  create newObj, oldObj and alt 'G'
+      
+SEE ALSO
+
+    label, select    
+
+        """
+        help('text_type')
 
     def faster(_self=cmd):
         '''

@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"CGO.h"
 #include"Extrude.h"
+#include"ShaderMgr.h"
 
 typedef struct RepCartoon {
   Rep R;                        /* must be first! */
@@ -59,6 +60,8 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   register PyMOLGlobals *G = I->R.G;
+  CShaderPrg * p = CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
+
   if(ray) {
     PRINTFD(G, FB_RepCartoon)
       " RepCartoonRender: rendering raytracable...\n" ENDFD;
@@ -74,8 +77,16 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
                            I->R.cs->Setting, I->R.obj->Setting);
       }
     } else {
-      int use_dlst;
+      int use_dlst, use_shader;
       use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
+
+      use_shader = (int) SettingGet(G, cSetting_cartoon_use_shader) & 
+	               (int) SettingGet(G, cSetting_use_shaders) ;
+      if (use_shader) {
+	CShaderPrg_Enable(p);
+	/*	ShaderEnable(G); */
+      }
+
       if(use_dlst && I->R.displayList) {
         glCallList(I->R.displayList);
       } else {
@@ -98,6 +109,11 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
         if(use_dlst && I->R.displayList) {
           glEndList();
         }
+
+	if (use_shader) {
+	  CShaderPrg_Disable(p);
+	  /*ShaderDisable(G);*/
+	}
       }
     }
   }

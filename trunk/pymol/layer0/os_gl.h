@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #ifndef WIN32
 #define GL_GLEXT_PROTOTYPES
 #endif
+#include<GL/glew.h>
 #include<GL/gl.h>
 #include<GL/glu.h>
 #include<GL/glext.h>
@@ -40,10 +41,12 @@ Z* -------------------------------------------------------------------
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef _MACPYMOL_XCODE
+#include<GL/glew.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/glext.h>
 #else
+#include<GL/glew.h>
 #include<gl.h>
 #include<glu.h>
 #include<glext.h>

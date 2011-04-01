@@ -1,8 +1,7 @@
 
-
 /* 
    A* -------------------------------------------------------------------
-   B* This fil econtains source code for the PyMOL computer program
+   B* This file contains source code for the PyMOL computer program
    C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
    D* -------------------------------------------------------------------
    E* It is unlawful to modify or remove this copyright notice.
@@ -31,6 +30,7 @@
 #include"ObjectSlice.h"
 #include"ObjectAlignment.h"
 #include"ObjectGroup.h"
+#include"ObjectVolume.h"
 #include"ListMacros.h"
 #include"MyPNG.h"
 #include"Ortho.h"
@@ -69,6 +69,27 @@
 #include"OVLexicon.h"
 #include"OVOneToOne.h"
 #include"OVOneToAny.h"
+
+
+#ifndef _PYMOL_NOPY
+#include"ce_types.h"
+/* Externals for CEAlign  */
+extern double** calcDM(pcePoint coords, int len);
+extern double** calcS(double** d1, double** d2, int lenA, int lenB, int wSize);
+extern pcePoint getCoords(PyObject *L, int length);
+extern pathCache findPath(double** S, double** dA, double** dB, int lenA, int lenB, int winSize, int * bufferSize);
+extern PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int bufferSize, int smaller, int winSize);
+#endif
+
+/* HACK */
+#ifndef __FLINE_HACK
+#define __FLINE_HACK
+void fline_mmio_(  int *errunit, char *buf,  int *len ) { }
+#endif
+
+#ifdef WIN32
+#define mkstemp _mktemp_s
+#endif
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -141,6 +162,17 @@ struct _CExecutive {
   int LastMotionCount;
 };
 
+#ifdef _PYMOL_INCENTIVE
+extern void primex_pymol_driver(int natom, double * x, double * y, double * z, double * tfactor, double * occupancy,
+				int * formal_charge, int * atomic_number, double *vdw_radius, int * isH2O, 
+				int * is_ion_atom, const char * space_group, double cell[6], double reso_high, double reso_low,
+				const char * reflection_file, int reflection_format, double map_u, double map_v, double map_cushion,
+				const char * map_file, int map_format );
+
+extern int primex_pymol_driver2(const char *space_group, double cell[6], double reso_high, double reso_low,
+                          const char *reflection_file, const char *map_ampl_label, const char *map_phase_label, 
+                          const char *fom_label, const char *map_file);
+#endif
 
 /* routines that still need to be updated for Tracker list iteration
 
@@ -153,6 +185,7 @@ ExecutiveRenameObjectAtoms
 ExecutiveSpheroid
 
 */
+
 static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, char *name,
                                             int allow_partial, int expand_groups);
 
@@ -170,6 +203,14 @@ static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
 int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int state,
                                        char *s1, int log, float *matrix, int homogenous,
                                        int global);
+
+void ReportVisibility(PyMOLGlobals * G, SpecRec *rec){
+#ifdef _PYMOL_LIB
+  if (G->CallbackObject && G->visibilityCallback){
+    G->visibilityCallback(G->CallbackObject, rec->name, rec->visible);
+  }
+#endif
+}
 
 int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
                                 int index, int count, int target, int freeze)
@@ -704,6 +745,7 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
   int multi = false;
   /* box_mode 0 = all, 1 = sele + buffer, 2 = vector, 3 = testing */
 
+  /* (pattern) if old_name(origObj) exists, overwrite it */
   origObj = ExecutiveFindObjectByName(G, surf_name);
   if(origObj) {
     if(origObj->type != cObjectSurface) {
@@ -712,13 +754,16 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
     }
   }
 
+  /* (pattern) if old_name(mObj) exists, overwrite it */
   mObj = ExecutiveFindObjectByName(G, map_name);
   if(mObj) {
     if(mObj->type != cObjectMap)
       mObj = NULL;
   }
+  /* state finding for the map */
   if(mObj) {
     mapObj = (ObjectMap *) mObj;
+    /* state handling */
     if(state == -1) {
       multi = true;
       state = 0;
@@ -846,6 +891,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
   OrthoLineType s1;
   ObjectMolecule *sele_obj = NULL;
 
+  /* (pattern) if old_name(origObj) exists, overwrite it */
   origObj = ExecutiveFindObjectByName(G, mesh_name);
   if(origObj) {
     if(origObj->type != cObjectMesh) {
@@ -854,6 +900,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
     }
   }
 
+  /* (pattern) if old_name(mObj) exists, overwrite it */
   mObj = ExecutiveFindObjectByName(G, map_name);
   if(mObj) {
     if(mObj->type != cObjectMap)
@@ -861,6 +908,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
   }
   if(mObj) {
     mapObj = (ObjectMap *) mObj;
+    /* state handling */
     if(state == -1) {
       multi = true;
       state = 0;
@@ -915,6 +963,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
           carve = -0.0;         /* impossible */
           break;
         case 1:                /* just do area around selection */
+	  /* determine the selected object */
           ok = (SelectorGetTmp(G, sele, s1) >= 0);
           if(ok) {
             int sele1 = SelectorIndexByName(G, s1);
@@ -997,6 +1046,239 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
   } else {
     PRINTFB(G, FB_ObjectMesh, FB_Errors)
       " Isomesh: Map or brick object \"%s\" not found.\n", map_name ENDFB(G);
+    ok = false;
+  }
+  return ok;
+}
+
+
+int ExecutiveVolumeColor(PyMOLGlobals * G, char * volume_name, float * colors, int ncolors) {
+ 
+  int ok = true;
+  CObject * origObj = NULL;
+  
+  origObj = ExecutiveFindObjectByName(G, volume_name);
+  if(origObj) {
+    if(origObj->type != cObjectVolume) {
+      ExecutiveDelete(G, volume_name);
+      origObj = NULL;
+    }
+  }
+
+  if(origObj) {
+    ok = ObjectVolumeColor((ObjectVolume*) origObj, colors, ncolors);
+  } else {
+    PRINTFB(G, FB_ObjectVolume, FB_Errors)
+      " Volume: volume object \"%s\" not found.\n", volume_name ENDFB(G);
+    ok = false;
+  }
+
+  return ok;
+}
+
+
+int ExecutiveVolume(PyMOLGlobals * G, char *volume_name, char *map_name,
+                        float lvl,
+                        char *sele, float fbuf, int state,
+                        float carve, int map_state, int quiet,
+                        int mesh_mode, int box_mode, float alt_lvl)
+{
+  int ok = true;
+  CObject *obj = NULL, *mObj, *origObj;
+  ObjectMap *mapObj;
+  float mn[3] = { 0, 0, 0 };
+  float mx[3] = { 15, 15, 15 };
+  float *vert_vla = NULL;
+  int multi = false;
+  ObjectMapState *ms;
+  OrthoLineType s1;
+  ObjectMolecule *sele_obj = NULL;
+
+  /* Goal: make a new volume map from the object or selection
+   *
+   * If the user specifies an VOLUME OBJECT NAME that already exists, then
+   * check to make sure it's a volume.  If it is, keep it, else delete it
+   * 
+   * If the user specifies a MAP OBJECT NAME that already exists, then
+   * make sure it's really a map.  Keep it if it is (to append the state)
+   * otherwise, delete it.
+   *
+   * Given that the MAP is valid, find the current states for the MAP object
+   * and the scene/protein.
+   *
+   * If the user is loading a map with N-states, into an N-state object, we need
+   * to loop over each state.  So,
+   *
+   * FOR EACH state in the MAP:
+   *   - determine the extents of the MAP for THIS STATE
+   *
+   *   - create the VOLUME object from the MAP/XTAL SYMM
+   *   - if VOLUME CREATION didn't work, then try creating from a BOX
+   *
+   *   - transform (translate/rotate) the VOLUME vis so that it
+   *     matches the map's ObjectMatrix.
+   *
+   *   - if this is a new VOLUME, (eg., origObj==NULL) then set the internal
+   *     PyMOL state to manage the object and add the name to the object list
+   *
+   *   - update the map state for the next loop and re-iterate
+   */
+
+  /* check for synonymous volume */
+  origObj = ExecutiveFindObjectByName(G, volume_name);
+  if(origObj) {
+    if(origObj->type != cObjectVolume) {
+      ExecutiveDelete(G, volume_name);
+      origObj = NULL;
+    }
+  }
+  /* find the map for this volume */
+  mObj = ExecutiveFindObjectByName(G, map_name);
+  if(mObj) {
+    if(mObj->type != cObjectMap)
+      mObj = NULL;
+  }
+
+  if(mObj) {
+    mapObj = (ObjectMap *) mObj;
+    /* BEGIN state finding */
+    if(state == -1) {
+      multi = true;
+      state = 0;
+      map_state = 0;
+    } else if(state == -2) {
+      state = SceneGetState(G);
+      if(map_state < 0)
+        map_state = state;
+    } else if(state == -3) {    /* append mode */
+      state = 0;
+      if(origObj)
+        if(origObj->fGetNFrame)
+          state = origObj->fGetNFrame(origObj);
+    } else {
+      if(map_state == -1) {
+        map_state = 0;
+        multi = true;
+      } else {
+        multi = false;
+      }
+      /* END state finding */
+    }
+    /* do for each state */
+    while(1) {
+      if(map_state == -2)
+        map_state = SceneGetState(G);
+      if(map_state == -3)
+        map_state = ObjectMapGetNStates(mapObj) - 1;
+      ms = ObjectMapStateGetActive(mapObj, map_state);
+      if(ms) {
+	/* determine extents */
+        switch (box_mode) {
+        case 0:                /* do the whole map */
+          {
+            int c;
+            for(c = 0; c < 3; c++) {
+              mn[c] = ms->Corner[c];
+              mx[c] = ms->Corner[3 * 7 + c];
+            }
+          }
+          if(ms->State.Matrix) {
+            transform44d3f(ms->State.Matrix, mn, mn);
+            transform44d3f(ms->State.Matrix, mx, mx);
+            {
+              float tmp;
+              int a;
+              for(a = 0; a < 3; a++)
+                if(mn[a] > mx[a]) {
+                  tmp = mn[a];
+                  mn[a] = mx[a];
+                  mx[a] = tmp;
+                }
+            }
+          }
+          carve = -0.0;         /* impossible */
+          break;
+        case 1:                /* just do area around selection */
+          ok = (SelectorGetTmp(G, sele, s1) >= 0);
+          if(ok) {
+            int sele1 = SelectorIndexByName(G, s1);
+            if(sele1 >= 0)
+              sele_obj = SelectorGetSingleObjectMolecule(G, sele1);
+          }
+
+          ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
+          if(carve != 0.0) {
+            vert_vla = ExecutiveGetVertexVLA(G, s1, state);
+            if(fbuf <= R_SMALL4)
+              fbuf = fabs(carve);
+          }
+          SelectorFreeTmp(G, s1);
+          {
+            int c;
+            for(c = 0; c < 3; c++) {
+              mn[c] -= fbuf;
+              mx[c] += fbuf;
+            }
+          }
+          break;
+        }
+        PRINTFB(G, FB_CCmd, FB_Blather)
+          " Volume: buffer %8.3f carve %8.3f \n", fbuf, carve ENDFB(G);
+/*
+        if(sele_obj
+           && SettingGet_b(G, NULL, sele_obj->Obj.Setting, cSetting_map_auto_expand_sym)
+           && (sele_obj->Symmetry) && ObjectMapValidXtal(mapObj, state)) {
+
+          obj = (CObject *) ObjectVolumeFromXtalSym(G, (ObjectVolume *) origObj, mapObj,
+                                                  sele_obj->Symmetry,
+                                                  map_state, state, mn, mx, lvl,
+                                                  mesh_mode, carve, vert_vla, alt_lvl,
+                                                  quiet);
+        } else {
+          obj = NULL;
+        }
+*/
+        if(!obj) {
+          obj = (CObject *) ObjectVolumeFromBox(G, (ObjectVolume *) origObj, mapObj,
+                                              map_state, state, mn, mx, lvl, mesh_mode,
+                                              carve, vert_vla, alt_lvl, quiet);
+        }
+        /* copy the map's TTT */
+        ExecutiveMatrixCopy2(G, mObj, obj, 1, 1, -1, -1, false, 0, quiet);
+	/* set the object name
+	 * manage the object in the UI */
+        if(!origObj) {
+          ObjectSetName(obj, volume_name);
+          ExecutiveManageObject(G, (CObject *) obj, false, quiet);
+        }
+
+        if(SettingGet(G, cSetting_isomesh_auto_state))
+          if(obj)
+            ObjectGotoState((ObjectMolecule *) obj, state);
+        if(!quiet) {
+	  PRINTFB(G, FB_ObjectVolume, FB_Actions)
+	    " Volume: created \"%s\"\n", volume_name
+	    ENDFB(G);
+        }
+      } else if(!multi) {
+        PRINTFB(G, FB_ObjectVolume, FB_Warnings)
+          " Volume-Warning: state %d not present in map \"%s\".\n", map_state + 1,
+          map_name ENDFB(G);
+        ok = false;
+      }
+      if(multi) {
+        origObj = obj;
+        map_state++;
+        state++;
+        if(map_state >= mapObj->NState)
+          break;
+      } else {
+        break;
+      }
+    }
+  } else {
+    PRINTFB(G, FB_ObjectVolume, FB_Errors)
+      " Volume: Map or brick object \"%s\" not found.\n", map_name ENDFB(G);
     ok = false;
   }
   return ok;
@@ -2384,6 +2666,9 @@ static void ExecutiveInvalidateMapDependents(PyMOLGlobals * G, char *map_name)
       case cObjectSurface:
         ObjectSurfaceInvalidateMapName((ObjectSurface *) rec->obj, map_name);
         break;
+      case cObjectVolume:
+        ObjectVolumeInvalidateMapName((ObjectVolume *) rec->obj, map_name);
+        break;
       }
     }
   }
@@ -2931,7 +3216,6 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int
   int result = false;
   SpecRec *rec = NULL;
   register CExecutive *I = G->Executive;
-
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->type == cExecSelection)
       if(rec->visible) {
@@ -3456,6 +3740,32 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
                                                     (float *) start_at, size, eff_state,
                                                     quiet);
           break;
+	case cLoadTypeMMDStr:
+	  obj =
+	    (CObject *) ObjectMoleculeReadMMDStr(G, (ObjectMolecule *) origObj, content, eff_state,
+						 discrete);
+	  if(!origObj) {
+	    if(obj) {
+	      ObjectSetName(obj, new_name);
+	    }
+	  } else if(origObj) {
+	    if(finish)
+	      ExecutiveUpdateObjectSelection(G, origObj);
+	  }
+	  break;
+	case cLoadTypeMMD:
+	  obj =
+	    (CObject *) ObjectMoleculeLoadMMDFile(G, (ObjectMolecule *) origObj, content, eff_state,
+						  NULL, discrete);
+	  if(!origObj) {
+	    if(obj) {
+	      ObjectSetName(obj, new_name);
+	    }
+	  } else if(origObj) {
+	    if(finish)
+	      ExecutiveUpdateObjectSelection(G, origObj);
+	  }
+	  break;
         }
 
         if(obj) {
@@ -4096,6 +4406,52 @@ PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G)
 #endif
 }
 
+#ifdef _PYMOL_LIB
+int *ExecutiveGetRepsGlobalForObject(PyMOLGlobals *G, const char *name){
+  SpecRec *rec = NULL;
+  int *repOn = 0;
+  int n_vis = 0, a;
+  rec = ExecutiveFindSpec(G, (char*)name);
+  if(rec) {
+    for(a = 0; a < cRepCnt; a++) {
+      if(rec->repOn[a])
+	n_vis++;
+    }
+    repOn = VLACalloc(int, n_vis);
+    n_vis = 0;
+    for(a = 0; a < cRepCnt; a++) {
+      if(rec->repOn[a]) {
+	repOn[n_vis] = a;
+	n_vis++;
+      }
+    }
+  }
+  return repOn;
+}
+
+int *ExecutiveGetRepsObjectForObject(PyMOLGlobals *G, const char *name){
+  SpecRec *rec = NULL;
+  int *RepVis = 0;
+  int n_vis = 0, a;
+  rec = ExecutiveFindSpec(G, (char*)name);
+  if(rec) {
+    for(a = 0; a < cRepCnt; a++) {
+      if(rec->obj->RepVis[a])
+	n_vis++;
+    }
+    RepVis = VLACalloc(int, n_vis);
+    n_vis = 0;
+    for(a = 0; a < cRepCnt; a++) {
+      if(rec->obj->RepVis[a]) {
+          RepVis[n_vis] = a;
+          n_vis++;
+      }
+    }
+  }
+  return RepVis;
+}
+#endif
+
 int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
 {
 #ifdef _PYMOL_NOPY
@@ -4200,6 +4556,111 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
     }
   }
   return ok;
+#endif
+}
+
+PyObject* ExecutiveGetVolumeField(PyMOLGlobals * G, char* objName) {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  CObject *obj;
+  PyObject* result = NULL;
+
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeField Entered.\n" ENDFD(G);
+
+  obj = ExecutiveFindObjectByName(G, objName);
+  if(obj && obj->type==cObjectVolume) {
+    result = ObjectVolumeGetField((ObjectVolume *) obj);
+  }
+
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeField Exited.\n" ENDFD(G);
+
+  return result;
+
+#endif
+}
+
+PyObject* ExecutiveGetVolumeHistogram(PyMOLGlobals * G, char* objName) {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  CObject *obj;
+  PyObject* result = NULL;
+
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeHistogram Entered.\n" ENDFD(G);
+
+  obj = ExecutiveFindObjectByName(G, objName);
+  if(obj && obj->type==cObjectVolume) {
+    result = ObjectVolumeGetHistogram((ObjectVolume *) obj);
+  }
+
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeHistogram Exited.\n" ENDFD(G);
+
+  return result;
+
+#endif
+}
+
+PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, char* objName) {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  CObject *obj;
+  PyObject* result = NULL;
+
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Entered.\n" ENDFD(G);
+
+  obj = ExecutiveFindObjectByName(G, objName);
+  if(obj && obj->type==cObjectVolume) {
+    result = ObjectVolumeGetRamp((ObjectVolume *) obj);
+  }
+
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Exited.\n" ENDFD(G);
+
+  return result;
+
+#endif
+}
+
+PyObject* ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName) {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  CObject *obj;
+  PyObject* result = NULL;
+
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Entered.\n" ENDFD(G);
+
+  obj = ExecutiveFindObjectByName(G, objName);
+  if(obj && obj->type==cObjectVolume) {
+    result = ObjectVolumeGetIsUpdated((ObjectVolume *) obj);
+  }
+
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Exited.\n" ENDFD(G);
+
+  return result;
+
+#endif
+}
+
+PyObject* ExecutiveSetVolumeRamp(PyMOLGlobals * G, char* objName, float *ramp_list, int list_size) {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  CObject *obj;
+  PyObject* result = NULL;
+
+  PRINTFD(G, FB_Executive) "Executive-SetVolumeRamp Entered.\n" ENDFD(G);
+
+  obj = ExecutiveFindObjectByName(G, objName);
+  if(obj && obj->type==cObjectVolume) {
+    result = ObjectVolumeSetRamp((ObjectVolume *) obj, ramp_list, list_size);
+  }
+
+  PRINTFD(G, FB_Executive) "Executive-SetVolumeRamp Exited.\n" ENDFD(G);
+
+  return result;
+
 #endif
 }
 
@@ -4426,7 +4887,7 @@ int ExecutiveRampNew(PyMOLGlobals * G, char *name, char *src_name,
   if(src_obj) {
     if((src_obj->type != cObjectMap) && (src_obj->type != cObjectMolecule)) {
       PRINTFB(G, FB_Executive, FB_Errors)
-        "ExecutiveRampMapNew: Error: object '%s' is not a map or molecule.\n", src_name
+        "ExecutiveRampNew: Error: object '%s' is not a map or molecule.\n", src_name
         ENDFB(G);
       ok = false;
     }
@@ -4434,7 +4895,7 @@ int ExecutiveRampNew(PyMOLGlobals * G, char *name, char *src_name,
     src_obj = NULL;
   } else {
     PRINTFB(G, FB_Executive, FB_Errors)
-      "ExecutiveRampMapNew: Error: object '%s' not found.\n", src_name ENDFB(G);
+      "ExecutiveRampNew: Error: object '%s' not found.\n", src_name ENDFB(G);
     ok = false;
   }
   if(ok) {
@@ -4445,6 +4906,7 @@ int ExecutiveRampNew(PyMOLGlobals * G, char *name, char *src_name,
     } else {
       switch (src_obj->type) {
       case cObjectMap:
+	/* mapping this ramp from a selection */
         if(sele && sele[0]) {
           vert_vla = ExecutiveGetVertexVLA(G, sele, src_state);
         }
@@ -4516,6 +4978,9 @@ static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals * G, SpecRec * rec)
     break;
   case cObjectGroup:
     PyList_SetItem(result, 5, ObjectGroupAsPyList((ObjectGroup *) rec->obj));
+    break;
+  case cObjectVolume:
+    PyList_SetItem(result, 5, ObjectVolumeAsPyList((ObjectVolume *) rec->obj));
     break;
   default:
     PyList_SetItem(result, 5, PConvAutoNone(NULL));
@@ -4620,6 +5085,11 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
           if(ok)
             ok = ObjectGroupNewFromPyList(G, PyList_GetItem(cur, 5),
                                           (ObjectGroup **) (void *) &rec->obj, version);
+          break;
+        case cObjectVolume:
+          if(ok)
+            ok = ObjectVolumeNewFromPyList(G, PyList_GetItem(cur, 5),
+                                         (ObjectVolume **) (void *) &rec->obj);
           break;
 
         default:
@@ -6166,6 +6636,333 @@ int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator, char *operands,
   return ok;
 }
 
+
+const char * ExecutiveMapGenerate(PyMOLGlobals * G, char * name, char * reflection_file, char * tempFile,
+				  char * amplitudes, char * phases, char * weights, double reso_low,
+				  double reso_high, char * space_group, double cell[6], int quiet, int zoom)
+{
+#ifdef NO_MMLIBS
+  return NULL;
+#else
+  /* FIXME: this should be returned in memory!! */
+  /* In the meantime, use mkstemp and load in Python */
+  int ok;
+
+  ok = 0;
+
+  if (weights && (!strncmp(weights,"None",4))) 
+    weights=NULL;
+
+  /* printf("Passing to primex driver: space_group=%s, cell=[%f %f %f %f %f %f], reso_high=%f, rseo_low=%f, refl_file=%s, ampl=%s, phases=%s, weights=%s, map_file=%s", space_group, cell[0], cell[1], cell[2], cell[3], cell[4], cell[5], reso_high, reso_low, reflection_file, amplitudes, phases, weights, tempFile); */
+
+  ok = !(primex_pymol_driver2(space_group, cell, reso_high, reso_low, reflection_file, amplitudes,
+			    phases, weights, tempFile)); 
+
+  if (!ok) 
+    return NULL;
+  else
+    return (const char*) tempFile;
+#endif
+}
+
+/* #if 0 */
+
+/* /\* const char * ExecutiveMapCalculate(){ *\/ */
+
+/* #ifdef _PYMOL_NOPY */
+/*   return 0; */
+/* #else */
+
+/*   CObject * origObj = NULL, * molTmp = NULL; */
+/*   int isNew; */
+/*   int ok = false; */
+/*   int tmpSele; */
+/*   OrthoLineType s1; */
+/*   ObjectMolecule * molObj; */
+/*   CSymmetry * symm; */
+/*   CCrystal * cryst; */
+
+/*   /\* driver parameters *\/ */
+/*   int natom; */
+/*   int *formal_charge, *atomic_number, *isH2O, *is_ion_atom; */
+/*   int map_format = 2; */
+/*   double *x, *y, *z; */
+/*   double *tfactor, *occupancy, *vdw_radius; */
+/*   double reso_high, reso_low; */
+/*   double map_cushion; */
+/*   double cell[6]; */
+/*   char * space_group; */
+
+/*   const char * result = NULL; */
+/*   /\* FIXME: this should be returned in memory!! *\/ */
+/*   /\* In the meantime, use mkstemp and load in Python *\/ */
+/*   int dirSize, strSize, fd; */
+/*   char * tmp_dir = "/tmp"; */
+/*   char * map_file = "PYMOL_TMP_MAP_XXXXXX"; */
+/*   char * template; */
+/*   dirSize = strlen((const char*) tmp_dir); */
+/*   strSize = strlen((const char*) map_file); */
+/*   template = (char *) malloc ((size_t) ((sizeof(char)) * (strSize + dirSize + 2))); */
+/*   strncpy(template, (const char *) tmp_dir, dirSize); */
+/*   strncpy(template + dirSize, (const char *) "/", (int) 1); */
+/*   strncpy(template + dirSize + 1, (const char *) map_file, strSize); */
+/*   template[dirSize + 1 + strSize] = '\0';		  */
+/*   if ((fd = mkstemp (template)) < 0 ) { */
+/*         printf("Error making temporary file!!!\n"); */
+/*         return NULL; */
+/*     } else { */
+/*         printf("filename - %s\n", template); */
+/*     } */
+  
+
+/*   PRINTFB(G, FB_Executive, FB_Blather) */
+/*     "Executive-Update: Starting ExecutiveMapGenerate.\n" */
+/*     ENDFB(G); */
+
+/*   PRINTFB(G, FB_Executive, FB_Blather) */
+/*     "Executive-Update: Got to MapGenerate with: name=%s, selection=%s,\nrefl_file=%s, file_fmt=%d,\nstate=%d, normalize=%d, quiet=%d, zoom=%d\n",  */
+/*     name, selection, reflection_file, reflection_file_format, state,normalize,quiet,zoom */
+/*     ENDFB(G); */
+
+/*   /\* If the name of the object the user gave already exists, wipe it out *\/ */
+/*   origObj = ExecutiveFindObjectByName(G, name); */
+/*   if(origObj) { */
+/*     if(origObj->type != cObjectMap) { */
+/*       ExecutiveDelete(G, origObj->Name); */
+/*     } else { */
+/*       isNew = false; */
+/*     } */
+/*   } */
+
+/*   molTmp = (CObject*) ExecutiveFindObjectByName(G, selection); */
+/*   if(molTmp) { */
+/*     if(molTmp->type != cObjectMolecule) { */
+/*       PRINTFB(G, FB_Executive, FB_Errors) */
+/*         "ExecutiveMapGenerate: Error: object '%s' is not a molecule.\n", selection */
+/*         ENDFB(G); */
+/*       ok = false; */
+/*     } else { */
+/*       molObj = (ObjectMolecule *) molTmp; */
+/*       ok = true; */
+/*     } */
+/*   } else if(WordMatch(G, selection, cKeywordNone, true)) { */
+/*     molTmp = NULL; */
+/*   } else { */
+/*     PRINTFB(G, FB_Executive, FB_Errors) */
+/*       "ExecutiveMapGenerate: Error: object '%s' not found.\n", selection ENDFB(G); */
+/*     ok = false; */
+/*   } */
+
+/*   if (ok) { */
+/*     natom = molObj->NAtom; */
+/*     ok = (natom>0); */
+/*   } */
+
+/*   /\** Allocate memory for all lists *\/ */
+/*   /\* FIXME: If any of these errors out, then we need to ensure  */
+/*    *        that all pre-allocated memory is cleaned up *\/ */
+/*  /\*  * XYZ coords *\/ */
+/*   if (ok) { */
+/*     x = VLAlloc(double, natom); */
+/*     ok = (x!=NULL); */
+/*   } */
+/*   if (ok) { */
+/*     y = VLAlloc(double, natom); */
+/*     ok = (y!=NULL); */
+/*   } */
+/*   if (ok) { */
+/*     z = VLAlloc(double, natom); */
+/*     ok = (z!=NULL); */
+/*   } */
+/*  /\*  * temperature factors, b *\/ */
+/*   if (ok) { */
+/*     tfactor = VLAlloc(double, natom); */
+/*     ok = (tfactor!=NULL); */
+/*   } */
+/*  /\*  * occupancy factors, q *\/ */
+/*   if (ok) { */
+/*     occupancy = VLAlloc(double, natom); */
+/*     ok = (occupancy!=NULL); */
+/*   } */
+/*  /\*  * vdw_radii *\/ */
+/*   if (ok) { */
+/*     vdw_radius = VLAlloc(double, natom); */
+/*     ok = (vdw_radius!=NULL); */
+/*   } */
+/*  /\*  * formal_charges *\/ */
+/*   if (ok) { */
+/*     formal_charge = VLAlloc(int, natom); */
+/*     ok = (formal_charge!=NULL); */
+/*   } */
+/*  /\*  * atomic_numbers *\/ */
+/*   if (ok) { */
+/*     atomic_number= VLAlloc(int, natom); */
+/*     ok = (atomic_number!=NULL); */
+/*   } */
+/*  /\*  * is H2O or not; list *\/ */
+/*   if (ok) { */
+/*     isH2O = VLAlloc(int, natom); */
+/*     ok = (isH2O!=NULL); */
+/*   } */
+/*  /\*  * is_ion_atom list *\/ */
+/*   if (ok) { */
+/*     is_ion_atom = VLAlloc(int, natom); */
+/*     ok = (is_ion_atom!=NULL); */
+/*   } */
+  
+/*   /\* Fill in allocated lists *\/ */
+
+/*   /\*  space_group char* *\/ */
+/*   /\*  and *\/ */
+/*   /\*  cell dimensions *\/ */
+/*   if (molObj) { */
+/*     if (molObj->Symmetry) */
+/*       symm = molObj->Symmetry; */
+/*     ok = (symm!=NULL); */
+
+/*     if (ok) { */
+/*       /\* space group *\/ */
+/*       space_group = symm->SpaceGroup; */
+
+/*       cryst = symm->Crystal; */
+/*       ok = (cryst!=NULL); */
+/*     } */
+    
+/*     if (ok) { */
+/*       double* pCell = cell; */
+/*       if (cryst->Dim) { */
+/* 	*(pCell++) = cryst->Dim[0]; */
+/* 	*(pCell++) = cryst->Dim[1]; */
+/* 	*(pCell++) = cryst->Dim[2]; */
+/*       } */
+/*       if (cryst->Angle) { */
+/* 	*(pCell++) = cryst->Angle[0]; */
+/* 	*(pCell++) = cryst->Angle[1]; */
+/* 	*(pCell++) = cryst->Angle[2]; */
+/*       } */
+/*     } */
+/*   } */
+  
+/*     /\*  * high/low resolution *\/ */
+/*   reso_high = 0.0; */
+/*   reso_low  = 500.0; */
+
+/*   /\*  * reflection_file (char*) *\/ */
+/*   /\* check for existance and readabillity? *\/ */
+
+/*   /\*  * file_format (done) *\/ */
+/*   /\*  * ALREADY DEFINED: User Input  *\/ */
+
+/*   /\*  * map_u/map_v *\/ */
+/*   /\* * ALREADY DEFINED: User Input *\/ */
+
+/*   /\*  * map_cushion *\/ */
+/*   map_cushion = 5.0; */
+
+/*   /\*  * map_file *\/ */
+/*   /\*  * map_format=2 *\/ */
+
+/*   if (molObj && molObj->NAtom) { */
+/*     AtomInfoType * ai; */
+/*     int i, idx; */
+/*     register ObjectMolecule * obj = molObj; */
+/*     register CoordSet * cs; */
+/*     register double *X=x, *Y=y, *Z=z; */
+/*     register double * Tfact=tfactor, * Occ=occupancy, * VDW=vdw_radius; */
+/*     register int * Fchg = formal_charge, * Protons = atomic_number; */
+/*     register int * Ion = is_ion_atom, * Water = isH2O; */
+/*     register float * src; */
+/*     for (i=0;i<obj->NAtom;i++) { */
+/*       /\* access current atom info *\/ */
+/*       ai = obj->AtomInfo + i; */
+      
+/*       if(!ai) { */
+/* 	printf("Problem with obj->AtomInfo+%d\n", i); */
+/*       } */
+
+/*       *(Tfact++) = ai->b; */
+/*       *(Occ++)   = ai->q; */
+/*       *(VDW++)   = ai->vdw; */
+/*       *(Fchg++)  = ai->formalCharge; */
+/*       *(Protons++) = (int) ai->protons; */
+/*       *(Water++) = AtomInfoKnownWaterResName(G,ai->resn); */
+/*       /\* known ionic metals *\/ */
+/*       *(Ion++)   = (! (int)ai->bonded) && ((int) ai->formalCharge); */
+      
+/*       /\* get the atom index and copy the coordinates,  */
+/*        * making sure to respect states and discrete flags *\/ */
+	
+/*       /\* state = -1; defaults to global state, */
+/*        * otherwise, use object state *\/ */
+/*       if(state < 0) */
+/*         state = SceneGetState(G); */
+
+/*       /\* now to the coordinates *\/ */
+/*       if (state<obj->NCSet) { */
+/* 	cs = obj->CSet[state];  */
+/*       } */
+/*       else { */
+/* 	cs = NULL; */
+/*       } */
+	
+/*       if (obj->DiscreteFlag) { */
+/* 	if (cs==obj->DiscreteCSet[i]) { */
+/* 	  idx = obj->DiscreteAtmToIdx[i]; */
+/* 	} else { */
+/* 	  idx = -1; */
+/* 	} */
+/*       } else { */
+/* 	idx = cs->AtmToIdx[i]; */
+/*       } */
+
+/*       if(idx>=0) { */
+/* 	src = cs->Coord + 3 * idx; */
+/* 	*(X++) = *(src++); */
+/* 	*(Y++) = *(src++); */
+/* 	*(Z++) = *(src++); */
+/*       } /\* end for i=.. *\/ */
+/*     } /\* end if (n) *\/ */
+
+/*     primex_pymol_driver(natom, x, y, z, tfactor, occupancy, */
+/*     			formal_charge, atomic_number, vdw_radius, isH2O, */
+/*     			is_ion_atom, space_group, cell, reso_high, reso_low, */
+/*     			reflection_file, reflection_file_format, map_u, map_v, map_cushion, */
+/*     			template, map_format );  /\* 2 = ccp4 map format *\/  */
+
+/*     VLAFree(x); */
+/*     VLAFree(y); */
+/*     VLAFree(z); */
+/*     VLAFree(tfactor); */
+/*     VLAFree(occupancy); */
+/*     VLAFree(formal_charge); */
+/*     VLAFree(atomic_number); */
+/*     VLAFree(vdw_radius); */
+/*     VLAFree(isH2O); */
+/*     VLAFree(is_ion_atom); */
+
+/*     close(fd); */
+
+/*     printf("Returning file name: %s.\n", template); */
+
+/*     return (const char*) template; */
+
+/*   } /\* if indices *\/ */
+  
+/*   PRINTFB(G, FB_Executive, FB_Blather) */
+/*     "Executive-Update: Done ExecutiveMapGenerate (Exiting w/Error).\n" */
+/*   ENDFB(G); */
+  
+/*   return 0; */
+/* #endif */
+
+/* #else */
+/*   return 0; */
+/*     } */
+/* #endif */
+
+
+
+
 int ExecutiveMapNew(PyMOLGlobals * G, char *name, int type, float *grid,
                     char *sele, float buffer,
                     float *minCorner,
@@ -7688,6 +8485,7 @@ void ExecutiveHideSelections(PyMOLGlobals * G)
         rec->visible = false;
         SceneInvalidate(G);
         SeqDirty(G);
+	ReportVisibility(G, rec);
       }
     }
   }
@@ -8198,6 +8996,8 @@ int ExecutiveGetType(PyMOLGlobals * G, char *name, WordType type)
         strcat(type, "cgo");
       else if(rec->obj->type == cObjectGroup)
         strcat(type, "group");
+      else if(rec->obj->type == cObjectVolume)
+	strcat(type, "volume");
     } else if(rec->type == cExecSelection) {
       strcpy(type, "selection");
     }
@@ -9631,8 +10431,15 @@ int ExecutiveLabel(PyMOLGlobals * G, char *s1, char *expr, int quiet, int eval_m
     ExecutiveObjMolSeleOp(G, sele1, &op1);
 
     if(!quiet) {
+      {
+	char *unlabelledstr = "";
+	if (cnt<0){ /* if negative, say unlabelled */
+	  cnt = -cnt;
+	  unlabelledstr = "un";
+	}
       PRINTFB(G, FB_Executive, FB_Actions)
-        " Label: labelled %i atoms.\n", cnt ENDFB(G);
+        " Label: %slabelled %i atoms.\n", unlabelledstr, cnt ENDFB(G);
+      }
     }
   } else {
     PRINTFB(G, FB_Executive, FB_Warnings)
@@ -10845,6 +11652,11 @@ void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, CObject * obj)
 {
   if(obj->type == cObjectMolecule) {
     SelectorUpdateObjectSele(G, (ObjectMolecule *) obj);
+#ifndef NO_MMLIBS
+    if (SettingGetGlobal_i(G, cSetting_auto_defer_atom_count) >= ((ObjectMolecule *) obj)->NAtom ){
+      ObjectMoleculeUpdateMMStereoInfo(G, (ObjectMolecule *)obj);
+    }
+#endif
   }
 }
 
@@ -11752,6 +12564,95 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, char *sel
 #endif
 }
 
+int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result, 
+                                  int index, char *sele,
+                                  int state, int quiet)
+{
+  CObject *obj = NULL;
+  CSetting **handle = NULL, *set_ptr1 = NULL, *set_ptr2 = NULL;
+  int ok = true;
+  int type;
+  type = SettingGetType(G, index);
+  if(sele)
+    if(sele[0]) {
+      obj = ExecutiveFindObjectByName(G, sele);
+      if(!obj)
+        ok = false;
+    }
+  if(!ok) {
+    PRINTFB(G, FB_Executive, FB_Errors)
+      " ExecutiveGetSettingFromString-Error: sele \"%s\" not found.\n", sele ENDFB(G);
+    ok = false;
+  } else if(obj) {
+    handle = obj->fGetSettingHandle(obj, -1);
+    if(handle)
+      set_ptr1 = *handle;
+    if(state >= 0) {
+      handle = obj->fGetSettingHandle(obj, state);
+      if(handle)
+        set_ptr2 = *handle;
+      else {
+        PRINTFB(G, FB_Executive, FB_Errors)
+          " ExecutiveGetSettingFromString-Error: sele \"%s\" lacks state %d.\n", sele, state + 1
+          ENDFB(G);
+        ok = false;
+      }
+    }
+  }
+  if(ok) {
+    switch (type) {
+    case cSetting_boolean:
+      {
+        int value = SettingGet_b(G, set_ptr2, set_ptr1, index);
+	result->type = PYMOL_RETURN_VALUE_IS_INT;
+	result->int_value = value;
+      }
+      break;
+    case cSetting_int:
+      {
+        int value = SettingGet_i(G, set_ptr2, set_ptr1, index);
+	result->type = PYMOL_RETURN_VALUE_IS_INT;
+	result->int_value = value;
+      }
+      break;
+    case cSetting_float:
+      {
+        float value = SettingGet_f(G, set_ptr2, set_ptr1, index);
+	result->type = PYMOL_RETURN_VALUE_IS_FLOAT;
+	result->float_value = value;
+      }
+      break;
+    case cSetting_float3:
+      {
+	result->type = PYMOL_RETURN_VALUE_IS_FLOAT_ARRAY;
+	result->float_array = VLAlloc(float, 3);
+	result->array_length = 3;
+	SettingGet_3f(G, set_ptr2, set_ptr1, index, result->float_array);
+      }
+      break;
+    case cSetting_color:
+      {
+        int value = SettingGet_color(G, set_ptr2, set_ptr1, index);
+	result->type = PYMOL_RETURN_VALUE_IS_INT;
+	result->int_value = value;
+      }
+      break;
+    case cSetting_string:
+      {
+        OrthoLineType buffer = "";
+        buffer[0] = 0;
+        SettingGetTextValue(G, set_ptr2, set_ptr1, index, buffer);
+	result->type = PYMOL_RETURN_VALUE_IS_STRING;
+	result->string = strdup(buffer);
+      }
+      break;
+    default:
+      break;
+    }
+  }
+  return (ok);
+}
+
 int ExecutiveSetSettingFromString(PyMOLGlobals * G,
                                   int index, char *value, char *sele,
                                   int state, int quiet, int updates)
@@ -12655,6 +13556,7 @@ void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op)
         if(rec->obj->type == cObjectMolecule) {
 					/* if the objects are valid molecules, then perform the operation in op_code */
           obj = (ObjectMolecule *) rec->obj;
+
           switch (op->code) {
           case OMOP_RenameAtoms:
             {
@@ -13478,15 +14380,18 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
                     tRec->in_scene = SceneObjectDel(G, tRec->obj, true);
                     ExecutiveInvalidateSceneMembers(G);
                     tRec->visible = !tRec->visible;
+		    ReportVisibility(G, rec);
                   } else {
                     if((!suppress_hidden) || (!hide_underscore) || (!tRec->is_hidden)) {
                       tRec->in_scene = SceneObjectAdd(G, tRec->obj);
                       ExecutiveInvalidateSceneMembers(G);
                       tRec->visible = !tRec->visible;
+		      ReportVisibility(G, rec);
                     }
                   }
                 } else if((tRec->type != cExecSelection) || (!onoff))   /* hide all selections, but show all */
                   tRec->visible = !tRec->visible;
+		ReportVisibility(G, rec);
               }
             }
           }
@@ -13512,11 +14417,13 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
                 rec->in_scene = SceneObjectDel(G, rec->obj, true);
               rec->visible = false;
               ExecutiveInvalidateSceneMembers(G);
+	      ReportVisibility(G, rec);
             }
           }
           break;
         case cExecSelection:
           if(rec->visible != onoff) {
+	    int previousVisible = rec->visible;
             rec->visible = !rec->visible;
             if(rec->visible)
               if(SettingGetGlobal_b(G, cSetting_active_selections)) {
@@ -13525,6 +14432,9 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
               }
             SceneInvalidate(G);
             SeqDirty(G);
+	    if (previousVisible!=rec->visible){
+	      ReportVisibility(G, rec);
+	    }
           }
           break;
         }
@@ -13553,6 +14463,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
           if((tRec->type != cExecSelection) || (!onoff)) {
             /* hide all selections, but show all */
             tRec->visible = !tRec->visible;
+	    ReportVisibility(G, rec);
           }
         }
       }
@@ -13569,9 +14480,11 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
               ExecutiveInvalidateSceneMembers(G);
             }
             tRec->visible = !tRec->visible;
+	    ReportVisibility(G, rec);
           }
         } else if(tRec->type == cExecSelection) {
           if(tRec->visible != onoff) {
+	    int previousVisible = rec->visible;
             tRec->visible = !tRec->visible;
             if(tRec->visible)
               if(SettingGetGlobal_b(G, cSetting_active_selections)) {
@@ -13580,6 +14493,9 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
               }
             SceneInvalidate(G);
             SeqDirty(G);
+	    if (previousVisible!=rec->visible){
+	      ReportVisibility(G, rec);
+	    }
           }
         }
       }
@@ -14812,6 +15728,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
   SpecRec *rec = NULL;
   register CExecutive *I = G->Executive;
   int exists = false;
+  int previousVisible;
 
   if(SettingGet(G, cSetting_auto_hide_selections))
     ExecutiveHideSelections(G);
@@ -14858,12 +15775,17 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
     rec->type = cExecObject;
     rec->next = NULL;
     rec->obj = obj;
+    previousVisible = rec->visible;
     if(rec->obj->type == cObjectMap) {
       rec->visible = 0;
     } else {
       rec->visible = 1;
       /*      SceneObjectAdd(G,obj); */
     }
+    if (previousVisible!=rec->visible){
+      ReportVisibility(G, rec);
+    }
+
     for(a = 0; a < cRepCnt; a++)
       rec->repOn[a] = false;
     if(rec->obj->type == cObjectMolecule)
@@ -14927,14 +15849,18 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
     if(rec->type == cExecSelection) {
       if(strcmp(rec->name, name) == 0)
         break;
-      if(hide_all)
+      if(hide_all && rec->visible){
         rec->visible = false;
+	ReportVisibility(G, rec);
+      }
     }
   }
   if(rec && hide_all)
     while(ListIterate(I->Spec, rec, next))
-      if(rec->type == cExecSelection)
+      if(rec->type == cExecSelection && rec->visible){
         rec->visible = false;
+	ReportVisibility(G, rec);
+      }
 
   if(!rec) {
     ListElemCalloc(G, rec, SpecRec);
@@ -14942,8 +15868,10 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
     rec->type = cExecSelection;
     rec->next = NULL;
     rec->sele_color = -1;
-    rec->visible = false;
-
+    if (rec->visible){
+      rec->visible = false;
+      ReportVisibility(G, rec);
+    }
     rec->cand_id = TrackerNewCand(I->Tracker, (TrackerRef *) (void *) rec);
     TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id, 1);
     TrackerLink(I->Tracker, rec->cand_id, I->all_sel_list_id, 1);
@@ -14957,8 +15885,9 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
     if(name[0] != '_') {
       if(SettingGet(G, cSetting_auto_hide_selections))
         ExecutiveHideSelections(G);
-      if(SettingGet(G, cSetting_auto_show_selections)) {
+      if(SettingGet(G, cSetting_auto_show_selections) && !rec->visible) {
         rec->visible = true;
+	ReportVisibility(G, rec);
       }
     }
     if(rec->visible)
@@ -15047,6 +15976,7 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                   case cObjectCGO:
                   case cObjectCallback:
                   case cObjectAlignment:
+		  case cObjectVolume:
                     MenuActivate(G, mx, my, x, y, false, "simple_action", rec->obj->Name);
                     break;
                   case cObjectSlice:
@@ -15093,6 +16023,9 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                   case cObjectSlice:
                     MenuActivate(G, mx, my, x, y, false, "slice_show", rec->obj->Name);
                     break;
+		  case cObjectVolume:
+                    MenuActivate(G, mx, my, x, y, false, "volume_show", rec->obj->Name);
+                    break;
 
                   }
                   break;
@@ -15132,6 +16065,10 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                   case cObjectSlice:
                     MenuActivate(G, mx, my, x, y, false, "slice_hide", rec->obj->Name);
                     break;
+		  case cObjectVolume:
+                    MenuActivate(G, mx, my, x, y, false, "volume_hide", rec->obj->Name);
+                    break;
+		    
 
                   }
                   break;
@@ -15183,6 +16120,9 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                     break;
                   case cObjectSlice:
                     MenuActivate(G, mx, my, x, y, false, "slice_color", rec->obj->Name);
+                    break;
+                  case cObjectVolume:
+                    MenuActivate(G, mx, my, x, y, false, "vol_color", rec->obj->Name);
                     break;
                   }
                   break;
@@ -15327,6 +16267,7 @@ static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, in
 
   if(!rec->visible) {
     rec->visible = true;
+    ReportVisibility(G, rec);
   }
   if(!rec->in_scene) {
     rec->in_scene = SceneObjectAdd(G, rec->obj);
@@ -15350,6 +16291,7 @@ static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, in
             }
             if(!parent_rec->visible) {
               parent_rec->visible = true;
+	      ReportVisibility(G, parent_rec);
             }
           }
         }
@@ -15372,7 +16314,10 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
         sprintf(buffer, "cmd.disable('%s')", rec->obj->Name);
       SceneObjectDel(G, rec->obj, true);
       ExecutiveInvalidateSceneMembers(G);
-      rec->visible = new_vis;
+      if (rec->visible != new_vis){
+	rec->visible = new_vis;
+	ReportVisibility(G, rec);
+      }
     } else if((!rec->visible) && new_vis) {
       ExecutiveSpecEnable(G, rec, parents, logging);
       /*
@@ -15408,7 +16353,10 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
        */
       sprintf(buffer, "cmd.enable('%s')", rec->name);
       PLog(G, buffer, cPLog_pym);
-      rec->visible = true;
+      if (!rec->visible){
+	rec->visible = true;
+	ReportVisibility(G, rec);
+      }
 #if 0
     } else if(mod & cOrthoSHIFT) {
 
@@ -15420,7 +16368,10 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
           rec->sele_color = 15;
       }
       /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
-      rec->visible = true;
+      if (!rec->visible){
+	rec->visible = true;
+	ReportVisibility(G, rec);
+      }
 #endif
     } else {
 
@@ -15436,10 +16387,36 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
       if(SettingGet(G, cSetting_logging)) {
         PLog(G, buffer, cPLog_pym);
       }
-      rec->visible = new_vis;
+      if (rec->visible != new_vis){
+	rec->visible = new_vis;
+	ReportVisibility(G, rec);
+      }
     }
     SceneChanged(G);
   }
+}
+PyObject *ExecutiveAssignAtomTypes(PyMOLGlobals * G, char *s1, int format, int state, int quiet)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  PyObject *result = NULL;
+  int sele1;
+
+  sele1 = SelectorIndexByName(G, s1);
+  if(state < 0)
+    state = 0;
+  {
+    int unblock = PAutoBlock(G);        /*   PBlock(G);    PBlockAndUnlockAPI(); */
+    if(sele1 >= 0) {
+      result = SelectorAssignAtomTypes(G, sele1, state, quiet, format);
+    }
+    if(PyErr_Occurred())
+      PyErr_Print();
+    PAutoUnblock(G, unblock);   /*    PUnblock(G);  PLockAPIAndUnblock(); */
+  }
+  return (result);
+#endif
 }
 
 static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)
@@ -15605,7 +16582,6 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
       if(I->PressedWhat == 2) {
         I->OverWhat = 0;
       }
-
       if(I->Over >= 0) {
         SpecRec *rec = NULL;
         PanelRec *panel = NULL;
@@ -16592,3 +17568,60 @@ for(a = 0; a < 3; a++) {
 
 printf("\n");
 #endif
+
+PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB, int lenA, int lenB, int windowSize) {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  int i=0;
+  int smaller;
+  double **dmA ,**dmB, **S;
+  int bufferSize;
+  int *bInt;
+  pcePoint coordsA, coordsB;
+  pathCache paths;
+  PyObject * result;
+
+  smaller = lenA < lenB ? lenA : lenB;
+	
+  /* get the coodinates from the Python objects */
+  coordsA = (pcePoint) getCoords(listA, lenA);
+  coordsB = (pcePoint) getCoords(listB, lenB);
+	
+  /* calculate the distance matrix for each protein */
+  dmA = (double**) calcDM(coordsA, lenA);
+  dmB = (double**) calcDM(coordsB, lenB);
+	
+  /* calculate the CE Similarity matrix */
+  S = (double**) calcS(dmA, dmB, lenA, lenB, windowSize);
+	
+  /* find the best path through the CE Sim. matrix */
+  bufferSize = 0;
+  bInt = &bufferSize;
+  /* the following line HANGS PyMOL */
+  paths = (pathCache) findPath( S, dmA, dmB, lenA, lenB, windowSize, bInt );
+	
+  /* Get the optimal superposition here... */
+  result = (PyObject*) findBest( coordsA, coordsB, paths, bufferSize, smaller,  windowSize );
+	
+  /* release memory */
+  free(coordsA);
+  free(coordsB);
+	
+  /* distance matrices	 */
+  for ( i = 0; i < lenA; i++ )
+    free( dmA[i] );
+  free(dmA);
+	
+  for  ( i = 0; i < lenB; i++ )
+    free( dmB[i] );
+  free(dmB);
+	
+  /* similarity matrix */
+  for ( i = 0; i < lenA; i++ )
+    free( S[i] );
+  free(S);
+	
+  return (PyObject*) result;
+#endif
+}

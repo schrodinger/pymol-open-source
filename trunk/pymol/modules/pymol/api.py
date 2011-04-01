@@ -41,7 +41,9 @@ from creating import \
       slice_new,          \
       symexp,             \
       ramp_new,           \
-      ungroup
+      ungroup,            \
+      volume,             \
+      volume_color
 
 #--------------------------------------------------------------------
 import commanding
@@ -115,6 +117,11 @@ from querying import \
       get_title,          \
       get_type,           \
       get_version,        \
+      get_volume_field,   \
+      get_volume_histogram, \
+      get_volume_ramp, \
+      set_volume_ramp, \
+      get_volume_is_updated, \
       get_vrml,           \
       id_atom,            \
       identify,           \
@@ -212,7 +219,7 @@ from editor import \
       fab
       
 from computing import \
-      clean              
+      clean
 
 matrix_transfer = matrix_copy # legacy
 

@@ -709,19 +709,19 @@ float MapGetSeparation(PyMOLGlobals * G, float range, float *mx, float *mn,
 
   maxCubed = maxSize * maxSize * maxSize;
 
-  /* find longest axis */
-
+  /* find longest axis: diagonal = max-min, for
+   * each axis and find the largest */
   subtract3f(mx, mn, diagonal);
   diagonal[0] = (float) fabs(diagonal[0]);
   diagonal[1] = (float) fabs(diagonal[1]);
   diagonal[2] = (float) fabs(diagonal[2]);
-
+  /* find largest */
   size = diagonal[0];
   if(diagonal[1] > size)
     size = diagonal[1];
   if(diagonal[2] > size)
     size = diagonal[2];
-
+  /* err check size and diagonal */
   if(size == 0.0) {
     diagonal[0] = 1.0;
     diagonal[1] = 1.0;
@@ -795,10 +795,13 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
   int firstFlag;
   Vector3f diagonal;
 
+  /* allocate space for a MapType 
+   * "I" is now defined */
   OOAlloc(G, MapType);
 
   PRINTFD(G, FB_Map)
     " MapNew-Debug: entered.\n" ENDFD;
+  /* Initialize */
   I->G = G;
   I->group_id = group_id;
   I->block_base = block_base;
@@ -809,13 +812,16 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
   I->EMask = NULL;
   I->NEElem = 0;
 
+  /* initialize an empty cache for the map */
   I->Link = CacheAlloc(G, int, nVert, group_id, block_base + cCache_map_link_offset);
   ErrChkPtr(G, I->Link);
 
   for(a = 0; a < nVert; a++)
     I->Link[a] = -1;
 
+  /* map extents; set if valid, otherwise determine based on the flagged vertices */
   if(extent) {
+    /* valid, so copy */
     I->Min[0] = extent[0];
     I->Max[0] = extent[1];
     I->Min[1] = extent[2];
@@ -823,17 +829,22 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
     I->Min[2] = extent[4];
     I->Max[2] = extent[5];
   } else {
+    /* blank, so determine */
     I->Min[0] = 0.0F;
     I->Max[0] = 0.0F;
     I->Min[1] = 0.0F;
     I->Max[1] = 0.0F;
     I->Min[2] = 0.0F;
     I->Max[2] = 0.0F;
+
+    /* flag is an array of ints, one per vertex to signify inclusion for consideration in this map */
     if(flag) {
       firstFlag = true;
       v = vert;
       for(a = 0; a < nVert; a++) {
+	/* if we consider this vertex */
         if(flag[a]) {
+	  /* first-time setup*/
           if(firstFlag) {
             for(c = 0; c < 3; c++) {
               I->Min[c] = v[c];
@@ -841,8 +852,8 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
             }
             firstFlag = false;
           } else {
+	    /* min/max extents, over all vertices */
             for(c = 0; c < 3; c++) {
-
               if(I->Min[c] > v[c])
                 I->Min[c] = v[c];
               if(I->Max[c] < v[c])
@@ -853,6 +864,7 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
         v += 3;
       }
     } else {
+      /* no flag: do all vertices in the list */
       if(nVert) {
         v = vert;
         for(c = 0; c < 3; c++) {
@@ -886,12 +898,12 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
     printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
            I->Min[0], I->Min[1], I->Min[2], I->Max[0], I->Max[1], I->Max[2]);
   }
-
+  /* interesting */
   for(c = 0; c < 3; c++) {
     I->Min[c] -= MapSafety;
     I->Max[c] += MapSafety;
   }
-
+  /* pad the boundaries by "range" */
   if(range < 0.0) {             /* negative range is a flag to expand edges using "range". */
     range = -range;
     for(c = 0; c < 3; c++) {
@@ -900,7 +912,7 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
     }
   }
 
-  /* compute final box size */
+  /* compute final box size ..................... */
   I->Div = MapGetSeparation(G, range, I->Max, I->Min, diagonal);
   I->recipDiv = 1.0F / (I->Div);        /* cache this */
 

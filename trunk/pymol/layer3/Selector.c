@@ -1,5 +1,3 @@
-
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -154,9 +152,8 @@ static SelectorWordType *SelectorParse(PyMOLGlobals * G, char *s);
 static void SelectorPurgeMembers(PyMOLGlobals * G, int sele);
 static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
                                   ObjectMolecule * obj, int no_dummies, int exec_manage);
-
-static void SelectorClean(PyMOLGlobals * G);
 static int *SelectorGetIndexVLA(PyMOLGlobals * G, int sele);
+static void SelectorClean(PyMOLGlobals * G);
 static int *SelectorApplyMultipick(PyMOLGlobals * G, Multipick * mp);
 static int SelectorCheckNeighbors(PyMOLGlobals * G, int maxDepth, ObjectMolecule * obj,
                                   int at1, int at2, int *zero, int *scratch);
@@ -344,6 +341,7 @@ static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offs
 #define SELE_RSTz ( 0x4800 | STYP_SEL0 | 0x90 )
 #define SELE_ANT2 ( 0x4900 | STYP_OPR2 | 0x60 )
 #define SELE_BYX1 ( 0x4A00 | STYP_OPR1 | 0x20 )
+#define SELE_STRO ( 0x4B00 | STYP_SEL1 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -542,7 +540,7 @@ static WordKeyValue Keyword[] = {
   /*
      {  "nucseq",  SELE_NUCs },
      {  "ns.",      SELE_NUCs },
-   */
+    */
 
   {"fixed", SELE_FXDz},
   {"fxd.", SELE_FXDz},
@@ -575,6 +573,8 @@ static WordKeyValue Keyword[] = {
   {"%", SELE_SELs},
   {"b", SELE_BVLx},             /* 2 operand selection operator */
   {"q", SELE_QVLx},             /* 2 operand selection operator */
+
+  {"stereo", SELE_STRO},
 
   {"bycell", SELE_BYX1},
   {"", 0}
@@ -1536,7 +1536,6 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
                 *(dst++) = *(src++);
                 *(dst++) = *(src++);
                 nc++;
-
               }
             }
           }
@@ -3991,7 +3990,9 @@ int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
 
 
 /*========================================================================*/
-static int *SelectorGetIndexVLA(PyMOLGlobals * G, int sele)
+/* bad to make this non-static? */
+/* static int *SelectorGetIndexVLA(PyMOLGlobals * G, int sele) */
+int *SelectorGetIndexVLA(PyMOLGlobals * G, int sele)
 {                               /* assumes updated tables */
   register CSelector *I = G->Selector;
   int a, c = 0;
@@ -6509,6 +6510,46 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
   if(counter)
     *counter = c;
   return (cLen);
+}
+
+
+PyObject *SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, int format)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
+  register CSelector *I = G->Selector;
+  //  PyObject *model = NULL;
+  int ok = true;
+
+  SelectorUpdateTable(G, state, -1);
+
+  if(ok) {
+    int nAtom = 0;
+    int a;
+    for(a = cNDummyAtoms; a < I->NAtom; a++) {
+      int at = I->Table[a].atom;
+      ObjectMolecule *obj = I->Obj[I->Table[a].model];
+      int s = obj->AtomInfo[at].selEntry;
+      I->Table[a].index = 0;
+      if(SelectorIsMember(G, s, sele)) {
+	ObjectMoleculeInvalidateAtomType(obj, state);
+      }
+    }
+    for(a = cNDummyAtoms; a < I->NAtom; a++) {
+      int at = I->Table[a].atom;
+      ObjectMolecule *obj = I->Obj[I->Table[a].model];
+      int s = obj->AtomInfo[at].selEntry;
+      I->Table[a].index = 0;
+      if(SelectorIsMember(G, s, sele)) {
+	ObjectMoleculeUpdateAtomTypeInfoForState(G, obj, state, 1, format);
+	nAtom++;
+      }
+    }
+  }
+  return NULL;
+#endif
 }
 
 
@@ -9065,6 +9106,10 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base)
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
 
+#ifndef NO_MMLIBS
+	ObjectMoleculeUpdateAtomTypeInfo(G, i_obj[table_a->model]);	
+#endif
+
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
           AtomInfoType *ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
           st = null_st;
@@ -9098,6 +9143,36 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base)
           if((*base_0_sele_a =
               WordMatcherMatchAlpha(matcher,
                                     i_obj[table_a->model]->AtomInfo[table_a->atom].elem)))
+            c++;
+          table_a++;
+          base_0_sele_a++;
+        }
+        WordMatcherFree(matcher);
+      }
+    }
+    break;
+  case SELE_STRO:
+    {
+      CWordMatchOptions options;
+      char mmstereotype[2];
+      mmstereotype[1] = 0;
+      WordMatchOptionsConfigAlphaList(&options, wildcard[0], ignore_case);
+
+      table_a = i_table + cNDummyAtoms;
+      base_0_sele_a = &base[0].sele[cNDummyAtoms];
+
+
+      if((matcher = WordMatcherNew(G, base[1].text, &options, true))) {
+        table_a = i_table + cNDummyAtoms;
+        base_0_sele_a = &base[0].sele[cNDummyAtoms];
+
+#ifndef NO_MMLIBS
+	ObjectMoleculeUpdateMMStereoInfo(G, i_obj[table_a->model]);	
+#endif
+        for(a = cNDummyAtoms; a < I_NAtom; a++) {
+	  mmstereotype[0] = convertStereoToChar(i_obj[table_a->model]->AtomInfo[table_a->atom].mmstereo);
+          if((*base_0_sele_a =
+              WordMatcherMatchAlpha(matcher,mmstereotype)))
             c++;
           table_a++;
           base_0_sele_a++;
@@ -9450,7 +9525,6 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base)
           word++;
         }
       }
-
       WordMatchOptionsConfigAlpha(&options, wildcard[0], ignore_case);
 
       if((matcher = WordMatcherNew(G, word, &options, false))) {

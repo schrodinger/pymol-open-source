@@ -61,7 +61,7 @@ extern "C" {
 // Function Declarations
 /////////////////////////////////////////////////////////////////////////////
 // Calculates the CE Similarity Matrix
-double** calcS(double** d1, double** d2, int lenA, int lenB, double winSize);
+double** calcS(double** d1, double** d2, int lenA, int lenB, int wSize);
 
 // calculates a simple distance matrix
 double** calcDM(pcePoint coords, int len);
@@ -70,7 +70,7 @@ double** calcDM(pcePoint coords, int len);
 pcePoint getCoords( PyObject* L, int len );
 
 // Optimal path finding algorithm (CE).
-pathCache findPath(double** S, double** dA, double**dB, int lenA, int lenB, int winSize, int& bufferSize);
+pathCache findPath(double** S, double** dA, double**dB, int lenA, int lenB, int winSize, int* bufferSize);
 
 // filter through the results and find the best
 PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int bufferSize, int smaller, int winSize );

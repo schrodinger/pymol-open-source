@@ -340,6 +340,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
 void ObjectMoleculeExtendIndices(ObjectMolecule * I, int state);
 
 void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state);
+void ObjectMoleculeInvalidateAtomType(ObjectMolecule *I, int state);
 
 void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vis_only);
 
@@ -499,6 +500,16 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals * G, ObjectMolecule * obj
                                           char *fname, int frame, int discrete,
                                           M4XAnnoType * m4x, PDBInfoRec * pdb_info);
 
+#endif
+
+#ifndef NO_MMLIBS
+int ObjectMoleculeToMMCT(PyMOLGlobals * G, ObjectMolecule * obj, int state, const char *component, const char *helpcmd);
+int MMStereoInfo(PyMOLGlobals * G, ObjectMolecule * obj, int state, int mmct, int write, int setparity);
+int initializeMMLibs();
+int ObjectMoleculeUpdateMMStereoInfo(PyMOLGlobals * G, ObjectMolecule * obj);
+int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize, int format);
+int ObjectMoleculeUpdateAtomTypeInfo(PyMOLGlobals * G, ObjectMolecule * obj);
+int MMSetAtomTypes(PyMOLGlobals *G, ObjectMolecule *obj, int state, int mmct, int force_type);
 #endif
 
 #endif

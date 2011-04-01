@@ -473,7 +473,7 @@ SEE ALSO
     def _processPWG(fname,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            from consortia.web.pymolhttpd import PymolHttpd
+            from web.pymolhttpd import PymolHttpd
             browser_flag = 0
             launch_flag = 0
             report_url = None
@@ -1256,6 +1256,9 @@ PYMOL API
         elif type == 'pdb':
             bioType = type
             typeExt = '.pdb'
+        elif type=='cif':
+            bioType=type
+            typeExt = '.sf'
         elif re.search("^pdb\d+$", type) != None:
             bioType = 'bio'
             typeExt = re.search("^pdb\d+$", type).group()
@@ -1267,23 +1270,32 @@ PYMOL API
         
         # paths to the PDBs on each server, by type
         hostPaths = { "pdb" :
-                      { "bio" : "data/biounit/coordinates/divided/",
-                        "pdb"  : "data/structures/divided/pdb/" },
+                      { "bio"  : "data/biounit/coordinates/divided/",
+                        "pdb"  : "data/structures/divided/pdb/",
+                        "cif"  : "data/structures/divided/structure_factors/",
+                        },
                       "pdbe" :
-                      { "bio" : "data/biounit/coordinates/divided/",
-                        "pdb"  : "data/structures/divided/pdb/" },
+                      { "bio"  : "data/biounit/coordinates/divided/",
+                        "pdb"  : "data/structures/divided/pdb/",
+                        "cif"  : "data/structures/divided/structure_factors/",
+                        },
                       "pdbj" :
-                      { "bio" : "data/biounit/coordinates/divided/",
-                        "pdb"  : "data/structures/divided/pdb/" }
+                      { "bio"  : "data/biounit/coordinates/divided/",
+                        "pdb"  : "data/structures/divided/pdb/",
+                        "cif"  : "data/structures/divided/structure_factors/",
+                        }
                     }
 
         # portion of the link after the code
         hostPost = { "pdb" : { "pdb" : ".ent.gz",
-                               "bio": "."+typeExt+".gz" },
+                               "bio" : "."+typeExt+".gz",
+                               "cif" : "sf.ent.gz" },
                      "pdbe": { "pdb" : ".ent.gz",
-                               "bio": "."+typeExt+".gz" },
+                               "bio" : "."+typeExt+".gz",
+                               "cif" : "sf.ent.gz" },
                      "pdbj": { "pdb" : ".ent.gz",
-                               "bio": "."+typeExt+".gz" }
+                               "bio" : "."+typeExt+".gz",
+                               "cif" : "sf.ent.gz" }
                    }
 
         # users could set this to something nonsensical
@@ -1303,7 +1315,7 @@ PYMOL API
             else:
                 fname = string.lower(code)
                 
-            if bioType in [ 'fofc', '2fofc' ]:
+            if bioType in [ 'fofc', '2fofc', 'cif' ]:
                 fname += typeExt
                 if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
                     name = name + "_" + bioType
@@ -1329,11 +1341,13 @@ PYMOL API
         
         while (done == 0) and (tries<3): # try loading URL up to 3 times
             tries = tries + 1
-            if bioType in [ 'pdb', 'bio' ]:
+            if bioType in [ 'pdb', 'bio', 'cif' ]:
                 # pdb files are: pdb3XYZ whereas pdb1 files are 1XYZ.pdb3
                 prePDB = ''
                 if type=='pdb':
                     prePDB = 'pdb'
+                elif type=="cif":
+                    prePDB = 'r'
 
                 # eg, ftp://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/data/structures/divided/pdb/
                 remotePre = fetchHosts[fetch_host] + hostPaths[fetch_host][bioType]
@@ -1347,7 +1361,7 @@ PYMOL API
                     #print "remoteCode: %s" % remoteCode
                     #print "remotePost: %s" % remotePost
                     url = remotePre + remoteCode + remotePost
-#                    print url
+                    #print url
                     
                     if url!=None:
                         filename = urllib.urlretrieve(url)[0]
@@ -1367,8 +1381,12 @@ PYMOL API
                                     fobj.flush()
                                     if auto_close_file:
                                         fobj.close()
-                                r = _self.read_pdbstr(pdb_str,name,state,finish,
-                                                      discrete,quiet,zoom,multiplex)
+                                if bioType=="cif":
+                                    if not quiet:
+                                        print "Downloaded CIF file '%s' to' '%s'." % (name,fname)
+                                else:
+                                    r = _self.read_pdbstr(pdb_str,name,state,finish,
+                                                          discrete,quiet,zoom,multiplex)
                                 done = 1
                             except IOError:
 #                                print traceback.print_exc()

@@ -34,6 +34,52 @@ if __name__=='pymol.querying':
                     _self.distance()
         _self.unpick()   
 
+    def get_volume_field(objName,_self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _self._cmd.get_volume_field(_self._COb,objName)
+        finally:
+            _self.unlock(r,_self)
+        return r
+
+    def get_volume_histogram(objName,_self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _self._cmd.get_volume_histogram(_self._COb,objName)
+        finally:
+            _self.unlock(r,_self)
+        return r
+
+    def get_volume_ramp(objName,_self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _self._cmd.get_volume_ramp(_self._COb,objName)
+        finally:
+            _self.unlock(r,_self)
+        return r
+
+    def get_volume_is_updated(objName,_self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _self._cmd.get_volume_is_updated(_self._COb,objName)
+        finally:
+            _self.unlock(r,_self)
+        return r
+ 
+    # SHOULD BE MOVED SOMWHERE ELSE
+    def set_volume_ramp(objName, ramp, _self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _self._cmd.set_volume_ramp(_self._COb,objName,ramp)
+        finally:
+            _self.unlock(r,_self)
+        return r
+
     def get_unused_name(prefix="tmp",alwaysnumber=1,_self=cmd):
         r = DEFAULT_ERROR        
         # should replace this with a C function
@@ -51,6 +97,17 @@ if __name__=='pymol.querying':
                     counter = counter + 1
             else:
                 r=prefix
+
+            # safe names....
+            safe_chars = range(48,58)
+            safe_chars.extend(range(65,91))
+            safe_chars.extend(range(97,123))
+            safe_chars.extend([ord('+'),ord('-'),ord('_')])
+            # remove non-safe chars
+            for c in range(len(r)):
+                if ord(r[c]) not in safe_chars:
+                    r = r[:c] + "_" + r[c+1:]
+
         finally:
             _self.unlock(r,_self)
         return r

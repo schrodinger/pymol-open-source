@@ -176,6 +176,8 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                                        float radius, float scale,
                                        float base, float coord_wt, float rms_exp);
 
+PyObject *SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, int format);
+
 
 /* reserve special meaning for tags 1-15 and note that 0 is disallowed */
 

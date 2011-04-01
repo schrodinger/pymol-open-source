@@ -387,6 +387,16 @@ DESCRIPTION
         if _self._raising(r,_self): raise QuietException
         return r
 
+    def assign_atom_types( selection, format = "mol2", state=1, quiet=1, _self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            # format : mol2/sybyl = 1, macromodel/mmd = 2, global setting atom_type_format = 0
+            r = _cmd.assign_atom_types(_self._COb, selection, int(1), int(state-1), quiet)
+        finally:
+            _self.unlock(r,_self)
+        return r
+
     def save(filename, selection='(all)', state=-1, format='', ref='',
              ref_state=-1, quiet=1, partial=0,_self=cmd):
         '''
@@ -605,6 +615,8 @@ SEE ALSO
                 last_state = state
             recList=[]
             for state in range(first_state, last_state+1):
+                # assign_atom_types selection, format [ mol2, macromodel ], state, quiet
+                assign_atom_types(selection, "mol2", state, 1, _self)
                 recList.extend(io.mol2.toList(_self.get_model(selection,state,ref,ref_state),selection=selection,state=state))
             m = MOL2(cmd=cmd)
             m.strToFile(recList,filename)

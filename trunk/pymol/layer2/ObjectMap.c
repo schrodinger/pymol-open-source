@@ -64,6 +64,12 @@ typedef PyArrayObject MyArrayObject;
 #endif
 #endif
 
+/* MapState::ValidXtal -- determines whether the MapState's Xtal type passed in is valid
+ * PARAMS
+ *  ms, MapState
+ * RETURNS
+ *   true/false
+ */
 int ObjectMapStateValidXtal(ObjectMapState * ms)
 {
   if(ms && ms->Active) {
@@ -82,6 +88,13 @@ int ObjectMapStateValidXtal(ObjectMapState * ms)
   return false;
 }
 
+/* Map::ValidXtal -- detemines whether the Map is valid
+ * PARAMS
+ *  I, Map
+ *  state, map's state
+ * RETURNS
+ *  true/false
+ */
 int ObjectMapValidXtal(ObjectMap * I, int state)
 {
   if((state >= 0) && (state < I->NState)) {
@@ -91,6 +104,11 @@ int ObjectMapValidXtal(ObjectMap * I, int state)
   return false;
 }
 
+/* Map::IsStateValidActive -- true if the Map's state is VALID and ACTIVE, false otherwise
+ * PARAMS
+ *   I, the map
+ *   state, the maps' state
+ */
 static int ObjectMapIsStateValidActive(ObjectMap * I, int state)
 {
   if((state >= 0) && (state < I->NState))
@@ -99,6 +117,14 @@ static int ObjectMapIsStateValidActive(ObjectMap * I, int state)
   return 0;
 }
 
+/* Map::TransformMatrix -- transform this map's matrix by 'matrix' parameter
+ * PARAMS
+ *   I, the map
+ *   state, the map's state
+ *   matrix, matrix to mult. by
+ * RETURNS
+ *   None; updates Map
+ */
 void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix)
 {
   if(ObjectMapIsStateValidActive(I, state))
@@ -106,6 +132,11 @@ void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix)
   ObjectMapUpdateExtents(I);
 }
 
+/* Map::ResetMatrix -- reset's the map's matrix for the given state
+ * PARAMS
+ *   I, the map
+ *   state, the map's state
+ */   
 void ObjectMapResetMatrix(ObjectMap * I, int state)
 {
   if(ObjectMapIsStateValidActive(I, state))
@@ -113,6 +144,14 @@ void ObjectMapResetMatrix(ObjectMap * I, int state)
   ObjectMapUpdateExtents(I);
 }
 
+/* Map::GetMatrix
+ * PARAMS
+ *   I, the map
+ *   state, the map's state
+ *   matrix, ptr to the the buffer to copy the data into
+ * RETURNS
+ *  true/false; updates matrix parameter
+ */
 int ObjectMapGetMatrix(ObjectMap * I, int state, double **matrix)
 {
   if(ObjectMapIsStateValidActive(I, state)) {
@@ -122,6 +161,12 @@ int ObjectMapGetMatrix(ObjectMap * I, int state, double **matrix)
   return false;
 }
 
+/* Map::SetMatrix
+ * PARAMS
+ *   I, the map
+ *   state, the map's state
+ *   matrix, the matrix to set to
+ */
 int ObjectMapSetMatrix(ObjectMap * I, int state, double *matrix)
 {
   if(ObjectMapIsStateValidActive(I, state)) {
@@ -131,6 +176,18 @@ int ObjectMapSetMatrix(ObjectMap * I, int state, double *matrix)
   return false;
 }
 
+/* MapState::GetExcludedStats -- 
+ * PARARMS
+ *   G, usual PyMOL globals
+ *   ms, MapState
+ *   vert_vla, variable length array of vertices
+ *   beyond, radius of exclusion
+ *   within, radius of inlcusion
+ *   level, map level
+ *
+ * RETURNS
+ *  number of exluded pts?
+ */
 int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float *vert_vla,
                                    float beyond, float within, float *level)
 {
@@ -141,6 +198,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
   float cutoff = beyond;
   MapType *voxelmap = NULL;
 
+  /* size of the VLA */
   if(vert_vla) {
     list_size = VLAGetSize(vert_vla) / 3;
   } else {
@@ -149,6 +207,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
   if(cutoff < within)
     cutoff = within;
 
+  /* make a new map from the VLA .............. */
   if(list_size)
     voxelmap = MapNew(G, -cutoff, vert_vla, list_size, NULL);
 
@@ -219,6 +278,15 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals * G, ObjectMapState * ms, float 
   return cnt;
 }
 
+/* MapState::ObjectMapStateGetDataRange -- get min/max from the scalar field
+ * PARAMS
+ * G
+ *    usual PyMOLGlobals
+ * ms
+ *    I
+ * RETURNS
+ * npts, but stores range in min/max
+ */
 int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min,
                                float *max)
 {
@@ -239,6 +307,81 @@ int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min
   }
   *min = min_val;
   *max = max_val;
+  return cnt;
+}
+
+/* MapState::ObjectMapStateGetHistogram -- compute a map histogram
+ *
+ * INPUT PARAMS
+ *
+ * h_points - number of histogram points
+ * limit - limit the data to (mean - limit * stdev, mean + limit * stdev)
+ *         if limit <= 0, don't trim the histogram
+ *
+ * OUTPUT PARAMS
+ *
+ * histogram - output histogram buffer. first four values are
+ *             minimum, maximum, mean and stdev, followed by n_points
+ *             of non-normalized histogram counts.
+ */
+int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms, 
+                               int n_points, float limit, float *histogram)
+{
+  float max_val = 0.0f, min_val = 0.0f;
+  float sum = 0.0f, sumsq = 0.0f;
+  float min_his, max_his, irange, mean, stdev;
+  int pos;
+  CField *data = ms->Field->data;
+  int cnt = data->dim[0] * data->dim[1] * data->dim[2];
+  float *raw_data = (float *) data->data;
+  if(cnt) {
+    int a;
+    sum = min_val = (max_val = *(raw_data++));
+    sumsq = sum*sum;
+    for(a = 1; a < cnt; a++) {
+      double f_val = *(raw_data++);
+      if(min_val > f_val)
+        min_val = f_val;
+      if(max_val < f_val)
+        max_val = f_val;
+      sum += f_val;
+      sumsq += f_val*f_val;
+    }
+    mean = (float) (sum / cnt);
+    stdev = (float) sqrt1d((sumsq - (sum * sum / cnt)) / (cnt));
+    // Compute the histogram
+    if (limit > 0.0F) {
+      min_his = mean - limit*stdev;
+      if (min_his < min_val)
+        min_his = min_val;
+      max_his = mean + limit*stdev;
+      if (max_his > max_val)
+        max_his = max_val;
+    } else {
+      min_his = min_val;
+      max_his = max_val;
+    }
+    irange = (float)(n_points-1) / (max_his - min_his);
+    for (a = 0; a < n_points; a++) 
+      histogram[a+4] = 0.0f;
+    raw_data = (float *) data->data;
+    for (a = 0; a < cnt; a++) {
+      double f_val = *(raw_data++);
+      pos = (int)(irange * (f_val-min_his));
+      if (pos >= 0 && pos < n_points) {
+        histogram[pos+4] += 1.0;
+      }
+    }
+    histogram[0] = min_his;
+    histogram[1] = max_his;
+    histogram[2] = mean;
+    histogram[3] = stdev;
+  } else {
+    histogram[0] = 0.0;
+    histogram[1] = 1.0;
+    histogram[2] = 1.0;
+    histogram[3] = 1.0;
+  }
   return cnt;
 }
 
@@ -2115,8 +2258,10 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ObjectMapState *ms;
   int expectation;
 
+  /* state check */
   if(state < 0)
     state = I->NState;
+  /* alloc/init a new MapState */
   if(I->NState <= state) {
     VLACheck(I->State, ObjectMapState, state);
     I->NState = state + 1;
@@ -2345,6 +2490,13 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ms->Crystal->Angle[0] = alpha;
   ms->Crystal->Angle[1] = beta;
   ms->Crystal->Angle[2] = gamma;
+
+  /* -- JV; for vol 
+  ms->Mean = mean;
+  ms->SD = stdev;
+  ms->MaxValue = maxd;
+  ms->MinValue = mind;
+  */
 
   ms->FDim[3] = 3;
   if(!(ms->FDim[0] && ms->FDim[1] && ms->FDim[2]))

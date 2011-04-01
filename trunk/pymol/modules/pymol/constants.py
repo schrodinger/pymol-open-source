@@ -168,6 +168,7 @@ repres = {
     'angles'        :17,
     'dihedrals'     :18,
     'ellipsoids'    :19,
+    'volume'        :20,
 }
 repres_sc = Shortcut(repres.keys())
 
@@ -336,6 +337,7 @@ class fb_module:
     objectsurface             =36
     objectgadget              =37
     objectslice               =38
+    objectvolume              =39
 
     repangle                  =43
     repdihederal              =44
@@ -354,6 +356,8 @@ class fb_module:
     repcartoon                =58
     sculpt                    =59
     vfont                     =60
+    # in layer0
+    shader                    =61
 
     executive                 =70
     selector                  =71

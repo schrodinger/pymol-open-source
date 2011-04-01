@@ -269,6 +269,18 @@ def slice_hide(self_cmd, sele):
               [ 1, 'slice'        , 'cmd.hide("slice","'+sele+'")'     ],
               ]
 
+def volume_show(self_cmd, sele):
+    return [[ 2, 'Show:'       , ''                             ],
+              [ 1, 'volume'       , 'cmd.show("volume","'+sele+'")'     ],
+              [ 1, 'extent'       , 'cmd.show("extent","'+sele+'")'     ],
+              ]
+
+def volume_hide(self_cmd, sele):
+    return [[ 2, 'Hide:'       , ''                             ],
+              [ 1, 'volume'        , 'cmd.hide("volume","'+sele+'")'     ],
+              [ 1, 'extent'        , 'cmd.hide("extent","'+sele+'")'     ],
+              ]
+
 def by_elem2(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
@@ -541,6 +553,19 @@ def all_colors(self_cmd, sele):
 #   [ 1, '\\999white'       ,'cmd.color("white","'+sele+'")'  ],
     
         ]
+
+#def vol_color(self_cmd, sele):
+#    print "Be sure to finish the color_volume colorRamps"
+#    return [
+#        [2, 'Colors:',            ''],
+#        [1, 'High Focus',         'cmd.volume_color("'+sele+'","-1")' ],
+#        [1, 'Med. Focus',         'cmd.volume_color("'+sele+'","-2")' ],
+#        [1, 'Low  Focus',         'cmd.volume_color("'+sele+'","-3")' ],
+#        [1, 'Solvent Focus',      'cmd.volume_color("'+sele+'","-4")' ],
+#        [1, 'Ion Focus',          'cmd.volume_color("'+sele+'","-5")' ],
+#        ]
+
+
 
 def color_auto(self_cmd, sele):
     return [
@@ -1118,6 +1143,11 @@ def map_mesh(self_cmd, sele):
             [ 1, '@ level -3.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",-3.0)'      ],
             ]
 
+def map_volume(self_cmd, sele):
+    return [[ 2, 'Volume:', ''],
+            [ 1, 'default'              , 'cmd.volume("'+sele+'_volume","'+sele+'",1.0)'  ]
+           ]
+
 def map_surface(self_cmd, sele):
     return [[ 2, 'Surface:',  '' ],
             [ 1, '@ level 1.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",1.0)'      ],
@@ -1151,6 +1181,7 @@ def map_action(self_cmd, sele):
             [ 1, 'surface'      , map_surface(self_cmd, sele)  ],
             [ 1, 'slice'        , map_slice(self_cmd, sele)  ],
             [ 1, 'gradient'     , map_gradient(self_cmd, sele)  ],                                    
+            [ 1, 'volume'       , map_volume(self_cmd, sele)  ],
             [ 0, ''             , ''                       ],
             [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
             [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
@@ -1273,7 +1304,7 @@ def label_props(self_cmd, sele):
               [ 1, 'text type'      , 'cmd.label("'+sele+'","text_type")'    ],
               [ 1, 'numeric type'   , 'cmd.label("'+sele+'","numeric_type")' ],
               [ 0, ''               , ''                                  ],
-              [ 1, 'stereochemistry', 'cmd.label("'+sele+'","numeric_type")' ],  # -- TODO
+              [ 1, 'stereochemistry', 'cmd.label("'+sele+'","stereo")' ]
               ]
 
 def label_ids(self_cmd, sele):
