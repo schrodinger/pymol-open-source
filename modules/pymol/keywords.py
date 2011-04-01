@@ -123,9 +123,9 @@ def get_command_keywords(self_cmd=cmd):
         'intra_rms_cur' : [ self_cmd.intra_rms_cur     , 0 , 0 , ''  , parsing.STRICT ],
         'invert'        : [ self_cmd.invert            , 0 , 0 , ''  , parsing.STRICT ],
         'isodot'        : [ self_cmd.isodot            , 0 , 0 , ''  , parsing.LEGACY ],
-        'isolevel'      : [ self_cmd.isolevel           , 0 , 0 , '' , parsing.STRICT ],      
+        'isolevel'      : [ self_cmd.isolevel          , 0 , 0 , ''  , parsing.STRICT ],      
         'isomesh'       : [ self_cmd.isomesh           , 0 , 0 , ''  , parsing.LEGACY ],
-        'isosurface'    : [ self_cmd.isosurface        , 0 , 0 , ''  , parsing.LEGACY ],   
+        'isosurface'    : [ self_cmd.isosurface        , 0 , 0 , ''  , parsing.LEGACY ],
         'iterate'       : [ self_cmd.iterate           , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
         'iterate_state' : [ self_cmd.iterate_state     , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
         'label'         : [ self_cmd.label             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
@@ -266,6 +266,8 @@ def get_command_keywords(self_cmd=cmd):
         'vdw_fit'       : [ self_cmd.vdw_fit           , 0 , 0 , ''  , parsing.STRICT ],   
         'view'          : [ self_cmd.view              , 0 , 0 , ''  , parsing.STRICT ],   
         'viewport'      : [ self_cmd.viewport          , 0 , 0 , ''  , parsing.STRICT ],
+        'volume'        : [ self_cmd.volume            , 0 , 0 , ''  , parsing.STRICT ],
+        'volume_color'  : [ self_cmd.volume_color      , 0 , 0 , ''  , parsing.STRICT ],
         'window'        : [ self_cmd.window            , 0 , 0 , ''  , parsing.STRICT ],         
         'while'         : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
         'wizard'        : [ self_cmd.wizard            , 0 , 0 , ''  , parsing.STRICT ],
@@ -367,6 +369,8 @@ def get_help_only_keywords(self_cmd=cmd):
         'selections'            : [ self_cmd.helping.selections ],
         'skip'                  : [ self_cmd.helping.skip  ],                
         'sync'                  : [ self_cmd.sync ],
+        'stereochemistry'       : [ self_cmd.helping.stereochemistry ],
+        'text_type'             : [ self_cmd.helping.text_type ],
         'transparency'          : [ self_cmd.helping.transparency ],
         '@'                     : [ self_cmd.helping.at_sign ],  
         }

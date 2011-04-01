@@ -3,8 +3,9 @@
 # TODO:
 #  - provide diff for pdb2pqr freemol
 #  - use remove_alt to count alternate atom locations and warn the user
-#
 #  - Note to users that they should remove freemol's pymol.exe on OS X.
+#  - Fold in ApbsInterface.py
+#  - Default to calling psize.py and pdb2pqr rather than our internals.
 
 ### (all) and resn glu and resi 154+157
 ### flag ignore, atom-selection, clear
@@ -65,6 +66,7 @@ Features under consideration:
 
  - Use 'acc' to calculate solvent-accessible surface areas. We'll use
    the PyMOL 'standard' method and store this data as B-factors.
+
  - Show the field lines. Relevant code from menu.py:
 
     def map_gradient(self_cmd, sele):
@@ -72,6 +74,29 @@ Features under consideration:
                 [ 1, 'default'         , 'cmd.gradient("'+sele+'_grad","'+sele+'");cmd.ramp_new("'+sele+
                   '_grad_ramp","'+sele+'");cmd.color("'+sele+'_grad_ramp","'+sele+'_grad");' ]
                 ]
+
+ - Deal with Zinc. Here's an email snippet from David Neuhaus:
+
+      2) Many of the proteins I work with are zinc finger proteins,
+      and back in 2006 I had some correspondence with Nathan Baker and
+      Todd Dolinsky about how to handle this for .pdb files that
+      contain a zinc atom - essentially by hand-editing the pdb file
+      to change CYS residues to CYM, running pdb2pqr using the AMBER
+      force field, restoring the zinc atom to the .pqr file by
+      hand-editing (pdb2pqr stripped it out, so I cut-and-paste back
+      from the original .pdb file), and hand-editing the .pqr file
+      charge on the zinc to +2, and the radius to 1.2.  I haven't yet
+      tested such a hand-made .pqr file for a zinc finger protein yet
+      with your plugin, but I am assuming it will work as before
+      (selected via "Choose Externally Generated PQR").  I guess this
+      would still be the only way to achieve this workflow with your
+      new plugin, or might there be some clever way of scripting any
+      of this?  I"d be happy to send further details if you are
+      interested - but I appreciate also that even if it is possible,
+      it might well be more trouble to implement than it is worth.
+
+ - Force users to click through a dialog box telling them which atoms
+   are being ignored in the PQR file.
 
 Known hacks:
 
@@ -83,7 +108,13 @@ Known hacks:
    but we will check for foo-PE0 if we can't find foo.dx.
 
 2. We look for dylib errors in the APBS executable that's shipped with
-freemol on OS X. Code in get_default()'s verify().
+   freemol on OS X. Code in get_default()'s verify().
+
+3. We play some weird tricks to import pdb2pqr. They're documented,
+   but the first import gets pdb2pqr itself, and the second gets the
+   data directories containing the force fields. They're required
+   because OS X launches MacPyMOL without running .bash_profile or
+   .bashrc.
 
 """
 from __future__ import division
@@ -151,7 +182,7 @@ def get_default_location(name):
         For any program name <foo>.exe we will also search for
         <foo>. We'll search for the .exe version first. We do not
         automatically check for .exe versions of programs when .exe is
-        not specified.
+        not specified. We will do the same for <foo>.py
     """
     def verify(name,f):
         if name in 'apbs.exe apbs'.split():
@@ -183,9 +214,16 @@ def get_default_location(name):
         searchDirs.append("/tmp")
         searchDirs.append(".")
 
+
+    # This must come before /sw/bin (which may also be in PATH) in
+    # order for our pdb2pqr importing to work
+    # correctly. /sw/bin/pdb2pqr just calls through to this.
+    searchDirs.append(os.path.join("/sw", "share", "pdb2pqr"))
+
     searchDirs.extend(string.split(os.environ["PATH"], ":"))
     searchDirs.append(os.path.join("/usr", "local", "bin"))
     searchDirs.append(os.path.join("/opt", "local", "bin"))
+    searchDirs.append(os.path.join("/sw", "bin"))
 
     print "Search dirs",searchDirs
 
@@ -201,6 +239,12 @@ def get_default_location(name):
                 return f
             elif name.endswith('.exe'):
                 f = os.path.join( d, name[:-4] )  # make path/name.py
+                print "trying",f
+                if os.path.exists(f) and verify(name,f):
+                    return f
+            elif name.endswith('.py'):
+                f = os.path.join( d, name[:-3] )  # make path/name.py
+                print "trying",f
                 if os.path.exists(f) and verify(name,f):
                     return f
         
@@ -537,7 +581,8 @@ class APBSTools2:
                      'Use another PQR',
                      'Use PDB2PQR',):
             self.radiobuttons.add(text)
-        self.radiobuttons.setvalue('Use PyMOL generated PQR and PyMOL generated Hydrogens and termini')
+        #self.radiobuttons.setvalue('Use PyMOL generated PQR and PyMOL generated Hydrogens and termini')
+        self.radiobuttons.setvalue('Use PDB2PQR')
 
         self.pdb2pqr_options = Pmw.EntryField(group.interior(),
                                               labelpos='w',
@@ -804,17 +849,17 @@ class APBSTools2:
                               pady = 10,
                               justify=LEFT,
                               text = """
-The PyMOL APBS tools can calculate proper grid dimensions and spacing (we attempt to make
-the fine mesh spacing 0.5A or finer, but we will make it coarser if forced to by the
-Maximum Grid Points setting in the configuration pane).  If you wish to use APBS's psize.py
-to set up the grid, make sure that the path is set correctly above.
+By default, the PyMOL APBS Tools will use APBS's psize.py to calculate proper grid dimensions and
+spacing. This tool attempts to make the fine mesh spacing 0.5 A or smaller, but will make a coarser 
+grid if constrained to do so by the Maximum Memory Allowed setting in the configuration pane. If 
+you wish this behavior, you must ensure that "APBS psize.py location" above points to a valid file.
+This plugin can also calculate grid dimensions and spacing itself. If you wish that behavior, simply 
+delete the "APBS psize.py location" above.
 
-PyMOL can generate PQR files using standard protein residues and AMBER charges.  If you
-wish to use PDB2PQR instead, make sure that it is installed and that the path is set
-correctly above.
-
-If PyMOL does not automatically find apbs, psize.py, or pdb2pqr, you may set the environment
-variables APBS_BINARY, APBS_PSIZE and APBS_PDB2PQR to point to them respectively.
+By default, the PyMOL APBS Tools will use PDB2PQR to generate PQR files. Command line options for 
+PDB2PQR can be controlled on the Main panel. If you wish to use PDB2PQR, you must ensure that 
+"pdb2pqr location" above points to a valid file. PyMOL can directly generate PQR files using standard 
+protein residues and AMBER charges.  If wish that behavior, simply delete the "pdb2pqr location" above.
 """,
                               )
         label.pack()
@@ -946,6 +991,34 @@ Citation for PDB2PQR:
     def showAppModal(self):
         #self.dialog.activate() #geometry = 'centerscreenfirst',globalMode = 'nograb')
         self.dialog.show()
+    def generatePqrFile(self):
+        ''' Wrapper for all of our PQR generation routines.
+        
+        - Generate PQR file if necessary
+        - Return False if unsuccessful, True if successful.
+
+        - Clean up PQR file if we generated it (the
+          generate... functions are required to do this.).
+        '''
+        if self.radiobuttons.getvalue() == 'Use another PQR':
+            pass
+        elif self.radiobuttons.getvalue() == 'Use PDB2PQR':
+            if DEBUG: print "GENERATING PQR FILE via PDB2PQR"
+            good = self._generatePdb2pqrPqrFile()
+            if not good:
+                if DEBUG:
+                    print "Could not generate PDB2PQR file.  _generatePdb2pqrPqrFile failed."
+                return False
+            if DEBUG: print "GENERATED"
+        else: # it's one of the pymol-generated options
+            if DEBUG: print "GENERATING PQR FILE via PyMOL"
+            good = self._generatePymolPqrFile()
+            if not good:
+                if DEBUG:
+                    print "Could not generate the PyMOL-basd PQR file.  generatePyMOLPqrFile failed."
+                return False
+            if DEBUG: print "GENERATED"
+        return True
     def execute(self, result, refocus=True):
         if result == 'Register APBS Use':
             import webbrowser
@@ -959,24 +1032,11 @@ Citation for PDB2PQR:
                 if DEBUG:
                     print "ERROR: Something went wrong trying to generate the APBS input file."
                 return False
-            if self.radiobuttons.getvalue() == 'Use another PQR':
-                pass
-            elif self.radiobuttons.getvalue() == 'Use PDB2PQR':
-                if DEBUG: print "GENERATING PQR FILE via PDB2PQR"
-                good = self.generatePdb2pqrPqrFile()
-                if not good:
-                    if DEBUG:
-                        print "Could not generate PDB2PQR file.  generatePdb2pqrPqrFile failed."
-                    return False
-                if DEBUG: print "GENERATED"
-            else: # it's one of the pymol-generated options
-                if DEBUG: print "GENERATING PQR FILE via PyMOL"
-                good = self.generatePymolPqrFile()
-                if not good:
-                    if DEBUG:
-                        print "Could not generate the PyMOL-basd PQR file.  generatePyMOLPqrFile failed."
-                    return False
-                if DEBUG: print "GENERATED"
+            # START
+            good = self.generatePqrFile()
+            if not good:
+                return False
+            # Stop
             if os.path.exists(self.pymol_generated_dx_filename.getvalue()):
                 try:
                     os.unlink(self.pymol_generated_dx_filename.getvalue())
@@ -1033,12 +1093,17 @@ Citation for PDB2PQR:
         try:
             if not self.psize.valid():
                 raise NoPsize
-            pqr_filename = self.pymol_generated_pqr_filename.getvalue()
+            good = self.generatePqrFile()
+            if not good:
+                print "Could not generate PQR file!"
+                return False
+            pqr_filename = self.getPqrFilename()
             try:
-                f = file(pqr_filename,'w')
+                f = open(pqr_filename,'r')
                 f.close()
             except:
                 raise NoPDB
+
             #
             # Do some magic to load the psize module
             #
@@ -1051,8 +1116,10 @@ Citation for PDB2PQR:
             
             if pymol.cmd.count_atoms( self.selection.getvalue() + " and not alt ''")!=0:
                 print "WARNING: You have alternate locations for some of your atoms!"
-            pymol.cmd.save(pqr_filename,sel)
+            # pymol.cmd.save(pqr_filename,sel) # Pretty sure this was a bug. No need to write it when it's externally generated.
             f.close()
+
+
             size = psize.Psize()
             size.setConstant('gmemceil',int(self.max_mem_allowed.getvalue()))
             size.runPsize(pqr_filename)
@@ -1075,10 +1142,10 @@ Citation for PDB2PQR:
             maxs = [None,None,None]
             for a in model.atom:
                 for i in (0,1,2):
-                    if mins[i] is None or a.coord[i] < mins[i]:
-                        mins[i] = a.coord[i]
-                    if maxs[i] is None or a.coord[i] > maxs[i]:
-                        maxs[i] = a.coord[i]
+                    if mins[i] is None or (a.coord[i] - a.elec_radius) < mins[i]:
+                        mins[i] = a.coord[i] - a.elec_radius
+                    if maxs[i] is None or (a.coord[i] + a.elec_radius) > maxs[i]:
+                        maxs[i] = a.coord[i] + a.elec_radius
             if None in mins or None in maxs:
                 error_dialog = Pmw.MessageDialog(self.parent,
                                                  title = 'Error',
@@ -1237,10 +1304,11 @@ Citation for PDB2PQR:
         because pdb2pqr will debump things and write them out with
         3 digits post-decimal. Bleh.
         """
-        f = file(filename,'r')
+        f = open(filename,'r')
         txt = f.read()
         f.close()
-        f = file(filename,'w')
+        print "Erasing contents of",filename,"in order to clean it up"
+        f = open(filename,'w')
         # APBS accepts whitespace-delimited columns
         # it doesn't care about non-coord lines, so there's not need to be careful about
         # where we replace dashes.
@@ -1295,7 +1363,7 @@ Citation for PDB2PQR:
 
         Or you can grab any other useful information - I'd say that using a regular expression like this would be the best option to ensure you don't get false positives. 
         """
-        f = file(fname)
+        f = open(fname)
         unassigned = re.compile('REMARK   5 *(\d+) \w* in').findall(f.read())  # Text contains PQR output string
         f.close()
         return '+'.join(unassigned)
@@ -1368,7 +1436,8 @@ Citation for PDB2PQR:
             # write out the input text
             #
             try:
-                f = file(self.pymol_generated_in_filename.getvalue(),'w')
+                print "Erasing contents of",self.pymol_generated_in_filename.getvalue(),"in order to write new input file"
+                f = open(self.pymol_generated_in_filename.getvalue(),'w')
                 f.write(apbs_input_text)
                 f.close()
             except IOError:
@@ -1464,9 +1533,11 @@ Citation for PDB2PQR:
 
         return True
 
-
-    def generatePdb2pqrPqrFile(self,silent=False):
+    # PQR generation routines are required to call
+    # cleanupGeneratedPdbOrPqrFile themselves.
+    def _generatePdb2pqrPqrFile(self,silent=False):
         """use pdb2pqr to generate a pqr file
+        Call this via the wrapper generatePqrFile()
         """
         if not silent:
             def show_error(message):
@@ -1484,7 +1555,8 @@ Citation for PDB2PQR:
         #
         pdb_filename = self.pymol_generated_pdb_filename.getvalue()
         try:
-            f = file(pdb_filename,'w')
+            print "Erasing contents of",pdb_filename,"in order to generate new PDB file"
+            f = open(pdb_filename,'w')
             f.close()
         except:
             show_error('Please set a temporary PDB file location that you have permission to edit')
@@ -1522,9 +1594,11 @@ Citation for PDB2PQR:
             args = tuple(args)
         args = (self.pdb2pqr.getvalue(),) + args
         try:
+            # This allows us to import pdb2pqr
             sys.path.append(os.path.dirname(os.path.dirname(self.pdb2pqr.getvalue())))
             print "Appended", os.path.dirname(os.path.dirname(self.pdb2pqr.getvalue()))
             import pdb2pqr.pdb2pqr
+            # This allows pdb2pqr to correctly find the dat directory with AMBER.DAT.
             sys.path.append(os.path.dirname(self.pdb2pqr.getvalue()))
             print "Appended", os.path.dirname(self.pdb2pqr.getvalue())
             print "Imported pdb2pqr"
@@ -1552,11 +1626,13 @@ Citation for PDB2PQR:
             print "Unassigned atom IDs",unassigned_atoms
             show_error(message_text)
             return False
-        print "I WILL RETURN TRUE YO!"
+        print "I WILL RETURN TRUE from pdb2pqr"
         return True
         
         
-    def generatePymolPqrFile(self):
+    # PQR generation routines are required to call
+    # cleanupGeneratedPdbOrPqrFile themselves.
+    def _generatePymolPqrFile(self):
         """generate a pqr file from pymol
 
         This will also call through to champ to set the Hydrogens and charges
@@ -1566,6 +1642,7 @@ Citation for PDB2PQR:
         To make it worse, APBS seems to freak out when there are chain ids.  So,
         this gets rid of the chain ids.
 
+        call this through the wrapper generatePqrFile
         """
         # CHAMP will break in many cases if retain_order is set. So,
         # we unset it here and reset it later. Note that it's fine to
@@ -1579,7 +1656,8 @@ Citation for PDB2PQR:
         
         pqr_filename = self.getPqrFilename()
         try:
-            f = file(pqr_filename,'w')
+            print "Erasing previous contents of",pqr_filename
+            f = open(pqr_filename,'w')
             f.close()
         except:
             error_dialog = Pmw.MessageDialog(self.parent,
@@ -2133,6 +2211,21 @@ class VisualizationGroup(Pmw.Group):
             for bar in bars: bar.pack(side=LEFT)
             self.ms_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=LEFT)
 
+            self.fl_group = Pmw.Group(self.interior(),tag_text='Field Lines')
+            self.fl_buttonbox = Pmw.ButtonBox(self.fl_group.interior(), padx=0)
+            self.fl_buttonbox.pack()
+            self.fl_buttonbox.add('Show',command=self.showFieldLines)
+            self.fl_buttonbox.add('Hide',command=self.showNegSurface)
+            self.fl_buttonbox.add('Update',command=self.updateFieldLines)
+            self.fl_buttonbox.alignbuttons()
+            label = Tkinter.Label(self.fl_group.interior(),
+                                  pady = 10,
+                                  justify=LEFT,
+                                  text = """Follows same coloring as surface.""",
+                                  )
+            label.pack()
+            self.fl_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=TOP)
+
             self.pi_group = Pmw.Group(self.interior(),tag_text='Positive Isosurface')
             self.pi_buttonbox = Pmw.ButtonBox(self.pi_group.interior(), padx=0)
             self.pi_buttonbox.pack()
@@ -2171,6 +2264,8 @@ class VisualizationGroup(Pmw.Group):
             self.neg_surf_val.pack(side=LEFT)
             self.ni_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=LEFT)
 
+
+
         else:
             self.error_label = Tkinter.Label(self.interior(),
                                   pady = 10,
@@ -2193,6 +2288,10 @@ If you have a molecule and a map loaded, please click "Update"''',
         #return 'e_lvl'
         idx = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule'].index(self.molecule.getvalue())
         return '_'.join(('e_lvl',str(idx),str(self.visgroup_num)))
+    def getGradName(self):
+        #return 'e_lvl'
+        idx = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule'].index(self.molecule.getvalue())
+        return '_'.join(('grad',str(idx),str(self.visgroup_num)))
 
     def getIsoPosName(self):
         idx = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'].index(self.map.getvalue())
@@ -2202,7 +2301,7 @@ If you have a molecule and a map loaded, please click "Update"''',
         idx = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'].index(self.map.getvalue())
         return '_'.join(('iso_neg',str(idx),str(self.visgroup_num)))
         
-    def updateMolSurface(self):
+    def updateRamp(self):
         molecule_name = self.molecule.getvalue()
         ramp_name = self.getRampName()
         map_name = self.map.getvalue()
@@ -2214,6 +2313,9 @@ If you have a molecule and a map loaded, please click "Update"''',
         pymol.cmd.delete(ramp_name)
         pymol.cmd.ramp_new(ramp_name,map_name,range)
         pymol.cmd.set('surface_color',ramp_name,molecule_name)
+    def updateMolSurface(self):
+        molecule_name = self.molecule.getvalue()
+        self.updateRamp()
         if self.surface_solvent.get()==1:
             pymol.cmd.set('surface_solvent',1,molecule_name)
             pymol.cmd.set('surface_ramp_above_mode',0,molecule_name)
@@ -2242,4 +2344,16 @@ If you have a molecule and a map loaded, please click "Update"''',
         pymol.cmd.isosurface(self.getIsoNegName(),self.map.getvalue(),float(self.neg_surf_val.getvalue()))
         pymol.cmd.color('red',self.getIsoNegName())
         pymol.cmd.show('everything',self.getIsoNegName())
+    def showFieldLines(self):
+        self.updateFieldLines()
+    def hideFieldLines(self):
+        pymol.cmd.hide('everything',self.getGradName())
+    def updateFieldLines(self):
+        print "IN update"
+        pymol.cmd.gradient(self.getGradName(),self.map.getvalue())
+        print "Made gradient"
+        self.updateRamp()
+        print "Updated ramp"
+        pymol.cmd.color(self.getRampName(),self.getGradName())
+        print "set colors"
         

@@ -29,6 +29,7 @@
 #include"main.h"
 #include"Feedback.h"
 #include"Sphere.h"
+#include"ShaderMgr.h"
 
 typedef struct RepCylBond {
   Rep R;
@@ -78,6 +79,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
   float alpha;
   SphereRec *sp;
   register PyMOLGlobals *G = I->R.G;
+  CShaderPrg * prg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
 
   alpha =
     SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_stick_transparency);
@@ -196,6 +198,12 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 
     } else {
       int use_dlst;
+      int use_shader = (int) SettingGet(G, cSetting_stick_use_shader) &
+	               (int) SettingGet(G, cSetting_use_shaders);
+      if (use_shader) {
+	/*	ShaderEnable(G);*/
+	CShaderPrg_Enable(prg);
+      }
 
       use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
       if(use_dlst && I->R.displayList) {
@@ -329,6 +337,10 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
         if(use_dlst && I->R.displayList) {
           glEndList();
         }
+	if (use_shader) {
+	  /*	  ShaderDisable(G);*/
+	  CShaderPrg_Disable(prg);
+	}
       }
     }
   }

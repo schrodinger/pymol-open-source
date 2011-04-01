@@ -678,7 +678,28 @@ if __name__=='pymol.setting':
         heavy_neighbor_cutoff              = 639	# see wizard/measurement.py
         polar_neighbor_cutoff              = 640	# see wizard/measurement.py
         surface_residue_cutoff             = 641        # see menu.py
-        
+        surface_use_shader                 = 642
+        cartoon_use_shader                 = 643
+        stick_use_shader                   = 644
+        line_use_shader                    = 645
+        sphere_use_shader                  = 646
+        use_shaders                        = 647
+        shader_path                        = 648
+        volume_bit_depth                   = 649
+        volume_color                       = 650
+        volume_layers                      = 651
+        volume_data_range                  = 652
+        auto_defer_atom_count              = 653
+        default_refmac_names               = 654 # 2FoFc-ampl 2FoFc-ph FoFc-ampl FoFc-ph
+        default_phenix_names               = 655 # 2FoFc-ampl 2FoFc-ph FoFc-ampl FoFc-ph
+        default_phenix_no_fill_names       = 656 # 2FoFc-ampl 2FoFc-ph
+        default_buster_names               = 657 # 2FoFc-ampl 2FoFc-ph FoFc-ampl FoFc-ph
+        default_fofc_map_rep               = 658
+        default_2fofc_map_rep              = 659
+        atom_type_format                   = 660
+        autoclose_dialogs                  = 661
+
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

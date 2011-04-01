@@ -35,6 +35,7 @@ typedef struct {
   unsigned int base_size;
 } CField;
 
+/* accessors for getting data from a field */
 #define Ffloat3(f,a,b,c) (*((float*)((f)->data + \
                                      (a)*(f)->stride[0] + \
                                      (b)*(f)->stride[1] + \
@@ -95,5 +96,7 @@ PyObject *FieldAsPyList(CField * I);
 CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list);
 CField *FieldNewCopy(PyMOLGlobals * G, CField * src);
 int FieldSmooth3f(CField * I);
+
+float* FieldSample(CField * I, int skip);
 
 #endif

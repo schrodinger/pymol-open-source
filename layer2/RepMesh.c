@@ -83,7 +83,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
   int c;
   float *col = NULL;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
-
   if(ray) {
     if(n) {
       float radius;
@@ -466,7 +465,6 @@ Rep *RepMeshNew(CoordSet * cs, int state)
   AtomInfoType *ai1;
 
   OOAlloc(G, RepMesh);
-
   PRINTFD(G, FB_RepMesh)
   " RepMeshNew-DEBUG: entered with coord-set %p\n", (void *) cs ENDFD;
   obj = cs->Obj;

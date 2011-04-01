@@ -22,6 +22,7 @@
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #include <signal.h>
+#include <tchar.h>
 #include <stdafx.h>
 #endif
 
@@ -52,7 +53,7 @@
 #include "Util.h"
 #include "Control.h"
 #include "Movie.h"
-
+#include "Shader.h"
 #ifdef _PYMOL_NO_MAIN
 
 int MainSavingUnderWhileIdle(void)
@@ -1218,6 +1219,7 @@ static void MainInit(PyMOLGlobals * G)
   I->DeferReshapeDeferral = 1;
 
   PyMOL_Start(PyMOLInstance);
+  PyMOL_ConfigureShadersGL(PyMOLInstance);
 
   PyMOL_SetSwapBuffersFn(PyMOLInstance, (PyMOLSwapBuffersFn *) p_glutSwapBuffers);
   I->ReshapeTime = (I->IdleTime = UtilGetSeconds(G));
@@ -1653,6 +1655,7 @@ void sharp3d_prepare_context(void);
 
 static void launch(CPyMOLOptions * options, int own_the_options)
 {
+
   int multisample_mask = 0;
   int theWindow = 0;
   PyMOLGlobals *G = NULL;
@@ -1845,7 +1848,6 @@ static void launch(CPyMOLOptions * options, int own_the_options)
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
 #endif
-
   MainInit(G);
   if(own_the_options)
     G->Main->OwnedOptions = options;

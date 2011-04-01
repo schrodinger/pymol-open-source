@@ -58,8 +58,17 @@ Z* -------------------------------------------------------------------
 #define cRepAngle      17
 #define cRepDihedral   18
 #define cRepEllipsoid  19
+#define cRepVolume     20
 
-#define cRepCnt        20
+/* Add other reps here.  Don't forget to
+ * bump the cRepCnt
+ * update modules/constants.py::repres{}
+ * update modules/constants.py::fb_module, if needed
+ * update modules/viewing.py::rep_list
+ * create your RepXYZ.h and RepXYZ.c
+ */
+
+#define cRepCnt        21
 
 
 /* Hierarchical invalidation scheme - 

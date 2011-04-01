@@ -505,7 +505,10 @@ if __name__=='pymol.parser':
         def stdin_reader(self): # dedicated thread for reading standard input
             import sys
             while 1:
-                l = sys.stdin.readline()
+		try:
+                	l = sys.stdin.readline()
+		except IOError:
+			continue
                 if l!="":
                     if self.nest==0:
                         # if we're reading embedded input on stdin

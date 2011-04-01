@@ -12,7 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-if __name__=='pymol.shortcut':
+if __name__=='pymol.shortcut' or __name__=='shortcut':
     
     import copy
     import types

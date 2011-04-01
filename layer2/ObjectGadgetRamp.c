@@ -688,7 +688,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
 
   CGOColor(cgo, 1.0F, 1.0F, 1.0F);
 
-#ifndef _PYMOL_NOPY
+  //#ifndef _PYMOL_NOPY
   CGOFontScale(cgo, I->text_scale_h, I->text_scale_v);
 
   if(I->Level && I->NLevel) {
@@ -706,7 +706,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
     ShapeFVertex(cgo, REL, 12);
     CGOWriteLeft(cgo, buffer);
   }
-#endif
+  //#endif
 
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeNormal(cgo, LKP, 2);
@@ -868,9 +868,9 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   CGOFree(gs->ShapeCGO);
   gs->ShapeCGO = cgo;
 
-#ifndef _PYMOL_NOPY
+  //#ifndef _PYMOL_NOPY
   CGOPreloadFonts(gs->ShapeCGO);
-#endif
+  //#endif
 
   cgo = CGONewSized(I->Gadget.Obj.G, 100);
   CGODotwidth(cgo, 5);

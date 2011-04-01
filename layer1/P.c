@@ -122,6 +122,112 @@ static int label_next_token(WordType dst, char **expr)
   return (q != dst);
 }
 
+/* MMSTEREO_STALE is how this mmstereo field gets intialized, and it means
+   that mmstereo information needs to be computed */
+#define MMSTEREO_STALE 0                  // ' '
+#define MMSTEREO_NO_CHIRALITY 127         // ' '
+#define PYMOL_MMSTEREO_CHIRALITY_R 1      // 'R'
+#define PYMOL_MMSTEREO_CHIRALITY_S 2      // 'S'
+#define PYMOL_MMSTEREO_E 11               // 'E'
+#define PYMOL_MMSTEREO_Z 12               // 'Z'
+#define PYMOL_MMSTEREO_P 13               // 'P'
+#define PYMOL_MMSTEREO_M 14               // 'M'
+#define PYMOL_MMSTEREO_CHIRALITY_ANR 50   // 'r'
+#define PYMOL_MMSTEREO_CHIRALITY_ANS 51   // 's'
+#define PYMOL_MMSTEREO_UNDEF 99
+#define PYMOL_MMSTEREO_ST_INDEFINITE 100
+#define PYMOL_MMSTEREO_GEOM_INDEFINITE 101
+#define PYMOL_MMSTEREO_AN_GEOM_INDEFINITE 102
+
+char convertStereoToChar(int stereo){
+  switch (stereo){
+  case PYMOL_MMSTEREO_CHIRALITY_R:
+    return 'R';
+  case PYMOL_MMSTEREO_CHIRALITY_S:
+    return 'S';
+  case  PYMOL_MMSTEREO_E:
+    return 'E';
+  case  PYMOL_MMSTEREO_Z:
+    return 'Z';
+  case  PYMOL_MMSTEREO_P:
+    return 'P';
+  case  PYMOL_MMSTEREO_M:
+    return 'M';
+  case PYMOL_MMSTEREO_CHIRALITY_ANR:
+    return 'r';
+  case PYMOL_MMSTEREO_CHIRALITY_ANS:
+    return 's';
+  case PYMOL_MMSTEREO_UNDEF:
+  case PYMOL_MMSTEREO_ST_INDEFINITE:
+  case PYMOL_MMSTEREO_GEOM_INDEFINITE:
+  case PYMOL_MMSTEREO_AN_GEOM_INDEFINITE:
+    return '?';
+  }
+  return ' ';
+}
+int convertCharToStereo(char stereo){
+  switch (stereo){
+  case 'R':
+    return PYMOL_MMSTEREO_CHIRALITY_R;
+  case 'S':
+    return PYMOL_MMSTEREO_CHIRALITY_S;
+  case 'r':
+    return PYMOL_MMSTEREO_CHIRALITY_ANR;
+  case 's':
+    return PYMOL_MMSTEREO_CHIRALITY_ANS;
+  case 'E':
+    return PYMOL_MMSTEREO_E;
+  case 'Z':
+    return PYMOL_MMSTEREO_Z;
+  case 'P':
+    return PYMOL_MMSTEREO_P;
+  case 'M':
+    return PYMOL_MMSTEREO_M;
+  case '?':
+    return PYMOL_MMSTEREO_GEOM_INDEFINITE;
+  }
+  return MMSTEREO_NO_CHIRALITY;
+}
+
+
+int PLabelExprUsesVariable(PyMOLGlobals * G, char *expr, char *var)
+{
+  OrthoLineType buffer;
+  char ch, quote = 0;
+  int escaped = false;
+  while((ch = *(expr++))) {
+    if(!quote) {
+      if(ch == '\'') {
+        quote = ch;
+      } else if(ch == '"') {
+        quote = ch;
+      } else if((ch < 33) || (ch == '+') || (ch == '(') || (ch == ')')) {
+        /* nop */
+      } else if(ch > 32) {
+        WordType tok;
+        expr--;
+        if(label_next_token(tok, &expr)) {
+          buffer[0] = 0;
+          if(!strcmp(tok, var)) {
+	    return 1;
+	  }
+	}
+      }
+    } else {
+      if(ch == quote) {
+        quote = 0;
+      } else if(ch == '\\') {
+        if(!escaped) {
+          escaped = true;
+        } else {
+          escaped = false;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
 int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, int index)
 {
   /* alternate C implementation which bypasses Python expressions -- works
@@ -213,6 +319,8 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
             sprintf(buffer, "%1.3f", at->partialCharge);
           } else if(!strcmp(tok, "formal_charge")) {
             sprintf(buffer, "%d", at->formalCharge);
+          } else if(!strcmp(tok, "stereo")) {
+	    sprintf(buffer, "%c", convertStereoToChar(at->mmstereo));
           } else if(!strcmp(tok, "color")) {
             sprintf(buffer, "%d", at->color);
           } else if(!strcmp(tok, "cartoon")) {
@@ -694,7 +802,7 @@ int PAlterAtomState(PyMOLGlobals * G, float *v, char *expr, int read_only,
   int result = true;
   float f[3];
   PyObject *x_id1, *x_id2 = NULL, *y_id1, *y_id2 = NULL, *z_id1, *z_id2 = NULL;
-  char atype[7];
+  char atype[7], mmstereotype[2];
   PyObject *flags_id1 = NULL, *flags_id2 = NULL;
   int flags;
   dict = PyDict_New();
@@ -740,6 +848,9 @@ int PAlterAtomState(PyMOLGlobals * G, float *v, char *expr, int read_only,
     PConvFloatToPyDictItem(dict, "elec_radius", at->elec_radius);
     PConvFloatToPyDictItem(dict, "partial_charge", at->partialCharge);
     PConvIntToPyDictItem(dict, "formal_charge", at->formalCharge);
+    mmstereotype[0] = convertStereoToChar(at->mmstereo);
+    mmstereotype[1] = 0;
+    PConvStringToPyDictItem(dict, "stereo", mmstereotype);
     PConvIntToPyDictItem(dict, "cartoon", at->cartoon);
     PConvIntToPyDictItem(dict, "color", at->color);
     PConvIntToPyDictItem(dict, "ID", at->id);
@@ -827,7 +938,7 @@ int PAlterAtom(PyMOLGlobals * G,
   PyObject *text_type_id1, *text_type_id2 = NULL;
   SSType ssType;
   PyObject *ss_id1, *ss_id2 = NULL;
-  char atype[7];
+  char atype[7], mmstereotype[2];
   PyObject *type_id1, *type_id2 = NULL;
   float b, q, partialCharge, vdw, elec_radius;
   PyObject *b_id1, *b_id2 = NULL;
@@ -838,6 +949,8 @@ int PAlterAtom(PyMOLGlobals * G,
   int formalCharge, numericType;
   PyObject *formal_charge_id1, *formal_charge_id2 = NULL;
   PyObject *numeric_type_id1, *numeric_type_id2 = NULL;
+  char stereo[2];
+  PyObject *stereo_id1, *stereo_id2 = NULL;
   int cartoon;
   PyObject *cartoon_id1, *cartoon_id2 = NULL;
   int color;
@@ -886,6 +999,9 @@ int PAlterAtom(PyMOLGlobals * G,
   elec_radius_id1 = PConvFloatToPyDictItem(dict, "elec_radius", at->elec_radius);
   partial_charge_id1 = PConvFloatToPyDictItem(dict, "partial_charge", at->partialCharge);
   formal_charge_id1 = PConvIntToPyDictItem(dict, "formal_charge", at->formalCharge);
+  mmstereotype[0] = convertStereoToChar(at->mmstereo);
+  mmstereotype[1] = 0;
+  stereo_id1 = PConvStringToPyDictItem(dict, "stereo", mmstereotype);
   cartoon_id1 = PConvIntToPyDictItem(dict, "cartoon", at->cartoon);
 
   {
@@ -958,6 +1074,8 @@ int PAlterAtom(PyMOLGlobals * G,
       else if(!(partial_charge_id2 = PyDict_GetItemString(dict, "partial_charge")))
         result = false;
       else if(!(formal_charge_id2 = PyDict_GetItemString(dict, "formal_charge")))
+        result = false;
+      else if(!(stereo_id2 = PyDict_GetItemString(dict, "stereo")))
         result = false;
       else if(!(cartoon_id2 = PyDict_GetItemString(dict, "cartoon")))
         result = false;
@@ -1109,6 +1227,12 @@ int PAlterAtom(PyMOLGlobals * G,
         }
 
       }
+      if(stereo_id1 != stereo_id2) {
+        if(!PConvPyObjectToStrMaxLen(stereo_id2, stereo, 2))
+          result = false;
+        else
+          at->mmstereo = convertStereoToChar(stereo[0]);
+      }
       if(cartoon_id1 != cartoon_id2) {
         if(!PConvPyObjectToInt(cartoon_id2, &cartoon))
           result = false;
@@ -1188,7 +1312,7 @@ int PLabelAtom(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, int
   PyObject *P_inst_dict = G->P_inst->dict;
   int result;
   OrthoLineType label;
-  char atype[7];
+  char atype[7], mmstereotype[2];
   OrthoLineType buffer;
   if(at->hetatm)
     strcpy(atype, "HETATM");
@@ -1241,6 +1365,9 @@ int PLabelAtom(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, int
     PConvStringToPyDictItem(dict, "numeric_type", "?");
   PConvFloatToPyDictItem(dict, "partial_charge", at->partialCharge);
   PConvIntToPyDictItem(dict, "formal_charge", at->formalCharge);
+  mmstereotype[0] = convertStereoToChar(at->mmstereo);
+  mmstereotype[1] = 0;
+  PConvStringToPyDictItem(dict, "stereo", mmstereotype);
   PConvIntToPyDictItem(dict, "color", at->color);
   PConvIntToPyDictItem(dict, "cartoon", at->cartoon);
   PConvIntToPyDictItem(dict, "ID", at->id);
@@ -1503,7 +1630,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
      32 and 64 bit */
 
 #ifndef EMBEDDED_PYTHONHOME
-#define EMBEDDED_PYTHONHOME "\\py25"
+#define EMBEDDED_PYTHONHOME "\\py27"
 #endif
 
   {                             /* Automatically hide the window if this process was started as a
@@ -1825,13 +1952,6 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
 #endif
 
   /* END PROPRIETARY CODE SEGMENT */
-  init_opengl();
-  init_opengl_num();
-  init_glu();
-  init_glu_num();
-  init_glut();
-  initopenglutil();
-  initopenglutil_num();
 #endif
 #endif
 
@@ -2056,13 +2176,6 @@ void PInit(PyMOLGlobals * G, int global_instance)
   initranlib();
 #endif
   /* initialize PyOpenGL */
-  init_opengl();
-  init_opengl_num();
-  init_glu();
-  init_glu_num();
-  init_glut();
-  initopenglutil();
-  initopenglutil_num();
 #endif
 
   if(global_instance) {

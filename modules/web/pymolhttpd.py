@@ -411,7 +411,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             self.wfile.write("No args\n")
 
-# this is the public class we're exposing to PyMOL members
+# this is the public class we're exposing to PyMOL consortium members
 
 class PymolHttpd:
 

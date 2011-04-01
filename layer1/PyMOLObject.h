@@ -44,7 +44,7 @@ typedef char ObjectNameType[WordLength];
 #define cObjectSlice        10
 #define cObjectAlignment    11
 #define cObjectGroup        12
-
+#define cObjectVolume       13
 
 /* 
    the object base class is in the process of being converted to support

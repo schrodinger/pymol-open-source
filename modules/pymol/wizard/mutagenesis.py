@@ -50,7 +50,6 @@ class Mutagenesis(Wizard):
         
         cmd.unpick()
         
-
         self.dep = default_dep
 
         self.ind_library = io.pkl.fromFile(os.environ['PYMOL_PATH']+
@@ -440,7 +439,6 @@ class Mutagenesis(Wizard):
         if self.status==0:
             self.prompt = [ 'Pick a residue...']
         elif self.status==1:
-            
             self.prompt = [ 'Select a rotamer for %s or pick a new residue...'%self.res_text ]
         return self.prompt
 
@@ -716,6 +714,7 @@ class Mutagenesis(Wizard):
                 cmd.update(bump_name,obj_name)
                 
     def do_select(self,selection):
+        print "Selected!"
         cmd=self.cmd
         pymol=cmd._pymol
         if (obj_name in cmd.get_names()):
@@ -736,6 +735,7 @@ class Mutagenesis(Wizard):
         return 1
     
     def do_pick(self,bondFlag):
+        print "Picked!"
         cmd=self.cmd
         pymol=cmd._pymol
         if bondFlag:

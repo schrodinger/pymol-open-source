@@ -158,6 +158,27 @@ typedef struct {
   int *array;
 } PyMOLreturn_int_array;
 
+typedef struct {
+  PyMOLstatus status;
+  int size;
+  char **array;
+} PyMOLreturn_string_array;
+
+#define PYMOL_RETURN_VALUE_IS_STRING       0x01
+#define PYMOL_RETURN_VALUE_IS_INT          0x02
+#define PYMOL_RETURN_VALUE_IS_FLOAT        0x04
+#define PYMOL_RETURN_VALUE_IS_FLOAT_ARRAY  0x08
+
+typedef struct {
+  PyMOLstatus status;
+  short int type;
+  char *string;
+  int int_value;
+  float float_value;
+  int array_length;
+  float *float_array;
+} PyMOLreturn_value;
+
 typedef void PyMOLModalDrawFn(void *G);
 
 
@@ -175,6 +196,7 @@ void PyMOL_Free(CPyMOL * I);
 /* starting and stopping */
 
 void PyMOL_Start(CPyMOL * I);
+void PyMOL_ConfigureShadersGL(CPyMOL * I);
 #ifndef PYMOL_NO_PY
 void PyMOL_StartWithPython(CPyMOL * I);
 #endif
@@ -221,6 +243,8 @@ typedef void PyMOLSwapBuffersFn(void);
 void PyMOL_SetSwapBuffersFn(CPyMOL * I, PyMOLSwapBuffersFn * fn);
 void PyMOL_SwapBuffers(CPyMOL * I);     /* only works if above function has been set */
 void PyMOL_SetDefaultMouse(CPyMOL * I);
+void PyMOL_SetStereoCapable(CPyMOL * I, int stereoCapable);
+void PyMOL_InitializeCMol(CPyMOL * I);
 
 
 /* host query methods */
@@ -234,6 +258,8 @@ int PyMOL_GetImageReady(CPyMOL * I, int reset);
 PyMOLreturn_int_array PyMOL_GetImageInfo(CPyMOL * I);
 int PyMOL_GetImageData(CPyMOL * I, int width, int height, int row_bytes,
                        void *buffer, int mode, int reset);
+PyMOLreturn_int_array PyMOL_GetImageDataReturned(CPyMOL * I, int width, int height, int row_bytes,
+						 int mode, int reset);
 
 int PyMOL_GetReshape(CPyMOL * I);
 int PyMOL_GetIdleAndReady(CPyMOL * I);
@@ -356,6 +382,10 @@ PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I, char *setting, char *value,
                                 char *selection,
                                 int state, int quiet, int side_effects);
 
+PyMOLreturn_value PyMOL_CmdGet(CPyMOL * I, char *setting,
+			       char *selection,
+			       int state, int quiet);
+
 PyMOLreturn_status PyMOL_CmdUnset(CPyMOL * I, char *setting, char *selection,
                                   int state, int quiet, int side_effects);
 
@@ -471,9 +501,31 @@ PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, char *object_name, char *sele
 				       int set_xyz, float x, float y, float z,
 				       int state, int mode, int quiet);
 
+PyMOLreturn_status PyMOL_CmdTurn(CPyMOL * I, char axis, float angle);
+
+PyMOLreturn_status PyMOL_CmdMPlay(CPyMOL * I, int cmd);
+
+PyMOLreturn_status PyMOL_CmdSetFeedbackMask(CPyMOL * I, int action, int module, int mask);
 
 /* releasing returned values */
 
 int PyMOL_FreeResultArray(CPyMOL * I, void *array);
+
+PyMOLreturn_status PyMOL_CmdRock(CPyMOL * I, int mode);
+
+PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int enabled_only);
+
+PyMOLreturn_status PyMOL_CmdMapNew(CPyMOL * I, char *name, int type, float grid_spacing, 
+				   char *selection, int state, int normalize,
+				   int zoom, int quiet);
+
+#ifdef _PYMOL_LIB
+PyMOLreturn_status PyMOL_SetIsVisibilityCallback(CPyMOL * I, void *CallbackObject, void (*visibilityCallback)(void *, const char *, int ));
+PyMOLreturn_int_array PyMOL_GetRepsGlobalForObject(CPyMOL * I, const char *name);
+PyMOLreturn_int_array PyMOL_GetRepsObjectForObject(CPyMOL * I, const char *name);
+PyMOLreturn_status PyMOL_SetButton(CPyMOL * I, char *button, char *modifier, char *action);
+PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, char *modename);
+
+#endif
 
 #endif

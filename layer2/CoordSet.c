@@ -1123,7 +1123,6 @@ void CoordSetInvalidateRep(CoordSet * I, int type, int level)
     MapFree(I->Coord2Idx);
     I->Coord2Idx = NULL;
     /* invalidate distances */
-    
   }
   SceneChanged(I->State.G);
 }
@@ -1422,11 +1421,11 @@ CoordSet *CoordSetNew(PyMOLGlobals * G)
   I->fExtendIndices = CoordSetExtendIndices;
   I->fAppendIndices = CoordSetAppendIndices;
   I->fInvalidateRep = CoordSetInvalidateRep;
-
   I->PeriodicBoxType = cCSet_NoPeriodicity;
 
   I->SpheroidSphereSize = I->State.G->Sphere->Sphere[1]->nDot;  /* does this make any sense? */
 
+  I->noInvalidateMMStereoAndTextType = 0;
   return (I);
 }
 

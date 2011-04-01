@@ -12,17 +12,21 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-if __name__=='pymol.controlling':
+if __name__=='pymol.controlling' or __name__=='controlling':
     
     import string
     import selector
-    import cmd
-    import pymol
+    from shortcut import Shortcut
+    try:
+        import cmd
+        from cmd import _cmd, QuietException, is_string, \
+             boolean_dict, boolean_sc, \
+             DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
+             location_code, location_sc 
+        import pymol
+    except:
+        cmd = None
     
-    from cmd import _cmd, Shortcut, QuietException, is_string, \
-          boolean_dict, boolean_sc, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
-          location_code, location_sc 
 
     button_code = {
         'left' : 0,

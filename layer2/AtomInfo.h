@@ -220,6 +220,7 @@ typedef struct AtomInfoType {
 
   signed char visRep[cRepCnt];
   signed char stereo;           /* for 2D representation */
+  signed char mmstereo;           /* from MMStereo */
   signed char hydrogen;
   signed char cartoon;          /* 0 = default which is auto (use ssType) */
 
@@ -233,7 +234,7 @@ typedef struct AtomInfoType {
   signed char masked;
   signed char protekted;
 
-  signed char protons;
+  signed char protons;          /* atomic number */
   signed char hb_donor;
   signed char hb_acceptor;
   signed char has_setting;      /* setting based on unique_id */

@@ -1,4 +1,3 @@
-7
 from pymol import cmd as global_cmd
 import pymol
 

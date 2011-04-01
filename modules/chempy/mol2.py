@@ -167,7 +167,6 @@ class MOL2(Storage):
                             at.text_type, at.q))
 
         # RTI BOND
-            bt = MOL2._bondTypes
         molList.append(f["bond"])
         for b in range(len(model.bond)):
             bo = model.bond[b]

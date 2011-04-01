@@ -25,7 +25,7 @@ if __name__=='pymol.fitting':
 		  DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
 
-	def cealign(mobile, target, verbose=None, _self=cmd):
+	def cealign(target, mobile, target_state=1, mobile_state=1, verbose=0, _self=cmd):
 		'''
 DESCRIPTION
 
@@ -33,8 +33,8 @@ DESCRIPTION
 
 USAGE 
 
-	cealign target, mobile
-
+	cealign target, mobile [, target_state [, mobile_state [, verbose ]]]
+]
 NOTES
         The original algorithm has two settings (D0, and D1) for cutoffs and one window size.  We use their default settings (D0=3.0 Angstroms; D1=4.0 Angstroms; Window size=8) which were empircally determined through tests for speed and accuracy.
 	Reference: Shindyalov IN, Bourne PE (1998) Protein structure alignment by incremental combinatorial extension (CE) of the optimal path. Protein Engineering 11(9) 739-747.
@@ -64,7 +64,7 @@ SEE ALSO
 		# max gap size
 		gapMax = 30
 
-		verbose = (verbose!=None)
+		quiet = not(int(verbose))
 
 		from pymol import stored
 		# make the lists for holding coordinates
@@ -86,16 +86,16 @@ SEE ALSO
 		mobile = selector.process(mobile)
 		target = selector.process(target)
 				
-		cmd.iterate_state(1, mobile, "stored.sel1.append([x,y,z])")
-		cmd.iterate_state(1, target, "stored.sel2.append([x,y,z])")
+		cmd.iterate_state(mobile_state, mobile, "stored.sel2.append([x,y,z])")
+		cmd.iterate_state(target_state, target, "stored.sel1.append([x,y,z])")
 		
 		# full molecule
-		mol1 = cmd.identify(mobile,1)[0][0]
-		mol2 = cmd.identify(target,1)[0][0]
+		mol1 = cmd.identify(target,1)[0][0]
+		mol2 = cmd.identify(mobile,1)[0][0]
 		
 		# put all atoms from MOL1 & MOL2 into stored.mol1; gets the VLA of coords
-		cmd.iterate_state(1, mol1, "stored.mol1.append([x,y,z])")
-		cmd.iterate_state(1, mol2, "stored.mol2.append([x,y,z])")
+		cmd.iterate_state(target_state, mol1, "stored.mol1.append([x,y,z])")
+		cmd.iterate_state(mobile_state, mol2, "stored.mol2.append([x,y,z])")
 		
 		if ( len(stored.mol1) == 0 ):
 			print "ERROR: Your first selection was empty."
@@ -111,12 +111,11 @@ SEE ALSO
 			r = _cmd.cealign( _self._COb, stored.sel1, stored.sel2 )
 
 			(aliLen, RMSD, rotMat) = r
-			
-			if ( verbose != 0 ):
+			if not quiet:
 				import pprint
 				print "Aligned %d residues." % (aliLen)
 				print "RMSD of Alignment: %f" % (RMSD)
-				print "TTT Matrix:\n"
+				print "TTT Matrix:"
 				pprint.pprint(rotMat)
 			else:
 				print "RMSD %f over %i residues" % (float(RMSD), int(aliLen))
@@ -128,7 +127,7 @@ SEE ALSO
 		return ( {"alignment_length": aliLen, "RMSD" : RMSD, "rotation_matrix" : rotMat } )
 
 
-	def alignto(sel1,verbose=None):
+	def alignto(sel1,quiet=1):
 		"""
 DESCRIPTION
 
@@ -139,7 +138,7 @@ DESCRIPTION
 
 USAGE
 
-	alignto target [, verbose=False]
+	alignto target [, quiet ]
 
 EXAMPLE
 
@@ -152,7 +151,7 @@ SEE ALSO
         align, super, cealign, fit, rms, rms_cur, intra_fit
 		"""
 		for x in cmd.get_names("objects"):
-			if verbose != None:
+			if not quiet:
         	        	print "Aligning %s to %s" % (x, sel1)
 			cealign( sel1, x )
 				

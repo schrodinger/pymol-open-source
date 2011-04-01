@@ -875,6 +875,26 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_heavy_neighbor_cutoff      639
 #define cSetting_polar_neighbor_cutoff      640
 #define cSetting_surface_residue_cutoff     641
+#define cSetting_surface_use_shader         642
+#define cSetting_cartoon_use_shader         643
+#define cSetting_stick_use_shader           644
+#define cSetting_line_use_shader            645
+#define cSetting_sphere_use_shader          646
+#define cSetting_use_shaders                647
+#define cSetting_shader_path                648
+#define cSetting_volume_bit_depth           649
+#define cSetting_volume_color               650
+#define cSetting_volume_layers              651
+#define cSetting_volume_data_range          652
+#define cSetting_auto_defer_atom_count      653
+#define cSetting_default_refmac_names       654
+#define cSetting_default_phenix_names       655
+#define cSetting_default_phenix_no_fill_names 656
+#define cSetting_default_buster_names       657
+#define cSetting_default_fofc_map_rep       658
+#define cSetting_default_2fofc_map_rep      659
+#define cSetting_atom_type_format           660
+#define cSetting_autoclose_dialogs          661
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -885,7 +905,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       641
-
+#define cSetting_INIT                       662
 
 #endif

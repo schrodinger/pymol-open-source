@@ -57,7 +57,7 @@ typedef struct ObjectMapState {
   float *Range;                 /* Range for non-xtal maps */
   float *Grid;                  /* Spacing for non-xtal maps */
   float ExtentMin[3], ExtentMax[3];
-
+  float Mean, SD; /* -- JV for vol */
   /* below not stored */
 
   int have_range;
@@ -81,6 +81,7 @@ typedef struct ObjectMapDesc {  /* information for creating a new map */
                                    0 = zeros
                                    1 = ones */
 } ObjectMapDesc;
+
 
 ObjectMap *ObjectMapNew(PyMOLGlobals * G);
 int ObjectMapNewCopy(PyMOLGlobals * G, ObjectMap * src, ObjectMap ** result,
@@ -152,5 +153,8 @@ int ObjectMapSetMatrix(ObjectMap * I, int state, double *matrix);
 void ObjectMapStateRegeneratePoints(ObjectMapState * ms);
 int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min,
                                float *max);
+int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
+                               int n_points, float limit, float *histogram);
+
 
 #endif

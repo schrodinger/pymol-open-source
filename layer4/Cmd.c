@@ -1,5 +1,4 @@
 
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -83,14 +82,6 @@ Z* -------------------------------------------------------------------
 #include"OVContext.h"
 #include"PlugIOManager.h"
 #include"Seeker.h"
-
-/* refactor this out like the other commands */
-#include"ce_types.h"
-extern double** calcDM(pcePoint coords, int len);
-extern double** calcS(double** d1, double** d2, int lenA, int lenB, double winSize);
-extern pcePoint getCoords(PyObject *L, int length);
-/*extern pathCache findPath(double** S, double** dA, double** dB, int lenA, int lenB, int winSize, int& bufferSize);*/
-extern PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int bufferSize, int smaller, int winSize);
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -422,6 +413,27 @@ static PyObject *CmdGLDeleteLists(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
+static PyObject *CmdGLDeleteTexture(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  unsigned int int1;
+  int ok = false;
+  ok = PyArg_ParseTuple(args, "Oi", &self, &int1);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    if(G->HaveGUI) {
+      if(G->ValidContext) {
+        glDeleteTextures(1, &int1);
+      }
+    }
+  }
+  return APISuccess();
+}
 static PyObject *CmdRayAntiThread(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -740,6 +752,138 @@ static PyObject *CmdGetOrigin(PyObject * self, PyObject * args)
   } else {
     return APIFailure();
   }
+}
+
+static PyObject * CmdGetVolumeField(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok = false;
+  char* objName;
+  ok = PyArg_ParseTuple(args, "Os", &self, &objName);
+
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterBlockedNotModal(G))) {
+    result = ExecutiveGetVolumeField(G,objName);
+    APIExitBlocked(G);
+  }
+
+  if(!result) {
+    return APIFailure();
+  } else
+    return result;
+}
+
+static PyObject * CmdGetVolumeHistogram(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok = false;
+  char* objName;
+  ok = PyArg_ParseTuple(args, "Os", &self, &objName);
+
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterBlockedNotModal(G))) {
+    result = ExecutiveGetVolumeHistogram(G,objName);
+    APIExitBlocked(G);
+  }
+
+  if(!result) {
+    return APIFailure();
+  } else
+    return result;
+}
+
+static PyObject * CmdGetVolumeRamp(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok = false;
+  char* objName;
+  ok = PyArg_ParseTuple(args, "Os", &self, &objName);
+
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterBlockedNotModal(G))) {
+    result = ExecutiveGetVolumeRamp(G,objName);
+    APIExitBlocked(G);
+  }
+
+  if(!result) {
+    return APIFailure();
+  } else
+    return result;
+}
+
+static PyObject * CmdGetVolumeIsUpdated(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok = false;
+  char* objName;
+  ok = PyArg_ParseTuple(args, "Os", &self, &objName);
+
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterBlockedNotModal(G))) {
+    result = ExecutiveGetVolumeIsUpdated(G,objName);
+    APIExitBlocked(G);
+  }
+  
+  if(!result) {
+    return APIFailure();
+  } else
+    return result;
+}
+
+static PyObject * CmdSetVolumeRamp(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok = false;
+  char* objName;
+  PyObject *ramp_list;
+  float *float_array;
+
+  ok = PyArg_ParseTuple(args, "OsO", &self, &objName, &ramp_list);
+
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok)
+    ok = PyList_Check(ramp_list);
+  if(ok)
+    ok = PConvPyListToFloatArray(ramp_list, &float_array);
+  if(ok && (ok = APIEnterBlockedNotModal(G))) {
+    int list_len = PyList_Size(ramp_list);
+    result = ExecutiveSetVolumeRamp(G,objName,float_array,list_len);
+    APIExitBlocked(G);
+  }
+  if(!result) {
+    return APIFailure();
+  } else
+    return result;
 }
 
 static PyObject *CmdGetVis(PyObject * self, PyObject * args)
@@ -1435,7 +1579,7 @@ static PyObject *CmdGetChains(PyObject * self, PyObject * args)
       chain_str = ExecutiveGetChains(G, s1, int1, &null_chain);
     APIExit(G);
     if(chain_str) {
-      l = strlen(chain_str);
+      l = (int) strlen(chain_str);
       if(null_chain)
         l++;
       result = PyList_New(l);
@@ -1522,6 +1666,53 @@ static PyObject *CmdRampNew(PyObject * self, PyObject * args)
     APIExit(G);
   }
   return APIResultOk(ok);
+}
+
+/* Synthesize a map from possibly weighted coefficients */
+/* See MapCalculate for the actual calculation */
+static PyObject * CmdMapGenerate(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals * G = NULL;
+  int ok = false;
+
+  char * name, * reflection_file, * tempFile, * amplitudes, * phases, * weights, *space_group;
+  const char * cResult;
+  int  quiet, zoom;
+  double reso_high, reso_low, cell[6];
+
+
+  ok = PyArg_ParseTuple(args, "Ossssssddsddddddii", &self, &name, &reflection_file, &tempFile,
+			&amplitudes, &phases, &weights, &reso_low, &reso_high,
+			&space_group, &cell[0], &cell[1], &cell[2], &cell[3], &cell[4],
+			&cell[5],&quiet, &zoom);
+
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+
+  if (ok && (ok = APIEnterNotModal(G))) {
+
+    if (ok) {
+      PRINTFB(G, FB_CCmd, FB_Blather)
+	" Cmd-Update: Start ExecutiveMapGenerate."
+      ENDFB(G);
+
+      cResult = (const char*) ExecutiveMapGenerate(G, name, reflection_file, tempFile, 
+						   amplitudes, phases, weights, 
+						   reso_low, reso_high, 
+						   space_group, cell, quiet, zoom);
+
+      PRINTFB(G, FB_CCmd, FB_Blather)
+	" Cmd-Update: Finished ExecutiveMapGenerate."
+      ENDFB(G);
+    }
+    APIExit(G);
+  }
+
+  return APIAutoNone(Py_BuildValue("s", cResult));
 }
 
 static PyObject *CmdMapNew(PyObject * self, PyObject * args)
@@ -7191,7 +7382,6 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   int multiplex;
   int zoom;
   int bytes;
-
   ok = PyArg_ParseTuple(args, "Oss#iiiiiii", &self,
                         &oname, &fname, &bytes, &frame, &type,
                         &finish, &discrete, &quiet, &multiplex, &zoom);
@@ -8501,17 +8691,11 @@ static PyObject *CmdGetCThreadingAPI(PyObject * self, PyObject * args)
 
 static PyObject *CmdCEAlign(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = NULL;
+  PyMOLGlobals * G = NULL;
   int ok = false;
-  const double windowSize = 8.0;
-  int i=0;
-  int lenA, lenB, smaller;
-  double **dmA ,**dmB, **S;
-  int bufferSize;
-  int *bInt;
-  PyObject *listA, *listB, *rVal;
-  pcePoint coordsA, coordsB;
-  pathCache paths;
+  int windowSize = 8.0;
+  PyObject *listA, *listB, *result;
+  Py_ssize_t lenA, lenB;
 
   ok = PyArg_ParseTuple(args, "OOO", &self, &listA, &listB);
   if(ok) {
@@ -8520,72 +8704,133 @@ static PyObject *CmdCEAlign(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  /* let Python know we made two lists */
-/*   Py_INCREF(listA); */
-/*   Py_INCREF(listB); */
-  /* handle empty selections (should probably do this in Python)  */
+
+ /* handle empty selections (should probably do this in Python)  */
   lenA = PyList_Size(listA);
   if ( lenA < 1 ) {
-    printf("CEALIGN ERROR: First selection didn't have any atoms.  Please check your selection.\n");
-    /* let Python remove the lists */
-/*     Py_DECREF(listA); */
-/*     Py_DECREF(listB); */
-    return NULL;
+    /* TODO: Use Feedback */
+    printf("CmdCealign-Error: First selection didn't have any atoms.  Please check your selection.\n");
+    result = NULL;
+    ok = false;
   }
 	
-  lenB = PyList_Size(listB);
-  if ( lenB < 1 ) {
-    printf("CEALIGN ERROR: Second selection didn't have any atoms.  Please check your selection.\n");
-    /* let Python remove the lists */
-  /*   Py_DECREF(listA); */
-/*     Py_DECREF(listB); */
-    return NULL;
+  if(ok)
+    lenB = PyList_Size(listB);
+  /* TODO: Use Feedback */
+  if ( ok && lenB < 1 ) {
+    printf("CmdCealign-Error: Second selection didn't have any atoms.  Please check your selection.\n");
+    result = NULL;
   }
-  smaller = lenA < lenB ? lenA : lenB;
-	
-  /* get the coodinates from the Python objects */
-  coordsA = (pcePoint) getCoords(listA, lenA);
-  coordsB = (pcePoint) getCoords(listB, lenB);
-	
-  /* calculate the distance matrix for each protein */
-  dmA = (double**) calcDM(coordsA, lenA);
-  dmB = (double**) calcDM(coordsB, lenB);
-	
-  /* calculate the CE Similarity matrix */
-  S = (double**) calcS(dmA, dmB, lenA, lenB, windowSize);
-	
-  /* find the best path through the CE Sim. matrix */
-  bufferSize = 0;
-  bInt = &bufferSize;
-  /* the following line HANGS PyMOL */
-  paths = (pathCache) findPath( S, dmA, dmB, lenA, lenB, (int) windowSize, bInt );
-	
-  /* Get the optimal superposition here... */
-  rVal = (PyObject*) findBest( coordsA, coordsB, paths, bufferSize, smaller, (int) windowSize );
-	
-  /* let Python remove the lists */
-/*   Py_DECREF(listA); */
-/*   Py_DECREF(listB); */
-	
-  /* release memory */
-  free(coordsA);
-  free(coordsB);
-	
-  /* distance matrices	 */
-  for ( i = 0; i < lenA; i++ )
-    free( dmA[i] );
-  free(dmA);
-	
-  for  ( i = 0; i < lenB; i++ )
-    free( dmB[i] );
-  free(dmB);
-	
-  /* similarity matrix */
-  for ( i = 0; i < lenA; i++ )
-    free( S[i] );
-  free(S);
-	
-  return rVal;
+
+  if(ok) {
+    APIEnterBlocked(G);
+    result = (PyObject*) ExecutiveCEAlign(G, listA, listB, lenA, lenB, windowSize);
+    APIExitBlocked(G);
+  }
+  return result;
+}
+
+static PyObject *CmdVolumeColor(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals * G = NULL;
+  char * volume_name;
+  PyObject * oColors;
+  float * colors;
+  int ncolors = 0;
+  int ok = false;
+
+  /* volume_name = (string) name
+   * oColors = array of N-RGBA colors as, [ (r,g,b,a), (r,g,b,a), ..., (r,g,b,a) ],
+   *   which will be unpacked to an array of N*4 floats
+   */
+  ok = PyArg_ParseTuple(args, "OsO", &self, &volume_name, &oColors);
+
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+
+  ncolors = PyList_Size(oColors);
+
+  PRINTFB(G, FB_ObjectVolume, FB_Blather)
+    " CmdVolumeColor-Warning: ncolors=%d were passed in.\n", ncolors
+  ENDFB(G);
+
+  ok = (ncolors!=0);
+
+  if((ok) && (ok = APIEnterNotModal(G))) {
+    ok = PConvPyListToFloatVLA(oColors, &colors);
+    
+    if (ok) 
+      ok = ExecutiveVolumeColor(G, volume_name, colors, ncolors);
+
+    APIExit(G);
+  }
+  return APIResultOk(ok);
+}
+
+static PyObject *CmdVolume(PyObject *self, PyObject *args)
+{ 
+  PyMOLGlobals *G = NULL;
+  char *volume_name, *map_name, *sele;
+  float lvl, fbuf, alt_lvl;
+  int mesh_mode;
+  int state = -1;
+  int box_mode;
+  float carve;
+  int ok = false;
+  int map_state;
+  int quiet;
+
+  ok = PyArg_ParseTuple(args, "Ossisffiifiif", &self, &volume_name, &map_name, &box_mode,
+                        &sele, &fbuf, &lvl, &mesh_mode, &state, &carve, &map_state,
+                        &quiet, &alt_lvl);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterNotModal(G))) {
+    ok = ExecutiveVolume(G, volume_name, map_name, lvl, sele, fbuf,
+                         state, carve, map_state, quiet, mesh_mode, box_mode,
+                         alt_lvl);
+    APIExit(G);
+  }
+  return APIResultOk(ok);
+}
+
+static PyObject *CmdAssignAtomTypes(PyObject *self, PyObject *args)
+{ 
+  PyMOLGlobals *G = NULL;
+  char *sele;
+  int state = -1;
+  int ok = false;
+  int format;
+  int quiet;
+  OrthoLineType s1;
+  PyObject *result = NULL;
+
+  ok = PyArg_ParseTuple(args, "Osiii", &self, &sele, &format, &state, &quiet);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    APIEnterBlocked(G);
+    ok = (SelectorGetTmp(G, sele, s1) >= 0);
+    if(ok){
+      /* format : 1: mol/sybyl, 2: macromodel/mmd */
+      result = ExecutiveAssignAtomTypes(G, s1, format, state, quiet);
+      SelectorFreeTmp(G, s1);
+    }
+    APIExitBlocked(G);
+  }
+  return (APIAutoNone(result));
 }
 
 static PyMethodDef Cmd_methods[] = {
@@ -8609,6 +8854,7 @@ static PyMethodDef Cmd_methods[] = {
   {"alter_list", CmdAlterList, METH_VARARGS},
   {"alter_state", CmdAlterState, METH_VARARGS},
   {"angle", CmdAngle, METH_VARARGS},
+  {"assign_atom_types", CmdAssignAtomTypes, METH_VARARGS},
   {"attach", CmdAttach, METH_VARARGS},
   {"bg_color", CmdBackgroundColor, METH_VARARGS},
   {"bond", CmdBond, METH_VARARGS},
@@ -8616,6 +8862,7 @@ static PyMethodDef Cmd_methods[] = {
   {"button", CmdButton, METH_VARARGS},
   /*  {"cache",                 CmdCache,                METH_VARARGS }, */
   {"cartoon", CmdCartoon, METH_VARARGS},
+  {"cealign", CmdCEAlign, METH_VARARGS},
   {"center", CmdCenter, METH_VARARGS},
   {"clip", CmdClip, METH_VARARGS},
   {"cls", CmdCls, METH_VARARGS},
@@ -8634,6 +8881,7 @@ static PyMethodDef Cmd_methods[] = {
   {"del_colorection", CmdDelColorection, METH_VARARGS},
   {"fake_drag", CmdFakeDrag, METH_VARARGS},
   {"gl_delete_lists", CmdGLDeleteLists, METH_VARARGS},
+  {"gl_delete_texture", CmdGLDeleteTexture, METH_VARARGS},
   {"delete", CmdDelete, METH_VARARGS},
   {"dirty", CmdDirty, METH_VARARGS},
   {"dirty_wizard", CmdDirtyWizard, METH_VARARGS},
@@ -8712,6 +8960,11 @@ static PyMethodDef Cmd_methods[] = {
   {"get_version", CmdGetVersion, METH_VARARGS},
   {"get_view", CmdGetView, METH_VARARGS},
   {"get_vis", CmdGetVis, METH_VARARGS},
+  {"get_volume_field", CmdGetVolumeField, METH_VARARGS},
+  {"get_volume_histogram", CmdGetVolumeHistogram, METH_VARARGS},
+  {"get_volume_ramp", CmdGetVolumeRamp, METH_VARARGS},
+  {"set_volume_ramp", CmdSetVolumeRamp, METH_VARARGS},
+  {"get_volume_is_updated", CmdGetVolumeIsUpdated, METH_VARARGS},
   {"get_vrml", CmdGetVRML, METH_VARARGS},
   {"get_wizard", CmdGetWizard, METH_VARARGS},
   {"get_wizard_stack", CmdGetWizardStack, METH_VARARGS},
@@ -8738,6 +8991,7 @@ static PyMethodDef Cmd_methods[] = {
   {"load_png", CmdLoadPNG, METH_VARARGS},
   {"load_object", CmdLoadObject, METH_VARARGS},
   {"load_traj", CmdLoadTraj, METH_VARARGS},
+  {"map_generate", CmdMapGenerate, METH_VARARGS},
   {"map_new", CmdMapNew, METH_VARARGS},
   {"map_double", CmdMapDouble, METH_VARARGS},
   {"map_halve", CmdMapHalve, METH_VARARGS},
@@ -8845,6 +9099,8 @@ static PyMethodDef Cmd_methods[] = {
   {"turn", CmdTurn, METH_VARARGS},
   {"viewport", CmdViewport, METH_VARARGS},
   {"vdw_fit", CmdVdwFit, METH_VARARGS},
+  {"volume", CmdVolume, METH_VARARGS},
+  {"volume_color", CmdVolumeColor, METH_VARARGS},
   {"undo", CmdUndo, METH_VARARGS},
   {"ungroup", CmdUngroup, METH_VARARGS},
   {"unpick", CmdUnpick, METH_VARARGS},
@@ -8853,7 +9109,6 @@ static PyMethodDef Cmd_methods[] = {
   {"update", CmdUpdate, METH_VARARGS},
   {"window", CmdWindow, METH_VARARGS},
   {"zoom", CmdZoom, METH_VARARGS},
-  {"cealign", CmdCEAlign, METH_VARARGS},
   {NULL, NULL}                  /* sentinel */
 };
 

@@ -101,7 +101,8 @@ class PMGApp(Pmw.MegaWidget):
                 ("All Readable","*.mae"), # proprietary format
                 ("All Readable","*.fasta"),
                 ("All Readable","*.aln"),
-                ("All Readable","*.acnt"),                 
+                ("All Readable","*.acnt"),
+                #("All Readable","*.mtz"),                 
                 ("PDB File","*.pdb"),
                 ("PDB1 File","*.pdb1"),                
                 ("All Files","*.*"),
@@ -116,6 +117,7 @@ class PMGApp(Pmw.MegaWidget):
                 ("Macromodel File","*.out"),
                 ("Macromodel File","*.mmd"),
                 ("Macromodel File","*.mmod"),
+#                ("MTZ Reflection File","*.mtz"),
                 ("BRIX/O Map","*.o"),
                 ("BRIX/O Map","*.omap"),
                 ("BRIX/O Map","*.brix"),
@@ -295,19 +297,24 @@ class PMGApp(Pmw.MegaWidget):
         
         
     def initializePlugins(self):
+        # startup_pattern = /path/to/plugins/*.py*
         startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.py*",__file__)
         # startup_pattern = os.environ['PYMOL_PATH']+"/modules/pmg_tk/startup/*.py*"
         raw_list = glob(startup_pattern)
         unique = {}
         for a in raw_list:
+            # strips the extension from the module name: foo.py -> foo
             unique[re.sub(r".*[\/\\]|\.py.*$","",a)] = 1
         for name in unique.keys():
             try:
                 if name != "__init__":
                     module_context = string.join(string.split(__name__,'.')[0:-1])
+                    # set the module name
                     mod_name = module_context+".startup."+name
+                    # import the module by name, then
                     __builtin__.__import__(mod_name)
                     mod = sys.modules[mod_name]
+                    # look it up and initialize it
                     if hasattr(mod,'__init_plugin__'):
                         mod.__init_plugin__(self)
                     elif hasattr(mod,'__init__'):

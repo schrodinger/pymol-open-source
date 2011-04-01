@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2011-04-01 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* PyMOL v1.4b1 -- adds volumes, glew, shaders, bug fixes, etc
+
 2011-02-03 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Added PyMOL Web Services API; for information run

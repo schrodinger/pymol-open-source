@@ -53,10 +53,10 @@ double** calcDM(pcePoint coords, int len)
   return dm;
 }
 
-double** calcS(double** d1, double** d2, int lenA, int lenB, double winSize)
+double** calcS(double** d1, double** d2, int lenA, int lenB, int wSize)
 {
   int i;
-	
+  double winSize = (double) wSize;
   // initialize the 2D similarity matrix
   double** S = (double**) malloc(sizeof(double*)*lenA);
   for ( i = 0; i < lenA; i++ )
@@ -73,7 +73,7 @@ double** calcS(double** d1, double** d2, int lenA, int lenB, double winSize)
   for ( iA = 0; iA < lenA; iA++ ) {
     for ( iB = 0; iB < lenB; iB++ ) {
       S[iA][iB] = -1.0;
-      if ( iA > lenA - winSize || iB > lenB - winSize )
+      if ( iA > lenA - wSize || iB > lenB - wSize )
 	continue;
 		
       double score = 0.0;
@@ -85,8 +85,8 @@ double** calcS(double** d1, double** d2, int lenA, int lenB, double winSize)
       // residues is 3.8 Angstroms.  Due to entropy, S = -k ln pi * pi,
       // this tell us nothing, so it doesn't help so ignore it.
       //
-      for ( row = 0; row < (int) winSize - 2; row++ ) {
-	for ( col = row + 2; col < (int) winSize; col++ ) {
+      for ( row = 0; row <  wSize - 2; row++ ) {
+	for ( col = row + 2; col <  wSize; col++ ) {
 	  score += fabs( d1[iA+row][iA+col] - d2[iB+row][iB+col] );
 	}
       }
@@ -103,6 +103,9 @@ pcePoint getCoords( PyObject* L, int length )
 {
   // make space for the current coords
   pcePoint coords = (pcePoint) malloc(sizeof(cePoint)*length);
+
+  if (!coords)
+    return NULL;
 
   // loop through the arguments, pulling out the
   // XYZ coordinates.
@@ -134,7 +137,7 @@ pcePoint getCoords( PyObject* L, int length )
 
 
 
-pathCache findPath( double** S, double** dA, double** dB, int lenA, int lenB, int winSize, int& bufferSize )
+pathCache findPath( double** S, double** dA, double** dB, int lenA, int lenB, int winSize, int * bufferSize )
 {
   // CE-specific cutoffs
   const double D0 = 3.0;
@@ -385,7 +388,7 @@ pathCache findPath( double** S, double** dA, double** dB, int lenA, int lenB, in
 	// we're going to add an entry to the ring-buffer.
 	// Adjust maxSize values and curIndex accordingly.
 	bufferIndex = ( bufferIndex == MAX_KEPT-1 ) ? 0 : bufferIndex+1;
-	bufferSize = ( bufferSize < MAX_KEPT ) ? bufferSize+1 : MAX_KEPT;
+	*bufferSize = ( *bufferSize < MAX_KEPT ) ? (*bufferSize)+1 : MAX_KEPT;
 	path pathCopy = (path) malloc( sizeof(afp)*smaller );
 
 	int i;
@@ -394,7 +397,7 @@ pathCache findPath( double** S, double** dA, double** dB, int lenA, int lenB, in
 	  pathCopy[i].second = bestPath[i].second;
 	}
 
-	if ( bufferIndex == 0 && bufferSize == MAX_KEPT ) {
+	if ( bufferIndex == 0 && (*bufferSize) == MAX_KEPT ) {
 	  if ( pathBuffer[MAX_KEPT-1] )
 	    free(pathBuffer[MAX_KEPT-1]); 
 	  pathBuffer[MAX_KEPT-1] = pathCopy;
@@ -522,9 +525,9 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
 	
     // left singular vectors
     TA2<double> W = TA2<double>(n,n);
-    // diago	nal matrix of singular values
+    // diagonal matrix of singular values
     TA2<double> S = TA2<double>(n,n);
-    // right singular ve	ctors
+    // right singular vectors
     TA2<double> Vt = TA2<double>(n,n);
     // singular values		
     TA1<double> sigmas = TA1<double>(n);
@@ -550,7 +553,7 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
 	// revese the smallest axes and last sigma	
 	S[n-1][n-1] = -S[n-1][n-1];
 			
-	for ( unsigned int i = 0; i < n; i++ )
+	for ( int i = 0; i < n; i++ )
 	  W[n-1][i] = -W[n-1][i];
 			
 	sigmas[n-1] = -sigmas[n-1];
@@ -595,26 +598,26 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
 	
   // list of list of pairs	
   PyObject* rVal = PyList_New(0);
-  Py_INCREF(rVal);
+  // Py_INCREF(rVal);
 
   PyObject* pyRMSD = Py_BuildValue( "f", bestRMSD );
-  Py_INCREF(pyRMSD);
+  // Py_INCREF(pyRMSD);
 
   PyObject* pyAliLen = Py_BuildValue( "i", bestLen );
-  Py_INCREF(pyAliLen);
+  // Py_INCREF(pyAliLen);
 
   PyObject* pyU = Py_BuildValue( "[f,f,f,f, f,f,f,f, f,f,f,f, f,f,f,f]",
 				 bestU[0][0], bestU[1][0], bestU[2][0], bestCOM1[0],
 				 bestU[0][1], bestU[1][1], bestU[2][1], bestCOM1[1],
 				 bestU[0][2], bestU[1][2], bestU[2][2], bestCOM1[2],
 				 -bestCOM2[0], -bestCOM2[1], -bestCOM2[2], 1.);
-  Py_INCREF(pyU);
+  // Py_INCREF(pyU);
 	
   PyList_Append(rVal, pyAliLen);
   PyList_Append(rVal, pyRMSD);
   PyList_Append(rVal, pyU );
 
-  return rVal;
+  return (PyObject*) rVal;
 }
 
 
@@ -625,8 +628,8 @@ TA2<double> transpose( const TA2<double>& v )
 	
   TA2<double> rVal(n,m);
 	
-  for ( int i = 0; i < m; i++ )
-    for ( int j = 0; j < n; j++ )
+  for ( unsigned int i = 0; i < m; i++ )
+    for ( unsigned int j = 0; j < n; j++ )
       rVal[j][i] = v[i][j];
 		
   return rVal;
