@@ -10,7 +10,7 @@ def _raising(code=-1,_self=cmd):
     return 0
 
 def is_string(obj):
-    return isinstance(obj,types.StringType)
+    return (isinstance(obj,types.StringType) or isinstance(obj,types.UnicodeType))
 
 def is_list(obj):
     return isinstance(obj,types.ListType)

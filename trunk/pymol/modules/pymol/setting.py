@@ -699,6 +699,9 @@ if __name__=='pymol.setting':
         atom_type_format                   = 660
         autoclose_dialogs                  = 661
 
+        bg_gradient                        = 662
+        bg_rgb_top                         = 663
+        bg_rgb_bottom                      = 664
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

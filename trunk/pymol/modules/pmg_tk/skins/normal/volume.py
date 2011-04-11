@@ -366,14 +366,16 @@ class Volume(Frame):
         else:
             pt = pt[0]
 
-        event.x = self.active_ramp.getPoint(pt) + self.padX
+        pos = self.active_ramp.getPoint(pt)
+        if pos:
+            event.x = pos + self.padX
 
-        # update the model
-        self.active_ramp.removePoint(pt)
-        self.addPoint(event)
+            # update the model
+            self.active_ramp.removePoint(pt)
+            self.addPoint(event)
 
-        # update the scene
-        self.update_transferframe()
+            # update the scene
+            self.update_transferframe()
 
     def addWithoutGUI(self,obj,data,alpha,col,kind="triplet"):
         if not self.ramp_update.has_key(obj):

@@ -2525,10 +2525,43 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     ExecutiveInvalidateRep(G, inv_sele, cRepDot, cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_bg_gradient:
+    ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
+    SceneChanged(G);
+    break;
+  case cSetting_bg_rgb_top:
+    {
+      /* clamp this value */
+      float vv[3], *v = SettingGetfv(G, cSetting_bg_rgb_top);
+      if((v[0] > 1.0F) || (v[1] > 1.0F) || (v[2] > 1.0F)) {
+        vv[0] = v[0] / 255.0F;
+        vv[1] = v[1] / 255.0F;
+        vv[2] = v[2] / 255.0F;
+        SettingSet_3fv(G->Setting, cSetting_bg_rgb_top, vv);
+      }
+      ColorUpdateFront(G, v);
+    }
+    ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
+    SceneChanged(G);
+    break;
+  case cSetting_bg_rgb_bottom:
+    {
+      /* clamp this value */
+      float vv[3], *v = SettingGetfv(G, cSetting_bg_rgb_bottom);
+      if((v[0] > 1.0F) || (v[1] > 1.0F) || (v[2] > 1.0F)) {
+        vv[0] = v[0] / 255.0F;
+        vv[1] = v[1] / 255.0F;
+        vv[2] = v[2] / 255.0F;
+        SettingSet_3fv(G->Setting, cSetting_bg_rgb_bottom, vv);
+      }
+      ColorUpdateFront(G, v);
+    }
+    ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
+    SceneChanged(G);
+    break;
   case cSetting_bg_rgb:
     {
       /* clamp this value */
-
       float vv[3], *v = SettingGetfv(G, cSetting_bg_rgb);
       if((v[0] > 1.0F) || (v[1] > 1.0F) || (v[2] > 1.0F)) {
         vv[0] = v[0] / 255.0F;
@@ -3971,5 +4004,10 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_s(I, cSetting_atom_type_format, "mol2");
 
     set_b(I, cSetting_autoclose_dialogs, 1);
+
+    set_b(I, cSetting_bg_gradient, 0);
+    set_color(I, cSetting_bg_rgb_top, "-1");
+    set_color(I, cSetting_bg_rgb_bottom, "-1");
+
   }
 }
