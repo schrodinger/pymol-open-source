@@ -840,6 +840,10 @@ typedef struct _CPyMOL {
   ov_word lex_atom_type_format;
   ov_word lex_autoclose_dialogs;
 
+  ov_word lex_bg_gradient;
+  ov_word lex_bg_rgb_top;
+  ov_word lex_bg_rgb_bottom;
+
 #ifdef _PYMOL_LIB
   OVOneToOne *MouseButtonCodeLexicon;
   ov_word lex_left, lex_middle, lex_right;
@@ -902,6 +906,10 @@ CC_INLINE static PyMOLreturn_status return_status(int status)
   result.status = status;
   return result;
 }
+
+#ifdef _PYMOL_LIB
+int initial_button_modes[cButModeInputCount];
+#endif
 
 static OVstatus PyMOL_InitAPI(CPyMOL * I)
 {
@@ -1692,6 +1700,9 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(default_2fofc_map_rep,659);
   LEX_SETTING(atom_type_format, 660);
   LEX_SETTING(autoclose_dialogs,661);
+  LEX_SETTING(bg_gradient, 662);
+  LEX_SETTING(bg_rgb_top, 663);
+  LEX_SETTING(bg_rgb_bottom, 664);
 
 #ifdef _PYMOL_LIB
 
@@ -1815,6 +1826,34 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
       return_OVstatus_FAILURE;
 
 #include "buttonmodes_lex_init.h"
+
+  {
+    int a;
+    /* These are set by default for the modes, basically, any single or double
+       click is a simple click (i.e., cButModeSimpleClick), mouse button
+       actions are initialized to a potential click, wheel actions are set to none.
+       This is very similar to what is done in PyMOL_SetMouseButtonMode(), 
+       and it makes it easier to specify new modes without needing to set
+       every mouse function */
+    for(a = cButModeLeftDouble /* 16 */; a <= cButModeRightCtrlAltShftSingle /* 63 */; a++) {
+      /* all single and double clicks */
+      initial_button_modes[a] = cButModeSimpleClick;
+    }
+    for(a = cButModeLeftAlt /* 68 */; a <= cButModeRightCtrlAltShft /* 79 */; a++) {
+      /* all button modes with Alt */
+      initial_button_modes[a] = cButModePotentialClick;
+    }
+    for(a = cButModeLeftNone /* 0 */; a <= cButModeRightCtSh /* 11 */; a++) {
+      /* all button modes without Alt */
+      initial_button_modes[a] = cButModePotentialClick;
+    }
+    for(a = cButModeWheelNone /* 12 */; a <= cButModeWheelCtSh /* 15 */; a++) {
+      initial_button_modes[a] = cButModeNone;
+    }  
+    for(a = cButModeWheelAlt /* 64 */; a <= cButModeWheelCtrlAltShft /* 67 */; a++) {
+      initial_button_modes[a] = cButModeNone;
+    }
+  }
 
 #endif
 
@@ -3776,7 +3815,6 @@ PYMOL_API_UNLOCK}
 void PyMOL_Key(CPyMOL * I, unsigned char k, int x, int y, int modifiers)
 {
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
-
   if(!WizardDoKey(G, k, x, y, modifiers))
     OrthoKey(G, k, x, y, modifiers);
 PYMOL_API_UNLOCK}
@@ -4354,6 +4392,7 @@ void PyMOL_SetStereoCapable(CPyMOL * I, int stereoCapable){
     } else {
       SettingSet_i(I->G->Setting, cSetting_stereo_mode, 2);      /* otherwise crosseye by default */
     }
+    SceneUpdateStereo(I->G);
   }
   PYMOL_API_UNLOCK
 }
@@ -4393,7 +4432,7 @@ void PyMOL_SetDefaultMouse(CPyMOL * I)
   ButModeSet(G, cButModeWheelCtrl, cButModeMoveSlabAndZoom);
   ButModeSet(G, cButModeWheelCtSh, cButModeTransZ);
 
-  ButModeSet(G, cButModeMiddleCtSh, cButModeOrigAt);
+  ButModeSet(G, cButModeMiddleCtSh, cButModeOrigAt); /* SET TWICE?!? */
 
   ButModeSet(G, cButModeLeftSingle, cButModeSimpleClick);
   ButModeSet(G, cButModeMiddleSingle, cButModeCent);
@@ -4422,20 +4461,22 @@ PyMOLreturn_status PyMOL_CmdRock(CPyMOL * I, int mode){
   PYMOL_API_UNLOCK return result;
 }
 
+
 PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int enabled_only){
   char *res;
+  int numstrs;
   long reslen, pl = 0;
-  int numstrs = 0;
   PyMOLreturn_string_array result = { PyMOLstatus_SUCCESS };
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
 
-  res = ExecutiveGetNames(G, mode, enabled_only, s0);
-  reslen = VLAGetSize(res);
-
-  while(pl<reslen){
-    pl += strlen(res + pl) + 1;
-    numstrs++;
+  if (s0[0]){
+    res = ExecutiveGetObjectNames(G, mode, s0, enabled_only, &numstrs);
+  } else {
+    /* could have used "*", but still need to keep ExecutiveGetNames()
+       since CmdGetNames() uses it */
+    res = ExecutiveGetNames(G, mode, enabled_only, s0);
   }
+  reslen = VLAGetSize(res);
   result.size = numstrs;
   result.array = VLAlloc(char*, numstrs);
   numstrs = 0;
@@ -4444,6 +4485,7 @@ PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int e
     pl += strlen(res + pl) + 1;
     numstrs++;
   }
+
   PYMOL_API_UNLOCK 
   return (result);
 }
@@ -4471,21 +4513,21 @@ PyMOLreturn_status PyMOL_CmdMapNew(CPyMOL * I, char *name, int type, float grid_
 }
 
 #ifdef _PYMOL_LIB
-PyMOLreturn_status PyMOL_SetIsVisibilityCallback(CPyMOL * I, void *CallbackObject, void (*visibilityCallback)(void *, const char *, int )){
+PyMOLreturn_status PyMOL_SetIsEnabledCallback(CPyMOL * I, void *CallbackObject, void (*enabledCallback)(void *, const char *, int )){
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK 
     I->G->CallbackObject = CallbackObject;
-    I->G->visibilityCallback = visibilityCallback;
+    I->G->enabledCallback = enabledCallback;
   result.status =  PyMOLstatus_SUCCESS;
   PYMOL_API_UNLOCK 
   return result;
 }
 
-PyMOLreturn_int_array PyMOL_GetRepsGlobalForObject(CPyMOL * I, const char *name){
+PyMOLreturn_int_array PyMOL_GetRepsInSceneForObject(CPyMOL * I, const char *name){
   PyMOLreturn_int_array result = { PyMOLstatus_SUCCESS, 0, NULL };
   int *retarr = 0;
   PYMOL_API_LOCK
-    retarr = ExecutiveGetRepsGlobalForObject(I->G, name);
+    retarr = ExecutiveGetRepsInSceneForObject(I->G, name);
   if(!retarr) {
     result.status = PyMOLstatus_FAILURE;
   } else {
@@ -4495,11 +4537,11 @@ PyMOLreturn_int_array PyMOL_GetRepsGlobalForObject(CPyMOL * I, const char *name)
   PYMOL_API_UNLOCK return result;
 }
 
-PyMOLreturn_int_array PyMOL_GetRepsObjectForObject(CPyMOL * I, const char *name){
+PyMOLreturn_int_array PyMOL_GetRepsForObject(CPyMOL * I, const char *name){
   PyMOLreturn_int_array result = { PyMOLstatus_SUCCESS, 0, NULL };
   int *retarr = 0;
   PYMOL_API_LOCK
-    retarr = ExecutiveGetRepsObjectForObject(I->G, name);
+    retarr = ExecutiveGetRepsForObject(I->G, name);
   if(!retarr) {
     result.status = PyMOLstatus_FAILURE;
   } else {
@@ -4521,7 +4563,9 @@ PyMOLreturn_status PyMOL_SetButton(CPyMOL * I, char *button, char *modifier, cha
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
 
   PYMOL_API_LOCK
-
+    UtilNCopyToLower(button, button, strlen(button)+1);
+    UtilNCopyToLower(modifier, modifier, strlen(modifier)+1);
+    UtilNCopyToLower(action, action, strlen(action)+1);
     ok = OVreturn_IS_OK(button_num = get_button_code(I, button));
   if (ok) ok = OVreturn_IS_OK((but_mod_num = get_button_mod_code(I, modifier)));
   if (ok) ok = OVreturn_IS_OK((act_code = get_button_action_code(I, action)));
@@ -4560,9 +4604,18 @@ PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, char *modename){
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
 
   PYMOL_API_LOCK
+    UtilNCopyToLower(modename, modename, strlen(modename)+1);
     ok = OVreturn_IS_OK(mode = get_mouse_mode(I, modename));
   if (ok){
     result.status =  PyMOLstatus_SUCCESS;
+    {
+      int a;
+      /* for Button modes, first initialize all buttons, so that 
+	 previous functionality does not linger */
+      for(a = 0; a < cButModeInputCount; a++) {
+	ButModeSet(I->G, a, initial_button_modes[a]);
+      }
+    }
     start = button_mode_start[mode.word];
     for (i=0; i<n_button_mode[mode.word]; i++, start+=2){
       ButModeSet(I->G, all_buttons[start], all_buttons[start+1]);

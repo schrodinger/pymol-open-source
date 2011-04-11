@@ -832,7 +832,8 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
       }
       break;
     case 127:                  /* delete */
-#ifndef _PYMOL_OSX
+#if !defined(_PYMOL_OSX) || defined(_PYMOL_LIB)
+      /* this defined(_PYMOL_LIB) should really be for JyMOL, not all _PYMOL_LIB, AX? */
       if((!I->CurChar) || (I->CurChar == I->PromptChar) || !OrthoTextVisible(G)) {
         OrthoKeyControl(G, 4 + 64);
       } else {
@@ -1225,6 +1226,44 @@ float *OrthoGetOverlayColor(PyMOLGlobals * G)
 
 /* END PROPRIETARY CODE SEGMENT */
 
+/* draw background gradient from bg_rgb_top
+ * to bg_rgb_bottom is bg_gradient is set
+ */
+static void bg_grad(PyMOLGlobals * G) {
+  float * top = SettingGet_3fv(G, NULL, NULL, cSetting_bg_rgb_top);
+  float * bottom = SettingGet_3fv(G, NULL, NULL, cSetting_bg_rgb_bottom);
+  float alpha =  SettingGet_i(G, NULL, NULL, cSetting_opaque_background) ? 1.0 : 0.0;
+
+  if (! SettingGet_b(G, NULL, NULL, cSetting_bg_gradient))
+    return;
+
+  glMatrixMode (GL_MODELVIEW);
+  glPushMatrix ();
+  glLoadIdentity ();
+  glMatrixMode (GL_PROJECTION);
+  glPushMatrix ();
+  glLoadIdentity ();
+
+  glDisable(GL_LIGHTING);
+  glDisable(GL_DEPTH_TEST);
+
+  glBegin (GL_QUADS);
+  glColor4f(bottom[0], bottom[1], bottom[2], alpha);
+  glVertex3f (-1.0f, -1.0f, -1.0f);
+  glVertex3f (1.0f, -1.0f, -1.0f);
+
+  glColor4f(top[0], top[1], top[2], alpha);
+  glVertex3f (1.0f, 1.0f, -1.0f);
+  glVertex3f (-1.0f, 1.0f, -1.0f);
+  glEnd ();
+
+  glEnable(GL_LIGHTING);
+  glEnable(GL_DEPTH_TEST);
+  glPopMatrix ();
+  glMatrixMode (GL_MODELVIEW);
+  glPopMatrix ();
+}
+
 void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 {
   register COrtho *I = G->Ortho;
@@ -1315,9 +1354,9 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
     {
       float alpha = (SettingGetGlobal_b(G, cSetting_opaque_background) ? 1.0F : 0.0F);
+      //plain clear color
       glClearColor(v[0], v[1], v[2], alpha);
     }
-
     if(overlay || (!text))
       if(!SceneRenderCached(G))
         render = true;
@@ -1326,13 +1365,16 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       if(SceneMustDrawBoth(G)) {
         OrthoDrawBuffer(G, GL_BACK_LEFT);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	bg_grad(G);
         OrthoDrawBuffer(G, GL_BACK_RIGHT);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	bg_grad(G);
         times = 2;
         double_pump = true;
       } else {
         OrthoDrawBuffer(G, GL_BACK);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	bg_grad(G);
         times = 1;
         double_pump = false;
       }
@@ -2185,7 +2227,11 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
     }
     /*  OrthoFeedbackIn(G," "); */
     I->CurLine++;
+
+#ifndef _PYMOL_LIB
+    /* prompt (and typing) should only be shown for PyMOL, not libpymol */
     strcpy(I->Prompt, "PyMOL>");
+#endif
     strcpy(I->Line[I->CurLine], I->Prompt);
     I->CurChar = (I->PromptChar = strlen(I->Prompt));
     I->InputFlag = 1;
