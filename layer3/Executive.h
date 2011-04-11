@@ -529,4 +529,6 @@ int *ExecutiveGetRepsGlobalForObject(PyMOLGlobals *G, const char *name);
 int *ExecutiveGetRepsObjectForObject(PyMOLGlobals *G, const char *name);
 #endif
 
+char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, char *name, int enabled_only, int *numstrs);
+
 #endif
