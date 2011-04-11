@@ -17625,3 +17625,39 @@ PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB
   return (PyObject*) result;
 #endif
 }
+
+char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, char *name, int enabled_only, int *numstrs){
+  char *res;
+  int size=0, stlen;
+  register CExecutive *I = G->Executive;
+  CTracker *I_Tracker = I->Tracker;
+  *numstrs = 0;
+  {
+    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    SpecRec *rec;
+    res = VLAlloc(char, 1000);
+    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+      if((rec->type == cExecObject
+          && (((!mode) || (mode == 1) || (mode == 3) || (mode == 4))
+              || ((rec->obj->type != cObjectGroup) && ((mode == 6) || (mode == 8)))
+              || ((rec->obj->type == cObjectGroup) && ((mode == 7) || (mode == 9)))))
+         || (rec->type == cExecSelection
+             && ((!mode) || (mode == 2) || (mode == 3) || (mode == 5)))
+         ) {
+        if((mode < 3) || (mode > 7) || (mode == 9) || (rec->name[0] != '_')) {
+          if((!enabled_only) || (rec->visible)) {
+            stlen = strlen(rec->name);
+            VLACheck(res, char, size + stlen + 1);
+            strcpy(res + size, rec->name);
+            size += stlen + 1;
+            *numstrs += 1;
+          }
+        }
+      }
+    }
+  }
+  VLASize(res, char, size);
+  return (res);
+}
+
