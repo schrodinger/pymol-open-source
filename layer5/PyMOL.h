@@ -520,12 +520,11 @@ PyMOLreturn_status PyMOL_CmdMapNew(CPyMOL * I, char *name, int type, float grid_
 				   int zoom, int quiet);
 
 #ifdef _PYMOL_LIB
-PyMOLreturn_status PyMOL_SetIsVisibilityCallback(CPyMOL * I, void *CallbackObject, void (*visibilityCallback)(void *, const char *, int ));
-PyMOLreturn_int_array PyMOL_GetRepsGlobalForObject(CPyMOL * I, const char *name);
-PyMOLreturn_int_array PyMOL_GetRepsObjectForObject(CPyMOL * I, const char *name);
+PyMOLreturn_status PyMOL_SetIsEnabledCallback(CPyMOL * I, void *CallbackObject, void (*enabledCallback)(void *, const char *, int ));
+PyMOLreturn_int_array PyMOL_GetRepsInSceneForObject(CPyMOL * I, const char *name);
+PyMOLreturn_int_array PyMOL_GetRepsForObject(CPyMOL * I, const char *name);
 PyMOLreturn_status PyMOL_SetButton(CPyMOL * I, char *button, char *modifier, char *action);
 PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, char *modename);
-
 #endif
 
 #endif

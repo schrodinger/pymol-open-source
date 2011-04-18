@@ -81,6 +81,11 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
   if(ray) {
 
     float radius;
+    /*    float alpha = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_ribbon_transparency); */
+    float alpha = SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
+    alpha = 1.0F - alpha;
+    if(fabs(alpha-1.0) < R_SMALL4)
+      alpha = 1.0F;
 
     if(I->radius == 0.0F) {
       radius = ray->PixelRadius * line_width / 2.0F;
@@ -93,6 +98,7 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 
     if(c > 0) {
       while(c--) {
+	ray->fTransparentf(ray, 1.0F - alpha);
         ray->fSausage3fv(ray, v + 4, v + 11, radius, v + 1, v + 8);
         v += 18;
       }
@@ -157,6 +163,10 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
     } else {
       int use_dlst;
       int ribbon_smooth;
+      float alpha = SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
+      alpha = 1.0F - alpha;
+      if(fabs(alpha-1.0) < R_SMALL4)
+	alpha = 1.0F;
 
       ribbon_smooth = SettingGet_i(G, NULL, I->R.obj->Setting, cSetting_ribbon_smooth);
       if(!ribbon_smooth)
@@ -194,17 +204,20 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
           glBegin(GL_LINE_STRIP);
           while(c--) {
             if(first) {
-              glColor3fv(v + 1);
+              /* glColor3fv(v + 1); */
+	      glColor4f( (v+1)[0], (v+1)[1], (v+1)[2], alpha);
               glVertex3fv(v + 4);
               first = false;
             } else if((v[4] != v[-11]) || (v[5] != v[-10]) || (v[6] != v[-9])) {
               glEnd();
               glBegin(GL_LINE_STRIP);
-              glColor3fv(v + 1);
+              /* glColor3fv(v + 1); */
+	      glColor4f( (v+1)[0], (v+1)[1], (v+1)[2], alpha);
               glVertex3fv(v + 4);
             }
-            glColor3fv(v + 8);
-            glVertex3fv(v + 11);
+            /* glColor3fv(v + 8); */
+	    glColor4f( (v+8)[0], (v+8)[1], (v+8)[2], alpha);
+	    glVertex3fv(v + 11);
             v += 18;
           }
           glEnd();

@@ -844,6 +844,10 @@ typedef struct _CPyMOL {
   ov_word lex_bg_rgb_top;
   ov_word lex_bg_rgb_bottom;
 
+  ov_word lex_ray_volume;
+
+  ov_word lex_ribbon_transparency;
+
 #ifdef _PYMOL_LIB
   OVOneToOne *MouseButtonCodeLexicon;
   ov_word lex_left, lex_middle, lex_right;
@@ -1703,6 +1707,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(bg_gradient, 662);
   LEX_SETTING(bg_rgb_top, 663);
   LEX_SETTING(bg_rgb_bottom, 664);
+  LEX_SETTING(ray_volume, 665);
+  LEX_SETTING(ribbon_transparency, 666);
 
 #ifdef _PYMOL_LIB
 

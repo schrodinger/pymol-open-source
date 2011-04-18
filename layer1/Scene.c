@@ -208,6 +208,10 @@ struct _CScene {
 
 };
 
+/* EXPERIMENTAL VOLUME RAYTRACING DATA */
+extern float *rayDepthPixels;
+extern int rayVolume;
+
 typedef struct {
   float unit_left, unit_right, unit_top, unit_bottom, unit_front, unit_back;
 } SceneUnitContext;
@@ -7085,6 +7089,9 @@ void SceneRay(PyMOLGlobals * G,
     OrthoDirty(G);
   }
 
+  /* EXPERIMENTAL VOLUME CODE */
+  if (rayVolume)
+    SceneUpdate(G, true);
 }
 
 
@@ -7920,7 +7927,10 @@ static void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
   {
     int *slot_vla = I->SlotVLA;
     while(ListIterate(I->Obj, rec, next)) {
-      if(rec->obj->fRender) {
+
+      /* EXPERIMENTAL RAY-VOLUME COMPOSITION CODE */
+      /*      if(rec->obj->fRender) { */
+      if(rec->obj->fRender && (!rayVolume || rec->obj->type==cObjectVolume)) {
 
         if(Feedback(G, FB_OpenGL, FB_Debugging))
           PyMOLCheckOpenGLErr("Before fRender iteration");
@@ -8642,12 +8652,38 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       glPopMatrix();            /* 1 */
 
     } else {
-
+      int times = 1;
       /* STANDARD RENDERING */
 
       /* rendering for visualization */
 
-      int times = 1;
+/*** THIS IS AN UGLY EXPERIMENTAL 
+ *** VOLUME + RAYTRACING COMPOSITION CODE 
+ ***/
+if (rayVolume) {
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0, I->Width, 0, I->Height, -100, 100);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+  glRasterPos3f(0, 0, -1);
+  /*  if (rayDepthPixels) */
+  /*    glDrawPixels(I->Width, I->Height, GL_DEPTH_COMPONENT, GL_FLOAT, rayDepthPixels); */
+  glDepthMask(GL_FALSE);
+  if (I->Image && I->Image->data)
+    glDrawPixels(I->Width, I->Height, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->data);
+  glDepthMask(GL_TRUE);
+  glClear(GL_DEPTH_BUFFER_BIT);
+  glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  I->CopyType = false;
+  rayVolume--;
+}
+/*** END OF EXPERIMENTAL CODE ***/
 
       switch (stereo_mode) {
       case cStereo_clone_dynamic:

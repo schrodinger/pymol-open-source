@@ -5306,6 +5306,8 @@ extern int n_sausages;
 extern int n_skipped;
 #endif
 
+float *rayDepthPixels = NULL;
+int rayVolume = 0;
 
 /*========================================================================*/
 void RayRender(CRay * I, unsigned int *image, double timing,
@@ -5335,6 +5337,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   int height = I->Height;
   int trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
+  int volume, depth_x, depth_y;
+  float depth_value;
+
   if(n_light > 10)
     n_light = 10;
 
@@ -6239,8 +6244,34 @@ void RayRender(CRay * I, unsigned int *image, double timing,
      n_cylinders / ((float) n_cells), n_sausages / ((float) n_cells),
      n_skipped / ((float) n_cells));
 #endif
-  FreeP(depth);
+
+  /* EXPERIMENTAL RAY-VOLUME CODE */
+  volume = (int) SettingGet(I->G, cSetting_ray_volume);
+
+  if (volume) {
+    int x, y;
+    for(y = 0; y < height; y++) {
+      for(x = 0; x < width; x++) {
+        float dd = depth[x+width*y];
+	/*
+//        dd = -dd/50.0;
+//        if (dd < 0.0) dd = 0.0;
+//        if (dd > 1.0) dd = 1.0;
+//        if (dd==0.0) dd = 1.0;
+//        unsigned char cc = (unsigned char)(dd * 255.0);
+//       image[x+width*y] = (255 << 24) | (cc << 16) | (cc << 8) | cc;
+*/
+        depth[x+width*y] = dd;
+      }
+    }
+    if (rayDepthPixels)
+      FreeP(rayDepthPixels);
+    rayDepthPixels = depth;
+    rayVolume = 3;
+  } else 
+    FreeP(depth);
 }
+
 
 void RayRenderColorTable(CRay * I, int width, int height, int *image)
 {
