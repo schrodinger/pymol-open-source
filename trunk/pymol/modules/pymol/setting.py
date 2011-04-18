@@ -703,6 +703,10 @@ if __name__=='pymol.setting':
         bg_rgb_top                         = 663
         bg_rgb_bottom                      = 664
 
+        ray_volume                         = 665
+
+        ribbon_transparency                = 666
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

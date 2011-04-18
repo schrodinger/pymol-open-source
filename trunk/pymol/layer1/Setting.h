@@ -898,6 +898,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_bg_gradient                662
 #define cSetting_bg_rgb_top                 663
 #define cSetting_bg_rgb_bottom              664
+#define cSetting_ray_volume                 665
+#define cSetting_ribbon_transparency        666  /* oh noes */
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -908,6 +910,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       665
+#define cSetting_INIT                       667
 
 #endif

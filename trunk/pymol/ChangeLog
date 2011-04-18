@@ -4,6 +4,14 @@ CHANGE LOG
 
 2011-04-01 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* transparent ribbons
+
+	* naive volume ray tracing; better version coming soon
+
+	* small bug fixes
+
+2011-04-01 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* introducing gradient backgrounds (non-ray tracing; testing)
 
 	* Windows bug fixes

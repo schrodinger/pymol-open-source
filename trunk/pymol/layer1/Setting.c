@@ -2434,6 +2434,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_ribbon_width:
   case cSetting_ribbon_throw:
   case cSetting_ribbon_trace_atoms:
+  case cSetting_ribbon_transparency:
     ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
     SceneChanged(G);
     break;
@@ -4008,6 +4009,10 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_bg_gradient, 0);
     set_color(I, cSetting_bg_rgb_top, "-1");
     set_color(I, cSetting_bg_rgb_bottom, "-1");
+
+    set_b(I, cSetting_ray_volume, 0);
+    
+    set_f(I, cSetting_ribbon_transparency, 0.0F);
 
   }
 }

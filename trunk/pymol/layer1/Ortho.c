@@ -1609,7 +1609,9 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G)
     if(nLine) {
       nChar = VLAGetSize(I->WizardPromptVLA);
 
-      /* count max line length */
+      /* count max line length; it's strlen - X, 
+       * where X is 4*n, where n is the number
+       * of colors in the text label */
 
       maxLen = 0;
       p = vla;
@@ -1632,6 +1634,9 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G)
           c--;
         }
       }
+
+      /* determine the coordinates from which to draw the text;
+       * need to make adjustments for the sequence viewer */
 
       rect.top = I->Height;
       if(I->HaveSeqViewer)
@@ -1679,6 +1684,7 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G)
       p = vla;
       ll = 0;
       c = nChar;
+      /* set the char color, position the characters and draw the text */
       while(c > 0) {
         if(*p) {
           if((*p == '\\') && (*(p + 1)) && (*(p + 2)) && (*(p + 3))) {
