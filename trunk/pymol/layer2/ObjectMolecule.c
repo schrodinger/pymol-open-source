@@ -226,7 +226,10 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char* ch, int len)
 	} else { /* no state */
 	  n = snprintf(ch, len, "%s", cs->Name);
 	}
-      } 
+      } else { /* no coord set, can be an N-state object missing a CSet */
+	if (len && ch)
+	  ch[0] = 0;
+      }
     } else { /* state > NCSet, out of range due to other object or global setting */
       if(show_state) {
 	if(show_as_fraction) {
