@@ -4,6 +4,13 @@ CHANGE LOG
 
 2011-04-20 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* freezing colors the states blue
+
+	* added out of bounds checks for showing states; those
+	  beyond are shown as "--"
+
+2011-04-20 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* state_counter_mode
 
 	* fixed bg_gradient coloring
