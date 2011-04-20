@@ -707,6 +707,8 @@ if __name__=='pymol.setting':
 
         ribbon_transparency                = 666
 
+        state_counter_mode                 = 667
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

@@ -16907,6 +16907,7 @@ static void ExecutiveDraw(Block * block)
   PyMOLGlobals *G = block->G;
   int x, y, xx, x2, y2;
   char *c = NULL;
+  WordType ch;
   float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
   float cloakedColor[3] = { 0.35F, 0.35F, 0.35F };
   float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
@@ -17238,8 +17239,13 @@ static void ExecutiveDraw(Block * block)
             }
 
             if(rec->type == cExecObject) {
-              if(rec->obj->fGetCaption)
-                c = rec->obj->fGetCaption(rec->obj);
+              if(rec->obj->fGetCaption) {
+		/* get this object's "caption" that goes on its title line,
+		 * currently, this is "state-title [curState/nState]"
+		 */
+                c = ch;
+		rec->obj->fGetCaption(rec->obj, ch, WordLength);
+	      }
               if(c && c[0] && nChar > 1 && strcmp(c, rec->obj->Name) != 0) {
                 TextSetColor(G, captionColor);
                 TextSetPos2i(G, x + 2 + 8 * (max_char - nChar), y2 + text_lift);
@@ -17251,6 +17257,7 @@ static void ExecutiveDraw(Block * block)
                   else
                     break;
               }
+	      c[0] = 0;
             }
           }
 
