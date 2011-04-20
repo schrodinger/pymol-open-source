@@ -71,7 +71,7 @@ struct _CObject {
   void (*fDescribeElement) (CObject * I, int index, char *buffer);
   void (*fInvalidate) (CObject * I, int rep, int level, int state);
   CSetting **(*fGetSettingHandle) (CObject * I, int state);
-  char *(*fGetCaption) (CObject * I);
+  char *(*fGetCaption) (CObject * I, char * ch, int len);
   CObjectState *(*fGetObjectState) (CObject * I, int state);
   int type;
   ObjectNameType Name;

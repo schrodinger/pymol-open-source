@@ -102,7 +102,7 @@ if __name__=='pymol.querying':
             safe_chars = range(48,58)
             safe_chars.extend(range(65,91))
             safe_chars.extend(range(97,123))
-            safe_chars.extend([ord('+'),ord('-'),ord('_')])
+            safe_chars.extend([ord('+'),ord('-'),ord('_'),ord('.')])
             # remove non-safe chars
             for c in range(len(r)):
                 if ord(r[c]) not in safe_chars:

@@ -4007,12 +4007,14 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_autoclose_dialogs, 1);
 
     set_b(I, cSetting_bg_gradient, 0);
-    set_color(I, cSetting_bg_rgb_top, "-1");
-    set_color(I, cSetting_bg_rgb_bottom, "-1");
+    set_3f(I, cSetting_bg_rgb_top, 0.0F, 0.0F, 0.3F);
+    set_3f(I, cSetting_bg_rgb_bottom, 0.2F, 0.2F, 0.5F);
 
     set_b(I, cSetting_ray_volume, 0);
     
     set_f(I, cSetting_ribbon_transparency, 0.0F);
+
+    set_i(I, cSetting_state_counter_mode, -1);
 
   }
 }

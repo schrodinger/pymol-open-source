@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2011-04-20 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* state_counter_mode
+
+	* fixed bg_gradient coloring
+
+	* added small dictionary for xray space groups
+
+	* get_names and safe names 
+
 2011-04-01 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* transparent ribbons

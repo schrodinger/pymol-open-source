@@ -149,18 +149,79 @@ int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int stat
   return result;
 }
 
-static char *ObjectMoleculeGetCaption(ObjectMolecule * I)
+/* PARAMS
+ *   ch -- ptr to empty str of length 'len'
+ *  len -- str len 
+ * RETURNS
+ *   ch, with the caption in place
+ * NOTES
+ *   User owns the buffer so must clean up after it
+ */
+static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char* ch, int len)
 {
   int state = ObjectGetCurrentState((CObject *) I, false);
+  int counter_mode = SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_state_counter_mode);
 
+  int n = 0;
+  /* TODO: get these from settings */
+  int show_state = 0;
+  int show_as_fraction = 0;
+
+  switch(counter_mode) {
+  case 0: /* off */
+    show_state = show_as_fraction = 0;
+    break;
+  case 2: /* just state */
+    show_state = 1;
+    show_as_fraction = 0;
+    break;
+  case -1: /* fraction, full-on */
+  case 1:
+  default:
+    show_state = show_as_fraction = 1;
+    break;
+  }
+
+  /* bail on null string or no room */
+  if (!ch || len==0)
+    return NULL;
+
+  /* if the state is valid, setup the label */
   if((state >= 0) && (state < I->NCSet)) {
     CoordSet *cs = I->CSet[state];
     if(cs) {
-      return cs->Name;
-    }
+      if(show_state) {
+	if (show_as_fraction) {
+	  if (cs->Name && strlen(cs->Name)) { 	  /* NAME */
+	    n = snprintf(ch, len, "%s %d/%d", cs->Name, state+1, I->NCSet);
+	  } 
+	  else { /* no name */
+	    n = snprintf(ch, len, "%d/%d", state+1, I->NCSet);
+	  }
+	} else { /* not fraction */
+	  if (cs->Name && strlen(cs->Name)) {
+	    n = snprintf(ch, len, "%s %d", cs->Name, state+1);
+	  } else { /* no name */
+	    n = snprintf(ch, len, "%d", state+1);
+	  }
+	}
+      } else { /* no state */
+	  n = snprintf(ch, len, "%s", cs->Name);
+      }
+    }	
+
+    if(n>len)
+      return NULL;
+    else
+      return ch;
+  } else {
+    /* blank out the title if outside the valid # of states */
+    if (len && ch)
+      ch[0] = 0;
   }
   return NULL;
 }
+
 
 int ObjectMoleculeGetMatrix(ObjectMolecule * I, int state, double **history)
 {
