@@ -108,6 +108,13 @@ typedef float aliased_float;
 #include <stddef.h>
 #endif
 
+#if defined(_WIN32) || defined(_WIN64)
+#define fmax max
+#define fmin min
+#pragma warning (disable:4996)
+#define snprintf sprintf_s
+#endif
+
 #include "ov_types.h"
 
 #endif

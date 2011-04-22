@@ -106,7 +106,7 @@ typedef struct SpecRec {
   CObject *obj;
   struct SpecRec *next;
   int repOn[cRepCnt];
-  int visible;
+  int visible;            /* This is actually when object is "Enabled", not visible */
 
   ObjectNameType group_name;
 
@@ -204,10 +204,10 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int stat
                                        char *s1, int log, float *matrix, int homogenous,
                                        int global);
 
-void ReportVisibility(PyMOLGlobals * G, SpecRec *rec){
+void ReportEnabledChange(PyMOLGlobals * G, SpecRec *rec){
 #ifdef _PYMOL_LIB
-  if (G->CallbackObject && G->visibilityCallback){
-    G->visibilityCallback(G->CallbackObject, rec->name, rec->visible);
+  if (G->CallbackObject && G->enabledCallback){
+    G->enabledCallback(G->CallbackObject, rec->name, rec->visible);
   }
 #endif
 }
@@ -4407,7 +4407,7 @@ PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G)
 }
 
 #ifdef _PYMOL_LIB
-int *ExecutiveGetRepsGlobalForObject(PyMOLGlobals *G, const char *name){
+int *ExecutiveGetRepsInSceneForObject(PyMOLGlobals *G, const char *name){
   SpecRec *rec = NULL;
   int *repOn = 0;
   int n_vis = 0, a;
@@ -4429,7 +4429,7 @@ int *ExecutiveGetRepsGlobalForObject(PyMOLGlobals *G, const char *name){
   return repOn;
 }
 
-int *ExecutiveGetRepsObjectForObject(PyMOLGlobals *G, const char *name){
+int *ExecutiveGetRepsForObject(PyMOLGlobals *G, const char *name){
   SpecRec *rec = NULL;
   int *RepVis = 0;
   int n_vis = 0, a;
@@ -6641,9 +6641,6 @@ const char * ExecutiveMapGenerate(PyMOLGlobals * G, char * name, char * reflecti
 				  char * amplitudes, char * phases, char * weights, double reso_low,
 				  double reso_high, char * space_group, double cell[6], int quiet, int zoom)
 {
-#ifdef NO_MMLIBS
-  return NULL;
-#else
   /* FIXME: this should be returned in memory!! */
   /* In the meantime, use mkstemp and load in Python */
   int ok;
@@ -6655,14 +6652,16 @@ const char * ExecutiveMapGenerate(PyMOLGlobals * G, char * name, char * reflecti
 
   /* printf("Passing to primex driver: space_group=%s, cell=[%f %f %f %f %f %f], reso_high=%f, rseo_low=%f, refl_file=%s, ampl=%s, phases=%s, weights=%s, map_file=%s", space_group, cell[0], cell[1], cell[2], cell[3], cell[4], cell[5], reso_high, reso_low, reflection_file, amplitudes, phases, weights, tempFile); */
 
+#ifndef NO_MMLIBS
   ok = !(primex_pymol_driver2(space_group, cell, reso_high, reso_low, reflection_file, amplitudes,
 			    phases, weights, tempFile)); 
+#endif
 
   if (!ok) 
     return NULL;
   else
     return (const char*) tempFile;
-#endif
+
 }
 
 /* #if 0 */
@@ -8485,7 +8484,7 @@ void ExecutiveHideSelections(PyMOLGlobals * G)
         rec->visible = false;
         SceneInvalidate(G);
         SeqDirty(G);
-	ReportVisibility(G, rec);
+	ReportEnabledChange(G, rec);
       }
     }
   }
@@ -12127,7 +12126,7 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
     }
   }
   if(side_effects) {
-    SettingGenerateSideEffects(G, index, s1, state);  /* not strickly correct */
+    SettingGenerateSideEffects(G, index, s1, state);  /* not strictly correct */
     /*    SettingGenerateSideEffects(G,index,s2,state); */
   }
 
@@ -14380,18 +14379,18 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
                     tRec->in_scene = SceneObjectDel(G, tRec->obj, true);
                     ExecutiveInvalidateSceneMembers(G);
                     tRec->visible = !tRec->visible;
-		    ReportVisibility(G, rec);
+		    ReportEnabledChange(G, rec);
                   } else {
                     if((!suppress_hidden) || (!hide_underscore) || (!tRec->is_hidden)) {
                       tRec->in_scene = SceneObjectAdd(G, tRec->obj);
                       ExecutiveInvalidateSceneMembers(G);
                       tRec->visible = !tRec->visible;
-		      ReportVisibility(G, rec);
+		      ReportEnabledChange(G, rec);
                     }
                   }
                 } else if((tRec->type != cExecSelection) || (!onoff))   /* hide all selections, but show all */
                   tRec->visible = !tRec->visible;
-		ReportVisibility(G, rec);
+		ReportEnabledChange(G, rec);
               }
             }
           }
@@ -14417,7 +14416,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
                 rec->in_scene = SceneObjectDel(G, rec->obj, true);
               rec->visible = false;
               ExecutiveInvalidateSceneMembers(G);
-	      ReportVisibility(G, rec);
+	      ReportEnabledChange(G, rec);
             }
           }
           break;
@@ -14433,7 +14432,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
             SceneInvalidate(G);
             SeqDirty(G);
 	    if (previousVisible!=rec->visible){
-	      ReportVisibility(G, rec);
+	      ReportEnabledChange(G, rec);
 	    }
           }
           break;
@@ -14463,7 +14462,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
           if((tRec->type != cExecSelection) || (!onoff)) {
             /* hide all selections, but show all */
             tRec->visible = !tRec->visible;
-	    ReportVisibility(G, rec);
+	    ReportEnabledChange(G, rec);
           }
         }
       }
@@ -14480,7 +14479,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
               ExecutiveInvalidateSceneMembers(G);
             }
             tRec->visible = !tRec->visible;
-	    ReportVisibility(G, rec);
+	    ReportEnabledChange(G, rec);
           }
         } else if(tRec->type == cExecSelection) {
           if(tRec->visible != onoff) {
@@ -14494,7 +14493,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
             SceneInvalidate(G);
             SeqDirty(G);
 	    if (previousVisible!=rec->visible){
-	      ReportVisibility(G, rec);
+	      ReportEnabledChange(G, rec);
 	    }
           }
         }
@@ -15783,7 +15782,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
       /*      SceneObjectAdd(G,obj); */
     }
     if (previousVisible!=rec->visible){
-      ReportVisibility(G, rec);
+      ReportEnabledChange(G, rec);
     }
 
     for(a = 0; a < cRepCnt; a++)
@@ -15851,7 +15850,7 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
         break;
       if(hide_all && rec->visible){
         rec->visible = false;
-	ReportVisibility(G, rec);
+	ReportEnabledChange(G, rec);
       }
     }
   }
@@ -15859,7 +15858,7 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
     while(ListIterate(I->Spec, rec, next))
       if(rec->type == cExecSelection && rec->visible){
         rec->visible = false;
-	ReportVisibility(G, rec);
+	ReportEnabledChange(G, rec);
       }
 
   if(!rec) {
@@ -15870,7 +15869,7 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
     rec->sele_color = -1;
     if (rec->visible){
       rec->visible = false;
-      ReportVisibility(G, rec);
+      ReportEnabledChange(G, rec);
     }
     rec->cand_id = TrackerNewCand(I->Tracker, (TrackerRef *) (void *) rec);
     TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id, 1);
@@ -15887,7 +15886,7 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
         ExecutiveHideSelections(G);
       if(SettingGet(G, cSetting_auto_show_selections) && !rec->visible) {
         rec->visible = true;
-	ReportVisibility(G, rec);
+	ReportEnabledChange(G, rec);
       }
     }
     if(rec->visible)
@@ -16267,7 +16266,7 @@ static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, in
 
   if(!rec->visible) {
     rec->visible = true;
-    ReportVisibility(G, rec);
+    ReportEnabledChange(G, rec);
   }
   if(!rec->in_scene) {
     rec->in_scene = SceneObjectAdd(G, rec->obj);
@@ -16291,7 +16290,7 @@ static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, in
             }
             if(!parent_rec->visible) {
               parent_rec->visible = true;
-	      ReportVisibility(G, parent_rec);
+	      ReportEnabledChange(G, parent_rec);
             }
           }
         }
@@ -16316,7 +16315,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
       ExecutiveInvalidateSceneMembers(G);
       if (rec->visible != new_vis){
 	rec->visible = new_vis;
-	ReportVisibility(G, rec);
+	ReportEnabledChange(G, rec);
       }
     } else if((!rec->visible) && new_vis) {
       ExecutiveSpecEnable(G, rec, parents, logging);
@@ -16355,7 +16354,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
       PLog(G, buffer, cPLog_pym);
       if (!rec->visible){
 	rec->visible = true;
-	ReportVisibility(G, rec);
+	ReportEnabledChange(G, rec);
       }
 #if 0
     } else if(mod & cOrthoSHIFT) {
@@ -16370,7 +16369,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
       /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
       if (!rec->visible){
 	rec->visible = true;
-	ReportVisibility(G, rec);
+	ReportEnabledChange(G, rec);
       }
 #endif
     } else {
@@ -16389,7 +16388,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
       }
       if (rec->visible != new_vis){
 	rec->visible = new_vis;
-	ReportVisibility(G, rec);
+	ReportEnabledChange(G, rec);
       }
     }
     SceneChanged(G);
@@ -16906,8 +16905,8 @@ static void ExecutiveDraw(Block * block)
 {
   PyMOLGlobals *G = block->G;
   int x, y, xx, x2, y2;
-  char *c = NULL;
   WordType ch;
+  char *c = NULL;
   float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
   float cloakedColor[3] = { 0.35F, 0.35F, 0.35F };
   float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
@@ -16936,12 +16935,15 @@ static void ExecutiveDraw(Block * block)
   int arrows = SettingGetGlobal_b(G, cSetting_group_arrow_prefix);
 
   ExecutiveUpdatePanelList(G);
+  
+  /* if we're running with a GUI and have a valid panel */
   if(G->HaveGUI && G->ValidContext && ((block->rect.right - block->rect.left) > 6)
      && I->ValidPanel) {
     int max_char;
     int nChar;
-    /* do we have enough structures to warrant a scroll bar? */
 
+    /* count entries
+     * do we have enough structures to warrant a scroll bar? */
     n_ent = 0;
     while(ListIterate(I->Panel, panel, next)) {
       rec = panel->spec;
@@ -16954,6 +16956,7 @@ static void ExecutiveDraw(Block * block)
     if(n_disp < 1)
       n_disp = 1;
 
+    /* we need a scrollbar */
     if(n_ent > n_disp) {
       int bar_maxed = ScrollBarIsMaxed(I->ScrollBar);
       if(!I->ScrollBarActive) {
@@ -16978,6 +16981,7 @@ static void ExecutiveDraw(Block * block)
       I->NSkip = 0;
     }
 
+    /* determination of longest string based on internal_gui_size, etc... */
     max_char =
       (((I->Block->rect.right - I->Block->rect.left) -
         (ExecLeftMargin + ExecRightMargin + 4)) - (op_cnt * ExecToggleWidth));
@@ -16986,12 +16990,14 @@ static void ExecutiveDraw(Block * block)
     }
     max_char /= 8;
 
+    /* fill and outline the entire block */
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
       glColor3fv(I->Block->BackColor);
       BlockFill(I->Block);
       BlockDrawLeftEdge(I->Block);
     }
 
+    /* draw the scroll bar */
     if(I->ScrollBarActive) {
       ScrollBarSetBox(I->ScrollBar, I->Block->rect.top - ExecScrollBarMargin,
                       I->Block->rect.left + ExecScrollBarMargin,
@@ -17013,13 +17019,15 @@ static void ExecutiveDraw(Block * block)
       x += ExecScrollBarWidth + ExecScrollBarMargin;
     }
     skip = I->NSkip;
-    /*    while(ListIterate(I->Spec,rec,next)) { */
+
+    /* for each object in the Panel... */
     while(ListIterate(I->Panel, panel, next)) {
       rec = panel->spec;
       if((rec->name[0] != '_') || (!hide_underscore)) {
         if(skip) {
           skip--;
         } else {
+	  /* setup the X,Y offsets for this entry */
           row++;
           x2 = xx;
           y2 = y;
@@ -17029,6 +17037,10 @@ static void ExecutiveDraw(Block * block)
             x2 = x + 10;
           }
 #ifndef _PYMOL_NOPY
+	  /*
+	   * The ASHLC menus; these access Python so,
+	   * protect this block from non-python instances
+	   */
           {
             int a;
             float toggleColor[3] = { 0.5F, 0.5F, 1.0F };
@@ -17049,6 +17061,8 @@ static void ExecutiveDraw(Block * block)
                    glVertex2i(x2+(ExecToggleSize)/2,y2+ExecToggleSize);
                    glEnd();
                  */
+
+		/* the infamous ASHLC! */
 
                 draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
                             toggleLightEdge, toggleDarkEdge, toggleColor);
@@ -17105,6 +17119,7 @@ static void ExecutiveDraw(Block * block)
               x2 += ExecToggleWidth;
             }
           }
+	  /* end ASHLC */
 #endif
 
           {
@@ -17128,6 +17143,7 @@ static void ExecutiveDraw(Block * block)
               {
                 int but_width = (x2 - x3) - 1;
 
+		/* drawing a group +/- NAME */
                 if(panel->is_group) {
 
                   if((rec->hilight == 2) && (I->Over == I->Pressed)) {
@@ -17164,6 +17180,7 @@ static void ExecutiveDraw(Block * block)
                 }
 
                 if((rec->hilight == 1) || ((row == I->Over) && (I->OverWhat == 1))) {
+		  /* button hull */
                   draw_button(x3, y2, but_width, (ExecLineHeight - 1), lightEdge,
                               darkEdge, pressedColor);
                 } else if(rec->visible) {
@@ -17191,8 +17208,10 @@ static void ExecutiveDraw(Block * block)
 
               TextSetColor(G, I->Block->TextColor);
 
+	      /* object name */
               c = rec->name;
-
+	      
+	      /* parse out the prefix if group.foo */
               if(!full_names) {
                 if(rec->group) {        /* if prefix matches group name, then truncate */
                   char *p = c, *q = rec->group->name;
@@ -17207,6 +17226,7 @@ static void ExecutiveDraw(Block * block)
                 }
               }
 
+	      /* wrap selection names with "(" and ")" */
               if(rec->type == cExecSelection)
                 if((nChar--) > 0) {
                   TextDrawChar(G, '(');
@@ -17222,14 +17242,17 @@ static void ExecutiveDraw(Block * block)
                 }
               }
 
+	      /* draw the object name, char by char */
               while(*c) {
-                if((nChar--) > 0)
+                if((nChar--) > 0) {
                   TextDrawChar(G, *(c++));
+		}
                 else
                   break;
               }
             }
 
+	    /* SELECTIONS: wrap selection names with "(" and ")" */
             if(rec->type == cExecSelection) {
               if((nChar--) > 0) {
                 TextDrawChar(G, ')');
@@ -17238,13 +17261,14 @@ static void ExecutiveDraw(Block * block)
               c = rec->name;
             }
 
+	    /* OBJECTS: output any label captions, like state number, state title */
             if(rec->type == cExecObject) {
               if(rec->obj->fGetCaption) {
 		/* get this object's "caption" that goes on its title line,
 		 * currently, this is "state-title [curState/nState]"
 		 */
-                c = ch;
-		rec->obj->fGetCaption(rec->obj, ch, WordLength);
+		c = ch;
+                rec->obj->fGetCaption(rec->obj, ch, WordLength);
 	      }
               if(c && c[0] && nChar > 1 && strcmp(c, rec->obj->Name) != 0) {
                 TextSetColor(G, captionColor);
@@ -17252,7 +17276,7 @@ static void ExecutiveDraw(Block * block)
                 if((nChar--) > 0)
                   TextDrawChar(G, ' ');
                 while(*c)
-                  if((nChar--) > 0){
+                  if((nChar--) > 0) {
 		    /* allow color encoding for names */
 		    if((*c == '\\') && (*(c + 1)) && (*(c + 2)) && (*(c + 3))) {
 		      TextSetColor3f(G, (*(c + 1) - '0') / 9.0F, (*(c + 2) - '0') / 9.0F,
@@ -17653,25 +17677,24 @@ char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, char *name, int enable
     res = VLAlloc(char, 1000);
     while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
       if((rec->type == cExecObject
-          && (((!mode) || (mode == 1) || (mode == 3) || (mode == 4))
-              || ((rec->obj->type != cObjectGroup) && ((mode == 6) || (mode == 8)))
-              || ((rec->obj->type == cObjectGroup) && ((mode == 7) || (mode == 9)))))
-         || (rec->type == cExecSelection
-             && ((!mode) || (mode == 2) || (mode == 3) || (mode == 5)))
-         ) {
-        if((mode < 3) || (mode > 7) || (mode == 9) || (rec->name[0] != '_')) {
-          if((!enabled_only) || (rec->visible)) {
-            stlen = strlen(rec->name);
+	  && (((!mode) || (mode == 1) || (mode == 3) || (mode == 4))
+	      || ((rec->obj->type != cObjectGroup) && ((mode == 6) || (mode == 8)))
+	      || ((rec->obj->type == cObjectGroup) && ((mode == 7) || (mode == 9)))))
+	 || (rec->type == cExecSelection
+	     && ((!mode) || (mode == 2) || (mode == 3) || (mode == 5)))
+	 ) {
+	if((mode < 3) || (mode > 7) || (mode == 9) || (rec->name[0] != '_')) {
+	  if((!enabled_only) || (rec->visible)) {
+	    stlen = strlen(rec->name);	    
             VLACheck(res, char, size + stlen + 1);
             strcpy(res + size, rec->name);
             size += stlen + 1;
-            *numstrs += 1;
-          }
-        }
+	    *numstrs += 1;
+	  }
+	}
       }
     }
   }
   VLASize(res, char, size);
   return (res);
 }
-

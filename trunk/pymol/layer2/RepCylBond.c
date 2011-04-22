@@ -78,6 +78,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
   Pickable *p;
   float alpha;
   SphereRec *sp;
+  float *fog_color, fog_enabled;
   register PyMOLGlobals *G = I->R.G;
   CShaderPrg * prg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
 
@@ -201,8 +202,14 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
       int use_shader = (int) SettingGet(G, cSetting_stick_use_shader) &
 	               (int) SettingGet(G, cSetting_use_shaders);
       if (use_shader) {
-	/*	ShaderEnable(G);*/
-	CShaderPrg_Enable(prg);
+        /*	ShaderEnable(G);*/
+        CShaderPrg_Enable(prg);
+        fog_color = SettingGetfv(G, cSetting_bg_rgb);
+        fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
+        CShaderPrg_Set1f(prg, "fog_r", fog_color[0]);
+        CShaderPrg_Set1f(prg, "fog_g", fog_color[1]);
+        CShaderPrg_Set1f(prg, "fog_b", fog_color[2]);
+        CShaderPrg_Set1f(prg, "fog_enabled", fog_enabled);
       }
 
       use_dlst = (int) SettingGet(G, cSetting_use_display_lists);

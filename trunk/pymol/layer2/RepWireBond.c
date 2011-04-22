@@ -479,6 +479,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
   unsigned int i, j;
   Pickable *p;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
+  float *fog_color, fog_enabled;
   CShaderPrg * prg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
 
   if(ray) {
@@ -560,8 +561,14 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
       int use_shader = (int) SettingGet(G, cSetting_line_use_shader) & 
 	               (int) SettingGet(G, cSetting_use_shaders);
       if (use_shader) {
-	/*	ShaderEnable(G);*/
-	CShaderPrg_Enable(prg);
+         /*	ShaderEnable(G);*/
+        CShaderPrg_Enable(prg);
+        fog_color = SettingGetfv(G, cSetting_bg_rgb);
+        fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
+        CShaderPrg_Set1f(prg, "fog_r", fog_color[0]);
+        CShaderPrg_Set1f(prg, "fog_g", fog_color[1]);
+        CShaderPrg_Set1f(prg, "fog_b", fog_color[2]);
+        CShaderPrg_Set1f(prg, "fog_enabled", fog_enabled);
       }
 
       use_dlst = (int) SettingGet(G, cSetting_use_display_lists);

@@ -3161,9 +3161,16 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
   register int all_vis = !vis_only;
   register signed char *visRep;
   float tmp_matrix[16], v_tmp[3], *matrix = NULL;
+
+  int objState;
+  int frozen = SettingGetIfDefined_i(I->Obj.G, I->Obj.Setting, cSetting_state, &objState);
+
   register int use_matrices =
     SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   if(use_matrices<0) use_matrices = 0;
+
+  if(frozen)
+    curState = objState - 1;
 
   if(G->HaveGUI && G->ValidContext) {
     register AtomInfoType *atInfo = I->AtomInfo, *ai;
@@ -11773,7 +11780,7 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
 
 AtomInfoType *get_atom_info_type(ObjectMolecule *obj, int state, int idx){
   int atm;
-  if (state>=0 && state < obj->NCSet){   
+  if (state>=0 && state < obj->NCSet && obj->CSet[state] && obj->CSet[state]->NIndex > idx){   
     atm = obj->CSet[state]->IdxToAtm[idx];
     return &obj->AtomInfo[atm];
   } else {
@@ -12394,7 +12401,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
   I->Obj.fGetObjectState = (CObjectState * (*)(CObject *, int state))
     ObjectMoleculeGetObjectState;
 
-  I->Obj.fGetCaption = (char *(*)(CObject *)) ObjectMoleculeGetCaption;
+  I->Obj.fGetCaption = (char *(*)(CObject *, char *, int)) ObjectMoleculeGetCaption;
   I->AtomInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);   /* autozero here is important */
   I->CurCSet = 0;
   I->Symmetry = NULL;

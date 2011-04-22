@@ -130,6 +130,5 @@ int CShaderPrg_IsLinked(CShaderPrg * I);
 /* accessors/mutators/uniform setters */
 int CShaderPrg_Set1i(CShaderPrg * I, const char * name, int i);
 int CShaderPrg_Set1f(CShaderPrg * I, const char * name, float f);
-
 #endif
 

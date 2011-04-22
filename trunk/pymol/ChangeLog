@@ -4,6 +4,20 @@ CHANGE LOG
 
 2011-04-20 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* finished the state counter
+
+	* all measures now work inter-distance, and
+	  honor object states
+
+	* selecting/picking now works as we'd expect, with 
+	  respect to states
+
+	* improved shaders; added fog, fixed rendering issues
+
+	* bug fix for possible crash
+
+2011-04-20 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* freezing colors the states blue
 
 	* added out of bounds checks for showing states; those

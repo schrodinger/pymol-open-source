@@ -180,6 +180,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
   int *vi = I->Vis;
   float alpha;
   int t_mode;
+  float *fog_color, fog_enabled;
   CShaderPrg * prg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
 
   if((I->Type != 1) && (!s)) {
@@ -978,8 +979,14 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
           use_shader = (int) SettingGet(G, cSetting_surface_use_shader) & 
                            (int) SettingGet(G, cSetting_use_shaders);
           if (use_shader) {
-	    /*              ShaderEnable(G);*/
-	    CShaderPrg_Enable(prg);
+      	    /* ShaderEnable(G);*/
+            CShaderPrg_Enable(prg);
+            fog_color = SettingGetfv(G, cSetting_bg_rgb);
+            fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
+            CShaderPrg_Set1f(prg, "fog_r", fog_color[0]);
+            CShaderPrg_Set1f(prg, "fog_g", fog_color[1]);
+            CShaderPrg_Set1f(prg, "fog_b", fog_color[2]);
+            CShaderPrg_Set1f(prg, "fog_enabled", fog_enabled);
           }
           if(use_dlst && I->R.displayList) {
             glCallList(I->R.displayList);

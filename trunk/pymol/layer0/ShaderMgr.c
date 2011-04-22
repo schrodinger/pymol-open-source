@@ -18,12 +18,13 @@ Z* -------------------------------------------------------------------
  * (1) Debugging; Feeding back
  * (2) printfs needs to be FeedbackAdd or PRINTFD
  */
-#include "os_gl.h"
+
 #include <string.h>
 #include "ShaderMgr.h"
 #include "OOMac.h"
 #include "ListMacros.h"
 #include "PyMOLOptions.h"
+#include "os_gl.h"
 #include "Feedback.h"
 
 #define MAX_LOG_LEN 1024
@@ -72,7 +73,6 @@ const char* default_fs = "varying vec3 N, L0, H0, L1, H1;"
 "  }"
 "  gl_FragColor = color;"
 "}";
-
 const char *volume_vs = "varying float fog;"
 ""
 "void main()"
@@ -80,20 +80,26 @@ const char *volume_vs = "varying float fog;"
 "  vec4 vertex = gl_ModelViewMatrix * gl_Vertex;"
 "  gl_TexCoord[0] = gl_MultiTexCoord0;"
 "  gl_ClipVertex = vertex;"
-"  gl_FogFragCoord = length(vertex.z);"
-"  fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;"
 "  gl_Position = ftransform();"
+"  gl_FogFragCoord = -vertex.z;"
+"  fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;"
 "}";
-
 const char *volume_fs = "uniform sampler3D volumeTex;"
 "uniform sampler1D colorTex;"
+""
+"uniform float fog_r;"
+"uniform float fog_g;"
+"uniform float fog_b;"
+"uniform float fog_enabled;"
 "varying float fog;"
 ""
 "void main()"
 "{"
-"  vec3 fog_color = vec3(0.0, 0.0, 0.0);"
+"  vec3 fog_color = vec3(fog_r, fog_g, fog_b);"
 "  vec4 color = texture1D(colorTex, texture3D(volumeTex, gl_TexCoord[0].xyz).x);"
-"  gl_FragColor = vec4(vec3(mix(fog_color, color.rgb, fog)), color.a);"
+"  if (color.a == 0.0) discard;"
+"  float cfog = mix(1.0, clamp(fog, 0.0, 1.0), fog_enabled);"
+"  gl_FragColor = vec4(vec3(mix(fog_color, color.rgb, cfog)), color.a);"
 "}";
 
 
@@ -133,28 +139,36 @@ void ShaderMgrInit(PyMOLGlobals * G) {
  * other programs (i.e., JyMOL, AxPyMOL, etc.).
  */
 void ShaderMgrConfig(PyMOLGlobals * G) {
-  int major, minor, err;
+  int major, minor;
   char buf[50];
   CShaderPrg *p;
   int hasShaders = 0;
+  int ok = 0;
+  GLenum err; 
 
-  err = glewInit();
+  ok = (G && G->HaveGUI); /* && G->ValidContext); */
 
-  /* verify glewInit */
-  if (GLEW_OK != err) {
-    /* Problem: glewInit failed, something is seriously wrong. */
-    FeedbackAdd(G, "ShaderMgrInit-Error: Could not initialize GLEW:");
-    FeedbackAdd(G, glewGetErrorString(err));
+  if (ok) {
+    err = glewInit();
+  } else {
     return;
   }
 
-  if (GLEW_VERSION_2_0)
-    FeedbackAdd(G, " Detected OpenGL version 2.0 or greater.  Shaders available.\n");
-  else
-  { 
-    FeedbackAdd(G, " Detected OpenGL version prior to 2.0.  Shaders unavailable.\n");
+  if (GLEW_OK==err) {
+    if (GLEW_VERSION_2_0) {
+      FeedbackAdd(G, " Detected OpenGL version 2.0 or greater.  Shaders available.\n");
+    }
+    else { 
+      FeedbackAdd(G, " Detected OpenGL version prior to 2.0.  Shaders and volumes unavailable.\n");
+      return;
+    }
+  } 
+  else {
+    /* print info on glew error? */
+    FeedbackAdd(G, " There was an error intializing GLEW.  Basic graphics, including\n shaders and volumes may be unavailable.\n");
+    fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));
     return;
-  }  
+  }
 
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
   /* USE GLEW instead */
@@ -390,7 +404,7 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
 
   PRINTFB(G, FB_ShaderMgr, FB_Debugging)
     "CShaderMgr_ReadShaderFromDisk: fileName='%s'\n", fileName
-  ENDFB(G);
+    ENDFB(G);
   /* check the input */
   if (!strlen(fileName)) {
     PRINTFB(G, FB_ShaderMgr, FB_Errors)
@@ -401,7 +415,7 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
   pymol_path = getenv("PYMOL_PATH");
   if (!pymol_path){
     PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-      " PyMOLShader_NewFromFile-Warning: PYMOL_PATH not set, cannot read shader config files (%s) from disk\n", fileName ENDFB(G);
+      " PyMOLShader_NewFromFile-Warning: PYMOL_PATH not set, cannot read shader config files from disk\n", fileName ENDFB(G);
     return NULL;
   }
   /* make this a setting */
@@ -454,44 +468,17 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
   DListElemAlloc(G, I, CShaderPrg);
   DListElemInit(I, prev, next);
 
-  /* defaults */
-  I->id = 0;
-  I->vid = 0;
-  I->fid = 0;
-
-  /* SHADER PROGRAM */
   I->name = strdup(name);
   I->id = glCreateProgram();
-
   PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-    "Created program with id: %d\n", I->id
-  ENDFB(G);
-
-  /* did we create a glShaderProgram? */
-  if (!I->id) {
-    if (G && G->Option && !G->Option->quiet) {
-      PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_New-Error: could not create shader program; shaders disbaled.\n" ENDFB(G);
-    }
-    return 0;
-  }    
+    "Created program with id: %d\n", I->id ENDFB(G);
 
   /* VERTEX shader setup */
   /* CShaderPrg_InitShader(I, GL_VERTEX_SHADER); */
   I->v = strdup(v);
   I->vid = glCreateShader(GL_VERTEX_SHADER);
-
-  /* did we create the vertex shader? */
-  if (!I->vid) {
-    if (G && G->Option && !G->Option->quiet) {
-      PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_New-Error: could not create vertex shader; shaders disbaled.\n" ENDFB(G);
-    }
-    return 0;
-  }    
-
   PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-    "Created vertex shader with id: %d\n", I->vid
-  ENDFB(G);
-
+    "Created vertex shader with id: %d\n", I->vid ENDFB(G);
   glShaderSource(I->vid, 1, (const GLchar**) &I->v, NULL);
   glCompileShader((GLuint) I->vid);
   /* verify compilation */
@@ -501,7 +488,7 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
       PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_New-Error: vertex shader compilation failed; log follows.\n" ENDFB(G);
       glGetShaderInfoLog(I->vid, MAX_LOG_LEN, &howLong, infoLog);
       PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	"infoLog(len=%d)=%s\n", howLong, infoLog ENDFB(G);
+	"infoLog=%s\n", infoLog ENDFB(G);
     }
     return 0;
   }
@@ -516,14 +503,6 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
   PRINTFB(G, FB_ShaderMgr, FB_Debugging)
     "Created fragment shader with id: %d\n", I->fid 
     ENDFB(G);
-
-  /* did we create the vertex shader? */
-  if (!I->fid) {
-    if (G && G->Option && !G->Option->quiet) {
-      PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_New-Error: could not create fragment shader; shaders disbaled.\n" ENDFB(G);
-    }
-    return 0;
-  }    
 
   glShaderSource(I->fid, 1, (const GLchar **) &I->f, NULL);
   glCompileShader((GLuint) I->fid);

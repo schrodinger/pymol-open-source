@@ -4402,8 +4402,10 @@ void PyMOL_SetStereoCapable(CPyMOL * I, int stereoCapable){
     } else {
       SettingSet_i(I->G->Setting, cSetting_stereo_mode, 2);      /* otherwise crosseye by default */
     }
-    SceneUpdateStereo(I->G);
+  } else if (G->StereoCapable && SettingGetGlobal_b(G, cSetting_stereo)){
+    SettingSet_i(I->G->Setting, cSetting_stereo_mode, SettingGetGlobal_b(I->G, cSetting_stereo_mode));
   }
+  SceneUpdateStereo(I->G);
   PYMOL_API_UNLOCK
 }
 
