@@ -1159,6 +1159,8 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1)
   nEdge = (int) SettingGet(G, cSetting_stick_quality) * 2;
   if(nEdge > 50)
     nEdge = 50;
+  if(nEdge < 3)
+    nEdge = 3;
 
   subdivide(nEdge, x, y);
 
@@ -1304,6 +1306,8 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number)
   nEdge = (int) SettingGet(G, cSetting_stick_quality) * 2;
   if(nEdge > 50)
     nEdge = 50;
+  if(nEdge < 3)
+    nEdge = 3;
 
   subdivide(nEdge, x, y);
 
@@ -1479,6 +1483,7 @@ void EditorRender(PyMOLGlobals * G, int state)
   /*  int v_cnt; */
   ObjectMolecule *obj1 = NULL, *obj2 = NULL, *obj3 = NULL, *obj4 = NULL;
   int index1, index2, index3, index4;
+  int st, frozen;
 
   if(EditorActive(G)) {
 
@@ -1514,6 +1519,10 @@ void EditorRender(PyMOLGlobals * G, int state)
         vv = vp;
 
         if(obj1) {
+	  /* if the user froze a state, use it instead of the global */
+	  if(frozen = SettingGetIfDefined_i(obj1->Obj.G, obj1->Obj.Setting, cSetting_state, &st)) {
+	    state = st-1;
+	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj1, state, index1, vv)) {
             draw_globe(G, vv, 1);
             vv += 3;
@@ -1521,6 +1530,9 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj2) {
+	  if(frozen = SettingGetIfDefined_i(obj2->Obj.G, obj2->Obj.Setting, cSetting_state, &st)) {
+	    state = st-1;
+	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj2, state, index2, vv)) {
             draw_globe(G, vv, 2);
             vv += 3;
@@ -1528,6 +1540,9 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj3) {
+	  if(frozen = SettingGetIfDefined_i(obj3->Obj.G, obj3->Obj.Setting, cSetting_state, &st)) {
+	    state = st-1;
+	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj3, state, index3, vv)) {
             draw_globe(G, vv, 3);
             vv += 3;
@@ -1535,6 +1550,9 @@ void EditorRender(PyMOLGlobals * G, int state)
         }
 
         if(obj4) {
+	  if(frozen = SettingGetIfDefined_i(obj4->Obj.G, obj4->Obj.Setting, cSetting_state, &st)) {
+	    state = st-1;
+	  }
           if(ObjectMoleculeGetAtomTxfVertex(obj4, state, index4, vv)) {
             draw_globe(G, vv, 4);
             vv += 3;
@@ -1640,7 +1658,7 @@ void EditorActivate(PyMOLGlobals * G, int state, int enable_bond)
                                  sele1, sele2,
                                  sele3, sele4,
                                  cEditorBasePref, cEditorComp, &I->BondMode);
-
+    /* just returns 'state' */
     state = EditorGetEffectiveState(G, NULL, state);
     I->ActiveState = state;
 

@@ -174,7 +174,7 @@ struct _PyMOLGlobals {
 
 #ifdef _PYMOL_LIB
   void *CallbackObject;
-  void (*visibilityCallback)(void *, const char *, int );
+  void (*enabledCallback)(void *, const char *, int );
 #endif
 };
 

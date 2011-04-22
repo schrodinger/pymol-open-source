@@ -525,8 +525,8 @@ PyObject *ExecutiveAssignAtomTypes(PyMOLGlobals * G, char *s1, int format, int s
 PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB, int lenA, int lenB, int windowSize) ;
 
 #ifdef _PYMOL_LIB
-int *ExecutiveGetRepsGlobalForObject(PyMOLGlobals *G, const char *name);
-int *ExecutiveGetRepsObjectForObject(PyMOLGlobals *G, const char *name);
+int *ExecutiveGetRepsInSceneForObject(PyMOLGlobals *G, const char *name);
+int *ExecutiveGetRepsForObject(PyMOLGlobals *G, const char *name);
 #endif
 
 char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, char *name, int enabled_only, int *numstrs);

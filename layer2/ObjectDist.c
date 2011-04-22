@@ -571,8 +571,11 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
   float dist_sum = 0.0, dist;
   int dist_cnt = 0;
   int n_state1, n_state2, state1, state2;
+  int frozen1 = -1, frozen2 = -1;
   ObjectDist *I;
   
+  CObject * query_obj;
+
   /* if the distance name we presented exists and is an object, just
    * overwrite it by resetting it; otherwise intialize the
    * objectDistance and its base class */
@@ -583,28 +586,58 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
     if(reset)
       ObjectDistReset(G, I);
   }
+
   *result = 0.0;
+
   /* max number of states */
   mn = 0;
   SelectorUpdateTable(G, state, -1);
+
   /* here we determine the highest number of states with which we need to concern ourselves */
   n_state1 = SelectorGetSeleNCSet(G, sele1);
   n_state2 = SelectorGetSeleNCSet(G, sele2);
   /* take the larger state count */
   mn = (n_state2>n_state1) ? n_state2 : n_state1;
+
+  /* updated state handling */
+  /* determine the selected object */
+  if(sele1 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele1);
+  if(query_obj) {
+    frozen1 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state1);
+    state1--;
+  }
+
+  if(sele2 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele2);
+  if(query_obj) {
+    frozen2 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state2);
+    state2--;
+  }
+
   if(mn) {
+    /* loop over the max number of states */
     for(a = 0; a < mn; a++) {
 
-      /* set the current state */
+      /* the state param is valid, set it */
       if(state >= 0) {
-        if(state >= mn)
+        if(state >= mn)  /* bail */
           break;
-        a = state;
+        a = state;  /* otherwise, set a to state */
       }
 
+      PRINTFB(G, FB_ObjectDist, FB_Blather)
+	" ObjectDistNewFromSele: obj1 is frozen = %d into state %d+1\n", frozen1, state1 
+	ENDFD(G);
+      PRINTFB(G, FB_ObjectDist, FB_Blather) 
+	" ObjectDistNewFromSele: obj1 is frozen = %d into state %d+1\n", frozen2, state2 
+	ENDFD(G);
+
       VLACheck(I->DSet, DistSet *, a);
-      state1 = (n_state1>1) ? a : 0;
-      state2 = (n_state2>1) ? a : 0;
+      if(!frozen1)
+	state1 = (n_state1>1) ? a : 0;
+      if(!frozen2)
+	state2 = (n_state2>1) ? a : 0;
 
       /* this does the actual work of creating the distances for this state */
       /* I->DSet[a] = new DistSet(G, selections, states, etc) -- created this new DistSet */
@@ -619,7 +652,7 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
         I->NDSet = a + 1;
       }
 
-      if(state >= 0)
+      if(state >= 0 || (frozen1 && frozen2))
 	break;
     }
   }
@@ -644,6 +677,9 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int angle_cnt = 0;
   int n_state1, n_state2, n_state3, state1, state2, state3;
   ObjectDist *I;
+
+  int frozen1=-1, frozen2=-1, frozen3=-1;
+  CObject * query_obj;
 
   if(!oldObj)                   /* create object if new */
     I = ObjectDistNew(G);
@@ -670,6 +706,31 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
   if(n_state3 > mn)
     mn = n_state3;
 
+  /* updated state handling */
+  /* determine the selected object */
+  if(sele1 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele1);
+  if(query_obj) {
+    frozen1 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state1);
+    state1--;
+  }
+  /* updated state handling */
+  /* determine the selected object */
+  if(sele2 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele2);
+  if(query_obj) {
+    frozen2 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state2);
+    state2--;
+  }
+  /* updated state handling */
+  /* determine the selected object */
+  if(sele3 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele3);
+  if(query_obj) {
+    frozen3 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state3);
+    state3--;
+  }
+
   if(mn) {
     for(a = 0; a < mn; a++) {
       if(state >= 0) {
@@ -679,18 +740,23 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
       }
       /* treat selections with one state as static singletons */
 
-      if(n_state1 > 1)
-        state1 = a;
-      else
-        state1 = 0;
-      if(n_state2 > 1)
-        state2 = a;
-      else
-        state2 = 0;
-      if(n_state3 > 1)
-        state3 = a;
-      else
-        state3 = 0;
+      PRINTFB(G, FB_ObjectDist, FB_Blather)
+	" ObjectDistNewFromAngleSele: obj1 is frozen = %d into state %d+1\n", frozen1, state1 
+	ENDFD(G);
+      PRINTFB(G, FB_ObjectDist, FB_Blather) 
+	" ObjectDistNewFromAngleSele: obj2 is frozen = %d into state %d+1\n", frozen2, state2 
+	ENDFD(G);
+      PRINTFB(G, FB_ObjectDist, FB_Blather) 
+	" ObjectDistNewFromAngleSele: obj3 is frozen = %d into state %d+1\n", frozen3, state3
+	ENDFD(G);
+
+      VLACheck(I->DSet, DistSet *, a);
+      if(!frozen1)
+	state1 = (n_state1>1) ? a : 0;
+      if(!frozen2)
+	state2 = (n_state2>1) ? a : 0;
+      if(!frozen3)
+	state3 = (n_state3>1) ? a : 0;
 
       VLACheck(I->DSet, DistSet *, a);
       I->DSet[a] = SelectorGetAngleSet(G, I->DSet[a], sele1, state1, sele2,
@@ -702,7 +768,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
         if(I->NDSet <= a)
           I->NDSet = a + 1;
       }
-      if(state >= 0)
+      if(state >= 0 || (frozen1 && frozen2 && frozen3))
         break;
     }
   }
@@ -730,6 +796,9 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int angle_cnt = 0;
   int n_state1, n_state2, n_state3, n_state4, state1, state2, state3, state4;
   ObjectDist *I;
+
+  int frozen1=-1, frozen2=-1, frozen3=-1, frozen4=-1;
+  CObject * query_obj;
 
   if(!oldObj)                   /* create object if new */
     I = ObjectDistNew(G);
@@ -760,6 +829,39 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
   if(n_state4 > mn)
     mn = n_state4;
 
+  /* updated state handling */
+  /* determine the selected object */
+  if(sele1 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele1);
+  if(query_obj) {
+    frozen1 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state1);
+    state1--;
+  }
+  /* updated state handling */
+  /* determine the selected object */
+  if(sele2 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele2);
+  if(query_obj) {
+    frozen2 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state2);
+    state2--;
+  }
+  /* updated state handling */
+  /* determine the selected object */
+  if(sele3 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele3);
+  if(query_obj) {
+    frozen3 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state3);
+    state3--;
+  }
+  /* updated state handling */
+  /* determine the selected object */
+  if(sele4 >= 0)
+    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele4);
+  if(query_obj) {
+    frozen4 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state4);
+    state4--;
+  }
+
   if(mn) {
     for(a = 0; a < mn; a++) {
       if(state >= 0) {
@@ -769,22 +871,14 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
       }
       /* treat selections with one state as static singletons */
 
-      if(n_state1 > 1)
-        state1 = a;
-      else
-        state1 = 0;
-      if(n_state2 > 1)
-        state2 = a;
-      else
-        state2 = 0;
-      if(n_state3 > 1)
-        state3 = a;
-      else
-        state3 = 0;
-      if(n_state4 > 1)
-        state4 = a;
-      else
-        state4 = 0;
+      if(!frozen1)
+	state1 = (n_state1>1) ? a : 0;
+      if(!frozen2)
+	state2 = (n_state2>1) ? a : 0;
+      if(!frozen3)
+	state3 = (n_state3>1) ? a : 0;
+      if(!frozen4)
+	state4 = (n_state4>1) ? a : 0;
 
       VLACheck(I->DSet, DistSet *, a);
       I->DSet[a] = SelectorGetDihedralSet(G, I->DSet[a], sele1, state1, sele2,
@@ -797,7 +891,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
           I->NDSet = a + 1;
       }
 
-      if(state >= 0)
+      if(state >= 0 || (frozen1 && frozen2 && frozen3 && frozen4))
         break;
     }
   }

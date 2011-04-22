@@ -21,13 +21,6 @@ Z* -------------------------------------------------------------------
 
 #include<math.h>
 
-#if defined(_WIN32) || defined(_WIN64)
-#define fmax max
-#define fmin min
-#pragma warning (disable:4996)
-#define snprintf sprintf_s
-#endif
-
 #include"OOMac.h"
 #include"ObjectVolume.h"
 #include"Base.h"
@@ -904,6 +897,8 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   float d, sliceRange, sliceDelta;
   float origin[3];
   CShaderPrg * p;
+  float *fog_color;
+  float fog_enabled;
 
   /* bail if no shaders */
   if (G && !(CShaderMgr_ShadersPresent(G->ShaderMgr)))
@@ -956,7 +951,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
         if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
-            if(vs->RefreshFlag || vs->RecolorFlag || !pass) {
+            if(pass == -1) {
               int use_dlst;
 
 PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
@@ -1245,7 +1240,15 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                 CShaderPrg_Enable(p);
                 CShaderPrg_Set1i(p, "volumeTex", 0);
                 CShaderPrg_Set1i(p, "colorTex", 1);
-            	CShaderPrg_Set1f(p, "nSlices", volume_layers);
+              	CShaderPrg_Set1f(p, "nSlices", volume_layers);
+
+                fog_color = SettingGetfv(G, cSetting_bg_rgb);                
+                fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
+           
+                CShaderPrg_Set1f(p, "fog_r", fog_color[0]);
+                CShaderPrg_Set1f(p, "fog_g", fog_color[1]);
+                CShaderPrg_Set1f(p, "fog_b", fog_color[2]);
+                CShaderPrg_Set1f(p, "fog_enabled", fog_enabled);
 
                 glActiveTexture(GL_TEXTURE2);
                 glBindTexture(GL_TEXTURE_2D, vs->textures[2]);

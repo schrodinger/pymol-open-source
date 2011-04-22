@@ -55,6 +55,8 @@ Queue.c  \
 Queue.h  \
 Raw.c  \
 Raw.h  \
+Shader.c \
+Shader.h \
 Sphere.c  \
 SphereData.h  \
 Sphere.h  \

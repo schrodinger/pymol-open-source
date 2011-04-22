@@ -3810,7 +3810,9 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
   int flag;
   int order;
   AtomInfoType *ai1, *ai2;
+  /* Sulfur cutoff */
   float cutoff_s;
+  /* Hydrogen cutoff */
   float cutoff_h;
   float cutoff_v;
   float cutoff;
@@ -3844,7 +3846,12 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
   while(repeat) {
     repeat = false;
 
+    /* 
+     * BOND SEARCH MODE
+     */
     if(cs->NIndex && bondSearchMode) {  /* &&(!I->DiscreteFlag) WLD 010527 */
+      /* if there are atoms, and we need to search for bonds, instead of using
+       * (possibly) supplied CONECT records... */
 
       PRINTFB(G, FB_ObjectMolecule, FB_Blather)
         " ObjectMoleculeConnect: Searching for bonds amongst %d coordinates.\n",
@@ -3856,6 +3863,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
       }
 
       switch (connect_mode) {
+	/* DISTANCE BASED CONNECTIONS */
       case 0:                  /* distance-based and explicit (not HETATM to HETATM) */
       case 3:                  /* distance-based and explicit (even HETATM to HETATM) */
       case 2:                  /* distance-based only */  {
@@ -3864,6 +3872,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
           int *cnt = Alloc(int, cs->NIndex);
           int valcnt;
 
+	  /* initialize each atom's (max) expected valence */
           for(i = 0; i < cs->NIndex; i++) {
             valcnt = AtomInfoGetExpectedValence(G, ai + cs->IdxToAtm[i]);
             if(valcnt < 0)
@@ -3871,6 +3880,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
             cnt[i] = valcnt;
           }
 
+	  /* make a map of the local neighborhood in space */
           map = MapNew(G, max_cutoff + MAX_VDW, cs->Coord, cs->NIndex, NULL);
           if(map) {
             int dim12 = map->D1D2;
@@ -3879,22 +3889,27 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
             for(i = 0; i < cs->NIndex; i++) {
               if(nBond > maxBond)
                 break;
+	      /* atom i's position in space */
               v1 = cs->Coord + (3 * i);
 
               a1 = cs->IdxToAtm[i];
               ai1 = ai + a1;
 
               MapLocus(map, v1, &a, &b, &c);
+	      /* d = [a-1, a, a+1] */
               for(d = a - 1; d <= a + 1; d++) {
                 int *j_ptr1 = map->Head + d * dim12 + (b - 1) * dim2;
+		/* e = [b-1, b, b+1] */
                 for(e = b - 1; e <= b + 1; e++) {
                   int *j_ptr2 = j_ptr1 + c - 1;
                   j_ptr1 += dim2;
+		  /* f = [c-1, c, c+1] */
                   for(f = c - 1; f <= c + 1; f++) {
                     j = *(j_ptr2++);    /*  *MapFirst(map,d,e,f)); */
                     while(j >= 0) {
 
                       if(i < j) {
+			/* position in space for atom 2 */
                         v2 = cs->Coord + (3 * j);
                         dst = (float) diff3f(v1, v2);
 
@@ -3905,7 +3920,11 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
 
                         /* quick hack for water detection.  
                            they don't usually don't have CONECT records 
-                           and may not be HETATMs though they are supposed to be... */
+                           and may not be HETATMs though they are supposed to be... 
+
+			   This checks whether either atom in the bond
+			   is a known wter.
+			*/
 
                         water_flag = false;
                         if(AtomInfoKnownWaterResName(G, ai1->resn))
@@ -3949,11 +3968,17 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                            
                            ) {
                           
+			  /* WE THINK WE HAVE A BOND */
                           flag = true;
+
+			  /* unbond edge cases */
+
+			  /* atoms in same water molecule or different? */
                           if(water_flag)
                             if(!AtomInfoSameResidue(G, ai1, ai2)) /* don't connect water atoms in different residues */
                               flag = false;
-			  
+
+			  /* atoms have same alt. conformations? from same molecule? */
                           if(flag) {
                             if(ai1->alt[0] != ai2->alt[0]) {    /* handle alternate conformers */
                               if(ai1->alt[0] && ai2->alt[0])
@@ -3966,6 +3991,8 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                                                    alt conformations in 
                                                    different residues */
                           }
+			  
+			  /* do not bond different water molecules, even if their alt. confs. match */
                           if(flag) {
                             if(ai1->alt[0] || ai2->alt[0])
                               if(water_flag)    /* hack to clean up water bonds */
@@ -3973,6 +4000,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                                   flag = false;
                           }
 
+			  /* if either is a cation, unbond is user wants */
                           if(flag && unbond_cations) {
                             if(AtomInfoIsFreeCation(G, ai1))
                               flag = false;
@@ -3980,18 +4008,22 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                               flag = false;
                           }
 
+			  /* we have a bond, now process it */
                           if(flag) {
                             VLACheck((*bond), BondType, nBond);
                             (*bond)[nBond].index[0] = a1;
                             (*bond)[nBond].index[1] = a2;
                             (*bond)[nBond].stereo = 0;
                             order = 1;
+			    /* if we allow bonds between chains and it screws up the
+			     * bonding, disallow inter-chain bonds */
                             if(discrete_chains < 0) {   /* if we're allowing bonds between chains,
                                                            then make sure things don't get out of hand */
                               if(cnt[i] == -1)
                                 violations++;
                               if(cnt[j] == -1)
                                 violations++;
+			      /* decrement free valences, since we have a bond */
                               cnt[i]--;
                               cnt[j]--;
                               if(violations > (cs->NIndex >> 3)) {
@@ -4004,6 +4036,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                                 goto do_it_again;
                               }
                             }
+			    /* selenomethionine; double-bond the carbonyl if present */
                             if(ai1->hetatm && (!ai1->resn[3])) {        /* common HETATMs we should know about... */
                               switch (ai1->resn[0]) {
                               case 'M':
@@ -4011,6 +4044,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                                 case 'S':
                                   switch (ai1->resn[2]) {
                                   case 'E':
+				    /* if carbonyl in same residue, double bond it */
                                     if(((!ai1->name[1]) && (!ai2->name[1])) &&
                                        (((ai1->name[0] == 'C') && (ai2->name[0] == 'O'))
                                         || ((ai1->name[0] == 'O')
@@ -4027,7 +4061,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                               }
                             } else if((!ai1->hetatm)) {
                               if(AtomInfoSameResidue(I->Obj.G, ai1, ai2)) {
-                                /* Standard disconnected PDB residue */
+                                /* hookup standard disconnected PDB residue */
                                 assign_pdb_known_residue(G, ai1, ai2, &order);
                               }
                             }
@@ -4065,6 +4099,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
       nBond = 0;
     }
   }
+  /* if we have explicit connectivity, determine if we need to set check_conect_all */
   if(cs->NTmpBond && cs->TmpBond) {
     int check_conect_all = false;
     int pdb_conect_all = false;
@@ -4073,7 +4108,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
       nBond, cs->NTmpBond ENDFB(G);
     if((nBond == 0) && (cs->NTmpBond > 0) &&
        bondSearchMode && (connect_mode == 0) && cs->NIndex) {
-      /* if we were no bonds were found, and we have explicit connectivity,
+      /* if no bonds were found, and we have explicit connectivity,
        * try to determine if we need to set pdb_conect_mode */
       for(i = 0; i < cs->NIndex; i++) {
         a1 = cs->IdxToAtm[i];
@@ -4132,7 +4167,8 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
       }
     }
   }
-
+  
+  /* Link b/t ligand and residue? */
   if(cs->NTmpLinkBond && cs->TmpLinkBond) {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       "ObjectMoleculeConnect: incorporating linkage bonds. %d %d\n",
