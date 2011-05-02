@@ -322,13 +322,14 @@ Block *WizardGetBlock(PyMOLGlobals * G)
 int WizardDoPick(PyMOLGlobals * G, int bondFlag)
 {
   /**
-   * Run when user picks something in the wizard
+   * Run when user picks something
    */
 #ifdef _PYMOL_NOPY
   return 0;
 #else
   register CWizard *I = G->Wizard;
   int result = false;
+
   /* process the pick if it happened and we're listening for it */
   if(I->EventMask & cWizEventPick)
     if(I->Stack >= 0)

@@ -651,6 +651,7 @@ int ObjectGetCurrentState(CObject * I, int ignore_all_states)
   int state = -2;
   int objState;
 
+  /* Get the settings for this object; returns T/F and sets objState */
   if(SettingGetIfDefined_i(I->G, I->Setting, cSetting_state, &objState)) {
     if(objState > 0) {          /* a specific state */
       state = objState - 1;
@@ -659,6 +660,7 @@ int ObjectGetCurrentState(CObject * I, int ignore_all_states)
       state = -1;               /* all states */
     }
   }
+  /* if that setting didn't exist on the object, get global */
   if(state == -2) {             /* default -- use global state */
     state = SettingGetGlobal_i(I->G, cSetting_state) - 1;
   }

@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2011-05-02 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* fixed shader bug
+
+	* v1.4.1 release
+
 2011-04-20 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* finished the state counter

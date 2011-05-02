@@ -344,10 +344,10 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
         if(use_dlst && I->R.displayList) {
           glEndList();
         }
-	if (use_shader) {
-	  /*	  ShaderDisable(G);*/
-	  CShaderPrg_Disable(prg);
-	}
+      }
+      if (use_shader) {
+        /*      ShaderDisable(G);*/
+        CShaderPrg_Disable(prg);
       }
     }
   }

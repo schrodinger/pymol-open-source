@@ -1,8 +1,8 @@
 #ifndef _PyMOL_VERSION
 #ifndef PYMOL_EVAL
-#define _PyMOL_VERSION "1.4"
+#define _PyMOL_VERSION "1.4.1"
 #else
-#define _PyMOL_VERSION "1.4 eval"
+#define _PyMOL_VERSION "1.4.1 eval"
 #endif
 #endif
 
@@ -11,12 +11,12 @@
 #endif
 
 #ifndef _PyMOL_VERSION_double
-#define _PyMOL_VERSION_double 1.40
+#define _PyMOL_VERSION_double 1.41
 #endif
 
 
 /* for session file compatibility */
 
 #ifndef _PyMOL_VERSION_int
-#define _PyMOL_VERSION_int 140
+#define _PyMOL_VERSION_int 141
 #endif
