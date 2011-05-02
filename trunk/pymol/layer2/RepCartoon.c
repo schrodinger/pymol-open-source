@@ -57,6 +57,7 @@ void RepCartoonFree(RepCartoon * I)
 
 static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 {
+  float *fog_color, fog_enabled;
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   register PyMOLGlobals *G = I->R.G;
@@ -85,6 +86,12 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       if (use_shader) {
 	CShaderPrg_Enable(p);
 	/*	ShaderEnable(G); */
+        fog_color = SettingGetfv(G, cSetting_bg_rgb);
+        fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
+        CShaderPrg_Set1f(p, "fog_r", fog_color[0]);
+        CShaderPrg_Set1f(p, "fog_g", fog_color[1]);
+        CShaderPrg_Set1f(p, "fog_b", fog_color[2]);
+        CShaderPrg_Set1f(p, "fog_enabled", fog_enabled);
       }
 
       if(use_dlst && I->R.displayList) {
@@ -109,11 +116,10 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
         if(use_dlst && I->R.displayList) {
           glEndList();
         }
-
-	if (use_shader) {
-	  CShaderPrg_Disable(p);
-	  /*ShaderDisable(G);*/
-	}
+      }
+      if (use_shader) {
+        CShaderPrg_Disable(p);
+        /*ShaderDisable(G);*/
       }
     }
   }

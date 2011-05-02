@@ -3995,7 +3995,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_color(I, cSetting_volume_color, "-1");
     set_f(I, cSetting_volume_layers, 256);
     set_f(I, cSetting_volume_data_range, 5.0);
-    set_i(I, cSetting_auto_defer_atom_count, 1000);
+    set_i(I, cSetting_auto_defer_atom_count, 0);
     set_s(I, cSetting_default_refmac_names, "FWT PHWT DELFWT PHDELWT");
     set_s(I, cSetting_default_phenix_names, "2FOFCWT PH2FOFCWT FOFCWT PHFOFCWT");
     set_s(I, cSetting_default_phenix_no_fill_names, "2FOFCWT_no_fil PH2FOFCWT_no_fill None None");

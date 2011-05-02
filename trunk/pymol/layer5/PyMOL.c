@@ -2213,8 +2213,12 @@ PyMOLreturn_status PyMOL_CmdShow(CPyMOL * I, char *representation, char *selecti
   OVreturn_word rep_id;
   if(OVreturn_IS_OK((rep_id = get_rep_id(I, representation)))) {
     SelectorGetTmp(I->G, selection, s1);
-    ExecutiveSetRepVisib(I->G, s1, rep_id.word, true);
-    SelectorFreeTmp(I->G, s1);
+    if (!s1[0]){  /* This doesn't catch patterns that don't match, but everything else */
+      ok = false;
+    } else {
+      ExecutiveSetRepVisib(I->G, s1, rep_id.word, true);
+      SelectorFreeTmp(I->G, s1);
+    }
   } else {
     ok = false;
   }
@@ -2229,8 +2233,12 @@ PyMOLreturn_status PyMOL_CmdHide(CPyMOL * I, char *representation, char *selecti
   OVreturn_word rep_id;
   if(OVreturn_IS_OK((rep_id = get_rep_id(I, representation)))) {
     SelectorGetTmp(I->G, selection, s1);
-    ExecutiveSetRepVisib(I->G, s1, rep_id.word, false);
-    SelectorFreeTmp(I->G, s1);
+    if (!s1[0]){  /* This doesn't catch patterns that don't match, but everything else */
+      ok = false;
+    } else {
+      ExecutiveSetRepVisib(I->G, s1, rep_id.word, false);
+      SelectorFreeTmp(I->G, s1);
+    }
   } else {
     ok = false;
   }
@@ -4475,29 +4483,28 @@ PyMOLreturn_status PyMOL_CmdRock(CPyMOL * I, int mode){
 
 
 PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int enabled_only){
-  char *res;
+  char *res, *arg;
   int numstrs;
   long reslen, pl = 0;
   PyMOLreturn_string_array result = { PyMOLstatus_SUCCESS };
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
 
+  arg = s0;
   if (s0[0]){
-    res = ExecutiveGetObjectNames(G, mode, s0, enabled_only, &numstrs);
-  } else {
-    /* could have used "*", but still need to keep ExecutiveGetNames()
-       since CmdGetNames() uses it */
-    res = ExecutiveGetNames(G, mode, enabled_only, s0);
+    arg = "*";
   }
+
+  res = ExecutiveGetObjectNames(G, mode, s0, enabled_only, &numstrs);
+
   reslen = VLAGetSize(res);
-  result.size = numstrs;
   result.array = VLAlloc(char*, numstrs);
+  result.size = numstrs;
   numstrs = 0;
   for (pl=0; pl<reslen;){
     result.array[numstrs] = &res[pl];
     pl += strlen(res + pl) + 1;
     numstrs++;
   }
-
   PYMOL_API_UNLOCK 
   return (result);
 }

@@ -3840,6 +3840,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
       int i;
       SceneElem *elem = I->SceneVLA;
 
+      /* check & handle a click on the scrollbar */
       if(I->ScrollBarActive) {
         if((x - I->Block->rect.left) < (SceneScrollBarWidth + SceneScrollBarMargin)) {
           click_handled = true;
@@ -3859,7 +3860,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     }
 
     if(!click_handled) {
-
+      /* check for double click (within 0.35s and 10sq. pixels */
       if(((ButModeCheckPossibleSingleClick(G, button, mod) || (!mod))
           && ((when - I->LastClickTime) < cDoubleTime))) {
         int dx, dy;
@@ -3879,7 +3880,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           }
         }
       }
-    }
+    } /* end not click handled */
 
     if(ButModeCheckPossibleSingleClick(G, button, mod) || (!mod)) {
       I->PossibleSingleClick = 1;
@@ -3891,7 +3892,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
         I->PossibleSingleClick = 0;
       }
     }
-  }
+  } /* end not single-click */
 
   I->LastWinX = x;
   I->LastWinY = y;
@@ -4139,6 +4140,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
                  && SelectorIsMember(G,
                                      objMol->AtomInfo[I->LastPicked.src.index].selEntry,
                                      active_sele)) {
+		/* user clicked on a selected atom */
                 ObjectNameType name;
                 ExecutiveGetActiveSeleName(G, name, false,
                                            SettingGet(G, cSetting_logging));
@@ -4146,6 +4148,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
                                  I->LastWinX, I->LastWinY,
                                  is_single_click, "pick_sele", name, name);
               } else {
+		/* user clicked on an atom not in a selection */
                 ObjectMoleculeGetAtomSele((ObjectMolecule *) obj, I->LastPicked.src.index,
                                           buffer);
                 ObjectMoleculeGetAtomSeleLog((ObjectMolecule *) obj,
@@ -6452,6 +6455,7 @@ void SceneRay(PyMOLGlobals * G,
   CRay *ray = NULL;
   float height, width;
   float aspRat;
+  float volume_layers;
   float rayView[16];
   int curState;
   double timing;
@@ -7090,9 +7094,11 @@ void SceneRay(PyMOLGlobals * G,
   }
 
   /* EXPERIMENTAL VOLUME CODE */
-  if (rayVolume)
+  if (rayVolume) {
     SceneUpdate(G, true);
+  }
 }
+
 
 
 /*========================================================================*/
@@ -8660,7 +8666,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 /*** THIS IS AN UGLY EXPERIMENTAL 
  *** VOLUME + RAYTRACING COMPOSITION CODE 
  ***/
-if (rayVolume) {
+if (rayVolume && rayDepthPixels) {
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
@@ -8669,18 +8675,19 @@ if (rayVolume) {
   glPushMatrix();
   glLoadIdentity();
   glRasterPos3f(0, 0, -1);
-  /*  if (rayDepthPixels) */
-  /*    glDrawPixels(I->Width, I->Height, GL_DEPTH_COMPONENT, GL_FLOAT, rayDepthPixels); */
   glDepthMask(GL_FALSE);
-  if (I->Image && I->Image->data)
+  if (I->Image && I->Image->data) 
     glDrawPixels(I->Width, I->Height, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->data);
   glDepthMask(GL_TRUE);
-  glClear(GL_DEPTH_BUFFER_BIT);
+  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+  glDepthFunc(GL_ALWAYS);
+  glDrawPixels(I->Width, I->Height, GL_DEPTH_COMPONENT, GL_FLOAT, rayDepthPixels); 
+  glDepthFunc(GL_LESS);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glPopMatrix();
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
   glMatrixMode(GL_MODELVIEW);
-  I->CopyType = false;
   rayVolume--;
 }
 /*** END OF EXPERIMENTAL CODE ***/

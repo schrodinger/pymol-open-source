@@ -5313,7 +5313,7 @@ int rayVolume = 0;
 void RayRender(CRay * I, unsigned int *image, double timing,
                float angle, int antialias, unsigned int *return_bg)
 {
-  int a;
+  int a, x, y;
   unsigned int *image_copy = NULL;
   unsigned int back_mask, fore_mask = 0, trace_word = 0;
   unsigned int background, buffer_size;
@@ -6249,19 +6249,11 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   volume = (int) SettingGet(I->G, cSetting_ray_volume);
 
   if (volume) {
-    int x, y;
     for(y = 0; y < height; y++) {
       for(x = 0; x < width; x++) {
         float dd = depth[x+width*y];
-	/*
-//        dd = -dd/50.0;
-//        if (dd < 0.0) dd = 0.0;
-//        if (dd > 1.0) dd = 1.0;
-//        if (dd==0.0) dd = 1.0;
-//        unsigned char cc = (unsigned char)(dd * 255.0);
-//       image[x+width*y] = (255 << 24) | (cc << 16) | (cc << 8) | cc;
-*/
-        depth[x+width*y] = dd;
+        if (dd == 0.0) dd = -back;
+        depth[x+width*y] = -dd/(back-front) + 0.1;
       }
     }
     if (rayDepthPixels)
