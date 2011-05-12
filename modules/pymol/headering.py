@@ -1,8 +1,12 @@
 import os
+import re
 import sys
 import string
 import struct
 import pymol
+import math
+from xray import space_group_map
+
 
 if sys.byteorder == "big":
     MACH_ARCH_CODE_INT = 1
@@ -77,7 +81,7 @@ class baseHeader:
                         FCol = curFCol
                         PCol = curPCol
                         return (FCol, PCol, looksLike)
-            return [None]*3
+        return [None]*3
                             
         
 
@@ -321,14 +325,48 @@ class MTZHeader(baseHeader):
                         self.nprimop  = tokens[1]
                         self.lattice  = tokens[2]
                         self.groupnum = tokens[3]
+
+                        # try official MTZ format
+                        # first 10 chars are the space_group
+                        # from 10 on (6-chars) are the pt group
                         self.space_group = string.strip(tokens[4][:10],"'")
                         self.pt_group = string.strip(string.strip(tokens[4][10:],"'"))
+
+                        # valid format for MTZ space group?
+                        if self.space_group not in space_group_map.values():
+                            # invalid format; try to guess
+                            # SPCGP => S P C GP; maybe in the keys?
+                            if self.space_group in space_group_map:
+                                self.space_group = space_group_map[self.space_group]
+
+                        # new refmac; smarter parsing
+                        if self.space_group not in space_group_map.values():
+                            m = re.match("'(?P<spc_gp>.*)' +(?P<pt_gp>.*)", tokens[4])
+                            self.space_group, self.pt_group = m.group('spc_gp'), m.group('pt_gp')
+                            if self.space_group in space_group_map:
+                                self.space_group = space_group_map[self.space_group]
+
+                        # still?
+                        try:
+                            if self.space_group not in space_group_map.values():
+                                # eek, even worse (Buster); try to guess
+                                (self.space_group, self.pt_group) = string.split(tokens[4])
+                                self.space_group = string.strip(self.space_group,"'")
+                                self.pt_group = string.strip(self.pt_group,"'")
+
+                                if self.space_group in space_group_map:
+                                    self.space_group = space_group_map[self.space_group]
+                        except Exception as e:
+                            pass
+                        
                     elif field.startswith(H["SYMM"]):
                         tokens = string.split(tokens)
                         tokens = map(lambda x: string.strip(string.strip(x, ",")),tokens)
                         self.symm.append(tokens)
                     elif field.startswith(H["RESO"]):
                         self.reso_min, self.reso_max = string.split(tokens)
+                        self.reso_min = math.sqrt(1./float(self.reso_min))
+                        self.reso_max = math.sqrt(1./float(self.reso_max))
                     elif field.startswith(H["VALM"]):
                         self.missing_flag = tokens
                     elif field.startswith(H["COL"]):
