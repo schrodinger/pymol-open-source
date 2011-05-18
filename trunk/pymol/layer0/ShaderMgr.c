@@ -284,8 +284,8 @@ void getGLVersion(PyMOLGlobals * G, int *major, int* minor) {
   if ((verstr==NULL) || (sscanf(verstr,"%d.%d", major, minor) != 2)) {
     *major = *minor = 0;
     /* Use PyMOL FB system, instead of fprintf */
-    PRINTFD(G, FB_ObjectVolume)
-      "Invalid GL_VERSION format.\n" ENDFD(G);
+    PRINTFD(G, FB_ObjectVolume) 
+      "Invalid GL_VERSION format.\n" ENDFD;
   }
 }
 
@@ -320,7 +320,7 @@ void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
 
       if (G && G->Option && !G->Option->quiet) {
         PRINTFD(G, FB_ObjectVolume) 
-          "Invalid GL_SHADING_LANGUAGE_VERSION format.\n" ENDFD(G);
+          "Invalid GL_SHADING_LANGUAGE_VERSION format.\n" ENDFD;
       }
     }
   }
@@ -665,5 +665,4 @@ int CShaderPrg_Set1f(CShaderPrg * p, const char * name, float f)
   }
   return 1;
 }
-
 

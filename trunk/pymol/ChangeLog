@@ -2,9 +2,25 @@
 CHANGE LOG
 =========================================================================
 
+2011-05-02 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* fixed state bug in distances for (all)
+
+	* fixed ray trace bug when not using Python
+
+	* fixed nucleic acid residue naming (Thanks to Thomas Holder)
+
 2011-05-12 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* more robust space group/pt group reading from maps
+
+2011-05-02 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* fixed state bug in distances for (all)
+
+	* fixed ray trace bug when not using Python
+
+	* fixed nucleic acid residue naming (Thanks to Thomas Holder)
 
 2011-05-02 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 

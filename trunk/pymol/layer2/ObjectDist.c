@@ -574,7 +574,7 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int frozen1 = -1, frozen2 = -1;
   ObjectDist *I;
   
-  CObject * query_obj;
+  CObject * query_obj = NULL;
 
   /* if the distance name we presented exists and is an object, just
    * overwrite it by resetting it; otherwise intialize the
@@ -605,15 +605,23 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
     query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele1);
   if(query_obj) {
     frozen1 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state1);
-    state1--;
+    if(frozen1) {
+      state1--;
+    }
   }
 
   if(sele2 >= 0)
     query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele2);
   if(query_obj) {
     frozen2 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state2);
-    state2--;
+    if(frozen2) {
+      state2--;
+    }
   }
+  
+  /* FIX for incorrectly handling state=-1 for multi-molecule selections */
+  if(state1<0) state1=0;
+  if(state2<0) state2=0;
 
   if(mn) {
     /* loop over the max number of states */
@@ -628,10 +636,10 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
       PRINTFB(G, FB_ObjectDist, FB_Blather)
 	" ObjectDistNewFromSele: obj1 is frozen = %d into state %d+1\n", frozen1, state1 
-	ENDFD(G);
+	ENDFB(G);
       PRINTFB(G, FB_ObjectDist, FB_Blather) 
 	" ObjectDistNewFromSele: obj1 is frozen = %d into state %d+1\n", frozen2, state2 
-	ENDFD(G);
+	ENDFB(G);
 
       VLACheck(I->DSet, DistSet *, a);
       if(!frozen1)
