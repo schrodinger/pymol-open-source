@@ -5659,7 +5659,10 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       FreeP(thread_info);
     } else
 #endif
-    {                           /* serial execution */
+    { 
+#ifdef _PYMOL_NOPY
+      n_thread = 1;          /* serial execution */
+#endif
       BasisMakeMap(I->Basis + 1, I->Vert2Prim, I->Primitive, I->NPrimitive,
                    I->Volume, 0, cCache_ray_map, perspective, front, I->PrimSize);
       if(shadows) {
