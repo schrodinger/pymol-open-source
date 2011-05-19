@@ -16975,7 +16975,6 @@ static void ExecutiveDraw(Block * block)
         I->NSkip = (int) ScrollBarGetValue(I->ScrollBar);
       }
       I->ScrollBarActive = 1;
-
     } else {
       I->ScrollBarActive = 0;
       I->NSkip = 0;
@@ -17145,7 +17144,6 @@ static void ExecutiveDraw(Block * block)
 
 		/* drawing a group +/- NAME */
                 if(panel->is_group) {
-
                   if((rec->hilight == 2) && (I->Over == I->Pressed)) {
                     draw_button(x3, y2, 15, (ExecLineHeight - 1), lightEdge, darkEdge,
                                 pressedColor);
@@ -17235,6 +17233,7 @@ static void ExecutiveDraw(Block * block)
 
             if(c) {
               if(hidden_prefix) {
+		/* ^.name */
                 if(arrows && ((nChar--) > 0)) {
                   TextDrawChar(G, '^');
                   TextSetPos2i(G, x3 + 2, y2 + text_lift);
@@ -17257,7 +17256,6 @@ static void ExecutiveDraw(Block * block)
               if((nChar--) > 0) {
                 TextDrawChar(G, ')');
               }
-
               c = rec->name;
             }
 
@@ -17265,11 +17263,10 @@ static void ExecutiveDraw(Block * block)
             if(rec->type == cExecObject) {
               if(rec->obj->fGetCaption) {
 		/* get this object's "caption" that goes on its title line,
-		 * currently, this is "state-title [curState/nState]"
-		 */
-		c = ch;
-                rec->obj->fGetCaption(rec->obj, ch, WordLength);
+		 * currently, this is "state-title [curState/nState]" */
+                c = rec->obj->fGetCaption(rec->obj, ch, WordLength);
 	      }
+	      /* now print the caption */
               if(c && c[0] && nChar > 1 && strcmp(c, rec->obj->Name) != 0) {
                 TextSetColor(G, captionColor);
                 TextSetPos2i(G, x + 2 + 8 * (max_char - nChar), y2 + text_lift);
@@ -17288,7 +17285,10 @@ static void ExecutiveDraw(Block * block)
                   else
                     break;
               }
-	      c[0] = 0;
+	      /* I added this to fix a string clearing problem,
+	       * but it then caused an issue with groups. Interestingly,
+	       * removing this fixes the bug and no longer makes the other bug */
+	      /* c[0] = 0; */
             }
           }
 
