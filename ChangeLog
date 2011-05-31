@@ -3,6 +3,10 @@ CHANGE LOG
 =========================================================================
 
 2011-05-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* bugfix for drawing ribbons, drastically increases their rendering (3x+)
+
+2011-05-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 	
 	* fixed a bug where group names were clipped
 	
