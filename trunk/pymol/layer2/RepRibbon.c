@@ -208,7 +208,7 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 	      glColor4f( (v+1)[0], (v+1)[1], (v+1)[2], alpha);
               glVertex3fv(v + 4);
               first = false;
-            } else if((v[4] != v[-11]) || (v[5] != v[-10]) || (v[6] != v[-9])) {
+            } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
               glEnd();
               glBegin(GL_LINE_STRIP);
               /* glColor3fv(v + 1); */
