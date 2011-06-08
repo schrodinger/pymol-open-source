@@ -2,14 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2011-06-08 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* "fix" for colored sticks problem
+
+	* fixed File > Save Molecule using object's state
+
+	* fog/shading in shaders
+
 2011-05-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* bugfix for drawing ribbons, drastically increases their rendering (3x+)
 
 2011-05-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
-	
+
 	* fixed a bug where group names were clipped
-	
+
 2011-05-18 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* fixed state bug in distances for (all)

@@ -1,5 +1,6 @@
 varying vec3 N, L0, H0, L1, H1;
 varying vec4 D0, A0, D1, A1;
+varying float fog;
 void main()
 {
   N = normalize(gl_NormalMatrix * gl_Normal);
@@ -14,5 +15,7 @@ void main()
   D0 = gl_LightSource[0].diffuse * gl_Color;
   A1 = gl_LightSource[1].ambient * gl_Color;
   D1 = gl_LightSource[1].diffuse * gl_Color;
+  gl_FogFragCoord = -eye_pos.z;
+  fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;
   gl_Position = ftransform();
 }

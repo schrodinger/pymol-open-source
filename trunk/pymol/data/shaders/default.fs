@@ -1,5 +1,13 @@
 varying vec3 N, L0, H0, L1, H1;
 varying vec4 D0, A0, D1, A1;
+
+uniform float fog_r;
+uniform float fog_g;
+uniform float fog_b;
+uniform float fog_enabled;
+
+varying float fog;
+
 void main()
 {
   vec3 n, h;
@@ -21,5 +29,10 @@ void main()
       NdotH = max(dot(n, h), 0.0);
       color += gl_LightSource[1].specular * pow(NdotH, shininess);
   }
-  gl_FragColor = color;
+
+  vec3 fog_color = vec3(fog_r, fog_g, fog_b);
+  float cfog = mix(1.0, clamp(fog, 0.0, 1.0), fog_enabled);
+
+  gl_FragColor = vec4(mix(fog_color, color.rgb, cfog), color.a);
 }
+
