@@ -793,8 +793,11 @@ class Normal(PMGSkin):
                             save_sele = string.join(map(lambda x:"("+str(x)+")",sels)," or ")
                             self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
                                          "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
-			    if self.states_option.getvalue()=="all":
+                            if self.states_option.getvalue()=="all":
                                 self.cmd.save(sfile,"(%s)"%save_sele,state=0,quiet=0)
+                            elif self.states_option.getvalue() == "objects's current":
+                                st = self.cmd.get_state(save_sele)
+                                self.cmd.save(sfile,"(%s)"%save_sele,state=st,quiet=0)
 			    else:
                                 self.cmd.save(sfile,"(%s)"%save_sele,quiet=0)
                             return

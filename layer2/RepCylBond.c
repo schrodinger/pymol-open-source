@@ -201,9 +201,9 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
       int use_dlst;
       int use_shader = (int) SettingGet(G, cSetting_stick_use_shader) &
 	               (int) SettingGet(G, cSetting_use_shaders);
+      float vxCol[4];
       if (use_shader) {
-        /*	ShaderEnable(G);*/
-        CShaderPrg_Enable(prg);
+	CShaderPrg_Enable(prg);
         fog_color = SettingGetfv(G, cSetting_bg_rgb);
         fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
         CShaderPrg_Set1f(prg, "fog_r", fog_color[0]);
@@ -235,19 +235,22 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
         while(c--) {
           /* cylinder entry consists of a color, a fan,
              a cylinder, and another fan (if flagged) */
-
+	  vxCol[0] = v[0];
+	  vxCol[1] = v[1];
+	  vxCol[2] = v[2];
           if((alpha == 1.0) && (!var_alpha)) {
-            glColor3fv(v);
+	    vxCol[3] = 1.0F;
           } else if(var_alpha) {
-            glColor4f(v[0], v[1], v[2], *(var_alpha++));
+	    vxCol[3] = *(var_alpha++);
           } else {
-            glColor4f(v[0], v[1], v[2], alpha);
+	    vxCol[3] = alpha;
           }
           v += 3;
 
           glBegin(GL_TRIANGLE_STRIP);
           a = I->NEdge + 1;
           while(a--) {
+	    glColor4fv(vxCol);
             glNormal3fv(v);
             v += 3;
             glVertex3fv(v);
@@ -344,10 +347,10 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
         if(use_dlst && I->R.displayList) {
           glEndList();
         }
-      }
-      if (use_shader) {
-        /*      ShaderDisable(G);*/
-        CShaderPrg_Disable(prg);
+	if (use_shader) {
+	  /*	  ShaderDisable(G);*/
+	  CShaderPrg_Disable(prg);
+	}
       }
     }
   }
