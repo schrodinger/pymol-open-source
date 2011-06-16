@@ -6289,7 +6289,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
     }
   }
   if (warning1 || warning2){
-	  PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Warnings)
+         PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Blather)
 	    " ObjectMoleculeGuessValences(%d,%d): Unreasonable connectivity in heteroatom,\n  unsuccessful in guessing valences.\n", warning1, warning2
 	     ENDFB(I->Obj.G);
   }
