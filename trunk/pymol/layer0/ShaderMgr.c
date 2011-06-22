@@ -182,7 +182,7 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
   else {
     /* print info on glew error? */
     FeedbackAdd(G, " There was an error intializing GLEW.  Basic graphics, including\n shaders and volumes may be unavailable.\n");
-    fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));
+    /*fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));*/
     return;
   }
 
