@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Ray.h"
 #include"Setting.h"
+#include"os_gl.h"
 
 
 /* Compiled Graphics Library for simple graphics objects

@@ -14,7 +14,7 @@
    -*
    Z* -------------------------------------------------------------------
 */
-
+#include"os_python.h"
 #include "os_std.h"
 #include "os_gl.h"
 
@@ -64,6 +64,8 @@
 #include "PyMOLGlobals.h"
 #include "PyMOLOptions.h"
 #include "Feedback.h"
+
+#include "ShaderMgr.h"
 
 #ifndef _PYMOL_NOPY
 PyMOLGlobals *SingletonPyMOLGlobals = NULL;
@@ -2432,14 +2434,14 @@ PyMOLreturn_int PyMOL_CmdGetMovieLength(CPyMOL * I,int quiet)
 {
   int ok = true;
   PyMOLreturn_int result;
+  result.status = PyMOLstatus_FAILURE;
+  result.value = 0;
+
   PYMOL_API_LOCK
   if(ok) {
     result.value = MovieGetLength(I->G);
     result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-    result.value = 0;
-  }
+  };
   PYMOL_API_UNLOCK return result;
 }
 
@@ -4671,5 +4673,65 @@ static OVreturn_word get_mouse_mode(CPyMOL * I, char *mousemode)
     return result;
   return OVOneToOne_GetForward(I->MouseModeLexicon, result.word);
 }
+
+PyMOLreturn_status PyMOL_ZoomScene(CPyMOL * I, float scale){
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
+  PYMOL_API_LOCK  
+    SceneZoom(I->G, scale);
+  result.status =  PyMOLstatus_SUCCESS;
+  PYMOL_API_UNLOCK return result;
+}
+
+#include "palettes.h"
+
+static OVreturn_word get_palette(CPyMOL * I, char *palette)
+{
+  OVreturn_word result;
+  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, palette))))
+    return result;
+  return OVOneToOne_GetForward(I->PaletteLexicon, result.word);
+}
+
+PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, char *selection, float minimum, float maximum, int byres, int quiet){
+  PyMOLreturn_float_array result = { PyMOLstatus_FAILURE };
+  PYMOL_API_LOCK
+    int ok = true;
+  int digits, first, last, array_pl, ret;
+  float min_ret, max_ret;
+  char prefix[2];
+  OVreturn_word pal_word;
+  OrthoLineType s1;
+  ALLOCATE_ARRAY(char*, palette, strlen(pal)+1)
+    UtilNCopyToLower((char*)palette, pal, strlen(pal)+1);
+  
+  if(selection[0])
+    ok = (SelectorGetTmp(I->G, selection, s1) >= 0);
+  else
+    s1[0] = 0;
+
+  if (ok)
+    ok = OVreturn_IS_OK(pal_word = get_palette(I, (char*)palette));  
+  prefix[0] = palette_prefix[pal_word.word];
+  prefix[1] = 0;
+  array_pl = pal_word.word * 3;
+  digits = palette_data[array_pl++];
+  first = palette_data[array_pl++];
+  last = palette_data[array_pl++];
+
+  ret = ExecutiveSpectrum(I->G, s1, expression, minimum, maximum, first, last, prefix, digits, byres, quiet, &min_ret, &max_ret);
+
+  if (ret){
+    result.size = 2;
+    result.array = VLAlloc(float, 2);
+    result.array[0] = min_ret;
+
+
+    result.status = PyMOLstatus_SUCCESS;
+  } else {
+    result.status = PyMOLstatus_FAILURE;
+  }
+  PYMOL_API_UNLOCK return result;
+}
+
 
 #endif

@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -300,7 +301,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
       if (vs->textures[t]) {
         if(PIsGlutThread()) {
           if(vs->State.G->ValidContext) {
-            glDeleteTextures(1, &vs->textures[t]);
+            glDeleteTextures(1, (const GLuint *) &vs->textures[t]);
             vs->textures[t] = 0;
           }
         } else {
@@ -579,22 +580,13 @@ static void ObjectVolumeStateUpdateColors(ObjectVolume * I, ObjectVolumeState * 
 static void ObjectVolumeUpdate(ObjectVolume * I)
 {
   int a;
-  int c;
   ObjectVolumeState *vs;
   ObjectMapState *oms = NULL;
   ObjectMap *map = NULL;
 
-  int *n;
-  float *v;
   float carve_buffer;
   int avoid_flag = false;
-  int *old_n;
-  float *old_v;
-  int n_cur;
-  int n_seg;
-  int n_line;
   int flag;
-  int last_flag = 0;
   int h, k, l;
   int i, j;
   int ok = true;
@@ -868,19 +860,13 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->Obj.G;
   float *v = NULL;
-  float *vc;
-  int *rc;
-  float radius;
   int state = info->state;
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   int pass = info->pass;
   int *n = NULL;
-  int c;
   int a = 0;
-  float line_width = SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_width);
   ObjectVolumeState *vs = NULL;
-  register CScene *S = G->Scene;
   int volume_bit_depth =  (int) SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_bit_depth);
   float volume_layers =  SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_layers);
   /* make this a setting? */
@@ -975,7 +961,6 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
               }
 
               if (!vs->textures[0] || vs->RefreshFlag) {
-                int i;
 
 PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
   "ObjectVolumeRender-Msg: texture not inited or we need refresh.\n"
@@ -1029,11 +1014,11 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 32, 32, 0, GL_RGB, GL_UNSIGNED_BYTE, random_data);
 */
                 if (vs->textures[0]) {
-                  glDeleteTextures(1, &vs->textures[0]);
+                  glDeleteTextures(1, (const GLuint *) &vs->textures[0]);
                   vs->textures[0] = 0;
                 }
                 // Create a 3D texture
-                glGenTextures(1, &vs->textures[0]);
+                glGenTextures(1, (GLuint *) &vs->textures[0]);
                 glBindTexture(GL_TEXTURE_3D, vs->textures[0]);
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1058,7 +1043,7 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
   ENDFB(I->Obj.G); 
                 // Create a color map - this will be replaced by a proper Volume Ramp object
                 if (vs->textures[1]) {
-                  glDeleteTextures(1, &vs->textures[1]);
+                  glDeleteTextures(1, (const GLuint *) &vs->textures[1]);
                   vs->textures[1] = 0;
                 }
               }
@@ -1093,7 +1078,7 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
   "ObjectVolumeColor-Update: Using established color ramp.\n"
   ENDFB(I->Obj.G);  
             		}
-                glGenTextures(1, &vs->textures[1]);
+			  glGenTextures(1, (GLuint *) &vs->textures[1]);
                 glBindTexture(GL_TEXTURE_1D, vs->textures[1]);
                 glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1767,7 +1752,7 @@ PyObject * ObjectVolumeGetField(ObjectVolume * I)
   /* TODO: Allow for multi-state maps? */
   CField* F;
   int n_elem;
-  PyObject * result;
+  PyObject * result = NULL;
   ObjectVolumeState *ovs;
   int a;
 
@@ -1801,7 +1786,7 @@ PyObject * ObjectVolumeGetHistogram(ObjectVolume * I)
 #else
   /* TODO: Allow for multi-state maps? */
   int n_elem;
-  PyObject * result;
+  PyObject * result = NULL;
   ObjectVolumeState *ovs;
   int a;
 
@@ -1833,7 +1818,7 @@ PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
 #else
   /* TODO: Allow for multi-state maps? */
   int n_elem;
-  PyObject * result;
+  PyObject * result = NULL;
   ObjectVolumeState *ovs;
   int a;
 
@@ -1864,8 +1849,7 @@ PyObject * ObjectVolumeSetRamp(ObjectVolume * I, float *ramp_list, int list_size
   return NULL;
 #else
   /* TODO: Allow for multi-state maps? */
-  int n_elem;
-  PyObject * result;
+  PyObject * result = NULL;
   ObjectVolumeState *ovs;
   int a;
 
@@ -1900,7 +1884,7 @@ PyObject * ObjectVolumeGetIsUpdated(ObjectVolume * I)
   return NULL;
 #else
   /* TODO: Allow for multi-state maps? */
-  PyObject * result;
+  PyObject * result = NULL;
   ObjectVolumeState *ovs;
   int a;
   

@@ -17,7 +17,7 @@ Z* -------------------------------------------------------------------
 
 
 /* Module for internal C-level PyMOL tests...*/
-
+#include"os_python.h"
 #include"os_predef.h"
 #include"os_std.h"
 #include"Base.h"

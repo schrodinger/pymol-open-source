@@ -23,6 +23,7 @@ dependencies as one C library.  That means we need to explicitly call
 the initialization functions for these libraries on startup.
 
 */
+#include"os_python.h"
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -429,7 +430,7 @@ static void PLockAPIWhileBlocked(PyMOLGlobals * G);
 
 #define P_log_file_str "_log_file"
 
-#define xxxPYMOL_NEW_THREADS
+#define xxxPYMOL_NEW_THREADS 1
 
 unsigned int PyThread_get_thread_ident(void);   /* critical functionality */
 
@@ -2647,8 +2648,8 @@ void PBlock(PyMOLGlobals * G)
 {
 
   if(!PAutoBlock(G)) {
-    int *p = 0;
-    *p = 0;
+    // int *p = 0;
+    //  *p = 0;
     ErrFatal(G, "PBlock", "Threading error detected.  Terminating...");
   }
 }
@@ -2680,7 +2681,7 @@ int PAutoBlock(PyMOLGlobals * G)
       PyEval_AcquireLock();
 
       PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: restoring 0x%x\n", id ENDFD;
+        " PAutoBlock-DEBUG (NewThreads): restoring 0x%x\n", id ENDFD;
 
       PyThreadState_Swap((SavedThread + a)->state);
 

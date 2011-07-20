@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2011-07-20 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixed lots of warnings on build; cleaning up code
+
+2011-07-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Multi-model PDBs now write ENDMDL after models and END at end of file; thanks to Thomas Holder for the patch. 
+
+2011-06-23 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Code cleaning; reducing number of warnings
+
 2011-06-22 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Small state bugfix

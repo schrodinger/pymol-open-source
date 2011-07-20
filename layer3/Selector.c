@@ -13,7 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-
+#include"os_python.h"
 #include"os_predef.h"
 #include"os_std.h"
 
@@ -163,6 +163,8 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * o
                                             int no_dummies, int *idx,
                                             int n_idx, int numbered_tags);
 
+
+extern char convertStereoToChar(int stereo);
 
 static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offset)
 {
@@ -9094,6 +9096,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base)
   case SELE_TTYs:
     {
       CWordMatchOptions options;
+      int prevmodel;
 
       WordMatchOptionsConfigAlphaList(&options, wildcard[0], ignore_case);
 
@@ -9103,15 +9106,21 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base)
       if((matcher = WordMatcherNew(G, base[1].text, &options, true))) {
         char null_st[1] = "";
         char *st;
+	AtomInfoType * ai;
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
 
-#ifndef NO_MMLIBS
-	ObjectMoleculeUpdateAtomTypeInfo(G, i_obj[table_a->model]);	
-#endif
-
+	prevmodel = -1;
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
-          AtomInfoType *ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#ifndef NO_MMLIBS
+	  if (prevmodel!=table_a->model){  /* for now just check for previous model */
+	    ObjectMoleculeUpdateMMStereoInfo(G, i_obj[table_a->model]);	
+	    prevmodel = table_a->model;
+	  }
+#endif
+/* END PROPRIETARY CODE SEGMENT */
+          ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
           st = null_st;
           if(ai->textType) {
             if(!(st = OVLexicon_FetchCString(G->Lexicon, ai->textType)))
@@ -9154,6 +9163,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base)
   case SELE_STRO:
     {
       CWordMatchOptions options;
+      int prevmodel;
       char mmstereotype[2];
       mmstereotype[1] = 0;
       WordMatchOptionsConfigAlphaList(&options, wildcard[0], ignore_case);
@@ -9165,11 +9175,16 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base)
       if((matcher = WordMatcherNew(G, base[1].text, &options, true))) {
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
-
-#ifndef NO_MMLIBS
-	ObjectMoleculeUpdateMMStereoInfo(G, i_obj[table_a->model]);	
-#endif
+	prevmodel = -1;
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#ifndef NO_MMLIBS
+	  if (prevmodel!=table_a->model){  /* for now just check for previous model */
+	    ObjectMoleculeUpdateMMStereoInfo(G, i_obj[table_a->model]);	
+	    prevmodel = table_a->model;
+	  }
+#endif
+/* END PROPRIETARY CODE SEGMENT */
 	  mmstereotype[0] = convertStereoToChar(i_obj[table_a->model]->AtomInfo[table_a->atom].mmstereo);
           if((*base_0_sele_a =
               WordMatcherMatchAlpha(matcher,mmstereotype)))

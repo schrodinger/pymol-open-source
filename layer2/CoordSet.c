@@ -14,6 +14,8 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
+
 #include"os_predef.h"
 #include"os_std.h"
 

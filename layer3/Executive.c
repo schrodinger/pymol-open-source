@@ -14,7 +14,7 @@
    -*
    Z* -------------------------------------------------------------------
 */
-
+#include"os_python.h"
 #include"os_predef.h"
 #include"os_std.h"
 #include"os_gl.h"
@@ -4566,14 +4566,14 @@ PyObject* ExecutiveGetVolumeField(PyMOLGlobals * G, char* objName) {
   CObject *obj;
   PyObject* result = NULL;
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeField Entered.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeField Entered.\n" ENDFD;
 
   obj = ExecutiveFindObjectByName(G, objName);
   if(obj && obj->type==cObjectVolume) {
     result = ObjectVolumeGetField((ObjectVolume *) obj);
   }
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeField Exited.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeField Exited.\n" ENDFD;
 
   return result;
 
@@ -4587,14 +4587,14 @@ PyObject* ExecutiveGetVolumeHistogram(PyMOLGlobals * G, char* objName) {
   CObject *obj;
   PyObject* result = NULL;
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeHistogram Entered.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeHistogram Entered.\n" ENDFD;
 
   obj = ExecutiveFindObjectByName(G, objName);
   if(obj && obj->type==cObjectVolume) {
     result = ObjectVolumeGetHistogram((ObjectVolume *) obj);
   }
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeHistogram Exited.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeHistogram Exited.\n" ENDFD;
 
   return result;
 
@@ -4608,14 +4608,14 @@ PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, char* objName) {
   CObject *obj;
   PyObject* result = NULL;
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Entered.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Entered.\n" ENDFD;
 
   obj = ExecutiveFindObjectByName(G, objName);
   if(obj && obj->type==cObjectVolume) {
     result = ObjectVolumeGetRamp((ObjectVolume *) obj);
   }
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Exited.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeRamp Exited.\n" ENDFD;
 
   return result;
 
@@ -4629,14 +4629,14 @@ PyObject* ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName) {
   CObject *obj;
   PyObject* result = NULL;
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Entered.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Entered.\n" ENDFD;
 
   obj = ExecutiveFindObjectByName(G, objName);
   if(obj && obj->type==cObjectVolume) {
     result = ObjectVolumeGetIsUpdated((ObjectVolume *) obj);
   }
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Exited.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Exited.\n" ENDFD;
 
   return result;
 
@@ -4650,14 +4650,14 @@ PyObject* ExecutiveSetVolumeRamp(PyMOLGlobals * G, char* objName, float *ramp_li
   CObject *obj;
   PyObject* result = NULL;
 
-  PRINTFD(G, FB_Executive) "Executive-SetVolumeRamp Entered.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-SetVolumeRamp Entered.\n" ENDFD;
 
   obj = ExecutiveFindObjectByName(G, objName);
   if(obj && obj->type==cObjectVolume) {
     result = ObjectVolumeSetRamp((ObjectVolume *) obj, ramp_list, list_size);
   }
 
-  PRINTFD(G, FB_Executive) "Executive-SetVolumeRamp Exited.\n" ENDFD(G);
+  PRINTFD(G, FB_Executive) "Executive-SetVolumeRamp Exited.\n" ENDFD;
 
   return result;
 
@@ -8101,7 +8101,7 @@ int ExecutiveAlign(PyMOLGlobals * G, char *s1, char *s2, char *mat_file, float g
                                                       coord_wt, expect);
 	    } else {
 	      PRINTFB(G, FB_Executive, FB_Errors)
-		" ExecutiveAlign: No alignment found.\n", na, nb ENDFB(G);
+		" ExecutiveAlign: No alignment found.\n" ENDFB(G);
 	    }
 	  }
           if(ok)
@@ -10089,6 +10089,12 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, char *s1, int state, int conectFla
 
   if(state == -1) {             /* multimodel PDB */
     n_state = ExecutiveCountStates(G, s1);
+    sprintf(model_record, "NUMMDL    %-4d\n", n_state);
+    {
+      ov_size len = op1.i2;
+      UtilConcatVLA(&op1.charVLA, &len, model_record);
+      op1.i2 = len;
+    }
   }
 
   if(mode == 1) {
@@ -10134,14 +10140,6 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, char *s1, int state, int conectFla
         ExecutiveObjMolSeleOp(G, sele1, &op1);
       }
     }
-    if((!(SettingGetGlobal_i(G, cSetting_pdb_no_end_record)))
-       && !(pdb_info.is_pqr_file))
-      /* terminate with END */
-    {
-      ov_size len = op1.i2;
-      UtilConcatVLA(&op1.charVLA, &len, end_str);
-      op1.i2 = len;
-    }
     switch (state) {
     case -1:
       {
@@ -10151,6 +10149,15 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, char *s1, int state, int conectFla
       }
       break;
     }
+  }
+
+  if((!(SettingGetGlobal_i(G, cSetting_pdb_no_end_record)))
+     && !(pdb_info.is_pqr_file))
+    /* terminate with END */
+  {
+    ov_size len = op1.i2;
+    UtilConcatVLA(&op1.charVLA, &len, end_str);
+    op1.i2 = len;
   }
 
   /* terminate (just in case) */

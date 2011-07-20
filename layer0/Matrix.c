@@ -1,5 +1,3 @@
-
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -15,7 +13,7 @@ I* Additional authors of this source file include:
 -* Whoever wrote EISPACK
 Z* -------------------------------------------------------------------
 */
-
+#include"os_python.h"
 #include"os_predef.h"
 #include"os_std.h"
 

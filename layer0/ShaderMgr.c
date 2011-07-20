@@ -431,7 +431,7 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
   pymol_path = getenv("PYMOL_PATH");
   if (!pymol_path){
     PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-      " PyMOLShader_NewFromFile-Warning: PYMOL_PATH not set, cannot read shader config files from disk\n", fileName ENDFB(G);
+      " PyMOLShader_NewFromFile-Warning: PYMOL_PATH not set, cannot read shader config files from disk\n" ENDFB(G);
     return NULL;
   }
   /* make this a setting */
