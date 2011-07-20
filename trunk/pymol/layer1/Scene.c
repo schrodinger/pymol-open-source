@@ -13,6 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
 
 #include"os_predef.h"
 
@@ -6455,7 +6456,6 @@ void SceneRay(PyMOLGlobals * G,
   CRay *ray = NULL;
   float height, width;
   float aspRat;
-  float volume_layers;
   float rayView[16];
   int curState;
   double timing;

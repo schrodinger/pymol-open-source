@@ -14,7 +14,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-
+#include"os_python.h"
 #include "os_std.h"
 #include "MemoryDebug.h"
 #include "PlugIOManager.h"
@@ -155,7 +155,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
           " ObjectMolecule: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
       } else if (natoms!=obj->NAtom) {
 	PRINTFB(G, FB_Errors, FB_ObjectMolecule)
-          " ObjectMolecule: plugin '%s' cannot open file because the number of atoms in the object (%d) did not equal the number of atoms in the '%s' (%d) file.\n", plugin_type, obj->NAtom, plugin_type, natoms, fname ENDFB(G);
+          " ObjectMolecule: plugin '%s' cannot open file because the number of atoms in the object (%d) did not equal the number of atoms in the '%s' (%d) file.\n", plugin_type, obj->NAtom, plugin_type, natoms ENDFB(G);
       } else if(cs_tmpl) {
 	/* by this point, we have opened the DCD file, and we have a valid topology file (obj->CSet[0] exists) */
         CoordSet *cs = CoordSetCopy(cs_tmpl);
@@ -204,7 +204,8 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                   if(!obj->NCSet) zoom_flag = true;
 
 		  /* make sure we have room for 'frame' CoordSet*'s in obj->CSet */
-                  VLACheck(obj->CSet, CoordSet, frame); /* was CoordSet* */
+		  /* TODO: TEST this function */
+                  VLACheck(obj->CSet, CoordSet*, frame); /* was CoordSet* */
 		  /* bump the object's state count */
                   if(obj->NCSet <= frame) obj->NCSet = frame + 1;
 		  /* if there's data in this state's coordset, emtpy it */

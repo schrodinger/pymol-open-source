@@ -1,5 +1,3 @@
-
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -15,7 +13,6 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-
 #include"os_predef.h"
 #include"MemoryDebug.h"
 

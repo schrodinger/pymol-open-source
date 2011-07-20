@@ -52,7 +52,7 @@ cmd.set('mouse_selection_mode',0)
 
 # just show ribbon (means we can only select labelled C-alphas)
 
-cmd.as("cartoon") 
+cmd.show_as("cartoon") 
 
 # set up the labels
 

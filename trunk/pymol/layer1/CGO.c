@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -1728,6 +1729,16 @@ void CGORenderGL(CGO * I, float *color, CSetting * set1, CSetting * set2,
               break;
             }
           } else {              /* opaque */
+	    switch(op){
+	    case CGO_COLOR:
+	      /* Since CGO operations are done in sequence, alpha could happen 
+		 after color is set.  In this case, we still need to keep track of the color 
+		 in case there is a transparent object */
+	      c0 = pc;
+	      break;
+	    default:
+	      break;
+	    }
             CGO_gl[op] (R, pc);
           }
           pc += CGO_sz[op];

@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -3130,7 +3131,7 @@ int RayTraceThread(CRayThreadInfo * T)
   unsigned int edge_alpha_avg[4] = { 0, 0, 0, 0 };
   int edge_cnt = 0;
   float edge_base[2] = { 0.0F, 0.0F };
-  float interior_normal[3];
+  float interior_normal[3] = {0.0F, 0.0F, 0.0F};
   float edge_width = 0.35356F;
   float edge_height = 0.35356F;
   float trans_spec_cut, trans_spec_scale, trans_oblique, oblique_power;
@@ -5337,8 +5338,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   int height = I->Height;
   int trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
-  int volume, depth_x, depth_y;
-  float depth_value;
+  int volume;
 
   if(n_light > 10)
     n_light = 10;

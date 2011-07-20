@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
 
 #include"os_proprietary.h"
 
@@ -3979,7 +3980,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_i(I, cSetting_motion_hand, 1);
     set_b(I, cSetting_pdb_ignore_conect, 0);
     set_b(I, cSetting_editor_bond_cycle_mode, 1); /* >0 -> include aromatic */
-    set_b(I, cSetting_dynamic_measures, 0);
+    set_b(I, cSetting_dynamic_measures, 1);
     set_f(I, cSetting_neighbor_cutoff, 3.5F);
     set_f(I, cSetting_heavy_neighbor_cutoff, 3.5F);
     set_f(I, cSetting_polar_neighbor_cutoff, 3.5F);

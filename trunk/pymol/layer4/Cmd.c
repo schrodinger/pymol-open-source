@@ -42,9 +42,9 @@ Z* -------------------------------------------------------------------
  */
 
 #ifndef _PYMOL_NOPY
+#include"os_python.h"
 #include"PyMOLOptions.h"
 #include"os_predef.h"
-#include"os_python.h"
 #include"os_gl.h"
 #include"os_std.h"
 #include"Version.h"
@@ -102,6 +102,12 @@ static int run_only_once = true;
 #endif
 #endif
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#ifdef _MACPYMOL_XCODE
+extern int do_window(int code,int x,int y,int w, int h);
+#endif /* _MACPYMOL_XCODE */
+/* END PROPRIETARY CODE SEGMENT */
+
 int PyThread_get_thread_ident(void);
 
 #define API_SETUP_PYMOL_GLOBALS \
@@ -133,8 +139,6 @@ static void APIEnter(PyMOLGlobals * G)
 #ifdef WIN32
     abort();
 #endif
-
-
 /* END PROPRIETARY CODE SEGMENT */
     exit(0);
   }
@@ -1676,7 +1680,7 @@ static PyObject * CmdMapGenerate(PyObject * self, PyObject * args)
   int ok = false;
 
   char * name, * reflection_file, * tempFile, * amplitudes, * phases, * weights, *space_group;
-  const char * cResult;
+  const char * cResult = NULL;
   int  quiet, zoom;
   double reso_high, reso_low, cell[6];
 
@@ -4412,6 +4416,7 @@ static PyObject *CmdMem(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
+/* What is this for?  */
 static int decoy_input_hook(void)
 {
   return 0;

@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #define _H_View
 
 #include"os_python.h"
+#include"os_gl.h"
 
 #include"Ray.h"
 #include"Block.h"

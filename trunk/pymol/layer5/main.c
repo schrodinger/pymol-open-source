@@ -14,9 +14,9 @@
    -*
    Z* -------------------------------------------------------------------
 */
+#include "os_python.h"
 
 #include "os_predef.h"
-#include "os_python.h"
 
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */

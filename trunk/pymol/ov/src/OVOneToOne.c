@@ -82,9 +82,9 @@ void OVOneToOne_Dump(OVOneToOne * up)
         fprintf(stderr,
                 " OVOneToOne_Dump: Elements %d:    %d (->%d)    %d (->%d)\n",
                 (int) a + 1,
-                up->elem[a].forward_value,
+                (int) up->elem[a].forward_value,
                 (int) up->elem[a].forward_next,
-                up->elem[a].reverse_value, (int) up->elem[a].reverse_next);
+                (int) up->elem[a].reverse_value, (int) up->elem[a].reverse_next);
         empty = OV_FALSE;
       }
   }

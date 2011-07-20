@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -564,7 +565,7 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
 
 #ifdef _MACPYMOL_XCODE
       /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-      float busyValue;
+      float busyValue = 0.0F;
       if(I->BusyStatus[1]) {
         busyValue = (I->BusyStatus[0] * 1.0F / I->BusyStatus[1]);
       }

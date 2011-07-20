@@ -31,6 +31,7 @@
 //  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include"os_python.h"
 
 // include the template numerical toolkit
 #include "tnt/tnt.h"
@@ -54,7 +55,6 @@ extern "C" {
 
 #include"ce_types.h"
 #include"os_std.h"
-#include"os_python.h"
 #include <math.h>
 
 /////////////////////////////////////////////////////////////////////////////

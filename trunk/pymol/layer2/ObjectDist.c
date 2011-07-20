@@ -14,6 +14,8 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
+
 #include"os_predef.h"
 #include"os_std.h"
 
@@ -687,8 +689,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
   ObjectDist *I;
 
   int frozen1=-1, frozen2=-1, frozen3=-1;
-  CObject * query_obj;
-
+  CObject * query_obj = NULL;
   if(!oldObj)                   /* create object if new */
     I = ObjectDistNew(G);
   else {                        /* otherwise, use existing object */
@@ -750,13 +751,13 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
       PRINTFB(G, FB_ObjectDist, FB_Blather)
 	" ObjectDistNewFromAngleSele: obj1 is frozen = %d into state %d+1\n", frozen1, state1 
-	ENDFD(G);
+	ENDFD;
       PRINTFB(G, FB_ObjectDist, FB_Blather) 
 	" ObjectDistNewFromAngleSele: obj2 is frozen = %d into state %d+1\n", frozen2, state2 
-	ENDFD(G);
+	ENDFD;
       PRINTFB(G, FB_ObjectDist, FB_Blather) 
 	" ObjectDistNewFromAngleSele: obj3 is frozen = %d into state %d+1\n", frozen3, state3
-	ENDFD(G);
+	ENDFD;
 
       VLACheck(I->DSet, DistSet *, a);
       if(!frozen1)
@@ -806,7 +807,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
   ObjectDist *I;
 
   int frozen1=-1, frozen2=-1, frozen3=-1, frozen4=-1;
-  CObject * query_obj;
+  CObject * query_obj = NULL;
 
   if(!oldObj)                   /* create object if new */
     I = ObjectDistNew(G);
