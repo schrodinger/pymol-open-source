@@ -1,4 +1,5 @@
-from pymol.opengl.gl import *
+from OpenGL.GL import *
+from OpenGL.GL.ARB.vertex_buffer_object import *
 from pymol.callback import Callback
 from pymol import cmd
 

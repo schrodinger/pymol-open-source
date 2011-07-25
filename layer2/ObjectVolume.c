@@ -1463,6 +1463,7 @@ void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs)
   vs->Field = NULL;
   vs->textures[0] = 0;
   vs->textures[1] = 0;
+  vs->textures[2] = 0;
 //  vs->Histogram = NULL;
   vs->Histogram = (float*)calloc(sizeof(float), HISTOGRAM_SIZE+4);
   vs->isUpdated = false;

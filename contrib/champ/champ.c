@@ -13,6 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
 
 #include"os_std.h"
 #include"os_memory.h"
@@ -5000,8 +5001,7 @@ int ChampSmiToPat(CChamp *I,char *c)
     }
     if(sym==cSym_Null) {
       PRINTFB(FB_smiles_parsing,FB_errors)
-        " champ: error parsing smiles string at '%c' (char %d) in\n champ: '%s'\n",*c,c-orig_c,orig_c
-        
+        " champ: error parsing smiles string at '%c' (char %ld) in\n champ: '%s'\n",*c,c-orig_c,orig_c        
         ENDFB;
       ok=false;
     }
@@ -5202,8 +5202,3 @@ int ChampBondMatch(ListBond *p,ListBond *a)
           ((!p->not_class)||(!(p->not_class&a->class)))&&
           ((!p->not_cycle)||(!(p->not_cycle&a->cycle)))));
 }
-
-
-
-
-

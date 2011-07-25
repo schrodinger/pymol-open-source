@@ -121,7 +121,7 @@ elif sys.platform=='darwin':
                     ]
         ext_comp_args=[]
         ext_link_args=[
-	               "-L/usr/X11R6/lib", "-lGL", "-lXxf86vm",
+	               "-L/usr/X11R6/lib64", "-lGL", "-lXxf86vm",
                    "-L"+EXT+"/lib", "-lpng", "-lglut", "-lfreetype"
                    ]
 #============================================================================
@@ -141,7 +141,7 @@ else: # linux or other unix
           ]	
     pyogl_libs = ["GL","GLU","glut", "GLEW"]
     lib_dirs=[
-        "/usr/X11R6/lib",
+        "/usr/X11R6/lib64",
 #        "/users/warren/pymol/ext/lib"
         ]
     def_macros=[("_PYMOL_MODULE",None),

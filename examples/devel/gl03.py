@@ -1,11 +1,12 @@
-from pymol.opengl.gl import *
+from OpenGL.GL import *
+from OpenGL.GL.ARB.vertex_buffer_object import *
 from pymol.callback import Callback
 from pymol import cmd
 
 # this is an example of creating a callback object which
 # uses GL arrays.  Requires Numeric Python:
 
-from Numeric import *
+from numpy import *
 
 # define a callback object
 
@@ -13,8 +14,8 @@ class myCallback(Callback):
 
    def __init__(self,b):
 
-      self.vert = zeros([126,3],Float)
-      self.norm = zeros([126,3],Float)
+      self.vert = zeros([126,3],float)
+      self.norm = zeros([126,3],float)
 
       for a in range(0,63):
          x = a/10.0+b/10.0
@@ -37,8 +38,8 @@ class myCallback(Callback):
 
    def __call__(self):
       glColor3f(1.0,1.0,1.0)
-      glVertexPointer(3,0,self.vert)
-      glNormalPointer(3,0,self.norm)
+      glVertexPointer(3,GL_FLOAT, 0,self.vert)
+      glNormalPointer(GL_FLOAT,0,self.norm)
       
       glEnable(GL_VERTEX_ARRAY)
       glEnable(GL_NORMAL_ARRAY)

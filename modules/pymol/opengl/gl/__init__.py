@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jul 09, 2010 by -c
+
 import sys
 from pymol import opengl
 
@@ -13,7 +15,7 @@ function.  To reenable it, call the careful() function.
 """
 
 if opengl._numeric:
-    from Numeric import ArrayType
+    from numpy.oldnumeric import ArrayType
     try:
         import _opengl_num
         _opengl = _opengl_num

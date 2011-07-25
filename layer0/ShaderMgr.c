@@ -417,6 +417,7 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
   FILE* f;
   long size;
   char* buffer = NULL, *p, *pymol_path, *shader_path, *fullFile;
+  size_t res;
 
   PRINTFB(G, FB_ShaderMgr, FB_Debugging)
     "CShaderMgr_ReadShaderFromDisk: fileName='%s'\n", fileName
@@ -462,7 +463,11 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
   ErrChkPtr(G,buffer);
   p = buffer;
   fseek(f, 0, SEEK_SET);
-  fread(p, size, 1, f);
+  res = fread(p, size, 1, f);
+  /* error reading shader */
+  if(size!=res)
+    return NULL;
+
   p[size] = 0;
   fclose(f);
 

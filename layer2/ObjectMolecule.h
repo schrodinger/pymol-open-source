@@ -502,12 +502,12 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals * G, ObjectMolecule * obj
 
 #endif
 
+int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize, int format);
 #ifndef NO_MMLIBS
 int ObjectMoleculeToMMCT(PyMOLGlobals * G, ObjectMolecule * obj, int state, const char *component, const char *helpcmd);
 int MMStereoInfo(PyMOLGlobals * G, ObjectMolecule * obj, int state, int mmct, int write, int setparity);
 int initializeMMLibs();
 int ObjectMoleculeUpdateMMStereoInfo(PyMOLGlobals * G, ObjectMolecule * obj);
-int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize, int format);
 int ObjectMoleculeUpdateAtomTypeInfo(PyMOLGlobals * G, ObjectMolecule * obj);
 int MMSetAtomTypes(PyMOLGlobals *G, ObjectMolecule *obj, int state, int mmct, int force_type);
 #endif

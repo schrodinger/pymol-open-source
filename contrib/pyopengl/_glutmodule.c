@@ -1146,7 +1146,6 @@ static PyObject *glut_glutFullScreen(PyObject * _self, PyObject * _args)
 #if (GLUT_API_VERSION >= 4)
 static PyObject *glut_glutGameModeString(PyObject * _self, PyObject * _args)
 {
-    PyObject *_res = NULL;
     char *s;
     if (!PyArg_ParseTuple(_args, "s", &s))
 	return NULL;
@@ -1157,7 +1156,6 @@ static PyObject *glut_glutGameModeString(PyObject * _self, PyObject * _args)
 
 static PyObject *glut_glutEnterGameMode(PyObject * _self, PyObject * _args)
 {
-    PyObject *_res = NULL;
     if (!PyArg_ParseTuple(_args, ""))
 	return NULL;
     fprintf(stderr, "glutEnterGameMode()\n");
@@ -1168,7 +1166,6 @@ static PyObject *glut_glutEnterGameMode(PyObject * _self, PyObject * _args)
 
 static PyObject *glut_glutLeaveGameMode(PyObject * _self, PyObject * _args)
 {
-    PyObject *_res = NULL;
     if (!PyArg_ParseTuple(_args, ""))
 	return NULL;
     fprintf(stderr, "glutLeaveGameMode()\n");
