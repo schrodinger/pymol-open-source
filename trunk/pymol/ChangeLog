@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2011-07-25 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixing more warnings; opengl bindings work again; thanks to Jack
+	Haworth for the patch
+
 2011-07-20 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Fixed lots of warnings on build; cleaning up code

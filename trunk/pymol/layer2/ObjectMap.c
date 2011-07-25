@@ -4357,6 +4357,7 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, char *fname, int
   FILE *f = NULL;
   char *buffer, *p;
   long size;
+  size_t res;
 
   if(!is_string) {
 
@@ -4382,7 +4383,10 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, char *fname, int
       ErrChkPtr(G, buffer);
       p = buffer;
       fseek(f, 0, SEEK_SET);
-      fread(p, size, 1, f);
+      res = fread(p, size, 1, f);
+      /* error reading file */
+      if(size!=res)
+	return NULL;
       fclose(f);
     } else {
       buffer = fname;
@@ -4524,6 +4528,7 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, char *fname, int 
   FILE *f = NULL;
   long size;
   char *buffer, *p;
+  size_t res;
 
   if(!is_string) {
 
@@ -4549,7 +4554,10 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, char *fname, int 
       ErrChkPtr(G, buffer);
       p = buffer;
       fseek(f, 0, SEEK_SET);
-      fread(p, size, 1, f);
+      res = fread(p, size, 1, f);
+      /* error reading file */
+      if(size!=res)
+	return NULL;
       fclose(f);
     } else {
       buffer = fname;
@@ -4876,6 +4884,7 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, i
   long size;
   char *buffer, *p;
   float mat[9];
+  size_t res;
 
   f = fopen(fname, "rb");
   if(!f) {
@@ -4895,7 +4904,10 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, i
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(size!=res)
+      return NULL;
     fclose(f);
 
     I = ObjectMapReadDXStr(G, obj, buffer, size, state, quiet);
@@ -5120,7 +5132,8 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
   long size;
   char *buffer, *p;
   float mat[9];
-
+  size_t res;
+  
   f = fopen(fname, "rb");
   if(!f) {
     ok = ErrMessage(G, "ObjectMapLoadACNTFile", "Unable to open file!");
@@ -5139,7 +5152,9 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    if(size!=res)
+      return NULL;
     fclose(f);
 
     I = ObjectMapReadACNTStr(G, obj, buffer, size, state, quiet);
@@ -5170,6 +5185,7 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
   long size;
   char *buffer, *p;
   float mat[9];
+  size_t res;
 
   f = fopen(fname, "rb");
   if(!f)
@@ -5187,7 +5203,10 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(size!=res)
+      return NULL;
     fclose(f);
 
     I = ObjectMapReadFLDStr(G, obj, buffer, size, state, quiet);
@@ -5218,6 +5237,7 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
   long size;
   char *buffer, *p;
   float mat[9];
+  size_t res;
 
   f = fopen(fname, "rb");
   if(!f)
@@ -5235,7 +5255,11 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(size!=res)
+      return NULL;
+    
     p[size] = 0;
     fclose(f);
 
@@ -5268,6 +5292,7 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
   long size;
   char *buffer, *p;
   float mat[9];
+  size_t res;
 
   f = fopen(fname, "rb");
   if(!f)
@@ -5285,7 +5310,10 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(res!=size)
+      return NULL;
     p[size] = 0;
     fclose(f);
 
@@ -5317,6 +5345,7 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, char *fname,
   FILE *f = NULL;
   long size;
   char *buffer, *p;
+  size_t res;
 
   if(is_file) {
     f = fopen(fname, "rb");
@@ -5341,7 +5370,10 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, char *fname,
       ErrChkPtr(G, buffer);
       p = buffer;
       fseek(f, 0, SEEK_SET);
-      fread(p, size, 1, f);
+      res = fread(p, size, 1, f);
+      /* error reading file */
+      if(size!=res)
+	return NULL;
       p[size] = 0;
       fclose(f);
     } else {

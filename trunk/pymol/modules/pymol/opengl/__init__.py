@@ -1,7 +1,9 @@
+## Automatically adapted for numpy.oldnumeric Jul 09, 2010 by -c
+
 # PyOpenGL: modified for usage inside of PyMOL
 
 try:
-    import multiarray
+    import numpy.oldnumeric as multiarray
     _numeric = 1
 except ImportError:
     _numeric = 0

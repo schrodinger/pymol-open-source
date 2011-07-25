@@ -1162,7 +1162,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
         }
       } else {
         PRINTFB(G, FB_Errors, FB_ObjectMolecule)
-          " ObjMolLoadTRJFile-Error: Failed to read an expected coordinate value.\n    This trajectory does not match the loaded parameter/topology file.\n    Likely cause: either the atom count or the periodic box settings\n    are inconsistent between the two files.\n"
+          " ObjMolLoadTRJFile-Error: Failed to read expected coordinate value.\n  This traj. does not match the loaded parameter/topology file.\n  Likely cause: either the atom count or the periodic box settings\n  are inconsistent between the two files.\n"
           ENDFB(G);
         break;
       }
@@ -1194,6 +1194,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
   int zoom_flag = false;
   CoordSet *cs = NULL;
   int size;
+  size_t res;
 
 #define BUFSIZE 4194304
 #define GETTING_LOW 10000
@@ -1219,7 +1220,10 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(size!=res)
+      return NULL;
     p[size] = 0;
     fclose(f);
 
@@ -2318,6 +2322,7 @@ ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj
   FILE *f;
   long size;
   char *buffer, *p;
+  size_t res;
 
   f = fopen(fname, "rb");
   if(!f)
@@ -2334,7 +2339,10 @@ ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(size!=res)
+      return NULL;
     p[size] = 0;
     fclose(f);
 
@@ -2771,6 +2779,8 @@ int ObjectMoleculeMultiSave(ObjectMolecule * I, char *fname, FILE * f, int state
 {
   CRaw *raw = NULL;
   int ok = true;
+  size_t res;
+
   PRINTFD(I->Obj.G, FB_ObjectMolecule)
     " ObjectMoleculeMultiSave-Debug: entered  state=%d\n", state ENDFD;
   switch (format) {
@@ -2782,7 +2792,12 @@ int ObjectMoleculeMultiSave(ObjectMolecule * I, char *fname, FILE * f, int state
           char *pdb = ExecutiveSeleToPDBStr(I->Obj.G, I->Obj.Name,
                                             state, true, 0, NULL, 0, I, quiet);
           if(pdb) {
-            fwrite(pdb, strlen(pdb), 1, f);
+            res = fwrite(pdb, strlen(pdb), 1, f);
+	    if(strlen(pdb)!=res) {
+	      PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Errors)
+		" Multisave: Error writing to file '%s'.\n", fname ENDFB(I->Obj.G);
+	      ok = false;
+	    }
             if(!quiet) {
               PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Actions)
                 " Multisave: wrote object '%s'.\n", I->Obj.Name ENDFB(I->Obj.G);
@@ -3658,6 +3673,7 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals * G, ObjectMolecule * obj
   FILE *f;
   long size;
   char *buffer, *p;
+  size_t res;
 
   f = fopen(fname, "rb");
   if(!f)
@@ -3674,7 +3690,10 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals * G, ObjectMolecule * obj
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(size!=res)
+      return NULL;
     p[size] = 0;
     fclose(f);
 
@@ -9715,7 +9734,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals * G, ObjectMolecule * obj
   FILE *f;
   long size;
   char *buffer, *p;
-
+  size_t res;
   f = fopen(fname, "rb");
   if(!f) {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
@@ -9733,7 +9752,11 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals * G, ObjectMolecule * obj
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f)
+    /* error reading file */
+    if(size!=res)
+      return NULL;
+
     p[size] = 0;
     fclose(f);
 
@@ -12619,6 +12642,8 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals * G, ObjectMolecule * obj
   char *buffer, *p;
   char cc[MAXLINELEN], oName[WordLength];
   int nLines;
+  size_t res;
+
   f = fopen(fname, "rb");
   if(!f)
     ok = ErrMessage(G, "ObjectMoleculeLoadMMDFile", "Unable to open file!");
@@ -12632,7 +12657,11 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals * G, ObjectMolecule * obj
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(size!=res)
+      return NULL;
+
     p[size] = 0;
     fclose(f);
     p = buffer;
@@ -13337,6 +13366,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals * G, ObjectMolecule * obj
   FILE *f;
   long size;
   char *buffer, *p;
+  size_t res;
 
   f = fopen(fname, "rb");
   if(!f)
@@ -13353,7 +13383,11 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals * G, ObjectMolecule * obj
     ErrChkPtr(G, buffer);
     p = buffer;
     fseek(f, 0, SEEK_SET);
-    fread(p, size, 1, f);
+    res = fread(p, size, 1, f);
+    /* error reading file */
+    if(size!=res)
+      return NULL;
+    
     p[size] = 0;
     fclose(f);
     I = ObjectMoleculeReadMOLStr(G, obj, buffer, frame, discrete, true);

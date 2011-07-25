@@ -13,10 +13,11 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_python.h"
 
 #include"os_std.h"
 #include"os_memory.h"
-#include"os_python.h"
+
 #include"const.h"
 #include"champ.h"
 #include"list.h"

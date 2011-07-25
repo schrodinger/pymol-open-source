@@ -3430,6 +3430,7 @@ void ExecutiveLoadMOL2(PyMOLGlobals * G, CObject * origObj, char *fname,
   char *next_entry = NULL;
   int repeat_flag = true;
   int n_processed = 0;
+  size_t res;
 
   if(is_string) {
     buffer = fname;
@@ -3452,7 +3453,9 @@ void ExecutiveLoadMOL2(PyMOLGlobals * G, CObject * origObj, char *fname,
       ErrChkPtr(G, buffer);
       p = buffer;
       fseek(f, 0, SEEK_SET);
-      fread(p, size, 1, f);
+      res = fread(p, size, 1, f);
+      if(size!=res)
+	ok = false;
       p[size] = 0;
       fclose(f);
     }
@@ -3644,6 +3647,7 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
       char *next_entry = NULL;
       int repeat_flag = true;
       int n_processed = 0;
+      size_t res;
 
       if(is_string) {
         buffer = content;
@@ -3668,7 +3672,9 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
           ErrChkPtr(G, buffer);
           p = buffer;
           fseek(f, 0, SEEK_SET);
-          fread(p, size, 1, f);
+          res = fread(p, size, 1, f);
+	  if(size!=res)
+	    ok = false;
           p[size] = 0;
           fclose(f);
         }
@@ -3930,6 +3936,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
   PDBInfoRec pdb_info_rec;
   int model_number;
   CObject *deferred_zoom_obj = NULL;
+  size_t res;
 
   if(!pdb_info) {
     UtilZeroMem(&pdb_info_rec, sizeof(PDBInfoRec));
@@ -3957,7 +3964,9 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
       ErrChkPtr(G, buffer);
       p = buffer;
       fseek(f, 0, SEEK_SET);
-      fread(p, size, 1, f);
+      res = fread(p, size, 1, f);
+      if(size!=res)
+	ok = false;
       p[size] = 0;
       fclose(f);
     }
