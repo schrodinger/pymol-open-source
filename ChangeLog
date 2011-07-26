@@ -4,6 +4,10 @@ CHANGE LOG
 
 2011-07-26 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* one more fread
+
+2011-07-26 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* Fixing bugs introduced by last commit for freads; and fixed another importing bug
 
 2011-07-25 Jason Vertrees <Jason.Vertrees@schrodinger.com>

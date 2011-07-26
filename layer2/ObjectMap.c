@@ -5312,7 +5312,7 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(1!=size)
+    if(1!=res)
       return NULL;
     p[size] = 0;
     fclose(f);
