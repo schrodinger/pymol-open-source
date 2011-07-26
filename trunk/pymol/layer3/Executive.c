@@ -3454,7 +3454,7 @@ void ExecutiveLoadMOL2(PyMOLGlobals * G, CObject * origObj, char *fname,
       p = buffer;
       fseek(f, 0, SEEK_SET);
       res = fread(p, size, 1, f);
-      if(size!=res)
+      if(1!=res)
 	ok = false;
       p[size] = 0;
       fclose(f);
@@ -3673,7 +3673,7 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
           p = buffer;
           fseek(f, 0, SEEK_SET);
           res = fread(p, size, 1, f);
-	  if(size!=res)
+	  if(1!=res)
 	    ok = false;
           p[size] = 0;
           fclose(f);
@@ -3965,7 +3965,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
       p = buffer;
       fseek(f, 0, SEEK_SET);
       res = fread(p, size, 1, f);
-      if(size!=res)
+      if(1!=res)
 	ok = false;
       p[size] = 0;
       fclose(f);

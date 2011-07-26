@@ -4385,7 +4385,7 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, char *fname, int
       fseek(f, 0, SEEK_SET);
       res = fread(p, size, 1, f);
       /* error reading file */
-      if(size!=res)
+      if(1!=res)
 	return NULL;
       fclose(f);
     } else {
@@ -4556,7 +4556,7 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, char *fname, int 
       fseek(f, 0, SEEK_SET);
       res = fread(p, size, 1, f);
       /* error reading file */
-      if(size!=res)
+      if(1!=res)
 	return NULL;
       fclose(f);
     } else {
@@ -4906,7 +4906,7 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, i
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
     fclose(f);
 
@@ -5153,7 +5153,7 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
     p = buffer;
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
-    if(size!=res)
+    if(1!=res)
       return NULL;
     fclose(f);
 
@@ -5205,7 +5205,7 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
     fclose(f);
 
@@ -5257,7 +5257,7 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
     
     p[size] = 0;
@@ -5312,7 +5312,7 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(res!=size)
+    if(1!=size)
       return NULL;
     p[size] = 0;
     fclose(f);
@@ -5372,7 +5372,7 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, char *fname,
       fseek(f, 0, SEEK_SET);
       res = fread(p, size, 1, f);
       /* error reading file */
-      if(size!=res)
+      if(1!=res)
 	return NULL;
       p[size] = 0;
       fclose(f);

@@ -265,6 +265,7 @@ int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
   int a;
   int n_entry;
   unsigned int size;
+  size_t res;
 
   if(fname && fname[0]
 #ifdef _PYMOL_NOPY
@@ -286,7 +287,9 @@ int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
       ErrChkPtr(G, buffer);
       p = buffer;
       fseek(f, 0, SEEK_SET);
-      fread(p, size, 1, f);
+      res = fread(p, size, 1, f);
+      if(1!=res) 
+	return NULL;
       p[size] = 0;
       fclose(f);
     }

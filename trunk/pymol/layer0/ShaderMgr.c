@@ -465,8 +465,10 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
   fseek(f, 0, SEEK_SET);
   res = fread(p, size, 1, f);
   /* error reading shader */
-  if(size!=res)
+  if(1!=res) {
+    printf("size(%d)!=res(%d)\n", size,res);
     return NULL;
+  }
 
   p[size] = 0;
   fclose(f);

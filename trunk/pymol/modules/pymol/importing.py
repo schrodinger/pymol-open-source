@@ -1261,7 +1261,7 @@ PYMOL API
             typeExt = '.sf'
         elif re.search("^pdb\d+$", type) != None:
             bioType = 'bio'
-            typeExt = re.search("^pdb\d+$", type).group()
+            typeExt = "." + re.search("^pdb\d+$", type).group()
 
         # worldwide servers
         fetchHosts = {  "pdb"  : "ftp://ftp.wwpdb.org/pub/pdb/",
@@ -1288,13 +1288,13 @@ PYMOL API
 
         # portion of the link after the code
         hostPost = { "pdb" : { "pdb" : ".ent.gz",
-                               "bio" : "."+typeExt+".gz",
+                               "bio" : typeExt+".gz",
                                "cif" : "sf.ent.gz" },
                      "pdbe": { "pdb" : ".ent.gz",
-                               "bio" : "."+typeExt+".gz",
+                               "bio" : typeExt+".gz",
                                "cif" : "sf.ent.gz" },
                      "pdbj": { "pdb" : ".ent.gz",
-                               "bio" : "."+typeExt+".gz",
+                               "bio" : typeExt+".gz",
                                "cif" : "sf.ent.gz" }
                    }
 
