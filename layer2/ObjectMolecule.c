@@ -1222,7 +1222,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
     p[size] = 0;
     fclose(f);
@@ -2341,7 +2341,7 @@ ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
     p[size] = 0;
     fclose(f);
@@ -2793,7 +2793,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule * I, char *fname, FILE * f, int state
                                             state, true, 0, NULL, 0, I, quiet);
           if(pdb) {
             res = fwrite(pdb, strlen(pdb), 1, f);
-	    if(strlen(pdb)!=res) {
+	    if(1!=res) {
 	      PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Errors)
 		" Multisave: Error writing to file '%s'.\n", fname ENDFB(I->Obj.G);
 	      ok = false;
@@ -3692,7 +3692,7 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals * G, ObjectMolecule * obj
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
     p[size] = 0;
     fclose(f);
@@ -9754,7 +9754,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals * G, ObjectMolecule * obj
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f)
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
 
     p[size] = 0;
@@ -12659,7 +12659,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals * G, ObjectMolecule * obj
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
 
     p[size] = 0;
@@ -13385,7 +13385,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals * G, ObjectMolecule * obj
     fseek(f, 0, SEEK_SET);
     res = fread(p, size, 1, f);
     /* error reading file */
-    if(size!=res)
+    if(1!=res)
       return NULL;
     
     p[size] = 0;

@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2011-07-26 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixing bugs introduced by last commit for freads; and fixed another importing bug
+
 2011-07-25 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Fixing more warnings; opengl bindings work again; thanks to Jack
