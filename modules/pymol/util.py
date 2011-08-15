@@ -502,7 +502,7 @@ def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
     Color all chains a different color
     '''
     if int(legacy):
-        c = first_color
+        c = int(first_color)
         for a in cmd.get_chains(selection):
             if len(string.strip(a)):
                 if not quiet: print (" util.cbc: color %d,(chain %s)"%(c,a))

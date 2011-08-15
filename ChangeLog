@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2011-08-15 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixed a conversion bug in util.cbc; thanks Hongbo.
+	
 2011-07-26 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* one more fread
