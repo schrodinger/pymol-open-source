@@ -175,6 +175,56 @@ def sum_partial_charges(selection="(all)",quiet=1,_self=cmd):
         print " util.sum_partial_charges: sum = %0.4f"%result
     return result
 
+def compute_mass(selection="(all)",state=-1,implicit=False,quiet=1,_self=cmd):
+    """
+DESCRIPTION
+
+    "compute_mass" calculates the atomic mass of a selection
+    (in atomic mass units).
+	
+USAGE
+
+    compute_mass [ selection [, state [, implicit [, quiet ]]]]
+
+ARGUMENTS
+
+   selection = selection, defaults to '(all)'
+
+   state = object state, defaults to current state for each given 
+           object. See notes.
+
+   implicit = if false then only calculate masses exactly as
+              in the objects; if true, then add hydrogens were
+	      possible before calculating mass
+
+EXAMPLES
+
+  print util.compute_mass("all")
+
+  m = util.compute_mass("organic",state=4,implicit=True)
+
+NOTES
+
+  If the state argument is specified and an object does not exist
+  in that state, the 0 atoms will be counted for that object,
+  thus resulting in a zero mass for that object.
+
+  """
+    result = 0.0
+    for obj in _self.get_object_list(selection):
+        if state==-1:
+            state = _self.get("state",obj)
+	m = _self.get_model(selection + " and " + obj,state)
+	if len(m.atom)==0:
+            print " Warning: No atoms in state %d for object %s" % (state,obj)
+	if implicit!=False:
+	    result += m.get_implicit_mass()
+	else:
+	    result += m.get_mass()
+    if not quiet:
+        print " util.compute_mass: mass = %0.4f u"%result
+    return result
+    
 def protein_assign_charges_and_radii(obj_name,_self=cmd):
     pymol=_self._pymol
     cmd=_self

@@ -8571,6 +8571,12 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
           pick->context.object = NULL;
         }
 
+	/* Picking changes the Shading model to GL_FLAT,
+	 * we need to change it back to GL_SMOOTH. This is because
+	 * bg_grad() might be called in OrthoDoDraw() before GL 
+	 * settings are set in SceneRender() */
+	glShadeModel(GL_SMOOTH);
+
         VLAFree(pickVLA);
       } else if(smp) {
 
@@ -8650,6 +8656,12 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
         }
 
         smp->picked[0].src.index = nPick;
+
+	/* Picking changes the Shading model to GL_FLAT,
+	 * we need to change it back to GL_SMOOTH. This is because
+	 * bg_grad() might be called in OrthoDoDraw() before GL 
+	 * settings are set in SceneRender() */
+	glShadeModel(GL_SMOOTH);
 
         VLAFree(pickVLA);
         VLAFreeP(lowBitVLA);
