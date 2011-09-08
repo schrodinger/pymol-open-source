@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2011-09-08 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Added A > Generate > Selection > polar, non_polar,
+	acceptor/donator options
+
 2011-08-21 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
         * Fixed click-flash that happens when middle-clicking when
