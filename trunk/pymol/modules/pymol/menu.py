@@ -715,8 +715,11 @@ def selection(self_cmd, sele):
               [ 1, 'all', 'cmd.select("'+sele+'_all","'+sele+'")'],
               [ 1, 'polymer', 'cmd.select("'+sele+'_polymer","('+sele+') and polymer")'],
               [ 1, 'organic', 'cmd.select("'+sele+'_organic","('+sele+') and organic")'],
-              [ 1, 'solvent', 'cmd.select("'+sele+'_solvent","('+sele+') and solvent")'],           
-              [ 1, 'surface residues', 'util.find_surface_residues(sele="'+sele+'", _self=cmd)' ],
+              [ 1, 'solvent', 'cmd.select("'+sele+'_solvent","('+sele+') and solvent")'],
+              [ 1, 'polar hydrogens', 'cmd.select("'+sele+'_polar_h","('+sele+') and (e. H and bound_to e. S+O+N)")'],
+              [ 1, 'non-polar hydrogens', 'cmd.select("'+sele+'_npolar_h","('+sele+') and (e. H and (not bound_to e. S+O+N))")'],
+              [ 1, 'donors', 'cmd.select("'+sele+'_donors","('+sele+') and hbd")'],
+              [ 1, 'acceptors', 'cmd.select("'+sele+'_acceptors","('+sele+') and hba")'],           
               ]
 
 def mol_generate(self_cmd, sele):
