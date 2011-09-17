@@ -440,7 +440,8 @@ int ObjectMoleculeGetCheckHBond(int *h_is_real,
                                 int don_atom,
                                 int don_state,
                                 ObjectMolecule * acc_obj,
-                                int acc_atom, int acc_state, HBondCriteria * hbc);
+                                int acc_atom, int acc_state, HBondCriteria * hbc,
+				int * h_idx);
 void ObjectMoleculeInitHBondCriteria(PyMOLGlobals * G, HBondCriteria * hbc);
 int ObjectMoleculeConvertIDsToIndices(ObjectMolecule * I, int *id, int n_id);
 

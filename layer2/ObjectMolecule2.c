@@ -3214,7 +3214,8 @@ static int ObjectMoleculeTestHBond(float *donToAcc, float *donToH, float *hToAcc
 
 static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
                                         int atom,
-                                        int state, float *dir, float *best, int *is_real)
+                                        int state, float *dir, float *best, 
+					int *is_real, int * h_idx)
 {
   int result = 0;
   CoordSet *cs;
@@ -3285,12 +3286,14 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
               if((best_dot < cand_dot) || ((is_real) && (!*is_real))) {
                 best_dot = cand_dot;
                 copy3f(cand, best);
+		*h_idx = I->AtomInfo[a1].id;
                 if(is_real)
                   *is_real = true;
               }
             } else {            /* first */
               result = true;
               copy3f(cand, best);
+	      *h_idx = I->AtomInfo[a1].id;
               best_dot = cand_dot;
               if(is_real)
                 *is_real = true;
@@ -3312,7 +3315,10 @@ int ObjectMoleculeGetCheckHBond(int *h_is_real,
                                 int don_atom,
                                 int don_state,
                                 ObjectMolecule * acc_obj,
-                                int acc_atom, int acc_state, HBondCriteria * hbc)
+                                int acc_atom, 
+				int acc_state, 
+				HBondCriteria * hbc,
+				int * h_idx)
 {
   int result = 0;
   CoordSet *csD, *csA;
@@ -3367,7 +3373,7 @@ int ObjectMoleculeGetCheckHBond(int *h_is_real,
       subtract3f(vAcc, vDon, donToAcc);
 
       if(ObjectMoleculeFindBestDonorH(don_obj,
-                                      don_atom, don_state, donToAcc, bestH, h_is_real)) {
+                                      don_atom, don_state, donToAcc, bestH, h_is_real, h_idx)) {
 
         subtract3f(bestH, vDon, donToH);
         subtract3f(vAcc, bestH, hToAcc);
