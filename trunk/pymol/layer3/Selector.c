@@ -1842,6 +1842,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
   int consensus = true;
   int first_last_only = false;
   int first_pass = true;
+  int h_idx = -1;
 
   if(!single_object) {
     if(state_value < 0) {
@@ -2273,7 +2274,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
                        */
                       if((!exclude) && ObjectMoleculeGetCheckHBond(NULL, NULL, obj1,    /* donor first */
                                                                    at1, state, obj0,    /* then acceptor */
-                                                                   at0, state, hbc)) {
+                                                                   at0, state, hbc, &h_idx)) {
 
                         /*                        printf(" found hbond between acceptor resi %s and donor resi %s\n",
                            res[a0].obj->AtomInfo[at0].resi,
@@ -11520,7 +11521,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   int exclusion = 0;
   int bonds_only = 0;
   int from_proton = SettingGetGlobal_b(G, cSetting_h_bond_from_proton);
-	
+  int h_idx1, h_idx2;
+  int h_idx = -1;
   CMeasureInfo *atom1Info=NULL, *atom2Info=NULL; 
 
   /* if we're creating hydrogen bonds, then set some distance cutoffs */
@@ -11682,37 +11684,50 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
                 a_keeper = SelectorCheckNeighbors(G, 1, obj1, at1, at2, zero, scratch);
               }
               if(a_keeper && (mode == 2)) {
+		/* proton comes from ai1 */
                 if(ai1->hb_donor && ai2->hb_acceptor) {
-                  a_keeper = ObjectMoleculeGetCheckHBond(&h_real,
-                                                         h_crd,
-                                                         obj1,
-                                                         at1,
-                                                         state1, obj2, at2, state2, hbc);
+                  a_keeper = ObjectMoleculeGetCheckHBond(&h_real, h_crd, 
+							 obj1, at1, state1, 
+							 obj2, at2, state2,
+							 hbc, &h_idx);
                   if(a_keeper) {
-                    if(h_real && from_proton)
+                    if(h_real && from_proton) {
                       don_vv = h_crd;
-                    else
+		      h_idx1 = h_idx;
+		    }
+                    else {
                       don_vv = cs1->Coord + 3 * idx1;
+		      h_idx1 = ai1->id;
+		    }
                     acc_vv = cs2->Coord + 3 * idx2;
+		    h_idx2 = ai2->id;
                   }
                 } else if(ai1->hb_acceptor && ai2->hb_donor) {
-                  a_keeper = ObjectMoleculeGetCheckHBond(&h_real,
-                                                         h_crd,
-                                                         obj2,
-                                                         at2,
-                                                         state2, obj1, at1, state1, hbc);
+		  /* proton comes from ai2 */
+                  a_keeper = ObjectMoleculeGetCheckHBond(&h_real, h_crd,
+							 obj2, at2, state2,
+							 obj1, at1, state1, 
+							 hbc, &h_idx);
 
                   if(a_keeper) {
-                    if(h_real && from_proton)
+                    if(h_real && from_proton) {
                       don_vv = h_crd;
-                    else
+		      h_idx2 = h_idx;
+		    }
+                    else {
                       don_vv = cs2->Coord + 3 * idx2;
-                      acc_vv = cs1->Coord + 3 * idx1;
+		      h_idx2 = ai2->id;
+		    }
+		    acc_vv = cs1->Coord + 3 * idx1;
+		    h_idx1 = ai1->id;
                   }
                 } else {
                   a_keeper = false;
                 }
-              }
+              } else if (a_keeper && mode!=2) {
+		h_idx1 = ai1->id;
+		h_idx2 = ai2->id;
+	      }
               if((sele1 == sele2) && (at1 > at2))
                 a_keeper = false;
 
@@ -11724,8 +11739,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
 		DListElemAlloc(G, atom2Info, CMeasureInfo);
 		DListElemInit(atom1Info,prev,next);
 		DListElemInit(atom2Info,prev,next);
-		atom1Info->id = ai1->id;  /* unique, object-local atom ID */
-		atom2Info->id = ai2->id;
+		atom1Info->id = h_idx1;  /* unique, object-local atom ID */
+		atom2Info->id = h_idx2;
 		atom1Info->offset = nv;  /* offset into this DSet's Coord */
 		atom2Info->offset = nv+1;
 		atom1Info->obj = obj1;  /* first atom in this measure's ObjMol */
