@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2011-09-19 Jason Vertrees <Jason.Vertrees@schrodinger.com>	
+
+	* Doc fix
+
 2011-09-16 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* PyMOL now respects the h_bond_from_proton setting
