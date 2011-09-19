@@ -2585,6 +2585,12 @@ class Normal(PMGSkin):
                                 variable = self.setting.animation,
                                 command = lambda s=self: s.setting.update('animation'))
 
+        self.menuBar.addmenuitem('Display', 'checkbutton',
+                                 'Roving Detail',
+                                 label='Roving Detail',
+                                variable = self.setting.roving_detail,
+                                command = lambda s=self: s.setting.update('roving_detail'))
+
         self.menuBar.addmenu('Setting', 'Settings and Configuration',tearoff=TRUE)
 
         self.menuBar.addmenuitem('Setting', 'command',
