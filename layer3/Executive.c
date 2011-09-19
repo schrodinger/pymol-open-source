@@ -16137,7 +16137,8 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                     MenuActivate(G, mx, my, x, y, false, "slice_color", rec->obj->Name);
                     break;
                   case cObjectVolume:
-                    MenuActivate(G, mx, my, x, y, false, "vol_color", rec->obj->Name);
+		    /* TODO: Create better automated coloring for volumes */
+                    MenuActivate(G, mx, my, x, y, false, "general_color", rec->obj->Name);
                     break;
                   }
                   break;

@@ -19,6 +19,7 @@ class Measurement(Wizard):
         self.cutoff = self.cmd.get_setting_float("neighbor_cutoff")
         self.heavy_neighbor_cutoff = self.cmd.get_setting_float("heavy_neighbor_cutoff")
         self.polar_neighbor_cutoff = self.cmd.get_setting_float("polar_neighbor_cutoff")
+        self.hbond_cutoff = self.cmd.get_setting_float("h_bond_cutoff_center")
 
         self.status = 0 # 0 no atoms selections, 1 atom selected, 2 atoms selected, 3 atoms selected
         self.error = None
@@ -26,6 +27,7 @@ class Measurement(Wizard):
 
         # mode selection subsystem
         self.mode = self.session.get('default_mode','pairs')
+        
         self.modes = [
             'pairs',
             'angle',
@@ -33,6 +35,7 @@ class Measurement(Wizard):
             'polar',
             'heavy',
             'neigh',
+            'hbond',
             ]
         
         self.mode_name = {
@@ -42,6 +45,7 @@ class Measurement(Wizard):
             'pairs':'Distances',
             'angle':'Angles',
             'dihed':'Dihedrals',
+            'hbond':'Polar Contacts',
             }
         # users can now specify how they're finding neighbors
         self.neighbor_modes = [
@@ -173,6 +177,10 @@ class Measurement(Wizard):
         # if setting mode, we're restarting the selection process
         self.status = 0
         self.clear_input()
+
+        if self.mode=='hbond':
+            self.cmd.set("mouse_selection_mode", 5)
+
         self.cmd.refresh_wizard()
 
     def set_object_mode(self,mode):
@@ -232,7 +240,7 @@ class Measurement(Wizard):
     def get_prompt(self):
         (what, code) = self.get_selection_name()
         self.prompt = None
-        if self.mode in ['pairs', 'angle', 'dihed' ]:
+        if self.mode in ['pairs', 'angle', 'dihed', 'hbond' ]:
             if self.status==0:
                 self.prompt = [ 'Please click on the first %s...' % what]
             elif self.status==1:
@@ -352,6 +360,23 @@ class Measurement(Wizard):
                         reset = 0
                     self.cmd.dihedral(obj_name, "(v. and " + sele_prefix+"0)", "(v. and " + sele_prefix+"1)",
                                       "(v. and " + sele_prefix+"2)", "(v. and (pk1))", reset=reset)
+                    self.cmd.enable(obj_name)
+                    self.clear_input()
+                    self.status = 0
+                self.cmd.unpick()
+            if self.mode == 'hbond':
+                if self.status==0:
+                    self.cmd.select(sele_name,"(pk1)")
+                    self.cmd.select(indi_sele, sele_name)
+                    self.cmd.enable(indi_sele)
+                    self.status = 1
+                    self.error = None
+                elif self.status==1:
+                    obj_name  = self.get_name((self.object_mode=='append'),
+                                              (self.object_mode=='append'))
+                    if self.object_mode=='merge':
+                        reset = 0
+                    self.cmd.dist(obj_name,"(v. and " + sele_prefix+"0)","(v. and (pk1))",mode=2,cutoff=self.hbond_cutoff,reset=reset)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
