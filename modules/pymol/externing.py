@@ -119,7 +119,7 @@ USAGE
 
 PYMOL API
 
-    cmd.system(string command,int sync=1)
+    cmd.system(string command,int async=0)
 
 NOTES
 
