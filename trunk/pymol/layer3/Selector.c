@@ -11521,7 +11521,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   int exclusion = 0;
   int bonds_only = 0;
   int from_proton = SettingGetGlobal_b(G, cSetting_h_bond_from_proton);
-  int h_idx1, h_idx2;
+  int h_idx1=-1, h_idx2=-1;
   int h_idx = -1;
   CMeasureInfo *atom1Info=NULL, *atom2Info=NULL; 
 

@@ -131,15 +131,19 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule * O)
 	      if (idx>=0) {
 		/* valid offset */
 		float * varDst = NULL;
+		short update = 0;
 		if (memb->measureType==cRepDash && memb->offset < I->NIndex) {
 		  varDst = I->Coord;
 		  I->fInvalidateRep(I, cRepDash, cRepInvCoord);
+		  update = 1;
 		} else if (memb->measureType==cRepAngle && memb->offset < I->NAngleIndex) {
 		  varDst = I->AngleCoord;
 		  I->fInvalidateRep(I, cRepAngle, cRepInvCoord);
+		  update = 1;
 		} else if (memb->measureType==cRepDihedral && memb->offset < I->NDihedralIndex) {
 		  varDst = I->DihedralCoord;
 		  I->fInvalidateRep(I, cRepDihedral, cRepInvCoord);
+		  update = 1;
 		}
 		/* update the coordinates */
 		if (varDst) {
@@ -150,6 +154,14 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule * O)
 		  /* no matter what, update labels */
 		  I->fInvalidateRep(I, cRepLabel, cRepInvCoord);
 		  rVal |= 1;
+		}
+		if (update){ 
+		  /* We need to update these representations right away since this could be 
+		     called during the scene rendering loop, and update might not be called
+		     on this object again.  This is ok since update checks to see if the reps
+		     exist, and if they already do, then the overhead is minimal, so multiple
+		     calls to update won't normally happen, but when they do, it won't hurt. */
+		  I->fUpdate(I, -1);
 		}
 	      }
 	    }
