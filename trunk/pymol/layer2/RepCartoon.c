@@ -446,7 +446,9 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                         nbr[3] = neighbor[mem3] + 1;
                         while((mem4 = neighbor[nbr[3]]) >= 0) {
                           if((mem4 != mem2) && (mem4 != mem1) && (mem4 != mem0)) {
-                            if((atomInfo[mem4].protons == cAN_N)) {     /* purine case */
+			    
+			    if((atomInfo[mem4].protons == cAN_N)||
+			       (WordMatchExact(G, "C5", atomInfo[mem4].name,1))) {     /* purine case */
                               nbr[4] = neighbor[mem4] + 1;
                               while((mem5 = neighbor[nbr[4]]) >= 0) {
                                 if((mem5 != mem3) && (mem5 != mem2) && (mem5 != mem1)
