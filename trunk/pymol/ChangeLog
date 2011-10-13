@@ -3,7 +3,11 @@ CHANGE LOG
 =========================================================================
 
 2011-10-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
-	
+
+	* Added the get_viewport function and updated the viewport function
+
+2011-10-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* Added support for some non-standard nucleic acids (PSU)
 
 2011-09-29 Jason Vertrees <Jason.Vertrees@schrodinger.com>

@@ -741,6 +741,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_view, a, k)
     
+    def get_viewport(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_viewport, a, k)
+
     def get_vis(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_vis, a, k)

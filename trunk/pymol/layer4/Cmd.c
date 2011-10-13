@@ -2323,6 +2323,29 @@ static PyObject *CmdGetView(PyObject * self, PyObject * args)
   }
 }
 
+static PyObject *CmdGetViewPort(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  int width, height;
+  int ok = false;
+  ok = PyArg_ParseTuple(args, "O", &self);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterNotModal(G))) {
+    SceneGetViewPortWidthHeight(G, &width, &height);
+    APIExit(G);
+    return (Py_BuildValue
+            ("(ii)", width, height
+            ));
+  } else {
+    return (APIAutoNone(NULL));
+  }
+}
+
 static PyObject *CmdSetView(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -8964,6 +8987,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_type", CmdGetType, METH_VARARGS},
   {"get_version", CmdGetVersion, METH_VARARGS},
   {"get_view", CmdGetView, METH_VARARGS},
+  {"get_viewport", CmdGetViewPort, METH_VARARGS},
   {"get_vis", CmdGetVis, METH_VARARGS},
   {"get_volume_field", CmdGetVolumeField, METH_VARARGS},
   {"get_volume_histogram", CmdGetVolumeHistogram, METH_VARARGS},
