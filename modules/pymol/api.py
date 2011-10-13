@@ -319,6 +319,7 @@ from viewing import \
       full_screen,        \
       get_colorection,    \
       get_view,           \
+      get_viewport,       \
       get_vis,            \
       get_scene_dict,     \
       get_scene_list,     \

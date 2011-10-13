@@ -1001,6 +1001,13 @@ void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
   *height = I->Height;
 }
 
+void SceneGetViewPortWidthHeight(PyMOLGlobals * G, int *width, int *height)
+{
+  register CScene *I = G->Scene;
+  *width = I->Width;
+  *height = I->Height;
+}
+
 void SceneSetCardInfo(PyMOLGlobals * G, char *vendor, char *renderer, char *version)
 {
   register CScene *I = G->Scene;

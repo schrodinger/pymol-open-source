@@ -428,7 +428,7 @@ if __name__=='pymol.parsing':
             for a in arg_nam:
                 if arg_dct[a]:
                     if not val_dct.has_key(a):
-                        print "Parsing-Error: missing required argument:",a
+                        print "Parsing-Error: missing required argument in function ", name, " :",a
                         raise QuietException
             # return all arguments as keyword arguments
             kw = val_dct

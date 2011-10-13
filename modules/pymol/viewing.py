@@ -968,6 +968,60 @@ SEE ALSO
                         print " view: '%s' deleted."%key
 
 
+    def get_viewport(output=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_viewport" returns and optionally prints out the screen viewport size
+
+    If a log file is currently open, get_viewport will not write the view
+    matrix to the screen unless the "output" parameter is 2.
+
+USAGE
+
+    get_viewport [output]
+
+ARGUMENTS
+
+    output = 0: output matrix to screen
+
+    output = 1: do not Output matrix to screen
+
+    output = 2: force output to screen even if log file is open
+
+    output = 3: return formatted string instead of a list
+
+PYMOL API
+
+    cmd.get_viewport(output=1, quiet=1)
+
+    '''
+
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _cmd.get_viewport(_self._COb)
+        finally:
+            _self.unlock(r,_self)
+        if is_ok(r):
+            if len(r):
+                if (_self.get_setting_legacy("logging")!=0.0) and (output<3):
+                    if not quiet:
+                        print " get_viewport: data written to log file."
+                    _self.log("_ viewport (\\\n","cmd.viewport((\\\n")
+                    _self.log("_  %14.9f, %14.9f ))\n"% r)
+                    if output<2: # suppress if we have a log file open
+                        output=0
+                if output and (not quiet) and (output<3):
+                    print "### cut below here and paste into script ###"
+                    print "viewport ( %14.9f, %14.9f )"% r
+                    print "### cut above here and paste into script ###"
+            if output==3:
+                return ("viewport ( %14.9f, %14.9f )\n"% r)
+        elif _self._raising(r,_self):
+            raise QuietException
+        return r
+
     def get_vis(_self=cmd):
         r = DEFAULT_ERROR      
         try:
@@ -1904,6 +1958,19 @@ PYMOL API
     cmd.viewport(int width, int height)
         '''
         r = None
+        if cmd.is_string(width) and height < 0:
+            try:
+                width = eval(re.sub(r"[^0-9,\-\)\(\.]","",width))
+            except:
+                traceback.print_exc()
+                print "Error: bad viewport argument; should be 2 floats, width and height."
+                raise QuietException
+            if len(width)!=2:
+                print "Error: bad viewport argument; should be 2 floats, width and height."
+                raise QuietException
+            height = width[1]
+            width = width[0]
+
         if not cmd.is_glut_thread():
             _self.do("viewport %d,%d"%(int(width),int(height)),0)
         else:

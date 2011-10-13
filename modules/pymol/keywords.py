@@ -104,6 +104,7 @@ def get_command_keywords(self_cmd=cmd):
         'get_type'      : [ self_cmd.get_type          , 0 , 0 , ''  , parsing.STRICT ],
         'get_version'   : [ self_cmd.get_version       , 0 , 0 , ''  , parsing.STRICT ],            
         'get_view'      : [ self_cmd.get_view          , 0 , 0 , ''  , parsing.STRICT ],
+        'get_viewport'  : [ self_cmd.get_viewport      , 0 , 0 , ''  , parsing.STRICT ],
         'global'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'gradient'      : [ self_cmd.gradient          , 0 , 0 , ''  , parsing.STRICT ],            
         'group'         : [ self_cmd.group             , 0 , 0 , ''  , parsing.STRICT ],
