@@ -156,7 +156,7 @@ else: # linux or other unix
 #               ("_PYMOL_VMD_PLUGINS",None)
 		("NO_MMLIBS",None),
                 ]
-    ext_comp_args=["-ffast-math","-funroll-loops","-O3"]
+    ext_comp_args=["-ffast-math","-funroll-loops","-O3","-g"]
     ext_link_args=[]
   
 setup ( # Distribution meta-data

@@ -2,6 +2,15 @@
 CHANGE LOG
 =========================================================================
 
+2011-12-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Cleaned up 'fitting.py' (untabified)
+
+	* alignto updated; can now take a method for alignment
+
+	* cealign updated; made faster and cleaner; thanks to Thomas
+	Holder for the ideas and patch
+
 2011-10-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Added the get_viewport function and updated the viewport function

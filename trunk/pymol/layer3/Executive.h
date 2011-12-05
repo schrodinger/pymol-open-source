@@ -522,7 +522,8 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
                         int mesh_mode, int box_mode, float alt_lvl);
 PyObject *ExecutiveAssignAtomTypes(PyMOLGlobals * G, char *s1, int format, int state, int quiet);
 
-PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB, int lenA, int lenB, int windowSize) ;
+PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB, int lenA, int lenB,
+			    float d0, float d1, int windowSize, int gapMax);
 
 #ifdef _PYMOL_LIB
 int *ExecutiveGetRepsInSceneForObject(PyMOLGlobals *G, const char *name);
