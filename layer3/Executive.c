@@ -77,7 +77,7 @@
 extern double** calcDM(pcePoint coords, int len);
 extern double** calcS(double** d1, double** d2, int lenA, int lenB, int wSize);
 extern pcePoint getCoords(PyObject *L, int length);
-extern pathCache findPath(double** S, double** dA, double** dB, int lenA, int lenB, int winSize, int * bufferSize);
+extern pathCache findPath(double** S, double** dA, double** dB, int lenA, int lenB, float D0, float D1, int winSize, int gapMax, int * bufferSize);
 extern PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int bufferSize, int smaller, int winSize);
 #endif
 
@@ -17624,7 +17624,7 @@ for(a = 0; a < 3; a++) {
 printf("\n");
 #endif
 
-PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB, int lenA, int lenB, int windowSize) {
+PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB, int lenA, int lenB, float d0, float d1, int windowSize, int gapMax) {
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
@@ -17632,7 +17632,6 @@ PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB
   int smaller;
   double **dmA ,**dmB, **S;
   int bufferSize;
-  int *bInt;
   pcePoint coordsA, coordsB;
   pathCache paths;
   PyObject * result;
@@ -17652,12 +17651,12 @@ PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB
 	
   /* find the best path through the CE Sim. matrix */
   bufferSize = 0;
-  bInt = &bufferSize;
+
   /* the following line HANGS PyMOL */
-  paths = (pathCache) findPath( S, dmA, dmB, lenA, lenB, windowSize, bInt );
+  paths = (pathCache) findPath(S, dmA, dmB, lenA, lenB, d0, d1, windowSize, gapMax, &bufferSize);
 	
   /* Get the optimal superposition here... */
-  result = (PyObject*) findBest( coordsA, coordsB, paths, bufferSize, smaller,  windowSize );
+  result = (PyObject*) findBest(coordsA, coordsB, paths, bufferSize, smaller, windowSize);
 	
   /* release memory */
   free(coordsA);

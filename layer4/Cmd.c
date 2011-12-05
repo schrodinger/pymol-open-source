@@ -8721,11 +8721,17 @@ static PyObject *CmdCEAlign(PyObject *self, PyObject *args)
 {
   PyMOLGlobals * G = NULL;
   int ok = false;
-  int windowSize = 8.0;
+  int windowSize = 8, gap_max=30;
+  float d0=3.0, d1=4.0;
   PyObject *listA, *listB, *result;
   Py_ssize_t lenA, lenB;
 
-  ok = PyArg_ParseTuple(args, "OOO", &self, &listA, &listB);
+  /* Unpack the arguments from Python */
+
+  ok = PyArg_ParseTuple(args, "OOO|ffii", &self, &listA, &listB, &d0, &d1, &windowSize, &gap_max);
+
+  /* Handle errors */
+
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -8733,26 +8739,26 @@ static PyObject *CmdCEAlign(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
 
- /* handle empty selections (should probably do this in Python)  */
+  /* Get the list lengths */
+
   lenA = PyList_Size(listA);
-  if ( lenA < 1 ) {
-    /* TODO: Use Feedback */
-    printf("CmdCealign-Error: First selection didn't have any atoms.  Please check your selection.\n");
+  if (lenA < 1) {
     result = NULL;
     ok = false;
   }
 	
   if(ok)
     lenB = PyList_Size(listB);
-  /* TODO: Use Feedback */
-  if ( ok && lenB < 1 ) {
-    printf("CmdCealign-Error: Second selection didn't have any atoms.  Please check your selection.\n");
+  if (ok && lenB < 1) {
     result = NULL;
+    ok = false;
   }
+
+  /* Call CEAlign */
 
   if(ok) {
     APIEnterBlocked(G);
-    result = (PyObject*) ExecutiveCEAlign(G, listA, listB, lenA, lenB, windowSize);
+    result = (PyObject*) ExecutiveCEAlign(G, listA, listB, lenA, lenB, d0, d1, windowSize, gap_max);
     APIExitBlocked(G);
   }
   return result;

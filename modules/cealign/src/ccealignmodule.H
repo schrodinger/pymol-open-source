@@ -70,7 +70,7 @@ double** calcDM(pcePoint coords, int len);
 pcePoint getCoords( PyObject* L, int len );
 
 // Optimal path finding algorithm (CE).
-pathCache findPath(double** S, double** dA, double**dB, int lenA, int lenB, int winSize, int* bufferSize);
+pathCache findPath(double** S, double** dA, double**dB, int lenA, int lenB, float D0, float D1, int winSize, int gapMax, int* bufferSize);
 
 // filter through the results and find the best
 PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int bufferSize, int smaller, int winSize );
