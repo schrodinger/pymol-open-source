@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2011-12-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* fixed get_mass
+	
 2011-12-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Cleaned up 'fitting.py' (untabified)
