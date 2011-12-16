@@ -15617,6 +15617,34 @@ void ExecutiveDelete(PyMOLGlobals * G, char *name)
 
 }
 
+ObjectMolecule **ExecutiveGetObjectMoleculeListVLA(PyMOLGlobals * G, char *name)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj, **result = NULL;
+  int n = 0;
+  result = VLAlloc(ObjectMolecule *, 10);
+  CTracker *I_Tracker = I->Tracker;
+  int list_id = ExecutiveGetNamesListFromPattern(G, name, false, false);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+    if(rec) {
+      switch (rec->type) {
+      case cExecObject:
+        if(rec->obj->type == cObjectMolecule) {	
+	  VLACheck(result, ObjectMolecule *, n);
+	  result[n] = rec->obj;
+	  n++;
+	}
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  VLASize(result, ObjectMolecule *, n);
+  return (result);
+}
+
 
 /*========================================================================*/
 void ExecutiveDump(PyMOLGlobals * G, char *fname, char *obj)

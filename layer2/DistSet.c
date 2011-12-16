@@ -84,7 +84,7 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
 
 
 /* -- JV */
-int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule * O)
+int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
 {
   /* TODO:
    *  3.  Make this multi-threaded
@@ -99,27 +99,27 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule * O)
   PRINTFD(G, FB_DistSet)
     " DistSet: adjusting distance vertex\n" ENDFD;
 
-  /* If the user doesn't provide the Object O, we should consider
+  /* If the user doesn't provide the Object obj, we should consider
    * looping over all atoms in Selector->Table instead of bailing */
-  if (!I || !O) return 0;
+  if (!I || !obj) return 0;
 
   DListIterate(I->MeasureInfo, memb, next)
     {
       /* if this distance set belongs to this object */
-      if (memb && memb->obj==O) {
-	for (a=0; a<O->NAtom; a++ ) {
+      if (memb && memb->obj==obj) {
+	for (a=0; a<obj->NAtom; a++ ) {
 	  /* matched on OBJ above and now ATOM ID within the object */
-	  if (O->AtomInfo[a].id == memb->id) {
+	  if (obj->AtomInfo[a].id == memb->id) {
 
 	    /* if the state we found in our record could be right */
-	    if (memb->state < O->NCSet) {
+	    if (memb->state < obj->NCSet) {
 	      /* get the coordinate set for this state */
-	      cs = O->CSet[memb->state];
+	      cs = obj->CSet[memb->state];
 	      
 	      /* get proper index based on state and discrete flags */
-	      if (O->DiscreteFlag) {
-		if (cs==O->DiscreteCSet[a]) {
-		  idx = O->DiscreteAtmToIdx[a];
+	      if (obj->DiscreteFlag) {
+		if (cs==obj->DiscreteCSet[a]) {
+		  idx = obj->DiscreteAtmToIdx[a];
 		} else {
 		  idx = -1;
 		}

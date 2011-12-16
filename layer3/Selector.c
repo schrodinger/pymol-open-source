@@ -7174,6 +7174,10 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, char *name,
      to the new merged molecule */
 
   ObjectMoleculeExtendIndices(targ, -1);
+  if (isNew)
+    ObjectMoleculeResetIDNumbers(targ);
+  else
+    ObjectMoleculeUpdateIDNumbers(targ);
   ObjectMoleculeUpdateNonbonded(targ);
 
   if(!isNew) {                  /* recreate selection table */
