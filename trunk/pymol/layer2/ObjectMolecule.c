@@ -2428,6 +2428,29 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
   }
 }
 
+void ObjectMoleculeResetIDNumbers(ObjectMolecule * I)
+{
+  int a;
+  int max;
+  AtomInfoType *ai;
+  BondType *b;
+
+  printf("ObjectMoleculeResetIDNumbers called\n");
+  I->AtomCounter = 0;
+  ai = I->AtomInfo;
+  for(a = 0; a < I->NAtom; a++) {
+    ai->id = I->AtomCounter++;
+    ai++;
+  }
+
+  I->BondCounter = 0;
+  b = I->Bond;
+  for(a = 0; a < I->NBond; a++) {
+    b->id = I->BondCounter++;
+    b++;
+  }
+}
+
 static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals * G, CRaw * pmo,
                                             AtomInfoType ** atInfoPtr, int *restart)
 {
