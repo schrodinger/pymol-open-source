@@ -13,14 +13,14 @@
 #Z* -------------------------------------------------------------------
 
 if __name__=='pymol.fitting':
-        
-        import cmd
-        from cmd import _cmd,lock,unlock
-        import selector
-        import os
-        import pymol
-        import string
-        
+	
+	import cmd
+	from cmd import _cmd,lock,unlock
+	import selector
+	import os
+	import pymol
+	import string
+
         from cmd import _cmd,lock,unlock,Shortcut, \
             DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
@@ -104,9 +104,10 @@ SEE ALSO
                                 pprint.pprint(rotMat)
                         elif quiet==0:
                                 print "RMSD %f over %i residues" % (float(RMSD), int(aliLen))
-                        
-                        if int(transform):
-                                _self.transform_selection("byobj (" + mobile + ")", rotMat, homogenous=0, state=0)
+
+			if int(transform):
+				for model in cmd.get_object_list("(" + mobile + ")"):
+					_self.transform_object(model, rotMat, state=0)
                 finally:
                         _self.unlock(r,_self)
                 if _self._raising(r,_self): raise pymol.CmdException             
@@ -132,6 +133,7 @@ EXAMPLE
 
         # fetch some calmodulins
         fetch 1cll 1sra 1ggz 1k95, async=0
+
         # align them to 1cll using cealign
         alignto 1cll, method=cealign
 
@@ -418,203 +420,203 @@ SEE ALSO
                         r = _cmd.intrafit(_self._COb,"("+str(selection)+")",int(state)-1,0,int(quiet),int(0))
                 finally:
                         _self.unlock(r,_self)
-                if r<0.0:
-                        r = DEFAULT_ERROR
-                elif not quiet:
-                        st = 1
-                        for a in r:
-                                if a>=0.0:
-                                        print " cmd.intra_rms_cur: %5.3f in state %d vs state %d"%(a,st,state)
-                                st = st + 1
-                if _self._raising(r,_self): raise pymol.CmdException             
-                return r
+		if r<0.0:
+			r = DEFAULT_ERROR
+		elif not quiet:
+			st = 1
+			for a in r:
+				if a>=0.0:
+					print " cmd.intra_rms_cur: %5.3f in state %d vs state %d"%(a,st,state)
+				st = st + 1
+		if _self._raising(r,_self): raise pymol.CmdException		 
+		return r
 
-        def fit(mobile, target, mobile_state=0, target_state=0,
-                quiet=1, matchmaker=0, cutoff=2.0, cycles=0, object=None, _self=cmd):
-                '''
+	def fit(mobile, target, mobile_state=0, target_state=0,
+		quiet=1, matchmaker=0, cutoff=2.0, cycles=0, object=None, _self=cmd):
+		'''
 DESCRIPTION
 
-        "fit" superimposes the model in the first selection on to the model
-        in the second selection.
-        
+	"fit" superimposes the model in the first selection on to the model
+	in the second selection.
+	
 USAGE
 
-        fit mobile, target
+	fit mobile, target
 
 EXAMPLES
 
-        fit protA, protB
+	fit protA, protB
 
 NOTES
 
-        Only matching atoms in both selections will be used for the fit.
-        
-        Since atoms are matched based on all of their identifiers
-        (including segment and chain identifiers), this command is only
-        helpful when comparing very similar structures.
+	Only matching atoms in both selections will be used for the fit.
+	
+	Since atoms are matched based on all of their identifiers
+	(including segment and chain identifiers), this command is only
+	helpful when comparing very similar structures.
 
 SEE ALSO
 
-        align, super, pair_fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
-                '''
-                r = DEFAULT_ERROR          
-                a=str(mobile)
-                b=str(target)
-                # preprocess selections
-                a = selector.process(a)
-                b = selector.process(b)
-                #
-                if object==None: object=''
-                if int(matchmaker)==0:
-                        sele1 = "((%s) in (%s))" % (str(a),str(b))
-                        sele2 = "((%s) in (%s))" % (str(b),str(a))
-                else:
-                        sele1 = str(a)
-                        sele2 = str(b)
-                try:
-                        _self.lock(_self)
-                        r = _cmd.fit(_self._COb,sele1,sele2,2,
-                                     int(mobile_state)-1,int(target_state)-1,
-                                     int(quiet),int(matchmaker),float(cutoff),
-                                     int(cycles),str(object))
-                finally:
-                        _self.unlock(r,_self)
-                if _self._raising(r,_self): raise pymol.CmdException             
-                return r
+	align, super, pair_fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
+		'''
+		r = DEFAULT_ERROR	   
+		a=str(mobile)
+		b=str(target)
+		# preprocess selections
+		a = selector.process(a)
+		b = selector.process(b)
+		#
+		if object==None: object=''
+		if int(matchmaker)==0:
+			sele1 = "((%s) in (%s))" % (str(a),str(b))
+			sele2 = "((%s) in (%s))" % (str(b),str(a))
+		else:
+			sele1 = str(a)
+			sele2 = str(b)
+		try:
+			_self.lock(_self)
+			r = _cmd.fit(_self._COb,sele1,sele2,2,
+				     int(mobile_state)-1,int(target_state)-1,
+				     int(quiet),int(matchmaker),float(cutoff),
+				     int(cycles),str(object))
+		finally:
+			_self.unlock(r,_self)
+		if _self._raising(r,_self): raise pymol.CmdException		 
+		return r
 
-        def rms(mobile, target, mobile_state=0, target_state=0, quiet=1,
-                          matchmaker=0, cutoff=2.0, cycles=0, object=None, _self=cmd):
-                '''
+	def rms(mobile, target, mobile_state=0, target_state=0, quiet=1,
+			  matchmaker=0, cutoff=2.0, cycles=0, object=None, _self=cmd):
+		'''
 DESCRIPTION
 
-        "rms" computes a RMS fit between two atom selections, but does not
-        tranform the models after performing the fit.
+	"rms" computes a RMS fit between two atom selections, but does not
+	tranform the models after performing the fit.
 
 USAGE
 
-        rms (selection), (target-selection)
+	rms (selection), (target-selection)
 
 EXAMPLES
 
-        fit ( mutant and name ca ), ( wildtype and name ca )
+	fit ( mutant and name ca ), ( wildtype and name ca )
 
 SEE ALSO
 
-        fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit       
-                '''
-                r = DEFAULT_ERROR          
-                a=str(mobile)
-                b=str(target)
-                # preprocess selections
-                a = selector.process(a)
-                b = selector.process(b)
-                #
-                if object==None: object=''              
-                if int(matchmaker)==0:
-                        sele1 = "((%s) in (%s))" % (str(a),str(b))
-                        sele2 = "((%s) in (%s))" % (str(b),str(a))
-                else:
-                        sele1 = str(a)
-                        sele2 = str(b)
-                try:
-                        _self.lock(_self)       
-                        r = _cmd.fit(_self._COb,sele1,sele2,1,
-                                     int(mobile_state)-1,int(target_state)-1,
-                                     int(quiet),int(matchmaker),float(cutoff),
-                                     int(cycles),str(object))
-                finally:
-                        _self.unlock(r,_self)
-                if _self._raising(r,_self): raise pymol.CmdException             
-                return r
+	fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit	  
+		'''
+		r = DEFAULT_ERROR	   
+		a=str(mobile)
+		b=str(target)
+		# preprocess selections
+		a = selector.process(a)
+		b = selector.process(b)
+		#
+		if object==None: object=''		
+		if int(matchmaker)==0:
+			sele1 = "((%s) in (%s))" % (str(a),str(b))
+			sele2 = "((%s) in (%s))" % (str(b),str(a))
+		else:
+			sele1 = str(a)
+			sele2 = str(b)
+		try:
+			_self.lock(_self)	
+			r = _cmd.fit(_self._COb,sele1,sele2,1,
+				     int(mobile_state)-1,int(target_state)-1,
+				     int(quiet),int(matchmaker),float(cutoff),
+				     int(cycles),str(object))
+		finally:
+			_self.unlock(r,_self)
+		if _self._raising(r,_self): raise pymol.CmdException		 
+		return r
 
-        def rms_cur(mobile, target, mobile_state=0, target_state=0,
-                                quiet=1, matchmaker=0, cutoff=2.0, cycles=0,
-                                object=None, _self=cmd):
-                
-                '''
+	def rms_cur(mobile, target, mobile_state=0, target_state=0,
+				quiet=1, matchmaker=0, cutoff=2.0, cycles=0,
+				object=None, _self=cmd):
+		
+		'''
 DESCRIPTION
 
-        "rms_cur" computes the RMS difference between two atom
-        selections without performing any fitting.
+	"rms_cur" computes the RMS difference between two atom
+	selections without performing any fitting.
 
 USAGE
 
-        rms_cur (selection), (selection)
+	rms_cur (selection), (selection)
 
 SEE ALSO
 
-        fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit   
-                '''
-                r = DEFAULT_ERROR          
-                a=str(mobile)
-                b=str(target)
-                # preprocess selections
-                a = selector.process(a)
-                b = selector.process(b)
-                #
-                if object==None: object=''                        
-                if int(matchmaker)==0:
-                        sele1 = "((%s) in (%s))" % (str(a),str(b))
-                        sele2 = "((%s) in (%s))" % (str(b),str(a))
-                else:
-                        sele1 = str(a)
-                        sele2 = str(b)
-                try:
-                        _self.lock(_self)
-                        r = _cmd.fit(_self._COb,sele1,sele2,0,
-                                     int(mobile_state)-1,int(target_state)-1,
-                                     int(quiet),int(matchmaker),float(cutoff),
-                                     int(cycles),str(object))
-                finally:
-                        _self.unlock(r,_self)
-                if _self._raising(r,_self): raise pymol.CmdException             
-                return r
+	fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit	  
+		'''
+		r = DEFAULT_ERROR	   
+		a=str(mobile)
+		b=str(target)
+		# preprocess selections
+		a = selector.process(a)
+		b = selector.process(b)
+		#
+		if object==None: object=''			  
+		if int(matchmaker)==0:
+			sele1 = "((%s) in (%s))" % (str(a),str(b))
+			sele2 = "((%s) in (%s))" % (str(b),str(a))
+		else:
+			sele1 = str(a)
+			sele2 = str(b)
+		try:
+			_self.lock(_self)
+			r = _cmd.fit(_self._COb,sele1,sele2,0,
+				     int(mobile_state)-1,int(target_state)-1,
+				     int(quiet),int(matchmaker),float(cutoff),
+				     int(cycles),str(object))
+		finally:
+			_self.unlock(r,_self)
+		if _self._raising(r,_self): raise pymol.CmdException		 
+		return r
 
-        def pair_fit(*arg, **kw):
-                '''
+	def pair_fit(*arg, **kw):
+		'''
 DESCRIPTION
 
-        "pair_fit" fits matched sets of atom pairs between two objects.
+	"pair_fit" fits matched sets of atom pairs between two objects.
 
 USAGE
 
-        pair_fit selection, selection, [ selection, selection [ ... ]]
+	pair_fit selection, selection, [ selection, selection [ ... ]]
 
 EXAMPLES
 
-        # superimpose protA residues 10-25 and 33-46 to protB residues 22-37 and 41-54:
-        
-        pair_fit protA/10-25+33-46/CA, protB/22-37+41-54/CA
+	# superimpose protA residues 10-25 and 33-46 to protB residues 22-37 and 41-54:
+	
+	pair_fit protA/10-25+33-46/CA, protB/22-37+41-54/CA
 
-        # superimpose ligA atoms C1, C2, and C4 to ligB atoms C8, C4, and C10, respectively:
-        
-        pair_fit ligA////C1, ligB////C8, ligA////C2, ligB////C4, ligA////C3, ligB////C10
-        
+	# superimpose ligA atoms C1, C2, and C4 to ligB atoms C8, C4, and C10, respectively:
+	
+	pair_fit ligA////C1, ligB////C8, ligA////C2, ligB////C4, ligA////C3, ligB////C10
+	
 NOTES
 
-        So long as the atoms are stored in PyMOL with the same order
-        internally, you can provide just two selections.  Otherwise, you
-        may need to specify each pair of atoms separately, two by two, as
-        additional arguments to pair_fit.
-        
-        Script files are usually recommended when using this command.
+	So long as the atoms are stored in PyMOL with the same order
+	internally, you can provide just two selections.  Otherwise, you
+	may need to specify each pair of atoms separately, two by two, as
+	additional arguments to pair_fit.
+	
+	Script files are usually recommended when using this command.
 
 SEE ALSO
 
-        fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
-                '''
-                _self = kw.get('_self',cmd)
-                r = DEFAULT_ERROR          
-                new_arg = []
-                for a in arg:
-                        new_arg.append(selector.process(a))
-                try:
-                        _self.lock(_self)       
-                        r = _cmd.fit_pairs(_self._COb,new_arg)
-                finally:
-                        _self.unlock(r,_self)
-                if _self._raising(r,_self): raise pymol.CmdException             
-                return r
+	fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
+		'''
+		_self = kw.get('_self',cmd)
+		r = DEFAULT_ERROR	   
+		new_arg = []
+		for a in arg:
+			new_arg.append(selector.process(a))
+		try:
+			_self.lock(_self)	
+			r = _cmd.fit_pairs(_self._COb,new_arg)
+		finally:
+			_self.unlock(r,_self)
+		if _self._raising(r,_self): raise pymol.CmdException		 
+		return r
 
 
 

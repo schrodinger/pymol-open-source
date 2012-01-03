@@ -2479,8 +2479,10 @@ void PParse(PyMOLGlobals * G, char *str)
 void PDo(PyMOLGlobals * G, char *str)
 {                               /* assumes we already hold the re-entrant API lock */
   int blocked;
+  PyObject *ret ;
   blocked = PAutoBlock(G);
-  Py_XDECREF(PyObject_CallFunction(G->P_inst->cmd_do, "s", str));
+  ret = PyObject_CallFunction(G->P_inst->cmd_do, "s", str);
+  Py_XDECREF(ret);
   PAutoUnblock(G, blocked);
 }
 

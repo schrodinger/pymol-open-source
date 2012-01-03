@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2012-01-03 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* improved callback rendering
+
+	* improved cealign (thanks to Thomas Holder)
+
 2011-12-16 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* fixed object creation when merging two objects; thanks to James
@@ -10,7 +16,7 @@ CHANGE LOG
 2011-12-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* fixed get_mass
-	
+
 2011-12-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* fixed create to reorder IDs when combining objects; thanks to James
