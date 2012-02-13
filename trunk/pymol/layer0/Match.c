@@ -289,7 +289,7 @@ int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
       fseek(f, 0, SEEK_SET);
       res = fread(p, size, 1, f);
       if(1!=res) 
-	return NULL;
+	return 0;
       p[size] = 0;
       fclose(f);
     }

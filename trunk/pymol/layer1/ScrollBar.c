@@ -87,7 +87,11 @@ static void ScrollBarDraw(Block * block)
   int top, left, bottom, right;
 
   CScrollBar *I = (CScrollBar *) block->reference;
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
   glColor3fv(I->BackColor);
+#endif
   BlockFill(I->Block);
 
   ScrollBarUpdate(I);
@@ -114,37 +118,113 @@ static void ScrollBarDraw(Block * block)
 
   if(G->HaveGUI && G->ValidContext) {
 
+#if defined(PURE_OPENGL_ES_2)
+    /* TODO */
+#else
     glColor3f(0.8F, 0.8F, 0.8F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	right, top,
+	right, bottom + 1,
+	left, top,
+	left, bottom + 1
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(right, top);
     glVertex2i(right, bottom + 1);
     glVertex2i(left, bottom + 1);
     glVertex2i(left, top);
     glEnd();
+#endif
+#endif
 
+#if defined(PURE_OPENGL_ES_2)
+    /* TODO */
+#else
     glColor3f(0.3F, 0.3F, 0.3F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	right, top - 1,
+	right, bottom,
+	left + 1, top - 1,
+	left + 1, bottom
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(right, top - 1);
     glVertex2i(right, bottom);
     glVertex2i(left + 1, bottom);
     glVertex2i(left + 1, top - 1);
     glEnd();
+#endif
+#endif
 
+#if defined(PURE_OPENGL_ES_2)
+    /* TODO */
+#else
     glColor3f(0.3F, 0.3F, 0.3F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	right, bottom + 1,
+	right, bottom,
+	left, bottom + 1,
+	left, bottom
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(right, bottom + 1);
     glVertex2i(right, bottom);
     glVertex2i(left, bottom);
     glVertex2i(left, bottom + 1);
     glEnd();
+#endif
+#endif
 
+#if defined(PURE_OPENGL_ES_2)
+    /* TODO */
+#else
     glColor3fv(I->BarColor);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	right - 1, top - 1,
+	right - 1, bottom + 1,
+	left + 1, top - 1,
+	left + 1, bottom + 1
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(right - 1, top - 1);
     glVertex2i(right - 1, bottom + 1);
     glVertex2i(left + 1, bottom + 1);
     glVertex2i(left + 1, top - 1);
     glEnd();
+#endif
+#endif
   }
 }
 
@@ -176,38 +256,113 @@ void ScrollBarDrawHandle(struct CScrollBar *I, float alpha)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor4f(0.8F, 0.8F, 0.8F, alpha);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	right, top,
+	right, bottom + 1,
+	left, top,
+	left, bottom + 1
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(right, top);
     glVertex2i(right, bottom + 1);
     glVertex2i(left, bottom + 1);
     glVertex2i(left, top);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor4f(0.3F, 0.3F, 0.3F, alpha);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	right, top - 1,
+	right, bottom,
+	left + 1, top - 1,
+	left + 1, bottom
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(right, top - 1);
     glVertex2i(right, bottom);
     glVertex2i(left + 1, bottom);
     glVertex2i(left + 1, top - 1);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor4f(0.3F, 0.3F, 0.3F, alpha);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	right, bottom + 1,
+	right, bottom,
+	left, bottom + 1,
+	left, bottom
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(right, bottom + 1);
     glVertex2i(right, bottom);
     glVertex2i(left, bottom);
     glVertex2i(left, bottom + 1);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor4f(I->BarColor[0], I->BarColor[1], I->BarColor[2], alpha);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	right - 1, top - 1,
+	right - 1, bottom + 1,
+	left + 1, top - 1,
+	left + 1, bottom + 1
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(right - 1, top - 1);
     glVertex2i(right - 1, bottom + 1);
     glVertex2i(left + 1, bottom + 1);
     glVertex2i(left + 1, top - 1);
     glEnd();
-
+#endif
+#endif
     glDisable(GL_BLEND);
   }
 }

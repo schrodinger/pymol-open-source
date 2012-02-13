@@ -439,7 +439,7 @@ class ValenceWizard(RepeatableActionWizard):
         self.cmd.button('double_left','none','MovA')
         
     def do_pick(self, bondFlag):
-        self.cmd.select(active_sele, "bymol pk1") 
+        self.cmd.select(active_sele, "bymol pk1")
         if bondFlag:
             if self.order>=0:
                 self.cmd.valence(self.order, "pk1", "pk2")
@@ -450,7 +450,7 @@ class ValenceWizard(RepeatableActionWizard):
         else:
             self.cmd.button('double_left','none','PkBd')
             self.cmd.button('single_left','none','PkBd')
-            self.cmd.unpick()
+        self.cmd.unpick()
         if not self.getRepeating():
             self.actionWizardDone()
 
@@ -1004,7 +1004,7 @@ class FragmentFrame(GuiFrame):
 #        GuiLabel(self, "Fragments")
 
         GuiButton(self, "CH4", lambda s=self: s.grow("methane",1,0,"methyl"), "Methane")
-        GuiButton(self, "C=C", lambda s=self: s.grow("ethylene",4,0,"vinyl"), "Enthylene")
+        GuiButton(self, "C=C", lambda s=self: s.grow("ethylene",4,0,"vinyl"), "Ethylene")
         GuiButton(self, "C#C", lambda s=self: s.grow("acetylene",2,0,"alkynl"), "Acetylene")
         GuiButton(self, "C#N", lambda s=self: s.grow("cyanide",2,0,"cyano"), "Cyanide")
         GuiButton(self, "C=O", lambda s=self: s.grow("formaldehyde",2,0,"carbonyl",), "Aldehyde")

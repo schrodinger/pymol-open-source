@@ -34,6 +34,9 @@ Z* -------------------------------------------------------------------
 
 #define cPI            3.14159265358979323846   /* pi */
 
+short countBits(unsigned long bits);
+short countBitsInt(int bits);
+
 typedef float Vector3f[3];      /* for local vars only - use float* for parameters */
 typedef int Vector3i[3];
 
@@ -460,5 +463,10 @@ __inline__ static float inline_project3f(float *v1, float *v2, float *proj)
 #define remove_component3f slow_remove_component3f
 
 #endif
+
+void mult3f(float *vsrc, float val, float *vdest);
+float max3(float val1, float val2, float val3);
+float ave3(float val1, float val2, float val3);
+float ave2(float val1, float val2);
 
 #endif

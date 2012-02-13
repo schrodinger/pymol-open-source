@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"main.h"
 #include"Setting.h"
+#include"ShaderMgr.h"
 
 typedef struct RepNonbonded {
   Rep R;
@@ -34,6 +35,7 @@ typedef struct RepNonbonded {
   int N, NP;
   float Width;
   float Radius;
+  CGO *shaderCGO;
 } RepNonbonded;
 
 #include"ObjectMolecule.h"
@@ -42,6 +44,10 @@ void RepNonbondedFree(RepNonbonded * I);
 
 void RepNonbondedFree(RepNonbonded * I)
 {
+  if (I->shaderCGO){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = 0;
+  }
   FreeP(I->VP);
   FreeP(I->V);
   RepPurge(&I->R);
@@ -66,11 +72,81 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
     else
       glLineWidth(line_width);
 
+    SceneResetNormal(G, true);
+
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     if(!info->line_lighting)
       glDisable(GL_LIGHTING);
-    SceneResetNormal(G, true);
-    glBegin(GL_LINES);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      int nverts = 0;
+      {
+	int a;
+	int nIndex = cs->NIndex;
+	AtomInfoType *atomInfo = obj->AtomInfo;
+	int *i2a = cs->IdxToAtm;
+	for(a = 0; a < nIndex; a++) {
+	  AtomInfoType *ai = atomInfo + *(i2a++);
+	  if((!ai->bonded) && ai->visRep[cRepNonbonded]) {
+	    nverts += 6;
+	  }
+	}
+      }
+      if (nverts>0) {
+	ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
+	ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
+	int pl, plc, plca = 0;
+	int a;
+	int nIndex = cs->NIndex;
+	AtomInfoType *atomInfo = obj->AtomInfo;
+	int *i2a = cs->IdxToAtm;
+	int last_color = -1;
+	float *v = cs->Coord, *colv;
+	pl = 0;
+	for(a = 0; a < nIndex; a++) {
+	  AtomInfoType *ai = atomInfo + *(i2a++);
+	  if((!ai->bonded) && ai->visRep[cRepNonbonded]) {
+	    int c = ai->color;
+	    float v0 = v[0];
+	    float v1 = v[1];
+	    float v2 = v[2];
+	    active = true;
+	    if(c != last_color) {
+	      last_color = c;
+	    }
+	    colv = ColorGet(G, c);
+	    for (plc=pl; plc < (pl+18); ){
+	      colorVals[plca++] = colv[0];
+	      colorVals[plca++] = colv[1];
+	      colorVals[plca++] = colv[2];
+	      colorVals[plca++] = 1.f;
+	    }
+	    vertVals[pl++] = v0 - nonbonded_size; vertVals[pl++] = v1; vertVals[pl++] = v2;
+	    vertVals[pl++] = v0 + nonbonded_size; vertVals[pl++] = v1; vertVals[pl++] = v2;
 
+	    vertVals[pl++] = v0; vertVals[pl++] = v1 - nonbonded_size; vertVals[pl++] = v2;
+	    vertVals[pl++] = v0; vertVals[pl++] = v1 + nonbonded_size; vertVals[pl++] = v2;
+
+	    vertVals[pl++] = v0; vertVals[pl++] = v1; vertVals[pl++] = v2 - nonbonded_size;
+	    vertVals[pl++] = v0; vertVals[pl++] = v1; vertVals[pl++] = v2 + nonbonded_size;
+	  }
+	  v += 3;
+	}
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, vertVals);
+	glColorPointer(4, GL_FLOAT, 0, colorVals);
+	glDrawArrays(GL_LINES, 0, nverts);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+	DEALLOCATE_ARRAY(vertVals)
+	DEALLOCATE_ARRAY(colorVals)
+      }
+    }
+#else
+    glBegin(GL_LINES);
     {
       int a;
       int nIndex = cs->NIndex;
@@ -105,7 +181,9 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
       }
     }
     glEnd();
+#endif
     glEnable(GL_LIGHTING);
+#endif
     if(!active)
       cs->Active[cRepNonbonded] = true;
   }
@@ -121,7 +199,6 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
   unsigned int i, j;
   Pickable *p;
   float alpha;
-
   alpha =
     SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_transparency);
   alpha = 1.0F - alpha;
@@ -156,16 +233,62 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
       v = I->VP;
       c = I->NP;
       p = I->R.P;
-
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	int nverts = c * 6, pl, plc = 0;
+	GLubyte *tmp_ptr;
+	ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
+	ALLOCATE_ARRAY(GLubyte,colorVals,nverts*4)
+	pl = 0;
+	while(c--) {
+	  i++;
+	  if(!(*pick)[0].src.bond) {
+	    /* pass 1 - low order bits */
+	    colorVals[plc++] = (uchar) ((i & 0xF) << 4);
+	    colorVals[plc++] = (uchar) ((i & 0xF0) | 0x8);
+	    colorVals[plc++] = (uchar) ((i & 0xF00) >> 4);
+	    colorVals[plc++] = (uchar) 255;
+	    VLACheck((*pick), Picking, i);
+	    p++;
+	    (*pick)[i].src = *p;  /* copy object and atom info */
+	    (*pick)[i].context = I->R.context;
+	  } else {
+	    /* pass 2 - high order bits */
+	    j = i >> 12;
+	    colorVals[plc++] = (uchar) ((j & 0xF) << 4);
+	    colorVals[plc++] = (uchar) ((j & 0xF0) | 0x8);
+	    colorVals[plc++] = (uchar) ((j & 0xF00) >> 4);
+	    colorVals[plc++] = (uchar) 255;
+	  }
+	  memcpy(&vertVals[pl], v, 18*sizeof(GLfloat));
+	  v += 18;
+	  pl += 18;
+	  tmp_ptr = &colorVals[plc-4];
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
+	}
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, vertVals);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorVals);
+	glDrawArrays(GL_LINES, 0, nverts);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+	DEALLOCATE_ARRAY(vertVals)
+	DEALLOCATE_ARRAY(colorVals)
+      }
+#else
       glBegin(GL_LINES);
-
       while(c--) {
-
         i++;
-
         if(!(*pick)[0].src.bond) {
           /* pass 1 - low order bits */
-
           glColor3ub((uchar) ((i & 0xF) << 4), (uchar) ((i & 0xF0) | 0x8),
                      (uchar) ((i & 0xF00) >> 4));
           VLACheck((*pick), Picking, i);
@@ -174,12 +297,9 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
           (*pick)[i].context = I->R.context;
         } else {
           /* pass 2 - high order bits */
-
           j = i >> 12;
-
           glColor3ub((uchar) ((j & 0xF) << 4), (uchar) ((j & 0xF0) | 0x8),
                      (uchar) ((j & 0xF00) >> 4));
-
         }
 
         glVertex3fv(v);
@@ -194,49 +314,193 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
         v += 3;
         glVertex3fv(v);
         v += 3;
-
       }
       glEnd();
-
+#endif
+#endif
       (*pick)[0].src.index = i;
     } else {
+      short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
+      short nonbonded_as_cylinders ;
+      register int nvidia_bugs = (int) SettingGet(G, cSetting_nvidia_bugs);
+      use_shader = (int) SettingGet(G, cSetting_nonbonded_use_shader) & 
+                           (int) SettingGet(G, cSetting_use_shaders);
+      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
 
-      int use_dlst;
+      nonbonded_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_nonbonded_as_cylinders);
+      if (!use_shader && I->shaderCGO){
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = 0;
+      }
 
-      if(info->width_scale_flag)
-        glLineWidth(I->Width * info->width_scale);
-      else
-        glLineWidth(I->Width);
+      if (I->shaderCGO && (nonbonded_as_cylinders ^ I->shaderCGO->has_draw_cylinder_buffers)){
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = 0;
+      }
 
-      use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
-      if(use_dlst && I->R.displayList) {
-        glCallList(I->R.displayList);
+#ifdef _PYMOL_GL_CALLLISTS
+        if(use_display_lists && I->R.displayList) {
+          glCallList(I->R.displayList);
+	  return;
+	}
+#endif
+
+      if (use_shader){
+	if (!I->shaderCGO){
+	  I->shaderCGO = CGONew(G);
+	  I->shaderCGO->use_shader = true;
+	  generate_shader_cgo = 1;
+	} else {
+	  CShaderPrg *shaderPrg;
+	  if (nonbonded_as_cylinders){
+	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
+	    if(pixel_scale_value < 0)
+	      pixel_scale_value = 1.0F;
+	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+	    CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * I->Width/ 2.f);
+	  } else {
+	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	  }
+
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+
+	  CShaderPrg_Disable(shaderPrg);
+	  return;
+	}
+      }
+#ifdef _PYMOL_GL_CALLLISTS
+      if(use_display_lists) {
+	if(!I->R.displayList) {
+	  I->R.displayList = glGenLists(1);
+	  if(I->R.displayList) {
+	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
+	  }
+	}
+      }
+#else
+      (void) use_display_lists; (void) nvidia_bugs;
+#endif
+      v = I->V;
+      c = I->N;
+      if (generate_shader_cgo){
+	CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE);
+	if(!info->line_lighting)
+	  CGODisable(I->shaderCGO, GL_LIGHTING);
+	if (nonbonded_as_cylinders){
+	  if(c) {
+	    float *origin, axis[3];
+	    CGOResetNormal(I->shaderCGO, true);
+	    while(c--) {
+	      if(alpha == 1.0) {
+		CGOColorv(I->shaderCGO, v);
+	      } else {
+		CGOAlpha(I->shaderCGO, alpha);
+		CGOColorv(I->shaderCGO, v);
+	      }
+	      v += 3;
+	      origin = v;
+	      v += 3;
+	      axis[0] = v[0] - origin[0];
+	      axis[1] = v[1] - origin[1];
+	      axis[2] = v[2] - origin[2];
+	      CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
+	      v += 3;
+	      origin = v;
+	      v += 3;
+	      axis[0] = v[0] - origin[0];
+	      axis[1] = v[1] - origin[1];
+	      axis[2] = v[2] - origin[2];
+	      CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
+	      v += 3;
+	      origin = v;
+	      v += 3;
+	      axis[0] = v[0] - origin[0];
+	      axis[1] = v[1] - origin[1];
+	      axis[2] = v[2] - origin[2];
+	      CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 3);
+	      v += 3;
+	    }
+	  }
+	} else {
+	  if(c) {
+	    CGOBegin(I->shaderCGO, GL_LINES);
+	    CGOResetNormal(I->shaderCGO, true);
+	    while(c--) {
+	      if(alpha == 1.0) {
+		CGOColorv(I->shaderCGO, v);
+	      } else {
+		CGOAlpha(I->shaderCGO, alpha);
+		CGOColorv(I->shaderCGO, v);
+	      }
+	      v += 3;
+	      CGOVertexv(I->shaderCGO, v);
+	      v += 3;
+	      CGOVertexv(I->shaderCGO, v);
+	      v += 3;
+	      CGOVertexv(I->shaderCGO, v);
+	      v += 3;
+	      CGOVertexv(I->shaderCGO, v);
+	      v += 3;
+	      CGOVertexv(I->shaderCGO, v);
+	      v += 3;
+	      CGOVertexv(I->shaderCGO, v);
+	      v += 3;
+	    }
+	    CGOEnd(I->shaderCGO);
+	  }
+	}
+	if(!info->line_lighting)
+	  CGOEnable(I->shaderCGO, GL_LIGHTING);
       } else {
-        int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
-
+	if(info->width_scale_flag)
+	  glLineWidth(I->Width * info->width_scale);
+	else
+	  glLineWidth(I->Width);
+	
         if(SettingGetGlobal_i(G, cSetting_ati_bugs)) {
           glFlush();            /* eliminate ATI artifacts under VISTA */
         }
-
-        if(use_dlst) {
-          if(!I->R.displayList) {
-            I->R.displayList = glGenLists(1);
-            if(I->R.displayList) {
-              glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-            }
-          }
-        }
-
-        v = I->V;
-        c = I->N;
         if(c) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
           if(!info->line_lighting)
             glDisable(GL_LIGHTING);
+#ifdef _PYMOL_GL_DRAWARRAYS
+          SceneResetNormal(G, true);
+	  {
+	    int nverts = c * 6;
+	    ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
+	    ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
+	    int pl, plc;
+	    pl = 0; plc = 0;
+	    while(c--) {
+	      colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
+	      colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
+	      colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
+	      colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
+	      colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
+	      colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
+	      v += 3;
+	      memcpy(&vertVals[pl], v, 18*sizeof(GLfloat));
+	      v += 18;
+	      pl += 18;
+	    }
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glEnableClientState(GL_COLOR_ARRAY);
+	    glVertexPointer(3, GL_FLOAT, 0, vertVals);
+	    glColorPointer(4, GL_FLOAT, 0, colorVals);
+	    glDrawArrays(GL_LINES, 0, nverts);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	    glDisableClientState(GL_COLOR_ARRAY);
+	    DEALLOCATE_ARRAY(vertVals)
+	    DEALLOCATE_ARRAY(colorVals)
+	  }
+#else
           glBegin(GL_LINES);
           SceneResetNormal(G, true);
-
           while(c--) {
-
             if(alpha == 1.0) {
               glColor3fv(v);
             } else {
@@ -246,31 +510,74 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
             if(nvidia_bugs) {
               glFlush();
             }
-
             glVertex3fv(v);
             v += 3;
             glVertex3fv(v);
             v += 3;
-
             glVertex3fv(v);
             v += 3;
             glVertex3fv(v);
             v += 3;
-
             glVertex3fv(v);
             v += 3;
             glVertex3fv(v);
             v += 3;
-
           }
           glEnd();
+#endif
           glEnable(GL_LIGHTING);
+#endif
         }
-        if(use_dlst && I->R.displayList) {
-          glEndList();
-        }
-
       }
+
+      if (use_shader) {
+	if (generate_shader_cgo){
+	  CGO *convertcgo = NULL;
+	  CGOStop(I->shaderCGO);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  CGOFree(I->shaderCGO);    
+	  I->shaderCGO = convertcgo;
+#else
+	  (void)convertcgo;
+#endif
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+	  if (nonbonded_as_cylinders){
+	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
+	  } else {
+	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	  }
+	  if (convertcgo){
+	    CGOFree(I->shaderCGO);
+	    I->shaderCGO = convertcgo;
+	  }
+#else
+	  (void)convertcgo;
+#endif
+	}
+	
+	{
+	  CShaderPrg *shaderPrg;
+	  if (nonbonded_as_cylinders){
+	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
+	    if(pixel_scale_value < 0)
+	      pixel_scale_value = 1.0F;
+	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+	    CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * I->Width/ 2.f);
+	  } else {
+	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	  }	 
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  CShaderPrg_Disable(shaderPrg);
+	}
+      }
+#ifdef _PYMOL_GL_CALLLISTS
+      if (use_display_lists && I->R.displayList){
+	glEndList();
+	glCallList(I->R.displayList);      
+      }
+#endif
     }
   }
 }
@@ -316,6 +623,7 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepNonbondedRender;
   I->R.fFree = (void (*)(struct Rep *)) RepNonbondedFree;
 
+  I->shaderCGO = NULL;
   I->N = 0;
   I->NP = 0;
   I->V = NULL;

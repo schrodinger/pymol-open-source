@@ -36,7 +36,7 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include"Seq.h"
 #include"Seeker.h"
-
+#include"ShaderMgr.h"
 
 /* 
    just so you don't forget...
@@ -861,6 +861,8 @@ static void ObjectAlignmentFree(ObjectAlignment * I)
 {
   int a;
   for(a = 0; a < I->NState; a++) {
+    if(I->State[a].shaderCGO)
+      CGOFree(I->State[a].shaderCGO);
     if(I->State[a].std)
       CGOFree(I->State[a].std);
     if(I->State[a].ray)
@@ -903,27 +905,26 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
 {
   register PyMOLGlobals *G = I->Obj.G;
   int update_needed = false;
+  short use_shader = SettingGet(G, cSetting_alignment_as_cylinders) && 
+    SettingGet(G, cSetting_render_as_cylinders) &&
+    SettingGet(G, cSetting_use_shaders);
   {
     int a;
-
     for(a = 0; a < I->NState; a++) {
       ObjectAlignmentState *oas = I->State + a;
-      if(!oas->valid)
+      if(!oas->valid || (use_shader && !oas->shaderCGO)){
         update_needed = true;
+      }
     }
   }
-
   if(update_needed) {
-
     ExecutiveObjectOffset *eoo = NULL;
     OVOneToOne *id2eoo = NULL;
-
     if(ExecutiveGetUniqueIDObjectOffsetVLADict(G, &eoo, &id2eoo)) {
-
       int a;
       for(a = 0; a < I->NState; a++) {
         ObjectAlignmentState *oas = I->State + a;
-        if(!oas->valid) {
+	if(!oas->valid || (use_shader && !oas->shaderCGO)){
           ObjectMolecule *guide_obj = NULL;
           if(oas->guide[0]) {
             guide_obj = ExecutiveFindObjectMoleculeByName(G, oas->guide);
@@ -990,9 +991,8 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
 
                   scale3f(mean, scale, mean);
 
-                  CGOBegin(cgo, GL_LINES);
-
                   c = b;
+                  CGOBegin(cgo, GL_LINES);
                   while((id = vla[c++])) {
                     if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
                       if(ObjectMoleculeGetAtomVertex(eoo[offset.word].obj, a,
@@ -1010,14 +1010,11 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                     }
                   }
                   CGOEnd(cgo);
-
                 } else if(n_coord) {    /* if 2 points, then simply draw a line */
                   float first[3];
                   int first_flag = true;
-                  CGOBegin(cgo, GL_LINES);
-
                   c = b;
-
+                  CGOBegin(cgo, GL_LINES);
                   while((id = vla[c++])) {
                     if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
                       if(ObjectMoleculeGetAtomVertex(eoo[offset.word].obj, a,
@@ -1034,7 +1031,6 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                   }
                   CGOEnd(cgo);
                 }
-
                 /* update the it2tag dictionary */
 
                 tag++;
@@ -1051,7 +1047,20 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
             /* simplify if necessary */
 
             {
-              int est = CGOCheckComplex(cgo);
+              int est = CGOCheckComplex(cgo); 
+	      {
+		CGO *convertcgo = NULL;
+		if(cgo){
+		  if(oas->shaderCGO) {
+		    CGOFree(oas->shaderCGO);
+		    oas->shaderCGO = NULL;
+		  }
+		  oas->shaderCGO = CGOConvertLinesToShaderCylinders(cgo, 0);
+		  convertcgo = CGOCombineBeginEnd(cgo, 0);
+		  CGOFree(cgo);
+		  cgo = convertcgo;
+		}
+	      }
               if(est) {
                 oas->ray = cgo;
                 oas->std = CGOSimplify(cgo, est);
@@ -1134,15 +1143,48 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
               else
                 CGORenderRay(sobj->std, ray, color, I->Obj.Setting, NULL);
             } else if(G->HaveGUI && G->ValidContext) {
+#ifndef PURE_OPENGL_ES_2
               if(!info->line_lighting)
                 glDisable(GL_LIGHTING);
+#endif
               SceneResetNormal(G, true);
               if(pick) {
               } else {
-                if(sobj->std)
-                  CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info);
+		if(sobj->std){
+		  short use_shader = SettingGet(G, cSetting_alignment_as_cylinders) && 
+		    SettingGet(G, cSetting_render_as_cylinders) &&
+		    SettingGet(G, cSetting_use_shaders);
+		  if (use_shader){
+		    if (!sobj->shaderCGO){
+		      ObjectAlignmentUpdate(I);
+		    }
+		    if (!sobj->shaderCGO->has_draw_cylinder_buffers){
+		      CGO *convertcgo = sobj->shaderCGO;		      
+		      sobj->shaderCGO = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(convertcgo, 0);
+		      if (sobj->shaderCGO){
+			CGOFree(convertcgo);
+		      } else {
+			sobj->shaderCGO = convertcgo;
+		      }
+		    }
+		    {
+		      CShaderPrg *shaderPrg;
+		      float line_width = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_line_width);
+		      float radius = SceneGetLineWidthForCylinders(G, info, line_width);
+		      shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+		      CShaderPrg_Set1f(shaderPrg, "uni_radius", radius);
+		      CGORenderGL(sobj->shaderCGO, NULL, NULL, NULL, info, NULL);
+		      CShaderPrg_Disable(shaderPrg);
+		      return;
+		    }
+		  } else {
+		    CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info, NULL);
+		  }
+		}
               }
+#ifndef PURE_OPENGL_ES_2
               glEnable(GL_LIGHTING);
+#endif
             }
           }
         }
@@ -1161,15 +1203,59 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
+#ifndef PURE_OPENGL_ES_2
             if(!info->line_lighting)
               glDisable(GL_LIGHTING);
+#endif
             SceneResetNormal(G, true);
             if(sobj) {
-              if(sobj->std)
-                CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info);
-            }
-            glEnable(GL_LIGHTING);
-          }
+	      if(sobj->std){
+		short use_shader = SettingGet(G, cSetting_alignment_as_cylinders) && 
+		  SettingGet(G, cSetting_render_as_cylinders) &&
+		  SettingGet(G, cSetting_use_shaders);
+		if (use_shader){
+		  if (!sobj->shaderCGO){
+		    ObjectAlignmentUpdate(I);
+		  }
+		  if (sobj->shaderCGO && !sobj->shaderCGO->has_draw_cylinder_buffers){
+		    CGO *convertcgo = sobj->shaderCGO;		      
+		    sobj->shaderCGO = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(convertcgo, 0);
+		    if (sobj->shaderCGO){
+		      CGOFree(convertcgo);
+		    } else {
+		      sobj->shaderCGO = convertcgo;
+		    }
+		  }
+		  if (sobj->shaderCGO) {
+		    CShaderPrg *shaderPrg;
+		    float linewidth = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_line_width);
+		    float lineradius = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_line_radius);
+		    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
+		    if (linewidth < 0.f){
+		      linewidth = 1.f;
+		    }
+		    if(pixel_scale_value < 0)
+		      pixel_scale_value = 1.0F;
+		    if (lineradius < 0.f){
+		      lineradius = linewidth * info->vertex_scale * pixel_scale_value / 2.f;
+		    }
+		    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+		    CShaderPrg_Set1f(shaderPrg, "uni_radius", lineradius);
+		    glVertexAttrib3fv(CShaderPrg_GetAttribLocation(shaderPrg, "attr_colors"), color);
+		    glVertexAttrib3fv(CShaderPrg_GetAttribLocation(shaderPrg, "attr_colors2"), color);
+		    CGORenderGL(sobj->shaderCGO, color, I->Obj.Setting, NULL, info, NULL);
+		    CShaderPrg_Disable(shaderPrg);
+		    return;
+		  }
+		} else {
+		  CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info, NULL);
+		}
+	      }
+	    }
+#ifndef PURE_OPENGL_ES_2
+	    glEnable(GL_LIGHTING);
+#endif
+	  }
         }
       }
     }
@@ -1202,6 +1288,7 @@ static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals * G)
   I->State = VLAMalloc(10, sizeof(ObjectAlignmentState), 5, true);      /* auto-zero */
   I->NState = 0;
   I->SelectionState = -1;
+  I->ForceState = -1;
 
   I->Obj.type = cObjectAlignment;
   I->Obj.fFree = (void (*)(CObject *)) ObjectAlignmentFree;
@@ -1263,7 +1350,6 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
         UtilCopyMem(oas->alignVLA, align_vla, sizeof(int) * size);
         VLASize(oas->alignVLA, int, size);
       }
-
     } else {
       VLAFreeP(oas->alignVLA);
     }

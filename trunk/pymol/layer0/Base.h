@@ -102,13 +102,13 @@ typedef struct {
   Picking *picked;
 } Multipick;
 
-typedef struct {
+typedef struct LabPosType {
   int mode;
   float pos[3];
   float offset[3];
 } LabPosType;
 
-typedef struct {
+typedef struct RefPosType {
   float coord[3];
   int specified;
 } RefPosType;

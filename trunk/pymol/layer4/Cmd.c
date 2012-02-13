@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 
 #ifndef _PYMOL_NOPY
 #include"os_python.h"
+#include"PyMOLGlobals.h"
 #include"PyMOLOptions.h"
 #include"os_predef.h"
 #include"os_gl.h"
@@ -1048,15 +1049,16 @@ static PyObject *CmdDecline(PyObject * self, PyObject * args)
 
 }
 
-static PyObject *CmdSetCrystal(PyObject * self, PyObject * args)
+static PyObject *CmdSetSymmetry(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1, *str2;
+  int state;
   OrthoLineType s1;
   float a, b, c, alpha, beta, gamma;
 
-  ok = PyArg_ParseTuple(args, "Osffffffs", &self, &str1, &a, &b, &c,
+  ok = PyArg_ParseTuple(args, "Osiffffffs", &self, &str1, &state, &a, &b, &c,
                         &alpha, &beta, &gamma, &str2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -1067,24 +1069,25 @@ static PyObject *CmdSetCrystal(PyObject * self, PyObject * args)
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G, str1, s1) >= 0);
     if(ok)
-      ok = ExecutiveSetCrystal(G, s1, a, b, c, alpha, beta, gamma, str2);
+      ok = ExecutiveSetSymmetry(G, s1, state, a, b, c, alpha, beta, gamma, str2);
     SelectorFreeTmp(G, s1);
     APIExit(G);
   }
   return APIResultOk(ok);
 }
 
-static PyObject *CmdGetCrystal(PyObject * self, PyObject * args)
+static PyObject *CmdGetSymmetry(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1;
   OrthoLineType s1;
   float a, b, c, alpha, beta, gamma;
+  int state;
   WordType sg;
   PyObject *result = NULL;
   int defined;
-  ok = PyArg_ParseTuple(args, "Os", &self, &str1);
+  ok = PyArg_ParseTuple(args, "Osi", &self, &str1, &state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -1094,7 +1097,7 @@ static PyObject *CmdGetCrystal(PyObject * self, PyObject * args)
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G, str1, s1) >= 0);
     if(ok)
-      ok = ExecutiveGetCrystal(G, s1, &a, &b, &c, &alpha, &beta, &gamma, sg, &defined);
+      ok = ExecutiveGetSymmetry(G, s1, state, &a, &b, &c, &alpha, &beta, &gamma, sg, &defined);
     APIExit(G);
     if(ok) {
       if(defined) {
@@ -2577,8 +2580,8 @@ static PyObject *CmdPushUndo(PyObject * self, PyObject * args)
       ok = (SelectorGetTmp(G, str0, s0) >= 0);
     if(ok)
       ok = ExecutiveSaveUndo(G, s0, state);
-    if(s0[0])
-      SelectorFreeTmp(G, s0);
+      if(s0[0])
+	SelectorFreeTmp(G, s0);
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -3836,6 +3839,37 @@ static PyObject *CmdSymExp(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdSymmetryCopy(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char *source_name, *target_name;
+  int source_mode, target_mode;
+  int source_state, target_state, target_undo;
+  int log;
+  int quiet;
+  int ok = false;
+
+  ok = PyArg_ParseTuple(args, "Ossiiiiiii", &self,
+                        &source_name, &target_name,
+                        &source_mode, &target_mode,
+                        &source_state, &target_state, &target_undo, &log, &quiet);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterNotModal(G))) {
+    ExecutiveSymmetryCopy(G,
+			  source_name, target_name,
+			  source_mode, target_mode,
+			  source_state, target_state, target_undo, log, quiet);
+    APIExit(G);
+  }
+
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdOverlap(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -4439,10 +4473,9 @@ static PyObject *CmdMem(PyObject * self, PyObject * args)
   return APISuccess();
 }
 
-/* What is this for?  */
-static int decoy_input_hook(void)
-{
-  return 0;
+static int decoy_input_hook(void) 
+{ 
+  return 0; 
 }
 
 static PyObject *Cmd_GetGlobalCObject(PyObject * self, PyObject * args)
@@ -6281,7 +6314,8 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
         result = 1;             /* signal success by returning 1 instead of 0, or -1 for error  */
     } else {
       ExecutiveDrawNow(G);      /* TODO STATUS */
-      if(ray || !G->HaveGUI) {
+      if(ray || !G->HaveGUI) {  /* should !G->HaveGUI be here?  It should not re-ray trace if 
+				   it already exists.  Works if taken out on OSX */
         SceneRay(G, width, height, (int) SettingGet(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
         ok = ScenePNG(G, str1, dpi, quiet, false, format);
@@ -6874,6 +6908,40 @@ static PyObject *CmdSetBond(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdGetBond(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = Py_None;
+  int index;
+  char *str3, *str4;
+  int state;
+  int quiet;
+  int updates;
+  OrthoLineType s1, s2;
+  int ok = false;
+  ok =
+    PyArg_ParseTuple(args, "Oissiii", &self, &index, &str3, &str4, &state,
+                     &quiet, &updates);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterNotModal(G))) {
+    s1[0] = 0;
+    s2[0] = 0;
+    ok = (SelectorGetTmp(G, str3, s1) >= 0);
+    ok = (SelectorGetTmp(G, str4, s2) >= 0) && ok;
+    if(ok)
+      result = ExecutiveGetBondSetting(G, index, s1, s2, state, quiet, updates);
+    SelectorFreeTmp(G, s1);
+    SelectorFreeTmp(G, s2);
+    APIExit(G);
+  }
+  return APIAutoNone(result);
+}
+
 static PyObject *CmdGet(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -7215,8 +7283,11 @@ static PyObject *CmdLoadObject(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     ObjectNameType valid_name = "";
+    int isTmp;
+  
     buf[0] = 0;
     ExecutiveProcessObjectName(G, oname, valid_name);
+    isTmp = valid_name[0] == '_';
 
     origObj = ExecutiveFindObjectByName(G, valid_name);
 
@@ -7224,11 +7295,14 @@ static PyObject *CmdLoadObject(PyObject * self, PyObject * args)
 
     switch (type) {
     case cLoadTypeChemPyModel:
-      if(origObj)
+      if(origObj){
         if(origObj->type != cObjectMolecule) {
           ExecutiveDelete(G, valid_name);
           origObj = NULL;
-        }
+        } else {
+	  discrete = 1;
+	}
+      }
       PBlock(G);                /*PBlockAndUnlockAPI(); */
       obj = (CObject *) ObjectMoleculeLoadChemPyModel(G, (ObjectMolecule *)
                                                       origObj, model, frame, discrete);
@@ -8228,7 +8302,7 @@ static PyObject *CmdHAdd(PyObject * self, PyObject * args)
     ok = (SelectorGetTmp(G, str1, s1) >= 0);
     ExecutiveAddHydrogens(G, s1, quiet);        /* TODO STATUS */
     SelectorFreeTmp(G, s1);
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+      ok = (SelectorGetTmp(G, str1, s1) >= 0);
     ExecutiveAddHydrogens(G, s1, quiet);        /* TODO STATUS */
     SelectorFreeTmp(G, s1);
     ok = (SelectorGetTmp(G, str1, s1) >= 0);
@@ -8236,7 +8310,7 @@ static PyObject *CmdHAdd(PyObject * self, PyObject * args)
     SelectorFreeTmp(G, s1);
     ok = (SelectorGetTmp(G, str1, s1) >= 0);
     ExecutiveAddHydrogens(G, s1, quiet);        /* TODO STATUS */
-    SelectorFreeTmp(G, s1);
+      SelectorFreeTmp(G, s1);
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -8987,7 +9061,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_setting_text", CmdGetSettingText, METH_VARARGS},
   {"get_setting_updates", CmdGetSettingUpdates, METH_VARARGS},
   {"get_object_list", CmdGetObjectList, METH_VARARGS},
-  {"get_symmetry", CmdGetCrystal, METH_VARARGS},
+  {"get_symmetry", CmdGetSymmetry, METH_VARARGS},
   {"get_state", CmdGetState, METH_VARARGS},
   {"get_title", CmdGetTitle, METH_VARARGS},
   {"get_type", CmdGetType, METH_VARARGS},
@@ -9091,6 +9165,7 @@ static PyMethodDef Cmd_methods[] = {
   {"select_list", CmdSelectList, METH_VARARGS},
   {"set", CmdSet, METH_VARARGS},
   {"set_bond", CmdSetBond, METH_VARARGS},
+  {"get_bond", CmdGetBond, METH_VARARGS},
   {"legacy_set", CmdLegacySet, METH_VARARGS},
   {"sculpt_deactivate", CmdSculptDeactivate, METH_VARARGS},
   {"sculpt_activate", CmdSculptActivate, METH_VARARGS},
@@ -9108,7 +9183,7 @@ static PyMethodDef Cmd_methods[] = {
   {"set_object_ttt", CmdSetObjectTTT, METH_VARARGS},
   {"set_object_color", CmdSetObjectColor, METH_VARARGS},
   {"set_session", CmdSetSession, METH_VARARGS},
-  {"set_symmetry", CmdSetCrystal, METH_VARARGS},
+  {"set_symmetry", CmdSetSymmetry, METH_VARARGS},
   {"set_title", CmdSetTitle, METH_VARARGS},
   {"set_wizard", CmdSetWizard, METH_VARARGS},
   {"set_wizard_stack", CmdSetWizardStack, METH_VARARGS},
@@ -9124,6 +9199,7 @@ static PyMethodDef Cmd_methods[] = {
   {"stereo", CmdStereo, METH_VARARGS},
   {"system", CmdSystem, METH_VARARGS},
   {"symexp", CmdSymExp, METH_VARARGS},
+  {"symmetry_copy", CmdSymmetryCopy, METH_VARARGS},
   {"test", CmdTest, METH_VARARGS},
   {"toggle", CmdToggle, METH_VARARGS},
   {"matrix_copy", CmdMatrixCopy, METH_VARARGS},

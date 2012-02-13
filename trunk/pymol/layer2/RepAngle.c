@@ -28,6 +28,8 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Setting.h"
 #include"PyMOLObject.h"
+#include"ShaderMgr.h"
+#include"CGO.h"
 
 typedef struct RepAngle {
   Rep R;
@@ -36,6 +38,7 @@ typedef struct RepAngle {
   CObject *Obj;
   DistSet *ds;
   float linewidth, radius;
+  CGO *shaderCGO;
 } RepAngle;
 
 #include"ObjectDist.h"
@@ -44,6 +47,10 @@ void RepAngleFree(RepAngle * I);
 
 void RepAngleFree(RepAngle * I)
 {
+  if (I->shaderCGO){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = 0;
+  }
   VLAFreeP(I->V);
   RepPurge(&I->R);
   OOFreeP(I);
@@ -58,21 +65,23 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   int c = I->N;
   float *vc;
   int round_ends;
+  float line_width;
   int color =
     SettingGet_color(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_angle_color);
-  I->linewidth =
+  I->linewidth = line_width = 
     SettingGet_f(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_dash_width);
   I->radius =
     SettingGet_f(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_dash_radius);
   round_ends =
     SettingGet_b(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_dash_round_ends);
+  line_width = SceneGetDynamicLineWidth(info, line_width);
 
   if(ray) {
 
     float radius;
 
     if(I->radius == 0.0F) {
-      radius = ray->PixelRadius * I->linewidth / 2.0F;
+      radius = ray->PixelRadius * line_width / 2.0F;
     } else {
       radius = I->radius;
     }
@@ -97,37 +106,147 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else {
-      int use_dlst;
+      short use_shader, generate_shader_cgo = 0, use_display_lists = 0, dash_as_cylinders = 0;
 
-      if(info->width_scale_flag) {
-        glLineWidth(I->linewidth * info->width_scale);
-      } else {
-        glLineWidth(I->linewidth);
+      use_shader = (int) SettingGet(G, cSetting_dash_use_shader) & 
+                           (int) SettingGet(G, cSetting_use_shaders);
+      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+      dash_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_dash_as_cylinders);
+
+      if (!use_shader && I->shaderCGO){
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = 0;
       }
-      if(color >= 0)
-        glColor3fv(ColorGet(G, color));
+#ifdef _PYMOL_GL_CALLLISTS
+      if(use_display_lists && I->R.displayList) {
+	glCallList(I->R.displayList);
+	return;
+      }
+#endif
 
-      use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
-      if(use_dlst && I->R.displayList) {
-        glCallList(I->R.displayList);
+      if (use_shader){
+	if (!I->shaderCGO){
+	  I->shaderCGO = CGONew(G);
+	  I->shaderCGO->use_shader = true;
+	  generate_shader_cgo = 1;
+	} else {
+	  CShaderPrg *shaderPrg;
+	  if (dash_as_cylinders){
+	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
+	    if(pixel_scale_value < 0)
+	      pixel_scale_value = 1.0F;
+	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+	    if(I->radius == 0.0F) {
+	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
+	    } else {
+	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
+	    }
+	    if (!round_ends){
+	      CShaderPrg_Set1f(shaderPrg, "flat_caps", 1.f);
+	    }
+	  } else {
+	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	  }
+
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+
+	  CShaderPrg_Disable(shaderPrg);
+	  return;
+	}
+      }
+#ifdef _PYMOL_GL_CALLLISTS
+      if(use_display_lists) {
+	if(!I->R.displayList) {
+	  I->R.displayList = glGenLists(1);
+	  if(I->R.displayList) {
+	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
+	  }
+	}
+      }
+#else
+      (void) use_display_lists;
+#endif
+
+      if (generate_shader_cgo){
+	CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
+	CGOResetNormal(I->shaderCGO, true);
       } else {
-
+	if(info->width_scale_flag) {
+	  glLineWidth(line_width * info->width_scale);
+	} else {
+	  glLineWidth(line_width);
+	}
         SceneResetNormal(G, true);
+      }
 
-        if(use_dlst) {
-          if(!I->R.displayList) {
-            I->R.displayList = glGenLists(1);
-            if(I->R.displayList) {
-              glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-            }
-          }
-        }
-
+      if (generate_shader_cgo){
+	if(color >= 0){
+	  CGOColorv(I->shaderCGO, ColorGet(G, color));
+	} else if (I->Obj && I->Obj->Color >= 0){
+	  CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
+	}
+	v = I->V;
+	c = I->N;
+	if (dash_as_cylinders){
+	  float *origin = NULL, axis[3];
+	  while(c > 0) {
+	    origin = v;
+	    v += 3;
+	    axis[0] = v[0] - origin[0];
+	    axis[1] = v[1] - origin[1];
+	    axis[2] = v[2] - origin[2];
+	    v += 3;
+	    CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
+	    c -= 2;
+	  }
+	} else {
+	  CGOBegin(I->shaderCGO, GL_LINES);
+	  while(c > 0) {
+	    CGOVertexv(I->shaderCGO, v);
+	    v += 3;
+	    CGOVertexv(I->shaderCGO, v);
+	    v += 3;
+	    c -= 2;
+	  }
+	  CGOEnd(I->shaderCGO);
+	}
+      } else {
+	if(color >= 0){
+#ifdef PURE_OPENGL_ES_2
+	  /* TODO */
+#else
+	  glColor3fv(ColorGet(G, color));
+#endif
+	}
         v = I->V;
         c = I->N;
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
         if(!info->line_lighting)
           glDisable(GL_LIGHTING);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	{
+	  int pl, cinit;
+	  ALLOCATE_ARRAY(GLfloat,lineVerts,c)
+	  pl = 0;
+	  cinit = c;
+	  while(c > 0) {
+	    lineVerts[pl++] = v[0]; lineVerts[pl++] = v[1]; lineVerts[pl++] = v[2];
+	    v += 3;
+	    lineVerts[pl++] = v[0]; lineVerts[pl++] = v[1]; lineVerts[pl++] = v[2];
+	    v += 3;
+	    c -= 2;
+	  }
+	  glEnableClientState(GL_VERTEX_ARRAY);
+	  glVertexPointer(3, GL_FLOAT, 0, lineVerts);
+	  glDrawArrays(GL_LINE_LOOP, 0, cinit);
+	  glDisableClientState(GL_VERTEX_ARRAY);
+	  DEALLOCATE_ARRAY(lineVerts)
+	}
+#else
         glBegin(GL_LINES);
         while(c > 0) {
           glVertex3fv(v);
@@ -137,12 +256,67 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
           c -= 2;
         }
         glEnd();
+#endif
         glEnable(GL_LIGHTING);
-
-        if(use_dlst && I->R.displayList) {
-          glEndList();
-        }
+#endif
       }
+      if (use_shader) {
+	if (generate_shader_cgo){
+	  CGO *convertcgo = NULL;
+	  CGOStop(I->shaderCGO);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  CGOFree(I->shaderCGO);    
+	  I->shaderCGO = convertcgo;
+#else
+	  (void)convertcgo;
+#endif
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+	  if (dash_as_cylinders){
+	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
+	  } else {
+	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	  }
+	  if (convertcgo){
+	    CGOFree(I->shaderCGO);
+	    I->shaderCGO = convertcgo;
+	  }
+#else
+	  (void)convertcgo;
+#endif
+	}
+	
+	{
+	  CShaderPrg *shaderPrg;
+	  if (dash_as_cylinders){
+	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
+	    if(pixel_scale_value < 0)
+	      pixel_scale_value = 1.0F;
+	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+	    if(I->radius == 0.0F) {
+	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
+	    } else {
+	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
+	    }
+	    if (!round_ends){
+	      CShaderPrg_Set1f(shaderPrg, "flat_caps", 1.f);
+	    }
+	  } else {
+	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	  }	 
+
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  
+	  CShaderPrg_Disable(shaderPrg);
+	}
+      }
+#ifdef _PYMOL_GL_CALLLISTS
+      if (use_display_lists && I->R.displayList){
+	glEndList();
+	glCallList(I->R.displayList);      
+      }
+#endif
     }
   }
 }
@@ -177,6 +351,7 @@ Rep *RepAngleNew(DistSet * ds)
   if(dash_sum < R_SMALL4)
     dash_sum = 0.1F;
 
+  I->shaderCGO = 0;
   I->N = 0;
   I->V = NULL;
   I->R.P = NULL;

@@ -45,7 +45,6 @@ class PMGApp(Pmw.MegaWidget):
 #       self.root.tk.call('tk','scaling',1)
 
          # try to get the windows properly aligned...
-         
          osFrame = { 'win32' : (4,60), 'irix'   : (0,41),
                      'darwin': (0,51), 'cygwin' : (0,60),
                      'linux' : (0,31), 'linux2' : (0,31) }

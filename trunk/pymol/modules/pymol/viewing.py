@@ -1575,7 +1575,9 @@ SEE ALSO
                         lst = _scene_validate_list(_self)
                         if key == setting.get("scene_current_name",_self=_self):
                             ix = lst.index(key) - 1
-                            if ix>=0:
+                            if ix<0:
+                                ix = lst.index(key) + 1
+                            if ix>=0 and ix < len(lst):
                                 setting.set("scene_current_name",lst[ix],quiet=1,_self=_self)
                             else:
                                 setting.set("scene_current_name","",quiet=1,_self=_self) 
@@ -2490,7 +2492,7 @@ EXAMPLE
         # preprocess selection
         selection = selector.process(selection)
         color = _self._interpret_color(_self,str(color))
-        #
+
         r = DEFAULT_ERROR      
         try:
             _self.lock(_self)

@@ -66,6 +66,7 @@
 #include "Feedback.h"
 
 #include "ShaderMgr.h"
+#include "Version.h"
 
 #ifndef _PYMOL_NOPY
 PyMOLGlobals *SingletonPyMOLGlobals = NULL;
@@ -852,6 +853,49 @@ typedef struct _CPyMOL {
 
   ov_word lex_state_counter_mode;
 
+  ov_word lex_cgo_use_shader;
+
+  ov_word lex_cgo_shader_ub_color;
+  ov_word lex_cgo_shader_ub_normal;
+  ov_word lex_cgo_lighting;
+  ov_word lex_mesh_use_shader;
+  ov_word lex_stick_debug;
+  ov_word lex_cgo_debug;
+  ov_word lex_stick_round_nub;
+  ov_word lex_stick_good_geometry;
+  ov_word lex_stick_as_cylinders;
+  ov_word lex_mesh_as_cylinders;
+  ov_word lex_line_as_cylinders;
+  ov_word lex_ribbon_as_cylinders;
+  ov_word lex_ribbon_use_shader;
+  ov_word lex_excl_display_lists_shaders;
+  ov_word lex_dash_use_shader;
+  ov_word lex_dash_as_cylinders;
+  ov_word lex_nonbonded_use_shader;
+  ov_word lex_nonbonded_as_cylinders;
+  ov_word lex_cylinders_shader_filter_faces;
+  ov_word lex_nb_spheres_size;
+  ov_word lex_nb_spheres_quality;
+  ov_word lex_nb_spheres_use_shader;
+  ov_word lex_render_as_cylinders;
+  ov_word lex_alignment_as_cylinders;
+  ov_word lex_cartoon_nucleic_acid_as_cylinders;
+  ov_word lex_cgo_shader_ub_flags;
+  ov_word lex_offscreen_rendering_for_antialiasing;
+  ov_word lex_offscreen_rendering_multiplier;
+  ov_word lex_cylinder_shader_ff_workaround;
+  ov_word lex_surface_color_smoothing;
+  ov_word lex_surface_color_smoothing_threshold;
+  ov_word lex_dot_use_shader;
+  ov_word lex_dot_as_spheres;
+  ov_word lex_ambient_occlusion_mode;
+  ov_word lex_ambient_occlusion_scale;
+  ov_word lex_ambient_occlusion_smooth;
+  ov_word lex_anaglyph_mode;
+  ov_word lex_edit_light;
+  ov_word lex_smooth_half_bonds;
+  ov_word lex_suspend_undo;
+  ov_word lex_suspend_undo_atom_count;
 
 #ifdef _PYMOL_LIB
   OVOneToOne *MouseButtonCodeLexicon;
@@ -878,8 +922,10 @@ typedef struct _CPyMOL {
   ov_word lex_but_drgo, lex_but_imsz, lex_but_imvz, lex_but_box, lex_but_irtz;
 
   OVOneToOne *MouseModeLexicon;
-
 #include "buttonmodes_lex_def.h"
+
+  OVOneToOne *PaletteLexicon;
+#include "palettes_lex_def.h"
 
 #endif
 
@@ -1715,6 +1761,48 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(ray_volume, 665);
   LEX_SETTING(ribbon_transparency, 666);
   LEX_SETTING(state_counter_mode, 667);
+  LEX_SETTING(cgo_use_shader, 668);
+  LEX_SETTING(cgo_shader_ub_color, 669);
+  LEX_SETTING(cgo_shader_ub_normal, 670);
+  LEX_SETTING(cgo_lighting, 671);
+  LEX_SETTING(mesh_use_shader, 672);
+  LEX_SETTING(stick_debug, 673);
+  LEX_SETTING(cgo_debug, 674);
+  LEX_SETTING(stick_round_nub, 675);
+  LEX_SETTING(stick_good_geometry, 676);
+  LEX_SETTING(stick_as_cylinders, 677);
+  LEX_SETTING(mesh_as_cylinders, 678);
+  LEX_SETTING(line_as_cylinders, 679);
+  LEX_SETTING(ribbon_as_cylinders, 680);
+  LEX_SETTING(ribbon_use_shader, 681);
+  LEX_SETTING(excl_display_lists_shaders, 682);
+  LEX_SETTING(dash_use_shader, 683);
+  LEX_SETTING(dash_as_cylinders, 684);
+  LEX_SETTING(nonbonded_use_shader, 685);
+  LEX_SETTING(nonbonded_as_cylinders, 686);
+  LEX_SETTING(cylinders_shader_filter_faces, 687)
+  LEX_SETTING(nb_spheres_size, 688)
+  LEX_SETTING(nb_spheres_quality, 689)
+  LEX_SETTING(nb_spheres_use_shader, 690)
+  LEX_SETTING(render_as_cylinders, 691)
+  LEX_SETTING(alignment_as_cylinders, 692)
+  LEX_SETTING(cartoon_nucleic_acid_as_cylinders, 693)
+  LEX_SETTING(cgo_shader_ub_flags, 694);
+  LEX_SETTING(offscreen_rendering_for_antialiasing, 695);
+  LEX_SETTING(offscreen_rendering_multiplier, 696);
+  LEX_SETTING(cylinder_shader_ff_workaround, 697);
+  LEX_SETTING(surface_color_smoothing, 698);
+  LEX_SETTING(surface_color_smoothing_threshold, 699);
+  LEX_SETTING(dot_use_shader, 700);
+  LEX_SETTING(dot_as_spheres, 701);
+  LEX_SETTING(ambient_occlusion_mode, 702);
+  LEX_SETTING(ambient_occlusion_scale, 703);
+  LEX_SETTING(ambient_occlusion_smooth, 704);
+  LEX_SETTING(smooth_half_bonds, 705);
+  LEX_SETTING(anaglyph_mode, 706);
+  LEX_SETTING(edit_light, 707);
+  LEX_SETTING(suspend_undo, 708);
+  LEX_SETTING(suspend_undo_atom_count, 709);
 
 #ifdef _PYMOL_LIB
 
@@ -1866,6 +1954,16 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
       initial_button_modes[a] = cButModeNone;
     }
   }
+
+  I->PaletteLexicon = OVOneToOne_New(C->heap);
+  if(!I->PaletteLexicon)
+    return_OVstatus_FAILURE;
+
+#define LEX_PALETTE(NAME,CODE) LEX(NAME) \
+    if(!OVreturn_IS_OK( OVOneToOne_Set(I->PaletteLexicon,I->lex_ ## NAME, CODE)))  \
+      return_OVstatus_FAILURE;
+
+#include "palettes_lex_init.h"
 
 #endif
 
@@ -3716,6 +3814,7 @@ PYMOL_API_UNLOCK}
 
 static void setup_gl_state(void)
 {
+
   /* get us into a well defined GL state */
 
   /*glMatrixMode(GL_PROJECTION);
@@ -3723,22 +3822,29 @@ static void setup_gl_state(void)
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity(); */
 
+#ifdef PURE_OPENGL_ES_2
+#else
   glDisable(GL_ALPHA_TEST);
-  glDisable(GL_AUTO_NORMAL);
-  glDisable(GL_BLEND);
   glDisable(GL_COLOR_LOGIC_OP);
   glDisable(GL_COLOR_MATERIAL);
-  glDisable(GL_CULL_FACE);
-
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_DITHER);
   glDisable(GL_FOG);
   glDisable(GL_LIGHTING);
   glDisable(GL_LIGHT0);
   glDisable(GL_LIGHT1);
   glDisable(GL_LINE_SMOOTH);
   glDisable(GL_NORMALIZE);
+#endif
+
+#ifndef _PYMOL_GL_DRAWARRAYS
+  glDisable(GL_AUTO_NORMAL);
+#endif
+  glDisable(GL_BLEND);
+  glDisable(GL_CULL_FACE);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_DITHER);
+#ifndef _PYMOL_GL_DRAWARRAYS
   glDisable(GL_POLYGON_SMOOTH);
+#endif
 }
 
 void PyMOL_Draw(CPyMOL * I)
@@ -4625,8 +4731,12 @@ PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, char *modename){
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
 
   PYMOL_API_LOCK
-    UtilNCopyToLower(modename, modename, strlen(modename)+1);
-    ok = OVreturn_IS_OK(mode = get_mouse_mode(I, modename));
+    {
+        ALLOCATE_ARRAY(char*, nmodename, strlen(modename)+1)
+	UtilNCopyToLower((char*)nmodename, modename, strlen(modename)+1);
+        ok = OVreturn_IS_OK(mode = get_mouse_mode(I, (char*)nmodename));
+        DEALLOCATE_ARRAY(nmodename)
+    }
   if (ok){
     result.status =  PyMOLstatus_SUCCESS;
     {
@@ -4682,6 +4792,14 @@ PyMOLreturn_status PyMOL_ZoomScene(CPyMOL * I, float scale){
   PYMOL_API_UNLOCK return result;
 }
 
+PyMOLreturn_status PyMOL_TranslateScene(CPyMOL * I, float x, float y, float z){
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
+  PYMOL_API_LOCK  
+    SceneTranslate(I->G, x, y, z);
+  result.status =  PyMOLstatus_SUCCESS;
+  PYMOL_API_UNLOCK return result;
+}
+
 #include "palettes.h"
 
 static OVreturn_word get_palette(CPyMOL * I, char *palette)
@@ -4695,7 +4813,7 @@ static OVreturn_word get_palette(CPyMOL * I, char *palette)
 PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, char *selection, float minimum, float maximum, int byres, int quiet){
   PyMOLreturn_float_array result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
-    int ok = true;
+  int ok = true;
   int digits, first, last, array_pl, ret;
   float min_ret, max_ret;
   char prefix[2];
@@ -4710,7 +4828,7 @@ PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, 
     s1[0] = 0;
 
   if (ok)
-    ok = OVreturn_IS_OK(pal_word = get_palette(I, (char*)palette));  
+  ok = OVreturn_IS_OK(pal_word = get_palette(I, (char*)palette));  
   prefix[0] = palette_prefix[pal_word.word];
   prefix[1] = 0;
   array_pl = pal_word.word * 3;
@@ -4724,8 +4842,7 @@ PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, 
     result.size = 2;
     result.array = VLAlloc(float, 2);
     result.array[0] = min_ret;
-
-
+    result.array[1] = max_ret;
     result.status = PyMOLstatus_SUCCESS;
   } else {
     result.status = PyMOLstatus_FAILURE;
@@ -4733,5 +4850,17 @@ PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, 
   PYMOL_API_UNLOCK return result;
 }
 
-
 #endif
+
+PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I){
+  int ok = true;
+  PyMOLreturn_value result = { PyMOLstatus_FAILURE };
+
+  PYMOL_API_LOCK
+  if(ok) {
+    result.type = PYMOL_RETURN_VALUE_IS_STRING;
+    result.string = strdup(_PyMOL_VERSION);
+    result.status = PyMOLstatus_SUCCESS;
+  };
+  PYMOL_API_UNLOCK return result;
+}

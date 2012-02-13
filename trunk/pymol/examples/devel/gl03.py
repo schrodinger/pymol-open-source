@@ -41,9 +41,9 @@ class myCallback(Callback):
       glVertexPointer(3,GL_FLOAT, 0,self.vert)
       glNormalPointer(GL_FLOAT,0,self.norm)
       
-      glEnable(GL_VERTEX_ARRAY)
-      glEnable(GL_NORMAL_ARRAY)
-      glDisable(GL_COLOR_ARRAY)
+      glEnableClientState(GL_VERTEX_ARRAY)
+      glEnableClientState(GL_NORMAL_ARRAY)
+      glDisableClientState(GL_COLOR_ARRAY)
       glDrawArrays(GL_TRIANGLE_STRIP,0,126)
 
    def get_extent(self):

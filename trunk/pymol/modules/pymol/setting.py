@@ -709,6 +709,51 @@ if __name__=='pymol.setting':
 
         state_counter_mode                 = 667
 
+        cgo_use_shader                     = 668
+
+        cgo_shader_ub_color                = 669
+        cgo_shader_ub_normal               = 670
+
+        cgo_lighting                       = 671
+        mesh_use_shader                    = 672
+        stick_debug                        = 673
+        cgo_debug                          = 674
+        stick_round_nub                    = 675
+        stick_good_geometry                = 676
+        stick_as_cylinders                 = 677
+        mesh_as_cylinders                  = 678
+        line_as_cylinders                  = 679
+        ribbon_as_cylinders                = 680
+        ribbon_use_shader                  = 681
+        excl_display_lists_shaders         = 682
+        dash_use_shader                    = 683
+        dash_as_cylinders                  = 684
+        nonbonded_use_shader               = 685
+        nonbonded_as_cylinders             = 686
+        cylinders_shader_filter_faces      = 687
+        nb_spheres_size                    = 688
+        nb_spheres_quality                 = 689
+        nb_spheres_use_shader              = 690
+        render_as_cylinders                = 691
+        alignment_as_cylinders             = 692
+        cartoon_nucleic_acid_as_cylinders  = 693
+        cgo_shader_ub_flags                = 694
+        offscreen_rendering_for_antialiasing = 695
+        offscreen_rendering_multiplier     = 696
+        cylinder_shader_ff_workaround      = 697
+        surface_color_smoothing            = 698
+        surface_color_smoothing_threshold  = 699
+        dot_use_shader                     = 700
+        dot_as_spheres                     = 701
+        ambient_occlusion_mode             = 702
+        ambient_occlusion_scale            = 703
+        ambient_occlusion_smooth           = 704
+        smooth_half_bonds                  = 705
+        anaglyph_mode                      = 706
+        edit_light                         = 707
+        suspend_undo                       = 708
+        suspend_undo_atom_count            = 709
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []
@@ -1376,3 +1421,84 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException
         return r
 
+    def get_bond(name, selection1, selection2=None,
+                 state=0, updates=1, quiet=1, _self=cmd):
+        ''' 
+DESCRIPTION
+
+    "get_bond" gets per-bond settings for all bonds which exist
+    between two selections of atoms.
+
+USAGE
+
+    get_bond name, selection1 [, selection2 ]
+
+ARGUMENTS
+
+    name = string: name of the setting
+
+    selection1 = string: first set of atoms
+
+    selection2 = string: seconds set of atoms {default: (selection1)}
+
+EXAMPLE
+
+    get_bond stick_transparency, */n+c+ca+o
+
+
+NOTES
+
+    The following per-bond settings are currently implemented.  Others
+    may seem to be recognized but will currently have no effect when
+    set at the per-bond level.
+    
+    * valence
+    * line_width
+    * line_color
+    * stick_radius
+    * stick_color
+    * stick_transparency
+
+PYMOL API
+
+    cmd.get_bond ( string name,
+                   string selection1,
+                   string selection2,
+                   int state, int updates, quiet=1)
+
+       '''
+        r = DEFAULT_ERROR
+        selection1 = str(selection1)
+        if selection2 == None:
+            selection2 = selection1
+
+        index = _get_index(str(name))
+        if(index<0):
+            print "Error: unknown setting '%s'."%name
+            raise QuietException
+        else:
+            try:
+                _self.lock(_self)
+                type = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))[0]
+                if type==None:
+                    print "Error: unable to get setting type."
+                    raise QuietException
+                try:
+                    if len(selection1):
+                        selection1=selector.process(selection1)
+                    if len(selection2):
+                        selection2=selector.process(selection2)                        
+                    r = _cmd.get_bond(_self._COb,int(index),
+                                 "("+selection1+")","("+selection2+")",
+                                 int(state)-1,int(quiet),
+                                 int(updates))
+                except:
+                    traceback.print_exc()
+                    if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
+                        traceback.print_exc()
+                        print "Error: unable to get_bond info."
+                    raise QuietException
+            finally:
+                _self.unlock(r,_self)
+        if _self._raising(r,_self): raise QuietException            
+        return r

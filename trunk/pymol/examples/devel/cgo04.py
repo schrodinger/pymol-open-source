@@ -216,5 +216,5 @@ cgo.extend([
    SPHERE,   0,0,0,0.5,
 ])
 
-cmd.load_cgo(cgo,"test")
+cmd.load_cgo(cgo,"cgo04")
 cmd.set("cgo_dot_width",20)

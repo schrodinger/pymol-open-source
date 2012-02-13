@@ -363,11 +363,12 @@ if pymol_launch != 3: # if this isn't a dry run
                     # use display lists to minimize use of OpenGL
                     # immediate mode rendering (unreasonably slow on
                     # Radeon HD cards!)
-                    cmd.set("use_display_lists") 
+                    if cmd.get_setting_int("use_shaders")==0:
+                        cmd.set("use_display_lists") 
 
                     # disable line smooothing to prevent various
                     # bizarre screen-update and drawing artifacts
-                    cmd.unset("line_smooth")
+                    # cmd.unset("line_smooth")
 
                     # limit frame rate to 30 fps to avoid ATI "jello"
                     # where screen updates fall way behind the user.

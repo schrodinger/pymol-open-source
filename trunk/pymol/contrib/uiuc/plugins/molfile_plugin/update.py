@@ -1,4 +1,4 @@
-if 1:
+if 0:
     print "DANGER DO NOT RUN UNTIL changes to the following files have been backported..."
     print "dcdplugin.c, gridplugin.c, endianswap.h, fastio.h, vmddir.h "
     print "dtrplugin.cpp, fs4plugin.cpp, maeffplugin.cpp"
@@ -9,7 +9,7 @@ else:
     import os
     from glob import glob
 
-    molfile_src_path = "/home/warren/tmp/plugins/molfile_plugin/src"
+    molfile_src_path = "/Volumes/Data/scm/vikki/pymol/contrib/uiuc/plugins/molfile_plugin/src.pre"
 #    molfile_src_path = "/Users/delwarl/tmp/plugins/molfile_plugin/src"    
 
     src_list=[
@@ -25,8 +25,8 @@ else:
         'ccp4plugin',
 #        'cdfplugin', # requires netcdf
         'corplugin',
-        'cpmdlogplugin', #
-        'cpmdplugin',
+#        'cpmdlogplugin', #
+#        'cpmdplugin',
         'crdplugin',
         'cubeplugin',
         'dcdplugin',
@@ -37,7 +37,7 @@ else:
         'edmplugin',
         'fs4plugin',
         'gamessplugin',
-        'gaussianplugin', #
+#        'gaussianplugin', #
         'graspplugin',
         'grdplugin',
         'gridplugin',
@@ -163,7 +163,7 @@ else:
     }\n''')
 
 
-    os.system("/bin/cp %s/*.h src/"%molfile_src_path)
+    os.system("/bin/cp %s/*.h* src/"%molfile_src_path)
     os.system("/bin/cp %s/hash.c src/"%molfile_src_path)
 
     os.system("/bin/chmod -x src/*")

@@ -34,8 +34,10 @@ typedef struct SphereRec {
   int NMesh;
 } SphereRec, *SphereRecPtr;
 
+#define NUMBER_OF_SPHERE_LEVELS 5
+
 struct _CSphere {
-  SphereRecPtr Sphere[5];
+  SphereRecPtr Sphere[NUMBER_OF_SPHERE_LEVELS];
   SphereRec *Array;
 };
 

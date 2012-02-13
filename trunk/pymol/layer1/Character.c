@@ -202,8 +202,12 @@ float CharacterGetAdvance(PyMOLGlobals * G, int sampling, int id)
 void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glEnable(GL_TEXTURE_2D);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+#endif
     /*    glEnable(GL_BLEND);
        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); */
   }
@@ -212,7 +216,11 @@ void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
 void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glDisable(GL_TEXTURE_2D);
+#endif
     /*    glDisable(GL_BLEND); */
   }
 }
@@ -242,6 +250,33 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id)
       v1[0] += rec->Width / sampling;
       v1[1] += rec->Height / sampling;
       /*      glColor4f(0.5F,0.5F,0.5F,1.0F); */
+#if defined(PURE_OPENGL_ES_2)
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	const GLfloat vertexVals [] = {
+	  v0[0], v0[1], v0[2],
+	  v0[0], v1[1], v0[2],
+	  v1[0], v0[1], v0[2],
+	  v1[0], v1[1], v0[2]
+	};	
+	const GLfloat texVals [] = {
+	  0.0F, 0.0F,
+	  0.0F, rec->extent[1],
+	  rec->extent[0], 0.0F,
+	  rec->extent[0], rec->extent[1]
+	};	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	
+	glVertexPointer(3, GL_FLOAT, 0, vertexVals);    
+	glTexCoordPointer(2, GL_FLOAT, 0, texVals);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+      }
+#else
       glBegin(GL_QUADS);
       glTexCoord2f(0.0F, 0.0F);
       glVertex3f(v0[0], v0[1], v0[2]);
@@ -252,6 +287,8 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id)
       glTexCoord2f(rec->extent[0], 0.0F);
       glVertex3f(v1[0], v0[1], v0[2]);
       glEnd();
+#endif
+#endif
     }
      TextAdvance(G, rec->Advance / sampling);
   }

@@ -61,8 +61,8 @@ class Normal(PMGSkin):
     pad = ' ' # extra space in menus
     
     appname        = 'The PyMOL Molecular Graphics System'
-    appversion     = '1.4'
-    copyright      = ('Copyright (C) 2003-2011 \n' +
+    appversion     = '1.5.0.1'
+    copyright      = ('Copyright (C) 2003-2012 \n' +
                       'Schrodinger LLC.\n'+
                       'All rights reserved.')
     contactweb     = 'http://www.pymol.org'
@@ -141,8 +141,6 @@ class Normal(PMGSkin):
     def destroyMessageBar(self):
 
         self.messageBar.destroy()
-#        self.app.destroycomponent('messagebar')
-#        self.app.destroycomponent('bottomtray')
         
     def get_current_session_file(self):
         session_file = self.cmd.get_setting_text("session_file")        
@@ -180,6 +178,7 @@ class Normal(PMGSkin):
                       text=text,highlightthickness=0,
                       command=cmmd,padx=0,pady=0)
         newBtn.pack(side=LEFT,fill=BOTH,expand=YES)
+        return newBtn
 
     def get_view(self):
         self.cmd.get_view(quiet=0)
@@ -240,8 +239,9 @@ class Normal(PMGSkin):
         self.volB = self.buttonAdd(row4, 'Volume',
                                    lambda s=self:
                                        s.toggleFrame(s.volFrame))
-#        btn_interrupt = self.buttonAdd(self.commandFrame,'Interrupt',lambda s=self: s.cmd.interrupt())
-        
+        # initialize disabled
+        self.volB.config(state=DISABLED)
+
     def destroyButtonArea(self):
         self.app.destroycomponent('row1')
         self.app.destroycomponent('row2')
@@ -552,14 +552,22 @@ class Normal(PMGSkin):
             self.output.after(500,self.update_menus) # twice a second
 
     def update_volume(self):
+        # if the volume frame is open, update it
         if self.volFrame in self.dataArea.slaves():
             if self.volFrame.update_is_needed():
                 self.volFrame.update_object_list()
                 self.volFrame.update_listbox()
-                self.volFrame.update_transferframe()                
+                self.volFrame.update_transferframe()
+        else:
+            # volume frame is closed, update the button
+            if len(self.cmd.get_names_of_type("object:volume",public=1))>0:
+                self.volB.config(state=NORMAL)
+            else:
+                self.volB.config(state=DISABLED)
+        # keep calling
         if self.app.allow_after:
             self.output.after(500,self.update_volume) 
-        
+
     def file_open(self,tutorial=0):
         # FIXME: finish
         REFLECTION_FORMATS = ( "MTZ", "mtz", "CIF", "cif" )
@@ -793,7 +801,7 @@ class Normal(PMGSkin):
                             save_sele = string.join(map(lambda x:"("+str(x)+")",sels)," or ")
                             self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
                                          "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
-                            if self.states_option.getvalue()=="all":
+			    if self.states_option.getvalue()=="all":
                                 self.cmd.save(sfile,"(%s)"%save_sele,state=0,quiet=0)
                             elif self.states_option.getvalue() == "object's current":
                                 ap = 0
@@ -855,32 +863,26 @@ class Normal(PMGSkin):
                             if doSplit:
                                 # save each state in "save_sele" to file "sfile" as 'sfile_stateXYZ.pdb'
                                 s = self.cmd.count_states(save_sele)
-#                                print "Nstates to save= %s" % s
                                 for stateSave in range(1,int(s)+1):
                                     save_file = sfile
                                     # _state004
                                     inter = "_state" + string.zfill(str(stateSave), len(str(s))+1)
-#                                    print "inter: ", inter
                                     # g either MATCHES *.pdb or not.  If so, save, name_stateXYZ.pdb
                                     g = re.search("(.*)(\..*)$", save_file)
                                     if g!=None:
                                         # 1PDB_state004.pdb
                                         save_file = g.groups()[0] + inter + g.groups()[1]
-#                                        print "g!=None: save_file=> %s" % save_file
                                     else:
                                         # user entered a file w/o an extension name: eg, '1abc'
                                         # this saves to, '1abc_state00XYZ'
                                         save_file = save_file + inter
-#                                        print "g==None: save_file=> %s" % save_file
-
-#                                    print "Saving to: %s in state %s" % (save_file, stateSave)
 
                                     self.cmd.log("save %s,(%s)\n"%(save_file,save_sele),
                                                  "cmd.save('%s','(%s)', state='%s')\n"%(save_file,save_sele,stateSave))
                                     self.cmd.save(save_file,"(%s)"%save_sele,state=stateSave,quiet=0)
                             else:
                                 save_file = sfile
-#                                print "Saving one state from one file."
+
                                 # just save current selection to one file
                                 self.cmd.log("save %s,(%s)\n"%(save_file,save_sele),
                                              "cmd.save('%s','(%s)', state='%s')\n"%(save_file,save_sele,stateSave))
@@ -1277,8 +1279,8 @@ class Normal(PMGSkin):
 
         if _wincheck():
             self.menuBar.addmenuitem('File', 'command', 'Autoload MTZ file.',
-                                    label='Open MTZ with Defaults...',
-                                    command=self.file_autoload_mtz)
+                                     label='Open MTZ with Defaults...',
+                                     command=self.file_autoload_mtz)
 
         self.menuBar.addmenuitem('File', 'command', 'Save session.',
                                 label='Save Session',
@@ -1391,12 +1393,12 @@ class Normal(PMGSkin):
                 self.menuBar.addmenuitem('Edit', 'separator', '')
         
 
-        self.menuBar.addmenuitem('Edit', 'command', 'Undo Conformation',
-                                         label='Undo Conformation [Ctrl-Z]',
+        self.menuBar.addmenuitem('Edit', 'command', 'Undo',
+                                         label='Undo [Ctrl-Z]',
                                          command = lambda s=self: s.cmd.do("_ undo"))
 
-        self.menuBar.addmenuitem('Edit', 'command', 'Redo Conformation',
-                                         label='Redo Conformation [Ctrl-A]',
+        self.menuBar.addmenuitem('Edit', 'command', 'Redo',
+                                         label='Redo [Ctrl-Y]',
                                          command = lambda s=self: s.cmd.do("_ redo"))
 
         self.menuBar.addmenuitem('Edit', 'separator', '')
@@ -1446,11 +1448,11 @@ class Normal(PMGSkin):
             "_ editor.attach_fragment('pk1','formamide',5,0)"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Bromine',
-                                         label='Bromine [Ctrl-B]',
+                                         label='Bromine [Ctrl-Shift-B]',
                                          command = lambda s=self: s.cmd.do("_ replace Br,1,1"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Carbon',
-                                         label='Carbon [Ctrl-C]',
+                                         label='Carbon [Ctrl-Shift-C]',
                                          command = lambda s=self: s.cmd.do("_ replace C,4,4"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Carbonyl',
@@ -1459,7 +1461,7 @@ class Normal(PMGSkin):
             "_ editor.attach_fragment('pk1','formaldehyde',2,0)"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Chlorine',
-                                         label='Chlorine [Ctrl-L]',
+                                         label='Chlorine [Ctrl-Shift-L]',
                                          command = lambda s=self: s.cmd.do("_ replace Cl,1,1"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Cyclobutyl',
@@ -1488,24 +1490,24 @@ class Normal(PMGSkin):
             "_ editor.attach_fragment('pk1','cycloheptane',8,0)"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Fluorine',
-                                         label='Fluorine [Ctrl-F]',
+                                         label='Fluorine [Ctrl-Shift-F]',
                                          command = lambda s=self: s.cmd.do("_ replace F,1,1"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Iodine',
-                                         label='Iodine [Ctrl-I]',
+                                         label='Iodine [Ctrl-Shift-I]',
                                          command = lambda s=self: s.cmd.do("_ replace I,1,1"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Methane',
-                                         label='Methane',
+                                         label='Methane [Ctrl-Shift-M]',
                                          command = lambda s=self: s.cmd.do(
             "_ editor.attach_fragment('pk1','methane',1,0)"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Nitrogen',
-                                         label='Nitrogen [Ctrl-N]',
+                                         label='Nitrogen [Ctrl-Shift-N]',
                                          command = lambda s=self: s.cmd.do("_ replace N,4,3"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Oxygen',
-                                         label='Oxygen [Ctrl-O]',
+                                         label='Oxygen [Ctrl-Shift-O]',
                                          command = lambda s=self: s.cmd.do("_ replace O,4,2"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Phenyl',
@@ -1514,7 +1516,7 @@ class Normal(PMGSkin):
             "_ editor.attach_fragment('pk1','benzene',6,0)"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Sulfer',
-                                         label='Sulfer [Ctrl-S]',
+                                         label='Sulfer [Ctrl-Shift-S]',
                                          command = lambda s=self: s.cmd.do("_ replace S,2,2"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Sulfonyl',
@@ -1523,7 +1525,7 @@ class Normal(PMGSkin):
             "_ editor.attach_fragment('pk1','sulfone',3,1)"))
 
         self.menuBar.addmenuitem('Fragment', 'command', 'Phosphorus',
-                                         label='Phosphorus [Ctrl-P]',
+                                         label='Phosphorus [Ctrl-Shift-P]',
                                          command = lambda s=self: s.cmd.do("_ replace P,4,3"))
 
 #      self.menuBar.addmenu('Residue', 'Residue')
@@ -1768,19 +1770,19 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Build', 'separator', '')
         
         self.menuBar.addmenuitem('Build', 'command', 'Cycle Bond Valence',
-                                         label='Cycle Bond Valence [Ctrl-W]',
+                                         label='Cycle Bond Valence [Ctrl-Shift-W]',
                                          command = lambda s=self: s.cmd.do("_ cycle_valence"))
 
         self.menuBar.addmenuitem('Build', 'command', 'Fill Hydrogens',
-                                         label='Fill Hydrogens on (pk1) [Ctrl-R]',
+                                         label='Fill Hydrogens on (pk1) [Ctrl-Shift-R]',
                                          command = lambda s=self: s.cmd.do("_ h_fill"))
 
         self.menuBar.addmenuitem('Build', 'command', 'Invert',
-                                         label='Invert (pk2)-(pk1)-(pk3) [Ctrl-E]',
+                                         label='Invert (pk2)-(pk1)-(pk3) [Ctrl-Shift-E]',
                                          command = lambda s=self: s.cmd.do("_ invert"))
 
         self.menuBar.addmenuitem('Build', 'command', 'Form Bond',
-                                         label='Create Bond (pk1)-(pk2) [Ctrl-T]',
+                                         label='Create Bond (pk1)-(pk2) [Ctrl-Shift-T]',
                                          command = lambda s=self: s.cmd.do("_ bond"))
 
 
@@ -1788,21 +1790,21 @@ class Normal(PMGSkin):
 
         
         self.menuBar.addmenuitem('Build', 'command', 'Remove (pk1)',
-                                         label='Remove (pk1) [Ctrl-D]',
+                                         label='Remove (pk1) [Ctrl-Shift-D]',
                                          command = lambda s=self: s.cmd.do("_ remove pk1"))
 
         self.menuBar.addmenuitem('Build', 'separator', '')
         
         self.menuBar.addmenuitem('Build', 'command', 'Make Positive',
-                                 label='Make (pk1) Positive [Ctrl-K]',
+                                 label='Make (pk1) Positive [Ctrl-Shift-K]',
                                  command = lambda s=self: s.cmd.do("_ alter pk1,formal_charge=1.0"))
         
         self.menuBar.addmenuitem('Build', 'command', 'Make Negative',
-                                 label='Make (pk1) Negative [Ctrl-J]',
+                                 label='Make (pk1) Negative [Ctrl-Shift-J]',
                                  command = lambda s=self: s.cmd.do("_ alter pk1,formal_charge=-1.0"))
         
         self.menuBar.addmenuitem('Build', 'command', 'Make Neutral',
-                                 label='Make (pk1) Neutral [Ctrl-U]',
+                                 label='Make (pk1) Neutral [Ctrl-Shift-U]',
                                  command = lambda s=self: s.cmd.do("_ alter pk1,formal_charge=-0.0"))
 
         self.menuBar.addmenu('Movie', 'Movie Control',tearoff=TRUE)
@@ -3034,6 +3036,10 @@ class Normal(PMGSkin):
                                 variable = self.setting.antialias,
                                 command = lambda s=self: s.setting.update('antialias'))
 
+        self.menuBar.addmenuitem('Rendering', 'command', 'Modernize',
+                                 label='Modernize',
+                                 command = lambda s=self: s.util.modernize_rendering(1,s.cmd))
+
         self.menuBar.addmenuitem('Rendering', 'separator', '')
         
         self.menuBar.addcascademenu('Rendering', 'Shadows', 'Shadows',
@@ -3072,6 +3078,9 @@ class Normal(PMGSkin):
                                         label='Occlusion',
                                          command = lambda s=self: s.cmd.do("_ util.ray_shadows('occlusion')"))
 
+        self.menuBar.addmenuitem('Shadows', 'command', 'Occlusion 2',
+                                        label='Occlusion 2',
+                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('occlusion2')"))
 
 
         self.menuBar.addcascademenu('Rendering', 'Texture', 'Texture',
@@ -3450,6 +3459,10 @@ class Normal(PMGSkin):
                                          label='3 Button Viewing',
                                          command = lambda s=self: s.cmd.mouse('three_button_viewing'))
 
+        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Lights',
+                                         label='3 Button Lights',
+                                         command = lambda s=self: s.cmd.mouse('three_button_lights'))
+
         self.menuBar.addmenuitem('Mouse', 'command', '3 Button All Modes',
                                          label='3 Button All Modes',
                                          command = lambda s=self: s.cmd.config_mouse('three_button_all_modes'))
@@ -3461,6 +3474,10 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing',
                                          label='2 Button Viewing',
                                          command = lambda s=self: s.cmd.config_mouse('two_button'))
+
+        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Lights',
+                                         label='2 Button Lights',
+                                         command = lambda s=self: s.cmd.config_mouse('two_button_lights'))
 
         self.menuBar.addmenuitem('Mouse', 'command', '1 Button Viewing Mode',
                                          label='1 Button Viewing Mode',

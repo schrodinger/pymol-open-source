@@ -37,6 +37,8 @@ ObjectSlice.c \
 ObjectSlice.h \
 ObjectSurface.c \
 ObjectSurface.h \
+ObjectVolume.c \
+ObjectVolume.h \
 RepAngle.c \
 RepAngle.h \
 RepCartoon.c \

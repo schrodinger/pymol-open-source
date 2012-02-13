@@ -14,7 +14,7 @@
    -*
    Z* -------------------------------------------------------------------
 */
-#include "os_python.h"
+#include"os_python.h"
 
 #include "os_predef.h"
 
@@ -355,11 +355,39 @@ static void DrawBlueLine(PyMOLGlobals * G)
 
       /* draw sync lines */
       glColor3d(0.0f, 0.0f, 0.0f);
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	const GLfloat lineVerts[] = {
+	  0.0F, window_height - 0.5F, 0.0F,
+	  (float) window_width, window_height - 0.5F, 0.0F
+	};
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, lineVerts);
+	glDrawArrays(GL_LINES, 0, 2);
+	glDisableClientState(GL_VERTEX_ARRAY);
+      }
+#else
       glBegin(GL_LINES);        /* Draw a background line */
       glVertex3f(0.0F, window_height - 0.5F, 0.0F);
       glVertex3f((float) window_width, window_height - 0.5F, 0.0F);
       glEnd();
+#endif
       glColor3d(0.0f, 0.0f, 1.0f);
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	GLfloat lineVerts[] = {
+	  0.0f, window_height - 0.5f, 0.0f,
+	  window_width * 0.80f, window_height - 0.5f, 0.0f
+	};
+	if(buffer == GL_BACK_LEFT){
+	  lineVerts[3] = window_width * 0.30f;
+	}
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, lineVerts);
+	glDrawArrays(GL_LINES, 0, 2);
+	glDisableClientState(GL_VERTEX_ARRAY);
+      }
+#else
       glBegin(GL_LINES);        /* Draw a line of the correct length (the cross
                                    over is about 40% across the screen from the left */
       glVertex3f(0.0f, window_height - 0.5f, 0.0f);
@@ -368,6 +396,7 @@ static void DrawBlueLine(PyMOLGlobals * G)
       else
         glVertex3f(window_width * 0.80f, window_height - 0.5f, 0.0f);
       glEnd();
+#endif
 
       glPopMatrix();
       glMatrixMode(GL_PROJECTION);
@@ -885,6 +914,20 @@ static void MainDrawProgress(PyMOLGlobals * G)
         }
 
         glColor3fv(black);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	{
+	  const GLint polyVerts[] = {
+	    0, ViewPort[3],
+	    cBusyWidth, ViewPort[3],
+	    0, ViewPort[3] - cBusyHeight,
+	    cBusyWidth, ViewPort[3] - cBusyHeight
+	  };
+	  glEnableClientState(GL_VERTEX_ARRAY);
+	  glVertexPointer(2, GL_INT, 0, polyVerts);
+	  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	  glDisableClientState(GL_VERTEX_ARRAY);
+	}
+#else
         glBegin(GL_POLYGON);
         glVertex2i(0, ViewPort[3]);
         glVertex2i(cBusyWidth, ViewPort[3]);
@@ -892,7 +935,7 @@ static void MainDrawProgress(PyMOLGlobals * G)
         glVertex2i(0, ViewPort[3] - cBusyHeight);
         glVertex2i(0, ViewPort[3]);     /* needed on old buggy Mesa */
         glEnd();
-
+#endif
         y = ViewPort[3] - cBusyMargin;
 
         glColor3fv(white);
@@ -910,7 +953,20 @@ static void MainDrawProgress(PyMOLGlobals * G)
         for(offset = 0; offset < PYMOL_PROGRESS_SIZE; offset += 2) {
 
           if(progress[offset + 1]) {
-
+#ifdef _PYMOL_GL_DRAWARRAYS
+	    {
+	      const GLint polyVerts[] = {
+		cBusyMargin, y,
+		cBusyWidth - cBusyMargin, y,
+		cBusyWidth - cBusyMargin, y - cBusyBar,
+		cBusyMargin, y - cBusyBar
+	      };
+	      glEnableClientState(GL_VERTEX_ARRAY);
+	      glVertexPointer(2, GL_INT, 0, polyVerts);
+	      glDrawArrays(GL_LINE_LOOP, 0, 4);
+	      glDisableClientState(GL_VERTEX_ARRAY);
+	    }
+#else
             glBegin(GL_LINE_LOOP);
             glVertex2i(cBusyMargin, y);
             glVertex2i(cBusyWidth - cBusyMargin, y);
@@ -918,17 +974,33 @@ static void MainDrawProgress(PyMOLGlobals * G)
             glVertex2i(cBusyMargin, y - cBusyBar);
             glVertex2i(cBusyMargin, y); /* needed on old buggy Mesa */
             glEnd();
+#endif
             glColor3fv(white);
-            glBegin(GL_POLYGON);
-            glVertex2i(cBusyMargin, y);
             x =
               (progress[offset] * (cBusyWidth - 2 * cBusyMargin) / progress[offset + 1]) +
               cBusyMargin;
+#ifdef _PYMOL_GL_DRAWARRAYS
+	    {
+	      const GLint polyVerts[] = {
+		cBusyMargin, y,
+		x, y,
+		cBusyMargin, y - cBusyBar,
+		x, y - cBusyBar
+	      };
+	      glEnableClientState(GL_VERTEX_ARRAY);
+	      glVertexPointer(2, GL_INT, 0, polyVerts);
+	      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	      glDisableClientState(GL_VERTEX_ARRAY);
+	    }
+#else
+            glBegin(GL_POLYGON);
+            glVertex2i(cBusyMargin, y);
             glVertex2i(x, y);
             glVertex2i(x, y - cBusyBar);
             glVertex2i(cBusyMargin, y - cBusyBar);
             glVertex2i(cBusyMargin, y); /* needed on old buggy Mesa */
             glEnd();
+#endif
             y -= cBusySpacing;
           }
         }

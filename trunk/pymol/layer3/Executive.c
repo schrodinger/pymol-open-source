@@ -31,6 +31,7 @@
 #include"ObjectAlignment.h"
 #include"ObjectGroup.h"
 #include"ObjectVolume.h"
+#include"ObjectMap.h"
 #include"ListMacros.h"
 #include"MyPNG.h"
 #include"Ortho.h"
@@ -3216,12 +3217,13 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int
   int result = false;
   SpecRec *rec = NULL;
   register CExecutive *I = G->Executive;
-  while(ListIterate(I->Spec, rec, next)) {
-    if(rec->type == cExecSelection)
+  while(ListIterate(I->Spec, rec, next)){
+    if(rec->type == cExecSelection){
       if(rec->visible) {
         strcpy(name, rec->name);
         result = true;
       }
+    }
   }
   if((!result) && create_new) {
     if(SettingGetGlobal_b(G, cSetting_auto_number_selections)) {
@@ -3851,6 +3853,19 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
 
 }
 
+/* ExecutiveGetExistingCompatible
+ *
+ * PARAMS
+ *  oname -- object name
+ *  type  -- new object type
+ *
+ * RETURNS
+ *  (CObject *) Base-class object ptr
+ *
+ * SIDE EFFECTS
+ *  If an object with the same name but different type already exists,
+ *  then it is deleted.
+ */
 CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, char *oname, int type)
 {
   CObject *origObj = NULL;
@@ -5018,6 +5033,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
     ok = PyList_Check(names);
   if(ok)
     l = PyList_Size(names);
+
   while(ok && (a < l)) {
     cur = PyList_GetItem(names, a);
     if(cur != Py_None) {        /* skip over None w/o aborting */
@@ -5075,9 +5091,10 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
                                             (ObjectSurface **) (void *) &rec->obj);
           break;
         case cObjectCGO:
-          if(ok)
+          if(ok){
             ok = ObjectCGONewFromPyList(G, PyList_GetItem(cur, 5),
                                         (ObjectCGO **) (void *) &rec->obj, version);
+	  }
           break;
         case cObjectGadget:
           if(ok)
@@ -5118,8 +5135,9 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
       }
 
       if(ll > 6) {
-        if(ok)
+        if(ok){
           ok = PConvPyStrToStr(PyList_GetItem(cur, 6), rec->group_name, sizeof(WordType));
+	}
       }
 
       if(PyErr_Occurred()) {
@@ -5487,7 +5505,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
   int incomplete = false;
   PyObject *tmp;
   SceneViewType sv;
-  int version = -1;
+  int version = -1, version_full;
   int migrate_sessions = SettingGetGlobal_b(G, cSetting_session_migration);
   char active[WordLength] = "";
   int have_active = false;
@@ -5513,11 +5531,14 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
     if(tmp) {
       ok = PConvPyIntToInt(tmp, &version);
       if(ok) {
+	version_full = version;
+	while (version_full < 1000)  /* account for versions with less than 4 digits */
+	  version_full *= 10;
         if(version > _PyMOL_VERSION_int) {
           if(!quiet) {
             PRINTFB(G, FB_Executive, FB_Errors)
-              "Warning: This session was created with a newer version of PyMOL (%1.2f).\n",
-              version / 100. ENDFB(G);
+              "Warning: This session was created with a newer version of PyMOL (%1.3f).\n",
+              version_full / 1000. ENDFB(G);
             if(SettingGet(G, cSetting_session_version_check)) {
               PRINTFB(G, FB_Executive, FB_Errors)
                 "Error: Please update first -- see http://www.pymol.org\n" ENDFB(G);
@@ -5530,7 +5551,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
         } else {
           if(!quiet) {
             PRINTFB(G, FB_Executive, FB_Details)
-              " Executive: Loading version %1.2f session...\n", version / 100.0 ENDFB(G);
+              " Executive: Loading version %1.3f session...\n", version_full / 1000.0 ENDFB(G);
           }
         }
       }
@@ -5851,54 +5872,123 @@ static CObject **ExecutiveSeleToObjectVLA(PyMOLGlobals * G, char *s1)
   return (result);
 }
 
-int ExecutiveGetCrystal(PyMOLGlobals * G, char *sele, float *a, float *b, float *c,
-                        float *alpha, float *beta, float *gamma,
-                        char *sgroup, int *defined)
+int ExecutiveGetSymmetry(PyMOLGlobals * G, char *sele, int state, float *a, float *b, float *c,
+                        float *alpha, float *beta, float *gamma, char *sgroup, int *defined)
 {
   int ok = true;
 
   ObjectMolecule *objMol;
-  int sele0;
-  sele0 = SelectorIndexByName(G, sele);
-  *defined = false;
-  if(sele0 < 0) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      "Error: invalid selection.\n" ENDFB(G);
-    ok = false;
-  } else {
-    objMol = SelectorGetSingleObjectMolecule(G, sele0);
-    if(!objMol) {
+  ObjectMap *objMap;
+  int n_obj;
+  CObject **objVLA = NULL;
+  CObject *obj = NULL;
+  CSymmetry* symm;
+
+  if(state<0) {
+    state = 0;
+  } else if(state>0) {
+    state--;
+  }
+
+  objVLA = ExecutiveSeleToObjectVLA(G, sele);
+  n_obj = VLAGetSize(objVLA);
+
+  switch(n_obj) {
+
+    /* No object found */
+  case 0:
+    {
       PRINTFB(G, FB_Executive, FB_Errors)
-        "Error: selection must refer to exactly one object.\n" ENDFB(G);
+	"Error: invalid selection.\n" ENDFB(G);
       ok = false;
-    } else {
-      if(objMol->Symmetry && objMol->Symmetry->Crystal) {
-        *a = objMol->Symmetry->Crystal->Dim[0];
-        *b = objMol->Symmetry->Crystal->Dim[1];
-        *c = objMol->Symmetry->Crystal->Dim[2];
-        *alpha = objMol->Symmetry->Crystal->Angle[0];
-        *beta = objMol->Symmetry->Crystal->Angle[1];
-        *gamma = objMol->Symmetry->Crystal->Angle[2];
-        UtilNCopy(sgroup, objMol->Symmetry->SpaceGroup, sizeof(WordType));
-        *defined = true;
+    }
+    break;
+
+    /* One unique object found */
+  case 1:
+    {
+      obj = objVLA[0];
+
+      if(obj->type==cObjectMolecule) {
+	objMol = (ObjectMolecule*) obj;
+
+	if(objMol->Symmetry && objMol->Symmetry->Crystal) {
+	  *a = objMol->Symmetry->Crystal->Dim[0];
+	  *b = objMol->Symmetry->Crystal->Dim[1];
+	  *c = objMol->Symmetry->Crystal->Dim[2];
+	  *alpha = objMol->Symmetry->Crystal->Angle[0];
+	  *beta = objMol->Symmetry->Crystal->Angle[1];
+	  *gamma = objMol->Symmetry->Crystal->Angle[2];
+	  UtilNCopy(sgroup, objMol->Symmetry->SpaceGroup, sizeof(WordType));
+	  *defined = true;
+	  ok = true;
+	}
+      } else if(obj->type==cObjectMap) {
+	objMap = (ObjectMap*) obj;
+
+	/* maps can have multiple symmetry states */
+	if(state>objMap->NState) {
+	  ok = false;
+	  break;
+	}
+
+	symm = (objMap->State + state)->Symmetry;
+	
+	if(symm && symm->Crystal) {
+
+	  *a = symm->Crystal->Dim[0];
+	  *b = symm->Crystal->Dim[1];
+	  *c = symm->Crystal->Dim[2];
+	  *alpha = symm->Crystal->Angle[0];
+	  *beta = symm->Crystal->Angle[1];
+	  *gamma = symm->Crystal->Angle[2];
+	  UtilNCopy(sgroup, symm->SpaceGroup, sizeof(WordType));
+	  *defined = true;
+	  ok = true;
+	}
       }
     }
+    break;
+
+    /* Too many objects found */
+  default:
+    PRINTFB(G, FB_Executive, FB_Errors)
+      "Error: selection must refer to exactly one object.\n" ENDFB(G);
+    ok = false;
+    break;
   }
+
   return (ok);
 }
 
-int ExecutiveSetCrystal(PyMOLGlobals * G, char *sele, float a, float b, float c,
+int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float b, float c,
                         float alpha, float beta, float gamma, char *sgroup)
 {
   CObject **objVLA = NULL;
   CObject *obj;
   ObjectMolecule *objMol;
-  /*  ObjectMap *objMap; */
+  ObjectMap *objMap;
   int ok = true;
   CSymmetry *symmetry = NULL;
+  CSymmetry *symmetry_state = NULL;
   CCrystal *crystal = NULL;
   int n_obj;
-  int i;
+  int i, s;
+  int do_all_states = false;
+
+  /* TODO */
+  /* Need to handle states */
+  /* if state==-1 then state=1
+   * if state==0 then all states
+   * otherwise use the specified state
+   */
+  if(0==state) {
+    do_all_states = true;
+  } else if (state<0) {
+    state = 0;
+  } else if(state>0) {
+    state--;
+  }
 
   objVLA = ExecutiveSeleToObjectVLA(G, sele);
   n_obj = VLAGetSize(objVLA);
@@ -5920,40 +6010,56 @@ int ExecutiveSetCrystal(PyMOLGlobals * G, char *sele, float a, float b, float c,
         }
         objMol = (ObjectMolecule *) obj;
         if(symmetry) {
+	  /* right now, ObjectMolecules only have one-state symmetry information */
           if(objMol->Symmetry)
             SymmetryFree(objMol->Symmetry);
           objMol->Symmetry = SymmetryCopy(symmetry);
         }
         break;
-        /* not currently supported 
-           case cObjectMap:
+      case cObjectMap:
+	/* create a new symmetry object for copying */
+        if(!symmetry) {
+          symmetry = SymmetryNew(G);
+          symmetry->Crystal->Dim[0] = a;
+          symmetry->Crystal->Dim[1] = b;
+          symmetry->Crystal->Dim[2] = c;
+          symmetry->Crystal->Angle[0] = alpha;
+          symmetry->Crystal->Angle[1] = beta;
+          symmetry->Crystal->Angle[2] = gamma;
+          UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
+          SymmetryAttemptGeneration(symmetry, false);
+        }
 
-           if(!crystal) {
-           crystal = CrystalNew(G);
-           crystal->Dim[0]=a;
-           crystal->Dim[1]=b;
-           crystal->Dim[2]=c;
-           crystal->Angle[0]=alpha;
-           crystal->Angle[1]=beta;
-           crystal->Angle[2]=gamma;
-           CrystalUpdate(crystal);
-           }
-           if(crystal) {
-           objMap = (ObjectMap*)obj;
-           if(objMap->Crystal) {
-           CrystalFree(objMap->Crystal);
-           }
-           objMap->Crystal=CrystalCopy(crystal);
-           }
-           break;
-         */
+        objMap = (ObjectMap *) obj;
+	
+        if(symmetry) {
+	  if(do_all_states) {
+	    /* copy symmetry to all states */
+	    for(s=0; s<objMap->NState; s++) {
+	      symmetry_state = (objMap->State + s)->Symmetry;
 
+	      if(symmetry_state)
+		SymmetryFree(symmetry_state);
+
+		symmetry_state = SymmetryCopy(symmetry);
+	    }
+	  } else {
+	    /* single state */
+	    symmetry_state = (objMap->State + state)->Symmetry;
+
+	    if(symmetry_state)
+	      SymmetryFree(symmetry_state);
+
+	    symmetry_state = SymmetryCopy(symmetry);
+	  }
+        }
+	break;
       }
     }
   } else {
     ok = false;
     PRINTFB(G, FB_Executive, FB_Errors)
-      " ExecutiveSetCrystal: no object selected\n" ENDFB(G);
+      " ExecutiveSetSymmetry: no object selected\n" ENDFB(G);
   }
   if(crystal)
     CrystalFree(crystal);
@@ -5961,6 +6067,133 @@ int ExecutiveSetCrystal(PyMOLGlobals * G, char *sele, float a, float b, float c,
     SymmetryFree(symmetry);
   VLAFreeP(objVLA);
   return (ok);
+}
+
+int ExecutiveSymmetryCopy(PyMOLGlobals * G, char *source_name, char *target_name,
+			  int source_mode, int target_mode,
+			  int source_state, int target_state,
+			  int target_undo, int log, int quiet) {
+
+  /* Copy the symmetry info from source to target; currently maps can have
+   * multiple states for symmetry, but ObjectMolecule cannot */
+
+  int ok = true;
+  CObject *source_obj = NULL;
+  CObject *target_obj = NULL;
+  CSymmetry * source_symm = NULL;
+  CSymmetry ** target_symm = NULL;
+
+  ObjectMolecule * tmp_mol = NULL;
+  ObjectMap * tmp_map = NULL;
+
+  /* defaults */
+  if(source_state==-1)
+    source_state = 0;
+  if(target_state==-1)
+    target_state = 0;
+  
+  /* SOURCE OBJECT and its SYMMETRY INFO */
+  source_obj = ExecutiveFindObjectByName(G, source_name);
+
+  if(source_obj) {
+    /* ObjectMolecule */
+    if(source_obj->type==cObjectMolecule){
+      /* OVERRIDE STATE for ObjectMolecules */
+      source_state = 0;
+      tmp_mol = (ObjectMolecule*) source_obj;
+      source_symm = tmp_mol->Symmetry + source_state;
+    }
+    /* ObjectMap */
+    else if(source_obj->type==cObjectMap){
+      tmp_map = (ObjectMap*) source_obj;
+
+      if(source_state+1>tmp_map->NState) {
+	PRINTFB(G, FB_Executive, FB_Errors)
+	  " SymmetryCopy-Error: source state '%d' greater than number of states in object '%s'.", tmp_map->NState, source_name  ENDFB(G);
+	ok = false;
+      }
+      if(ok) {
+	source_symm = (tmp_map->State + source_state)->Symmetry;
+      }
+    }
+    else {
+      /* object is not a molecule or a map -- bad input */
+      PRINTFB(G, FB_Executive, FB_Errors)
+	" SymmetryCopy-Error: source '%s' is not a molecular or map object.", source_name  ENDFB(G);
+      ok = false;
+    }
+  } else {
+    /* no source object found */
+    PRINTFB(G, FB_Executive, FB_Errors)
+      " SymmetryCopy-Error: source object not found."  ENDFB(G);
+    ok = false;
+  }
+
+  /* TARGET OBJECT and its SYMMETRY INFO */
+  target_obj = ExecutiveFindObjectByName(G, target_name);
+
+  if(target_obj) {
+    /* ObjectMolecule */
+    if(target_obj->type==cObjectMolecule){
+      /* OVERRIDE STATE for ObjectMolecules */
+      target_state = 0;
+      tmp_mol = (ObjectMolecule*) target_obj;
+      target_symm = &(tmp_mol->Symmetry); /* + target_state; */
+    }
+    /* ObjectMap */
+    else if(target_obj->type==cObjectMap){
+      tmp_map = (ObjectMap*) target_obj;
+
+      if(target_state+1>tmp_map->NState) {
+	PRINTFB(G, FB_Executive, FB_Errors)
+	  " SymmetryCopy-Error: target state '%d' greater than number of states in object '%s'.", tmp_map->NState, target_name  ENDFB(G);
+	ok = false;
+      }
+      if(ok) {
+	target_symm =  (CSymmetry**)  &((tmp_map->State + target_state)->Symmetry);
+      }
+    }
+    else {
+      /* object is not a molecule or a map -- bad input */
+      PRINTFB(G, FB_Executive, FB_Errors)
+	" SymmetryCopy-Error: target '%s' is not a molecular or map object.", target_name  ENDFB(G);
+      ok = false;
+    }
+  } else {
+    /* no target object found */
+    PRINTFB(G, FB_Executive, FB_Errors)
+      " SymmetryCopy-Error: target object not found."  ENDFB(G);
+    ok = false;
+  }
+
+  /* Do the copy */
+  if(ok) {
+    if(target_symm) {
+      if(*target_symm)
+	SymmetryFree(*target_symm);
+      
+      *target_symm = SymmetryCopy(source_symm);
+
+      /* Invalidate cRepCell */
+      /* if the unit cell is shown for molecule, redraw it */
+      if(tmp_mol) {
+	if(tmp_mol->Obj.RepVis[cRepCell]) {
+	  if(tmp_mol->Symmetry) {
+	    if(tmp_mol->Symmetry->Crystal) {
+	      if(tmp_mol->UnitCellCGO)
+		CGOFree(tmp_mol->UnitCellCGO);
+	      tmp_mol->UnitCellCGO = CrystalGetUnitCellCGO(tmp_mol->Symmetry->Crystal);
+	    }
+	  }
+	}
+      }
+
+      if(! *target_symm)
+	ok = false;
+    }
+  }
+
+  return ok;
 }
 
 int ExecutiveSmooth(PyMOLGlobals * G, char *name, int cycles,
@@ -6660,11 +6893,6 @@ const char * ExecutiveMapGenerate(PyMOLGlobals * G, char * name, char * reflecti
     weights=NULL;
 
   /* printf("Passing to primex driver: space_group=%s, cell=[%f %f %f %f %f %f], reso_high=%f, rseo_low=%f, refl_file=%s, ampl=%s, phases=%s, weights=%s, map_file=%s", space_group, cell[0], cell[1], cell[2], cell[3], cell[4], cell[5], reso_high, reso_low, reflection_file, amplitudes, phases, weights, tempFile); */
-
-#ifndef NO_MMLIBS
-  ok = !(primex_pymol_driver2(space_group, cell, reso_high, reso_low, reflection_file, amplitudes,
-			    phases, weights, tempFile)); 
-#endif
 
   if (!ok) 
     return NULL;
@@ -7608,7 +7836,6 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
             PLog(G, buf2, cPLog_no_flush);
           }
         } else {
-          printf("here2\n");
           sprintf(buffer, "%s(?%s)", sel_mode_kw, cTempRectSele);
           SelectorCreate(G, selName, buffer, NULL, 0, NULL);
           if(log_box) {
@@ -8430,7 +8657,7 @@ CObject *ExecutiveGetLastObjectEdited(PyMOLGlobals * G)
 
 /*========================================================================*/
 int ExecutiveSaveUndo(PyMOLGlobals * G, char *s1, int state)
-{
+  {
   int sele1;
   ObjectMoleculeOpRec op1;
 
@@ -8542,6 +8769,9 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState)
     } else
       width = (int) min_width;
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     if(round_points) {
       glEnable(GL_POINT_SMOOTH);
       glAlphaFunc(GL_GREATER, 0.5F);
@@ -8553,6 +8783,7 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState)
       glDisable(GL_ALPHA_TEST);
       glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
     }
+#endif
 
     no_depth = (int) SettingGet(G, cSetting_selection_overlay);
 
@@ -8576,12 +8807,15 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState)
 
               if(no_depth)
                 glDisable(GL_DEPTH_TEST);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
               glDisable(GL_FOG);
-
               if(rec->sele_color < 0)
                 glColor3f(1.0F, 0.2F, 0.6F);
               else
                 glColor3fv(ColorGet(G, rec->sele_color));
+#endif
 
               gl_width = (float) width;
               if(width > 6) {   /* keep it even above 6 */
@@ -8590,8 +8824,14 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState)
                   gl_width = (float) width;
                 }
               }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
               glPointSize(gl_width);
+#endif
+#ifndef _PYMOL_GL_DRAWARRAYS
               glBegin(GL_POINTS);
+#endif
               rec1 = NULL;
               while(ListIterate(I->Spec, rec1, next)) {
                 if(rec1->type == cExecObject) {
@@ -8601,34 +8841,62 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState)
                   }
                 }
               }
+#ifndef _PYMOL_GL_DRAWARRAYS
               glEnd();
+#endif
 
               if(width > 2) {
                 switch (width) {
                 case 1:
                 case 2:
                 case 3:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                   glPointSize(1.0F);
+#endif
                   break;
                 case 4:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                   glPointSize(2.0F);
+#endif
                   break;
                 case 5:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                   glPointSize(3.0F);
+#endif
                   break;
                 case 6:
                 case 7:
                 case 8:
                 case 9:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                   glPointSize(4.0F);
+#endif
                   break;
                 default:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                   glPointSize(6.0F);
+#endif
                   break;
                 }
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                 glColor3f(0.0F, 0.0F, 0.0F);
+#endif
+#ifndef _PYMOL_GL_DRAWARRAYS
                 glBegin(GL_POINTS);
+#endif
                 rec1 = NULL;
                 while(ListIterate(I->Spec, rec1, next)) {
                   if(rec1->type == cExecObject) {
@@ -8638,17 +8906,36 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState)
                     }
                   }
                 }
+#ifndef _PYMOL_GL_DRAWARRAYS
                 glEnd();
+#endif
               }
 
               if(width > 4) {
                 if(width > 5) {
+#ifdef PURE_OPENGL_ES_2
+		  ;
+		  /* TODO */
+#else
                   glPointSize(2.0F);
-                } else
-                  glPointSize(1.0F);
-                glColor3f(1.0F, 1.0F, 1.0F);
+#endif
+                } else {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
 
+                  glPointSize(1.0F);
+#endif
+		}
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+                glColor3f(1.0F, 1.0F, 1.0F);
+#endif
+
+#ifndef _PYMOL_GL_DRAWARRAYS
                 glBegin(GL_POINTS);
+#endif
                 rec1 = NULL;
                 while(ListIterate(I->Spec, rec1, next)) {
                   if(rec1->type == cExecObject) {
@@ -8658,20 +8945,31 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState)
                     }
                   }
                 }
+#ifndef _PYMOL_GL_DRAWARRAYS
                 glEnd();
+#endif
               }
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
               if(no_depth)
                 glEnable(GL_DEPTH_TEST);
               if(fog)
                 glEnable(GL_FOG);
+#endif
             }
           }
         }
       }
     }
     if(round_points) {
+#ifdef PURE_OPENGL_ES_2
+      ;
+      /* TODO */
+#else
       glAlphaFunc(GL_GREATER, 0.05F);
+#endif
     }
   }
 }
@@ -10149,6 +10447,14 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, char *s1, int state, int conectFla
         ExecutiveObjMolSeleOp(G, sele1, &op1);
       }
     }
+    if((!(SettingGetGlobal_i(G, cSetting_pdb_no_end_record)))
+       && !(pdb_info.is_pqr_file))
+      /* terminate with END */
+    {
+      ov_size len = op1.i2;
+      UtilConcatVLA(&op1.charVLA, &len, end_str);
+      op1.i2 = len;
+    }
     switch (state) {
     case -1:
       {
@@ -10158,15 +10464,6 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, char *s1, int state, int conectFla
       }
       break;
     }
-  }
-
-  if((!(SettingGetGlobal_i(G, cSetting_pdb_no_end_record)))
-     && !(pdb_info.is_pqr_file))
-    /* terminate with END */
-  {
-    ov_size len = op1.i2;
-    UtilConcatVLA(&op1.charVLA, &len, end_str);
-    op1.i2 = len;
   }
 
   /* terminate (just in case) */
@@ -11316,6 +11613,20 @@ int ExecutiveRMS(PyMOLGlobals * G, char *s1, char *s2, int mode, float refine,
           cgo = CGONew(G);
           /*             CGOColor(cgo,1.0,1.0,0.0); 
              CGOLinewidth(cgo,3.0); */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  {
+	    int nverts = n_pair*2, pl = 0;
+	    float *vertexVals, *tmp_ptr;
+	    vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);	      
+	    for(a = 0; a < n_pair; a++) {
+	      tmp_ptr = op2.vv1 + (a * 3);
+	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	      MatrixTransformTTTfN3f(1, v1, op2.ttt, op1.vv1 + (a * 3));
+	      tmp_ptr = v1;
+	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	    }
+	  }
+#else
           CGOBegin(cgo, GL_LINES);
           for(a = 0; a < n_pair; a++) {
             CGOVertexv(cgo, op2.vv1 + (a * 3));
@@ -11323,6 +11634,7 @@ int ExecutiveRMS(PyMOLGlobals * G, char *s1, char *s2, int mode, float refine,
             CGOVertexv(cgo, v1);
           }
           CGOEnd(cgo);
+#endif
           CGOStop(cgo);
           ocgo = ObjectCGOFromCGO(G, NULL, cgo, 0);
           ocgo->Obj.Color = ColorGetIndex(G, "yellow");
@@ -11667,11 +11979,6 @@ void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, CObject * obj)
 {
   if(obj->type == cObjectMolecule) {
     SelectorUpdateObjectSele(G, (ObjectMolecule *) obj);
-#ifndef NO_MMLIBS
-    if (SettingGetGlobal_i(G, cSetting_auto_defer_atom_count) >= ((ObjectMolecule *) obj)->NAtom ){
-      ObjectMoleculeUpdateMMStereoInfo(G, (ObjectMolecule *)obj);
-    }
-#endif
   }
 }
 
@@ -11769,29 +12076,37 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
   if(!SettingGet(G, cSetting_suspend_updates)) {
 
     int stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
+    int stereo = SettingGetGlobal_i(G, cSetting_stereo);
+#ifdef PURE_OPENGL_ES_2
+#else
     if(G->HaveGUI && G->ValidContext) {
       glMatrixMode(GL_MODELVIEW);       /* why is this necessary?  is it? */
     }
+#endif
 
     ExecutiveUpdateSceneMembers(G);
     SceneUpdate(G, false);
     if(WizardUpdate(G))
       SceneUpdate(G, false);
 
-    switch (stereo_mode) {
-    case cStereo_geowall:
-      {
-        int width = G->Option->winX;
-        int height = G->Option->winY;
-        glViewport(0, 0, width / 2, height);
-        OrthoDoDraw(G, 1);
-        OrthoDoDraw(G, 2);
-        glViewport(0, 0, width, height);
+    if (stereo){
+      switch (stereo_mode) {
+      case cStereo_geowall:
+	{
+	  int width = G->Option->winX;
+	  int height = G->Option->winY;
+	  glViewport(0, 0, width / 2, height);
+	  OrthoDoDraw(G, 1);
+	  OrthoDoDraw(G, 2);
+	  glViewport(0, 0, width, height);
+	}
+	break;
+      default:
+	OrthoDoDraw(G, 0);
+	break;
       }
-      break;
-    default:
+    } else {
       OrthoDoDraw(G, 0);
-      break;
     }
 
     if(G->HaveGUI && G->ValidContext) {
@@ -11803,8 +12118,8 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
     PyMOL_NeedSwap(G->PyMOL);
   }
 
-  PRINTFD(G, FB_Executive)
-    " ExecutiveDrawNow: leaving.\n" ENDFD;
+  //  PRINTFD(G, FB_Executive)
+  //    " ExecutiveDrawNow: leaving.\n" ENDFD;
 }
 
 
@@ -12045,6 +12360,127 @@ int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
   return (ok);
 }
 /*========================================================================*/
+PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index, 
+				  char *s1, char *s2, int state, int quiet, int updates)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj = NULL;
+  int sele1, sele2;
+  SettingName name;
+  int unblock;
+  //  int *value_ptr;
+  //  int value_type = 0;
+  PyObject *result = PyList_New(0);
+
+  PRINTFD(G, FB_Executive)
+    " ExecutiveGetBondSetting: entered. '%s' '%s'\n", s1, s2 ENDFD;
+  unblock = PAutoBlock(G);
+  sele1 = SelectorIndexByName(G, s1);
+  sele2 = SelectorIndexByName(G, s2);
+
+  if((sele1 >= 0) && (sele2 >= 0)) {
+    while((ListIterate(I->Spec, rec, next))) {
+      if((rec->type == cExecObject) && (rec->obj->type == cObjectMolecule)) {
+	obj = (ObjectMolecule *) rec->obj;
+	{
+	  int a, nBond = obj->NBond ;
+	  int nSet = 0;
+	  BondType *bi = obj->Bond;
+	  AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo;
+
+	  PyObject *pyObjList = NULL;
+	  PyObject *pyBondList = NULL;
+
+	  for(a = 0; a < nBond; a++) {
+	    ai1 = ai + bi->index[0];
+	    ai2 = ai + bi->index[1];
+	    if((SelectorIsMember(G, ai1->selEntry, sele1) &&
+		SelectorIsMember(G, ai2->selEntry, sele2)) ||
+	       (SelectorIsMember(G, ai2->selEntry, sele1) &&
+		SelectorIsMember(G, ai1->selEntry, sele2))) {
+	      PyObject *pyBondInfo = PyList_New(3);
+	      if (!pyObjList){
+		pyObjList = PyList_New(2);
+		pyBondList = PyList_New(0);
+		PyList_SetItem(pyObjList, 0, PyString_FromString(obj->Obj.Name));
+		PyList_SetItem(pyObjList, 1, pyBondList);
+		PyList_Append(result, pyObjList);
+	      }
+	      PyList_SetItem(pyBondInfo, 0, PyInt_FromLong((long)bi->index[0]+1));
+	      PyList_SetItem(pyBondInfo, 1, PyInt_FromLong((long)bi->index[1]+1));
+	      if (bi->has_setting){
+		int uid = AtomInfoCheckUniqueBondID(G, bi);
+		int setting_type = SettingGetType(G, index);
+		PyObject *bond_setting_value = Py_None;
+		switch (setting_type){
+		case cSetting_boolean:
+		  {
+		    int val = 0;
+		    SettingUniqueGet_b(G, uid, index, &val);
+		    if (val) bond_setting_value = Py_True; else bond_setting_value = Py_False;
+		  }
+		  break;
+		case cSetting_int:
+		  {
+		    int val = 0;
+		    SettingUniqueGet_i(G, uid, index, &val);
+		    bond_setting_value = PyInt_FromLong(val);
+		  }
+		  break;
+		case cSetting_float:
+		  {
+		    float val = 0;
+		    SettingUniqueGet_f(G, uid, index, &val);
+		    bond_setting_value = PyFloat_FromDouble(val);
+		  }
+		  break;
+		case cSetting_color:
+		  {
+		    float *val;
+		    int col;
+		    SettingUniqueGet_color(G, uid, index, &col);
+		    val = ColorGet(G, col);
+		    if (val){
+		      bond_setting_value = PyList_New(3);
+		      PyList_SetItem(bond_setting_value, 0, PyFloat_FromDouble(val[0]));
+		      PyList_SetItem(bond_setting_value, 1, PyFloat_FromDouble(val[1]));
+		      PyList_SetItem(bond_setting_value, 2, PyFloat_FromDouble(val[2]));
+		    }
+		  }
+		  break;
+		default:
+		  bond_setting_value = Py_None;
+		}
+		PyList_SetItem(pyBondInfo, 2, bond_setting_value);
+	      } else {
+		PyList_SetItem(pyBondInfo, 2, Py_None);
+	      }
+	      PyList_Append(pyBondList, pyBondInfo);
+	      nSet++;
+	    }
+	    bi++;
+	  }
+	  if(nSet && !quiet) {
+	    SettingGetName(G, index, name);
+	    PRINTF
+	      " Getting: %s for %d bonds in object \"%s\".\n",
+	      name, nSet, obj->Obj.Name ENDF(G);
+	  }
+	}
+      }
+    }
+  }
+  PRINTFD(G, FB_Executive)
+    " ExecutiveGetBondSetting: end. '%s' '%s'\n", s1, s2 ENDFD;
+  PAutoUnblock(G, unblock);
+  return result;
+#endif
+}
+/*========================================================================*/
 int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
                             char *s1, char *s2, int state, int quiet, int updates)
 {
@@ -12062,6 +12498,7 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
   int side_effects = false;
   int value_storage, *value_ptr;
   int value_type = 0;
+
   PRINTFD(G, FB_Executive)
     " ExecutiveSetBondSetting: entered. '%s' '%s'\n", s1, s2 ENDFD;
   unblock = PAutoBlock(G);
@@ -12234,7 +12671,7 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, char *sel
   int unblock;
   int ok = true;
   PRINTFD(G, FB_Executive)
-    " ExecutiveSetSetting: entered. sele \"%s\"\n", sele ENDFD;
+    " ExecutiveSetSetting: entered. sele \"%s\" updates=%d index=%d\n", sele, updates, index ENDFD;
   unblock = PAutoBlock(G);
   if((!sele) || (sele[0] == 0)) {       /* global setting */
     ok = SettingSetFromTuple(G, NULL, index, tuple);
@@ -15247,7 +15684,8 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
   ObjectMolecule *new_obj = NULL;
   ObjectMoleculeOpRec op;
   MapType *map;
-  int x, y, z, a, b, c, i, j, h, k, l, n;
+  int x, y, z, b, c, i, j, h, k, l, n;
+  ov_size a;
   CoordSet *cs, *os;
   int keepFlag, sele, tt[3];
   float *v1, *v2, m[16], tc[3], ts[3];
@@ -15402,10 +15840,10 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
 
                   /* TODO: should also transform the U tensor at this point... */
 
-									/* make and manage the new object; update the scene for the new object */
-									printf("new_name before: %s\n", new_name);
-                  sprintf(new_name, "%s%02d%02d%02d%02d", name, a, x, y, z);
-									printf("Making new object: %s from name=%s, a=%d, x=%d, y=%d, z=%d\n", new_name, name, a, x, y, z); /* remove me -- JV */
+		  /* make and manage the new object; update the scene for the new object */
+		  printf("new_name before: %s\n", new_name);
+		  sprintf(new_name, "%s%02d%02d%02d%02d", name, (int)a, (int)x, (int)y, (int)z);
+		  printf("Making new object: %s from name=%s, a=%d, x=%d, y=%d, z=%d\n", new_name, name, (int)a, (int)x, (int)y, (int)z); /* remove me -- JV */
                   ObjectSetName((CObject *) new_obj, new_name);
                   ExecutiveDelete(G, new_name);
                   ExecutiveManageObject(G, (CObject *) new_obj, -1, quiet);
@@ -15504,7 +15942,7 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
     }
     ExecutiveDelKey(I, rec);
     SelectorDelete(G, rec->name);
-    rec->obj->fFree(rec->obj);
+      rec->obj->fFree(rec->obj);
     rec->obj = NULL;
     TrackerDelCand(I->Tracker, rec->cand_id);
     break;
@@ -15621,19 +16059,19 @@ ObjectMolecule **ExecutiveGetObjectMoleculeListVLA(PyMOLGlobals * G, char *name)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
-  ObjectMolecule *obj, **result = NULL;
+  ObjectMolecule **result = NULL;
   int n = 0;
-  result = VLAlloc(ObjectMolecule *, 10);
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, false, false);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  result = VLAlloc(ObjectMolecule *, 10);
   while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
     if(rec) {
       switch (rec->type) {
       case cExecObject:
         if(rec->obj->type == cObjectMolecule) {	
 	  VLACheck(result, ObjectMolecule *, n);
-	  result[n] = rec->obj;
+	  result[n] = (ObjectMolecule*)rec->obj;
 	  n++;
 	}
       }
@@ -15849,9 +16287,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
     ExecutiveDoAutoGroup(G, rec);
   }
 
-  if(obj->type == cObjectMolecule) {
-    ExecutiveUpdateObjectSelection(G, obj);
-  }
+  ExecutiveUpdateObjectSelection(G, obj);
 
   if(SettingGet(G, cSetting_auto_dss)) {
     if(obj->type == cObjectMolecule) {
@@ -16896,31 +17332,114 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
 static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
                         float *inside)
 {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
   glColor3fv(light);
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLint polyVerts[] = {
+      x2, y2,
+      x2, y2 + h,
+      x2 + w, y2,
+      x2 + w, y2 + h
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_INT, 0, polyVerts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_POLYGON);
   glVertex2i(x2, y2);
   glVertex2i(x2, y2 + h);
   glVertex2i(x2 + w, y2 + h);
   glVertex2i(x2 + w, y2);
   glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
   glColor3fv(dark);
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLint polyVerts[] = {
+      x2 + 1, y2,
+      x2 + 1, y2 + h - 1,
+      x2 + w, y2,
+      x2 + w, y2 + h - 1
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_INT, 0, polyVerts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_POLYGON);
   glVertex2i(x2 + 1, y2);
   glVertex2i(x2 + 1, y2 + h - 1);
   glVertex2i(x2 + w, y2 + h - 1);
   glVertex2i(x2 + w, y2);
   glEnd();
+#endif
+#endif
 
   if(inside) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3fv(inside);
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLint polyVerts[] = {
+      x2 + 1, y2 + 1,
+      x2 + 1, y2 + h - 1,
+      x2 + w - 1, y2 + 1,
+      x2 + w - 1, y2 + h - 1
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_INT, 0, polyVerts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(x2 + 1, y2 + 1);
     glVertex2i(x2 + 1, y2 + h - 1);
     glVertex2i(x2 + w - 1, y2 + h - 1);
     glVertex2i(x2 + w - 1, y2 + 1);
     glEnd();
+#endif
+#endif
   } else {                      /* rainbow */
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLint polyVerts[] = {
+      x2 + 1, y2 + 1,
+      x2 + 1, y2 + h - 1,
+      x2 + w - 1, y2 + 1,
+      x2 + w - 1, y2 + h - 1
+    };
+    const GLfloat colorVerts[] = {
+      1.0F, 0.1F, 0.1F, 1.f,
+      0.1F, 1.0F, 0.1F, 1.f,
+      0.1F, 0.1F, 1.0F, 1.f,
+      1.0F, 1.0F, 0.1F, 1.f
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer(2, GL_INT, 0, polyVerts);
+    glColorPointer(4, GL_FLOAT, 0, colorVerts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+#else
     glBegin(GL_POLYGON);
     glColor3f(1.0F, 0.1F, 0.1F);
     glVertex2i(x2 + 1, y2 + 1);
@@ -16931,6 +17450,8 @@ static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
     glColor3f(0.1F, 0.1F, 1.0F);
     glVertex2i(x2 + w - 1, y2 + 1);
     glEnd();
+#endif
+#endif
   }
 
 }
@@ -17036,7 +17557,11 @@ static void ExecutiveDraw(Block * block)
 
     /* fill and outline the entire block */
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       glColor3fv(I->Block->BackColor);
+#endif
       BlockFill(I->Block);
       BlockDrawLeftEdge(I->Block);
     }
@@ -17418,11 +17943,13 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, char *pattern)
       MovieReset(G);
       EditorInactivate(G);
       ControlRock(G, 0);
+      OrthoReshape(G, -1, -1, false);
 
 #ifndef _PYMOL_NOPY
       blocked = PAutoBlock(G);
       PRunStringInstance(G, "cmd.view('*','clear')");
       PRunStringInstance(G, "cmd.scene('*','clear')");
+      PRunStringInstance(G, "cmd.config_mouse(\"three_button\")");
       WizardSet(G, NULL, false);
       PAutoUnblock(G, blocked);
 #endif

@@ -29,28 +29,34 @@ Z* -------------------------------------------------------------------
 
 static void FontGLUTSave(CFontGLUT * I)
 {
+#ifndef _PYMOL_PURE_OPENGL_ES
   glGetIntegerv(GL_UNPACK_SWAP_BYTES, (GLint *) & I->swapbytes);
   glGetIntegerv(GL_UNPACK_LSB_FIRST, (GLint *) & I->lsbfirst);
   glGetIntegerv(GL_UNPACK_ROW_LENGTH, (GLint *) & I->rowlength);
   glGetIntegerv(GL_UNPACK_SKIP_ROWS, (GLint *) & I->skiprows);
   glGetIntegerv(GL_UNPACK_SKIP_PIXELS, (GLint *) & I->skippixels);
+#endif
   glGetIntegerv(GL_UNPACK_ALIGNMENT, (GLint *) & I->alignment);
 
+#ifndef _PYMOL_PURE_OPENGL_ES
   glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
   glPixelStorei(GL_UNPACK_LSB_FIRST, GL_FALSE);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
   glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
   glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+#endif
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 static void FontGLUTRestore(CFontGLUT * I)
 {
+#ifndef _PYMOL_PURE_OPENGL_ES
   glPixelStorei(GL_UNPACK_SWAP_BYTES, I->swapbytes);
   glPixelStorei(GL_UNPACK_LSB_FIRST, I->lsbfirst);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, I->rowlength);
   glPixelStorei(GL_UNPACK_SKIP_ROWS, I->skiprows);
   glPixelStorei(GL_UNPACK_SKIP_PIXELS, I->skippixels);
+#endif
   glPixelStorei(GL_UNPACK_ALIGNMENT, I->alignment);
 }
 
@@ -184,8 +190,15 @@ static char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, char *st, fl
       }
 
       if(!textured) {
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
         glColor3fv(TextGetColor(G));
+#endif
+
+#ifndef _PYMOL_PURE_OPENGL_ES
         glRasterPos4fv(TextGetPos(G));
+#endif
         FontGLUTSave(I);
       }
 
@@ -197,8 +210,11 @@ static char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, char *st, fl
           if(ch) {
             if(!textured) {
 
+#ifndef _PYMOL_PURE_OPENGL_ES
+	      /* NEED TODO FOR _PYMOL_GL_DRAWARRAYS */
               glBitmap(ch->width, ch->height,
                        ch->xorig, ch->yorig, ch->advance, 0, ch->bitmap);
+#endif
               TextAdvance(G, ch->advance);
             } else {
               CharFngrprnt fprnt;

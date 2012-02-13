@@ -65,14 +65,7 @@ mview interpolate
 mview smooth
 mview smooth
 
-# 5) Activate scene content at the appropriate movie frames.
- 
-mdo 1: scene 001, view=0, quiet=1
-mdo 240: scene 002, view=0, quiet=1
-mdo 540: scene 003, view=0, quiet=1
-mdo 840: scene 001, view=0, quiet=1
-
-# 6) Force frame 1 content to load.
+# 5) Force frame 1 content to load.
 
 rewind
 

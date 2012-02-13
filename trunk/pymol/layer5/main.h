@@ -82,4 +82,4 @@ int was_main(void);
 
 #endif
 
-#endif
+#endif /* _H_main header */

@@ -14,6 +14,7 @@
 
 import traceback
 import string
+import sys
 
 try:
     from cmd import QuietException, \
@@ -60,6 +61,18 @@ try:
             result = []
             for op in sym_op:
                 mat = []
+                try:
+                    # WORKAROUND: Not sure why the string op can have difficulty
+                    # being split, but calling this inside a try/except block before
+                    # it gets called in the below for loop seems to fix it
+                    # TODO : NEED TO FIGURE OUT : it could have something to do with
+                    # how sym_dict/sym_base is instantiated, and how PyMOL in P.c
+                    # imports this module directly
+                    # the error that is thrown is "IndexError: list index out of range"
+                    string.split(op,',')
+                except:
+#                    traceback.print_exc()
+                    pass
                 for expr in string.split(op,','):
                     mat.append( expr_to_vect[expr] )
                 mat.append([0.0,0.0,0.0,1.0])
@@ -148,6 +161,8 @@ expr_to_vect = {
     }
 
 sym_base = {
+    (
+    ) : ['', ''] ,
     (
     'x,y,z',
     ) : ['P 1', 'P1'] ,
@@ -8552,6 +8567,7 @@ for key in sym_base.keys():
 
 
 space_group_map = {
+    ""       : "",
     "P1"     : "P 1",       
     "P111"   : "P 1 1 1",    
     "A111"   : "A 1 1 1",

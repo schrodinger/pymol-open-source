@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #define cSelectionNone 1
 
 int SelectorInit(PyMOLGlobals * G);
+int SelectorInitImpl(PyMOLGlobals * G, CSelector **I, short init2);
 int SelectorCreate(PyMOLGlobals * G, char *name, char *sele, ObjectMolecule * obj,
                    int quiet, Multipick * mp);
 int SelectorCreateWithStateDomain(PyMOLGlobals * G, char *name, char *sele,
@@ -54,6 +55,8 @@ void SelectorToggle(PyMOLGlobals * G, int rep, char *name);
 void SelectorCylinder(PyMOLGlobals * G, char *sele, char *onoff);
 
 int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain);
+int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int domain);
+
 #define cSelectorUpdateTableAllStates -1
 #define cSelectorUpdateTableCurrentState -2
 #define cSelectorUpdateTableEffectiveStates -3
@@ -61,9 +64,12 @@ int SelectorUpdateTable(PyMOLGlobals * G, int req_state, int domain);
 int SelectorIndexByName(PyMOLGlobals * G, char *sele);
 char *SelectorGetNameFromIndex(PyMOLGlobals * G, int index);
 void SelectorFree(PyMOLGlobals * G);
+void SelectorFreeImpl(PyMOLGlobals * G, CSelector *I, short init2);
 void SelectorDelete(PyMOLGlobals * G, char *sele);
 void SelectorFreeTmp(PyMOLGlobals * G, char *name);
 int SelectorGetTmp(PyMOLGlobals * G, char *input, char *store);
+int SelectorGetTmpQuiet(PyMOLGlobals * G, char *input, char *store);
+int SelectorGetTmpImpl(PyMOLGlobals * G, char *input, char *store, int quiet);
 int SelectorCheckTmp(PyMOLGlobals * G, char *name);
 int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int state,
                    int conectFlag, PDBInfoRec * pdb_info, int *counter, double *ref,
@@ -116,6 +122,7 @@ int SelectorGetPairIndices(PyMOLGlobals * G, int sele1, int state1, int sele2, i
                            ObjectMolecule *** objVLA);
 
 int SelectorCountAtoms(PyMOLGlobals * G, int sele, int state);
+void SelectorSetDeleteFlagOnSelectionInObject(PyMOLGlobals * G, int sele, ObjectMolecule *obj, signed char val);
 int SelectorCheckIntersection(PyMOLGlobals * G, int sele1, int sele2);
 int SelectorCountStates(PyMOLGlobals * G, int sele);
 int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
@@ -229,6 +236,7 @@ __inline__ static int SelectorIsMember(PyMOLGlobals * G, int s, int sele)
   else
     return false;               /* no atom is a member of none (1), and negative selections don't exist */
 }
+
 #endif
 
 #endif

@@ -11,7 +11,7 @@
  *
  *      $RCSfile: molfile_plugin.h,v $
  *      $Author: saam $       $Locker:  $             $State: Exp $
- *      $Revision: 1.86 $       $Date: 2009/06/27 00:44:25 $
+ *      $Revision: 1.91 $       $Date: 2009/07/28 21:54:30 $
  *
  ***************************************************************************/
 
@@ -147,9 +147,12 @@ typedef struct molfile_qm_timestep_metadata {
   int has_gradient;                    /**< if timestep contains gradient    */
   int num_scfiter;                     /**< # scf iterations for this ts     */
   int num_orbitals_per_wavef[MOLFILE_MAXWAVEPERTS]; /**< # orbitals for each wavefunction */
+  int has_orben_per_wavef[MOLFILE_MAXWAVEPERTS]; /**< orbital energy flags */
+  int has_occup_per_wavef[MOLFILE_MAXWAVEPERTS]; /**< orbital occupancy flags */
   int num_wavef ;                      /**< # wavefunctions in this ts     */
   int wavef_size;                      /**< size of one wavefunction 
                                         *   (# of gaussian basis fctns)    */
+  int num_charge_sets;            /**< # of charge values per atom */
 } molfile_qm_timestep_metadata_t;
 #endif
 
@@ -238,10 +241,8 @@ typedef struct {
 
   /* everything else */
   int have_sysinfo;
-  int have_esp;                 /**< ESP charges available?  */
-  int have_npa;                 /**< XXX: ??? data?   */
   int have_carthessian;         /**< hessian in cartesian coords available  */
-  int have_internals;           /**< hessian in internal coords available  */
+  int have_inthessian;          /**< hessian in internal coords available  */
   int have_normalmodes;         /**< normal modes available  */
 } molfile_qm_metadata_t;
 
@@ -297,13 +298,10 @@ typedef struct {
                           *   have converged properly. */
   int num_electrons;     /**< number of electrons.    XXX: can be fractional in some DFT codes */
   int totalcharge;       /**< total charge of system. XXX: can be fractional in some DFT codes */
-  int multiplicity;      /**< multiplicity of system */
   int num_occupied_A;    /**< number of occupied alpha orbitals */
   int num_occupied_B;    /**< number of occupied beta orbitals */
 
   double *nuc_charge;    /**< array(natom) containing the nuclear charge of atom i */
-  double *esp_charges;   /**< per-atom esp charges */
-  double *npa_charges;   /**< per-atom npa charges */
 
   char basis_string[MOLFILE_BUFSIZ];    /**< basis name as "nice" string. */
   char runtitle[MOLFILE_BIGBUFSIZ];     /**< title of run.                */
@@ -317,7 +315,12 @@ typedef struct {
   int   type;               /**< CANONICAL, LOCALIZED, OTHER */
   int   spin;               /**< 1 for alpha, -1 for beta */
   int   excitation;         /**< 0 for ground state, 1,2,3,... for excited states */
+  int   multiplicity;       /**< spin multiplicity of the state, zero if unknown */
   char info[MOLFILE_BUFSIZ]; /**< string for additional type info */
+
+  double energy;            /**< energy of the electronic state.
+                             *   i.e. HF-SCF energy, CI state energy,
+                             *   MCSCF energy, etc. */
 
   float *wave_coeffs;       /**< expansion coefficients for wavefunction in the
                              *   form {orbital1(c1),orbital1(c2),.....,orbitalM(cN)} */
@@ -336,8 +339,8 @@ typedef struct {
   float  *gradient;         /**< force on each atom (=gradient of energy) */
 
   double *scfenergies;      /**< scfenergy per trajectory point. */
-  double *mulliken_charges; /** per-atom Mulliken charges  */
-  double *lowdin_charges;   /** per-atom Lowdin charges    */
+  double *charges;          /**< per-atom charges */
+  int    *charge_types;     /**< type of each charge set */
 } molfile_qm_timestep_t;
 
 
@@ -389,6 +392,11 @@ enum molfile_qm_wavefunc_type {
   MOLFILE_WAVE_NATO,   MOLFILE_WAVE_UNKNOWN
 };
 
+enum molfile_qm_charge_type {
+  MOLFILE_QMCHARGE_MULLIKEN, MOLFILE_QMCHARGE_LOWDIN,
+  MOLFILE_QMCHARGE_ESP, MOLFILE_QMCHARGE_NPA,
+  MOLFILE_QMCHARGE_UNKNOWN
+};
 #endif
 
 

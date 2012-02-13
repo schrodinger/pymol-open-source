@@ -193,7 +193,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
   int ok = true;
 
   AtomInfoType *atInfo = VLACalloc(AtomInfoType, 1);
-
+  atInfo->oldid = -1;
   if(state >= 0) {              /* specific state */
     start_state = state;
     stop_state = state + 1;
@@ -350,7 +350,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
           cset = NULL;
         } else {
           /* merge coordinate set */
-          CoordSetMerge(I->CSet[state], cset);
+          CoordSetMerge(I, I->CSet[state], cset);
           if(cset->fFree) {
             cset->fFree(cset);
             cset = NULL;
@@ -4311,7 +4311,7 @@ void ObjectMoleculeSort(ObjectMolecule * I)
         I->DiscreteAtmToIdx = dAtmToIdx;
       }
     }
-    AtomInfoFreeSortedIndexes(I->Obj.G, index, outdex);
+    AtomInfoFreeSortedIndexes(I->Obj.G, &index, &outdex);
 
     UtilSortInPlace(I->Obj.G, I->Bond, I->NBond, sizeof(BondType),
                     (UtilOrderFn *) BondInOrder);

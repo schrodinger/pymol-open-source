@@ -113,74 +113,148 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level);
 
 #endif
 
-#if 0
-static void SphereDump(FILE * f, char *prefix, SphereRec * sp)
-{
-  int a;
-  int c;
-  fprintf(f, "static int %s_NTri = %d;\n", prefix, sp->NTri);
-  fprintf(f, "static int %s_NStrip = %d;\n", prefix, sp->NStrip);
-  fprintf(f, "static int %s_NVertTot = %d;\n", prefix, sp->NVertTot);
-  fprintf(f, "static int %s_nDot = %d;\n", prefix, sp->nDot);
-  fprintf(f, "static float %s_dot[][3] = {\n", prefix);
-  for(a = 0; a < sp->nDot; a++) {
-    fprintf(f, "{ %15.12fF, %15.12fF, %15.12fF },\n",
-            sp->dot[a][0], sp->dot[a][1], sp->dot[a][2]);
-  }
-  fprintf(f, "};\n");
-
-  fprintf(f, "static float %s_area[] = {\n", prefix);
-
-  c = 0;
-  for(a = 0; a < sp->nDot; a++) {
-    fprintf(f, "%15.12fF,", sp->area[a]);
-    c = (c + 1) % 4;
-    if(!c)
-      fprintf(f, "\n");
-  }
-  fprintf(f, "};\n");
-
-  fprintf(f, "static int %s_StripLen[] = {\n", prefix);
-  c = 0;
-  for(a = 0; a < sp->NStrip; a++) {
-    fprintf(f, "%6d,", sp->StripLen[a]);
-    c = (c + 1) % 10;
-    if(!c)
-      fprintf(f, "\n");
-  }
-  fprintf(f, "};\n");
-
-  fprintf(f, "static int %s_Sequence[] = {\n", prefix);
-  c = 0;
-  for(a = 0; a < sp->NVertTot; a++) {
-    fprintf(f, "%6d,", sp->Sequence[a]);
-    c = (c + 1) % 10;
-    if(!c)
-      fprintf(f, "\n");
-  }
-  fprintf(f, "};\n");
-
-  fprintf(f, "static int %s_Tri[] = {\n", prefix);
-  c = 0;
-  for(a = 0; a < 3 * sp->NTri; a++) {
-    fprintf(f, "%6d,", sp->Tri[a]);
-    c = (c + 1) % 10;
-    if(!c)
-      fprintf(f, "\n");
-  }
-  fprintf(f, "};\n");
-
-}
-
-static void SphereDumpAll(void)
+#ifndef FAST_SPHERE_INIT
+static void SphereDumpAll(CSphere *I)
 {
   FILE *f;
+  int i, dot_total, a, c, strip_total, seq_total, tri_total;
+  SphereRec *sp;
   f = fopen("SphereData.h", "w");
-  SphereDump(f, "Sphere0", I->Sphere[0]);
-  SphereDump(f, "Sphere1", I->Sphere[1]);
-  SphereDump(f, "Sphere2", I->Sphere[2]);
-  SphereDump(f, "Sphere3", I->Sphere[3]);
-  SphereDump(f, "Sphere4", I->Sphere[4]);
+
+  fprintf(f, "static int Sphere_NSpheres = %d;\n", NUMBER_OF_SPHERE_LEVELS);
+
+  fprintf(f, "static int Sphere_NTri[%d] = {\n", NUMBER_OF_SPHERE_LEVELS);
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    fprintf(f, " %d, ", I->Sphere[i]->NTri);
+  }  
+  fprintf(f, "\n};\n");
+
+  fprintf(f, "static int Sphere_NStrip[%d] = {\n", NUMBER_OF_SPHERE_LEVELS);
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    fprintf(f, " %d, ", I->Sphere[i]->NStrip);
+  }  
+  fprintf(f, "\n};\n");
+
+  fprintf(f, "static int Sphere_NVertTot[%d] = {\n", NUMBER_OF_SPHERE_LEVELS);
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    fprintf(f, " %d, ", I->Sphere[i]->NVertTot);
+  }  
+  fprintf(f, "\n};\n");
+
+  fprintf(f, "static int Sphere_nDot[%d] = {\n", NUMBER_OF_SPHERE_LEVELS);
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    fprintf(f, " %d, ", I->Sphere[i]->nDot);
+  }  
+  fprintf(f, "\n};\n");
+
+  fprintf(f, "static int Sphere_dot_start[%d] = {\n", NUMBER_OF_SPHERE_LEVELS);
+  dot_total = 0;
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    fprintf(f, " %d, ", dot_total);
+    dot_total += I->Sphere[i]->nDot;
+  }  
+  fprintf(f, "\n};\n");
+
+  fprintf(f, "static float Sphere_dot[][3] = {\n");
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    sp = I->Sphere[i];
+    fprintf(f, "/* dots for Sphere #%d */\n", i);
+    for(a = 0; a < sp->nDot; a++) {
+      fprintf(f, "{ %15.12fF, %15.12fF, %15.12fF },\n",
+	      sp->dot[a][0], sp->dot[a][1], sp->dot[a][2]);
+    }
+  }
+  fprintf(f, "};\n");
+
+  fprintf(f, "static float Sphere_area[] = {\n");
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    sp = I->Sphere[i];
+    fprintf(f, "/* areas for Sphere #%d */\n", i);
+    c = 0;
+    for(a = 0; a < sp->nDot; a++) {
+      fprintf(f, "%15.12fF,", sp->area[a]);
+    c = (c + 1) % 4;
+      if (!c)
+	fprintf(f, "\n");	
+    }
+    if (c)
+      fprintf(f, "\n");
+  }
+  fprintf(f, "};\n");
+
+
+  fprintf(f, "static int Sphere_StripLen_start[%d] = {\n", NUMBER_OF_SPHERE_LEVELS);
+  strip_total = 0;
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    fprintf(f, " %d, ", strip_total);
+    strip_total += I->Sphere[i]->NStrip;
+  }  
+  fprintf(f, "\n};\n");
+
+  fprintf(f, "static int Sphere_StripLen[] = {\n");
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    sp = I->Sphere[i];
+    fprintf(f, "/* StripLen for Sphere #%d */\n", i);
+    c = 0;
+    for(a = 0; a < sp->NStrip; a++) {
+      fprintf(f, "%6d,", sp->StripLen[a]);
+      c = (c + 1) % 10;
+      if(!c)
+	fprintf(f, "\n");
+    }
+    if (c)
+      fprintf(f, "\n");
+  }
+  fprintf(f, "};\n");
+
+  fprintf(f, "static int Sphere_Sequence_start[%d] = {\n", NUMBER_OF_SPHERE_LEVELS);
+  seq_total = 0;
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    fprintf(f, " %d, ", seq_total);
+    seq_total += I->Sphere[i]->NVertTot;
+  }  
+  fprintf(f, "\n};\n");
+
+  fprintf(f, "static int Sphere_Sequence[] = {\n");
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    sp = I->Sphere[i];
+    fprintf(f, "/* Sequence for Sphere #%d */\n", i);
+    c = 0;
+    for(a = 0; a < sp->NVertTot; a++) {
+      fprintf(f, "%6d,", sp->Sequence[a]);
+      c = (c + 1) % 10;
+      if(!c)
+	fprintf(f, "\n");
+    }
+    if (c)
+      fprintf(f, "\n");
+  }
+  fprintf(f, "};\n");
+
+  fprintf(f, "static int Sphere_Tri_start[%d] = {\n", NUMBER_OF_SPHERE_LEVELS);
+  tri_total = 0;
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    fprintf(f, " %d, ", tri_total);
+    tri_total += 3 * I->Sphere[i]->NTri;
+  }  
+  fprintf(f, "\n};\n");
+
+  fprintf(f, "static int Sphere_Tri[] = {\n");
+  for (i=0; i < NUMBER_OF_SPHERE_LEVELS; i++){
+    sp = I->Sphere[i];
+    fprintf(f, "/* Tri for Sphere #%d */\n", i);
+    c = 0;
+    for(a = 0; a < 3* sp->NTri; a++) {
+      fprintf(f, "%6d,", sp->Tri[a]);
+      c = (c + 1) % 10;
+      if(!c)
+	fprintf(f, "\n");
+    }
+    if (c)
+      fprintf(f, "\n");
+  }
+  fprintf(f, "};\n");
+
   fclose(f);
 }
 #endif
@@ -190,83 +264,39 @@ void SphereInit(PyMOLGlobals * G)
   register CSphere *I = (G->Sphere = Calloc(CSphere, 1));
 
 #ifdef FAST_SPHERE_INIT
-  I->Array = Alloc(SphereRec, 5);
+  I->Array = Alloc(SphereRec, Sphere_NSpheres);
 
-  I->Array[0].area = Sphere0_area;
-  I->Array[0].dot = Sphere0_dot;
-  I->Array[0].StripLen = Sphere0_StripLen;
-  I->Array[0].Sequence = Sphere0_Sequence;
-  I->Array[0].NStrip = Sphere0_NStrip;
-  I->Array[0].NVertTot = Sphere0_NVertTot;
-  I->Array[0].nDot = Sphere0_nDot;
-  I->Array[0].Tri = Sphere0_Tri;
-  I->Array[0].NTri = Sphere0_NTri;
-  I->Array[0].Mesh = (int *) (void *) mesh;
-  I->Array[0].NMesh = 30;
-
-  I->Array[1].area = Sphere1_area;
-  I->Array[1].dot = Sphere1_dot;
-  I->Array[1].StripLen = Sphere1_StripLen;
-  I->Array[1].Sequence = Sphere1_Sequence;
-  I->Array[1].NStrip = Sphere1_NStrip;
-  I->Array[1].NVertTot = Sphere1_NVertTot;
-  I->Array[1].nDot = Sphere1_nDot;
-  I->Array[1].Tri = Sphere1_Tri;
-  I->Array[1].NTri = Sphere1_NTri;
-  I->Array[1].Mesh = NULL;
-  I->Array[1].NMesh = 0;
-
-  I->Array[2].area = Sphere2_area;
-  I->Array[2].dot = Sphere2_dot;
-  I->Array[2].StripLen = Sphere2_StripLen;
-  I->Array[2].Sequence = Sphere2_Sequence;
-  I->Array[2].NStrip = Sphere2_NStrip;
-  I->Array[2].NVertTot = Sphere2_NVertTot;
-  I->Array[2].nDot = Sphere2_nDot;
-  I->Array[2].Tri = Sphere2_Tri;
-  I->Array[2].NTri = Sphere2_NTri;
-  I->Array[2].Mesh = NULL;
-  I->Array[2].NMesh = 0;
-
-  I->Array[3].area = Sphere3_area;
-  I->Array[3].dot = Sphere3_dot;
-  I->Array[3].StripLen = Sphere3_StripLen;
-  I->Array[3].Sequence = Sphere3_Sequence;
-  I->Array[3].NStrip = Sphere3_NStrip;
-  I->Array[3].NVertTot = Sphere3_NVertTot;
-  I->Array[3].nDot = Sphere3_nDot;
-  I->Array[3].Tri = Sphere3_Tri;
-  I->Array[3].NTri = Sphere3_NTri;
-  I->Array[3].Mesh = NULL;
-  I->Array[3].NMesh = 0;
-
-  I->Array[4].area = Sphere4_area;
-  I->Array[4].dot = Sphere4_dot;
-  I->Array[4].StripLen = Sphere4_StripLen;
-  I->Array[4].Sequence = Sphere4_Sequence;
-  I->Array[4].NStrip = Sphere4_NStrip;
-  I->Array[4].NVertTot = Sphere4_NVertTot;
-  I->Array[4].nDot = Sphere4_nDot;
-  I->Array[4].Tri = Sphere4_Tri;
-  I->Array[4].NTri = Sphere4_NTri;
-  I->Array[4].Mesh = NULL;
-  I->Array[4].NMesh = 0;
-
-  I->Sphere[0] = &I->Array[0];
-  I->Sphere[1] = &I->Array[1];
-  I->Sphere[2] = &I->Array[2];
-  I->Sphere[3] = &I->Array[3];
-  I->Sphere[4] = &I->Array[4];
+  {
+    int i;
+    for (i=0; i<Sphere_NSpheres; i++){
+      I->Array[i].area = &Sphere_area[Sphere_dot_start[i]];
+      I->Array[i].dot = &Sphere_dot[Sphere_dot_start[i]];
+      I->Array[i].StripLen = &Sphere_StripLen[Sphere_StripLen_start[i]];
+      I->Array[i].Sequence = &Sphere_Sequence[Sphere_Sequence_start[i]];
+      I->Array[i].NStrip = Sphere_NStrip[i];
+      I->Array[i].NVertTot = Sphere_NVertTot[i];
+      I->Array[i].nDot = Sphere_nDot[i];
+      I->Array[i].Tri = &Sphere_Tri[Sphere_Tri_start[i]];
+      I->Array[i].NTri = Sphere_NTri[i];
+      
+      if (i){
+	I->Array[i].Mesh = NULL;
+	I->Array[i].NMesh = 0;
+      } else {
+	I->Array[i].Mesh = (int *) (void *) mesh;
+	I->Array[i].NMesh = 30;
+      }
+      I->Sphere[i] = &I->Array[i];
+    }
+  }
 #else
-  I->Sphere[0] = MakeDotSphere(G, 0);
-  I->Sphere[1] = MakeDotSphere(G, 1);
-  I->Sphere[2] = MakeDotSphere(G, 2);
-  I->Sphere[3] = MakeDotSphere(G, 3);
-  I->Sphere[4] = MakeDotSphere(G, 4);
-  /*
-     SphereDumpAll();
-   */
-
+  {
+    int i;
+    for (i=0; i<NUMBER_OF_SPHERE_LEVELS; i++){
+      I->Sphere[i] = MakeDotSphere(G, i);
+    }
+    SphereDumpAll(I);
+  }
 #endif
 
 }
@@ -305,8 +335,16 @@ void SphereFree(PyMOLGlobals * G)
 
 #ifndef FAST_SPHERE_INIT
 
-#define MAXDOT 2600
-#define MAXTRI 6200
+// MAXDOT : 12, 42, 162, 642, 2562 ... :: 12 + (30 + 120 + 480 + 1920 + ... ) :: 12 + ( 30 + (30*4) + (30*4*4) + (30*4*4*4) + ... )
+// MAXTRI : 80, 320, 1280, 5120, ... :: 20*1 + 20*4 + 20*4*4 + 20*4*4*4 + 20*4*4*4*4 :: 
+
+//For NUMBER_OF_SPHERE_LEVELS=6
+//#define MAXDOT 12900   // 12800
+//#define MAXTRI 20500   // 20480
+
+//For NUMBER_OF_SPHERE_LEVELS=5
+#define MAXDOT 2600      // 2562
+#define MAXTRI 5200      // 5120
 
 typedef int EdgeCol[MAXDOT];    /* should move these into dynamic storage to save 3MB  mem */
 typedef EdgeCol EdgeArray[MAXDOT];
@@ -385,8 +423,8 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level)
     for(b = 0; b < MAXDOT; b++)
       (*S->EdgeRef)[a][b] = -1;
 
-  if(level > 4)
-    level = 4;
+  if(level > (NUMBER_OF_SPHERE_LEVELS-1))
+    level = (NUMBER_OF_SPHERE_LEVELS-1);
 
   for(c = 0; c < level; c++) {
     /* create new vertices */
@@ -421,9 +459,9 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level)
       S->Tri[S->NTri][2] = (*S->EdgeRef)[l][h];
       S->NTri++;
     }
-    /*              printf( "MakeDotSphere: Level: %i  S->NTri: %i\n",c, S->NTri); */
+    //    printf( "MakeDotSphere: Level: %i  S->NTri: %i\n",c, S->NTri); 
   }
-  /*  printf(" MakeDotSphere: NDot %i S->NTri %i\n",NDot,S->NTri); */
+  //  printf(" MakeDotSphere: NDot %i S->NTri %i\n",S->NDot,S->NTri);
   result = Alloc(SphereRec, 1);
   ErrChkPtr(G, result);
   result->dot = Alloc(Vector3f, S->NDot);

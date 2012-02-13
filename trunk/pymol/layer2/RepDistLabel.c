@@ -123,8 +123,12 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
       if(float_text)
         glDisable(GL_DEPTH_TEST);
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       if(!info->line_lighting)
         glDisable(GL_LIGHTING);
+#endif
 
       TextSetOutlineColor(G, I->OutlineColor);
       color = SettingGet_color(G, I->ds->Setting, I->Obj->Setting, cSetting_label_color);
@@ -140,7 +144,11 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
         v += 6;
         n++;
       }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       glEnable(GL_LIGHTING);
+#endif
       if(float_text)
         glEnable(GL_DEPTH_TEST);
     }

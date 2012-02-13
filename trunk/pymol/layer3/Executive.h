@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
+#include"PyMOLGlobals.h"
 #include"PyMOLObject.h"
 #include"ObjectMolecule.h"
 #include"ObjectMap.h"
@@ -225,6 +226,8 @@ void ExecutiveDelete(PyMOLGlobals * G, char *name);
 void ExecutiveDump(PyMOLGlobals * G, char *fname, char *obj);
 void ExecutiveSetControlsOff(PyMOLGlobals * G, char *name);
 void ExecutiveSort(PyMOLGlobals * G, char *name);
+PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index, 
+				  char *s1, char *s2, int state, int quiet, int updates);
 int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
                             char *s1, char *s2, int state, int quiet, int updates);
 int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
@@ -398,8 +401,16 @@ int ExecutiveMapNew(PyMOLGlobals * G, char *name, int type, float *grid, char *s
 
 int ***ExecutiveGetBondPrint(PyMOLGlobals * G, char *name, int max_bond, int max_type,
                              int *dim);
-int ExecutiveSetCrystal(PyMOLGlobals * G, char *sele, float a, float b, float c,
+int ExecutiveGetSymmetry(PyMOLGlobals * G, char *sele, int state, float *a, float *b, float *c,
+                        float *alpha, float *beta, float *gamma, char *sgroup,
+                        int *defined);
+int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float b, float c,
                         float alpha, float beta, float gamma, char *sgroup);
+int ExecutiveSymmetryCopy(PyMOLGlobals * G,
+			  char *source_name, char *target_name,
+			  int source_mode, int target_mode,
+			  int source_state, int target_state,
+			  int target_undo, int log, int quiet);
 int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, char *names, int partial,
                         int quiet);
 int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session, int partial_restore,
@@ -433,9 +444,6 @@ PyObject *ExecutiveGetVolumeHistogram(PyMOLGlobals * G, char * objName);
 PyObject *ExecutiveSetVolumeRamp(PyMOLGlobals * G, char * objName, float *ramp_list, int list_size);
 PyObject *ExecutiveGetVolumeRamp(PyMOLGlobals * G, char * objName);
 PyObject* ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName);
-int ExecutiveGetCrystal(PyMOLGlobals * G, char *sele, float *a, float *b, float *c,
-                        float *alpha, float *beta, float *gamma, char *sgroup,
-                        int *defined);
 int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj,
                                    void **hidden);
 int ExecutiveSetObjectColor(PyMOLGlobals * G, char *name, char *color, int quiet);

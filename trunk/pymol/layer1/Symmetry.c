@@ -128,9 +128,12 @@ int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
       CrystalDump(I->Crystal);
     }
   }
+  /* TAKEN OUT BB 2/2012  SpaceGroup can be blank, 
+     sg_sym_to_mat_list has a blank entry with no operations
   if(!I->SpaceGroup[0]) {
     ErrMessage(G, "Symmetry", "Missing space group symbol");
-  } else if(P_xray) {
+    } else */
+  if(P_xray) {
     int blocked = PAutoBlock(G);
     mats = PyObject_CallMethod(P_xray, "sg_sym_to_mat_list", "s", I->SpaceGroup);
     if(mats && (mats != Py_None)) {
@@ -206,6 +209,8 @@ CSymmetry *SymmetryCopy(CSymmetry * other)
 
 void SymmetryUpdate(CSymmetry * I)
 {
+  if(I->Crystal)
+    CrystalUpdate(I->Crystal);
 }
 
 void SymmetryDump(CSymmetry * I)

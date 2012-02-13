@@ -138,6 +138,17 @@ Z* -------------------------------------------------------------------
 #define ListElemFree(Elem) { mfree(Elem); Elem = NULL; }
 
 
+#define GetListLength(VAR, List,Link,ElemType)	\
+{					  \
+  register ElemType *current = (List); \
+  int length = 0; \
+  while(current) \
+	 { \
+		current = current->Link; \
+		length++; \
+	 } \
+  VAR = length; \
+}
 
 /* -- JV
  * Doubly linked list macros

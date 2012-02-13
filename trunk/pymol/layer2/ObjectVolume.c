@@ -284,6 +284,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
     int t;
   ObjectStatePurge(&vs->State);
   if(vs->State.G->HaveGUI) {
+#ifdef _PYMOL_GL_CALLLISTS
     if(vs->displayList) {
       if(PIsGlutThread()) {
         if(vs->State.G->ValidContext) {
@@ -297,6 +298,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
         vs->displayList = 0;
       }
     }
+#endif
     for (t=0; t<2; t++) {
       if (vs->textures[t]) {
         if(PIsGlutThread()) {
@@ -583,7 +585,6 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
   ObjectVolumeState *vs;
   ObjectMapState *oms = NULL;
   ObjectMap *map = NULL;
-
   float carve_buffer;
   int avoid_flag = false;
   int flag;
@@ -623,7 +624,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
         if(vs->RefreshFlag || vs->ResurfaceFlag) {
           memcpy(vs->Corner, oms->Corner, sizeof(float) * 24);
           if(!vs->Field) {
-            vs->Crystal = *(oms->Crystal);
+            vs->Crystal = *(oms->Symmetry->Crystal);
           }
 
           if(I->Obj.RepVis[cRepCell]) {
@@ -674,7 +675,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
                 max_ext = vs->ExtentMax;
               }
 
-              IsosurfGetRange(I->Obj.G, field, oms->Crystal,
+              IsosurfGetRange(I->Obj.G, field, oms->Symmetry->Crystal,
                               min_ext, max_ext, vs->Range, true);
             }
 
@@ -882,7 +883,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   int n_points;
   float d, sliceRange, sliceDelta;
   float origin[3];
-  CShaderPrg * p;
+  CShaderPrg *shaderPrg;
   float *fog_color;
   float fog_enabled;
 
@@ -894,6 +895,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     volume_bit_depth = GL_RGBA4;
   else if (volume_bit_depth==8)
     volume_bit_depth = GL_RGBA;
+#ifndef _PYMOL_PURE_OPENGL_ES
   else if (volume_bit_depth==16)
     volume_bit_depth = GL_RGBA16F_ARB;
   else if (volume_bit_depth==32)
@@ -901,7 +903,10 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   /* default back to 16-bit for improper value */
   else
     volume_bit_depth = GL_RGBA16F_ARB;
-
+#else
+  else
+    volume_bit_depth = GL_RGBA8_OES;
+#endif
   ObjectPrepareContext(&I->Obj, ray);
 
   if(state >= 0)
@@ -945,21 +950,25 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
   !pass, vs->RefreshFlag, vs->RecolorFlag
 	ENDFB(I->Obj.G); 
 		
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
               if(!info->line_lighting)
                 glDisable(GL_LIGHTING);
-
+#endif
               SceneResetNormal(I->Obj.G, false);
               /*ObjectUseColor(&I->Obj);*/
 
               // Never use display lists for volume rendering
               use_dlst = 0; 
 
+#ifdef _PYMOL_GL_CALLLISTS
               if(use_dlst && vs->displayList && vs->displayListInvalid) {
                 glDeleteLists(vs->displayList, 1);
                 vs->displayList = 0;
                 vs->displayListInvalid = false;
               }
-
+#endif
               if (!vs->textures[0] || vs->RefreshFlag) {
 
 PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
@@ -1013,6 +1022,7 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                 glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 32, 32, 0, GL_RGB, GL_UNSIGNED_BYTE, random_data);
 */
+#ifndef _PYMOL_PURE_OPENGL_ES
                 if (vs->textures[0]) {
                   glDeleteTextures(1, (const GLuint *) &vs->textures[0]);
                   vs->textures[0] = 0;
@@ -1046,6 +1056,12 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                   glDeleteTextures(1, (const GLuint *) &vs->textures[1]);
                   vs->textures[1] = 0;
                 }
+#else
+		(void)bias;
+		(void)scale;
+		(void)max_val;
+		(void)min_val;
+#endif
               }
 
           		if (vs->RecolorFlag || 0==I->Obj.Color) {
@@ -1078,15 +1094,21 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
   "ObjectVolumeColor-Update: Using established color ramp.\n"
   ENDFB(I->Obj.G);  
             		}
-			  glGenTextures(1, (GLuint *) &vs->textures[1]);
+#ifndef _PYMOL_PURE_OPENGL_ES
+                glGenTextures(1, (GLuint *) &vs->textures[1]);
                 glBindTexture(GL_TEXTURE_1D, vs->textures[1]);
                 glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
                 glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
                 glTexImage1D(GL_TEXTURE_1D, 0, volume_bit_depth, volume_nColors, 0, GL_RGBA, GL_FLOAT, vs->colors);
+#endif
               } // recolor
 
+#ifndef _PYMOL_GL_CALLLISTS
+	      if(use_dlst){
+	      } else {
+#else
               if(use_dlst && vs->displayList) {
                 glCallList(vs->displayList);
               } else {
@@ -1098,6 +1120,7 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                     }
                   }
                 }
+#endif
                 if(n && v && I->Obj.RepVis[cRepVolume]) {
                   x_offset = 0.5 / vs->volume->dim[2];
                   y_offset = 0.5 / vs->volume->dim[1];
@@ -1128,7 +1151,7 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                   tex_corner[22] = 1.0-y_offset;
                   tex_corner[23] = 1.0-z_offset;
 
-                  p = CShaderMgr_GetShaderPrg(G->ShaderMgr, "volume");
+                  shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "volume");
 
                   corner = vs->Corner;
 
@@ -1145,9 +1168,53 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                     min_ext = vs->ExtentMin;
                     max_ext = vs->ExtentMax;
                   }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                   glDisable(GL_LIGHTING);
+#endif
 		  /* extents */
 		  if(I->Obj.RepVis[cRepExtent] && corner) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+		    {
+		      const GLfloat polyVerts[] = {
+			corner[0], corner[1], corner[2],
+			corner[3], corner[4], corner[5],
+			corner[3], corner[4], corner[5],
+			corner[9], corner[10], corner[11],
+			corner[9], corner[10], corner[11],
+			corner[6], corner[7], corner[8], 
+			corner[6], corner[7], corner[8],
+			corner[0], corner[1], corner[2], 
+			
+			corner[12], corner[13], corner[14],
+			corner[15], corner[16], corner[17],
+			corner[15], corner[16], corner[17],
+			corner[21], corner[22], corner[23],
+			corner[21], corner[22], corner[23],
+			corner[18], corner[19], corner[20],
+			corner[18], corner[19], corner[20], 
+			corner[12], corner[13], corner[14], 
+			
+			corner[0], corner[1], corner[2],
+			corner[12], corner[13], corner[14],
+			corner[3], corner[4], corner[5],
+			corner[15], corner[16], corner[17],
+			corner[9], corner[10], corner[11],
+			corner[21], corner[22], corner[23],
+			corner[6], corner[7], corner[8], 
+			corner[18], corner[19], corner[20]
+		      };
+		      glColor3f(1,1,1);
+		      glEnableClientState(GL_VERTEX_ARRAY);
+		      glVertexPointer(3, GL_FLOAT, 0, polyVerts);
+		      glDrawArrays(GL_LINES, 0, 24);
+		      glDisableClientState(GL_VERTEX_ARRAY);
+		    }
+#else
 		    glBegin(GL_LINES);
 		    glColor3f(1,1,1);
 		    glVertex3f(corner[0], corner[1], corner[2]);
@@ -1177,6 +1244,8 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 		    glVertex3f(corner[6], corner[7], corner[8]); 
 		    glVertex3f(corner[18], corner[19], corner[20]);
 		    glEnd();
+#endif
+#endif
 		  }
 
                   m = SceneGetMatrix(G);
@@ -1221,35 +1290,41 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 /* glVertex3f(origin[0]+sliceRange,origin[1]-sliceRange,origin[2]+sliceRange); */
 /* glEnd(); */
 /* // */
-
-                CShaderPrg_Enable(p);
-                CShaderPrg_Set1i(p, "volumeTex", 0);
-                CShaderPrg_Set1i(p, "colorTex", 1);
-              	CShaderPrg_Set1f(p, "nSlices", volume_layers);
+                CShaderPrg_Enable(shaderPrg);
+                CShaderPrg_Set1i(shaderPrg, "volumeTex", 0);
+                CShaderPrg_Set1i(shaderPrg, "colorTex", 1);
+              	CShaderPrg_Set1f(shaderPrg, "nSlices", volume_layers);
 
                 fog_color = SettingGetfv(G, cSetting_bg_rgb);                
                 fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
            
-                CShaderPrg_Set1f(p, "fog_r", fog_color[0]);
-                CShaderPrg_Set1f(p, "fog_g", fog_color[1]);
-                CShaderPrg_Set1f(p, "fog_b", fog_color[2]);
-                CShaderPrg_Set1f(p, "fog_enabled", fog_enabled);
+		CShaderPrg_Set3f(shaderPrg, "fog_color", fog_color[0], fog_color[1], fog_color[2]);
+                CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
 
                 glActiveTexture(GL_TEXTURE2);
                 glBindTexture(GL_TEXTURE_2D, vs->textures[2]);
+#ifndef _PYMOL_PURE_OPENGL_ES
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_1D, vs->textures[1]);
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_3D, vs->textures[0]);
-
+#endif
                 // PyMOL uses different glAlphaFunct and we need to reset it
                 // to default value (everything passes)
 
                 // Not sure if we really need to restore this
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                 glGetIntegerv(GL_ALPHA_TEST_FUNC, &alpha_func);
                 glGetFloatv(GL_ALPHA_TEST_REF, &alpha_ref);
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+                    /* TODO */
+#else
                 glAlphaFunc(GL_ALWAYS, 0.0);
+#endif
 
                 // This is setting used for PyMOL, but just to be on a safe side
                 // we set glBlendFunct explicitely here
@@ -1284,16 +1359,26 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                       &tex_corner[6], &tex_corner[18], &tex_coords[n_points], origin);
                     ObjectVolumeDrawSlice(points, tex_coords, n_points/3, zaxis);
                   }
-                  CShaderPrg_Disable(p);
+                  CShaderPrg_Disable(shaderPrg);
+
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                   glAlphaFunc(alpha_func, alpha_ref);
                   glEnable(GL_LIGHTING);
+#endif
                 }
+#ifdef _PYMOL_GL_CALLLISTS
                 if(use_dlst && vs->displayList) {
                   glEndList();
                 }
-
+#endif
               }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
               glEnable(GL_LIGHTING);
+#endif
             }
           }
         }
@@ -1310,6 +1395,9 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float *zaxis)
 {
   float center[3], v[3], w[3], q[3];
+#ifdef _PYMOL_PURE_OPENGL_ES
+  float tex_center[3];
+#endif
   float angles[12];
   float a, c, s;
   int vertices[12];
@@ -1329,6 +1417,17 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
     center[0] /= (float)n_points;
     center[1] /= (float)n_points;
     center[2] /= (float)n_points;
+   
+#ifdef _PYMOL_PURE_OPENGL_ES
+    for (i=0; i<3*n_points; i+=3) {
+        tex_center[0] += tex_coords[i];
+        tex_center[1] += tex_coords[i+1];
+        tex_center[2] += tex_coords[i+2];
+    }
+    tex_center[0] /= (float)n_points;
+    tex_center[1] /= (float)n_points;
+    tex_center[2] /= (float)n_points;
+#endif
    
     v[0] = points[0]-center[0];
     v[1] = points[1]-center[1];
@@ -1358,13 +1457,41 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
     }
 
     // Now the vertices are sorted so draw the polygon
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      int nverts = n_points, pl = 0;
+      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
+      ALLOCATE_ARRAY(GLfloat,texVals,nverts*3)
+      float *tmp_ptr;
+      for (i=0; i<n_points; i++) {
+	tmp_ptr = &tex_coords[3*vertices[(i)%n_points]];
+	texVals[pl] = tmp_ptr[0]; texVals[pl+1] = tmp_ptr[1]; texVals[pl+2] = tmp_ptr[2];	
+	tmp_ptr = &points[3*vertices[(i)%n_points]];
+	vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];	
+	pl += 3;
+      }
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+      glVertexPointer(3, GL_FLOAT, 0, vertVals);
+      glTexCoordPointer(3, GL_FLOAT, 0, texVals);
+      glDrawArrays(GL_TRIANGLE_FAN, 0, nverts);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+      DEALLOCATE_ARRAY(vertVals)
+      DEALLOCATE_ARRAY(texVals)
+    }
+#else
     glBegin(GL_POLYGON);
     for (i=0; i<n_points; i++) {
       glTexCoord3fv(&tex_coords[3*vertices[(i)%n_points]]);
       glVertex3fv(&points[3*vertices[(i)%n_points]]);
     }
     glEnd();
-   
+#endif
+#endif
 }
 
 int ObjectVolumeAddSlicePoint(float *pt0, float *pt1, float *zaxis, float d, 
@@ -1551,19 +1678,19 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
         int eff_range[6];
 
         if(IsosurfGetRange
-           (G, oms->Field, oms->Crystal, min_ext, max_ext, eff_range, false)) {
+           (G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false)) {
           int fdim[3];
           int expand_result;
           /* need to generate symmetry-expanded temporary map */
 
-          vs->Crystal = *(oms->Crystal);
+          vs->Crystal = *(oms->Symmetry->Crystal);
           fdim[0] = eff_range[3] - eff_range[0];
           fdim[1] = eff_range[4] - eff_range[1];
           fdim[2] = eff_range[5] - eff_range[2];
           vs->Field = IsosurfFieldAlloc(I->Obj.G, fdim);
 
           expand_result =
-            IsosurfExpand(oms->Field, vs->Field, oms->Crystal, sym, eff_range);
+            IsosurfExpand(oms->Field, vs->Field, oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
             ok = false;
@@ -1685,7 +1812,7 @@ ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMa
         max_ext = vs->ExtentMax;
       }
 
-      IsosurfGetRange(G, oms->Field, oms->Crystal, min_ext, max_ext, vs->Range, true);
+      IsosurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, vs->Range, true);
     }
     vs->ExtentFlag = true;
   }

@@ -369,15 +369,25 @@ KEYBOARD COMMANDS and MODIFIERS
 
     Command Entry Field in the Interal GUI (black window)
 
+    If text exists on the command line then control keys correspond to editing the command line:
+
     TAB          Complete commmand or filename (like in tcsh or bash).
     CTRL-A       Go to the beginning of the line.
     CTRL-E       Go to the end of the line.
     CTRL-K       Delete through to the end of the line.
+    CTRL-V       Paste into command line (operating system dependent.)
+
+    If no text is on the command line, then control keys correspond to molecular editing:
 
     Command Entry Field on the External GUI (gray window).
 
-    CTRL-C       These operating system-provided cut and paste functions
-    CTRL-V       will only work in the external GUI command line.
+    CTRL-A       Select all atoms into the named selection "(sele)".
+    CTRL-C       Copy current selection.
+    CTRL-I       Invert currently active selection.
+    CTRL-V       Paste copied or cut atoms into a new object.
+    CTRL-X       Cut the selected atoms.
+    CTRL-Y       Redo.
+    CTRL-Z       Udno.
 
 EDITING 
 

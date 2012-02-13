@@ -234,6 +234,7 @@ PyObject *ObjectSliceAsPyList(ObjectSlice * I)
 static void ObjectSliceStateFree(ObjectSliceState * oss)
 {
   if(oss->G->HaveGUI) {
+#ifdef _PYMOL_GL_CALLLISTS
     if(oss->displayList) {
       if(PIsGlutThread()) {
         if(oss->G->ValidContext) {
@@ -247,6 +248,7 @@ static void ObjectSliceStateFree(ObjectSliceState * oss)
         oss->displayList = 0;
       }
     }
+#endif
   }
   VLAFreeP(oss->normals);
   VLAFreeP(oss->colors);
@@ -891,6 +893,125 @@ int ObjectSliceGetOrigin(ObjectSlice * I, int state, float *origin)
   return ok;
 }
 
+#ifdef PURE_OPENGL_ES_2
+void ObjectSliceRenderStripES(int nverts, int *strip, int abegin, int aend, float *vnormal, float *color, float *point, float alpha){
+    /* TODO */
+}
+void ObjectSliceRenderStripTrianglesES(Picking **pick, Picking *p, int nverts, int *strip, int abegin, int aend, float *point, int iarg){
+}
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+void ObjectSliceRenderStripES(int nverts, int *strip, int abegin, int aend, float *vnormal, float *color, float *point, float alpha){
+  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
+  ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
+  ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
+  int pl = 0, plc = 0, a, offset;
+  float *tmp_ptr, *col;
+  for (a = abegin; a < aend; a++){
+    offset = *(strip++);
+    switch(offset){
+    case START_STRIP:
+    case STOP_STRIP:
+      break;
+    default:
+      col = color + 3 * offset;
+      if(vnormal){
+	tmp_ptr = vnormal + 3 * offset;
+	normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; 
+	normalVals[pl+2] = tmp_ptr[2]; 
+      }
+      colorVals[plc++] = col[0]; colorVals[plc++] = col[1];
+      colorVals[plc++] = col[2]; colorVals[plc++] = alpha;
+      tmp_ptr = point + 3 * offset;
+      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1];
+      vertexVals[pl++] = tmp_ptr[2];
+    }
+  }
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_COLOR_ARRAY);
+  if (vnormal){
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, 0, normalVals);
+  }
+  glVertexPointer(3, GL_FLOAT, 0, vertexVals);
+  glColorPointer(4, GL_FLOAT, 0, colorVals);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+  if (vnormal){
+    glDisableClientState(GL_NORMAL_ARRAY);
+  }
+  DEALLOCATE_ARRAY(colorVals)
+  DEALLOCATE_ARRAY(normalVals)
+  DEALLOCATE_ARRAY(vertexVals)
+}
+void ObjectSliceRenderStripTrianglesES(Picking **pick, Picking *p, int nverts, int *strip, int abegin, int aend, float *point, int iarg){
+  ALLOCATE_ARRAY(GLubyte,colorVals,nverts*3)
+  ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
+  float *tmp_ptr;
+  int pl = 0, plc = 0, a, offset, i = iarg, offset0, offset1, offset2, tri_count, j;
+  for (a = abegin; a < aend; a++){
+    offset = *(strip++);
+    switch(offset){
+    case START_STRIP:
+    case STOP_STRIP:
+      break;
+    default:
+      tri_count++;
+      offset2 = offset1;
+      offset1 = offset0;
+      offset0 = offset;
+      if (tri_count>=3){
+	i++;
+	if(!(*pick)[0].src.bond) {
+	  /* pass 1 - low order bits */
+	  colorVals[plc++] = (uchar) ((i & 0xF) << 4);
+	  colorVals[plc++] = (uchar) ((i & 0xF0) | 0x8);
+	  colorVals[plc++] = (uchar) ((i & 0xF00) >> 4);
+	  VLACheck((*pick), Picking, i);
+	  (*pick)[i] = *p; /* copy object and atom info */
+	} else {
+	  /* pass 2 - high order bits */
+	  j = i >> 12;
+	  colorVals[plc++] = (uchar) ((j & 0xF) << 4);
+	  colorVals[plc++] = (uchar) ((j & 0xF0) | 0x8);
+	  colorVals[plc++] = (uchar) ((j & 0xF00) >> 4);
+	}
+	p->src.bond = offset0 + 1;	
+	colorVals[plc] = colorVals[plc-3]; plc++; colorVals[plc] = colorVals[plc-3]; plc++;
+	colorVals[plc] = colorVals[plc-3]; plc++; colorVals[plc] = colorVals[plc-3]; plc++;
+	colorVals[plc] = colorVals[plc-3]; plc++; colorVals[plc] = colorVals[plc-3]; plc++;
+	if(tri_count & 0x1) {     /* get the handedness right ... */
+	  tmp_ptr = point + 3 * offset0;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	  tmp_ptr = point + 3 * offset1;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	  tmp_ptr = point + 3 * offset2;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	} else {
+	  tmp_ptr = point + 3 * offset1;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	  tmp_ptr = point + 3 * offset0;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	  tmp_ptr = point + 3 * offset2;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	}
+      }
+    }
+  }
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_COLOR_ARRAY);
+  glVertexPointer(3, GL_FLOAT, 0, vertexVals);
+  glColorPointer(4, GL_FLOAT, 0, colorVals);
+  glDrawArrays(GL_TRIANGLES, 0, nverts);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+  DEALLOCATE_ARRAY(colorVals)
+  DEALLOCATE_ARRAY(vertexVals)
+}
+#endif
+#endif
+
 static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 {
 
@@ -1053,7 +1174,6 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
           ray->fTransparentf(ray, 0.0);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
-
             int i = (*pick)->src.index;
             int j;
             Picking p;
@@ -1071,6 +1191,47 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
               int offset0 = 0, offset1 = 0, offset2, offset;
               int strip_active = false;
               int tri_count = 0;
+#ifdef _PYMOL_GL_DRAWARRAYS
+	      int *stripstart = strip, abegin, nverts, iinit ;
+	      {
+		(void) j;
+		for(a = 0; a < n; a++) {
+		  offset = *(strip++);
+		  switch (offset) {
+		  case START_STRIP:
+		    abegin = a;
+		    stripstart = strip;
+		    strip_active = true;
+		    iinit = i;
+		    tri_count = 0;
+		    nverts = 0;
+		    break;
+		  case STOP_STRIP:
+		    if(strip_active){
+		      ObjectSliceRenderStripTrianglesES(pick, &p, nverts, stripstart, abegin, a, point, iinit);
+		    }
+		    strip_active = false;
+		    break;
+		  default:
+		    if(strip_active) {
+		      tri_count++;
+		      offset2 = offset1;
+		      offset1 = offset0;
+		      offset0 = offset;
+		      
+		      if(tri_count >= 3) {
+			nverts += 3;
+			i++;
+		      }
+                    }
+                  }
+                  break;
+                }
+              }
+              if(strip_active) {        /* just in case */
+		ObjectSliceRenderStripTrianglesES(pick, &p, nverts, stripstart, abegin, a, point, iinit);
+              }
+#else
               for(a = 0; a < n; a++) {
                 offset = *(strip++);
                 switch (offset) {
@@ -1128,6 +1289,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
               if(strip_active) {        /* just in case */
                 glEnd();
               }
+#endif
             }
             (*pick)[0].src.index = i;   /* pass the count */
           } else {
@@ -1146,16 +1308,15 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
               ObjectUseColor(&I->Obj);
               use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
 
+#ifdef _PYMOL_GL_CALLLISTS
               if(use_dlst && oss->displayList && oss->displayListInvalid) {
                 glDeleteLists(oss->displayList, 1);
                 oss->displayList = 0;
                 oss->displayListInvalid = false;
               }
-
               if(use_dlst && oss->displayList) {
                 glCallList(oss->displayList);
               } else {
-
                 if(use_dlst) {
                   if(!oss->displayList) {
                     oss->displayList = glGenLists(1);
@@ -1164,12 +1325,11 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
                     }
                   }
                 }
-
+#endif
                 if(I->Obj.RepVis[cRepSlice]) {
                   int *strip = oss->strips;
                   float *point = oss->points;
                   float *color = oss->colors;
-                  float *col;
                   float *vnormal = oss->normals;
                   int n = oss->n_strips;
                   int a;
@@ -1181,9 +1341,42 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
                     normal[0] = oss->system[2];
                     normal[1] = oss->system[5];
                     normal[2] = oss->system[8];
-                    glNormal3fv(normal);
+
+#ifdef PURE_OPENGL_ES_2
+                    /* TODO */
+#else
+		    glNormal3fv(normal);
+#endif
                   }
 
+#ifdef _PYMOL_GL_DRAWARRAYS
+		  {
+		    int *stripstart = strip, abegin, nverts ;
+		    for(a = 0; a < n; a++) {
+		      offset = *(strip++);
+		      switch (offset) {
+		      case START_STRIP:
+			abegin = a;
+			stripstart = strip;
+			strip_active = true;
+			break;
+		      case STOP_STRIP:
+			if(strip_active){
+			  nverts = strip - stripstart;
+			  ObjectSliceRenderStripES(nverts, stripstart, abegin, a, vnormal, color, point, alpha);
+			}
+			strip_active = false;
+			break;
+		      default:
+			break;
+		      }
+		    }
+		    if(strip_active){
+		      nverts = strip - stripstart;
+		      ObjectSliceRenderStripES(nverts, stripstart, abegin, a, vnormal, color, point, alpha);
+		    }
+		  }
+#else
                   for(a = 0; a < n; a++) {
                     offset = *(strip++);
                     switch (offset) {
@@ -1199,6 +1392,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
                       break;
                     default:
                       if(strip_active) {
+			float *col;
                         col = color + 3 * offset;
                         if(vnormal)
                           glNormal3fv(vnormal + 3 * offset);
@@ -1210,14 +1404,16 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
                   }
                   if(strip_active)      /* just in case */
                     glEnd();
+#endif
                 }
-
               }
 
+#ifdef _PYMOL_GL_CALLLISTS
               if(use_dlst && oss->displayList) {
                 glEndList();
               }
             }
+#endif
           }
         }
       }

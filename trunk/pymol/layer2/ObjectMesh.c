@@ -37,6 +37,8 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"P.h"
 #include"Matrix.h"
+#include"ShaderMgr.h"
+#include"CGO.h"
 
 ObjectMesh *ObjectMeshNew(PyMOLGlobals * G);
 
@@ -262,6 +264,7 @@ static void ObjectMeshStateFree(ObjectMeshState * ms)
 {
   ObjectStatePurge(&ms->State);
   if(ms->State.G->HaveGUI) {
+#ifdef _PYMOL_GL_CALLLISTS
     if(ms->displayList) {
       if(PIsGlutThread()) {
         if(ms->State.G->ValidContext) {
@@ -275,6 +278,7 @@ static void ObjectMeshStateFree(ObjectMeshState * ms)
         ms->displayList = 0;
       }
     }
+#endif
   }
   if(ms->Field) {
     IsosurfFieldFree(ms->State.G, ms->Field);
@@ -285,6 +289,10 @@ static void ObjectMeshStateFree(ObjectMeshState * ms)
   FreeP(ms->VC);
   FreeP(ms->RC);
   VLAFreeP(ms->AtomVertex);
+  if (ms->shaderCGO){
+    CGOFree(ms->shaderCGO);
+    ms->shaderCGO = NULL;
+  }
   if(ms->UnitCellCGO) {
     CGOFree(ms->UnitCellCGO);
     ms->UnitCellCGO = NULL;
@@ -383,6 +391,21 @@ static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state)
     I->Obj.ExtentFlag = false;
   }
   if((rep == cRepMesh) || (rep == cRepAll) || (rep == cRepCell)) {
+    if (state < 0){
+      for(a = 0; a < I->NState; a++) {
+	ObjectMeshState *ms = &I->State[a];
+	if (ms && ms->shaderCGO){
+	  CGOFree(ms->shaderCGO);
+	  ms->shaderCGO = NULL;
+	}
+      }
+    } else {
+      ObjectMeshState *ms = &I->State[state];
+      if (ms && ms->shaderCGO){
+	CGOFree(ms->shaderCGO);
+	ms->shaderCGO = NULL;
+      }
+    }
     for(a = 0; a < I->NState; a++) {
       if(state < 0)
         once_flag = false;
@@ -553,7 +576,6 @@ static void ObjectMeshUpdate(ObjectMesh * I)
   int mesh_skip = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_mesh_skip);
 
   MapType *voxelmap;            /* this has nothing to do with isosurfaces... */
-
   for(a = 0; a < I->NState; a++) {
     ms = I->State + a;
     if(ms->Active) {
@@ -574,7 +596,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
       if(oms) {
         if(ms->RefreshFlag || ms->ResurfaceFlag) {
           if(!ms->Field) {
-            ms->Crystal = *(oms->Crystal);
+            ms->Crystal = *(oms->Symmetry->Crystal);
           }
 
           if(I->Obj.RepVis[cRepCell]) {
@@ -622,7 +644,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
                 max_ext = ms->ExtentMax;
               }
 
-              IsosurfGetRange(I->Obj.G, field, oms->Crystal,
+              IsosurfGetRange(I->Obj.G, field, oms->Symmetry->Crystal,
                               min_ext, max_ext, ms->Range, true);
             }
             /*                      printf("Mesh-DEBUG: %d %d %d %d %d %d\n",
@@ -780,6 +802,10 @@ static void ObjectMeshUpdate(ObjectMesh * I)
           ms->RecolorFlag = false;
         }
       }
+      if (ms->shaderCGO){
+	CGOFree(ms->shaderCGO);
+	ms->shaderCGO = NULL;
+      }
     }
     SceneInvalidate(I->Obj.G);
   }
@@ -804,10 +830,9 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
   int *n = NULL;
   int c;
   int a = 0;
-  float line_width = SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_width);
+  float line_width, mesh_width = SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_width);
   ObjectMeshState *ms = NULL;
-  line_width = SceneGetDynamicLineWidth(info, line_width);
-
+  line_width = SceneGetDynamicLineWidth(info, mesh_width);
   ObjectPrepareContext(&I->Obj, ray);
 
   if(state >= 0)
@@ -913,68 +938,300 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
           if(pick) {
           } else {
             if(!pass) {
-              int use_dlst;
-              if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell]))
-                CGORenderGL(ms->UnitCellCGO, ColorGet(I->Obj.G, I->Obj.Color),
-                            I->Obj.Setting, NULL, info);
+	      short use_shader, generate_shader_cgo = 0, use_display_lists;
+	      short mesh_as_cylinders ;
+	      use_shader = (int) SettingGet(G, cSetting_mesh_use_shader) & 
+		(int) SettingGet(G, cSetting_use_shaders);
+	      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+	      mesh_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_mesh_as_cylinders) && ms->MeshMode != 1;
 
-              if(!info->line_lighting)
-                glDisable(GL_LIGHTING);
-              SceneResetNormal(I->Obj.G, false);
-              ObjectUseColor(&I->Obj);
-              use_dlst = (int) SettingGet(I->Obj.G, cSetting_use_display_lists);
+	      if (ms->shaderCGO && !use_shader){
+		CGOFree(ms->shaderCGO);
+		ms->shaderCGO = NULL;
+	      }
+	      if (ms->shaderCGO && (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers)){
+		CGOFree(ms->shaderCGO);
+		ms->shaderCGO = NULL;
+	      }
+	      if (use_shader){
+		if (!ms->shaderCGO){
+		  ms->shaderCGO = CGONew(G);
+		  ms->shaderCGO->use_shader = true;
+		  generate_shader_cgo = 1;
+		} else {
+		  CShaderPrg *shaderPrg;
+		  if (mesh_as_cylinders){
+		    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+		    CShaderPrg_Set1f(shaderPrg, "uni_radius", SceneGetLineWidthForCylinders(G, info, mesh_width));
+		  } else {
+		    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+		    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+		  }
+		  CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
+		  
+		  CShaderPrg_Disable(shaderPrg);
+		  /* instead of returning, need to check if all states are being rendered */
+		  if(state >= 0)
+		    break;
+		  a = a + 1;
+		  if(a >= I->NState)
+		    break;
+		  continue;
+		}
+	      }
 
-              if(use_dlst && ms->displayList && ms->displayListInvalid) {
-                glDeleteLists(ms->displayList, 1);
-                ms->displayList = 0;
-                ms->displayListInvalid = false;
-              }
+	      /* TODO: UnitCellCGO */
+	      if (generate_shader_cgo){
+		CGOColorv(ms->shaderCGO, ColorGet(I->Obj.G, I->Obj.Color));
+		if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell])){
+		  CGOAppend(ms->shaderCGO, ms->UnitCellCGO);
+		}
+	      } else {
+		if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell]))
+		  CGORenderGL(ms->UnitCellCGO, ColorGet(I->Obj.G, I->Obj.Color),
+			      I->Obj.Setting, NULL, info, NULL);
+	      }
 
-              if(use_dlst && ms->displayList) {
-                glCallList(ms->displayList);
-              } else {
+#ifdef _PYMOL_GL_CALLLISTS
+	      if (ms->displayList && ms->displayListInvalid) {
+		glDeleteLists(ms->displayList, 1);
+		ms->displayList = 0;
+		ms->displayListInvalid = false;
+	      }
+	      if(use_display_lists){
+		if (ms->displayList) {
+		  glCallList(ms->displayList);
+		  /* instead of returning, need to check if all states are being rendered */
+		  if(state >= 0)
+		    break;
+		  a = a + 1;
+		  if(a >= I->NState)
+		    break;
+		  continue;
+		}
+	      }
+#endif
 
-                if(use_dlst) {
-                  if(!ms->displayList) {
-                    ms->displayList = glGenLists(1);
-                    if(ms->displayList) {
-                      glNewList(ms->displayList, GL_COMPILE_AND_EXECUTE);
-                    }
-                  }
-                }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+	      if(!info->line_lighting){
+		if (generate_shader_cgo){
+		  if (!mesh_as_cylinders){
+		    CGODisable(ms->shaderCGO, GL_LIGHTING);
+		  }
+		} else {
+		  glDisable(GL_LIGHTING);
+		}
+	      }
+#endif
+	      if (generate_shader_cgo){
+		CGOResetNormal(ms->shaderCGO, false);
+		ObjectUseColorCGO(ms->shaderCGO, &I->Obj);
+	      } else {
+		SceneResetNormal(I->Obj.G, false);
+		ObjectUseColor(&I->Obj);
+	      }
 
-                if(n && v && I->Obj.RepVis[cRepMesh]) {
-                  vc = ms->VC;
-                  if(ms->MeshMode == 1)
-                    glPointSize(SettingGet_f
-                                (I->Obj.G, I->Obj.Setting, NULL, cSetting_dot_width));
-                  else
-                    glLineWidth(line_width);
-                  while(*n) {
-                    c = *(n++);
-                    if(ms->MeshMode == 1)
-                      glBegin(GL_POINTS);
-                    else
-                      glBegin(GL_LINE_STRIP);
-                    while(c--) {
-                      if(vc) {
-                        glColor3fv(vc);
-                        vc += 3;
-                      }
-                      glVertex3fv(v);
-                      v += 3;
-                    }
-                    glEnd();
-                  }
-                }
-                if(use_dlst && ms->displayList) {
-                  glEndList();
-                }
-              }
-              glEnable(GL_LIGHTING);
-            }
-          }
-        }
+	      if (generate_shader_cgo){
+		if(n && v && I->Obj.RepVis[cRepMesh]) {
+		  vc = ms->VC;
+		  if(ms->MeshMode == 1){
+		    CGODotwidth(ms->shaderCGO, SettingGet_f
+				(I->Obj.G, I->Obj.Setting, NULL, cSetting_dot_width));
+		  } else {
+		    CGOLinewidthSpecial(ms->shaderCGO, LINEWIDTH_DYNAMIC_MESH); 
+		  }
+		  if (mesh_as_cylinders){
+		    while(*n) {
+		      float *origin = NULL, *vertex = NULL, *color = NULL, *color2 = NULL, axis[3];
+		      c = *(n++);
+		      while(c--) {
+			origin = vertex;
+			color = color2;
+			if(vc) {
+			  color2 = vc;
+			  vc += 3;
+			}
+			vertex = v;
+			v += 3;
+			if (origin && vertex){
+			  axis[0] = vertex[0] - origin[0];
+			  axis[1] = vertex[1] - origin[1];
+			  axis[2] = vertex[2] - origin[2];
+			  if (vc){
+			    CGOColorv(ms->shaderCGO, color);
+			    if ((*(color) != *(color2) || 
+				     *(color+1) != *(color2+1) || 
+				     *(color+2) != *(color2+2))){
+			      CGOShaderCylinder2ndColor(ms->shaderCGO, origin, axis, 1.f, 15, color2);
+			    } else {
+			      CGOShaderCylinder(ms->shaderCGO, origin, axis, 1.f, 15);
+			    }
+			  } else {
+			    CGOShaderCylinder(ms->shaderCGO, origin, axis, 1.f, 15);
+			  }
+			}
+		      }
+		    }
+		  } else {
+		    while(*n) {
+		      c = *(n++);
+		      if(ms->MeshMode == 1)
+			CGOBegin(ms->shaderCGO, GL_POINTS);
+		      else
+			CGOBegin(ms->shaderCGO, GL_LINE_STRIP);
+		      while(c--) {
+			if(vc) {
+			  CGOColorv(ms->shaderCGO, vc);
+			  vc += 3;
+			}
+			CGOVertexv(ms->shaderCGO, v);
+			v += 3;
+		      }
+		      CGOEnd(ms->shaderCGO);
+		    }
+		  }
+		}
+	      } else {
+		if(n && v && I->Obj.RepVis[cRepMesh]) {
+		  vc = ms->VC;
+		  if(ms->MeshMode == 1){
+#ifdef PURE_OPENGL_ES_2
+#else
+		    glPointSize(SettingGet_f
+				(I->Obj.G, I->Obj.Setting, NULL, cSetting_dot_width));
+#endif
+		  } else {
+		    glLineWidth(line_width);
+		  }
+		  while(*n) {
+		    c = *(n++);
+#ifdef PURE_OPENGL_ES_2
+		    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+		    {
+		      int nverts = c;
+		      ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
+		      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
+		      int pl = 0, plc = 0;
+		      GLenum mode = GL_LINE_STRIP;
+		      if(ms->MeshMode == 1){
+			mode = GL_POINTS;
+		      }
+		      while(c--) {
+			if(vc) {
+			  colorVals[plc] = vc[0]; colorVals[plc+1] = vc[1]; colorVals[plc+2] = vc[2]; colorVals[plc+3] = 1.f;
+			  vc += 3;
+			}
+			ptsVals[pl] = v[0]; ptsVals[pl+1] = v[1]; ptsVals[pl+2] = v[2];
+			v += 3;
+			pl += 3;
+			plc += 4;
+		      }
+		      glEnableClientState(GL_VERTEX_ARRAY);
+		      if (vc){
+			glEnableClientState(GL_COLOR_ARRAY);
+			glColorPointer(4, GL_FLOAT, 0, colorVals);
+		      }
+		      glVertexPointer(3, GL_FLOAT, 0, ptsVals);
+		      glDrawArrays(mode, 0, nverts);
+		      glDisableClientState(GL_VERTEX_ARRAY);
+		      if (vc){
+			glDisableClientState(GL_COLOR_ARRAY);
+		      }
+		      DEALLOCATE_ARRAY(ptsVals)
+		      DEALLOCATE_ARRAY(colorVals)
+		    }
+#else
+		    if(ms->MeshMode == 1)
+		      glBegin(GL_POINTS);
+		    else
+		      glBegin(GL_LINE_STRIP);
+		    while(c--) {
+		      if(vc) {
+			glColor3fv(vc);
+			vc += 3;
+		      }
+		      glVertex3fv(v);
+		      v += 3;
+		    }
+		    glEnd();
+#endif
+#endif
+		  }
+		}
+	      }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+	      if(!info->line_lighting){
+		if (generate_shader_cgo){
+		  if (!mesh_as_cylinders){
+		    CGOEnable(ms->shaderCGO, GL_LIGHTING);
+		  }
+		} else {
+		  glEnable(GL_LIGHTING);
+		}
+	      }
+#endif
+
+	      if (use_shader) {
+		if (generate_shader_cgo){
+		  CGO *convertcgo = NULL;
+		  CGOStop(ms->shaderCGO);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+		  convertcgo = CGOCombineBeginEnd(ms->shaderCGO, 0);    
+		  CGOFree(ms->shaderCGO);    
+		  ms->shaderCGO = convertcgo;
+#else
+		  (void)convertcgo;
+#endif
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+		  if (mesh_as_cylinders){
+		    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(ms->shaderCGO, 0);
+		  } else {
+		    convertcgo = CGOOptimizeToVBOIndexed(ms->shaderCGO, 0);
+		  }
+		  if (convertcgo){
+		    CGOFree(ms->shaderCGO);
+		    ms->shaderCGO = convertcgo;
+		  }
+#else
+		  (void)convertcgo;
+#endif
+		}
+		
+		{
+		  CShaderPrg *shaderPrg;
+		  if (mesh_as_cylinders){
+		    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+		    CShaderPrg_Set1f(shaderPrg, "uni_radius", SceneGetLineWidthForCylinders(G, info, mesh_width));
+		  } else {
+		    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+		    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1);
+		    CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
+		  }
+		  {
+		    float *color;
+		    color = ColorGet(G, I->Obj.Color);
+		    CGORenderGL(ms->shaderCGO, color, NULL, NULL, info, NULL);
+		  }
+		  CShaderPrg_Disable(shaderPrg);
+		}
+	      }
+	      
+#ifdef _PYMOL_GL_CALLLISTS
+	      if (use_display_lists && ms->displayList){
+		glEndList();
+		glCallList(ms->displayList);      
+	      }
+#endif
+      
+	    }
+	  }
+	}
       }
     }
     if(state >= 0)
@@ -1049,6 +1306,7 @@ void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms)
   ms->displayListInvalid = true;
   ms->caption[0] = 0;
   ms->Field = NULL;
+  ms->shaderCGO = NULL;
 }
 
 
@@ -1126,19 +1384,19 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
         int eff_range[6];
 
         if(IsosurfGetRange
-           (G, oms->Field, oms->Crystal, min_ext, max_ext, eff_range, false)) {
+           (G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false)) {
           int fdim[3];
           int expand_result;
           /* need to generate symmetry-expanded temporary map */
 
-          ms->Crystal = *(oms->Crystal);
+          ms->Crystal = *(oms->Symmetry->Crystal);
           fdim[0] = eff_range[3] - eff_range[0];
           fdim[1] = eff_range[4] - eff_range[1];
           fdim[2] = eff_range[5] - eff_range[2];
           ms->Field = IsosurfFieldAlloc(I->Obj.G, fdim);
 
           expand_result =
-            IsosurfExpand(oms->Field, ms->Field, oms->Crystal, sym, eff_range);
+            IsosurfExpand(oms->Field, ms->Field, oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
             ok = false;
@@ -1261,7 +1519,7 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * ma
         max_ext = ms->ExtentMax;
       }
 
-      IsosurfGetRange(G, oms->Field, oms->Crystal, min_ext, max_ext, ms->Range, true);
+      IsosurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, ms->Range, true);
     }
     ms->ExtentFlag = true;
   }

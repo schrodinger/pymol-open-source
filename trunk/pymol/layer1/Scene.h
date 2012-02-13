@@ -46,7 +46,6 @@ typedef struct {
 
 typedef float SceneViewType[cSceneViewSize];
 
-
 /* all information required to define the geometry of a particular view,
    for shipping to and from python as a list of floats
    0-15 = 4x4 rotation matrix 
@@ -125,7 +124,13 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, char *sele, int stat
 void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height);
 
 void SceneScale(PyMOLGlobals * G, float scale);
+void SceneResetNormalCGO(PyMOLGlobals * G, CGO *cgo, int lines);
 void SceneResetNormal(PyMOLGlobals * G, int lines);
+void SceneResetNormalUseShader(PyMOLGlobals * G, int lines, short use_shader);
+void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_shader, int attr);
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+void SceneGetResetNormal(PyMOLGlobals * G, float *normal, int lines);
+#endif
 
 int SceneObjectAdd(PyMOLGlobals * G, CObject * obj);
 int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge);
@@ -154,6 +159,7 @@ void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height);
 int SceneMultipick(PyMOLGlobals * G, Multipick * smp);
 void SceneInvalidateCopy(PyMOLGlobals * G, int free_buffer);
 
+void SceneGetViewPortWidthHeight(PyMOLGlobals * G, int *width, int *height);
 void SceneSetCardInfo(PyMOLGlobals * G, char *vendor, char *renderer, char *version);
 void SceneGetCardInfo(PyMOLGlobals * G, char **vendor, char **renderer, char **version);
 int SceneLoadPNG(PyMOLGlobals * G, char *fname, int movie_flag, int stereo, int quiet);
@@ -186,5 +192,13 @@ float SceneGetSpecularValue(PyMOLGlobals * G, float spec, int limit);
 void SceneAbortAnimation(PyMOLGlobals * G);
 void SceneObjectUpdateThread(CObjectUpdateThreadInfo * T);
 int SceneCaptureWindow(PyMOLGlobals * G);
+
+void SceneZoom(PyMOLGlobals * G, float scale);
+
+void SceneUpdateObjectMoleculesSingleThread(PyMOLGlobals * G);
+
+int SceneGetTwoSidedLighting(PyMOLGlobals * G);
+
+float SceneGetLineWidthForCylinders(PyMOLGlobals * G, RenderInfo * info, float line_width);
 
 #endif

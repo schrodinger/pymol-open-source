@@ -431,7 +431,7 @@ static void GadgetSetRender(GadgetSet * I, RenderInfo * info)
       } else {
         if(I->StdCGO) {
           /*CGORenderGL(I->PickCGO,color,I->Obj->Obj.Setting,NULL); */
-          CGORenderGL(I->StdCGO, color, I->Obj->Obj.Setting, NULL, info);
+          CGORenderGL(I->StdCGO, color, I->Obj->Obj.Setting, NULL, info, NULL);
         }
       }
     }

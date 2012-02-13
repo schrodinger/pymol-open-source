@@ -47,12 +47,38 @@ void BlockFill(Block * I)
 {
   register PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
+#if defined(PURE_OPENGL_ES_2)
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	I->rect.right, I->rect.top,
+	I->rect.right, I->rect.bottom,
+	I->rect.left, I->rect.top,
+	I->rect.left, I->rect.bottom
+      };
+#if defined(OPENGL_ES_1)      
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+#elif defined(OPENGL_ES_2)
+      glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, polyVerts);
+      glEnableVertexAttribArray(0);
+      glDrawArrays(GL_TRIANGLES, 0, 4);
+      glDisableVertexAttribArray(0);
+#endif
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(I->rect.right, I->rect.top);
     glVertex2i(I->rect.right, I->rect.bottom);
     glVertex2i(I->rect.left, I->rect.bottom);
     glVertex2i(I->rect.left, I->rect.top);
     glEnd();
+#endif
+#endif
   }
 }
 
@@ -61,12 +87,37 @@ void BlockFill(Block * I)
 void BlockDrawLeftEdge(Block * I)
 {
   register PyMOLGlobals *G = I->G;
+#if defined(PURE_OPENGL_ES_2)
+    /* TODO */
+  {
+#else
   if(G->HaveGUI && G->ValidContext) {
     glColor3f(0.3, 0.3, 0.3);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint lineVerts[] = {
+	I->rect.left, I->rect.bottom,
+	I->rect.left, I->rect.top
+      };
+#if defined(OPENGL_ES_1)
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, lineVerts);
+      glDrawArrays(GL_LINES, 0, 2);
+      glDisableClientState(GL_VERTEX_ARRAY);
+#elif defined(OPENGL_ES_2)
+      glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, lineVerts);
+      glEnableVertexAttribArray(0);
+      glDrawArrays(GL_LINES, 0, 2);      
+      glDisableVertexAttribArray(0);
+#endif
+    }
+#else
     glBegin(GL_LINES);
     glVertex2i(I->rect.left, I->rect.bottom);
     glVertex2i(I->rect.left, I->rect.top);
     glEnd();
+#endif
+#endif
   }
 }
 
@@ -76,12 +127,37 @@ void BlockOutline(Block * I)
 {
   register PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
+#if defined(PURE_OPENGL_ES_2)
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    const GLint lineVerts[] = {
+      I->rect.right, I->rect.top,
+      I->rect.right, I->rect.bottom,
+      I->rect.left, I->rect.bottom,
+      I->rect.left, I->rect.top
+    };
+#if defined(OPENGL_ES_1)
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_INT, 0, lineVerts);
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+#elif defined(OPENGL_ES_2)
+    glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, lineVerts);
+    glEnableVertexAttribArray(0);
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
+    glDisableVertexAttribArray(0);
+#endif
+
+#else
     glBegin(GL_LINE_LOOP);
     glVertex2i(I->rect.right, I->rect.top);
     glVertex2i(I->rect.right, I->rect.bottom);
     glVertex2i(I->rect.left, I->rect.bottom);
     glVertex2i(I->rect.left, I->rect.top);
     glEnd();
+#endif
+#endif
   }
 }
 
@@ -90,12 +166,37 @@ void BlockOutline(Block * I)
 void BlockDrawTopEdge(Block * I)
 {
   register PyMOLGlobals *G = I->G;
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+  {
+#else
   if(G->HaveGUI && G->ValidContext) {
     glColor3f(0.3, 0.3, 0.3);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint lineVerts[] = {
+	I->rect.right, I->rect.top,
+	I->rect.left, I->rect.top
+      };
+#if defined(OPENGL_ES_1)
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, lineVerts);
+      glDrawArrays(GL_LINES, 0, 2);
+      glDisableClientState(GL_VERTEX_ARRAY);
+#elif defined(OPENGL_ES_2)
+      glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, lineVerts);
+      glEnableVertexAttribArray(0);
+      glDrawArrays(GL_LINES, 0, 2);
+      glDisableVertexAttribArray(0);
+#endif
+    }
+#else
     glBegin(GL_LINES);
     glVertex2i(I->rect.right, I->rect.top);
     glVertex2i(I->rect.left, I->rect.top);
     glEnd();
+#endif
+#endif
   }
 }
 

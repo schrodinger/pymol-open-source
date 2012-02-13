@@ -213,7 +213,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def set_symmetry(selection, a, b, c, alpha, beta, gamma, spacegroup="P1", _self=cmd):
+    def set_symmetry(selection, a, b, c, alpha, beta, gamma, spacegroup="P1", state=-1, _self=cmd):
 
         '''
 DESCRIPTION
@@ -240,7 +240,7 @@ PYMOL API
         selection = selector.process(selection)
         try:
             _self.lock(_self)
-            r = _cmd.set_symmetry(_self._COb,str(selection),
+            r = _cmd.set_symmetry(_self._COb,str(selection), int(state),
                                          float(a),float(b),float(c),
                                          float(alpha),float(beta),float(gamma),
                                          str(spacegroup))
@@ -248,6 +248,73 @@ PYMOL API
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
+
+    def symmetry_copy(source_name='', target_name='', source_state=1, target_state=1, target_undo=1, log=0, quiet=1, _self=cmd):
+        """
+DESCRIPTION
+
+    "symmetry_copy" copies symmetry information from one object to another.
+
+USAGE
+
+    symmetry_copy source_name, target_name, source_state, target_state
+
+NOTES
+
+    Maps support accessing and setting states other than the first,
+    but molecular objects do not.
+
+    New in PyMOL v1.5.
+
+PYMOL API
+
+    cmd.symmetry_copy(source_name, target_name, source_state, target_state,
+        target_undo, log, quiet)
+
+        """
+
+        r = DEFAULT_ERROR
+
+        suspend_undo = _self.get("suspend_undo")
+        fin = 1
+        push_undo(target_name, just_coordinates=0, finish_undo=0, _self=_self)
+        _self.set("suspend_undo", 1, updates=0)
+
+        if source_name == None:
+            source_name = ''
+
+        target_name = str(target_name).strip()
+        source_name = str(source_name).strip()
+
+        # ignored for now
+        source_mode = 1
+        target_mode = 1
+        
+        try:
+            _self.lock(_self)
+            
+            r = _cmd.symmetry_copy(_self._COb,str(source_name),
+                                   str(target_name),
+                                   int(source_mode),
+                                   int(target_mode),
+                                   int(source_state)-1,
+                                   int(target_state)-1,
+                                   int(target_undo),
+                                   int(log),
+                                   int(quiet))
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self):
+            _self.set("suspend_undo", suspend_undo, updates=0)
+            fin = -1
+            push_undo("", just_coordinates=0, finish_undo=fin, _self=_self)
+            raise pymol.CmdException            
+
+            _self.set("suspend_undo", suspend_undo, updates=0)
+            push_undo("", just_coordinates=0, finish_undo=fin, _self=_self)
+
+        return r
+
 
     def set_name(old_name, new_name,_self=cmd):
         '''
@@ -1752,7 +1819,7 @@ NOTES
 
         '''
         r = DEFAULT_ERROR
-        selection = selector.process(selection)                
+        selection = selector.process(selection)
         if int(transpose):
             matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
                        matrix[1], matrix[5], matrix[9 ], matrix[13],

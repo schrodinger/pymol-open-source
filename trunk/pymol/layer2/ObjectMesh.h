@@ -49,6 +49,7 @@ typedef struct {
   float AltLevel;
   /* not stored */
   Isofield *Field;
+  CGO *shaderCGO;
 } ObjectMeshState;
 
 typedef struct ObjectMesh {

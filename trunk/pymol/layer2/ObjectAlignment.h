@@ -33,6 +33,7 @@ typedef struct ObjectAlignmentState {
   OVOneToAny *id2tag;
   CGO *std;
   CGO *ray;
+  CGO *shaderCGO;
 } ObjectAlignmentState;
 
 typedef struct ObjectAlignment {

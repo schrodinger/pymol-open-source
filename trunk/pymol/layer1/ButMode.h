@@ -92,7 +92,13 @@ Z* -------------------------------------------------------------------
 
 #define cButModeInvRotZ  53
 
-#define cButModeCount       54
+/* light editing */
+
+#define cButModeRotL 54
+#define cButModeMovL 55
+#define cButModeMvzL 56
+
+#define cButModeCount       57
 
 
 /* remainder only used in scene... */

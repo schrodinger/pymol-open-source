@@ -71,6 +71,7 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
     } else {
       int use_dlst;
       use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
+#ifdef _PYMOL_GL_CALLLISTS
       if(use_dlst && I->R.displayList) {
         glCallList(I->R.displayList);
       } else {
@@ -83,16 +84,18 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
             }
           }
         }
-
+#endif
         PRINTFD(G, FB_RepEllipsoid)
           " RepEllipsoidRender: rendering GL...\n" ENDFD;
-        if(I->std)
-          CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info);
-
+        if(I->std){
+          CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+	}
+#ifdef _PYMOL_GL_CALLLISTS
         if(use_dlst && I->R.displayList) {
           glEndList();
         }
       }
+#endif
     }
   }
 }

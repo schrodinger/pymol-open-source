@@ -525,6 +525,12 @@ PyMOLreturn_int_array PyMOL_GetRepsInSceneForObject(CPyMOL * I, const char *name
 PyMOLreturn_int_array PyMOL_GetRepsForObject(CPyMOL * I, const char *name);
 PyMOLreturn_status PyMOL_SetButton(CPyMOL * I, char *button, char *modifier, char *action);
 PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, char *modename);
+PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *palette, char *selection, float minimum, float maximum, int byres, int quiet);
 #endif
+
+PyMOLreturn_status PyMOL_ZoomScene(CPyMOL * I, float scale);
+PyMOLreturn_status PyMOL_TranslateScene(CPyMOL * I, float x, float y, float z);
+
+PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I);
 
 #endif

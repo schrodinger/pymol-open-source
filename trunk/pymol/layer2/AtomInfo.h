@@ -186,7 +186,7 @@ typedef char LabelType[cLabelTypeLen + 1];
 
 #define cAtomInfoNoType -9999
 
-typedef struct {
+typedef struct BondType {
   int index[2];
   int order;
   int id;
@@ -194,6 +194,7 @@ typedef struct {
   int temp1;
   short int stereo;             /* to preserve 2D rep */
   short int has_setting;        /* setting based on unique_id */
+  int oldid;
 } BondType;
 
 typedef struct AtomInfoType {
@@ -214,6 +215,7 @@ typedef struct AtomInfoType {
   int rank;
   int atomic_color;             /* what color was this atom originally assigned? */
   int textType;
+  int custom;
   int label;
 
   /* be careful not to write at these as (int*) */
@@ -231,6 +233,7 @@ typedef struct AtomInfoType {
 
   signed char valence;
   signed char deleteFlag;
+  signed char updateFlag;
   signed char masked;
   signed char protekted;
 
@@ -247,10 +250,12 @@ typedef struct AtomInfoType {
   ElemName elem;
   SSType ssType;                /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
   float U11, U22, U33, U12, U13, U23;
+  int oldid;
 } AtomInfoType;
 
 void AtomInfoFree(PyMOLGlobals * G);
 int AtomInfoInit(PyMOLGlobals * G);
+void BondTypeInit(BondType *bt);
 void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai);
 void AtomInfoCopy(PyMOLGlobals * G, AtomInfoType * src, AtomInfoType * dst);
 int AtomInfoReserveUniqueID(PyMOLGlobals * G, int unique_id);
@@ -284,15 +289,17 @@ int AtomInfoCheckUniqueID(PyMOLGlobals * G, AtomInfoType * ai);
 int *AtomInfoGetSortedIndex(PyMOLGlobals * G, CObject * obj, AtomInfoType * rec, int n,
                             int **outdex);
 void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I);
-void AtomInfoFreeSortedIndexes(PyMOLGlobals * G, int *index, int *outdex);
+void AtomInfoFreeSortedIndexes(PyMOLGlobals * G, int **index, int **outdex);
 void AtomInfoPrimeColors(PyMOLGlobals * G);
 void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1);
+int AtomInfoGetColorWithElement(PyMOLGlobals * G, AtomInfoType * at1, char *n);
 int AtomInfoGetColor(PyMOLGlobals * G, AtomInfoType * at1);
 int AtomInfoGetExpectedValence(PyMOLGlobals * G, AtomInfoType * I);
 int AtomInfoIsFreeCation(PyMOLGlobals * G, AtomInfoType * I);
 PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * at);
 int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * at, PyObject * list);
 int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
 int AtomInfoCompare(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
 int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
 int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
@@ -333,6 +340,7 @@ void AtomInfoGetPDB3LetHydroName(PyMOLGlobals * G, char *resn, char *iname, char
 #define cAIC_tt        0x0100
 #define cAIC_state     0x0200
 #define cAIC_rank      0x0400
+#define cAIC_custom    0x0800
 
 #define cAIC_IDMask (cAIC_id|cAIC_rank)
 #define cAIC_PDBMask (cAIC_b|cAIC_q|cAIC_id|cAIC_rank)
@@ -351,5 +359,7 @@ typedef struct {
   unsigned char type;
   int next;
 } SSEntry;
+
+int BondTypeCompare(PyMOLGlobals * G, BondType * bt1, BondType * bt2);
 
 #endif

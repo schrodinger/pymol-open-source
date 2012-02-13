@@ -572,7 +572,7 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
     // Now calculate the RMSD	
     //	
     double sig = 0.0;
-    for ( int i = 0; i < n; i++ )
+    for ( int i = 0; i < (int) n; i++ )
       sig += sigmas[i];
 		
     double curRMSD = sqrt(fabs((E0 - 2*sig) / (double) m ));
@@ -619,13 +619,13 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
 
 TA2<double> transpose(const TA2<double>& v)
 {
-  unsigned int m = v.dim1();
-  unsigned int n = v.dim2();
+  int m = (int) v.dim1();
+  int n = (int) v.dim2();
 	
   TA2<double> rVal(n,m);
 	
-  for ( unsigned int i = 0; i < m; i++ )
-    for ( unsigned int j = 0; j < n; j++ )
+  for ( int i = 0; i < m; i++ )
+    for ( int j = 0; j < n; j++ )
       rVal[j][i] = v[i][j];
 		
   return rVal;

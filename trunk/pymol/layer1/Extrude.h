@@ -65,7 +65,9 @@ void ExtrudeComputePuttyScaleFactors(CExtrude * I, ObjectMolecule * obj,
 void ExtrudeBuildNormals1f(CExtrude * I);
 void ExtrudeBuildNormals2f(CExtrude * I);
 void ExtrudeComputeTangents(CExtrude * I);
-void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override);
+void ExtrudeCylindersToCGO(CExtrude * I, CGO *cgo, float tube_radius, short is_picking);
+void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, short use_spheres);
+void ExtrudeCGOSurfaceTubeToCylinders(CExtrude * I, CGO * cgo, int cap, float *color_override);
 void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap);
 
 void ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_override);

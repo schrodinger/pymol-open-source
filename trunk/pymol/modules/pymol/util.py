@@ -71,12 +71,52 @@ _color_cycle = [
 
 _color_cycle_len = len(_color_cycle)
 
+def color_by_area(sele,mode="molecular",state=0,_self=cmd):
+    """
+    Colors molecule by surface area
+    
+    mode => 0 = molecular (default)
+    => 1 = solvent accessible
+    """
+    z = _self.get("auto_zoom")
+    d = _self.get("dot_solvent")
+    dd = _self.get("dot_density")
 
-def find_surface_residues(sele, _self=cmd):
+    asa = 0
+    try:
+        asa = 1 if mode=="solvent" else 0
+    except ValueError:
+	# default to molecular
+	asa = 0
+	
+    _self.set("auto_zoom", 0)
+    _self.set("dot_solvent", asa)
+    _self.set("dot_density", 3)
+	
+    tmpName = "tmp"
+    _self.create(tmpName, sele)
+	
+    l = []
+    _self.cmd.get_area(tmpName, load_b=1)
+    _self.cmd.iterate(tmpName, "l.append(b)", space={'l':l})
+    m,M = min(l), max(l)
+    l = []
+    _self.cmd.spectrum("b","rainbow",tmpName, minimum=m, maximum=M)
+    _self.cmd.iterate(tmpName, "l.append(color)", space={'l':l})
+    _self.cmd.alter(sele,"color=l.pop(0)", space={'l':l})
+
+    _self.cmd.recolor(sele)
+    
+    _self.cmd.delete(tmpName)
+	
+    _self.cmd.set("auto_zoom",z)
+    _self.cmd.set("dot_solvent",d)
+    _self.cmd.set("dot_density", dd)
+
+def find_surface_atoms(sele, _self=cmd):
 	"""
-	findSurfaceResidues
-		finds those residues on the surface of a protein
-		that have at least 'cutoff' exposed A**2 surface area.
+	finds those residues on the surface of a protein
+	that have at least 'cutoff' exposed A**2 surface area.
 
 	PARAMS
 		objSel (string)
@@ -92,15 +132,19 @@ def find_surface_residues(sele, _self=cmd):
 
         z = _self.get("auto_zoom")
         d = _self.get("dot_solvent")
+
 	tmpObj=_self.get_unused_name("__tmp")
-	_self.create( tmpObj, sele + " and polymer");
+
+	_self.create(tmpObj, sele + " and polymer");
+
 	_self.set("dot_solvent");
         _self.set("auto_zoom", 0)
+
 	_self.get_area(selection=tmpObj, load_b=1)
 
 	# threshold on what one considers an "exposed" atom (in A**2):
-        surface_residue_cutoff = _self.get("surface_residue_cutoff")
-	_self.remove( tmpObj + " and b < " + str(surface_residue_cutoff) )
+        surface_residue_cutoff = str(_self.get("surface_residue_cutoff"))
+	_self.remove(tmpObj + " and b < %s" % surface_residue_cutoff)
 
 	stored.tmp_dict = {}
 	_self.iterate(tmpObj, "stored.tmp_dict[(chain,resv)]=1")
@@ -175,14 +219,54 @@ def sum_partial_charges(selection="(all)",quiet=1,_self=cmd):
         print " util.sum_partial_charges: sum = %0.4f"%result
     return result
 
-def compute_mass(selection="(all)",implicit=False,quiet=1,_self=cmd):
-    result = None
-    if implicit:
-        result = _self.get_model(selection).get_implicit_mass()
-    else:
-        result = _self.get_model(selection).get_mass()
+def compute_mass(selection="(all)",state=-1,implicit=False,quiet=1,_self=cmd):
+    """
+DESCRIPTION
+
+    "compute_mass" calculates the atomic mass of a selection
+    (in atomic mass units).
+	
+USAGE
+
+    compute_mass [ selection [, state [, implicit [, quiet ]]]]
+
+ARGUMENTS
+
+   selection = selection, defaults to '(all)'
+
+   state = object state, defaults to current state for each given 
+           object. See notes.
+
+   implicit = if false then only calculate masses exactly as
+              in the objects; if true, then add hydrogens were
+	      possible before calculating mass
+
+EXAMPLES
+
+  print util.compute_mass("all")
+
+  m = util.compute_mass("organic",state=4,implicit=True)
+
+NOTES
+
+  If the state argument is specified and an object does not exist
+  in that state, the 0 atoms will be counted for that object,
+  thus resulting in a zero mass for that object.
+
+  """
+    result = 0.0
+    for obj in _self.get_object_list(selection):
+        if state==-1:
+            state = _self.get("state",obj)
+	m = _self.get_model(selection + " and " + obj,state)
+	if len(m.atom)==0:
+            print " Warning: No atoms in state %d for object %s" % (state,obj)
+	if implicit!=False:
+	    result += m.get_implicit_mass()
+	else:
+	    result += m.get_mass()
     if not quiet:
-	    print " util.compute_mass: mass = %0.4f u"%result
+        print " util.compute_mass: mass = %0.4f u"%result
     return result
     
 def protein_assign_charges_and_radii(obj_name,_self=cmd):
@@ -388,8 +472,46 @@ def cbh(color,selection="(all)",quiet=1,_self=cmd):
     cmd.color(color,"(elem H and ("+s+"))",quiet=quiet)
     cmd.color(color,s,flags=1,quiet=quiet)
 
+def enable_all_shaders(_self=cmd):
+    """
+    Turns on shaders for all representations
+    """
+    cmd=_self
+    cmd.set("use_shaders",1)
+    cmd.set("cartoon_use_shader",1)
+    cmd.set("cgo_use_shader",1)
+    cmd.set("dash_use_shader",1)
+    cmd.set("dot_use_shader",1)
+    cmd.set("line_use_shader",1)
+    cmd.set("mesh_use_shader",1)
+    cmd.set("nb_spheres_use_shader", 1)
+    cmd.set("nonbonded_use_shader",1)
+    cmd.set("ribbon_use_shader", 1)
+    cmd.set("sphere_use_shader", 1)
+    cmd.set("stick_use_shader",1)
+    cmd.set("surface_use_shader",1)
+
+def modernize_rendering(mode,_self=cmd):
+    """
+    Turns on shaders for all representations and
+    updates settings to improve rendering speed
+    and quality.
+    """
+    cmd=_self
+    
+    cmd.set("use_display_lists",0)
+    cmd.set("texture_fonts",1)
+    cmd.set("max_ups",0)
+
+    enable_all_shaders(cmd)
+
+    cmd.set("stick_ball", 0)
+    cmd.set("stick_as_cylinders", 1)
+    cmd.set("sphere_mode", 9)
+
+    cmd.do("_ rebuild")
+
 def performance(mode,_self=cmd):
-    pymol=_self._pymol
     cmd=_self
     mode = int(mode)
     if mode==0: # maximum quality
@@ -397,37 +519,113 @@ def performance(mode,_self=cmd):
         cmd.set('depth_cue',1)         
         cmd.set('specular',1)
         cmd.set('surface_quality',1)
-        cmd.set('stick_quality',15)
-        cmd.set('sphere_quality',2)
         cmd.set('cartoon_sampling',14)
         cmd.set('ribbon_sampling',10)
         cmd.set('transparency_mode',2)
-        cmd.set('stick_ball',1)
-        cmd.do("rebuild")
+        # new rendering
+        if cmd.get_setting_int("use_shaders")==1:
+            enable_all_shaders(cmd)
+            # as cylinderss
+            cmd.set("render_as_cylinders", 1)
+            cmd.set("alignment_as_cylinders", 1)
+            cmd.set("cartoon_nucleic_acid_as_cylinders", 1)
+            cmd.set("dash_as_cylinders", 1)
+            cmd.set("line_as_cylinders", 1)
+            cmd.set("mesh_as_cylinders", 1)
+            cmd.set("nonbonded_as_cylinders", 1)
+            cmd.set("ribbon_as_cylinders", 1)
+            cmd.set("stick_as_cylinders", 1)
+            # as spheres
+            cmd.set("dot_as_spheres", 1)
+
+            # special settings
+            # sticks
+            cmd.set("stick_ball", 0)
+            # spheres
+            cmd.set("sphere_mode", 9)
+            # nb_spheres
+            cmd.set("nb_spheres_quality", 3)
+
+        # old rendering
+        if cmd.get_setting_int("use_shaders")==0:
+            cmd.set('stick_quality',15)
+            cmd.set('sphere_quality',2)
+            cmd.set('stick_ball',1)
     elif mode==33:
         cmd.set('line_smooth',1)         
         cmd.set('depth_cue',1)         
         cmd.set('specular',1)
         cmd.set('surface_quality',0)
-        cmd.set('stick_quality',8)
-        cmd.set('sphere_quality',1)
         cmd.set('cartoon_sampling',7)
         cmd.set('ribbon_sampling',1)
         cmd.set('transparency_mode',2)
-        cmd.set('stick_ball',0)
-        cmd.do("rebuild")
+        # new rendering
+        if cmd.get_setting_int("use_shaders")==1:
+            enable_all_shaders(cmd)
+            # as cylinderss
+            cmd.set("render_as_cylinders", 1)
+            cmd.set("alignment_as_cylinders", 1)
+            cmd.set("cartoon_nucleic_acid_as_cylinders", 1)
+            cmd.set("dash_as_cylinders", 1)
+            cmd.set("line_as_cylinders", 1)
+            cmd.set("mesh_as_cylinders", 1)
+            cmd.set("nonbonded_as_cylinders", 1)
+            cmd.set("ribbon_as_cylinders", 1)
+            cmd.set("stick_as_cylinders", 1)
+            # as spheres
+            cmd.set("dot_as_spheres", 1)
+
+            # special settings
+            # sticks
+            cmd.set("stick_ball", 0)
+            # spheres
+            cmd.set("sphere_mode", 9)
+            # nb_spheres
+            cmd.set("nb_spheres_quality", 3)
+
+        # old rendering
+        if cmd.get_setting_int("use_shaders")==0:
+            cmd.set('stick_quality',8)
+            cmd.set('sphere_quality',1)
+            cmd.set('stick_ball',1)
+
     elif mode==66: # good perfomance
         cmd.set('line_smooth',0)
         cmd.set('depth_cue',0)         
         cmd.set('specular',1)
         cmd.set('surface_quality',0)
-        cmd.set('stick_quality',8)
-        cmd.set('sphere_quality',1)
         cmd.set('cartoon_sampling',6)
         cmd.set('ribbon_sampling',1)
         cmd.set('transparency_mode',2)
-        cmd.set('stick_ball',0.0)
-        cmd.do("rebuild")         
+        # new rendering
+        if cmd.get_setting_int("use_shaders")==1:
+            enable_all_shaders(cmd)
+            # as cylinderss
+            cmd.set("render_as_cylinders", 1)
+            cmd.set("alignment_as_cylinders", 0)
+            cmd.set("cartoon_nucleic_acid_as_cylinders", 0)
+            cmd.set("dash_as_cylinders", 0)
+            cmd.set("line_as_cylinders", 0)
+            cmd.set("mesh_as_cylinders", 0)
+            cmd.set("nonbonded_as_cylinders", 0)
+            cmd.set("ribbon_as_cylinders", 0)
+            cmd.set("stick_as_cylinders", 1)
+            # as spheres
+            cmd.set("dot_as_spheres", 0)
+
+            # special settings
+            # sticks
+            cmd.set("stick_ball", 0)
+            # spheres
+            cmd.set("sphere_mode", 9)
+            # nb_spheres
+            cmd.set("nb_spheres_quality", 3)
+        # old rendering
+        if cmd.get_setting_int("use_shaders")==0:
+            cmd.set('stick_quality',8)
+            cmd.set('sphere_quality',1)
+            cmd.set('stick_ball',0)
+
     else: # maximum performance
         cmd.set('line_smooth',0)
         cmd.set('depth_cue',0)
@@ -438,8 +636,30 @@ def performance(mode,_self=cmd):
         cmd.set('ribbon_sampling',1)
         cmd.set('cartoon_sampling',3)
         cmd.set('transparency_mode',0)
-        cmd.set('stick_ball',0.0)
-        cmd.do("rebuild")         
+        cmd.set('max_ups',0)
+        # new rendering
+        if cmd.get_setting_int("use_shaders")==1:
+            enable_all_shaders(cmd)
+            # as cylinderss
+            cmd.set("render_as_cylinders", 1)
+            cmd.set("alignment_as_cylinders", 0)
+            cmd.set("cartoon_nucleic_acid_as_cylinders", 0)
+            cmd.set("dash_as_cylinders", 0)
+            cmd.set("line_as_cylinders", 0)
+            cmd.set("mesh_as_cylinders", 0)
+            cmd.set("nonbonded_as_cylinders", 0)
+            cmd.set("ribbon_as_cylinders", 0)
+            cmd.set("stick_as_cylinders", 1)
+            # as spheres
+            cmd.set("dot_as_spheres", 0)
+        # old rendering
+        if cmd.get_setting_int("use_shaders")==0:
+            cmd.set('stick_quality',5)
+            cmd.set('sphere_quality',0)
+            cmd.set('stick_ball',0)
+
+    cmd.do("rebuild")
+
     
 def label_chains(sele="all",_self=cmd):
     pymol=_self._pymol
@@ -667,6 +887,19 @@ def ray_shadows(mode,_self=cmd):
         cmd.set('spec_direct',0.25)
         cmd.set('ray_shadow_decay_factor',0.1)
         cmd.set('ray_shadow_decay_range',5.0)
+    elif mode=="occlusion2":
+        cmd.set('light_count',2)
+        cmd.set("light","[-0.4,-0.4,-1.0]")
+        cmd.set('ambient',0.14)
+        cmd.set('direct',0.45)
+        cmd.set('reflect',0.45)
+        cmd.set('shininess',55)
+        cmd.set('spec_count',-1)
+        cmd.set('power',1.0)
+        cmd.set('specular_intensity',0.5)
+        cmd.set('spec_direct',0)
+        cmd.set('ray_shadow_decay_factor',0)
+        cmd.set('ambient_occlusion_mode', 1)
     elif mode=='medium':
         cmd.set('light_count',2)
         cmd.set("light","[-0.4,-0.4,-1.0]")

@@ -342,9 +342,10 @@ class MTZHeader(baseHeader):
                         # new refmac; smarter parsing
                         if self.space_group not in space_group_map.values():
                             m = re.match("'(?P<spc_gp>.*)' +(?P<pt_gp>.*)", tokens[4])
-                            self.space_group, self.pt_group = m.group('spc_gp'), m.group('pt_gp')
-                            if self.space_group in space_group_map:
-                                self.space_group = space_group_map[self.space_group]
+                            if m!=None:
+                                self.space_group, self.pt_group = m.group('spc_gp'), m.group('pt_gp')
+                                if self.space_group in space_group_map:
+                                    self.space_group = space_group_map[self.space_group]
 
                         # still?
                         try:

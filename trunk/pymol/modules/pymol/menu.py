@@ -58,6 +58,8 @@ def mouse_config(self_cmd):
                 'cmd.config_mouse("three_button_editing")' ],
               [ 1, '3-Button Viewing',
                 'cmd.mouse("three_button_viewing")' ],
+              [ 1, '3-Button Lights',
+                'cmd.mouse("three_button_lights")' ],
               [ 1, '3-Button All Modes',
                 'cmd.config_mouse("three_button_all_modes")' ],
               [ 0, '', ''],
@@ -65,6 +67,8 @@ def mouse_config(self_cmd):
                 'cmd.config_mouse("two_button_editing")' ],
               [ 1, '2-Button Viewing',
                 'cmd.config_mouse("two_button_viewing")' ],
+              [ 1, '2-Button Lights',
+                'cmd.mouse("two_button_lights")' ],
               ]
     return result
 
@@ -160,7 +164,10 @@ def mol_show(self_cmd, sele):
          [ 1, 'side chain' , show_misc(self_cmd, "((byres ("+sele+"))&(!(n;c,o,h|(n. n&!r. pro))))") ],
          [ 1, 'disulfides' , show_misc(self_cmd, "(byres ((("+sele+
             ") & r. CYS+CYX & n. SG) & bound_to (("+sele+") & r. CYS+CYX & n. SG))) & n. CA+CB+SG") ]
-         ])
+         ] +
+         [[ 0, '', ''],
+           [ 1, 'valence', 'cmd.set_bond("valence", "1", "'+sele+'",quiet=1)'],
+         ] )
 
     self_cmd.show("lines","(byres ((" + sele + " & r. CYS+CYX & n. SG) & bound_to ("
                   + sele + " & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
@@ -183,17 +190,19 @@ def mol_hide(self_cmd, sele):
          [ 1, 'waters'    , 'cmd.hide("(solvent and ('+sele+'))")'     ],                      
          [ 0, ''          , ''                                ],
          [ 1, 'hydrogens' , hide_hydro(self_cmd, sele) ],
-#         [ 1, 'hydrogens' , 'cmd.hide("('+sele+' and hydro)")'   ],
          [ 0, ''          , ''                                ],           
          [ 1, 'unselected', 'cmd.hide("(not '+sele+')")'         ],
          ]
-        )
+         + [[ 0, '', ''],
+           [ 1, 'valence', 'cmd.set_bond("valence", "0", "'+sele+'",quiet=1)'],
+         ] )
+
         
 def measurement_show(self_cmd, sele):
     return [[ 2, 'Show:'     , ''                               ],
               [ 1, 'dashes'    , 'cmd.show("dashes"    ,"'+sele+'")' ],
               [ 1, 'angles'    , 'cmd.show("angles"    ,"'+sele+'")' ],
-              [ 1, 'dihedrals' , 'cmd.show("dihedrals"    ,"'+sele+'")' ],
+              [ 1, 'dihedrals' , 'cmd.show("dihedrals" ,"'+sele+'")' ],
               [ 1, 'labels'    , 'cmd.show("labels"    ,"'+sele+'")' ]
              ]   
 
@@ -376,17 +385,20 @@ def by_ss(self_cmd, sele):
 
 def spectrum(self_cmd, sele):
     return [
-                [ 2, 'Spectrum:'     ,''                               ],
-              [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(e. c)',
-                 'cmd.spectrum("count",selection="('+sele+')&e. c")'],           
-              [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(*/ca)',
-                 'cmd.spectrum("count",selection="('+sele+')&*/ca")'],
-              [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
-                 'cmd.spectrum("count",selection="'+sele+'",byres=1)'],
-              [ 0, ''                                , ''                 ],
-              [ 1, 'b-factors'   , 'cmd.spectrum("b",selection=("'+sele+'"),quiet=0)'         ],
-              [ 1, 'b-factors(*/ca)'   , 'cmd.spectrum("b",selection="(('+sele+')&*/ca)",quiet=0)'         ],                       
-              ]
+        [ 2, 'Spectrum:'     ,''                               ],
+        [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(e. c)',
+          'cmd.spectrum("count",selection="('+sele+')&e. c")'],           
+        [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(*/ca)',
+          'cmd.spectrum("count",selection="('+sele+')&*/ca")'],
+        [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
+          'cmd.spectrum("count",selection="'+sele+'",byres=1)'],
+        [ 0, ''                                , ''                 ],
+        [ 1, 'b-factors'   ,   'cmd.spectrum("b",selection=("'+sele+'"),quiet=0)'         ],
+        [ 1, 'b-factors(*/ca)' , 'cmd.spectrum("b",selection="(('+sele+')&*/ca)",quiet=0)'         ],
+        [ 0, ''                                , ''                 ],
+        [ 1, 'area (molecular)', 'util.color_by_area(("'+sele+'"),"molecular")'         ],
+        [ 1, 'area (solvent)'  , 'util.color_by_area(("'+sele+'"),"solvent")'         ],
+        ]
 
 def by_chain(self_cmd, sele):
     return [
@@ -720,6 +732,7 @@ def selection(self_cmd, sele):
               [ 1, 'non-polar hydrogens', 'cmd.select("'+sele+'_npolar_h","('+sele+') and (e. H and (not bound_to e. S+O+N))")'],
               [ 1, 'donors', 'cmd.select("'+sele+'_donors","('+sele+') and hbd")'],
               [ 1, 'acceptors', 'cmd.select("'+sele+'_acceptors","('+sele+') and hba")'],           
+              [ 1, 'surface atoms', 'util.find_surface_atoms(sele="'+sele+'", _self=cmd)' ],
               ]
 
 def mol_generate(self_cmd, sele):
