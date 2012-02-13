@@ -1,0 +1,36 @@
+# This is the 2 gaussian approximation
+#
+# Data are from Ramesh C. Agarwal, Acta Cryst. A34, 791-809, 1978
+#
+# The formula for the atomic form factor is: 
+#   a[0]*exp(-b[0]*s*s) + a[1]*exp(-b[1]*s*s)
+#
+# The data for each atom type is:
+#
+#  atomtype
+#  a-atom-form-factor[2] 
+#  b-atom-form-factor[2]
+#
+# line start with # is a comment line
+# blank line will be skipped
+#
+# The number of atom-form-factor
+6
+H  
+        0.4866          0.5098
+       34.1284          8.8996
+C   
+        3.0102          2.9705
+       29.9132          2.8724
+Cv 
+        3.1055          2.8623
+       30.1306          2.4793    
+N 
+        3.0492          3.9432
+       25.0383          3.4059
+O  
+        3.2942          4.6968
+       20.0401          3.1184     
+S     
+        5.6604         10.3140
+       33.0400          1.8160

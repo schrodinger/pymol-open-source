@@ -1,0 +1,5820 @@
+# line start with '#' is a comment line, blank line can be skipped by code
+# Format of this file is
+# spgid      space-group-number
+# sspgname   short-Hermann-Mauguin-symbol 
+# fspgname   full-Hermann-Mauguin-symbol
+# pgname     point-group-symbol
+# crysym     crystal-system-name
+# xyzasu     real-space-ASU-description
+# primoper   symmetry-operations
+# centoper   centering-operations
+# note: The identity transformation should always be the first symm. oper.
+ 
+spgid 1
+sspgname  P 1
+fspgname  P 1
+pgname    1
+crysym    triclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<1
+primoper  x,y,z
+centoper  x,y,z
+endofdef  
+                                                                 
+spgid 1
+sspgname  A 1
+fspgname  A 1 1 1
+pgname    1
+crysym    triclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef 
+
+spgid 2
+sspgname  P -1
+fspgname  P -1
+pgname    -1
+crysym    triclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,-z
+centoper  x,y,z
+endofdef 
+
+spgid 2
+sspgname  P 1-
+fspgname  P 1-
+pgname    -1
+crysym    triclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,-z
+centoper  x,y,z
+endofdef
+
+spgid 3
+sspgname  P 2
+fspgname  P 2
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y,-z
+centoper  x,y,z
+endofdef
+ 
+spgid 3
+sspgname  P 2
+fspgname  P 1 2 1
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y,-z
+centoper  x,y,z
+endofdef  
+
+spgid 3
+sspgname  P 2
+fspgname  P 1 1 2
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+primoper  -x,-y,z
+centoper  x,y,z
+endofdef  
+
+spgid 4
+sspgname  P 21
+fspgname  P 21
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y+1/2,-z
+centoper  x,y,z
+endofdef
+
+spgid 4
+sspgname  P 21
+fspgname  P 1 21 1
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y+1/2,-z
+centoper  x,y,z
+endofdef  
+
+spgid 4
+sspgname  P 21
+fspgname  P 1 1 21
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+centoper  x,y,z
+endofdef  
+
+spgid 5
+sspgname  C 2
+fspgname  C 2
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+spgid 5
+sspgname  C 2
+fspgname  C 1 2 1
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef  
+
+spgid 5
+sspgname  A 2
+fspgname  A 1 2 1
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,y,-z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef  
+
+spgid 5
+sspgname  C 2
+fspgname  I 1 2 1
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,y,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef  
+
+spgid 5
+sspgname  C 2
+fspgname  A 1 1 2
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef  
+
+spgid 5
+sspgname  B 2
+fspgname  B 1 1 2
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+centoper  x,y,z
+centoper  x+1/2,y,z+1/2
+endofdef  
+
+spgid 5
+sspgname  C 2
+fspgname  I 1 1 2
+pgname    2
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef  
+
+spgid  5
+sspgname  C 21 
+fspgname  C 1 21 1
+pgname    2 
+crysym    monoclinic
+xyzasu    0<=x<=1/2; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y+1/2,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+spgid 6
+sspgname  P m
+fspgname  P 1 m 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+primoper  x,-y,z
+centoper  x,y,z
+endofdef  
+
+spgid 6
+sspgname  P m
+fspgname  P 1 1 m 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  x,y,-z
+centoper  x,y,z
+endofdef  
+
+spgid 7
+sspgname  P c
+fspgname  P 1 c 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  x,-y,z+1/2
+centoper  x,y,z
+endofdef  
+
+spgid 7
+sspgname  P c
+fspgname  P 1 n 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  x+1/2,-y,z+1/2
+centoper  x,y,z
+endofdef  
+
+spgid 7
+sspgname  P c
+fspgname  P 1 a 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+primoper  x+1/2,-y,z
+centoper  x,y,z
+endofdef  
+
+spgid 7
+sspgname  P c
+fspgname  P 1 1 a 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  x+1/2,y,-z
+centoper  x,y,z
+endofdef  
+
+spgid 7
+sspgname  P c
+fspgname  P 1 1 n 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  x+1/2,y+1/2,-z
+centoper  x,y,z
+endofdef  
+
+spgid 7
+sspgname  P c
+fspgname  P 1 1 b
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  x,y+1/2,-z
+centoper  x,y,z
+endofdef  
+
+spgid 8
+sspgname  C m
+fspgname  C 1 m 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<1
+primoper  x,y,z
+primoper  x,-y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef  
+
+spgid 8
+sspgname  C m
+fspgname  A 1 m 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  x,-y,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef  
+
+spgid 8
+sspgname  C m
+fspgname  I 1 m 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  x,-y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef  
+
+spgid 8
+sspgname  C m
+fspgname  A 1 1 m 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  x,y,-z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef  
+
+spgid 8
+sspgname  C m
+fspgname  B 1 1 m 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  x,y,-z
+centoper  x,y,z
+centoper  x+1/2,y,z+1/2
+endofdef  
+
+spgid 8
+sspgname  C m
+fspgname  I 1 1 m 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  x,y,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef  
+
+spgid 9
+sspgname  C c
+fspgname  C 1 c 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  x,-y,z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef  
+
+spgid 9
+sspgname  C c
+fspgname  A 1 n 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  x+1/2,-y,z+1/2
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef  
+
+spgid 9
+sspgname  C c
+fspgname  I 1 a 1 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  x+1/2,-y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef  
+
+spgid 9
+sspgname  C c
+fspgname  A 1 1 a
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  x+1/2,y,-z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef  
+
+spgid 9
+sspgname  C c
+fspgname  B 1 1 n
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  x+1/2,y+1/2,-z
+centoper  x,y,z
+centoper  x+1/2,y,z+1/2
+endofdef  
+
+spgid 9
+sspgname  C c
+fspgname  I 1 1 b 
+pgname    m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  x,y+1/2,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef  
+
+spgid  10
+sspgname  P 2/m 
+fspgname  P 1 2/m 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y,-z
+primoper  -x,-y,-z
+primoper  x,-y,z
+centoper  x,y,z
+endofdef
+
+spgid  10
+sspgname  P 2/m 
+fspgname  P 1 1 2/m
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,-y,-z
+primoper  x,y,-z
+centoper  x,y,z
+endofdef
+
+spgid  11
+sspgname  P 21/m
+fspgname  P 1 21/m 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y+1/2,-z
+primoper  -x,-y,-z
+primoper  x,-y+1/2,z
+centoper  x,y,z
+endofdef
+
+spgid  11
+sspgname  P 21/m
+fspgname  P 1 1 21/m
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  12
+sspgname  C 2/m
+fspgname  C 1 2/m 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y,-z
+primoper  -x,-y,-z
+primoper  x,-y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  12
+sspgname  C 2/m
+fspgname  A 1 2/m 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,y,-z
+primoper  -x,-y,-z
+primoper  x,-y,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef
+
+
+spgid  12
+sspgname  C 2/m
+fspgname  I 1 2/m 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,y,-z
+primoper  -x,-y,-z
+primoper  x,-y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  12
+sspgname  C 2/m
+fspgname  A 1 1 2/m
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,-y,-z
+primoper  x,y,-z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef
+
+
+spgid  12
+sspgname  C 2/m
+fspgname  B 1 1 2/m
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,-y,-z
+primoper  x,y,-z
+centoper  x,y,z
+centoper  x+1/2,y,z+1/2
+endofdef
+
+
+spgid  12
+sspgname  C 2/m
+fspgname  I 1 1 2/m
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,-y,-z
+primoper  x,y,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  13
+sspgname  P 2/c
+fspgname  P 1 2/c 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,y,-z+1/2
+primoper  -x,-y,-z
+primoper  x,-y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  13
+sspgname  P 2/c
+fspgname  P 1 2/n 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,y,-z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,-y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  13
+sspgname  P 2/c
+fspgname  P 1 2/a 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x+1/2,y,-z
+primoper  -x,-y,-z
+primoper  x+1/2,-y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  13
+sspgname  P 2/c
+fspgname  P 1 1 2/a
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x+1/2,-y,z
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  13
+sspgname  P 2/c
+fspgname  P 1 1 2/n
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z
+primoper  -x,-y,-z
+primoper  x+1/2,y+1/2,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  13
+sspgname  P 2/c
+fspgname  P 1 1 2/b
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y+1/2,z
+primoper  -x,-y,-z
+primoper  x,y+1/2,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  14
+sspgname  P 21/c
+fspgname  P 1 21/c 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,y+1/2,-z+1/2
+primoper  -x,-y,-z
+primoper  x,-y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  14
+sspgname  P 21/c
+fspgname  P 1 21/n 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,-y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  14
+sspgname  P 21/c
+fspgname  P 1 21/a 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x+1/2,y+1/2,-z
+primoper  -x,-y,-z
+primoper  x+1/2,-y+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  14
+sspgname  P 21/c
+fspgname  P 1 1 21/a
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  14
+sspgname  P 21/c
+fspgname  P 1 1 21/n
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,y+1/2,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  14
+sspgname  P 21/c
+fspgname  P 1 1 21/b
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y+1/2,z+1/2
+primoper  -x,-y,-z
+primoper  x,y+1/2,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  15
+sspgname  C 2/c
+fspgname  C 1 2/c 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,y,-z+1/2
+primoper  -x,-y,-z
+primoper  x,-y,z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  15
+sspgname  C 2/c
+fspgname  A 1 2/n 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,y,-z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,-y,z+1/2
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef
+
+
+spgid  15
+sspgname  C 2/c
+fspgname  I 1 2/a 1
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,y,-z
+primoper  -x,-y,-z
+primoper  x+1/2,-y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  15
+sspgname  C 2/c
+fspgname  A 1 1 2/a
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef
+
+
+spgid  15
+sspgname  C 2/c
+fspgname  B 1 1 2/n
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z
+primoper  -x,-y,-z
+primoper  x+1/2,y+1/2,-z
+centoper  x,y,z
+centoper  x+1/2,y,z+1/2
+endofdef
+
+
+spgid  15
+sspgname  C 2/c
+fspgname  I 1 1 2/b
+pgname    2/m
+crysym    monoclinic
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y+1/2,z
+primoper  -x,-y,-z
+primoper  x,y+1/2,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  16
+sspgname  P 2 2 2 
+fspgname  P 2 2 2
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  17
+sspgname  P 2 2 21 
+fspgname  P 2 2 21
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z
+centoper  x,y,z
+endofdef
+
+spgid  18
+sspgname  P 21 21 2 
+fspgname  P 21 21 2
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+centoper  x,y,z
+endofdef
+
+spgid  18
+sspgname  P 21 2 21 
+fspgname  P 21 2 21
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,y,-z
+primoper  -x+1/2,-y,z+1/2
+primoper  x+1/2,-y,-z+1/2
+centoper  x,y,z
+endofdef
+
+spgid  18
+sspgname  P 21 21 2A 
+fspgname  P 21 21 2A
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z
+primoper  x+1/2,-y,-z
+primoper  -x,y+1/2,-z
+centoper  x,y,z
+endofdef
+
+spgid  19
+sspgname  P 21 21 21 
+fspgname  P 21 21 21
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  20
+sspgname  C 2 2 21 
+fspgname  C 2 2 21
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+spgid  20
+sspgname  B 2 21 2 
+fspgname  B 2 21 2
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y+1/2,z
+primoper  -x,y+1/2,-z
+primoper  -x,y,-z
+centoper  x,y,z:
+centoper  x+1/2,y,z+1/2
+endofdef
+
+spgid  21
+sspgname  C 2 2 2 
+fspgname  C 2 2 2
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  22
+sspgname  F 2 2 2 
+fspgname  F 2 2 2
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  23
+sspgname  I 2 2 2 
+fspgname  I 2 2 2
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  24
+sspgname  I 21 21 21 
+fspgname  I 21 21 21
+pgname    2 2 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  25
+sspgname  P m m 2 
+fspgname  P m m 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  26
+sspgname  P m c 21 
+fspgname  P m c 21
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  x,-y,z+1/2
+primoper  -x,y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  27
+sspgname  P c c 2 
+fspgname  P c c 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  28
+sspgname  P m a 2 
+fspgname  P m a 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x+1/2,-y,z
+primoper  -x+1/2,y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  29
+sspgname  P c a 21 
+fspgname  P c a 21
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  x+1/2,-y,z
+primoper  -x+1/2,y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  30
+sspgname  P n c 2 
+fspgname  P n c 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y+1/2,z+1/2
+primoper  -x,y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  31
+sspgname  P m n 21 
+fspgname  P m n 21
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  x+1/2,-y,z+1/2
+primoper  -x,y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  32
+sspgname  P b a 2 
+fspgname  P b a 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<1
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  33
+sspgname  P n a 21 
+fspgname  P n a 21
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  34
+sspgname  P n n 2 
+fspgname  P n n 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  35
+sspgname  C m m 2 
+fspgname  C m m 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/4; 0<=z<1
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  36
+sspgname  C m c 21 
+fspgname  C m c 21
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  x,-y,z+1/2
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  37
+sspgname  C c c 2 
+fspgname  C c c 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  38
+sspgname  A m m 2 
+fspgname  A m m 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef
+
+
+spgid  39
+sspgname  A e m 2 
+fspgname  A e m 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y+1/2,z
+primoper  -x,y+1/2,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef
+
+
+spgid  40
+sspgname  A m a 2 
+fspgname  A m a 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x+1/2,-y,z
+primoper  -x+1/2,y,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef
+
+
+spgid  41
+sspgname  A e a 2 
+fspgname  A b a 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+endofdef
+
+
+spgid  42
+sspgname  F m m 2 
+fspgname  F m m 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  43
+sspgname  F d d 2 
+fspgname  F d d 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x+1/4,-y+1/4,z+1/4
+primoper  -x+1/4,y+1/4,z+1/4
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  44
+sspgname  I m m 2 
+fspgname  I m m 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  45
+sspgname  I b a 2 
+fspgname  I b a 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  46
+sspgname  I m a 2 
+fspgname  I m a 2
+pgname    m m 2 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  x+1/2,-y,z
+primoper  -x+1/2,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  47
+sspgname  P m m m 
+fspgname  P 2/m 2/m 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  48
+sspgname  P n n n 
+fspgname  P 2/n 2/n 2/n
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  49
+sspgname  P c c m 
+fspgname  P 2/c 2/c 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  50
+sspgname  P b a n 
+fspgname  P 2/b 2/a 2/n
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -x+1/2,-y+1/2,-z
+primoper  x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  51
+sspgname  P m m a 
+fspgname  P 21/m 2/m 2/a
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x+1/2,-y,z
+primoper  -x,y,-z
+primoper  x+1/2,-y,-z
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z
+primoper  x,-y,z
+primoper  -x+1/2,y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  52
+sspgname  P n n a 
+fspgname  P 2/n 21/n 2/a
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  x,-y+1/2,-z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x,y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  53
+sspgname  P m n a 
+fspgname  P 2/m 2/n 21/a
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x+1/2,y,-z+1/2
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z+1/2
+primoper  x+1/2,-y,z+1/2
+primoper  -x,y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  54
+sspgname  P c c a 
+fspgname  P 21/c 2/c 2/a
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z
+primoper  -x,y,-z+1/2
+primoper  x+1/2,-y,-z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z
+primoper  x,-y,z+1/2
+primoper  -x+1/2,y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  55
+sspgname  P b a m 
+fspgname  P 21/b 21/a 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  56
+sspgname  P c c n 
+fspgname  P 21/c 21/c 2/n
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y,-z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,y+1/2,-z
+primoper  x,-y+1/2,z+1/2
+primoper  -x+1/2,y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  57
+sspgname  P b c m 
+fspgname  P 2/b 21/c 21/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x,-y+1/2,-z
+primoper  -x,-y,-z
+primoper  x,y,-z+1/2
+primoper  x,-y+1/2,z+1/2
+primoper  -x,y+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  58
+sspgname  P n n m 
+fspgname  P 21/n 21/n 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  59
+sspgname  P m m n 
+fspgname  P 21/m 21/m 2/n
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  -x+1/2,-y+1/2,-z
+primoper  x+1/2,y+1/2,-z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  60
+sspgname  P b c n 
+fspgname  P 21/b 2/c 21/n
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -x,y,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  -x,-y,-z
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  x,-y,z+1/2
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  61
+sspgname  P b c a 
+fspgname  P 21/b 21/c 21/a
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z+1/2
+primoper  x,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  62
+sspgname  P n m a 
+fspgname  P 21/n 21/m 21/a
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z+1/2
+primoper  x,-y+1/2,z
+primoper  -x+1/2,y+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  63
+sspgname  C m c m 
+fspgname  C 2/m 2/c 21/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x,y,-z+1/2
+primoper  x,-y,z+1/2
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  64
+sspgname  C m c e 
+fspgname  C 2/m 2/c 21/e
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y+1/2,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x,y+1/2,-z+1/2
+primoper  x,-y+1/2,z+1/2
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  65
+sspgname  C m m m 
+fspgname  C 2/m 2/m 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  66
+sspgname  C c c m 
+fspgname  C 2/c 2/c 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  67
+sspgname  C m m e 
+fspgname  C 2/m 2/m 2/e
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y+1/2,z
+primoper  -x,y+1/2,-z
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x,y+1/2,-z
+primoper  x,-y+1/2,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  68
+sspgname  C c c e 
+fspgname  C 2/c 2/c 2/e
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z
+primoper  -x,y,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  -x,-y+1/2,-z+1/2
+primoper  x+1/2,y,-z+1/2
+primoper  x,-y+1/2,z+1/2
+primoper  -x+1/2,y,z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  69
+sspgname  F m m m 
+fspgname  F 2/m 2/m 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  70
+sspgname  F d d d 
+fspgname  F 2/d 2/d 2/d
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -x+1/4,-y+1/4,-z+1/4
+primoper  x+1/4,y+1/4,-z+1/4
+primoper  x+1/4,-y+1/4,z+1/4
+primoper  -x+1/4,y+1/4,z+1/4
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  71
+sspgname  I m m m 
+fspgname  I 2/m 2/m 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  72
+sspgname  I b a m 
+fspgname  I 2/b 2/a 2/m
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  73
+sspgname  I b c a 
+fspgname  I 21/b 21/c 21/a
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z+1/2
+primoper  x,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  74
+sspgname  I m m a 
+fspgname  I 21/m 21/m 21/a
+pgname    m m m 
+crysym    orthorhombic 
+xyzasu    0<=x<=1/2; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y+1/2,z
+primoper  -x,y+1/2,-z
+primoper  x,-y,-z
+primoper  -x,-y,-z
+primoper  x,y+1/2,-z
+primoper  x,-y+1/2,z
+primoper  -x,y,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  75
+sspgname  P 4 
+fspgname  P 4
+pgname    4 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  76
+sspgname  P 41 
+fspgname  P 41
+pgname    4 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -y,x,z+1/4
+primoper  y,-x,z+3/4
+centoper  x,y,z
+endofdef
+
+
+spgid  77
+sspgname  P 42 
+fspgname  P 42
+pgname    4 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  78
+sspgname  P 43 
+fspgname  P 43
+pgname    4 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -y,x,z+3/4
+primoper  y,-x,z+1/4
+centoper  x,y,z
+endofdef
+
+
+spgid  79
+sspgname  I 4 
+fspgname  I 4
+pgname    4 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  80
+sspgname  I 41 
+fspgname  I 41
+pgname    4 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -y,x+1/2,z+1/4
+primoper  y+1/2,-x,z+3/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  81
+sspgname  P -4 
+fspgname  P -4
+pgname    -4 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  82
+sspgname  I -4 
+fspgname  I -4
+pgname    -4 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  83
+sspgname  P 4/m 
+fspgname  P 4/m
+pgname    4/m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  84
+sspgname  P 42/m 
+fspgname  P 42/m
+pgname    4/m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z+1/2
+primoper  -y,x,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  85
+sspgname  P 4/n 
+fspgname  P 4/n
+pgname    4/m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z
+primoper  y+1/2,-x+1/2,z
+primoper  -x+1/2,-y+1/2,-z
+primoper  x+1/2,y+1/2,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  86
+sspgname  P 42/n 
+fspgname  P 42/n
+pgname    4/m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  y,-x,-z
+primoper  -y,x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  87
+sspgname  I 4/m 
+fspgname  I 4/m
+pgname    4/m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  88
+sspgname  I 41/a 
+fspgname  I 41/a
+pgname    4/m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -y,x+1/2,z+1/4
+primoper  y+1/2,-x,z+3/4
+primoper  -x,-y+1/2,-z+1/4
+primoper  x+1/2,y,-z+3/4
+primoper  y,-x,-z
+primoper  -y+1/2,x+1/2,-z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  89
+sspgname  P 4 2 2 
+fspgname  P 4 2 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y,x,-z
+primoper  -y,-x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  90
+sspgname  P 4 21 2 
+fspgname  P 4 21 2
+pgname    422 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z
+primoper  y+1/2,-x+1/2,z
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  y,x,-z
+primoper  -y,-x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  91
+sspgname  P 41 2 2 
+fspgname  P 41 2 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -y,x,z+1/4
+primoper  y,-x,z+3/4
+primoper  -x,y,-z
+primoper  x,-y,-z+1/2
+primoper  y,x,-z+3/4
+primoper  -y,-x,-z+1/4
+centoper  x,y,z
+endofdef
+
+
+spgid  92
+sspgname  P 41 21 2 
+fspgname  P 41 21 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -y+1/2,x+1/2,z+1/4
+primoper  y+1/2,-x+1/2,z+3/4
+primoper  -x+1/2,y+1/2,-z+1/4
+primoper  x+1/2,-y+1/2,-z+3/4
+primoper  y,x,-z
+primoper  -y,-x,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  93
+sspgname  P 42 2 2 
+fspgname  P 42 2 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y,x,-z+1/2
+primoper  -y,-x,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  94
+sspgname  P 42 21 2 
+fspgname  P 42 21 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z+1/2
+primoper  y,x,-z
+primoper  -y,-x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  95
+sspgname  P 43 2 2 
+fspgname  P 43 2 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -y,x,z+3/4
+primoper  y,-x,z+1/4
+primoper  -x,y,-z
+primoper  x,-y,-z+1/2
+primoper  y,x,-z+1/4
+primoper  -y,-x,-z+3/4
+centoper  x,y,z
+endofdef
+
+
+spgid  96
+sspgname  P 43 21 2 
+fspgname  P 43 21 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y,z+1/2
+primoper  -y+1/2,x+1/2,z+3/4
+primoper  y+1/2,-x+1/2,z+1/4
+primoper  -x+1/2,y+1/2,-z+3/4
+primoper  x+1/2,-y+1/2,-z+1/4
+primoper  y,x,-z
+primoper  -y,-x,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  97
+sspgname  I 4 2 2 
+fspgname  I 4 2 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y,x,-z
+primoper  -y,-x,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  98
+sspgname  I 41 2 2 
+fspgname  I 41 2 2
+pgname    4 2 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -y,x+1/2,z+1/4
+primoper  y+1/2,-x,z+3/4
+primoper  -x+1/2,y,-z+3/4
+primoper  x,-y+1/2,-z+1/4
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y,-x,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  99
+sspgname  P 4 m m 
+fspgname  P 4 m m
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<1
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  100
+sspgname  P 4 b m 
+fspgname  P 4 b m
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<1
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+primoper  -y+1/2,-x+1/2,z
+primoper  y+1/2,x+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  101
+sspgname  P 42 c m 
+fspgname  P 42 c m
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  102
+sspgname  P 42 n m 
+fspgname  P 42 n m
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  103
+sspgname  P 4 c c 
+fspgname  P 4 c c
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  -y,-x,z+1/2
+primoper  y,x,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  104
+sspgname  P 4 n c 
+fspgname  P 4 n c
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  105
+sspgname  P 42 m c 
+fspgname  P 42 m c
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -y,-x,z+1/2
+primoper  y,x,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  106
+sspgname  P 42 b c 
+fspgname  P 42 b c
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  107
+sspgname  I 4 m m 
+fspgname  I 4 m m
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  108
+sspgname  I 4 c m 
+fspgname  I 4 c m
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  -y,-x,z+1/2
+primoper  y,x,z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  109
+sspgname  I 41 m d 
+fspgname  I 41 m d
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -y,x+1/2,z+1/4
+primoper  y+1/2,-x,z+3/4
+primoper  x,-y,z
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -y,-x+1/2,z+1/4
+primoper  y+1/2,x,z+3/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  110
+sspgname  I 41 c d 
+fspgname  I 41 c d
+pgname    4 m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -y,x+1/2,z+1/4
+primoper  y+1/2,-x,z+3/4
+primoper  x,-y,z+1/2
+primoper  -x+1/2,y+1/2,z
+primoper  -y,-x+1/2,z+3/4
+primoper  y+1/2,x,z+1/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  111
+sspgname  P -4 2 m 
+fspgname  P -4 2 m
+pgname    -4 2 m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  112
+sspgname  P -4 2 c 
+fspgname  P -4 2 c
+pgname    -4 2 m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z+1/2
+primoper  -y,-x,z+1/2
+primoper  y,x,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  113
+sspgname  P -4 21 m 
+fspgname  P -4 21 m
+pgname    -4 2 m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  -y+1/2,-x+1/2,z
+primoper  y+1/2,x+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  114
+sspgname  P -4 21 c 
+fspgname  P -4 21 c
+pgname    -4 2 m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  115
+sspgname  P -4 m 2 
+fspgname  P -4 m 2
+pgname    -4 m 2 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  y,x,-z
+primoper  -y,-x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  116
+sspgname  P -4 c 2 
+fspgname  P -4 c 2
+pgname    -4 m 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  y,x,-z+1/2
+primoper  -y,-x,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  117
+sspgname  P -4 b 2 
+fspgname  P -4 b 2
+pgname    -4 m 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+primoper  y+1/2,x+1/2,-z
+primoper  -y+1/2,-x+1/2,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  118
+sspgname  P -4 n 2 
+fspgname  P -4 n 2
+pgname    -4 m 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  119
+sspgname  I -4 m 2 
+fspgname  I -4 m 2
+pgname    -4 m 2 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  y,x,-z
+primoper  -y,-x,-z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  120
+sspgname  I -4 c 2 
+fspgname  I -4 c 2
+pgname    -4 m 2 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  y,x,-z+1/2
+primoper  -y,-x,-z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  121
+sspgname  I -4 2 m 
+fspgname  I -4 2 m
+pgname    -4 2 m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  122
+sspgname  I -4 2 d 
+fspgname  I -4 2 d
+pgname    -4 2 m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  -x+1/2,y,-z+3/4
+primoper  x+1/2,-y,-z+3/4
+primoper  -y+1/2,-x,z+3/4
+primoper  y+1/2,x,z+3/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  123
+sspgname  P 4/m m m 
+fspgname  P 4/m 2/m 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  124
+sspgname  P 4/m c c 
+fspgname  P 4/m 2/c 2/c
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z+1/2
+primoper  y,x,-z+1/2
+primoper  -y,-x,-z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  -y,-x,z+1/2
+primoper  y,x,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  125
+sspgname  P 4/n b m 
+fspgname  P 4/n 2/b 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  -x+1/2,-y+1/2,-z
+primoper  x+1/2,y+1/2,-z
+primoper  y+1/2,-x+1/2,-z
+primoper  -y+1/2,x+1/2,-z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+primoper  -y+1/2,-x+1/2,z
+primoper  y+1/2,x+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  126
+sspgname  P 4/n n c 
+fspgname  P 4/n 2/n 2/c 
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  y+1/2,-x+1/2,-z+1/2
+primoper  -y+1/2,x+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  127
+sspgname  P 4/m b m 
+fspgname  P 4/m 21/b 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  y+1/2,x+1/2,-z
+primoper  -y+1/2,-x+1/2,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+primoper  -y+1/2,-x+1/2,z
+primoper  y+1/2,x+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  128
+sspgname  P 4/m n c 
+fspgname  P 4/m 21/n 2/c
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z+1/2
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  129
+sspgname  P 4/n m m 
+fspgname  P 4/n 21/m 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z
+primoper  y+1/2,-x+1/2,z
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  -x+1/2,-y+1/2,-z
+primoper  x+1/2,y+1/2,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -y+1/2,-x+1/2,z
+primoper  y+1/2,x+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  130
+sspgname  P 4/n c c 
+fspgname  P 4/n 21/c 2/c
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z
+primoper  y+1/2,-x+1/2,z
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z+1/2
+primoper  y,x,-z+1/2
+primoper  -y,-x,-z+1/2
+primoper  -x+1/2,-y+1/2,-z
+primoper  x+1/2,y+1/2,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  131
+sspgname  P 42/m m c 
+fspgname  P 42/m 2/m 2/c
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y,x,-z+1/2
+primoper  -y,-x,-z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z+1/2
+primoper  -y,x,-z+1/2
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -y,-x,z+1/2
+primoper  y,x,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  132
+sspgname  P 42/m c m 
+fspgname  P 42/m 2/c 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z+1/2
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z+1/2
+primoper  -y,x,-z+1/2
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  133
+sspgname  P 42/n b c 
+fspgname  P 42/n 2/b 2/c
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z+1/2
+primoper  y+1/2,x+1/2,-z
+primoper  -y+1/2,-x+1/2,-z
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+primoper  -y,-x,z+1/2
+primoper  y,x,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  134
+sspgname  P 42/n n m 
+fspgname  P 42/n 2/n 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  135
+sspgname  P 42/m b c 
+fspgname  P 42/m 21/b 2/c
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z+1/2
+primoper  y,-x,z+1/2
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z+1/2
+primoper  -y,x,-z+1/2
+primoper  x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,z
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  136
+sspgname  P 42/m n m 
+fspgname  P 42/m 21/n 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z+1/2
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y+1/2,-x+1/2,-z+1/2
+primoper  -y+1/2,x+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  137
+sspgname  P 42/n m c 
+fspgname  P 42/n 21/m 2/c
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z+1/2
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  138
+sspgname  P 42/n c m 
+fspgname  P 42/n 21/c 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y+1/2,-z
+primoper  y,x,-z+1/2
+primoper  -y,-x,-z+1/2
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  -y+1/2,-x+1/2,z
+primoper  y+1/2,x+1/2,z
+centoper  x,y,z
+endofdef
+
+
+spgid  139
+sspgname  I 4/m m m 
+fspgname  I 4/m 2/m 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -y,-x,z
+primoper  y,x,z
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  140
+sspgname  I 4/m c m 
+fspgname  I 4/m 2/c 2/m
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -y,x,z
+primoper  y,-x,z
+primoper  -x,y,-z+1/2
+primoper  x,-y,-z+1/2
+primoper  y,x,-z+1/2
+primoper  -y,-x,-z+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,-y,z+1/2
+primoper  -x,y,z+1/2
+primoper  -y,-x,z+1/2
+primoper  y,x,z+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  141
+sspgname  I 41/a m d 
+fspgname  I 41/a 2/m 2/d
+pgname    4/m m m 
+crysym    Tetragonal
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/8 
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -y,x+1/2,z+1/4
+primoper  y+1/2,-x,z+3/4
+primoper  -x+1/2,y,-z+3/4
+primoper  x,-y+1/2,-z+1/4
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y,-x,-z
+primoper  -x,-y+1/2,-z+1/4
+primoper  x+1/2,y,-z+3/4
+primoper  y,-x,-z
+primoper  -y+1/2,x+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x,y,z
+primoper  -y+1/2,-x,z+3/4
+primoper  y,x+1/2,z+1/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  142
+sspgname  I 41/a c d 
+fspgname  I 41/a 2/c 2/d
+pgname    4/m m m 
+crysym    Tetragonal 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z+1/2
+primoper  -y,x+1/2,z+1/4
+primoper  y+1/2,-x,z+3/4
+primoper  -x+1/2,y,-z+1/4
+primoper  x,-y+1/2,-z+3/4
+primoper  y+1/2,x+1/2,-z
+primoper  -y,-x,-z+1/2
+primoper  -x,-y+1/2,-z+1/4
+primoper  x+1/2,y,-z+3/4
+primoper  y,-x,-z
+primoper  -y+1/2,x+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,z
+primoper  -x,y,z+1/2
+primoper  -y+1/2,-x,z+1/4
+primoper  y,x+1/2,z+3/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  143
+sspgname  P 3 
+fspgname  P 3
+pgname    3 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<1
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  144
+sspgname  P 31 
+fspgname  P 31
+pgname    3 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/3
+primoper  x,y,z
+primoper  -y,x-y,z+1/3
+primoper  -x+y,-x,z+2/3
+centoper  x,y,z
+endofdef
+
+
+spgid  145
+sspgname  P 32 
+fspgname  P 32
+pgname    3 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/3
+primoper  x,y,z
+primoper  -y,x-y,z+2/3
+primoper  -x+y,-x,z+1/3
+centoper  x,y,z
+endofdef
+
+spgid  146
+sspgname  R 3 
+fspgname  R 3
+pgname    3 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=1; 0<=z<1
+primoper  x,y,z
+primoper  z,x,y
+primoper  y,z,x
+centoper  x,y,z
+endofdef
+
+spgid  146
+sspgname  H 3 
+fspgname  H 3
+pgname    3 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/3
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+centoper  x,y,z
+centoper  x+2/3,y+1/3,z+1/3
+centoper  x+1/3,y+2/3,z+2/3
+endofdef
+
+spgid  147
+sspgname  P -3 
+fspgname  P -3
+pgname    -3 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+centoper  x,y,z
+endofdef
+
+spgid  148
+sspgname  R -3 
+fspgname  R -3
+pgname    -3 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  z,x,y
+primoper  y,z,x
+primoper  -x,-y,-z
+primoper  -z,-x,-y
+primoper  -y,-z,-x
+centoper  x,y,z
+endofdef
+
+spgid  148
+sspgname  H -3 
+fspgname  H -3
+pgname    -3 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+centoper  x,y,z
+centoper  x+2/3,y+1/3,z+1/3
+centoper  x+1/3,y+2/3,z+2/3
+endofdef
+
+spgid  149
+sspgname  P 3 1 2 
+fspgname  P 3 1 2
+pgname    3 1 2 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -y,-x,-z
+primoper  -x+y,y,-z
+primoper  x,x-y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  150
+sspgname  P 3 2 1 
+fspgname  P 3 2 1
+pgname    3 2 1 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  151
+sspgname  P 31 1 2 
+fspgname  P 31 1 2
+pgname    3 1 2 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z+1/3
+primoper  -x+y,-x,z+2/3
+primoper  -y,-x,-z+2/3
+primoper  -x+y,y,-z+1/3
+primoper  x,x-y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  152
+sspgname  P 31 2 1 
+fspgname  P 31 2 1
+pgname    3 2 1 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z+1/3
+primoper  -x+y,-x,z+2/3
+primoper  y,x,-z
+primoper  x-y,-y,-z+2/3
+primoper  -x,-x+y,-z+1/3
+centoper  x,y,z
+endofdef
+
+
+spgid  153
+sspgname  P 32 1 2 
+fspgname  P 32 1 2
+pgname    3 1 2 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z+2/3
+primoper  -x+y,-x,z+1/3
+primoper  -y,-x,-z+1/3
+primoper  -x+y,y,-z+2/3
+primoper  x,x-y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  154
+sspgname  P 32 2 1 
+fspgname  P 32 2 1
+pgname    3 2 1 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z+2/3
+primoper  -x+y,-x,z+1/3
+primoper  y,x,-z
+primoper  x-y,-y,-z+1/3
+primoper  -x,-x+y,-z+2/3
+centoper  x,y,z
+endofdef
+
+spgid  155
+sspgname  R 3 2 
+fspgname  R 3 2
+pgname    3 2 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  z,x,y
+primoper  y,z,x
+primoper  -z,-y,-x
+primoper  -y,-x,-z
+primoper  -x,-z,-y
+centoper  x,y,z
+endofdef
+
+spgid  155
+sspgname  H 3 2 
+fspgname  H 3 2
+pgname    3 2 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+centoper  x,y,z
+centoper  x+2/3,y+1/3,z+1/3
+centoper  x+1/3,y+2/3,z+2/3
+endofdef
+
+spgid  156
+sspgname  P 3 m 1 
+fspgname  P 3 m 1
+pgname    3 m 1 
+crysym    trigonal 
+xyzasu    0<=x<=2/3; 0<=y<=2/3; 0<=z<1
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  157
+sspgname  P 3 1 m 
+fspgname  P 3 1 m
+pgname    3 1 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<1
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  y,x,z
+primoper  x-y,-y,z
+primoper  -x,-x+y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  158
+sspgname  P 3 c 1 
+fspgname  P 3 c 1
+pgname    3 m 1 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  159
+sspgname  P 3 1 c 
+fspgname  P 3 1 c
+pgname    3 1 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  y,x,z+1/2
+primoper  x-y,-y,z+1/2
+primoper  -x,-x+y,z+1/2
+centoper  x,y,z
+endofdef
+
+spgid  160
+sspgname  R 3 m 
+fspgname  R 3 m
+pgname    3 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<1
+primoper  x,y,z
+primoper  z,x,y
+primoper  y,z,x
+primoper  z,y,x
+primoper  y,x,z
+primoper  x,z,y
+centoper  x,y,z
+endofdef
+
+spgid  160
+sspgname  H 3 m 
+fspgname  H 3 m
+pgname    3 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<2/3; 0<=z<=1/3
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+centoper  x,y,z
+centoper  x+2/3,y+1/3,z+1/3
+centoper  x+1/3,y+2/3,z+2/3
+endofdef
+
+spgid  161
+sspgname  R 3 c 
+fspgname  R 3 c
+pgname    3 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  z,x,y
+primoper  y,z,x
+primoper  z+1/2,y+1/2,x+1/2
+primoper  y+1/2,x+1/2,z+1/2
+primoper  x+1/2,z+1/2,y+1/2
+centoper  x,y,z
+endofdef
+
+spgid  161
+sspgname  H 3 c 
+fspgname  H 3 c
+pgname    3 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<2/3; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+centoper  x,y,z
+centoper  x+2/3,y+1/3,z+1/3
+centoper  x+1/3,y+2/3,z+2/3
+endofdef
+
+spgid  162
+sspgname  P -3 1 m 
+fspgname  P -3 1 2/m
+pgname    -3 1 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -y,-x,-z
+primoper  -x+y,y,-z
+primoper  x,x-y,-z
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  y,x,z
+primoper  x-y,-y,z
+primoper  -x,-x+y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  163
+sspgname  P -3 1 c 
+fspgname  P -3 1 2/c
+pgname    -3 1 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -y,-x,-z+1/2
+primoper  -x+y,y,-z+1/2
+primoper  x,x-y,-z+1/2
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  y,x,z+1/2
+primoper  x-y,-y,z+1/2
+primoper  -x,-x+y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  164
+sspgname  P -3 m 1 
+fspgname  P -3 2/m 1
+pgname    -3 m 1 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  165
+sspgname  P -3 c 1 
+fspgname  P -3 2/c 1
+pgname    -3 m 1 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  y,x,-z+1/2
+primoper  x-y,-y,-z+1/2
+primoper  -x,-x+y,-z+1/2
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+centoper  x,y,z
+endofdef
+
+spgid  166
+sspgname  R -3 m 
+fspgname  R -3 2/m
+pgname    -3 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/2
+primoper  x,y,z
+primoper  z,x,y
+primoper  y,z,x
+primoper  -z,-y,-x
+primoper  -y,-x,-z
+primoper  -x,-z,-y
+primoper  -x,-y,-z
+primoper  -z,-x,-y
+primoper  -y,-z,-x
+primoper  z,y,x
+primoper  y,x,z
+primoper  x,z,y
+centoper  x,y,z
+endofdef
+
+spgid  166
+sspgname  H -3 m 
+fspgname  H -3 2/m
+pgname    -3 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+centoper  x,y,z
+centoper  x+2/3,y+1/3,z+1/3
+centoper  x+1/3,y+2/3,z+2/3
+endofdef
+
+spgid  167
+sspgname  R -3 c 
+fspgname  R -3 2/c
+pgname    -3 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  z,x,y
+primoper  y,z,x
+primoper  -z+1/2,-y+1/2,-x+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+primoper  -x+1/2,-z+1/2,-y+1/2
+primoper  -x,-y,-z
+primoper  -z,-x,-y
+primoper  -y,-z,-x
+primoper  z+1/2,y+1/2,x+1/2
+primoper  y+1/2,x+1/2,z+1/2
+primoper  x+1/2,z+1/2,y+1/2
+centoper  x,y,z
+endofdef
+
+spgid  167
+sspgname  H -3 c 
+fspgname  H -3 2/c
+pgname    -3 m 
+crysym    trigonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/12
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  y,x,-z+1/2
+primoper  x-y,-y,-z+1/2
+primoper  -x,-x+y,-z+1/2
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+centoper  x,y,z
+centoper  x+2/3,y+1/3,z+1/3
+centoper  x+1/3,y+2/3,z+2/3
+endofdef
+
+spgid  168
+sspgname  P 6 
+fspgname  P 6
+pgname    6 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<1
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z
+primoper  y,-x+y,z
+primoper  x-y,x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  169
+sspgname  P 61 
+fspgname  P 61
+pgname    6 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<1/6
+primoper  x,y,z
+primoper  -y,x-y,z+1/3
+primoper  -x+y,-x,z+2/3
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+5/6
+primoper  x-y,x,z+1/6
+centoper  x,y,z
+endofdef
+
+
+spgid  170
+sspgname  P 65 
+fspgname  P 65
+pgname    6 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z+2/3
+primoper  -x+y,-x,z+1/3
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/6
+primoper  x-y,x,z+5/6
+centoper  x,y,z
+endofdef
+
+
+spgid  171
+sspgname  P 62 
+fspgname  P 62
+pgname    6 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/3
+primoper  x,y,z
+primoper  -y,x-y,z+2/3
+primoper  -x+y,-x,z+1/3
+primoper  -x,-y,z
+primoper  y,-x+y,z+2/3
+primoper  x-y,x,z+1/3
+centoper  x,y,z
+endofdef
+
+
+spgid  172
+sspgname  P 64 
+fspgname  P 64
+pgname    6 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/3
+primoper  x,y,z
+primoper  -y,x-y,z+1/3
+primoper  -x+y,-x,z+2/3
+primoper  -x,-y,z
+primoper  y,-x+y,z+1/3
+primoper  x-y,x,z+2/3
+centoper  x,y,z
+endofdef
+
+
+spgid  173
+sspgname  P 63 
+fspgname  P 63
+pgname    6 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/2
+primoper  x-y,x,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  174
+sspgname  P -6 
+fspgname  P -6
+pgname    -6 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,-z
+primoper  x,y,-z
+primoper  -y,x-y,-z
+primoper  -x+y,-x,z
+centoper  x,y,z
+endofdef
+
+
+spgid  175
+sspgname  P 6/m 
+fspgname  P 6/m
+pgname    6/m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z
+primoper  y,-x+y,z
+primoper  x-y,x,z
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  x,y,-z
+primoper  -y,x-y,-z
+primoper  -x+y,-x,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  176
+sspgname  P 63/m 
+fspgname  P 63/m
+pgname    6/m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/2
+primoper  x-y,x,z+1/2
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  x,y,-z+1/2
+primoper  -y,x-y,-z+1/2
+primoper  -x+y,-x,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  177
+sspgname  P 6 2 2 
+fspgname  P 6 2 2
+pgname    6 2 2 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z
+primoper  y,-x+y,z
+primoper  x-y,x,z
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+primoper  -y,-x,-z
+primoper  -x+y,y,-z
+primoper  x,x-y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  178
+sspgname  P 61 2 2 
+fspgname  P 61 2 2
+pgname    6 2 2 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/12
+primoper  x,y,z
+primoper  -y,x-y,z+1/3
+primoper  -x+y,-x,z+2/3
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+5/6
+primoper  x-y,x,z+1/6
+primoper  y,x,-z+1/3
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z+2/3
+primoper  -y,-x,-z+5/6
+primoper  -x+y,y,-z+1/2
+primoper  x,x-y,-z+1/6
+centoper  x,y,z
+endofdef
+
+
+spgid  179
+sspgname  P 65 2 2 
+fspgname  P 65 2 2
+pgname    6 2 2 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/12
+primoper  x,y,z
+primoper  -y,x-y,z+2/3
+primoper  -x+y,-x,z+1/3
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/6
+primoper  x-y,x,z+5/6
+primoper  y,x,-z+2/3
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z+1/3
+primoper  -y,-x,-z+1/6
+primoper  -x+y,y,-z+1/2
+primoper  x,x-y,-z+5/6
+centoper  x,y,z
+endofdef
+
+
+spgid  180
+sspgname  P 62 2 2 
+fspgname  P 62 2 2
+pgname    6 2 2 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z+2/3
+primoper  -x+y,-x,z+1/3
+primoper  -x,-y,z
+primoper  y,-x+y,z+2/3
+primoper  x-y,x,z+1/3
+primoper  y,x,-z+2/3
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z+1/3
+primoper  -y,-x,-z+2/3
+primoper  -x+y,y,-z
+primoper  x,x-y,-z+1/3
+centoper  x,y,z
+endofdef
+
+
+spgid  181
+sspgname  P 64 2 2 
+fspgname  P 64 2 2
+pgname    6 2 2 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/6
+primoper  x,y,z
+primoper  -y,x-y,z+1/3
+primoper  -x+y,-x,z+2/3
+primoper  -x,-y,z
+primoper  y,-x+y,z+1/3
+primoper  x-y,x,z+2/3
+primoper  y,x,-z+1/3
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z+2/3
+primoper  -y,-x,-z+1/3
+primoper  -x+y,y,-z
+primoper  x,x-y,-z+2/3
+centoper  x,y,z
+endofdef
+
+
+spgid  182
+sspgname  P 63 2 2 
+fspgname  P 63 2 2
+pgname    6 2 2 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/2
+primoper  x-y,x,z+1/2
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+primoper  -y,-x,-z+1/2
+primoper  -x+y,y,-z+1/2
+primoper  x,x-y,-z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  183
+sspgname  P 6 m m 
+fspgname  P 6 m m
+pgname    6 m m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<1
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z
+primoper  y,-x+y,z
+primoper  x-y,x,z
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+primoper  y,x,z
+primoper  x-y,-y,z
+primoper  -x,-x+y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  184
+sspgname  P 6 c c 
+fspgname  P 6 c c
+pgname    6 m m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z
+primoper  y,-x+y,z
+primoper  x-y,x,z
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+primoper  y,x,z+1/2
+primoper  x-y,-y,z+1/2
+primoper  -x,-x+y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  185
+sspgname  P 63 c m 
+fspgname  P 63 c m
+pgname    6 m m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/2
+primoper  x-y,x,z+1/2
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+primoper  y,x,z
+primoper  x-y,-y,z
+primoper  -x,-x+y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  186
+sspgname  P 63 m c 
+fspgname  P 63 m c
+pgname    6 m m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/2
+primoper  x-y,x,z+1/2
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+primoper  y,x,z+1/2
+primoper  x-y,-y,z+1/2
+primoper  -x,-x+y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  187
+sspgname  P -6 m 2 
+fspgname  P -6 m 2
+pgname    -6 m 2 
+crysym    hexagonal 
+xyzasu    0<=x<=2/3; 0<=y<=2/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  x,y,-z
+primoper  -y,x-y,-z
+primoper  -x+y,-x,-z
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+primoper  -y,-x,-z
+primoper  -x+y,y,-z
+primoper  x,x-y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  188
+sspgname  P -6 c 2 
+fspgname  P -6 c 2
+pgname    -6 m 2 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  x,y,-z+1/2
+primoper  -y,x-y,-z+1/2
+primoper  -x+y,-x,-z+1/2
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+primoper  -y,-x,-z
+primoper  -x+y,y,-z
+primoper  x,x-y,-z
+centoper  x,y,z
+endofdef
+
+
+spgid  189
+sspgname  P -6 2 m 
+fspgname  P -6 2 m
+pgname    -6 2 m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  x,y,-z
+primoper  -y,x-y,-z
+primoper  -x+y,-x,-z
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+primoper  y,x,z
+primoper  x-y,-y,z
+primoper  -x,-x+y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  190
+sspgname  P -6 2 c 
+fspgname  P -6 2 c
+pgname    -6 2 m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  x,y,-z+1/2
+primoper  -y,x-y,-z+1/2
+primoper  -x+y,-x,-z+1/2
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+primoper  y,x,z+1/2
+primoper  x-y,-y,z+1/2
+primoper  -x,-x+y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  191
+sspgname  P 6/m m m 
+fspgname  P 6/m 2/m 2/m
+pgname    6/m m m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<=1/2
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z
+primoper  y,-x+y,z
+primoper  x-y,x,z
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+primoper  -y,-x,-z
+primoper  -x+y,y,-z
+primoper  x,x-y,-z
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  x,y,-z
+primoper  -y,x-y,-z
+primoper  -x+y,-x,-z
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+primoper  y,x,z
+primoper  x-y,-y,z
+primoper  -x,-x+y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  192
+sspgname  P 6/m c c 
+fspgname  P 6/m 2/c 2/c
+pgname    6/m m m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z
+primoper  y,-x+y,z
+primoper  x-y,x,z
+primoper  y,x,-z+1/2
+primoper  x-y,-y,-z+1/2
+primoper  -x,-x+y,-z+1/2
+primoper  -y,-x,-z+1/2
+primoper  -x+y,y,-z+1/2
+primoper  x,x-y,-z+1/2
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  x,y,-z
+primoper  -y,x-y,-z
+primoper  -x+y,-x,-z
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+primoper  y,x,z+1/2
+primoper  x-y,-y,z+1/2
+primoper  -x,-x+y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  193
+sspgname  P 63/m c m 
+fspgname  P 63/m 2/c 2/m
+pgname    6/m m m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=1/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/2
+primoper  x-y,x,z+1/2
+primoper  y,x,-z+1/2
+primoper  x-y,-y,-z+1/2
+primoper  -x,-x+y,-z+1/2
+primoper  -y,-x,-z
+primoper  -x+y,y,-z
+primoper  x,x-y,-z
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  x,y,-z+1/2
+primoper  -y,x-y,-z+1/2
+primoper  -x+y,-x,-z+1/2
+primoper  -y,-x,z+1/2
+primoper  -x+y,y,z+1/2
+primoper  x,x-y,z+1/2
+primoper  y,x,z
+primoper  x-y,-y,z
+primoper  -x,-x+y,z
+centoper  x,y,z
+endofdef
+
+
+spgid  194
+sspgname  P 63/m m c 
+fspgname  P 63/m 2/m 2/c
+pgname    6/m m m 
+crysym    hexagonal 
+xyzasu    0<=x<1; 0<=y<=2/3; 0<=z<=1/4
+primoper  x,y,z
+primoper  -y,x-y,z
+primoper  -x+y,-x,z
+primoper  -x,-y,z+1/2
+primoper  y,-x+y,z+1/2
+primoper  x-y,x,z+1/2
+primoper  y,x,-z
+primoper  x-y,-y,-z
+primoper  -x,-x+y,-z
+primoper  -y,-x,-z+1/2
+primoper  -x+y,y,-z+1/2
+primoper  x,x-y,-z+1/2
+primoper  -x,-y,-z
+primoper  y,-x+y,-z
+primoper  x-y,x,-z
+primoper  x,y,-z+1/2
+primoper  -y,x-y,-z+1/2
+primoper  -x+y,-x,-z+1/2
+primoper  -y,-x,z
+primoper  -x+y,y,z
+primoper  x,x-y,z
+primoper  y,x,z+1/2
+primoper  x-y,-y,z+1/2
+primoper  -x,-x+y,z+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  195
+sspgname  P 2 3 
+fspgname  P 2 3
+pgname    2 3 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+centoper  x,y,z
+endofdef
+
+
+spgid  196
+sspgname  F 2 3 
+fspgname  F 2 3
+pgname    2 3 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  197
+sspgname  I 2 3 
+fspgname  I 2 3
+pgname    2 3 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  198
+sspgname  P 21 3 
+fspgname  P 21 3
+pgname    2 3 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  z,x,y
+primoper  z+1/2,-x+1/2,-y
+primoper  -z+1/2,-x,y+1/2
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,-x
+primoper  -y+1/2,-z,x+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  199
+sspgname  I 21 3 
+fspgname  I 21 3
+pgname    2 3 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  z,x,y
+primoper  z+1/2,-x+1/2,-y
+primoper  -z+1/2,-x,y+1/2
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,-x
+primoper  -y+1/2,-z,x+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  200
+sspgname  P m -3 
+fspgname  P 2/m -3
+pgname    m -3 
+crysym    cubic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -z,-x,-y
+primoper  -z,x,y
+primoper  z,x,-y
+primoper  z,-x,y
+primoper  -y,-z,-x
+primoper  y,-z,x
+primoper  -y,z,x
+primoper  y,z,-x
+centoper  x,y,z
+endofdef
+
+
+spgid  201
+sspgname  P n -3 
+fspgname  P 2/n -3
+pgname    m -3 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -z+1/2,-x+1/2,-y+1/2
+primoper  -z+1/2,x+1/2,y+1/2
+primoper  z+1/2,x+1/2,-y+1/2
+primoper  z+1/2,-x+1/2,y+1/2
+primoper  -y+1/2,-z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,x+1/2
+primoper  -y+1/2,z+1/2,x+1/2
+primoper  y+1/2,z+1/2,-x+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  202
+sspgname  F m -3 
+fspgname  F 2/m -3
+pgname    m -3 
+crysym    cubic 
+xyzasu    0<=x<=1/2; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -z,-x,-y
+primoper  -z,x,y
+primoper  z,x,-y
+primoper  z,-x,y
+primoper  -y,-z,-x
+primoper  y,-z,x
+primoper  -y,z,x
+primoper  y,z,-x
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  203
+sspgname  F d -3
+fspgname  F 2/d -3
+pgname    m -3
+crysym    cubic
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z
+primoper  -x+1/2,y,-z+1/2
+primoper  x,-y+1/2,-z+1/2
+primoper  z,x,y
+primoper  z,-x+1/2,-y+1/2
+primoper  -z+1/2,-x+1/2,y
+primoper  -z+1/2,x,-y+1/2
+primoper  y,z,x
+primoper  -y+1/2,z,-x+1/2
+primoper  y,-z+1/2,-x+1/2
+primoper  -y+1/2,-z+1/2,x
+primoper  -x+1/4,-y+1/4,-z+1/4
+primoper  x+3/4,y+3/4,-z+1/4
+primoper  x+3/4,-y+1/4,z+3/4
+primoper  -x+1/4,y+3/4,z+3/4
+primoper  -z+1/4,-x+1/4,-y+1/4
+primoper  -z+1/4,x+3/4,y+3/4
+primoper  z+3/4,x+3/4,-y+1/4
+primoper  z+3/4,-x+1/4,y+3/4
+primoper  -y+1/4,-z+1/4,-x+1/4
+primoper  y+3/4,-z+1/4,x+3/4
+primoper  -y+1/4,z+3/4,x+3/4
+primoper  y+3/4,z+3/4,-x+1/4
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  204
+sspgname  I m -3 
+fspgname  I 2/m -3
+pgname    m -3 
+crysym    cubic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -z,-x,-y
+primoper  -z,x,y
+primoper  z,x,-y
+primoper  z,-x,y
+primoper  -y,-z,-x
+primoper  y,-z,x
+primoper  -y,z,x
+primoper  y,z,-x
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  205
+sspgname  P a -3 
+fspgname  P 21/a -3
+pgname    m -3 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  z,x,y
+primoper  z+1/2,-x+1/2,-y
+primoper  -z+1/2,-x,y+1/2
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,-x
+primoper  -y+1/2,-z,x+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z+1/2
+primoper  x,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z
+primoper  -z,-x,-y
+primoper  -z+1/2,x+1/2,y
+primoper  z+1/2,x,-y+1/2
+primoper  z,-x+1/2,y+1/2
+primoper  -y,-z,-x
+primoper  y,-z+1/2,x+1/2
+primoper  -y+1/2,z+1/2,x
+primoper  y+1/2,z,-x+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  206
+sspgname  I a -3 
+fspgname  I 21/a -3
+pgname    m -3 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  z,x,y
+primoper  z+1/2,-x+1/2,-y
+primoper  -z+1/2,-x,y+1/2
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,-x
+primoper  -y+1/2,-z,x+1/2
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z+1/2
+primoper  x,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z
+primoper  -z,-x,-y
+primoper  -z+1/2,x+1/2,y
+primoper  z+1/2,x,-y+1/2
+primoper  z,-x+1/2,y+1/2
+primoper  -y,-z,-x
+primoper  y,-z+1/2,x+1/2
+primoper  -y+1/2,z+1/2,x
+primoper  y+1/2,z,-x+1/2
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  207
+sspgname  P 4 3 2 
+fspgname  P 4 3 2
+pgname    4 3 2 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  y,-x,z
+primoper  -y,x,z
+primoper  x,z,-y
+primoper  -x,z,y
+primoper  -x,-z,-y
+primoper  x,-z,y
+primoper  z,y,-x
+primoper  z,-y,x
+primoper  -z,y,x
+primoper  -z,-y,-x
+centoper  x,y,z
+endofdef
+
+
+spgid  208
+sspgname  P 42 3 2 
+fspgname  P 42 3 2
+pgname    4 3 2 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  x+1/2,z+1/2,-y+1/2
+primoper  -x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,-z+1/2,-y+1/2
+primoper  x+1/2,-z+1/2,y+1/2
+primoper  z+1/2,y+1/2,-x+1/2
+primoper  z+1/2,-y+1/2,x+1/2
+primoper  -z+1/2,y+1/2,x+1/2
+primoper  -z+1/2,-y+1/2,-x+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  209
+sspgname  F 4 3 2 
+fspgname  F 4 3 2
+pgname    4 3 2 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  y,-x,z
+primoper  -y,x,z
+primoper  x,z,-y
+primoper  -x,z,y
+primoper  -x,-z,-y
+primoper  x,-z,y
+primoper  z,y,-x
+primoper  z,-y,x
+primoper  -z,y,x
+primoper  -z,-y,-x
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  210
+sspgname  F 41 3 2 
+fspgname  F 41 3 2
+pgname    4 3 2 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y+1/2,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x+1/2,y+1/2
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y+1/2,z+1/2,-x
+primoper  y+1/2,-z,-x+1/2
+primoper  -y,-z,x
+primoper  y+1/4,x+1/4,-z+1/4
+primoper  -y+3/4,-x+1/4,-z+3/4
+primoper  y+3/4,-x+1/4,z+3/4
+primoper  -y+1/4,x+1/4,z+1/4
+primoper  x+1/4,z+1/4,-y+1/4
+primoper  -x+1/4,z+1/4,y+1/4
+primoper  -x+3/4,-z+1/4,-y+3/4
+primoper  x+3/4,-z+1/4,y+3/4
+primoper  z+1/4,y+3/4,-x+3/4
+primoper  z+1/4,-y+3/4,x+3/4
+primoper  -z+3/4,y+3/4,x+1/4
+primoper  -z+1/4,-y+1/4,-x+1/4
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  211
+sspgname  I 4 3 2 
+fspgname  I 4 3 2
+pgname    4 3 2 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  y,-x,z
+primoper  -y,x,z
+primoper  x,z,-y
+primoper  -x,z,y
+primoper  -x,-z,-y
+primoper  x,-z,y
+primoper  z,y,-x
+primoper  z,-y,x
+primoper  -z,y,x
+primoper  -z,-y,-x
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  212
+sspgname  P 43 3 2 
+fspgname  P 43 3 2
+pgname    4 3 2 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  z,x,y
+primoper  z+1/2,-x+1/2,-y
+primoper  -z+1/2,-x,y+1/2
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,-x
+primoper  -y+1/2,-z,x+1/2
+primoper  y+1/4,x+3/4,-z+3/4
+primoper  -y+1/4,-x+1/4,-z+1/4
+primoper  y+3/4,-x+3/4,z+1/4
+primoper  -y+3/4,x+1/4,z+3/4
+primoper  x+1/4,z+3/4,-y+3/4
+primoper  -x+3/4,z+1/4,y+3/4
+primoper  -x+1/4,-z+1/4,-y+1/4
+primoper  x+3/4,-z+3/4,y+1/4
+primoper  z+1/4,y+3/4,-x+3/4
+primoper  z+3/4,-y+3/4,x+1/4
+primoper  -z+3/4,y+1/4,x+3/4
+primoper  -z+1/4,-y+1/4,-x+1/4
+centoper  x,y,z
+endofdef
+
+
+spgid  213
+sspgname  P 41 3 2 
+fspgname  P 41 3 2
+pgname    4 3 2 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  z,x,y
+primoper  z+1/2,-x+1/2,-y
+primoper  -z+1/2,-x,y+1/2
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,-x
+primoper  -y+1/2,-z,x+1/2
+primoper  y+3/4,x+1/4,-z+1/4
+primoper  -y+3/4,-x+3/4,-z+3/4
+primoper  y+1/4,-x+1/4,z+3/4
+primoper  -y+1/4,x+3/4,z+1/4
+primoper  x+3/4,z+1/4,-y+1/4
+primoper  -x+1/4,z+3/4,y+1/4
+primoper  -x+3/4,-z+3/4,-y+3/4
+primoper  x+1/4,-z+1/4,y+3/4
+primoper  z+3/4,y+1/4,-x+1/4
+primoper  z+1/4,-y+1/4,x+3/4
+primoper  -z+1/4,y+3/4,x+1/4
+primoper  -z+3/4,-y+3/4,-x+3/4
+centoper  x,y,z
+endofdef
+
+
+spgid  214
+sspgname  I 41 3 2 
+fspgname  I 41 3 2
+pgname    4 3 2 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x+1/2,y,-z
+primoper  x,-y,-z+1/2
+primoper  z,x,y
+primoper  z,-x,-y+1/2
+primoper  -z+1/2,-x,y+1/2
+primoper  -z+1/2,x,-y
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,-x
+primoper  -y+1/2,-z,x+1/2
+primoper  y+1/4,x+3/4,-z+3/4
+primoper  -y+1/4,-x+1/4,-z+1/4
+primoper  y+1/4,-x+1/4,z+3/4
+primoper  -y+1/4,x+3/4,z+1/4
+primoper  x+1/4,z+3/4,-y+3/4
+primoper  -x+1/4,z+3/4,y+1/4
+primoper  -x+1/4,-z+1/4,-y+1/4
+primoper  x+1/4,-z+1/4,y+3/4
+primoper  z+3/4,y+1/4,-x+1/4
+primoper  z+3/4,-y+3/4,x+1/4
+primoper  -z+3/4,y+1/4,x+3/4
+primoper  -z+1/4,-y+1/4,-x+1/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  215
+sspgname  P -4 3 m 
+fspgname  P -4 3 m
+pgname    -4 3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,z
+primoper  -y,-x,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,z,y
+primoper  -x,z,-y
+primoper  -x,-z,y
+primoper  x,-z,-y
+primoper  z,y,x
+primoper  z,-y,-x
+primoper  -z,y,-x
+primoper  -z,-y,x
+centoper  x,y,z
+endofdef
+
+
+spgid  216
+sspgname  F -4 3 m 
+fspgname  F -4 3 m
+pgname    -4 3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,z
+primoper  -y,-x,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,z,y
+primoper  -x,z,-y
+primoper  -x,-z,y
+primoper  x,-z,-y
+primoper  z,y,x
+primoper  z,-y,-x
+primoper  -z,y,-x
+primoper  -z,-y,x
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  217
+sspgname  I -4 3 m 
+fspgname  I -4 3 m
+pgname    -4 3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,z
+primoper  -y,-x,z
+primoper  y,-x,-z
+primoper  -y,x,-z
+primoper  x,z,y
+primoper  -x,z,-y
+primoper  -x,-z,y
+primoper  x,-z,-y
+primoper  z,y,x
+primoper  z,-y,-x
+primoper  -z,y,-x
+primoper  -z,-y,x
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  218
+sspgname  P -4 3 n 
+fspgname  P -4 3 n
+pgname    -4 3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y+1/2,x+1/2,z+1/2
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,-x+1/2,-z+1/2
+primoper  -y+1/2,x+1/2,-z+1/2
+primoper  x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,z+1/2,-y+1/2
+primoper  -x+1/2,-z+1/2,y+1/2
+primoper  x+1/2,-z+1/2,-y+1/2
+primoper  z+1/2,y+1/2,x+1/2
+primoper  z+1/2,-y+1/2,-x+1/2
+primoper  -z+1/2,y+1/2,-x+1/2
+primoper  -z+1/2,-y+1/2,x+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  219
+sspgname  F -4 3 c 
+fspgname  F -4 3 c
+pgname    -4 3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x+1/2,-y+1/2,z
+primoper  -x+1/2,y+1/2,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z+1/2,-x+1/2,y
+primoper  -z+1/2,x+1/2,-y
+primoper  y,z,x
+primoper  -y+1/2,z,-x+1/2
+primoper  y,-z+1/2,-x+1/2
+primoper  -y,-z,x
+primoper  y,x+1/2,z
+primoper  -y+1/2,-x,z
+primoper  y+1/2,-x,-z
+primoper  -y,x+1/2,-z
+primoper  x,z+1/2,y
+primoper  -x,z+1/2,-y
+primoper  -x+1/2,-z,y
+primoper  x+1/2,-z,-y
+primoper  z+1/2,y,x
+primoper  z+1/2,-y+1/2,-x+1/2
+primoper  -z,y,-x+1/2
+primoper  -z,-y,x+1/2
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  220
+sspgname  I -4 3 d 
+fspgname  I -4 3 d
+pgname    -4 3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<1; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y+1/2,z
+primoper  -x,y+1/2,-z+1/2
+primoper  x,-y,-z+1/2
+primoper  z,x,y
+primoper  z,-x,-y+1/2
+primoper  -z,-x+1/2,y
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y,-z,-x+1/2
+primoper  -y+1/2,-z,x+1/2
+primoper  y+3/4,x+3/4,z+3/4
+primoper  -y+1/4,-x+3/4,z+3/4
+primoper  y+1/4,-x+3/4,-z+1/4
+primoper  -y+3/4,x+3/4,-z+1/4
+primoper  x+3/4,z+3/4,y+3/4
+primoper  -x+3/4,z+3/4,-y+1/4
+primoper  -x+1/4,-z+3/4,y+3/4
+primoper  x+1/4,-z+3/4,-y+1/4
+primoper  z+1/4,y+1/4,x+1/4
+primoper  z+3/4,-y+1/4,-x+3/4
+primoper  -z+1/4,y+1/4,-x+3/4
+primoper  -z+1/4,-y+3/4,x+3/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  221
+sspgname  P m -3 m 
+fspgname  P m -3 m
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/2
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  y,-x,z
+primoper  -y,x,z
+primoper  x,z,-y
+primoper  -x,z,y
+primoper  -x,-z,-y
+primoper  x,-z,y
+primoper  z,y,-x
+primoper  z,-y,x
+primoper  -z,-y,-x
+primoper  -z,y,x
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -z,-x,-y
+primoper  -z,x,y
+primoper  z,x,-y
+primoper  z,-x,y
+primoper  -y,-z,-x
+primoper  y,-z,x
+primoper  -y,z,x
+primoper  y,z,-x
+primoper  -y,-x,z
+primoper  y,x,z
+primoper  -y,x,-z
+primoper  y,-x,-z
+primoper  -x,-z,y
+primoper  x,-z,-y
+primoper  x,z,y
+primoper  -x,z,-y
+primoper  -z,-y,x
+primoper  -z,y,-x
+primoper  z,-y,-x
+primoper  z,y,x
+centoper  x,y,z
+endofdef
+
+
+spgid  222
+sspgname  P n -3 n 
+fspgname  P 4/n -3 2/n
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  y,-x,z
+primoper  -y,x,z
+primoper  x,z,-y
+primoper  -x,z,y
+primoper  -x,-z,-y
+primoper  x,-z,y
+primoper  z,y,-x
+primoper  z,-y,x
+primoper  -z,y,x
+primoper  -z,-y,-x
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -z+1/2,-x+1/2,-y+1/2
+primoper  -z+1/2,x+1/2,y+1/2
+primoper  z+1/2,x+1/2,-y+1/2
+primoper  z+1/2,-x+1/2,y+1/2
+primoper  -y+1/2,-z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,x+1/2
+primoper  -y+1/2,z+1/2,x+1/2
+primoper  y+1/2,z+1/2,-x+1/2
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+primoper  -y+1/2,x+1/2,-z+1/2
+primoper  y+1/2,-x+1/2,-z+1/2
+primoper  -x+1/2,-z+1/2,y+1/2
+primoper  x+1/2,-z+1/2,-y+1/2
+primoper  x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,z+1/2,-y+1/2
+primoper  -z+1/2,-y+1/2,x+1/2
+primoper  -z+1/2,y+1/2,-x+1/2
+primoper  z+1/2,-y+1/2,-x+1/2
+primoper  z+1/2,y+1/2,x+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  223
+sspgname  P m -3 n 
+fspgname  P 42/m -3 2/n
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  x+1/2,z+1/2,-y+1/2
+primoper  -x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,-z+1/2,-y+1/2
+primoper  x+1/2,-z+1/2,y+1/2
+primoper  z+1/2,y+1/2,-x+1/2
+primoper  z+1/2,-y+1/2,x+1/2
+primoper  -z+1/2,y+1/2,x+1/2
+primoper  -z+1/2,-y+1/2,-x+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -z,-x,-y
+primoper  -z,x,y
+primoper  z,x,-y
+primoper  z,-x,y
+primoper  -y,-z,-x
+primoper  y,-z,x
+primoper  -y,z,x
+primoper  y,z,-x
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+primoper  -y+1/2,x+1/2,-z+1/2
+primoper  y+1/2,-x+1/2,-z+1/2
+primoper  -x+1/2,-z+1/2,y+1/2
+primoper  x+1/2,-z+1/2,-y+1/2
+primoper  x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,z+1/2,-y+1/2
+primoper  -z+1/2,-y+1/2,x+1/2
+primoper  -z+1/2,y+1/2,-x+1/2
+primoper  z+1/2,-y+1/2,-x+1/2
+primoper  z+1/2,y+1/2,x+1/2
+centoper  x,y,z
+endofdef
+
+
+spgid  224
+sspgname  P n -3 m 
+fspgname  P 42/n -3 2/m
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  x+1/2,z+1/2,-y+1/2
+primoper  -x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,-z+1/2,-y+1/2
+primoper  x+1/2,-z+1/2,y+1/2
+primoper  z+1/2,y+1/2,-x+1/2
+primoper  z+1/2,-y+1/2,x+1/2
+primoper  -z+1/2,y+1/2,x+1/2
+primoper  -z+1/2,-y+1/2,-x+1/2
+primoper  -x+1/2,-y+1/2,-z+1/2
+primoper  x+1/2,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z+1/2
+primoper  -z+1/2,-x+1/2,-y+1/2
+primoper  -z+1/2,x+1/2,y+1/2
+primoper  z+1/2,x+1/2,-y+1/2
+primoper  z+1/2,-x+1/2,y+1/2
+primoper  -y+1/2,-z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,x+1/2
+primoper  -y+1/2,z+1/2,x+1/2
+primoper  y+1/2,z+1/2,-x+1/2
+primoper  -y,-x,z
+primoper  y,x,z
+primoper  -y,x,-z
+primoper  y,-x,-z
+primoper  -x,-z,y
+primoper  x,-z,-y
+primoper  x,z,y
+primoper  -x,z,-y
+primoper  -z,-y,x
+primoper  -z,y,-x
+primoper  z,y,x
+primoper  z,-y,-x
+centoper  x,y,z
+endofdef
+
+
+spgid  225
+sspgname  F m -3 m 
+fspgname  F 4/m -3 2/m
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<=1/2; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  y,-x,z
+primoper  -y,x,z
+primoper  x,z,-y
+primoper  -x,z,y
+primoper  -x,-z,-y
+primoper  x,-z,y
+primoper  z,y,-x
+primoper  z,-y,x
+primoper  -z,-y,-x
+primoper  -z,y,x
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -z,-x,-y
+primoper  -z,x,y
+primoper  z,x,-y
+primoper  z,-x,y
+primoper  -y,-z,-x
+primoper  y,-z,x
+primoper  -y,z,x
+primoper  y,z,-x
+primoper  -y,-x,z
+primoper  y,x,z
+primoper  -y,x,-z
+primoper  y,-x,-z
+primoper  -x,-z,y
+primoper  x,-z,-y
+primoper  x,z,y
+primoper  -x,z,-y
+primoper  -z,-y,x
+primoper  -z,y,-x
+primoper  z,-y,-x
+primoper  z,y,x
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  226
+sspgname  F m -3 c 
+fspgname  F 4/m -3 2/c
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<=1/2; 0<=y<=1/4; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y+1/2,x+1/2,-z+1/2
+primoper  -y+1/2,-x+1/2,-z+1/2
+primoper  y+1/2,-x+1/2,z+1/2
+primoper  -y+1/2,x+1/2,z+1/2
+primoper  x+1/2,z+1/2,-y+1/2
+primoper  -x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,-z+1/2,-y+1/2
+primoper  x+1/2,-z+1/2,y+1/2
+primoper  z+1/2,y+1/2,-x+1/2
+primoper  z+1/2,-y+1/2,x+1/2
+primoper  -z+1/2,y+1/2,x+1/2
+primoper  -z+1/2,-y+1/2,-x+1/2
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -z,-x,-y
+primoper  -z,x,y
+primoper  z,x,-y
+primoper  z,-x,y
+primoper  -y,-z,-x
+primoper  y,-z,x
+primoper  -y,z,x
+primoper  y,z,-x
+primoper  -y+1/2,-x+1/2,z+1/2
+primoper  y+1/2,x+1/2,z+1/2
+primoper  -y+1/2,x+1/2,-z+1/2
+primoper  y+1/2,-x+1/2,-z+1/2
+primoper  -x+1/2,-z+1/2,y+1/2
+primoper  x+1/2,-z+1/2,-y+1/2
+primoper  x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,z+1/2,-y+1/2
+primoper  -z+1/2,-y+1/2,x+1/2
+primoper  -z+1/2,y+1/2,-x+1/2
+primoper  z+1/2,-y+1/2,-x+1/2
+primoper  z+1/2,y+1/2,x+1/2
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  227
+sspgname  F d -3 m 
+fspgname  F 41/d -3 2/m
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x,-y+1/2,z+1/2
+primoper  -x,y,-z
+primoper  x,-y+1/2,-z+1/2
+primoper  z,x,y
+primoper  z,-x+1/2,-y+1/2
+primoper  -z,-x+1/2,y+1/2
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y+1/2,z+1/2,-x
+primoper  y+1/2,-z,-x+1/2
+primoper  -y+1/2,-z+1/2,x
+primoper  y+3/4,x+1/4,-z+3/4
+primoper  -y+1/4,-x+1/4,-z+1/4
+primoper  y+3/4,-x+1/4,z+3/4
+primoper  -y+1/4,x+1/4,z+1/4
+primoper  x+3/4,z+1/4,-y+3/4
+primoper  -x+1/4,z+1/4,y+1/4
+primoper  -x+1/4,-z+1/4,-y+1/4
+primoper  x+3/4,-z+1/4,y+3/4
+primoper  z+1/4,y+3/4,-x+3/4
+primoper  z+1/4,-y+1/4,x+1/4
+primoper  -z+1/4,-y+3/4,-x+3/4
+primoper  -z+3/4,y+1/4,x+3/4
+primoper  -x+1/4,-y+1/4,-z+1/4
+primoper  x+1/4,y+3/4,-z+3/4
+primoper  x+1/4,-y+1/4,z+1/4
+primoper  -x+1/4,y+3/4,z+3/4
+primoper  -z+1/4,-x+1/4,-y+1/4
+primoper  -z+1/4,x+3/4,y+3/4
+primoper  z+1/4,x+3/4,-y+3/4
+primoper  z+1/4,-x+1/4,y+1/4
+primoper  -y+1/4,-z+1/4,-x+1/4
+primoper  y+3/4,-z+3/4,x+1/4
+primoper  -y+3/4,z+1/4,x+3/4
+primoper  y+3/4,z+3/4,-x+1/4
+primoper  y,-x,-z
+primoper  y,x,z
+primoper  -y+1/2,-x,z+1/2
+primoper  -y+1/2,x,-z+1/2
+primoper  -x+1/2,-z,y+1/2
+primoper  x,-z,-y
+primoper  x,z,y
+primoper  -x+1/2,z,-y+1/2
+primoper  -z,-y+1/2,x+1/2
+primoper  -z,y,-x
+primoper  z+1/2,-y,-x+1/2
+primoper  z,y+1/2,x+1/2
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  228
+sspgname  F d -3 c 
+fspgname  F 41/d -3 2/c
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<1/8
+primoper  x,y,z
+primoper  -x,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,-z
+primoper  x+1/2,-y,-z+1/2
+primoper  z,x,y
+primoper  z+1/2,-x,-y+1/2
+primoper  -z,-x+1/2,y+1/2
+primoper  -z+1/2,x+1/2,-y
+primoper  y,z,x
+primoper  -y+1/2,z+1/2,-x
+primoper  y+1/2,-z,-x+1/2
+primoper  -y,-z+1/2,x+1/2
+primoper  y+3/4,x+1/4,-z+3/4
+primoper  -y+1/4,-x+1/4,-z+1/4
+primoper  y+1/4,-x+3/4,z+3/4
+primoper  -y+3/4,x+3/4,z+1/4
+primoper  x+3/4,z+1/4,-y+3/4
+primoper  -x+3/4,z+3/4,y+1/4
+primoper  -x+1/4,-z+1/4,-y+1/4
+primoper  x+1/4,-z+3/4,y+3/4
+primoper  z+3/4,y+1/4,-x+3/4
+primoper  z+1/4,-y+3/4,x+3/4
+primoper  -z+3/4,y+3/4,x+1/4
+primoper  -z+1/4,-y+1/4,-x+1/4
+primoper  -x+3/4,-y+3/4,-z+3/4
+primoper  x+3/4,y+1/4,-z+1/4
+primoper  x+1/4,-y+1/4,z+3/4
+primoper  -x+1/4,y+3/4,z+1/4
+primoper  -z+3/4,-x+3/4,-y+3/4
+primoper  -z+1/4,x+3/4,y+1/4
+primoper  z+3/4,x+1/4,-y+1/4
+primoper  z+1/4,-x+1/4,y+3/4
+primoper  -y+3/4,-z+3/4,-x+3/4
+primoper  y+1/4,-z+1/4,x+3/4
+primoper  -y+1/4,z+3/4,x+1/4
+primoper  y+3/4,z+1/4,-x+1/4
+primoper  -y,-x+1/2,z
+primoper  y+1/2,x+1/2,z+1/2
+primoper  -y+1/2,x,-z
+primoper  y,-x,-z+1/2
+primoper  -x,-z+1/2,y
+primoper  x,-z,-y+1/2
+primoper  x+1/2,z+1/2,y+1/2
+primoper  -x+1/2,z,-y
+primoper  -z,-y+1/2,x
+primoper  -z+1/2,y,-x
+primoper  z,-y,-x+1/2
+primoper  z+1/2,y+1/2,x+1/2
+centoper  x,y,z
+centoper  x,y+1/2,z+1/2
+centoper  x+1/2,y,z+1/2
+centoper  x+1/2,y+1/2,z
+endofdef
+
+
+spgid  229
+sspgname  I m -3 m 
+fspgname  I 4/m -3 2/m
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<=1/2; 0<=y<=1/2; 0<=z<=1/4
+primoper  x,y,z
+primoper  -x,-y,z
+primoper  -x,y,-z
+primoper  x,-y,-z
+primoper  z,x,y
+primoper  z,-x,-y
+primoper  -z,-x,y
+primoper  -z,x,-y
+primoper  y,z,x
+primoper  -y,z,-x
+primoper  y,-z,-x
+primoper  -y,-z,x
+primoper  y,x,-z
+primoper  -y,-x,-z
+primoper  y,-x,z
+primoper  -y,x,z
+primoper  x,z,-y
+primoper  -x,z,y
+primoper  -x,-z,-y
+primoper  x,-z,y
+primoper  z,y,-x
+primoper  z,-y,x
+primoper  -z,-y,-x
+primoper  -z,y,x
+primoper  -x,-y,-z
+primoper  x,y,-z
+primoper  x,-y,z
+primoper  -x,y,z
+primoper  -z,-x,-y
+primoper  -z,x,y
+primoper  z,x,-y
+primoper  z,-x,y
+primoper  -y,-z,-x
+primoper  y,-z,x
+primoper  -y,z,x
+primoper  y,z,-x
+primoper  -y,-x,z
+primoper  y,x,z
+primoper  -y,x,-z
+primoper  y,-x,-z
+primoper  -x,-z,y
+primoper  x,-z,-y
+primoper  x,z,y
+primoper  -x,z,-y
+primoper  -z,-y,x
+primoper  -z,y,-x
+primoper  z,-y,-x
+primoper  z,y,x
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef
+
+
+spgid  230
+sspgname  I a -3 d 
+fspgname  I 41/a -3 2/d
+pgname    m -3 m 
+crysym    cubic 
+xyzasu    0<=x<1; 0<=y<=1/4; 0<=z<=1/8
+primoper  x,y,z
+primoper  -x+1/2,-y,z+1/2
+primoper  -x,y+1/2,-z+1/2
+primoper  x+1/2,-y+1/2,-z
+primoper  z,x,y
+primoper  z+1/2,-x+1/2,-y
+primoper  -z+1/2,-x,y+1/2
+primoper  -z,x+1/2,-y+1/2
+primoper  y,z,x
+primoper  -y,z+1/2,-x+1/2
+primoper  y+1/2,-z+1/2,-x
+primoper  -y+1/2,-z,x+1/2
+primoper  y+3/4,x+1/4,-z+1/4
+primoper  -y+3/4,-x+3/4,-z+3/4
+primoper  y+1/4,-x+1/4,z+3/4
+primoper  -y+1/4,x+3/4,z+1/4
+primoper  x+3/4,z+1/4,-y+1/4
+primoper  -x+1/4,z+3/4,y+1/4
+primoper  -x+3/4,-z+3/4,-y+3/4
+primoper  x+1/4,-z+1/4,y+3/4
+primoper  z+3/4,y+1/4,-x+1/4
+primoper  z+1/4,-y+1/4,x+3/4
+primoper  -z+1/4,y+3/4,x+1/4
+primoper  -z+3/4,-y+3/4,-x+3/4
+primoper  -x,-y,-z
+primoper  x+1/2,y,-z+1/2
+primoper  x,-y+1/2,z+1/2
+primoper  -x+1/2,y+1/2,z
+primoper  -z,-x,-y
+primoper  -z+1/2,x+1/2,y
+primoper  z+1/2,x,-y+1/2
+primoper  z,-x+1/2,y+1/2
+primoper  -y,-z,-x
+primoper  y,-z+1/2,x+1/2
+primoper  -y+1/2,z+1/2,x
+primoper  y+1/2,z,-x+1/2
+primoper  -y+1/4,-x+3/4,z+3/4
+primoper  y+1/4,x+1/4,z+1/4
+primoper  -y+3/4,x+3/4,-z+1/4
+primoper  y+3/4,-x+1/4,-z+3/4
+primoper  -x+1/4,-z+3/4,y+3/4
+primoper  x+3/4,-z+1/4,-y+3/4
+primoper  x+1/4,z+1/4,y+1/4
+primoper  -x+3/4,z+3/4,-y+1/4
+primoper  -z+1/4,-y+3/4,x+3/4
+primoper  -z+3/4,y+3/4,-x+1/4
+primoper  z+3/4,-y+1/4,-x+3/4
+primoper  z+1/4,y+1/4,x+1/4
+centoper  x,y,z
+centoper  x+1/2,y+1/2,z+1/2
+endofdef

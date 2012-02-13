@@ -4,6 +4,10 @@ CHANGE LOG
 
 2012-02-13 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* adding necessary files to build PyMOL v1.5.0.1
+
+2012-02-13 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* Open Source PyMOL v1.5.0.1
 
 	* improved rendering Performance
