@@ -163,6 +163,12 @@ class Storage:
         if (mode[0:1]=='r') and (string.find(fname,':')>1):
             import urllib
             return urllib.urlopen(fname)
+        elif fname.endswith(".gz") or fname.endswith(".pze") or fname.endswith("pzw"):
+            gzContent = open(fname,mode).read()
+            import StringIO
+            fakestream = StringIO.StringIO(gzContent)
+            import gzip
+            return gzip.GzipFile(fileobj=fakestream)
         else:
             return open(fname,mode)
         
@@ -656,7 +662,7 @@ atomic_number = {
 implicit_valence = {
     'H'  :  {0:1,1:0},
     'C'  :  {0:4,1:3,2:2,3:1,4:0},
-    'N'  :  {0:3,1:2,2:1,3:0},
+    'N'  :  {0:3,1:2,2:1,3:0,4:0},
     'O'  :  {0:2,1:1,2:0},
     'F'  :  {0:1,1:0},
     'Cl' :  {0:1,1:0},
@@ -668,11 +674,11 @@ implicit_valence = {
     'K'  :  {0:0,1:0},     # as drawn
     'Cu' :  {0:0,1:0,2:0}, # as drawn
     'CU' :  {0:0,1:0,2:0}, # as drawn
-    'Zn' :  {0:0,1:0,2:0}, # as drawn
-    'ZN' :  {0:0,1:0,2:0}, # as drawn
+    'Zn' :  {0:0,1:0,2:0,4:0}, # as drawn
+    'ZN' :  {0:0,1:0,2:0,4:0}, # as drawn
     'Mg' :  {0:1,1:0},
     'MG' :  {0:1,1:0},
     'Ca' :  {0:1,1:0},
     'CA' :  {0:1,1:0},
-    'P'  :  {6:0},
+    'P'  :  {0:3,1:2,2:1,3:0,4:0,5:0,6:0},
     }

@@ -282,6 +282,11 @@ int AtomInfoCheckUniqueBondID(PyMOLGlobals * G, BondType * bi)
   return bi->unique_id;
 }
 
+void BondTypeInit(BondType *bt){
+  bt->oldid = -1;
+  bt->unique_id = 0;
+  bt->has_setting = 0;
+}
 int AtomInfoInit(PyMOLGlobals * G)
 {
   register CAtomInfo *I = NULL;
@@ -969,7 +974,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * I)
 #else
   PyObject *result = NULL;
 
-  result = PyList_New(47);
+  result = PyList_New(48);
   PyList_SetItem(result, 0, PyInt_FromLong(I->resv));
   PyList_SetItem(result, 1, PyString_FromString(I->chain));
   PyList_SetItem(result, 2, PyString_FromString(I->alt));
@@ -1030,6 +1035,14 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * I)
   PyList_SetItem(result, 44, PyFloat_FromDouble(I->U12));
   PyList_SetItem(result, 45, PyFloat_FromDouble(I->U13));
   PyList_SetItem(result, 46, PyFloat_FromDouble(I->U23));
+  {
+    char null_st[1] = "";
+    char *st = null_st;
+    st = null_st;
+    if(I->custom)
+      st = OVLexicon_FetchCString(G->Lexicon, I->custom);
+    PyList_SetItem(result, 47, PyString_FromString(st));
+  }
 
   return (PConvAutoNone(result));
 #endif
@@ -1178,6 +1191,17 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
     if(ok)
       ok = PConvPyFloatToFloat(PyList_GetItem(list, 46), &I->U23);
   }
+  if(ok && (ll > 47)) {
+    OrthoLineType temp;
+    PConvPyStrToStr(PyList_GetItem(list, 47), temp, sizeof(OrthoLineType));
+    I->custom = 0;
+    if(temp[0]) {
+      OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
+      if(OVreturn_IS_OK(result)) {
+        I->custom = result.word;
+      }
+    }
+  }
   return (ok);
 #endif
 }
@@ -1201,6 +1225,9 @@ void AtomInfoCopy(PyMOLGlobals * G, AtomInfoType * src, AtomInfoType * dst)
   }
   if(dst->textType) {
     OVLexicon_IncRef(G->Lexicon, dst->textType);
+  }
+  if(dst->custom) {
+    OVLexicon_IncRef(G->Lexicon, dst->custom);
   }
 }
 
@@ -1235,6 +1262,9 @@ void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai)
   CAtomInfo *I = G->AtomInfo;
   if(ai->textType) {
     OVLexicon_DecRef(G->Lexicon, ai->textType);
+  }
+  if(ai->custom) {
+    OVLexicon_DecRef(G->Lexicon, ai->custom);
   }
   if(ai->has_setting && ai->unique_id) {
     SettingUniqueDetachChain(G, ai->unique_id);
@@ -1441,7 +1471,10 @@ void AtomInfoBracketResidueFast(PyMOLGlobals * G, AtomInfoType * ai0, int n0, in
                                 int *st, int *nd)
 {
   /* efficient but unreliable way to find where residue atoms are located in an object 
-   * for purpose of residue-based operations */
+   * for purpose of residue-based operations.
+   * This function finds all atoms in the AtomInfoType array in both directions that 
+   * belong to the same residue. It starts the search from the "cur" offset, and returns
+   * the beginning offset (st) and the ending offset (nd).*/
   int a;
   AtomInfoType *ai1;
 
@@ -1904,8 +1937,11 @@ void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1)
 
 int AtomInfoGetColor(PyMOLGlobals * G, AtomInfoType * at1)
 {
+  return AtomInfoGetColorWithElement(G, at1, at1->elem);
+}
+int AtomInfoGetColorWithElement(PyMOLGlobals * G, AtomInfoType * at1, char *n)
+{
   CAtomInfo *I = G->AtomInfo;
-  char *n = at1->elem;
   int color = I->DefaultColor;
 
   if(!n[0]) {
@@ -2383,10 +2419,10 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, CObject * obj, AtomInfoType * rec,
   return (index);
 }
 
-void AtomInfoFreeSortedIndexes(PyMOLGlobals * G, int *index, int *outdex)
+void AtomInfoFreeSortedIndexes(PyMOLGlobals * G, int **index, int **outdex)
 {
-  FreeP(index);
-  FreeP(outdex);
+  FreeP(*index);
+  FreeP(*outdex);
 }
 
 static int AtomInfoNameCompare(PyMOLGlobals * G, char *name1, char *name2)
@@ -2408,6 +2444,60 @@ static int AtomInfoNameCompare(PyMOLGlobals * G, char *name1, char *name2)
     return cmp;
   return WordCompare(G, name1, name2, true);
 
+}
+
+int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+{
+  return (at1->resv != at2->resv ||
+	  at1->customType != at2->customType ||
+	  at1->priority != at2->priority ||
+	  at1->b != at2->b ||
+	  at1->q != at2->q ||
+	  at1->vdw != at2->vdw ||
+	  at1->partialCharge != at2->partialCharge ||
+	  at1->formalCharge != at2->formalCharge ||
+	  at1->atom != at2->atom ||
+	  //	  at1->selEntry != at2->selEntry ||
+	  at1->color != at2->color ||
+	  at1->id != at2->id ||
+	  at1->flags != at2->flags ||
+	  //	  at1->temp1 != at2->temp1 ||
+	  at1->unique_id != at2->unique_id ||
+	  at1->discrete_state != at2->discrete_state ||
+	  at1->elec_radius != at2->elec_radius ||
+	  at1->rank != at2->rank ||
+	  at1->atomic_color != at2->atomic_color ||
+	  at1->textType != at2->textType ||
+	  at1->custom != at2->custom ||
+	  at1->label != at2->label ||
+	  //	  !memcmp(at1->visRep, at2->visRep, sizeof(signed char)*cRepCnt) || // should this be in here?
+	  at1->stereo != at2->stereo ||
+	  at1->mmstereo != at2->mmstereo ||
+	  at1->hydrogen != at2->hydrogen ||
+	  at1->cartoon != at2->cartoon ||
+	  at1->hetatm != at2->hetatm ||
+	  at1->bonded != at2->bonded ||
+	  //	  at1->chemFlag != at2->chemFlag ||
+	  //	  at1->geom != at2->geom ||
+	  //	  at1->valence != at2->valence ||  // Valence should not be in, since it is not initially computed?
+	  at1->deleteFlag != at2->deleteFlag ||
+	  at1->updateFlag != at2->updateFlag ||
+	  at1->masked != at2->masked ||
+	  at1->protekted != at2->protekted ||
+	  at1->protons != at2->protons ||
+	  at1->hb_donor != at2->hb_donor ||
+	  at1->hb_acceptor != at2->hb_acceptor ||
+	  at1->has_setting != at2->has_setting ||
+	  strcmp(at1->chain, at2->chain) || 
+	  strcmp(at1->alt, at2->alt) || 
+	  strcmp(at1->resi, at2->resi) || 
+	  strcmp(at1->segi, at2->segi) || 
+	  strcmp(at1->resn, at2->resn) || 
+	  strcmp(at1->name, at2->name) || 
+	  strcmp(at1->elem, at2->elem) || 
+	  strcmp(at1->ssType, at2->ssType));
+	  // should these variables be in here?
+	  //  float U11, U22, U33, U12, U13, U23;
 }
 
 int AtomInfoCompare(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
@@ -3903,3 +3993,14 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
     I->hydrogen = true;
   /*  printf("I->name %s I->priority %d\n",I->name,I->priority); */
 }
+
+int BondTypeCompare(PyMOLGlobals * G, BondType * bt1, BondType * bt2){
+  return (bt1->index[0] != bt2->index[0] ||
+	  bt1->index[1] != bt2->index[1] ||
+	  bt1->order != bt2->order ||
+	  bt1->id != bt2->id ||
+	  bt1->unique_id != bt2->unique_id ||
+	  bt1->stereo != bt2->stereo ||
+	  bt1->has_setting != bt2->has_setting);
+}
+

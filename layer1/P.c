@@ -292,6 +292,12 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
             if(at->textType)
               st = OVLexicon_FetchCString(G->Lexicon, at->textType);
             label_len = label_copy_text(label, st, label_len, label_max);
+          } else if(!strcmp(tok, "custom")) {
+            char null_st[1] = "";
+            char *st = null_st;
+            if(at->custom)
+              st = OVLexicon_FetchCString(G->Lexicon, at->custom);
+            label_len = label_copy_text(label, st, label_len, label_max);
           } else if(!strcmp(tok, "elem")) {
             label_len = label_copy_text(label, at->elem, label_len, label_max);
           } else if(!strcmp(tok, "geom")) {
@@ -837,6 +843,10 @@ int PAlterAtomState(PyMOLGlobals * G, float *v, char *expr, int read_only,
         st = OVLexicon_FetchCString(G->Lexicon, at->textType);
       PConvStringToPyDictItem(dict, "text_type", st);
 
+      if(at->custom)
+        st = OVLexicon_FetchCString(G->Lexicon, at->custom);
+      PConvStringToPyDictItem(dict, "custom", st);
+
       st = null_st;
       if(at->label)
         st = OVLexicon_FetchCString(G->Lexicon, at->label);
@@ -937,6 +947,7 @@ int PAlterAtom(PyMOLGlobals * G,
   int flags;
   PyObject *segi_id1, *segi_id2 = NULL;
   PyObject *text_type_id1, *text_type_id2 = NULL;
+  PyObject *custom_id1, *custom_id2 = NULL;
   SSType ssType;
   PyObject *ss_id1, *ss_id2 = NULL;
   char atype[7], mmstereotype[2];
@@ -1014,6 +1025,12 @@ int PAlterAtom(PyMOLGlobals * G,
     text_type_id1 = PConvStringToPyDictItem(dict, "text_type", st);
 
     st = null_st;
+
+    if(at->custom)
+      st = OVLexicon_FetchCString(G->Lexicon, at->custom);
+    custom_id1 = PConvStringToPyDictItem(dict, "custom", st);
+
+    st = null_st;
     if(at->label)
       st = OVLexicon_FetchCString(G->Lexicon, at->label);
     label_id1 = PConvStringToPyDictItem(dict, "label", st);
@@ -1061,6 +1078,8 @@ int PAlterAtom(PyMOLGlobals * G,
       else if(!(chain_id2 = PyDict_GetItemString(dict, "chain")))
         result = false;
       else if(!(text_type_id2 = PyDict_GetItemString(dict, "text_type")))
+        result = false;
+      else if(!(custom_id2 = PyDict_GetItemString(dict, "custom")))
         result = false;
       else if(!(ss_id2 = PyDict_GetItemString(dict, "ss")))
         result = false;
@@ -1175,6 +1194,23 @@ int PAlterAtom(PyMOLGlobals * G,
             OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
             if(OVreturn_IS_OK(result)) {
               at->textType = result.word;
+            }
+          }
+        }
+      }
+      if(custom_id1 != custom_id2) {
+
+        OrthoLineType temp;
+        if(at->custom) {
+          OVLexicon_DecRef(G->Lexicon, at->custom);
+        }
+        at->custom = 0;
+
+        if(PConvPyObjectToStrMaxLen(custom_id2, temp, sizeof(OrthoLineType) - 1)) {
+          if(temp[0]) {
+            OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
+            if(OVreturn_IS_OK(result)) {
+              at->custom = result.word;
             }
           }
         }
@@ -1342,6 +1378,11 @@ int PLabelAtom(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, int
     if(at->textType)
       st = OVLexicon_FetchCString(G->Lexicon, at->textType);
     PConvStringToPyDictItem(dict, "text_type", st);
+
+    st = null_st;
+    if(at->custom)
+      st = OVLexicon_FetchCString(G->Lexicon, at->custom);
+    PConvStringToPyDictItem(dict, "custom", st);
 
     st = null_st;
     if(at->label)

@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
  * (2) printfs needs to be FeedbackAdd or PRINTFD
  */
 
+#include "os_python.h"
 #include <string.h>
 #include "ShaderMgr.h"
 #include "OOMac.h"
@@ -26,100 +27,14 @@ Z* -------------------------------------------------------------------
 #include "PyMOLOptions.h"
 #include "os_gl.h"
 #include "Feedback.h"
+#include "MemoryDebug.h"
+#include "Setting.h"
+#include "Scene.h"
+#include "Color.h"
 
 #define MAX_LOG_LEN 1024
 
-const char* default_vs = "varying vec3 N, L0, H0, L1, H1;"
-"varying vec4 D0, A0, D1, A1;"
-"varying float fog;"
-"void main()"
-"{"
-"  N = normalize(gl_NormalMatrix * gl_Normal);"
-"  vec3 eye_pos = vec3(gl_ModelViewMatrix * gl_Vertex);"
-"  vec3 aux = vec3(gl_LightSource[0].position - vec4(eye_pos, 1.0));"
-"  L0 = normalize(aux);"
-"  H0 = normalize(gl_LightSource[0].halfVector.xyz);"
-"  aux = vec3(gl_LightSource[1].position - vec4(eye_pos, 1.0));"
-"  L1 = normalize(aux);"
-"  H1 = normalize(gl_LightSource[1].halfVector.xyz);"
-"  A0 = gl_LightSource[0].ambient * gl_Color;"
-"  D0 = gl_LightSource[0].diffuse * gl_Color;"
-"  A1 = gl_LightSource[1].ambient * gl_Color;"
-"  D1 = gl_LightSource[1].diffuse * gl_Color;"
-"  gl_FogFragCoord = -eye_pos.z;"
-"  fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;"
-"  gl_Position = ftransform();"
-"}";
-
-const char* default_fs = "varying vec3 N, L0, H0, L1, H1;"
-"varying vec4 D0, A0, D1, A1;"
-""
-"uniform float fog_r;"
-"uniform float fog_g;"
-"uniform float fog_b;"
-"uniform float fog_enabled;"
-""
-"varying float fog;"
-""
-"void main()"
-"{"
-"  vec3 n, h;"
-"  float NdotL, NdotH;"
-"  vec4 color = A0 + A1;"
-"  n = normalize(N);"
-"  NdotL = max(dot(n, normalize(L0)), 0.0);"
-"  float shininess = gl_FrontMaterial.shininess;"
-"  if (NdotL > 0.0) {"
-"      color += D0 * NdotL;"
-"      h = normalize(H0);"
-"      NdotH = max(dot(n, h), 0.0);"
-"      color += gl_LightSource[0].specular * pow(NdotH, shininess);"
-"  }"
-"  NdotL = max(dot(n, normalize(L1)), 0.0);"
-"  if (NdotL > 0.0) {"
-"      color += D1 * NdotL;"
-"      h = normalize(H1);"
-"      NdotH = max(dot(n, h), 0.0);"
-"      color += gl_LightSource[1].specular * pow(NdotH, shininess);"
-"  }"
-""
-"  vec3 fog_color = vec3(fog_r, fog_g, fog_b);"
-"  float cfog = mix(1.0, clamp(fog, 0.0, 1.0), fog_enabled);"
-""
-"  gl_FragColor = vec4(mix(fog_color, color.rgb, cfog), color.a);"
-"}";
-
-const char *volume_vs = "varying float fog;"
-""
-"void main()"
-"{"
-"  vec4 vertex = gl_ModelViewMatrix * gl_Vertex;"
-"  gl_TexCoord[0] = gl_MultiTexCoord0;"
-"  gl_ClipVertex = vertex;"
-"  gl_Position = ftransform();"
-"  gl_FogFragCoord = -vertex.z;"
-"  fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;"
-"}";
-const char *volume_fs = "uniform sampler3D volumeTex;"
-"uniform sampler1D colorTex;"
-""
-"uniform float fog_r;"
-"uniform float fog_g;"
-"uniform float fog_b;"
-"uniform float fog_enabled;"
-"varying float fog;"
-""
-"void main()"
-"{"
-"  vec3 fog_color = vec3(fog_r, fog_g, fog_b);"
-"  vec4 color = texture1D(colorTex, texture3D(volumeTex, gl_TexCoord[0].xyz).x);"
-"  if (color.a == 0.0) discard;"
-"  float cfog = mix(1.0, clamp(fog, 0.0, 1.0), fog_enabled);"
-"  gl_FragColor = vec4(vec3(mix(fog_color, color.rgb, cfog)), color.a);"
-"}";
-
-
-
+#include "ShaderText.h"
 
 void getGLVersion(PyMOLGlobals * G, int *major, int* minor);
 void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor);
@@ -157,19 +72,25 @@ void ShaderMgrInit(PyMOLGlobals * G) {
 void ShaderMgrConfig(PyMOLGlobals * G) {
   int major, minor;
   char buf[50];
-  CShaderPrg *p;
-  int hasShaders = 0;
+  CShaderPrg *defaultShader, *volumeShader, *sphereShader,
+    *cylinderShader, *cylinderNoFFShader, *spheredirectShader;
+
+  int hasShaders = 0, hasCylinderShader = 0;
   int ok = 0;
   GLenum err; 
 
   ok = (G && G->HaveGUI); /* && G->ValidContext); */
 
+#ifndef _PYMOL_PURE_OPENGL_ES
   if (ok) {
     err = glewInit();
   } else {
     return;
   }
-
+#else
+  err = -1;
+#endif
+#ifndef ANDROID
   if (GLEW_OK==err) {
     if (GLEW_VERSION_2_0) {
       FeedbackAdd(G, " Detected OpenGL version 2.0 or greater.  Shaders available.\n");
@@ -182,91 +103,131 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
   else {
     /* print info on glew error? */
     FeedbackAdd(G, " There was an error intializing GLEW.  Basic graphics, including\n shaders and volumes may be unavailable.\n");
-    /*fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));*/
+#ifndef _PYMOL_PURE_OPENGL_ES
+    fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));
+#endif
     return;
-  }
-
-  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-  /* USE GLEW instead */
-/* #ifdef __WIN32 */
-#if 0
-      printf("glActiveTexture is: %x\n", glActiveTexture);
-
-  if(!(glGenProgramsARB && glBindProgramARB &&
-       glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB)) {
-    glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
-    glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
-    glDeleteProgramsARB =
-      (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
-    glProgramStringARB =
-      (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
-    glProgramEnvParameter4fARB =
-      (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
-    glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
-    glGetProgramiv = (PFNGLGETPROGRAMIVPROC) wglGetProcAddress("glGetProgramiv");
-    glAttachShader = (PFNGLATTACHSHADERPROC) wglGetProcAddress("glAttachShader");
-    glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC) wglGetProcAddress("glGetShaderInfoLog");
-    glGetShaderiv = (PFNGLGETSHADERIVPROC) wglGetProcAddress("glGetShaderiv");
-    glCompileShader = (PFNGLCOMPILESHADERPROC) wglGetProcAddress("glCompileShader");
-    glShaderSource = (PFNGLSHADERSOURCEPROC) wglGetProcAddress("glShaderSource");
-    glCreateShader = (PFNGLCREATESHADERPROC) wglGetProcAddress("glCreateShader");
-    glCreateProgram = (PFNGLCREATEPROGRAMPROC) wglGetProcAddress("glCreateProgram");
-    glDeleteProgram  = (PFNGLDELETEPROGRAMPROC) wglGetProcAddress("glDeleteProgram");
-    glDeleteShader = (PFNGLDELETESHADERPROC) wglGetProcAddress("glDeleteShader");
-    glUseProgram = (PFNGLUSEPROGRAMPROC) wglGetProcAddress("glUseProgram");
-    glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC) wglGetProcAddress("glGetProgramInfoLog");
-    glLinkProgram = (PFNGLLINKPROGRAMPROC) wglGetProcAddress("glLinkProgram");
-    glUniform1i = (PFNGLUNIFORM1IPROC) wglGetProcAddress("glUniform1i");
-    glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC) wglGetProcAddress("glGetUniformLocation");
-    glUniform1f = (PFNGLUNIFORM1FPROC) wglGetProcAddress("glUniform1f");
-    glTexImage3D = getTexImage3D(); /*(PFNGLTEXIMAGE3DPROC) wglGetProcAddress("glTexImage3D");*/
-    glActiveTexture = getActiveTexture(); /*(PFNGLACTIVETEXTUREPROC) wglGetProcAddress("glActiveTexture");*/
-
-    if (! glActiveTexture) {
-      FeedbackAdd(G, " Could not bind the glActiveTexture function.  No volume shaders.\n");
-      abort();
-    } 
-    /* else  */
-    /*   printf("glActiveTexture is: %x\n", glActiveTexture); */
-
-    if (! glTexImage3D) {
-      FeedbackAdd(G, " Could not bind the glTexImage3D function.  No volume shaders.\n");
-      abort();
-    } 
-    /* else */
-    /*   printf("glTexImage3D is: %x\n", glTexImage3D); */
   }
 #endif
 
   /* First try to load configuration from files in $PYMOL_PATH, if they don't exist 
      load from const char * */
   //  FeedbackEnable(G, FB_ShaderMgr, FB_Everything);
-  p = CShaderPrg_NewFromFile(G, "default", "default.vs", "default.fs");
-  if (!p){
-    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+#if defined(PURE_OPENGL_ES_2)
+  /* these are the shaders for the IPhone (Compiled but not used yet) */
+  PRINTFB(G, FB_ShaderMgr, FB_Results) "reading in default_es.vs and default_es.fs\n" ENDFB(G);
+  defaultShader = CShaderPrg_NewFromFile(G, "default", "default_es.vs", "default_es.fs");
+#elif defined(OPENGL_ES_2)
+  /* these are the shaders that uses ES2 */
+  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in default_es2.vs and default_es2.fs\n" ENDFB(G);
+  defaultShader = CShaderPrg_NewFromFile(G, "default", "default_es2.vs", "default_es2.fs");
+#else
+  /* these are the original default shaders */
+  PRINTFB(G, FB_ShaderMgr, FB_Results) "reading in default.vs and default.fs\n" ENDFB(G);
+  defaultShader = CShaderPrg_NewFromFile(G, "default", "default.vs", "default.fs");
+#endif
+  if (!defaultShader){
+    PRINTFB(G, FB_ShaderMgr, FB_Results)
       " PyMOLShader_NewFromFile-Warning: default shader files not found, loading from memory.\n" ENDFB(G);
-    p = CShaderPrg_New(G, "default", default_vs, default_fs);
+    defaultShader = CShaderPrg_New(G, "default", default_vs, default_fs);
   }
-  hasShaders = (p!=0);
 
-  CShaderMgr_AddShaderPrg(G->ShaderMgr, p);
-  p = CShaderPrg_NewFromFile(G, "volume", "volume.vs", "volume.fs");
-  if (!p){
+#if defined(OPENGL_ES_2)
+  if (defaultShader){
+    GLenum err ;
+    glBindAttribLocation(defaultShader->id, VERTEX_POS, "a_Vertex");
+    if ((err = glGetError())){
+        PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR: a_Vertex: %d\n", err ENDFB(G);
+    }
+    glBindAttribLocation(defaultShader->id, VERTEX_NORMAL, "a_Normal");
+    if ((err = glGetError())){
+        PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR: a_Normal: %d\n", err ENDFB(G);
+    }
+    glBindAttribLocation(defaultShader->id, VERTEX_COLOR, "a_Color");
+    if ((err = glGetError())){
+        PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR: a_Color: %d\n", err ENDFB(G);
+    }
+    CShaderPrg_Link(defaultShader);	  
+  }
+#endif
+
+  hasShaders = (defaultShader!=0);
+
+  CShaderMgr_AddShaderPrg(G->ShaderMgr, defaultShader);
+
+#ifndef _PYMOL_PURE_OPENGL_ES
+  volumeShader = CShaderPrg_NewFromFile(G, "volume", "volume.vs", "volume.fs");
+  if (!volumeShader){
     PRINTFB(G, FB_ShaderMgr, FB_Warnings)
       " PyMOLShader_NewFromFile-Warning: volume shader files not found, loading from memory.\n" ENDFB(G);
-    p = CShaderPrg_New(G, "volume", volume_vs, volume_fs);
+    volumeShader = CShaderPrg_New(G, "volume", volume_vs, volume_fs);
   }
-  hasShaders &= (p!=0);
-  CShaderMgr_AddShaderPrg(G->ShaderMgr, p);
+  hasShaders &= (volumeShader!=0);
+  CShaderMgr_AddShaderPrg(G->ShaderMgr, volumeShader);
+
+  sphereShader = CShaderPrg_NewFromFile(G, "sphere", "sphere.vs", "sphere.fs");
+  if (!sphereShader){
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+      " PyMOLShader_NewFromFile-Warning: sphere shader files not found, loading from memory.\n" ENDFB(G);
+    sphereShader = CShaderPrg_New(G, "sphere", sphere_vs, sphere_fs);
+  }
+  hasShaders &= (sphereShader!=0);
+  CShaderMgr_AddShaderPrg(G->ShaderMgr, sphereShader);
+
+  spheredirectShader = CShaderPrg_NewFromFile(G, "spheredirect", "spheredirect.vs", 0);
+  if (!spheredirectShader){
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+      " PyMOLShader_NewFromFile-Warning: sphere shader files not found, loading from memory.\n" ENDFB(G);
+    spheredirectShader = CShaderPrg_New(G, "spheredirect", spheredirect_vs, 0);
+  }
+  if (sphereShader){
+    spheredirectShader->fid = sphereShader->fid;
+    glAttachShader(spheredirectShader->id, spheredirectShader->fid);
+    CShaderPrg_Link(spheredirectShader);
+  }
+  hasShaders &= (spheredirectShader!=0);
+  CShaderMgr_AddShaderPrg(G->ShaderMgr, spheredirectShader);
+  
+
+  cylinderShader = CShaderPrg_NewFromFile(G, "cylinder", "cylinder.vs", "cylinder.fs");
+  if (!cylinderShader){
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+      " PyMOLShader_NewFromFile-Warning: cylinder shader files not found, loading from memory.\n" ENDFB(G);
+    cylinderShader = CShaderPrg_New(G, "cylinder", cylinder_vs, cylinder_fs);
+  }
+  hasCylinderShader &= (cylinderShader!=0);
+  CShaderMgr_AddShaderPrg(G->ShaderMgr, cylinderShader);
+
+  cylinderNoFFShader = CShaderPrg_NewFromFile(G, "cylinder_no_ff", 0, "cylinder_no_ff.fs");
+  if (!cylinderNoFFShader){
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+      " PyMOLShader_NewFromFile-Warning: cylinder_no_ff shader files not found, loading from memory.\n" ENDFB(G);
+    cylinderNoFFShader = CShaderPrg_New(G, "cylinder_no_ff", 0, cylinder_no_ff_fs);
+  }
+  if (cylinderShader){
+    cylinderNoFFShader->vid = cylinderShader->vid;
+    glAttachShader(cylinderNoFFShader->id, cylinderNoFFShader->vid);
+    CShaderPrg_Link(cylinderNoFFShader);
+  }
+  hasShaders &= (cylinderNoFFShader!=0);
+  CShaderMgr_AddShaderPrg(G->ShaderMgr, cylinderNoFFShader);
+
   /* report GLSL version */
   if (G && G->Option && !G->Option->quiet) {
     getGLSLVersion(G, &major, &minor);
     sprintf(buf, " Detected GLSL version %d.%d.\n", major, minor);
     FeedbackAdd(G, buf);
   }
+#endif
 
   G->ShaderMgr->ShadersPresent = hasShaders;
 
+#ifdef PURE_OPENGL_ES_2
+  CShaderPrg_Enable_DefaultShader(G);
+#endif
+  if (hasShaders){
+    SettingSetGlobal_b(G, cSetting_use_shaders, 1);
+  }
 }
 
 /* getGLVersion -- determine user's GL version
@@ -295,6 +256,7 @@ void getGLVersion(PyMOLGlobals * G, int *major, int* minor) {
  * major, rval for major
  * minor, rval for minor
  */
+#ifndef _PYMOL_PURE_OPENGL_ES
 void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
   int gl_major, gl_minor;
   *major = *minor = 0;
@@ -325,7 +287,7 @@ void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
     }
   }
 }
-
+#endif
 
 
 
@@ -345,15 +307,18 @@ CShaderMgr * CShaderMgr_New(PyMOLGlobals * G)
     /* error out */
     if (G && G->Option && !G->Option->quiet) {
     PRINTFB(G, FB_ShaderMgr, FB_Errors)
-      " CShaderMgr_New-Error: Failed to create the shader manager.  Shaders disabled.\n" ENDFB(G)
+      " CShaderMgr_New-Error: Failed to create the shader manager.  Shader disabled.\n" ENDFB(G)
     }
     return NULL;
   }
 
-
   I->G = G;
+  I->current_shader = 0;
   DListInit(I->programs, prev, next, CShaderPrg);
   I->ShadersPresent = 0;
+  I->vbos_to_free = 0;
+  I->number_of_vbos_to_free = 0;
+  I->stereo_flag = 0;
   return I;
 }
 
@@ -399,13 +364,17 @@ int CShaderMgr_RemoveShaderPrg(CShaderMgr * I, const char * name)
 
 CShaderPrg * CShaderMgr_GetShaderPrg(CShaderMgr * I, const char * name)
 {
-  CShaderPrg * p = NULL;
+  CShaderPrg * p = NULL, *ret = NULL;
   DListIterate(I->programs, p, next) 
     {
-      if (p && strcmp(p->name,name)==0) break;
+      if (p && strcmp(p->name,name)==0){
+	ret = p;
+	break;
+      }
     }
 
-  return p;
+  I->current_shader = ret;
+  return ret;
 }
 
 int CShaderMgr_ShadersPresent(CShaderMgr * I)
@@ -466,7 +435,8 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
   res = fread(p, size, 1, f);
   /* error reading shader */
   if(1!=res) {
-    printf("size(%d)!=res(%d)\n", size,res);
+    PRINTFB(G, FB_ShaderMgr, FB_Errors)
+      " PyMOLShader_NewFromFile-Error: size(%ld)!=res(%ld)\n", size,res ENDFB(G);
     return NULL;
   }
 
@@ -478,6 +448,104 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
 }
 
 
+#ifdef _PYMOL_OPENGL_SHADERS
+
+#ifndef GL_FRAGMENT_PROGRAM_ARB
+#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
+#endif
+
+static GLboolean ProgramStringIsNative(PyMOLGlobals * G,
+                                       GLenum target, GLenum format,
+                                       GLsizei len, const GLvoid * string)
+{
+  GLint errorPos, isNative;
+  glProgramStringARB(target, format, len, string);
+  glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
+  glGetProgramivARB(target, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
+  if((errorPos == -1) && (isNative == 1))
+    return GL_TRUE;
+  else if(errorPos >= 0) {
+    if(Feedback(G, FB_OpenGL, FB_Errors)) {
+      printf("OpenGL-Error: ARB shader error at char %d\n---->%s\n", errorPos,
+             ((char *) string) + errorPos);
+    }
+  }
+  return GL_FALSE;
+}
+#endif
+
+/* ============================================================================
+ * CShaderPrg -- Simple Shader class
+ */
+CShaderPrg * CShaderPrg_NewARB(PyMOLGlobals * G, const char * name, const char * v, const char * f)
+{
+  /* if v == f == NULL, read 'name.vs' and 'name.fs' from disk */
+
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#ifdef WIN32
+  if(!(glGenProgramsARB && glBindProgramARB &&
+       glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB)) {
+    glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
+    glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
+    glDeleteProgramsARB =
+      (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
+    glProgramStringARB =
+      (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
+    glProgramEnvParameter4fARB =
+      (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
+    glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
+  }
+
+  if(glGenProgramsARB && glBindProgramARB &&
+     glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB)
+#endif
+  {
+    /* END PROPRIETARY CODE SEGMENT */
+
+#ifdef _PYMOL_OPENGL_SHADERS
+    int ok = true;
+    GLuint programs[2];
+    glGenProgramsARB(2, programs);
+    
+    /* load the vertex program */
+    glBindProgramARB(GL_VERTEX_PROGRAM_ARB, programs[0]);
+    
+    ok = ok && (ProgramStringIsNative(G, GL_VERTEX_PROGRAM_ARB,
+				      GL_PROGRAM_FORMAT_ASCII_ARB, strlen(v), v));
+    
+    if(Feedback(G, FB_OpenGL, FB_Debugging))
+      PyMOLCheckOpenGLErr("loading vertex program");
+    
+    /* load the fragment program */
+    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, programs[1]);
+    
+    ok = ok && (ProgramStringIsNative(G, GL_FRAGMENT_PROGRAM_ARB,
+				      GL_PROGRAM_FORMAT_ASCII_ARB, strlen(f), f));
+    
+    if(Feedback(G, FB_OpenGL, FB_Debugging))
+      PyMOLCheckOpenGLErr("loading fragment program");
+    if(ok) {
+      CShaderPrg * I = NULL;
+      
+      DListElemAlloc(G, I, CShaderPrg);
+      DListElemInit(I, prev, next);
+
+      I->G = G;
+      I->name = strdup(name);
+
+      I->vid = programs[0];
+      I->fid = programs[1];
+
+      CShaderMgr_AddShaderPrg(G->ShaderMgr, I);
+
+      return I;
+    } else {
+      glDeleteProgramsARB(2, programs);
+    }
+#endif
+  }
+  return NULL;
+}
 
 /* ============================================================================
  * CShaderPrg -- Simple Shader class
@@ -491,76 +559,90 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
   DListElemAlloc(G, I, CShaderPrg);
   DListElemInit(I, prev, next);
 
+  I->G = G;
   I->name = strdup(name);
+
   I->id = glCreateProgram();
   PRINTFB(G, FB_ShaderMgr, FB_Debugging)
     "Created program with id: %d\n", I->id ENDFB(G);
 
   /* VERTEX shader setup */
   /* CShaderPrg_InitShader(I, GL_VERTEX_SHADER); */
-  I->v = strdup(v);
-  I->vid = glCreateShader(GL_VERTEX_SHADER);
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-    "Created vertex shader with id: %d\n", I->vid ENDFB(G);
-  glShaderSource(I->vid, 1, (const GLchar**) &I->v, NULL);
-  glCompileShader((GLuint) I->vid);
-  /* verify compilation */
-  glGetShaderiv(I->vid, GL_COMPILE_STATUS, &status);
-  if (!status) {
-    if (G && G->Option && !G->Option->quiet) {
-      PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_New-Error: vertex shader compilation failed; log follows.\n" ENDFB(G);
-      glGetShaderInfoLog(I->vid, MAX_LOG_LEN, &howLong, infoLog);
-      PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	"infoLog=%s\n", infoLog ENDFB(G);
+  if (v){
+    I->v = strdup(v);
+    I->vid = glCreateShader(GL_VERTEX_SHADER);
+    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
+      "Created vertex shader with id: %d\n", I->vid ENDFB(G);
+    glShaderSource(I->vid, 1, (const GLchar**) &I->v, NULL);
+    glCompileShader((GLuint) I->vid);
+    /* verify compilation */
+    glGetShaderiv(I->vid, GL_COMPILE_STATUS, &status);
+    if (!status) {
+      if (G && G->Option && !G->Option->quiet) {
+	PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_New-Error: vertex shader compilation failed name='%s'; log follows.\n", I->name ENDFB(G);
+	glGetShaderInfoLog(I->vid, MAX_LOG_LEN, &howLong, infoLog);
+	PRINTFB(G, FB_ShaderMgr, FB_Errors)
+	  "infoLog=%s\n", infoLog ENDFB(G);
+      }
+      return 0;
     }
-    return 0;
+    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
+      "CShaderPrg_New-Message: vertex shader compiled.\n" ENDFB(G);
+    glAttachShader(I->id, I->vid);
   }
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-    "CShaderPrg_New-Message: vertex shader compiled.\n" ENDFB(G);
-  glAttachShader(I->id, I->vid);
 
-  /* FRAGMENT source setup */
-  /* CShaderPrg_InitShader(I, GL_FRAGMENT_SHADER); */
-  I->f = strdup(f);
-  I->fid = glCreateShader(GL_FRAGMENT_SHADER);
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-    "Created fragment shader with id: %d\n", I->fid 
-    ENDFB(G);
+  if (f){
+    /* FRAGMENT source setup */
+    /* CShaderPrg_InitShader(I, GL_FRAGMENT_SHADER); */
+    I->f = strdup(f);
+    I->fid = glCreateShader(GL_FRAGMENT_SHADER);
+    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
+      "Created fragment shader with id: %d\n", I->fid 
+      ENDFB(G);
+    
+    glShaderSource(I->fid, 1, (const GLchar **) &I->f, NULL);
+    glCompileShader((GLuint) I->fid);
+    /* verify compilation */
+    glGetShaderiv(I->fid, GL_COMPILE_STATUS, &status);
+    if (!status) {
+      if (G && G->Option && !G->Option->quiet) {
+	PRINTFB(G, FB_ShaderMgr, FB_Errors)
+	  " CShaderPrg-Error: fragment shader compilation failed name='%s'; log follows.\n", I->name
+	  ENDFB(G);
+	glGetShaderInfoLog(I->fid, MAX_LOG_LEN, &howLong, infoLog);
+	PRINTFB(G, FB_ShaderMgr, FB_Errors)
+	  "infoLog=%s\n", infoLog ENDFB(G);
+      }
+      return 0;
+    }    
+    glAttachShader(I->id, I->fid);
+  }
 
-  glShaderSource(I->fid, 1, (const GLchar **) &I->f, NULL);
-  glCompileShader((GLuint) I->fid);
-  /* verify compilation */
-  glGetShaderiv(I->fid, GL_COMPILE_STATUS, &status);
-  if (!status) {
-    if (G && G->Option && !G->Option->quiet) {
-      PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	" CShaderPrg-Error: fragment shader compilation failed; log follows.\n"
-	ENDFB(G);
-      glGetShaderInfoLog(I->fid, MAX_LOG_LEN, &howLong, infoLog);
-      PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	"infoLog=%s\n", infoLog ENDFB(G);
+  if (v && f){
+    /* Link the new program */
+    if (!CShaderPrg_Link(I)){
+      CShaderPrg_Delete(I);
+      return NULL;
     }
-    return 0;
-  }    
-  glAttachShader(I->id, I->fid);
-  
-  /* Link the new program */
-  CShaderPrg_Link(I);
-
+  }
   return I;
 }
 
 
 CShaderPrg * CShaderPrg_NewFromFile(PyMOLGlobals * G, const char * name, const char * vFile, const char * fFile)
 {
-  char *vFileStr, *fFileStr;
-  vFileStr = CShaderMgr_ReadShaderFromDisk(G, vFile);
-  if (!vFileStr){
-    return (NULL);
+  char *vFileStr = NULL, *fFileStr = NULL;
+  if (vFile){
+    vFileStr = CShaderMgr_ReadShaderFromDisk(G, vFile);
+    if (!vFileStr){
+      return (NULL);
+    }
   }
-  fFileStr = CShaderMgr_ReadShaderFromDisk(G, fFile);
-  if (!fFileStr){
-    return (NULL);
+  if (fFile){
+    fFileStr = CShaderMgr_ReadShaderFromDisk(G, fFile);
+    if (!fFileStr){
+      return (NULL);
+    }
   }
   return CShaderPrg_New(G, name, 
 			vFileStr, 
@@ -619,6 +701,15 @@ int CShaderPrg_Disable(CShaderPrg * p)
   return 1;
 }
 
+int CShaderPrg_DisableARB(CShaderPrg * p)
+{
+  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+#ifndef _PYMOL_PURE_OPENGL_ES
+  glDisable(GL_VERTEX_PROGRAM_ARB);
+#endif
+  return 1;
+}
+
  int CShaderPrg_IsLinked(CShaderPrg * I )
  {
    int status;
@@ -636,8 +727,12 @@ int CShaderPrg_Link(CShaderPrg * I)
   
   if (!CShaderPrg_IsLinked(I)) {
     if (G && G->Option && !G->Option->quiet) {
-      PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	" CShaderPrg_Link-Error: Shader program failed to link; log follows.\n"
+      GLint maxVarFloats[1];
+#ifndef _PYMOL_PURE_OPENGL_ES
+      glGetIntegerv(GL_MAX_VARYING_FLOATS, maxVarFloats);
+#endif
+    PRINTFB(G, FB_ShaderMgr, FB_Errors)
+	" CShaderPrg_Link-Error: Shader program failed to link name='%s'; GL_MAX_VARYING_FLOATS=%d log follows.\n", I->name, maxVarFloats[0]
 	ENDFB(G);
       glGetProgramInfoLog(I->id, MAX_LOG_LEN, &howLong, infoLog);
       PRINTFB(G, FB_ShaderMgr, FB_Errors)
@@ -662,6 +757,38 @@ int CShaderPrg_Set1i(CShaderPrg * p, const char * name, int i)
   return 1;
 }
 
+int CShaderPrg_Set3f(CShaderPrg * p, const char * name, float f1, float f2, float f3)
+{
+  if (p && p->id) {
+    GLint loc = glGetUniformLocation(p->id, name);
+    if (loc < 0)
+      return 0;
+    glUniform3f(loc, f1, f2, f3);
+  }
+  return 1;
+}
+
+int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, float* m) {
+  if (p && p->id) {
+    GLint loc = glGetUniformLocation(p->id, name);
+    if (loc < 0)
+      return 0;
+    glUniformMatrix3fv(loc, 1, GL_TRUE, m);
+  }
+  return 1;
+}
+
+int CShaderPrg_Set4f(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4)
+{
+  if (p && p->id) {
+    GLint loc = glGetUniformLocation(p->id, name);
+    if (loc < 0)
+      return 0;
+    glUniform4f(loc, f1, f2, f3, f4);
+  }
+  return 1;
+}
+
 int CShaderPrg_Set1f(CShaderPrg * p, const char * name, float f)
 {
   if (p && p->id) {
@@ -673,3 +800,282 @@ int CShaderPrg_Set1f(CShaderPrg * p, const char * name, float f)
   return 1;
 }
 
+int CShaderPrg_GetAttribLocation(CShaderPrg * p, const char * name)
+{
+  GLint loc = -1;
+
+  if (p && p->id) {
+    loc = glGetAttribLocation(p->id, name);
+    if (loc < 0)
+      return -1;
+  }
+  return loc;
+}
+
+void CShaderMgr_FreeAllVBOs(CShaderMgr * I){
+  GLuint *vboids = I->vbos_to_free, nvbos = I->number_of_vbos_to_free;
+  I->vbos_to_free = 0;
+  I->number_of_vbos_to_free = 0;
+  if (I && vboids){
+    GLuint i, nvbo=0 ;
+    for (i=0; i<nvbos; i++){
+      if (glIsBuffer(vboids[i])){
+	vboids[nvbo++] = vboids[i];
+      } else {
+	PRINTFB(I->G, FB_ShaderMgr, FB_Warnings) "WARNING: CShaderMgr_FreeAllVBOs() buffer is not a VBO i=%d vboids[i]=%d\n", i, vboids[i] ENDFB(I->G);
+      }
+    }
+    if (nvbo){
+      glDeleteBuffers(nvbo, vboids);
+    }
+    VLAFree(vboids);
+  }
+}
+
+#define STEP_FOR_BUF 100
+
+void CShaderMgr_AddVBOToFree(CShaderMgr * I, GLuint vboid){
+  if (I && I->vbos_to_free){
+    int nvbostofree = I->number_of_vbos_to_free++;
+    int exp = STEP_FOR_BUF*(1+((nvbostofree+1)/STEP_FOR_BUF));
+    VLACheck(I->vbos_to_free, GLuint, exp);
+    I->vbos_to_free[nvbostofree] = vboid;
+  } else {
+    I->vbos_to_free = VLAlloc(GLuint, STEP_FOR_BUF);
+    I->vbos_to_free[0] = vboid;
+    I->number_of_vbos_to_free = 1;
+  }
+}
+
+void CShaderPrg_Set_Specular_Values(PyMOLGlobals * G, CShaderPrg * shaderPrg){
+  float spec_value = SettingGet(G, cSetting_specular);
+  float settingSpecReflect, settingSpecDirect, settingSpecDirectPower, settingSpecPower;
+  int spec_count = SettingGet(G, cSetting_spec_count);
+
+  settingSpecPower = SettingGet(G, cSetting_spec_power);
+
+  if(settingSpecPower < 0.0F) {
+    settingSpecPower = SettingGet(G, cSetting_shininess);
+  }
+
+  CShaderPrg_Set1f(shaderPrg, "shininess", settingSpecPower);
+
+  if (spec_count < 0){
+    spec_count = SettingGet(G, cSetting_light_count);
+  }
+  if(spec_value == 1.0F)
+    spec_value = SettingGet(G, cSetting_specular_intensity);
+
+  settingSpecReflect = SettingGet(G, cSetting_spec_reflect);
+  settingSpecReflect = SceneGetSpecularValue(G, settingSpecReflect, 10);
+  settingSpecDirect = SettingGet(G, cSetting_spec_direct);
+  settingSpecDirectPower = SettingGet(G, cSetting_spec_direct_power);
+
+  if(settingSpecReflect < 0.0F)
+    settingSpecReflect = spec_value;
+  if(settingSpecDirect < 0.0F)
+    settingSpecDirect = spec_value;
+  if(settingSpecDirectPower < 0.0F)
+    settingSpecDirectPower = settingSpecPower;
+
+
+  if(settingSpecReflect > 1.0F)
+    settingSpecReflect = 1.0F;
+  if(SettingGet(G, cSetting_specular) < R_SMALL4) {
+    settingSpecReflect = 0.0F;
+  }
+  CShaderPrg_Set1f(shaderPrg, "spec_value_0", settingSpecDirect);
+  CShaderPrg_Set1f(shaderPrg, "shininess_0", settingSpecDirectPower);
+  CShaderPrg_Set1f(shaderPrg, "spec_value", settingSpecReflect);
+  CShaderPrg_Set1i(shaderPrg, "spec_count", spec_count);
+
+}
+
+void CShaderPrg_Set_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shaderPrg, int mode) {
+  extern float anaglyphR_constants[6][9];
+  extern float anaglyphL_constants[6][9];
+  /** Coefficients from: http://3dtv.at/Knowhow/AnaglyphComparison_en.aspx */
+  /** anaglyph[R|L]_constants are found in Scene.c b/c of ray tracing */
+  CShaderPrg_SetMat3f(shaderPrg, "matR", anaglyphR_constants[mode]);
+  CShaderPrg_SetMat3f(shaderPrg, "matL", anaglyphL_constants[mode]);
+  CShaderPrg_Set1f(shaderPrg, "gamma", SettingGet(G, cSetting_gamma));
+}
+
+CShaderPrg *CShaderPrg_Enable_DefaultShader(PyMOLGlobals * G){
+  float fog_enabled, *fog_color_top, *fog_color_bottom;
+  int bg_gradient, stereo, stereo_mode;
+  CShaderPrg * shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
+  CShaderPrg_Enable(shaderPrg);
+  fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
+  bg_gradient = SettingGet(G, cSetting_bg_gradient);
+  if (bg_gradient){
+    fog_color_top = SettingGetfv(G, cSetting_bg_rgb_top);
+    fog_color_bottom = SettingGetfv(G, cSetting_bg_rgb_bottom);
+  } else {
+    fog_color_top = SettingGetfv(G, cSetting_bg_rgb);
+    fog_color_bottom = fog_color_top;
+  }
+
+  stereo = SettingGetGlobal_i(G, cSetting_stereo);
+  stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
+  CShaderPrg_Set1i(shaderPrg, "stereo_flag", G->ShaderMgr->stereo_flag);
+  if (stereo && stereo_mode==cStereo_anaglyph)
+    CShaderPrg_Set_AnaglyphMode(G, shaderPrg, SettingGetGlobal_i(G, cSetting_anaglyph_mode));
+
+  CShaderPrg_Set1i(shaderPrg, "bg_gradient", bg_gradient);
+  CShaderPrg_Set3f(shaderPrg, "fog_color_top", fog_color_top[0], fog_color_top[1], fog_color_top[2]);
+  CShaderPrg_Set3f(shaderPrg, "fog_color_bottom", fog_color_bottom[0], fog_color_bottom[1], fog_color_bottom[2]);
+  CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
+  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1); // lighting on by default
+  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
+  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGet(G, cSetting_light_count));
+  CShaderPrg_Set1f(shaderPrg, "ambient_occlusion_scale", 0.f);
+  CShaderPrg_Set1i(shaderPrg, "accessibility_mode", SettingGetGlobal_i(G, cSetting_ambient_occlusion_mode) / 4);
+
+  {
+    int interior_color = SettingGetGlobal_i(G, cSetting_ray_interior_color);
+    float *color, inter[] = { 0.f, 0.f, 0.f }, threshold = 0.f;
+    if (interior_color < 0){
+      threshold = .22f;  // this is hardcoded for now, need to figure out exactly what Ray.c does
+                         // to cull the backfacing polygons
+    }
+    CShaderPrg_Set1f(shaderPrg, "interior_color_threshold", threshold);
+    if (interior_color < 0){
+      color = inter;
+    } else {
+      ColorGetEncoded(G, interior_color, inter);
+      color = inter;
+    }
+    CShaderPrg_Set4f(shaderPrg, "interior_color", color[0], color[1], color[2], 1.f);
+  }
+  CShaderPrg_Set1i(shaderPrg, "use_interior_color_threshold", 0);
+
+  CShaderPrg_Set_Specular_Values(G, shaderPrg);
+
+  return (shaderPrg);
+}
+CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G){
+  int fog_enabled, bg_gradient;
+  float *fog_color_top, *fog_color_bottom;
+  int ortho, stereo, stereo_mode;
+  int width, height;
+  CShaderPrg *shaderPrg;
+  float *m;
+
+  SceneGetWidthHeight(G, &width, &height);
+  m = SceneGetMatrix(G);
+  if (SettingGetGlobal_i(G, cSetting_cylinder_shader_ff_workaround)){
+    shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "cylinder_no_ff");
+  } else {
+    shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "cylinder");
+  }
+  CShaderPrg_Enable(shaderPrg);
+  CShaderPrg_Set1f(shaderPrg, "uni_radius", 0.f);
+  fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
+  bg_gradient = SettingGet(G, cSetting_bg_gradient);
+  if (bg_gradient){
+    fog_color_top = SettingGetfv(G, cSetting_bg_rgb_top);
+    fog_color_bottom = SettingGetfv(G, cSetting_bg_rgb_bottom);
+  } else {
+    fog_color_top = SettingGetfv(G, cSetting_bg_rgb);
+    fog_color_bottom = fog_color_top;
+  }
+  stereo = SettingGetGlobal_i(G, cSetting_stereo);
+  stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
+  CShaderPrg_Set1i(shaderPrg, "stereo_flag", G->ShaderMgr->stereo_flag);
+  if (stereo && stereo_mode==cStereo_anaglyph)
+    CShaderPrg_Set_AnaglyphMode(G, shaderPrg, SettingGetGlobal_i(G, cSetting_anaglyph_mode));
+
+  CShaderPrg_Set1i(shaderPrg, "bg_gradient", bg_gradient);
+  CShaderPrg_Set3f(shaderPrg, "fog_color_top", fog_color_top[0], fog_color_top[1], fog_color_top[2]);
+  CShaderPrg_Set3f(shaderPrg, "fog_color_bottom", fog_color_bottom[0], fog_color_bottom[1], fog_color_bottom[2]);
+  CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
+  CShaderPrg_Set1f(shaderPrg, "inv_height", 1.0/height);
+  ortho = SettingGet(G, cSetting_ortho);
+  CShaderPrg_Set1f(shaderPrg, "ortho", ortho ? 1.0 : 0.0);
+  CShaderPrg_Set1f(shaderPrg, "flat_caps", 0.0);
+  CShaderPrg_Set1i(shaderPrg, "filter_front_facing", SettingGet(G, cSetting_cylinders_shader_filter_faces));
+  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
+  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGet(G, cSetting_light_count));
+  CShaderPrg_Set1i(shaderPrg, "filter_front_facing", SettingGet(G, cSetting_cylinders_shader_filter_faces));
+  {
+    float smooth_half_bonds = (SettingGetGlobal_i(G, cSetting_smooth_half_bonds)) ? .2f : 0.f;
+    CShaderPrg_Set1f(shaderPrg, "half_bond", smooth_half_bonds);
+  }
+  CShaderPrg_Set_Specular_Values(G, shaderPrg);
+  return shaderPrg;
+}
+
+CShaderPrg *CShaderPrg_Enable_SphereShader(PyMOLGlobals * G, char *name){
+  int fog_enabled, bg_gradient;
+  float *fog_color_top, *fog_color_bottom;
+  int ortho, stereo, stereo_mode;
+  CShaderPrg *shaderPrg;
+  int width, height;
+  SceneGetWidthHeight(G, &width, &height);
+  shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, name);
+  CShaderPrg_Enable(shaderPrg);
+  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1);
+  CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", 1.f);
+  fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
+  bg_gradient = SettingGet(G, cSetting_bg_gradient);
+  if (bg_gradient){
+    fog_color_top = SettingGetfv(G, cSetting_bg_rgb_top);
+    fog_color_bottom = SettingGetfv(G, cSetting_bg_rgb_bottom);
+  } else {
+    fog_color_top = SettingGetfv(G, cSetting_bg_rgb);
+    fog_color_bottom = fog_color_top;
+  }
+
+  stereo = SettingGetGlobal_i(G, cSetting_stereo);
+  stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
+  CShaderPrg_Set1i(shaderPrg, "stereo_flag", G->ShaderMgr->stereo_flag);
+  if (stereo && stereo_mode==cStereo_anaglyph)
+    CShaderPrg_Set_AnaglyphMode(G, shaderPrg, SettingGetGlobal_i(G, cSetting_anaglyph_mode));
+
+  CShaderPrg_Set1i(shaderPrg, "bg_gradient", bg_gradient);
+  CShaderPrg_Set3f(shaderPrg, "fog_color_top", fog_color_top[0], fog_color_top[1], fog_color_top[2]);
+  CShaderPrg_Set3f(shaderPrg, "fog_color_bottom", fog_color_bottom[0], fog_color_bottom[1], fog_color_bottom[2]);
+  CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
+  CShaderPrg_Set1f(shaderPrg, "inv_height", 1.0/height);
+  ortho = SettingGet(G, cSetting_ortho);
+  CShaderPrg_Set1f(shaderPrg, "ortho", ortho ? 1.0 : 0.0);
+  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGet(G, cSetting_light_count));
+
+  {
+    float adj;
+    float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
+    /* Polynomial fitting for adjustment values relative to the field of view */
+    if (fov <= 90.f){
+      adj = 1.0027+0.000111*fov+0.000098*fov*fov;
+    } else {
+      adj = 2.02082 - 0.033935*fov + 0.00037854*fov*fov;
+    }
+    CShaderPrg_Set1f(shaderPrg, "horizontal_adjustment", adj);
+    CShaderPrg_Set1f(shaderPrg, "vertical_adjustment", adj);
+  }
+  CShaderPrg_Set_Specular_Values(G, shaderPrg);
+  return (shaderPrg);
+}
+
+CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G){
+  CShaderPrg *shaderPrg = NULL;
+#ifdef _PYMOL_OPENGL_SHADERS
+  /* load the vertex program */
+  shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "sphere_arb");
+  glBindProgramARB(GL_VERTEX_PROGRAM_ARB, shaderPrg->vid);
+  
+  /* load the fragment program */
+  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shaderPrg->fid);
+  
+  /* load some safe initial values  */
+  
+  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 0, 0.0F, 0.0F, 1.0, 0.0F);
+  glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, 0.5F, 2.0F, 0.0F, 0.0F);
+  
+  glEnable(GL_VERTEX_PROGRAM_ARB);
+  glEnable(GL_FRAGMENT_PROGRAM_ARB);
+  
+#endif
+  return shaderPrg;
+}

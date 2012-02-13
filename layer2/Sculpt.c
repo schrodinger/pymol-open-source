@@ -1508,7 +1508,6 @@ static int SculptCGOBump(float *v1, float *v2,
   float diff[3];
   register float dist;
   register float min_cutoff = cutoff - min;
-
   diff[0] = (v1[0] - v2[0]);
   diff[1] = (v1[1] - v2[1]);
   if(fabs(diff[0]) > min_cutoff)
@@ -1548,10 +1547,25 @@ static int SculptCGOBump(float *v1, float *v2,
           if(good_bad > mid) {
             CGOLinewidth(cgo, 1 + color_factor * 3);
             CGOColorv(cgo, color);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	    {
+	      int nverts = 2, pl = 0;
+	      float *vertexVals;
+	      const float vVals[] = {
+		v1[0], v1[1], v1[2],
+		v2[0], v2[1], v2[2]
+	      };
+	      vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
+	      for (pl=0; pl<3*nverts; pl++){
+		vertexVals[pl] = vVals[pl];
+	      }
+	    }
+#else
             CGOBegin(cgo, GL_LINES);
             CGOVertexv(cgo, v1);
             CGOVertexv(cgo, v2);
             CGOEnd(cgo);
+#endif
           }
           break;
         case 1:
@@ -1588,10 +1602,25 @@ static int SculptCGOBump(float *v1, float *v2,
               CGOLinewidth(cgo, 1 + color_factor * 3);
               CGOResetNormal(cgo, true);
               CGOColorv(cgo, color);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	      {
+		int nverts = 2, pl = 0;
+		float *vertexVals;
+		const float vVals[] = {
+		  vv1[0], vv1[1], vv1[2],
+		  vv2[0], vv2[1], vv2[2],
+		};
+		vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
+		for (pl=0; pl<3*nverts; pl++){
+		  vertexVals[pl] = vVals[pl];
+		}
+	      }
+#else
               CGOBegin(cgo, GL_LINES);
               CGOVertexv(cgo, vv1);
               CGOVertexv(cgo, vv2);
               CGOEnd(cgo);
+#endif
             } else {
               CGOCustomCylinderv(cgo, vv1, vv2, radius, color, color, 1, 1);
             }

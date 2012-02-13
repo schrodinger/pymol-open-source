@@ -71,7 +71,8 @@ struct _CRayThreadInfo {
   unsigned int *image;
   float front, back;
   unsigned int fore_mask;
-  float *bkrd;
+  float *bkrd_top, *bkrd_bottom;
+  short bkrd_is_gradient; /* if not gradient, use bkrd_top as bkrd */
   float ambient;
   unsigned int background;
   int border;
@@ -99,6 +100,10 @@ struct _CRayHashThreadInfo {
   int phase;
   float size_hint;
   CRay *ray;
+  float *bkrd_top, *bkrd_bottom;
+  short bkrd_is_gradient; /* if not gradient, use bkrd_top as bkrd */
+  int width, height;
+  int opaque_back;
 };
 
 struct _CRayAntiThreadInfo {
@@ -275,45 +280,57 @@ static void RayGetSphereNormalPerspective(CRay * I, RayInfo * r)
 static void fill(unsigned int *buffer, unsigned int value, unsigned int cnt)
 {
   while(cnt & 0xFFFFFF80) {
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    cnt -= 0x20;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
+    cnt -= 0x20; /* Not sure why this is split up from the below loop */
+    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
+    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
+    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
+    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
+    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
+    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
+    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
+    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
   }
   while(cnt--) {
     *(buffer++) = value;
   }
 }
 
+static void fill_gradient(CRay * I, int opaque_back, unsigned int *buffer, float *bkrd_bottom, float *bkrd_top, int width, int height, unsigned int cnt)
+{
+  const float _p499 = 0.499F;
+  int w, h;
+  unsigned int value;
+  float bkrd[3], perc;
+  unsigned int back_mask;
+
+  if(opaque_back) {
+    if(I->BigEndian)
+      back_mask = 0x000000FF;
+    else
+      back_mask = 0xFF000000;
+  } else {
+    back_mask = 0x00000000;
+  }
+  for (h=0; h<height; h++){
+    /* for fill_gradient, y is from top to bottom */
+    perc = h/(float)height;
+    bkrd[0] = bkrd_top[0] + perc * (bkrd_bottom[0] - bkrd_top[0]);
+    bkrd[1] = bkrd_top[1] + perc * (bkrd_bottom[1] - bkrd_top[1]);
+    bkrd[2] = bkrd_top[2] + perc * (bkrd_bottom[2] - bkrd_top[2]);
+    if(I->BigEndian){
+      value = back_mask | ((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))) << 24) |
+	((0xFF & ((unsigned int) (bkrd[1] * 255 + _p499))) << 16) |
+	((0xFF & ((unsigned int) (bkrd[2] * 255 + _p499))) << 8);
+    } else {
+      value = back_mask | ((0xFF & ((unsigned int) (bkrd[2] * 255 + _p499))) << 16) |
+	((0xFF & ((unsigned int) (bkrd[1] * 255 + _p499))) << 8) |
+	((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))));
+    }
+    for (w=0; w<width; w++){
+      *(buffer++) = value;
+    }
+  }
+}
 
 /*========================================================================*/
 #ifdef _PYMOL_INLINE
@@ -2410,7 +2427,8 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   int fogFlag = false;
   int fogRangeFlag = false;
   float fog;
-  float *bkrd;
+  float *bkrd, *bkrd_top, *bkrd_bottom;
+  short bkrd_is_gradient;
   float fog_start = 0.0F;
   float gamma;
   float *d;
@@ -2481,7 +2499,14 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
     antialias = (int) SettingGet(I->G, cSetting_antialias);
 
   bkrd = SettingGetfv(I->G, cSetting_bg_rgb);
-
+  bkrd_is_gradient = SettingGet(I->G, cSetting_bg_gradient);
+  if (!bkrd_is_gradient){
+    bkrd_top = bkrd;
+    bkrd_bottom = bkrd;
+  } else {
+    bkrd_top = SettingGetfv(I->G, cSetting_bg_rgb_top);
+    bkrd_bottom = SettingGetfv(I->G, cSetting_bg_rgb_bottom);
+  }
   RayExpandPrimitives(I);
   RayTransformFirst(I, 0, identity);
 
@@ -2854,9 +2879,12 @@ int RayHashThread(CRayHashThreadInfo * T)
                cCache_ray_map, T->perspective, T->front, T->size_hint);
 
   /* utilize a little extra wasted CPU time in thread 0 which computes the smaller map... */
-
   if(!T->phase) {
-    fill(T->image, T->background, T->bytes);
+    if (T->bkrd_is_gradient){
+      fill_gradient(T->ray, T->opaque_back, T->image, T->bkrd_top, T->bkrd_bottom, T->width, T->height, T->width * (unsigned int) T->height);      
+    } else {
+      fill(T->image, T->background, T->bytes);
+    }
     RayComputeBox(T->ray);
   }
   return 1;
@@ -3059,6 +3087,10 @@ static void RayPrimGetColorRamped(PyMOLGlobals * G, float *matrix, RayInfo * r, 
       ColorGetRamped(G, (int) (c2[0] - _01), back_pact, fc2, -1);
       c2 = fc2;
     }
+    /* TODO : here is where we would set the correct color if we implemented
+       non-linear (smoothstep) half bonds. We probably need to add another
+       parameter/variable to the primitive to tell this function what interpolation
+       to do */
     fc[0] = (c1[0] * (_1 - w2)) + (c2[0] * w2);
     fc[1] = (c1[1] * (_1 - w2)) + (c2[1] * w2);
     fc[2] = (c1[2] * (_1 - w2)) + (c2[2] * w2);
@@ -3169,6 +3201,7 @@ int RayTraceThread(CRayThreadInfo * T)
   const float _persistLimit = 0.0001F;
   float legacy_1m = _1 - legacy;
   int n_basis = I->NBasis;
+  unsigned int back_mask = 0;
 
   /*   MemoryDebugDump();
      printf("%d\n",sizeof(CPrimitive));
@@ -3428,12 +3461,47 @@ int RayTraceThread(CRayThreadInfo * T)
   } else {
     border_offset = 0.0F;
   }
+  if (T->bkrd_is_gradient){
+    if(opaque_back) {
+      if(I->BigEndian)
+	back_mask = 0x000000FF;
+      else
+	back_mask = 0xFF000000;
+    } else {
+      back_mask = 0x00000000;
+    }
+  }
   for(yy = T->y_start; (yy < T->y_stop); yy++) {
+    float perc, bkrd[3];
+    unsigned int bkrd_value;
     if(PyMOL_GetInterrupt(I->G->PyMOL, false))
       break;
 
     y = T->y_start + ((yy - T->y_start) + offset) % (render_height);    /* make sure threads write to different pages */
 
+    if (T->bkrd_is_gradient){
+      /* for RayTraceThread, y is from bottom to top */
+      perc = y/(float)T->height;
+      bkrd[0] = T->bkrd_bottom[0] + perc * (T->bkrd_top[0] - T->bkrd_bottom[0]);
+      bkrd[1] = T->bkrd_bottom[1] + perc * (T->bkrd_top[1] - T->bkrd_bottom[1]);
+      bkrd[2] = T->bkrd_bottom[2] + perc * (T->bkrd_top[2] - T->bkrd_bottom[2]);
+      if(T->ray->BigEndian){
+	bkrd_value = back_mask | 
+	  ((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))) << 24) |
+	  ((0xFF & ((unsigned int) (bkrd[1] * 255 + _p499))) << 16) |
+	  ((0xFF & ((unsigned int) (bkrd[2] * 255 + _p499))) << 8);
+      } else {
+	bkrd_value = back_mask | 
+	  ((0xFF & ((unsigned int) (bkrd[2] * 255 + _p499))) << 16) |
+	  ((0xFF & ((unsigned int) (bkrd[1] * 255 + _p499))) << 8) |
+	  ((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))));
+      }
+    } else {
+      bkrd_value = T->background;
+      bkrd[0] = T->bkrd_top[0];
+      bkrd[1] = T->bkrd_top[1];
+      bkrd[2] = T->bkrd_top[2];
+    }
     if((!T->phase) && !(yy & 0xF)) {    /* don't slow down rendering too much */
       if(T->edging_cutoff) {
         if(T->edging) {
@@ -3460,10 +3528,9 @@ int RayTraceThread(CRayThreadInfo * T)
               if(x && y && (x < (T->width - 1)) && (y < (T->height - 1))) {     /* not on the edge... */
                 if(find_edge(T->edging + (pixel - T->image),
                              depth + (pixel - T->image),
-                             T->width, T->edging_cutoff, T->background)) {
+                             T->width, T->edging_cutoff, bkrd_value)) {
                   register unsigned char *pixel_c = (unsigned char *) pixel;
                   register unsigned int c1, c2, c3, c4;
-
                   edge_cnt = 1;
                   edge_sampling = true;
 
@@ -3514,7 +3581,7 @@ int RayTraceThread(CRayThreadInfo * T)
                 r1.base[1] = pixel_base[1];
 
               } else {
-                *pixel = T->background;
+                *pixel = bkrd_value;
                 switch (edge_cnt) {
                 case 1:
                   r1.base[0] = edge_base[0] + edge_width;
@@ -3947,9 +4014,9 @@ int RayTraceThread(CRayThreadInfo * T)
                 ffact1m = _1 - ffact;
 
                 if(opaque_back) {
-                  fc[0] = ffact * T->bkrd[0] + fc[0] * ffact1m;
-                  fc[1] = ffact * T->bkrd[1] + fc[1] * ffact1m;
-                  fc[2] = ffact * T->bkrd[2] + fc[2] * ffact1m;
+		  fc[0] = ffact * bkrd[0] + fc[0] * ffact1m;
+		  fc[1] = ffact * bkrd[1] + fc[1] * ffact1m;
+		  fc[2] = ffact * bkrd[2] + fc[2] * ffact1m;
                 } else {
                   fc[3] = ffact1m * (_1 - r1.trans);
                 }
@@ -3990,9 +4057,10 @@ int RayTraceThread(CRayThreadInfo * T)
                  or we're on the last pass of a dead-end loop */
               i = -1;
 
-              fc[0] = first_excess + T->bkrd[0];
-              fc[1] = first_excess + T->bkrd[1];
-              fc[2] = first_excess + T->bkrd[2];
+	      fc[0] = first_excess + bkrd[0];
+	      fc[1] = first_excess + bkrd[1];
+	      fc[2] = first_excess + bkrd[2];
+
               if(opaque_back) {
                 fc[3] = _1;
               } else {
@@ -5320,7 +5388,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   unsigned int background, buffer_size;
   int opaque_back = 0;
   int n_hit = 0;
-  float *bkrd_ptr, bkrd[3];
+  float *bkrd_ptr;
+  float bkrd_top[3], bkrd_bottom[3];
+  short bkrd_is_gradient; /* if not gradient, use bkrd_top as bkrd */
   double now;
   int shadows;
   int n_thread;
@@ -5336,7 +5406,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   float *pos = I->Pos;
   int width = I->Width;
   int height = I->Height;
-  int trace_mode;
+  int ray_trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
   int volume;
 
@@ -5367,7 +5437,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   if(opaque_back < 0)
     opaque_back = SettingGetGlobal_i(I->G, cSetting_opaque_background);
 
-  trace_mode = SettingGetGlobal_i(I->G, cSetting_ray_trace_mode);
+  ray_trace_mode = SettingGetGlobal_i(I->G, cSetting_ray_trace_mode);
 
   shadows = SettingGetGlobal_i(I->G, cSetting_ray_shadows);
 
@@ -5377,9 +5447,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     antialias = SettingGetGlobal_i(I->G, cSetting_antialias);
   }
 
-  if(trace_mode && (antialias == 1))
+  if(ray_trace_mode && (antialias == 1))
     antialias = 2;
-  else if(trace_mode && antialias)
+  else if(ray_trace_mode && antialias)
     antialias++;
 
   if(antialias < 0)
@@ -5387,7 +5457,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   if(antialias > 4)
     antialias = 4;
 
-  if((!antialias) || trace_mode)
+  if((!antialias) || ray_trace_mode)
     oversample_cutoff = 0;
 
   mag = antialias;
@@ -5404,34 +5474,42 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   } else {
     buffer_size = width * height;
   }
-  if(trace_mode) {
+  if(ray_trace_mode) {
     depth = Calloc(float, width * height);
   } else if(oversample_cutoff) {
     depth = Calloc(float, width * height);
   }
   ambient = SettingGet(I->G, cSetting_ambient);
 
-  bkrd_ptr = SettingGetfv(I->G, cSetting_bg_rgb);
-  copy3f(bkrd_ptr, bkrd);
+  bkrd_is_gradient = SettingGet(I->G, cSetting_bg_gradient);
+  if (bkrd_is_gradient){
+    bkrd_ptr = SettingGetfv(I->G, cSetting_bg_rgb_top);
+    copy3f(bkrd_ptr, bkrd_top);
+    bkrd_ptr = SettingGetfv(I->G, cSetting_bg_rgb_bottom);
+    copy3f(bkrd_ptr, bkrd_bottom);
+  } else {
+    bkrd_ptr = SettingGetfv(I->G, cSetting_bg_rgb);
+    copy3f(bkrd_ptr, bkrd_top);
+    copy3f(bkrd_ptr, bkrd_bottom);
+  }
   {                             /* adjust bkrd and trace to offset the effect of gamma correction */
     float gamma = SettingGet(I->G, cSetting_gamma);
-    {
-      register float inp;
-      register float sig;
-      inp = (bkrd[0] + bkrd[1] + bkrd[2]) / 3.0F;
-      if(inp < R_SMALL4)
-        sig = 1.0F;
-      else
-        sig = (float) (pow(inp, gamma)) / inp;
-      bkrd[0] *= sig;
-      bkrd[1] *= sig;
-      bkrd[2] *= sig;
-      if(bkrd[0] > 1.0F)
-        bkrd[0] = 1.0F;
-      if(bkrd[1] > 1.0F)
-        bkrd[1] = 1.0F;
-      if(bkrd[2] > 1.0F)
-        bkrd[2] = 1.0F;
+    register float inp;
+    register float sig;
+    inp = (bkrd_top[0] + bkrd_top[1] + bkrd_top[2]) / 3.0F;
+    if(inp < R_SMALL4)
+      sig = 1.0F;
+    else
+      sig = (float) (pow(inp, gamma)) / inp;
+    bkrd_top[0] *= sig;
+    bkrd_top[1] *= sig;
+    bkrd_top[2] *= sig;
+    if(bkrd_top[0] > 1.0F)
+      bkrd_top[0] = 1.0F;
+    if(bkrd_top[1] > 1.0F)
+      bkrd_top[1] = 1.0F;
+    if(bkrd_top[2] > 1.0F)
+      bkrd_top[2] = 1.0F;
 
 #if 0
       inp = ambient;
@@ -5443,8 +5521,38 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       if(ambient > 1.0f)
         ambient = 1.0F;
 #endif
+    if (bkrd_is_gradient) {
+      register float inp;
+      register float sig;
+      inp = (bkrd_bottom[0] + bkrd_bottom[1] + bkrd_bottom[2]) / 3.0F;
+      if(inp < R_SMALL4)
+        sig = 1.0F;
+      else
+        sig = (float) (pow(inp, gamma)) / inp;
+      bkrd_bottom[0] *= sig;
+      bkrd_bottom[1] *= sig;
+      bkrd_bottom[2] *= sig;
+      if(bkrd_bottom[0] > 1.0F)
+        bkrd_bottom[0] = 1.0F;
+      if(bkrd_bottom[1] > 1.0F)
+        bkrd_bottom[1] = 1.0F;
+      if(bkrd_bottom[2] > 1.0F)
+        bkrd_bottom[2] = 1.0F;
+
+#if 0
+      inp = ambient;
+      if(inp < R_SMALL4)
+        sig = 1.0F;
+      else
+        sig = (float) (pow(inp, gamma)) / inp;
+      ambient *= sig;
+      if(ambient > 1.0f)
+        ambient = 1.0F;
+#endif
+    } else {
+      copy3f(bkrd_top, bkrd_bottom);      
     }
-    if(trace_mode) {
+    if(ray_trace_mode) {
       register float inp;
       register float sig;
       int trace_color = SettingGetGlobal_color(I->G, cSetting_ray_trace_color);
@@ -5487,36 +5595,41 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       back_mask = 0xFF000000;
     fore_mask = back_mask;
   } else {
-    if(I->BigEndian) {
-      back_mask = 0x00000000;
-    } else {
-      back_mask = 0x00000000;
-    }
+    back_mask = 0x00000000;
   }
-  if(I->BigEndian) {
-    background = back_mask |
-      ((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))) << 24) |
-      ((0xFF & ((unsigned int) (bkrd[1] * 255 + _p499))) << 16) |
-      ((0xFF & ((unsigned int) (bkrd[2] * 255 + _p499))) << 8);
+  if (!bkrd_is_gradient) {
+    if(I->BigEndian) {
+      background = back_mask |
+	((0xFF & ((unsigned int) (bkrd_top[0] * 255 + _p499))) << 24) |
+	((0xFF & ((unsigned int) (bkrd_top[1] * 255 + _p499))) << 16) |
+	((0xFF & ((unsigned int) (bkrd_top[2] * 255 + _p499))) << 8);
+    } else {
+      background = back_mask |
+	((0xFF & ((unsigned int) (bkrd_top[2] * 255 + _p499))) << 16) |
+	((0xFF & ((unsigned int) (bkrd_top[1] * 255 + _p499))) << 8) |
+	((0xFF & ((unsigned int) (bkrd_top[0] * 255 + _p499))));
+    }
   } else {
-    background = back_mask |
-      ((0xFF & ((unsigned int) (bkrd[2] * 255 + _p499))) << 16) |
-      ((0xFF & ((unsigned int) (bkrd[1] * 255 + _p499))) << 8) |
-      ((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))));
+    background = back_mask;
   }
 
   OrthoBusyFast(I->G, 2, 20);
 
-  PRINTFB(I->G, FB_Ray, FB_Blather)
-    " RayNew: Background = %x %d %d %d\n", background, (int) (bkrd[0] * 255),
-    (int) (bkrd[1] * 255), (int) (bkrd[2] * 255)
-    ENDFB(I->G);
-
+  if (!bkrd_is_gradient) {
+    PRINTFB(I->G, FB_Ray, FB_Blather)
+      " RayNew: Background = %x %d %d %d\n", background, (int) (bkrd_top[0] * 255),
+      (int) (bkrd_top[1] * 255), (int) (bkrd_top[2] * 255)
+      ENDFB(I->G);
+  }
   if(return_bg)
     *return_bg = background;
 
   if(!I->NPrimitive) {          /* nothing to render! */
-    fill(image, background, width * (unsigned int) height);
+    if (!bkrd_is_gradient) {
+      fill(image, background, width * (unsigned int) height);
+    } else {
+      fill_gradient(I, opaque_back, image, bkrd_top, bkrd_bottom, width, height, width * (unsigned int) height);
+    }
   } else {
 
     if(I->PrimSizeCnt) {
@@ -5629,7 +5742,16 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       thread_info[0].front = front;
 
       thread_info[0].image = image;
-      thread_info[0].background = background;
+      thread_info[0].bkrd_is_gradient = bkrd_is_gradient;
+      if (bkrd_is_gradient){
+	thread_info[0].bkrd_top = bkrd_top;
+	thread_info[0].bkrd_bottom = bkrd_bottom;
+	thread_info[0].width = width;
+	thread_info[0].height = height;
+	thread_info[0].opaque_back = opaque_back;
+      } else {
+	thread_info[0].background = background;
+      }
       thread_info[0].bytes = width * (unsigned int) height;
       thread_info[0].ray = I;   /* for compute box */
       thread_info[0].size_hint = I->PrimSize;
@@ -5676,7 +5798,11 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
       /* serial tasks which RayHashThread does in parallel mode using the first thread */
 
-      fill(image, background, width * (unsigned int) height);
+      if (!bkrd_is_gradient) {
+	fill(image, background, width * (unsigned int) height);
+      } else {
+	fill_gradient(I, opaque_back, image, bkrd_top, bkrd_bottom, width, height, width * (unsigned int) height);
+      }
       RayComputeBox(I);
 
     }
@@ -5822,7 +5948,14 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         rt[a].front = front;
         rt[a].back = back;
         rt[a].fore_mask = fore_mask;
-        rt[a].bkrd = bkrd;
+	rt[a].bkrd_is_gradient = bkrd_is_gradient;
+	if (bkrd_is_gradient){
+	  rt[a].bkrd_top = bkrd_top;
+	  rt[a].bkrd_bottom = bkrd_bottom;
+	} else {
+	  rt[a].bkrd_top = bkrd_top;
+	  rt[a].bkrd_bottom = bkrd_top;
+	}
         rt[a].ambient = ambient;
         rt[a].background = background;
         rt[a].phase = a;
@@ -5866,7 +5999,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     }
   }
 
-  if(depth && trace_mode) {
+  if(depth && ray_trace_mode) {
     float *delta = Alloc(float, 3 * width * height);
     int x, y;
     {
@@ -6035,7 +6168,26 @@ void RayRender(CRay * I, unsigned int *image, double timing,
             depth_f *= gain;
             disco_f *= gain;
           }
-          for(y = 0; y < height; y++)
+          for(y = 0; y < height; y++){
+	    float bkrd[3], perc = 0.;
+	    if (bkrd_is_gradient) {
+	      /* for RayRender, y is from bottom to top */
+	      perc = y/(float)height;
+	      bkrd[0] = bkrd_bottom[0] + perc * (bkrd_top[0] - bkrd_bottom[0]);
+	      bkrd[1] = bkrd_bottom[1] + perc * (bkrd_top[1] - bkrd_bottom[1]);
+	      bkrd[2] = bkrd_bottom[2] + perc * (bkrd_top[2] - bkrd_bottom[2]);
+	      if(I->BigEndian) {
+		background = back_mask |
+		  ((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))) << 24) |
+		  ((0xFF & ((unsigned int) (bkrd[1] * 255 + _p499))) << 16) |
+		  ((0xFF & ((unsigned int) (bkrd[2] * 255 + _p499))) << 8);
+	      } else {
+		background = back_mask |
+		  ((0xFF & ((unsigned int) (bkrd[2] * 255 + _p499))) << 16) |
+		  ((0xFF & ((unsigned int) (bkrd[1] * 255 + _p499))) << 8) |
+		  ((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))));
+	      }
+	    }
             for(x = 0; x < width; x++) {
               dc = 0;
               max_slope = 0.0F;
@@ -6196,15 +6348,16 @@ void RayRender(CRay * I, unsigned int *image, double timing,
                 } else {
                   *q = trace_word;
                 }
-              } else if(trace_mode == 2) {      /* only draw edge */
+              } else if(ray_trace_mode == 2) {      /* only draw edge */
                 *q = background;
-              } else if(trace_mode == 3) {      /* quantize */
+              } else if(ray_trace_mode == 3) {      /* quantize */
                 *q = (*q & 0xC0C0C0C0);
                 *q = *q | ((*q) >> 2) | ((*q) >> 4) | ((*q) >> 6);
               }
               p += 3;
               q++;
             }
+	  }
         }
       }
     }
@@ -6941,8 +7094,9 @@ void RayTriangle3fv(CRay * I,
   CPrimitive *p;
 
   float *vv;
-  float n0[3], nx[3], s1[3], s2[3], s3[3];
+  float n0[3] = { 0.f, 0.f, 1.f }, nx[3] = { 0.f, 0.f, 0.f }, s1[3], s2[3], s3[3];
   float l1, l2, l3;
+  short normals_exist = n1 && n2 && n3;
 
   /*  dump3f(v1," v1");
      dump3f(v2," v2");
@@ -6967,17 +7121,21 @@ void RayTriangle3fv(CRay * I,
      copy3f(I->WobbleParam,p->wobble_param); */
 
   /* determine exact triangle normal */
-  add3f(n1, n2, nx);
-  add3f(n3, nx, nx);
+  if (normals_exist){
+    add3f(n1, n2, nx);
+    add3f(n3, nx, nx);
+  }
   subtract3f(v1, v2, s1);
   subtract3f(v3, v2, s2);
   subtract3f(v1, v3, s3);
   cross_product3f(s1, s2, n0);
-  if((fabs(n0[0]) < RAY_SMALL) && (fabs(n0[1]) < RAY_SMALL) && (fabs(n0[2]) < RAY_SMALL)) {
-    copy3f(nx, n0);
-  } /* fall-back */
-  else if(dot_product3f(n0, nx) < 0)
-    invert3f(n0);
+  if (normals_exist){
+    if((fabs(n0[0]) < RAY_SMALL) && (fabs(n0[1]) < RAY_SMALL) && (fabs(n0[2]) < RAY_SMALL)) {
+      copy3f(nx, n0);
+    } /* fall-back */
+    else if(dot_product3f(n0, nx) < 0)
+      invert3f(n0);
+  }
   normalize3f(n0);
 
   vv = p->n0;
@@ -7043,18 +7201,33 @@ void RayTriangle3fv(CRay * I,
     (*vv++) = (*v++);
   }
 
-  vv = p->n1;
-  (*vv++) = (*n1++);
-  (*vv++) = (*n1++);
-  (*vv++) = (*n1++);
-  vv = p->n2;
-  (*vv++) = (*n2++);
-  (*vv++) = (*n2++);
-  (*vv++) = (*n2++);
-  vv = p->n3;
-  (*vv++) = (*n3++);
-  (*vv++) = (*n3++);
-  (*vv++) = (*n3++);
+  if (normals_exist){
+    vv = p->n1;
+    (*vv++) = (*n1++);
+    (*vv++) = (*n1++);
+    (*vv++) = (*n1++);
+    vv = p->n2;
+    (*vv++) = (*n2++);
+    (*vv++) = (*n2++);
+    (*vv++) = (*n2++);
+    vv = p->n3;
+    (*vv++) = (*n3++);
+    (*vv++) = (*n3++);
+    (*vv++) = (*n3++);
+  } else {
+    vv = p->n1;
+    (*vv++) = n0[0];
+    (*vv++) = n0[1];
+    (*vv++) = n0[2];
+    vv = p->n2;
+    (*vv++) = n0[0];
+    (*vv++) = n0[1];
+    (*vv++) = n0[2];
+    vv = p->n3;
+    (*vv++) = n0[0];
+    (*vv++) = n0[1];
+    (*vv++) = n0[2];
+  }
 
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT, p->v1, p->v1);

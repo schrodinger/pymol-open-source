@@ -29,7 +29,7 @@ class Clickurl(Wizard):
     
     def do_select(self,name):
         pymol.stored.link = ''
-        cmd.iterate(name,"stored.link=text_type") 
+        cmd.iterate(name,"stored.link=custom") 
         if len(pymol.stored.link):
             webbrowser.open(pymol.stored.link)
         cmd.delete(name)
@@ -44,7 +44,7 @@ util.cbc()
 
 # store the links as atom text_types
 
-cmd.alter("name ca",r"text_type='http://delsci.info/cgi-bin/click.cgi?residue=%s%s%s'%(resn,resi,chain)")
+cmd.alter("name ca",r"custom='http://delsci.info/cgi-bin/click.cgi?residue=%s%s%s'%(resn,resi,chain)")
 
 # put the mouse into single-atom selection mode
 

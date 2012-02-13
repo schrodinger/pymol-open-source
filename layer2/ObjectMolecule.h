@@ -57,15 +57,15 @@ typedef struct ObjectMolecule {
 	/* array of atoms (infos) */
   AtomInfoType *AtomInfo;
 	/* number of atoms and bonds */
-  int NAtom;
-  int NBond;
+  int NAtom, prevNAtom;
+  int NBond, prevNBond;
 	/* is this object loaded as a discrete object? if so, number of states */
   int DiscreteFlag, NDiscrete;
   int *DiscreteAtmToIdx;
   struct CoordSet **DiscreteCSet;
   /* proposed, for storing uniform trajectory data more efficiently:
      int *UniformAtmToIdx, *UniformIdxToAtm;  */
-  int CurCSet;
+  int CurCSet;                  /* Current state number */
   int SeleBase;                 /* for internal usage by  selector & only valid during selection process */
   CSymmetry *Symmetry;
   int *Neighbor;
@@ -80,7 +80,7 @@ typedef struct ObjectMolecule {
   struct CSculpt *Sculpt;
   int RepVisCacheValid;
   signed char RepVisCache[cRepCnt];     /* for transient storage during updates */
-
+  /* UndoDataList *UndoData; */
 } ObjectMolecule;
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
@@ -505,13 +505,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals * G, ObjectMolecule * obj
 #endif
 
 int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize, int format);
-#ifndef NO_MMLIBS
-int ObjectMoleculeToMMCT(PyMOLGlobals * G, ObjectMolecule * obj, int state, const char *component, const char *helpcmd);
-int MMStereoInfo(PyMOLGlobals * G, ObjectMolecule * obj, int state, int mmct, int write, int setparity);
-int initializeMMLibs();
-int ObjectMoleculeUpdateMMStereoInfo(PyMOLGlobals * G, ObjectMolecule * obj);
-int ObjectMoleculeUpdateAtomTypeInfo(PyMOLGlobals * G, ObjectMolecule * obj);
-int MMSetAtomTypes(PyMOLGlobals *G, ObjectMolecule *obj, int state, int mmct, int force_type);
-#endif
-
+void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * obj);
+void ObjectMoleculeSetAtomBondInfoTypeOldIdToNegOne(PyMOLGlobals * G, ObjectMolecule * obj);
+void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAtom);
 #endif

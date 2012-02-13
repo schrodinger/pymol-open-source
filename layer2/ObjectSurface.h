@@ -48,6 +48,7 @@ typedef struct {
   int Side;
   int displayList;
   int displayListInvalid;
+  CGO *shaderCGO;
 } ObjectSurfaceState;
 
 typedef struct ObjectSurface {

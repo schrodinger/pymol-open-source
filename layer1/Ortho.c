@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
 #include"Movie.h"
+#include "ShaderMgr.h"
 
 #ifndef true
 #define true 1
@@ -113,6 +114,10 @@ void OrthoParseCurrentLine(PyMOLGlobals * G);
 Block *OrthoFindBlock(PyMOLGlobals * G, int x, int y);
 void OrthoKeyControl(PyMOLGlobals * G, unsigned char k);
 void OrthoKeyAlt(PyMOLGlobals * G, unsigned char k);
+void OrthoKeyCtSh(PyMOLGlobals * G, unsigned char k);
+void OrthoKeyCmmd(PyMOLGlobals * G, unsigned char k);
+
+
 
 #define cBusyWidth 240
 #define cBusyHeight 60
@@ -160,7 +165,10 @@ void OrthoDrawBuffer(PyMOLGlobals * G, GLenum mode)
 {
   register COrtho *I = G->Ortho;
   if((mode != I->ActiveGLBuffer) && G->HaveGUI && G->ValidContext) {
+#ifndef _PYMOL_GL_DRAWARRAYS
+	      /* NEED TODO FOR _PYMOL_GL_DRAWARRAYS */
     glDrawBuffer(mode);
+#endif
     I->ActiveGLBuffer = mode;
   }
 }
@@ -546,7 +554,6 @@ void MacPyMOLSetProgress(float value);
 
 /* END PROPRIETARY CODE SEGMENT */
 
-
 /*========================================================================*/
 void OrthoBusyDraw(PyMOLGlobals * G, int force)
 {
@@ -582,7 +589,6 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
         float white[3] = { 1, 1, 1 };
         int draw_both = SceneMustDrawBoth(G);
         OrthoPushMatrix(G);
-
         {
           int pass = 0;
           glClear(GL_DEPTH_BUFFER_BIT);
@@ -596,7 +602,39 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
               OrthoDrawBuffer(G, GL_FRONT);     /* draw into the front buffer */
             }
 
+#ifdef PURE_OPENGL_ES_2
+	    {
+	      GLfloat polyVerts[] = {
+                0, I->Height, 0,
+                cBusyWidth, I->Height, 0, 
+                0, I->Height - cBusyHeight, 0, 
+                cBusyWidth, I->Height - cBusyHeight, 0
+	      }; 
+	      GLenum err ;
+	      glVertexAttrib3fv(VERTEX_COLOR, black);
+	      glVertexAttribPointer(VERTEX_POS, VERTEX_POS_SIZE, GL_FLOAT, GL_FALSE, 0, polyVerts);
+	      glEnableVertexAttribArray(VERTEX_POS);
+	      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	      glDisableVertexAttribArray(VERTEX_POS);
+	    }
+	    glVertexAttrib3fv(VERTEX_COLOR, white);
+#else
             glColor3fv(black);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	    {
+	      const GLint polyVerts[] = {
+                0, I->Height,
+                cBusyWidth, I->Height,
+                0, I->Height - cBusyHeight,
+                cBusyWidth, I->Height - cBusyHeight
+	      };
+	      glEnableClientState(GL_VERTEX_ARRAY);
+	      glEnableClientState(GL_COLOR_ARRAY);
+	      glVertexPointer(2, GL_INT, 0, polyVerts);
+	      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	      glDisableClientState(GL_VERTEX_ARRAY);
+	    }
+#else
             glBegin(GL_POLYGON);
             glVertex2i(0, I->Height);
             glVertex2i(cBusyWidth, I->Height);
@@ -604,8 +642,9 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
             glVertex2i(0, I->Height - cBusyHeight);
             glVertex2i(0, I->Height);   /* needed on old buggy Mesa */
             glEnd();
-
+#endif
             glColor3fv(white);
+#endif
 
             y = I->Height - cBusyMargin;
             c = I->BusyMessage;
@@ -617,6 +656,31 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
             }
 
             if(I->BusyStatus[1]) {
+#if defined(_PYMOL_GL_DRAWARRAYS) || defined(PURE_OPENGL_ES_2)
+	      {
+		const GLint lineVerts[] = {
+		  cBusyMargin, y,
+		  cBusyWidth - cBusyMargin, y,
+		  cBusyWidth - cBusyMargin, y - cBusyBar,
+		  cBusyMargin, y - cBusyBar,
+		  cBusyMargin, y       /* needed on old buggy Mesa */
+		};
+#endif
+      
+#ifdef PURE_OPENGL_ES_2
+		glEnableVertexAttribArray(VERTEX_POS);
+		glVertexAttribPointer(VERTEX_POS, 2, GL_INT, GL_FALSE, 0, lineVerts);	
+		glDrawArrays(GL_LINE_LOOP, 0, 5);
+		glDisableVertexAttribArray(VERTEX_POS);
+	      }
+#else		
+#ifdef _PYMOL_GL_DRAWARRAYS
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_INT, 0, lineVerts);
+		glDrawArrays(GL_LINE_LOOP, 0, 5);
+		glDisableClientState(GL_VERTEX_ARRAY);
+	      }
+#else
               glBegin(GL_LINE_LOOP);
               glVertex2i(cBusyMargin, y);
               glVertex2i(cBusyWidth - cBusyMargin, y);
@@ -624,22 +688,74 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
               glVertex2i(cBusyMargin, y - cBusyBar);
               glVertex2i(cBusyMargin, y);       /* needed on old buggy Mesa */
               glEnd();
-              glColor3fv(white);
-              glBegin(GL_POLYGON);
-              glVertex2i(cBusyMargin, y);
+#endif
+	      glColor3fv(white);
+#endif
               x =
                 (I->BusyStatus[0] * (cBusyWidth - 2 * cBusyMargin) / I->BusyStatus[1]) +
                 cBusyMargin;
+#if defined(_PYMOL_GL_DRAWARRAYS) || defined(PURE_OPENGL_ES_2)
+	      {
+		const GLint polyVerts[] = {
+		  cBusyMargin, y,
+		  x, y,
+		  cBusyMargin, y - cBusyBar,
+		  x, y - cBusyBar,
+		};	      
+#endif
+#ifdef PURE_OPENGL_ES_2
+		glEnableVertexAttribArray(VERTEX_POS);
+		glVertexAttribPointer(VERTEX_POS, 2, GL_INT, GL_FALSE, 0, polyVerts);	      
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glDisableVertexAttribArray(VERTEX_POS);
+	      }
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_INT, 0, polyVerts);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glDisableClientState(GL_VERTEX_ARRAY);
+	      }
+#else
+              glBegin(GL_POLYGON);
+              glVertex2i(cBusyMargin, y);
               glVertex2i(x, y);
               glVertex2i(x, y - cBusyBar);
               glVertex2i(cBusyMargin, y - cBusyBar);
               glVertex2i(cBusyMargin, y);       /* needed on old buggy Mesa */
               glEnd();
+#endif
+#endif
               y -= cBusySpacing;
             }
 
             if(I->BusyStatus[3]) {
+#if defined(_PYMOL_GL_DRAWARRAYS) || defined(PURE_OPENGL_ES_2)
+	      {
+		const GLint lineVerts[] = {
+		  cBusyMargin, y,
+		  cBusyWidth - cBusyMargin, y,
+		  cBusyWidth - cBusyMargin, y - cBusyBar,
+		  cBusyMargin, y - cBusyBar,
+		  cBusyMargin, y       /* needed on old buggy Mesa */
+		};
+#endif
+#ifdef PURE_OPENGL_ES_2
+		glVertexAttrib3fv(VERTEX_COLOR, white);
+		glEnableVertexAttribArray(VERTEX_POS);
+		glVertexAttribPointer(VERTEX_POS, 2, GL_INT, GL_FALSE, 0, lineVerts);	      
+		glDrawArrays(GL_LINE_LOOP, 0, 5);
+		glDisableVertexAttribArray(VERTEX_POS);
+	      }
+#else
               glColor3fv(white);
+#ifdef _PYMOL_GL_DRAWARRAYS
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_INT, 0, lineVerts);
+		glDrawArrays(GL_LINE_LOOP, 0, 5);
+		glDisableClientState(GL_VERTEX_ARRAY);
+	      }
+#else
               glBegin(GL_LINE_LOOP);
               glVertex2i(cBusyMargin, y);
               glVertex2i(cBusyWidth - cBusyMargin, y);
@@ -647,10 +763,36 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
               glVertex2i(cBusyMargin, y - cBusyBar);
               glVertex2i(cBusyMargin, y);       /* needed on old buggy Mesa */
               glEnd();
+#endif
+#endif
               x =
                 (I->BusyStatus[2] * (cBusyWidth - 2 * cBusyMargin) / I->BusyStatus[3]) +
                 cBusyMargin;
+#if defined(_PYMOL_GL_DRAWARRAYS) || defined(PURE_OPENGL_ES_2)
+	      {
+		const GLint polyVerts[] = {
+		  cBusyMargin, y,
+		  x, y,
+		  cBusyMargin, y - cBusyBar,
+		  x, y - cBusyBar
+		};
+#endif
+#ifdef PURE_OPENGL_ES_2
+		glVertexAttrib3fv(VERTEX_COLOR, white);
+		glEnableVertexAttribArray(VERTEX_POS);
+		glVertexAttribPointer(VERTEX_POS, 2, GL_INT, GL_FALSE, 0, polyVerts);	      
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glDisableVertexAttribArray(VERTEX_POS);
+	      }
+#else
               glColor3fv(white);
+#ifdef _PYMOL_GL_DRAWARRAYS
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_INT, 0, polyVerts);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glDisableClientState(GL_VERTEX_ARRAY);
+	      }
+#else
               glBegin(GL_POLYGON);
               glVertex2i(cBusyMargin, y);
               glVertex2i(x, y);
@@ -658,6 +800,8 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
               glVertex2i(cBusyMargin, y - cBusyBar);
               glVertex2i(cBusyMargin, y);       /* needed on old buggy Mesa */
               glEnd();
+#endif
+#endif
               y -= cBusySpacing;
             }
 
@@ -727,6 +871,36 @@ void OrthoKeyControl(PyMOLGlobals * G, unsigned char k)
   /* safer... */
 
   sprintf(buffer, "cmd._ctrl(chr(%d))", k);
+  /* sprintf(buffer,"_ctrl %c",k); */
+  PLog(G, buffer, cPLog_pym);
+  PParse(G, buffer);
+  PFlush(G);
+
+}
+
+/*========================================================================*/
+void OrthoKeyCmmd(PyMOLGlobals * G, unsigned char k)
+{
+  char buffer[OrthoLineLength];
+
+  /* safer... */
+
+  sprintf(buffer, "cmd._cmmd(chr(%d))", k);
+  /* sprintf(buffer,"_ctrl %c",k); */
+  PLog(G, buffer, cPLog_pym);
+  PParse(G, buffer);
+  PFlush(G);
+
+}
+
+/*========================================================================*/
+void OrthoKeyCtSh(PyMOLGlobals * G, unsigned char k)
+{
+  char buffer[OrthoLineLength];
+
+  /* safer... */
+
+  sprintf(buffer, "cmd._ctsh(chr(%d))", k);
   /* sprintf(buffer,"_ctrl %c",k); */
   PLog(G, buffer, cPLog_pym);
   PParse(G, buffer);
@@ -808,6 +982,8 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
   }
   if(mod == 4) {                /* alt */
     OrthoKeyAlt(G, k);
+  } else if  (mod == 3) {       /* chsh */
+    OrthoKeyCtSh(G,(unsigned int) (k+64));
   } else if((k > 32) && (k != 127)) {
     curLine = add_normal_char(I, k);
   } else
@@ -977,9 +1153,13 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
       break;
     case 22:                   /* CTRL V -- paste */
 #ifndef _PYMOL_NOPY
-      PBlockAndUnlockAPI(G);
-      PRunStringInstance(G, "cmd.paste()");
-      PLockAPIAndUnblock(G);
+      if (I->CurChar != I->PromptChar) { /* no text entered yet... */
+	PBlockAndUnlockAPI(G);
+	PRunStringInstance(G, "cmd.paste()");
+	PLockAPIAndUnblock(G);
+      } else {
+	OrthoKeyControl(G, (unsigned char) (k + 64));
+      }
 #endif
       break;
     default:
@@ -1230,7 +1410,8 @@ float *OrthoGetOverlayColor(PyMOLGlobals * G)
 /* draw background gradient from bg_rgb_top
  * to bg_rgb_bottom is bg_gradient is set
  */
-static void bg_grad(PyMOLGlobals * G) {
+
+void bg_grad(PyMOLGlobals * G) {
   float * top = SettingGet_3fv(G, NULL, NULL, cSetting_bg_rgb_top);
   float * bottom = SettingGet_3fv(G, NULL, NULL, cSetting_bg_rgb_bottom);
   float alpha =  SettingGet_i(G, NULL, NULL, cSetting_opaque_background) ? 1.0 : 0.0;
@@ -1238,16 +1419,44 @@ static void bg_grad(PyMOLGlobals * G) {
   if (! SettingGet_b(G, NULL, NULL, cSetting_bg_gradient))
     return;
 
+#ifdef PURE_OPENGL_ES_2
+#else
   glMatrixMode (GL_MODELVIEW);
   glPushMatrix ();
   glLoadIdentity ();
   glMatrixMode (GL_PROJECTION);
   glPushMatrix ();
   glLoadIdentity ();
-
   glDisable(GL_LIGHTING);
+#endif
   glDisable(GL_DEPTH_TEST);
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLfloat colorVals[] = {
+      bottom[0], bottom[1], bottom[2], alpha,
+      bottom[0], bottom[1], bottom[2], alpha,
+      top[0], top[1], top[2], alpha,
+      top[0], top[1], top[2], alpha
+    };
+    const GLfloat polyVerts[] = {
+      -1.0f, -1.0f, -1.0f,
+      1.0f, -1.0f, -1.0f,
+      -1.0f, 1.0f, -1.0f,
+      1.0f, 1.0f, -1.0f
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, polyVerts);    
+    glColorPointer(4, GL_FLOAT, 0, colorVals);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+#else
   glBegin (GL_QUADS);
   glColor4f(bottom[0], bottom[1], bottom[2], alpha);
   glVertex3f (-1.0f, -1.0f, -1.0f);
@@ -1257,12 +1466,16 @@ static void bg_grad(PyMOLGlobals * G) {
   glVertex3f (1.0f, 1.0f, -1.0f);
   glVertex3f (-1.0f, 1.0f, -1.0f);
   glEnd ();
+#endif
+#endif
 
+#ifndef PURE_OPENGL_ES_2
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
   glPopMatrix ();
   glMatrixMode (GL_MODELVIEW);
   glPopMatrix ();
+#endif
 }
 
 void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
@@ -1420,20 +1633,56 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         height = block->rect.bottom;
         switch (internal_gui_mode) {
         case 0:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
           glColor3f(0.0, 0.0, 0.0);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint polyVerts[] = {
+	      I->Width - rightSceneMargin, height - 1,
+	      I->Width - rightSceneMargin, 0,
+	      0, height - 1,
+	      0, 0
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, polyVerts);	  
+	    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	    glDisableClientState(GL_VERTEX_ARRAY);	  
+	  }
+#else
           glBegin(GL_POLYGON);
           glVertex2i(I->Width - rightSceneMargin, height - 1);
           glVertex2i(I->Width - rightSceneMargin, 0);
           glVertex2i(0, 0);
           glVertex2i(0, height - 1);
           glEnd();
+#endif
+#endif
           /* deliberate fall-through */
         case 1:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
           glColor3f(0.3, 0.3, 0.3);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint lineVerts[] = {
+	      1 + I->Width - rightSceneMargin, height - 1,
+	      -1, height - 1
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, lineVerts);
+	    glDrawArrays(GL_LINES, 0, 2);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_LINES);
           glVertex2i(1 + I->Width - rightSceneMargin, height - 1);
           glVertex2i(-1, height - 1);
           glEnd();
+#endif
+#endif
           break;
         }
       }
@@ -1444,11 +1693,28 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       if(SettingGet(G, cSetting_internal_gui)) {
         int internal_gui_width = (int) SettingGet(G, cSetting_internal_gui_width);
         if(internal_gui_mode != 2) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
           glColor3f(0.3, 0.3, 0.3);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint lineVerts[] = {
+	      I->Width - internal_gui_width, 0,
+	      I->Width - internal_gui_width, I->Height
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, lineVerts);
+	    glDrawArrays(GL_LINES, 0, 2);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_LINES);
           glVertex2i(I->Width - internal_gui_width, 0);
           glVertex2i(I->Width - internal_gui_width, I->Height);
           glEnd();
+#endif
+#endif
         }
       }
 
@@ -1477,7 +1743,10 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
         l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
 
+#ifdef PURE_OPENGL_ES_2
+#else
         glColor3fv(I->TextColor);
+#endif
         while(l >= 0) {
           lcount++;
           if(lcount > showLines)
@@ -1533,7 +1802,25 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         " OrthoDoDraw: blocks drawn.\n" ENDFD;
 
       if(I->LoopFlag) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
         glColor3f(1.0, 1.0, 1.0);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	{
+	  const GLint lineVerts[] = {
+	    I->LoopRect.left, I->LoopRect.top,
+	    I->LoopRect.right, I->LoopRect.top,
+	    I->LoopRect.right, I->LoopRect.bottom,
+	    I->LoopRect.left, I->LoopRect.bottom,
+	    I->LoopRect.left, I->LoopRect.top
+	  };
+	  glEnableClientState(GL_VERTEX_ARRAY);
+	  glVertexPointer(2, GL_INT, 0, lineVerts);
+	  glDrawArrays(GL_LINE_LOOP, 0, 5);
+	  glDisableClientState(GL_VERTEX_ARRAY);
+	}
+#else
         glBegin(GL_LINE_LOOP);
         glVertex2i(I->LoopRect.left, I->LoopRect.top);
         glVertex2i(I->LoopRect.right, I->LoopRect.top);
@@ -1541,6 +1828,8 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         glVertex2i(I->LoopRect.left, I->LoopRect.bottom);
         glVertex2i(I->LoopRect.left, I->LoopRect.top);
         glEnd();
+#endif
+#endif
       }
 
 
@@ -1657,21 +1946,43 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G)
       rect.right = rect.left + cOrthoCharWidth * maxLen + 2 * cWizardBorder + 1;
 
       if(prompt_mode == 1) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
         if(SettingGetGlobal_b(G, cSetting_internal_gui_mode)) {
           glColor3f(1.0, 1.0F, 1.0F);
         } else {
           glColor3fv(I->WizardBackColor);
         }
+#ifdef _PYMOL_GL_DRAWARRAYS
+	{
+	  const GLint polyVerts[] = {
+	    rect.right, rect.top,
+	    rect.right, rect.bottom,
+	    rect.left, rect.top,
+	    rect.left, rect.bottom
+	  };
+	  glEnableClientState(GL_VERTEX_ARRAY);
+	  glVertexPointer(2, GL_INT, 0, polyVerts);
+	  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	  glDisableClientState(GL_VERTEX_ARRAY);
+	}
+#else
         glBegin(GL_POLYGON);
         glVertex2i(rect.right, rect.top);
         glVertex2i(rect.right, rect.bottom);
         glVertex2i(rect.left, rect.bottom);
         glVertex2i(rect.left, rect.top);
         glEnd();
+#endif
+#endif
       }
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       glColor3fv(text_color);
-
+#endif
       x = rect.left + cWizardBorder;
       y = rect.top - (cWizardBorder + cOrthoLineHeight);
 
@@ -1802,13 +2113,16 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
 
   I->WrapXFlag = false;
   if(width > 0) {
+    int stereo = SettingGetGlobal_i(G, cSetting_stereo);
     int stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
-    switch (stereo_mode) {
-    case cStereo_geowall:
-    case cStereo_dynamic:
-      width = width / 2;
-      I->WrapXFlag = true;
-      break;
+    if (stereo){
+      switch (stereo_mode) {
+      case cStereo_geowall:
+      case cStereo_dynamic:
+	width = width / 2;
+	I->WrapXFlag = true;
+	break;
+      }
     }
   }
 
@@ -2307,6 +2621,7 @@ void OrthoPushMatrix(PyMOLGlobals * G)
       glViewport(I->ViewPort[0], I->ViewPort[1], I->ViewPort[2], I->ViewPort[3]);
     }
 
+#ifndef PURE_OPENGL_ES_2
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -2316,7 +2631,10 @@ void OrthoPushMatrix(PyMOLGlobals * G)
     glLoadIdentity();
     glTranslatef(0.33F, 0.33F, 0.0F);   /* this generates better 
                                            rasterization on macs */
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+#else
     if(!SettingGetGlobal_b(G, cSetting_texture_fonts)) {
       glDisable(GL_ALPHA_TEST);
     } else {
@@ -2325,12 +2643,17 @@ void OrthoPushMatrix(PyMOLGlobals * G)
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
     glDisable(GL_NORMALIZE);
-    glDisable(GL_DEPTH_TEST);
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LINE_SMOOTH);
-    glDisable(GL_DITHER);
+#endif
+
     glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DITHER);
+
+#ifndef PURE_OPENGL_ES_2
     glShadeModel(GL_SMOOTH);
+#endif
     if(G->Option->multisample)
       glDisable(0x809D);        /* GL_MULTISAMPLE_ARB */
 
@@ -2351,11 +2674,12 @@ void OrthoPopMatrix(PyMOLGlobals * G)
 
     if(I->Pushed >= 0) {
       glViewport(I->ViewPort[0], I->ViewPort[1], I->ViewPort[2], I->ViewPort[3]);
+#ifndef PURE_OPENGL_ES_2
       glPopMatrix();
       glMatrixMode(GL_PROJECTION);
       glPopMatrix();
       glMatrixMode(GL_MODELVIEW);
-
+#endif
       I->Pushed--;
     }
   }

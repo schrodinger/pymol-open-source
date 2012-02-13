@@ -149,11 +149,11 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
     if(ok)
       ok = PConvPyListToFloatVLA(PyList_GetItem(list, 2), &I->Coord);
     if(ok)
-      ok = PConvPyListToIntArray(PyList_GetItem(list, 3), &I->IdxToAtm);
+      ok = PConvPyListToIntVLA(PyList_GetItem(list, 3), &I->IdxToAtm);
     if(ok) {
       tmp = PyList_GetItem(list, 4);    /* Discrete CSets don't have this */
       if(tmp != Py_None)
-        ok = PConvPyListToIntArray(tmp, &I->AtmToIdx);
+        ok = PConvPyListToIntVLA(tmp, &I->AtmToIdx);
     }
     if(ok && (ll > 5))
       ok = PConvPyStrToStr(PyList_GetItem(list, 5), I->Name, sizeof(WordType));
@@ -216,14 +216,18 @@ void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom)
     " CoordSetAdjustAtmIdx-Debug: entered NAtIndex: %d NIndex %d\n I->AtmToIdx %p\n",
     I->NAtIndex, I->NIndex, (void *) I->AtmToIdx ENDFD;
 
-  for(a = 0; a < I->NAtIndex; a++) {
-    a0 = lookup[a];
-    if(a0 >= 0) {
-      I->AtmToIdx[a0] = I->AtmToIdx[a];
+  if (I->AtmToIdx){
+    for(a = 0; a < I->NAtIndex; a++) {
+      a0 = lookup[a];
+      if(a0 >= 0) {
+	I->AtmToIdx[a0] = I->AtmToIdx[a];
+      }
     }
   }
   I->NAtIndex = nAtom;
-  I->AtmToIdx = Realloc(I->AtmToIdx, int, nAtom);
+  if (I->AtmToIdx){
+    VLASize(I->AtmToIdx, int, nAtom);
+  }
   for(a = 0; a < I->NIndex; a++) {
     I->IdxToAtm[a] = lookup[I->IdxToAtm[a]];
   }
@@ -235,20 +239,26 @@ void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom)
 
 
 /*========================================================================*/
-void CoordSetMerge(CoordSet * I, CoordSet * cs)
+void CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
 {                               /* must be non-overlapping */
   int nIndex;
   int a, i0;
 
   /* calculate new size and make room for new data */
   nIndex = I->NIndex + cs->NIndex;
-  I->IdxToAtm = Realloc(I->IdxToAtm, int, nIndex);
+  VLASize(I->IdxToAtm, int, nIndex);
   VLACheck(I->Coord, float, nIndex * 3);
 
   for(a = 0; a < cs->NIndex; a++) {
     i0 = a + I->NIndex;
     I->IdxToAtm[i0] = cs->IdxToAtm[a];
-    I->AtmToIdx[cs->IdxToAtm[a]] = i0;
+    if (OM->DiscreteFlag){
+      int idx = cs->IdxToAtm[a];
+      OM->DiscreteAtmToIdx[idx] = i0;
+      OM->DiscreteCSet[idx] = I;
+    } else {
+      I->AtmToIdx[cs->IdxToAtm[a]] = i0;
+    }
     copy3f(cs->Coord + a * 3, I->Coord + i0 * 3);
   }
   if(cs->LabPos) {
@@ -300,6 +310,8 @@ void CoordSetPurge(CoordSet * I)
   r0 = r1 = I->RefPos;
   l0 = l1 = I->LabPos;
 
+  /* This loop slides down the atoms that are not deleted (deleteFlag)
+     it moves the Coord, RefPos, and LabPos */
   for(a = 0; a < I->NIndex; a++) {
     a1 = I->IdxToAtm[a];
     ai = obj->AtomInfo + a1;
@@ -321,8 +333,13 @@ void CoordSetPurge(CoordSet * I)
       if(l0) {
         *(l1++) = *(l0++);
       }
-      I->AtmToIdx[a1] = ao;
+      if (I->AtmToIdx)
+	I->AtmToIdx[a1] = ao;
       I->IdxToAtm[ao] = a1;     /* no adjustment of these indexes yet... */
+      if (I->Obj->DiscreteFlag){
+	I->Obj->DiscreteAtmToIdx[a1] = ao;
+	I->Obj->DiscreteCSet[a1] = I;
+      }
     } else {
       c0 += 3;
       c1 += 3;
@@ -337,6 +354,8 @@ void CoordSetPurge(CoordSet * I)
     }
   }
   if(offset) {
+    /* If there were deleted atoms, (offset < 0), then
+       re-adjust the array sizes */
     I->NIndex += offset;
     VLASize(I->Coord, float, I->NIndex * 3);
     if(I->LabPos) {
@@ -345,7 +364,7 @@ void CoordSetPurge(CoordSet * I)
     if(I->RefPos) {
       VLASize(I->RefPos, RefPosType, I->NIndex);
     }
-    I->IdxToAtm = Realloc(I->IdxToAtm, int, I->NIndex);
+    VLASize(I->IdxToAtm, int, I->NIndex);
     PRINTFD(I->State.G, FB_CoordSet)
       " CoordSetPurge-Debug: I->IdxToAtm shrunk to %d\n", I->NIndex ENDFD;
     if(I->fInvalidateRep)
@@ -972,6 +991,15 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, float *v
       PConvStringToPyObjAttr(atom, "text_type", st);
     }
 
+    if(ai->custom) {
+      char null_st[1] = "";
+      char *st = null_st;
+
+      if(ai->custom)
+        st = OVLexicon_FetchCString(G->Lexicon, ai->custom);
+      PConvStringToPyObjAttr(atom, "custom", st);
+    }
+
     PConvIntToPyObjAttr(atom, "hetatm", ai->hetatm);
     PConvIntToPyObjAttr(atom, "flags", ai->flags);
     PConvIntToPyObjAttr(atom, "id", ai->id);    /* not necc. unique */
@@ -1022,9 +1050,9 @@ void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoT
 void CoordSetInvalidateRep(CoordSet * I, int type, int level)
 {
   int a;
-
   if(level >= cRepInvVisib) {
-    I->Obj->RepVisCacheValid = false;
+    if (I->Obj)
+      I->Obj->RepVisCacheValid = false;
   }
   /* graphical representations need redrawing */
   if(level == cRepInvVisib) {
@@ -1280,7 +1308,7 @@ void CoordSetRender(CoordSet * I, RenderInfo * info)
       } else if(G->HaveGUI && G->ValidContext) {
         if(!pick) {
           CGORenderGL(I->SculptCGO, ColorGet(G, I->Obj->Obj.Color),
-                      I->Setting, I->Obj->Obj.Setting, info);
+                      I->Setting, I->Obj->Obj.Setting, info, NULL);
         }
       }
     }
@@ -1437,14 +1465,21 @@ CoordSet *CoordSetNew(PyMOLGlobals * G)
   return (I);
 }
 
+CoordSet *CoordSetCopyImpl(CoordSet * cs);
 
-/*========================================================================*/
 CoordSet *CoordSetCopy(CoordSet * cs)
+{
+  if (!cs)
+    return NULL;
+  return (CoordSetCopyImpl(cs));
+}
+/*========================================================================*/
+CoordSet *CoordSetCopyImpl(CoordSet * cs)
 {
   int nAtom;
   /* OOAlloc declares and defines, I:
    * I = ... */
-  OOAlloc(cs->State.G, CoordSet);
+  OOCalloc(cs->State.G, CoordSet);
   /* shallow copy */
   (*I) = (*cs);                 /* NOTE: must deep-copy all pointers in this struct */
   /* deep copy state struct */
@@ -1455,7 +1490,7 @@ CoordSet *CoordSetCopy(CoordSet * cs)
   if(I->PeriodicBox)
     I->PeriodicBox = CrystalCopy(I->PeriodicBox);
   /* copy the coords */
-  I->Coord = VLAlloc(float, I->NIndex * 3);
+  I->Coord = VLACalloc(float, I->NIndex * 3);
   UtilCopyMem(I->Coord, cs->Coord, sizeof(float) * 3 * I->NIndex);
   /* copy label positions if present in source */
   if(cs->LabPos) {
@@ -1470,7 +1505,7 @@ CoordSet *CoordSetCopy(CoordSet * cs)
   /* copy atom to index mapping, if shallow copied from source */
   if(I->AtmToIdx) {
     nAtom = cs->Obj->NAtom;
-    I->AtmToIdx = Alloc(int, nAtom);
+    I->AtmToIdx = VLACalloc(int, nAtom);
     UtilCopyMem(I->AtmToIdx, cs->AtmToIdx, sizeof(int) * nAtom);
   }
 
@@ -1481,7 +1516,7 @@ CoordSet *CoordSetCopy(CoordSet * cs)
     }
   }
 
-  I->IdxToAtm = Alloc(int, I->NIndex);
+  I->IdxToAtm = VLACalloc(int, I->NIndex);
   UtilCopyMem(I->IdxToAtm, cs->IdxToAtm, sizeof(int) * I->NIndex);
 
   UtilZeroMem(I->Rep, sizeof(Rep *) * cRepCnt);
@@ -1502,8 +1537,8 @@ void CoordSetExtendIndices(CoordSet * I, int nAtom)
   ObjectMolecule *obj = I->Obj;
   if(obj->DiscreteFlag) {
     if(obj->NDiscrete < nAtom) {
-      VLACheck(obj->DiscreteAtmToIdx, int, nAtom);
-      VLACheck(obj->DiscreteCSet, CoordSet *, nAtom);
+      VLASize(obj->DiscreteAtmToIdx, int, nAtom);
+      VLASize(obj->DiscreteCSet, CoordSet *, nAtom);
       for(a = obj->NDiscrete; a < nAtom; a++) {
         obj->DiscreteAtmToIdx[a] = -1;
         obj->DiscreteCSet[a] = NULL;
@@ -1512,7 +1547,8 @@ void CoordSetExtendIndices(CoordSet * I, int nAtom)
     }
 
     if(I->AtmToIdx) {           /* convert to discrete if necessary */
-      FreeP(I->AtmToIdx);
+      VLAFree(I->AtmToIdx);
+      I->AtmToIdx = NULL;
       for(a = 0; a < I->NIndex; a++) {
         b = I->IdxToAtm[a];
         obj->DiscreteAtmToIdx[b] = a;
@@ -1522,7 +1558,7 @@ void CoordSetExtendIndices(CoordSet * I, int nAtom)
   }
   if(I->NAtIndex < nAtom) {
     if(I->AtmToIdx) {
-      I->AtmToIdx = Realloc(I->AtmToIdx, int, nAtom);
+      VLASize(I->AtmToIdx, int, nAtom);
       if(nAtom) {
         ErrChkPtr(I->State.G, I->AtmToIdx);
         for(a = I->NAtIndex; a < nAtom; a++)
@@ -1530,7 +1566,7 @@ void CoordSetExtendIndices(CoordSet * I, int nAtom)
       }
       I->NAtIndex = nAtom;
     } else if(!obj->DiscreteFlag) {
-      I->AtmToIdx = Alloc(int, nAtom);
+      I->AtmToIdx = VLACalloc(int, nAtom);
       for(a = 0; a < nAtom; a++)
         I->AtmToIdx[a] = -1;
       I->NAtIndex = nAtom;
@@ -1545,7 +1581,7 @@ void CoordSetAppendIndices(CoordSet * I, int offset)
   int a, b;
   ObjectMolecule *obj = I->Obj;
 
-  I->IdxToAtm = Alloc(int, I->NIndex);
+  I->IdxToAtm = VLACalloc(int, I->NIndex);
   if(I->NIndex) {
     ErrChkPtr(I->State.G, I->IdxToAtm);
     for(a = 0; a < I->NIndex; a++)
@@ -1560,7 +1596,7 @@ void CoordSetAppendIndices(CoordSet * I, int offset)
       obj->DiscreteCSet[b] = I;
     }
   } else {
-    I->AtmToIdx = Alloc(int, I->NIndex + offset);
+    I->AtmToIdx = VLACalloc(int, I->NIndex + offset);
     if(I->NIndex + offset) {
       ErrChkPtr(I->State.G, I->AtmToIdx);
       for(a = 0; a < offset; a++)
@@ -1578,8 +1614,8 @@ void CoordSetEnumIndices(CoordSet * I)
 {
   /* set up for simple case where 1 = 1, etc. */
   int a;
-  I->AtmToIdx = Alloc(int, I->NIndex);
-  I->IdxToAtm = Alloc(int, I->NIndex);
+  I->AtmToIdx = VLACalloc(int, I->NIndex);
+  I->IdxToAtm = VLACalloc(int, I->NIndex);
   if(I->NIndex) {
     ErrChkPtr(I->State.G, I->AtmToIdx);
     ErrChkPtr(I->State.G, I->IdxToAtm);
@@ -1608,8 +1644,8 @@ void CoordSetFree(CoordSet * I)
           obj->DiscreteAtmToIdx[I->IdxToAtm[a]] = -1;
           obj->DiscreteCSet[I->IdxToAtm[a]] = NULL;
         }
-    FreeP(I->AtmToIdx);
-    FreeP(I->IdxToAtm);
+    VLAFreeP(I->AtmToIdx);
+    VLAFreeP(I->IdxToAtm);
     VLAFreeP(I->Color);
     MapFree(I->Coord2Idx);
     VLAFreeP(I->Coord);
@@ -1628,4 +1664,13 @@ void CoordSetFree(CoordSet * I)
     /* free and make null */
     OOFreeP(I);
   }
+}
+void LabPosTypeCopy(LabPosType * src, LabPosType * dst){
+  dst->mode = src->mode;
+  copy3f(src->pos, dst->pos);
+  copy3f(src->offset, dst->offset);
+}
+void RefPosTypeCopy(RefPosType * src, RefPosType * dst){
+  copy3f(src->coord, dst->coord);
+  dst->specified = dst->specified;
 }

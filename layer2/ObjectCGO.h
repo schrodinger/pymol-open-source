@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 typedef struct ObjectCGOState {
   CGO *std;
   CGO *ray;
+  CGO *shaderCGO;
   int valid;
 } ObjectCGOState;
 

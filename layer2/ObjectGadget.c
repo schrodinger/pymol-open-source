@@ -115,6 +115,30 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   CGOColor(cgo, 1.0, 1.0, 1.0);
 
   /* top */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals, *normalVals;
+    const float nVals[] = {
+      2.f, 2.f, 0.f,
+      2.f, 2.f, 0.f,
+      2.f, 1.f, 0.f,
+      2.f, 1.f, 0.f
+    };
+    const float vVals[] = {
+      1.f, 5.f, 0.f,
+      1.f, 6.f, 0.f,
+      1.f, 1.f, 0.f,
+      1.f, 2.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);      
+    normalVals = vertexVals + (3*nverts);
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+      normalVals[pl] = nVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGONormal(cgo, 2.0, 2.0, 0.0);
   CGOVertex(cgo, 1.0, 5.0, 0.0);
@@ -124,9 +148,32 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   CGOVertex(cgo, 1.0, 1.0, 0.0);
   CGOVertex(cgo, 1.0, 2.0, 0.0);
   CGOEnd(cgo);
-
+#endif
   /* bottom */
-
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals, *normalVals;
+    const float nVals[] = {
+      2.f, 4.f, 0.f,
+      2.f, 4.f, 0.f,
+      2.f, 2.f, 0.f,
+      2.f, 2.f, 0.f
+    };
+    const float vVals[] = {
+      1.f, 3.f, 0.f,
+      1.f, 4.f, 0.f,
+      1.f, 7.f, 0.f,
+      1.f, 8.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);      
+    normalVals = vertexVals + (3*nverts);
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+      normalVals[pl] = nVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGONormal(cgo, 2.0, 4.0, 0.0);
   CGOVertex(cgo, 1.0, 3.0, 0.0);
@@ -136,9 +183,32 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   CGOVertex(cgo, 1.0, 7.0, 0.0);
   CGOVertex(cgo, 1.0, 8.0, 0.0);
   CGOEnd(cgo);
-
+#endif
   /* left */
-
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals, *normalVals;
+    const float nVals[] = {
+      2.f, 3.f, 0.f,
+      2.f, 3.f, 0.f,
+      2.f, 2.f, 0.f,
+      2.f, 2.f, 0.f
+    };
+    const float vVals[] = {
+      1.f, 1.f, 0.f,
+      1.f, 3.f, 0.f,
+      1.f, 5.f, 0.f,
+      1.f, 7.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);      
+    normalVals = vertexVals + (3*nverts);
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+      normalVals[pl] = nVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGONormal(cgo, 2.0, 3.0, 0.0);
   CGOVertex(cgo, 1.0, 1.0, 0.0);
@@ -148,8 +218,33 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   CGOVertex(cgo, 1.0, 5.0, 0.0);
   CGOVertex(cgo, 1.0, 7.0, 0.0);
   CGOEnd(cgo);
+#endif
 
   /* right */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals, *normalVals;
+    const float nVals[] = {
+      2.f, 2.f, 0.f,
+      2.f, 2.f, 0.f,
+      2.f, 0.f, 0.f,
+      2.f, 0.f, 0.f
+    };
+    const float vVals[] = {
+      1.f, 6.f, 0.f,
+      1.f, 8.f, 0.f,
+      1.f, 2.f, 0.f,
+      1.f, 4.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);      
+    normalVals = vertexVals + (3*nverts);
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+      normalVals[pl] = nVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGONormal(cgo, 2.0, 2.0, 0.0);
   CGOVertex(cgo, 1.0, 6.0, 0.0);
@@ -159,10 +254,27 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   CGOVertex(cgo, 1.0, 2.0, 0.0);
   CGOVertex(cgo, 1.0, 4.0, 0.0);
   CGOEnd(cgo);
-
+#endif
   CGOColor(cgo, 1.0, 0.0, 0.0);
 
   /* center */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      1.f, 5.f, 0.f,
+      1.f, 7.f, 0.f,
+      1.f, 6.f, 0.f,
+      1.f, 8.f, 0.f
+    };
+    CGONormal(cgo, 2.0, 2.0, 0.0);
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGONormal(cgo, 2.0, 2.0, 0.0);
   CGOVertex(cgo, 1.0, 5.0, 0.0);
@@ -170,9 +282,27 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   CGOVertex(cgo, 1.0, 6.0, 0.0);
   CGOVertex(cgo, 1.0, 8.0, 0.0);
   CGOEnd(cgo);
+#endif
 
   CGOColor(cgo, 0.0, 1.0, 0.0);
   /* backr */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      1.f, 9.f, 0.f,
+      1.f, 10.f, 0.f,
+      1.f, 11.f, 0.f,
+      1.f, 12.f, 0.f
+    };
+    CGONormal(cgo, 2.0, 2.0, 0.0);
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGONormal(cgo, 2.0, 2.0, 0.0);
   CGOVertex(cgo, 1.0, 9.0, 0.0);
@@ -180,7 +310,7 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   CGOVertex(cgo, 1.0, 11.0, 0.0);
   CGOVertex(cgo, 1.0, 12.0, 0.0);
   CGOEnd(cgo);
-
+#endif
   CGOStop(cgo);
 
   gs->ShapeCGO = cgo;
@@ -191,40 +321,105 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   CGOPickColor(cgo, 0, cPickableGadget);
 
   /* top */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      1.f, 1.f, 0.f,
+      1.f, 2.f, 0.f,
+      1.f, 5.f, 0.f,
+      1.f, 6.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGOVertex(cgo, 1.0, 1.0, 0.0);
   CGOVertex(cgo, 1.0, 2.0, 0.0);
   CGOVertex(cgo, 1.0, 5.0, 0.0);
   CGOVertex(cgo, 1.0, 6.0, 0.0);
   CGOEnd(cgo);
-
+#endif
   /* bottom */
-
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      1.f, 3.f, 0.f,
+      1.f, 4.f, 0.f,
+      1.f, 7.f, 0.f,
+      1.f, 8.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGOVertex(cgo, 1.0, 3.0, 0.0);
   CGOVertex(cgo, 1.0, 4.0, 0.0);
   CGOVertex(cgo, 1.0, 7.0, 0.0);
   CGOVertex(cgo, 1.0, 8.0, 0.0);
   CGOEnd(cgo);
+#endif
 
   /* left */
 
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      1.f, 1.f, 0.f,
+      1.f, 3.f, 0.f,
+      1.f, 5.f, 0.f,
+      1.f, 7.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGOVertex(cgo, 1.0, 1.0, 0.0);
   CGOVertex(cgo, 1.0, 3.0, 0.0);
   CGOVertex(cgo, 1.0, 5.0, 0.0);
   CGOVertex(cgo, 1.0, 7.0, 0.0);
   CGOEnd(cgo);
+#endif
 
   /* right */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      1.f, 6.f, 0.f,
+      1.f, 8.f, 0.f,
+      1.f, 2.f, 0.f,
+      1.f, 4.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGOVertex(cgo, 1.0, 6.0, 0.0);
   CGOVertex(cgo, 1.0, 8.0, 0.0);
   CGOVertex(cgo, 1.0, 2.0, 0.0);
   CGOVertex(cgo, 1.0, 4.0, 0.0);
   CGOEnd(cgo);
-
   CGOEnd(cgo);
+#endif
   CGOStop(cgo);
   gs->PickShapeCGO = cgo;
 
@@ -668,6 +863,16 @@ ObjectGadget *ObjectGadgetDefine(PyMOLGlobals * G, ObjectGadget * obj, PyObject 
             cgo = font_cgo;
           }
           est = CGOCheckComplex(cgo);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  {
+	    CGO *convertcgo = NULL;
+	    if(cgo && cgo->has_begin_end){
+	      convertcgo = CGOCombineBeginEnd(cgo, 0);
+	      CGOFree(cgo);
+	      cgo = convertcgo;
+	    }
+	  }
+#endif
           if(est) {
             I->State[state].ray = cgo;
             I->State[state].std = CGOSimplify(cgo, est);

@@ -87,8 +87,9 @@ void ExtrudeCircle(CExtrude * I, int n, float size)
 
   PRINTFD(I->G, FB_Extrude)
     " ExtrudeCircle-DEBUG: entered.\n" ENDFD;
-  if(n > 20)
-    n = 20;
+  /*
+  if(n > 50)
+  n = 50;*/
 
   FreeP(I->sv);
   FreeP(I->sn);
@@ -127,8 +128,8 @@ void ExtrudeOval(CExtrude * I, int n, float width, float length)
   PRINTFD(I->G, FB_Extrude)
     " ExtrudeOval-DEBUG: entered.\n" ENDFD;
 
-  if(n > 20)
-    n = 20;
+  /*  if(n > 50)
+      n = 50;*/
 
   FreeP(I->sv);
   FreeP(I->sn);
@@ -352,8 +353,8 @@ void ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size)
 
   PRINTFD(I->G, FB_Extrude)
     " ExtrudeDumbbell2-DEBUG: entered.\n" ENDFD;
-  if(n > 20)
-    n = 20;
+  /*  if(n > 50)
+      n = 50;*/
 
   FreeP(I->sv);
   FreeP(I->sn);
@@ -441,6 +442,36 @@ void ExtrudeCGOTraceAxes(CExtrude * I, CGO * cgo)
 
   if(I->N) {
     CGOColor(cgo, 0.5, 0.5, 0.5);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+    {
+      int nverts = 6*I->N, pl = 0;
+      float *vertexVals, *tmp_ptr;
+      vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);
+      v = I->p;
+      n = I->n;
+      for(a = 0; a < I->N; a++) {
+	add3f(v, n, v0);
+	tmp_ptr = v0;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	tmp_ptr = v;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	n += 3;
+	add3f(v, n, v0);
+	tmp_ptr = v0;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	tmp_ptr = v;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	n += 3;
+	add3f(v, n, v0);
+	tmp_ptr = v0;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	tmp_ptr = v;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	n += 3;
+	v += 3;
+      }
+    }
+#else
     CGOBegin(cgo, GL_LINES);
     v = I->p;
     n = I->n;
@@ -460,6 +491,7 @@ void ExtrudeCGOTraceAxes(CExtrude * I, CGO * cgo)
       v += 3;
     }
     CGOEnd(cgo);
+#endif
   }
 }
 
@@ -467,9 +499,20 @@ void ExtrudeCGOTrace(CExtrude * I, CGO * cgo)
 {
   int a;
   float *v;
-
   if(I->N) {
     CGOColor(cgo, 0.5, 0.5, 0.5);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+    {
+      int nverts = I->N, pl = 0;
+      float *vertexVals;
+      vertexVals = CGODrawArrays(cgo, GL_LINE_STRIP, CGO_VERTEX_ARRAY, nverts);
+      v = I->p;
+      for(a = 0; a < I->N; a++) {
+	vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
+	v += 3;
+      }
+    }
+#else
     CGOBegin(cgo, GL_LINE_STRIP);
     v = I->p;
     for(a = 0; a < I->N; a++) {
@@ -477,6 +520,7 @@ void ExtrudeCGOTrace(CExtrude * I, CGO * cgo)
       v += 3;
     }
     CGOEnd(cgo);
+#endif
   }
 }
 
@@ -539,39 +583,63 @@ void ExtrudeCGOTraceFrame(CExtrude * I, CGO * cgo)
 
   if(I->N && I->Ns) {
     CGOColor(cgo, 0.5, 0.5, 0.5);
-    CGOBegin(cgo, GL_LINES);
-    v = I->p;
-    n = I->n;
-    for(a = 0; a < I->N; a++) {
-      sv = I->sv;
-      tv = I->tv;
-      for(b = 0; b < I->Ns; b++) {
-        transform33Tf3f(n, sv, tv);
-        sv += 3;
-        tv += 3;
+    {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      int nverts = 2*I->N + 2, pl = 0;
+      float *vertexVals, *tmp_ptr;
+      vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);
+#else
+      CGOBegin(cgo, GL_LINES);
+#endif
+      v = I->p;
+      n = I->n;
+      for(a = 0; a < I->N; a++) {
+	sv = I->sv;
+	tv = I->tv;
+	for(b = 0; b < I->Ns; b++) {
+	  transform33Tf3f(n, sv, tv);
+	  sv += 3;
+	  tv += 3;
+	}
+	/* trace shape */
+	tv = I->tv;
+	add3f(v, tv, v0);
+	for(b = 1; b < I->Ns; b++) {
+	  tv += 3;
+	  add3f(v, tv, v1);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  tmp_ptr = v0;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	  tmp_ptr = v1;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+#else
+	  CGOVertexv(cgo, v0);
+	  CGOVertexv(cgo, v1);
+#endif
+	  copy3f(v1, v0);
+	}
+	tv = I->tv;
+	add3f(v, tv, v1);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	tmp_ptr = v0;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	tmp_ptr = v1;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+#else
+	CGOVertexv(cgo, v0);
+	CGOVertexv(cgo, v1);
+#endif
+	v += 3;
+	n += 9;
       }
-      /* trace shape */
-      tv = I->tv;
-      add3f(v, tv, v0);
-      for(b = 1; b < I->Ns; b++) {
-        tv += 3;
-        add3f(v, tv, v1);
-        CGOVertexv(cgo, v0);
-        CGOVertexv(cgo, v1);
-        copy3f(v1, v0);
-      }
-      tv = I->tv;
-      add3f(v, tv, v1)
-        CGOVertexv(cgo, v0);
-      CGOVertexv(cgo, v1);
-      v += 3;
-      n += 9;
+#ifndef _PYMOL_CGO_DRAWARRAYS
+      CGOEnd(cgo);
+#endif
     }
-    CGOEnd(cgo);
   }
 }
 
-void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override)
+void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, short use_spheres)
 {
   int a, b, *i;
   float *v;
@@ -627,11 +695,66 @@ void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overri
     start = I->Ns / 4;
     stop = 3 * I->Ns / 4;
     for(b = 0; b < I->Ns; b++) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      GLenum mode;
+      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	mode = GL_TRIANGLE_STRIP;
+      else {
+	  mode = GL_LINE_STRIP;
+      }
+      c = I->c;
+      i = I->i;
+      {
+	int nverts = 2*I->N, pl = 0, plc = 0, damode = CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY | CGO_PICK_COLOR_ARRAY, nxtn = 3;
+	float *vertexVals, *normalVals, *colorVals = 0, *nxtVals = 0, *tmp_ptr;
+	float *pickColorVals;
+	if (color_override && (b > start) && (b < stop))
+	  CGOColorv(cgo, color_override);
+	else {
+	  damode |= CGO_COLOR_ARRAY;
+	}
+	vertexVals = CGODrawArrays(cgo, mode, damode, nverts);      
+	normalVals = nxtVals = vertexVals + (nverts*3);
+	if (damode & CGO_COLOR_ARRAY){
+	  colorVals = nxtVals = normalVals + (nverts*3);
+	  nxtn = 4;
+	}
+	pickColorVals = nxtVals + (nverts*nxtn);
+
+	for(a = 0; a < I->N; a++) {
+	  if(colorVals){
+	    tmp_ptr = c;
+	    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	  }
+	  SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	  tmp_ptr = tn;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = tv;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	  tn += 3;
+	  tv += 3;
+	  if(colorVals){
+	    tmp_ptr = c;
+	    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	  }
+	  SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	  tmp_ptr = tn1;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = tv1;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	  tn1 += 3;
+	  tv1 += 3;
+	  c += 3;
+	  i++;
+	}
+      }
+#else
       if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
         CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo, GL_LINE_STRIP);
-        CGODisable(cgo, GL_LIGHTING);
       }
       c = I->c;
       i = I->i;
@@ -653,10 +776,7 @@ void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overri
         i++;
       }
       CGOEnd(cgo);
-    }
-
-    if(SettingGet(I->G, cSetting_cartoon_debug) >= 1.5) {
-      CGOEnable(cgo, GL_LIGHTING);
+#endif
     }
 
     switch (cap) {
@@ -674,6 +794,33 @@ void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overri
         tv += 3;
       }
 
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      {
+	int nverts = 2 + I->Ns, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	copy3f(I->n, v0);
+	invert3f(v0);
+	if(color_override)
+	  CGOColorv(cgo, color_override);
+	else
+	  CGOColorv(cgo, I->c);
+	CGOPickColor(cgo, I->i[0], cPickableAtom);
+	CGONormalv(cgo, v0);
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_FAN, CGO_VERTEX_ARRAY, nverts);	      
+
+	tmp_ptr = v;
+	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	pl += 3;
+	tmp_ptr = I->tv;
+	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	pl += 3;
+	for(b = I->Ns - 1; b >= 0; b--) {
+	  tmp_ptr = I->tv + b*3;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	}
+      }
+#else
       CGOBegin(cgo, GL_TRIANGLE_FAN);
       copy3f(I->n, v0);
       invert3f(v0);
@@ -690,7 +837,7 @@ void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overri
         CGOVertexv(cgo, I->tv + b * 3);
       }
       CGOEnd(cgo);
-
+#endif
       n = I->n + 9 * (I->N - 1);
       v = I->p + 3 * (I->N - 1);
 
@@ -698,18 +845,35 @@ void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overri
       tv = I->tv;
       for(b = 0; b < I->Ns; b++) {
         transform33Tf3f(n, sv, tv);
-        add3f(v, tv, tv)
-          sv += 3;
+        add3f(v, tv, tv);
+        sv += 3;
         tv += 3;
       }
 
+#ifndef _PYMOL_CGO_DRAWARRAYS
       CGOBegin(cgo, GL_TRIANGLE_FAN);
+#endif
       if(color_override)
         CGOColorv(cgo, color_override);
       else
         CGOColorv(cgo, I->c + 3 * (I->N - 1));
       CGOPickColor(cgo, I->i[I->N - 1], cPickableAtom);
       CGONormalv(cgo, n);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      {
+	int nverts = I->Ns + 2, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_FAN, CGO_VERTEX_ARRAY, nverts);      
+	vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+	/* trace shape */
+	for(b = 0; b < I->Ns; b++) {
+	  tmp_ptr = I->tv + b * 3;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	}
+	tmp_ptr = I->tv;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+      }
+#else
       CGOVertexv(cgo, v);
       /* trace shape */
       for(b = 0; b < I->Ns; b++) {
@@ -717,24 +881,169 @@ void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overri
       }
       CGOVertexv(cgo, I->tv);
       CGOEnd(cgo);
+#endif
       break;
     case 2:
       {
-        float factor = (float) cos(0.75 * PI / I->Ns);
+	float p0[3], p1[3], p2[3], z1, z2, normal[3], vertex1[3];
+	float c, d, prev, x, y, *v1, nEdge = I->Ns, nEdgeH = 2.f * floor(I->Ns/2.f);
+
+	n = I->n;
+	v = I->p;
+	sv = I->sv;
+	tv = I->tv;
+	for(b = 0; b < I->Ns; b++) {
+	  transform33Tf3f(n, sv, tv);
+	  add3f(v, tv, tv);
+	  sv += 3;
+	  tv += 3;
+	}
+	
+	copy3f(I->n, p0);
+	invert3f(p0);
+	transform33Tf3f(I->n, I->sv, p1);
+	cross_product3f(p0, p1, p2);
+	normalize3f(p1);
+	normalize3f(p2);
+
         if(color_override)
           CGOColorv(cgo, color_override);
         else
           CGOColorv(cgo, I->c);
         CGOPickColor(cgo, I->i[0], cPickableAtom);
         v = I->p;
-        CGOSphere(cgo, v, I->r * factor);
+	if (use_spheres){
+	  CGOSphere(cgo, v, I->r); // this matches the Cylinder
+	} else {
+	  /* If we don't use spheres, then we need to have the rounded cap
+	   * line up with the geometry perfectly.  We generate the cap using 
+	   * spheracle coordinates, then for the last line (i.e., last=true)
+	   * we use the coordinates from the geometry (i.e., exactly 
+	   * how they were genereated from I->n and I->sv).  This is so that 
+	   * the vertices line up perfectly. */
+	  nEdge = I->Ns;
+	  CGOBegin(cgo, GL_TRIANGLE_STRIP);
+	  z1 = z2 = 1.f;
+	  prev = 1.f;
+	  v1 = v;
+	  tv = I->tv;
+	  for (c = 1; c <= (nEdgeH/2); c++){
+	    short last = (c + 1) > (nEdgeH/2);
+	    z1 = z2;
+	    z2 = (float) cos((c) * PI / ((float)nEdgeH));
+	    for (d = 0; d <= nEdge; d++){
+	      x = (float) cos((d) * 2 * PI / (float)nEdge) * sin((c-prev) * PI / (float)nEdgeH);
+	      y = (float) sin((d) * 2 * PI / (float)nEdge) * sin((c-prev) * PI / (float)nEdgeH);
+	      normal[0] = p1[0] * x + p2[0] * y + p0[0] * z1;
+	      normal[1] = p1[1] * x + p2[1] * y + p0[1] * z1;
+	      normal[2] = p1[2] * x + p2[2] * y + p0[2] * z1;
+	      vertex1[0] = v1[0] + normal[0] * I->r;
+	      vertex1[1] = v1[1] + normal[1] * I->r;
+	      vertex1[2] = v1[2] + normal[2] * I->r;
+	      normalize3f(normal);
+	      CGONormalv(cgo, normal);	  
+	      CGOVertexv(cgo, vertex1);
+	      
+	      if (last){
+		float *vert = tv + 3*(((int)(nEdge-d))%((int)nEdge));
+		subtract3f(vert, v, normal);
+		CGONormalv(cgo, normal);
+		CGOVertexv(cgo, vert);
+	      } else {
+		x = (float) cos((d) * 2 * PI / (float)nEdge) * sin((c) * PI / (float)nEdgeH);
+		y = (float) sin((d) * 2 * PI / (float)nEdge) * sin((c) * PI / (float)nEdgeH);
+		normal[0] = p1[0] * x + p2[0] * y + p0[0] * z2;
+		normal[1] = p1[1] * x + p2[1] * y + p0[1] * z2;
+		normal[2] = p1[2] * x + p2[2] * y + p0[2] * z2;
+		vertex1[0] = v1[0] + normal[0] * I->r;
+		vertex1[1] = v1[1] + normal[1] * I->r;
+		vertex1[2] = v1[2] + normal[2] * I->r;
+		normalize3f(normal);
+		CGONormalv(cgo, normal);	  
+		CGOVertexv(cgo, vertex1);
+	      }
+	    }
+	  }
+	  CGOEnd(cgo);
+	}
+
+	n = I->n + 9 * (I->N - 1);
         v = I->p + 3 * (I->N - 1);
+	sv = I->sv;
+	tv = I->tv;
+	for(b = 0; b < I->Ns; b++) {
+	  transform33Tf3f(n, sv, tv);
+	  add3f(v, tv, tv);
+	  sv += 3;
+	  tv += 3;
+	}
+	
+	copy3f(n, p0);
+	transform33Tf3f(n, I->sv, p1);
+	cross_product3f(p0, p1, p2);
+	normalize3f(p1);
+	normalize3f(p2);
+
         if(color_override)
           CGOColorv(cgo, color_override);
         else
           CGOColorv(cgo, I->c + 3 * (I->N - 1));
         CGOPickColor(cgo, I->i[I->N - 1], cPickableAtom);
-        CGOSphere(cgo, v, I->r * factor);
+
+	if (use_spheres){
+	  CGOSphere(cgo, v, I->r); // this matches the Cylinder
+	} else {
+	  /* If we don't use spheres, then we need to have the rounded cap
+	   * line up with the geometry perfectly.  We generate the cap using 
+	   * spheracle coordinates, then for the last line (i.e., last=true)
+	   * we use the coordinates from the geometry (i.e., exactly 
+	   * how they were genereated from I->n and I->sv).  This is so that 
+	   * the vertices line up perfectly. */
+	  nEdge = I->Ns;
+	  CGOBegin(cgo, GL_TRIANGLE_STRIP);
+	  z1 = z2 = 1.f;
+	  prev = 1.f;
+	  v1 = v;
+	  tv = I->tv;
+	  for (c = 1; c <= (nEdgeH/2); c++){
+	    short last = (c + 1) > (nEdgeH/2);
+	    z1 = z2;
+	    z2 = (float) cos((c) * PI / ((float)nEdgeH));
+	    for (d = 0; d <= nEdge; d++){
+	      x = (float) cos((d) * 2 * PI / (float)nEdge) * sin((c-prev) * PI / (float)nEdgeH);
+	      y = (float) sin((d) * 2 * PI / (float)nEdge) * sin((c-prev) * PI / (float)nEdgeH);
+	      normal[0] = p1[0] * x + p2[0] * y + p0[0] * z1;
+	      normal[1] = p1[1] * x + p2[1] * y + p0[1] * z1;
+	      normal[2] = p1[2] * x + p2[2] * y + p0[2] * z1;
+	      vertex1[0] = v1[0] + normal[0] * I->r;
+	      vertex1[1] = v1[1] + normal[1] * I->r;
+	      vertex1[2] = v1[2] + normal[2] * I->r;
+	      normalize3f(normal);
+	      CGONormalv(cgo, normal);	  
+	      CGOVertexv(cgo, vertex1);
+	      
+	      if (last){
+		float *vert = tv + 3*(((int)(d))%((int)nEdge));
+		subtract3f(vert, v, normal);
+		CGONormalv(cgo, normal);
+		CGOVertexv(cgo, vert);
+	      } else {
+		x = (float) cos((d) * 2 * PI / (float)nEdge) * sin((c) * PI / (float)nEdgeH);
+		y = (float) sin((d) * 2 * PI / (float)nEdge) * sin((c) * PI / (float)nEdgeH);
+		normal[0] = p1[0] * x + p2[0] * y + p0[0] * z2;
+		normal[1] = p1[1] * x + p2[1] * y + p0[1] * z2;
+		normal[2] = p1[2] * x + p2[2] * y + p0[2] * z2;
+		vertex1[0] = v1[0] + normal[0] * I->r;
+		vertex1[1] = v1[1] + normal[1] * I->r;
+		vertex1[2] = v1[2] + normal[2] * I->r;
+		normalize3f(normal);
+		CGONormalv(cgo, normal);	  
+		CGOVertexv(cgo, vertex1);
+	      }
+	    }
+	  }
+	  CGOEnd(cgo);
+	}
       }
       break;
     }
@@ -745,6 +1054,50 @@ void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overri
   PRINTFD(I->G, FB_Extrude)
     " ExtrudeCGOSurfaceTube-DEBUG: exiting...\n" ENDFD;
 
+}
+
+void ExtrudeCylindersToCGO(CExtrude * I, CGO * cgo, float tube_radius, short is_picking){
+  float *v1, *c1, midv[3], midc[3];
+  int a, *i;
+
+  PRINTFD(I->G, FB_Extrude)
+    " ExtrudeCylindersToCGO-DEBUG: entered.\n" ENDFD;
+
+  v1 = I->p + 3;
+  c1 = I->c + 3;
+  i = I->i + 1;
+
+  if (is_picking){
+    float first = 2.f;
+    for(a = 1; a < I->N; a++) {
+      average3f(v1-3, v1, midv);
+      average3f(c1-3, c1, midc);
+      CGOPickColor(cgo, *(i-1), cPickableAtom);
+      CGOCustomCylinderv(cgo, v1-3, midv, tube_radius, c1-3, midc, first, 0.f);
+      CGOPickColor(cgo, *i, cPickableAtom);
+      CGOCustomCylinderv(cgo, midv, v1, tube_radius, midc, c1, 0.f, 2.f);
+      v1 += 3;
+      c1 += 3;
+      i++;
+      first = 0.f;
+    }
+  } else {
+    if (I->N > 1){
+      //      CGOSausage(cgo, v1-3, v1, tube_radius, c1-3, c1);
+      CGOCustomCylinderv(cgo, v1-3, v1, tube_radius, c1-3, c1, 2.f, 2.f);
+      v1 += 3;
+      c1 += 3;
+    }
+    for(a = 2; a < I->N; a++) {
+      //      CGOSausage(cgo, v1-3, v1, tube_radius, c1-3, c1);
+      CGOCustomCylinderv(cgo, v1-3, v1, tube_radius, c1-3, c1, 0.f, 2.f);
+      v1 += 3;
+      c1 += 3;
+    }
+  }
+
+  PRINTFD(I->G, FB_Extrude)
+    " ExtrudeCylindersToCGO-DEBUG: exiting...\n" ENDFD;
 }
 
 void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
@@ -875,11 +1228,54 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
     start = I->Ns / 4;
     stop = 3 * I->Ns / 4;
     for(b = 0; b < I->Ns; b++) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      GLenum mode;
+      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	mode = GL_TRIANGLE_STRIP;
+      else {
+	mode = GL_LINE_STRIP;
+      }
+      c = I->c;
+      i = I->i;
+      {
+	int nverts = 2*I->N, pl = 0, plc = 0;
+	float *vertexVals, *normalVals, *colorVals = 0, *nxtVals = 0, *tmp_ptr;
+	float *pickColorVals;
+	vertexVals = CGODrawArrays(cgo, mode, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY | CGO_COLOR_ARRAY | CGO_PICK_COLOR_ARRAY, nverts);      
+	normalVals = nxtVals = vertexVals + (nverts*3);
+	colorVals = nxtVals = normalVals + (nverts*3);
+	pickColorVals = (nxtVals + (nverts*4));
+
+	for(a = 0; a < I->N; a++) {
+	  tmp_ptr = c;
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2];  colorVals[plc++] = cgo->alpha;
+	  SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	  tmp_ptr = tn;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = tv;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	  tn += 3;
+	  tv += 3;
+	  tmp_ptr = c;
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2];  colorVals[plc++] = cgo->alpha;
+	  SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	  tmp_ptr = tn1;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = tv1;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	  tn1 += 3;
+	  tv1 += 3;
+	  c += 3;
+	  i++;
+	}
+      }
+#else
       if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
         CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo, GL_LINE_STRIP);
-        CGODisable(cgo, GL_LIGHTING);
       }
       c = I->c;
       i = I->i;
@@ -898,6 +1294,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
         i++;
       }
       CGOEnd(cgo);
+#endif
     }
 
     if(SettingGet(I->G, cSetting_cartoon_debug) > 3.5) {
@@ -912,36 +1309,67 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
       stop = 3 * I->Ns / 4;
       for(b = 0; b < I->Ns; b++) {
         float vv[3];
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	int nverts = 4*I->N, pl = 0;
+	float *vertexVals, *normalVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);
+	normalVals = vertexVals + (nverts*3);
+#else
         CGOBegin(cgo, GL_LINES);
+#endif
         c = I->c;
         i = I->i;
         for(a = 0; a < I->N; a++) {
           CGOColorv(cgo, c);
           copy3f(tn, vv);
-          scale3f(vv, 0.3F, vv)
-            add3f(vv, tv, vv);
+          scale3f(vv, 0.3F, vv);
+	  add3f(vv, tv, vv);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  tmp_ptr = tn;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = tv;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	  tmp_ptr = tn;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = vv;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+#else
           CGONormalv(cgo, tn);
           CGOVertexv(cgo, tv);
           CGOVertexv(cgo, vv);
+#endif
           tn += 3;
           tv += 3;
           copy3f(tn1, vv);
-          scale3f(vv, 0.3F, vv)
-            add3f(vv, tv1, vv);
+          scale3f(vv, 0.3F, vv);
+	  add3f(vv, tv1, vv);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  tmp_ptr = tn1;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = tv1;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	  tmp_ptr = tn1;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = vv;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+#else
           CGONormalv(cgo, tn1);
           CGOVertexv(cgo, tv1);
           CGOVertexv(cgo, vv);
+#endif
           tn1 += 3;
           tv1 += 3;
           c += 3;
           i++;
         }
+#ifndef _PYMOL_CGO_DRAWARRAYS
         CGOEnd(cgo);
+#endif
       }
-    }
-
-    if(SettingGet(I->G, cSetting_cartoon_debug) >= 1.5) {
-      CGOEnable(cgo, GL_LIGHTING);
     }
 
     if(cap) {
@@ -963,21 +1391,39 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
         sv += 3;
         tv += 3;
       }
-
+#ifndef _PYMOL_CGO_DRAWARRAYS
       CGOBegin(cgo, GL_TRIANGLE_FAN);
+#endif
       copy3f(I->n, v0);
       invert3f(v0);
       CGOColorv(cgo, I->c);
       CGOPickColor(cgo, I->i[0], cPickableAtom);
       CGONormalv(cgo, v0);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      {
+	int nverts =  I->Ns + 2, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_FAN, CGO_VERTEX_ARRAY, nverts);
+	tmp_ptr = v;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	tmp_ptr = I->tv;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	for(b = I->Ns - 1; b >= 0; b--) {
+	  tmp_ptr = I->tv + b * 3;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	}
+      }
+#else
       CGOVertexv(cgo, v);
       /* trace shape */
       CGOVertexv(cgo, I->tv);
       for(b = I->Ns - 1; b >= 0; b--) {
-        CGOVertexv(cgo, I->tv + b * 3);
+	CGOVertexv(cgo, I->tv + b * 3);
       }
+#endif
+#ifndef _PYMOL_CGO_DRAWARRAYS
       CGOEnd(cgo);
-
+#endif
       n = I->n + 9 * (I->N - 1);
       v = I->p + 3 * (I->N - 1);
       sf = I->sf + (I->N - 1);  /* PUTTY */
@@ -996,10 +1442,27 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
         tv += 3;
       }
 
+#ifndef _PYMOL_CGO_DRAWARRAYS
       CGOBegin(cgo, GL_TRIANGLE_FAN);
+#endif
       CGOColorv(cgo, I->c + 3 * (I->N - 1));
       CGOPickColor(cgo, I->i[I->N - 1], cPickableAtom);
       CGONormalv(cgo, n);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      {
+	int nverts = I->Ns + 2, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_FAN, CGO_VERTEX_ARRAY, nverts);
+	tmp_ptr = v;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	for(b = 0; b < I->Ns; b++) {
+	  tmp_ptr = I->tv + b *3;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	}
+	tmp_ptr = I->tv;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+      }
+#else
       CGOVertexv(cgo, v);
       /* trace shape */
       for(b = 0; b < I->Ns; b++) {
@@ -1007,7 +1470,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
       }
       CGOVertexv(cgo, I->tv);
       CGOEnd(cgo);
-
+#endif
     }
     FreeP(TV);
     FreeP(TN);
@@ -1073,26 +1536,71 @@ void ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_ove
     tn1 = TN + 3 * I->N;
 
     for(b = 0; b < I->Ns; b += 2) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      int nverts = 2*I->N, pl = 0, plc = 0, damode = CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY | CGO_PICK_COLOR_ARRAY, nxtn = 3;
+      float *vertexVals, *normalVals, *colorVals = 0, *nxtVals = 0, *tmp_ptr;
+      float *pickColorVals;
+      GLenum mode = GL_LINE_STRIP;
+      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	mode = GL_TRIANGLE_STRIP;
+      if (color_override)
+	CGOColorv(cgo, color_override);
+      else 
+	damode |= CGO_COLOR_ARRAY;
+      vertexVals = CGODrawArrays(cgo, mode, damode, nverts);      
+      normalVals = nxtVals = vertexVals + (nverts*3);
+      if (!color_override){
+	colorVals = nxtVals = normalVals + (nverts*3);
+	nxtn = 4;
+      }
+      pickColorVals = (nxtVals + (nverts*nxtn));
+#else
       if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
         CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo, GL_LINE_STRIP);
-        CGODisable(cgo, GL_LIGHTING);
       }
+#endif
       if(color_override)
         CGOColorv(cgo, color_override);
       c = I->c;
       i = I->i;
       for(a = 0; a < I->N; a++) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	if(colorVals){
+	  tmp_ptr = c;
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
+	}
+	SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);
+	tmp_ptr = tn;
+	normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	tmp_ptr = tv;
+	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	pl += 3;
+#else
         if(!color_override)
           CGOColorv(cgo, c);
         CGOPickColor(cgo, *i, cPickableAtom);
         CGONormalv(cgo, tn);
         CGOVertexv(cgo, tv);
+#endif
         tn += 3;
         tv += 3;
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	if(colorVals){
+	  tmp_ptr = c;
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
+	}
+	SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);
+	tmp_ptr = tn1;
+	normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	tmp_ptr = tv1;
+	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	pl += 3;
+#else
         CGONormalv(cgo, tn1);
         CGOVertexv(cgo, tv1);
+#endif
         tn1 += 3;
         tv1 += 3;
         c += 3;
@@ -1102,11 +1610,9 @@ void ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_ove
       tn += 3 * I->N;
       tv1 += 3 * I->N;
       tn1 += 3 * I->N;
+#ifndef _PYMOL_CGO_DRAWARRAYS
       CGOEnd(cgo);
-    }
-
-    if(SettingGet(I->G, cSetting_cartoon_debug) > 1.5) {
-      CGOEnable(cgo, GL_LIGHTING);
+#endif
     }
 
     if(cap) {
@@ -1125,13 +1631,33 @@ void ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_ove
         sv += 3;
         tv += 3;
       }
+#ifndef _PYMOL_CGO_DRAWARRAYS
       CGOBegin(cgo, GL_TRIANGLE_FAN);
+#endif
       copy3f(I->n, v0);
       invert3f(v0);
       if(!color_override)
         CGOColorv(cgo, I->c);
       CGOPickColor(cgo, I->i[0], cPickableAtom);
       CGONormalv(cgo, v0);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      {
+	int nverts = 2 + I->Ns, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_FAN, CGO_VERTEX_ARRAY, nverts);	
+	tmp_ptr = v;
+	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	pl += 3;
+	tmp_ptr = I->tv;
+	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	pl += 3;
+	for(b = I->Ns - 1; b >= 0; b--) {
+	  tmp_ptr = I->tv + b * 3;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	}
+      }
+#else
       CGOVertexv(cgo, v);
       /* trace shape */
       CGOVertexv(cgo, I->tv);
@@ -1139,7 +1665,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_ove
         CGOVertexv(cgo, I->tv + b * 3);
       }
       CGOEnd(cgo);
-
+#endif
       n = I->n + 9 * (I->N - 1);
       v = I->p + 3 * (I->N - 1);
 
@@ -1151,11 +1677,28 @@ void ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_ove
         sv += 3;
         tv += 3;
       }
+#ifndef _PYMOL_CGO_DRAWARRAYS
       CGOBegin(cgo, GL_TRIANGLE_FAN);
+#endif
       if(!color_override)
         CGOColorv(cgo, I->c + 3 * (I->N - 1));
       CGOPickColor(cgo, I->i[I->N - 1], cPickableAtom);
       CGONormalv(cgo, n);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      {
+	int nverts = I->Ns + 2, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_FAN, CGO_VERTEX_ARRAY, nverts);      
+	vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+	/* trace shape */
+	for(b = 0; b < I->Ns; b++) {
+	  tmp_ptr = I->tv + b * 3;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	}
+	tmp_ptr = I->tv;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+      }
+#else
       CGOVertexv(cgo, v);
       /* trace shape */
       for(b = 0; b < I->Ns; b++) {
@@ -1163,7 +1706,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_ove
       }
       CGOVertexv(cgo, I->tv);
       CGOEnd(cgo);
-
+#endif
     }
     FreeP(TV);
     FreeP(TN);
@@ -1256,11 +1799,69 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
     tn1 = TN + 3 * I->N;
 
     for(b = 0; b < I->Ns; b += 2) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      GLenum mode;
+      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	mode = GL_TRIANGLE_STRIP;
+      else {
+	mode = GL_LINE_STRIP;
+      }
+      c = I->c;
+      i = I->i;
+      {
+	int nverts = 2*I->N, pl = 0, plc = 0, damode = CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY | CGO_PICK_COLOR_ARRAY, nxtn = 3;
+	float *vertexVals, *normalVals, *colorVals = 0, *nxtVals = 0, *tmp_ptr;
+	float *pickColorVals;
+	if (color_override)
+	  CGOColorv(cgo, color_override);
+	else 
+	  damode |= CGO_COLOR_ARRAY;
+	vertexVals = CGODrawArrays(cgo, mode, damode, nverts);      
+	normalVals = nxtVals = vertexVals + (nverts*3);
+	if (damode & CGO_COLOR_ARRAY){
+	  colorVals = nxtVals = normalVals + (nverts*3);
+	  nxtn = 4;
+	}
+	pickColorVals = (nxtVals + (nverts*nxtn));
+
+	for(a = 0; a < I->N; a++) {
+	  if(colorVals){
+	    tmp_ptr = c;
+	    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	  }
+	  SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	  tmp_ptr = tn;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = tv;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	  tn += 3;
+	  tv += 3;
+	  if(colorVals){
+	    tmp_ptr = c;
+	    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	  }
+	  SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	  tmp_ptr = tn1;
+	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	  tmp_ptr = tv1;
+	  vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	  pl += 3;
+	  tn1 += 3;
+	  tv1 += 3;
+	  c += 3;
+	  i++;
+	}
+	tv += 3 * I->N;
+	tn += 3 * I->N;
+	tv1 += 3 * I->N;
+	tn1 += 3 * I->N;
+      }
+#else
       if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
         CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo, GL_LINE_STRIP);
-        CGODisable(cgo, GL_LIGHTING);
       }
       if(color_override)
         CGOColorv(cgo, color_override);
@@ -1286,10 +1887,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
       tv1 += 3 * I->N;
       tn1 += 3 * I->N;
       CGOEnd(cgo);
-    }
-
-    if(SettingGet(I->G, cSetting_cartoon_debug) > 1.5) {
-      CGOEnable(cgo, GL_LIGHTING);
+#endif
     }
 
     FreeP(TV);
@@ -1353,7 +1951,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
       sn += 3;
     }
 
-    /* fill in each strip separately */
+    /* fill in each strip of arrow separately */
 
     tv = TV;
     tn = TN;
@@ -1362,20 +1960,73 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
     tn1 = TN + 3 * I->N;
 
     for(b = 0; b < I->Ns; b += 2) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      GLenum mode;
+      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	mode = GL_TRIANGLE_STRIP;
+      else {
+	mode = GL_LINE_STRIP;
+      }
+      c = I->c;
+      i = I->i;
+      {
+	int nverts = 2*subN + 2, pl = 0, plc = 0;
+	float *vertexVals, *normalVals, *colorVals = 0, *tmp_ptr;
+	float *pickColorVals = 0;
+	vertexVals = CGODrawArrays(cgo, mode, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY | CGO_COLOR_ARRAY | CGO_PICK_COLOR_ARRAY, nverts);      
+	normalVals = vertexVals + (nverts*3);
+	colorVals = normalVals + (nverts*3);
+	pickColorVals = (colorVals + (nverts*4));
+	for(a = 0; a < I->N; a++) {
+	  if(a <= subN) {
+	    if(color_override && ((b == 2) || (b == 3) || (b == 6) || (b == 7)))
+	      tmp_ptr = color_override;
+	    else
+	      tmp_ptr = c;
+	    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	    SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);
+	    tmp_ptr = tn;
+	    normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	    tmp_ptr = tv;
+	    vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	    pl += 3;
+	  }
+	  tn += 3;
+	  tv += 3;
+	  if(a <= subN) {
+	    tmp_ptr = &colorVals[plc-4];
+	    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	    SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	    tmp_ptr = tn1;
+	    normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	    tmp_ptr = tv1;
+	    vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	    pl += 3;
+	  }
+	  tn1 += 3;
+	  tv1 += 3;
+	  c += 3;
+	  i++;
+	}
+	tv += 3 * I->N;
+	tn += 3 * I->N;
+	tv1 += 3 * I->N;
+	tn1 += 3 * I->N;
+      }
+#else
       if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
         CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo, GL_LINE_STRIP);
-        CGODisable(cgo, GL_LIGHTING);
       }
       c = I->c;
       i = I->i;
       for(a = 0; a < I->N; a++) {
         if(a <= subN) {
-          if(color_override && ((b == 2) || (b == 3) || (b == 6) || (b == 7)))
-            CGOColorv(cgo, color_override);
-          else
-            CGOColorv(cgo, c);
+	  if(color_override && ((b == 2) || (b == 3) || (b == 6) || (b == 7)))
+	    CGOColorv(cgo, color_override);
+	  else
+	    CGOColorv(cgo, c);
           CGOPickColor(cgo, *i, cPickableAtom);
           CGONormalv(cgo, tn);
           CGOVertexv(cgo, tv);
@@ -1396,10 +2047,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
       tv1 += 3 * I->N;
       tn1 += 3 * I->N;
       CGOEnd(cgo);
-    }
-
-    if(SettingGet(I->G, cSetting_cartoon_debug) > 1.5) {
-      CGOEnable(cgo, GL_LIGHTING);
+#endif
     }
 
     if(1) {
@@ -1415,7 +2063,10 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
         sv += 3;
         tv += 3;
       }
+
+#ifndef _PYMOL_CGO_DRAWARRAYS
       CGOBegin(cgo, GL_TRIANGLE_FAN);
+#endif
       copy3f(I->n, v0);
       invert3f(v0);
       if(color_override)
@@ -1424,6 +2075,22 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
         CGOColorv(cgo, I->c);
       CGOPickColor(cgo, I->i[0], cPickableAtom);
       CGONormalv(cgo, v0);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      {
+	int nverts = (I->Ns/2) + 2, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_FAN, CGO_VERTEX_ARRAY, nverts);
+	tmp_ptr = v;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	tmp_ptr = I->tv;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	/* trace shape */
+	for(b = I->Ns - 2; b >= 0; b -= 2) {
+	  tmp_ptr = I->tv + b * 3;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	}
+      }
+#else
       CGOVertexv(cgo, v);
       /* trace shape */
       CGOVertexv(cgo, I->tv);
@@ -1431,6 +2098,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
         CGOVertexv(cgo, I->tv + b * 3);
       }
       CGOEnd(cgo);
+#endif
     }
 
     /* now do the arrow part */
@@ -1475,11 +2143,64 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
     tn1 = TN + 3 * I->N;
 
     for(b = 0; b < I->Ns; b += 2) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      GLenum mode;
+      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	mode = GL_TRIANGLE_STRIP;
+      else {
+	  mode = GL_LINE_STRIP;
+      }
+      c = I->c;
+      i = I->i;
+      {
+	int nverts = 2*(I->N - subN + 1), pl = 0, plc = 0;
+	float *vertexVals, *normalVals, *colorVals = 0, *tmp_ptr;
+	float *pickColorVals;
+	vertexVals = CGODrawArrays(cgo, mode, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY | CGO_COLOR_ARRAY | CGO_PICK_COLOR_ARRAY, nverts);      
+	normalVals = vertexVals + (nverts*3);
+	colorVals = normalVals + (nverts*3);
+	pickColorVals = (colorVals + (nverts*4));
+	for(a = 0; a < I->N; a++) {
+	  if(a >= (subN - 1)) {
+	    if(color_override && ((b == 2) || (b == 3) || (b == 6) || (b == 7)))
+	      tmp_ptr = color_override;
+	    else
+	      tmp_ptr = c;
+	    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	    SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	    tmp_ptr = tn;
+	    normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	    tmp_ptr = tv;
+	    vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	    pl += 3;
+	  }
+	  tn += 3;
+	  tv += 3;
+	  if (a >= (subN - 1)) {
+	    tmp_ptr = &colorVals[plc-4];
+	    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	    SetCGOPickColor(pickColorVals, nverts, pl, *i, cPickableAtom);	  
+	    tmp_ptr = tn1;
+	    normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
+	    tmp_ptr = tv1;
+	    vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
+	    pl += 3;
+	  }
+	  tn1 += 3;
+	  tv1 += 3;
+	  c += 3;
+	  i++;
+	}
+	tv += 3 * I->N;
+	tn += 3 * I->N;
+	tv1 += 3 * I->N;
+	tn1 += 3 * I->N;
+      }
+#else
       if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
         CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo, GL_LINE_STRIP);
-        CGODisable(cgo, GL_LIGHTING);
       }
       c = I->c;
       i = I->i;
@@ -1509,6 +2230,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
       tv1 += 3 * I->N;
       tn1 += 3 * I->N;
       CGOEnd(cgo);
+#endif
     }
 
     n = I->n + 9 * (subN - 1);
@@ -1526,7 +2248,9 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
       tv += 3;
     }
 
+#ifndef _PYMOL_CGO_DRAWARRAYS
     CGOBegin(cgo, GL_TRIANGLE_FAN);
+#endif
     copy3f(n, v0);
     invert3f(v0);
     if(color_override)
@@ -1535,8 +2259,24 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
       CGOColorv(cgo, I->c + 3 * (subN - 1));
     CGOPickColor(cgo, I->i[(subN - 1)], cPickableAtom);
     CGONormalv(cgo, v0);
-    CGOVertexv(cgo, v);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+    {
+      int nverts = (I->Ns/2) + 2, pl = 0;
+      float *vertexVals, *tmp_ptr;
+      vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_FAN, CGO_VERTEX_ARRAY, nverts);
+      tmp_ptr = v;
+      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
 
+      tv = I->tv;
+      for(b = 0; b < I->Ns; b += 2) {
+	tmp_ptr = I->tv + b * 3;
+	vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+      }
+      tmp_ptr = I->tv;
+      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+    }
+#else
+    CGOVertexv(cgo, v);
     /* trace shape */
     tv = I->tv;
     for(b = 0; b < I->Ns; b += 2) {
@@ -1544,7 +2284,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color
     }
     CGOVertexv(cgo, I->tv);
     CGOEnd(cgo);
-
+#endif
     FreeP(TV);
     FreeP(TN);
   }

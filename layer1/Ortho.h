@@ -113,6 +113,8 @@ int OrthoGetWrapClickSide(PyMOLGlobals * G);
 float *OrthoGetOverlayColor(PyMOLGlobals * G);
 void OrthoDrawWizardPrompt(PyMOLGlobals * G);
 
+void bg_grad(PyMOLGlobals * G);
+
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 

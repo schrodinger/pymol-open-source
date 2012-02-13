@@ -137,8 +137,8 @@ void CrystalUpdate(CCrystal * I)
   float sabgs1;
   int i;
 
-	/* if we just cleared out the memory, but didn't init
-	 * then init the crystal and return */
+  /* if we just cleared out the memory, but didn't init
+   * then init the crystal and return */
   if(((I->Angle[0] == 0.0F) &&
       (I->Angle[1] == 0.0F) &&
       (I->Angle[2] == 0.0F)) ||
@@ -236,7 +236,70 @@ CGO *CrystalGetUnitCellCGO(CCrystal * I)
   CGO *cgo = NULL;
   if(I) {
     cgo = CGONew(G);
+#ifndef PURE_OPENGL_ES_2
     CGODisable(cgo, GL_LIGHTING);
+#endif
+
+#ifdef _PYMOL_CGO_DRAWARRAYS
+    {
+      int nverts = 10, pl = 0;
+      float *vertexVals;
+      vertexVals = CGODrawArrays(cgo, GL_LINE_STRIP, CGO_VERTEX_ARRAY, nverts);	      
+      set3f(v, 0, 0, 0);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 1, 0, 0);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 1, 1, 0);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 0, 1, 0);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 0, 0, 0);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 0, 0, 1);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 1, 0, 1);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 1, 1, 1);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 0, 1, 1);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 0, 0, 1);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+    }
+    {
+      int nverts = 6, pl = 0;
+      float *vertexVals;
+      vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);	      
+      set3f(v, 0, 1, 0);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 0, 1, 1);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 1, 1, 0);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 1, 1, 1);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 1, 0, 0);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+      set3f(v, 1, 0, 1);
+      transform33f3f(I->FracToReal, v, v);
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; vertexVals[pl++] = v[2];
+    }
+#else
     CGOBegin(cgo, GL_LINE_STRIP);
     set3f(v, 0, 0, 0);
     transform33f3f(I->FracToReal, v, v);
@@ -305,8 +368,11 @@ CGO *CrystalGetUnitCellCGO(CCrystal * I)
     transform33f3f(I->FracToReal, v, v);
     CGOVertexv(cgo, v);
     CGOEnd(cgo);
+#endif
 
+#ifndef PURE_OPENGL_ES_2
     CGOEnable(cgo, GL_LIGHTING);
+#endif
     CGOStop(cgo);
   }
   return (cgo);

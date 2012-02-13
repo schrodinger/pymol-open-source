@@ -15,7 +15,6 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 #include"os_python.h"
-
 #include "os_gl.h"
 #include "os_std.h"
 
@@ -409,7 +408,11 @@ static void SeqDraw(Block * block)
       for(a = I->NRow - 1; a >= 0; a--) {
         row = I->Row + a;
         cur_color = overlay_color;
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
         glColor3fv(cur_color);
+#endif
         yy = y1 - 2;
         if(max_len < row->ext_len)
           max_len = row->ext_len;
@@ -437,7 +440,11 @@ static void SeqDraw(Block * block)
             if(tot_len <= vis_size) {
               if(row->label_flag) {
                 TextSetColor(G, cur_color);
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
                 glColor3fv(cur_color);
+#endif
               } else if(col->unaligned && unaligned_color) {
                 float tmp_color[3];
                 float *v = ColorGet(G, col->color);
@@ -446,31 +453,66 @@ static void SeqDraw(Block * block)
                 case 4:
                   average3f(v, bg_color, tmp_color);
                   TextSetColor(G, tmp_color);
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
                   glColor3fv(tmp_color);
+#endif
                   break;
                 case 2:
                 case 5:
                   average3f(v, unaligned_color, tmp_color);
                   TextSetColor(G, tmp_color);
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
                   glColor3fv(tmp_color);
+#endif
                   break;
                 default:
                   TextSetColor(G, unaligned_color);
-                  glColor3fv(unaligned_color);
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
+                 glColor3fv(unaligned_color);
+#endif
                   break;
                 }
               } else {
                 float *v = ColorGet(G, col->color);
                 TextSetColor(G, v);
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
                 glColor3fv(v);
+#endif
               }
               if(col->inverse) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+		{
+		  const GLint polyVerts[] = {
+		    xx, yy,
+		    xx, yy + I->LineHeight - 1,
+		    xx + pix_wid, yy,
+		    xx + pix_wid, yy + I->LineHeight - 1
+		  };
+		  glEnableClientState(GL_VERTEX_ARRAY);
+		  glVertexPointer(2, GL_INT, 0, polyVerts);
+		  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		  glDisableClientState(GL_VERTEX_ARRAY);
+		}
+#else
                 glBegin(GL_POLYGON);
                 glVertex2i(xx, yy);
                 glVertex2i(xx, yy + I->LineHeight - 1);
                 glVertex2i(xx + pix_wid, yy + I->LineHeight - 1);
                 glVertex2i(xx + pix_wid, yy);
                 glEnd();
+#endif
+#endif
                 TextSetColor(G, black);
               }
               TextDrawSubStrFast(G, row->txt, xx, y1, col->start, ch_wid);
@@ -533,14 +575,32 @@ static void SeqDraw(Block * block)
             xx2 =
               x + I->CharMargin + I->CharWidth * (col2->offset +
                                                   (col2->stop - col2->start) - I->NSkip);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
             glColor3fv(overlay_color);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	    {
+	      const GLint lineVerts[] = {
+		xx, yy,
+		xx, yy + I->LineHeight - 2,
+		xx2, yy + I->LineHeight - 2,
+		xx2, yy
+	      };
+	      glEnableClientState(GL_VERTEX_ARRAY);
+	      glVertexPointer(2, GL_INT, 0, lineVerts);
+	      glDrawArrays(GL_LINE_LOOP, 0, 4);
+	      glDisableClientState(GL_VERTEX_ARRAY);
+	    }
+#else
             glBegin(GL_LINE_LOOP);
             glVertex2i(xx, yy);
             glVertex2i(xx, yy + I->LineHeight - 2);
             glVertex2i(xx2, yy + I->LineHeight - 2);
             glVertex2i(xx2, yy);
             glEnd();
-
+#endif
+#endif
           }
         }
       }
@@ -587,13 +647,32 @@ static void SeqDraw(Block * block)
                   stop = cent + 0.5F;
                 }
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                 glColor3fv(cur_color);
+#ifdef _PYMOL_GL_DRAWARRAYS
+		{
+		  const GLfloat polyVerts[] = {
+		    start, bot,
+		    start, top,
+		    stop, bot,
+		    stop, top
+		  };
+		  glEnableClientState(GL_VERTEX_ARRAY);
+		  glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+		  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		  glDisableClientState(GL_VERTEX_ARRAY);
+		}
+#else
                 glBegin(GL_POLYGON);
                 glVertex2f(start, bot);
                 glVertex2f(start, top);
                 glVertex2f(stop, top);
                 glVertex2f(stop, bot);
                 glEnd();
+#endif
+#endif
                 mode = 0;
               } else if(col->inverse && mode) {
                 if(last_color != col->color) {
@@ -608,13 +687,32 @@ static void SeqDraw(Block * block)
                     start = cent - 0.5F;
                     stop = cent + 0.5F;
                   }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                   glColor3fv(cur_color);
+#ifdef _PYMOL_GL_DRAWARRAYS
+		  {
+		    const GLfloat polyVerts[] = {
+		      start, bot,
+		      start, top,
+		      stop, bot,
+		      stop, top
+		    };
+		    glEnableClientState(GL_VERTEX_ARRAY);
+		    glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+		    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		    glDisableClientState(GL_VERTEX_ARRAY);
+		  }
+#else
                   glBegin(GL_POLYGON);
                   glVertex2f(start, bot);
                   glVertex2f(start, top);
                   glVertex2f(stop, top);
                   glVertex2f(stop, bot);
                   glEnd();
+#endif
+#endif
                   start = (width * col->offset) / max_len;
                   last_color = col->color;
                   if(row->label_flag)
@@ -634,13 +732,32 @@ static void SeqDraw(Block * block)
                 start = cent - 0.5F;
                 stop = cent + 0.5F;
               }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
               glColor3fv(cur_color);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	      {
+		const GLfloat polyVerts[] = {
+		  start, bot,
+		  start, top,
+		  stop, bot,
+		  stop, top
+		};
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glDisableClientState(GL_VERTEX_ARRAY);
+	      }
+#else
               glBegin(GL_POLYGON);
               glVertex2f(start, bot);
               glVertex2f(start, top);
               glVertex2f(stop, top);
               glVertex2f(stop, bot);
               glEnd();
+#endif
+#endif
             }
 
           }

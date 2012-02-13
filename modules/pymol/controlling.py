@@ -47,10 +47,10 @@ if __name__=='pymol.controlling' or __name__=='controlling':
         'shft'  : 1,
         'ctrl'  : 2,
         'ctsh'  : 3,
-    'alt'   : 4,
-    'alsh'  : 5,
-    'ctal'  : 6,
-    'ctas'  : 7,
+        'alt'   : 4,
+        'alsh'  : 5,
+        'ctal'  : 6,
+        'ctas'  : 7,
         }
 
     but_mod_sc = Shortcut(but_mod_code.keys())
@@ -116,44 +116,53 @@ if __name__=='pymol.controlling' or __name__=='controlling':
         'imsz' : 50 ,
         'imvz' : 51 ,
         'box'  : 52 ,
-        'irtz' : 53
+        'irtz' : 53 ,
+        'rotl' : 54 ,
+        'movl' : 55 ,
+        'mvzl' : 56
         }
     
     but_act_sc = Shortcut(but_act_code.keys())
 
     ring_dict = {
-        'maestro' : [   'three_button_maestro' ],
+        'maestro' : [ 'three_button_maestro' ],
         
-        'three_button' : [   'three_button_viewing',
-                             'three_button_editing'  ], # LEGACY
-
-        'three_button_viewing' : [   'three_button_viewing',
-                                     'three_button_editing'  ],
-
-        'three_button_editing' : [  'three_button_editing', 
-                                    'three_button_viewing', ],
+        'three_button' : [ 'three_button_viewing',
+                           'three_button_editing',
+                         ], # LEGACY
+                        
+        'three_button_viewing' : [ 'three_button_viewing',
+                                   'three_button_editing',
+                                 ],
+                                   
+        'three_button_editing' : [ 'three_button_editing', 
+                                   'three_button_viewing',
+                                 ],
 
         'two_button' : [ 'two_button_viewing', # LEGACY
-                         'two_button_selecting' ],
+                         'two_button_selecting',
+                       ],
 
         'two_button_viewing' : [ 'two_button_viewing', 
-                                 'two_button_selecting' ],
+                                 'two_button_selecting',
+                               ],
 
         'two_button_editing' : [ 'two_button_editing',
                                  'two_button_viewing',
                                  'two_button_selecting',
-                                 ],
+                               ],
 
-        'three_button_motions' : [   'three_button_motions',
-                                     'three_button_viewing', ],
+        'three_button_motions' : [ 'three_button_motions',
+                                   'three_button_viewing', ],
 
         'three_button_all_modes' : [ 'three_button_editing',
                                      'three_button_motions',
                                      'three_button_viewing',
-                                      ],
+                                     'three_button_lights', ],
 
-        'one_button' : [   'one_button_viewing' ],
+        'one_button' : [ 'one_button_viewing' ],
         }
+
     ring_dict_sc = Shortcut(ring_dict.keys())
 
     def config_mouse(ring='three_button', quiet=1, _self=cmd):
@@ -195,17 +204,20 @@ SEE ALSO
     mouse_ring = ring_dict['three_button']
 
     mode_name_dict = {
+        'three_button_lights'  : '3-Button Lights',
         'three_button_maestro' : '3-Button Maestro',        
         'three_button_viewing' : '3-Button Viewing',
         'three_button_editing' : '3-Button Editing',
-        'three_button_motions':  '3-Button Motions',
+        'three_button_motions' : '3-Button Motions',
         'two_button_viewing'   : '2-Button Viewing',
         'two_button_selecting' : '2-Btn. Selecting',
         'two_button_editing'   : '2-Button Editing',
+        'two_button_lights'    : '2-Button Lights',
         'one_button_viewing'   : '1-Button Viewing',
         }
 
-    mode_name_list = [ 
+    mode_name_list = [
+        'three_button_lights' ,
         'three_button_viewing',
         'three_button_editing',
         'three_button_motions',
@@ -213,11 +225,69 @@ SEE ALSO
         'two_button_viewing' ,
         'two_button_selecting' ,
         'two_button_editing',
+        'two_button_lights',
         'one_button_viewing' , 
+        'default' , 
         # okay to append new mode name, but don't insert: order & position matter
         ]
 
     mode_dict = {
+        'three_button_lights' :
+        [ ('l','none','rota'),
+          ('m','none','move'),
+          ('r','none','movz'),
+          ('l','shft','rotl'),
+          ('m','shft','movl'),
+          ('r','shft','mvzl') ,                 
+          ('l','ctrl','none'),
+          ('m','ctrl','none'),
+          ('r','ctrl','none'),                  
+          ('l','ctsh','none'),
+          ('m','ctsh','none'),
+          ('r','ctsh','none'),
+          ('l','alt' ,'none'),
+          ('m','alt' ,'none'),
+          ('r','alt' ,'none'),
+          ('w','none','slab'),
+          ('w','shft','movs'),
+          ('w','ctrl','mvsz'),
+          ('w','ctsh','movz'),
+          ('double_left','none','none'),
+          ('double_middle','none','none'),
+          ('double_right','none', 'none'),
+          ('single_left','none','none'),
+          ('single_middle','none','cent'),
+          ('single_right','none', 'menu'),
+          ('single_left','alt', 'cent'),
+          ],
+        'two_button_lights' :
+        [ ('l','none','rota'),
+          ('m','none','none'),
+          ('r','none','movz'),
+          ('l','shft','rotl'),
+          ('m','shft','none'),
+          ('r','shft','mvzl'),                 
+          ('l','ctrl','movl'),
+          ('m','ctrl','none'),
+          ('r','ctrl','none'),                 
+          ('l','ctsh','none'),
+          ('m','ctsh','none'),
+          ('r','ctsh','cent'),
+          ('l','alt' ,'none'),
+          ('m','alt' ,'none'),
+          ('r','alt' ,'none'),
+          ('w','none','none'),
+          ('w','shft','none'),
+          ('w','ctrl','none'),
+          ('w','ctsh','none'),
+          ('double_left','none','menu'),
+          ('double_middle','none','none'),                               
+          ('double_right','none','cent'),
+          ('single_left','none','none'),
+          ('single_middle','none','none'),
+          ('single_right','none', 'menu'),
+          ('single_left','alt', 'cent'),
+          ],
         'three_button_maestro' :
         [ ('l','none','box'),
           ('m','none','rota'),
@@ -459,6 +529,19 @@ SEE ALSO
           ('single_left','ctal','none'),
           ('single_left','ctas','none'),
           ],
+         'default' :
+        [ ('l','none','rota'), # default that is set in PyMOL.c PyMOL_SetDefaultMouse
+          ('m','none','move'),
+          ('r','none','movz'),
+          ('r','shft','clip'),
+          ('m','ctsh','orig'),
+          ('w','none','slab'),
+          ('w','shft','movs'),
+          ('w','ctrl','mvsz'),
+          ('w','ctsh','movz'),
+          ('double_middle','none','none'),
+          ('single_middle','none','cent')
+          ]
         }
 
     def order(names,sort=0,location='current',_self=cmd):

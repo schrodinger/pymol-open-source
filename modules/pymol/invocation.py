@@ -276,7 +276,6 @@ if __name__=='pymol.invocation':
                     
                     if "e" in a:
                         options.full_screen = 1
-                        options.deferred.append("_do__ full_screen on")
                     if "G" in a: # Game mode (reqd for Mac stereo)
                         options.game_mode = 1
                         options.win_x = 1024
@@ -400,4 +399,5 @@ if __name__=='pymol.invocation':
         options.deferred.extend(final_actions)
         if options.show_splash and not options.no_gui and not restricted:
             options.deferred.insert(0,"_do__ cmd.splash(1)")
-        
+        if options.full_screen:
+            options.deferred.append("_do__ full_screen on")

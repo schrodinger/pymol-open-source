@@ -5,9 +5,24 @@ import time
 # this shows how you can efficiently update the coordinates
 # of an existing model for real-time viewing
 
-# for asychronous execution,  you may want to run this using the "spawn"
+# for asychronous execution,  you want to run this using the "spawn"
 # command from inside PyMOL or with the "-l" option from the unix shell
 
+# WARNING: if you do not run this using "spawn" or the "-l" option,
+# PyMOL will freeze, will not refresh the workspace, and might be difficult
+# to recover.
+
+# To run this script so that you can stop it, run with the global option:
+#
+# spawn chempy_model02.py, global
+#
+# Then you have access to the "cont" variable, and can stop the loop by
+# simply setting it:
+#
+# cont = False
+#
+
+cont = True
 # first we need a model
 
 cmd.load("$PYMOL_PATH/test/dat/pept.pdb","demo")
@@ -28,7 +43,7 @@ cmd.feedback("disable","executive","actions")
 # state 1 of the "demo" object
 
 m = cmd.get_model()
-while 1:
+while cont:
    time.sleep(0.05)
    try:
       cmd.set("suspend_updates","1") # only necessary if multithreading...
@@ -37,6 +52,7 @@ while 1:
          a.coord[1]+=(random()-0.5)*0.1
          a.coord[2]+=(random()-0.5)*0.1
       cmd.load_model(m,"demo",1)
+      cmd.set("suspend_updates","0") # only necessary if multithreading...
    except:
       cmd.set("suspend_updates","0") # only necessary if multithreading...
       traceback.print_exc()

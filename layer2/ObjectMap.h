@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 #include"PyMOLObject.h"
-#include"Crystal.h"
+#include"Symmetry.h"
 #include"Isosurf.h"
 #include"CGO.h"
 
@@ -45,7 +45,7 @@ Z* -------------------------------------------------------------------
 typedef struct ObjectMapState {
   CObjectState State;
   int Active;
-  CCrystal *Crystal;
+  CSymmetry *Symmetry;
   int Div[3];                   /* NOTE: Div is only meaningful for maps defined relative to a unit cell */
   int Min[3], Max[3];           /* valid min and max indices, required. */
   int FDim[4];                  /* Array dimensions with 3 in fourth slot, required */

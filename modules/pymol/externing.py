@@ -155,8 +155,13 @@ SEE ALSO
                         break
                     else:
                         a=a[:-1]
+                # if nothing in the queue, this special string is printed; so
+                # we ignore it
                 if len(a):
-                    new_lst.append(a)
+                    if a=="""PRIMARY selection doesn't exist or form "STRING" not defined""":
+                        new_list = []
+                    else:
+                        new_lst.append(a)
             r = _cmd.paste(_self._COb,new_lst)
         if _raising(r,_self): raise pymol.CmdException
         return r 

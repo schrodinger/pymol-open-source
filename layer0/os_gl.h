@@ -1,27 +1,77 @@
-
-
-/* 
-A* -------------------------------------------------------------------
-B* This file contains source code for the PyMOL computer program
-C* Copyright (c) Schrodinger, LLC. 
-D* -------------------------------------------------------------------
-E* It is unlawful to modify or remove this copyright notice.
-F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
-H* -------------------------------------------------------------------
-I* Additional authors of this source file include:
--* 
--* 
--*
-Z* -------------------------------------------------------------------
-*/
 #ifndef _H_os_gl
 #define _H_os_gl
 
 #include"os_predef.h"
 #include"os_proprietary.h"
 
+#if defined(_PYMOL_IOS) || defined(ANDROID)
+#define _PYMOL_PURE_OPENGL_ES
+#define _PYMOL_CGO_DRAWARRAYS
+#define _PYMOL_GL_DRAWARRAYS
+#define _PYMOL_CGO_DRAWBUFFERS
+#if !defined(OPENGL_ES_1) && !defined(OPENGL_ES_2)
+#define OPENGL_ES_1
+#endif
+#endif
+
+#if !defined(OPENGL_ES_1) && !defined(OPENGL_ES_2)
+#define OPENGL_ES_1 1
+#endif
+
+#if defined(_PYMOL_PURE_OPENGL_ES) && defined(OPENGL_ES_2)
+#define PURE_OPENGL_ES_2 1
+#endif
+
+#if defined(_PYMOL_PURE_OPENGL_ES) && !defined(_PYMOL_GL_DRAWARRAYS)
+#define _PYMOL_GL_DRAWARRAYS
+#endif
+
+//#if defined(WIN32) || defined(_PYMOL_PURE_OPENGL_ES)
+#if 1
+#if defined(WIN32) || defined(_PYMOL_PURE_OPENGL_ES) || defined(_PYMOL_LIB)
+#define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = malloc(size * sizeof(tname));
+#else
+#define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = malloc(size * sizeof(tname)); assert(variablename);
+#endif
+#define DEALLOCATE_ARRAY(variablename) free(variablename);
+#else
+#define ALLOCATE_ARRAY(tname,variablename, size) tname variablename[size];
+#define DEALLOCATE_ARRAY(variablename)
+#endif
+
+#if defined(OPENGL_ES_2)
+#define GL_SHADER_LIGHTING 0xfffe
+#endif
+
 #ifndef _PYMOL_OSX
+
+#if defined(ANDROID)
+
+/* ES 2 */
+#if defined(OPENGL_ES_2)
+#include<GLES2/gl2.h>
+#include<GLES2/gl2ext.h>
+#define GLchar char
+#define GLDOUBLE float
+#define GL_FRONT_LEFT GL_FRONT
+#define GL_FRONT_RIGHT GL_FRONT
+#define GL_BACK_LEFT GL_BACK
+#define GL_BACK_RIGHT GL_BACK
+#define GL_CLAMP GL_CLAMP_TO_EDGE
+//#define glNormal3fv(x) glNormal3f(x[0], x[1], x[2])
+//#define glColor3fv(x) glColor4f(x[0], x[1], x[2], 1.f)
+//#define glColor3f(x,y,z) glColor4f(x, y, z, 1.f)
+//#define glColor3ub(x,y,z) glColor4f(x/255.f, y/255.f, z/255.f, 1.f)
+#define GLDOUBLEMULTMATRIX glMultMatrixd
+#define GLDOUBLETRANSLATE glTranslated
+/* ES 1 */
+#elif defined(OPENGL_ES_1)
+#include<GLES/gl.h>
+#include<GLES/glext.h>
+#define GL_INT GL_SHORT
+#endif
+
+#else
 
 #ifdef _PYMOL_OPENGL_SHADERS
 #ifndef WIN32
@@ -35,32 +85,69 @@ Z* -------------------------------------------------------------------
 #include<GL/gl.h>
 #include<GL/glu.h>
 #endif
+#define GLDOUBLEMULTMATRIX glMultMatrixd
+#define GLDOUBLETRANSLATE glTranslated
+#endif
+/** android **/
 
 #else
 
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
+#ifndef _PYMOL_PURE_OPENGL_ES
 #include<GL/glew.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/glext.h>
+#define GLDOUBLEMULTMATRIX glMultMatrixd
+#define GLDOUBLETRANSLATE glTranslated
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+#ifdef PURE_OPENGL_ES_2
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
+#else
+#include <OpenGLES/ES1/gl.h>
+#include <OpenGLES/ES1/glext.h>
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
+#endif
+#define GLEW_OK 0
+#define GLEW_VERSION_2_0 0
+#define GL_FRONT_LEFT GL_FRONT
+#define GL_FRONT_RIGHT GL_FRONT
+#define GL_BACK_LEFT GL_BACK
+#define GL_BACK_RIGHT GL_BACK
+#define GL_CLAMP GL_CLAMP_TO_EDGE
+#define GLDOUBLEMULTMATRIX glMultMatrixf
+#define GLDOUBLETRANSLATE glTranslatef
+#define glNormal3fv(x) glNormal3f(x[0], x[1], x[2])
+#define glColor3fv(x) glColor4f(x[0], x[1], x[2], 1.f)
+#define glColor3f(x,y,z) glColor4f(x, y, z, 1.f)
+#define glColor3ub(x,y,z) glColor4f(x/255.f, y/255.f, z/255.f, 1.f)
+#define glOrtho glOrthof
 #else
 #include<GL/glew.h>
 #include<gl.h>
 #include<glu.h>
 #include<glext.h>
-
+#define GLDOUBLEMULTMATRIX glMultMatrixd
+#define GLDOUBLETRANSLATE glTranslated
+#endif
 #ifndef GL_TEXTURE_RECTANGLE_EXT
 #define GL_TEXTURE_RECTANGLE_EXT 0x84F5
 #endif
 
 #endif
 
-
 /* END PROPRIETARY CODE SEGMENT */
 #endif
 
+#ifdef _PYMOL_GL_DRAWARRAYS
+#define GLLIGHTMODELI glLightModelf
+#else
+#define GLLIGHTMODELI glLightModeli
+#endif
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32

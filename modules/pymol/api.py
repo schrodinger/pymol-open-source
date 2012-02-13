@@ -36,6 +36,7 @@ from creating import \
       isolevel,           \
       isomesh,            \
       isosurface,         \
+      map_generate,        \
       map_new,            \
       pseudoatom,         \
       slice_new,          \
@@ -203,6 +204,7 @@ from editing import \
       smooth,             \
       sort,               \
       split_states,       \
+      symmetry_copy,      \
       torsion,            \
       transform_object,   \
       transform_selection,\
@@ -362,6 +364,7 @@ import setting
 from setting import \
       set,                 \
       set_bond,            \
+      get_bond,            \
       get,                 \
       unset,               \
       unset_bond,          \

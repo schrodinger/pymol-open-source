@@ -460,6 +460,27 @@ def _alt(k,_self=cmd):
             apply(ak[0],ak[1],ak[2])
     return None
 
+# command (apple) keys
+
+def _cmmd(k,_self=cmd):
+    # WARNING: internal routine, subject to change
+    # command-key on macs
+    if _self.cmmd.has_key(k):
+        ak = _self.cmmd[k]
+        if ak[0]!=None:
+            apply(ak[0],ak[1],ak[2])
+    return None
+
+def _ctsh(k,_self=cmd):
+    # WARNING: internal routine, subject to change
+    # command-key on macs
+    if _self.ctsh.has_key(k):
+        ak = _self.ctsh[k]
+        if ak[0]!=None:
+            apply(ak[0],ak[1],ak[2])
+    return None
+    
+
 # writing PNG files (thread-unsafe)
 
 def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,format=-1,_self=cmd):

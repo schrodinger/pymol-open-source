@@ -480,6 +480,7 @@ SEE ALSO
             logging = 1
             root = None
             port = 0
+            wrap_native = 0
             if (string.find(fname,":")>1):
                 import urllib
                 lines = urllib.urlopen(fname).readlines()
@@ -530,10 +531,12 @@ SEE ALSO
                             os.unlink(fname)
                         elif keyword == 'options':
                             os.unlink(fname)
+                        elif keyword == 'wrap_native_return_types':
+                            wrap_native = 1
                         else:
                             print "Error: unrecognized input:  %s"%str(input)
             if launch_flag:
-                server = PymolHttpd(port,root,logging)
+                server = PymolHttpd(port,root,logging,wrap_native)
                 if port == 0:
                     port = server.port # get the dynamically assigned port number
                 server.start()
@@ -620,7 +623,7 @@ PYMOL API
     
 SEE ALSO
 
-    save
+    save, load_traj, fetch
         '''
         r = DEFAULT_ERROR
         try:
@@ -641,9 +644,8 @@ SEE ALSO
             fname = _self.exp_path(filename)
             go_to_first_scene = 0
             if not len(str(type)):
+                # guess the file type from the extension
                 fname_no_gz = gz_ext_re.sub("",filename) # strip gz
-                # determine file type if possible
-#                if re.search("\.pdb$|\.pdb1$|\.ent$|\.p5m",fname_no_gz,re.I):
                 if re.search("\.pdb$|\.pdb\d+$|\.ent$|\.p5m",fname_no_gz,re.I):
                     ftype = loadable.pdb
                 elif re.search("\.mol$",fname_no_gz,re.I):
@@ -690,7 +692,7 @@ SEE ALSO
                     ftype = loadable.crd
                 elif re.search("\.rst$",fname_no_gz,re.I):
                     ftype = loadable.crd
-                elif re.search("\.pse$",fname_no_gz,re.I):
+                elif re.search("\.pse$|\.pze|\.pzw$",fname_no_gz,re.I):
                     ftype = loadable.pse
                 elif re.search("\.psw$",fname_no_gz,re.I):
                     ftype = loadable.psw
@@ -742,6 +744,7 @@ SEE ALSO
                 else:
                     ftype = loadable.pdb # default is PDB
             elif _self.is_string(type):
+                # user specified the file type
                 if hasattr(loadable,type):
                     ftype = getattr(loadable,type)
                 else:
@@ -755,9 +758,10 @@ SEE ALSO
                             print "Error: unknown type '%s'",type
                             raise pymol.CmdException
             else:
+                # user specified the type as an int
                 ftype = int(type)
 
-    # special handling for PSW files 
+            # special handling for PSW files 
             if ftype == loadable.psw:
                 go_to_first_scene = 1                
                 ftype = loadable.pse
@@ -765,7 +769,7 @@ SEE ALSO
                 if int(_self.get_setting_legacy("presentation"))!=0:
                     go_to_first_scene = 1
                     
-    # get object name
+            # get object name
             if len(str(object))==0:
                 oname = re.sub(r".*\/|.*\\","",filename) # strip path
                 oname = gz_ext_re.sub("",oname) # strip gz                
@@ -776,14 +780,14 @@ SEE ALSO
             else:
                 oname = string.strip(object)
 
-    # loadable.sdf1 is for the old Python-based SDF file reader
+            # loadable.sdf1 is for the old Python-based SDF file reader
             if ftype == loadable.sdf1:
                 sdf = SDF(fname)
                 _processSDF(sdf,oname,state,quiet,_self)
                 r = DEFAULT_SUCCESS
                 ftype = -1
 
-     # loadable.sdf1 is the Python-based CIF file reader
+            # loadable.sdf1 is the Python-based CIF file reader
             if ftype == loadable.cif1:
                 try:
                     cif = CIF(fname)
@@ -793,44 +797,39 @@ SEE ALSO
                 r = DEFAULT_SUCCESS
                 ftype = -1
 
-    # png images 
+            # png images 
             if ftype == loadable.png:
                 r = _self.load_png(str(fname),quiet=quiet)
                 ftype = -1
 
-    # p1m embedded data script files (more secure)
-    
+            # p1m embedded data script files (more secure)
             if ftype == loadable.p1m:
                 _self._do("_ @"+fname)
                 ftype = -1
                 r = DEFAULT_SUCCESS
 
-    # pim import files (unrestricted scripting -- insecure)
-    
+            # pim import files (unrestricted scripting -- insecure)
             if ftype == loadable.pim:
                 _self._do("_ @"+fname)
                 ftype = -1
                 r = DEFAULT_SUCCESS
 
-    # pwg launch (PyMOL Web GUI / http server launch)
-    
+            # pwg launch (PyMOL Web GUI / http server launch)
             if ftype == loadable.pwg:
                 ftype = -1
                 r = _processPWG(fname)
 
-    # aln CLUSTAL
-    
+            # aln CLUSTAL
             if ftype == loadable.aln:
                 ftype = -1
                 r = _processALN(fname,quiet=quiet)
 
-    # fasta
-    
+            # fasta
             if ftype == loadable.fasta:
                 ftype = -1
                 r = _processFASTA(fname,quiet=quiet)
 
-    # special handling for trj failes (autodetect AMBER versus GROMACS)
+            # special handling for trj failes (autodetect AMBER versus GROMACS)
             if ftype == loadable.trj:
                 try: # autodetect gromacs TRJ
                     magic = map(ord,open(fname,'r').read(4))
@@ -839,7 +838,7 @@ SEE ALSO
                 except:
                     traceback.print_exc()
 
-    # special handling of cex files
+            # special handling of cex files
             if ftype == loadable.cex:
                 ftype = -1
                 if m4x!=None:
@@ -848,8 +847,7 @@ SEE ALSO
                     print " Error: CEX format not currently supported"
                     raise pymol.CmdException
 
-    # special handling of pse files
-
+            # special handling of pse files
             if ftype == loadable.pse:
                 ftype = -1
                 r = _self.set_session(io.pkl.fromFile(fname),quiet=quiet,
@@ -858,13 +856,12 @@ SEE ALSO
                     fname = fname.replace("\\","/") # always use unix-like path separators	
                     _self.set("session_file",fname,quiet=1)
                 
-    # special handling for multi-model files 
-
+            # special handling for multi-model files 
             if ftype in ( loadable.mol2, loadable.sdf1, loadable.sdf2, loadable.mae ):
                 if discrete_default: # make such files discrete by default
                     discrete = -1
 
-    # standard file handling
+            # standard file handling
             if ftype>=0:
                 r = _load(oname,fname,state,ftype,finish,
                           discrete,quiet,multiplex,zoom,mimic,_self=_self)
@@ -1439,7 +1436,7 @@ PYMOL API
                                             fobj.close()
                                     if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
                                         name = name + "_" + type
-                                    print "r = _self.load(",fname, name, state, loadable.brix, finish, discrete, quiet, multiplex, zoom, ")"
+                                    #print "r = _self.load(",fname, name, state, loadable.brix, finish, discrete, quiet, multiplex, zoom, ")"
                                     r = _self.load(fname, name, state, loadable.brix, finish, discrete, quiet, multiplex, zoom)
                                     done = 1
                                 except IOError:

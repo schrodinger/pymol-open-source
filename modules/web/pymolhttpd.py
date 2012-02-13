@@ -51,7 +51,6 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if self.server.pymol_logging:
             BaseHTTPServer.BaseHTTPRequestHandler.log_message(self,format,
                                                               *args)
-
     def process_request(self):
         """
         parse any URL or FORM arguments and process the request
@@ -103,7 +102,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         special request, such as apply or getattr
         """
         parts = self.urlpath.split('/') 
-        
+
         # for example:
         # if http://localhost:8080/apply/pymol.cmd.color?...
         # then parts is ['', 'apply', 'pymol.cmd.color...']
@@ -142,6 +141,13 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             self.send_error(404,"Not a recognized attribute")
             self.wfile.write(" %s is not a recognized attribute\n" % attr)
+
+    def wrap_return(self, result, status="OK", indent=None):
+        r = { 'status' : status, 'result' : result }
+        if self.server.wrap_natives==1:
+            return json.dumps(r,indent)
+        else:
+            return json.dumps(result,indent)
         
     def send_json_result(self, result):
         """
@@ -152,32 +158,33 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         """
         if self.callback != None:
             self.send_resp_header(200,'text/javascript')
-            self.wfile.write("%s(%s)"%(self.callback,json.dumps(result)))
+            self.wfile.write("%s(%s)"%(self.callback,self.wrap_return(result)))
 
         else:
             accept_mime = self.headers.getheader('Accept')
             if accept_mime in _json_mime_types:
                 self.send_resp_header(200,accept_mime)
-                self.wfile.write(json.dumps(result))
+                self.wfile.write(self.wrap_return(result))
+                
             else:
                 self.send_resp_header(200,'text/html')
                 self.wfile.write("PyMOL's JSON response: <pre>")
-                self.wfile.write(json.dumps(result,indent=4))
+                self.wfile.write(self.wrap_return(result,indent=4))
                 self.wfile.write("</pre>")
             
     def send_json_error(self, code, message):
         if self.callback != None:
             self.send_resp_header(code,'text/javascript')
-            self.wfile.write("%s(%s)"%(self.callback,json.dumps(message)))
+            self.wfile.write("%s(%s)"%(self.callback,self.wrap_return(message,"ERROR")))
         else:
             accept_mime = self.headers.getheader('Accept')            
             if accept_mime in _json_mime_types:
                 self.send_resp_header(code,accept_mime)
-                self.wfile.write(json.dumps(message))
+                self.wfile.write(self.wrap_return(message,"ERROR"))
             else:
                 self.send_resp_header(code,'text/html')
                 self.wfile.write("PyMOL's JSON response: <pre>")
-                self.wfile.write(json.dumps(message,indent=4))
+                self.wfile.write(self.wrap_return(message,"ERROR",indent=4))
                 self.wfile.write("</pre>")
 
     def send_exception_json(self, code, message):
@@ -415,7 +422,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 class PymolHttpd:
 
-    def __init__(self, port=8080, root=None, logging=1, self_cmd=None):
+    def __init__(self, port=8080, root=None, logging=1, wrap_natives=0, self_cmd=None):
         if self_cmd == None:
             # fallback on the global singleton PyMOL API
             try:
@@ -664,6 +671,8 @@ class PymolHttpd:
 
         self.server = BaseHTTPServer.HTTPServer(('', self.port),
                                                 _PymolHTTPRequestHandler)
+        self.server.wrap_natives = wrap_natives
+
         if self.port == 0:
             self.port = self.server.socket.getsockname()[1]
         self.server.pymol_session = self.session

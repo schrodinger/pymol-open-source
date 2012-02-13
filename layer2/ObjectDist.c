@@ -572,7 +572,7 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int a, mn;
   float dist_sum = 0.0, dist;
   int dist_cnt = 0;
-  int n_state1, n_state2, state1, state2;
+  int n_state1, n_state2, state1 = 0, state2 = 0;
   int frozen1 = -1, frozen2 = -1;
   ObjectDist *I;
   

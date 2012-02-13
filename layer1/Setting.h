@@ -901,7 +901,48 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_ray_volume                 665
 #define cSetting_ribbon_transparency        666  /* oh noes */
 #define cSetting_state_counter_mode         667 /* -1=as fraction; 0=off; 1=as fraction; 2=no fraction */
-
+#define cSetting_cgo_use_shader             668
+#define cSetting_cgo_shader_ub_color        669
+#define cSetting_cgo_shader_ub_normal       670
+#define cSetting_cgo_lighting               671
+#define cSetting_mesh_use_shader            672
+#define cSetting_stick_debug                673
+#define cSetting_cgo_debug                  674
+#define cSetting_stick_round_nub            675
+#define cSetting_stick_good_geometry        676
+#define cSetting_stick_as_cylinders         677
+#define cSetting_mesh_as_cylinders          678
+#define cSetting_line_as_cylinders          679
+#define cSetting_ribbon_as_cylinders        680
+#define cSetting_ribbon_use_shader          681
+#define cSetting_excl_display_lists_shaders 682
+#define cSetting_dash_use_shader            683
+#define cSetting_dash_as_cylinders          684
+#define cSetting_nonbonded_use_shader       685
+#define cSetting_nonbonded_as_cylinders     686
+#define cSetting_cylinders_shader_filter_faces     687
+#define cSetting_nb_spheres_size            688
+#define cSetting_nb_spheres_quality         689
+#define cSetting_nb_spheres_use_shader      690
+#define cSetting_render_as_cylinders        691
+#define cSetting_alignment_as_cylinders     692
+#define cSetting_cartoon_nucleic_acid_as_cylinders       693
+#define cSetting_cgo_shader_ub_flags        694
+#define cSetting_offscreen_rendering_for_antialiasing        695
+#define cSetting_offscreen_rendering_multiplier        696
+#define cSetting_cylinder_shader_ff_workaround       697
+#define cSetting_surface_color_smoothing       698
+#define cSetting_surface_color_smoothing_threshold       699
+#define cSetting_dot_use_shader                          700
+#define cSetting_dot_as_spheres                          701
+#define cSetting_ambient_occlusion_mode                  702
+#define cSetting_ambient_occlusion_scale                 703
+#define cSetting_ambient_occlusion_smooth                704
+#define cSetting_smooth_half_bonds                       705
+#define cSetting_anaglyph_mode                           706
+#define cSetting_edit_light                              707
+#define cSetting_suspend_undo                            708
+#define cSetting_suspend_undo_atom_count                 709
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -912,6 +953,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       668
+#define cSetting_INIT                       710
 
 #endif

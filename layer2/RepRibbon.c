@@ -29,15 +29,17 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"main.h"
 #include"Feedback.h"
+#include"ShaderMgr.h"
 
 typedef struct RepRibbon {
   Rep R;
   float *V;
-  float linewidth;
+  float ribbon_width;
   float radius;
   int N;
   int NS;
   int NP;
+  CGO *shaderCGO;
 } RepRibbon;
 
 #include"ObjectMolecule.h"
@@ -50,6 +52,10 @@ void RepRibbonInit(void)
 
 void RepRibbonFree(RepRibbon * I)
 {
+  if (I->shaderCGO){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = 0;
+  }
   FreeP(I->V);
   RepPurge(&I->R);
   OOFreeP(I);
@@ -65,7 +71,7 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
   Pickable *p;
   int i, j, ip;
   int last;
-  float line_width = SceneGetDynamicLineWidth(info, I->linewidth);
+  float line_width = SceneGetDynamicLineWidth(info, I->ribbon_width);
 
   /* 
 
@@ -114,6 +120,109 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
         i = (*pick)->src.index;
         p = I->R.P;
         last = -1;
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	{
+	  int nverts = 0, cinit = c, *vinit = v;
+	  {
+	    while(c--) {
+	      ip = (int) *(v);
+	      if(ip != last) {
+		last = ip;
+	      }
+	      nverts += 2;
+	      ip = (int) *(v + 7);
+	      if(ip != last) {
+		nverts += 2;
+		last = ip;
+	      }
+	      v += 18;
+	    }
+	  }
+	  v = vinit; c = cinit;
+	  {
+	    int pl = 0, plc = 0;
+	    ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
+	    ALLOCATE_ARRAY(GLubyte,colorVals,nverts*4)
+	    while(c--) {
+	      ip = (int) *(v);
+	      if(ip != last) {
+		i++;
+		last = ip;
+		if(!(*pick)[0].src.bond) {
+		  /* pass 1 - low order bits */
+		  colorVals[plc++] = (uchar) ((i & 0xF) << 4);
+		  colorVals[plc++] = (uchar) ((i & 0xF0) | 0x8);  /* we're encoding the index into the color */
+		  colorVals[plc++] = (uchar) ((i & 0xF00) >> 4);
+		  colorVals[plc++] = (uchar) 255;
+		  VLACheck((*pick), Picking, i);
+		  (*pick)[i].src = p[ip];   /* copy object and atom info */
+		  (*pick)[i].context = I->R.context;
+		} else {
+		  /* pass 2 - high order bits */
+		  j = i >> 12;
+		  colorVals[plc++] = (uchar) ((j & 0xF) << 4);
+		  colorVals[plc++] = (uchar) ((j & 0xF0) | 0x8);
+		  colorVals[plc++] = (uchar) ((j & 0xF00) >> 4);
+		  colorVals[plc++] = (uchar) 255;
+		}
+	      } else {
+		colorVals[plc] = colorVals[plc-4]; plc++;
+		colorVals[plc] = colorVals[plc-4]; plc++;
+		colorVals[plc] = colorVals[plc-4]; plc++;
+		colorVals[plc] = colorVals[plc-4]; plc++;
+	      }
+	      vertVals[pl++] = v[4]; vertVals[pl++] = v[5];  vertVals[pl++] = v[6];
+	      ip = (int) *(v + 7);
+	      if(ip != last) {
+		/* switch colors at midpoint */
+		vertVals[pl++] = v[15]; vertVals[pl++] = v[16];  vertVals[pl++] = v[17];
+		vertVals[pl++] = v[15]; vertVals[pl++] = v[16];  vertVals[pl++] = v[17];
+		i++;
+		last = ip;
+		if(!(*pick)[0].src.bond) {
+		  /* pass 1 - low order bits */
+		  colorVals[plc++] = (uchar) ((i & 0xF) << 4);
+		  colorVals[plc++] = (uchar) ((i & 0xF0) | 0x8);  /* we're encoding the index into the color */
+		  colorVals[plc++] = (uchar) ((i & 0xF00) >> 4);
+		  colorVals[plc++] = (uchar) 255;
+		  VLACheck((*pick), Picking, i);
+		  (*pick)[i].src = p[ip];   /* copy object and atom info */
+		  (*pick)[i].context = I->R.context;
+		} else {
+		  /* pass 2 - high order bits */
+		  j = i >> 12;
+		  colorVals[plc++] = (uchar) ((j & 0xF) << 4);
+		  colorVals[plc++] = (uchar) ((j & 0xF0) | 0x8);
+		  colorVals[plc++] = (uchar) ((j & 0xF00) >> 4);
+		  colorVals[plc++] = (uchar) 255;
+		}
+		colorVals[plc] = colorVals[plc-4]; plc++;
+		colorVals[plc] = colorVals[plc-4]; plc++;
+		colorVals[plc] = colorVals[plc-4]; plc++;
+		colorVals[plc] = colorVals[plc-4]; plc++;
+	      }
+	      colorVals[plc] = colorVals[plc-4]; plc++;
+	      colorVals[plc] = colorVals[plc-4]; plc++;
+	      colorVals[plc] = colorVals[plc-4]; plc++;
+	      colorVals[plc] = colorVals[plc-4]; plc++;
+	      vertVals[pl++] = v[11]; vertVals[pl++] = v[12];  vertVals[pl++] = v[13];
+	      v += 18;
+	    }
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glEnableClientState(GL_COLOR_ARRAY);
+	    glVertexPointer(3, GL_FLOAT, 0, vertVals);
+	    glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorVals);
+	    glDrawArrays(GL_LINES, 0, nverts);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	    glDisableClientState(GL_COLOR_ARRAY);
+	    DEALLOCATE_ARRAY(vertVals)
+	    DEALLOCATE_ARRAY(colorVals)
+	  }
+	}
+#else
         glBegin(GL_LINES);
         while(c--) {
           ip = (int) *(v);
@@ -159,77 +268,283 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
           v += 18;
         }
         glEnd();
+#endif
+#endif
         (*pick)[0].src.index = i;       /* pass the count */
       }
     } else {
-      int use_dlst;
+      short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
       int ribbon_smooth;
+      short ribbon_as_cylinders ;
       float alpha = SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
+
+      use_shader = (int) SettingGet(G, cSetting_ribbon_use_shader) & 
+                           (int) SettingGet(G, cSetting_use_shaders);
+      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+      ribbon_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_ribbon_as_cylinders);
+      if (!use_shader && I->shaderCGO){
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = 0;
+      }
+      if (I->shaderCGO && (ribbon_as_cylinders ^ I->shaderCGO->has_draw_cylinder_buffers)){
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = 0;
+      }
+
+#ifdef _PYMOL_GL_CALLLISTS
+      if(use_display_lists && I->R.displayList) {
+	glCallList(I->R.displayList);
+	return;
+      }
+#endif
+      if (use_shader){
+	if (!I->shaderCGO){
+	  I->shaderCGO = CGONew(G);
+	  I->shaderCGO->use_shader = true;
+	  generate_shader_cgo = 1;
+	} else {
+	  CShaderPrg *shaderPrg;
+	  if (ribbon_as_cylinders){
+	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
+	    if(pixel_scale_value < 0)
+	      pixel_scale_value = 1.0F;
+	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+	    if(I->radius == 0.0F) {
+	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
+	    } else {
+	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
+	    }
+	  } else {
+	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	  }
+
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+
+	  CShaderPrg_Disable(shaderPrg);
+	  return;
+	}
+      }
+#ifdef _PYMOL_GL_CALLLISTS
+      if(use_display_lists) {
+	if(!I->R.displayList) {
+	  I->R.displayList = glGenLists(1);
+	  if(I->R.displayList) {
+	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
+	  }
+	}
+      }
+#else
+      (void) use_display_lists;
+#endif
+
+
       alpha = 1.0F - alpha;
       if(fabs(alpha-1.0) < R_SMALL4)
 	alpha = 1.0F;
 
       ribbon_smooth = SettingGet_i(G, NULL, I->R.obj->Setting, cSetting_ribbon_smooth);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       if(!ribbon_smooth)
         glDisable(GL_LINE_SMOOTH);
+#endif
 
-      if(info->width_scale_flag)
-        glLineWidth(line_width * info->width_scale);
-      else
-        glLineWidth(line_width);
-
-      use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
-      if(use_dlst && I->R.displayList) {
-        glCallList(I->R.displayList);
+      if (generate_shader_cgo){
+	CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
+	CGOResetNormal(I->shaderCGO, true);
       } else {
-
-        SceneResetNormal(G, true);
-        if(use_dlst) {
-          if(!I->R.displayList) {
-            I->R.displayList = glGenLists(1);
-            if(I->R.displayList) {
-              glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-            }
-          }
-        }
-
-        PRINTFD(G, FB_RepRibbon)
-          " RepRibbonRender: rendering GL...\n" ENDFD;
-
-        if(c) {
-
-          int first = true;
-
-          if(!info->line_lighting)
-            glDisable(GL_LIGHTING);
-          glBegin(GL_LINE_STRIP);
-          while(c--) {
-            if(first) {
-              /* glColor3fv(v + 1); */
+	if(info->width_scale_flag)
+	  glLineWidth(line_width * info->width_scale);
+	else
+	  glLineWidth(line_width);
+	SceneResetNormal(G, true);
+      }
+      PRINTFD(G, FB_RepRibbon)
+	" RepRibbonRender: rendering GL...\n" ENDFD;
+      
+      if(c) {
+	int first = true;
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+	if (generate_shader_cgo){
+	  if (ribbon_as_cylinders){
+	    float *origin = NULL, *vertex = NULL, *color = NULL, *color2 = NULL, axis[3];
+	    while(c--) {
+	      if(first) {
+		/* glColor3fv(v + 1); */
+		CGOAlpha(I->shaderCGO, alpha);
+		CGOColorv(I->shaderCGO, v+1);
+		color2 = (v + 1);
+		vertex = (v + 4);
+		first = false;
+	      } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
+		CGOAlpha(I->shaderCGO, alpha);
+		CGOColorv(I->shaderCGO, v+1);
+		origin = color = NULL;
+		color2 = (v+1);
+		vertex = (v+4);
+	      }
+	      /* glColor3fv(v + 8); */
+	      origin = vertex;
+	      color = color2;
+	      color2 = (v+8);
+	      vertex = (v+11);
+	      axis[0] = vertex[0] - origin[0];
+	      axis[1] = vertex[1] - origin[1];
+	      axis[2] = vertex[2] - origin[2];
+	      if (*(color) != *(color2) || *(color+1) != *(color2+1) || *(color+2) != *(color2+2)){
+		CGOShaderCylinder2ndColor(I->shaderCGO, origin, axis, 1.f, 15, color2);
+	      } else {
+		CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
+	      }
+	      CGOAlpha(I->shaderCGO, alpha);
+	      CGOColorv(I->shaderCGO, v+8);
+	      v += 18;
+	    }
+	  } else {
+	    CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+	    while(c--) {
+	      if(first) {
+		/* glColor3fv(v + 1); */
+		CGOAlpha(I->shaderCGO, alpha);
+		CGOColorv(I->shaderCGO, v+1);
+		CGOVertexv(I->shaderCGO, v + 4);
+		first = false;
+	      } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
+		CGOEnd(I->shaderCGO);
+		CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+		/* glColor3fv(v + 1); */
+		CGOAlpha(I->shaderCGO, alpha);
+		CGOColorv(I->shaderCGO, v+1);
+		CGOVertexv(I->shaderCGO, v + 4);
+	      }
+	      /* glColor3fv(v + 8); */
+	      CGOAlpha(I->shaderCGO, alpha);
+	      CGOColorv(I->shaderCGO, v+8);
+	      CGOVertexv(I->shaderCGO, v + 11);
+	      v += 18;
+	    }
+	    CGOEnd(I->shaderCGO);
+	  }
+	} else {
+	  if(!info->line_lighting)
+	    glDisable(GL_LIGHTING);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    int nverts = c*2, pl=0, plc = 0;
+	    ALLOCATE_ARRAY(GLfloat,lineVals,nverts*3)
+	    ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
+	    
+	    while(c--) {
+	      colorVals[plc++] = v[1]; colorVals[plc++] = v[2];
+	      colorVals[plc++] = v[3]; colorVals[plc++] = alpha;
+	      lineVals[pl++] = v[4]; lineVals[pl++] = v[5]; lineVals[pl++] = v[6];
+	      colorVals[plc++] = v[8]; colorVals[plc++] = v[9];
+	      colorVals[plc++] = v[10]; colorVals[plc++] = alpha;
+	      lineVals[pl++] = v[11]; lineVals[pl++] = v[12]; lineVals[pl++] = v[13];
+	      v += 18;
+	    }
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glEnableClientState(GL_COLOR_ARRAY);
+	    glVertexPointer(3, GL_FLOAT, 0, lineVals);
+	    glColorPointer(4, GL_FLOAT, 0, colorVals);
+	    glDrawArrays(GL_LINES, 0, nverts);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	    glDisableClientState(GL_COLOR_ARRAY);
+	    DEALLOCATE_ARRAY(lineVals)
+	    DEALLOCATE_ARRAY(colorVals)
+	  }
+#else
+	  glBegin(GL_LINE_STRIP);
+	  while(c--) {
+	    if(first) {
+	      /* glColor3fv(v + 1); */
 	      glColor4f( (v+1)[0], (v+1)[1], (v+1)[2], alpha);
-              glVertex3fv(v + 4);
-              first = false;
-            } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
-              glEnd();
-              glBegin(GL_LINE_STRIP);
-              /* glColor3fv(v + 1); */
+	      glVertex3fv(v + 4);
+	      first = false;
+	    } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
+	      glEnd();
+	      glBegin(GL_LINE_STRIP);
+	      /* glColor3fv(v + 1); */
 	      glColor4f( (v+1)[0], (v+1)[1], (v+1)[2], alpha);
-              glVertex3fv(v + 4);
-            }
-            /* glColor3fv(v + 8); */
+	      glVertex3fv(v + 4);
+	    }
+	    /* glColor3fv(v + 8); */
 	    glColor4f( (v+8)[0], (v+8)[1], (v+8)[2], alpha);
 	    glVertex3fv(v + 11);
-            v += 18;
-          }
-          glEnd();
-          glEnable(GL_LIGHTING);
-        }
-        if(use_dlst && I->R.displayList) {
-          glEndList();
-        }
+	    v += 18;
+	  }
+	  glEnd();
+#endif
+	  glEnable(GL_LIGHTING);
+#endif
+	}
       }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       if(SettingGetGlobal_b(G, cSetting_line_smooth))
         glEnable(GL_LINE_SMOOTH);
+#endif
+
+      if (use_shader) {
+	if (generate_shader_cgo){
+	  CGO *convertcgo = NULL;
+	  CGOStop(I->shaderCGO);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  CGOFree(I->shaderCGO);    
+	  I->shaderCGO = convertcgo;
+#else
+	  (void)convertcgo;
+#endif
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+	  if (ribbon_as_cylinders){
+	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
+	  } else {
+	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	  }
+	  if (convertcgo){
+	    CGOFree(I->shaderCGO);
+	    I->shaderCGO = convertcgo;
+	  }
+#else
+	  (void)convertcgo;
+#endif
+	}
+	
+	{
+	  CShaderPrg *shaderPrg;
+	  if (ribbon_as_cylinders){
+	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
+	    if(pixel_scale_value < 0)
+	      pixel_scale_value = 1.0F;
+	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+	    if(I->radius == 0.0F) {
+	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
+	    } else {
+	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
+	    }
+	  } else {
+	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	  }	 
+
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  
+	  CShaderPrg_Disable(shaderPrg);
+	}
+      }
+
+#ifdef _PYMOL_GL_CALLLISTS
+      if (use_display_lists && I->R.displayList){
+	glEndList();
+	glCallList(I->R.displayList);      
+      }
+#endif
     }
   }
 }
@@ -314,7 +629,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   I->R.fFree = (void (*)(struct Rep *)) RepRibbonFree;
   I->R.fRecolor = NULL;
   I->R.obj = (CObject *) obj;
-  I->linewidth = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_width);
+  I->ribbon_width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_width);
   I->R.context.object = (void *) obj;
   I->R.context.state = state;
 
@@ -547,6 +862,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   I->V = (float *) mmalloc(sizeof(float) * 2 * cs->NIndex * 18 * sampling);
   ErrChkPtr(G, I->V);
 
+  I->shaderCGO = 0;
   I->N = 0;
   I->NP = 0;
   v = I->V;
@@ -720,15 +1036,173 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
       SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trace_atoms_mode);
     int na_mode =
       SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_nucleic_acid_mode);
-    float linewidth =
+    float ribbon_width =
       SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_width);
     int a1, a2 = -1;
     int color, last_color = -9;
 
-    glLineWidth(linewidth);
+    glLineWidth(ribbon_width);
+    SceneResetNormal(G, true);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     if(!info->line_lighting)
       glDisable(GL_LIGHTING);
-    SceneResetNormal(G, true);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      int nverts = 0;
+      {
+	for(a1 = 0; a1 < nAtIndex; a1++) {
+	  if(obj->DiscreteFlag) {
+	    if(cs == obj->DiscreteCSet[a1])
+	      a = obj->DiscreteAtmToIdx[a1];
+	    else
+	      a = -1;
+	  } else
+	    a = cs->AtmToIdx[a1];
+	  if(a >= 0) {
+	    ai = obj_AtomInfo + a1;
+	    if(ai->visRep[cRepRibbon]) {
+	      if(trace || ((ai->protons == cAN_C) &&
+			   (WordMatch(G, "CA", ai->name, 1) < 0) &&
+			   !AtomInfoSameResidueP(G, last_ai, ai))) {
+		if(a2 >= 0) {
+		  if(trace) {
+		    if(!AtomInfoSequential
+		       (G, obj_AtomInfo + a2, obj_AtomInfo + a1, trace_mode))
+		      a2 = -1;
+		  } else {
+		    if(!ObjectMoleculeCheckBondSep(obj, a1, a2, 3)) /* CA->N->C->CA = 3 bonds */
+		      a2 = -1;
+		  }
+		}
+		if(a2 != -1) {
+		  nverts += 2;
+		}
+		active = true;
+		last_ai = ai;
+		a2 = a1;
+	      } else if((((na_mode != 1) && (ai->protons == cAN_P) &&
+			  (WordMatch(G, "P", ai->name, 1) < 0)) ||
+			 ((na_mode == 1) && (ai->protons == cAN_C) &&
+			  (WordMatchExact(G, "C4*", ai->name, 1) ||
+			   WordMatchExact(G, "C4'", ai->name, 1)))) &&
+			!AtomInfoSameResidueP(G, last_ai, ai)) {
+		if(a2 >= 0) {
+		  if(!ObjectMoleculeCheckBondSep(obj, a1, a2, 6)) { /* six bonds between phosphates */
+		    a2 = -1;
+		  }
+		}
+		if (a2 != -1){
+		  nverts += 2;
+		}
+		active = true;
+		last_ai = ai;
+		a2 = a1;
+	      }
+	    }
+	  }
+	}
+      }
+      {
+	ALLOCATE_ARRAY(GLfloat,lineVals,nverts*3)
+	ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
+	float *cur_color;
+	int pl = 0, plc = 0, last_a;
+	a2 = -1;
+	last_ai = NULL;
+	last_a = -1;
+	for(a1 = 0; a1 < nAtIndex; a1++) {
+	  if(obj->DiscreteFlag) {
+	    if(cs == obj->DiscreteCSet[a1])
+	      a = obj->DiscreteAtmToIdx[a1];
+	    else
+	      a = -1;
+	  } else
+	    a = cs->AtmToIdx[a1];
+	  if(a >= 0) {
+	    ai = obj_AtomInfo + a1;
+	    if(ai->visRep[cRepRibbon]) {
+	      if(trace || ((ai->protons == cAN_C) &&
+			   (WordMatch(G, "CA", ai->name, 1) < 0) &&
+			   !AtomInfoSameResidueP(G, last_ai, ai))) {
+		if(a2 >= 0) {
+		  if(trace) {
+		    if(!AtomInfoSequential
+		       (G, obj_AtomInfo + a2, obj_AtomInfo + a1, trace_mode))
+		      a2 = -1;
+		  } else {
+		    if(!ObjectMoleculeCheckBondSep(obj, a1, a2, 3)) /* CA->N->C->CA = 3 bonds */
+		      a2 = -1;
+		  }
+		}
+		color = ai->color;
+		if(color != last_color) {
+		  last_color = color;
+		  cur_color = ColorGet(G, color);
+		}
+		if(a2 != -1) {
+		  colorVals[plc++] = cur_color[0]; colorVals[plc++] = cur_color[1]; colorVals[plc++] = cur_color[2]; colorVals[plc++] = 1.f;
+		  colorVals[plc++] = cur_color[0]; colorVals[plc++] = cur_color[1]; colorVals[plc++] = cur_color[2]; colorVals[plc++] = 1.f;
+		  lineVals[pl++] = cs->Coord[3*last_a]; 
+		  lineVals[pl++] = cs->Coord[3*last_a + 1]; 
+		  lineVals[pl++] = cs->Coord[3*last_a + 2];
+		  lineVals[pl++] = cs->Coord[3*a]; 
+		  lineVals[pl++] = cs->Coord[3*a + 1]; 
+		  lineVals[pl++] = cs->Coord[3*a + 2];
+		}
+		active = true;
+		last_ai = ai;
+		last_a = a;
+		a2 = a1;
+	      } else if((((na_mode != 1) && (ai->protons == cAN_P) &&
+			  (WordMatch(G, "P", ai->name, 1) < 0)) ||
+			 ((na_mode == 1) && (ai->protons == cAN_C) &&
+			  (WordMatchExact(G, "C4*", ai->name, 1) ||
+			   WordMatchExact(G, "C4'", ai->name, 1)))) &&
+			!AtomInfoSameResidueP(G, last_ai, ai)) {
+		if(a2 >= 0) {
+		  if(!ObjectMoleculeCheckBondSep(obj, a1, a2, 6)) { /* six bonds between phosphates */
+		    a2 = -1;
+		  }
+		}
+		color = ai->color;
+		if(color != last_color) {
+		  last_color = color;
+		  cur_color = ColorGet(G, color);
+		  //		  glColor3fv(cur_color);
+		}
+		if(a2 != -1) {
+		  colorVals[plc++] = cur_color[0]; colorVals[plc++] = cur_color[1]; colorVals[plc++] = cur_color[2]; colorVals[plc++] = 1.f;
+		  colorVals[plc++] = cur_color[0]; colorVals[plc++] = cur_color[1]; colorVals[plc++] = cur_color[2]; colorVals[plc++] = 1.f;
+		  lineVals[pl++] = cs->Coord[3*last_a]; 
+		  lineVals[pl++] = cs->Coord[3*last_a + 1]; 
+		  lineVals[pl++] = cs->Coord[3*last_a + 2];
+		  lineVals[pl++] = cs->Coord[3*a]; 
+		  lineVals[pl++] = cs->Coord[3*a + 1]; 
+		  lineVals[pl++] = cs->Coord[3*a + 2];
+		}
+		active = true;
+		last_ai = ai;
+		last_a = a;
+		a2 = a1;
+	      }
+	    }
+	  }
+	}
+	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, lineVals);
+	glColorPointer(4, GL_FLOAT, 0, colorVals);
+	glDrawArrays(GL_LINES, 0, nverts);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+	DEALLOCATE_ARRAY(lineVals)
+	DEALLOCATE_ARRAY(colorVals)
+      }
+    }
+#else
     glBegin(GL_LINE_STRIP);
     for(a1 = 0; a1 < nAtIndex; a1++) {
       if(obj->DiscreteFlag) {
@@ -797,7 +1271,9 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
       }
     }
     glEnd();
+#endif
     glEnable(GL_LIGHTING);
+#endif
     if(!active)
       cs->Active[cRepRibbon] = false;
   }

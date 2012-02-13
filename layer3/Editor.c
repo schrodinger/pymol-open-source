@@ -1045,20 +1045,20 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
       sele1 = SelectorIndexByName(G, cEditorSele2);
       if(sele0 >= 0) {
         if(sele1 >= 0)
-          sprintf(buffer, "((neighbor %s) and (elem h) and not %s)",
-                  cEditorSele1, cEditorSele2);
+	  sprintf(buffer, "((neighbor %s) and (elem h) and not %s)",
+		  cEditorSele1, cEditorSele2);
         else
-          sprintf(buffer, "((neighbor %s) and (elem h))", cEditorSele1);
-        SelectorGetTmp(G, buffer, s1);
-        ExecutiveRemoveAtoms(G, s1, quiet);
-        SelectorFreeTmp(G, s1);
-        i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);
-        obj0->AtomInfo[i0].chemFlag = false;
-        ExecutiveAddHydrogens(G, cEditorSele1, quiet);
+	  sprintf(buffer, "((neighbor %s) and (elem h))", cEditorSele1);
+	SelectorGetTmp(G, buffer, s1);
+	ExecutiveRemoveAtoms(G, s1, quiet);
+	SelectorFreeTmp(G, s1);
+	i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);
+	obj0->AtomInfo[i0].chemFlag = false;
+	ExecutiveAddHydrogens(G, cEditorSele1, quiet);
       }
 
-      if(sele1 >= 0) {
-        obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
+	if(sele1 >= 0) {
+	  obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
         if(sele0 >= 0)
           sprintf(buffer, "((neighbor %s) and (elem h) and not %s)",
                   cEditorSele2, cEditorSele1);
@@ -1067,10 +1067,10 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
         SelectorGetTmp(G, buffer, s1);
         ExecutiveRemoveAtoms(G, s1, quiet);
         SelectorFreeTmp(G, s1);
-        i0 = ObjectMoleculeGetAtomIndex(obj1, sele1);
-        obj1->AtomInfo[i0].chemFlag = false;
-        ExecutiveAddHydrogens(G, cEditorSele2, quiet);
-      }
+	  i0 = ObjectMoleculeGetAtomIndex(obj1, sele1);
+	  obj1->AtomInfo[i0].chemFlag = false;
+	  ExecutiveAddHydrogens(G, cEditorSele2, quiet);
+	}
     }
   }
 }
@@ -1171,8 +1171,44 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1)
   average3f(v2, v3, v2);
   copy3f(d0, n0);
   get_system1f3f(n0, n1, n2);
-
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
   glColor3fv(ColorGet(G, 0));
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    int numverts = 2*(nEdge+1), pl;
+    ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
+    ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
+    pl = 0;
+    for(a = 0; a <= nEdge; a++) {
+      c = a % nEdge;
+      v[0] = n1[0] * x[c] + n2[0] * y[c];
+      v[1] = n1[1] * x[c] + n2[1] * y[c];
+      v[2] = n1[2] * x[c] + n2[2] * y[c];
+      normalize3f(v);
+      normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
+      normVals[pl+3] = v[0]; normVals[pl+4] = v[1]; normVals[pl+5] = v[2];
+      v[0] = v2[0] + n1[0] * tube_size1 * x[c] + n2[0] * tube_size1 * y[c];
+      v[1] = v2[1] + n1[1] * tube_size1 * x[c] + n2[1] * tube_size1 * y[c];
+      v[2] = v2[2] + n1[2] * tube_size1 * x[c] + n2[2] * tube_size1 * y[c];
+      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+      v[0] = v3[0] + n1[0] * tube_size1 * x[c] + n2[0] * tube_size1 * y[c];
+      v[1] = v3[1] + n1[1] * tube_size1 * x[c] + n2[1] * tube_size1 * y[c];
+      v[2] = v3[2] + n1[2] * tube_size1 * x[c] + n2[2] * tube_size1 * y[c];
+      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+    }
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertVals);
+    glNormalPointer(GL_FLOAT, 0, normVals);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    DEALLOCATE_ARRAY(vertVals)
+    DEALLOCATE_ARRAY(normVals)
+  }
+#else
   glBegin(GL_TRIANGLE_STRIP);
   for(a = 0; a <= nEdge; a++) {
     c = a % nEdge;
@@ -1192,7 +1228,36 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1)
     glVertex3fv(v);
   }
   glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+  glNormal3fv(n0);
+  {
+    int numverts = 2*(nEdge+1), pl;
+    ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
+    pl = 0;
+    for(a = 0; a <= nEdge; a++) {
+      c = a % nEdge;
+      v[0] = v2[0] + n1[0] * tube_size3 * x[c] + n2[0] * tube_size3 * y[c];
+      v[1] = v2[1] + n1[1] * tube_size3 * x[c] + n2[1] * tube_size3 * y[c];
+      v[2] = v2[2] + n1[2] * tube_size3 * x[c] + n2[2] * tube_size3 * y[c];
+      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+      v[0] = v2[0] + n1[0] * tube_size1 * x[c] + n2[0] * tube_size1 * y[c];
+      v[1] = v2[1] + n1[1] * tube_size1 * x[c] + n2[1] * tube_size1 * y[c];
+      v[2] = v2[2] + n1[2] * tube_size1 * x[c] + n2[2] * tube_size1 * y[c];
+      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+    }
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertVals);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    DEALLOCATE_ARRAY(vertVals)
+  }
+#else
   glBegin(GL_TRIANGLE_STRIP);
   glNormal3fv(n0);
   for(a = 0; a <= nEdge; a++) {
@@ -1207,7 +1272,37 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1)
     glVertex3fv(v);
   }
   glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+  scale3f(n0, -1.0F, v);
+  glNormal3fv(v);
+  {
+    int numverts = 2*(nEdge+1), pl;
+    ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
+    pl = 0;
+    for(a = 0; a <= nEdge; a++) {
+      c = a % nEdge;
+      v[0] = v3[0] + n1[0] * tube_size1 * x[c] + n2[0] * tube_size1 * y[c];
+      v[1] = v3[1] + n1[1] * tube_size1 * x[c] + n2[1] * tube_size1 * y[c];
+      v[2] = v3[2] + n1[2] * tube_size1 * x[c] + n2[2] * tube_size1 * y[c];
+      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+      v[0] = v3[0] + n1[0] * tube_size3 * x[c] + n2[0] * tube_size3 * y[c];
+      v[1] = v3[1] + n1[1] * tube_size3 * x[c] + n2[1] * tube_size3 * y[c];
+      v[2] = v3[2] + n1[2] * tube_size3 * x[c] + n2[2] * tube_size3 * y[c];
+      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+    }
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertVals);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    DEALLOCATE_ARRAY(vertVals)
+  }
+#else
   glBegin(GL_TRIANGLE_STRIP);
   scale3f(n0, -1.0F, v);
   glNormal3fv(v);
@@ -1223,7 +1318,8 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1)
     glVertex3fv(v);
   }
   glEnd();
-
+#endif
+#endif
 }
 
 #if 0
@@ -1231,10 +1327,27 @@ static void draw_dist(float *v0, float *v1)
 {
   SceneResetNormal(G, true);
   glLineWidth(SettingGet(G, cSetting_line_width) * 2);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    GLfloat vertVals[] = {
+      v0[0], v0[1], v0[2],
+      v1[0], v1[1], v1[2]
+    };    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertVals);
+    glDrawArrays(GL_LINES, 0, 2);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_LINES);
   glVertex3fv(v0);
   glVertex3fv(v1);
   glEnd();
+#endif
+#endif
 }
 
 static void draw_arc(float *v0, float *v1, float *v2)
@@ -1255,12 +1368,29 @@ static void draw_arc(float *v0, float *v1, float *v2)
    */
   SceneResetNormal(G, true);
   glLineWidth(SettingGet(G, cSetting_line_width) * 2);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    GLfloat vertVals[] = {
+      v0[0], v0[1], v0[2],
+      v1[0], v1[1], v1[2],
+      v2[0], v2[1], v2[2]
+    };    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertVals);
+    glDrawArrays(GL_LINE_STRIP, 0, 3);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_LINE_STRIP);
   glVertex3fv(v0);
   glVertex3fv(v1);
   glVertex3fv(v2);
   glEnd();
-
+#endif
+#endif
 }
 
 static void draw_torsion(float *v0, float *v1, float *v2, float *v3)
@@ -1281,13 +1411,31 @@ static void draw_torsion(float *v0, float *v1, float *v2, float *v3)
    */
   SceneResetNormal(G, true);
   glLineWidth(SettingGet(G, cSetting_line_width) * 2);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    GLfloat vertVals[] = {
+      v0[0], v0[1], v0[2],
+      v1[0], v1[1], v1[2],
+      v2[0], v2[1], v2[2],
+      v3[0], v3[1], v3[2]
+    };    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertVals);
+    glDrawArrays(GL_LINE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_LINE_STRIP);
   glVertex3fv(v0);
   glVertex3fv(v1);
   glVertex3fv(v2);
   glVertex3fv(v3);
   glEnd();
-
+#endif
+#endif
 }
 #endif
 
@@ -1317,7 +1465,11 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number)
   n0[2] = 0.0;
   get_system1f3f(n0, n1, n2);
 
+#ifdef PURE_OPENGL_ES_2
+		  /* TODO */
+#else
   glColor3fv(ColorGet(G, 0));
+#endif
 
   cycle_counter = number;
   while(cycle_counter) {
@@ -1372,7 +1524,49 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number)
         break;
       }
     }
-
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      int numverts = 2*(nEdge+1), pl;
+      ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
+      ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
+      pl = 0;
+      for(a = 0; a <= nEdge; a++) {
+	c = a % nEdge;
+	v[0] = n1[0] * x[c] + n2[0] * y[c];
+	v[1] = n1[1] * x[c] + n2[1] * y[c];
+	v[2] = n1[2] * x[c] + n2[2] * y[c];
+	normalize3f(v);
+	normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
+	normVals[pl+3] = v[0]; normVals[pl+4] = v[1]; normVals[pl+5] = v[2];
+	v[0] =
+	  v2[0] + n1[0] * radius * x[c] + n2[0] * radius * y[c] + n0[0] * (offset + width);
+	v[1] =
+	  v2[1] + n1[1] * radius * x[c] + n2[1] * radius * y[c] + n0[1] * (offset + width);
+	v[2] =
+	  v2[2] + n1[2] * radius * x[c] + n2[2] * radius * y[c] + n0[2] * (offset + width);
+	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+	v[0] =
+	  v2[0] + n1[0] * radius * x[c] + n2[0] * radius * y[c] + n0[0] * (offset - width);
+	v[1] =
+	  v2[1] + n1[1] * radius * x[c] + n2[1] * radius * y[c] + n0[1] * (offset - width);
+	v[2] =
+	  v2[2] + n1[2] * radius * x[c] + n2[2] * radius * y[c] + n0[2] * (offset - width);
+	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+      }
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_NORMAL_ARRAY);
+      glVertexPointer(3, GL_FLOAT, 0, vertVals);
+      glNormalPointer(GL_FLOAT, 0, normVals);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
+      glDisableClientState(GL_NORMAL_ARRAY);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      DEALLOCATE_ARRAY(vertVals)
+      DEALLOCATE_ARRAY(normVals)
+    }
+#else
     glBegin(GL_TRIANGLE_STRIP);
     for(a = 0; a <= nEdge; a++) {
       c = a % nEdge;
@@ -1397,7 +1591,52 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number)
       glVertex3fv(v);
     }
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      int numverts = 2*(nEdge+1), pl;
+      ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
+      ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
+      pl = 0;
+      for(a = 0; a <= nEdge; a++) {
+	c = a % nEdge;
+	v[0] = n2[0] * x[c] + n0[0] * y[c];
+	v[1] = n2[1] * x[c] + n0[1] * y[c];
+	v[2] = n2[2] * x[c] + n0[2] * y[c];
+	normalize3f(v);
+	normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
+	normVals[pl+3] = v[0]; normVals[pl+4] = v[1]; normVals[pl+5] = v[2];
+	v[0] =
+	  v2[0] + n2[0] * radius * x[c] + n0[0] * radius * y[c] + n1[0] * (offset + width);
+	v[1] =
+	  v2[1] + n2[1] * radius * x[c] + n0[1] * radius * y[c] + n1[1] * (offset + width);
+	v[2] =
+	  v2[2] + n2[2] * radius * x[c] + n0[2] * radius * y[c] + n1[2] * (offset + width);
+	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+	v[0] =
+	  v2[0] + n2[0] * radius * x[c] + n0[0] * radius * y[c] + n1[0] * (offset - width);
+	v[1] =
+	  v2[1] + n2[1] * radius * x[c] + n0[1] * radius * y[c] + n1[1] * (offset - width);
+	v[2] =
+	  v2[2] + n2[2] * radius * x[c] + n0[2] * radius * y[c] + n1[2] * (offset - width);
+	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+      }
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_NORMAL_ARRAY);
+      glVertexPointer(3, GL_FLOAT, 0, vertVals);
+      glNormalPointer(GL_FLOAT, 0, normVals);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
+      glDisableClientState(GL_NORMAL_ARRAY);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      DEALLOCATE_ARRAY(vertVals)
+      DEALLOCATE_ARRAY(normVals)
+    }
+#else
     glBegin(GL_TRIANGLE_STRIP);
     for(a = 0; a <= nEdge; a++) {
       c = a % nEdge;
@@ -1422,7 +1661,52 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number)
       glVertex3fv(v);
     }
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      int numverts = 2*(nEdge+1), pl;
+      ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
+      ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
+      pl = 0;
+      for(a = 0; a <= nEdge; a++) {
+	c = a % nEdge;
+	v[0] = n0[0] * x[c] + n1[0] * y[c];
+	v[1] = n0[1] * x[c] + n1[1] * y[c];
+	v[2] = n0[2] * x[c] + n1[2] * y[c];
+	normalize3f(v);
+	normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
+	normVals[pl+3] = v[0]; normVals[pl+4] = v[1]; normVals[pl+5] = v[2];
+	v[0] =
+	  v2[0] + n0[0] * radius * x[c] + n1[0] * radius * y[c] + n2[0] * (offset + width);
+	v[1] =
+	  v2[1] + n0[1] * radius * x[c] + n1[1] * radius * y[c] + n2[1] * (offset + width);
+	v[2] =
+	  v2[2] + n0[2] * radius * x[c] + n1[2] * radius * y[c] + n2[2] * (offset + width);
+	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+	v[0] =
+	  v2[0] + n0[0] * radius * x[c] + n1[0] * radius * y[c] + n2[0] * (offset - width);
+	v[1] =
+	  v2[1] + n0[1] * radius * x[c] + n1[1] * radius * y[c] + n2[1] * (offset - width);
+	v[2] =
+	  v2[2] + n0[2] * radius * x[c] + n1[2] * radius * y[c] + n2[2] * (offset - width);
+	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
+      }
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_NORMAL_ARRAY);
+      glVertexPointer(3, GL_FLOAT, 0, vertVals);
+      glNormalPointer(GL_FLOAT, 0, normVals);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
+      glDisableClientState(GL_NORMAL_ARRAY);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      DEALLOCATE_ARRAY(vertVals)
+      DEALLOCATE_ARRAY(normVals)
+    }
+#else
     glBegin(GL_TRIANGLE_STRIP);
     for(a = 0; a <= nEdge; a++) {
       c = a % nEdge;
@@ -1447,7 +1731,8 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number)
       glVertex3fv(v);
     }
     glEnd();
-
+#endif
+#endif
     cycle_counter--;
   }
 

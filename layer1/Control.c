@@ -480,6 +480,63 @@ static int ControlClick(Block * block, int button, int x, int y, int mod)
 static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
                         float *inside)
 {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    const GLint polyVerts[] = {
+      x2, y2,
+      x2, y2 + h,
+      x2 + w, y2 + h,
+
+      x2 + w, y2 + h,
+      x2 + w, y2,
+      x2, y2,
+
+      x2 + 1, y2,
+      x2 + 1, y2 + h - 1,
+      x2 + w, y2 + h - 1,
+
+      x2 + w, y2 + h - 1,
+      x2 + w, y2,
+      x2 + 1, y2,
+
+      x2 + 1, y2 + 1,
+      x2 + 1, y2 + h - 1,
+      x2 + w - 1, y2 + h - 1,
+
+      x2 + w - 1, y2 + h - 1,
+      x2 + w - 1, y2 + 1,
+      x2 + 1, y2 + 1
+    };
+    const GLfloat colorVerts[] = {
+      light[0], light[1], light[2], 1.f,
+      light[0], light[1], light[2], 1.f,
+      light[0], light[1], light[2], 1.f,
+      light[0], light[1], light[2], 1.f,
+      light[0], light[1], light[2], 1.f,
+      light[0], light[1], light[2], 1.f,
+      dark[0], dark[2], dark[2], 1.f,
+      dark[0], dark[2], dark[2], 1.f,
+      dark[0], dark[2], dark[2], 1.f,
+      dark[0], dark[2], dark[2], 1.f,
+      dark[0], dark[2], dark[2], 1.f,
+      dark[0], dark[2], dark[2], 1.f,
+      inside[0], inside[1], inside[2], 1.f, 
+      inside[0], inside[1], inside[2], 1.f,
+      inside[0], inside[1], inside[2], 1.f,
+      inside[0], inside[1], inside[2], 1.f,
+      inside[0], inside[1], inside[2], 1.f,
+      inside[0], inside[1], inside[2], 1.f
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(4, GL_FLOAT, 0, colorVerts);
+    glVertexPointer(2, GL_INT, 0, polyVerts);
+    glDrawArrays(GL_TRIANGLES, 0, 18);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+#else
   glColor3fv(light);
   glBegin(GL_POLYGON);
   glVertex2i(x2, y2);
@@ -503,7 +560,8 @@ static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
   glVertex2i(x2 + w - 1, y2 + h - 1);
   glVertex2i(x2 + w - 1, y2 + 1);
   glEnd();
-
+#endif
+#endif
 }
 
 
@@ -523,10 +581,17 @@ static void ControlDraw(Block * block)
 
     int control_width = I->Block->rect.right - (I->Block->rect.left + cControlLeftMargin);
 
+#ifdef PURE_OPENGL_ES_2      
+      /* TODO */
+#else
     glColor3fv(I->Block->BackColor);
+#endif
     BlockFill(I->Block);
+#ifdef PURE_OPENGL_ES_2      
+      /* TODO */
+#else
     glColor3fv(I->Block->TextColor);
-
+#endif
     {
       int top, left, bottom, right;
 
@@ -535,6 +600,70 @@ static void ControlDraw(Block * block)
       top = I->Block->rect.top - (cControlTopMargin - 1);
       right = left + 5;
 
+      /* This draws the separator on the left side of the movie control buttons */
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	const GLint polyVerts[] = {
+	  right, top,
+	  right, bottom,
+	  left, bottom,
+	  
+	  left, bottom,
+	  left, top,
+	  right, top,
+	  
+	  right, top - 1,
+	  right, bottom,
+	  left + 1, bottom,
+	  
+	  left + 1, bottom,
+	  left + 1, top - 1,
+	  right, top - 1,
+	  
+	  right - 1, top - 1,
+	  right - 1, bottom + 1,
+	  left + 1, bottom + 1,
+	  
+	  left + 1, bottom + 1,
+	  left + 1, top - 1,
+	  right - 1, top - 1,
+	};
+	
+	const GLfloat colorVerts[] = {
+	  0.8F, 0.8F, 0.8F, 1.f,
+	  0.8F, 0.8F, 0.8F, 1.f,
+	  0.8F, 0.8F, 0.8F, 1.f,
+	  0.8F, 0.8F, 0.8F, 1.f,
+	  0.8F, 0.8F, 0.8F, 1.f,
+	  0.8F, 0.8F, 0.8F, 1.f,
+	  
+	  0.3F, 0.3F, 0.3F, 1.f,
+	  0.3F, 0.3F, 0.3F, 1.f,
+	  0.3F, 0.3F, 0.3F, 1.f,
+	  0.3F, 0.3F, 0.3F, 1.f,
+	  0.3F, 0.3F, 0.3F, 1.f,
+	  0.3F, 0.3F, 0.3F, 1.f,
+	  
+	  I->ButtonColor[0], I->ButtonColor[1], I->ButtonColor[2], 1.f,
+	  I->ButtonColor[0], I->ButtonColor[1], I->ButtonColor[2], 1.f,
+	  I->ButtonColor[0], I->ButtonColor[1], I->ButtonColor[2], 1.f,
+	  I->ButtonColor[0], I->ButtonColor[1], I->ButtonColor[2], 1.f,
+	  I->ButtonColor[0], I->ButtonColor[1], I->ButtonColor[2], 1.f,
+	  I->ButtonColor[0], I->ButtonColor[1], I->ButtonColor[2], 1.f
+	};
+	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glColorPointer(4, GL_FLOAT, 0, colorVerts);
+	glVertexPointer(2, GL_INT, 0, polyVerts);
+	glDrawArrays(GL_TRIANGLES, 0, 18);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+      }
+#else
       glColor3f(0.8F, 0.8F, 0.8F);
       glBegin(GL_POLYGON);
       glVertex2i(right, top);
@@ -559,6 +688,8 @@ static void ControlDraw(Block * block)
       glVertex2i(left + 1, bottom + 1);
       glVertex2i(left + 1, top - 1);
       glEnd();
+#endif
+#endif
     }
 
     y = I->Block->rect.top - cControlTopMargin;
@@ -595,9 +726,39 @@ static void ControlDraw(Block * block)
       if(control_width > 100) {
         x = but_left + (but_width - cControlBoxSize) / 2;
 
+#ifdef PURE_OPENGL_ES_2      
+      /* TODO */
+#else
         glColor3fv(I->Block->TextColor);
+#endif
         switch (but_num) {
         case 0:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint polyVerts[] = {
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - cControlInnerMargin,
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin,
+	      x + cControlInnerMargin, y - (cControlBoxSize / 2)
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLES, 0, 3);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+	  {
+	    const GLint lineVerts[] = {
+	      x + cControlInnerMargin, y - cControlInnerMargin,
+	      x + cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, lineVerts);
+	    glDrawArrays(GL_LINES, 0, 2);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_TRIANGLES);
           glVertex2i(x + (cControlBoxSize - 1) - cControlInnerMargin,
                      y - cControlInnerMargin);
@@ -610,10 +771,28 @@ static void ControlDraw(Block * block)
           glVertex2i(x + cControlInnerMargin,
                      y - (cControlBoxSize - 1) + cControlInnerMargin);
           glEnd();
+#endif
+#endif
           break;
 
         case 1:
-
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint polyVerts[] = {
+	      x + cControlBoxSize / 2 + 2, y - (cControlBoxSize / 2),
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - cControlInnerMargin,
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin,
+	      x + cControlInnerMargin, y - (cControlBoxSize / 2)
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_POLYGON);
           glVertex2i(x + cControlBoxSize / 2 + 2, y - (cControlBoxSize / 2));
           glVertex2i(x + (cControlBoxSize - 1) - cControlInnerMargin,
@@ -622,8 +801,27 @@ static void ControlDraw(Block * block)
           glVertex2i(x + (cControlBoxSize - 1) - cControlInnerMargin,
                      y - (cControlBoxSize - 1) + cControlInnerMargin);
           glEnd();
+#endif
+#endif
           break;
         case 2:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint polyVerts[] = {
+	      x + cControlInnerMargin, y - cControlInnerMargin,
+	      x + cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin,
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - cControlInnerMargin,
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_POLYGON);
           glVertex2i(x + cControlInnerMargin, y - cControlInnerMargin);
           glVertex2i(x + cControlInnerMargin,
@@ -633,9 +831,27 @@ static void ControlDraw(Block * block)
           glVertex2i(x + (cControlBoxSize - 1) - cControlInnerMargin,
                      y - cControlInnerMargin);
           glEnd();
+#endif
+#endif
           break;
 
         case 3:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint polyVerts[] = {
+	      x + cControlInnerMargin, y - cControlInnerMargin + 1,
+	      x + cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin - 1,
+	      x + (cControlBoxSize) - cControlInnerMargin, y - (cControlBoxSize / 2)
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLES, 0, 3);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_TRIANGLES);
           glVertex2i(x + cControlInnerMargin, y - cControlInnerMargin + 1);
           glVertex2i(x + cControlInnerMargin,
@@ -643,8 +859,27 @@ static void ControlDraw(Block * block)
           glVertex2i(x + (cControlBoxSize) - cControlInnerMargin,
                      y - (cControlBoxSize / 2));
           glEnd();
+#endif
+#endif
           break;
         case 4:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint polyVerts[] = {
+	      x + cControlBoxSize / 2 - 2, y - (cControlBoxSize / 2),
+	      x + cControlInnerMargin, y - cControlInnerMargin,
+	      x + cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin,
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - (cControlBoxSize / 2)
+	    };	      
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_POLYGON);
           glVertex2i(x + cControlBoxSize / 2 - 2, y - (cControlBoxSize / 2));
           glVertex2i(x + cControlInnerMargin, y - cControlInnerMargin);
@@ -653,9 +888,36 @@ static void ControlDraw(Block * block)
           glVertex2i(x + cControlInnerMargin,
                      y - (cControlBoxSize - 1) + cControlInnerMargin);
           glEnd();
-
+#endif
+#endif
           break;
         case 5:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint polyVerts[] = {
+	      x + cControlInnerMargin, y - cControlInnerMargin,
+	      x + cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin,
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - (cControlBoxSize / 2)
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLES, 0, 3);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+	  {
+	    const GLint lineVerts[] = {
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - cControlInnerMargin,
+	      x + (cControlBoxSize - 1) - cControlInnerMargin, y - (cControlBoxSize - 1) + cControlInnerMargin
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, lineVerts);
+	    glDrawArrays(GL_LINES, 0, 2);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_TRIANGLES);
           glVertex2i(x + cControlInnerMargin, y - cControlInnerMargin);
           glVertex2i(x + cControlInnerMargin,
@@ -669,6 +931,8 @@ static void ControlDraw(Block * block)
           glVertex2i(x + (cControlBoxSize - 1) - cControlInnerMargin,
                      y - (cControlBoxSize - 1) + cControlInnerMargin);
           glEnd();
+#endif
+#endif
           break;
         case 6:
           TextDrawStrAt(G, "S", x + cControlInnerMargin,
@@ -678,12 +942,30 @@ static void ControlDraw(Block * block)
           /*
              TextDrawStrAt(G,"R",x+cControlInnerMargin,
              y-cControlBoxSize+cControlInnerMargin+1); */
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLint polyVerts[] = {
+	      x + (cControlBoxSize / 2) + cControlSpread, y - cControlInnerMargin,
+	      x + (cControlBoxSize / 2), y - (cControlBoxSize) + cControlInnerMargin,
+	      x + (cControlBoxSize / 2) - cControlSpread, y - cControlInnerMargin
+	    };	      
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_INT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLES, 0, 3);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_POLYGON);
           glVertex2i(x + (cControlBoxSize / 2) + cControlSpread, y - cControlInnerMargin);
           glVertex2i(x + (cControlBoxSize / 2),
                      y - (cControlBoxSize) + cControlInnerMargin);
           glVertex2i(x + (cControlBoxSize / 2) - cControlSpread, y - cControlInnerMargin);
           glEnd();
+#endif
+#endif
           break;
         case 8:
           TextDrawStrAt(G, "F", x + cControlInnerMargin,
@@ -700,6 +982,33 @@ static void ControlDraw(Block * block)
       int y2 = I->Block->rect.bottom - 5;
 
       glColor3f(0.3F, 0.3F, 0.3F);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	const GLint lineVerts[] = {
+	  x1, y1,
+	  x2, y2,
+	  x1, y1 + 4,
+	  x2 - 4, y2,
+	  x1, y1 + 8,
+	  x2 - 8, y2,
+	  x1, y1 + 12,
+	  x2 - 12, y2,
+	  x1 - 4, y1 + 12,
+	  x2 - 12, y2 + 4,
+	  x1 - 8, y1 + 12,
+	  x2 - 12, y2 + 8,
+	  x1 - 12, y1 + 12,
+	  x2 - 12, y2 + 12
+	};	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_INT, 0, lineVerts);
+	glDrawArrays(GL_LINES, 0, 14);
+	glDisableClientState(GL_VERTEX_ARRAY);
+      }
+#else
       glBegin(GL_LINES);
       glVertex2i(x1, y1);
       glVertex2i(x2, y2);
@@ -728,13 +1037,41 @@ static void ControlDraw(Block * block)
       glVertex2i(x1, y1);
       glVertex2i(x2, y2);
       glEnd();
-
+#endif
+#endif
       x1 = I->Block->rect.right + 1;
       y1 = I->Block->rect.bottom - 2;
       x2 = I->Block->rect.right - 2;
       y2 = I->Block->rect.bottom - 5;
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       glColor3f(0.85F, 0.85F, 0.85F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	const GLint lineVerts[] = {
+	  x1, y1,
+	  x2, y2,
+	  x1, y1 + 4,
+	  x2 - 4, y2,
+	  x1, y1 + 8,
+	  x2 - 8, y2,
+	  x1, y1 + 12,
+	  x2 - 12, y2,
+	  x1 - 4, y1 + 12,
+	  x2 - 12, y2 + 4,
+	  x1 - 8, y1 + 12,
+	  x2 - 12, y2 + 8,
+	  x1 - 12, y1 + 12,
+	  x2 - 12, y2 + 12
+	};	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_INT, 0, lineVerts);
+	glDrawArrays(GL_LINES, 0, 14);
+	glDisableClientState(GL_VERTEX_ARRAY);
+      }
+#else
       glBegin(GL_LINES);
       glVertex2i(x1, y1);
       glVertex2i(x2, y2);
@@ -763,13 +1100,42 @@ static void ControlDraw(Block * block)
       glVertex2i(x1, y1);
       glVertex2i(x2, y2);
       glEnd();
-
+#endif
+#endif
       x1 = I->Block->rect.right + 1;
       y1 = I->Block->rect.bottom - 3;
       x2 = I->Block->rect.right - 1;
       y2 = I->Block->rect.bottom - 5;
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       glColor3f(0.7F, 0.7F, 0.7F);
+
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	const GLint lineVerts[] = {
+	  x1, y1,
+	  x2, y2,
+	  x1, y1 + 4,
+	  x2 - 4, y2,
+	  x1, y1 + 8,
+	  x2 - 8, y2,
+	  x1, y1 + 12,
+	  x2 - 12, y2,
+	  x1 - 4, y1 + 12,
+	  x2 - 12, y2 + 4,
+	  x1 - 8, y1 + 12,
+	  x2 - 12, y2 + 8,
+	  x1 - 12, y1 + 12,
+	  x2 - 12, y2 + 12
+	};	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_INT, 0, lineVerts);
+	glDrawArrays(GL_LINES, 0, 14);
+	glDisableClientState(GL_VERTEX_ARRAY);
+      }
+#else
       glBegin(GL_LINES);
       glVertex2i(x1, y1);
       glVertex2i(x2, y2);
@@ -798,7 +1164,8 @@ static void ControlDraw(Block * block)
       glVertex2i(x1, y1);
       glVertex2i(x2, y2);
       glEnd();
-
+#endif
+#endif
     }
 #endif
   }

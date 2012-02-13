@@ -170,13 +170,12 @@ DESCRIPTION
         if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def get_symmetry(selection="(all)",quiet=1,_self=cmd):
+    def get_symmetry(selection="(all)",state=-1,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
     "get_symmetry" can be used to obtain the crystal
-    and spacegroup parameters for a molecule
-    (FUTURE - map object - FUTURE)
+    and spacegroup parameters for a molecule or map.
 
 USAGE
 
@@ -184,7 +183,7 @@ USAGE
 
 PYMOL API
 
-    cmd.get_symmetry(string selection)
+    cmd.get_symmetry(string selection, int state, int quiet)
 
 
         '''
@@ -192,7 +191,7 @@ PYMOL API
         selection = selector.process(selection)
         try:
             _self.lock(_self)
-            r = _cmd.get_symmetry(_self._COb,str(selection))
+            r = _cmd.get_symmetry(_self._COb,str(selection),int(state))
             if not quiet:
                 if(is_list(r)):
                     if(len(r)):
@@ -626,7 +625,7 @@ PYMOL API
         else:
             if not quiet:
                 if _feedback(fb_module.cmd,fb_mask.results,_self):
-                    print " version: %s (%8.6f) %d"%r
+                    print " version: %s (%2.3f) %d"%r
         return r
     
     def get_vrml(version=2,_self=cmd): 
@@ -1189,7 +1188,12 @@ NOTES
     "object:molecule"
     "object:map"
     "object:mesh"
-    "object:distance"
+    "object:slice"
+    "object:surface"
+    "object:measurement"
+    "object:cgo"
+    "object:group"
+    "object:volume"
     "selection"
 
 SEE ALSO
@@ -1204,7 +1208,7 @@ SEE ALSO
             _self.unlock(r,_self)
         if is_error(r):
             if _feedback(fb_module.cmd,fb_mask.errors,_self):      
-                print "cmd-Error: unrecognized name."
+                print "Cmd-Error: unrecognized name."
         elif not quiet:
             print r
         if _raising(r,_self): raise pymol.CmdException
@@ -1428,10 +1432,20 @@ PYMOL API
         if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def get_names_of_type(type,_self=cmd):
-        obj = _self.get_names('objects')
-        types = map(get_type,obj)
-        mix = map(None,obj,types)
+    def get_names_of_type(type,public=1,_self=cmd):
+        """
+DESCRIPTION
+
+    "get_names_of_type" will return a list of names for the given type.
+
+        """
+        obj_type = "public_objects" if public==1 else "objects"
+        obj = _self.get_names(obj_type)
+        types = []
+        mix = []
+        if obj:
+            types = map(_self.get_type,obj)
+            mix = map(None,obj,types)
         lst = []
         for a in mix:
             if a[1]==type:

@@ -720,31 +720,114 @@ static int WizardRelease(Block * block, int button, int x, int y, int mod)
 static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
                         float *inside)
 {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
   glColor3fv(light);
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLint polyVerts[] = {
+      x2, y2,
+      x2, y2 + h,
+      x2 + w, y2,
+      x2 + w, y2 + h
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_INT, 0, polyVerts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_POLYGON);
   glVertex2i(x2, y2);
   glVertex2i(x2, y2 + h);
   glVertex2i(x2 + w, y2 + h);
   glVertex2i(x2 + w, y2);
   glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
   glColor3fv(dark);
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLint polyVerts[] = {
+      x2 + 1, y2,
+      x2 + 1, y2 + h - 1,
+      x2 + w, y2,
+      x2 + w, y2 + h - 1
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_INT, 0, polyVerts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_POLYGON);
   glVertex2i(x2 + 1, y2);
   glVertex2i(x2 + 1, y2 + h - 1);
   glVertex2i(x2 + w, y2 + h - 1);
   glVertex2i(x2 + w, y2);
   glEnd();
+#endif
+#endif
 
   if(inside) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3fv(inside);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	x2 + 1, y2 + 1,
+	x2 + 1, y2 + h - 1,
+	x2 + w - 1, y2 + 1,
+	x2 + w - 1, y2 + h - 1
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(x2 + 1, y2 + 1);
     glVertex2i(x2 + 1, y2 + h - 1);
     glVertex2i(x2 + w - 1, y2 + h - 1);
     glVertex2i(x2 + w - 1, y2 + 1);
     glEnd();
+#endif
+#endif
   } else {                      /* rainbow */
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	x2 + 1, y2 + 1,
+	x2 + 1, y2 + h - 1,
+	x2 + w - 1, y2 + 1,
+	x2 + w - 1, y2 + h - 1
+      };
+      const GLfloat colorVals[] = {
+	1.0F, 0.1F, 0.1F, 1.f,
+	0.1F, 1.0F, 0.1F, 1.f,
+	0.1F, 0.1F, 1.0F, 1.f,
+	1.0F, 1.0F, 0.1F, 1.f
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_COLOR_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glColorPointer(4, GL_FLOAT, 0, colorVals);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableClientState(GL_COLOR_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glColor3f(1.0F, 0.1F, 0.1F);
     glVertex2i(x2 + 1, y2 + 1);
@@ -755,6 +838,8 @@ static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
     glColor3f(0.1F, 0.1F, 1.0F);
     glVertex2i(x2 + w - 1, y2 + 1);
     glEnd();
+#endif
+#endif
   }
 
 }
@@ -815,18 +900,29 @@ static void WizardDraw(Block * block)
   if(G->HaveGUI && G->ValidContext && ((block->rect.right - block->rect.left) > 6)) {
 
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
       glColor3fv(I->Block->BackColor);
+#endif
       BlockFill(I->Block);
       BlockDrawLeftEdge(I->Block);
     } else {
       BlockDrawLeftEdge(I->Block);
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
       glColor3f(0.5, 0.5, 0.5);
+#endif
       BlockDrawTopEdge(I->Block);
       text_color2 = OrthoGetOverlayColor(G);
     }
 
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
     glColor3fv(I->Block->TextColor);
-
+#endif
     x = I->Block->rect.left + cWizardLeftMargin;
     y = (I->Block->rect.top - LineHeight) - cWizardTopMargin;
 
@@ -841,7 +937,11 @@ static void WizardDraw(Block * block)
         switch (I->Line[a].type) {
         case cWizTypeText:
           text_color = text_color2;
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
           glColor3fv(text_color2);
+#endif
           break;
         case cWizTypeButton:
           draw_button(I->Block->rect.left + 1, y,

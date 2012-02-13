@@ -35,6 +35,8 @@ typedef struct RepDot {
   int N, NC;
   int *Atom;                    /* atom */
   float Width;
+  CGO *shaderCGO;
+  short shaderCGO_as_spheres;
 } RepDot;
 
 Rep *RepDotNew(CoordSet * cset, int state);

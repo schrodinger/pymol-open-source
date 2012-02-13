@@ -566,80 +566,238 @@ void PopUpDraw(Block * block)
     /* put raised border around pop-up menu */
 
     /* bottom */
-
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3f(0.2F, 0.2F, 0.4F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	block->rect.left - 2, block->rect.bottom - 2,
+	block->rect.right + 2, block->rect.bottom - 2,
+	block->rect.left - 2, block->rect.bottom + 1,
+	block->rect.right + 2, block->rect.bottom + 1
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left - 2, block->rect.bottom - 2);
     glVertex2i(block->rect.right + 2, block->rect.bottom - 2);
     glVertex2i(block->rect.right + 2, block->rect.bottom + 1);
     glVertex2i(block->rect.left - 2, block->rect.bottom + 1);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3f(0.4F, 0.4F, 0.6F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	block->rect.left - 1, block->rect.bottom - 1,
+	block->rect.right + 1, block->rect.bottom - 1,
+	block->rect.left - 1, block->rect.bottom + 1,
+	block->rect.right + 1, block->rect.bottom + 1
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left - 1, block->rect.bottom - 1);
     glVertex2i(block->rect.right + 1, block->rect.bottom - 1);
     glVertex2i(block->rect.right + 1, block->rect.bottom + 1);
     glVertex2i(block->rect.left - 1, block->rect.bottom + 1);
     glEnd();
-
+#endif
+#endif
     /* right */
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3f(0.2F, 0.2F, 0.4F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	block->rect.right, block->rect.bottom - 2,
+	block->rect.right + 2, block->rect.bottom - 2,
+	block->rect.right, block->rect.top,
+	block->rect.right + 2, block->rect.top
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.right, block->rect.bottom - 2);
     glVertex2i(block->rect.right + 2, block->rect.bottom - 2);
     glVertex2i(block->rect.right + 2, block->rect.top);
     glVertex2i(block->rect.right, block->rect.top);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3f(0.4F, 0.4F, 0.6F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	block->rect.right, block->rect.bottom - 1,
+	block->rect.right + 1, block->rect.bottom - 1,
+	block->rect.right, block->rect.top,
+	block->rect.right + 1, block->rect.top
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.right, block->rect.bottom - 1);
     glVertex2i(block->rect.right + 1, block->rect.bottom - 1);
     glVertex2i(block->rect.right + 1, block->rect.top);
     glVertex2i(block->rect.right, block->rect.top);
     glEnd();
-
+#endif
+#endif
     /* top */
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3f(0.5F, 0.5F, 0.7F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	block->rect.left - 2, block->rect.top + 2,
+	block->rect.right + 2, block->rect.top + 2,
+	block->rect.left - 2, block->rect.top,
+	block->rect.right + 2, block->rect.top
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left - 2, block->rect.top + 2);
     glVertex2i(block->rect.right + 2, block->rect.top + 2);
     glVertex2i(block->rect.right + 2, block->rect.top);
     glVertex2i(block->rect.left - 2, block->rect.top);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3f(0.6F, 0.6F, 0.8F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	block->rect.left - 1, block->rect.top + 1,
+	block->rect.right + 1, block->rect.top + 1,
+	block->rect.left - 1, block->rect.top,
+	block->rect.right + 1, block->rect.top
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left - 1, block->rect.top + 1);
     glVertex2i(block->rect.right + 1, block->rect.top + 1);
     glVertex2i(block->rect.right + 1, block->rect.top);
     glVertex2i(block->rect.left - 1, block->rect.top);
     glEnd();
+#endif
+#endif
 
     /* left */
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3f(0.5F, 0.5F, 0.7F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	block->rect.left - 2, block->rect.bottom - 2,
+	block->rect.left, block->rect.bottom,
+	block->rect.left - 2, block->rect.top,
+	block->rect.left, block->rect.top
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left - 2, block->rect.bottom - 2);
     glVertex2i(block->rect.left, block->rect.bottom);
     glVertex2i(block->rect.left, block->rect.top);
     glVertex2i(block->rect.left - 2, block->rect.top);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3f(0.6F, 0.6F, 0.8F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	block->rect.left - 1, block->rect.bottom - 1,
+	block->rect.left, block->rect.bottom - 1,
+	block->rect.left - 1, block->rect.top,
+	block->rect.left, block->rect.top
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left - 1, block->rect.bottom - 1);
     glVertex2i(block->rect.left, block->rect.bottom - 1);
     glVertex2i(block->rect.left, block->rect.top);
     glVertex2i(block->rect.left - 1, block->rect.top);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3fv(block->BackColor);
+#endif
     BlockFill(block);
+
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3fv(block->TextColor);
+#endif
 
     if(I->Selected >= 0) {
 
@@ -647,37 +805,99 @@ void PopUpDraw(Block * block)
       y = I->Block->rect.top - PopUpConvertY(I, I->Selected, true) - cPopUpCharMargin;
 
       y += 2;
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	x, y,
+	x + I->Width - 1, y,
+	x, y - (cPopUpLineHeight + 3),
+	x + I->Width - 1, y - (cPopUpLineHeight + 3)
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
       glBegin(GL_POLYGON);
       glVertex2i(x, y);
       glVertex2i(x + I->Width - 1, y);
       glVertex2i(x + I->Width - 1, y - (cPopUpLineHeight + 3));
       glVertex2i(x, y - (cPopUpLineHeight + 3));
       glEnd();
+#endif
+#endif
     }
 
     if(I->Code[0] == 2) {       /* menu name */
 
       if(!SettingGetGlobal_i(G, cSetting_internal_gui_mode)) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
         glColor3f(0.3F, 0.3F, 0.6F);
+#endif
       } else {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
         glColor3f(1.0F, 1.0F, 1.0F);
+#endif
       }
       x = I->Block->rect.left;
       y = I->Block->rect.top;
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	x, y,
+	x + I->Width, y,
+	x, y - (cPopUpLineHeight + cPopUpCharMargin),
+	x + I->Width, y - (cPopUpLineHeight + cPopUpCharMargin)
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
       glBegin(GL_POLYGON);
       glVertex2i(x, y);
       glVertex2i(x + I->Width, y);
       glVertex2i(x + I->Width, y - (cPopUpLineHeight + cPopUpCharMargin));
       glVertex2i(x, y - (cPopUpLineHeight + cPopUpCharMargin));
       glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       glColor3f(0.2F, 0.2F, 0.4F);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	x + I->Width - 1, y - (cPopUpLineHeight + cPopUpCharMargin),
+	x, y - (cPopUpLineHeight + cPopUpCharMargin)
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_LINES, 0, 2);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
       glBegin(GL_LINES);
       glVertex2i(x + I->Width - 1, y - (cPopUpLineHeight + cPopUpCharMargin));
       glVertex2i(x, y - (cPopUpLineHeight + cPopUpCharMargin));
       glEnd();
-
+#endif
+#endif
     }
 
     x = I->Block->rect.left + cPopUpCharMargin;
@@ -719,6 +939,32 @@ void PopUpDraw(Block * block)
 
         if(I->Sub[a]) {
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	I->Block->rect.left - 3, y + 1,
+	I->Block->rect.left, y + 1,
+	I->Block->rect.left - 3, y + ((cPopUpLineHeight)) - 4,
+	I->Block->rect.left, y + ((cPopUpLineHeight)) - 4
+      };
+      const GLfloat colorVerts[] = {
+	0.4F, 0.4F, 0.4F, 1.f,
+	0.1F, 0.1F, 0.1F, 1.f,
+	0.4F, 0.4F, 0.4F, 1.f,
+	0.1F, 0.1F, 0.1F, 1.f
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_COLOR_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glColorPointer(4, GL_FLOAT, 0, colorVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_COLOR_ARRAY);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
           glBegin(GL_POLYGON);
           glColor3f(0.4F, 0.4F, 0.4F);
           glVertex2i(I->Block->rect.left - 3, y + 1);
@@ -728,7 +974,35 @@ void PopUpDraw(Block * block)
           glColor3f(0.4F, 0.4F, 0.4F);
           glVertex2i(I->Block->rect.left - 3, y + ((cPopUpLineHeight)) - 4);
           glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	I->Block->rect.right, y + 1,
+	I->Block->rect.right + 3, y + 1,
+	I->Block->rect.right, y + ((cPopUpLineHeight)) - 4,
+	I->Block->rect.right + 3, y + ((cPopUpLineHeight)) - 4
+      };
+      const GLfloat colorVerts[] = {
+	0.1F, 0.2F, 0.2F, 1.f,
+	0.4F, 0.4F, 0.4F, 1.f,
+	0.1F, 0.2F, 0.2F, 1.f,
+	0.4F, 0.4F, 0.4F, 1.f,
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_COLOR_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glColorPointer(4, GL_FLOAT, 0, colorVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_COLOR_ARRAY);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
           glBegin(GL_POLYGON);
           glColor3f(0.1F, 0.2F, 0.2F);
           glVertex2i(I->Block->rect.right, y + 1);
@@ -738,13 +1012,40 @@ void PopUpDraw(Block * block)
           glColor3f(0.1F, 0.2F, 0.2F);
           glVertex2i(I->Block->rect.right, y + ((cPopUpLineHeight)) - 4);
           glEnd();
-
+#endif
+#endif
         }
 
         y -= cPopUpLineHeight;
         if(I->Code[a] == 2)
           y -= 2;
       } else {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+        I->Block->rect.left, y + ((cPopUpLineHeight + cPopUpCharMargin) / 2) + 3,
+        I->Block->rect.right, y + ((cPopUpLineHeight + cPopUpCharMargin) / 2) + 3,
+        I->Block->rect.left, y + ((cPopUpLineHeight + cPopUpCharMargin) / 2) + 4,
+        I->Block->rect.right, y + ((cPopUpLineHeight + cPopUpCharMargin) / 2) + 4
+      };
+      const GLfloat colorVerts[] = {
+        0.3F, 0.3F, 0.5F, 1.f,
+        0.3F, 0.3F, 0.5F, 1.f,
+        0.6F, 0.6F, 0.8F, 1.f,
+        0.6F, 0.6F, 0.8F, 1.f
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_COLOR_ARRAY);
+      glVertexPointer(2, GL_INT, 0, polyVerts);
+      glColorPointer(4, GL_FLOAT, 0, colorVerts);
+      glDrawArrays(GL_LINES, 0, 4);
+      glDisableClientState(GL_COLOR_ARRAY);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
         glBegin(GL_LINES);
         glColor3f(0.3F, 0.3F, 0.5F);
         glVertex2i(I->Block->rect.left,
@@ -757,11 +1058,17 @@ void PopUpDraw(Block * block)
         glVertex2i(I->Block->rect.right,
                    y + ((cPopUpLineHeight + cPopUpCharMargin) / 2) + 4);
         glEnd();
+#endif
+#endif
         y -= cPopUpBarHeight;
       }
 
     }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3fv(block->TextColor);
+#endif
     /*    BlockOutline(block); */
   }
 }

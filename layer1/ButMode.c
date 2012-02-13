@@ -144,8 +144,13 @@ static int ButModeClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
   int dy = (y - block->rect.bottom) / cButModeLineHeight;
-  int dx = (x - block->rect.left);
-  int forward = (dx > ((block->rect.right - block->rect.left) / 2));
+  //  int dx = (x - block->rect.left);
+  int forward = 1; 
+  // TAKEN OUT : BB 12/11 : Mouse position should not have
+  // an effect on whether the mouse ring goes forwards or 
+  // backwards.
+  // forward = (dx > ((block->rect.right - block->rect.left) / 2));
+  // 
   /*  register CButMode *I=block->G->ButMode; */
   if(dy < 2) {
     if(ButModeTranslate(G, P_GLUT_SINGLE_LEFT, 0) != cButModePickAtom) {
@@ -200,12 +205,20 @@ static void ButModeDraw(Block * block)
 
   if(G->HaveGUI && G->ValidContext && ((block->rect.right - block->rect.left) > 6)) {
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
+#ifdef PURE_OPENGL_ES_2      
+      /* TODO */
+#else
       glColor3fv(I->Block->BackColor);
+#endif
       BlockFill(I->Block);
       BlockDrawLeftEdge(I->Block);
     } else {
       BlockDrawLeftEdge(I->Block);
+#ifdef PURE_OPENGL_ES_2      
+      /* TODO */
+#else
       glColor3f(0.5, 0.5, 0.5);
+#endif
       BlockDrawTopEdge(I->Block);
       textColor2 = OrthoGetOverlayColor(G);
       textColor = textColor2;
@@ -387,9 +400,14 @@ static void ButModeDraw(Block * block)
     y -= cButModeLineHeight;
     {
       int buffer;
+#ifndef _PYMOL_GL_DRAWARRAYS
+      /* TODO : Why do we only do this for the back right buffer,
+	 for performance? */
       glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
       if(buffer != GL_BACK_RIGHT) {
-
+#else
+	(void) buffer;
+#endif
         if(I->Delay <= 0.0F) {
           if(I->Samples > 0.0F)
             I->RateShown = (I->Rate / I->Samples);
@@ -397,7 +415,9 @@ static void ButModeDraw(Block * block)
             I->RateShown = 0.0F;
           I->Delay = 0.2F;
         }
+#ifndef _PYMOL_GL_DRAWARRAYS
       }
+#endif
     }
 
     {
@@ -508,6 +528,9 @@ int ButModeInit(PyMOLGlobals * G)
     strcpy(I->Code[cButModeInvTransZ], "IMvZ ");
     strcpy(I->Code[cButModeSeleSetBox], " Box ");
     strcpy(I->Code[cButModeInvRotZ], "IRtZ ");
+    strcpy(I->Code[cButModeRotL], "RotL " );
+    strcpy(I->Code[cButModeMovL], "MovL " );
+    strcpy(I->Code[cButModeMvzL], "MvzL " );
 
     I->Block = OrthoNewBlock(G, NULL);
     I->Block->fClick = ButModeClick;

@@ -22,6 +22,38 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Matrix.h"
 
+#define MASK_01010101 (((unsigned long)(-1))/3)
+#define MASK_00110011 (((unsigned long)(-1))/5)
+#define MASK_00001111 (((unsigned long)(-1))/17)
+#define MASK_11111111 (((unsigned long)(-1))/257)
+
+#define MASK_01010101010101010101010101010101 MASK_01010101
+#define MASK_00110011001100110011001100110011 MASK_00110011
+#define MASK_00001111000011110000111100001111 MASK_00001111
+#define MASK_00000000111111110000000011111111 MASK_11111111
+#define MASK_00000000000000001111111111111111 (((unsigned long)(-1))/65537)
+
+short countBits(unsigned long bits){
+  unsigned long n = bits;
+  n = (n & MASK_01010101010101010101010101010101) + ((n >> 1) & MASK_01010101010101010101010101010101) ;
+  n = (n & MASK_00110011001100110011001100110011) + ((n >> 2) & MASK_00110011001100110011001100110011) ;
+  n = (n & MASK_00001111000011110000111100001111) + ((n >> 4) & MASK_00001111000011110000111100001111) ;
+  n = (n & MASK_00000000111111110000000011111111) + ((n >> 8) & MASK_00000000111111110000000011111111) ;
+  n = (n & MASK_00000000000000001111111111111111) + ((n >> 16) & MASK_00000000000000001111111111111111) ;
+  return (n % 255);
+}
+short countBitsInt(int bits){
+  /* This could be improved to not splitting 
+     the bits into 4 variables in a loop which are 16 bits each */
+  unsigned long n = bits & 65535;
+  short nbits = 0;
+  n = (n & MASK_01010101) + ((n >> 1) & MASK_01010101) ;
+  n = (n & MASK_00110011) + ((n >> 2) & MASK_00110011) ;
+  n = (n & MASK_00001111) + ((n >> 4) & MASK_00001111) ;
+  nbits += (n % 255);
+  return nbits;
+}
+
 #ifndef R_SMALL
 #define R_SMALL 0.000000001
 #endif
@@ -2152,4 +2184,31 @@ void matrix_to_rotation(Matrix53f rot, float *axis, float *angle)
   printf("\n");
 #endif
 
+}
+void mult3f(float *vsrc, float val, float *vdest){
+  vdest[0] = vsrc[0] * val;
+  vdest[1] = vsrc[1] * val;
+  vdest[2] = vsrc[2] * val;
+}
+
+float max3(float val1, float val2, float val3){
+  if (val1>val2){
+    if (val1>val3){
+      return val1;
+    } else {
+      return val3;
+    }
+  } else {
+    if (val2>val3){
+      return val2;
+    } else {
+      return val3;
+    }
+  }
+}
+float ave3(float val1, float val2, float val3){
+  return ((val1+val2+val3)/3.f);
+}
+float ave2(float val1, float val2){
+  return ((val1+val2)/2.f);
 }

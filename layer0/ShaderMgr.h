@@ -20,6 +20,10 @@ Z* -------------------------------------------------------------------
 #include "PyMOLGlobals.h"
 
 
+#ifndef GL_FRAGMENT_PROGRAM_ARB
+#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
+#endif
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef __WIN32
 PFNGLTEXIMAGE3DPROC getTexImage3D();
@@ -57,8 +61,8 @@ typedef struct _CShaderPrg {
   /* openGL assigned id */
   int id;
   /* openGL fragment and vertex shader ids */
-  int vid;
-  int fid;
+  GLuint vid;
+  GLuint fid;
   /* fragment and vertex source */
   char * f;
   char * v;
@@ -70,6 +74,10 @@ struct _CShaderMgr {
   PyMOLGlobals * G;
   CShaderPrg * programs;
   int ShadersPresent;
+  GLuint *vbos_to_free;
+  int number_of_vbos_to_free;
+  CShaderPrg *current_shader;
+  int stereo_flag; /* -1 left; 0 = off; 1 = right */
 } _CShaderMgr;
 
 
@@ -87,7 +95,7 @@ void ShaderMgrConfig(PyMOLGlobals * G);
 
 /* New */
 CShaderMgr * CShaderMgr_New(PyMOLGlobals * G);
-
+CShaderPrg * CShaderPrg_NewARB(PyMOLGlobals * G, const char * name, const char * v, const char * f);
 /* Delete */
 void CShaderMgr_Delete(CShaderMgr * I);
 
@@ -122,6 +130,7 @@ int CShaderPrg_Enable(CShaderPrg * I);
 
 /* Disable */
 int CShaderPrg_Disable(CShaderPrg * I);
+int CShaderPrg_DisableARB(CShaderPrg *I);
 
 /* Link and IsLinked */
 int CShaderPrg_Link(CShaderPrg * I);
@@ -130,5 +139,29 @@ int CShaderPrg_IsLinked(CShaderPrg * I);
 /* accessors/mutators/uniform setters */
 int CShaderPrg_Set1i(CShaderPrg * I, const char * name, int i);
 int CShaderPrg_Set1f(CShaderPrg * I, const char * name, float f);
+int CShaderPrg_Set3f(CShaderPrg * I, const char * name, float f1, float f2, float f3);
+int CShaderPrg_Set4f(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4);
+int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, float * m);
+
+int CShaderPrg_GetAttribLocation(CShaderPrg * p, const char * name);
+
+void CShaderMgr_AddVBOToFree(CShaderMgr * I, GLuint vboid);
+void CShaderMgr_FreeAllVBOs(CShaderMgr * I);
+
+CShaderPrg *CShaderPrg_Enable_DefaultShader(PyMOLGlobals * G);
+
+CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G);
+
+CShaderPrg *CShaderPrg_Enable_SphereShader(PyMOLGlobals * G, char *name);
+CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G);
+
+#define VERTEX_POS_SIZE    3
+#define VERTEX_NORMAL_SIZE 3
+#define VERTEX_COLOR_SIZE  4
+
+#define VERTEX_POS    0
+#define VERTEX_NORMAL 1
+#define VERTEX_COLOR  2
+
 #endif
 

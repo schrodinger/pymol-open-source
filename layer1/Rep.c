@@ -73,7 +73,8 @@ struct Rep *RepUpdate(struct Rep *I, struct CoordSet *cs, int state, int rep)
         I->MaxInvalid = cRepInvRep;
     }
 
-    if(I->MaxInvalid <= cRepInvColor) {
+    if(I->MaxInvalid < cRepInvColor) {
+    } else if(I->MaxInvalid == cRepInvColor) {
       if(I->fRecolor) {
         I->fRecolor(I, cs);
       } else {
@@ -119,6 +120,41 @@ static void RepRenderBox(struct Rep *this, RenderInfo * info)
 {
   register PyMOLGlobals *G = this->G;
   if(G->HaveGUI && G->ValidContext) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLfloat lineVerts[] = {
+	-0.5F, -0.5F, -0.5F,
+	-0.5F, -0.5F, 0.5F,
+	-0.5F, 0.5F, 0.5F,
+	-0.5F, 0.5F, -0.5F,
+	0.5F, 0.5F, -0.5F,
+	0.5F, 0.5F, 0.5F,
+	0.5F, -0.5F, 0.5F,
+	0.5F, -0.5F, -0.5F
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(3, GL_FLOAT, 0, lineVerts);
+      glDrawArrays(GL_LINE_LOOP, 0, 8);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+    {
+      const GLint lineVerts[] = {
+	0, 0, 0,
+	1, 0, 0,
+	0, 0, 0,
+	0, 2, 0,
+	0, 0, 0,
+	0, 0, 3
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(3, GL_INT, 0, lineVerts);
+      glDrawArrays(GL_LINES, 0, 6);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_LINE_LOOP);
     glVertex3f(-0.5F, -0.5F, -0.5F);
     glVertex3f(-0.5F, -0.5F, 0.5F);
@@ -142,6 +178,8 @@ static void RepRenderBox(struct Rep *this, RenderInfo * info)
     glVertex3i(0, 0, 3);
 
     glEnd();
+#endif
+#endif
   }
 
 }
@@ -164,6 +202,7 @@ void RepPurge(Rep * I)
 {
   register PyMOLGlobals *G = I->G;
   if(G->HaveGUI) {
+#ifndef _PYMOL_GL_DRAWARRAYS
     if(I->displayList) {
       if(PIsGlutThread()) {
         if(G->ValidContext) {
@@ -176,6 +215,7 @@ void RepPurge(Rep * I)
         PParse(G, buffer);
       }
     }
+#endif
   }
   FreeP(I->P);
 }

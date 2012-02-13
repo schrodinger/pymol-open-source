@@ -390,7 +390,20 @@ static int ZRevOrderFn(float *array,int l,int r)
 void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
 {
   /* approximate sort, for quick handling of transparency values */
-
+  /* this sort uses 2 arrays start1 and next1 to keep track of */
+  /* the indexes.  The values in start1 are set to the index */
+  /* relative to the array value within the min/max values.  If */
+  /* there is a collision, the value in next1 is set to the value */
+  /* that is collided, and start1[idx] is set to the index plus 1 (a+1) */
+  /* This makes it easy to go through the 2 arrays and write into the */
+  /* x array the approximate order of the floating point values in array */
+  /* by indexes. */
+  /* Since there are two arrays of n length, this guarentees that there */
+  /* will be enough memory to hold all indexes.  If there are many collisions, */
+  /* the next1 array will hold a link to most of the indexes, which are traversed */
+  /* when the first index is found in start1.  If there are few collisions, then */
+  /* the majority of the start1 array is used. The total number of items used in */
+  /* both arrays will always be the number of values, i.e., n. */
   if(n>0) {
     register float min,max,*f,v;
     register float range, scale;
@@ -407,14 +420,14 @@ void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
       if(max<v) max=v;
       if(min>v) min=v;
     }
-    range = (max-min)*1.0001F;
+    range = (max-min)*1.0001F; /* for boundary conditions */
     if(range<R_SMALL8) { 
       for(a=0;a<n;a++)
         x[a] = a;
     } else {
       scale = n/range;
       f = array;
-      /* hash by value */
+      /* hash by value (actually binning) */
       if(forward) {
         for(a=0;a<n;a++) {
           idx1 = (int)((*(f++)-min)*scale);

@@ -678,6 +678,24 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
 
   /* behind text */
 
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  CGOColor(cgo, 0.05F, 0.05F, 0.05F);
+  ShapeNormal(cgo, LKP, 2);
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      REL, 9.f, 0.f,
+      REL, 10.f, 0.f,
+      REL, 7.f, 0.f,
+      REL, 8.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   CGOColor(cgo, 0.05F, 0.05F, 0.05F);
   ShapeNormal(cgo, LKP, 2);
@@ -686,12 +704,12 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   ShapeVertex(cgo, REL, 7);
   ShapeVertex(cgo, REL, 8);
   CGOEnd(cgo);
+#endif
 
   CGOColor(cgo, 1.0F, 1.0F, 1.0F);
 
   //#ifndef _PYMOL_NOPY
   CGOFontScale(cgo, I->text_scale_h, I->text_scale_v);
-
   if(I->Level && I->NLevel) {
     /*
        for(a=0;a<I->NLevel;a++) {
@@ -709,22 +727,138 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   }
   //#endif
 
-  CGOBegin(cgo, GL_TRIANGLE_STRIP);
+  /* center */
+#ifdef _PYMOL_CGO_DRAWARRAYS
   ShapeNormal(cgo, LKP, 2);
-
   if(I->Color) {
-
     n_extra = 3 * I->NLevel;
     if(n_extra < 6)
       n_extra = 6;
+    {
+      VLACheck(gs->Coord, float, (I->var_index + n_extra) * 3);
+      c = I->var_index;
+      p = gs->Coord + 3 * c;
+      if(I->NLevel > 1) {
+	int nverts = I->NLevel*2, pl = 0, plc = 0;
+	float *vertexVals, *colorVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_COLOR_ARRAY, nverts);	      
+	colorVals = vertexVals + (3*nverts);
+        for(a = 0; a < I->NLevel; a++) {
+          if(I->Special && (I->Special[a] < 0)) {
+	    colorVals[plc++] = white[0]; colorVals[plc++] = white[1]; colorVals[plc++] = white[2]; colorVals[plc++] = cgo->alpha;
+          } else {
+            float tmp[3], *src = I->Color + 3 * a;
+            copy3f(src, tmp);
+            ColorLookupColor(I->Gadget.Obj.G, tmp);
+	    colorVals[plc++] = tmp[0]; colorVals[plc++] = tmp[1]; colorVals[plc++] = tmp[2]; colorVals[plc++] = cgo->alpha;
+          }
+          *(p++) = I->border + (I->width * a) / (I->NLevel - 1);
+          *(p++) = -I->border;
+          *(p++) = I->border;
+	  vertexVals[pl++] = REL; vertexVals[pl++] = c; vertexVals[pl++] = 0.f;
+          c++;
+          *(p++) = I->border + (I->width * a) / (I->NLevel - 1);
+          *(p++) = -(I->border + I->bar_height);
+          *(p++) = I->border;
+	  tmp_ptr = &colorVals[plc-4];
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	  vertexVals[pl++] = REL; vertexVals[pl++] = c; vertexVals[pl++] = 0.f;
+          c++;
+          *(p++) = I->border + (I->width * a) / (I->NLevel - 1);
+          *(p++) = -(I->border + I->height + I->height);
+          *(p++) = I->border;
+          c++;
+        }
+      } else {
+	int nverts = 4, pl = 0, plc = 0;
+	float *vertexVals, *colorVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_COLOR_ARRAY, nverts);	      
+	colorVals = vertexVals + (3*nverts);
 
+        for(a = 0; a < 2; a++) {
+          if(I->Special && (I->Special[0] < 0)) {
+	    colorVals[plc++] = white[0]; colorVals[plc++] = white[1]; colorVals[plc++] = white[2]; colorVals[plc++] = cgo->alpha;
+          } else {
+            float tmp[3], *src = I->Color;
+            copy3f(src, tmp);
+            ColorLookupColor(I->Gadget.Obj.G, tmp);
+	    colorVals[plc++] = tmp[0]; colorVals[plc++] = tmp[1]; colorVals[plc++] = tmp[2]; colorVals[plc++] = cgo->alpha;
+          }
+
+          *(p++) = I->border + (I->width * a);
+          *(p++) = -I->border;
+          *(p++) = I->border;
+	  vertexVals[pl++] = REL; vertexVals[pl++] = c; vertexVals[pl++] = 0.f;
+          c++;
+
+          *(p++) = I->border + (I->width * a);
+          *(p++) = -(I->border + I->bar_height);
+          *(p++) = I->border;
+	  tmp_ptr = &colorVals[plc-4];
+	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+	  vertexVals[pl++] = REL; vertexVals[pl++] = c; vertexVals[pl++] = 0.f;
+          c++;
+
+          *(p++) = I->border + (I->width * a);
+          *(p++) = -(I->border + I->height + I->height);
+          *(p++) = I->border;
+          c++;
+        }
+      }
+    }
+  } else {
+    int samples = 20;
+    float fxn;
+    float color[3];
+    int nverts = samples*2, pl = 0, plc = 0;
+    float *vertexVals, *colorVals, *tmp_ptr;
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_COLOR_ARRAY, nverts);	      
+    colorVals = vertexVals + (3*nverts);
+    n_extra = 3 * samples;
+    VLACheck(gs->Coord, float, (I->var_index + n_extra) * 3);
+    c = I->var_index;
+    p = gs->Coord + 3 * c;
+
+    for(a = 0; a < samples; a++) {
+      fxn = a / (samples - 1.0F);
+
+      ObjectGadgetRampCalculate(I, fxn, color);
+      colorVals[plc++] = color[0]; colorVals[plc++] = color[1]; colorVals[plc++] = color[2]; colorVals[plc++] = cgo->alpha;
+
+      *(p++) = I->border + (I->width * fxn);
+      *(p++) = -I->border;
+      *(p++) = I->border;
+      vertexVals[pl++] = REL; vertexVals[pl++] = c; vertexVals[pl++] = 0.f;
+      c++;
+
+      *(p++) = I->border + (I->width * fxn);
+      *(p++) = -(I->border + I->bar_height);
+      *(p++) = I->border;
+      tmp_ptr = &colorVals[plc-4];
+      colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = cgo->alpha;
+      vertexVals[pl++] = REL; vertexVals[pl++] = c; vertexVals[pl++] = 0.f;
+      c++;
+
+      *(p++) = I->border + (I->width * fxn);
+      *(p++) = -(I->border + I->height + I->height);
+      *(p++) = I->border;
+      c++;
+    }
+  }
+  gs->NCoord = c;
+#else
+  CGOBegin(cgo, GL_TRIANGLE_STRIP);
+  ShapeNormal(cgo, LKP, 2);
+  if(I->Color) {
+    n_extra = 3 * I->NLevel;
+    if(n_extra < 6)
+      n_extra = 6;
     {
       VLACheck(gs->Coord, float, (I->var_index + n_extra) * 3);
       c = I->var_index;
       p = gs->Coord + 3 * c;
       if(I->NLevel > 1) {
         for(a = 0; a < I->NLevel; a++) {
-
           if(I->Special && (I->Special[a] < 0)) {
             CGOColorv(cgo, white);
           } else {
@@ -733,19 +867,16 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
             ColorLookupColor(I->Gadget.Obj.G, tmp);
             CGOColorv(cgo, tmp);
           }
-
           *(p++) = I->border + (I->width * a) / (I->NLevel - 1);
           *(p++) = -I->border;
           *(p++) = I->border;
           ShapeVertex(cgo, REL, c);
           c++;
-
           *(p++) = I->border + (I->width * a) / (I->NLevel - 1);
           *(p++) = -(I->border + I->bar_height);
           *(p++) = I->border;
           ShapeVertex(cgo, REL, c);
           c++;
-
           *(p++) = I->border + (I->width * a) / (I->NLevel - 1);
           *(p++) = -(I->border + I->height + I->height);
           *(p++) = I->border;
@@ -819,10 +950,34 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   gs->NCoord = c;
   /* center */
   CGOEnd(cgo);
+#endif
 
   CGOColor(cgo, 0.5F, 0.5F, 0.5F);
-
   /* top */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals, *normalVals;
+    const float nVals[] = {
+      LKP, 2.f, 0.f,
+      LKP, 2.f, 0.f,
+      LKP, 1.f, 0.f,
+      LKP, 1.f, 0.f
+    };
+    const float vVals[] = {
+      REL, 5.f, 0.f,
+      REL, 6.f, 0.f,
+      REL, 1.f, 0.f,
+      REL, 2.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);
+    normalVals = vertexVals + (3*nverts);
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+      normalVals[pl] = nVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeNormal(cgo, LKP, 2);
   ShapeVertex(cgo, REL, 5);
@@ -831,9 +986,33 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   ShapeVertex(cgo, REL, 1);
   ShapeVertex(cgo, REL, 2);
   CGOEnd(cgo);
+#endif
 
   /* bottom */
-
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals, *normalVals;
+    const float nVals[] = {
+      LKP, 4.f, 0.f,
+      LKP, 4.f, 0.f,
+      LKP, 2.f, 0.f,
+      LKP, 2.f, 0.f
+    };
+    const float vVals[] = {
+      REL, 3.f, 0.f,
+      REL, 4.f, 0.f,
+      REL, 7.f, 0.f,
+      REL, 8.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);      
+    normalVals = vertexVals + (3*nverts);
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+      normalVals[pl] = nVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeNormal(cgo, LKP, 4);
   ShapeVertex(cgo, REL, 3);
@@ -842,9 +1021,33 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   ShapeVertex(cgo, REL, 7);
   ShapeVertex(cgo, REL, 8);
   CGOEnd(cgo);
+#endif
 
   /* left */
-
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals, *normalVals;
+    const float nVals[] = {
+      LKP, 3.f, 0.f,
+      LKP, 3.f, 0.f,
+      LKP, 2.f, 0.f,
+      LKP, 2.f, 0.f
+    };
+    const float vVals[] = {
+      REL, 1.f, 0.f,
+      REL, 3.f, 0.f,
+      REL, 5.f, 0.f,
+      REL, 7.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);      
+    normalVals = vertexVals + (3*nverts);
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+      normalVals[pl] = nVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeNormal(cgo, LKP, 3);
   ShapeVertex(cgo, REL, 1);
@@ -853,8 +1056,33 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   ShapeVertex(cgo, REL, 5);
   ShapeVertex(cgo, REL, 7);
   CGOEnd(cgo);
+#endif
 
   /* right */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals, *normalVals;
+    const float nVals[] = {
+      LKP, 2.f, 0.f,
+      LKP, 2.f, 0.f,
+      LKP, 0.f, 0.f,
+      LKP, 0.f, 0.f
+    };
+    const float vVals[] = {
+      REL, 6.f, 0.f,
+      REL, 8.f, 0.f,
+      REL, 2.f, 0.f,
+      REL, 4.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);      
+    normalVals = vertexVals + (3*nverts);
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+      normalVals[pl] = nVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeNormal(cgo, LKP, 2);
   ShapeVertex(cgo, REL, 6);
@@ -863,7 +1091,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   ShapeVertex(cgo, REL, 2);
   ShapeVertex(cgo, REL, 4);
   CGOEnd(cgo);
-
+#endif
   CGOStop(cgo);
 
   CGOFree(gs->ShapeCGO);
@@ -878,49 +1106,130 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
   CGOPickColor(cgo, 0, cPickableGadget);
 
   /* top */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      REL, 1.f, 0.f,
+      REL, 2.f, 0.f,
+      REL, 5.f, 0.f,
+      REL, 6.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeVertex(cgo, REL, 1);
   ShapeVertex(cgo, REL, 2);
   ShapeVertex(cgo, REL, 5);
   ShapeVertex(cgo, REL, 6);
-
   CGOEnd(cgo);
+#endif
 
   /* bottom */
-
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      REL, 3.f, 0.f,
+      REL, 4.f, 0.f,
+      REL, 7.f, 0.f,
+      REL, 8.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeVertex(cgo, REL, 3);
   ShapeVertex(cgo, REL, 4);
   ShapeVertex(cgo, REL, 7);
   ShapeVertex(cgo, REL, 8);
   CGOEnd(cgo);
+#endif
 
   /* left */
-
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      REL, 1.f, 0.f,
+      REL, 3.f, 0.f,
+      REL, 5.f, 0.f,
+      REL, 7.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeVertex(cgo, REL, 1);
   ShapeVertex(cgo, REL, 3);
   ShapeVertex(cgo, REL, 5);
   ShapeVertex(cgo, REL, 7);
   CGOEnd(cgo);
+#endif
 
   /* right */
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      REL, 6.f, 0.f,
+      REL, 8.f, 0.f,
+      REL, 2.f, 0.f,
+      REL, 4.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeVertex(cgo, REL, 6);
   ShapeVertex(cgo, REL, 8);
   ShapeVertex(cgo, REL, 2);
   ShapeVertex(cgo, REL, 4);
   CGOEnd(cgo);
+#endif
 
   /* band */
-
   CGOPickColor(cgo, 13, cPickableGadget);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  {
+    int nverts = 4, pl = 0;
+    float *vertexVals;
+    const float vVals[] = {
+      REL, 5.f, 0.f,
+      REL, 6.f, 0.f,
+      REL, 7.f, 0.f,
+      REL, 8.f, 0.f
+    };
+    vertexVals = CGODrawArrays(cgo, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+    for (pl=0; pl<3*nverts; pl++){
+      vertexVals[pl] = vVals[pl];
+    }
+  }
+#else
   CGOBegin(cgo, GL_TRIANGLE_STRIP);
   ShapeVertex(cgo, REL, 5);
   ShapeVertex(cgo, REL, 6);
   ShapeVertex(cgo, REL, 7);
   ShapeVertex(cgo, REL, 8);
   CGOEnd(cgo);
+#endif
 
   CGOStop(cgo);
 

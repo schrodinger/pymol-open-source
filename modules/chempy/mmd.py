@@ -118,8 +118,8 @@ class MMD(Storage):
         for i in conn.atom:
             
 # construct neighbor list
-            neighbors = 6*[0]
-            bondorders = 6*[0]
+            neighbors = len(conn.bond[c])*[0]
+            bondorders = len(conn.bond[c])*[0]
             j = 0
             for b in conn.bond[c]:
                 n = b.index[0]
@@ -134,7 +134,7 @@ class MMD(Storage):
                 tline = " %3d" % (i.numeric_type)
             else:
                 tline = " %3d" % 64
-            for j in range(6): 
+            for j in range(len(conn.bond[c])): 
                 tline = tline + " %5d %1d" % (neighbors[j], bondorders[j])
             tline = tline + " %11.6f %11.6f %11.6f " % (i.coord[0], 
                 i.coord[1], i.coord[2])

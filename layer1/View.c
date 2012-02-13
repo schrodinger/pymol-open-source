@@ -115,26 +115,64 @@ void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect, int first, int last,
     float bot = rect->bottom + 1;
     float start = (int)(rect->left + (width * (first - offset)) / nDrawn);
     float stop = (int)(rect->left + (width * (last - offset)) / nDrawn);
-    glColor4fv(color4);
     if((stop - start) < 1.0F)
       stop = start+1.0F;
     if(fill) {
       glEnable(GL_BLEND);
-
-      glBegin(GL_POLYGON);
-      glVertex2f(start, bot);
-      glVertex2f(start, top);
-      glVertex2f(stop, top);
-      glVertex2f(stop, bot);
-      glEnd();
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    glColor4f(color4[0],color4[1],color4[2],color4[3]);
+      {
+	const GLfloat polyVerts[] = {
+	  start, bot,
+	  start, top,
+	  stop, bot,
+	  stop, top
+	};
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glDisableClientState(GL_VERTEX_ARRAY);
+      }
+#else
+    glColor4fv(color4);
+    glBegin(GL_POLYGON);
+    glVertex2f(start, bot);
+    glVertex2f(start, top);
+    glVertex2f(stop, top);
+    glVertex2f(stop, bot);
+    glEnd();
+#endif
+#endif
       glDisable(GL_BLEND);
     } else {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+      {
+	const GLfloat polyVerts[] = {
+	  start, bot,
+	  start, top,
+	  stop, top,
+	  stop, bot
+	};
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+	glDrawArrays(GL_LINE_LOOP, 0, 4);
+	glDisableClientState(GL_VERTEX_ARRAY);
+      }
+#else
       glBegin(GL_LINE_LOOP);
       glVertex2f(start, bot);
       glVertex2f(start, top);
       glVertex2f(stop, top);
       glVertex2f(stop, bot);
       glEnd();
+#endif
+#endif
     }
   }
 }
@@ -175,13 +213,59 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
         case 0:
           break;
         case 1:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
           glColor3fv(bar_color);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLfloat polyVerts[] = {
+	      start, mid_bot,
+	      start, mid_top,
+	      stop, mid_bot,
+	      stop, mid_top
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_POLYGON);
           glVertex2f(start, mid_bot);
           glVertex2f(start, mid_top);
           glVertex2f(stop, mid_top);
           glVertex2f(stop, mid_bot);
           glEnd();
+#endif
+#endif
+
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLfloat polyVerts[] = {
+	      start, mid_top,
+	      stop, mid_top,
+	      start, mid_bot-1,
+	      stop, mid_bot-1
+	    };
+	    const GLfloat colorVals [] = {
+	      key_color[0],key_color[1],key_color[2], 1.f,
+	      key_color[0],key_color[1],key_color[2], 1.f,
+	      bot_color[0],bot_color[1],bot_color[2], 1.f,
+	      bot_color[0],bot_color[1],bot_color[2], 1.f
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glEnableClientState(GL_COLOR_ARRAY);
+	    glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+	    glColorPointer(4, GL_FLOAT, 0, colorVals);
+	    glDrawArrays(GL_LINES, 0, 4);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	    glDisableClientState(GL_COLOR_ARRAY);
+	  }
+#else
           glColor3fv(key_color);
           glBegin(GL_LINES);
           glVertex2f(start,mid_top);
@@ -190,18 +274,73 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
           glVertex2f(start,mid_bot-1);
           glVertex2f(stop,mid_bot-1);
           glEnd();
-
+#endif
+#endif
           break;
         case 2:
           if((stop - start) < 1.0F)
             stop = start+1.0F;
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
           glColor3fv(key_color);
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLfloat polyVerts[] = {
+	      start, bot,
+	      start, top,
+	      stop, bot,
+	      stop, top
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
           glBegin(GL_POLYGON);
           glVertex2f(start, bot);
           glVertex2f(start, top);
           glVertex2f(stop, top);
           glVertex2f(stop, bot);
           glEnd();
+#endif
+#endif
+
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLfloat polyVerts[] = {
+	      start,bot-1,
+	      stop,bot-1,
+	      stop,bot,
+	      stop,top,
+	      start,top,
+	      stop,top,
+	      start,bot,
+	      start,top
+	    };
+	    const GLfloat colorVals [] = {
+	      bot_color[0],bot_color[1],bot_color[2], 1.f,
+	      bot_color[0],bot_color[1],bot_color[2], 1.f,
+	      bot_color[0],bot_color[1],bot_color[2], 1.f,
+	      bot_color[0],bot_color[1],bot_color[2], 1.f,
+	      top_color[0],top_color[1],top_color[2], 1.f,
+	      top_color[0],top_color[1],top_color[2], 1.f,
+	      top_color[0],top_color[1],top_color[2], 1.f,
+	      top_color[0],top_color[1],top_color[2], 1.f
+	    };
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glEnableClientState(GL_COLOR_ARRAY);
+	    glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+	    glColorPointer(4, GL_FLOAT, 0, colorVals);
+	    glDrawArrays(GL_LINES, 0, 8);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	    glDisableClientState(GL_COLOR_ARRAY);
+	  }
+#else
           glBegin(GL_LINES);
           glColor3fv(bot_color);
           glVertex2f(start,bot-1);
@@ -214,6 +353,8 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
           glVertex2f(start,bot);
           glVertex2f(start,top);
           glEnd();
+#endif
+#endif
           break;
         }
         start = (int)(rect->left + (width * (cur - offset)) / nDrawn);
@@ -540,17 +681,29 @@ int ViewIterate(CView * I, CViewIterator * iter, CRay * ray, int at_least_once)
 
       if(elem->pre_flag) {
         /* move the camera to the location we are looking at */
-        glTranslated(elem->pre[0], elem->pre[1], elem->pre[2]);
+#ifdef PURE_OPENGL_ES_2
+        /* TODO */
+#else
+        GLDOUBLETRANSLATE(elem->pre[0], elem->pre[1], elem->pre[2]);
+#endif	
       }
 
       if(elem->matrix_flag) {
         /* rotate about the origin (the the center of rotation) */
-        glMultMatrixd(elem->matrix);
+#ifdef PURE_OPENGL_ES_2
+        /* TODO */
+#else
+        GLDOUBLEMULTMATRIX(elem->matrix);
+#endif
       }
 
       if(elem->post_flag) {
         /* move the origin to the center of rotation */
-        glTranslated(elem->post[0], elem->post[1], elem->post[2]);
+#ifdef PURE_OPENGL_ES_2
+        /* TODO */
+#else
+	GLDOUBLETRANSLATE(elem->post[0], elem->post[1], elem->post[2]);
+#endif
       }
 
     }

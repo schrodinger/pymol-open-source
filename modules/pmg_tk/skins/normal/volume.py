@@ -5,9 +5,6 @@ from pymol import cmd
 import os
 import colorsys
 
-#ugh
-import time
-
 from hist import VolumeHist
 from pymol.colorramping import ColorRamp
 

@@ -160,6 +160,7 @@ SEE ALSO
     group
     
     '''
+        
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -169,7 +170,140 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
+    def map_generate(name, reflection_file, amplitudes, phases, weights="None",
+                     reso_low=50.0, reso_high=1.0,quiet=1,zoom=1,_self=cmd):
+        '''
 
+DESCRIPTION
+
+    "map_generate" generates a map object from a PDB object or selection and
+    reflection data.
+
+    Experimental use with caution.
+    
+USAGE
+
+    map_generate name, object, reflection_file, amplitudes, phases, weights [,
+        reso_low [, reso_high ]]
+
+ARGUMENTS
+
+    name = string: name of the map object to create or modify
+	
+    obj = string: molecular object from which Fc is calculated.
+
+    reflection_file = string: name of reflection file on disk; if None, then
+                      PyMOL attempts to download the CIF file from the PDB.
+                      Default = None; attempt to download from PDB.
+
+    amplitudes = string: fully qualified apmlitudes column name.  Properly 
+                 qualified names are: project/crysta/column.  For example,
+                 KINASE/cryastl1/FWT.
+
+    phases = string:  fully qualified phases column name.  Properly 
+             qualified names are: project/crystal/column.  For example,
+             KINASE/crystal1/DELPHWT.
+
+    weights = string: fully qualified phases column name.  Properly 
+              qualified names are: project/crystal/column.  For example,
+              KINASE/crystal1/FOM.
+
+    reso_low = float : minimum resolution; if set to equal max_reso, then
+               reso_low and reso_high will be read from the reflection file.
+
+    reso_high = float : maximum resolution; if set to equal min_reso then
+               reso_low and reso_high will be read from the reflection file.
+    
+NOTES
+
+    This function can be used to synthesize x-ray maps from the reflection data.
+    Supported reflection file formats are "mtz".  Other formats coming soon.
+
+    New in PyMOL v1.4 for Mac and Linux.
+    
+    '''
+        # preprocess selection
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            if not os.path.isfile(reflection_file):
+                print " MapGenerate-Error: Could not find file '%s'.\n Please check the filename and try again." % reflection_file
+                raise pymol.CmdException
+
+            # TODO: work for CIF, MTZ, and CNS
+            import headering
+            mtzFile = headering.MTZHeader(reflection_file)
+                
+            # FORMAT: crystal/dataset/column
+            dataset = string.split(amplitudes,"/")
+            if len(dataset):
+                datasetName = dataset[1]
+                
+            for d in mtzFile.datasets.keys():
+                if mtzFile.datasets[d]["name"]==datasetName:
+                    break
+            dataset = mtzFile.datasets[d]
+            cellX, cellY, cellZ = dataset['x'], dataset['y'], dataset['z']
+            cellAlpha, cellBeta, cellGamma = dataset['alpha'], dataset['beta'], dataset['gamma']
+            if reso_low==reso_high:
+                reso_low, reso_high = mtzFile.reso_min, mtzFile.reso_max
+            space_group = mtzFile.space_group
+
+            #print "space_group = '%s'" % space_group
+            
+            # got data, now parse for driver
+            
+            origAmplitudes = amplitudes
+            amplitudes = string.split(amplitudes,'/')
+            if len(amplitudes):
+                amplitudes = amplitudes[-1]
+            else:
+                print " MapGenerate-Error: Improperly formatted amplitude name, '%s'.  Please specify it as" % origAmplitudes
+                print "  dataset_name/crystal_name/amplitude_column_name."
+                return None
+
+            origPhases = phases
+            phases = string.split(phases,'/')
+            if len(phases):
+                phases=phases[-1]
+            else:
+                print " MapGenerate-Error: Improperly formatted phase name, '%s'.  Please specify it as" % origPhases
+                print "  dataset_name/crystal_name/phase_column_name."
+                return None
+
+            if weights!="None":
+                origWeights = weights
+                weights = string.split(weights,'/')
+                if len(weights):
+                    weights = weights[-1]
+                else:
+                    print " MapGenerate-Error: Improperly formatted weight name, '%s'.  Please specify it as" % origWeights
+                    print "  dataset_name/crystal_name/weight_column_name."
+                    return None
+
+            tempFile = tempfile.NamedTemporaryFile(delete=False)
+            tempFileName = tempFile.name
+            tempFile.close()
+
+            r = _cmd.map_generate(_self._COb,str(name),str(reflection_file),str(tempFileName),str(amplitudes),str(phases),
+                              str(weights),float(reso_low),float(reso_high),str(space_group),
+                              float(cellX), float(cellY), float(cellZ),
+                              float(cellAlpha), float(cellBeta), float(cellGamma),
+                              int(quiet),int(zoom))
+            if r!=None:
+                print "Loading map '%s'" % (name)
+                pymol.cmd.load(r, name, format="ccp4", finish=1)
+                # setting?
+                os.remove(r)
+
+        except ImportError:
+            print " MapGenerate-Error: Cannot import headering module.  Cannot read MTZ file or make map."
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
+
+        return name
+    
     def map_new(name, type='gaussian', grid=None, selection="(all)",
                 buffer=None, box=None, state=0, quiet=1, zoom=0,
                 normalize=-1, clamp=[1.0,-1.0], resolution=0.0, _self=cmd):
@@ -929,7 +1063,7 @@ SEE ALSO
 
     load, copy, extract
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
         #      
@@ -958,7 +1092,7 @@ SEE ALSO
                 else:
                     extract = selection
                 _self.remove("(("+extract+") in (%s)) and not (%s)"%(name,name))
-        if _self._raising(r,_self): raise pymol.CmdException                                    
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def extract(*arg,**kw):

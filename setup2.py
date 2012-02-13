@@ -37,17 +37,13 @@ else:
    uninstall = 0
    
 try:
-   pymol_launch = 3
-   import pymol
    
    if not (os.path.exists("data") and os.path.exists("LICENSE")):
       print ' Please run "python setup2.py" from the PyMOL source directory.'
    else:
-      pymol_file = sys.modules['pymol'].__file__
-      if pymol_file[-4:]==".pyc":
-         pymol_file = pymol_file[0:-1]
-
-      site_packages = os.path.split(os.path.split(pymol_file)[0])[0]
+      from setup3 import site_packages
+      pymol_file = os.path.join(site_packages, 'pymol', '__init__.py')
+      pymol_path = os.path.join(site_packages, 'pymol', 'pymol_path')
 
       if uninstall:
          print "\nUninstalling from %s ..."%site_packages
@@ -82,7 +78,6 @@ try:
          print "\n Installing into %s ..."%site_packages
 
 #         pymol_path = re.sub(r"[\/\\][^\/\\]*$","/pymol_path",pymol_file)
-         pymol_path = os.path.join(os.path.split(pymol_file)[0],"pymol_path")
 
          # Create PYMOL_PATH directory
          dir_util.mkpath(pymol_path)
@@ -102,7 +97,6 @@ try:
          if sys.platform=='darwin':
             f.write('if [ "$DISPLAY" == "" ]; then\nDISPLAY=":0.0"\nexport DISPLAY\nfi\n')
 
-         pymol_init = re.sub(r"[\/\\][^\/\\]*$","/__pymol_path",sys.modules['pymol'].__file__)
          python_exe = sys.executable
          if python_exe[0:2]=="./":
             python_exe=os.getcwd()+"/"+python_exe[2:]

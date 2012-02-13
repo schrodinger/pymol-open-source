@@ -553,7 +553,10 @@ void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop)
     SettingGet_i(I->G, NULL, I->Setting, cSetting_defer_builds_mode);
   int async_builds = SettingGet_b(I->G, NULL, I->Setting, cSetting_async_builds);
   int max_threads = SettingGet_i(I->G, NULL, I->Setting, cSetting_max_threads);
+  int all_states = SettingGet_i(I->G, NULL, I->Setting, cSetting_all_states);
   int dummy;
+  if (all_states)
+    return;
   if(defer_builds_mode >= 3) {
     if(SceneObjectIsActive(I->G, I))
       defer_builds_mode = 2;
@@ -1025,10 +1028,14 @@ void ObjectPrepareContext(CObject * I, CRay * ray)
         gl[11] = 0.0;
         gl[15] = 1.0;
 
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
         glMultMatrixf(gl);
 
         /* include the pre-translation */
         glTranslatef(ttt[12], ttt[13], ttt[14]);
+#endif
       }
     }
   }
@@ -1166,7 +1173,22 @@ void ObjectUseColor(CObject * I)
 {
   register PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glColor3fv(ColorGet(I->G, I->Color));
+#endif
+  }
+}
+void ObjectUseColorCGO(CGO *cgo, CObject * I)
+{
+  register PyMOLGlobals *G = I->G;
+  if(G->HaveGUI && G->ValidContext) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+    CGOColorv(cgo, ColorGet(I->G, I->Color));
+#endif
   }
 }
 
@@ -1183,7 +1205,27 @@ static void ObjectRenderUnitBox(CObject * this, RenderInfo * info)
 {
   register PyMOLGlobals *G = this->G;
   if(G->HaveGUI && G->ValidContext) {
-
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint lineVerts[] = {
+	-1, -1, -1,
+	-1, -1, 1,
+	-1, 1, 1,
+	-1, 1, -1,
+	1, 1, -1,
+	1, 1, 1,
+	1, -1, 1,
+	1, -1, -1
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(3, GL_INT, 0, lineVerts);
+      glDrawArrays(GL_LINE_LOOP, 0, 8);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_LINE_LOOP);
     glVertex3i(-1, -1, -1);
     glVertex3i(-1, -1, 1);
@@ -1195,7 +1237,28 @@ static void ObjectRenderUnitBox(CObject * this, RenderInfo * info)
     glVertex3i(1, -1, 1);
     glVertex3i(1, -1, -1);
     glEnd();
+#endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint lineVerts[] = {
+	0, 0, 0,
+	1, 0, 0,
+	0, 0, 0,
+	0, 3, 0,
+	0, 0, 0,
+	0, 0, 9
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(3, GL_INT, 0, lineVerts);
+      glDrawArrays(GL_LINES, 0, 6);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_LINES);
     glVertex3i(0, 0, 0);
     glVertex3i(1, 0, 0);
@@ -1207,6 +1270,8 @@ static void ObjectRenderUnitBox(CObject * this, RenderInfo * info)
     glVertex3i(0, 0, 9);
 
     glEnd();
+#endif
+#endif
   }
 }
 
@@ -1364,8 +1429,10 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       RaySetTTT(info->ray, true, matrix);
       result = true;
     } else if(G->HaveGUI && G->ValidContext) {
+#ifndef PURE_OPENGL_ES_2
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
+#endif
       matrix[0] = i_matrix[0];
       matrix[1] = i_matrix[4];
       matrix[2] = i_matrix[8];
@@ -1382,7 +1449,11 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       matrix[13] = i_matrix[7];
       matrix[14] = i_matrix[11];
       matrix[15] = i_matrix[15];
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
       glMultMatrixf(matrix);
+#endif
       result = true;
     }
   }
@@ -1395,8 +1466,10 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info)
   if(info->ray) {
     RayPopTTT(info->ray);
   } else if(G->HaveGUI && G->ValidContext) {
+#ifndef PURE_OPENGL_ES_2
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#endif
   }
 }
 

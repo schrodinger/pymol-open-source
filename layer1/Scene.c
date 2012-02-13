@@ -55,6 +55,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOL.h"
 #include"PConv.h"
 #include"ScrollBar.h"
+#include "ShaderMgr.h"
 
 #ifdef _PYMOL_IP_EXTRAS
 #include "IncentiveCopyToClipboard.h"
@@ -70,6 +71,26 @@ Z* -------------------------------------------------------------------
 #define SceneTopMargin 0
 #define SceneBottomMargin 3
 #define SceneLeftMargin 3
+
+/* Shared with ShaderMgr */
+/** Coefficients from: http://3dtv.at/Knowhow/AnaglyphComparison_en.aspx */
+/** Optimize the look and feel of anaglyph 3D */
+/* the last mode is the 3x3 identity */
+float anaglyphL_constants[6][9] = { { 0.299, 0.587, 0.114, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000 },
+				    { 0.299, 0.587, 0.114, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000 },
+				    { 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000 },
+				    { 0.299, 0.587, 0.114, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000 },
+				    { 0.000, 0.700, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000 },
+				    { 1.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 1.000 } };
+
+float anaglyphR_constants[6][9] = { { 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.299, 0.587, 0.114 },
+				    { 0.000, 0.000, 0.000, 0.299, 0.587, 0.114, 0.299, 0.587, 0.114 },
+				    { 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 1.000 },
+				    { 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 1.000 },
+				    { 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 1.000 },
+				    { 1.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 1.000 } };
+
+#define F2UI(a) (unsigned int) ((a) * 255.0)
 
 typedef struct ObjRec {
   CObject *obj;
@@ -206,7 +227,9 @@ struct _CScene {
   int ReinterpolateFlag;
   CObject *ReinterpolateObj;
   CObject *MotionGrabbedObj;
-
+  GLuint offscreen_fb, offscreen_depth_rb, offscreen_color_rb;
+  int offscreen_width, offscreen_height;
+  short offscreen_error;
 };
 
 /* EXPERIMENTAL VOLUME RAYTRACING DATA */
@@ -778,25 +801,6 @@ static int SceneGetObjState(PyMOLGlobals * G, CObject * obj, int state)
 }
 #endif
 
-float SceneGetDynamicLineWidth(RenderInfo * info, float line_width)
-{
-  if(info && info->dynamic_width) {
-    float factor;
-    if(info->vertex_scale > R_SMALL4) {
-      factor = info->dynamic_width_factor / info->vertex_scale;
-      if(factor > info->dynamic_width_max)
-        factor = info->dynamic_width_max;
-      if(factor < info->dynamic_width_min) {
-        factor = info->dynamic_width_min;
-      }
-    } else {
-      factor = info->dynamic_width_max;
-    }
-    return factor * line_width;
-  }
-  return line_width;
-}
-
 void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, char *scene_name)
 {
   float *fp;
@@ -997,8 +1001,15 @@ static void ScenePrepareUnitContext(SceneUnitContext * context, int width, int h
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
 {
   register CScene *I = G->Scene;
-  *width = I->Width;
-  *height = I->Height;
+  short created = I->offscreen_width && I->offscreen_height;
+  short offscreen = SettingGet(G, cSetting_offscreen_rendering_for_antialiasing);
+  if (offscreen && created && !I->offscreen_error){
+    *width = I->offscreen_width;
+    *height = I->offscreen_height;
+  } else {
+    *width = I->Width;
+    *height = I->Height;
+  }
 }
 
 void SceneGetViewPortWidthHeight(PyMOLGlobals * G, int *width, int *height)
@@ -1906,18 +1917,22 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
       else
         image = (GLvoid *) Alloc(char, buffer_size);
       ErrChkPtr(G, image);
+#ifndef _PYMOL_PURE_OPENGL_ES
       if(SceneMustDrawBoth(G) || save_stereo) {
         glReadBuffer(GL_BACK_LEFT);
       } else {
         glReadBuffer(GL_BACK);
       }
+#endif
       PyMOLReadPixels(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height,
                       GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image));
+#ifndef _PYMOL_PURE_OPENGL_ES
       if(save_stereo) {
         glReadBuffer(GL_BACK_RIGHT);
         PyMOLReadPixels(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height,
                         GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image + buffer_size));
       }
+#endif
       reset_alpha = true;
       ScenePurgeImage(G);
       I->Image = Calloc(ImageType, 1);
@@ -2273,8 +2288,13 @@ void SceneSetFrame(PyMOLGlobals * G, int mode, int frame)
       SettingSetGlobal_i(G, cSetting_frame, newFrame + 1);
       SettingSetGlobal_i(G, cSetting_state, newState + 1);
       if(movieCommand) {
+	int suspend_undo = SettingGet(G, cSetting_suspend_undo);
+	if (!suspend_undo){
+	  SettingSetGlobal_i(G, cSetting_suspend_undo, 1);
+	}
 	MovieDoFrameCommand(G, newFrame);
 	MovieFlushCommands(G);
+	SettingSetGlobal_i(G, cSetting_suspend_undo, suspend_undo);
       }
       if(SettingGet(G, cSetting_cache_frames))
 	I->MovieFrameFlag = true;
@@ -2805,30 +2825,98 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
                         float *inside)
 {
   glColor3fv(light);
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLint polyVerts[] = {
+      x2, y2, z,
+      x2, y2 + h, z,
+      x2 + w, y2, z,
+      x2 + w, y2 + h, z
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_INT, 0, polyVerts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_POLYGON);
   glVertex3i(x2, y2, z);
   glVertex3i(x2, y2 + h, z);
   glVertex3i(x2 + w, y2 + h, z);
   glVertex3i(x2 + w, y2, z);
   glEnd();
+#endif
 
   glColor3fv(dark);
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    const GLint polyVerts[] = {
+      x2 + 1, y2, z,
+      x2 + 1, y2 + h - 1, z,
+      x2 + w, y2, z,
+      x2 + w, y2 + h - 1, z
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_INT, 0, polyVerts);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+  }
+#else
   glBegin(GL_POLYGON);
   glVertex3i(x2 + 1, y2, z);
   glVertex3i(x2 + 1, y2 + h - 1, z);
   glVertex3i(x2 + w, y2 + h - 1, z);
   glVertex3i(x2 + w, y2, z);
   glEnd();
+#endif
 
   if(inside) {
     glColor3fv(inside);
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint polyVerts[] = {
+	x2 + 1, y2 + 1, z,
+	x2 + 1, y2 + h - 1, z,
+	x2 + w - 1, y2 + h - 1, z,
+	x2 + w - 1, y2 + 1, z
+      };
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(3, GL_INT, 0, polyVerts);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glDisableClientState(GL_VERTEX_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glVertex3i(x2 + 1, y2 + 1, z);
     glVertex3i(x2 + 1, y2 + h - 1, z);
     glVertex3i(x2 + w - 1, y2 + h - 1, z);
     glVertex3i(x2 + w - 1, y2 + 1, z);
     glEnd();
+#endif
   } else {                      /* rainbow */
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      const GLint vertexVals [] = {
+	x2 + 1, y2 + 1, z,
+	x2 + 1, y2 + h - 1, z,
+	x2 + w - 1, y2 + 1, z,
+	x2 + w - 1, y2 + h - 1, z
+      };
+      const GLfloat colorVals [] = {
+	1.0F, 0.1F, 0.1F, 1.f,
+	0.1F, 1.0F, 0.1F, 1.f,
+	0.1F, 0.1F, 1.0F, 1.f,
+	1.0F, 1.0F, 0.1F 1.f
+      };      
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_COLOR_ARRAY);
+      glVertexPointer(3, GL_INT, 0, vertexVals);
+      glColorPointer(4, GL_FLOAT, 0, colorVals);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);      
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableClientState(GL_COLOR_ARRAY);
+    }
+#else
     glBegin(GL_POLYGON);
     glColor3f(1.0F, 0.1F, 0.1F);
     glVertex3i(x2 + 1, y2 + 1, z);
@@ -2839,6 +2927,7 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
     glColor3f(0.1F, 0.1F, 1.0F);
     glVertex3i(x2 + w - 1, y2 + 1, z);
     glEnd();
+#endif
   }
 }
 #endif
@@ -3092,20 +3181,25 @@ void SceneDraw(Block * block) /* returns true if scene was drawn (using a cached
       int width = I->Image->width;
       int height = I->Image->height;
 
+#ifndef _PYMOL_PURE_OPENGL_ES
       if(I->Image->stereo) {
         int buffer;
         glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
         if(buffer == GL_BACK_RIGHT)     /* hardware stereo */
           data += I->Image->size;
         else {
-          switch (OrthoGetRenderMode(G)) {
-          case cStereo_geowall:
-            data += I->Image->size;
-            break;
-          }
+	  int stereo = SettingGetGlobal_i(G, cSetting_stereo);
+	  if (stereo){
+	    switch (OrthoGetRenderMode(G)) {
+	    case cStereo_geowall:
+	      data += I->Image->size;
+	      break;
+	    }
+	  }
         }
         /* if drawing the right buffer, then draw the right image */
       }
+#endif
 
       if((height > I->Height) || (width > I->Width)) {  /* image is oversize */
         {
@@ -3202,9 +3296,11 @@ void SceneDraw(Block * block) /* returns true if scene was drawn (using a cached
                 }
               }
 
+#ifndef _PYMOL_PURE_OPENGL_ES
               glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->Block->rect.left),
                             (int) ((I->Height - tmp_height) / 2 + I->Block->rect.bottom),
                             -10);
+#endif
               PyMOLDrawPixels(tmp_width, tmp_height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
               drawn = true;
             }
@@ -3285,9 +3381,11 @@ void SceneDraw(Block * block) /* returns true if scene was drawn (using a cached
               }
             }
           }
+#ifndef _PYMOL_PURE_OPENGL_ES
           glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->Block->rect.left),
                         (int) ((I->Height - tmp_height) / 2 + I->Block->rect.bottom),
                         -10);
+#endif
           PyMOLDrawPixels(tmp_width, tmp_height, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buffer);
           drawn = true;
         }
@@ -3335,14 +3433,18 @@ void SceneDraw(Block * block) /* returns true if scene was drawn (using a cached
             }
           }
         }
+#ifndef _PYMOL_PURE_OPENGL_ES
         glRasterPos3i((int) ((I->Width - width) / 2 + I->Block->rect.left),
                       (int) ((I->Height - height) / 2 + I->Block->rect.bottom), -10);
+#endif
         PyMOLDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buffer);
         drawn = true;
         FreeP(tmp_buffer);
       } else {                  /* not a forced copy, so don't show/blend alpha */
+#ifndef _PYMOL_PURE_OPENGL_ES
         glRasterPos3i((int) ((I->Width - width) / 2 + I->Block->rect.left),
                       (int) ((I->Height - height) / 2 + I->Block->rect.bottom), -10);
+#endif
         PyMOLDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
         drawn = true;
       }
@@ -3414,8 +3516,9 @@ unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer)
     if(Feedback(G, FB_Scene, FB_Debugging))
       debug = true;
 
+#ifndef _PYMOL_PURE_OPENGL_ES
     glReadBuffer(gl_buffer);
-
+#endif
     extra_safe_buffer = Alloc(pix, w * h * 21);
     buffer = extra_safe_buffer + (w * h * 10);
 
@@ -3526,7 +3629,9 @@ unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
     buffer = extra_safe_buffer + (w * h * 5);
 
     result = VLAlloc(unsigned int, w * h);
+#ifndef _PYMOL_PURE_OPENGL_ES
     glReadBuffer(gl_buffer);
+#endif
     PyMOLReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &buffer[0][0]);
 
     /* first, check to make sure bkrd_alpha is correct 
@@ -4113,6 +4218,9 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     case cButModeClipF:
     case cButModeRotZ:
     case cButModeInvRotZ:
+    case cButModeRotL:
+    case cButModeMovL:
+    case cButModeMvzL:
       SceneNoteMouseInteraction(G);
       SceneDontCopyNext(G);
 
@@ -4711,19 +4819,27 @@ void ScenePushRasterMatrix(PyMOLGlobals * G, float *v)
 {
   register CScene *I = G->Scene;
   float scale = SceneGetExactScreenVertexScale(G, v);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glTranslatef(v[0], v[1], v[2]);       /* go to this position */
   glMultMatrixf(I->InvMatrix);
   glScalef(scale, scale, scale);
+#endif
   /*  glTranslatef(-0.33F,-0.33F,0.0F); */
 
 }
 
 void ScenePopRasterMatrix(PyMOLGlobals * G)
 {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
+#endif
 }
 
 
@@ -5678,6 +5794,9 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
     case cButModeClipNF:
     case cButModeClipN:
     case cButModeClipF:
+    case cButModeRotL:
+    case cButModeMovL:
+    case cButModeMvzL:
 
       SceneNoteMouseInteraction(G);
 
@@ -5865,6 +5984,128 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
           moved_flag = true;
         }
         break;
+      case cButModeRotL: 
+      case cButModeMovL:
+	{
+	  /* when light_count == 1, there is an ambient light;
+	   * when light_count == 2, there are two lights, the ambient and
+	   * a directional, called "light". When there are three, it's the 
+	   * ambient, light and the third is light2, and so on.
+	   *
+	   * Should we use an off-by-one here to make this easier for the
+	   * user to understand? light1 is ambient, light2 is first directional
+	   * 
+	   */
+	  float pos[3];
+	  int result, which_light;
+	  float ms = 0.01;
+	  
+	  switch(SettingGet_i(G, NULL, NULL, cSetting_edit_light)) {
+	  case 2:
+	    which_light = cSetting_light2;
+	    break;
+	  case 3:
+	    which_light = cSetting_light3;
+	    break;
+	  case 4:
+	    which_light = cSetting_light4;
+	    break;
+	  case 5:
+	    which_light = cSetting_light5;
+	    break;
+	  case 6:
+	    which_light = cSetting_light6;
+	    break;
+	  case 7:
+	    which_light = cSetting_light7;
+	    break;
+	  case 8:
+	    which_light = cSetting_light8;
+	    break;
+	  case 9:
+	    which_light = cSetting_light9;
+	    break;	
+	  case 0:
+	  case 1:
+	  default:
+	    which_light = cSetting_light;
+	    break;
+	  }
+  
+	  SettingGet_3f(G, NULL, NULL, which_light, pos);
+	  
+	  pos[0] += (float) dx * ms;
+	  pos[1] += (float) dy * ms;
+	  
+	  result = SettingSet_3fv(G->Setting, which_light, pos);
+	  I->LastX = x;
+	  I->LastY = y;
+	}
+	break;
+      case cButModeMvzL:
+	{
+	  float pos[3];
+	  int result, which_light;
+	  float ms = 0.01;
+	  float factor = 0.f;
+
+	  /* when light_count == 1, there is an ambient light;
+	   * when light_count == 2, there are two lights, the ambient and
+	   * a directional, called "light". When there are three, it's the 
+	   * ambient, light and the third is light2, and so on.
+	   */
+	  
+	  switch(SettingGet_i(G, NULL, NULL, cSetting_edit_light)) {
+	  case 2:
+	    which_light = cSetting_light2;
+	    break;
+	  case 3:
+	    which_light = cSetting_light3;
+	    break;
+	  case 4:
+	    which_light = cSetting_light4;
+	    break;
+	  case 5:
+	    which_light = cSetting_light5;
+	    break;
+	  case 6:
+	    which_light = cSetting_light6;
+	    break;
+	  case 7:
+	    which_light = cSetting_light7;
+	    break;
+	  case 8:
+	    which_light = cSetting_light8;
+	    break;
+	  case 9:
+	    which_light = cSetting_light9;
+	    break;	
+	  case 0:
+	  case 1:
+	  default:
+	    which_light = cSetting_light;
+	    break;
+	  }
+
+	  if(I->LastY != y) {
+	    factor = 400 / ((I->FrontSafe + I->BackSafe) / 2);
+	    if(factor >= 0.0F) {
+	      factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) * 
+		(((float) y) - I->LastY) / factor;
+	      if(!SettingGetGlobal_b(G, cSetting_legacy_mouse_zoom))
+		factor = -factor;
+	    }
+	  }
+
+	  SettingGet_3f(G, NULL, NULL, which_light, pos);
+	  
+	  pos[2] -= factor * ms;
+	  
+	  result = SettingSet_3fv(G->Setting, which_light, pos);
+	  I->LastX = x;
+	  I->LastY = y;
+	}
+	break;
       }
       if(moved_flag)
         SceneDoRoving(G, old_front, old_back, old_origin, adjust_flag, false);
@@ -6022,6 +6263,25 @@ int SceneDeferRelease(Block * block, int button, int x, int y, int mod)
 void SceneFree(PyMOLGlobals * G)
 {
   register CScene *I = G->Scene;
+  short created = I->offscreen_width && I->offscreen_height;
+#ifndef _PYMOL_PURE_OPENGL_ES
+  if (created){
+    /* Cleaning up offscreen buffer if exists */
+    if (I->offscreen_fb){
+      glDeleteFramebuffersEXT(1, &I->offscreen_fb);
+      I->offscreen_fb = 0;
+    }
+    if (I->offscreen_color_rb){
+      glDeleteRenderbuffersEXT(1, &I->offscreen_color_rb);
+      I->offscreen_color_rb = 0;
+    }
+    if (I->offscreen_depth_rb){
+      glDeleteRenderbuffersEXT(1, &I->offscreen_depth_rb);
+      I->offscreen_depth_rb = 0;
+    }
+  }
+#endif
+
   if(I->ScrollBar)
     ScrollBarFree(I->ScrollBar);
   CGOFree(I->AlphaCGO);
@@ -6229,13 +6489,106 @@ void SceneResetNormal(PyMOLGlobals * G, int lines)
 {
   register CScene *I = G->Scene;
   if(G->HaveGUI && G->ValidContext) {
+#if defined(_PYMOL_PURE_OPENGL_ES) && defined(OPENGL_ES_2)
+    if(lines)
+      glVertexAttrib3fv(VERTEX_NORMAL, I->LinesNormal);
+    else
+      glVertexAttrib3fv(VERTEX_NORMAL, I->ViewNormal);
+#else
     if(lines)
       glNormal3fv(I->LinesNormal);
     else
       glNormal3fv(I->ViewNormal);
+#endif
   }
 }
 
+void SceneResetNormalCGO(PyMOLGlobals * G, CGO *cgo, int lines)
+{
+  register CScene *I = G->Scene;
+  if(G->HaveGUI && G->ValidContext) {
+    if(lines)
+      CGONormalv(cgo, I->LinesNormal);
+    else
+      CGONormalv(cgo, I->ViewNormal);
+  }
+}
+
+void SceneResetNormalUseShader(PyMOLGlobals * G, int lines, short use_shader)
+{
+  register CScene *I = G->Scene;
+  if(G->HaveGUI && G->ValidContext) {
+#if defined(PURE_OPENGL_ES_2)
+    if(lines)
+      glVertexAttrib3fv(VERTEX_NORMAL, I->LinesNormal);
+    else
+      glVertexAttrib3fv(VERTEX_NORMAL, I->ViewNormal);
+#elif defined(OPENGL_ES_2)
+    if (use_shader){
+      if(lines)
+	glVertexAttrib3fv(VERTEX_NORMAL, I->LinesNormal);
+      else
+	glVertexAttrib3fv(VERTEX_NORMAL, I->ViewNormal);
+    } else {
+      if(lines)
+	glNormal3fv(I->LinesNormal);
+      else
+	glNormal3fv(I->ViewNormal);
+    }
+#else
+    if(lines)
+      glNormal3fv(I->LinesNormal);
+    else
+      glNormal3fv(I->ViewNormal);
+#endif
+  }
+}
+
+void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_shader, int attr)
+{
+  register CScene *I = G->Scene;
+  if(G->HaveGUI && G->ValidContext) {
+#if defined(PURE_OPENGL_ES_2)
+    if(lines)
+      glVertexAttrib3fv(attr, I->LinesNormal);
+    else
+      glVertexAttrib3fv(attr, I->ViewNormal);
+#elif defined(OPENGL_ES_2)
+    if (use_shader){
+      if(lines)
+	glVertexAttrib3fv(attr, I->LinesNormal);
+      else
+	glVertexAttrib3fv(attr, I->ViewNormal);
+    } else {
+      if(lines)
+	glNormal3fv(I->LinesNormal);
+      else
+	glNormal3fv(I->ViewNormal);
+    }
+#else
+    if(lines)
+      glNormal3fv(I->LinesNormal);
+    else
+      glNormal3fv(I->ViewNormal);
+#endif
+  }
+}
+
+
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+void SceneGetResetNormal(PyMOLGlobals * G, float *normal, int lines)
+{
+  register CScene *I = G->Scene;
+  float *norm;
+  if(G->HaveGUI && G->ValidContext) {
+    if(lines)
+      norm = I->LinesNormal;
+    else
+      norm = I->ViewNormal;
+    normal[0] = norm[0]; normal[1] = norm[1]; normal[2] = norm[2];
+  }
+}
+#endif
 
 /*========================================================================*/
 static void SceneApplyImageGamma(PyMOLGlobals * G, unsigned int *buffer, int width,
@@ -6769,7 +7122,6 @@ void SceneRay(PyMOLGlobals * G,
           RayRender(ray, buffer, timing, angle, antialias, &background);
 
           /*    RayRenderColorTable(ray,ray_width,ray_height,buffer); */
-
           if(!grid.active) {
             I->Image = Calloc(ImageType, 1);
             I->Image->data = (unsigned char *) buffer;
@@ -6981,7 +7333,6 @@ void SceneRay(PyMOLGlobals * G,
       case cStereo_anaglyph:
         {
           int big_endian;
-          
           {
             unsigned int test;
             unsigned char *testPtr;
@@ -6989,21 +7340,86 @@ void SceneRay(PyMOLGlobals * G,
             testPtr = (unsigned char *) &test;
             big_endian = (*testPtr) && 1;
           }
-
           {
             unsigned int *l = (unsigned int *) stereo_image->data;
             unsigned int *r = (unsigned int *) I->Image->data;
+	    int anaglyph_mode = SettingGet(G, cSetting_anaglyph_mode);
+	    /* anaglyph scalars */
+	    float * a_r = anaglyphR_constants[anaglyph_mode];
+	    float * a_l = anaglyphL_constants[anaglyph_mode];
+
             register int height, width;
             register int a, b;
+	    float _r[3] = {0.F,0.F,0.F}, _l[3] = {0.F,0.F,0.F}, _b[3] = {0.F,0.F,0.F};
             height = I->Image->height;
             width = I->Image->width;
             
             for(a = 0; a < height; a++) {
               for(b = 0; b < width; b++) {
                 if(big_endian) {
-                  *r = (*l & 0x00FFFFFF) | (*r & 0xFF000000);
+                  /* original : RGBA
+		   *r = (*l & 0x00FFFFFF) | (*r & 0xFF000000);
+		   */
+		  /* UNTESTED */
+		  _l[0] = (float)((*r & 0xFF000000));
+		  _l[1] = (float)((*r & 0x00FF0000) >> 16);
+		  _l[2] = (float)((*r & 0x0000FF00) >> 8);
+		  _r[0] = (float)((*l & 0xFF000000));
+		  _r[1] = (float)((*l & 0x00FF0000) >> 16);
+		  _r[2] = (float)((*l & 0x0000FF00) >> 8);
+
+		  _b[0] = (a_l[0] * _l[0] + a_l[1] * _l[1] + a_l[2] * _l[2]); // R
+		  _b[1] = (a_l[3] * _l[0] + a_l[4] * _l[1] + a_l[5] * _l[2]); // G
+		  _b[2] = (a_l[6] * _l[0] + a_l[7] * _l[1] + a_l[8] * _l[2]); // B
+
+		  *l = (unsigned int) (0x000000FF & *l) |
+		       (unsigned int) (1.0 * _b[0]) |
+		      ((unsigned int) (1.0 * _b[1]))<<8 |
+		      ((unsigned int) (1.0 * _b[2]))<<16;
+
+		  _b[0] = (a_r[0] * _r[0] + a_r[1] * _r[1] + a_r[2] * _r[2]); // R
+		  _b[1] = (a_r[3] * _r[0] + a_r[4] * _r[1] + a_r[5] * _r[2]); // G
+		  _b[2] = (a_r[6] * _r[0] + a_r[7] * _r[1] + a_r[8] * _r[2]); // B
+
+		  *r = (unsigned int) (0x000000FF & *r) |
+		       (unsigned int) (1.0 * _b[0]) |
+   		      ((unsigned int) (1.0 * _b[1]))<<8 |
+		      ((unsigned int) (1.0 * _b[2]))<<16;
+
+		  *r = (*l | *r);
                 } else {
-                  *r = (*l & 0xFFFFFF00) | (*r & 0x000000FF); /* not yet tested */
+                  /* original : AGBR
+		   *r = (*l & 0xFFFFFF00) | (*r & 0x000000FF);
+		   */
+		  
+		  /* Right and Left as unsigned ints */
+		  /* CORRECT */
+		  _l[0] = (float)((*r & 0x000000FF));
+		  _l[1] = (float)((*r & 0x0000FF00) >> 8);
+		  _l[2] = (float)((*r & 0x00FF0000) >> 16);
+		  _r[0] = (float)((*l & 0x000000FF));
+		  _r[1] = (float)((*l & 0x0000FF00) >> 8);
+		  _r[2] = (float)((*l & 0x00FF0000) >> 16);
+
+		  _b[0] = (a_l[0] * _l[0] + a_l[1] * _l[1] + a_l[2] * _l[2]); // R
+		  _b[1] = (a_l[3] * _l[0] + a_l[4] * _l[1] + a_l[5] * _l[2]); // G
+		  _b[2] = (a_l[6] * _l[0] + a_l[7] * _l[1] + a_l[8] * _l[2]); // B
+
+		  *l = (unsigned int) (0xFF000000 & *l) |
+		       (unsigned int) (1.0 * _b[0]) |
+		      ((unsigned int) (1.0 * _b[1]))<<8 |
+		      ((unsigned int) (1.0 * _b[2]))<<16;
+
+		  _b[0] = (a_r[0] * _r[0] + a_r[1] * _r[1] + a_r[2] * _r[2]); // R
+		  _b[1] = (a_r[3] * _r[0] + a_r[4] * _r[1] + a_r[5] * _r[2]); // G
+		  _b[2] = (a_r[6] * _r[0] + a_r[7] * _r[1] + a_r[8] * _r[2]); // B
+
+		  *r = (unsigned int) (0xFF000000 & *r) |
+		       (unsigned int) (1.0 * _b[0]) |
+   		      ((unsigned int) (1.0 * _b[1]))<<8 |
+		      ((unsigned int) (1.0 * _b[2]))<<16;
+
+		  *r = (*l | *r);
                 }
                 l++;
                 r++;
@@ -7139,7 +7555,9 @@ static void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_win
         I->Image->width = w;
         I->Image->height = h;
         if(G->HaveGUI && G->ValidContext) {
+#ifndef _PYMOL_PURE_OPENGL_ES
           glReadBuffer(buffer);
+#endif
           PyMOLReadPixels(x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->data);
         }
       }
@@ -7210,6 +7628,18 @@ static void SceneStencilCheck(PyMOLGlobals *G)
   }
 }
 
+void SceneUpdateObjectMoleculesSingleThread(PyMOLGlobals * G)
+{
+  register CScene *I = G->Scene;
+  ObjRec *rec = NULL;
+  while(ListIterate(I->Obj, rec, next)) {
+    if(rec->obj->type == cObjectMolecule) {
+      if(rec->obj->fUpdate)
+	rec->obj->fUpdate(rec->obj);
+    }
+  }
+}
+
 /*========================================================================*/
 void SceneUpdate(PyMOLGlobals * G, int force)
 {
@@ -7226,6 +7656,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
   WizardDoView(G, false);
   EditorUpdate(G);
   SceneStencilCheck(G);
+
   if(defer_builds_mode == 0) {
     if(SettingGetGlobal_i(G, cSetting_draw_mode) == -2) {
       defer_builds_mode = 1;
@@ -7263,6 +7694,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
 
       {
 #ifndef _PYMOL_NOPY
+        int cartoon_use_shader = SettingGetGlobal_i(G, cSetting_cartoon_use_shader);
         int n_thread = SettingGetGlobal_i(G, cSetting_max_threads);
         int multithread = SettingGetGlobal_i(G, cSetting_async_builds);
         if(multithread && (n_thread > 1)) {
@@ -7305,7 +7737,9 @@ void SceneUpdate(PyMOLGlobals * G, int force)
             n_thread = 1;
         }
 
-        if(multithread && (n_thread > 1)) {
+	/* Note: we might want to optimize this by doing multi-threaded updates
+	   for all objects except for cartoon objects. */
+        if(!cartoon_use_shader && multithread && (n_thread > 1)) {
           /* multi-threaded geometry update */
           int cnt = 0;
 
@@ -7567,8 +8001,10 @@ static void SceneProgramLighting(PyMOLGlobals * G)
 
   /* lighting */
 
+#ifdef PURE_OPENGL_ES_2
+#else
   glEnable(GL_LIGHTING);
-
+#endif
   vv[0] = 0.0F;
   vv[1] = 0.0F;
   vv[2] = 1.0F;
@@ -7585,7 +8021,11 @@ static void SceneProgramLighting(PyMOLGlobals * G)
 
 /* END PROPRIETARY CODE SEGMENT */
 
+#ifdef PURE_OPENGL_ES_2
+  /* need to set the light in the shader */
+#else
   glLightfv(GL_LIGHT0, GL_POSITION, vv);
+#endif
 
   if(n_light > 1) {
 
@@ -7606,44 +8046,60 @@ static void SceneProgramLighting(PyMOLGlobals * G)
     normalize3f(vv);
     invert3f(vv);
 
+#ifdef PURE_OPENGL_ES_2
+#else
     glLightfv(GL_LIGHT1, GL_POSITION, vv);
+#endif
 
     if(n_light > 2) {
       copy3f(SettingGetGlobal_3fv(G, cSetting_light2), vv);
       normalize3f(vv);
       invert3f(vv);
+#ifdef PURE_OPENGL_ES_2
+#else
       glLightfv(GL_LIGHT2, GL_POSITION, vv);
+#endif
 
       if(n_light > 3) {
         copy3f(SettingGetGlobal_3fv(G, cSetting_light3), vv);
         normalize3f(vv);
         invert3f(vv);
+#ifdef PURE_OPENGL_ES_2
+#else
         glLightfv(GL_LIGHT3, GL_POSITION, vv);
-
+#endif
         if(n_light > 4) {
           copy3f(SettingGetGlobal_3fv(G, cSetting_light4), vv);
           normalize3f(vv);
           invert3f(vv);
+#ifdef PURE_OPENGL_ES_2
+#else
           glLightfv(GL_LIGHT4, GL_POSITION, vv);
-
+#endif
           if(n_light > 5) {
             copy3f(SettingGetGlobal_3fv(G, cSetting_light5), vv);
             normalize3f(vv);
             invert3f(vv);
+#ifdef PURE_OPENGL_ES_2
+#else
             glLightfv(GL_LIGHT5, GL_POSITION, vv);
-
+#endif
             if(n_light > 6) {
               copy3f(SettingGetGlobal_3fv(G, cSetting_light6), vv);
               normalize3f(vv);
               invert3f(vv);
+#ifdef PURE_OPENGL_ES_2
+#else
               glLightfv(GL_LIGHT6, GL_POSITION, vv);
-
+#endif
               if(n_light > 7) {
                 copy3f(SettingGetGlobal_3fv(G, cSetting_light7), vv);
                 normalize3f(vv);
                 invert3f(vv);
+#ifdef PURE_OPENGL_ES_2
+#else
                 glLightfv(GL_LIGHT7, GL_POSITION, vv);
-
+#endif
               }
             }
           }
@@ -7668,32 +8124,43 @@ static void SceneProgramLighting(PyMOLGlobals * G)
 
     if(two_sided_lighting ||
        (SettingGetGlobal_i(G, cSetting_transparency_mode) == 1)) {
-      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+#ifdef PURE_OPENGL_ES_2
+#else
+      GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+#endif
     } else {
-      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+#ifdef PURE_OPENGL_ES_2
+#else
+      GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+#endif
     }
   }
 
   /* ambient lighting */
 
   white4f(vv, SettingGet(G, cSetting_ambient));
+#ifndef PURE_OPENGL_ES_2
   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, vv);
-
+#endif
   /* LIGHT0 is our direct light (eminating from the camera -- minus Z) */
 
   if(direct > R_SMALL4) {
     
+#ifndef PURE_OPENGL_ES_2
     glEnable(GL_LIGHT0);
+#endif
     
     vv[0] = 0.0F;
     vv[1] = 0.0F;
     vv[2] = 0.0F;
     vv[3] = 1.0F;
+#ifndef PURE_OPENGL_ES_2
     glLightfv(GL_LIGHT0, GL_AMBIENT, vv);
-    
+#endif    
     white4f(vv, direct);
+#ifndef PURE_OPENGL_ES_2
     glLightfv(GL_LIGHT0, GL_DIFFUSE, vv);
-
+#endif
     {
       float spec_direct = SettingGet(G, cSetting_spec_direct);
       float spec[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
@@ -7702,11 +8169,15 @@ static void SceneProgramLighting(PyMOLGlobals * G)
       } else if(spec_direct > 0.0F) {
         white4f(spec, spec_direct);
       }
+#ifndef PURE_OPENGL_ES_2
       glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
+#endif
     }
 
   } else {
+#ifndef PURE_OPENGL_ES_2
     glDisable(GL_LIGHT0);
+#endif
   }
 
   /* LIGHTS1-3 are our reflected light (specular and diffuse
@@ -7722,6 +8193,7 @@ static void SceneProgramLighting(PyMOLGlobals * G)
         spec_count = SettingGetGlobal_i(G, cSetting_light_count);
       white4f(spec, spec_value);
       white4f(diff, reflect);
+#ifndef PURE_OPENGL_ES_2
       glEnable(GL_LIGHT1);
       if(spec_count >= 1) {
         glLightfv(GL_LIGHT1, GL_SPECULAR, spec);
@@ -7730,7 +8202,9 @@ static void SceneProgramLighting(PyMOLGlobals * G)
       }
       glLightfv(GL_LIGHT1, GL_AMBIENT, zero);
       glLightfv(GL_LIGHT1, GL_DIFFUSE, diff);
+#endif
       if(n_light > 2) {
+#ifndef PURE_OPENGL_ES_2
         glEnable(GL_LIGHT2);
         if(spec_count >= 2) {
           glLightfv(GL_LIGHT2, GL_SPECULAR, spec);
@@ -7739,7 +8213,9 @@ static void SceneProgramLighting(PyMOLGlobals * G)
         }
         glLightfv(GL_LIGHT2, GL_AMBIENT, zero);
         glLightfv(GL_LIGHT2, GL_DIFFUSE, diff);
+#endif
         if(n_light > 3) {
+#ifndef PURE_OPENGL_ES_2
           glEnable(GL_LIGHT3);
           if(spec_count >= 3) {
             glLightfv(GL_LIGHT3, GL_SPECULAR, spec);
@@ -7748,7 +8224,9 @@ static void SceneProgramLighting(PyMOLGlobals * G)
           }
           glLightfv(GL_LIGHT3, GL_AMBIENT, zero);
           glLightfv(GL_LIGHT3, GL_DIFFUSE, diff);
+#endif
           if(n_light > 4) {
+#ifndef PURE_OPENGL_ES_2
             glEnable(GL_LIGHT4);
             if(spec_count >= 4) {
               glLightfv(GL_LIGHT4, GL_SPECULAR, spec);
@@ -7757,7 +8235,9 @@ static void SceneProgramLighting(PyMOLGlobals * G)
             }
             glLightfv(GL_LIGHT4, GL_AMBIENT, zero);
             glLightfv(GL_LIGHT4, GL_DIFFUSE, diff);
+#endif
             if(n_light > 5) {
+#ifndef PURE_OPENGL_ES_2
               glEnable(GL_LIGHT5);
               if(spec_count >= 5) {
                 glLightfv(GL_LIGHT5, GL_SPECULAR, spec);
@@ -7766,7 +8246,9 @@ static void SceneProgramLighting(PyMOLGlobals * G)
               }
               glLightfv(GL_LIGHT5, GL_AMBIENT, zero);
               glLightfv(GL_LIGHT5, GL_DIFFUSE, diff);
+#endif
               if(n_light > 6) {
+#ifndef PURE_OPENGL_ES_2
                 glEnable(GL_LIGHT6);
                 if(spec_count >= 6) {
                   glLightfv(GL_LIGHT6, GL_SPECULAR, spec);
@@ -7775,7 +8257,9 @@ static void SceneProgramLighting(PyMOLGlobals * G)
                 }
                 glLightfv(GL_LIGHT6, GL_AMBIENT, zero);
                 glLightfv(GL_LIGHT6, GL_DIFFUSE, diff);
+#endif
                 if(n_light > 7) {
+#ifndef PURE_OPENGL_ES_2
                   glEnable(GL_LIGHT7);
                   if(spec_count >= 7) {
                     glLightfv(GL_LIGHT7, GL_SPECULAR, spec);
@@ -7784,6 +8268,7 @@ static void SceneProgramLighting(PyMOLGlobals * G)
                   }
                   glLightfv(GL_LIGHT7, GL_AMBIENT, zero);
                   glLightfv(GL_LIGHT7, GL_DIFFUSE, diff);
+#endif
                 }
               }
             }
@@ -7791,6 +8276,7 @@ static void SceneProgramLighting(PyMOLGlobals * G)
         }
       }
     }
+#ifndef PURE_OPENGL_ES_2
     if(n_light < 2)
       glDisable(GL_LIGHT1);
     if(n_light < 3)
@@ -7805,16 +8291,23 @@ static void SceneProgramLighting(PyMOLGlobals * G)
       glDisable(GL_LIGHT6);
     if(n_light < 8)
       glDisable(GL_LIGHT7);
+#endif
   }
 
   {
     float ones[4];
     white4f(ones, 1.0F);
+#ifndef PURE_OPENGL_ES_2
     glMaterialfv(GL_FRONT, GL_SPECULAR, ones);
+#endif
   }
 
+#ifndef PURE_OPENGL_ES_2
   glMaterialf(GL_FRONT, GL_SHININESS, SettingGet(G, cSetting_shininess));
+#endif
 
+#if 0
+  /* NEVER USED */
   if(0) {
 
     glColor4f(1.0, 1.0, 1.0, 1.0);
@@ -7866,8 +8359,8 @@ static void SceneProgramLighting(PyMOLGlobals * G)
 
     glGetMaterialfv(GL_FRONT, GL_SHININESS, vv);
     printf("glGetMaterialfv(GL_FRONT,GL_SHININESS, vv) %8.3f\n", vv[0]);
-
   }
+#endif
 }
 
 
@@ -7882,6 +8375,7 @@ static void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
   float vv[4];
   int state = SceneGetState(G);
   RenderInfo info;
+
   UtilZeroMem(&info, sizeof(RenderInfo));
   info.pick = pickVLA;
   info.pass = pass;
@@ -7949,7 +8443,10 @@ static void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
           PyMOLCheckOpenGLErr("Before fRender iteration");
 
         if(SceneGetDrawFlag(grid, slot_vla, rec->obj->grid_slot)) {
+#ifdef PURE_OPENGL_ES_2
+#else
           glPushMatrix();
+#endif
           if(fat)
             glLineWidth(3.0);
 
@@ -7957,65 +8454,107 @@ static void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
           case 1:              /* unit context */
             {
 #ifndef _PYMOL_OSX
+#ifndef PURE_OPENGL_ES_2
               /* workaround for MacOSX 10.4.3 */
               glPushAttrib(GL_LIGHTING_BIT);
 #endif
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+#else
               glMatrixMode(GL_PROJECTION);
               glPushMatrix();
               glLoadIdentity();
               glMatrixMode(GL_MODELVIEW);
               glPushMatrix();
               glLoadIdentity();
+#endif
               vv[0] = 0.0;
               vv[1] = 0.0;
               vv[2] = -1.0;
               vv[3] = 0.0;
+
+#ifdef PURE_OPENGL_ES_2
+#else
               glLightfv(GL_LIGHT0, GL_POSITION, vv);
               glLightfv(GL_LIGHT1, GL_POSITION, vv);
-
+#endif
               if(!grid->active) {
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
                 glOrtho(context->unit_left,
                         context->unit_right,
                         context->unit_top,
                         context->unit_bottom, context->unit_front, context->unit_back);
+#endif
               } else {          /* special unit context */
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
                 glOrtho(grid->context.unit_left,
                         grid->context.unit_right,
                         grid->context.unit_top,
                         grid->context.unit_bottom,
                         grid->context.unit_front, grid->context.unit_back);
+#endif
               }
 
+#ifdef PURE_OPENGL_ES_2
+#else
               glNormal3f(0.0F, 0.0F, 1.0F);
+#endif
               info.state = ObjectGetCurrentState(rec->obj, false);
               rec->obj->fRender(rec->obj, &info);
 
+#ifdef PURE_OPENGL_ES_2
+#else
               glMatrixMode(GL_PROJECTION);
               glPopMatrix();
               glMatrixMode(GL_MODELVIEW);
               glLoadIdentity();
+#endif
 #ifndef _PYMOL_OSX
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
               glPopAttrib();
+#endif
+
 #else
               /* workaround for MacOSX 10.4.3 */
               /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
               SceneProgramLighting(G);  /* an expensive workaround... */
               if(pickVLA) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                 glDisable(GL_FOG);
                 glDisable(GL_COLOR_MATERIAL);
                 glDisable(GL_LIGHTING);
                 glDisable(GL_DITHER);
                 glDisable(GL_BLEND);
                 glDisable(GL_LINE_SMOOTH);
+#endif
+#ifndef _PYMOL_PURE_OPENGL_ES
                 glDisable(GL_POLYGON_SMOOTH);
+#endif
+
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
                 if(G->Option->multisample)
                   glDisable(0x809D);    /* GL_MULTISAMPLE_ARB */
                 glShadeModel(GL_FLAT);
+#endif
               }
               /* END PROPRIETARY CODE SEGMENT */
 #endif
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
               glPopMatrix();
+#endif
             }
             break;
           case 2:
@@ -8024,7 +8563,12 @@ static void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
           default:
             if(Feedback(G, FB_OpenGL, FB_Debugging))
               if(normal)
+#ifdef PURE_OPENGL_ES_2
+		;
+		/* TODO */
+#else
                 glNormal3fv(normal);
+#endif
             if((!grid->active) || (grid->mode != 2)) {
               info.state = ObjectGetCurrentState(rec->obj, false);
               rec->obj->fRender(rec->obj, &info);
@@ -8034,7 +8578,10 @@ static void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
             }
             break;
           }
+#ifdef PURE_OPENGL_ES_2
+#else
           glPopMatrix();
+#endif
         }
         if(Feedback(G, FB_OpenGL, FB_Debugging))
           PyMOLCheckOpenGLErr("After fRender iteration");
@@ -8057,6 +8604,415 @@ void sharp3d_begin_left_stereo(void);
 void sharp3d_switch_to_right_stereo(void);
 void sharp3d_end_stereo(void);
 #endif
+
+int GetPowerOfTwoLargeEnough(float val){
+  int ret, incr = 0;
+  while ((ret = pow(2, incr++)) < val);
+  return ret;
+}
+
+void PrepareViewPortForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times, int x, int y, int oversize_width, int oversize_height){
+  switch (stereo_mode) {
+  case cStereo_quadbuffer:   /* hardware */
+    OrthoDrawBuffer(G, GL_BACK_LEFT);
+    break;
+  case cStereo_crosseye:     /* side by side, crosseye */
+    if (offscreen){
+      glViewport(I->offscreen_width / 2, 0, I->offscreen_width / 2,
+		 I->offscreen_height);
+    } else if(oversize_width && oversize_height) {
+      glViewport(I->Block->rect.left + oversize_width / 2 + x,
+		 I->Block->rect.bottom + y,
+		 oversize_width / 2, oversize_height);
+    } else {
+      glViewport(I->Block->rect.left + I->Width / 2, I->Block->rect.bottom,
+		 I->Width / 2, I->Height);
+    }
+    break;
+  case cStereo_walleye:
+  case cStereo_sidebyside:
+    if (offscreen){
+      glViewport(0, 0, I->offscreen_width / 2,
+		 I->offscreen_height);
+    } else if(oversize_width && oversize_height) {
+      glViewport(I->Block->rect.left + x,
+		 I->Block->rect.bottom + y,
+		 oversize_width / 2, oversize_height);
+    } else {
+      glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width / 2,
+		 I->Height);
+    }
+    break;
+  case cStereo_geowall:
+    if (offscreen){
+      glViewport(0, 0, I->offscreen_width / 2,
+		 I->offscreen_height);
+    } else {
+      glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height);
+    }
+    break;
+  case cStereo_stencil_by_row:
+  case cStereo_stencil_by_column:
+  case cStereo_stencil_checkerboard:
+    if(I->StencilValid) {
+      glStencilFunc(GL_EQUAL, 1, 1);
+      glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+      glEnable(GL_STENCIL_TEST);
+    }
+    break;
+  case cStereo_stencil_custom:
+#ifdef _PYMOL_SHARP3D
+    sharp3d_begin_left_stereo();
+#endif
+    break;
+  case cStereo_anaglyph:
+    /* glClear(GL_ACCUM_BUFFER_BIT); */
+    glColorMask(true, false, false, true);
+    break;
+  case cStereo_clone_dynamic:
+#ifndef _PYMOL_PURE_OPENGL_ES
+    glClear(GL_ACCUM_BUFFER_BIT);
+#endif
+    OrthoDrawBuffer(G, GL_BACK_LEFT);
+    if(times) {
+      float dynamic_strength =
+	SettingGetGlobal_f(G, cSetting_stereo_dynamic_strength);
+      float vv[4] = { 0.75F, 0.75F, 0.75F, 1.0F };
+      vv[0] = dynamic_strength;
+      vv[1] = dynamic_strength;
+      vv[2] = dynamic_strength;
+#ifndef PURE_OPENGL_ES_2
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
+#endif
+#ifndef _PYMOL_PURE_OPENGL_ES
+      glAccum(GL_ADD, 0.5);
+#endif
+#ifndef PURE_OPENGL_ES_2
+      glDisable(GL_FOG);
+#endif
+    }
+    break;
+  case cStereo_dynamic:
+    if(times) {
+      float dynamic_strength =
+	SettingGetGlobal_f(G, cSetting_stereo_dynamic_strength);
+      float vv[4] = { 0.75F, 0.75F, 0.75F, 1.0F };
+      vv[0] = dynamic_strength;
+      vv[1] = dynamic_strength;
+      vv[2] = dynamic_strength;
+#ifndef _PYMOL_PURE_OPENGL_ES
+      glClearAccum(0.5, 0.5, 0.5, 0.5);
+      glClear(GL_ACCUM_BUFFER_BIT);
+#endif
+#ifndef PURE_OPENGL_ES_2
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
+      glDisable(GL_FOG);
+#endif
+      glViewport(I->Block->rect.left + G->Option->winX / 2,
+		 I->Block->rect.bottom, I->Width, I->Height);
+    } else {
+#ifndef _PYMOL_PURE_OPENGL_ES
+      glClearAccum(0.0, 0.0, 0.0, 0.0);
+      glClear(GL_ACCUM_BUFFER_BIT);
+#endif
+      glViewport(I->Block->rect.left,
+		 I->Block->rect.bottom, I->Width, I->Height);
+    }
+    break;
+  }
+}
+
+void PrepareViewPortForStereo2nd(PyMOLGlobals * G, CScene *I, int stereo_mode, short offscreen, int times, int x, int y, int oversize_width, int oversize_height){
+  switch (stereo_mode) {
+  case cStereo_quadbuffer:   /* hardware */
+    OrthoDrawBuffer(G, GL_BACK_RIGHT);
+    break;
+  case cStereo_crosseye:     /* side by side, crosseye */
+    if (offscreen){
+      glViewport(0, 0, I->offscreen_width / 2,
+		 I->offscreen_height);
+    } else if(oversize_width && oversize_height) {
+      glViewport(I->Block->rect.left + x,
+		 I->Block->rect.bottom + y,
+		 oversize_width / 2, oversize_height);
+    } else {
+      glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width / 2,
+		 I->Height);
+    }
+    break;
+  case cStereo_walleye:      /* side by side, walleye */
+  case cStereo_sidebyside:
+    if (offscreen){
+      glViewport(I->offscreen_width / 2, 0, I->offscreen_width / 2,
+		 I->offscreen_height);
+    } else if(oversize_width && oversize_height) {
+      glViewport(I->Block->rect.left + oversize_width / 2 + x,
+		 I->Block->rect.bottom + y,
+		 oversize_width / 2, oversize_height);
+    } else {
+      glViewport(I->Block->rect.left + I->Width / 2, I->Block->rect.bottom,
+		 I->Width / 2, I->Height);
+    }
+    break;
+  case cStereo_geowall:      /* geowall */
+    if (offscreen){
+      glViewport(I->offscreen_width / 2, 0, I->offscreen_width / 2,
+		 I->offscreen_height);
+    } else {
+      glViewport(I->Block->rect.left + G->Option->winX / 2,
+		 I->Block->rect.bottom, I->Width, I->Height);
+    }
+    break;
+  case cStereo_stencil_by_row:
+  case cStereo_stencil_by_column:
+  case cStereo_stencil_checkerboard:
+    glStencilFunc(GL_EQUAL, 0, 1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glEnable(GL_STENCIL_TEST);
+    break;
+  case cStereo_stencil_custom:
+#ifdef _PYMOL_SHARP3D
+    sharp3d_switch_to_right_stereo();
+#endif
+    break;
+  case cStereo_anaglyph:
+    /* glAccum(GL_ACCUM, 0.5); */
+    glColorMask(false, true, true, true);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    break;
+  case cStereo_clone_dynamic:
+#ifndef _PYMOL_PURE_OPENGL_ES
+    if(times) {
+      glAccum(GL_ACCUM, -0.5);
+    } else {
+      glAccum(GL_ACCUM, 0.5);
+    }
+#endif
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    break;
+  case cStereo_dynamic:
+    if(times) {
+#ifndef _PYMOL_PURE_OPENGL_ES
+      glAccum(GL_ACCUM, -0.5);
+#endif
+    } else {
+#ifndef _PYMOL_PURE_OPENGL_ES
+      glAccum(GL_ACCUM, 0.5);
+#endif
+      glEnable(GL_SCISSOR_TEST);
+    }
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if(!times) {
+      glDisable(GL_SCISSOR_TEST);
+    }
+    break;
+  }
+}
+
+void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int times, int fog_active){
+  switch (stereo_mode) {
+  case cStereo_quadbuffer:
+    OrthoDrawBuffer(G, GL_BACK_LEFT); /* leave us in a stereo context 
+					 (avoids problems with cards than can't handle
+					 use of mono contexts) */
+    break;
+  case cStereo_crosseye:
+  case cStereo_walleye:
+  case cStereo_sidebyside:
+    OrthoDrawBuffer(G, GL_BACK);
+    break;
+  case cStereo_geowall:
+    break;
+  case cStereo_stencil_by_row:
+  case cStereo_stencil_by_column:
+  case cStereo_stencil_checkerboard:
+    glDisable(GL_STENCIL_TEST);
+    break;
+  case cStereo_stencil_custom:
+#ifdef _PYMOL_SHARP3D
+    sharp3d_end_stereo();
+#endif
+    break;
+  case cStereo_anaglyph:
+    glColorMask(true, true, true, true);
+    /*              glAccum(GL_ACCUM, 0.5);
+		    glAccum(GL_RETURN, 1.0); */
+    OrthoDrawBuffer(G, GL_BACK_LEFT);
+    break;
+  case cStereo_clone_dynamic:
+#ifndef _PYMOL_PURE_OPENGL_ES
+    glAccum(GL_ACCUM, 0.5);
+#endif
+    if(times) {
+      float vv[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
+#ifndef PURE_OPENGL_ES_2
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
+      if(fog_active)
+	glEnable(GL_FOG);
+#endif
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      OrthoDrawBuffer(G, GL_BACK_RIGHT);
+    }
+#ifndef _PYMOL_PURE_OPENGL_ES
+    glAccum(GL_RETURN, 1.0);
+#endif
+    OrthoDrawBuffer(G, GL_BACK_LEFT);
+    break;
+  case cStereo_dynamic:
+#ifndef _PYMOL_PURE_OPENGL_ES
+    glAccum(GL_ACCUM, 0.5);
+#endif
+    if(times) {
+      float vv[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
+#ifndef PURE_OPENGL_ES_2
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
+      if(fog_active)
+	glEnable(GL_FOG);
+#endif
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+#ifndef _PYMOL_PURE_OPENGL_ES
+    glAccum(GL_RETURN, 1.0);
+#endif
+    if(times) {
+      glViewport(I->Block->rect.left,
+		 I->Block->rect.bottom, I->Width + 2, I->Height + 2);
+      glScissor(I->Block->rect.left - 1,
+		I->Block->rect.bottom - 1, I->Width + 2, I->Height + 2);
+      glEnable(GL_SCISSOR_TEST);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glDisable(GL_SCISSOR_TEST);
+    } else {
+      glDisable(GL_SCISSOR_TEST);
+    }
+    break;
+  }
+}
+void DoRendering(PyMOLGlobals * G, CScene *I, short offscreen, GridInfo *grid, int times, int curState, float *normal, 
+		 SceneUnitContext *context, float width_scale, short renderTransparent, short onlySelections, short excludeSelections){
+  int pass;
+  if(grid->active && !offscreen)
+    GridGetGLViewport(grid);
+  {
+    int slot;
+    for(slot = 0; slot <= grid->last_slot; slot++) {
+      if(grid->active) {
+	GridSetGLViewport(grid, slot);
+      }
+      /* render picked atoms */
+      /* render the debugging CGO */
+#ifdef PURE_OPENGL_ES_2
+      if (!onlySelections){
+	EditorRender(G, curState);
+	CGORenderGL(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
+      }
+#else
+      glPushMatrix();   /* 2 */
+      if (!onlySelections)
+	EditorRender(G, curState);
+      glPopMatrix();    /* 1 */
+      glPushMatrix();   /* 2 */
+      if (!onlySelections){
+	glNormal3fv(normal);
+	CGORenderGL(G->DebugCGO, NULL, NULL, NULL, NULL, NULL);
+      }
+      glPopMatrix();    /* 1 */
+      glPushMatrix();   /* 2 */
+#endif
+      /* render all objects */
+      if (!onlySelections){
+	for(pass = 1; pass > -2; pass--) {        /* render opaque, then antialiased, then transparent... */
+	  SceneRenderAll(G, context, normal, NULL, pass, false, width_scale, grid,
+			 times);
+	}
+      }
+#ifdef PURE_OPENGL_ES_2
+      if (!excludeSelections)
+	ExecutiveRenderSelections(G, curState);
+#else
+      glPopMatrix();    /* 1 */
+      /* render selections */
+      glPushMatrix();   /* 2 */
+      glNormal3fv(normal);
+      if (!excludeSelections)
+	ExecutiveRenderSelections(G, curState);
+
+      if (!onlySelections && renderTransparent){
+	PRINTFD(G, FB_Scene)
+	  " SceneRender: rendering transparent objects...\n" ENDFD;
+	/* render transparent */
+	SceneRenderAll(G, context, normal, NULL, -1, false, width_scale, grid, 0);
+      }
+
+      glPopMatrix();    /* 1 */
+#endif
+    }
+  }
+  if(grid->active)
+    GridSetGLViewport(grid, -1);
+}
+
+void DoHandedStereo(PyMOLGlobals * G, CScene *I, void (*prepareViewPortForStereo)(PyMOLGlobals *, CScene *, int, short, int, int, int, int, int),
+		    int stereo_mode, short offscreen, int times, int x, int y, int oversize_width, int oversize_height, GLenum mode, int mono_as_quad_stereo,
+		    int prepare_matrix_arg, GridInfo *grid, int curState, float *normal, SceneUnitContext *context,
+		    float width_scale, short clearDepthAfterPrepareMatrix, short onlySelections, short excludeSelections){
+  if(mono_as_quad_stereo) {
+    OrthoDrawBuffer(G, mode);
+  } else {
+    prepareViewPortForStereo(G, I, stereo_mode, offscreen, times, x, y, oversize_width, oversize_height);
+  }
+  /* prepare the stereo transformation matrix */
+#ifdef PURE_OPENGL_ES_2
+  /* TODO */
+#else
+  glPushMatrix();       /* 1 */
+#endif
+  if (offscreen){
+    bg_grad(G);
+  }
+  ScenePrepareMatrix(G, prepare_matrix_arg);
+  if (clearDepthAfterPrepareMatrix){
+    /* not sure why this isn't here in the first call, i.e., left handed stereo */
+    glClear(GL_DEPTH_BUFFER_BIT);
+  }
+
+  DoRendering(G, I, offscreen, grid, times, curState, normal, context, width_scale, 0, onlySelections, excludeSelections);
+
+#ifdef PURE_OPENGL_ES_2
+  /* TODO */
+#else
+  glPopMatrix();        /* 0 */
+#endif
+}
+
+void InitializeViewPort(PyMOLGlobals * G, CScene *I, int x, int y, int oversize_width, int oversize_height, 
+			int *stereo_mode, int *stereo_using_mono_matrix, float *width_scale){
+  if(oversize_width && oversize_height) {
+    int want_view[4];
+    int got_view[4];
+    want_view[0] = I->Block->rect.left + x;
+    want_view[1] = I->Block->rect.bottom + y;
+    want_view[2] = oversize_width;
+    want_view[3] = oversize_height;
+    glViewport(want_view[0], want_view[1], want_view[2], want_view[3]);
+    glGetIntegerv(GL_VIEWPORT, (GLint *) (void *) got_view);
+    if((got_view[0] != want_view[0]) ||
+       (got_view[1] != want_view[1]) ||
+       (got_view[2] != want_view[2]) || (got_view[3] != want_view[3])) {
+      PRINTFB(G, FB_Scene, FB_Warnings)
+	"Scene-Warning: glViewport failure.\n" ENDFB(G);
+    }
+    switch (*stereo_mode) {
+    case cStereo_geowall:
+      *stereo_mode = 0;
+      break;
+    }
+    *stereo_using_mono_matrix = true;
+    *width_scale = ((float) (oversize_width)) / I->Width;
+  } else {
+    glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height);
+  }
+}
 
 /*========================================================================*/
 void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
@@ -8082,7 +9038,6 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
   int index;
   int curState;
   int nPick, nHighBits, nLowBits;
-  int pass;
   float fov;
   int must_render_stereo = false;
   int mono_as_quad_stereo = false;
@@ -8092,6 +9047,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
   SceneUnitContext context;
   float width_scale = 0.0F;
   int stereo_mode = I->StereoMode;
+  int stereo = SettingGetGlobal_i(G, cSetting_stereo);
   GridInfo grid;
   int grid_mode = SettingGetGlobal_i(G, cSetting_grid_mode);
   int fog_active = false;
@@ -8108,6 +9064,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       aspRat *= grid.asp_adjust;
   }
 
+  CShaderMgr_FreeAllVBOs(G->ShaderMgr);
   SceneUpdateAnimation(G);
 
   if(SceneMustDrawBoth(G)) {
@@ -8129,7 +9086,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     if(Feedback(G, FB_OpenGL, FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 0");
 
-    must_render_stereo = (stereo_mode != 0);    /* are we doing stereo? */
+    must_render_stereo = (stereo && stereo_mode != 0);    /* are we doing stereo? */
     if(!must_render_stereo) {
       if(G->StereoCapable &&
          SettingGet_i(G, NULL, NULL, cSetting_stereo_double_pump_mono)) {
@@ -8165,6 +9122,8 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 
         glGetIntegerv(GL_VIEWPORT, viewport);
 
+#ifdef PURE_OPENGL_ES_2
+#else
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
@@ -8178,13 +9137,15 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
         glDisable(GL_LIGHTING);
         glDisable(GL_FOG);
         glDisable(GL_NORMALIZE);
-        glDisable(GL_DEPTH_TEST);
         glDisable(GL_COLOR_MATERIAL);
         glDisable(GL_LINE_SMOOTH);
-        glDisable(GL_DITHER);
-        glDisable(GL_BLEND);
         glShadeModel(GL_SMOOTH);
         glDisable(0x809D);      /* GL_MULTISAMPLE_ARB */
+#endif
+
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_DITHER);
+        glDisable(GL_BLEND);
 
         glDisable(GL_STENCIL_TEST);
         glClearStencil(0);
@@ -8206,34 +9167,115 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
             {
               int parity = I->StencilParity;
               int y;
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	      {
+		ALLOCATE_ARRAY(GLint,lineVerts, h * 2)
+		int pl;
+		pl = 0;
+		for(y = 0; y < h; y += 2) {
+		  lineVerts[pl] = 0;
+		  pl++;
+		  lineVerts[pl] = y + parity;
+		  pl++;
+		  lineVerts[pl] = w;
+		  pl++;
+		  lineVerts[pl] = y + parity;
+		  pl++;
+		}
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_INT, 0, lineVerts);
+		glDrawArrays(GL_LINES, 0, h);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		DEALLOCATE_ARRAY(lineVerts)
+	      }
+#else
               glBegin(GL_LINES);
               for(y = 0; y < h; y += 2) {
                 glVertex2i(0, y + parity);
                 glVertex2i(w, y + parity);
               }
               glEnd();
+#endif
+#endif
             }
             break;
           case cStereo_stencil_by_column:
             {
               int x;
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	      {
+		ALLOCATE_ARRAY(GLint,lineVerts, w * 2)
+		int pl;
+		pl = 0;
+		for(x = 0; x < w; x += 2) {
+		  lineVerts[pl] = x;
+		  pl++;
+		  lineVerts[pl] = 0;
+		  pl++;
+		  lineVerts[pl] = x;
+		  pl++;
+		  lineVerts[pl] = h;
+		  pl++;
+		}
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_INT, 0, lineVerts);
+		glDrawArrays(GL_LINES, 0, w);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		DEALLOCATE_ARRAY(lineVerts)
+	      }
+#else
               glBegin(GL_LINES);
               for(x = 0; x < w; x += 2) {
                 glVertex2i(x, 0);
                 glVertex2i(x, h);
               }
               glEnd();
+#endif
+#endif
             }
             break;
           case cStereo_stencil_checkerboard:
             {
               int i, m = 2 * ((h > w) ? h : w);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	      {
+		ALLOCATE_ARRAY(GLint,lineVerts, m * 2)
+		int pl;
+		pl = 0;
+		for(i = 0; i < m; i += 2) {
+		  lineVerts[pl] = i;
+		  pl++;
+		  lineVerts[pl] = 0;
+		  pl++;
+		  lineVerts[pl] = 0;
+		  pl++;
+		  lineVerts[pl] = i;
+		  pl++;
+		}
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_INT, 0, lineVerts);
+		glDrawArrays(GL_LINES, 0, m);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		DEALLOCATE_ARRAY(lineVerts)
+	      }
+#else
               glBegin(GL_LINES);
               for(i = 0; i < m; i += 2) {
                 glVertex2i(i, 0);
                 glVertex2i(0, i);
               }
               glEnd();
+#endif
+#endif
             }
             break;
           }
@@ -8242,11 +9284,13 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
         glColorMask(true, true, true, true);
         glDepthMask(true);
 
+#ifdef PURE_OPENGL_ES_2
+#else
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
-
+#endif
         I->StencilValid = true;
       }
     }
@@ -8278,92 +9322,101 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 
     glGetIntegerv(GL_VIEWPORT, (GLint *) (void *) view_save);
 
-    if(oversize_width && oversize_height) {
-      int want_view[4];
-      int got_view[4];
-      want_view[0] = I->Block->rect.left + x;
-      want_view[1] = I->Block->rect.bottom + y;
-      want_view[2] = oversize_width;
-      want_view[3] = oversize_height;
-      glViewport(want_view[0], want_view[1], want_view[2], want_view[3]);
-      glGetIntegerv(GL_VIEWPORT, (GLint *) (void *) got_view);
-      if((got_view[0] != want_view[0]) ||
-         (got_view[1] != want_view[1]) ||
-         (got_view[2] != want_view[2]) || (got_view[3] != want_view[3])) {
-        PRINTFB(G, FB_Scene, FB_Warnings)
-          "Scene-Warning: glViewport failure.\n" ENDFB(G);
-      }
-      switch (stereo_mode) {
-      case cStereo_geowall:
-        stereo_mode = 0;
-        break;
-      }
-      stereo_using_mono_matrix = true;
-      width_scale = ((float) (oversize_width)) / I->Width;
-    } else {
-      glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height);
-    }
+    InitializeViewPort(G, I, x, y, oversize_width, oversize_height, &stereo_mode, &stereo_using_mono_matrix, &width_scale);
 
     debug_pick = (int) SettingGet(G, cSetting_debug_pick);
 
     if(SettingGet(G, cSetting_line_smooth)) {
       if(!(pick || smp)) {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
         glEnable(GL_LINE_SMOOTH);
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+#endif
       }
     } else {
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
       glDisable(GL_LINE_SMOOTH);
+#endif
     }
     glLineWidth(SettingGet(G, cSetting_line_width));
-
+    
+#ifndef PURE_OPENGL_ES_2
     glPointSize(SettingGet(G, cSetting_dot_width));
-
     glEnable(GL_NORMALIZE);     /* get rid of this to boost performance */
+#endif
 
     glEnable(GL_DEPTH_TEST);
 
     /* get matrixes for unit objects */
 
+#ifndef PURE_OPENGL_ES_2
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
+#endif
     /* must be done with identity MODELVIEW */
     SceneProgramLighting(G);
-
     ScenePrepareUnitContext(&context, I->Width, I->Height);
-
     /* do standard 3D objects */
-
     /* Set up the clipping planes */
-
+#ifndef PURE_OPENGL_ES_2
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-
+#endif
     if(SettingGet(G, cSetting_all_states)) {
       curState = -1;
     } else {
       curState = SettingGetGlobal_i(G, cSetting_state) - 1;
     }
-
     if(!SettingGetGlobal_b(G, cSetting_ortho)) {
+#ifdef _PYMOL_PURE_OPENGL_ES
+      {
+	double xmin, xmax, ymin, ymax;
+#ifdef PURE_OPENGL_ES_2
+	/* NEED TO SET THE MODELVIEWMATRIX IN THE SHADER */
+#else
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	ymax = I->FrontSafe * tan(fov * M_PI / 360.0);
+	ymin = -ymax;
+	xmin = ymin * aspRat;
+	xmax = ymax * aspRat;
+	glFrustumf(xmin, xmax, ymin, ymax, I->FrontSafe, I->BackSafe);
+#endif
+      }
+#else
       gluPerspective(fov, aspRat, I->FrontSafe, I->BackSafe);
+#endif
     } else {
       height = (float) (fabs(I->Pos[2]) * tan((fov / 2.0) * cPI / 180.0));
       width = height * aspRat;
 
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
       glOrtho(-width, width, -height, height, I->FrontSafe, I->BackSafe);
-
+#endif
     }
 
+#ifdef PURE_OPENGL_ES_2
+#else
     glMatrixMode(GL_MODELVIEW);
+#endif
     ScenePrepareMatrix(G, 0);
 
     /* Save these for editing operations */
 
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
     glGetFloatv(GL_MODELVIEW_MATRIX, I->ModMatrix);
     glGetFloatv(GL_PROJECTION_MATRIX, I->ProMatrix);
+#endif
 
     multiply44f44f44f(I->ModMatrix, I->ProMatrix, I->PmvMatrix);
 
@@ -8404,16 +9457,23 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+#ifdef _PYMOL_PURE_OPENGL_ES
+#else
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+#else
       glEnable(GL_COLOR_MATERIAL);
-
       glShadeModel(GL_SMOOTH);
-
+#endif
       glEnable(GL_DITHER);
 
+#ifdef PURE_OPENGL_ES_2
+#else
       glAlphaFunc(GL_GREATER, 0.05F);
       glEnable(GL_ALPHA_TEST);
+#endif
 
       if(G->Option->multisample)
         glEnable(0x809D);       /* GL_MULTISAMPLE_ARB */
@@ -8421,9 +9481,11 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       I->FogStart =
         (I->BackSafe - I->FrontSafe) * SettingGet(G, cSetting_fog_start) + I->FrontSafe;
 
+#ifdef PURE_OPENGL_ES_2
+#else
       glFogf(GL_FOG_MODE, GL_LINEAR);
       glFogf(GL_FOG_START, I->FogStart);
-
+#endif
       {
         float fog_density = SettingGet(G, cSetting_fog);
         if((fog_density > R_SMALL8) && (fog_density != 1.0F)) {
@@ -8431,8 +9493,11 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
         } else {
           I->FogEnd = I->BackSafe;
         }
+#ifdef PURE_OPENGL_ES_2
+#else
         glFogf(GL_FOG_END, I->FogEnd);
         glFogf(GL_FOG_DENSITY, fog_density);
+#endif
       }
 
       v = SettingGetfv(G, cSetting_bg_rgb);
@@ -8443,33 +9508,48 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       /* NOTE: this doesn't seem to work :( -- only raytracing can do this */
       fog[3] = (SettingGetGlobal_b(G, cSetting_opaque_background) ? 1.0F : 0.0F);
 
+#ifdef PURE_OPENGL_ES_2
+#else
       glFogfv(GL_FOG_COLOR, fog);
-
+#endif
       if(SettingGetGlobal_b(G, cSetting_depth_cue) &&
          (SettingGet(G, cSetting_fog) != 0.0F)) {
         fog_active = true;
+#ifndef PURE_OPENGL_ES_2
         glEnable(GL_FOG);
+#endif
       } else {
         fog_active = false;
+#ifndef PURE_OPENGL_ES_2
         glDisable(GL_FOG);
+#endif
       }
+#ifdef PURE_OPENGL_ES_2
+#else
       glColor4ub(255, 255, 255, 255);
       glNormal3fv(normal);
-
+#endif
     } else {
       /* picking mode: we want flat, unshaded, unblended, unsmooth colors */
 
+#ifdef PURE_OPENGL_ES_2
+#else
       glDisable(GL_FOG);
       glDisable(GL_COLOR_MATERIAL);
       glDisable(GL_LIGHTING);
       glDisable(GL_DITHER);
       glDisable(GL_BLEND);
       glDisable(GL_LINE_SMOOTH);
+#endif
+#ifndef _PYMOL_PURE_OPENGL_ES        
       glDisable(GL_POLYGON_SMOOTH);
+#endif
       if(G->Option->multisample)
         glDisable(0x809D);      /* GL_MULTISAMPLE_ARB */
+#ifdef PURE_OPENGL_ES_2
+#else
       glShadeModel(GL_FLAT);
-
+#endif
     }
 
     PRINTFD(G, FB_Scene)
@@ -8489,7 +9569,11 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
         break;
       }
 
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
       glPushMatrix();           /* 1 */
+#endif
       {
         if(!stereo_using_mono_matrix)
           switch (stereo_mode) {
@@ -8564,7 +9648,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 
         if(debug_pick) {
           PRINTFB(G, FB_Scene, FB_Details)
-            " SceneClick-Detail: index %d < %d?\n", index, pickVLA[0].src.index ENDFB(G);
+            " SceneClick-Detail: lowBits=%d highBits=%d index %d < %d?\n", lowBits, highBits, index, pickVLA[0].src.index ENDFB(G);
         }
 
         if(index && (index <= pickVLA[0].src.index)) {
@@ -8578,11 +9662,15 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
           pick->context.object = NULL;
         }
 
+#ifdef PURE_OPENGL_ES_2
+#else
 	/* Picking changes the Shading model to GL_FLAT,
-	 * we need to change it back to GL_SMOOTH. This is because
-	 * bg_grad() might be called in OrthoDoDraw() before GL 
-	 * settings are set in SceneRender() */
+	   we need to change it back to GL_SMOOTH. This is because
+	   bg_grad() might be called in OrthoDoDraw() before GL 
+	   settings are set in SceneRender() */
+	//      glEnable(GL_COLOR_MATERIAL);
 	glShadeModel(GL_SMOOTH);
+#endif
 
         VLAFree(pickVLA);
       } else if(smp) {
@@ -8664,52 +9752,183 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 
         smp->picked[0].src.index = nPick;
 
+#ifdef PURE_OPENGL_ES_2
+#else
 	/* Picking changes the Shading model to GL_FLAT,
-	 * we need to change it back to GL_SMOOTH. This is because
-	 * bg_grad() might be called in OrthoDoDraw() before GL 
-	 * settings are set in SceneRender() */
+	   we need to change it back to GL_SMOOTH. This is because
+	   bg_grad() might be called in OrthoDoDraw() before GL 
+	   settings are set in SceneRender() */
+	//      glEnable(GL_COLOR_MATERIAL);
 	glShadeModel(GL_SMOOTH);
+#endif
 
         VLAFree(pickVLA);
         VLAFreeP(lowBitVLA);
         VLAFreeP(highBitVLA);
       }
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
+#else
       glPopMatrix();            /* 1 */
-
+#endif
     } else {
-      int times = 1;
+      int times = 1, origtimes;
+      short offscreen = 0;
       /* STANDARD RENDERING */
 
+#ifndef _PYMOL_PURE_OPENGL_ES
+      offscreen = SettingGet(G, cSetting_offscreen_rendering_for_antialiasing);
+      if(offscreen) {
+	/* Check to see if size needs to be different, if so, create new one */
+	float multiplier = SettingGetGlobal_f(G, cSetting_offscreen_rendering_multiplier);
+	int w, h;
+	short created = I->offscreen_width && I->offscreen_height;
+	w = GetPowerOfTwoLargeEnough(I->Width*multiplier);
+	h = GetPowerOfTwoLargeEnough(I->Height*multiplier);
+	if (I->offscreen_error){
+	  if (I->offscreen_width != w || I->offscreen_height != h){
+	    I->offscreen_error = 0;
+	  } else {
+	    offscreen = 0;
+	  }
+	}
+	if (!I->offscreen_error && (!created || I->offscreen_width != w || I->offscreen_height != h)){
+	  GLenum status;
+	  if (created){
+	    /* need to clean up */
+	    PRINTFB(G, FB_Scene, FB_Blather)
+	      " SceneRender: offscreen_rendering_for_antialiasing: size changed, \n        screen size: width=%d height=%d \n        current offscreen size: width=%d height=%d \n        changing to offscreen size width=%d height=%d multiplier=%f\n", I->Width, I->Height, I->offscreen_width, I->offscreen_height, w, h, multiplier    ENDFB(G);
+	    if (I->offscreen_fb){
+	      glDeleteFramebuffersEXT(1, &I->offscreen_fb);
+	      I->offscreen_fb = 0;
+	    }
+	    if (I->offscreen_color_rb){
+	      glDeleteRenderbuffersEXT(1, &I->offscreen_color_rb);
+	      I->offscreen_color_rb = 0;
+	    }
+	    if (I->offscreen_depth_rb){
+	      glDeleteRenderbuffersEXT(1, &I->offscreen_depth_rb);
+	      I->offscreen_depth_rb = 0;
+	    }
+	  } else {
+	    PRINTFB(G, FB_Scene, FB_Blather)
+	      " SceneRender: offscreen_rendering_for_antialiasing: \n        screen size: width=%d height=%d\n        offscreen size: width=%d height=%d multiplier=%f\n", I->Width, I->Height, w, h, multiplier    ENDFB(G);
+	  }
+
+	  glGenFramebuffersEXT(1, &I->offscreen_fb);
+	  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, I->offscreen_fb);
+	  //Create and attach a color buffer
+	  glGenRenderbuffersEXT(1, &I->offscreen_color_rb);
+	  //We must bind color_rb before we call glRenderbufferStorageEXT
+	  glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, I->offscreen_color_rb);
+	  //The storage format is RGBA8
+	  glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGBA8, w, h);
+	  //Attach color buffer to FBO
+	  glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, I->offscreen_color_rb);
+	  //-------------------------
+	  glGenRenderbuffersEXT(1, &I->offscreen_depth_rb);
+	  glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, I->offscreen_depth_rb);
+	  glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, w, h);
+	  //-------------------------
+	  //Attach depth buffer to FBO
+	  glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, I->offscreen_depth_rb);
+	  //-------------------------
+	  //Does the GPU support current FBO configuration?
+	  status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	  /* ERROR CHECKING if offscreen frambuffer not created properly */
+	  PRINTFB(G, FB_Scene, FB_Debugging)
+	    " SceneRender: glCheckFramebufferStatusEXT returns status=%d\n",
+	    status    ENDFB(G);
+	  if (status!=GL_FRAMEBUFFER_COMPLETE_EXT ){
+	    GLint maxRenderbufferSize;
+	    I->offscreen_error = 1;
+	    offscreen = 0;
+	    glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE_EXT, &maxRenderbufferSize);
+	    if (I->offscreen_width != w || I->offscreen_height != h){
+	      PRINTFB(G, FB_Scene, FB_Errors)
+		" SceneRender: offscreen_rendering_for_antialiasing: multiplier=%f error creating offscreen buffers w=%d h=%d GL_MAX_RENDERBUFFER_SIZE_EXT=%d status=%d\n",
+		multiplier, w, h, maxRenderbufferSize, status    ENDFB(G);
+	    }
+	    I->offscreen_width = I->offscreen_height = 0;
+	    if (I->offscreen_fb){
+	      glDeleteFramebuffersEXT(1, &I->offscreen_fb);
+	      I->offscreen_fb = 0;
+	    }
+	    if (I->offscreen_color_rb){
+	      glDeleteRenderbuffersEXT(1, &I->offscreen_color_rb);
+	      I->offscreen_color_rb = 0;
+	    }
+	    if (I->offscreen_depth_rb){
+	      glDeleteRenderbuffersEXT(1, &I->offscreen_depth_rb);
+	      I->offscreen_depth_rb = 0;
+	    }
+	  } else {
+	    I->offscreen_error = 0;
+	  }
+	  I->offscreen_width = w;
+	  I->offscreen_height = h;
+	}
+	if (offscreen){
+	  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, I->offscreen_fb);
+	  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+	  if(grid.active){
+	    grid.cur_view[0] = grid.cur_view[1] = 0;
+	    grid.cur_view[2] = I->offscreen_width;
+	    grid.cur_view[3] = I->offscreen_height;
+	  }
+	}
+      }
+#endif
       /* rendering for visualization */
 
 /*** THIS IS AN UGLY EXPERIMENTAL 
  *** VOLUME + RAYTRACING COMPOSITION CODE 
  ***/
-if (rayVolume && rayDepthPixels) {
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0, I->Width, 0, I->Height, -100, 100);
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
-  glRasterPos3f(0, 0, -1);
-  glDepthMask(GL_FALSE);
-  if (I->Image && I->Image->data) 
-    glDrawPixels(I->Width, I->Height, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->data);
-  glDepthMask(GL_TRUE);
-  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-  glDepthFunc(GL_ALWAYS);
-  glDrawPixels(I->Width, I->Height, GL_DEPTH_COMPONENT, GL_FLOAT, rayDepthPixels); 
-  glDepthFunc(GL_LESS);
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glPopMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
-  rayVolume--;
-}
+      if (rayVolume && rayDepthPixels) {
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0, I->Width, 0, I->Height, -100, 100);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+#endif
+	
+#ifndef _PYMOL_PURE_OPENGL_ES
+	glRasterPos3f(0, 0, -1);
+#endif
+	glDepthMask(GL_FALSE);
+#ifndef _PYMOL_PURE_OPENGL_ES
+	/* NEED TODO FOR _PYMOL_GL_DRAWARRAYS */
+	if (I->Image && I->Image->data) 
+	  glDrawPixels(I->Width, I->Height, GL_RGBA, GL_UNSIGNED_BYTE, I->Image->data);
+#endif
+	glDepthMask(GL_TRUE);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glDepthFunc(GL_ALWAYS);
+#ifndef _PYMOL_PURE_OPENGL_ES
+	/* NEED TODO FOR _PYMOL_GL_DRAWARRAYS */
+	glDrawPixels(I->Width, I->Height, GL_DEPTH_COMPONENT, GL_FLOAT, rayDepthPixels); 
+#endif
+	glDepthFunc(GL_LESS);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+#endif
+	rayVolume--;
+      }
 /*** END OF EXPERIMENTAL CODE ***/
+
 
       switch (stereo_mode) {
       case cStereo_clone_dynamic:
@@ -8717,431 +9936,148 @@ if (rayVolume && rayDepthPixels) {
         times = 2;
         break;
       }
-
       PRINTFD(G, FB_Scene)
         " SceneRender: I->StereoMode %d must_render_stereo %d\n    mono_as_quad_stereo %d  StereoCapable %d\n",
         stereo_mode, must_render_stereo, mono_as_quad_stereo, G->StereoCapable ENDFD;
 
       start_time = UtilGetSeconds(G);
+      origtimes = times;
       while(times--) {
         if(must_render_stereo) {
           /* STEREO RENDERING (real or double-pumped) */
-
           PRINTFD(G, FB_Scene)
             " SceneRender: left hand stereo...\n" ENDFD;
-
-          if(Feedback(G, FB_OpenGL, FB_Debugging))
-            PyMOLCheckOpenGLErr("before stereo glViewport 1");
-
           /* LEFT HAND STEREO */
-
-          if(mono_as_quad_stereo) {
-            OrthoDrawBuffer(G, GL_BACK_LEFT);
-          } else
-            switch (stereo_mode) {
-            case cStereo_quadbuffer:   /* hardware */
-              OrthoDrawBuffer(G, GL_BACK_LEFT);
-              break;
-            case cStereo_crosseye:     /* side by side, crosseye */
-              if(oversize_width && oversize_height) {
-                glViewport(I->Block->rect.left + oversize_width / 2 + x,
-                           I->Block->rect.bottom + y,
-                           oversize_width / 2, oversize_height);
-              } else {
-                glViewport(I->Block->rect.left + I->Width / 2, I->Block->rect.bottom,
-                           I->Width / 2, I->Height);
-              }
-              break;
-            case cStereo_walleye:
-            case cStereo_sidebyside:
-              if(oversize_width && oversize_height) {
-                glViewport(I->Block->rect.left + x,
-                           I->Block->rect.bottom + y,
-                           oversize_width / 2, oversize_height);
-              } else {
-                glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width / 2,
-                           I->Height);
-              }
-              break;
-            case cStereo_geowall:
-              glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height);
-              break;
-            case cStereo_stencil_by_row:
-            case cStereo_stencil_by_column:
-            case cStereo_stencil_checkerboard:
-              if(I->StencilValid) {
-                glStencilFunc(GL_EQUAL, 1, 1);
-                glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                glEnable(GL_STENCIL_TEST);
-              }
-              break;
-            case cStereo_stencil_custom:
-#ifdef _PYMOL_SHARP3D
-              sharp3d_begin_left_stereo();
-#endif
-              break;
-            case cStereo_anaglyph:
-              /* glClear(GL_ACCUM_BUFFER_BIT); */
-              glColorMask(true, false, false, true);
-              break;
-            case cStereo_clone_dynamic:
-              glClear(GL_ACCUM_BUFFER_BIT);
-              OrthoDrawBuffer(G, GL_BACK_LEFT);
-              if(times) {
-                float dynamic_strength =
-                  SettingGetGlobal_f(G, cSetting_stereo_dynamic_strength);
-                float vv[4] = { 0.75F, 0.75F, 0.75F, 1.0F };
-                vv[0] = dynamic_strength;
-                vv[1] = dynamic_strength;
-                vv[2] = dynamic_strength;
-                glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
-                glAccum(GL_ADD, 0.5);
-                glDisable(GL_FOG);
-              }
-              break;
-            case cStereo_dynamic:
-              if(times) {
-                float dynamic_strength =
-                  SettingGetGlobal_f(G, cSetting_stereo_dynamic_strength);
-                float vv[4] = { 0.75F, 0.75F, 0.75F, 1.0F };
-                vv[0] = dynamic_strength;
-                vv[1] = dynamic_strength;
-                vv[2] = dynamic_strength;
-                glClearAccum(0.5, 0.5, 0.5, 0.5);
-                glClear(GL_ACCUM_BUFFER_BIT);
-                glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
-                glDisable(GL_FOG);
-                glViewport(I->Block->rect.left + G->Option->winX / 2,
-                           I->Block->rect.bottom, I->Width, I->Height);
-              } else {
-                glClearAccum(0.0, 0.0, 0.0, 0.0);
-                glClear(GL_ACCUM_BUFFER_BIT);
-                glViewport(I->Block->rect.left,
-                           I->Block->rect.bottom, I->Width, I->Height);
-              }
-              break;
-            }
-
-          /* prepare the stereo transformation matrix */
-
-          glPushMatrix();       /* 1 */
-          ScenePrepareMatrix(G, stereo_using_mono_matrix ? 0 : 1);
-
-          if(grid.active)
-            GridGetGLViewport(&grid);
-          {
-            int slot;
-            for(slot = 0; slot <= grid.last_slot; slot++) {
-
-              if(grid.active) {
-                GridSetGLViewport(&grid, slot);
-              }
-
-              /* render picked atoms */
-
-              glPushMatrix();   /* 2 */
-              EditorRender(G, curState);
-              glPopMatrix();    /* 1 */
-
-              /* render the debugging CGO */
-
-              glPushMatrix();   /* 2 */
-              glNormal3fv(normal);
-              CGORenderGL(G->DebugCGO, NULL, NULL, NULL, NULL);
-              glPopMatrix();    /* 1 */
-
-              /* render all objects */
-
-              glPushMatrix();   /* 2 */
-
-              for(pass = 1; pass > -2; pass--) {        /* render opaque, then antialiased, then transparent... */
-                SceneRenderAll(G, &context, normal, NULL, pass, false, width_scale, &grid,
-                               times);
-              }
-              glPopMatrix();    /* 1 */
-
-              /* render selections */
-              glPushMatrix();   /* 2 */
-              glNormal3fv(normal);
-              ExecutiveRenderSelections(G, curState);
-              glPopMatrix();    /* 1 */
-
-            }
-          }
-          if(grid.active)
-            GridSetGLViewport(&grid, -1);
-
-          glPopMatrix();        /* 0 */
-
-          /* RIGHT HAND STEREO */
-
+	  if (G->ShaderMgr && stereo_mode==cStereo_anaglyph) {
+	    G->ShaderMgr->stereo_flag = -1;
+	  }
+	  DoHandedStereo(G, I, PrepareViewPortForStereo, stereo_mode, offscreen, times, x, y, oversize_width, oversize_height, 
+			 GL_BACK_LEFT, mono_as_quad_stereo, stereo_using_mono_matrix ? 0 : 1, &grid, curState, normal, &context, width_scale, 0, 0, offscreen);
           PRINTFD(G, FB_Scene)
             " SceneRender: right hand stereo...\n" ENDFD;
-
-          if(Feedback(G, FB_OpenGL, FB_Debugging))
-            PyMOLCheckOpenGLErr("before stereo glViewport 2");
-
-          if(mono_as_quad_stereo) {     /* double pumped mono */
-            OrthoDrawBuffer(G, GL_BACK_RIGHT);
-          } else
-            switch (stereo_mode) {
-            case cStereo_quadbuffer:   /* hardware */
-              OrthoDrawBuffer(G, GL_BACK_RIGHT);
-              break;
-            case cStereo_crosseye:     /* side by side, crosseye */
-              if(oversize_width && oversize_height) {
-                glViewport(I->Block->rect.left + x,
-                           I->Block->rect.bottom + y,
-                           oversize_width / 2, oversize_height);
-              } else {
-                glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width / 2,
-                           I->Height);
-              }
-              break;
-            case cStereo_walleye:      /* side by side, walleye */
-            case cStereo_sidebyside:
-              if(oversize_width && oversize_height) {
-                glViewport(I->Block->rect.left + oversize_width / 2 + x,
-                           I->Block->rect.bottom + y,
-                           oversize_width / 2, oversize_height);
-              } else {
-                glViewport(I->Block->rect.left + I->Width / 2, I->Block->rect.bottom,
-                           I->Width / 2, I->Height);
-              }
-              break;
-            case cStereo_geowall:      /* geowall */
-              glViewport(I->Block->rect.left + G->Option->winX / 2,
-                         I->Block->rect.bottom, I->Width, I->Height);
-              break;
-            case cStereo_stencil_by_row:
-            case cStereo_stencil_by_column:
-            case cStereo_stencil_checkerboard:
-              glStencilFunc(GL_EQUAL, 0, 1);
-              glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-              glEnable(GL_STENCIL_TEST);
-              break;
-            case cStereo_stencil_custom:
-#ifdef _PYMOL_SHARP3D
-              sharp3d_switch_to_right_stereo();
-#endif
-              break;
-            case cStereo_anaglyph:
-              /* glAccum(GL_ACCUM, 0.5); */
-              glColorMask(false, true, true, true);
-              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-              break;
-            case cStereo_clone_dynamic:
-              if(times) {
-                glAccum(GL_ACCUM, -0.5);
-              } else {
-                glAccum(GL_ACCUM, 0.5);
-              }
-              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-              break;
-            case cStereo_dynamic:
-              if(times) {
-                glAccum(GL_ACCUM, -0.5);
-              } else {
-                glAccum(GL_ACCUM, 0.5);
-                glEnable(GL_SCISSOR_TEST);
-              }
-              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-              if(!times) {
-                glDisable(GL_SCISSOR_TEST);
-              }
-              break;
-            }
-
-          /* prepare the stereo transformation matrix */
-
-          glPushMatrix();       /* 1 */
-          ScenePrepareMatrix(G, stereo_using_mono_matrix ? 0 : 2);
-          glClear(GL_DEPTH_BUFFER_BIT);
-
-          if(grid.active)
-            GridGetGLViewport(&grid);
-
-          {
-            int slot;
-
-            for(slot = 0; slot <= grid.last_slot; slot++) {
-
-              if(grid.active) {
-                GridSetGLViewport(&grid, slot);
-              }
-
-              /* render picked atoms */
-
-              glPushMatrix();   /* 2 */
-              EditorRender(G, curState);
-              glPopMatrix();    /* 1 */
-
-              /* render the debugging CGO */
-
-              glPushMatrix();   /* 2 */
-              glNormal3fv(normal);
-              CGORenderGL(G->DebugCGO, NULL, NULL, NULL, NULL);
-              glPopMatrix();    /* 1 */
-
-              /* render all objects */
-
-              glPushMatrix();   /* 2 */
-              for(pass = 1; pass > -2; pass--) {        /* render opaque, then antialiased, then transparent... */
-                SceneRenderAll(G, &context, normal, NULL, pass, false, width_scale, &grid,
-                               times);
-              }
-              glPopMatrix();    /* 1 */
-
-              /* render selections */
-              glPushMatrix();   /* 2 */
-              glNormal3fv(normal);
-              ExecutiveRenderSelections(G, curState);
-              glPopMatrix();    /* 1 */
-
-            }
-          }
-
-          if(grid.active)
-            GridSetGLViewport(&grid, -1);
-
-          glPopMatrix();        /* 0 */
-
+          /* RIGHT HAND STEREO */
+	  if (G->ShaderMgr && stereo_mode==cStereo_anaglyph) {
+	    G->ShaderMgr->stereo_flag = 1;
+	  }
+	  DoHandedStereo(G, I, PrepareViewPortForStereo2nd, stereo_mode, offscreen, times, x, y, oversize_width, oversize_height, 
+			 GL_BACK_RIGHT, mono_as_quad_stereo, stereo_using_mono_matrix ? 0 : 2, &grid, curState, normal, &context, width_scale, 1, 0, offscreen);
           /* restore draw buffer */
-
           if(mono_as_quad_stereo) {     /* double pumped mono...can't draw to GL_BACK so stick with LEFT */
             OrthoDrawBuffer(G, GL_BACK_LEFT);
-          } else
-            switch (stereo_mode) {
-            case cStereo_quadbuffer:
-              OrthoDrawBuffer(G, GL_BACK_LEFT); /* leave us in a stereo context 
-                                                   (avoids problems with cards than can't handle
-                                                   use of mono contexts) */
-              break;
-            case cStereo_crosseye:
-            case cStereo_walleye:
-            case cStereo_sidebyside:
-              OrthoDrawBuffer(G, GL_BACK);
-              break;
-            case cStereo_geowall:
-              break;
-            case cStereo_stencil_by_row:
-            case cStereo_stencil_by_column:
-            case cStereo_stencil_checkerboard:
-              glDisable(GL_STENCIL_TEST);
-              break;
-            case cStereo_stencil_custom:
-#ifdef _PYMOL_SHARP3D
-              sharp3d_end_stereo();
-#endif
-              break;
-            case cStereo_anaglyph:
-              glColorMask(true, true, true, true);
-              /*              glAccum(GL_ACCUM, 0.5);
-                              glAccum(GL_RETURN, 1.0); */
-              OrthoDrawBuffer(G, GL_BACK_LEFT);
-              break;
-            case cStereo_clone_dynamic:
-              glAccum(GL_ACCUM, 0.5);
-              if(times) {
-                float vv[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
-                glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
-                if(fog_active)
-                  glEnable(GL_FOG);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                OrthoDrawBuffer(G, GL_BACK_RIGHT);
-              }
-              glAccum(GL_RETURN, 1.0);
-              OrthoDrawBuffer(G, GL_BACK_LEFT);
-              break;
-            case cStereo_dynamic:
-              glAccum(GL_ACCUM, 0.5);
-              if(times) {
-                float vv[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
-                glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, vv);
-                if(fog_active)
-                  glEnable(GL_FOG);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-              }
-              glAccum(GL_RETURN, 1.0);
-              if(times) {
-                glViewport(I->Block->rect.left,
-                           I->Block->rect.bottom, I->Width + 2, I->Height + 2);
-                glScissor(I->Block->rect.left - 1,
-                          I->Block->rect.bottom - 1, I->Width + 2, I->Height + 2);
-                glEnable(GL_SCISSOR_TEST);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                glDisable(GL_SCISSOR_TEST);
-              } else {
-                glDisable(GL_SCISSOR_TEST);
-              }
-              break;
-            }
-
+          } else {
+	    SetDrawBufferForStereo(G, I, stereo_mode, times, fog_active);
+	  }
         } else {
+	  if (G->ShaderMgr) {
+	    G->ShaderMgr->stereo_flag = 0;
+	  }
 
           /* MONOSCOPING RENDERING (not double-pumped) */
-          if(grid.active)
-            GridGetGLViewport(&grid);
-
+	  if(!grid.active && offscreen) {
+	    glViewport(0, 0, I->offscreen_width, I->offscreen_height);
+	  }
+	  if (offscreen){
+	    bg_grad(G);
+	  }
           if(Feedback(G, FB_OpenGL, FB_Debugging))
             PyMOLCheckOpenGLErr("Before mono rendering");
-
-          {
-            int slot;
-            for(slot = 0; slot <= grid.last_slot; slot++) {
-
-              if(grid.active) {
-                GridSetGLViewport(&grid, slot);
-              }
-
-              /* mono rendering */
-
-              PRINTFD(G, FB_Scene)
-                " SceneRender: rendering DebugCGO...\n" ENDFD;
-
-              glPushMatrix();
-              glNormal3fv(normal);
-              CGORenderGL(G->DebugCGO, NULL, NULL, NULL, NULL);
-              glPopMatrix();
-
-              glPushMatrix();
-              PRINTFD(G, FB_Scene)
-                " SceneRender: rendering picked atoms...\n" ENDFD;
-              EditorRender(G, curState);
-              glPopMatrix();
-
-              PRINTFD(G, FB_Scene)
-                " SceneRender: rendering opaque and antialiased...\n" ENDFD;
-
-              for(pass = 1; pass > -2; pass--) {        /* render opaque then antialiased... */
-                SceneRenderAll(G, &context, normal, NULL, pass, false, width_scale, &grid,
-                               0);
-              }
-
-              glPushMatrix();
-              PRINTFD(G, FB_Scene)
-                " SceneRender: rendering selections...\n" ENDFD;
-
-              glNormal3fv(normal);
-              ExecutiveRenderSelections(G, curState);
-
-              PRINTFD(G, FB_Scene)
-                " SceneRender: rendering transparent objects...\n" ENDFD;
-
-              /* render transparent */
-              SceneRenderAll(G, &context, normal, NULL, -1, false, width_scale, &grid, 0);
-              glPopMatrix();
-            }
-          }
-          if(grid.active) {
-            GridSetGLViewport(&grid, -1);
-          }
+	  DoRendering(G, I, offscreen, &grid, times, curState, normal, &context, width_scale, 1, 0, offscreen);
           if(Feedback(G, FB_OpenGL, FB_Debugging))
             PyMOLCheckOpenGLErr("during mono rendering");
         }
       }
+#ifndef _PYMOL_PURE_OPENGL_ES
+      if(offscreen) {
+	int minx, miny;
+	glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, I->offscreen_fb); 
+	glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0); 
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if (stereo && stereo_mode == cStereo_geowall){
+	  minx = I->Block->rect.left;
+	  miny = I->Block->rect.bottom;
+	  glBlitFramebufferEXT (0, 0, I->offscreen_width / 2, I->offscreen_height,
+				minx, miny, I->Width + minx, I->Height + miny,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR );
+	  minx = I->Block->rect.left + G->Option->winX / 2;
+	  miny = I->Block->rect.bottom;
+	  glBlitFramebufferEXT (I->offscreen_width / 2, 0, I->offscreen_width, I->offscreen_height,
+				minx, miny, I->Width + minx, I->Height + miny,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR );
+	  
+	} else if(oversize_width && oversize_height) {
+	  minx = I->Block->rect.left + x;
+	  miny = I->Block->rect.bottom + y;
+	  glBlitFramebufferEXT (0, 0, I->offscreen_width, I->offscreen_height,
+				minx, miny, minx + oversize_width, miny + oversize_height,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR );
+	} else {
+	  minx = I->Block->rect.left;
+	  miny = I->Block->rect.bottom;
+	  glBlitFramebufferEXT (0, 0, I->offscreen_width, I->offscreen_height,
+				minx, miny, I->Width + minx, I->Height + miny,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR );
+	}
+	glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0); 
+	glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0); 
+
+
+	/* Here we render ONLY the SELECTED Markers, should we put all of this into a function, so it
+	   can be called above as well? */
+
+	InitializeViewPort(G, I, x, y, oversize_width, oversize_height, &stereo_mode, &stereo_using_mono_matrix, &width_scale);
+
+	times = origtimes;
+	offscreen = 0;
+	while(times--) {
+	  if(must_render_stereo) {
+	    /* STEREO RENDERING (real or double-pumped) */
+	    PRINTFD(G, FB_Scene)
+	      " SceneRender: left hand stereo...\n" ENDFD;
+	    /* LEFT HAND STEREO */
+	    if (G->ShaderMgr && stereo_mode==cStereo_anaglyph) {
+	      G->ShaderMgr->stereo_flag = -1;
+	    }
+
+	    DoHandedStereo(G, I, PrepareViewPortForStereo, stereo_mode, offscreen, times, x, y, oversize_width, oversize_height, 
+			   GL_BACK_LEFT, mono_as_quad_stereo, stereo_using_mono_matrix ? 0 : 1, 
+			   &grid, curState, normal, &context, width_scale, 0, 1 /* onlySelections */, 0);
+	    PRINTFD(G, FB_Scene)
+	      " SceneRender: right hand stereo...\n" ENDFD;
+	    /* RIGHT HAND STEREO */
+	    if (G->ShaderMgr && stereo_mode==cStereo_anaglyph) {
+	      G->ShaderMgr->stereo_flag = 1;
+	    }
+	    DoHandedStereo(G, I, PrepareViewPortForStereo2nd, stereo_mode, offscreen, times, x, y, oversize_width, oversize_height, 
+			   GL_BACK_RIGHT, mono_as_quad_stereo, stereo_using_mono_matrix ? 0 : 2, 
+			   &grid, curState, normal, &context, width_scale, 1, 1 /* onlySelections */, 0);
+	    /* restore draw buffer */
+	    if(mono_as_quad_stereo) {     /* double pumped mono...can't draw to GL_BACK so stick with LEFT */
+	      OrthoDrawBuffer(G, GL_BACK_LEFT);
+	    } else {
+	      SetDrawBufferForStereo(G, I, stereo_mode, times, fog_active);
+	    }
+	  } else {
+	    /* MONOSCOPING RENDERING (not double-pumped) */
+	    if(!grid.active && offscreen) {
+	      glViewport(0, 0, I->offscreen_width, I->offscreen_height);
+	    }
+	    if (offscreen){
+	      bg_grad(G);
+	    }
+	    if(Feedback(G, FB_OpenGL, FB_Debugging))
+	      PyMOLCheckOpenGLErr("Before mono rendering");
+	    DoRendering(G, I, offscreen, &grid, times, curState, normal, &context, width_scale, 1, 1  /* onlySelections */, 0);
+	    if(Feedback(G, FB_OpenGL, FB_Debugging))
+	      PyMOLCheckOpenGLErr("during mono rendering");
+	  }
+	}
+	/* FINISHED rendering selection markers */
+	
+      }
+#endif
     }
 
+#ifndef PURE_OPENGL_ES_2
     if(!(pick || smp)) {
       glDisable(GL_FOG);
       glDisable(GL_LIGHTING);
@@ -9158,6 +10094,7 @@ if (rayVolume && rayDepthPixels) {
     glDisable(GL_ALPHA_TEST);
     if(G->Option->multisample)
       glDisable(0x809D);        /* GL_MULTISAMPLE_ARB */
+#endif
     glViewport(view_save[0], view_save[1], view_save[2], view_save[3]);
 
     if(Feedback(G, FB_OpenGL, FB_Debugging))
@@ -9229,6 +10166,8 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode)
 
   float stAng, stShift;
 
+#ifdef PURE_OPENGL_ES_2
+#else
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
   glLoadIdentity();
 
@@ -9237,7 +10176,7 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode)
     /* mono */
 
     /* move the camera to the location we are looking at */
-    glTranslated(I->Pos[0], I->Pos[1], I->Pos[2]);
+    glTranslatef(I->Pos[0], I->Pos[1], I->Pos[2]);
 
     /* rotate about the origin (the the center of rotation) */
     glMultMatrixf(I->RotMatrix);
@@ -9276,7 +10215,7 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode)
     /* move the origin to the center of rotation */
     glTranslatef(-I->Origin[0], -I->Origin[1], -I->Origin[2]);
   }
-
+#endif
 }
 
 
@@ -9336,4 +10275,60 @@ void SceneScale(PyMOLGlobals * G, float scale)
   register CScene *I = G->Scene;
   I->Scale *= scale;
   SceneInvalidate(G);
+}
+
+void SceneZoom(PyMOLGlobals * G, float scale){
+  register CScene *I = G->Scene;
+  float factor = -((I->FrontSafe + I->BackSafe) / 2) * 0.1 * scale;
+  /*    SettingGetGlobal_f(G, cSetting_mouse_wheel_scale); */
+  I->Pos[2] += factor;
+  I->Front -= factor;
+  I->Back -= factor;
+  I->FrontSafe = GetFrontSafe(I->Front, I->Back);
+  I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+  SceneInvalidate(G);
+}
+
+int SceneGetTwoSidedLighting(PyMOLGlobals * G){
+  int two_sided_lighting = SettingGetGlobal_b(G, cSetting_two_sided_lighting);
+  if(two_sided_lighting<0) {
+    if(SettingGetGlobal_i(G, cSetting_surface_cavity_mode))
+      two_sided_lighting = true;
+    else
+      two_sided_lighting = false;
+  }
+  two_sided_lighting = two_sided_lighting || (SettingGetGlobal_i(G, cSetting_transparency_mode) ==1);
+  return two_sided_lighting;
+}
+
+float SceneGetDynamicLineWidth(RenderInfo * info, float line_width)
+{
+  if(info && info->dynamic_width) {
+    float factor;
+    if(info->vertex_scale > R_SMALL4) {
+      factor = info->dynamic_width_factor / info->vertex_scale;
+      if(factor > info->dynamic_width_max)
+        factor = info->dynamic_width_max;
+      if(factor < info->dynamic_width_min) {
+        factor = info->dynamic_width_min;
+      }
+    } else {
+      factor = info->dynamic_width_max;
+    }
+    return factor * line_width;
+  }
+  return line_width;
+}
+
+float SceneGetLineWidthForCylinders(PyMOLGlobals * G, RenderInfo * info, float line_width_arg){
+  float line_width = SceneGetDynamicLineWidth(info, line_width_arg);
+ 
+  float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
+  
+  if(pixel_scale_value < 0)
+    pixel_scale_value = 1.0F;
+  /* the radius of the cylinders is the vertex_scale * ray_pixel_scale */
+  /* this turns out to be exactly right, but changes if the scene or user 
+     moves */
+  return info->vertex_scale * pixel_scale_value * line_width / 2.f;
 }

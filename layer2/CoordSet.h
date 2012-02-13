@@ -40,7 +40,7 @@ typedef struct CoordSet {
   int *Color;
   int *IdxToAtm;
   int *AtmToIdx;
-  int NIndex, NAtIndex;
+  int NIndex, NAtIndex, prevNIndex, prevNAtIndex;
   Rep *Rep[cRepCnt];            /* an array of pointers to representations */
   int Active[cRepCnt];          /* active flags */
   int NTmpBond;                 /* optional, temporary (for coord set transfers) */
@@ -125,12 +125,15 @@ int CoordSetValidateRefPos(CoordSet * I);
 
 void CoordSetPurge(CoordSet * I);
 void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom);
-void CoordSetMerge(CoordSet * I, CoordSet * cs);        /* must be non-overlapping */
+void CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs);        /* must be non-overlapping */
 void CoordSetRecordTxfApplied(CoordSet * I, float *TTT, int homogenous);
 void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff);
 
 typedef struct _CCoordSetUpdateThreadInfo CCoordSetUpdateThreadInfo;
 
 void CoordSetUpdateThread(CCoordSetUpdateThreadInfo * T);
+
+void LabPosTypeCopy(LabPosType * src, LabPosType * dst);
+void RefPosTypeCopy(RefPosType * src, RefPosType * dst);
 
 #endif

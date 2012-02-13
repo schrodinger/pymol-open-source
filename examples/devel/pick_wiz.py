@@ -1,6 +1,11 @@
 
 # demonstrate how to use PyMOL's atom pick "events" in a Wizard
 
+# Note: To pick an atom or bond, you need to use the button mouse actions "PkAt"
+#       or "PkTB" respectively.  By default, the "PkTB" is not available in the
+#       default 3-Button Viewing mode, but it can be used in the 3-Button Editing
+#       mode by double clicking the right button.
+#
 # Run this file as:
 #  DOS/Unix> pymol pick_wiz.py
 #     or

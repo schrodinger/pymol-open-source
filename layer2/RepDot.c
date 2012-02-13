@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"ObjectMolecule.h"
 #include"Scene.h"
+#include"ShaderMgr.h"
 
 void RepDotFree(RepDot * I);
 
@@ -39,6 +40,10 @@ void RepDotInit(void)
 
 void RepDotFree(RepDot * I)
 {
+  if (I->shaderCGO){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = 0;
+  }
   FreeP(I->VC);
   FreeP(I->V);
   FreeP(I->T);
@@ -88,39 +93,194 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-    } else {
+    } else { /* else not pick, i.e., when rendering */
+      short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
       int normals =
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_normals);
       int lighting =
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_lighting);
-      int use_dlst;
+      short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
 
-      if(!normals)
-        SceneResetNormal(G, true);
-      if(!lighting) {
-        if(!info->line_lighting)
-          glDisable(GL_LIGHTING);
+      use_shader = (int) SettingGet(G, cSetting_dot_use_shader) & 
+                   (int) SettingGet(G, cSetting_use_shaders);
+      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+
+      if (I->shaderCGO && ((!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO)) ||
+			   I->shaderCGO_as_spheres!= dot_as_spheres)){
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = 0;
       }
-      use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
 
-      if(info->width_scale_flag)
-        glPointSize(I->Width * info->width_scale);
-      else
-        glPointSize(I->Width);
+#ifdef _PYMOL_GL_CALLLISTS
+      if(use_display_lists && I->R.displayList) {
+	glCallList(I->R.displayList);
+	return;
+      }
+#endif
+      if (use_shader){
+	if (!I->shaderCGO){
+	  generate_shader_cgo = 1;
+	} else {
+	  CShaderPrg *shaderPrg;
+	  float *color;
+	  color = ColorGet(G, I->R.obj->Color);
 
-      if(use_dlst && I->R.displayList) {
-        glCallList(I->R.displayList);
+	  I->shaderCGO->enable_shaders = false;
+	  if (dot_as_spheres){
+	    float radius;
+	    if(I->dotSize <= 0.0F) {
+	      if(info->width_scale_flag)
+		radius = I->Width * info->width_scale * info->vertex_scale / 1.4142F;
+	      else
+		radius = I->Width * info->vertex_scale;
+	    } else {
+	      radius = I->dotSize;
+	    }
+	    shaderPrg = CShaderPrg_Enable_SphereShader(G, "sphere");
+	    CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", fabs(radius));
+	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
+	    CShaderPrg_Disable(shaderPrg);
+	  } else {
+	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    SceneResetNormalUseShaderAttribute(G, 0, true, CShaderPrg_GetAttribLocation(shaderPrg, "a_Normal"));
+	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
+	    CShaderPrg_Disable(shaderPrg);
+	  }
+	  return; /* should not do any other rendering after shaderCGO has
+		    been rendered */
+	}
+      }
+#ifdef _PYMOL_GL_CALLLISTS
+      if(use_display_lists) {
+	if(!I->R.displayList) {
+	  I->R.displayList = glGenLists(1);
+	  if(I->R.displayList) {
+	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
+	  }
+	}
+      }
+#endif
+
+      if (generate_shader_cgo){
+	CGO *cgo = CGONew(G);
+	I->shaderCGO = CGONew(G);
+	if(!normals)
+	  CGOResetNormal(I->shaderCGO, true);
+	if (dot_as_spheres){
+	  while(c--) {
+	    if(!cc) {             /* load up the current vertex color */
+	      cc = (int) (*(v++));
+	      CGOColorv(cgo, v);
+	      v += 3;
+	    }
+	    if(normals)
+	      CGONormalv(cgo, v);
+	    v += 3;
+	    CGOSphere(cgo, v, 1.f);
+	    v += 3;
+	    cc--;
+	  }
+	} else {
+	  CGOLinewidthSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
+	  CGOBegin(cgo, GL_POINTS);
+	  while(c--) {
+	    if(!cc) {             /* load up the current vertex color */
+	      cc = (int) (*(v++));
+	      CGOColorv(cgo, v);
+	      v += 3;
+	    }
+	    v += 3;
+	    CGOVertexv(cgo, v);
+	    v += 3;
+	    cc--;
+	  }
+	  CGOEnd(cgo);
+	}
+	CGOStop(cgo);
+	{
+	  if (dot_as_spheres){
+	    I->shaderCGO = CGOOptimizeSpheresToVBONonIndexed(cgo, CGO_BOUNDING_BOX_SZ + CGO_DRAW_SPHERE_BUFFERS_SZ);
+	  } else {
+	    CGO *convertcgo = CGOCombineBeginEnd(cgo, 0), *tmpCGO;
+	    tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, CGO_BOUNDING_BOX_SZ + I->N * 3 + 7);
+	    CGOAppend(I->shaderCGO, tmpCGO);
+	    CGOFreeWithoutVBOs(tmpCGO);
+	    CGOFree(convertcgo);
+	  }
+	  CGOStop(I->shaderCGO);
+	}
+	I->shaderCGO->use_shader = true;
+	I->shaderCGO_as_spheres = dot_as_spheres;
+	CGOFree(cgo);
+
+	/* now that the shaderCGO is created, we can just call RepDotRender to render it */
+	RepDotRender(I, info);
       } else {
+	if(!normals)
+	  SceneResetNormal(G, true);
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
+	if(!lighting) {
+	  if(!info->line_lighting)
+	    glDisable(GL_LIGHTING);
+	}
+#endif
 
-        if(use_dlst) {
-          if(!I->R.displayList) {
-            I->R.displayList = glGenLists(1);
-            if(I->R.displayList) {
-              glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-            }
-          }
-        }
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
+	if(info->width_scale_flag)
+	  glPointSize(I->Width * info->width_scale);
+	else
+	  glPointSize(I->Width);
+#endif
 
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	{
+	  int pl = 0, nverts = c, plc = 0;
+	  ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
+	  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
+	  ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
+	  float *cur_color;
+	  while(c--) {
+	    if(!cc) {             /* load up the current vertex color */
+	      cc = (int) (*(v++));
+	      cur_color = v;
+	      v += 3;
+	    }
+	    colorVals[plc++] = cur_color[0]; colorVals[plc++] = cur_color[1]; colorVals[plc++] = cur_color[2]; colorVals[plc++] = 1.f;
+	    if(normals){
+	      normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
+	    }
+	    v += 3;
+	    ptsVals[pl++] = v[0]; ptsVals[pl++] = v[1]; ptsVals[pl++] = v[2];
+	    v += 3;
+	    cc--;
+	  }
+	  glEnableClientState(GL_VERTEX_ARRAY);
+	  glEnableClientState(GL_COLOR_ARRAY);
+	  if (normals){
+	    glEnableClientState(GL_NORMAL_ARRAY);
+	    glNormalPointer(GL_FLOAT, 0, normalVals);
+	  }
+	  glColorPointer(4, GL_FLOAT, 0, colorVals);
+	  glVertexPointer(3, GL_FLOAT, 0, ptsVals);
+	  glDrawArrays(GL_POINTS, 0, nverts);
+	  glDisableClientState(GL_COLOR_ARRAY);
+	  glDisableClientState(GL_VERTEX_ARRAY);
+	  if (normals){
+	    glDisableClientState(GL_NORMAL_ARRAY);
+	  }	  
+	  DEALLOCATE_ARRAY(ptsVals)
+	  DEALLOCATE_ARRAY(colorVals)
+	  DEALLOCATE_ARRAY(normalVals)
+	}
+#else
         glBegin(GL_POINTS);
         while(c--) {
           if(!cc) {             /* load up the current vertex color */
@@ -136,12 +296,21 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
           cc--;
         }
         glEnd();
+#endif
+#endif
 
-        if(use_dlst && I->R.displayList) {
-          glEndList();
-        }
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
+#else
         if(!lighting)
           glEnable(GL_LIGHTING);
+#endif
+#ifdef _PYMOL_GL_CALLLISTS
+	if (use_display_lists && I->R.displayList){
+	  glEndList();
+	  glCallList(I->R.displayList);      
+	}
+#endif
       }
     }
   }
@@ -213,6 +382,7 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
   I->VN = NULL;
   I->Atom = NULL;
   I->R.fRecolor = NULL;
+  I->shaderCGO = 0;
 
   I->Width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_dot_width);
   cullByFlag = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trim_dots);      /* are we using flags 24 & 25 */

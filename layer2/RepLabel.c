@@ -120,8 +120,12 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
         int float_text = (int) SettingGet(G, cSetting_float_labels);
         if(float_text)
           glDisable(GL_DEPTH_TEST);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
         if(!info->line_lighting)
           glDisable(GL_LIGHTING);
+#endif
         TextSetOutlineColor(G, I->OutlineColor);
         while(c--) {
           if(*l) {
@@ -132,7 +136,11 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
           l++;
           v += 9;
         }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
         glEnable(GL_LIGHTING);
+#endif
         glEnable(GL_BLEND);
         if(float_text)
           glEnable(GL_DEPTH_TEST);

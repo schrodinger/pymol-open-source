@@ -2,6 +2,37 @@
 CHANGE LOG
 =========================================================================
 
+2012-02-13 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Open Source PyMOL v1.5.0.1
+
+	* improved rendering Performance
+
+	* improved rendering Quality
+
+	* bg_gradient now ray traces
+
+	* improved cartoon support for non-standard nucleotides
+
+	* surface color smoothing
+
+	* surface-based picking
+
+	* frame buffer-based antialiasing for real-time rendering
+
+	* optimized anaglyph colors and intensities for an improved 3D
+	viewing experience
+
+	* real-time and ray-traceable ambient occlusion
+
+	* molecular weight calculuations; A > Compute > Molceular Weight
+
+	* selection generation A > Generate > Selection
+
+	* new mouse mode for repositioning lights
+
+	* many bug fixes
+
 2012-01-03 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* improved callback rendering

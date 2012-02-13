@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jul 09, 2010 by -c
-
 # $Id$
 import sys
 from pymol import opengl

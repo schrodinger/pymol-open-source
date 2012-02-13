@@ -38,7 +38,7 @@ for part in particle:
                    vdw = part[4])
 
 # draw spheres efficiently
-cmd.as("spheres")
+cmd.show_as("spheres")
 cmd.unset("cull_spheres") 
 
 # defer geometry generation until needed

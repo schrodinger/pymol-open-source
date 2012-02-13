@@ -1816,6 +1816,24 @@ static void MovieDraw(Block * block)
 
       if(G->HaveGUI && G->ValidContext) {
         float black[3] = {0.0F,0.0F,0.0F};
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    const GLfloat polyVerts[] = {
+	      rect.right, rect.bottom,
+	      rect.right, rect.top,
+	      block->rect.right, rect.bottom,
+	      block->rect.right, rect.top
+	    };
+	    glColor4f(black[0], black[1], black[2], 1.F);	
+	    glEnableClientState(GL_VERTEX_ARRAY);
+	    glVertexPointer(2, GL_FLOAT, 0, polyVerts);
+	    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	    glDisableClientState(GL_VERTEX_ARRAY);
+	  }
+#else
         glColor3fv(black);
         glBegin(GL_POLYGON);
         glVertex2f(rect.right, rect.bottom);
@@ -1823,6 +1841,8 @@ static void MovieDraw(Block * block)
         glVertex2f(block->rect.right, rect.top);
         glVertex2f(block->rect.right, rect.bottom);
         glEnd();
+#endif
+#endif
       }
 
       if(!n_frame) {
@@ -1831,11 +1851,12 @@ static void MovieDraw(Block * block)
       } else {
         float scroll_value = ScrollBarGetValue(I->ScrollBar);
         int new_frame = (int) (scroll_value + 0.5F);
-        if(new_frame != frame) {
-          frame = new_frame;
-          SceneSetFrame(G, 7, frame);
-        }
-        if(!ScrollBarGrabbed(I->ScrollBar)) {
+        if(ScrollBarGrabbed(I->ScrollBar)) {
+	  if(new_frame != frame) {
+	    frame = new_frame;
+	    SceneSetFrame(G, 7, frame);
+	  }
+	} else {
           ScrollBarSetValue(I->ScrollBar, frame);
         }
         ScrollBarSetLimits(I->ScrollBar, n_frame, 1);

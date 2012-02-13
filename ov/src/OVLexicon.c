@@ -89,6 +89,13 @@ static OVstatus OVLexicon_CheckStorage(OVLexicon * uk, ov_word entry_size,
   return_OVstatus_SUCCESS;
 }
 
+/*============================================================================
+ * _GetCStringHash -- returns a djb2 string hash key of the input
+ * PARAMS
+ *   string str
+ * RETURNS
+ *   string hash key
+ */
 static ov_word _GetCStringHash(ov_uchar8 * str)
 {
   register ov_uchar8 *p = str;
@@ -346,12 +353,14 @@ OVreturn_word OVLexicon_GetFromCString(OVLexicon * uk, ov_char8 * str)
 
 OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, ov_char8 * str)
 {
+  /* get hash token for this word */
   ov_word hash = _GetCStringHash((ov_uchar8 *) str);
   OVreturn_word search = OVOneToOne_GetForward(uk->up, hash);
   register ov_word index = 0;
   ov_word cur_index = 0;
   ov_char8 *c;
 
+  /* error is something like OVstatus_NULL_PTR, OVstatus_NOT_FOUND; see ov/src/OVreturns.h */
   if(OVreturn_IS_ERROR(search)) {
     return search;
   } else {

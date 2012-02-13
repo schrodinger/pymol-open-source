@@ -36,7 +36,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct RepCartoon {
   Rep R;                        /* must be first! */
-  CGO *ray, *std;
+  CGO *ray, *std, *preshader, *pickingCGO;
 
 } RepCartoon;
 
@@ -50,6 +50,10 @@ void RepCartoonFree(RepCartoon * I)
 {
   if(I->ray)
     CGOFree(I->ray);
+  if(I->pickingCGO && (I->pickingCGO != I->std))
+    CGOFree(I->pickingCGO);
+  if(I->preshader && (I->ray!=I->preshader))
+    CGOFree(I->preshader);
   if(I->std)
     CGOFree(I->std);
   RepPurge(&I->R);
@@ -58,11 +62,77 @@ void RepCartoonFree(RepCartoon * I)
 
 static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 {
-  float *fog_color, fog_enabled;
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   register PyMOLGlobals *G = I->R.G;
-  CShaderPrg * p = CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
+
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+  if (I->preshader){
+    int use_shaders, cartoon_use_shader, has_cylinders_to_optimize;
+    use_shaders = (int) SettingGet(G, cSetting_use_shaders);
+    cartoon_use_shader = (int) SettingGet(G, cSetting_cartoon_use_shader);
+    has_cylinders_to_optimize = SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders) && SettingGet(G, cSetting_render_as_cylinders) ;
+    if (use_shaders && cartoon_use_shader){
+      CGO *convertcgo = NULL, *tmpCGO = NULL;
+      if (has_cylinders_to_optimize){
+	CGO *leftOverCGO = CGONew(G), *leftOverCGOSimplified, *sphereVBOs = NULL, *leftOverAfterSpheresCGO;
+
+	/* Optimize Cylinders into Shader operation */
+	convertcgo = CGOOptimizeGLSLCylindersToVBOIndexedWithLeftOver(I->preshader, 0, leftOverCGO);
+	if (!convertcgo){
+	  convertcgo = CGONew(G);
+	  leftOverCGO = I->preshader;
+	  I->preshader = NULL;
+	} else {
+	  CGOStop(leftOverCGO); 
+	}
+	/* Optimize spheres and putting them into convertcgo as a shader CGO operation */
+	leftOverAfterSpheresCGO = CGONew(G);
+	sphereVBOs = CGOOptimizeSpheresToVBONonIndexedImpl(leftOverCGO, 0, leftOverAfterSpheresCGO);
+	if (sphereVBOs){
+	  CGOStop(leftOverAfterSpheresCGO);
+	  if (leftOverCGO!=I->ray){
+	    CGOFree(leftOverCGO);
+	  }
+	  CGOAppend(convertcgo, sphereVBOs);
+	  CGOFreeWithoutVBOs(sphereVBOs);
+	} else {
+	  leftOverAfterSpheresCGO = leftOverCGO;
+	}
+	/* For the rest of the primitives that exist, simplify them into Geometry
+	 * (should probably be no more, but do this anyway) */
+	leftOverCGOSimplified = CGOSimplify(leftOverAfterSpheresCGO, 0);
+	if (leftOverAfterSpheresCGO!=I->ray){
+	  CGOFree(leftOverAfterSpheresCGO);
+	}
+	/* Convert all DrawArrays and Geometry to VBOs */
+	tmpCGO = CGOOptimizeToVBONotIndexed(leftOverCGOSimplified, 0);
+	CGOFree(leftOverCGOSimplified);
+	CGOAppend(convertcgo, tmpCGO);
+	CGOFreeWithoutVBOs(tmpCGO);
+	I->std = convertcgo;
+      } else {
+	convertcgo = CGOSimplify(I->preshader, 0);
+	tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
+	CGOFree(convertcgo);
+	I->std = tmpCGO;
+      }
+    } else {
+      I->std = CGOSimplify(I->preshader, 0);
+    }
+    if(I->preshader && (I->ray!=I->preshader)){
+      CGOFree(I->preshader);
+    }
+    I->preshader = NULL;
+  }
+#else
+  if (I->preshader){
+    I->std = I->preshader;
+    //    I->pickingCGO = I->std = I->preshader;
+    I->preshader = NULL;
+  }
+
+#endif
 
   if(ray) {
     PRINTFD(G, FB_RepCartoon)
@@ -73,32 +143,25 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
     else if(I->std)
       CGORenderRay(I->std, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
   } else if(G->HaveGUI && G->ValidContext) {
+    int use_shader;
+    use_shader = ((int) SettingGet(G, cSetting_cartoon_use_shader) &
+		  (int)SettingGet(G, cSetting_use_shaders)) 
+      && !pick;  /* should not use shaders for picking (for now) */
+    
     if(pick) {
-      if(I->std) {
-        CGORenderGLPicking(I->std, pick, &I->R.context,
+      if(I->pickingCGO) {
+	I->pickingCGO->use_shader = use_shader;
+        CGORenderGLPicking(I->pickingCGO, pick, &I->R.context,
                            I->R.cs->Setting, I->R.obj->Setting);
       }
     } else {
-      int use_dlst, use_shader;
+      int use_dlst;
       use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
 
-      use_shader = (int) SettingGet(G, cSetting_cartoon_use_shader) & 
-	               (int) SettingGet(G, cSetting_use_shaders) ;
-      if (use_shader) {
-	CShaderPrg_Enable(p);
-	/*	ShaderEnable(G); */
-        fog_color = SettingGetfv(G, cSetting_bg_rgb);
-        fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
-        CShaderPrg_Set1f(p, "fog_r", fog_color[0]);
-        CShaderPrg_Set1f(p, "fog_g", fog_color[1]);
-        CShaderPrg_Set1f(p, "fog_b", fog_color[2]);
-        CShaderPrg_Set1f(p, "fog_enabled", fog_enabled);
-      }
-
+#ifdef _PYMOL_GL_CALLLISTS
       if(use_dlst && I->R.displayList) {
         glCallList(I->R.displayList);
       } else {
-
         if(use_dlst) {
           if(!I->R.displayList) {
             I->R.displayList = glGenLists(1);
@@ -107,21 +170,22 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
             }
           }
         }
+#endif
 
         PRINTFD(G, FB_RepCartoon)
           " RepCartoonRender: rendering GL...\n" ENDFD;
 
-        if(I->std)
-          CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info);
-
+        if(I->std){
+	  I->std->use_shader = use_shader;
+	  I->std->enable_shaders = true;
+          CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+	}
+#ifdef _PYMOL_GL_CALLLISTS
         if(use_dlst && I->R.displayList) {
           glEndList();
         }
       }
-      if (use_shader) {
-        CShaderPrg_Disable(p);
-        /*ShaderDisable(G);*/
-      }
+#endif
     }
   }
 }
@@ -149,7 +213,7 @@ static float smooth(float x, float power)
 
 /* atix must contain n_atom + 1 elements, with the first atom repeated at the end */
 
-static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * obj,
+static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, ObjectMolecule * obj,
                     CoordSet * cs, float ring_width, CGO * cgo, int ring_color,
                     int ring_mode, float ladder_radius, int ladder_color, int ladder_mode,
                     int finder, int sc_helper, int *nuc_flag, int na_mode,
@@ -163,11 +227,14 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
   AtomInfoType *ai_i[MAX_RING_ATOM];
   int have_all = true;
   int all_marked = true;
-  AtomInfoType *ai;
+  AtomInfoType *ai = 0;
   int have_C4 = -1;
   int have_C4_prime = -1;
   int have_C_number = -1;
   int nf = false;
+  int cartoon_color;
+  cartoon_color =
+    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_color);
 
   /* first, make sure all atoms have known coordinates */
   {
@@ -446,10 +513,9 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                         nbr[3] = neighbor[mem3] + 1;
                         while((mem4 = neighbor[nbr[3]]) >= 0) {
                           if((mem4 != mem2) && (mem4 != mem1) && (mem4 != mem0)) {
-			    
-			    if((atomInfo[mem4].protons == cAN_N)||
-			       (WordMatchExact(G, "C5", atomInfo[mem4].name,1))) {     /* purine case */
-                              nbr[4] = neighbor[mem4] + 1;
+			    if((atomInfo[mem4].protons == cAN_N) ||
+			       WordMatchExact(G, "C5", atomInfo[mem4].name, 1)) {     /* purine case */
+			      nbr[4] = neighbor[mem4] + 1;
                               while((mem5 = neighbor[nbr[4]]) >= 0) {
                                 if((mem5 != mem3) && (mem5 != mem2) && (mem5 != mem1)
                                    && (mem5 != mem0) && (marked[mem5])
@@ -773,7 +839,6 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                                       g1_ai->visRep[cRepSphere]))) {
 
                   float *g1p, *g2p;
-                  float *color;
                   float avg[3];
 
                   {
@@ -811,20 +876,31 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                     g1p = avg;
                   }
 
-                  if(!g1_ai->masked)
-                    CGOPickColor(cgo, g1, cPickableAtom);
-
-                  if(ladder_color >= 0) {
-                    color = ColorGet(G, ladder_color);
-                    CGOCustomCylinderv(cgo, g1p,
-                                       g2p, glyco_radius, color, color, 2.0F, 2.0F);
-                  } else {
-                    CGOCustomCylinderv(cgo, g1p,
-                                       g2p,
-                                       glyco_radius,
-                                       ColorGet(G, g1_ai->color),
-                                       ColorGet(G, g2_ai->color), 2.0F, 2.0F);
-                  }
+		  {
+		    float *color1, *color2;
+		    if (ladder_color >= 0) {
+		      color1 = color2 = ColorGet(G, ladder_color);
+		    } else {
+		      color1 = ColorGet(G, g1_ai->color);
+		      color2 = ColorGet(G, g2_ai->color);
+		    }
+		    if (is_picking){ /* If picking, need to split cylinder in two to pick atoms */
+		      float midv[3], midc[3];
+		      average3f(g1p, g2p, midv);
+		      average3f(color1, color2, midc);
+		      if(!g1_ai->masked)
+			CGOPickColor(cgo, g1, cPickableAtom);
+		      CGOCustomCylinderv(cgo, g1p, midv, glyco_radius, 
+					 color1, midc, 2.0F, 0.0F);
+		      if(!g2_ai->masked)
+			CGOPickColor(cgo, g2, cPickableAtom);
+		      CGOCustomCylinderv(cgo, midv, g2p, glyco_radius, 
+					 midc, color2, 0.0F, 2.0F);
+		    } else {
+		      CGOCustomCylinderv(cgo, g1p, g2p, glyco_radius, 
+					 color1, color2, 2.0F, 2.0F);
+		    }
+		  }
                 }
               }
             }
@@ -891,7 +967,6 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                                       bas_ai->visRep[cRepSphere]))) {
 
                   int sug, bas;
-                  float *color;
                   if(obj->DiscreteFlag) {
                     if(cs == obj->DiscreteCSet[sugar_at] &&
                        cs == obj->DiscreteCSet[base_at]) {
@@ -907,20 +982,33 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                   }
 
                   if((sug >= 0) && (bas >= 0)) {
-                    if(!bas_ai->masked)
-                      CGOPickColor(cgo, base_at, cPickableAtom);
-                    if(ladder_color >= 0) {
-                      color = ColorGet(G, ladder_color);
-                      CGOCustomCylinderv(cgo, cs->Coord + 3 * sug,
-                                         cs->Coord + 3 * bas,
-                                         ladder_radius, color, color, 2.0F, 2.0F);
-                    } else {
-                      CGOCustomCylinderv(cgo, cs->Coord + 3 * sug,
-                                         cs->Coord + 3 * bas,
-                                         ladder_radius,
-                                         ColorGet(G, sug_ai->color),
-                                         ColorGet(G, bas_ai->color), 2.0F, 2.0F);
-                    }
+		    {
+		      float *color1, *color2;
+		      if (ladder_color >= 0) {
+			color1 = color2 = ColorGet(G, ladder_color);
+		      } else {
+			color1 = ColorGet(G, sug_ai->color);
+			color2 = ColorGet(G, bas_ai->color);
+		      }
+		      if (is_picking){
+			float midv[3], midc[3];
+			average3f(cs->Coord + 3 * sug, cs->Coord + 3 * bas, midv);
+			average3f(color1, color2, midc);
+			if(!sug_ai->masked)
+			  CGOPickColor(cgo, sugar_at, cPickableAtom);
+			CGOCustomCylinderv(cgo, cs->Coord + 3 * sug, midv, ladder_radius, 
+					   color1, midc, 2.0F, 0.0F);
+			if(!bas_ai->masked)
+			  CGOPickColor(cgo, base_at, cPickableAtom);
+			CGOCustomCylinderv(cgo, midv, cs->Coord + 3 * bas, ladder_radius, 
+					   midc, color2, 0.0F, 2.0F);
+		      } else {
+			CGOCustomCylinderv(cgo, cs->Coord + 3 * sug,
+					   cs->Coord + 3 * bas,
+					   ladder_radius,
+					   color1, color2, 2.0F, 2.0F);
+		      }
+		    }
                   }
                 }
               }
@@ -938,7 +1026,6 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                                   bas_ai->visRep[cRepSphere]))) {
 
               int sug, bas;
-              float *color;
               float *v_outer, tmp[3], outer[3];
               if(obj->DiscreteFlag) {
                 if(cs == obj->DiscreteCSet[sugar_at] && cs == obj->DiscreteCSet[base_at]) {
@@ -988,20 +1075,33 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                     v_outer = outer;
                   }
                 }
-                if(!bas_ai->masked)
-                  CGOPickColor(cgo, base_at, cPickableAtom);
-                if(ladder_color >= 0) {
-                  color = ColorGet(G, ladder_color);
-                  CGOCustomCylinderv(cgo, v_outer,
-                                     cs->Coord + 3 * bas,
-                                     ladder_radius, color, color, 2.0F, 2.0F);
-                } else {
-                  CGOCustomCylinderv(cgo, v_outer,
-                                     cs->Coord + 3 * bas,
-                                     ladder_radius,
-                                     ColorGet(G, sug_ai->color),
-                                     ColorGet(G, bas_ai->color), 2.0F, 2.0F);
-                }
+		{
+		  float *color1, *color2;
+		  if (ladder_color >= 0) {
+		    color1 = color2 = ColorGet(G, ladder_color);
+		  } else {
+		    color1 = ColorGet(G, sug_ai->color);
+		    color2 = ColorGet(G, bas_ai->color);
+		  }
+		  if (is_picking){
+		    float midv[3], midc[3];
+		    average3f(v_outer, cs->Coord + 3 * bas, midv);
+		    average3f(color1, color2, midc);
+		    if(!sug_ai->masked)
+		      CGOPickColor(cgo, sugar_at, cPickableAtom);
+		    CGOCustomCylinderv(cgo, v_outer, midv, ladder_radius, 
+				       color1, midc, 2.0F, 0.0F);
+		    if(!bas_ai->masked)
+		      CGOPickColor(cgo, base_at, cPickableAtom);
+		    CGOCustomCylinderv(cgo, midv, cs->Coord + 3 * bas, ladder_radius, 
+				       midc, color2, 0.0F, 2.0F);
+		  } else {
+		    CGOCustomCylinderv(cgo, v_outer,
+				       cs->Coord + 3 * bas,
+				       ladder_radius,
+				       color1, color2, 2.0F, 2.0F);
+		  }
+		}
               }
             }
           }
@@ -1138,7 +1238,8 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
         if(ring_color >= 0) {
           color = ColorGet(G, ring_color);
         } else {
-          color = avg_col;
+          color = ColorGet(G, AtomInfoGetColorWithElement(G, ai, "C")); /* NEED TO CHANGE TO CARBON COLOR */
+	  //          color = avg_col; /* NEED TO CHANGE TO CARBON COLOR */
         }
 
         CGOColorv(cgo, color);
@@ -1159,7 +1260,7 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
           }
 
           if(n_atom) {
-            add3f(avg_col, col[i], avg_col);
+	    CGOColorv(cgo, avg_col);
             if(!ai_i[0]->masked)
               CGOPickColor(cgo, atix[0], cPickableAtom);
             CGOSphere(cgo, avg, radius);
@@ -1214,7 +1315,6 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
             float out[3];
 
             CGOBegin(cgo, GL_TRIANGLES);
-
             for(i = 0; i < n_atom; i++) {
               ii = i + 1;
               average3f(v_i[ii], v_i[i], mid);
@@ -1241,12 +1341,12 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
               CGONormalv(cgo, n_up[i]);
               if(ring_color < 0)
                 CGOColorv(cgo, col[i]);
-              CGOPickColor(cgo, atix[i], cPickableAtom);
+	      //              CGOPickColor(cgo, atix[i], cPickableAtom);
               CGOVertexv(cgo, v0t);
               CGONormalv(cgo, n_up[ii]);
               if(ring_color < 0)
                 CGOColorv(cgo, col[ii]);
-              CGOPickColor(cgo, atix[ii], cPickableAtom);
+	      //              CGOPickColor(cgo, atix[ii], cPickableAtom);
               CGOVertexv(cgo, v1t);
 
               if(ring_mode > 1) {
@@ -1254,38 +1354,32 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
 
                 if(ring_color < 0)
                   CGOColorv(cgo, col[i]);
-                CGOPickColor(cgo, atix[i], cPickableAtom);
+		//                CGOPickColor(cgo, atix[i], cPickableAtom);
                 CGOVertexv(cgo, v0t);
                 CGOVertexv(cgo, v0b);
                 if(ring_color < 0)
                   CGOColorv(cgo, col[ii]);
-                CGOPickColor(cgo, atix[ii], cPickableAtom);
                 CGOVertexv(cgo, v1t);
                 CGOVertexv(cgo, v1t);
                 if(ring_color < 0)
                   CGOColorv(cgo, col[i]);
-                CGOPickColor(cgo, atix[i], cPickableAtom);
                 CGOVertexv(cgo, v0b);
                 if(ring_color < 0)
                   CGOColorv(cgo, col[ii]);
-                CGOPickColor(cgo, atix[ii], cPickableAtom);
                 CGOVertexv(cgo, v1b);
               }
 
               CGONormalv(cgo, upi);
               if(ring_color < 0)
                 CGOColorv(cgo, color);
-              CGOPickColor(cgo, atix[i], cPickableAtom);
               CGOVertexv(cgo, cb);
               CGONormalv(cgo, n_dn[ii]);
               if(ring_color < 0)
                 CGOColorv(cgo, col[ii]);
-              CGOPickColor(cgo, atix[ii], cPickableAtom);
               CGOVertexv(cgo, v1b);
               CGONormalv(cgo, n_dn[i]);
               if(ring_color < 0)
                 CGOColorv(cgo, col[i]);
-              CGOPickColor(cgo, atix[i], cPickableAtom);
               CGOVertexv(cgo, v0b);
 
             }
@@ -1294,25 +1388,35 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
             if((alpha != 1.0F) || (ring_alpha != alpha))
               CGOAlpha(cgo, alpha);
 
-            if(ring_mode == 1) {
+	    {
+	      float ring_width_for_mode = ring_width;
+	      if (ring_mode == 3){
+		ring_width_for_mode = 3.f * ring_width;
+	      }
               for(i = 0; i < n_atom; i++) {
                 ii = i + 1;
-                CGOPickColor(cgo, atix[i], cPickableAtom);
-                if(ring_color < 0) {
-                  CGOSausage(cgo, v_i[i], v_i[ii], ring_width, col[i], col[ii]);
-                } else {
-                  CGOSausage(cgo, v_i[i], v_i[ii], ring_width, color, color);
-                }
-              }
-            } else if(ring_mode == 3) {
-              for(i = 0; i < n_atom; i++) {
-                ii = i + 1;
-                CGOPickColor(cgo, atix[i], cPickableAtom);
-                if(ring_color < 0) {
-                  CGOSausage(cgo, v_i[i], v_i[ii], 3 * ring_width, col[i], col[ii]);
-                } else {
-                  CGOSausage(cgo, v_i[i], v_i[ii], 3 * ring_width, color, color);
-                }
+		{
+		  float *color1, *color2;
+		  if (ring_color < 0) {
+		    color1 = col[i];
+		    color2 = col[ii];
+		  } else {
+		    color1 = color2 = color;
+		  }
+		  if (is_picking){
+		    float midv[3], midc[3];
+		    average3f(v_i[i], v_i[ii], midv);
+		    average3f(color1, color2, midc);
+		    CGOPickColor(cgo, atix[i], cPickableAtom);		    
+		    CGOCustomCylinderv(cgo, v_i[i], midv, ring_width_for_mode, 
+				       color1, midc, 2.0F, 0.0F);
+		    CGOPickColor(cgo, atix[ii], cPickableAtom);		    
+		    CGOCustomCylinderv(cgo, midv, v_i[ii], ring_width_for_mode, 
+				       midc, color2, 0.0F, 2.0F);
+		  } else {
+		    CGOSausage(cgo, v_i[i], v_i[ii], ring_width_for_mode, color1, color2);
+		  }
+		}
               }
             }
           }
@@ -1455,75 +1559,1179 @@ static void nuc_acid(PyMOLGlobals * G, int a, int a1, AtomInfoType * ai, CoordSe
   *p_v = v;
 }
 
+CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinders_for_strands, short is_picking,
+			   float *pv, int nAt, float *tv, float *pvo,
+			   float *dl, int *car, int *seg, int *at, int *nuc_flag,
+			   float putty_mean, float putty_stdev, float putty_min, float putty_max,
+			   int *ring_anchor, int n_ring){
+  PyMOLGlobals *G = cs->State.G;
+  CGO *cgo;
+  float *h_start = NULL, *h_end = NULL;
+  int b, c;
+  int last_color, uniform_color;
+  int contigFlag;
+  int contFlag, extrudeFlag;
+  float t4[3];
+  int n_p, n_pm1, n_pm2;
+  CExtrude *ex = NULL, *ex1;
+  float f0, f1, f2, f3, f4, dev;
+  int *vi, atom_index1, atom_index2;
+  float *v, *v0, *v1, *v2, *v3, *v4, *vo;
+  float *d;
+  float *vc = NULL;
+  float *p0, *p1, *p2, *p3;
+  float *vn;
+  int i0, *atp;
+  int c1, c2;
+  float alpha, ring_alpha;
+  int round_helices;
+  int cartoon_debug;
+  int cylindrical_helices;
+  int a;
+  float t0[3], t1[3], t2[3], t3[3];
+  int sampling;
+  float *sampling_tmp;
+  int *s, *cc;
+  int cur_car;
+  int cartoon_color, highlight_color;
+  int discrete_colors;
+  float helix_radius;
+  float loop_radius;
+  int nucleic_color = 0;
+  float throw;
+  float power_a = 5;
+  float power_b = 5;
+  int refine;
+  float tube_radius;
+  float putty_radius;
+  int loop_quality, oval_quality, tube_quality, putty_quality;
+  int loop_cap, tube_cap;
+  float length, width;
+  float oval_width, oval_length;
+  float dumbbell_radius, dumbbell_width, dumbbell_length;
+  float ring_width;
+  int ring_color;
+  int ring_mode, ring_finder, ring_finder_eff;
+  int ladder_mode, ladder_color;
+  float ladder_radius, ring_radius;
+  int na_mode;
+  int cartoon_side_chain_helper;
+  cartoon_color =
+    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_color);
+  cartoon_side_chain_helper =
+    SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_side_chain_helper);
+  na_mode =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_nucleic_acid_mode);
+
+  ladder_mode =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ladder_mode);
+  ladder_radius =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ladder_radius);
+  ladder_color =
+    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ladder_color);
+  ring_radius =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_radius);
+
+  if(ladder_color == -1)
+    ladder_color = cartoon_color;
+
+  ring_finder =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_finder);
+  ring_finder_eff = ring_finder;
+  ring_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_mode);
+  if((!ring_mode) || (ring_finder == 2))
+    ring_finder_eff = 1;
+
+  ring_color =
+    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_color);
+  if(ring_color == -1)
+    ring_color = cartoon_color;
+
+  ring_width =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_width);
+  if(ring_width < 0.0F) {
+    ring_width =
+      fabs(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_radius)) * 0.5F;
+  }
+
+  length = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_rect_length);
+  width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_rect_width);
+  oval_length =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_oval_length);
+  dumbbell_length =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_dumbbell_length);
+  oval_width =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_oval_width);
+  dumbbell_width =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_dumbbell_width);
+  dumbbell_radius =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_dumbbell_radius);
+  if(dumbbell_radius < 0.01F)
+    dumbbell_radius = 0.01F;
+
+  tube_cap = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_tube_cap);
+  loop_cap = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_loop_cap);
+
+  tube_radius =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_tube_radius);
+  if(tube_radius < 0.01F)
+    tube_radius = 0.01F;
+  putty_radius =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_putty_radius);
+  /* WLD removed: if(putty_radius<0.01F) putty_radius=0.01F; --
+     should not constrain what is effectively a scale factor */
+  tube_quality =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_tube_quality);
+  if(tube_quality < 3)
+    tube_quality = 3;
+  oval_quality =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_oval_quality);
+  if(oval_quality < 3)
+    tube_quality = 3;
+  putty_quality =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_putty_quality);
+  if(putty_quality < 3)
+    putty_quality = 3;
+  loop_quality =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_loop_quality);
+  if(loop_quality < 3)
+    loop_quality = 3;
+  if(SettingGetGlobal_i(G, cSetting_ray_trace_mode) > 0)
+    if(loop_quality < 12)
+      loop_quality *= 2;
+  refine = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_refine);
+  power_a = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_power);
+  power_b = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_power_b);
+  throw = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_throw);
+  loop_radius =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_loop_radius);
+  if(loop_radius < 0.01F)
+    loop_radius = 0.01F;
+  helix_radius =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_helix_radius);
+  discrete_colors =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_discrete_colors);
+  nucleic_color =
+    SettingGet_color(G, cs->Setting, obj->Obj.Setting,
+                     cSetting_cartoon_nucleic_acid_color);
+  if(nucleic_color == -1)
+    nucleic_color = cartoon_color;
+  highlight_color =
+    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_highlight_color);
+
+  cylindrical_helices =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_cylindrical_helices);
+
+  sampling = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_sampling);
+  if(sampling < 1)
+    sampling = 1;
+  sampling_tmp = Alloc(float, sampling * 3);
+
+  alpha =
+    1.0F - SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_transparency);
+  ring_alpha =
+    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_transparency);
+
+  if(ring_alpha < 0.0F)
+    ring_alpha = alpha;
+  else
+    ring_alpha = 1.0F - ring_alpha;
+
+  round_helices =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_round_helices);
+  cartoon_debug = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_debug);
+
+  cgo = CGONew(G);
+
+  if(alpha != 1.0F)
+    CGOAlpha(cgo, alpha);
+
+  /* debugging output */
+  if(round_helices) {
+    if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
+      CGOColor(cgo, 1.0, 1.0, 1.0);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+      CGODisable(cgo, GL_LIGHTING);
+#endif
+
+      v1 = NULL;
+      v2 = NULL;
+      v3 = NULL;
+      v4 = NULL;
+      v = pv;
+      if(nAt > 1) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	int nverts = nAt - 3, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_LINE_STRIP, CGO_VERTEX_ARRAY, nverts);      
+#else
+        CGOBegin(cgo, GL_LINE_STRIP);
+#endif
+        for(a = 0; a < nAt; a++) {
+          v4 = v3;
+          v3 = v2;
+          v2 = v1;
+          v1 = v;
+          if(v1 && v2 && v3 && v4) {
+            add3f(v1, v4, t0);
+            add3f(v2, v3, t1);
+            /*            scale3f(t0,0.2024,t0);
+               scale3f(t1,0.2727,t1); */
+
+            scale3f(t0, 0.2130F, t0);
+            scale3f(t1, 0.2870F, t1);
+
+            add3f(t0, t1, t0);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	    tmp_ptr = t0;
+	    vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+#else
+            CGOVertexv(cgo, t0);
+#endif
+          }
+          v += 3;
+        }
+#ifndef _PYMOL_CGO_DRAWARRAYS
+        CGOEnd(cgo);
+#endif
+      }
+    }
+  }
+
+  PRINTFD(G, FB_RepCartoon)
+    " RepCartoon-Debug: creating 3D scaffold...\n" ENDFD;
+
+  /* okay, we now have enough info to generate smooth interpolations */
+
+  if(nAt > 1) {
+    ex = ExtrudeNew(G);
+    ExtrudeAllocPointsNormalsColors(ex, cs->NIndex * (3 * sampling + 3));
+  }
+
+  /* process cylindrical helices first */
+
+  if((nAt > 1) && cylindrical_helices) {
+
+    /* this is confusing because we're borrowing Extrude's arrays 
+     * for convenient storage, but not actually calling Extrude */
+
+    n_p = 0;
+    v = ex->p;
+    vc = ex->c;
+    vn = ex->n;
+    vi = ex->i;
+
+    last_color = -1;
+    uniform_color = true;
+
+    v1 = pv;                    /* points */
+    v2 = tv;                    /* tangents */
+    vo = pvo;
+    d = dl;
+    s = seg;
+    cc = car;
+    atp = at;                   /* cs index pointer */
+    a = 0;
+    contFlag = true;
+    cur_car = cCartoon_skip;
+    extrudeFlag = false;
+    contigFlag = false;
+
+    while(contFlag) {
+      if((*cc) != cur_car) {    /* new cartoon type */
+        if(n_p) {               /* any cartoon points? */
+          extrudeFlag = true;
+        } else {
+          cur_car = *(cc);      /* now: go ahead and switch cartoons */
+          n_p = 0;
+          v = ex->p;
+          vc = ex->c;
+          vi = ex->i;
+          vn = ex->n;
+          last_color = -1;
+          uniform_color = true;
+        }
+      }
+      if(a && !extrudeFlag) {
+        if((*s) != *(s - 1)) {  /* new segment */
+          contigFlag = false;
+          if(n_p) {             /* any cartoon points? */
+            extrudeFlag = true;
+          } else {
+            n_p = 0;
+            v = ex->p;
+            vc = ex->c;
+            vi = ex->i;
+            vn = ex->n;
+            last_color = -1;
+            uniform_color = true;
+          }
+        }
+      }
+      if(!extrudeFlag) {
+        if((a < (nAt - 1)) && (*s == *(s + 1))) {       /* working in the same segment... */
+          atom_index1 = cs->IdxToAtm[*atp];
+          atom_index2 = cs->IdxToAtm[*(atp + 1)];
+          c1 = *(cs->Color + *atp);
+          c2 = *(cs->Color + *(atp + 1));
+
+          if(cartoon_color >= 0) {
+            c1 = (c2 = cartoon_color);
+          }
+
+          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_cartoon_color,
+                                   c1, &c1);
+          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index2, cSetting_cartoon_color,
+                                   c2, &c2);
+
+          if(discrete_colors) {
+            if(n_p == 0) {
+              if(contigFlag) {
+                if(cur_car != cCartoon_loop)
+                  c2 = c1;
+                else {
+                  if((*cc + 1) == cur_car)
+                    c2 = c1;
+                  else
+                    c1 = c2;
+                }
+              } else if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
+                c2 = c1;
+              }
+            } else {
+              if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
+                c2 = c1;
+              }
+            }                   /* not contig */
+
+          }
+
+          if((*(cc) == *(cc + 1)) && (c1 != c2))
+            uniform_color = false;
+          if(last_color >= 0) {
+            if(c1 != last_color)
+              uniform_color = false;
+          }
+          last_color = c1;
+
+          v0 = ColorGet(G, c1);
+          *(vc++) = *(v0++);
+          *(vc++) = *(v0++);
+          *(vc++) = *(v0++);
+          *(vi++) = atom_index1;
+
+          v0 = ColorGet(G, c2); /* kludge */
+          *(vc) = *(v0++);
+          *(vc + 1) = *(v0++);
+          *(vc + 2) = *(v0++);
+          *(vi) = atom_index2;
+        } else {
+          vc += 3;              /* part of kludge */
+          vi++;
+        }
+        if(cur_car == cCartoon_skip_helix) {
+          if(!n_p) {
+            h_start = v1;
+            h_end = v1;
+          } else {
+            h_end = v1;
+          }
+          copy3f(v1, v);        /* just store coordinates until we have a complete cylinder */
+          v += 3;
+          n_p++;
+        }
+        v1 += 3;
+        v2 += 3;
+        v3 += 3;
+        vo += 3;
+        d++;
+        atp++;
+        s++;
+        cc++;
+      }
+
+      a++;
+      if(a == nAt) {
+        contFlag = false;
+        if(n_p)
+          extrudeFlag = true;
+      }
+
+      if(extrudeFlag) {         /* generate cylinder */
+        contigFlag = true;
+        if((a < nAt) && extrudeFlag) {
+          if(*(s - 1) != *(s))
+            contigFlag = false;
+        }
+
+        if(n_p > 1) {
+          atom_index1 = cs->IdxToAtm[*(atp - 1)];
+          c1 = *(cs->Color + *(atp - 1));
+
+          if(cartoon_color >= 0) {
+            c1 = cartoon_color;
+          }
+
+          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_cartoon_color,
+                                   c1, &c1);
+
+          if(n_p < 5) {
+            copy3f(ex->p, t3);
+            copy3f(v - 3, t4);
+          } else {
+            add3f(ex->p, ex->p + 9, t0);
+            add3f(ex->p + 3, ex->p + 6, t1);
+            scale3f(t0, 0.2130F, t0);
+            scale3f(t1, 0.2870F, t1);
+            add3f(t0, t1, t3);
+
+            add3f(v - 3, v - 12, t0);
+            add3f(v - 6, v - 9, t1);
+            scale3f(t0, 0.2130F, t0);
+            scale3f(t1, 0.2870F, t1);
+            add3f(t0, t1, t4);
+
+            /* extend helix to line up with CA */
+            subtract3f(t4, t3, t0);
+            normalize3f(t0);
+            subtract3f(v - 3, t3, t1);
+            project3f(t1, t0, t4);
+            add3f(t3, t4, t4);
+            invert3f(t0);
+            subtract3f(ex->p, t4, t1);
+            project3f(t1, t0, t3);
+            add3f(t3, t4, t3);
+
+            /* relocate terminal CA to touch helix, if necessary */
+
+            if(h_start && h_end) {
+              subtract3f(h_start, t3, t0);
+              f0 = helix_radius - loop_radius * 2;
+              if(length3f(t0) > f0) {
+                normalize3f(t0);
+                scale3f(t0, f0, t1);
+                add3f(t1, t3, h_start);
+              }
+
+              subtract3f(h_end, t4, t0);
+              if(length3f(t0) > f0) {
+                normalize3f(t0);
+                scale3f(t0, f0, t1);
+                add3f(t1, t4, h_end);
+              }
+            }
+          }
+
+          /* push helix out a tad to consume loop */
+
+          subtract3f(t4, t3, t0);
+          normalize3f(t0);
+          scale3f(t0, loop_radius * 2, t0);
+          add3f(t0, t4, t4);
+          invert3f(t0);
+          add3f(t0, t3, t3);
+
+          if(uniform_color) {
+            CGOCylinderv(cgo, t3, t4, helix_radius, ex->c, ex->c);
+          } else {
+            subtract3f(t4, t3, t0);
+            n_pm1 = n_p - 1;
+            n_pm2 = n_p - 2;
+            for(b = 0; b < n_pm1; b++) {
+              if(!b) {
+                scale3f(t0, ((float) b - 0.005F) / n_pm1, t1);  /* add small overlap */
+              } else {
+                scale3f(t0, ((float) b) / n_pm1, t1);
+              }
+              if(b < n_pm2) {
+                scale3f(t0, ((float) b + 1.005F) / n_pm1, t2);
+              } else {
+                scale3f(t0, ((float) b + 1) / n_pm1, t2);
+              }
+              add3f(t3, t1, t1);
+              add3f(t3, t2, t2);
+              CGOCustomCylinderv(cgo, t1, t2, helix_radius, ex->c + (b * 3),
+                                 ex->c + (b + 1) * 3, (float) (b ? 0 : cCylCapFlat),
+                                 (float) (b == n_pm2 ? cCylCapFlat : 0));
+            }
+          }
+        }
+        a--;                    /* undo above... */
+        extrudeFlag = false;
+        n_p = 0;
+        v = ex->p;
+        vc = ex->c;
+        vi = ex->i;
+        vn = ex->n;
+        uniform_color = true;
+        last_color = -1;
+      }
+    }
+  }
+
+  if(nAt > 1) {
+    n_p = 0;
+    v = ex->p;
+    vc = ex->c;
+    vn = ex->n;
+    vi = ex->i;
+
+    v1 = pv;                    /* points */
+    v2 = tv;                    /* tangents */
+    vo = pvo;
+    d = dl;
+    s = seg;
+    cc = car;
+    atp = at;                   /* cs index pointer */
+    a = 0;
+    contFlag = true;
+    cur_car = cCartoon_skip;
+    extrudeFlag = false;
+    contigFlag = false;
+
+    while(contFlag) {
+
+      if((*cc) != cur_car) {    /* new cartoon type */
+        if(n_p) {               /* any cartoon points? */
+          extrudeFlag = true;
+        } else {
+          cur_car = *(cc);      /* no: go ahead and switch cartoons */
+          ExtrudeTruncate(ex, 0);
+          n_p = 0;
+          v = ex->p;
+          vc = ex->c;
+          vn = ex->n;
+          vi = ex->i;
+        }
+      }
+
+      /* CONFUSION ALERT -- I don't understand the following code (anymore) */
+
+      if(a < (nAt - 1)) {
+        /* put a setting controlled conditional here.. */
+        if(((*(cc + 1)) != cur_car) && (cur_car != cCartoon_loop)) {    /* end of segment */
+          if(n_p) {             /* any cartoon points? */
+            extrudeFlag = true;
+          } else {
+            cur_car = cCartoon_loop;    /* no: go ahead and switch cartoons */
+            ExtrudeTruncate(ex, 0);
+            n_p = 0;
+            v = ex->p;
+            vc = ex->c;
+            vn = ex->n;
+            vi = ex->i;
+          }
+        }
+      }
+      if((a < (nAt - 1)) && !extrudeFlag) {
+        if((*s) != *(s + 1)) {  /* new segment */
+          contigFlag = false;
+          if(n_p) {             /* any cartoon points? */
+            extrudeFlag = true;
+          } else {
+            ExtrudeTruncate(ex, 0);
+            n_p = 0;
+            v = ex->p;
+            vc = ex->c;
+            vn = ex->n;
+            vi = ex->i;
+          }
+        }
+      }
+      if(!extrudeFlag) {
+        if((a < (nAt - 1)) && (*s == *(s + 1))) {       /* working in the same segment... */
+          c1 = *(cs->Color + *atp);
+          c2 = *(cs->Color + *(atp + 1));
+          atom_index1 = cs->IdxToAtm[*atp];
+          atom_index2 = cs->IdxToAtm[*(atp + 1)];
+
+          if(cartoon_color >= 0) {
+            c1 = (c2 = cartoon_color);
+          }
+
+          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_cartoon_color,
+                                   c1, &c1);
+          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index2, cSetting_cartoon_color,
+                                   c2, &c2);
+
+          if(nuc_flag[*atp] || nuc_flag[*(atp + 1)]) {  /* this is a nucleic acid ribbon */
+            if(nucleic_color >= 0) {
+              c1 = (c2 = nucleic_color);
+            }
+          }
+
+          if(discrete_colors) {
+            if(n_p == 0) {
+              if(contigFlag) {
+                if(cur_car != cCartoon_loop)
+                  c2 = c1;
+                else {
+                  if((*cc + 1) == cur_car)
+                    c2 = c1;
+                  else
+                    c1 = c2;
+                }
+              } else if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
+                c2 = c1;
+              }
+            } else {
+              if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
+                c2 = c1;
+              }
+            }                   /* not contig */
+          }
+
+          dev = throw * (*d);
+          for(b = 0; b < sampling; b++) {       /* needs optimization */
+
+            if(n_p == 0) {
+
+              /* provide starting point on first point in segment only... */
+
+              f0 = ((float) b) / sampling;      /* fraction of completion */
+              if(f0 <= 0.5) {
+                v0 = ColorGet(G, c1);
+                i0 = atom_index1;
+              } else {
+                v0 = ColorGet(G, c2);
+                i0 = atom_index2;
+              }
+              f0 = smooth(f0, power_a); /* bias sampling towards the center of the curve */
+
+              /* store colors */
+
+              *(vc++) = *(v0++);
+              *(vc++) = *(v0++);
+              *(vc++) = *(v0++);
+              *(vi++) = i0;
+              /* start of line/cylinder */
+
+              f1 = 1.0F - f0;
+              f2 = smooth(f0, power_b);
+              f3 = smooth(f1, power_b);
+              f4 = dev * f2 * f3;       /* displacement magnitude */
+
+              *(v++) = f1 * v1[0] + f0 * v1[3] + f4 * (f3 * v2[0] - f2 * v2[3]);
+
+              *(v++) = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
+
+              *(v++) = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
+
+              vn += 9;
+
+              copy3f(vo, vn - 6);       /* starter... */
+
+              n_p++;
+
+            }
+
+            f0 = ((float) b + 1) / sampling;
+            if(f0 <= 0.5) {
+              v0 = ColorGet(G, c1);
+              i0 = atom_index1;
+            } else {
+              v0 = ColorGet(G, c2);
+              i0 = atom_index2;
+            }
+            f0 = smooth(f0, power_a);   /* bias sampling towards the center of the curve */
+
+            /* store colors */
+
+            *(vc++) = *(v0++);
+            *(vc++) = *(v0++);
+            *(vc++) = *(v0++);
+            *(vi++) = i0;
+
+            /* end of line/cylinder */
+
+            f1 = 1.0F - f0;
+            f2 = smooth(f0, power_b);
+            f3 = smooth(f1, power_b);
+            f4 = dev * f2 * f3; /* displacement magnitude */
+
+            *(v++) = f1 * v1[0] + f0 * v1[3] + f4 * (f3 * v2[0] - f2 * v2[3]);
+
+            *(v++) = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
+
+            *(v++) = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
+
+            /*                remove_component3f(vo,v2,o0);
+               remove_component3f(vo+3,v2,o0+3); */
+
+            vn += 3;
+            *(vn++) = f1 * (vo[0] * f2) + f0 * (vo[3] * f3);
+            *(vn++) = f1 * (vo[1] * f2) + f0 * (vo[4] * f3);
+            *(vn++) = f1 * (vo[2] * f2) + f0 * (vo[5] * f3);
+            vn += 3;
+
+            if(b == sampling - 1)
+              copy3f(vo + 3, vn - 6);   /* starter... */
+            n_p++;
+
+          }
+
+          /* now do a smoothing pass along orientation 
+             vector to smooth helices, etc... */
+
+          c = refine;
+          cross_product3f(vn + 3 - (sampling * 9), vn + 3 - 9, t0);
+
+          cross_product3f(vo, vo + 3, t0);
+          if((sampling > 1) && length3f(t0) > R_SMALL4) {
+
+            normalize3f(t0);
+            while(c--) {
+              p0 = v - (sampling * 3) - 3;
+              p1 = v - (sampling * 3);
+              p2 = v - (sampling * 3) + 3;
+              for(b = 0; b < (sampling - 1); b++) {
+                f0 = dot_product3f(t0, p0);
+                f1 = dot_product3f(t0, p1);
+                f2 = dot_product3f(t0, p2);
+
+                f3 = (f2 + f0) / 2.0F;
+                scale3f(t0, f3 - f1, t1);
+                p3 = sampling_tmp + b * 3;
+                add3f(t1, p1, p3);
+
+                p0 = p1;
+                p1 = p2;
+                p2 += 3;
+              }
+              p1 = v - (sampling * 3);
+              for(b = 0; b < (sampling - 1); b++) {
+                p3 = sampling_tmp + b * 3;
+                copy3f(p3, p1);
+                p1 += 3;
+              }
+            }
+          }
+        }
+        v1 += 3;
+        v2 += 3;
+        v3 += 3;
+        vo += 3;
+        d++;
+        atp += 1;
+        s++;
+        cc++;
+
+      }
+
+      a++;
+      if(a == nAt) {
+        contFlag = false;
+        if(n_p)
+          extrudeFlag = true;
+      }
+      if(extrudeFlag) {
+        contigFlag = true;
+        if((a < nAt) && extrudeFlag) {
+          if(*(s - 1) != *(s))
+            contigFlag = false;
+        }
+
+        if((cur_car != cCartoon_skip) && (cur_car != cCartoon_skip_helix)) {
+
+          if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
+            CGOColor(cgo, 0.0, 1.0, 0.0);
+
+            v = ex->p;
+            vn = ex->n + 3;
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+            CGODisable(cgo, GL_LIGHTING);
+#endif
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	    {
+	      int nverts = n_p * 2, pl = 0;
+	      float *vertexVals, *tmp_ptr;
+	      vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
+	      for(b = 0; b < n_p; b++) {
+		tmp_ptr = v;
+		vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+		add3f(v, vn, t0);
+		tmp_ptr = t0;
+		vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+		v += 3;
+		vn += 9;
+	      }
+	    }
+#else
+            CGOBegin(cgo, GL_LINES);
+            for(b = 0; b < n_p; b++) {
+              CGOVertexv(cgo, v);
+              add3f(v, vn, t0);
+              CGOVertexv(cgo, t0);
+              v += 3;
+              vn += 9;
+            }
+            CGOEnd(cgo);
+#endif
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+            CGOEnable(cgo, GL_LIGHTING);
+#endif
+          }
+
+          ExtrudeTruncate(ex, n_p);
+          ExtrudeComputeTangents(ex);
+
+          /* set up shape */
+          switch (cur_car) {
+          case cCartoon_tube:
+	    if (use_cylinders_for_strands){
+	      ExtrudeCylindersToCGO(ex, cgo, tube_radius, is_picking);
+	    } else {
+	      ExtrudeCircle(ex, tube_quality, tube_radius);
+	      ExtrudeBuildNormals1f(ex);
+	      ExtrudeCGOSurfaceTube(ex, cgo, tube_cap, NULL, use_cylinders_for_strands);
+	    }
+            break;
+          case cCartoon_putty:
+            ExtrudeCircle(ex, putty_quality, putty_radius);
+            ExtrudeBuildNormals1f(ex);
+            ExtrudeComputePuttyScaleFactors(ex, obj,
+                                            SettingGet_i(G, cs->Setting, obj->Obj.Setting,
+                                                         cSetting_cartoon_putty_transform),
+                                            putty_mean, putty_stdev, putty_min, putty_max,
+                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+                                                         cSetting_cartoon_putty_scale_power),
+                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+                                                         cSetting_cartoon_putty_range),
+                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+                                                         cSetting_cartoon_putty_scale_min),
+                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+                                                         cSetting_cartoon_putty_scale_max),
+                                            sampling / 2);
+
+            ExtrudeCGOSurfaceVariableTube(ex, cgo, 1);
+            break;
+          case cCartoon_loop:
+            ExtrudeCircle(ex, loop_quality, loop_radius);
+            ExtrudeBuildNormals1f(ex);
+            ExtrudeCGOSurfaceTube(ex, cgo, loop_cap, NULL, use_cylinders_for_strands);
+            break;
+          case cCartoon_rect:
+	    if(highlight_color < 0) {
+              ExtrudeRectangle(ex, width, length, 0);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfacePolygon(ex, cgo, 1, NULL);
+            } else {
+              ExtrudeRectangle(ex, width, length, 1);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfacePolygon(ex, cgo, 0, NULL);
+              ExtrudeRectangle(ex, width, length, 2);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfacePolygon(ex, cgo, 1, ColorGet(G, highlight_color));
+	    }
+            break;
+          case cCartoon_oval:
+            ExtrudeOval(ex, oval_quality, oval_width, oval_length);
+            ExtrudeBuildNormals2f(ex);
+            if(highlight_color < 0)
+              ExtrudeCGOSurfaceTube(ex, cgo, 1, NULL, use_cylinders_for_strands);
+            else
+              ExtrudeCGOSurfaceTube(ex, cgo, 1, ColorGet(G, highlight_color), use_cylinders_for_strands);
+            break;
+          case cCartoon_arrow:
+            ExtrudeRectangle(ex, width, length, 0);
+            ExtrudeBuildNormals2f(ex);
+            if(highlight_color < 0)
+              ExtrudeCGOSurfaceStrand(ex, cgo, sampling, NULL);
+            else
+              ExtrudeCGOSurfaceStrand(ex, cgo, sampling, ColorGet(G, highlight_color));
+
+
+            /* for PLY files      
+               ExtrudeCircle(ex,loop_quality,loop_radius);
+               ExtrudeBuildNormals1f(ex);
+               ExtrudeCGOSurfaceTube(ex,cgo,loop_cap,NULL);
+             */
+            break;
+          case cCartoon_dumbbell:
+            if(highlight_color < 0) {
+              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 0);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, NULL);
+            } else {
+
+              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 1);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, NULL);
+
+              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 2);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling,
+                                            ColorGet(G, highlight_color));
+            }
+            /*
+               ExtrudeCGOSurfacePolygonX(ex,cgo,1); */
+
+            ex1 = ExtrudeCopyPointsNormalsColors(ex);
+            ExtrudeDumbbellEdge(ex1, sampling, -1, dumbbell_length);
+            ExtrudeComputeTangents(ex1);
+            ExtrudeCircle(ex1, loop_quality, dumbbell_radius);
+            ExtrudeBuildNormals1f(ex1);
+
+            ExtrudeCGOSurfaceTube(ex1, cgo, 1, NULL, use_cylinders_for_strands);
+            ExtrudeFree(ex1);
+
+            ex1 = ExtrudeCopyPointsNormalsColors(ex);
+            ExtrudeDumbbellEdge(ex1, sampling, 1, dumbbell_length);
+            ExtrudeComputeTangents(ex1);
+            ExtrudeCircle(ex1, loop_quality, dumbbell_radius);
+            ExtrudeBuildNormals1f(ex1);
+            ExtrudeCGOSurfaceTube(ex1, cgo, 1, NULL, use_cylinders_for_strands);
+            ExtrudeFree(ex1);
+
+            break;
+          }
+        }
+        a--;                    /* undo above... */
+        extrudeFlag = false;
+        ExtrudeTruncate(ex, 0);
+        n_p = 0;
+        v = ex->p;
+        vc = ex->c;
+        vn = ex->n;
+      }
+    }
+  }
+
+  if(nAt > 1) {
+    if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
+      CGOColor(cgo, 1.0, 1.0, 1.0);
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+      CGODisable(cgo, GL_LIGHTING);
+#endif
+      {
+
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	int nverts = nAt * 4, pl = 0;
+	float *vertexVals, *tmp_ptr;
+	vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
+#else
+	CGOBegin(cgo, GL_LINES);
+#endif
+	v1 = pv;
+	v2 = pvo;
+	v3 = tv;
+	for(a = 0; a < nAt; a++) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+	  tmp_ptr = v1;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	  add3f(v1, v2, t0);
+	  add3f(v2, t0, t0);
+	  tmp_ptr = t0;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	  subtract3f(v1, v3, t0);
+	  tmp_ptr = t0;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+	  add3f(v1, v3, t0);
+	  tmp_ptr = t0;
+	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
+#else
+	  CGOVertexv(cgo, v1);
+	  add3f(v1, v2, t0);
+	  add3f(v2, t0, t0);
+	  CGOVertexv(cgo, t0);
+	  subtract3f(v1, v3, t0);
+	  CGOVertexv(cgo, t0);
+	  add3f(v1, v3, t0);
+	  CGOVertexv(cgo, t0);
+#endif
+	  v1 += 3;
+	  v2 += 3;
+	  v3 += 3;
+	}
+#ifndef _PYMOL_CGO_DRAWARRAYS
+	CGOEnd(cgo);
+#endif
+      }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+      CGOEnable(cgo, GL_LIGHTING);
+#endif
+    }
+  }
+  if(ex) {
+    ExtrudeFree(ex);
+  }
+  /* draw the rings */
+
+  if(ring_anchor && n_ring) {
+    int ring_i;
+    int mem[8];
+    int nbr[7];
+    int *neighbor;
+    int *marked = Calloc(int, obj->NAtom);
+    float *moved = Calloc(float, obj->NAtom * 3);
+
+    register int escape_count;
+    register int *atmToIdx = NULL;
+
+    if(!obj->DiscreteFlag)
+      atmToIdx = cs->AtmToIdx;
+
+    ObjectMoleculeUpdateNeighbors(obj);
+    neighbor = obj->Neighbor;
+
+    escape_count = ESCAPE_MAX;  /* don't get bogged down with structures 
+                                   that have unreasonable connectivity */
+    for(ring_i = 0; ring_i < n_ring; ring_i++) {
+      mem[0] = ring_anchor[ring_i];
+      nbr[0] = neighbor[mem[0]] + 1;
+      while(((mem[1] = neighbor[nbr[0]]) >= 0) &&
+            ((!atmToIdx) || (atmToIdx[mem[0]] >= 0))) {
+        nbr[1] = neighbor[mem[1]] + 1;
+        while(((mem[2] = neighbor[nbr[1]]) >= 0) &&
+              ((!atmToIdx) || (atmToIdx[mem[1]] >= 0))) {
+          if(mem[2] != mem[0]) {
+            nbr[2] = neighbor[mem[2]] + 1;
+            while(((mem[3] = neighbor[nbr[2]]) >= 0) &&
+                  ((!atmToIdx) || (atmToIdx[mem[2]] >= 0))) {
+              if(mem[3] != mem[1]) {
+                nbr[3] = neighbor[mem[3]] + 1;
+                while(((mem[4] = neighbor[nbr[3]]) >= 0) &&
+                      ((!atmToIdx) || (atmToIdx[mem[3]] >= 0))) {
+                  if((mem[4] != mem[2]) && (mem[4] != mem[1]) && (mem[4] != mem[0])) {
+                    nbr[4] = neighbor[mem[4]] + 1;
+                    while(((mem[5] = neighbor[nbr[4]]) >= 0) &&
+                          ((!atmToIdx) || (atmToIdx[mem[4]] >= 0))) {
+                      if(!(escape_count--))
+                        goto escape;
+                      if((mem[5] != mem[3]) && (mem[5] != mem[2]) && (mem[5] != mem[1])) {
+                        if(mem[5] == mem[0]) {  /* five-cycle */
+                          /*    printf(" 5: %s(%d) %s(%d) %s(%d) %s(%d) %s(%d)\n",
+                             obj->AtomInfo[mem[0]].name,mem[0],
+                             obj->AtomInfo[mem[1]].name,mem[1],
+                             obj->AtomInfo[mem[2]].name,mem[2],
+                             obj->AtomInfo[mem[3]].name,mem[3],
+                             obj->AtomInfo[mem[4]].name,mem[4]); */
+                          do_ring(G, is_picking, 5, mem, obj, cs, ring_width, cgo, ring_color,
+                                  ring_mode, ladder_radius, ladder_color, ladder_mode,
+                                  ring_finder, cartoon_side_chain_helper, nuc_flag,
+                                  na_mode, ring_alpha, alpha, marked, moved, ring_radius);
+
+                        }
+
+                        nbr[5] = neighbor[mem[5]] + 1;
+                        while(((mem[6] = neighbor[nbr[5]]) >= 0) &&
+                              ((!atmToIdx) || (atmToIdx[mem[5]] >= 0))) {
+                          if((mem[6] != mem[4]) && (mem[6] != mem[3])
+                             && (mem[6] != mem[2]) && (mem[6] != mem[1])) {
+                            if(mem[6] == mem[0]) {      /* six-cycle */
+                              /* printf(" 6: %s %s %s %s %s %s\n",
+                                 obj->AtomInfo[mem[0]].name,
+                                 obj->AtomInfo[mem[1]].name,
+                                 obj->AtomInfo[mem[2]].name,
+                                 obj->AtomInfo[mem[3]].name,
+                                 obj->AtomInfo[mem[4]].name,
+                                 obj->AtomInfo[mem[5]].name
+                                 ); */
+                              do_ring(G, is_picking, 6, mem, obj, cs, ring_width, cgo, ring_color,
+                                      ring_mode, ladder_radius, ladder_color, ladder_mode,
+                                      ring_finder, cartoon_side_chain_helper, nuc_flag,
+                                      na_mode, ring_alpha, alpha, marked, moved,
+                                      ring_radius);
+                            }
+                            nbr[6] = neighbor[mem[6]] + 1;
+                            while(((mem[7] = neighbor[nbr[6]]) >= 0) &&
+                                  ((!atmToIdx) || (atmToIdx[mem[6]] >= 0))) {
+                              if((mem[7] != mem[5]) && (mem[7] != mem[4])
+                                 && (mem[7] != mem[3]) && (mem[7] != mem[2])
+                                 && (mem[7] != mem[1])) {
+                                if(mem[7] == mem[0]) {
+                                  do_ring(G, is_picking, 7, mem, obj, cs, ring_width, cgo,
+                                          ring_color, ring_mode, ladder_radius,
+                                          ladder_color, ladder_mode, ring_finder,
+                                          cartoon_side_chain_helper, nuc_flag, na_mode,
+                                          ring_alpha, alpha, marked, moved, ring_radius);
+                                }
+                              }
+                              nbr[6] += 2;
+                            }
+                          }
+                          nbr[5] += 2;
+                        }
+                      }
+                      nbr[4] += 2;
+                    }
+                  }
+                  nbr[3] += 2;
+                }
+              }
+              nbr[2] += 2;
+            }
+          }
+          nbr[1] += 2;
+        }
+        nbr[0] += 2;
+      }
+    escape:
+      escape_count = ESCAPE_MAX;        /* don't get bogged down with structures 
+                                           that have unreasonable connectivity */
+    }
+    FreeP(marked);
+    FreeP(moved);
+  }
+  CGOStop(cgo);
+
+  FreeP(sampling_tmp);
+
+  return (cgo);
+}
+
 Rep *RepCartoonNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj;
-  int a, b, c, f, e, a1, a2, c1, c2, i0, *i, *s, *at, *seg, nAt, *atp, a3, a4 =
+  int a, b, c, f, e, a1, a2, *i, *s, *at, *seg, nAt, a3, a4 =
     0, *car, *cc, *sstype;
-  float *v, *v0, *v1, *v2, *v3, *v4, *v5, *vo, *vn, *va;
-  float *p0, *p1, *p2, *p3;
+  float *v, *v0, *v1, *v2, *v3, *v4, *v5, *vo, *va;
   float *pv = NULL;
   float *pvo = NULL, *pva = NULL;
   float *dv = NULL;
   float *nv = NULL;
   float *tv = NULL;
-  float *vc = NULL;
   float *tmp = NULL;
   int last, first, end_flag;
-  int *vi, atom_index1, atom_index2;
-  float f0, f1, f2, f3, f4, dev;
   float *d, dp;
   float *dl = NULL;
   int nSeg;
-  int sampling;
   int *ss, *fp;
-  float power_a = 5;
-  float power_b = 5;
-  float loop_radius;
-  float tube_radius;
-  float putty_radius;
 
   int visFlag;
-  CExtrude *ex = NULL, *ex1;
-  int n_p, n_pm1, n_pm2;
-  int loop_quality, oval_quality, tube_quality, putty_quality;
-  float oval_width, oval_length;
-  float dumbbell_radius, dumbbell_width, dumbbell_length;
-  float throw;
   int st, nd;
   float *v_c, *v_n, *v_o, *v_o_last = NULL;
-  float t0[3], t1[3], t2[3], t3[3], t4[3], o0[12], o1[12];
+  float t0[3], t1[3], t2[3], t3[3], o0[12], o1[12];
   float max_dot;
-  float length, width;
   int cur_car;
-  int contFlag, extrudeFlag;
   int cartoon_debug;
   int fancy_helices;
   int fancy_sheets;
-  int refine;
-  int contigFlag;
-  int discrete_colors;
   int cylindrical_helices;
-  int last_color, uniform_color;
-  int cartoon_color, highlight_color;
+  int highlight_color;
   int cartoon_side_chain_helper;
-  int ladder_mode, ladder_color;
-  float ladder_radius, ring_radius;
+  int ladder_mode;
   int round_helices;
   int smooth_loops;
   int na_mode;
   int parity;
   float refine_tips;
-  float helix_radius;
-  float *h_start = NULL, *h_end = NULL;
-  float *sampling_tmp;
   int *flag_tmp;
   int smooth_first, smooth_last, smooth_cycles, flat_cycles;
   int trace, trace_mode;
   int skip_to;
   AtomInfoType *ai, *last_ai = NULL;
-  float alpha;
   int putty_flag = false;
   float putty_mean = 10.0F, putty_stdev = 0.0F;
   float putty_max = -FLT_MAX, putty_min = FLT_MAX;
@@ -1534,12 +2742,15 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   int *ring_anchor = NULL;
   int ring_mode, ring_finder, ring_finder_eff;
   int n_ring = 0;
-  float ring_width;
-  int ring_color;
-  int loop_cap, tube_cap;
   int *nuc_flag = NULL;
-  int nucleic_color = 0;
-  float ring_alpha;
+  float alpha;
+  /*  short na_ladder_as_cylinders = SettingGet(G, cSetting_use_shaders) && 
+    (((int)SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders)) & 1) && 
+    SettingGet(G, cSetting_render_as_cylinders);*/
+  short na_strands_as_cylinders = SettingGet(G, cSetting_use_shaders) && 
+    (((int)SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders)) & 2) && 
+    SettingGet(G, cSetting_render_as_cylinders);
+
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -1563,78 +2774,17 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   }
 
   RepInit(G, &I->R);
-  power_a = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_power);
-  power_b = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_power_b);
 
   cartoon_debug = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_debug);
-  length = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_rect_length);
-  width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_rect_width);
+
   trace = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_trace_atoms);
   trace_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trace_atoms_mode);
-
   alpha =
     1.0F - SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_transparency);
-  throw = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_throw);
-
-  sampling = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_sampling);
-  if(sampling < 1)
-    sampling = 1;
-  loop_radius =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_loop_radius);
-  if(loop_radius < 0.01F)
-    loop_radius = 0.01F;
-  loop_quality =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_loop_quality);
-  if(loop_quality < 3)
-    loop_quality = 3;
-  if(SettingGetGlobal_i(G, cSetting_ray_trace_mode) > 0)
-    if(loop_quality < 12)
-      loop_quality *= 2;
-
-  tube_radius =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_tube_radius);
-  if(tube_radius < 0.01F)
-    tube_radius = 0.01F;
-  tube_quality =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_tube_quality);
-  if(tube_quality < 3)
-    tube_quality = 3;
-
-  putty_radius =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_putty_radius);
-  /* WLD removed: if(putty_radius<0.01F) putty_radius=0.01F; --
-     should not constrain what is effectively a scale factor */
-
-  putty_quality =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_putty_quality);
-  if(putty_quality < 3)
-    putty_quality = 3;
-
-  cartoon_color =
-    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_color);
   cartoon_side_chain_helper =
     SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_side_chain_helper);
-
   highlight_color =
     SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_highlight_color);
-
-  oval_length =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_oval_length);
-  oval_width =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_oval_width);
-  oval_quality =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_oval_quality);
-  if(oval_quality < 3)
-    tube_quality = 3;
-
-  dumbbell_length =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_dumbbell_length);
-  dumbbell_width =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_dumbbell_width);
-  dumbbell_radius =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_dumbbell_radius);
-  if(dumbbell_radius < 0.01F)
-    dumbbell_radius = 0.01F;
 
   fancy_helices =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_fancy_helices);
@@ -1642,31 +2792,13 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_fancy_sheets);
   cylindrical_helices =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_cylindrical_helices);
-  refine = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_refine);
   refine_tips =
     SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_refine_tips);
 
-  discrete_colors =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_discrete_colors);
   round_helices =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_round_helices);
   smooth_loops =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_smooth_loops);
-  helix_radius =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_helix_radius);
-
-  ring_width =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_width);
-  if(ring_width < 0.0F) {
-    ring_width =
-      fabs(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_radius)) * 0.5F;
-  }
-
-  ring_color =
-    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_color);
-
-  if(ring_color == -1)
-    ring_color = cartoon_color;
 
   smooth_first =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_smooth_first);
@@ -1679,44 +2811,17 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   na_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_nucleic_acid_mode);
-  nucleic_color =
-    SettingGet_color(G, cs->Setting, obj->Obj.Setting,
-                     cSetting_cartoon_nucleic_acid_color);
-
-  if(nucleic_color == -1)
-    nucleic_color = cartoon_color;
-
   ring_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_mode);
   ring_finder =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_finder);
-  ring_alpha =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_transparency);
-
-  if(ring_alpha < 0.0F)
-    ring_alpha = alpha;
-  else
-    ring_alpha = 1.0F - ring_alpha;
-
   alpha =
     1.0F - SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_transparency);
   ladder_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ladder_mode);
-  ladder_radius =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ladder_radius);
-  ladder_color =
-    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ladder_color);
-  ring_radius =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_ring_radius);
-
-  if(ladder_color == -1)
-    ladder_color = cartoon_color;
 
   ring_finder_eff = ring_finder;
   if((!ring_mode) || (ring_finder == 2))
     ring_finder_eff = 1;
-
-  tube_cap = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_tube_cap);
-  loop_cap = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_loop_cap);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepCartoonRender;
   I->R.fFree = (void (*)(struct Rep *)) RepCartoonFree;
@@ -1725,6 +2830,8 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   I->R.cs = cs;
   I->ray = NULL;
   I->std = NULL;
+  I->preshader = NULL;
+  I->pickingCGO = NULL;
   I->R.context.object = (void *) obj;
   I->R.context.state = state;
 
@@ -1738,7 +2845,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   seg = Alloc(int, cs->NAtIndex);
   car = Alloc(int, cs->NAtIndex);
   sstype = Alloc(int, cs->NAtIndex);
-  sampling_tmp = Alloc(float, sampling * 3);
   flag_tmp = Calloc(int, cs->NAtIndex);
   nuc_flag = Calloc(int, cs->NAtIndex);
   if(ring_mode || ladder_mode) {
@@ -2646,872 +3752,30 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     }
   }
 
-  I->ray = CGONew(G);
+  I->ray = GenerateRepCartoonCGO(cs, obj, na_strands_as_cylinders, false, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
+				 putty_mean, putty_stdev, putty_min, putty_max, ring_anchor, n_ring);
 
-  if(alpha != 1.0F)
-    CGOAlpha(I->ray, alpha);
-
-  /* debugging output */
-  if(round_helices) {
-    if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
-      CGOColor(I->ray, 1.0, 1.0, 1.0);
-      CGODisable(I->ray, GL_LIGHTING);
-      CGOBegin(I->ray, GL_LINE_STRIP);
-
-      v1 = NULL;
-      v2 = NULL;
-      v3 = NULL;
-      v4 = NULL;
-      v = pv;
-      if(nAt > 1) {
-        CGOBegin(I->ray, GL_LINE_STRIP);
-        for(a = 0; a < nAt; a++) {
-          v4 = v3;
-          v3 = v2;
-          v2 = v1;
-          v1 = v;
-          if(v1 && v2 && v3 && v4) {
-            add3f(v1, v4, t0);
-            add3f(v2, v3, t1);
-            /*            scale3f(t0,0.2024,t0);
-               scale3f(t1,0.2727,t1); */
-
-            scale3f(t0, 0.2130F, t0);
-            scale3f(t1, 0.2870F, t1);
-
-            add3f(t0, t1, t0);
-            CGOVertexv(I->ray, t0);
-          }
-          v += 3;
-        }
-        CGOEnd(I->ray);
-      }
-    }
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  if (I->ray && I->ray->has_begin_end){
+    CGO *convertcgo = NULL;
+    convertcgo = CGOCombineBeginEnd(I->ray, 0);    
+    I->preshader = I->ray = convertcgo;
+  } else {
+    I->preshader = I->ray;
   }
+#else
+  I->preshader = I->ray;
+#endif
 
-  PRINTFD(G, FB_RepCartoon)
-    " RepCartoon-Debug: creating 3D scaffold...\n" ENDFD;
-
-  /* okay, we now have enough info to generate smooth interpolations */
-
-  if(nAt > 1) {
-    ex = ExtrudeNew(G);
-    ExtrudeAllocPointsNormalsColors(ex, cs->NIndex * (3 * sampling + 3));
+  {
+    CGO *convertcgo = GenerateRepCartoonCGO(cs, obj, false, true, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
+					    putty_mean, putty_stdev, putty_min, putty_max, ring_anchor, n_ring);
+    I->pickingCGO = CGOSimplify(convertcgo, convertcgo->c);
+    CGOFree(convertcgo);
+    convertcgo = CGOCombineBeginEnd(I->pickingCGO, I->pickingCGO->c);
+    CGOFree(I->pickingCGO);
+    I->pickingCGO = convertcgo;
   }
-
-  /* process cylindrical helices first */
-
-  if((nAt > 1) && cylindrical_helices) {
-
-    /* this is confusing because we're borrowing Extrude's arrays 
-     * for convenient storage, but not actually calling Extrude */
-
-    n_p = 0;
-    v = ex->p;
-    vc = ex->c;
-    vn = ex->n;
-    vi = ex->i;
-
-    last_color = -1;
-    uniform_color = true;
-
-    v1 = pv;                    /* points */
-    v2 = tv;                    /* tangents */
-    vo = pvo;
-    d = dl;
-    s = seg;
-    cc = car;
-    atp = at;                   /* cs index pointer */
-    a = 0;
-    contFlag = true;
-    cur_car = cCartoon_skip;
-    extrudeFlag = false;
-    contigFlag = false;
-
-    while(contFlag) {
-      if((*cc) != cur_car) {    /* new cartoon type */
-        if(n_p) {               /* any cartoon points? */
-          extrudeFlag = true;
-        } else {
-          cur_car = *(cc);      /* now: go ahead and switch cartoons */
-          n_p = 0;
-          v = ex->p;
-          vc = ex->c;
-          vi = ex->i;
-          vn = ex->n;
-          last_color = -1;
-          uniform_color = true;
-        }
-      }
-      if(a && !extrudeFlag) {
-        if((*s) != *(s - 1)) {  /* new segment */
-          contigFlag = false;
-          if(n_p) {             /* any cartoon points? */
-            extrudeFlag = true;
-          } else {
-            n_p = 0;
-            v = ex->p;
-            vc = ex->c;
-            vi = ex->i;
-            vn = ex->n;
-            last_color = -1;
-            uniform_color = true;
-          }
-        }
-      }
-      if(!extrudeFlag) {
-        if((a < (nAt - 1)) && (*s == *(s + 1))) {       /* working in the same segment... */
-          atom_index1 = cs->IdxToAtm[*atp];
-          atom_index2 = cs->IdxToAtm[*(atp + 1)];
-          c1 = *(cs->Color + *atp);
-          c2 = *(cs->Color + *(atp + 1));
-
-          if(cartoon_color >= 0) {
-            c1 = (c2 = cartoon_color);
-          }
-
-          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_cartoon_color,
-                                   c1, &c1);
-          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index2, cSetting_cartoon_color,
-                                   c2, &c2);
-
-          if(discrete_colors) {
-            if(n_p == 0) {
-              if(contigFlag) {
-                if(cur_car != cCartoon_loop)
-                  c2 = c1;
-                else {
-                  if((*cc + 1) == cur_car)
-                    c2 = c1;
-                  else
-                    c1 = c2;
-                }
-              } else if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
-                c2 = c1;
-              }
-            } else {
-              if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
-                c2 = c1;
-              }
-            }                   /* not contig */
-
-          }
-
-          if((*(cc) == *(cc + 1)) && (c1 != c2))
-            uniform_color = false;
-          if(last_color >= 0) {
-            if(c1 != last_color)
-              uniform_color = false;
-          }
-          last_color = c1;
-
-          v0 = ColorGet(G, c1);
-          *(vc++) = *(v0++);
-          *(vc++) = *(v0++);
-          *(vc++) = *(v0++);
-          *(vi++) = atom_index1;
-
-          v0 = ColorGet(G, c2); /* kludge */
-          *(vc) = *(v0++);
-          *(vc + 1) = *(v0++);
-          *(vc + 2) = *(v0++);
-          *(vi) = atom_index2;
-        } else {
-          vc += 3;              /* part of kludge */
-          vi++;
-        }
-        if(cur_car == cCartoon_skip_helix) {
-          if(!n_p) {
-            h_start = v1;
-            h_end = v1;
-          } else {
-            h_end = v1;
-          }
-          copy3f(v1, v);        /* just store coordinates until we have a complete cylinder */
-          v += 3;
-          n_p++;
-        }
-        v1 += 3;
-        v2 += 3;
-        v3 += 3;
-        vo += 3;
-        d++;
-        atp++;
-        s++;
-        cc++;
-      }
-
-      a++;
-      if(a == nAt) {
-        contFlag = false;
-        if(n_p)
-          extrudeFlag = true;
-      }
-
-      if(extrudeFlag) {         /* generate cylinder */
-        contigFlag = true;
-        if((a < nAt) && extrudeFlag) {
-          if(*(s - 1) != *(s))
-            contigFlag = false;
-        }
-
-        if(n_p > 1) {
-          atom_index1 = cs->IdxToAtm[*(atp - 1)];
-          c1 = *(cs->Color + *(atp - 1));
-
-          if(cartoon_color >= 0) {
-            c1 = cartoon_color;
-          }
-
-          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_cartoon_color,
-                                   c1, &c1);
-
-          if(n_p < 5) {
-            copy3f(ex->p, t3);
-            copy3f(v - 3, t4);
-          } else {
-            add3f(ex->p, ex->p + 9, t0);
-            add3f(ex->p + 3, ex->p + 6, t1);
-            scale3f(t0, 0.2130F, t0);
-            scale3f(t1, 0.2870F, t1);
-            add3f(t0, t1, t3);
-
-            add3f(v - 3, v - 12, t0);
-            add3f(v - 6, v - 9, t1);
-            scale3f(t0, 0.2130F, t0);
-            scale3f(t1, 0.2870F, t1);
-            add3f(t0, t1, t4);
-
-            /* extend helix to line up with CA */
-            subtract3f(t4, t3, t0);
-            normalize3f(t0);
-            subtract3f(v - 3, t3, t1);
-            project3f(t1, t0, t4);
-            add3f(t3, t4, t4);
-            invert3f(t0);
-            subtract3f(ex->p, t4, t1);
-            project3f(t1, t0, t3);
-            add3f(t3, t4, t3);
-
-            /* relocate terminal CA to touch helix, if necessary */
-
-            if(h_start && h_end) {
-              subtract3f(h_start, t3, t0);
-              f0 = helix_radius - loop_radius * 2;
-              if(length3f(t0) > f0) {
-                normalize3f(t0);
-                scale3f(t0, f0, t1);
-                add3f(t1, t3, h_start);
-              }
-
-              subtract3f(h_end, t4, t0);
-              if(length3f(t0) > f0) {
-                normalize3f(t0);
-                scale3f(t0, f0, t1);
-                add3f(t1, t4, h_end);
-              }
-            }
-          }
-
-          /* push helix out a tad to consume loop */
-
-          subtract3f(t4, t3, t0);
-          normalize3f(t0);
-          scale3f(t0, loop_radius * 2, t0);
-          add3f(t0, t4, t4);
-          invert3f(t0);
-          add3f(t0, t3, t3);
-
-          if(uniform_color) {
-            CGOCylinderv(I->ray, t3, t4, helix_radius, ex->c, ex->c);
-
-          } else {
-            subtract3f(t4, t3, t0);
-            n_pm1 = n_p - 1;
-            n_pm2 = n_p - 2;
-            for(b = 0; b < n_pm1; b++) {
-              if(!b) {
-                scale3f(t0, ((float) b - 0.005F) / n_pm1, t1);  /* add small overlap */
-              } else {
-                scale3f(t0, ((float) b) / n_pm1, t1);
-              }
-              if(b < n_pm2) {
-                scale3f(t0, ((float) b + 1.005F) / n_pm1, t2);
-              } else {
-                scale3f(t0, ((float) b + 1) / n_pm1, t2);
-              }
-              add3f(t3, t1, t1);
-              add3f(t3, t2, t2);
-              CGOCustomCylinderv(I->ray, t1, t2, helix_radius, ex->c + (b * 3),
-                                 ex->c + (b + 1) * 3, (float) (b ? 0 : cCylCapFlat),
-                                 (float) (b == n_pm2 ? cCylCapFlat : 0));
-            }
-          }
-        }
-        a--;                    /* undo above... */
-        extrudeFlag = false;
-        n_p = 0;
-        v = ex->p;
-        vc = ex->c;
-        vi = ex->i;
-        vn = ex->n;
-        uniform_color = true;
-        last_color = -1;
-      }
-    }
-  }
-
-  if(nAt > 1) {
-    n_p = 0;
-    v = ex->p;
-    vc = ex->c;
-    vn = ex->n;
-    vi = ex->i;
-
-    v1 = pv;                    /* points */
-    v2 = tv;                    /* tangents */
-    vo = pvo;
-    d = dl;
-    s = seg;
-    cc = car;
-    atp = at;                   /* cs index pointer */
-    a = 0;
-    contFlag = true;
-    cur_car = cCartoon_skip;
-    extrudeFlag = false;
-    contigFlag = false;
-
-    while(contFlag) {
-
-      if((*cc) != cur_car) {    /* new cartoon type */
-        if(n_p) {               /* any cartoon points? */
-          extrudeFlag = true;
-        } else {
-          cur_car = *(cc);      /* no: go ahead and switch cartoons */
-          ExtrudeTruncate(ex, 0);
-          n_p = 0;
-          v = ex->p;
-          vc = ex->c;
-          vn = ex->n;
-          vi = ex->i;
-        }
-      }
-
-      /* CONFUSION ALERT -- I don't understand the following code (anymore) */
-
-      if(a < (nAt - 1)) {
-        /* put a setting controlled conditional here.. */
-        if(((*(cc + 1)) != cur_car) && (cur_car != cCartoon_loop)) {    /* end of segment */
-          if(n_p) {             /* any cartoon points? */
-            extrudeFlag = true;
-          } else {
-            cur_car = cCartoon_loop;    /* no: go ahead and switch cartoons */
-            ExtrudeTruncate(ex, 0);
-            n_p = 0;
-            v = ex->p;
-            vc = ex->c;
-            vn = ex->n;
-            vi = ex->i;
-          }
-        }
-      }
-      if((a < (nAt - 1)) && !extrudeFlag) {
-        if((*s) != *(s + 1)) {  /* new segment */
-          contigFlag = false;
-          if(n_p) {             /* any cartoon points? */
-            extrudeFlag = true;
-          } else {
-            ExtrudeTruncate(ex, 0);
-            n_p = 0;
-            v = ex->p;
-            vc = ex->c;
-            vn = ex->n;
-            vi = ex->i;
-          }
-        }
-      }
-      if(!extrudeFlag) {
-        if((a < (nAt - 1)) && (*s == *(s + 1))) {       /* working in the same segment... */
-          c1 = *(cs->Color + *atp);
-          c2 = *(cs->Color + *(atp + 1));
-          atom_index1 = cs->IdxToAtm[*atp];
-          atom_index2 = cs->IdxToAtm[*(atp + 1)];
-
-          if(cartoon_color >= 0) {
-            c1 = (c2 = cartoon_color);
-          }
-
-          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_cartoon_color,
-                                   c1, &c1);
-          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index2, cSetting_cartoon_color,
-                                   c2, &c2);
-
-          if(nuc_flag[*atp] || nuc_flag[*(atp + 1)]) {  /* this is a nucleic acid ribbon */
-            if(nucleic_color >= 0) {
-              c1 = (c2 = nucleic_color);
-            }
-          }
-
-          if(discrete_colors) {
-            if(n_p == 0) {
-              if(contigFlag) {
-                if(cur_car != cCartoon_loop)
-                  c2 = c1;
-                else {
-                  if((*cc + 1) == cur_car)
-                    c2 = c1;
-                  else
-                    c1 = c2;
-                }
-              } else if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
-                c2 = c1;
-              }
-            } else {
-              if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
-                c2 = c1;
-              }
-            }                   /* not contig */
-          }
-
-          dev = throw * (*d);
-          for(b = 0; b < sampling; b++) {       /* needs optimization */
-
-            if(n_p == 0) {
-
-              /* provide starting point on first point in segment only... */
-
-              f0 = ((float) b) / sampling;      /* fraction of completion */
-              if(f0 <= 0.5) {
-                v0 = ColorGet(G, c1);
-                i0 = atom_index1;
-              } else {
-                v0 = ColorGet(G, c2);
-                i0 = atom_index2;
-              }
-              f0 = smooth(f0, power_a); /* bias sampling towards the center of the curve */
-
-              /* store colors */
-
-              *(vc++) = *(v0++);
-              *(vc++) = *(v0++);
-              *(vc++) = *(v0++);
-              *(vi++) = i0;
-              /* start of line/cylinder */
-
-              f1 = 1.0F - f0;
-              f2 = smooth(f0, power_b);
-              f3 = smooth(f1, power_b);
-              f4 = dev * f2 * f3;       /* displacement magnitude */
-
-              *(v++) = f1 * v1[0] + f0 * v1[3] + f4 * (f3 * v2[0] - f2 * v2[3]);
-
-              *(v++) = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
-
-              *(v++) = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
-
-              vn += 9;
-
-              copy3f(vo, vn - 6);       /* starter... */
-
-              n_p++;
-
-            }
-
-            f0 = ((float) b + 1) / sampling;
-            if(f0 <= 0.5) {
-              v0 = ColorGet(G, c1);
-              i0 = atom_index1;
-            } else {
-              v0 = ColorGet(G, c2);
-              i0 = atom_index2;
-            }
-            f0 = smooth(f0, power_a);   /* bias sampling towards the center of the curve */
-
-            /* store colors */
-
-            *(vc++) = *(v0++);
-            *(vc++) = *(v0++);
-            *(vc++) = *(v0++);
-            *(vi++) = i0;
-
-            /* end of line/cylinder */
-
-            f1 = 1.0F - f0;
-            f2 = smooth(f0, power_b);
-            f3 = smooth(f1, power_b);
-            f4 = dev * f2 * f3; /* displacement magnitude */
-
-            *(v++) = f1 * v1[0] + f0 * v1[3] + f4 * (f3 * v2[0] - f2 * v2[3]);
-
-            *(v++) = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
-
-            *(v++) = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
-
-            /*                remove_component3f(vo,v2,o0);
-               remove_component3f(vo+3,v2,o0+3); */
-
-            vn += 3;
-            *(vn++) = f1 * (vo[0] * f2) + f0 * (vo[3] * f3);
-            *(vn++) = f1 * (vo[1] * f2) + f0 * (vo[4] * f3);
-            *(vn++) = f1 * (vo[2] * f2) + f0 * (vo[5] * f3);
-            vn += 3;
-
-            if(b == sampling - 1)
-              copy3f(vo + 3, vn - 6);   /* starter... */
-            n_p++;
-
-          }
-
-          /* now do a smoothing pass along orientation 
-             vector to smooth helices, etc... */
-
-          c = refine;
-          cross_product3f(vn + 3 - (sampling * 9), vn + 3 - 9, t0);
-
-          cross_product3f(vo, vo + 3, t0);
-          if((sampling > 1) && length3f(t0) > R_SMALL4) {
-
-            normalize3f(t0);
-            while(c--) {
-              p0 = v - (sampling * 3) - 3;
-              p1 = v - (sampling * 3);
-              p2 = v - (sampling * 3) + 3;
-              for(b = 0; b < (sampling - 1); b++) {
-                f0 = dot_product3f(t0, p0);
-                f1 = dot_product3f(t0, p1);
-                f2 = dot_product3f(t0, p2);
-
-                f3 = (f2 + f0) / 2.0F;
-                scale3f(t0, f3 - f1, t1);
-                p3 = sampling_tmp + b * 3;
-                add3f(t1, p1, p3);
-
-                p0 = p1;
-                p1 = p2;
-                p2 += 3;
-              }
-              p1 = v - (sampling * 3);
-              for(b = 0; b < (sampling - 1); b++) {
-                p3 = sampling_tmp + b * 3;
-                copy3f(p3, p1);
-                p1 += 3;
-              }
-            }
-          }
-        }
-        v1 += 3;
-        v2 += 3;
-        v3 += 3;
-        vo += 3;
-        d++;
-        atp += 1;
-        s++;
-        cc++;
-
-      }
-
-      a++;
-      if(a == nAt) {
-        contFlag = false;
-        if(n_p)
-          extrudeFlag = true;
-      }
-      if(extrudeFlag) {
-        contigFlag = true;
-        if((a < nAt) && extrudeFlag) {
-          if(*(s - 1) != *(s))
-            contigFlag = false;
-        }
-
-        if((cur_car != cCartoon_skip) && (cur_car != cCartoon_skip_helix)) {
-
-          if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
-            CGOColor(I->ray, 0.0, 1.0, 0.0);
-
-            v = ex->p;
-            vn = ex->n + 3;
-            CGODisable(I->ray, GL_LIGHTING);
-            CGOBegin(I->ray, GL_LINES);
-            for(b = 0; b < n_p; b++) {
-              CGOVertexv(I->ray, v);
-              add3f(v, vn, t0);
-              CGOVertexv(I->ray, t0);
-              v += 3;
-              vn += 9;
-            }
-            CGOEnd(I->ray);
-            CGOEnable(I->ray, GL_LIGHTING);
-          }
-
-          ExtrudeTruncate(ex, n_p);
-          ExtrudeComputeTangents(ex);
-
-          /* set up shape */
-          switch (cur_car) {
-          case cCartoon_tube:
-            ExtrudeCircle(ex, tube_quality, tube_radius);
-            ExtrudeBuildNormals1f(ex);
-            ExtrudeCGOSurfaceTube(ex, I->ray, tube_cap, NULL);
-            break;
-          case cCartoon_putty:
-            ExtrudeCircle(ex, putty_quality, putty_radius);
-            ExtrudeBuildNormals1f(ex);
-            ExtrudeComputePuttyScaleFactors(ex, obj,
-                                            SettingGet_i(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_transform),
-                                            putty_mean, putty_stdev, putty_min, putty_max,
-                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_scale_power),
-                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_range),
-                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_scale_min),
-                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_scale_max),
-                                            sampling / 2);
-
-            ExtrudeCGOSurfaceVariableTube(ex, I->ray, 1);
-            break;
-          case cCartoon_loop:
-            ExtrudeCircle(ex, loop_quality, loop_radius);
-            ExtrudeBuildNormals1f(ex);
-            ExtrudeCGOSurfaceTube(ex, I->ray, loop_cap, NULL);
-            break;
-          case cCartoon_rect:
-            if(highlight_color < 0) {
-              ExtrudeRectangle(ex, width, length, 0);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygon(ex, I->ray, 1, NULL);
-            } else {
-              ExtrudeRectangle(ex, width, length, 1);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygon(ex, I->ray, 0, NULL);
-              ExtrudeRectangle(ex, width, length, 2);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygon(ex, I->ray, 1, ColorGet(G, highlight_color));
-            }
-            break;
-          case cCartoon_oval:
-            ExtrudeOval(ex, oval_quality, oval_width, oval_length);
-            ExtrudeBuildNormals2f(ex);
-            if(highlight_color < 0)
-              ExtrudeCGOSurfaceTube(ex, I->ray, 1, NULL);
-            else
-              ExtrudeCGOSurfaceTube(ex, I->ray, 1, ColorGet(G, highlight_color));
-            break;
-          case cCartoon_arrow:
-            ExtrudeRectangle(ex, width, length, 0);
-            ExtrudeBuildNormals2f(ex);
-            if(highlight_color < 0)
-              ExtrudeCGOSurfaceStrand(ex, I->ray, sampling, NULL);
-            else
-              ExtrudeCGOSurfaceStrand(ex, I->ray, sampling, ColorGet(G, highlight_color));
-
-            /* for PLY files      
-               ExtrudeCircle(ex,loop_quality,loop_radius);
-               ExtrudeBuildNormals1f(ex);
-               ExtrudeCGOSurfaceTube(ex,I->ray,loop_cap,NULL);
-             */
-            break;
-          case cCartoon_dumbbell:
-            if(highlight_color < 0) {
-              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 0);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygonTaper(ex, I->ray, sampling, NULL);
-            } else {
-
-              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 1);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygonTaper(ex, I->ray, sampling, NULL);
-
-              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 2);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygonTaper(ex, I->ray, sampling,
-                                            ColorGet(G, highlight_color));
-            }
-            /*
-               ExtrudeCGOSurfacePolygonX(ex,I->ray,1); */
-
-            ex1 = ExtrudeCopyPointsNormalsColors(ex);
-            ExtrudeDumbbellEdge(ex1, sampling, -1, dumbbell_length);
-            ExtrudeComputeTangents(ex1);
-            ExtrudeCircle(ex1, loop_quality, dumbbell_radius);
-            ExtrudeBuildNormals1f(ex1);
-
-            ExtrudeCGOSurfaceTube(ex1, I->ray, 1, NULL);
-            ExtrudeFree(ex1);
-
-            ex1 = ExtrudeCopyPointsNormalsColors(ex);
-            ExtrudeDumbbellEdge(ex1, sampling, 1, dumbbell_length);
-            ExtrudeComputeTangents(ex1);
-            ExtrudeCircle(ex1, loop_quality, dumbbell_radius);
-            ExtrudeBuildNormals1f(ex1);
-            ExtrudeCGOSurfaceTube(ex1, I->ray, 1, NULL);
-            ExtrudeFree(ex1);
-
-            break;
-          }
-        }
-        a--;                    /* undo above... */
-        extrudeFlag = false;
-        ExtrudeTruncate(ex, 0);
-        n_p = 0;
-        v = ex->p;
-        vc = ex->c;
-        vn = ex->n;
-      }
-    }
-  }
-
-  if(nAt > 1) {
-    if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
-      CGOColor(I->ray, 1.0, 1.0, 1.0);
-      CGODisable(I->ray, GL_LIGHTING);
-      CGOBegin(I->ray, GL_LINES);
-      v1 = pv;
-      v2 = pvo;
-      v3 = tv;
-      for(a = 0; a < nAt; a++) {
-        CGOVertexv(I->ray, v1);
-        add3f(v1, v2, t0);
-        add3f(v2, t0, t0);
-        CGOVertexv(I->ray, t0);
-        subtract3f(v1, v3, t0);
-        CGOVertexv(I->ray, t0);
-        add3f(v1, v3, t0);
-        CGOVertexv(I->ray, t0);
-        v1 += 3;
-        v2 += 3;
-        v3 += 3;
-      }
-      CGOEnd(I->ray);
-
-      CGOEnable(I->ray, GL_LIGHTING);
-    }
-  }
-  if(ex) {
-    ExtrudeFree(ex);
-  }
-  /* draw the rings */
-
-  if(ring_anchor && n_ring) {
-    int ring_i;
-    int mem[8];
-    int nbr[7];
-    int *neighbor;
-    int *marked = Calloc(int, obj->NAtom);
-    float *moved = Calloc(float, obj->NAtom * 3);
-
-    register int escape_count;
-    register int *atmToIdx = NULL;
-
-    if(!obj->DiscreteFlag)
-      atmToIdx = cs->AtmToIdx;
-
-    ObjectMoleculeUpdateNeighbors(obj);
-    neighbor = obj->Neighbor;
-
-    escape_count = ESCAPE_MAX;  /* don't get bogged down with structures 
-                                   that have unreasonable connectivity */
-    for(ring_i = 0; ring_i < n_ring; ring_i++) {
-      mem[0] = ring_anchor[ring_i];
-      nbr[0] = neighbor[mem[0]] + 1;
-      while(((mem[1] = neighbor[nbr[0]]) >= 0) &&
-            ((!atmToIdx) || (atmToIdx[mem[0]] >= 0))) {
-        nbr[1] = neighbor[mem[1]] + 1;
-        while(((mem[2] = neighbor[nbr[1]]) >= 0) &&
-              ((!atmToIdx) || (atmToIdx[mem[1]] >= 0))) {
-          if(mem[2] != mem[0]) {
-            nbr[2] = neighbor[mem[2]] + 1;
-            while(((mem[3] = neighbor[nbr[2]]) >= 0) &&
-                  ((!atmToIdx) || (atmToIdx[mem[2]] >= 0))) {
-              if(mem[3] != mem[1]) {
-                nbr[3] = neighbor[mem[3]] + 1;
-                while(((mem[4] = neighbor[nbr[3]]) >= 0) &&
-                      ((!atmToIdx) || (atmToIdx[mem[3]] >= 0))) {
-                  if((mem[4] != mem[2]) && (mem[4] != mem[1]) && (mem[4] != mem[0])) {
-                    nbr[4] = neighbor[mem[4]] + 1;
-                    while(((mem[5] = neighbor[nbr[4]]) >= 0) &&
-                          ((!atmToIdx) || (atmToIdx[mem[4]] >= 0))) {
-                      if(!(escape_count--))
-                        goto escape;
-                      if((mem[5] != mem[3]) && (mem[5] != mem[2]) && (mem[5] != mem[1])) {
-                        if(mem[5] == mem[0]) {  /* five-cycle */
-                          /*    printf(" 5: %s(%d) %s(%d) %s(%d) %s(%d) %s(%d)\n",
-                             obj->AtomInfo[mem[0]].name,mem[0],
-                             obj->AtomInfo[mem[1]].name,mem[1],
-                             obj->AtomInfo[mem[2]].name,mem[2],
-                             obj->AtomInfo[mem[3]].name,mem[3],
-                             obj->AtomInfo[mem[4]].name,mem[4]); */
-                          do_ring(G, 5, mem, obj, cs, ring_width, I->ray, ring_color,
-                                  ring_mode, ladder_radius, ladder_color, ladder_mode,
-                                  ring_finder, cartoon_side_chain_helper, nuc_flag,
-                                  na_mode, ring_alpha, alpha, marked, moved, ring_radius);
-
-                        }
-
-                        nbr[5] = neighbor[mem[5]] + 1;
-                        while(((mem[6] = neighbor[nbr[5]]) >= 0) &&
-                              ((!atmToIdx) || (atmToIdx[mem[5]] >= 0))) {
-                          if((mem[6] != mem[4]) && (mem[6] != mem[3])
-                             && (mem[6] != mem[2]) && (mem[6] != mem[1])) {
-                            if(mem[6] == mem[0]) {      /* six-cycle */
-                              /* printf(" 6: %s %s %s %s %s %s\n",
-                                 obj->AtomInfo[mem[0]].name,
-                                 obj->AtomInfo[mem[1]].name,
-                                 obj->AtomInfo[mem[2]].name,
-                                 obj->AtomInfo[mem[3]].name,
-                                 obj->AtomInfo[mem[4]].name,
-                                 obj->AtomInfo[mem[5]].name
-                                 ); */
-                              do_ring(G, 6, mem, obj, cs, ring_width, I->ray, ring_color,
-                                      ring_mode, ladder_radius, ladder_color, ladder_mode,
-                                      ring_finder, cartoon_side_chain_helper, nuc_flag,
-                                      na_mode, ring_alpha, alpha, marked, moved,
-                                      ring_radius);
-                            }
-                            nbr[6] = neighbor[mem[6]] + 1;
-                            while(((mem[7] = neighbor[nbr[6]]) >= 0) &&
-                                  ((!atmToIdx) || (atmToIdx[mem[6]] >= 0))) {
-                              if((mem[7] != mem[5]) && (mem[7] != mem[4])
-                                 && (mem[7] != mem[3]) && (mem[7] != mem[2])
-                                 && (mem[7] != mem[1])) {
-                                if(mem[7] == mem[0]) {
-                                  do_ring(G, 7, mem, obj, cs, ring_width, I->ray,
-                                          ring_color, ring_mode, ladder_radius,
-                                          ladder_color, ladder_mode, ring_finder,
-                                          cartoon_side_chain_helper, nuc_flag, na_mode,
-                                          ring_alpha, alpha, marked, moved, ring_radius);
-                                }
-                              }
-                              nbr[6] += 2;
-                            }
-                          }
-                          nbr[5] += 2;
-                        }
-                      }
-                      nbr[4] += 2;
-                    }
-                  }
-                  nbr[3] += 2;
-                }
-              }
-              nbr[2] += 2;
-            }
-          }
-          nbr[1] += 2;
-        }
-        nbr[0] += 2;
-      }
-    escape:
-      escape_count = ESCAPE_MAX;        /* don't get bogged down with structures 
-                                           that have unreasonable connectivity */
-    }
-    FreeP(marked);
-    FreeP(moved);
-  }
-  CGOStop(I->ray);
-  I->std = CGOSimplify(I->ray, 0);
   FreeP(dv);
   FreeP(dl);
   FreeP(tv);
@@ -3524,7 +3788,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   FreeP(car);
   FreeP(tmp);
   FreeP(sstype);
-  FreeP(sampling_tmp);
   FreeP(flag_tmp);
   FreeP(nuc_flag);
   VLAFreeP(ring_anchor);
