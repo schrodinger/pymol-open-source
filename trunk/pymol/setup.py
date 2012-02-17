@@ -45,54 +45,81 @@ elif sys.platform=='cygwin':
 elif sys.platform=='darwin':
     using_fink = "'/sw/" in str(sys.path)
     if using_fink:
-        # NOTE: this code not tested in years and may not work...
-        #
         # under Fink, with the following packages installed:
         #
-        #  python24
-        #  libpng3
-        #  pmw-py24
-        #  freetype2
-        #  freetype2-dev
+        #  python27
+        #  libpng15
+        #  pmw-py27
+        #  freetype219
+        #  freeglut
+        #  glew
         #
         # REMEMBER to use Fink's Python!
         #
+        try:
+            os.makedirs("generated/include")
+        except OSError:
+            # ignore error if directory already exists
+            pass
+
+        try:
+            os.makedirs("generated/src")
+        except OSError:
+            # ignore error if directory already exists
+            pass
+
+        import create_shadertext
+
+        outputheader = open("generated/include/ShaderText.h",'w')
+        outputfile = open("generated/src/ShaderText.c",'w')
+
+        create_shadertext.create_shadertext("data/shaders",
+                                            "shadertext.txt",
+                                            outputheader,
+                                            outputfile)
+
+        outputheader.close()
+        outputfile.close()
+
         inc_dirs=["ov/src",
                   "layer0","layer1","layer2",
                   "layer3","layer4","layer5", 
-                  "/System/Library/Frameworks/OpenGL.framework/Headers",
-                  "/System/Library/Frameworks/GLUT.framework/Headers",
-                  "/System/Library/Frameworks/CoreFoundation.framework/Headers",
-                  "/System/Library/Frameworks/AppKit.framework/Headers",
-                  "/System/Library/Frameworks/ApplicationServices.framework/Headers",
-                  "/System/Library/Frameworks/Cocoa.framework/Headers",
-                  "/System/Library/Frameworks/IOKit.framework/Headers",
-                  "/sw/lib/freetype2/include",
-                  "/sw/lib/freetype2/include/freetype2",
+                  "/sw/include/freetype2/freetype",
+                  "/sw/include/freetype2",
                   "/sw/include",
+                  "/usr/X11/include",
 		  "modules/cealign/src",
 		  "modules/cealign/src/tnt",
 		  #"contrib/uiuc/plugins/include/",
 		  #"contrib/uiuc/plugins/molfile_plugin/src",
+                  "generated/include",
+                  "generated/src",
                   ]
         libs=[]
         pyogl_libs = []
         lib_dirs=[]
         def_macros=[("_PYMOL_MODULE",None),
-                    ("_PYMOL_OSX",None),
                     ("_PYMOL_LIBPNG",None),
                     ("_PYMOL_FREETYPE",None),
+                    ("_PYMOL_INLINE",None),
+                    ("_PYMOL_NUMPY",None),
+                    ("_PYMOL_OPENGL_SHADERS",None),
+                    ("NO_MMLIBS",None),
+                    ("_PYMOL_CGO_DRAWARRAYS",None),
+                    ("_PYMOL_CGO_DRAWBUFFERS",None),
+                    ("_CGO_DRAWARRAYS",None),
+                    ("_PYMOL_GL_CALLLISTS",None),
+                    ("OPENGL_ES_2",None),
                     ]
         ext_comp_args=[]
-        ext_link_args=["-framework","OpenGL",
-                       "-framework","AppKit",
-                       "-framework","ApplicationServices",
-                       "-framework","CoreFoundation",
-                       "-framework","Cocoa",
-                       "-framework","IOKit",
-                       "-framework","GLUT",
-                       "-lpng",
-                       "-L/sw/lib/freetype2/lib", "-lfreetype" ]
+        ext_link_args=[
+                       "-L/sw/lib", "-lpng",
+                       "/usr/X11/lib/libGL.dylib",
+                       "/usr/X11/lib/libGLU.dylib",
+                       "-lfreeglut",
+                       "-lglew",
+                       "-L/sw/lib/freetype219/lib", "-lfreetype"
+                        ]
     else:
         # Not using Fink -- building as if we are on Linux/X11 with
         # the external dependencies compiled into "./ext" in the
@@ -100,16 +127,43 @@ elif sys.platform=='darwin':
         #
         # REMEMEBER to use "./ext/bin/python ..."
         #
-        EXT = os.getcwd()+"/ext"
+        # create shader text
+        try:
+            os.makedirs("generated/include")
+        except OSError:
+            # ignore error if directory already exists
+            pass
+
+        try:
+            os.makedirs("generated/src")
+        except OSError:
+            # ignore error if directory already exists
+            pass
+
+        import create_shadertext
+
+        outputheader = open("generated/include/ShaderText.h",'w')
+        outputfile = open("generated/src/ShaderText.c",'w')
+
+        create_shadertext.create_shadertext("data/shaders",
+                                            "shadertext.txt",
+                                            outputheader,
+                                            outputfile)
+
+        outputheader.close()
+        outputfile.close()
+
+        EXT = "/opt/local"
         inc_dirs=["ov/src",
                   "layer0","layer1","layer2",
                   "layer3","layer4","layer5", 
-                  "/usr/X11R6/include",
                   EXT+"/include",
                   EXT+"/include/GL",
                   EXT+"/include/freetype2",
 		  "modules/cealign/src",
 		  "modules/cealign/src/tnt",
+                  "generated/include",
+                  "generated/src",
                   ]
         libs=[]
         pyogl_libs = []
@@ -117,11 +171,19 @@ elif sys.platform=='darwin':
         def_macros=[("_PYMOL_MODULE",None),
                     ("_PYMOL_LIBPNG",None),
                     ("_PYMOL_FREETYPE",None),
+                    ("_PYMOL_INLINE",None),
+                    ("_PYMOL_NUMPY",None),
+                    ("_PYMOL_OPENGL_SHADERS",None),
+                    ("NO_MMLIBS",None),
+                    ("_PYMOL_CGO_DRAWARRAYS",None),
+                    ("_PYMOL_CGO_DRAWBUFFERS",None),
+                    ("_CGO_DRAWARRAYS",None),
+                    ("_PYMOL_GL_CALLLISTS",None),
+                    ("OPENGL_ES_2",None),
                     ]
-        ext_comp_args=[]
+        ext_comp_args=["-ffast-math","-funroll-loops","-O3","-fcommon"]
         ext_link_args=[
-            "-L/usr/X11R6/lib64", "-lGL", "-lXxf86vm",
-            "-L"+EXT+"/lib", "-lpng", "-lglut", "-lfreetype"
+                    "-L"+EXT+"/lib", "-lpng", "-lGL", "-lglut", "-lGLEW", "-lfreetype"
             ]
 #============================================================================
 else: # linux or other unix
@@ -230,6 +292,7 @@ distribution = setup ( # Distribution meta-data
                  'pymol/opengl/glu',
                  'pymol/opengl/glut',
                  'pymol/wizard',
+                 'pymol2',
                  'web',
                  'web/examples',
                  'web/javascript', ],
@@ -449,42 +512,56 @@ distribution = setup ( # Distribution meta-data
                   libraries = pyogl_libs,
                   library_dirs = lib_dirs,
                   define_macros = def_macros,
+                  extra_link_args = ext_link_args,
+                  extra_compile_args = ext_comp_args,
                   ),
         Extension("pymol.opengl.glu._glu", ["contrib/pyopengl/_glumodule.c"],
                   include_dirs = inc_dirs,
                   libraries = pyogl_libs,
                   library_dirs = lib_dirs,
-                  define_macros = def_macros
+                  define_macros = def_macros,
+                  extra_link_args = ext_link_args,
+                  extra_compile_args = ext_comp_args,
                   ),
         Extension("pymol.opengl.glut._glut", ["contrib/pyopengl/_glutmodule.c"],
                   include_dirs = inc_dirs,
                   libraries = pyogl_libs,
                   library_dirs = lib_dirs,
-                  define_macros = def_macros
+                  define_macros = def_macros,
+                  extra_link_args = ext_link_args,
+                  extra_compile_args = ext_comp_args,
                   ),
         Extension("pymol.opengl.gl._opengl_num", ["contrib/pyopengl/_opengl_nummodule.c"],
                   include_dirs = inc_dirs,
                   libraries = pyogl_libs,
                   library_dirs = lib_dirs,
-                  define_macros = def_macros
+                  define_macros = def_macros,
+                  extra_link_args = ext_link_args,
+                  extra_compile_args = ext_comp_args,
                   ),
         Extension("pymol.opengl.gl._opengl", ["contrib/pyopengl/_openglmodule.c"],
                   include_dirs = inc_dirs,
                   libraries = pyogl_libs,
                   library_dirs = lib_dirs,
-                  define_macros = def_macros
+                  define_macros = def_macros,
+                  extra_link_args = ext_link_args,
+                  extra_compile_args = ext_comp_args,
                   ),
         Extension("pymol.opengl.gl.openglutil", ["contrib/pyopengl/openglutil.c"],
                   include_dirs = inc_dirs,
                   libraries = pyogl_libs,
                   library_dirs = lib_dirs,
-                  define_macros = def_macros
+                  define_macros = def_macros,
+                  extra_link_args = ext_link_args,
+                  extra_compile_args = ext_comp_args,
                   ),
         Extension("pymol.opengl.gl.openglutil_num", ["contrib/pyopengl/openglutil_num.c"],
                   include_dirs = inc_dirs,
                   libraries = pyogl_libs,
                   library_dirs = lib_dirs,
-                  define_macros = def_macros
+                  define_macros = def_macros,
+                  extra_link_args = ext_link_args,
+                  extra_compile_args = ext_comp_args,
                   )
         ])
 
