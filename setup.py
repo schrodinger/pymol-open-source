@@ -206,7 +206,7 @@ else: # linux or other unix
 
 distribution = setup ( # Distribution meta-data
     name      = "pymol",
-    version   = "1.5.0.1", # see layer0/Version.h for updated version
+    version   = "1.5.0.2", # see layer0/Version.h for updated version
     author    = "Schrodinger",
     url       = "http://pymol.org",
     contact   = "pymol-users@lists.sourceforge.net",
