@@ -69,7 +69,7 @@ int CrystalFromPyList(CCrystal * I, PyObject * list)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  int ok = true;
+  int ok = true, rok = true;
   int ll = 0;
   if(ok)
     ok = (I != NULL);
@@ -77,6 +77,7 @@ int CrystalFromPyList(CCrystal * I, PyObject * list)
     ok = PyList_Check(list);
   if(ok)
     ll = PyList_Size(list);
+  rok = ok;
   if(ok && (ll > 0))
     ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list, 0), I->Dim, 3);
   if(ok && (ll > 1))
@@ -87,7 +88,7 @@ int CrystalFromPyList(CCrystal * I, PyObject * list)
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 
-  return (ok);
+  return (rok);
 #endif
 
 }

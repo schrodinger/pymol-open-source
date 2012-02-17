@@ -72,7 +72,7 @@ int SymmetryFromPyList(CSymmetry * I, PyObject * list)
   if(ok)
     ok = CrystalFromPyList(I->Crystal, PyList_GetItem(list, 0));
   if(ok)
-    ok = PConvPyStrToStr(PyList_GetItem(list, 1), I->SpaceGroup, sizeof(WordType));
+    PConvPyStrToStr(PyList_GetItem(list, 1), I->SpaceGroup, sizeof(WordType));
   if(ok) {
     ok = SymmetryAttemptGeneration(I, true);
   }
