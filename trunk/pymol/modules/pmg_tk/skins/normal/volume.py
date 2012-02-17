@@ -171,6 +171,12 @@ class Volume(Frame):
     def update_is_needed(self):
         # check removed objects
         pubObj = self.cmd.get_names("public_objects")
+        if not pubObj:
+            # if ModalDraw is set (e.g., a movie is running)
+            # then API cannot be accessed and get_names() returns
+            # None.  In this case, the volume panel info does not
+            # need to be updated
+            return False
         for x in self.object_list:
             if x not in pubObj:
                 return True
