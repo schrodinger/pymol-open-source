@@ -4,6 +4,10 @@ CHANGE LOG
 
 2012-02-17 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* Fink/Macport builds fixed; thanks to Jack Howarth for the patch.
+	
+2012-02-17 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* Open Source PyMOL v1.5.0.2
 	* stack trace when saving movie as MPEG (ID: 3488608)
 	* error loading from pse that don't have Crystal/Symmetry info 
