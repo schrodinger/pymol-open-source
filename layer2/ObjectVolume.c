@@ -1121,58 +1121,8 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                   }
                 }
 #endif
-                if(n && v && I->Obj.RepVis[cRepVolume]) {
-                  x_offset = 0.5 / vs->volume->dim[2];
-                  y_offset = 0.5 / vs->volume->dim[1];
-                  z_offset = 0.5 / vs->volume->dim[0];
-
-                  tex_corner[0] = x_offset;
-                  tex_corner[1] = y_offset;
-                  tex_corner[2] = z_offset;
-                  tex_corner[3] = x_offset;
-                  tex_corner[4] = y_offset;
-                  tex_corner[5] = 1.0-z_offset;
-                  tex_corner[6] = x_offset;
-                  tex_corner[7] = 1.0-y_offset;
-                  tex_corner[8] = z_offset;
-                  tex_corner[9] = x_offset;
-                  tex_corner[10] = 1.0-y_offset;
-                  tex_corner[11] = 1.0-z_offset;
-                  tex_corner[12] = 1.0-x_offset;
-                  tex_corner[13] = y_offset;
-                  tex_corner[14] = z_offset;
-                  tex_corner[15] = 1.0-x_offset;
-                  tex_corner[16] = y_offset;
-                  tex_corner[17] = 1.0-z_offset;
-                  tex_corner[18] = 1.0-x_offset;
-                  tex_corner[19] = 1.0-y_offset;
-                  tex_corner[20] = z_offset;
-                  tex_corner[21] = 1.0-x_offset;
-                  tex_corner[22] = 1.0-y_offset;
-                  tex_corner[23] = 1.0-z_offset;
-
-                  shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "volume");
-
                   corner = vs->Corner;
 
-                  origin[0] = corner[0] + 0.5*(corner[21]-corner[0]);
-		  origin[1] = corner[1] + 0.5*(corner[22]-corner[1]);
-		  origin[2] = corner[2] + 0.5*(corner[23]-corner[2]);
-
-                  if(MatrixInvTransformExtentsR44d3f(vs->State.Matrix,
-                                         vs->ExtentMin, vs->ExtentMax,
-                                         tmp_min, tmp_max)) {
-                    min_ext = tmp_min;
-                    max_ext = tmp_max;
-                  } else {
-                    min_ext = vs->ExtentMin;
-                    max_ext = vs->ExtentMax;
-                  }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                  glDisable(GL_LIGHTING);
-#endif
 		  /* extents */
 		  if(I->Obj.RepVis[cRepExtent] && corner) {
 #ifdef PURE_OPENGL_ES_2
@@ -1248,6 +1198,56 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 #endif
 		  }
 
+                if(n && v && I->Obj.RepVis[cRepVolume]) {
+                  x_offset = 0.5 / vs->volume->dim[2];
+                  y_offset = 0.5 / vs->volume->dim[1];
+                  z_offset = 0.5 / vs->volume->dim[0];
+
+                  tex_corner[0] = x_offset;
+                  tex_corner[1] = y_offset;
+                  tex_corner[2] = z_offset;
+                  tex_corner[3] = x_offset;
+                  tex_corner[4] = y_offset;
+                  tex_corner[5] = 1.0-z_offset;
+                  tex_corner[6] = x_offset;
+                  tex_corner[7] = 1.0-y_offset;
+                  tex_corner[8] = z_offset;
+                  tex_corner[9] = x_offset;
+                  tex_corner[10] = 1.0-y_offset;
+                  tex_corner[11] = 1.0-z_offset;
+                  tex_corner[12] = 1.0-x_offset;
+                  tex_corner[13] = y_offset;
+                  tex_corner[14] = z_offset;
+                  tex_corner[15] = 1.0-x_offset;
+                  tex_corner[16] = y_offset;
+                  tex_corner[17] = 1.0-z_offset;
+                  tex_corner[18] = 1.0-x_offset;
+                  tex_corner[19] = 1.0-y_offset;
+                  tex_corner[20] = z_offset;
+                  tex_corner[21] = 1.0-x_offset;
+                  tex_corner[22] = 1.0-y_offset;
+                  tex_corner[23] = 1.0-z_offset;
+
+                  shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "volume");
+
+                  origin[0] = corner[0] + 0.5*(corner[21]-corner[0]);
+		  origin[1] = corner[1] + 0.5*(corner[22]-corner[1]);
+		  origin[2] = corner[2] + 0.5*(corner[23]-corner[2]);
+
+                  if(MatrixInvTransformExtentsR44d3f(vs->State.Matrix,
+                                         vs->ExtentMin, vs->ExtentMax,
+                                         tmp_min, tmp_max)) {
+                    min_ext = tmp_min;
+                    max_ext = tmp_max;
+                  } else {
+                    min_ext = vs->ExtentMin;
+                    max_ext = vs->ExtentMax;
+                  }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+                  glDisable(GL_LIGHTING);
+#endif
                   m = SceneGetMatrix(G);
                   zaxis[0] = m[2];
 		  zaxis[1] = m[6];
