@@ -6094,7 +6094,7 @@ static void CGO_gl_color(CCGORenderer * I, float **varg)
 #ifdef PURE_OPENGL_ES_2
   {
     if (I->G->ShaderMgr->current_shader){
-      int attr_a_Color = CShaderPrg_GetAttribLocation(I->G->ShaderMgr->current_shader, "a_Accessibility");
+      int attr_a_Color = CShaderPrg_GetAttribLocation(I->G->ShaderMgr->current_shader, "a_Color");
       glVertexAttrib4f(attr_a_Color, v[0], v[1], v[2], I->alpha);
     }
   }
@@ -6102,7 +6102,7 @@ static void CGO_gl_color(CCGORenderer * I, float **varg)
 #ifdef OPENGL_ES_2
   if (I->use_shader){
     if (I->G->ShaderMgr->current_shader){
-      int attr_a_Color = CShaderPrg_GetAttribLocation(I->G->ShaderMgr->current_shader, "a_Accessibility");
+      int attr_a_Color = CShaderPrg_GetAttribLocation(I->G->ShaderMgr->current_shader, "a_Color");
       glVertexAttrib4f(attr_a_Color, v[0], v[1], v[2], I->alpha);
     }
   } else {

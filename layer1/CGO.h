@@ -296,7 +296,6 @@ void CGOChar(CGO * I, char c);
 void CGOFontVertex(CGO * I, float x, float y, float z);
 void CGOFontVertexv(CGO * I, float *v);
 void CGOFontScale(CGO * I, float v1, float v2);
-void CGOChar(CGO * I, char c);
 void CGOIndent(CGO * I, char c, float dir);
 void CGOWrite(CGO * I, char *str);
 void CGOWriteLeft(CGO * I, char *str);

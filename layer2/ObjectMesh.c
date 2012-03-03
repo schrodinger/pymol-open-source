@@ -292,6 +292,7 @@ static void ObjectMeshStateFree(ObjectMeshState * ms)
   if (ms->shaderCGO){
     CGOFree(ms->shaderCGO);
     ms->shaderCGO = NULL;
+    ms->shaderUnitCellCGO = NULL;
   }
   if(ms->UnitCellCGO) {
     CGOFree(ms->UnitCellCGO);
@@ -397,6 +398,7 @@ static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state)
 	if (ms && ms->shaderCGO){
 	  CGOFree(ms->shaderCGO);
 	  ms->shaderCGO = NULL;
+	  ms->shaderUnitCellCGO = NULL;
 	}
       }
     } else {
@@ -404,6 +406,7 @@ static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state)
       if (ms && ms->shaderCGO){
 	CGOFree(ms->shaderCGO);
 	ms->shaderCGO = NULL;
+	ms->shaderUnitCellCGO = NULL;
       }
     }
     for(a = 0; a < I->NState; a++) {
@@ -805,6 +808,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
       if (ms->shaderCGO){
 	CGOFree(ms->shaderCGO);
 	ms->shaderCGO = NULL;
+	ms->shaderUnitCellCGO = NULL;
       }
     }
     SceneInvalidate(I->Obj.G);
@@ -948,10 +952,12 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 	      if (ms->shaderCGO && !use_shader){
 		CGOFree(ms->shaderCGO);
 		ms->shaderCGO = NULL;
+		ms->shaderUnitCellCGO = NULL;
 	      }
 	      if (ms->shaderCGO && (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers)){
 		CGOFree(ms->shaderCGO);
 		ms->shaderCGO = NULL;
+		ms->shaderUnitCellCGO = NULL;
 	      }
 	      if (use_shader){
 		if (!ms->shaderCGO){
@@ -970,6 +976,14 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 		  CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
 		  
 		  CShaderPrg_Disable(shaderPrg);
+		  if (ms->shaderUnitCellCGO){
+		    float *color;
+		    color = ColorGet(G, I->Obj.Color);
+		    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+		    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+		    CGORenderGL(ms->shaderUnitCellCGO, ColorGet(I->Obj.G, I->Obj.Color), NULL, NULL, info, NULL);
+		    CShaderPrg_Disable(shaderPrg);
+		  }
 		  /* instead of returning, need to check if all states are being rendered */
 		  if(state >= 0)
 		    break;
@@ -982,9 +996,14 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 
 	      /* TODO: UnitCellCGO */
 	      if (generate_shader_cgo){
-		CGOColorv(ms->shaderCGO, ColorGet(I->Obj.G, I->Obj.Color));
-		if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell])){
-		  CGOAppend(ms->shaderCGO, ms->UnitCellCGO);
+		if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell]) && !ms->shaderUnitCellCGO){
+		  CGO *newUnitCellCGO = CGONewSized(G, 0);
+		  CGOColorv(newUnitCellCGO, ColorGet(I->Obj.G, I->Obj.Color));
+		  CGOAppend(newUnitCellCGO, ms->UnitCellCGO);
+		  ms->shaderUnitCellCGO = CGOOptimizeToVBONotIndexed(newUnitCellCGO, 0);
+		  CGOFree(newUnitCellCGO);
+		  ms->shaderUnitCellCGO->use_shader = true;
+		  ms->shaderUnitCellCGO->enable_shaders = false;
 		}
 	      } else {
 		if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell]))
@@ -1217,8 +1236,14 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 		    float *color;
 		    color = ColorGet(G, I->Obj.Color);
 		    CGORenderGL(ms->shaderCGO, color, NULL, NULL, info, NULL);
+		    CShaderPrg_Disable(shaderPrg);
+		    if (ms->shaderUnitCellCGO){
+		      shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+		      CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+		      CGORenderGL(ms->shaderUnitCellCGO, ColorGet(I->Obj.G, I->Obj.Color), NULL, NULL, info, NULL);
+		      CShaderPrg_Disable(shaderPrg);
+		    }
 		  }
-		  CShaderPrg_Disable(shaderPrg);
 		}
 	      }
 	      
@@ -1307,6 +1332,7 @@ void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms)
   ms->caption[0] = 0;
   ms->Field = NULL;
   ms->shaderCGO = NULL;
+  ms->shaderUnitCellCGO = NULL;
 }
 
 
