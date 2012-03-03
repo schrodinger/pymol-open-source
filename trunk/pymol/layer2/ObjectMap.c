@@ -1231,6 +1231,13 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * I,
                                          PyObject * ary, int quiet);
 #endif
 
+void ObjectMapRegeneratePoints(ObjectMap * om){
+  int i;
+  for (i=0; i<om->NState;i++){
+    ObjectMapStateRegeneratePoints(om->State + i);
+  }
+}
+
 void ObjectMapStateRegeneratePoints(ObjectMapState * ms)
 {
   int a, b, c, e;
