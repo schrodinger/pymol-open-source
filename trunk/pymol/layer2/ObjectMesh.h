@@ -50,6 +50,7 @@ typedef struct {
   /* not stored */
   Isofield *Field;
   CGO *shaderCGO;
+  CGO *shaderUnitCellCGO;
 } ObjectMeshState;
 
 typedef struct ObjectMesh {
