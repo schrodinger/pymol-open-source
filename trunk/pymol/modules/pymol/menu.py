@@ -254,7 +254,7 @@ def mesh_hide(self_cmd, sele):
     return [[ 2, 'Hide:'       , ''                             ],
               [ 1, 'mesh'        , 'cmd.hide("mesh","'+sele+'")'     ],                      
               [ 1, 'cell'        , 'cmd.hide("cell","'+sele+'")'      ],           
-              [ 1, 'everything'  , 'cmd.hide("everything",("'+sele+'")'          ]]
+              [ 1, 'everything'  , 'cmd.hide("everything","'+sele+'")'          ]]
 
 def surface_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
