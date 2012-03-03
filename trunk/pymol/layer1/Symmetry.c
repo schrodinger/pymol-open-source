@@ -58,6 +58,7 @@ int SymmetryFromPyList(CSymmetry * I, PyObject * list)
 #else
   int ok = true;
   ov_size ll;
+  PyObject *secondval;
 
   if(ok)
     ok = (I != NULL);
@@ -69,10 +70,19 @@ int SymmetryFromPyList(CSymmetry * I, PyObject * list)
     ok = PyList_Check(list);
   if(ok)
     ll = PyList_Size(list);
-  if(ok)
-    ok = CrystalFromPyList(I->Crystal, PyList_GetItem(list, 0));
-  if(ok)
-    PConvPyStrToStr(PyList_GetItem(list, 1), I->SpaceGroup, sizeof(WordType));
+  if (ok && ll>=2){
+    secondval = PyList_GetItem(list, 1);
+    if (PyList_Check(secondval)){
+      /* if only the crystal, read it */
+      if(ok)
+	ok = CrystalFromPyList(I->Crystal, list);    
+    } else {
+      if(ok)
+	ok = CrystalFromPyList(I->Crystal, PyList_GetItem(list, 0));
+      if(ok)
+	PConvPyStrToStr(PyList_GetItem(list, 1), I->SpaceGroup, sizeof(WordType));
+    }
+  }
   if(ok) {
     ok = SymmetryAttemptGeneration(I, true);
   }
