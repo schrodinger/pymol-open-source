@@ -5875,7 +5875,7 @@ static CObject **ExecutiveSeleToObjectVLA(PyMOLGlobals * G, char *s1)
 int ExecutiveGetSymmetry(PyMOLGlobals * G, char *sele, int state, float *a, float *b, float *c,
                         float *alpha, float *beta, float *gamma, char *sgroup, int *defined)
 {
-  int ok = true;
+  int ok = false;
 
   ObjectMolecule *objMol;
   ObjectMap *objMap;
