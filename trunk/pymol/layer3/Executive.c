@@ -5532,7 +5532,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
       ok = PConvPyIntToInt(tmp, &version);
       if(ok) {
 	version_full = version;
-	while (version_full < 1000)  /* account for versions with less than 4 digits */
+	while (version_full < 210)  /* any version less than 2.1 (account for next major version 2) should be 4 digits, otherwise 3 */
 	  version_full *= 10;
         if(version > _PyMOL_VERSION_int) {
           if(!quiet) {
