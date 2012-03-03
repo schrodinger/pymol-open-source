@@ -36,10 +36,12 @@ typedef struct {
 
 int SymmetryAttemptGeneration(CSymmetry * I, int quiet);
 void SymmetryFree(CSymmetry * I);
+void SymmetryClear(CSymmetry * I);
 CSymmetry *SymmetryNew(PyMOLGlobals * G);
 void SymmetryUpdate(CSymmetry * I);
 void SymmetryDump(CSymmetry * I);
 CSymmetry *SymmetryCopy(CSymmetry * other);
+CSymmetry *SymmetryCopyTo(CSymmetry * other,CSymmetry *dest);
 PyObject *SymmetryAsPyList(CSymmetry * I);
 int SymmetryFromPyList(CSymmetry * I, PyObject * list);
 CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list);

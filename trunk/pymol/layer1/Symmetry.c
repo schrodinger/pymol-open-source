@@ -173,6 +173,14 @@ void SymmetryFree(CSymmetry * I)
   OOFreeP(I);
 }
 
+void SymmetryClear(CSymmetry * I)
+{
+  if(I->Crystal)
+    CrystalFree(I->Crystal);
+  VLAFreeP(I->SymMatVLA);
+  VLAFreeP(I->SymOpVLA);
+}
+
 void SymmetryReset(CSymmetry * I)
 {
   I->SpaceGroup[0] = 0;
@@ -200,6 +208,15 @@ CSymmetry *SymmetryCopy(CSymmetry * other)
     OOFreeP(I);
     return NULL;
   }
+  UtilCopyMem(I, other, sizeof(CSymmetry));
+  I->Crystal = CrystalCopy(I->Crystal);
+  I->SymMatVLA = VLACopy(I->SymMatVLA, float);
+  I->SymOpVLA = VLACopy(I->SymOpVLA, WordType);
+  return (I);
+}
+
+CSymmetry *SymmetryCopyTo(CSymmetry *other, CSymmetry *I)
+{
   UtilCopyMem(I, other, sizeof(CSymmetry));
   I->Crystal = CrystalCopy(I->Crystal);
   I->SymMatVLA = VLACopy(I->SymMatVLA, float);

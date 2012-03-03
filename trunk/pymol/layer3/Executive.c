@@ -5970,7 +5970,6 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
   ObjectMap *objMap;
   int ok = true;
   CSymmetry *symmetry = NULL;
-  CSymmetry *symmetry_state = NULL;
   CCrystal *crystal = NULL;
   int n_obj;
   int i, s;
@@ -6011,48 +6010,55 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
         objMol = (ObjectMolecule *) obj;
         if(symmetry) {
 	  /* right now, ObjectMolecules only have one-state symmetry information */
-          if(objMol->Symmetry)
-            SymmetryFree(objMol->Symmetry);
-          objMol->Symmetry = SymmetryCopy(symmetry);
+	  CSymmetry *sym = objMol->Symmetry;
+	  if (sym){
+	    SymmetryClear(sym);
+	  } else {
+	    sym = SymmetryNew(G);
+	    objMol->Symmetry = sym;
+	  }
+	  SymmetryCopyTo(symmetry, sym);
         }
         break;
       case cObjectMap:
 	/* create a new symmetry object for copying */
-        if(!symmetry) {
-          symmetry = SymmetryNew(G);
-          symmetry->Crystal->Dim[0] = a;
-          symmetry->Crystal->Dim[1] = b;
-          symmetry->Crystal->Dim[2] = c;
-          symmetry->Crystal->Angle[0] = alpha;
-          symmetry->Crystal->Angle[1] = beta;
-          symmetry->Crystal->Angle[2] = gamma;
-          UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
-          SymmetryAttemptGeneration(symmetry, false);
-        }
+	symmetry = SymmetryNew(G);
+	symmetry->Crystal->Dim[0] = a;
+	symmetry->Crystal->Dim[1] = b;
+	symmetry->Crystal->Dim[2] = c;
+	symmetry->Crystal->Angle[0] = alpha;
+	symmetry->Crystal->Angle[1] = beta;
+	symmetry->Crystal->Angle[2] = gamma;
+	UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
+	SymmetryAttemptGeneration(symmetry, false);
 
-        objMap = (ObjectMap *) obj;
+	objMap = (ObjectMap *) obj;
 	
-        if(symmetry) {
+	if(symmetry) {
 	  if(do_all_states) {
 	    /* copy symmetry to all states */
 	    for(s=0; s<objMap->NState; s++) {
-	      symmetry_state = (objMap->State + s)->Symmetry;
-
-	      if(symmetry_state)
-		SymmetryFree(symmetry_state);
-
-		symmetry_state = SymmetryCopy(symmetry);
+	      CSymmetry *sym = (objMap->State + s)->Symmetry;
+	      if (sym){
+		SymmetryClear(sym);
+	      } else {
+		sym = SymmetryNew(G);
+		(objMap->State + s)->Symmetry = sym;
+	      }
+	      SymmetryCopyTo(symmetry, sym);
 	    }
 	  } else {
 	    /* single state */
-	    symmetry_state = (objMap->State + state)->Symmetry;
-
-	    if(symmetry_state)
-	      SymmetryFree(symmetry_state);
-
-	    symmetry_state = SymmetryCopy(symmetry);
+	    CSymmetry *sym = (objMap->State + state)->Symmetry;
+	    if (sym){
+	      SymmetryClear(sym);
+	    } else {
+	      sym = SymmetryNew(G);
+	      (objMap->State + state)->Symmetry = sym;
+	    }
+	    SymmetryCopyTo(symmetry, sym);
 	  }
-        }
+	}
 	break;
       }
     }
