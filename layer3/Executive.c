@@ -6058,6 +6058,7 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
 	    }
 	    SymmetryCopyTo(symmetry, sym);
 	  }
+	  ObjectMapRegeneratePoints(objMap);
 	}
 	break;
       }
@@ -6090,7 +6091,7 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, char *source_name, char *target_name
   CSymmetry ** target_symm = NULL;
 
   ObjectMolecule * tmp_mol = NULL;
-  ObjectMap * tmp_map = NULL;
+  ObjectMap * tmp_map = NULL, *targ_map = NULL;
 
   /* defaults */
   if(source_state==-1)
@@ -6148,15 +6149,15 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, char *source_name, char *target_name
     }
     /* ObjectMap */
     else if(target_obj->type==cObjectMap){
-      tmp_map = (ObjectMap*) target_obj;
+      targ_map = (ObjectMap*) target_obj;
 
-      if(target_state+1>tmp_map->NState) {
+      if(target_state+1>targ_map->NState) {
 	PRINTFB(G, FB_Executive, FB_Errors)
-	  " SymmetryCopy-Error: target state '%d' greater than number of states in object '%s'.", tmp_map->NState, target_name  ENDFB(G);
+	  " SymmetryCopy-Error: target state '%d' greater than number of states in object '%s'.", targ_map->NState, target_name  ENDFB(G);
 	ok = false;
       }
       if(ok) {
-	target_symm =  (CSymmetry**)  &((tmp_map->State + target_state)->Symmetry);
+	target_symm =  (CSymmetry**)  &((targ_map->State + target_state)->Symmetry);
       }
     }
     else {
@@ -6192,6 +6193,9 @@ int ExecutiveSymmetryCopy(PyMOLGlobals * G, char *source_name, char *target_name
 	    }
 	  }
 	}
+      }
+      if (targ_map){
+	ObjectMapRegeneratePoints(targ_map);
       }
 
       if(! *target_symm)

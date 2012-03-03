@@ -150,6 +150,7 @@ void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix);
 void ObjectMapResetMatrix(ObjectMap * I, int state);
 int ObjectMapGetMatrix(ObjectMap * I, int state, double **matrix);
 int ObjectMapSetMatrix(ObjectMap * I, int state, double *matrix);
+void ObjectMapRegeneratePoints(ObjectMap * om);
 void ObjectMapStateRegeneratePoints(ObjectMapState * ms);
 int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min,
                                float *max);
