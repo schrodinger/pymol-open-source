@@ -2610,14 +2610,23 @@ int PFlush(PyMOLGlobals * G)
 {
   /* NOTE: ASSUMES unblocked Python threads and a locked API */
   PyObject *err;
-  char buffer[OrthoLineLength + 1];
   int did_work = false;
   if(OrthoCommandWaiting(G)) {
     did_work = true;
     PBlock(G);
     if(!(PIsGlutThread() && G->P_inst->glut_thread_keep_out)) {
       /* don't run if we're currently banned */
-      while(OrthoCommandOut(G, buffer)) {
+      char *buffer = 0;
+      int size, curSize = 0;
+      while(size = OrthoCommandOutSize(G)){
+	if (!curSize){
+	  buffer = VLACalloc(char, size);
+	  curSize = size;
+	} else if (size < curSize){
+	  VLASize(buffer, char, size);
+	  curSize = size;
+	}
+	OrthoCommandOut(G, buffer);
         OrthoCommandNest(G, 1);
         PUnlockAPIWhileBlocked(G);
         if(PyErr_Occurred()) {
@@ -2638,6 +2647,8 @@ int PFlush(PyMOLGlobals * G)
           PFlushFast(G);
         OrthoCommandNest(G, -1);
       }
+      if (buffer)
+	VLAFreeP(buffer);
     }
     PUnblock(G);
   }
@@ -2648,9 +2659,18 @@ int PFlushFast(PyMOLGlobals * G)
 {
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */
   PyObject *err;
-  char buffer[OrthoLineLength + 1];
   int did_work = false;
-  while(OrthoCommandOut(G, buffer)) {
+  char *buffer = 0;
+  int size, curSize = 0;
+  while(size = OrthoCommandOutSize(G)){
+    if (!curSize){
+      buffer = VLACalloc(char, size);
+      curSize = size;
+    } else if (size < curSize){
+      VLASize(buffer, char, size);
+      curSize = size;
+    }
+    OrthoCommandOut(G, buffer);
     OrthoCommandNest(G, 1);
     did_work = true;
     PRINTFD(G, FB_Threads)
@@ -2674,6 +2694,9 @@ int PFlushFast(PyMOLGlobals * G)
       PFlushFast(G);
     OrthoCommandNest(G, -1);
   }
+  if (buffer)
+    VLAFreeP(buffer);
+
   return did_work;
 }
 

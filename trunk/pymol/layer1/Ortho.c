@@ -394,6 +394,16 @@ void OrthoCommandNest(PyMOLGlobals * G, int dir)
 
 
 /*========================================================================*/
+int OrthoCommandOutSize(PyMOLGlobals * G){
+  if(G) {
+    register COrtho *I = G->Ortho;
+    if(I && I->cmdActiveQueue) {
+      return QueueStrCheck(I->cmdActiveQueue);
+    }
+  }
+  return 0;
+}
+
 int OrthoCommandOut(PyMOLGlobals * G, char *buffer)
 {
   if(G && buffer) {
@@ -403,10 +413,9 @@ int OrthoCommandOut(PyMOLGlobals * G, char *buffer)
       int result;
       result = QueueStrOut(I->cmdActiveQueue, buffer);
       return (result);
-    } else
-      return 0;
-  } else
-    return 0;
+    }
+  }
+  return 0;
 }
 
 
