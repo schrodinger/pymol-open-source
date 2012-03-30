@@ -6397,9 +6397,9 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
 
           ai = obj->AtomInfo + at;
           if(last)
-            if(!last->hetatm)
+            if(last->flags & cAtomFlag_polymer)
               if(ai->resv != last->resv)
-                if((abs(ai->resv - last->resv) > 1) || (ai->hetatm)) {
+                if((abs(ai->resv - last->resv) > 1) || !(ai->flags & cAtomFlag_polymer)) {
                   if(use_ter) {
                     CoordSetAtomToTERStrVLA(G, charVLA, &cLen, last, c);
                     c++;
