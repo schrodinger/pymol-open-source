@@ -84,30 +84,20 @@ if __name__=='pymol.querying':
         r = DEFAULT_ERROR        
         # should replace this with a C function
         try:
+            # remove non-safe chars
+            prefix = _self.get_legal_name(prefix)
+
             _self.lock(_self)  
-            avoid_dict = {}
-            for name in _self.get_names('all'):
-                avoid_dict[name] = None
-            if alwaysnumber or avoid_dict.has_key(prefix):
+            avoid_set = set(_self.get_names('all'))
+            if alwaysnumber or prefix in avoid_set:
                 counter = 1
                 while 1:
                     r = prefix + "%02d"%counter
-                    if not avoid_dict.has_key(r):
+                    if r not in avoid_set:
                         break
                     counter = counter + 1
             else:
                 r=prefix
-
-            # safe names....
-            safe_chars = range(48,58)
-            safe_chars.extend(range(65,91))
-            safe_chars.extend(range(97,123))
-            safe_chars.extend([ord('+'),ord('-'),ord('_'),ord('.')])
-            # remove non-safe chars
-            for c in range(len(r)):
-                if ord(r[c]) not in safe_chars:
-                    r = r[:c] + "_" + r[c+1:]
-
         finally:
             _self.unlock(r,_self)
         return r
