@@ -327,37 +327,35 @@ if pymol_launch != 3: # if this isn't a dry run
             (vendor,renderer,version) = cmd.get_renderer()
 
             # Quadro cards don't support GL_BACK in stereo contexts
-            if vendor[0:6]=='NVIDIA':
+            if vendor.startswith('NVIDIA'):
                 if 'Quadro' in renderer:
                     if invocation.options.show_splash:
                         print " Adapting to Quadro hardware."
                     cmd.set('stereo_double_pump_mono',1)                    
 
-            elif vendor[0:4]=='Mesa':
+            elif vendor.startswith('Mesa'):
                 if renderer[0:18]=='Mesa GLX Indirect':
                     pass
 
-            elif vendor[0:9]=='Parallels':
+            elif vendor.startswith('Parallels'):
                 if renderer[0:8]=='Parallel':
                     pass
                     # this was critical for older Parallels
                     # but actually slows down current versions
                     # cmd.set('texture_fonts',1) 
 
-            elif vendor[0:3]=='ATI':
+            elif vendor.startswith('ATI'):
                 if renderer[0:17]=='FireGL2 / FireGL3':  # obsolete ?
                     if invocation.options.show_splash:
                         print " Adapting to FireGL hardware."
                     cmd.set('line_width','2',quiet=1)            
 
-                if sys.platform[0:3]=='win':
+                if sys.platform.startswith('win'):
                     if sys.getwindowsversion()[0]>5:
                         # prevent color corruption by calling glFlush etc.
                         cmd.set('ati_bugs',1) 
                         
                 if 'Radeon HD' in renderer:
-                    #print " Note: Radeon HD cards tend not to run PyMOL well."
-                    #print " Use nVidia or Intel instead, if OpenGL glitches occur."
                     print " Adjusting settings to improve performance for ATI cards."
 
                     # use display lists to minimize use of OpenGL
@@ -366,18 +364,32 @@ if pymol_launch != 3: # if this isn't a dry run
                     if cmd.get_setting_int("use_shaders")==0:
                         cmd.set("use_display_lists") 
 
-                    # disable line smooothing to prevent various
-                    # bizarre screen-update and drawing artifacts
-                    # cmd.unset("line_smooth")
-
                     # limit frame rate to 30 fps to avoid ATI "jello"
                     # where screen updates fall way behind the user.
                     cmd.set("max_ups",30) 
 
-            elif vendor[0:9]=='Microsoft':
+            elif vendor.startswith('Microsoft'):
                 if renderer[0:17]=='GDI Generic':
                     cmd.set('light_count',1)
                     cmd.set('spec_direct',0.7)
+
+            elif vendor.startswith("Intel"):
+
+                print " Adjusting settings to improve performance for Intel cards."
+                
+                # disable shaders until Intel gets its act together
+
+                cmd.set("use_shaders", 0)
+                cmd.set("sphere_mode", 0)
+
+            else:
+                if ("Intel" in renderer) and (("HD" in renderer) or ("Express" in renderer)):
+
+                    # catch DRI via the Intel chipsets
+
+                    cmd.set("use_shaders", 0)
+                    cmd.set("sphere_mode", 0)
+                    
 
             # find out how many processors we have, and adjust hash
             # table size to reflect available RAM

@@ -14,11 +14,6 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-/* TODO
- * (1) Debugging; Feeding back
- * (2) printfs needs to be FeedbackAdd or PRINTFD
- */
-
 #include "os_python.h"
 #include <string.h>
 #include "ShaderMgr.h"
@@ -39,6 +34,8 @@ Z* -------------------------------------------------------------------
 void getGLVersion(PyMOLGlobals * G, int *major, int* minor);
 void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor);
 
+static void disableShaders(PyMOLGlobals * G);
+
 #ifdef WIN32
 /* REMOVE US */
 PFNGLTEXIMAGE3DPROC getTexImage3D(){
@@ -55,6 +52,15 @@ PFNGLACTIVETEXTUREPROC getActiveTexture() {
   return my_glActiveTexture;
 }
 #endif
+
+/*
+ * Use this to turn off shaders if the renderer cannot use them.
+ */
+void disableShaders(PyMOLGlobals * G) {
+    /* Auto-disable shader-based rendering */
+    SettingSetGlobal_b(G, cSetting_use_shaders, 0);
+    SettingSetGlobal_i(G, cSetting_sphere_mode, 0);
+}
 
 /* ============================================================================
  * ShaderMgrInit is called from PyMOL.c during start up; it just allocates
@@ -93,16 +99,18 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
 #ifndef ANDROID
   if (GLEW_OK==err) {
     if (GLEW_VERSION_2_0) {
-      FeedbackAdd(G, " Detected OpenGL version 2.0 or greater.  Shaders available.\n");
+      FeedbackAdd(G, " Detected OpenGL version 2.0 or greater. Shaders available.\n");
     }
     else { 
-      FeedbackAdd(G, " Detected OpenGL version prior to 2.0.  Shaders and volumes unavailable.\n");
+      FeedbackAdd(G, " Detected OpenGL version prior to 2.0. Shaders and volumes unavailable.\n");
+      disableShaders(G);
       return;
     }
   } 
   else {
     /* print info on glew error? */
     FeedbackAdd(G, " There was an error intializing GLEW.  Basic graphics, including\n shaders and volumes may be unavailable.\n");
+    disableShaders(G);
 #ifndef _PYMOL_PURE_OPENGL_ES
     fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));
 #endif
@@ -225,8 +233,10 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
 #ifdef PURE_OPENGL_ES_2
   CShaderPrg_Enable_DefaultShader(G);
 #endif
-  if (hasShaders){
+  if (hasShaders) {
     SettingSetGlobal_b(G, cSetting_use_shaders, 1);
+  } else {
+      disableShaders(G);
   }
 }
 
