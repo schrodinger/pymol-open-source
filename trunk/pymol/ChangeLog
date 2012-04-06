@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2012-04-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Standard splash
+
 2012-04-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Default all Intel cards to not use shaders
