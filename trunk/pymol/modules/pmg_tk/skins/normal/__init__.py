@@ -1015,14 +1015,6 @@ class Normal(PMGSkin):
         if command != None:
             self.cmd.do(command)
 
-            
-    def aboutPlugins(self):
-        about = Pmw.MessageDialog((self.app._hull),
-                                          title = 'About Plugins',
-                                          message_text =
-     'Plugins are external modules which extend PyMOL\'s capabilities.\n\n Available plugins (if any) are shown in the Plugin menu.\n\nIf no plugins are listed, then either none have been installed, \nor those that are installed are not yet functional.')
-        about.activate(geometry='centerscreenfirst')      
-
     def transparency_menu(self,name,label,setting_name):
         
         self.menuBar.addcascademenu('Transparency', name, label, label=label)
@@ -3656,25 +3648,6 @@ class Normal(PMGSkin):
             '_ replace_wizard demo,finish'))
 
         self.menuBar.addmenu('Plugin', 'Plugin',tearoff=TRUE)      
-
-        self.menuBar.addcascademenu('Plugin', 'PluginAction', 'Manage Plugins',
-                                             label='Manage Plugins')
-
-        self.menuBar.addmenuitem('PluginAction', 'command', 'Install',
-                                         label='Install...',
-                                         command = lambda s=self: s.app.installPlugin())
-
-        self.menuBar.addmenuitem('PluginAction', 'command', 'Remove',
-                                 label='Remove...',
-                                 command = lambda s=self: s.app.removePlugin())
-
-        self.menuBar.addmenuitem('PluginAction', 'separator', '')
-        
-        self.menuBar.addmenuitem('PluginAction', 'command', 'About',
-                                         label='About',
-                                         command = lambda s=self: s.aboutPlugins())
-
-        self.menuBar.addmenuitem('Plugin', 'separator', '')
 
     def show_about(self):
         Pmw.aboutversion(self.appversion)

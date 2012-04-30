@@ -292,6 +292,7 @@ distribution = setup ( # Distribution meta-data
                  'pymol/opengl/glu',
                  'pymol/opengl/glut',
                  'pymol/wizard',
+                 'pymol/plugins',
                  'pymol2',
                  'web',
                  'web/examples',

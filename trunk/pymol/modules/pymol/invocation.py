@@ -70,6 +70,7 @@ if __name__=='pymol.invocation':
     options.stereo_mode = 0
     options.zoom_mode = -1
     options.no_quit = 0
+    options.plugins = 2
 
     options.win_py = { 'irix':240,
                        'darwin': 214, # hmm...need to set to 192 for Leopard?...
@@ -351,6 +352,7 @@ if __name__=='pymol.invocation':
                         options.keep_thread_alive = 1
                 if "k" in a: # suppress reading of .pymolrc and related files
                     pymolrc = None
+                    options.plugins = 0
                 if "U" in a: #
                     options.reuse_helper = 1
                 if "Q" in a:
@@ -394,6 +396,9 @@ if __name__=='pymol.invocation':
                 loaded_something = 1
         if pymolrc != None:
             options.deferred = pymolrc + options.deferred
+        if options.plugins == 1:
+            # Load plugins independent of PMGApp (will not add menu items)
+            options.deferred.append('_do__ /import pymol.plugins;pymol.plugins.initialize(-1)')
         if loaded_something and (options.after_load_script!=""):
             options.deferred.append(options.after_load_script)
         options.deferred.extend(final_actions)

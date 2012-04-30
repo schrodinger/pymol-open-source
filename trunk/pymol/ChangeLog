@@ -4,6 +4,10 @@ CHANGE LOG
 
 2012-04-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* Improved PyMOL Plugin System; Thomas Holder's PyMOL OSFP project
+	
+2012-04-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* Standard splash
 
 2012-04-05 Jason Vertrees <Jason.Vertrees@schrodinger.com>

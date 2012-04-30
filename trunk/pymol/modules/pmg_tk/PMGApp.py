@@ -183,41 +183,6 @@ class PMGApp(Pmw.MegaWidget):
     def execute(self,cmmd):  
         self.fifo.put(cmmd)
 
-    def installPlugin(self):
-        plugdir = os.path.split(__file__)[0]
-        path = os.path.join(plugdir, "startup", "check_writable")
-        ok = 1
-        try:
-            f=open(path,'wb')
-            f.close()
-            os.unlink(path)
-        except:
-            ok = 0
-            tkMessageBox.showinfo("Error",
- "Unable to write to the plugin directory.\nPerhaps you have insufficient privileges?  Please ensure that you have permission to write to:\n%s" % path)
-        if ok:
-            ofile = askopenfilename(title="Install Plugin",
-                initialdir = os.getcwd(),
-                filetypes=[ ("All Readable","*.py"),
-                                ("All Readable","*.pyc"),                        
-                                ])
-            if len(ofile):
-                initialdir, plugname = os.path.split(ofile)
-                try:
-                    f=open(ofile,'rb')
-                    plugin = f.read()
-                    f.close()
-                    path = os.path.join(plugdir, "startup", plugname)
-                    f=open(path,'wb')
-                    f.write(plugin)
-                    f.close()
-                    tkMessageBox.showinfo("Success", 
-                        "Plugin '%s' has been installed.\nPlease restart PyMOL to begin use." % plugname)
-                except:
-                    traceback.print_exc()
-                    tkMessageBox.showinfo("Error", "unable to install plugin '%s'" % plugname)
-
-
     def my_show(self,win,center=1):
         if sys.platform!='linux2':
             win.show()
@@ -242,92 +207,9 @@ class PMGApp(Pmw.MegaWidget):
         else: 
             win.destroy()
 
-    def removePlugin2(self,result):
-        if result != 'OK':
-            self.my_withdraw(self.dialog)
-            self.dialog = None
-        else:
-            sels = self.dialog.getcurselection()
-            if len(sels)!=0:
-                startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.[Pp][Yy]*",__file__)
-                removed = re.sub(r"[\/\\][^\/\\]*$","/startup/removed",__file__)
-                if not os.path.isdir(removed):
-                    try:
-                        os.mkdir(removed,0775)
-                    except:
-                        pass
-                raw_list = glob(startup_pattern)
-                for a in raw_list:
-                    prefix = re.sub(r".*[\/\\]|\.py.*$","",a)
-                    if prefix in sels:
-                        if a.lower()[-3:] == '.py':
-                            try: # create backup copy
-                                dest_path = os.path.join(removed,prefix+".py")
-                                open(dest_path,'wb').write(open(a,'rb').read())
-                            except:
-                                traceback.print_exc()
-                        os.unlink(a)
-                tkMessageBox.showinfo("Success", 
-                                      "One or more plugins have been removed.\nPlease restart PyMOL.")
-            self.my_withdraw(self.dialog)
-            del self.dialog
-    
-    def removePlugin(self):
-        startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.py*",__file__)
-        raw_list = glob(startup_pattern)
-        unique = {}
-        for a in raw_list:
-            unique[re.sub(r".*[\/\\]|\.py.*$","",a)] = 1
-        lst = unique.keys()
-        lst = filter(lambda x:x!="__init__",lst)
-        lst.sort()
-        self.dialog = Pmw.SelectionDialog(self.root,title="Remove",
-                                  buttons = ('OK', 'Cancel'),
-                                              defaultbutton='Cancel',
-                                  scrolledlist_labelpos=N,
-                                  scrolledlist_listbox_selectmode=EXTENDED,
-                                  label_text='Which plugin would you like to remove?',
-                                  scrolledlist_items = lst,
-                                  command = self.removePlugin2)
-        if len(lst):
-            listbox = self.dialog.component('scrolledlist')      
-            listbox.selection_set(0)
-        self.my_show(self.dialog)
-        
-        
-    def initializePlugins(self):
-        # startup_pattern = /path/to/plugins/*.py*
-        startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.py*",__file__)
-        # startup_pattern = os.environ['PYMOL_PATH']+"/modules/pmg_tk/startup/*.py*"
-        raw_list = glob(startup_pattern)
-        unique = {}
-        for a in raw_list:
-            # strips the extension from the module name: foo.py -> foo
-            unique[re.sub(r".*[\/\\]|\.py.*$","",a)] = 1
-        for name in unique.keys():
-            try:
-                if name != "__init__":
-                    module_context = string.join(string.split(__name__,'.')[0:-1])
-                    # set the module name
-                    mod_name = module_context+".startup."+name
-                    # import the module by name, then
-                    __builtin__.__import__(mod_name)
-                    mod = sys.modules[mod_name]
-                    # look it up and initialize it
-                    if hasattr(mod,'__init_plugin__'):
-                        mod.__init_plugin__(self)
-                    elif hasattr(mod,'__init__'):
-                        mod.__init__(self)
-            except:
-                suppress = 0
-                # suppress error reporting when using old versions of Python
-                if float(sys.version[0:3])<2.3:
-                    if( name in ['apbs_tools' ]):
-                        suppress = 1
-                if not suppress:
-                    print "Exception in plugin '%s' -- Traceback follows..."%name
-                    traceback.print_exc()
-                    print "Error: unable to initialize plugin '%s'."%name
+    def _initializePlugins(self):
+        from pymol.plugins import legacysupport
+        return legacysupport.initializePlugins(self)
 
     def addSkinMenuItems(self,menuBar,menuName):
         if not hasattr(self,'skinNameList'):
@@ -369,6 +251,9 @@ class PMGApp(Pmw.MegaWidget):
             self.skin.setup()
     
     def __init__(self, pymol_instance, skin):
+
+        # prevent overloading
+        self.initializePlugins = self._initializePlugins
 
         self.allow_after = 1 # easy switch for troubleshooting threads
 
