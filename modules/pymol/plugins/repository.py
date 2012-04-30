@@ -1,0 +1,338 @@
+'''
+PyMOL Plugins Engine, Repository Support
+
+This code is in very experimental state!
+
+(c) 2011-2012 Thomas Holder, PyMOL OS Fellow
+License: BSD-2-Clause
+
+'''
+import urllib2
+from urllib2 import URLError
+
+from .installation import supported_extensions
+
+def urlopen(url):
+    '''
+    urlopen wrapper with timeout from preferences ("network_timeout").
+
+    The timeout does not effect the "urlopen" call itself, that takes 20sec
+    for unavailable urls in my tests. Also "socket.setdefaulttimeout" does
+    not change that.
+    '''
+    from urllib2 import urlopen
+    from . import pref_get
+
+    timeout = pref_get('network_timeout', 10.0)
+    return urlopen(url, timeout=timeout)
+
+class Repository():
+    '''
+    Abstract repository class
+
+    All open/read operations should raise IOError on failure.
+    '''
+    def __init__(self, url):
+        self.url = url
+
+    def list(self):
+        '''
+        Return a list of filenames
+        '''
+        try:
+            return self.list_indexfile()
+        except:
+            return self.list_scan()
+
+    def list_indexfile(self):
+        s = self.retrieve('pluginindex.txt')
+        return s.splitlines()
+
+    def list_scan(self):
+        raise NotImplementedError
+
+    def retrieve(self, name):
+        '''
+        Return file content as string
+        '''
+        raise NotImplementedError
+
+    def copy(self, name, dst):
+        '''
+        Copy file. The destination may be a directory.
+        '''
+        import os
+
+        if os.path.isdir(dst):
+            dst = os.path.join(dst, os.path.basename(name))
+
+        content = self.retrieve(name)
+        f = open(dst, 'w')
+        f.write(content)
+        f.close()
+
+    def is_supported(self, name):
+        if len(name) == 0 or name[0] in ['.', '_']:
+            return False
+        for ext in supported_extensions:
+            if name.endswith(ext):
+                return True
+        return False
+
+    def get_full_url(self, name):
+        import re
+        baseurl = re.sub(r'/[^/]*$', '', self.url)
+        return baseurl + '/' + name
+
+class HttpRepository(Repository):
+    '''
+    HTML page over HTTP
+    '''
+    def list_scan(self):
+        import re
+
+        # fetch as string
+        handle = urlopen(self.url)
+        content = handle.read()
+
+        # clear comments
+        re_comment = re.compile(r'<!\s*--.*?--\s*>', re.DOTALL)
+        content = re_comment.sub('', content)
+
+        # find links
+        names = []
+        re_a = re.compile(r'<a\s+(.*?)>')
+        re_href = re.compile(r'''href\s*=\s*(\S+|".+?"|'.+?')''')
+        re_anchor = re.compile(r'#.*')
+        for attribs in re_a.findall(content):
+            for name in re_href.findall(attribs):
+                if name[0] in ['"', "'"]:
+                    assert name[0] == name[-1]
+                    name = name[1:-1]
+                if '#' in name:
+                    name = re_anchor.sub('', name)
+                # filter for supported types
+                if self.is_supported(name):
+                    names.append(name)
+
+        return names
+
+    def retrieve(self, name):
+        url = self.get_full_url(name)
+        handle = urlopen(url)
+        content = handle.read()
+        handle.close()
+
+        return content
+
+class GithubRepository(HttpRepository):
+    '''
+    http://developer.github.com/v3/
+
+    Inherit HttpRepository to reuse "retrieve" method.
+    '''
+
+    def __init__(self, url):
+        import re
+        m = re.search(r'github.com[:/]([^/]+)/([^/]+)', url)
+
+        if m is None:
+            raise KeyError('cannot parse github.com url')
+
+        self.user = m.group(1)
+        self.repo = m.group(2)
+        if self.repo.endswith('.git'):
+            self.repo = self.repo[:-4]
+
+        # for now: only support main repository
+        assert self.user == 'Pymol-Scripts'
+        assert self.repo == 'Pymol-script-repo'
+
+        # for HttpRepository.retrieve
+        self.url = 'https://github.com/%s/%s/raw/master/' % (self.user, self.repo)
+
+    def list_scan(self):
+        sha = 'master'
+        r = self.fetchjson('/repos/%s/%s/git/trees/%s' % (self.user, self.repo, sha))
+
+        names = []
+        for d in r['tree']:
+            if d['type'] != 'blob':
+                continue
+            name = d['path']
+            if self.is_supported(name):
+                names.append(name)
+
+        return names
+
+    list = list_scan
+
+    def fetchjson(self, url):
+        handle = urlopen('https://api.github.com' + url)
+        return eval(handle.read())
+
+class LocalRepository(Repository):
+    def __init__(self, url):
+        from urlparse import urlparse
+        r = urlparse(url)
+        self.url = r.path
+
+    def list_scan(self):
+        import os
+        names = os.listdir(self.url)
+        return filter(self.is_supported, names)
+
+    def retrieve(self, name):
+        url = self.get_full_url(name)
+        handle = open(url)
+        content = handle.read()
+        handle.close()
+        return content
+
+    def copy(self, name, dst):
+        import shutil
+        url = self.get_full_url(name)
+        shutil.copy(url, dst)
+
+    def get_full_url(self, name):
+        import os
+        return os.path.join(self.url, name)
+
+def guess(url):
+    u = url.lower()
+
+    if 'github.com' in u:
+        return GithubRepository(url)
+
+    if u.startswith('http://') or \
+            u.startswith('https://'):
+        return HttpRepository(url)
+
+    if u.startswith('file://') or \
+            u.startswith('/'):
+        return LocalRepository(url)
+
+    raise KeyError('cannot guess repository type')
+
+def fetchscript(title, dest=None, run=1, quiet=1):
+    '''
+DESCRIPTION
+
+    Fetch script from PyMOLWiki or Pymol-script-repo
+
+    Returns filename on success, or None on failure.
+
+ARGUMENTS
+
+    title = string: Wiki page title or full URL
+    '''
+    import urllib2, re, os
+    from pymol import cmd
+
+    quiet = int(quiet)
+    if dest is None:
+        dest = cmd.get('fetch_path')
+
+    # remove hash
+    if '#' in title:
+        title = title.split('#')[0]
+
+    # github
+    git_master = 'https://raw.github.com/Pymol-Scripts/Pymol-script-repo/master/'
+    m = re.match(r'https://(?:raw\.)?github\.com/Pymol-Scripts/Pymol-script-repo/(?:raw/|blob/)?master/(.*)', title)
+    if m is not None:
+        filename = m.group(1)
+        url = git_master + filename
+        rawscript = 1
+
+    # pymolwiki
+    else:
+        if title.startswith('http'):
+            a = title.split('pymolwiki.org/index.php/', 2)
+            if len(a) == 2:
+                title = a[1]
+            else:
+                m = re.search(r'[?&]title=([^&]+)', title)
+                if m is not None:
+                    title = m.group(1)
+                else:
+                    print 'Failed to parse URL:', title
+                    return
+
+        title = title[0].upper() + title[1:].replace(' ','_')
+        url = "http://pymolwiki.org/index.php?title=%s&action=raw" % (title)
+        filename = title + '.py'
+        rawscript = 0
+
+    filename = os.path.join(dest, filename.rsplit('/')[-1])
+
+    if os.path.exists(filename):
+        if not quiet:
+            print 'File "%s" exists, will not redownload'
+    else:
+        if not quiet:
+            print 'Downloading', url
+
+        # get page content
+        try:
+            handle = urlopen(url)
+            content = handle.read()
+        except IOError as e:
+            print "Plugin-Error: %s" % e
+            return
+
+        if not rawscript:
+            # redirect
+            redirect = re.match(r'\s*#REDIRECT\s*\[\[(.*?)\]\]', content)
+            if redirect is not None:
+                return fetchscript(redirect.group(1), dest, run, quiet)
+
+            # parse Infobox
+            pattern2 = re.compile(r'\{\{Infobox script-repo.*?\| *filename *= *(\S*).*?\}\}', re.DOTALL)
+            chunks2 = pattern2.findall(content)
+            if len(chunks2) > 0:
+                try:
+                    return fetchscript(git_master + chunks2[0], dest, run, quiet)
+                except urllib2.HTTPError:
+                    print 'Warning: Infobox filename found, but download failed'
+
+            # parse for <source ...>...</source>
+            pattern = re.compile(r'<(?:source|syntaxhighlight)\b[^>]*>(.*?)</(?:source|syntaxhighlight)>', re.DOTALL)
+            chunks = pattern.findall(content)
+
+            # check script-chunks for cmd.extend
+            chunks = filter(lambda s: 'cmd.extend' in s, chunks)
+
+            if len(chunks) == 0:
+                print 'Error: No <source> or <syntaxhighlight> block with cmd.extend found'
+                return
+            if len(chunks) > 1:
+                print 'Warning: %d chunks found, only saving first' % (len(chunks))
+
+            content = chunks[0]
+
+        handle = open(filename, 'w')
+        handle.write(content)
+        handle.close()
+
+    if int(run):
+        cmd.do("run " + filename, echo=not quiet)
+
+    return filename
+
+if __name__ == '__main__':
+    try:
+        import socket_hack
+    except ImportError:
+        pass
+
+    r1 = guess('http://pldserver1.biochem.queensu.ca/~rlc/work/pymol/')
+    print r1.list()
+
+    r1 = guess('https://github.com/Pymol-Scripts/Pymol-script-repo')
+    print r1.list()
+
+    r1 = guess('/opt/pymol-svn/modules/pmg_tk/startup')
+    print r1.list()
+
+# vi:expandtab:smarttab:sw=4
