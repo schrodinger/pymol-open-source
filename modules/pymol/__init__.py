@@ -331,7 +331,8 @@ if pymol_launch != 3: # if this isn't a dry run
                 if 'Quadro' in renderer:
                     if invocation.options.show_splash:
                         print " Adapting to Quadro hardware."
-                    cmd.set('stereo_double_pump_mono',1)                    
+                    cmd.set('stereo_double_pump_mono',1)
+                    cmd.set('cylinder_shader_ff_workaround', 1)
 
             elif vendor.startswith('Mesa'):
                 if renderer[0:18]=='Mesa GLX Indirect':
@@ -364,9 +365,9 @@ if pymol_launch != 3: # if this isn't a dry run
                     if cmd.get_setting_int("use_shaders")==0:
                         cmd.set("use_display_lists") 
 
-                    # limit frame rate to 30 fps to avoid ATI "jello"
-                    # where screen updates fall way behind the user.
-                    cmd.set("max_ups",30) 
+                        # limit frame rate to 30 fps to avoid ATI "jello"
+                        # where screen updates fall way behind the user.
+                        cmd.set("max_ups",30) 
 
             elif vendor.startswith('Microsoft'):
                 if renderer[0:17]=='GDI Generic':
