@@ -84,10 +84,11 @@ if __name__=='pymol.querying':
         r = DEFAULT_ERROR        
         # should replace this with a C function
         try:
+            _self.lock(_self)  
+
             # remove non-safe chars
             prefix = _self.get_legal_name(prefix)
 
-            _self.lock(_self)  
             avoid_set = set(_self.get_names('all'))
             if alwaysnumber or prefix in avoid_set:
                 counter = 1
@@ -1197,7 +1198,7 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if is_error(r):
-            if _feedback(fb_module.cmd,fb_mask.errors,_self):      
+            if not quiet and _feedback(fb_module.cmd,fb_mask.errors,_self):      
                 print "Cmd-Error: unrecognized name."
         elif not quiet:
             print r
@@ -1430,16 +1431,27 @@ DESCRIPTION
 
         """
         obj_type = "public_objects" if public==1 else "objects"
-        obj = _self.get_names(obj_type)
         types = []
         mix = []
-        if obj:
-            types = map(_self.get_type,obj)
-            mix = map(None,obj,types)
-        lst = []
-        for a in mix:
-            if a[1]==type:
-                lst.append(a[0])
+
+        try:
+            _self.lock(_self)
+
+            obj = _self.get_names(obj_type)
+    
+            if obj:
+                try:
+                    types = map(_self.get_type,obj)
+                    mix = map(None,obj,types)
+                except:
+                    pass
+            lst = []
+            for a in mix:
+                if a[1]==type:
+                    lst.append(a[0])
+        finally:
+            _self.unlock(r,_self)
+        if _raising(r,_self): raise pymol.CmdException
         return lst
 
 

@@ -2,14 +2,20 @@
 CHANGE LOG
 =========================================================================
 
+2012-05-30 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixing get_unused_names
+
+	* Fixing locking on get_names_of_type
+
 2012-04-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Adding checks for Quadro cards to enable cylinder shader workaround.
-	
+
 2012-04-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Improved PyMOL Plugin System; Thomas Holder's PyMOL OSFP project
-	
+
 2012-04-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Standard splash
