@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2012-05-30 Blaine Bell <Blaine.Bell@schrodinger.com>
+
+	* Fixing the exception handling of get_names_of_type
+
 2012-05-30 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Fixing get_unused_names

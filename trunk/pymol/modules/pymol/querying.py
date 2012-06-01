@@ -1433,25 +1433,22 @@ DESCRIPTION
         obj_type = "public_objects" if public==1 else "objects"
         types = []
         mix = []
-
+        obj = None
         try:
-            _self.lock(_self)
-
             obj = _self.get_names(obj_type)
+        except:
+            pass
     
-            if obj:
-                try:
-                    types = map(_self.get_type,obj)
-                    mix = map(None,obj,types)
-                except:
-                    pass
-            lst = []
-            for a in mix:
-                if a[1]==type:
-                    lst.append(a[0])
-        finally:
-            _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
+        if obj:
+            try:
+                types = map(_self.get_type,obj)
+                mix = map(None,obj,types)
+            except:
+                pass
+        lst = []
+        for a in mix:
+            if a[1]==type:
+                lst.append(a[0])
         return lst
 
 
