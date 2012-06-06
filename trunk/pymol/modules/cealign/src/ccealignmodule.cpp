@@ -256,7 +256,8 @@ pathCache findPath( double** S, double** dA, double** dB, int lenA, int lenB, fl
 	  // the S, matrix.
 					
 	  // 1st: If jA and jB are at the end of the matrix
-	  if ( jA > lenA-winSize-1 || jB > lenB-winSize-1 ){
+	  if ( jA > lenA-winSize || jB > lenB-winSize ){
+	    // FIXME, was: jA > lenA-winSize-1 || jB > lenB-winSize-1
 	    continue;
 	  }
 	  // 2nd: If this gapped octapeptide is bad, ignore it.
@@ -423,6 +424,7 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
   TA2<double> bestU;
   TA1<double> bestCOM1, bestCOM2;
   int bestLen = 0;
+  int bestO = -1;
 	
   // loop through the buffer
   for ( int o = 0; o < bufferSize; o++ ) {
@@ -438,8 +440,7 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
       // rebuild the coordinate lists for this path
       if ( paths[o][j].first != -1 )
 	{
-	  int k = 0;
-	  while ( k++ < winSize )
+	  for ( int k = 0; k < winSize; k++ )
 	    {
 	      double t1[] = { coordsA[ paths[o][j].first +k ].x, 
 			      coordsA[ paths[o][j].first +k ].y, 
@@ -586,9 +587,8 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
       bestCOM1 = c1COM.copy();
       bestCOM2 = c2COM.copy();
       bestLen = curLen;
+      bestO = o;
     }
-
-    o++;
   }
 
   if ( bestRMSD == 1e6 ) {
@@ -609,9 +609,18 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
 				 bestU[0][2], bestU[1][2], bestU[2][2], bestCOM1[2],
 				 -bestCOM2[0], -bestCOM2[1], -bestCOM2[2], 1.);
 	
+  PyObject* pyPathA = PyList_New(0);
+  PyObject* pyPathB = PyList_New(0);
+  for (int j = 0; j < smaller && paths[bestO][j].first != -1; j++) {
+    PyList_Append(pyPathA, Py_BuildValue("i", paths[bestO][j].first));
+    PyList_Append(pyPathB, Py_BuildValue("i", paths[bestO][j].second));
+  }
+
   PyList_Append(rVal, pyAliLen);
   PyList_Append(rVal, pyRMSD);
   PyList_Append(rVal, pyU );
+  PyList_Append(rVal, pyPathA );
+  PyList_Append(rVal, pyPathB );
 
   return (PyObject*) rVal;
 }

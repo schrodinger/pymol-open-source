@@ -2,6 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2012-06-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixing up CEAlign (thanks to Thomas Holder)
+
+	* FIXED: fails to align chains of length < 2*window+1
+    
+	* FIXED: if chain length is a multiple of window, only (length-window) residues get aligned
+
+	* FIXED: only evaluates every 2nd path of the best 20 (increments k twice in the loop)
+
+	* FIXED: if no alignment is found, the return value is NULL which raises a SystemError instead of a graceful error message.
+
+	* FIXED: finally, it's not possible to obtain the alignment as an object (like with align ..., object=aln)
+
+	* FIXED: fixed auto complete names on for cealign
+
 2012-05-30 Blaine Bell <Blaine.Bell@schrodinger.com>
 
 	* Fixing the exception handling of get_names_of_type
