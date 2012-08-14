@@ -4,7 +4,11 @@ CHANGE LOG
 
 2012-08-14 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
-	* Adding autocomplete for dss.
+	* Added autocomplete for 'group' command.
+
+2012-08-14 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Adding autocomplete for 'dss'.
 
 2012-08-14 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
