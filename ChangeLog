@@ -4,6 +4,10 @@ CHANGE LOG
 
 2012-08-14 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
+	* Adding autocomplete for dss.
+
+2012-08-14 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
 	* Fixed bug where FASTA strings aren't returned for multiple objects.
 
 2012-06-06 Jason Vertrees <Jason.Vertrees@schrodinger.com>
