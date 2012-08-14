@@ -170,21 +170,24 @@ PYMOL API
     
     def get_fastastr(selection="all", state=-1, quiet=1, _self=cmd):
         dict = { 'seq' : {} }
-        _self.iterate("("+selection+") and polymer and name ca",
+        # we use (alt '' or alt 'A') because 'guide' picks up 
+        # non-canonical structures: eg, 1ejg has residue 22 as a SER and 
+        # PRO, which guide will report twice
+        _self.iterate("("+selection+") and polymer and name ca and (alt '' or alt 'A')",
                     "seq[model]=seq.get(model,[]);seq[model].append(resn)",space=dict)
         seq = dict['seq']
         result = []
         for obj in _self.get_names("objects",selection='('+selection+')'):
             if seq.has_key(obj):
-                seq = map(lambda x:_resn_to_aa.get(x,'?'),seq[obj])
+                cur_seq = map(lambda x:_resn_to_aa.get(x,'?'),seq[obj])
                 result.append(">%s"%obj)
-                seq = string.join(seq,'')
-                while len(seq):
-                    if len(seq)>=70:
-                        result.append(seq[0:70])
-                        seq=seq[70:]
+                cur_seq = string.join(cur_seq,'')
+                while len(cur_seq):
+                    if len(cur_seq)>=70:
+                        result.append(cur_seq[0:70])
+                        cur_seq=cur_seq[70:]
                     else:
-                        result.append(seq)
+                        result.append(cur_seq)
                         break
         result = string.join(result,'\n')
         if len(result):
