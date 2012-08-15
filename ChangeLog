@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2012-08-15 Jason Vertrees <Jason.Vertrees@schrodinger.com>
+
+	* Fixed longstanding annoyance: 'as rep, vis' now works
+
 2012-08-14 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Added autocomplete for 'group' command.
