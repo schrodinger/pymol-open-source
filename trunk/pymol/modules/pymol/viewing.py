@@ -642,6 +642,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
+            vis_sel = None
             if (representation=="") and (selection==""):
                 if is_ok(_cmd.showhide(_self._COb,str(selection),-1,0)):
                     if is_ok(_cmd.showhide(_self._COb,"(all)",repres['lines'],1)):
@@ -652,7 +653,14 @@ SEE ALSO
                 repn = repres[rep]
                 # preprocess selection 
                 selection = selector.process(selection)
-                #
+
+                # user specified 'visible' -- this has always been problematic
+
+                if "visible".startswith(selection.lower()) and len(string.split(selection))==1:
+                    vis_sel = _self.get_unused_name("_vis")
+                    _self.select(vis_sel, selection)
+                    selection = vis_sel
+
                 if is_ok(_cmd.showhide(_self._COb,str(selection),-1,0)):
                     r = _cmd.showhide(_self._COb,str(selection),int(repn),1)
             elif representation=='all':
@@ -671,6 +679,8 @@ SEE ALSO
                 if is_ok(_cmd.showhide(_self._COb,"all",-1,0)):
                     r = _cmd.showhide(_self._COb,"all",int(repn),1);
         finally:
+            if vis_sel is not None:
+                _self.delete(vis_sel)
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
