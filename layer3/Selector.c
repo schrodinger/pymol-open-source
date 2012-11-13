@@ -3755,6 +3755,10 @@ int SelectorCreateAlignments(PyMOLGlobals * G,
         cnt++;
       } else {
 
+        /* search back to first atom in residue */
+        while(at1a > 0 && AtomInfoSameResidue(G, ai1a, ai1a - 1)) { ai1a--; at1a--; }
+        while(at2a > 0 && AtomInfoSameResidue(G, ai2a, ai2a - 1)) { ai2a--; at2a--; }
+
         while(1) {              /* match up all matching atom names in each residue */
           cmp = AtomInfoNameOrder(G, ai1a, ai2a);
           if(cmp == 0) {        /* atoms match */

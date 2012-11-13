@@ -10457,14 +10457,6 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, char *s1, int state, int conectFla
         ExecutiveObjMolSeleOp(G, sele1, &op1);
       }
     }
-    if((!(SettingGetGlobal_i(G, cSetting_pdb_no_end_record)))
-       && !(pdb_info.is_pqr_file))
-      /* terminate with END */
-    {
-      ov_size len = op1.i2;
-      UtilConcatVLA(&op1.charVLA, &len, end_str);
-      op1.i2 = len;
-    }
     switch (state) {
     case -1:
       {
@@ -10474,6 +10466,15 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, char *s1, int state, int conectFla
       }
       break;
     }
+  }
+
+  if((!(SettingGetGlobal_i(G, cSetting_pdb_no_end_record)))
+     && !(pdb_info.is_pqr_file))
+    /* terminate with END */
+  {
+    ov_size len = op1.i2;
+    UtilConcatVLA(&op1.charVLA, &len, end_str);
+    op1.i2 = len;
   }
 
   /* terminate (just in case) */
