@@ -84,11 +84,10 @@ if __name__=='pymol.querying':
         r = DEFAULT_ERROR        
         # should replace this with a C function
         try:
-            _self.lock(_self)  
-
             # remove non-safe chars
             prefix = _self.get_legal_name(prefix)
 
+            _self.lock(_self)  
             avoid_set = set(_self.get_names('all'))
             if alwaysnumber or prefix in avoid_set:
                 counter = 1
