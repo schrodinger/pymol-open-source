@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2012-11-12 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* Fixed #3539436: right justified resn in PDB
+
+	* Fixed #3506103: alignment objects from "super" do not contain N atoms
+
+	* Fixed #3496006: END before ENDMDL bug reintroduced
+
 2012-08-15 Jason Vertrees <Jason.Vertrees@schrodinger.com>
 
 	* Fixed longstanding annoyance: 'as rep, vis' now works
