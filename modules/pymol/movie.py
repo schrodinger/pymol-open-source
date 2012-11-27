@@ -405,7 +405,7 @@ def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1,
 def _rock(mode,axis,first,last,period,pause,_self=cmd):
     cmd = _self
     n_frame = last - first + 1
-    angle = 10
+    angle = cmd.get_setting_float('sweep_angle') * 0.5
     if (period * 1.5) < pause:
         n_cyc = int(round(pause / period))
         frame_list = []
@@ -459,7 +459,7 @@ def _nutate(mode,first,last,period,pause,_self=cmd):
     cmd = _self
     n_frame = last - first + 1
     axis = 'y'
-    angle = 10
+    angle = cmd.get_setting_float('sweep_angle') * 0.75
     if (period * 1.5) < pause:
         n_cyc = int(round(pause / period))
         frame_list = []
@@ -471,7 +471,7 @@ def _nutate(mode,first,last,period,pause,_self=cmd):
     direction = 0
     spiral = 1
     for frame in frame_list:
-        _nutate_sub(frame[0], frame[1], spiral=spiral, _self=cmd)
+        _nutate_sub(frame[0], frame[1], angle, spiral, _self=cmd)
         spiral = 0
         
 def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,
