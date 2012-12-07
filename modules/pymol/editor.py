@@ -66,6 +66,23 @@ def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
 #___last = ___time()
 
 def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",hydro=-1,ss=-1,_self=cmd):
+    '''
+ARGUMENTS
+
+    selection = str: named selection of single N or C atom
+
+    amino_acid = str: fragment name to load from fragment library
+
+    center = bool: center on new terminus (pk1)
+
+    animate = int: animate centering
+
+    object = str: name of new object (if selection is none)
+
+    hydro = int (-1/0/1): keep hydrogens
+
+    ss = int: Secondary structure 1=alpha helix, 2=antiparallel beta, 3=parallel beta, 4=flat
+    '''
 #    global ___total, ___seg1, ___seg2, ___seg3, ___pass, ___last
 #    ___mark0 = ___time()
 #    ___mark1 = ___time()
@@ -289,6 +306,10 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
     resi = int(resi)
     state = int(state)
     dir = int(dir)
+    hydro = int(hydro)
+
+    if hydro < 0:
+        hydro = not _self.get_setting_boolean("auto_remove_hydrogens")
     
     seq_len = 0
     if (mode == 'peptide') and is_string(input):
@@ -328,6 +349,8 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
                     tmp_obj = _self.get_unused_name()
                     first = sequence.pop()
                     _self.fragment(code[first], tmp_obj)
+                    if not hydro:
+                        cmd.remove(tmp_obj + ' and hydro')
                     _self.alter(tmp_obj,'resi="""%s""";chain="""%s""";segi="""%s"""'%(resi,chain,segi))
                     _self.create(name,tmp_obj+" or ?"+name,1,state,zoom=0)
                     tmp_sel = _self.get_unused_name()
