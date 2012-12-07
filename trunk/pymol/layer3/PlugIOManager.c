@@ -48,7 +48,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                           float *shift, int quiet, char *plugin_type)
 {
 
-  PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+  PRINTFB(G, FB_ObjectMolecule, FB_Errors)
     " ObjectMolecule-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
     ENDFB(G);
   return 0;
@@ -57,7 +57,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
 ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
                                 char *fname, int state, int quiet, char *plugin_type)
 {
-  PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+  PRINTFB(G, FB_ObjectMolecule, FB_Errors)
     " ObjectMap-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
     ENDFB(G);
   return NULL;
@@ -136,7 +136,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
       }
     }
     if(!plugin) {
-      PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
         " ObjectMolecule: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
     } else {
       int natoms;
@@ -151,10 +151,10 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
       file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
 
       if(!file_handle) {
-        PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+        PRINTFB(G, FB_ObjectMolecule, FB_Errors)
           " ObjectMolecule: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
       } else if (natoms!=obj->NAtom) {
-	PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+	PRINTFB(G, FB_ObjectMolecule, FB_Errors)
           " ObjectMolecule: plugin '%s' cannot open file because the number of atoms in the object (%d) did not equal the number of atoms in the '%s' (%d) file.\n", plugin_type, obj->NAtom, plugin_type, natoms ENDFB(G);
       } else if(cs_tmpl) {
 	/* by this point, we have opened the DCD file, and we have a valid topology file (obj->CSet[0] exists) */
@@ -176,7 +176,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
             if(cnt >= start) {
               icnt--;
               if(icnt > 0) {
-                PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                PRINTFB(G, FB_ObjectMolecule, FB_Details)
                   " ObjectMolecule: skipping set %d...\n", cnt ENDFB(G);
               } else {
                 icnt = interval;
@@ -184,7 +184,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
               }
               if(icnt == interval) {
                 if(n_avg < average) {
-                  PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                  PRINTFB(G, FB_ObjectMolecule, FB_Details)
                     " ObjectMolecule: averaging set %d...\n", cnt ENDFB(G);
                 } else {
                   /* compute average */
@@ -214,13 +214,13 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                   obj->CSet[frame] = cs;
                   ncnt++;
                   if(average < 2) {
-                    PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                    PRINTFB(G, FB_ObjectMolecule, FB_Details)
                       " ObjectMolecule: read set %d into state %d...\n", cnt, frame + 1
                       ENDFB(G);
                   } else {
-                    PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                    PRINTFB(G, FB_ObjectMolecule, FB_Details)
                       " ObjectMolecule: averaging set %d...\n", cnt ENDFB(G);
-                    PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                    PRINTFB(G, FB_ObjectMolecule, FB_Details)
                       " ObjectMolecule: average loaded into state %d...\n", frame + 1
                       ENDFB(G);
                   }
@@ -234,7 +234,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                 }
               }
             } else {
-              PRINTFB(G, FB_Details, FB_ObjectMolecule)
+              PRINTFB(G, FB_ObjectMolecule, FB_Details)
                 " ObjectMolecule: skipping set %d...\n", cnt ENDFB(G);
             }
           } /* end while */
@@ -275,7 +275,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
         }
       }
       if(!plugin) {
-        PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+        PRINTFB(G, FB_ObjectMolecule, FB_Errors)
           " ObjectMolecule: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
         ok = false;
       }
@@ -284,7 +284,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
     if(ok) {
       file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
       if(!file_handle) {
-        PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+        PRINTFB(G, FB_ObjectMolecule, FB_Errors)
           " ObjectMolecule: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
         ok = false;
       }
@@ -312,7 +312,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
           }
 
           if(plugin->read_volumetric_data(file_handle, i, datablock, colorblock)) {
-            PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+            PRINTFB(G, FB_ObjectMolecule, FB_Errors)
               " ObjectMap: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
             ok = false;
           } else {
@@ -329,7 +329,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
                  dump3f(v->zaxis,"z");
                */
 
-              PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+              PRINTFB(G, FB_ObjectMolecule, FB_Errors)
                 " ObjectMap-Error: PyMOL only handles XYZ-axes-aligned CUBE files.\n"
                 ENDFB(G);
               ok = false;
@@ -725,7 +725,7 @@ timestep.coords = (float *) cs->Coord;
     if(cnt >= start) {
       icnt--;
       if(icnt > 0) {
-        PRINTFB(G, FB_Details, FB_ObjectMolecule)
+        PRINTFB(G, FB_ObjectMolecule, FB_Details)
           " ObjectMolecule: skipping set %d...\n", cnt ENDFB(G);
       } else {
         icnt = interval;
@@ -734,7 +734,7 @@ timestep.coords = (float *) cs->Coord;
 
       if(icnt == interval) {
         if(n_avg < average) {
-          PRINTFB(G, FB_Details, FB_ObjectMolecule)
+          PRINTFB(G, FB_ObjectMolecule, FB_Details)
             " ObjectMolecule: averaging set %d...\n", cnt ENDFB(G);
         } else {
           /* compute average */
@@ -764,12 +764,12 @@ timestep.coords = (float *) cs->Coord;
           ncnt++;
 
           if(average < 2) {
-            PRINTFB(G, FB_Details, FB_ObjectMolecule)
+            PRINTFB(G, FB_ObjectMolecule, FB_Details)
               " ObjectMolecule: read set %d into state %d...\n", cnt, frame + 1 ENDFB(G);
           } else {
-            PRINTFB(G, FB_Details, FB_ObjectMolecule)
+            PRINTFB(G, FB_ObjectMolecule, FB_Details)
               " ObjectMolecule: averaging set %d...\n", cnt ENDFB(G);
-            PRINTFB(G, FB_Details, FB_ObjectMolecule)
+            PRINTFB(G, FB_ObjectMolecule, FB_Details)
               " ObjectMolecule: average loaded into state %d...\n", frame + 1 ENDFB(G);
           }
           frame++;
@@ -783,7 +783,7 @@ timestep.coords = (float *) cs->Coord;
         }
       }
     } else {
-      PRINTFB(G, FB_Details, FB_ObjectMolecule)
+      PRINTFB(G, FB_ObjectMolecule, FB_Details)
         " ObjectMolecule: skipping set %d...\n", cnt ENDFB(G);
     }
   }
