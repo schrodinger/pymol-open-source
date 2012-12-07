@@ -1,7 +1,7 @@
 
 import sys
 import cmd
-from cmd import Shortcut, is_string
+from cmd import Shortcut, is_string, QuietException
 from cmd import fb_module, fb_mask, fb_action,_raising
 import copy
 
@@ -131,7 +131,7 @@ EXAMPLES
                 print "Error: ambiguous feedback mask '%s'."%mask
                 if _raising(_self=_self): raise QuietException
                 else: return None
-            mask_int = int(getattr(fb_mask,mask_kee))
+            mask_int |= int(getattr(fb_mask,mask_kee))
 
         # validate and iterate modules
 

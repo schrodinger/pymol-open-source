@@ -853,7 +853,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
     ok = ErrMessage(G, "ObjectMoleculeLoadTRJFile", "Unable to open file!");
   } else {
     if(!I->CSTmpl) {
-      PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
         " ObjMolLoadTRJFile: Missing topology" ENDFB(G);
       return (I);
     }
@@ -1020,7 +1020,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
             if(cnt >= start) {
               icnt--;
               if(icnt > 0) {
-                PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                PRINTFB(G, FB_ObjectMolecule, FB_Details)
                   " ObjectMolecule: skipping set %d...\n", cnt ENDFB(G);
               } else {
                 icnt = interval;
@@ -1029,7 +1029,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
 
               if(icnt == interval) {
                 if(n_avg < average) {
-                  PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                  PRINTFB(G, FB_ObjectMolecule, FB_Details)
                     " ObjectMolecule: averaging set %d...\n", cnt ENDFB(G);
                 } else {
 
@@ -1146,13 +1146,13 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                   ncnt++;
 
                   if(average < 2) {
-                    PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                    PRINTFB(G, FB_ObjectMolecule, FB_Details)
                       " ObjectMolecule: read set %d into state %d...\n", cnt, frame + 1
                       ENDFB(G);
                   } else {
-                    PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                    PRINTFB(G, FB_ObjectMolecule, FB_Details)
                       " ObjectMolecule: averaging set %d...\n", cnt ENDFB(G);
-                    PRINTFB(G, FB_Details, FB_ObjectMolecule)
+                    PRINTFB(G, FB_ObjectMolecule, FB_Details)
                       " ObjectMolecule: average loaded into state %d...\n", frame + 1
                       ENDFB(G);
                   }
@@ -1166,13 +1166,13 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                 }
               }
             } else {
-              PRINTFB(G, FB_Details, FB_ObjectMolecule)
+              PRINTFB(G, FB_ObjectMolecule, FB_Details)
                 " ObjectMolecule: skipping set %d...\n", cnt ENDFB(G);
             }
           }
         }
       } else {
-        PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+        PRINTFB(G, FB_ObjectMolecule, FB_Errors)
           " ObjMolLoadTRJFile-Error: Failed to read expected coordinate value.\n  This traj. does not match the loaded parameter/topology file.\n  Likely cause: either the atom count or the periodic box settings\n  are inconsistent between the two files.\n"
           ENDFB(G);
         break;
@@ -1215,7 +1215,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     ok = ErrMessage(G, "ObjectMoleculeLoadRSTFile", "Unable to open file!");
   else {
     if(!I->CSTmpl) {
-      PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
         " ObjMolLoadRSTFile: Missing topology" ENDFB(G);
       return (I);
     }
@@ -1283,7 +1283,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
               I->CSet[frame]->fFree(I->CSet[frame]);
             I->CSet[frame] = cs;
 
-            PRINTFB(G, FB_Details, FB_ObjectMolecule)
+            PRINTFB(G, FB_ObjectMolecule, FB_Details)
               " ObjectMolecule: read coordinates into state %d...\n", frame + 1 ENDFB(G);
 
             cs = CoordSetCopy(cs);
@@ -1291,7 +1291,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
           }
         }
       } else {
-        PRINTFB(G, FB_Errors, FB_ObjectMolecule)
+        PRINTFB(G, FB_ObjectMolecule, FB_Errors)
           " ObjMolLoadRSTFile: atom/coordinate mismatch.\n" ENDFB(G);
         break;
       }
