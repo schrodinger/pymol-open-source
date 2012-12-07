@@ -10083,6 +10083,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
   CoordSet *cs;
   AtomInfoType *ai, *ai0, *ai_option;
   PyMOLGlobals *G = I->Obj.G;
+  PyCodeObject *expr_co = NULL;
 
   PRINTFD(G, FB_ObjectMolecule)
     " ObjectMoleculeSeleOp-DEBUG: sele %d op->code %d\n", sele, op->code ENDFD;
@@ -10092,6 +10093,12 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
     case OMOP_ALTR:
     case OMOP_AlterState:
       PBlock(G);
+      expr_co = Py_CompileString(op->s1, "", Py_single_input);
+      if(expr_co == NULL) {
+        if(PyErr_Occurred())
+          PyErr_Print();
+        ok = ErrMessage(G, "Alter", "failed to compile expression");
+      }
       /* PBlockAndUnlockAPI() is not safe.
        * what if "v" is invalidated by another thread? */
       break;
@@ -11157,7 +11164,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               case OMOP_ALTR:
                 if(ok) {
                   if(PAlterAtom
-                     (I->Obj.G, &I->AtomInfo[a], op->s1, op->i2, I->Obj.Name, a,
+                     (I->Obj.G, &I->AtomInfo[a], expr_co, op->i2, I->Obj.Name, a,
                       op->py_ob1))
                     op->i1++;
                   else
@@ -11181,7 +11188,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                           ai_option = I->AtomInfo + a;
                         else
                           ai_option = NULL;
-                        if(PAlterAtomState(I->Obj.G, cs->Coord + (a1 * 3), op->s1, op->i3,
+                        if(PAlterAtomState(I->Obj.G, cs->Coord + (a1 * 3), expr_co, op->i3,
                                            ai_option, I->Obj.Name, a, op->py_ob1)) {
                           op->i1++;
                           hit_flag = true;
@@ -11688,6 +11695,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
     switch (op->code) {
     case OMOP_ALTR:
     case OMOP_AlterState:
+      Py_XDECREF(expr_co);
       PUnblock(G);
       break;
     }
