@@ -800,7 +800,7 @@ void PDumpException()
   PyObject_CallMethod(P_traceback, "print_exc", "");
 }
 
-int PAlterAtomState(PyMOLGlobals * G, float *v, char *expr, int read_only,
+int PAlterAtomState(PyMOLGlobals * G, float *v, PyCodeObject *expr_co, int read_only,
                     AtomInfoType * at, char *model, int index, PyObject * space)
 
 /* assumes Blocked python interpreter */
@@ -873,7 +873,7 @@ int PAlterAtomState(PyMOLGlobals * G, float *v, char *expr, int read_only,
   x_id1 = PConvFloatToPyDictItem(dict, "x", v[0]);
   y_id1 = PConvFloatToPyDictItem(dict, "y", v[1]);
   z_id1 = PConvFloatToPyDictItem(dict, "z", v[2]);
-  PXDecRef(PyRun_String(expr, Py_single_input, space, dict));
+  PXDecRef(PyEval_EvalCode(expr_co, space, dict));
   if(PyErr_Occurred()) {
     PyErr_Print();
     result = false;
@@ -923,7 +923,7 @@ int PAlterAtomState(PyMOLGlobals * G, float *v, char *expr, int read_only,
 }
 
 int PAlterAtom(PyMOLGlobals * G,
-               AtomInfoType * at, char *expr, int read_only,
+               AtomInfoType * at, PyCodeObject *expr_co, int read_only,
                char *model, int index, PyObject * space)
 {
   /* assumes Blocked python interpreter */
@@ -1041,7 +1041,7 @@ int PAlterAtom(PyMOLGlobals * G,
   state_id1 = PConvIntToPyDictItem(dict, "state", at->discrete_state);
   rank_id1 = PConvIntToPyDictItem(dict, "rank", at->rank);
 
-  PXDecRef(PyRun_String(expr, Py_single_input, space, dict));
+  PXDecRef(PyEval_EvalCode(expr_co, space, dict));
   if(PyErr_Occurred()) {
     ErrMessage(G, "Alter", "Aborting on error. Assignment may be incomplete.");
     PyErr_Print();

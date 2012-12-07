@@ -10991,9 +10991,14 @@ int ExecutiveIterateList(PyMOLGlobals * G, char *name,
         if(ok)
           ok = ((index <= n_atom) && (index > 0));
         if(ok)
+        {
+          PyCodeObject *expr_co = Py_CompileString(expr, "", Py_single_input);
           ok =
-            PAlterAtom(G, obj->AtomInfo + index - 1, expr, read_only, name, index - 1,
+            (expr_co != NULL) &&
+            PAlterAtom(G, obj->AtomInfo + index - 1, expr_co, read_only, name, index - 1,
                        space);
+          Py_XDECREF(expr_co);
+        }
         if(ok)
           n_eval++;
       }
