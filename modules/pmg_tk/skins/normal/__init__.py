@@ -1015,6 +1015,15 @@ class Normal(PMGSkin):
         if command != None:
             self.cmd.do(command)
 
+    def mvprg_scene_loop(self, pause, rock, angle):
+        def func():
+            cmd = self.cmd
+            start = cmd.get_movie_length() + 1
+            cmd.ending()
+            cmd.set('sweep_angle', angle)
+            cmd.movie.add_scenes(None, pause, rock=rock, start=start)
+        return func
+
     def transparency_menu(self,name,label,setting_name):
         
         self.menuBar.addcascademenu('Transparency', name, label, label=label)
@@ -2070,47 +2079,17 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Nutate2', 'command', '24 seconds each',label='24 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=4,start=%d)"))
 
-        self.menuBar.addcascademenu('Scene Loop', 'X-Rock2', 'X-Rock',
-                                    label='X-Rock')
+        for label, rock in [('X-Rock', 2), ('Y-Rock', 1)]:
+            mlabel = 'SL-' + label
+            self.menuBar.addcascademenu('Scene Loop', mlabel, label, label=label)
 
-        self.menuBar.addmenuitem('X-Rock2', 'command', '2 seconds each',label='2 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=2,start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock2', 'command', '4 seconds each',label='4 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=2,start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock2', 'command', '8 seconds each',label='8 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=2,start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock2', 'command', '12 seconds each',label='12 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,12.0,rock=2,start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock2', 'command', '16 seconds each',label='16 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,16.0,rock=2,start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock2', 'command', '24 seconds each',label='24 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=2,start=%d)"))
-
-        self.menuBar.addcascademenu('Scene Loop', 'Y-Rock2', 'Y-Rock',
-                                    label='Y-Rock')
-
-        self.menuBar.addmenuitem('Y-Rock2', 'command', '2 seconds each',label='2 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=1,start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock2', 'command', '4 seconds each',label='4 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=1,start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock2', 'command', '8 seconds each',label='8 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=1,start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock2', 'command', '12 seconds each',label='12 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,12.0,rock=1,start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock2', 'command', '16 seconds each',label='16 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,16.0,rock=1,start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock2', 'command', '24 seconds each',label='24 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=1,start=%d)"))
+            for angle, seconds in ((30, (2,4,8)), (60, (4,8,16)), (90, (6,12,24)), (120, (8,16,32))):
+                if angle != 30:
+                    self.menuBar.addmenuitem(mlabel, 'separator', '')
+                for sec in seconds:
+                    label = '%d deg. over %d sec.' % (angle, sec)
+                    self.menuBar.addmenuitem(mlabel, 'command', label, label=label,
+                            command=self.mvprg_scene_loop(sec, rock, angle))
 
         self.menuBar.addcascademenu('Scene Loop', 'No-Motion', 'Steady',
                                     label='Steady')
