@@ -301,6 +301,17 @@ class Normal(PMGSkin):
         else: # autocenter, deiconify, and run mainloop
             win.destroy()
 
+    def back_search(self, set0=False):
+        if not self.history_cur or set0:
+            self.history[0] = self.command.get()
+        for i in range(self.history_cur + 1, len(self.history)):
+            if self.history[i].startswith(self.history[0]):
+                self.history_cur = i
+                self.command.set(self.history[self.history_cur])
+                l = len(self.history[self.history_cur])
+                self.entry.icursor(l)
+                break
+
     def back(self):
         if not self.history_cur:
             self.history[0] = self.command.get()
@@ -312,7 +323,7 @@ class Normal(PMGSkin):
     def forward(self):
         if not self.history_cur:
             self.history[0] = self.command.get()
-        self.history_cur = (self.history_cur - 1) & self.history_mask
+        self.history_cur = max(0, self.history_cur - 1) & self.history_mask
         self.command.set(self.history[self.history_cur])
         l = len(self.history[self.history_cur])
         self.entry.icursor(l)
@@ -323,9 +334,10 @@ class Normal(PMGSkin):
         t.start()
         
     def doTypedCommand(self,cmmd):
-        self.history[0]=cmmd
-        self.history.insert(0,'') # always leave blank at 0
-        self.history.pop(self.history_mask+1)
+        if self.history[1] != cmmd:
+            self.history[0]=cmmd
+            self.history.insert(0,'') # always leave blank at 0
+            self.history.pop(self.history_mask+1)
         self.history_cur = 0
         t = threading.Thread(target=_doAsync,args=(self.cmd,cmmd,1))
         t.setDaemon(1)
@@ -363,6 +375,7 @@ class Normal(PMGSkin):
         self.entry.bind('<Tab>', lambda e, s=self: s.complete(e))
         self.entry.bind('<Up>', lambda e, s=self: s.back())
         self.entry.bind('<Down>', lambda e, s=self: s.forward())
+        self.entry.bind('<Control-Up>', lambda e: self.back_search())
         self.root.protocol("WM_DELETE_WINDOW", lambda s=self: s.confirm_quit())
         
         self.initialdir = os.getcwd()
