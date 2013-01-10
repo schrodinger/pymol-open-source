@@ -7114,7 +7114,8 @@ static PyObject *CmdQuit(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "O", &self);
+  int code = EXIT_SUCCESS;
+  ok = PyArg_ParseTuple(args, "Oi", &self, &code);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -7128,7 +7129,7 @@ static PyObject *CmdQuit(PyObject * self, PyObject * args)
     }
     if(!G->Option->no_quit) {
       G->Terminating = true;
-      PExit(G, EXIT_SUCCESS);
+      PExit(G, code);
     } else {
       OrthoAddOutput(G, "Cmd-Error: cannot quit from within this context.\n");
     }

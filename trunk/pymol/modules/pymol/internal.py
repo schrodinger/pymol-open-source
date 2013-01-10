@@ -506,7 +506,7 @@ def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,format=-1,_self=cmd):
 
 # quitting (thread-specific)
 
-def _quit(_self=cmd):
+def _quit(code=0, _self=cmd):
     pymol=_self._pymol
     # WARNING: internal routine, subject to change
     try:
@@ -526,7 +526,7 @@ def _quit(_self=cmd):
                 _self.reaper.join()
             except:
                 pass
-        r = _cmd.quit(_self._COb)
+        r = _cmd.quit(_self._COb, int(code))
     finally:
         _self.unlock(-1,_self)
     return r

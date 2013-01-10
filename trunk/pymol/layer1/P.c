@@ -2507,7 +2507,7 @@ void PExit(PyMOLGlobals * G, int code)
      so for the time being, let's just take the process down at this
      point, instead of allowing PyExit to be called. */
 
-  exit(EXIT_SUCCESS);
+  exit(code);
 
   Py_Exit(code);
 }

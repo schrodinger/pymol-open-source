@@ -383,7 +383,7 @@ USAGE (PYTHON)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def quit(_self=cmd):
+    def quit(code=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -397,12 +397,13 @@ PYMOL API
 
     cmd.quit()
         '''
+        code = int(code)
         if thread.get_ident() == pymol.glutThread:
-            _self._quit(_self)
+            _self._quit(code, _self)
         else:
             try:
                 _self.lock(_self)
-                _cmd.do(_self._COb,"_ time.sleep(0.100);cmd._quit()",0,0)
+                _cmd.do(_self._COb,"_ time.sleep(0.100);cmd._quit(%d)" % (code),0,0)
                 # allow time for a graceful exit from the calling thread
                 try:
                     thread.exit()
