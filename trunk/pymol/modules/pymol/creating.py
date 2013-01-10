@@ -478,8 +478,12 @@ SEE ALSO
         if selection!='':
             selection = selector.process(selection)
         # coerce range
-        range = list(safe_list_eval(str(range)))
-        range = map(lambda x:float(x),range)
+        try:
+            if isinstance(range, str):
+                range = safe_list_eval(range)
+            range = map(float, range)
+        except:
+            raise pymol.CmdException('invalid range')
         if is_list(color):
             for a in color:
                 if not is_list(a):
