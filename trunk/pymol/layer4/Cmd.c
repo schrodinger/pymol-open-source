@@ -7115,7 +7115,7 @@ static PyObject *CmdQuit(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   int ok = false;
   int code = EXIT_SUCCESS;
-  ok = PyArg_ParseTuple(args, "Oi", &self, &code);
+  ok = PyArg_ParseTuple(args, "O|i", &self, &code);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
