@@ -71,6 +71,7 @@ if __name__=='pymol.invocation':
     options.zoom_mode = -1
     options.no_quit = 0
     options.plugins = 2
+    options.exit_on_error = 0
 
     options.win_py = { 'irix':240,
                        'darwin': 214, # hmm...need to set to 192 for Leopard?...
@@ -236,6 +237,8 @@ if __name__=='pymol.invocation':
                     options.win_y = int(av.pop())
                 if "X" in a:
                     options.win_px = int(av.pop())
+                if "y" in a:
+                    options.exit_on_error = 1
                 if "Y" in a:
                     options.win_py = int(av.pop())
                 if "D" in a:
