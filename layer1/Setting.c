@@ -2256,7 +2256,15 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     SceneInvalidate(G);
     break;
   case cSetting_angle_color:
+    if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_dash_use_shader)){
+      ExecutiveInvalidateRep(G, "all", cRepAngle, cRepInvRep);
+    }
+    SceneInvalidate(G);
+    break;
   case cSetting_dihedral_color:
+    if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_dash_use_shader)){
+      ExecutiveInvalidateRep(G, "all", cRepDihedral, cRepInvRep);
+    }
     SceneInvalidate(G);
     break;
   case cSetting_mouse_selection_mode:
