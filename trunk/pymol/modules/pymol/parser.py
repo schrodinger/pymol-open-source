@@ -41,14 +41,14 @@ if __name__=='pymol.parser':
 
     remove_lists_re = re.compile("\[[^\]]*\]")
 
-    def complete_sc(st,sc,type_name,postfix):
+    def complete_sc(st,sc,type_name,postfix, mode=0):
         result = None
 
         try:
             sc=sc() # invoke lambda functions (if any)
         except:
             traceback.print_exc()
-        amb = sc.interpret(st)
+        amb = sc.interpret(st, mode)
         if amb==None:
             print " parser: no matching %s."%type_name
         elif type(amb)==types.StringType:
@@ -480,7 +480,9 @@ if __name__=='pymol.parser':
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):
                     print "Parser: QuietException caught"
                 p_result = 0 # notify caller that an error was encountered
-            except CmdException:
+            except CmdException as e:
+                if e.args:
+                    print " Error:", e.args
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):         
                     print "Parser: CmdException caught."
                 p_result = 0
@@ -489,6 +491,8 @@ if __name__=='pymol.parser':
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):
                     print "PyMOL: Caught an unknown exception."
                 p_result = 0 # notify caller that an error was encountered
+            if not p_result and self.cmd._pymol.invocation.options.exit_on_error:
+                self.cmd.quit(1)
             return p_result  # 0 = Exception, None = abort, 1 = ok
 
         def get_embedded(self,key=None):
@@ -529,7 +533,7 @@ if __name__=='pymol.parser':
             flag = 0
             if (string.find(st,' ')<0) and (string.find(st,'@'))<0:
                 try:
-                    result = complete_sc(st, self.cmd.kwhash, 'commands',' ')
+                    result = complete_sc(st, self.cmd.kwhash, 'commands',' ', 1)
                 except:
                     traceback.print_exc()
             else:
@@ -558,25 +562,17 @@ if __name__=='pymol.parser':
                     except:
                         traceback.print_exc()
                 if not flag: # otherwise fallback onto filename completion
-                    if(st[:1]=='@'):
-                        st=st[1:]
-                        pre = '@'
-                    loc = reduce(max,[string.rfind(st,','),
-                                            string.rfind(st,' '),
-                                            string.rfind(st,']'),
-                                            string.rfind(st,')')])+1
+                    loc = 1 + max(map(st.rfind, ', ])@'))
+                    pre = st[:loc]
                     st3 = st[loc:]
                     flist = glob.glob(exp_path(st3)+"*")
-                    lst = map(None,st3)
-                    lst.reverse()
-                    st3 = string.join(lst,'')
                     lf = len(flist)
                     if lf == 0:
                         print " parser: no matching files."
                     elif lf==1:
-                        result = st[0:loc]+flist[0]
+                        result = flist[0]
                         if os.path.isdir(flist[0]):
-                            result = result + "/"
+                            result += os.path.sep
                     else:
                         flist.sort()
                         print " parser: matching files:"
@@ -584,24 +580,9 @@ if __name__=='pymol.parser':
                         for a in lst:
                             print a
                         # now append as much up to point of ambiguity
-                        css = map(None,flist[0]) # common sub-string (css)
-                        for a in flist:
-                            ac = map(None,a)
-                            tmp = css
-                            css = []
-                            for c in range(len(tmp)):
-                                if tmp[c]!=ac[c]:
-                                    break
-                                css.append(tmp[c])
-                        tmp = css
-                        css = []
-                        for a in tmp:
-                            if a==None:
-                                break
-                            css.append(a)
-                        css = string.join(css,'')
+                        css = os.path.commonprefix(flist)
                         if len(css)>len(st3):
-                            result = st[0:loc]+css
+                            result = css
             if result!=None:
                 result = pre+result
             return result

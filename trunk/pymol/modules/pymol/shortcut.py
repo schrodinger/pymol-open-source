@@ -15,17 +15,12 @@
 if __name__=='pymol.shortcut' or __name__=='shortcut':
     
     import copy
-    import types
-    import re
-    import string
+    from pymol.checking import is_string, is_list
     
-    abbr_re = re.compile(r"[^\_]*\_")
-
-    def is_string(obj):
-        return isinstance(obj,types.StringType)
-
-    def is_list(obj):
-        return isinstance(obj,types.ListType)
+    def mkabbr(a, m=1):
+        b = a.split('_')
+        b[:-1] = [c[0:m] for c in b[:-1]]
+        return '_'.join(b)
 
     class Shortcut:
 
@@ -45,41 +40,22 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
         def add_one(self,a):
             # optimize symbols
             hash = self.shortcut
-            abbr_dict = {}
-            find = string.find
-            abbr_re_sub = abbr_re.sub
+            abbr_dict = self.abbr_dict
             for b in range(1,len(a)):
                 sub = a[0:b]
-                if hash.has_key(sub):
-                    hash[sub]=0
-                else:
-                    hash[sub]=a
-            if find(a,"_")>=0:
-                abbr = abbr_re_sub(lambda x:x.group(0)[0]+"_",a)
-                if a!=abbr:
-                    if(abbr_dict.has_key(abbr)):
-                        abbr_dict[abbr].append(a)
-                    else:
-                        abbr_dict[abbr]=[a]
-                    for b in range(string.find(abbr,'_')+1,len(abbr)):
-                        sub = abbr[0:b]
-                        if hash.has_key(sub):
-                            hash[sub]=0
+                hash[sub] = 0 if sub in hash else a
+            if '_' in a:
+                for n in (1, 2):
+                    abbr = mkabbr(a, n)
+                    if a!=abbr:
+                        if abbr in abbr_dict:
+                            if a not in abbr_dict[abbr]:
+                                abbr_dict[abbr].append(a)
                         else:
-                            hash[sub]=a
-
-                abbr = abbr_re_sub(lambda x:x.group(0)[0:2]+"_",a)
-                if a!=abbr:
-                    if(abbr_dict.has_key(abbr)):
-                        abbr_dict[abbr].append(a)
-                    else:
-                        abbr_dict[abbr]=[a]
-                    for b in range(string.find(abbr,'_')+1,len(abbr)):
-                        sub = abbr[0:b]
-                        if hash.has_key(sub):
-                            hash[sub]=0
-                        else:
-                            hash[sub]=a
+                            abbr_dict[abbr]=[a]
+                        for b in range(abbr.find('_')+1,len(abbr)):
+                            sub = abbr[0:b]
+                            hash[sub] = 0 if sub in hash else a
 
         def rebuild(self,list=None):
             if list!=None:
@@ -92,83 +68,73 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
             hash = self.shortcut
             self.abbr_dict = {}
             abbr_dict = self.abbr_dict
-            self.abbr_list = []
-            abbr_list = self.abbr_list
-            find = string.find
-            abbr_re_sub = abbr_re.sub
             #
             for a in self.keywords:
                 for b in range(1,len(a)):
                     sub = a[0:b]
-                    if hash.has_key(sub):
-                        hash[sub]=0
-                    else:
-                        hash[sub]=a
-                if find(a,"_")>=0:
-                    abbr = abbr_re_sub(lambda x:x.group(0)[0]+"_",a)
-                    if a!=abbr:
-                        if(abbr_dict.has_key(abbr)):
-                            abbr_dict[abbr].append(a)
-                        else:
-                            abbr_dict[abbr]=[a]
-                        for b in range(string.find(abbr,'_')+1,len(abbr)):
-                            sub = abbr[0:b]
-                            if hash.has_key(sub):
-                                hash[sub]=0
+                    hash[sub] = 0 if sub in hash else a
+                if '_' in a:
+                    for n in (1, 2):
+                        abbr = mkabbr(a, n)
+                        if a!=abbr:
+                            if abbr in abbr_dict:
+                                abbr_dict[abbr].append(a)
                             else:
-                                hash[sub]=a
-                    abbr = abbr_re_sub(lambda x:x.group(0)[0:2]+"_",a)
-                    if a!=abbr:
-                        if(abbr_dict.has_key(abbr)):
-                            abbr_dict[abbr].append(a)
-                        else:
-                            abbr_dict[abbr]=[a]
-                        for b in range(string.find(abbr,'_')+1,len(abbr)):
-                            sub = abbr[0:b]
-                            if hash.has_key(sub):
-                                hash[sub]=0
-                            else:
-                                hash[sub]=a
+                                abbr_dict[abbr]=[a]
+                            for b in range(abbr.find('_')+1,len(abbr)):
+                                sub = abbr[0:b]
+                                hash[sub] = 0 if sub in hash else a
 
-            for a in abbr_dict.keys():
-                adk = abbr_dict[a]
+            self._rebuild_finalize()
+
+        def _rebuild_finalize(self):
+            hash = self.shortcut
+            for a, adk in self.abbr_dict.iteritems():
                 if len(adk)==1:
                     hash[a]=adk[0]
             for a in self.keywords:
                 hash[a]=a
 
-        def interpret(self,kee):
+        def interpret(self,kee, mode=0):
+            '''
+            Returns None (no hit), str (one hit) or list (multiple hits)
+
+            kee = str: query string, setting prefix or shortcut
+            mode = 0/1: if mode=1, do prefix search even if kee has exact match
+            '''
             if not len(kee): # empty string matches everything
                 return copy.deepcopy(self.keywords)
-            elif not self.shortcut.has_key(kee):
-                return None # unrecognized, returns None
-            elif self.shortcut[kee]==0:
-                lst_dict = {}
-                lcm = len(kee)
-                for a in self.keywords:
-                    if a[0:lcm] == kee:
-                        lst_dict[a]=1 # ambiguous returns list
-                for a in self.abbr_dict.keys():
-                    if a[0:lcm] == kee:
-                        for b in self.abbr_dict[a]:
-                            lst_dict[b]=1
-                lst = lst_dict.keys()
-                if(len(lst)==1):
-                    return lst[0]
-                elif not len(lst):
-                    return None
-                return lst
-            else:
-                return self.shortcut[kee] # otherwise return string
+
+            try:
+                r = self.shortcut[kee]
+            except KeyError:
+                return None
+            if r and not mode:
+                return r
+
+            # prefix search
+            lst_set = set(a for a in self.keywords if a.startswith(kee))
+            for abbr, a_list in self.abbr_dict.iteritems():
+                if abbr.startswith(kee):
+                    lst_set.update(a_list)
+
+            # no match
+            if not lst_set:
+                return None
+
+            # single match: str
+            lst = list(lst_set)
+            if len(lst) == 1:
+                return lst[0]
+
+            # multiple matches: list
+            return lst
 
         def has_key(self,kee):
             return self.shortcut.has_key(kee)
 
         def __getitem__(self,kee):
-            if self.shortcut.has_key(kee):
-                return self.shortcut[kee]
-            else:
-                return None
+            return self.shortcut.get(kee, None)
 
         def __delitem__(self,kee):
             self.keywords.remove(kee)
@@ -177,13 +143,7 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
         def append(self,kee):
             self.keywords.append(kee)
             self.add_one(kee)
-            hash = self.shortcut      
-            for a in self.abbr_dict.keys():
-                adk = self.abbr_dict[a]
-                if len(adk)==1:
-                    hash[a]=adk[0]
-            for a in self.keywords:
-                hash[a]=a
+            self._rebuild_finalize()
 
         def auto_err(self,kee,descrip=None):
             result = None
