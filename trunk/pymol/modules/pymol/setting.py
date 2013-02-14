@@ -753,6 +753,7 @@ if __name__=='pymol.setting':
         edit_light                         = 707
         suspend_undo                       = 708
         suspend_undo_atom_count            = 709
+        pick_surface                       = 710
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

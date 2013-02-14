@@ -428,9 +428,11 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
     /* Not ray tracing, but rendering */
     if(pick) {
-      /* Surfaces can't be picked yet */
-      if (I->pickingCGO){
+      int pick_surface = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_pick_surface);
+      int no_pick_but_write_to_depth_buffer = (!pick_surface && (alpha == 1.0));
+      if (I->pickingCGO && (pick_surface || no_pick_but_write_to_depth_buffer)){
 	I->pickingCGO->use_shader = false;
+	I->pickingCGO->no_pick = no_pick_but_write_to_depth_buffer;
 	CGORenderGLPicking(I->pickingCGO, pick, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
       }
     } else {

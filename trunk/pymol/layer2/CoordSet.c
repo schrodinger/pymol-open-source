@@ -1191,19 +1191,21 @@ static void CoordSetUpdate(CoordSet * I, int state)
   if(!I->Color) {               /* colors invalidated */
     I->Color = VLAlloc(int, I->NIndex);
     if(I->Color) {
-      if(obj->DiscreteFlag)
+      if(obj->DiscreteFlag){
         for(a = 0; a < I->Obj->NAtom; a++) {
           if(obj->DiscreteCSet[a] == I) {
             i = obj->DiscreteAtmToIdx[a];
             if(i >= 0)
               I->Color[i] = obj->AtomInfo[a].color;
           }
-      } else
-        for(a = 0; a < I->Obj->NAtom; a++) {
-          i = I->AtmToIdx[a];
+	}
+      } else {
+	for(a = 0; a < I->Obj->NAtom; a++) {
+	  i = I->AtmToIdx[a];
           if(i >= 0)
             I->Color[i] = obj->AtomInfo[a].color;
         }
+      }
     }
   }
   OrthoBusyFast(G, 0, cRepCnt);

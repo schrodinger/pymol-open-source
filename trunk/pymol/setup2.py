@@ -36,6 +36,10 @@ if 'uninstall' in sys.argv:
 else:
    uninstall = 0
    
+if not uninstall:
+   print 'setup2.py no longer needed to install PyMOL'
+   sys.exit()
+
 try:
    
    if not (os.path.exists("data") and os.path.exists("LICENSE")):

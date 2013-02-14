@@ -3481,7 +3481,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
   atInfo = *atInfoPtr;
 
   p_store = p;
-  p = ncopy(cc, p, 6);
+  p = ncopy(cc, p, 10);
   if(sscanf(cc, "%d", &nAtom) != 1) {
     nAtom = 0;
     tinker_xyz = false;
@@ -8047,7 +8047,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           else {
             char color_name[24];
             sprintf(color_name, "0x%08x", trgb);
-            atInfo[a].color = ColorGetIndex(G, color_name);
+	    atInfo[a].color = ColorGetIndex(G, color_name);
           }
         }
       }
@@ -13162,7 +13162,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, char *buffer,
     atInfo = *atInfoPtr;
 
   if(ok) {
-    p = ncopy(cc, p, 6);
+    p = ncopy(cc, p, 6);  // could this be too small for large molecules with #atoms > 999999 ?
     if(sscanf(cc, "%d", &nAtom) != 1)
       ok = ErrMessage(G, "ReadMMDFile", "bad atom count");
   }

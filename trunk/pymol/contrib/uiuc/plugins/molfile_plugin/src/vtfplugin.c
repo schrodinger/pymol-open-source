@@ -4,7 +4,7 @@
 #define STATIC_PLUGIN 1
 
 /* VTF plugin by Olaf Lenz <olenz@fias.uni-frankfurt.de> */
-/* $Id: vtfplugin.c,v 1.13 2009/05/18 05:01:56 johns Exp $ */
+/* $Id: vtfplugin.c,v 1.14 2011/06/22 18:06:04 johns Exp $ */
 
 /*
 VMD file reader plugin for:
@@ -31,7 +31,7 @@ VMD file reader plugin for:
 #endif
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 3
+#define VERSION_MINOR 4
 
 /* TODO:
 - volumetric/graphics format
@@ -92,7 +92,7 @@ static void vtf_error(const char *msg, const char *line) {
 /*     cons_fputs(VMDCON_ERROR, message); */
 /*   else */
 /* #else */
-    printf(message);
+    printf("%s", message);
 /* #endif */
 }
 

@@ -80,6 +80,7 @@ struct _CGO {
   short use_shader, cgo_shader_ub_color, cgo_shader_ub_normal;
   short debug;
   short enable_shaders;
+  short no_pick;
 };
 
 
@@ -291,6 +292,7 @@ void CGOLinewidthSpecial(CGO * I, int v);
 #define POINTSIZE_DYNAMIC_DOT_WIDTH 3
 #define LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON 4
 #define LINEWIDTH_DYNAMIC_WITH_SCALE_DASH 5
+#define CYLINDERWIDTH_DYNAMIC_MESH  6
 void CGODotwidth(CGO * I, float v);
 void CGOChar(CGO * I, char c);
 void CGOFontVertex(CGO * I, float x, float y, float z);
@@ -361,6 +363,8 @@ void CGOShaderCylinder2ndColor(CGO *I, float *origin, float *axis, float tube_si
 int CGOCountNumberOfOperationsOfTypeDEBUG(CGO *I, int optype);
 int CGOCountNumberOfOperationsOfType(CGO *I, int op);
 short CGOHasOperationsOfType(CGO *I, int op);
+short CGOHasOperationsOfType2(CGO *I, int op1, int op2);
+short CGOHasCylinderOperations(CGO *I);
 
 short CGOCheckWhetherToFree(PyMOLGlobals * G, CGO *I);
 

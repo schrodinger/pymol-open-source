@@ -4962,16 +4962,28 @@ int ExecutiveRampNew(PyMOLGlobals * G, char *name, char *src_name,
 }
 
 #ifndef _PYMOL_NOPY
+#include "ObjectMesh.h"
+
 static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals * G, SpecRec * rec)
 {
 
   PyObject *result = NULL;
+  int recobjtype = rec->obj->type;
+  switch (recobjtype){
+  case cObjectMesh:
+    { /* If a mesh no longer has its dependent map, then it gets saved as a CGO */
+      int allMapsExist = ObjectMeshAllMapsInStatesExist((ObjectMesh *) rec->obj);
+      if (!allMapsExist){
+	recobjtype = cObjectCGO;
+      }
+    }
+  }
   result = PyList_New(7);
   PyList_SetItem(result, 0, PyString_FromString(rec->obj->Name));
   PyList_SetItem(result, 1, PyInt_FromLong(cExecObject));
   PyList_SetItem(result, 2, PyInt_FromLong(rec->visible));
   PyList_SetItem(result, 3, PConvIntArrayToPyList(rec->repOn, cRepCnt));
-  PyList_SetItem(result, 4, PyInt_FromLong(rec->obj->type));
+  PyList_SetItem(result, 4, PyInt_FromLong(recobjtype));
   switch (rec->obj->type) {
   case cObjectGadget:
     PyList_SetItem(result, 5, ObjectGadgetAsPyList((ObjectGadget *) rec->obj));

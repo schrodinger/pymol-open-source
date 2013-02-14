@@ -1,15 +1,19 @@
 import sys, os
+from distutils import dir_util
 
-write = sys.stdout.write
+def openw(filename):
+    if not isinstance(filename, basestring):
+        return filename
+    dir_util.mkpath(os.path.dirname(filename))
+    return open(filename, 'w')
 
 def create_shadertext(shaderdir, inputfile, outputheader, outputfile):
 
+    outputheader = openw(outputheader)
+    outputfile = openw(outputfile)
 
     with open(os.path.join(shaderdir, inputfile)) as f:
-        while 1:
-            l = f.readline()
-            if not l:
-                break
+        for l in f:
             lspl = l.split()
             if len(lspl)==0:
                 continue
@@ -22,23 +26,14 @@ def create_shadertext(shaderdir, inputfile, outputheader, outputfile):
                     outputheader.write("extern const char* %s;\n" % varname)
                     outputfile.write("const char* %s =\n" % varname)
                     with open(os.path.join(shaderdir, filename)) as f2:
-                        while 1:
-                            l2 = f2.readline()
-                            if not l2:
-                                outputfile.write(";\n") # end of variable definition
-                                break
+                        for l2 in f2:
                             st = l2.strip("\n")
                             if len(st)>0:
                                 outputfile.write("\"%s\\n\"\n" % st)
+                        outputfile.write(";\n") # end of variable definition
             else:
                 outputheader.write("%s\n" % l.strip())
                 outputfile.write("%s\n" % l.strip())
 
 if __name__ == "__main__":
- 
-    shaderdir = sys.argv[1]
-    inputfile = sys.argv[2]
-    outputheader = open(sys.argv[3], 'w')
-    outputfile = open(sys.argv[4], 'w')
-
-    create_shader_text(shaderdir, inputfile, outputheader, outputfile)
+    create_shader_text(*sys.argv[1:5])

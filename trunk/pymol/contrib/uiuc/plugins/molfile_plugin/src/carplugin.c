@@ -16,7 +16,7 @@
  *
  *      $RCSfile: carplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.14 $       $Date: 2009/04/29 15:45:28 $
+ *      $Revision: 1.17 $       $Date: 2011/02/22 03:50:03 $
  *
  ***************************************************************************/
 
@@ -279,8 +279,16 @@ static int read_car_structure(void *mydata, int *optflags,
         return MOLFILE_ERROR;
       }
 
-      /* XXX - use the chain name to identify different molecules */
-      sprintf(atom->chain, "%d", mol_num);
+      /* XXX - this code can easily create buffer overflows
+               and cause data corruption or segfaults:
+
+         XXX - use the chain name to identify different molecules
+         sprintf(atom->chain, "%d", mol_num);
+
+         we avoid the buffer overflow and use typical capital 
+         letters for the chain identifiers instead.
+      */
+      sprintf(atom->chain, "%c", (char) (((int) 'A') + (mol_num % 26))); 
 
       atom++;
       
@@ -391,7 +399,7 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   plugin.prettyname = "InsightII car";
   plugin.author = "Eamon Caddigan";
   plugin.majorv = 0;
-  plugin.minorv = 4;
+  plugin.minorv = 5;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "car";
   plugin.open_file_read = open_car_read;

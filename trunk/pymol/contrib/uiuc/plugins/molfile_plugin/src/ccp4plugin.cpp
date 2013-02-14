@@ -16,7 +16,7 @@
  *
  *      $RCSfile: ccp4plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.32 $       $Date: 2009/05/12 16:31:02 $
+ *      $Revision: 1.35 $       $Date: 2009/07/07 04:22:30 $
  *
  ***************************************************************************/
 
@@ -132,7 +132,7 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   }
 
 
-#if 0
+#if 1
   printf("ccp4plugin)    extent: %d x %d x %d\n",
          extent[0], extent[1], extent[2]);
   printf("ccp4plugin) nxyzstart: %d x %d x %d\n", 
@@ -266,9 +266,9 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   zaxis[2] = z3 * zScale;
 
 #if 1
-  // Handle both MRC-2000 and older MRC maps
+  // Handle both MRC-2000 and older format maps
   if (origin2k[0] == 0.0f && origin2k[1] == 0.0f && origin2k[2] == 0.0f) {
-    printf("ccp4plugin) using old MRC n[xyz]start origin\n");
+    printf("ccp4plugin) using CCP4 n[xyz]start origin\n");
     ccp4->vol[0].origin[0] = xaxis[0] * nxyzstart[xIndex] + 
                              yaxis[0] * nxyzstart[yIndex] +
                              zaxis[0] * nxyzstart[zIndex];
@@ -410,7 +410,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   plugin.prettyname = "CCP4, MRC Density Map";
   plugin.author = "Eamon Caddigan, John Stone";
   plugin.majorv = 1;
-  plugin.minorv = 4;
+  plugin.minorv = 5;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "ccp4,mrc,map";
   plugin.open_file_read = open_ccp4_read;

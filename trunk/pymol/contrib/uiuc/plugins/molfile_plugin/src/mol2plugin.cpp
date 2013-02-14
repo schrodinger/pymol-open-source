@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: mol2plugin.C,v $
- *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.35 $       $Date: 2009/04/29 15:45:31 $
+ *      $Author: johanstr $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.36 $       $Date: 2011/12/07 23:50:21 $
  *
  ***************************************************************************/
   
@@ -431,7 +431,7 @@ static int write_mol2_timestep(void *mydata, const molfile_timestep_t *ts) {
   for (i = 0; i < data->natoms; i++) {
     //getmol2ff(mol2fftype, atom->type);
 //    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        %8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], mol2fftype, atom->resid, atom->resname, atom->charge);
-    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        %8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], atom->type, atom->resid, atom->resname, atom->charge);
+    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        % 8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], atom->type, atom->resid, atom->resname, atom->charge);
     ++atom; 
     pos += 3;
   }

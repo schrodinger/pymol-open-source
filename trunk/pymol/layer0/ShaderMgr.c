@@ -822,6 +822,15 @@ int CShaderPrg_GetAttribLocation(CShaderPrg * p, const char * name)
   return loc;
 }
 
+void CShaderPrg_SetAttrib4fLocation(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4){
+  if (p){
+    int attr = CShaderPrg_GetAttribLocation(p, name);
+    if (attr>=0){
+      glVertexAttrib4f(attr, f1, f2, f3, f4);
+    }
+  }
+}
+
 void CShaderMgr_FreeAllVBOs(CShaderMgr * I){
   GLuint *vboids = I->vbos_to_free, nvbos = I->number_of_vbos_to_free;
   I->vbos_to_free = 0;

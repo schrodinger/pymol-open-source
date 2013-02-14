@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr                                                                       
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the           
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the           
  *cr                        University of Illinois                       
  *cr                         All Rights Reserved                        
  *cr                                                                   
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: dcdplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.72 $       $Date: 2009/01/14 22:16:52 $
+ *      $Revision: 1.76 $       $Date: 2011/05/18 17:29:19 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -48,6 +48,7 @@
  ***************************************************************************/
 
 #include "largefiles.h"   /* platform dependent 64-bit file I/O defines */
+#include "fastio.h"       /* must come before others, for O_DIRECT...   */
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -57,7 +58,6 @@
 #include <math.h>
 #include <time.h>
 #include "endianswap.h"
-#include "fastio.h"
 #include "molfile_plugin.h"
 
 #ifndef M_PI_2
@@ -164,10 +164,7 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
 {
   unsigned int input_integer[2];  /* buffer space */
   int i, ret_val, rec_scale;
-  union hdrufb_union {
-  char charvalue[84];    /* char buffer used to store header */
-  int intvalue;
-  } hdrbuf;
+  char hdrbuf[84];    /* char buffer used to store header */
   int NTITLE;
   int dcdcordmagic;
   char *corp = (char *) &dcdcordmagic;
@@ -229,7 +226,7 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
   }
 
   /* Buffer the entire header for random access */
-  ret_val = READ(fd, hdrbuf.charvalue, 80);
+  ret_val = READ(fd, hdrbuf, 80);
   CHECK_FREAD(ret_val, "buffering header");
   CHECK_FEOF(ret_val, "buffering header");
 
@@ -237,12 +234,12 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
   /* header, which is unused by X-PLOR, to its version number.  */
   /* Checking if this is nonzero tells us this is a CHARMm file */
   /* and to look for other CHARMm flags.                        */
-  if (*((int *) (hdrbuf.charvalue + 76)) != 0) {
+  if (*((int *) (hdrbuf + 76)) != 0) {
     (*charmm) = DCD_IS_CHARMM;
-    if (*((int *) (hdrbuf.charvalue + 40)) != 0)
+    if (*((int *) (hdrbuf + 40)) != 0)
       (*charmm) |= DCD_HAS_EXTRA_BLOCK;
 
-    if (*((int *) (hdrbuf.charvalue + 44)) == 1)
+    if (*((int *) (hdrbuf + 44)) == 1)
       (*charmm) |= DCD_HAS_4DIMS;
 
     if (rec_scale == RECSCALE64BIT)
@@ -261,32 +258,32 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
   }
 
   /* Store the number of sets of coordinates (NSET) */
-  (*NSET) = *((int *)(hdrbuf.charvalue)); 
+  (*NSET) = *((int *) (hdrbuf));
   if (*reverseEndian) swap4_unaligned(NSET, 1);
 
   /* Store ISTART, the starting timestep */
-  (*ISTART) = *((int *) (hdrbuf.charvalue + 4));
+  (*ISTART) = *((int *) (hdrbuf + 4));
   if (*reverseEndian) swap4_unaligned(ISTART, 1);
 
   /* Store NSAVC, the number of timesteps between dcd saves */
-  (*NSAVC) = *((int *) (hdrbuf.charvalue + 8));
+  (*NSAVC) = *((int *) (hdrbuf + 8));
   if (*reverseEndian) swap4_unaligned(NSAVC, 1);
 
   /* Store NAMNF, the number of fixed atoms */
-  (*NAMNF) = *((int *) (hdrbuf.charvalue + 32));
+  (*NAMNF) = *((int *) (hdrbuf + 32));
   if (*reverseEndian) swap4_unaligned(NAMNF, 1);
 
   /* Read in the timestep, DELTA */
   /* Note: DELTA is stored as a double with X-PLOR but as a float with CHARMm */
   if ((*charmm) & DCD_IS_CHARMM) {
     float ftmp;
-    ftmp = *((float *)(hdrbuf.charvalue+36)); /* is this safe on Alpha? */
+    ftmp = *((float *)(hdrbuf+36)); /* is this safe on Alpha? */
     if (*reverseEndian)
       swap4_aligned(&ftmp, 1);
 
     *DELTA = (double)ftmp;
   } else {
-    (*DELTA) = *((double *)(hdrbuf.charvalue + 36));
+    (*DELTA) = *((double *)(hdrbuf + 36));
     if (*reverseEndian) swap8_unaligned(DELTA, 1);
   }
 
@@ -319,6 +316,25 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
     CHECK_FREAD(ret_val, "reading NTITLE");
     CHECK_FEOF(ret_val, "reading NTITLE");
     if (*reverseEndian) swap4_aligned(&NTITLE, 1);
+
+    if (NTITLE < 0) {
+      printf("dcdplugin) WARNING: Bogus NTITLE value: %d (hex: %08x)\n", 
+             NTITLE, NTITLE);
+      return DCD_BADFORMAT;
+    }
+
+    if (NTITLE > 1000) {
+      printf("dcdplugin) WARNING: Bogus NTITLE value: %d (hex: %08x)\n", 
+             NTITLE, NTITLE);
+      if (NTITLE == 1095062083) {
+        printf("dcdplugin) WARNING: Broken Vega ZZ 2.4.0 DCD file detected\n");
+        printf("dcdplugin) Assuming 2 title lines, good luck...\n");
+        NTITLE = 2;
+      } else {
+        printf("dcdplugin) Assuming zero title lines, good luck...\n");
+        NTITLE = 0;
+      }
+    }
 
     for (i=0; i<NTITLE; i++) {
       fio_fseek(fd, 80, FIO_SEEK_CUR);
@@ -1116,9 +1132,9 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   plugin.type = MOLFILE_PLUGIN_TYPE;
   plugin.name = "dcd";
   plugin.prettyname = "CHARMM,NAMD,XPLOR DCD Trajectory";
-  plugin.author = "Justin Gullingsrud, John Stone";
+  plugin.author = "Axel Kohlmeyer, Justin Gullingsrud, John Stone";
   plugin.majorv = 1;
-  plugin.minorv = 10;
+  plugin.minorv = 11;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "dcd";
   plugin.open_file_read = open_dcd_read;
@@ -1131,7 +1147,7 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
