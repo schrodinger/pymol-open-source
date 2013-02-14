@@ -285,6 +285,20 @@ NOTES
             raise QuietException                  
         return r
         
+    def _unit2px(value, dpi):
+        '''API only. Returns pixel units given a string representation in other units'''
+        if isinstance(value, str):
+            m = re.search(r'[a-z].*', value, re.I)
+            if m:
+                if dpi <= 0:
+                    raise pymol.CmdException('need dpi if units are given')
+                value, unit = value[:m.start()], m.group(0).lower()
+                upi = {'in': 1.0, 'mm': 25.4, 'cm': 2.54}
+                if unit not in upi:
+                    raise pymol.CmdException('unknown unit, supported units are: ' +
+                            ', '.join(upi))
+                value = float(value) * dpi / upi[unit] + 0.5
+        return int(value)
 
     def png(filename, width=0, height=0, dpi=-1.0, ray=0,
             quiet=1, prior=0, format=0, _self=cmd):
@@ -313,10 +327,13 @@ EXAMPLES
 
     png image.png
     png image.png, dpi=300
+    png image.png, 10cm, dpi=300, ray=1
 
 NOTES
 
     PNG is the only image format supported by PyMOL.
+
+    The width and height arguments support optional units "in" and "cm".
 
 SEE ALSO
 
@@ -337,6 +354,10 @@ PYMOL API
                 if prior < 0: # default is to fall back to actual rendering
                     prior = 0
         if not prior:
+            dpi = float(dpi)
+            width = _unit2px(width, dpi)
+            height = _unit2px(height, dpi)
+
             if thread.get_ident() == pymol.glutThread:
                 r = _self._png(str(filename),int(width),int(height),float(dpi),
                                int(ray),int(quiet),0,int(format),_self)

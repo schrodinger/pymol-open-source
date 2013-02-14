@@ -1,16 +1,13 @@
 
 import cmd
 import types
-import _cmd
-import string
+from pymol import _cmd
 import threading
 import traceback
 import thread
 import re
-import viewing
 import time
 import pymol
-from operator import add
 
 from chempy import io
 
@@ -61,7 +58,7 @@ def _cache_purge(max_size, _self=cmd):
         _pymol = _self._pymol
         _cache_validate(_self)
         if len(_pymol._cache):
-            cur_size = reduce(add,map(lambda x:x[0],_pymol._cache))
+            cur_size = sum(x[0] for x in _pymol._cache)
             if max_size>=0: # purge to reduce size
                 now = time.time()
                 # sort by last access time
@@ -296,6 +293,36 @@ def _copy_image(_self=cmd,quiet=1):
 
 # loading
 
+def file_read(finfo):
+    '''
+    Read a file, possibly gzipped or bzipped, and return the
+    uncompressed file contents as a string.
+
+    finfo may be a filename, URL or open file handle.
+    '''
+    try:
+        if not isinstance(finfo, basestring):
+            handle = finfo
+        elif ':' in finfo:
+            import urllib
+            handle = urllib.urlopen(finfo)
+        else:
+            handle = open(finfo)
+        contents = handle.read()
+        handle.close()
+    except IOError:
+        raise pymol.CmdException('failed to open file "%s"' % finfo)
+
+    if contents[:2] == '\x1f\x8b': # gzip magic number
+        import cStringIO, gzip
+        fakestream = cStringIO.StringIO(contents)
+        return gzip.GzipFile(fileobj=fakestream).read()
+
+    if contents[:2] == 'BZ' and contents[4:10] == '1AY&SY': # bzip magic
+        import bz2
+        return bz2.decompress(contents)
+
+    return contents
 
 def _load(oname,finfo,state,ftype,finish,discrete,
           quiet=1,multiplex=0,zoom=-1,mimic=1,
@@ -325,13 +352,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
             try:
                 # BEGIN PROPRIETARY CODE SEGMENT
                 from epymol import moe
-                if (string.find(finfo,":")>1):
-                    import urllib
-                    moe_file = urllib.urlopen(finfo)
-                else:
-                    moe_file = open(finfo)
-                moe_str = moe_file.read()
-                moe_file.close()
+                moe_str = file_read(finfo)
                 r = moe.read_moestr(moe_str,str(oname),int(state),
                                 int(finish),int(discrete),int(quiet),int(zoom),_self=_self)
 
@@ -344,13 +365,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
             try:
                 # BEGIN PROPRIETARY CODE SEGMENT
                 from epymol import mae
-                if (string.find(finfo,":")>1):
-                    import urllib 
-                    mae_file = urllib.urlopen(finfo)
-                else:
-                    mae_file = open(finfo)
-                mae_str = mae_file.read()
-                mae_file.close()
+                mae_str = file_read(finfo)
                 r = mae.read_maestr(mae_str,str(oname),
                                     int(state),
                                     int(finish),int(discrete),
@@ -364,26 +379,11 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 if _self._raising(-1,_self): raise pymol.CmdException
 
         else:
-            if ftype in _load2str.keys() and (string.find(finfo,":")>1):
-                gz = re.search("\.gz$",finfo,re.I)
-                try:
-                    import urllib
-                    tmp_file = urllib.urlopen(finfo)
-                except:
-                    print "Error: unable to open the URL:\nError:   %s"%finfo
-#                    traceback.print_exc()
-                    return 0
-                finfo = tmp_file.read() 
-                if gz:
-                    import StringIO
-                    fakestream = StringIO.StringIO(finfo)
-                    import gzip
-                    finfo = gzip.GzipFile(fileobj=fakestream).read()
-                ftype = _load2str[ftype]
-                tmp_file.close()
-            elif ftype in _load2str.keys() and re.search("\.gz$",finfo,re.I):
-                import gzip
-                finfo = gzip.open(finfo).read()                
+            if ftype in _load2str and (':' in finfo or cmd.gz_ext_re.search(finfo)):
+                # NOTE: we could safely always do this, not only for URLs and
+                # compressed files. But I don't want to change the old behavior
+                # that regular files are read from the C function.
+                finfo = file_read(finfo)
                 ftype = _load2str[ftype]
             r = _cmd.load(_self._COb,str(oname),finfo,int(state)-1,int(ftype),
                           int(finish),int(discrete),int(quiet),

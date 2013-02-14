@@ -443,7 +443,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException      
         return r
 
-    def extend(name,function,_self=cmd):
+    def extend(name, function=None, _self=cmd):
         
         '''
 DESCRIPTION
@@ -480,9 +480,12 @@ SEE ALSO
 
     alias, api
             '''
+        if function is None:
+            name, function = name.__name__, name
         _self.keyword[name] = [function, 0,0,',',parsing.STRICT]
         _self.kwhash.append(name)
         _self.help_sc.append(name)
+        return function
 
         # for aliasing compound commands to a single keyword
 
@@ -522,7 +525,7 @@ SEE ALSO
                                0,0,',',parsing.STRICT]
         _self.kwhash.append(name)
 
-    def dummy(*arg):
+    def dummy(*arg, **kw):
         '''
 DESCRIPTION
 

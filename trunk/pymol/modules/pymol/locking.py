@@ -7,7 +7,7 @@ import cmd
 
 from cmd import fb_module, fb_mask, fb_action, fb_debug
 
-import _cmd
+from pymol import _cmd
 
 # WARNING: internal routines, subject to change      
 def lock_c(_self=cmd): 

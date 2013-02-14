@@ -100,7 +100,7 @@ if __name__=='pymol.cmd':
     try:
         
         import re
-        import _cmd
+        from pymol import _cmd
         import string
         import thread
         import threading

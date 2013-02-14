@@ -168,20 +168,15 @@ if pymol_launch != 3: # if this isn't a dry run
         pymol_launch = -1 # non-threaded launch import flag
         # NOTE: overrides current value (if any)
         
-        try_again = 0
+        # make sure we import pymol from correct path
+        pymol_base = os.path.dirname(os.path.realpath(__file__))
+        site_packages = os.path.dirname(pymol_base)
+        if pymol_base in sys.path:
+            sys.path.remove(pymol_base)
+        if site_packages not in sys.path:
+            sys.path.insert(0, site_packages)
 
-        try:
-            import pymol
-        except ImportError:
-            try_again = 1
-
-        if try_again: # insert directory with this file into search path
-            try:
-                sys.exc_clear()
-                sys.path.insert(0,os.path.dirname(os.path.dirname(__file__)))
-            except:
-                pass
-            import pymol
+        import pymol
         
         pymol_launch = 1 # consume main thread for use by PyMOL
     
@@ -483,8 +478,14 @@ if pymol_launch != 3: # if this isn't a dry run
         _cmd.runpymol(_COb,block_input_hook) # only returns if we are running pretend GLUT
 #      from pymol.embed import wxpymol # never returns
 
-    import _cmd
-    import cmd
+    try:
+        # try to do global import of built-in module
+        _cmd = __import__('_cmd', level=0)
+    except ImportError:
+        # import shared library
+        from pymol import _cmd
+
+    from pymol import cmd
 
     global _COb
 
