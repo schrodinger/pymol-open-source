@@ -1,2 +1,0 @@
-OBJS=binposplugin.o carplugin.o corplugin.o cpmdplugin.o crdplugin.o dcdplugin.o dlpolyplugin.o gamessplugin.o moldenplugin.o namdbinplugin.o pdbplugin.o pqrplugin.o psfplugin.o rst7plugin.o tinkerplugin.o xyzplugin.o xyzplugin.o
-DEPS=binposplugin.p carplugin.p corplugin.p cpmdplugin.p crdplugin.p dcdplugin.p dlpolyplugin.p gamessplugin.p moldenplugin.p namdbinplugin.p pdbplugin.p pqrplugin.p psfplugin.p rst7plugin.p tinkerplugin.p xyzplugin.p xyzplugin.p
