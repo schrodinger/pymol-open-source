@@ -7,7 +7,7 @@ import re
 import string
 from cmd import Shortcut
 
-gz_ext_re = re.compile("\.gz$", re.I)
+gz_ext_re = re.compile(r"\.(gz|bz2)$", re.I)
 
 file_ext_re = re.compile(string.join([
     "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",

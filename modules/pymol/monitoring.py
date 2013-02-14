@@ -1,6 +1,6 @@
 
 import cmd
-import _cmd
+from pymol import _cmd
 import sys
 
 def get_progress(reset=0,_self=cmd):

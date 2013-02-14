@@ -2,6 +2,19 @@
 CHANGE LOG
 =========================================================================
 
+2013-02-14 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* apply patch #120 "pymol" import in launcher ambiguous
+	  http://sourceforge.net/p/pymol/bugs/120/
+
+	* always import _cmd from pymol or pymol.cmd instead of relative
+
+	* add bz2 support for reading PDB and some other file formats
+
+	* support width/height units with the png command
+
+	* support decorator syntax for cmd.extend
+
 2013-01-10 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* Exit on error with "-y" flag

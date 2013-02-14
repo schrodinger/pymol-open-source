@@ -5,7 +5,7 @@ from cmd import Shortcut, is_string, QuietException
 from cmd import fb_module, fb_mask, fb_action,_raising
 import copy
 
-import _cmd
+from pymol import _cmd
 import string
 
 def _feedback(module,mask,_self=cmd): # feedback query routine
