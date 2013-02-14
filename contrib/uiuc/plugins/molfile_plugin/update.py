@@ -9,8 +9,7 @@ else:
     import os
     from glob import glob
 
-    molfile_src_path = "/Volumes/Data/scm/vikki/pymol/contrib/uiuc/plugins/molfile_plugin/src.pre"
-#    molfile_src_path = "/Users/delwarl/tmp/plugins/molfile_plugin/src"    
+    molfile_src_path = "/tmp/plugins/molfile_plugin/src"
 
     src_list=[
         'avsplugin',

@@ -943,6 +943,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_edit_light                              707
 #define cSetting_suspend_undo                            708
 #define cSetting_suspend_undo_atom_count                 709
+#define cSetting_pick_surface                            710
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -953,6 +954,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       710
+#define cSetting_INIT                       711
 
 #endif

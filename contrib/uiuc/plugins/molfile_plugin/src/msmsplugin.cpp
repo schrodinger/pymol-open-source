@@ -16,7 +16,7 @@
  *
  *      $RCSfile: msmsplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.10 $       $Date: 2009/04/29 15:45:31 $
+ *      $Revision: 1.12 $       $Date: 2011/12/30 04:36:29 $
  *
  ***************************************************************************/
 
@@ -118,7 +118,7 @@ static int read_rawgraphics(void *v, int *nelem,
   #define LINESIZE 180
   char inbuf[LINESIZE];
   int i, t;
-  float tf;
+  float tf=0.0f;
   int facecount=0;
   int vertexcount=0;
 
@@ -237,7 +237,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   plugin.prettyname = "MSMS Surface Mesh";
   plugin.author = "John Stone";
   plugin.majorv = 0;
-  plugin.minorv = 4;
+  plugin.minorv = 5;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "face,vert";
   plugin.open_file_read = open_file_read;

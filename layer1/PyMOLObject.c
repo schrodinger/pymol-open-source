@@ -1180,6 +1180,7 @@ void ObjectUseColor(CObject * I)
 #endif
   }
 }
+
 void ObjectUseColorCGO(CGO *cgo, CObject * I)
 {
   register PyMOLGlobals *G = I->G;
@@ -1191,7 +1192,6 @@ void ObjectUseColorCGO(CGO *cgo, CObject * I)
 #endif
   }
 }
-
 
 /*========================================================================*/
 static void ObjectInvalidate(CObject * this, int rep, int level, int state)

@@ -1451,7 +1451,6 @@ void RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, 
       } else {
 	c1 = (c2 = bd_stick_color);
       }
-      
       vv1 = cs->Coord + 3 * a1;
       vv2 = cs->Coord + 3 * a2;
       
@@ -1886,7 +1885,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         } else {
           c1 = (c2 = bd_stick_color);
         }
-
         vv1 = cs->Coord + 3 * a1;
         vv2 = cs->Coord + 3 * a2;
 
@@ -2067,7 +2065,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 	    float *cv2 = NULL;
 	    if((c1 == c2) && s1 && s2 && (!ColorCheckRamped(G, c1))) {
 	    } else {
-	      cv2 = ColorGet(G, c2);
+	      cv2 = Alloc(float, 3);
+	      copy3f(ColorGet(G, c2), cv2);
 	    }
 	    copy3f(vv1, v1);
 	    copy3f(vv2, v2);
@@ -2118,6 +2117,9 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 	    }
 	    RepCylinder(G, I, Vcgo, v1, v2, nEdge, capdraw1, capdraw2, bd_radius, overlap_r,
 			nub_r, NULL, shader_mode, cv2);
+	    if (cv2){
+	      FreeP(cv2);
+	    }
 	  }
           if(variable_alpha) {  /* record alpha values for each */
             float bd_alpha = (1.0F - bd_transp);

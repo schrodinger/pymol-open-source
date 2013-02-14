@@ -4893,7 +4893,7 @@ float SceneGetScreenVertexScale(PyMOLGlobals * G, float *v1)
   } else {
     float front_size =
       2 * I->FrontSafe * ((float) tan((fov / 2.0F) * PI / 180.0F)) / (I->Height);
-    ratio = front_size * (-vt[2] / I->FrontSafe);
+    ratio = fabs(front_size * (-vt[2] / I->FrontSafe));
   }
   return ratio;
 }

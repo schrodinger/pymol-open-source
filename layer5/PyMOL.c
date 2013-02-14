@@ -896,6 +896,7 @@ typedef struct _CPyMOL {
   ov_word lex_smooth_half_bonds;
   ov_word lex_suspend_undo;
   ov_word lex_suspend_undo_atom_count;
+  ov_word lex_pick_surface;
 
 #ifdef _PYMOL_LIB
   OVOneToOne *MouseButtonCodeLexicon;
@@ -1803,6 +1804,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(edit_light, 707);
   LEX_SETTING(suspend_undo, 708);
   LEX_SETTING(suspend_undo_atom_count, 709);
+  LEX_SETTING(pick_surface, 710);
 
 #ifdef _PYMOL_LIB
 

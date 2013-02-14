@@ -33,8 +33,6 @@ Z* -------------------------------------------------------------------
 #include"VFont.h"
 #include"ShaderMgr.h"
 
-static void ObjectCGOFree(ObjectCGO * I);
-
 #ifndef _PYMOL_NOPY
 static PyObject *ObjectCGOStateAsPyList(ObjectCGOState * I)
 {
@@ -174,7 +172,7 @@ PyObject *ObjectCGOAsPyList(ObjectCGO * I)
 
 /*========================================================================*/
 
-static void ObjectCGOFree(ObjectCGO * I)
+void ObjectCGOFree(ObjectCGO * I)
 {
   int a;
   for(a = 0; a < I->NState; a++) {
@@ -230,14 +228,25 @@ void ObjectCGORecomputeExtent(ObjectCGO * I)
 /*========================================================================*/
 static void ObjectCGOInvalidate(ObjectCGO * I, int rep, int level, int state)
 {
+  ObjectCGOState *sobj = NULL;
   if(state < 0) {
     int a;
     for(a = 0; a < I->NState; a++) {
       I->State[a].valid = false;
+      sobj = I->State + a;
+      if (sobj->shaderCGO){
+	CGOFree(sobj->shaderCGO);	      
+	sobj->shaderCGO = 0;
+      }
     }
   } else {
     if((state >= 0) && (state < I->NState)) {
       I->State[state].valid = false;
+      sobj = I->State + state;
+      if (sobj->shaderCGO){
+	CGOFree(sobj->shaderCGO);	      
+	sobj->shaderCGO = 0;
+      }
     }
   }
 }
@@ -331,7 +340,12 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		  colorWithA[0] = 1.f; colorWithA[1] = 1.f; colorWithA[2] = 1.f;
 		}
 		colorWithA[3] = 1.f - SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_transparency);
-		convertcgo = CGOOptimizeToVBOIndexedWithColor(sobj->std, 0, colorWithA);
+		if (CGOHasCylinderOperations(sobj->std)){
+		  convertcgo = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(sobj->std, 0);
+		  //		  convertcgo->enable_shaders = true;
+		} else {
+		  convertcgo = CGOOptimizeToVBOIndexedWithColor(sobj->std, 0, colorWithA);
+		}
 		sobj->shaderCGO = convertcgo;
 	      }
 	    } else if (sobj->shaderCGO){
@@ -411,7 +425,12 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 	      colorWithA[0] = 1.f; colorWithA[1] = 1.f; colorWithA[2] = 1.f;
 	    }
 	    colorWithA[3] = 1.f - SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_transparency);
-	    sobj->shaderCGO = CGOOptimizeToVBOIndexedWithColor(sobj->std, 0, colorWithA);
+	    if (CGOHasCylinderOperations(sobj->std)){
+	      sobj->shaderCGO = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(sobj->std, 0);
+	      //	      sobj->shaderCGO->enable_shaders = true;
+	    } else {
+	      sobj->shaderCGO = CGOOptimizeToVBOIndexedWithColor(sobj->std, 0, colorWithA);
+	    }
 	  }
 	} else if (sobj->shaderCGO){
 	  CGOFree(sobj->shaderCGO);	      

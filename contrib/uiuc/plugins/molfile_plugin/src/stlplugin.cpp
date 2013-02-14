@@ -16,7 +16,7 @@
  *
  *      $RCSfile: stlplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.14 $       $Date: 2009/04/29 15:45:34 $
+ *      $Revision: 1.15 $       $Date: 2011/12/30 04:36:29 $
  *
  ***************************************************************************/
 
@@ -95,8 +95,7 @@ static int read_rawgraphics(void *v, int *nelem,
     // "solid name"
     fgets(line, 80, infile);
     sscanf(line, " %s", keyWord);
-    if (strcasecmp(keyWord, "solid") != 0)
-    {
+    if (strcasecmp(keyWord, "solid") != 0) {
       fprintf(stderr, "stlplugin) error: expected \"solid\".\n");
       error = 1;
     }
@@ -104,13 +103,10 @@ static int read_rawgraphics(void *v, int *nelem,
     // "facet normal ni nj nk"
     fgets(line, 80, infile);
     sscanf(line, " %s", keyWord);
-    if (strcasecmp(keyWord, "facet") != 0)
-    {
+    if (strcasecmp(keyWord, "facet") != 0) {
       fprintf(stderr, "stlplugin) error: expected \"facet\".\n");
       error = 1;
-    }
-    else
-    {
+    } else {
       gListPtr = new molfile_graphics_list;
       gListPtr->next = NULL;
       gListPtr->gItem.type = MOLFILE_TRIANGLE;
@@ -118,40 +114,37 @@ static int read_rawgraphics(void *v, int *nelem,
       tmpPtr = gListPtr;
     }
 
-    while ( !feof(infile) && (error == 0) )
-    {
+    while ( !feof(infile) && (error == 0) ) {
       // "outer loop"
       fgets(line, 80, infile);
       sscanf(line, " %s", keyWord);
-      if (strcasecmp(keyWord, "outer") != 0)
-      {
+      if (strcasecmp(keyWord, "outer") != 0) {
         fprintf(stderr, "stlplugin) error: expected \"outer\".\n");
         error = 1;
         break;
-      }
-      else
-      {
+      } else {
         i = 0;
       }
         
       // "vertex vx, vy, vz"
-      while (i < 9)
-      {
+      while (i < 9) {
         fgets(line, 80, infile);
         sscanf(line, " %s", keyWord);
-        if (strcasecmp(keyWord, "vertex") != 0)
-        {
+        if (strcasecmp(keyWord, "vertex") != 0) {
           fprintf(stderr, "stlplugin) error: expected \"vertex\".\n");
           error = 1;
           break; 
-        }
-        else if ( sscanf(line, " %*s %f %f %f", &(tmpPtr->gItem.data[i++]),
-                         &(tmpPtr->gItem.data[i++]), 
-                         &(tmpPtr->gItem.data[i++])) != 3 )
-        {
-          fprintf(stderr, "stlplugin) error: not enough vertices.\n");
-          error = 1;
-          break;
+        } else {
+          float t1=0.0f, t2=0.0f, t3=0.0f;
+          if ( sscanf(line, " %*s %f %f %f", &t1, &t2, &t3) == 3 ) {
+            tmpPtr->gItem.data[i++] = t1;
+            tmpPtr->gItem.data[i++] = t2;
+            tmpPtr->gItem.data[i++] = t3;
+          } else {
+            fprintf(stderr, "stlplugin) error: not enough vertices.\n");
+            error = 1;
+            break;
+          }
         }
       }
       if (error != 0) break;
@@ -159,8 +152,7 @@ static int read_rawgraphics(void *v, int *nelem,
       // "endloop"
       fgets(line, 80, infile);
       sscanf(line, " %s", keyWord);
-      if (strcasecmp(keyWord, "endloop") != 0)
-      {
+      if (strcasecmp(keyWord, "endloop") != 0) {
         fprintf(stderr, "stlplugin) error: expected \"endloop\".\n");
         error = 1;
         break;
@@ -169,8 +161,7 @@ static int read_rawgraphics(void *v, int *nelem,
       // "endfacet"
       fgets(line, 80, infile);
       sscanf(line, " %s", keyWord);
-      if (strcasecmp(keyWord, "endfacet") != 0)
-      {
+      if (strcasecmp(keyWord, "endfacet") != 0) {
         fprintf(stderr, "stlplugin) error: expected \"endfacet\".\n");
         error = 1;
         break;
@@ -179,21 +170,18 @@ static int read_rawgraphics(void *v, int *nelem,
       // "endsolid" or "facet normal ni nj nk"
       fgets(line, 80, infile);
       sscanf(line, " %s", keyWord);
-      if (strcasecmp(keyWord, "endsolid") == 0)
-      {
+      if (strcasecmp(keyWord, "endsolid") == 0) {
         break;
       }
-      if (strcasecmp(keyWord, "facet") == 0)
-      {
+
+      if (strcasecmp(keyWord, "facet") == 0) {
         // Create a new list item and initialize it.
         tmpPtr->next = new molfile_graphics_list;
         tmpPtr = tmpPtr->next;
         tmpPtr->next = NULL;
         tmpPtr->gItem.type = MOLFILE_TRIANGLE;
         ntriangles++;
-      }
-      else
-      {
+      } else {
         fprintf(stderr, 
                 "stlplugin) error: expected \"facet\" or \"endsolid\".\n");
         error = 1;
@@ -201,8 +189,7 @@ static int read_rawgraphics(void *v, int *nelem,
       }
 
       // file error
-      if(ferror(infile))
-      {
+      if(ferror(infile)) {
         fprintf(stderr, "stlplugin) error: problem reading file\n");
         error = 1;
         break;
@@ -211,10 +198,8 @@ static int read_rawgraphics(void *v, int *nelem,
 
 
     // If an error occurred, free the linked list and return MOLFILE_ERROR
-    if (error != 0)
-    {
-      while (gListPtr != NULL)
-      {
+    if (error != 0) {
+      while (gListPtr != NULL) {
         tmpPtr = gListPtr->next;
         delete gListPtr;
         gListPtr = tmpPtr;
@@ -226,8 +211,7 @@ static int read_rawgraphics(void *v, int *nelem,
     // linked list into it, deleting the list as you go.
     stl->graphics = new molfile_graphics_t[ntriangles];
     i = 0;
-    while (gListPtr != NULL)
-    {
+    while (gListPtr != NULL) {
       stl->graphics[i] = gListPtr->gItem;
       tmpPtr = gListPtr->next;
       delete gListPtr;
@@ -263,7 +247,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   plugin.prettyname = "STL Stereolithography Triangle Mesh";
   plugin.author = "Eamon Caddigan";
   plugin.minorv = 0;
-  plugin.majorv = 2;
+  plugin.majorv = 3;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "stl";
   plugin.open_file_read = open_file_read;

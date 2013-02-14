@@ -46,6 +46,7 @@ struct _CCGORenderer {
   PyMOLGlobals *G;
   RenderInfo *info;
   Rep *rep;
+  float *color;
   float alpha;
   short isPicking;
   short use_shader;
@@ -321,7 +322,7 @@ static PyObject *CGOArrayAsPyList(CGO * I)
       case CGO_DRAW_ARRAYS:
 	{
 	  int narrays = CGO_get_int(pc + 2), nverts = CGO_get_int(pc + 3), floatlength = narrays*nverts;
-	  cc = floatlength + 4 ;
+	  cc = floatlength ;
 	  PyList_SetItem(result, i++, PyFloat_FromDouble((float) CGO_read_int(pc)));
 	  PyList_SetItem(result, i++, PyFloat_FromDouble((float) CGO_read_int(pc)));
 	  PyList_SetItem(result, i++, PyFloat_FromDouble((float) CGO_read_int(pc)));
@@ -444,6 +445,7 @@ CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version)
   I->has_draw_sphere_buffers = false;
 #endif
   I->enable_shaders = 0;
+  I->no_pick = 0;
   if(ok)
     ok = (list != NULL);
   if(ok)
@@ -504,6 +506,7 @@ CGO *CGONew(PyMOLGlobals * G)
   I->current_accessibility = 1.f;
 #endif
   I->enable_shaders = 0;
+  I->no_pick = 0;
   return (I);
 }
 
@@ -526,6 +529,7 @@ CGO *CGONewSized(PyMOLGlobals * G, int size)
   I->current_accessibility = 1.f;
 #endif
   I->enable_shaders = 0;
+  I->no_pick = 0;
   return (I);
 }
 
@@ -1702,7 +1706,7 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	  pc += sz;
 	}
 	if (nverts>0 && !err){
-	  int pl = 0, plc = 0, plp = 0, pla = 0;
+	  int pl = 0, plc = 0, pla = 0;
 	  float *vertexVals, *tmp_ptr;
 	  float *normalVals = 0, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0, *accessibilityVals = 0;
 	  uchar *pickColorValsUC;
@@ -1743,8 +1747,8 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	      /* TODO need to move uchar and index/bond separately into pickColorVals */
 	      CGO_put_int(&pickColorVals[pla * 2], CGO_get_int(pc));
 	      CGO_put_int(&pickColorVals[pla * 2 + 1], CGO_get_int(pc+1));
-	      cgo->current_pick_color_index = (int)pc[0];
-	      cgo->current_pick_color_bond = (int)pc[1];
+	      cgo->current_pick_color_index = CGO_get_int(pc);
+	      cgo->current_pick_color_bond = CGO_get_int(pc + 1);
 	      notHaveValue = notHaveValue ^ CGO_PICK_COLOR_ARRAY;
 	      break;
 	    case CGO_ACCESSIBILITY:
@@ -1761,10 +1765,8 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 		colorVals[plc+2] = tmp_ptr[2];	colorVals[plc+3] = tmp_ptr[3];
 	      }
 	      if (notHaveValue & CGO_PICK_COLOR_ARRAY){
-		CGO_put_int(pickColorVals + plp, cgo->current_pick_color_index);
-		plp++;
-		CGO_put_int(pickColorVals + plp, cgo->current_pick_color_bond);
-		plp++;
+		CGO_put_int(pickColorVals + pla * 2, cgo->current_pick_color_index);
+		CGO_put_int(pickColorVals + pla * 2 + 1, cgo->current_pick_color_bond);
 	      }
 	      if (accessibilityVals){
 		accessibilityVals[pla] = cgo->current_accessibility;
@@ -2294,8 +2296,8 @@ void OptimizePointsToVBO(CGO *I, CGO *cgo, int num_total_vertices_points, float 
       cgo->alpha = *pc;
       break;
     case CGO_PICK_COLOR:
-      cgo->current_pick_color_index = (int)pc[0];
-      cgo->current_pick_color_bond = (int)pc[1];
+      cgo->current_pick_color_index = CGO_get_int(pc);
+      cgo->current_pick_color_bond = CGO_get_int(pc + 1);
       break;
 #ifdef _PYMOL_CGO_DRAWARRAYS
     case CGO_DRAW_ARRAYS:
@@ -2581,8 +2583,8 @@ CGO *CGOOptimizeToVBONotIndexed(CGO * I, int est)
 	cgo->current_accessibility = pc[0];
 	break;
       case CGO_PICK_COLOR:
-	cgo->current_pick_color_index = (int)pc[0];
-	cgo->current_pick_color_bond = (int)pc[1];
+	cgo->current_pick_color_index = CGO_get_int(pc);
+	cgo->current_pick_color_bond = CGO_get_int(pc + 1);
 	break;
 #ifdef _PYMOL_CGO_DRAWARRAYS
       case CGO_DRAW_ARRAYS:
@@ -2861,8 +2863,8 @@ CGO *CGOOptimizeToVBONotIndexed(CGO * I, int est)
 	cgo->alpha = *pc;
 	break;
       case CGO_PICK_COLOR:
-	cgo->current_pick_color_index = (int)pc[0];
-	cgo->current_pick_color_bond = (int)pc[1];
+	cgo->current_pick_color_index = CGO_get_int(pc);
+	cgo->current_pick_color_bond = CGO_get_int(pc + 1);
 	break;
 #ifdef _PYMOL_CGO_DRAWARRAYS
       case CGO_DRAW_ARRAYS:
@@ -3162,8 +3164,8 @@ CGO *CGOOptimizeToVBOIndexedWithColor(CGO * I, int est, float *color)
 	cgo->current_accessibility = *pc;
 	break;
       case CGO_PICK_COLOR:
-	cgo->current_pick_color_index = (int)pc[0];
-	cgo->current_pick_color_bond = (int)pc[1];
+	cgo->current_pick_color_index = CGO_get_int(pc);
+	cgo->current_pick_color_bond = CGO_get_int(pc + 1);
 	break;
 #ifdef _PYMOL_CGO_DRAWARRAYS
       case CGO_DRAW_ARRAYS:
@@ -3483,8 +3485,8 @@ CGO *CGOOptimizeToVBOIndexedWithColor(CGO * I, int est, float *color)
 	cgo->alpha = *pc;
 	break;
       case CGO_PICK_COLOR:
-	cgo->current_pick_color_index = (int)pc[0];
-	cgo->current_pick_color_bond = (int)pc[1];
+	cgo->current_pick_color_index = CGO_get_int(pc);
+	cgo->current_pick_color_bond = CGO_get_int(pc + 1);
 	break;
 #ifdef _PYMOL_CGO_DRAWARRAYS
       case CGO_DRAW_ARRAYS:
@@ -3784,7 +3786,7 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
     int capvals;
     int *indexVals = 0;
     int tot = 4 * 4 * 3 * num_total_cylinders;
-    short copyToLeftOver, copyColorToLeftOver, copyPickColorToLeftOver, copyAlphaToLeftOver ;
+    short copyToLeftOver, copyColorToLeftOver, copyPickColorToLeftOver, copyAlphaToLeftOver, copyToReturnCGO ;
     float *org_originVals;
     float *org_axisVals;
     float *org_colorVals = NULL;
@@ -3807,9 +3809,10 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
     pc = I->op;
     cgo->alpha = 1.f;
     min_alpha = 1.f;
-    copyToLeftOver = copyColorToLeftOver = copyPickColorToLeftOver = copyAlphaToLeftOver = 0;
+    copyToReturnCGO = copyToLeftOver = copyColorToLeftOver = copyPickColorToLeftOver = copyAlphaToLeftOver = 0;
     while((op = (CGO_MASK & CGO_read_int(pc)))) {
       copyToLeftOver = false;
+      copyToReturnCGO = false;
       save_pc = pc;
       err = 0;
       color2nd = false;
@@ -3829,8 +3832,8 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
 	copyAlphaToLeftOver = true;
 	break;
       case CGO_PICK_COLOR:
-        cgo->current_pick_color_index = (int)pc[0];
-        cgo->current_pick_color_bond = (int)pc[1];
+	cgo->current_pick_color_index = CGO_get_int(pc);
+	cgo->current_pick_color_bond = CGO_get_int(pc + 1);
 	copyPickColorToLeftOver = true;
 	break;
       case CGO_SAUSAGE:
@@ -3935,8 +3938,25 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
 	PRINTFB(I->G, FB_CGO, FB_Warnings) "WARNING: CGOOptimizeGLSLCylindersToVBO() CGO_DRAW_BUFFERS_INDEXED or CGO_DRAW_BUFFERS_INDEXED encountered op=0x%X\n", op ENDFB(I->G);	
 	break;
 #endif
+      case CGO_LINEWIDTH_SPECIAL:
+	copyToReturnCGO = true;
+	break;
       default:
 	copyToLeftOver = true;
+      }
+      if (copyToReturnCGO){
+	float *npc = save_pc, *nc;
+	int origsz = sz;
+	if (sz < 0){
+	  sz = CGO_sz[op];
+	} else {
+	  npc -= sz;
+	}
+	nc = CGO_add(cgo, sz + 1);
+	*(nc++) = *(npc - 1);
+	while(sz--)
+	  *(nc++) = *(npc++);
+	sz = origsz;
       }
       if (leftOverCGO && copyToLeftOver){
 	float *npc = save_pc, *nc;
@@ -4121,8 +4141,8 @@ CGO *CGOOptimizeSpheresToVBONonIndexedImpl(CGO * I, int est, CGO *leftOverCGO)
 	copyAlphaToLeftOver = true;
 	break;
       case CGO_PICK_COLOR:
-        cgo->current_pick_color_index = (int)pc[0];
-        cgo->current_pick_color_bond = (int)pc[1];
+	cgo->current_pick_color_index = CGO_get_int(pc);
+	cgo->current_pick_color_bond = CGO_get_int(pc + 1);
 	copyPickColorToLeftOver = true;
 	break;
       case CGO_SPHERE:
@@ -4414,7 +4434,7 @@ CGO *CGOSimplify(CGO * I, int est)
 	  pc += sz;
 	}
 	if (nverts>0 && !err){
-	  int pl = 0, plc = 0, plp = 0;
+	  int pl = 0, plc = 0, pla = 0;
 	  float *vertexVals, *tmp_ptr;
 	  float *normalVals = 0, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0;
 	  uchar *pickColorValsUC;
@@ -4448,8 +4468,8 @@ CGO *CGOSimplify(CGO * I, int est)
 	      notHaveValue = notHaveValue ^ CGO_COLOR_ARRAY;
 	      break;
 	    case CGO_PICK_COLOR:
-	      cgo->current_pick_color_index = (int)pc[0];
-	      cgo->current_pick_color_bond = (int)pc[1];
+	      cgo->current_pick_color_index = CGO_get_int(pc);
+	      cgo->current_pick_color_bond = CGO_get_int(pc + 1);
 	      notHaveValue = notHaveValue ^ CGO_PICK_COLOR_ARRAY;
 	      break;
 	    case CGO_VERTEX:
@@ -4463,13 +4483,12 @@ CGO *CGOSimplify(CGO * I, int est)
 		colorVals[plc+2] = tmp_ptr[2]; colorVals[plc+3] = tmp_ptr[3]; 
 	      }
 	      if (notHaveValue & CGO_PICK_COLOR_ARRAY){
-		CGO_put_int(pickColorVals + plp, cgo->current_pick_color_index);
-		plp++;
-		CGO_put_int(pickColorVals + plp, cgo->current_pick_color_bond);
-		plp++;
+		CGO_put_int(pickColorVals + pla * 2, cgo->current_pick_color_index);
+		CGO_put_int(pickColorVals + pla * 2 + 1, cgo->current_pick_color_bond);
 	      }
 	      vertexVals[pl++] = pc[0]; vertexVals[pl++] = pc[1]; vertexVals[pl++] = pc[2];
 	      plc += 4;
+	      pla++;
 	      notHaveValue = damode;
 	      break;
 	    case CGO_END:
@@ -5813,6 +5832,8 @@ static void CGO_gl_draw_buffers_not_indexed(CCGORenderer * I, float **pc){
 #endif
 }
 
+static void CGO_gl_color_impl(CCGORenderer * I, float *v);
+
 static void CGO_gl_draw_sphere_buffers(CCGORenderer * I, float **pc) {
 #ifndef _PYMOL_PURE_OPENGL_ES
 #ifdef _PYMOL_CGO_DRAWBUFFERS
@@ -6006,6 +6027,25 @@ static void CGO_gl_linewidth_special(CCGORenderer * I, float **pc)
       }
       break;
     }
+  case CYLINDERWIDTH_DYNAMIC_MESH:
+    {
+      CSetting *setting = NULL;
+      float mesh_width;
+      CShaderPrg *shaderPrg = CShaderPrg_Enable_CylinderShader(I->G);
+      if (I && I->rep && I->rep->obj){
+	setting = I->rep->obj->Setting;
+      }
+      mesh_width = SettingGet_f(I->G, setting, NULL, cSetting_mesh_width);
+      CShaderPrg_Set1f(shaderPrg, "uni_radius", SceneGetLineWidthForCylinders(I->G, I->info, mesh_width));
+      if (I->color){
+	CShaderPrg_SetAttrib4fLocation(I->G->ShaderMgr->current_shader, "attr_colors", I->color[0], I->color[1], I->color[2], I->alpha);
+	CShaderPrg_SetAttrib4fLocation(I->G->ShaderMgr->current_shader, "attr_colors2", I->color[0], I->color[1], I->color[2], I->alpha);
+      } else {
+	CShaderPrg_SetAttrib4fLocation(I->G->ShaderMgr->current_shader, "attr_colors", 1.f, 1.f, 1.f, I->alpha);
+	CShaderPrg_SetAttrib4fLocation(I->G->ShaderMgr->current_shader, "attr_colors2", 1.f, 1.f, 1.f, I->alpha);
+      }
+    }
+    break;
   default:
     PRINTFB(I->G, FB_CGO, FB_Warnings) " CGO_gl_linewidth_special(): bad mode=%d\n", mode ENDFB(I->G);
   }
@@ -6088,9 +6128,7 @@ static void CGO_gl_error(CCGORenderer * I, float **pc)
   PRINTFB(I->G, FB_CGO, FB_Warnings) " CGO_gl_error() is not suppose to be called op=%d with mask=%d\n", CGO_get_int((*pc)-1), CGO_MASK & CGO_get_int((*pc)-1) ENDFB(I->G);
 }
 
-static void CGO_gl_color(CCGORenderer * I, float **varg)
-{
-  float *v = *varg;
+static void CGO_gl_color_impl(CCGORenderer * I, float *v){
 #ifdef PURE_OPENGL_ES_2
   {
     if (I->G->ShaderMgr->current_shader){
@@ -6112,6 +6150,12 @@ static void CGO_gl_color(CCGORenderer * I, float **varg)
   glColor4f(v[0], v[1], v[2], I->alpha);
 #endif
 #endif
+}
+
+static void CGO_gl_color(CCGORenderer * I, float **varg)
+{
+  float *v = *varg;
+  CGO_gl_color_impl(I, v);
 }
 
 /* dispatch table for OpenGL */
@@ -6168,7 +6212,8 @@ CGO_op_fn CGO_gl[] = {
   CGO_gl_null,                  /* 0x27 shader cylinder with 2nd color */
   CGO_gl_draw_sphere_buffers,   /* 0x28 draw sphere buffers */
   CGO_gl_null,                  /* 0x29 accessibility used for ambient occlusion */
-  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,
+  CGO_gl_error,
+  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,
   CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,
   CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error,  CGO_gl_error
 };
@@ -6204,31 +6249,35 @@ void CGORenderGLPicking(CGO * I, Picking ** pick, PickContext * context, CSettin
 	      if (arrays & CGO_COLOR_ARRAY){ pca += nverts * 4; }
 	      pickColorValsUC = (uchar*)pca;
 	      pickColorVals = pca + nverts;
-	      pl =0;
-	      for (v=0;v<nverts; v++){
-		pidx = idx;
-		pbnd = bnd;
-		idx = CGO_get_int(pickColorVals + (v * 2));
-		bnd = CGO_get_int(pickColorVals + (v * 2) + 1);
-		i++;
-		if(!(*pick)[0].src.bond) {
-		  pickColorValsUC[pl++] = ((i & 0xF) << 4);
-		  pickColorValsUC[pl++] = ((i & 0xF0) | 0x8);
-		  pickColorValsUC[pl++] = ((i & 0xF00) >> 4);
-		  pickColorValsUC[pl++] = 255;
-		  VLACheck((*pick), Picking, i);
-		  p = (*pick) + i;
-		  p->context = (*context);
-		  p->src.index = (int)idx;
-		  p->src.bond = (int) bnd;      /* actually holds state information */
-		  I->current_pick_color_index = idx;
-		  I->current_pick_color_bond = bnd;
-		} else {
-		  j = i >> 12;
-		  pickColorValsUC[pl++] = ((j & 0xF) << 4);
-		  pickColorValsUC[pl++] = ((j & 0xF0) | 0x8);
-		  pickColorValsUC[pl++] = ((j & 0xF00) >> 4);
-		  pickColorValsUC[pl++] = 255;
+	      pl = 0;
+	      if (I->no_pick){
+		memset(pickColorValsUC, 0, 4 * nverts);
+	      } else {
+		for (v=0;v<nverts; v++){
+		  pidx = idx;
+		  pbnd = bnd;
+		  idx = CGO_get_int(pickColorVals + (v * 2));
+		  bnd = CGO_get_int(pickColorVals + (v * 2) + 1);
+		  i++;
+		  if(!(*pick)[0].src.bond) {
+		    pickColorValsUC[pl++] = ((i & 0xF) << 4);
+		    pickColorValsUC[pl++] = ((i & 0xF0) | 0x8);
+		    pickColorValsUC[pl++] = ((i & 0xF00) >> 4);
+		    pickColorValsUC[pl++] = 255;
+		    VLACheck((*pick), Picking, i);
+		    p = (*pick) + i;
+		    p->context = (*context);
+		    p->src.index = (int)idx;
+		    p->src.bond = (int) bnd;      /* actually holds state information */
+		    I->current_pick_color_index = idx;
+		    I->current_pick_color_bond = bnd;
+		  } else {
+		    j = i >> 12;
+		    pickColorValsUC[pl++] = ((j & 0xF) << 4);
+		    pickColorValsUC[pl++] = ((j & 0xF0) | 0x8);
+		    pickColorValsUC[pl++] = ((j & 0xF00) >> 4);
+		    pickColorValsUC[pl++] = 255;
+		  }
 		}
 	      }
 	    }
@@ -6254,34 +6303,38 @@ void CGORenderGLPicking(CGO * I, Picking ** pick, PickContext * context, CSettin
 	    pickColorValsUC = (uchar*)pca;
 	    pickColorVals = pca + nverts;
 	    pl =0;
-	    for (v=0;v<nverts; v++){
-	      pidx = idx;
-	      pbnd = bnd;
-	      idx = CGO_get_int(pickColorVals + v * 2);
-	      bnd = CGO_get_int(pickColorVals + v * 2 + 1);
-	      chg = idx != pidx || bnd != pbnd;
-	      if (chg)
-		i++;
-	      if(!(*pick)[0].src.bond) {
-		pickColorValsUC[pl++] = ((i & 0xF) << 4);
-		pickColorValsUC[pl++] = ((i & 0xF0) | 0x8);
-		pickColorValsUC[pl++] = ((i & 0xF00) >> 4);
-		pickColorValsUC[pl++] = 255;
-		if (chg){
-		  VLACheck((*pick), Picking, i);
-		  p = (*pick) + i;
-		  p->context = (*context);
-		  p->src.index = (int)idx;
-		  p->src.bond = (int) bnd;      /* actually holds state information */
-		  I->current_pick_color_index = idx;
-		  I->current_pick_color_bond = bnd;
+	    if (I->no_pick){
+	      memset(pickColorValsUC, 0, 4 * nverts);	      
+	    } else {
+	      for (v=0;v<nverts; v++){
+		pidx = idx;
+		pbnd = bnd;
+		idx = CGO_get_int(pickColorVals + v * 2);
+		bnd = CGO_get_int(pickColorVals + v * 2 + 1);
+		chg = idx != pidx || bnd != pbnd;
+		if (chg)
+		  i++;
+		if(!(*pick)[0].src.bond) {
+		  pickColorValsUC[pl++] = ((i & 0xF) << 4);
+		  pickColorValsUC[pl++] = ((i & 0xF0) | 0x8);
+		  pickColorValsUC[pl++] = ((i & 0xF00) >> 4);
+		  pickColorValsUC[pl++] = 255;
+		  if (chg){
+		    VLACheck((*pick), Picking, i);
+		    p = (*pick) + i;
+		    p->context = (*context);
+		    p->src.index = (int)idx;
+		    p->src.bond = (int) bnd;      /* actually holds state information */
+		    I->current_pick_color_index = idx;
+		    I->current_pick_color_bond = bnd;
+		  }
+		} else {
+		  j = i >> 12;
+		  pickColorValsUC[pl++] = ((j & 0xF) << 4);
+		  pickColorValsUC[pl++] = ((j & 0xF0) | 0x8);
+		  pickColorValsUC[pl++] = ((j & 0xF00) >> 4);
+		  pickColorValsUC[pl++] = 255;
 		}
-	      } else {
-		j = i >> 12;
-		pickColorValsUC[pl++] = ((j & 0xF) << 4);
-		pickColorValsUC[pl++] = ((j & 0xF0) | 0x8);
-		pickColorValsUC[pl++] = ((j & 0xF00) >> 4);
-		pickColorValsUC[pl++] = 255;
 	      }
 	    }
 	  } else 
@@ -6378,30 +6431,23 @@ void CGORenderGL(CGO * I, float *color, CSetting * set1, CSetting * set2,
     R->enable_shaders = I->enable_shaders;
     R->debug = I->debug;
     R->rep = rep;
+    R->color = color;
     SceneResetNormalUseShader(I->G, true, I->use_shader);
     if(I->c) {
       R->alpha = 1.0F - SettingGet_f(I->G, set1, set2, cSetting_cgo_transparency);
 #ifdef PURE_OPENGL_ES_2
-      if (I->G->ShaderMgr->current_shader){
-	int attr_a_Color = CShaderPrg_GetAttribLocation(I->G->ShaderMgr->current_shader, "a_Color");
-	if (attr_a_Color>=0){
-	  if(color)
-	    glVertexAttrib4f(attr_a_Color, color[0], color[1], color[2], R->alpha);
-	  else
-	    glVertexAttrib4f(attr_a_Color, 1.0, 1.0, 1.0, R->alpha);
-	}
+      if (color){
+	CShaderPrg_SetAttrib4fLocation(I->G->ShaderMgr->current_shader, "a_Color", color[0], color[1], color[2], R->alpha);
+      } else {
+	CShaderPrg_SetAttrib4fLocation(I->G->ShaderMgr->current_shader, "a_Color", 1.f, 1.f, 1.f, R->alpha);
       }
 #else
 #ifdef OPENGL_ES_2
       if (I->use_shader){
-	if (I->G->ShaderMgr->current_shader){
-	  int attr_a_Color = CShaderPrg_GetAttribLocation(I->G->ShaderMgr->current_shader, "a_Color");
-	  if (attr_a_Color>=0){
-	    if(color)
-	      glVertexAttrib4f(attr_a_Color, color[0], color[1], color[2], R->alpha);
-	    else
-	      glVertexAttrib4f(attr_a_Color, 1.0, 1.0, 1.0, R->alpha);
-	  }
+	if (color){
+	  CShaderPrg_SetAttrib4fLocation(I->G->ShaderMgr->current_shader, "a_Color", color[0], color[1], color[2], R->alpha);
+	} else {
+	  CShaderPrg_SetAttrib4fLocation(I->G->ShaderMgr->current_shader, "a_Color", 1.f, 1.f, 1.f, R->alpha);
 	}
       } else {
 	if(color)
@@ -8033,6 +8079,48 @@ short CGOHasOperationsOfType(CGO *I, int optype){
   }
   return (0);
 }
+short CGOHasOperationsOfType2(CGO *I, int optype1, int optype2){
+  register float *pc = I->op;
+  int op;
+
+  while((op = (CGO_MASK & CGO_read_int(pc)))) {
+    //    printf("%X ", op);
+    if (op == optype1 || op == optype2){
+      return (1);
+    }
+    switch (op) {
+#ifdef _PYMOL_CGO_DRAWARRAYS
+    case CGO_DRAW_ARRAYS:
+      {
+	int narrays = CGO_get_int(pc + 2), nverts = CGO_get_int(pc + 3), floatlength = narrays*nverts;
+	pc += floatlength + 4 ;
+      }
+      break;
+#endif
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+    case CGO_DRAW_BUFFERS_INDEXED:
+      {
+	int nverts = CGO_get_int(pc + 4);
+	pc += nverts*3 + 10 ; 
+      }
+      break;
+    case CGO_DRAW_BUFFERS_NOT_INDEXED:
+      {
+	int nverts = CGO_get_int(pc + 3);
+	pc += nverts*3 + 8 ; 
+      }
+      break;
+#endif
+    }
+    pc += CGO_sz[op];
+  }
+  return (0);
+}
+
+short CGOHasCylinderOperations(CGO *I){
+  return CGOHasOperationsOfType2(I, CGO_SHADER_CYLINDER, CGO_SHADER_CYLINDER_WITH_2ND_COLOR);
+}
+
 short CGOCheckWhetherToFree(PyMOLGlobals * G, CGO *I){
   if (I->use_shader){
     if (I->cgo_shader_ub_color != SettingGet(G, cSetting_cgo_shader_ub_color) || 

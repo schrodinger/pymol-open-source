@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"ShaderMgr.h"
 #include"CGO.h"
+#include"ObjectCGO.h"
 
 ObjectMesh *ObjectMeshNew(PyMOLGlobals * G);
 
@@ -84,6 +85,23 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
 #endif
 
 #ifndef _PYMOL_NOPY
+static int ObjectMeshStateMapExists(ObjectMesh *I, ObjectMeshState *ms){
+  return ExecutiveFindObjectMapByName(I->Obj.G, ms->MapName) ? 1 : 0;
+}
+
+int ObjectMeshAllMapsInStatesExist(ObjectMesh * I)
+{
+  int a;
+  for(a = 0; a < I->NState; a++) {
+    if(I->State[a].Active) {
+      if (!ObjectMeshStateMapExists(I, I->State + a)){
+	return 0;
+      }
+    }
+  }
+  return 1;
+}
+
 static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh * I)
 {
 
@@ -243,6 +261,8 @@ int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** res
 #endif
 }
 
+static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCGO, int stateArg);
+
 PyObject *ObjectMeshAsPyList(ObjectMesh * I)
 {
 #ifdef _PYMOL_NOPY
@@ -251,11 +271,32 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
 
   PyObject *result = NULL;
 
-  result = PyList_New(3);
-  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
-  PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
-  PyList_SetItem(result, 2, ObjectMeshAllStatesAsPyList(I));
+  int allMapsExist = ObjectMeshAllMapsInStatesExist(I);
 
+  if (allMapsExist){
+    result = PyList_New(3);
+    PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+    PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
+    PyList_SetItem(result, 2, ObjectMeshAllStatesAsPyList(I));
+  } else {
+    /* save ObjectMesh as ObjectCGO */
+    ObjectCGO *retObjectCGO = NULL;
+    int a;
+    PRINTFB(I->Obj.G, FB_ObjectMesh, FB_Errors)
+      "ObjectMesh-Warning: map has been deleted, saving as CGO.\n"
+      ENDFB(I->Obj.G);
+    for(a = 0; a < I->NState; a++) {
+      CGO *cgo = ObjectMeshRenderImpl(I, 0, 1, a);
+      retObjectCGO = ObjectCGOFromCGO(I->Obj.G, retObjectCGO, cgo, a);
+      
+    }
+    ObjectCopyHeader(&retObjectCGO->Obj, &I->Obj);
+    ObjectSetRepVis(&retObjectCGO->Obj, cRepMesh, 0);
+    ObjectSetRepVis(&retObjectCGO->Obj, cRepCGO, 1);
+    retObjectCGO->Obj.type = cObjectCGO;
+    result = ObjectCGOAsPyList(retObjectCGO);
+    ObjectCGOFree(retObjectCGO);
+  }
   return (PConvAutoNone(result));
 #endif
 }
@@ -820,22 +861,38 @@ static void ObjectMeshUpdate(ObjectMesh * I)
   }
 }
 
+
 static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
+{
+  ObjectMeshRenderImpl(I, info, 0, 0);
+}
+
+static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCGO, int stateArg)
 {
   PyMOLGlobals *G = I->Obj.G;
   float *v = NULL;
   float *vc;
   int *rc;
   float radius;
-  int state = info->state;
-  CRay *ray = info->ray;
-  Picking **pick = info->pick;
-  int pass = info->pass;
+  int state = 0;
+  CRay *ray = 0;
+  Picking **pick = 0;
+  int pass = 0;
   int *n = NULL;
   int c;
   int a = 0;
   float line_width, mesh_width = SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_width);
   ObjectMeshState *ms = NULL;
+
+  if (info){
+    state = info->state;
+    ray = info->ray;
+    pick = info->pick;
+    pass = info->pass;
+  } else {
+    state = stateArg;
+  }
+
   line_width = SceneGetDynamicLineWidth(info, mesh_width);
   ObjectPrepareContext(&I->Obj, ray);
 
@@ -944,6 +1001,7 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
             if(!pass) {
 	      short use_shader, generate_shader_cgo = 0, use_display_lists;
 	      short mesh_as_cylinders ;
+	      CGO *shaderCGO = NULL;
 	      use_shader = (int) SettingGet(G, cSetting_mesh_use_shader) & 
 		(int) SettingGet(G, cSetting_use_shaders);
 	      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
@@ -960,9 +1018,9 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 		ms->shaderUnitCellCGO = NULL;
 	      }
 	      if (use_shader){
-		if (!ms->shaderCGO){
-		  ms->shaderCGO = CGONew(G);
-		  ms->shaderCGO->use_shader = true;
+		if (!ms->shaderCGO || returnCGO){
+		  shaderCGO = CGONew(G);
+		  shaderCGO->use_shader = true;
 		  generate_shader_cgo = 1;
 		} else {
 		  CShaderPrg *shaderPrg;
@@ -1034,10 +1092,10 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 #ifdef PURE_OPENGL_ES_2
     /* TODO */
 #else
-	      if(!info->line_lighting){
+	      if(info && !info->line_lighting){
 		if (generate_shader_cgo){
 		  if (!mesh_as_cylinders){
-		    CGODisable(ms->shaderCGO, GL_LIGHTING);
+		    CGODisable(shaderCGO, GL_LIGHTING);
 		  }
 		} else {
 		  glDisable(GL_LIGHTING);
@@ -1045,8 +1103,10 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 	      }
 #endif
 	      if (generate_shader_cgo){
-		CGOResetNormal(ms->shaderCGO, false);
-		ObjectUseColorCGO(ms->shaderCGO, &I->Obj);
+		CGOResetNormal(shaderCGO, false);
+		if (!returnCGO){
+		  ObjectUseColorCGO(shaderCGO, &I->Obj);
+		}
 	      } else {
 		SceneResetNormal(I->Obj.G, false);
 		ObjectUseColor(&I->Obj);
@@ -1055,13 +1115,18 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 	      if (generate_shader_cgo){
 		if(n && v && I->Obj.RepVis[cRepMesh]) {
 		  vc = ms->VC;
-		  if(ms->MeshMode == 1){
-		    CGODotwidth(ms->shaderCGO, SettingGet_f
-				(I->Obj.G, I->Obj.Setting, NULL, cSetting_dot_width));
-		  } else {
-		    CGOLinewidthSpecial(ms->shaderCGO, LINEWIDTH_DYNAMIC_MESH); 
-		  }
+		  if (!mesh_as_cylinders){
+		    if(ms->MeshMode == 1){
+		      CGODotwidth(shaderCGO, SettingGet_f
+				  (I->Obj.G, I->Obj.Setting, NULL, cSetting_dot_width));
+		    } else {
+		      CGOLinewidthSpecial(shaderCGO, LINEWIDTH_DYNAMIC_MESH); 
+		    }
+		  } 
 		  if (mesh_as_cylinders){
+		    if (returnCGO){
+		      CGOLinewidthSpecial(shaderCGO, CYLINDERWIDTH_DYNAMIC_MESH);
+		    }
 		    while(*n) {
 		      float *origin = NULL, *vertex = NULL, *color = NULL, *color2 = NULL, axis[3];
 		      c = *(n++);
@@ -1079,16 +1144,16 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 			  axis[1] = vertex[1] - origin[1];
 			  axis[2] = vertex[2] - origin[2];
 			  if (vc){
-			    CGOColorv(ms->shaderCGO, color);
+			    CGOColorv(shaderCGO, color);
 			    if ((*(color) != *(color2) || 
 				     *(color+1) != *(color2+1) || 
 				     *(color+2) != *(color2+2))){
-			      CGOShaderCylinder2ndColor(ms->shaderCGO, origin, axis, 1.f, 15, color2);
+			      CGOShaderCylinder2ndColor(shaderCGO, origin, axis, 1.f, 15, color2);
 			    } else {
-			      CGOShaderCylinder(ms->shaderCGO, origin, axis, 1.f, 15);
+			      CGOShaderCylinder(shaderCGO, origin, axis, 1.f, 15);
 			    }
 			  } else {
-			    CGOShaderCylinder(ms->shaderCGO, origin, axis, 1.f, 15);
+			    CGOShaderCylinder(shaderCGO, origin, axis, 1.f, 15);
 			  }
 			}
 		      }
@@ -1097,18 +1162,28 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 		    while(*n) {
 		      c = *(n++);
 		      if(ms->MeshMode == 1)
-			CGOBegin(ms->shaderCGO, GL_POINTS);
-		      else
-			CGOBegin(ms->shaderCGO, GL_LINE_STRIP);
+			CGOBegin(shaderCGO, GL_POINTS);
+		      else {
+			if (c < 2){
+			  while(c--) {
+			    if(vc) {
+			      vc += 3;
+			    }
+			    v += 3;
+			  }
+			  continue;
+			}
+			CGOBegin(shaderCGO, GL_LINE_STRIP);
+		      }
 		      while(c--) {
 			if(vc) {
-			  CGOColorv(ms->shaderCGO, vc);
+			  CGOColorv(shaderCGO, vc);
 			  vc += 3;
 			}
-			CGOVertexv(ms->shaderCGO, v);
+			CGOVertexv(shaderCGO, v);
 			v += 3;
 		      }
-		      CGOEnd(ms->shaderCGO);
+		      CGOEnd(shaderCGO);
 		    }
 		  }
 		}
@@ -1185,10 +1260,10 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 #ifdef PURE_OPENGL_ES_2
     /* TODO */
 #else
-	      if(!info->line_lighting){
+	      if(info && !info->line_lighting){
 		if (generate_shader_cgo){
 		  if (!mesh_as_cylinders){
-		    CGOEnable(ms->shaderCGO, GL_LIGHTING);
+		    CGOEnable(shaderCGO, GL_LIGHTING);
 		  }
 		} else {
 		  glEnable(GL_LIGHTING);
@@ -1199,15 +1274,20 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
 	      if (use_shader) {
 		if (generate_shader_cgo){
 		  CGO *convertcgo = NULL;
-		  CGOStop(ms->shaderCGO);
+		  CGOStop(shaderCGO);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-		  convertcgo = CGOCombineBeginEnd(ms->shaderCGO, 0);    
-		  CGOFree(ms->shaderCGO);    
-		  ms->shaderCGO = convertcgo;
+		  convertcgo = CGOCombineBeginEnd(shaderCGO, 0);    
+		  CGOFree(shaderCGO);    
+		  shaderCGO = convertcgo;
 #else
 		  (void)convertcgo;
 #endif
 #ifdef _PYMOL_CGO_DRAWBUFFERS
+		  if (returnCGO){
+		    return (shaderCGO);
+		  } else {
+		    ms->shaderCGO = shaderCGO;
+		  }
 		  if (mesh_as_cylinders){
 		    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(ms->shaderCGO, 0);
 		  } else {
@@ -1265,6 +1345,7 @@ static void ObjectMeshRender(ObjectMesh * I, RenderInfo * info)
     if(a >= I->NState)
       break;
   }
+  return NULL;
 }
 
 

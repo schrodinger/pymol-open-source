@@ -5,10 +5,10 @@
 
 //
 // Version info for VMD plugin tree:
-//   $Id: maeffplugin.cxx,v 1.19 2009/05/18 16:09:21 johns Exp $
+//   $Id: maeffplugin.cxx,v 1.24 2011/12/23 21:56:19 johns Exp $
 //
 // Version info for last sync with D. E. Shaw Research:
-//  //depot/desrad/main/sw/libs/vmd_plugins,DIST/maeffplugin.cxx#6
+//  //depot/desrad/main/sw/libs/molfile/plugins/maeffplugin.cxx#3
 //
 
 /*
@@ -166,7 +166,7 @@ namespace {
       ~Tokenizer();
 
       //! \brief Current token under cursor
-      const char * token();
+      const char * token(bool ignore_single_character_tokens=false);
 
       //! \brief Advance to next token
       void next();
@@ -179,6 +179,9 @@ namespace {
 
       //! \brief Predict a particular token
       const char * predict(const char * match="");
+
+      //! \brief Predict a value token
+      const char * predict_value();
 
       //! \brief For while(not_a(match)) loops
       bool not_a(const char * match=END_OF_FILE);
@@ -226,7 +229,7 @@ Tokenizer::~Tokenizer() {
  * defined using this one-character lookahead.
  * @return The current (possibly new) token 
  */
-const char * Tokenizer::token() {
+const char * Tokenizer::token(bool ignore_single) {
   // -----------------------------------------------
   // Keep returning the same token until next()
   // is called.
@@ -282,7 +285,10 @@ const char * Tokenizer::token() {
       // Everything else starts with some other character
       // -----------------------------------------------
       if (issingle(c)) {
-        state = SINGLECHAR;
+        if (ignore_single)
+          state = STARTOTHER;
+        else  
+          state = SINGLECHAR;
       } else if (c == '"') {
         state = STARTSTRING;
       } else {
@@ -328,12 +334,22 @@ const char * Tokenizer::token() {
       state = CONTINUEOTHER;
       break;
     case CONTINUEOTHER:
-      if ( issingle(c) || ::isspace(c) || c == '#' || c == '"' ) {
-        *ptr++ = '\0';
-        state = DONE;
+      if (ignore_single) {
+        if (isspace(c) || c == '\n') {
+          *ptr++ = '\0';
+          state = DONE;
+        } else {
+          *ptr++ = c;
+          c = read();
+        }
       } else {
-        *ptr++ = c;
-        c = read();
+        if (issingle(c) || isspace(c) || c == '#' || c == '"') {
+          *ptr++ = '\0';
+          state = DONE;
+        } else {
+          *ptr++ = c;
+          c = read();
+        }
       }
       break;
     }
@@ -382,6 +398,20 @@ Tokenizer::predict(const char * match) {
   }
   next();
   return tok;
+}
+
+const char *
+Tokenizer::predict_value() {
+    const char * tok = token(true); // ignore single char tokens here
+    if ( (tok[0] == '\0') || (strcmp(tok,":::") == 0) || (strcmp(tok,"}") == 0)) {
+        std::stringstream str;
+        str << "Line " << line() << " predicted a value token, but I have a '"
+            << (isprint(tok[0])?tok:"<unprintable>")
+            << "'" << std::endl;
+        throw std::runtime_error(str.str());
+    }
+    next();
+    return tok;
 }
 
 /*!
@@ -630,6 +660,16 @@ namespace {
     return x[0]*y[0] + x[1]*y[1] + x[2]*y[2];
   }
 
+  void strip_whitespace(char *buf) {
+    if (!buf) return;
+    char *ptr = buf;
+    while (isspace(*ptr)) ++ptr;
+    while (*ptr && !isspace(*ptr)) {
+      *buf++ = *ptr++;
+    }
+    *buf='\0';
+  }
+
   struct Handle {
     std::ofstream output;
     bool eof;
@@ -745,6 +785,7 @@ namespace {
       } else {
         strncpy(arr, value.c_str(), N);
       }
+      strip_whitespace(arr);
     }
 
     static void get_int(const std::string &value, int &ival) {
@@ -776,8 +817,11 @@ namespace {
       vel( h->ctmap[m_ct].velocity),
       natoms( h->ctmap[m_ct].natoms )
     {
-      h->optflags = MOLFILE_INSERTION;
+#if defined(DESRES_CTNUMBER)
+      h->optflags = MOLFILE_CTNUMBER;
+#endif
     }
+
     virtual void set_schema( const Schema &schema ) {
       for (unsigned i=0; i<schema.size(); i++) {
         const std::string &attr=schema[i].attr;
@@ -806,7 +850,9 @@ namespace {
       if (i_segid>=0)   GET_STR(row[i_segid], a.segid);
       if (i_chain>=0)   GET_STR(row[i_chain], a.chain);
 
-      a.insertion[0] = 'A' + m_ct-1;
+#if defined(DESRES_CTNUMBER)
+      a.ctnumber = m_ct;
+#endif
       if (i_anum>=0)    get_int(row[i_anum], a.atomicnumber);
 
       // if we didn't get an atom name, try to get one from the atomic number.
@@ -976,7 +1022,6 @@ namespace {
       molfile_atom_t a;
       memset(&a, 0, sizeof(molfile_atom_t));
 
-      a.insertion[0] = 'A' + m_ct-1;
       strcpy(a.name, "pseudo");
       strcpy(a.type, "pseudo");
       if (i_resname>=0) GET_STR(row[i_resname], a.resname);
@@ -984,6 +1029,9 @@ namespace {
       if (i_segid>=0) GET_STR(row[i_segid], a.segid);
       if (i_resid>=0) get_int(row[i_resid], a.resid);
 
+#if defined(DESRES_CTNUMBER)
+      a.ctnumber = m_ct;
+#endif
       atoms.push_back(a);
       npseudos += 1;
 
@@ -1129,7 +1177,7 @@ namespace {
     AttrMap attrs;
     tokenizer.predict(":::");
     for (unsigned i=0;i<schema.size();++i) {
-      std::string value = tokenizer.predict();
+      std::string value = tokenizer.predict_value();
       if (value == "<>" || value == "") continue; // use default element
       // Strip quotes if present
       if (value[0] == '"' && value[value.size()-1]) {
@@ -1181,7 +1229,7 @@ namespace {
       // throw away row index
       tokenizer.predict();
       for(unsigned i=0;i<width;++i) {
-        row[i] = tokenizer.predict();
+        row[i] = tokenizer.predict_value();
       }
       subarray.insert_row(row);
     }
@@ -1229,11 +1277,17 @@ namespace {
 
 namespace {
 
-  std::string quotify( const std::string &s ) {
-    // empty string --> quoted ""
-    if (s == "") return "\"\"";
+  std::string quotify( const std::string &s, unsigned pad=0 ) {
 
     std::string raw(s);
+    for (unsigned i=raw.size(); i<pad; i++) {
+      //printf("adding %d'th space to %s\n", (int)i, raw.c_str());
+      if (i%2) raw = raw + std::string(" ");
+      else     raw = std::string(" ") + raw;
+    }
+
+    // empty string --> quoted ""
+    if (raw == "") return "\"\"";
 
     // Check for non-printable characters and "
     for(std::string::iterator p=raw.begin(), en=raw.end();
@@ -1272,6 +1326,7 @@ namespace {
   void write_ct_header( std::ofstream &output, 
                         const double *A, const double *B, const double *C ) {
     output << "f_m_ct {\n"
+           << "  s_m_title\n"
            << "  r_chorus_box_ax\n"
            << "  r_chorus_box_ay\n"
            << "  r_chorus_box_az\n"
@@ -1281,7 +1336,8 @@ namespace {
            << "  r_chorus_box_cx\n"
            << "  r_chorus_box_cy\n"
            << "  r_chorus_box_cz\n"
-           << "  :::\n";
+           << "  :::\n"
+           << "  \"\"\n";
     int i;
     for (i=0; i<3; i++) output << "  " << A[i] << std::endl;
     for (i=0; i<3; i++) output << "  " << B[i] << std::endl;
@@ -1293,51 +1349,43 @@ namespace {
                         const float *pos, const float *vel ) {
 
     output << "  m_atom[" << atommap.size() << "] {\n";
-    output << "    s_m_pdb_atom_name\n";
-    output << "    s_m_pdb_residue_name\n";
-    output << "    s_m_chain_name\n";
-    output << "    s_m_pdb_segment_name\n";
-    output << "    i_m_residue_number\n";
+    output << "    # First column is atom index #\n";
+    output << "    i_m_mmod_type\n";
     output << "    r_m_x_coord\n";
     output << "    r_m_y_coord\n";
     output << "    r_m_z_coord\n";
+    output << "    i_m_residue_number\n";
+    output << "    s_m_insertion_code\n";
+    output << "    s_m_mmod_res\n";
+    output << "    s_m_chain_name\n";
+    output << "    i_m_color\n";
+    output << "    r_m_charge1\n";
+    output << "    r_m_charge2\n";
+    output << "    s_m_pdb_residue_name\n";
+    output << "    s_m_pdb_atom_name\n";
+    output << "    s_m_grow_name\n";
+    output << "    i_m_atomic_number\n";
+    output << "    i_m_formal_charge\n";
+    output << "    i_m_visibility\n";
+    output << "    s_m_pdb_segment_name\n";
     if (vel) {
       output << "    r_ffio_x_vel\n";
       output << "    r_ffio_y_vel\n";
       output << "    r_ffio_z_vel\n";
     }
-    output << "    i_m_atomic_number\n";
-    output << "    i_m_mmod_type\n";
-    output << "    i_m_color\n";
-    output << "    i_m_visibility\n";
-    output << "    i_m_formal_charge\n";
-    output << "    r_m_charge1\n";
-    output << "    r_m_charge2\n";
-    output << "    s_m_mmod_res\n";
-    output << "    s_m_grow_name\n";
-    output << "    s_m_insertion_code\n";
     output << "    :::\n";
 
     for (std::map<size_t,int>::const_iterator i=atommap.begin(); 
         i!=atommap.end(); ++i) {
       const molfile_atom_t &a = atoms[i->first];
-      output << "    " << i->second << ' '
-             << quotify(a.name) << ' '
-             << quotify(a.resname) << ' '
-             << quotify(a.chain) << ' '
-             << quotify(a.segid) << ' '
-             << a.resid << ' '
-             << pos[0+3*i->first] << ' '
-             << pos[1+3*i->first] << ' '
-             << pos[2+3*i->first] << ' ';
-      if (vel) {
-        output << vel[0+3*i->first] << ' '
-               << vel[1+3*i->first] << ' '
-               << vel[2+3*i->first] << ' ';
-      }
+
       // get atomic number from mass if not provided explicitly.
       int anum = a.atomicnumber;
       if (anum < 1) anum = find_element_by_amu(a.mass).first;
+      // Don't write a zero-length chain
+      const char * chain = a.chain[0] ? a.chain : " ";
+      // Don't write a zero-length insertion
+      const char * insertion = a.insertion[0] ? a.insertion : " ";
       // the other setting make Maestro happy
       int color=2; // gray
       int mmod=64; // mmod_type; 64="any atom"
@@ -1359,16 +1407,33 @@ namespace {
         default: ;
       }
       static const std::string blank("\" \"");
-      output << anum << ' '
+
+      output << "    " << i->second << ' '
              << mmod << ' '       // mmod_type
-             << color << ' '   // m_color
+             << pos[0+3*i->first] << ' '
+             << pos[1+3*i->first] << ' '
+             << pos[2+3*i->first] << ' '
+             << a.resid << ' '
+             << quotify(insertion) << ' '   // m_insertion_code
+             << blank << ' '                // mmod_res
+             << quotify(chain) << ' '
+             << color << ' '                // m_color
+             << 0.0 << ' '                  // charge1
+             << 0.0 << ' '                  // charge2
+             << quotify(a.resname, 4) << ' '
+             << quotify(a.name) << ' '
+             << blank << ' '                // m_grow_name
+             << anum << ' '
+             << 0   << ' '                  // formal charge
              << 1 << ' '       // m_visibility
-             << 0   << ' '     // formal charge
-             << 0.0 << ' '     // charge1
-             << 0.0 << ' '     // charge2
-             << blank << ' '  // mmod_res
-             << blank << ' '  // m_grow_name
-             << quotify(a.insertion) << ' ' // m_insertion_code
+             << quotify(a.segid) << ' '
+             ;
+      if (vel) {
+        output << vel[0+3*i->first] << ' '
+               << vel[1+3*i->first] << ' '
+               << vel[2+3*i->first] << ' ';
+      }
+      output 
              << std::endl;    
     }
     output << "    :::\n";
@@ -1466,6 +1531,7 @@ namespace {
 
   void write_ct_footer( std::ofstream &output ) {
     output << "}\n";
+    output << "\n";
   }
 }
 
@@ -1546,7 +1612,9 @@ namespace {
 
           // copy atom to stage1
           molfile_atom_t &atom = stage2.particles.at( aj-1 );
-          atom.insertion[0] = 'A' + h->stage1-1;
+#if defined(DESRES_CTNUMBER)
+          atom.ctnumber = h->stage1;
+#endif
           stage1.particles.push_back(atom);
           stage1.natoms += 1;
 
@@ -1626,6 +1694,7 @@ namespace {
       }
 
     }
+    h->nparticles = *vmdatoms;
     return h;
   }
 
@@ -1709,6 +1778,9 @@ namespace {
     }
 
     *optflags = h->optflags;
+#if defined(DESRES_CTNUMBER)
+    *optflags |= MOLFILE_CTNUMBER;
+#endif
     return MOLFILE_SUCCESS;
   }
 
@@ -1772,6 +1844,18 @@ namespace {
     return MOLFILE_SUCCESS;
   }
 
+#if defined(DESRES_READ_TIMESTEP2)
+  int read_timestep2(void *v, ssize_t n, molfile_timestep_t *ts) {
+      Handle *h = reinterpret_cast<Handle *>(v);
+      if (n!=0) return MOLFILE_EOF;
+      bool save_eof = h->eof;
+      h->eof = false;
+      int rc = read_next_timestep(v, h->nparticles, ts);
+      h->eof = save_eof;
+      return rc;
+  }
+#endif
+
   void close_file_read( void *v) {
     delete reinterpret_cast<Handle *>(v);
   }
@@ -1796,15 +1880,17 @@ namespace {
 
     // assign ct for each particle, and count ct atoms and pseudos
     std::vector<int> atom_ct(h->nparticles);
-    char last_insertion = 0;
+    int last_ctnumber = -1;
     int ct = 1;
     for (int i=0; i<h->nparticles; i++) {
       const molfile_atom_t &a = atoms[i];
-      if (i==0) last_insertion = a.insertion[0];
-      else if (a.insertion[0] != last_insertion) {
-        last_insertion = a.insertion[0];
+#if defined(DESRES_CTNUMBER)
+      if (i==0) last_ctnumber = a.ctnumber;
+      else if (a.ctnumber != last_ctnumber) {
+        last_ctnumber = a.ctnumber;
         ++ct;
       }
+#endif
       atom_ct[i] = ct;
       ct_data &data = h->ctmap[ct];
       site s;
@@ -1845,7 +1931,7 @@ namespace {
     }
     if (badbonds) {
       fprintf(stderr, "Could not store all bonds in mae file\n");
-      fprintf(stderr, "Check that no bonded atoms have different insertion\n");
+      fprintf(stderr, "Check that no bonded atoms have different ctnumber\n");
       return MOLFILE_ERROR;
     }
     if (skipped) {
@@ -1927,7 +2013,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
   maeff.prettyname = "Maestro File";
   maeff.author = "D. E. Shaw Research";
   maeff.majorv = 3;
-  maeff.minorv = 3;
+  maeff.minorv = 5;
   maeff.is_reentrant = VMDPLUGIN_THREADUNSAFE;
 
   maeff.filename_extension = "mae,maeff,cms";
@@ -1936,6 +2022,9 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
   maeff.read_bonds = read_bonds;
   maeff.read_timestep_metadata = read_timestep_metadata;
   maeff.read_next_timestep = read_next_timestep;
+#if defined(DESRES_READ_TIMESTEP2)
+  maeff.read_timestep2 = read_timestep2;
+#endif
   maeff.close_file_read = close_file_read;
 
   maeff.open_file_write = open_file_write;

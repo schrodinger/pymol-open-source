@@ -16,17 +16,20 @@
  *
  *      $RCSfile: basissetplugin.c,v $
  *      $Author: saam $       $Locker:  $             $State: Exp $
- *      $Revision: 1.4 $       $Date: 2009/06/27 00:45:27 $
+ *      $Revision: 1.13 $       $Date: 2009/11/13 20:37:59 $
  *
  ***************************************************************************/
 
 /* *******************************************************
  *
- *          G A M E S S     P L U G I N 
+ *          B A S I S    S E T    P L U G I N 
  *
- * This plugin allows VMD to read GAMESS log files
- * currently only single point geometries and trajectories
- * for optimizations, saddle point runs are supported 
+ * This plugin reads basis sets for quantum chemical
+ * calculations. The basis set must be in the GAMESS format.
+ * Such files can be downloaded for virtually any basis set
+ * from the EMSL basis set exchange website:
+ * https:
+
  *
  * ********************************************************/
 
@@ -37,7 +40,7 @@
 #include <time.h>
 #include <math.h>
 
-#include "gamessplugin.h"
+#include "qmplugin.h"
 #include "unit_conversion.h"
  
 #define ANGSTROM 0
@@ -48,8 +51,6 @@
 /*
  * Error reporting macro for use in DEBUG mode
  */
-
-#define GAMESS_DEBUG
 #ifdef GAMESS_DEBUG
 #define PRINTERR fprintf(stderr, "\n In file %s, line %d: \n %s \n \n", \
                             __FILE__, __LINE__, strerror(errno))
@@ -79,13 +80,33 @@
 #define FOUND   1
 #define STOPPED 2
 
-#define NUM_ELEMENTS 10
+#define NUM_ELEMENTS 109
 
-
-
+/* Translation table for element to atomic numbers for element
+ * names used Gamess format files from EMSL */
 static const char *elements[] = { 
   "(unknown)", "HYDROGEN", "HELIUM", "LITHIUM", "BERYLLIUM", "BORON",
-  "CARBON", "NITROGEN", "OXYGEN", "FLUORINE", "NEON"};
+  "CARBON", "NITROGEN", "OXYGEN", "FLUORINE", "NEON",
+  "SODIUM", "MAGNESIUM", "ALUMINUM", "SILICON", "PHOSPHOROUS",
+  "SULFUR", "CHLORINE", "ARGON", "POTASSIUM", "CALCIUM", "SCANDIUM",
+  "TITANIUM", "VANADIUM", "CHROMIUM", "MANGANESE", "IRON", "COBALT",
+  "NICKEL", "COPPER", "ZINC", "GALLIUM", "GERMANIUM", "ARSENIC",
+  "SELENIUM", "BROMINE", "KRYPTON",
+  "RUBIDIUM", "STRONTIUM", "YTTRIUM", "ZIRCONIUM", "NIOBIUM",
+  "MOLYBDENUM", "TECHNETIUM", "RUTHENIUM", "RHODIUM", "PALLADIUM",
+  "SILVER", "CADMIUM", "INDIUM", "TIN", "ANTIMONY", "TELLURIUM",
+  "IODINE", "XENON",
+  "CESIUM", "BARIUM", "LANTHANUM", "CER", "PRASEODYMIUM", "NEODYMIUM",
+  "PROMETIUM", "SAMARIUM", "EUROPIUM", "GADOLIUM", "TERBIUM",
+  "DYSPROSIUM", "HOLMIUM", "ERBIUM", "THULIUM", "YTTERBIUM", 
+  "LUTETIUM", "HAFNIUM", "TANTALUM", "TUNGSTEN", "RHENIUM", "OSMIUM",
+  "IRIDIUM", "PLATINUM", "GOLD", "MERCURY", "THALLIUM", "LEAD",
+  "BISMUTH", "POLONIUM", "ASTATINE", "RADON",
+  "FRANCIUM", "RADIUM", "ACTINIUM", "THORIUM", "PROTACTINIUM", 
+  "URANIUM", "NEPTUNIUM", "PLUTONIUM", "AMERICIUM", "CURIUM", 
+  "BERKELIUM", "CALIFORNIUM", "EINSTEINIUM", "FERMIUM", "MENDELEVIUM",
+  "NOBELIUM", "LAWRENCIUM", "RUTHERFORDIUM", "DUBNIUM", "SEABORGIUM",
+  "BOHRIUM", "HASSIUM", "MEITNERIUM"};
 
 
 
@@ -93,7 +114,7 @@ static const char *elements[] = {
 /* declaration/documentation of internal (static) functions */
 /* ######################################################## */
 
-static void print_input_data(gamessdata *);
+static void print_input_data(qmdata_t *);
 
 
 /* the function get_basis we also parse the basis function section to
@@ -103,22 +124,18 @@ static void print_input_data(gamessdata *);
  * be provided by the the plugin itself; however, the user might
  * define his own basis/contraction coeffients and hence reading
  * them from the input file seem to be somewhat more general. */
-static int get_basis (gamessdata *);
+static int get_basis (qmdata_t *);
 
 
 /* read all primitives for the current shell */
-static int read_shell_primitives(gamessdata *, prim_t **prim,
+static int read_shell_primitives(qmdata_t *, prim_t **prim,
                                  char *shellsymm, int icoeff);
 
-/* convert shell symmetry type from char to int */
-static int shellsymm_int(char symm);
+/* convert shell type from char to int */
+static int shelltype_int(char type);
 
 /* Populate the flat arrays containing the basis set data */
-static int fill_basis_arrays(gamessdata *);
-
-static char* trimleft(char *);
-static int goto_keystring(FILE *file, const char *keystring,
-                                const char *stopstring);
+static int fill_basis_arrays(qmdata_t *);
 
 
 /* ######################################################## */
@@ -129,21 +146,16 @@ static int goto_keystring(FILE *file, const char *keystring,
 
 /***************************************************************
  *
- * Called by VMD to open the GAMESS logfile and get the number
+ * Called by VMD to open the file and get the number
  * of atoms.
- * We are also reading all the static (i.e. non-trajectory)
- * data here since we have to parse a bit to get the atom count
- * anyway. These data will then be provided to VMD by
- * read_gamess_metadata() and read_gamess_rundata().
  *
  * *************************************************************/
 static void *open_basis_read(const char *filename, 
                   const char *filetype, int *natoms) {
 
   FILE *fd;
-  gamessdata *data;
+  qmdata_t *data;
 
-  printf("open_basis_read();\n");
   
   /* open the input file */
   fd = fopen(filename, "rb");
@@ -154,7 +166,7 @@ static void *open_basis_read(const char *filename,
   }
 
   /* allocate memory for main data structure */
-  data = (gamessdata *)calloc(1,sizeof(gamessdata));
+  data = (qmdata_t *)calloc(1,sizeof(qmdata_t));
 
   /* make sure memory was allocated properly */
   if (data == NULL) {
@@ -169,7 +181,7 @@ static void *open_basis_read(const char *filename,
   /* initialize some of the character arrays */
   memset(data->basis_string,0,sizeof(data->basis_string));
 
-  /* store file pointer and filename in gamess struct */
+  /* store file pointer in qmdata_t struct */
   data->file = fd;
 
   /* Read the basis set */
@@ -198,17 +210,15 @@ static void *open_basis_read(const char *filename,
 static int read_basis_metadata(void *mydata, 
     molfile_qm_metadata_t *metadata) {
 
-  gamessdata *data = (gamessdata *)mydata;
+  qmdata_t *data = (qmdata_t *)mydata;
 
   metadata->ncart = 0;
   metadata->nimag = 0;
   metadata->nintcoords = 0;
 
   metadata->have_sysinfo = 0;
-  metadata->have_esp = 0;
-  metadata->have_npa = 0;
   metadata->have_carthessian = 0;
-  metadata->have_internals = 0;
+  metadata->have_inthessian = 0;
   metadata->have_normalmodes = 0;
 
   /* orbital + basis set data */
@@ -231,10 +241,9 @@ static int read_basis_metadata(void *mydata,
 static int read_basis_rundata(void *mydata, 
                                molfile_qm_t *qm_data) {
 
-  gamessdata *data = (gamessdata *)mydata;
+  qmdata_t *data = (qmdata_t *)mydata;
   int i;
   molfile_qm_basis_t   *basis_data   = &qm_data->basis;
-/*   molfile_qm_sysinfo_t *sys_data     = &qm_data->run; */
 
 /*   strncpy(sys_data->basis_string, data->basis_string, */
 /*           sizeof(sys_data->basis_string)); */
@@ -250,7 +259,7 @@ static int read_basis_rundata(void *mydata,
     
     for (i=0; i<data->num_shells; i++) {
       basis_data->num_prim_per_shell[i] = data->num_prim_per_shell[i];
-      basis_data->shell_symmetry[i] = data->shell_symmetry[i];
+      basis_data->shell_types[i] = data->shell_types[i];
     }
     
     for (i=0; i<2*data->num_basis_funcs; i++) {
@@ -272,13 +281,12 @@ static int read_basis_rundata(void *mydata,
  **********************************************************/
 static void close_basis_read(void *mydata) {
 
-  gamessdata *data = (gamessdata *)mydata;
+  qmdata_t *data = (qmdata_t *)mydata;
   int i, j;
   fclose(data->file);
 
-  free(data->initatoms);
   free(data->basis);
-  free(data->shell_symmetry);
+  free(data->shell_types);
   free(data->atomicnum_per_basisatom);
   free(data->num_shells_per_atom);
   free(data->num_prim_per_shell);
@@ -306,7 +314,7 @@ static void close_basis_read(void *mydata) {
 
 #define TORF(x) (x ? "T" : "F")
 
-static void print_input_data(gamessdata *data) {
+static void print_input_data(qmdata_t *data) {
   int i, j, k;
   int primcount=0;
   int shellcount=0;
@@ -325,7 +333,7 @@ static void print_input_data(gamessdata *data) {
   printf("  SHELL TYPE  PRIMITIVE        EXPONENT          CONTRACTION COEFFICIENT(S)\n");
   printf("\n");
 
-  printf("gamessplugin) =================================================================\n");
+  printf(" =================================================================\n");
   for (i=0; i<data->num_basis_atoms; i++) {
     printf("%-8d (%10s)\n\n", data->basis_set[i].atomicnum, data->basis_set[i].name);
     printf("\n");
@@ -334,7 +342,7 @@ static void print_input_data(gamessdata *data) {
 
       for (k=0; k<data->basis_set[i].shell[j].numprims; k++) {
         printf("%6d   %d %7d %22f%22f\n", j,
-               data->basis_set[i].shell[j].symmetry,
+               data->basis_set[i].shell[j].type,
                primcount+1,
                data->basis_set[i].shell[j].prim[k].exponent,
                data->basis_set[i].shell[j].prim[k].contraction_coeff);
@@ -359,7 +367,7 @@ static void print_input_data(gamessdata *data) {
  * this function reads in the basis set data 
  *
  * ******************************************************/
-int get_basis(gamessdata *data) {
+int get_basis(qmdata_t *data) {
 
   char buffer[BUFSIZ];
   char word[4][BUFSIZ];
@@ -369,14 +377,12 @@ int get_basis(gamessdata *data) {
   shell_t *shell;
   long filepos;
 
-  printf("get_basis()\n");
-
   /* initialize buffers */
   buffer[0] = '\0';
   for (i=0; i<3; i++) word[i][0] = '\0';
   
-  if (!goto_keystring(data->file, "$DATA", NULL))
-    printf("gamessplugin) No basis set found!\n");
+  if (!pass_keyline(data->file, "$DATA", NULL))
+    printf("basissetplugin) No basis set found!\n");
 
 
   /* Allocate space for the basis for all atoms */
@@ -389,7 +395,7 @@ int get_basis(gamessdata *data) {
 
   do {
     prim_t *prim = NULL;
-    char shellsymm;
+    char shelltype;
     int numprim = 0;
     int icoeff = 0;
     filepos = ftell(data->file);
@@ -398,7 +404,7 @@ int get_basis(gamessdata *data) {
     /* Count the number of relevant words in the line. */
     numread = sscanf(buffer,"%s %s %s %s",&word[0][0], &word[1][0],
            &word[2][0], &word[3][0]);
-    printf("%s",buffer);
+
     if (!strcmp(&word[0][0], "$END")) break;
 
     switch (numread) {
@@ -417,13 +423,13 @@ int get_basis(gamessdata *data) {
 
         do {
           filepos = ftell(data->file);
-          numprim = read_shell_primitives(data, &prim, &shellsymm, icoeff);
+          numprim = read_shell_primitives(data, &prim, &shelltype, icoeff);
 
           if (numprim>0) {
             /* make sure we have eiter S, L, P, D, F or G shells */
-            if ( (shellsymm!='S' && shellsymm!='L' && shellsymm!='P' && 
-                  shellsymm!='D' && shellsymm!='F' && shellsymm!='G') ) {
-              printf("gamessplugin) WARNING ... %c shells are not supported \n", shellsymm);
+            if ( (shelltype!='S' && shelltype!='L' && shelltype!='P' && 
+                  shelltype!='D' && shelltype!='F' && shelltype!='G') ) {
+              printf("basissetplugin) WARNING ... %c shells are not supported \n", shelltype);
             }
             
             /* create new shell */
@@ -431,20 +437,18 @@ int get_basis(gamessdata *data) {
               shell = (shell_t*)realloc(shell, (numshells+1)*sizeof(shell_t));
             }
             shell[numshells].numprims = numprim;
-            shell[numshells].symmetry = shellsymm_int(shellsymm);
+            shell[numshells].type = shelltype_int(shelltype);
             shell[numshells].prim = prim;
             data->num_basis_funcs += numprim;
 
             /* We split L-shells into one S and one P-shell.
              * I.e. for L-shells we have to go back read the shell again
-             * this time using the second contraction coefficients.
-             * We use L and M instead of S and P for the shell symmetry
-             * in order to be able to distinguish SP-type shells. */
-            if (shellsymm=='L' && !icoeff) {
+             * this time using the second contraction coefficients. */
+            if (shelltype=='L' && !icoeff) {
               fseek(data->file, filepos, SEEK_SET);
               icoeff++;
-            } else if (shellsymm=='L' && icoeff) {
-              shell[numshells].symmetry = SP_P_SHELL;
+            } else if (shelltype=='L' && icoeff) {
+              shell[numshells].type = SP_P_SHELL;
               icoeff = 0;
             }
 
@@ -471,7 +475,7 @@ int get_basis(gamessdata *data) {
   } while (!success);
 
 
-  printf("gamessplugin) Parsed %d uncontracted basis functions for %d atoms.\n",
+  printf("basissetplugin) Parsed %d uncontracted basis functions for %d atoms.\n",
          data->num_basis_funcs, i);
 
   data->num_basis_atoms = i;
@@ -483,40 +487,40 @@ int get_basis(gamessdata *data) {
 
 /**************************************************
  *
- * Convert shell symmetry type from char to int.
+ * Convert shell type from char to int.
  *
  ************************************************ */
-static int shellsymm_int(char symm) {
-  int shell_symmetry;
+static int shelltype_int(char type) {
+  int shelltype;
 
-  switch (symm) {
+  switch (type) {
     case 'L':
-      shell_symmetry = SP_S_SHELL;
+      shelltype = SP_S_SHELL;
       break;
     case 'M':
-      shell_symmetry = SP_P_SHELL;
+      shelltype = SP_P_SHELL;
       break;
     case 'S':
-      shell_symmetry = S_SHELL;
+      shelltype = S_SHELL;
       break;
     case 'P':
-      shell_symmetry = P_SHELL;
+      shelltype = P_SHELL;
       break;
     case 'D':
-      shell_symmetry = D_SHELL;
+      shelltype = D_SHELL;
       break;
     case 'F':
-      shell_symmetry = F_SHELL;
+      shelltype = F_SHELL;
       break;
     case 'G':
-      shell_symmetry = G_SHELL;
+      shelltype = G_SHELL;
       break;
     default:
-      shell_symmetry = UNK_SHELL;
+      shelltype = UNK_SHELL;
       break;
   }
 
-  return shell_symmetry;
+  return shelltype;
 }
 
 
@@ -527,14 +531,14 @@ static int shellsymm_int(char symm) {
  * set data.
  *
  ******************************************************/
-static int fill_basis_arrays(gamessdata *data) {
+static int fill_basis_arrays(qmdata_t *data) {
   int i, j, k;
   int shellcount = 0;
   int primcount = 0;
   float *basis;
   int *num_shells_per_atom;
   int *num_prim_per_shell;
-  int *shell_symmetry;
+  int *shell_types;
   int *atomicnum_per_basisatom;
 
   /* Count the total number of primitives which
@@ -561,10 +565,10 @@ static int fill_basis_arrays(gamessdata *data) {
     return MOLFILE_ERROR;
   }
 
-  shell_symmetry = (int *)calloc(data->num_shells, sizeof(int));
+  shell_types = (int *)calloc(data->num_shells, sizeof(int));
   
   /* make sure memory was allocated properly */
-  if (shell_symmetry == NULL) {
+  if (shell_types == NULL) {
     PRINTERR; 
     return MOLFILE_ERROR;
   }
@@ -594,9 +598,9 @@ static int fill_basis_arrays(gamessdata *data) {
   }
 
 
-  /* store pointers in struct gamessdata */
+  /* store pointers in struct qmdata_t */
   data->basis = basis;
-  data->shell_symmetry = shell_symmetry;
+  data->shell_types = shell_types;
   data->num_shells_per_atom = num_shells_per_atom;
   data->num_prim_per_shell = num_prim_per_shell;
   data->atomicnum_per_basisatom = atomicnum_per_basisatom;
@@ -607,16 +611,17 @@ static int fill_basis_arrays(gamessdata *data) {
     /* assign atomic number from element name */
     data->basis_set[i].atomicnum = 0;
     for (j=0; j<NUM_ELEMENTS; j++) {
-      if (!strcmp(elements[j], data->basis_set[i].name))
+      if (!strcmp(elements[j], data->basis_set[i].name)) {
         data->basis_set[i].atomicnum = j;
+        break;
+      }
     }
-    printf("%d %s\n", data->basis_set[i].atomicnum, data->basis_set[i].name);
     atomicnum_per_basisatom[i] = data->basis_set[i].atomicnum;
 
     num_shells_per_atom[i] = data->basis_set[i].numshells;
 
     for (j=0; j<data->basis_set[i].numshells; j++) {
-      shell_symmetry[shellcount] = data->basis_set[i].shell[j].symmetry;
+      shell_types[shellcount] = data->basis_set[i].shell[j].type;
       num_prim_per_shell[shellcount] = data->basis_set[i].shell[j].numprims;
 
       for (k=0; k<data->basis_set[i].shell[j].numprims; k++) {
@@ -637,7 +642,7 @@ static int fill_basis_arrays(gamessdata *data) {
  * read all primitives for the current shell
  *
  ******************************************************/
-static int read_shell_primitives(gamessdata *data, prim_t **prim, char *shellsymm,
+static int read_shell_primitives(qmdata_t *data, prim_t **prim, char *shelltype,
                                  int icoeff) {
   char buffer[BUFSIZ];
   float exponent = 0.0; 
@@ -646,7 +651,7 @@ static int read_shell_primitives(gamessdata *data, prim_t **prim, char *shellsym
   int primcounter = 0, nprim = 0;;
 
   GET_LINE(buffer, data->file);
-  success = sscanf(buffer,"%c %d", shellsymm, &nprim);
+  success = sscanf(buffer,"%c %d", shelltype, &nprim);
 
   (*prim) = (prim_t*)calloc(nprim, sizeof(prim_t));
 
@@ -654,7 +659,6 @@ static int read_shell_primitives(gamessdata *data, prim_t **prim, char *shellsym
     GET_LINE(buffer, data->file);
     success = sscanf(buffer,"%*d %f %f %f",
                        &exponent, &contract[0], &contract[1]); 
-printf("%s",buffer);
 
     /* store in basis array and increase the counter */ 
     switch (success) {
@@ -694,64 +698,6 @@ printf("%s",buffer);
   return primcounter;
 }
 
-
-
-/********************************************************
- *
- * this function returns a pointer to the first non-whitespace
- * character in a string.
- * The c-string must be null-terminated.
- *
- ********************************************************/
-static char* trimleft(char* the_string)
-{
-  char *new_string = the_string;
-  while ( (*new_string=='\n' || *new_string==' ' || *new_string=='\t') && 
-	  (*new_string != '\0'))
-  {
-    new_string++;
-  }
-
-  return new_string;
-}
-
-
-/* Advances the file pointer until the first appearance
- * of a line beginning with the given keystring. Leading
- * whitespace in the lines are ignored, the keystring 
- * should not begin with whitespace otherwise no match
- * will be found.
- * If stopstring is encountered before the keystring 
- * the file is rewound to the position where the search
- * started. If stopstring is NULL then the search stops
- * at EOF. */
-static int goto_keystring(FILE *file, const char *keystring,
-        const char *stopstring) {
-  char buffer[BUFSIZ];
-  char *line;
-  int found = 0;
-  long filepos;
-  filepos = ftell(file);
-
-  do {
-    if (!fgets(buffer, sizeof(buffer), file)) {
-      fseek(file, filepos, SEEK_SET);
-      return 0;
-    }
-    line = trimleft(buffer);
-    if (strstr(line, keystring)) {
-      found = 1;
-      break;
-    }
-  } while (!stopstring || !strstr(line, stopstring));
-    
-  if (!found) {
-    fseek(file, filepos, SEEK_SET);
-    return STOPPED;
-  }
-
-  return FOUND;
-}
 
 
 

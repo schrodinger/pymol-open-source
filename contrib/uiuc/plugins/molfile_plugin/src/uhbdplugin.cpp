@@ -16,7 +16,7 @@
  *
  *      $RCSfile: uhbdplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.12 $       $Date: 2009/04/29 15:45:35 $
+ *      $Revision: 1.13 $       $Date: 2011/06/22 18:06:03 $
  *
  ***************************************************************************/
 
@@ -63,17 +63,17 @@ static char *uhbdgets(char *s, int n, FILE *stream, const char *msg) {
   char *returnVal;
 
   if (feof(stream)) {
-    printf(msg);
+    printf("%s", msg);
     printf("uhbdplugin) Unexpected end-of-file.\n");
     return NULL;
   } else if (ferror(stream)) {
-    printf(msg);
+    printf("%s", msg);
     printf("uhbdplugin) Error reading file.\n");
     return NULL;
   } else {
     returnVal = fgets(s, n, stream);
     if (returnVal == NULL) {
-      printf(msg);
+      printf("%s", msg);
       printf("uhbdplugin) Encountered EOF or error reading line.\n");
     }
   }
@@ -331,7 +331,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   plugin.prettyname = "UHBD Grid";
   plugin.author = "Alexander Spaar, Justin Gullingsrud";
   plugin.majorv = 0;
-  plugin.minorv = 4;
+  plugin.minorv = 5;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "uhbdgrd,grd";
   plugin.open_file_read = open_uhbd_read;

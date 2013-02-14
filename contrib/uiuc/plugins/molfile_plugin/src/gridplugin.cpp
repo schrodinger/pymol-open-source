@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: gridplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.13 $       $Date: 2008/01/09 20:27:20 $
+ *      $Revision: 1.14 $       $Date: 2009/04/29 15:45:30 $
  *
  ***************************************************************************/
 
@@ -71,8 +71,7 @@ static void *open_grid_read(const char *filepath, const char *filetype,
   FILE *fd;
   grid_t *grid;
   float header[64], ra, rx, ry, rz;
-  int dataBegin, swap, blocksize; 
-  my_aliased_int nnx, nny, nnz;
+  int dataBegin, swap, blocksize, nnx, nny, nnz;
   
   fd = fopen(filepath, "rb");
   if (!fd) {
@@ -107,9 +106,9 @@ static void *open_grid_read(const char *filepath, const char *filetype,
   }
 
   // number of planes in each dimension
-  nnx = ((my_aliased_int *)header)[25];
-  nny = ((my_aliased_int* )header)[26];
-  nnz = ((my_aliased_int *)header)[27];
+  nnx = ((int *)header)[25];
+  nny = ((int *)header)[26];
+  nnz = ((int *)header)[27];
 
   // grid spacing in angstroms
   ra = header[28];
@@ -232,7 +231,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

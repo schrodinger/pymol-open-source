@@ -144,6 +144,7 @@ int CShaderPrg_Set4f(CShaderPrg * p, const char * name, float f1, float f2, floa
 int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, float * m);
 
 int CShaderPrg_GetAttribLocation(CShaderPrg * p, const char * name);
+void CShaderPrg_SetAttrib4fLocation(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4);
 
 void CShaderMgr_AddVBOToFree(CShaderMgr * I, GLuint vboid);
 void CShaderMgr_FreeAllVBOs(CShaderMgr * I);

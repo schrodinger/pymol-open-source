@@ -10,8 +10,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: vmdconio.h,v $
- *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.2 $       $Date: 2009/01/30 14:36:08 $
+ *      $Author: akohlmey $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.3 $       $Date: 2010/10/27 01:34:47 $
  *
  ***************************************************************************/
 
@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {

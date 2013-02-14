@@ -4456,5 +4456,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 
     set_i(I, cSetting_anaglyph_mode, 4); /* 0 = true; 1 = gray; 2 = color; 3 = half color; 4 = optimized */
     set_i(I, cSetting_edit_light, 1); /* 0=ambient, default to 1 */
+
+    set_b(I, cSetting_pick_surface, 1);
   }
 }

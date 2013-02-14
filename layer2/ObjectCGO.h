@@ -48,4 +48,6 @@ int ObjectCGONewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCGO ** resul
                            int version);
 ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals * G, char *text, float *pos);
 
+void ObjectCGOFree(ObjectCGO * I);
+
 #endif

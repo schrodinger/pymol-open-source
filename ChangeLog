@@ -4,6 +4,8 @@ CHANGE LOG
 
 2013-02-14 Thomas Holder <thomas.holder@schrodinger.com>
 
+	* enable VMD plugins by default
+
 	* apply patch #120 "pymol" import in launcher ambiguous
 	  http://sourceforge.net/p/pymol/bugs/120/
 
@@ -14,6 +16,8 @@ CHANGE LOG
 	* support width/height units with the png command
 
 	* support decorator syntax for cmd.extend
+
+	* setup.py refactoring, setup2.py no longer needed
 
 2013-01-10 Thomas Holder <thomas.holder@schrodinger.com>
 

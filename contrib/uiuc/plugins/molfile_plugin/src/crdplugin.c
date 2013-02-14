@@ -16,7 +16,7 @@
  *
  *      $RCSfile: crdplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.36 $       $Date: 2009/04/29 15:45:28 $
+ *      $Revision: 1.38 $       $Date: 2011/03/14 16:07:42 $
  *
  ***************************************************************************/
 
@@ -168,7 +168,7 @@ static int write_crd_timestep(void *v, const molfile_timestep_t *ts) {
     fprintf(crd->file, "\n"); 
     
   if (crd->has_box) {
-    fprintf (crd->file, "%8.3f %8.3f %8.3f\n", ts->A, ts->B, ts->C);
+    fprintf (crd->file, "%8.3f%8.3f%8.3f\n", ts->A, ts->B, ts->C);
   }
 
   return MOLFILE_SUCCESS;
@@ -193,7 +193,7 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
   plugin.prettyname = "AMBER Coordinates";
   plugin.author = "Justin Gullingsrud, John Stone";
   plugin.majorv = 0;
-  plugin.minorv = 7;
+  plugin.minorv = 8;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "mdcrd,crd";
   plugin.open_file_read = open_crd_read;

@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -10,7 +10,7 @@
  *
  *      $RCSfile: endianswap.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.5 $       $Date: 2006/01/05 00:05:52 $
+ *      $Revision: 1.6 $       $Date: 2009/04/29 15:45:29 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -27,16 +27,6 @@
 
 #ifndef ENDIAN_SWAP_H
 #define ENDIAN_SWAP_H
-
-#ifdef __GNUC__
-#if __GNUC__ > 3
-typedef int my_aliased_int __attribute__((may_alias));
-#else
-typedef int my_aliased_int;
-#endif
-#else
-typedef int my_aliased_int;
-#endif
 
 /* works on unaligned 2-byte quantities */
 static void swap2_unaligned(void *v, long ndata) {
@@ -118,9 +108,9 @@ static void swap2_aligned(void *v, long ndata) {
 /* Only works with aligned 4-byte quantities, will cause a bus error */
 /* on some platforms if used on unaligned data.                      */
 static void swap4_aligned(void *v, long ndata) {
-  my_aliased_int *data = (my_aliased_int *) v;
+  int *data = (int *) v;
   long i;
-  my_aliased_int *N;
+  int *N;
   for (i=0; i<ndata; i++) {
     N = data + i;
     *N=(((*N>>24)&0xff) | ((*N&0xff)<<24) | 
@@ -135,9 +125,9 @@ static void swap8_aligned(void *v, long ndata) {
   /* Use int* internally to prevent bugs caused by some compilers */
   /* and hardware that would potentially load data into an FP reg */
   /* and hose everything, such as the old "jmemcpy()" bug in NAMD */
-  my_aliased_int *data = (my_aliased_int *) v;  
+  int *data = (int *) v;  
   long i;
-  my_aliased_int *N; 
+  int *N; 
   int t0, t1;
 
   for (i=0; i<ndata; i++) {
