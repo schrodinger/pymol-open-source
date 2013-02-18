@@ -1,0 +1,12 @@
+.git
+.gitignore
+.svn
+.svnignore
+*.pyc
+*.d
+contrib/sglite
+generated
+build
+pymol
+debug
+data/mm
