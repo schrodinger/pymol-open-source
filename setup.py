@@ -15,6 +15,40 @@ from glob import glob
 import shutil
 import sys, os, re
 
+import distutils.ccompiler
+import multiprocessing.pool
+
+def CCompiler_compile(self, sources, output_dir=None, macros=None,
+        include_dirs=None, debug=0, extra_preargs=None, extra_postargs=None,
+        depends=None):
+    '''
+    Enable parallel and incremental build.
+
+    To do a clean build, please remove the "build" directory.
+    '''
+    macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
+            output_dir, macros, include_dirs, sources, depends, extra_postargs)
+    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+
+    def _single_compile(obj):
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            return
+        try:
+            if not self.force and \
+                    os.path.getmtime(obj) > \
+                    os.path.getmtime(src):
+                return
+        except OSError:
+            pass
+        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+
+    multiprocessing.pool.ThreadPool().map(_single_compile, objects)
+    return objects
+
+distutils.ccompiler.CCompiler.compile = CCompiler_compile
+
 class install_pymol(install):
     pymol_path = None
     bundled_pmw = False
