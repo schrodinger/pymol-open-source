@@ -378,6 +378,10 @@ if pymol_launch != 3: # if this isn't a dry run
                 cmd.set("use_shaders", 0)
                 cmd.set("sphere_mode", 0)
 
+            elif vendor == 'nouveau':
+                cmd.set("use_shaders", 0)
+                cmd.set("sphere_mode", 0)
+
             else:
                 if ("Intel" in renderer) and (("HD" in renderer) or ("Express" in renderer)):
 

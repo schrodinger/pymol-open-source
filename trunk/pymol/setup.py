@@ -49,6 +49,17 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
 distutils.ccompiler.CCompiler.compile = CCompiler_compile
 
+def posix_find_lib(names, lib_dirs):
+    # http://stackoverflow.com/questions/1376184/determine-if-c-library-is-installed-on-unix
+    from subprocess import Popen, PIPE
+    args = ["gcc", "-o", os.devnull, "-x", "c", "-"] + ["-L" + d for d in lib_dirs]
+    for name in names:
+        p = Popen(args + ["-l" + name], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        p.communicate("int main(){}")
+        if p.wait() == 0:
+            return name
+    raise IOError('could not find any of ' + str(names))
+
 class install_pymol(install):
     pymol_path = None
     bundled_pmw = False
@@ -187,7 +198,8 @@ elif sys.platform=='cygwin':
                 ("CYGWIN",None),
                 ("_PYMOL_LIBPNG",None)]
 #============================================================================
-elif sys.platform=='darwin':
+else: # unix style (linux, mac, ...)
+
     def_macros += [
             ("_PYMOL_LIBPNG",None),
             ("_PYMOL_FREETYPE",None),
@@ -202,94 +214,17 @@ elif sys.platform=='darwin':
             ("OPENGL_ES_2",None),
             ]
 
-    using_fink = "'/sw/" in str(sys.path)
-    if using_fink:
-        # under Fink, with the following packages installed:
-        #
-        #  python27
-        #  libpng15
-        #  pmw-py27
-        #  freetype219
-        #  freeglut
-        #  glew
-        #
-        # REMEMBER to use Fink's Python!
-        #
-        inc_dirs += [
-                  "/sw/include/freetype2/freetype",
-                  "/sw/include/freetype2",
-                  "/sw/include",
-                  "/usr/X11/include",
-                  ]
-        ext_link_args=[
-                       "-L/sw/lib", "-lpng",
-                       "/usr/X11/lib/libGL.dylib",
-                       "/usr/X11/lib/libGLU.dylib",
-                       "-lfreeglut",
-                       "-lglew",
-                       "-L/sw/lib/freetype219/lib", "-lfreetype"
-                        ]
-    else:
-        # Not using Fink -- building as if we are on Linux/X11 with
-        # the external dependencies compiled into "./ext" in the
-        # current working directory,
-        #
-        # REMEMEBER to use "./ext/bin/python ..."
-        #
-        # create shader text
-        for EXT in ("/opt/X11", "/opt/local"):
-            inc_dirs += [
-                  EXT+"/include",
-                  EXT+"/include/GL",
-                  EXT+"/include/freetype2",
-                  ]
-            lib_dirs += [
-                  EXT+"/lib",
-                ]
-        ext_comp_args=["-ffast-math","-funroll-loops","-O3","-fcommon"]
-        ext_link_args=[
-                    "-L"+EXT+"/lib", "-lpng", "-lGL", "-lglut", "-lGLEW", "-lfreetype"
-            ]
-#============================================================================
-else: # linux or other unix
+    libs += ["png", "freetype"]
 
-    inc_dirs += [
-                 "/usr/include/freetype2",
-                 ]
-    libs = [ "GL",
-             "GLU",
-             "glut",
-             "png",
-             "z",
-             "freetype",
-             "GLEW",
-             # "Xxf86vm"
-          ]	
-    pyogl_libs = [ "GL", 
-                   "GLU",
-                   "glut",
-                   "GLEW"]
-    lib_dirs = [ "/usr/X11R6/lib64", ]
-    def_macros += [
-                   ("_PYMOL_INLINE",None),
-                   ("_PYMOL_FREETYPE",None),
-                   ("_PYMOL_LIBPNG",None),
-                   # OpenGL shaders
-                   ("_PYMOL_OPENGL_SHADERS",None),
-                   # Numeric Python support                    
-                   #                ("_PYMOL_NUMPY",None),
-                   # VMD plugin support           
-                   #               ("_PYMOL_VMD_PLUGINS",None)
-                   ("_PYMOL_CGO_DRAWARRAYS",None),
-                   ("_PYMOL_CGO_DRAWBUFFERS",None),
-                   ("_CGO_DRAWARRAYS",None),
-                   ("_PYMOL_GL_CALLLISTS",None),
-                   ("OPENGL_ES_2",None),
-                   ]
-    ext_comp_args = [ "-ffast-math",
-                      "-funroll-loops",
-                      "-O3",
-                      "-g" ]
+    for prefix in ["/usr", "/usr/X11", "/opt/local", "/sw"]:
+        inc_dirs += filter(os.path.isdir, [prefix + s for s in ["/include", "/include/freetype2"]])
+        lib_dirs += filter(os.path.isdir, [prefix + s for s in ["/lib"]])
+
+    glut = posix_find_lib(['glut', 'freeglut'], lib_dirs)
+    for _libs in (libs, pyogl_libs):
+        _libs += ["GL", "GLU", "GLEW", glut]
+
+    ext_comp_args = ["-ffast-math", "-funroll-loops", "-O3", "-fcommon"]
 
 def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open('layer0/Version.h').read())[0]
