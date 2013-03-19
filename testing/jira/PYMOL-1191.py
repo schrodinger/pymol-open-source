@@ -5,6 +5,7 @@ MOE 2012 surfaces
 
 from pymol import cmd, testing, stored
 
+@testing.requires('incentive')
 class TestPYMOL1191(testing.PyMOLTestCase):
 
     def testLoadMOE2012(self):

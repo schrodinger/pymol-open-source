@@ -6,6 +6,7 @@ Testing properties for simple getting/setting and loading from sdf and mae files
 import unittest
 from pymol import cmd, testing
 
+@testing.requires('properties')
 class TestProperties(testing.PyMOLTestCase):
 
     # test loading MAE files with no properties (default)

@@ -6,9 +6,14 @@ Testing setting/getting properties for different types
 import random
 import unittest
 from pymol import cmd, testing
-from pymol.properties import PROPERTY_AUTO, PROPERTY_BOOLEAN, \
-     PROPERTY_INT, PROPERTY_FLOAT, PROPERTY_STRING, PROPERTY_COLOR
 
+try:
+    from pymol.properties import PROPERTY_AUTO, PROPERTY_BOOLEAN, \
+     PROPERTY_INT, PROPERTY_FLOAT, PROPERTY_STRING, PROPERTY_COLOR
+except ImportError:
+    pass
+
+@testing.requires('properties')
 class TestProperties(testing.PyMOLTestCase):
     def testBooleanType(self):
         cmd.fragment('ala')

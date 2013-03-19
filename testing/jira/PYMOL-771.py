@@ -5,6 +5,7 @@ group_auto_mode setting is not applied when loading a maestro structure file
 
 from pymol import cmd, testing
 
+@testing.requires('incentive')
 class Test771(testing.PyMOLTestCase):
 
     def testMAEName(self):

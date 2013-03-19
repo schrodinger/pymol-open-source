@@ -4,6 +4,7 @@ FreeMOL tests
 
 from pymol import testing
 
+@testing.requires('freemol')
 class TestFreemol(testing.PyMOLTestCase):
 
     def testValidate(self):

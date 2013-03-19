@@ -3,6 +3,7 @@ from pymol import cmd, testing, stored
 
 class TestComputing(testing.PyMOLTestCase):
 
+    @testing.requires('incentive')
     def testClean(self):
         cmd.fragment('his')
         xyz1 = cmd.get_model('his').get_coord_list()

@@ -6,6 +6,7 @@ Testing atom properties for simple getting/setting and loading from sdf and mae 
 import unittest
 from pymol import cmd, testing, stored
 
+@testing.requires('properties')
 class TestAtomProperties(testing.PyMOLTestCase):
 
     def testSetNoAtomProperty(self):

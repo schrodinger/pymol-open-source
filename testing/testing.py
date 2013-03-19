@@ -97,6 +97,12 @@ else:
             if hasflag('multicore') and max_threads <= 1:
                 return unittest.skip('no multicore')(func)
 
+            if hasflag('properties') and not options.incentive_product:
+                return unittest.skip('no pymol.properties')(func)
+
+            if hasflag('freemol') and not options.incentive_product:
+                return unittest.skip('no freemol')(func)
+
             if flags:
                 raise ValueError('unknown flags: ' + ', '.join(flags)
                         + '; choices: ' + ', '.join(sorted(flags_known)))
