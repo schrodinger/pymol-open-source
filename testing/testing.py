@@ -122,6 +122,19 @@ else:
             if os.path.exists(self.filename):
                 os.remove(self.filename)
 
+    class mkdtemp(object):
+        '''
+        Context manager for temporary directory
+        '''
+        def __init__(self):
+            self.name = tempfile.mkdtemp()
+        def __enter__(self):
+            return self.name
+        def __exit__(self, exc_type, exc_value, traceback):
+            import shutil
+            if os.path.exists(self.name):
+                shutil.rmtree(self.name)
+
     class foreachList(list):
         pass
 
