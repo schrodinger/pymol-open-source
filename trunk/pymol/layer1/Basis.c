@@ -33,7 +33,6 @@ static const float kR_SMALL4 = 0.0001F;
 static const float kR_SMALL5 = 0.0001F;
 #define EPSILON 0.000001F
 
-
 /*========================================================================*/
 #ifdef _PYMOL_INLINE
 __inline__
@@ -883,17 +882,6 @@ static int ConeLineToSphereCapped(float *base, float *ray,
       scale3f(ray, ray_extend, near_p);
       add3f(base, near_p, near_p);
 
-#if 0
-      printf("base2orig len %8.3f extend %8.3f dangle %8.3f %8.3f ",
-             base2orig_radial_len, ray_extend, dangle,
-             dot_product3f(base2orig_normal, dir));
-      {
-        float check[3];
-        subtract3f(near_p, orig, check);
-        printf("check: %8.7f\n", dot_product3f(check, dir));
-      }
-#endif
-
       /* Now we punt entirely and throw the solution of this quadratic
          relationship over to Mathematica.  Surely this calculation
          could be significantly optimized... */
@@ -959,42 +947,6 @@ static int ConeLineToSphereCapped(float *base, float *ray,
           shift1 = (float) ((partA + partBroot * 0.5) / partC);
           shift2 = (float) ((partA - partBroot * 0.5) / partC);
         }
-
-#if 0
-        /* prove that the solutions are valid */
-        {
-          float near1[3], cone1[3];
-          float near2[3], cone2[3];
-          float radius1 = fabs(spread * shift1);
-          float radius2 = fabs(spread * shift2);
-
-          scale3f(ray, shift1 / dangle, near1);
-          add3f(near_p, near1, near1);
-
-          scale3f(dir, shift1, cone1);
-          add3f(orig, cone1, cone1);
-
-          scale3f(ray, shift2 / dangle, near2);
-          add3f(near_p, near2, near2);
-
-          scale3f(dir, shift2, cone2);
-          add3f(orig, cone2, cone2);
-
-          {
-            float diff1 = diff3f(near1, cone1);
-            float diff2 = diff3f(near2, cone2);
-
-            if(fabs(diff1 - radius1) > 0.01) {
-              printf("error #1: %10.8f != %10.8f for ", diff1, radius1);
-              printf("%8.3f %8.3f\n", shift1, shift2);
-            }
-            if(fabs(diff2 - radius2) > 0.01) {
-              printf("error #2: %10.8f != %10.8f for ", diff2, radius2);
-              printf("%8.3f %8.3f\n", shift1, shift2);
-            }
-          }
-        }
-#endif
       }
 
       {
@@ -1893,16 +1845,6 @@ int BasisHitPerspective(BasisCallRec * BC)
                           if((dist >= _0) && (dist <= back_dist)) {
                             new_min_index = prm->vert;
                             r_dist = dist;
-                          } else if(check_interior_flag && (dist <= back_dist)) {
-#if 0
-                            if(diffsq3f(vt, BI_Vertex + i * 3) < BI_Radius2[i]) {
-                              /* TO FIX */
-                              local_iflag = true;
-                              r_prim = prm;
-                              r_dist = _0;
-                              new_min_index = prm->vert;
-                            }
-#endif
                           }
                         }
                       }
@@ -2222,16 +2164,6 @@ int BasisHitOrthoscopic(BasisCallRec * BC)
                       if((dist >= _0) && (dist <= back)) {
                         minIndex = prm->vert;
                         r_dist = dist;
-                      } else if(check_interior_flag) {
-#if 0
-                        /* TODO TO FIX */
-                        if(diffsq3f(vt, BI->Vertex + i * 3) < BI->Radius2[i]) {
-                          local_iflag = true;
-                          r_prim = prm;
-                          r_dist = front;
-                          minIndex = prm->vert;
-                        }
-#endif
                       }
                     }
                   }
@@ -2926,84 +2858,11 @@ int BasisHitShadow(BasisCallRec * BC)
   return (-1);
 }
 
-#if 0
-
 /*========================================================================*/
-void BasisOptimizeMap(CBasis * I, float *vertex, int n, int *vert2prim);
-void BasisOptimizeMap(CBasis * I, float *vertex, int n, int *vert2prim)
-{
-  int *ip, *op;
-  int k;
-  int v2p;
-  int i, ii;
-  MapCache cache;
-  int a, b, c, aa, bb, cc;
-  int h;
-  int *xxtmp, *elist;
-  MapCacheInit(&cache, I->Map);
-  int cnt = 0, tcnt = 0;
-  elist = I->Map->EList;
-
-#if 0
-  for(k = 0; k < n; k++) {
-    if(MapExclLocus(I->Map, vertex + 3 * k, &aa, &bb, &cc)) {
-      for(a = aa - 1; a <= aa + 1; a++) {
-        for(b = bb - 1; b <= bb + 1; b++) {
-          xxtmp = I->Map->EHead + (a * I->Map->D1D2) + (b * I->Map->Dim[2]);
-          for(c = cc - 1; c <= cc + 1; c++) {
-#else
-  {
-    {
-      for(a = I->Map->iMin[0]; a <= I->Map->iMax[0]; a++) {
-        for(b = I->Map->iMin[1]; b <= I->Map->iMax[1]; b++) {
-          xxtmp = I->Map->EHead + (a * I->Map->D1D2) + (b * I->Map->Dim[2]);
-          for(c = I->Map->iMin[2]; c <= I->Map->iMax[2]; c++) {
-#endif
-
-            h = *(xxtmp + c);
-            cnt = 0;
-            tcnt = 0;
-            if(h) {
-              op = ip = elist + h;
-              MapCacheReset(&cache);
-
-              if(ip) {
-                i = *(ip++);
-                while(i >= 0) {
-                  tcnt++;
-                  v2p = vert2prim[i];
-                  ii = *(ip++);
-                  /*    printf("%d\n",v2p); */
-                  if(!MapCached(&cache, v2p)) {
-                    *(op++) = i;        /* copy/store */
-                    MapCache(&cache, v2p);
-                  } /* end of if */
-                  else {
-                    /* remove this vertex from the linked list -- we don't need it more than once */
-                    cnt++;
-                  }
-                  i = ii;
-                }               /* end of while */
-                *op = -1;       /* terminate new list */
-              }
-              /*   printf("%6d %6d\n",tcnt,cnt); */
-            }
-
-          }
-        }
-      }
-    }
-  }
-
-}
-#endif
-
-
-/*========================================================================*/
-void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
-                  float *volume,
-                  int group_id, int block_base,
-                  int perspective, float front, float size_hint)
+int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
+		 float *volume,
+		 int group_id, int block_base,
+		 int perspective, float front, float size_hint)
 {
   register float *v;
   float ll;
@@ -3025,7 +2884,7 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
   float l1, l2;
   float bh, ch;
   int n_voxel;
-
+  int ok = true;
   const float _0 = 0.0;
   const float _p5 = 0.5;
 
@@ -3180,16 +3039,21 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
     }
 
     extra_vert += I->NVertex;
-    tempVertex =
-      CacheAlloc(I->G, float, extra_vert * 3, group_id, cCache_basis_tempVertex);
-    tempRef = CacheAlloc(I->G, int, extra_vert, group_id, cCache_basis_tempRef);
+    if (ok)
+      tempVertex =
+	CacheAlloc(I->G, float, extra_vert * 3, group_id, cCache_basis_tempVertex);
+    CHECKOK(ok, tempVertex);
+    if (ok)
+      tempRef = CacheAlloc(I->G, int, extra_vert, group_id, cCache_basis_tempRef);
+    CHECKOK(ok, tempRef);
 
     ErrChkPtr(I->G, tempVertex);        /* can happen if extra vert is unreasonable */
     ErrChkPtr(I->G, tempRef);
 
     /* lower indexes->flags, top is ref->lower index */
+    ok &= !I->G->Interrupt;
 
-    {
+    if (ok){
       register float *vv, *d;
       int *vert2prim_a = vert2prim;
 
@@ -3202,7 +3066,7 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
       vv += n * 3;
       v += n * 3;
 
-      for(a = 0; a < I->NVertex; a++) {
+      for(a = 0; ok && a < I->NVertex; a++) {
 
         prm = prim + *(vert2prim_a++);
 
@@ -3324,6 +3188,7 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
           }
           break;
         }                       /* end of switch */
+	ok &= !I->G->Interrupt;
       }
     }
     if(n > extra_vert) {
@@ -3334,76 +3199,81 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
     PRINTFB(I->G, FB_Ray, FB_Blather)
       " BasisMakeMap: %d total vertices\n", n ENDFB(I->G);
 
-    if(volume) {
-      v = tempVertex;
-
-      min[0] = max[0] = v[0];
-      min[1] = max[1] = v[1];
-      min[2] = max[2] = v[2];
-
-      v += 3;
-
-      if(Feedback(I->G, FB_Ray, FB_Debugging)) {
-        dump3f(min, " BasisMakeMap: remapped min");
-        dump3f(max, " BasisMakeMap: remapped max");
-        fflush(stdout);
+    if (ok){
+      if(volume) {
+	v = tempVertex;
+	
+	min[0] = max[0] = v[0];
+	min[1] = max[1] = v[1];
+	min[2] = max[2] = v[2];
+	
+	v += 3;
+	
+	if(Feedback(I->G, FB_Ray, FB_Debugging)) {
+	  dump3f(min, " BasisMakeMap: remapped min");
+	  dump3f(max, " BasisMakeMap: remapped max");
+	  fflush(stdout);
+	}
+	
+	for(a = 1; a < n; a++) {
+	  if(min[0] > v[0])
+	    min[0] = v[0];
+	  if(max[0] < v[0])
+	    max[0] = v[0];
+	  
+	  if(min[1] > v[1])
+	    min[1] = v[1];
+	  if(max[1] < v[1])
+	    max[1] = v[1];
+	  
+	  if(min[2] > v[2])
+	    min[2] = v[2];
+	  if(max[2] < v[2])
+	    max[2] = v[2];
+	  v += 3;
+	}
+	
+	if(Feedback(I->G, FB_Ray, FB_Debugging)) {
+	  dump3f(min, " BasisMakeMap: remapped min");
+	  dump3f(max, " BasisMakeMap: remapped max");
+	  fflush(stdout);
+	}
+	if(min[0] < volume[0])
+	  min[0] = volume[0];
+	if(max[0] > volume[1])
+	  max[0] = volume[1];
+	if(min[1] < volume[2])
+	  min[1] = volume[2];
+	if(max[1] > volume[3])
+	  max[1] = volume[3];
+	
+	if(min[2] < (-volume[5]))
+	  min[2] = (-volume[5]);
+	if(max[2] > (-volume[4]))
+	  max[2] = (-volume[4]);
+	
+	extent[0] = min[0];
+	extent[1] = max[0];
+	extent[2] = min[1];
+	extent[3] = max[1];
+	extent[4] = min[2];
+	extent[5] = max[2];
+	PRINTFB(I->G, FB_Ray, FB_Blather)
+	  " BasisMakeMap: Extent [%8.2f %8.2f] [%8.2f %8.2f] [%8.2f %8.2f]\n",
+	  extent[0], extent[1], extent[2], extent[3], extent[4], extent[5]
+	  ENDFB(I->G);
+	I->Map = MapNewCached(I->G, -sep, tempVertex, n, extent, group_id, block_base);
+	CHECKOK(ok, I->Map);
+      } else {
+	I->Map = MapNewCached(I->G, sep, tempVertex, n, NULL, group_id, block_base);
+	CHECKOK(ok, I->Map);
       }
-
-      for(a = 1; a < n; a++) {
-        if(min[0] > v[0])
-          min[0] = v[0];
-        if(max[0] < v[0])
-          max[0] = v[0];
-
-        if(min[1] > v[1])
-          min[1] = v[1];
-        if(max[1] < v[1])
-          max[1] = v[1];
-
-        if(min[2] > v[2])
-          min[2] = v[2];
-        if(max[2] < v[2])
-          max[2] = v[2];
-        v += 3;
-      }
-
-      if(Feedback(I->G, FB_Ray, FB_Debugging)) {
-        dump3f(min, " BasisMakeMap: remapped min");
-        dump3f(max, " BasisMakeMap: remapped max");
-        fflush(stdout);
-      }
-      if(min[0] < volume[0])
-        min[0] = volume[0];
-      if(max[0] > volume[1])
-        max[0] = volume[1];
-      if(min[1] < volume[2])
-        min[1] = volume[2];
-      if(max[1] > volume[3])
-        max[1] = volume[3];
-
-      if(min[2] < (-volume[5]))
-        min[2] = (-volume[5]);
-      if(max[2] > (-volume[4]))
-        max[2] = (-volume[4]);
-
-      extent[0] = min[0];
-      extent[1] = max[0];
-      extent[2] = min[1];
-      extent[3] = max[1];
-      extent[4] = min[2];
-      extent[5] = max[2];
-      PRINTFB(I->G, FB_Ray, FB_Blather)
-        " BasisMakeMap: Extent [%8.2f %8.2f] [%8.2f %8.2f] [%8.2f %8.2f]\n",
-        extent[0], extent[1], extent[2], extent[3], extent[4], extent[5]
-        ENDFB(I->G);
-      I->Map = MapNewCached(I->G, -sep, tempVertex, n, extent, group_id, block_base);
-    } else {
-      I->Map = MapNewCached(I->G, sep, tempVertex, n, NULL, group_id, block_base);
     }
+    if (ok)
+      n_voxel = I->Map->Dim[0] * I->Map->Dim[1] * I->Map->Dim[2];
 
-    n_voxel = I->Map->Dim[0] * I->Map->Dim[1] * I->Map->Dim[2];
-
-    if(perspective) {
+    if (!ok){
+    } else if(perspective) {
 
       /* this is a new optimization which prevents primitives
          contained entirely within a single voxel from spilling over
@@ -3413,16 +3283,22 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
          impact of this optimization is to reduce the size of the
          express list (I->Map->Elist) array by about 3-fold */
 
-      int *prm_spanner = Calloc(int, n_prim);
-      int *spanner = Calloc(int, n);
+      int *prm_spanner = NULL;
+      int *spanner = NULL;
       float *v = tempVertex;
       int j, k, l, jj, kk, ll;
       int nVertex = I->NVertex;
       int prm_index;
       MapType *map = I->Map;
 
+      prm_spanner = Calloc(int, n_prim);
+      CHECKOK(ok, prm_spanner);
+      if (ok)
+	spanner = Calloc(int, n);
+      CHECKOK(ok, spanner);
+
       /* figure out which primitives span more than one voxel */
-      for(a = 0; a < n; a++) {
+      for(a = 0; ok && a < n; a++) {
         if(a < nVertex)
           prm_index = vert2prim[a];
         else
@@ -3438,15 +3314,6 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
               MapLocus(map, vv, &jj, &kk, &ll);
               if((j != jj) || (k != kk) || (l != ll)) {
                 prm_spanner[prm_index] = 1;
-#if 0
-                zero3f(prm->c1);
-                zero3f(prm->c2);
-                zero3f(prm->c3);
-                prm->c1[0] = 1.0F;
-                prm->c2[0] = 1.0F;
-                prm->c3[0] = 1.0F;
-#endif
-
               }
               break;
             default:           /* currently we aren't optimizing other primitives */
@@ -3456,26 +3323,28 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
           }
         }
         v += 3;
+	ok &= !I->G->Interrupt;
       }
       /* now flag associated vertices */
-      for(a = 0; a < n; a++) {
+      for(a = 0; ok && a < n; a++) {
         if(a < nVertex)
           prm_index = vert2prim[a];
         else
           prm_index = vert2prim[tempRef[a]];
         spanner[a] = prm_spanner[prm_index];
+	ok &= !I->G->Interrupt;
       }
       /* and do the optimized expansion */
-      MapSetupExpressPerp(I->Map, tempVertex, front, n, true, spanner);
+      ok &= MapSetupExpressPerp(I->Map, tempVertex, front, n, true, spanner);
       FreeP(spanner);
       FreeP(prm_spanner);
     } else if(n_voxel < (3 * n)) {
-      MapSetupExpressXY(I->Map, n, true);
+      ok &= MapSetupExpressXY(I->Map, n, true);
     } else {
-      MapSetupExpressXYVert(I->Map, tempVertex, n, true);
+      ok &= MapSetupExpressXYVert(I->Map, tempVertex, n, true);
     }
 
-    {
+    if (ok) {
       register MapType *map = I->Map;
       register int *sp, *ip, *ip0, ii;
       register int *elist = map->EList, *ehead = map->EHead;
@@ -3489,14 +3358,6 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
       const int iMax1 = map->iMax[1];
       const int iMax2 = map->iMax[2];
 
-#if 0
-      elist_new =
-        VLACacheAlloc(I->G, int, map->NEElem, group_id,
-                      block_base + cCache_map_elist_new_offset);
-      ehead_new =
-        CacheCalloc(I->G, int, (map->Dim[0] * map->Dim[1] * map->Dim[2]), group_id,
-                    block_base + cCache_map_ehead_new_offset);
-#endif
       /* now do a filter-reassignment pass to remap fake vertices
          to the original line vertex while deleting duplicate entries */
 
@@ -3733,28 +3594,50 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
   } else {
     /* simple sphere mode */
     I->Map = MapNewCached(I->G, -sep, I->Vertex, I->NVertex, NULL, group_id, block_base);
-    if(perspective) {
-      MapSetupExpressPerp(I->Map, I->Vertex, front, I->NVertex, false, NULL);
-    } else {
-      MapSetupExpressXYVert(I->Map, I->Vertex, I->NVertex, false);
+    CHECKOK(ok, I->Map);
+    if (ok){
+      if(perspective) {
+	ok &= MapSetupExpressPerp(I->Map, I->Vertex, front, I->NVertex, false, NULL);
+      } else {
+	ok &= MapSetupExpressXYVert(I->Map, I->Vertex, I->NVertex, false);
+      }
     }
   }
+  return ok;
 }
 
 
 /*========================================================================*/
-void BasisInit(PyMOLGlobals * G, CBasis * I, int group_id)
+int BasisInit(PyMOLGlobals * G, CBasis * I, int group_id)
 {
+  int ok = true;
   I->G = G;
+  I->Radius = NULL;
+  I->Radius2 = NULL;
+  I->Normal = NULL;
+  I->Vert2Normal = NULL;
+  I->Precomp = NULL;
   I->Vertex = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_vertex);
-  I->Radius = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_radius);
-  I->Radius2 = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_radius2);
-  I->Normal = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_normal);
-  I->Vert2Normal = VLACacheAlloc(I->G, int, 1, group_id, cCache_basis_vert2normal);
-  I->Precomp = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_precomp);
+  CHECKOK(ok, I->Vertex);
+  if (ok)
+    I->Radius = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_radius);
+  CHECKOK(ok, I->Radius);
+  if (ok)
+    I->Radius2 = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_radius2);
+  CHECKOK(ok, I->Radius2);
+  if (ok)
+    I->Normal = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_normal);
+  CHECKOK(ok, I->Normal);
+  if (ok)
+    I->Vert2Normal = VLACacheAlloc(I->G, int, 1, group_id, cCache_basis_vert2normal);
+  CHECKOK(ok, I->Vert2Normal);
+  if (ok)
+    I->Precomp = VLACacheAlloc(I->G, float, 1, group_id, cCache_basis_precomp);
+  CHECKOK(ok, I->Precomp);
   I->Map = NULL;
   I->NVertex = 0;
   I->NNormal = 0;
+  return ok;
 }
 
 

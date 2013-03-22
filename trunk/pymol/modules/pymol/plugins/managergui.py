@@ -157,7 +157,7 @@ class PluginManager(Pmw.MegaToplevel):
         self.f_installed = f_installed
 
     def page_install_new(self, notebook):
-        from pymol import Scratch_Storage
+        from pymol import Scratch_Storage, CmdException
 
         page = notebook.add('Install New Plugin')
 
@@ -192,7 +192,12 @@ class PluginManager(Pmw.MegaToplevel):
                 return
             import tempfile, shutil
             tmpdir = tempfile.mkdtemp()
-            filename = fetchscript(url, tmpdir, False)
+            try:
+                filename = fetchscript(url, tmpdir, False)
+            except CmdException as e:
+                tkMessageBox.showerror('Error', 'Fetching Plugin failed.\n' + str(e))
+                return
+
             if filename:
                 installPluginFromFile(filename, self.interior())
             shutil.rmtree(tmpdir)
@@ -331,7 +336,7 @@ class PluginManager(Pmw.MegaToplevel):
         from . import get_startup_path, set_startup_path
 
         # plugin search path
-        w = Pmw.Group(page, tag_text='Plugin search path')
+        w = Pmw.Group(page, tag_text='Plugin override search path')
         w.pack(**default_top)
 
         def slb_path_setlist(items):
@@ -373,8 +378,9 @@ class PluginManager(Pmw.MegaToplevel):
             slb_path.setvalue([v[0]]) # provide list to avoid unicode problem
 
         slb_path = Pmw.ScrolledListBox(w.interior(),
-                items=get_startup_path(), listbox_height=4)
-        slb_path.setvalue([slb_path.get(0)]) # provide list to avoid unicode problem
+                items=get_startup_path(True), listbox_height=4)
+        if slb_path.get(0):
+            slb_path.setvalue([slb_path.get(0)]) # provide list to avoid unicode problem
         slb_path.pack(**default_top)
 
         bb_path = Pmw.ButtonBox(w.interior())

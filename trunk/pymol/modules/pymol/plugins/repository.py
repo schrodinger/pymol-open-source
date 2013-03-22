@@ -227,7 +227,7 @@ ARGUMENTS
     title = string: Wiki page title or full URL
     '''
     import urllib2, re, os
-    from pymol import cmd
+    from pymol import cmd, CmdException
 
     quiet = int(quiet)
     if dest is None:
@@ -256,8 +256,7 @@ ARGUMENTS
                 if m is not None:
                     title = m.group(1)
                 else:
-                    print 'Failed to parse URL:', title
-                    return
+                    raise CmdException('Failed to parse URL: ' + title)
 
         title = title[0].upper() + title[1:].replace(' ','_')
         url = "http://pymolwiki.org/index.php?title=%s&action=raw" % (title)
@@ -278,8 +277,7 @@ ARGUMENTS
             handle = urlopen(url)
             content = handle.read()
         except IOError as e:
-            print "Plugin-Error: %s" % e
-            return
+            raise CmdException(e, "Plugin-Error")
 
         if not rawscript:
             # redirect
@@ -288,7 +286,7 @@ ARGUMENTS
                 return fetchscript(redirect.group(1), dest, run, quiet)
 
             # parse Infobox
-            pattern2 = re.compile(r'\{\{Infobox script-repo.*?\| *filename *= *(\S*).*?\}\}', re.DOTALL)
+            pattern2 = re.compile(r'\{\{Infobox script-repo.*?\| *filename *= *([^|\s]+).*?\}\}', re.DOTALL)
             chunks2 = pattern2.findall(content)
             if len(chunks2) > 0:
                 try:
@@ -304,8 +302,7 @@ ARGUMENTS
             chunks = filter(lambda s: 'cmd.extend' in s, chunks)
 
             if len(chunks) == 0:
-                print 'Error: No <source> or <syntaxhighlight> block with cmd.extend found'
-                return
+                raise CmdException('No <source> or <syntaxhighlight> block with cmd.extend found')
             if len(chunks) > 1:
                 print 'Warning: %d chunks found, only saving first' % (len(chunks))
 

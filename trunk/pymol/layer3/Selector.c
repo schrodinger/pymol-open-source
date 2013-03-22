@@ -597,61 +597,6 @@ static WordKeyValue AtOper[] = {
 
 #define cINTER_ENTRIES 11
 
-#if 0
-int SelectorResidueVLAGetDistMat(PyMOLGlobals * G, int *vla,
-                                 int n, int state, float *dist_mat, float scale)
-{
-  register int a, b;
-  register ObjectMolecule *obj;
-  register CoordSet *cs;
-  float *coord = Alloc(float, 3 * n);
-  if(scale != 0.0F)
-    scale = 1.0F / scale;
-  if(coord) {
-    for(a = 0; a < n; a++) {
-      register int at_ca1;
-      float *vv_ca = coord + a * 3;
-
-      obj = I->Obj[vla[0]];
-      at_ca1 = vla[1];
-
-      if(state < obj->NCSet)
-        cs = obj->CSet[state];
-      else
-        cs = NULL;
-      if(cs) {
-        register int idx_ca1 = -1;
-        if(obj->DiscreteFlag) {
-          if(cs == obj->DiscreteCSet[at_ca1])
-            idx_ca1 = obj->DiscreteAtmToIdx[at_ca1];
-          else
-            idx_ca1 = -1;
-        } else
-          idx_ca1 = cs->AtmToIdx[at_ca1];
-
-        if(idx_ca1 >= 0) {
-          float *v_ca1 = cs->Coord + 3 * idx_ca1;
-          copy3f(v_ca1, vv_ca);
-        }
-      }
-    }
-    {
-      for(a = 0; a < n; a++) {  /* optimize this later */
-        float *vv_ca = coord + a * 3;
-        for(b = 0; b < n; b++) {
-          float *vv_cb = coord + b * 3;
-          float diff = scale * diff3f(vv_ca, vv_cb);
-          dist_mat[a][b] = diff;
-          dist_mat[b][a] = diff;
-        }
-      }
-    }
-  }
-  FreeP(coord);
-  return 1;
-}
-#endif
-
 int SelectorRenameObjectAtoms(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int force,
                               int update_table)
 {
@@ -2193,11 +2138,6 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
               if(idx >= 0) {
                 copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * aa);      /* record coordinate */
                 I->Flag1[aa] = true;
-#if 0
-                printf(" storing donor for %s %d at %8.3f %8.3f %8.3f\n",
-                       res[a].obj->AtomInfo[at].resi, idx,
-                       I->Vertex[3 * aa], I->Vertex[3 * aa + 1], I->Vertex[3 * aa + 2]);
-#endif
                 n1++;
               }
             }
@@ -2221,11 +2161,6 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
                 idx = cs->AtmToIdx[at];
               if(idx >= 0) {
                 copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * aa);      /* record coordinate */
-#if 0
-                printf(" storing acceptor for %s %d at %8.3f %8.3f %8.3f\n",
-                       res[a].obj->AtomInfo[at].resi, idx,
-                       I->Vertex[3 * aa], I->Vertex[3 * aa + 1], I->Vertex[3 * aa + 2]);
-#endif
               }
             }
 
@@ -4164,35 +4099,6 @@ int SelectorIsMemberSlow(PyMOLGlobals * G, int s, int sele)
 }
 
 #endif
-
-
-/*========================================================================*/
-#if 0
-static int SelectorPurgeMember(PyMOLGlobals * G, AtomInfoType * ai, int sele)
-{                               /* never tested... */
-  register CSelector *I = G->Selector;
-  int s = ai->selEntry;
-  int l = -1;
-  int result = 0;
-  int nxt;
-  while(s) {
-    nxt = I->Member[s].next;
-    if(I->Member[s].selection == sele) {
-      if(l > 0)
-        I->Member[l].next = I->Member[s].next;
-      else
-        ai->selEntry = I->Member[s].next;
-      I->Member[s].next = I->FreeMember;
-      I->FreeMember = s;
-      result = true;
-    }
-    l = s;
-    s = nxt;
-  }
-  return result;
-}
-#endif
-
 
 /*========================================================================*/
 int SelectorMoveMember(PyMOLGlobals * G, int s, int sele_old, int sele_new)
@@ -7750,38 +7656,7 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
 /*========================================================================*/
 static int *SelectorApplySeqRowVLA(PyMOLGlobals * G, CSeqRow * rowVLA, int nRow)
 {
-#if 0
-
-  register CSelector *I = G->Selector;
-  int *result;
-  int a, n;
-  ObjectMolecule *obj;
-  SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
-  result = Calloc(int, I->NAtom);
-  for(a = 0; a < nRow; a++) {
-    CSeqRow *row = rowVLA + a;
-    obj = ExecutiveFindObjectMoleculeByName(G, row->name);
-    if(obj) {
-      for(b = 0; b < row->nCol; b++) {
-        CSeqCol *col = row->col + b;
-        int *index;
-        if(col->atom_at && row->atom_lists)
-          index = row->atom_lists + col->atom_at;
-        while((*index) > 0) {
-          if(index)
-            if(col->inverse)
-
-              result[obj->SeleBase + *index] = true;
-          /* NOTE: SeleBase only safe with cSelectorUpdateTableAllStates!  */
-          index++;
-        }
-      }
-    }
-  }
-  return (result);
-#else
   return NULL;
-#endif
 }
 
 
@@ -7971,15 +7846,6 @@ int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, char *sname,
   return _SelectorCreate(G, sname, NULL, obj, true, NULL, NULL, 0, idx_tag, n_idx, n_obj,
                          NULL, -1, -1, -1);
 }
-
-#if 0
-static int SelectorCreateFromSeqRowVLA(PyMOLGlobals * G, char *sname, CSeqRow * rowVLA,
-                                       int nRow)
-{
-  return _SelectorCreate(G, sname, NULL, NULL, true, NULL, rowVLA, nRow, NULL, 0, 0, NULL,
-                         -1, -1, -1);
-}
-#endif
 
 int SelectorCreate(PyMOLGlobals * G, char *sname, char *sele, ObjectMolecule * obj,
                    int quiet, Multipick * mp)
@@ -8958,11 +8824,6 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
   int flag;
   int ok = true;
   int index, state;
-#if 0
-  int rmin, rmax, rtest;
-  char *p;
-#endif
-
   char *np;
   int rep_mask[cRepCnt];
   char *wildcard = SettingGetGlobal_s(G, cSetting_wildcard);
@@ -9517,42 +9378,6 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
       }
     }
     break;
-#if 0
-    /* delete this once you're sure the new code works! */
-
-    if((p = strstr(base[1].text, ":"))  /* range */
-       ||(p = strstr(base[1].text, "-"))) {     /* range */
-      *p = ' ';
-      if(sscanf(base[1].text, "%i%i", &rmin, &rmax) != 2)
-        ok = ErrMessage(G, "Selector", "Invalid Range.");
-      if(ok)
-        for(a = cNDummyAtoms; a < I_NAtom; a++) {
-          if(sscanf(i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].resi,
-                    "%i", &rtest)) {
-            if((rtest >= rmin) && (rtest <= rmax)) {
-              base[0].sele[a] = true;
-              c++;
-            } else
-              base[0].sele[a] = false;
-          } else
-            base[0].sele[a] = false;
-        }
-    } else {                    /* not a range */
-
-      WordPrimeCommaMatch(G, base[1].text);
-      for(a = cNDummyAtoms; a < I_NAtom; a++) {
-        if(WordMatchComma(G, base[1].text,
-                          i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].resi,
-                          ignore_case) < 0) {
-          base[0].sele[a] = true;
-          c++;
-        } else
-          base[0].sele[a] = false;
-      }
-    }
-    break;
-#endif
-
   case SELE_RSNs:
     {
       CWordMatchOptions options;
@@ -11366,16 +11191,6 @@ SelectorWordType *SelectorParse(PyMOLGlobals * G, char *s)
     } else {                    /*outside a word -- q is undefined */
 
       switch (*p) {
-#if 0
-      case '*':                /* special case */
-        c++;
-        VLACheck(r, SelectorWordType, c);
-        q = r[c - 1];
-        *q++ = '+';
-        *q = 0;
-        w_flag = false;
-        break;
-#endif
       case '!':                /* single words */
       case '&':
       case '|':

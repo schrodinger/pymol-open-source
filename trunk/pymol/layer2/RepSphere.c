@@ -107,20 +107,6 @@ void RepSphereFree(RepSphere * I)
 /* MULTI-INSTSANCE TODO:  isn't this a conflict? */
 static CShaderPrg *sphereARBShaderPrg = NULL;
 #endif
-#ifdef PURE_OPENGL_ES_2
-void RepSphereRenderImmediatePointsES(PyMOLGlobals *G, int sphere_mode, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, float *varg){
-    /* TODO */
-}
-void RepSphereRenderImmediateMode4PointsES(PyMOLGlobals *G, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, float *varg, 
-					   float zz_factor, float s_factor, float *dim_add, float _1){
-    /* TODO */
-}
-void RepSphereRenderImmediateQuadsES(PyMOLGlobals *G, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, 
-				     float *varg, float *_00, float *_10, float *_11, float *_01, float sphere_scale, 
-				     float *fog_info, float *m, float cur_radius, float z_front, float z_back, float _1, float cutoff, float m_cutoff){
-    /* TODO */
-}
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 void RepSphereRenderImmediatePointsES(PyMOLGlobals *G, int sphere_mode, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, float *varg){
   int a, *i2a = i2aarg, pl = 0, plc = 0;
@@ -265,7 +251,6 @@ void RepSphereRenderImmediateQuadsES(PyMOLGlobals *G, AtomInfoType *atomInfo, in
   DEALLOCATE_ARRAY(texVals)
 }
 #endif
-#endif
 
 void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
 {
@@ -285,49 +270,33 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
 
       switch (sphere_mode) {
       case 2:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
         glDisable(GL_POINT_SMOOTH);
         glDisable(GL_ALPHA_TEST);
         pixel_scale *= 1.4F;
         glPointSize(1.0F);
-#endif
         break;
       case 3:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         glEnable(GL_POINT_SMOOTH);
         glAlphaFunc(GL_GREATER, 0.5F);
         glEnable(GL_ALPHA_TEST);
         glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
         glPointSize(1.0F);
-#endif
         pixel_scale *= 2.0F;
         break;
       case 4:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         glEnable(GL_POINT_SMOOTH);
         glEnable(GL_ALPHA_TEST);
         glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
         glPointSize(1.0F);
-#endif
         pixel_scale *= 2.0F;
         break;
       default:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
         glDisable(GL_POINT_SMOOTH);
         glDisable(GL_ALPHA_TEST);
         glPointSize(SettingGet_f
                     (G, cs->Setting, obj->Obj.Setting, cSetting_sphere_point_size));
-#endif
         break;
       }
 
@@ -540,9 +509,6 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
 			s_factor = 0.0F;
 		      }
 		    }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 		    if(size < _1) {
 		      size = _1;
 		      glDisable(GL_POINT_SMOOTH);
@@ -552,7 +518,6 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
 		      glEnable(GL_ALPHA_TEST);
 		    }
 		    glPointSize(size);
-#endif
 		  }
 		  x_add = z_factor * clamp_radius * info->view_normal[0];
 		  y_add = z_factor * clamp_radius * info->view_normal[1];
@@ -642,11 +607,7 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
             pass++;
           }
         }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         glDisable(GL_POINT_SMOOTH);
-#endif
       } else {
         /* sphere_mode is 1, 2, or 3 */
 
@@ -662,9 +623,6 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
         float *v = cs->Coord;
         float last_radius = -1.0F;
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         if(!info->line_lighting)
           glDisable(GL_LIGHTING);
 
@@ -748,18 +706,13 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
         glEnd();
 #endif
         glEnable(GL_LIGHTING);
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         if(sphere_mode == 3) {
           glDisable(GL_POINT_SMOOTH);
           glAlphaFunc(GL_GREATER, 0.05F);
         } else {
           glEnable(GL_ALPHA_TEST);
         }
-#endif
       }
     } else {                    /* triangle-based spheres */
 
@@ -797,11 +750,7 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
 
             if(c != last_color) {
               last_color = c;
-#ifdef PURE_OPENGL_ES_2
-		  /* TODO */
-#else
               glColor3fv(ColorGet(G, c));
-#endif
             }
 
             {
@@ -810,9 +759,6 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
               int b;
               for(b = 0; b < sp_NStrip; b++) {
                 int nc = *(s++);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		{
 		  int nverts = nc;
@@ -846,7 +792,6 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
                 }
                 glEnd();
 #endif
-#endif
               }
             }
           }
@@ -859,18 +804,6 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
       cs->Active[cRepSphere] = false;
   }
 }
-#ifdef PURE_OPENGL_ES_2
-void RepSphereRenderTriangleStripsES(int nvertsarg, float *varg){
-    /* TODO */
-}
-void RepSphereRenderPointsES(int nvertsarg, float *varg, float *vnarg){
-    /* TODO */
-}
-void RepSphereRenderMode5PointsES(int nvertsarg, float *varg, float zz_factor, float s_factor, float *dim_add, float _1){
-}
-void RepSphereRenderPointsDefaultES(RepSphere * I, Picking **pick, int nvertsarg, int iarg, Pickable *parg, float *varg){
-}
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 void RepSphereRenderTriangleStripsES(int nvertsarg, float *varg){
   int nverts = nvertsarg;
@@ -1029,7 +962,1017 @@ void RepSphereRenderPointsDefaultES(RepSphere * I, Picking **pick, int nvertsarg
 }
 
 #endif
+
+
+int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I, RenderInfo * info, int carg, float **vptr, float alpha, SphereRec *sphereRecPtr){
+  short use_shader, generate_shader_cgo = 0;
+  float *v = *vptr;
+  int c = carg;
+  int ok = true;
+  use_shader = (int) SettingGet(G, cSetting_sphere_use_shader) & 
+    (int) SettingGet(G, cSetting_use_shaders);
+  if (I->shaderCGO && !use_shader){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = 0;
+  }
+
+  if (use_shader){
+    if (!I->shaderCGO){
+      I->shaderCGO = CGONew(G);
+      CHECKOK(ok, I->shaderCGO);
+      if (ok)
+	I->shaderCGO->use_shader = true;
+      generate_shader_cgo = 1;
+    } else {
+      I->shaderCGO->enable_shaders = true;
+      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+      return true;
+    }
+  }
+
+  if (generate_shader_cgo){
+    if(ok && sphereRecPtr) {
+      float last_vdw = -1.0F;
+      int variable_alpha = I->VariableAlphaFlag;
+      SphereRec *sp = sphereRecPtr;
+
+      while(ok && c--) {
+	Vector3f *sp_dot = sp->dot;
+	int b, *q, *s;
+	if(variable_alpha){
+	  ok &= CGOAlpha(I->shaderCGO, v[3]);
+	} else {
+	  ok &= CGOAlpha(I->shaderCGO, alpha);
+	}
+	if (ok)
+	  ok &= CGOColorv(I->shaderCGO, v);
+	(*vptr)+=4; v = *vptr;
+
+	if (ok){
+	  register float vdw = v[3];
+	  last_vdw = vdw;
+	  q = sp->Sequence;
+	  s = sp->StripLen;
+	  for(b = 0; ok && b < sp->NStrip; b++) {
+	    int d;
+	    ok &= CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
+	    for(d = 0; ok && d < (*s); d++) {
+	      float *norm = sp_dot[*(q++)];
+	      ok &= CGONormalv(I->shaderCGO, norm);
+	      if (ok)
+		ok &= CGOVertex(I->shaderCGO, v[0] + vdw * norm[0], v[1] + vdw * norm[1], v[2] + vdw * norm[2]);
+	    }
+	    if (ok)
+	      ok &= CGOEnd(I->shaderCGO);
+	    s++;
+	  }
+	}
+	(*vptr)+=4; v = *vptr;
+      }
+      if (ok)
+	ok &= CGOStop(I->shaderCGO);
+    }
+    if (ok) {
+      CGO *convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0), *convertcgo2;
+      CHECKOK(ok, convertcgo);
+      if (ok){
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = convertcgo;
+	convertcgo2 = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
+	CHECKOK(ok, convertcgo2);
+	if (ok){
+	  CGOFree(I->shaderCGO);
+	  I->shaderCGO = convertcgo2;
+	}
+      }
+    }
+    if (ok){
+      I->shaderCGO->enable_shaders = true;
+      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+    }
+  } else {
+    if(sphereRecPtr) {
+      float last_vdw = -1.0F;
+      int dlist = 0;
+      int variable_alpha = I->VariableAlphaFlag;
+      SphereRec *sp = sphereRecPtr;
+      while(c--) {
+	Vector3f *sp_dot = sp->dot;
+	int b, *q, *s;
+	if(variable_alpha)
+	  glColor4f(v[0], v[1], v[2], v[3]);
+	else
+	  glColor4f(v[0], v[1], v[2], alpha);
+	(*vptr)+=4; v = *vptr;
+	{
+	  register float vdw = v[3];
+	  glTranslatef(v[0], v[1], v[2]);
+	  if((vdw != last_vdw) || (!dlist)) {
+	    last_vdw = vdw;
+	    q = sp->Sequence;
+	    s = sp->StripLen;
+#ifdef _PYMOL_GL_CALLLISTS
+	    if(!dlist)
+	      dlist = glGenLists(1);
+	    if(dlist) {
+	      glNewList(dlist, GL_COMPILE_AND_EXECUTE);
+	    }
 #endif
+	    
+	    for(b = 0; b < sp->NStrip; b++) {
+	      int d;
+#ifdef _PYMOL_GL_DRAWARRAYS
+	      {
+		int nverts = *s;
+		ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
+		ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
+		int pl = 0;
+		
+		for(d = 0; d < (*s); d++) {
+		  float *norm = sp_dot[*(q++)];
+		  normalVals[pl] = norm[0]; normalVals[pl+1] = norm[1]; normalVals[pl+2] = norm[2];
+		  vertexVals[pl++] = vdw * norm[0]; vertexVals[pl++] = vdw * norm[1];
+		  vertexVals[pl++] = vdw * norm[2];
+		}
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glVertexPointer(3, GL_FLOAT, 0, vertexVals);
+		glNormalPointer(GL_FLOAT, 0, normalVals);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_NORMAL_ARRAY);
+		DEALLOCATE_ARRAY(vertexVals)
+		DEALLOCATE_ARRAY(normalVals)
+	      }
+#else
+	      glBegin(GL_TRIANGLE_STRIP);
+	      for(d = 0; d < (*s); d++) {
+		float *norm = sp_dot[*(q++)];
+		glNormal3fv(norm);
+		glVertex3f(vdw * norm[0], vdw * norm[1], vdw * norm[2]);
+	      }
+	      glEnd();
+#endif
+	      s++;
+	    }
+#ifdef _PYMOL_GL_CALLLISTS
+	    if(dlist) {
+	      glEndList();
+	    }
+	  } else {
+	    glCallList(dlist);
+#endif
+	  }
+	  glTranslatef(-v[0], -v[1], -v[2]);
+	}
+	(*vptr)+=4; v = *vptr;
+      }
+#ifdef _PYMOL_GL_CALLLISTS
+      if(dlist)
+	glDeleteLists(dlist, 1);
+#endif
+    }
+  }
+  
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+    I->R.cs->Active[cRepSphere] = false;
+  }
+  return ok;
+}
+   //, float radius, int carg, float pixel_scale, int clamp_size_flag, float max_size){
+
+void RenderSphereMode_Sprites(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int sphere_mode, int carg, float **vptr, float **vnptr){
+   int c = carg;
+   float pixel_scale = 1.0F / info->vertex_scale;
+   float last_radius = -1.0F, cur_radius;
+   float size;
+   float *v = *vptr, *vn = *vnptr;
+   float max_size =
+     SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting,
+		  cSetting_sphere_point_max_size);
+   int clamp_size_flag = (max_size >= 0.0F);
+
+  if((sphere_mode == 3) || (sphere_mode == 8)) {
+    pixel_scale *= 2.0F;
+    glEnable(GL_POINT_SMOOTH);
+    glAlphaFunc(GL_GREATER, 0.5F);
+    glEnable(GL_ALPHA_TEST);
+    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+    glPointSize(1.0F);
+  } else {
+    glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
+    glDisable(GL_POINT_SMOOTH);
+    glDisable(GL_ALPHA_TEST);
+    pixel_scale *= 1.4F;
+  }
+  if((sphere_mode == 7) || (sphere_mode == 8))
+    glEnable(GL_LIGHTING);
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    float *startv = v, *startvn = vn;
+    int nverts = 0;
+    while(c--) {
+      if(last_radius != (cur_radius = v[7])) {
+	size = cur_radius * pixel_scale;
+	if (nverts>0){
+	  RepSphereRenderPointsES(nverts, startv, startvn);
+	  nverts = 0;
+	  startv = v;
+	  startvn = vn;
+	}
+	if(clamp_size_flag)
+	  if(size > max_size)
+	    size = max_size;
+	glPointSize(size);
+	last_radius = cur_radius;
+      }
+      if(vn) {
+	(*vnptr)+=3; vn = *vnptr;
+      }
+      nverts++;
+      (*vptr)+=8; v = *vptr;
+    }
+    if (nverts>0){
+      RepSphereRenderPointsES(nverts, startv, startvn);
+    }
+  }
+#else
+  glBegin(GL_POINTS);
+  while(c--) {
+    if(last_radius != (cur_radius = v[7])) {
+      size = cur_radius * pixel_scale;
+      glEnd();
+      if(clamp_size_flag)
+	if(size > max_size)
+	  size = max_size;
+      glPointSize(size);
+      glBegin(GL_POINTS);
+      last_radius = cur_radius;
+    }
+    glColor3fv(v);
+    (*vptr)+=4; v = *vptr;
+    if(vn) {
+      glNormal3fv(vn);
+      (*vnptr)+=3; vn = *vnptr;
+    }
+    glVertex3fv(v);
+    (*vptr)+=4; v = *vptr;
+  }
+  glEnd();
+#endif
+  if(sphere_mode == 3) {
+    glDisable(GL_POINT_SMOOTH);
+    glAlphaFunc(GL_GREATER, 0.05F);
+  } else {
+    glEnable(GL_ALPHA_TEST);
+  }
+}
+ 
+void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, float radius, int carg){
+  register float _1 = 1.0F;
+  register float _2 = 2.0F;
+  float pixel_scale = 1.0F / info->vertex_scale;
+  int repeat = true;
+  register float x_add = 0.0F, y_add = 0.0F, z_add = 0.0F;
+#ifdef _PYMOL_GL_DRAWARRAYS
+  float dim_add[3] = { 0.0F, 0.0F, 0.0F };
+#endif
+  register float z_factor = 0.0F, r_factor = 1.0F;
+  register float largest;
+  register float r, g, b;
+  register float s_factor = 0.0F;
+  register float zz_factor;
+  register float clamp_radius;
+  register float last_size;
+  int pass = 0;
+  float *v, last_radius, cur_radius, size;
+  int c;
+  float max_size =
+    SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting,
+		 cSetting_sphere_point_max_size);
+  int clamp_size_flag = (max_size >= 0.0F);
+
+  glEnable(GL_POINT_SMOOTH);
+  glEnable(GL_ALPHA_TEST);
+  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+  glPointSize(1.0F);
+  
+  pixel_scale *= 2.0F;
+  while(repeat) {
+    v = I->VC;
+    c = I->NC;
+    largest = 0.0F;
+    zz_factor = _1 - (float) pow(_1 - z_factor, 2);
+    if(zz_factor < 0.45F)
+      zz_factor = 0.45F;
+    
+    last_radius = -1.0F;
+    last_size = -1.0F;
+    repeat = false;
+#ifdef _PYMOL_GL_DRAWARRAYS
+    {
+      int nverts;
+      float *startv = v;  
+      (void)r; (void)g; (void)b;
+      nverts = 0;
+      while(c--) {
+	if(last_radius != (cur_radius = v[7])) {
+	  size = cur_radius * pixel_scale;
+	  clamp_radius = cur_radius;
+	  if(clamp_size_flag)
+	    if(size > max_size) {
+	      size = max_size;
+	      clamp_radius = size / pixel_scale;
+	    }
+	  size *= r_factor;
+	  if(size != last_size) {
+	    if (nverts>0){
+	      RepSphereRenderMode5PointsES(nverts, startv, zz_factor, s_factor, dim_add, _1);
+	      startv = v;
+	      nverts = 0;
+	    }
+	    if(size > largest)
+	      largest = size;
+	    if(size < _2) {
+	      if(!pass) {
+		zz_factor = 1.0F;
+		s_factor = 0.0F;
+	      }
+	    }
+	    if(size < _1) {
+	      size = _1;
+	    glDisable(GL_POINT_SMOOTH);
+	    glDisable(GL_ALPHA_TEST);
+	  } else {
+	    glEnable(GL_POINT_SMOOTH);
+	    glEnable(GL_ALPHA_TEST);
+	  }
+	  glPointSize(size);
+	}
+	x_add = z_factor * clamp_radius * info->view_normal[0];
+	y_add = z_factor * clamp_radius * info->view_normal[1];
+	z_add = z_factor * clamp_radius * info->view_normal[2];
+	dim_add[0] = x_add; dim_add[1] = y_add; dim_add[2] = z_add;
+	last_radius = cur_radius;
+	last_size = size;
+      }
+      nverts++;
+      v += 8;
+    }
+    if (nverts>0){
+      RepSphereRenderMode5PointsES(nverts, startv, zz_factor, s_factor, dim_add, _1);
+    }
+  }
+#else
+  glBegin(GL_POINTS);
+  while(c--) {
+    if(last_radius != (cur_radius = v[7])) {
+      size = cur_radius * pixel_scale;
+      clamp_radius = cur_radius;
+      if(clamp_size_flag)
+	if(size > max_size) {
+	  size = max_size;
+	  clamp_radius = size / pixel_scale;
+	}
+      size *= r_factor;
+      if(size != last_size) {
+	glEnd();
+	if(size > largest)
+	  largest = size;
+	if(size < _2) {
+	  if(!pass) {
+	    zz_factor = 1.0F;
+	    s_factor = 0.0F;
+	  }
+	}
+	if(size < _1) {
+	  size = _1;
+	  glDisable(GL_POINT_SMOOTH);
+	  glDisable(GL_ALPHA_TEST);
+	} else {
+	  glEnable(GL_POINT_SMOOTH);
+	  glEnable(GL_ALPHA_TEST);
+	}
+	glPointSize(size);
+	glBegin(GL_POINTS);
+      }
+      x_add = z_factor * clamp_radius * info->view_normal[0];
+      y_add = z_factor * clamp_radius * info->view_normal[1];
+      z_add = z_factor * clamp_radius * info->view_normal[2];
+      last_radius = cur_radius;
+      last_size = size;
+    }
+    r = zz_factor * v[0] + s_factor;
+    g = zz_factor * v[1] + s_factor;
+    b = zz_factor * v[2] + s_factor;
+    
+    glColor3f(r > _1 ? _1 : r, g > _1 ? _1 : g, b > _1 ? _1 : b);
+    
+    v += 4;
+    glVertex3f(v[0] + x_add, v[1] + y_add, v[2] + z_add);
+    v += 4;
+  }
+  glEnd();
+#endif
+  if(largest > 2.0F) {
+    float reduce = (largest - 2.0F) / largest;
+    r_factor *= reduce;
+    z_factor = (float) sqrt1f(1.0F - (r_factor * r_factor));
+    s_factor = (float) pow(z_factor, 20.0F) * 0.5F;
+    repeat = true;
+    pass++;
+  }
+}
+ glDisable(GL_POINT_SMOOTH);
+}
+
+void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int n_quad_verts, float **vptr, float radius, int carg){
+  int c = carg;
+  int vc = 0;
+  int cc = 0;
+  int ac = 0;
+  int attr;
+  CShaderPrg *shaderPrg;
+  short use_shader, generate_shader_cgo = 0;
+  float *v = *vptr;
+  use_shader = (int) SettingGet(G, cSetting_sphere_use_shader) & 
+    (int) SettingGet(G, cSetting_use_shaders);
+
+  if (I->shaderCGO && !use_shader){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = 0;
+  }
+  if (use_shader){
+    if (!I->shaderCGO){
+      I->shaderCGO = CGONew(G);
+      I->shaderCGO->use_shader = true;
+      generate_shader_cgo = 1;
+    } else {
+      I->shaderCGO->enable_shaders = true;
+      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+      return;
+    }
+  }
+  
+  if (generate_shader_cgo){
+    CGOEnable(I->shaderCGO, GL_LIGHTING);
+    while (c--) {
+      CGOAlpha(I->shaderCGO, v[3]);
+      CGOColorv(I->shaderCGO, v);
+      CGOSphere(I->shaderCGO, v+4, v[7]);
+      (*vptr)+=8; v = *vptr;
+    }
+    CGOStop(I->shaderCGO);
+    {
+      CGO *convertcgo = NULL;
+      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, 0);
+      if (convertcgo){
+	CGOFree(I->shaderCGO);    
+	I->shaderCGO = convertcgo;
+      }
+    }
+    
+    {
+      I->shaderCGO->enable_shaders = true;
+      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+      return;
+    }
+  } else {
+    ALLOCATE_ARRAY(GLfloat,colorVals,c*4*4)
+    ALLOCATE_ARRAY(GLfloat,vertexVals,c*4*3)
+    ALLOCATE_ARRAY(GLfloat,attribVals,c*4*3)
+    n_quad_verts = c * 4;
+    if(Feedback(G, FB_OpenGL, FB_Debugging)) {
+      PRINTF "GLSL Sphere Shader: n_quad_verts: %d\n", 
+	n_quad_verts ENDF(G);
+    }
+    shaderPrg = CShaderPrg_Enable_SphereShader(G, "spheredirect");
+    
+    attr = CShaderPrg_GetAttribLocation(shaderPrg, "sphere_attributes");
+    
+    while (c--) {
+      radius = v[7];
+      attribVals[ac++] = -1.0;
+      attribVals[ac++] = -1.0;
+      attribVals[ac++] = radius;
+      colorVals[cc++] = v[0];
+      colorVals[cc++] = v[1];
+      colorVals[cc++] = v[2];
+      colorVals[cc++] = v[3];
+      vertexVals[vc++] = v[4];
+      vertexVals[vc++] = v[5];
+      vertexVals[vc++] = v[6];
+      
+      attribVals[ac++] =  1.0;
+      attribVals[ac++] = -1.0;
+      attribVals[ac++] = radius;
+      colorVals[cc++] = v[0];
+      colorVals[cc++] = v[1];
+      colorVals[cc++] = v[2];
+      colorVals[cc++] = v[3];
+      vertexVals[vc++] = v[4];
+      vertexVals[vc++] = v[5];
+      vertexVals[vc++] = v[6];
+      
+      attribVals[ac++] = 1.0;
+      attribVals[ac++] = 1.0;
+      attribVals[ac++] = radius;
+      colorVals[cc++] = v[0];
+      colorVals[cc++] = v[1];
+      colorVals[cc++] = v[2];
+      colorVals[cc++] = v[3];
+      vertexVals[vc++] = v[4];
+      vertexVals[vc++] = v[5];
+      vertexVals[vc++] = v[6];
+      
+      attribVals[ac++] = -1.0;
+      attribVals[ac++] =  1.0;
+      attribVals[ac++] = radius;
+      colorVals[cc++] = v[0];
+      colorVals[cc++] = v[1];
+      colorVals[cc++] = v[2];
+      colorVals[cc++] = v[3];
+      vertexVals[vc++] = v[4];
+      vertexVals[vc++] = v[5];
+      vertexVals[vc++] = v[6];
+      
+      glBegin(GL_QUADS);
+      glColor4f(v[0], v[1], v[2], v[3]);
+      glVertexAttrib3f(attr, -1.0, -1.0, radius);
+      glVertex3f(v[4], v[5], v[6]);
+      glVertexAttrib3f(attr,  1.0, -1.0, radius);
+      glVertex3f(v[4], v[5], v[6]);
+      glVertexAttrib3f(attr,  1.0,  1.0, radius);
+      glVertex3f(v[4], v[5], v[6]);
+      glVertexAttrib3f(attr, -1.0,  1.0, radius);
+      glVertex3f(v[4], v[5], v[6]);
+      glEnd();
+      
+      (*vptr)+=8; v = *vptr;
+    }
+    CShaderPrg_Disable(shaderPrg);
+    
+    DEALLOCATE_ARRAY(colorVals)
+    DEALLOCATE_ARRAY(vertexVals)
+    DEALLOCATE_ARRAY(attribVals)
+  }
+}
+
+void RenderSphereMode_ARB(PyMOLGlobals *G, RenderInfo *info, float **vptr, int carg){
+  if(sphereARBShaderPrg) {
+    int c = carg;
+    float fog_info[3];
+    float _1 = 1.0F;
+    float _00[2] = { 0.0F, 0.0F };
+    float _01[2] = { 0.0F, 1.0F };
+    float _11[2] = { 1.0F, 1.0F };
+    float _10[2] = { 1.0F, 0.0F };
+    register float v0, v1, v2, nv0, nv1, nv2, nv3, v3;
+    register float *m = info->pmv_matrix;
+    register float cutoff = 1.2F;
+    register float m_cutoff = -cutoff;
+    register float z_front, z_back;
+    float *v = *vptr;
+    float last_radius, cur_radius;
+    /* compute -Ze = (Wc) of fog start */
+    nv3 =
+      (info->front +
+       (info->back - info->front) * SettingGetGlobal_f(G,
+						       cSetting_fog_start));
+    /* compute Zc of fog start using std. perspective transformation */
+    nv2 =
+      (nv3 * (info->back + info->front) -
+       2 * (info->back * info->front)) / (info->back - info->front);
+    /* compute Zc/Wc to get normalized depth coordinate of fog start */
+    nv0 = (nv2 / nv3);
+    fog_info[0] = (nv0 * 0.5) + 0.5;
+    /* printf("%8.3f %8.3f %8.3f %8.3f\n", nv3, nv2, nv0, fog_info[0]); */
+    fog_info[1] = 1.0F / (1.0 - fog_info[0]);     /* effective range of fog */
+    
+    z_front = info->stereo_front;
+    z_back = info->back + ((info->back + info->front) * 0.25);
+    
+    if(Feedback(G, FB_OpenGL, FB_Debugging))
+      PyMOLCheckOpenGLErr("before shader");
+    
+    CShaderPrg_Enable_SphereShaderARB(G);
+    
+    {
+      glNormal3fv(info->view_normal);
+      
+      (*vptr)+=4; v = *vptr;
+      last_radius = -1.f;
+      glBegin(GL_QUADS);
+      while(c--) {
+	v3 = v[3];
+	v0 = v[0];
+	v1 = v[1];
+	v2 = v[2];
+	
+	if(last_radius != (cur_radius = v3)) {
+	  glEnd();
+	  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+				     0, 0.0F, 0.0F, v3, 0.0F);
+	  glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
+				     0, fog_info[0], fog_info[1], 0.0F,
+				     0.0F);
+	  glBegin(GL_QUADS);
+	  last_radius = cur_radius;
+	}
+	
+	/*  MatrixTransformC44f4f(info->pmv_matrix, v, nv); */
+	
+	nv3 = m[3] * v0 + m[7] * v1 + m[11] * v2 + m[15]; /* compute Wc */
+	
+	if(((nv3 - cur_radius) > z_front) && (nv3 < z_back)) {    /* is it within the viewing volume? */
+	  nv0 = m[0] * v0 + m[4] * v1 + m[8] * v2 + m[12];
+	  
+	  nv3 = _1 / nv3;
+	  nv1 = m[1] * v0 + m[5] * v1 + m[9] * v2 + m[13];
+	  nv0 *= nv3;
+	  nv1 *= nv3;
+	  
+	  if((nv0 < cutoff) && (nv0 > m_cutoff) &&
+	     (nv1 < cutoff) && (nv1 > m_cutoff)) {
+	    
+	    glColor3fv(v - 4);
+	    
+	    glTexCoord2fv(_00);
+	    glVertex3fv(v);
+	    
+	    glTexCoord2fv(_10);
+	    glVertex3fv(v);
+	    
+	    glTexCoord2fv(_11);
+	    glVertex3fv(v);
+	    
+	    glTexCoord2fv(_01);
+	    glVertex3fv(v);
+	  }
+	}
+	(*vptr)+=8; v = *vptr;
+      }
+      glEnd();
+      
+      CShaderPrg_DisableARB(sphereARBShaderPrg);
+      if(Feedback(G, FB_OpenGL, FB_Debugging))
+	PyMOLCheckOpenGLErr("after shader");
+    }
+  }
+}
+
+/* simple, default point width points -- modes 1 or 6 */
+void RenderSphereMode_1_or_6(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, float **vptr, float **vnptr, int carg, float alpha){
+  int c = carg;
+  float *v = *vptr, *vn = *vnptr;
+  glPointSize(SettingGet_f
+	      (G, I->R.cs->Setting, I->R.obj->Setting,
+	       cSetting_sphere_point_size));
+  glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
+  glDisable(GL_POINT_SMOOTH);
+  glDisable(GL_ALPHA_TEST);
+  
+#ifdef _PYMOL_GL_DRAWARRAYS
+  {
+    int nverts = c;
+    ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
+    ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
+    ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
+    int pl =0, plc = 0;
+    while (c--){
+      colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; 
+      colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
+      (*vptr)+=4; v = *vptr;
+      if (vn){
+	normalVals[pl] = vn[0]; normalVals[pl+1] = vn[1]; normalVals[pl+2] = vn[2];
+	(*vnptr)+=3; vn = *vnptr;
+      }
+      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; 
+      vertexVals[pl++] = v[2]; 
+      (*vptr)+=4; v = *vptr;
+    }
+    glEnable(GL_LIGHTING);
+    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    if (vn){
+      glEnableClientState(GL_NORMAL_ARRAY);
+      glNormalPointer(GL_FLOAT, 0, normalVals);
+    }
+    glVertexPointer(3, GL_FLOAT, 0, vertexVals);
+    glColorPointer(4, GL_FLOAT, 0, colorVals);
+    glDrawArrays(GL_POINTS, 0, nverts);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    if (vn){
+      glDisableClientState(GL_NORMAL_ARRAY);
+    }
+    DEALLOCATE_ARRAY(colorVals)
+    DEALLOCATE_ARRAY(normalVals)
+    DEALLOCATE_ARRAY(vertexVals)
+  }
+#else
+  glBegin(GL_POINTS);
+  if(alpha == 1.0) {
+    if(vn) {
+      glEnd();
+      glEnable(GL_LIGHTING);
+      glBegin(GL_POINTS);
+      while(c--) {
+	glColor3fv(v);
+	(*vptr)+=4; v = *vptr;
+	glNormal3fv(vn);
+	(*vnptr)+=3; vn = *vnptr;
+	glVertex3fv(v);
+	(*vptr)+=4; v = *vptr;
+      }
+    } else {
+      while(c--) {
+	glColor3fv(v);
+	(*vptr)+=4; v = *vptr;
+	glVertex3fv(v);
+	(*vptr)+=4; v = *vptr;
+      }
+    }
+  } else {
+    if(vn) {
+      glEnd();
+      glEnable(GL_LIGHTING);
+      glBegin(GL_POINTS);
+      while(c--) {
+	glColor4f(v[0], v[1], v[2], alpha);
+	(*vptr)+=4; v = *vptr;
+	glNormal3fv(vn);
+	(*vnptr)+=3; vn = *vnptr;
+	glVertex3fv(v);
+	(*vptr)+=4; v = *vptr;
+      }
+    } else {
+      while(c--) {
+	glColor4f(v[0], v[1], v[2], alpha);
+	(*vptr)+=4; v = *vptr;
+	glVertex3fv(v);
+	(*vptr)+=4; v = *vptr;
+      }
+    }
+  }
+  glEnd();
+#endif
+  glEnable(GL_ALPHA_TEST);
+}
+
+void RenderSphereMode_Default(PyMOLGlobals *G, RepSphere *I, int carg, float **vptr, float alpha, SphereRec *sp){
+  int cc, c = carg, flag, a;
+  int variable_alpha = I->VariableAlphaFlag;
+  int use_dlst;
+  int *nt;
+  float *v = *vptr;
+  float restart;
+  use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
+  
+#ifdef _PYMOL_GL_CALLLISTS
+  if(use_dlst && I->R.displayList) {
+    glCallList(I->R.displayList);
+  } else {                /* display list */
+    if(use_dlst) {
+      if(!I->R.displayList) {
+	I->R.displayList = glGenLists(1);
+	if(I->R.displayList) {
+	  glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
+	}
+      }
+    }
+#endif
+    if(I->cullFlag) {
+      if((alpha == 1.0) && (!variable_alpha)) {
+	nt = I->NT;       /* number of passes for each sphere */
+	while(c--) {      /* iterate through all atoms */
+	  glColor3fv(v);
+	  (*vptr)+=4; v = *vptr;
+	  cc = *(nt++);
+	  flag = 0;
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    int nverts=0;
+	    float *vstart = v;
+	    while(cc--) {   /* execute loop this many times */
+	      restart = *(v++);
+	      if(restart) {
+		if(flag) {
+		  RepSphereRenderTriangleStripsES(nverts, vstart);
+		  nverts = 0;
+		  vstart = v - 1;
+		}
+		if(restart == 2.0) {        /* swap triangle polarity */
+		  nverts++;
+		}
+		nverts += 2;
+		(*vptr)+=12; v = *vptr;
+	      }
+	      nverts++;
+	      (*vptr)+=6; v = *vptr;
+	      flag = 1;
+	    }
+	    if (nverts>0){
+	      RepSphereRenderTriangleStripsES(nverts, vstart);
+	    }
+	  }
+#else
+	  glBegin(GL_TRIANGLE_STRIP);
+	  while(cc--) {   /* execute loop this many times */
+	    restart = *v;
+	    (*vptr)++; v = *vptr;
+	    if(restart) {
+	      if(flag) {
+		glEnd();
+		glBegin(GL_TRIANGLE_STRIP);
+	      }
+	      if(restart == 2.0) {        /* swap triangle polarity */
+		glNormal3fv(v);
+		glVertex3fv(v + 3);
+	      }
+	      glNormal3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	      glVertex3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	      glNormal3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	      glVertex3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	    }
+	    glNormal3fv(v);
+	    (*vptr)+=3; v = *vptr;
+	    glVertex3fv(v);
+	    (*vptr)+=3; v = *vptr;
+	    flag = 1;
+	  }
+	  glEnd();
+#endif
+	}
+      } else {
+	nt = I->NT;       /* number of passes for each sphere */
+	while(c--) {      /* iterate through all atoms */
+	  glColor4f(v[0], v[1], v[2], v[3]);
+	  (*vptr)+=4; v = *vptr;
+	  cc = *(nt++);
+	  flag = 0;
+#ifdef _PYMOL_GL_DRAWARRAYS
+	  {
+	    int nverts=0;
+	    float *vstart = v;
+	    while(cc--) {   /* execute loop this many times */
+	      restart = *(v++);
+	      if(restart) {
+		if(flag) {
+		  RepSphereRenderTriangleStripsES(nverts, vstart);
+		  nverts = 0;
+		  vstart = v - 1;
+		}
+		if(restart == 2.0) {        /* swap triangle polarity */
+		  nverts++;
+		}
+		nverts += 2;
+		(*vptr)+=12; v = *vptr;
+	      }
+	      nverts++;
+	      (*vptr)+=6; v = *vptr;
+	      flag = 1;
+	    }
+	    if (nverts>0){
+	      RepSphereRenderTriangleStripsES(nverts, vstart);
+	    }
+	  }
+#else
+	  glBegin(GL_TRIANGLE_STRIP);
+	  while(cc--) {   /* execute loop this many times */
+	    restart = *v;
+	    (*vptr)++; v = *vptr;
+	    if(restart) {
+	      if(flag) {
+		glEnd();
+		glBegin(GL_TRIANGLE_STRIP);
+	      }
+	      if(restart == 2.0) {        /* swap triangle polarity */
+		glNormal3fv(v);
+		glVertex3fv(v + 3);
+	      }
+	      glNormal3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	      glVertex3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	      glNormal3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	      glVertex3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	    }
+	    glNormal3fv(v);
+	    (*vptr)+=3; v = *vptr;
+	    glVertex3fv(v);
+	    (*vptr)+=3; v = *vptr;
+	    flag = 1;
+	  }
+	  glEnd();
+#endif
+	}
+      }
+    } else if(sp) {
+      if((alpha == 1.0) && !variable_alpha) {
+	while(c--) {
+	  glColor3fv(v);
+	  (*vptr)+=4; v = *vptr;
+	  for(a = 0; a < sp->NStrip; a++) {
+#ifdef _PYMOL_GL_DRAWARRAYS
+	    cc = sp->StripLen[a];
+	    {
+	      int nverts = cc;
+	      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
+	      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
+	      int pl = 0;
+	      
+	      while(cc--) {
+		normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
+		(*vptr)+=3; v = *vptr;
+		vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
+		(*vptr)+=3; v = *vptr;
+		pl += 3;
+	      }
+	      glEnableClientState(GL_VERTEX_ARRAY);
+	      glEnableClientState(GL_NORMAL_ARRAY);
+	      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
+	      glNormalPointer(GL_FLOAT, 0, normalVals);
+	      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
+	      glDisableClientState(GL_VERTEX_ARRAY);
+	      glDisableClientState(GL_NORMAL_ARRAY);
+	      DEALLOCATE_ARRAY(normalVals)
+	      DEALLOCATE_ARRAY(vertexVals)
+	    }
+#else
+	    glBegin(GL_TRIANGLE_STRIP);
+	    cc = sp->StripLen[a];
+	    while(cc--) {
+	      glNormal3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	      glVertex3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	    }
+	    glEnd();
+#endif
+	  }
+	}
+      } else {
+	while(c--) {
+	  glColor4f(v[0], v[1], v[2], v[3]);
+	  (*vptr)+=4; v = *vptr;
+	  for(a = 0; a < sp->NStrip; a++) {
+#ifdef _PYMOL_GL_DRAWARRAYS
+	    {
+	      int nverts = cc;
+	      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
+	      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
+	      int pl = 0;
+	      
+	      while(cc--) {
+		normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
+		(*vptr)+=3; v = *vptr;
+		vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
+		(*vptr)+=3; v = *vptr;
+		pl += 3;
+	      }
+	      glEnableClientState(GL_VERTEX_ARRAY);
+	      glEnableClientState(GL_NORMAL_ARRAY);
+	      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
+	      glNormalPointer(GL_FLOAT, 0, normalVals);
+	      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
+	      glDisableClientState(GL_VERTEX_ARRAY);
+	      glDisableClientState(GL_NORMAL_ARRAY);
+	      DEALLOCATE_ARRAY(normalVals)
+	      DEALLOCATE_ARRAY(vertexVals)
+	    }
+#else
+	    glBegin(GL_TRIANGLE_STRIP);
+	    cc = sp->StripLen[a];
+	    while(cc--) {
+	      glNormal3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	      glVertex3fv(v);
+	      (*vptr)+=3; v = *vptr;
+	    }
+	    glEnd();
+#endif
+	  }
+	}
+      }
+    }
+#ifdef _PYMOL_GL_CALLLISTS
+    if(use_dlst && I->R.displayList) {
+      glEndList();
+    }
+  }
+#endif
+}
 
 static void RepSphereRender(RepSphere * I, RenderInfo * info)
 {
@@ -1038,14 +1981,13 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
   PyMOLGlobals *G = I->R.G;
   float *v = I->V, *vc, *vn = I->VN;
   int c = I->N;
-  int cc = 0, *nt = NULL;
+  int cc = 0;
   int a;
-  int flag;
   SphereRec *sp = I->SP;
-  float restart;
   float alpha;
   int n_quad_verts;
   float radius;
+  int ok = true;
 
 #ifdef _PYMOL_OPENGL_SHADERS
   /* TO DO -- garbage collect -- IMPORTANT! */
@@ -1070,10 +2012,10 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
         while(c--) {
           vc = v;
           v += 3;
-          for(a = 0; a < sp->NStrip; a++) {
+          for(a = 0; ok && a < sp->NStrip; a++) {
             cc = sp->StripLen[a];
-            while((cc--) > 2) {
-              ray->fTriangle3fv(ray, v + 3, v + 9, v + 15, v, v + 6, v + 12, vc, vc, vc);
+            while(ok && (cc--) > 2) {
+              ok &= ray->fTriangle3fv(ray, v + 3, v + 9, v + 15, v, v + 6, v + 12, vc, vc, vc);
               v += 6;
             }
             v += 12;
@@ -1084,24 +2026,14 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
       int variable_alpha = I->VariableAlphaFlag;
       v = I->VC;
       c = I->NC;
-      while(c--) {
+      while(ok && c--) {
         if(variable_alpha) {
           ray->fTransparentf(ray, 1.0F - v[3]);
         }
         ray->fColor3fv(ray, v);
         v += 4;
 
-#if 0
-        /* temp code for testing ellipsoids */
-        {
-          float n1[3] = { 1.0F, 0.0F, 0.0F };
-          float n2[3] = { 0.0F, 0.75F, 0.0F };
-          float n3[3] = { 0.0F, 0.0F, 0.35F };
-          ray->fEllipsoid3fv(ray, v, *(v + 3), n1, n2, n3);
-        }
-#else
-        ray->fSphere3fv(ray, v, *(v + 3));
-#endif
+	ok &= ray->fSphere3fv(ray, v, *(v + 3));
         v += 4;
       }
     }
@@ -1111,6 +2043,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
       int trans_pick_mode = SettingGet_i(G, I->R.cs->Setting,
                                          I->R.obj->Setting,
                                          cSetting_transparency_picking_mode);
+
+      SceneSetupGLPicking(G);
 
       if(I->R.P && ((trans_pick_mode == 1) || ((trans_pick_mode == 2) && (alpha > 0.9F)))) {
         int i, j;
@@ -1126,12 +2060,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
               i++;
               if(!(*pick)[0].src.bond) {
                 /* pass 1 - low order bits *            */
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                 glColor3ub((uchar) ((i & 0xF) << 4), (uchar) ((i & 0xF0) | 0x8),
                            (uchar) ((i & 0xF00) >> 4));
-#endif
                 VLACheck((*pick), Picking, i);
                 p++;
                 (*pick)[i].src = *p;    /* copy object and atom info */
@@ -1139,12 +2069,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
               } else {
                 /* pass 2 - high order bits */
                 j = i >> 12;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                 glColor3ub((uchar) ((j & 0xF) << 4), (uchar) ((j & 0xF0) | 0x8),
                            (uchar) ((j & 0xF00) >> 4));
-#endif
               }
             } else {
               p++;
@@ -1154,9 +2080,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
             for(a = 0; a < sp->NStrip; a++) {
               cc = sp->StripLen[a];
               if(!skip) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		{
 		  int nverts = cc-1;
@@ -1186,7 +2109,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
                   v += 6;
                 }
                 glEnd();
-#endif
 #endif
               } else {
                 while((cc--) > 0) {
@@ -1228,15 +2150,11 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
             case 4:
             case 3:
             case 8:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
               glEnable(GL_POINT_SMOOTH);
               glAlphaFunc(GL_GREATER, 0.5F);
               glEnable(GL_ALPHA_TEST);
               glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
               glPointSize(1.0F);
-#endif
               pixel_scale *= 2.0F;
 #ifndef _PYMOL_GL_DRAWARRAYS
               glBegin(GL_POINTS);
@@ -1244,29 +2162,21 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
               break;
             case 2:
             case 7:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
               glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
               glDisable(GL_POINT_SMOOTH);
               glDisable(GL_ALPHA_TEST);
-#endif
               pixel_scale *= 1.4F;
 #ifndef _PYMOL_GL_DRAWARRAYS
               glBegin(GL_POINTS);
 #endif
               break;
             default:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
               glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
               glDisable(GL_POINT_SMOOTH);
               glDisable(GL_ALPHA_TEST);
               glPointSize(SettingGet_f
                           (G, I->R.cs->Setting, I->R.obj->Setting,
                            cSetting_sphere_point_size));
-#endif
 #ifndef _PYMOL_GL_DRAWARRAYS
               glBegin(GL_POINTS);
 #endif
@@ -1287,12 +2197,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
               i++;
               if(!(*pick)[0].src.bond) {
                 /* pass 1 - low order bits *            */
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                 glColor3ub((uchar) ((i & 0xF) << 4), (uchar) ((i & 0xF0) | 0x8),
                            (uchar) ((i & 0xF00) >> 4));
-#endif
                 VLACheck((*pick), Picking, i);
                 p++;
 #ifndef _PYMOL_GL_DRAWARRAYS
@@ -1302,12 +2208,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
               } else {
                 /* pass 2 - high order bits */
                 j = i >> 12;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                 glColor3ub((uchar) ((j & 0xF) << 4), (uchar) ((j & 0xF0) | 0x8),
                            (uchar) ((j & 0xF00) >> 4));
-#endif
               }
             } else {
               p++;
@@ -1323,9 +2225,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
                 q = sp->Sequence;
                 s = sp->StripLen;
                 for(b = 0; b < sp->NStrip; b++) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		  {
 		    int nverts = *s;
@@ -1360,7 +2259,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
                   }
                   glEnd();
 #endif
-#endif
                   s++;
                 }
               }
@@ -1376,18 +2274,11 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
                   v += 4;
                   if(!skip) {
                     register float vdw = v[3];
-#ifdef PURE_OPENGL_ES_2
-		  /* TODO */
-#else
                     glTranslatef(v[0], v[1], v[2]);
-#endif
                     q = sp->Sequence;
                     s = sp->StripLen;
                     for(b = 0; b < sp->NStrip; b++) {
                       int d;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		      {
 			int nverts = *s;
@@ -1420,14 +2311,9 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
                       }
                       glEnd();
 #endif
-#endif
                       s++;
                     }
-#ifdef PURE_OPENGL_ES_2
-		  /* TODO */
-#else
                     glTranslatef(-v[0], -v[1], -v[2]);
-#endif
                   }
                   v += 4;
                 }
@@ -1457,11 +2343,7 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
                     if(clamp_size_flag)
                       if(size > max_size)
                         size = max_size;
-#ifdef PURE_OPENGL_ES_2
-		  /* TODO */
-#else
                     glPointSize(size);
-#endif
 #ifndef _PYMOL_GL_DRAWARRAYS
 		    glBegin(GL_POINTS);
 #endif
@@ -1500,12 +2382,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
             case 3:
             case 4:
             case 8:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
               glDisable(GL_POINT_SMOOTH);
               glAlphaFunc(GL_GREATER, 0.05F);
-#endif
 
 #ifdef _PYMOL_GL_DRAWARRAYS
 	      /* TODO Need to draw points */
@@ -1525,11 +2403,7 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
 #else
               glEnd();
 #endif
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
               glEnable(GL_ALPHA_TEST);
-#endif
               break;
             }
           }
@@ -1537,6 +2411,7 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
         (*pick)[0].src.index = i;
       }
     } else {                    /* not pick */
+
       if(!sp) {
         /* no sp -- we're rendering as points */
         int use_dlst;
@@ -1547,7 +2422,9 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
         c = I->NC;
 
 #ifdef _PYMOL_GL_CALLLISTS
-        if(((sphere_mode >= 2) && (sphere_mode <= 3)) || ((sphere_mode >= 7) && (sphere_mode <= 8))) {  /* scaleable reps... */
+	switch (sphere_mode){
+	case 2: case 3: case 7: case 8:
+	  /* scaleable reps... */
           if(I->R.displayList) {
             if(I->LastVertexScale != info->vertex_scale) {
               glDeleteLists(I->R.displayList, 1);
@@ -1560,11 +2437,7 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
 
         use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
         switch (sphere_mode) {
-        case -1:
-        case 0:
-        case 4:
-        case 5:
-        case 9:
+        case -1: case 0: case 4: case 5: case 9:
           use_dlst = 0;
           break;
         }
@@ -1582,746 +2455,41 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
             }
           }
 #endif
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
           if((sphere_mode > 0) && (!info->line_lighting))
             glDisable(GL_LIGHTING);
+	  if((sphere_mode == 5)
+#ifdef _PYMOL_OPENGL_SHADERS
+	     && (!sphereARBShaderPrg)
 #endif
+	     )
+	    sphere_mode = 4;
+
           switch (sphere_mode) {
           case -1:
           case 0:              /* memory-efficient sphere rendering */
-            if(I->SSP) {
-              float last_vdw = -1.0F;
-              int dlist = 0;
-              int variable_alpha = I->VariableAlphaFlag;
-              SphereRec *sp = I->SSP;
-              while(c--) {
-                Vector3f *sp_dot = sp->dot;
-                int b, *q, *s;
-                if(variable_alpha)
-#ifdef PURE_OPENGL_ES_2
-		  ;
-		/* TODO */
-#else
-                  glColor4f(v[0], v[1], v[2], v[3]);
-#endif
-                else
-#ifdef PURE_OPENGL_ES_2
-		  ;
-		  /* TODO */
-#else
-                  glColor4f(v[0], v[1], v[2], alpha);
-#endif
-                v += 4;
-                {
-                  register float vdw = v[3];
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                  glTranslatef(v[0], v[1], v[2]);
-#endif
-                  if((vdw != last_vdw) || (!dlist)) {
-                    last_vdw = vdw;
-                    q = sp->Sequence;
-                    s = sp->StripLen;
-#ifdef _PYMOL_GL_CALLLISTS
-                    if(!dlist)
-                      dlist = glGenLists(1);
-                    if(dlist) {
-                      glNewList(dlist, GL_COMPILE_AND_EXECUTE);
-                    }
-#endif
-                    for(b = 0; b < sp->NStrip; b++) {
-                      int d;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
-		      {
-			int nverts = *s;
-			ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-			ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-			int pl = 0;
-			
-			for(d = 0; d < (*s); d++) {
-			  float *norm = sp_dot[*(q++)];
-			  normalVals[pl] = norm[0]; normalVals[pl+1] = norm[1]; normalVals[pl+2] = norm[2];
-			  vertexVals[pl++] = vdw * norm[0]; vertexVals[pl++] = vdw * norm[1];
-			  vertexVals[pl++] = vdw * norm[2];
-			}
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-			glNormalPointer(GL_FLOAT, 0, normalVals);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_NORMAL_ARRAY);
-			DEALLOCATE_ARRAY(vertexVals)
-			DEALLOCATE_ARRAY(normalVals)
-		      }
-#else
-                      glBegin(GL_TRIANGLE_STRIP);
-                      for(d = 0; d < (*s); d++) {
-                        float *norm = sp_dot[*(q++)];
-                        glNormal3fv(norm);
-                        glVertex3f(vdw * norm[0], vdw * norm[1], vdw * norm[2]);
-                      }
-                      glEnd();
-#endif
-#endif
-                      s++;
-                    }
-#ifdef _PYMOL_GL_CALLLISTS
-                    if(dlist) {
-                      glEndList();
-                    }
-                  } else {
-                    glCallList(dlist);
-#endif
-                  }
-#ifdef PURE_OPENGL_ES_2
-		  /* TODO */
-#else
-                  glTranslatef(-v[0], -v[1], -v[2]);
-#endif
-                }
-                v += 4;
-              }
-#ifdef _PYMOL_GL_CALLLISTS
-              if(dlist)
-                glDeleteLists(dlist, 1);
-#endif
-            }
+	    if (ok)
+	      ok &= RenderSphereMode_Direct(G, I, info, c, &v, alpha, I->SSP);
             break;
           case 2:
           case 3:
-          case 4:
           case 7:
           case 8:
-#ifdef _PYMOL_OPENGL_SHADERS
-          case 5:
-          case 9:
-#endif
-            {
-              register float _1 = 1.0F;
-              register float _2 = 2.0F;
-              register float last_radius = -_1;
-              register float cur_radius;
-              register float pixel_scale = 1.0F / info->vertex_scale;
-              register float max_size =
-                SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting,
-                             cSetting_sphere_point_max_size);
-              register int clamp_size_flag = (max_size >= 0.0F);
-              register float size;
-
-              if((sphere_mode == 5)
-#ifdef _PYMOL_OPENGL_SHADERS
-                 && (!sphereARBShaderPrg)
-#endif
-                 )
-                sphere_mode = 4;
-              switch (sphere_mode) {
-
-              case 2:
-              case 3:
-              case 7:
-              case 8:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                if((sphere_mode == 3) || (sphere_mode == 8)) {
-                  pixel_scale *= 2.0F;
-                  glEnable(GL_POINT_SMOOTH);
-                  glAlphaFunc(GL_GREATER, 0.5F);
-                  glEnable(GL_ALPHA_TEST);
-                  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-                  glPointSize(1.0F);
-                } else {
-                  glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
-                  glDisable(GL_POINT_SMOOTH);
-                  glDisable(GL_ALPHA_TEST);
-                  pixel_scale *= 1.4F;
-                }
-                if((sphere_mode == 7) || (sphere_mode == 8))
-                  glEnable(GL_LIGHTING);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  float *startv = v, *startvn = vn;
-		  int nverts = 0;
-		  while(c--) {
-		    if(last_radius != (cur_radius = v[7])) {
-		      size = cur_radius * pixel_scale;
-		      if (nverts>0){
-			RepSphereRenderPointsES(nverts, startv, startvn);
-			nverts = 0;
-			startv = v;
-			startvn = vn;
-		      }
-		      if(clamp_size_flag)
-			if(size > max_size)
-			  size = max_size;
-		      glPointSize(size);
-		      last_radius = cur_radius;
-		    }
-		    if(vn) {
-		      vn += 3;
-		    }
-		    nverts++;
-		    v += 8;
-		  }
-		  if (nverts>0){
-		    RepSphereRenderPointsES(nverts, startv, startvn);
-		  }
-		}
-#else
-                glBegin(GL_POINTS);
-                while(c--) {
-                  if(last_radius != (cur_radius = v[7])) {
-                    size = cur_radius * pixel_scale;
-                    glEnd();
-                    if(clamp_size_flag)
-                      if(size > max_size)
-                        size = max_size;
-                    glPointSize(size);
-                    glBegin(GL_POINTS);
-                    last_radius = cur_radius;
-                  }
-                  glColor3fv(v);
-                  v += 4;
-                  if(vn) {
-                    glNormal3fv(vn);
-                    vn += 3;
-                  }
-                  glVertex3fv(v);
-                  v += 4;
-                }
-                glEnd();
-#endif
-                if(sphere_mode == 3) {
-                  glDisable(GL_POINT_SMOOTH);
-                  glAlphaFunc(GL_GREATER, 0.05F);
-                } else {
-                  glEnable(GL_ALPHA_TEST);
-                }
-#endif
-                break;
-              case 4:          /* draw multiple points of different radii and Z position */
-#ifndef _PYMOL_OPENGL_SHADERS
-              case 5:
-              case 9:
-#endif
-                {
-                  int repeat = true;
-                  register float x_add = 0.0F, y_add = 0.0F, z_add = 0.0F;
-#ifdef _PYMOL_GL_DRAWARRAYS
-		  float dim_add[3] = { 0.0F, 0.0F, 0.0F };
-#endif
-                  register float z_factor = 0.0F, r_factor = 1.0F;
-                  register float largest;
-                  register float r, g, b;
-                  register float s_factor = 0.0F;
-                  register float zz_factor;
-                  register float clamp_radius;
-                  register float last_size;
-                  int pass = 0;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                  glEnable(GL_POINT_SMOOTH);
-                  glEnable(GL_ALPHA_TEST);
-                  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-                  glPointSize(1.0F);
-#endif
-
-                  pixel_scale *= 2.0F;
-                  while(repeat) {
-                    v = I->VC;
-                    c = I->NC;
-                    largest = 0.0F;
-                    zz_factor = _1 - (float) pow(_1 - z_factor, 2);
-                    if(zz_factor < 0.45F)
-                      zz_factor = 0.45F;
-
-                    last_radius = -1.0F;
-                    last_size = -1.0F;
-                    repeat = false;
-		    //#if 0
-#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      int nverts;
-		      float *startv = v;  
-		      (void)r; (void)g; (void)b;
-		      nverts = 0;
-		      while(c--) {
-			if(last_radius != (cur_radius = v[7])) {
-			  size = cur_radius * pixel_scale;
-			  clamp_radius = cur_radius;
-			  if(clamp_size_flag)
-			    if(size > max_size) {
-			      size = max_size;
-			      clamp_radius = size / pixel_scale;
-			    }
-			  size *= r_factor;
-			  if(size != last_size) {
-			    if (nverts>0){
-			      RepSphereRenderMode5PointsES(nverts, startv, zz_factor, s_factor, dim_add, _1);
-			      startv = v;
-			      nverts = 0;
-			    }
-			    if(size > largest)
-			      largest = size;
-			    if(size < _2) {
-			      if(!pass) {
-				zz_factor = 1.0F;
-				s_factor = 0.0F;
-			      }
-			    }
-			    if(size < _1) {
-			      size = _1;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-			    }
-#else
-			      glDisable(GL_POINT_SMOOTH);
-			      glDisable(GL_ALPHA_TEST);
-			    } else {
-			      glEnable(GL_POINT_SMOOTH);
-			      glEnable(GL_ALPHA_TEST);
-			    }
-			    glPointSize(size);
-#endif
-			  }
-			  x_add = z_factor * clamp_radius * info->view_normal[0];
-			  y_add = z_factor * clamp_radius * info->view_normal[1];
-			  z_add = z_factor * clamp_radius * info->view_normal[2];
-			  dim_add[0] = x_add; dim_add[1] = y_add; dim_add[2] = z_add;
-			  last_radius = cur_radius;
-			  last_size = size;
-			}
-			nverts++;
-			v += 8;
-		      }
-		      if (nverts>0){
-			RepSphereRenderMode5PointsES(nverts, startv, zz_factor, s_factor, dim_add, _1);
-		      }
-		    }
-#else
-                    glBegin(GL_POINTS);
-                    while(c--) {
-                      if(last_radius != (cur_radius = v[7])) {
-                        size = cur_radius * pixel_scale;
-                        clamp_radius = cur_radius;
-                        if(clamp_size_flag)
-                          if(size > max_size) {
-                            size = max_size;
-                            clamp_radius = size / pixel_scale;
-                          }
-                        size *= r_factor;
-                        if(size != last_size) {
-                          glEnd();
-                          if(size > largest)
-                            largest = size;
-                          if(size < _2) {
-                            if(!pass) {
-                              zz_factor = 1.0F;
-                              s_factor = 0.0F;
-                            }
-                          }
-                          if(size < _1) {
-                            size = _1;
-                            glDisable(GL_POINT_SMOOTH);
-                            glDisable(GL_ALPHA_TEST);
-                          } else {
-                            glEnable(GL_POINT_SMOOTH);
-                            glEnable(GL_ALPHA_TEST);
-                          }
-                          glPointSize(size);
-                          glBegin(GL_POINTS);
-                        }
-                        x_add = z_factor * clamp_radius * info->view_normal[0];
-                        y_add = z_factor * clamp_radius * info->view_normal[1];
-                        z_add = z_factor * clamp_radius * info->view_normal[2];
-                        last_radius = cur_radius;
-                        last_size = size;
-                      }
-                      r = zz_factor * v[0] + s_factor;
-                      g = zz_factor * v[1] + s_factor;
-                      b = zz_factor * v[2] + s_factor;
-
-                      glColor3f(r > _1 ? _1 : r, g > _1 ? _1 : g, b > _1 ? _1 : b);
-
-                      v += 4;
-                      glVertex3f(v[0] + x_add, v[1] + y_add, v[2] + z_add);
-                      v += 4;
-                    }
-                    glEnd();
-#endif
-                    if(largest > 2.0F) {
-                      float reduce = (largest - 2.0F) / largest;
-                      r_factor *= reduce;
-                      z_factor = (float) sqrt1f(1.0F - (r_factor * r_factor));
-                      s_factor = (float) pow(z_factor, 20.0F) * 0.5F;
-                      repeat = true;
-                      pass++;
-                    }
-                  }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                  glDisable(GL_POINT_SMOOTH);
-#endif
-                }
-                break;
-#ifdef _PYMOL_OPENGL_SHADERS
-                case 9: { // use GLSL shader
-                  int vc = 0;
-                  int cc = 0;
-                  int ac = 0;
-                  int attr;
-                  CShaderPrg *shaderPrg;
-		  short use_shader, generate_shader_cgo = 0;
-
-		  use_shader = (int) SettingGet(G, cSetting_sphere_use_shader) & 
-		               (int) SettingGet(G, cSetting_use_shaders);
-
-		  if (I->shaderCGO && !use_shader){
-		    CGOFree(I->shaderCGO);
-		    I->shaderCGO = 0;
-		  }
-		  if (use_shader){
-		    if (!I->shaderCGO){
-		      I->shaderCGO = CGONew(G);
-		      I->shaderCGO->use_shader = true;
-		      generate_shader_cgo = 1;
-		    } else {
-		      I->shaderCGO->enable_shaders = true;
-		      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-		      return;
-		    }
-		  }
-
-		  if (generate_shader_cgo){
-		    CGOEnable(I->shaderCGO, GL_LIGHTING);
-		    while (c--) {
-                      CGOAlpha(I->shaderCGO, v[3]);
-		      CGOColorv(I->shaderCGO, v);
-		      CGOSphere(I->shaderCGO, v+4, v[7]);
-		      v+=8;
-		    }
-		    CGOStop(I->shaderCGO);
-		    {
-		      CGO *convertcgo = NULL;
-		      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, 0);
-		      if (convertcgo){
-			CGOFree(I->shaderCGO);    
-			I->shaderCGO = convertcgo;
-		      }
-		    }
-
-		    {
-		      I->shaderCGO->enable_shaders = true;
-		      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-		      return;
-		    }
-		  } else {
-		    ALLOCATE_ARRAY(GLfloat,colorVals,c*4*4)
-		    ALLOCATE_ARRAY(GLfloat,vertexVals,c*4*3)
-		    ALLOCATE_ARRAY(GLfloat,attribVals,c*4*3)
-		    n_quad_verts = c * 4;
-		    if(Feedback(G, FB_OpenGL, FB_Debugging)) {
-		      PRINTF "GLSL Sphere Shader: n_quad_verts: %d\n", 
-			n_quad_verts ENDF(G);
-		    }
-		    shaderPrg = CShaderPrg_Enable_SphereShader(G, "spheredirect");
-		    
-		    attr = CShaderPrg_GetAttribLocation(shaderPrg, "sphere_attributes");
-		    
-		    while (c--) {
-                      radius = v[7];
-                      attribVals[ac++] = -1.0;
-                      attribVals[ac++] = -1.0;
-                      attribVals[ac++] = radius;
-                      colorVals[cc++] = v[0];
-                      colorVals[cc++] = v[1];
-                      colorVals[cc++] = v[2];
-                      colorVals[cc++] = v[3];
-                      vertexVals[vc++] = v[4];
-                      vertexVals[vc++] = v[5];
-                      vertexVals[vc++] = v[6];
-		      
-                      attribVals[ac++] =  1.0;
-                      attribVals[ac++] = -1.0;
-                      attribVals[ac++] = radius;
-                      colorVals[cc++] = v[0];
-                      colorVals[cc++] = v[1];
-                      colorVals[cc++] = v[2];
-                      colorVals[cc++] = v[3];
-                      vertexVals[vc++] = v[4];
-                      vertexVals[vc++] = v[5];
-                      vertexVals[vc++] = v[6];
-
-                      attribVals[ac++] = 1.0;
-                      attribVals[ac++] = 1.0;
-                      attribVals[ac++] = radius;
-                      colorVals[cc++] = v[0];
-                      colorVals[cc++] = v[1];
-                      colorVals[cc++] = v[2];
-                      colorVals[cc++] = v[3];
-                      vertexVals[vc++] = v[4];
-                      vertexVals[vc++] = v[5];
-                      vertexVals[vc++] = v[6];
-
-                      attribVals[ac++] = -1.0;
-                      attribVals[ac++] =  1.0;
-                      attribVals[ac++] = radius;
-                      colorVals[cc++] = v[0];
-                      colorVals[cc++] = v[1];
-                      colorVals[cc++] = v[2];
-                      colorVals[cc++] = v[3];
-                      vertexVals[vc++] = v[4];
-                      vertexVals[vc++] = v[5];
-                      vertexVals[vc++] = v[6];
-
-		      glBegin(GL_QUADS);
-		      glColor4f(v[0], v[1], v[2], v[3]);
-		      glVertexAttrib3f(attr, -1.0, -1.0, radius);
-		      glVertex3f(v[4], v[5], v[6]);
-		      glVertexAttrib3f(attr,  1.0, -1.0, radius);
-		      glVertex3f(v[4], v[5], v[6]);
-		      glVertexAttrib3f(attr,  1.0,  1.0, radius);
-		      glVertex3f(v[4], v[5], v[6]);
-		      glVertexAttrib3f(attr, -1.0,  1.0, radius);
-		      glVertex3f(v[4], v[5], v[6]);
-		      glEnd();
-
-                      v+=8;
-		    }
-		    CShaderPrg_Disable(shaderPrg);
-
-		    DEALLOCATE_ARRAY(colorVals)
-		    DEALLOCATE_ARRAY(vertexVals)
-		    DEALLOCATE_ARRAY(attribVals)
-		  }
-		} break;
-              case 5:          /* use vertex/fragment program */
-                if(sphereARBShaderPrg) {
-                  float fog_info[3];
-                  float _00[2] = { 0.0F, 0.0F };
-                  float _01[2] = { 0.0F, 1.0F };
-                  float _11[2] = { 1.0F, 1.0F };
-                  float _10[2] = { 1.0F, 0.0F };
-                  register float v0, v1, v2, nv0, nv1, nv2, nv3, v3;
-                  register float *m = info->pmv_matrix;
-                  register float cutoff = 1.2F;
-                  register float m_cutoff = -cutoff;
-                  register float z_front, z_back;
-                  /* compute -Ze = (Wc) of fog start */
-                  nv3 =
-                    (info->front +
-                     (info->back - info->front) * SettingGetGlobal_f(G,
-                                                                     cSetting_fog_start));
-                  /* compute Zc of fog start using std. perspective transformation */
-                  nv2 =
-                    (nv3 * (info->back + info->front) -
-                     2 * (info->back * info->front)) / (info->back - info->front);
-                  /* compute Zc/Wc to get normalized depth coordinate of fog start */
-                  nv0 = (nv2 / nv3);
-                  fog_info[0] = (nv0 * 0.5) + 0.5;
-                  /* printf("%8.3f %8.3f %8.3f %8.3f\n", nv3, nv2, nv0, fog_info[0]); */
-                  fog_info[1] = 1.0F / (1.0 - fog_info[0]);     /* effective range of fog */
-
-                  z_front = info->stereo_front;
-                  z_back = info->back + ((info->back + info->front) * 0.25);
-
-                  if(Feedback(G, FB_OpenGL, FB_Debugging))
-                    PyMOLCheckOpenGLErr("before shader");
-
-		  CShaderPrg_Enable_SphereShaderARB(G);
-
-                  {
-                    glNormal3fv(info->view_normal);
-#if 0
-//#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      /* TODO */    
-		    }
-#else
-                    v += 4;
-                    last_radius = -1.f;
-                    glBegin(GL_QUADS);
-                    while(c--) {
-
-                      v3 = v[3];
-
-                      v0 = v[0];
-                      v1 = v[1];
-                      v2 = v[2];
-
-                      if(last_radius != (cur_radius = v3)) {
-                        glEnd();
-                        glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                                                   0, 0.0F, 0.0F, v3, 0.0F);
-                        glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
-                                                   0, fog_info[0], fog_info[1], 0.0F,
-                                                   0.0F);
-                        glBegin(GL_QUADS);
-                        last_radius = cur_radius;
-                      }
-
-                      /*  MatrixTransformC44f4f(info->pmv_matrix, v, nv); */
-
-                      nv3 = m[3] * v0 + m[7] * v1 + m[11] * v2 + m[15]; /* compute Wc */
-
-                      if(((nv3 - cur_radius) > z_front) && (nv3 < z_back)) {    /* is it within the viewing volume? */
-                        nv0 = m[0] * v0 + m[4] * v1 + m[8] * v2 + m[12];
-
-                        nv3 = _1 / nv3;
-                        nv1 = m[1] * v0 + m[5] * v1 + m[9] * v2 + m[13];
-                        nv0 *= nv3;
-                        nv1 *= nv3;
-
-                        if((nv0 < cutoff) && (nv0 > m_cutoff) &&
-                           (nv1 < cutoff) && (nv1 > m_cutoff)) {
-
-                          glColor3fv(v - 4);
-
-                          glTexCoord2fv(_00);
-                          glVertex3fv(v);
-
-                          glTexCoord2fv(_10);
-                          glVertex3fv(v);
-
-                          glTexCoord2fv(_11);
-                          glVertex3fv(v);
-
-                          glTexCoord2fv(_01);
-                          glVertex3fv(v);
-                        }
-                      }
-                      v += 8;
-                    }
-                    glEnd();
-#endif
-                  }
-
-		  CShaderPrg_DisableARB(sphereARBShaderPrg);
-                  if(Feedback(G, FB_OpenGL, FB_Debugging))
-                    PyMOLCheckOpenGLErr("after shader");
-                }
-                break;
-#endif
-              }
-            }
+	    RenderSphereMode_Sprites(G, I, info, sphere_mode, c, &v, &vn);
+	    break;
+          case 4:
+	    RenderSphereMode_Points(G, I, info, radius, c);
+	    break;
+	  case 5:          /* use vertex/fragment program */
+	    RenderSphereMode_ARB(G, info, &v, c);
+	    break;
+	  case 9: // use GLSL shader
+	    RenderSphereMode_9(G, I, info, n_quad_verts, &v, radius, c);
+	    break;
+	  default:
+	    RenderSphereMode_1_or_6(G, I, info, &v, &vn, c, alpha);
             break;
-          default:             /* simple, default point width points -- modes 1 or 6 */
-
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-            glPointSize(SettingGet_f
-                        (G, I->R.cs->Setting, I->R.obj->Setting,
-                         cSetting_sphere_point_size));
-            glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
-            glDisable(GL_POINT_SMOOTH);
-            glDisable(GL_ALPHA_TEST);
-
-#ifdef _PYMOL_GL_DRAWARRAYS
-	    {
-	      int nverts = c;
-	      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-	      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-	      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-	      int pl =0, plc = 0;
-	      while (c--){
-		colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; 
-		colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
-		v += 4;
-		if (vn){
-		  normalVals[pl] = vn[0]; normalVals[pl+1] = vn[1]; normalVals[pl+2] = vn[2];
-		  vn += 3;
-		}
-		vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; 
-		vertexVals[pl++] = v[2]; 
-		v += 4;
-	      }
-	      glEnable(GL_LIGHTING);
-	      
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_COLOR_ARRAY);
-	      if (vn){
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, 0, normalVals);
-	      }
-	      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-	      glColorPointer(4, GL_FLOAT, 0, colorVals);
-	      glDrawArrays(GL_POINTS, 0, nverts);
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	      glDisableClientState(GL_COLOR_ARRAY);
-	      if (vn){
-		glDisableClientState(GL_NORMAL_ARRAY);
-	      }
-	      DEALLOCATE_ARRAY(colorVals)
-	      DEALLOCATE_ARRAY(normalVals)
-	      DEALLOCATE_ARRAY(vertexVals)
-	    }
-#else
-            glBegin(GL_POINTS);
-            if(alpha == 1.0) {
-              if(vn) {
-                glEnd();
-                glEnable(GL_LIGHTING);
-                glBegin(GL_POINTS);
-                while(c--) {
-                  glColor3fv(v);
-                  v += 4;
-                  glNormal3fv(vn);
-                  vn += 3;
-                  glVertex3fv(v);
-                  v += 4;
-                }
-              } else {
-                while(c--) {
-                  glColor3fv(v);
-                  v += 4;
-                  glVertex3fv(v);
-                  v += 4;
-                }
-              }
-            } else {
-              if(vn) {
-                glEnd();
-                glEnable(GL_LIGHTING);
-                glBegin(GL_POINTS);
-                while(c--) {
-                  glColor4f(v[0], v[1], v[2], alpha);
-                  v += 4;
-                  glNormal3fv(vn);
-                  vn += 3;
-                  glVertex3fv(v);
-                  v += 4;
-                }
-              } else {
-                while(c--) {
-                  glColor4f(v[0], v[1], v[2], alpha);
-                  v += 4;
-                  glVertex3fv(v);
-                  v += 4;
-                }
-              }
-            }
-            glEnd();
-#endif
-            glEnable(GL_ALPHA_TEST);
-#endif
-            break;
-
           }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
           glEnable(GL_LIGHTING);
-#endif
 
 #ifdef _PYMOL_GL_CALLLISTS
           if(use_dlst && I->R.displayList) {
@@ -2330,276 +2498,7 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
         }
 #endif
       } else {                  /* real spheres, drawn with triangles -- not points or impostors */
-        int variable_alpha = I->VariableAlphaFlag;
-        int use_dlst;
-
-        use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
-
-#ifdef _PYMOL_GL_CALLLISTS
-        if(use_dlst && I->R.displayList) {
-          glCallList(I->R.displayList);
-        } else {                /* display list */
-          if(use_dlst) {
-            if(!I->R.displayList) {
-              I->R.displayList = glGenLists(1);
-              if(I->R.displayList) {
-                glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-              }
-            }
-          }
-#endif
-          if(I->cullFlag) {
-
-            if((alpha == 1.0) && (!variable_alpha)) {
-
-              nt = I->NT;       /* number of passes for each sphere */
-              while(c--) {      /* iterate through all atoms */
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                glColor3fv(v);
-#endif
-                v += 4;
-                cc = *(nt++);
-                flag = 0;
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts=0;
-		  float *vstart = v;
-		  while(cc--) {   /* execute loop this many times */
-		    restart = *(v++);
-		    if(restart) {
-		      if(flag) {
-			RepSphereRenderTriangleStripsES(nverts, vstart);
-			nverts = 0;
-			vstart = v - 1;
-		      }
-		      if(restart == 2.0) {        /* swap triangle polarity */
-			nverts++;
-		      }
-		      nverts += 2;
-		      v += 12;
-		    }
-		    nverts++;
-		    v += 6;
-		    flag = 1;
-		  }
-		  if (nverts>0){
-		    RepSphereRenderTriangleStripsES(nverts, vstart);
-		  }
-		}
-#else
-                glBegin(GL_TRIANGLE_STRIP);
-                while(cc--) {   /* execute loop this many times */
-                  restart = *(v++);
-                  if(restart) {
-                    if(flag) {
-                      glEnd();
-                      glBegin(GL_TRIANGLE_STRIP);
-                    }
-                    if(restart == 2.0) {        /* swap triangle polarity */
-                      glNormal3fv(v);
-                      glVertex3fv(v + 3);
-                    }
-                    glNormal3fv(v);
-                    v += 3;
-                    glVertex3fv(v);
-                    v += 3;
-                    glNormal3fv(v);
-                    v += 3;
-                    glVertex3fv(v);
-                    v += 3;
-                  }
-                  glNormal3fv(v);
-                  v += 3;
-                  glVertex3fv(v);
-                  v += 3;
-                  flag = 1;
-                }
-                glEnd();
-#endif
-              }
-            } else {
-
-              nt = I->NT;       /* number of passes for each sphere */
-              while(c--) {      /* iterate through all atoms */
-
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                glColor4f(v[0], v[1], v[2], v[3]);
-#endif
-                v += 4;
-                cc = *(nt++);
-                flag = 0;
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts=0;
-		  float *vstart = v;
-		  while(cc--) {   /* execute loop this many times */
-		    restart = *(v++);
-		    if(restart) {
-		      if(flag) {
-			RepSphereRenderTriangleStripsES(nverts, vstart);
-			nverts = 0;
-			vstart = v - 1;
-		      }
-		      if(restart == 2.0) {        /* swap triangle polarity */
-			nverts++;
-		      }
-		      nverts += 2;
-		      v += 12;
-		    }
-		    nverts++;
-		    v += 6;
-		    flag = 1;
-		  }
-		  if (nverts>0){
-		    RepSphereRenderTriangleStripsES(nverts, vstart);
-		  }
-		}
-#else
-                glBegin(GL_TRIANGLE_STRIP);
-                while(cc--) {   /* execute loop this many times */
-                  restart = *(v++);
-                  if(restart) {
-                    if(flag) {
-                      glEnd();
-                      glBegin(GL_TRIANGLE_STRIP);
-                    }
-                    if(restart == 2.0) {        /* swap triangle polarity */
-                      glNormal3fv(v);
-                      glVertex3fv(v + 3);
-                    }
-                    glNormal3fv(v);
-                    v += 3;
-                    glVertex3fv(v);
-                    v += 3;
-                    glNormal3fv(v);
-                    v += 3;
-                    glVertex3fv(v);
-                    v += 3;
-                  }
-                  glNormal3fv(v);
-                  v += 3;
-                  glVertex3fv(v);
-                  v += 3;
-                  flag = 1;
-                }
-                glEnd();
-#endif
-              }
-            }
-          } else if(sp) {
-            if((alpha == 1.0) && !variable_alpha) {
-              while(c--) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                glColor3fv(v);
-#endif
-                v += 4;
-                for(a = 0; a < sp->NStrip; a++) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
-                  cc = sp->StripLen[a];
-		      {
-			int nverts = cc;
-			ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-			ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-			int pl = 0;
-			
-			while(cc--) {
-			  normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-			  v += 3;
-			  vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-			  v += 3;
-			  pl += 3;
-			}
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-			glNormalPointer(GL_FLOAT, 0, normalVals);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_NORMAL_ARRAY);
-			DEALLOCATE_ARRAY(normalVals)
-			DEALLOCATE_ARRAY(vertexVals)
-		      }
-#else
-                  glBegin(GL_TRIANGLE_STRIP);
-                  cc = sp->StripLen[a];
-                  while(cc--) {
-                    glNormal3fv(v);
-                    v += 3;
-                    glVertex3fv(v);
-                    v += 3;
-                  }
-                  glEnd();
-#endif
-#endif
-                }
-              }
-            } else {
-              while(c--) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                glColor4f(v[0], v[1], v[2], v[3]);
-#endif
-                v += 4;
-                for(a = 0; a < sp->NStrip; a++) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
-		  {
-		    int nverts = cc;
-		    ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-		    ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-		    int pl = 0;
-		    
-		    while(cc--) {
-		      normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-		      v += 3;
-		      vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-		      v += 3;
-		      pl += 3;
-		    }
-		    glEnableClientState(GL_VERTEX_ARRAY);
-		    glEnableClientState(GL_NORMAL_ARRAY);
-		    glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-		    glNormalPointer(GL_FLOAT, 0, normalVals);
-		    glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-		    glDisableClientState(GL_VERTEX_ARRAY);
-		    glDisableClientState(GL_NORMAL_ARRAY);
-		    DEALLOCATE_ARRAY(normalVals)
-		    DEALLOCATE_ARRAY(vertexVals)
-		  }
-#else
-                  glBegin(GL_TRIANGLE_STRIP);
-                  cc = sp->StripLen[a];
-                  while(cc--) {
-                    glNormal3fv(v);
-                    v += 3;
-                    glVertex3fv(v);
-                    v += 3;
-                  }
-                  glEnd();
-#endif
-#endif
-                }
-              }
-            }
-          }
-#ifdef _PYMOL_GL_CALLLISTS
-          if(use_dlst && I->R.displayList) {
-            glEndList();
-          }
-        }
-#endif
+	RenderSphereMode_Default(G, I, c, &v, alpha, sp);
       }
     }
   }
@@ -2676,7 +2575,9 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   int draw_quality = (((draw_mode == 1) || (draw_mode == -2) || (draw_mode == 2)));
 
   OOCalloc(G, RepSphere);
-
+  CHECKOK(ok, I);
+  if (!ok)
+    return NULL;
   obj = cs->Obj;
   vFlag = false;
   if(obj->RepVisCache[cRepSphere])
@@ -2691,81 +2592,83 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     return (NULL);              /* skip if no dots are visible */
   }
   marked = Calloc(int, obj->NAtom);
-  RepInit(G, &I->R);
+  CHECKOK(ok, marked);
+  if (ok)
+    RepInit(G, &I->R);
   I->shaderCGO = NULL;
 
-  ds = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_quality);
-  sphere_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_mode);
-  if(sphere_mode > 0)
-    ds = -1;
-
-  if(ds < 0) {
-    sp = NULL;
-  } else {
-    if(draw_quality && (ds < 3))
-      ds = 3;
-    if(ds > 4)
-      ds = 4;
-    sp = G->Sphere->Sphere[ds];
+  if (ok){
+    ds = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_quality);
+    sphere_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_mode);
+    if(sphere_mode > 0)
+      ds = -1;
+    
+    if(ds < 0) {
+      sp = NULL;
+    } else {
+      if(draw_quality && (ds < 3))
+	ds = 3;
+      if(ds > 4)
+	ds = 4;
+      sp = G->Sphere->Sphere[ds];
+    }
+  }
+  if (ok){
+    sphere_color =
+      SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_color);
+    cartoon_side_chain_helper =
+      SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_side_chain_helper);
+    ribbon_side_chain_helper =
+      SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_side_chain_helper);
+    transp = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_transparency);
+    spheroid_scale =
+      SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_spheroid_scale);
+    if(sp && spheroid_scale && cs->Spheroid)
+      spheroidFlag = 1;
+    else
+      spheroidFlag = 0;
+    sphere_scale = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_scale);
   }
 
-  sphere_color =
-    SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_color);
-  cartoon_side_chain_helper =
-    SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_side_chain_helper);
-  ribbon_side_chain_helper =
-    SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_side_chain_helper);
-  transp = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_transparency);
-  spheroid_scale =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_spheroid_scale);
-  if(sp && spheroid_scale && cs->Spheroid)
-    spheroidFlag = 1;
-  else
-    spheroidFlag = 0;
-
-  sphere_scale = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_scale);
-
-  I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepSphereRender;
-  I->R.fFree = (void (*)(struct Rep *)) RepSphereFree;
-  I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepSphereSameVis;
-
-  /* automatic --  OOcalloc 
-     I->R.fRecolor=NULL;
-     I->LastVisib=NULL;
-     I->LastColor=NULL;
-     I->NP = 0; 
-   */
-
-  I->LastVertexScale = -1.0F;
-  I->R.obj = (CObject *) obj;
-  I->R.cs = cs;
-  I->R.context.object = (void *) obj;
-  I->R.context.state = state;
-
+  if (ok){
+    I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepSphereRender;
+    I->R.fFree = (void (*)(struct Rep *)) RepSphereFree;
+    I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepSphereSameVis;
+    I->LastVertexScale = -1.0F;
+    I->R.obj = (CObject *) obj;
+    I->R.cs = cs;
+    I->R.context.object = (void *) obj;
+    I->R.context.state = state;
+  }
   /* raytracing primitives */
 
-  I->VC = (float *) mmalloc(sizeof(float) * cs->NIndex * 8);
-  ErrChkPtr(G, I->VC);
-  I->NC = 0;
-  map_flag = Calloc(int, cs->NIndex);
-
-  I->NT = NULL;
-  nt = NULL;
-
-  v = I->VC;
-  mf = map_flag;
-
-  if(SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
-    sphere_add = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_solvent_radius);       /* if so, get solvent radius */
+  if (ok)
+    I->VC = (float *) mmalloc(sizeof(float) * cs->NIndex * 8);
+  CHECKOK(ok, I->VC);
+  if (ok){
+    I->NC = 0;
+    map_flag = Calloc(int, cs->NIndex);
   }
+  CHECKOK(ok, map_flag);
 
-  if(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
-    I->R.P = Alloc(Pickable, cs->NIndex + 1);
-    ErrChkPtr(G, I->R.P);
+  if (ok){
+    I->NT = NULL;
+    nt = NULL;
+    v = I->VC;
+    mf = map_flag;
+    
+    if(SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
+      sphere_add = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_solvent_radius);       /* if so, get solvent radius */
+    }
+    
+    if(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
+      I->R.P = Alloc(Pickable, cs->NIndex + 1);
+      CHECKOK(ok, I->R.P);
+    }
   }
 
   I->spheroidFlag = spheroidFlag;
-  for(a = 0; a < cs->NIndex; a++) {
+  for(a = 0; ok && a < cs->NIndex; a++) {
     a1 = cs->IdxToAtm[a];
     ati1 = obj->AtomInfo + a1;
     vis_flag = ati1->visRep[cRepSphere];
@@ -2842,57 +2745,73 @@ Rep *RepSphereNew(CoordSet * cs, int state)
       *(v++) = obj->AtomInfo[a1].vdw * at_sphere_scale + sphere_add;    /* radius */
     }
     mf++;
+    ok &= !G->Interrupt;
   }
-
-  I->VariableAlphaFlag = variable_alpha;
-  if(I->NC)
-    I->VC = ReallocForSure(I->VC, float, (v - I->VC));
-  else
-    I->VC = ReallocForSure(I->VC, float, 1);
-  if(I->R.P) {
-    I->R.P = Realloc(I->R.P, Pickable, I->NP + 1);
-    I->R.P[0].index = I->NP;
-  }
-
-  if(variable_alpha)
-    I->cullFlag = false;
-  else {
-    I->cullFlag = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cull_spheres);
-
-    if(I->cullFlag < 0) {
-      I->cullFlag = !(obj->NCSet > 1);
+  if (ok){
+    I->VariableAlphaFlag = variable_alpha;
+    if(I->NC)
+      I->VC = ReallocForSure(I->VC, float, (v - I->VC));
+    else
+      I->VC = ReallocForSure(I->VC, float, 1);
+    CHECKOK(ok, I->VC);
+    if(ok && I->R.P) {
+      I->R.P = Realloc(I->R.P, Pickable, I->NP + 1);
+      CHECKOK(ok, I->R.P);
+      if (ok)
+	I->R.P[0].index = I->NP;
     }
   }
 
-  if(draw_quality)
-    I->cullFlag = false;
-
-  if(spheroidFlag || (!sp))
-    I->cullFlag = false;
-
-  if((I->cullFlag < 2) &&
-     (SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sculpting)))
-    /* optimize build-time performance when sculpting */
-    I->cullFlag = false;
-
-  if((I->cullFlag < 2) && (SettingGet(G, cSetting_roving_spheres) != 0.0F))
-    I->cullFlag = false;
-
-  if(sp && (I->cullFlag < 2) && (!spheroidFlag)) {
-    /* don't cull unless forced */
-    I->SSP = sp;
-    sp = NULL;
+  if (ok){
+    if(variable_alpha)
+      I->cullFlag = false;
+    else {
+      I->cullFlag = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cull_spheres);
+      
+      if(I->cullFlag < 0) {
+	I->cullFlag = !(obj->NCSet > 1);
+      }
+    }
+    
+    if(draw_quality)
+      I->cullFlag = false;
+    
+    if(spheroidFlag || (!sp))
+      I->cullFlag = false;
+    
+    if((I->cullFlag < 2) &&
+       (SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sculpting)))
+      /* optimize build-time performance when sculpting */
+      I->cullFlag = false;
+    
+    if((I->cullFlag < 2) && (SettingGet(G, cSetting_roving_spheres) != 0.0F))
+      I->cullFlag = false;
+    
+    if(sp && (I->cullFlag < 2) && (!spheroidFlag)) {
+      /* don't cull unless forced */
+      I->SSP = sp;
+      sp = NULL;
+    }
   }
 
   if(!sp) {                     /* if sp==null, then we're drawing a point-based sphere rep */
 
     /* sort the vertices by radius */
-    if(I->NC && I->VC && (!spheroidFlag) && (sphere_mode != 1)) {
-      int *ix = Alloc(int, I->NC);
-      float *vc_tmp = Alloc(float, I->NC * 8);
-      Pickable *pk_tmp = Alloc(Pickable, I->NP + 1);
+    if(ok && I->NC && I->VC && (!spheroidFlag) && (sphere_mode != 1)) {
+      int *ix = NULL;
+      float *vc_tmp = NULL;
+      Pickable *pk_tmp = NULL;
       int a;
-      if(vc_tmp && pk_tmp && ix) {
+      ix = Alloc(int, I->NC);
+      CHECKOK(ok, ix);
+      if (ok)
+	vc_tmp = Alloc(float, I->NC * 8);
+      CHECKOK(ok, vc_tmp);
+      if (ok)
+	pk_tmp = Alloc(Pickable, I->NP + 1);
+      CHECKOK(ok, pk_tmp);
+
+      if(ok && vc_tmp && pk_tmp && ix) {
         UtilCopyMem(vc_tmp, I->VC, sizeof(float) * 8 * I->NC);
         UtilCopyMem(pk_tmp, I->R.P, sizeof(Pickable) * (I->NP + 1));
 
@@ -2909,16 +2828,21 @@ Rep *RepSphereNew(CoordSet * cs, int state)
       FreeP(pk_tmp);
     }
 
-    if((sphere_mode >= 6) && (sphere_mode < 9) && I->NC) {
+    if(ok && (sphere_mode >= 6) && (sphere_mode < 9) && I->NC) {
       /* compute sphere normals to approximate a surface */
       register float range = 6.0F;
       float *vc = I->VC;
       float *dot = G->Sphere->Sphere[1]->dot[0];
       int n_dot = G->Sphere->Sphere[1]->nDot;
       int nc = I->NC;
-      int *active = Alloc(int, 2 * n_dot);
-      float *v_tmp = Alloc(float, 3 * nc);
-      {
+      int *active = NULL;
+      float *v_tmp = NULL;
+      active = Alloc(int, 2 * n_dot);
+      CHECKOK(ok, active);
+      if (ok)
+	v_tmp = Alloc(float, 3 * nc);
+      CHECKOK(ok, v_tmp);
+      if (ok) {
         float *src = vc + 4;
         float *dst = v_tmp;
         for(a = 0; a < nc; a++) {       /* create packed array of sphere centers */
@@ -2929,8 +2853,11 @@ Rep *RepSphereNew(CoordSet * cs, int state)
         }
         {
           map = MapNew(G, range, v_tmp, nc, NULL);
-          I->VN = Alloc(float, I->NC * 3);
-          if(map && I->VN) {
+	  CHECKOK(ok, map);
+	  if (ok)
+	    I->VN = Alloc(float, I->NC * 3);
+	  CHECKOK(ok, I->VN);
+          if(ok && map && I->VN) {
             float dst;
             register float *vv;
             register int nbr_flag;
@@ -2938,15 +2865,17 @@ Rep *RepSphereNew(CoordSet * cs, int state)
             register float cut_mult = -1.0F;
             register float range2 = range * range;
 
-            MapSetupExpress(map);
-            v = vc + 4;
-            v0 = I->VN;
-            for(a = 1; a < n_dot; a++) {
-              float t_dot = dot_product3f(dot, dot + a * 3);
-              if(cut_mult < t_dot)
-                cut_mult = t_dot;
-            }
-            for(a = 0; a < nc; a++) {
+            ok &= MapSetupExpress(map);
+	    if (ok){
+	      v = vc + 4;
+	      v0 = I->VN;
+	      for(a = 1; a < n_dot; a++) {
+		float t_dot = dot_product3f(dot, dot + a * 3);
+		if(cut_mult < t_dot)
+		  cut_mult = t_dot;
+	      }
+	    }
+            for(a = 0; ok && a < nc; a++) {
               nbr_flag = false;
               MapLocus(map, v, &h, &k, &l);
               da = active;
@@ -2957,7 +2886,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
               i = *(MapEStart(map, h, k, l));
               if(i) {
                 j = map->EList[i++];
-                while(j >= 0) {
+                while(ok && j >= 0) {
                   if(j != a) {
                     vv = v_tmp + 3 * j;
                     if(within3fret(vv, v, range, range2, v1, &dst)) {
@@ -2974,24 +2903,28 @@ Rep *RepSphereNew(CoordSet * cs, int state)
                     }
                   }
                   j = map->EList[i++];
+		  ok &= !G->Interrupt;
                 }
               }
-              if(!n_dot_active) {
-                v0[0] = 0.0F;
-                v0[1] = 0.0F;
-                v0[2] = 1.0F;
-              } else {
-                zero3f(v0);
-                b = 0;
-                while(b < n_dot_active) {
-                  vv = dot + active[b];
-                  add3f(vv, v0, v0);
-                  b++;
-                }
-                normalize3f(v0);
-              }
-              v += 8;
-              v0 += 3;
+	      if (ok){
+		if(!n_dot_active) {
+		  v0[0] = 0.0F;
+		  v0[1] = 0.0F;
+		  v0[2] = 1.0F;
+		} else {
+		  zero3f(v0);
+		  b = 0;
+		  while(b < n_dot_active) {
+		    vv = dot + active[b];
+		    add3f(vv, v0, v0);
+		    b++;
+		  }
+		  normalize3f(v0);
+		}
+		v += 8;
+		v0 += 3;
+	      }
+	      ok &= !G->Interrupt;
             }
           }
         }
@@ -3012,28 +2945,30 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   } else {
 
     if(I->cullFlag && sp) {
-      I->V = (float *) mmalloc(sizeof(float) * I->NC * (sp->NVertTot * 31));    /* double check 31 */
-      ErrChkPtr(G, I->V);
-
-      I->NT = Alloc(int, cs->NIndex);
-      ErrChkPtr(G, I->NT);
-
-      visFlag = Alloc(int, sp->nDot);
-      ErrChkPtr(G, visFlag);
-
+      if (ok)
+	I->V = (float *) mmalloc(sizeof(float) * I->NC * (sp->NVertTot * 31));    /* double check 31 */
+      CHECKOK(ok, I->V);
+      if (ok)
+	I->NT = Alloc(int, cs->NIndex);
+      CHECKOK(ok, I->NT);
+      if (ok)
+	visFlag = Alloc(int, sp->nDot);
+      CHECKOK(ok, visFlag);
       /* hmm...need to compute max(sphere_scale) for all atoms... */
 
-      map =
-        MapNewFlagged(G, MAX_VDW * sphere_scale + sphere_add, cs->Coord, cs->NIndex, NULL,
-                      map_flag);
-      if(map)
-        MapSetupExpress(map);
-    } else {
+      if (ok)
+	map =
+	  MapNewFlagged(G, MAX_VDW * sphere_scale + sphere_add, cs->Coord, cs->NIndex, NULL,
+			map_flag);
+      CHECKOK(ok, map);
+      if (ok)
+	ok &= MapSetupExpress(map);
+    } else if (ok){
       if(sp)
         I->V = (float *) mmalloc(sizeof(float) * I->NC * (4 + sp->NVertTot * 6));
       else
         I->V = (float *) mmalloc(sizeof(float) * I->NC * 7);    /* one color, one alpha, one vertex per spheres */
-      ErrChkPtr(G, I->V);
+      CHECKOK(ok, I->V);
     }
 
     /* rendering primitives */
@@ -3043,7 +2978,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     v = I->V;
     nt = I->NT;
 
-    for(a = 0; a < cs->NIndex; a++) {
+    for(a = 0; ok && a < cs->NIndex; a++) {
       a1 = cs->IdxToAtm[a];
       ati1 = obj->AtomInfo + a1;
       vis_flag = marked[a1];
@@ -3082,7 +3017,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
         *(v++) = 1.0F - at_transp;      /* alpha */
 
         if(I->cullFlag && (!spheroidFlag) && (sp)) {
-          for(b = 0; b < sp->nDot; b++) {       /* Sphere culling mode - more strips, but many fewer atoms */
+          for(b = 0; ok && b < sp->nDot; b++) {       /* Sphere culling mode - more strips, but many fewer atoms */
             v1[0] = v0[0] + vdw * sp->dot[b][0];
             v1[1] = v0[1] + vdw * sp->dot[b][1];
             v1[2] = v0[2] + vdw * sp->dot[b][2];
@@ -3112,10 +3047,11 @@ Rep *RepSphereNew(CoordSet * cs, int state)
                 j = map->EList[i++];
               }
             }
+	    ok &= !G->Interrupt;
           }
           q = sp->Sequence;
           s = sp->StripLen;
-          for(b = 0; b < sp->NStrip; b++) {
+          for(b = 0; ok && b < sp->NStrip; b++) {
             /* this is an attempt to fill in *some* of the cracks
              * by checking to see if the center of the triangle is visible 
              * IMHO - the increase in framerates is worth missing a triangle
@@ -3170,13 +3106,14 @@ Rep *RepSphereNew(CoordSet * cs, int state)
               q++;
             }
             s++;
+	    ok &= !G->Interrupt;
           }
 
           *(nt) = 0;            /* how many passes through the triangle renderer? */
           q = sp->Sequence;
           s = sp->StripLen;
 
-          for(b = 0; b < sp->NStrip; b++) {
+          for(b = 0; ok && b < sp->NStrip; b++) {
             restart = 1.0;      /* startin a new strip */
             for(c = 0; c < (*s); c++) {
               if(c > 1) {       /* on third vertex or better */
@@ -3224,12 +3161,13 @@ Rep *RepSphereNew(CoordSet * cs, int state)
               q++;
             }
             s++;
+	    ok &= !G->Interrupt;
           }
         } else if(sp) {
           q = sp->Sequence;
           s = sp->StripLen;
           if(spheroidFlag) {
-            for(b = 0; b < sp->NStrip; b++) {
+            for(b = 0; ok && b < sp->NStrip; b++) {
               sphLen = cs->Spheroid + (sp->nDot * a1);
               sphNorm = cs->SpheroidNormal + (3 * sp->nDot * a1);
               for(c = 0; c < (*s); c++) {
@@ -3243,12 +3181,12 @@ Rep *RepSphereNew(CoordSet * cs, int state)
                 *(v++) = v0[2] + sphTmp * sp->dot[*q][2];
                 q++;
               }
-
               s++;
+	      ok &= !G->Interrupt;
             }
           } else {
-            for(b = 0; b < sp->NStrip; b++) {
-              for(c = 0; c < (*s); c++) {
+            for(b = 0; ok && b < sp->NStrip; b++) {
+              for(c = 0; ok && c < (*s); c++) {
                 *(v++) = sp->dot[*q][0];        /* normal */
                 *(v++) = sp->dot[*q][1];
                 *(v++) = sp->dot[*q][2];
@@ -3256,11 +3194,13 @@ Rep *RepSphereNew(CoordSet * cs, int state)
                 *(v++) = v0[1] + vdw * sp->dot[*q][1];
                 *(v++) = v0[2] + vdw * sp->dot[*q][2];
                 q++;
+		ok &= !G->Interrupt;
               }
               s++;
+	      ok &= !G->Interrupt;
             }
           }
-        } else {                /* if sp is null, then we're simply drawing points */
+        } else if (ok) {                /* if sp is null, then we're simply drawing points */
           *(v++) = v0[0];
           *(v++) = v0[1];
           *(v++) = v0[2];
@@ -3269,14 +3209,13 @@ Rep *RepSphereNew(CoordSet * cs, int state)
         if(nt)
           nt++;
       }
-      if(G->Interrupt) {
-        ok = false;
-        break;
-      }
+      ok &= !G->Interrupt;
+      if (!ok)
+	break;
     }
   }
 
-  if(sp) {                      /* don't do this if we're trying to conserve RAM */
+  if(ok && sp) {                      /* don't do this if we're trying to conserve RAM */
 
     if(!I->LastVisib)
       I->LastVisib = Alloc(int, cs->NIndex);
@@ -3298,15 +3237,19 @@ Rep *RepSphereNew(CoordSet * cs, int state)
       }
   }
 
-  if(I->V) {
+  if(ok && I->V) {
     if(I->N) {
       I->V = ReallocForSure(I->V, float, (v - I->V));
-      if(I->NT)
+      CHECKOK(ok, I->V);
+      if(ok && I->NT)
         I->NT = ReallocForSure(I->NT, int, (nt - I->NT));
+      CHECKOK(ok, I->NT);
     } else {
       I->V = ReallocForSure(I->V, float, 1);
-      if(I->NT)
+      CHECKOK(ok, I->V);
+      if(ok && I->NT)
         I->NT = ReallocForSure(I->NT, int, 1);
+      CHECKOK(ok, I->NT);
     }
   }
   FreeP(marked);

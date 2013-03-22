@@ -78,6 +78,12 @@ typedef struct _OVContext OVContext;
 #define OVCONTEXT_DEFINED
 #endif
 
+#ifndef OVONETOONE_DEFINED
+typedef struct _OVOneToOne OVOneToOne;
+#define OVONETOONE_DEFINED
+#endif
+
+
 #ifndef CObject_DEFINED
 typedef struct _CObject CObject;
 #define CObject_DEFINED
@@ -186,5 +192,11 @@ struct _PyMOLGlobals {
 #ifndef _PYMOL_NOPY
 extern PyMOLGlobals *SingletonPyMOLGlobals;
 #endif
+
+#define ORTHOCGOARG , CGO *orthoCGO
+#define ORTHOCGOARGB  orthoCGO
+#define ORTHOCGOARGVAR , orthoCGO
+#define ORTHOFASTCGOARGVAR , orthoFastCGO
+#define ORTHOCGOARGNULL , NULL
 
 #endif

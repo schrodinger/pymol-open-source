@@ -82,27 +82,27 @@ G3dPrimitive *RayRenderG3d(CRay * I, int width, int height, float front,
                            float back, float fov, int quiet);
 
 struct _CRay {
-  void (*fSphere3fv) (CRay * ray, float *v, float r);
-  void (*fCylinder3fv) (CRay * ray, float *v1, float *v2, float r, float *c1, float *c2);
-  void (*fCustomCylinder3fv) (CRay * ray, float *v1, float *v2, float r, float *c1,
-                              float *c2, int cap1, int cap2);
-  void (*fCone3fv) (CRay * ray, float *v1, float *v2, float r1, float r2, float *c1,
-                    float *c2, int cap1, int cap2);
-  void (*fSausage3fv) (CRay * ray, float *v1, float *v2, float r, float *c1, float *c2);
+  int (*fSphere3fv) (CRay * ray, float *v, float r);
+  int (*fCylinder3fv) (CRay * ray, float *v1, float *v2, float r, float *c1, float *c2);
+  int (*fCustomCylinder3fv) (CRay * ray, float *v1, float *v2, float r, float *c1,
+			     float *c2, int cap1, int cap2);
+  int (*fCone3fv) (CRay * ray, float *v1, float *v2, float r1, float r2, float *c1,
+		   float *c2, int cap1, int cap2);
+  int (*fSausage3fv) (CRay * ray, float *v1, float *v2, float r, float *c1, float *c2);
   void (*fColor3fv) (CRay * ray, float *c);
-  void (*fTriangle3fv) (CRay * ray,
-                        float *v1, float *v2, float *v3,
-                        float *n1, float *n2, float *n3, float *c1, float *c2, float *c3);
-  void (*fTriangleTrans3fv) (CRay * ray,
-                             float *v1, float *v2, float *v3,
-                             float *n1, float *n2, float *n3,
-                             float *c1, float *c2, float *c3,
-                             float t1, float t2, float t3);
+  int (*fTriangle3fv) (CRay * ray,
+		       float *v1, float *v2, float *v3,
+		       float *n1, float *n2, float *n3, float *c1, float *c2, float *c3);
+  int (*fTriangleTrans3fv) (CRay * ray,
+			    float *v1, float *v2, float *v3,
+			    float *n1, float *n2, float *n3,
+			    float *c1, float *c2, float *c3,
+			    float t1, float t2, float t3);
   void (*fWobble) (CRay * ray, int mode, float *par);
   void (*fTransparentf) (CRay * ray, float t);
-  void (*fCharacter) (CRay * ray, int char_id);
+  int (*fCharacter) (CRay * ray, int char_id);
   void (*fInteriorColor3fv) (CRay * ray, float *v, int passive);
-  void (*fEllipsoid3fv) (CRay * ray, float *v, float r, float *n1, float *n2, float *n3);
+  int (*fEllipsoid3fv) (CRay * ray, float *v, float r, float *n1, float *n2, float *n3);
   /* everything below should be private */
   PyMOLGlobals *G;
   CPrimitive *Primitive;
@@ -139,6 +139,8 @@ struct _CRay {
   double PrimSize;
   int PrimSizeCnt;
   float Fov, Pos[3];
+  unsigned char *bkgrd_data;
+  int bkgrd_width, bkgrd_height;
 };
 
 #endif

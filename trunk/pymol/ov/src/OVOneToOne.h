@@ -12,7 +12,10 @@
 #include "OVHeap.h"
 #include "OVreturns.h"
 
+#ifndef OVONETOONE_DEFINED
 typedef struct _OVOneToOne OVOneToOne;
+#define OVONETOONE_DEFINED
+#endif
 
 OVOneToOne *OVOneToOne_New(OVHeap * heap);
 OVstatus OVOneToOne_Init(OVOneToOne * o2o, OVHeap * heap);

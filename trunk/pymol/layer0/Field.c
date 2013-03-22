@@ -57,16 +57,6 @@ PyObject *FieldAsPyList(CField * I)
     break;
   }
 
-#if 0
-  int type;
-  char *data;
-  unsigned int *dim;
-  unsigned int *stride;
-  int n_dim;
-  unsigned int size;
-  unsigned int base_size;
-#endif
-
   return (PConvAutoNone(result));
 #endif
 
@@ -206,24 +196,6 @@ float FieldInterpolatef(CField * I, int a, int b, int c, float x, float y, float
   y1 = 1.0F - y;
   z1 = 1.0F - z;
 
-#if 0
-  if((product1 = x1 * y1 * z1) != 0.0F)
-    result1 += product1 * Ffloat3(I, a, b, c);
-  if((product2 = x * y1 * z1) != 0.0F)
-    result2 += product2 * Ffloat3(I, a + 1, b, c);
-  if((product1 = x1 * y * z1) != 0.0F)
-    result1 += product1 * Ffloat3(I, a, b + 1, c);
-  if((product2 = x1 * y1 * z) != 0.0F)
-    result2 += product2 * Ffloat3(I, a, b, c + 1);
-  if((product1 = x * y * z1) != 0.0F)
-    result1 += product1 * Ffloat3(I, a + 1, b + 1, c);
-  if((product2 = x1 * y * z) != 0.0F)
-    result2 += product2 * Ffloat3(I, a, b + 1, c + 1);
-  if((product1 = x * y1 * z) != 0.0F)
-    result1 += product1 * Ffloat3(I, a + 1, b, c + 1);
-  if((product2 = x * y * z) != 0.0F)
-    result2 += product2 * Ffloat3(I, a + 1, b + 1, c + 1);
-#else
   {
     register char *data = I->data;
     register int a_st = I->stride[0];
@@ -251,7 +223,6 @@ float FieldInterpolatef(CField * I, int a, int b, int c, float x, float y, float
       result2 +=
         product2 * (*((float *) (data + a_bs + a_st + b_bs + b_st + c_bs + c_st)));
   }
-#endif
 
   /*
      printf("%8.5f %8.5f %8.5f %8.3f\n %8.5f %8.5f %8.5f %8.5f \n",
@@ -307,31 +278,6 @@ void FieldInterpolate3f(CField * I, int *locus, float *fract, float *result)
   y1 = 1.0F - y;
   z1 = 1.0F - z;
 
-#if 0
-  for(d = 0; d < 3; d++) {
-    result1 = 0.0F;
-    result2 = 0.0F;
-
-    if((product1 = x1 * y1 * z1) != 0.0F)
-      result1 += product1 * Ffloat4(I, a, b, c, d);
-    if((product2 = x * y1 * z1) != 0.0F)
-      result2 += product2 * Ffloat4(I, a + 1, b, c, d);
-    if((product1 = x1 * y * z1) != 0.0F)
-      result1 += product1 * Ffloat4(I, a, b + 1, c, d);
-    if((product2 = x1 * y1 * z) != 0.0F)
-      result2 += product2 * Ffloat4(I, a, b, c + 1, d);
-    if((product1 = x * y * z1) != 0.0F)
-      result1 += product1 * Ffloat4(I, a + 1, b + 1, c, d);
-    if((product2 = x1 * y * z) != 0.0F)
-      result2 += product2 * Ffloat4(I, a, b + 1, c + 1, d);
-    if((product1 = x * y1 * z) != 0.0F)
-      result1 += product1 * Ffloat4(I, a + 1, b, c + 1, d);
-    if((product2 = x * y * z) != 0.0F)
-      result2 += product2 * Ffloat4(I, a + 1, b + 1, c + 1, d);
-
-    result[d] = result1 + result2;
-  }
-#else
   {
     register char *data = I->data;
     register int a_st = I->stride[0];
@@ -372,7 +318,6 @@ void FieldInterpolate3f(CField * I, int *locus, float *fract, float *result)
       result[d] = result1 + result2;
     }
   }
-#endif
 }
 
 int FieldSmooth3f(CField * I)

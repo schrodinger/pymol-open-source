@@ -276,31 +276,6 @@ static PyObject *CmdGetModalDraw(PyObject * self, PyObject * args)
   return APIResultCode(status);
 }
 
-#if 0
-static PyObject *CmdCache(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  int action;
-  char *scene;
-  int state;
-  ok = PyArg_ParseTuple(args, "Oisi", &self, &actions, &scene, &state);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    if(!ref_object[0])
-      ref_object = NULL;
-    if((ok = APIEnterNotModal(G))) {
-      APIExit(G);
-    }
-  }
-  return (APIResultOk(ok));
-}
-#endif
-
 static PyObject *CmdPseudoatom(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -1411,17 +1386,7 @@ static PyObject *CmdTranslateObjectTTT(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-#if 1
     ok = ExecutiveTranslateObjectTTT(G, name, mov, SettingGetGlobal_i(G, cSetting_movie_auto_store), true);
-#else
-    CObject *obj = ExecutiveFindObjectByName(G, name);
-    if(obj) {
-      ObjectTranslateTTT(obj, mov, false);
-      SceneInvalidate(G);
-    } else {
-      ok = false;
-    }
-#endif
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -2115,7 +2080,7 @@ static PyObject *CmdBackgroundColor(PyObject * self, PyObject * args)
   if(ok && (ok = APIEnterNotModal(G))) {
     idx = ColorGetIndex(G, str1);
     if(idx >= 0)
-      ok = SettingSetfv(G, cSetting_bg_rgb, ColorGet(G, idx));
+      ok = SettingSet_i(G->Setting, cSetting_bg_rgb, idx);
     else {
       ErrMessage(G, "Color", "Bad color name.");
       ok = false;               /* bad color */
@@ -3254,6 +3219,7 @@ static PyObject *CmdRefreshWizard(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     WizardRefresh(G);
+    OrthoInvalidateDoDraw(G);
     OrthoDirty(G);
     APIExit(G);
   }
@@ -3481,290 +3447,12 @@ static PyObject *CmdSliceNew(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-#if 1
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = ExecutiveSliceNew(G, slice, map, state, map_state);
     APIExit(G);
   }
-#else
-  int multi = false;
-  CObject *obj = NULL, *mObj, *origObj;
-  ObjectMap *mapObj;
-  ObjectMapState *ms;
-  if(ok && (ok = APIEnterNotModal(G))) {
-    origObj = ExecutiveFindObjectByName(G, slice);
-    if(origObj) {
-      if(origObj->type != cObjectSlice) {
-        ExecutiveDelete(G, slice);
-        origObj = NULL;
-      }
-    }
-
-    mObj = ExecutiveFindObjectByName(G, map);
-    if(mObj) {
-      if(mObj->type != cObjectMap)
-        mObj = NULL;
-    }
-    if(mObj) {
-      mapObj = (ObjectMap *) mObj;
-      if(state == -1) {
-        multi = true;
-        state = 0;
-        map_state = 0;
-      } else if(state == -2) {
-        state = SceneGetState(G);
-        if(map_state < 0)
-          map_state = state;
-      } else if(state == -3) {  /* append mode */
-        state = 0;
-        if(origObj)
-          if(origObj->fGetNFrame)
-            state = origObj->fGetNFrame(origObj);
-      } else {
-        if(map_state == -1) {
-          map_state = 0;
-          multi = true;
-        } else {
-          multi = false;
-        }
-      }
-      while(1) {
-        if(map_state == -2)
-          map_state = SceneGetState(G);
-        if(map_state == -3)
-          map_state = ObjectMapGetNStates(mapObj) - 1;
-        ms = ObjectMapStateGetActive(mapObj, map_state);
-        if(ms) {
-          obj = (CObject *) ObjectSliceFromMap(G, (ObjectSlice *) origObj, mapObj,
-                                               state, map_state);
-
-          if(!origObj) {
-            ObjectSetName(obj, slice);
-            ExecutiveManageObject(G, (CObject *) obj, -1, false);
-          }
-          PRINTFB(G, FB_ObjectMesh, FB_Actions)
-            " SliceMap: created \"%s\".\n", slice ENDFB(G);
-
-        } else if(!multi) {
-          PRINTFB(G, FB_ObjectSlice, FB_Warnings)
-            " SliceMap-Warning: state %d not present in map \"%s\".\n", map_state + 1, map
-            ENDFB(G);
-          ok = false;
-        }
-        if(multi) {
-          origObj = obj;
-          map_state++;
-          state++;
-          if(map_state >= mapObj->NState)
-            break;
-        } else {
-          break;
-        }
-      }
-    } else {
-      PRINTFB(G, FB_ObjectSlice, FB_Errors)
-        " SliceMap: Map or brick object \"%s\" not found.\n", map ENDFB(G);
-      ok = false;
-    }
-    APIExit(G);
-  }
-#endif
-
   return APIResultOk(ok);
 }
-
-#if 0
-
-
-/* this code can probably be deleted -- already replaced by slices and ramps */
-
-static PyObject *CmdRGBFunction(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  int ok = false;
-  int multi = false;
-  char *slice;
-  int function = -1;
-  int state;
-  CObject *obj = NULL;
-  ObjectSlice *Sobj = NULL;
-  ObjectSliceState *ss;
-
-  ok = PyArg_ParseTuple(args, "Osii", &self, &slice, &function, &state);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    obj = ExecutiveFindObjectByName(G, slice);
-    if(obj) {
-      if(obj->type != cObjectSlice) {
-        obj = NULL;
-        ok = false;
-      }
-    }
-    if(obj) {
-      Sobj = (ObjectSlice *) obj;
-      if(state == -1) {
-        multi = true;
-        state = 0;
-      } else if(state == -2) {
-        state = SceneGetState(G);
-        multi = false;
-      } else {
-        multi = false;
-      }
-      while(1) {
-        ss = ObjectSliceStateGetActive(Sobj, state);
-        if(ss) {
-          ss->RGBFunction = function;
-          ss->RefreshFlag = true;
-        }
-        if(multi) {
-          state++;
-          if(state >= Sobj->NState)
-            break;
-        } else {
-          break;
-        }
-      }
-    } else {
-      PRINTFB(G, FB_ObjectSlice, FB_Errors)
-        " SliceRGBFunction-Warning: Object \"%s\" doesn't exist or is not a slice.\n",
-        slice ENDFB(G);
-      ok = false;
-    }
-    APIExit(G);
-  }
-  return APIResultOk(ok);
-}
-
-static PyObject *CmdSliceHeightmap(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  int ok = false;
-  int multi = false;
-  char *slice;
-  int state;
-  CObject *obj = NULL;
-  ObjectSlice *Sobj = NULL;
-  ObjectSliceState *ss;
-
-  ok = PyArg_ParseTuple(args, "Osi", &self, &slice, &state);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    obj = ExecutiveFindObjectByName(G, slice);
-    if(obj) {
-      if(obj->type != cObjectSlice) {
-        obj = NULL;
-        ok = false;
-      }
-    }
-    if(obj) {
-      Sobj = (ObjectSlice *) obj;
-      if(state == -1) {
-        multi = true;
-        state = 0;
-      } else if(state == -2) {
-        state = SceneGetState(G);
-        multi = false;
-      } else {
-        multi = false;
-      }
-      while(1) {
-        ss = ObjectSliceStateGetActive(Sobj, state);
-        if(ss) {
-          ss->HeightmapFlag = !ss->HeightmapFlag;
-        }
-        if(multi) {
-          state++;
-          if(state >= Sobj->NState)
-            break;
-        } else {
-          break;
-        }
-      }
-    } else {
-      PRINTFB(G, FB_ObjectSlice, FB_Errors)
-        " SliceHeightmap-Warning: Object \"%s\" doesn't exist or is not a slice.\n", slice
-        ENDFB(G);
-      ok = false;
-    }
-    APIExit(G);
-  }
-  return APIResultOk(ok);
-}
-
-static PyObject *CmdSliceSetLock(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  int ok = false;
-  int multi = false;
-  char *slice;
-  int lock = -1;
-  int state;
-  CObject *obj = NULL;
-  ObjectSlice *Sobj = NULL;
-  ObjectSliceState *ss;
-
-  ok = PyArg_ParseTuple(args, "Osii", &self, &slice, &state, &lock);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    obj = ExecutiveFindObjectByName(G, slice);
-    if(obj) {
-      if(obj->type != cObjectSlice) {
-        obj = NULL;
-        ok = false;
-      }
-    }
-    if(obj) {
-      Sobj = (ObjectSlice *) obj;
-      if(state == -1) {
-        multi = true;
-        state = 0;
-      } else if(state == -2) {
-        state = SceneGetState(G);
-        multi = false;
-      } else {
-        multi = false;
-      }
-      while(1) {
-        ss = ObjectSliceStateGetActive(Sobj, state);
-        if(ss) {
-          ss->LockedFlag = lock;
-          ss->RefreshFlag = true;
-        }
-        if(multi) {
-          state++;
-          if(state >= Sobj->NState)
-            break;
-        } else {
-          break;
-        }
-      }
-    } else {
-      PRINTFB(G, FB_ObjectSlice, FB_Errors)
-        " SliceSetLock-Warning: Object \"%s\" doesn't exist or is not a slice.\n", slice
-        ENDFB(G);
-      ok = false;
-    }
-    APIExit(G);
-  }
-  return APIResultOk(ok);
-}
-#endif
 
 static PyObject *CmdIsosurface(PyObject * self, PyObject * args)
 {
@@ -4443,9 +4131,6 @@ static PyObject *CmdReady(PyObject * self, PyObject * args)
   }
 }
 
-#if 0
-extern int _Py_CountReferences(void);
-#endif
 static PyObject *CmdMem(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -4466,16 +4151,8 @@ static PyObject *CmdMem(PyObject * self, PyObject * args)
 #endif
     SelectorMemoryDump(G);
     ExecutiveMemoryDump(G);
-#if 0
-    printf(" Py_Debug: %d total references.\n", _Py_CountReferences());
-#endif
   }
   return APISuccess();
-}
-
-static int decoy_input_hook(void) 
-{ 
-  return 0; 
 }
 
 static PyObject *Cmd_GetGlobalCObject(PyObject * self, PyObject * args)
@@ -4560,26 +4237,7 @@ static PyObject *Cmd_Start(PyObject * self, PyObject * args)
   }
   if(ok) {
     G->P_inst->cmd = cmd;
-#if 1
     PyMOL_StartWithPython(G->PyMOL);
-#if 0
-    G->Option->keep_thread_alive = true;
-    PUnblock(G);
-    if(0) {
-      int a;
-      for(a = 0; a < 100; a++) {
-        PyMOL_Idle(G->PyMOL);
-      }
-    }
-    PBlock(G);
-#endif
-
-#else
-    PyMOL_Start(G->PyMOL);
-    PyMOL_CmdLoad(G->PyMOL, "test/dat/pept.pdb", "filename", "pdb", "test", 1, 0, 1, 0, 0,
-                  1);
-    PyMOL_CmdRay(G->PyMOL, 400, 400, 1, 0.0F, 0.0F, 0, 0, 0);
-#endif
   }
   return APIResultOk(ok);
 }
@@ -4752,25 +4410,14 @@ static PyObject *CmdRunPyMOL(PyObject * self, PyObject * args)
   if(run_only_once) {
     run_only_once = false;
 
-#ifdef _PYMOL_MODULE
+    // _PYMOL_MODULE stuff
     {
       int block_input_hook = false;
       if(!PyArg_ParseTuple(args, "Oi", &self, &block_input_hook))
         block_input_hook = false;
 
-      /* prevent Tcl/Tk from installing/using its hook, which will
-         cause a segmentation fault IF and ONLY IF (1) Tcl/Tk is
-         running in a sub-thread (always the case with PyMOL_) and (2)
-         when the Python interpreter itself is reading from stdin
-         (only the case when launched via "import pymol" with
-         launch_mode 2 (async threaded) */
-
-      if(block_input_hook)
-        PyOS_InputHook = decoy_input_hook;
-
-      was_main();
+      main_shared(block_input_hook);
     }
-#endif
   }
 #endif
 #endif
@@ -6415,32 +6062,9 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-#if 1
     ok = ExecutiveMotionView(G, action, first, last, power, bias, simple, 
                              linear, object, wrap, hand, window, cycles, 
                              scene_name, scene_cut, state, quiet, autogen);
-#else
-    if(wrap < 0) {
-      wrap = SettingGetGlobal_b(G, cSetting_movie_loop);
-    }
-    if(object[0]) {
-      CObject *obj = ExecutiveFindObjectByName(G, object);
-      if(!obj) {
-        ok = false;
-      } else {
-        if(simple < 0)
-          simple = 0;
-        ok = ObjectMotion(obj, action, first, last, power, bias,
-                          simple, linear, wrap, hand, window, cycles, state, quiet);
-      }
-    } else {
-      simple = true;            /* force this because camera matrix does't work like a TTT */
-      ok = MovieView(G, action, first, last, power,
-                     bias, simple, linear, wrap, hand, window, cycles,
-                     scene_name, scene_cut, state, quiet);
-    }
-#endif
-
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -7707,88 +7331,13 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
                 fname, valid_name, frame + 1);
       }
       break;
-#if 0
-    case cLoadTypeXYZ:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading XYZStr\n" ENDFD;
-      if(!origObj) {
-        obj = (CObject *) ObjectMoleculeLoadXYZFile(G, NULL, fname, frame, discrete);
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, obj, zoom, true);
-          if(frame < 0)
-            frame = ((ObjectMolecule *) obj)->NCSet - 1;
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else {
-        ObjectMoleculeLoadXYZFile(G, (ObjectMolecule *) origObj, fname, frame, discrete);
-        if(finish)
-          ExecutiveUpdateObjectSelection(G, origObj);
-        if(frame < 0)
-          frame = ((ObjectMolecule *) origObj)->NCSet - 1;
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname, valid_name, frame + 1);
-      }
-      break;
-#endif
     case cLoadTypePDBStr:
       ok = ExecutiveProcessPDBFile(G, origObj, fname, valid_name,
                                    frame, discrete, finish, buf, NULL,
                                    quiet, true, multiplex, zoom);
       break;
-#if 0
-
-    case cLoadTypeMOL:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading MOL\n" ENDFD;
-      obj =
-        (CObject *) ObjectMoleculeLoadMOLFile(G, (ObjectMolecule *) origObj, fname, frame,
-                                              discrete);
-      if(!origObj) {
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, obj, zoom, true);
-          if(frame < 0)
-            frame = ((ObjectMolecule *) obj)->NCSet - 1;
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else if(origObj) {
-        if(finish)
-          ExecutiveUpdateObjectSelection(G, origObj);
-        if(frame < 0)
-          frame = ((ObjectMolecule *) origObj)->NCSet - 1;
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname, valid_name, frame + 1);
-      }
-      break;
-    case cLoadTypeMOLStr:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: reading MOLStr\n" ENDFD;
-      obj = (CObject *) ObjectMoleculeReadMOLStr(G,
-                                                 (ObjectMolecule *) origObj, fname, frame,
-                                                 discrete, finish);
-      if(!origObj) {
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, obj, zoom, true);
-          if(frame < 0)
-            frame = ((ObjectMolecule *) obj)->NCSet - 1;
-          sprintf(buf, " CmdLoad: MOL-string loaded as \"%s\".\n", valid_name);
-        }
-      } else if(origObj) {
-        if(finish) {
-          ObjectMoleculeInvalidate((ObjectMolecule *) origObj, cRepAll, cRepInvAll, -1);
-          ObjectMoleculeUpdateIDNumbers((ObjectMolecule *) origObj);
-          ObjectMoleculeUpdateNonbonded((ObjectMolecule *) origObj);
-          ExecutiveUpdateObjectSelection(G, origObj);
-        }
-        if(frame < 0)
-          frame = ((ObjectMolecule *) origObj)->NCSet - 1;
-        sprintf(buf, " CmdLoad: MOL-string appended into object \"%s\", state %d.\n",
-                valid_name, frame + 1);
-      }
-      break;
-#else
     case cLoadTypeMOL:
     case cLoadTypeMOLStr:
-#endif
     case cLoadTypeXYZ:
     case cLoadTypeXYZStr:
     case cLoadTypeSDF2:

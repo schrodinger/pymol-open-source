@@ -533,4 +533,6 @@ PyMOLreturn_status PyMOL_TranslateScene(CPyMOL * I, float x, float y, float z);
 
 PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I);
 
+PyMOLreturn_status PyMOL_GetSettingString(CPyMOL * I, int settingid, char *deststr);
+
 #endif

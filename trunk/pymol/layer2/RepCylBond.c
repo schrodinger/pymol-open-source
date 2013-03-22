@@ -47,16 +47,22 @@ typedef struct RepCylBond {
   int NSP, NSPC;
   float *VarAlpha, *VarAlphaRay, *VarAlphaSph;
   CGO *shaderCGO;
+  int shaderCGOmode;
 } RepCylBond;
 
-void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1, float *v2, int nEdge,
-		 int frontCap, int endCap, float tube_size, float overlap, float nub, float **dir, 
-		 int shader_mode, float *v2color );
+static void subdivide(int n, float *x, float *y);
+int RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1, float *v2, int nEdge,
+		int frontCap, int endCap, float tube_size, float overlap, float nub, float **dir, 
+		int shader_mode, float *v2color );
 
 void RepCylBondFree(RepCylBond * I);
 
 void RepCylBondFree(RepCylBond * I)
 {
+  if (I->shaderCGO){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = 0;
+  }
   if (I->Vcgo){
     CGOFree(I->Vcgo);
     I->Vcgo = 0;
@@ -77,20 +83,19 @@ void RepCylBondFree(RepCylBond * I)
   OOFreeP(I);
 }
 
-void RepCylinderBox(RepCylBond *I, CGO *cgo, float *v1, float *v2, float tube_size,
-		    float overlap, float nub);
+int RepCylinderBox(RepCylBond *I, CGO *cgo, float *v1, float *v2, float tube_size,
+		   float overlap, float nub);
 
 static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
   Picking **pick = info->pick;
-  int a;
   float *vptr, *var_alpha;
-  int c, cc;
+  int c;
   float alpha;
-  SphereRec *sp;
   register PyMOLGlobals *G = I->R.G;
   int width, height;
+  int ok = true;
 
   SceneGetWidthHeight(G, &width, &height); 
 
@@ -100,6 +105,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
   if(ray) {
+    int stick_ball = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_stick_ball);
     ray->fTransparentf(ray, 1.0F - alpha);
     PRINTFD(G, FB_RepCylBond)
       " RepCylBondRender: rendering raytracable...\n" ENDFD;
@@ -107,31 +113,34 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
     vptr = I->VR;
     c = I->NR;
     var_alpha = I->VarAlphaRay;
-    while(c--) {
+    while(ok && c--) {
       if(var_alpha) {
         ray->fTransparentf(ray, 1.0F - *(var_alpha++));
       }
       if (vptr[0] == vptr[3] && vptr[1] == vptr[4] && vptr[2] == vptr[5]){
-	ray->fSausage3fv(ray, vptr + 7, vptr + 10, *(vptr + 6), vptr, vptr + 3);
+	ok &= ray->fSausage3fv(ray, vptr + 7, vptr + 10, *(vptr + 6), vptr, vptr + 3);
       } else {
 	float mid[3];
 	average3f(vptr + 7, vptr + 10, mid);
-	ray->fSausage3fv(ray, vptr + 7, mid, *(vptr + 6), vptr, vptr);
-	ray->fSausage3fv(ray, mid, vptr + 10, *(vptr + 6), vptr + 3, vptr + 3);
+	ok &= ray->fSausage3fv(ray, vptr + 7, mid, *(vptr + 6), vptr, vptr);
+	if (ok)
+	  ok &= ray->fSausage3fv(ray, mid, vptr + 10, *(vptr + 6), vptr + 3, vptr + 3);
       }
       vptr += 13;
     }
     var_alpha = I->VarAlphaSph;
-    if(I->VSPC) {
+    if(ok && I->VSPC) {
       vptr = I->VSPC;
       c = I->NSPC;
-      while(c--) {
+      while(ok && c--) {
         if(var_alpha) {
           ray->fTransparentf(ray, 1.0F - *(var_alpha++));
         }
         ray->fColor3fv(ray, vptr);
         vptr += 3;
-        ray->fSphere3fv(ray, vptr, *(vptr + 3));
+	if (stick_ball){
+	  ok &= ray->fSphere3fv(ray, vptr, *(vptr + 3));
+	}
         vptr += 4;
       }
     }
@@ -152,9 +161,10 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
       shader_mode = use_shader && (int) SettingGet(G, cSetting_stick_as_cylinders) 
 	&& (int) SettingGet(G, cSetting_render_as_cylinders);
 
-      if (I->shaderCGO && (!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO))){
+      if (I->shaderCGO && (!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO) || I->shaderCGOmode != shader_mode)){
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = 0;
+	I->shaderCGOmode = 0;
       }
 
 #ifdef _PYMOL_GL_CALLLISTS
@@ -167,30 +177,31 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
-	  I->shaderCGO->use_shader = true;
+	  CHECKOK(ok, I->shaderCGO);
+	  if (ok){
+	    I->shaderCGOmode = shader_mode;
+	    CGOSetUseShader(I->shaderCGO, true);
+	  }
 	  generate_shader_cgo = 1;
 	} else {
-	  if (shader_mode == 1) { // GLSL
-	    CShaderPrg *shaderPrg;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	    {
-	      float *color;
-	      color = ColorGet(G, I->R.obj->Color);
-	      I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
-	      I->shaderCGO->enable_shaders = 0;
-	      CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
-	    }
-	    CShaderPrg_Disable(shaderPrg);
+	  if (shader_mode == 1  && CShaderMgr_ShaderPrgExists(G->ShaderMgr, "cylinder")){ // GLSL
+	    float *color;
+	    color = ColorGet(G, I->R.obj->Color);
+	    I->shaderCGO->enable_shaders = 1;
+	    I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
+	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	    return;
 	  } else {
 	    CShaderPrg *shaderPrg;
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", !SettingGet(G, cSetting_stick_debug));
+	    if (!shaderPrg) return;
+	    SceneResetNormalUseShaderAttribute(G, 0, true, CShaderPrg_GetAttribLocation(shaderPrg, "a_Normal"));
+	    CShaderPrg_SetLightingEnabled(shaderPrg, !SettingGet(G, cSetting_stick_debug));
 	    {
 	      float *color;
 	      color = ColorGet(G, I->R.obj->Color);
 	      I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
-	      I->shaderCGO->enable_shaders = 0;
+	      I->shaderCGO->enable_shaders = true;
 	      CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	    }
 	    CShaderPrg_Disable(shaderPrg);
@@ -208,15 +219,14 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	}
       }
 #endif
-      //      vptr = I->V;
       c = I->N;
       var_alpha = I->VarAlpha;
       PRINTFD(G, FB_RepCylBond)
 	" RepCylBondRender: rendering GL...\n" ENDFD;
       
       if (generate_shader_cgo){
-	if (I->Vcgo){
-	  CGOAppend(I->shaderCGO, I->Vcgo);
+	if (ok && I->Vcgo){
+	  ok &= CGOAppendNoStop(I->shaderCGO, I->Vcgo);
 	}
       } else {
 	if (I->Vcgo){
@@ -226,126 +236,47 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	  CGORenderGL(I->Vcgo, color, NULL, NULL, info, &I->R);
 	}
       }
-      if(I->VSP) {            /* stick_ball : stick spheres, if present */
-	vptr = I->VSP;
-	c = I->NSP;
+      if(SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_stick_ball)) {            /* stick_ball : stick spheres, if present */
+	int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
+	int draw_quality = (((draw_mode == 1) || (draw_mode == -2) || (draw_mode == 2)));
+	int sphere_quality;
+	float alphaval = alpha;
+	sphere_quality = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_sphere_quality);
+	if(sphere_quality < 0) sphere_quality = 0; else if(sphere_quality > 4) sphere_quality = 4;
+	if(draw_quality && (sphere_quality < 3))
+	  sphere_quality = 3;
+
+	vptr = I->VSPC;
+	c = I->NSPC;
 	var_alpha = I->VarAlphaSph;
-	  if (generate_shader_cgo){
-	    if((alpha == 1.0) && !(var_alpha)) {
-	      sp = I->SP;
-	      while(c--) {
-		CGOColorv(I->shaderCGO, vptr);
-		vptr += 3;
-		for(a = 0; a < sp->NStrip; a++) {
-		  cc = sp->StripLen[a];
-		  CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
-		  cc = sp->StripLen[a];
-		  while(cc--) {
-		    CGONormalv(I->shaderCGO, vptr);
-		    vptr += 3;
-		    CGOVertexv(I->shaderCGO, vptr);
-		    vptr += 3;
-		  }
-		  CGOEnd(I->shaderCGO);
-		}
+	if (generate_shader_cgo){
+	  if (ok){
+	    if (ok && !var_alpha)
+	      ok &= CGOAlpha(I->shaderCGO, alphaval);	    
+	    while(ok && c--) {
+	      if(var_alpha) {
+		ok &= CGOAlpha(I->shaderCGO, *(var_alpha++));
 	      }
-	    } else {
-	      sp = I->SP;
-	      while(c--) {
-		if(!var_alpha) {
-		  CGOAlpha(I->shaderCGO, alpha);
-		} else {
-		  CGOAlpha(I->shaderCGO, *(var_alpha++));
-		}
-		CGOColor(I->shaderCGO, vptr[0], vptr[1], vptr[2]);
-		vptr += 3;
-		for(a = 0; a < sp->NStrip; a++) {
-		  cc = sp->StripLen[a];
-		  CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
-		  cc = sp->StripLen[a];
-		  while(cc--) {
-		    CGONormalv(I->shaderCGO, vptr);
-		    vptr += 3;
-		    CGOVertexv(I->shaderCGO, vptr);
-		    vptr += 3;
-		  }
-		  CGOEnd(I->shaderCGO);
-		}
-	      }
-	    }
-	} else { /* end generate_shader_cgo */
-	if((alpha == 1.0) && !(var_alpha)) {
-	  sp = I->SP;
-	  while(c--) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-	    glColor3fv(vptr);
-#endif
-	    vptr += 3;
-	    for(a = 0; a < sp->NStrip; a++) {
-	      cc = sp->StripLen[a];
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
-	      {
-		int numverts = cc, pl;
-		ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
-		ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
-		pl = 0;
-		while(cc--) {
-		  normVals[pl] = vptr[0]; normVals[pl+1] = vptr[1]; normVals[pl+2] = vptr[2];
-		  vptr += 3;
-		  vertVals[pl++] = vptr[0]; vertVals[pl++] = vptr[1]; vertVals[pl++] = vptr[2];
-		  vptr += 3;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		glNormalPointer(GL_FLOAT, 0, normVals);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
-		glDisableClientState(GL_NORMAL_ARRAY);
-		glDisableClientState(GL_VERTEX_ARRAY);
-		DEALLOCATE_ARRAY(vertVals)
-		DEALLOCATE_ARRAY(normVals)
-	      }
-#else
-	      glBegin(GL_TRIANGLE_STRIP);
-	      cc = sp->StripLen[a];
-	      while(cc--) {
-		glNormal3fv(vptr);
-		vptr += 3;
-		glVertex3fv(vptr);
+	      if (ok){
+		ok &= CGOColorv(I->shaderCGO, vptr);
 		vptr += 3;
 	      }
-	      glEnd();
-#endif
-#endif
+	      if (ok){
+		ok &= CGOSphere(I->shaderCGO, vptr, *(vptr + 3));
+		vptr += 4;
+	      }
 	    }
 	  }
 	} else {
-	  sp = I->SP;
-	  while(c--) {
-	    if(!var_alpha) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-	      glColor4f(vptr[0], vptr[1], vptr[2], alpha);
-#endif
-	    } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-	      glColor4f(vptr[0], vptr[1], vptr[2], *(var_alpha++));
-#endif
-	    }
+	  int a, cc;
+	  SphereRec *sp = I->SP;
+	  vptr = I->VSP;
+	  c = I->NSP;
+	  while (c--){
+	    glColor3fv(vptr);
 	    vptr += 3;
 	    for(a = 0; a < sp->NStrip; a++) {
 	      cc = sp->StripLen[a];
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 	      {
 		int numverts = cc, pl;
@@ -370,7 +301,6 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	      }
 #else
 	      glBegin(GL_TRIANGLE_STRIP);
-	      cc = sp->StripLen[a];
 	      while(cc--) {
 		glNormal3fv(vptr);
 		vptr += 3;
@@ -378,70 +308,79 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 		vptr += 3;
 	      }
 	      glEnd();
-#endif
 #endif
 	    }
 	  }
 	}
-	} /* end else use_shader */ 	
       }
       PRINTFD(G, FB_RepCylBond)
 	" RepCylBondRender: done.\n" ENDFD;
       
       /* end of rendering, if using shaders, then render CGO */
       if (use_shader) {
-	if (generate_shader_cgo){
+	if (ok && generate_shader_cgo){
 	  CGO *convertcgo = NULL;
-	  CGOStop(I->shaderCGO);
+	  ok &= CGOStop(I->shaderCGO);
 
-	  /*
-#ifdef _PYMOL_CGO_DRAWARRAYS
-	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
-	  CGOFree(I->shaderCGO);    
-	  I->shaderCGO = convertcgo;
-#else
-	  (void)convertcgo;
-#endif
-	  */
 #ifdef _PYMOL_CGO_DRAWBUFFERS
-	  if (shader_mode == 1) { //GLSL
+	  if (ok && shader_mode == 1 && CShaderMgr_ShaderPrgExists(G->ShaderMgr, "cylinder")) { //GLSL
 	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
+	    CHECKOK(ok, convertcgo);
 	  } else {
-	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	    CGO *convertcgo2 = CGOSimplify(I->shaderCGO, 0);
+	    CHECKOK(ok, convertcgo2);
+	    if (ok){
+	      convertcgo = CGOCombineBeginEnd(convertcgo2, 0);
+	      CHECKOK(ok, convertcgo);
+	    }
+	    CGOFree(convertcgo2);
+	    convertcgo2 = convertcgo;
+	    if (ok){
+	      convertcgo = CGOOptimizeToVBONotIndexed(convertcgo2, 0);
+	      CHECKOK(ok, convertcgo);
+	    }
+	    CGOFree(convertcgo2);
 	  }
-	  if (convertcgo){
+	  if (convertcgo!=NULL){
 	    CGOFree(I->shaderCGO);
 	    I->shaderCGO = convertcgo;
+	    convertcgo = NULL;
+	    CGOSetUseShader(I->shaderCGO, true);
 	  }
 #else
 	  (void)convertcgo;
 #endif
 	}
 
-  if (shader_mode == 1) { // GLSL
-    CShaderPrg *shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-    {
-      float *color;
-      color = ColorGet(G, I->R.obj->Color);
-      I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
-      I->shaderCGO->enable_shaders = 0;
-      CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
-    }
-    CShaderPrg_Disable(shaderPrg);
-  } else {
-    CShaderPrg *shaderPrg;
-    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", !SettingGet(G, cSetting_stick_debug));
-    {
-      float *color;
-      color = ColorGet(G, I->R.obj->Color);
-      I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
-      I->shaderCGO->enable_shaders = 0;
-      CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
-    }
-    CShaderPrg_Disable(shaderPrg);
-  }
-  }
+	if (ok){
+	  if (shader_mode == 1 && CShaderMgr_ShaderPrgExists(G->ShaderMgr, "cylinder")) { //GLSL
+	    float *color;
+	    color = ColorGet(G, I->R.obj->Color);
+	    I->shaderCGO->enable_shaders = 1;
+	    I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
+	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
+	  } else {
+	    CShaderPrg *shaderPrg;
+	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
+	    if (!shaderPrg)return;
+	    SceneResetNormalUseShaderAttribute(G, 0, true, CShaderPrg_GetAttribLocation(shaderPrg, "a_Normal"));
+	    CShaderPrg_SetLightingEnabled(shaderPrg, !SettingGet(G, cSetting_stick_debug));
+	    {
+	      float *color;
+	      color = ColorGet(G, I->R.obj->Color);
+	      I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
+	      I->shaderCGO->enable_shaders = true;
+	      CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
+	    }
+	    CShaderPrg_Disable(shaderPrg);
+	  }
+	} else {
+	  CGOFree(I->shaderCGO);
+	  I->shaderCGO = NULL;
+	  I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+	  I->R.cs->Active[cRepCyl] = false;
+	}
+      }
 #ifdef _PYMOL_GL_CALLLISTS
       if (use_display_lists && I->R.displayList){
 	glEndList();
@@ -452,16 +391,16 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
   }
 }
 
-static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
-                       float **vr_ptr, int *nr_ptr,     /* ray */
-                       float *v1, float *v2, int *other,
-                       int a1, int a2, float *coord,
-                       float *color1, float *color2, int ord,
-                       int n_edge,
-                       float tube_size,
-                       float overlap,
-                       float nub, int half_bonds, int fixed_r, float scale_r,
-                       short shader_mode)
+static int RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
+		      float **vr_ptr, int *nr_ptr,     /* ray */
+		      float *v1, float *v2, int *other,
+		      int a1, int a2, float *coord,
+		      float *color1, float *color2, int ord,
+		      int n_edge,
+		      float tube_size,
+		      float overlap,
+		      float nub, int half_bonds, int fixed_r, float scale_r,
+		      short shader_mode)
 {
 
   float d[3], t[3], p0[3], p1[3], p2[3], *vv;
@@ -470,6 +409,7 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
   int n = *n_ptr, nr = *nr_ptr;
   int a3;
   int double_sided;
+  int ok = true;
 
   /* First, we need to construct a coordinate system */
 
@@ -538,13 +478,14 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
       if(!half_bonds) {
 
         /* opengl */
-
-	CGOColorv(cgo, color1);
+	if (ok)
+	  ok &= CGOColorv(cgo, color1);
 
         add3f(v1, t, v1t);
         add3f(v2, t, v2t);
 
-	RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	if (ok)
+	  ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
         n++;
 
         /* ray */
@@ -562,11 +503,13 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
         /* opengl */
 
-	CGOColorv(cgo, color1);
+	if (ok)
+	  ok &= CGOColorv(cgo, color1);
         subtract3f(v1, t, v1t);
         subtract3f(v2, t, v2t);
 
-        RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	if (ok)
+	  ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
 
         /* ray */
 
@@ -588,14 +531,14 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
         vh[2] = (v1[2] + v2[2]) * 0.5F;
 
         if(color1) {
-
-
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
           /* opengl */
           add3f(v1, t, v1t);
           add3f(vh, t, v2t);
 
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -611,12 +554,14 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           vr += 3;
           nr++;
 
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
           /* opengl */
           subtract3f(v1, t, v1t);
           subtract3f(vh, t, v2t);
 
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -634,11 +579,12 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
         }
         if(color2) {
-
-	  CGOColorv(cgo, color2);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color2);
           add3f(v2, t, v1t);
           add3f(vh, t, v2t);
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+          if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -654,12 +600,14 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           vr += 3;
           nr++;
 
-	  CGOColorv(cgo, color2);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color2);
 
           subtract3f(v2, t, v1t);
           subtract3f(vh, t, v2t);
 
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
           /* ray */
 
@@ -673,7 +621,6 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           copy3f(v2t, vr);
           vr += 3;
           nr++;
-
         }
       }
     }
@@ -697,11 +644,13 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
       if(!half_bonds) {
         /* opengl */
-	CGOColorv(cgo, color1);
+	if (ok)
+	  ok &= CGOColorv(cgo, color1);
 
         copy3f(v1, v1t);
         copy3f(v2, v2t);
-        RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	if (ok)
+	  ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
         n++;
 
         /* ray */
@@ -718,11 +667,13 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
         nr++;
 
         /* opengl */
-	CGOColorv(cgo, color1);
+	if (ok)
+	  ok &= CGOColorv(cgo, color1);
         add3f(v1, t, v1t);
         add3f(v2, t, v2t);
 
-	RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	if (ok)
+	  ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
         n++;
 
         /* ray */
@@ -739,11 +690,13 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
         nr++;
 
         /* opengl */
-	CGOColorv(cgo, color1);
+	if (ok)
+	  ok &= CGOColorv(cgo, color1);
         subtract3f(v1, t, v1t);
         subtract3f(v2, t, v2t);
 
-        RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	if (ok)
+	  ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
         n++;
 
         /* ray */
@@ -758,7 +711,6 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
         copy3f(v2t, vr);
         vr += 3;
         nr++;
-
       } else {
         vh[0] = (v1[0] + v2[0]) * 0.5F;
         vh[1] = (v1[1] + v2[1]) * 0.5F;
@@ -766,10 +718,12 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
         if(color1) {
           /* opengl */
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
 
           copy3f(v1, v1t);
-          RepCylinder(NULL, I, cgo, v1t, vh, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, vh, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -786,11 +740,13 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           nr++;
 
           /* opengl */
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
           add3f(v1, t, v1t);
           add3f(vh, t, v2t);
 
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -807,12 +763,14 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           nr++;
 
           /* opengl */
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
 
           subtract3f(v1, t, v1t);
           subtract3f(vh, t, v2t);
 
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -827,15 +785,16 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           copy3f(v2t, vr);
           vr += 3;
           nr++;
-
         }
         if(color2) {
 
           /* opengl */
-	  CGOColorv(cgo, color2);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color2);
 
           copy3f(v2, v2t);
-          RepCylinder(NULL, I, cgo, v2t, vh, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v2t, vh, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -852,12 +811,14 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           nr++;
 
           /* opengl */
-	  CGOColorv(cgo, color2);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color2);
 
           add3f(v2, t, v1t);
           add3f(vh, t, v2t);
 
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -874,12 +835,14 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           nr++;
 
           /* opengl */
-	  CGOColorv(cgo, color2);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color2);
 
           subtract3f(v2, t, v1t);
           subtract3f(vh, t, v2t);
 
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -894,7 +857,6 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
           copy3f(v2t, vr);
           vr += 3;
           nr++;
-
         }
       }
     }
@@ -935,11 +897,13 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
         /* opengl */
 
-	CGOColorv(cgo, color1);
+	if (ok)
+	  ok &= CGOColorv(cgo, color1);
 
         copy3f(v1, v1t);
         copy3f(v2, v2t);
-        RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	if (ok)
+	  ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 1, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
         n++;
 
         /* ray */
@@ -979,9 +943,11 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
         /* opengl */
 
-	CGOColorv(cgo, color1);
+	if (ok)
+	  ok &= CGOColorv(cgo, color1);
 
-        RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
+	if (ok)
+	  ok &= RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
         n++;
 
         scale3f(along, inner2a, adj);
@@ -1004,9 +970,11 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
         /* opengl */
 
-	CGOColorv(cgo, color1);
+	if (ok)
+	  ok &= CGOColorv(cgo, color1);
 
-        RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
+	if (ok)
+	  ok &= RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
         n++;
 
         if(double_sided) {
@@ -1035,9 +1003,11 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
           /* opengl */
 
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
 
-          RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
           n++;
 
           scale3f(along, inner2a, adj);
@@ -1060,13 +1030,13 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
           /* opengl */
 
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
 
-          RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
           n++;
-
         }
-
       } else {
         vh[0] = (v1[0] + v2[0]) * 0.5F;
         vh[1] = (v1[1] + v2[1]) * 0.5F;
@@ -1076,11 +1046,13 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
           /* opengl */
 
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
 
           copy3f(v1, v1t);
           copy3f(vh, v2t);
-          RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+          if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -1120,9 +1092,11 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
           /* open gl */
 
-	  CGOColorv(cgo, color1);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color1);
 
-          RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
           n++;
 
           if(double_sided) {
@@ -1150,23 +1124,24 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
             nr++;
 
             /* open gl */
-
-	    CGOColorv(cgo, color1);
-
-            RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
+	    if (ok)
+	      ok &= CGOColorv(cgo, color1);
+	    if (ok)
+	      ok &= RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
             n++;
 
           }
         }
 
         if(color2) {
-
-	  CGOColorv(cgo, color2);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color2);
 
           copy3f(v2, v1t);
           copy3f(vh, v2t);
 
-	  RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1t, v2t, n_edge, 1, 0, radius, overlap_r, nub_r, &dir, shader_mode, NULL);
           n++;
 
           /* ray */
@@ -1206,9 +1181,11 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 
           /* opengl */
 
-	  CGOColorv(cgo, color2);
+	  if (ok)
+	    ok &= CGOColorv(cgo, color2);
 
-          RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
+	  if (ok)
+	    ok &= RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
           n++;
 
           if(double_sided) {
@@ -1236,11 +1213,11 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
             nr++;
 
             /* opengl */
-
-	    CGOColorv(cgo, color2);
-            RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
+	    if (ok)
+	      ok &= CGOColorv(cgo, color2);
+	    if (ok)
+	      ok &= RepCylinder(NULL, I, cgo, v1tt, v2tt, n_edge, 1, 1, radius2, overlap_r2, nub_r2, &dir, shader_mode, NULL);
             n++;
-
           }
         }
       }
@@ -1250,6 +1227,9 @@ static void RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
   *n_ptr = n;
   *vr_ptr = vr;
   *nr_ptr = nr;
+  if (dir)
+    FreeP(dir);
+  return ok;
 }
 
 void RepCylBondFilterBond(int *marked, AtomInfoType *ati1, AtomInfoType *ati2, int b1, int b2, int na_mode, int *c1, int *c2, int *s1, int *s2){
@@ -1391,7 +1371,9 @@ void RepCylBondFilterBond(int *marked, AtomInfoType *ati1, AtomInfoType *ati2, i
     }
   }
 }
-void RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, CoordSet * cs, int *marked){
+int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, CoordSet * cs, int *marked);
+
+int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, CoordSet * cs, int *marked){
   PyMOLGlobals *G = cs->State.G;
   register BondType *b = obj->Bond;
   int a, ord, a1, a2, stick_color, c1, c2, s1, s2, half_bonds, hide_long = false;
@@ -1403,6 +1385,7 @@ void RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, 
   int na_mode;
   const float _0p9 = 0.9F;
   int n_bonds = 0, n_bonds_bc = 0;
+  int ok = true;
 
   radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_radius);
   stick_color = SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_stick_color);
@@ -1417,7 +1400,7 @@ void RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, 
   na_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_nucleic_acid_mode);
 
-  for(a = 0; a < obj->NBond; a++) {
+  for(a = 0; ok && a < obj->NBond; a++) {
     b1 = b->index[0];
     b2 = b->index[1];
     ord = b->order;
@@ -1486,35 +1469,51 @@ void RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, 
 	n_bonds++;
 	if (!adjacent_atoms[a1]){
 	  adjacent_atoms[a1] = Calloc(int, 2);
-	  adjacent_atoms[a1][0] = 1; adjacent_atoms[a1][1] = a2;
+	  CHECKOK(ok, adjacent_atoms[a1]);
+	  if (ok){
+	    adjacent_atoms[a1][0] = 1; adjacent_atoms[a1][1] = a2;
+	  }
 	} else {
 	  int len = adjacent_atoms[a1][0], *ptr = adjacent_atoms[a1], cnt;
 	  adjacent_atoms[a1] = Calloc(int, len+2);
-	  adjacent_atoms[a1][0] = len+1; 
-	  for (cnt = 1; cnt<=len; cnt++){
-	    adjacent_atoms[a1][cnt] = ptr[cnt];
+	  CHECKOK(ok, adjacent_atoms[a1]);
+
+	  if (ok){
+	    adjacent_atoms[a1][0] = len+1; 
+	    for (cnt = 1; cnt<=len; cnt++){
+	      adjacent_atoms[a1][cnt] = ptr[cnt];
+	    }
+	    adjacent_atoms[a1][len+1] = a2;
 	  }
-	  adjacent_atoms[a1][len+1] = a2;
 	  FreeP(ptr);
 	}
 
-	if (!adjacent_atoms[a2]){
-	  adjacent_atoms[a2] = Calloc(int, 2);
-	  adjacent_atoms[a2][0] = 1; adjacent_atoms[a2][1] = a1;
-	} else {
-	  int len = adjacent_atoms[a2][0], *ptr = adjacent_atoms[a2], cnt;
-	  adjacent_atoms[a2] = Calloc(int, len+2);
-	  adjacent_atoms[a2][0] = len+1; 
-	  for (cnt = 1; cnt<=len; cnt++){
-	    adjacent_atoms[a2][cnt] = ptr[cnt];
+	if (ok){
+	  if (!adjacent_atoms[a2]){
+	    adjacent_atoms[a2] = Calloc(int, 2);
+	    CHECKOK(ok, adjacent_atoms[a2]);
+	    if (ok){
+	      adjacent_atoms[a2][0] = 1; adjacent_atoms[a2][1] = a1;
+	    }
+	  } else {
+	    int len = adjacent_atoms[a2][0], *ptr = adjacent_atoms[a2], cnt;
+	    adjacent_atoms[a2] = Calloc(int, len+2);
+	    CHECKOK(ok, adjacent_atoms[a2]);
+	    if (ok){
+	      adjacent_atoms[a2][0] = len+1; 
+	      for (cnt = 1; cnt<=len; cnt++){
+		adjacent_atoms[a2][cnt] = ptr[cnt];
+	      }
+	      adjacent_atoms[a2][len+1] = a1;
+	    }
+	    FreeP(ptr);
 	  }
-	  adjacent_atoms[a2][len+1] = a1;	  
-	  FreeP(ptr);
 	}
       }
     }
     b++;
   }
+  return ok;
 }
 
 
@@ -1526,7 +1525,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   int a, a1, a2, c1, c2, s1, s2;
   register int b1, b2;
   register BondType *b;
-  float *vv1, *vv2, *v0, *vr, *vsp, *vspc;
+  float *vv1, *vv2, *v0, *vr, *vspc;
+  float *vsp;
   float v1[3], v2[3], h[3];
   float radius;
   int nEdge;
@@ -1563,13 +1563,24 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   int n_bonds = 0;
   short shader_mode = 0;
   CGO *Vcgo = 0;
-  OOAlloc(G, RepCylBond);
+  int ok = true;
+  int stick_ball_filter_single_atoms;
 
+  OOAlloc(G, RepCylBond);
+  CHECKOK(ok, I);
+  if (!ok){
+    return NULL;
+  }
   I->Vcgo = 0;
   I->VPcgo = 0;
   PRINTFD(G, FB_RepCylBond)
     " RepCylBondNew-Debug: entered.\n" ENDFD;
   obj = cs->Obj;
+  /* if shaders are off, valences are on, and stick_ball is on, then we need to filter stick_balls to not show 
+     on atoms with a single bond */
+    stick_ball_filter_single_atoms = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_valence) &&
+                                     SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_stick_ball)
+                                 && !SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_use_shaders);
   visFlag = false;
   b = obj->Bond;
   ai1 = obj->AtomInfo;
@@ -1590,9 +1601,27 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   }
 
   marked = Calloc(int, obj->NAtom);
+  CHECKOK(ok, marked);
+  if (!ok){
+    RepCylBondFree(I);
+    return NULL;
+  }
   capdrawn = Calloc(short, obj->NAtom);
-  if (SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_good_geometry)){
+  CHECKOK(ok, capdrawn);
+  if (!ok){
+    FreeP(marked);
+    RepCylBondFree(I);
+    return NULL;
+  }
+  if (SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_good_geometry) || stick_ball_filter_single_atoms){
     adjacent_atoms = Calloc(int*, obj->NAtom);
+    CHECKOK(ok, adjacent_atoms);
+    if (!ok){
+      FreeP(marked);
+      FreeP(capdrawn);
+      RepCylBondFree(I);
+      return NULL;
+    }
   }
 
   valence = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_valence);
@@ -1615,7 +1644,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   hide_long = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_hide_long_bonds);
 
   b = obj->Bond;
-  for(a = 0; a < obj->NBond; a++) {
+  for(a = 0; ok && a < obj->NBond; a++) {
     b1 = b->index[0];
     b2 = b->index[1];
     ord = b->order;
@@ -1658,6 +1687,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         maxCyl += 2;
     }
     b++;
+    ok &= !G->Interrupt;
   }
 
   nEdge = (int) SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_quality);
@@ -1687,8 +1717,9 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   I->VarAlphaRay = NULL;
   I->VarAlphaSph = NULL;
   I->shaderCGO = 0;
+  I->shaderCGOmode = 0;
 
-  if(obj->NBond) {
+  if(ok && obj->NBond) {
     int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
     int draw_quality = (((draw_mode == 1) || (draw_mode == -2) || (draw_mode == 2)));
     stick_ball = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_stick_ball);
@@ -1745,15 +1776,17 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         }
         b++;
       }
-
     }
 
     if(valence_found) {         /* build list of up to 2 connected atoms for each atom */
       other = ObjectMoleculeGetPrioritizedOtherIndexList(obj, cs);
-      fixed_radius =
-        SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_stick_fixed_radius);
-      scale_r =
-        SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_valence_scale);
+      CHECKOK(ok, other);
+      if (ok){
+	fixed_radius =
+	  SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_stick_fixed_radius);
+	scale_r =
+	  SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_valence_scale);
+      }
     }
 
     /* OpenGL */
@@ -1770,20 +1803,24 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       // for color = 12 floats total
     }
 
-    if(variable_alpha)
+    if(ok && variable_alpha){
       I->VarAlpha = Alloc(float, maxCyl);
-    /*    I->V = VLAlloc(float, v_size);
-	  ErrChkPtr(G, I->V);*/
-
-    Vcgo = CGONew(G);
+      CHECKOK(ok, I->VarAlpha);
+    }
+    if (ok)
+      Vcgo = CGONew(G);
+    CHECKOK(ok, Vcgo);
 
     /* RayTrace */
 
     vr_size = maxCyl * 11 * 3;
-    if(variable_alpha)
+    if(ok && variable_alpha){
       I->VarAlphaRay = Alloc(float, maxCyl);
-    I->VR = Alloc(float, vr_size);
-    ErrChkPtr(G, I->VR);
+      CHECKOK(ok, I->VarAlphaRay);
+    }
+    if (ok)
+      I->VR = Alloc(float, vr_size);
+    CHECKOK(ok, I->VR);
 
     /* spheres for stick & balls */
     if(stick_ball) {
@@ -1794,15 +1831,13 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     } else if(draw_quality) {
       stick_ball = true;
     }
-    if(stick_ball) {
+    if(ok) { //(stick_ball) {
       int ds;
-
       ds = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_quality);
       if(ds < 0)
         ds = 0;
       if(ds > 4)
         ds = 4;
-
       if(draw_quality && (ds < 3))
         ds = 3;
 
@@ -1810,19 +1845,23 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 
       I->SP = sp;
       I->VSP = Alloc(float, maxCyl * 2 * (3 + sp->NVertTot * 6));
-      I->VSPC = Alloc(float, maxCyl * 2 * 7);
-      I->VarAlphaSph = Alloc(float, maxCyl * 2);
-      ErrChkPtr(G, I->VSP);
+      CHECKOK(ok, I->VSP);
+      if (ok)
+	I->VSPC = Alloc(float, maxCyl * 2 * 7);
+      CHECKOK(ok, I->VSPC);
+      if (ok)
+	I->VarAlphaSph = Alloc(float, maxCyl * 2);
+      CHECKOK(ok, I->VarAlphaSph);
     }
     I->NEdge = nEdge;
-    if (adjacent_atoms){
-      RepCylBondPopulateAdjacentAtoms(adjacent_atoms, obj, cs, marked);
+    if (ok && adjacent_atoms){
+      ok &= RepCylBondPopulateAdjacentAtoms(adjacent_atoms, obj, cs, marked);
     }
     vr = I->VR;
-    vsp = I->VSP;
     vspc = I->VSPC;
+    vsp = I->VSP;
     b = obj->Bond;
-    for(a = 0; a < obj->NBond; a++) {
+    for(a = 0; ok && a < obj->NBond; a++) {
       b1 = b->index[0];
       b2 = b->index[1];
       ord = b->order;
@@ -1845,7 +1884,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         float bd_radius, bd_radius_full;
         float overlap_r, nub_r;
         float bd_transp;
-	float bd_alpha = 0.f;
+	float bd_alpha;
 	int capdraw1 = 0, capdraw2 = 0;
 	int adj1 = 0, adj2 = 0;
 	if (adjacent_atoms){
@@ -1912,13 +1951,12 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 	  RepCylBondFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2, &s1, &s2);
         }
 	
-        if(stick_ball) {
-          int d, e;
-          if(stick_ball_ratio >= 1.0F)  /* don't use caps if spheres are big enough */
-            caps_req = false;
-          if(s1 && (!marked[b1])) {     /* just once for each atom... */
-            int *q = sp->Sequence;
-            int *s = sp->StripLen;
+        if(true) { // (stick_ball) {
+	  //          if(stick_ball_ratio >= 1.0F)  // don't use caps if spheres are big enough
+            /* This means that if stick_ball gets changed, the RepCylBond needs to be completely invalidated */
+          caps_req = !stick_ball;
+	  if(s1 && (!marked[b1]) && (!stick_ball_filter_single_atoms || (ord==1 || (adjacent_atoms[a1] && adjacent_atoms[a1][0] > 1)))) {
+	      /* just once for each atom..., if stick_ball_filter is on, then do not put a sphere when there is one adjacent atom only for atoms that have more than one adjacent atom */
             float vdw =
               stick_ball_ratio * ((ati1->protons == cAN_H) ? bd_radius : bd_radius_full);
             float vdw1 = (vdw >= 0) ? vdw : -ati1->vdw * vdw;
@@ -1932,21 +1970,26 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 	    } else {
 	      rgb1 = ColorGet(G, sbc1);
 	    }
-            copy3f(rgb1, vsp);
-            vsp += 3;
-            for(d = 0; d < sp->NStrip; d++) {
-              for(e = 0; e < (*s); e++) {
-                *(vsp++) = sp->dot[*q][0];      /* normal */
-                *(vsp++) = sp->dot[*q][1];
-                *(vsp++) = sp->dot[*q][2];
-                *(vsp++) = vv1[0] + vdw1 * sp->dot[*q][0];      /* point */
-                *(vsp++) = vv1[1] + vdw1 * sp->dot[*q][1];
-                *(vsp++) = vv1[2] + vdw1 * sp->dot[*q][2];
-                q++;
-              }
-              s++;
-            }
-            I->NSP++;
+	    {
+	      int *q = sp->Sequence;
+	      int *s = sp->StripLen;
+	      int d, e;
+	      copy3f(rgb1, vsp);
+	      vsp += 3;
+	      for(d = 0; d < sp->NStrip; d++) {
+		for(e = 0; e < (*s); e++) {
+		  *(vsp++) = sp->dot[*q][0];      /* normal */
+		  *(vsp++) = sp->dot[*q][1];
+		  *(vsp++) = sp->dot[*q][2];
+		  *(vsp++) = vv1[0] + vdw1 * sp->dot[*q][0];      /* point */
+		  *(vsp++) = vv1[1] + vdw1 * sp->dot[*q][1];
+		  *(vsp++) = vv1[2] + vdw1 * sp->dot[*q][2];
+		  q++;
+		}
+		s++;
+	      }
+	      I->NSP++;
+	    }
             copy3f(rgb1, vspc);
             vspc += 3;
             copy3f(vv1, vspc);
@@ -1955,9 +1998,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
             I->NSPC++;
           }
 
-          if(s2 && !(marked[b2])) {     /* just once for each atom..., SAME CODE as for s1, consolidate? */
-            int *q = sp->Sequence;
-            int *s = sp->StripLen;
+	  if(s2 && (!marked[b2]) && (!stick_ball_filter_single_atoms || (ord==1 || adjacent_atoms[a2] && adjacent_atoms[a2][0] > 1))) {
+	      /* just once for each atom..., if stick_ball_filter is on, then only for atoms that have more than one adjacent atom */
             float vdw =
               stick_ball_ratio * ((ati2->protons == cAN_H) ? bd_radius : bd_radius_full);
             float vdw2 = (vdw >= 0) ? vdw : -ati2->vdw * vdw;
@@ -1971,21 +2013,26 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
             } else {
               rgb2 = ColorGet(G, sbc2);
             }
-            copy3f(rgb2, vsp);
-            vsp += 3;
-            for(d = 0; d < sp->NStrip; d++) {
-              for(e = 0; e < (*s); e++) {
-                *(vsp++) = sp->dot[*q][0];      /* normal */
-                *(vsp++) = sp->dot[*q][1];
-                *(vsp++) = sp->dot[*q][2];
-                *(vsp++) = vv2[0] + vdw2 * sp->dot[*q][0];      /* point */
-                *(vsp++) = vv2[1] + vdw2 * sp->dot[*q][1];
-                *(vsp++) = vv2[2] + vdw2 * sp->dot[*q][2];
-                q++;
-              }
-              s++;
-            }
-            I->NSP++;
+	    {
+	      int *q = sp->Sequence;
+	      int *s = sp->StripLen;
+	      int d, e;
+	      copy3f(rgb2, vsp);
+	      vsp += 3;
+	      for(d = 0; d < sp->NStrip; d++) {
+		for(e = 0; e < (*s); e++) {
+		  *(vsp++) = sp->dot[*q][0];      /* normal */
+		  *(vsp++) = sp->dot[*q][1];
+		  *(vsp++) = sp->dot[*q][2];
+		  *(vsp++) = vv2[0] + vdw2 * sp->dot[*q][0];      /* point */
+		  *(vsp++) = vv2[1] + vdw2 * sp->dot[*q][1];
+		  *(vsp++) = vv2[2] + vdw2 * sp->dot[*q][2];
+		  q++;
+		}
+		s++;
+	      }
+	      I->NSP++;
+	    }
             copy3f(rgb2, vspc);
             vspc += 3;
             copy3f(vv2, vspc);
@@ -2004,7 +2051,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 	  } else {
 	    alp = alpha;
 	  }
-	  CGOAlpha(Vcgo, alp);
+	  if (ok)
+	    ok &= CGOAlpha(Vcgo, alp);
 	}
 
         if(hide_long && (s1 || s2)) {
@@ -2015,26 +2063,28 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
             s1 = s2 = 0;
         }
 
-        if(s1 || s2) {
+        if((s1 || s2)) {
           int bd_valence_flag;
+	  short c1t = ((c1 & cColor_TRGB_Mask) == cColor_TRGB_Bits),
+	    c2t = ((c2 & cColor_TRGB_Mask) == cColor_TRGB_Bits);
 	  n_bonds++;
           AtomInfoGetBondSetting_b(G, b, cSetting_valence, valence_flag,
                                    &bd_valence_flag);
 
           if((bd_valence_flag) && (ord > 1) && (ord < 5)) {
-
-            if((c1 == c2) && s1 && s2 && (!ColorCheckRamped(G, c1))) {
+            if(!c1t && !c2t && (c1 == c2) && s1 && s2 && (!ColorCheckRamped(G, c1))) {
               v0 = ColorGet(G, c1);
-              RepValence(I, Vcgo, &I->N,
-                         &vr, &I->NR,
-                         vv1, vv2, other,
-                         a1, a2, cs->Coord,
-                         v0, NULL, ord, nEdge,
-                         bd_radius, overlap, nub, false, fixed_radius, scale_r, shader_mode);
+	      if (ok)
+		ok &= RepValence(I, Vcgo, &I->N,
+				 &vr, &I->NR,
+				 vv1, vv2, other,
+				 a1, a2, cs->Coord,
+				 v0, NULL, ord, nEdge,
+				 bd_radius, overlap, nub, false, fixed_radius, scale_r, shader_mode);
             } else {
               rgb1 = NULL;
               if(s1) {
-                if(ColorCheckRamped(G, c1)) {
+                if(!c1t && ColorCheckRamped(G, c1)) {
                   ColorGetRamped(G, c1, vv1, rgb1_buf, state);
                 } else {
                   rgb1 = ColorGet(G, c1);
@@ -2045,7 +2095,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 
               rgb2 = NULL;
               if(s2) {
-                if(ColorCheckRamped(G, c2)) {
+                if(!c2t && ColorCheckRamped(G, c2)) {
                   ColorGetRamped(G, c2, vv2, rgb2_buf, state);
                 } else {
                   rgb2 = ColorGet(G, c2);
@@ -2053,75 +2103,81 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
                 }
                 rgb2 = rgb2_buf;
               }
-              RepValence(I, Vcgo, &I->N,
-                         &vr, &I->NR,
-                         vv1, vv2, other,
-                         a1, a2, cs->Coord,
-                         rgb1, rgb2, ord, nEdge,
-                         bd_radius, overlap, nub, true, fixed_radius, scale_r, shader_mode);
+	      if (ok)
+		ok = RepValence(I, Vcgo, &I->N,
+				&vr, &I->NR,
+				vv1, vv2, other,
+				a1, a2, cs->Coord,
+				rgb1, rgb2, ord, nEdge,
+				bd_radius, overlap, nub, true, fixed_radius, scale_r, shader_mode);
             }
-
           } else {
 	    float *cv2 = NULL;
-	    if((c1 == c2) && s1 && s2 && (!ColorCheckRamped(G, c1))) {
-	    } else {
-	      cv2 = Alloc(float, 3);
-	      copy3f(ColorGet(G, c2), cv2);
+	    if (ok){
+	      if(!c1t && !c2t && (c1 == c2) && s1 && s2 && (!ColorCheckRamped(G, c1))) {
+	      } else {
+		cv2 = Alloc(float, 3);
+		CHECKOK(ok, cv2);
+		if (ok)
+		  copy3f(ColorGet(G, c2), cv2);
+	      }
 	    }
-	    copy3f(vv1, v1);
-	    copy3f(vv2, v2);
-	    
-	    v0 = ColorGet(G, c1);
-	    
-	    /* ray-tracing */
-	    
-	    copy3f(v0, vr);
-	    vr += 3;
-	    if (cv2){
-	      copy3f(cv2, vr);
-	    } else {
+	    if (ok){
+	      copy3f(vv1, v1);
+	      copy3f(vv2, v2);
+	      
+	      v0 = ColorGet(G, c1);
+	      
+	      /* ray-tracing */
+	      
 	      copy3f(v0, vr);
-	    }
-	    vr += 3;
-	    
-	    *(vr++) = bd_radius;
-	    
-	    copy3f(v1, vr);
-	    vr += 3;
-	    
-	    copy3f(v2, vr);
-	    vr += 3;
-	    
-	    I->NR++;
-	    
-	    /* store color */
-	    CGOColorv(Vcgo, v0);
-	    I->N++;
-	    /* generate a cylinder */
-	    if (adjacent_atoms){
-	      capdraw1 = (adj1==1);
-	      capdraw2 = (adj2==1);
-	    } else {
-	      capdraw1 = caps_req;		
-	      capdraw2 = caps_req;		
-	    }
-	    if (shader_mode){
-	      if (capdraw1){
-		if (capdrawn[a1]){ capdraw1 = 0; }
-		else { capdrawn[a1] = 1; }
+	      vr += 3;
+	      if (cv2){
+		copy3f(cv2, vr);
+	      } else {
+		copy3f(v0, vr);
 	      }
-	      if (capdraw2){
-		if (capdrawn[a2]) { capdraw2 = 0; }
-		else { capdrawn[a2] = 1; }
+	      vr += 3;
+	      
+	      *(vr++) = bd_radius;
+	      
+	      copy3f(v1, vr);
+	      vr += 3;
+	      
+	      copy3f(v2, vr);
+	      vr += 3;
+	      
+	      I->NR++;
+	      
+	      /* store color */
+	      if (ok)
+		ok &= CGOColorv(Vcgo, v0);
+	      I->N++;
+	      /* generate a cylinder */
+	      if (adjacent_atoms){
+		capdraw1 = (adj1==1);
+		capdraw2 = (adj2==1);
+	      } else {
+		capdraw1 = caps_req;		
+		capdraw2 = caps_req;		
 	      }
-	    }
-	    RepCylinder(G, I, Vcgo, v1, v2, nEdge, capdraw1, capdraw2, bd_radius, overlap_r,
-			nub_r, NULL, shader_mode, cv2);
-	    if (cv2){
-	      FreeP(cv2);
+	      if (shader_mode){
+		if (capdraw1)
+		  if (capdrawn[a1]) capdraw1 = 0;
+		  else capdrawn[a1] = 1;
+		if (capdraw2)
+		  if (capdrawn[a2]) capdraw2 = 0;
+		  else capdrawn[a2] = 1;
+	      }
+	      if (ok)
+		ok &= RepCylinder(G, I, Vcgo, v1, v2, nEdge, capdraw1, capdraw2, bd_radius, overlap_r,
+				  nub_r, NULL, shader_mode, cv2);
+	      if (cv2){
+		FreeP(cv2);
+	      }
 	    }
 	  }
-          if(variable_alpha) {  /* record alpha values for each */
+          if(ok && variable_alpha) {  /* record alpha values for each */
             float bd_alpha = (1.0F - bd_transp);
             while(n_var_alpha < I->N) {
               I->VarAlpha[n_var_alpha++] = bd_alpha;
@@ -2129,7 +2185,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
             while(n_var_alpha_ray < I->NR) {
               I->VarAlphaRay[n_var_alpha_ray++] = bd_alpha;
             }
-            while(n_var_alpha_sph < I->NSP) {
+            while(n_var_alpha_sph < I->NSPC) {
               I->VarAlphaSph[n_var_alpha_sph++] = bd_alpha;
             }
           }
@@ -2138,67 +2194,13 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       /*      printf("%d\n",(v-I->V)/( (9+6+6) * (nEdge+1) + 3 )); */
       b++;
     }
-
-
-    /* Now we need to patch/close the areas where cylinders missed for stick_good_geometry for each atom */
-    if (false && adjacent_atoms){
-      float stick_radius;
-      stick_radius = SettingGetGlobal_f(G, cSetting_stick_radius);      
-      for(a = 0; a < obj->NAtom; a++) {    
-	if (adjacent_atoms[a] != NULL){
-	  switch (adjacent_atoms[a][0]){
-	  case 2:
-	    a1 =  adjacent_atoms[a][1];
-	    a2 =  adjacent_atoms[a][2];
-	    //	    printf("# adjacent atoms=2 : atom#%d adjacents : %d %d\n", a, adjacent_atoms[a][1], adjacent_atoms[a][2]);
-	    {
-	      float *atomPoint, *atomPoint1, *atomPoint2, bondDirection1[3], bondDirection2[3], cross[3], white[] = { 1.f, 1.f, 1.f }, pt[3];
-	      /*	      register AtomInfoType *ati = obj->AtomInfo + a;
-			      register AtomInfoType *ati1 = obj->AtomInfo + adjacent_atoms[a][1];
-			      register AtomInfoType *ati2 = obj->AtomInfo + adjacent_atoms[a][2];*/
-	      atomPoint = cs->Coord + 3 * a;
-	      atomPoint1 = cs->Coord + 3 * a1;
-	      atomPoint2 = cs->Coord + 3 * a2;
-	      bondDirection1[0] = atomPoint1[0] - atomPoint[0];
-	      bondDirection1[1] = atomPoint1[1] - atomPoint[1];
-	      bondDirection1[2] = atomPoint1[2] - atomPoint[2];
-	      bondDirection2[0] = atomPoint2[0] - atomPoint[0];
-	      bondDirection2[1] = atomPoint2[1] - atomPoint[1];
-	      bondDirection2[2] = atomPoint2[2] - atomPoint[2];
-
-	      cross_product3f(bondDirection1, bondDirection2, cross);
-	      normalize3f(cross);
-	      CGOColorv(Vcgo, white);
-	      CGOBegin(Vcgo, GL_TRIANGLES);
-	      pt[0] = atomPoint[0] + cross[0] * stick_radius;
-	      pt[1] = atomPoint[1] + cross[1] * stick_radius;
-	      pt[2] = atomPoint[2] + cross[2] * stick_radius;
-	      CGOVertexv(Vcgo, pt);	      
-	      pt[0] = atomPoint[0] - cross[0] * stick_radius;
-	      pt[1] = atomPoint[1] - cross[1] * stick_radius;
-	      pt[2] = atomPoint[2] - cross[2] * stick_radius;
-	      CGOVertexv(Vcgo, pt);	      
-	      pt[0] = - (bondDirection1[0] + bondDirection2[0]);
-	      pt[1] = - (bondDirection1[1] + bondDirection2[1]);
-	      pt[2] = - (bondDirection1[2] + bondDirection2[2]);
-	      normalize3f(pt);
-	      pt[0] = pt[0] * stick_radius + atomPoint[0];
-	      pt[1] = pt[1] * stick_radius + atomPoint[1];
-	      pt[2] = pt[2] * stick_radius + atomPoint[2];
-	      CGOVertexv(Vcgo, pt);	      
-	      CGOEnd(Vcgo);
-	    }
-	    break;
-	  }
-	}
-      }
-    }
-
-    CGOStop(Vcgo);
+    if (ok)
+      ok &= CGOStop(Vcgo);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-    if (Vcgo){
+    if (ok && Vcgo){
       CGO *convertcgo = NULL;
       convertcgo = CGOCombineBeginEnd(Vcgo, 0);    
+      CHECKOK(ok, convertcgo);
       CGOFree(Vcgo);    
       Vcgo = 0;
       I->Vcgo = convertcgo;
@@ -2214,38 +2216,49 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     if((signed) vr_size < (vr - I->VR))
       ErrFatal(G, "RepCylBond", "VR array overrun.");
 
-    //    VLASizeForSure(I->V, float, (vptr - I->V));
-    I->VR = ReallocForSure(I->VR, float, (vr - I->VR));
-    if(I->VSP)
+    if (ok)
+      I->VR = ReallocForSure(I->VR, float, (vr - I->VR));
+    CHECKOK(ok, I->VR);
+    if(ok && I->VSP){
       I->VSP = ReallocForSure(I->VSP, float, (vsp - I->VSP));
-    if(I->VSPC)
+      CHECKOK(ok, I->VSP);
+    }
+    if(ok && I->VSPC){
       I->VSPC = ReallocForSure(I->VSPC, float, (vspc - I->VSPC));
-    if(I->VarAlpha)
+      CHECKOK(ok, I->VSPC);
+    }
+    if(ok && I->VarAlpha){
       I->VarAlpha = ReallocForSure(I->VarAlpha, float, n_var_alpha);
-    if(n_var_alpha_ray) {
-      if(I->VarAlphaRay)
+      CHECKOK(ok, I->VarAlpha);
+    }
+    if(ok && n_var_alpha_ray) {
+      if(I->VarAlphaRay){
         I->VarAlphaRay = ReallocForSure(I->VarAlphaRay, float, n_var_alpha_ray);
+	CHECKOK(ok, I->VarAlphaRay);
+      }
     } else {
       FreeP(I->VarAlphaRay);
     }
-    if(n_var_alpha_sph) {
-      if(I->VarAlphaSph)
+    if(ok && n_var_alpha_sph) {
+      if(I->VarAlphaSph){
         I->VarAlphaSph = ReallocForSure(I->VarAlphaSph, float, n_var_alpha_sph);
+	CHECKOK(ok, I->VarAlphaSph);
+      }
     } else {
       FreeP(I->VarAlphaSph);
     }
 
     /* Generating the picking CGO I->VPcgo */
-    if(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
+    if(ok && SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
       I->VPcgo = CGONew(G);      
-
+      CHECKOK(ok, I->VPcgo);
       PRINTFD(G, FB_RepCylBond)
         " RepCylBondNEW: generating pickable version\n" ENDFD;
 
       /* pickable versions are simply capped boxes
        */
       b = obj->Bond;
-      for(a = 0; a < obj->NBond; a++) {
+      for(a = 0; ok && a < obj->NBond; a++) {
         b1 = b->index[0];
         b2 = b->index[1];
         if(obj->DiscreteFlag) {
@@ -2288,24 +2301,27 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
             h[0] = (v1[0] + v2[0]) / 2;
             h[1] = (v1[1] + v2[1]) / 2;
             h[2] = (v1[2] + v2[2]) / 2;
-            if(s1 & (!ai1->masked)) {
-	      CGOPickColor(I->VPcgo, b1, a);
-              RepCylinderBox(I, I->VPcgo, v1, h, bd_radius, overlap_r, nub_r);
+            if(ok && (s1 & (!ai1->masked))) {
+	      ok &= CGOPickColor(I->VPcgo, b1, a);
+	      if (ok)
+		ok &= RepCylinderBox(I, I->VPcgo, v1, h, bd_radius, overlap_r, nub_r);
             }
-            if(s2 & (!ai2->masked)) {
-	      CGOPickColor(I->VPcgo, b2, a);
-              RepCylinderBox(I, I->VPcgo, h, v2, bd_radius, overlap_r, nub_r);
+            if(ok && (s2 & (!ai2->masked))) {
+	      ok &= CGOPickColor(I->VPcgo, b2, a);
+              if (ok)
+		ok &= RepCylinderBox(I, I->VPcgo, h, v2, bd_radius, overlap_r, nub_r);
             }
           }
         }
         b++;
       }
-
-      CGOStop(I->VPcgo);
+      if (ok)
+	ok &= CGOStop(I->VPcgo);
 
 #ifdef _PYMOL_CGO_DRAWARRAYS
-      {
+      if (ok) {
 	CGO *convertcgo = CGOCombineBeginEnd(I->VPcgo, 0);    
+	CHECKOK(ok, convertcgo);
 	CGOFree(I->VPcgo);    
 	I->VPcgo = convertcgo;
 
@@ -2326,15 +2342,32 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     }
     FreeP(adjacent_atoms);
   }
+  if (!ok){
+    RepCylBondFree(I);
+    I = NULL;
+  }
   return ((void *) (struct Rep *) I);
 }
 
-void RepCylinderBox(RepCylBond *I, CGO *cgo, float *vv1, float *vv2,
-		    float tube_size, float overlap, float nub)
+static void subdivide(int n, float *x, float *y)
+{
+  int a;
+  if(n < 3) {
+    n = 3;
+  }
+  for(a = 0; a <= n; a++) {
+    x[a] = (float) cos(a * 2 * PI / n);
+    y[a] = (float) sin(a * 2 * PI / n);
+  }
+}
+
+int RepCylinderBox(RepCylBond *I, CGO *cgo, float *vv1, float *vv2,
+		   float tube_size, float overlap, float nub)
 {
 
   float d[3], t[3], p0[3], p1[3], p2[3], n[3];
   float v[24], v1[3], v2[3];
+  int ok = true;
 
   tube_size *= 0.7F;
 
@@ -2418,42 +2451,44 @@ void RepCylinderBox(RepCylBond *I, CGO *cgo, float *vv1, float *vv2,
   v[22] = v[19] + d[1];
   v[23] = v[20] + d[2];
 
-  CGOBegin(cgo, GL_TRIANGLE_STRIP);
-  CGOVertexv(cgo, v);  
-  CGOVertexv(cgo, &v[3]);  
-  CGOVertexv(cgo, &v[6]);  
-  CGOVertexv(cgo, &v[9]);  
-  CGOVertexv(cgo, &v[12]);  
-  CGOVertexv(cgo, &v[15]);  
-  CGOVertexv(cgo, &v[18]);  
-  CGOVertexv(cgo, &v[21]);  
-  CGOVertexv(cgo, &v[0]);
-  CGOVertexv(cgo, &v[3]);
-  CGOEnd(cgo);
+  ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
+  if (ok) ok &= CGOVertexv(cgo, v);  
+  if (ok) ok &= CGOVertexv(cgo, &v[3]);  
+  if (ok) ok &= CGOVertexv(cgo, &v[6]);  
+  if (ok) ok &= CGOVertexv(cgo, &v[9]);  
+  if (ok) ok &= CGOVertexv(cgo, &v[12]);  
+  if (ok) ok &= CGOVertexv(cgo, &v[15]);  
+  if (ok) ok &= CGOVertexv(cgo, &v[18]);  
+  if (ok) ok &= CGOVertexv(cgo, &v[21]);  
+  if (ok) ok &= CGOVertexv(cgo, &v[0]);
+  if (ok) ok &= CGOVertexv(cgo, &v[3]);
+  if (ok) ok &= CGOEnd(cgo);
 
-  CGOBegin(cgo, GL_TRIANGLE_STRIP);
-  CGOVertexv(cgo, &v[0]);
-  CGOVertexv(cgo, &v[6]);
-  CGOVertexv(cgo, &v[18]);
-  CGOVertexv(cgo, &v[12]);
-  CGOEnd(cgo);
+  if (ok) ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
+  if (ok) ok &= CGOVertexv(cgo, &v[0]);
+  if (ok) ok &= CGOVertexv(cgo, &v[6]);
+  if (ok) ok &= CGOVertexv(cgo, &v[18]);
+  if (ok) ok &= CGOVertexv(cgo, &v[12]);
+  if (ok) ok &= CGOEnd(cgo);
 
-  CGOBegin(cgo, GL_TRIANGLE_STRIP);
-  CGOVertexv(cgo, &v[3]);
-  CGOVertexv(cgo, &v[9]);
-  CGOVertexv(cgo, &v[21]);
-  CGOVertexv(cgo, &v[15]);
-  CGOEnd(cgo);
+  if (ok) ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
+  if (ok) ok &= CGOVertexv(cgo, &v[3]);
+  if (ok) ok &= CGOVertexv(cgo, &v[9]);
+  if (ok) ok &= CGOVertexv(cgo, &v[21]);
+  if (ok) ok &= CGOVertexv(cgo, &v[15]);
+  if (ok) ok &= CGOEnd(cgo);
+  return ok;
 }
 
-void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *v2arg, int nEdge,
-		 int frontCapArg, int endCapArg, float tube_size, float overlap, float nub, float **dir,
-		 int shader_mode, float *v2color )
+int RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *v2arg, int nEdge,
+		int frontCapArg, int endCapArg, float tube_size, float overlap, float nub, float **dir,
+		int shader_mode, float *v2color )
 {
 
   float d[3], t[3], p0[3], p1[3], p2[3], v1[3], v2[3], x, y, c, cincr, cinit, normal[3], vertex1[3], vertex2[3];
   int frontCap = frontCapArg, endCap = endCapArg, tmpCap;
   int stick_round_nub = 0;
+  int ok = true;
 
   if ( shader_mode ) { // GLSL
     //short cap = (endCap || frontCap) ? 1 : 0;
@@ -2466,11 +2501,11 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
     vertex1[2] = v2arg[2]-v1arg[2];
 
     if (v2color){
-      CGOShaderCylinder2ndColor(cgo, v1arg, vertex1, tube_size, cap + 16, v2color);
+      ok &= CGOShaderCylinder2ndColor(cgo, v1arg, vertex1, tube_size, cap + 16, v2color);
     } else {
-      CGOShaderCylinder(cgo, v1arg, vertex1, tube_size, cap);
+      ok &= CGOShaderCylinder(cgo, v1arg, vertex1, tube_size, cap);
     }
-    return;
+    return ok;
   }
 
   if (G){
@@ -2542,7 +2577,7 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
       /* p2 is y coord in cap space */
       /* p3 is z coord in cap space (i.e., normal of cap */
 
-      CGOBegin(cgo, GL_TRIANGLE_STRIP);
+      ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
 
       p3[0] = -p0[0];
       p3[1] = -p0[1];
@@ -2561,7 +2596,7 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
       for (c = cinit; c < cmax; c += cincr){
 	z1 = z2;
 	z2 = (float) cos((c) * PI / ((float)nEdge));
-	for (d = 0; d <= nEdge; d++){
+	for (d = 0; ok && d <= nEdge; d++){
 	  x = (float) cos((d) * 2 * PI / (float)nEdge) * sin((c-prev) * PI / (float)nEdge);
 	  y = (float) sin((d) * 2 * PI / (float)nEdge) * sin((c-prev) * PI / (float)nEdge);
 	  normal[0] = p1[0] * x + p2[0] * y + p3[0] * z1;
@@ -2571,8 +2606,9 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
 	  vertex1[1] = v1[1] + normal[1] * tube_size;
 	  vertex1[2] = v1[2] + normal[2] * tube_size;
 	  normalize3f(normal);
-	  CGONormalv(cgo, normal);	  
-	  CGOVertexv(cgo, vertex1);
+	  ok &= CGONormalv(cgo, normal);	  
+	  if (ok)
+	    ok &= CGOVertexv(cgo, vertex1);
 
 	  x = (float) cos((d) * 2 * PI / (float)nEdge) * sin((c) * PI / (float)nEdge);
 	  y = (float) sin((d) * 2 * PI / (float)nEdge) * sin((c) * PI / (float)nEdge);
@@ -2584,16 +2620,19 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
 	  vertex1[1] = v1[1] + normal[1] * tube_size;
 	  vertex1[2] = v1[2] + normal[2] * tube_size;
 	  normalize3f(normal);
-	  CGONormalv(cgo, normal);	  
-	  CGOVertexv(cgo, vertex1);
+	  if (ok)
+	    ok &= CGONormalv(cgo, normal);	  
+	  if (ok)
+	    ok &= CGOVertexv(cgo, vertex1);
 	  nverts += 2;
 	}
 	prev = cincr;
       }
-      CGOEnd(cgo);
+      if (ok)
+	ok &= CGOEnd(cgo);
     } else {
       /* pointed front cap */
-      CGOBegin(cgo, GL_TRIANGLE_FAN);
+      ok &= CGOBegin(cgo, GL_TRIANGLE_FAN);
 
       /* normal for top of cap */
       normal[0] = -p0[0];
@@ -2603,9 +2642,11 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
       vertex1[0] = v1[0] - p0[0] * nub;
       vertex1[1] = v1[1] - p0[1] * nub;
       vertex1[2] = v1[2] - p0[2] * nub;
-      CGONormalv(cgo, normal);
-      CGOVertexv(cgo, vertex1);
-      for(c = nEdge; c >= 0; c--) {
+      if (ok)
+	ok &= CGONormalv(cgo, normal);
+      if (ok)
+	ok &= CGOVertexv(cgo, vertex1);
+      for(c = nEdge; ok && c >= 0; c--) {
 	/* this is a fan for the cap, 
 	   around the outside edge of the end of the cylinder */
 	x = (float) cos(c * 2 * PI / nEdge);
@@ -2618,19 +2659,22 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
 	vertex1[0] = v1[0] + normal[0] * tube_size;
 	vertex1[1] = v1[1] + normal[1] * tube_size;
 	vertex1[2] = v1[2] + normal[2] * tube_size;
-	CGONormalv(cgo, normal);
-	CGOVertexv(cgo, vertex1);
+	ok &= CGONormalv(cgo, normal);
+	if (ok)
+	  ok &= CGOVertexv(cgo, vertex1);
       }
-      CGOEnd(cgo);
+      if (ok)
+	ok &= CGOEnd(cgo);
     }
   }
 
   if (v2color){
     float hd[3];
     mult3f(d, .5f, hd);
-    CGOBegin(cgo, GL_TRIANGLE_STRIP);
+    if (ok)
+      ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
     
-    for(c = nEdge; c >= 0; c--) {
+    for(c = nEdge; ok && c >= 0; c--) {
       x = (float) cos(c * 2 * PI / nEdge);
       y = (float) sin(c * 2 * PI / nEdge);
       normal[0] = p1[0] * tube_size * x + p2[0] * tube_size * y;
@@ -2645,17 +2689,22 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
       vertex2[1] = vertex1[1] + hd[1];
       vertex2[2] = vertex1[2] + hd[2];
       normalize3f(normal);
-      CGONormalv(cgo, normal);    
-      CGOVertexv(cgo, vertex1);
-      CGOVertexv(cgo, vertex2);
+      ok &= CGONormalv(cgo, normal);
+      if (ok)
+	ok &= CGOVertexv(cgo, vertex1);
+      if (ok)
+	ok &= CGOVertexv(cgo, vertex2);
     }
-    CGOEnd(cgo);
+    if (ok)
+      ok &= CGOEnd(cgo);
 
-    CGOColorv(cgo, v2color);
+    if (ok)
+      ok &= CGOColorv(cgo, v2color);
 
-    CGOBegin(cgo, GL_TRIANGLE_STRIP);
+    if (ok)
+      ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
     
-    for(c = nEdge; c >= 0; c--) {
+    for(c = nEdge; ok && c >= 0; c--) {
       x = (float) cos(c * 2 * PI / nEdge);
       y = (float) sin(c * 2 * PI / nEdge);
       normal[0] = p1[0] * tube_size * x + p2[0] * tube_size * y;
@@ -2670,16 +2719,19 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
       vertex2[1] = vertex1[1] + hd[1];
       vertex2[2] = vertex1[2] + hd[2];
       normalize3f(normal);
-      CGONormalv(cgo, normal);    
-      CGOVertexv(cgo, vertex1);
-      CGOVertexv(cgo, vertex2);
+      ok &= CGONormalv(cgo, normal);    
+      if (ok)
+	ok &= CGOVertexv(cgo, vertex1);
+      if (ok)
+	ok &= CGOVertexv(cgo, vertex2);
     }
-    CGOEnd(cgo);
-
+    if (ok)
+      ok &= CGOEnd(cgo);
   } else {
-    CGOBegin(cgo, GL_TRIANGLE_STRIP);
-    
-    for(c = nEdge; c >= 0; c--) {
+    if (ok)
+      ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
+
+    for(c = nEdge; ok && c >= 0; c--) {
       x = (float) cos(c * 2 * PI / nEdge);
       y = (float) sin(c * 2 * PI / nEdge);
       normal[0] = p1[0] * tube_size * x + p2[0] * tube_size * y;
@@ -2694,14 +2746,17 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
       vertex2[1] = vertex1[1] + d[1];
       vertex2[2] = vertex1[2] + d[2];
       normalize3f(normal);
-      CGONormalv(cgo, normal);    
-      CGOVertexv(cgo, vertex1);
-      CGOVertexv(cgo, vertex2);
+      ok &= CGONormalv(cgo, normal);    
+      if (ok)
+	ok &= CGOVertexv(cgo, vertex1);
+      if (ok)
+	ok &= CGOVertexv(cgo, vertex2);
     }
-    CGOEnd(cgo);
+    if (ok)
+      ok &= CGOEnd(cgo);
   }
 
-  if(endCap) {
+  if(ok && endCap) {
     if (stick_round_nub){
       int ntoskipattop = 0;
       int d, nverts = 0, cmax = 1 + nEdge/2;
@@ -2711,7 +2766,7 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
       /* p1 is x coord in cap space */
       /* p2 is y coord in cap space */
       /* p3 is z coord in cap space (i.e., normal of cap */
-      CGOBegin(cgo, GL_TRIANGLE_STRIP);
+      ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
 
       p3[0] = p0[0];
       p3[1] = p0[1];
@@ -2726,10 +2781,10 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
 	cincr = 1.;
       }
       prev = cinit;
-      for (c = cinit; c < cmax; c+=cincr){
+      for (c = cinit; ok && c < cmax; c+=cincr){
 	z1 = z2;
 	z2 = (float) cos((c) * PI / ((float)nEdge));
-	for (d = 0; d <= nEdge; d++){
+	for (d = 0; ok && d <= nEdge; d++){
 	  x = (float) cos((d) * 2 * PI / (float)nEdge) * sin((c-prev) * PI / (float)nEdge);
 	  y = (float) sin((d) * 2 * PI / (float)nEdge) * sin((c-prev) * PI / (float)nEdge);
 	  normal[0] = p1[0] * x + p2[0] * y + p3[0] * z1;
@@ -2739,8 +2794,9 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
 	  vertex1[1] = v2[1] + normal[1] * tube_size;
 	  vertex1[2] = v2[2] + normal[2] * tube_size;
 	  normalize3f(normal);
-	  CGONormalv(cgo, normal);	  
-	  CGOVertexv(cgo, vertex1);
+	  ok &= CGONormalv(cgo, normal);	  
+	  if (ok)
+	    ok &= CGOVertexv(cgo, vertex1);
 
 	  x = (float) cos((d) * 2 * PI / (float)nEdge) * sin((c) * PI / (float)nEdge);
 	  y = (float) sin((d) * 2 * PI / (float)nEdge) * sin((c) * PI / (float)nEdge);
@@ -2752,17 +2808,19 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
 	  vertex1[1] = v2[1] + normal[1] * tube_size;
 	  vertex1[2] = v2[2] + normal[2] * tube_size;
 	  normalize3f(normal);
-	  CGONormalv(cgo, normal);	  
-	  CGOVertexv(cgo, vertex1);
-
+	  if (ok) 
+	    ok &= CGONormalv(cgo, normal);	  
+	  if (ok)
+	    ok &= CGOVertexv(cgo, vertex1);
 	  nverts += 2;
 	}
 	prev = cincr;
       }
-      CGOEnd(cgo);
+      if (ok)
+	ok &= CGOEnd(cgo);
     } else {
       /* pointed end cap */
-      CGOBegin(cgo, GL_TRIANGLE_FAN);
+      ok &= CGOBegin(cgo, GL_TRIANGLE_FAN);
       /* normal for top of cap */
       normal[0] = p0[0];
       normal[1] = p0[1];
@@ -2771,9 +2829,11 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
       vertex1[0] = v2[0] + p0[0] * nub;
       vertex1[1] = v2[1] + p0[1] * nub;
       vertex1[2] = v2[2] + p0[2] * nub;
-      CGONormalv(cgo, normal);
-      CGOVertexv(cgo, vertex1);
-      for(c = 0; c <= nEdge; c++) {
+      if (ok)
+	ok &= CGONormalv(cgo, normal);
+      if (ok)
+	ok &= CGOVertexv(cgo, vertex1);
+      for(c = 0; ok && c <= nEdge; c++) {
 	/* this is a fan for the cap, 
 	   around the outside edge of the end of the cylinder */
 	x = (float) cos(c * 2 * PI / nEdge);
@@ -2787,12 +2847,15 @@ void RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *
 	vertex1[1] = v2[1] + normal[1] * tube_size;
 	vertex1[2] = v2[2] + normal[2] * tube_size;
       
-	CGONormalv(cgo, normal);
-	CGOVertexv(cgo, vertex1);
+	ok &= CGONormalv(cgo, normal);
+	if (ok)
+	  ok &= CGOVertexv(cgo, vertex1);
       }
-      CGOEnd(cgo);
+      if (ok)
+	ok &= CGOEnd(cgo);
     }
   }
+  return ok;
 }
 
 static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
@@ -2865,9 +2928,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
   normalize3f(p2);
 
   /* now we have a coordinate system */
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
   {
     int nverts = (nEdge+1) * 2;
@@ -2932,7 +2992,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
   }
   glEnd();
 #endif
-#endif
 
   if(frontCap) {
     v[0] = -p0[0];
@@ -2943,9 +3002,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
     vv[1] = v1[1] - p0[1] * nub;
     vv[2] = v1[2] - p0[2] * nub;
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
     {
       int nverts = nEdge+2, pl;
@@ -3002,7 +3058,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
 
     glEnd();
 #endif
-#endif
   }
 
   if(endCap) {
@@ -3015,9 +3070,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
     vv[1] = v2[1] + p0[1] * nub;
     vv[2] = v2[2] + p0[2] * nub;
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
     {
       int nverts = nEdge+2, pl;
@@ -3070,7 +3122,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
       glVertex3fv(vv);
     }
     glEnd();
-#endif
 #endif
   }
 }
@@ -3151,11 +3202,7 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
             if(c1 == c2) {      /* same colors -> one cylinder */
               if(c1 != last_color) {
                 last_color = c1;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                 glColor3fv(ColorGet(G, c1));
-#endif
               }
 
 	      /* overlap is half since it is one cylinder representing both halfs of a bond */
@@ -3170,22 +3217,14 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
 
               if(c1 != last_color) {
                 last_color = c1;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                 glColor3fv(ColorGet(G, c1));
-#endif
               }
 
               RepCylinderImmediate(v1, avg, nEdge, 1, 0, overlap_r, nub_r, radius, &dir);
 
               if(c2 != last_color) {
                 last_color = c2;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                 glColor3fv(ColorGet(G, c2));
-#endif
               }
 
               RepCylinderImmediate(v2, avg, nEdge, 1, 0, overlap_r, nub_r, radius, &dir);

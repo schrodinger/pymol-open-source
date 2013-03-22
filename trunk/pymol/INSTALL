@@ -12,48 +12,18 @@ and installing PyMOL from the open-source code:
         FreeBSD
         Mac OS X under X11 (with Fink or similar)
 
+    See also: http://pymolwiki.org/index.php/Linux_Install
+
 Note that you must have OpenGL, glut, libpng, tcl/tk, python,
 freetype2, and Pmw already installed on your system for this to work.
 Nowadays, you can typically use the package manager to automatically
 download and install the required components ("apt-get install
 python-pmw" or "yum install freetype-devel", etc.)
- 
-    python setup.py build install
-    python setup2.py install
-    ./pymol
+
+    python setup.py build install --home=~
+    ~/bin/pymol
 
     Note: under Fink, "python" above must be Fink's python.
 
 Good luck!
-
-PS. There are two other unsupported approaches intended primarily for
-developer use, with pymol runningly directly out of the source
-directory instead of being installed into an external Python or the
-global system Python.
-
-  1. GNU autotools: assumes that all of the external dependencies are
-     already installed in your system.  NOTE: 'make install' only
-     targets the local directory (.).  This build approach is not
-     currently intended for a Python-integrated installation -- see
-     the above distutils approach for that -- but it could be quite
-     useful in situations where you want to build and maintain
-     multiple PyMOL development versions on a single machine, either
-     locally, or system-wide.
-
-    NOTE: This method has only been tested on Linux.
-
-    ./configure
-    make install
-    ./pymol
-    make clean (optional, to save space)
-
-  2. Schrodinger, LLC's internal Makefiles (AS IS/PROPRIETARY):
-     assumes that external depencies are already compiled and present
-     in a local ./ext subdirectory.
-    
-    cp setup/Rules.xxxxx Rules.delci # (then configure manually)
-    make -f Makefile.delsci
-    ./setup/setup.sh
-    ./pymol
-
 

@@ -152,7 +152,6 @@ def amber99(selection="(all)",quiet=0,_self=cmd):
     result = 1
     # first, set all parameters to zero
 
-    cmd.alter(selection,"name=''")
     cmd.alter(selection,"partial_charge=0")
     cmd.alter(selection,"elec_radius=0.0")
     cmd.alter(selection,"text_type=''")

@@ -31,10 +31,8 @@
 #include "os_std.h"
 #include "os_gl.h"
 
-#ifdef _PYMOL_MODULE
 #ifdef _DRI_WORKAROUND
 #include <dlfcn.h>
-#endif
 #endif
 
 #include "PyMOLGlobals.h"
@@ -53,7 +51,6 @@
 #include "Util.h"
 #include "Control.h"
 #include "Movie.h"
-#include "Shader.h"
 #ifdef _PYMOL_NO_MAIN
 
 int MainSavingUnderWhileIdle(void)
@@ -235,13 +232,6 @@ PyObject *MainComplete(char *str)
 
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#if 0
-I think this code is dead ...
-#ifdef _PYMOL_OSX
-int *MacPyMOLReady = NULL;
-CPyMOLOptions *MacPyMOLOption = NULL;
-#endif
-#endif
 
 /* END PROPRIETARY CODE SEGMENT */
 
@@ -411,164 +401,6 @@ static void DrawBlueLine(PyMOLGlobals * G)
 
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#if 0
-I think this code is dead ...
-#ifdef _PYMOL_OSX
-
-/* SPECIAL HOOKS FOR MacPyMOL */
-int MainCheckRedundantOpen(char *file)
-{
-  int result = false;
-#ifndef _PYMOL_NOPY
-  PBlock(G);
-  result = PTruthCallStr(G->P_inst->cmd_do, "check_redundant_open", file);
-  PUnblock(G);
-#endif
-  return result;
-}
-
-void MainMovieCopyPrepare(int *width, int *height, int *length)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-  if(PLockAPIAsGlut(true)) {
-    MovieCopyPrepare(G, width, height, length);
-    PUnlockAPIAsGlut(G);
-  }
-}
-
-int MainMovieCopyFrame(int frame, int width, int height, int rowbytes, void *ptr)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-  int result = false;
-  if(PLockAPIAsGlut(G, true)) {
-    result = MovieCopyFrame(G, frame, width, height, rowbytes, ptr);
-    PUnlockAPIAsGlut(G);
-  }
-  return result;
-}
-
-void MainMovieCopyFinish(void)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-  if(PLockAPIAsGlut(G, true)) {
-    MovieCopyFinish(G);
-    PUnlockAPIAsGlut(G);
-  }
-}
-
-void MainSceneGetSize(int *width, int *height)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-  if(PLockAPIAsGlut(G, true)) {
-    SceneGetWidthHeight(G, width, height);
-    PUnlockAPIAsGlut(G);
-  }
-}
-
-int MainSceneCopy(int width, int height, int rowbytes, void *ptr)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-
-  int result = false;
-  if(PLockAPIAsGlut(G, true)) {
-    result = SceneCopyExternal(G, width, height, rowbytes, (unsigned char *) ptr, 0);
-    PUnlockAPIAsGlut(G);
-  }
-  return result;
-}
-
-void MainDoCommand(char *str1)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-
-  if(PLockAPIAsGlut(G, true)) {
-    if(str1[0] != '_') {        /* suppress internal call-backs */
-      if(strncmp(str1, "cmd._", 5)) {
-        OrthoAddOutput(G, "PyMOL>");
-        OrthoAddOutput(G, str1);
-        OrthoNewLine(G, NULL, true);
-      }
-      PDo(str1);
-    } else if(str1[1] == ' ') { /* "_ command" suppresses echoing of command, but it is still logged */
-      PDo(str1 + 2);
-    } else {
-      PDo(str1);
-    }
-    PUnlockAPIAsGlut(G);
-  }
-}
-
-void MainRunCommand(char *str1)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-
-  if(PLockAPIAsGlut(G, true)) {
-
-    if(str1[0] != '_') {        /* suppress internal call-backs */
-      if(strncmp(str1, "cmd._", 5)) {
-        OrthoAddOutput(G, "PyMOL>");
-        OrthoAddOutput(G, str1);
-        OrthoNewLine(G, NULL, true);
-        if(WordMatch(G, str1, "quit", true) == 0)       /* don't log quit */
-          PLog(G, str1, cPLog_pml);
-      }
-      PParse(G, str1);
-    } else if(str1[1] == ' ') { /* "_ command" suppresses echoing of command, but it is still logged */
-      if(WordMatch(G, str1 + 2, "quit", true) >= 0)     /* don't log quit */
-        PLog(G, str1 + 2, cPLog_pml);
-      PParse(G, str1 + 2);
-    } else {
-      PParse(G, str1);
-    }
-    PUnlockAPIAsGlut(G);
-  }
-}
-
-void MainFlushAsync(void)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-  if(PLockAPIAsGlut(G, true)) {
-    PFlush(G);
-    PUnlockAPIAsGlut(G);
-  }
-}
-
-void MainFlush(void)
-{                               /* assumes GIL held */
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-
-  MainPushValidContext(G);
-
-  PFlush(G);
-
-  MainPopValidContext(G);
-
-}
-
-void MainRunString(char *str)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-  PBlock(G);
-  PLockStatus(G);
-  MainPushValidContext(G);
-  PRunStringModule(G, str);
-  MainPopValidContext(G);
-  PUnlockStatus(G);
-  PUnblock(G);
-}
-
-PyObject *MainGetStringResult(char *str)
-{
-  PyMOLGlobals *G = SingletonPyMOLGlobals;
-  PyObject *result;
-  MainPushValidContext(G);
-  result = PyRun_String(str, Py_eval_input, G->P_inst->dict, G->P_inst->dict);
-  MainPopValidContext(G);
-  return (result);
-}
-#endif
-
-#endif
 
 /* END PROPRIETARY CODE SEGMENT */
 
@@ -1416,23 +1248,6 @@ static void MainBusyIdle(void)
   PRINTFD(G, FB_Main)
     " MainBusyIdle: called.\n" ENDFD;
 
-#if 0
-#ifdef  _PYMOL_SHARP3D
-  /* keep the window on even coordinates to preserve L/R stereo... */
-  {
-    int x, y;
-    x = glutGet(P_GLUT_WINDOW_X);
-    if(x != Sharp3DLastWindowX) {
-      Sharp3DLastWindowX = x;
-      if(x & 0x1) {
-        y = glutGet(P_GLUT_WINDOW_Y);
-        glutPositionWindow(x - 1, y);
-      }
-    }
-  }
-#endif
-#endif
-
   /* flush command and output queues */
 
   /*  PRINTFD(G,FB_Main)
@@ -1971,9 +1786,14 @@ static void launch(CPyMOLOptions * options, int own_the_options)
 
 /*========================================================================*/
 
-#ifndef _PYMOL_MODULE
-int main(int argc, char *argv[])
+static int is_shared = 1;
+static int main_common(void);
+static int decoy_input_hook(void) { return 0; }
+
+int main_exec(int argc, char **argv)
 {
+  is_shared = 0;
+
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   myArgc = argc;
   myArgv = argv;
@@ -1981,9 +1801,17 @@ int main(int argc, char *argv[])
   fflush(stdout);
   PSetupEmbedded(G, argc, argv);
 
-#else
-int was_main(void)
+  return main_common();
+}
+
+int main_shared(int block_input_hook)
 {
+  if(!is_shared)
+    return 0;
+
+  if(block_input_hook)
+    PyOS_InputHook = decoy_input_hook;
+
   myArgc = 1;
   strcpy(myArgvvv, "pymol");
   myArgvv[0] = myArgvvv;
@@ -1993,8 +1821,11 @@ int was_main(void)
   dlopen("libGL.so.1", RTLD_LAZY | RTLD_GLOBAL);
 #endif
 
-#endif
+  return main_common();
+}
 
+static int main_common(void)
+{
   {                             /* no matter how PyMOL was built, we always come through here... */
 
     CPyMOLOptions *options = PyMOLOptions_New();

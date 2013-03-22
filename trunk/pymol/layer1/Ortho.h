@@ -80,6 +80,7 @@ void OrthoBusyMessage(PyMOLGlobals * G, char *message);
 void OrthoBusySlow(PyMOLGlobals * G, int progress, int total);
 void OrthoBusyFast(PyMOLGlobals * G, int progress, int total);
 void OrthoBusyPrime(PyMOLGlobals * G);
+void OrthoCommandSetBusy(PyMOLGlobals * G, int busy);
 void OrthoCommandIn(PyMOLGlobals * G, char *buffer);
 int OrthoCommandSize(PyMOLGlobals * G);
 int OrthoCommandOut(PyMOLGlobals * G, char *buffer);
@@ -112,9 +113,20 @@ int OrthoGetRenderMode(PyMOLGlobals * G);
 void OrthoDrawBuffer(PyMOLGlobals * G, GLenum mode);
 int OrthoGetWrapClickSide(PyMOLGlobals * G);
 float *OrthoGetOverlayColor(PyMOLGlobals * G);
-void OrthoDrawWizardPrompt(PyMOLGlobals * G);
+void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG);
 
 void bg_grad(PyMOLGlobals * G);
+GLuint OrthoGetBackgroundTextureID(PyMOLGlobals * G);
+void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals * G);
+
+void OrthoGetBackgroundSize(PyMOLGlobals * G, int *width, int *height);
+
+int OrthoBackgroundDataIsSet(PyMOLGlobals *G);
+void *OrthoBackgroundDataGet(PyMOLGlobals *G, int *width, int *height);
+void OrthoGetSize(PyMOLGlobals *G, int *width, int *height);
+
+void OrthoInvalidateDoDraw(PyMOLGlobals * G);
+void OrthoRenderCGO(PyMOLGlobals * G);
 
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];

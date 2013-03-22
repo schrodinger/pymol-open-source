@@ -51,20 +51,6 @@ struct _CWordMatcher {
 #define cMatchNumericRange  cWordMatchOptionNumericRanges
 #define cMatchAlphaRange  cWordMatchOptionAlphaRanges
 #define cMatchWildcard 3
-#if 0
-static void WordMatcherDump(CWordMatcher * I)
-{
-  MatchNode *cur_node = I->node;
-  register int n_node = I->n_node;
-  while(n_node--) {
-    printf("match_mode %d\n", cur_node->match_mode);
-    printf("literal1 '%s' %d literal2 '%s' %d\n",
-           I->charVLA + cur_node->literal1,
-           cur_node->has1, I->charVLA + cur_node->literal2, cur_node->has2);
-    cur_node++;
-  }
-}
-#endif
 
 #ifndef _PYMOL_INLINE
 int WordCompare(PyMOLGlobals * G, char *p, char *q, int ignCase)

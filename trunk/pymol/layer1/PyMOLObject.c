@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Movie.h"
 #include"View.h"
+#include"Err.h"
 
 #include"Executive.h"
 
@@ -218,10 +219,10 @@ int ObjectGetSpecLevel(CObject * I, int frame)
   return -1;
 }
 
-void ObjectDrawViewElem(CObject *I, BlockRect *rect,int frames)
+void ObjectDrawViewElem(CObject *I, BlockRect *rect,int frames ORTHOCGOARG)
 {
   if(I->ViewElem) {
-    ViewElemDraw(I->G,I->ViewElem,rect,frames,I->Name);
+    ViewElemDraw(I->G,I->ViewElem,rect,frames,I->Name ORTHOCGOARGVAR);
   }
 }
 
@@ -1028,14 +1029,10 @@ void ObjectPrepareContext(CObject * I, CRay * ray)
         gl[11] = 0.0;
         gl[15] = 1.0;
 
-#ifdef PURE_OPENGL_ES_2
-	/* TODO */
-#else
         glMultMatrixf(gl);
 
         /* include the pre-translation */
         glTranslatef(ttt[12], ttt[13], ttt[14]);
-#endif
       }
     }
   }
@@ -1045,7 +1042,6 @@ void ObjectPrepareContext(CObject * I, CRay * ray)
 /*========================================================================*/
 void ObjectSetTTTOrigin(CObject * I, float *origin)
 {
-#if 1
   float homo[16];
   float *dst;
   float post[3];
@@ -1072,24 +1068,6 @@ void ObjectSetTTTOrigin(CObject * I, float *origin)
   invert3f3f(origin, dst);
 
   copy44f(homo, I->TTT);
-
-#else
-  if(!I->TTTFlag) {
-    I->TTTFlag = true;
-    initializeTTT44f(I->TTT);
-  }
-
-  I->TTT[3] += I->TTT[12];      /* remove existing origin from overall translation */
-  I->TTT[7] += I->TTT[13];
-  I->TTT[11] += I->TTT[14];
-
-  scale3f(origin, -1.0F, I->TTT + 12);  /* set new origin */
-
-  I->TTT[3] += origin[0];       /* add new origin into overall translation */
-  I->TTT[7] += origin[1];
-  I->TTT[11] += origin[2];
-#endif
-
 }
 
 
@@ -1173,11 +1151,7 @@ void ObjectUseColor(CObject * I)
 {
   register PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glColor3fv(ColorGet(I->G, I->Color));
-#endif
   }
 }
 
@@ -1185,11 +1159,7 @@ void ObjectUseColorCGO(CGO *cgo, CObject * I)
 {
   register PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     CGOColorv(cgo, ColorGet(I->G, I->Color));
-#endif
   }
 }
 
@@ -1205,9 +1175,6 @@ static void ObjectRenderUnitBox(CObject * this, RenderInfo * info)
 {
   register PyMOLGlobals *G = this->G;
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
     {
       const GLint lineVerts[] = {
@@ -1238,11 +1205,7 @@ static void ObjectRenderUnitBox(CObject * this, RenderInfo * info)
     glVertex3i(1, -1, -1);
     glEnd();
 #endif
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
     {
       const GLint lineVerts[] = {
@@ -1270,7 +1233,6 @@ static void ObjectRenderUnitBox(CObject * this, RenderInfo * info)
     glVertex3i(0, 0, 9);
 
     glEnd();
-#endif
 #endif
   }
 }
@@ -1340,17 +1302,21 @@ void ObjectStatePurge(CObjectState * I)
   FreeP(I->Matrix);
 }
 
-void ObjectStateSetMatrix(CObjectState * I, double *matrix)
+int ObjectStateSetMatrix(CObjectState * I, double *matrix)
 {
+  int ok = true;
   if(matrix) {
     if(!I->Matrix)
       I->Matrix = Alloc(double, 16);
+    CHECKOK(ok, I->Matrix);
     if(I->Matrix) {
       copy44d(matrix, I->Matrix);
     }
   } else if(I->Matrix) {
     FreeP(I->Matrix);
+    I->Matrix = NULL;
   }
+  return ok;
 }
 
 void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix)
@@ -1429,10 +1395,8 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       RaySetTTT(info->ray, true, matrix);
       result = true;
     } else if(G->HaveGUI && G->ValidContext) {
-#ifndef PURE_OPENGL_ES_2
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
-#endif
       matrix[0] = i_matrix[0];
       matrix[1] = i_matrix[4];
       matrix[2] = i_matrix[8];
@@ -1449,11 +1413,7 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       matrix[13] = i_matrix[7];
       matrix[14] = i_matrix[11];
       matrix[15] = i_matrix[15];
-#ifdef PURE_OPENGL_ES_2
-	/* TODO */
-#else
       glMultMatrixf(matrix);
-#endif
       result = true;
     }
   }
@@ -1466,10 +1426,8 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info)
   if(info->ray) {
     RayPopTTT(info->ray);
   } else if(G->HaveGUI && G->ValidContext) {
-#ifndef PURE_OPENGL_ES_2
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-#endif
   }
 }
 

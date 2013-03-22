@@ -34,8 +34,14 @@ Z* -------------------------------------------------------------------
 
 typedef struct _CFont CFont;
 
+#include "os_gl_pre.h"
+
+#define SHADERCGOARG , CGO *shaderCGO
+#define SHADERCGOARGVAR ,shaderCGO
+#define SHADERCGOARGV shaderCGO
+
 typedef char *FontRenderOpenGLFn(RenderInfo * info, CFont *, char *text, float size,
-                                 float *rpos);
+                                 float *rpos SHADERCGOARG);
 typedef char *FontRenderRayFn(CRay * ray, CFont *, char *text, float size, float *rpos);
 
 struct _CFont {

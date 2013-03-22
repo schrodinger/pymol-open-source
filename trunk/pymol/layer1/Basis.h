@@ -106,12 +106,12 @@ typedef struct {
   float back_dist;
 } BasisCallRec;
 
-void BasisInit(PyMOLGlobals * G, CBasis * I, int group_id);
+int BasisInit(PyMOLGlobals * G, CBasis * I, int group_id);
 void BasisFinish(CBasis * I, int group_id);
-void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
-                  float *volume,
-                  int group_id, int block_base,
-                  int perspective, float front, float size_hint);
+int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
+		 float *volume,
+		 int group_id, int block_base,
+		 int perspective, float front, float size_hint);
 
 void BasisSetupMatrix(CBasis * I);
 void BasisGetTriangleNormal(CBasis * I, RayInfo * r, int i, float *fc, int perspective);

@@ -138,6 +138,7 @@ typedef struct Rep {
   /* private */
   void (*fRecolor) (struct Rep * I, struct CoordSet * cs);
   int (*fSameVis) (struct Rep * I, struct CoordSet * cs);
+  int (*fSameColor) (struct Rep * I, struct CoordSet * cs);
   struct Rep *(*fRebuild) (struct Rep * I, struct CoordSet * cs, int state, int rep);
   struct Rep *(*fNew) (struct CoordSet * cs, int state);
   int displayList;

@@ -207,6 +207,7 @@ static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
 }
 #endif
 
+int ObjectVolumeRampToColor(ObjectVolume * I, int state) ;
 #ifndef _PYMOL_NOPY
 static int ObjectVolumeAllStatesFromPyList(ObjectVolume * I, PyObject * list)
 {
@@ -221,6 +222,7 @@ static int ObjectVolumeAllStatesFromPyList(ObjectVolume * I, PyObject * list)
       ok = ObjectVolumeStateFromPyList(I->Obj.G, I->State + a, PyList_GetItem(list, a));
       if(!ok)
         break;
+      ObjectVolumeRampToColor(I, a);
     }
   }
   return (ok);
@@ -301,17 +303,21 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
 #endif
     for (t=0; t<2; t++) {
       if (vs->textures[t]) {
+	CShaderMgr_AddVBOToFree(vs->State.G->ShaderMgr, (const GLuint *) &vs->textures[t]);
+	vs->textures[t] = 0;
+	/*
         if(PIsGlutThread()) {
           if(vs->State.G->ValidContext) {
             glDeleteTextures(1, (const GLuint *) &vs->textures[t]);
             vs->textures[t] = 0;
           }
         } else {
-          char buffer[255];       /* pass this off to the main thread */
+          char buffer[255];       // pass this off to the main thread
           sprintf(buffer, "_cmd.gl_delete_texture(cmd._COb,%d)\n", vs->textures[t]);
           PParse(vs->State.G, buffer);
           vs->textures[t] = 0;
         }
+      */
       }
     }
   }
@@ -334,7 +340,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
   if (vs->Histogram)
     free(vs->Histogram);
   if (vs->Ramp)
-    free(vs->Ramp);
+    FreeP(vs->Ramp);
   vs->Active = false;
 }
 
@@ -398,28 +404,6 @@ void ObjectVolumeDump(ObjectVolume * I, char *fname, int state)
       " ObjectVolumeDump: %s written to %s\n", I->Obj.Name, fname ENDFB(I->Obj.G);
   }
 }
-
-#if 0
-static char *ObjectVolumeGetCaption(ObjectVolume * I)
-{
-  int state = ObjectGetCurrentState((CObject *) I, false);
-  if(state >= 0) {
-    if(state < I->NState) {
-      char *p;
-      ObjectVolumeState *vs = I->State + state;
-      sprintf(vs->caption, "@ %1.4f\n", vs->Level);
-      p = vs->caption + strlen(vs->caption);
-      while(p > vs->caption) {
-        p--;
-        if(*p != '0')
-          break;
-      }
-      return vs->caption;
-    }
-  }
-  return NULL;
-}
-#endif
 
 static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int state)
 {
@@ -783,6 +767,47 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
 int ObjectVolumeAddSlicePoint(float *p0, float *p1, float *zaxis, float d, float *slice, float *t0, float *t1, float *tex_coords, float *origin);
 void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float *zaxis);
 
+int ObjectVolumeRampToColor(ObjectVolume * I, int state) {
+  /* Converting Ramp to Colors, used for ObjectVolumeColor */
+  ObjectVolumeState *ovs = NULL;
+  int ncolors;
+  float *colors ;
+  int pl = 0, i, j;
+  int lowerId, upperId, span, lowerc = 1, upperc;
+  float mixc, mixcincr;
+  int ok = true;
+  if (state<0){
+    ovs = I->State;
+  } else {
+    ovs = (I->State + state);
+  }
+  ncolors = 1 + (int)ovs->Ramp[(ovs->RampSize-1)*5];
+  colors = (float*) malloc(4 * ncolors * sizeof(float));
+  CHECKOK(ok, colors);
+  if (ok){
+    lowerId = (int)ovs->Ramp[0];
+    for (i = 1; i<ovs->RampSize; i++){
+      upperId = (int)ovs->Ramp[i*5];
+      upperc = i * 5 + 1;
+      mixc = 1.f;
+      span = upperId - lowerId;
+      mixcincr = 1.f/(float)span;
+      for (j = lowerId; j < upperId; j++){
+	colors[pl++] = ovs->Ramp[lowerc] * mixc + ovs->Ramp[upperc] * (1.f-mixc); 
+	colors[pl++] = ovs->Ramp[lowerc+1] * mixc + ovs->Ramp[upperc+1] * (1.f-mixc); 
+	colors[pl++] = ovs->Ramp[lowerc+2] * mixc + ovs->Ramp[upperc+2] * (1.f-mixc); 
+	colors[pl++] = ovs->Ramp[lowerc+3] * mixc + ovs->Ramp[upperc+3] * (1.f-mixc); 
+	mixc -= mixcincr;
+      }
+      lowerId = upperId;
+      lowerc = upperc;
+    }
+    ObjectVolumeColor(I, colors, 4 * ncolors);
+    free(colors);
+  }
+  return ok;
+}
+
 int ObjectVolumeColor(ObjectVolume * I, float * colors, int ncolors) {
 
   int i;
@@ -884,8 +909,6 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   float d, sliceRange, sliceDelta;
   float origin[3];
   CShaderPrg *shaderPrg;
-  float *fog_color;
-  float fog_enabled;
 
   /* bail if no shaders */
   if (G && !(CShaderMgr_ShadersPresent(G->ShaderMgr)))
@@ -895,7 +918,6 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     volume_bit_depth = GL_RGBA4;
   else if (volume_bit_depth==8)
     volume_bit_depth = GL_RGBA;
-#ifndef _PYMOL_PURE_OPENGL_ES
   else if (volume_bit_depth==16)
     volume_bit_depth = GL_RGBA16F_ARB;
   else if (volume_bit_depth==32)
@@ -903,10 +925,6 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   /* default back to 16-bit for improper value */
   else
     volume_bit_depth = GL_RGBA16F_ARB;
-#else
-  else
-    volume_bit_depth = GL_RGBA8_OES;
-#endif
   ObjectPrepareContext(&I->Obj, ray);
 
   if(state >= 0)
@@ -945,17 +963,8 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
             if(pass == -1) {
               int use_dlst;
 
-PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
-  "ObjectVolumeRender-Msg: !pass=%d and refresh=%d and recolor=%d.\n", 
-  !pass, vs->RefreshFlag, vs->RecolorFlag
-	ENDFB(I->Obj.G); 
-		
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
               if(!info->line_lighting)
                 glDisable(GL_LIGHTING);
-#endif
               SceneResetNormal(I->Obj.G, false);
               /*ObjectUseColor(&I->Obj);*/
 
@@ -971,9 +980,9 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 #endif
               if (!vs->textures[0] || vs->RefreshFlag) {
 
-PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
-  "ObjectVolumeRender-Msg: texture not inited or we need refresh.\n"
-  ENDFB(I->Obj.G); 
+		PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
+		  "ObjectVolumeRender-Msg: texture not inited or we need refresh.\n"
+		  ENDFB(I->Obj.G); 
 
                 vs->RefreshFlag = false;
 
@@ -999,30 +1008,10 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 		  printf("glTexImage3D is: %x", glTexImage3D);
 #endif
 /* END PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-  
-PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
-  "ObjectVolumeRender-Msg: About to create the texture-unit.\n"
-  ENDFB(I->Obj.G); 
-/*
-                // For future experiments with tex coord jittering
+		PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
+		  "ObjectVolumeRender-Msg: About to create the texture-unit.\n"
+		  ENDFB(I->Obj.G); 
 
-                if (vs->textures[2]) {
-                  glDeleteTextures(1, &vs->textures[2]);
-                  vs->textures[2] = 0;
-                }
-                unsigned char random_data[3*1024];
-                for (i=0;i<3*1024;i++) {
-                    random_data[i] = (rand() % 255);
-                }
-                glGenTextures(1, &vs->textures[2]);
-                glBindTexture(GL_TEXTURE_2D, vs->textures[2]);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-                glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 32, 32, 0, GL_RGB, GL_UNSIGNED_BYTE, random_data);
-*/
-#ifndef _PYMOL_PURE_OPENGL_ES
                 if (vs->textures[0]) {
                   glDeleteTextures(1, (const GLuint *) &vs->textures[0]);
                   vs->textures[0] = 0;
@@ -1048,33 +1037,27 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                   GL_RED, GL_FLOAT, vs->volume->data);
                 glPixelTransferf(GL_RED_BIAS, 0.0);
                 glPixelTransferf(GL_RED_SCALE, 1.0);
-PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
-  "ObjectVolumeRender-Msg: Created.\n"
-  ENDFB(I->Obj.G); 
+		PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
+		  "ObjectVolumeRender-Msg: Created.\n"
+		  ENDFB(I->Obj.G); 
                 // Create a color map - this will be replaced by a proper Volume Ramp object
                 if (vs->textures[1]) {
                   glDeleteTextures(1, (const GLuint *) &vs->textures[1]);
                   vs->textures[1] = 0;
                 }
-#else
-		(void)bias;
-		(void)scale;
-		(void)max_val;
-		(void)min_val;
-#endif
               }
 
           		if (vs->RecolorFlag || 0==I->Obj.Color) {
           		  int i;
-PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
-  "ObjectVolumeColor-Update: Making new color ramp.\n"
-  ENDFB(I->Obj.G);
+			  PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
+			    "ObjectVolumeColor-Update: Making new color ramp.\n"
+			    ENDFB(I->Obj.G);
           		  /* default coloring */
           		  vs->RecolorFlag = false;
           		  if (0==I->Obj.Color) {
-PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
-  "ObjectVolumeColor-Update: No colors, making new.\n"
-  ENDFB(I->Obj.G);
+			    PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
+			      "ObjectVolumeColor-Update: No colors, making new.\n"
+			      ENDFB(I->Obj.G);
 		    
                   /* don't need to create more space, just overwrite the values */
             		  if (vs->colors) free(vs->colors);
@@ -1090,11 +1073,10 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
           		      vs->colors[4*i+3] = 0.1*exp(-(norm+0.5)*(norm+0.5)) + 0.5*(exp(-(norm-1.1)*(norm-1.1)/0.4));
 		              }
 		            } else {
-PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
-  "ObjectVolumeColor-Update: Using established color ramp.\n"
-  ENDFB(I->Obj.G);  
+			    PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
+			      "ObjectVolumeColor-Update: Using established color ramp.\n"
+			      ENDFB(I->Obj.G);  
             		}
-#ifndef _PYMOL_PURE_OPENGL_ES
                 glGenTextures(1, (GLuint *) &vs->textures[1]);
                 glBindTexture(GL_TEXTURE_1D, vs->textures[1]);
                 glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1102,7 +1084,6 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                 glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
                 glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
                 glTexImage1D(GL_TEXTURE_1D, 0, volume_bit_depth, volume_nColors, 0, GL_RGBA, GL_FLOAT, vs->colors);
-#endif
               } // recolor
 
 #ifndef _PYMOL_GL_CALLLISTS
@@ -1125,9 +1106,6 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 
 		  /* extents */
 		  if(I->Obj.RepVis[cRepExtent] && corner) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		    {
 		      const GLfloat polyVerts[] = {
@@ -1195,7 +1173,6 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 		    glVertex3f(corner[18], corner[19], corner[20]);
 		    glEnd();
 #endif
-#endif
 		  }
 
                 if(n && v && I->Obj.RepVis[cRepVolume]) {
@@ -1229,7 +1206,6 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                   tex_corner[23] = 1.0-z_offset;
 
                   shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "volume");
-
                   origin[0] = corner[0] + 0.5*(corner[21]-corner[0]);
 		  origin[1] = corner[1] + 0.5*(corner[22]-corner[1]);
 		  origin[2] = corner[2] + 0.5*(corner[23]-corner[2]);
@@ -1243,11 +1219,7 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                     min_ext = vs->ExtentMin;
                     max_ext = vs->ExtentMax;
                   }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                   glDisable(GL_LIGHTING);
-#endif
                   m = SceneGetMatrix(G);
                   zaxis[0] = m[2];
 		  zaxis[1] = m[6];
@@ -1295,36 +1267,37 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                 CShaderPrg_Set1i(shaderPrg, "colorTex", 1);
               	CShaderPrg_Set1f(shaderPrg, "nSlices", volume_layers);
 
-                fog_color = SettingGetfv(G, cSetting_bg_rgb);                
-                fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
-           
-		CShaderPrg_Set3f(shaderPrg, "fog_color", fog_color[0], fog_color[1], fog_color[2]);
-                CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
-
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D, vs->textures[2]);
-#ifndef _PYMOL_PURE_OPENGL_ES
+		{
+		  int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
+		  OrthoLineType bg_image_filename;
+		  strcpy(bg_image_filename,SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename));
+		  CShaderPrg_Set1f(shaderPrg, "fogIsSolidColor", bg_gradient || bg_image_filename[0] ? 0.f : 1.f);
+		}
+		CShaderPrg_Set3fv(shaderPrg, "fogSolidColor", ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb)));
+		CShaderPrg_SetFogUniforms(G, shaderPrg);
+		CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGet(G, cSetting_depth_cue) ? 1.f : 0.f);
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
+		if (!(shaderPrg->uniform_set & 4)){
+		  CShaderPrg_Set1i(shaderPrg, "bgTextureMap", 4);
+		  shaderPrg->uniform_set |= 4;
+		}
+		{
+		  float fog[4];
+		  SceneSetFog(G, fog);
+		}
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_1D, vs->textures[1]);
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_3D, vs->textures[0]);
-#endif
                 // PyMOL uses different glAlphaFunct and we need to reset it
                 // to default value (everything passes)
 
                 // Not sure if we really need to restore this
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                 glGetIntegerv(GL_ALPHA_TEST_FUNC, &alpha_func);
                 glGetFloatv(GL_ALPHA_TEST_REF, &alpha_ref);
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-                    /* TODO */
-#else
                 glAlphaFunc(GL_ALWAYS, 0.0);
-#endif
 
                 // This is setting used for PyMOL, but just to be on a safe side
                 // we set glBlendFunct explicitely here
@@ -1361,12 +1334,8 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                   }
                   CShaderPrg_Disable(shaderPrg);
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                   glAlphaFunc(alpha_func, alpha_ref);
                   glEnable(GL_LIGHTING);
-#endif
                 }
 #ifdef _PYMOL_GL_CALLLISTS
                 if(use_dlst && vs->displayList) {
@@ -1374,11 +1343,7 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
                 }
 #endif
               }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
               glEnable(GL_LIGHTING);
-#endif
             }
           }
         }
@@ -1395,9 +1360,6 @@ PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
 void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float *zaxis)
 {
   float center[3], v[3], w[3], q[3];
-#ifdef _PYMOL_PURE_OPENGL_ES
-  float tex_center[3];
-#endif
   float angles[12];
   float a, c, s;
   int vertices[12];
@@ -1417,17 +1379,6 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
     center[0] /= (float)n_points;
     center[1] /= (float)n_points;
     center[2] /= (float)n_points;
-   
-#ifdef _PYMOL_PURE_OPENGL_ES
-    for (i=0; i<3*n_points; i+=3) {
-        tex_center[0] += tex_coords[i];
-        tex_center[1] += tex_coords[i+1];
-        tex_center[2] += tex_coords[i+2];
-    }
-    tex_center[0] /= (float)n_points;
-    tex_center[1] /= (float)n_points;
-    tex_center[2] /= (float)n_points;
-#endif
    
     v[0] = points[0]-center[0];
     v[1] = points[1]-center[1];
@@ -1457,9 +1408,6 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
     }
 
     // Now the vertices are sorted so draw the polygon
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
     {
       int nverts = n_points, pl = 0;
@@ -1490,7 +1438,6 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
       glVertex3fv(&points[3*vertices[(i)%n_points]]);
     }
     glEnd();
-#endif
 #endif
 }
 
@@ -1590,13 +1537,12 @@ void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs)
   vs->Field = NULL;
   vs->textures[0] = 0;
   vs->textures[1] = 0;
-  vs->textures[2] = 0;
 //  vs->Histogram = NULL;
   vs->Histogram = (float*)calloc(sizeof(float), HISTOGRAM_SIZE+4);
   vs->isUpdated = false;
   // Initial ramp
   vs->RampSize = 5;
-  vs->Ramp = (float*)malloc(5*5*sizeof(float));
+  vs->Ramp = Alloc(float, 5*5);
   vs->Ramp[0] = 0.0; vs->Ramp[1] = 0.0; vs->Ramp[2] = 0.0; vs->Ramp[3] = 1.0; vs->Ramp[4] = 0.0;
   vs->Ramp[5] = 200.0; vs->Ramp[6] = 0.0; vs->Ramp[7] = 0.0; vs->Ramp[8] = 1.0; vs->Ramp[9] = 0.0;
   vs->Ramp[10] = 210.0; vs->Ramp[11] = 1.0; vs->Ramp[12] = 0.0; vs->Ramp[13] = 0.2; vs->Ramp[14] = 0.2;
@@ -1823,6 +1769,9 @@ ObjectVolume *ObjectVolumeFromBox(PyMOLGlobals * G, ObjectVolume * obj, ObjectMa
   }
   if(I) {
     ObjectVolumeRecomputeExtent(I);
+    if (I->NState && I->State && !I->State->colors){
+      ObjectVolumeRampToColor(I, -1);
+    }
   }
   I->Obj.ExtentFlag = true;
   /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]); */
@@ -1990,7 +1939,7 @@ PyObject * ObjectVolumeSetRamp(ObjectVolume * I, float *ramp_list, int list_size
       ovs = I->State + a;
       if (ramp_list && list_size>0) {
         if (ovs->Ramp) {
-          free(ovs->Ramp);
+          FreeP(ovs->Ramp);
         }
         ovs->Ramp = ramp_list;
         ovs->RampSize = list_size / 5;

@@ -66,6 +66,7 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
   int c = I->N;
   float *vc;
   int round_ends;
+  int ok = true;
   int color =
     SettingGet_color(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_dash_color);
   float line_width =
@@ -93,12 +94,12 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
     v = I->V;
     c = I->N;
 
-    while(c > 0) {
+    while(ok && c > 0) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]); */
       if(round_ends) {
-        ray->fSausage3fv(ray, v, v + 3, radius, vc, vc);
+        ok &= ray->fSausage3fv(ray, v, v + 3, radius, vc, vc);
       } else {
-        ray->fCustomCylinder3fv(ray, v, v + 3, radius, vc, vc, cCylCapFlat, cCylCapFlat);
+        ok &= ray->fCustomCylinder3fv(ray, v, v + 3, radius, vc, vc, cCylCapFlat, cCylCapFlat);
       }
       v += 6;
       c -= 2;
@@ -133,9 +134,11 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
-	  I->shaderCGO->use_shader = true;
+	  CHECKOK(ok, I->shaderCGO);
+	  if (ok)
+	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
-	} else {
+	} else if (ok) {
 	  CShaderPrg *shaderPrg;
 	  if (dash_as_cylinders){
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
@@ -148,13 +151,13 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
 	    }
 	    if (!round_ends){
-	      CShaderPrg_Set1f(shaderPrg, "flat_caps", 1.f);
+	      CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 0.f);
 	    }
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
 	  }
-
+	  if (!shaderPrg) return;
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 
 	  CShaderPrg_Disable(shaderPrg);
@@ -175,8 +178,10 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 #endif
 
       if (generate_shader_cgo){
-	CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
-	CGOResetNormal(I->shaderCGO, true);
+	if (ok)
+	  ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
+	if (ok)
+	  ok &= CGOResetNormal(I->shaderCGO, true);
       } else {
 	if(info->width_scale_flag) {
 	  glLineWidth(line_width * info->width_scale);
@@ -187,49 +192,46 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
       }
 
       if (generate_shader_cgo){
-	if(color >= 0){
-	  CGOColorv(I->shaderCGO, ColorGet(G, color));
-	} else if (I->Obj && I->Obj->Color >= 0){
-	  CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
+	if (ok){
+	  if(color >= 0){
+	    ok &= CGOColorv(I->shaderCGO, ColorGet(G, color));
+	  } else if (I->Obj && I->Obj->Color >= 0){
+	    ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
+	  }
 	}
 	v = I->V;
 	c = I->N;
 	if (dash_as_cylinders){
 	  float *origin = NULL, axis[3];
-	  while(c > 0) {
+	  while(ok && c > 0) {
 	    origin = v;
 	    v += 3;
 	    axis[0] = v[0] - origin[0];
 	    axis[1] = v[1] - origin[1];
 	    axis[2] = v[2] - origin[2];
 	    v += 3;
-	    CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
+	    ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
 	    c -= 2;
 	  }
 	} else {
-	  CGOBegin(I->shaderCGO, GL_LINES);
-	  while(c > 0) {
-	    CGOVertexv(I->shaderCGO, v);
+	  ok &= CGOBegin(I->shaderCGO, GL_LINES);
+	  while(ok && c > 0) {
+	    ok &= CGOVertexv(I->shaderCGO, v);
 	    v += 3;
-	    CGOVertexv(I->shaderCGO, v);
+	    if (ok)
+	      ok &= CGOVertexv(I->shaderCGO, v);
 	    v += 3;
 	    c -= 2;
 	  }
-	  CGOEnd(I->shaderCGO);
+	  if (ok)
+	    ok &= CGOEnd(I->shaderCGO);
 	}
       } else {
 	if(color >= 0){
-#ifdef PURE_OPENGL_ES_2
-	  /* TODO */
-#else
 	  glColor3fv(ColorGet(G, color));
-#endif
 	}
 	v = I->V;
 	c = I->N;
-#ifdef PURE_OPENGL_ES_2
-	/* TODO */
-#else
 	if(!info->line_lighting)
 	  glDisable(GL_LIGHTING);
 #ifdef _PYMOL_GL_DRAWARRAYS
@@ -262,35 +264,42 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	glEnd();
 #endif
 	glEnable(GL_LIGHTING);
-#endif
       }
       if (use_shader) {
 	if (generate_shader_cgo){
 	  CGO *convertcgo = NULL;
-	  CGOStop(I->shaderCGO);
+	  if (ok)
+	    ok &= CGOStop(I->shaderCGO);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  if (ok)
+	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);    
 	  I->shaderCGO = convertcgo;
+	  convertcgo = NULL;
 #else
 	  (void)convertcgo;
 #endif
 #ifdef _PYMOL_CGO_DRAWBUFFERS
-	  if (dash_as_cylinders){
-	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	  } else {
-	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	  if (ok){
+	    if (dash_as_cylinders){
+	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
+	    } else {
+	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
+	    }
+	    CHECKOK(ok, convertcgo);
 	  }
 	  if (convertcgo){
 	    CGOFree(I->shaderCGO);
 	    I->shaderCGO = convertcgo;
+	    convertcgo = NULL;
 	  }
 #else
 	  (void)convertcgo;
 #endif
 	}
 	
-	{
+	if (ok) {
 	  CShaderPrg *shaderPrg;
 	  if (dash_as_cylinders){
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
@@ -303,13 +312,16 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
 	    }
 	    if (!round_ends){
-	      CShaderPrg_Set1f(shaderPrg, "flat_caps", 1.f);
+	      CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 0.f);
 	    }
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
 	  }	 
 
+	  if (!shaderPrg)
+	    return;
+        
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 	  
 	  CShaderPrg_Disable(shaderPrg);
@@ -323,9 +335,15 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 #endif
     }
   }
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->ds->Rep[cRepDash] = NULL;
+    RepDistDashFree(I);
+  }
 }
 
-Rep *RepDistDashNew(DistSet * ds)
+Rep *RepDistDashNew(DistSet * ds, int state)
 {
   PyMOLGlobals *G = ds->State.G;
   int a;
@@ -333,13 +351,12 @@ Rep *RepDistDashNew(DistSet * ds)
   float *v, *v1, *v2, d[3], d1[3];
   float l;
   float dash_len, dash_gap, dash_sum;
-#if 0
-  float d2[3], ph, seg;
-#endif
+  int ok = true;
 
   OOAlloc(G, RepDistDash);
+  CHECKOK(ok, I);
 
-  if(!ds->NIndex) {
+  if(!ok || !ds->NIndex) {
     OOFreeP(I);
     return (NULL);
   }
@@ -349,7 +366,7 @@ Rep *RepDistDashNew(DistSet * ds)
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepDistDashRender;
   I->R.fFree = (void (*)(struct Rep *)) RepDistDashFree;
   I->R.fRecolor = NULL;
-
+  I->R.context.state = state;
   dash_len = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dash_length);
   dash_gap = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dash_gap);
   dash_sum = dash_len + dash_gap;
@@ -366,8 +383,8 @@ Rep *RepDistDashNew(DistSet * ds)
   n = 0;
   if(ds->NIndex) {
     I->V = VLAlloc(float, ds->NIndex * 10);
-
-    for(a = 0; a < ds->NIndex; a = a + 2) {
+    CHECKOK(ok, I->V);
+    for(a = 0; ok && a < ds->NIndex; a = a + 2) {
       v1 = ds->Coord + 3 * a;
       v2 = ds->Coord + 3 * (a + 1);
 
@@ -389,8 +406,9 @@ Rep *RepDistDashNew(DistSet * ds)
           float half_dash_gap = dash_gap * 0.5;
 
           average3f(v1, v2, avg);
-          while(l_left > dash_sum) {
+          while(ok && l_left > dash_sum) {
             VLACheck(I->V, float, (n * 3) + 11);
+	    CHECKOK(ok, I->V);
             v = I->V + n * 3;
             scale3f(d, l_used + half_dash_gap, proj1);
             scale3f(d, l_used + dash_len + half_dash_gap, proj2);
@@ -402,7 +420,7 @@ Rep *RepDistDashNew(DistSet * ds)
             l_left -= dash_sum;
             l_used += dash_sum;
           }
-          if(l_left > dash_gap) {
+          if(ok && l_left > dash_gap) {
             l_left -= dash_gap;
             scale3f(d, l_used + half_dash_gap, proj1);
             scale3f(d, l_used + l_left + half_dash_gap, proj2);
@@ -416,58 +434,25 @@ Rep *RepDistDashNew(DistSet * ds)
           }
         } else if(dash_len > R_SMALL4) {
           VLACheck(I->V, float, (n * 3) + 5);
-          v = I->V + n * 3;
-          copy3f(v1, v);
-          copy3f(v2, v + 3);
-          n += 2;
+	  CHECKOK(ok, I->V);
+	  if (ok){
+	    v = I->V + n * 3;
+	    copy3f(v1, v);
+	    copy3f(v2, v + 3);
+	    n += 2;
+	  }
         }
       }
-#if 0
-      l -= dash_gap;
-
-      ph = dash_sum - (float) fmod((l + dash_gap) / 2.0, dash_sum);
-      if(l > R_SMALL4) {
-
-        copy3f(v1, d1);
-        normalize3f(d);
-        scale3f(d, dash_gap, d2);
-        scale3f(d2, 0.5F, d2);
-        add3f(d1, d2, d1);
-
-        while(l > 0.0) {
-          if(ph < dash_len) {
-            seg = dash_len - ph;
-            if(l < seg)
-              seg = l;
-            scale3f(d, seg, d2);
-            if((seg / dash_len) > 0.2) {
-              VLACheck(I->V, float, (n * 3) + 5);
-              v = I->V + n * 3;
-              copy3f(d1, v);
-              v += 3;
-              add3f(d1, d2, d1);
-              copy3f(d1, v);
-              n += 2;
-            } else
-              add3f(d1, d2, d1);
-            ph = dash_len;
-          } else {
-            /* gap */
-            seg = dash_gap;
-            if(l < seg)
-              seg = l;
-            scale3f(d, seg, d2);
-            add3f(d1, d2, d1);
-            ph = 0.0;
-          }
-          l -= seg;
-        }
-      }
-#endif
-
     }
-    VLASize(I->V, float, n * 3);
-    I->N = n;
+    if (ok)
+      VLASize(I->V, float, n * 3);
+    CHECKOK(ok, I->V);
+    if (ok)
+      I->N = n;
+  }
+  if (!ok){
+    RepDistDashFree(I);
+    I = NULL;
   }
   return ((void *) (struct Rep *) I);
 }

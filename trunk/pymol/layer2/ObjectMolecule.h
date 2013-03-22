@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Symmetry.h"
 #include"Raw.h"
 #include"DistSet.h"
+#include "Executive_pre.h"
 
 #define cKeywordAll "all"
 #define cKeywordNone "none"
@@ -80,7 +81,6 @@ typedef struct ObjectMolecule {
   struct CSculpt *Sculpt;
   int RepVisCacheValid;
   signed char RepVisCache[cRepCnt];     /* for transient storage during updates */
-  /* UndoDataList *UndoData; */
 } ObjectMolecule;
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
@@ -291,7 +291,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
                                 float *pos, int color, int state, int more, int quiet);
 
 ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag);
-void ObjectMoleculeSort(ObjectMolecule * I);
+int ObjectMoleculeSort(ObjectMolecule * I);
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule * obj);
 void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int invalidate);
 
@@ -337,22 +337,22 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
 ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
                                          char *PDBStr, int frame, int discrete);
 
-void ObjectMoleculeExtendIndices(ObjectMolecule * I, int state);
+int ObjectMoleculeExtendIndices(ObjectMolecule * I, int state);
 
 void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state);
 void ObjectMoleculeInvalidateAtomType(ObjectMolecule *I, int state);
 
-void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vis_only);
+void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vis_only SELINDICATORARG);
 
 void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
 
 struct CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule * I, int setIndex);
 void ObjectMoleculeBlindSymMovie(ObjectMolecule * I);
-void ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
-                         struct CoordSet *cs, int bondSearchFlag,
-                         int aic_mask, int invalidate);
+int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
+			struct CoordSet *cs, int bondSearchFlag,
+			int aic_mask, int invalidate);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I);
-void ObjectMoleculeUpdateNeighbors(ObjectMolecule * I);
+int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I);
 int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, float *v, int mode,
                            int log);
 int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v,
@@ -381,9 +381,9 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I);
 
 void ObjectMoleculeSaveUndo(ObjectMolecule * I, int state, int log);
 void ObjectMoleculeUndo(ObjectMolecule * I, int dir);
-void ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
+int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
 void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
-void ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
+int ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
 void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule * I, int state, int index, float *v);
 int ObjectMoleculeVerifyChemistry(ObjectMolecule * I, int state);
@@ -394,8 +394,8 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index);
 int ObjectMoleculeGetTotalAtomValence(ObjectMolecule * I, int atom);
 int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode,
                               int order);
-void ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai);
-void ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src, int index1,
+int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai);
+int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src, int index1,
                         int mode, int move_flag);
 int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule * I, int i0, int i1);
@@ -430,7 +430,7 @@ int ObjectMoleculeGetBondPath(ObjectMolecule * I, int atom, int max,
 int ***ObjectMoleculeGetBondPrint(ObjectMolecule * I, int max_bond, int max_type,
                                   int *dim);
 
-int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * ai,
+int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, AtomInfoType * ai,
                           struct CoordSet *cs, int searchFlag, int connectModeOverride);
 int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete);
 
@@ -468,41 +468,6 @@ struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                                                char **next_pdb,
                                                PDBInfoRec * pdb_info,
                                                int quiet, int *model_number);
-
-#if 0
-
-/* legacy binary file suppoort */
-
-typedef struct {
-  int index[2];
-  int order;
-} BondType068;
-
-typedef struct {
-  int index[2];
-  int order;
-  int stereo;
-} BondType083;
-#endif
-
-#if 0
-ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals * G, ObjectMolecule * I,
-                                          char *MOLStr, int frame, int discrete,
-                                          int quiet, int multiplex, char *new_name,
-                                          char **next_entry);
-
-ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals * G, ObjectMolecule * obj,
-                                         char *molstr, int frame, int discrete,
-                                         int finish);
-
-ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int discrete);
-
-ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int discrete,
-                                          M4XAnnoType * m4x, PDBInfoRec * pdb_info);
-
-#endif
 
 int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize, int format);
 void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * obj);

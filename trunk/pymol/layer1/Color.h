@@ -85,6 +85,7 @@ int ColorGetCurrent(PyMOLGlobals * G);
 int ColorGetIndex(PyMOLGlobals * G, char *name);
 int ColorConvertOldSessionIndex(PyMOLGlobals * G, int index);
 void ColorUpdateFront(PyMOLGlobals * G, float *back);
+void ColorUpdateFrontFromSettings(PyMOLGlobals * G);
 
 float *ColorGet(PyMOLGlobals * G, int index);   /* pointer maybe invalid after creating a new color */
 float *ColorGetRaw(PyMOLGlobals * G, int index);        /* pointer maybe invalid after creating a new color */
@@ -116,5 +117,6 @@ int ColorLookupColor(PyMOLGlobals * G, float *color);
 void ColorGetBkrdContColor(PyMOLGlobals * G, float *rgb, int invert_flag);
 unsigned int ColorGet32BitWord(PyMOLGlobals * G, float *rgba);
 int ColorGetEncoded(PyMOLGlobals * G, int index, float *color);
+int Color3fToInt(PyMOLGlobals * G, float *rgb);
 
 #endif

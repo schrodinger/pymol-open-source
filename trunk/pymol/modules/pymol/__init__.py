@@ -213,8 +213,13 @@ if pymol_launch != 3: # if this isn't a dry run
         # Python exception type for PyMOL commands
         
         class CmdException:
-            def __init__(self,args=None):
+            label = "Error"
+            def __init__(self, args=None, label=None):
                 self.args = args
+                if label:
+                    self.label = label
+            def __str__(self):
+                return " %s: %s" % (self.label, self.args)
         
         class Scratch_Storage:
             pass

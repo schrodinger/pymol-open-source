@@ -2398,10 +2398,16 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, CObject * obj, AtomInfoType * rec,
   int *index;
   int a;
   CSetting *setting = NULL;
+  int ok = true;
   index = Alloc(int, n + 1);
-  ErrChkPtr(G, index);
-  (*outdex) = Alloc(int, n + 1);
-  ErrChkPtr(G, *outdex);
+  CHECKOK(ok, index);
+  if (ok)
+    (*outdex) = Alloc(int, n + 1);
+  CHECKOK(ok, *outdex);
+  if (!ok){
+    FreeP(index);
+    return NULL;
+  }
   if(obj)
     setting = obj->Setting;
 
@@ -3983,11 +3989,6 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
 
   if(I->vdw == 0.0)             /* only assigned if not yet assigned */
     I->vdw = vdw;
-
-#if 0
-  if(!I->protons)
-    I->protons = cAN_C;         /* default assumption */
-#endif
 
   if(I->protons == cAN_H)
     I->hydrogen = true;

@@ -37,6 +37,8 @@ varying vec4 packed_data_5 ;
 
 varying vec4 color1;
 varying vec4 color2;
+varying vec2 bgTextureLookup;
+uniform vec2 pixelSize;
 
 void main(void)
 {
@@ -101,5 +103,6 @@ void main(void)
     point = tvertex.xyz / tvertex.w;
 
     gl_Position = gl_ModelViewProjectionMatrix * vertex;
+    bgTextureLookup = (gl_Position.xy/gl_Position.w) / 2.0 + 0.5;
 }
 

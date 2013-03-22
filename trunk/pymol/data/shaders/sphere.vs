@@ -13,8 +13,9 @@ attribute float a_rightUpFlags;
 
 varying vec4 COLOR;
 varying vec3 sphere_center;
-varying vec3 point;
 varying float radius2;
+varying vec3 point;
+varying vec2 bgTextureLookup;
 
 void main(void)
 {
@@ -61,5 +62,6 @@ void main(void)
 
     // Pass transformed vertex
     gl_Position = gl_ModelViewProjectionMatrix * vertex;
+    bgTextureLookup = (gl_Position.xy/gl_Position.w) / 2.0 + 0.5;
 }
 

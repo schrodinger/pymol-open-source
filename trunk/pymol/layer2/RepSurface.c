@@ -56,8 +56,9 @@ typedef struct RepSurface {
   int solidFlag;
   int oneColorFlag, oneColor;
   int allVisibleFlag;
-  int *LastVisib;
+  char *LastVisib;
   int *LastColor;
+  int ColorInvalidated;
   int Type;
   float max_vdw;
   CGO *debug;
@@ -84,9 +85,11 @@ void RepSurfaceFree(RepSurface * I)
   VLAFreeP(I->VN);
   if (I->pickingCGO && I->pickingCGO!=I->shaderCGO){
     CGOFree(I->pickingCGO);
+    I->pickingCGO = NULL;
   }
   if (I->shaderCGO){
     CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
   }
   if (I->vertexIndices){
     FreeP(I->vertexIndices);
@@ -151,18 +154,6 @@ static void SolventDotFree(SolventDot * I)
   OOFreeP(I);
 }
 
-#if 0
-static int ZOrderFn(float *array, int l, int r)
-{
-  return (array[l] <= array[r]);
-}
-
-static int ZRevOrderFn(float *array, int l, int r)
-{
-  return (array[l] >= array[r]);
-}
-#endif
-
 static int check_and_add(int *cache, int spacing, int t0, int t1)
 {
   int *rec;
@@ -199,6 +190,42 @@ static int check_and_add(int *cache, int spacing, int t0, int t1)
 
 #define CLAMP_VALUE(v)  ((v>1.f) ? 1.f :  (v < 0.f) ? 0.f : v)
 
+void RepSurfaceSortIX(PyMOLGlobals * G, RepSurface *I, int t_mode){
+  float *z_value = NULL, *zv;
+  float *sum, *sv;
+  float matrix[16];
+  int idx;
+  int *ix = NULL;
+  
+  glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+  sum = I->sum;
+  z_value = I->z_value;
+  ix = I->ix;
+  zv = z_value;
+  sv = sum;
+  
+  /* for each triangle, computes the z */
+  for (idx = 0; idx<I->n_tri; idx++){
+    *(zv++) = matrix[2] * sv[0] + matrix[6] * sv[1] + matrix[10] * sv[2];
+    sv += 3;
+  }
+  
+  switch (t_mode) {
+  case 1:
+    UtilSemiSortFloatIndex(I->n_tri, z_value, ix, true);
+    /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn); */
+    break;
+  default:
+    UtilSemiSortFloatIndex(I->n_tri, z_value, ix, false);
+    /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn); */
+    break;
+  }
+}
+
+int AtomInfoIsMasked(ObjectMolecule *obj, int atm){
+  AtomInfoType *ait = &obj->AtomInfo[atm];
+  return (ait->masked ? cPickableNoPick : cPickableAtom);
+}
 
 static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 {
@@ -215,6 +242,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
   int c = I->N;
   int *vi = I->Vis;
   int *at = I->AT;
+  int ok = true;
   float alpha;
   int t_mode;
   short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
@@ -253,12 +281,12 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       }
 
       if(c)
-        while(c--) {
+        while(ok && c--) {
           if(*vi) {
             if(!I->oneColorFlag) {
               ray->fColor3fv(ray, vc);
             }
-            ray->fSphere3fv(ray, v, radius);
+            ok &= ray->fSphere3fv(ray, v, radius);
           }
           vi++;
           vc += 3;
@@ -270,7 +298,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       if(I->oneColorFlag) {
         float col[3], col1[3], col2[3], col3[3];
         ColorGetEncoded(G, I->oneColor, col);
-        while(c--) {
+        while(ok && c--) {
           if((I->proximity
               && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
              || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))){
@@ -299,14 +327,14 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	      mult3f(col2, ao2, col2);
 	      mult3f(col3, ao3, col3);
 	    }
-	    ray->fTriangle3fv(ray, v + (*t) * 3, v + (*(t + 1)) * 3, v + (*(t + 2)) * 3,
-			      vn + (*t) * 3, vn + (*(t + 1)) * 3, vn + (*(t + 2)) * 3,
-			      col1, col2, col3);
+	    ok &= ray->fTriangle3fv(ray, v + (*t) * 3, v + (*(t + 1)) * 3, v + (*(t + 2)) * 3,
+				    vn + (*t) * 3, vn + (*(t + 1)) * 3, vn + (*(t + 2)) * 3,
+				    col1, col2, col3);
 	  }
           t += 3;
         }
       } else {
-        while(c--) {
+        while(ok && c--) {
           register int ttA = *t, ttB = *(t + 1), ttC = *(t + 2);
           if((I->proximity && ((*(vi + ttA)) || (*(vi + ttB)) || (*(vi + ttC)))) ||
              ((*(vi + ttA)) && (*(vi + ttB)) && (*(vi + ttC)))) {
@@ -351,13 +379,13 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		mult3f(cC, ao3, cC);
 	      }
               if(va) {
-                ray->fTriangleTrans3fv(ray, v + ttA3, v + ttB3, v + ttC3,
-                                       vn + ttA3, vn + ttB3, vn + ttC3,
-                                       cA, cB, cC,
-                                       1.0F - va[ttA], 1.0F - va[ttB], 1.0F - va[ttC]);
+                ok &= ray->fTriangleTrans3fv(ray, v + ttA3, v + ttB3, v + ttC3,
+					     vn + ttA3, vn + ttB3, vn + ttC3,
+					     cA, cB, cC,
+					     1.0F - va[ttA], 1.0F - va[ttB], 1.0F - va[ttC]);
               } else {
-                ray->fTriangle3fv(ray, v + ttA3, v + ttB3, v + ttC3,
-                                  vn + ttA3, vn + ttB3, vn + ttC3, cA, cB, cC);
+                ok &= ray->fTriangle3fv(ray, v + ttA3, v + ttB3, v + ttC3,
+					vn + ttA3, vn + ttB3, vn + ttC3, cA, cB, cC);
               }
             }
           }
@@ -370,61 +398,68 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       int t0, t1, t2;
       int spacing = 10;
       int *cache = Calloc(int, spacing * (I->N + 1));
+      CHECKOK(ok, cache);
 
       radius = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_radius);
 
-      if(radius == 0.0F) {
+      if(ok && radius == 0.0F) {
         float line_width =
           SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_width);
         line_width = SceneGetDynamicLineWidth(info, line_width);
 
         radius = ray->PixelRadius * line_width / 2.0F;
       }
-
-      c = I->NT;
-      if(I->oneColorFlag) {
-        float col[3];
-        ColorGetEncoded(G, I->oneColor, col);
-        while(c--) {
-          t0 = (*t);
-          t1 = (*(t + 1));
-          t2 = (*(t + 2));
-          if((I->proximity && ((*(vi + t0)) || (*(vi + t1)) || (*(vi + t2)))) ||
-             ((*(vi + t0)) && (*(vi + t1)) && (*(vi + t2)))) {
-            if(!check_and_add(cache, spacing, t0, t1))
-              ray->fSausage3fv(ray, v + t0 * 3, v + t1 * 3, radius, col, col);
-            if(!check_and_add(cache, spacing, t1, t2))
-              ray->fSausage3fv(ray, v + t1 * 3, v + t2 * 3, radius, col, col);
-            if(!check_and_add(cache, spacing, t2, t0))
-              ray->fSausage3fv(ray, v + t2 * 3, v + t0 * 3, radius, col, col);
-          }
-          t += 3;
-        }
-      } else {
-        while(c--) {
-          t0 = (*t);
-          t1 = (*(t + 1));
-          t2 = (*(t + 2));
-
-          if((I->proximity && ((*(vi + t0)) || (*(vi + t1)) || (*(vi + t2)))) ||
-             ((*(vi + t0)) && (*(vi + t1)) && (*(vi + t2))))
-            if((*(vi + t0)) || (*(vi + t1)) || (*(vi + t2))) {
-              if(!check_and_add(cache, spacing, t0, t1))
-                ray->fSausage3fv(ray, v + t0 * 3, v + t1 * 3, radius, vc + t0 * 3,
-                                 vc + t1 * 3);
-              if(!check_and_add(cache, spacing, t1, t2))
-                ray->fSausage3fv(ray, v + t1 * 3, v + t2 * 3, radius, vc + t1 * 3,
-                                 vc + t2 * 3);
-              if(!check_and_add(cache, spacing, t2, t0))
-                ray->fSausage3fv(ray, v + t2 * 3, v + t0 * 3, radius, vc + t2 * 3,
-                                 vc + t0 * 3);
-            }
-          t += 3;
-        }
+      if (ok){
+	c = I->NT;
+	if(I->oneColorFlag) {
+	  float col[3];
+	  ColorGetEncoded(G, I->oneColor, col);
+	  while(ok && c--) {
+	    t0 = (*t);
+	    t1 = (*(t + 1));
+	    t2 = (*(t + 2));
+	    if((I->proximity && ((*(vi + t0)) || (*(vi + t1)) || (*(vi + t2)))) ||
+	       ((*(vi + t0)) && (*(vi + t1)) && (*(vi + t2)))) {
+	      if(!check_and_add(cache, spacing, t0, t1))
+		ok &= ray->fSausage3fv(ray, v + t0 * 3, v + t1 * 3, radius, col, col);
+	      if(!check_and_add(cache, spacing, t1, t2))
+		ok &= ray->fSausage3fv(ray, v + t1 * 3, v + t2 * 3, radius, col, col);
+	      if(!check_and_add(cache, spacing, t2, t0))
+		ok &= ray->fSausage3fv(ray, v + t2 * 3, v + t0 * 3, radius, col, col);
+	    }
+	    t += 3;
+	  }
+	} else {
+	  while(ok && c--) {
+	    t0 = (*t);
+	    t1 = (*(t + 1));
+	    t2 = (*(t + 2));
+	    
+	    if((I->proximity && ((*(vi + t0)) || (*(vi + t1)) || (*(vi + t2)))) ||
+	       ((*(vi + t0)) && (*(vi + t1)) && (*(vi + t2))))
+	      if((*(vi + t0)) || (*(vi + t1)) || (*(vi + t2))) {
+		if(!check_and_add(cache, spacing, t0, t1))
+		  ok &= ray->fSausage3fv(ray, v + t0 * 3, v + t1 * 3, radius, vc + t0 * 3,
+					 vc + t1 * 3);
+		if(!check_and_add(cache, spacing, t1, t2))
+		  ok &= ray->fSausage3fv(ray, v + t1 * 3, v + t2 * 3, radius, vc + t1 * 3,
+					 vc + t2 * 3);
+		if(!check_and_add(cache, spacing, t2, t0))
+		  ok &= ray->fSausage3fv(ray, v + t2 * 3, v + t0 * 3, radius, vc + t2 * 3,
+					 vc + t0 * 3);
+	      }
+	    t += 3;
+	  }
+	}
+	FreeP(cache);
       }
-      FreeP(cache);
     }
-    ray->fTransparentf(ray, 0.0);
+    if (ok){
+      ray->fTransparentf(ray, 0.0);
+    } else {
+      /* If not ok, then Clear Entire RepSurface, not just the ray object */
+      
+    }
   } else if(G->HaveGUI && G->ValidContext) {
     /* Not ray tracing, but rendering */
     if(pick) {
@@ -444,7 +479,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       if (I->shaderCGO && (!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO) ||
 			   (I->Type == 1 && I->dot_as_spheres != dot_as_spheres))){
 	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
+	I->shaderCGO = NULL;
       }
 #ifdef _PYMOL_GL_CALLLISTS
         if(use_display_lists && I->R.displayList) {
@@ -456,16 +491,19 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
-	  I->shaderCGO->use_shader = true;
-	  I->dot_as_spheres = dot_as_spheres;
-	  generate_shader_cgo = 1;
+	  CHECKOK(ok, I->shaderCGO);
+	  if (ok){
+	    I->shaderCGO->use_shader = true;
+	    I->dot_as_spheres = dot_as_spheres;
+	    generate_shader_cgo = 1;
+	  }
 	} else {
 	  CShaderPrg * shaderPrg = 0;
 	  if (I->Type == 1){
 	    if (dot_as_spheres){
 	      float radius = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width) 
 		             * info->vertex_scale;
-	      shaderPrg = CShaderPrg_Enable_SphereShader(G, "sphere");
+	      shaderPrg = CShaderPrg_Enable_DefaultSphereShader(G);
 	      CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", fabs(radius));
 	    } else {
 	      shaderPrg = CShaderPrg_Enable_DefaultShader(G);
@@ -477,13 +515,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    CShaderPrg_Set1f(shaderPrg, "uni_radius", SceneGetLineWidthForCylinders(G, info, mesh_width));
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-#ifdef PURE_OPENGL_ES_2
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
-#else
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1);
-#endif
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 1);
 	    CShaderPrg_Set1f(shaderPrg, "ambient_occlusion_scale", ambient_occlusion_scale);
-	    CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
 	    CShaderPrg_Set1i(shaderPrg, "use_interior_color_threshold", 1);
 	    if((alpha != 1.0) || va) {
 	      /* Updating indices if alpha */
@@ -494,43 +527,12 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		t_mode = 0;
 	      }
 	      if(t_mode) {
-		float *z_value = NULL, *zv;
-		float *sum, *sv;
-		float matrix[16];
-		int idx;
-		int *ix = NULL;
-		
-#ifdef PURE_OPENGL_ES_2
-		/* TODO */
-#else
-		glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-#endif
-		sum = I->sum;
-		z_value = I->z_value;
-		ix = I->ix;
-		zv = z_value;
-		sv = sum;
-		
-		/* for each triangle, computes the z */
-		for (idx = 0; idx<I->n_tri; idx++){
-		  *(zv++) = matrix[2] * sv[0] + matrix[6] * sv[1] + matrix[10] * sv[2];
-		  sv += 3;
-		}
-		
-		switch (t_mode) {
-		case 1:
-		  UtilSemiSortFloatIndex(I->n_tri, z_value, ix, true);
-		  /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn); */
-		  break;
-		default:
-		  UtilSemiSortFloatIndex(I->n_tri, z_value, ix, false);
-		  /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn); */
-		  break;
-		}
+		RepSurfaceSortIX(G, I, t_mode);
 		/* Now once we have ix, we can update the vertexIndices that are stored
 		   as VBOs */
-		if (ix){
+		if (I->ix){
 		  float *pc = CGOGetNextDrawBufferedIndex(I->shaderCGO->op);
+		  int *ix = I->ix;
 		  if (pc){
 		    int nindices = CGO_get_int(pc+3), c, pl, idx;
 		    uint vbuf = CGO_get_int(pc+8);
@@ -593,31 +595,30 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	  }
 	}
         if(!lighting)
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 	  if(!info->line_lighting)
 	    glDisable(GL_LIGHTING);
-#endif
 	if (generate_shader_cgo){
 	  if((alpha != 1.0)) {
 	    CGOAlpha(I->shaderCGO, alpha);
 	  }
 	  if (dot_as_spheres){
 	    if(c) {
-	      CGOColor(I->shaderCGO, 1.0, 0.0, 0.0);
-	      if(I->oneColorFlag) {
-		CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
+	      ok &= CGOColor(I->shaderCGO, 1.0, 0.0, 0.0);
+	      if(ok && I->oneColorFlag) {
+		ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
 	      }
-	      while(c--) {
+	      while(ok && c--) {
 		if(*vi) {
 		  if(!I->oneColorFlag) {
-		    CGOColorv(I->shaderCGO, vc);
+		    ok &= CGOColorv(I->shaderCGO, vc);
 		  }
-		  if(normals)
-		    CGONormalv(I->shaderCGO, vn);
-		  CGOPickColor(I->shaderCGO, *at, cPickableAtom);
-		  CGOSphere(I->shaderCGO, v, 1.f);
+		  if(ok && normals)
+		    ok &= CGONormalv(I->shaderCGO, vn);
+		  if (ok)
+		    ok &= CGOPickColor(I->shaderCGO, *at, AtomInfoIsMasked((ObjectMolecule*)I->R.obj, *at));
+
+		  if (ok)
+		    ok &= CGOSphere(I->shaderCGO, v, 1.f);
 		}
 		vi++;
 		vc += 3;
@@ -627,25 +628,27 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	      }
 	    }
 	  } else {
-	    CGODotwidth(I->shaderCGO, SettingGet_f
-			(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
-	    if(c) {
-	      CGOColor(I->shaderCGO, 1.0, 0.0, 0.0);
-	      CGOBegin(I->shaderCGO, GL_POINTS);
-	      if(I->oneColorFlag) {
-		CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
+	    ok &= CGODotwidth(I->shaderCGO, SettingGet_f
+			      (G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
+	    if(ok && c) {
+	      ok &= CGOColor(I->shaderCGO, 1.0, 0.0, 0.0);
+	      ok &= CGOBegin(I->shaderCGO, GL_POINTS);
+	      if(ok && I->oneColorFlag) {
+		ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
 	      }
 	      
-	      while(c--) {
+	      while(ok && c--) {
 		if(*vi) {
 		  if(!I->oneColorFlag) {
-		    CGOColorv(I->shaderCGO, vc);
+		    ok &= CGOColorv(I->shaderCGO, vc);
 		  }
 		  /*		  if(normals){
 		    CGONormalv(I->shaderCGO, vn);
 		    }*/
-		  CGOPickColor(I->shaderCGO, *at, cPickableAtom);
-		  CGOVertexv(I->shaderCGO, v);
+		  if (ok)
+		    ok &= CGOPickColor(I->shaderCGO, *at, AtomInfoIsMasked((ObjectMolecule*)I->R.obj, *at));
+		  if (ok)
+		    ok &= CGOVertexv(I->shaderCGO, v);
 		}
 		vi++;
 		vc += 3;
@@ -653,20 +656,14 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		v += 3;
 		at++;
 	      }
-	      CGOEnd(I->shaderCGO);
+	      if (ok)
+		ok &= CGOEnd(I->shaderCGO);
 	    }
 	  }
 	} else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
           glPointSize(SettingGet_f
                       (G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
-#endif
           if(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
             glColor3f(1.0, 0.0, 0.0);
 #ifdef _PYMOL_GL_DRAWARRAYS
             if(I->oneColorFlag) {
@@ -750,116 +747,122 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             }
             glEnd();
 #endif
-#endif
           }
 	  } /* else use shader */
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 	  if(!lighting)
 	    glEnable(GL_LIGHTING);
-#endif
       } else if(I->Type == 2) { /* rendering triangle mesh */
         int normals =
           SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_normals);
         int lighting =
           SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
-        if(!normals){
+        if(ok && !normals){
 	  if (generate_shader_cgo){
-	    CGOResetNormal(I->shaderCGO, true);
+	    ok &= CGOResetNormal(I->shaderCGO, true);
 	  } else {
 	    SceneResetNormal(G, true);
 	  }
 	}
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         if(!lighting)
           if(!info->line_lighting)
             glDisable(GL_LIGHTING);
-#endif
-	{
+	if (ok) {
           float line_width =
             SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_width);
           line_width = SceneGetDynamicLineWidth(info, line_width);
 
 	  if (generate_shader_cgo){
-	    CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
+	    ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
 	  } else {
 	    glLineWidth(line_width);
 	  }
 
           c = I->NT;
-          if(c) {
+          if(ok && c) {
             if(I->oneColorFlag) {
 		if (generate_shader_cgo){
-		  CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
-		  while(c--) {
+		  ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
+		  while(ok && c--) {
 		    if((I->proximity
 			&& ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
 		       || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))) {
 		      if(normals) {
 			int idx;
-			CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+			ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
 			idx = (*(t + 2));
-			CGONormalv(I->shaderCGO, vn + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			
 			idx = (*t);
-			CGONormalv(I->shaderCGO, vn + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = (*t);
-			CGONormalv(I->shaderCGO, vn + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = (*t);
-			CGONormalv(I->shaderCGO, vn + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
-			CGOEnd(I->shaderCGO);
+			if (ok)
+			  ok &= CGOEnd(I->shaderCGO);
 		      } else {
 			int idx;
-			CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+			ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
 			
 			idx = (*(t + 2));
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			idx = *t;
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = *t;
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = *t;
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
-			CGOEnd(I->shaderCGO);
+			if (ok)
+			  ok &= CGOEnd(I->shaderCGO);
 		      }
 		    } else
 		      t += 3;
 		  }
 	      } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
               glColor3fv(ColorGet(G, I->oneColor));
-#endif
               while(c--) {
                 if((I->proximity
                     && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
                    || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))) {
                   if(normals) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		    {
 		      float *tmp_ptr;
@@ -911,11 +914,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     t++;
                     glEnd();
 #endif
-#endif
                   } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		    {
 		      float *tmp_ptr;
@@ -948,7 +947,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     glVertex3fv(v + (*t) * 3);
                     t++;
                     glEnd();
-#endif
 #endif
                   }
                 } else
@@ -957,64 +955,94 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	      } /* end else use_shader */ 
             } else { /* not oneColorFlag */
 		if (generate_shader_cgo){
-		  while(c--) {
+		  while(ok && c--) {
 		    if((I->proximity
 			&& ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
 		       || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))) {
 		      if(normals) {
 			int idx;
-			CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+			ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
 			
 			idx = (*(t + 2));
-			CGOColorv(I->shaderCGO, vc + idx * 3);
-			CGONormalv(I->shaderCGO, vn + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
+			if (ok)
+			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			
 			idx = (*t);
-			CGOColorv(I->shaderCGO, vc + idx * 3);
-			CGONormalv(I->shaderCGO, vn + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
+			if (ok)
+			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = (*t);
-			CGOColorv(I->shaderCGO, vc + idx * 3);
-			CGONormalv(I->shaderCGO, vn + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
+			if (ok)
+			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = (*t);
-			CGOColorv(I->shaderCGO, vc + idx * 3);
-			CGONormalv(I->shaderCGO, vn + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
+			if (ok)
+			  ok &= CGONormalv(I->shaderCGO, vn + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
-			CGOEnd(I->shaderCGO);
+			if (ok)
+			  ok &= CGOEnd(I->shaderCGO);
 		      } else {
 			int idx;
-			CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+			ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
 
 			idx = (*(t + 2));
-			CGOColorv(I->shaderCGO, vc + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 
 			idx = (*t);
-			CGOColorv(I->shaderCGO, vc + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = (*t);
-			CGOColorv(I->shaderCGO, vc + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
 			idx = (*t);
-			CGOColorv(I->shaderCGO, vc + idx * 3);
-			CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + idx * 3);
+			if (ok)
+			  ok &= CGOColorv(I->shaderCGO, vc + idx * 3);
+			if (ok)
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+			if (ok)
+			  ok &= CGOVertexv(I->shaderCGO, v + idx * 3);
 			t++;
-			CGOEnd(I->shaderCGO);
+			if (ok)
+			  ok &= CGOEnd(I->shaderCGO);
 		      }
 		    } else
 		      t += 3;
@@ -1025,9 +1053,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
                    || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))) {
                   if(normals) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		    {
 		      float *tmp_ptr;
@@ -1097,11 +1122,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     t++;
                     glEnd();
 #endif
-#endif
                   } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		    {
 		      float *tmp_ptr;
@@ -1153,7 +1174,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     glVertex3fv(v + (*t) * 3);
                     t++;
                     glEnd();
-#endif
 #endif
                   }
                 } else
@@ -1163,12 +1183,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    } /* end else use_shader */ 
           }
 	}
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         if(!lighting)
           glEnable(GL_LIGHTING);
-#endif
       } else {
         /* we're rendering triangles */
 
@@ -1192,105 +1208,109 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             float sum[3];
             float matrix[16];
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
             glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-#endif
 
             if(I->oneColorFlag) {
               t_buf = Alloc(float *, I->NT * 6);
             } else {
               t_buf = Alloc(float *, I->NT * 12);
             }
-
-            z_value = Alloc(float, I->NT);
-            ix = Alloc(int, I->NT);
-	    if (use_shader && generate_shader_cgo){
+	    CHECKOK(ok, t_buf);
+	    if (ok){
+	      z_value = Alloc(float, I->NT);
+	      CHECKOK(ok, z_value);
+	    }
+	    if (ok){
+	      ix = Alloc(int, I->NT);
+	      CHECKOK(ok, ix);
+	    }
+	    if (ok && use_shader && generate_shader_cgo){
 	      sumarray = Alloc(float, I->NT * 3);
+	      CHECKOK(ok, sumarray);
 	    }
             zv = z_value;
             tb = t_buf;
             c = I->NT;
-            if(I->oneColorFlag) {
-              while(c--) {
-                if((I->proximity
-                    && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
-                   || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))) {
-
-                  *(tb++) = vn + (*t) * 3;
-                  *(tb++) = v + (*t) * 3;
-                  *(tb++) = vn + (*(t + 1)) * 3;
-                  *(tb++) = v + (*(t + 1)) * 3;
-                  *(tb++) = vn + (*(t + 2)) * 3;
-                  *(tb++) = v + (*(t + 2)) * 3;
-
-                  add3f(tb[-1], tb[-3], sum);
-                  add3f(sum, tb[-5], sum);
-
-		  if (sumarray){
-		    sumarray[sumarraypl++] = sum[0];
-		    sumarray[sumarraypl++] = sum[1];
-		    sumarray[sumarraypl++] = sum[2];
-		  }
-                  *(zv++) = matrix[2] * sum[0] + matrix[6] * sum[1] + matrix[10] * sum[2];
-                  n_tri++;
-                }
-                t += 3;
-              }
-            } else {
-              while(c--) {
-                if((I->proximity
-                    && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
-                   || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2))))))
-                  if((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))) {
-
-                    if(va)
-                      *(tb++) = va + (*t);
-                    else
-                      *(tb++) = &alpha;
-                    *(tb++) = vc + (*t) * 3;
-                    *(tb++) = vn + (*t) * 3;
-                    *(tb++) = v + (*t) * 3;
-
-                    if(va)
-                      *(tb++) = va + (*(t + 1));
-                    else
-                      *(tb++) = &alpha;
-                    *(tb++) = vc + (*(t + 1)) * 3;
-                    *(tb++) = vn + (*(t + 1)) * 3;
-                    *(tb++) = v + (*(t + 1)) * 3;
-
-                    if(va)
-                      *(tb++) = va + (*(t + 2));
-                    else
-                      *(tb++) = &alpha;
-                    *(tb++) = vc + (*(t + 2)) * 3;
-                    *(tb++) = vn + (*(t + 2)) * 3;
-                    *(tb++) = v + (*(t + 2)) * 3;
-
-                    add3f(tb[-1], tb[-5], sum);
-                    add3f(sum, tb[-9], sum);
+	    if (ok){
+	      if(I->oneColorFlag) {
+		while(c--) {
+		  if((I->proximity
+		      && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
+		     || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))) {
+		    
+		    *(tb++) = vn + (*t) * 3;
+		    *(tb++) = v + (*t) * 3;
+		    *(tb++) = vn + (*(t + 1)) * 3;
+		    *(tb++) = v + (*(t + 1)) * 3;
+		    *(tb++) = vn + (*(t + 2)) * 3;
+		    *(tb++) = v + (*(t + 2)) * 3;
+		    
+		    add3f(tb[-1], tb[-3], sum);
+		    add3f(sum, tb[-5], sum);
+		    
 		    if (sumarray){
 		      sumarray[sumarraypl++] = sum[0];
 		      sumarray[sumarraypl++] = sum[1];
 		      sumarray[sumarraypl++] = sum[2];
 		    }
-                    *(zv++) =
-                      matrix[2] * sum[0] + matrix[6] * sum[1] + matrix[10] * sum[2];
-                    n_tri++;
-                  }
-                t += 3;
-              }
-            }
-
+		    *(zv++) = matrix[2] * sum[0] + matrix[6] * sum[1] + matrix[10] * sum[2];
+		    n_tri++;
+		  }
+		  t += 3;
+		}
+	      } else {
+		while(c--) {
+		  if((I->proximity
+		      && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
+		     || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2))))))
+		    if((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))) {
+		      
+		      if(va)
+			*(tb++) = va + (*t);
+		      else
+			*(tb++) = &alpha;
+		      *(tb++) = vc + (*t) * 3;
+		      *(tb++) = vn + (*t) * 3;
+		      *(tb++) = v + (*t) * 3;
+		      
+		      if(va)
+			*(tb++) = va + (*(t + 1));
+		      else
+			*(tb++) = &alpha;
+		      *(tb++) = vc + (*(t + 1)) * 3;
+		      *(tb++) = vn + (*(t + 1)) * 3;
+		      *(tb++) = v + (*(t + 1)) * 3;
+		      
+		      if(va)
+			*(tb++) = va + (*(t + 2));
+		      else
+			*(tb++) = &alpha;
+		      *(tb++) = vc + (*(t + 2)) * 3;
+		      *(tb++) = vn + (*(t + 2)) * 3;
+		      *(tb++) = v + (*(t + 2)) * 3;
+		      
+		      add3f(tb[-1], tb[-5], sum);
+		      add3f(sum, tb[-9], sum);
+		      if (sumarray){
+			sumarray[sumarraypl++] = sum[0];
+			sumarray[sumarraypl++] = sum[1];
+			sumarray[sumarraypl++] = sum[2];
+		      }
+		      *(zv++) =
+			matrix[2] * sum[0] + matrix[6] * sum[1] + matrix[10] * sum[2];
+		      n_tri++;
+		    }
+		  t += 3;
+		}
+	      }
+	    }
             switch (t_mode) {
             case 1:
-              UtilSemiSortFloatIndex(n_tri, z_value, ix, true);
+              ok &= UtilSemiSortFloatIndex(n_tri, z_value, ix, true);
               /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn); */
               break;
             default:
-              UtilSemiSortFloatIndex(n_tri, z_value, ix, false);
+              ok &= UtilSemiSortFloatIndex(n_tri, z_value, ix, false);
               /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn); */
               break;
             }
@@ -1298,41 +1318,51 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             if(I->oneColorFlag) {
               float col[3];
               ColorGetEncoded(G, I->oneColor, col);
+	      if (ok){
 		if (generate_shader_cgo){
 		  CGOAlpha(I->shaderCGO, alpha);
-		  CGOColor(I->shaderCGO, col[0], col[1], col[2]);
-		  CGOBegin(I->shaderCGO, GL_TRIANGLES);
-		  for(c = 0; c < n_tri; c++) {
+		  if (ok)
+		    ok &= CGOColor(I->shaderCGO, col[0], col[1], col[2]);
+		  if (ok)
+		    ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
+		  for(c = 0; ok && c < n_tri; c++) {
 		    int idx;
 		    tb = t_buf + 6 * c;
 		    //		    tb = t_buf + 6 * ix[c];
-		    CGONormalv(I->shaderCGO, *(tb++));
-		    idx = ((*tb - v)/3);
-		    CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-		    if (I->VAO){
-		      CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
+		  if (ok)
+		    ok &= CGONormalv(I->shaderCGO, *(tb++));
+		  idx = ((*tb - v)/3);
+		  if (ok)
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    if (ok && I->VAO){
+		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
-		    CGOVertexv(I->shaderCGO, *(tb++));
-		    CGONormalv(I->shaderCGO, *(tb++));
+		    if (ok)
+		      ok &= CGOVertexv(I->shaderCGO, *(tb++));
+		    if (ok)
+		      ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
-		    CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-		    if (I->VAO){
-		      CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
+		    if (ok)
+		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    if (ok && I->VAO){
+		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
-		    CGOVertexv(I->shaderCGO, *(tb++));
-		    CGONormalv(I->shaderCGO, *(tb++));
+		    if (ok)
+		      ok &= CGOVertexv(I->shaderCGO, *(tb++));
+		    if (ok)
+		      ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
-		    CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-		    if (I->VAO){
-		      CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
+		    if (ok)
+		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    if (ok && I->VAO){
+		    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
-		    CGOVertexv(I->shaderCGO, *(tb++));
+		    if (ok)
+		      ok &= CGOVertexv(I->shaderCGO, *(tb++));
 		  }
-		  CGOEnd(I->shaderCGO);
+		  if (ok)
+		    ok &= CGOEnd(I->shaderCGO);
 	      } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 		glColor4f(col[0], col[1], col[2], alpha);
 #ifdef _PYMOL_GL_DRAWARRAYS
 		{
@@ -1384,57 +1414,58 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		}
 		glEnd();
 #endif
-#endif
 	      } /* end if else use_shader */
+	      }
             } else { /* else I->oneColorFlag */
 		if (generate_shader_cgo){
-		  CGOBegin(I->shaderCGO, GL_TRIANGLES);
-		  for(c = 0; c < n_tri; c++) {
+		  if (ok)
+		    ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
+		  for(c = 0; ok && c < n_tri; c++) {
 		    float *vv, *v_alpha;
 		    int idx;
 		    tb = t_buf + 12 * c; /* need to update index every frame */
 		    //		    tb = t_buf + 12 * ix[c];
 		    v_alpha = *(tb++);
 		    vv = *(tb++);
-		    CGOAlpha(I->shaderCGO, *v_alpha);
-		    CGOColor(I->shaderCGO, vv[0], vv[1], vv[2]);
-		    CGONormalv(I->shaderCGO, *(tb++));
+		    ok &= CGOAlpha(I->shaderCGO, *v_alpha);
+		    if (ok) ok &= CGOColor(I->shaderCGO, vv[0], vv[1], vv[2]);
+		    if (ok) ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
-		    CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-		    if (I->VAO){
-		      CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
+		    if (ok) 
+		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    if (ok && I->VAO){
+		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
-		    CGOVertexv(I->shaderCGO, *(tb++));
+		    if (ok) ok &= CGOVertexv(I->shaderCGO, *(tb++));
 		    
 		    v_alpha = *(tb++);
 		    vv = *(tb++);
-		    CGOAlpha(I->shaderCGO, *v_alpha);
-		    CGOColor(I->shaderCGO, vv[0], vv[1], vv[2]);
-		    CGONormalv(I->shaderCGO, *(tb++));
+		    if (ok) ok &= CGOAlpha(I->shaderCGO, *v_alpha);
+		    if (ok) ok &= CGOColor(I->shaderCGO, vv[0], vv[1], vv[2]);
+		    if (ok) ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
-		    CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-		    if (I->VAO){
-		      CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
+		    if (ok) 
+		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    if (ok && I->VAO){
+		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
-		    CGOVertexv(I->shaderCGO, *(tb++));
+		    if (ok) ok &= CGOVertexv(I->shaderCGO, *(tb++));
 		    
 		    v_alpha = *(tb++);
 		    vv = *(tb++);
-		    CGOAlpha(I->shaderCGO, *v_alpha);
-		    CGOColor(I->shaderCGO, vv[0], vv[1], vv[2]);
-		    CGONormalv(I->shaderCGO, *(tb++));
+		    if (ok) ok &= CGOAlpha(I->shaderCGO, *v_alpha);
+		    if (ok) ok &= CGOColor(I->shaderCGO, vv[0], vv[1], vv[2]);
+		    if (ok) ok &= CGONormalv(I->shaderCGO, *(tb++));
 		    idx = ((*tb - v)/3);
-		    CGOPickColor(I->shaderCGO, I->AT[idx], cPickableAtom);
-		    if (I->VAO){
-		      CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
+		    if (ok) 
+		      ok &= CGOPickColor(I->shaderCGO, I->AT[idx], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[idx]));
+		    if (ok && I->VAO){
+		      ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + idx));
 		    }
-		    CGOVertexv(I->shaderCGO, *(tb++));
+		    if (ok) ok &= CGOVertexv(I->shaderCGO, *(tb++));
 		  }
-		  CGOEnd(I->shaderCGO);
+		  if (ok) ok &= CGOEnd(I->shaderCGO);
 	      } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		{
 		  int nverts = n_tri*3;
@@ -1518,10 +1549,9 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		}
 		glEnd();
 #endif
-#endif
 	      }
 	    } /* end if else use_shader */
-	    if (use_shader && generate_shader_cgo){
+	    if (ok && use_shader && generate_shader_cgo){
 	      I->ix = ix;
 	      I->z_value = z_value;
 	      I->n_tri = n_tri;
@@ -1531,28 +1561,23 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	      FreeP(z_value);
 	      FreeP(t_buf);
 	    }
-          } else {
+          } else if (ok) {
             if(info->alpha_cgo) {       /* global transparency sort */
               if(I->allVisibleFlag) {
                 if(I->oneColorFlag) {
                   float col[3];
                   ColorGetEncoded(G, I->oneColor, col);
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                   glColor4f(col[0], col[1], col[2], alpha);
-#endif
                   c = *(s++);
                   while(c) {
                     int parity = 0;
                     s += 2;
-                    while(c--) {
-                      CGOAlphaTriangle(info->alpha_cgo,
-                                       v + s[-2] * 3, v + s[-1] * 3, v + (*s) * 3,
-                                       vn + s[-2] * 3, vn + s[-1] * 3, vn + (*s) * 3,
-                                       col, col, col, alpha, alpha, alpha, parity);
-
+                    while(ok && c--) {
+                      ok &= CGOAlphaTriangle(info->alpha_cgo,
+					     v + s[-2] * 3, v + s[-1] * 3, v + (*s) * 3,
+					     vn + s[-2] * 3, vn + s[-1] * 3, vn + (*s) * 3,
+					     col, col, col, alpha, alpha, alpha, parity);
                       s++;
                       parity = !parity;
                     }
@@ -1560,7 +1585,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                   }
                 } else {
                   c = *(s++);
-                  while(c) {
+                  while(ok && c) {
                     float *col0, *col1, *col2;
                     int parity = 0;
                     float alpha0, alpha1, alpha2;
@@ -1578,17 +1603,17 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                       alpha1 = alpha;
                     }
                     s++;
-                    while(c--) {
+                    while(ok && c--) {
                       col2 = vc + (*s) * 3;
                       if(va) {
                         alpha2 = va[(*s)];
                       } else {
                         alpha2 = alpha;
                       }
-                      CGOAlphaTriangle(info->alpha_cgo,
-                                       v + s[-2] * 3, v + s[-1] * 3, v + (*s) * 3,
-                                       vn + s[-2] * 3, vn + s[-1] * 3, vn + (*s) * 3,
-                                       col0, col1, col2, alpha0, alpha1, alpha2, parity);
+                      ok &= CGOAlphaTriangle(info->alpha_cgo,
+					     v + s[-2] * 3, v + s[-1] * 3, v + (*s) * 3,
+					     vn + s[-2] * 3, vn + s[-1] * 3, vn + (*s) * 3,
+					     col0, col1, col2, alpha0, alpha1, alpha2, parity);
                       alpha0 = alpha1;
                       alpha1 = alpha2;
                       col0 = col1;
@@ -1599,13 +1624,13 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     c = *(s++);
                   }
                 }
-              } else {          /* subset s */
+              } else if (ok){          /* subset s */
                 c = I->NT;
                 if(c) {
                   if(I->oneColorFlag) {
                     float color[3];
                     ColorGetEncoded(G, I->oneColor, color);
-                    while(c--) {
+                    while(ok && c--) {
                       if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
                                            || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
                                                                          &&
@@ -1618,15 +1643,15 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                                                                            (*(t + 2))))))
                       {
 
-                        CGOAlphaTriangle(info->alpha_cgo,
-                                         v + t[0] * 3, v + t[1] * 3, v + t[2] * 3,
-                                         vn + t[0] * 3, vn + t[1] * 3, vn + t[2] * 3,
-                                         color, color, color, alpha, alpha, alpha, 0);
+                        ok &= CGOAlphaTriangle(info->alpha_cgo,
+					       v + t[0] * 3, v + t[1] * 3, v + t[2] * 3,
+					       vn + t[0] * 3, vn + t[1] * 3, vn + t[2] * 3,
+					       color, color, color, alpha, alpha, alpha, 0);
                       }
                       t += 3;
                     }
                   } else {
-                    while(c--) {
+                    while(ok && c--) {
                       if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
                                            || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
                                                                          &&
@@ -1640,26 +1665,27 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                       {
 
                         if(va) {
-                          CGOAlphaTriangle(info->alpha_cgo,
-                                           v + t[0] * 3, v + t[1] * 3, v + t[2] * 3,
-                                           vn + t[0] * 3, vn + t[1] * 3, vn + t[2] * 3,
-                                           vc + t[0] * 3, vc + t[1] * 3, vc + t[2] * 3,
-                                           va[t[0]], va[t[1]], va[t[2]], 0);
+                          ok &= CGOAlphaTriangle(info->alpha_cgo,
+						 v + t[0] * 3, v + t[1] * 3, v + t[2] * 3,
+						 vn + t[0] * 3, vn + t[1] * 3, vn + t[2] * 3,
+						 vc + t[0] * 3, vc + t[1] * 3, vc + t[2] * 3,
+						 va[t[0]], va[t[1]], va[t[2]], 0);
                         } else {
-                          CGOAlphaTriangle(info->alpha_cgo,
-                                           v + t[0] * 3, v + t[1] * 3, v + t[2] * 3,
-                                           vn + t[0] * 3, vn + t[1] * 3, vn + t[2] * 3,
-                                           vc + t[0] * 3, vc + t[1] * 3, vc + t[2] * 3,
-                                           alpha, alpha, alpha, 0);
+                          ok &= CGOAlphaTriangle(info->alpha_cgo,
+						 v + t[0] * 3, v + t[1] * 3, v + t[2] * 3,
+						 vn + t[0] * 3, vn + t[1] * 3, vn + t[2] * 3,
+						 vc + t[0] * 3, vc + t[1] * 3, vc + t[2] * 3,
+						 alpha, alpha, alpha, 0);
                         }
                       }
                       t += 3;
                     }
                   }
-                  CGOEnd(info->alpha_cgo);
+		  if (ok)
+		    CGOEnd(info->alpha_cgo);
                 }
               }
-            } else {
+            } else if (ok){
 
               /* fast and ugly */
               /*          glCullFace(GL_BACK);
@@ -1671,48 +1697,44 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                   ColorGetEncoded(G, I->oneColor, col);
 
 		    if (generate_shader_cgo){
-		      CGOAlpha(I->shaderCGO, alpha);
-		      CGOColor(I->shaderCGO, col[0], col[1], col[2]);
+		      if (ok) ok &= CGOAlpha(I->shaderCGO, alpha);
+		      if (ok) ok &= CGOColor(I->shaderCGO, col[0], col[1], col[2]);
 		      c = *(s++);
-		      while(c) {
-			CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
-			CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			if (I->VAO){
-			  CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+		      while(ok && c) {
+			if (ok) ok &= CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
+			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			if (ok && I->VAO){
+			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
-			CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			if (ok) 
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
-			CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			if (I->VAO){
-			  CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			if (ok && I->VAO){
+			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
-			CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			if (ok) 
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
-			while(c--) {
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			while(ok && c--) {
+			  ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
-			CGOEnd(I->shaderCGO);
+			if (ok) ok &= CGOEnd(I->shaderCGO);
 			c = *(s++);
 		      }
 		  } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 		    glColor4f(col[0], col[1], col[2], alpha);
-#endif
 		    c = *(s++);
 		    while(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		      {
 			int nverts = c + 2;
@@ -1762,73 +1784,72 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		      }
 		      glEnd();
 #endif
-#endif
 		      c = *(s++);
 		    }
 		  } /* end if else use_shader */
 		} else { /* I->oneColorFlag */
 		    if (generate_shader_cgo){
 		      c = *(s++);
-		      while(c) {
+		      while(ok && c) {
 			float *col;
-			CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
+			if (ok) ok &= CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
 			col = vc + (*s) * 3;
 			if(va) {
-			  CGOAlpha(I->shaderCGO, va[(*s)]);
-			  CGOColor(I->shaderCGO, col[0], col[1], col[2]);
+			  if (ok) ok &= CGOAlpha(I->shaderCGO, va[(*s)]);
+			  if (ok) ok &= CGOColor(I->shaderCGO, col[0], col[1], col[2]);
 			} else {
-			  CGOAlpha(I->shaderCGO, alpha);
-			  CGOColor(I->shaderCGO, col[0], col[1], col[2]);
+			  if (ok) ok &= CGOAlpha(I->shaderCGO, alpha);
+			  if (ok) ok &= CGOColor(I->shaderCGO, col[0], col[1], col[2]);
 			}
-			CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			if (I->VAO){
-			  CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			if (ok && I->VAO){
+			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
-			CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			if (ok) 
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
 			col = vc + (*s) * 3;
 			if(va) {
-			  CGOAlpha(I->shaderCGO, va[(*s)]);
-			  CGOColor(I->shaderCGO, col[0], col[1], col[2]);
+			  if (ok) ok &= CGOAlpha(I->shaderCGO, va[(*s)]);
+			  if (ok) ok &= CGOColor(I->shaderCGO, col[0], col[1], col[2]);
 			} else {
-			  CGOAlpha(I->shaderCGO, alpha);
-			  CGOColor(I->shaderCGO, col[0], col[1], col[2]);
+			  if (ok) ok &= CGOAlpha(I->shaderCGO, alpha);
+			  if (ok) ok &= CGOColor(I->shaderCGO, col[0], col[1], col[2]);
 			}
-			CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			if (I->VAO){
-			  CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			if (ok && I->VAO){
+			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
-			CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			if (ok) 
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
-			while(c--) {
+			while(ok && c--) {
 			  col = vc + (*s) * 3;
 			  if(va) {
-			    CGOAlpha(I->shaderCGO, va[(*s)]);
-			    CGOColor(I->shaderCGO, col[0], col[1], col[2]);
+			    ok &= CGOAlpha(I->shaderCGO, va[(*s)]);
+			    if (ok) ok &= CGOColor(I->shaderCGO, col[0], col[1], col[2]);
 			  } else {
-			    CGOAlpha(I->shaderCGO, alpha);
-			    CGOColor(I->shaderCGO, col[0], col[1], col[2]);
+			    ok &= CGOAlpha(I->shaderCGO, alpha);
+			    if (ok) ok &= CGOColor(I->shaderCGO, col[0], col[1], col[2]);
 			  }
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
-			CGOEnd(I->shaderCGO);
+			if (ok) ok &= CGOEnd(I->shaderCGO);
 			c = *(s++);
 		      }
 		  } else {
 		    c = *(s++);
 		    while(c) {
 		      float *col;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		      {
 			int nverts = 2 + c;
@@ -1922,7 +1943,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		      }
 		      glEnd();
 #endif
-#endif
 		      c = *(s++);
 		    }
 		  }
@@ -1930,15 +1950,15 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
               } else {          /* subset s */
 		  if (generate_shader_cgo){
 		    c = I->NT;
-		    if(c) {
-		      CGOBegin(I->shaderCGO, GL_TRIANGLES);
+		    if(ok && c) {
+		      if (ok) ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
 		      if(I->oneColorFlag) {
 			float color[3];
 			float *col;
 			ColorGetEncoded(G, I->oneColor, color);
-			CGOAlpha(I->shaderCGO, alpha);
-			CGOColor(I->shaderCGO, color[0], color[1], color[2]);
-			while(c--) {
+			if (ok) ok &= CGOAlpha(I->shaderCGO, alpha);
+			if (ok) ok &= CGOColor(I->shaderCGO, color[0], color[1], color[2]);
+			while(ok && c--) {
 			  if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
 					       || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
 									     &&
@@ -1952,34 +1972,37 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 			    {
 			      col = vc + (*t) * 3;
 			      CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			      if (I->VAO){
-				CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			      if (ok && I->VAO){
+				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
-			      CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			      CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			      if (ok) 
+				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			      col = vc + (*t) * 3;
-			      CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			      if (I->VAO){
-				CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			      if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			      if (ok && I->VAO){
+				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
-			      CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			      CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			      if (ok) 
+				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			      col = vc + (*t) * 3;
-			      CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			      if (I->VAO){
-				CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			      if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			      if (ok && I->VAO){
+				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
-			      CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			      CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			      if (ok) 
+				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			    } else
 			    t += 3;
 			}
 		      } else {
 			float *col;
-			while(c--) {
+			while(ok && c--) {
 			  if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
 					       || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
 									     &&
@@ -1994,58 +2017,58 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 			      
 			      col = vc + (*t) * 3;
 			      if(va) {
-				CGOAlpha(I->shaderCGO, va[(*t)]);
+				ok &= CGOAlpha(I->shaderCGO, va[(*t)]);
 			      } else {
-				CGOAlpha(I->shaderCGO, alpha);
+				ok &= CGOAlpha(I->shaderCGO, alpha);
 			      }
-			      CGOColorv(I->shaderCGO, col);
-			      CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			      if (I->VAO){
-				CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			      if (ok) ok &= CGOColorv(I->shaderCGO, col);
+			      if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			      if (ok && I->VAO){
+				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
-			      CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			      CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			      if (ok) 
+				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			      col = vc + (*t) * 3;
 			      if(va) {
-				CGOAlpha(I->shaderCGO, va[(*t)]);
+				if (ok) ok &= CGOAlpha(I->shaderCGO, va[(*t)]);
 			      } else {
-				CGOAlpha(I->shaderCGO, alpha);
+				if (ok) ok &= CGOAlpha(I->shaderCGO, alpha);
 			      }
-			      CGOColorv(I->shaderCGO, col);
-			      CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			      if (I->VAO){
-				CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			      if (ok) ok &= CGOColorv(I->shaderCGO, col);
+			      if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			      if (ok && I->VAO){
+				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
-			      CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			      CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			      if (ok) 
+				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			      col = vc + (*t) * 3;
 			      if(va) {
-				CGOAlpha(I->shaderCGO, va[(*t)]);
+				if (ok) ok &= CGOAlpha(I->shaderCGO, va[(*t)]);
 			      } else {
-				CGOAlpha(I->shaderCGO, alpha);
+				if (ok) ok &= CGOAlpha(I->shaderCGO, alpha);
 			      }
-			      CGOColorv(I->shaderCGO, col);
-			      CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			      if (I->VAO){
-				CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			      if (ok) ok &= CGOColorv(I->shaderCGO, col);
+			      if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			      if (ok && I->VAO){
+				ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			      }
-			      CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			      CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			      if (ok) 
+				ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			      if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			      t++;
 			    } else
 			    t += 3;
 			}
 		      }
-		      CGOEnd(I->shaderCGO);
+		      if (ok) ok &= CGOEnd(I->shaderCGO);
 		    }
 		} else {  /* end generate_shader_cgo */
                 c = I->NT;
                 if(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		  {
 		    int nverts = 0, cinit = c;
@@ -2272,7 +2295,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                   }
                   glEnd();
 #endif
-#endif
                 }
               }
 	      } /* end else use_shader */ 
@@ -2280,55 +2302,51 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             /*          glDisable(GL_CULL_FACE);
                glDepthMask(GL_TRUE); */
           }
-        } else {                /* opaque */
+        } else if (ok) {                /* opaque */
           int simplify = 0; //, use_shader;
           simplify = (int) SettingGet(G, cSetting_simplify_display_lists);
             if(I->allVisibleFlag) {
               if(I->oneColorFlag) {
                 if(use_display_lists && simplify) {      /* simplify: try to help display list optimizer */
 		    if (generate_shader_cgo){
-		      CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
+		      ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
 		      c = *(s++);
-		      while(c) {
-			CGOBegin(I->shaderCGO, GL_TRIANGLES);
+		      while(ok && c) {
+			ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
 			s += 2;
-			while(c--) {
+			while(ok && c--) {
 			  s -= 2;
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok)
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
-			CGOEnd(I->shaderCGO);
+			if (ok) ok &= CGOEnd(I->shaderCGO);
 		      }
 		  } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 		    glColor3fv(ColorGet(G, I->oneColor));
-#endif
 		    c = *(s++);
 		    while(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		      {
 			int nverts = c*3;
@@ -2384,53 +2402,48 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		      }
 		      glEnd();
 #endif
-#endif
 		      c = *(s++);
 		    }
 		  } /* end if else use_shader */
-                } else {
+                } else if (ok) {
 		    if (generate_shader_cgo){
 		      CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
 		      c = *(s++);
-		      while(c) {
-			CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
-			CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			if (I->VAO){
-			  CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+		      while(ok && c) {
+			if (ok) ok &= CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
+			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			if (ok) 
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			if (ok && I->VAO){
+			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
-			CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
-			CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			if (I->VAO){
-			  CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			if (ok) 
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			if (ok && I->VAO){
+			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
-			CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
-			while(c--) {
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			while(ok && c--) {
+			  ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
-			CGOEnd(I->shaderCGO);
+			if (ok) ok &= CGOEnd(I->shaderCGO);
 			c = *(s++);
 		      }
 		  } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 		    glColor3fv(ColorGet(G, I->oneColor));
-#endif
 		    c = *(s++);
 		    while(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		      {
 			int nverts = c + 2;
@@ -2480,7 +2493,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		      }
 		      glEnd();
 #endif
-#endif
 		      c = *(s++);
 		    }
 		  }               /* use_display_lists&&simplify */
@@ -2489,70 +2501,76 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		  if (generate_shader_cgo){
 		    if(use_display_lists && simplify) {      /* simplify: try to help display list optimizer */
 		      c = *(s++);
-		      while(c) {
-			CGOBegin(I->shaderCGO, GL_TRIANGLES);
+		      while(ok && c) {
+			ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
 			s += 2;
-			while(c--) {
+			while(ok && c--) {
 			  s -= 2;
-			  CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
-			  CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
-			  CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
-			CGOEnd(I->shaderCGO);
+			if (ok) ok &= CGOEnd(I->shaderCGO);
 			c = *(s++);
 		      }
 		    } else {
 		      c = *(s++);
-		      while(c) {
-			CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
-			CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			if (I->VAO){
-			  CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+		      while(ok && c) {
+			ok &= CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
+			if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
+			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			if (ok && I->VAO){
+			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
-			CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			if (ok) 
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
-			CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			if (I->VAO){
-			  CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
+			if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			if (ok && I->VAO){
+			  ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			}
-			CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			if (ok) 
+			  ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			s++;
-			while(c--) {
-			  CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			  CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
+			while(ok && c--) {
+			  ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*s], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*s) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
 			  s++;
 			}
-			CGOEnd(I->shaderCGO );
+			if (ok) ok &= CGOEnd(I->shaderCGO );
 			c = *(s++);
 		      }
 		    }
@@ -2560,9 +2578,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                 if(use_display_lists && simplify) {      /* simplify: try to help display list optimizer */
                   c = *(s++);
                   while(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		    {
 		      int nverts = c*3;
@@ -2630,15 +2645,11 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     }
                     glEnd();
 #endif
-#endif
                     c = *(s++);
                   }
                 } else {
                   c = *(s++);
                   while(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		    {
 		      int nverts = c + 2;
@@ -2707,20 +2718,19 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     }
                     glEnd();
 #endif
-#endif
                     c = *(s++);
                   }
                 }
 	      } /* end if else generate_shader_cgo */
               }                 /* one color */
-            } else {            /* subsets */
+            } else if (ok) {            /* subsets */
 		if (generate_shader_cgo){
 		  c = I->NT;
-		  if(c) {
-		    CGOBegin(I->shaderCGO, GL_TRIANGLES);
+		  if(ok && c) {
+		    ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
 		    if(I->oneColorFlag) {
-		      CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
-		      while(c--) {
+		      if (ok) ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
+		      while(ok && c--) {
 			if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
 					     || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
 									   &&
@@ -2731,32 +2741,35 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 									    (vi +
 									     (*(t + 2)))))) {
 			  
-			  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			  ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
-			  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
-			  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
 			} else
 			  t += 3;
 		      }
 		    } else {
-		      while(c--) {
+		      while(ok && c--) {
 			if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
 					     || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
 									   &&
@@ -2766,43 +2779,42 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 									   (*
 									    (vi +
 									     (*(t + 2)))))) {
-			  
-			  CGOColorv(I->shaderCGO, vc + (*t) * 3);
-			  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			  ok &= CGOColorv(I->shaderCGO, vc + (*t) * 3);
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
-			  CGOColorv(I->shaderCGO, vc + (*t) * 3);
-			  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*t) * 3);
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
-			  CGOColorv(I->shaderCGO, vc + (*t) * 3);
-			  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-			  if (I->VAO){
-			    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*t) * 3);
+			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+			  if (ok && I->VAO){
+			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 			  }
-			  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-			  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+			  if (ok) 
+			    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 			  t++;
 			} else
 			  t += 3;
 		      }
 		    }
-		    CGOEnd(I->shaderCGO);
+		    if (ok) ok &= CGOEnd(I->shaderCGO);
 		  }
 	      } else {  /* if else generate_shader_cgo */
               c = I->NT;
               if(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 		{
 		  int nverts = 0, cinit = c, *tinit = t;
@@ -2957,7 +2969,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                 }
                 glEnd();
 #endif
-#endif
               }
 	      } /* end if else use_shader */
             }
@@ -2966,51 +2977,51 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    }*/
         }
       }
-      if(SettingGet(G, cSetting_surface_debug)) {
+      if(ok && SettingGet(G, cSetting_surface_debug)) {
         t = I->T;
         c = I->NT;
 	  if (generate_shader_cgo){
 	    if(c) {
-	      CGOBegin(I->shaderCGO, GL_TRIANGLES);
-	      while(c--) {
+	      ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
+	      while(ok && c--) {
 		if(I->allVisibleFlag
 		   ||
 		   ((I->proximity
 		     && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
 		    || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2))))))) {
-		  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-		  if (I->VAO){
-		    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+		  ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+		  if (ok && I->VAO){
+		    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 		  }
-		  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-		  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+		  if (ok) 
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
-		  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-		  if (I->VAO){
-		    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+		  if (ok && I->VAO){
+		    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 		  }
-		  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-		  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+		  if (ok) 
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
-		  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-		  if (I->VAO){
-		    CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
+		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+		  if (ok && I->VAO){
+		    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *t));
 		  }
-		  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-		  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+		  if (ok) 
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
 		} else {
 		  t += 3;
 		}
 	      }
-	      CGOEnd(I->shaderCGO);
+	      if (ok) ok &= CGOEnd(I->shaderCGO);
 	    }
 	} else {
 
         if(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 	  {
 	    int nverts = 0, cinit = c, *tinit = t;
@@ -3092,53 +3103,48 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
           }
           glEnd();
 #endif
-#endif
         }
 	} /* end else use_shader */ 
         t = I->T;
         c = I->NT;
 
 	  if (generate_shader_cgo){
-	    if(c) {
-	      CGOColor(I->shaderCGO, 0.0, 1.0, 0.0);
-	      CGODotwidth(I->shaderCGO, 1.0F);
-	      while(c--) {
-		CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+	    if(ok && c) {
+	      ok &= CGOColor(I->shaderCGO, 0.0, 1.0, 0.0);
+	      if (ok) ok &= CGODotwidth(I->shaderCGO, 1.0F);
+	      while(ok && c--) {
+		ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
 		if(I->allVisibleFlag
 		   ||
 		   ((I->proximity
 		     && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
 		    || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2))))))) {
-		  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-		  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-		  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+		  if (ok) 
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
-		  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-		  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-		  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+		  if (ok) 
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
-		  CGONormalv(I->shaderCGO, vn + (*t) * 3);
-		  CGOPickColor(I->shaderCGO, I->AT[*t], cPickableAtom);
-		  CGOVertexv(I->shaderCGO, v + (*t) * 3);
+		  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*t) * 3);
+		  if (ok) 
+		    ok &= CGOPickColor(I->shaderCGO, I->AT[*t], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*t]));
+		  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*t) * 3);
 		  t++;
 		} else {
 		  t += 3;
 		}
-		CGOEnd(I->shaderCGO);
+		if (ok) ok &= CGOEnd(I->shaderCGO);
 	      }
 	    }
 	} else {/* end generate_shader_cgo */
         if(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
           glColor3f(0.0, 1.0, 0.0);
           glLineWidth(1.0F);
-#endif
           while(c--) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
             if(I->allVisibleFlag
                ||
@@ -3200,31 +3206,27 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             }
             glEnd();
 #endif
-#endif
           }
         }
 	} /* end else use_shader */ 
 
         c = I->N;
 	if (generate_shader_cgo){
-	  if(c) {
-	    CGOColor(I->shaderCGO, 1.0, 0.0, 0.0);
-	    CGOResetNormal(I->shaderCGO, true);
-	    CGOBegin(I->shaderCGO, GL_LINES);
-	    while(c--) {
-	      CGOVertexv(I->shaderCGO, v);
-	      CGOVertex(I->shaderCGO, v[0] + vn[0] / 2, v[1] + vn[1] / 2, v[2] + vn[2] / 2);
+	  if(ok && c) {
+	    ok &= CGOColor(I->shaderCGO, 1.0, 0.0, 0.0);
+	    if (ok) ok &= CGOResetNormal(I->shaderCGO, true);
+	    if (ok) ok &= CGOBegin(I->shaderCGO, GL_LINES);
+	    while(ok && c--) {
+	      ok &= CGOVertexv(I->shaderCGO, v);
+	      if (ok) ok &= CGOVertex(I->shaderCGO, v[0] + vn[0] / 2, v[1] + vn[1] / 2, v[2] + vn[2] / 2);
 	      v += 3;
 	      vn += 3;
 	    }
-	    CGOEnd(I->shaderCGO);
+	    if (ok) ok &= CGOEnd(I->shaderCGO);
 	  }
 	} else {
         if(c) {
           SceneResetNormal(G, true);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
           glColor3f(1.0, 0.0, 0.0);
 #ifdef _PYMOL_GL_DRAWARRAYS
 	  {
@@ -3254,29 +3256,33 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
           }
           glEnd();
 #endif
-#endif
         }
       } /* end else use_shader */ 
       }
       /* end of rendering, if using shaders, then render CGO */
-      if (use_shader) {
+      if (ok && use_shader) {
 	CShaderPrg * shaderPrg = 0;
 	if (generate_shader_cgo){
 	  CGO *convertcgo = NULL;
-	  CGOStop(I->shaderCGO);
+	  if (ok) ok &= CGOStop(I->shaderCGO);
 #ifdef _PYMOL_CGO_DRAWARRAYS
 
 
 	  if (I->Type != 2){
-	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);
+	    if (ok)
+	      convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);
+	    CHECKOK(ok, convertcgo);
 	    CGOFree(I->shaderCGO);
 	    I->shaderCGO = convertcgo;
-
+	    convertcgo = NULL;
 	    I->pickingCGO = I->shaderCGO;
 	    if (I->Type == 1){
 	      /* Only needed to simplify spheres in surface_type=1 */
 	      CGO *simple = CGOSimplify(I->shaderCGO, 0);
-	      I->pickingCGO = CGOCombineBeginEnd(simple ,0);
+	      CHECKOK(ok, simple);
+	      if (ok)
+		I->pickingCGO = CGOCombineBeginEnd(simple ,0);
+	      CHECKOK(ok, I->pickingCGO);
 	      CGOFree(simple);
 	    }
 	  }
@@ -3288,38 +3294,56 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    if (dot_as_spheres) {
 	      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, CGO_BOUNDING_BOX_SZ + CGO_DRAW_SPHERE_BUFFERS_SZ);
 	    } else {
-	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
+	      convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(I->shaderCGO, 0, false, NULL);
 	    }
-	    convertcgo->use_shader = true;
+	    CHECKOK(ok, convertcgo);
+	    if (ok)
+	      convertcgo->use_shader = true;
 	  } else if (I->Type == 2) {
 	    CGO *convertcgo2, *simple;
 	    convertcgo2 = CGOConvertLinesToShaderCylinders(I->shaderCGO, 0);
-	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(convertcgo2, 0);
-	    convertcgo->use_shader = true;
-
-	    simple = CGOCombineBeginEnd(convertcgo2, 0);
-	    I->pickingCGO = CGOSimplify(simple, 0);
+	    CHECKOK(ok, convertcgo2);
+	    if (ok)
+	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(convertcgo2, 0);
+	    CHECKOK(ok, convertcgo);
+	    if (ok)
+	      convertcgo->use_shader = true;
+	    if (ok)
+	      simple = CGOCombineBeginEnd(convertcgo2, 0);
+	    CHECKOK(ok, simple);
+	    if (ok)
+	      I->pickingCGO = CGOSimplify(simple, 0);
+	    CHECKOK(ok, I->pickingCGO);
 	    CGOFree(simple);
-	    
 	    CGOFree(convertcgo2);
 	  } else {
 	    if(I->Type != 1 && ((alpha != 1.0) || va)) {
-	      convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	      if (ok)
+		convertcgo = CGOOptimizeToVBOIndexedNoShader(I->shaderCGO, 0);
+	      CHECKOK(ok, convertcgo);
 	    } else {
-	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
+	      if (ok)
+		convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(I->shaderCGO, 0, false, NULL);
+	      CHECKOK(ok, convertcgo);
 	    }
-	    convertcgo->use_shader = true;
+	    if (ok)
+	      convertcgo->use_shader = true;
 	  }	  
-	  if(I->Type == 1 && !dot_as_spheres) {
+	  if(ok && I->Type == 1 && !dot_as_spheres) {
 	    I->shaderCGO = CGONew(G);
-	    I->shaderCGO->use_shader = true;
-	    CGOResetNormal(I->shaderCGO, true);
-	    CGOLinewidthSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
-	    CGOStop(I->shaderCGO);
-	    CGOAppend(I->shaderCGO, convertcgo);
-	    CGOFreeWithoutVBOs(convertcgo);	    
+	    CHECKOK(ok, I->shaderCGO);
+	    if (ok){
+	      I->shaderCGO->use_shader = true;
+	      if (ok) ok &= CGOResetNormal(I->shaderCGO, true);
+	      if (ok) ok &= CGOLinewidthSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
+	      if (ok) ok &= CGOStop(I->shaderCGO);
+	      if (ok) CGOAppend(I->shaderCGO, convertcgo);
+	      CGOFreeWithoutVBOs(convertcgo);
+	      convertcgo = NULL;
+	    }
 	  } else {
 	    I->shaderCGO = convertcgo;
+	    convertcgo = NULL;
 	  }
 #else
 	  (void)convertcgo;
@@ -3330,7 +3354,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	  if (dot_as_spheres){
 	    float radius = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width)
                            * info->vertex_scale;
-	    shaderPrg = CShaderPrg_Enable_SphereShader(G, "sphere");
+	    shaderPrg = CShaderPrg_Enable_DefaultSphereShader(G);
 	    CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", fabs(radius));
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
@@ -3342,54 +3366,50 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	  CShaderPrg_Set1f(shaderPrg, "uni_radius", SceneGetLineWidthForCylinders(G, info, mesh_width));
 	} else {
 	  shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-#ifdef PURE_OPENGL_ES_2
-	  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
-#else
-	  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1);
-#endif
 	  CShaderPrg_Set1f(shaderPrg, "ambient_occlusion_scale", ambient_occlusion_scale);
-	  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
 	  CShaderPrg_Set1i(shaderPrg, "use_interior_color_threshold", 1);
 	  {
-	    float *color;
-	    color = ColorGet(G, I->R.obj->Color);
-	    
-	    if (I->ix){
-	      float *pc = CGOGetNextDrawBufferedIndex(I->shaderCGO->op);
-	      if (pc){
-		int nindices = CGO_get_int(pc+3), c, pl, idx;
-		uint vbuf = CGO_get_int(pc+8);
-		uint *vertexIndices;
-		vertexIndices = Alloc(uint, nindices);	      
-		if (!vertexIndices){
-		  PRINTFB(I->R.G, FB_RepSurface, FB_Errors) "ERROR: RepSurfaceRender() vertexIndices could not be allocated: nindices=%d\n", nindices ENDFB(I->R.G);
-		}
-		for(c = 0, pl=0; c < I->n_tri; c++) {
-		  idx = I->ix[c] * 3;
-		  vertexIndices[pl++] = idx;
-		  vertexIndices[pl++] = idx + 1;
-		  vertexIndices[pl++] = idx + 2;
-		}
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbuf);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint)*nindices, vertexIndices, GL_STATIC_DRAW);
-		/*		if (I->vertexIndices){
-		  FreeP(I->vertexIndices);
-		  }*/
-		I->vertexIndices = vertexIndices;
+	    if((alpha != 1.0) || va) {
+	      int t_mode =
+		SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting,
+			     cSetting_transparency_mode);
+	      if(info && info->alpha_cgo) {
+		t_mode = 0;
 	      }
-	    } else {
-	      /*	      if (I->vertexIndices){
-		FreeP(I->vertexIndices);
-		I->vertexIndices = 0;
-		}*/
+	      if (t_mode){
+		RepSurfaceSortIX(G, I, t_mode);
+		if (I->ix){
+		  float *pc = CGOGetNextDrawBufferedIndex(I->shaderCGO->op);
+		  if (pc){
+		    int nindices = CGO_get_int(pc+3), c, pl, idx;
+		    uint vbuf = CGO_get_int(pc+8);
+		    uint *vertexIndices;
+		    vertexIndices = Alloc(uint, nindices);	      
+		    if (!vertexIndices){
+		      PRINTFB(I->R.G, FB_RepSurface, FB_Errors) "ERROR: RepSurfaceRender() vertexIndices could not be allocated: nindices=%d\n", nindices ENDFB(I->R.G);
+		    }
+		    for(c = 0, pl=0; c < I->n_tri; c++) {
+		      idx = I->ix[c] * 3;
+		      vertexIndices[pl++] = idx;
+		      vertexIndices[pl++] = idx + 1;
+		      vertexIndices[pl++] = idx + 2;
+		    }
+		    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbuf);
+		    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint)*nindices, vertexIndices, GL_STATIC_DRAW);
+		    I->vertexIndices = vertexIndices;
+		  }
+		}
+	      }
 	    }
 	  }
 	}
-	I->shaderCGO->enable_shaders = shaderPrg ? 0 : 1;
-	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-	if (shaderPrg){
-	  CShaderPrg_Disable(shaderPrg);
-	}
+    if (I->shaderCGO){
+        I->shaderCGO->enable_shaders = shaderPrg ? 0 : 1;
+        CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+        if (shaderPrg){
+            CShaderPrg_Disable(shaderPrg);
+        }
+    }
       }
 #ifdef _PYMOL_GL_CALLLISTS
     if (use_display_lists && I->R.displayList){
@@ -3399,28 +3419,58 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 #endif
     }
   }
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+    I->R.cs->Active[cRepSurface] = false;
+  }
 }
 
 int RepSurfaceSameVis(RepSurface * I, CoordSet * cs)
 {
   int same = true;
-  int *lv, *lc, *cc;
+  char *lv;
   int a;
   AtomInfoType *ai;
 
   ai = cs->Obj->AtomInfo;
   lv = I->LastVisib;
-  lc = I->LastColor;
-  cc = cs->Color;
 
   for(a = 0; a < cs->NIndex; a++) {
     if(*(lv++) != (ai + cs->IdxToAtm[a])->visRep[cRepSurface]) {
       same = false;
       break;
     }
-    if(*(lc++) != *(cc++)) {
-      same = false;
-      break;
+  }
+  return (same);
+}
+
+void RepSurfaceInvalidate(struct Rep *I, struct CoordSet *cs, int level){
+  RepInvalidate(I, cs, level);
+  if (level >= cRepInvColor)
+    ((RepSurface*)I)->ColorInvalidated = true;
+}
+
+int RepSurfaceSameColor(RepSurface * I, CoordSet * cs)
+{
+  int same = true;
+  int *lc, *cc;
+  int a;
+  AtomInfoType *ai;
+
+  same = !I->ColorInvalidated;
+  if (same){
+    ai = cs->Obj->AtomInfo;
+    lc = I->LastColor;
+    cc = cs->Color;
+    for(a = 0; a < cs->NIndex; a++) {
+      if((ai + cs->IdxToAtm[a])->visRep[cRepSurface]) {
+	if(*(lc++) != *(cc++)) {
+	  same = false;
+	  break;
+	}
+      }
     }
   }
   return (same);
@@ -3433,7 +3483,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   int a, i0, i, j, c1;
   float *v0, *vc, *c0, *va;
   float *n0;
-  int *vi, *lv, *lc, *cc;
+  int *vi, *lc, *cc;
+  char *lv;
   int first_color;
   float *v_pos, v_above[3];
   int ramp_above;
@@ -3499,7 +3550,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   cutoff = I->max_vdw + 2 * probe_radius;
 
   if(!I->LastVisib)
-    I->LastVisib = Alloc(int, cs->NIndex);
+    I->LastVisib = Alloc(char, cs->NIndex);
   if(!I->LastColor)
     I->LastColor = Alloc(int, cs->NIndex);
   lv = I->LastVisib;
@@ -3507,7 +3558,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   cc = cs->Color;
   ai2 = obj->AtomInfo;
   for(a = 0; a < cs->NIndex; a++) {
-    *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSurface];
+    *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSurface] ? 1 : 0;
     *(lc++) = *(cc++);
   }
 
@@ -3591,7 +3642,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
           if((!cullByFlag) || !(ai1->flags & cAtomFlag_ignore)) {
             v0 = cs->Coord + 3 * a;
             i = *(MapLocusEStart(map, v0));
-            if(i) {
+            if(i && map->EList) {
               j = map->EList[i++];
               while(j >= 0) {
                 if(present[j] > 1) {
@@ -3665,7 +3716,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	  planew = -(vn0[0] * v0mod[0] + vn0[1] * v0mod[1] + vn0[2] * v0mod[2]);
 
 	  i = *(MapLocusEStart(ambient_occlusion_map, v0));
-	  if(i) {
+	  if(i && map->EList) {
 	    j = ambient_occlusion_map->EList[i++];
 	    while(j >= 0) {
 	      subtract3f(cs->Coord + j * 3, v0, d);
@@ -3677,7 +3728,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	      j = ambient_occlusion_map->EList[i++];
 	    }
 	  }
-	  if (closeA){
+	  if (closeA >= 0){
 	    if (nVAO[closeA]){
 	      I->VAO[a] = VAO[closeA];
 	    } else {
@@ -3743,7 +3794,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
 	  add3f(v0, v0mod, v0mod);
 	  planew = -(vn0[0] * v0mod[0] + vn0[1] * v0mod[1] + vn0[2] * v0mod[2]);
 	  i = *(MapLocusEStart(ambient_occlusion_map, v0));
-	  if(i) {
+	  if(i && ambient_occlusion_map->EList) {
 	    j = ambient_occlusion_map->EList[i++];
 	    maxDistA = 0.f;
 	    has = 0;
@@ -3877,11 +3928,12 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
     if(map) {
       short color_smoothing = SettingGetGlobal_i(G, cSetting_surface_color_smoothing);
       float color_smoothing_threshold = SettingGetGlobal_f(G, cSetting_surface_color_smoothing_threshold);
-      int atm;
+      int atm, ok = true;
       MapSetupExpress(map);
-      if (!I->AT)
+      ok &= !G->Interrupt;
+      if (ok && !I->AT)
 	I->AT = VLACalloc(int, I->N);
-      for(a = 0; a < I->N; a++) {
+      for(a = 0; ok && a < I->N; a++) {
         float at_transp = transp;
 
         AtomInfoType *ai0 = NULL;
@@ -3895,7 +3947,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
         vi = I->Vis + a;
         /* colors */
         i = *(MapLocusEStart(map, v0));
-        if(i) {
+        if(i && map->EList) {
           j = map->EList[i++];
           while(j >= 0) {
 	    atm = cs->IdxToAtm[j];
@@ -3985,7 +4037,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
           if(carve_map) {
 
             i = *(MapLocusEStart(carve_map, v0));
-            if(i) {
+            if(i && carve_map->EList) {
               j = carve_map->EList[i++];
               while(j >= 0) {
                 register float *v_targ = carve_vla + 3 * j;
@@ -4010,7 +4062,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
         if(clear_flag && (*vi)) {       /* is point visible, and are we clearing? */
           if(clear_map) {
             i = *(MapLocusEStart(clear_map, v0));
-            if(i) {
+            if(i && clear_map->EList) {
               j = clear_map->EList[i++];
               while(j >= 0) {
                 if(within3f(clear_vla + 3 * j, v0, clear_cutoff)) {
@@ -4098,7 +4150,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   if(G->HaveGUI) {
     if (I->shaderCGO){
       CGOFree(I->shaderCGO);
-      I->shaderCGO = 0;
+      I->shaderCGO = NULL;
     }
     if (I->vertexIndices){
       FreeP(I->vertexIndices);
@@ -4148,6 +4200,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   if((!ramped_flag)
      || (!SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_ray_color_ramps)))
     FreeP(I->RC);
+  I->ColorInvalidated = false;
   FreeP(present);
 }
 
@@ -4361,10 +4414,12 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
   }
 
   I->V = VLAlloc(float, (MaxN + 1) * 3);
-  I->VN = VLAlloc(float, (MaxN + 1) * 3);
+  CHECKOK(ok, I->V);
+  if (ok)
+    I->VN = VLAlloc(float, (MaxN + 1) * 3);
+  CHECKOK(ok, I->VN);
 
-  if(G->Interrupt)
-    ok = false;
+  ok &= !G->Interrupt;
 
   if(!(I->V && I->VN) || (!ok)) {       /* bail out point -- try to reduce crashes */
     PRINTFB(G, FB_RepSurface, FB_Errors)
@@ -4395,10 +4450,8 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                             circumscribe, I->surfaceMode, I->surfaceSolvent,
                             I->cavityCull, I->allVisibleFlag, I->maxVdw,
                             I->cavityMode, I->cavityRadius, I->cavityCutoff);
-
-    if((!sol_dot) || (G->Interrupt))
-      ok = false;
-
+    CHECKOK(ok, sol_dot);
+    ok &= !G->Interrupt;
     if(ok && sol_dot) {
       if(!I->surfaceSolvent) {
 
@@ -4444,25 +4497,27 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
             }
           }
         }
-        if(G->Interrupt)
-          ok = false;
+	ok &= !G->Interrupt;
         if(ok) {
           MapType *map, *solv_map;
           map = MapNewFlagged(G, I->maxVdw + probe_rad_more,
                               I->coord, VLAGetSize(I->coord) / 3, NULL, NULL);
-
-          solv_map = MapNew(G, probe_rad_less, sol_dot->dot, sol_dot->nDot, NULL);
-          if(map && solv_map) {
-
-            MapSetupExpress(solv_map);
-            MapSetupExpress(map);
-
-            if(sol_dot->nDot) {
+	  CHECKOK(ok, map);
+	  if (ok)
+	    solv_map = MapNew(G, probe_rad_less, sol_dot->dot, sol_dot->nDot, NULL);
+	  CHECKOK(ok, solv_map);
+          if(ok) {
+            ok &= MapSetupExpress(solv_map);
+	    if (ok)
+	      ok &= MapSetupExpress(map);
+	    ok &= !G->Interrupt;
+	    ok &= map->EList && solv_map->EList;
+            if(sol_dot->nDot && ok) {
               int *dc = sol_dot->dotCode;
               Vector3f *dot = Alloc(Vector3f, sp->nDot);
               float *v0, *n0;
-
-              {
+	      CHECKOK(ok, dot);
+              if (ok){
                 int b;
                 for(b = 0; b < sp->nDot; b++) {
                   scale3f(sp->dot[b], probe_radius, dot[b]);
@@ -4470,14 +4525,14 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
               }
               v0 = sol_dot->dot;
               n0 = sol_dot->dotNormal;
-              {
+              if (ok) {
                 int a, b;
                 float dist2 = probe_rad_less2;
                 int sp_nDot = sp->nDot;
-                for(a = 0; a < sol_dot->nDot; a++) {
+                for(a = 0; ok && a < sol_dot->nDot; a++) {
                   if(dc[a] || (surface_type < 6)) {     /* surface type 6 is completely scribed */
                     OrthoBusyFast(G, a + sol_dot->nDot * 2, sol_dot->nDot * 5); /* 2/5 to 3/5 */
-                    for(b = 0; b < sp_nDot; b++) {
+                    for(b = 0; ok && b < sp_nDot; b++) {
                       float *dot_b = dot[b];
                       v[0] = v0[0] + dot_b[0];
                       v[1] = v0[1] + dot_b[1];
@@ -4485,7 +4540,8 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                       {
                         int flag = true;
                         int ii;
-                        if((ii = *(MapLocusEStart(solv_map, v)))) {
+			ii = *(MapLocusEStart(solv_map, v));
+                        if(ii && solv_map->EList) {
                           register float *i_dot = sol_dot->dot;
                           register float dist = probe_rad_less;
                           register int *elist_ii = solv_map->EList + ii;
@@ -4531,7 +4587,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
 
                         if(flag) {
                           register int i = *(MapLocusEStart(map, v));
-                          if(i) {
+                          if(i && map->EList) {
                             register int j = map->EList[i++];
                             while(j >= 0) {
                               SurfaceJobAtomInfo *atom_info = I_atom_info + j;
@@ -4559,21 +4615,24 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                               int vn_offset = vn - I->VN;
                               MaxN = MaxN * 2;
                               VLASize(I->V, float, (MaxN + 1) * 3);
-                              VLASize(I->VN, float, (MaxN + 1) * 3);
-                              v = I->V + v_offset;
-                              vn = I->VN + vn_offset;
+			      CHECKOK(ok, I->V);
+			      if (ok)
+				VLASize(I->VN, float, (MaxN + 1) * 3);
+			      CHECKOK(ok, I->VN);
+			      if (ok){
+				v = I->V + v_offset;
+				vn = I->VN + vn_offset;
+			      }
                             }
                           }
                         }
                       }
+		      ok &= !G->Interrupt;
                     }
                   }
                   v0 += 3;
                   n0 += 3;
-                  if(G->Interrupt) {
-                    ok = false;
-                    break;
-                  }
+		  ok &= !G->Interrupt;
                 }
               }
               FreeP(dot);
@@ -4602,8 +4661,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
     }
     SolventDotFree(sol_dot);
     sol_dot = NULL;
-    if(G->Interrupt)
-      ok = false;
+    ok &= !G->Interrupt;
     if(ok) {
       int refine, ref_count = 1;
 
@@ -4611,12 +4669,12 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
         ref_count = 2;          /* these constants need more tuning... */
       }
 
-      for(refine = 0; refine < ref_count; refine++) {
+      for(refine = 0; ok && refine < ref_count; refine++) {
 
         /* add new vertices in regions where curvature is very high
            or where there are gaps with no points */
 
-        if(ok && I->N && (surface_type == 0) && (circumscribe)) {
+        if(I->N && (surface_type == 0) && (circumscribe)) {
           int n_new = 0;
 
           float neighborhood = 2.6 * point_sep; /* these constants need more tuning... */
@@ -4634,21 +4692,24 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
             MapType *map = NULL;
             int a;
             map = MapNew(G, map_cutoff, I->V, I->N, NULL);
-            MapSetupExpress(map);
+	    CHECKOK(ok, map);
+	    if (ok)
+	      ok &= MapSetupExpress(map);
             v = I->V;
             vn = I->VN;
-            for(a = 0; a < I->N; a++) {
+            for(a = 0; ok && a < I->N; a++) {
               register int i = *(MapLocusEStart(map, v));
-              if(i) {
+              if(i && map->EList) {
                 register int j = map->EList[i++];
-                while(j >= 0) {
+                while(ok && j >= 0) {
                   if(j > a) {
                     float *v0 = I->V + 3 * j;
                     if(within3f(v0, v, map_cutoff)) {
                       int add_new = false;
                       float *n0 = I->VN + 3 * j;
                       VLACheck(new_dot, float, n_new * 6 + 5);
-                      {
+		      CHECKOK(ok, new_dot);
+                      if (ok){
                         float *v1 = new_dot + n_new * 6;
                         average3f(v, v0, v1);
                         if((dot_product3f(n0, vn) < dot_cutoff)
@@ -4685,22 +4746,29 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                     }
                   }
                   j = map->EList[i++];
+		  ok &= !G->Interrupt;
                 }
               }
               v += 3;
               vn += 3;
+	      ok &= !G->Interrupt;
             }
             MapFree(map);
           }
-          if(n_new) {
+          if(ok && n_new) {
             float *n1 = new_dot + 3;
             float *v1 = new_dot;
             VLASize(I->V, float, 3 * (I->N + n_new));
-            VLASize(I->VN, float, 3 * (I->N + n_new));
-            v = I->V + 3 * I->N;
-            vn = I->VN + 3 * I->N;
-            I->N += n_new;
-            while(n_new--) {
+	    CHECKOK(ok, I->V);
+	    if (ok)
+	      VLASize(I->VN, float, 3 * (I->N + n_new));
+	    CHECKOK(ok, I->VN);
+	    if (ok){
+	      v = I->V + 3 * I->N;
+	      vn = I->VN + 3 * I->N;
+	      I->N += n_new;
+	    }
+            while(ok && n_new--) {
               copy3f(v1, v);
               copy3f(n1, vn);
               v += 3;
@@ -4723,11 +4791,13 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
             MapNewFlagged(G, I->maxVdw + probe_radius, I_coord, n_index, NULL,
                           present_vla);
           int a;
-          MapSetupExpress(map);
+	  CHECKOK(ok, map);
+          if (ok)
+	    ok &= MapSetupExpress(map);
           v = I->V;
-          for(a = 0; a < I->N; a++) {
+          for(a = 0; ok && a < I->N; a++) {
             register int i = *(MapLocusEStart(map, v));
-            if(i) {
+            if(i && map->EList) {
               register int j = map->EList[i++];
               while(j >= 0) {
                 SurfaceJobAtomInfo *atom_info = I_atom_info + j;
@@ -4740,10 +4810,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
               }
             }
             v += 3;
-            if(G->Interrupt) {
-              ok = false;
-              break;
-            }
+	    ok &= !G->Interrupt;
           }
 
           MapFree(map);
@@ -4791,7 +4858,8 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
           int repeat_flag = true;
           float min_dot = 0.1F;
           int *dot_flag = Alloc(int, I->N);
-          while(repeat_flag) {
+	  CHECKOK(ok, dot_flag);
+          while(ok && repeat_flag) {
             repeat_flag = false;
 
             if(surface_type >= 3) {
@@ -4808,13 +4876,15 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
               {
                 MapType *map = MapNew(G, point_sep + 0.05F, I->V, I->N, NULL);
                 int a;
-                MapSetupExpress(map);
+		CHECKOK(ok, map);
+		if (ok)
+		  ok &= MapSetupExpress(map);
                 v = I->V;
                 vn = I->VN;
-                for(a = 0; a < I->N; a++) {
+                for(a = 0; ok && a < I->N; a++) {
                   if(dot_flag[a]) {
                     register int i = *(MapLocusEStart(map, v));
-                    if(i) {
+                    if(i && map->EList) {
                       register int j = map->EList[i++];
                       jj = I->N;
                       nearest = point_sep + 1.0F;
@@ -4851,25 +4921,25 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                   }
                   v += 3;
                   vn += 3;
-                  if(G->Interrupt) {
-                    ok = false;
-                    break;
-                  }
+		  ok &= !G->Interrupt;
                 }
                 MapFree(map);
               }
             } else {            /* surface types < 3 */
               int a;
               MapType *map = MapNew(G, -point_sep, I->V, I->N, NULL);
-              for(a = 0; a < I->N; a++)
-                dot_flag[a] = 1;
-              MapSetupExpress(map);
+	      CHECKOK(ok, map);
+	      if (ok){
+		for(a = 0; a < I->N; a++)
+		  dot_flag[a] = 1;
+		ok &= MapSetupExpress(map);
+	      }
               v = I->V;
               vn = I->VN;
-              for(a = 0; a < I->N; a++) {
+              for(a = 0; ok && a < I->N; a++) {
                 if(dot_flag[a]) {
                   register int i = *(MapLocusEStart(map, v));
-                  if(i) {
+                  if(i && map->EList) {
                     register int j = map->EList[i++];
                     while(j >= 0) {
                       if(j != a) {
@@ -4888,10 +4958,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                 }
                 v += 3;
                 vn += 3;
-                if(G->Interrupt) {
-                  ok = false;
-                  break;
-                }
+		ok &= !G->Interrupt;
               }
               MapFree(map);
             }
@@ -4921,10 +4988,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                 }
               }
             }
-            if(G->Interrupt) {
-              ok = false;
-              break;
-            }
+	    ok &= !G->Interrupt;
           }
           FreeP(dot_flag);
         }
@@ -4940,24 +5004,27 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
           float dot_sum;
           int n_nbr;
           int *dot_flag = Alloc(int, I->N);
-          if(surface_type == 6) {       /* emprical tweaks */
+	  CHECKOK(ok, dot_flag);
+          if(ok && surface_type == 6) {       /* emprical tweaks */
             trim_factor *= 2.5;
             trim_cutoff *= 1.5;
           }
-          while(repeat_flag) {
+          while(ok && repeat_flag) {
             int a;
             MapType *map = MapNew(G, neighborhood, I->V, I->N, NULL);
-            repeat_flag = false;
-
-            for(a = 0; a < I->N; a++)
-              dot_flag[a] = 1;
-            MapSetupExpress(map);
+	    CHECKOK(ok, map);
+	    if (ok){
+	      repeat_flag = false;
+	      for(a = 0; a < I->N; a++)
+		dot_flag[a] = 1;
+	      ok &= MapSetupExpress(map);
+	    }
             v = I->V;
             vn = I->VN;
-            for(a = 0; a < I->N; a++) {
+            for(a = 0; ok && a < I->N; a++) {
               if(dot_flag[a]) {
                 register int i = *(MapLocusEStart(map, v));
-                if(i) {
+                if(i && map->EList) {
                   register int j = map->EList[i++];
                   n_nbr = 0;
                   dot_sum = 0.0F;
@@ -4986,10 +5053,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
               }
               v += 3;
               vn += 3;
-              if(G->Interrupt) {
-                ok = false;
-                break;
-              }
+	      ok &= !G->Interrupt;
             }
 
             if(ok) {
@@ -5017,45 +5081,46 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
               }
             }
             MapFree(map);
-            if(G->Interrupt) {
-              ok = false;
-              break;
-            }
+	    ok &= !G->Interrupt;
           }
           FreeP(dot_flag);
         }
-        if(G->Interrupt) {
-          ok = false;
-          break;
-        }
+	ok &= !G->Interrupt;
       }
     }
 
-    if(I->N && I->V && I->VN) {
+    if(ok && I->N && I->V && I->VN) {
       VLASizeForSure(I->V, float, 3 * I->N);
-      VLASizeForSure(I->VN, float, 3 * I->N);
+      CHECKOK(ok, I->V);
+      if (ok)
+	VLASizeForSure(I->VN, float, 3 * I->N);
+      CHECKOK(ok, I->VN);
     }
 
     PRINTFB(G, FB_RepSurface, FB_Blather)
       " RepSurface: %i surface points.\n", I->N ENDFB(G);
 
-    if(G->Interrupt)
-      ok = false;
+    ok &= !G->Interrupt;
 
     OrthoBusyFast(G, 3, 5);
-    if(ok && I->N) {
-      if(surface_type != 1) {   /* not a dot surface... */
+    if(I->N) {
+      if(ok && surface_type != 1) {   /* not a dot surface... */
         float cutoff = point_sep * 5.0F;
         if((cutoff > probe_radius) && (!I->surfaceSolvent))
           cutoff = probe_radius;
         I->T = TrianglePointsToSurface(G, I->V, I->VN, I->N, cutoff, &I->NT, &I->S, NULL, 
                                        I->cavityMode);
+	CHECKOK(ok, I->T);
         PRINTFB(G, FB_RepSurface, FB_Blather)
           " RepSurface: %i triangles.\n", I->NT ENDFB(G);
       }
     } else {
-      VLASizeForSure(I->V, float, 1);
-      VLASizeForSure(I->VN, float, 1);
+      if (ok)
+	VLASizeForSure(I->V, float, 1);
+      CHECKOK(ok, I->V);
+      if (ok)
+	VLASizeForSure(I->VN, float, 1);
+      CHECKOK(ok, I->VN);
     }
     if(carve_map)
       MapFree(carve_map);
@@ -5069,6 +5134,9 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj = cs->Obj;
   OOCalloc(G, RepSurface);
+  CHECKOK(ok, I);
+  if (!ok)
+    return NULL;
   I->pickingCGO = I->shaderCGO = 0;
   I->vertexIndices = 0;
   I->sum = 0;
@@ -5076,6 +5144,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
   I->ix = 0;
   I->n_tri = 0;
   I->AT = 0;
+  I->ColorInvalidated = false;
   {
     int surface_mode =
       SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_surface_mode);
@@ -5233,6 +5302,8 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       I->R.fFree = (void (*)(struct Rep *)) RepSurfaceFree;
       I->R.fRecolor = (void (*)(struct Rep *, struct CoordSet *)) RepSurfaceColor;
       I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepSurfaceSameVis;
+      I->R.fSameColor = (int (*)(struct Rep *, struct CoordSet *)) RepSurfaceSameColor;
+      I->R.fInvalidate = (void (*)(struct Rep *, struct CoordSet *, int)) RepSurfaceInvalidate;
       I->R.obj = (CObject *) (cs->Obj);
       I->R.cs = cs;
       I->allVisibleFlag = true;
@@ -5259,7 +5330,8 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       }
       if(surface_flag) {
         SurfaceJobAtomInfo *atom_info = VLACalloc(SurfaceJobAtomInfo, cs->NIndex);
-        if(atom_info) {
+	CHECKOK(ok, atom_info);
+        if(ok && atom_info) {
           AtomInfoType *i_ai, *obj_atom_info = obj->AtomInfo;
           int *idx_to_atm = cs->IdxToAtm;
           int n_index = cs->NIndex;
@@ -5276,39 +5348,42 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
         OrthoBusyFast(G, 0, 1);
 
-        n_present = cs->NIndex;
-
-        carve_selection =
-          SettingGet_s(G, cs->Setting, obj->Obj.Setting,
-                       cSetting_surface_carve_selection);
-        carve_cutoff =
-          SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_surface_carve_cutoff);
-        if((!carve_selection) || (!carve_selection[0]))
-          carve_cutoff = 0.0F;
-        if(carve_cutoff > 0.0F) {
-          carve_state =
-            SettingGet_i(G, cs->Setting, obj->Obj.Setting,
-                         cSetting_surface_carve_state) - 1;
-          carve_cutoff += 2 * I->max_vdw + probe_radius;
-
-          if(carve_selection)
-            carve_map = SelectorGetSpacialMapFromSeleCoord(G,
-                                                           SelectorIndexByName(G,
-                                                                               carve_selection),
-                                                           carve_state, carve_cutoff,
-                                                           &carve_vla);
-          if(carve_map)
-            MapSetupExpress(carve_map);
-          carve_flag = true;
-          I->allVisibleFlag = false;
-        }
-        if(!I->allVisibleFlag) {
+	if (ok){
+	  n_present = cs->NIndex;
+	  
+	  carve_selection =
+	    SettingGet_s(G, cs->Setting, obj->Obj.Setting,
+			 cSetting_surface_carve_selection);
+	  carve_cutoff =
+	    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_surface_carve_cutoff);
+	  if((!carve_selection) || (!carve_selection[0]))
+	    carve_cutoff = 0.0F;
+	  if(carve_cutoff > 0.0F) {
+	    carve_state =
+	      SettingGet_i(G, cs->Setting, obj->Obj.Setting,
+			   cSetting_surface_carve_state) - 1;
+	    carve_cutoff += 2 * I->max_vdw + probe_radius;
+	    
+	    if(carve_selection)
+	      carve_map = SelectorGetSpacialMapFromSeleCoord(G,
+							     SelectorIndexByName(G,
+										 carve_selection),
+							     carve_state, carve_cutoff,
+							     &carve_vla);
+	    if(carve_map)
+	      ok &= MapSetupExpress(carve_map);
+	    carve_flag = true;
+	    I->allVisibleFlag = false;
+	  }
+	}
+        if(ok && !I->allVisibleFlag) {
           /* optimize the space over which we calculate a surface */
 
           /* first find out which atoms are actually to be surfaced */
 
           present_vla = VLAlloc(int, cs->NIndex);
-          {
+	  CHECKOK(ok, present_vla);
+          if (ok){
             register int *ap = present_vla;
             register int *idx_to_atm = cs->IdxToAtm;
             register AtomInfoType *obj_AtomInfo = obj->AtomInfo;
@@ -5326,16 +5401,19 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
             }
           }
 
-          map =
-            MapNewFlagged(G, 2 * I->max_vdw + probe_radius, cs->Coord, cs->NIndex, NULL,
-                          present_vla);
-          MapSetupExpress(map);
+	  if (ok)
+	    map =
+	      MapNewFlagged(G, 2 * I->max_vdw + probe_radius, cs->Coord, cs->NIndex, NULL,
+			    present_vla);
+	  CHECKOK(ok, map);
+	  if (ok)
+	    ok &= MapSetupExpress(map);
 
-          if(inclInvis) {
+          if(ok && inclInvis) {
             /* then add in the nearby atoms which are not surfaced and not ignored */
             float probe_radiusX2 = probe_radius * 2;
             int a;
-            for(a = 0; a < cs->NIndex; a++)
+            for(a = 0; ok && a < cs->NIndex; a++){
               if(!present_vla[a]) {
                 AtomInfoType *ai1 = obj->AtomInfo + cs->IdxToAtm[a];
                 if((inclH || (!ai1->hydrogen)) &&
@@ -5344,7 +5422,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
                   float *v0 = cs->Coord + 3 * a;
                   int i = *(MapLocusEStart(map, v0));
                   if(optimize) {
-                    if(i) {
+                    if(i && map->EList) {
                       int j = map->EList[i++];
                       while(j >= 0) {
                         if(present_vla[j] > 1) {
@@ -5363,17 +5441,19 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
                     present_vla[a] = 1;
                 }
               }
+	      ok &= !G->Interrupt;
+	    }
           }
 
-          if(carve_flag && (!optimize)) {
+          if(ok && carve_flag && (!optimize)) {
             /* and optimize for carved region */
             int a;
-            for(a = 0; a < cs->NIndex; a++) {
+            for(a = 0; ok && a < cs->NIndex; a++) {
               int include_flag = false;
               if(carve_map) {
                 float *v0 = cs->Coord + 3 * a;
                 int i = *(MapLocusEStart(carve_map, v0));
-                if(i) {
+                if(i && carve_map->EList) {
                   int j = carve_map->EList[i++];
                   while(j >= 0) {
                     if(within3f(carve_vla + 3 * j, v0, carve_cutoff)) {
@@ -5386,6 +5466,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
               }
               if(!include_flag)
                 present_vla[a] = 0;
+	      ok &= !G->Interrupt;
             }
           }
           MapFree(map);
@@ -5394,7 +5475,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
           /* now count how many atoms we actually need to think about */
 
           n_present = 0;
-          {
+          if (ok) {
             int a;
             for(a = 0; a < cs->NIndex; a++) {
               if(present_vla[a]) {
@@ -5404,10 +5485,10 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
           }
         }
 
-        {
+        if (ok) {
           SurfaceJob *surf_job = SurfaceJobNew(G);
-
-          if(surf_job) {
+	  CHECKOK(ok, surf_job);
+          if(ok && surf_job) {
 
             surf_job->maxVdw = I->max_vdw;
             surf_job->allVisibleFlag = I->allVisibleFlag;
@@ -5420,7 +5501,8 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
               /* implies that n_present < cs->NIndex, so eliminate
                  irrelevant atoms & coordinates if we are optimizing subsets */
               surf_job->coord = VLAlloc(float, n_present * 3);
-              {
+	      CHECKOK(ok, surf_job->coord);
+              if (ok) {
                 int *p = present_vla;
                 SurfaceJobAtomInfo *ai_src = surf_job->atomInfo;
                 SurfaceJobAtomInfo *ai_dst = surf_job->atomInfo;
@@ -5441,42 +5523,44 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
                 }
               }
               VLASize(surf_job->atomInfo, SurfaceJobAtomInfo, n_present);
+	      CHECKOK(ok, surf_job->atomInfo);
             } else {
               surf_job->presentVla = present_vla;
               present_vla = NULL;
               surf_job->coord = VLAlloc(float, cs->NIndex * 3);
-              if(surf_job->coord)
+	      CHECKOK(ok, surf_job->coord);
+              if(ok)
                 UtilCopyMem(surf_job->coord, cs->Coord, sizeof(float) * 3 * cs->NIndex);
             }
+	    if (ok){
+	      surf_job->sphereIndex = sphere_idx;
+	      surf_job->solventSphereIndex = solv_sph_idx;
+	      
+	      surf_job->surfaceType = surface_type;
+	      surf_job->circumscribe = circumscribe;
+	      surf_job->probeRadius = probe_radius;
+	      surf_job->pointSep = point_sep;
+	      
+	      surf_job->trimCutoff = trim_cutoff;
+	      surf_job->trimFactor = trim_factor;
+	      
+	      surf_job->cavityMode = cavity_mode;
+	      surf_job->cavityRadius = cavity_radius;
+	      surf_job->cavityCutoff = cavity_cutoff;
+	      
+	      if(carve_vla)
+		surf_job->carveVla = VLACopy(carve_vla, float);
+	      surf_job->carveCutoff = carve_cutoff;
+	      
+	      surf_job->surfaceMode = surface_mode;
+	      surf_job->surfaceSolvent = surface_solvent;
+	      
+	      surf_job->cavityCull = SettingGet_i(G, cs->Setting,
+						  obj->Obj.Setting, cSetting_cavity_cull);
+	    }
+	  }
 
-            surf_job->sphereIndex = sphere_idx;
-            surf_job->solventSphereIndex = solv_sph_idx;
-
-            surf_job->surfaceType = surface_type;
-            surf_job->circumscribe = circumscribe;
-            surf_job->probeRadius = probe_radius;
-            surf_job->pointSep = point_sep;
-
-            surf_job->trimCutoff = trim_cutoff;
-            surf_job->trimFactor = trim_factor;
-
-            surf_job->cavityMode = cavity_mode;
-            surf_job->cavityRadius = cavity_radius;
-            surf_job->cavityCutoff = cavity_cutoff;
-
-            if(carve_vla)
-              surf_job->carveVla = VLACopy(carve_vla, float);
-            surf_job->carveCutoff = carve_cutoff;
-
-            surf_job->surfaceMode = surface_mode;
-            surf_job->surfaceSolvent = surface_solvent;
-
-            surf_job->cavityCull = SettingGet_i(G, cs->Setting,
-                                                obj->Obj.Setting, cSetting_cavity_cull);
-          }
-
-          if(G->Interrupt)
-            ok = false;
+          ok &= !G->Interrupt;
 
           if(ok) {
             int found = false;
@@ -5507,9 +5591,9 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
               PAutoUnblock(G, blocked);
             }
 #endif
-            if(!found) {
+            if(ok && !found) {
 
-              SurfaceJobRun(G, surf_job);
+              ok &= SurfaceJobRun(G, surf_job);
 
 #ifndef _PYMOL_NOPY
               if(cache_mode > 1) {
@@ -5537,29 +5621,28 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 #endif
           }
           /* surf_job must be valid at this point */
-
-          I->N = surf_job->N;
-          surf_job->N = 0;
-          I->V = surf_job->V;
-          surf_job->V = NULL;
-          I->VN = surf_job->VN;
-          surf_job->VN = NULL;
-          I->NT = surf_job->NT;
-          surf_job->NT = 0;
-          I->T = surf_job->T;
-          surf_job->T = NULL;
-          I->S = surf_job->S;
-          surf_job->S = NULL;
-
+	  if (ok){
+	    I->N = surf_job->N;
+	    surf_job->N = 0;
+	    I->V = surf_job->V;
+	    surf_job->V = NULL;
+	    I->VN = surf_job->VN;
+	    surf_job->VN = NULL;
+	    I->NT = surf_job->NT;
+	    surf_job->NT = 0;
+	    I->T = surf_job->T;
+	    surf_job->T = NULL;
+	    I->S = surf_job->S;
+	    surf_job->S = NULL;
+	  }
+	  
           SurfaceJobPurgeResult(G, surf_job);
           SurfaceJobFree(G, surf_job);
 
         }
         VLAFreeP(atom_info);
 
-        if(G->Interrupt)
-          ok = false;
-
+	ok &= !G->Interrupt;
         if(ok)
           RepSurfaceColor(I, cs);
       }
@@ -5567,16 +5650,16 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
         MapFree(carve_map);
       VLAFreeP(carve_vla);
       VLAFreeP(present_vla);
-      if(I->debug)
-        CGOStop(I->debug);
+      if(ok && I->debug)
+        ok &= CGOStop(I->debug);
       OrthoBusyFast(G, 4, 4);
-      if(!ok) {
-        RepSurfaceFree(I);
-        I = NULL;
-      }
-      return ((void *) (struct Rep *) I);
     }
   }
+  if(!ok) {
+    RepSurfaceFree(I);
+    I = NULL;
+  }
+  return ((void *) (struct Rep *) I);
 }
 
 static SolventDot *SolventDotNew(PyMOLGlobals * G,
@@ -5599,7 +5682,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
   int n_coord = VLAGetSize(atom_info);
   Vector3f *sp_dot = sp->dot;
   OOCalloc(G, SolventDot);
-
+  CHECKOK(ok, I);
   /*  printf("%p %p %p %f %p %p %p %d %d %d %d %d %f\n",
      G,
      coord,
@@ -5612,32 +5695,39 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
    */
 
   stopDot = n_coord * sp->nDot + 2 * circumscribe;
-  I->dot = VLAlloc(float, (stopDot + 1) * 3);
-  I->dotNormal = VLAlloc(float, (stopDot + 1) * 3);
-  I->dotCode = VLACalloc(int, stopDot + 1);
+  if (ok)
+    I->dot = VLAlloc(float, (stopDot + 1) * 3);
+  CHECKOK(ok, I->dot);
+  if (ok){
+    I->dotNormal = VLAlloc(float, (stopDot + 1) * 3);
+    CHECKOK(ok, I->dotNormal);
+  }
+  if (ok){
+    I->dotCode = VLACalloc(int, stopDot + 1);
+    CHECKOK(ok, I->dotCode);
+  }
 
   probe_radius_plus = probe_radius * 1.5F;
 
   I->nDot = 0;
-  {
+  if (ok) {
     int dotCnt = 0;
-    MapType *map =
-      MapNewFlagged(G, max_vdw + probe_radius, coord, n_coord, NULL, present);
-    if(G->Interrupt)
-      ok = false;
+    MapType *map = MapNewFlagged(G, max_vdw + probe_radius, coord, n_coord, NULL, present);
+    CHECKOK(ok, map);
+    ok &= !G->Interrupt;
     if(map && ok) {
       float *v = I->dot;
       float *n = I->dotNormal;
       int *dc = I->dotCode;
       int maxCnt = 0;
 
-      MapSetupExpress(map);
-      {
+      ok &= MapSetupExpress(map);
+      if (ok) {
         int a;
         int skip_flag;
 
         SurfaceJobAtomInfo *a_atom_info = atom_info;
-        for(a = 0; a < n_coord; a++) {
+        for(a = 0; ok && a < n_coord; a++) {
           OrthoBusyFast(G, a, n_coord * 5);
           if((!present) || (present[a])) {
             register int i;
@@ -5647,9 +5737,9 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
             skip_flag = false;
 
             i = *(MapLocusEStart(map, v0));
-            if(i) {
+            if(i && map->EList) {
               register int j = map->EList[i++];
-              while(j >= 0) {
+              while(ok && j >= 0) {
                 SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                 if(j > a)       /* only check if this is atom trails */
                   if((!present) || present[j]) {
@@ -5660,10 +5750,11 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                     }
                   }
                 j = map->EList[i++];
+		ok &= !G->Interrupt;
               }
             }
-            if(!skip_flag) {
-              for(b = 0; b < sp->nDot; b++) {
+            if(ok && !skip_flag) {
+              for(b = 0; ok && b < sp->nDot; b++) {
                 float *sp_dot_b = (float*)(sp_dot + b);
                 register int i;
                 int flag = true;
@@ -5673,7 +5764,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                 i = *(MapLocusEStart(map, v));
                 if(i) {
                   register int j = map->EList[i++];
-                  while(j >= 0) {
+                  while(ok && j >= 0) {
                     SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                     if((!present) || present[j]) {
                       if(j != a) {
@@ -5691,9 +5782,10 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                       }
                     }
                     j = map->EList[i++];
+		    ok &= !G->Interrupt;
                   }
                 }
-                if(flag && (dotCnt < stopDot)) {
+                if(ok && flag && (dotCnt < stopDot)) {
                   dotCnt++;
                   v += 3;
                   n += 3;
@@ -5715,22 +5807,21 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
 
       /*    CGOReset(G->DebugCGO); */
 
-      {
+      if (ok) {
         MapType *map2 = NULL;
-        if(circumscribe && (!surface_solvent))
-          map2 =
-            MapNewFlagged(G, 2 * (max_vdw + probe_radius), coord, n_coord, NULL, present);
-
-        if(G->Interrupt)
-          ok = false;
-        if(map2 && ok) {
+        if(circumscribe && (!surface_solvent)){
+          map2 = MapNewFlagged(G, 2 * (max_vdw + probe_radius), coord, n_coord, NULL, present);
+	  CHECKOK(ok, map2);
+	}
+	ok &= !G->Interrupt;
+        if(ok && map2) {
           /*        CGOBegin(G->DebugCGO,GL_LINES); */
           int a;
           int skip_flag;
 
           SurfaceJobAtomInfo *a_atom_info = atom_info;
-          MapSetupExpress(map2);
-          for(a = 0; a < n_coord; a++) {
+          ok &= MapSetupExpress(map2);
+          for(a = 0; ok && a < n_coord; a++) {
             if((!present) || present[a]) {
               register int i;
               float vdw2;
@@ -5743,7 +5834,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
               i = *(MapLocusEStart(map2, v0));
               if(i) {
                 register int j = map2->EList[i++];
-                while(j >= 0) {
+                while(ok && j >= 0) {
                   SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                   if(j > a)     /* only check if this is atom trails */
                     if((!present) || present[j]) {
@@ -5754,10 +5845,11 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                       }
                     }
                   j = map2->EList[i++];
+		  ok &= !G->Interrupt;
                 }
               }
 
-              if(!skip_flag) {
+              if(ok && !skip_flag) {
                 register int ii = *(MapLocusEStart(map2, v0));
                 if(ii) {
                   register int jj = map2->EList[ii++];
@@ -5786,7 +5878,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                           scale3f(vp, adj, vp);
                           add3f(v0, vp, vp);
 
-                          for(b = 0; b <= circumscribe; b++) {
+                          for(b = 0; ok && b <= circumscribe; b++) {
                             float xcos = (float) cos((b * 2 * cPI) / circumscribe);
                             float ysin = (float) sin((b * 2 * cPI) / circumscribe);
                             float xcosr = xcos * radius;
@@ -5797,9 +5889,9 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                             v[2] = vp[2] + vx[2] * xcosr + vy[2] * ysinr;
 
                             i = *(MapLocusEStart(map, v));
-                            if(i) {
+                            if(i && map->EList) {
                               register int j = map->EList[i++];
-                              while(j >= 0) {
+                              while(ok && j >= 0) {
                                 SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                                 if((!present) || present[j])
                                   if((j != a) && (j != jj)) {
@@ -5825,9 +5917,10 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                                       }
                                   }
                                 j = map->EList[i++];
+				ok &= !G->Interrupt;
                               }
                             }
-                            if(flag && (dotCnt < stopDot)) {
+                            if(ok && flag && (dotCnt < stopDot)) {
                               float vt0[3], vt2[3];
                               subtract3f(v0, v, vt0);
                               subtract3f(v2, v, vt2);
@@ -5841,16 +5934,6 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                                  n[1] = vx[1] * xcos + vy[1] * ysin;
                                  n[2] = vx[2] * xcos + vy[2] * ysin;
                                */
-
-#if 0
-                              {
-                                float sum[3];
-                                scale3f(n, 0.2, sum);
-                                add3f(v, sum, sum);
-                                CGOVertexv(G->DebugCGO, v);
-                                CGOVertexv(G->DebugCGO, sum);
-                              }
-#endif
 
                               *dc = 1;  /* mark as exempt */
 
@@ -5869,10 +5952,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
               }
             }
             a_atom_info++;
-            if(G->Interrupt) {
-              ok = false;
-              break;
-            }
+	    ok &= !G->Interrupt;
           }
         }
         MapFree(map2);
@@ -5882,10 +5962,11 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
     /*    CGOEnd(G->DebugCGO); */
   }
 
-  if(cavity_mode) {
-    float *cavityDot = VLAlloc(float, (stopDot + 1) * 3);
+  if(ok && cavity_mode) {
     int nCavityDot = 0;
     int dotCnt = 0;
+    float *cavityDot = VLAlloc(float, (stopDot + 1) * 3);
+    CHECKOK(ok, cavityDot);
     if(cavity_radius<0.0F) {
       cavity_radius = - probe_radius * cavity_radius;
     }
@@ -5893,14 +5974,14 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
       cavity_cutoff = cavity_radius - cavity_cutoff * probe_radius;
     }
     {
-      MapType *map =
-        MapNewFlagged(G, max_vdw + cavity_radius, coord, n_coord, NULL, present);
+      MapType *map = MapNewFlagged(G, max_vdw + cavity_radius, coord, n_coord, NULL, present);
+      CHECKOK(ok, map);
       if(G->Interrupt)
         ok = false;
-      if(map && ok) {
+      if(ok && map) {
         float *v = cavityDot;
-        MapSetupExpress(map);
-        {
+        ok &= MapSetupExpress(map);
+        if (ok) {
           int a;
           int skip_flag;
           SurfaceJobAtomInfo *a_atom_info = atom_info;
@@ -5911,7 +5992,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
               vdw = a_atom_info->vdw + cavity_radius;
               skip_flag = false;
               i = *(MapLocusEStart(map, v0));
-              if(i) {
+              if(i && map->EList) {
                 register int j = map->EList[i++];
                 while(j >= 0) {
                   SurfaceJobAtomInfo *j_atom_info = atom_info + j;
@@ -5986,7 +6067,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
             int a;
             for(a = 0; a < I->nDot; a++) {
               register int i = *(MapLocusEStart(map, v));
-              if(i) {
+              if(i && map->EList) {
                 register int j = map->EList[i++];
                 while(j >= 0) {
                   if(within3f(cavityDot + (3 * j), v, cavity_cutoff)) {
@@ -6040,33 +6121,28 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
       FreeP(dot_flag);
     }
     VLAFreeP(cavityDot);
-
-  } 
+  }
   if(ok && (cavity_mode != 1) && (cavity_cull > 0) && 
      (probe_radius > 0.75F) && (!surface_solvent)) {
     int *dot_flag = Calloc(int, I->nDot);
     ErrChkPtr(G, dot_flag);
-
-#if 0
-    dot_flag[maxDot] = 1;       /* this guarantees that we have a valid dot */
-#endif
 
     {
       MapType *map = MapNew(G, probe_radius_plus, I->dot, I->nDot, NULL);
       if(map) {
         int flag = true;
         MapSetupExpress(map);
-        while(flag) {
+        while(ok && flag) {
           int *p = dot_flag;
           float *v = I->dot;
           int a;
           flag = false;
-          for(a = 0; a < I->nDot; a++) {
+          for(a = 0; ok && a < I->nDot; a++) {
             if(!dot_flag[a]) {
               register int i = *(MapLocusEStart(map, v));
               int cnt = 0;
 
-              if(i) {
+              if(i && map->EList) {
                 register int j = map->EList[i++];
                 while(j >= 0) {
                   if(j != a) {
@@ -6090,17 +6166,15 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
             }
             v += 3;
             p++;
+	    ok &= !G->Interrupt;
           }
-          if(G->Interrupt) {
-            ok = false;
-            break;
-          }
+	  ok &= !G->Interrupt;
         }
       }
       MapFree(map);
     }
 
-    {
+    if (ok) {
       float *v0 = I->dot;
       float *n0 = I->dotNormal;
       int *dc0 = I->dotCode;
@@ -6132,24 +6206,6 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
 
     FreeP(dot_flag);
   }
-#if 0
-  {
-    CGOReset(G->DebugCGO);
-    CGOBegin(G->DebugCGO, GL_LINES);
-    c = I->nDot;
-    v = (v0 = I->dot);
-    n = (n0 = I->dotNormal);
-    for(a = 0; a < c; a++) {
-      float sum[3];
-      add3f(v, n, sum);
-      CGOVertexv(G->DebugCGO, v);
-      CGOVertexv(G->DebugCGO, sum);
-      v += 3;
-      n += 3;
-    }
-    CGOEnd(G->DebugCGO);
-  }
-#endif
   if(!ok) {
     SolventDotFree(I);
     I = NULL;

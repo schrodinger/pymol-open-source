@@ -49,6 +49,8 @@ struct _CText {
   int NActive;
   ActiveRec *Active;
   float Pos[4];
+  float WorldPos[4];
+  float ScreenWorldOffset[3];
   float Color[4];
   unsigned char UColor[4];
   unsigned char OutlineColor[4];
@@ -109,26 +111,48 @@ void TextSetPos(PyMOLGlobals * G, float *pos)
   I->Pos[3] = 1.0F;
 }
 
-void TextDrawSubStrFast(PyMOLGlobals * G, char *c, int x, int y, int start, int n)
+void TextSetWorldPos(PyMOLGlobals * G, float *pos)
+{
+  register CText *I = G->Text;
+  copy3f(pos, I->WorldPos);
+  I->WorldPos[3] = 1.0F;
+}
+float *TextGetWorldPos(PyMOLGlobals * G){
+  register CText *I = G->Text;
+  return I->WorldPos;
+}
+void TextSetScreenWorldOffset(PyMOLGlobals * G, float *pos)
+{
+  register CText *I = G->Text;
+  I->ScreenWorldOffset[0] = -pos[0];
+  I->ScreenWorldOffset[1] = -pos[1];
+  I->ScreenWorldOffset[2] = -pos[2];
+}
+float *TextGetScreenWorldOffset(PyMOLGlobals * G){
+  register CText *I = G->Text;
+  return I->ScreenWorldOffset;
+}
+
+void TextDrawSubStrFast(PyMOLGlobals * G, char *c, int x, int y, int start, int n ORTHOCGOARG)
 {
   c += start;
   TextSetPos2i(G, x, y);
   if(n)
     while(*c) {
       n--;
-      TextDrawChar(G, *(c++));
+      TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
       if(n <= 0)
         break;
     }
 }
 
-void TextDrawCharRepeat(PyMOLGlobals * G, char c, int x, int y, int start, int n)
+void TextDrawCharRepeat(PyMOLGlobals * G, char c, int x, int y, int start, int n ORTHOCGOARG)
 {
   c += start;
   TextSetPos2i(G, x, y);
   while(n) {
     n--;
-    TextDrawChar(G, c);
+    TextDrawChar(G, c ORTHOCGOARGVAR);
   }
 }
 
@@ -238,7 +262,7 @@ void TextGetOutlineColor(PyMOLGlobals * G,
 }
 
 char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
-                       char *st, float size, float *rpos)
+                       char *st, float size, float *rpos, CGO *shaderCGO)
 {
   register CText *I = G->Text;
   CFont *font;
@@ -254,7 +278,7 @@ char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
       else
         fn = font->fRenderOpenGL;
       if(fn)
-        return fn(info, font, st, size, rpos);
+        return fn(info, font, st, size, rpos SHADERCGOARGVAR);
     }
     /* make sure we got to end of string */
     if(*st)
@@ -263,25 +287,25 @@ char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
   return st;
 }
 
-void TextDrawStrAt(PyMOLGlobals * G, char *st, int x, int y)
+void TextDrawStrAt(PyMOLGlobals * G, char *st, int x, int y ORTHOCGOARG)
 {
   register CText *I = G->Text;
   TextSetPos3f(G, (float) x, (float) y, 0.0F);
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL);
+  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
 }
 
-void TextDrawStr(PyMOLGlobals * G, char *st)
+void TextDrawStr(PyMOLGlobals * G, char *st ORTHOCGOARG)
 {
   register CText *I = G->Text;
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL);
+  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
 }
 
-void TextDrawChar(PyMOLGlobals * G, char ch)
+void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG)
 {
   char st[2] = { 0, 0 };
   register CText *I = G->Text;
   st[0] = ch;
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL);
+  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
 }
 
 char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
@@ -529,49 +553,6 @@ int TextInit(PyMOLGlobals * G)
       I->Active[I->NActive].Font->TextID = I->NActive;
       I->NActive++;
     }
-#if 0
-
-    /* Linux Libertine not inluded due to already excessive bloat of Text.o */
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_LinLibertine_R_2_2_0_dat, TTF_LinLibertine_R_2_2_0_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_LinLibertine_It_2_2_0rc1_dat, TTF_LinLibertine_It_2_2_0rc1_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_LinLibertine_Bd_2_2_0rc10_dat,
-                  TTF_LinLibertine_Bd_2_2_0rc10_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-
-    VLACheck(I->Active, ActiveRec, I->NActive);
-    I->Active[I->NActive].Font =
-      FontTypeNew(G, TTF_LinLibertine_BdIt_2_1_6v2_dat,
-                  TTF_LinLibertine_BdIt_2_1_6v2_len);
-    if(I->Active[I->NActive].Font) {
-      I->Active[I->NActive].Src = cTextSrcFreeType;
-      I->Active[I->NActive].Font->TextID = I->NActive;
-      I->NActive++;
-    }
-#endif
-
 #endif
 
     return 1;

@@ -39,15 +39,16 @@ static PyObject *ObjectCGOStateAsPyList(ObjectCGOState * I)
 
   PyObject *result = NULL;
 
-  result = PyList_New(2);
+  result = PyList_New(1);
+  /*  NO LONGER NEED TO SAVE I->std, just ray tracing version 
   if(I->std)
     PyList_SetItem(result, 0, CGOAsPyList(I->std));
   else
-    PyList_SetItem(result, 0, PConvAutoNone(NULL));
+  PyList_SetItem(result, 0, PConvAutoNone(NULL));*/
   if(I->ray)
-    PyList_SetItem(result, 1, CGOAsPyList(I->ray));
+    PyList_SetItem(result, 0, CGOAsPyList(I->ray));
   else
-    PyList_SetItem(result, 1, PConvAutoNone(NULL));
+    PyList_SetItem(result, 0, PConvAutoNone(NULL));
   return (PConvAutoNone(result));
 
 }
@@ -62,7 +63,6 @@ static PyObject *ObjectCGOAllStatesAsPyList(ObjectCGO * I)
     PyList_SetItem(result, a, ObjectCGOStateAsPyList(I->State + a));
   }
   return (PConvAutoNone(result));
-
 }
 
 static int ObjectCGOStateFromPyList(PyMOLGlobals * G, ObjectCGOState * I, PyObject * list,
@@ -92,6 +92,19 @@ static int ObjectCGOStateFromPyList(PyMOLGlobals * G, ObjectCGOState * I, PyObje
       I->ray = NULL;
     else
       ok = ((I->ray = CGONewFromPyList(G, PyList_GetItem(list, 1), version)) != NULL);
+    if (!I->std && I->ray){
+      I->std = CGOSimplify(I->ray, 0);
+#ifdef _PYMOL_CGO_DRAWARRAYS
+      {
+	CGO *convertcgo = NULL;
+	if(I->std && I->std->has_begin_end){
+	  convertcgo = CGOCombineBeginEnd(I->std, 0);
+	  CGOFree(I->std);
+	  I->std = convertcgo;
+	}
+      }
+#endif
+    }
   }
   return (ok);
 }
@@ -354,10 +367,24 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 	    }
 #endif
             if(ray) {
-              if(sobj->ray)
-                CGORenderRay(sobj->ray, ray, color, I->Obj.Setting, NULL);
-              else
-                CGORenderRay(sobj->std, ray, color, I->Obj.Setting, NULL);
+	      int try_std = false;
+              if(sobj->ray){
+                int rayok = CGORenderRay(sobj->ray, ray, color, I->Obj.Setting, NULL);
+		if (!rayok){
+		  CGOFree(sobj->ray);
+		  sobj->ray = NULL;
+		  try_std = true;
+		}
+	      } else {
+		try_std = true;
+	      }
+	      if (try_std && sobj->std){
+		int rayok = CGORenderRay(sobj->std, ray, color, I->Obj.Setting, NULL);
+		if (!rayok){
+		  CGOFree(sobj->std);
+		  sobj->std = NULL;
+		}
+	      }
             } else if(G->HaveGUI && G->ValidContext) {
               if(pick) {
               } else {
@@ -370,7 +397,7 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		}
 		if (use_shader && sobj->shaderCGO){
 		  shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-		  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", cgo_lighting);
+		  CShaderPrg_SetLightingEnabled(shaderPrg, cgo_lighting);
 		  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", two_sided_lighting);
 		  sobj->shaderCGO->use_shader = use_shader;
 		  sobj->shaderCGO->debug = SettingGet(G, cSetting_cgo_debug);
@@ -379,8 +406,6 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		} else {
 		  sobj->std->use_shader = use_shader;
 		  sobj->std->debug = SettingGet(G, cSetting_cgo_debug);
-#ifdef PURE_OPENGL_ES_2
-#else
 		  if (cgo_lighting){
 		    glEnable(GL_LIGHTING);
 		  } else {
@@ -391,17 +416,14 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		  } else {
 		    GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 		  }
-#endif
 		  sobj->std->use_shader = use_shader;
 		  sobj->std->debug = SettingGet(G, cSetting_cgo_debug);
 		  CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info, NULL);
-#ifndef _PYMOL_PURE_OPENGL_ES
 		  if (SceneGetTwoSidedLighting(G)){
 		    glEnable(GL_VERTEX_PROGRAM_TWO_SIDE);
 		  } else {
 		    glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
 		  }
-#endif
           if (!cgo_lighting){
 		    glEnable(GL_LIGHTING);
 		  }
@@ -439,10 +461,24 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 #endif
         if(ray) {
           if(sobj) {
-            if(sobj->ray)
-              CGORenderRay(sobj->ray, ray, color, I->Obj.Setting, NULL);
-            else if(sobj->std)
-              CGORenderRay(sobj->std, ray, color, I->Obj.Setting, NULL);
+	    int try_std = false;
+            if(sobj->ray){
+              int rayok = CGORenderRay(sobj->ray, ray, color, I->Obj.Setting, NULL);
+	      if (!rayok){
+		CGOFree(sobj->ray);
+		sobj->ray = NULL;
+		try_std = true;
+	      }
+	    } else {
+	      try_std = true;
+	    }
+	    if (try_std && sobj->std){
+              int rayok = CGORenderRay(sobj->std, ray, color, I->Obj.Setting, NULL);
+	      if (!rayok){
+		CGOFree(sobj->std);
+		sobj->std = NULL;
+	      }
+	    }
           }
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
@@ -458,7 +494,8 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		}
 		if (use_shader){
 		  shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-		  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", cgo_lighting);
+		  if (!shaderPrg) return;
+		  CShaderPrg_SetLightingEnabled(shaderPrg, cgo_lighting);
 		  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", two_sided_lighting);
 		  sobj->shaderCGO->use_shader = use_shader;
 		  sobj->shaderCGO->debug = SettingGet(G, cSetting_cgo_debug);
@@ -472,21 +509,17 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		  } else {
 		    glDisable(GL_LIGHTING);
 		  }
-#ifndef _PYMOL_PURE_OPENGL_ES
 		  if (two_sided_lighting){
 		    glEnable(GL_VERTEX_PROGRAM_TWO_SIDE);
 		  } else {
 		    glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
 		  }
-#endif
 		  CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info, NULL);
-#ifndef _PYMOL_PURE_OPENGL_ES
 		  if (SceneGetTwoSidedLighting(G)){
 		    glEnable(GL_VERTEX_PROGRAM_TWO_SIDE);
 		  } else {
 		    glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
 		  }
-#endif
 		  if (!cgo_lighting){
 		    glEnable(GL_LIGHTING);
 		  }
@@ -590,7 +623,7 @@ static CGO *ObjectCGOFloatArrayToCGO(PyMOLGlobals * G, float *raw, int len, int 
 ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals * G, ObjectCGO * obj, CGO * cgo, int state)
 {
   ObjectCGO *I = NULL;
-  int est;
+  int est = 0;
 
   if(obj) {
     if(obj->Obj.type != cObjectCGO)     /* TODO: handle this */
@@ -618,7 +651,8 @@ ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals * G, ObjectCGO * obj, CGO * cgo, int st
   if(I->State[state].ray) {
     CGOFree(I->State[state].ray);
   }
-  est = CGOCheckComplex(cgo);
+  if (cgo)
+    est = CGOCheckComplex(cgo);
 #ifdef _PYMOL_CGO_DRAWARRAYS
   {
     CGO *convertcgo = NULL;

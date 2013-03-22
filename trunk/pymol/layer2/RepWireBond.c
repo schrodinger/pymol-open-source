@@ -389,9 +389,6 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
       glLineWidth(line_width);
 
     SceneResetNormal(G, true);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     if(!info->line_lighting)
       glDisable(GL_LIGHTING);
 #ifdef _PYMOL_GL_DRAWARRAYS
@@ -600,7 +597,6 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
     glEnd();
 #endif
     glEnable(GL_LIGHTING);
-#endif
     if(!active)
       cs->Active[cRepLine] = false;
   }
@@ -616,6 +612,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
   int c = I->N;
   unsigned int i, j;
   Pickable *p;
+  int ok = true;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
   float line_width_setting =
     SettingGet(G, cSetting_line_width);
@@ -634,7 +631,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
     v = I->V;
     c = I->N;
 
-    while(c--) {
+    while(ok && c--) {
       if(vw) {
         if(last_width != *vw) {
           last_width = *vw;
@@ -643,7 +640,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
         vw++;
       }
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]); */
-      ray->fSausage3fv(ray, v + 3, v + 6, radius, v, v);
+      ok &= ray->fSausage3fv(ray, v + 3, v + 6, radius, v, v);
       v += 9;
     }
 
@@ -658,9 +655,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
       c = I->NP;
       p = I->R.P;
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
       (void) nvidia_bugs;
       {
@@ -740,7 +734,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
       }
       glEnd();
 #endif
-#endif
       (*pick)[0].src.index = i; /* pass the count */
     } else { /* else not pick i.e., when rendering */
       short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
@@ -771,7 +764,9 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
-	  I->shaderCGO->use_shader = true;
+	  CHECKOK(ok, I->shaderCGO);
+	  if (ok)
+	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
 	} else {
 	  CShaderPrg *shaderPrg;
@@ -780,6 +775,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;
 	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+	    if (!shaderPrg) return;
 	    if (vw){
 	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width_setting/ 2.f);
 	    } else {
@@ -787,11 +783,11 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	    }
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    if (!shaderPrg) return;
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
 	  }
-
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-
+	  
 	  CShaderPrg_Disable(shaderPrg);
 	  return;
 	}
@@ -812,16 +808,12 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
       v = I->V;
       c = I->N;
 
-      if (generate_shader_cgo){
-	CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE);
+      if (ok && generate_shader_cgo){
+	ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE);
 	
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-	if(!info->line_lighting)
-	  CGODisable(I->shaderCGO, GL_LIGHTING);
-#endif
-	CGOResetNormal(I->shaderCGO, true);
+	if(ok && !info->line_lighting)
+	  ok &= CGODisable(I->shaderCGO, GL_LIGHTING);
+	ok &= CGOResetNormal(I->shaderCGO, true);
       } else {
 
 	if(info->width_scale_flag)
@@ -829,47 +821,52 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	else
 	  glLineWidth(line_width);
 	
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 	if(!info->line_lighting)
 	  glDisable(GL_LIGHTING);
-#endif
 	SceneResetNormal(G, true);
       }
 
       
       if (generate_shader_cgo){
-	while(c--) {
+	while(ok && c--) {
 	  //	  float cylinder_width = line_width;
 	  float cylinder_width = line_width_setting;
 	  if(vw) {
 	    if(last_width != *vw) {
 	      last_width = *vw;
-	      CGOLinewidth(I->shaderCGO, last_width);
+	      ok &= CGOLinewidth(I->shaderCGO, last_width);
 	    }
 	    cylinder_width = *vw;
 	    vw++;
 	  }
-	  CGOColorv(I->shaderCGO, v);
-	  v += 3;
-	  if (line_as_cylinders){
-	    float *origin, axis[3];
-	    origin = v;
+	  if (ok){
+	    ok &= CGOColorv(I->shaderCGO, v);
 	    v += 3;
-	    axis[0] = v[0] - origin[0];
-	    axis[1] = v[1] - origin[1];
-	    axis[2] = v[2] - origin[2];
-	    v += 3;
-	    /* Storing the cylinder_width divided by the current line_width setting */
-	    CGOShaderCylinder(I->shaderCGO, origin, axis, cylinder_width/line_width_setting, 15);
-	  } else {
-	    CGOBegin(I->shaderCGO, GL_LINES);
-	    CGOVertexv(I->shaderCGO, v);
-	    v += 3;
-	    CGOVertexv(I->shaderCGO, v);
-	    v += 3;
-	    CGOEnd(I->shaderCGO);
+	  }
+	  if (ok){
+	    if (line_as_cylinders){
+	      float *origin, axis[3];
+	      origin = v;
+	      v += 3;
+	      axis[0] = v[0] - origin[0];
+	      axis[1] = v[1] - origin[1];
+	      axis[2] = v[2] - origin[2];
+	      v += 3;
+	      /* Storing the cylinder_width divided by the current line_width setting */
+	      ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, cylinder_width/line_width_setting, 15);
+	    } else {
+	      ok &= CGOBegin(I->shaderCGO, GL_LINES);
+	      if (ok){
+		ok &= CGOVertexv(I->shaderCGO, v);
+		v += 3;
+	      }
+	      if (ok){
+		ok &= CGOVertexv(I->shaderCGO, v);
+		v += 3;
+	      }
+	      if (ok)
+		ok &= CGOEnd(I->shaderCGO);
+	    }
 	  }
 	}
       } else {
@@ -881,9 +878,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	    }
 	    vw++;
 	  }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 	  glColor3fv(v);
 	  v += 3;
@@ -909,51 +903,54 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	  v += 3;
 	  glEnd();
 #endif
-#endif
 	}
       }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
       if (generate_shader_cgo){
-	CGOEnable(I->shaderCGO, GL_LIGHTING);
+	if (ok)
+	  ok &= CGOEnable(I->shaderCGO, GL_LIGHTING);
       } else {
 	glEnable(GL_LIGHTING);
       }
-#endif
       if (use_shader) {
-	if (generate_shader_cgo){
+	if (ok && generate_shader_cgo){
 	  CGO *convertcgo = NULL;
-	  CGOStop(I->shaderCGO);
+	  if (ok)
+	    ok &= CGOStop(I->shaderCGO);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
-	  CGOFree(I->shaderCGO);    
-	  I->shaderCGO = convertcgo;
+	  if (ok){
+	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	    CGOFree(I->shaderCGO);    
+	    I->shaderCGO = convertcgo;
+	    CHECKOK(ok, I->shaderCGO);
+	    convertcgo = NULL;
+	  }
 #else
 	  (void)convertcgo;
 #endif
 #ifdef _PYMOL_CGO_DRAWBUFFERS
-	  if (line_as_cylinders){
-	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	  } else {
-	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	  if (ok && I->shaderCGO){
+	    if (line_as_cylinders){
+              convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
+	    } else {
+              convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
+	    }
 	  }
-	  if (convertcgo){
-	    CGOFree(I->shaderCGO);
-	    I->shaderCGO = convertcgo;
-	  }
+      CGOFree(I->shaderCGO);
+      I->shaderCGO = convertcgo;
+      CHECKOK(ok, I->shaderCGO);
 #else
 	  (void)convertcgo;
 #endif
 	}
 	
-	{
+	if (ok){
 	  CShaderPrg *shaderPrg;
 	  if (line_as_cylinders){
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;
 	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
+	    if (!shaderPrg) return;
 	    if (vw){
 	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width_setting/ 2.f);
 	    } else {
@@ -961,9 +958,10 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	    }
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    if (!shaderPrg) return;
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
 	  }	 
-
+	  
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 	  
 	  CShaderPrg_Disable(shaderPrg);
@@ -976,6 +974,12 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
       }
 #endif
     }
+  }
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+    I->R.cs->Active[cRepLine] = false;
   }
 }
 
@@ -1009,14 +1013,16 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   int hide_long = false;
   int fancy;
   const float _0p9 = 0.9F;
+  int ok = true;
 
   OOAlloc(G, RepWireBond);
+  CHECKOK(ok, I);
   PRINTFD(G, FB_RepWireBond)
     " RepWireBondNew-Debug: entered.\n" ENDFD;
 
   visFlag = false;
   b = obj->Bond;
-  if(obj->RepVisCache[cRepLine])
+  if(ok && obj->RepVisCache[cRepLine]){
     for(a = 0; a < obj->NBond; a++) {
       b1 = b->index[0];
       b2 = b->index[1];
@@ -1026,34 +1032,42 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
         break;
       }
     }
+  }
   if(!visFlag) {
     OOFreeP(I);
     return (NULL);              /* skip if no dots are visible */
   }
   marked = Calloc(int, obj->NAtom);
+  CHECKOK(ok, marked);
+  if (!ok){
+    OOFreeP(I);
+    return (NULL);
+  }
+  
   valence = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_valence);
   valence_flag = (valence != 0.0F);
   if((valence == 1.0F) || (valence == 0.0F))    /* backwards compatibility... */
     valence = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_valence_size);
   cartoon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
-                                           cSetting_cartoon_side_chain_helper);
+					   cSetting_cartoon_side_chain_helper);
   ribbon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
-                                          cSetting_ribbon_side_chain_helper);
+					  cSetting_ribbon_side_chain_helper);
   line_stick_helper = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
-                                   cSetting_line_stick_helper);
+				   cSetting_line_stick_helper);
   line_color = SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_line_color);
   line_width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_line_width);
-
+  
   if(line_stick_helper && (SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                        cSetting_stick_transparency) > R_SMALL4))
+					cSetting_stick_transparency) > R_SMALL4))
     line_stick_helper = false;
   half_bonds = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_half_bonds);
   hide_long = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_hide_long_bonds);
   na_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_nucleic_acid_mode);
   fancy = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_valence_mode) == 1;
-
+  
   b = obj->Bond;
+  
   for(a = 0; a < obj->NBond; a++) {
     int bd_valence_flag;
 
@@ -1110,6 +1124,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   I->R.fRecolor = NULL;
   I->R.context.object = (void *) obj;
   I->R.context.state = state;
+  I->R.cs = cs;
 
   if(obj->NBond) {
 
@@ -1118,13 +1133,14 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
     if(variable_width) {
       I->VarWidth = Alloc(float, maxSegment);
+      CHECKOK(ok, I->VarWidth);
     }
 
-    I->V = (float *) mmalloc(sizeof(float) * maxSegment * 9);
+    if (ok)
+      I->V = Alloc(float, maxSegment * 9);
+    CHECKOK(ok, I->V);
 
-    ErrChkPtr(G, I->V);
-
-    if(cartoon_side_chain_helper || ribbon_side_chain_helper) {
+    if(ok && (cartoon_side_chain_helper || ribbon_side_chain_helper)) {
       /* mark atoms that are bonded to atoms without a
          visible cartoon or ribbon */
 
@@ -1172,7 +1188,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
     v = I->V;
     b = obj->Bond;
-    for(a = 0; a < obj->NBond; a++) {
+
+    for(a = 0; ok && a < obj->NBond; a++) {
 
       b1 = b->index[0];
       b2 = b->index[1];
@@ -1542,26 +1559,32 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
         }
       }
       b++;
+      ok &= !G->Interrupt;
     }
-
-    I->V = ReallocForSure(I->V, float, (v - I->V));
-    if(I->VarWidth) {
+    if (ok)
+      I->V = ReallocForSure(I->V, float, (v - I->V));
+    CHECKOK(ok, I->V);
+    if(ok && I->VarWidth) {
       I->VarWidth = ReallocForSure(I->VarWidth, float, n_line_width);
+      CHECKOK(ok, I->VarWidth);
     }
 
     /* now create pickable verson */
 
-    if(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
-      I->VP = (float *) mmalloc(sizeof(float) * maxBond * 6 * 2);
-      ErrChkPtr(G, I->VP);
+    if(ok && SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
+      I->VP = Alloc(float, maxBond * 6 * 2);
+      CHECKOK(ok, I->VP);
 
-      I->R.P = Alloc(Pickable, 2 * maxBond + 1);
-      ErrChkPtr(G, I->R.P);
-      rp = I->R.P + 1;          /* skip first record! */
+      if (ok)
+	I->R.P = Alloc(Pickable, 2 * maxBond + 1);
+      CHECKOK(ok, I->R.P);
+      if (ok){
+	rp = I->R.P + 1;          /* skip first record! */
 
-      v = I->VP;
-      b = obj->Bond;
-      for(a = 0; a < obj->NBond; a++) {
+	v = I->VP;
+	b = obj->Bond;
+      }
+      for(a = 0; ok && a < obj->NBond; a++) {
 
         b1 = b->index[0];
         b2 = b->index[1];
@@ -1643,14 +1666,25 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
             }
           }
         }
+	ok &= !G->Interrupt;
       }
-      I->R.P = Realloc(I->R.P, Pickable, I->NP + 1);
-      I->R.P[0].index = I->NP;
-      I->VP = ReallocForSure(I->VP, float, (v - I->VP));
+      if (ok){
+	I->R.P = Realloc(I->R.P, Pickable, I->NP + 1);
+	CHECKOK(ok, I->R.P);
+	if (ok)
+	  I->R.P[0].index = I->NP;
+      }
+      if (ok)
+	I->VP = ReallocForSure(I->VP, float, (v - I->VP));
+      CHECKOK(ok, I->VP);
     }
   }
   FreeP(marked);
   FreeP(other);
+  if (!ok){
+    RepWireBondFree(I);
+    I = NULL;
+  }
   return ((void *) (struct Rep *) I);
 }
 

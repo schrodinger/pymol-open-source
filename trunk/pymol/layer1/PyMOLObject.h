@@ -87,6 +87,7 @@ struct _CObject {
 
   /* not pickled */
   int grid_slot;
+  CGO *gridSlotSelIndicatorsCGO;
   int Grabbed;
 };
 
@@ -120,11 +121,11 @@ int ObjectMotion(CObject * I, int action, int first,
 int ObjectGetSpecLevel(CObject * I, int frame);
 void ObjectMotionTrim(CObject *I, int n_frame);
 void ObjectMotionExtend(CObject *I, int n_frame);
-void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames);
+void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames ORTHOCGOARG);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);
 void ObjectStateCopy(CObjectState * dst, CObjectState * src);
 void ObjectStatePurge(CObjectState * I);
-void ObjectStateSetMatrix(CObjectState * I, double *matrix);
+int ObjectStateSetMatrix(CObjectState * I, double *matrix);
 double *ObjectStateGetMatrix(CObjectState * I);
 void ObjectStateTransformMatrix(CObjectState * I, double *matrix);
 void ObjectStateResetMatrix(CObjectState * I);
@@ -140,5 +141,17 @@ void ObjectMotionReinterpolate(CObject *I);
 int ObjectMotionGetLength(CObject *I);
 
 typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;
+
+#define cObjectTypeAll                    0
+#define cObjectTypeObjects                1
+#define cObjectTypeSelections             2
+#define cObjectTypePublic                 3
+#define cObjectTypePublicObjects          4
+#define cObjectTypePublicSelections       5
+#define cObjectTypePublicNonGroupObjects  6
+#define cObjectTypePublicGroupObjects     7
+#define cObjectTypeNonGroupObjects        8
+#define cObjectTypeGroupObjects           9
+/* Note: public objects are ones that do not start with "_" */
 
 #endif

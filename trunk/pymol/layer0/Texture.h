@@ -23,5 +23,9 @@ Z* -------------------------------------------------------------------
 int TextureInit(PyMOLGlobals * G);
 void TextureFree(PyMOLGlobals * G);
 int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent);
+void TextureInitTextTexture(PyMOLGlobals * G);
+GLuint TextureGetTextTextureID(PyMOLGlobals * G);
+void TextureGetPlacementForNewSubtexture(PyMOLGlobals * G, int new_texture_width, int new_texture_height, int *new_texture_posx, int *new_texture_posy);
+int TextureGetTextTextureSize(PyMOLGlobals * G);
 
 #endif

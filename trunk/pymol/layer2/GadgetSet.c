@@ -28,6 +28,9 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"PConv.h"
 #include"main.h"
+#include"CGO.h"
+#include"ShaderMgr.h"
+#include"Ray.h"
 
 void GadgetSetUpdate(GadgetSet * I);
 void GadgetSetFree(GadgetSet * I);
@@ -77,102 +80,6 @@ int GadgetSetSetVertex(GadgetSet * I, int index, int base, float *v)
     }
   } else
     ok = false;
-  return (ok);
-}
-
-int GadgetSetFetch(GadgetSet * I, float *inp, float *out)
-{
-  int ok = true;
-  int idx = (int) inp[1], base;
-  float *v, *b;
-  switch ((int) inp[0]) {
-  case 0:                      /* absolute global vertex  */
-    if(idx < I->NCoord) {
-      v = I->Coord + 3 * idx;
-      copy3f(v, out);
-    } else
-      ok = false;
-    break;
-  case 1:                      /* relative vertex in gadget (relative to gadget origin)  */
-    if(idx < I->NCoord) {
-      v = I->Coord + 3 * idx;
-      copy3f(v, out);
-      if(idx)
-        add3f(I->Coord, out, out);
-    } else
-      ok = false;
-    break;
-  case 2:                      /* offset vertex in gadget (relative to vertex relative to gadget origin) */
-    base = (int) inp[2];
-    if((idx < I->NCoord) && (base < I->NCoord)) {
-      v = I->Coord + 3 * idx;
-      b = I->Coord + 3 * base;
-      add3f(b, v, out);
-      if(idx)
-        add3f(I->Coord, out, out);
-    } else
-      ok = false;
-    break;
-  case 3:                      /* normal */
-    if(idx < I->NNormal) {
-      v = I->Normal + 3 * idx;
-      copy3f(v, out);
-    } else
-      ok = false;
-    break;
-  case 4:                      /* color */
-    if(idx < I->NColor) {
-      v = I->Color + 3 * idx;
-      copy3f(v, out);
-    } else
-      ok = false;
-    break;
-  default:
-    ok = false;
-    break;
-  }
-  return (ok);
-}
-
-int GadgetSetFetchColor(GadgetSet * I, float *inp, float *out)
-{
-  int ok = true;
-  float *v;
-  int idx;
-  if(inp[0] < 1.1F) {           /* explicit color */
-    copy3f(inp, out);
-  } else {
-    idx = (int) inp[1];
-    /* lookup color */
-    if((idx > 0) && (idx < I->NColor)) {
-      v = I->Color + 3 * idx;
-      copy3f(v, out);
-    } else if(idx < 0) {        /* negatives go white */
-      out[0] = 1.0F;
-      out[1] = 1.0F;
-      out[2] = 1.0F;
-    }
-    ok = false;
-  }
-  return (ok);
-}
-
-int GadgetSetFetchNormal(GadgetSet * I, float *inp, float *out)
-{
-  int ok = true;
-  int idx;
-  float *v;
-  if(inp[0] < 1.1) {            /* explicit normal */
-    copy3f(inp, out);
-  } else {
-    idx = (int) inp[1];
-    /* lookup normal */
-    if(idx < I->NNormal) {
-      v = I->Normal + 3 * idx;
-      copy3f(v, out);
-    } else
-      ok = false;
-  }
   return (ok);
 }
 
@@ -361,43 +268,13 @@ void GadgetSetInvalidateRep(GadgetSet * I, int type, int level)
 /*========================================================================*/
 void GadgetSetUpdate(GadgetSet * I)
 {
-  CGO *cgo = NULL, *font_cgo = NULL;
-
-  int est;
-
   if(I->StdCGO) {
     CGOFree(I->StdCGO);
     I->StdCGO = NULL;
   }
-
-  if(I->RayCGO) {
-    CGOFree(I->RayCGO);
-    I->RayCGO = NULL;
-  }
-
-  if(I->PickShapeCGO) {
-    I->PickCGO = CGOProcessShape(I->PickShapeCGO, I, I->PickCGO);
-  }
-
-  if(I->ShapeCGO) {
-    font_cgo = CGOProcessShape(I->ShapeCGO, I, NULL);
-    est = CGOCheckForText(font_cgo);
-    if(est) {
-      /* assume we've already preloaded fonts... */
-      cgo = CGODrawText(font_cgo, est, NULL);
-      CGOFree(font_cgo);
-    } else {
-      cgo = font_cgo;
-      font_cgo = NULL;
-    }
-  }
-  if(cgo) {
-    est = CGOCheckComplex(cgo);
-    if(est) {
-      I->RayCGO = cgo;
-      I->StdCGO = CGOSimplify(cgo, est);
-    } else
-      I->StdCGO = cgo;
+  if(I->PickCGO) {
+    CGOFree(I->PickCGO);
+    I->PickCGO = NULL;
   }
 }
 
@@ -410,6 +287,9 @@ static void GadgetSetRender(GadgetSet * I, RenderInfo * info)
   Picking **pick = info->pick;
   float *color;
   PickContext context;
+  short use_shader;
+  use_shader = (int) SettingGet(I->G, cSetting_use_shaders);
+
   context.object = I->Obj;
   context.state = I->State;
 
@@ -419,19 +299,81 @@ static void GadgetSetRender(GadgetSet * I, RenderInfo * info)
     PyMOLGlobals *G = I->G;
 
     if(ray) {
-      if(I->RayCGO)
-        CGORenderRay(I->RayCGO, ray, color, I->Obj->Obj.Setting, NULL);
-      else
-        CGORenderRay(I->StdCGO, ray, color, I->Obj->Obj.Setting, NULL);
+      if(I->ShapeCGO){
+        int ok = true;
+	float mat[16] = { 1.f, 0.f, 0.f, I->Coord[0], 
+                          0.f, 1.f, 0.f, I->Coord[1], 
+                          0.f, 0.f, 1.f, I->Coord[2],
+			  0.f, 0.f, 0.f, 1.f };
+	RayPushTTT(ray);
+	RaySetTTT(ray, true, mat);  /* Used to set the ray-tracing matrix,
+				       this works, but is there another way to do this? */
+	ok = CGORenderRay(I->ShapeCGO, ray, color, I->Obj->Obj.Setting, NULL);
+	RayPopTTT(ray);
+      }
     } else if(G->HaveGUI && G->ValidContext) {
+      short use_shader = (int) SettingGet(I->G, cSetting_use_shaders) &&
+	CShaderPrg_Get_RampShader(I->G);
       if(pick) {
+	if (!I->PickCGO && I->PickShapeCGO){
+	  CGO *convertcgo;
+	  int ok = true;
+	  convertcgo = CGOCombineBeginEnd(I->PickShapeCGO, 0);
+	  CHECKOK(ok, convertcgo);
+	  if (ok){
+	    if (use_shader){
+	      I->PickCGO = CGOOptimizeToVBOIndexedNoShader(convertcgo, 0);
+	      I->PickCGO->use_shader = true;
+	      CGOFree(convertcgo);
+	    } else {
+	      I->PickCGO = convertcgo;
+	    }
+	  } else {
+	    CGOFree(convertcgo);
+	  }
+	}
         if(I->PickCGO) {
-          CGORenderGLPicking(I->PickCGO, pick, &context, I->Obj->Obj.Setting, NULL);
+	  if (use_shader){
+	    CShaderPrg *shader = CShaderPrg_Enable_RampShader(G);
+	    CShaderPrg_Set3f(shader, "offsetPt", I->Coord[0], I->Coord[1], I->Coord[2]);
+	    CGORenderGLPicking(I->PickCGO, pick, &context, I->Obj->Obj.Setting, NULL);
+	    CShaderPrg_Disable(shader);
+	  } else {
+	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
+	    CGORenderGLPicking(I->PickShapeCGO, pick, &context, I->Obj->Obj.Setting, NULL);
+	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
+	  }
         }
       } else {
+	if (!I->StdCGO && I->ShapeCGO){
+	  CGO *convertcgo;
+	  int ok = true;
+	  convertcgo = CGOCombineBeginEnd(I->ShapeCGO, 0);
+	  CHECKOK(ok, convertcgo);
+	  if (ok){
+	    if (use_shader){
+	      I->StdCGO = CGOOptimizeToVBOIndexedNoShader(convertcgo, 0);
+	      I->StdCGO->use_shader = true;
+	      CGOFree(convertcgo);
+	    } else {
+	      I->StdCGO = convertcgo;
+	    }
+	  } else {
+	    CGOFree(convertcgo);
+	  }
+	}
         if(I->StdCGO) {
           /*CGORenderGL(I->PickCGO,color,I->Obj->Obj.Setting,NULL); */
-          CGORenderGL(I->StdCGO, color, I->Obj->Obj.Setting, NULL, info, NULL);
+	  if (use_shader){
+	    CShaderPrg *shader = CShaderPrg_Enable_RampShader(G);
+	    CShaderPrg_Set3f(shader, "offsetPt", I->Coord[0], I->Coord[1], I->Coord[2]);
+	    CGORenderGL(I->StdCGO, color, I->Obj->Obj.Setting, NULL, info, NULL);
+	    CShaderPrg_Disable(shader);
+	  } else {
+	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
+	    CGORenderGL(I->ShapeCGO, color, I->Obj->Obj.Setting, NULL, info, NULL);
+	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
+	  }
         }
       }
     }
@@ -457,7 +399,6 @@ GadgetSet *GadgetSetNew(PyMOLGlobals * G)
   I->Setting = NULL;
   I->PickCGO = NULL;
   I->StdCGO = NULL;
-  I->RayCGO = NULL;
   I->ShapeCGO = NULL;
   I->PickShapeCGO = NULL;
 
@@ -478,7 +419,6 @@ void GadgetSetFree(GadgetSet * I)
     CGOFree(I->PickCGO);
     CGOFree(I->PickShapeCGO);
     CGOFree(I->StdCGO);
-    CGOFree(I->RayCGO);
     CGOFree(I->ShapeCGO);
     VLAFreeP(I->Coord);
     VLAFreeP(I->Normal);

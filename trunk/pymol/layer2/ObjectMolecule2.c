@@ -335,9 +335,12 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
         if(cset->fEnumIndices)
           cset->fEnumIndices(cset);
         if(!ai_merged) {
-          ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);      /* NOTE: will release atInfo */
-          ObjectMoleculeExtendIndices(I, -1);
-          ObjectMoleculeUpdateNeighbors(I);
+	  if (ok)
+	    ok &= ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);      /* NOTE: will release atInfo */
+          if (ok)
+	    ok &= ObjectMoleculeExtendIndices(I, -1);
+          if (ok)
+	    ok &= ObjectMoleculeUpdateNeighbors(I);
           ai_merged = true;
         }
         if(state >= I->NCSet) {
@@ -350,7 +353,8 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
           cset = NULL;
         } else {
           /* merge coordinate set */
-          CoordSetMerge(I, I->CSet[state], cset);
+	  if (ok)
+	    ok &= CoordSetMerge(I, I->CSet[state], cset);
           if(cset->fFree) {
             cset->fFree(cset);
             cset = NULL;
@@ -360,7 +364,8 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
     }
   }
   if(ai_merged) {
-    ObjectMoleculeSort(I);
+    if (ok)
+      ok &= ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
     ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);
@@ -380,10 +385,15 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
   int offset;
   int n_alloc = 0;
   BondType *bd;
+  int ok = true;
 
-  ObjectMoleculeUpdateNeighbors(I);
+  CHECKOK(ok, other);
+
+  if (ok){
+    ok &= ObjectMoleculeUpdateNeighbors(I);
+  }
   bd = I->Bond;
-  for(a = 0; a < I->NBond; a++) {
+  for(a = 0; ok && a < I->NBond; a++) {
     b1 = bd->index[0];
     b2 = bd->index[1];
     if(I->DiscreteFlag) {
@@ -403,17 +413,22 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
       n_alloc += populate_other(other + a2, a1, I->AtomInfo + b1, bd, I->Neighbor);
     }
     bd++;
+    ok &= !I->Obj.G->Interrupt;
   }
-
-  n_alloc = 3 * (n_alloc + cs->NIndex);
-  o = other;
-  result = Alloc(int, n_alloc);
-  for(a = 0; a < cs->NIndex; a++) {
-    result[a] = -1;
+  if (ok){
+    n_alloc = 3 * (n_alloc + cs->NIndex);
+    o = other;
+    result = Alloc(int, n_alloc);
+    CHECKOK(ok, result);
   }
-  offset = cs->NIndex;
-  bd = I->Bond;
-  for(a = 0; a < I->NBond; a++) {
+  if (ok){
+    for(a = 0; a < cs->NIndex; a++) {
+      result[a] = -1;
+    }
+    offset = cs->NIndex;
+    bd = I->Bond;
+  }
+  for(a = 0; ok && a < I->NBond; a++) {
     b1 = bd->index[0];
     b2 = bd->index[1];
     if(I->DiscreteFlag) {
@@ -491,6 +506,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
 
     }
     bd++;
+    ok &= !I->Obj.G->Interrupt;
   }
   FreeP(other);
   return result;
@@ -1639,7 +1655,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   SSEntry *ss_list = NULL;
   int n_ss = 1;
   int *(ss[256]);               /* one array for each chain identifier */
-
+  int ss_is_init = 0;
   char cc[MAXLINELEN], tags[MAXLINELEN];
   char cc_saved, ctmp;
   int index;
@@ -1657,6 +1673,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int literal_names = SettingGetGlobal_b(G, cSetting_pdb_literal_names);
   int bogus_name_alignment = true;
   AtomName literal_name = "";
+  int ok = true;
 
   if(tags_in && (!quiet) && (!*restart_model)) {
     char *p = tags;
@@ -1710,7 +1727,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     int seen_end_of_atoms = false;
 
     *restart_model = NULL;
-    while(*p) {
+    while(ok && *p) {
       if(n_tags && !quiet) {
         int skip = false;
 
@@ -1832,17 +1849,21 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
               if(WordMatchExact(G, "ALIGN", cc, true)) {        /* ALIGN is special */
                 if(!m4x->align) {
                   m4x->align = Calloc(M4XAlignType, 1);
-                  M4XAlignInit(m4x->align);
-                  p = nskip(p, 8);
-                  p = ntrim(cc, p, 6);  /* get visibility of this structure */
+		  CHECKOK(ok, m4x->align);
+		  if (ok){
+		    M4XAlignInit(m4x->align);
+		    p = nskip(p, 8);
+		    p = ntrim(cc, p, 6);  /* get visibility of this structure */
+		  }
                 }
               } else if(WordMatchExact(G, "HIDE", cc, true)) {
                 m4x->invisible = 1;
               } else {
                 if(!m4x->context) {
                   m4x->context = VLACalloc(M4XContextType, 10);
+		  CHECKOK(ok, m4x->context);
                 }
-                if(m4x->context) {
+                if(ok && m4x->context) {
                   int cn;
                   int found = false;
 
@@ -1858,10 +1879,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                   if(!found) {
                     cn = m4x->n_context++;
                     VLACheck(m4x->context, M4XContextType, cn);
-                    UtilNCopy(m4x->context[cn].name, cc, sizeof(WordType));
+		    CHECKOK(ok, m4x->context);
+		    if (ok){
+		      UtilNCopy(m4x->context[cn].name, cc, sizeof(WordType));
+		    }
                   }
 
-                  while(*cc) {
+                  while(ok && *cc) {
                     p = nskip(p, 1);
                     p = ntrim(cc, p, 6);
                     switch (cc[0]) {
@@ -1877,6 +1901,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                       if(WordMatchExact(G, "SITE", cc, true)) {
                         if(!m4x->context[cn].site) {
                           m4x->context[cn].site = VLAlloc(int, 50);
+			  CHECKOK(ok, m4x->context[cn].site);
                         }
                       }
                       break;
@@ -1884,6 +1909,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                       if(WordMatchExact(G, "LIGAND", cc, true)) {
                         if(!m4x->context[cn].ligand) {
                           m4x->context[cn].ligand = VLAlloc(int, 50);
+			  CHECKOK(ok, m4x->context[cn].ligand);
                         }
                       }
                       break;
@@ -1891,6 +1917,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                       if(WordMatchExact(G, "WATER", cc, true)) {
                         if(!m4x->context[cn].water) {
                           m4x->context[cn].water = VLAlloc(int, 50);
+			  CHECKOK(ok, m4x->context[cn].water);
                         }
                       }
                       break;
@@ -1898,6 +1925,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                       if(WordMatchExact(G, "HBOND", cc, true)) {
                         if(!m4x->context[cn].hbond) {
                           m4x->context[cn].hbond = VLAlloc(M4XBondType, 50);
+			  CHECKOK(ok, m4x->context[cn].hbond);
                         }
                       }
                       break;
@@ -1905,6 +1933,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                       if(WordMatchExact(G, "NBOND", cc, true)) {
                         if(!m4x->context[cn].nbond) {
                           m4x->context[cn].nbond = VLAlloc(M4XBondType, 50);
+			  CHECKOK(ok, m4x->context[cn].nbond);
                         }
                       }
                       break;
@@ -1921,24 +1950,33 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   }
 
   *restart_model = NULL;
-  coord = VLAlloc(float, 3 * nAtom);
+  if (ok){
+    coord = VLAlloc(float, 3 * nAtom);
+    CHECKOK(ok, coord);
+  }
 
-  if(atInfo)
+  if(ok && atInfo){
     VLACheck(atInfo, AtomInfoType, nAtom);
-
-  if(bondFlag) {
+    CHECKOK(ok, atInfo);
+    if (ok)
+      *atInfoPtr = atInfo;
+  }
+  if(ok && bondFlag) {
     nBond = 0;
     bond = VLACalloc(BondType, 6 * nAtom);
+    CHECKOK(ok, bond);
   }
   p = buffer;
   PRINTFB(G, FB_ObjectMolecule, FB_Blather)
     " ObjectMoleculeReadPDB: Found %i atoms...\n", nAtom ENDFB(G);
 
-  if(ssFlag) {
+  if(ok && ssFlag) {
     for(a = 0; a <= 255; a++) {
       ss[a] = 0;
     }
+    ss_is_init = true;
     ss_list = VLAlloc(SSEntry, 50);
+    CHECKOK(ok, ss_list);
   }
 
   a = 0;                        /* WATCHOUT */
@@ -1947,7 +1985,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   /* PASS 2 */
   seen_model = false;
 
-  while(*p) {
+  while(ok && *p) {
     /*      printf("%c%c%c%c%c%c\n",p[0],p[1],p[2],p[3],p[4],p[5]); */
     AFlag = false;
     SSCode = 0;
@@ -2132,8 +2170,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
               (p[1] == 'R') &&
               (p[2] == 'Y') &&
               (p[3] == 'S') && (p[4] == 'T') && (p[5] == '1') && (!*restart_model)) {
-      if(!symmetry)
+      if(!symmetry){
         symmetry = SymmetryNew(G);
+	CHECKOK(ok, symmetry);
+      }
       if(symmetry) {
         int symFlag = true;
         PRINTFB(G, FB_ObjectMolecule, FB_Blather)
@@ -2225,18 +2265,21 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           else {
             if((b1 >= 0) && (b2 >= 0) && (b1 != b2)) {  /* IDs must be positive and distinct */
               VLACheck(bond, BondType, nBond);
-              if(b1 <= b2) {
-                bond[nBond].index[0] = b1;      /* temporarily store the atom indexes */
-                bond[nBond].index[1] = b2;
-                bond[nBond].order = 1;
-                bond[nBond].stereo = 0;
-              } else {
-                bond[nBond].index[0] = b2;
-                bond[nBond].index[1] = b1;
-                bond[nBond].order = 1;
-                bond[nBond].stereo = 0;
-              }
-              nBond++;
+	      CHECKOK(ok, bond);
+	      if (ok){
+		if(b1 <= b2) {
+		  bond[nBond].index[0] = b1;      /* temporarily store the atom indexes */
+		  bond[nBond].index[1] = b2;
+		  bond[nBond].order = 1;
+		  bond[nBond].stereo = 0;
+		} else {
+		  bond[nBond].index[0] = b2;
+		  bond[nBond].index[1] = b1;
+		  bond[nBond].order = 1;
+		  bond[nBond].stereo = 0;
+		}
+		nBond++;
+	      }
             }
           }
         }
@@ -2286,12 +2329,18 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                       p = ncopy(cc, p, 6);
                       if(sscanf(cc, "%f", &fitness) == 1) {
                         VLACheck(align->id_at_point, int, point_id);
-                        VLACheck(align->fitness, float, point_id);
-                        if(point_id >= align->n_point)
-                          align->n_point = point_id + 1;
-                        align->id_at_point[point_id] = atom_id;
-                        align->fitness[point_id] = fitness;
-                        /*                        printf("read alignment atom %d to target %s point %d fitness %8.3f\n",
+			CHECKOK(ok, align->id_at_point);
+			if (ok){
+			  VLACheck(align->fitness, float, point_id);
+			  CHECKOK(ok, align->id_at_point);
+			  if (ok){
+			    if(point_id >= align->n_point)
+			      align->n_point = point_id + 1;
+			    align->id_at_point[point_id] = atom_id;
+			    align->fitness[point_id] = fitness;
+			  }
+			}
+			  /*                        printf("read alignment atom %d to target %s point %d fitness %8.3f\n",
                            atom_id,target,point_id,fitness); */
                       }
                     }
@@ -2304,7 +2353,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           break;
         }
 
-        if((!parsed_flag) && m4x->context) {    /* named context of some sort... */
+        if(ok && (!parsed_flag) && m4x->context) {    /* named context of some sort... */
           int cn;
           int found = false;
 
@@ -2338,18 +2387,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                     if(sscanf(cc, "%d", &order) == 1) {
                       if((b1 >= 0) && (b2 >= 0)) {      /* IDs must be positive */
                         VLACheck(bond, BondType, nBond);
-                        if(b1 <= b2) {
-                          bond[nBond].index[0] = b1;    /* temporarily store the atom indexes */
-                          bond[nBond].index[1] = b2;
-                          bond[nBond].order = order;
-                          bond[nBond].stereo = 0;
-
-                        } else {
-                          bond[nBond].index[0] = b2;
-                          bond[nBond].index[1] = b1;
-                          bond[nBond].order = order;
-                          bond[nBond].stereo = 0;
-                        }
+			CHECKOK(ok, bond);
+			if (ok){
+			  if(b1 <= b2) {
+			    bond[nBond].index[0] = b1;    /* temporarily store the atom indexes */
+			    bond[nBond].index[1] = b2;
+			    bond[nBond].order = order;
+			    bond[nBond].stereo = 0;
+			  } else {
+			    bond[nBond].index[0] = b2;
+			    bond[nBond].index[1] = b1;
+			    bond[nBond].order = order;
+			    bond[nBond].stereo = 0;
+			  }
+			}
                         nBond++;
                       }
                     }
@@ -2361,12 +2412,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
               if(WordMatchExact(G, "SITE", cc, true)) {
                 if(cont->site) {
                   int id;
-                  while(*cc) {
+                  while(ok && *cc) {
                     p = nskip(p, 1);
                     p = ncopy(cc, p, 6);
                     if(sscanf(cc, "%d", &id) == 1) {
                       VLACheck(cont->site, int, cont->n_site);
-                      cont->site[cont->n_site++] = id;
+		      CHECKOK(ok, cont->site);
+		      if (ok)
+			cont->site[cont->n_site++] = id;
                     }
                   }
                 }
@@ -2376,12 +2429,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
               if(WordMatchExact(G, "LIGAND", cc, true)) {
                 if(cont->ligand) {
                   int id;
-                  while(*cc) {
+                  while(ok && *cc) {
                     p = nskip(p, 1);
                     p = ncopy(cc, p, 6);
                     if(sscanf(cc, "%d", &id) == 1) {
                       VLACheck(cont->ligand, int, cont->n_ligand);
-                      cont->ligand[cont->n_ligand++] = id;
+		      CHECKOK(ok, cont->ligand);
+		      if (ok)
+			cont->ligand[cont->n_ligand++] = id;
                     }
                   }
                 }
@@ -2391,12 +2446,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
               if(WordMatchExact(G, "WATER", cc, true)) {
                 if(cont->water) {
                   int id;
-                  while(*cc) {
+                  while(ok && *cc) {
                     p = nskip(p, 1);
                     p = ncopy(cc, p, 6);
                     if(sscanf(cc, "%d", &id) == 1) {
                       VLACheck(cont->water, int, cont->n_water);
-                      cont->water[cont->n_water++] = id;
+		      CHECKOK(ok, cont->water);
+		      if (ok)
+			cont->water[cont->n_water++] = id;
                     }
                   }
                 }
@@ -2417,10 +2474,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                       p = ncopy(cc, p, 6);
                       if(sscanf(cc, "%f", &strength) == 1) {
                         VLACheck(cont->hbond, M4XBondType, cont->n_hbond);
-                        cont->hbond[cont->n_hbond].atom1 = id1;
-                        cont->hbond[cont->n_hbond].atom2 = id2;
-                        cont->hbond[cont->n_hbond].strength = strength;
-                        cont->n_hbond++;
+			CHECKOK(ok, cont->hbond);
+			if (ok){
+			  cont->hbond[cont->n_hbond].atom1 = id1;
+			  cont->hbond[cont->n_hbond].atom2 = id2;
+			  cont->hbond[cont->n_hbond].strength = strength;
+			  cont->n_hbond++;
+			}
                       }
                     }
                   }
@@ -2442,10 +2502,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                       p = ncopy(cc, p, 6);
                       if(sscanf(cc, "%f", &strength) == 1) {
                         VLACheck(cont->nbond, M4XBondType, cont->n_nbond);
-                        cont->nbond[cont->n_nbond].atom1 = id1;
-                        cont->nbond[cont->n_nbond].atom2 = id2;
-                        cont->nbond[cont->n_nbond].strength = strength;
-                        cont->n_nbond++;
+			CHECKOK(ok, cont->nbond);
+			if (ok){
+			  cont->nbond[cont->n_nbond].atom1 = id1;
+			  cont->nbond[cont->n_nbond].atom2 = id2;
+			  cont->nbond[cont->n_nbond].strength = strength;
+			  cont->n_nbond++;
+			}
                       }
                     }
                   }
@@ -2502,7 +2565,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
     /* Secondary structure records */
 
-    if(SSCode) {
+    if(ok && SSCode) {
 
       /* pretty confusing how this works... the following efficient (i.e. array-based)
          secondary structure lookup even when there are multiple insertion codes
@@ -2511,52 +2574,62 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
       if(!ss[ss_chain1]) {      /* allocate new array for chain if necc. */
         ss[ss_chain1] = Calloc(int, cResvMask + 1);
+	CHECKOK(ok, ss[ss_chain1]);
       }
 
       sst = NULL;
-      for(b = ss_resv1; b <= ss_resv2; b++) {   /* iterate over all residues indicated */
+      for(b = ss_resv1; ok && b <= ss_resv2; b++) {   /* iterate over all residues indicated */
         index = b & cResvMask;
         if(ss[ss_chain1][index])
           sst = NULL;           /* make a unique copy in the event of multiple entries for one resv */
         if(!sst) {
           VLACheck(ss_list, SSEntry, n_ss);
-          ssi = n_ss++;
-          sst = ss_list + ssi;
-          sst->resv1 = ss_resv1;
-          sst->resv2 = ss_resv2;
-          sst->chain1 = ss_chain1;
-          sst->chain2 = ss_chain2;
-          sst->type = SSCode;
-          strcpy(sst->resi1, ss_resi1);
-          strcpy(sst->resi2, ss_resi2);
-          ss_found = true;
+	  CHECKOK(ok, ss_list);
+	  if (ok){
+	    ssi = n_ss++;
+	    sst = ss_list + ssi;
+	    sst->resv1 = ss_resv1;
+	    sst->resv2 = ss_resv2;
+	    sst->chain1 = ss_chain1;
+	    sst->chain2 = ss_chain2;
+	    sst->type = SSCode;
+	    strcpy(sst->resi1, ss_resi1);
+	    strcpy(sst->resi2, ss_resi2);
+	    ss_found = true;
+	  }
         }
-        sst->next = ss[ss_chain1][index];
-        ss[ss_chain1][index] = ssi;
-        if(sst->next)
-          sst = NULL;           /* force another unique copy */
+	if (ok){
+	  sst->next = ss[ss_chain1][index];
+	  ss[ss_chain1][index] = ssi;
+	  if(sst->next)
+	    sst = NULL;           /* force another unique copy */
+	}
       }
 
-      if(ss_chain2 != ss_chain1) {      /* handle case where chains are not the same (undefined in PDB spec?) */
+      if(ok && ss_chain2 != ss_chain1) {      /* handle case where chains are not the same (undefined in PDB spec?) */
         if(!ss[ss_chain2]) {
           ss[ss_chain2] = Calloc(int, cResvMask + 1);
+	  CHECKOK(ok, ss[ss_chain2]);
         }
         sst = NULL;
-        for(b = ss_resv1; b <= ss_resv2; b++) { /* iterate over all residues indicated */
+        for(b = ss_resv1; ok && b <= ss_resv2; b++) { /* iterate over all residues indicated */
           index = b & cResvMask;
           if(ss[ss_chain2][index])
             sst = NULL;         /* make a unique copy in the event of multiple entries for one resv */
           if(!sst) {
             VLACheck(ss_list, SSEntry, n_ss);
-            ssi = n_ss++;
-            sst = ss_list + ssi;
-            sst->resv1 = ss_resv1;
-            sst->resv2 = ss_resv2;
-            sst->chain1 = ss_chain1;
-            sst->chain2 = ss_chain2;
-            sst->type = SSCode;
-            strcpy(sst->resi1, ss_resi1);
-            strcpy(sst->resi2, ss_resi2);
+	    CHECKOK(ok, ss_list);
+	    if (ok){
+	      ssi = n_ss++;
+	      sst = ss_list + ssi;
+	      sst->resv1 = ss_resv1;
+	      sst->resv2 = ss_resv2;
+	      sst->chain1 = ss_chain1;
+	      sst->chain2 = ss_chain2;
+	      sst->type = SSCode;
+	      strcpy(sst->resi1, ss_resi1);
+	      strcpy(sst->resi2, ss_resi2);
+	    }
           }
           sst->next = ss[ss_chain2][index];
           ss[ss_chain2][index] = ssi;
@@ -2567,7 +2640,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     }
     /* Atom records */
 
-    if(AFlag && (!*restart_model)) {
+    if(ok && AFlag && (!*restart_model)) {
       ai = atInfo + atomCount;
       p = nskip(p, 6);
       p = ncopy(cc, p, 5);
@@ -2852,7 +2925,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         ai->name, ai->resn, ai->resi, ai->chain,
         *(coord + a), *(coord + a + 1), *(coord + a + 2), ai->b, ai->q, ai->segi ENDFD;
 
-      if(atomCount < (nAtom - 1)) {     /* safety */
+      if(atomCount < nAtom) {     /* safety */
         a += 3;
         atomCount++;
       }
@@ -2862,7 +2935,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
   /* END PASS 2 */
 
-  if(bondFlag) {
+  if(ok && bondFlag) {
     UtilSortInPlace(G, bond, nBond, sizeof(BondType), (UtilOrderFn *) BondInOrder);
     if(nBond) {
       if(!have_bond_order) {    /* handle PDB bond-order kludge */
@@ -2905,16 +2978,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       /* build index */
       maxAt++;
       idx = Alloc(int, maxAt + 1);
-      for(a = 0; a < maxAt; a++) {
-        idx[a] = -1;
+      CHECKOK(ok, idx);
+      if (ok){
+	for(a = 0; a < maxAt; a++) {
+	  idx[a] = -1;
+	}
+	for(a = 0; a < nAtom; a++)
+	  idx[atInfo[a].id] = a;
+
+	/* convert indices to bonds */
+	ii1 = bond;
+	ii2 = bond;
+	nReal = 0;
       }
-      for(a = 0; a < nAtom; a++)
-        idx[atInfo[a].id] = a;
-      /* convert indices to bonds */
-      ii1 = bond;
-      ii2 = bond;
-      nReal = 0;
-      {
+      if (ok) {
         int unbond_cations = SettingGetGlobal_i(G, cSetting_pdb_unbond_cations);
         int flag;
 
@@ -2971,60 +3048,75 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   PRINTFB(G, FB_ObjectMolecule, FB_Blather)
     " PDBStr2CoordSet: Read %d bonds from CONECT records (%p).\n", nBond,
     (void *) bond ENDFB(G);
-  cset = CoordSetNew(G);
-  cset->NIndex = nAtom;
-  cset->Coord = coord;
-  cset->TmpBond = bond;
-  cset->NTmpBond = nBond;
-  if(symmetry)
-    cset->Symmetry = symmetry;
-  if(atInfoPtr)
-    *atInfoPtr = atInfo;
 
-  if((*restart_model) && (!foundNextModelFlag)) {
-    /* if plan on need to reading another model into this object, 
-       make sure there is another model to read... */
-    p = *restart_model;
-    while(*p) {
-      if((p[0] == 'H') && (p[1] == 'E') && (p[2] == 'A') &&
-         (p[3] == 'D') && (p[4] == 'E') && (p[5] == 'R')) {
-        /* seeing HEADER means we're off the end of the existing file */
-        break;
+  if (ok){
+    cset = CoordSetNew(G);
+    CHECKOK(ok, cset);
+
+    cset->NIndex = nAtom;
+    cset->Coord = coord;
+    cset->TmpBond = bond;
+    cset->NTmpBond = nBond;
+    if(symmetry)
+      cset->Symmetry = symmetry;
+    if(atInfoPtr)
+      *atInfoPtr = atInfo;
+    
+    if((*restart_model) && (!foundNextModelFlag)) {
+      /* if plan on need to reading another model into this object, 
+	 make sure there is another model to read... */
+      p = *restart_model;
+      while(*p) {
+	if((p[0] == 'H') && (p[1] == 'E') && (p[2] == 'A') &&
+	   (p[3] == 'D') && (p[4] == 'E') && (p[5] == 'R')) {
+	  /* seeing HEADER means we're off the end of the existing file */
+	  break;
+	}
+	if((p[0] == 'M') && (p[1] == 'O') && (p[2] == 'D') &&
+	   (p[3] == 'E') && (p[4] == 'L') && (p[5] == ' ')) {
+	  foundNextModelFlag = true;
+	  break;
+	}
+	if((p[0] == 'E') && (p[1] == 'N') && (p[2] == 'D') &&
+	   (p[3] == 'M') && (p[4] == 'D') && (p[5] == 'L')) {
+	  foundNextModelFlag = true;
+	  break;
+	}
+	p = nextline(p);
       }
-      if((p[0] == 'M') && (p[1] == 'O') && (p[2] == 'D') &&
-         (p[3] == 'E') && (p[4] == 'L') && (p[5] == ' ')) {
-        foundNextModelFlag = true;
-        break;
+      if(!foundNextModelFlag) {
+	*restart_model = NULL;
       }
-      if((p[0] == 'E') && (p[1] == 'N') && (p[2] == 'D') &&
-         (p[3] == 'M') && (p[4] == 'D') && (p[5] == 'L')) {
-        foundNextModelFlag = true;
-        break;
-      }
-      p = nextline(p);
-    }
-    if(!foundNextModelFlag) {
-      *restart_model = NULL;
     }
   }
-
-  if(ssFlag) {
+  if (!ok){
+    if (cset){
+      CoordSetFree(cset);
+      cset = NULL;
+    } else {
+      VLAFreeP(coord);
+      VLAFreeP(bond);
+    }
+  }
+  if(ssFlag && ss_is_init) {
     for(a = 0; a <= 255; a++) {
       FreeP(ss[a]);
     }
     VLAFreeP(ss_list);
   }
-
-  if(!seen_model)
-    *model_number = 1;
-
-  if((*restart_model) && (*next_pdb)) { /* if we're mixing multistate objects and
-                                           trajectories, then enforce sanity by 
-                                           reading the models first... */
-    if(is_end_of_object)
-      (*restart_model) = NULL;
-    else if((*next_pdb) < (*restart_model))
-      (*next_pdb) = NULL;
+  
+  if (ok){
+    if(!seen_model)
+      *model_number = 1;
+    
+    if((*restart_model) && (*next_pdb)) { /* if we're mixing multistate objects and
+					     trajectories, then enforce sanity by 
+					     reading the models first... */
+      if(is_end_of_object)
+	(*restart_model) = NULL;
+      else if((*next_pdb) < (*restart_model))
+	(*next_pdb) = NULL;
+    }
   }
   return (cset);
 }
@@ -3162,10 +3254,6 @@ static int ObjectMoleculeTestHBond(float *donToAcc, float *donToH, float *hToAcc
   normalize23f(hToAcc, nHToAcc);
   if(accPlane) {                /* remember, plane need not exist if it's water... */
     normalize23f(accPlane, nAccPlane);
-#if 0
-    if(dot_product3f(nDonToAcc, nAccPlane) > (-hbc->cone_dangle))       /* don't allow D behind Acceptor plan */
-      return 0;
-#endif
     if(dot_product3f(nHToAcc, nAccPlane) > (-hbc->cone_dangle)) /* don't allow H behind Acceptor plane */
       return 0;
   }
@@ -3382,42 +3470,6 @@ int ObjectMoleculeGetCheckHBond(int *h_is_real,
                                            acc_state, accPlane, hToAcc) > 0.1) {
           vAccPlane = &accPlane[0];
         }
-#if 0
-        {
-          float tmp[3];
-          CGOLinewidth(DebugCGO, 4.0F);
-          CGOBegin(DebugCGO, GL_LINES);
-
-          CGOColor(DebugCGO, 0.0F, 1.0F, 0.0F); /* green */
-          CGOVertexv(DebugCGO, vDon);
-          normalize23f(donToAcc, tmp);
-          add3f(vDon, tmp, tmp);
-          CGOVertexv(DebugCGO, tmp);
-
-          CGOColor(DebugCGO, 1.0F, 0.0F, 0.0F); /* red */
-          CGOVertexv(DebugCGO, bestH);
-          normalize23f(hToAcc, tmp);
-          add3f(bestH, tmp, tmp);
-          CGOVertexv(DebugCGO, tmp);
-
-          CGOColor(DebugCGO, 0.0F, 1.0F, 1.0F); /* cyan */
-          CGOVertexv(DebugCGO, vDon);
-          normalize23f(donToH, tmp);
-          add3f(vDon, tmp, tmp);
-          CGOVertexv(DebugCGO, tmp);
-
-          if(vAccPlane) {
-            CGOColor(DebugCGO, 1.0F, 1.0F, 0.0F);       /* yellow */
-            CGOVertexv(DebugCGO, vAcc);
-            normalize23f(vAccPlane, tmp);
-            add3f(vAcc, tmp, tmp);
-            CGOVertexv(DebugCGO, tmp);
-          }
-
-          CGOEnd(DebugCGO);
-
-        }
-#endif
         result = ObjectMoleculeTestHBond(donToAcc, donToH, hToAcc, vAccPlane, hbc);
         if(result && h_crd_ret && h_is_real && *h_is_real)
           copy3f(bestH, h_crd_ret);
@@ -3603,9 +3655,11 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
   AtomInfoType *ai;
   if(ok)
     ok = PyList_Check(list);
-  VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + 1);
+  if (ok)
+    VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + 1);
+  CHECKOK(ok, I->AtomInfo);
   ai = I->AtomInfo;
-  for(a = 0; a < I->NAtom; a++) {
+  for(a = 0; ok && a < I->NAtom; a++) {
     if(ok)
       ok = AtomInfoFromPyList(I->Obj.G, ai, PyList_GetItem(list, a));
     ai++;
@@ -3637,9 +3691,9 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 8), &discrete_flag);
 
-  I = ObjectMoleculeNew(G, discrete_flag);
-  if(ok)
-    ok = (I != NULL);
+  if (ok)
+    I = ObjectMoleculeNew(G, discrete_flag);
+  CHECKOK(ok, I);
 
   if(ok)
     ok = ObjectFromPyList(G, PyList_GetItem(list, 0), &I->Obj);
@@ -3674,11 +3728,15 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     int a, i;
     CoordSet *cs;
     VLACheck(I->DiscreteAtmToIdx, int, I->NDiscrete);
-    VLACheck(I->DiscreteCSet, CoordSet *, I->NDiscrete);
-    if(ok)
+    CHECKOK(ok, I->DiscreteAtmToIdx);
+    if (ok)
+      VLACheck(I->DiscreteCSet, CoordSet *, I->NDiscrete);
+    CHECKOK(ok, I->DiscreteCSet); 
+    if(ok){
       ok =
         PConvPyListToIntArrayInPlace(PyList_GetItem(list, 14), I->DiscreteAtmToIdx,
                                      I->NDiscrete);
+    }
     if(ok)
       ok = PConvPyListToIntArray(PyList_GetItem(list, 15), &dcs);
     if(ok) {
@@ -3698,12 +3756,15 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     }
     FreeP(dcs);
   }
-
-  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+  if (ok)
+    ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
   if(ok)
     (*result) = I;
   else {
-    /* cleanup? */
+    /* cleanup */
+    if (I)
+        ObjectMoleculeFree(I);
+    (*result) = NULL;
   }
 
   return (ok);
@@ -3769,39 +3830,13 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
     PyList_SetItem(result, 15, PConvAutoNone(NULL));
   }
 
-#if 0
-  CObject Obj;
-  struct CoordSet **CSet;
-  int NCSet;
-  struct CoordSet *CSTmpl;      /* template for trajectories, etc. */
-  BondType *Bond;
-  AtomInfoType *AtomInfo;
-  int NAtom;
-  int NBond;
-  int DiscreteFlag, NDiscrete;
-  int *DiscreteAtmToIdx;
-  struct CoordSet **DiscreteCSet;
-  int CurCSet;
-  int SeleBase;                 /* for internal usage by  selector & only valid during selection process */
-  CSymmetry *Symmetry;
-  int *Neighbor;
-  float *UndoCoord[cUndoMask + 1];
-  int UndoState[cUndoMask + 1];
-  int UndoNIndex[cUndoMask + 1];
-  int UndoIter;
-  CGO *UnitCellCGO;
-  int BondCounter;
-  int AtomCounter;
-  struct CSculpt *Sculpt;
-#endif
-
   return (PConvAutoNone(result));
 #endif
 }
 
 
 /*========================================================================*/
-int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * ai,
+int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, AtomInfoType * ai,
                           struct CoordSet *cs, int bondSearchMode,
                           int connectModeOverride)
 {
@@ -3830,6 +3865,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
   int connect_bonded = SettingGetGlobal_b(G, cSetting_connect_bonded);
   int connect_mode = SettingGetGlobal_i(G, cSetting_connect_mode);
   int unbond_cations = SettingGetGlobal_i(G, cSetting_pdb_unbond_cations);
+  int ok = true;
   cutoff_v = SettingGet(G, cSetting_connect_cutoff);
   cutoff_s = cutoff_v + 0.2F;
   cutoff_h = cutoff_v - 0.2F;
@@ -3849,7 +3885,8 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
   nBond = 0;
   maxBond = cs->NIndex * 8;
   (*bond) = VLACalloc(BondType, maxBond);
-  while(repeat) {
+  CHECKOK(ok, (*bond));
+  while(ok && repeat) {
     repeat = false;
 
     /* 
@@ -3878,21 +3915,27 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
           int *cnt = Alloc(int, cs->NIndex);
           int valcnt;
 
-	  /* initialize each atom's (max) expected valence */
-          for(i = 0; i < cs->NIndex; i++) {
-            valcnt = AtomInfoGetExpectedValence(G, ai + cs->IdxToAtm[i]);
-            if(valcnt < 0)
-              valcnt = 6;
-            cnt[i] = valcnt;
-          }
+	  CHECKOK(ok, cnt);
+
+	  if (ok){
+	    /* initialize each atom's (max) expected valence */
+	    for(i = 0; i < cs->NIndex; i++) {
+	      valcnt = AtomInfoGetExpectedValence(G, ai + cs->IdxToAtm[i]);
+	      if(valcnt < 0)
+		valcnt = 6;
+	      cnt[i] = valcnt;
+	    }
+	  }
 
 	  /* make a map of the local neighborhood in space */
-          map = MapNew(G, max_cutoff + MAX_VDW, cs->Coord, cs->NIndex, NULL);
-          if(map) {
+	  if (ok)
+	    map = MapNew(G, max_cutoff + MAX_VDW, cs->Coord, cs->NIndex, NULL);
+	  CHECKOK(ok, map);
+          if(ok) {
             int dim12 = map->D1D2;
             int dim2 = map->Dim[2];
 
-            for(i = 0; i < cs->NIndex; i++) {
+            for(i = 0; ok && i < cs->NIndex; i++) {
               if(nBond > maxBond)
                 break;
 	      /* atom i's position in space */
@@ -3903,16 +3946,16 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
 
               MapLocus(map, v1, &a, &b, &c);
 	      /* d = [a-1, a, a+1] */
-              for(d = a - 1; d <= a + 1; d++) {
+              for(d = a - 1; ok && d <= a + 1; d++) {
                 int *j_ptr1 = map->Head + d * dim12 + (b - 1) * dim2;
 		/* e = [b-1, b, b+1] */
-                for(e = b - 1; e <= b + 1; e++) {
+                for(e = b - 1; ok && e <= b + 1; e++) {
                   int *j_ptr2 = j_ptr1 + c - 1;
                   j_ptr1 += dim2;
 		  /* f = [c-1, c, c+1] */
-                  for(f = c - 1; f <= c + 1; f++) {
+                  for(f = c - 1; ok && f <= c + 1; f++) {
                     j = *(j_ptr2++);    /*  *MapFirst(map,d,e,f)); */
-                    while(j >= 0) {
+                    while(ok && j >= 0) {
 
                       if(i < j) {
 			/* position in space for atom 2 */
@@ -4017,14 +4060,17 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
 			  /* we have a bond, now process it */
                           if(flag) {
                             VLACheck((*bond), BondType, nBond);
-                            (*bond)[nBond].index[0] = a1;
-                            (*bond)[nBond].index[1] = a2;
-                            (*bond)[nBond].stereo = 0;
-                            order = 1;
+			    CHECKOK(ok, (*bond));
+			    if (ok){
+			      (*bond)[nBond].index[0] = a1;
+			      (*bond)[nBond].index[1] = a2;
+			      (*bond)[nBond].stereo = 0;
+			      order = 1;
+			    }
 			    /* if we allow bonds between chains and it screws up the
 			     * bonding, disallow inter-chain bonds */
-                            if(discrete_chains < 0) {   /* if we're allowing bonds between chains,
-                                                           then make sure things don't get out of hand */
+                            if(ok && discrete_chains < 0) {   /* if we're allowing bonds between chains,
+								 then make sure things don't get out of hand */
                               if(cnt[i] == -1)
                                 violations++;
                               if(cnt[j] == -1)
@@ -4106,7 +4152,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
     }
   }
   /* if we have explicit connectivity, determine if we need to set check_conect_all */
-  if(cs->NTmpBond && cs->TmpBond) {
+  if(ok && cs->NTmpBond && cs->TmpBond) {
     int check_conect_all = false;
     int pdb_conect_all = false;
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
@@ -4128,9 +4174,12 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
     }
 
     VLACheck((*bond), BondType, (nBond + cs->NTmpBond));
-    ii1 = (*bond) + nBond;
-    ii2 = cs->TmpBond;
-    {
+    CHECKOK(ok, (*bond));
+    if (ok){
+      ii1 = (*bond) + nBond;
+      ii2 = cs->TmpBond;
+    }
+    if (ok) {
       register int n_atom = I->NAtom;
       for(a = 0; a < cs->NTmpBond; a++) {
         a1 = cs->IdxToAtm[ii2->index[0]];       /* convert bonds from index space */
@@ -4155,45 +4204,50 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
       }
     }
 
-    nBond = nBond + cs->NTmpBond;
-    VLAFreeP(cs->TmpBond);
-    cs->NTmpBond = 0;
-
-    if(pdb_conect_all) {
-      int dummy;
-      if(!SettingGetIfDefined_b(G, I->Obj.Setting, cSetting_pdb_conect_all, &dummy)) {
-        CSetting **handle = NULL;
-        if(I->Obj.fGetSettingHandle) {
-          handle = I->Obj.fGetSettingHandle(&I->Obj, -1);
-          if(handle) {
-            SettingCheckHandle(G, handle);
-            SettingSet_b(*handle, cSetting_pdb_conect_all, true);
-          }
-        }
+    if (ok){
+      nBond = nBond + cs->NTmpBond;
+      VLAFreeP(cs->TmpBond);
+      cs->NTmpBond = 0;
+      
+      if(pdb_conect_all) {
+	int dummy;
+	if(!SettingGetIfDefined_b(G, I->Obj.Setting, cSetting_pdb_conect_all, &dummy)) {
+	  CSetting **handle = NULL;
+	  if(I->Obj.fGetSettingHandle) {
+	    handle = I->Obj.fGetSettingHandle(&I->Obj, -1);
+	    if(handle) {
+	      SettingCheckHandle(G, handle);
+	      SettingSet_b(*handle, cSetting_pdb_conect_all, true);
+	    }
+	  }
+	}
       }
     }
   }
   
   /* Link b/t ligand and residue? */
-  if(cs->NTmpLinkBond && cs->TmpLinkBond) {
+  if(ok && cs->NTmpLinkBond && cs->TmpLinkBond) {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       "ObjectMoleculeConnect: incorporating linkage bonds. %d %d\n",
       nBond, cs->NTmpLinkBond ENDFB(G);
     VLACheck((*bond), BondType, (nBond + cs->NTmpLinkBond));
-    ii1 = (*bond) + nBond;
-    ii2 = cs->TmpLinkBond;
-    for(a = 0; a < cs->NTmpLinkBond; a++) {
-      a1 = ii2->index[0];       /* first atom is in object */
-      a2 = cs->IdxToAtm[ii2->index[1]]; /* second is in the cset */
-      ai[a1].bonded = true;
-      ai[a2].bonded = true;
-      (*ii1) = (*ii2);          /* note this copies owned ids and thus settings etc. */
-      ii1->index[0] = a1;
-      ii1->index[1] = a2;
-      ii1++;
-      ii2++;
+    CHECKOK(ok, (*bond));
+    if (ok){
+      ii1 = (*bond) + nBond;
+      ii2 = cs->TmpLinkBond;
+      for(a = 0; a < cs->NTmpLinkBond; a++) {
+	a1 = ii2->index[0];       /* first atom is in object */
+	a2 = cs->IdxToAtm[ii2->index[1]]; /* second is in the cset */
+	ai[a1].bonded = true;
+	ai[a2].bonded = true;
+	(*ii1) = (*ii2);          /* note this copies owned ids and thus settings etc. */
+	ii1->index[0] = a1;
+	ii1->index[1] = a2;
+	ii1++;
+	ii2++;
+      }
+      nBond = nBond + cs->NTmpLinkBond;
     }
-    nBond = nBond + cs->NTmpLinkBond;
     VLAFreeP(cs->TmpLinkBond);
     cs->NTmpLinkBond = 0;
   }
@@ -4201,7 +4255,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
   PRINTFD(G, FB_ObjectMolecule)
     " ObjectMoleculeConnect: elminating duplicates with %d bonds...\n", nBond ENDFD;
 
-  if(!I->DiscreteFlag) {
+  if(ok && !I->DiscreteFlag) {
     UtilSortInPlace(G, (*bond), nBond, sizeof(BondType), (UtilOrderFn *) BondInOrder);
     if(nBond) {                 /* eliminate duplicates */
       ii1 = (*bond) + 1;
@@ -4221,25 +4275,30 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
           }
         }
       VLASize((*bond), BondType, nBond);
+      CHECKOK(ok, (*bond));
     }
   }
   /* restore bond oder positivity */
 
-  ii1 = *bond;
-  for(a = 0; a < nBond; a++) {
-    if(ii1->order < 0)
-      ii1->order = -ii1->order;
-    ii1++;
+  if (ok){
+    ii1 = *bond;
+    for(a = 0; a < nBond; a++) {
+      if(ii1->order < 0)
+	ii1->order = -ii1->order;
+      ii1++;
+    }
   }
 
   PRINTFD(G, FB_ObjectMolecule)
     " ObjectMoleculeConnect: leaving with %d bonds...\n", nBond ENDFD;
-  return (nBond);
+  if (ok)
+    *nbond = nBond;
+  return ok;
 }
 
 
 /*========================================================================*/
-void ObjectMoleculeSort(ObjectMolecule * I)
+int ObjectMoleculeSort(ObjectMolecule * I)
 {                               /* sorts atoms and bonds */
   int *index;
   int *outdex = NULL;
@@ -4247,18 +4306,22 @@ void ObjectMoleculeSort(ObjectMolecule * I)
   CoordSet *cs, **dcs;
   AtomInfoType *atInfo;
   int *dAtmToIdx;
+  int ok = true;
   if(!I->DiscreteFlag) {        /* currently, discrete objects are never sorted */
     int n_bytes = sizeof(int) * I->NAtom;
     int already_in_order = true;
     int i_NAtom = I->NAtom;
     index = AtomInfoGetSortedIndex(I->Obj.G, &I->Obj, I->AtomInfo, i_NAtom, &outdex);
-    for(a = 0; a < i_NAtom; a++) {
-      if(index[a] != a) {
-        already_in_order = false;
-        break;
+    CHECKOK(ok, index);
+    if (ok){
+      for(a = 0; a < i_NAtom; a++) {
+	if(index[a] != a) {
+	  already_in_order = false;
+	  break;
+	}
       }
     }
-    if(!already_in_order) {     /* if we aren't already in perfect order */
+    if(ok && !already_in_order) {     /* if we aren't already in perfect order */
 
       for(a = 0; a < I->NBond; a++) {   /* bonds */
         I->Bond[a].index[0] = outdex[I->Bond[a].index[0]];
@@ -4290,20 +4353,33 @@ void ObjectMoleculeSort(ObjectMolecule * I)
       }
 
       atInfo = (AtomInfoType *) VLAMalloc(i_NAtom, sizeof(AtomInfoType), 5, true);
-      /* autozero here is important */
-      for(a = 0; a < i_NAtom; a++)
-        atInfo[a] = I->AtomInfo[index[a]];
+      CHECKOK(ok, atInfo);
+      if (ok){
+	/* autozero here is important */
+	for(a = 0; a < i_NAtom; a++)
+	  atInfo[a] = I->AtomInfo[index[a]];
+      }
       VLAFreeP(I->AtomInfo);
       I->AtomInfo = atInfo;
 
-      if(I->DiscreteFlag) {
+      if(ok && I->DiscreteFlag) {
         dcs = VLAlloc(CoordSet *, i_NAtom);
-        dAtmToIdx = VLAlloc(int, i_NAtom);
-        for(a = 0; a < i_NAtom; a++) {
-          b = index[a];
-          dcs[a] = I->DiscreteCSet[b];
-          dAtmToIdx[a] = I->DiscreteAtmToIdx[b];
-        }
+	CHECKOK(ok, dcs);
+	if (ok)
+	  dAtmToIdx = VLAlloc(int, i_NAtom);
+	CHECKOK(ok, dAtmToIdx);
+	if (ok){
+	  for(a = 0; a < i_NAtom; a++) {
+	    b = index[a];
+	    dcs[a] = I->DiscreteCSet[b];
+	    dAtmToIdx[a] = I->DiscreteAtmToIdx[b];
+	  }
+	} else {
+	  VLAFreeP(dcs);
+	  VLAFreeP(dAtmToIdx);
+	  dcs = NULL;
+	  dAtmToIdx = NULL;
+	}
         VLAFreeP(I->DiscreteCSet);
         VLAFreeP(I->DiscreteAtmToIdx);
         I->DiscreteCSet = dcs;
@@ -4311,11 +4387,12 @@ void ObjectMoleculeSort(ObjectMolecule * I)
       }
     }
     AtomInfoFreeSortedIndexes(I->Obj.G, &index, &outdex);
-
-    UtilSortInPlace(I->Obj.G, I->Bond, I->NBond, sizeof(BondType),
-                    (UtilOrderFn *) BondInOrder);
-    /* sort...important! */
-    ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);     /* important */
-
+    if (ok){
+      UtilSortInPlace(I->Obj.G, I->Bond, I->NBond, sizeof(BondType),
+		      (UtilOrderFn *) BondInOrder);
+      /* sort...important! */
+      ObjectMoleculeInvalidate(I, cRepAll, cRepInvAtoms, -1);     /* important */
+    }
   }
+  return ok;
 }

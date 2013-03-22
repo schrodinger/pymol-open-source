@@ -87,17 +87,6 @@ int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode
     ds->fInvalidateRep(ds, cRepLabel, cRepInvCoord);
     /*      ExecutiveUpdateCoordDepends(I->Obj.G,I); */
   }
-#if 0
-  if(log) {
-    OrthoLineType line, buffer;
-    if(SettingGet(I->Obj.G, cSetting_logging)) {
-      ObjectMoleculeGetAtomSele(I, index, buffer);
-      sprintf(line, "cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
-              buffer, v[0], v[1], v[2], state + 1, mode, 0);
-      PLog(G, line, cPLog_no_flush);
-    }
-  }
-#endif
   return (result);
 }
 
@@ -389,15 +378,6 @@ PyObject *ObjectDistAsPyList(ObjectDist * I)
   PyList_SetItem(result, 2, ObjectDistDSetAsPyList(I));
   PyList_SetItem(result, 3, PyInt_FromLong(I->CurDSet));
 
-#if 0
-
-  CObject Obj;
-  struct DistSet **DSet;
-  int NDSet;
-  int CurDSet;
-
-#endif
-
   return (PConvAutoNone(result));
 #endif
 }
@@ -526,6 +506,29 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
   }
 }
 
+void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
+  int a;
+  ObjectDist * I = (ObjectDist*)Iarg;
+  if(state < 0) {
+    for(a = 0; a < I->NDSet; a++)
+      if(I->DSet[a])
+	if(I->DSet[a]->fInvalidateRep)
+	  I->DSet[a]->fInvalidateRep(I->DSet[a], rep, level);
+  } else if(state < I->NDSet) {
+    /* if a specific state to render */
+    I->CurDSet = state % I->NDSet;
+    if(I->DSet[I->CurDSet]) {
+      if(I->DSet[I->CurDSet]->fInvalidateRep)
+	I->DSet[I->CurDSet]->fInvalidateRep(I->DSet[I->CurDSet], rep, level);
+    }
+  } else if(I->NDSet == 1) {  /* if only one coordinate set, assume static */
+    if(I->DSet[0]->fInvalidateRep) {
+      if(SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_static_singletons)) {
+	I->DSet[0]->fInvalidateRep(I->DSet[0], rep, level);
+      }
+    }
+  }
+}
 
 /*========================================================================*/
 ObjectDist *ObjectDistNew(PyMOLGlobals * G)
@@ -538,6 +541,7 @@ ObjectDist *ObjectDistNew(PyMOLGlobals * G)
   I->Obj.fRender = (void (*)(CObject *, RenderInfo * info)) ObjectDistRender;
   I->Obj.fFree = (void (*)(CObject *)) ObjectDistFree;
   I->Obj.fUpdate = (void (*)(CObject *)) ObjectDistUpdate;
+  I->Obj.fInvalidate = (void (*)(CObject *, int, int, int)) ObjectDistInvalidate;
   I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectDistGetNFrames;
   I->Obj.fGetSettingHandle = (CSetting ** (*)(CObject *, int state))
     ObjectDistGetSettingHandle;
@@ -759,7 +763,6 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
 	" ObjectDistNewFromAngleSele: obj3 is frozen = %d into state %d+1\n", frozen3, state3
 	ENDFD;
 
-      VLACheck(I->DSet, DistSet *, a);
       if(!frozen1)
 	state1 = (n_state1>1) ? a : 0;
       if(!frozen2)
@@ -767,7 +770,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
       if(!frozen3)
 	state3 = (n_state3>1) ? a : 0;
 
-      VLACheck(I->DSet, DistSet *, a);
+      VLACheck(I->DSet, DistSet *, a+1);
       I->DSet[a] = SelectorGetAngleSet(G, I->DSet[a], sele1, state1, sele2,
                                        state2, sele3, state3, mode, &angle_sum,
                                        &angle_cnt);
@@ -931,7 +934,7 @@ void ObjectDistFree(ObjectDist * I)
         I->DSet[a]->fFree(I->DSet[a]);
       I->DSet[a] = NULL;
     }
-  /*  VLAFreeP(I->DSet); */
+  VLAFreeP(I->DSet);
   ObjectPurge(&I->Obj);
   OOFreeP(I); /* from OOAlloc */
 }

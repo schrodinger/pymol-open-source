@@ -482,7 +482,7 @@ if __name__=='pymol.parser':
                 p_result = 0 # notify caller that an error was encountered
             except CmdException as e:
                 if e.args:
-                    print " Error:", e.args
+                    print e
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):         
                     print "Parser: CmdException caught."
                 p_result = 0

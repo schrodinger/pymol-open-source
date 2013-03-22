@@ -31,6 +31,8 @@ Z* -------------------------------------------------------------------
 #include"Text.h"
 
 #include"Word.h"
+#include"CGO.h"
+#include"CoordSet.h"
 
 typedef char DistLabel[8];
 
@@ -42,7 +44,10 @@ typedef struct RepDistLabel {
   CObject *Obj;
   DistSet *ds;
   int OutlineColor;
+  CGO *shaderCGO;
 } RepDistLabel;
+
+#define SHADERCGO I->shaderCGO
 
 #include"ObjectDist.h"
 
@@ -50,6 +55,9 @@ void RepDistLabelFree(RepDistLabel * I);
 
 void RepDistLabelFree(RepDistLabel * I)
 {
+  if (I->shaderCGO){
+    CGOFree(I->shaderCGO);
+  }
   VLAFreeP(I->V);
   VLAFreeP(I->L);
   RepPurge(&I->R);
@@ -68,6 +76,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
   int color;
   int font_id = SettingGet_i(G, I->ds->Setting, I->Obj->Setting, cSetting_label_font_id);
   float font_size = SettingGet_f(G, I->ds->Setting, I->Obj->Setting, cSetting_label_size);
+  int ok = true;
 
   if(ray) {
 
@@ -87,48 +96,29 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
     }
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-      Pickable *p = I->R.P;
-      int i;
-      if(c) {
-        int float_text = (int) SettingGet(G, cSetting_float_labels);
-        if(float_text)
-          glDisable(GL_DEPTH_TEST);
-
-        i = (*pick)->src.index;
-        while(c--) {
-          if(*l) {
-            int first_pass = (!(*pick)[0].src.bond);
-            i++;
-            TextSetPos(G, v);
-            TextSetPickColor(G, first_pass, i);
-            if(first_pass) {
-              VLACheck((*pick), Picking, i);
-              p++;
-              (*pick)[i].src = *p;      /* copy object and atom info */
-              (*pick)[i].context = I->R.context;
-            }
-            TextRenderOpenGL(G, info, font_id, l[n], font_size, v + 3);
-            n++;
-          }
-          v += 6;
-        }
-        if(float_text)
-          glEnable(GL_DEPTH_TEST);
-        (*pick)[0].src.index = i;       /* pass the count */
+      if (I->shaderCGO){
+	CGORenderGLPicking(I->shaderCGO, pick, &I->R.context, NULL, NULL);
+	return;
       }
     } else {
+	Pickable *p = I->R.P;
       int float_text = SettingGet_i(G, I->ds->Setting,
                                     I->Obj->Setting,
                                     cSetting_float_labels);
       if(float_text)
         glDisable(GL_DEPTH_TEST);
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-      if(!info->line_lighting)
-        glDisable(GL_LIGHTING);
-#endif
+	if (!I->shaderCGO){
+	  I->shaderCGO = CGONew(G);
+	  CHECKOK(ok, I->shaderCGO);
+	  if (ok){
+	    I->shaderCGO->use_shader = true;
+	    I->shaderCGO->enable_shaders = true;
+	  }
+	} else {
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  return;
+	}
 
       TextSetOutlineColor(G, I->OutlineColor);
       color = SettingGet_color(G, I->ds->Setting, I->Obj->Setting, cSetting_label_color);
@@ -138,20 +128,36 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
       else
         TextSetColor(G, ColorGet(G, I->Obj->Color));
       while(c--) {
-
+	p++;
+	if (ok)
+	  ok &= CGOPickColor(I->shaderCGO, p->index, p->bond);
         TextSetPos(G, v);
-        TextRenderOpenGL(G, info, font_id, l[n], font_size, v + 3);
+        TextRenderOpenGL(G, info, font_id, l[n], font_size, v + 3, SHADERCGO);
         v += 6;
         n++;
       }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-      glEnable(GL_LIGHTING);
-#endif
-      if(float_text)
-        glEnable(GL_DEPTH_TEST);
+      if (ok && I->shaderCGO){
+	ok &= CGOStop(I->shaderCGO);
+	if (ok){
+	  CGO *convertcgo = CGOOptimizeLabels(I->shaderCGO, 0);
+	  CHECKOK(ok, convertcgo);
+	  CGOFree(I->shaderCGO);
+	  I->shaderCGO = convertcgo;
+	  convertcgo = NULL;
+	}
+	if (ok && I->shaderCGO){
+	  I->shaderCGO->use_shader = true;
+	  I->shaderCGO->enable_shaders = true;
+	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	}
+      }
     }
+  }
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->ds->Rep[cRepLabel] = NULL;
+    RepDistLabelFree(I);
   }
 }
 
@@ -167,9 +173,12 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   int default_digits =
     SettingGet_i(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_label_digits);
   Pickable *rp = NULL;
-  OOAlloc(G, RepDistLabel);
+  int ok = true;
 
-  if(!(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex)) {
+  OOAlloc(G, RepDistLabel);
+  CHECKOK(ok, I);
+
+  if(!ok || !(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex)) {
     ds->NLabel = 0;
     VLAFreeP(ds->LabCoord);
     VLAFreeP(ds->LabPos);
@@ -196,12 +205,13 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   I->R.context.object = (void *) ds->Obj;
   I->R.context.state = state;
 
+  I->shaderCGO = NULL;
+
   I->OutlineColor =
     SettingGet_i(G, ds->Setting, I->Obj->Setting, cSetting_label_outline_color);
 
   if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
     float *lc;
-
     ds->NLabel = (ds->NIndex / 2 + ds->NAngleIndex / 5 + ds->NDihedralIndex / 6);
 
     if(!ds->LabCoord) {         /* store label coordinates */
@@ -209,19 +219,26 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     } else {
       VLACheck(ds->LabCoord, float, 3 * ds->NLabel);
     }
-
-    if(ds->LabPos) {            /* make sure this VLA covers all labels */
+    CHECKOK(ok, ds->LabCoord);
+      
+    if(ok && ds->LabPos) {            /* make sure this VLA covers all labels */
       VLACheck(ds->LabPos, LabPosType, ds->NLabel);
+      CHECKOK(ok, ds->LabPos);
     }
 
-    if(SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_pickable)) {
+    if(ok && SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_pickable)) {
       I->R.P = Alloc(Pickable, ds->NLabel + 1);
-      ErrChkPtr(G, I->R.P);
-      rp = I->R.P + 1;          /* skip first record! */
+      CHECKOK(ok, I->R.P);
+      if (ok)
+	rp = I->R.P + 1;          /* skip first record! */
     }
 
-    I->V = VLAlloc(float, 3 * (ds->NIndex / 2 + ds->NAngleIndex / 5) + 1);
-    I->L = VLAlloc(DistLabel, (ds->NIndex / 2 + ds->NAngleIndex / 5) + 1);
+    if (ok)
+      I->V = VLAlloc(float, 3 * (ds->NIndex / 2 + ds->NAngleIndex / 5) + 1);
+    CHECKOK(ok, I->V);
+    if (ok)
+      I->L = VLAlloc(DistLabel, (ds->NIndex / 2 + ds->NAngleIndex / 5) + 1);
+    CHECKOK(ok, I->L);
 
     n = 0;
     lc = ds->LabCoord;
@@ -235,7 +252,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
       if(digits > 10)
         digits = 10;
       sprintf(format, "%c0.%df", '%', digits);
-      for(a = 0; a < ds->NIndex; a = a + 2) {
+      for(a = 0; ok && a < ds->NIndex; a = a + 2) {
         v1 = ds->Coord + 3 * a;
         v2 = ds->Coord + 3 * (a + 1);
         average3f(v2, v1, d);
@@ -243,7 +260,13 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         sprintf(buffer, format, di);
 
         VLACheck(I->V, float, 6 * n + 5);
-        VLACheck(I->L, DistLabel, n);
+	CHECKOK(ok, I->V);
+	if (ok)
+	  VLACheck(I->L, DistLabel, n);
+	CHECKOK(ok, I->L);
+
+	if (!ok)
+	  break;
         v = I->V + 6 * n;
         strcpy(I->L[n], buffer);
         copy3f(d, v);
@@ -275,7 +298,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
       }
     }
 
-    if(ds->NAngleIndex) {
+    if(ok && ds->NAngleIndex) {
 
       float d1[3], d2[3], n1[3], n2[3];
       float avg[3];
@@ -291,7 +314,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         digits = 10;
       sprintf(format, "%c0.%df", '%', digits);
 
-      for(a = 0; a < ds->NAngleIndex; a = a + 5) {
+      for(a = 0; ok && a < ds->NAngleIndex; a = a + 5) {
         v1 = ds->AngleCoord + 3 * a;
         v2 = ds->AngleCoord + 3 * (a + 1);
         v3 = ds->AngleCoord + 3 * (a + 2);
@@ -327,7 +350,12 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         sprintf(buffer, format, di);
 
         VLACheck(I->V, float, 6 * n + 5);
-        VLACheck(I->L, DistLabel, n);
+	CHECKOK(ok, I->V);
+	if (ok)
+	  VLACheck(I->L, DistLabel, n);
+	CHECKOK(ok, I->L);
+	if (!ok)
+	  break;
         v = I->V + 6 * n;
         strcpy(I->L[n], buffer);
         copy3f(avg, v);
@@ -357,7 +385,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
       }
     }
 
-    if(ds->NDihedralIndex) {
+    if(ok && ds->NDihedralIndex) {
 
       float d12[3], d32[3], d43[3], n32[3];
       float p12[3], p43[3], np12[3], np43[3];
@@ -381,7 +409,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         digits = 10;
       sprintf(format, "%c0.%df", '%', digits);
 
-      for(a = 0; a < ds->NDihedralIndex; a = a + 6) {
+      for(a = 0; ok && a < ds->NDihedralIndex; a = a + 6) {
         v1 = ds->DihedralCoord + 3 * a;
         v2 = v1 + 3;
         v3 = v1 + 6;
@@ -425,7 +453,10 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         sprintf(buffer, format, di);
 
         VLACheck(I->V, float, 6 * n + 5);
-        VLACheck(I->L, DistLabel, n);
+	CHECKOK(ok, I->V);
+	if (ok)
+	  VLACheck(I->L, DistLabel, n);
+	CHECKOK(ok, I->L);
         v = I->V + 6 * n;
         strcpy(I->L[n], buffer);
         copy3f(avg, v);
@@ -460,10 +491,14 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
 
   I->N = n;
 
-  if(rp) {
+  if(ok && rp) {
     I->R.P = ReallocForSure(I->R.P, Pickable, (rp - I->R.P));
+    CHECKOK(ok, I->R.P);
     I->R.P[0].index = I->N;     /* unnec? */
   }
-
+  if (!ok){
+    RepDistLabelFree(I);
+    I = NULL;
+  }
   return ((void *) (struct Rep *) I);
 }

@@ -32,7 +32,7 @@ typedef struct CoordSet {
   void (*fFree) (struct CoordSet * I);
   void (*fEnumIndices) (struct CoordSet * I);
   void (*fAppendIndices) (struct CoordSet * I, int existingAtoms);
-  void (*fExtendIndices) (struct CoordSet * I, int nAtom);
+  int (*fExtendIndices) (struct CoordSet * I, int nAtom);
   void (*fInvalidateRep) (struct CoordSet * I, int type, int level);
   CObjectState State;
   ObjectMolecule *Obj;
@@ -76,7 +76,7 @@ typedef struct CoordSet {
      byres/bychain actions which assume such atoms to be adjancent...
    */
 
-  CGO *SculptCGO;
+  CGO *SculptCGO, *SculptShaderCGO;
   MapType *Coord2Idx;
   float Coord2IdxReq, Coord2IdxDiv;
 
@@ -125,7 +125,7 @@ int CoordSetValidateRefPos(CoordSet * I);
 
 void CoordSetPurge(CoordSet * I);
 void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom);
-void CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs);        /* must be non-overlapping */
+int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs);        /* must be non-overlapping */
 void CoordSetRecordTxfApplied(CoordSet * I, float *TTT, int homogenous);
 void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff);
 
@@ -135,5 +135,6 @@ void CoordSetUpdateThread(CCoordSetUpdateThreadInfo * T);
 
 void LabPosTypeCopy(LabPosType * src, LabPosType * dst);
 void RefPosTypeCopy(RefPosType * src, RefPosType * dst);
+void CoordSetFree(CoordSet * I);
 
 #endif

@@ -1316,19 +1316,6 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState * I)
 
   PyList_SetItem(result, 14, IsosurfAsPyList(I->Field));
   PyList_SetItem(result, 15, ObjectStateAsPyList(&I->State));
-#if 0
-  int Active;
-  CCrystal *Crystal;
-  int Div[3], Min[3], Max[3], FDim[4];
-  Isofield *Field;
-  float Corner[24];
-  int *Dim;
-  float *Origin;
-  float *Range;
-  float *Grid;
-  float ExtentMin[3], ExtentMax[3];
-#endif
-
   return (PConvAutoNone(result));
 }
 #endif
@@ -1867,9 +1854,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
           if(pick) {
           } else {
             ObjectUseColor(&I->Obj);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
             glDisable(GL_LIGHTING);
 #ifdef _PYMOL_GL_DRAWARRAYS
 	    {
@@ -1970,7 +1954,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
             glEnd();
 #endif
             glEnable(GL_LIGHTING);
-#endif
           }
         }
       }
@@ -2047,9 +2030,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
                 if(gradients) {
                   raw_gradient = (float *) gradients->data;
                 } else {
-#ifndef PURE_OPENGL_ES_2
                   glDisable(GL_LIGHTING);
-#endif
                 }
                 {
                   int ramped = ColorCheckRamped(G, I->Obj.Color);
@@ -2057,9 +2038,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
                   int color = I->Obj.Color;
                   float gt[3];
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                   glPointSize(width);
                   glDisable(GL_POINT_SMOOTH);
 #ifdef _PYMOL_GL_DRAWARRAYS
@@ -2172,7 +2150,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
                   glEnd();
 #endif
                 glEnable(GL_POINT_SMOOTH);
-#endif
                 }
               }
             }

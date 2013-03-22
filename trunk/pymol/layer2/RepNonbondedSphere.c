@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"main.h"
 #include"ShaderMgr.h"
+#include"Scene.h"
 
 typedef struct RepNonbondedSphere {
   Rep R;
@@ -75,7 +76,7 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
   SphereRec *sp;
   int i, j;
   Pickable *p;
-
+  int ok = true;
   float alpha;
 
   alpha =
@@ -89,13 +90,13 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
     ray->fTransparentf(ray, 1.0F - alpha);
     v = I->VC;
     c = I->NC;
-    while(c--) {
+    while(ok && c--) {
       if(variable_alpha) {
         ray->fTransparentf(ray, 1.0F - v[3]);
       }
       ray->fColor3fv(ray, v);
       v += 4;
-      ray->fSphere3fv(ray, v, *(v + 3));
+      ok &= ray->fSphere3fv(ray, v, *(v + 3));
       v += 4;
     }
     ray->fTransparentf(ray, 0.0);
@@ -108,9 +109,7 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
       c = I->NP;
       p = I->R.P;
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
+      SceneSetupGLPicking(G);
 #ifdef _PYMOL_GL_DRAWARRAYS
       {
 	int nverts = c * 6, pl, plc = 0;
@@ -191,7 +190,6 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
       }
       glEnd();
 #endif
-#endif
       (*pick)[0].src.index = i;
 
     } else { /* rendering */
@@ -199,9 +197,9 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
       short use_shader, use_default_shader, use_sphere_shader, generate_shader_cgo = 0, use_display_lists = 0;
       use_shader = (int) SettingGet(G, cSetting_nb_spheres_use_shader) &&
 	           (int) SettingGet(G, cSetting_use_shaders);
-      use_sphere_shader = (int) (SettingGet(G, cSetting_nb_spheres_use_shader)==2) &&
+      use_sphere_shader = (int) (SettingGet(G, cSetting_nb_spheres_use_shader)==1) &&
 	                  (int) SettingGet(G, cSetting_use_shaders);
-      use_default_shader = (int) (SettingGet(G, cSetting_nb_spheres_use_shader)==1) && 
+      use_default_shader = (int) (SettingGet(G, cSetting_nb_spheres_use_shader)==2) && 
 	                   (int) SettingGet(G, cSetting_use_shaders);
       use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
 
@@ -222,9 +220,11 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
-	  I->shaderCGO->use_shader = true;
+	  CHECKOK(ok, I->shaderCGO);
+	  if (ok)
+	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
-	} else {
+	} else if (ok) {
 	  I->shaderCGO->enable_shaders = true;
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 	  return;
@@ -246,53 +246,62 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
       sp = I->SP;
 
       if (generate_shader_cgo){
-	if (use_sphere_shader){
-	  /* Go through the ray tracing data, its easier (and available!) */
-	  int variable_alpha = I->VariableAlphaFlag;
-	  CGOAlpha(I->shaderCGO, alpha);
-	  v = I->VC;
-	  c = I->NC;
-	  while(c--) {
-	    if(variable_alpha) {
-	      CGOAlpha(I->shaderCGO, v[3]);
-	    }
-	    CGOColorv(I->shaderCGO, v);
-	    v += 4;
-	    CGOSphere(I->shaderCGO, v, *(v + 3));
-	    v += 4;
-	  }
-	  CGOAlpha(I->shaderCGO, 1.);
-	} else {
-	  while(c--) {
-	    if((alpha == 1.0) && (!variable_alpha)) {
-	      CGOAlpha(I->shaderCGO, 1.f);
-	      CGOColorv(I->shaderCGO, v);
-	    } else {
-	      if(variable_alpha)
-		CGOAlpha(I->shaderCGO, v[3]);
-	      else
-		CGOAlpha(I->shaderCGO, alpha);
-	      CGOColor(I->shaderCGO, v[0], v[1], v[2]);
-	    }
-	    v += 4;
-	    for(a = 0; a < sp->NStrip; a++) {
-	      cc = sp->StripLen[a];
-	      CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
-	      while(cc--) {
-		CGONormalv(I->shaderCGO, v);
-		v += 3;
-		CGOVertexv(I->shaderCGO, v);
-		v += 3;
+	if (ok){
+	  if (use_sphere_shader){
+	    /* Go through the ray tracing data, its easier (and available!) */
+	    int variable_alpha = I->VariableAlphaFlag;
+	    ok &= CGOAlpha(I->shaderCGO, alpha);
+	    v = I->VC;
+	    c = I->NC;
+	    while(ok && c--) {
+	      if(variable_alpha) {
+		ok &= CGOAlpha(I->shaderCGO, v[3]);
 	      }
-	      CGOEnd(I->shaderCGO);
+	      if (ok){
+		ok &= CGOColorv(I->shaderCGO, v);
+		v += 4;
+	      }
+	      if (ok){
+		ok &= CGOSphere(I->shaderCGO, v, *(v + 3));
+		v += 4;
+	      }
+	    }
+	    if (ok)
+	      ok &= CGOAlpha(I->shaderCGO, 1.);
+	  } else {
+	    while(ok && c--) {
+	      if((alpha == 1.0) && (!variable_alpha)) {
+		ok &= CGOAlpha(I->shaderCGO, 1.f);
+		if (ok)
+		  ok &= CGOColorv(I->shaderCGO, v);
+	      } else {
+		if(variable_alpha)
+		  ok &= CGOAlpha(I->shaderCGO, v[3]);
+		else
+		  ok &= CGOAlpha(I->shaderCGO, alpha);
+		if (ok)
+		  ok &= CGOColor(I->shaderCGO, v[0], v[1], v[2]);
+	      }
+	      v += 4;
+	      for(a = 0; ok && a < sp->NStrip; a++) {
+		cc = sp->StripLen[a];
+		ok &= CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
+		while(ok && cc--) {
+		  ok &= CGONormalv(I->shaderCGO, v);
+		  v += 3;
+		  if (ok){
+		    ok &= CGOVertexv(I->shaderCGO, v);
+		    v += 3;
+		  }
+		}
+		if (ok)
+		  ok &= CGOEnd(I->shaderCGO);
+	      }
 	    }
 	  }
 	}
       } else {
 	while(c--) {
-#ifdef PURE_OPENGL_ES_2
-	  /* TODO */
-#else
 	  if((alpha == 1.0) && (!variable_alpha)) {
 	    glColor3fv(v);
 	  } else {
@@ -301,13 +310,9 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 	    else
 	      glColor4f(v[0], v[1], v[2], alpha);
 	  }
-#endif
 	  v += 4;
 	  for(a = 0; a < sp->NStrip; a++) {
 	    cc = sp->StripLen[a];
-#ifdef PURE_OPENGL_ES_2
-	    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 	    {
 	      int nverts = cc, pl;
@@ -340,40 +345,48 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 	    }
 	    glEnd();
 #endif
-#endif
 	  }
         }
       }
 
       if (use_shader) {
-	if (generate_shader_cgo){
+	if (ok && generate_shader_cgo){
 	  CGO *convertcgo = NULL;
-	  CGOStop(I->shaderCGO);
+	  ok &= CGOStop(I->shaderCGO);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  if (ok)
+	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);    
 	  I->shaderCGO = convertcgo;
+	  convertcgo = NULL;
 #else
 	  (void)convertcgo;
 #endif
 #ifdef _PYMOL_CGO_DRAWBUFFERS
-	  if (use_sphere_shader){
-	    convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, 0);
-	  } else {
-	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	  if (ok){
+	    if (use_sphere_shader){
+	      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, 0);
+	    } else {
+	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
+	    }
+	    CHECKOK(ok, convertcgo);
 	  }
 	  if(convertcgo){
 	    CGOFree(I->shaderCGO);
 	    I->shaderCGO = convertcgo;
+	    I->shaderCGO->use_shader = true;
+	    convertcgo = NULL;
 	  }
 #else
 	  (void)convertcgo;
 #endif
 	}
 	
-	{
+	if (ok) {
 	  I->shaderCGO->enable_shaders = true;
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  return;
 	}
       }
 #ifdef _PYMOL_GL_CALLLISTS
@@ -383,6 +396,12 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
       }
 #endif
     }
+  }
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+    I->R.cs->Active[cRepNonbondedSphere] = false;
   }
 }
 
@@ -405,10 +424,14 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   int variable_alpha = false;
   float transp =
     SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_nonbonded_transparency);
+  int ok = true;
 
   OOAlloc(G, RepNonbondedSphere);
+  CHECKOK(ok, I);
 
-  active = Alloc(int, cs->NIndex);
+  if (ok)
+    active = Alloc(int, cs->NIndex);
+  CHECKOK(ok, active);
 
   if(obj->RepVisCache[cRepNonbondedSphere])
     for(a = 0; a < cs->NIndex; a++) {
@@ -460,26 +483,26 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   /* raytracing primitives */
 
   I->VC = (float *) mmalloc(sizeof(float) * nSphere * 8);
-  ErrChkPtr(G, I->VC);
+  CHECKOK(ok, I->VC);
   I->NC = 0;
 
   v = I->VC;
 
-  for(a = 0; a < cs->NIndex; a++) {
+  for(a = 0; ok && a < cs->NIndex; a++) {
     if(active[a]) {
       float at_transp;
       ai = obj->AtomInfo + cs->IdxToAtm[a];
       if(AtomInfoGetSetting_f(G, ai, cSetting_nonbonded_transparency, transp, &at_transp))
-        variable_alpha = true;
-
+	variable_alpha = true;
+      
       I->NC++;
       c1 = *(cs->Color + a);
       v0 = cs->Coord + 3 * a;
       if(ColorCheckRamped(G, c1)) {
-        ColorGetRamped(G, c1, v0, tmpColor, state);
-        vc = tmpColor;
+	ColorGetRamped(G, c1, v0, tmpColor, state);
+	vc = tmpColor;
       } else {
-        vc = ColorGet(G, c1);
+	vc = ColorGet(G, c1);
       }
       *(v++) = *(vc++);
       *(v++) = *(vc++);
@@ -490,16 +513,20 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
       *(v++) = *(v0++);
       *(v++) = nb_spheres_size;
     }
+    ok &= !G->Interrupt;
   }
 
-  I->VariableAlphaFlag = variable_alpha;
-  if(I->NC)
-    I->VC = ReallocForSure(I->VC, float, (v - I->VC));
-  else
-    I->VC = ReallocForSure(I->VC, float, 1);
-
-  I->V = (float *) mmalloc(sizeof(float) * nSphere * (4 + sp->NVertTot * 6));
-  ErrChkPtr(G, I->V);
+  if (ok){
+    I->VariableAlphaFlag = variable_alpha;
+    if(I->NC)
+      I->VC = ReallocForSure(I->VC, float, (v - I->VC));
+    else
+      I->VC = ReallocForSure(I->VC, float, 1);
+    CHECKOK(ok, I->VC);
+  }
+  if (ok)
+    I->V = (float *) mmalloc(sizeof(float) * nSphere * (4 + sp->NVertTot * 6));
+  CHECKOK(ok, I->V);
 
   /* rendering primitives */
 
@@ -507,7 +534,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   I->SP = sp;
   v = I->V;
 
-  for(a = 0; a < cs->NIndex; a++) {
+  for(a = 0; ok && a < cs->NIndex; a++) {
     if(active[a]) {
       float at_transp;
       ai = obj->AtomInfo + cs->IdxToAtm[a];
@@ -515,55 +542,60 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
       v0 = cs->Coord + 3 * a;
       vc = ColorGet(G, c1);
       if(AtomInfoGetSetting_f(G, ai, cSetting_nonbonded_transparency, transp, &at_transp))
-        variable_alpha = true;
-
+	variable_alpha = true;
+      
       if(ColorCheckRamped(G, c1)) {
-        ColorGetRamped(G, c1, v0, tmpColor, state);
-        vc = tmpColor;
+	ColorGetRamped(G, c1, v0, tmpColor, state);
+	vc = tmpColor;
       } else {
-        vc = ColorGet(G, c1);
+	vc = ColorGet(G, c1);
       }
-
+      
       *(v++) = *(vc++);
       *(v++) = *(vc++);
       *(v++) = *(vc++);
       *(v++) = 1.0F - at_transp;
-
+      
       q = sp->Sequence;
       s = sp->StripLen;
-
-      for(d = 0; d < sp->NStrip; d++) {
-        for(c = 0; c < (*s); c++) {
-          *(v++) = sp->dot[*q][0];      /* normal */
-          *(v++) = sp->dot[*q][1];
-          *(v++) = sp->dot[*q][2];
-          *(v++) = v0[0] + nb_spheres_size * sp->dot[*q][0];     /* point */
-          *(v++) = v0[1] + nb_spheres_size * sp->dot[*q][1];
-          *(v++) = v0[2] + nb_spheres_size * sp->dot[*q][2];
-          q++;
-        }
-        s++;
+      
+      for(d = 0; ok && d < sp->NStrip; d++) {
+	for(c = 0; c < (*s); c++) {
+	  *(v++) = sp->dot[*q][0];      /* normal */
+	  *(v++) = sp->dot[*q][1];
+	  *(v++) = sp->dot[*q][2];
+	  *(v++) = v0[0] + nb_spheres_size * sp->dot[*q][0];     /* point */
+	  *(v++) = v0[1] + nb_spheres_size * sp->dot[*q][1];
+	  *(v++) = v0[2] + nb_spheres_size * sp->dot[*q][2];
+	  q++;
+	}
+	s++;
+	ok &= !G->Interrupt;
       }
       I->N++;
     }
   }
 
-  if(I->N)
-    I->V = ReallocForSure(I->V, float, (v - I->V));
-  else
-    I->V = ReallocForSure(I->V, float, 1);
+  if (ok){
+    if(I->N)
+      I->V = ReallocForSure(I->V, float, (v - I->V));
+    else
+      I->V = ReallocForSure(I->V, float, 1);
+    CHECKOK(ok, I->V);
+  }
 
   /* use pickable representation from nonbonded */
-  if(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
+  if(ok && SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
     I->VP = (float *) mmalloc(sizeof(float) * nSphere * 18);
-    ErrChkPtr(G, I->VP);
+    CHECKOK(ok, I->VP);
 
-    I->R.P = Alloc(Pickable, cs->NIndex + 1);
-    ErrChkPtr(G, I->R.P);
+    if (ok)
+      I->R.P = Alloc(Pickable, cs->NIndex + 1);
+    CHECKOK(ok, I->R.P);
 
     v = I->VP;
 
-    for(a = 0; a < cs->NIndex; a++)
+    for(a = 0; ok && a < cs->NIndex; a++){
       if(active[a] > 0) {
 
         a1 = cs->IdxToAtm[a];
@@ -595,14 +627,26 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
           *(v++) = v1[2] + nb_spheres_size;
         }
       }
-    I->R.P = Realloc(I->R.P, Pickable, I->NP + 1);
-    I->R.context.object = (void *) obj;
-    I->R.context.state = state;
-
-    I->R.P[0].index = I->NP;
-    I->VP = Realloc(I->VP, float, I->NP * 21);
+      ok &= !G->Interrupt;
+    }
+    if (ok)
+      I->R.P = Realloc(I->R.P, Pickable, I->NP + 1);
+    CHECKOK(ok, I->R.P);
+    if (ok){
+      I->R.context.object = (void *) obj;
+      I->R.context.state = state;
+      
+      I->R.P[0].index = I->NP;
+    }
+    if (ok)
+      I->VP = Realloc(I->VP, float, I->NP * 21);
+    CHECKOK(ok, I->VP);
   }
-
+  
   FreeP(active);
+  if (!ok){
+    RepNonbondedSphereFree(I);
+    I = NULL;
+  }
   return ((void *) (struct Rep *) I);
 }

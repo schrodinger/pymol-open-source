@@ -37,7 +37,7 @@ Z* -------------------------------------------------------------------
 typedef struct RepCartoon {
   Rep R;                        /* must be first! */
   CGO *ray, *std, *preshader, *pickingCGO;
-
+  char *LastVisib;
 } RepCartoon;
 
 #include"ObjectMolecule.h"
@@ -56,6 +56,7 @@ void RepCartoonFree(RepCartoon * I)
     CGOFree(I->preshader);
   if(I->std)
     CGOFree(I->std);
+  FreeP(I->LastVisib);
   RepPurge(&I->R);
   OOFreeP(I);
 }
@@ -65,60 +66,83 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   register PyMOLGlobals *G = I->R.G;
+  int ok = true;
 
 #ifdef _PYMOL_CGO_DRAWBUFFERS
-  if (I->preshader){
+  if (!ray && I->preshader){
     int use_shaders, cartoon_use_shader, has_cylinders_to_optimize;
     use_shaders = (int) SettingGet(G, cSetting_use_shaders);
     cartoon_use_shader = (int) SettingGet(G, cSetting_cartoon_use_shader);
-    has_cylinders_to_optimize = SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders) && SettingGet(G, cSetting_render_as_cylinders) ;
+    has_cylinders_to_optimize = CShaderPrg_Get_CylinderShader_NoSet(G) && SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders) && SettingGet(G, cSetting_render_as_cylinders) ;
     if (use_shaders && cartoon_use_shader){
       CGO *convertcgo = NULL, *tmpCGO = NULL;
       if (has_cylinders_to_optimize){
-	CGO *leftOverCGO = CGONew(G), *leftOverCGOSimplified, *sphereVBOs = NULL, *leftOverAfterSpheresCGO;
-
+	CGO *leftOverCGO = CGONew(G), *leftOverCGOSimplified = NULL, *sphereVBOs = NULL, *leftOverAfterSpheresCGO = NULL;
+	CHECKOK(ok, leftOverCGO);
 	/* Optimize Cylinders into Shader operation */
-	convertcgo = CGOOptimizeGLSLCylindersToVBOIndexedWithLeftOver(I->preshader, 0, leftOverCGO);
+	if (CShaderPrg_Get_CylinderShader_NoSet(G)){
+	  convertcgo = CGOOptimizeGLSLCylindersToVBOIndexedWithLeftOver(I->preshader, 0, leftOverCGO);
+	}
 	if (!convertcgo){
 	  convertcgo = CGONew(G);
+	  CHECKOK(ok, convertcgo);
 	  leftOverCGO = I->preshader;
 	  I->preshader = NULL;
-	} else {
-	  CGOStop(leftOverCGO); 
+	} else if (ok) {
+	  ok &= CGOStop(leftOverCGO); 
 	}
 	/* Optimize spheres and putting them into convertcgo as a shader CGO operation */
-	leftOverAfterSpheresCGO = CGONew(G);
-	sphereVBOs = CGOOptimizeSpheresToVBONonIndexedImpl(leftOverCGO, 0, leftOverAfterSpheresCGO);
-	if (sphereVBOs){
-	  CGOStop(leftOverAfterSpheresCGO);
+	if (ok)
+	  leftOverAfterSpheresCGO = CGONew(G);
+	CHECKOK(ok, leftOverAfterSpheresCGO);
+	if (ok)
+	  sphereVBOs = CGOOptimizeSpheresToVBONonIndexedImpl(leftOverCGO, 0, leftOverAfterSpheresCGO);
+	if (ok && sphereVBOs){
+	  ok &= CGOStop(leftOverAfterSpheresCGO);
 	  if (leftOverCGO!=I->ray){
 	    CGOFree(leftOverCGO);
+	    leftOverCGO = NULL;
 	  }
-	  CGOAppend(convertcgo, sphereVBOs);
+	  if (ok && sphereVBOs)
+	    ok &= CGOAppend(convertcgo, sphereVBOs);
 	  CGOFreeWithoutVBOs(sphereVBOs);
+	  sphereVBOs = NULL;
 	} else {
 	  leftOverAfterSpheresCGO = leftOverCGO;
 	}
 	/* For the rest of the primitives that exist, simplify them into Geometry
 	 * (should probably be no more, but do this anyway) */
-	leftOverCGOSimplified = CGOSimplify(leftOverAfterSpheresCGO, 0);
+	if (ok)
+	  leftOverCGOSimplified = CGOSimplify(leftOverAfterSpheresCGO, 0);
+	CHECKOK(ok, leftOverCGOSimplified);
 	if (leftOverAfterSpheresCGO!=I->ray){
 	  CGOFree(leftOverAfterSpheresCGO);
+	  leftOverAfterSpheresCGO = NULL;
 	}
 	/* Convert all DrawArrays and Geometry to VBOs */
-	tmpCGO = CGOOptimizeToVBONotIndexed(leftOverCGOSimplified, 0);
+	if (ok)
+	  tmpCGO = CGOOptimizeToVBONotIndexed(leftOverCGOSimplified, 0);
+	CHECKOK(ok, tmpCGO);
 	CGOFree(leftOverCGOSimplified);
-	CGOAppend(convertcgo, tmpCGO);
+	leftOverCGOSimplified = NULL;
+	if (ok)
+	  ok &= CGOAppend(convertcgo, tmpCGO);
 	CGOFreeWithoutVBOs(tmpCGO);
+	tmpCGO = NULL;
 	I->std = convertcgo;
-      } else {
+      } else if (ok){
 	convertcgo = CGOSimplify(I->preshader, 0);
-	tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
+	CHECKOK(ok, convertcgo);
+	if (ok)
+	  tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
+	CHECKOK(ok, tmpCGO);
 	CGOFree(convertcgo);
+	convertcgo = NULL;
 	I->std = tmpCGO;
       }
-    } else {
+    } else if (ok){
       I->std = CGOSimplify(I->preshader, 0);
+      CHECKOK(ok, I->std);
     }
     if(I->preshader && (I->ray!=I->preshader)){
       CGOFree(I->preshader);
@@ -135,13 +159,27 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 #endif
 
   if(ray) {
+    int try_std = false;
     PRINTFD(G, FB_RepCartoon)
       " RepCartoonRender: rendering raytracable...\n" ENDFD;
 
-    if(I->ray)
-      CGORenderRay(I->ray, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
-    else if(I->std)
-      CGORenderRay(I->std, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
+    if(I->ray){
+      int rok = CGORenderRay(I->ray, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
+      if (!rok){
+	CGOFree(I->ray);
+	I->ray = NULL;
+	try_std = true;
+      }
+    } else {
+      try_std = true;
+    }
+    if(try_std && I->std){
+      ok &= CGORenderRay(I->std, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
+      if (!ok){
+	CGOFree(I->std);
+	I->std = NULL;
+      }
+    }
   } else if(G->HaveGUI && G->ValidContext) {
     int use_shader;
     use_shader = ((int) SettingGet(G, cSetting_cartoon_use_shader) &
@@ -175,8 +213,9 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
         PRINTFD(G, FB_RepCartoon)
           " RepCartoonRender: rendering GL...\n" ENDFD;
 
-        if(I->std){
+        if(ok && I->std){
 	  I->std->use_shader = use_shader;
+
 	  I->std->enable_shaders = true;
           CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
 	}
@@ -187,6 +226,14 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       }
 #endif
     }
+  }
+  if (!ok || !CGOHasOperationsOfType(I->ray, 0)){
+    CGOFree(I->ray);
+    I->ray = NULL;
+    CGOFree(I->std);
+    I->std = NULL;
+    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+    I->R.cs->Active[cRepCartoon] = false;
   }
 }
 
@@ -227,7 +274,7 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
   AtomInfoType *ai_i[MAX_RING_ATOM];
   int have_all = true;
   int all_marked = true;
-  AtomInfoType *ai = 0;
+  AtomInfoType *ai;
   int have_C4 = -1;
   int have_C4_prime = -1;
   int have_C_number = -1;
@@ -1565,6 +1612,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 			   float putty_mean, float putty_stdev, float putty_min, float putty_max,
 			   int *ring_anchor, int n_ring){
   PyMOLGlobals *G = cs->State.G;
+  int ok = true;
   CGO *cgo;
   float *h_start = NULL, *h_end = NULL;
   int b, c;
@@ -1573,7 +1621,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
   int contFlag, extrudeFlag;
   float t4[3];
   int n_p, n_pm1, n_pm2;
-  CExtrude *ex = NULL, *ex1;
+  CExtrude *ex = NULL, *ex1 = NULL;
   float f0, f1, f2, f3, f4, dev;
   int *vi, atom_index1, atom_index2;
   float *v, *v0, *v1, *v2, *v3, *v4, *vo;
@@ -1750,11 +1798,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
   if(round_helices) {
     if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
       CGOColor(cgo, 1.0, 1.0, 1.0);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
       CGODisable(cgo, GL_LIGHTING);
-#endif
 
       v1 = NULL;
       v2 = NULL;
@@ -1807,12 +1851,14 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 
   if(nAt > 1) {
     ex = ExtrudeNew(G);
-    ExtrudeAllocPointsNormalsColors(ex, cs->NIndex * (3 * sampling + 3));
+    CHECKOK(ok, ex);
+    if (ok)
+      ok &= ExtrudeAllocPointsNormalsColors(ex, cs->NIndex * (3 * sampling + 3));
   }
 
   /* process cylindrical helices first */
 
-  if((nAt > 1) && cylindrical_helices) {
+  if(ok && (nAt > 1) && cylindrical_helices) {
 
     /* this is confusing because we're borrowing Extrude's arrays 
      * for convenient storage, but not actually calling Extrude */
@@ -2034,12 +2080,13 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
           add3f(t0, t3, t3);
 
           if(uniform_color) {
-            CGOCylinderv(cgo, t3, t4, helix_radius, ex->c, ex->c);
+	    if (ok)
+	      ok &= CGOCylinderv(cgo, t3, t4, helix_radius, ex->c, ex->c);
           } else {
             subtract3f(t4, t3, t0);
             n_pm1 = n_p - 1;
             n_pm2 = n_p - 2;
-            for(b = 0; b < n_pm1; b++) {
+            for(b = 0; ok && b < n_pm1; b++) {
               if(!b) {
                 scale3f(t0, ((float) b - 0.005F) / n_pm1, t1);  /* add small overlap */
               } else {
@@ -2052,9 +2099,9 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
               }
               add3f(t3, t1, t1);
               add3f(t3, t2, t2);
-              CGOCustomCylinderv(cgo, t1, t2, helix_radius, ex->c + (b * 3),
-                                 ex->c + (b + 1) * 3, (float) (b ? 0 : cCylCapFlat),
-                                 (float) (b == n_pm2 ? cCylCapFlat : 0));
+              ok &= CGOCustomCylinderv(cgo, t1, t2, helix_radius, ex->c + (b * 3),
+				       ex->c + (b + 1) * 3, (float) (b ? 0 : cCylCapFlat),
+				       (float) (b == n_pm2 ? cCylCapFlat : 0));
             }
           }
         }
@@ -2071,7 +2118,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
     }
   }
 
-  if(nAt > 1) {
+  if(ok && nAt > 1) {
     n_p = 0;
     v = ex->p;
     vc = ex->c;
@@ -2140,7 +2187,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
           }
         }
       }
-      if(!extrudeFlag) {
+      if(ok && !extrudeFlag) {
         if((a < (nAt - 1)) && (*s == *(s + 1))) {       /* working in the same segment... */
           c1 = *(cs->Color + *atp);
           c2 = *(cs->Color + *(atp + 1));
@@ -2326,7 +2373,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
         if(n_p)
           extrudeFlag = true;
       }
-      if(extrudeFlag) {
+      if(ok && extrudeFlag) {
         contigFlag = true;
         if((a < nAt) && extrudeFlag) {
           if(*(s - 1) != *(s))
@@ -2336,20 +2383,18 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
         if((cur_car != cCartoon_skip) && (cur_car != cCartoon_skip_helix)) {
 
           if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
-            CGOColor(cgo, 0.0, 1.0, 0.0);
+            ok &= CGOColor(cgo, 0.0, 1.0, 0.0);
 
             v = ex->p;
             vn = ex->n + 3;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-            CGODisable(cgo, GL_LIGHTING);
-#endif
+	    if (ok)
+	      ok &= CGODisable(cgo, GL_LIGHTING);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-	    {
+	    if (ok) {
 	      int nverts = n_p * 2, pl = 0;
 	      float *vertexVals, *tmp_ptr;
 	      vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
+	      CHECKOK(ok, vertexVals);
 	      for(b = 0; b < n_p; b++) {
 		tmp_ptr = v;
 		vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
@@ -2361,91 +2406,122 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 	      }
 	    }
 #else
-            CGOBegin(cgo, GL_LINES);
-            for(b = 0; b < n_p; b++) {
-              CGOVertexv(cgo, v);
+	    if (ok)
+	      ok &= CGOBegin(cgo, GL_LINES);
+            for(b = 0; ok && b < n_p; b++) {
+              ok &= CGOVertexv(cgo, v);
               add3f(v, vn, t0);
-              CGOVertexv(cgo, t0);
+	      if (ok)
+		ok &= CGOVertexv(cgo, t0);
               v += 3;
               vn += 9;
             }
-            CGOEnd(cgo);
+	    if (ok)
+	      ok &= CGOEnd(cgo);
 #endif
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-            CGOEnable(cgo, GL_LIGHTING);
-#endif
+            if (ok)
+	      ok &= CGOEnable(cgo, GL_LIGHTING);
           }
 
-          ExtrudeTruncate(ex, n_p);
-          ExtrudeComputeTangents(ex);
-
+	  if (ok){
+	    ExtrudeTruncate(ex, n_p);
+	    ok &= ExtrudeComputeTangents(ex);
+	  }
+	  if (ok){
           /* set up shape */
           switch (cur_car) {
           case cCartoon_tube:
 	    if (use_cylinders_for_strands){
-	      ExtrudeCylindersToCGO(ex, cgo, tube_radius, is_picking);
+	      ok &= ExtrudeCylindersToCGO(ex, cgo, tube_radius, is_picking);
 	    } else {
-	      ExtrudeCircle(ex, tube_quality, tube_radius);
-	      ExtrudeBuildNormals1f(ex);
-	      ExtrudeCGOSurfaceTube(ex, cgo, tube_cap, NULL, use_cylinders_for_strands);
+	      ok &= ExtrudeCircle(ex, tube_quality, tube_radius);
+	      if (ok)
+		ExtrudeBuildNormals1f(ex);
+	      if (ok)
+		ok &= ExtrudeCGOSurfaceTube(ex, cgo, tube_cap, NULL, use_cylinders_for_strands);
+	      if (!ok)
+		contFlag = false;
 	    }
             break;
           case cCartoon_putty:
-            ExtrudeCircle(ex, putty_quality, putty_radius);
-            ExtrudeBuildNormals1f(ex);
-            ExtrudeComputePuttyScaleFactors(ex, obj,
-                                            SettingGet_i(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_transform),
-                                            putty_mean, putty_stdev, putty_min, putty_max,
-                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_scale_power),
-                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_range),
-                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_scale_min),
-                                            SettingGet_f(G, cs->Setting, obj->Obj.Setting,
-                                                         cSetting_cartoon_putty_scale_max),
-                                            sampling / 2);
-
-            ExtrudeCGOSurfaceVariableTube(ex, cgo, 1);
+            ok &= ExtrudeCircle(ex, putty_quality, putty_radius);
+	    if (ok)
+	      ExtrudeBuildNormals1f(ex);
+            if (ok)
+	      ok &= ExtrudeComputePuttyScaleFactors(ex, obj,
+						    SettingGet_i(G, cs->Setting, obj->Obj.Setting,
+								 cSetting_cartoon_putty_transform),
+						    putty_mean, putty_stdev, putty_min, putty_max,
+						    SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+								 cSetting_cartoon_putty_scale_power),
+						    SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+								 cSetting_cartoon_putty_range),
+						    SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+								 cSetting_cartoon_putty_scale_min),
+						    SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+								 cSetting_cartoon_putty_scale_max),
+						    sampling / 2);
+	    if (ok)
+	      ok &= ExtrudeCGOSurfaceVariableTube(ex, cgo, 1);
+            if (!ok)
+	      contFlag = false;
             break;
           case cCartoon_loop:
-            ExtrudeCircle(ex, loop_quality, loop_radius);
-            ExtrudeBuildNormals1f(ex);
-            ExtrudeCGOSurfaceTube(ex, cgo, loop_cap, NULL, use_cylinders_for_strands);
+            ok &= ExtrudeCircle(ex, loop_quality, loop_radius);
+	    if (ok)
+	      ExtrudeBuildNormals1f(ex);
+            if (ok)
+	      ok &= ExtrudeCGOSurfaceTube(ex, cgo, loop_cap, NULL, use_cylinders_for_strands);
+	    if (!ok)
+	      contFlag = false;
             break;
           case cCartoon_rect:
 	    if(highlight_color < 0) {
-              ExtrudeRectangle(ex, width, length, 0);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygon(ex, cgo, 1, NULL);
+              ok &= ExtrudeRectangle(ex, width, length, 0);
+	      if (ok)
+		ExtrudeBuildNormals2f(ex);
+	      if (ok)
+		ok &= ExtrudeCGOSurfacePolygon(ex, cgo, 1, NULL);
+	      if (!ok)
+		contFlag = false;
             } else {
-              ExtrudeRectangle(ex, width, length, 1);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygon(ex, cgo, 0, NULL);
-              ExtrudeRectangle(ex, width, length, 2);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygon(ex, cgo, 1, ColorGet(G, highlight_color));
+              ok &= ExtrudeRectangle(ex, width, length, 1);
+	      if (ok)
+		ExtrudeBuildNormals2f(ex);
+	      if (ok)
+		ok &= ExtrudeCGOSurfacePolygon(ex, cgo, 0, NULL);
+	      if (ok){
+		ok &= ExtrudeRectangle(ex, width, length, 2);
+		if (ok)
+		  ExtrudeBuildNormals2f(ex);
+		if (ok)
+		  ok &= ExtrudeCGOSurfacePolygon(ex, cgo, 1, ColorGet(G, highlight_color));
+	      }
 	    }
             break;
           case cCartoon_oval:
-            ExtrudeOval(ex, oval_quality, oval_width, oval_length);
-            ExtrudeBuildNormals2f(ex);
-            if(highlight_color < 0)
-              ExtrudeCGOSurfaceTube(ex, cgo, 1, NULL, use_cylinders_for_strands);
-            else
-              ExtrudeCGOSurfaceTube(ex, cgo, 1, ColorGet(G, highlight_color), use_cylinders_for_strands);
+            ok &= ExtrudeOval(ex, oval_quality, oval_width, oval_length);
+	    if (ok)
+	      ExtrudeBuildNormals2f(ex);
+            if (ok){
+	      if(highlight_color < 0)
+		ok &= ExtrudeCGOSurfaceTube(ex, cgo, 1, NULL, use_cylinders_for_strands);
+	      else
+		ok &= ExtrudeCGOSurfaceTube(ex, cgo, 1, ColorGet(G, highlight_color), use_cylinders_for_strands);
+	    }
+	    if (!ok)
+	      contFlag = false;
             break;
           case cCartoon_arrow:
-            ExtrudeRectangle(ex, width, length, 0);
-            ExtrudeBuildNormals2f(ex);
-            if(highlight_color < 0)
-              ExtrudeCGOSurfaceStrand(ex, cgo, sampling, NULL);
-            else
-              ExtrudeCGOSurfaceStrand(ex, cgo, sampling, ColorGet(G, highlight_color));
-
+            ok &= ExtrudeRectangle(ex, width, length, 0);
+	    if (ok)
+	      ExtrudeBuildNormals2f(ex);
+	    if (ok){
+	      if(highlight_color < 0)
+		ok &= ExtrudeCGOSurfaceStrand(ex, cgo, sampling, NULL);
+	      else
+		ok &= ExtrudeCGOSurfaceStrand(ex, cgo, sampling, ColorGet(G, highlight_color));
+	    }
 
             /* for PLY files      
                ExtrudeCircle(ex,loop_quality,loop_radius);
@@ -2455,46 +2531,74 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
             break;
           case cCartoon_dumbbell:
             if(highlight_color < 0) {
-              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 0);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, NULL);
+              ok &= ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 0);
+	      if (ok)
+		ExtrudeBuildNormals2f(ex);
+	      if (ok)
+		ok &= ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, NULL);
+	      if (!ok)
+		contFlag = false;
             } else {
-
-              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 1);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, NULL);
-
-              ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 2);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling,
-                                            ColorGet(G, highlight_color));
+              ok &= ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 1);
+	      if (ok)
+		ExtrudeBuildNormals2f(ex);
+	      if (ok)
+		ok &= ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling, NULL);
+	      if (ok)
+		ok &= ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 2);
+	      if (ok)
+		ExtrudeBuildNormals2f(ex);
+	      if (ok)
+		ok &= ExtrudeCGOSurfacePolygonTaper(ex, cgo, sampling,
+						    ColorGet(G, highlight_color));
+	      if (!ok)
+		contFlag = false;
             }
             /*
                ExtrudeCGOSurfacePolygonX(ex,cgo,1); */
 
-            ex1 = ExtrudeCopyPointsNormalsColors(ex);
-            ExtrudeDumbbellEdge(ex1, sampling, -1, dumbbell_length);
-            ExtrudeComputeTangents(ex1);
-            ExtrudeCircle(ex1, loop_quality, dumbbell_radius);
-            ExtrudeBuildNormals1f(ex1);
+	    if (ok){
+	      ex1 = ExtrudeCopyPointsNormalsColors(ex);
+	      CHECKOK(ok, ex1);
+	      if (ok)
+		ExtrudeDumbbellEdge(ex1, sampling, -1, dumbbell_length);
+	      if (ok)
+	      ok &= ExtrudeComputeTangents(ex1);
+	    }
+	    if (ok)
+	      ok &= ExtrudeCircle(ex1, loop_quality, dumbbell_radius);
+	    if (ok)
+	      ExtrudeBuildNormals1f(ex1);
 
-            ExtrudeCGOSurfaceTube(ex1, cgo, 1, NULL, use_cylinders_for_strands);
-            ExtrudeFree(ex1);
-
-            ex1 = ExtrudeCopyPointsNormalsColors(ex);
-            ExtrudeDumbbellEdge(ex1, sampling, 1, dumbbell_length);
-            ExtrudeComputeTangents(ex1);
-            ExtrudeCircle(ex1, loop_quality, dumbbell_radius);
-            ExtrudeBuildNormals1f(ex1);
-            ExtrudeCGOSurfaceTube(ex1, cgo, 1, NULL, use_cylinders_for_strands);
-            ExtrudeFree(ex1);
-
+	    if (ok)
+	      ok &= ExtrudeCGOSurfaceTube(ex1, cgo, 1, NULL, use_cylinders_for_strands);
+	    if (ok){
+	      ExtrudeFree(ex1);
+	      ex1 = ExtrudeCopyPointsNormalsColors(ex);
+	      CHECKOK(ok, ex1);
+	      if (ok)
+		ExtrudeDumbbellEdge(ex1, sampling, 1, dumbbell_length);
+	      if (ok)
+		ok &= ExtrudeComputeTangents(ex1);
+	      if (ok)
+		ok &= ExtrudeCircle(ex1, loop_quality, dumbbell_radius);
+	      if (ok)
+		ExtrudeBuildNormals1f(ex1);
+	      if (ok)
+		ok &= ExtrudeCGOSurfaceTube(ex1, cgo, 1, NULL, use_cylinders_for_strands);
+	    }
+	    if (!ok)
+	      contFlag = false;
+	    if (ex1)
+	      ExtrudeFree(ex1);
             break;
           }
+	  }
         }
         a--;                    /* undo above... */
         extrudeFlag = false;
-        ExtrudeTruncate(ex, 0);
+	if (ok)
+	  ExtrudeTruncate(ex, 0);
         n_p = 0;
         v = ex->p;
         vc = ex->c;
@@ -2503,27 +2607,26 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
     }
   }
 
-  if(nAt > 1) {
+  if(ok && nAt > 1) {
     if((cartoon_debug > 0.5) && (cartoon_debug < 2.5)) {
-      CGOColor(cgo, 1.0, 1.0, 1.0);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-      CGODisable(cgo, GL_LIGHTING);
-#endif
+      ok &= CGOColor(cgo, 1.0, 1.0, 1.0);
+      ok &= CGODisable(cgo, GL_LIGHTING);
       {
 
 #ifdef _PYMOL_CGO_DRAWARRAYS
 	int nverts = nAt * 4, pl = 0;
 	float *vertexVals, *tmp_ptr;
-	vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
+	if (ok)
+	  vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
+	CHECKOK(ok, vertexVals);
 #else
-	CGOBegin(cgo, GL_LINES);
+	if (ok)
+	  ok &= CGOBegin(cgo, GL_LINES);
 #endif
 	v1 = pv;
 	v2 = pvo;
 	v3 = tv;
-	for(a = 0; a < nAt; a++) {
+	for(a = 0; ok && a < nAt; a++) {
 #ifdef _PYMOL_CGO_DRAWARRAYS
 	  tmp_ptr = v1;
 	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
@@ -2538,28 +2641,32 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 	  tmp_ptr = t0;
 	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
 #else
-	  CGOVertexv(cgo, v1);
-	  add3f(v1, v2, t0);
-	  add3f(v2, t0, t0);
-	  CGOVertexv(cgo, t0);
-	  subtract3f(v1, v3, t0);
-	  CGOVertexv(cgo, t0);
-	  add3f(v1, v3, t0);
-	  CGOVertexv(cgo, t0);
+	  ok &= CGOVertexv(cgo, v1);
+	  if (ok){
+	    add3f(v1, v2, t0);
+	    add3f(v2, t0, t0);
+	    ok &= CGOVertexv(cgo, t0);
+	  }
+	  if (ok){
+	    subtract3f(v1, v3, t0);
+	    ok &= CGOVertexv(cgo, t0);
+	  }
+	  if (ok){
+	    add3f(v1, v3, t0);
+	    ok &= CGOVertexv(cgo, t0);
+	  }
 #endif
 	  v1 += 3;
 	  v2 += 3;
 	  v3 += 3;
 	}
 #ifndef _PYMOL_CGO_DRAWARRAYS
-	CGOEnd(cgo);
+	if (ok)
+	  ok &= CGOEnd(cgo);
 #endif
       }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-      CGOEnable(cgo, GL_LIGHTING);
-#endif
+      if (ok)
+	ok &= CGOEnable(cgo, GL_LIGHTING);
     }
   }
   if(ex) {
@@ -2567,7 +2674,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
   }
   /* draw the rings */
 
-  if(ring_anchor && n_ring) {
+  if(ok && ring_anchor && n_ring) {
     int ring_i;
     int mem[8];
     int nbr[7];
@@ -2581,12 +2688,12 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
     if(!obj->DiscreteFlag)
       atmToIdx = cs->AtmToIdx;
 
-    ObjectMoleculeUpdateNeighbors(obj);
+    ok &= ObjectMoleculeUpdateNeighbors(obj);
     neighbor = obj->Neighbor;
 
     escape_count = ESCAPE_MAX;  /* don't get bogged down with structures 
                                    that have unreasonable connectivity */
-    for(ring_i = 0; ring_i < n_ring; ring_i++) {
+    for(ring_i = 0; ok && ring_i < n_ring; ring_i++) {
       mem[0] = ring_anchor[ring_i];
       nbr[0] = neighbor[mem[0]] + 1;
       while(((mem[1] = neighbor[nbr[0]]) >= 0) &&
@@ -2683,11 +2790,47 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
     FreeP(marked);
     FreeP(moved);
   }
-  CGOStop(cgo);
+  if (ok)
+    CGOStop(cgo);
 
   FreeP(sampling_tmp);
 
+  if (!ok){
+    CGOFree(cgo);
+    cgo = NULL;
+  }
   return (cgo);
+}
+
+int RepCartoonSameVis(RepCartoon * I, CoordSet * cs)
+{
+  int same = true;
+  char *lv;
+  int a;
+  AtomInfoType *ai;
+
+  if (!I->LastVisib)
+    return false;
+  ai = cs->Obj->AtomInfo;
+  lv = I->LastVisib;
+
+  for(a = 0; a < cs->NIndex; a++) {
+    if(*(lv++) != (ai + cs->IdxToAtm[a])->visRep[cRepCartoon]) {
+      same = false;
+      break;
+    }
+  }
+  return (same);
+}
+
+void RepCartoonInvalidate(struct Rep *I, struct CoordSet *cs, int level)
+{
+  if (level >= cRepInvColor){
+    RepCartoon *rc = (RepCartoon*)I;
+    FreeP(rc->LastVisib);
+    rc->LastVisib = NULL;
+  }
+  RepInvalidate(I, cs, level);
 }
 
 Rep *RepCartoonNew(CoordSet * cs, int state)
@@ -2744,6 +2887,8 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   int n_ring = 0;
   int *nuc_flag = NULL;
   float alpha;
+  char *lv;
+  int ok = true;
   /*  short na_ladder_as_cylinders = SettingGet(G, cSetting_use_shaders) && 
     (((int)SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders)) & 1) && 
     SettingGet(G, cSetting_render_as_cylinders);*/
@@ -2824,7 +2969,9 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     ring_finder_eff = 1;
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepCartoonRender;
+  I->R.fSameVis = (int (*)(struct Rep *, struct CoordSet *)) RepCartoonSameVis;
   I->R.fFree = (void (*)(struct Rep *)) RepCartoonFree;
+  I->R.fInvalidate = RepCartoonInvalidate;
   I->R.fRecolor = NULL;
   I->R.obj = &obj->Obj;
   I->R.cs = cs;
@@ -2847,6 +2994,9 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   sstype = Alloc(int, cs->NAtIndex);
   flag_tmp = Calloc(int, cs->NAtIndex);
   nuc_flag = Calloc(int, cs->NAtIndex);
+
+  I->LastVisib = Calloc(char, cs->NAtIndex);
+  
   if(ring_mode || ladder_mode) {
     ring_anchor = VLAlloc(int, cs->NAtIndex / 10 + 1);
   }
@@ -2862,17 +3012,19 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   a2 = -1;
   parity = 1;
 
+  lv = I->LastVisib;
   for(a1 = 0; a1 < cs->NAtIndex; a1++) {
     if(obj->DiscreteFlag) {
       if(cs == obj->DiscreteCSet[a1])
         a = obj->DiscreteAtmToIdx[a1];
       else
         a = -1;
-    } else
+    } else {
       a = cs->AtmToIdx[a1];
+    }
     if(a >= 0) {
       ai = obj->AtomInfo + a1;
-
+      *(lv++) = ai->visRep[cRepCartoon] ? 1 : 0;
       if(ai->visRep[cRepCartoon]) {
         if(ring_anchor && (ai->protons != cAN_H) && ((ring_finder_eff >= 3) ||  /* all 5-7 atom rings */
                                                      ((ring_finder_eff <= 2) && /*  C4-containing rings */
@@ -3754,27 +3906,52 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   I->ray = GenerateRepCartoonCGO(cs, obj, na_strands_as_cylinders, false, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
 				 putty_mean, putty_stdev, putty_min, putty_max, ring_anchor, n_ring);
-
+  CHECKOK(ok, I->ray);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-  if (I->ray && I->ray->has_begin_end){
-    CGO *convertcgo = NULL;
-    convertcgo = CGOCombineBeginEnd(I->ray, 0);    
-    I->preshader = I->ray = convertcgo;
-  } else {
-    I->preshader = I->ray;
+  if (ok){
+    if (I->ray && I->ray->has_begin_end){
+      CGO *convertcgo = NULL;
+      convertcgo = CGOCombineBeginEnd(I->ray, 0);
+      CHECKOK(ok, convertcgo);
+      I->preshader = I->ray = convertcgo;
+    } else {
+      I->preshader = I->ray;
+    }
   }
 #else
   I->preshader = I->ray;
 #endif
 
-  {
+  if (ok){
+    int has_picking_cgo = 0;
     CGO *convertcgo = GenerateRepCartoonCGO(cs, obj, false, true, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
 					    putty_mean, putty_stdev, putty_min, putty_max, ring_anchor, n_ring);
-    I->pickingCGO = CGOSimplify(convertcgo, convertcgo->c);
-    CGOFree(convertcgo);
-    convertcgo = CGOCombineBeginEnd(I->pickingCGO, I->pickingCGO->c);
-    CGOFree(I->pickingCGO);
-    I->pickingCGO = convertcgo;
+    if (convertcgo){
+      I->pickingCGO = CGOSimplify(convertcgo, 0);
+      if (I->pickingCGO){
+	CGOFree(convertcgo);
+	convertcgo = CGOCombineBeginEnd(I->pickingCGO, 0);
+	if (convertcgo){
+	  CGOFree(I->pickingCGO);
+	  I->pickingCGO = convertcgo;
+	  has_picking_cgo = true;
+	} else {
+	  CGOFree(I->pickingCGO);
+	  I->pickingCGO = NULL;
+	}
+      } else {
+	CGOFree(convertcgo);
+	convertcgo = NULL;
+      }
+    }
+    ok &= has_picking_cgo;  /* If picking object can't load, remove object */
+  }
+
+  ok &= !G->Interrupt;
+  if (!ok){
+    /* cannot generate RepCartoon */
+    RepCartoonFree(I);
+    I = NULL;
   }
   FreeP(dv);
   FreeP(dl);

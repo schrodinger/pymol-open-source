@@ -519,39 +519,6 @@ void TetsurfGetRange(PyMOLGlobals * G,
     " IsosurfGetRange: returning range: %d %d %d %d %d %d\n",
     range[0], range[1], range[2], range[3], range[4], range[5]
     ENDFD;
-#if 0
-  float fmn[3], fmx[3];
-  float rmn[3], rmx[3];
-  float imn[3], imx[3];
-  int a;
-  transform33f3f(cryst->RealToFrac, mn, fmn);
-  transform33f3f(cryst->RealToFrac, mx, fmx);
-  for(a = 0; a < 3; a++) {
-    rmn[a] = F4(field->points, 0, 0, 0, a);
-    rmx[a] = F4(field->points,
-                field->dimensions[0] - 1,
-                field->dimensions[1] - 1, field->dimensions[2] - 1, a);
-  }
-
-  transform33f3f(cryst->RealToFrac, rmn, imn);
-  transform33f3f(cryst->RealToFrac, rmx, imx);
-
-  for(a = 0; a < 3; a++) {
-    range[a] =
-      floor(((field->dimensions[a] - 1) * (fmn[a] - imn[a]) / (imx[a] - imn[a])));
-    range[a + 3] =
-      (int) (((field->dimensions[a] - 1) * (fmx[a] - imn[a]) / (imx[a] - imn[a]))) + 1;
-    if(range[a] < 0)
-      range[a] = 0;
-    if(range[a] > field->dimensions[a])
-      range[a] = field->dimensions[a];
-    if(range[a + 3] < 0)
-      range[a + 3] = 0;
-    if(range[a + 3] > field->dimensions[a])
-      range[a + 3] = field->dimensions[a];
-  }
-#endif
-
 }
 
 

@@ -30,10 +30,13 @@
 #include "P.h"
 #include "Text.h"
 #include "Menu.h"
+#include "CGO.h"
+#include "Movie.h"
 
 #define cButModeLineHeight 12
 #define cButModeLeftMargin 2
 #define cButModeTopMargin 1
+#define cButModeBottomMargin 2
 
 struct _CButMode {
   Block *Block;
@@ -188,16 +191,14 @@ static int ButModeClick(Block * block, int button, int x, int y, int mod)
   return (1);
 }
 
-
+short ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG);
 /*========================================================================*/
-static void ButModeDraw(Block * block)
+static void ButModeDraw(Block * block ORTHOCGOARG)
 {
   PyMOLGlobals *G = block->G;
   register CButMode *I = G->ButMode;
   int x, y, a;
-  char rateStr[255];
   int mode;
-  int nf;
   float *textColor = I->Block->TextColor;
   float *textColor2 = I->TextColor2;
 
@@ -205,20 +206,18 @@ static void ButModeDraw(Block * block)
 
   if(G->HaveGUI && G->ValidContext && ((block->rect.right - block->rect.left) > 6)) {
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
-#ifdef PURE_OPENGL_ES_2      
-      /* TODO */
-#else
-      glColor3fv(I->Block->BackColor);
-#endif
-      BlockFill(I->Block);
-      BlockDrawLeftEdge(I->Block);
+      if (orthoCGO)
+	CGOColorv(orthoCGO, I->Block->BackColor);
+      else
+	glColor3fv(I->Block->BackColor);
+      BlockFill(I->Block ORTHOCGOARGVAR);
+      BlockDrawLeftEdge(I->Block ORTHOCGOARGVAR);
     } else {
-      BlockDrawLeftEdge(I->Block);
-#ifdef PURE_OPENGL_ES_2      
-      /* TODO */
-#else
-      glColor3f(0.5, 0.5, 0.5);
-#endif
+      BlockDrawLeftEdge(I->Block ORTHOCGOARGVAR);
+      if (orthoCGO)
+	CGOColor(orthoCGO, .5f, .5f, .5f);
+      else
+	glColor3f(0.5, 0.5, 0.5);
       BlockDrawTopEdge(I->Block);
       textColor2 = OrthoGetOverlayColor(G);
       textColor = textColor2;
@@ -228,41 +227,41 @@ static void ButModeDraw(Block * block)
     y = (I->Block->rect.top - cButModeLineHeight) - cButModeTopMargin;
 
     TextSetColor(G, textColor);
-    TextDrawStrAt(G, "Mouse Mode ", x + 1, y);
+    TextDrawStrAt(G, "Mouse Mode ", x + 1, y ORTHOCGOARGVAR);
     TextSetColor(G, I->TextColor3);
-    TextDrawStrAt(G, SettingGetGlobal_s(G, cSetting_button_mode_name), x + 88, y);
+    TextDrawStrAt(G, SettingGetGlobal_s(G, cSetting_button_mode_name), x + 88, y ORTHOCGOARGVAR);
     /*    TextDrawStrAt(G,"2-Bttn Selecting",x+88,y); */
     y -= cButModeLineHeight;
 
     if(SettingGetGlobal_b(G, cSetting_mouse_grid)) {
 
       TextSetColor(G, I->TextColor3);
-      TextDrawStrAt(G, "Buttons", x + 6, y);
+      TextDrawStrAt(G, "Buttons", x + 6, y ORTHOCGOARGVAR);
       TextSetColor(G, I->TextColor1);
       /*    TextDrawStrAt(G,"  Left Mddl Rght Scrl",x+48,y); */
-      TextDrawStrAt(G, "    L    M    R  Wheel", x + 43, y);
+      TextDrawStrAt(G, "    L    M    R  Wheel", x + 43, y ORTHOCGOARGVAR);
 
       y -= cButModeLineHeight;
       /*    glColor3fv(I->Block->TextColor);
          TextDrawStrAt(G,"K",x,y-4); */
       TextSetColor(G, I->TextColor3);
-      TextDrawStrAt(G, "&", x + 12, y);
-      TextDrawStrAt(G, "Keys", x + 24, y);
+      TextDrawStrAt(G, "&", x + 12, y ORTHOCGOARGVAR);
+      TextDrawStrAt(G, "Keys", x + 24, y ORTHOCGOARGVAR);
       TextSetColor(G, textColor2);
 
       TextSetPos2i(G, x + 64, y);
       for(a = 0; a < 3; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR);
+          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, I->Code[mode]);
+          TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
       }
       mode = I->Mode[12];
       if(mode < 0)
-        TextDrawStr(G, BLANK_STR);
+        TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
       else
-        TextDrawStr(G, I->Code[mode]);
+        TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
 
       y -= cButModeLineHeight;
       /*    TextSetColor(G,I->Block->TextColor);
@@ -270,91 +269,91 @@ static void ButModeDraw(Block * block)
       TextSetColor(G, I->TextColor1);
 
       TextSetColor(G, I->TextColor1);
-      TextDrawStrAt(G, "Shft ", x + 24, y);
+      TextDrawStrAt(G, "Shft ", x + 24, y ORTHOCGOARGVAR);
       TextSetColor(G, textColor2);
       TextSetPos2i(G, x + 64, y);
       for(a = 3; a < 6; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR);
+          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, I->Code[mode]);
+          TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
       }
       mode = I->Mode[13];
       if(mode < 0)
-        TextDrawStr(G, BLANK_STR);
+        TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
       else
-        TextDrawStr(G, I->Code[mode]);
+        TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
 
       y -= cButModeLineHeight;
       /*    glColor3fv(I->Block->TextColor);
          TextDrawStrAt(G,"y",x+10,y+2); */
       TextSetColor(G, I->TextColor1);
-      TextDrawStrAt(G, "Ctrl ", x + 24, y);
+      TextDrawStrAt(G, "Ctrl ", x + 24, y ORTHOCGOARGVAR);
       TextSetColor(G, textColor2);
       TextSetPos2i(G, x + 64, y);
       for(a = 6; a < 9; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR);
+          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, I->Code[mode]);
+          TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
       }
       mode = I->Mode[14];
       if(mode < 0)
-        TextDrawStr(G, BLANK_STR);
+        TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
       else
-        TextDrawStr(G, I->Code[mode]);
+        TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
       y -= cButModeLineHeight;
 
       /*    glColor3fv(I->Block->TextColor);
          TextDrawStrAt(G,"s",x+15,y+3); */
       TextSetColor(G, I->TextColor1);
       TextSetColor(G, I->TextColor1);
-      TextDrawStrAt(G, "CtSh ", x + 24, y);
+      TextDrawStrAt(G, "CtSh ", x + 24, y ORTHOCGOARGVAR);
       TextSetColor(G, textColor2);
       TextSetPos2i(G, x + 64, y);
       for(a = 9; a < 12; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR);
+          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, I->Code[mode]);
+          TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
       }
       mode = I->Mode[15];
       if(mode < 0)
-        TextDrawStr(G, BLANK_STR);
+        TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
       else
-        TextDrawStr(G, I->Code[mode]);
+        TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
 
       y -= cButModeLineHeight;
 
       TextSetColor(G, I->Block->TextColor);
       TextSetColor(G, I->TextColor1);
-      TextDrawStrAt(G, " SnglClk", x - 8, y);
+      TextDrawStrAt(G, " SnglClk", x - 8, y ORTHOCGOARGVAR);
       TextSetColor(G, textColor2);
       TextSetPos2i(G, x + 64, y);
       for(a = 19; a < 22; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR);
+          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, I->Code[mode]);
+          TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
       }
       TextSetColor(G, I->Block->TextColor);
       y -= cButModeLineHeight;
 
       TextSetColor(G, I->Block->TextColor);
       TextSetColor(G, I->TextColor1);
-      TextDrawStrAt(G, " DblClk", x, y);
+      TextDrawStrAt(G, " DblClk", x, y ORTHOCGOARGVAR);
       TextSetColor(G, textColor2);
       TextSetPos2i(G, x + 64, y);
       for(a = 16; a < 19; a++) {
         mode = I->Mode[a];
         if(mode < 0)
-          TextDrawStr(G, BLANK_STR);
+          TextDrawStr(G, BLANK_STR ORTHOCGOARGVAR);
         else
-          TextDrawStr(G, I->Code[mode]);
+          TextDrawStr(G, I->Code[mode] ORTHOCGOARGVAR);
       }
       TextSetColor(G, I->Block->TextColor);
       y -= cButModeLineHeight;
@@ -364,93 +363,119 @@ static void ButModeDraw(Block * block)
     {
       TextSetColor(G, textColor);
       if(ButModeTranslate(G, P_GLUT_SINGLE_LEFT, 0) == cButModePickAtom) {
-        TextDrawStrAt(G, "Picking ", x, y);
+        TextDrawStrAt(G, "Picking ", x, y ORTHOCGOARGVAR);
         TextSetColor(G, I->TextColor3);
-        TextDrawStrAt(G, "Atoms (and Joints)", x + 64, y);
+        TextDrawStrAt(G, "Atoms (and Joints)", x + 64, y ORTHOCGOARGVAR);
       } else {
-        TextDrawStrAt(G, "Selecting ", x, y);
+        TextDrawStrAt(G, "Selecting ", x, y ORTHOCGOARGVAR);
         TextSetColor(G, I->TextColor3);
         switch (SettingGetGlobal_i(G, cSetting_mouse_selection_mode)) {
         case 0:
-          TextDrawStrAt(G, "Atoms", x + 80, y);
+          TextDrawStrAt(G, "Atoms", x + 80, y ORTHOCGOARGVAR);
           break;
         case 1:
-          TextDrawStrAt(G, "Residues", x + 80, y);
+          TextDrawStrAt(G, "Residues", x + 80, y ORTHOCGOARGVAR);
           break;
         case 2:
-          TextDrawStrAt(G, "Chains", x + 80, y);
+          TextDrawStrAt(G, "Chains", x + 80, y ORTHOCGOARGVAR);
           break;
         case 3:
-          TextDrawStrAt(G, "Segments", x + 80, y);
+          TextDrawStrAt(G, "Segments", x + 80, y ORTHOCGOARGVAR);
           break;
         case 4:
-          TextDrawStrAt(G, "Objects", x + 80, y);
+          TextDrawStrAt(G, "Objects", x + 80, y ORTHOCGOARGVAR);
           break;
         case 5:
-          TextDrawStrAt(G, "Molecules", x + 80, y);
+          TextDrawStrAt(G, "Molecules", x + 80, y ORTHOCGOARGVAR);
           break;
         case 6:
-          TextDrawStrAt(G, "C-alphas", x + 80, y);
+          TextDrawStrAt(G, "C-alphas", x + 80, y ORTHOCGOARGVAR);
           break;
         }
-      }
-    }
-
-    TextSetColor(G, I->Block->TextColor);
-    y -= cButModeLineHeight;
-    {
-      int buffer;
-#ifndef _PYMOL_GL_DRAWARRAYS
-      /* TODO : Why do we only do this for the back right buffer,
-	 for performance? */
-      glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
-      if(buffer != GL_BACK_RIGHT) {
-#else
-	(void) buffer;
-#endif
-        if(I->Delay <= 0.0F) {
-          if(I->Samples > 0.0F)
-            I->RateShown = (I->Rate / I->Samples);
-          else
-            I->RateShown = 0.0F;
-          I->Delay = 0.2F;
-        }
-#ifndef _PYMOL_GL_DRAWARRAYS
-      }
-#endif
-    }
-
-    {
-      int has_movie = false;
-      int frame_rate = SettingGetGlobal_b(G, cSetting_show_frame_rate);
-      nf = SceneGetNFrame(G, &has_movie);
-      if(nf == 0)
-        nf = 1;
-      TextSetColor(G, textColor);
-      if(has_movie) {
-        TextDrawStrAt(G, "Frame ", x, y);
-      } else {
-        TextDrawStrAt(G, "State ", x, y);
-      }
-      TextSetColor(G, textColor2);
-      sprintf(rateStr, "%4d/%4d ", SceneGetFrame(G) + 1, nf);
-      TextDrawStrAt(G, rateStr, x + 48, y);
-      if(frame_rate) {
-        sprintf(rateStr,"%5.1f",I->RateShown);
-        TextDrawStrAt(G, rateStr, x + 144, y);
-        TextSetColor(G, textColor);
-        TextDrawStrAt(G, "Hz ", x + 192, y);
-        TextSetColor(G, textColor2);
-      } else if(has_movie) {
-        TextSetColor(G, textColor);
-        TextDrawStrAt(G, "State ", x + 128, y);
-        TextSetColor(G, textColor2);
-        sprintf(rateStr," %4d",SceneGetState(G)+1);
-        TextDrawStrAt(G, rateStr, x + 168, y);
-      } else if(frame_rate) {
       }
     }
   }
+  if (!ORTHOCGOARGB || !(SettingGetGlobal_b(G, cSetting_show_frame_rate) || MoviePlaying(G))) {
+    ButModeDrawFastImpl(block, true ORTHOCGOARGVAR);
+  }
+}
+
+short ButModeDrawFast(Block * block ORTHOCGOARG){
+  return ButModeDrawFastImpl(block, false ORTHOCGOARGVAR);
+}
+
+short ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG)
+{
+  PyMOLGlobals *G = block->G;
+  register CButMode *I = G->ButMode;
+  int x, y;
+  float *textColor = I->Block->TextColor;
+  float *textColor2 = I->TextColor2;
+
+  if (!definitely && (!(SettingGetGlobal_b(G, cSetting_show_frame_rate) || MoviePlaying(G)))) {
+    return false;
+  }
+
+  x = I->Block->rect.left + cButModeLeftMargin;
+  y = I->Block->rect.bottom + cButModeLineHeight + cButModeBottomMargin;
+  
+  TextSetColor(G, I->Block->TextColor);
+  y -= cButModeLineHeight;
+  {
+    int buffer;
+#ifndef _PYMOL_GL_DRAWARRAYS
+    /* TODO : Why do we only do this for the back right buffer,
+       for performance? */
+    glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
+    if(buffer != GL_BACK_RIGHT) {
+#else
+      (void) buffer;
+#endif
+      if(I->Delay <= 0.0F) {
+	if(I->Samples > 0.0F)
+	  I->RateShown = (I->Rate / I->Samples);
+	else
+	  I->RateShown = 0.0F;
+	I->Delay = 0.2F;
+      }
+#ifndef _PYMOL_GL_DRAWARRAYS
+    }
+#endif
+  }
+  
+  {
+    int has_movie = false;
+    int frame_rate = SettingGetGlobal_b(G, cSetting_show_frame_rate);
+    int nf;
+    char rateStr[255];
+    nf = SceneGetNFrame(G, &has_movie);
+    if(nf == 0)
+      nf = 1;
+    TextSetColor(G, textColor);
+    if(has_movie) {
+      TextDrawStrAt(G, "Frame ", x, y ORTHOCGOARGVAR);
+    } else {
+      TextDrawStrAt(G, "State ", x, y ORTHOCGOARGVAR);
+    }
+    TextSetColor(G, textColor2);
+    sprintf(rateStr, "%4d/%4d ", SceneGetFrame(G) + 1, nf);
+    TextDrawStrAt(G, rateStr, x + 48, y ORTHOCGOARGVAR);
+    if(frame_rate) {
+      sprintf(rateStr,"%5.1f",I->RateShown);
+      TextDrawStrAt(G, rateStr, x + 144, y ORTHOCGOARGVAR);
+      TextSetColor(G, textColor);
+      TextDrawStrAt(G, "Hz ", x + 192, y ORTHOCGOARGVAR);
+      TextSetColor(G, textColor2);
+    } else if(has_movie) {
+      TextSetColor(G, textColor);
+      TextDrawStrAt(G, "State ", x + 128, y ORTHOCGOARGVAR);
+      TextSetColor(G, textColor2);
+      sprintf(rateStr," %4d",SceneGetState(G)+1);
+      TextDrawStrAt(G, rateStr, x + 168, y ORTHOCGOARGVAR);
+    } else if(frame_rate) {
+    }
+  }
+  return true;
 }
 
 
@@ -535,6 +560,7 @@ int ButModeInit(PyMOLGlobals * G)
     I->Block = OrthoNewBlock(G, NULL);
     I->Block->fClick = ButModeClick;
     I->Block->fDraw = ButModeDraw;
+    I->Block->fFastDraw = ButModeDrawFast;
     I->Block->fReshape = BlockReshape;
     I->Block->active = true;
 

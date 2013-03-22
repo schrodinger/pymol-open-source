@@ -53,65 +53,6 @@ void ShakerReset(CShaker * I)
   I->NTorsCon = 0;
 }
 
-#if 0
-
-/* this code moved into Sculpt.c */
-
-float ShakerDoDist(float target, float *v0, float *v1, float *d0to1, float *d1to0,
-                   float wt)
-{
-  float d[3], push[3];
-  float len, dev, dev_2, sc, result;
-
-  subtract3f(v0, v1, d);
-  len = (float) length3f(d);
-  dev = target - len;
-  if((result = fabs(dev)) > R_SMALL8) {
-    dev_2 = wt * dev * 0.5F;
-    if(len > R_SMALL8) {        /* nonoverlapping */
-      sc = dev_2 / len;
-      scale3f(d, sc, push);
-      add3f(push, d0to1, d0to1);
-      subtract3f(d1to0, push, d1to0);
-    } else {                    /* overlapping, so just push in a random direction */
-      float rd[3];
-      get_random3f(rd);
-      d0to1[0] -= rd[0] * dev_2;
-      d1to0[0] += rd[0] * dev_2;
-      d0to1[1] -= rd[1] * dev_2;
-      d1to0[1] += rd[1] * dev_2;
-      d0to1[2] -= rd[2] * dev_2;
-      d1to0[2] += rd[2] * dev_2;
-    }
-  } else
-    result = 0.0;
-  return result;
-}
-
-float ShakerDoDistLimit(float target, float *v0, float *v1, float *d0to1, float *d1to0,
-                        float wt)
-{
-  float d[3], push[3];
-  float len, dev, dev_2, sc;
-
-  if(wt == 0.0F)
-    return 0.0F;
-  subtract3f(v0, v1, d);
-  len = (float) length3f(d);
-  dev = target - len;
-  if(dev < 0.0F) {              /* assuming len is non-zero since it is above target */
-    dev_2 = wt * dev * 0.5F;
-    sc = dev_2 / len;
-    scale3f(d, sc, push);
-    add3f(push, d0to1, d0to1);
-    subtract3f(d1to0, push, d1to0);
-    return -dev;
-  } else
-    return 0.0F;
-}
-
-#endif
-
 void ShakerAddDistCon(CShaker * I, int atom0, int atom1, float target, int type, float wt)
 {
   ShakerDistCon *sdc;

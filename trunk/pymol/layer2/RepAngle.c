@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"ShaderMgr.h"
 #include"CGO.h"
+#include"CoordSet.h"
 
 typedef struct RepAngle {
   Rep R;
@@ -66,6 +67,7 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   float *vc;
   int round_ends;
   float line_width;
+  int ok = true;
   int color =
     SettingGet_color(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_angle_color);
   I->linewidth = line_width = 
@@ -92,12 +94,12 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
     v = I->V;
     c = I->N;
 
-    while(c > 0) {
+    while(ok && c > 0) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]); */
       if(round_ends) {
-        ray->fSausage3fv(ray, v, v + 3, radius, vc, vc);
+        ok &= ray->fSausage3fv(ray, v, v + 3, radius, vc, vc);
       } else {
-        ray->fCustomCylinder3fv(ray, v, v + 3, radius, vc, vc, cCylCapFlat, cCylCapFlat);
+        ok &= ray->fCustomCylinder3fv(ray, v, v + 3, radius, vc, vc, cCylCapFlat, cCylCapFlat);
       }
       v += 6;
       c -= 2;
@@ -127,7 +129,9 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
-	  I->shaderCGO->use_shader = true;
+	  CHECKOK(ok, I->shaderCGO);
+	  if (ok)
+	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
 	} else {
 	  CShaderPrg *shaderPrg;
@@ -142,13 +146,13 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
 	    }
 	    if (!round_ends){
-	      CShaderPrg_Set1f(shaderPrg, "flat_caps", 1.f);
+	      CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 0.f);
 	    }
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
 	  }
-
+	  if (!shaderPrg) return;
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 
 	  CShaderPrg_Disable(shaderPrg);
@@ -169,8 +173,10 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 #endif
 
       if (generate_shader_cgo){
-	CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
-	CGOResetNormal(I->shaderCGO, true);
+	if (ok)
+	  ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
+	if (ok)
+	  ok &= CGOResetNormal(I->shaderCGO, true);
       } else {
 	if(info->width_scale_flag) {
 	  glLineWidth(line_width * info->width_scale);
@@ -181,50 +187,47 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
       }
 
       if (generate_shader_cgo){
-	if(color >= 0){
-	  CGOColorv(I->shaderCGO, ColorGet(G, color));
-	} else if (I->Obj && I->Obj->Color >= 0){
-	  CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
+	if (ok){
+	  if(color >= 0){
+	    ok &= CGOColorv(I->shaderCGO, ColorGet(G, color));
+	  } else if (I->Obj && I->Obj->Color >= 0){
+	    ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
+	  }
 	}
 	v = I->V;
 	c = I->N;
 	if (dash_as_cylinders){
 	  float *origin = NULL, axis[3];
-	  while(c > 0) {
+	  while(ok && c > 0) {
 	    origin = v;
 	    v += 3;
 	    axis[0] = v[0] - origin[0];
 	    axis[1] = v[1] - origin[1];
 	    axis[2] = v[2] - origin[2];
 	    v += 3;
-	    CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
+	    ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
 	    c -= 2;
 	  }
-	} else {
-	  CGOBegin(I->shaderCGO, GL_LINES);
-	  while(c > 0) {
-	    CGOVertexv(I->shaderCGO, v);
+	} else if (ok) {
+	  ok &= CGOBegin(I->shaderCGO, GL_LINES);
+	  while(ok && c > 0) {
+	    ok &= CGOVertexv(I->shaderCGO, v);
 	    v += 3;
-	    CGOVertexv(I->shaderCGO, v);
+	    if (ok)
+	      ok &= CGOVertexv(I->shaderCGO, v);
 	    v += 3;
 	    c -= 2;
 	  }
-	  CGOEnd(I->shaderCGO);
+	  if (ok)
+	    ok &= CGOEnd(I->shaderCGO);
 	}
       } else {
 	if(color >= 0){
-#ifdef PURE_OPENGL_ES_2
-	  /* TODO */
-#else
 	  glColor3fv(ColorGet(G, color));
-#endif
 	}
         v = I->V;
         c = I->N;
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
         if(!info->line_lighting)
           glDisable(GL_LIGHTING);
 #ifdef _PYMOL_GL_DRAWARRAYS
@@ -258,35 +261,42 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
         glEnd();
 #endif
         glEnable(GL_LIGHTING);
-#endif
       }
       if (use_shader) {
 	if (generate_shader_cgo){
 	  CGO *convertcgo = NULL;
-	  CGOStop(I->shaderCGO);
+	  if (ok)
+	    ok &= CGOStop(I->shaderCGO);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  if (ok)
+	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);    
 	  I->shaderCGO = convertcgo;
+	  convertcgo = NULL;
 #else
 	  (void)convertcgo;
 #endif
 #ifdef _PYMOL_CGO_DRAWBUFFERS
-	  if (dash_as_cylinders){
-	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	  } else {
-	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	  if (ok){
+	    if (dash_as_cylinders){
+	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
+	    } else {
+	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
+	    }
 	  }
+	  CHECKOK(ok, convertcgo);
 	  if (convertcgo){
 	    CGOFree(I->shaderCGO);
 	    I->shaderCGO = convertcgo;
+	    convertcgo = NULL;
 	  }
 #else
 	  (void)convertcgo;
 #endif
 	}
 	
-	{
+	if (ok) {
 	  CShaderPrg *shaderPrg;
 	  if (dash_as_cylinders){
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
@@ -299,11 +309,11 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
 	    }
 	    if (!round_ends){
-	      CShaderPrg_Set1f(shaderPrg, "flat_caps", 1.f);
+	      CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 0.f);
 	    }
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
 	  }	 
 
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
@@ -319,9 +329,15 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 #endif
     }
   }
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->ds->Rep[cRepAngle] = NULL;
+    RepAngleFree(I);
+  }
 }
 
-Rep *RepAngleNew(DistSet * ds)
+Rep *RepAngleNew(DistSet * ds, int state)
 {
   PyMOLGlobals *G = ds->State.G;
   int a;
@@ -329,12 +345,14 @@ Rep *RepAngleNew(DistSet * ds)
   float *v, *v1, *v2, *v3, *v4, d1[3], d2[3], d3[3], n1[3], n3[3], l1, l2, x[3], y[3];
   float length, radius, angle, pos, phase;
   float dash_len, dash_gap, dash_sum;
+  int ok = true;
 
   OOAlloc(G, RepAngle);
-
+  CHECKOK(ok, I);
+  
   PRINTFD(G, FB_RepAngle)
     "RepAngleNew: entered.\n" ENDFD;
-  if(!ds->NAngleIndex) {
+  if(!ok || !ds->NAngleIndex) {
     OOFreeP(I);
     return (NULL);
   }
@@ -361,8 +379,8 @@ Rep *RepAngleNew(DistSet * ds)
   n = 0;
   if(ds->NAngleIndex) {
     I->V = VLAlloc(float, ds->NAngleIndex * 10);
-
-    for(a = 0; a < ds->NAngleIndex; a = a + 5) {
+    CHECKOK(ok, I->V);
+    for(a = 0; ok && a < ds->NAngleIndex; a = a + 5) {
       v1 = ds->AngleCoord + 3 * a;
       v2 = ds->AngleCoord + 3 * (a + 1);
       v3 = ds->AngleCoord + 3 * (a + 2);
@@ -397,25 +415,30 @@ Rep *RepAngleNew(DistSet * ds)
       scale3f(n3, radius, y);
 
       if(v4[0] != 0.0F) {       /* line 1 flag */
-
         VLACheck(I->V, float, (n * 3) + 5);
-        v = I->V + n * 3;
-        copy3f(v1, v);
-        v += 3;
-        copy3f(v2, v);
-        n += 2;
+	CHECKOK(ok, I->V);
+	if (ok){
+	  v = I->V + n * 3;
+	  copy3f(v1, v);
+	  v += 3;
+	  copy3f(v2, v);
+	  n += 2;
+	}
       }
-
-      if(v4[1] != 0.0F) {       /* line 2 flag */
-
-        VLACheck(I->V, float, (n * 3) + 5);
-        v = I->V + n * 3;
-        copy3f(v3, v);
-        v += 3;
-        copy3f(v2, v);
-        n += 2;
+      
+      if(ok && v4[1] != 0.0F) {       /* line 2 flag */
+	VLACheck(I->V, float, (n * 3) + 5);
+	CHECKOK(ok, I->V);
+	if (ok){
+	  v = I->V + n * 3;
+	  copy3f(v3, v);
+	  v += 3;
+	  copy3f(v2, v);
+	  n += 2;
+	}
       }
-
+      if (!ok)
+	break;
       /* now we have a relevant orthogonal axes */
 
       length = (float) (angle * radius * 2);
@@ -432,12 +455,15 @@ Rep *RepAngleNew(DistSet * ds)
         float cur_angle;
         float cons_pos1, cons_pos2;
 
-        while(pos < length) {
+        while(ok && pos < length) {
 
           mod_pos = (float) fmod(pos + phase, dash_sum);
 
           VLACheck(I->V, float, (n * 3) + 5);
+	  CHECKOK(ok, I->V);
 
+	  if (!ok)
+	    break;
           cons_pos1 = pos;
           if(cons_pos1 < 0.0F)
             cons_pos1 = 0.0F;
@@ -468,8 +494,15 @@ Rep *RepAngleNew(DistSet * ds)
         }
       }
     }
-    VLASize(I->V, float, n * 3);
-    I->N = n;
+    if (ok)
+      VLASize(I->V, float, n * 3);
+    CHECKOK(ok, I->V);
+    if (ok)
+      I->N = n;
+  }
+  if (!ok){
+    RepAngleFree(I);
+    I = NULL;
   }
   return ((void *) (struct Rep *) I);
 }
