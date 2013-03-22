@@ -44,8 +44,11 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
             pass
         self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
 
-    multiprocessing.pool.ThreadPool().map(_single_compile, objects)
+    pmap(_single_compile, objects)
     return objects
+
+jobs = int(os.getenv('JOBS', 0))
+pmap = map if jobs == 1 else multiprocessing.pool.ThreadPool(jobs or None).map
 
 distutils.ccompiler.CCompiler.compile = CCompiler_compile
 
@@ -216,7 +219,12 @@ else: # unix style (linux, mac, ...)
 
     libs += ["png", "freetype"]
 
-    for prefix in ["/usr", "/usr/X11", "/opt/local", "/sw"]:
+    try:
+        prefix_path = os.environ['PREFIX_PATH'].split(os.pathsep)
+    except KeyError:
+        prefix_path = ["/usr", "/usr/X11", "/opt/local", "/sw"]
+
+    for prefix in prefix_path:
         inc_dirs += filter(os.path.isdir, [prefix + s for s in ["/include", "/include/freetype2"]])
         lib_dirs += filter(os.path.isdir, [prefix + s for s in ["/lib"]])
 
