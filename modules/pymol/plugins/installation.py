@@ -202,7 +202,7 @@ def installPluginFromFile(ofile, parent=None):
         plugdir = user_plugdir
 
     if plugdir not in plugdirs:
-        set_startup_path([plugdir] + plugdirs)
+        set_startup_path([plugdir] + get_startup_path(True))
 
     def remove_if_exists(pathname, ask):
         '''
@@ -248,6 +248,8 @@ def installPluginFromFile(ofile, parent=None):
             raise InstallationCancelled
 
         remove_if_exists(pathname, False)
+
+    name = "unknown" # fallback for error message
 
     temppathnames = []
     try:

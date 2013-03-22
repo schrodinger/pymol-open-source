@@ -371,23 +371,11 @@ void UtilSortIndexGlobals(PyMOLGlobals *G,int n,void *array,int *x,UtilOrderFnGl
 
 #define MAX_BIN = 100
 
-#if 0
-static int ZOrderFn(float *array,int l,int r)
-{
-  return (array[l]<=array[r]);
-}
-
-static int ZRevOrderFn(float *array,int l,int r)
-{
-  return (array[l]>=array[r]);
-}
-#endif
-
 #ifndef R_SMALL8
 #define R_SMALL8 0.00000001F
 #endif
 
-void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
+int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
 {
   /* approximate sort, for quick handling of transparency values */
   /* this sort uses 2 arrays start1 and next1 to keep track of */
@@ -404,15 +392,23 @@ void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
   /* when the first index is found in start1.  If there are few collisions, then */
   /* the majority of the start1 array is used. The total number of items used in */
   /* both arrays will always be the number of values, i.e., n. */
+  int ok = true;
   if(n>0) {
     register float min,max,*f,v;
     register float range, scale;
     register int a;
-    register int *start1 = Calloc(int,n*2);
-    register int *next1 = start1 + n;
+    register int *start1;
+    register int *next1;
     register int idx1;
     register int n_minus_one;
 
+    start1 = Calloc(int,n*2);
+    CHECKOK(ok, start1);
+    if (!ok){
+      return false;
+    }
+
+    next1 = start1 + n;
     max = (min = array[0]);
     f = array + 1;
     for(a=1;a<n;a++) {
@@ -463,73 +459,8 @@ void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
     }
     mfree(start1);
   }
+  return true;
 }
-
-#if 0
-
-/* nested sort code not used */
-            register int idx2;
-            register int nest_cnt = 0;
-
-              if(0) {
-                int *start2 = Alloc(int,n);
-                int *next2 = Alloc(int,n);
-
-                min = array[idx1];
-                max = array[idx1];
-                start2[nest_cnt] = 0;
-                nest_cnt++;
-                while(1) {
-                  idx1 = next1[idx1] - 1;
-                  if(idx1<0) break;
-                  v = array[idx1];
-                  start2[nest_cnt] = 0;
-                  if(min>v) min=v;
-                  if(max<v) max=v;
-                  nest_cnt++;
-                }
-                range = (max-min)*1.0001F;
-                if(range<R_SMALL8) {
-                  idx1 = cur1 - 1;
-                  while(idx1>0) {
-                    x[c] = idx1;
-                    c++;
-                    idx1 = next1[idx1] - 1;
-                  }
-                } else {
-                  scale = nest_cnt/range;
-                  idx1 = cur1 - 1;
-                  /* hash by value */
-                  if(forward) {
-                    while(idx1>=0) {
-                      idx2 = (int)((array[idx1]-min)*scale);
-                      next2[idx1] = start2[idx2];
-                      start2[idx2] = idx1 + 1;
-                      idx1 = next1[idx1] - 1;
-                    }
-                  } else {
-                    n_minus_one = nest_cnt-1;
-                    while(idx1>=0) {
-                      idx2 = n_minus_one - (int)((array[idx1]-min)*scale);
-                      next2[idx1] = start2[idx2];
-                      start2[idx2] = idx1 + 1;
-                      idx1 = next1[idx1] - 1;
-                    }
-                  }
-                  /* read out in value order */
-                  { 
-                    register int b;
-                    for(b=0;b<nest_cnt;b++) {
-                      idx2 = start2[b] - 1;
-                      while(idx2>=0) {
-                        x[c] = idx2;
-                        c++;
-                        idx2 = next2[idx2] - 1;
-                      }
-                    }
-                  }
-
-#endif
 
 void UtilSortInPlace(PyMOLGlobals *G,void *array,int nItem,
 					 unsigned int itemSize,

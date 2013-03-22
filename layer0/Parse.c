@@ -137,7 +137,61 @@ char *ParseAlphaCopy(char *q, char *p, int n)
   *q = 0;
   return p;
 }
-
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+/* ParseFloat3List: scan in Python-like list of 3 floats */
+int ParseFloat3List(char *parg, float *vals){
+  char buf[256], blen;
+  int cont = 1;
+  char *p = parg;
+  int pl = 0, vpl = 0, i;
+  char *npl;
+  double dval;
+  while (cont){
+    switch(p[pl]){
+    case ' ':
+      pl++;
+      break;
+    default:
+      cont = 0;
+    }
+  }
+  if (p[pl] == '[') pl++;
+  cont = 1;
+  while (vpl<3){
+    while (p[pl] == ' '){
+      pl++;
+    }
+    if (!p[pl])
+      break;
+    npl = strchr(&p[pl], ',');
+    if (npl){
+      blen = (npl- &p[pl] );
+      strncpy(buf, &p[pl], blen);
+      buf[blen] = 0;
+      for (i=0; i<blen; i++){
+	if (!isdigit(buf[i]) && buf[i]!='.'){
+	  cont = 0;
+	}
+      }
+    } else {
+      strcpy(buf, &p[pl]);
+      blen = strlen(buf);
+      if (buf[blen-1]==']')
+	buf[blen-1] = 0;
+    }
+    cont &= sscanf(buf, "%lf", &dval);
+    if (!cont) break;
+    vals[vpl++] = (float)dval;
+    if (npl){
+      pl = npl-p + 1;
+    } else {
+      break;
+    }
+  }
+  return vpl==3;
+}
 
 /*========================================================================*/
 char *ParseWordCopy(char *q, char *p, int n)

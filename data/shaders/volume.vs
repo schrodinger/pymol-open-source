@@ -1,4 +1,7 @@
 varying float fog;
+uniform float g_Fog_end;
+uniform float g_Fog_scale;
+varying vec2 bgTextureLookup;
 
 void main()
 {
@@ -7,5 +10,6 @@ void main()
   gl_ClipVertex = vertex;
   gl_Position = ftransform();
   gl_FogFragCoord = -vertex.z;
-  fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;
+  fog = (g_Fog_end - gl_FogFragCoord) * g_Fog_scale;
+  bgTextureLookup = (gl_Position.xy/gl_Position.w) / 2.0 + 0.5;
 }

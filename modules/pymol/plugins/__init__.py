@@ -17,7 +17,7 @@ from .legacysupport import *
 PYMOLPLUGINSRC = os.path.expanduser('~/.pymolpluginsrc.py')
 
 preferences = {
-    'verbose': True,
+    'verbose': False,
     'instantsave': True,
 }
 
@@ -33,12 +33,15 @@ def is_verbose(debug=0):
         return True
     return verbose and pymol.invocation.options.show_splash
 
-def get_startup_path():
+def get_startup_path(useronly=False):
+    if useronly:
+        # assume last item is always from installation directory
+        return startup.__path__[:-1]
     return startup.__path__
 
 def set_startup_path(p, autosave=True):
-    if isinstance(p, list) and len(p) > 0:
-        startup.__path__ = p
+    if isinstance(p, list):
+        startup.__path__[:-1] = p
         if autosave:
             set_pref_changed()
     else:
@@ -66,7 +69,7 @@ def pref_save(filename=PYMOLPLUGINSRC, quiet=1):
     print >> f, '  import', __name__
     print >> f, '  ' + __name__ + '.autoload =', repr(autoload)
     print >> f, '  ' + __name__ + '.preferences =', repr(preferences)
-    print >> f, '  ' + __name__ + '.set_startup_path(', repr(get_startup_path()), ', False)'
+    print >> f, '  ' + __name__ + '.set_startup_path(', repr(get_startup_path(True)), ', False)'
     print >> f, 'except:'
     print >> f, '  import os'
     print >> f, '  print "Error while loading " + os.path.abspath(__script__)'
@@ -234,9 +237,9 @@ class PluginInfo(object):
         try:
             # overload cmd.extend to register commands
             extend_orig = cmd.extend
-            def extend_overload(name, function):
-                extend_orig(name, function)
-                self.commands.append(name)
+            def extend_overload(a, b=None):
+                self.commands.append(a if b else a.__name__)
+                return extend_orig(a, b)
             cmd.extend = extend_overload
 
             # do not use self.loaded here

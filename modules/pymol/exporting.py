@@ -315,9 +315,12 @@ ARGUMENTS
 
     filename = string: file path to be written
     
-    width = integer: width in pixels {default: 0 (current)}
+    width = integer or string: width in pixels (without units), inches (in)
+    or centimeters (cm). If unit suffix is given, dpi argument is required
+    as well. If only one of width or height is given, the aspect ratio of
+    the viewport is preserved. {default: 0 (current)}
 
-    height = integer: height in pixels {default: 0 (current)}
+    height = integer or string: height (see width) {default: 0 (current)}
 
     dpi = float: dots-per-inch {default -1.0 (unspecified)}
 
@@ -332,8 +335,6 @@ EXAMPLES
 NOTES
 
     PNG is the only image format supported by PyMOL.
-
-    The width and height arguments support optional units "in" and "cm".
 
 SEE ALSO
 

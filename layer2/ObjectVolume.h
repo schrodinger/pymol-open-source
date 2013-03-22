@@ -47,7 +47,7 @@ typedef struct {
   WordType caption;
   float AltLevel;
   float Corner[24];
-  int textures[3];
+  int textures[2];
   CField *volume;
   float *Histogram;
   /* not stored */

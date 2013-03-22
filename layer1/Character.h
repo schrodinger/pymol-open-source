@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include "Pixmap.h"
 #include "PyMOLGlobals.h"
+#include "Font.h"
 
 typedef unsigned char CharColor[4];
 
@@ -46,6 +47,8 @@ typedef struct {
   CharUnion u;
 } CharFngrprnt;
 
+#define EXTENT_SIZE 4
+
 typedef struct {
   int Active;
   CPixmap Pixmap;
@@ -55,7 +58,7 @@ typedef struct {
   float XOrig, YOrig;
   int Next, Prev, HashNext, HashPrev;
   CharFngrprnt Fngrprnt;
-  float extent[2];              /* texture extent */
+  float extent[EXTENT_SIZE];              /* texture extent */
 } CharRec;
 
 struct _CCharacter {
@@ -98,7 +101,7 @@ void CharacterSetRetention(PyMOLGlobals * G, int retail_all);
 unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals * G, int id);
 
 void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info);
-void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id);
+void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short isworldlabel SHADERCGOARG);
 void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info);
 
 #endif

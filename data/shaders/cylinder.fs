@@ -4,12 +4,15 @@
 uniform bool lighting_enabled;
 
 uniform float fog_enabled;
+
+uniform sampler2D bgTextureMap;
+uniform vec3 fogSolidColor;
+uniform float fogIsSolidColor;
+
 uniform bool bg_gradient;
-uniform vec3 fog_color_top;
-uniform vec3 fog_color_bottom;
 uniform float inv_height;
 uniform float ortho;
-uniform float flat_caps;
+uniform float no_flat_caps;
 uniform bool filter_front_facing;
 uniform bool two_sided_lighting_enabled;
 uniform int light_count;
@@ -19,10 +22,9 @@ uniform int spec_count;
 uniform float spec_value;
 uniform float spec_value_0;
 uniform float half_bond;
-uniform int stereo_flag;
-uniform mat3 matR;
-uniform mat3 matL;
-uniform float gamma;
+
+#include ANAGLYPH_HEADER
+
 //varying vec3 point; // surface point
 //varying vec3 axis; // cylinder axis
 //varying vec3 base; // cylinder base
@@ -55,25 +57,32 @@ varying vec4 packed_data_5 ;
 varying vec4 color1;
 varying vec4 color2;
 
-vec4 ComputeColorForLight(vec3 N, vec3 L, vec3 H, vec4 ambient, vec4 diffuse, float spec, float shine, vec4 color){
-  float NdotL, NdotH;
-  vec4 ret_val = vec4(0.);
-  ret_val += ambient * color;
-  NdotL = dot(N, L);
-  if (NdotL > 0.0) {
-    ret_val += diffuse * NdotL * color;
-    NdotH = max(dot(N, H), 0.0);
-    ret_val += spec * pow(NdotH, shine);
-  }
-  return ret_val;
-}
+uniform float g_Fog_end;
+uniform float g_Fog_scale;
+varying vec2 bgTextureLookup;
+
+uniform float isStretched;
+uniform float isCentered;
+uniform float isCenteredOrRepeated;
+uniform float isTiled;
+uniform vec2 tileSize;
+uniform vec2 tiledSize;
+uniform vec2 viewImageSize;
+uniform vec2 pixelSize;
+uniform vec2 halfPixel;
+
+#include ComputeFogColor
+
+#include ComputeColorForLight
 
 void main(void)
 {
+#ifndef cylinder_shader_ff_workaround
     // cull back face - otherwise we are drawing all pixels twice
     // this change gives roughly 2x speedup
     if (filter_front_facing && !gl_FrontFacing) 
       discard; 
+#endif
 
     vec3 ray_target = surface_point;
     vec3 ray_origin = vec3(0.0);
@@ -117,36 +126,30 @@ void main(void)
 
     /* cap :  4 bits : 1st - frontcap
                        2nd - endcap
-                       3rd - frontcap round
-                       4th - endcap round
+                       3rd - frontcapround
+                       4th - endcapround
+		       5th - smooth_half_bonds
      */
-    int icap = int(cap);
-    vec4 color;
-    if (icap > 15){
-       float dp = clamp(-half_bond*new_point.z*inv_height, 0., .5);
-       color = mix(color1, color2, smoothstep(.5 - dp, .5 + dp, ratio));
-       icap = icap - 16;
-    } else {
-       color = mix(color1, color2, ratio);
-    }
+    float fcap = cap;
     float frontcap = 0.0, frontcapround = 0.0;
     float endcap = 0.0, endcapround = 0.0;
+    float smooth_half_bonds = 0.0;
 
-    if (icap == 1 || icap == 3 || icap == 5 || icap == 7 ||
-        icap == 9 || icap == 11 || icap == 13 || icap == 15)
-        frontcap = 1.0;
+    frontcap = mod(fcap, 2.0);
+    fcap = ( fcap - frontcap ) / 2.0;
+    endcap = mod(fcap, 2.0);
+    fcap = ( fcap - endcap ) / 2.0;
+    frontcapround = floor((mod(fcap, 2.0) + no_flat_caps) / 2.0);
+    fcap = ( fcap - frontcapround ) / 2.0;
+    endcapround = floor((mod(fcap, 2.0) + no_flat_caps) / 2.0);
+    fcap = ( fcap - endcapround ) / 2.0;
+    
+    smooth_half_bonds = floor((mod(fcap, 2.0) + no_flat_caps) / 2.0);
 
-    if (icap == 2 || icap == 3 || icap == 6 || icap == 7 ||
-        icap == 10 || icap == 11 || icap == 14 || icap == 15)
-        endcap = 1.0;
+    vec4 color;
 
-    if (frontcap > 0.5 && flat_caps < 0.5 &&
-        ((icap > 3 && icap < 8) ||
-         icap > 11))
-        frontcapround = 1.0;
-
-    if (endcap > 0.5 && flat_caps < 0.5 && icap > 7)
-        endcapround = 1.0;
+    float dp = clamp(-half_bond*new_point.z*inv_height, 0., .5) * smooth_half_bonds;
+    color = mix(color1, color2, smoothstep(.5 - dp, .5 + dp, ratio));
 
     // test front cap
     float cap_test = dot((new_point - base), axis);
@@ -172,7 +175,7 @@ void main(void)
 
     // round
     if (frontcapround > 0.5 && cap_test < 0.0) {
-      if ( frontcap < 1.0)
+      if ( frontcap < 0.5)
         discard;
       color = color1;
       vec3 sphere_direction = mix(base, ray_origin - base, ortho);
@@ -191,7 +194,7 @@ void main(void)
     // flat
     if (endcapround < 0.5 && cap_test > 0.0) {
       // ray-plane intersection
-      color = color1;
+      color = color2;
       float dNV = dot(axis, ray_direction);
       if (dNV < 0.0) discard;
       float near = dot(axis, end_cyl) / dNV;
@@ -204,7 +207,7 @@ void main(void)
     // round
 
     if (endcapround > 0.5 && cap_test > 0.0) {
-      if ( endcap < 1.0)
+      if ( endcap < 0.5)
         discard;
       color = color2;
       vec3 sphere_direction = mix(end_cyl, ray_origin - end_cyl, ortho);
@@ -239,111 +242,18 @@ void main(void)
 
   final_color = (gl_LightModel.ambient) * color;
 
-  if (light_count>0){
-    final_color += ComputeColorForLight(normal, normalize(vec3(gl_LightSource[0].position)),
-                                        normalize(vec3(gl_LightSource[0].halfVector.xyz)),
-                                        gl_LightSource[0].ambient,
-                                        gl_LightSource[0].diffuse,
-                                        spec_value_0, shininess_0, color);
-  if (light_count>1){
-    final_color += ComputeColorForLight(normal, normalize(vec3(gl_LightSource[1].position)),
-                                        normalize(vec3(gl_LightSource[1].halfVector.xyz)),
-                                        gl_LightSource[1].ambient,
-                                        gl_LightSource[1].diffuse,
-                                        spec_value, shininess, color);
-  if (light_count>2){
-    final_color += ComputeColorForLight(normal, normalize(vec3(gl_LightSource[2].position)),
-                                        normalize(vec3(gl_LightSource[2].halfVector.xyz)),
-                                        gl_LightSource[2].ambient,
-                                        gl_LightSource[2].diffuse,
-                                        spec_value, shininess, color);
-  if (light_count>3){
-    final_color += ComputeColorForLight(normal, normalize(vec3(gl_LightSource[3].position)),
-                                        normalize(vec3(gl_LightSource[3].halfVector.xyz)),
-                                        gl_LightSource[3].ambient,
-                                        gl_LightSource[3].diffuse,
-                                        spec_value, shininess, color);
-  if (light_count>4){
-    final_color += ComputeColorForLight(normal, normalize(vec3(gl_LightSource[4].position)),
-                                        normalize(vec3(gl_LightSource[4].halfVector.xyz)),
-                                        gl_LightSource[4].ambient,
-                                        gl_LightSource[4].diffuse,
-                                        spec_value, shininess, color);
-  if (light_count>5){
-    final_color += ComputeColorForLight(normal, normalize(vec3(gl_LightSource[5].position)),
-                                        normalize(vec3(gl_LightSource[5].halfVector.xyz)),
-                                        gl_LightSource[5].ambient,
-                                        gl_LightSource[5].diffuse,
-                                        spec_value, shininess, color);
-  if (light_count>6){
-    final_color += ComputeColorForLight(normal, normalize(vec3(gl_LightSource[6].position)),
-                                        normalize(vec3(gl_LightSource[6].halfVector.xyz)),
-                                        gl_LightSource[6].ambient,
-                                        gl_LightSource[6].diffuse,
-                                        spec_value, shininess, color);
-  if (light_count>7){
-    final_color += ComputeColorForLight(normal, normalize(vec3(gl_LightSource[7].position)),
-                                        normalize(vec3(gl_LightSource[7].halfVector.xyz)),
-                                        gl_LightSource[7].ambient,
-                                        gl_LightSource[7].diffuse,
-                                        spec_value, shininess, color);
-  }}}}}}}}
+#include CallComputeColorForLight
 
-/*
-  for (i=0; i<light_count; i++){
-    vec3 L = normalize(gl_LightSource[i].position.xyz);
-    vec3 H = normalize(gl_LightSource[i].halfVector.xyz);
-    float spec = 0., shine = 0.;
-    if (i==0){
-      spec = spec_value_0;
-      shine = shininess_0;
-    } else if (spec_count >= i){
-      spec = spec_value;
-      shine = shininess;
-    }
+  float cfog = clamp((g_Fog_end + new_point.z) * g_Fog_scale, 0.0, 1.0);
 
-    final_color += gl_LightSource[i].ambient * color;
-    NdotL = dot(normal, L);
-    if (NdotL > 0.0) {
-      final_color += gl_LightSource[i].diffuse * NdotL * color;
-      NdotH = max(dot(normal, H), 0.0);
-      final_color += spec * pow(NdotH, shine);
-    }
+  cfog = mix(1.0, clamp(cfog, 0.0, 1.0), fog_enabled);
 
-// I don't think we need two sided lighting for cylinders since we do not
-   draw the insides of the cylinders 
-    if (two_sided_lighting_enabled){
-      NdotL = dot(-normal, L);
-      if (NdotL > 0.0) {
-        final_color += gl_LightSource[i].diffuse * NdotL * color;
-        NdotH = max(dot(-normal, H), 0.0);
-        final_color += spec * pow(NdotH, shine);
-      }
-    }
-//
-  }
-*/
-  float fog = clamp((gl_Fog.end + new_point.z) * gl_Fog.scale, 0.0, 1.0);
+  vec4 fogColor = ComputeFogColor();
 
-  fog = mix(1.0, fog, fog_enabled);
-    
-  vec3 fog_color;
+  final_color.rgb = mix(fogColor.xyz, final_color.rgb, cfog);
 
-  if (bg_gradient){
-    fog_color = mix(fog_color_bottom, fog_color_top, gl_FragCoord.y * inv_height);
-  } else {
-    fog_color = fog_color_top;
-  }
+  vec4 fColor = vec4(final_color.rgb, color.a);
 
-  final_color.rgb = mix(fog_color, final_color.rgb, fog);
-
-  vec4 f = vec4(final_color.rgb, color.a);
-
-  if(stereo_flag==-1)
-    gl_FragColor = vec4(matL * pow(f.rgb,vec3(gamma,gamma,gamma)), f.a);
-  else if (stereo_flag==0)
-    gl_FragColor = f;
-  else if (stereo_flag==1)
-    gl_FragColor = vec4(matR * pow(f.rgb, vec3(gamma,gamma,gamma)), f.a);
+#include ANAGLYPH_BODY
 }
 

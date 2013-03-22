@@ -2,6 +2,51 @@
 CHANGE LOG
 =========================================================================
 
+2013-03-22 Blaine Bell <blaine.bell@schrodinger.com>, Thomas Holder <thomas.holder@schrodinger.com>
+
+	* improved rendering performance using shaders, including
+	  dynamically updated shaders based on settings
+	  (see data/shaders directory)
+
+	* implemented shaders for menus, labels, selection indicators,
+	  background, and other graphics that were not using shaders.
+
+	* consolidated textures used for labels and selection indicators
+	  to one texture, which helps performance
+
+	* added memory checking to help avoid crashing when memory is
+	  low or not available
+
+	* cleaned up code base, took out extraneous preprocessor code and
+	  code that was not used.
+
+	* refactor pmg_tk.Settings
+
+	* Do not clear atom names with chempy.champ.assign.amber99
+
+	* fix some plugin manager exception handling
+
+	* fix create with name=None
+
+	* Plugin override search path: Always include "startup"
+	  from installation directory in plugin search path
+
+	* Movie > Program > Scene Loop > Nutate > by degrees
+
+	* ObjectMeshRenderImpl refactoring: color isomesh and isodot with
+	  mesh_color and dot_color settings
+
+	* merging alignment objects: eliminate orphaned atoms
+
+	* fix cealign alignment object creation: rms_cur arguments swapped
+
+	* improved the alignto command to take additional keyword arguments
+	  which get passed to the used method -> object=aln supported now
+
+	* remove _PYMOL_MODULE constant
+
+	* fix LITERAL mode command parsing: ignore leading whitespace
+
 2013-02-14 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* enable VMD plugins by default

@@ -28,6 +28,7 @@ char *ParseCommaCopy(char *q, char *p, int n);
 char *ParseSkipEquals(char *p);
 char *ParseIntCopy(char *q, char *p, int n);
 char *ParseAlphaCopy(char *q, char *p, int n);
+int ParseFloat3List(char *p, float *vals);
 
 #ifdef _PYMOL_INLINE
 

@@ -56,6 +56,12 @@ typedef struct {
   int n_strips;
   int *strips;
 
+  CGO *shaderCGO;
+  float Corner[24];
+
+  float outline_points[36];
+  int outline_n_points;
+  float outline_zaxis[3];
 } ObjectSliceState;
 
 typedef struct ObjectSlice {
@@ -75,7 +81,7 @@ int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** r
 ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice * I, int state);
 void ObjectSliceStateValue2RGB(ObjectSliceState * s, float normalized_value,
                                float *result);
-int ObjectSliceGetOrigin(ObjectSlice * I, int state, float *origin);
+//int ObjectSliceGetOrigin(ObjectSlice * I, int state, float *origin);
 void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov,
                      float *z_dir);
 int ObjectSliceGetVertex(ObjectSlice * I, int index, int base, float *v);

@@ -1,8 +1,5 @@
-#if defined(PURE_OPENGL_ES_2)
-/* these are the shaders for the IPhone (Compiled but not used yet) */
-read default_vs default_es.vs
-read default_fs default_es.fs
-#elif defined(OPENGL_ES_2)
+#include "os_gl.h"
+#if defined(OPENGL_ES_2)
 /* these are the shaders that uses ES2 */
 read default_vs default_es2.vs
 read default_fs default_es2.fs
@@ -11,8 +8,6 @@ read default_fs default_es2.fs
 read default_vs default.vs
 read default_fs default.fs
 #endif
-#ifndef _PYMOL_PURE_OPENGL_ES
-/* Volume shaders (not used for IPhone yet */
 read volume_vs volume.vs
 read volume_fs volume.fs
 read sphere_vs sphere.vs
@@ -20,7 +15,24 @@ read sphere_fs sphere.fs
 read spheredirect_vs spheredirect.vs
 read cylinder_vs cylinder.vs
 read cylinder_fs cylinder.fs
-read cylinder_no_ff_fs cylinder_no_ff.fs
 read sphere_arb_vs sphere_arb_vs.vs
 read sphere_arb_fs sphere_arb_fs.fs
-#endif
+read indicator_vs indicator.vs
+read indicator_fs indicator.fs
+read compute_color_for_light_fs compute_color_for_light.fs
+read call_compute_color_for_light_fs call_compute_color_for_light.fs
+read compute_fog_color_fs compute_fog_color.fs
+read bg_vs bg.vs
+read bg_fs bg.fs
+read label_vs label.vs
+read label_fs label.fs
+read screen_vs screen.vs
+read screen_fs screen.fs
+read labelscreen_vs labelscreen.vs
+read labelscreen_fs labelscreen.fs
+read defaultscreen_vs defaultscreen.vs
+read defaultscreen_fs defaultscreen.fs
+read anaglyph_fs anaglyph.fs
+read anaglyph_header_fs anaglyph_header.fs
+read ramp_vs ramp.vs
+read ramp_fs ramp.fs

@@ -5,9 +5,12 @@ uniform bool lighting_enabled;
 uniform float ortho;
 
 uniform float fog_enabled;
+
+uniform sampler2D bgTextureMap;
+uniform vec3 fogSolidColor;
+uniform float fogIsSolidColor;
+
 uniform bool bg_gradient;
-uniform vec3 fog_color_top;
-uniform vec3 fog_color_bottom;
 uniform float inv_height;
 uniform int light_count;
 uniform float shininess;
@@ -15,29 +18,31 @@ uniform float shininess_0;
 uniform int spec_count;
 uniform float spec_value;
 uniform float spec_value_0;
-uniform int stereo_flag;
-uniform mat3 matL;
-uniform mat3 matR;
-uniform float gamma;
+
+#include ANAGLYPH_HEADER
 
 varying vec4 COLOR;
 varying vec3 sphere_center;
 varying float radius2;
 varying vec3 point;
-// varying fog;
 
-vec4 ComputeColorForLight(vec3 N, vec3 L, vec3 H, vec4 ambient, vec4 diffuse, float spec, float shine){
-  float NdotL, NdotH;
-  vec4 ret_val = vec4(0.);
-  ret_val += ambient * COLOR;
-  NdotL = dot(N, L);
-  if (NdotL > 0.0) {
-    ret_val += diffuse * NdotL * COLOR;
-    NdotH = max(dot(N, H), 0.0);
-    ret_val += spec * pow(NdotH, shine);
-  }
-  return ret_val;
-}
+uniform float g_Fog_end;
+uniform float g_Fog_scale;
+varying vec2 bgTextureLookup;
+
+uniform float isStretched;
+uniform float isCentered;
+uniform float isCenteredOrRepeated;
+uniform float isTiled;
+uniform vec2 tileSize;
+uniform vec2 tiledSize;
+uniform vec2 viewImageSize;
+uniform vec2 pixelSize;
+uniform vec2 halfPixel;
+
+#include ComputeFogColor
+
+#include ComputeColorForLight
 
 void main(void)
 {
@@ -76,17 +81,18 @@ void main(void)
     // this is a workaround necessary for Mac
     // otherwise the modified fragment won't clip properly
 
+/*
+    float isDiscarded = step(.5, step(depth, 0.) + step(1.-depth, 0.));
+    if (isDiscarded > 0.0)
+      discard;
+*/
     if (depth <= 0.0)
       discard;
 
     if (depth >= 1.0)
       discard;
 
-    if (COLOR.a <= 1.0)
-      gl_FragDepth = depth;
-    else
-      gl_FragDepth = 1.0;
-
+    gl_FragDepth = depth;
 
     vec4 color;
 
@@ -97,55 +103,7 @@ void main(void)
 
     vec4 final_color = (gl_LightModel.ambient) * COLOR;
 
-    if (light_count>0){
-      final_color += ComputeColorForLight(N, normalize(vec3(gl_LightSource[0].position)),
-                                          normalize(vec3(gl_LightSource[0].halfVector.xyz)),
-                                          gl_LightSource[0].ambient,
-                                          gl_LightSource[0].diffuse,
-                                          spec_value_0, shininess_0);
-      if (light_count>1){
-	final_color += ComputeColorForLight(N, normalize(vec3(gl_LightSource[1].position)),
-                                            normalize(vec3(gl_LightSource[1].halfVector.xyz)),
-                                            gl_LightSource[1].ambient,
-                                            gl_LightSource[1].diffuse,
-                                            spec_value, shininess);
-      if (light_count>2){
-	final_color += ComputeColorForLight(N, normalize(vec3(gl_LightSource[2].position)),
-                                            normalize(vec3(gl_LightSource[2].halfVector.xyz)),
-                                            gl_LightSource[2].ambient,
-                                            gl_LightSource[2].diffuse,
-                                            spec_value, shininess);
-      if (light_count>3){
-	final_color += ComputeColorForLight(N, normalize(vec3(gl_LightSource[3].position)),
-                                            normalize(vec3(gl_LightSource[3].halfVector.xyz)),
-                                            gl_LightSource[3].ambient,
-                                            gl_LightSource[3].diffuse,
-                                            spec_value, shininess);
-      if (light_count>4){
-	final_color += ComputeColorForLight(N, normalize(vec3(gl_LightSource[4].position)),
-                                            normalize(vec3(gl_LightSource[4].halfVector.xyz)),
-                                            gl_LightSource[4].ambient,
-                                            gl_LightSource[4].diffuse,
-                                            spec_value, shininess);
-      if (light_count>5){
-	final_color += ComputeColorForLight(N, normalize(vec3(gl_LightSource[5].position)),
-                                            normalize(vec3(gl_LightSource[5].halfVector.xyz)),
-                                            gl_LightSource[5].ambient,
-                                            gl_LightSource[5].diffuse,
-                                            spec_value, shininess);
-      if (light_count>6){
-	final_color += ComputeColorForLight(N, normalize(vec3(gl_LightSource[6].position)),
-                                            normalize(vec3(gl_LightSource[6].halfVector.xyz)),
-                                            gl_LightSource[6].ambient,
-                                            gl_LightSource[6].diffuse,
-                                            spec_value, shininess);
-      if (light_count>7){
-	final_color += ComputeColorForLight(N, normalize(vec3(gl_LightSource[7].position)),
-                                            normalize(vec3(gl_LightSource[7].halfVector.xyz)),
-                                            gl_LightSource[7].ambient,
-                                            gl_LightSource[7].diffuse,
-                                            spec_value, shininess);
-    }}}}}}}}
+#include CallComputeColorForLight
 
 /*
     int i;
@@ -169,24 +127,16 @@ void main(void)
       }
     }
 */
-    float fog = clamp((gl_Fog.end + ipoint.z) * gl_Fog.scale, 0.0, 1.0);
-    fog = mix(1.0, fog, fog_enabled);
-    vec3 fog_color;
+    float fogv = (g_Fog_end + ipoint.z) * g_Fog_scale;
+    float cfog = clamp(fogv, 0.0, 1.0);
 
-    if (bg_gradient){
-      fog_color = mix(fog_color_bottom, fog_color_top, gl_FragCoord.y * inv_height);
-    } else {
-      fog_color = fog_color_top;
-    }
+    cfog = mix(1.0, clamp(cfog, 0.0, 1.0), fog_enabled);
 
-    final_color.rgb = mix(fog_color, final_color.rgb, fog);
+    vec4 fogColor = ComputeFogColor();
 
-    vec4 f = vec4(final_color.rgb, COLOR.a);
+    final_color.rgb = mix(fogColor.rgb, final_color.rgb, cfog);
 
-  if(stereo_flag==-1)
-    gl_FragColor = vec4(matL * pow(f.rgb,vec3(gamma,gamma,gamma)), f.a);
-  else if (stereo_flag==0)
-    gl_FragColor = f;
-  else if (stereo_flag==1)
-    gl_FragColor = vec4(matR * pow(f.rgb, vec3(gamma,gamma,gamma)), f.a);
+    vec4 fColor = vec4(final_color.rgb, COLOR.a);
+
+#include ANAGLYPH_BODY
 }

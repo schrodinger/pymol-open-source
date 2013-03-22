@@ -21,6 +21,5 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 Rep *RepLabelNew(CoordSet * cset, int state);
-void RepLabelInit(void);
 
 #endif

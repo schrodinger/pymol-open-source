@@ -19,8 +19,8 @@ Z* -------------------------------------------------------------------
 #define _H_Vector
 
 #include"os_predef.h"
-
-
+#include"os_gl_pre.h"
+#include<math.h>
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
 
@@ -120,6 +120,8 @@ void identity33f(float *m1);
 void identity33d(double *m);
 void identity44f(float *m1);
 void identity44d(double *m1);
+#define GLORTHO(l,r,b,t,n,f) glOrtho(l,r,b,t,n,f)
+#define GLFRUSTUM(l,r,b,t,n,f) glFrustumf(l,r,b,t,n,f)
 
 void copy44f44f(float *src, float *dst);
 void copy44d44f(double *src, float *dst);
@@ -251,6 +253,8 @@ float dot_product3f(float *v1, float *v2);
 void invert3f(float *v);
 void invert3f3f(float *v1, float *v2);
 void scale3f(float *v1, float v0, float *v2);
+void copy4uc(uchar *src, uchar *dst);
+void copy3uc(uchar *src, uchar *dst);
 void copy3f(float *src, float *dst);
 void copy3d(double *src, double *dst);
 void copy4f(float *src, float *dst);
@@ -274,6 +278,8 @@ void zero3f(float *v1)
 #define invert3f(v) {(v)[0]=-(v)[0]; (v)[1]=-(v)[1]; (v)[2]=-(v)[2];}
 #define invert3f3f(v1,v2) {(v2)[0]=-(v1)[0]; (v2)[1]=-(v1)[1]; (v2)[2]=-(v1)[2];}
 #define scale3f(v1,v0,v2) {(v2)[0]=(v1)[0]*(v0); (v2)[1]=(v1)[1]*(v0); (v2)[2]=(v1)[2]*(v0);}
+#define copy3uc(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
+#define copy4uc(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2]; (v2)[3]=(v1)[3];}
 #define copy3f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
 #define copy3d(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
 #define copy4f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2]; (v2)[3]=(v1)[3];}
@@ -464,9 +470,12 @@ __inline__ static float inline_project3f(float *v1, float *v2, float *proj)
 
 #endif
 
+void mult4f(float *vsrc, float val, float *vdest);
 void mult3f(float *vsrc, float val, float *vdest);
 float max3(float val1, float val2, float val3);
 float ave3(float val1, float val2, float val3);
 float ave2(float val1, float val2);
+void white4f(float *rgba, float value);
+void add4f(float *v1, float *v2, float *sum);
 
 #endif

@@ -55,9 +55,9 @@ MapType *MapNewCached(PyMOLGlobals * G, float range, float *vert, int nVert,
 
 MapType *MapNewFlagged(PyMOLGlobals * G, float range, float *vert, int nVert,
                        float *extent, int *flag);
-void MapSetupExpress(MapType * I);
-void MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
-                         int negative_start, int *spanner);
+int MapSetupExpress(MapType * I);
+int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
+			int negative_start, int *spanner);
 
 void MapFree(MapType * I);
 
@@ -74,7 +74,7 @@ int MapExclLocus(MapType * map, float *v, int *a, int *b, int *c);
 #define MapCache(m,a) {(m)->Cache[a]=1;(m)->CacheLink[a]=(m)->CacheStart;(m)->CacheStart=a;}
 #define MapCached(m,a) ((m)->Cache[a])
 
-void MapCacheInit(MapCache * M, MapType * I, int group_id, int block_base);
+int MapCacheInit(MapCache * M, MapType * I, int group_id, int block_base);
 void MapCacheReset(MapCache * M);
 void MapCacheFree(MapCache * M, int group_id, int block_base);
 
@@ -88,8 +88,8 @@ float MapGetDiv(MapType * I);
 int MapInside(MapType * I, float *v, int *a, int *b, int *c);
 
 int MapInsideXY(MapType * I, float *v, int *a, int *b, int *c);
-void MapSetupExpressXY(MapType * I, int n_vert, int negative_start);
+int MapSetupExpressXY(MapType * I, int n_vert, int negative_start);
 
-void MapSetupExpressXYVert(MapType * I, float *vert, int n_vert, int negative_start);
+int MapSetupExpressXYVert(MapType * I, float *vert, int n_vert, int negative_start);
 
 #endif

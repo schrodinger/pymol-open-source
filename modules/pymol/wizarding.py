@@ -181,10 +181,6 @@ DESCRIPTION
     def session_restore_wizard(session,_self=cmd):
         if session!=None:
             if session.has_key('wizard'):
-                from pymol.wizard import message
-                import __main__
-#         __main__.message = message
-                sys.modules['message'] = message
                 try:
                     wizards = cPickle.loads(session['wizard'])
                     for wiz in wizards:

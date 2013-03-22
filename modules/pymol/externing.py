@@ -92,8 +92,8 @@ SEE ALSO
             pattern = "*"
         else:
             pattern = exp_path(pattern)
-        if string.find("*",pattern)<0:
-            lst = glob(pattern+"/*")
+        if '*' not in pattern:
+            lst = glob(os.path.join(pattern, '*'))
         else:
             lst = []
         if not len(lst):

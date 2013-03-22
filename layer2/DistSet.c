@@ -23,8 +23,8 @@ Z* -------------------------------------------------------------------
 #include"OOMac.h"
 #include"MemoryDebug.h"
 #include"Err.h"
-#include"Scene.h"
 #include"DistSet.h"
+#include"Scene.h"
 #include"Color.h"
 #include"RepDistDash.h"
 #include"RepDistLabel.h"
@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"ListMacros.h"
 #include"Selector.h"
+#include "PyMOL.h"
 
 static void DistSetUpdate(DistSet * I, int state);
 static void DistSetFree(DistSet * I);
@@ -91,10 +92,11 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
    */
   PyMOLGlobals * G = I->State.G;
 
-  int a, idx, rVal=0;
+  int a, idx, rVal=0, passedNAtoms = 0, totalNAtoms = 0;
   float *src, *dst;
   CMeasureInfo * memb = NULL;
   CoordSet * cs;
+  short update = 0;
 
   PRINTFD(G, FB_DistSet)
     " DistSet: adjusting distance vertex\n" ENDFD;
@@ -103,11 +105,19 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
    * looping over all atoms in Selector->Table instead of bailing */
   if (!I || !obj) return 0;
 
+  DListIterate(I->MeasureInfo, memb, next){
+    if (memb && memb->obj==obj) {
+      totalNAtoms += obj->NAtom;
+    }
+  }
+  memb = NULL;
   DListIterate(I->MeasureInfo, memb, next)
     {
       /* if this distance set belongs to this object */
+      PyMOL_SetProgress(G->PyMOL, PYMOL_PROGRESS_FAST, passedNAtoms, totalNAtoms);
       if (memb && memb->obj==obj) {
 	for (a=0; a<obj->NAtom; a++ ) {
+	  passedNAtoms++;
 	  /* matched on OBJ above and now ATOM ID within the object */
 	  if (obj->AtomInfo[a].id == memb->id) {
 
@@ -131,7 +141,6 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
 	      if (idx>=0) {
 		/* valid offset */
 		float * varDst = NULL;
-		short update = 0;
 		if (memb->measureType==cRepDash && memb->offset < I->NIndex) {
 		  varDst = I->Coord;
 		  I->fInvalidateRep(I, cRepDash, cRepInvCoord);
@@ -155,20 +164,21 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
 		  I->fInvalidateRep(I, cRepLabel, cRepInvCoord);
 		  rVal |= 1;
 		}
-		if (update){ 
-		  /* We need to update these representations right away since this could be 
-		     called during the scene rendering loop, and update might not be called
-		     on this object again.  This is ok since update checks to see if the reps
-		     exist, and if they already do, then the overhead is minimal, so multiple
-		     calls to update won't normally happen, but when they do, it won't hurt. */
-		  I->fUpdate(I, -1);
-		}
 	      }
 	    }
 	  }
 	}
       }
     }
+
+  if (update){ 
+    /* We need to update these representations right away since this could be 
+       called during the scene rendering loop, and update might not be called
+       on this object again.  This is ok since update checks to see if the reps
+       exist, and if they already do, then the overhead is minimal, so multiple
+       calls to update won't normally happen, but when they do, it won't hurt. */
+    I->fUpdate(I, -1);
+  }
   
   PRINTFD(G, FB_DistSet)
     " DistSet: done updating distance set's vertex\n" ENDFD;
@@ -327,8 +337,8 @@ static void DistSetInvalidateRep(DistSet * I, int type, int level)
   /* if representation type is specified, adjust it */
   if(type >= 0) {
     if(type < I->NRep) {
-      SceneChanged(I->State.G);
       if(I->Rep[type]) {
+        SceneChanged(I->State.G);
         I->Rep[type]->fFree(I->Rep[type]);
         I->Rep[type] = NULL;
       }
@@ -336,8 +346,8 @@ static void DistSetInvalidateRep(DistSet * I, int type, int level)
   } else {
     /* reset all representation types */
     for(a = 0; a < I->NRep; a++) {
-      SceneChanged(I->State.G);
       if(I->Rep[a]) {
+        SceneChanged(I->State.G);
         switch (level) {
         case cRepInvColor:
           if(I->Rep[a]->fRecolor) {
@@ -366,7 +376,7 @@ static void DistSetUpdate(DistSet * I, int state)
   if(!I->Rep[cRepDash]) {
     /* query the dist set looking for the selected atoms for this distance,
      * then update the *coords */
-    I->Rep[cRepDash] = RepDistDashNew(I);
+    I->Rep[cRepDash] = RepDistDashNew(I,state);
     SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepLabel]) {
@@ -378,13 +388,13 @@ static void DistSetUpdate(DistSet * I, int state)
   if(!I->Rep[cRepAngle]) {
     /* query the angle set looking for the selected atoms for this distance,
      * then update the *coords */
-    I->Rep[cRepAngle] = RepAngleNew(I);
+    I->Rep[cRepAngle] = RepAngleNew(I, state);
     SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepDihedral]) {
     /* query the dihedral set looking for the selected atoms for this distance,
      * then update the *coords */
-    I->Rep[cRepDihedral] = RepDihedralNew(I);
+    I->Rep[cRepDihedral] = RepDihedralNew(I, state);
     SceneInvalidate(I->State.G);
   }
   /* status bar 100% */
@@ -464,26 +474,14 @@ DistSet *DistSetNew(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-#if 0
-static void DistSetStrip(DistSet * I)
-{
-  int a;
-  for(a = 0; a < I->NRep; a++)
-    if(I->Rep[a])
-      I->Rep[a]->fFree(I->Rep[a]);
-  I->NRep = 0;
-}
-#endif
-
-/*========================================================================*/
 static void DistSetFree(DistSet * I)
 {
   int a;
   CMeasureInfo * ptr, *target;
-  for(a = 0; a < I->NRep; a++)
-    if(I->Rep[a])
-      I->Rep[a]->fFree(I->Rep[a]);
   if(I) {
+    for(a = 0; a < I->NRep; a++)
+      if(I->Rep[a])
+	I->Rep[a]->fFree(I->Rep[a]);
     VLAFreeP(I->AngleCoord);
     VLAFreeP(I->DihedralCoord);
     VLAFreeP(I->LabCoord);

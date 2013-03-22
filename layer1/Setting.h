@@ -80,7 +80,7 @@ void SettingUniqueSet_b(PyMOLGlobals * G, int unique_id, int setting_id, int val
 void SettingUniqueSet_i(PyMOLGlobals * G, int unique_id, int setting_id, int value);
 void SettingUniqueSet_f(PyMOLGlobals * G, int unique_id, int setting_id, float value);
 void SettingUniqueSet_color(PyMOLGlobals * G, int unique_id, int setting_id, int value);
-void SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
+int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
                                 int setting_type, void *value);
 
 int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id);
@@ -134,6 +134,7 @@ float *SettingGetGlobal_3fv(PyMOLGlobals * G, int index);       /* always succee
 
 int SettingSetGlobal_b(PyMOLGlobals * G, int index, int value);
 int SettingSetGlobal_i(PyMOLGlobals * G, int index, int value);
+int SettingSetGlobal_s(PyMOLGlobals * G, int index, char *value);
 int SettingSetGlobal_f(PyMOLGlobals * G, int index, float value);
 int SettingSetGlobal_3f(PyMOLGlobals * G, int index, float value1, float value2,
                         float value3);
@@ -169,6 +170,7 @@ int SettingStringToTypedValue(PyMOLGlobals * G, int index, char *st, int *type,
 
 #ifndef _PYMOL_NOPY
 int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tuple);
+PyObject *SettingGetPyObject(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
 PyObject *SettingGetTuple(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);       /* (type,(value,)) */
 PyObject *SettingGetDefinedTuple(PyMOLGlobals * G, CSetting * set1, int index);
 PyObject *SettingGetUpdateList(PyMOLGlobals * G, CSetting * I);
@@ -194,11 +196,6 @@ int SettingFromPyList(CSetting * I, PyObject * list);
 int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list);
 PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals * G);
 
-
-/* proposed...
-PyObject *SettingGetDefaultsAsPyList(PyMOLGlobals *G);
-int SettingSetDefaultsFromPyList(PyMOLGlobals *G,PyObject *list);
-*/
 
 CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
@@ -619,6 +616,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_cartoon_side_chain_helper  383
 #define cSetting_surface_optimize_subsets   384
 #define cSetting_multiplex                  385
+// cSetting_texture_fonts deprecated
 #define cSetting_texture_fonts              386
 #define cSetting_pqr_workarounds            387
 #define cSetting_animation                  388
@@ -943,7 +941,13 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_edit_light                              707
 #define cSetting_suspend_undo                            708
 #define cSetting_suspend_undo_atom_count                 709
-#define cSetting_pick_surface                            710
+#define cSetting_suspend_deferred                        710
+#define cSetting_pick_surface                            711
+// bg_image is not implemented in open-source
+#define cSetting_bg_image_filename                       712
+#define cSetting_bg_image_mode                           713
+#define cSetting_bg_image_tilesize                       714
+#define cSetting_bg_image_linear                         715
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -954,6 +958,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       711
+#define cSetting_INIT                       716
 
 #endif

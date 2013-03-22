@@ -72,6 +72,8 @@ typedef struct {
 #define cPickableAtom -1
 #define cPickableLabel -2
 #define cPickableGadget -3
+#define cPickableNoPick -4
+
 
 #define cPuttyTransformNormalizedNonlinear 0
 #define cPuttyTransformRelativeNonlinear   1

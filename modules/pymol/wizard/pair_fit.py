@@ -143,7 +143,6 @@ class Pair_fit(Wizard):
     def do_select(self,name): # map selects into picks
         cmd.unpick()
         try:
-            print (name + " and not " + sele_prefix + "*")
             cmd.edit(name + " and not " + sele_prefix + "*") # note, using new object name wildcards
             cmd.delete(name)
             self.do_pick(0)

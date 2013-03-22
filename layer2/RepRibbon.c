@@ -72,6 +72,7 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
   int i, j, ip;
   int last;
   float line_width = SceneGetDynamicLineWidth(info, I->ribbon_width);
+  int ok = true;
 
   /* 
 
@@ -104,9 +105,9 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
       " RepRibbonRender: rendering raytracable...\n" ENDFD;
 
     if(c > 0) {
-      while(c--) {
+      while(ok && c--) {
 	ray->fTransparentf(ray, 1.0F - alpha);
-        ray->fSausage3fv(ray, v + 4, v + 11, radius, v + 1, v + 8);
+        ok &= ray->fSausage3fv(ray, v + 4, v + 11, radius, v + 1, v + 8);
         v += 18;
       }
     }
@@ -120,9 +121,7 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
         i = (*pick)->src.index;
         p = I->R.P;
         last = -1;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
+	SceneSetupGLPicking(G);
 #ifdef _PYMOL_GL_DRAWARRAYS
 	{
 	  int nverts = 0, cinit = c, *vinit = v;
@@ -269,7 +268,6 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
         }
         glEnd();
 #endif
-#endif
         (*pick)[0].src.index = i;       /* pass the count */
       }
     } else {
@@ -300,9 +298,11 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
-	  I->shaderCGO->use_shader = true;
+	  CHECKOK(ok, I->shaderCGO);
+	  if (ok)
+	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
-	} else {
+	} else if (ok) {
 	  CShaderPrg *shaderPrg;
 	  if (ribbon_as_cylinders){
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
@@ -316,11 +316,11 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 	    }
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
 	  }
-
+	  if (!shaderPrg) return;
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-
+	  
 	  CShaderPrg_Disable(shaderPrg);
 	  return;
 	}
@@ -344,16 +344,13 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 	alpha = 1.0F;
 
       ribbon_smooth = SettingGet_i(G, NULL, I->R.obj->Setting, cSetting_ribbon_smooth);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
       if(!ribbon_smooth)
         glDisable(GL_LINE_SMOOTH);
-#endif
 
       if (generate_shader_cgo){
-	CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
-	CGOResetNormal(I->shaderCGO, true);
+	ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
+	if (ok)
+	  ok &= CGOResetNormal(I->shaderCGO, true);
       } else {
 	if(info->width_scale_flag)
 	  glLineWidth(line_width * info->width_scale);
@@ -364,25 +361,24 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
       PRINTFD(G, FB_RepRibbon)
 	" RepRibbonRender: rendering GL...\n" ENDFD;
       
-      if(c) {
+      if(ok && c) {
 	int first = true;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 	if (generate_shader_cgo){
 	  if (ribbon_as_cylinders){
 	    float *origin = NULL, *vertex = NULL, *color = NULL, *color2 = NULL, axis[3];
-	    while(c--) {
+	    while(ok && c--) {
 	      if(first) {
 		/* glColor3fv(v + 1); */
-		CGOAlpha(I->shaderCGO, alpha);
-		CGOColorv(I->shaderCGO, v+1);
+		ok &= CGOAlpha(I->shaderCGO, alpha);
+		if (ok)
+		  ok &= CGOColorv(I->shaderCGO, v+1);
 		color2 = (v + 1);
 		vertex = (v + 4);
 		first = false;
 	      } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
-		CGOAlpha(I->shaderCGO, alpha);
-		CGOColorv(I->shaderCGO, v+1);
+		ok &= CGOAlpha(I->shaderCGO, alpha);
+		if (ok)
+		  ok &= CGOColorv(I->shaderCGO, v+1);
 		origin = color = NULL;
 		color2 = (v+1);
 		vertex = (v+4);
@@ -395,39 +391,53 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 	      axis[0] = vertex[0] - origin[0];
 	      axis[1] = vertex[1] - origin[1];
 	      axis[2] = vertex[2] - origin[2];
-	      if (*(color) != *(color2) || *(color+1) != *(color2+1) || *(color+2) != *(color2+2)){
-		CGOShaderCylinder2ndColor(I->shaderCGO, origin, axis, 1.f, 15, color2);
-	      } else {
-		CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
+	      if (ok){
+		if (*(color) != *(color2) || *(color+1) != *(color2+1) || *(color+2) != *(color2+2)){
+		  ok &= CGOShaderCylinder2ndColor(I->shaderCGO, origin, axis, 1.f, 15, color2);
+		} else {
+		  ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
+		}
 	      }
-	      CGOAlpha(I->shaderCGO, alpha);
-	      CGOColorv(I->shaderCGO, v+8);
+	      if (ok)
+		ok &= CGOAlpha(I->shaderCGO, alpha);
+	      if (ok)
+		ok &= CGOColorv(I->shaderCGO, v+8);
 	      v += 18;
 	    }
-	  } else {
-	    CGOBegin(I->shaderCGO, GL_LINE_STRIP);
-	    while(c--) {
+	  } else if (ok) {
+	    ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+	    while(ok && c--) {
 	      if(first) {
 		/* glColor3fv(v + 1); */
-		CGOAlpha(I->shaderCGO, alpha);
-		CGOColorv(I->shaderCGO, v+1);
-		CGOVertexv(I->shaderCGO, v + 4);
+		ok &= CGOAlpha(I->shaderCGO, alpha);
+		if (ok)
+		  ok &= CGOColorv(I->shaderCGO, v+1);
+		if (ok)
+		  ok &= CGOVertexv(I->shaderCGO, v + 4);
 		first = false;
 	      } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
-		CGOEnd(I->shaderCGO);
-		CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+		ok &= CGOEnd(I->shaderCGO);
+		if (ok)
+		  ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
 		/* glColor3fv(v + 1); */
-		CGOAlpha(I->shaderCGO, alpha);
-		CGOColorv(I->shaderCGO, v+1);
-		CGOVertexv(I->shaderCGO, v + 4);
+		if (ok)
+		  ok &= CGOAlpha(I->shaderCGO, alpha);
+		if (ok)
+		  ok &= CGOColorv(I->shaderCGO, v+1);
+		if (ok)
+		  ok &= CGOVertexv(I->shaderCGO, v + 4);
 	      }
 	      /* glColor3fv(v + 8); */
-	      CGOAlpha(I->shaderCGO, alpha);
-	      CGOColorv(I->shaderCGO, v+8);
-	      CGOVertexv(I->shaderCGO, v + 11);
+	      if (ok)
+		ok &= CGOAlpha(I->shaderCGO, alpha);
+	      if (ok)
+		ok &= CGOColorv(I->shaderCGO, v+8);
+	      if (ok)
+		ok &= CGOVertexv(I->shaderCGO, v + 11);
 	      v += 18;
 	    }
-	    CGOEnd(I->shaderCGO);
+	    if (ok)
+	      ok &= CGOEnd(I->shaderCGO);
 	  }
 	} else {
 	  if(!info->line_lighting)
@@ -480,43 +490,45 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 	  glEnd();
 #endif
 	  glEnable(GL_LIGHTING);
-#endif
 	}
       }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
       if(SettingGetGlobal_b(G, cSetting_line_smooth))
         glEnable(GL_LINE_SMOOTH);
-#endif
 
       if (use_shader) {
-	if (generate_shader_cgo){
+	if (ok && generate_shader_cgo){
 	  CGO *convertcgo = NULL;
-	  CGOStop(I->shaderCGO);
+	  ok &= CGOStop(I->shaderCGO);
 #ifdef _PYMOL_CGO_DRAWARRAYS
-	  convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  if (ok)
+	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);    
 	  I->shaderCGO = convertcgo;
+	  convertcgo = NULL;
 #else
 	  (void)convertcgo;
 #endif
 #ifdef _PYMOL_CGO_DRAWBUFFERS
-	  if (ribbon_as_cylinders){
-	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	  } else {
-	    convertcgo = CGOOptimizeToVBOIndexed(I->shaderCGO, 0);
+	  if (ok){
+	    if (ribbon_as_cylinders){
+	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
+	    } else {
+	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
+	    }
+	    CHECKOK(ok, convertcgo);
 	  }
 	  if (convertcgo){
 	    CGOFree(I->shaderCGO);
 	    I->shaderCGO = convertcgo;
+	    convertcgo = NULL;
 	  }
 #else
 	  (void)convertcgo;
 #endif
 	}
 	
-	{
+	if (ok){
 	  CShaderPrg *shaderPrg;
 	  if (ribbon_as_cylinders){
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
@@ -530,8 +542,9 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 	    }
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
-	  }	 
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
+	  }
+	  if (!shaderPrg) return;
 
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 	  
@@ -546,6 +559,12 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
       }
 #endif
     }
+  }
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+    I->R.cs->Active[cRepRibbon] = false;
   }
 }
 
@@ -629,6 +648,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   I->R.fFree = (void (*)(struct Rep *)) RepRibbonFree;
   I->R.fRecolor = NULL;
   I->R.obj = (CObject *) obj;
+  I->R.cs = cs;
   I->ribbon_width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_width);
   I->R.context.object = (void *) obj;
   I->R.context.state = state;
@@ -1043,9 +1063,6 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
 
     glLineWidth(ribbon_width);
     SceneResetNormal(G, true);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     if(!info->line_lighting)
       glDisable(GL_LIGHTING);
 #ifdef _PYMOL_GL_DRAWARRAYS
@@ -1273,7 +1290,6 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
     glEnd();
 #endif
     glEnable(GL_LIGHTING);
-#endif
     if(!active)
       cs->Active[cRepRibbon] = false;
   }

@@ -83,7 +83,7 @@ static void lookup_color(CColor * I, float *in, float *out, int big_endian);
 
 void ColorGetBkrdContColor(PyMOLGlobals * G, float *rgb, int invert_flag)
 {
-  float *bkrd = SettingGetfv(G, cSetting_bg_rgb);
+  float *bkrd = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
 
   if(!invert_flag) {
     if((bkrd[0] + bkrd[1] + bkrd[2]) > 0.5F) {
@@ -363,30 +363,6 @@ PyObject *ColorAsPyList(PyMOLGlobals * G)
 #endif
 }
 
-#if 0
-
-/*========================================================================*/
-PyObject *ColorTableAsPyList(PyMOLGlobals * G)
-{
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-  register CColor *I = G->Color;
-  PyObject *result;
-
-  result = PyList_New(2);
-  PyList_SetItem(result, 0, PyFloat_FromDouble(I->Gamma));
-  if(0 && I->ColorTable) {      /* for now, we don't embed the color table due to size... */
-    PyList_SetItem(result, 1, PConvIntArrayToPyList((int *) (I->ColorTable), 512 * 512));
-  } else {
-    PyList_SetItem(result, 1, PConvAutoNone(Py_None));
-  }
-  return result;
-#endif
-}
-#endif
-
-
 /*========================================================================*/
 int ColorConvertOldSessionIndex(PyMOLGlobals * G, int index)
 {
@@ -588,53 +564,6 @@ int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
   return (ok);
 #endif
 }
-
-
-/*========================================================================*/
-#if 0
-int ColorTableFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
-{
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-  register CColor *I = G->Color;
-  int ok = true;
-  int ll = 0;
-  if(!partial_restore) {
-    if(ok)
-      ok = (list != NULL);
-    if(ok)
-      ok = PyList_Check(list);
-    if(ok) {
-      ll = PyList_Size(list);
-      if(ll > 1) {
-        float tmp_float;
-        if(ok)
-          ok = PConvPyFloatToFloat(PyList_GetItem(list, 0), &tmp_float);
-        if(ok)
-          I->Gamma = tmp_float;
-        {
-          PyObject *tmp = PyList_GetItem(list, 1);
-          if(tmp && (tmp != Py_None)) {
-#if 0
-            int PConvPyListToIntArrayInPlace(PyObject * obj, int *ff, ov_size ll);
-
-            int PConvPyListToIntArrayInPlace(tmp, int *ff, ov_size ll);
-            PyList_SetItem(list, 2, PConvIntArrayToPyList(I->ColorTable, 512 * 512));
-
-#endif
-
-            ColorUpdateFromLut(G, -1);
-          }
-        }
-      }
-    }
-  }
-  return ok;
-#endif
-}
-#endif
-
 
 /*========================================================================*/
 void ColorDef(PyMOLGlobals * G, char *name, float *v, int mode, int quiet)
@@ -2787,24 +2716,6 @@ int ColorTableLoad(PyMOLGlobals * G, char *fname, float gamma, int quiet)
   return (ok);
 }
 
-#if 0
-static void unlookup_color(unsigned int *table, float *in, float *out, int big_endian)
-{
-  /* simple iterative approach to finding closest input for a desired
-     output given the current color mapping table */
-
-  float cur_in[3], cur_out[3], diff[3];
-  copy3f(in, cur_in);
-  for(a = 0; a < 10; a++) {
-    lookup_color(table, cur_in, cur_out, big_endian);
-    diff3f(cur_out, in, diff);
-    scale3f(0.5, diff, diff);
-    subtract3f(cur_in, diff, cur_in);
-  }
-  copy3f(cur_in, out);
-}
-#endif
-
 static void lookup_color(CColor * I, float *in, float *out, int big_endian)
 {
   const float _1 = 1.0F;
@@ -3032,6 +2943,27 @@ void ColorUpdateFront(PyMOLGlobals * G, float *back)
     zero3f(I->Front);
 }
 
+void ColorUpdateFrontFromSettings(PyMOLGlobals * G){
+  int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
+  OrthoLineType bg_image_filename;
+  strcpy (bg_image_filename, SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename));
+  
+  if (!bg_gradient){
+    if (!bg_image_filename[0] && !OrthoBackgroundDataIsSet(G)){
+      float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+      ColorUpdateFront(G, v);
+    } else {
+      float v[] = { 0.f, 0.f, 0.f };
+      ColorUpdateFront(G, v);
+    }
+  } else {
+    float vv[3], *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom));
+    float *vb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top));
+    average3f(v, vb, vv);
+    ColorUpdateFront(G, vv);    
+  }
+}
+
 
 /*========================================================================*/
 float *ColorGetSpecial(PyMOLGlobals * G, int index)
@@ -3126,4 +3058,16 @@ int ColorGetEncoded(PyMOLGlobals * G, int index, float *color)
     return 0;
   }
   return 1;
+}
+
+int Color3fToInt(PyMOLGlobals * G, float *rgb){
+  unsigned int rc, gc, bc;
+  unsigned int result;
+  rc = pymol_roundf(rgb[0] * 255.);
+  gc = pymol_roundf(rgb[1] * 255.);
+  bc = pymol_roundf(rgb[2] * 255.);
+  return ( ( cColor_TRGB_Bits & 0xFF000000) | 
+	   ( ( rc << 16 ) & 0x00FF0000) |
+	   ( ( gc << 8 ) & 0x0000FF00) |
+	   ( ( bc & 0x000000FF ) ) );
 }

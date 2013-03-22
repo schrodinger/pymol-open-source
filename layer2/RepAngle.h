@@ -17,9 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_RepAngle
 #define _H_RepAngle
 
-#include"Rep.h"
 #include"DistSet.h"
 
-Rep *RepAngleNew(DistSet * ds);
+Rep *RepAngleNew(DistSet * ds, int state);
 
 #endif

@@ -124,7 +124,7 @@ SEE ALSO
                             tmp2 = _self.get_unused_name('_2')
                             _self.select_list(tmp1, obj1[0], [ids1[j] for i in i1 for j in range(i, i+window)])
                             _self.select_list(tmp2, obj2[0], [ids2[j] for i in i2 for j in range(i, i+window)])
-                            _self.rms_cur(tmp1, tmp2, cycles=0, matchmaker=4, object=object)
+                            _self.rms_cur(tmp2, tmp1, cycles=0, matchmaker=4, object=object)
                             _self.delete(tmp1)
                             _self.delete(tmp2)
                 except SystemError:
@@ -136,7 +136,7 @@ SEE ALSO
                 return ( {"alignment_length": aliLen, "RMSD" : RMSD, "rotation_matrix" : rotMat } )
 
 
-        def alignto(target,method="cealign",quiet=1,_self=cmd):
+        def alignto(target,method="cealign",quiet=1,_self=cmd, **kwargs):
                 """
 DESCRIPTION
 
@@ -158,22 +158,23 @@ EXAMPLE
 
         # align them to 1cll using cealign
         alignto 1cll, method=cealign
+        alignto 1cll, object=all_to_1cll
 
 SEE ALSO
 
         align, super, cealign, fit, rms, rms_cur, intra_fit
                 """
-                if method=="align":
-                        method=lambda x, sel : _self.align(x,sel)
-                elif method=="super":
-                        method=lambda x, sel : _self.super(x,sel)
-                else:
-                        method=lambda x, sel : _self.cealign(sel,x)
-                        
+                if cmd.is_string(method):
+                    if method in cmd.keyword:
+                        method = cmd.keyword[method][0]
+                    else:
+                        raise CmdException('Unknown method: ' + method)
                 for x in cmd.get_names("public_objects"):
+                        if x == target:
+                            continue
                         if not quiet:
                                 print "Aligning %s to %s" % (x, target)
-                        method(x,target)
+                        method(mobile=x, target=target, **kwargs)
                                 
 
 

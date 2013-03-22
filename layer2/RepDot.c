@@ -62,6 +62,8 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
   float *v = I->V;
   int c = I->N;
   int cc = 0;
+  int ok = true;
+
   if(ray) {
     float radius;
 
@@ -71,26 +73,17 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
       radius = I->dotSize;
     }
 
-    while(c--) {
+    while(ok && c--) {
       if(!cc) {                 /* load up the current vertex color */
         cc = (int) (*(v++));
         ray->fColor3fv(ray, v);
         v += 3;
       }
       v += 3;
-      ray->fSphere3fv(ray, v, radius);
+      ok &= ray->fSphere3fv(ray, v, radius);
       v += 3;
       cc--;
     }
-    /*         v=I->VC;
-       c=I->NC;
-       while(c--) {
-       ray->fColor3fv(ray,v);
-       v+=3;
-       ray->fSphere3fv(ray,v,*(v+3));
-       v+=4;
-       } */
-
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else { /* else not pick, i.e., when rendering */
@@ -136,13 +129,14 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 	    } else {
 	      radius = I->dotSize;
 	    }
-	    shaderPrg = CShaderPrg_Enable_SphereShader(G, "sphere");
+	    shaderPrg = CShaderPrg_Enable_DefaultSphereShader(G);
 	    CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", fabs(radius));
 	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	    CShaderPrg_Disable(shaderPrg);
 	  } else {
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
+	    if (!shaderPrg) return;
+	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
 	    SceneResetNormalUseShaderAttribute(G, 0, true, CShaderPrg_GetAttribLocation(shaderPrg, "a_Normal"));
 	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	    CShaderPrg_Disable(shaderPrg);
@@ -164,82 +158,93 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 
       if (generate_shader_cgo){
 	CGO *cgo = CGONew(G);
-	I->shaderCGO = CGONew(G);
-	if(!normals)
+	CHECKOK(ok, cgo);
+	if (ok)
+	  I->shaderCGO = CGONew(G);
+	CHECKOK(ok, I->shaderCGO);
+	if (ok)
+	  CGOSetUseShader(I->shaderCGO, true);
+	if(ok && !normals)
 	  CGOResetNormal(I->shaderCGO, true);
 	if (dot_as_spheres){
-	  while(c--) {
+	  while(ok && c--) {
 	    if(!cc) {             /* load up the current vertex color */
 	      cc = (int) (*(v++));
-	      CGOColorv(cgo, v);
+	      ok &= CGOColorv(cgo, v);
 	      v += 3;
 	    }
-	    if(normals)
-	      CGONormalv(cgo, v);
+	    if(ok && normals)
+	      ok &= CGONormalv(cgo, v);
 	    v += 3;
-	    CGOSphere(cgo, v, 1.f);
+	    if (ok)
+	      ok &= CGOSphere(cgo, v, 1.f);
 	    v += 3;
 	    cc--;
 	  }
 	} else {
-	  CGOLinewidthSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
-	  CGOBegin(cgo, GL_POINTS);
-	  while(c--) {
+	  if (ok)
+	    ok &= CGOLinewidthSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
+	  if (ok)
+	    ok &= CGOBegin(cgo, GL_POINTS);
+	  while(ok && c--) {
 	    if(!cc) {             /* load up the current vertex color */
 	      cc = (int) (*(v++));
-	      CGOColorv(cgo, v);
+	      ok &= CGOColorv(cgo, v);
 	      v += 3;
 	    }
+           /*      if(normals)  /* NORMALS do not get set for points 
+                   CGONormalv(cgo, v);*/
 	    v += 3;
-	    CGOVertexv(cgo, v);
+	    if (ok)
+	      ok &= CGOVertexv(cgo, v);
 	    v += 3;
 	    cc--;
 	  }
-	  CGOEnd(cgo);
+	  if (ok)
+	    ok &= CGOEnd(cgo);
 	}
-	CGOStop(cgo);
-	{
+	if (ok)
+	  ok &= CGOStop(cgo);
+	if (ok) {
 	  if (dot_as_spheres){
 	    I->shaderCGO = CGOOptimizeSpheresToVBONonIndexed(cgo, CGO_BOUNDING_BOX_SZ + CGO_DRAW_SPHERE_BUFFERS_SZ);
+	    CHECKOK(ok, I->shaderCGO);
 	  } else {
 	    CGO *convertcgo = CGOCombineBeginEnd(cgo, 0), *tmpCGO;
-	    tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, CGO_BOUNDING_BOX_SZ + I->N * 3 + 7);
-	    CGOAppend(I->shaderCGO, tmpCGO);
+	    CHECKOK(ok, convertcgo);
+	    if (ok)
+	      tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, CGO_BOUNDING_BOX_SZ + I->N * 3 + 7);
+	    CHECKOK(ok, tmpCGO);
+	    if (ok)
+	      ok &= CGOAppend(I->shaderCGO, tmpCGO);
 	    CGOFreeWithoutVBOs(tmpCGO);
 	    CGOFree(convertcgo);
 	  }
-	  CGOStop(I->shaderCGO);
+	  if (ok)
+	    ok &= CGOStop(I->shaderCGO);
 	}
-	I->shaderCGO->use_shader = true;
-	I->shaderCGO_as_spheres = dot_as_spheres;
+	if (ok){
+	  I->shaderCGO->use_shader = true;
+	  I->shaderCGO_as_spheres = dot_as_spheres;
+	}
 	CGOFree(cgo);
 
 	/* now that the shaderCGO is created, we can just call RepDotRender to render it */
-	RepDotRender(I, info);
+	if (ok)
+	  RepDotRender(I, info);
       } else {
 	if(!normals)
 	  SceneResetNormal(G, true);
-#ifdef PURE_OPENGL_ES_2
-	/* TODO */
-#else
 	if(!lighting) {
 	  if(!info->line_lighting)
 	    glDisable(GL_LIGHTING);
 	}
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-	/* TODO */
-#else
 	if(info->width_scale_flag)
 	  glPointSize(I->Width * info->width_scale);
 	else
 	  glPointSize(I->Width);
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-	/* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 	{
 	  int pl = 0, nverts = c, plc = 0;
@@ -297,14 +302,9 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
         }
         glEnd();
 #endif
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-	/* TODO */
-#else
         if(!lighting)
           glEnable(GL_LIGHTING);
-#endif
 #ifdef _PYMOL_GL_CALLLISTS
 	if (use_display_lists && I->R.displayList){
 	  glEndList();
@@ -313,6 +313,12 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 #endif
       }
     }
+  }
+  if (!ok){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = NULL;
+    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+    I->R.cs->Active[cRepDot] = false;
   }
 }
 
@@ -349,23 +355,27 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
   int atm, *ati = NULL;
   AtomInfoType *ai1, *ai2;
   int dot_color;
+  int ok = true;
   OOAlloc(G, RepDot);
+  CHECKOK(ok, I);
+  if (ok)
+    obj = cs->Obj;
 
-  obj = cs->Obj;
-
-  if(mode == cRepDotAreaType) { /* assume all atoms "visible" for area comp. */
-    visFlag = true;
-  } else {
-    visFlag = false;
-    if(obj->RepVisCache[cRepDot])
-      for(a = 0; a < cs->NIndex; a++) {
-        if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepDot]) {
-          visFlag = true;
-          break;
-        }
-      }
+  if (ok){
+    if(mode == cRepDotAreaType) { /* assume all atoms "visible" for area comp. */
+      visFlag = true;
+    } else {
+      visFlag = false;
+      if(obj->RepVisCache[cRepDot])
+	for(a = 0; a < cs->NIndex; a++) {
+	  if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepDot]) {
+	    visFlag = true;
+	    break;
+	  }
+	}
+    }
   }
-  if(!visFlag) {
+  if(!ok || !visFlag) {
     OOFreeP(I);
     return (NULL);              /* skip if no dots are visible */
   }
@@ -412,33 +422,45 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
   I->R.cs = cs;
 
   I->V = (float *) mmalloc(sizeof(float) * cs->NIndex * sp->nDot * 10);
-  ErrChkPtr(G, I->V);
+  CHECKOK(ok, I->V);
 
-  if(mode == cRepDotAreaType) { /* in area mode, we need to export save addl. info 
+  if(ok && mode == cRepDotAreaType) { /* in area mode, we need to export save addl. info 
                                  * such as the normal vectors, the partial area, 
                                  * the originating atom, etc. */
     I->A = Alloc(float, cs->NIndex * sp->nDot);
-    I->T = Alloc(int, cs->NIndex * sp->nDot);
-    I->F = Alloc(int, cs->NIndex * sp->nDot);
-    I->VN = Alloc(float, cs->NIndex * sp->nDot * 3);
-    I->Atom = Alloc(int, cs->NIndex * sp->nDot);
-    aa = I->A;
-    tp = I->T;
-    tf = I->F;
-    ati = I->Atom;
-    inclH = true;
-    cullByFlag = true;
+    CHECKOK(ok, I->A);
+    if (ok)
+      I->T = Alloc(int, cs->NIndex * sp->nDot);
+    CHECKOK(ok, I->T);
+    if (ok)
+      I->F = Alloc(int, cs->NIndex * sp->nDot);
+    CHECKOK(ok, I->F);
+    if (ok)
+      I->VN = Alloc(float, cs->NIndex * sp->nDot * 3);
+    CHECKOK(ok, I->VN);
+    if (ok)
+      I->Atom = Alloc(int, cs->NIndex * sp->nDot);
+    CHECKOK(ok, I->Atom);
+    if (ok){
+      aa = I->A;
+      tp = I->T;
+      tf = I->F;
+      ati = I->Atom;
+      inclH = true;
+      cullByFlag = true;
+    }
   }
   vn = I->VN;
-
   I->N = 0;
   lastColor = -1;
   colorCnt = 0;
-  map = MapNew(G, max_vdw, cs->Coord, cs->NIndex, NULL);
+  if (ok)
+    map = MapNew(G, max_vdw, cs->Coord, cs->NIndex, NULL);
+  CHECKOK(ok, map);
   v = I->V;
-  if(map) {
-    MapSetupExpress(map);
-    for(a = 0; a < cs->NIndex; a++) {
+  if(ok && map) {
+    ok &= MapSetupExpress(map);
+    for(a = 0; ok && a < cs->NIndex; a++) {
       atm = cs->IdxToAtm[a];
       ai1 = obj->AtomInfo + atm;
       if(ai1->visRep[cRepDot] || mode == cRepDotAreaType)
@@ -534,20 +556,34 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
             }
           }
         }
+      ok &= !G->Interrupt;
     }
     if(countPtr)
       *countPtr = (float) colorCnt;     /* save count */
     MapFree(map);
   }
-
-  I->V = ReallocForSure(I->V, float, (v - I->V));
-
-  if(mode == cRepDotAreaType) {
+  if (ok)
+    I->V = ReallocForSure(I->V, float, (v - I->V));
+  CHECKOK(ok, I->V);
+  if(ok && mode == cRepDotAreaType) {
     I->A = ReallocForSure(I->A, float, (aa - I->A));
-    I->T = ReallocForSure(I->T, int, (tp - I->T));
-    I->F = ReallocForSure(I->F, int, (tf - I->F));
-    I->VN = ReallocForSure(I->VN, float, (vn - I->VN));
-    I->Atom = ReallocForSure(I->Atom, int, (ati - I->Atom));
+    CHECKOK(ok, I->A);
+    if (ok)
+      I->T = ReallocForSure(I->T, int, (tp - I->T));
+    CHECKOK(ok, I->T);
+    if (ok)
+      I->F = ReallocForSure(I->F, int, (tf - I->F));
+    CHECKOK(ok, I->F);
+    if (ok)
+      I->VN = ReallocForSure(I->VN, float, (vn - I->VN));
+    CHECKOK(ok, I->VN);
+    if (ok)
+      I->Atom = ReallocForSure(I->Atom, int, (ati - I->Atom));
+    CHECKOK(ok, I->Atom);
+  }
+  if (!ok){
+    RepDotFree(I);
+    I = NULL;
   }
   return ((void *) (struct Rep *) I);
 }

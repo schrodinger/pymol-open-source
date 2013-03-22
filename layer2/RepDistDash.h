@@ -20,6 +20,6 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"DistSet.h"
 
-Rep *RepDistDashNew(DistSet * ds);
+Rep *RepDistDashNew(DistSet * ds, int state);
 
 #endif

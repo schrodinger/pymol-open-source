@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Text.h"
 #include"Texture.h"
+#include"CGO.h"
 
 #define HASH_MASK 0x2FFF
 
@@ -202,12 +203,12 @@ float CharacterGetAdvance(PyMOLGlobals * G, int sampling, int id)
 void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-    glEnable(GL_TEXTURE_2D);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-#endif
+    short use_shader;
+    use_shader = (int) SettingGet(G, cSetting_use_shaders);
+    if (!use_shader){
+      glEnable(GL_TEXTURE_2D);
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    }
     /*    glEnable(GL_BLEND);
        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); */
   }
@@ -216,16 +217,16 @@ void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
 void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-    glDisable(GL_TEXTURE_2D);
-#endif
+    short use_shader;
+    use_shader = (int) SettingGet(G, cSetting_use_shaders);
+    if (!use_shader){
+      glDisable(GL_TEXTURE_2D);
+    }
     /*    glDisable(GL_BLEND); */
   }
 }
 
-void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id)
+void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short isworldlabel SHADERCGOARG)
 
 /* need orientation matrix */
 {
@@ -234,6 +235,7 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id)
 
   int texture_id = TextureGetFromChar(G, id, rec->extent);
   float sampling = 1.0F;
+
   if(G->HaveGUI && G->ValidContext && texture_id) {
     if(info)
       sampling = (float) info->sampling;
@@ -241,7 +243,9 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id)
     /*    if(glIsTexture(texture_id)) -- BAD -- impacts performance */
       float *v, v0[3];
       float v1[3];
-      glBindTexture(GL_TEXTURE_2D, texture_id);
+      if (!shaderCGO){
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+      }
       v = TextGetPos(G);
       copy3f(v, v0);
       v0[0] -= rec->XOrig / sampling;
@@ -250,45 +254,40 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id)
       v1[0] += rec->Width / sampling;
       v1[1] += rec->Height / sampling;
       /*      glColor4f(0.5F,0.5F,0.5F,1.0F); */
-#if defined(PURE_OPENGL_ES_2)
-    /* TODO */
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
-      {
-	const GLfloat vertexVals [] = {
-	  v0[0], v0[1], v0[2],
-	  v0[0], v1[1], v0[2],
-	  v1[0], v0[1], v0[2],
-	  v1[0], v1[1], v0[2]
-	};	
-	const GLfloat texVals [] = {
-	  0.0F, 0.0F,
-	  0.0F, rec->extent[1],
-	  rec->extent[0], 0.0F,
-	  rec->extent[0], rec->extent[1]
-	};	
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	
-	glVertexPointer(3, GL_FLOAT, 0, vertexVals);    
-	glTexCoordPointer(2, GL_FLOAT, 0, texVals);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+      if (shaderCGO){
+          float *worldPos = TextGetWorldPos(G);
+	  if (isworldlabel){
+	    float *screenWorldOffset = TextGetScreenWorldOffset(G);
+	    CGODrawLabel(shaderCGO, texture_id, worldPos, screenWorldOffset, v0, v1, rec->extent);
+	  } else {
+	    CGODrawTexture(shaderCGO, texture_id, worldPos, v0, v1, rec->extent);
+	  }
+      } else {
+	{
+	  const GLfloat vertexVals [] = {
+	    v0[0], v0[1], v0[2],
+	    v0[0], v1[1], v0[2],
+	    v1[0], v0[1], v0[2],
+	    v1[0], v1[1], v0[2]
+	  };	
+	  const GLfloat texVals [] = {
+	    rec->extent[0], rec->extent[1],
+	    rec->extent[0], rec->extent[3],
+	    rec->extent[2], rec->extent[1],
+	    rec->extent[2], rec->extent[3]
+	  };	
+	  glEnableClientState(GL_VERTEX_ARRAY);
+	  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+#ifdef OPENGL_ES_1
+	  glClientActiveTexture(GL_TEXTURE1);
+#endif
+	  glVertexPointer(3, GL_FLOAT, 0, vertexVals);    
+	  glTexCoordPointer(2, GL_FLOAT, 0, texVals);
+	  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	  glDisableClientState(GL_VERTEX_ARRAY);
+	  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
       }
-#else
-      glBegin(GL_QUADS);
-      glTexCoord2f(0.0F, 0.0F);
-      glVertex3f(v0[0], v0[1], v0[2]);
-      glTexCoord2f(0.0F, rec->extent[1]);
-      glVertex3f(v0[0], v1[1], v0[2]);
-      glTexCoord2f(rec->extent[0], rec->extent[1]);
-      glVertex3f(v1[0], v1[1], v0[2]);
-      glTexCoord2f(rec->extent[0], 0.0F);
-      glVertex3f(v1[0], v0[1], v0[2]);
-      glEnd();
-#endif
-#endif
     }
      TextAdvance(G, rec->Advance / sampling);
   }

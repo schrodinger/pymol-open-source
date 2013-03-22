@@ -76,26 +76,6 @@ static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState * I)
   PyList_SetItem(result, 15, PyInt_FromLong(I->Side));
   PyList_SetItem(result, 16, PyInt_FromLong(I->quiet));
 
-#if 0
-  ObjectNameType MapName;
-  int MapState;
-  CCrystal Crystal;
-  int Active;
-  int *N;
-  float *V;
-  int Range[6];
-  float ExtentMin[3], ExtentMax[3];
-  int ExtentFlag;
-  float Level, Radius;
-  int RefreshFlag;
-  int ResurfaceFlag;
-  float *AtomVertex;
-  int CarveFlag;
-  float CarveBuffer;
-  int DotFlag;
-  CGO *UnitCellCGO;
-#endif
-
   return (PConvAutoNone(result));
 }
 
@@ -713,17 +693,6 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
   SceneInvalidate(I->Obj.G);
 }
 
-#if 0
-static int ZOrderFn(float *array, int l, int r)
-{
-  return (array[l] <= array[r]);
-}
-
-static int ZRevOrderFn(float *array, int l, int r)
-{
-  return (array[l] >= array[r]);
-}
-#endif
 static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -922,11 +891,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 		} else {
 		  CShaderPrg * shaderPrg = 0;
 		  shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-#ifdef PURE_OPENGL_ES_2
-		  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
-#else
 		  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1);
-#endif
 		  
 		  ms->shaderCGO->enable_shaders = shaderPrg ? 0 : 1;
 		  CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
@@ -958,11 +923,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 		}
 		CGOColorv(ms->shaderCGO, col);
 	      } else {
-#ifdef PURE_OPENGL_ES_2
-		/* TODO */
-#else
 		glColor4f(col[0], col[1], col[2], alpha);
-#endif
 	      }
 
                 if(n && v && I->Obj.RepVis[cRepSurface]) {
@@ -979,11 +940,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
                       float sum[3];
                       float matrix[16];
                       int parity;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
                       glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-#endif
                       t_buf = Alloc(float *, ms->nT * 9);
                       vc = ms->VC;
 
@@ -1070,9 +1027,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			}
 			CGOColorv(ms->shaderCGO, col);
 		      } else {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 			glColor4f(col[0], col[1], col[2], alpha);
 		      }
 
@@ -1193,7 +1147,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			}
 			glEnd();
 #endif
-#endif
 		      }
 
                       FreeP(ix);
@@ -1263,9 +1216,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			} else {
 			  while(*n) {
 			    c = *(n++);
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 			    {
 			      int nverts = c/2, pl = 0, plc = 0;;
@@ -1317,7 +1267,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			      c -= 2;
 			    }
 			    glEnd();
-#endif
 #endif
 			  }
                         }
@@ -1385,9 +1334,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			switch (ms->Mode) {
 			case 3:
 			case 2:
-#ifdef PURE_OPENGL_ES_2
-			  /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 			  {
 			    int nverts = c/2, pl = 0, plc = 0;
@@ -1439,12 +1385,8 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			  }
 			  glEnd();
 #endif
-#endif
 			  break;
 			case 1:
-#ifdef PURE_OPENGL_ES_2
-			  /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 			  {
 			    int nverts = c, pl = 0, plc = 0;
@@ -1487,13 +1429,9 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			  }
 			  glEnd();
 #endif
-#endif
 			  break;
 			case 0:
 			default:
-#ifdef PURE_OPENGL_ES_2
-			  /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
 			  {
 			    int nverts = c, pl = 0, plc = 0;
@@ -1537,7 +1475,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			  }
 			  glEnd();
 #endif
-#endif
 			  break;
 			}
 		      }
@@ -1572,11 +1509,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 		  {
 		    CShaderPrg * shaderPrg = 0;
 		    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-#ifdef PURE_OPENGL_ES_2
-		    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 0);
-#else
 		    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1);
-#endif
 		    ms->shaderCGO->enable_shaders = shaderPrg ? 0 : 1;
 		    CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
 		    if (shaderPrg)

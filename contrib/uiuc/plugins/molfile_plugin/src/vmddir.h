@@ -56,7 +56,9 @@ static VMDDIR * vmd_opendir(const char * filename) {
   strcat(dirname, "\\*");
   d = (VMDDIR *) malloc(sizeof(VMDDIR));
   if (d != NULL) {
-    d->h = FindFirstFile(dirname, &(d->fd));
+    wchar_t szBuff[VMD_FILENAME_MAX];
+    swprintf(szBuff, L"%p", dirname);
+    d->h = FindFirstFile(szBuff, &(d->fd));
     if (d->h == ((HANDLE)(-1))) {
       free(d);
       return NULL;
@@ -67,7 +69,10 @@ static VMDDIR * vmd_opendir(const char * filename) {
 
 static char * vmd_readdir(VMDDIR * d) {
   if (FindNextFile(d->h, &(d->fd))) {
-    return d->fd.cFileName; 
+    int len = wcslen(d->fd.cFileName);
+    char* ascii = new char[len + 1];
+    wcstombs( ascii, d->fd.cFileName, len );
+    return ascii;
   }
   return NULL;     
 }

@@ -364,6 +364,21 @@ void scale3f(float *v1, float v0, float *v2)
   v2[2] = v1[2] * v0;
 }
 
+void copy3uc(uchar *v1, uchar *v2)
+{
+  v2[0] = v1[0];
+  v2[1] = v1[1];
+  v2[2] = v1[2];
+}
+
+void copy4uc(uchar *v1, uchar *v2)
+{
+  v2[0] = v1[0];
+  v2[1] = v1[1];
+  v2[2] = v1[2];
+  v2[3] = v1[3];
+}
+
 void copy3f(float *v1, float *v2)
 {
   v2[0] = v1[0];
@@ -1922,29 +1937,6 @@ void matrix_inverse_transform33f3f(Matrix33f m1, float *v1, float *v2)
   v2[2] = m1[0][2] * v1[0] + m1[1][2] * v1[1] + m1[2][2] * v1[2];
 }
 
-#if 0
-double matdiffsq(float *v1, oMatrix5f m, float *v2)
-{
-  register double dx, dy, dz;
-  float vx, vy, vz;
-
-  dx = v2[0] - m[3][0];
-  dy = v2[1] - m[3][1];
-  dz = v2[2] - m[3][2];
-
-  vx = m[0][0] * dx + m[0][1] * dy + m[0][2] * dz;
-  vy = m[1][0] * dx + m[1][1] * dy + m[1][2] * dz;
-  vz = m[2][0] * dx + m[2][1] * dy + m[2][2] * dz;
-
-  dx = (v1[0] - (vx + m[4][0]));
-  dy = (v1[1] - (vy + m[4][1]));
-  dz = (v1[2] - (vz + m[4][2]));
-
-  return (dx * dx + dy * dy + dz * dz);
-
-}
-#endif
-
 void transform5f3f(oMatrix5f m, float *v1, float *v2)
 {
   register double dx, dy, dz;
@@ -2191,6 +2183,13 @@ void mult3f(float *vsrc, float val, float *vdest){
   vdest[2] = vsrc[2] * val;
 }
 
+void mult4f(float *vsrc, float val, float *vdest){
+  vdest[0] = vsrc[0] * val;
+  vdest[1] = vsrc[1] * val;
+  vdest[2] = vsrc[2] * val;
+  vdest[3] = vsrc[3] * val;
+}
+
 float max3(float val1, float val2, float val3){
   if (val1>val2){
     if (val1>val3){
@@ -2212,3 +2211,18 @@ float ave3(float val1, float val2, float val3){
 float ave2(float val1, float val2){
   return ((val1+val2)/2.f);
 }
+
+void white4f(float *rgba, float value){
+  rgba[0] = value;
+  rgba[1] = value;
+  rgba[2] = value;
+  rgba[3] = 1.0F;
+}
+void add4f(float *v1, float *v2, float *v3)
+{
+  v3[0] = v1[0] + v2[0];
+  v3[1] = v1[1] + v2[1];
+  v3[2] = v1[2] + v2[2];
+  v3[3] = v1[3] + v2[3];
+}
+

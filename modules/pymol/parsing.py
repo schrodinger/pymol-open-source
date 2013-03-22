@@ -62,7 +62,6 @@
 if __name__=='pymol.parsing':
 
     import re
-    import string
     import sys
     import threading
     import new
@@ -94,9 +93,6 @@ if __name__=='pymol.parsing':
     
     # key regular expressions
 
-    command_re = re.compile(r"[^\s]+")
-    whitesp_re = re.compile(r"\s+")
-    comma_re = re.compile(r"\s*,\s*")
     arg_name_re = re.compile(r"[A-Za-z0-9_]+\s*\=")
     nester_char_re = re.compile(r"\(|\)|\[|\]")
     nester_re = re.compile(r"[^,;]*[\(\[]")
@@ -165,31 +161,25 @@ if __name__=='pymol.parsing':
         result = [] 
         # current character
         cc = 0
-        mo = command_re.match(st[cc:])
-        if mo:
-            cc=cc+mo.end(0)
+        a = st.split(None, 1)
+        if len(a) == 2:
+            st = a[1]
             while 1:
                 if mode>=LITERAL: # LITERAL argument handling
                     if (mode-LITERAL)==len(result):
-                        result.append((None,string.strip(st[cc:])))
+                        result.append((None, st[cc:].strip()))
                         return result
                 # clean whitespace
-                mo = whitesp_re.match(st[cc:])
-                if mo:
-                    cc=cc+mo.end(0)            
-                if not len(st[cc:]):
+                st = st.lstrip()
+                if st == '':
                     break
                 # read argument name, if any         
-                mo = arg_name_re.match(st[cc:])
+                mo = arg_name_re.match(st)
                 if mo:
-                    nam = string.strip(mo.group(0)[:-1])
-                    cc=cc+mo.end(0)
+                    nam = mo.group(0)[:-1].strip()
+                    st = st[mo.end(0):].lstrip()
                 else:
                     nam = None
-                # clean whitespace
-                mo = whitesp_re.match(st[cc:])
-                if mo:
-                    cc=cc+mo.end(0)
                 # is one or more nesters present?
                 skip_flag = 0
                 if nester_re.match(st[cc:]):
@@ -239,7 +229,7 @@ if __name__=='pymol.parsing':
                     if not len(nest_str): # we must have failed to parse...
                         skip_flag = 0
                     else:
-                        result.append((nam,string.strip(nest_str)))
+                        result.append((nam, nest_str.strip()))
                 if not skip_flag:
                     # no nester, so just read normal argument value
                     argval = None
@@ -262,16 +252,14 @@ if __name__=='pymol.parsing':
                             argval = argval + mo.group(0)
                             cc=cc+mo.end(0)
                         if argval!=None:
-                            result.append((nam,string.strip(argval)))
+                            result.append((nam, argval.strip()))
                 # clean whitespace
-                mo = whitesp_re.match(st[cc:])
-                if mo:
-                    cc=cc+mo.end(0)
+                st = st[cc:].lstrip()
+                cc = 0
                 # skip over comma
-                if len(st[cc:]):
-                    mo = comma_re.match(st[cc:])
-                    if mo:
-                        cc=cc+mo.end(0)
+                if st != '':
+                    if st.startswith(','):
+                        st = st[1:].lstrip()
                     else:
                         print "Error: "+st
                         print "Error: "+" "*cc+"^ syntax error (type 3)."
@@ -319,7 +307,7 @@ if __name__=='pymol.parsing':
             for a in rows:
                 st = margin*' '
                 row = 0
-                st = st + string.join(a,'  ')
+                st = st + '  '.join(a)
                 result.append(st)
         return result
 
@@ -516,11 +504,11 @@ if __name__=='pymol.parsing':
         while c<l:
             ch = str[c]
             if (ch in tok) and (len(stack)==0):
-                lst.append(string.strip(wd))
+                lst.append(wd.strip())
                 nf = nf + 1
                 if mx:
                     if nf==mx:
-                        wd = string.strip(str[c+1:])
+                        wd = str[c+1:].strip()
                         break;
                 wd = ''
                 w = 0
@@ -535,7 +523,7 @@ if __name__=='pymol.parsing':
                 wd = wd + ch
             c = c + 1
         if len(wd):
-            lst.append(string.strip(wd))
+            lst.append(wd.strip())
         return lst
 
     import pymol

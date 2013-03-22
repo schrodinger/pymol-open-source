@@ -237,9 +237,7 @@ CGO *CrystalGetUnitCellCGO(CCrystal * I)
   CGO *cgo = NULL;
   if(I) {
     cgo = CGONew(G);
-#ifndef PURE_OPENGL_ES_2
     CGODisable(cgo, GL_LIGHTING);
-#endif
 
 #ifdef _PYMOL_CGO_DRAWARRAYS
     {
@@ -371,9 +369,7 @@ CGO *CrystalGetUnitCellCGO(CCrystal * I)
     CGOEnd(cgo);
 #endif
 
-#ifndef PURE_OPENGL_ES_2
     CGOEnable(cgo, GL_LIGHTING);
-#endif
     CGOStop(cgo);
   }
   return (cgo);

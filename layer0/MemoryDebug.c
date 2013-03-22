@@ -71,55 +71,8 @@ static void DieOutOfMemory(void)
 
 void MemoryZero(char *p, char *q)
 {
-#if 1
   if(q - p)
     memset(p, 0, q - p);
-#else
-  register unsigned long count;
-  register long *a;
-  int mask;
-  /*  fprintf(stderr,"MemoryZero: start %p stop %p\n",p,q);
-     fflush(stderr);
-   */
-
-  count = q - p;
-  mask = sizeof(long) - 1;
-  /* get us word aligned */
-  while(count && (((int) p) & mask)) {
-    count--;
-    *p++ = 0;
-  }
-  a = (long *) p;
-  /* now blank efficiently */
-  while(count > (sizeof(long) * 16)) {
-    count -= (sizeof(long) * 16);
-    *a++ = 0;
-    *a++ = 0;
-    *a++ = 0;
-    *a++ = 0;
-
-    *a++ = 0;
-    *a++ = 0;
-    *a++ = 0;
-    *a++ = 0;
-
-    *a++ = 0;
-    *a++ = 0;
-    *a++ = 0;
-    *a++ = 0;
-
-    *a++ = 0;
-    *a++ = 0;
-    *a++ = 0;
-    *a++ = 0;
-  }
-  p = (char *) a;
-  while(count > 0) {
-    *p++ = 0;
-    count--;
-  }
-#endif
-
 }
 
 void *VLAExpand(void *ptr, ov_size rec)

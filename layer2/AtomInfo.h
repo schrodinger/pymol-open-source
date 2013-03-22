@@ -179,10 +179,6 @@ typedef char ResName[cResnLen + 1];
 typedef char AtomName[cAtomNameLen + 1];
 
 typedef char ElemName[cElemNameLen + 1];
-#if 0
-typedef char TextType[cTextTypeLen + 1];
-typedef char LabelType[cLabelTypeLen + 1];
-#endif
 
 #define cAtomInfoNoType -9999
 

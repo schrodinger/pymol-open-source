@@ -81,10 +81,21 @@ struct Rep *RepUpdate(struct Rep *I, struct CoordSet *cs, int state, int rep)
         I = I->fRebuild(I, cs, state, rep);
       }
     } else if(I->MaxInvalid <= cRepInvVisib) {
+      int rebuilt = false;
       if(I->fSameVis) {
-        if(!I->fSameVis(I, cs))
+        if(!I->fSameVis(I, cs)){
           I = I->fRebuild(I, cs, state, rep);
-      } else
+          rebuilt = true;
+        }
+      }
+      if(I->fSameColor) {
+        if (!rebuilt){
+          if(!I->fSameColor(I, cs)){
+            I->fRecolor(I, cs);
+          }
+        }
+      }
+      if (!I->fSameVis && !I->fSameColor)
         I = I->fRebuild(I, cs, state, rep);
     } else if(I->MaxInvalid >= cRepInvCoord) {
       I = I->fRebuild(I, cs, state, rep);
@@ -120,9 +131,6 @@ static void RepRenderBox(struct Rep *this, RenderInfo * info)
 {
   register PyMOLGlobals *G = this->G;
   if(G->HaveGUI && G->ValidContext) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 #ifdef _PYMOL_GL_DRAWARRAYS
     {
       const GLfloat lineVerts[] = {
@@ -178,7 +186,6 @@ static void RepRenderBox(struct Rep *this, RenderInfo * info)
     glVertex3i(0, 0, 3);
 
     glEnd();
-#endif
 #endif
   }
 

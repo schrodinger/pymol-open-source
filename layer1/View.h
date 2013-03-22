@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #define _H_View
 
 #include"os_python.h"
-#include"os_gl.h"
+#include "os_gl.h"
 
 #include"Ray.h"
 #include"Block.h"
@@ -91,7 +91,7 @@ int ViewElemSmooth(CViewElem * first, CViewElem * last, int window, int loop);
 int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
                         float power, float bias,
                         int simple, float linearity, int hand, float cut);
-void ViewElemDraw(PyMOLGlobals *G, CViewElem * src, BlockRect *rect, int frames, char *title);
+void ViewElemDraw(PyMOLGlobals *G, CViewElem * src, BlockRect *rect, int frames, char *title ORTHOCGOARG);
 
 #define cViewElemModifyInsert 1
 #define cViewElemModifyDelete -1
@@ -101,6 +101,6 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * src, BlockRect *rect, int frames,
 int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, int count, int target);
 int ViewElemXtoFrame(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames, int x, int nearest);
 void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect,int first, int last,
-                     int frames, float *color4, int fill);
+                     int frames, float *color4, int fill ORTHOCGOARG);
 
 #endif

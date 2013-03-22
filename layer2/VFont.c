@@ -64,7 +64,7 @@ int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
   float *pc;
   unsigned char c;
   int drawing, stroke;
-  float *cgo_verts = 0, *tmp_ptr;
+  float *cgo_verts, *tmp_ptr;
   ov_diff offset;
   if((font_id > 0) && (font_id <= I->NFont)) {
     fr = I->Font[font_id];
@@ -92,17 +92,10 @@ int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
                 transform33f3f(matrix, pen, pen);
               add3f(base, pen, pen);
               if(stroke) {
-#ifndef _PYMOL_CGO_DRAWARRAYS
                 CGOEnd(cgo);
-#endif
               }
-#ifdef _PYMOL_CGO_DRAWARRAYS
-	      cgo_verts = CGODrawArrays(cgo, GL_LINE_STRIP, CGO_VERTEX_ARRAY, 1);
-	      cgo_verts[0] = pen[0]; cgo_verts[1] = pen[1]; cgo_verts[2] = pen[2];
-#else
               CGOBegin(cgo, GL_LINE_STRIP);
               CGOVertexv(cgo, pen);
-#endif
               stroke = true;
               break;
             case 1:            /* drawto */
@@ -113,15 +106,9 @@ int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
                 transform33f3f(matrix, pen, pen);
               add3f(base, pen, pen);
               if(stroke) {
-#ifdef _PYMOL_CGO_DRAWARRAYS
-		tmp_ptr = CGO_add_GLfloat(cgo, 3);
-		tmp_ptr[0] = pen[0]; tmp_ptr[1] = pen[1]; tmp_ptr[2] = pen[2];
-		(*((int*)(cgo_verts - 1))) += 1;
-#else
 		(void)tmp_ptr;
 		(void)cgo_verts;
                 CGOVertexv(cgo, pen);
-#endif
               }
               break;
             default:
@@ -136,9 +123,7 @@ int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
             transform33f3f(matrix, pen, pen);
           add3f(pen, pos, pos);
           if(stroke){
-#ifndef _PYMOL_CGO_DRAWARRAYS
             CGOEnd(cgo);
-#endif
 	  }
         }
       }

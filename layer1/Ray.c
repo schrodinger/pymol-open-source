@@ -49,7 +49,6 @@ Z* -------------------------------------------------------------------
 #define RAY_SMALL 0.00001
 #endif
 
-
 /* BASES 
    0 contains untransformed vertices (vector size = 3)
 	1 contains transformed vertices (vector size = 3)
@@ -121,28 +120,28 @@ void RayTransparentf(CRay * I, float v);
 
 void RaySetup(CRay * I);
 void RayColor3fv(CRay * I, float *v);
-void RaySphere3fv(CRay * I, float *v, float r);
-void RayCharacter(CRay * I, int char_id);
-void RayCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2);
-void RaySausage3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2);
+int RaySphere3fv(CRay * I, float *v, float r);
+int RayCharacter(CRay * I, int char_id);
+int RayCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2);
+int RaySausage3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2);
 void RayInteriorColor3fv(CRay * I, float *v, int passive);
-void RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
+int RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
                 float *c1, float *c2, int cap1, int cap2);
-void RayTriangle3fv(CRay * I,
-                    float *v1, float *v2, float *v3,
-                    float *n1, float *n2, float *n3, float *c1, float *c2, float *c3);
+int RayTriangle3fv(CRay * I,
+		   float *v1, float *v2, float *v3,
+		   float *n1, float *n2, float *n3, float *c1, float *c2, float *c3);
 
-void RayTriangleTrans3fv(CRay * I,
-                         float *v1, float *v2, float *v3,
-                         float *n1, float *n2, float *n3,
-                         float *c1, float *c2, float *c3, float t1, float t2, float t3);
-void RayEllipsoid3fv(CRay * I, float *v, float r, float *n1, float *n2, float *n3);
+int RayTriangleTrans3fv(CRay * I,
+			float *v1, float *v2, float *v3,
+			float *n1, float *n2, float *n3,
+			float *c1, float *c2, float *c3, float t1, float t2, float t3);
+int RayEllipsoid3fv(CRay * I, float *v, float r, float *n1, float *n2, float *n3);
 
 void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p);
 void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], float3 * p);
 
-void RayExpandPrimitives(CRay * I);
-void RayTransformBasis(CRay * I, CBasis * B, int group_id);
+int RayExpandPrimitives(CRay * I);
+int RayTransformBasis(CRay * I, CBasis * B, int group_id);
 
 int PrimitiveSphereHit(CRay * I, float *v, float *n, float *minDist, int except);
 
@@ -151,8 +150,8 @@ void RayTransformInverseNormals33(unsigned int n, float3 * q, const float m[16],
                                   float3 * p);
 void RayProjectTriangle(CRay * I, RayInfo * r, float *light, float *v0, float *n0,
                         float scale);
-void RayCustomCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2,
-                          int cap1, int cap2);
+int RayCustomCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2,
+			 int cap1, int cap2);
 void RaySetContext(CRay * I, int context)
 {
   if(context >= 0)
@@ -293,6 +292,31 @@ static void fill(unsigned int *buffer, unsigned int value, unsigned int cnt)
   while(cnt--) {
     *(buffer++) = value;
   }
+}
+#define MIN(x,y) ((x < y) ? x : y)
+#define MAX(x,y) ((x > y) ? x : y)
+#define length2f(v1, v2) (sqrt1f(((v1)*(v1)) + ((v2)*(v2))))
+void add4ucf(unsigned char *ucval, float *fval, float mulv){
+  fval[0] += ucval[0] * mulv;
+  fval[1] += ucval[1] * mulv;
+  fval[2] += ucval[2] * mulv;
+  fval[3] += ucval[3] * mulv;
+}
+
+void copy4fuc(float *fval, unsigned char *ucval){
+  ucval[0] = (0xFF & (int)pymol_roundf(fval[0]));
+  ucval[1] = (0xFF & (int)pymol_roundf(fval[1]));
+  ucval[2] = (0xFF & (int)pymol_roundf(fval[2]));
+  ucval[3] = (0xFF & (int)pymol_roundf(fval[3]));
+}
+
+float fmodpos(float a, float b){
+  float ret = fmod(a, b);
+  if (ret < 0.f){
+    ret = fmod(-ret, b);
+    ret = fmod( b - ret, b);
+  }
+  return ret;
 }
 
 static void fill_gradient(CRay * I, int opaque_back, unsigned int *buffer, float *bkrd_bottom, float *bkrd_top, int width, int height, unsigned int cnt)
@@ -446,13 +470,14 @@ static void RayReflectAndTexture(CRay * I, RayInfo * r, int perspective)
 
 
 /*========================================================================*/
-void RayExpandPrimitives(CRay * I)
+int RayExpandPrimitives(CRay * I)
 {
   int a;
   float *v0, *v1, *n0, *n1;
   CBasis *basis;
   int nVert, nNorm;
   float voxel_floor;
+  int ok = true;
 
   nVert = 0;
   nNorm = 0;
@@ -500,7 +525,8 @@ void RayExpandPrimitives(CRay * I)
   nNorm = 0;
   v0 = basis->Vertex;
   n0 = basis->Normal;
-  for(a = 0; a < I->NPrimitive; a++) {
+  ok &= !I->G->Interrupt;
+  for(a = 0; ok && a < I->NPrimitive; a++) {
     switch (I->Primitive[a].type) {
     case cPrimTriangle:
     case cPrimCharacter:
@@ -611,6 +637,7 @@ void RayExpandPrimitives(CRay * I)
       nVert++;
       break;
     }
+    ok &= !I->G->Interrupt;
   }
   if(nVert > basis->NVertex) {
     fprintf(stderr, "Error: basis->NVertex exceeded\n");
@@ -618,6 +645,7 @@ void RayExpandPrimitives(CRay * I)
   PRINTFB(I->G, FB_Ray, FB_Blather)
     " Ray: minvoxel  %8.3f\n Ray: NPrimit  %d nvert %d\n", basis->MinVoxel, I->NPrimitive,
     nVert ENDFB(I->G);
+  return ok;
 }
 
 
@@ -701,13 +729,14 @@ static void RayComputeBox(CRay * I)
   I->max_box[2] = zmax;
 }
 
-static void RayTransformFirst(CRay * I, int perspective, int identity)
+static int RayTransformFirst(CRay * I, int perspective, int identity)
 {
   CBasis *basis0, *basis1;
   CPrimitive *prm;
   int a;
   float *v0;
   int backface_cull;
+  int ok = true;
   int two_sided_lighting = SettingGetGlobal_b(I->G, cSetting_two_sided_lighting);
 
   if(two_sided_lighting<0) {
@@ -728,42 +757,67 @@ static void RayTransformFirst(CRay * I, int perspective, int identity)
   basis0 = I->Basis;
   basis1 = I->Basis + 1;
 
-  VLACacheSize(I->G, basis1->Vertex, float, 3 * basis0->NVertex, 1, cCache_basis_vertex);
-  VLACacheSize(I->G, basis1->Normal, float, 3 * basis0->NNormal, 1, cCache_basis_normal);
-  VLACacheSize(I->G, basis1->Precomp, float, 3 * basis0->NNormal, 1,
-               cCache_basis_precomp);
-  VLACacheSize(I->G, basis1->Vert2Normal, int, basis0->NVertex, 1,
-               cCache_basis_vert2normal);
-  VLACacheSize(I->G, basis1->Radius, float, basis0->NVertex, 1, cCache_basis_radius);
-  VLACacheSize(I->G, basis1->Radius2, float, basis0->NVertex, 1, cCache_basis_radius2);
-
-  if(identity) {
-    UtilCopyMem(basis1->Vertex, basis0->Vertex, basis0->NVertex * sizeof(float) * 3);
-  } else {
-    RayApplyMatrix33(basis0->NVertex, (float3 *) basis1->Vertex,
-                     I->ModelView, (float3 *) basis0->Vertex);
+  if (ok){
+    VLACacheSize(I->G, basis1->Vertex, float, 3 * basis0->NVertex, 1, cCache_basis_vertex);
+    CHECKOK(ok, basis1->Vertex);
   }
-
-  for(a = 0; a < basis0->NVertex; a++) {
-    basis1->Radius[a] = basis0->Radius[a];
-    basis1->Radius2[a] = basis0->Radius2[a];
-    basis1->Vert2Normal[a] = basis0->Vert2Normal[a];
+  if (ok){
+    VLACacheSize(I->G, basis1->Normal, float, 3 * basis0->NNormal, 1, cCache_basis_normal);
+    CHECKOK(ok, basis1->Normal);
   }
-  basis1->MaxRadius = basis0->MaxRadius;
-  basis1->MinVoxel = basis0->MinVoxel;
-  basis1->NVertex = basis0->NVertex;
-
-  if(identity) {
-    UtilCopyMem(basis1->Normal, basis0->Normal, basis0->NNormal * sizeof(float) * 3);
-  } else {
-    RayTransformNormals33(basis0->NNormal, (float3 *) basis1->Normal,
-                          I->ModelView, (float3 *) basis0->Normal);
+  if (ok){
+    VLACacheSize(I->G, basis1->Precomp, float, 3 * basis0->NNormal, 1,
+		 cCache_basis_precomp);
+    CHECKOK(ok, basis1->Precomp);
   }
+  if (ok){
+    VLACacheSize(I->G, basis1->Vert2Normal, int, basis0->NVertex, 1,
+		 cCache_basis_vert2normal);
+    CHECKOK(ok, basis1->Vert2Normal);
+  }
+  if (ok){
+    VLACacheSize(I->G, basis1->Radius, float, basis0->NVertex, 1, cCache_basis_radius);
+    CHECKOK(ok, basis1->Radius);
+  }
+  if (ok){
+    VLACacheSize(I->G, basis1->Radius2, float, basis0->NVertex, 1, cCache_basis_radius2);
+    CHECKOK(ok, basis1->Radius2);
+  }
+  ok &= !I->G->Interrupt;
+  if (ok){
+    if(identity) {
+      UtilCopyMem(basis1->Vertex, basis0->Vertex, basis0->NVertex * sizeof(float) * 3);
+    } else {
+      RayApplyMatrix33(basis0->NVertex, (float3 *) basis1->Vertex,
+		       I->ModelView, (float3 *) basis0->Vertex);
+    }
+  }
+  ok &= !I->G->Interrupt;
 
-  basis1->NNormal = basis0->NNormal;
-
+  if (ok){
+    memcpy(basis1->Radius, basis0->Radius, basis0->NVertex * sizeof(float));
+    memcpy(basis1->Radius2, basis0->Radius2, basis0->NVertex * sizeof(float));
+    memcpy(basis1->Vert2Normal, basis0->Vert2Normal, basis0->NVertex * sizeof(int));
+  }
+  ok &= !I->G->Interrupt;
+  if (ok){
+    basis1->MaxRadius = basis0->MaxRadius;
+    basis1->MinVoxel = basis0->MinVoxel;
+    basis1->NVertex = basis0->NVertex;
+  }
+  ok &= !I->G->Interrupt;
+  if (ok){
+    if(identity) {
+      UtilCopyMem(basis1->Normal, basis0->Normal, basis0->NNormal * sizeof(float) * 3);
+    } else {
+      RayTransformNormals33(basis0->NNormal, (float3 *) basis1->Normal,
+			    I->ModelView, (float3 *) basis0->Normal);
+    }
+    basis1->NNormal = basis0->NNormal;
+  }
+  ok &= !I->G->Interrupt;
   if(perspective) {
-    for(a = 0; a < I->NPrimitive; a++) {
+    for(a = 0; ok && a < I->NPrimitive; a++) {
       prm = I->Primitive + a;
 
       prm = I->Primitive + a;
@@ -777,9 +831,10 @@ static void RayTransformFirst(CRay * I, int perspective, int identity)
                                            basis1->Vert2Normal[prm->vert] * 3);
         break;
       }
+      ok &= !I->G->Interrupt;
     }
   } else {
-    for(a = 0; a < I->NPrimitive; a++) {
+    for(a = 0; ok && a < I->NPrimitive; a++) {
       prm = I->Primitive + a;
       switch (prm->type) {
       case cPrimTriangle:
@@ -802,36 +857,50 @@ static void RayTransformFirst(CRay * I, int perspective, int identity)
         break;
 
       }
+      ok &= !I->G->Interrupt;
     }
   }
+  return ok;
 }
 
 
 /*========================================================================*/
-void RayTransformBasis(CRay * I, CBasis * basis1, int group_id)
+int RayTransformBasis(CRay * I, CBasis * basis1, int group_id)
 {
   CBasis *basis0;
   int a;
   float *v0, *v1;
   CPrimitive *prm;
+  int ok = true;
 
   basis0 = I->Basis + 1;
 
   VLACacheSize(I->G, basis1->Vertex, float, 3 * basis0->NVertex, group_id,
                cCache_basis_vertex);
-  VLACacheSize(I->G, basis1->Normal, float, 3 * basis0->NNormal, group_id,
-               cCache_basis_normal);
-  VLACacheSize(I->G, basis1->Precomp, float, 3 * basis0->NNormal, group_id,
-               cCache_basis_precomp);
-  VLACacheSize(I->G, basis1->Vert2Normal, int, basis0->NVertex, group_id,
-               cCache_basis_vert2normal);
-  VLACacheSize(I->G, basis1->Radius, float, basis0->NVertex, group_id,
-               cCache_basis_radius);
-  VLACacheSize(I->G, basis1->Radius2, float, basis0->NVertex, group_id,
-               cCache_basis_radius2);
+  CHECKOK(ok, basis1->Vertex);
+  if (ok)
+    VLACacheSize(I->G, basis1->Normal, float, 3 * basis0->NNormal, group_id,
+		 cCache_basis_normal);
+  CHECKOK(ok, basis1->Normal);
+  if (ok)
+    VLACacheSize(I->G, basis1->Precomp, float, 3 * basis0->NNormal, group_id,
+		 cCache_basis_precomp);
+  CHECKOK(ok, basis1->Precomp);
+  if (ok)
+    VLACacheSize(I->G, basis1->Vert2Normal, int, basis0->NVertex, group_id,
+		 cCache_basis_vert2normal);
+  CHECKOK(ok, basis1->Vert2Normal);
+  if (ok)
+    VLACacheSize(I->G, basis1->Radius, float, basis0->NVertex, group_id,
+		 cCache_basis_radius);
+  CHECKOK(ok, basis1->Radius);
+  if (ok)
+    VLACacheSize(I->G, basis1->Radius2, float, basis0->NVertex, group_id,
+		 cCache_basis_radius2);
+  CHECKOK(ok, basis1->Radius2);
   v0 = basis0->Vertex;
   v1 = basis1->Vertex;
-  for(a = 0; a < basis0->NVertex; a++) {
+  for(a = 0; ok && a < basis0->NVertex; a++) {
     matrix_transform33f3f(basis1->Matrix, v0, v1);
     v0 += 3;
     v1 += 3;
@@ -839,19 +908,22 @@ void RayTransformBasis(CRay * I, CBasis * basis1, int group_id)
     basis1->Radius2[a] = basis0->Radius2[a];
     basis1->Vert2Normal[a] = basis0->Vert2Normal[a];
   }
-  v0 = basis0->Normal;
-  v1 = basis1->Normal;
-  for(a = 0; a < basis0->NNormal; a++) {
+  if (ok){
+    v0 = basis0->Normal;
+    v1 = basis1->Normal;
+  }
+  for(a = 0; ok && a < basis0->NNormal; a++) {
     matrix_transform33f3f(basis1->Matrix, v0, v1);
     v0 += 3;
     v1 += 3;
   }
-  basis1->MaxRadius = basis0->MaxRadius;
-  basis1->MinVoxel = basis0->MinVoxel;
-  basis1->NVertex = basis0->NVertex;
-  basis1->NNormal = basis0->NNormal;
-
-  for(a = 0; a < I->NPrimitive; a++) {
+  if (ok){
+    basis1->MaxRadius = basis0->MaxRadius;
+    basis1->MinVoxel = basis0->MinVoxel;
+    basis1->NVertex = basis0->NVertex;
+    basis1->NNormal = basis0->NNormal;
+  }
+  for(a = 0; ok && a < I->NPrimitive; a++) {
     prm = I->Primitive + a;
     switch (prm->type) {
     case cPrimTriangle:
@@ -872,6 +944,7 @@ void RayTransformBasis(CRay * I, CBasis * basis1, int group_id)
 
     }
   }
+  return ok;
 }
 
 
@@ -1905,17 +1978,6 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
           UtilConcatVLA(vla, &cnt, "\t\t\t}\n");
         }
 
-#if 0
-        UtilConcatVLA(vla, &cnt, "\t\t\tMODEL_SHADING_COUNT 1\n");
-        UtilConcatVLA(vla, &cnt, "\t\t\tMODEL_SHADING_DESCRIPTION_LIST {\n");
-        UtilConcatVLA(vla, &cnt, "\t\t\t\tSHADING_DESCRIPTION 0 {\n");
-        UtilConcatVLA(vla, &cnt, "\t\t\t\tTEXTURE_LAYER_COUNT 0\n");
-        sprintf(buffer, "\t\t\t\tSHADER_ID %d\n", a);
-        UtilConcatVLA(vla, &cnt, buffer);
-        UtilConcatVLA(vla, &cnt, "\t\t\t\t}\n");
-        UtilConcatVLA(vla, &cnt, "\t\t\t}\n");
-#endif
-
         {
           int b;
           int *ip = mesh->face_position_list;
@@ -2047,53 +2109,6 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
       }
     }
     UtilConcatVLA(vla, &cnt, "}\n\n");
-
-#if 0
-    /* bind shaders with the correct models */
-
-    {
-      int a;
-      for(a = 0; a < n_mesh; a++) {
-
-        UtilConcatVLA(vla, &cnt, "MODIFIER \"SHADING\" {\n");
-        sprintf(buffer, "\tMODIFIER_NAME \"Mesh%d\"\n", a);
-        UtilConcatVLA(vla, &cnt, buffer);
-        UtilConcatVLA(vla, &cnt, "\tPARAMETERS {\n");
-        UtilConcatVLA(vla, &cnt, "\t\tSHADER_LIST_COUNT 1\n");
-        UtilConcatVLA(vla, &cnt, "\t\tSHADER_LIST_LIST {\n");
-        UtilConcatVLA(vla, &cnt, "\t\t\tSHADER_LIST 0 {\n");
-
-        {
-          OrthoLineType buffer;
-          int n_color = material->color_count;
-
-          sprintf(buffer, "\t\t\t\tSHADER_COUNT %d\n", n_color);
-          UtilConcatVLA(vla, &cnt, buffer);
-
-          UtilConcatVLA(vla, &cnt, "\t\t\t\tSHADER_NAME_LIST {\n");
-
-          {
-            int c;
-            for(c = 0; c < n_color; c++) {
-              sprintf(buffer, "\t\t\t\t\tSHADER %d NAME: \"Shader%06d\"\n", c, c);
-              UtilConcatVLA(vla, &cnt, buffer);
-            }
-          }
-
-          UtilConcatVLA(vla, &cnt, "\t\t\t\t}\n");
-        }
-
-        UtilConcatVLA(vla, &cnt, "\t\t\t}\n");
-        UtilConcatVLA(vla, &cnt, "\t\t}\n");
-        UtilConcatVLA(vla, &cnt, "\t}\n");
-        UtilConcatVLA(vla, &cnt, "}\n\n");
-
-      }
-
-    }
-
-#endif
-
   }
   return cnt;
 }
@@ -2498,14 +2513,14 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   if(antialias < 0)
     antialias = (int) SettingGet(I->G, cSetting_antialias);
 
-  bkrd = SettingGetfv(I->G, cSetting_bg_rgb);
+  bkrd = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
   bkrd_is_gradient = SettingGet(I->G, cSetting_bg_gradient);
   if (!bkrd_is_gradient){
     bkrd_top = bkrd;
     bkrd_bottom = bkrd;
   } else {
-    bkrd_top = SettingGetfv(I->G, cSetting_bg_rgb_top);
-    bkrd_bottom = SettingGetfv(I->G, cSetting_bg_rgb_bottom);
+    bkrd_top = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_top));
+    bkrd_bottom = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_bottom));
   }
   RayExpandPrimitives(I);
   RayTransformFirst(I, 0, identity);
@@ -2698,33 +2713,6 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
             );
           UtilConcatVLA(&charVLA, &cc, buffer);
         } else {
-#if 0
-
-          sprintf(buffer,
-                  "smooth_triangle{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>\n",
-                  vert[0], vert[1], vert[2], norm[0], norm[1], norm[2], vert[3], vert[4],
-                  vert[5], norm[3], norm[4], norm[5], vert[6], vert[7], vert[8], norm[6],
-                  norm[7], norm[8]
-            );
-          UtilConcatVLA(&charVLA, &cc, buffer);
-          if(prim->trans > R_SMALL4)
-            sprintf(transmit, "transmit %4.6f", prim->trans);
-          else
-            transmit[0] = 0;
-          if(equal3f(prim->c1, prim->c2) || equal3f(prim->c1, prim->c3)) {
-            sprintf(buffer, "pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}}\n",
-                    prim->c1[0], prim->c1[1], prim->c1[2], transmit);
-          } else if(equal3f(prim->c2, prim->c3)) {
-            sprintf(buffer, "pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}}\n",
-                    prim->c2[0], prim->c2[1], prim->c2[2], transmit);
-          } else {
-            sprintf(buffer, "pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}}\n",
-                    (prim->c1[0] + prim->c2[0] + prim->c3[0]) / 3,
-                    (prim->c1[1] + prim->c2[1] + prim->c3[1]) / 3,
-                    (prim->c1[2] + prim->c2[2] + prim->c3[2]) / 3, transmit);
-          }
-          UtilConcatVLA(&charVLA, &cc, buffer);
-#else
           /* nowadays we use mesh2 to generate smooth_color_triangles */
 
           UtilConcatVLA(&charVLA, &cc, "mesh2 { ");
@@ -2758,8 +2746,6 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
 
           sprintf(buffer, "face_indices { 1, <0,1,2>, 0, 1, 2 } }\n");
           UtilConcatVLA(&charVLA, &cc, buffer);
-#endif
-
         }
       }
       break;
@@ -2916,9 +2902,9 @@ static void RayTraceSpawn(CRayThreadInfo * Thread, int n_thread)
 #endif
 
 static int find_edge(unsigned int *ptr, float *depth, unsigned int width,
-                     int threshold, int back)
+                     int threshold, int back, short use_background)
 {                               /* can only be called for a pixel NOT on the edge */
-  {                             /* color testing */
+  if (use_background){    // color testing 
     register int compare0, compare1, compare2, compare3, compare4, compare5, compare6,
       compare7, compare8;
     {
@@ -2941,45 +2927,45 @@ static int find_edge(unsigned int *ptr, float *depth, unsigned int width,
       compare8 = (signed int) *(ptr + width + 1);
       back_two = back_two || ((compare7 == back) == back_test);
       if(back_two)
-        threshold = (threshold >> 1);   /* halve threshold for pixels that hit background */
+	threshold = (threshold >> 1);   // halve threshold for pixels that hit background 
     }
-
+    
     {
       register int current;
       register unsigned int shift = 0;
-      register int sum1 = 0, sum2 = 3, sum3 = 0, sum4 = 0, sum5 = 0, sum6 = 0, sum7 =
-        0, sum8 = 0;
+      register int sum1 = 0, sum2 = 3, sum3 = 0, sum4 = 0, sum5 = 0, sum6 = 0, sum7 = 0, sum8 = 0;
       int a;
       for(a = 0; a < 4; a++) {
-        current = ((compare0 >> shift) & 0xFF);
-        sum1 += abs(current - ((compare1 >> shift) & 0xFF));
-        sum2 += abs(current - ((compare2 >> shift) & 0xFF));
-        if(sum1 >= threshold)
-          return 1;
-        sum3 += abs(current - ((compare3 >> shift) & 0xFF));
-        if(sum2 >= threshold)
-          return 1;
-        sum4 += abs(current - ((compare4 >> shift) & 0xFF));
-        if(sum3 >= threshold)
-          return 1;
-        sum5 += abs(current - ((compare5 >> shift) & 0xFF));
-        if(sum4 >= threshold)
-          return 1;
-        sum6 += abs(current - ((compare6 >> shift) & 0xFF));
-        if(sum5 >= threshold)
-          return 1;
-        sum7 += abs(current - ((compare7 >> shift) & 0xFF));
-        if(sum6 >= threshold)
-          return 1;
-        sum8 += abs(current - ((compare8 >> shift) & 0xFF));
-        if(sum7 >= threshold)
-          return 1;
-        if(sum8 >= threshold)
-          return 1;
-        shift += 8;
+	current = ((compare0 >> shift) & 0xFF);
+	sum1 += abs(current - ((compare1 >> shift) & 0xFF));
+	sum2 += abs(current - ((compare2 >> shift) & 0xFF));
+	if(sum1 >= threshold)
+	  return 1;
+	sum3 += abs(current - ((compare3 >> shift) & 0xFF));
+	if(sum2 >= threshold)
+	  return 1;
+	sum4 += abs(current - ((compare4 >> shift) & 0xFF));
+	if(sum3 >= threshold)
+	  return 1;
+	sum5 += abs(current - ((compare5 >> shift) & 0xFF));
+	if(sum4 >= threshold)
+	  return 1;
+	sum6 += abs(current - ((compare6 >> shift) & 0xFF));
+	if(sum5 >= threshold)
+	  return 1;
+	sum7 += abs(current - ((compare7 >> shift) & 0xFF));
+	if(sum6 >= threshold)
+	  return 1;
+	sum8 += abs(current - ((compare8 >> shift) & 0xFF));
+	if(sum7 >= threshold)
+	  return 1;
+	if(sum8 >= threshold)
+	  return 1;
+	shift += 8;
       }
     }
   }
+
   if(depth) {                   /* depth testing */
     register float compare0, compare1, compare2, compare3, compare4, compare5, compare6,
       compare7, compare8;
@@ -3116,7 +3102,7 @@ int RayTraceThread(CRayThreadInfo * T)
   RayInfo r1, r2;
   int fogFlag = false;
   int fogRangeFlag = false;
-  int opaque_back = 0;
+  int opaque_back = 0, orig_opaque_back = 0;
   int n_hit = 0;
   int two_sided_lighting;
   float fog;
@@ -3201,7 +3187,10 @@ int RayTraceThread(CRayThreadInfo * T)
   const float _persistLimit = 0.0001F;
   float legacy_1m = _1 - legacy;
   int n_basis = I->NBasis;
-  unsigned int back_mask = 0;
+  unsigned int back_mask;
+  float bg_rgb[3], *tmpf;
+  tmpf = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
+  mult3f(tmpf, 255.f, bg_rgb);
 
   /*   MemoryDebugDump();
      printf("%d\n",sizeof(CPrimitive));
@@ -3236,6 +3225,7 @@ int RayTraceThread(CRayThreadInfo * T)
   opaque_back = SettingGetGlobal_i(I->G, cSetting_ray_opaque_background);
   if(opaque_back < 0)
     opaque_back = SettingGetGlobal_i(I->G, cSetting_opaque_background);
+  orig_opaque_back = opaque_back;
 
   two_sided_lighting = SettingGetGlobal_i(I->G, cSetting_two_sided_lighting);
   if(two_sided_lighting<0) {
@@ -3338,8 +3328,6 @@ int RayTraceThread(CRayThreadInfo * T)
   }
 
   if(fog != _0) {
-    if(fog > 1.0F)
-      fog = 1.0F;
     fogFlag = true;
     fog_start = SettingGet(I->G, cSetting_ray_trace_fog_start);
     if(fog_start < 0.0F)
@@ -3472,19 +3460,20 @@ int RayTraceThread(CRayThreadInfo * T)
     }
   }
   for(yy = T->y_start; (yy < T->y_stop); yy++) {
-    float perc, bkrd[3];
+    float perc, bkrd[4];
     unsigned int bkrd_value;
-    if(PyMOL_GetInterrupt(I->G->PyMOL, false))
+
+    if(I->G->Interrupt)
       break;
 
     y = T->y_start + ((yy - T->y_start) + offset) % (render_height);    /* make sure threads write to different pages */
-
     if (T->bkrd_is_gradient){
       /* for RayTraceThread, y is from bottom to top */
       perc = y/(float)T->height;
       bkrd[0] = T->bkrd_bottom[0] + perc * (T->bkrd_top[0] - T->bkrd_bottom[0]);
       bkrd[1] = T->bkrd_bottom[1] + perc * (T->bkrd_top[1] - T->bkrd_bottom[1]);
       bkrd[2] = T->bkrd_bottom[2] + perc * (T->bkrd_top[2] - T->bkrd_bottom[2]);
+      bkrd[3] = 1.f;
       if(T->ray->BigEndian){
 	bkrd_value = back_mask | 
 	  ((0xFF & ((unsigned int) (bkrd[0] * 255 + _p499))) << 24) |
@@ -3501,6 +3490,11 @@ int RayTraceThread(CRayThreadInfo * T)
       bkrd[0] = T->bkrd_top[0];
       bkrd[1] = T->bkrd_top[1];
       bkrd[2] = T->bkrd_top[2];
+      if (orig_opaque_back){
+	bkrd[3] = 1.f;
+      } else {
+	bkrd[3] = 0.f;
+      }
     }
     if((!T->phase) && !(yy & 0xF)) {    /* don't slow down rendering too much */
       if(T->edging_cutoff) {
@@ -3519,7 +3513,6 @@ int RayTraceThread(CRayThreadInfo * T)
       pixel_base[1] = ((y + 0.5F + border_offset) * invHgtRange) + vol2;
 
       for(x = T->x_start; (x < T->x_stop); x++) {
-
         pixel_base[0] = (((x + 0.5F + border_offset)) * invWdthRange) + vol0;
 
         while(1) {
@@ -3528,7 +3521,7 @@ int RayTraceThread(CRayThreadInfo * T)
               if(x && y && (x < (T->width - 1)) && (y < (T->height - 1))) {     /* not on the edge... */
                 if(find_edge(T->edging + (pixel - T->image),
                              depth + (pixel - T->image),
-                             T->width, T->edging_cutoff, bkrd_value)) {
+                             T->width, T->edging_cutoff, bkrd_value, 0)) {
                   register unsigned char *pixel_c = (unsigned char *) pixel;
                   register unsigned int c1, c2, c3, c4;
                   edge_cnt = 1;
@@ -3576,12 +3569,23 @@ int RayTraceThread(CRayThreadInfo * T)
                 pixel_c[2] = c3;
                 pixel_c[3] = c4;
 
+		/* Need to account for alpha, if exists */
+		if (orig_opaque_back && c4 < 255){
+		  float bkpart = (255 - c4) / 255.f;
+		  float ppart = 1.f - bkpart;
+		  pixel_c[0] = pymol_roundf(bkpart * bkrd[0] * 255 + ppart * pixel_c[0]);
+		  pixel_c[1] = pymol_roundf(bkpart * bkrd[1] * 255 + ppart * pixel_c[1]);
+		  pixel_c[2] = pymol_roundf(bkpart * bkrd[2] * 255 + ppart * pixel_c[2]);
+		  pixel_c[3] = 255;
+		}
+
                 /* restore X,Y coordinates */
                 r1.base[0] = pixel_base[0];
                 r1.base[1] = pixel_base[1];
 
               } else {
-                *pixel = bkrd_value;
+                *pixel = 0;
+		//                *pixel = bkrd_value;
                 switch (edge_cnt) {
                 case 1:
                   r1.base[0] = edge_base[0] + edge_width;
@@ -3858,8 +3862,6 @@ int RayTraceThread(CRayThreadInfo * T)
 
               reflect_cmp = _0;
               if(settingSpecDirect != _0) {
-
-#if 1
                 if(r1.surfnormal[2] > _0) {
                   excess =
                     (float) (pow(r1.surfnormal[2], settingSpecDirectPower) *
@@ -3867,19 +3869,6 @@ int RayTraceThread(CRayThreadInfo * T)
                 } else {
                   excess = _0;
                 }
-
-#else
-                float tmp[3];
-                tmp[0] = r1.dir[0];
-                tmp[1] = r1.dir[1];
-                tmp[2] = r2.dir[2] - _1;
-                dotgle = -dot_product3f(r1.surfnormal, tmp);
-                if(dotgle < _0)
-                  dotgle = _0;
-                excess =
-                  (float) (pow(dotgle, settingSpecDirectPower) * settingSpecDirect);
-#endif
-
               } else {
                 excess = _0;
               }
@@ -4013,13 +4002,14 @@ int RayTraceThread(CRayThreadInfo * T)
 
                 ffact1m = _1 - ffact;
 
-                if(opaque_back) {
+		if(orig_opaque_back) {
 		  fc[0] = ffact * bkrd[0] + fc[0] * ffact1m;
 		  fc[1] = ffact * bkrd[1] + fc[1] * ffact1m;
 		  fc[2] = ffact * bkrd[2] + fc[2] * ffact1m;
-                } else {
+		  fc[3] = _1;
+		} else {
                   fc[3] = ffact1m * (_1 - r1.trans);
-                }
+		}
 
                 if(!pass) {
                   if(r1.trans < trans_spec_cut) {
@@ -4046,10 +4036,10 @@ int RayTraceThread(CRayThreadInfo * T)
                   fc[1] += first_excess;
                   fc[2] += first_excess;
                 }
-                if(opaque_back) {
+                if(orig_opaque_back) {
                   fc[3] = _1;
-                } else {
-                  fc[3] = _1 - r1.trans;
+		} else {
+		  fc[3] = _1 - r1.trans;
                 }
               }
             } else if(pass) {
@@ -4061,11 +4051,12 @@ int RayTraceThread(CRayThreadInfo * T)
 	      fc[1] = first_excess + bkrd[1];
 	      fc[2] = first_excess + bkrd[2];
 
-              if(opaque_back) {
+	      if(orig_opaque_back) {
                 fc[3] = _1;
-              } else {
-                fc[3] = _0;
-              }
+	      } else {
+		fc[3] = _0;
+		//		fc[3] = bkrd[3];
+	      }
 
               ffact = 1.0F;
               ffact1m = 0.0F;
@@ -4100,7 +4091,7 @@ int RayTraceThread(CRayThreadInfo * T)
               if(cc2 > 255)
                 cc2 = 255;
 
-              if(opaque_back) {
+              if(orig_opaque_back) {
                 if(I->BigEndian)
                   *pixel = T->fore_mask | (cc0 << 24) | (cc1 << 16) | (cc2 << 8);
                 else
@@ -4139,7 +4130,7 @@ int RayTraceThread(CRayThreadInfo * T)
 
               persist_inv = _1 - mix_in;
 
-              if(!opaque_back) {
+              if(!orig_opaque_back) {
                 if(i < 0) {     /* hit nothing -- so don't blend */
                   fc[0] = (float) (0xFF & (last_pixel >> 24));
                   fc[1] = (float) (0xFF & (last_pixel >> 16));
@@ -4328,6 +4319,23 @@ int RayTraceThread(CRayThreadInfo * T)
               *pixel = (cc3 << 24) | (cc2 << 16) | (cc1 << 8) | cc0;
           }
 
+	  {
+	    /* If final pixel has alpha, then the background should be 
+	       blended into it */
+	    register unsigned char *pixel_c = (unsigned char *) pixel;
+	    if (pixel_c[3] < 255){
+	      float pixa = (pixel_c[3]/255.f);
+	      float pixam1 = _1 - pixa;
+	      float pixam1255 = pixam1 * 255.f;
+	      if (T->bkrd_is_gradient){
+		pixel_c[0] = (unsigned char)pymol_roundf(pixel_c[0] * pixa + bkrd[0] * pixam1255);
+		pixel_c[1] = (unsigned char)pymol_roundf(pixel_c[1] * pixa + bkrd[1] * pixam1255);
+		pixel_c[2] = (unsigned char)pymol_roundf(pixel_c[2] * pixa + bkrd[2] * pixam1255);
+		pixel_c[3] = (unsigned char)pymol_roundf(pixel_c[3] * pixa + bkrd[3] * pixam1255);
+	      }
+	    }
+	  }
+
           if(!T->edging)
             break;
           /* if here, then we're edging...
@@ -4357,7 +4365,6 @@ int RayTraceThread(CRayThreadInfo * T)
     }
     /* end of if */
   }                             /* end of for */
-
   /*  if(T->n_thread>1) 
      printf(" Ray: Thread %d: Complete.\n",T->phase+1); */
   MapCacheFree(&BasisCall[0].cache, T->phase, cCache_map_scene_cache);
@@ -5386,7 +5393,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   unsigned int *image_copy = NULL;
   unsigned int back_mask, fore_mask = 0, trace_word = 0;
   unsigned int background, buffer_size;
-  int opaque_back = 0;
+  int orig_opaque_back = 0, opaque_back = 0;
   int n_hit = 0;
   float *bkrd_ptr;
   float bkrd_top[3], bkrd_bottom[3];
@@ -5409,6 +5416,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   int ray_trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
   int volume;
+  int ok = true;
 
   if(n_light > 10)
     n_light = 10;
@@ -5437,6 +5445,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   if(opaque_back < 0)
     opaque_back = SettingGetGlobal_i(I->G, cSetting_opaque_background);
 
+  orig_opaque_back = opaque_back;
   ray_trace_mode = SettingGetGlobal_i(I->G, cSetting_ray_trace_mode);
 
   shadows = SettingGetGlobal_i(I->G, cSetting_ray_shadows);
@@ -5482,13 +5491,14 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   ambient = SettingGet(I->G, cSetting_ambient);
 
   bkrd_is_gradient = SettingGet(I->G, cSetting_bg_gradient);
+
   if (bkrd_is_gradient){
-    bkrd_ptr = SettingGetfv(I->G, cSetting_bg_rgb_top);
+    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_top));
     copy3f(bkrd_ptr, bkrd_top);
-    bkrd_ptr = SettingGetfv(I->G, cSetting_bg_rgb_bottom);
+    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_bottom));
     copy3f(bkrd_ptr, bkrd_bottom);
   } else {
-    bkrd_ptr = SettingGetfv(I->G, cSetting_bg_rgb);
+    bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
     copy3f(bkrd_ptr, bkrd_top);
     copy3f(bkrd_ptr, bkrd_bottom);
   }
@@ -5511,16 +5521,6 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     if(bkrd_top[2] > 1.0F)
       bkrd_top[2] = 1.0F;
 
-#if 0
-      inp = ambient;
-      if(inp < R_SMALL4)
-        sig = 1.0F;
-      else
-        sig = (float) (pow(inp, gamma)) / inp;
-      ambient *= sig;
-      if(ambient > 1.0f)
-        ambient = 1.0F;
-#endif
     if (bkrd_is_gradient) {
       register float inp;
       register float sig;
@@ -5538,17 +5538,6 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         bkrd_bottom[1] = 1.0F;
       if(bkrd_bottom[2] > 1.0F)
         bkrd_bottom[2] = 1.0F;
-
-#if 0
-      inp = ambient;
-      if(inp < R_SMALL4)
-        sig = 1.0F;
-      else
-        sig = (float) (pow(inp, gamma)) / inp;
-      ambient *= sig;
-      if(ambient > 1.0f)
-        ambient = 1.0F;
-#endif
     } else {
       copy3f(bkrd_top, bkrd_bottom);      
     }
@@ -5612,7 +5601,6 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   } else {
     background = back_mask;
   }
-
   OrthoBusyFast(I->G, 2, 20);
 
   if (!bkrd_is_gradient) {
@@ -5625,10 +5613,10 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     *return_bg = background;
 
   if(!I->NPrimitive) {          /* nothing to render! */
-    if (!bkrd_is_gradient) {
-      fill(image, background, width * (unsigned int) height);
-    } else {
+    if (bkrd_is_gradient) {
       fill_gradient(I, opaque_back, image, bkrd_top, bkrd_bottom, width, height, width * (unsigned int) height);
+    } else {
+      fill(image, background, width * (unsigned int) height);
     }
   } else {
 
@@ -5639,9 +5627,11 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     } else {
       I->PrimSize = 0.0F;
     }
-
-    RayExpandPrimitives(I);
-    RayTransformFirst(I, perspective, false);
+    ok &= !I->G->Interrupt;
+    if (ok)
+      ok &= RayExpandPrimitives(I);
+    if (ok)
+      ok &= RayTransformFirst(I, perspective, false);
 
     OrthoBusyFast(I->G, 3, 20);
 
@@ -5651,16 +5641,17 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       " Ray: processed %i graphics primitives in %4.2f sec.\n", I->NPrimitive, now
       ENDFB(I->G);
 
-    I->NBasis = n_light + 1;
-    if(I->NBasis > MAX_BASIS)
-      I->NBasis = MAX_BASIS;
-    if(I->NBasis < 2)
-      I->NBasis = 2;
-    {                           /* light sources */
+    if (ok) {                           /* light sources */
       int bc;
-      for(bc = 2; bc < I->NBasis; bc++) {
-        BasisInit(I->G, I->Basis + bc, bc);
-
+      I->NBasis = n_light + 1;
+      if(I->NBasis > MAX_BASIS)
+	I->NBasis = MAX_BASIS;
+      if(I->NBasis < 2)
+	I->NBasis = 2;
+      for(bc = 2; ok && bc < I->NBasis; bc++) {
+        ok &= BasisInit(I->G, I->Basis + bc, bc);
+      }
+      for(bc = 2; ok && bc < I->NBasis; bc++) {
         {                       /* setup light & rotate if necessary  */
           float light[3], *lightv;
           switch (bc) {
@@ -5717,10 +5708,11 @@ void RayRender(CRay * I, unsigned int *image, double timing,
           }
         }
 
-        if(shadows) {           /* don't waste time on shadows unless needed */
+        if(ok && shadows) {           /* don't waste time on shadows unless needed */
           BasisSetupMatrix(I->Basis + bc);
-          RayTransformBasis(I, I->Basis + bc, bc);
+          ok &= RayTransformBasis(I, I->Basis + bc, bc);
         }
+	ok &= !I->G->Interrupt;
       }
     }
 
@@ -5743,11 +5735,11 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
       thread_info[0].image = image;
       thread_info[0].bkrd_is_gradient = bkrd_is_gradient;
+      thread_info[0].width = width;
+      thread_info[0].height = height;
       if (bkrd_is_gradient){
 	thread_info[0].bkrd_top = bkrd_top;
 	thread_info[0].bkrd_bottom = bkrd_bottom;
-	thread_info[0].width = width;
-	thread_info[0].height = height;
 	thread_info[0].opaque_back = opaque_back;
       } else {
 	thread_info[0].background = background;
@@ -5781,73 +5773,55 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       FreeP(thread_info);
     } else
 #endif
-    { 
+    if (ok){ 
 #ifdef _PYMOL_NOPY
       n_thread = 1;          /* serial execution */
 #endif
-      BasisMakeMap(I->Basis + 1, I->Vert2Prim, I->Primitive, I->NPrimitive,
-                   I->Volume, 0, cCache_ray_map, perspective, front, I->PrimSize);
-      if(shadows) {
+      ok &= BasisMakeMap(I->Basis + 1, I->Vert2Prim, I->Primitive, I->NPrimitive,
+			 I->Volume, 0, cCache_ray_map, perspective, front, I->PrimSize);
+      if(ok && shadows) {
         int bc;
         float factor = SettingGetGlobal_f(I->G, cSetting_ray_hint_shadow);
-        for(bc = 2; bc < I->NBasis; bc++) {
-          BasisMakeMap(I->Basis + bc, I->Vert2Prim, I->Primitive, I->NPrimitive,
-                       NULL, bc - 1, cCache_ray_map, false, _0, I->PrimSize * factor);
+        for(bc = 2; ok && bc < I->NBasis; bc++) {
+          ok &= BasisMakeMap(I->Basis + bc, I->Vert2Prim, I->Primitive, I->NPrimitive,
+			     NULL, bc - 1, cCache_ray_map, false, _0, I->PrimSize * factor);
         }
       }
 
       /* serial tasks which RayHashThread does in parallel mode using the first thread */
 
-      if (!bkrd_is_gradient) {
-	fill(image, background, width * (unsigned int) height);
-      } else {
-	fill_gradient(I, opaque_back, image, bkrd_top, bkrd_bottom, width, height, width * (unsigned int) height);
+      if (ok){
+	if (bkrd_is_gradient) {
+	  fill_gradient(I, opaque_back, image, bkrd_top, bkrd_bottom, width, height, width * (unsigned int) height);
+	} else {
+	  fill(image, background, width * (unsigned int) height);
+	}
+	RayComputeBox(I);
+	
       }
-      RayComputeBox(I);
-
     }
 
     OrthoBusyFast(I->G, 5, 20);
     now = UtilGetSeconds(I->G) - timing;
 
-#if 0
-    /* was ifdef _MemoryDebug_ON */
-    if(Feedback(I->G, FB_Ray, FB_Debugging)) {
-      MemoryDebugDump();
+    if (ok){
+      if(shadows) {
+	PRINTFB(I->G, FB_Ray, FB_Blather)
+	  " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %4.2f sec.\n",
+	  I->Basis[1].Map->Div, I->Basis[1].Map->Dim[0],
+	  I->Basis[1].Map->Dim[1], I->Basis[1].Map->Dim[2],
+	  I->Basis[2].Map->Div, I->Basis[2].Map->Dim[0],
+	  I->Basis[2].Map->Dim[2], I->Basis[2].Map->Dim[2], now ENDFB(I->G);
+      } else {
+	PRINTFB(I->G, FB_Ray, FB_Blather)
+	  " Ray: voxels: [%4.2f:%dx%dx%d], %4.2f sec.\n",
+	  I->Basis[1].Map->Div, I->Basis[1].Map->Dim[0],
+	  I->Basis[1].Map->Dim[1], I->Basis[1].Map->Dim[2], now ENDFB(I->G);
+      }
     }
-    if(shadows) {
-      PRINTFB(I->G, FB_Ray, FB_Blather)
-        " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
-        I->Basis[1].Map->Div, I->Basis[1].Map->Dim[0],
-        I->Basis[1].Map->Dim[1], I->Basis[1].Map->Dim[2],
-        I->Basis[2].Map->Div, I->Basis[2].Map->Dim[0],
-        I->Basis[2].Map->Dim[2], I->Basis[2].Map->Dim[2],
-        (int) (MemoryDebugUsage() / (1024.0 * 1024)), now ENDFB(I->G);
-    } else {
-      PRINTFB(I->G, FB_Ray, FB_Blather)
-        " Ray: voxels: [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
-        I->Basis[1].Map->Div, I->Basis[1].Map->Dim[0],
-        I->Basis[1].Map->Dim[1], I->Basis[1].Map->Dim[2],
-        (int) (MemoryDebugUsage() / (1024.0 * 1024)), now ENDFB(I->G);
-    }
-#else
-    if(shadows) {
-      PRINTFB(I->G, FB_Ray, FB_Blather)
-        " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %4.2f sec.\n",
-        I->Basis[1].Map->Div, I->Basis[1].Map->Dim[0],
-        I->Basis[1].Map->Dim[1], I->Basis[1].Map->Dim[2],
-        I->Basis[2].Map->Div, I->Basis[2].Map->Dim[0],
-        I->Basis[2].Map->Dim[2], I->Basis[2].Map->Dim[2], now ENDFB(I->G);
-    } else {
-      PRINTFB(I->G, FB_Ray, FB_Blather)
-        " Ray: voxels: [%4.2f:%dx%dx%d], %4.2f sec.\n",
-        I->Basis[1].Map->Div, I->Basis[1].Map->Dim[0],
-        I->Basis[1].Map->Dim[1], I->Basis[1].Map->Dim[2], now ENDFB(I->G);
-    }
-#endif
     /* IMAGING */
 
-    {
+    if (ok){
       /* now spawn threads as needed */
       CRayThreadInfo *rt = Calloc(CRayThreadInfo, n_thread);
 
@@ -5999,10 +5973,11 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     }
   }
 
-  if(depth && ray_trace_mode) {
+  if(ok && depth && ray_trace_mode) {
     float *delta = Alloc(float, 3 * width * height);
     int x, y;
-    {
+    CHECKOK(ok, delta);
+    if (ok) {
       register int xc, yc;
       register float d, dzdx, dzdy, *p, *q, dd;
       p = depth;
@@ -6048,7 +6023,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         }
     }
 
-    {
+    if (ok){
       int i;
       {
         const float _1 = 1.0F;
@@ -6304,7 +6279,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
                   ffact1m = _1 - ffact;
 
-                  if(opaque_back) {
+                  if(orig_opaque_back) {
                     fc[0] =
                       (0xFF & (background >> 24)) * ffact +
                       (0xFF & (trace_word >> 24)) * ffact1m;
@@ -6364,7 +6339,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     FreeP(delta);
   }
 
-  if(antialias > 1) {
+  if(ok && antialias > 1) {
     /* now spawn threads as needed */
     CRayAntiThreadInfo *rt = Calloc(CRayAntiThreadInfo, n_thread);
 
@@ -6401,23 +6376,25 @@ void RayRender(CRay * I, unsigned int *image, double timing,
      n_skipped / ((float) n_cells));
 #endif
 
-  /* EXPERIMENTAL RAY-VOLUME CODE */
-  volume = (int) SettingGet(I->G, cSetting_ray_volume);
-
-  if (volume) {
-    for(y = 0; y < height; y++) {
-      for(x = 0; x < width; x++) {
-        float dd = depth[x+width*y];
-        if (dd == 0.0) dd = -back;
-        depth[x+width*y] = -dd/(back-front) + 0.1;
+  if (ok){
+    /* EXPERIMENTAL RAY-VOLUME CODE */
+    volume = (int) SettingGet(I->G, cSetting_ray_volume);
+    
+    if (volume) {
+      for(y = 0; y < height; y++) {
+	for(x = 0; x < width; x++) {
+	  float dd = depth[x+width*y];
+	  if (dd == 0.0) dd = -back;
+	  depth[x+width*y] = -dd/(back-front) + 0.1;
+	}
       }
-    }
-    if (rayDepthPixels)
-      FreeP(rayDepthPixels);
-    rayDepthPixels = depth;
-    rayVolume = 3;
-  } else 
-    FreeP(depth);
+      if (rayDepthPixels)
+	FreeP(rayDepthPixels);
+      rayDepthPixels = depth;
+      rayVolume = 3;
+    } else 
+      FreeP(depth);
+  }
 }
 
 
@@ -6500,13 +6477,16 @@ void RayColor3fv(CRay * I, float *v)
 
 
 /*========================================================================*/
-void RaySphere3fv(CRay * I, float *v, float r)
+int RaySphere3fv(CRay * I, float *v, float r)
 {
   CPrimitive *p;
-
+  int ok = true;
   float *vv;
 
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive, 0, cCache_ray_primitive);
+  CHECKOK(ok, I->Primitive);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive;
 
   p->type = cPrimSphere;
@@ -6546,6 +6526,7 @@ void RaySphere3fv(CRay * I, float *v, float r)
   }
 
   I->NPrimitive++;
+  return true;
 }
 
 void RayGetScaledAxes(CRay * I, float *xn, float *yn)
@@ -6575,7 +6556,7 @@ void RayGetScaledAxes(CRay * I, float *xn, float *yn)
 
 
 /*========================================================================*/
-void RayCharacter(CRay * I, int char_id)
+int RayCharacter(CRay * I, int char_id)
 {
   CPrimitive *p;
   float *v;
@@ -6583,10 +6564,14 @@ void RayCharacter(CRay * I, int char_id)
   float *vv;
   float width, height;
   float v_scale;
+  int ok = true;
 
   v = TextGetPos(I->G);
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive + 1, 0,
                 cCache_ray_primitive);
+  CHECKOK(ok, I->Primitive);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive;
 
   p->type = cPrimCharacter;
@@ -6704,17 +6689,21 @@ void RayCharacter(CRay * I, int char_id)
   }
 
   I->NPrimitive += 2;
+  return true;
 }
 
 
 /*========================================================================*/
-void RayCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2)
+int RayCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2)
 {
   CPrimitive *p;
-
+  int ok = true;
   float *vv;
 
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive, 0, cCache_ray_primitive);
+  CHECKOK(ok, I->Primitive);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive;
 
   p->type = cPrimCylinder;
@@ -6768,18 +6757,22 @@ void RayCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c
   }
 
   I->NPrimitive++;
+  return true;
 }
 
 
 /*========================================================================*/
-void RayCustomCylinder3fv(CRay * I, float *v1, float *v2, float r,
-                          float *c1, float *c2, int cap1, int cap2)
+int RayCustomCylinder3fv(CRay * I, float *v1, float *v2, float r,
+			 float *c1, float *c2, int cap1, int cap2)
 {
   CPrimitive *p;
-
+  int ok = true;
   float *vv;
 
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive, 0, cCache_ray_primitive);
+  CHECKOK(ok, I->Primitive);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive;
 
   p->type = cPrimCylinder;
@@ -6833,14 +6826,16 @@ void RayCustomCylinder3fv(CRay * I, float *v1, float *v2, float r,
   }
 
   I->NPrimitive++;
+  return true;
 }
 
-void RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
-                float *c1, float *c2, int cap1, int cap2)
+int RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
+	       float *c1, float *c2, int cap1, int cap2)
 {
   CPrimitive *p;
   float r_max = (r1 > r2) ? r1 : r2;
   float *vv;
+  int ok = true;
 
   if(r2 > r1) {                 /* make sure r1 is always larger */
     float t, *tp;
@@ -6860,6 +6855,9 @@ void RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
   }
 
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive, 0, cCache_ray_primitive);
+  CHECKOK(ok, I->Primitive);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive;
 
   p->type = cPrimCone;
@@ -6920,17 +6918,21 @@ void RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
   }
 
   I->NPrimitive++;
+  return true;
 }
 
 
 /*========================================================================*/
-void RaySausage3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2)
+int RaySausage3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2)
 {
   CPrimitive *p;
-
+  int ok = true;
   float *vv;
 
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive, 0, cCache_ray_primitive);
+  CHECKOK(ok, I->Primitive);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive;
 
   p->type = cPrimSausage;
@@ -6982,16 +6984,20 @@ void RaySausage3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2
   }
 
   I->NPrimitive++;
+  return true;
 }
 
-void RayEllipsoid3fv(CRay * I, float *v, float r, float *n1, float *n2, float *n3)
+int RayEllipsoid3fv(CRay * I, float *v, float r, float *n1, float *n2, float *n3)
 {
 
   CPrimitive *p;
-
+  int ok = true;
   float *vv;
 
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive, 0, cCache_ray_primitive);
+  CHECKOK(ok, I->Primitive);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive;
 
   p->type = cPrimEllipsoid;
@@ -7082,19 +7088,19 @@ void RayEllipsoid3fv(CRay * I, float *v, float r, float *n1, float *n2, float *n
   }
 
   I->NPrimitive++;
-
+  return true;
 }
 
 
 /*========================================================================*/
-void RayTriangle3fv(CRay * I,
-                    float *v1, float *v2, float *v3,
-                    float *n1, float *n2, float *n3, float *c1, float *c2, float *c3)
+int RayTriangle3fv(CRay * I,
+		   float *v1, float *v2, float *v3,
+		   float *n1, float *n2, float *n3, float *c1, float *c2, float *c3)
 {
   CPrimitive *p;
-
+  int ok = true;
   float *vv;
-  float n0[3] = { 0.f, 0.f, 1.f }, nx[3] = { 0.f, 0.f, 0.f }, s1[3], s2[3], s3[3];
+  float n0[3] = { 0.f, 0.f, 1.f }, nx[3], s1[3], s2[3], s3[3];
   float l1, l2, l3;
   short normals_exist = n1 && n2 && n3;
 
@@ -7108,6 +7114,9 @@ void RayTriangle3fv(CRay * I,
      dump3f(c2," c2");
      dump3f(c3," c3"); */
   VLACacheCheck(I->G, I->Primitive, CPrimitive, I->NPrimitive, 0, cCache_ray_primitive);
+  CHECKOK(ok, I->Primitive);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive;
 
   p->type = cPrimTriangle;
@@ -7250,24 +7259,26 @@ void RayTriangle3fv(CRay * I,
   }
 
   I->NPrimitive++;
-
+  return true;
 }
 
-void RayTriangleTrans3fv(CRay * I,
-                         float *v1, float *v2, float *v3,
-                         float *n1, float *n2, float *n3,
-                         float *c1, float *c2, float *c3, float t1, float t2, float t3)
+int RayTriangleTrans3fv(CRay * I,
+			float *v1, float *v2, float *v3,
+			float *n1, float *n2, float *n3,
+			float *c1, float *c2, float *c3, float t1, float t2, float t3)
 {
   CPrimitive *p;
-
-  RayTriangle3fv(I, v1, v2, v3, n1, n2, n3, c1, c2, c3);
-
+  int ok = true;
+  ok = RayTriangle3fv(I, v1, v2, v3, n1, n2, n3, c1, c2, c3);
+  if (!ok)
+    return false;
   p = I->Primitive + I->NPrimitive - 1;
 
   p->tr[0] = t1;
   p->tr[1] = t2;
   p->tr[2] = t3;
   p->trans = (t1 + t2 + t3) / 3.0F;
+  return true;
 }
 
 
@@ -7330,7 +7341,6 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
     v = ColorGet(I->G, color);
     copy3f(v, I->IntColor);
   }
-
   return (I);
 }
 

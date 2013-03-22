@@ -34,11 +34,6 @@ the initialization functions for these libraries on startup.
 #ifdef WIN32
 #include<windows.h>
 #include<process.h>
-#ifndef WIN64
-#if 0
-#include<winappc.h>
-#endif
-#endif
 #endif
 
 /* END PROPRIETARY CODE SEGMENT */

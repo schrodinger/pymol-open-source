@@ -32,7 +32,8 @@ typedef struct Block {
   int active;
   float BackColor[3];
   float TextColor[3];
-  void (*fDraw) (struct Block * block);
+  void (*fDraw) (struct Block * block ORTHOCGOARG);
+  short (*fFastDraw) (struct Block * block ORTHOCGOARG);
   void (*fReshape) (struct Block * block, int width, int height);
   int (*fClick) (struct Block * block, int button, int x, int y, int mod);
   int (*fCursor) (struct Block * block, int x, int y, int mod);
@@ -44,14 +45,14 @@ typedef struct Block {
 typedef Block **CBlock;
 
 void BlockGlobalToLocal(Block * block, int x, int y, int *lx, int *ly);
-void BlockRecursiveDraw(Block * block);
+void BlockRecursiveDraw(Block * block ORTHOCGOARG);
+short BlockRecursiveFastDraw(Block * block ORTHOCGOARG);
 Block *BlockRecursiveFind(Block * block, int x, int y);
 void BlockSetMargin(Block * block, int t, int l, int b, int r);
 void BlockReshape(Block * block, int width, int height);
-void BlockFill(Block * I);
-void BlockDrawLeftEdge(Block * I);
+void BlockFill(Block * I ORTHOCGOARG);
+void BlockDrawLeftEdge(Block * I ORTHOCGOARG);
 void BlockGetSize(Block * I, int *width, int *height);
-void BlockOutline(Block * I);
 void BlockInit(PyMOLGlobals * G, Block * I);
 void BlockTranslate(Block * I, int dx, int dy);
 void BlockDrawTopEdge(Block * I);

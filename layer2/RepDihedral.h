@@ -20,6 +20,6 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"DistSet.h"
 
-Rep *RepDihedralNew(DistSet * ds);
+Rep *RepDihedralNew(DistSet * ds, int state);
 
 #endif

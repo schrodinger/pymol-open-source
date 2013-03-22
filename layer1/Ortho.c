@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
 #include"os_python.h"
 
 #include"os_predef.h"
@@ -43,6 +44,8 @@ Z* -------------------------------------------------------------------
 #include"PyMOL.h"
 #include"Movie.h"
 #include "ShaderMgr.h"
+#include "Vector.h"
+#include "CGO.h"
 
 #ifndef true
 #define true 1
@@ -92,6 +95,7 @@ struct _COrtho {
   int LoopFlag;
   int cmdNestLevel;
   CQueue *cmdQueue[CMD_QUEUE_MASK + 1], *cmdActiveQueue;
+  int cmdActiveBusy;
   CQueue *feedback;
   int Pushed;
   CDeferred *deferred;
@@ -107,7 +111,36 @@ struct _COrtho {
   int TextBottom;
 
   int IssueViewportWhenReleased;
+  GLuint bg_texture_id;
+  short bg_texture_needs_update;
+  CGO *bgCGO;
+  int bgWidth, bgHeight;
+  void *bgData;
+  CGO *orthoCGO, *orthoFastCGO;
 };
+
+int OrthoBackgroundDataIsSet(PyMOLGlobals *G){
+  register COrtho *I = G->Ortho;
+  return (I->bgData != NULL && (I->bgWidth > 0 && I->bgHeight > 0));
+}
+void *OrthoBackgroundDataGet(PyMOLGlobals *G, int *width, int *height){
+  register COrtho *I = G->Ortho;
+  *width = I->bgWidth;
+  *height = I->bgHeight;
+  return (I->bgData);
+}
+
+void OrthoGetSize(PyMOLGlobals *G, int *width, int *height){
+  register COrtho *I = G->Ortho;
+  *width = I->Width;
+  *height = I->Height;
+}
+
+void OrthoGetBackgroundSize(PyMOLGlobals * G, int *width, int *height){
+  register COrtho *I = G->Ortho;
+  *width = I->bgWidth;
+  *height = I->bgHeight;
+}
 
 void OrthoParseCurrentLine(PyMOLGlobals * G);
 
@@ -190,6 +223,7 @@ void OrthoSetLoopRect(PyMOLGlobals * G, int flag, BlockRect * rect)
   register COrtho *I = G->Ortho;
   I->LoopRect = (*rect);
   I->LoopFlag = flag;
+  OrthoInvalidateDoDraw(G);
   OrthoDirty(G);
 }
 
@@ -268,6 +302,7 @@ void OrthoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
 {
   register COrtho *I = G->Ortho;
   int curLine = I->CurLine & OrthoSaveLines;
+  int cursorMoved = false;
 
   PRINTFB(G, FB_Ortho, FB_Blather)
     " OrthoSpecial: %c (%d), x %d y %d, mod %d\n", k, k, x, y, mod ENDFB(G);
@@ -288,6 +323,7 @@ void OrthoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
     }
     I->InputFlag = 1;
     I->CursorChar = -1;
+    cursorMoved = true;
     break;
   case P_GLUT_KEY_UP:
     if(I->CurChar && (I->HistoryView == I->HistoryLine)) {
@@ -304,6 +340,7 @@ void OrthoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
     }
     I->CursorChar = -1;
     I->InputFlag = 1;
+    cursorMoved = true;
     break;
   case P_GLUT_KEY_LEFT:
     if(I->CursorChar >= 0) {
@@ -313,6 +350,7 @@ void OrthoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
     }
     if(I->CursorChar < I->PromptChar)
       I->CursorChar = I->PromptChar;
+    cursorMoved = true;
     break;
   case P_GLUT_KEY_RIGHT:
     if(I->CursorChar >= 0) {
@@ -322,7 +360,11 @@ void OrthoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
     }
     if((unsigned) I->CursorChar > strlen(I->Line[curLine]))
       I->CursorChar = strlen(I->Line[curLine]);
+    cursorMoved = true;
     break;
+  }
+  if (cursorMoved){
+    OrthoInvalidateDoDraw(G);    
   }
   OrthoDirty(G);
 }
@@ -423,7 +465,7 @@ int OrthoCommandOut(PyMOLGlobals * G, char *buffer)
 int OrthoCommandWaiting(PyMOLGlobals * G)
 {
   register COrtho *I = G->Ortho;
-  return (QueueStrCheck(I->cmdActiveQueue));
+  return (I->cmdActiveBusy || QueueStrCheck(I->cmdActiveQueue));
 }
 
 
@@ -436,6 +478,7 @@ void OrthoClear(PyMOLGlobals * G)
     I->Line[a][0] = 0;
   OrthoNewLine(G, NULL, true);
   OrthoRestorePrompt(G);
+  OrthoInvalidateDoDraw(G);
   OrthoDirty(G);
 }
 
@@ -471,7 +514,6 @@ void OrthoDirty(PyMOLGlobals * G)
   if(!I->DirtyFlag) {
     I->DirtyFlag = true;
   }
-
   PyMOL_NeedRedisplay(G->PyMOL);
 }
 
@@ -520,12 +562,13 @@ void OrthoBusyFast(PyMOLGlobals * G, int progress, int total)
 {
   register COrtho *I = G->Ortho;
   double time_yet = (-I->BusyLastUpdate) + UtilGetSeconds(G);
+  short finished = progress == total;
   PRINTFD(G, FB_Ortho)
     " OrthoBusyFast-DEBUG: progress %d total %d\n", progress, total ENDFD;
   I->BusyStatus[2] = progress;
   I->BusyStatus[3] = total;
-  if(SettingGetGlobal_b(G, cSetting_show_progress) && (time_yet > 0.15F)) {
-    if(PyMOL_GetBusy(G->PyMOL, false)) {        /* harmless race condition */
+  if(finished || (SettingGetGlobal_b(G, cSetting_show_progress) && (time_yet > 0.15F))) {
+    if(PyMOL_GetBusy(G->PyMOL, false) || finished) {        /* harmless race condition */
 #ifndef _PYMOL_NOPY
       int blocked = PAutoBlock(G);
       if(PLockStatusAttempt(G)) {
@@ -597,10 +640,11 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
         float black[3] = { 0, 0, 0 };
         float white[3] = { 1, 1, 1 };
         int draw_both = SceneMustDrawBoth(G);
+	CGO *orthoCGO = I->orthoCGO;
         OrthoPushMatrix(G);
         {
           int pass = 0;
-          glClear(GL_DEPTH_BUFFER_BIT);
+          SceneGLClear(G, GL_DEPTH_BUFFER_BIT);
           while(1) {
             if(draw_both) {
               if(!pass)
@@ -611,35 +655,17 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
               OrthoDrawBuffer(G, GL_FRONT);     /* draw into the front buffer */
             }
 
-#ifdef PURE_OPENGL_ES_2
-	    {
-	      GLfloat polyVerts[] = {
-                0, I->Height, 0,
-                cBusyWidth, I->Height, 0, 
-                0, I->Height - cBusyHeight, 0, 
-                cBusyWidth, I->Height - cBusyHeight, 0
-	      }; 
-	      GLenum err ;
-	      glVertexAttrib3fv(VERTEX_COLOR, black);
-	      glVertexAttribPointer(VERTEX_POS, VERTEX_POS_SIZE, GL_FLOAT, GL_FALSE, 0, polyVerts);
-	      glEnableVertexAttribArray(VERTEX_POS);
-	      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	      glDisableVertexAttribArray(VERTEX_POS);
-	    }
-	    glVertexAttrib3fv(VERTEX_COLOR, white);
-#else
             glColor3fv(black);
 #ifdef _PYMOL_GL_DRAWARRAYS
 	    {
-	      const GLint polyVerts[] = {
+	      const GLshort polyVerts[] = {
                 0, I->Height,
                 cBusyWidth, I->Height,
                 0, I->Height - cBusyHeight,
                 cBusyWidth, I->Height - cBusyHeight
 	      };
 	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_COLOR_ARRAY);
-	      glVertexPointer(2, GL_INT, 0, polyVerts);
+	      glVertexPointer(2, GL_SHORT, 0, polyVerts);
 	      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	      glDisableClientState(GL_VERTEX_ARRAY);
 	    }
@@ -653,167 +679,67 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
             glEnd();
 #endif
             glColor3fv(white);
-#endif
 
             y = I->Height - cBusyMargin;
             c = I->BusyMessage;
             if(*c) {
               TextSetColor(G, white);
               TextSetPos2i(G, cBusyMargin, y - (cBusySpacing / 2));
-              TextDrawStr(G, c);
+              TextDrawStr(G, c ORTHOCGOARGVAR);
               y -= cBusySpacing;
             }
 
             if(I->BusyStatus[1]) {
-#if defined(_PYMOL_GL_DRAWARRAYS) || defined(PURE_OPENGL_ES_2)
 	      {
-		const GLint lineVerts[] = {
-		  cBusyMargin, y,
-		  cBusyWidth - cBusyMargin, y,
-		  cBusyWidth - cBusyMargin, y - cBusyBar,
-		  cBusyMargin, y - cBusyBar,
-		  cBusyMargin, y       /* needed on old buggy Mesa */
-		};
-#endif
-      
-#ifdef PURE_OPENGL_ES_2
-		glEnableVertexAttribArray(VERTEX_POS);
-		glVertexAttribPointer(VERTEX_POS, 2, GL_INT, GL_FALSE, 0, lineVerts);	
-		glDrawArrays(GL_LINE_LOOP, 0, 5);
-		glDisableVertexAttribArray(VERTEX_POS);
+		DEFINE_RENDER_DATA(GLshort, lineVerts,
+				   cBusyMargin, y, 
+				   cBusyWidth - cBusyMargin, y,
+				   cBusyWidth - cBusyMargin, y - cBusyBar,
+				   cBusyMargin, y - cBusyBar,
+				   cBusyMargin, y);
+		RENDER_DEFINED_DATA(GL_LINE_LOOP, 2, GL_SHORT, 5, lineVerts);
+		glColor3fv(white);
 	      }
-#else		
-#ifdef _PYMOL_GL_DRAWARRAYS
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_INT, 0, lineVerts);
-		glDrawArrays(GL_LINE_LOOP, 0, 5);
-		glDisableClientState(GL_VERTEX_ARRAY);
-	      }
-#else
-              glBegin(GL_LINE_LOOP);
-              glVertex2i(cBusyMargin, y);
-              glVertex2i(cBusyWidth - cBusyMargin, y);
-              glVertex2i(cBusyWidth - cBusyMargin, y - cBusyBar);
-              glVertex2i(cBusyMargin, y - cBusyBar);
-              glVertex2i(cBusyMargin, y);       /* needed on old buggy Mesa */
-              glEnd();
-#endif
-	      glColor3fv(white);
-#endif
               x =
                 (I->BusyStatus[0] * (cBusyWidth - 2 * cBusyMargin) / I->BusyStatus[1]) +
                 cBusyMargin;
-#if defined(_PYMOL_GL_DRAWARRAYS) || defined(PURE_OPENGL_ES_2)
 	      {
-		const GLint polyVerts[] = {
-		  cBusyMargin, y,
-		  x, y,
-		  cBusyMargin, y - cBusyBar,
-		  x, y - cBusyBar,
-		};	      
-#endif
-#ifdef PURE_OPENGL_ES_2
-		glEnableVertexAttribArray(VERTEX_POS);
-		glVertexAttribPointer(VERTEX_POS, 2, GL_INT, GL_FALSE, 0, polyVerts);	      
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glDisableVertexAttribArray(VERTEX_POS);
+		DEFINE_RENDER_DATA(GLshort, lineVerts,
+				   cBusyMargin, y,
+				   x, y,
+				   cBusyMargin, y - cBusyBar,
+				   x, y - cBusyBar);
+		RENDER_DEFINED_DATA(GL_TRIANGLE_STRIP, 2, GL_SHORT, 4, lineVerts);
 	      }
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_INT, 0, polyVerts);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glDisableClientState(GL_VERTEX_ARRAY);
-	      }
-#else
-              glBegin(GL_POLYGON);
-              glVertex2i(cBusyMargin, y);
-              glVertex2i(x, y);
-              glVertex2i(x, y - cBusyBar);
-              glVertex2i(cBusyMargin, y - cBusyBar);
-              glVertex2i(cBusyMargin, y);       /* needed on old buggy Mesa */
-              glEnd();
-#endif
-#endif
               y -= cBusySpacing;
             }
 
             if(I->BusyStatus[3]) {
-#if defined(_PYMOL_GL_DRAWARRAYS) || defined(PURE_OPENGL_ES_2)
 	      {
-		const GLint lineVerts[] = {
-		  cBusyMargin, y,
-		  cBusyWidth - cBusyMargin, y,
-		  cBusyWidth - cBusyMargin, y - cBusyBar,
-		  cBusyMargin, y - cBusyBar,
-		  cBusyMargin, y       /* needed on old buggy Mesa */
-		};
-#endif
-#ifdef PURE_OPENGL_ES_2
-		glVertexAttrib3fv(VERTEX_COLOR, white);
-		glEnableVertexAttribArray(VERTEX_POS);
-		glVertexAttribPointer(VERTEX_POS, 2, GL_INT, GL_FALSE, 0, lineVerts);	      
-		glDrawArrays(GL_LINE_LOOP, 0, 5);
-		glDisableVertexAttribArray(VERTEX_POS);
+		DEFINE_RENDER_DATA(GLshort, lineVerts,
+				   cBusyMargin, y,
+				   cBusyWidth - cBusyMargin, y,
+				   cBusyWidth - cBusyMargin, y - cBusyBar,
+				   cBusyMargin, y - cBusyBar,
+				   cBusyMargin, y);
+		CHANGE_COLOR3fv(white);
+		RENDER_DEFINED_DATA(GL_LINE_LOOP, 2, GL_SHORT, 5, lineVerts);
 	      }
-#else
-              glColor3fv(white);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_INT, 0, lineVerts);
-		glDrawArrays(GL_LINE_LOOP, 0, 5);
-		glDisableClientState(GL_VERTEX_ARRAY);
-	      }
-#else
-              glBegin(GL_LINE_LOOP);
-              glVertex2i(cBusyMargin, y);
-              glVertex2i(cBusyWidth - cBusyMargin, y);
-              glVertex2i(cBusyWidth - cBusyMargin, y - cBusyBar);
-              glVertex2i(cBusyMargin, y - cBusyBar);
-              glVertex2i(cBusyMargin, y);       /* needed on old buggy Mesa */
-              glEnd();
-#endif
-#endif
               x =
                 (I->BusyStatus[2] * (cBusyWidth - 2 * cBusyMargin) / I->BusyStatus[3]) +
                 cBusyMargin;
-#if defined(_PYMOL_GL_DRAWARRAYS) || defined(PURE_OPENGL_ES_2)
+
 	      {
-		const GLint polyVerts[] = {
-		  cBusyMargin, y,
-		  x, y,
-		  cBusyMargin, y - cBusyBar,
-		  x, y - cBusyBar
-		};
-#endif
-#ifdef PURE_OPENGL_ES_2
-		glVertexAttrib3fv(VERTEX_COLOR, white);
-		glEnableVertexAttribArray(VERTEX_POS);
-		glVertexAttribPointer(VERTEX_POS, 2, GL_INT, GL_FALSE, 0, polyVerts);	      
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glDisableVertexAttribArray(VERTEX_POS);
+		DEFINE_RENDER_DATA(GLshort, polyVerts,
+				   cBusyMargin, y,
+				   x, y,
+				   cBusyMargin, y - cBusyBar,
+				   x, y - cBusyBar);
+		CHANGE_COLOR3fv(white);
+		RENDER_DEFINED_DATA(GL_TRIANGLE_STRIP, 2, GL_SHORT, 4, polyVerts);
 	      }
-#else
-              glColor3fv(white);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_INT, 0, polyVerts);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glDisableClientState(GL_VERTEX_ARRAY);
-	      }
-#else
-              glBegin(GL_POLYGON);
-              glVertex2i(cBusyMargin, y);
-              glVertex2i(x, y);
-              glVertex2i(x, y - cBusyBar);
-              glVertex2i(cBusyMargin, y - cBusyBar);
-              glVertex2i(cBusyMargin, y);       /* needed on old buggy Mesa */
-              glEnd();
-#endif
-#endif
               y -= cBusySpacing;
             }
-
             if(!draw_both)
               break;
             if(pass > 1)
@@ -1175,7 +1101,7 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
       OrthoKeyControl(G, (unsigned char) (k + 64));
       break;
     }
-  PyMOL_NeedRedisplay(G->PyMOL);
+  OrthoInvalidateDoDraw(G);
 }
 
 
@@ -1270,6 +1196,9 @@ void OrthoAddOutput(PyMOLGlobals * G, char *str)
   if((SettingGet(G, cSetting_internal_feedback) > 1) ||
      SettingGet(G, cSetting_overlay) || SettingGet(G, cSetting_auto_overlay))
     OrthoDirty(G);
+
+  if(I->DrawText)
+    OrthoInvalidateDoDraw(G);
 }
 
 
@@ -1420,77 +1349,165 @@ float *OrthoGetOverlayColor(PyMOLGlobals * G)
  * to bg_rgb_bottom is bg_gradient is set
  */
 
+#define BACKGROUND_TEXTURE_SIZE 256
+
+GLuint OrthoGetBackgroundTextureID(PyMOLGlobals * G){
+  register COrtho *I = G->Ortho;
+  return I->bg_texture_id;
+}
+
+void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals * G){
+  register COrtho *I = G->Ortho;
+  I->bg_texture_needs_update = 1;
+}
+
 void bg_grad(PyMOLGlobals * G) {
-  float * top = SettingGet_3fv(G, NULL, NULL, cSetting_bg_rgb_top);
-  float * bottom = SettingGet_3fv(G, NULL, NULL, cSetting_bg_rgb_bottom);
-  float alpha =  SettingGet_i(G, NULL, NULL, cSetting_opaque_background) ? 1.0 : 0.0;
+  register COrtho *I = G->Ortho;    
+  float top[3];
+  float bottom[3];
+  int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
+  short bg_is_solid = 0;
+  int ok = true;
+  copy3f(ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top)), top);
+  copy3f(ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom)), bottom);
 
-  if (! SettingGet_b(G, NULL, NULL, cSetting_bg_gradient))
+  if (!bg_gradient){
+    float zero[3] = { 0.f, 0.f, 0.f } ;
+    float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+    bg_is_solid = !equal3f(bg_rgb, zero);
+    if (!bg_is_solid)
+      return;
+  }
+
+  if (!CShaderMgr_ShadersPresent(G->ShaderMgr)){
+    float zero[3] = { 0.f, 0.f, 0.f } ;
+    float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+    bg_is_solid = !equal3f(bg_rgb, zero);
+    if (bg_is_solid){
+      SceneGLClearColor(bg_rgb[0], bg_rgb[1], bg_rgb[2], 1.0);
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    }
     return;
+  }
 
-#ifdef PURE_OPENGL_ES_2
-#else
-  glMatrixMode (GL_MODELVIEW);
-  glPushMatrix ();
-  glLoadIdentity ();
-  glMatrixMode (GL_PROJECTION);
-  glPushMatrix ();
-  glLoadIdentity ();
-  glDisable(GL_LIGHTING);
-#endif
   glDisable(GL_DEPTH_TEST);
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
   {
-    const GLfloat colorVals[] = {
-      bottom[0], bottom[1], bottom[2], alpha,
-      bottom[0], bottom[1], bottom[2], alpha,
-      top[0], top[1], top[2], alpha,
-      top[0], top[1], top[2], alpha
-    };
-    const GLfloat polyVerts[] = {
-      -1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
-      -1.0f, 1.0f, -1.0f,
-      1.0f, 1.0f, -1.0f
-    };
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, polyVerts);    
-    glColorPointer(4, GL_FLOAT, 0, colorVals);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+    if (!I->bgCGO) {
+      CGO *cgo = CGONew(G), *cgo2;
+      ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
+      if (ok)
+	ok &= CGOVertex(cgo, -1.f, -1.f, 0.98f);
+      if (ok)
+	ok &= CGOVertex(cgo, 1.f, -1.f, 0.98f);
+      if (ok)
+	ok &= CGOVertex(cgo, -1.f, 1.f, 0.98f);
+      if (ok)
+	ok &= CGOVertex(cgo, 1.f, 1.f, 0.98f);
+      if (ok)
+	ok &= CGOEnd(cgo);
+      if (ok)
+	ok &= CGOStop(cgo);
+      if (ok)
+	cgo2 = CGOCombineBeginEnd(cgo, 0);
+      CHECKOK(ok, cgo2);
+      CGOFree(cgo);
+      if (ok)
+	I->bgCGO = CGOOptimizeToVBONotIndexed(cgo2, 0);
+      if (ok){
+	CGOChangeShadersTo(I->bgCGO, GL_DEFAULT_SHADER, GL_BACKGROUND_SHADER);
+	I->bgCGO->use_shader = true;
+      } else {
+	CGOFree(I->bgCGO);
+	I->bgCGO = NULL;
+      }
+      CGOFree(cgo2);
+    }
+    if (ok && !bg_is_solid && (I->bgData && (!I->bg_texture_id || I->bg_texture_needs_update))){
+      short is_new = !I->bg_texture_id;
+      if (is_new){
+	glGenTextures(1, &I->bg_texture_id);
+      }
+      glActiveTexture(GL_TEXTURE4);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      glBindTexture(GL_TEXTURE_2D, I->bg_texture_id);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      }
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+		   I->bgWidth, I->bgHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)I->bgData);
+
+      bg_gradient = I->bg_texture_needs_update = 0;
+    }
+
+    if (ok && !bg_is_solid && bg_gradient && (!I->bg_texture_id || I->bg_texture_needs_update)){
+      short is_new = !I->bg_texture_id;
+      int tex_dim = BACKGROUND_TEXTURE_SIZE;
+      int buff_total = tex_dim * tex_dim;
+      unsigned char *temp_buffer = Alloc(unsigned char, buff_total * 4);
+      I->bg_texture_needs_update = 0;
+      I->bgWidth = BACKGROUND_TEXTURE_SIZE;
+      I->bgHeight = BACKGROUND_TEXTURE_SIZE;
+      if (is_new){
+	glGenTextures(1, &I->bg_texture_id);
+      }
+      glActiveTexture(GL_TEXTURE4);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      glBindTexture(GL_TEXTURE_2D, I->bg_texture_id);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      {
+	int bg_image_linear = SettingGet_b(G, NULL, NULL, cSetting_bg_image_linear);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bg_image_linear ? GL_LINEAR : GL_NEAREST);
+      }
+      UtilZeroMem(temp_buffer, buff_total * 4);
+
+      {
+	int a, b;
+	unsigned char *q, val[4];
+	float bot[3] = { bottom[0]*255, bottom[1]*255, bottom[2]*255 };
+	float tmpb, diff[3] = { 255.f*(top[0] - bottom[0]), 
+				255.f*(top[1] - bottom[1]), 
+				255.f*(top[2] - bottom[2]) };
+          
+	for(b = 0; b < BACKGROUND_TEXTURE_SIZE; b++) {
+	  tmpb = b / (BACKGROUND_TEXTURE_SIZE-1.f);
+	  val[0] = (unsigned char)pymol_roundf(bot[0] + tmpb*diff[0]) ;
+	  val[1] = (unsigned char)pymol_roundf(bot[1] + tmpb*diff[1]) ;
+	  val[2] = (unsigned char)pymol_roundf(bot[2] + tmpb*diff[2]) ;
+	  for(a = 0; a < BACKGROUND_TEXTURE_SIZE; a++) {
+	    q = temp_buffer + (4 * BACKGROUND_TEXTURE_SIZE * b) + 4 * a;
+	    *(q++) = val[0];
+	    *(q++) = val[1];
+	    *(q++) = val[2];
+	    *(q++) = 255;
+	  }
+	}
+      }
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+		   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)temp_buffer);
+      FreeP(temp_buffer);
+    }
+    if (ok && I->bgCGO) {
+      CShaderPrg *shaderPrg = CShaderPrg_Get_BackgroundShader(G);
+      if (shaderPrg){
+       	CGORenderGL(I->bgCGO, NULL, NULL, NULL, NULL, NULL);
+	CShaderPrg_Disable(shaderPrg);
+	glEnable(GL_DEPTH_TEST);
+      }
+    }
   }
-#else
-  glBegin (GL_QUADS);
-  glColor4f(bottom[0], bottom[1], bottom[2], alpha);
-  glVertex3f (-1.0f, -1.0f, -1.0f);
-  glVertex3f (1.0f, -1.0f, -1.0f);
-
-  glColor4f(top[0], top[1], top[2], alpha);
-  glVertex3f (1.0f, 1.0f, -1.0f);
-  glVertex3f (-1.0f, 1.0f, -1.0f);
-  glEnd ();
-#endif
-#endif
-
-#ifndef PURE_OPENGL_ES_2
-  glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
-  glPopMatrix ();
-  glMatrixMode (GL_MODELVIEW);
-  glPopMatrix ();
-#endif
 }
 
 void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 {
   register COrtho *I = G->Ortho;
-
+  CGO *orthoCGO = NULL;
   int x, y;
   int l, lcount;
   char *str;
@@ -1507,6 +1524,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
   int render = false;
   int internal_gui_mode = SettingGetGlobal_i(G, cSetting_internal_gui_mode);
 
+  int generate_shader_cgo = 0;
   I->RenderMode = render_mode;
   if(SettingGetGlobal_b(G, cSetting_seq_view)) {
     SeqUpdate(G);
@@ -1522,7 +1540,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     skip_prompt = 1;
 
   double_pump = SettingGet_i(G, NULL, NULL, cSetting_stereo_double_pump_mono);
-  bg_color = SettingGet_3fv(G, NULL, NULL, cSetting_bg_rgb);
+  bg_color = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
 
   I->OverlayColor[0] = 1.0F - bg_color[0];
   I->OverlayColor[1] = 1.0F - bg_color[1];
@@ -1552,7 +1570,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
     internal_feedback = (int) SettingGet(G, cSetting_internal_feedback);
 
-    v = SettingGetfv(G, cSetting_bg_rgb);
+    v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
     overlay = OrthoGetOverlayStatus(G);
     switch (overlay) {
     case -1:                   /* auto overlay */
@@ -1575,11 +1593,6 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     if(text)
       overlay = 0;
 
-    {
-      float alpha = (SettingGetGlobal_b(G, cSetting_opaque_background) ? 1.0F : 0.0F);
-      //plain clear color
-      glClearColor(v[0], v[1], v[2], alpha);
-    }
     if(overlay || (!text))
       if(!SceneRenderCached(G))
         render = true;
@@ -1587,17 +1600,14 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     if(render_mode < 2) {
       if(SceneMustDrawBoth(G)) {
         OrthoDrawBuffer(G, GL_BACK_LEFT);
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	bg_grad(G);
+        SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         OrthoDrawBuffer(G, GL_BACK_RIGHT);
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	bg_grad(G);
+        SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         times = 2;
         double_pump = true;
       } else {
         OrthoDrawBuffer(G, GL_BACK);
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	bg_grad(G);
+        SceneGLClear(G, GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         times = 1;
         double_pump = false;
       }
@@ -1615,7 +1625,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0,
                   SettingGetGlobal_b(G, cSetting_image_copy_always));
 
-    glClearColor(0.0, 0.0, 0.0, 1.0);
+    SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
 
     while(times--) {
 
@@ -1634,6 +1644,43 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
       OrthoPushMatrix(G);
 
+      if (CShaderMgr_ShadersPresent(G->ShaderMgr)){
+	if (SettingGet(G, cSetting_use_shaders)){
+	  CGO *orthoFastCGO = CGONew(G);
+	  if (I->orthoFastCGO)
+	    CGOFree(I->orthoFastCGO);
+	  I->orthoFastCGO = NULL;
+	  if (BlockRecursiveFastDraw(I->Blocks ORTHOFASTCGOARGVAR)){
+	    int ok = true;
+	    CGO *expandedCGO;
+	    CGOStop(orthoFastCGO);
+	    expandedCGO = CGOExpandDrawTextures(orthoFastCGO, 0);
+	    CHECKOK(ok, expandedCGO);
+	    if (ok)
+	      I->orthoFastCGO = CGOOptimizeScreenTexturesAndPolygons(expandedCGO, 0);
+	    CHECKOK(ok, I->orthoFastCGO);
+	    CGOFree(orthoFastCGO);
+	    CGOFree(expandedCGO);
+	    if (ok){
+	      CGOStop(I->orthoFastCGO);
+	      I->orthoFastCGO->use_shader = true;
+	    } else {
+	      CGOFree(I->orthoFastCGO);
+	    }
+	  } else {
+	    CGOFree(orthoFastCGO);
+	    orthoFastCGO = NULL;
+	  }
+	  if (!I->orthoCGO){
+	    orthoCGO = CGONew(G);
+	    generate_shader_cgo = true;
+	  } else {
+	    OrthoRenderCGO(G);
+	    OrthoPopMatrix(G);
+	    return;
+	  }
+	}
+      }
       x = I->X;
       y = I->Y;
 
@@ -1642,56 +1689,40 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         height = block->rect.bottom;
         switch (internal_gui_mode) {
         case 0:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-          glColor3f(0.0, 0.0, 0.0);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  {
-	    const GLint polyVerts[] = {
-	      I->Width - rightSceneMargin, height - 1,
-	      I->Width - rightSceneMargin, 0,
-	      0, height - 1,
-	      0, 0
-	    };
-	    glEnableClientState(GL_VERTEX_ARRAY);
-	    glVertexPointer(2, GL_INT, 0, polyVerts);	  
-	    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	    glDisableClientState(GL_VERTEX_ARRAY);	  
+	  if (generate_shader_cgo){
+	    CGOColor(orthoCGO, 0.f, 0.f, 0.f);
+	    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+	    CGOVertex(orthoCGO, I->Width - rightSceneMargin, height - 1, 0.f);
+	    CGOVertex(orthoCGO, I->Width - rightSceneMargin, 0, 0.f);
+	    CGOVertex(orthoCGO, 0.f, height - 1,0.f);
+	    CGOVertex(orthoCGO, 0.f, 0.f, 0.f);
+	    CGOEnd(orthoCGO);
+	  } else {
+	    glColor3f(0.0, 0.0, 0.0);
+	    glBegin(GL_POLYGON);
+	    glVertex2i(I->Width - rightSceneMargin, height - 1);
+	    glVertex2i(I->Width - rightSceneMargin, 0);
+	    glVertex2i(0, 0);
+	    glVertex2i(0, height - 1);
+	    glEnd();
 	  }
-#else
-          glBegin(GL_POLYGON);
-          glVertex2i(I->Width - rightSceneMargin, height - 1);
-          glVertex2i(I->Width - rightSceneMargin, 0);
-          glVertex2i(0, 0);
-          glVertex2i(0, height - 1);
-          glEnd();
-#endif
-#endif
           /* deliberate fall-through */
         case 1:
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-          glColor3f(0.3, 0.3, 0.3);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  {
-	    const GLint lineVerts[] = {
-	      1 + I->Width - rightSceneMargin, height - 1,
-	      -1, height - 1
-	    };
-	    glEnableClientState(GL_VERTEX_ARRAY);
-	    glVertexPointer(2, GL_INT, 0, lineVerts);
-	    glDrawArrays(GL_LINES, 0, 2);
-	    glDisableClientState(GL_VERTEX_ARRAY);
+	  if (generate_shader_cgo){
+	    CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
+	    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+	    CGOVertex(orthoCGO, 1 + I->Width - rightSceneMargin, height, 0.f);
+	    CGOVertex(orthoCGO, 1 + I->Width - rightSceneMargin, height - 1, 0.f);
+	    CGOVertex(orthoCGO, -1, height, 0.f);
+	    CGOVertex(orthoCGO, -1, height - 1, 0.f);
+	    CGOEnd(orthoCGO);
+	  } else {
+	    glColor3f(0.3, 0.3, 0.3);
+	    glBegin(GL_LINES);
+	    glVertex2i(1 + I->Width - rightSceneMargin, height - 1);
+	    glVertex2i(-1, height - 1);
+	    glEnd();
 	  }
-#else
-          glBegin(GL_LINES);
-          glVertex2i(1 + I->Width - rightSceneMargin, height - 1);
-          glVertex2i(-1, height - 1);
-          glEnd();
-#endif
-#endif
           break;
         }
       }
@@ -1702,28 +1733,21 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       if(SettingGet(G, cSetting_internal_gui)) {
         int internal_gui_width = (int) SettingGet(G, cSetting_internal_gui_width);
         if(internal_gui_mode != 2) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-          glColor3f(0.3, 0.3, 0.3);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  {
-	    const GLint lineVerts[] = {
-	      I->Width - internal_gui_width, 0,
-	      I->Width - internal_gui_width, I->Height
-	    };
-	    glEnableClientState(GL_VERTEX_ARRAY);
-	    glVertexPointer(2, GL_INT, 0, lineVerts);
-	    glDrawArrays(GL_LINES, 0, 2);
-	    glDisableClientState(GL_VERTEX_ARRAY);
+	  if (generate_shader_cgo){
+	    CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
+	    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+	    CGOVertex(orthoCGO, I->Width - internal_gui_width - 1.f, 0.f, 0.f);
+	    CGOVertex(orthoCGO, I->Width - internal_gui_width, 0.f, 0.f);
+	    CGOVertex(orthoCGO, I->Width - internal_gui_width -1.f, I->Height, 0.f);
+	    CGOVertex(orthoCGO, I->Width - internal_gui_width, I->Height, 0.f);
+	    CGOEnd(orthoCGO);
+	  } else {
+	    glColor3f(0.3, 0.3, 0.3);
+	    glBegin(GL_LINES);
+	    glVertex2i(I->Width - internal_gui_width, 0);
+	    glVertex2i(I->Width - internal_gui_width, I->Height);
+	    glEnd();
 	  }
-#else
-          glBegin(GL_LINES);
-          glVertex2i(I->Width - internal_gui_width, 0);
-          glVertex2i(I->Width - internal_gui_width, I->Height);
-          glEnd();
-#endif
-#endif
         }
       }
 
@@ -1752,10 +1776,11 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
         l = (I->CurLine - (lcount + skip_prompt)) & OrthoSaveLines;
 
-#ifdef PURE_OPENGL_ES_2
-#else
-        glColor3fv(I->TextColor);
-#endif
+	if (orthoCGO)
+	  CGOColorv(orthoCGO, I->TextColor);
+	else
+	  glColor3fv(I->TextColor);
+
         while(l >= 0) {
           lcount++;
           if(lcount > showLines)
@@ -1778,13 +1803,13 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
             TextSetColor(G, I->OverlayColor);
           TextSetPos2i(G, x, y);
           if(str) {
-            TextDrawStr(G, str);
+            TextDrawStr(G, str ORTHOCGOARGVAR);
             if((lcount == 1) && (I->InputFlag)) {
               if(!skip_prompt) {
                 if(I->CursorChar >= 0) {
                   TextSetPos2i(G, x + 8 * I->CursorChar, y);
                 }
-                TextDrawChar(G, '_');
+                TextDrawChar(G, '_' ORTHOCGOARGVAR);
               }
             }
           }
@@ -1793,7 +1818,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         }
       }
 
-      OrthoDrawWizardPrompt(G);
+      OrthoDrawWizardPrompt(G ORTHOCGOARGVAR);
 
       if((int) SettingGet(G, cSetting_text) || I->SplashFlag) {
         Block *block;
@@ -1801,50 +1826,59 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         block = SeqGetBlock(G);
         active_tmp = block->active;
         block->active = false;
-        BlockRecursiveDraw(I->Blocks);
+        BlockRecursiveDraw(I->Blocks ORTHOCGOARGVAR);
         block->active = active_tmp;
       } else {
-        BlockRecursiveDraw(I->Blocks);
+        BlockRecursiveDraw(I->Blocks ORTHOCGOARGVAR);
       }
 
       PRINTFD(G, FB_Ortho)
         " OrthoDoDraw: blocks drawn.\n" ENDFD;
 
       if(I->LoopFlag) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-        glColor3f(1.0, 1.0, 1.0);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	{
-	  const GLint lineVerts[] = {
-	    I->LoopRect.left, I->LoopRect.top,
-	    I->LoopRect.right, I->LoopRect.top,
-	    I->LoopRect.right, I->LoopRect.bottom,
-	    I->LoopRect.left, I->LoopRect.bottom,
-	    I->LoopRect.left, I->LoopRect.top
-	  };
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glVertexPointer(2, GL_INT, 0, lineVerts);
-	  glDrawArrays(GL_LINE_LOOP, 0, 5);
-	  glDisableClientState(GL_VERTEX_ARRAY);
+	if (generate_shader_cgo){
+	  CGOColor(orthoCGO, 1.f, 1.f, 1.f);
+
+	  CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+	  CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top+1, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.left+1, I->LoopRect.bottom, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.left+1, I->LoopRect.top+1, 0.f);
+	  CGOEnd(orthoCGO);
+	  CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+	  CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.top+1, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top+1, 0.f);
+	  CGOEnd(orthoCGO);
+	  CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+	  CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.top+1, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.right+1, I->LoopRect.bottom, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.right+1, I->LoopRect.top+1, 0.f);
+	  CGOEnd(orthoCGO);
+	  CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+	  CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.left, I->LoopRect.bottom+1, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom, 0.f);
+	  CGOVertex(orthoCGO, I->LoopRect.right, I->LoopRect.bottom+1, 0.f);
+	  CGOEnd(orthoCGO);
+	} else {
+	  glColor3f(1.0, 1.0, 1.0);
+	  glBegin(GL_LINE_LOOP);
+	  glVertex2i(I->LoopRect.left, I->LoopRect.top);
+	  glVertex2i(I->LoopRect.right, I->LoopRect.top);
+	  glVertex2i(I->LoopRect.right, I->LoopRect.bottom);
+	  glVertex2i(I->LoopRect.left, I->LoopRect.bottom);
+	  glVertex2i(I->LoopRect.left, I->LoopRect.top);
+	  glEnd();
 	}
-#else
-        glBegin(GL_LINE_LOOP);
-        glVertex2i(I->LoopRect.left, I->LoopRect.top);
-        glVertex2i(I->LoopRect.right, I->LoopRect.top);
-        glVertex2i(I->LoopRect.right, I->LoopRect.bottom);
-        glVertex2i(I->LoopRect.left, I->LoopRect.bottom);
-        glVertex2i(I->LoopRect.left, I->LoopRect.top);
-        glEnd();
-#endif
-#endif
       }
 
 
       /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef PYMOL_EVAL
-      OrthoDrawEvalMessage(G);
+      OrthoDrawEvalMessage(G ORTHOCGOARGVAR);
 #endif
 #ifdef PYMOL_BETA
       OrthoDrawBetaMessage(G);
@@ -1873,16 +1907,53 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
   }
 
+  if (generate_shader_cgo){
+    int ok = true;
+
+    /* This implements one shader for both text and solid polygons rendered for the orthoCGO */
+    CGOStop(orthoCGO);
+    {
+      CGO *expandedCGO = CGOExpandDrawTextures(orthoCGO, 0);
+      CHECKOK(ok, expandedCGO);
+      if (ok)
+	I->orthoCGO = CGOOptimizeScreenTexturesAndPolygons(expandedCGO, 0);
+      CHECKOK(ok, I->orthoCGO);
+      CGOFree(orthoCGO);
+      CGOFree(expandedCGO);
+      if (ok){
+	CGOStop(I->orthoCGO);
+	I->orthoCGO->use_shader = true;
+      }
+
+      OrthoPushMatrix(G);
+      OrthoRenderCGO(G);
+      OrthoPopMatrix(G);
+    }
+  }
+
   I->DirtyFlag = false;
   PRINTFD(G, FB_Ortho)
     " OrthoDoDraw: leaving...\n" ENDFD;
 
 }
 
+void OrthoRenderCGO(PyMOLGlobals * G){
+  register COrtho *I = G->Ortho;
+  if (I->orthoCGO) {
+    SceneDrawImageOverlay(G, NULL);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    CGORenderGL(I->orthoCGO, NULL, NULL, NULL, NULL, NULL);
+    if (I->orthoFastCGO)
+      CGORenderGL(I->orthoFastCGO, NULL, NULL, NULL, NULL, NULL);
+    CShaderPrg_Disable(CShaderPrg_Get_Current_Shader(G));
+    glEnable(GL_DEPTH_TEST);
+  }
+}
 
 /*========================================================================*/
 
-void OrthoDrawWizardPrompt(PyMOLGlobals * G)
+void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG)
 {
   /* assumes PMGUI */
 
@@ -1955,43 +2026,37 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G)
       rect.right = rect.left + cOrthoCharWidth * maxLen + 2 * cWizardBorder + 1;
 
       if(prompt_mode == 1) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-        if(SettingGetGlobal_b(G, cSetting_internal_gui_mode)) {
-          glColor3f(1.0, 1.0F, 1.0F);
-        } else {
-          glColor3fv(I->WizardBackColor);
-        }
-#ifdef _PYMOL_GL_DRAWARRAYS
-	{
-	  const GLint polyVerts[] = {
-	    rect.right, rect.top,
-	    rect.right, rect.bottom,
-	    rect.left, rect.top,
-	    rect.left, rect.bottom
-	  };
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glVertexPointer(2, GL_INT, 0, polyVerts);
-	  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	  glDisableClientState(GL_VERTEX_ARRAY);
+	if (orthoCGO){
+	  if(SettingGetGlobal_b(G, cSetting_internal_gui_mode)) {
+	    CGOColor(orthoCGO, 1.0, 1.0F, 1.0F);
+	  } else {
+	    CGOColorv(orthoCGO, I->WizardBackColor);
+	  }
+	  CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+	  CGOVertex(orthoCGO, rect.right, rect.top, 0.f);
+	  CGOVertex(orthoCGO, rect.right, rect.bottom, 0.f);
+	  CGOVertex(orthoCGO, rect.left, rect.top, 0.f);
+	  CGOVertex(orthoCGO, rect.left, rect.bottom, 0.f);
+	  CGOEnd(orthoCGO);
+	} else {
+	  if(SettingGetGlobal_b(G, cSetting_internal_gui_mode)) {
+	    glColor3f(1.0, 1.0F, 1.0F);
+	  } else {
+	    glColor3fv(I->WizardBackColor);
+	  }
+	  glBegin(GL_POLYGON);
+	  glVertex2i(rect.right, rect.top);
+	  glVertex2i(rect.right, rect.bottom);
+	  glVertex2i(rect.left, rect.bottom);
+	  glVertex2i(rect.left, rect.top);
+	  glEnd();
 	}
-#else
-        glBegin(GL_POLYGON);
-        glVertex2i(rect.right, rect.top);
-        glVertex2i(rect.right, rect.bottom);
-        glVertex2i(rect.left, rect.bottom);
-        glVertex2i(rect.left, rect.top);
-        glEnd();
-#endif
-#endif
       }
+      if (orthoCGO)
+	CGOColorv(orthoCGO, text_color);
+      else
+	glColor3fv(text_color);
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-      glColor3fv(text_color);
-#endif
       x = rect.left + cWizardBorder;
       y = rect.top - (cWizardBorder + cOrthoLineHeight);
 
@@ -2024,7 +2089,7 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G)
         }
         if(c--) {
           if(*p) {
-            TextDrawChar(G, *p);
+            TextDrawChar(G, *p ORTHOCGOARGVAR);
             xx = xx + 8;
           }
           if(!*(p++)) {
@@ -2056,48 +2121,52 @@ static void OrthoLayoutPanel(PyMOLGlobals * G,
   int height = I->Height;
 
   if(SettingGet(G, cSetting_internal_gui)) {
-#ifndef _PYMOL_NOPY
+    /* The Executive Block consists of the area in which object entries are rendered,
+       if the wizard doesn't exist, then this region extends all the way down to the 
+       top of the ButMode block */
     block = ExecutiveGetBlock(G);
     BlockSetMargin(block, m_top, m_left, executiveBottom, m_right);
     block->active = true;
 
+    /* The Wizard Block is shown when a wizard is loaded, it is the area between the
+       Executive Block and the ButMode Block, and is used for Wizard-related info/buttons */
     block = WizardGetBlock(G);
     BlockSetMargin(block, height - executiveBottom + 1, m_left, wizardBottom, m_right);
     block->active = false;
 
+    /* The ButMode block shows info about which Mouse Mode, Selecting Mode, State info,
+       and other info like frame rate. It is located under the Wizard Block, and above
+       the Control Block */
     block = ButModeGetBlock(G);
     BlockSetMargin(block, height - wizardBottom + 1, m_left, butModeBottom, m_right);
     block->active = true;
-#else
-    block = ExecutiveGetBlock(G);
-    BlockSetMargin(block, m_top, m_left, executiveBottom, m_right);
-    block->active = true;
 
-    block = WizardGetBlock(G);
-    BlockSetMargin(block, height - executiveBottom + 1, m_left, wizardBottom, m_right);
-    block->active = false;
-
-    block = ButModeGetBlock(G);
-    BlockSetMargin(block, height - wizardBottom + 1, m_left, butModeBottom, m_right);
-    block->active = false;
-#endif
-
+    /* Controls are the Movie/Scene arrow buttons at the very bottom */
     block = ControlGetBlock(G);
     BlockSetMargin(block, height - butModeBottom + 1, m_left, controlBottom, m_right);
     block->active = true;
   } else {
+    /* The Executive Block consists of the area in which object entries are rendered,
+       if the wizard doesn't exist, then this region extends all the way down to the 
+       top of the ButMode block */
     block = ExecutiveGetBlock(G);
     BlockSetMargin(block, m_right, m_bottom, m_right, m_bottom);
     block->active = false;
 
+    /* The Wizard Block is shown when a wizard is loaded, it is the area between the
+       Executive Block and the ButMode Block, and is used for Wizard-related info/buttons */
     block = WizardGetBlock(G);
     BlockSetMargin(block, m_right, m_bottom, m_right, m_bottom);
     block->active = false;
 
+    /* The ButMode block shows info about which Mouse Mode, Selecting Mode, State info,
+       and other info like frame rate. It is located under the Wizard Block, and above
+       the Control Block */
     block = ButModeGetBlock(G);
     BlockSetMargin(block, m_right, m_bottom, m_right, m_bottom);
     block->active = false;
 
+    /* Controls are the Movie/Scene arrow buttons at the very bottom */
     block = ControlGetBlock(G);
     BlockSetMargin(block, m_right, m_bottom, m_right, m_bottom);
     block->active = false;
@@ -2221,6 +2290,8 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
     WizardRefresh(G);           /* safe to call even if no wizard exists */
   }
   SceneInvalidateStencil(G);
+  ShaderMgrResetUniformSet(G);
+  OrthoInvalidateDoDraw(G);
   OrthoDirty(G);
 }
 
@@ -2234,7 +2305,6 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
   if(SettingGet(G, cSetting_internal_gui) > 0.0) {
     Block *block;
     int internal_gui_width = (int) SettingGet(G, cSetting_internal_gui_width);
-#if 1
     OrthoLayoutPanel(G, 0, I->Width - internal_gui_width, I->TextBottom, 0);
 
     block = ExecutiveGetBlock(G);
@@ -2242,42 +2312,6 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
     block = WizardGetBlock(G);
     block->fReshape(block, I->Width, I->Height);
     block->active = (wizHeight && true);
-#else
-    int height, width;
-    height = I->Height;
-    width = I->Width;
-
-    int WizardMargin = WizardMargin1;
-
-    block = ExecutiveGetBlock(G);
-
-    if(!SettingGet(G, cSetting_mouse_grid)) {
-      WizardMargin = WizardMargin2;
-    }
-
-    if(height) {
-      int wh = wizHeight;
-      if(wh)
-        wh++;
-      BlockSetMargin(block, 0, width - internal_gui_width, WizardMargin + wh, 0);
-    } else {
-      BlockSetMargin(block, 0, width - internal_gui_width, WizardMargin, 0);
-    }
-    block->fReshape(block, width, height);
-
-    block = WizardGetBlock(G);
-
-    if(wizHeight) {
-      BlockSetMargin(block, height - (WizardMargin + wizHeight),
-                     width - internal_gui_width, WizardMargin, 0);
-      block->active = true;
-    } else {
-      BlockSetMargin(block, height - WizardMargin, width - internal_gui_width,
-                     WizardMargin, 0);
-      block->active = false;
-    }
-    block->fReshape(block, width, height);
-#endif
   }
 }
 
@@ -2374,22 +2408,8 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
     }
     I->ActiveButton = -1;
   }
-#if 0
-  if(block && !handled) {
-    if(SceneGetBlock(G) == block) {
-      if(state == P_GLUT_DOWN) {
-        I->LoopRect.left = x;
-        I->LoopRect.top = y;
-        I->LoopRect.right = x;
-        I->LoopRect.bottom = y;
-        I->LoopFlag = true;
-        I->LoopMod = mod;
-        I->GrabbedBy = &I->LoopBlock;
-        OrthoDirty(G);
-      }
-    }
-  }
-#endif
+  if (handled)
+    OrthoInvalidateDoDraw(G);    
   return (handled);
 }
 
@@ -2421,6 +2441,8 @@ int OrthoDrag(PyMOLGlobals * G, int x, int y, int mod)
     if(block->fDrag)
       handled = block->fDrag(block, x, y, mod);
   }
+  if (handled && block!=SceneGetBlock(G))  // if user is not draging inside scene, then update OrthoCGO
+    OrthoInvalidateDoDraw(G);
   return (handled);
 }
 
@@ -2551,6 +2573,12 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
     I->ActiveGLBuffer = GL_NONE;
     I->LastDraw = UtilGetSeconds(G);
     I->DrawTime = 0.0;
+    I->bg_texture_id = 0;
+    I->bg_texture_needs_update = 0;
+    I->bgCGO = NULL;
+    I->bgWidth = I->bgHeight = 0;
+    I->bgData = NULL;
+    I->orthoCGO = NULL;
     if(showSplash) {
       OrthoSplash(G);
       I->SplashFlag = true;
@@ -2604,6 +2632,10 @@ void OrthoFree(PyMOLGlobals * G)
     DeferredFree(I->deferred);
     I->deferred = NULL;
   }
+  if (I->bgData){
+    FreeP(I->bgData);
+    I->bgData = NULL;
+  }
   FreeP(G->Ortho);
 }
 
@@ -2619,18 +2651,15 @@ void OrthoPushMatrix(PyMOLGlobals * G)
       glGetIntegerv(GL_VIEWPORT, I->ViewPort);
     }
     switch (I->RenderMode) {
-    case 1:
-      glViewport(I->ViewPort[0], I->ViewPort[1], I->ViewPort[2], I->ViewPort[3]);
-      break;
     case 2:
       glViewport(I->ViewPort[0] + I->ViewPort[2], I->ViewPort[1],
                  I->ViewPort[2], I->ViewPort[3]);
       break;
+    case 1:
     default:
       glViewport(I->ViewPort[0], I->ViewPort[1], I->ViewPort[2], I->ViewPort[3]);
     }
 
-#ifndef PURE_OPENGL_ES_2
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -2640,32 +2669,20 @@ void OrthoPushMatrix(PyMOLGlobals * G)
     glLoadIdentity();
     glTranslatef(0.33F, 0.33F, 0.0F);   /* this generates better 
                                            rasterization on macs */
-#endif
 
-#ifdef PURE_OPENGL_ES_2
-#else
-    if(!SettingGetGlobal_b(G, cSetting_texture_fonts)) {
-      glDisable(GL_ALPHA_TEST);
-    } else {
-      glEnable(GL_ALPHA_TEST);
-    }
+    glDisable(GL_ALPHA_TEST);
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
     glDisable(GL_NORMALIZE);
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LINE_SMOOTH);
-#endif
-
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
 
-#ifndef PURE_OPENGL_ES_2
     glShadeModel(GL_SMOOTH);
-#endif
     if(G->Option->multisample)
       glDisable(0x809D);        /* GL_MULTISAMPLE_ARB */
-
     I->Pushed++;
   }
   /*  glDisable(GL_ALPHA_TEST);
@@ -2683,12 +2700,10 @@ void OrthoPopMatrix(PyMOLGlobals * G)
 
     if(I->Pushed >= 0) {
       glViewport(I->ViewPort[0], I->ViewPort[1], I->ViewPort[2], I->ViewPort[3]);
-#ifndef PURE_OPENGL_ES_2
       glPopMatrix();
       glMatrixMode(GL_PROJECTION);
       glPopMatrix();
       glMatrixMode(GL_MODELVIEW);
-#endif
       I->Pushed--;
     }
   }
@@ -2708,6 +2723,10 @@ void OrthoCommandIn(PyMOLGlobals * G, char *buffer)
     QueueStrIn(I->cmdActiveQueue, buffer);
 }
 
+void OrthoCommandSetBusy(PyMOLGlobals * G, int busy){
+  register COrtho *I = G->Ortho;
+  I->cmdActiveBusy = busy;
+}
 
 /*========================================================================*/
 void OrthoPasteIn(PyMOLGlobals * G, char *buffer)
@@ -2764,4 +2783,14 @@ void OrthoPasteIn(PyMOLGlobals * G, char *buffer)
     OrthoParseCurrentLine(G);
   } else
     I->InputFlag = true;
+}
+
+void OrthoInvalidateDoDraw(PyMOLGlobals * G)
+{
+  register COrtho *I = G->Ortho;
+  if (I->orthoCGO){
+    CGOFree(I->orthoCGO);
+    I->orthoCGO = NULL;
+    PyMOL_NeedRedisplay(G->PyMOL);
+  }
 }

@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 
 #include"Block.h"
 #include"main.h"
+#include"CGO.h"
 
 void BlockGetSize(Block * I, int *width, int *height)
 {
@@ -43,133 +44,58 @@ void BlockInit(PyMOLGlobals * G, Block * I)
 
 
 /*========================================================================*/
-void BlockFill(Block * I)
+void BlockFill(Block * I ORTHOCGOARG)
 {
   register PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
-#if defined(PURE_OPENGL_ES_2)
-    /* TODO */
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      const GLint polyVerts[] = {
-	I->rect.right, I->rect.top,
-	I->rect.right, I->rect.bottom,
-	I->rect.left, I->rect.top,
-	I->rect.left, I->rect.bottom
-      };
-#if defined(OPENGL_ES_1)      
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(2, GL_INT, 0, polyVerts);
-      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-      glDisableClientState(GL_VERTEX_ARRAY);
-#elif defined(OPENGL_ES_2)
-      glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, polyVerts);
-      glEnableVertexAttribArray(0);
-      glDrawArrays(GL_TRIANGLES, 0, 4);
-      glDisableVertexAttribArray(0);
-#endif
+    if (orthoCGO){
+      CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+      CGOVertex(orthoCGO, I->rect.right, I->rect.top, 0.f);
+      CGOVertex(orthoCGO, I->rect.right, I->rect.bottom, 0.f);
+      CGOVertex(orthoCGO, I->rect.left, I->rect.top, 0.f);
+      CGOVertex(orthoCGO, I->rect.left, I->rect.bottom, 0.f);
+      CGOEnd(orthoCGO);
+    } else {
+      glBegin(GL_POLYGON);
+      glVertex2i(I->rect.right, I->rect.top);
+      glVertex2i(I->rect.right, I->rect.bottom);
+      glVertex2i(I->rect.left, I->rect.bottom);
+      glVertex2i(I->rect.left, I->rect.top);
+      glEnd();
     }
-#else
-    glBegin(GL_POLYGON);
-    glVertex2i(I->rect.right, I->rect.top);
-    glVertex2i(I->rect.right, I->rect.bottom);
-    glVertex2i(I->rect.left, I->rect.bottom);
-    glVertex2i(I->rect.left, I->rect.top);
-    glEnd();
-#endif
-#endif
   }
 }
 
 
 /*========================================================================*/
-void BlockDrawLeftEdge(Block * I)
+void BlockDrawLeftEdge(Block * I ORTHOCGOARG)
 {
   register PyMOLGlobals *G = I->G;
-#if defined(PURE_OPENGL_ES_2)
-    /* TODO */
-  {
-#else
   if(G->HaveGUI && G->ValidContext) {
-    glColor3f(0.3, 0.3, 0.3);
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      const GLint lineVerts[] = {
-	I->rect.left, I->rect.bottom,
-	I->rect.left, I->rect.top
-      };
-#if defined(OPENGL_ES_1)
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(2, GL_INT, 0, lineVerts);
-      glDrawArrays(GL_LINES, 0, 2);
-      glDisableClientState(GL_VERTEX_ARRAY);
-#elif defined(OPENGL_ES_2)
-      glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, lineVerts);
-      glEnableVertexAttribArray(0);
-      glDrawArrays(GL_LINES, 0, 2);      
-      glDisableVertexAttribArray(0);
-#endif
+    if (orthoCGO){
+      CGOColor(orthoCGO, .3f, .3f, .3f);
+      CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
+      CGOVertex(orthoCGO, I->rect.left - 1.f, I->rect.bottom, 0.f);
+      CGOVertex(orthoCGO, I->rect.left, I->rect.bottom, 0.f);
+      CGOVertex(orthoCGO, I->rect.left - 1.f, I->rect.top, 0.f);
+      CGOVertex(orthoCGO, I->rect.left, I->rect.top, 0.f);
+      CGOEnd(orthoCGO);
+    } else {
+      if(G->HaveGUI && G->ValidContext) {
+	glColor3f(0.3, 0.3, 0.3);
+	glBegin(GL_LINES);
+	glVertex2i(I->rect.left, I->rect.bottom);
+	glVertex2i(I->rect.left, I->rect.top);
+	glEnd();
+      }
     }
-#else
-    glBegin(GL_LINES);
-    glVertex2i(I->rect.left, I->rect.bottom);
-    glVertex2i(I->rect.left, I->rect.top);
-    glEnd();
-#endif
-#endif
   }
 }
-
-
-/*========================================================================*/
-void BlockOutline(Block * I)
-{
-  register PyMOLGlobals *G = I->G;
-  if(G->HaveGUI && G->ValidContext) {
-#if defined(PURE_OPENGL_ES_2)
-    /* TODO */
-#else
-#ifdef _PYMOL_GL_DRAWARRAYS
-    const GLint lineVerts[] = {
-      I->rect.right, I->rect.top,
-      I->rect.right, I->rect.bottom,
-      I->rect.left, I->rect.bottom,
-      I->rect.left, I->rect.top
-    };
-#if defined(OPENGL_ES_1)
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_INT, 0, lineVerts);
-    glDrawArrays(GL_LINE_LOOP, 0, 4);
-    glDisableClientState(GL_VERTEX_ARRAY);
-#elif defined(OPENGL_ES_2)
-    glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, lineVerts);
-    glEnableVertexAttribArray(0);
-    glDrawArrays(GL_LINE_LOOP, 0, 4);
-    glDisableVertexAttribArray(0);
-#endif
-
-#else
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(I->rect.right, I->rect.top);
-    glVertex2i(I->rect.right, I->rect.bottom);
-    glVertex2i(I->rect.left, I->rect.bottom);
-    glVertex2i(I->rect.left, I->rect.top);
-    glEnd();
-#endif
-#endif
-  }
-}
-
 
 /*========================================================================*/
 void BlockDrawTopEdge(Block * I)
 {
   register PyMOLGlobals *G = I->G;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-  {
-#else
   if(G->HaveGUI && G->ValidContext) {
     glColor3f(0.3, 0.3, 0.3);
 #ifdef _PYMOL_GL_DRAWARRAYS
@@ -195,7 +121,6 @@ void BlockDrawTopEdge(Block * I)
     glVertex2i(I->rect.right, I->rect.top);
     glVertex2i(I->rect.left, I->rect.top);
     glEnd();
-#endif
 #endif
   }
 }
@@ -231,20 +156,36 @@ void BlockTranslate(Block * I, int dx, int dy)
 
 
 /*========================================================================*/
-void BlockRecursiveDraw(Block * block)
+void BlockRecursiveDraw(Block * block ORTHOCGOARG)
 {
   if(block) {
     if(block->next)
-      BlockRecursiveDraw(block->next);
+      BlockRecursiveDraw(block->next ORTHOCGOARGVAR);
     if(block->active) {
       if(block->fDraw)
-        block->fDraw(block);
+        block->fDraw(block ORTHOCGOARGVAR);
       if(block->inside)
-        BlockRecursiveDraw(block->inside);
+        BlockRecursiveDraw(block->inside ORTHOCGOARGVAR);
     }
   }
 }
 
+/*========================================================================*/
+short BlockRecursiveFastDraw(Block * block ORTHOCGOARG)
+{
+  short ret = false;
+  if(block) {
+    if(block->next)
+      ret |= BlockRecursiveFastDraw(block->next ORTHOCGOARGVAR);
+    if(block->active) {
+      if(block->fFastDraw)
+        ret |= block->fFastDraw(block ORTHOCGOARGVAR);
+      if(block->inside)
+        ret |= BlockRecursiveFastDraw(block->inside ORTHOCGOARGVAR);
+    }
+  }
+  return ret;
+}
 
 /*========================================================================*/
 Block *BlockRecursiveFind(Block * block, int x, int y)

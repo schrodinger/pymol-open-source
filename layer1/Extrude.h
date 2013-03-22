@@ -44,7 +44,7 @@ CExtrude *ExtrudeNew(PyMOLGlobals * G);
 
 CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude * orig);
 
-void ExtrudeAllocPointsNormalsColors(CExtrude * I, int n);
+int ExtrudeAllocPointsNormalsColors(CExtrude * I, int n);
 void ExtrudeTruncate(CExtrude * I, int n);
 
 /* SAUSAGE: look-up table -- nearest neighbors to extrusion points */
@@ -52,34 +52,34 @@ void ExtrudeMakePuttyLUT(CExtrude * I, ObjectMolecule * Sauce_obj);
 
 void ExtrudeFree(CExtrude * I);
 
-void ExtrudeCircle(CExtrude * I, int n, float size);
-void ExtrudeRectangle(CExtrude * I, float width, float length, int mode);
-void ExtrudeOval(CExtrude * I, int n, float width, float length);
+int ExtrudeCircle(CExtrude * I, int n, float size);
+int ExtrudeRectangle(CExtrude * I, float width, float length, int mode);
+int ExtrudeOval(CExtrude * I, int n, float width, float length);
 
-void ExtrudeComputePuttyScaleFactors(CExtrude * I, ObjectMolecule * obj,
-                                     int transform,
-                                     float mean, float stdev, float min, float max,
-                                     float power, float range,
-                                     float min_scale, float max_scale, int smooth_window);
+int ExtrudeComputePuttyScaleFactors(CExtrude * I, ObjectMolecule * obj,
+				    int transform,
+				    float mean, float stdev, float min, float max,
+				    float power, float range,
+				    float min_scale, float max_scale, int smooth_window);
 
 void ExtrudeBuildNormals1f(CExtrude * I);
 void ExtrudeBuildNormals2f(CExtrude * I);
-void ExtrudeComputeTangents(CExtrude * I);
-void ExtrudeCylindersToCGO(CExtrude * I, CGO *cgo, float tube_radius, short is_picking);
-void ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, short use_spheres);
+int ExtrudeComputeTangents(CExtrude * I);
+int ExtrudeCylindersToCGO(CExtrude * I, CGO *cgo, float tube_radius, short is_picking);
+int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, short use_spheres);
 void ExtrudeCGOSurfaceTubeToCylinders(CExtrude * I, CGO * cgo, int cap, float *color_override);
-void ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap);
+int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap);
 
-void ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_override);
-void ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo,
+int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_override);
+int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo,
                                    int sampling, float *color_override);
-void ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling,
+int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling,
                              float *color_override);
 void ExtrudeCGOTraceFrame(CExtrude * I, CGO * cgo);
 void ExtrudeCGOTrace(CExtrude * I, CGO * cgo);
 void ExtrudeCGOTraceAxes(CExtrude * I, CGO * cgo);
-void ExtrudeDumbbell1(CExtrude * I, float width, float length, int mode);
-void ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size);
+int ExtrudeDumbbell1(CExtrude * I, float width, float length, int mode);
+int ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size);
 void ExtrudeDumbbellEdge(CExtrude * I, int samp, int sign, float length);
 
 #endif

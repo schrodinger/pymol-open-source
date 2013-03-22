@@ -27,6 +27,8 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 #include "PyMOL.h"
+#include "Executive_pre.h"
+#include "Scene.h"
 
 #define cLoadTypeUnknown -1
 #define cLoadTypePDB 0
@@ -138,13 +140,6 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname, ch
 int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals * G,
                                             ExecutiveObjectOffset ** vla,
                                             OVOneToOne ** dict);
-
-#if 0
-void ExecutiveLoadMOL2(PyMOLGlobals * G, CObject * origObj, char *fname,
-                       char *oname, int frame, int discrete, int finish,
-                       OrthoLineType buf, int multiplex, int quiet,
-                       int is_string, int zoom);
-#endif
 
 int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
                   char *content, int content_length,
@@ -333,7 +328,9 @@ int ExecutiveInvert(PyMOLGlobals * G, int quiet);
 char *ExecutiveGetNames(PyMOLGlobals * G, int mode, int enabled_only, char *s0);
 int ExecutiveGetType(PyMOLGlobals * G, char *name, WordType type);
 float ExecutiveGetArea(PyMOLGlobals * G, char *s0, int sta0, int load_b);
-void ExecutiveRenderSelections(PyMOLGlobals * G, int curState);
+void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals *G);
+void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G);
+void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInfo *grid);
 void ExecutiveHideSelections(PyMOLGlobals * G);
 int ExecutiveSetTitle(PyMOLGlobals * G, char *name, int state, char *text);
 char *ExecutiveGetTitle(PyMOLGlobals * G, char *name, int state);
@@ -498,7 +495,7 @@ int ExecutiveVolume(PyMOLGlobals * G, char *volume_name, char *map_name,
 
 int ExecutiveVolumeColor(PyMOLGlobals * G, char * volume_name, float * colors, int ncolors );
 
-void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected);
+void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected ORTHOCGOARG);
 
 void ExecutiveMotionReinterpolate(PyMOLGlobals * G);
 
