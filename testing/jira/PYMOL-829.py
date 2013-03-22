@@ -20,7 +20,7 @@ class Test829(testing.PyMOLTestCase):
         cmd.zoom()
         #need to check to make sure screen image has red in it
         img_array = self.get_imagearray(width=100, height=100, ray=0)
-        self.assertImageHasColor('red', img_array)
+        self.assertImageHasColor('red', img_array, delta=[10,0,0])
 
     def testDihedralColor(self):
         cmd.fragment('ala')

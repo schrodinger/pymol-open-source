@@ -313,7 +313,7 @@ else:
             self.assertTrue(numpy.allclose(data1, data2, 0, delta),
                     'images not equal')
 
-        def assertImageHasColor(self, color, img=None):
+        def assertImageHasColor(self, color, img=None, delta=0):
             if isinstance(color, str):
                 color = [int(v*255) for v in cmd.get_color_tuple(color)]
             else:
@@ -322,7 +322,10 @@ else:
             dim = img.shape[-1]
             if dim == len(color) + 1:
                 color.append(255)
-            self.assertTrue(color in img.reshape((-1, dim)).tolist(),
+            if isinstance(delta, list) and dim == len(delta) + 1:
+                delta.append(0)
+            diff = abs(img.reshape((-1, dim)) - color)
+            self.assertTrue((diff - delta <= 0).prod(1).sum(),
                     'no such color: ' + str(color))
 
         def assertImageHasTransparency(self, img=None):
