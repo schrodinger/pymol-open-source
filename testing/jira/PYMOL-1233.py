@@ -6,7 +6,7 @@ import unittest
 from pymol import cmd, testing
 
 @testing.requires('gui')
-class Test829(testing.PyMOLTestCase):
+class Test1233(testing.PyMOLTestCase):
 
     def _check_colors(self, *colors):
         for ray, shaders, cylinders in [

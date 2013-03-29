@@ -17,7 +17,7 @@ class TestPYMOL802(testing.PyMOLTestCase):
 
     @testing.foreach((-1,'on',True), (1,'on',True), (0,'on',False), (-1,'off',False))
     def test802(self, ray_opaque_background, opaque_background, trans_check):
-        cmd.load(self.datafile('1oky.pdb'))
+        cmd.load(self.datafile('1oky.pdb.gz'))
         cmd.hide()
         cmd.show('cartoon')
         cmd.set('ray_opaque_background', ray_opaque_background)

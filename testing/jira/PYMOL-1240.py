@@ -10,7 +10,7 @@ v_pdbstr_anisou = (
     'ANISOU    1  N   ARG A 197     3652   4226   3841   -164    -54    -45       N  \n'
     'END\n')
 
-class TestPYMOL1241(testing.PyMOLTestCase):
+class TestPYMOL1240(testing.PyMOLTestCase):
 
     def testSaveANISO(self):
         cmd.read_pdbstr(v_pdbstr_anisou, 'm1')

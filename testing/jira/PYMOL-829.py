@@ -1,6 +1,6 @@
 '''
 Regression test for PYMOL-829
-Certain mouse actions in edit mode cause objects to be ungrouped
+setting angle_color does not invalidate existing angles that should get color changed
 '''
 
 import unittest
