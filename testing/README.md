@@ -3,6 +3,9 @@ PyMOL Testing Framework
 
 This is a python unittest based testing framework for PyMOL.
 
+Feel free to clone this repository and contribute.
+https://help.github.com/articles/fork-a-repo
+
 How to Run Tests
 ----------------
 
