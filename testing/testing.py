@@ -287,7 +287,7 @@ else:
         def assertColorEqual(self, color1, color2):
             self.assertEqual(self._getColorTuple(color1), self._getColorTuple(color2))
 
-        def assertImageEqual(self, img1, img2=None, delta=0):
+        def assertImageEqual(self, img1, img2=None, delta=0, count=0, msg='images not equal'):
             '''
             Test if two images are the same.
 
@@ -295,6 +295,8 @@ else:
             or numpy arrays.
 
             delta > 0 is for inexact match (image data is 0..255 int)
+
+            count is the number of allowed pixel mismatches.
             '''
             import numpy
 
@@ -308,10 +310,10 @@ else:
             data2 = self.get_imagearray(img2)
 
             self.assertEqual(data1.shape, data2.shape,
-                    'image shapes not equal')
+                    'image shapes not equal ')
 
-            self.assertTrue(numpy.allclose(data1, data2, 0, delta),
-                    'images not equal')
+            noff = numpy.count_nonzero(abs(data1 - data2) > delta)
+            self.assertLessEqual(noff, count * data1.shape[-1], msg + ' (%d)' % noff)
 
         def assertImageHasColor(self, color, img=None, delta=0):
             if isinstance(color, str):
