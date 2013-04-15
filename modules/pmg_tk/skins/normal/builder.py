@@ -1054,9 +1054,9 @@ class ModifyFrame(GuiFrame):
         self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
         GuiLabel(self, " Charge", width=6)
-        GuiButton(self, "+1", lambda s=self: s.setCharge("1.0","+1"), "Positive Charge")
-        GuiButton(self, "0", lambda s=self: s.setCharge("0.0","neutral"), "Neutral Charge")
-        GuiButton(self, "-1", lambda s=self: s.setCharge("-1.0","-1"), "Negative Charge")
+        GuiButton(self, "+1", lambda s=self: s.setCharge(1,"+1"), "Positive Charge")
+        GuiButton(self, "0", lambda s=self: s.setCharge(0,"neutral"), "Neutral Charge")
+        GuiButton(self, "-1", lambda s=self: s.setCharge(-1,"-1"), "Negative Charge")
 
         l = Label(self, text="Bonds", width=7)
         l.grid(row=self.row, column=self.col, sticky=E)
@@ -1078,10 +1078,7 @@ class ModifyFrame(GuiFrame):
             for sele in picked:
                 self.cmd.alter(sele,"formal_charge=%s" % charge)
                 self.cmd.h_fill()
-                if abs(float(charge))>0.0001:
-                    self.cmd.label(sele,"'''"+text+"'''")
-                else:
-                    self.cmd.label(sele)
+                self.cmd.label(sele,'"%+d" % formal_charge if formal_charge else ""')
             self.cmd.unpick()
         else:
             ChargeWizard(self.cmd).toggle(charge, text)

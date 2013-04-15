@@ -889,9 +889,9 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
 {
   register PyMOLGlobals *G = I->Obj.G;
   int update_needed = false;
-  short use_shader = SettingGet(G, cSetting_alignment_as_cylinders) && 
-    SettingGet(G, cSetting_render_as_cylinders) &&
-    SettingGet(G, cSetting_use_shaders);
+  short use_shader = SettingGetGlobal_b(G, cSetting_alignment_as_cylinders) && 
+    SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
+    SettingGetGlobal_b(G, cSetting_use_shaders);
   {
     int a;
     for(a = 0; a < I->NState; a++) {
@@ -1148,9 +1148,9 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
               if(pick) {
               } else {
 		if(sobj->std){
-		  short use_shader = SettingGet(G, cSetting_alignment_as_cylinders) && 
-		    SettingGet(G, cSetting_render_as_cylinders) &&
-		    SettingGet(G, cSetting_use_shaders);
+		  short use_shader = SettingGetGlobal_b(G, cSetting_alignment_as_cylinders) && 
+		    SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
+		    SettingGetGlobal_b(G, cSetting_use_shaders);
 		  if (use_shader){
 		    if (!sobj->shaderCGO){
 		      ObjectAlignmentUpdate(I);
@@ -1188,7 +1188,7 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
         }
       } else {
         if(!sobj) {
-          if(I->NState && SettingGet(G, cSetting_static_singletons))
+          if(I->NState && SettingGetGlobal_b(G, cSetting_static_singletons))
             sobj = I->State;
         }
         if(ray) {
@@ -1220,9 +1220,9 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
             SceneResetNormal(G, true);
             if(sobj) {
 	      if(sobj->std){
-		short use_shader = SettingGet(G, cSetting_alignment_as_cylinders) && 
-		  SettingGet(G, cSetting_render_as_cylinders) &&
-		  SettingGet(G, cSetting_use_shaders);
+		short use_shader = SettingGetGlobal_b(G, cSetting_alignment_as_cylinders) && 
+		  SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
+		  SettingGetGlobal_b(G, cSetting_use_shaders);
 		if (use_shader){
 		  if (!sobj->shaderCGO){
 		    ObjectAlignmentUpdate(I);

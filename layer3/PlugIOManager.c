@@ -244,7 +244,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
         SceneChanged(G);
         SceneCountFrames(G);
         if(zoom_flag)
-          if(SettingGet(G, cSetting_auto_zoom)) {
+          if(SettingGetGlobal_i(G, cSetting_auto_zoom)) {
             ExecutiveWindowZoom(G, obj->Obj.Name, 0.0, -1, 0, 0, quiet);        /* auto zoom (all states) */
           }
       }

@@ -110,10 +110,10 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
     } else {
       short use_shader, generate_shader_cgo = 0, use_display_lists = 0, dash_as_cylinders = 0;
 
-      use_shader = (int) SettingGet(G, cSetting_dash_use_shader) & 
-                           (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
-      dash_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_dash_as_cylinders);
+      use_shader = SettingGetGlobal_b(G, cSetting_dash_use_shader) & 
+	           SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
+      dash_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_dash_as_cylinders);
 
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);

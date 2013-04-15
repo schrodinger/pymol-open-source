@@ -2,6 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2013-04-12 Blaine Bell <blaine.bell@schrodinger.com>, Thomas Holder <thomas.holder@schrodinger.com>
+
+	* rotate ANISOU vector when transforming objects
+
+	* new command: split_chains
+
+	* fix create/extract bug with movie
+
+	* fixed cartoon VBO memory leak
+
+	* always draw rounded caps with sticks shaders
+
+	* several shader fixes and performance improvements
+
+	* fixed screen z-offset for labels
+
 2013-03-22 Blaine Bell <blaine.bell@schrodinger.com>, Thomas Holder <thomas.holder@schrodinger.com>
 
 	* improved rendering performance using shaders, including

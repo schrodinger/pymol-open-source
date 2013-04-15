@@ -1500,7 +1500,7 @@ void AtomInfoBracketResidueFast(PyMOLGlobals * G, AtomInfoType * ai0, int n0, in
 int AtomInfoUpdateAutoColor(PyMOLGlobals * G)
 {
   CAtomInfo *I = G->AtomInfo;
-  if(SettingGet(G, cSetting_auto_color))
+  if(SettingGetGlobal_b(G, cSetting_auto_color))
     I->CColor = ColorGetNext(G);
   else
     I->CColor = ColorGetIndex(G, "carbon");
@@ -3517,7 +3517,7 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
     n++;
   if(toupper(*n) != I->elem[0]) {
     pri = 1000;                 /* unconventional atom name -- make no assignments */
-  } else if((int) SettingGet(G, cSetting_pdb_standard_order)) {
+  } else if(SettingGetGlobal_b(G, cSetting_pdb_standard_order)) {
     switch (*n) {
 
     case 'N':
@@ -3964,7 +3964,7 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
     break;                      /* default radius for known atoms with unknown radii */
   }
 
-  if(SettingGet(G, cSetting_legacy_vdw_radii)) {        /* ver<0.75, old, incorrect VDW */
+  if(SettingGetGlobal_b(G, cSetting_legacy_vdw_radii)) {        /* ver<0.75, old, incorrect VDW */
     if(!strcmp(e, "N"))
       vdw = 1.8F;               /* slow but compact */
     if(!strcmp(e, "C"))

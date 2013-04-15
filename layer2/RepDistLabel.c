@@ -151,6 +151,8 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 	}
       }
+      if(float_text)
+        glEnable(GL_DEPTH_TEST);
     }
   }
   if (!ok){

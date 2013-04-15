@@ -99,7 +99,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
       SceneSetupGLPicking(G);
       if(c) {
         char *st;
-        int float_text = (int) SettingGet(G, cSetting_float_labels);
+        int float_text = SettingGetGlobal_i(G, cSetting_float_labels);
         if(float_text)
           glDisable(GL_DEPTH_TEST);
 
@@ -129,10 +129,10 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
     } else {
       if(c) {
         char *st;
-        int float_text = (int) SettingGet(G, cSetting_float_labels);
+        int float_text = SettingGetGlobal_i(G, cSetting_float_labels);
 	short use_shader;
 	Pickable *p = I->R.P;
-	use_shader = (int) SettingGet(G, cSetting_use_shaders);
+	use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
         if(float_text)
           glDisable(GL_DEPTH_TEST);
 	if (use_shader){
@@ -144,6 +144,8 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 	    }
 	  } else {
 	    CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	    if(float_text)
+	      glEnable(GL_DEPTH_TEST);
 	    return;
 	  }
 	} else if (I->shaderCGO) {

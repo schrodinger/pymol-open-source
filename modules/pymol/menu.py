@@ -641,8 +641,10 @@ def presets(self_cmd, sele):
 
 def hydrogens(self_cmd, sele):
    return [[ 2, 'Hydrogens:'       ,''                        ],     
-           [ 1, 'add'   ,'cmd.h_add("'+sele+'")'          ],           
+           [ 1, 'add'   ,'cmd.h_add("'+sele+'");cmd.sort("'+sele+' extend 1")' ],
+           [ 1, 'add polar' , 'cmd.h_add("'+sele+' & (don.|acc.)");cmd.sort("'+sele+' extend 1")' ],
            [ 1, 'remove'   ,'cmd.remove("('+sele+') and hydro")'          ],
+           [ 1, 'remove nonpolar' , 'cmd.remove("'+sele+' & hydro & nbr. (don.|acc.)")' ],
            ]
 
 def state(self_cmd, sele):

@@ -746,11 +746,11 @@ static int RayTransformFirst(CRay * I, int perspective, int identity)
       two_sided_lighting = false;
   }
 
-  backface_cull = (int) SettingGet(I->G, cSetting_backface_cull);
+  backface_cull = SettingGetGlobal_b(I->G, cSetting_backface_cull);
 
   if(two_sided_lighting ||
-     (SettingGet(I->G, cSetting_transparency_mode) == 1) ||
-     (SettingGet(I->G, cSetting_ray_interior_color) != -1) || I->CheckInterior)
+     (SettingGetGlobal_i(I->G, cSetting_transparency_mode) == 1) ||
+     (SettingGetGlobal_i(I->G, cSetting_ray_interior_color) != -1) || I->CheckInterior)
     backface_cull = 0;
 
 
@@ -2459,17 +2459,17 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   char *charVLA, *headerVLA;
   char transmit[64];
   float light[3], *lightv;
-  float spec_power = SettingGet(I->G, cSetting_spec_power);
+  float spec_power = SettingGetGlobal_f(I->G, cSetting_spec_power);
   int identity = (SettingGetGlobal_i(I->G, cSetting_geometry_export_mode) == 1);
 
   if(spec_power < 0.0F) {
-    spec_power = SettingGet(I->G, cSetting_shininess);
+    spec_power = SettingGetGlobal_f(I->G, cSetting_shininess);
   }
   spec_power /= 4.0F;
 
   charVLA = *charVLA_ptr;
   headerVLA = *headerVLA_ptr;
-  smooth_color_triangle = (int) SettingGet(I->G, cSetting_smooth_color_triangle);
+  smooth_color_triangle = SettingGetGlobal_b(I->G, cSetting_smooth_color_triangle);
   PRINTFB(I->G, FB_Ray, FB_Blather)
     " RayRenderPOV: w %d h %d f %8.3f b %8.3f\n", width, height, front, back ENDFB(I->G);
   if(Feedback(I->G, FB_Ray, FB_Blather)) {
@@ -2478,7 +2478,7 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   }
   cc = 0;
   hc = 0;
-  gamma = SettingGet(I->G, cSetting_gamma);
+  gamma = SettingGetGlobal_f(I->G, cSetting_gamma);
   if(gamma > R_SMALL4)
     gamma = 1.0F / gamma;
   else
@@ -2487,16 +2487,16 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   lightv = SettingGetfv(I->G, cSetting_light);
   copy3f(lightv, light);
 
-  fog = SettingGet(I->G, cSetting_ray_trace_fog);
+  fog = SettingGetGlobal_f(I->G, cSetting_ray_trace_fog);
   if(fog < 0.0F)
-    fog = SettingGet(I->G, cSetting_depth_cue);
+    fog = SettingGetGlobal_b(I->G, cSetting_depth_cue);
   if(fog != 0.0F) {
     if(fog > 1.0F)
       fog = 1.0F;
     fogFlag = true;
-    fog_start = SettingGet(I->G, cSetting_ray_trace_fog_start);
+    fog_start = SettingGetGlobal_f(I->G, cSetting_ray_trace_fog_start);
     if(fog_start < 0.0F)
-      fog_start = SettingGet(I->G, cSetting_fog_start);
+      fog_start = SettingGetGlobal_f(I->G, cSetting_fog_start);
     if(fog_start > 1.0F)
       fog_start = 1.0F;
     if(fog_start < 0.0F)
@@ -2511,10 +2511,10 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   /* SETUP */
 
   if(antialias < 0)
-    antialias = (int) SettingGet(I->G, cSetting_antialias);
+    antialias = SettingGetGlobal_i(I->G, cSetting_antialias);
 
   bkrd = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
-  bkrd_is_gradient = SettingGet(I->G, cSetting_bg_gradient);
+  bkrd_is_gradient = SettingGetGlobal_b(I->G, cSetting_bg_gradient);
   if (!bkrd_is_gradient){
     bkrd_top = bkrd;
     bkrd_bottom = bkrd;
@@ -2530,7 +2530,7 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   base = I->Basis + 1;
 
   {
-    int ortho = SettingGet(I->G, cSetting_ortho);
+    int ortho = SettingGetGlobal_b(I->G, cSetting_ortho);
     if(!identity) {
       if(!ortho) {
         sprintf(buffer, "camera {direction<0.0,0.0,%8.3f>\n location <0.0 , 0.0 , 0.0>\n right %12.10f*x up y \n }\n", -57.3F * cos(fov * cPI / (180 * 2.4)) / fov,     /* by trial and error */
@@ -2571,8 +2571,8 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
 
   {
     float ambient =
-      SettingGet(I->G, cSetting_ambient) + SettingGet(I->G, cSetting_direct);
-    float reflect = SettingGet(I->G, cSetting_reflect);
+      SettingGetGlobal_f(I->G, cSetting_ambient) + SettingGetGlobal_f(I->G, cSetting_direct);
+    float reflect = SettingGetGlobal_f(I->G, cSetting_reflect);
 
     if(ambient > 0.5)
       ambient = 0.5;
@@ -2581,7 +2581,7 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
 
     sprintf(buffer,
             "#default { finish{phong %8.3f ambient %8.3f diffuse %8.3f phong_size %8.6f}}\n",
-            SettingGet(I->G, cSetting_spec_reflect), ambient, reflect, spec_power);
+            SettingGetGlobal_f(I->G, cSetting_spec_reflect), ambient, reflect, spec_power);
     UtilConcatVLA(&headerVLA, &hc, buffer);
   }
 
@@ -3197,7 +3197,7 @@ int RayTraceThread(CRayThreadInfo * T)
    */
 
   {
-    float fudge = SettingGet(I->G, cSetting_ray_triangle_fudge);
+    float fudge = SettingGetGlobal_f(I->G, cSetting_ray_triangle_fudge);
 
     BasisFudge0 = 0.0F - fudge;
     BasisFudge1 = 1.0F + fudge;
@@ -3214,10 +3214,10 @@ int RayTraceThread(CRayThreadInfo * T)
   interior_shadows = SettingGetGlobal_i(I->G, cSetting_ray_interior_shadows);
   interior_wobble = SettingGetGlobal_i(I->G, cSetting_ray_interior_texture);
   interior_color = SettingGetGlobal_i(I->G, cSetting_ray_interior_color);
-  interior_reflect = 1.0F - SettingGet(I->G, cSetting_ray_interior_reflect);
+  interior_reflect = 1.0F - SettingGetGlobal_f(I->G, cSetting_ray_interior_reflect);
   interior_mode = SettingGetGlobal_i(I->G, cSetting_ray_interior_mode);
   label_shadow_mode = SettingGetGlobal_i(I->G, cSetting_label_shadow_mode);
-  project_triangle = SettingGet(I->G, cSetting_ray_improve_shadows);
+  project_triangle = SettingGetGlobal_f(I->G, cSetting_ray_improve_shadows);
   shadows = SettingGetGlobal_i(I->G, cSetting_ray_shadows);
   trans_shadows = SettingGetGlobal_i(I->G, cSetting_ray_transparency_shadows);
 
@@ -3235,8 +3235,8 @@ int RayTraceThread(CRayThreadInfo * T)
       two_sided_lighting = false;
   }
   
-  ray_trans_spec = SettingGet(I->G, cSetting_ray_transparency_specular);
-  ray_lab_spec = SettingGet(I->G, cSetting_ray_label_specular);
+  ray_trans_spec = SettingGetGlobal_f(I->G, cSetting_ray_transparency_specular);
+  ray_lab_spec = SettingGetGlobal_f(I->G, cSetting_ray_label_specular);
   trans_cont = SettingGetGlobal_f(I->G, cSetting_ray_transparency_contrast);
   trans_mode = SettingGetGlobal_i(I->G, cSetting_transparency_mode);
   trans_oblique = SettingGetGlobal_f(I->G, cSetting_ray_transparency_oblique);
@@ -3259,7 +3259,7 @@ int RayTraceThread(CRayThreadInfo * T)
       lreflect = _0;
     ray_scatter = ray_scatter * reflect_scale;
   }
-  direct = SettingGet(I->G, cSetting_direct);
+  direct = SettingGetGlobal_f(I->G, cSetting_direct);
 
   /* apply legacy adjustments */
 
@@ -3267,14 +3267,14 @@ int RayTraceThread(CRayThreadInfo * T)
   lreflect *= (1.0F - legacy) + (legacy * (0.72F / 0.45F));
   direct *= (1.0F - legacy) + (legacy * (0.24F / 0.45F));
 
-  direct_shade = SettingGet(I->G, cSetting_ray_direct_shade);
-  trans_spec_cut = SettingGet(I->G, cSetting_ray_transparency_spec_cut);
+  direct_shade = SettingGetGlobal_f(I->G, cSetting_ray_direct_shade);
+  trans_spec_cut = SettingGetGlobal_f(I->G, cSetting_ray_transparency_spec_cut);
   blend_colors = SettingGetGlobal_i(I->G, cSetting_ray_blend_colors);
   max_pass = SettingGetGlobal_i(I->G, cSetting_ray_max_passes);
   if(blend_colors) {
-    red_blend = SettingGet(I->G, cSetting_ray_blend_red);
-    green_blend = SettingGet(I->G, cSetting_ray_blend_green);
-    blue_blend = SettingGet(I->G, cSetting_ray_blend_blue);
+    red_blend = SettingGetGlobal_f(I->G, cSetting_ray_blend_red);
+    green_blend = SettingGetGlobal_f(I->G, cSetting_ray_blend_green);
+    blue_blend = SettingGetGlobal_f(I->G, cSetting_ray_blend_blue);
   }
 
   if(trans_spec_cut < _1)
@@ -3283,31 +3283,31 @@ int RayTraceThread(CRayThreadInfo * T)
     trans_spec_scale = _0;
 
   /* COOP */
-  settingPower = SettingGet(I->G, cSetting_power);
-  settingReflectPower = SettingGet(I->G, cSetting_reflect_power);
-  settingSpecPower = SettingGet(I->G, cSetting_spec_power);
+  settingPower = SettingGetGlobal_f(I->G, cSetting_power);
+  settingReflectPower = SettingGetGlobal_f(I->G, cSetting_reflect_power);
+  settingSpecPower = SettingGetGlobal_f(I->G, cSetting_spec_power);
   if(settingSpecPower < 0.0F) {
-    settingSpecPower = SettingGet(I->G, cSetting_shininess);
+    settingSpecPower = SettingGetGlobal_f(I->G, cSetting_shininess);
   }
 
   {
-    float spec_value = SettingGet(I->G, cSetting_specular);
+    float spec_value = SettingGetGlobal_f(I->G, cSetting_specular);
     if(spec_value == 1.0F)
-      spec_value = SettingGet(I->G, cSetting_specular_intensity);
-    settingSpecReflect = SettingGet(I->G, cSetting_spec_reflect);
+      spec_value = SettingGetGlobal_f(I->G, cSetting_specular_intensity);
+    settingSpecReflect = SettingGetGlobal_f(I->G, cSetting_spec_reflect);
     if(settingSpecReflect < 0.0F)
       settingSpecReflect = spec_value;
     settingSpecReflect = SceneGetSpecularValue(I->G, settingSpecReflect, 10);
-    settingSpecDirect = SettingGet(I->G, cSetting_spec_direct);
+    settingSpecDirect = SettingGetGlobal_f(I->G, cSetting_spec_direct);
     if(settingSpecDirect < 0.0F)
       settingSpecDirect = spec_value;
-    settingSpecDirectPower = SettingGet(I->G, cSetting_spec_direct_power);
+    settingSpecDirectPower = SettingGetGlobal_f(I->G, cSetting_spec_direct_power);
     if(settingSpecDirectPower < 0.0F)
       settingSpecDirectPower = settingSpecPower;
   }
   if(settingSpecReflect > 1.0F)
     settingSpecReflect = 1.0F;
-  if(SettingGet(I->G, cSetting_specular) < R_SMALL4) {
+  if(SettingGetGlobal_f(I->G, cSetting_specular) < R_SMALL4) {
     settingSpecReflect = 0.0F;
   }
 
@@ -3315,23 +3315,23 @@ int RayTraceThread(CRayThreadInfo * T)
      || I->CheckInterior)
     backface_cull = 0;
 
-  shadow_fudge = SettingGet(I->G, cSetting_ray_shadow_fudge);
+  shadow_fudge = SettingGetGlobal_f(I->G, cSetting_ray_shadow_fudge);
 
   inv1minusFogStart = _1;
 
-  fog = SettingGet(I->G, cSetting_ray_trace_fog);
+  fog = SettingGetGlobal_f(I->G, cSetting_ray_trace_fog);
   if(fog < 0.0F) {
-    if(SettingGet(I->G, cSetting_depth_cue)) {
-      fog = SettingGet(I->G, cSetting_fog);
+    if(SettingGetGlobal_b(I->G, cSetting_depth_cue)) {
+      fog = SettingGetGlobal_f(I->G, cSetting_fog);
     } else
       fog = _0;
   }
 
   if(fog != _0) {
     fogFlag = true;
-    fog_start = SettingGet(I->G, cSetting_ray_trace_fog_start);
+    fog_start = SettingGetGlobal_f(I->G, cSetting_ray_trace_fog_start);
     if(fog_start < 0.0F)
-      fog_start = SettingGet(I->G, cSetting_fog_start);
+      fog_start = SettingGetGlobal_f(I->G, cSetting_fog_start);
     if(fog_start > 1.0F)
       fog_start = 1.0F;
     if(fog_start < 0.0F)
@@ -5488,9 +5488,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   } else if(oversample_cutoff) {
     depth = Calloc(float, width * height);
   }
-  ambient = SettingGet(I->G, cSetting_ambient);
+  ambient = SettingGetGlobal_f(I->G, cSetting_ambient);
 
-  bkrd_is_gradient = SettingGet(I->G, cSetting_bg_gradient);
+  bkrd_is_gradient = SettingGetGlobal_b(I->G, cSetting_bg_gradient);
 
   if (bkrd_is_gradient){
     bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_top));
@@ -5503,7 +5503,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     copy3f(bkrd_ptr, bkrd_bottom);
   }
   {                             /* adjust bkrd and trace to offset the effect of gamma correction */
-    float gamma = SettingGet(I->G, cSetting_gamma);
+    float gamma = SettingGetGlobal_f(I->G, cSetting_gamma);
     register float inp;
     register float sig;
     inp = (bkrd_top[0] + bkrd_top[1] + bkrd_top[2]) / 3.0F;
@@ -6033,10 +6033,10 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         int fogFlag = false;
         float fog_start = 0.0F;
         int fogRangeFlag = false;
-        float fog = SettingGet(I->G, cSetting_ray_trace_fog);
+        float fog = SettingGetGlobal_f(I->G, cSetting_ray_trace_fog);
         if(fog < 0.0F) {
-          if(SettingGet(I->G, cSetting_depth_cue)) {
-            fog = SettingGet(I->G, cSetting_fog);
+          if(SettingGetGlobal_b(I->G, cSetting_depth_cue)) {
+            fog = SettingGetGlobal_f(I->G, cSetting_fog);
           } else
             fog = _0;
         }
@@ -6045,9 +6045,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
           if(fog > 1.0F)
             fog = 1.0F;
           fogFlag = true;
-          fog_start = SettingGet(I->G, cSetting_ray_trace_fog_start);
+          fog_start = SettingGetGlobal_f(I->G, cSetting_ray_trace_fog_start);
           if(fog_start < 0.0F)
-            fog_start = SettingGet(I->G, cSetting_fog_start);
+            fog_start = SettingGetGlobal_f(I->G, cSetting_fog_start);
           if(fog_start > 1.0F)
             fog_start = 1.0F;
           if(fog_start < 0.0F)
@@ -6378,7 +6378,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
   if (ok){
     /* EXPERIMENTAL RAY-VOLUME CODE */
-    volume = (int) SettingGet(I->G, cSetting_ray_volume);
+    volume = SettingGetGlobal_b(I->G, cSetting_ray_volume);
     
     if (volume) {
       for(y = 0; y < height; y++) {

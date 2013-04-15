@@ -71,9 +71,9 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 #ifdef _PYMOL_CGO_DRAWBUFFERS
   if (!ray && I->preshader){
     int use_shaders, cartoon_use_shader, has_cylinders_to_optimize;
-    use_shaders = (int) SettingGet(G, cSetting_use_shaders);
-    cartoon_use_shader = (int) SettingGet(G, cSetting_cartoon_use_shader);
-    has_cylinders_to_optimize = CShaderPrg_Get_CylinderShader_NoSet(G) && SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders) && SettingGet(G, cSetting_render_as_cylinders) ;
+    use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
+    cartoon_use_shader = SettingGetGlobal_b(G, cSetting_cartoon_use_shader);
+    has_cylinders_to_optimize = CShaderPrg_Get_CylinderShader_NoSet(G) && SettingGetGlobal_i(G, cSetting_cartoon_nucleic_acid_as_cylinders) && SettingGetGlobal_b(G, cSetting_render_as_cylinders) ;
     if (use_shaders && cartoon_use_shader){
       CGO *convertcgo = NULL, *tmpCGO = NULL;
       if (has_cylinders_to_optimize){
@@ -182,8 +182,8 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
     }
   } else if(G->HaveGUI && G->ValidContext) {
     int use_shader;
-    use_shader = ((int) SettingGet(G, cSetting_cartoon_use_shader) &
-		  (int)SettingGet(G, cSetting_use_shaders)) 
+    use_shader = (SettingGetGlobal_b(G, cSetting_cartoon_use_shader) &
+		  SettingGetGlobal_b(G, cSetting_use_shaders)) 
       && !pick;  /* should not use shaders for picking (for now) */
     
     if(pick) {
@@ -194,7 +194,7 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       }
     } else {
       int use_dlst;
-      use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
+      use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
 #ifdef _PYMOL_GL_CALLLISTS
       if(use_dlst && I->R.displayList) {
@@ -2889,12 +2889,9 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   float alpha;
   char *lv;
   int ok = true;
-  /*  short na_ladder_as_cylinders = SettingGet(G, cSetting_use_shaders) && 
-    (((int)SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders)) & 1) && 
-    SettingGet(G, cSetting_render_as_cylinders);*/
-  short na_strands_as_cylinders = SettingGet(G, cSetting_use_shaders) && 
-    (((int)SettingGet(G, cSetting_cartoon_nucleic_acid_as_cylinders)) & 2) && 
-    SettingGet(G, cSetting_render_as_cylinders);
+  short na_strands_as_cylinders = SettingGetGlobal_b(G, cSetting_use_shaders) && 
+    (SettingGetGlobal_i(G, cSetting_cartoon_nucleic_acid_as_cylinders) & 2) && 
+    SettingGetGlobal_b(G, cSetting_render_as_cylinders);
 
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!

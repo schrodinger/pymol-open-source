@@ -303,7 +303,7 @@ def file_read(finfo):
     try:
         if not isinstance(finfo, basestring):
             handle = finfo
-        elif ':' in finfo:
+        elif '://' in finfo:
             import urllib
             handle = urllib.urlopen(finfo)
         else:
@@ -379,7 +379,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 if _self._raising(-1,_self): raise pymol.CmdException
 
         else:
-            if ftype in _load2str and (':' in finfo or cmd.gz_ext_re.search(finfo)):
+            if ftype in _load2str and ('://' in finfo or cmd.gz_ext_re.search(finfo)):
                 # NOTE: we could safely always do this, not only for URLs and
                 # compressed files. But I don't want to change the old behavior
                 # that regular files are read from the C function.

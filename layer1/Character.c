@@ -204,7 +204,7 @@ void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
     short use_shader;
-    use_shader = (int) SettingGet(G, cSetting_use_shaders);
+    use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
     if (!use_shader){
       glEnable(GL_TEXTURE_2D);
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -218,7 +218,7 @@ void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
     short use_shader;
-    use_shader = (int) SettingGet(G, cSetting_use_shaders);
+    use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
     if (!use_shader){
       glDisable(GL_TEXTURE_2D);
     }

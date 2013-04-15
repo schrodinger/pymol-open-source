@@ -257,10 +257,10 @@ static int ControlDrag(Block * block, int x, int y, int mod)
     delta = x - I->LastPos;
     if(I->DragFlag) {
       if(delta) {
-        gui_width = (int) SettingGet(G, cSetting_internal_gui_width) - delta;
+        gui_width = SettingGetGlobal_i(G, cSetting_internal_gui_width) - delta;
         if(gui_width < cControlMinWidth)
           gui_width = cControlMinWidth;
-        delta = (int) SettingGet(G, cSetting_internal_gui_width) - gui_width;
+        delta = SettingGetGlobal_i(G, cSetting_internal_gui_width) - gui_width;
         width = OrthoGetWidth(G) + delta;
         I->LastPos = x;
         I->SaveWidth = 0;
@@ -299,7 +299,7 @@ static int ControlRelease(Block * block, int button, int x, int y, int mod)
       break;
     case 2:
       MoviePlay(G, cMovieStop);
-      if(SettingGet(G, cSetting_sculpting))
+      if(SettingGetGlobal_b(G, cSetting_sculpting))
         SettingSet(G, cSetting_sculpting, 0);
       if(SettingGetGlobal_b(G, cSetting_rock))
         SettingSetGlobal_b(G, cSetting_rock, false);
@@ -390,7 +390,7 @@ int ControlIdling(PyMOLGlobals * G)
   CControl *I = G->Control;
   return (I->sdofActive ||
           MoviePlaying(G) ||
-          SettingGetGlobal_b(G, cSetting_rock) || SettingGet(G, cSetting_sculpting));
+          SettingGetGlobal_b(G, cSetting_rock) || SettingGetGlobal_b(G, cSetting_sculpting));
 }
 
 
@@ -456,7 +456,7 @@ static int ControlClick(Block * block, int button, int x, int y, int mod)
           OrthoReshape(G, -1, -1, false);
           I->SaveWidth = 0;
         } else {
-          I->SaveWidth = (int) SettingGet(G, cSetting_internal_gui_width);
+          I->SaveWidth = SettingGetGlobal_i(G, cSetting_internal_gui_width);
           SettingSet(G, cSetting_internal_gui_width, (float) cControlMinWidth);
           OrthoReshape(G, -1, -1, false);
         }
@@ -640,7 +640,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
       if((but_num == I->Active)) {
         draw_button(but_left, but_bottom,
                     but_width, but_height, lightEdge, darkEdge, pushed ORTHOCGOARGVAR);
-      } else if(((but_num == 6) && ((int) SettingGet(G, cSetting_seq_view))) ||
+      } else if(((but_num == 6) && (SettingGetGlobal_b(G, cSetting_seq_view))) ||
                 ((but_num == 3) && (MoviePlaying(G))) ||
                 ((but_num == 7) && (SettingGetGlobal_b(G, cSetting_rock))) ||
                 ((but_num == 8) && (SettingGetGlobal_b(G, cSetting_full_screen)))) {

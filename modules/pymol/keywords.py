@@ -160,6 +160,7 @@ def get_command_keywords(self_cmd=cmd):
         'minsert'       : [ self_cmd.minsert           , 0 , 0 , ''  , parsing.STRICT ],
         'mmove'         : [ self_cmd.mmove             , 0 , 0 , ''  , parsing.STRICT ],        
         'move'          : [ self_cmd.move              , 0 , 0 , ''  , parsing.STRICT ],
+        'mse2met'       : [ self_cmd.mse2met           , 0 , 0 , ''  , parsing.STRICT ],
         'mset'          : [ self_cmd.mset              , 0 , 0 , ''  , parsing.STRICT ],
         'mdo'           : [ self_cmd.mdo               , 2 , 2 , ':' , parsing.MOVIE  ],
         'mdump'         : [ self_cmd.mdump             , 0 , 0 , ''  , parsing.STRICT ],      
@@ -242,6 +243,7 @@ def get_command_keywords(self_cmd=cmd):
         'spawn'         : [ self_cmd.helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ], # insecure
         'spheroid'      : [ self_cmd.spheroid          , 0 , 0 , ''  , parsing.STRICT ],
         'splash'        : [ self_cmd.splash            , 0 , 0 , ''  , parsing.STRICT ],
+        'split_chains'  : [ self_cmd.split_chains      , 0 , 0 , ''  , parsing.STRICT ],
         'split_states'  : [ self_cmd.split_states      , 0 , 0 , ''  , parsing.STRICT ],
         '_special'      : [ self_cmd._special          , 0 , 0 , ''  , parsing.STRICT ],
         'stereo'        : [ self_cmd.stereo            , 0 , 0 , ''  , parsing.STRICT ],

@@ -678,7 +678,6 @@ int SettingSetSmart_i(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int in
   return SettingSetGlobal_i(G, index, value);
 }
 
-
 void SettingConvertToColorIf3f(PyMOLGlobals * G, int index){
   if (SettingGetType(G, index) == cSetting_float3){
     register CSetting *I = G->Setting;
@@ -776,10 +775,6 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
   SettingSet_b(I, cSetting_async_builds, 0);
 #endif
 
-  SettingConvertToColorIf3f(G, cSetting_bg_rgb);
-  SettingConvertToColorIf3f(G, cSetting_bg_rgb_top);
-  SettingConvertToColorIf3f(G, cSetting_bg_rgb_bottom);
-
   ColorUpdateFrontFromSettings(G);
   return (ok);
 #endif
@@ -871,6 +866,28 @@ PyObject *SettingAsPyList(CSetting * I)
 #endif
 }
 
+
+/*========================================================================*/
+static int SettingCheckUseShaders(CSetting * I)
+{
+  PyMOLGlobals * G = I->G;
+    if (SettingGetGlobal_i(G, cSetting_use_shaders)){
+      if (!CShaderMgr_ShadersPresent(G->ShaderMgr)){
+	SettingSet_b(I, cSetting_use_shaders, 0);
+	PRINTFB(G, FB_Setting, FB_Warnings)
+	  "Setting-Error: use_shaders cannot be set when Shaders are not available, setting use_shaders back to false\n"
+	  ENDFB(G);
+	return 1;
+      }
+      if (SettingGetGlobal_b(G, cSetting_excl_display_lists_shaders) && SettingGetGlobal_i(G, cSetting_use_display_lists)){
+	PRINTFB(G, FB_Setting, FB_Details)
+	  "Setting-Details: use_shaders and use_display_lists are exclusive, turning off use_display_lists\n"
+	  ENDFB(G);
+	SettingSet_b(G->Setting, cSetting_use_display_lists, 0);
+      }
+    }
+    return 0;
+}
 
 /*========================================================================*/
 #ifndef _PYMOL_NOPY
@@ -966,7 +983,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list)
     }
   }
   {
-    int light_count = SettingGet(G, cSetting_light_count);
+    int light_count = SettingGetGlobal_i(G, cSetting_light_count);
     if (light_count > 8){
       PRINTFB(I->G, FB_Setting, FB_Warnings)
 	"SettingNewFromPyList-Error: light_count cannot be higher than 8, setting light_count to 8\n"
@@ -1001,13 +1018,14 @@ int SettingFromPyList(CSetting * I, PyObject * list)
     }
   }
   {
-    int light_count = SettingGet(I->G, cSetting_light_count);
+    int light_count = SettingGetGlobal_i(I->G, cSetting_light_count);
     if (light_count > 8){
       PRINTFB(I->G, FB_Setting, FB_Warnings)
 	"SettingFromPyList-Error: light_count cannot be higher than 8, setting light_count to 8\n"
 	ENDFB(I->G);
       SettingSet_i(I->G->Setting, cSetting_light_count, 8);
     }
+    SettingCheckUseShaders(I);
   }
   return (ok);
 #endif
@@ -1697,6 +1715,14 @@ int SettingSet_i(CSetting * I, int index, int value)
 
 
 /*========================================================================*/
+int SettingSet_color_from_3f(CSetting * I, int index, float *vals)
+{
+  int color_index;
+  clamp3f(vals);
+  color_index = Color3fToInt(I->G, vals);
+  return SettingSet_i(I, index, color_index);
+}
+
 int SettingSet_color(CSetting * I, int index, char *value)
 {
   int ok = true;
@@ -2294,13 +2320,13 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_spec_reflect:
   case cSetting_spec_direct:
   case cSetting_spec_direct_power:
-    if (SettingGet(G, cSetting_use_shaders) || SettingGet(G, cSetting_sphere_mode) == 9){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders) || SettingGetGlobal_i(G, cSetting_sphere_mode) == 9){
       SceneInvalidate(G);
     }
     break;
   case cSetting_use_display_lists:
     {
-      if (SettingGet(G, cSetting_excl_display_lists_shaders) && SettingGet(G, cSetting_use_display_lists) && SettingGet(G, cSetting_use_shaders)){
+      if (SettingGetGlobal_b(G, cSetting_excl_display_lists_shaders) && SettingGetGlobal_i(G, cSetting_use_display_lists) && SettingGetGlobal_b(G, cSetting_use_shaders)){
 	PRINTFB(G, FB_Setting, FB_Details)
 	  "Setting-Details: use_shaders and use_display_lists are exclusive, turning off use_shaders\n"
 	  ENDFB(G);
@@ -2310,63 +2336,53 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_use_shaders:
     {
       short changed = 0;
-      if (SettingGet(G, cSetting_use_shaders)){
-	if (!CShaderMgr_ShadersPresent(G->ShaderMgr)){
-	  SettingSet_b(G->Setting, cSetting_use_shaders, 0);
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Error: use_shaders cannot be set when Shaders are not available, setting use_shaders back to false\n"
-	    ENDFB(G);
+      if (SettingGetGlobal_b(G, cSetting_use_shaders)){
+	if (SettingCheckUseShaders(G->Setting)){
 	  return;
-	}
-	if (SettingGet(G, cSetting_excl_display_lists_shaders) && SettingGet(G, cSetting_use_display_lists)){
-	  PRINTFB(G, FB_Setting, FB_Details)
-	    "Setting-Details: use_shaders and use_display_lists are exclusive, turning off use_display_lists\n"
-	    ENDFB(G);
-	  SettingSet_b(G->Setting, cSetting_use_display_lists, 0);
 	}
       }
       SceneInvalidate(G);
-      if (SettingGet(G, cSetting_ribbon_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_ribbon_use_shader)){
 	ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
 	changed = 1;
       }
-      if (SettingGet(G, cSetting_nonbonded_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_nonbonded_use_shader)){
 	ExecutiveInvalidateRep(G, inv_sele, cRepNonbonded, cRepInvRep);
 	changed = 1;
       }
-      if (SettingGet(G, cSetting_nb_spheres_use_shader)){
+      if (SettingGetGlobal_i(G, cSetting_nb_spheres_use_shader)){
 	changed = 1;
       }
-      if (SettingGet(G, cSetting_dash_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_dash_use_shader)){
 	ExecutiveInvalidateRep(G, inv_sele, cRepAngle, cRepInvRep);
 	ExecutiveInvalidateRep(G, inv_sele, cRepDihedral, cRepInvRep);
 	ExecutiveInvalidateRep(G, inv_sele, cRepDash, cRepInvRep);
 	changed = 1;
       }
-      if (SettingGet(G, cSetting_line_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_line_use_shader)){
 	ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
 	changed = 1;
       }
-      if (SettingGet(G, cSetting_cartoon_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_cartoon_use_shader)){
 	ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
 	changed = 1;
       }
-      if (SettingGet(G, cSetting_cgo_use_shader) ||
-          SettingGet(G, cSetting_stick_as_cylinders)){
+      if (SettingGetGlobal_b(G, cSetting_cgo_use_shader) ||
+          SettingGetGlobal_b(G, cSetting_stick_as_cylinders)){
 	ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvRep);
 	changed = 1;
       }
-      if (SettingGet(G, cSetting_stick_use_shader) ||
-          SettingGet(G, cSetting_stick_as_cylinders) ||
-	  (SettingGet(G, cSetting_stick_ball) && 
-	   SettingGet(G, cSetting_valence))){
+      if (SettingGetGlobal_b(G, cSetting_stick_use_shader) ||
+          SettingGetGlobal_b(G, cSetting_stick_as_cylinders) ||
+	  (SettingGetGlobal_b(G, cSetting_stick_ball) && 
+	   SettingGetGlobal_b(G, cSetting_valence))){
 	ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
 	changed = 1;
       }
 
-      if (SettingGet(G, cSetting_surface_use_shader) ||
-	  SettingGet(G, cSetting_dot_use_shader) || 
-	  SettingGet(G, cSetting_mesh_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_surface_use_shader) ||
+	  SettingGetGlobal_b(G, cSetting_dot_use_shader) || 
+	  SettingGetGlobal_b(G, cSetting_mesh_use_shader)){
 	changed = 1;
       }
       if (changed){
@@ -2392,19 +2408,19 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     break;
   case cSetting_dash_round_ends:
   case cSetting_dash_color:
-    if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_dash_use_shader)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_dash_use_shader)){
       ExecutiveInvalidateRep(G, "all", cRepDash, cRepInvRep);
     }
     SceneInvalidate(G);
     break;
   case cSetting_angle_color:
-    if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_dash_use_shader)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_dash_use_shader)){
       ExecutiveInvalidateRep(G, "all", cRepAngle, cRepInvRep);
     }
     SceneInvalidate(G);
     break;
   case cSetting_dihedral_color:
-    if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_dash_use_shader)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_dash_use_shader)){
       ExecutiveInvalidateRep(G, "all", cRepDihedral, cRepInvRep);
     }
     SceneInvalidate(G);
@@ -2466,16 +2482,16 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     SceneChanged(G);
     break;
   case cSetting_line_use_shader:
-    if (SettingGet(G, cSetting_use_shaders)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
       SceneChanged(G);
-      if (SettingGet(G, cSetting_line_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_line_use_shader)){
 	SceneUpdateObjectMoleculesSingleThread(G);
       }
     }
     break;
   case cSetting_ribbon_use_shader:
-    if (SettingGet(G, cSetting_use_shaders)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
       SceneChanged(G);
     }
@@ -2485,13 +2501,13 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     SceneChanged(G);
     break;
   case cSetting_dot_use_shader:
-    if (SettingGet(G, cSetting_use_shaders)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepDot, cRepInvRep);
       SceneChanged(G);
     }
     break;
   case cSetting_nonbonded_use_shader:
-    if (SettingGet(G, cSetting_use_shaders)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepNonbonded, cRepInvRep);
       SceneChanged(G);
     }
@@ -2502,7 +2518,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     break;
   case cSetting_nb_spheres_use_shader:
     {
-      int nb_spheres_use_shader = SettingGet(G, cSetting_nb_spheres_use_shader);
+      int nb_spheres_use_shader = SettingGetGlobal_b(G, cSetting_nb_spheres_use_shader);
       if (nb_spheres_use_shader<0 || nb_spheres_use_shader>2){
 	if (nb_spheres_use_shader<0){
 	  nb_spheres_use_shader = 0;
@@ -2517,7 +2533,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
 	
       }
     }
-    if (SettingGet(G, cSetting_use_shaders)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       SceneChanged(G);
     }
     break;
@@ -2530,7 +2546,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_nonbonded_as_cylinders:
   case cSetting_alignment_as_cylinders:
   case cSetting_cartoon_nucleic_acid_as_cylinders:
-    if (SettingGet(G, cSetting_render_as_cylinders)){
+    if (SettingGetGlobal_b(G, cSetting_render_as_cylinders)){
       if (!CShaderMgr_ShaderPrgExists(G->ShaderMgr, "cylinder")){
 	SettingSet_b(G->Setting, cSetting_render_as_cylinders, 0);
 	PRINTFB(G, FB_Setting, FB_Warnings)
@@ -2542,7 +2558,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
       case cSetting_render_as_cylinders:
       case cSetting_cartoon_nucleic_acid_as_cylinders:
       case cSetting_use_shaders:
-	if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_render_as_cylinders)){
+	if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_render_as_cylinders)){
 	  ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
 	}
       }
@@ -2550,9 +2566,9 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     }
     break;
   case cSetting_mesh_use_shader:
-    if (SettingGet(G, cSetting_use_shaders)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       SceneChanged(G);
-      if (SettingGet(G, cSetting_mesh_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_mesh_use_shader)){
 	SceneUpdateObjectMoleculesSingleThread(G);
       }
     }
@@ -2690,8 +2706,8 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_stick_use_shader:
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
     SceneChanged(G);
-    if (SettingGet(G, cSetting_use_shaders)){
-      if (SettingGet(G, cSetting_stick_use_shader)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
+      if (SettingGetGlobal_b(G, cSetting_stick_use_shader)){
 	SceneUpdateObjectMoleculesSingleThread(G);
       }
     }
@@ -2993,32 +3009,32 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     SceneChanged(G);
     break;
   case cSetting_cartoon_use_shader:
-    if (SettingGet(G, cSetting_use_shaders)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
       SceneChanged(G);
-      if (SettingGet(G, cSetting_cartoon_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_cartoon_use_shader)){
 	SceneUpdateObjectMoleculesSingleThread(G);
       }
     }
     break;
   case cSetting_cgo_use_shader:
-    if (SettingGet(G, cSetting_use_shaders)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvRep);
       SceneChanged(G);
-      if (SettingGet(G, cSetting_cgo_use_shader)){
+      if (SettingGetGlobal_b(G, cSetting_cgo_use_shader)){
 	SceneUpdateObjectMoleculesSingleThread(G);
       }
     }
     break;
   case cSetting_cgo_shader_ub_flags:
-    if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_cgo_use_shader)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_cgo_use_shader)){
       ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
       SceneChanged(G);
       SceneUpdateObjectMoleculesSingleThread(G);
     }
     break;
   case cSetting_cgo_shader_ub_color:
-    if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_cgo_use_shader)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_cgo_use_shader)){
       ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvRep);
       ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
       ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
@@ -3027,7 +3043,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     }
     break;
   case cSetting_cgo_shader_ub_normal:
-    if (SettingGet(G, cSetting_use_shaders) && SettingGet(G, cSetting_cgo_use_shader)){
+    if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_cgo_use_shader)){
       ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvRep);
       ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
       SceneChanged(G);
@@ -3045,7 +3061,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     SceneChanged(G);
     break;
   case cSetting_bg_gradient:
-    if (SettingGet(G, cSetting_bg_gradient)){
+    if (SettingGetGlobal_b(G, cSetting_bg_gradient)){
       ColorUpdateFrontFromSettings(G);
       ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
     }
@@ -3070,7 +3086,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
         vv[2] = v[2] / 255.0F;
         SettingSet_3fv(G->Setting, cSetting_bg_rgb_top, vv);
       }
-      if(SettingGet(G, cSetting_bg_gradient)) {
+      if(SettingGetGlobal_b(G, cSetting_bg_gradient)) {
 	ColorUpdateFrontFromSettings(G);
 	ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
 	OrthoBackgroundTextureNeedsUpdate(G);
@@ -3088,7 +3104,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
         vv[2] = v[2] / 255.0F;
         SettingSet_3fv(G->Setting, cSetting_bg_rgb_bottom, vv);
       }
-      if(SettingGet(G, cSetting_bg_gradient)) {
+      if(SettingGetGlobal_b(G, cSetting_bg_gradient)) {
 	ColorUpdateFrontFromSettings(G);
 	ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
 	OrthoBackgroundTextureNeedsUpdate(G);
@@ -3149,18 +3165,18 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_mouse_grid:
   case cSetting_movie_panel_row_height:
   case cSetting_movie_panel:
-    if(!SettingGet(G, cSetting_suspend_updates)) {
+    if(!SettingGetGlobal_b(G, cSetting_suspend_updates)) {
       OrthoCommandIn(G, "viewport");
     }
     break;
   case cSetting_suspend_updates:
-    if(!SettingGet(G, cSetting_suspend_updates)) {
+    if(!SettingGetGlobal_b(G, cSetting_suspend_updates)) {
       SceneChanged(G);          /* force big update upon resumption */
       OrthoDirty(G);
     }
     break;
   case cSetting_security:
-    G->Security = (int) SettingGet(G, cSetting_security);
+    G->Security = SettingGetGlobal_i(G, cSetting_security);
     break;
   case cSetting_state:
   case cSetting_frame:
@@ -3479,14 +3495,7 @@ int SettingSetNamed(PyMOLGlobals * G, char *name, char *value)
 /*========================================================================*/
 float SettingGetNamed(PyMOLGlobals * G, char *name)
 {
-  return (SettingGet(G, SettingGetIndex(G, name)));
-}
-
-
-/*========================================================================*/
-float SettingGet(PyMOLGlobals * G, int index)
-{
-  return (SettingGetGlobal_f(G, index));
+  return (SettingGetGlobal_f(G, SettingGetIndex(G, name)));
 }
 
 

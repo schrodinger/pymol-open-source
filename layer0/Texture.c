@@ -111,7 +111,7 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
   CTexture *I = G->Texture;
   int is_new = false;
   int tex_dim = INIT_TEXTURE_SIZE;
-  short use_shader = (int) SettingGet(G, cSetting_use_shaders);
+  short use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
 
   if(G->HaveGUI && G->ValidContext) {
     if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->ch2tex, char_id))) {

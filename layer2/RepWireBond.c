@@ -615,7 +615,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
   int ok = true;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
   float line_width_setting =
-    SettingGet(G, cSetting_line_width);
+    SettingGetGlobal_f(G, cSetting_line_width);
 
   if(ray) {
 
@@ -645,7 +645,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
     }
 
   } else if(G->HaveGUI && G->ValidContext) {
-    register int nvidia_bugs = (int) SettingGet(G, cSetting_nvidia_bugs);
+    register int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
 
     if(pick) {
 
@@ -738,12 +738,12 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
     } else { /* else not pick i.e., when rendering */
       short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
       short line_as_cylinders ;
-      register int nvidia_bugs = (int) SettingGet(G, cSetting_nvidia_bugs);
-      use_shader = (int) SettingGet(G, cSetting_line_use_shader) & 
-                           (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+      register int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
+      use_shader = SettingGetGlobal_b(G, cSetting_line_use_shader) & 
+                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
-      line_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_line_as_cylinders);
+      line_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_line_as_cylinders);
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = 0;

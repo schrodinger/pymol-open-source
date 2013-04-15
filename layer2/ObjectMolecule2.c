@@ -215,9 +215,9 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
   }
   {
     /* match existing properties of the old atom */
-    int auto_show_lines = (int) SettingGet(G, cSetting_auto_show_lines);
-    int auto_show_spheres = (int) SettingGet(G, cSetting_auto_show_spheres);
-    int auto_show_nonbonded = (int) SettingGet(G, cSetting_auto_show_nonbonded);
+    int auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
+    int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
+    int auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
     AtomInfoType *ai = atInfo;
     ai->resv = AtomResvFromResi(resi);
     ai->hetatm = hetatm;
@@ -1640,10 +1640,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int nBond = 0;
   int b1, b2, nReal, maxAt;
   CSymmetry *symmetry = NULL;
-  int auto_show_lines = (int) SettingGet(G, cSetting_auto_show_lines);
-  int auto_show_nonbonded = (int) SettingGet(G, cSetting_auto_show_nonbonded);
-  int auto_show_spheres = (int) SettingGet(G, cSetting_auto_show_spheres);
-  int reformat_names = (int) SettingGet(G, cSetting_pdb_reformat_names_mode);
+  int auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
+  int auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
+  int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
+  int reformat_names = SettingGetGlobal_i(G, cSetting_pdb_reformat_names_mode);
   int truncate_resn = SettingGetGlobal_b(G, cSetting_pdb_truncate_residue_name);
   char *tags_in = SettingGetGlobal_s(G, cSetting_pdb_echo_tags), *tag_start[PDB_MAX_TAGS];
   int n_tags = 0;
@@ -1704,7 +1704,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   if(literal_names)
     reformat_names = 0;
 
-  ignore_pdb_segi = (int) SettingGet(G, cSetting_ignore_pdb_segi);
+  ignore_pdb_segi = SettingGetGlobal_b(G, cSetting_ignore_pdb_segi);
 
   p = buffer;
   nAtom = 0;
@@ -3866,7 +3866,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   int connect_mode = SettingGetGlobal_i(G, cSetting_connect_mode);
   int unbond_cations = SettingGetGlobal_i(G, cSetting_pdb_unbond_cations);
   int ok = true;
-  cutoff_v = SettingGet(G, cSetting_connect_cutoff);
+  cutoff_v = SettingGetGlobal_f(G, cSetting_connect_cutoff);
   cutoff_s = cutoff_v + 0.2F;
   cutoff_h = cutoff_v - 0.2F;
   max_cutoff = cutoff_s;

@@ -164,10 +164,10 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
       short mesh_as_cylinders ;
       int lighting =
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
-      use_shader = (int) SettingGet(G, cSetting_mesh_use_shader) & 
-                           (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
-      mesh_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
+      use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) & 
+                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
+      mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
 
       if (I->shaderCGO && !use_shader){
 	CGOFree(I->shaderCGO);

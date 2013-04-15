@@ -4125,7 +4125,7 @@ void PyMOL_NeedReshape(CPyMOL * I, int mode, int x, int y, int width, int height
     int w;
     int internal_feedback;
     BlockGetSize(SceneGetBlock(G), &w, &height);
-    internal_feedback = (int) SettingGet(G, cSetting_internal_feedback);
+    internal_feedback = SettingGetGlobal_i(G, cSetting_internal_feedback);
     if(internal_feedback)
       height += (internal_feedback - 1) * cOrthoLineHeight + cOrthoBottomSceneMargin;
     if(SettingGetGlobal_b(G, cSetting_seq_view)

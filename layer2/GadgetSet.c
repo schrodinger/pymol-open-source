@@ -288,7 +288,7 @@ static void GadgetSetRender(GadgetSet * I, RenderInfo * info)
   float *color;
   PickContext context;
   short use_shader;
-  use_shader = (int) SettingGet(I->G, cSetting_use_shaders);
+  use_shader = (short) SettingGetGlobal_b(I->G, cSetting_use_shaders);
 
   context.object = I->Obj;
   context.state = I->State;
@@ -312,7 +312,7 @@ static void GadgetSetRender(GadgetSet * I, RenderInfo * info)
 	RayPopTTT(ray);
       }
     } else if(G->HaveGUI && G->ValidContext) {
-      short use_shader = (int) SettingGet(I->G, cSetting_use_shaders) &&
+      short use_shader = (short) SettingGetGlobal_b(I->G, cSetting_use_shaders) &&
 	CShaderPrg_Get_RampShader(I->G);
       if(pick) {
 	if (!I->PickCGO && I->PickShapeCGO){

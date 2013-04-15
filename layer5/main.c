@@ -51,6 +51,7 @@
 #include "Util.h"
 #include "Control.h"
 #include "Movie.h"
+
 #ifdef _PYMOL_NO_MAIN
 
 int MainSavingUnderWhileIdle(void)
@@ -669,7 +670,7 @@ static void MainDrawLocked(void)
   }
 
   if(PyMOL_GetSwap(G->PyMOL, true)) {
-    if(!(int) SettingGet(G, cSetting_suspend_updates))
+    if(!SettingGetGlobal_b(G, cSetting_suspend_updates))
       if(G->HaveGUI) {
         DrawBlueLine(G);
         p_glutSwapBuffers();
@@ -1065,7 +1066,7 @@ void MainDoReshape(int width, int height)
 
     if(height < 0) {
       BlockGetSize(SceneGetBlock(G), &w, &height);
-      internal_feedback = (int) SettingGet(G, cSetting_internal_feedback);
+      internal_feedback = SettingGetGlobal_i(G, cSetting_internal_feedback);
       if(internal_feedback)
         height += (internal_feedback - 1) * cOrthoLineHeight + cOrthoBottomSceneMargin;
       if(SettingGetGlobal_b(G, cSetting_seq_view)
@@ -1096,7 +1097,7 @@ void MainDoReshape(int width, int height)
 
       /* do we need to become full-screen? */
 
-      if(SettingGet(G, cSetting_full_screen) && G->HaveGUI && G->ValidContext) {
+      if(SettingGetGlobal_b(G, cSetting_full_screen) && G->HaveGUI && G->ValidContext) {
 #ifndef __APPLE__
         p_glutFullScreen();
 #else
@@ -1324,16 +1325,16 @@ static void MainBusyIdle(void)
 
     switch (I->IdleMode) {
     case 2:                    /* avoid racing the CPU */
-      if((UtilGetSeconds(G) - I->IdleTime) > (SettingGet(G, cSetting_idle_delay) / 5.0)) {
+      if((UtilGetSeconds(G) - I->IdleTime) > (SettingGetGlobal_f(G, cSetting_idle_delay) / 5.0)) {
         I->IdleMode = 3;
         I->IdleTime = UtilGetSeconds(G);
       }
       break;
     case 3:
-      if((UtilGetSeconds(G) - I->IdleTime) > (SettingGet(G, cSetting_idle_delay))) {
+      if((UtilGetSeconds(G) - I->IdleTime) > (SettingGetGlobal_f(G, cSetting_idle_delay))) {
         I->IdleMode = 4;
         if(G->HaveGUI)
-          if(SettingGet(G, cSetting_cache_display)) {
+          if(SettingGetGlobal_b(G, cSetting_cache_display)) {
             p_glutPostRedisplay();      /* trigger caching of the current scene */
           }
         break;

@@ -2533,7 +2533,7 @@ void PLog(PyMOLGlobals * G, char *str, int format)
   int blocked;
   PyObject *log;
   OrthoLineType buffer = "";
-  mode = (int) SettingGet(G, cSetting_logging);
+  mode = SettingGetGlobal_i(G, cSetting_logging);
   if(mode) {
     blocked = PAutoBlock(G);
     log = PyDict_GetItemString(P_pymol_dict, P_log_file_str);
@@ -2590,7 +2590,7 @@ void PLogFlush(PyMOLGlobals * G)
   int mode;
   PyObject *log;
   int blocked;
-  mode = (int) SettingGet(G, cSetting_logging);
+  mode = SettingGetGlobal_i(G, cSetting_logging);
   if(mode) {
     blocked = PAutoBlock(G);
     log = PyDict_GetItemString(P_pymol_dict, P_log_file_str);

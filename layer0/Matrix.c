@@ -880,8 +880,8 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, float *v1, float *v2, float *wt,
   }
 
   sumwt = 0.0F;
-  tol = SettingGet(G, cSetting_fit_tolerance);
-  maxiter = (int) SettingGet(G, cSetting_fit_iterations);
+  tol = SettingGetGlobal_f(G, cSetting_fit_tolerance);
+  maxiter = SettingGetGlobal_i(G, cSetting_fit_iterations);
 
   /* Calculate center-of-mass vectors */
 

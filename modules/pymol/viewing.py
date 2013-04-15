@@ -1533,39 +1533,24 @@ SEE ALSO
                         _self.delete(name)
                     if key not in pymol._scene_order:
                         pymol._scene_order.append(key)
-                    entry = []
-                    if view:
-                        entry.append(_self.get_view(0))
-                    else:
-                        entry.append(None);
-                    if active:
-                        entry.append(_self.get_vis())
-                    else:
-                        entry.append(None)
-                    if frame:
-                        entry.append(_self.get_frame())
-                    else:
-                        entry.append(None)
-                    if color:
-                        entry.append(_self.get_colorection(key))
-                    else:
-                        entry.append(None)
                     if rep:
-                        entry.append(1)
                         for rep_name in rep_list:
                             name = "_scene_"+key+"_"+rep_name
                             _self.select(name,"rep "+rep_name)
-                    else:
-                        entry.append(None)
-                    if is_string(message):
-                        if len(message)>1:
+                    if message:
                             if (message[0:1] in [ '"',"'"] and
                                  message[-1:] in [ '"',"'"]):
                                 message=message[1:-1]
                             else:
-                                message = string.split(message,"\n")
-                    entry.append(message)
-                    pymol._scene_dict[key]=entry
+                                message = message.splitlines()
+                    pymol._scene_dict[key] = [
+                        _self.get_view(0) if view else None,
+                        _self.get_vis() if active else None,
+                        _self.get_frame() if frame else None,
+                        _self.get_colorection(key) if color else None,
+                        1 if rep else None,
+                        message,
+                    ]
                     if _feedback(fb_module.scene,fb_mask.actions,_self):
                         print " scene: scene "+action+"d as \"%s\"."%key
                     _scene_validate_list(_self)                        

@@ -136,7 +136,7 @@ SEE ALSO
                 return ( {"alignment_length": aliLen, "RMSD" : RMSD, "rotation_matrix" : rotMat } )
 
 
-        def alignto(target,method="cealign",quiet=1,_self=cmd, **kwargs):
+        def alignto(target=None,method="cealign",quiet=1,_self=cmd, **kwargs):
                 """
 DESCRIPTION
 
@@ -169,7 +169,10 @@ SEE ALSO
                         method = cmd.keyword[method][0]
                     else:
                         raise CmdException('Unknown method: ' + method)
-                for x in cmd.get_names("public_objects"):
+                names = cmd.get_names("public_objects", 1)
+                if not target:
+                    target = names[0]
+                for x in names:
                         if x == target:
                             continue
                         if not quiet:

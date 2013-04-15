@@ -693,8 +693,60 @@ void CoordSetFracToReal(CoordSet * I, CCrystal * cryst)
 
 
 /*========================================================================*/
+static char RotateU(double *matrix, float *anisou)
+/* Rotates the ANISOU vector
+ *
+ * matrix: flat 4x4, but only rotation (upper left 3x3) is considered
+ * anisou: has 6 elements (of symmetric 3x3) and will be rotated in-place
+ */
+{
+  int i, j, k;
+  float Re[3][3];
+  double e_val[3], e_vec[3][3];
+  double U[3][3] = {
+    { anisou[0], anisou[3], anisou[4] },
+    { anisou[3], anisou[1], anisou[5] },
+    { anisou[4], anisou[5], anisou[2] },
+  };
+
+  // e_val, e_vec = linalg.eigh(U)
+  if(!xx_matrix_jacobi_solve(*e_vec, e_val, &i, *U, 3))
+    return false;
+
+  // Re = dot(matrix[:3,:3], e_vec)
+  for (i = 0; i < 3; i++)
+    for (j = 0; j < 3; j++) {
+      Re[i][j] = 0.0;
+      for (k = 0; k < 3; k++)
+        Re[i][j] += matrix[i * 4 + k] * e_vec[k][j];
+    }
+
+  // U = dot(Re * e_val, Re.T)
+  for (i = 0; i < 3; i++)
+    for (j = 0; j <= i; j++) {
+      U[i][j] = 0.0;
+      for (k = 0; k < 3; k++)
+        U[i][j] += Re[i][k] * e_val[k] * Re[j][k];
+    }
+
+  anisou[0] = U[0][0];
+  anisou[1] = U[1][1];
+  anisou[2] = U[2][2];
+  anisou[3] = U[1][0];
+  anisou[4] = U[2][0];
+  anisou[5] = U[2][1];
+
+  return true;
+}
+
+/*========================================================================*/
 void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
-                             AtomInfoType * ai, float *v, int cnt, PDBInfoRec * pdb_info)
+                             AtomInfoType * ai, float *v, int cnt, PDBInfoRec * pdb_info, double *matrix)
+/*
+ * v: 3x1 vertex in final output space
+ * matrix: 4x4 homogenous transformation matrix from model space to output
+ *         space (view matrix * state matrix). Used for ANISOU.
+ */
 {
   char *aType;
   AtomName name;
@@ -704,8 +756,8 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
 
   char formalCharge[4];
   int rl;
-  int literal = (int) SettingGet(G, cSetting_pdb_literal_names);
-  int reformat = (int) SettingGet(G, cSetting_pdb_reformat_names_mode);
+  int literal = SettingGetGlobal_b(G, cSetting_pdb_literal_names);
+  int reformat = SettingGetGlobal_i(G, cSetting_pdb_reformat_names_mode);
   WordType x, y, z;
 
   formalCharge[0] = 0;
@@ -866,7 +918,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
       }
     }
   }
-  if((int) SettingGet(G, cSetting_pdb_retain_ids)) {
+  if(SettingGetGlobal_b(G, cSetting_pdb_retain_ids)) {
     cnt = ai->id - 1;
   }
   if(cnt > 99998)
@@ -892,11 +944,16 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
       // Columns 7 - 27 and 73 - 80 are identical to the corresponding ATOM/HETATM record.
       char *atomline = (*charVLA) + (*c);
       char *anisoline = atomline + linelen;
+      float anisou[6] = { ai->U11, ai->U22, ai->U33, ai->U12, ai->U13, ai->U23 };
+      if(matrix && !RotateU(matrix, anisou)) {
+        PRINTFB(G, FB_CoordSet, FB_Errors) "RotateU failed\n" ENDFB(G);
+        return;
+      }
       strncpy(anisoline + 6, atomline + 6, 22);
       sprintf(anisoline + 28,
           "%7.0f%7.0f%7.0f%7.0f%7.0f%7.0f",
-          ai->U11 * 1e4, ai->U22 * 1e4, ai->U33 * 1e4,
-          ai->U12 * 1e4, ai->U13 * 1e4, ai->U23 * 1e4);
+          anisou[0] * 1e4, anisou[1] * 1e4, anisou[2] * 1e4,
+          anisou[3] * 1e4, anisou[4] * 1e4, anisou[5] * 1e4);
       strcpy(anisoline + 70, atomline + 70);
       strncpy(anisoline, "ANISOU", 6);
       (*c) += linelen;
@@ -956,7 +1013,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
 
 /*========================================================================*/
 PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, float *v,
-                                   float *ref, int index)
+                                   float *ref, int index, double *matrix)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -966,6 +1023,12 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, float *v
   if(!atom)
     ok = ErrMessage(G, "CoordSetAtomToChemPyAtom", "can't create atom");
   else {
+    float tmp_array[6] = { ai->U11, ai->U22, ai->U33, ai->U12, ai->U13, ai->U23 };
+
+    if(matrix) {
+      RotateU(matrix, tmp_array);
+    }
+
     PConvFloat3ToPyObjAttr(atom, "coord", v);
     if(ref)
       PConvFloat3ToPyObjAttr(atom, "ref_coord", ref);
@@ -983,13 +1046,6 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, float *v
     PConvFloatToPyObjAttr(atom, "q", ai->q);
     PConvFloatToPyObjAttr(atom, "b", ai->b);
     {
-      float tmp_array[6];
-      tmp_array[0] = ai->U11;
-      tmp_array[1] = ai->U22;
-      tmp_array[2] = ai->U33;
-      tmp_array[3] = ai->U12;
-      tmp_array[4] = ai->U13;
-      tmp_array[5] = ai->U23;
       {
         PyObject *tmp_obj = PConvFloatArrayToPyList(tmp_array, 6);
         if(tmp_obj) {
@@ -1041,7 +1097,7 @@ void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoT
   ResIdent resi;
   ResName resn;
   int rl;
-  int retain_ids = (int) SettingGet(G, cSetting_pdb_retain_ids);
+  int retain_ids = SettingGetGlobal_b(G, cSetting_pdb_retain_ids);
   int ter_id;
 
   strcpy(resn, ai->resn);       /* enforce 3-letter residue name in PDB files */
@@ -1347,12 +1403,9 @@ void CoordSetRender(CoordSet * I, RenderInfo * info)
 	}
       } else if(G->HaveGUI && G->ValidContext) {
         if(!pick) {
-	  int use_shader = (int)SettingGet(G, cSetting_use_shaders);
-	  if (I->SculptShaderCGO){
-	    CGOFree(I->SculptShaderCGO);
-	    I->SculptShaderCGO = NULL;
-	  }
+	  int use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
 	  if (use_shader){
+	    if (!I->SculptShaderCGO){
 	      CGO *convertcgo = NULL;
 	      convertcgo = CGOCombineBeginEnd(I->SculptCGO, 0);
 	      if (convertcgo){
@@ -1360,6 +1413,10 @@ void CoordSetRender(CoordSet * I, RenderInfo * info)
 		I->SculptShaderCGO->use_shader = I->SculptShaderCGO->enable_shaders = true;
 		CGOFree(convertcgo);
 	      }
+	    }
+	  } else if (I->SculptShaderCGO){
+	    CGOFree(I->SculptShaderCGO);
+	    I->SculptShaderCGO = NULL;
 	  }
 	  if (I->SculptShaderCGO){
 	    CGORenderGL(I->SculptShaderCGO, ColorGet(G, I->Obj->Obj.Color),

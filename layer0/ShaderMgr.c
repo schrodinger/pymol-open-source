@@ -162,7 +162,7 @@ void CShaderPrg_ReplaceStringsInPlace(PyMOLGlobals *G, char *dest_line, char **r
 
 void CShaderPrg_Reload_CallComputeColorForLight(PyMOLGlobals * G, char *name){
   CShaderMgr *I = G->ShaderMgr;
-  int light_count = (int) SettingGet(G, cSetting_light_count);
+  int light_count = SettingGetGlobal_i(G, cSetting_light_count);
   char **reparr = Alloc(char*, 5);
   char *accstr, *tmpstr ;
   int tmpstrlen, accstrlen, i, idx;
@@ -382,7 +382,7 @@ char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, ch
 
 void CShaderMgr_Reload_Shader_Variables(PyMOLGlobals * G){
   CShaderMgr *I = G->ShaderMgr;
-  int bg_gradient = (int) SettingGet(G, cSetting_bg_gradient);  
+  int bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);  
   int bg_image_mode_solid;
   int stereo, stereo_mode;
   bg_image_mode_solid = !bg_gradient;
@@ -390,7 +390,7 @@ void CShaderMgr_Reload_Shader_Variables(PyMOLGlobals * G){
 
   I->shader_include_values[SHADERLEX_LOOKUP(G, "bg_image_mode_solid")] = !bg_gradient;
   I->shader_include_values[SHADERLEX_LOOKUP(G, "bg_image_mode_stretched")] = bg_gradient;
-  I->shader_include_values[SHADERLEX_LOOKUP(G, "cylinder_shader_ff_workaround")] = (int) SettingGet(G, cSetting_cylinder_shader_ff_workaround);
+  I->shader_include_values[SHADERLEX_LOOKUP(G, "cylinder_shader_ff_workaround")] = SettingGetGlobal_b(G, cSetting_cylinder_shader_ff_workaround);
 
   stereo = SettingGetGlobal_i(G, cSetting_stereo);
   stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
@@ -1679,28 +1679,28 @@ void CShaderMgr_AddVBOToFree(CShaderMgr * I, GLuint vboid){
 }
 
 void CShaderPrg_Set_Specular_Values(PyMOLGlobals * G, CShaderPrg * shaderPrg){
-  float spec_value = SettingGet(G, cSetting_specular);
+  float spec_value = SettingGetGlobal_f(G, cSetting_specular);
   float settingSpecReflect, settingSpecDirect, settingSpecDirectPower, settingSpecPower;
-  int spec_count = SettingGet(G, cSetting_spec_count);
+  int spec_count = SettingGetGlobal_i(G, cSetting_spec_count);
 
-  settingSpecPower = SettingGet(G, cSetting_spec_power);
+  settingSpecPower = SettingGetGlobal_f(G, cSetting_spec_power);
 
   if(settingSpecPower < 0.0F) {
-    settingSpecPower = SettingGet(G, cSetting_shininess);
+    settingSpecPower = SettingGetGlobal_f(G, cSetting_shininess);
   }
 
   CShaderPrg_Set1f(shaderPrg, "shininess", settingSpecPower);
 
   if (spec_count < 0){
-    spec_count = SettingGet(G, cSetting_light_count);
+    spec_count = SettingGetGlobal_i(G, cSetting_light_count);
   }
   if(spec_value == 1.0F)
-    spec_value = SettingGet(G, cSetting_specular_intensity);
+    spec_value = SettingGetGlobal_f(G, cSetting_specular_intensity);
 
-  settingSpecReflect = SettingGet(G, cSetting_spec_reflect);
+  settingSpecReflect = SettingGetGlobal_f(G, cSetting_spec_reflect);
   settingSpecReflect = SceneGetSpecularValue(G, settingSpecReflect, 10);
-  settingSpecDirect = SettingGet(G, cSetting_spec_direct);
-  settingSpecDirectPower = SettingGet(G, cSetting_spec_direct_power);
+  settingSpecDirect = SettingGetGlobal_f(G, cSetting_spec_direct);
+  settingSpecDirectPower = SettingGetGlobal_f(G, cSetting_spec_direct_power);
 
   if(settingSpecReflect < 0.0F)
     settingSpecReflect = spec_value;
@@ -1712,7 +1712,7 @@ void CShaderPrg_Set_Specular_Values(PyMOLGlobals * G, CShaderPrg * shaderPrg){
 
   if(settingSpecReflect > 1.0F)
     settingSpecReflect = 1.0F;
-  if(SettingGet(G, cSetting_specular) < R_SMALL4) {
+  if(SettingGetGlobal_f(G, cSetting_specular) < R_SMALL4) {
     settingSpecReflect = 0.0F;
   }
   CShaderPrg_Set1f(shaderPrg, "spec_value_0", settingSpecDirect);
@@ -1729,7 +1729,7 @@ void CShaderPrg_Set_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shaderPrg, int m
   /** anaglyph[R|L]_constants are found in Scene.c b/c of ray tracing */
   CShaderPrg_SetMat3f(shaderPrg, "matR", anaglyphR_constants[mode]);
   CShaderPrg_SetMat3f(shaderPrg, "matL", anaglyphL_constants[mode]);
-  CShaderPrg_Set1f(shaderPrg, "gamma", SettingGet(G, cSetting_gamma));
+  CShaderPrg_Set1f(shaderPrg, "gamma", SettingGetGlobal_f(G, cSetting_gamma));
 }
 
 void CShaderPrg_Set_Stereo_And_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shaderPrg) {
@@ -1776,8 +1776,8 @@ CShaderPrg *CShaderPrg_Enable_DefaultShaderImpl(PyMOLGlobals * G, CShaderPrg * s
     return shaderPrg;
   }
   CShaderPrg_Enable(shaderPrg);
-  fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
-  bg_gradient = SettingGet(G, cSetting_bg_gradient);
+  fog_enabled = SettingGetGlobal_b(G, cSetting_depth_cue) ? 1.0 : 0.0;
+  bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);
   if (bg_gradient){
     fog_color_top = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top));
     fog_color_bottom = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom));
@@ -1805,7 +1805,7 @@ CShaderPrg *CShaderPrg_Enable_DefaultShaderImpl(PyMOLGlobals * G, CShaderPrg * s
   
   CShaderPrg_SetLightingEnabled(shaderPrg, 1); // lighting on by default
   CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLightingSettings(G, set1, set2));
-  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGet(G, cSetting_light_count));
+  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGetGlobal_i(G, cSetting_light_count));
   CShaderPrg_Set1f(shaderPrg, "ambient_occlusion_scale", 0.f);
   CShaderPrg_Set1i(shaderPrg, "accessibility_mode", SettingGetGlobal_i(G, cSetting_ambient_occlusion_mode) / 4);
   {
@@ -1844,8 +1844,8 @@ CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G){
       return NULL;
   CShaderPrg_Enable(shaderPrg);
   CShaderPrg_Set1f(shaderPrg, "uni_radius", 0.f);
-  fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
-  bg_gradient = SettingGet(G, cSetting_bg_gradient);
+  fog_enabled = SettingGetGlobal_b(G, cSetting_depth_cue) ? 1.0 : 0.0;
+  bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);
   if (bg_gradient){
     fog_color_top = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top));
     fog_color_bottom = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom));
@@ -1861,13 +1861,13 @@ CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G){
   CShaderPrg_Set3f(shaderPrg, "fog_color_bottom", fog_color_bottom[0], fog_color_bottom[1], fog_color_bottom[2]);
   CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
   CShaderPrg_Set1f(shaderPrg, "inv_height", 1.0/height);
-  ortho = SettingGet(G, cSetting_ortho);
+  ortho = SettingGetGlobal_b(G, cSetting_ortho);
   CShaderPrg_Set1f(shaderPrg, "ortho", ortho ? 1.0 : 0.0);
   CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 1.0);
-  CShaderPrg_Set1i(shaderPrg, "filter_front_facing", SettingGet(G, cSetting_cylinders_shader_filter_faces));
+  CShaderPrg_Set1i(shaderPrg, "filter_front_facing", SettingGetGlobal_b(G, cSetting_cylinders_shader_filter_faces));
   CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
-  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGet(G, cSetting_light_count));
-  CShaderPrg_Set1i(shaderPrg, "filter_front_facing", SettingGet(G, cSetting_cylinders_shader_filter_faces));
+  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGetGlobal_i(G, cSetting_light_count));
+  CShaderPrg_Set1i(shaderPrg, "filter_front_facing", SettingGetGlobal_b(G, cSetting_cylinders_shader_filter_faces));
   {
     float smooth_half_bonds = (SettingGetGlobal_i(G, cSetting_smooth_half_bonds)) ? .2f : 0.f;
     CShaderPrg_Set1f(shaderPrg, "half_bond", smooth_half_bonds);
@@ -1876,7 +1876,7 @@ CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G){
 
   CShaderPrg_SetFogUniforms(G, shaderPrg);
 
-  CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGet(G, cSetting_depth_cue) ? 1.f : 0.f);
+  CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGetGlobal_b(G, cSetting_depth_cue) ? 1.f : 0.f);
   glActiveTexture(GL_TEXTURE4);
   glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
 
@@ -1912,16 +1912,16 @@ CShaderPrg *CShaderPrg_Enable_SphereShader(PyMOLGlobals * G, char *name){
   CShaderPrg_Enable(shaderPrg);
   CShaderPrg_SetLightingEnabled(shaderPrg, 1);
   CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", 1.f);
-  fog_enabled = SettingGet(G, cSetting_depth_cue) ? 1.0 : 0.0;
-  bg_gradient = SettingGet(G, cSetting_bg_gradient);
+  fog_enabled = SettingGetGlobal_b(G, cSetting_depth_cue) ? 1.0 : 0.0;
+  bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);
 
   CShaderPrg_Set_Stereo_And_AnaglyphMode(G, shaderPrg);
 
   CShaderPrg_Set1i(shaderPrg, "bg_gradient", bg_gradient);
   CShaderPrg_Set1f(shaderPrg, "inv_height", 1.0/height);
-  ortho = SettingGet(G, cSetting_ortho);
+  ortho = SettingGetGlobal_b(G, cSetting_ortho);
   CShaderPrg_Set1f(shaderPrg, "ortho", ortho ? 1.0 : 0.0);
-  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGet(G, cSetting_light_count));
+  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGetGlobal_i(G, cSetting_light_count));
 
   {
     float adj;
@@ -2008,15 +2008,6 @@ CShaderPrg *CShaderPrg_Get_Current_Shader(PyMOLGlobals * G){
 CShaderPrg *CShaderPrg_Get_BackgroundShader(PyMOLGlobals * G){
   {
     return CShaderMgr_GetShaderPrg(G->ShaderMgr, "bg");
-    /*
-    int bg_image_mode = (int) SettingGet(G, cSetting_bg_image_mode);
-    if (bg_image_mode==2){
-      return CShaderMgr_GetShaderPrg(G->ShaderMgr, "bgtiled");
-    } else if (bg_image_mode==3 || bg_image_mode==1){
-      return CShaderMgr_GetShaderPrg(G->ShaderMgr, "bgcentered");
-    } else {
-      return CShaderMgr_GetShaderPrg(G->ShaderMgr, "bgstretched");
-      }*/
   }
 }
 
@@ -2101,7 +2092,7 @@ CShaderPrg *CShaderPrg_Enable_LabelShaderImpl(PyMOLGlobals * G, CShaderPrg *shad
 
   CShaderPrg_SetFogUniforms(G, shaderPrg);
 
-  CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGet(G, cSetting_depth_cue) ? 1.f : 0.f);
+  CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGetGlobal_b(G, cSetting_depth_cue) ? 1.f : 0.f);
   glActiveTexture(GL_TEXTURE4);
   glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
   if (!(shaderPrg->uniform_set & 4)){

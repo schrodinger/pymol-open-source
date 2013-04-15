@@ -826,7 +826,7 @@ int ObjectVolumeColor(ObjectVolume * I, float * colors, int ncolors) {
   }
   
   if(I->NState &&
-     ((SettingGet(I->Obj.G, cSetting_static_singletons) && (I->NState == 1))))
+     ((SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons) && (I->NState == 1))))
     vs = I->State;
 
   PRINTFB(I->Obj.G, FB_ObjectVolume, FB_Blather)
@@ -943,7 +943,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     } else {
       if(!vs) {
         if(I->NState &&
-           ((SettingGet(I->Obj.G, cSetting_static_singletons) && (I->NState == 1))))
+           ((SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons) && (I->NState == 1))))
           vs = I->State;
       }
     }
@@ -1275,7 +1275,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 		}
 		CShaderPrg_Set3fv(shaderPrg, "fogSolidColor", ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb)));
 		CShaderPrg_SetFogUniforms(G, shaderPrg);
-		CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGet(G, cSetting_depth_cue) ? 1.f : 0.f);
+		CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGetGlobal_b(G, cSetting_depth_cue) ? 1.f : 0.f);
 		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
 		if (!(shaderPrg->uniform_set & 4)){

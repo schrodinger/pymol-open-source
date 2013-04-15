@@ -276,10 +276,10 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
       short ribbon_as_cylinders ;
       float alpha = SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
 
-      use_shader = (int) SettingGet(G, cSetting_ribbon_use_shader) & 
-                           (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
-      ribbon_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_ribbon_as_cylinders);
+      use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) & 
+                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
+      ribbon_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_ribbon_as_cylinders);
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = 0;

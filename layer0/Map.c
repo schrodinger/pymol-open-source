@@ -752,7 +752,7 @@ float MapGetSeparation(PyMOLGlobals * G, float range, float *mx, float *mn,
   float size, maxSubDiv, divSize, subDiv[3];
   float maxCubed, subDivCubed;
   int a;
-  maxSize = SettingGet(G, cSetting_hash_max);
+  maxSize = SettingGetGlobal_i(G, cSetting_hash_max);
 
   maxCubed = maxSize * maxSize * maxSize;
 

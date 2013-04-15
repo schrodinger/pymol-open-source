@@ -90,9 +90,9 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
     } else {
       int use_dlst;
       int use_shaders;
-      use_shaders = (int) SettingGet(G, cSetting_use_shaders);
+      use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
       
-      use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
+      use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
 #ifdef _PYMOL_GL_CALLLISTS
       if(use_dlst && I->R.displayList) {
         glCallList(I->R.displayList);
@@ -233,6 +233,9 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
       AtomInfoType *ai;
       float last_alpha = 1.0F;
 
+      double *csmatrix = SettingGet_i(G, cs->Setting, obj->Obj.Setting,
+            cSetting_matrix_mode) > 0 ? NULL : cs->State.Matrix;
+
       for(a = 0; a < cs->NIndex; a++) {
         a1 = cs->IdxToAtm[a];
         ai = obj->AtomInfo + a1;
@@ -318,6 +321,9 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
                 c1 = *(cs->Color + a);
               else
                 c1 = at_ellipsoid_color;
+
+              if(csmatrix)
+                left_multiply44d44d(csmatrix, e_vec);
 
               n0[0] = e_vec[0];
               n0[1] = e_vec[4];

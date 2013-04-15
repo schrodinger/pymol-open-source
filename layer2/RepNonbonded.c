@@ -320,12 +320,12 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
       /* not pick, but render */
       short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
       short nonbonded_as_cylinders ;
-      register int nvidia_bugs = (int) SettingGet(G, cSetting_nvidia_bugs);
-      use_shader = (int) SettingGet(G, cSetting_nonbonded_use_shader) & 
-                           (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+      register int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
+      use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) & 
+                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
-      nonbonded_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_nonbonded_as_cylinders);
+      nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = 0;

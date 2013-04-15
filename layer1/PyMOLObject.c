@@ -881,6 +881,7 @@ void ObjectSetTTT(CObject * I, float *ttt, int state, int store)
       I->TTTFlag = true;
     } else {
       I->TTTFlag = false;
+      return;
     }
     if(store<0) 
       store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
