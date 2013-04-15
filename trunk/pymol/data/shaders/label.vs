@@ -24,7 +24,6 @@ void main()
   transformedPosition.z = transformedPosition.z + attr_screenworldoffset.z/(screenSize.x*screenOriginVertexScale);
   transformedPosition.x = transformedPosition.x + aspectRatioAdjustment * attr_screenoffset.x * 2./screenSize.x;
   transformedPosition.y = transformedPosition.y + attr_screenoffset.y * 2./screenSize.y;
-  transformedPosition.z = transformedPosition.z - .1;
   gl_Position = transformedPosition;
   textureLookup = attr_texcoords;
   normalizedViewCoordinate = (gl_Position.xyz/gl_Position.w) / 2.0 + 0.5;

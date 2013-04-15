@@ -164,7 +164,7 @@ static char *_FontTypeRenderOpenGL(RenderInfo * info,
 	  x_indent += screenWorldOffset[0] / v_scale;
 	  y_indent += screenWorldOffset[1] / v_scale;
 	} else {
-          screenWorldOffset[2] += rpos[1];
+          screenWorldOffset[2] += rpos[2];
 	}
       }
       if(!pushed) {

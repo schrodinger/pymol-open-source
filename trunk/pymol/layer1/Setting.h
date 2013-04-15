@@ -109,6 +109,7 @@ void SettingCheckHandle(PyMOLGlobals * G, CSetting ** handle);
 
 int SettingSet_b(CSetting * I, int index, int value);
 int SettingSet_i(CSetting * I, int index, int value);
+int SettingSet_color_from_3f(CSetting * I, int index, float *vals);
 int SettingSet_f(CSetting * I, int index, float value);
 int SettingSet_s(CSetting * I, int index, char *value);
 int SettingSet_3f(CSetting * I, int index, float value1, float value2, float value3);
@@ -182,7 +183,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
 /* Legacy API below */
 
 int SettingGetIndex(PyMOLGlobals * G, char *name);
-float SettingGet(PyMOLGlobals * G, int index);
 int SettingSet(PyMOLGlobals * G, int index, float v);
 int SettingSetfv(PyMOLGlobals * G, int index, float *value);
 float *SettingGetfv(PyMOLGlobals * G, int index);

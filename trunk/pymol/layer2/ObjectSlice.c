@@ -862,7 +862,7 @@ int ObjectSliceGetOrigin(ObjectSlice * I, int state, float *origin)
     } else {
       if(!oss) {
         if(I->NState &&
-           ((SettingGet(I->Obj.G, cSetting_static_singletons) && (I->NState == 1))))
+           ((SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons) && (I->NState == 1))))
           oss = I->State;
       }
     }
@@ -1210,7 +1210,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
       oss = I->State + cur_state;
     } else {
       if(!oss) {
-        if(I->NState && ((SettingGet(G, cSetting_static_singletons) && (I->NState == 1))))
+        if(I->NState && ((SettingGetGlobal_b(G, cSetting_static_singletons) && (I->NState == 1))))
           oss = I->State;
       }
     }
@@ -1444,7 +1444,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 		  */
 		  ObjectUseColor(&I->Obj);
 		}
-		use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
+		use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
 		
 #ifdef _PYMOL_GL_CALLLISTS
 		if(use_dlst && oss->displayList && oss->displayListInvalid) {

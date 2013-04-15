@@ -1050,7 +1050,7 @@ ARGUMENTS
 
     source_state = integer: {default: 0 -- copy all states}
 
-    target_state = integer: {default: 0}
+    target_state = integer: -1 appends after last state {default: 0}
 
 PYMOL API
 
@@ -1068,6 +1068,9 @@ SEE ALSO
     load, copy, extract
         '''
         r = DEFAULT_ERROR
+        target_state = int(target_state)
+        if target_state == -1:
+            target_state = _self.count_states('?' + name) + 1
         # preprocess selection
         selection = selector.process(selection)
         #      

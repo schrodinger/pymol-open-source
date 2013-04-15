@@ -352,7 +352,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
                     if not hydro:
                         cmd.remove(tmp_obj + ' and hydro')
                     _self.alter(tmp_obj,'resi="""%s""";chain="""%s""";segi="""%s"""'%(resi,chain,segi))
-                    _self.create(name,tmp_obj+" or ?"+name,1,state,zoom=0)
+                    _self.create(name,tmp_obj+" or ?"+name,1,1,zoom=0)
                     tmp_sel = _self.get_unused_name()
                     if mode == 'peptide':
                         if dir>0:

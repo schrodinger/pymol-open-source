@@ -144,7 +144,7 @@ int ColorGetNext(PyMOLGlobals * G)
 {
   int result;
   int next;
-  next = (int) SettingGet(G, cSetting_auto_color_next);
+  next = SettingGetGlobal_i(G, cSetting_auto_color_next);
 
   if(next >= nAutoColor)
     next = 0;
@@ -160,7 +160,7 @@ int ColorGetCurrent(PyMOLGlobals * G)
 {
   int result;
   int next;
-  next = (int) SettingGet(G, cSetting_auto_color_next);
+  next = SettingGetGlobal_i(G, cSetting_auto_color_next);
   next--;
   if(next < 0)
     next = (nAutoColor - 1);
@@ -2571,10 +2571,10 @@ int ColorTableLoad(PyMOLGlobals * G, char *fname, float gamma, int quiet)
 
       float min_factor = 0.15F;
 
-      red_max = SettingGet(G, cSetting_pymol_space_max_red);
-      green_max = SettingGet(G, cSetting_pymol_space_max_green);
-      blue_max = SettingGet(G, cSetting_pymol_space_max_blue);
-      min_factor = SettingGet(G, cSetting_pymol_space_min_factor);
+      red_max = SettingGetGlobal_f(G, cSetting_pymol_space_max_red);
+      green_max = SettingGetGlobal_f(G, cSetting_pymol_space_max_green);
+      blue_max = SettingGetGlobal_f(G, cSetting_pymol_space_max_blue);
+      min_factor = SettingGetGlobal_f(G, cSetting_pymol_space_min_factor);
 
       FreeP(I->ColorTable);
       if(I->BigEndian)

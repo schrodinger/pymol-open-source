@@ -252,8 +252,8 @@ void MovieCopyPrepare(PyMOLGlobals * G, int *width, int *height, int *length)
   register CMovie *I = G->Movie;
   int nFrame;
 
-  I->CacheSave = (int) SettingGet(G, cSetting_cache_frames);
-  I->OverlaySave = (int) SettingGet(G, cSetting_overlay);
+  I->CacheSave = SettingGetGlobal_b(G, cSetting_cache_frames);
+  I->OverlaySave = SettingGetGlobal_i(G, cSetting_overlay);
   if(!I->CacheSave)
     MovieClearImages(G);
   SettingSet(G, cSetting_cache_frames, 1.0);
@@ -625,7 +625,7 @@ void MoviePlay(PyMOLGlobals * G, int cmd)
   switch (cmd) {
   case cMovieToggle:
     I->Playing = !I->Playing;
-    if(I->Playing && !(int) SettingGet(G, cSetting_movie_loop)) {
+    if(I->Playing && !SettingGetGlobal_b(G, cSetting_movie_loop)) {
       /* if not looping, and at end of movie, then automatically rewind
          and force execution of the first movie command */
       if((SettingGetGlobal_i(G, cSetting_frame)) == (SceneGetNFrame(G, NULL))) {
@@ -637,7 +637,7 @@ void MoviePlay(PyMOLGlobals * G, int cmd)
     I->Playing = false;
     break;
   case cMoviePlay:
-    if(!(int) SettingGet(G, cSetting_movie_loop)) {
+    if(!SettingGetGlobal_b(G, cSetting_movie_loop)) {
       /* if not looping, and at end of movie, then automatically rewind
          and force execution of the first movie command */
       if((SettingGetGlobal_i(G, cSetting_frame)) == (SceneGetNFrame(G, NULL))) {
@@ -695,7 +695,7 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
   switch (M->stage) {
   case 0:                      /* setup */
     MovieSetRealtime(G, false);
-    M->save = (int) SettingGet(G, cSetting_cache_frames);
+    M->save = SettingGetGlobal_b(G, cSetting_cache_frames);
     if(!M->save)
       MovieClearImages(G);
     SettingSet(G, cSetting_cache_frames, 1.0);
@@ -1010,7 +1010,7 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
 int MovieFrameToImage(PyMOLGlobals * G, int frame)
 {
   int result = 0;
-  int single_image = (int) SettingGet(G, cSetting_single_image);
+  int single_image = SettingGetGlobal_b(G, cSetting_single_image);
   if(single_image)
     result = MovieFrameToIndex(G, frame);
   else

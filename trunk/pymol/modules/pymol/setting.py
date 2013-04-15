@@ -1366,7 +1366,6 @@ SEE ALSO
             r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,2)
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
         return r
     
     def get_setting_float(name,object='',state=0,_self=cmd): # INTERNAL

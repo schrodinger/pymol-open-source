@@ -324,9 +324,9 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
   float *color;
   int use_shader = 0;
   
-  use_shader = (int) SettingGet(G, cSetting_cgo_use_shader) &
-    (int)SettingGet(G, cSetting_use_shaders) & 
-    (int)!SettingGet(G, cSetting_transparency_global_sort);
+  use_shader = SettingGetGlobal_b(G, cSetting_cgo_use_shader) &
+    SettingGetGlobal_b(G, cSetting_use_shaders) & 
+    !SettingGetGlobal_b(G, cSetting_transparency_global_sort);
 
   ObjectPrepareContext(&I->Obj, ray);
 
@@ -400,12 +400,12 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		  CShaderPrg_SetLightingEnabled(shaderPrg, cgo_lighting);
 		  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", two_sided_lighting);
 		  sobj->shaderCGO->use_shader = use_shader;
-		  sobj->shaderCGO->debug = SettingGet(G, cSetting_cgo_debug);
+		  sobj->shaderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
 		  CGORenderGL(sobj->shaderCGO, color, I->Obj.Setting, NULL, info, NULL);
 		  CShaderPrg_Disable(shaderPrg);
 		} else {
 		  sobj->std->use_shader = use_shader;
-		  sobj->std->debug = SettingGet(G, cSetting_cgo_debug);
+		  sobj->std->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
 		  if (cgo_lighting){
 		    glEnable(GL_LIGHTING);
 		  } else {
@@ -417,7 +417,7 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		    GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 		  }
 		  sobj->std->use_shader = use_shader;
-		  sobj->std->debug = SettingGet(G, cSetting_cgo_debug);
+		  sobj->std->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
 		  CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info, NULL);
 		  if (SceneGetTwoSidedLighting(G)){
 		    glEnable(GL_VERTEX_PROGRAM_TWO_SIDE);
@@ -434,7 +434,7 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
         }
       } else {
         if(!sobj) {
-          if(I->NState && SettingGet(G, cSetting_static_singletons))
+          if(I->NState && SettingGetGlobal_b(G, cSetting_static_singletons))
             sobj = I->State;
         }
 #ifdef _PYMOL_CGO_DRAWBUFFERS
@@ -498,12 +498,12 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		  CShaderPrg_SetLightingEnabled(shaderPrg, cgo_lighting);
 		  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", two_sided_lighting);
 		  sobj->shaderCGO->use_shader = use_shader;
-		  sobj->shaderCGO->debug = SettingGet(G, cSetting_cgo_debug);
+		  sobj->shaderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
 		  CGORenderGL(sobj->shaderCGO, color, I->Obj.Setting, NULL, info, NULL);
 		  CShaderPrg_Disable(shaderPrg);
 		} else {
 		  sobj->std->use_shader = use_shader;
-		  sobj->std->debug = SettingGet(G, cSetting_cgo_debug);
+		  sobj->std->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
 		  if (cgo_lighting){
 		    glEnable(GL_LIGHTING);
 		  } else {

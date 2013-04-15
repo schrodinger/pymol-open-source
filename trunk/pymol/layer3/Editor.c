@@ -346,7 +346,7 @@ void EditorDefineExtraPks(PyMOLGlobals * G)
     sprintf(buffer, "(byobject %s)", name);
     SelectorCreate(G, cEditorObject, buffer, NULL, true, NULL);
 
-    if(SettingGet(G, cSetting_auto_hide_selections))
+    if(SettingGetGlobal_b(G, cSetting_auto_hide_selections))
       ExecutiveHideSelections(G);
     EditorInvalidateShaderCGO(G);
   }
@@ -550,7 +550,7 @@ void EditorGetNextMultiatom(PyMOLGlobals * G, char *name)
 int EditorLogState(PyMOLGlobals * G, int pkresi)
 {
   register CEditor *I = G->Editor;
-  if(SettingGet(G, cSetting_logging)) {
+  if(SettingGetGlobal_i(G, cSetting_logging)) {
 
     OrthoLineType buffer, buf1 = "None", buf2 = "None", buf3 = "None", buf4 = "None";
     int pkbond = 1;
@@ -1163,7 +1163,7 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1, CGO *shaderCGO)
   float tube_size1 = 0.5F;
   float tube_size3 = 0.45F;
 
-  nEdge = (int) SettingGet(G, cSetting_stick_quality) * 2;
+  nEdge = SettingGetGlobal_i(G, cSetting_stick_quality) * 2;
   if(nEdge > 50)
     nEdge = 50;
   if(nEdge < 3)
@@ -1383,7 +1383,7 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number, CGO *shaderCGO)
   float offset = 0.0F;
   int cycle_counter;
 
-  nEdge = (int) SettingGet(G, cSetting_stick_quality) * 2;
+  nEdge = SettingGetGlobal_i(G, cSetting_stick_quality) * 2;
   if(nEdge > 50)
     nEdge = 50;
   if(nEdge < 3)
@@ -1765,7 +1765,7 @@ void EditorRender(PyMOLGlobals * G, int state)
   CGO *shaderCGO = NULL;
 
   if(EditorActive(G)) {
-    int use_shader = (int)SettingGet(G, cSetting_use_shaders);
+    int use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
     if (use_shader){
       if (!I->shaderCGO){
 	shaderCGO = CGONew(G);
@@ -1903,10 +1903,6 @@ void EditorInactivate(PyMOLGlobals * G)
   ExecutiveDelete(G, cEditorDihedral);
   ExecutiveDelete(G, cEditorDihe1);
   ExecutiveDelete(G, cEditorDihe2);
-  /*  if(SettingGet(G,cSetting_log_conformations)) PLogFlush(G);
-     TODO: resolve this problem:
-     we can't assume that Python interpreter isn't blocked
-   */
   EditorMouseInvalid(G);
   EditorInvalidateShaderCGO(G);
   SceneInvalidate(G);
@@ -1946,13 +1942,13 @@ void EditorActivate(PyMOLGlobals * G, int state, int enable_bond)
     state = EditorGetEffectiveState(G, NULL, state);
     I->ActiveState = state;
 
-    if(0 && (I->NFrag > 1) && ((int) SettingGet(G, cSetting_editor_label_fragments))) {
+    if(0 && (I->NFrag > 1) && SettingGetGlobal_b(G, cSetting_editor_label_fragments)) {
       /*      SelectorComputeFragPos(G,obj,I->ActiveState,I->NFrag,cEditorFragPref,&I->PosVLA); */
       I->ShowFrags = true;
     } else {
       I->ShowFrags = false;
     }
-    if(SettingGet(G, cSetting_auto_hide_selections))
+    if(SettingGetGlobal_b(G, cSetting_auto_hide_selections))
       ExecutiveHideSelections(G);
 
     if(I->BondMode && SettingGetGlobal_b(G, cSetting_editor_auto_dihedral))
@@ -2003,7 +1999,7 @@ void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj,
   int seleFlag = false;
   int i0, i1, i2, i3;
   register CEditor *I = G->Editor;
-  int log_trans = (int) SettingGet(G, cSetting_log_conformations);
+  int log_trans = SettingGetGlobal_b(G, cSetting_log_conformations);
   int drag_sele = -1;
   ObjectMolecule *objMol = NULL;
 
@@ -2253,7 +2249,7 @@ void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj,
     I->ShowFrags = false;
     if(objMol) {
       ObjectMoleculeSaveUndo(objMol, state, log_trans);
-      if(SettingGet(G, cSetting_auto_sculpt)) {
+      if(SettingGetGlobal_b(G, cSetting_auto_sculpt)) {
         SettingSet(G, cSetting_sculpting, 1);
         if(!objMol->Sculpt)
           ObjectMoleculeSculptImprint(objMol, state, -1, 0);
@@ -2286,7 +2282,7 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
   float d0[3], d1[3], d2[3], n0[3], n1[3], n2[3];
   float opp, adj, theta;
   float m[16];
-  int log_trans = (int) SettingGet(G, cSetting_log_conformations);
+  int log_trans = SettingGetGlobal_b(G, cSetting_log_conformations);
 
   PRINTFD(G, FB_Editor)
     " EditorDrag-Debug: entered. obj %p state %d index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n",

@@ -119,7 +119,7 @@ static void ObjectCallbackRender(ObjectCallback * I, RenderInfo * info)
         }
       } else {
         if(!sobj) {
-          if(I->NState && SettingGet(G, cSetting_static_singletons))
+          if(I->NState && SettingGetGlobal_b(G, cSetting_static_singletons))
             sobj = I->State;
         }
         if(ray) {

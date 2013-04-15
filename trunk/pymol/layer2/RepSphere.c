@@ -969,8 +969,8 @@ int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I, RenderInfo * info, in
   float *v = *vptr;
   int c = carg;
   int ok = true;
-  use_shader = (int) SettingGet(G, cSetting_sphere_use_shader) & 
-    (int) SettingGet(G, cSetting_use_shaders);
+  use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) & 
+               SettingGetGlobal_b(G, cSetting_use_shaders);
   if (I->shaderCGO && !use_shader){
     CGOFree(I->shaderCGO);
     I->shaderCGO = 0;
@@ -1398,8 +1398,8 @@ void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int n_q
   CShaderPrg *shaderPrg;
   short use_shader, generate_shader_cgo = 0;
   float *v = *vptr;
-  use_shader = (int) SettingGet(G, cSetting_sphere_use_shader) & 
-    (int) SettingGet(G, cSetting_use_shaders);
+  use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) & 
+               SettingGetGlobal_b(G, cSetting_use_shaders);
 
   if (I->shaderCGO && !use_shader){
     CGOFree(I->shaderCGO);
@@ -1441,6 +1441,13 @@ void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int n_q
       return;
     }
   } else {
+    shaderPrg = CShaderPrg_Enable_SphereShader(G, "spheredirect");
+    if (!shaderPrg){
+      /* this should never happen, since we check 
+	 the sphere_mode at the beginning of RepSphereRender */
+      return;
+    }
+    {
     ALLOCATE_ARRAY(GLfloat,colorVals,c*4*4)
     ALLOCATE_ARRAY(GLfloat,vertexVals,c*4*3)
     ALLOCATE_ARRAY(GLfloat,attribVals,c*4*3)
@@ -1449,8 +1456,6 @@ void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int n_q
       PRINTF "GLSL Sphere Shader: n_quad_verts: %d\n", 
 	n_quad_verts ENDF(G);
     }
-    shaderPrg = CShaderPrg_Enable_SphereShader(G, "spheredirect");
-    
     attr = CShaderPrg_GetAttribLocation(shaderPrg, "sphere_attributes");
     
     while (c--) {
@@ -1518,6 +1523,7 @@ void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int n_q
     DEALLOCATE_ARRAY(colorVals)
     DEALLOCATE_ARRAY(vertexVals)
     DEALLOCATE_ARRAY(attribVals)
+    }
   }
 }
 
@@ -1731,7 +1737,7 @@ void RenderSphereMode_Default(PyMOLGlobals *G, RepSphere *I, int carg, float **v
   int *nt;
   float *v = *vptr;
   float restart;
-  use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
+  use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
   
 #ifdef _PYMOL_GL_CALLLISTS
   if(use_dlst && I->R.displayList) {
@@ -1988,6 +1994,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
   int n_quad_verts;
   float radius;
   int ok = true;
+  short use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) & 
+                     SettingGetGlobal_b(G, cSetting_use_shaders);
 
 #ifdef _PYMOL_OPENGL_SHADERS
   /* TO DO -- garbage collect -- IMPORTANT! */
@@ -2128,6 +2136,9 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
           int sphere_mode = SettingGet_i(G, I->R.cs->Setting,
                                          I->R.obj->Setting,
                                          cSetting_sphere_mode);
+	  if (sphere_mode == 9 && (!use_shader || !CShaderPrg_Enable_SphereShader(G, "spheredirect"))){
+	    sphere_mode = 0;
+	  }
 #ifdef _PYMOL_GL_DRAWARRAYS
 	  int starti, nverts = 0;
 	  float *startv;
@@ -2418,6 +2429,9 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
         int sphere_mode = SettingGet_i(G, I->R.cs->Setting,
                                        I->R.obj->Setting,
                                        cSetting_sphere_mode);
+	if (sphere_mode == 9 && (!use_shader || !CShaderPrg_Enable_SphereShader(G, "spheredirect"))){
+	  sphere_mode = 0;
+	}
         v = I->VC;
         c = I->NC;
 
@@ -2435,7 +2449,7 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
 #endif
         I->LastVertexScale = info->vertex_scale;
 
-        use_dlst = (int) SettingGet(G, cSetting_use_display_lists);
+        use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
         switch (sphere_mode) {
         case -1: case 0: case 4: case 5: case 9:
           use_dlst = 0;
@@ -2573,6 +2587,8 @@ Rep *RepSphereNew(CoordSet * cs, int state)
 #endif
   int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
   int draw_quality = (((draw_mode == 1) || (draw_mode == -2) || (draw_mode == 2)));
+  short use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) & 
+                     SettingGetGlobal_b(G, cSetting_use_shaders);
 
   OOCalloc(G, RepSphere);
   CHECKOK(ok, I);
@@ -2600,6 +2616,9 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   if (ok){
     ds = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_quality);
     sphere_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_mode);
+    if (sphere_mode == 9 && (!use_shader || !CShaderPrg_Enable_SphereShader(G, "spheredirect"))){
+      sphere_mode = 0;
+    }
     if(sphere_mode > 0)
       ds = -1;
     
@@ -2784,7 +2803,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
       /* optimize build-time performance when sculpting */
       I->cullFlag = false;
     
-    if((I->cullFlag < 2) && (SettingGet(G, cSetting_roving_spheres) != 0.0F))
+    if((I->cullFlag < 2) && (SettingGetGlobal_f(G, cSetting_roving_spheres) != 0.0F))
       I->cullFlag = false;
     
     if(sp && (I->cullFlag < 2) && (!spheroidFlag)) {

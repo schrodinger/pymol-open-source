@@ -849,7 +849,7 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
           ObjectSetName(obj, surf_name);
           ExecutiveManageObject(G, (CObject *) obj, -1, quiet);
         }
-        if(SettingGet(G, cSetting_isomesh_auto_state))
+        if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
           if(obj)
             ObjectGotoState((ObjectMolecule *) obj, state);
         if(!quiet) {
@@ -1021,7 +1021,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
           ExecutiveManageObject(G, (CObject *) obj, false, quiet);
         }
 
-        if(SettingGet(G, cSetting_isomesh_auto_state))
+        if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
           if(obj)
             ObjectGotoState((ObjectMolecule *) obj, state);
         if(!quiet) {
@@ -1259,7 +1259,7 @@ int ExecutiveVolume(PyMOLGlobals * G, char *volume_name, char *map_name,
           ExecutiveManageObject(G, (CObject *) obj, false, quiet);
         }
 
-        if(SettingGet(G, cSetting_isomesh_auto_state))
+        if(SettingGetGlobal_b(G, cSetting_isomesh_auto_state))
           if(obj)
             ObjectGotoState((ObjectMolecule *) obj, state);
         if(!quiet) {
@@ -3221,7 +3221,7 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int
       sprintf(name, "sel%02d", sel_num);
       SelectorCreateEmpty(G, name, -1);
       if(log) {
-        if(SettingGet(G, cSetting_logging)) {
+        if(SettingGetGlobal_i(G, cSetting_logging)) {
           OrthoLineType buf2;
           sprintf(buf2, "cmd.select('%s','none')\n", name);
           PLog(G, buf2, cPLog_no_flush);
@@ -5419,7 +5419,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
             PRINTFB(G, FB_Executive, FB_Errors)
               "Warning: This session was created with a newer version of PyMOL (%1.3f).\n",
               version_full / 1000. ENDFB(G);
-            if(SettingGet(G, cSetting_session_version_check)) {
+            if(SettingGetGlobal_i(G, cSetting_session_version_check)) {
               PRINTFB(G, FB_Executive, FB_Errors)
                 "Error: Please update first -- see http://www.pymol.org\n" ENDFB(G);
               ok = false;
@@ -6962,7 +6962,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
   ObjectMolecule *objMol;
   CGOReset(G->DebugCGO);
 
-  if(SettingGet(G, cSetting_sculpting)) {
+  if(SettingGetGlobal_b(G, cSetting_sculpting)) {
     if(!SettingGetGlobal_b(G, cSetting_sculpt_auto_center))
       center = NULL;
 
@@ -7355,9 +7355,9 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
   char empty_string[1] = "";
   char *sel_mode_kw = empty_string;
 
-  logging = (int) SettingGet(G, cSetting_logging);
+  logging = SettingGetGlobal_i(G, cSetting_logging);
   if(logging)
-    log_box = (int) SettingGet(G, cSetting_log_box_selections);
+    log_box = SettingGetGlobal_b(G, cSetting_log_box_selections);
   /*  if(logging==cPLog_pml)
      strcpy(prefix,"_ "); */
   smp.picked = VLAlloc(Picking, 1000);
@@ -7384,7 +7384,7 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
     case cButModeSeleSetBox:
     case cButModeSeleAddBox:
     case cButModeSeleSubBox:
-      ExecutiveGetActiveSeleName(G, selName, true, SettingGet(G, cSetting_logging));
+      ExecutiveGetActiveSeleName(G, selName, true, SettingGetGlobal_i(G, cSetting_logging));
       sel_mode_kw = SceneGetSeleModeKeyword(G);
       /* intentional omission of break! */
     case cButModeRectAdd:
@@ -7441,7 +7441,7 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
           }
         }
       }
-      if(SettingGet(G, cSetting_auto_show_selections)) {
+      if(SettingGetGlobal_b(G, cSetting_auto_show_selections)) {
         ExecutiveSetObjVisib(G, selName, true, false);
       }
       break;
@@ -7460,9 +7460,9 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
         OrthoLineType buf2;
         ObjectNameType name;
 
-        if(ExecutiveGetActiveSeleName(G, name, false, SettingGet(G, cSetting_logging))) {
+        if(ExecutiveGetActiveSeleName(G, name, false, SettingGetGlobal_i(G, cSetting_logging))) {
           ExecutiveSetObjVisib(G, name, 0, false);
-          if(SettingGet(G, cSetting_logging)) {
+          if(SettingGetGlobal_i(G, cSetting_logging)) {
             sprintf(buf2, "cmd.disable('%s')\n", name);
             PLog(G, buf2, cPLog_no_flush);
           }
@@ -8401,7 +8401,7 @@ void ExecutiveRenderIndicatorCGO(PyMOLGlobals * G, CGO *selIndicatorsCGO){
   CShaderPrg *shaderPrg;
   float text_texture_dim = TextureGetTextTextureSize(G);
   float textureScale;
-  int no_depth = (int) SettingGet(G, cSetting_selection_overlay);
+  int no_depth = (int) SettingGetGlobal_f(G, cSetting_selection_overlay);
   shaderPrg = CShaderPrg_Enable_IndicatorShader(G);
   if (!shaderPrg)return;
   glEnable(GL_POINT_SPRITE);
@@ -8472,8 +8472,8 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   int any_active = false;
-  int no_depth = (int) SettingGet(G, cSetting_selection_overlay);
-  short use_shader = (int) SettingGet(G, cSetting_use_shaders);
+  int no_depth = (int) SettingGetGlobal_f(G, cSetting_selection_overlay);
+  short use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
 
   if (use_shader){
     if (slot){
@@ -8515,7 +8515,7 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
     float width_scale = SettingGetGlobal_f(G, cSetting_selection_width_scale);
     int round_points = SettingGetGlobal_b(G, cSetting_selection_round_points);
     int vis_only = SettingGetGlobal_b(G, cSetting_selection_visible_only);
-    int fog = SettingGet(G, cSetting_depth_cue) && SettingGet(G, cSetting_fog);
+    int fog = SettingGetGlobal_b(G, cSetting_depth_cue) && SettingGetGlobal_f(G, cSetting_fog);
 
     (void)fog;
 
@@ -9466,7 +9466,7 @@ void ExecutiveFlag(PyMOLGlobals * G, int flag, char *s1, int action, int quiet)
         }
       }
     }
-    if((int) SettingGet(G, cSetting_auto_indicate_flags)) {
+    if(SettingGetGlobal_b(G, cSetting_auto_indicate_flags)) {
       sprintf(buffer, "(flag %d)", flag);
       SelectorCreate(G, cIndicateSele, buffer, NULL, true, NULL);
       ExecutiveSetObjVisib(G, cIndicateSele, true, false);
@@ -9568,11 +9568,11 @@ int ExecutiveStereo(PyMOLGlobals * G, int flag)
 
   switch (flag) {
   case -1:
-    SettingSet(G, cSetting_stereo_shift, -SettingGet(G, cSetting_stereo_shift));
+    SettingSet(G, cSetting_stereo_shift, -SettingGetGlobal_f(G, cSetting_stereo_shift));
     break;
   default:                     /* -2 */
     if(G->HaveGUI) {
-      stereo_mode = (int) SettingGet(G, cSetting_stereo_mode);
+      stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
       switch (stereo_mode) {
       case 0:                  /* off */
         break;
@@ -11336,7 +11336,7 @@ int ExecutiveRMS(PyMOLGlobals * G, char *s1, char *s2, int mode, float refine,
           ocgo->Obj.Color = ColorGetIndex(G, "yellow");
           ObjectSetName((CObject *) ocgo, oname);
           ExecutiveDelete(G, oname);
-          auto_save = (int) SettingGet(G, cSetting_auto_zoom);
+          auto_save = SettingGetGlobal_i(G, cSetting_auto_zoom);
           SettingSet(G, cSetting_auto_zoom, 0);
           ExecutiveManageObject(G, (CObject *) ocgo, -1, false);
           SettingSet(G, cSetting_auto_zoom, (float) auto_save);
@@ -13921,7 +13921,7 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
   {
     register CExecutive *I = G->Executive;
     if(G->HaveGUI && G->ValidContext) {
-      if(!SettingGet(G, cSetting_full_screen)) {
+      if(!SettingGetGlobal_b(G, cSetting_full_screen)) {
         I->oldPX = p_glutGet(P_GLUT_WINDOW_X)
 #ifdef FREEGLUT
           - p_glutGet(P_GLUT_WINDOW_BORDER_WIDTH)
@@ -14543,7 +14543,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
     " ExecutiveSymExp: entered.\n" ENDFD;
 
   /* controls whether we zoom in on newly created objects or not */
-	auto_save = SettingGet(G, cSetting_auto_zoom);
+	auto_save = SettingGetGlobal_i(G, cSetting_auto_zoom);
   SettingSet(G, cSetting_auto_zoom, 0);
 
   sele = SelectorIndexByName(G, s1);
@@ -14962,7 +14962,7 @@ void ExecutiveDoZoom(PyMOLGlobals * G, CObject * obj, int is_new, int zoom, int 
 static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
 {
   register CExecutive *I = G->Executive;
-  int auto_mode = SettingGet(G, cSetting_group_auto_mode);
+  int auto_mode = SettingGetGlobal_i(G, cSetting_group_auto_mode);
   if(auto_mode && (rec->name[0] != '_')) {
     char *period = rec->name + strlen(rec->name);
     SpecRec *found_group = NULL;
@@ -15013,7 +15013,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
   int exists = false;
   int previousVisible;
 
-  if(SettingGet(G, cSetting_auto_hide_selections))
+  if(SettingGetGlobal_b(G, cSetting_auto_hide_selections))
     ExecutiveHideSelections(G);
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->obj == obj) {
@@ -15091,7 +15091,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
 
   ExecutiveUpdateObjectSelection(G, obj);
 
-  if(SettingGet(G, cSetting_auto_dss)) {
+  if(SettingGetGlobal_b(G, cSetting_auto_dss)) {
     if(obj->type == cObjectMolecule) {
       ObjectMolecule *objMol = (ObjectMolecule *) obj;
       if(objMol->NCSet == 1) {
@@ -15165,9 +15165,9 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
     for(a = 0; a < cRepCnt; a++)
       rec->repOn[a] = false;
     if(name[0] != '_') {
-      if(SettingGet(G, cSetting_auto_hide_selections))
+      if(SettingGetGlobal_b(G, cSetting_auto_hide_selections))
         ExecutiveHideSelections(G);
-      if(SettingGet(G, cSetting_auto_show_selections) && !rec->visible) {
+      if(SettingGetGlobal_b(G, cSetting_auto_show_selections) && !rec->visible) {
         rec->visible = true;
 	ReportEnabledChange(G, rec);
       }
@@ -15592,7 +15592,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
                                        int new_vis, int mod, int parents)
 {
   OrthoLineType buffer = "";
-  int logging = SettingGet(G, cSetting_logging);
+  int logging = SettingGetGlobal_i(G, cSetting_logging);
   if(rec->type == cExecObject) {
     if(rec->visible && !new_vis) {
       if(logging)
@@ -15618,7 +15618,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
       PLog(G, buffer, cPLog_pym);
     }
   } else if(rec->type == cExecAll) {
-    if(SettingGet(G, cSetting_logging)) {
+    if(SettingGetGlobal_i(G, cSetting_logging)) {
       if(rec->visible)
         sprintf(buffer, "cmd.disable('all')");
       else
@@ -15628,14 +15628,6 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
     ExecutiveSetObjVisib(G, cKeywordAll, !rec->visible, false);
   } else if(rec->type == cExecSelection) {
     if(mod & cOrthoCTRL) {
-      /*        SettingSet(G,cSetting_selection_overlay,
-         (float)(!((int)SettingGet(G,cSetting_selection_overlay))));
-         if(SettingGet(G,cSetting_logging)) {
-         sprintf(buffer,"cmd.set('selection_overlay',%d)",
-         (int)SettingGet(G,cSetting_selection_overlay));
-         PLog(G,buffer,cPLog_pym);
-         }
-       */
       sprintf(buffer, "cmd.enable('%s')", rec->name);
       PLog(G, buffer, cPLog_pym);
       if (!rec->visible){
@@ -15645,7 +15637,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
     } else {
 
       if(rec->visible && !new_vis) {
-        if(SettingGet(G, cSetting_logging))
+        if(SettingGetGlobal_i(G, cSetting_logging))
           sprintf(buffer, "cmd.disable('%s')", rec->name);
       } else if((!rec->visible) && new_vis) {
         sprintf(buffer, "cmd.enable('%s')", rec->name);
@@ -15653,7 +15645,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
       if(new_vis && SettingGetGlobal_b(G, cSetting_active_selections)) {
         ExecutiveHideSelections(G);
       }
-      if(SettingGet(G, cSetting_logging)) {
+      if(SettingGetGlobal_i(G, cSetting_logging)) {
         PLog(G, buffer, cPLog_pym);
       }
       if (rec->visible != new_vis){

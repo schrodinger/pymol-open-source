@@ -4011,8 +4011,8 @@ void SelectorLogSele(PyMOLGlobals * G, char *name)
   int sele;
   int logging;
   int robust;
-  logging = (int) SettingGet(G, cSetting_logging);
-  robust = (int) SettingGet(G, cSetting_robust_logs);
+  logging = SettingGetGlobal_i(G, cSetting_logging);
+  robust = SettingGetGlobal_b(G, cSetting_robust_logs);
   if(logging) {
     sele = SelectorIndexByName(G, name);
     if(sele >= 0) {
@@ -5447,17 +5447,17 @@ int SelectorMapGaussian(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
   float mean, stdev;
   double sf[256][11], *sfp;
   AtomSF *atom_sf = NULL;
-  double b_adjust = (double) SettingGet(G, cSetting_gaussian_b_adjust);
+  double b_adjust = (double) SettingGetGlobal_f(G, cSetting_gaussian_b_adjust);
   double elim = 7.0;
   double rcut2;
   float rcut;
   float max_rcut = 0.0F;
-  float b_floor = SettingGet(G, cSetting_gaussian_b_floor);
+  float b_floor = SettingGetGlobal_f(G, cSetting_gaussian_b_floor);
   float blur_factor = 1.0F;
 
   {
     if(fabs(resolution) < R_SMALL4) 
-      resolution = SettingGet(G, cSetting_gaussian_resolution);
+      resolution = SettingGetGlobal_f(G, cSetting_gaussian_resolution);
     if(resolution < 1.0 ) 
       resolution = 1.0F;
     blur_factor = 2.0F / resolution;    
@@ -5959,8 +5959,8 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
   if(shift)
     cutoff_to_power = (float) pow(cutoff, shift_power);
 
-  c_factor = SettingGet(G, cSetting_coulomb_units_factor) /
-    SettingGet(G, cSetting_coulomb_dielectric);
+  c_factor = SettingGetGlobal_f(G, cSetting_coulomb_units_factor) /
+             SettingGetGlobal_f(G, cSetting_coulomb_dielectric);
 
   c = 0;
   SelectorUpdateTable(G, state, -1);
@@ -6198,11 +6198,13 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
   register CSelector *I = G->Selector;
 
   int a, b, b1, b2, c, d, s, idx, at, a1, a2;
-  int use_ter = (int) SettingGet(G, cSetting_pdb_use_ter_records);
-  int retain_ids = (int) SettingGet(G, cSetting_pdb_retain_ids);
-  int conect_all = (int) SettingGet(G, cSetting_pdb_conect_all);
+  int use_ter = SettingGetGlobal_i(G, cSetting_pdb_use_ter_records);
+  int retain_ids = SettingGetGlobal_b(G, cSetting_pdb_retain_ids);
+  int conect_all = SettingGetGlobal_b(G, cSetting_pdb_conect_all);
   double matrix[16];
-  int matrix_flag = false;
+  double *matrix_ptr = NULL;
+  double matrix_full[16]; // for ANISOU
+  double *matrix_full_ptr = NULL;
   float v_tmp[3], *v_ptr;
   CoordSet *cs, *mat_cs = NULL;
   ObjectMolecule *obj, *last_obj = NULL;
@@ -6220,54 +6222,6 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
     c = *counter;
   else
     c = 0;
-  /*  if(SettingGet(G,cSetting_save_pdb_ss)) {
-     SSEntry *ss = NULL;
-     int n_ss = 0;
-     int ss_active = false;
-
-     ss = VLAlloc(SSEntry,100);
-
-     for(a=0;a<I->NAtom;a++) {
-     at=I->Table[a].atom;
-     I->Table[a].index=0;
-     obj=I->Obj[I->Table[a].model];
-     s = obj->AtomInfo[at].selEntry;
-     if(SelectorIsMember(G,s,sele)) 
-     {
-     if(state<obj->NCSet) 
-     cs=obj->CSet[state];
-     else
-     cs=NULL;
-     if(cs) {
-     if(obj->DiscreteFlag) {
-     if(cs==obj->DiscreteCSet[at])
-     idx=obj->DiscreteAtmToIdx[at];
-     else
-     idx=-1;
-     } else 
-     idx=cs->AtmToIdx[at];
-     if(idx>=0) {
-     ai = obj->AtomInfo+at;
-
-     if(ss_active) {
-
-     } else {
-     if((at->ss=='H')||(at->ss=='S')) {
-     VLACheck(ss,SSEntry,n_ss);
-
-     }
-     }
-
-     CoordSetAtomToPDBStrVLA(G,charVLA,&cLen,ai,
-     obj->CSet[state]->Coord+(3*idx),c);
-     last = ai;
-     c++;
-     }
-     }
-     }
-     }
-     }
-   */
 
   for(a = cNDummyAtoms; a < I->NAtom; a++) {
     at = I->Table[a].atom;
@@ -6292,15 +6246,20 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
           if(mat_cs != cs) {
             /* compute the effective matrix for output coordinates */
 
-            matrix_flag = false;
+            matrix_ptr = ref;
+            matrix_full_ptr = ref;
+
+            if(ObjectGetTotalMatrix(&obj->Obj, state, true, matrix_full)) {
+              if(ref)
+                left_multiply44d44d(ref, matrix_full);
+              matrix_full_ptr = matrix_full;
+            }
+
             if(ObjectGetTotalMatrix(&obj->Obj, state, false, matrix)) {
               if(ref) {
                 left_multiply44d44d(ref, matrix);
               }
-              matrix_flag = true;
-            } else if(ref) {
-              copy44d(ref, matrix);
-              matrix_flag = true;
+              matrix_ptr = matrix;
             }
             mat_cs = cs;
           }
@@ -6321,11 +6280,11 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
             I->Table[a].index = c + 1;  /* NOTE marking with "1" based indexes here */
           }
           v_ptr = cs->Coord + (3 * idx);
-          if(matrix_flag) {
-            transform44d3f(matrix, v_ptr, v_tmp);
+          if(matrix_ptr) {
+            transform44d3f(matrix_ptr, v_ptr, v_tmp);
             v_ptr = v_tmp;
           }
-          CoordSetAtomToPDBStrVLA(G, charVLA, &cLen, ai, v_ptr, c, pdb_info);
+          CoordSetAtomToPDBStrVLA(G, charVLA, &cLen, ai, v_ptr, c, pdb_info, matrix_full_ptr);
           last = ai;
           c++;
 
@@ -6550,7 +6509,9 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
         int c = 0;
         PyObject *atom_list = PyList_New(nAtom);
         double matrix[16];
-        int matrix_flag = false;
+        double *matrix_ptr = NULL;
+        double matrix_full[16]; // for ANISOU
+        double *matrix_full_ptr = NULL;
         PyObject_SetAttrString(model, "atom", atom_list);
         for(a = cNDummyAtoms; a < I->NAtom; a++) {
           if(I->Table[a].index) {
@@ -6572,15 +6533,20 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
               if(mat_cs != cs) {
                 /* compute the effective matrix for output coordinates */
 
-                matrix_flag = false;
+                matrix_ptr = ref;
+                matrix_full_ptr = ref;
+
+                if(ObjectGetTotalMatrix(&obj->Obj, state, true, matrix_full)) {
+                  if(ref)
+                    left_multiply44d44d(ref, matrix_full);
+                  matrix_full_ptr = matrix_full;
+                }
+
                 if(ObjectGetTotalMatrix(&obj->Obj, state, false, matrix)) {
                   if(ref) {
                     left_multiply44d44d(ref, matrix);
                   }
-                  matrix_flag = true;
-                } else if(ref) {
-                  copy44d(ref, matrix);
-                  matrix_flag = true;
+                  matrix_ptr = matrix;
                 }
                 mat_cs = cs;
               }
@@ -6597,8 +6563,8 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
                 AtomInfoType *ai = obj->AtomInfo + at;
                 float *v_ptr = cs->Coord + (3 * idx);
                 float v_tmp[3];
-                if(matrix_flag) {
-                  transform44d3f(matrix, v_ptr, v_tmp);
+                if(matrix_ptr) {
+                  transform44d3f(matrix_ptr, v_ptr, v_tmp);
                   v_ptr = v_tmp;
                 }
                 {
@@ -6609,14 +6575,15 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
                     ref_pos += idx;
                     if(ref_pos->specified) {
                       ref_ptr = ref_pos->coord;
-                      if(matrix_flag) {
-                        transform44d3f(matrix, ref_ptr, ref_tmp);
+                      if(matrix_ptr) {
+                        transform44d3f(matrix_ptr, ref_ptr, ref_tmp);
                         ref_ptr = ref_tmp;
                       }
                     }
                   }
                   if(c < nAtom) {       /* safety */
-                    PyObject *atom = CoordSetAtomToChemPyAtom(G, ai, v_ptr, ref_ptr, at);
+                    PyObject *atom = CoordSetAtomToChemPyAtom(G, ai, v_ptr,
+                        ref_ptr, at, matrix_full_ptr);
                     if(atom) {
                       PyList_SetItem(atom_list, c, atom);       /* steals */
                       c = c + 1;
@@ -8674,7 +8641,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
 
   case SELE_PREz:
     state = SceneGetState(G);
-    static_singletons = (int) SettingGet(G, cSetting_static_singletons);
+    static_singletons = SettingGetGlobal_b(G, cSetting_static_singletons);
     flag = false;
     cs = NULL;
     for(a = cNDummyAtoms; a < I->NAtom; a++) {

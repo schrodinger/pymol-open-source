@@ -195,13 +195,13 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
     } else { /* rendering */
       int variable_alpha = I->VariableAlphaFlag;
       short use_shader, use_default_shader, use_sphere_shader, generate_shader_cgo = 0, use_display_lists = 0;
-      use_shader = (int) SettingGet(G, cSetting_nb_spheres_use_shader) &&
-	           (int) SettingGet(G, cSetting_use_shaders);
-      use_sphere_shader = (int) (SettingGet(G, cSetting_nb_spheres_use_shader)==1) &&
-	                  (int) SettingGet(G, cSetting_use_shaders);
-      use_default_shader = (int) (SettingGet(G, cSetting_nb_spheres_use_shader)==2) && 
-	                   (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+      use_shader = SettingGetGlobal_i(G, cSetting_nb_spheres_use_shader) &&
+                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_sphere_shader = (SettingGetGlobal_i(G, cSetting_nb_spheres_use_shader)==1) &&
+	                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_default_shader = (SettingGetGlobal_i(G, cSetting_nb_spheres_use_shader)==2) && 
+	                    SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
       if (I->shaderCGO){
 	if (!use_shader || use_sphere_shader ^ I->shaderCGO->has_draw_sphere_buffers){

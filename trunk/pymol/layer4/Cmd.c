@@ -5755,7 +5755,8 @@ static PyObject *CmdGetObjectMatrix(PyObject * self, PyObject * args)
   int ok = false;
   int found;
   int state;
-  ok = PyArg_ParseTuple(args, "Osi", &self, &name, &state);
+  int incl_ttt = true;
+  ok = PyArg_ParseTuple(args, "Osi|i", &self, &name, &state, &incl_ttt);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -5763,7 +5764,7 @@ static PyObject *CmdGetObjectMatrix(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    found = ExecutiveGetObjectMatrix(G, name, state, &history, true);
+    found = ExecutiveGetObjectMatrix(G, name, state, &history, incl_ttt);
     APIExit(G);
     if(found) {
       if(history)
@@ -5963,7 +5964,7 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
       ExecutiveDrawNow(G);      /* TODO STATUS */
       if(ray || !G->HaveGUI) {  /* should !G->HaveGUI be here?  It should not re-ray trace if 
 				   it already exists.  Works if taken out on OSX */
-        SceneRay(G, width, height, (int) SettingGet(G, cSetting_ray_default_renderer),
+        SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
         ok = ScenePNG(G, str1, dpi, quiet, false, format);
       } else if(width || height) {
@@ -5994,7 +5995,7 @@ static PyObject *CmdMPNG(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = MoviePNG(G, str1, (int) SettingGet(G, cSetting_cache_frames),
+    ok = MoviePNG(G, str1, SettingGetGlobal_b(G, cSetting_cache_frames),
                   int1, int2, int3, int4, format, mode, quiet);
     /* TODO STATUS */
     APIExit(G);
@@ -6102,12 +6103,12 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
             w = 10;
           if(h < 10)
             h = 10;
-          if(!SettingGet(G, cSetting_full_screen)) {
-            if(SettingGet(G, cSetting_internal_gui)) {
-              w += (int) SettingGet(G, cSetting_internal_gui_width);
+          if(!SettingGetGlobal_b(G, cSetting_full_screen)) {
+            if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
+              w += SettingGetGlobal_i(G, cSetting_internal_gui_width);
             }
-            if(SettingGet(G, cSetting_internal_feedback)) {
-              h += (int) (SettingGet(G, cSetting_internal_feedback) - 1) * cOrthoLineHeight +
+            if(SettingGetGlobal_i(G, cSetting_internal_feedback)) {
+              h += (SettingGetGlobal_i(G, cSetting_internal_feedback) - 1) * cOrthoLineHeight +
                 cOrthoBottomSceneMargin;
             }
           }
@@ -6259,7 +6260,7 @@ static PyObject *CmdRay(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     if(mode < 0)
-      mode = (int) SettingGet(G, cSetting_ray_default_renderer);
+      mode = SettingGetGlobal_i(G, cSetting_ray_default_renderer);
     ExecutiveRay(G, w, h, mode, angle, shift, quiet, false, antialias); /* TODO STATUS */
     APIExit(G);
   }

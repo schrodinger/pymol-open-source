@@ -726,7 +726,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
       ms = I->State + a;
     } else {
       if(!ms) {
-        if(I->NState && ((SettingGet(G, cSetting_static_singletons) && (I->NState == 1))))
+        if(I->NState && ((SettingGetGlobal_b(G, cSetting_static_singletons) && (I->NState == 1))))
           ms = I->State;
       }
     }
@@ -831,9 +831,9 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
             int render_now = false;
             int t_mode;
 	    short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
-	    use_shader = (int) SettingGet(G, cSetting_surface_use_shader) & 
-	      (int) SettingGet(G, cSetting_use_shaders);
-	    use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+	    use_shader = SettingGetGlobal_b(G, cSetting_surface_use_shader) & 
+	                 SettingGetGlobal_b(G, cSetting_use_shaders);
+	    use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
             t_mode = SettingGet_i(G, NULL, I->Obj.Setting, cSetting_transparency_mode);
 

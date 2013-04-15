@@ -809,7 +809,7 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overrid
     for(b = 0; ok && b < I->Ns; b++) {
 #ifdef _PYMOL_CGO_DRAWARRAYS
       GLenum mode;
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	mode = GL_TRIANGLE_STRIP;
       else {
 	  mode = GL_LINE_STRIP;
@@ -867,7 +867,7 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overrid
       }
 #else
       if (ok){
-	if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	  ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
 	else {
 	  ok &= CGOBegin(cgo, GL_LINE_STRIP);
@@ -1411,7 +1411,7 @@ int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
     for(b = 0; b < I->Ns; b++) {
 #ifdef _PYMOL_CGO_DRAWARRAYS
       GLenum mode;
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	mode = GL_TRIANGLE_STRIP;
       else {
 	mode = GL_LINE_STRIP;
@@ -1457,7 +1457,7 @@ int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
 	}
       }
 #else
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
         CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo, GL_LINE_STRIP);
@@ -1482,7 +1482,7 @@ int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
 #endif
     }
 
-    if(ok && SettingGet(I->G, cSetting_cartoon_debug) > 3.5) {
+    if(ok && SettingGetGlobal_i(I->G, cSetting_cartoon_debug) > 3.5) {
 
       tv = TV;
       tn = TN;
@@ -1740,7 +1740,7 @@ int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_over
       float *vertexVals, *normalVals, *colorVals = 0, *nxtVals = 0, *tmp_ptr;
       float *pickColorVals;
       GLenum mode = GL_LINE_STRIP;
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	mode = GL_TRIANGLE_STRIP;
       if (color_override)
 	ok &= CGOColorv(cgo, color_override);
@@ -1759,7 +1759,7 @@ int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_over
       }
       pickColorVals = (nxtVals + (nverts*nxtn));
 #else
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
         ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         ok &= CGOBegin(cgo, GL_LINE_STRIP);
@@ -2039,7 +2039,7 @@ int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
     for(b = 0; ok && b < I->Ns; b += 2) {
 #ifdef _PYMOL_CGO_DRAWARRAYS
       GLenum mode;
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	mode = GL_TRIANGLE_STRIP;
       else {
 	mode = GL_LINE_STRIP;
@@ -2101,7 +2101,7 @@ int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
       }
 #else
       if (ok){
-	if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	  ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
 	else {
 	  ok &= CGOBegin(cgo, GL_LINE_STRIP);
@@ -2215,7 +2215,7 @@ int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color_
     for(b = 0; ok && b < I->Ns; b += 2) {
 #ifdef _PYMOL_CGO_DRAWARRAYS
       GLenum mode;
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	mode = GL_TRIANGLE_STRIP;
       else {
 	mode = GL_LINE_STRIP;
@@ -2270,7 +2270,7 @@ int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color_
 	tn1 += 3 * I->N;
       }
 #else
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
         ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
       else {
         ok &= CGOBegin(cgo, GL_LINE_STRIP);
@@ -2418,7 +2418,7 @@ int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color_
     for(b = 0; ok && b < I->Ns; b += 2) {
 #ifdef _PYMOL_CGO_DRAWARRAYS
       GLenum mode;
-      if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+      if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	mode = GL_TRIANGLE_STRIP;
       else {
 	  mode = GL_LINE_STRIP;
@@ -2474,7 +2474,7 @@ int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color_
       }
 #else
       if (ok){
-	if(SettingGet(I->G, cSetting_cartoon_debug) < 1.5)
+	if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	  ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
 	else {
 	  ok &= CGOBegin(cgo, GL_LINE_STRIP);

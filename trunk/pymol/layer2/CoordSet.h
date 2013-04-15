@@ -100,7 +100,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs);
 
 CoordSet *CoordSetNew(PyMOLGlobals * G);
 void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoType * ai,
-                             float *v, int cnt, PDBInfoRec * pdb_info);
+                             float *v, int cnt, PDBInfoRec * pdb_info, double *matrix);
 void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoType * ai,
                              int cnt);
 CoordSet *CoordSetCopy(CoordSet * cs);
@@ -111,7 +111,7 @@ void CoordSetRealToFrac(CoordSet * I, CCrystal * cryst);
 void CoordSetFracToReal(CoordSet * I, CCrystal * cryst);
 void CoordSetGetAverage(CoordSet * I, float *v0);
 PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, float *v,
-                                   float *ref, int index);
+                                   float *ref, int index, double *matrix);
 int CoordSetGetAtomVertex(CoordSet * I, int at, float *v);
 int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v);
 int CoordSetSetAtomVertex(CoordSet * I, int at, float *v);

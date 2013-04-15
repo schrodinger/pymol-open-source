@@ -373,8 +373,8 @@ void OrthoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
 /*========================================================================*/
 int OrthoTextVisible(PyMOLGlobals * G)
 {
-  return (SettingGet(G, cSetting_internal_feedback) ||
-          SettingGet(G, cSetting_text) || SettingGet(G, cSetting_overlay));
+  return (SettingGetGlobal_i(G, cSetting_internal_feedback) ||
+          SettingGetGlobal_b(G, cSetting_text) || SettingGetGlobal_i(G, cSetting_overlay));
 }
 
 
@@ -617,7 +617,7 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
     " OrthoBusyDraw: entered.\n" ENDFD;
   now = UtilGetSeconds(G);
   busyTime = (-I->BusyLast) + now;
-  if(SettingGet(G, cSetting_show_progress) && (force || (busyTime > cBusyUpdate))) {
+  if(SettingGetGlobal_b(G, cSetting_show_progress) && (force || (busyTime > cBusyUpdate))) {
 
     I->BusyLast = now;
     if(PIsGlutThread()) {
@@ -1045,9 +1045,9 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
         } else {
           if(mod & cOrthoSHIFT)
             SettingSet(G, cSetting_overlay,
-                       (float) (!((int) SettingGet(G, cSetting_overlay))));
+                       (float) (!(SettingGetGlobal_i(G, cSetting_overlay))));
           else
-            SettingSet(G, cSetting_text, (float) (!((int) SettingGet(G, cSetting_text))));
+            SettingSet(G, cSetting_text, (float) (!(SettingGetGlobal_b(G, cSetting_text))));
         }
       }
       break;
@@ -1159,7 +1159,7 @@ void OrthoAddOutput(PyMOLGlobals * G, char *str)
   while(*p) {
     if(*p >= 32) {
       cc++;
-      wrap = (int) SettingGet(G, cSetting_wrap_output);
+      wrap = SettingGetGlobal_b(G, cSetting_wrap_output);
 
       if(wrap > 0) {
         if(cc > wrap) {
@@ -1193,8 +1193,8 @@ void OrthoAddOutput(PyMOLGlobals * G, char *str)
   }
   *q = 0;
   I->CurChar = strlen(I->Line[curLine]);
-  if((SettingGet(G, cSetting_internal_feedback) > 1) ||
-     SettingGet(G, cSetting_overlay) || SettingGet(G, cSetting_auto_overlay))
+  if((SettingGetGlobal_i(G, cSetting_internal_feedback) > 1) ||
+     SettingGetGlobal_i(G, cSetting_overlay) || SettingGetGlobal_i(G, cSetting_auto_overlay))
     OrthoDirty(G);
 
   if(I->DrawText)
@@ -1558,7 +1558,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
       switch (SettingGetGlobal_i(G, cSetting_internal_gui_mode)) {
       case 0:
-        rightSceneMargin = (int) SettingGet(G, cSetting_internal_gui_width);
+        rightSceneMargin = SettingGetGlobal_i(G, cSetting_internal_gui_width);
         break;
       default:
         rightSceneMargin = 0;
@@ -1568,7 +1568,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       rightSceneMargin = 0;
     }
 
-    internal_feedback = (int) SettingGet(G, cSetting_internal_feedback);
+    internal_feedback = SettingGetGlobal_i(G, cSetting_internal_feedback);
 
     v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
     overlay = OrthoGetOverlayStatus(G);
@@ -1585,11 +1585,11 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         overlay = 0;
       break;
     case 1:                    /* default -- user overlay_lines */
-      overlay = (int) SettingGet(G, cSetting_overlay_lines);
+      overlay = SettingGetGlobal_i(G, cSetting_overlay_lines);
       break;
     }
 
-    text = (int) SettingGet(G, cSetting_text);
+    text = SettingGetGlobal_b(G, cSetting_text);
     if(text)
       overlay = 0;
 
@@ -1645,7 +1645,8 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       OrthoPushMatrix(G);
 
       if (CShaderMgr_ShadersPresent(G->ShaderMgr)){
-	if (SettingGet(G, cSetting_use_shaders)){
+	if(SettingGetGlobal_b(G, cSetting_internal_gui) && 
+	   SettingGetGlobal_b(G, cSetting_use_shaders)){
 	  CGO *orthoFastCGO = CGONew(G);
 	  if (I->orthoFastCGO)
 	    CGOFree(I->orthoFastCGO);
@@ -1730,8 +1731,8 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       PRINTFD(G, FB_Ortho)
         " OrthoDoDraw: drawing blocks...\n" ENDFD;
 
-      if(SettingGet(G, cSetting_internal_gui)) {
-        int internal_gui_width = (int) SettingGet(G, cSetting_internal_gui_width);
+      if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
+        int internal_gui_width = SettingGetGlobal_i(G, cSetting_internal_gui_width);
         if(internal_gui_mode != 2) {
 	  if (generate_shader_cgo){
 	    CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
@@ -1766,7 +1767,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
           y += (7 * cOrthoLineHeight) / 10;
         }
 #endif
-        if((int) SettingGet(G, cSetting_text) || I->SplashFlag)
+        if(SettingGetGlobal_b(G, cSetting_text) || I->SplashFlag)
           showLines = I->ShowLines;
         else {
           showLines = internal_feedback + overlay;
@@ -1820,7 +1821,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
       OrthoDrawWizardPrompt(G ORTHOCGOARGVAR);
 
-      if((int) SettingGet(G, cSetting_text) || I->SplashFlag) {
+      if(SettingGetGlobal_b(G, cSetting_text) || I->SplashFlag) {
         Block *block;
         int active_tmp;
         block = SeqGetBlock(G);
@@ -2120,7 +2121,7 @@ static void OrthoLayoutPanel(PyMOLGlobals * G,
 
   int height = I->Height;
 
-  if(SettingGet(G, cSetting_internal_gui)) {
+  if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
     /* The Executive Block consists of the area in which object entries are rendered,
        if the wizard doesn't exist, then this region extends all the way down to the 
        top of the ButMode block */
@@ -2217,14 +2218,14 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
     textBottom += MovieGetPanelHeight(G);
     I->TextBottom = textBottom;
 
-    internal_feedback = (int) SettingGet(G, cSetting_internal_feedback);
+    internal_feedback = SettingGetGlobal_i(G, cSetting_internal_feedback);
     if(internal_feedback)
       sceneBottom =
         textBottom + (internal_feedback - 1) * cOrthoLineHeight + cOrthoBottomSceneMargin;
     else
       sceneBottom = textBottom;
 
-    internal_gui_width = (int) SettingGet(G, cSetting_internal_gui_width);
+    internal_gui_width = SettingGetGlobal_i(G, cSetting_internal_gui_width);
     if(!SettingGetGlobal_b(G, cSetting_internal_gui)) {
       internal_gui_width = 0;
       sceneRight = 0;
@@ -2302,9 +2303,9 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
   register COrtho *I = G->Ortho;
   I->WizardHeight = wizHeight;
 
-  if(SettingGet(G, cSetting_internal_gui) > 0.0) {
+  if(SettingGetGlobal_b(G, cSetting_internal_gui) > 0.0) {
     Block *block;
-    int internal_gui_width = (int) SettingGet(G, cSetting_internal_gui_width);
+    int internal_gui_width = SettingGetGlobal_i(G, cSetting_internal_gui_width);
     OrthoLayoutPanel(G, 0, I->Width - internal_gui_width, I->TextBottom, 0);
 
     block = ExecutiveGetBlock(G);

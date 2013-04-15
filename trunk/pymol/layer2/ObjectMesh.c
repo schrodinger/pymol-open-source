@@ -922,7 +922,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
       break;
     } else if(0 <= state && state < I->NState) {
       ms = I->State + state;
-    } else if(I->NState == 1 && SettingGet(G, cSetting_static_singletons)) {
+    } else if(I->NState == 1 && SettingGetGlobal_b(G, cSetting_static_singletons)) {
       ms = I->State;
     }
 
@@ -1025,9 +1025,9 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      short use_shader, use_display_lists;
 	      short mesh_as_cylinders ;
 	      CGO *shaderCGO = NULL;
-	      use_shader = ( (int) SettingGet(G, cSetting_mesh_use_shader) & (int) SettingGet(G, cSetting_use_shaders)) | returnCGO;
-	      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
-	      mesh_as_cylinders = (int) SettingGet(G, cSetting_render_as_cylinders) && SettingGet(G, cSetting_mesh_as_cylinders) && ms->MeshMode != 1;
+	      use_shader = ( SettingGetGlobal_b(G, cSetting_mesh_use_shader) & SettingGetGlobal_b(G, cSetting_use_shaders)) | returnCGO;
+	      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
+	      mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && ms->MeshMode != 1;
 
 	      if (ms->shaderCGO && (!use_shader || (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers))){
 		CGOFree(ms->shaderCGO);

@@ -980,11 +980,7 @@ NOTES
             print "Error: unknown format '%s'",format
             if _self._raising(r,_self): raise pymol.CmdException            
         if ftype!=None:
-            if ftype in (loadable.pdb,
-                         loadable.mol,
-                         loadable.sdf,
-                         loadable.ccp4,
-                         loadable.xplor):
+            if ftype in _raw_dict:
                 try:
                     _self.lock(_self)
                     r = _cmd.load(_self._COb,str(object),str(content),int(state)-1,

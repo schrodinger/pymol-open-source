@@ -155,11 +155,11 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
       }
     } else { /* else not pick, i.e., when rendering */
       short use_shader, generate_shader_cgo = 0, use_display_lists = 0, shader_mode = 0;
-      use_shader = (int) SettingGet(G, cSetting_stick_use_shader) & 
-                           (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
-      shader_mode = use_shader && (int) SettingGet(G, cSetting_stick_as_cylinders) 
-	&& (int) SettingGet(G, cSetting_render_as_cylinders);
+      use_shader = SettingGetGlobal_b(G, cSetting_stick_use_shader) & 
+                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
+      shader_mode = use_shader && SettingGetGlobal_b(G, cSetting_stick_as_cylinders) 
+	&& SettingGetGlobal_b(G, cSetting_render_as_cylinders);
 
       if (I->shaderCGO && (!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO) || I->shaderCGOmode != shader_mode)){
 	CGOFree(I->shaderCGO);
@@ -188,7 +188,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	    float *color;
 	    color = ColorGet(G, I->R.obj->Color);
 	    I->shaderCGO->enable_shaders = 1;
-	    I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
+	    I->shaderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
 	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	    return;
 	  } else {
@@ -196,11 +196,11 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
 	    if (!shaderPrg) return;
 	    SceneResetNormalUseShaderAttribute(G, 0, true, CShaderPrg_GetAttribLocation(shaderPrg, "a_Normal"));
-	    CShaderPrg_SetLightingEnabled(shaderPrg, !SettingGet(G, cSetting_stick_debug));
+	    CShaderPrg_SetLightingEnabled(shaderPrg, !SettingGetGlobal_i(G, cSetting_stick_debug));
 	    {
 	      float *color;
 	      color = ColorGet(G, I->R.obj->Color);
-	      I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
+	      I->shaderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
 	      I->shaderCGO->enable_shaders = true;
 	      CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	    }
@@ -232,7 +232,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	if (I->Vcgo){
 	  float *color;
 	  color = ColorGet(G, I->R.obj->Color);
-	  I->Vcgo->debug = SettingGet(G, cSetting_stick_debug);
+	  I->Vcgo->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
 	  CGORenderGL(I->Vcgo, color, NULL, NULL, info, &I->R);
 	}
       }
@@ -357,18 +357,18 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	    float *color;
 	    color = ColorGet(G, I->R.obj->Color);
 	    I->shaderCGO->enable_shaders = 1;
-	    I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
+	    I->shaderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
 	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	  } else {
 	    CShaderPrg *shaderPrg;
 	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
 	    if (!shaderPrg)return;
 	    SceneResetNormalUseShaderAttribute(G, 0, true, CShaderPrg_GetAttribLocation(shaderPrg, "a_Normal"));
-	    CShaderPrg_SetLightingEnabled(shaderPrg, !SettingGet(G, cSetting_stick_debug));
+	    CShaderPrg_SetLightingEnabled(shaderPrg, !SettingGetGlobal_i(G, cSetting_stick_debug));
 	    {
 	      float *color;
 	      color = ColorGet(G, I->R.obj->Color);
-	      I->shaderCGO->debug = SettingGet(G, cSetting_stick_debug);
+	      I->shaderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
 	      I->shaderCGO->enable_shaders = true;
 	      CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	    }
@@ -1732,8 +1732,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       overlap = 0.05;
     }
 
-    shader_mode = (int)SettingGet(G, cSetting_use_shaders) && (int) SettingGet(G, cSetting_stick_as_cylinders) 
-      && (int) SettingGet(G, cSetting_render_as_cylinders) && (int)SettingGet(G, cSetting_stick_use_shader);
+    shader_mode = SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_stick_as_cylinders) 
+      && SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_stick_use_shader);
 
     if(cartoon_side_chain_helper || ribbon_side_chain_helper) {
       /* mark atoms that are bonded to atoms without a
@@ -2491,8 +2491,8 @@ int RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *v
   int ok = true;
 
   if ( shader_mode ) { // GLSL
-    //short cap = (endCap || frontCap) ? 1 : 0;
-    short cap = (frontCap > 0 ? 5 : 0) | (endCap > 0 ? 10 : 0);
+    short cap = 15; // for shaders, always draw rounded caps
+    //    short cap = (frontCap > 0 ? 5 : 0) | (endCap > 0 ? 10 : 0);
 
     // These are not really triangles, we are simply passing
     // origin, axis and flags information to CGO    

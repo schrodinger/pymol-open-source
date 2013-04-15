@@ -1211,7 +1211,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
   SceneChanged(G);
   SceneCountFrames(G);
   if(zoom_flag)
-    if(SettingGet(G, cSetting_auto_zoom)) {
+    if(SettingGetGlobal_i(G, cSetting_auto_zoom)) {
       ExecutiveWindowZoom(G, I->Obj.Name, 0.0, -1, 0, 0, quiet);        /* auto zoom (all states) */
     }
 
@@ -1336,7 +1336,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
   SceneChanged(G);
   SceneCountFrames(G);
   if(zoom_flag){
-    if(SettingGet(G, cSetting_auto_zoom)) {
+    if(SettingGetGlobal_i(G, cSetting_auto_zoom)) {
       ExecutiveWindowZoom(G, I->Obj.Name, 0.0, -1, 0, 0, quiet);        /* auto zoom (all states) */
     }
   }
@@ -1404,9 +1404,9 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
   AtomInfoType *atInfo = NULL, *ai;
   BondType *bond = NULL, *bd;
   int nBond = 0;
-  int auto_show_lines = (int) SettingGet(G, cSetting_auto_show_lines);
-  int auto_show_spheres = (int) SettingGet(G, cSetting_auto_show_spheres);
-  int auto_show_nonbonded = (int) SettingGet(G, cSetting_auto_show_nonbonded);
+  int auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
+  int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
+  int auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
   int amber7 = false;
 
   WordType title;
@@ -3106,7 +3106,7 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule * I, int a0, int a1, int dist)
 /*========================================================================*/
 void ObjectGotoState(ObjectMolecule * I, int state)
 {
-  if((I->NCSet > 1) || (!SettingGet(I->Obj.G, cSetting_static_singletons))) {
+  if((I->NCSet > 1) || (!SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons))) {
     if(state > I->NCSet)
       state = I->NCSet - 1;
     if(state < 0)
@@ -3251,7 +3251,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 	      }
 	    }
 	  }
-	} else if(SettingGet(I->Obj.G, cSetting_static_singletons)) {
+	} else if(SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons)) {
 	  if(I->NCSet == 1) {
 	    if((cs = I->CSet[0])) {
 	      idx2atm = cs->IdxToAtm;
@@ -3358,7 +3358,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 	      }
 	    }
 	  }
-	} else if(SettingGet(I->Obj.G, cSetting_static_singletons)) {
+	} else if(SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons)) {
 	  if(I->NCSet == 1) {
 	    if((cs = I->CSet[0])) {
 	      idx2atm = cs->IdxToAtm;
@@ -3451,9 +3451,9 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
   int nBond = 0;
   int b1, b2;
   WordType tmp_name;
-  int auto_show_lines = (int) SettingGet(G, cSetting_auto_show_lines);
-  int auto_show_spheres = (int) SettingGet(G, cSetting_auto_show_spheres);
-  int auto_show_nonbonded = (int) SettingGet(G, cSetting_auto_show_nonbonded);
+  int auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
+  int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
+  int auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
   int tinker_xyz = true;
   int valid_atom;
   int have_n_atom = false;
@@ -4838,8 +4838,8 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
 
   spl = spheroid;
 
-  spheroid_smooth = SettingGet(I->Obj.G, cSetting_spheroid_smooth);
-  spheroid_fill = SettingGet(I->Obj.G, cSetting_spheroid_fill);
+  spheroid_smooth = SettingGetGlobal_f(I->Obj.G, cSetting_spheroid_smooth);
+  spheroid_fill = SettingGetGlobal_f(I->Obj.G, cSetting_spheroid_fill);
   /* first compute average coordinate */
 
   if(average < 1)
@@ -5214,7 +5214,7 @@ void ObjectMoleculeSaveUndo(ObjectMolecule * I, int state, int log)
   ExecutiveSetLastObjectEdited(G, (CObject *) I);
   if(log) {
     OrthoLineType line;
-    if(SettingGet(I->Obj.G, cSetting_logging)) {
+    if(SettingGetGlobal_i(I->Obj.G, cSetting_logging)) {
       sprintf(line, "cmd.push_undo(\"%s\",%d)\n", I->Obj.Name, state + 1);
       PLog(G, line, cPLog_no_flush);
     }
@@ -7395,7 +7395,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
   if(log) {
     OrthoLineType line;
     WordType sele_str = ",'";
-    logging = (int) SettingGet(G, cSetting_logging);
+    logging = SettingGetGlobal_i(G, cSetting_logging);
     if(sele >= 0) {
       strcat(sele_str, sname);
     }
@@ -7618,7 +7618,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
   BondType *ii, *bond = NULL;
   int ok = true;
   int auto_show_lines;
-  int auto_show_spheres = (int) SettingGet(G, cSetting_auto_show_spheres);
+  int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
   int auto_show_nonbonded;
   int hetatm;
   int ignore_ids;
@@ -7629,10 +7629,10 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
   PyObject *index = NULL;
   PyObject *crd = NULL;
   PyObject *tmp = NULL;
-  auto_show_lines = (int) SettingGet(G, cSetting_auto_show_lines);
-  auto_show_nonbonded = (int) SettingGet(G, cSetting_auto_show_nonbonded);
+  auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
+  auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
 
-  ignore_ids = !(int) SettingGet(G, cSetting_preserve_chempy_ids);
+  ignore_ids = !SettingGetGlobal_b(G, cSetting_preserve_chempy_ids);
 
   nAtom = 0;
   nBond = 0;
@@ -8607,11 +8607,11 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, char *buffer,
   BondType *bond = NULL;
   int ok = true;
   int auto_show_lines;
-  int auto_show_spheres = (int) SettingGet(G, cSetting_auto_show_spheres);
+  int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
   int auto_show_nonbonded;
   WordType nameTmp;
-  auto_show_lines = (int) SettingGet(G, cSetting_auto_show_lines);
-  auto_show_nonbonded = (int) SettingGet(G, cSetting_auto_show_nonbonded);
+  auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
+  auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
 
   p = buffer;
   nAtom = 0;
@@ -8979,13 +8979,13 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
   BondType *bond = NULL;
   int ok = true;
   int auto_show_lines;
-  int auto_show_spheres = (int) SettingGet(G, cSetting_auto_show_spheres);
+  int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
   int auto_show_nonbonded;
   int have_molecule = false;
   WordType nameTmp;
 
-  auto_show_lines = (int) SettingGet(G, cSetting_auto_show_lines);
-  auto_show_nonbonded = (int) SettingGet(G, cSetting_auto_show_nonbonded);
+  auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
+  auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
 
   p = buffer;
   nAtom = 0;
@@ -10284,6 +10284,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_PDB1:
+#ifdef _DEAD_CODE_DIE
+      ErrFatal(G, "ObjectMoleculeSeleOp", "OMOP_PDB1 is dead");
+#endif
       for(b = 0; b < I->NCSet; b++)
         if(I->CSet[b]) {
           if((b == op->i1) || (op->i1 < 0))
@@ -10299,7 +10302,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   ind = I->CSet[b]->AtmToIdx[a];
                 if(ind >= 0)
                   CoordSetAtomToPDBStrVLA(G, &op->charVLA, &op->i2, I->AtomInfo + a,
-                                          I->CSet[b]->Coord + (3 * ind), op->i3, NULL);
+                                          I->CSet[b]->Coord + (3 * ind), op->i3, NULL, NULL);
                 op->i3++;
               }
             }
@@ -11776,7 +11779,7 @@ void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, i
     quo[0] = '"';
     quo[1] = 0;
   }
-  if(SettingGet(I->Obj.G, cSetting_robust_logs)) {
+  if(SettingGetGlobal_b(I->Obj.G, cSetting_robust_logs)) {
     ai = I->AtomInfo + index;
     if(ai->alt[0])
       sprintf(buffer, "%s/%s/%s/%s/%s`%s/%s`%s%s", quo, I->Obj.Name, ai->segi, ai->chain,
@@ -12149,7 +12152,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, float *v, i
   }
   if(log) {
     OrthoLineType line, buffer;
-    if(SettingGet(G, cSetting_logging)) {
+    if(SettingGetGlobal_i(G, cSetting_logging)) {
       ObjectMoleculeGetAtomSele(I, index, buffer);
       sprintf(line, "cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
               buffer, v[0], v[1], v[2], state + 1, mode, 0);
@@ -13247,9 +13250,9 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, char *buffer,
   float *f;
   BondType *ii, *bond = NULL;
   int ok = true;
-  int auto_show_lines = (int) SettingGet(G, cSetting_auto_show_lines);
-  int auto_show_spheres = (int) SettingGet(G, cSetting_auto_show_spheres);
-  int auto_show_nonbonded = (int) SettingGet(G, cSetting_auto_show_nonbonded);
+  int auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
+  int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
+  int auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
 
   p = buffer;
   nAtom = 0;

@@ -94,9 +94,9 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_lighting);
       short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
 
-      use_shader = (int) SettingGet(G, cSetting_dot_use_shader) & 
-                   (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+      use_shader = SettingGetGlobal_b(G, cSetting_dot_use_shader) & 
+                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
       if (I->shaderCGO && ((!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO)) ||
 			   I->shaderCGO_as_spheres!= dot_as_spheres)){

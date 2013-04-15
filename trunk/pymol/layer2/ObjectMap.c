@@ -2412,7 +2412,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ms = &I->State[state];
   ObjectMapStateInit(I->Obj.G, ms);
 
-  normalize = (int) SettingGet(I->Obj.G, cSetting_normalize_ccp4_maps);
+  normalize = SettingGetGlobal_b(I->Obj.G, cSetting_normalize_ccp4_maps);
   maxd = -FLT_MAX;
   mind = FLT_MAX;
   p = CCP4Str;
@@ -3594,8 +3594,8 @@ static int ObjectMapBRIXStrToMap(ObjectMap * I, char *BRIXStr, int bytes, int st
   int normalize;
   int swap_bytes;
 
-  normalize = (int) SettingGet(I->Obj.G, cSetting_normalize_o_maps);
-  swap_bytes = (int) SettingGet(I->Obj.G, cSetting_swap_dsn6_bytes);
+  normalize = SettingGetGlobal_b(I->Obj.G, cSetting_normalize_o_maps);
+  swap_bytes = SettingGetGlobal_b(I->Obj.G, cSetting_swap_dsn6_bytes);
   if(state < 0)
     state = I->NState;
   if(I->NState <= state) {
@@ -4011,7 +4011,7 @@ static int ObjectMapGRDStrToMap(ObjectMap * I, char *GRDStr, int bytes, int stat
   }
   ms = &I->State[state];
   ObjectMapStateInit(I->Obj.G, ms);
-  normalize = (int) SettingGet(I->Obj.G, cSetting_normalize_grd_maps);
+  normalize = SettingGetGlobal_b(I->Obj.G, cSetting_normalize_grd_maps);
   maxd = -FLT_MAX;
   mind = FLT_MAX;
 

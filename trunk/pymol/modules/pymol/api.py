@@ -49,6 +49,7 @@ from creating import \
 #--------------------------------------------------------------------
 import commanding
 from commanding import \
+      async,           \
       cls,                \
       delete,             \
       do,                 \
@@ -181,6 +182,7 @@ from editing import \
       map_trim,           \
       matrix_copy,        \
       matrix_reset,       \
+      mse2met,            \
       protect,            \
       push_undo,          \
       reference,          \
@@ -203,6 +205,7 @@ from editing import \
       set_title,          \
       smooth,             \
       sort,               \
+      split_chains,       \
       split_states,       \
       symmetry_copy,      \
       torsion,            \

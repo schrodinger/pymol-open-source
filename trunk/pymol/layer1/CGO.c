@@ -41,7 +41,7 @@ Z* -------------------------------------------------------------------
 
 #define VAR_FOR_NORMAL  pl
 #define VERTEX_NORMAL_SIZE 3
-#define VAR_FOR_NORMAL_CNT_PLUS   + (cnt / 3)
+#define VAR_FOR_NORMAL_CNT_PLUS   
 
 #define CLIP_COLOR_VALUE(cv)  ((cv>1.f) ? 255 :  (cv < 0.f) ? 0 : pymol_roundf(cv * 255) )
 #define CLIP_NORMAL_VALUE(cv)  ((cv>1.f) ? 127 :  (cv < -1.f) ? -128 : pymol_roundf(((cv + 1.f)/2.f) * 255) - 128 )
@@ -432,8 +432,8 @@ CGO *CGONewSized(PyMOLGlobals * G, int size)
 void CGOSetUseShader(CGO *I, int use_shader){
   I->use_shader = use_shader;
   if (use_shader){
-    I->cgo_shader_ub_color = SettingGet(I->G, cSetting_cgo_shader_ub_color);
-    I->cgo_shader_ub_normal = SettingGet(I->G, cSetting_cgo_shader_ub_normal);
+    I->cgo_shader_ub_color = SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color);
+    I->cgo_shader_ub_normal = SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal);
   } else {
     I->cgo_shader_ub_color = 0;
     I->cgo_shader_ub_normal = 0;
@@ -1507,7 +1507,7 @@ int CGOCheckComplex(CGO * I)
   sp = I->G->Sphere->Sphere[1];
 
   /* stick_quality needs to match *every* CGO? */
-  nEdge = (int) SettingGet(I->G, cSetting_stick_quality);
+  nEdge = SettingGetGlobal_i(I->G, cSetting_stick_quality);
 
   while((op = (CGO_MASK & CGO_read_int(pc)))) {
     switch (op) {
@@ -2019,8 +2019,8 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
     if (ok){
       cgo->use_shader = I->use_shader;
       if (cgo->use_shader){
-	cgo->cgo_shader_ub_color = SettingGet(cgo->G, cSetting_cgo_shader_ub_color);
-	cgo->cgo_shader_ub_normal = SettingGet(cgo->G, cSetting_cgo_shader_ub_normal);
+	cgo->cgo_shader_ub_color = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_color);
+	cgo->cgo_shader_ub_normal = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_normal);
       }
     }
   }
@@ -2357,7 +2357,7 @@ void SetVertexValuesForVBO(PyMOLGlobals * G, CGO *cgo, int arrays, int pl, int p
   c = cnt * 3; c2 = c + 1; c3 = c + 2;
   cc = cnt * 4; cc2 = cc + 1; cc3 = cc + 2; cc4 = cc + 3;
   vertexVals[pl] = vertexValsDA[c]; vertexVals[pl2] = vertexValsDA[c2]; vertexVals[pl3] = vertexValsDA[c3];
-  if (SettingGet(G, cSetting_cgo_shader_ub_normal)){
+  if (SettingGetGlobal_i(G, cSetting_cgo_shader_ub_normal)){
     if (normalValsC){
       if (arrays & CGO_NORMAL_ARRAY){
 	normalValsC[pln1] = CLIP_NORMAL_VALUE(normalValsDA[c]); normalValsC[pln2] = CLIP_NORMAL_VALUE(normalValsDA[c2]); normalValsC[pln3] = CLIP_NORMAL_VALUE(normalValsDA[c3]);
@@ -2376,11 +2376,8 @@ void SetVertexValuesForVBO(PyMOLGlobals * G, CGO *cgo, int arrays, int pl, int p
 	normalVals[pln1] = cgo->normal[0]; normalVals[pln2] = cgo->normal[1]; normalVals[pln3] = cgo->normal[2];
       }
     }
-    /*#ifdef ALIGN_VBOS_TO_4_BYTE_ARRAYS
-      normalVals[pln3+1] = 1.f;
-      #endif*/
   }
-  if (SettingGet(G, cSetting_cgo_shader_ub_color)){
+  if (SettingGetGlobal_i(G, cSetting_cgo_shader_ub_color)){
     if (arrays & CGO_COLOR_ARRAY){
       colorValsUC[plc] = CLIP_COLOR_VALUE(colorValsDA[cc]); colorValsUC[plc2] = CLIP_COLOR_VALUE(colorValsDA[cc2]); 
       colorValsUC[plc3] = CLIP_COLOR_VALUE(colorValsDA[cc3]); colorValsUC[plc4] = CLIP_COLOR_VALUE(colorValsDA[cc4]);
@@ -2442,12 +2439,12 @@ int OptimizePointsToVBO(CGO *I, CGO *cgo, int num_total_vertices_points, float *
   }
   normalVals = vertexVals + 3 * num_total_vertices_points;
   nxtn = 3;
-  if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+  if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
     normalValsC = (uchar*) normalVals;
     nxtn = 1;
   }
   colorVals = normalVals + nxtn * num_total_vertices_points;
-  if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+  if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
     colorValsUC = (uchar*) colorVals;
     nxtn = 1;
   } else {
@@ -2648,7 +2645,7 @@ int OptimizePointsToVBO(CGO *I, CGO *cgo, int num_total_vertices_points, float *
       } else if (ok){
 	short sz = 3;
 	allbufs[1] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_vertices_points*sz, normalVals, GL_STATIC_DRAW);      
@@ -2665,7 +2662,7 @@ int OptimizePointsToVBO(CGO *I, CGO *cgo, int num_total_vertices_points, float *
       } else if (ok){
 	short sz = 4;
 	allbufs[2] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_vertices_points*sz, colorVals, GL_STATIC_DRAW);      
@@ -3155,12 +3152,12 @@ CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short addshade
     }
     normalVals = vertexVals + 3 * num_total_indexes;
     nxtn = 3;
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
       normalValsC = (uchar*) normalVals;
       nxtn = 1;
     }
     colorVals = normalVals + nxtn * num_total_indexes;
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
       colorValsUC = (uchar*) colorVals;
       nxtn = 1;
     } else {
@@ -3214,7 +3211,7 @@ CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short addshade
       } else if (ok){
 	short sz = 3;
 	allbufs[1] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_indexes*sz, normalVals, GL_STATIC_DRAW);      
@@ -3230,7 +3227,7 @@ CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short addshade
       } else if (ok){
 	short sz = 4;
 	allbufs[2] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_indexes*sz, colorVals, GL_STATIC_DRAW);      
@@ -3310,13 +3307,13 @@ CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short addshade
     }
     normalVals = vertexVals + 3 * num_total_indexes_lines;
     nxtn = 3;
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
       normalValsC = (uchar*) normalVals;
       nxtn = 1;
     }
 
     colorVals = normalVals + nxtn * num_total_indexes_lines;
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
       colorValsUC = (uchar*) colorVals;
       nxtn = 1;
     } else {
@@ -3499,7 +3496,7 @@ CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short addshade
       } else if (ok){
 	short sz = 3;
 	allbufs[1] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_indexes_lines*sz, normalVals, GL_STATIC_DRAW);      
@@ -3515,7 +3512,7 @@ CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short addshade
       } else if (ok){
 	short sz = 4;
 	allbufs[2] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_indexes_lines*sz, colorVals, GL_STATIC_DRAW);      
@@ -3567,8 +3564,8 @@ CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short addshade
   }
   cgo->use_shader = I->use_shader;
   if (cgo->use_shader){
-    cgo->cgo_shader_ub_color = SettingGet(cgo->G, cSetting_cgo_shader_ub_color);
-    cgo->cgo_shader_ub_normal = SettingGet(cgo->G, cSetting_cgo_shader_ub_normal);
+    cgo->cgo_shader_ub_color = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_color);
+    cgo->cgo_shader_ub_normal = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_normal);
   }
   if (!ok){
     CGOFree(cgo);
@@ -3657,13 +3654,13 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
     }
     normalVals = vertexVals + 3 * num_total_vertices;
     nxtn = 3;
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
       normalValsC = (uchar*) normalVals;
       nxtn = 1;
     }
 
     colorVals = normalVals + nxtn * num_total_vertices;
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
       colorValsUC = (uchar*) colorVals;
       nxtn = 1;
     } else {
@@ -3717,7 +3714,7 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
 	  for (cnt=0; cnt<nverts*3; cnt++){
 	    vertexVals[pl + cnt] = vertexValsDA[cnt];
 	  }
-	  if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+	  if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	    if (arrays & CGO_NORMAL_ARRAY){
 	      nxtVals = normalValsDA = vertexValsDA + (nxtn*nverts);
 	      for (cnt=0; cnt<nverts*3; cnt++){
@@ -3742,13 +3739,13 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
 	    }
 	  }
 	  nxtn = 3;
-	  if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+	  if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	    if (arrays & CGO_COLOR_ARRAY){
 	      nxtVals = colorValsDA = nxtVals + (nxtn*nverts);
 	      for (cnt=0; cnt<nverts*4; cnt++){
 		colorValsUC[plc + cnt] = CLIP_COLOR_VALUE(colorValsDA[cnt]);
 	      }
-	      nxtn = 4;
+	      nxtn = 1;
 	    } else {
 	      uchar col[4] = { CLIP_COLOR_VALUE(cgo->color[0]), CLIP_COLOR_VALUE(cgo->color[1]), CLIP_COLOR_VALUE(cgo->color[2]), CLIP_COLOR_VALUE(cgo->alpha) };
 	      for (cnt=0; cnt<nverts*4; cnt++){
@@ -3887,7 +3884,7 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
       } else if (ok){
 	short sz = 3;
 	allbufs[1] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_vertices*sz, normalVals, GL_STATIC_DRAW);      
@@ -3903,7 +3900,7 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
       } else if (ok) {
 	short sz = 4;
 	allbufs[2] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_vertices*sz, colorVals, GL_STATIC_DRAW);      
@@ -3992,12 +3989,12 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
     }
     normalVals = vertexVals + 3 * num_total_vertices_lines;
     sz = 3;
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
       normalValsC = (uchar*) normalVals;
       sz = 1;
     }
     colorVals = normalVals + sz * num_total_vertices_lines;
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
       colorValsUC = (uchar*) colorVals;
       sz = 1;
     } else {
@@ -4049,7 +4046,7 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
 	  for (cnt=0; cnt<nverts*3; cnt++){
 	    vertexVals[pl + cnt] = vertexValsDA[cnt];
 	  }
-	  if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+	  if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	    if (arrays & CGO_NORMAL_ARRAY){
 	      nxtVals = normalValsDA = vertexValsDA + (nxtn*nverts);
 	      for (cnt=0; cnt<nverts*3; cnt++){
@@ -4073,7 +4070,7 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
 	      }
 	    }
 	  }
-	  if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+	  if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	    if (arrays & CGO_COLOR_ARRAY){
 	      nxtVals = colorValsDA = nxtVals + (nxtn*nverts);
 	      for (cnt=0; cnt<nverts*4; cnt++){
@@ -4197,7 +4194,7 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
       } else if (ok){
 	short sz = 3;
 	allbufs[1] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_vertices_lines*sz, normalVals, GL_STATIC_DRAW);      
@@ -4213,7 +4210,7 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
       } else if (ok){
 	short sz = 4;
 	allbufs[2] = bufs[bufpl++];
-	if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	  sz = 1;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*num_total_vertices_lines*sz, colorVals, GL_STATIC_DRAW);      
@@ -4269,8 +4266,8 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
     }
     cgo->use_shader = I->use_shader;
     if (cgo->use_shader){
-      cgo->cgo_shader_ub_color = SettingGet(cgo->G, cSetting_cgo_shader_ub_color);
-      cgo->cgo_shader_ub_normal = SettingGet(cgo->G, cSetting_cgo_shader_ub_normal);
+      cgo->cgo_shader_ub_color = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_color); 
+      cgo->cgo_shader_ub_normal = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_normal);
     }
   }
   if (!ok){
@@ -4676,8 +4673,8 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
     if (ok){
       cgo->use_shader = I->use_shader;
       if (cgo->use_shader){
-	cgo->cgo_shader_ub_color = SettingGet(cgo->G, cSetting_cgo_shader_ub_color);
-	cgo->cgo_shader_ub_normal = SettingGet(cgo->G, cSetting_cgo_shader_ub_normal);
+	cgo->cgo_shader_ub_color = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_color);
+	cgo->cgo_shader_ub_normal = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_normal);
       }
     }
   }
@@ -4732,8 +4729,8 @@ CGO *CGOOptimizeSpheresToVBONonIndexedImpl(CGO * I, int est, CGO *leftOverCGO)
 
     cgo = CGONewSized(I->G, I->c + est);
 
-    cgo_shader_ub_color = SettingGet(cgo->G, cSetting_cgo_shader_ub_color);
-    cgo_shader_ub_flags = SettingGet(cgo->G, cSetting_cgo_shader_ub_flags);
+    cgo_shader_ub_color = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_color);
+    cgo_shader_ub_flags = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_flags);
   
     org_vertVals = vertVals = Alloc(float, tot);
     if (!org_vertVals){
@@ -4976,8 +4973,8 @@ CGO *CGOOptimizeSpheresToVBONonIndexedImpl(CGO * I, int est, CGO *leftOverCGO)
       }
       cgo->use_shader = I->use_shader;
       if (cgo->use_shader){
-	cgo->cgo_shader_ub_color = SettingGet(cgo->G, cSetting_cgo_shader_ub_color);
-	cgo->cgo_shader_ub_normal = SettingGet(cgo->G, cSetting_cgo_shader_ub_normal);
+	cgo->cgo_shader_ub_color = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_color);
+	cgo->cgo_shader_ub_normal = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_normal);
       }
     }
   }
@@ -6665,13 +6662,13 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
 #ifdef OPENGL_ES_2
     if (I->use_shader && attr_a_Normal>=0){
       glEnableVertexAttribArray(attr_a_Normal);
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	glVertexAttribPointer(attr_a_Normal, VERTEX_NORMAL_SIZE, GL_BYTE, GL_TRUE, 0, 0);
       } else {
 	glVertexAttribPointer(attr_a_Normal, VERTEX_NORMAL_SIZE, GL_FLOAT, GL_FALSE, 0, 0);
       }
     } else {
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	glNormalPointer(GL_BYTE, 0, 0);
       } else {
 	glNormalPointer(GL_FLOAT, 0, 0);
@@ -6679,7 +6676,7 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
       glEnableClientState(GL_NORMAL_ARRAY);
     }
 #else
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
       glNormalPointer(GL_BYTE, 0, 0);
     } else {
       glNormalPointer(GL_FLOAT, 0, 0);
@@ -6706,13 +6703,13 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
 #ifdef OPENGL_ES_2
     if (I->use_shader){
       glEnableVertexAttribArray(attr_a_Color);
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	glVertexAttribPointer(attr_a_Color, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
       } else {
 	glVertexAttribPointer(attr_a_Color, VERTEX_COLOR_SIZE, GL_FLOAT, GL_FALSE, 0, 0);
       }
     } else {
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, 0);
       } else {
 	glColorPointer(4, GL_FLOAT, 0, 0);
@@ -6720,7 +6717,7 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
       glEnableClientState(GL_COLOR_ARRAY);
     }
 #else
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
       glColorPointer(4, GL_UNSIGNED_BYTE, 0, 0);
     } else {
       glColorPointer(4, GL_FLOAT, 0, 0);
@@ -6848,13 +6845,13 @@ static void CGO_gl_draw_buffers_not_indexed(CCGORenderer * I, float **pc){
 #ifdef OPENGL_ES_2
     if (I->use_shader){
       glEnableVertexAttribArray(attr_a_Normal);
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	glVertexAttribPointer(attr_a_Normal, VERTEX_NORMAL_SIZE, GL_BYTE, GL_TRUE, 0, 0);
       } else {
 	glVertexAttribPointer(attr_a_Normal, VERTEX_NORMAL_SIZE, GL_FLOAT, GL_FALSE, 0, 0);
       }
     } else {
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
 	glNormalPointer(GL_BYTE, 0, 0);
       } else {
 	glNormalPointer(GL_FLOAT, 0, 0);
@@ -6862,7 +6859,7 @@ static void CGO_gl_draw_buffers_not_indexed(CCGORenderer * I, float **pc){
       glEnableClientState(GL_NORMAL_ARRAY);
     }
 #else
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_normal)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_normal)){
       glNormalPointer(GL_BYTE, 0, 0);
     } else {
       glNormalPointer(GL_FLOAT, 0, 0);
@@ -6890,13 +6887,13 @@ static void CGO_gl_draw_buffers_not_indexed(CCGORenderer * I, float **pc){
 #ifdef OPENGL_ES_2
     if (I->use_shader){
       glEnableVertexAttribArray(attr_a_Color);
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	glVertexAttribPointer(attr_a_Color, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
       } else {
 	glVertexAttribPointer(attr_a_Color, VERTEX_COLOR_SIZE, GL_FLOAT, GL_FALSE, 0, 0);
       }
     } else {
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, 0);
       } else {
 	glColorPointer(4, GL_FLOAT, 0, 0);
@@ -6904,7 +6901,7 @@ static void CGO_gl_draw_buffers_not_indexed(CCGORenderer * I, float **pc){
       glEnableClientState(GL_COLOR_ARRAY);
     }
 #else
-    if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+    if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
       glColorPointer(4, GL_UNSIGNED_BYTE, 0, 0);
     } else {
       glColorPointer(4, GL_FLOAT, 0, 0);
@@ -8646,9 +8643,9 @@ static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, flo
   int ok = true;
 
   v = v_buf;
-  nEdge = (int) SettingGet(I->G, cSetting_stick_quality);
-  overlap = tube_size * SettingGet(I->G, cSetting_stick_overlap);
-  nub = tube_size * SettingGet(I->G, cSetting_stick_nub);
+  nEdge = SettingGetGlobal_i(I->G, cSetting_stick_quality);
+  overlap = tube_size * SettingGetGlobal_f(I->G, cSetting_stick_overlap);
+  nub = tube_size * SettingGetGlobal_f(I->G, cSetting_stick_nub);
 
   if(nEdge > MAX_EDGE)
     nEdge = MAX_EDGE;
@@ -8955,9 +8952,9 @@ static int CGOSimpleCone(CGO * I, float *v1, float *v2, float r1, float r2,
   int ok = true;
 
   v = v_buf;
-  nEdge = (int) SettingGet(I->G, cSetting_cone_quality);
-  nub1 = r1 * SettingGet(I->G, cSetting_stick_nub);
-  nub2 = r2 * SettingGet(I->G, cSetting_stick_nub);
+  nEdge = (int) SettingGetGlobal_i(I->G, cSetting_cone_quality);
+  nub1 = r1 * SettingGetGlobal_f(I->G, cSetting_stick_nub);
+  nub2 = r2 * SettingGetGlobal_f(I->G, cSetting_stick_nub);
 
   if(nEdge > MAX_EDGE)
     nEdge = MAX_EDGE;
@@ -9427,6 +9424,8 @@ int CGOAppendImpl(CGO *dest, CGO *source, int stopAtEnd){
     if (stopAtEnd)
       ok &= CGOStop(dest);
   }
+  // when appending, if source has draw buffers, dest does too
+  dest->has_draw_buffers |= source->has_draw_buffers;
   return ok;
 }
 
@@ -9666,8 +9665,8 @@ short CGOHasCylinderOperations(CGO *I){
 
 short CGOCheckWhetherToFree(PyMOLGlobals * G, CGO *I){
   if (I->use_shader){
-    if (I->cgo_shader_ub_color != SettingGet(G, cSetting_cgo_shader_ub_color) || 
-	I->cgo_shader_ub_normal != SettingGet(G, cSetting_cgo_shader_ub_normal)){
+    if (I->cgo_shader_ub_color != SettingGetGlobal_i(G, cSetting_cgo_shader_ub_color) || 
+	I->cgo_shader_ub_normal != SettingGetGlobal_i(G, cSetting_cgo_shader_ub_normal)){
       return true;
     }
   }
@@ -9801,8 +9800,8 @@ CGO *CGOConvertLinesToShaderCylinders(CGO * I, int est){
   CGOStop(cgo);
   cgo->use_shader = I->use_shader;
   if (cgo->use_shader){
-    cgo->cgo_shader_ub_color = SettingGet(cgo->G, cSetting_cgo_shader_ub_color);
-    cgo->cgo_shader_ub_normal = SettingGet(cgo->G, cSetting_cgo_shader_ub_normal);
+    cgo->cgo_shader_ub_color = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_color);
+    cgo->cgo_shader_ub_normal = SettingGetGlobal_i(cgo->G, cSetting_cgo_shader_ub_normal);
   }
   if (tot_nverts){
     return (cgo);
@@ -9955,7 +9954,7 @@ CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est)
     {
       int mul = 6; // 3 - screenoffset/vertex, 2 - texture coordinates, 1 - color
       /*
-      if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+      if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	mul++;
       } else {
 	mul += 4;
@@ -9973,7 +9972,7 @@ CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est)
     colorVals = texcoordVals + nxtn * num_total_indices;
     colorValsUC = (uchar*) colorVals;
     nxtn = 1;
-      /*    if (true) { //SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+      /*    if (true) { //SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
     } else {
       nxtn = 4;
       }*/
@@ -10026,7 +10025,7 @@ CGO *CGOOptimizeScreenTexturesAndPolygons(CGO * I, int est)
 	ok = false;
       } else if (ok){
 	allbufs[2] = bufs[bufpl++];
-	/*	if (SettingGet(I->G, cSetting_cgo_shader_ub_color)){
+	/*	if (SettingGetGlobal_i(I->G, cSetting_cgo_shader_ub_color)){
 	  sz = 1;
 	  }*/
 	glBufferData(GL_ARRAY_BUFFER, sizeof(uchar)*num_total_indices*4, colorValsUC, GL_STATIC_DRAW);      

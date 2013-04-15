@@ -472,9 +472,9 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       }
     } else {
       short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
-      use_shader = (int) SettingGet(G, cSetting_surface_use_shader) & 
-                           (int) SettingGet(G, cSetting_use_shaders);
-      use_display_lists = (int) SettingGet(G, cSetting_use_display_lists);
+      use_shader = SettingGetGlobal_b(G, cSetting_surface_use_shader) & 
+                   SettingGetGlobal_b(G, cSetting_use_shaders);
+      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
       if (I->shaderCGO && (!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO) ||
 			   (I->Type == 1 && I->dot_as_spheres != dot_as_spheres))){
@@ -2304,7 +2304,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
           }
         } else if (ok) {                /* opaque */
           int simplify = 0; //, use_shader;
-          simplify = (int) SettingGet(G, cSetting_simplify_display_lists);
+          simplify = SettingGetGlobal_b(G, cSetting_simplify_display_lists);
             if(I->allVisibleFlag) {
               if(I->oneColorFlag) {
                 if(use_display_lists && simplify) {      /* simplify: try to help display list optimizer */
@@ -2977,7 +2977,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    }*/
         }
       }
-      if(ok && SettingGet(G, cSetting_surface_debug)) {
+      if(ok && SettingGetGlobal_i(G, cSetting_surface_debug)) {
         t = I->T;
         c = I->NT;
 	  if (generate_shader_cgo){

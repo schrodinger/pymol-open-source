@@ -156,7 +156,7 @@ static void SeekerSelectionToggleRange(PyMOLGlobals * G, CSeqRow * rowVLA, int r
           PLogFlush(G);
         }
 
-        if(SettingGet(G, cSetting_auto_show_selections))
+        if(SettingGetGlobal_b(G, cSetting_auto_show_selections))
           ExecutiveSetObjVisib(G, selName, 1, false);
         SceneInvalidate(G);
       }
@@ -239,7 +239,7 @@ static void SeekerSelectionToggle(PyMOLGlobals * G, CSeqRow * rowVLA, int row_nu
           PLogFlush(G);
         }
 
-        if(SettingGet(G, cSetting_auto_show_selections))
+        if(SettingGetGlobal_b(G, cSetting_auto_show_selections))
           ExecutiveSetObjVisib(G, selName, 1, false);
         SceneInvalidate(G);
       }
@@ -343,7 +343,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, CSeqRow * rowVLA, int button, int 
         char name[WordLength];
         if(ExecutiveGetActiveSeleName(G, name, false, false)) {
           SelectorCreate(G, name, "none", NULL, true, NULL);
-          if(SettingGet(G, cSetting_logging)) {
+          if(SettingGetGlobal_i(G, cSetting_logging)) {
             sprintf(buf2, "cmd.select('%s','none', enable=1)", name);
             PLog(G, buf2, cPLog_no_flush);
           }
