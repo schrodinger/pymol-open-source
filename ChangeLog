@@ -2,6 +2,17 @@
 CHANGE LOG
 =========================================================================
 
+2013-04-17 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* support full path for "matrix" argument
+	  https://sourceforge.net/p/pymol/patches/4/
+
+	* use PyMOL API in pymol.rpc module
+	  https://sourceforge.net/p/pymol/patches/3/
+
+	* doc string for cmd.find_pairs
+	  https://sourceforge.net/p/pymol/patches/2/
+
 2013-04-12 Blaine Bell <blaine.bell@schrodinger.com>, Thomas Holder <thomas.holder@schrodinger.com>
 
 	* rotate ANISOU vector when transforming objects

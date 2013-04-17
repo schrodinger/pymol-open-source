@@ -222,12 +222,12 @@ SEE ALSO
                 target = selector.process(target)
                 if object==None: object=''
                 matrix = str(matrix)
-                if string.lower(matrix)=='none':
-                        matrix=''
-                if len(matrix):
-                        mfile = cmd.exp_path("$PYMOL_DATA/pymol/matrices/"+matrix)
+                if matrix.lower() in ['none', '']:
+                        mfile = ''
+                elif os.path.exists(matrix):
+                        mfile = matrix
                 else:
-                        mfile = ''                
+                        mfile = cmd.exp_path("$PYMOL_DATA/pymol/matrices/"+matrix)
                 # delete existing alignment object (if asked to reset it)
                 try:
                         _self.lock(_self)
@@ -289,12 +289,12 @@ SEE ALSO
                 mobile = selector.process(mobile)
                 target = selector.process(target)
                 matrix = str(matrix)
-                if string.lower(matrix)=='none':
-                        matrix=''
-                if len(matrix):
-                        mfile = cmd.exp_path("$PYMOL_DATA/pymol/matrices/"+matrix)
-                else:
+                if matrix.lower() in ['none', '']:
                         mfile = ''
+                elif os.path.exists(matrix):
+                        mfile = matrix
+                else:
+                        mfile = cmd.exp_path("$PYMOL_DATA/pymol/matrices/"+matrix)
                 if object==None: object=''
                 # delete existing alignment object (if asked to reset it)
                 try:
