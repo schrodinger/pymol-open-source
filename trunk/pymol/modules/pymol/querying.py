@@ -1315,8 +1315,29 @@ NOTE
         '''
 DESCRIPTION
 
-    "find_pairs" is currently undocumented.
+    API only function. Returns a list of atom pairs. Atoms are represented as
+    (model,index) tuples.
 
+    Can be restricted to hydrogen-bonding-like contacts. WARNING: Only checks
+    atom orientation, not atom type (so would hydrogen bond between carbons for
+    example), so make sure to provide appropriate atom selections.
+
+ARGUMENTS
+
+    selection1, selection2 = string: atom selections
+
+    state1, state2 = integer: state-index (only positive values allowed) {default: 1}
+
+    cutoff = float: distance cutoff {default: 3.5}
+
+    mode = integer: if mode=1, do coarse hydrogen bonding assessment {default: 0}
+
+    angle = float: hydrogen bond angle cutoff, only if mode=1 {default: 45.0}
+
+NOTE
+
+    Although this does a similar job like "distance", it uses a completely
+    different routine and the "mode" argument has different meanings!
         '''
         # preprocess selection
         selection1 = selector.process(selection1)

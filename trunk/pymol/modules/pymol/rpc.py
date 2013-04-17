@@ -10,6 +10,8 @@
             - python with threading enabled  
  
   RD Version: $Rev$            
+
+  Modified 2013-04-17 Thomas Holder, Schrodinger, Inc.
 """
 import SimpleXMLRPCServer
 import threading,sys,time,types,os,tempfile
@@ -19,52 +21,6 @@ from pymol import cmd,cgo
 _xmlPort=9123
 # number of alternate ports to try if the first fails
 _nPortsToTry=5
-def rpcCmd(cmdText):
-  """ executes a PyMol API command
- 
-   return value is either the result of the command or the empty string
- 
-  """
-  res = cmd.do(cmdText)
-  if res is not None:
-    return res
-  else:
-    return ''
- 
-def rpcQuit():
-  """ causes PyMol to quit """
-  cmd.quit()
-  return 1
- 
-def rpcZoom(what=''):
-  """ executes cmd.zoom(what) """
-  cmd.zoom(what)
-  return 1
- 
- 
-def rpcSet(prop,val,obj):
-  """ executes a PyMol set command
- 
-   return value is either the result of the command or the empty string
- 
-  """
-  res = cmd.set(prop,val,obj)
-  if res is not None:
-    return res
-  else:
-    return ''
- 
-def rpcGet(prop,obj):
-  """ executes a PyMol get command
- 
-   return value is either the result of the command or the empty string
- 
-  """
-  res = cmd.get(prop,obj)
-  if res is not None:
-    return res
-  else:
-    return ''
  
 def rpcPing():
   """ Used to establish whether or not the server is alive.
@@ -90,16 +46,7 @@ def rpcLabel(pos,labelText,id='lab1',color=(1,1,1)):
       at the moment this is, how you say, a hack
  
   """
-  x,y,z = pos
-  text="""
-Atom
- 
-  1  0  0  0  0  0  0  0  0  0999 V2000
-% 10.4f% 10.4f%10.4f C   0  0  0  0  0  0  0  0  0  0  0  0
-M  END"""%(x,y,z)
-  cmd.read_molstr(text,id)
-  cmd.label("%s"%(id),'"%s"'%labelText)
-  cmd.hide("nonbonded",id)
+  cmd.pseudoatom(id, label=repr(labelText), elem='C', pos=pos)
   cmd.set_color("%s-color"%id,color)
   cmd.color("%s-color"%id,id)
   return 1
@@ -240,36 +187,6 @@ is white
   cgoDict[id] = obj
   cmd.load_cgo(obj,id,1)
   return 1
- 
-def rpcShow(objs):
-  """ shows (enables) an object (or objects)"""
-  if type(objs) not in (types.ListType,types.TupleType):
-    objs = (objs,)
- 
-  for objName in objs:
-    try:
-      cmd.enable(objName)
-    except:
-      res = 0
-      break
-    else:
-      res = 1
-  return res  
- 
-def rpcHide(objs):
-  """ hides (disables) an object (or objects) """
-  if type(objs) not in (types.ListType,types.TupleType):
-    objs = (objs,)
- 
-  for objName in objs:
-    try:
-      cmd.disable(objName)
-    except:
-      res = 0
-      break
-    else:
-      res = 1
-  return res  
  
 def rpcDeleteObject(objName):
   """ deletes an object """
@@ -432,23 +349,6 @@ def rpcLoadSurfaceData(data,objName='surface',format='',surfaceLevel=1.0):
     return ''
 
  
-def rpcSave(filename,objName='all',state=0,format=''):
-  """ executes a cmd.save command
- 
-    Arguments:
-     - filename: output filename
-     - objName: (OPTIONAL) object(s) to be saved
-     - state: (OPTIONAL)
-     - format: (OPTIONAL) output format
- 
-  """
-  res = cmd.save(filename,objName,state,format)
-  if res is not None:
-    return res
-  else:
-    return ''
-
- 
 def rpcRotate(vect,objName='',state=-1):
   """ rotates objects
  
@@ -464,33 +364,9 @@ def rpcRotate(vect,objName='',state=-1):
   cmd.rotate('z',vect[2],objName,state=state)
   return 1
 
-def rpcTranslate(vect,objName='all',state=-1):
-  """ translates objects
- 
-    Arguments:
-     - vect: a sequence with x y and z translations
-     - objName: (OPTIONAL) object to be translated
-     - state: (OPTIONAL) if zero only visible states are translated,
-       if -1 (the default), all states are translated
-  """
-  cmd.translate(vect,objNAme,state=state)
-  return 1
-
 def rpcGetNames(what='selections',enabledOnly=1):
   """ returns the results of cmd.get_names(what) """
   return cmd.get_names(what,enabled_only=enabledOnly)
- 
-def rpcIdentify(what='all',mode=0):
-  """ returns the results of cmd.identify(what,mode) """
-  return cmd.identify(what,mode=mode)
- 
-def rpcIndex(what='all'):
-  """ returns the results of cmd.index(what) """
-  return cmd.index(what)
- 
-def rpcCountAtoms(what='all'):
-  """ returns the results of cmd.count_atoms(what) """
-  return cmd.count_atoms(what)
  
 def rpcIdAtom(what='all',mode=0):
   """ returns the results of cmd.id_atom(what) """
@@ -543,37 +419,35 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
   """
   if not hostname:
     import os
-    hostname = os.environ.get('PYMOL_RPCHOST','')
-    if not hostname or hostname.upper()=='LOCALHOST':
-      hostname = 'localhost'
-    else:
-      import socket
-      hostname=socket.gethostbyname(socket.gethostname())
+    hostname = os.environ.get('PYMOL_RPCHOST', 'localhost')
  
   global cgoDict,serv
   cgoDict = {}
   for i in range(nToTry):
     try:
-      serv = SimpleXMLRPCServer.SimpleXMLRPCServer((hostname,port+i),logRequests=0)
+      serv = SimpleXMLRPCServer.SimpleXMLRPCServer((hostname,port+i),logRequests=0,
+          allow_none=True)
     except:
       serv = None
     else:
       break
   if serv:
     print 'xml-rpc server running on host %s, port %d'%(hostname,port+i)
-    serv.register_function(rpcCmd,'do')
-    serv.register_function(rpcQuit,'quit')
-    serv.register_function(rpcSet,'set')
-    serv.register_function(rpcGet,'get')
+
+    # import PyMOL API
+    from pymol import api
+    for name in dir(api):
+      func = getattr(api, name)
+      if callable(func):
+        serv.register_function(func, name)
+
+    # legacy stuff with unique names
     serv.register_function(rpcPing,'ping')
     serv.register_function(rpcResetCGO,'resetCGO')
     serv.register_function(rpcRenderCGO,'renderCGO')
     serv.register_function(rpcSphere,'sphere')
     serv.register_function(rpcSpheres,'spheres')
     serv.register_function(rpcCylinder,'cylinder')
-    serv.register_function(rpcHide,'hide')
-    serv.register_function(rpcShow,'show')
-    serv.register_function(rpcZoom,'zoom')
     serv.register_function(rpcDeleteObject,'deleteObject')
     serv.register_function(rpcDeleteAll,'deleteAll')
     serv.register_function(rpcLoadPDB,'loadPDB')
@@ -581,17 +455,16 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
     serv.register_function(rpcLoadSurface,'loadSurface')
     serv.register_function(rpcLoadSurfaceData,'loadSurfaceData')
     serv.register_function(rpcLoadFile,'loadFile')
-    serv.register_function(rpcSave,'save')
-    serv.register_function(rpcLabel,'label')
-    serv.register_function(rpcRotate,'rotate')
-    serv.register_function(rpcTranslate,'translate')
     serv.register_function(rpcGetNames,'getNames')
-    serv.register_function(rpcIdentify,'identify')
-    serv.register_function(rpcIndex,'index')
-    serv.register_function(rpcCountAtoms,'countAtoms')
+    serv.register_function(api.count_atoms,'countAtoms')
     serv.register_function(rpcIdAtom,'idAtom')
     serv.register_function(rpcHelp,'help')
     serv.register_function(rpcGetAtomCoords,'getAtomCoords')
+
+    # legacy stuff, should be removed because overwrites API names!
+    serv.register_function(rpcLabel,'label')   # pseudoatom
+    serv.register_function(rpcRotate,'rotate') 
+
     serv.register_introspection_functions()
     t = threading.Thread(target=serv.serve_forever)
     t.setDaemon(1)
@@ -599,3 +472,4 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
   else:
     print 'xml-rpc server could not be started'
     
+# vi:expandtab:smarttab:sw=2
