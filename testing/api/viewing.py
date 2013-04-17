@@ -1,3 +1,4 @@
+import random
 from pymol import cmd, testing, stored
 
 class TestViewing(testing.PyMOLTestCase):
@@ -76,40 +77,85 @@ class TestViewing(testing.PyMOLTestCase):
         self._testZoomGeneric(cmd.orient, views)
 
     def testClip(self):
-        cmd.clip
-        self.skipTest('TODO')
+        for a in "xyz":
+            cmd.turn(a, random.random() * 10 - 5)
+            cmd.move(a, random.random() * 10 - 5)
+        v = cmd.get_view()
+        cmd.clip("near", -5)
+        self.assertAlmostEqual(v[15] + 5, cmd.get_view()[15], delta=1e-3)
+        cmd.clip("far", 10)
+        self.assertAlmostEqual(v[16] - 10, cmd.get_view()[16], delta=1e-3)
+        cmd.clip("move", -15)
+        a = cmd.get_view()
+        self.assertAlmostEqual(v[15], a[15] - 20, delta=1e-3)
+        self.assertAlmostEqual(v[16], a[16] - 5, delta=1e-3)
+        cmd.clip("slab", 20)
+        v = cmd.get_view()
+        self.assertAlmostEqual(v[16] - v[15], 20.0, delta=1e-3)
+        cmd.pseudoatom()
+        cmd.clip("atoms", 5, "all")
+        v = cmd.get_view()
+        self.assertAlmostEqual(v[16] - v[15], 10.0, delta=1e-3)
 
     def testOrigin(self):
         cmd.origin
         self.skipTest('TODO')
 
     def testMove(self):
-        cmd.move
-        self.skipTest('TODO')
+        for a in "xyz":
+            cmd.turn(a, random.random() * 10 - 5)
+            cmd.move(a, random.random() * 10 - 5)
+        v = list(cmd.get_view())
+        d = (2,4,6)
+        cmd.move("x", d[0])
+        cmd.move("y", d[1])
+        cmd.move("z", d[2])
+        m = cmd.get_view()
+        v[9] += d[0]
+        v[10] += d[1]
+        v[11] += d[2]
+        v[15] -= d[2]
+        v[16] -= d[2]
+        self.assertArrayEqual(v, m, delta=1e-3)
 
     def testEnable(self):
-        cmd.enable
-        self.skipTest('TODO')
+        cmd.create('m1', 'none')
+        cmd.create('m2', 'none')
+        cmd.disable()
+        self.assertEqual(cmd.get_names('public_objects', 1), [])
+        cmd.enable('m1')
+        self.assertEqual(cmd.get_names('public_objects', 1), ['m1'])
+        cmd.enable()
+        self.assertEqual(cmd.get_names('public_objects', 1), ['m1', 'm2'])
 
     def testDisable(self):
-        cmd.disable
-        self.skipTest('TODO')
+        # see testEnable
+        pass
 
     def testToggle(self):
         cmd.toggle
         self.skipTest('TODO')
 
     def testShow(self):
-        cmd.show
-        self.skipTest('TODO')
+        cmd.fragment('ala')
+        self.assertEqual(cmd.count_atoms('rep sticks'), 0)
+        cmd.show('sticks')
+        self.assertEqual(cmd.count_atoms('rep sticks'), 10)
+        cmd.hide('lines', 'not elem C')
+        self.assertEqual(cmd.count_atoms('rep lines'), 3)
 
     def testHide(self):
-        cmd.hide
-        self.skipTest('TODO')
+        # see testShow
+        pass
 
     def testView(self):
-        cmd.view
-        self.skipTest('TODO')
+        cmd.turn('x', 30)
+        a = cmd.get_view()
+        cmd.view('A', 'store')
+        cmd.turn('y', 30)
+        self.assertNotEqual(a, cmd.get_view())
+        cmd.view('A', 'recall')
+        self.assertEqual(a, cmd.get_view())
 
     def testScene(self):
         cmd.scene
@@ -120,8 +166,9 @@ class TestViewing(testing.PyMOLTestCase):
         self.skipTest('TODO')
 
     def testTurn(self):
-        cmd.turn
-        self.skipTest('TODO')
+        cmd.turn('z', 90)
+        v = cmd.get_view()
+        self.assertArrayEqual(v[:9], [0.,1.,0.,-1.,0.,0.,0.,0.,1.], delta=1e-3)
 
     def testRock(self):
         cmd.rock
@@ -140,8 +187,9 @@ class TestViewing(testing.PyMOLTestCase):
         self.skipTest('TODO')
 
     def testViewport(self):
-        cmd.viewport
-        self.skipTest('TODO')
+        v = (100,50)
+        cmd.viewport(*v)
+        self.assertEqual(cmd.get_viewport(), v)
 
     def testCartoon(self):
         cmd.cartoon
@@ -156,16 +204,28 @@ class TestViewing(testing.PyMOLTestCase):
         self.skipTest('TODO')
 
     def testRay(self):
-        cmd.ray
-        self.skipTest('TODO')
+        # tested in many other tests
+        pass
 
     def testRefresh(self):
         cmd.refresh
         self.skipTest('TODO')
 
     def testReset(self):
-        cmd.reset
-        self.skipTest('TODO')
+        # view
+        v = cmd.get_view()
+        cmd.turn('x', 10)
+        cmd.move('y', 10)
+        self.assertNotEqual(v, cmd.get_view())
+        cmd.reset()
+        self.assertEqual(v, cmd.get_view())
+        # object
+        cmd.pseudoatom("m1")
+        x = cmd.get_object_matrix("m1")
+        cmd.translate([1,2,3], object="m1")
+        self.assertNotEqual(x, cmd.get_object_matrix("m1"))
+        cmd.reset("m1")
+        self.assertEqual(x, cmd.get_object_matrix("m1"))
 
     def testDirty(self):
         cmd.dirty
@@ -180,8 +240,11 @@ class TestViewing(testing.PyMOLTestCase):
         self.skipTest('TODO')
 
     def testColor(self):
-        cmd.color
-        self.skipTest('TODO')
+        cmd.fragment('ala')
+        cmd.color(3)
+        colors = set()
+        cmd.iterate('all', 'colors.add(color)', space=locals())
+        self.assertItemsEqual(colors, [3])
 
     def testSpectrum(self):
         cmd.spectrum

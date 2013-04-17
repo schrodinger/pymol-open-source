@@ -1,5 +1,6 @@
 from pymol import cmd, testing, stored
 
+@testing.requires('incentive')
 class TestMorphing(testing.PyMOLTestCase):
 
     @testing.requires('incentive')
