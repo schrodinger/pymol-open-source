@@ -246,6 +246,28 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.iterate('all', 'colors.add(color)', space=locals())
         self.assertItemsEqual(colors, [3])
 
+    def _testSpectrum_setup(self):
+        cmd.pseudoatom('m1', pos=(-2,0,0))
+        cmd.pseudoatom('m2', pos=(0,0,0))
+        cmd.pseudoatom('m3', pos=(2,0,0))
+        cmd.show_as('spheres')
+        cmd.set('ambient', 1)
+        cmd.set('specular', 0)
+        cmd.viewport(40,20)
+        cmd.zoom()
+
     def testSpectrum(self):
-        cmd.spectrum
-        self.skipTest('TODO')
+        self._testSpectrum_setup()
+        cmd.spectrum()
+        img = self.get_imagearray()
+        self.assertImageHasColor('blue', img)
+        self.assertImageHasColor('red', img)
+
+    @testing.requires('incentive')
+    def testSpectrumany(self):
+        self._testSpectrum_setup()
+        cmd.spectrum('count', 'red blue')
+        img = self.get_imagearray()
+        self.assertImageHasColor('red', img)
+        self.assertImageHasColor('blue', img)
+        self.assertImageHasColor('0x7f007f', img, delta=1)
