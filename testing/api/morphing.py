@@ -25,6 +25,10 @@ class TestMorphing(testing.PyMOLTestCase):
         cmd.rotate('x', 45, 'm1', 3)
         steps = 5
         cmd.morph('mout', 'm1', None, 0, 0, 0, steps, 'linear')
-        self.assertEqual(steps * 3, cmd.count_states('mout'))
+        self.assertEqual(steps * 2, cmd.count_states('mout'))
         self.assertEqual(cmd.count_atoms('m1'),
                          cmd.count_atoms('mout'))
+        cmd.morph('mo2', 'm1', None, 0, -1, 0, steps, 'linear')
+        self.assertEqual(steps * 3, cmd.count_states('mo2'))
+        self.assertEqual(cmd.count_atoms('m1'),
+                         cmd.count_atoms('mo2'))
