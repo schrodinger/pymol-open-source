@@ -26,7 +26,7 @@ class TestAtomProperties(testing.PyMOLTestCase):
 
     @testing.foreach('1molecule.mae')
     def testLoadNoAtomProperties(self, molfilename):
-        cmd.load(self.datafile(molfilename), 'test', load_properties='*', load_atom_properties='')
+        cmd.load(self.datafile(molfilename), 'test', object_props='*')
         objs = cmd.get_object_list()
         for obj in objs:
             stored.prop_lookup = {}
@@ -37,7 +37,7 @@ class TestAtomProperties(testing.PyMOLTestCase):
 
     @testing.foreach('1molecule.mae', '1d_smiles.mae')
     def testMAEchempy(self, molfilename):
-        cmd.load(self.datafile(molfilename), 'test', load_properties='*', load_atom_properties='*')
+        cmd.load(self.datafile(molfilename), 'test', object_props='*', atom_props='*')
         objs = cmd.get_object_list()
         for obj in objs:
             idxToVal = {}
@@ -70,7 +70,7 @@ class TestAtomProperties(testing.PyMOLTestCase):
                 idx += 1
 
     def testMAEsaveLoadSessionsWithAtomProperties(self):
-        cmd.load(self.datafile('1molecule.mae'), '1molecule', load_atom_properties='*')
+        cmd.load(self.datafile('1molecule.mae'), '1molecule', atom_props='*')
         allpropdata = {}
         objs = cmd.get_object_list()
         stored.prop_lookup = {}

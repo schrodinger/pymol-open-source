@@ -10,7 +10,7 @@ from pymol import cmd, testing, stored
 class TestCopyProperties(testing.PyMOLTestCase):
 
     def testCopyObjectProperties(self):
-        cmd.load(self.datafile('1molecule.mae'), 'test', load_properties='*')
+        cmd.load(self.datafile('1molecule.mae'), 'test', object_props='*')
         objs = cmd.get_object_list()
         for obj in objs:
             obj_copy = '%s_copy' % obj
@@ -24,7 +24,7 @@ class TestCopyProperties(testing.PyMOLTestCase):
                 self.assertEqual(prop1, prop2)
 
     def testCopyAtomProperties(self):
-        cmd.load(self.datafile('1molecule.mae'), 'test', load_properties='*', load_atom_properties='*')
+        cmd.load(self.datafile('1molecule.mae'), 'test', object_props='*', atom_props='*')
         objs = cmd.get_object_list()
         for obj in objs:
             obj_copy = '%s_copy' % obj

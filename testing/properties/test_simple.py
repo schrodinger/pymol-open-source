@@ -19,7 +19,7 @@ class TestProperties(testing.PyMOLTestCase):
 
     # test loading MAE files with all properties
     def testMAEloadAllProperties(self):
-        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', load_properties='*')
+        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', object_props='*')
         objs = cmd.get_object_list()
         for obj in objs:
             props = cmd.get_property_list(obj)
@@ -28,7 +28,7 @@ class TestProperties(testing.PyMOLTestCase):
     # test loading MAE files with some properties listed
     def testMAEloadSomeProperties(self):
         props = ['s_knime_origin_file_name', 's_knime_origin_hostname']
-        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', load_properties=' '.join(props))
+        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', object_props=' '.join(props))
         objs = cmd.get_object_list()
         for obj in objs:
             allprops = cmd.get_property_list(obj)
@@ -37,7 +37,7 @@ class TestProperties(testing.PyMOLTestCase):
     # test loading MAE files with some properties listed that do not exist
     def testMAEloadSomePropertiesDontExist(self):
         props = ['s_knime_origin_file_name', 's_knime_origin_hostname', 'dontexist']
-        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', load_properties=' '.join(props))
+        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', object_props=' '.join(props))
         objs = cmd.get_object_list()
         for obj in objs:
             allprops = cmd.get_property_list(obj)
@@ -46,14 +46,14 @@ class TestProperties(testing.PyMOLTestCase):
     # test loading MAE files with no properties listed
     def testMAEloadSomePropertiesEmptyList(self):
         props = []
-        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', load_properties=' '.join(props))
+        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', object_props=' '.join(props))
         objs = cmd.get_object_list()
         for obj in objs:
             allprops = cmd.get_property_list(obj)
             self.assertIsNone(allprops)
 
     def testMAEsaveLoadSessions(self):
-        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', load_properties='*')
+        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', object_props='*')
         allpropdata = {}
         objs = cmd.get_object_list()
         for obj in objs:
@@ -79,7 +79,7 @@ class TestProperties(testing.PyMOLTestCase):
                     self.fail('properties are not the same: obj=%s prop=%s' % (obj, prop))
 
     def testMAEchempy(self):
-        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', load_properties='*')
+        cmd.load(self.datafile('1d_smiles.mae'), '1d_smiles', object_props='*')
         objs = cmd.get_object_list()
         for obj in objs:
             model = cmd.get_model(obj)
@@ -132,7 +132,7 @@ class TestProperties(testing.PyMOLTestCase):
                 'property loaded, but should not')
         cmd.delete('*')
 
-        cmd.load('CID_%d.sdf' % cid, 'm1', load_properties='*')
+        cmd.load('CID_%d.sdf' % cid, 'm1', object_props='*')
         self.assertEqual(cid, cmd.get_property('PUBCHEM_COMPOUND_CID', 'm1'))
 
         v_pc = cmd.get_property('PUBCHEM_MMFF94_PARTIAL_CHARGES', 'm1')
@@ -141,7 +141,8 @@ class TestProperties(testing.PyMOLTestCase):
         self.assertEqual(n_pc, len(lines) - 1)
 
         # test loading selective properties
-        cmd.load('CID_%d.sdf' % cid, 'm2', load_properties="PUBCHEM_COMPOUND_CID PUBCHEM_CONFORMER_RMSD PUBCHEM_CONFORMER_DIVERSEORDER")
+        cmd.set('load_object_props_default', "PUBCHEM_COMPOUND_CID PUBCHEM_CONFORMER_RMSD PUBCHEM_CONFORMER_DIVERSEORDER")
+        cmd.load('CID_%d.sdf' % cid, 'm2')
         self.assertEqual(cid, cmd.get_property('PUBCHEM_COMPOUND_CID', 'm2'))
         self.assertEqual(None, cmd.get_property('PUBCHEM_EFFECTIVE_ROTOR_COUNT', 'm2'))
 
