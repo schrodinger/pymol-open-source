@@ -1061,7 +1061,7 @@ NOTES
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def read_mmodstr(*arg,**kw):
+    def read_mmodstr(content, name, state=0, quiet=1, zoom=-1, **kw):
         '''
 DESCRIPTION
 
@@ -1072,24 +1072,9 @@ DESCRIPTION
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            ftype = loadable.mmodstr
-            if kw.has_key('quiet'):
-                quiet = int(kw['quiet'])
-            else:
-                quiet = 1
-            if kw.has_key('zoom'):
-                zoom = int(kw['zoom'])
-            else:
-                zoom = -1
-            if len(arg)==2:
-                oname = string.strip(arg[1])
-                r = _cmd.load(_self._COb,str(oname),arg[0],-1,int(ftype),1,1,quiet,0,zoom)
-            elif len(arg)==3:
-                oname = string.strip(arg[1])
-                r = _cmd.load(_self._COb,str(oname),arg[0],int(arg[2])-1,
-                                  int(ftype),1,1,quiet,0,zoom)
-            else:
-                print "argument error."
+            r = _cmd.load(_self._COb, str(name).strip(), str(content),
+                    int(state)-1, loadable.mmodstr, 1, 1, int(quiet), 0,
+                    int(zoom))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -1229,251 +1214,142 @@ PYMOL API
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def _fetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet,_self=cmd):
-        import urllib
-        import gzip
-        import os
-        import string
-        import time
-        import re
+    fetchHosts = {
+        "pdb"  : "ftp://ftp.wwpdb.org/pub/pdb",
+        "pdbe" : "ftp://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated",
+        "pdbj" : "ftp://pdb.protein.osaka-u.ac.jp/pub/pdb",
+    }
+
+    hostPaths = {
+        "bio"  : "/data/biounit/coordinates/divided/{mid}/{code}.{type}.gz",
+        "pdb"  : "/data/structures/divided/pdb/{mid}/pdb{code}.ent.gz",
+        "cif"  : "/data/structures/divided/structure_factors/{mid}/r{code}sf.ent.gz",
+        "2fofc" : "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}.omap",
+        "fofc": "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}_diff.omap",
+    }
+
+    def _fetch(code, name, state, finish, discrete, multiplex, zoom, type, path,
+            file, quiet, _self=cmd):
+        '''
+        code = str: single pdb identifier
+        name = str: object name
+        state = int: object state
+        finish =
+        discrete = bool: make discrete multi-state object
+        multiplex = bool: split states into objects (like split_states)
+        zoom = int: zoom to new loaded object
+        type = str: fofc, 2fofc, pdb, pdb1, ... 
+        path = str: fetch_path
+        file = str or file: file name or open file handle
+        '''
+        from . import internal
+
+        fetch_host_list = [x if '://' in x else fetchHosts[x]
+                for x in _self.get("fetch_host", _self=_self).split()]
 
         # file types can be: fofc, 2fofc, pdb, pdb1, pdb2, pdb3, etc...
         # bioType is the string representation of the type
         # typeExt is the file name extension based on type
-        if type == 'fofc':
-            bioType = type
-            typeExt = '_fofc.omap'
-        elif type == '2fofc':
-            bioType = type
-            typeExt = '_2fofc.omap'
-        elif type == 'pdb':
-            bioType = type
+        bioType = type
+        if type == 'pdb':
             typeExt = '.pdb'
-        elif type=='cif':
-            bioType=type
+        elif type in ('fofc', '2fofc'):
+            typeExt = '_%s.omap' % type
+        elif type == 'cif':
             typeExt = '.sf'
-        elif re.search("^pdb\d+$", type) != None:
+        elif re.match(r'pdb\d+$', type):
             bioType = 'bio'
-            typeExt = "." + re.search("^pdb\d+$", type).group()
+            typeExt = '.' + type
+        else:
+            raise ValueError('type')
 
-        # worldwide servers
-        fetchHosts = {  "pdb"  : "ftp://ftp.wwpdb.org/pub/pdb/",
-                        "pdbe" : "ftp://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/", 
-                        "pdbj" : "ftp://pdb.protein.osaka-u.ac.jp/pub/pdb/" }
-        
-        # paths to the PDBs on each server, by type
-        hostPaths = { "pdb" :
-                      { "bio"  : "data/biounit/coordinates/divided/",
-                        "pdb"  : "data/structures/divided/pdb/",
-                        "cif"  : "data/structures/divided/structure_factors/",
-                        },
-                      "pdbe" :
-                      { "bio"  : "data/biounit/coordinates/divided/",
-                        "pdb"  : "data/structures/divided/pdb/",
-                        "cif"  : "data/structures/divided/structure_factors/",
-                        },
-                      "pdbj" :
-                      { "bio"  : "data/biounit/coordinates/divided/",
-                        "pdb"  : "data/structures/divided/pdb/",
-                        "cif"  : "data/structures/divided/structure_factors/",
-                        }
-                    }
+        url = hostPaths[bioType]
+        url_list = [url] if '://' in url else [fetch_host + url
+                for fetch_host in fetch_host_list]
 
-        # portion of the link after the code
-        hostPost = { "pdb" : { "pdb" : ".ent.gz",
-                               "bio" : typeExt+".gz",
-                               "cif" : "sf.ent.gz" },
-                     "pdbe": { "pdb" : ".ent.gz",
-                               "bio" : typeExt+".gz",
-                               "cif" : "sf.ent.gz" },
-                     "pdbj": { "pdb" : ".ent.gz",
-                               "bio" : typeExt+".gz",
-                               "cif" : "sf.ent.gz" }
-                   }
+        if not name:
+            name = code
+            if bioType not in ('pdb', 'bio'):
+                name += '_' + type
+        code = code.lower()
 
-        # users could set this to something nonsensical
-        fetch_host = setting.get("fetch_host", _self=_self)
-        if fetch_host not in ( "pdb", "pdbe", "pdbj" ):
-            fetch_host = "pdb"
-                        
         fobj = None
-        fname = None
-        auto_close_file = 1
 
-        if path and not file:
-            file = 1
-        if (file==1) or (file=='1') or (file=='auto'): 
-            if path:
-                fname = os.path.join(path,string.lower(code))
-            else:
-                fname = string.lower(code)
-                
-            if bioType in [ 'fofc', '2fofc', 'cif' ]:
-                fname += typeExt
-                if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
-                    name = name + "_" + bioType
-            else:
-                fname += typeExt
-        elif is_string(file):
-            fname = file
-        elif file:
+        if not file or file in (1, '1', 'auto'):
+            file = os.path.join(path, code.lower() + typeExt)
+
+        if not isinstance(file, basestring):
             fobj = file
-            auto_close_file = 0
-        if fname and not fobj:
-            # if the file's cached locally, use it
-            if os.path.exists(fname):
-                if bioType in ("fofc", "2fofc"):
-                    return _self.load(fname,name,state,'brix',finish,discrete,quiet,
-                                  multiplex,zoom)
-                else:                    
-                    return _self.load(fname,name,state,'pdb',finish,discrete,quiet,
-                                  multiplex,zoom)
-        tries = 0
-        r = DEFAULT_ERROR
-        done = 0
-        
-        while (done == 0) and (tries<3): # try loading URL up to 3 times
-            tries = tries + 1
-            if bioType in [ 'pdb', 'bio', 'cif' ]:
-                # pdb files are: pdb3XYZ whereas pdb1 files are 1XYZ.pdb3
-                prePDB = ''
-                if type=='pdb':
-                    prePDB = 'pdb'
-                elif type=="cif":
-                    prePDB = 'r'
+            file = None
+        elif os.path.exists(file):
+            # skip downloading
+            url_list = []
 
-                # eg, ftp://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/data/structures/divided/pdb/
-                remotePre = fetchHosts[fetch_host] + hostPaths[fetch_host][bioType]
-                # eg, fo/pdb1foo
-                remoteCode = string.lower(code)[1:3] + "/" + prePDB + string.lower(code)
-                # eg, .pdb3.gz
-                remotePost = hostPost[fetch_host][bioType]
-                
-                try:
-                    #print "remotePre: %s" % remotePre
-                    #print "remoteCode: %s" % remoteCode
-                    #print "remotePost: %s" % remotePost
-                    url = remotePre + remoteCode + remotePost
-                    #print url
-                    
-                    if url!=None:
-                        filename = urllib.urlretrieve(url)[0]
-                except:
-#                    print traceback.print_exc()
-                    pass
-                else:
-                    if os.path.exists(filename):
-                        if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
-                            try:
-                                abort = 0
-                                pdb_str = gzip.open(filename).read()
-                                if fname and not fobj:
-                                    fobj = open(fname,'wb')
-                                if fobj:
-                                    fobj.write(pdb_str)
-                                    fobj.flush()
-                                    if auto_close_file:
-                                        fobj.close()
-                                if bioType=="cif":
-                                    if not quiet:
-                                        print "Downloaded CIF file '%s' to' '%s'." % (name,fname)
-                                else:
-                                    r = _self.read_pdbstr(pdb_str,name,state,finish,
-                                                          discrete,quiet,zoom,multiplex)
-                                done = 1
-                            except IOError:
-#                                print traceback.print_exc()
-                                pass
-                        else:
-#                            print traceback.print_exc()
-                            pass
-                        try:
-                            os.remove(filename)
-                        except:
-                            pass
-            elif bioType in ("fofc" ,"2fofc"):
-            # for ED maps,
-            # http://eds.bmc.uu.se/eds/dfs/cb/1cbs/1cbs.omap
-            # http://eds.bmc.uu.se/eds/dfs/cb/1cbs/1cbs_diff.omap
-                url = None
-                remoteCode = string.lower(code)
-                if len(remoteCode)<4:
-                    pass
-                else:
-                    url = "http://eds.bmc.uu.se/eds/dfs/" + remoteCode[1:3] + "/" + remoteCode + "/" + remoteCode
-                    if type=="2fofc":
-                        url += ".omap"
-                    else:  # default to fofc
-                        url += "_diff.omap"
+        for url in url_list:
+            url = url.format(mid=code[1:3], code=code, type=type)
 
-                if url == None:
-                    pass
-                else:
-                    try:
-                        filename = urllib.urlretrieve(url)[0]
-                    except:
-                        pass
-                    else:
-                        if os.path.exists(filename):
-                            if (os.path.getsize(filename) > 0): # If 0, then map doesn't exist
-                                try:
-                                    abort = 0
-                                    map_str = open(filename,'rb').read()
-                                    if map_str[0]=='<':  # file not found
-                                        print "Electron density map for %s not found on server." % remoteCode
-                                        os.remove(filename)
-                                        break
-                                    if fname and not fobj:
-                                        fobj = open(fname,'wb')
-                                    if fobj:
-                                        fobj.write(map_str)
-                                        fobj.flush()
-                                        if auto_close_file:
-                                            fobj.close()
-                                    if name in _self.get_names("objects"):  # if the PDB exists, don't over write it
-                                        name = name + "_" + type
-                                    #print "r = _self.load(",fname, name, state, loadable.brix, finish, discrete, quiet, multiplex, zoom, ")"
-                                    r = _self.load(fname, name, state, loadable.brix, finish, discrete, quiet, multiplex, zoom)
-                                    done = 1
-                                except IOError:
-    #                                print traceback.print_exc()
-                                    pass
-                            else:
-    #                            print traceback.print_exc()
-                                pass
-                            try:
-                                os.remove(filename)
-                            except:
-                                pass
-                          
-            if done == 0:
-                time.sleep(0.1)
-        if done == 0:
-            r = DEFAULT_ERROR
-            print "Error-fetch: unable to load '%s'."%code
-        return r
-    
+            try:
+                contents = internal.file_read(url)
+            except pymol.CmdException:
+                if not quiet:
+                    print " Warning: failed to fetch from", url
+                continue
+
+            if file:
+                fobj = open(file, 'wb')
+            fobj.write(contents)
+            fobj.flush()
+            if file:
+                fobj.close()
+
+            if not file:
+                return DEFAULT_SUCCESS
+
+            if bioType == 'cif':
+                if not quiet:
+                    print " Downloaded CIF file to '%s'." % (file)
+                return DEFAULT_SUCCESS
+
+            break
+
+        if os.path.exists(file):
+            r = _self.load(file, name, state,
+                    'brix' if bioType in ('fofc', '2fofc') else 'pdb',
+                    finish, discrete, quiet, multiplex, zoom)
+            if not _self.is_error(r):
+                return name
+
+        print " Error-fetch: unable to load '%s'." % code
+        return DEFAULT_ERROR
+
     def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet,_self):
         import string
         r = DEFAULT_SUCCESS
-        code_list = string.split(str(code))
-        name = string.strip(str(name))
+        code_list = code.split()
+        name = name.strip()
         if (name!='') and (len(code_list)>1) and (discrete<0):
             discrete = 1 # by default, select discrete  when loading
             # multiple PDB entries into a single object
+
         for obj_code in code_list:
-            obj_code = string.strip(obj_code)
-            if len(obj_code):
-                if name=='':
+            obj_name = name
+
+            chain = None
+            if len(obj_code) in (5,6) and type == 'pdb':
+                if not obj_name:
                     obj_name = obj_code
-                else:
-                    obj_name = name
-                r = _fetch(obj_code,obj_name,state,finish,
-                           discrete,multiplex,zoom,type,path,file,quiet,_self)
+                obj_code, chain = obj_code[:4], obj_code[-1]
+
+            r = _fetch(obj_code, obj_name, state, finish,
+                    discrete, multiplex, zoom, type, path, file, quiet, _self)
+
+            if chain and isinstance(r, str):
+                _self.remove('?%s and not chain %s' % (r, chain))
+
         return r
     
     def fetch(code, name='', state=0, finish=1, discrete=-1,
-              multiplex=-2, zoom=-1, type='pdb', async=-1, path=None,
+              multiplex=-2, zoom=-1, type='pdb', async=-1, path='',
               file=None, quiet=1, _self=cmd):
         
         '''
@@ -1487,7 +1363,8 @@ USAGE
 
 ARGUMENTS
 
-    code = a single PDB identifier or a list of identifiers.
+    code = a single PDB identifier or a list of identifiers. Supports
+    5-letter codes for fetching single chains (like 1a00A).
 
     name = the object name into which the file should be loaded.
 
@@ -1512,26 +1389,25 @@ NOTES
     not work behind certain types of network firewalls.
     
         '''
-        import threading
+        state, finish, discrete = int(state), int(finish), int(discrete)
+        multiplex, zoom = int(multiplex), int(zoom)
+        async, quiet = int(async), int(quiet)
+
         r = DEFAULT_SUCCESS
-        if path==None:
-            path = setting.get('fetch_path',_self=_self)
+        if not path:
             # blank paths need to be reset to '.'
-            if path=='': path='.'
+            path = setting.get('fetch_path',_self=_self) or '.'
         if async<0: # by default, run asynch when interactive, sync when not
             async = not quiet
-        if not int(async):
+        args = (code, name, state, finish, discrete, multiplex, zoom, type, path, file, quiet, _self)
+        kwargs = { '_self' : _self }
+        if async:
+            _self.async(_multifetch, *args, **kwargs)
+        else:
             try:
                 _self.block_flush(_self)
-                r = _multifetch(code,name,state,finish,
-                                discrete,multiplex,zoom,type,path,file,quiet,_self)
-            except:
+                r = _multifetch(*args)
+            finally:
                 _self.unblock_flush(_self)
-        else:
-            t = threading.Thread(target=_multifetch,
-                                 args=(code,name,state,finish,
-                                       discrete,multiplex,zoom,type,path,file,quiet,_self))
-            t.setDaemon(1)
-            t.start()
         return r
         

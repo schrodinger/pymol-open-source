@@ -19,6 +19,14 @@ import operator
 
 class Base:
 
+    @property
+    def nAtom(self):
+        return len(self.atom)
+
+    @property
+    def nBond(self):
+        return len(self.bond)
+
 #------------------------------------------------------------------------------
     def update_index(self):
         if chempy.feedback['verbose']:
@@ -129,17 +137,6 @@ class Base:
 #------------------------------------------------------------------------------
 
 class Indexed(Base):
-
-    attr_value = {
-        'nAtom' : compile('len(self.atom)','Indexed','eval'),
-        'nBond' : compile('len(self.bond)','Indexed','eval'),
-        }
-
-    def __getattr__(self,attr):
-        if Indexed.attr_value.has_key(attr):
-            return eval(Indexed.attr_value[attr])
-        else:
-            raise AttributeError(attr)
 
 #------------------------------------------------------------------------------
     def __init__(self):
@@ -579,16 +576,6 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
 class Connected(Base):
 
-    attr_value = {
-        'nAtom' : compile('len(self.atom)','Connected','eval'),
-        }
-
-    def __getattr__(self,attr):
-        if Connected.attr_value.has_key(attr):
-            return eval(Connected.attr_value[attr])
-        else:
-            raise AttributeError(attr)
-        
 #------------------------------------------------------------------------------
     def __init__(self):
         self.reset()

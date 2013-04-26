@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2013-04-26 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* refactored importing.fetch
+
+	* spectrum enhancements (arbitrary expressions and colors)
+
+	* pymol2.cmd2: implement proxy pattern
+
+	* chempy model improvements
+
+	* fix bg_color, which sometimes did not apply instantly
+
 2013-04-17 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* support full path for "matrix" argument

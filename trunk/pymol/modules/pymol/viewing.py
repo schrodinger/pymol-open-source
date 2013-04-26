@@ -36,6 +36,19 @@ if __name__=='pymol.viewing':
           DEFAULT_ERROR, DEFAULT_SUCCESS
         
     import thread
+
+    palette_colors_dict = {
+        'rainbow_cycle'     : 'magenta blue cyan green yellow orange red magenta',
+        'rainbow_cycle_rev' : 'magenta red orange yellow green cyan blue magenta',
+        'rainbow'           : 'blue cyan green yellow orange red',
+        'rainbow_rev'       : 'red orange yellow green cyan blue',
+        'rainbow2'          : 'blue cyan green yellow orange red',
+        'rainbow2_rev'      : 'red orange yellow green cyan blue',
+        'gcbmry'            : 'green cyan blue magenta red yellow',
+        'yrmbcg'            : 'yellow red magenta blue cyan green',
+        'cbmr'              : 'cyan blue magenta red',
+        'rmbc'              : 'red magenta blue cyan',
+    }
     
     rep_list = [ "lines", "sticks", "spheres", "dots", "surface",
                  "mesh", "nonbonded", "nb_spheres", "cartoon",
@@ -2497,6 +2510,81 @@ EXAMPLE
         if _self._raising(r,_self): raise QuietException
         return r
 
+    def spectrumany(expression, colors, selection='(all)', minimum=None,
+            maximum=None, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Pure python implementation of the spectrum command. Supports arbitrary
+    color lists instead of palettes and any numerical atom property which
+    works in iterate as expression.
+
+    Non-numeric values (like resn) will be enumerated.
+
+    This is not a separate PyMOL command but is used as a fallback in "spectrum".
+        '''
+        from . import CmdException
+
+        if ' ' not in colors:
+            colors = palette_colors_dict.get(colors) or colors.replace('_', ' ')
+
+        quiet, colors = int(quiet), colors.split()
+
+        n_colors = len(colors)
+        if n_colors < 2:
+            raise CmdException('please provide at least 2 colors')
+
+        col_tuples = [_self.get_color_tuple(i) for i in colors]
+        if None in col_tuples:
+            raise CmdException('unknown color')
+
+        expression = {'pc': 'partial_charge', 'fc': 'formal_charge',
+                'resi': 'resv'}.get(expression, expression)
+
+        if expression == 'count':
+            e_list = range(_self.count_atoms(selection))
+        else:
+            e_list = []
+            _self.iterate(selection, 'e_list.append(%s)' % (expression), space=locals())
+
+        try:
+            v_list = [float(v) for v in e_list if v is not None]
+        except (TypeError, ValueError):
+            if not quiet:
+                print ' Spectrum: Expression is non-numeric, enumerating values'
+            v_list = e_list = map(sorted(set(e_list)).index, e_list)
+
+        if not v_list:
+            return (0., 0.)
+
+        if minimum is None: minimum = min(v_list)
+        if maximum is None: maximum = max(v_list)
+        r = minimum, maximum = float(minimum), float(maximum)
+        if not quiet:
+            print ' Spectrum: range (%.5f to %.5f)' % r
+
+        val_range = maximum - minimum
+        if not val_range:
+            _self.color(colors[0], selection)
+            return r
+
+        e_it = iter(e_list)
+        def next_color():
+            v = e_it.next()
+            if v is None:
+                return False
+            v = (float(v) - minimum) / val_range * (n_colors - 1)
+            i = min(int(v), n_colors - 2)
+            p = v - i
+            rgb = [int(255 * (col_tuples[i+1][j] * p + col_tuples[i][j] * (1.0 - p)))
+                    for j in range(3)]
+            return 0x40000000 + rgb[0] * 0x10000 + rgb[1] * 0x100 + rgb[2]
+
+        _self.alter(selection, 'color = next_color() or color', space=locals())
+        _self.recolor(selection)
+
+        return r
+
     def spectrum(expression="count", palette="rainbow",
                  selection="(all)", minimum=None, maximum=None,
                  byres=0, quiet=1, _self=cmd):
@@ -2516,7 +2604,8 @@ ARGUMENTS
     expression = count, b, q, or pc: respectively, atom count, temperature factor,
     occupancy, or partial charge {default: count}
     
-    palette = string: palette name {default: rainbow}
+    palette = string: palette name or space separated list of colors
+    {default: rainbow}
 
     selection = string: atoms to color {default: (all)}
 
@@ -2560,8 +2649,13 @@ PYMOL API
 
 
         '''
+        palette_hit = palette_sc.shortcut.get(palette)
+        if palette_hit:
+            palette = palette_hit
 
-        palette = palette_sc.auto_err(palette,'palette')
+        if expression not in ('count', 'b', 'q', 'pc') or not palette_hit:
+            return spectrumany(expression, palette, selection,
+                    minimum, maximum, quiet, _self)
         
         (prefix,digits,first,last) = palette_dict[str(palette)]
 

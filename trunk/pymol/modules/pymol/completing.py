@@ -1,5 +1,12 @@
 import cmd
 
+expr_sc = cmd.Shortcut([
+    'segi', 'chain', 'resn', 'resi', 'name', 'alt', 'elem', 'text_type',
+    'formal_charge', 'numeric_type', 'ID',
+    'q', 'b', 'partial_charge', 'vdw',
+])
+
+aa_exp_e = [ expr_sc                    , 'expression'      , ''   ]
 aa_sel_e = [ cmd.selection_sc           , 'selection'       , ''   ]
 aa_sel_c = [ cmd.selection_sc           , 'selection'       , ', ' ]
 aa_obj_e = [ cmd.object_sc              , 'object'          , ''   ]
@@ -8,6 +15,12 @@ aa_obj_c = [ cmd.object_sc              , 'object'          , ', ' ]
 aa_set_c = [ cmd.setting.setting_sc     , 'setting'         , ', ' ]
 aa_map_c = [ cmd.map_sc                 , 'map object'      , ', ' ]
 aa_rep_c = [ cmd.repres_sc              , 'representation'  , ', ' ]
+
+def wizard_sc():
+    import os, pymol.wizard
+    names_glob = [name[:-3] for p in pymol.wizard.__path__
+            for name in os.listdir(p) if name.endswith('.py')]
+    return cmd.Shortcut(names_glob)
 
 def get_auto_arg_list(self_cmd=cmd):
     return [
@@ -78,6 +91,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'show'           : aa_rep_c,
         'smooth'         : aa_sel_e,
         'space'          : [ self_cmd.space_sc               , 'space'           , ''   ],      
+        'spectrum'       : aa_exp_e,
         'split_chains'   : aa_sel_e,
         'split_states'   : aa_obj_c,
         'super'          : aa_sel_c,
@@ -90,11 +104,13 @@ def get_auto_arg_list(self_cmd=cmd):
         'valence'        : [ self_cmd.editing.order_sc       , 'order'           , ', ' ],
         'view'           : [ self_cmd._pymol._view_dict_sc   , 'view'            , ''   ],         
         'window'         : [ self_cmd.window_sc              , 'action'          , ', ' ],      
+        'wizard'         : [ wizard_sc                       , 'wizard'          , ', '   ],
         'zoom'           : aa_sel_e,
         },
 # 2nd
         {
         'align'          : aa_sel_e,
+        'alter'          : aa_exp_e,
         'as'             : aa_sel_e,
         'bond'           : aa_sel_e,
         'button'         : [ self_cmd.controlling.but_mod_sc , 'modifier'        , ', ' ],
@@ -112,6 +128,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'hide'           : aa_sel_e,
         'isomesh'        : aa_map_c,
         'isosurface'     : aa_map_c,
+        'iterate'        : aa_exp_e,
         'volume'         : aa_map_c,
         'select'         : aa_sel_e,
         'save'           : aa_sel_c,
