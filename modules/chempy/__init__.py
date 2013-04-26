@@ -12,7 +12,6 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import string
 import os
 import copy
 
@@ -22,41 +21,34 @@ import copy
 
 class Atom:
 
-    defaults = {
-        'symbol'              : 'X',
-        'name'                : '',
-        'resn'                : 'UNK',
-        'resn_code'           : 'X',
-        'resi'                : '1',
-        'resi_number'         : 1,
-        'b'                   : 0.0,
-        'q'                   : 1.0,
-        'vdw'                 : 0.0,
-        'alt'                 : '',
-        'hetatm'              : 1,
-        'segi'                : '',
-        'chain'               : '',
-        'coord'               : [9999.999,9999.999,9999.999],
-        'formal_charge'       : 0.0,
-        'partial_charge'      : 0.0,
+    # these must be immutables
+    symbol              = 'X'
+    name                = ''
+    resn                = 'UNK'
+    resn_code           = 'X'
+    resi                = '1'
+    resi_number         = 1
+    b                   = 0.0
+    q                   = 1.0
+    vdw                 = 0.0
+    alt                 = ''
+    hetatm              = 1
+    segi                = ''
+    chain               = ''
+    coord               = (9999.999,9999.999,9999.999)
+    formal_charge       = 0.0
+    partial_charge      = 0.0
 # Flags
-        'flags'               : 0,
+    flags               = 0
 # Force-fields
-        'numeric_type'        : -9999,
-        'text_type'           : '??',
+    numeric_type        = -9999
+    text_type           = '??'
 # MDL Mol-files
-        'stereo'              : 0,
+    stereo              = 0
 # Macromodel files
-        'color_code'          : 2,
+    color_code          = 2
 # Secondary structure
-        'ss'                  : '',
-        }
-    
-    def __getattr__(self,attr):
-        if Atom.defaults.has_key(attr):
-            return copy.deepcopy(Atom.defaults[attr])
-        else:
-            raise AttributeError(attr)
+    ss                  = ''
 
     def get_mass(self):
         '''Given the chemical symbol the atomic mass is returned'''      
@@ -91,49 +83,26 @@ class Atom:
         return newat
 
     def get_signature(self):
-        return string.join([self.segi,self.chain,self.resn,
-                                  self.resi,self.symbol,self.name],':')
+        return ':'.join([self.segi, self.chain, self.resn,
+            self.resi, self.symbol, self.name])
     
     def __cmp__(self,other):
-        if type(self)==type(other):
-            if self.segi == other.segi:
-                if self.chain == other.chain:
-                    if self.resi_number == other.resi_number:
-                        if self.resn == other.resn:
-                            if self.resi == other.resi:
-                                if self.symbol == other.symbol:
-                                    if self.name == other.name:
-                                        return cmp(id(self),id(other))
-                                    else:
-                                        return cmp(self.name,other.name)
-                                else:
-                                    return cmp(self.symbol,other.symbol)
-                            else:
-                                return cmp(self.resi,other.resi)
-                        else:
-                            return cmp(self.resn,other.resn)
-                    else:
-                        return cmp(self.resi_number,other.resi_number)               
-                else:
-                    return cmp(self.chain,other.chain)
-            else:
-                return cmp(self.segi,other.segi)
-        else:
-            return cmp(type(self),type(other))
+        return \
+                cmp(type(self), type(other)) or \
+                cmp(self.segi, other.segi) or \
+                cmp(self.chain, other.chain) or \
+                cmp(self.resi_number, other.resi_number) or \
+                cmp(self.resi, other.resi) or \
+                cmp(self.resn, other.resn) or \
+                cmp(self.symbol, other.symbol) or \
+                cmp(self.name, other.name) or \
+                cmp(id(self), id(other))
         
 class Bond:
 
-    defaults = {
-        'order'           : 1,
-        'stereo'          : 0
-        }
+    order   = 1
+    stereo  = 0
 
-    def __getattr__(self,attr):
-        if Bond.defaults.has_key(attr):
-            return Bond.defaults[attr]
-        else:
-            raise AttributeError(attr)
-        
     def has(self,attr):
         return self.__dict__.has_key(attr) 
 
@@ -160,7 +129,7 @@ class Molecule:
 class Storage:
 
     def my_open(self,fname,mode='r'):
-        if (mode[0:1]=='r') and (string.find(fname,':')>1):
+        if 'r' in mode and '://' in fname:
             import urllib
             return urllib.urlopen(fname)
         elif fname.endswith(".gz") or fname.endswith(".pze") or fname.endswith("pzw"):

@@ -2078,13 +2078,8 @@ static PyObject *CmdBackgroundColor(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    idx = ColorGetIndex(G, str1);
-    if(idx >= 0)
-      ok = SettingSet_i(G->Setting, cSetting_bg_rgb, idx);
-    else {
-      ErrMessage(G, "Color", "Bad color name.");
-      ok = false;               /* bad color */
-    }
+    ok = SettingSet_color(G->Setting, cSetting_bg_rgb, str1);
+    SettingGenerateSideEffects(G, cSetting_bg_rgb, cKeywordAll, -1);
     APIExit(G);
   }
   return APIResultOk(ok);

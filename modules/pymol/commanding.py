@@ -546,19 +546,25 @@ DESCRIPTION
         '''
         from .wizard.message import Message
 
-        wiz = Message(['please wait ...'], dismiss=0)
-        cmd.set_wizard(wiz)
+        _self = kwargs.pop('_self', cmd)
+
+        wiz = Message(['please wait ...'], dismiss=0, _self=_self)
+        _self.set_wizard(wiz)
 
         if isinstance(func, str):
-            func = cmd.keyword[func][0]
+            func = _self.keyword[func][0]
 
         def wrapper():
             async_threads.append(t)
             try:
                 func(*args, **kwargs)
+            except (pymol.CmdException, cmd.QuietException) as e:
+                if e.args:
+                    print e
             finally:
-                cmd.set_wizard_stack(filter(lambda w: w != wiz,
-                    cmd.get_wizard_stack()))
+                _self.set_wizard_stack(filter(lambda w: w != wiz,
+                    _self.get_wizard_stack()))
+                _self.refresh_wizard()
                 async_threads.remove(t)
 
         t = threading.Thread(target=wrapper)
