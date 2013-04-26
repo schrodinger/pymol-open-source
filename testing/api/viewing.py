@@ -154,7 +154,7 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.view('A', 'store')
         cmd.turn('y', 30)
         self.assertNotEqual(a, cmd.get_view())
-        cmd.view('A', 'recall')
+        cmd.view('A', 'recall', animate=0)
         self.assertEqual(a, cmd.get_view())
 
     def testScene(self):
@@ -253,6 +253,8 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.show_as('spheres')
         cmd.set('ambient', 1)
         cmd.set('specular', 0)
+        cmd.set('reflect', 0)
+        cmd.set('direct', 0)
         cmd.viewport(40,20)
         cmd.zoom()
 
@@ -263,11 +265,10 @@ class TestViewing(testing.PyMOLTestCase):
         self.assertImageHasColor('blue', img)
         self.assertImageHasColor('red', img)
 
-    @testing.requires('incentive')
     def testSpectrumany(self):
         self._testSpectrum_setup()
         cmd.spectrum('count', 'red blue')
         img = self.get_imagearray()
         self.assertImageHasColor('red', img)
         self.assertImageHasColor('blue', img)
-        self.assertImageHasColor('0x7f007f', img, delta=1)
+        self.assertImageHasColor('0x7f007f', img, delta=30)
