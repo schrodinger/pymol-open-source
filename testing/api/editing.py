@@ -127,8 +127,11 @@ class TestEditing(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def test_dss(self):
-        cmd.dss
-        self.skipTest("TODO")
+        ss_list = []
+        cmd.fab('A' * 6, ss=1)
+        cmd.dss()
+        cmd.iterate('2-5/CA', 'ss_list.append(ss)', space=locals())
+        self.assertEqual(ss_list, ['H', 'H', 'H', 'H'])
 
     def test_edit(self):
         cmd.edit
