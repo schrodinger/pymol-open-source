@@ -8,12 +8,21 @@ import unittest
 
 class TestCreating(testing.PyMOLTestCase):
 
-    @unittest.skip("Not yet implemented.")
     def testGroup(self):
-        pass
+        cmd.pseudoatom('m1')
+        cmd.pseudoatom('m2')
+        cmd.pseudoatom('m3')
+        m_list = []
+        cmd.group('g1', 'm1 m2')
+        cmd.iterate('g1', 'm_list.append(model)', space=locals())
+        self.assertItemsEqual(m_list, ['m1', 'm2'])
+        m_list = []
+        cmd.ungroup('m2')
+        cmd.iterate('g1', 'm_list.append(model)', space=locals())
+        self.assertItemsEqual(m_list, ['m1'])
 
-    @unittest.skip("Not yet implemented.")
     def testUngroup(self):
+        # see testGroup
         pass
 
     @unittest.skip("Not yet implemented.")
