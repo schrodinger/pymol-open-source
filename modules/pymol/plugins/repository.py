@@ -67,7 +67,7 @@ class Repository():
             dst = os.path.join(dst, os.path.basename(name))
 
         content = self.retrieve(name)
-        f = open(dst, 'w')
+        f = open(dst, 'wb')
         f.write(content)
         f.close()
 
@@ -184,7 +184,7 @@ class LocalRepository(Repository):
 
     def retrieve(self, name):
         url = self.get_full_url(name)
-        handle = open(url)
+        handle = open(url, "rb")
         content = handle.read()
         handle.close()
         return content

@@ -2529,6 +2529,7 @@ class Normal(PMGSkin):
                                  'Specular Reflections.',
                                  label='Specular Reflections',
                                 variable = self.setting.specular,
+                                onvalue=1.0, offvalue=0.0,
                                 )
 
         self.menuBar.addmenuitem('Display', 'checkbutton',
@@ -2791,6 +2792,7 @@ class Normal(PMGSkin):
                                  'Highlight Color',
                                  label='Highlight Color',
                                 variable = self.setting.cartoon_highlight_color,
+                                onvalue=104, offvalue=-1,
                                 )
 
         self.menuBar.addcascademenu('Setting', 'Ribbon', 'Ribbon',
@@ -3136,6 +3138,7 @@ class Normal(PMGSkin):
                                  'Opaque Interior Colors',
                                  label='Opaque Interiors',
                                 variable = self.setting.ray_interior_color,
+                                onvalue=74, offvalue=-1,
                                 )
 
         self.menuBar.addmenuitem('Setting', 'separator', '')

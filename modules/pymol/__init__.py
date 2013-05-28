@@ -288,8 +288,6 @@ if pymol_launch != 3: # if this isn't a dry run
                     for a in self.invocation.options.deferred:
                         if a[0:4]=="_do_":
                             cmd.do(a[4:])
-                        elif re.search(r"pymol\.py$",a):
-                            pass
                         elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
                             cmd.do("_ run %s" % a)
                         elif cmd.file_ext_re.search(a):
