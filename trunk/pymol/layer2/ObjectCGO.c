@@ -40,13 +40,10 @@ static PyObject *ObjectCGOStateAsPyList(ObjectCGOState * I)
   PyObject *result = NULL;
 
   result = PyList_New(1);
-  /*  NO LONGER NEED TO SAVE I->std, just ray tracing version 
-  if(I->std)
-    PyList_SetItem(result, 0, CGOAsPyList(I->std));
-  else
-  PyList_SetItem(result, 0, PConvAutoNone(NULL));*/
   if(I->ray)
     PyList_SetItem(result, 0, CGOAsPyList(I->ray));
+  else if(I->std)
+    PyList_SetItem(result, 0, CGOAsPyList(I->std));
   else
     PyList_SetItem(result, 0, PConvAutoNone(NULL));
   return (PConvAutoNone(result));
@@ -747,16 +744,6 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo, 
             cgo = font_cgo;
           }
           est = CGOCheckComplex(cgo);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-	  {
-	    CGO *convertcgo = NULL;
-	    if(cgo && cgo->has_begin_end){
-	      convertcgo = CGOCombineBeginEnd(cgo, 0);
-	      CGOFree(cgo);
-	      cgo = convertcgo;
-	    }
-	  }
-#endif
           if(est) {
             I->State[state].ray = cgo;
             I->State[state].std = CGOSimplify(cgo, est);
@@ -822,16 +809,6 @@ ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals * G, ObjectCGO * obj,
       cgo = font_cgo;
     }
     est = CGOCheckComplex(cgo);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-    {
-      CGO *convertcgo = NULL;
-      if(cgo && cgo->has_begin_end){
-	convertcgo = CGOCombineBeginEnd(cgo, 0);
-	CGOFree(cgo);
-	cgo = convertcgo;
-      }
-    }
-#endif
     if(est) {
       I->State[state].ray = cgo;
       I->State[state].std = CGOSimplify(cgo, est);

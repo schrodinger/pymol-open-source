@@ -6,8 +6,8 @@ varying vec4 packed_data_3 ;
 varying vec4 packed_data_4 ;
 
 //varying vec3 N;
-#define NORMAL packed_data_0.xyz
 #define COLOR packed_data_3
+#define NORMAL normalize(packed_data_0.xyz)
 
 uniform float fog_enabled;
 varying float fog;

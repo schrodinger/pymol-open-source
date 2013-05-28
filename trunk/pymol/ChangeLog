@@ -2,6 +2,17 @@
 CHANGE LOG
 =========================================================================
 
+2013-05-27 Thomas Holder, Blaine Bell
+
+	* fix surface normals
+
+	* fix Scripts ending with ...pymol.py do not execute
+	  https://sourceforge.net/p/pymol/bugs/46/
+
+	* several CGO fixes
+
+	* several python fixes
+
 2013-04-26 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* refactored importing.fetch

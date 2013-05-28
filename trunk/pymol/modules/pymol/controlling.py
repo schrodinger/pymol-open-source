@@ -685,8 +685,8 @@ DESCRIPTION
         if is_string(active):
             active=boolean_dict[boolean_sc.auto_err(active,'active')]
         active = int(active)
-        if len(mouse_ring):
-            bm = int(_cmd.get_setting(_self._COb,"button_mode"))
+        bm = _self.get_setting_int("button_mode")
+        if 0 <= bm < len(mouse_ring):
             mouse_mode = mouse_ring[bm]
             if active:
                 if mouse_mode[0:10]=='two_button':

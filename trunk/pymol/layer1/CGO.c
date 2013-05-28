@@ -8404,25 +8404,6 @@ static int CGOSimpleSphere(CGO * I, float *v, float vdw)
   s = sp->StripLen;
 
   for(b = 0; b < sp->NStrip; b++) {
-#ifdef _PYMOL_CGO_DRAWARRAYS
-    {
-      int nverts = (*s), pl = 0;
-      float *vertexVals, *normalVals, *tmp_ptr;
-      vertexVals = CGODrawArrays(I, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);      
-      ok &= vertexVals ? true : false;
-      if (ok){
-	normalVals = vertexVals + (nverts*3);
-	for(c = 0; c < (*s); c++) {
-	  tmp_ptr = sp->dot[*q];
-	  normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
-	  vertexVals[pl++] = v[0] + vdw * sp->dot[*q][0]; 
-	  vertexVals[pl++] = v[1] + vdw * sp->dot[*q][1];
-	  vertexVals[pl++] = v[2] + vdw * sp->dot[*q][2];
-	  q++;
-	}
-      }
-    }
-#else
     if (ok)
       ok &= CGOBegin(I, GL_TRIANGLE_STRIP);
     for(c = 0; ok && c < (*s); c++) {
@@ -8434,7 +8415,6 @@ static int CGOSimpleSphere(CGO * I, float *v, float vdw)
     }
     if (ok)
       ok &= CGOEnd(I);
-#endif
     s++;
   }
   return ok;
@@ -8485,72 +8465,6 @@ static int CGOSimpleEllipsoid(CGO * I, float *v, float vdw, float *n0, float *n1
   s = sp->StripLen;
 
   for(b = 0; b < sp->NStrip; b++) {
-#ifdef _PYMOL_CGO_DRAWARRAYS
-    {
-      int nverts = (*s), pl = 0;
-      float *vertexVals, *normalVals;
-      vertexVals = CGODrawArrays(I, GL_TRIANGLE_STRIP, CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY, nverts);
-      ok &= vertexVals ? true : false;
-      if (ok){
-	normalVals = vertexVals + (nverts*3);
-	for(c = 0; c < (*s); c++) {
-	  float *sp_dot_q = sp->dot[*q];
-	  float s0 = vdw * sp_dot_q[0];
-	  float s1 = vdw * sp_dot_q[1];
-	  float s2 = vdw * sp_dot_q[2];
-	  float d0[3], d1[3], d2[3], vv[3], direction[3];
-	  float dd0, dd1, dd2, ss0, ss1, ss2;
-	  float comp0[3], comp1[3], comp2[3];
-	  float surfnormal[3];
-	  int i;
-	  
-	  scale3f(n0, s0, d0);
-	  scale3f(n1, s1, d1);
-	  scale3f(n2, s2, d2);
-	  
-	  for(i = 0; i < 3; i++) {
-	    vv[i] = d0[i] + d1[i] + d2[i];
-	  }
-	  normalize23f(vv, direction);
-	  add3f(v, vv, vv);
-	  
-	  dd0 = dot_product3f(direction, nn0);
-	  dd1 = dot_product3f(direction, nn1);
-	  dd2 = dot_product3f(direction, nn2);
-	  
-	  if(scale[0] > R_SMALL8) {
-	    ss0 = dd0 / scale_sq[0];
-	  } else {
-	    ss0 = 0.0F;
-	  }
-	  if(scale[1] > R_SMALL8) {
-	    ss1 = dd1 / scale_sq[1];
-	  } else {
-	    ss1 = 0.0F;
-	  }
-	  
-	  if(scale[2] > R_SMALL8) {
-	    ss2 = dd2 / scale_sq[2];
-	  } else {
-	    ss2 = 0.0F;
-	  }
-	  
-	  scale3f(nn0, ss0, comp0);
-	  scale3f(nn1, ss1, comp1);
-	  scale3f(nn2, ss2, comp2);
-	  
-	  for(i = 0; i < 3; i++) {
-	    surfnormal[i] = comp0[i] + comp1[i] + comp2[i];
-	  }
-	  normalize3f(surfnormal);
-	  
-	  normalVals[pl] = surfnormal[0]; normalVals[pl+1] = surfnormal[1]; normalVals[pl+2] = surfnormal[2];
-	  vertexVals[pl++] = vv[0]; vertexVals[pl++] = vv[1]; vertexVals[pl++] = vv[2];
-	  q++;
-	}
-      }
-    }
-#else
     ok &= CGOBegin(I, GL_TRIANGLE_STRIP);
     for(c = 0; ok && c < (*s); c++) {
       float *sp_dot_q = sp->dot[*q];
@@ -8610,7 +8524,6 @@ static int CGOSimpleEllipsoid(CGO * I, float *v, float vdw, float *n0, float *n1
     }
     if (ok)
       ok &= CGOEnd(I);
-#endif
     s++;
   }
   return ok;
@@ -8699,61 +8612,6 @@ static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, flo
 
   /* now we have a coordinate system */
 
-#ifdef _PYMOL_CGO_DRAWARRAYS
-  if (ok) {
-    int nverts = (2*nEdge) + 2, pl = 0, plc = 0, damode = CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY;
-    float *vertexVals;
-    float *normalVals, *colorVals = 0, *tmp_ptr;
-    if (colorFlag){
-      damode |= CGO_COLOR_ARRAY;
-    }
-    vertexVals = CGODrawArrays(I, GL_TRIANGLE_STRIP, damode, nverts);
-    ok &= vertexVals ? true : false;
-    if (ok){
-      normalVals = vertexVals + (nverts*3);
-      if (colorFlag){
-	colorVals = normalVals + (nverts*3);
-      }
-      for(c = nEdge; c >= 0; c--) {
-	v[0] = p1[0] * x[c] + p2[0] * y[c];
-	v[1] = p1[1] * x[c] + p2[1] * y[c];
-	v[2] = p1[2] * x[c] + p2[2] * y[c];
-	
-	v[3] = vv1[0] + v[0] * tube_size;
-	v[4] = vv1[1] + v[1] * tube_size;
-	v[5] = vv1[2] + v[2] * tube_size;
-	
-	v[6] = v[3] + d[0];
-	v[7] = v[4] + d[1];
-	v[8] = v[5] + d[2];
-	
-	tmp_ptr = v;
-	normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
-	if(colorFlag){
-	  if (c1){
-	    colorVals[plc++] = c1[0]; colorVals[plc++] = c1[1]; 
-	    colorVals[plc++] = c1[2]; colorVals[plc++] = I->alpha;
-	  } else {
-	    colorVals[plc++] = I->color[0]; colorVals[plc++] = I->color[1]; 
-	    colorVals[plc++] = I->color[2]; colorVals[plc++] = I->alpha;
-	  }
-	}
-	tmp_ptr = v + 3;
-	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
-	pl += 3;
-	tmp_ptr = &normalVals[pl-3];
-	normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
-	if(colorFlag){
-	  colorVals[plc++] = c2[0]; colorVals[plc++] = c2[1]; 
-	  colorVals[plc++] = c2[2]; colorVals[plc++] = I->alpha;
-	}
-	tmp_ptr = v + 6;
-	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
-	pl += 3;
-      }
-    }
-  }
-#else
   if (ok)
     ok &= CGOBegin(I, GL_TRIANGLE_STRIP);
   for(c = nEdge; ok && c >= 0; c--) {
@@ -8781,7 +8639,7 @@ static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, flo
   }
   if (ok)
     ok &= CGOEnd(I);
-#endif
+
   if(ok && cap1) {
     v[0] = -p0[0];
     v[1] = -p0[1];
@@ -8799,43 +8657,6 @@ static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, flo
 
     if(ok && colorFlag && c1)
       ok &= CGOColorv(I, c1);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-    if (ok) {
-      int nverts = nEdge + 2, pl = 0, damode = CGO_VERTEX_ARRAY;
-      float *vertexVals;
-      float *normalVals = 0;
-      if(cap2 == cCylCapRound){
-	damode |= CGO_NORMAL_ARRAY;
-      } else {
-	ok &= CGONormalv(I, v);
-      }
-      vertexVals = CGODrawArrays(I, GL_TRIANGLE_FAN, damode, nverts);
-      ok &= vertexVals ? true : false;
-      if (ok){
-	if(cap1 == cCylCapRound){
-	  normalVals = vertexVals + (nverts*3);
-	  normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	}
-	vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	pl += 3;
-	for(c = nEdge; c >= 0; c--) {
-	  v[0] = p1[0] * x[c] + p2[0] * y[c];
-	  v[1] = p1[1] * x[c] + p2[1] * y[c];
-	  v[2] = p1[2] * x[c] + p2[2] * y[c];
-	  
-	  v[3] = vv1[0] + v[0] * tube_size;
-	  v[4] = vv1[1] + v[1] * tube_size;
-	  v[5] = vv1[2] + v[2] * tube_size;
-	  
-	  if(normalVals){
-	    normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	  }
-	  vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	  pl += 3;
-	}
-      }
-    }
-#else
     if (ok)  ok &= CGOBegin(I, GL_TRIANGLE_FAN);
     if (ok)  ok &= CGONormalv(I, v);
     if (ok)  ok &= CGOVertexv(I, v + 3);
@@ -8856,7 +8677,6 @@ static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, flo
     }
     if (ok)
       ok &= CGOEnd(I);
-#endif
   }
 
   if(ok && cap2) {
@@ -8876,44 +8696,6 @@ static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, flo
 
     if(colorFlag)
       ok &= CGOColorv(I, c2);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-    if (ok) {
-      int nverts = nEdge + 2, pl = 0, damode = CGO_VERTEX_ARRAY;
-      float *vertexVals = NULL;
-      float *normalVals = NULL;
-      if(cap2 == cCylCapRound){
-	damode |= CGO_NORMAL_ARRAY;
-      } else {
-	ok &= CGONormalv(I, v);
-      }
-      if (ok)
-	vertexVals = CGODrawArrays(I, GL_TRIANGLE_FAN, damode, nverts);
-      ok &= vertexVals ? true : false;
-      if (ok){
-	if(cap2 == cCylCapRound){
-	  normalVals = vertexVals + (nverts*3);
-	  normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	}
-	vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	pl += 3;
-	for(c = 0; c <= nEdge; c++) {
-	  v[0] = p1[0] * x[c] + p2[0] * y[c];
-	  v[1] = p1[1] * x[c] + p2[1] * y[c];
-	  v[2] = p1[2] * x[c] + p2[2] * y[c];
-	  
-	  v[3] = vv2[0] + v[0] * tube_size;
-	  v[4] = vv2[1] + v[1] * tube_size;
-	  v[5] = vv2[2] + v[2] * tube_size;
-	  
-	  if(normalVals){
-	    normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	  }
-	  vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	  pl += 3;
-	}
-      }
-    }
-#else
     if (ok) ok &= CGOBegin(I, GL_TRIANGLE_FAN);
     if (ok) ok &= CGONormalv(I, v);
     if (ok) ok &= CGOVertexv(I, v + 3);
@@ -8933,7 +8715,6 @@ static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, flo
 	ok &= CGOVertexv(I, v + 3);
     }
     if (ok) ok &= CGOEnd(I);
-#endif
   }
   return ok;
 }
@@ -8952,7 +8733,8 @@ static int CGOSimpleCone(CGO * I, float *v1, float *v2, float r1, float r2,
   int ok = true;
 
   v = v_buf;
-  nEdge = (int) SettingGetGlobal_i(I->G, cSetting_cone_quality);
+  nEdge = SettingGetGlobal_i(I->G, cSetting_cone_quality);
+
   nub1 = r1 * SettingGetGlobal_f(I->G, cSetting_stick_nub);
   nub2 = r2 * SettingGetGlobal_f(I->G, cSetting_stick_nub);
 
@@ -9021,54 +8803,6 @@ static int CGOSimpleCone(CGO * I, float *v1, float *v2, float r1, float r2,
   }
 
   /* now we have normals */
-#ifdef _PYMOL_CGO_DRAWARRAYS
-  if (ok){
-    int nverts = (2*nEdge) + 2, pl = 0, plc = 0, damode = CGO_VERTEX_ARRAY | CGO_NORMAL_ARRAY;
-    float *vertexVals;
-    float *normalVals, *colorVals = 0, *tmp_ptr;
-    if (colorFlag){
-      damode |= CGO_COLOR_ARRAY;
-    }
-    vertexVals = CGODrawArrays(I, GL_TRIANGLE_STRIP, damode, nverts);
-    ok &= vertexVals ? true : false;
-    if (ok){
-      normalVals = vertexVals + (nverts*3);
-      if (colorFlag){
-	colorVals = normalVals + (nverts*3);
-      }
-      for(c = nEdge; c >= 0; c--) {
-	v[0] = p1[0] * x[c] + p2[0] * y[c];
-	v[1] = p1[1] * x[c] + p2[1] * y[c];
-	v[2] = p1[2] * x[c] + p2[2] * y[c];
-	
-	v[3] = vv1[0] + v[0] * r1;
-	v[4] = vv1[1] + v[1] * r1;
-	v[5] = vv1[2] + v[2] * r1;
-	
-	v[6] = vv1[0] + v[0] * r2 + d[0];
-	v[7] = vv1[1] + v[1] * r2 + d[1];
-	v[8] = vv1[2] + v[2] * r2 + d[2];
-	
-	tmp_ptr = edge_normal + 3 * c;
-	normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
-	if(colorFlag){
-	  colorVals[plc++] = c1[0]; colorVals[plc++] = c1[1]; colorVals[plc++] = c1[2]; colorVals[plc++] = I->alpha;
-	}
-	tmp_ptr = v + 3;
-	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
-	pl += 3;
-	tmp_ptr = &normalVals[pl-3];
-	normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
-	if(colorFlag){
-	  colorVals[plc++] = c2[0]; colorVals[plc++] = c2[1]; colorVals[plc++] = c2[2]; colorVals[plc++] = I->alpha;
-	}
-	tmp_ptr = v + 6;
-	vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
-	pl += 3;
-      }
-    }
-  }
-#else
   if (ok)
     ok &= CGOBegin(I, GL_TRIANGLE_STRIP);
   for(c = nEdge; ok && c >= 0; c--) {
@@ -9096,7 +8830,6 @@ static int CGOSimpleCone(CGO * I, float *v1, float *v2, float r1, float r2,
   }
   if (ok)
     ok &= CGOEnd(I);
-#endif
 
   if(ok && cap1) {
     v[0] = -p0[0];
@@ -9111,44 +8844,6 @@ static int CGOSimpleCone(CGO * I, float *v1, float *v2, float r1, float r2,
 
     if(colorFlag)
       ok &= CGOColorv(I, c1);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-    if (ok) {
-      int nverts = nEdge + 2, pl = 0, damode = CGO_VERTEX_ARRAY;
-      float *vertexVals;
-      float *normalVals = 0;
-      if(cap2 == cCylCapRound){
-	damode |= CGO_NORMAL_ARRAY;
-      } else {
-	CGONormalv(I, v);	
-      }
-
-      vertexVals = CGODrawArrays(I, GL_TRIANGLE_FAN, damode, nverts);
-      ok &= vertexVals ? true : false;
-      if (ok){
-	if(cap2 == cCylCapRound){
-	  normalVals = vertexVals + (nverts*3);
-	  normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	}
-	vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	pl += 3;
-	for(c = nEdge; c >= 0; c--) {
-	  v[0] = p1[0] * x[c] + p2[0] * y[c];
-	  v[1] = p1[1] * x[c] + p2[1] * y[c];
-	  v[2] = p1[2] * x[c] + p2[2] * y[c];
-	  
-	  v[3] = vv1[0] + v[0] * r1;
-	  v[4] = vv1[1] + v[1] * r1;
-	  v[5] = vv1[2] + v[2] * r1;
-	  
-	  if(normalVals){
-	    normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	  }
-	  vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	  pl += 3;
-	}
-      }
-    }
-#else
     if (ok)
       ok &= CGOBegin(I, GL_TRIANGLE_FAN);
     if (ok)
@@ -9172,7 +8867,6 @@ static int CGOSimpleCone(CGO * I, float *v1, float *v2, float r1, float r2,
     }
     if (ok)
       ok &= CGOEnd(I);
-#endif
   }
 
   if(ok && cap2) {
@@ -9189,43 +8883,6 @@ static int CGOSimpleCone(CGO * I, float *v1, float *v2, float r1, float r2,
 
     if(colorFlag)
       ok &= CGOColorv(I, c2);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-    if (ok) {
-      int nverts = nEdge + 2, pl = 0, damode = CGO_VERTEX_ARRAY;
-      float *vertexVals;
-      float *normalVals = 0;
-      if(cap2 == cCylCapRound){
-	damode |= CGO_NORMAL_ARRAY;
-      } else {
-	CGONormalv(I, v);
-      }
-      vertexVals = CGODrawArrays(I, GL_TRIANGLE_FAN, damode, nverts);
-      ok &= vertexVals ? true : false;
-      if (ok){
-	if(cap2 == cCylCapRound){
-	  normalVals = vertexVals + (nverts*3);
-	  normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	}
-	vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	pl += 3;
-	for(c = 0; c <= nEdge; c++) {
-	  v[0] = p1[0] * x[c] + p2[0] * y[c];
-	  v[1] = p1[1] * x[c] + p2[1] * y[c];
-	  v[2] = p1[2] * x[c] + p2[2] * y[c];
-	  
-	  v[3] = vv2[0] + v[0] * r2;
-	  v[4] = vv2[1] + v[1] * r2;
-	  v[5] = vv2[2] + v[2] * r2;
-	  
-	  if(normalVals){
-	    normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	  }
-	  vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	  pl += 3;
-	}
-      }
-    }
-#else
     if (ok)
       ok &= CGOBegin(I, GL_TRIANGLE_FAN);
     if (ok)
@@ -9249,7 +8906,6 @@ static int CGOSimpleCone(CGO * I, float *v1, float *v2, float r1, float r2,
     }
     if (ok)
       ok &= CGOEnd(I);
-#endif
   }
   return ok;
 }

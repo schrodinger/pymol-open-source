@@ -17,37 +17,38 @@
 # correspond to Menu-displayed settings are kept synchronized with
 # PyMOL
 
+import Tkinter
 from Tkinter import IntVar
 import time
 
 from pymol import cmd
 
-class PymolVar(IntVar):
-    true = 1
-    false = 0
-
+class PymolVar(Tkinter.Variable, object):
     def __init__(self, index, v):
+        super(PymolVar, self).__init__()
+        self.set(v)
         self.index = index
         self.skip_w = -1
-        IntVar.__init__(self, value=v != self.false)
         self.trace_variable('w', self.trace_w)
 
     def trace_w(self, *args):
         if self.skip_w > 0:
             self.skip_w -= 1
             return
-        cmd.set(self.index, self.true if self.get() else self.false, log=1)
+        cmd.set(self.index, self.get(), log=1)
 
     def update(self):
         self.skip_w += 1
         if not self.skip_w:
             return
         v = cmd.get_setting_tuple(self.index)[1][0]
-        self.set(v != self.false)
+        self.set(v)
 
 class ColorVar(PymolVar):
-    true = 'gray50'
-    false = -1
+    def set(self, v):
+        if isinstance(v, str) and v.strip():
+            v = cmd.get_color_index(v)
+        super(ColorVar, self).set(v)
 
 class Setting:
 
@@ -102,7 +103,7 @@ class Setting:
         elif v_type == 5: # color
             var = ColorVar(index, v_list[0])
         else: # text
-            raise UserWarning(name, v_type)
+            var = PymolVar(index, v_list[0])
 
         setattr(self, name, var)
         self.active_dict[index] = var

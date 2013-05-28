@@ -307,7 +307,7 @@ def file_read(finfo):
             import urllib
             handle = urllib.urlopen(finfo)
         else:
-            handle = open(finfo)
+            handle = open(finfo, 'rb')
         contents = handle.read()
         handle.close()
     except IOError:
