@@ -4,6 +4,9 @@ Testing: pymol.editing
 
 from pymol import cmd, testing, stored
 
+def get_coord_list(selection, state=1):
+    return cmd.get_model(selection, state).get_coord_list()
+
 class TestEditing(testing.PyMOLTestCase):
 
     alter_names_atomic = {
@@ -103,24 +106,47 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(v_xyz_2_post, v_mock)
 
     def test_alter_list(self):
-        cmd.alter_list
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.alter_list('gly', [[i+1, 'name = "X%d"' % i] for i in range(7)])
+        name_list = []
+        cmd.iterate('gly', 'name_list.append(name)', space=locals())
+        self.assertEqual(name_list, ['X%d' % i for i in range(7)])
 
     def test_attach(self):
-        cmd.attach
-        self.skipTest("TODO")
+        cmd.pseudoatom()
+        cmd.edit('first all')
+        cmd.attach('C', 1, 1)
+        self.assertEqual(2, cmd.count_atoms())
 
     def test_bond(self):
-        cmd.bond
-        self.skipTest("TODO")
+        cmd.pseudoatom('m1', pos=(0,0,0))
+        cmd.pseudoatom('m1', pos=(1,0,0))
+        cmd.pseudoatom('m1', pos=(1,1,0))
+
+        cmd.bond('m1`1', 'm1`2')
+        count = cmd.count_atoms('(m1`1) extend 1')
+        self.assertEqual(count, 2)
+
+        cmd.unbond('m1`1', 'm1`2')
+        count = cmd.count_atoms('(m1`1) extend 1')
+        self.assertEqual(count, 1)
 
     def test_cycle_valence(self):
-        cmd.cycle_valence
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.edit('ID 0', 'ID 1')
+
+        cmd.cycle_valence()
+        self.assertEqual(4, cmd.get_model('pkbond').bond[0].order)
+
+        cmd.cycle_valence()
+        self.assertEqual(2, cmd.get_model('pkbond').bond[0].order)
+
+        cmd.cycle_valence()
+        self.assertEqual(3, cmd.get_model('pkbond').bond[0].order)
 
     def test_deprotect(self):
-        cmd.deprotect
-        self.skipTest("TODO")
+        # see test_protect
+        pass
 
     def test_drag(self):
         cmd.drag
@@ -134,8 +160,10 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(ss_list, ['H', 'H', 'H', 'H'])
 
     def test_edit(self):
-        cmd.edit
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.edit('ID 0', 'ID 1', 'ID 2','ID 3')
+        names = cmd.get_names('public_selections')
+        self.assertEqual(names, ['pk1', 'pk2', 'pk3', 'pk4', 'pkset', 'pkmol'])
 
     def test_fix_chemistry(self):
         cmd.fix_chemistry
@@ -146,28 +174,38 @@ class TestEditing(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def test_fuse(self):
-        cmd.fuse
-        self.skipTest("TODO")
+        cmd.fragment('ala')
+        cmd.fragment('gly')
+        cmd.fuse("gly and elem N", "ala and elem O")
+        self.assertEqual(17, cmd.count_atoms('ala'))
 
     def test_get_editor_scheme(self):
         cmd.get_editor_scheme
         self.skipTest("TODO")
 
     def test_h_add(self):
-        cmd.h_add
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.h_add()
+        self.assertEqual(5, cmd.count_atoms('hydro'))
 
     def test_h_fill(self):
-        cmd.h_fill
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.edit('elem N')
+        cmd.h_fill()
+        self.assertEqual(4, cmd.count_atoms('hydro'))
 
     def test_h_fix(self):
         cmd.h_fix
         self.skipTest("TODO")
 
     def test_invert(self):
-        cmd.invert
-        self.skipTest("TODO")
+        cmd.fragment('ala')
+        xyzfix = get_coord_list('ID 1-7')
+        xyzmov = get_coord_list('ID 0+8+9')
+        cmd.edit('ID 1', 'ID 2', 'ID 3')
+        cmd.invert()
+        self.assertEqual(xyzfix, get_coord_list('ID 1-7'))
+        self.assertNotEqual(xyzmov, get_coord_list('ID 0+8+9'))
 
     def test_map_double(self):
         cmd.map_double
@@ -190,16 +228,39 @@ class TestEditing(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def test_matrix_copy(self):
-        cmd.matrix_copy
-        self.skipTest("TODO")
+        cmd.fragment('ala')
+        cmd.fragment('gly')
+        cmd.rotate('x', 90, 'none', object='ala')
+        cmd.matrix_copy('ala', 'gly')
+        self.assertArrayEqual(cmd.get_object_matrix('gly'),
+                (1.0, 0.0, 0.0, 0.0,
+                 0.0, 0.0,-1.0, 0.0,
+                 0.0, 1.0, 0.0, 0.0,
+                 0.0, 0.0, 0.0, 1.0), 1e-4)
+        cmd.matrix_reset('gly', mode=1)
+        self.assertArrayEqual(cmd.get_object_matrix('gly'),
+                (1.0, 0.0, 0.0, 0.0,
+                 0.0, 1.0, 0.0, 0.0,
+                 0.0, 0.0, 1.0, 0.0,
+                 0.0, 0.0, 0.0, 1.0), 1e-4)
 
     def test_matrix_reset(self):
-        cmd.matrix_reset
-        self.skipTest("TODO")
+        # see test_matrix_copy
+        pass
 
     def test_protect(self):
-        cmd.protect
-        self.skipTest("TODO")
+        cmd.pseudoatom('m1', pos=[0.,0.,0.])
+        cmd.pseudoatom('m1', pos=[1.,0.,0.])
+
+        cmd.protect('m1`1')
+        cmd.translate([0.,1.,0.])
+        self.assertEqual([0.,0.,0.], cmd.get_atom_coords('m1`1'))
+        self.assertEqual([1.,1.,0.], cmd.get_atom_coords('m1`2'))
+
+        cmd.deprotect()
+        cmd.translate([0.,0.,1.])
+        self.assertEqual([0.,0.,1.], cmd.get_atom_coords('m1`1'))
+        self.assertEqual([1.,1.,1.], cmd.get_atom_coords('m1`2'))
 
     def test_push_undo(self):
         cmd.push_undo
@@ -304,18 +365,32 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(['m2'], cmd.get_names())
 
     def test_set_object_color(self):
-        cmd.set_object_color
         self.skipTest("TODO")
 
+        cmd.fragment('gly')
+        cmd.set_object_color('gly', 'blue')
+        self.assertEqual('blue', cmd.get('color', 'gly'))
+
     def test_set_object_ttt(self):
-        cmd.set_object_ttt
-        self.skipTest("TODO")
+        M = [1.0, 0.0, 0.0, 0.0,
+             0.0, 0.0,-1.0, 0.0,
+             0.0, 1.0, 0.0, 0.0,
+             0.0, 0.0, 0.0, 1.0]
+        cmd.pseudoatom('m1')
+        cmd.set_object_ttt('m1', M)
+        self.assertArrayEqual(M, cmd.get_object_matrix('m1'), 1e-4)
 
     def test_set_symmetry(self):
         sym = [68.7, 126.8, 184.0, 90.0, 90.0, 90.0, 'P 21 21 21']
         cmd.pseudoatom('m1')
         cmd.set_symmetry('m1', *sym)
         v = cmd.get_symmetry('m1')
+        self.assertEqual(v[-1], sym[-1])
+        self.assertArrayEqual(v[:-1], sym[:-1], 1e-4)
+
+        cmd.pseudoatom('m2')
+        cmd.symmetry_copy('m1', 'm2')
+        v = cmd.get_symmetry('m2')
         self.assertEqual(v[-1], sym[-1])
         self.assertArrayEqual(v[:-1], sym[:-1], 1e-4)
 
@@ -346,8 +421,8 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertItemsEqual(['m1', 'm1_0001', 'm1_0002'], cmd.get_names())
 
     def test_symmetry_copy(self):
-        cmd.symmetry_copy
-        self.skipTest("TODO")
+        # see test_set_symmetry
+        pass
 
     def test_torsion(self):
         cmd.fragment('ala')
@@ -368,32 +443,35 @@ class TestEditing(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def test_translate(self):
-        cmd.translate
-        self.skipTest("TODO")
+        # see test_protect
+        pass
 
     def test_translate_atom(self):
         cmd.translate_atom
         self.skipTest("TODO")
 
     def test_unbond(self):
-        cmd.unbond
-        self.skipTest("TODO")
+        # see test_bond
+        pass
 
     def test_undo(self):
         cmd.undo
         self.skipTest("TODO")
 
     def test_unpick(self):
-        cmd.unpick
-        self.skipTest("TODO")
+        cmd.pseudoatom('m1')
+        cmd.edit('m1')
+        cmd.unpick()
+        self.assertTrue('pk1' not in cmd.get_names('selections'))
 
     def test_update(self):
         cmd.update
         self.skipTest("TODO")
 
     def test_valence(self):
-        cmd.valence
-        self.skipTest("TODO")
+        cmd.fragment('gly')
+        cmd.valence(2, 'ID 0', 'ID 1')
+        self.assertEqual(2, cmd.get_model('ID 0+1').bond[0].order)
 
     def test_vdw_fit(self):
         cmd.vdw_fit

@@ -264,10 +264,12 @@ else:
             cwd = self.moddirs[type(self).__module__]
             os.chdir(cwd)
 
+            cmd.feedback('push')
             cmd.feedback('disable', 'all', 'details actions')
             self.timings = []
 
         def tearDown(self):
+            cmd.feedback('pop')
             os.chdir(self.oldcwd)
 
         def _getColorTuple(self, color):

@@ -6,12 +6,18 @@ class TestCommanding(testing.PyMOLTestCase):
     def testAlias(self):
         stored.v = None
         cmd.alias('foo', '/stored.v = 123')
-        cmd.do('foo', echo=0)
+        cmd.do('_ foo', echo=0)
         self.assertEqual(stored.v, 123)
 
+    @testing.requires('gui', 'no_run_all')
     def testCls(self):
-        cmd.cls
-        self.skipTest("TODO")
+        cmd.set('internal_prompt', 0)
+        cmd.set('text', 1)
+        cmd.cls()
+
+        # check on black screen
+        img = self.get_imagearray()
+        self.assertFalse(img[...,:3].any())
 
     def testDelete(self):
         cmd.pseudoatom('m1')
@@ -43,20 +49,25 @@ class TestCommanding(testing.PyMOLTestCase):
         check(456)
 
     def testLog(self):
-        cmd.log
-        self.skipTest("TODO")
+        with testing.mktemp('.pml') as logfile:
+            cmd.log_open(logfile)
+            cmd.do('_ color blue')
+            cmd.log('hello world')
+            cmd.log_close()
+            lines = filter(None, map(str.strip, open(logfile)))
+            self.assertEqual(lines, ['color blue', 'hello world'])
 
     def testLogClose(self):
-        cmd.log_close
-        self.skipTest("TODO")
+        # see testLog
+        pass
 
     def testLogOpen(self):
-        cmd.log_open
-        self.skipTest("TODO")
+        # see testLog
+        pass
 
     def testQuit(self):
         cmd.quit
-        self.skipTest("TODO")
+        self.skipTest("cannot test quit")
 
     def testReinitialize(self):
         def check(v, names):
@@ -81,14 +92,20 @@ class TestCommanding(testing.PyMOLTestCase):
         check('off', [])
 
     def testResume(self):
-        cmd.resume
-        self.skipTest("TODO")
+        with testing.mktemp('.pml') as logfile:
+            with open(logfile, 'w') as f:
+                print >> f, 'bg yellow'
+            cmd.resume(logfile)
+            self.assertEqual('yellow', cmd.get('bg_rgb'))
+            cmd.log('hello world')
+            cmd.log_close()
+            lines = filter(None, map(str.strip, open(logfile)))
+            self.assertEqual(lines, ['bg yellow', 'hello world'])
 
     def testSplash(self):
-        cmd.splash
-        self.skipTest("TODO")
+        cmd.feedback('disable', 'all', 'output')
+        cmd.splash()
 
     def testSync(self):
-        cmd.sync
-        self.skipTest("TODO")
+        cmd.sync()
 
