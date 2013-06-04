@@ -23,7 +23,7 @@ class TestImporting(testing.PyMOLTestCase):
         with testing.mkdtemp() as fetch_path:
             names = []
             cmd.set('fetch_path', fetch_path)
-            cmd.set('fetch_host', 'file://' + self.datafile('pdb.mirror'))
+            cmd.set('fetch_host', 'file:///' + self.datafile('pdb.mirror'))
 
             cmd.fetch('1avy')
             names += ['1avy']
