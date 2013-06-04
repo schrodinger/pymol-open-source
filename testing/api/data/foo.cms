@@ -1,0 +1,566 @@
+{ 
+  s_m_m2io_version
+  :::
+  2.0.0 
+} 
+
+f_m_ct { 
+  s_m_title
+  s_m_entry_id
+  s_m_Corporate_ID
+  s_m_entry_name
+  i_sd_PUBCHEM\_COMPOUND\_CID
+  i_sd_PUBCHEM\_COMPOUND\_CANONICALIZED
+  i_sd_PUBCHEM\_CACTVS\_COMPLEXITY
+  i_sd_PUBCHEM\_CACTVS\_HBOND\_ACCEPTOR
+  i_sd_PUBCHEM\_CACTVS\_HBOND\_DONOR
+  i_sd_PUBCHEM\_CACTVS\_ROTATABLE\_BOND
+  s_sd_PUBCHEM\_CACTVS\_SUBSKEYS
+  s_sd_PUBCHEM\_IUPAC\_OPENEYE\_NAME
+  s_sd_PUBCHEM\_IUPAC\_CAS\_NAME
+  s_sd_PUBCHEM\_IUPAC\_NAME
+  s_sd_PUBCHEM\_IUPAC\_SYSTEMATIC\_NAME
+  s_sd_PUBCHEM\_IUPAC\_TRADITIONAL\_NAME
+  s_sd_PUBCHEM\_IUPAC\_INCHI
+  s_sd_PUBCHEM\_IUPAC\_INCHIKEY
+  r_sd_PUBCHEM\_EXACT\_MASS
+  s_sd_PUBCHEM\_MOLECULAR\_FORMULA
+  r_sd_PUBCHEM\_MOLECULAR\_WEIGHT
+  s_sd_PUBCHEM\_OPENEYE\_CAN\_SMILES
+  s_sd_PUBCHEM\_OPENEYE\_ISO\_SMILES
+  r_sd_PUBCHEM\_CACTVS\_TPSA
+  r_sd_PUBCHEM\_MONOISOTOPIC\_WEIGHT
+  i_sd_PUBCHEM\_TOTAL\_CHARGE
+  i_sd_PUBCHEM\_HEAVY\_ATOM\_COUNT
+  i_sd_PUBCHEM\_ATOM\_DEF\_STEREO\_COUNT
+  i_sd_PUBCHEM\_ATOM\_UDEF\_STEREO\_COUNT
+  i_sd_PUBCHEM\_BOND\_DEF\_STEREO\_COUNT
+  i_sd_PUBCHEM\_BOND\_UDEF\_STEREO\_COUNT
+  i_sd_PUBCHEM\_ISOTOPIC\_ATOM\_COUNT
+  i_sd_PUBCHEM\_COMPONENT\_COUNT
+  i_sd_PUBCHEM\_CACTVS\_TAUTO\_COUNT
+  s_sd_PUBCHEM\_COORDINATE\_TYPE
+  s_sd_PUBCHEM\_BONDANNOTATIONS
+  s_m_job_name
+  s_st_EZ_1
+  s_st_EZ_2
+  s_st_EZ_3
+  s_st_EZ_4
+  s_user_Target
+  r_mmod_Potential_Energy-OPLS-2005
+  b_mmod_Minimization_Converged-OPLS-2005
+  r_mmod_RMS_Derivative-OPLS-2005
+  i_mmod_Times_Found-OPLS-2005
+  r_mmod_Relative_Potential_Energy-OPLS-2005
+  b_mmod_Chiralities_Consistent-OPLS-2005
+  i_mmod_Conformation-OPLS-2005
+  i_mmod_Serial_Number-OPLS-2005
+  s_seurat_Idea_Source
+  s_seurat_Idea_Date
+  i_i_glide_lignum
+  r_i_docking_score
+  r_glide_XP_GScore
+  r_i_glide_gscore
+  r_i_glide_evdw
+  r_i_glide_ecoul
+  r_i_glide_energy
+  r_i_glide_einternal
+  r_i_glide_emodel
+  r_glide_XP_HBond
+  r_glide_XP_Reorg
+  i_i_glide_XP_nbrot
+  r_glide_XP_rmscomp
+  r_glide_XP_formalcharge
+  i_i_glide_XP_nsalt
+  r_glide_XP_Eint
+  i_i_glide_XP_specwpen
+  r_glide_XP_waterscore
+  r_glide_XP_corereorg
+  r_glide_XP_Rpscore
+  r_glide_XP_hbn
+  r_glide_XP_PhobEn
+  r_glide_XP_PhobEnHB
+  r_glide_XP_phobprn
+  r_glide_XP_LowMW
+  r_glide_XP_RotPenal
+  r_glide_XP_LipophilicEvdW
+  r_glide_XP_PhobEnPairHB
+  r_glide_XP_Electro
+  r_glide_XP_Sitemap
+  r_glide_XP_Penalties
+  r_glide_XP_PiStack
+  r_glide_XP_HBPenal
+  r_glide_XP_ExposPenal
+  r_glide_XP_PiCat
+  r_glide_XP_ClBr
+  r_glide_XP_wmscoret
+  i_i_glide_XP_alr2_reward
+  r_i_glide_ligand_efficiency
+  r_i_glide_ligand_efficiency_sa
+  r_i_glide_ligand_efficiency_ln
+  i_i_glide_confnum
+  i_i_glide_posenum
+  i_glide_XP_PoseRank
+  s_user_SMARTS
+  s_seurat_Registration_Database
+  s_seurat_Registration_Project
+  :::
+  11846653 
+  60 
+  CRA-035000 
+  IndirubinDerivRef.1 
+  11846653 
+  1     
+  797   
+  4     
+  3     
+  6     
+  AAADceB7sAAEEAAAAAAAAAAAAAAAAWLEAAAyQAAAAAAAAFgB8AAAHgBUAAABjAjhngYwwPPZkACoAyVyVACCgCAhEiAomSE4dPgKYPrA1dGUJAhgkADYyQcciICOAAAAAAACAAAAAAAAAAQAAAAAAAAAAA== 
+  "7-bromo-3-[3-(2-pyrrolidin-1-ylethoxyamino)-1H-indol-2-yl]indol-2-one hydrochloride" 
+  "7-bromo-3-[3-[2-(1-pyrrolidinyl)ethoxyamino]-1H-indol-2-yl]-2-indolone hydrochloride" 
+  "7-bromo-3-[3-(2-pyrrolidin-1-ylethoxyamino)-1H-indol-2-yl]indol-2-one hydrochloride" 
+  "7-bromanyl-3-[3-(2-pyrrolidin-1-ylethoxyamino)-1H-indol-2-yl]indol-2-one hydrochloride" 
+  "7-bromo-3-[3-(2-pyrrolidinoethoxyamino)-1H-indol-2-yl]indol-2-one hydrochloride" 
+  InChI=1S/C22H21BrN4O2.ClH/c23-16-8-5-7-15-18(22(28)25-19(15)16)21-20(14-6-1-2-9-17(14)24-21)26-29-13-12-27-10-3-4-11-27;/h1-2,5-9,24,26H,3-4,10-13H2;1H 
+  KOJJXRWTAXOIKJ-UHFFFAOYSA-N 
+            488.061466 
+  C22H22BrClN4O2 
+             489.79268 
+  C1CCN(C1)CCONC2=C(NC3=CC=CC=C32)C4=C5C=CC=C(C5=NC4=O)Br.Cl 
+  C1CCN(C1)CCONC2=C(NC3=CC=CC=C32)C4=C5C=CC=C(C5=NC4=O)Br.Cl 
+                  69.7 
+            488.061466 
+  0     
+  30    
+  0     
+  0     
+  0     
+  0     
+  0     
+  2     
+  33    
+  "1
+3" 
+  "15  16  8
+15  17  8
+17  18  8
+17  21  8
+18  22  8
+20  23  8
+20  26  8
+21  25  8
+22  27  8
+23  28  8
+25  27  8
+26  29  8
+28  30  8
+29  30  8
+6  16  8
+6  18  8" 
+  ligprep_10 
+  23_7_22_27_E 
+  23_18_19_22_Z 
+  19_25_28_29_Z 
+  1_27_29_28_E 
+  2nru 
+            242.156143 
+  1     
+              0.041914 
+  1     
+                     0 
+  1     
+  1     
+  1     
+  Singleton 
+  2012-07-16 
+  1     
+             -8.262799 
+             -8.262799 
+             -8.262799 
+            -40.965168 
+             -4.657021 
+            -45.622189 
+              1.772544 
+            -76.596145 
+             -1.210355 
+                     0 
+  6     
+                     0 
+                     0 
+  0     
+                   5.5 
+  0     
+                     0 
+                     0 
+                     0 
+                     0 
+                -0.425 
+                    -1 
+                     0 
+                     0 
+              0.209294 
+             -4.756002 
+                     0 
+             -0.349277 
+              -0.73146 
+                     0 
+                     0 
+                     0 
+                     0 
+                     0 
+                     0 
+                     0 
+  0     
+             -0.284924 
+             -0.875377 
+             -1.891971 
+  1     
+  3     
+  1     
+  "[#1][CX4]1([#1])[CX4]([#1])([#1])[CX4]([#1])([#1])[CX4]([#1])([#1])[NX3]1[CX4]([#1])([#1])[CX4]([#1])([#1])[OX2][NX3]([#1])[cX3]1[cX3]([nX3]([#1])[cX3]2[cX3]([#1])[cX3]([cX3]([#1])[cX3]([cX3]12)[#1])[#1])[CX3]2=[CX3]3[CX3](=[CX3]([#1])[CX3](=[CX3]([BrX1])[CX3]3=[NX2][CX3]2=[OX1])[#1])[#1]" 
+  pri 
+  IRAK4 
+  m_atom[50] { 
+    # First column is atom index #
+    i_m_mmod_type
+    r_m_x_coord
+    r_m_y_coord
+    r_m_z_coord
+    i_m_residue_number
+    s_m_insertion_code
+    s_m_mmod_res
+    s_m_chain_name
+    i_m_color
+    r_m_charge1
+    r_m_charge2
+    s_m_pdb_residue_name
+    s_m_pdb_atom_name
+    s_m_grow_name
+    i_m_atomic_number
+    i_m_formal_charge
+    i_m_representation
+    i_m_visibility
+    s_m_atom_name
+    i_m_template_index
+    i_i_constraint
+    :::
+    1       58   32.566431    9.014209  -11.529159   900 " " X " "    2  -0.17950  -0.17950 "UNK " "    " "    "   35   0    0    1 "" 0     0     
+    2       16   27.963263   10.710252   -4.878984   900 " " X " "    2  -0.32250  -0.32250 "UNK " "    " "    "    8   0    0    1 "" 0     0     
+    3       15   30.719120    5.403823   -7.622820   900 " " X " "    2  -0.22250  -0.22250 "UNK " "    " "    "    8   0    0    1 "" 0     0     
+    4       26   29.438789   13.764253   -6.357063   900 " " X " "    2  -0.63000  -0.63000 "UNK " "    " "    "    7   0    0    1 "" 0     0     
+    5       25   29.356193    6.382694   -5.106478   900 " " X " "    2  -0.47860  -0.47860 "UNK " "    " "    "    7   0    0    1 "" 0     0     
+    6       25   28.258653    9.750018   -5.886343   900 " " X " "    2  -0.48000  -0.48000 "UNK " "    " "    "    7   0    0    1 "" 0     0     
+    7       25   31.347681    7.162493   -9.023005   900 " " X " "    2  -0.51220  -0.51220 "UNK " "    " "    "    7   0    0    1 "" 0     0     
+    8        3   29.116370   14.536253   -7.551924   900 " " X " "    2   0.09000   0.09000 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    9        3   30.867113   13.494904   -6.479426   900 " " X " "    2   0.09000   0.09000 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    10       3   31.434049   14.842080   -6.927356   900 " " X " "    2  -0.12000  -0.12000 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    11       3   30.271796   15.533392   -7.639348   900 " " X " "    2  -0.12000  -0.12000 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    12       3   28.656062   12.520779   -6.286705   900 " " X " "    2   0.09000   0.09000 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    13       3   28.871748   11.793571   -4.951657   900 " " X " "    2   0.10250   0.10250 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    14       2   28.562417    8.472060   -5.378612   900 " " X " "    2   0.08100   0.08100 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    15       2   29.399099    7.514600   -5.898080   900 " " X " "    2   0.08570   0.08570 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    16       2   27.970260    7.897733   -4.193670   900 " " X " "    2   0.12330   0.12330 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    17       2   28.496717    6.576589   -4.041765   900 " " X " "    2   0.28600   0.28600 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    18       2   30.172059    7.670065   -7.094616   900 " " X " "    2  -0.05670  -0.05670 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    19       2   30.417589    8.792581   -7.765390   900 " " X " "    2  -0.00330  -0.00330 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    20       2   27.034679    8.329951   -3.221010   900 " " X " "    2  -0.22430  -0.22430 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    21       2   28.121300    5.740486   -2.974363   900 " " X " "    2  -0.35410  -0.35410 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    22       2   31.151349    8.410070   -8.943504   900 " " X " "    2   0.39630   0.39630 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    23       2   30.752160    6.602197   -7.897768   900 " " X " "    2   0.40170   0.40170 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    24       2   26.653268    7.498322   -2.148589   900 " " X " "    2  -0.22220  -0.22220 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    25       2   30.106910   10.192144   -7.516356   900 " " X " "    2  -0.11500  -0.11500 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    26       2   27.196184    6.205771   -2.022753   900 " " X " "    2  -0.08880  -0.08880 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    27       2   31.561784    9.467172   -9.883175   900 " " X " "    2   0.17620   0.17620 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    28       2   30.502301   11.128560   -8.409543   900 " " X " "    2  -0.11500  -0.11500 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    29       2   31.242672   10.755357   -9.620176   900 " " X " "    2  -0.11500  -0.11500 "UNK " "    " "    "    6   0    0    1 "" 0     0     
+    30      41   28.144072   15.024276   -7.484337   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    31      41   29.112605   13.895402   -8.433625   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    32      41   31.307337   13.142752   -5.546531   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    33      41   31.051555   12.742108   -7.245831   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    34      41   30.507658   15.780301   -8.674484   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    35      41   30.015902   16.462402   -7.129874   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    36      41   32.300451   14.713944   -7.576226   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    37      41   31.752302   15.429582   -6.066160   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    38      41   27.598497   12.771746   -6.379393   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    39      41   28.900222   11.865435   -7.124122   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    40      41   29.894529   11.421590   -4.873902   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    41      41   28.701737   12.482768   -4.124452   900 " " X " "    2   0.06000   0.06000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    42      43   29.886419    5.546303   -5.303814   900 " " X " "    2   0.35770   0.35770 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    43      43   28.930597   10.152172   -6.524142   900 " " X " "    2   0.38000   0.38000 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    44      41   26.603542    9.316603   -3.300507   900 " " X " "    2   0.16990   0.16990 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    45      41   28.537276    4.747708   -2.887087   900 " " X " "    2   0.17960   0.17960 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    46      41   29.582448   10.482639   -6.618504   900 " " X " "    2   0.11500   0.11500 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    47      41   25.939670    7.854577   -1.420088   900 " " X " "    2   0.14890   0.14890 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    48      41   26.900206    5.571940   -1.199619   900 " " X " "    2   0.13590   0.13590 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    49      41   30.279923   12.169004   -8.222403   900 " " X " "    2   0.11500   0.11500 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    50      41   31.543113   11.526923  -10.313720   900 " " X " "    2   0.11500   0.11500 "UNK " "    " "    "    1   0    0    1 "" 0     0     
+    :::
+  } 
+  m_bond[108] { 
+    # First column is bond index #
+    i_m_from
+    i_m_to
+    i_m_order
+    i_m_from_rep
+    i_m_to_rep
+    b_m_thin_bond
+    :::
+    1          1     27   1 1 1 0     
+    2          2      6   1 1 1 0     
+    3          2     13   1 1 1 0     
+    4          3     23   2 1 1 0     
+    5          4      8   1 1 1 0     
+    6          4      9   1 1 1 0     
+    7          4     12   1 1 1 0     
+    8          5     15   1 1 1 0     
+    9          5     17   1 1 1 0     
+    10         5     42   1 1 1 0     
+    11         6      2   1 1 1 0     
+    12         6     14   1 1 1 0     
+    13         6     43   1 1 1 0     
+    14         7     22   2 1 1 0     
+    15         7     23   1 1 1 0     
+    16         8      4   1 1 1 0     
+    17         8     11   1 1 1 0     
+    18         8     30   1 1 1 0     
+    19         8     31   1 1 1 0     
+    20         9      4   1 1 1 0     
+    21         9     10   1 1 1 0     
+    22         9     32   1 1 1 0     
+    23         9     33   1 1 1 0     
+    24        10      9   1 1 1 0     
+    25        10     11   1 1 1 0     
+    26        10     36   1 1 1 0     
+    27        10     37   1 1 1 0     
+    28        11      8   1 1 1 0     
+    29        11     10   1 1 1 0     
+    30        11     34   1 1 1 0     
+    31        11     35   1 1 1 0     
+    32        12      4   1 1 1 0     
+    33        12     13   1 1 1 0     
+    34        12     38   1 1 1 0     
+    35        12     39   1 1 1 0     
+    36        13      2   1 1 1 0     
+    37        13     12   1 1 1 0     
+    38        13     40   1 1 1 0     
+    39        13     41   1 1 1 0     
+    40        14      6   1 1 1 0     
+    41        14     15   2 1 1 0     
+    42        14     16   1 1 1 0     
+    43        15      5   1 1 1 0     
+    44        15     14   2 1 1 0     
+    45        15     18   1 1 1 0     
+    46        16     14   1 1 1 0     
+    47        16     17   1 1 1 0     
+    48        16     20   2 1 1 0     
+    49        17      5   1 1 1 0     
+    50        17     16   1 1 1 0     
+    51        17     21   2 1 1 0     
+    52        18     15   1 1 1 0     
+    53        18     19   2 1 1 0     
+    54        18     23   1 1 1 0     
+    55        19     18   2 1 1 0     
+    56        19     22   1 1 1 0     
+    57        19     25   1 1 1 0     
+    58        20     16   2 1 1 0     
+    59        20     24   1 1 1 0     
+    60        20     44   1 1 1 0     
+    61        21     17   2 1 1 0     
+    62        21     26   1 1 1 0     
+    63        21     45   1 1 1 0     
+    64        22      7   2 1 1 0     
+    65        22     19   1 1 1 0     
+    66        22     27   1 1 1 0     
+    67        23      3   2 1 1 0     
+    68        23      7   1 1 1 0     
+    69        23     18   1 1 1 0     
+    70        24     20   1 1 1 0     
+    71        24     26   2 1 1 0     
+    72        24     47   1 1 1 0     
+    73        25     19   1 1 1 0     
+    74        25     28   2 1 1 0     
+    75        25     46   1 1 1 0     
+    76        26     21   1 1 1 0     
+    77        26     24   2 1 1 0     
+    78        26     48   1 1 1 0     
+    79        27      1   1 1 1 0     
+    80        27     22   1 1 1 0     
+    81        27     29   2 1 1 0     
+    82        28     25   2 1 1 0     
+    83        28     29   1 1 1 0     
+    84        28     49   1 1 1 0     
+    85        29     27   2 1 1 0     
+    86        29     28   1 1 1 0     
+    87        29     50   1 1 1 0     
+    88        30      8   1 1 1 0     
+    89        31      8   1 1 1 0     
+    90        32      9   1 1 1 0     
+    91        33      9   1 1 1 0     
+    92        34     11   1 1 1 0     
+    93        35     11   1 1 1 0     
+    94        36     10   1 1 1 0     
+    95        37     10   1 1 1 0     
+    96        38     12   1 1 1 0     
+    97        39     12   1 1 1 0     
+    98        40     13   1 1 1 0     
+    99        41     13   1 1 1 0     
+    100       42      5   1 1 1 0     
+    101       43      6   1 1 1 0     
+    102       44     20   1 1 1 0     
+    103       45     21   1 1 1 0     
+    104       46     25   1 1 1 0     
+    105       47     24   1 1 1 0     
+    106       48     26   1 1 1 0     
+    107       49     28   1 1 1 0     
+    108       50     29   1 1 1 0     
+    :::
+  } 
+  m_glide_XPvisualizer { 
+    i_glide_XP_impact_version
+    s_glide_XPviz_ligname
+    i_glide_XPviz_lignum
+    i_glide_XPviz_posenum
+    r_glide_XP_GScore
+    r_i_docking_score
+    r_epik_State_Penalty
+    r_glide_XP_LowMW
+    r_glide_XP_RotPenal
+    r_glide_XP_LipophilicEvdW
+    r_glide_XP_HBond
+    r_glide_XP_PhobEnPairHB
+    r_glide_XP_Electro
+    r_glide_XP_Sitemap
+    r_glide_XP_Penalties
+    r_glide_XP_PhobEn
+    r_glide_XP_PiStack
+    r_glide_XP_PhobEnHB
+    r_glide_XP_HBPenal
+    r_glide_XP_ExposPenal
+    r_glide_XP_PiCat
+    r_glide_XP_ClBr
+    :::
+    58023 
+    2NRY 
+    1     
+    3     
+       -8.26279916705043 
+       -8.26279916705043 
+      0.0000 
+                       0 
+        0.20929440116094 
+        -4.7560017889929 
+       -1.21035502268359 
+                       0 
+       -0.34927656344424 
+      -0.731460193090638 
+                       0 
+                  -0.425 
+                       0 
+                      -1 
+                       0 
+                       0 
+                       0 
+                       0 
+    m_glide_XPviz_hbonds[3] { 
+      i_glide_XPviz_ihbl
+      i_glide_XPviz_ihbp
+      r_glide_XPviz_hbsct
+      :::
+      1     42    803     -0.538398417884031 
+      2     3     3122    -0.671956604799558 
+      3     4     4648                     0 
+      :::
+    } 
+    m_glide_XPviz_phobpack { 
+      i_glide_XPviz_ngpp
+      r_glide_XPviz_phobsc
+      :::
+      1     
+        -0.708333333333333 
+      m_glide_XPviz_phobgroups[1] { 
+        i_glide_XPviz_phobgroup_nat
+        i_glide_XPviz_phobgroup_nres
+        r_glide_XPviz_phobgroup_param
+        :::
+        1     8     8       -0.708333333333333 
+        :::
+      } 
+      m_glide_XPviz_phobatsc[8] { 
+        i_glide_XPviz_phobatgroup
+        i_glide_XPviz_phobatscat
+        r_glide_XPviz_phobatscpar
+        :::
+        1     1     1                   -0.075 
+        2     1     18                      -0 
+        3     1     19                      -0 
+        4     1     22                  -0.075 
+        5     1     25                      -0 
+        6     1     27                    -0.1 
+        7     1     28                      -0 
+        8     1     29                  -0.175 
+        :::
+      } 
+      m_glide_XPviz_pack_res[8] { 
+        i_glide_XPviz_pack_resgroup
+        i_glide_XPviz_pack_resnum
+        :::
+        1     1     200   
+        2     1     211   
+        3     1     213   
+        4     1     197   
+        5     1     262   
+        6     1     318   
+        7     1     246   
+        8     1     264   
+        :::
+      } 
+    } 
+    m_glide_XPviz_phobcon_hb[1] { 
+      i_glide_XPviz_phobcon_ligat
+      i_glide_XPviz_phobcon_protat
+      r_glide_XPviz_phobcon_param
+      :::
+      1     3     3122                    -1 
+      :::
+    } 
+    m_glide_XPviz_rotbonds[5] { 
+      i_glide_XPviz_rotbondat1
+      i_glide_XPviz_rotbondat2
+      :::
+      1     12    13    
+      2     2     13    
+      3     2     6     
+      4     14    6     
+      5     15    18    
+      :::
+    } 
+    m_glide_XPviz_watmol[20] { 
+      r_glide_XPviz_watmolx
+      r_glide_XPviz_watmoly
+      r_glide_XPviz_watmolz
+      :::
+      1         31.9356269204469     14.9735831022274    -11.3523038455092 
+      2         34.2689602537803     6.30691643556071    -10.1856371788426 
+      3         26.4356269204469     14.8069164355607    -5.01897051217589 
+      4         28.7689602537803     5.14024976889404    0.814362821157447 
+      5         29.2689602537803     16.9735831022274    -4.68563717884255 
+      6         23.2689602537803     8.30691643556071    -2.85230384550922 
+      7         25.7689602537803     11.8069164355607    -2.35230384550922 
+      8         24.7689602537803     6.80691643556071    0.647696154490781 
+      9         25.7689602537803     14.9735831022274    -1.01897051217589 
+      10        30.2689602537803      19.140249768894    -8.68563717884255 
+      11        23.9356269204469     10.4735831022274   -0.685637178842553 
+      12        26.7689602537803     2.47358310222738    -1.85230384550922 
+      13        23.4356269204469     5.47358310222737    -2.35230384550922 
+      14        30.1022935871136     19.4735831022274    -3.68563717884255 
+      15        33.2689602537803     19.3069164355607    -9.85230384550922 
+      16        24.7689602537803     3.80691643556071   -0.352303845509219 
+      17        23.7689602537803     14.3069164355607    -3.85230384550922 
+      18        25.4356269204469     4.80691643556071     2.64769615449078 
+      19        29.4356269204469     20.9735831022274    -6.51897051217589 
+      20        26.6022935871136     2.47358310222738     1.31436282115745 
+      :::
+    } 
+  } 
+} 
+
