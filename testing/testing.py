@@ -82,6 +82,13 @@ else:
                 flags_known.append(flag)
                 return flags.pop(flag, False)
 
+            if hasflag('shaders'):
+                cmd.set('use_shaders')
+                use_shaders = str(cmd.get('use_shaders')).strip().lower()
+                print "use_shaders=", use_shaders
+                if use_shaders in [ 'off', '0' ]:
+                    return unittest.skip('shaders')(func)
+
             if hasflag('gui') and options.no_gui:
                 return unittest.skip('no gui')(func)
 

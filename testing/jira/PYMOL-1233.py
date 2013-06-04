@@ -5,7 +5,7 @@ PYMOL-1233 Unable to color isomesh or isodot
 import unittest
 from pymol import cmd, testing
 
-@testing.requires('gui')
+@testing.requires('gui','shaders')
 class Test1233(testing.PyMOLTestCase):
 
     def _check_colors(self, *colors):
