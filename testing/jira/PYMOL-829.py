@@ -17,6 +17,7 @@ class Test829(testing.PyMOLTestCase):
         cmd.set('fog', '0')
         cmd.set('ambient', '1')
         cmd.set('angle_color', 'red')
+        cmd.set('dash_gap', '0')
         cmd.zoom()
         #need to check to make sure screen image has red in it
         img_array = self.get_imagearray(width=100, height=100, ray=0)
