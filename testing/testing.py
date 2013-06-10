@@ -62,6 +62,8 @@ else:
 
     pymol_test_dir = os.path.abspath(os.path.dirname(__file__))
 
+    deferred_unlink = []
+
     class requires(object):
         '''
         Decorator for test methods which only should be executed
@@ -403,7 +405,10 @@ else:
                     self.png(filename, **kwargs)
                     return self.get_imagearray(filename)
                 finally:
-                    os.unlink(filename)
+                    try:
+                        os.unlink(filename)
+                    except WindowsError:
+                        deferred_unlink.append(filename)
 
             if isinstance(img, numpy.ndarray):
                 return img
@@ -480,6 +485,9 @@ USAGE
         testresult = unittest.TextTestRunner(stream=out,
                 resultclass=PyMOLTestResult,
                 verbosity=int(verbosity)).run(suite)
+
+        while deferred_unlink:
+            os.unlink(deferred_unlink.pop())
 
         return len(testresult.errors) + len(testresult.failures)
 
