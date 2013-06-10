@@ -57,6 +57,9 @@ else:
     run_all = False
     max_threads = int(cmd.get('max_threads'))
 
+    cmd.set('use_shaders')
+    use_shaders = cmd.get_setting_boolean('use_shaders')
+
     pymol_test_dir = os.path.abspath(os.path.dirname(__file__))
 
     class requires(object):
@@ -82,12 +85,8 @@ else:
                 flags_known.append(flag)
                 return flags.pop(flag, False)
 
-            if hasflag('shaders'):
-                cmd.set('use_shaders')
-                use_shaders = str(cmd.get('use_shaders')).strip().lower()
-                print "use_shaders=", use_shaders
-                if use_shaders in [ 'off', '0' ]:
-                    return unittest.skip('shaders')(func)
+            if hasflag('shaders') and not use_shaders:
+                return unittest.skip('shaders')(func)
 
             if hasflag('gui') and options.no_gui:
                 return unittest.skip('no gui')(func)
@@ -478,9 +477,11 @@ USAGE
             suite.addTest(unittest.defaultTestLoader
                     .loadTestsFromModule(mod))
 
-        unittest.TextTestRunner(stream=out,
+        testresult = unittest.TextTestRunner(stream=out,
                 resultclass=PyMOLTestResult,
                 verbosity=int(verbosity)).run(suite)
+
+        return len(testresult.errors) + len(testresult.failures)
 
     def cli():
         '''
@@ -490,7 +491,8 @@ USAGE
             # silently do nothing
             return
 
-        run_testfiles(**vars(cliargs))
+        nfail = run_testfiles(**vars(cliargs))
+        cmd.quit(nfail)
 
     cmd.extend('run_testfiles', run_testfiles)
 
