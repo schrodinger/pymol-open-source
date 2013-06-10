@@ -262,7 +262,7 @@ class TestViewing(testing.PyMOLTestCase):
         self._testSpectrum_setup()
         cmd.spectrum()
         img = self.get_imagearray()
-        self.assertImageHasColor('blue', img)
+        self.assertImageHasColor('blue', img, delta=1)
         self.assertImageHasColor('red', img)
 
     def testSpectrumany(self):

@@ -20,10 +20,12 @@ class TestImporting(testing.PyMOLTestCase):
             self.assertEqual(cmd.get_type('1avy_2fofc'), 'object:map')
 
     def testFetchLocal(self):
+        import urlparse
         with testing.mkdtemp() as fetch_path:
             names = []
             cmd.set('fetch_path', fetch_path)
-            cmd.set('fetch_host', 'file:///' + self.datafile('pdb.mirror'))
+            cmd.set('fetch_host', urlparse.urlunsplit(['file', '',
+                self.datafile('pdb.mirror'), '', '']))
 
             cmd.fetch('1avy')
             names += ['1avy']

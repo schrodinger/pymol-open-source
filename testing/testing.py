@@ -320,7 +320,7 @@ else:
             self.assertEqual(data1.shape, data2.shape,
                     'image shapes not equal ')
 
-            noff = numpy.count_nonzero(abs(data1 - data2) > delta)
+            noff = numpy.sum(abs(data1 - data2) > delta)
             self.assertLessEqual(noff, count * data1.shape[-1], msg + ' (%d)' % noff)
 
         def assertImageHasColor(self, color, img=None, delta=0):
