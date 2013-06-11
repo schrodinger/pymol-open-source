@@ -2308,8 +2308,7 @@ class Normal(PMGSkin):
                                  'Stereo',
                                  label='Stereo',
                                 variable = self.setting.stereo,
-                                command = lambda s=self: s.cmd.do("_ stereo "+
-                                                                          ('off','on')[s.setting.stereo.get()]))
+                                )
         
 #      self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
 #                               label='Stereo On',

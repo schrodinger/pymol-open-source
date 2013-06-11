@@ -2,6 +2,26 @@
 CHANGE LOG
 =========================================================================
 
+2013-06-11 Blaine Bell <blaine.bell@schrodinger.com>
+
+	* Open Source PyMOL v1.6.0.0
+
+	* freeing VBOs properly when deleting volumes
+
+	* added quiet flag for SettingGenerateSideEffects() and SettingCheckUseShaders()
+
+	* fix 15bit color picking
+
+	* fix surface memory leak
+
+	* fix CGO demo
+
+2013-06-10 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* internal.file_read: use urllib2 instead of urllib
+
+	* fix ellipsoid transparency OpenGL rendering
+
 2013-05-27 Thomas Holder, Blaine Bell
 
 	* fix surface normals

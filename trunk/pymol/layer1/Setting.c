@@ -868,21 +868,25 @@ PyObject *SettingAsPyList(CSetting * I)
 
 
 /*========================================================================*/
-static int SettingCheckUseShaders(CSetting * I)
+static int SettingCheckUseShaders(CSetting * I, int quiet)
 {
   PyMOLGlobals * G = I->G;
     if (SettingGetGlobal_i(G, cSetting_use_shaders)){
       if (!CShaderMgr_ShadersPresent(G->ShaderMgr)){
 	SettingSet_b(I, cSetting_use_shaders, 0);
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Error: use_shaders cannot be set when Shaders are not available, setting use_shaders back to false\n"
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Error: use_shaders cannot be set when Shaders are not available, setting use_shaders back to false\n"
+	    ENDFB(G);
+	}
 	return 1;
       }
       if (SettingGetGlobal_b(G, cSetting_excl_display_lists_shaders) && SettingGetGlobal_i(G, cSetting_use_display_lists)){
-	PRINTFB(G, FB_Setting, FB_Details)
-	  "Setting-Details: use_shaders and use_display_lists are exclusive, turning off use_display_lists\n"
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Details)
+	    "Setting-Details: use_shaders and use_display_lists are exclusive, turning off use_display_lists\n"
+	    ENDFB(G);
+	}
 	SettingSet_b(G->Setting, cSetting_use_display_lists, 0);
       }
     }
@@ -1025,7 +1029,7 @@ int SettingFromPyList(CSetting * I, PyObject * list)
 	ENDFB(I->G);
       SettingSet_i(I->G->Setting, cSetting_light_count, 8);
     }
-    SettingCheckUseShaders(I);
+    SettingCheckUseShaders(I, 0);
   }
   return (ok);
 #endif
@@ -2207,7 +2211,7 @@ int SettingGetName(PyMOLGlobals * G, int index, SettingName name)
 
 
 /*========================================================================*/
-void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int state)
+void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int state, int quiet)
 {
   char all[] = "all";
   char *inv_sele;
@@ -2279,9 +2283,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
       int a_mode = SettingGetGlobal_i(G, cSetting_anaglyph_mode);
       int ANAGLYPH_MIN = 0, ANAGLYPH_MAX = 4;
       if((a_mode<ANAGLYPH_MIN) || (a_mode>ANAGLYPH_MAX)) {
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: anaglyph_mode range = [%d,%d]; setting to %d.", ANAGLYPH_MIN, ANAGLYPH_MAX, 4
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: anaglyph_mode range = [%d,%d]; setting to %d.", ANAGLYPH_MIN, ANAGLYPH_MAX, 4
+	    ENDFB(G);
+	}
 	SettingSet_i(G->Setting, cSetting_anaglyph_mode, 4);
       }	
     SceneUpdateStereoMode(G);
@@ -2310,9 +2316,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     SceneInvalidate(G);
     break;
   case cSetting_spec_power:
-    PRINTFB(G, FB_Setting, FB_Debugging)
-      "Setting-Details: spec_power is depreciated in PyMOL 1.5.  This option will not work in future versions. Please set shininess to set the specular exponent for movable light sources.\n"
-      ENDFB(G);
+    if (!quiet){
+      PRINTFB(G, FB_Setting, FB_Debugging)
+	"Setting-Details: spec_power is depreciated in PyMOL 1.5.  This option will not work in future versions. Please set shininess to set the specular exponent for movable light sources.\n"
+	ENDFB(G);
+    }
     SceneInvalidate(G);
     break;
   case cSetting_spec_count:
@@ -2327,9 +2335,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_use_display_lists:
     {
       if (SettingGetGlobal_b(G, cSetting_excl_display_lists_shaders) && SettingGetGlobal_i(G, cSetting_use_display_lists) && SettingGetGlobal_b(G, cSetting_use_shaders)){
-	PRINTFB(G, FB_Setting, FB_Details)
-	  "Setting-Details: use_shaders and use_display_lists are exclusive, turning off use_shaders\n"
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Details)
+	    "Setting-Details: use_shaders and use_display_lists are exclusive, turning off use_shaders\n"
+	    ENDFB(G);
+	}
 	SettingSet_b(G->Setting, cSetting_use_shaders, 0);
       }
     }
@@ -2337,7 +2347,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     {
       short changed = 0;
       if (SettingGetGlobal_b(G, cSetting_use_shaders)){
-	if (SettingCheckUseShaders(G->Setting)){
+	if (SettingCheckUseShaders(G->Setting, quiet)){
 	  return;
 	}
       }
@@ -2397,9 +2407,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     SceneInvalidate(G);
     break;
   case cSetting_texture_fonts:
-    PRINTFB(G, FB_Setting, FB_Warnings)
-      "Setting-Warning: texture_fonts is deprecated, it is no longer needed."
-      ENDFB(G);
+    if (!quiet){
+      PRINTFB(G, FB_Setting, FB_Warnings)
+	"Setting-Warning: texture_fonts is deprecated, it is no longer needed."
+	ENDFB(G);
+    }
     break;
   case cSetting_scene_buttons:
   case cSetting_scene_buttons_mode:
@@ -2525,10 +2537,12 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
 	} else {
 	  nb_spheres_use_shader = 2;
 	}
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Error: nb_spheres_use_shader can only be set to 0 (off), 1 (default shader), or 2 (sphere shader), setting to %d\n", nb_spheres_use_shader
-	  ENDFB(G);
-	  SettingSet_b(G->Setting, cSetting_use_shaders, nb_spheres_use_shader);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Error: nb_spheres_use_shader can only be set to 0 (off), 1 (default shader), or 2 (sphere shader), setting to %d\n", nb_spheres_use_shader
+	    ENDFB(G);
+	}
+	SettingSet_b(G->Setting, cSetting_use_shaders, nb_spheres_use_shader);
 	return;
 	
       }
@@ -2549,9 +2563,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     if (SettingGetGlobal_b(G, cSetting_render_as_cylinders)){
       if (!CShaderMgr_ShaderPrgExists(G->ShaderMgr, "cylinder")){
 	SettingSet_b(G->Setting, cSetting_render_as_cylinders, 0);
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Error: render_as_cylinders cannot be set when the Cylinder Shader is not available, setting render_as_cylinder back to false\n"
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Error: render_as_cylinders cannot be set when the Cylinder Shader is not available, setting render_as_cylinder back to false\n"
+	    ENDFB(G);
+	}
 	return;
       }
       switch (index){
@@ -2645,17 +2661,21 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     {
       int cgo_sphere_quality = SettingGetGlobal_i(G, cSetting_cgo_sphere_quality);
       if ( cgo_sphere_quality < 0 ){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: cgo_sphere_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
-	  (NUMBER_OF_SPHERE_LEVELS-1)
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: cgo_sphere_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
+	    (NUMBER_OF_SPHERE_LEVELS-1)
+	    ENDFB(G);
+	}
 	SettingSet_i(G->Setting, cSetting_cgo_sphere_quality, 0);
 	return ;
       } else if (cgo_sphere_quality > NUMBER_OF_SPHERE_LEVELS-1){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: cgo_sphere_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
-	  (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: cgo_sphere_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
+	    (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
+	    ENDFB(G);
+	}
 	SettingSet_i(G->Setting, cSetting_cgo_sphere_quality, (NUMBER_OF_SPHERE_LEVELS-1));
 	return ;
       }
@@ -2663,17 +2683,21 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     {
       int nb_spheres_quality = SettingGetGlobal_i(G, cSetting_nb_spheres_quality);
       if ( nb_spheres_quality < 0 ){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: nb_spheres_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
-	  (NUMBER_OF_SPHERE_LEVELS-1)
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: nb_spheres_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
+	    (NUMBER_OF_SPHERE_LEVELS-1)
+	    ENDFB(G);
+	}
 	SettingSet_i(G->Setting, cSetting_nb_spheres_quality, 0);
 	return ;
       } else if (nb_spheres_quality > NUMBER_OF_SPHERE_LEVELS-1){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: nb_spheres_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
-	  (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: nb_spheres_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
+	    (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
+	    ENDFB(G);
+	}
 	SettingSet_i(G->Setting, cSetting_nb_spheres_quality, (NUMBER_OF_SPHERE_LEVELS-1));
 	return ;
       }
@@ -2688,9 +2712,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_stick_quality:
     {
       if (SettingGetGlobal_i(G, cSetting_stick_quality) < 3){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: stick_quality needs to be at least 3, setting to 3\n"
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: stick_quality needs to be at least 3, setting to 3\n"
+	    ENDFB(G);
+	}
 	SettingSet_i(G->Setting, cSetting_stick_quality, 3);
 	return ;
       }
@@ -2806,17 +2832,21 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     {
       int sphere_quality = SettingGetGlobal_i(G, cSetting_sphere_quality);
       if ( sphere_quality < 0 ){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: sphere_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
-	  (NUMBER_OF_SPHERE_LEVELS-1)
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: sphere_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
+	    (NUMBER_OF_SPHERE_LEVELS-1)
+	    ENDFB(G);
+	}
 	SettingSet_i(G->Setting, cSetting_sphere_quality, 0);
 	return ;
       } else if (sphere_quality > NUMBER_OF_SPHERE_LEVELS-1){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: sphere_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
-	  (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: sphere_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
+	    (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
+	    ENDFB(G);
+	}
 	SettingSet_i(G->Setting, cSetting_sphere_quality, (NUMBER_OF_SPHERE_LEVELS-1));
 	return ;
       }
@@ -3236,9 +3266,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
 	  strcmp(lsetting, "sybyl") && 
 	  strcmp(lsetting, "macromodel") &&
 	  strcmp(lsetting, "mmd")){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: atom_type_format needs to be either mol2/sybyl or macromodel/mmd setting back to default mol2\n"
-	  ENDFB(G);
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: atom_type_format needs to be either mol2/sybyl or macromodel/mmd setting back to default mol2\n"
+	    ENDFB(G);
+	}
 	SettingSet_s(G->Setting, cSetting_atom_type_format, "mol2");	
       } else if (strcmp(setting, lsetting)){
 	SettingSet_s(G->Setting, cSetting_atom_type_format, lsetting);
@@ -3260,9 +3292,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_offscreen_rendering_multiplier:
 #if defined(WIN32) || defined(WIN64)
     if(SettingGetGlobal_b(G, cSetting_offscreen_rendering_for_antialiasing)){
-      PRINTFB(G, FB_Setting, FB_Warnings)
-	"Setting-Warning: offscreen_rendering_for_antialiasing is currently not supported on Windows.\n                 Please use graphics card controls to address anti-aliasing.\n"
-	ENDFB(G);
+      if (!quiet){
+	PRINTFB(G, FB_Setting, FB_Warnings)
+	  "Setting-Warning: offscreen_rendering_for_antialiasing is currently not supported on Windows.\n                 Please use graphics card controls to address anti-aliasing.\n"
+	  ENDFB(G);
+      }
       SettingSet_b(G->Setting, cSetting_offscreen_rendering_for_antialiasing, 0);
     }
 #else

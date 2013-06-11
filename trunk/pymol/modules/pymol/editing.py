@@ -587,7 +587,7 @@ PYMOL API
             r = _cmd.invert(_self._COb,int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.QuietException            
+        if _self._raising(r,_self): raise cmd.QuietException
         return r
 
     def unbond(atom1="(pk1)", atom2="(pk2)", quiet=1, _self=cmd):

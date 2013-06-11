@@ -572,7 +572,7 @@ if __name__=='pymol.parser':
                     elif lf==1:
                         result = flist[0]
                         if os.path.isdir(flist[0]):
-                            result += os.path.sep
+                            result += '/' # do not use os.path.sep here
                     else:
                         flist.sort()
                         print " parser: matching files:"

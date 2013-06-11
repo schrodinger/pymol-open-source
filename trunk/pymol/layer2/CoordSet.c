@@ -1528,7 +1528,7 @@ void CoordSetRender(CoordSet * I, RenderInfo * info)
               break;
             case cRepEllipsoid:        /* render spheres differently depending on transparency */
               if(SettingGet_f(G, r->cs->Setting,
-                              r->obj->Setting, cSetting_sphere_transparency) > 0.0001) {
+                              r->obj->Setting, cSetting_ellipsoid_transparency) > 0.0001) {
                 if(pass == -1)
                   r->fRender(r, info);
               } else if(pass == 1)

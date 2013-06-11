@@ -3272,6 +3272,10 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    if (ok)
 	      convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);
 	    CHECKOK(ok, convertcgo);
+	    if (I->pickingCGO && I->pickingCGO!=I->shaderCGO){
+	      CGOFree(I->pickingCGO);
+	      I->pickingCGO = NULL;
+	    }
 	    CGOFree(I->shaderCGO);
 	    I->shaderCGO = convertcgo;
 	    convertcgo = NULL;

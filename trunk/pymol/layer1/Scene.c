@@ -3467,8 +3467,8 @@ unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer)
 
   int debug = false;
   unsigned char *c;
-  int strict = false;
-  GLint rb, gb, bb;
+  int strict = false, bits15 = false;
+  GLint rb, gb, bb, ab;
   int bkrd_alpha = 0xFF;
   int check_alpha = false;
 
@@ -3477,10 +3477,15 @@ unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer)
     glGetIntegerv(GL_RED_BITS, &rb);
     glGetIntegerv(GL_GREEN_BITS, &gb);
     glGetIntegerv(GL_BLUE_BITS, &bb);
+    glGetIntegerv(GL_ALPHA_BITS, &ab);
 
     if((rb >= 8) && (gb >= 8) && (bb >= 8))
       strict = true;
-
+    bits15 = (rb == 5) && (gb == 5) && (bb == 5);
+    if((rb < 4) && (gb < 4) && (bb < 4)){
+      PRINTFB(G, FB_Scene, FB_Errors) "SceneFindTriplet: ERROR: not enough colors to pick: rb=%d gb=%d bb=%d\n", rb, gb, bb ENDFB(G);
+      return 0;
+    }
     if(Feedback(G, FB_Scene, FB_Debugging))
       debug = true;
 
@@ -3519,7 +3524,7 @@ unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer)
        (this is a bug for systems with broken alpha, such as Extreme 3D on Solaris 8 */
 
     flag = true;
-    for(d = 0; flag && (d < cRangeVal); d++)
+    for(d = 0; ab && flag && (d < cRangeVal); d++)
       for(a = -d; flag && (a <= d); a++)
         for(b = -d; flag && (b <= d); b++) {
           c = &buffer[(a + cRangeVal) + (b + cRangeVal) * w][0];
@@ -3528,21 +3533,23 @@ unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer)
             flag = false;
           }
         }
-
     /* now find the correct pixel */
-
     flag = true;
     for(d = 0; flag && (d < cRangeVal); d++)
       for(a = -d; flag && (a <= d); a++)
         for(b = -d; flag && (b <= d); b++) {
           c = &buffer[(a + cRangeVal) + (b + cRangeVal) * w][0];
           if(((c[3] == bkrd_alpha) || (!check_alpha)) &&
-             ((c[1] & 0x8) &&
+             ( ( (bits15 && c[1]) || (c[1] & 0x8)) &&
               ((!strict) ||
                (((c[1] & 0xF) == 8) && ((c[0] & 0xF) == 0) && ((c[2] & 0xF) == 0)
                )))) {           /* only consider intact, saturated pixels */
             flag = false;
-            result = ((c[0] >> 4) & 0xF) + (c[1] & 0xF0) + ((c[2] << 4) & 0xF00);
+	    if (bits15){  /* workaround for 15 bit rendering, for some reason red/green need rounding */
+	      c[0] += 0x8;
+	      c[2] += 0x8;
+	    }
+	    result = ((c[0] >> 4) & 0xF) + (c[1] & 0xF0) + ((c[2] << 4) & 0xF00);
             if(debug) {
               printf("%2x %2x %2x %d\n", c[0], c[1], c[2], result);
             }
@@ -3565,11 +3572,11 @@ unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
   unsigned char *c;
   int cc = 0;
   int dim[3];
-  int strict = false;
+  int strict = false, bits15 = false;
   int bkrd_alpha = 0xFF;
   int check_alpha = false;
 
-  GLint rb, gb, bb;
+  GLint rb, gb, bb, ab;
 
   dim[0] = w;
   dim[1] = h;
@@ -3581,12 +3588,17 @@ unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
   if(G->HaveGUI && G->ValidContext) {   /*just in case */
 
     glGetIntegerv(GL_RED_BITS, &rb);
-    glGetIntegerv(GL_RED_BITS, &gb);
-    glGetIntegerv(GL_RED_BITS, &bb);
+    glGetIntegerv(GL_GREEN_BITS, &gb);
+    glGetIntegerv(GL_BLUE_BITS, &bb);
+    glGetIntegerv(GL_ALPHA_BITS, &ab);
 
     if((rb >= 8) && (gb >= 8) && (bb >= 8))
       strict = true;
-
+    bits15 = (rb == 5) && (gb == 5) && (bb == 5);
+    if((rb < 4) && (gb < 4) && (bb < 4)){
+      PRINTFB(G, FB_Scene, FB_Errors) "SceneReadTriplet: ERROR: not enough colors to pick: rb=%d gb=%d bb=%d\n", rb, gb, bb ENDFB(G);
+      return 0;
+    }
     /* create some safe RAM on either side of the read buffer -- buggy
        ReadPixels implementations tend to trash RAM surrounding the
        target block */
@@ -3601,7 +3613,7 @@ unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
     /* first, check to make sure bkrd_alpha is correct 
        (this is a bug for systems with broken alpha, such as Extreme 3D on Solaris 8 */
 
-    for(a = 0; a < w; a++)
+    for(a = 0; ab && a < w; a++)
       for(b = 0; b < h; b++) {
         c = &buffer[a + b * w][0];
         if(c[3] == bkrd_alpha) {
@@ -3615,11 +3627,15 @@ unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
       for(b = 0; b < h; b++) {
         c = &buffer[a + b * w][0];
         if((((c[3] == bkrd_alpha) || (!check_alpha))) &&
-           ((c[1] & 0x8) &&
+           ((bits15 || (c[1] & 0x8)) &&
             ((!strict) ||
              (((c[1] & 0xF) == 8) && ((c[0] & 0xF) == 0) && ((c[2] & 0xF) == 0)
              )))) {             /* only consider intact, saturated pixels */
           VLACheck(result, unsigned int, cc + 1);
+	  if (bits15){  /* workaround for 15 bit rendering, for some reason red/green need rounding */
+	    c[0] += 0x8;
+	    c[2] += 0x8;
+	  }
           result[cc] = ((c[0] >> 4) & 0xF) + (c[1] & 0xF0) + ((c[2] << 4) & 0xF00);
           result[cc + 1] = b + a * h;
           /*printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result[cc]); */

@@ -91,16 +91,6 @@ static int ObjectCGOStateFromPyList(PyMOLGlobals * G, ObjectCGOState * I, PyObje
       ok = ((I->ray = CGONewFromPyList(G, PyList_GetItem(list, 1), version)) != NULL);
     if (!I->std && I->ray){
       I->std = CGOSimplify(I->ray, 0);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-      {
-	CGO *convertcgo = NULL;
-	if(I->std && I->std->has_begin_end){
-	  convertcgo = CGOCombineBeginEnd(I->std, 0);
-	  CGOFree(I->std);
-	  I->std = convertcgo;
-	}
-      }
-#endif
     }
   }
   return (ok);
@@ -280,16 +270,6 @@ static void ObjectCGOUpdate(ObjectCGO * I)
           if(ocs->std)
             CGOFree(ocs->std);
           ocs->std = CGOSimplify(ocs->ray, est);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-	  {
-	    CGO *convertcgo = NULL;
-	    if(ocs->std && ocs->std->has_begin_end){
-	      convertcgo = CGOCombineBeginEnd(ocs->std, 0);
-	      CGOFree(ocs->std);
-	      ocs->std = convertcgo;
-	    }
-	  }
-#endif
         }
       }
       ocs->valid = true;
@@ -350,6 +330,14 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 		  colorWithA[0] = 1.f; colorWithA[1] = 1.f; colorWithA[2] = 1.f;
 		}
 		colorWithA[3] = 1.f - SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_transparency);
+		{
+		  CGO *convertcgo = NULL;
+		  if(sobj->std && sobj->std->has_begin_end){
+		    convertcgo = CGOCombineBeginEnd(sobj->std, 0);
+		    CGOFree(sobj->std);
+		    sobj->std = convertcgo;
+		  }
+		}
 		if (CGOHasCylinderOperations(sobj->std)){
 		  convertcgo = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(sobj->std, 0);
 		  //		  convertcgo->enable_shaders = true;
@@ -444,6 +432,14 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 	      colorWithA[0] = 1.f; colorWithA[1] = 1.f; colorWithA[2] = 1.f;
 	    }
 	    colorWithA[3] = 1.f - SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_transparency);
+	    {
+	      CGO *convertcgo = NULL;
+	      if(sobj->std && sobj->std->has_begin_end){
+		convertcgo = CGOCombineBeginEnd(sobj->std, 0);
+		CGOFree(sobj->std);
+		sobj->std = convertcgo;
+	      }
+	    }
 	    if (CGOHasCylinderOperations(sobj->std)){
 	      sobj->shaderCGO = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(sobj->std, 0);
 	      //	      sobj->shaderCGO->enable_shaders = true;
@@ -573,16 +569,6 @@ static CGO *ObjectCGOPyListFloatToCGO(PyMOLGlobals * G, PyObject * list)
             PRINTF " FloatToCGO: error encountered on element %d\n", result ENDF(G);
           }
           CGOStop(cgo);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-	  {
-	    CGO *convertcgo = NULL;
-	    if(cgo && cgo->has_begin_end){
-	      convertcgo = CGOCombineBeginEnd(cgo, 0);
-	      CGOFree(cgo);
-	      cgo = convertcgo;
-	    }
-	  }
-#endif
         }
       }
       FreeP(raw);
@@ -650,16 +636,6 @@ ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals * G, ObjectCGO * obj, CGO * cgo, int st
   }
   if (cgo)
     est = CGOCheckComplex(cgo);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-  {
-    CGO *convertcgo = NULL;
-    if(cgo && cgo->has_begin_end){
-      convertcgo = CGOCombineBeginEnd(cgo, 0);
-      CGOFree(cgo);
-      cgo = convertcgo;
-    }
-  }
-#endif
   if(est) {
     I->State[state].ray = cgo;
     I->State[state].std = CGOSimplify(cgo, est);
