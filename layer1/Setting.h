@@ -177,7 +177,7 @@ PyObject *SettingGetDefinedTuple(PyMOLGlobals * G, CSetting * set1, int index);
 PyObject *SettingGetUpdateList(PyMOLGlobals * G, CSetting * I);
 #endif
 
-void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int state);
+void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int state, int quiet);
 
 
 /* Legacy API below */

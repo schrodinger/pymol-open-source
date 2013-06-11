@@ -303,7 +303,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
 #endif
     for (t=0; t<2; t++) {
       if (vs->textures[t]) {
-	CShaderMgr_AddVBOToFree(vs->State.G->ShaderMgr, (const GLuint *) &vs->textures[t]);
+        glDeleteTextures(1, (const GLuint *) &vs->textures[t]);
 	vs->textures[t] = 0;
 	/*
         if(PIsGlutThread()) {
@@ -346,8 +346,14 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
 
 static void ObjectVolumeFree(ObjectVolume * I)
 {
-  int a;
+  int a,i;
   for(a = 0; a < I->NState; a++) {
+    for (i=0; i<2; i++){
+      if (I->State[a].textures[i]){
+       glDeleteTextures(1, (const GLuint *) &I->State[a].textures[i]);
+       I->State[a].textures[i] = 0;
+      }
+    }
     if(I->State[a].Active)
       ObjectVolumeStateFree(I->State + a);
   }
