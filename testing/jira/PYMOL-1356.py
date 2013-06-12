@@ -70,7 +70,7 @@ class Test1356(testing.PyMOLTestCase):
 
         cmd.align('m1', 'm2')
         cmd.set_view(views[1])
-        self.assertImageEqual(ref, count=100, msg='ANISOU not aligned on display')
+        self.assertImageEqual(ref, count=100, delta=1, msg='ANISOU not aligned on display')
 
         pdbstr = cmd.get_pdbstr('m1')
         cmd.delete('*')
