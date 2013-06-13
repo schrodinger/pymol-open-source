@@ -1,6 +1,9 @@
 
 import types
-import cmd
+try:
+    import cmd
+except:
+    cmd = None
 
 def _raising(code=-1,_self=cmd):
     # WARNING: internal routine, subject to change

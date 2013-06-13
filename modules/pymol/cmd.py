@@ -310,8 +310,7 @@ if __name__=='pymol.cmd':
         selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
         object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))
         map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
-        contour_sc =  lambda sc=Shortcut,gnot=get_names_of_type:sc(
-            gnot('object:mesh')+gnot('object:surface'))
+        contour_sc =  lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:mesh')+gnot('object:surface'))
         group_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:group'))
         
         # Table for argument autocompletion

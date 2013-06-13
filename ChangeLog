@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2013-06-13 Blaine Bell <blaine.bell@schrodinger.com>
+
+	* fixed labels when use_shaders is 0 and show_frame_rate is on
+
+2013-06-12 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* update APBS Tools plugin
+
+	* fix spectrumany when minimum/maximum are provided
+
 2013-06-11 Blaine Bell <blaine.bell@schrodinger.com>
 
 	* Open Source PyMOL v1.6.0.0
