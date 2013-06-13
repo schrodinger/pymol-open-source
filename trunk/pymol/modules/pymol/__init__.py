@@ -252,9 +252,11 @@ if pymol_launch != 3: # if this isn't a dry run
         # auto-detect bundled FREEMOL (if present)
         
         if not os.environ.has_key("FREEMOL"):
-            test_path = os.path.join(os.environ['PYMOL_PATH'],"freemol")
-            if os.path.isdir(test_path):
-                os.environ['FREEMOL'] = test_path
+            for test_path in ['freemol', 'ext']:
+                test_path = os.path.join(os.environ['PYMOL_PATH'], test_path)
+                if os.path.isdir(test_path):
+                    os.environ['FREEMOL'] = test_path
+                    break
                 
         # include FREEMOL's libpy in sys.path (if present)
         
@@ -339,9 +341,6 @@ if pymol_launch != 3: # if this isn't a dry run
             elif vendor.startswith('Parallels'):
                 if renderer[0:8]=='Parallel':
                     pass
-                    # this was critical for older Parallels
-                    # but actually slows down current versions
-                    # cmd.set('texture_fonts',1) 
 
             elif vendor.startswith('ATI'):
                 if renderer[0:17]=='FireGL2 / FireGL3':  # obsolete ?

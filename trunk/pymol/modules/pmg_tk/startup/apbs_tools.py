@@ -1,11 +1,35 @@
 #!/usr/bin/env python
 
+# Schrodinger modifications to rev 26 from
+# pymolapbsplugin.svn.sourceforge.net/viewvc/pymolapbsplugin/trunk/src/apbsplugin.py
+#  - FreeMOL handling
+#  - importing of pdb2pqr
+#  - updated URLs
+#  - move all print statements behind "if DEBUG:" statements
+
 # TODO:
+
+#  - Fold in ApbsInterface.py
+#
+#  - Check to see if the selection from the main page is actually an
+#    object. If it is, select it by default on the visualization pane.
+#
+#  - Make sure there's a warning for when PDB2PQR decides to ignore
+#    things.
+#
+# Under consideration
+#
+#  - Add support for dual core machines via mpi versions and pdime
+#
+#  - Deal with MSE like util.py protein_assign_charges_and_radii()
+
+# Done
 #  - provide diff for pdb2pqr freemol
 #  - use remove_alt to count alternate atom locations and warn the user
 #  - Note to users that they should remove freemol's pymol.exe on OS X.
-#  - Fold in ApbsInterface.py
 #  - Default to calling psize.py and pdb2pqr rather than our internals.
+#  - Check for environment variables for APBS_BINARY and APBS_PSIZE
+#
 
 ### (all) and resn glu and resi 154+157
 ### flag ignore, atom-selection, clear
@@ -67,14 +91,6 @@ Features under consideration:
  - Use 'acc' to calculate solvent-accessible surface areas. We'll use
    the PyMOL 'standard' method and store this data as B-factors.
 
- - Show the field lines. Relevant code from menu.py:
-
-    def map_gradient(self_cmd, sele):
-        return [[ 2, 'Gradient:',  '' ],
-                [ 1, 'default'         , 'cmd.gradient("'+sele+'_grad","'+sele+'");cmd.ramp_new("'+sele+
-                  '_grad_ramp","'+sele+'");cmd.color("'+sele+'_grad_ramp","'+sele+'_grad");' ]
-                ]
-
  - Deal with Zinc. Here's an email snippet from David Neuhaus:
 
       2) Many of the proteins I work with are zinc finger proteins,
@@ -91,7 +107,7 @@ Features under consideration:
       (selected via "Choose Externally Generated PQR").  I guess this
       would still be the only way to achieve this workflow with your
       new plugin, or might there be some clever way of scripting any
-      of this?  I"d be happy to send further details if you are
+      of this?  I'd be happy to send further details if you are
       interested - but I appreciate also that even if it is possible,
       it might well be more trouble to implement than it is worth.
 
@@ -120,11 +136,13 @@ Known hacks:
 from __future__ import division
 from __future__ import generators
 
-global DEBUG
-DEBUG = 1
+INCLUDEWEBAPBS = False
+
+DEBUG = 0
 
 APBS_DEFAULT=True
 
+import tempfile
 import os,math,re
 import string
 import Tkinter
@@ -138,16 +156,17 @@ import pymol
 # Global config variables
 #
 # To change the default locations, change these to something like
-# APBS_BINARY_LOCATION = '/opt/bin/apbs'
+# APBS_BINARY_LOCATION = '/opt/bin/'
 #
-APBS_BINARY_LOCATION = None
-APBS_PSIZE_LOCATION = None
-APBS_PDB2PQR_LOCATION = None
-TEMPORARY_FILE_DIR = None
+APBS_BINARY_LOCATION = None # corresponding environment variable: APBS_BINARY_DIR
+APBS_WEB_LOCATION = None # corresponding environment variable: APBS_WEB_DIR
+APBS_PSIZE_LOCATION = None # corresponding environment variable: APBS_PSIZE_DIR
+APBS_PDB2PQR_LOCATION = None # corresponding environment variable: APBS_PDB2PQR_DIR
+TEMPORARY_FILE_DIR = tempfile.gettempdir() # corresponding environment variable: TEMP
 
 apbs_plea = ("IMPORTANT REQUEST: If you have not already done so, please register\n"
              "your use of the open-source Adaptive Poisson-Boltzmann Solver (APBS) at\n"
-             "-> http://agave.wustl.edu/apbs/download\n"
+             "-> http://www.poissonboltzmann.org/apbs/downloads\n"
              "Such proof of usage is vital in securing funding for APBS development!\n")
 
 pdb2pqr_plea = ("IMPORTANT REQUEST: If you have not already done so, please register\n"
@@ -185,7 +204,7 @@ def get_default_location(name):
         not specified. We will do the same for <foo>.py
     """
     def verify(name,f):
-        if name in 'apbs.exe apbs'.split():
+        if name in 'apbs.exe apbs apbs-mpi-openmpi apbs-mpi-lammpi apbs-mpi'.split(): # maybe if 'apbs' in name ?
             # You'd think we could just check the return code, but
             # APBS doesn't return zero on success. Instead, it returns
             # things like 3328. It seems to return 5 or -5 in this
@@ -195,59 +214,89 @@ def get_default_location(name):
             if 'dyld: Library not loaded' in prog_out:
                 print "Skipping",f,"because it appears to be broken (dyld)"
                 return False
+        if name in 'ApbsClient.py ApbsClient'.split():
+            # The python script does seem to return 0 on success.
+            # Here we just test to make sure it runs with the help
+            # message properly, i.e. that it can import the things it
+            # wants to import.
+            (retcode,prog_out) = run(f,'')
+            if retcode != 0:
+                print 'Bad ApbsClient.py'
+                print 'Program out'
+                print prog_out
+                print "Just so you know, os.system returns"
+                print os.system(f)
+                print "."
+                return False
         return True
     searchDirs = []
-    if "FREEMOL" in os.environ:
+    # Previous order was A B C D
+    #D
+    for x in 'APBS_BINARY_DIR APBS_WEB_DIR APBS_PSIZE_DIR APBS_PDB2PQR_DIR'.split():
+        if x in os.environ:
+            searchDirs.append(os.environ[x])
+    #C
+    for x in (APBS_BINARY_LOCATION, APBS_WEB_LOCATION, APBS_PSIZE_LOCATION, APBS_PDB2PQR_LOCATION):
+        if x != None and x != "":
+            searchDirs.append(x)
+    #A
+    if "FREEMOL" in os.environ: 
         searchDirs.append(os.environ["FREEMOL"])
+        searchDirs.append(os.path.join(os.environ["FREEMOL"], "share", "pdb2pqr"))
+    #B
     if "PYMOL_PATH" in os.environ:
         searchDirs.append(os.path.join(os.environ["PYMOL_PATH"], "ext", "bin"))
         searchDirs.append(os.path.join(os.environ["PYMOL_PATH"], "freemol", "bin"))
         searchDirs.append(os.path.join(os.environ["PYMOL_PATH"], "freemol", "share", "apbs"))
         searchDirs.append(os.path.join(os.environ["PYMOL_PATH"], "freemol", "share", "pdb2pqr"))
-    for x in (APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION, APBS_PDB2PQR_LOCATION):
-        if x != None and x != "":
-            searchDirs.append(x)
-    if name=="temp":
-        searchDirs = []
-        if TEMPORARY_FILE_DIR != None and TEMPORARY_FILE_DIR != "":
-            searchDirs.append(TEMPORARY_FILE_DIR)
-        searchDirs.append("/tmp")
-        searchDirs.append(".")
 
+    ### OTHER KNOWN PATHS WHERE PROGRAMS RESIDE
 
     # This must come before /sw/bin (which may also be in PATH) in
     # order for our pdb2pqr importing to work
     # correctly. /sw/bin/pdb2pqr just calls through to this.
     searchDirs.append(os.path.join("/sw", "share", "pdb2pqr"))
+    searchDirs.append(os.path.join("/sw", "share", "apbs", "tools", "manip"))
+    searchDirs.append(os.path.join("/sw", "share", "apbs-mpi-openmpi", "tools", "manip"))
+    searchDirs.append(os.path.join("/sw", "share", "apbs-mpi-lammpi", "tools", "manip"))
+    searchDirs.append(os.path.join("/usr", "local", "share", "tools", "manip"))
 
     searchDirs.extend(string.split(os.environ["PATH"], ":"))
     searchDirs.append(os.path.join("/usr", "local", "bin"))
     searchDirs.append(os.path.join("/opt", "local", "bin"))
     searchDirs.append(os.path.join("/sw", "bin"))
 
-    print "Search dirs",searchDirs
+    # This comes last because it must reset everything. Temp is
+    # different because it's just a directory to store things, not
+    # for finding things to run.
+    if name=="temp":
+        searchDirs = []
+        if 'TEMP' in os.environ:
+            searchDirs.append(os.environ['TEMP'])
+        if TEMPORARY_FILE_DIR != None and TEMPORARY_FILE_DIR != "":
+            searchDirs.append(TEMPORARY_FILE_DIR)
+        searchDirs.append("/tmp")
+        searchDirs.append(".")
 
     if DEBUG:
         print "get_default_location will search the following: ", searchDirs
     for d in searchDirs:
         if name=="temp":
             f = d           # just search for the directory
+            if os.path.isdir(f):
+                return f
         else:
             f = os.path.join( d, name )  # make path/name.py
-            print "trying",f
+            if DEBUG:
+                print "trying",f
             if os.path.exists(f) and verify(name,f):
                 return f
             elif name.endswith('.exe'):
-                f = os.path.join( d, name[:-4] )  # make path/name.py
-                print "trying",f
+                f = os.path.join( d, name[:-4] )  # make path/name.exe
+                if DEBUG:
+                    print "trying",f
                 if os.path.exists(f) and verify(name,f):
                     return f
-            elif name.endswith('.py'):
-                f = os.path.join( d, name[:-3] )  # make path/name.py
-                print "trying",f
-                if os.path.exists(f) and verify(name,f):
-                    return f
-        
     print "Could not find default location for file: %s" % name
     return ""
 
@@ -260,8 +309,8 @@ def __init__(self):
     creation shows itself.
     """
     self.menuBar.addmenuitem('Plugin', 'command',
-                             'Launch APBS Tools2',
-                             label='APBS Tools2...',
+                             'Launch APBS Tools2.1',
+                             label='APBS Tools2.1...',
                              command = lambda s=self: APBSTools2(s))
 
 def run(prog,args):
@@ -290,7 +339,8 @@ def run(prog,args):
     except IOError:
         print "Error opening output_file when trying to run the APBS command."
 
-    print "Running:\n\tprog=%s\n\targs=%s" % (prog,args)
+    if DEBUG:
+        print "Running:\n\tprog=%s\n\targs=%s" % (prog,args)
     retcode = subprocess.call(args,stdout=output_file.fileno(),stderr=subprocess.STDOUT)
     output_file.seek(0)
     #prog_out = output_file.read()
@@ -481,6 +531,8 @@ class APBSTools2:
         self.psize.setvalue(value)
     def setBinaryLocation(self,value):
         self.binary.setvalue(value)
+    def setWebApbsLocation(self,value):
+        self.webapbs.setvalue(value)
     def setPdb2pqrLocation(self,value):
         self.pdb2pqr.setvalue(value)
 
@@ -819,20 +871,56 @@ class APBSTools2:
             if os.path.isdir(os.path.split(s)[0]):
                 return Pmw.OK
             return Pmw.PARTIAL
+        # Both macports and fink allow you to install MPI versions
+        # now.  They change the name to apbs-mpi and apbs-mpi-openmpi
+        # respectively. So, we need to check for those versions.  fink
+        # also allows apbs-mpi-lammpi. It's easier to deal with that
+        # here than it is to make the get_default_location check
+        # recursively for everything.
+        apbs_location = ''
+        psize_location = ''
+
+        try:
+            import freemol.apbs
+            apbs_location = freemol.apbs.get_exe_path()
+            psize_location = freemol.apbs.get_psize_path()
+        except:
+            pass
+
+        if not psize_location:
+            psize_location = get_default_location('psize.py')
+        if not apbs_location:
+            apbs_location = get_default_location('apbs.exe')
+        if not apbs_location:
+            apbs_location = get_default_location('apbs-mpi.exe')
+        if not apbs_location:
+            apbs_location = get_default_location('apbs-mpi-openmpi.exe')
+        if not apbs_location:
+            apbs_location = get_default_location('apbs-mpi-lammpi.exe')
         self.binary = Pmw.EntryField(group.interior(),
                                      labelpos='w',
                                      label_pyclass = FileDialogButtonClassFactory.get(self.setBinaryLocation),
                                      validate = {'validator':quickFileValidation,},
-                                     value = get_default_location('apbs.exe'),
+                                     value = apbs_location,
                                      label_text = 'APBS binary location:',
                                      )
         self.binary.pack(fill = 'x', padx = 20, pady = 10)
+        if INCLUDEWEBAPBS:
+            self.webapbs = Pmw.EntryField(group.interior(),
+                                          labelpos='w',
+                                          label_pyclass = FileDialogButtonClassFactory.get(self.setWebApbsLocation),
+                                          validate = {'validator':quickFileValidation,},
+                                          value = get_default_location('ApbsClient.py'),
+                                          label_text = 'APBS web interface location:',
+                                          )
+            self.webapbs.pack(fill = 'x', padx = 20, pady = 10)
+
         self.psize =  Pmw.EntryField(group.interior(),
                                      labelpos='w',
                                      label_pyclass = FileDialogButtonClassFactory.get(self.setPsizeLocation),
                                      validate = {'validator':quickFileValidation,},
                                      #value = '/usr/local/apbs-0.3.1/tools/manip/psize.py',
-                                     value = get_default_location('psize.py'),
+                                     value = psize_location,
                                      label_text = 'APBS psize.py location:',
                                      )
         self.psize.pack(fill = 'x', padx = 20, pady = 10)
@@ -841,7 +929,7 @@ class APBSTools2:
                                        label_pyclass = FileDialogButtonClassFactory.get(self.setPdb2pqrLocation),
                                        validate = {'validator':quickFileValidation,},
                                        value = get_default_location('pdb2pqr.py'),
-                                       label_text = 'pdb2pqr location:',
+                                       label_text = 'pdb2pqr.py location:',
                                        )
         self.pdb2pqr.pack(fill = 'x', padx = 20, pady = 10)
 
@@ -850,7 +938,7 @@ class APBSTools2:
                               justify=LEFT,
                               text = """
 By default, the PyMOL APBS Tools will use APBS's psize.py to calculate proper grid dimensions and
-spacing. This tool attempts to make the fine mesh spacing 0.5 A or smaller, but will make a coarser 
+spacing. This tool attempts to make the fine mesh spacing approximately 0.5 A, but will make a coarser 
 grid if constrained to do so by the Maximum Memory Allowed setting in the configuration pane. If 
 you wish this behavior, you must ensure that "APBS psize.py location" above points to a valid file.
 This plugin can also calculate grid dimensions and spacing itself. If you wish that behavior, simply 
@@ -931,7 +1019,7 @@ by setting the environment variable TEMP.
 Documentation may be found at
 http://pymolwiki.org/index.php/APBS
 and
-http://apbs.wustl.edu/MediaWiki/index.php/APBS_electrostatics_in_PyMOL
+http://www.poissonboltzmann.org/apbs/examples/visualization/apbs-electrostatics-in-pymol
 
 It requires APBS version >= 0.5.0.
 
@@ -949,7 +1037,7 @@ Many thanks to
  - William G. Scott for help with several APBS+PyMOL issues and documentation
 
 Created by Michael Lerner (http://pymolwiki.org/index.php/User:Mglerner) mglerner@gmail.com
-Carlson Group, University of Michigan (http://www.umich.edu/~carlsonh/)
+Carlson Group, University of Michigan (http://sitemaker.umich.edu/carlsonlab/)
 
 Please contact the author and cite this plugin if you use it in a publication.
 
@@ -1022,7 +1110,7 @@ Citation for PDB2PQR:
     def execute(self, result, refocus=True):
         if result == 'Register APBS Use':
             import webbrowser
-            webbrowser.open("http://agave.wustl.edu/apbs/download")
+            webbrowser.open("http://www.poissonboltzmann.org/apbs/downloads")
         elif result == 'Register PDB2PQR Use':
             import webbrowser
             webbrowser.open("http://www.poissonboltzmann.org/pdb2pqr/d/downloads")
@@ -1078,8 +1166,10 @@ Citation for PDB2PQR:
             # Doing it this way takes care of clicking on the x in the top of the
             # window, which as result set to None.
             #
-            global APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION
+            global APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION, APBS_WEB_LOCATION
             APBS_BINARY_LOCATION = self.binary.getvalue()
+            if INCLUDEWEBAPBS:
+                APBS_WEB_LOCATION = self.webapbs.getvalue()
             APBS_PSIZE_LOCATION = self.psize.getvalue()
             self.quit()
     def quit(self):
@@ -1286,7 +1376,7 @@ Citation for PDB2PQR:
         #pymol.cmd.alter_state(1,'all','(x,y,z)=(int(x*1000)/1000.0, int(y*1000)/1000.0, int(z*1000)/1000.0)')
         #pymol.cmd.alter_state(1,'all','(x,y,z)=float("%.2f"%x),float("%.2f"%y),float("%.2f"%z)')
         pymol.cmd.alter_state(1,'all','(x,y,z)=float("%.3f"%x),float("%.3f"%y),float("%.3f"%z)')
-        pymol.cmd.alter(sel,'chain=""')
+        #pymol.cmd.alter(sel,'chain=""')
         pymol.cmd.alter(sel,'b=0')
         pymol.cmd.alter(sel,'q=0')
 
@@ -1370,7 +1460,7 @@ Citation for PDB2PQR:
         
             
     def generateApbsInputFile(self):
-        if self.checkInput(silent=False):
+        if self.checkInput():
             #
             # set up our variables
             #
@@ -1444,22 +1534,19 @@ Citation for PDB2PQR:
                 print "ERROR: Got the input file from APBS, but failed when trying to write to %s" % self.pymol_generated_in_filename.getvalue()
             return True
         else:
-            self.checkInput()
+            #self.checkInput()
             return False
 
-    def checkInput(self,silent=False):
-        """If silent is True, we'll just return a True/False value
+    def checkInput(self):
+        """No silent checks. Always show error.
         """
-        if not silent:
-            def show_error(message):
-                error_dialog = Pmw.MessageDialog(self.parent,
-                                                 title = 'Error',
-                                                 message_text = message,
-                                                 )
-                junk = error_dialog.activate()
-        else:
-            def show_error(message):
-                pass
+        def show_error(message):
+            print "In show error 1"
+            error_dialog = Pmw.MessageDialog(self.parent,
+                                             title = 'Error',
+                                             message_text = message,
+                                             )
+            junk = error_dialog.activate()
             
         #
         # First, check to make sure we have valid locations for apbs and psize
@@ -1535,20 +1622,17 @@ Citation for PDB2PQR:
 
     # PQR generation routines are required to call
     # cleanupGeneratedPdbOrPqrFile themselves.
-    def _generatePdb2pqrPqrFile(self,silent=False):
+    def _generatePdb2pqrPqrFile(self):
         """use pdb2pqr to generate a pqr file
         Call this via the wrapper generatePqrFile()
         """
-        if not silent:
-            def show_error(message):
-                error_dialog = Pmw.MessageDialog(self.parent,
-                                                 title = 'Error',
-                                                 message_text = message,
-                                                 )
-                junk = error_dialog.activate()
-        else:
-            def show_error(message):
-                pass
+        def show_error(message):
+            print "In show error 2"
+            error_dialog = Pmw.MessageDialog(self.parent,
+                                             title = 'Error',
+                                             message_text = message,
+                                             )
+            junk = error_dialog.activate()
         
         #
         # First, generate a PDB file
@@ -1581,42 +1665,65 @@ Citation for PDB2PQR:
         #
         # We have to be a little cute about args, because _options could have several options in it.
 
-        print "TESTING"
-        #run('/tmp/tmp.py',())
-        print "DONE TESTING"
-        args = '%s %s %s' %(self.pdb2pqr_options.getvalue(),
+        if DEBUG:
+            print "TESTING"
+            #run('/tmp/tmp.py',())
+            print "DONE TESTING"
+        try:
+            if not 'pdb2pqr' in sys.modules:
+                import imp
+                pdb2pqr_value = self.pdb2pqr.getvalue().strip()
+                if pdb2pqr_value:
+                    pdb2pqr = imp.load_module('pdb2pqr', None,
+                        pdb2pqr_value if os.path.isdir(pdb2pqr_value) else
+                        os.path.dirname(pdb2pqr_value),
+                        ('', '', imp.PKG_DIRECTORY))
+                else:
+                    import pdb2pqr
+                sys.path.extend(pdb2pqr.__path__)
+            import pdb2pqr
+            if DEBUG:
+                print "Imported pdb2pqr"
+            from pdb2pqr import main
+        except ImportError:
+            print sys.exc_info()
+            show_error("Error: could not import pdb2pqr, please check 'pdb2pqr.py location'")
+            return False
+
+        try:
+            args = [pdb2pqr.__file__,
+                self.pdb2pqr_options.getvalue(),
                             pdb_filename,
                             self.pymol_generated_pqr_filename.getvalue(),
-                            )
-        if type(args) == type(''):
-            args = tuple(args.split())
-        elif type(args) in (type([]),type(())):
-            args = tuple(args)
-        args = (self.pdb2pqr.getvalue(),) + args
-        try:
-            # This allows us to import pdb2pqr
-            sys.path.append(os.path.dirname(os.path.dirname(self.pdb2pqr.getvalue())))
-            print "Appended", os.path.dirname(os.path.dirname(self.pdb2pqr.getvalue()))
-            import pdb2pqr.pdb2pqr
-            # This allows pdb2pqr to correctly find the dat directory with AMBER.DAT.
-            sys.path.append(os.path.dirname(self.pdb2pqr.getvalue()))
-            print "Appended", os.path.dirname(self.pdb2pqr.getvalue())
-            print "Imported pdb2pqr"
-            print "args are: ", args
-            from pdb2pqr import main
-            print "Imported main"
-            main.mainCommand(args)
-            print "ran main.mainCommand"
-            retval = 0
+                            ]
+            if DEBUG:
+                print "Imported main"
+            try:
+                # currently pdb2pqr option parser fails without this
+                sys.argv = args
+
+                retval = main.mainCommand(args)
+                if DEBUG:
+                    print "PDB2PQR's mainCommand returned",retval
+                if retval == 1:
+                    retval = 0 # success condition is backwards in pdb2pqr
+                elif retval == 0:
+                    retval = 1 # success condition is backwards in pdb2pqr
+                elif retval == None:
+                    retval = 0 # When PDB2PQR does not explicitly
+                               # return anything, it's a success.
+            except:
+                print "Exception raised by main.mainCommand!"
+                print sys.exc_info()
+                retval = 1
         except:
-            print "Unexpected error:", sys.exc_info()
+            print "Unexpected error encountered while trying to import pdb2pqr:", sys.exc_info()
+            retval = 1 # failure is nonzero here.
 
 
         if retval != 0:
-            show_error('Could not run pdb2pqr: %s %s\n\n%s'%(self.pdb2pqr.getvalue(),
-                                                             args,
-                                                             progout)
-                       )
+            show_error('Could not run pdb2pqr: %s\n\nIt returned %s.\nCheck the PyMOL external GUI window for more information\n'%(
+                args, retval))
             return False
         self.cleanupGeneratedPdbOrPqrFile(self.pymol_generated_pqr_filename.getvalue())
         unassigned_atoms = self.getUnassignedAtomsFromPqr(self.pymol_generated_pqr_filename.getvalue())
@@ -1626,7 +1733,8 @@ Citation for PDB2PQR:
             print "Unassigned atom IDs",unassigned_atoms
             show_error(message_text)
             return False
-        print "I WILL RETURN TRUE from pdb2pqr"
+        if DEBUG:
+            print "I WILL RETURN TRUE from pdb2pqr"
         return True
         
         
@@ -1656,7 +1764,8 @@ Citation for PDB2PQR:
         
         pqr_filename = self.getPqrFilename()
         try:
-            print "Erasing previous contents of",pqr_filename
+            if DEBUG:
+                print "Erasing previous contents of",pqr_filename
             f = open(pqr_filename,'w')
             f.close()
         except:
@@ -2215,7 +2324,7 @@ class VisualizationGroup(Pmw.Group):
             self.fl_buttonbox = Pmw.ButtonBox(self.fl_group.interior(), padx=0)
             self.fl_buttonbox.pack()
             self.fl_buttonbox.add('Show',command=self.showFieldLines)
-            self.fl_buttonbox.add('Hide',command=self.showNegSurface)
+            self.fl_buttonbox.add('Hide',command=self.hideFieldLines)
             self.fl_buttonbox.add('Update',command=self.updateFieldLines)
             self.fl_buttonbox.alignbuttons()
             label = Tkinter.Label(self.fl_group.interior(),
@@ -2309,7 +2418,8 @@ If you have a molecule and a map loaded, please click "Update"''',
         mid = float(self.mol_surf_middle.getvalue())
         high = float(self.mol_surf_high.getvalue())
         range = [low,mid,high]
-        print " APBS Tools: range is",range
+        if DEBUG:
+            print " APBS Tools: range is",range
         pymol.cmd.delete(ramp_name)
         pymol.cmd.ramp_new(ramp_name,map_name,range)
         pymol.cmd.set('surface_color',ramp_name,molecule_name)
@@ -2356,4 +2466,4 @@ If you have a molecule and a map loaded, please click "Update"''',
         print "Updated ramp"
         pymol.cmd.color(self.getRampName(),self.getGradName())
         print "set colors"
-        
+        pymol.cmd.show('mesh',self.getGradName())

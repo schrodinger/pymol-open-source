@@ -21,7 +21,7 @@ default_polar_contacts = "polar_contacts"
 
 tmp_sele = "_p_tmp"
 
-prot_and_dna_sele = "(resn ALA+CYS+CYX+ASP+GLU+PHE+GLY+HIS+HID+HIE+HIP+HISE+HISD+HISP+ILE+LYS+LEU+MET+MSE+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U)"
+prot_and_dna_sele = "(resn ALA+CYS+CYX+ASP+GLU+PHE+GLY+HIS+HID+HIE+HIP+HISE+HISD+HISP+ILE+LYS+LEU+MET+MSE+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U+DA+DC+DT+DG+DU+DI)"
 wat_sele = "(resn WAT,H2O,HOH,TIP)"
 ion_sele = "(resn CA,HG,K,NA,ZN,MG,CL)"
 solv_sele = "("+wat_sele+"|"+ion_sele+")"

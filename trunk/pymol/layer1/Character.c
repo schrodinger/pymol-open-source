@@ -276,16 +276,16 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
 	    rec->extent[2], rec->extent[1],
 	    rec->extent[2], rec->extent[3]
 	  };	
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-#ifdef OPENGL_ES_1
-	  glClientActiveTexture(GL_TEXTURE1);
-#endif
-	  glVertexPointer(3, GL_FLOAT, 0, vertexVals);    
-	  glTexCoordPointer(2, GL_FLOAT, 0, texVals);
-	  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	  glDisableClientState(GL_VERTEX_ARRAY);
-	  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	  glBegin(GL_QUADS);
+	  glTexCoord2f(rec->extent[0], rec->extent[1]);
+	  glVertex3f(v0[0], v0[1], v0[2]);
+	  glTexCoord2f(rec->extent[0], rec->extent[3]);
+	  glVertex3f(v0[0], v1[1], v0[2]);
+	  glTexCoord2f(rec->extent[2], rec->extent[3]);
+	  glVertex3f(v1[0], v1[1], v0[2]);
+	  glTexCoord2f(rec->extent[2], rec->extent[1]);
+	  glVertex3f(v1[0], v0[1], v0[2]);
+	  glEnd();
 	}
       }
     }

@@ -1393,9 +1393,9 @@ SEE ALSO
                 if action=='clear':
                     for key in pymol._scene_dict.keys():
                         # free selections
-                        list = pymol._scene_dict[key]
-                        if len(list)>3:
-                            colorection = list[3]
+                        scene_list = pymol._scene_dict[key]
+                        if len(scene_list)>3:
+                            colorection = scene_list[3]
                             if colorection!=None:
                                 _self.del_colorection(colorection,key) 
                         name = "_scene_"+key+"_*"
@@ -1427,6 +1427,8 @@ SEE ALSO
                         print "Error: scene '%s' not found."%key
                     elif new_key==None:
                         print "Error: must provide the 'new_key' argument"
+                    elif new_key == key:
+                        print "scene: '%s' not changed" % key
                     else:
                         new_scene_order = []
                         for a in pymol._scene_order:
@@ -1443,9 +1445,9 @@ SEE ALSO
                             if name in valid_names:
                                 new_name = "_scene_"+new_key+"_"+rep_name
                                 _self.set_name(name,new_name)
-                        list = pymol._scene_dict[new_key]
-                        if len(list)>3:
-                            _self.set_colorection_name(list[3],key,new_key)
+                        scene_list = pymol._scene_dict[new_key]
+                        if len(scene_list)>3:
+                            _self.set_colorection_name(scene_list[3],key,new_key)
                         print" scene: '%s' renamed to '%s'."%(key,new_key)
                         pymol._scene_dict_sc.rebuild( pymol._scene_dict.keys())
                         _self.set("session_changed",1,quiet=1)
@@ -1464,29 +1466,29 @@ SEE ALSO
                     _self.set("scenes_changed",1,quiet=1);
                     key = pymol._scene_dict_sc.auto_err(key,'scene')
                     _self.set('scene_current_name', key, quiet=1)               
-                    list = pymol._scene_dict[key]
-                    ll = len(list)
+                    scene_list = pymol._scene_dict[key]
+                    ll = len(scene_list)
                     if (ll>1) and (active):
-                        if list[1]!=None:
+                        if scene_list[1]!=None:
                             _self.disable()
                             _self.deselect()
-                            _self.set_vis(list[1])
+                            _self.set_vis(scene_list[1])
                     if (ll>2) and (frame):
-                        if list[2]!=None:
+                        if scene_list[2]!=None:
                             if not _self.get_movie_playing(): # don't set frame when movie is already playing
-                                if _self.get_frame()!=list[2]: # only set the frame when it isn't already correct
-                                    _self.frame(list[2],scene=1) # let frame know that it is being set by a scene
+                                if _self.get_frame()!=scene_list[2]: # only set the frame when it isn't already correct
+                                    _self.frame(scene_list[2],scene=1) # let frame know that it is being set by a scene
                             else:
                                 _self.set_frame(1,10) # seek scene
                     if (ll>3) and (color):
-                        if list[3]!=None:
-                            _self.set_colorection(list[3],key)
+                        if scene_list[3]!=None:
+                            _self.set_colorection(scene_list[3],key)
                     if (ll>4) and (rep):
-                        if list[4]==None:
+                        if scene_list[4]==None:
                             rep = 0
                     if (ll>5) and (message==None):
-                        if list[5]!=None:
-                            message=list[5]
+                        if scene_list[5]!=None:
+                            message=scene_list[5]
                     if rep!=0:
                         _self.hide("(all)")
                         valid_names = _self.get_names("all")
@@ -1521,8 +1523,8 @@ SEE ALSO
                     if replace_flag and not mess_flag:
                         _self.wizard()
                     if (ll>0) and (view):
-                        if list[0]!=None:
-                            _self.set_view(list[0],animate,quiet,hand)
+                        if scene_list[0]!=None:
+                            _self.set_view(scene_list[0],animate,quiet,hand)
                     if not quiet and _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
                         print " scene: \"%s\" recalled."%key
                 elif (action=='store') or (action=='update'):
@@ -1535,11 +1537,11 @@ SEE ALSO
                     if not pymol._scene_dict.has_key(key):
                         pymol._scene_dict_sc.append(key)
                     else: # get rid of existing one (if exists)
-                        list = pymol._scene_dict[key]
-                        if (action=='update') and (message==None) and len(list)>5:
+                        scene_list = pymol._scene_dict[key]
+                        if (action=='update') and (message==None) and len(scene_list)>5:
                             message = pymol._scene_dict[key][5]
-                        if len(list)>3:
-                            colorection = list[3]
+                        if len(scene_list)>3:
+                            colorection = scene_list[3]
                             if colorection!=None:
                                 _self.del_colorection(colorection,key) # important -- free RAM
                         name = "_scene_"+key+"_*"
@@ -1575,9 +1577,9 @@ SEE ALSO
                         key = setting.get("scene_current_name",_self=_self)
                     key = pymol._scene_dict_sc.auto_err(key,'scene')
                     if pymol._scene_dict.has_key(key):
-                        list = pymol._scene_dict[key]
-                        if len(list)>3:
-                            colorection = list[3]
+                        scene_list = pymol._scene_dict[key]
+                        if len(scene_list)>3:
+                            colorection = scene_list[3]
                             if colorection!=None:
                                 _self.del_colorection(colorection,key) # important -- free RAM
                         lst = _scene_validate_list(_self)
@@ -2573,7 +2575,7 @@ DESCRIPTION
             v = e_it.next()
             if v is None:
                 return False
-            v = (float(v) - minimum) / val_range * (n_colors - 1)
+            v = min(1.0, max(0.0, (float(v) - minimum) / val_range)) * (n_colors - 1)
             i = min(int(v), n_colors - 2)
             p = v - i
             rgb = [int(255 * (col_tuples[i+1][j] * p + col_tuples[i][j] * (1.0 - p)))

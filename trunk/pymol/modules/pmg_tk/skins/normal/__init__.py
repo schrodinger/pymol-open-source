@@ -106,19 +106,6 @@ class Normal(PMGSkin):
         self.app.destroycomponent('commandframe')
         
     def createMessageBar(self):
-        # Create the message bar area for help and status messages.
-#        frame = self.app.createcomponent('bottomtray', (), None,
-#                                     Frame,(self.app._hull,), relief=SUNKEN)
-#        self.__messageBar = self.app.createcomponent('messagebar',
-#                                                  (), None,
-#                                                 Pmw.MessageBar, 
-#                                                 (frame,),
-#                                                 #entry_width = 40,
-#                                                 entry_relief=SUNKEN,
-#                                                 entry_bd=1,
-#                                                 labelpos=None)
-#        self.__messageBar.pack(side=LEFT, expand=NO, fill=X)
-
         self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 25,
              entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
 
@@ -139,7 +126,6 @@ class Normal(PMGSkin):
         self.balloon.configure(statuscommand = self.messageBar.helpmessage)
 
     def destroyMessageBar(self):
-
         self.messageBar.destroy()
         
     def get_current_session_file(self):
@@ -464,27 +450,6 @@ class Normal(PMGSkin):
         self.entry.bind('<Control-Next>',lambda e,s=self: s.cmd.do("cmd._special(105,0,0,2)"))
         self.entry.bind('<Home>',lambda e,s=self: s.cmd.do("cmd._special(106,0,0)"))
         self.entry.bind('<End>',lambda e,s=self: s.cmd.do("cmd._special(107,0,0)"))
-
-# obviated by changes made to the X11 OpenGL Window      
-#        if sys.platform=='darwin':
-#            if self.app.pymol.invocation.options.external_gui==3: # PyMOLX11Hybrid focus kludge
-#                self.root.bind_all('<Leave>',lambda e,s=self: s.focus_out(e)) 
-#                self.root.bind_all('<Enter>',lambda e,s=self: s.focus_in(e))
-
-#    def focus_in(self,event): # PyMOLX11Hybrid focus kludge
-#        if self.refocus_entry:
-#            self.cmd.do("_ cmd.window('defocus')") # deactivate MacPyMOL OpenGL window
-#            self.refocus_entry = 0
-#            self.entry.focus_set()
-
-#    def focus_out(self,event): # PyMOLX11Hybrid focus kludge
-#        # necessary so that the OpenGL portion of
-#        # PyMOLX11Hybrid can exhibit click-through behavior        
-#        if id(event.widget) == id(self.root):
-#            if ((event.y>event.widget.winfo_height())):
-#                self.root.focus_set() # (return cursor to entry window)
-#                self.cmd.do("_ cmd.window('focus')") # activate MacPyMOL OpenGL window
-#                self.refocus_entry = 1
 
     def update_feedback(self):
         if self.focus_entry:
@@ -981,18 +946,16 @@ class Normal(PMGSkin):
             self.cmd.save(sfile,quiet=0)
 
     def file_save_mpeg(self):
-        ok = 1
         try:
             from freemol import mpeg_encode
             if not mpeg_encode.validate():
-                ok = 0
                 print "produce-error: Unable to validate freemol.mpeg_encode"
+                raise
         except:
-            ok = 0
-            pass
-        if not ok:
             tkMessageBox.showerror("Error",
                 "MPEG encoder missing.\nThe FreeMOL add-ons may not be installed.")
+            return
+
         else:
             sfile = asksaveasfilename(defaultextension = _def_ext(".mpg"),
                                       initialdir = self.initialdir,

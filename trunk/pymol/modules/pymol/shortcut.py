@@ -15,7 +15,10 @@
 if __name__=='pymol.shortcut' or __name__=='shortcut':
     
     import copy
-    from pymol.checking import is_string, is_list
+    try:
+        from pymol.checking import is_string, is_list
+    except:
+        from checking import is_string, is_list
     
     def mkabbr(a, m=1):
         b = a.split('_')
