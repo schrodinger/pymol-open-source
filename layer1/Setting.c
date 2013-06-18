@@ -41,6 +41,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"Sphere.h"
 #include"Selector.h"
+#include"Parse.h"
 
 static void *SettingPtr(CSetting * I, int index, ov_size size);
 
@@ -920,43 +921,67 @@ static int set_list(CSetting * I, PyObject * list)
         set_type = false;
         break;
       default:
-        if(ok)
-          switch (setting_type) {
-          case cSetting_boolean:
-          case cSetting_int:
-            ok = PConvPyIntToInt(PyList_GetItem(list, 2),
-                                 (int *) SettingPtr(I, index, sizeof(int)));
-            break;
-          case cSetting_color:
-            {
-              int color = 0;
-              ok = PConvPyIntToInt(PyList_GetItem(list, 2), &color);
-              if(ok)
-                color = ColorConvertOldSessionIndex(I->G, color);
-              *((int *) SettingPtr(I, index, sizeof(int))) = color;
-            }
-            break;
-          case cSetting_float:
-            ok = PConvPyFloatToFloat(PyList_GetItem(list, 2),
-                                     (float *) SettingPtr(I, index, sizeof(float)));
-            break;
-          case cSetting_float3:
-            ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list, 2),
-                                                        (float *) SettingPtr(I, index,
-                                                                             3 *
-                                                                             sizeof
-                                                                             (float)), 3);
-            break;
-          case cSetting_string:
-            ok = PConvPyStrToStrPtr(PyList_GetItem(list, 2), &str);
-            if(ok) {
-              strcpy(((char *) SettingPtr(I, index, strlen(str) + 1)), str);
-            }
-            break;
-          }
+        if(ok){
+	  int skip = false;
+	  switch (index){
+	  case cSetting_bg_rgb:
+	  case cSetting_bg_rgb_top:
+	  case cSetting_bg_rgb_bottom:
+	    if (setting_type == cSetting_float3){
+	      float vals[3];
+	      ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list, 2), (float*)&vals, 3);
+	      if (ok){
+		SettingSet_color_from_3f(I, index, vals);
+		setting_type = cSetting_color;
+		skip = true;
+	      }
+	    } else if (setting_type == cSetting_color){
+	      int color = 0;
+	      ok = PConvPyIntToInt(PyList_GetItem(list, 2), &color);
+	      if(ok)
+		color = ColorConvertOldSessionIndex(I->G, color);
+	      *((int *) SettingPtr(I, index, sizeof(int))) = color;
+	    }
+	  }
+	  if (!skip){
+	    switch (setting_type) {
+	    case cSetting_boolean:
+	    case cSetting_int:
+	      ok = PConvPyIntToInt(PyList_GetItem(list, 2),
+				   (int *) SettingPtr(I, index, sizeof(int)));
+	      break;
+	    case cSetting_color:
+	      {
+		int color = 0;
+		ok = PConvPyIntToInt(PyList_GetItem(list, 2), &color);
+		if(ok)
+		  color = ColorConvertOldSessionIndex(I->G, color);
+		*((int *) SettingPtr(I, index, sizeof(int))) = color;
+	      }
+	      break;
+	    case cSetting_float:
+	      ok = PConvPyFloatToFloat(PyList_GetItem(list, 2),
+				       (float *) SettingPtr(I, index, sizeof(float)));
+	      break;
+	    case cSetting_float3:
+	      ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list, 2),
+							  (float *) SettingPtr(I, index,
+									       3 *
+									       sizeof
+									       (float)), 3);
+	      break;
+	    case cSetting_string:
+	      ok = PConvPyStrToStrPtr(PyList_GetItem(list, 2), &str);
+	      if(ok) {
+		strcpy(((char *) SettingPtr(I, index, strlen(str) + 1)), str);
+	      }
+	      break;
+	    }
+	  }
+	}
       }
       if(ok && set_type)
-        I->info[index].type = setting_type;
+	I->info[index].type = setting_type;
     }
   }
   return (ok);

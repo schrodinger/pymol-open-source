@@ -437,6 +437,15 @@ if __name__=='pymol.parsing':
 
     # launching routines
 
+    def execfile(filename, global_ns, local_ns):
+        if '://' in filename:
+            import pymol.internal as pi
+            co = compile(pi.file_read(filename), filename, 'exec')
+            exec(co, global_ns, local_ns)
+        else:
+            import __builtin__ as b
+            b.execfile(filename, global_ns, local_ns)
+
     def run_file(file,global_ns,local_ns):
         pymol.__script__ = file
         try:
