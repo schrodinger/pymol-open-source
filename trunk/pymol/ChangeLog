@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2013-06-18 Blaine Bell, Thomas Holder
+
+	* fixed loading in bg_rgb settings from old project pse files
+
+	* add URL support for run command
+
 2013-06-13 Blaine Bell <blaine.bell@schrodinger.com>
 
 	* fixed labels when use_shaders is 0 and show_frame_rate is on

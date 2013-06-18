@@ -123,10 +123,10 @@ class install_pymol(install):
                 out.write('"%s" "%s"' % (python_exe, pymol_file))
                 out.write(' %1 %2 %3 %4 %5 %6 %7 %8 %9' + os.linesep)
             else:
-                out.write('#!/bin/sh' + os.linesep)
+                out.write('#!/bin/bash' + os.linesep)
                 if sys.platform.startswith('darwin'):
-                    out.write('if [ "$DISPLAY" == "" ]; then DISPLAY=":0.0"; export DISPLAY; fi' + os.linesep)
-                out.write('PYMOL_PATH="%s"; export PYMOL_PATH' % pymol_path + os.linesep)
+                    out.write('[ "$DISPLAY" == "" ] && export DISPLAY=":0.0"' + os.linesep)
+                out.write('export PYMOL_PATH="%s"' % pymol_path + os.linesep)
                 out.write('"%s" "%s" "$@"' % (python_exe, pymol_file) + os.linesep)
 
         os.chmod(launch_script, 0755)
@@ -135,12 +135,16 @@ class install_pymol(install):
 
 #============================================================================
 
+# should be something like (build_base + "/generated"), but that's only
+# known to build and install instances
+generated_dir = os.path.join(os.environ.get("PYMOL_BLD", "build"), "generated")
+
 import create_shadertext
 create_shadertext.create_shadertext(
         "data/shaders",
         "shadertext.txt",
-        "generated/include/ShaderText.h",
-        "generated/src/ShaderText.c")
+        generated_dir + "/ShaderText.h",
+        generated_dir + "/ShaderText.c")
 
 pymol_src_dirs = [
     "ov/src",
@@ -152,12 +156,10 @@ pymol_src_dirs = [
     "layer5",
     "modules/cealign/src",
     "modules/cealign/src/tnt",
-    'generated/src',
-    'generated/include',
+    generated_dir,
 ]
 
 def_macros = [
-    ("_PYMOL_MODULE", None),
 ]
 
 libs = []
@@ -226,13 +228,16 @@ else: # unix style (linux, mac, ...)
 
     for prefix in prefix_path:
         inc_dirs += filter(os.path.isdir, [prefix + s for s in ["/include", "/include/freetype2"]])
-        lib_dirs += filter(os.path.isdir, [prefix + s for s in ["/lib"]])
+        lib_dirs += filter(os.path.isdir, [prefix + s for s in ["/lib64", "/lib"]])
 
     glut = posix_find_lib(['glut', 'freeglut'], lib_dirs)
-    for _libs in (libs, pyogl_libs):
-        _libs += ["GL", "GLU", "GLEW", glut]
 
-    ext_comp_args = ["-ffast-math", "-funroll-loops", "-O3", "-fcommon"]
+    libs += ["GLEW"]
+    pyogl_libs += ["GL", "GLU", glut]
+
+    libs += pyogl_libs
+
+    ext_comp_args += ["-ffast-math", "-funroll-loops", "-O3", "-fcommon"]
 
 def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open('layer0/Version.h').read())[0]
@@ -240,13 +245,15 @@ def get_pymol_version():
 def get_sources(subdirs, suffixes=('.c', '.cpp')):
     return [f for d in subdirs for s in suffixes for f in glob(d + '/*' + s)]
 
-def get_packages(base, parent='', r=[]):
+def get_packages(base, parent='', r=None):
     from os.path import join, exists
+    if r is None:
+        r = []
     if parent:
         r.append(parent)
     for name in os.listdir(join(base, parent)):
         if '.' not in name and exists(join(base, parent, name, '__init__.py')):
-            get_packages(base, join(parent, name))
+            get_packages(base, join(parent, name), r)
     return r
 
 def pyogl_extension(name, sources):
@@ -260,7 +267,10 @@ distribution = setup ( # Distribution meta-data
     author    = "Schrodinger",
     url       = "http://pymol.org",
     contact   = "pymol-users@lists.sourceforge.net",
-    description = "PyMOL is a Python-enhanced molecular graphics tool. It excels at 3D visualization of proteins, small molecules, density, surfaces, and trajectories. It also includes molecular editing, ray tracing, and movies. Open Source PyMOL is free to everyone!", 
+    description = ("PyMOL is a Python-enhanced molecular graphics tool. "
+        "It excels at 3D visualization of proteins, small molecules, density, "
+        "surfaces, and trajectories. It also includes molecular editing, "
+        "ray tracing, and movies. Open Source PyMOL is free to everyone!"),
 
     package_dir = {'' : 'modules'},
     packages = get_packages('modules'),
