@@ -7281,6 +7281,7 @@ static void SelectorPurgeMembers(PyMOLGlobals * G, int sele)
   register CSelector *I = G->Selector;
   void *iterator = NULL;
   ObjectMolecule *obj = NULL;
+  short changed = 0;
 
   if(I->Member) {
     register MemberType *I_Member = I->Member;
@@ -7301,6 +7302,7 @@ static void SelectorPurgeMembers(PyMOLGlobals * G, int sele)
                 I_Member[l].next = i_member_s->next;
               else
                 ai[-1].selEntry = i_member_s->next;
+	      changed = 1;
               i_member_s->next = I_FreeMember;
               I_FreeMember = s;
             }
@@ -7312,6 +7314,9 @@ static void SelectorPurgeMembers(PyMOLGlobals * G, int sele)
     }
     I->FreeMember = I_FreeMember;
   }
+  if (changed){
+    ExecutiveInvalidateSelectionIndicatorsCGO(G);
+  }
 }
 
 
@@ -7321,9 +7326,10 @@ int SelectorPurgeObjectMembers(PyMOLGlobals * G, ObjectMolecule * obj)
   int a = 0;
   int s = 0;
   int nxt;
+  short changed = 0;
 
   register CSelector *I = G->Selector;
-  if(I->Member)
+  if(I->Member){
     for(a = 0; a < obj->NAtom; a++) {
       s = obj->AtomInfo[a].selEntry;
       while(s) {
@@ -7333,7 +7339,12 @@ int SelectorPurgeObjectMembers(PyMOLGlobals * G, ObjectMolecule * obj)
         s = nxt;
       }
       obj->AtomInfo[a].selEntry = 0;
+      changed = 1;
     }
+  }
+  if (changed){
+    ExecutiveInvalidateSelectionIndicatorsCGO(G);
+  }
   return 1;
 }
 
@@ -7869,6 +7880,7 @@ static void SelectorCleanImpl(PyMOLGlobals * G, CSelector *I)
   FreeP(I->Flag2);
   I->Flag2 = NULL;
   I->NAtom = 0;
+  ExecutiveInvalidateSelectionIndicatorsCGO(G);
 }
 
 
@@ -9013,8 +9025,8 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
             if(!(st = OVLexicon_FetchCString(G->Lexicon, ai->custom)))
               st = null_st;
 	  }
-          if((*base_0_sele_a = WordMatcherMatchAlpha(matcher, st)));
-          c++;
+          if((*base_0_sele_a = WordMatcherMatchAlpha(matcher, st)))
+	    c++;
           table_a++;
           base_0_sele_a++;
         }
