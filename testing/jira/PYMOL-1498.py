@@ -4,7 +4,7 @@ MAE sticks representation
 
 from pymol import cmd, testing, stored
 
-testing.requires('incentive')
+@testing.requires('incentive')
 class Test1498(testing.PyMOLTestCase):
 
     def test(self):
