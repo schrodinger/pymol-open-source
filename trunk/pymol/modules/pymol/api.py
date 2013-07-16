@@ -391,7 +391,6 @@ from helping import \
 from experimenting import \
       check,              \
       dump,               \
-      expfit,             \
       get_bond_print,     \
       fast_minimize,      \
       import_coords,      \

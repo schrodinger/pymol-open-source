@@ -1061,7 +1061,7 @@ NOTES
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def read_mmodstr(content, name, state=0, quiet=1, zoom=-1, **kw):
+    def read_mmodstr(content, name, state=0, quiet=1, zoom=-1, _self=cmd, **kw):
         '''
 DESCRIPTION
 
@@ -1296,7 +1296,11 @@ PYMOL API
                 continue
 
             if file:
-                fobj = open(file, 'wb')
+                try:
+                    fobj = open(file, 'wb')
+                except IOError:
+                    raise pymol.CmdException('Cannot write to "%s"' % file)
+
             fobj.write(contents)
             fobj.flush()
             if file:

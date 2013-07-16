@@ -14707,9 +14707,14 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
                   /* TODO: should also transform the U tensor at this point... */
 
 									/* make and manage the new object; update the scene for the new object */
-									printf("new_name before: %s\n", new_name);
+
+                  PRINTFB(G, FB_Executive, FB_Blather)
+                    "new_name before: %s\n", new_name ENDFB(G);
                   sprintf(new_name, "%s%02d%02d%02d%02d", name, (int)a, x, y, z);
-		  printf("Making new object: %s from name=%s, a=%d, x=%d, y=%d, z=%d\n", new_name, name, (int)a, x, y, z); /* remove me -- JV */
+                  PRINTFB(G, FB_Executive, FB_Blather)
+                    "Making new object: %s from name=%s, a=%d, x=%d, y=%d, z=%d\n",
+                    new_name, name, (int)a, x, y, z ENDFB(G);
+
                   ObjectSetName((CObject *) new_obj, new_name);
                   ExecutiveDelete(G, new_name);
                   ExecutiveManageObject(G, (CObject *) new_obj, -1, quiet);

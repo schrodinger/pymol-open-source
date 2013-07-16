@@ -224,8 +224,12 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                       " ObjectMolecule: average loaded into state %d...\n", frame + 1
                       ENDFB(G);
                   }
-                  if((stop > 0) && (cnt >= stop)) break;
-                  if((max > 0) && (ncnt >= max))  break;
+
+                  if(stop > 0 && cnt >= stop || max > 0 && ncnt >= max) {
+                    cs = NULL;
+                    break;
+                  }
+
                   frame++;
 		  /* make a new cs */
                   cs = CoordSetCopy(cs);        /* otherwise, we need a place to put the next set */
