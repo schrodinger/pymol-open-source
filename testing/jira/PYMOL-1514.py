@@ -4,6 +4,7 @@ negative b-factor in MAE file.
 
 from pymol import cmd, testing, stored
 
+@testing.requires('incentive')
 class Test1514(testing.PyMOLTestCase):
 
     def test(self):
