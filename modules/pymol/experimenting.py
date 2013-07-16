@@ -32,16 +32,6 @@ if __name__=='pymol.experimenting':
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
-    def expfit(a,b,_self=cmd): # Huh?
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)   
-            r = _cmd.fit(_self._COb,a,b,2)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
-        return r
-
     def spheroid(object="",average=0,_self=cmd):  # EXPERIMENTAL
         '''
 DESCRIPTION
@@ -218,26 +208,16 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
-    def load_coords(*arg): # UNSUPPORTED
+    def load_coords(model, oname, state=1): # UNSUPPORTED
+        '''
+        WARNING: buggy argument list, state get's decremented twice!
+        '''
         _self = cmd
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            ok = 1
-            ftype = loadable.model
-            state = 0
-            model = arg[0];
-            if len(arg)<2:
-                ok=0
-            if len(arg)>=2:
-                oname = string.strip(arg[1])
-            if len(arg)>=3:
-                state = int(arg[2])-1
-            if ok:
-                r = _cmd.load_coords(_self._COb,str(oname),model,
-                                            int(state)-1,int(ftype))
-            else:
-                print "Error: invalid arguments."
+            r = _cmd.load_coords(_self._COb, str(oname).strip(), model,
+                    int(state)-2, cmd.loadable.model)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  

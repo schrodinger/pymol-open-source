@@ -2,6 +2,19 @@
 CHANGE LOG
 =========================================================================
 
+2013-07-16 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fixed load_traj with stop/max arguments.
+	  Thanks to David Osguthorpe for the patch.
+
+	* fix pymol.importing.read_mmodstr
+
+	* proper numpy support (ObjectMap.c)
+
+	* take out broken experimenting.expfit
+
+	* fetch_path: graceful error handling when writing file fails
+
 2013-07-15 Blaine Bell <blaine.bell@schrodinger.com>
 
 	* fixed flickering ortho problems on some machines

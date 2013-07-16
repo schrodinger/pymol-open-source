@@ -209,7 +209,6 @@ else: # unix style (linux, mac, ...)
             ("_PYMOL_LIBPNG",None),
             ("_PYMOL_FREETYPE",None),
             ("_PYMOL_INLINE",None),
-            ("_PYMOL_NUMPY",None),
             ("_PYMOL_OPENGL_SHADERS",None),
             ("NO_MMLIBS",None),
             ("_PYMOL_CGO_DRAWARRAYS",None),
@@ -218,6 +217,17 @@ else: # unix style (linux, mac, ...)
             ("_PYMOL_GL_CALLLISTS",None),
             ("OPENGL_ES_2",None),
             ]
+
+    try:
+        import numpy
+        inc_dirs += [
+            numpy.get_include(),
+        ]
+        def_macros += [
+            ("_PYMOL_NUMPY", None),
+        ]
+    except ImportError:
+        print "numpy not available"
 
     libs += ["png", "freetype"]
 
