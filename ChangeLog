@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2013-07-23 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix numpy/ndarrayobject.h import
+
+	* setup.py: add --osx-frameworks agument
+
+	* rpc server: use register_instance
+
 2013-07-16 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fixed load_traj with stop/max arguments.

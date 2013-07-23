@@ -436,10 +436,7 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
 
     # import PyMOL API
     from pymol import api
-    for name in dir(api):
-      func = getattr(api, name)
-      if callable(func):
-        serv.register_function(func, name)
+    serv.register_instance(cmd)
 
     # legacy stuff with unique names
     serv.register_function(rpcPing,'ping')
