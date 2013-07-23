@@ -39,7 +39,7 @@ Z* -------------------------------------------------------------------
 
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_NUMPY
-#include <numpy/ndarraytypes.h>
+#include <numpy/ndarrayobject.h>
 typedef PyArrayObject MyArrayObject;
 #endif
 #endif
