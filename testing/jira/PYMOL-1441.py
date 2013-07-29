@@ -2,8 +2,15 @@
 vis file support
 '''
 
+import unittest
 from pymol import cmd, testing, stored
 
+try:
+    import h5py
+except ImportError:
+    h5py = None
+
+@unittest.skipIf(not h5py, 'TODO: h5py required')
 @testing.requires('incentive')
 class Test1441(testing.PyMOLTestCase):
 
