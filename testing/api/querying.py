@@ -86,7 +86,7 @@ class TestQuerying(testing.PyMOLTestCase):
         coords = cmd.get_atom_coords("elem O")
         coords_ref = [0.545436, -0.974895, 1.498943]
         self.assertArrayEqual(coords, coords_ref, delta=1e-4)
-        self.assertRaises(CmdException, cmd.get_atom_coords, ["*"])
+        self.assertRaises(CmdException, cmd.get_atom_coords, "*")
 
     def testGetChains(self):
         cmd.pseudoatom("m1", chain="C")
@@ -227,20 +227,33 @@ class TestQuerying(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testIdAtom(self):
-        cmd.id_atom
-        self.skipTest("TODO")
+        cmd.fragment('gly', 'm1')
+        self.assertEqual(cmd.id_atom('ID 3'), 3)
+        self.assertEqual(cmd.id_atom('ID 3', 1), ('m1', 3))
+        cmd.feedback("disable", "cmd", "errors")
+        self.assertRaises(CmdException, cmd.id_atom, 'ID 3+4')
+        self.assertRaises(CmdException, cmd.id_atom, 'ID 100')
 
     def testIdentify(self):
-        cmd.identify
-        self.skipTest("TODO")
+        cmd.fragment('gly', 'm1')
+        cmd.select('s1', 'ID 3+4')
+        r = cmd.identify('s1')
+        self.assertItemsEqual(r, [3, 4])
+        r = cmd.identify('s1', 1)
+        self.assertItemsEqual(r, [('m1', 3), ('m1', 4)])
 
     def testIndex(self):
-        cmd.index
-        self.skipTest("TODO")
+        cmd.fragment('gly', 'm1')
+        r = cmd.index('index 3+4')
+        self.assertItemsEqual(r, [('m1', 3), ('m1', 4)])
 
     def testOverlap(self):
-        cmd.overlap
-        self.skipTest("TODO")
+        # unsupported command
+        cmd.pseudoatom('m1', vdw=2.0)
+        cmd.pseudoatom('m2', vdw=2.0, pos=(2., 0., 0.))
+        r = cmd.overlap('m1', 'm2')
+        # this is actually half the vdw overlap
+        self.assertEqual(r, 1.0)
 
     def testPhiPsi(self):
         cmd.phi_psi
