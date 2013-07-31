@@ -869,6 +869,20 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, float *v1, float *v2, float *wt,
   int a, b, c, maxiter;
   double t1[3], t2[3];
 
+  /* special case: just one atom pair */
+
+  if(n == 1) {
+    if(ttt) {
+      for(a = 1; a < 11; a++)
+        ttt[a] = 0.0F;
+      for(a = 0; a < 12; a += 5)
+        ttt[a] = 1.0F;
+      for(a = 0; a < 3; a++)
+        ttt[a + 12] = v2[a] - v1[a];
+    }
+    return 0.0F;
+  }
+
   /* Initialize arrays. */
 
   for(a = 0; a < 3; a++) {

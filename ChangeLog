@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2013-07-31 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* improve amber rst/crd support
+
+	* fix pair_fitting with one atom pair
+
 2013-07-23 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix numpy/ndarrayobject.h import

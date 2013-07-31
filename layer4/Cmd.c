@@ -7278,7 +7278,7 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
     case cLoadTypeCRD:
       PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading CRD\n" ENDFD;
       if(origObj) {             /* always reinitialize topology objects from scratch */
-        ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, frame, quiet);
+        ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, frame, quiet, 1);
         /* if(finish)
            ExecutiveUpdateObjectSelection(G,origObj); unnecc */
         sprintf(buf,
@@ -7293,7 +7293,7 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
     case cLoadTypeRST:
       PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading RST\n" ENDFD;
       if(origObj) {             /* always reinitialize topology objects from scratch */
-        ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, frame, quiet);
+        ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, frame, quiet, 0);
         /* if(finish)
            ExecutiveUpdateObjectSelection(G,origObj); unnecc */
         sprintf(buf,

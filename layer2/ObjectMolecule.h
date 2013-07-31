@@ -313,7 +313,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * obj
                                           char *sele, int image, float *shift, int quiet);
 
 ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int quiet);
+                                          char *fname, int frame, int quiet, char mode);
 
 ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
                                          PyObject * coords, int frame);
