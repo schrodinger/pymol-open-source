@@ -26,7 +26,7 @@ file_ext_re = re.compile(string.join([
     r"\.top$|", # AMBER Topology
     r"\.trj$|", # AMBER Trajectory
     r"\.crd$|", # AMBER coordinate file
-    r"\.rst$|", # AMBER restart
+    r"\.rst7?$|", # AMBER restart
     r"\.cex$|", # CEX format (used by metaphorics)
     r"\.phi$|", # PHI format (delphi)
     r"\.fld$|", # FLD format (AVS)

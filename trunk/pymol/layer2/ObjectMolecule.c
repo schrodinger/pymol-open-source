@@ -877,12 +877,15 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
   if(!f) {
     ok = ErrMessage(G, "ObjectMoleculeLoadTRJFile", "Unable to open file!");
   } else {
-    if(!I->CSTmpl) {
+    if(I->CSTmpl) {
+      cs = CoordSetCopy(I->CSTmpl);
+    } else if (I->NCSet > 0) {
+      cs = CoordSetCopy(I->CSet[0]);
+    } else {
       PRINTFB(G, FB_ObjectMolecule, FB_Errors)
         " ObjMolLoadTRJFile: Missing topology" ENDFB(G);
       return (I);
     }
-    cs = CoordSetCopy(I->CSTmpl);
 
     if(sele0 >= 0) {            /* build array of cross-references */
       xref = Alloc(int, I->NAtom);
@@ -1219,8 +1222,14 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
 }
 
 ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
-                                          char *fname, int frame, int quiet)
+                                          char *fname, int frame, int quiet, char mode)
 {
+  /*
+   * mode = 0: AMBER coordinate/restart file (one frame only)
+   * mode = 1: AMBER trajectory
+   * mode = 2: AMBER trajectory with box
+   *           http://ambermd.org/formats.html
+   */
   int ok = true;
   FILE *f;
   char *buffer, *p;
@@ -1231,6 +1240,13 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
   CoordSet *cs = NULL;
   int size;
   size_t res;
+  char ncolumn = 6; // number of coordinates per line
+  char nbyte = 12;  // width of one coordinate
+
+  if(mode > 0) {
+    ncolumn = 10;
+    nbyte = 8;
+  }
 
 #define BUFSIZE 4194304
 #define GETTING_LOW 10000
@@ -1239,12 +1255,15 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
   if(!f)
     ok = ErrMessage(G, "ObjectMoleculeLoadRSTFile", "Unable to open file!");
   else {
-    if(!I->CSTmpl) {
+    if(I->CSTmpl) {
+      cs = CoordSetCopy(I->CSTmpl);
+    } else if (I->NCSet > 0) {
+      cs = CoordSetCopy(I->CSet[0]);
+    } else {
       PRINTFB(G, FB_ObjectMolecule, FB_Errors)
         " ObjMolLoadRSTFile: Missing topology" ENDFB(G);
       return (I);
     }
-    cs = CoordSetCopy(I->CSTmpl);
     CHECKOK(ok, cs);
     if (ok){
       PRINTFB(G, FB_ObjectMolecule, FB_Blather)
@@ -1267,7 +1286,8 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     }
     if (ok){
       p = nextline(p);
-      p = nextline(p);
+      if (mode == 0) // skip NATOM,TIME
+        p = nextline(p);
     }
     a = 0;
     b = 0;
@@ -1275,8 +1295,8 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     f1 = 0.0;
     f2 = 0.0;
     while(ok && *p) {
-      p = ncopy(cc, p, 12);
-      if((++b) == 6) {
+      p = ncopy(cc, p, nbyte);
+      if((++b) == ncolumn) {
         b = 0;
         p = nextline(p);
       }
@@ -1293,6 +1313,8 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
           if((++a) == I->NAtom) {
             a = 0;
             if(b)
+              p = nextline(p);
+            if(mode == 2) // skip box
               p = nextline(p);
             b = 0;
             /* add new coord set */
@@ -1319,7 +1341,11 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
 	    if (ok)
 	      cs = CoordSetCopy(cs);
 	    CHECKOK(ok, cs);
-            break;
+
+            if (mode == 0) // restart file has only one frame
+              break;
+
+            frame += 1;
           }
         }
       } else {

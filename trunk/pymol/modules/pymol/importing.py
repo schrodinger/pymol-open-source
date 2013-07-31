@@ -690,8 +690,8 @@ SEE ALSO
                     ftype = loadable.dcd
                 elif re.search("\.crd$",fname_no_gz,re.I):
                     ftype = loadable.crd
-                elif re.search("\.rst$",fname_no_gz,re.I):
-                    ftype = loadable.crd
+                elif re.search("\.rst7?$",fname_no_gz,re.I):
+                    ftype = loadable.rst
                 elif re.search("\.pse$|\.pze|\.pzw$",fname_no_gz,re.I):
                     ftype = loadable.pse
                 elif re.search("\.psw$",fname_no_gz,re.I):
