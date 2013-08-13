@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2013-08-13 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix h_add atom sorting
+
+	* add "metals" keyword to selection language
+
 2013-07-31 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* improve amber rst/crd support

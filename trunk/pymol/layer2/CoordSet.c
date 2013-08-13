@@ -278,7 +278,6 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
     } else if(I->LabPos) {
       VLACheck(I->LabPos, LabPosType, nIndex);
     }
-    CHECKOK(ok, I->LabPos);
   }
   if (ok){
     if(cs->RefPos) {
@@ -292,7 +291,6 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
     } else if(I->RefPos) {
       VLACheck(I->RefPos, RefPosType, nIndex);
     }
-    CHECKOK(ok, I->RefPos);
   }
   if(ok && I->fInvalidateRep)
     I->fInvalidateRep(I, cRepAll, cRepInvAll);
