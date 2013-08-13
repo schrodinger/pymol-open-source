@@ -407,6 +407,7 @@ class TestEditing(testing.PyMOLTestCase):
     def test_sort(self):
         cmd.pseudoatom('m1', name='PS2')
         cmd.pseudoatom('m1', name='PS1')
+        cmd.alter('all', 'name = name_list.pop()', space={'name_list': ['PS1', 'PS2']})
         v = [a.name for a in cmd.get_model().atom]
         self.assertEqual(['PS2', 'PS1'], v)
         cmd.sort()
