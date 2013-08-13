@@ -343,6 +343,7 @@ static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offs
 #define SELE_ANT2 ( 0x4900 | STYP_OPR2 | 0x60 )
 #define SELE_BYX1 ( 0x4A00 | STYP_OPR1 | 0x20 )
 #define SELE_STRO ( 0x4B00 | STYP_SEL1 | 0x80 )
+#define SELE_METz ( 0x4C00 | STYP_SEL0 | 0x90 )
 
 #define SEL_PREMAX 0x8
 
@@ -579,6 +580,9 @@ static WordKeyValue Keyword[] = {
   {"stereo", SELE_STRO},
 
   {"bycell", SELE_BYX1},
+
+  {"metals", SELE_METz},        /* 0 parameter */
+
   {"", 0}
 };
 
@@ -8606,6 +8610,18 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
   case SELE_HYDz:
     for(a = cNDummyAtoms; a < I->NAtom; a++)
       base[0].sele[a] = i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hydrogen;
+    break;
+  case SELE_METz:
+    for(a = cNDummyAtoms; a < I->NAtom; a++) {
+      b = i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].protons;
+      base[0].sele[a] = (
+          b >  2 && b <  5 ||
+          b > 10 && b < 14 ||
+          b > 18 && b < 32 ||
+          b > 36 && b < 51 ||
+          b > 54 && b < 85 ||
+          b > 86);
+    }
     break;
   case SELE_FXDz:
     for(a = cNDummyAtoms; a < I->NAtom; a++)
