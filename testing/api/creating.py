@@ -145,7 +145,35 @@ class TestCreating(testing.PyMOLTestCase):
     def testUnquote(self):
         pass
 
-    @unittest.skip("Not yet implemented.")
     def testPseudoatom(self):
-        pass
+        cmd.set('retain_order')
+
+        cmd.pseudoatom('m1', '', 'A1', 'B2', 1, 'D',
+                'E5', 'F', 7.0, 0, 9.0, 0.1, '11', 'foo12',
+                (13, 14, 15), 1)
+        cmd.pseudoatom('m2', '', 'A1', 'B2', 2, 'A',
+                'E5', 'F', 7.0, 0, 9.0, 0.1, '12', 'bar12',
+                (13, 10, 15), 1)
+
+        # append to m1, pos and vdw vom selection
+        cmd.pseudoatom('m1', 'all', 'A2', 'B2', 3, 'D',
+                'E5', 'F', -1, 1, 19.0, 0.2, '13', 'com12',
+                None, 1, 'extent')
+
+        r_list = []
+        f_indices = [7, 9, 10, 13, 14, 15]
+
+        cmd.iterate_state(1, 'all',
+                'r_list.append([model, name, resn, resi, chain, segi, elem, '
+                'vdw, type, b, q, color, label, x, y, z])', space=locals())
+
+        for ref, values in zip(r_list, [
+            ['m1', 'A1', 'B2', '1', 'D', 'E5', 'F', 7.0, 'ATOM', 9.0, 0.1, 11, 'foo12', 13.0, 14.0, 15.0],
+            ['m1', 'A2', 'B2', '3', 'D', 'E5', 'F', 2.0, 'HETATM', 19.0, 0.2, 13, 'com12', 13.0, 12.0, 15.0],
+            ['m2', 'A1', 'B2', '2', 'A', 'E5', 'F', 7.0, 'ATOM', 9.0, 0.1, 12, 'bar12', 13.0, 10.0, 15.0],
+            ]):
+            for i in f_indices:
+                values[i] = round(values[i], 1)
+                ref[i] = round(ref[i], 1)
+            self.assertEqual(ref, values)
 
