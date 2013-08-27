@@ -710,6 +710,17 @@ DESCRIPTION
 
     "set_key" binds a specific python function to a key press.
 
+    New in PyMOL 1.6.1: second argument can also be a string in PyMOL
+    command syntax.
+
+USAGE
+
+    set_key key, command
+
+EXAMPLE
+
+    set_key F1, as cartoon, polymer; as sticks, organic
+
 PYMOL API (ONLY)
 
     cmd.set_key( string key, function fn, tuple arg=(), dict kw={})
@@ -738,9 +749,14 @@ KEYS WHICH CAN BE REDEFINED
 
 SEE ALSO
 
-    button
+    button, alias
         '''
         r = DEFAULT_ERROR
+        if isinstance(fn, basestring):
+            if arg or kw:
+                raise ValueError('arg and kw must be empty if fn is string')
+            arg = (fn,)
+            fn = cmd.do
         if key[0:5]=='CTRL-':
             pat=key[5:]
             if len(pat)>1: # ctrl-special key

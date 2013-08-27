@@ -3033,7 +3033,7 @@ int CGOProcessScreenCGOtoArrays(PyMOLGlobals * G, float *pcarg, CGO *cgo, float 
 		      colorValsUC[cpl+2] = CLIP_COLOR_VALUE(cgo->color[2]); colorValsUC[cpl+3] = CLIP_COLOR_VALUE(cgo->alpha);
 		    } else {
 		      colorVals[cpl] = cgo->color[0]; colorVals[cpl+1] = cgo->color[1];
-		      colorVals[cpl+2] = cgo->color[2]; colorVals[cpl+3] = cgo->color[3];
+		      colorVals[cpl+2] = cgo->color[2]; colorVals[cpl+3] = cgo->alpha;
 		    }
 		    pl++; ipl++;
 		  } else {

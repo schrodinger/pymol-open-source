@@ -15517,7 +15517,7 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                       ExecutiveSetObjVisib(G, cKeywordAll, false, false);       
                       /* need to log this */
                       if(!rec->visible)
-                        ExecutiveSpecSetVisibility(G, rec, true, 0, false);
+                        ExecutiveSpecSetVisibility(G, rec, true, 0, true);
                     }
                   } else {
                     I->ToggleMode = 4;
