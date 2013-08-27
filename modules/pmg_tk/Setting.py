@@ -44,6 +44,11 @@ class PymolVar(Tkinter.Variable, object):
         v = cmd.get_setting_tuple(self.index)[1][0]
         self.set(v)
 
+    def set(self, v):
+        if isinstance(v, float):
+            v = round(v, 6)
+        super(PymolVar, self).set(v)
+
 class ColorVar(PymolVar):
     def set(self, v):
         if isinstance(v, str) and v.strip():

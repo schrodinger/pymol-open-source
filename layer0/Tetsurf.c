@@ -679,8 +679,7 @@ static void TetsurfPurge(CTetsurf * II)
   if(I->Tri) {
     VLAFreeP(I->Tri);
   }
-  if(I->PtLink);
-  {
+  if(I->PtLink) {
     VLAFreeP(I->PtLink);
   }
   if(I->VertexCodes) {

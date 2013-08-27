@@ -109,7 +109,7 @@ def simple_unknowns(model,bondfield=bond_amber):
                     elif len(know):
                         d2 = [1.0,0,0]
                         at3 = model.atom[know[0]]
-                        p0 = normalize(sub(at1.coord,at3))
+                        p0 = normalize(sub(at1.coord,at3.coord))
                         p1 = normalize(cross_product(d2,p0))
                         v = scale(p1,TET_TAN)
                         v = normalize(add(p0,v))
@@ -206,6 +206,9 @@ def simple_unknowns(model,bondfield=bond_amber):
                     else: # blind
                         at2.coord = random_sphere(at1.coord,
                             bnd_len[(at1.text_type,at2.text_type)])
+
+                        # 2013-08-14 added by thomas
+                        raise NotImplementedError("FIXME: at3 unassigned")
                     at4=at2
                     at2=model.atom[a[1][1]]
                     v = [0.0,0.0,0.0]
@@ -257,6 +260,11 @@ def simple_unknowns(model,bondfield=bond_amber):
                 elif len(know): # fall-back
                     d2 = [1.0,0,0]
                     at3 = model.atom[know[0]]                  
+
+                    # 2013-08-14 added by thomas, not sure if this is correct
+                    d1 = sub(at1.coord,at3.coord)
+                    p0 = normalize(d1)
+
                     p1 = normalize(cross_product(d2,p0))
                     v = scale(p1,TET_TAN)
                     v = normalize(add(p0,v))
@@ -303,5 +311,25 @@ def simple_unknowns(model,bondfield=bond_amber):
             last_count = c
 
 
+#------------------------------------------------------------------------------
+def test_random():
+    '''
+    This is a simple test function which drops most coordinates from a
+    polypeptide and tries to reposition them with simple_unknowns().
+
+    Works fine to position hydrogens, fails to position other atoms.
+    '''
+    import random
+    from pymol import cmd
+    from chempy.champ import assign
+    cmd.fab('ACDEFGHIKLMNPQRSTVWY', 'm0')
+    assign.amber99()
+    for i in xrange(100):
+        m = cmd.get_model('m0').convert_to_connected()
+        for a in m.atom:
+            if random.random() < 0.8:
+                del a.coord
+        simple_unknowns(m)
+        cmd.load_model(m.convert_to_indexed(), 'm' + str(i + 1))
 
 

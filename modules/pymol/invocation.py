@@ -89,31 +89,16 @@ if __name__=='pymol.invocation':
     
     script_re = re.compile(r"pymolrc$|\.pml$|\.PML$|\.p1m$|\.P1M$")
     py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
-    pyc_re = re.compile(r"\.pyc$|\.PYC$") # not yet used
 
     def get_user_config():
-        # current working directory
-        lst = glob.glob(pymolrc_pat1)
-        # users home directory
-        if not len(lst): # unix
-            if os.environ.has_key("HOME"):
-                lst = glob.glob(os.environ['HOME']+"/"+pymolrc_pat1)
-        if not len(lst): # unix
-            if os.environ.has_key("HOME"):
-                lst = glob.glob(os.environ['HOME']+"/"+pymolrc_pat2)
-        if not len(lst): # win32
-            if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
-                lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pymolrc_pat1)
-        if not len(lst): # win32
-            if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
-                lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pymolrc_pat2)
-        # installation folder (if known)
-        if not len(lst): # all
-            if os.environ.has_key("PYMOL_PATH"):
-                lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pymolrc_pat1)
-        if not len(lst): # all
-            if os.environ.has_key("PYMOL_PATH"):
-                lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pymolrc_pat2)
+        for d in [os.getcwd(), '$HOME', '$HOMEPATH$HOMEDRIVE', '$PYMOL_PATH']:
+            d = os.path.expandvars(d)
+            for pat in [pymolrc_pat1, pymolrc_pat2]:
+                lst = glob.glob(d + os.sep + pat)
+                if lst:
+                    break
+            if lst:
+                break
         # global run_on_startup script (not overridden by pymolrc files, but is disabled by "-k")
         if os.environ.has_key("PYMOL_PATH"):
             first = glob.glob(os.environ['PYMOL_PATH']+"/"+ros_pat)
@@ -125,8 +110,6 @@ if __name__=='pymol.invocation':
                 first.append("_do__ run "+a) # preceeding "_ " cloaks
             elif script_re.search(a):
                 second.append("_do__ @"+a) # preceeding "_ " cloaks 
-    #      elif pyc_re.search(a): # ignore compiled versions for now
-    #         first.append("_do__ run "+a) # preceeding "_ " cloaks
 
         first.sort()
         second.sort()

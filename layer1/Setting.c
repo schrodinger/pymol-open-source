@@ -695,72 +695,70 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
   return 0;
 #else
   int ok = true;
+  int i;
 
-  int session_migration = SettingGetGlobal_b(G, cSetting_session_migration);
-  int session_version_check = SettingGetGlobal_b(G, cSetting_session_version_check);
   int full_screen = SettingGetGlobal_b(G, cSetting_full_screen);
   int internal_gui = SettingGetGlobal_b(G, cSetting_internal_gui);
   int internal_feedback = SettingGetGlobal_b(G, cSetting_internal_feedback);
-
-  int stereo = SettingGetGlobal_b(G, cSetting_stereo);
-  int text = SettingGetGlobal_b(G, cSetting_text);
-  int use_display_lists = SettingGetGlobal_b(G, cSetting_use_display_lists);
-  int max_threads = SettingGetGlobal_i(G, cSetting_max_threads);
-  int nvidia_bugs = SettingGetGlobal_b(G, cSetting_nvidia_bugs);
-  int ati_bugs = SettingGetGlobal_b(G, cSetting_ati_bugs);
-  int stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
-  int stereo_double_pump_mono = SettingGetGlobal_b(G, cSetting_stereo_double_pump_mono);
-  int show_progress = SettingGetGlobal_b(G, cSetting_show_progress);
-  int defer_updates = SettingGetGlobal_b(G, cSetting_defer_updates);
-  int suspend_updates = SettingGetGlobal_b(G, cSetting_suspend_updates);
-  int suspend_undo = SettingGetGlobal_b(G, cSetting_suspend_undo);
-  int suspend_undo_atom_count = SettingGetGlobal_i(G, cSetting_suspend_undo_atom_count);
-  int suspend_deferred = SettingGetGlobal_i(G, cSetting_suspend_deferred);
-  int cache_max = SettingGetGlobal_i(G, cSetting_cache_max);
-  int logging = SettingGetGlobal_i(G, cSetting_logging);
-  float no_idle = SettingGetGlobal_f(G, cSetting_no_idle);
-  float slow_idle = SettingGetGlobal_f(G, cSetting_fast_idle);
-  float fast_idle = SettingGetGlobal_f(G, cSetting_slow_idle);
-  int mouse_grid = SettingGetGlobal_b(G, cSetting_mouse_grid);
-  int mouse_z_scale = SettingGetGlobal_i(G,cSetting_mouse_scale);
   register CSetting *I = G->Setting;
+
+  int values_keep_i[30];
+  int settings_keep_i[] = {
+    cSetting_session_migration,
+    cSetting_session_version_check,
+    cSetting_stereo,
+    cSetting_text,
+    cSetting_use_display_lists,
+    cSetting_max_threads,
+    cSetting_nvidia_bugs,
+    cSetting_ati_bugs,
+    cSetting_stereo_mode,
+    cSetting_stereo_double_pump_mono,
+    cSetting_show_progress,
+    cSetting_defer_updates,
+    cSetting_suspend_updates,
+    cSetting_suspend_undo,
+    cSetting_suspend_undo_atom_count,
+    cSetting_suspend_deferred,
+    cSetting_cache_max,
+    cSetting_logging,
+    cSetting_mouse_grid,
+    cSetting_mouse_scale,
+    cSetting_use_shaders,
+    cSetting_cylinder_shader_ff_workaround,
+    // adjust the size of values_keep_i when adding items
+    0
+  };
+
+  float values_keep_f[10];
+  int settings_keep_f[] = {
+    cSetting_no_idle,
+    cSetting_fast_idle,
+    cSetting_slow_idle,
+    // adjust the size of values_keep_f when adding items
+    0
+  };
+
+  for (i = 0; settings_keep_i[i]; i++)
+    values_keep_i[i] = SettingGetGlobal_i(G, settings_keep_i[i]);
+
+  for (i = 0; settings_keep_f[i]; i++)
+    values_keep_f[i] = SettingGetGlobal_f(G, settings_keep_f[i]);
 
   if(list)
     if(PyList_Check(list))
       ok = SettingFromPyList(I, list);
 
   SettingSet_i(I, cSetting_security, G->Security);      /* always override Security setting with global variable */
-  SettingSet_b(I, cSetting_session_migration, session_migration);       /* preserve current migration info */
-  SettingSet_b(I, cSetting_session_version_check, session_version_check);
 
   /* restore the following settings  */
 
-  SettingSetGlobal_f(G, cSetting_no_idle, no_idle);
-  SettingSetGlobal_f(G, cSetting_fast_idle, fast_idle);
-  SettingSetGlobal_f(G, cSetting_slow_idle, slow_idle);
+  for (i = 0; settings_keep_i[i]; i++)
+    SettingSet_i(I, settings_keep_i[i], values_keep_i[i]);
 
-  SettingSet_b(I, cSetting_stereo, stereo);
-  SettingSet_b(I, cSetting_text, text);
-  SettingSet_b(I, cSetting_use_display_lists, use_display_lists);
-  SettingSet_i(I, cSetting_max_threads, max_threads);
-  SettingSet_i(I, cSetting_nvidia_bugs, nvidia_bugs);
-  SettingSet_i(I, cSetting_ati_bugs, ati_bugs);
-  SettingSet_i(I, cSetting_cache_max, cache_max);
-  SettingSet_i(I, cSetting_logging, logging);
+  for (i = 0; settings_keep_f[i]; i++)
+    SettingSet_f(I, settings_keep_f[i], values_keep_f[i]);
 
-  SettingSet_i(I, cSetting_stereo_mode, stereo_mode);
-  SettingSet_b(I, cSetting_stereo_double_pump_mono, stereo_double_pump_mono);
-  SettingSet_b(I, cSetting_full_screen, full_screen);
-  SettingSet_b(I, cSetting_show_progress, show_progress);
-  SettingSet_b(I, cSetting_defer_updates, defer_updates);
-  SettingSet_b(I, cSetting_suspend_updates, suspend_updates);
-  SettingSet_b(I, cSetting_suspend_undo, suspend_undo);
-  SettingSet_i(I, cSetting_suspend_undo_atom_count, suspend_undo_atom_count);
-  SettingSet_b(I, cSetting_suspend_deferred, suspend_deferred);
-  SettingSet_b(I, cSetting_session_changed, 0);
-
-  SettingSet_b(I, cSetting_mouse_grid, mouse_grid);
-  SettingSet_i(I, cSetting_mouse_z_scale, mouse_z_scale);
   if(G->Option->presentation) {
     SettingSet_b(I, cSetting_full_screen, full_screen);
     SettingSet_b(I, cSetting_presentation, 1);

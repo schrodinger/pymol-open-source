@@ -2,6 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2013-08-27 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix [bugs:#135] array overrun
+	  https://sourceforge.net/p/pymol/bugs/135/
+
+	* apply one part of [patches:#6]
+	  https://sourceforge.net/p/pymol/patches/6/
+
+	* preserve "use_shaders" setting when loading session files
+
+	* simplify pymolrc search routine
+
+	* fix CtSh-M click on group members in object menu panel
+
+	* set_key string support
+
 2013-08-13 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix h_add atom sorting
