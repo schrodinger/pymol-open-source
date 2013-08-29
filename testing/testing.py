@@ -281,18 +281,9 @@ else:
             os.chdir(self.oldcwd)
 
         def _getColorTuple(self, color):
-            if isinstance(color, tuple):
-                return color
-            if isinstance(color, list):
+            if isinstance(color, (tuple, list)):
                 return tuple(color)
-            elif isinstance(color, int):
-                if color in dict((k,v) for (v,k) in cmd.get_color_indices()):
-                    return cmd.get_color_tuple(color)
-                else:
-                    hexval = color & 0xffffff
-                    return tuple(map(lambda x: x/255., [ hexval >> 16, (hexval >> 8) & 0xff, hexval & 0xff ]))
-            elif isinstance(color, str):
-                return cmd.get_color_tuple(color)
+            return cmd.get_color_tuple(color)
                 
         def assertColorEqual(self, color1, color2):
             self.assertEqual(self._getColorTuple(color1), self._getColorTuple(color2))
