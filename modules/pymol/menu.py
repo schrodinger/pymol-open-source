@@ -14,6 +14,9 @@
 
 # This module defines the menus and their built-in commands
 
+# shared main chain/side chain atoms
+sele_ms_shared = '(n. CA|n. N&r. PRO)'
+
 def extract(self_cmd, sele):
     return [[ 2, 'Extract', '' ],
             [ 1, 'object', 'cmd.create(None,"'+sele+'",extract="'+sele+'",zoom=0)' ],
@@ -160,8 +163,8 @@ def mol_show(self_cmd, sele):
         + rep_action(self_cmd, sele,'show') +
         [[ 0, '', ''],
          [ 1, 'organic' , show_misc(self_cmd, '(organic and ('+sele+'))') ],
-         [ 1, 'main chain' , show_misc(self_cmd, "((byres ("+sele+"))&n;ca,c,n,o,h)") ],
-         [ 1, 'side chain' , show_misc(self_cmd, "((byres ("+sele+"))&(!(n;c,o,h|(n. n&!r. pro))))") ],
+         [ 1, 'main chain' , show_misc(self_cmd, "((byres ("+sele+"))&(bb.))") ],
+         [ 1, 'side chain' , show_misc(self_cmd, "((byres ("+sele+"))&(sc.|"+sele_ms_shared+"))") ],
          [ 1, 'disulfides' , show_misc(self_cmd, "(byres ((("+sele+
             ") & r. CYS+CYX & n. SG) & bound_to (("+sele+") & r. CYS+CYX & n. SG))) & n. CA+CB+SG") ]
          ] +
@@ -185,8 +188,8 @@ def mol_hide(self_cmd, sele):
          [ 0, ''          , ''                                ]]
         + rep_action(self_cmd, sele,'hide') +
         [[ 0, ''          , ''                                ],
-         [ 1, 'main chain', 'cmd.hide("((byres ('+sele+'))&(n. c,o,h|(n. n&!r. pro)))")' ],
-         [ 1, 'side chain', 'cmd.hide("((byres ('+sele+'))&!(n. ca,c,o,h|(n. n&!r. pro)))")' ],
+         [ 1, 'main chain', 'cmd.hide("((byres ('+sele+'))&(bb.&!'+sele_ms_shared+'))")' ],
+         [ 1, 'side chain', 'cmd.hide("((byres ('+sele+'))&(sc.&!'+sele_ms_shared+'))")' ],
          [ 1, 'waters'    , 'cmd.hide("(solvent and ('+sele+'))")'     ],                      
          [ 0, ''          , ''                                ],
          [ 1, 'hydrogens' , hide_hydro(self_cmd, sele) ],
@@ -877,7 +880,7 @@ def polar(self_cmd, sele):
                  'cmd.dist("'+sele+'_polar_conts","'+sele+'","'+sele+'",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'involving side chains'  ,
                  'cmd.dist("'+sele+'_polar_conts","('+sele+')","('+sele+
-                 ') and polymer and not (name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
+                 ') & sc.",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'involving solvent'  ,
                  'cmd.dist("'+sele+'_polar_conts","('+sele+') and solvent","('+sele+
                  ') and not (solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
@@ -885,18 +888,18 @@ def polar(self_cmd, sele):
                  'cmd.dist("'+sele+'_polar_conts","('+sele+') and not (solvent)","('+sele+
                  ') and not (solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'excluding main chain'  ,
-                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not (polymer and name n,o,h)","('+sele+
-                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') & !bb.","('+sele+') & !bb.",'
+                 'quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'excluding intra-main chain'  ,
                  'cmd.dist("'+sele+'_polar_conts","('+sele+')","('+sele+
-                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
+                 ') & !bb.",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'just intra-side chain'  ,
-                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not (solvent or (polymer and name n,o,h))","('+sele+
-                 ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') & sc.)","('+sele+') & sc.",'
+                 'quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+
                  '_polar_conts")'],
               [ 1, 'just intra-main chain'  ,
-                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not (solvent or (polymer and not name n,o,h))","('+sele+
-                 ') and not (solvent or (polymer and not name n,o,h))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') & bb.","('+sele+') & bb.",'
+                 'quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+
                  '_polar_conts")'],
               [ 0, '', '' ],
               [ 1, 'to other atoms in object',

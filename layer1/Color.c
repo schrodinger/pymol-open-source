@@ -682,6 +682,8 @@ int ColorGetIndex(PyMOLGlobals * G, char *name)
         return cColorBack;
       else if(i == -1)
         return -1;
+      if (i & cColor_TRGB_Bits)
+        return i;
     }
   }
   if((name[0] == '0') && (name[1] == 'x')) {    /* explicit hex RGB 0x000000 */

@@ -121,7 +121,8 @@ struct _COrtho {
 
 int OrthoBackgroundDataIsSet(PyMOLGlobals *G){
   register COrtho *I = G->Ortho;
-  return (I->bgData != NULL && (I->bgWidth > 0 && I->bgHeight > 0));
+  return (I->bgData && (I->bgWidth > 0 && I->bgHeight > 0));
+  //  return (I->bgCGO != NULL && (I->bgWidth > 0 && I->bgHeight > 0));
 }
 void *OrthoBackgroundDataGet(PyMOLGlobals *G, int *width, int *height){
   register COrtho *I = G->Ortho;
