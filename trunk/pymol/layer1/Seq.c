@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 
 #include "Menu.h"
 #include "Executive.h"
+#include "Ortho.h"
 
 struct _CSeq {
   Block *Block;
@@ -302,18 +303,29 @@ static void SeqDraw(Block * block ORTHOCGOARG)
 
     int x = I->Block->rect.left;
     int y = I->Block->rect.bottom + I->ScrollBarMargin + 1;
-    float *bg_color, overlay_color[3] = { 1.0F, 1.0F, 1.0F };
+    float bg_color[3] = { 0.f, 0.f, 0.f }, overlay_color[3] = { 1.0F, 1.0F, 1.0F };
     int label_color_index = SettingGetGlobal_color(G, cSetting_seq_view_label_color);
     float *label_color = ColorGet(G, label_color_index);
     copy3f(label_color, overlay_color);
-    bg_color = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
-    overlay_color[0] = overlay_color[0] - bg_color[0];
-    overlay_color[1] = overlay_color[1] - bg_color[1];
-    overlay_color[2] = overlay_color[2] - bg_color[2];
-    if(diff3f(overlay_color, bg_color) < 0.25)
-      zero3f(overlay_color);
 
+    if (SettingGetGlobal_b(G, cSetting_bg_gradient)){
+      if(SettingGetGlobal_b(G, cSetting_seq_view_location)) {
+	copy3f(ColorGet(G, SettingGetGlobal_color(G, cSetting_bg_rgb_bottom)), bg_color);
+      } else {
+	copy3f(ColorGet(G, SettingGetGlobal_color(G, cSetting_bg_rgb_top)), bg_color);
+      }      
+    } else {
+      copy3f(ColorGet(G, SettingGetGlobal_color(G, cSetting_bg_rgb)), bg_color);
+    }
     if(I->ScrollBarActive) {
+      if(!SettingGetGlobal_b(G, cSetting_seq_view_overlay)) {
+	if (orthoCGO){
+	  CGOColorv(orthoCGO, bg_color);
+	} else {
+	  glColor3fv(bg_color);
+	}
+	BlockFill(I->Block ORTHOCGOARGVAR);
+      }
       ScrollBarSetBox(I->ScrollBar, I->Block->rect.bottom + I->ScrollBarWidth,
                       I->Block->rect.left + I->ScrollBarMargin,
                       I->Block->rect.bottom + 2,

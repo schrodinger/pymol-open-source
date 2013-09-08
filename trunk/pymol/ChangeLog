@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2013-06-18 Blaine Bell, Thomas Holder
+
+	* fix seq viewer background color
+
+	* add "backbone" and "sidechain" selection keywords
+
+	* fix: cealign inverts target structure
+
 2013-08-27 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix [bugs:#135] array overrun

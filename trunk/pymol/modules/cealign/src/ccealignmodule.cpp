@@ -526,15 +526,12 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
 	
     // left singular vectors
     TA2<double> W = TA2<double>(n,n);
-    // diagonal matrix of singular values
-    TA2<double> S = TA2<double>(n,n);
     // right singular vectors
     TA2<double> Vt = TA2<double>(n,n);
     // singular values		
     TA1<double> sigmas = TA1<double>(n);
 		
     svd.getU(W);
-    svd.getS(S);
     svd.getV(Vt);
     Vt = transpose(Vt);
     svd.getSingularValues(sigmas);
@@ -547,12 +544,11 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
     JAMA::LU<double> LU_Vt(Vt);
     JAMA::LU<double> LU_W(W);
 		
-    if ( LU_W.det() * LU_Vt.det() == -1 )
+    if ( LU_W.det() * LU_Vt.det() < 0.0 )
       {
 	//std::cout << "_________REFLECTION_________" << std::endl;	
 			
 	// revese the smallest axes and last sigma	
-	S[n-1][n-1] = -S[n-1][n-1];
 			
 	for ( int i = 0; i < n; i++ )
 	  W[n-1][i] = -W[n-1][i];
@@ -563,11 +559,6 @@ PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int buf
     // calculate the rotation matrix, U.	
     // U = W * Vt	
     TA2<double> U = TA2<double>(TNT::matmult(W, Vt));
-
-    //	
-    // Rotate the points in the 2nd vector by U, thus solving the problem	
-    //	
-    c2 = TNT::matmult( c2, U );
 
     //	
     // Now calculate the RMSD	

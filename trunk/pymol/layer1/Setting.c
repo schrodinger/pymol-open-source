@@ -4508,7 +4508,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_color(I, cSetting_seq_view_unaligned_color, "-1");
     set_s(I, cSetting_seq_view_fill_char, "-");
     set_color(I, cSetting_seq_view_fill_color, "104");  /* grey50 */
-    set_color(I, cSetting_seq_view_label_color, "white");       /* grey50 */
+    set_color(I, cSetting_seq_view_label_color, "front");       /* grey50 */
     set_f(I, cSetting_surface_carve_normal_cutoff, -1.0F);
     set_i(I, cSetting_trace_atoms_mode, 5);
     set_b(I, cSetting_session_changed, 0);

@@ -79,6 +79,19 @@ static WordKeyValue rep_names[] = {
   {"",},
 };
 
+static char *backbone_names[] = {
+  // protein
+  "CA", "C", "O", "N", "OXT", "H",
+  // nucleic acid
+  "P", "OP1", "OP2", "OP3", "C1'", "C2'", "O2'",
+  "C3'", "O3'", "C4'", "O4'", "C5'", "O5'",
+  "H1'", "H3'", "H4'",
+  "H2'", "H2''", "H12'", "H22'",
+  "H5'", "H5''", "H15'", "H25'",
+  "HO2'", "HO3'", "HO5'",
+  ""
+};
+
 typedef struct {
   int level, imp_op_level;
   int type;                     /* 0 = value 1 = operation 2 = pre-operation */
@@ -344,6 +357,8 @@ static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offs
 #define SELE_BYX1 ( 0x4A00 | STYP_OPR1 | 0x20 )
 #define SELE_STRO ( 0x4B00 | STYP_SEL1 | 0x80 )
 #define SELE_METz ( 0x4C00 | STYP_SEL0 | 0x90 )
+#define SELE_BB_z ( 0x4D00 | STYP_SEL0 | 0x90 )
+#define SELE_SC_z ( 0x4E00 | STYP_SEL0 | 0x90 )
 
 #define SEL_PREMAX 0x8
 
@@ -582,6 +597,12 @@ static WordKeyValue Keyword[] = {
   {"bycell", SELE_BYX1},
 
   {"metals", SELE_METz},        /* 0 parameter */
+
+  {"backbone", SELE_BB_z},
+  {"bb.", SELE_BB_z},
+
+  {"sidechain", SELE_SC_z},
+  {"sc.", SELE_SC_z},
 
   {"", 0}
 };
@@ -8621,6 +8642,27 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
           b > 36 && b < 51 ||
           b > 54 && b < 85 ||
           b > 86);
+    }
+    break;
+  case SELE_BB_z:
+  case SELE_SC_z:
+    {
+      AtomInfoType *ai;
+      flag = (base->code == SELE_BB_z);
+      for(a = cNDummyAtoms; a < I->NAtom; a++) {
+        ai = i_obj[i_table[a].model]->AtomInfo + i_table[a].atom;
+        if(!(ai->flags & cAtomFlag_polymer)) {
+          base[0].sele[a] = 0;
+          continue;
+        }
+        base[0].sele[a] = !flag;
+        for(b = 0; backbone_names[b][0]; b++) {
+          if(!(strcmp(ai->name, backbone_names[b]))) {
+            base[0].sele[a] = flag;
+            break;
+          }
+        }
+      }
     }
     break;
   case SELE_FXDz:

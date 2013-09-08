@@ -838,7 +838,6 @@ NOTES
             r = _cmd.get_color(_self._COb,str(color),3)
         finally:
             _self.unlock(r,_self)
-        if _raising(r,_self): raise pymol.CmdException
         return r
             
     def get_renderer(_self=cmd):  # 
