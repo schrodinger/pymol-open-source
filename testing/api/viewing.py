@@ -98,8 +98,20 @@ class TestViewing(testing.PyMOLTestCase):
         self.assertAlmostEqual(v[16] - v[15], 10.0, delta=1e-3)
 
     def testOrigin(self):
-        cmd.origin
-        self.skipTest('TODO')
+        from chempy import cpv
+        cmd.pseudoatom('m1')
+        cmd.pseudoatom('m2')
+        cmd.pseudoatom('m3', pos=[1,0,0])
+        # by selection
+        cmd.origin('m3')
+        cmd.rotate('y', 90, 'm1')
+        # by position
+        cmd.origin(position=[-1,0,0])
+        cmd.rotate('y', 90, 'm2')
+        coords = []
+        cmd.iterate_state(1, 'm1 m2', 'coords.append([x,y,z])', space=locals())
+        d = cpv.distance(*coords)
+        self.assertAlmostEqual(d, 2 * 2**0.5)
 
     def testMove(self):
         for a in "xyz":
@@ -133,8 +145,23 @@ class TestViewing(testing.PyMOLTestCase):
         pass
 
     def testToggle(self):
-        cmd.toggle
-        self.skipTest('TODO')
+        cmd.fragment('gly')
+        cmd.show('sticks')
+        cmd.show('spheres')
+        cmd.toggle()
+        self.assertEqual(cmd.count_atoms('rep lines'), 0)
+        self.assertEqual(cmd.count_atoms('rep sticks'), 7)
+        self.assertEqual(cmd.count_atoms('rep spheres'), 7)
+        cmd.toggle()
+        cmd.toggle('sticks', '(all)')
+        self.assertEqual(cmd.count_atoms('rep lines'), 7)
+        self.assertEqual(cmd.count_atoms('rep sticks'), 0)
+        self.assertEqual(cmd.count_atoms('rep spheres'), 7)
+        cmd.toggle('sticks', '(all)')
+        cmd.toggle('spheres', '(all)')
+        self.assertEqual(cmd.count_atoms('rep lines'), 7)
+        self.assertEqual(cmd.count_atoms('rep sticks'), 7)
+        self.assertEqual(cmd.count_atoms('rep spheres'), 0)
 
     def testShow(self):
         cmd.fragment('ala')
@@ -161,9 +188,21 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.scene
         self.skipTest('TODO')
 
+    @testing.requires('gui')
     def testStereo(self):
-        cmd.stereo
-        self.skipTest('TODO')
+        for (k,v) in cmd.stereo_dict.items():
+            if v < 1:
+                continue
+            cmd.stereo(k)
+            self.assertTrue(cmd.get_setting_int('stereo'))
+            self.assertEqual(cmd.get_setting_int('stereo_mode'), v)
+        cmd.stereo('off')
+        self.assertFalse(cmd.get_setting_int('stereo'))
+        cmd.stereo('on')
+        self.assertTrue(cmd.get_setting_int('stereo'))
+        shift = cmd.get_setting_float('stereo_shift')
+        cmd.stereo('swap')
+        self.assertAlmostEqual(cmd.get_setting_float('stereo_shift'), -shift)
 
     def testTurn(self):
         cmd.turn('z', 90)
@@ -171,8 +210,14 @@ class TestViewing(testing.PyMOLTestCase):
         self.assertArrayEqual(v[:9], [0.,1.,0.,-1.,0.,0.,0.,0.,1.], delta=1e-3)
 
     def testRock(self):
-        cmd.rock
-        self.skipTest('TODO')
+        cmd.rock(1)
+        self.assertTrue(cmd.get_setting_int('rock'))
+        cmd.rock(0)
+        self.assertFalse(cmd.get_setting_int('rock'))
+        cmd.rock(-1)
+        self.assertTrue(cmd.get_setting_int('rock'))
+        cmd.rock(-1)
+        self.assertFalse(cmd.get_setting_int('rock'))
 
     def testLabel(self):
         cmd.label
