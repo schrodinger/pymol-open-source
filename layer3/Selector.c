@@ -156,7 +156,7 @@ static int SelectorGetArrayNCSet(PyMOLGlobals * G, int *array, int no_dummies);
 static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state);
 static int SelectorSelect0(PyMOLGlobals * G, EvalElem * base);
 static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet);
-static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base);
+static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state);
 static int SelectorLogic1(PyMOLGlobals * G, EvalElem * base, int state);
 static int SelectorLogic2(PyMOLGlobals * G, EvalElem * base);
 static int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state);
@@ -359,6 +359,9 @@ static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offs
 #define SELE_METz ( 0x4C00 | STYP_SEL0 | 0x90 )
 #define SELE_BB_z ( 0x4D00 | STYP_SEL0 | 0x90 )
 #define SELE_SC_z ( 0x4E00 | STYP_SEL0 | 0x90 )
+#define SELE_XVLx ( 0x5000 | STYP_SEL2 | 0x80 )
+#define SELE_YVLx ( 0x5100 | STYP_SEL2 | 0x80 )
+#define SELE_ZVLx ( 0x5200 | STYP_SEL2 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -604,6 +607,10 @@ static WordKeyValue Keyword[] = {
   {"sidechain", SELE_SC_z},
   {"sc.", SELE_SC_z},
 
+  {"x", SELE_XVLx},
+  {"y", SELE_YVLx},
+  {"z", SELE_ZVLx},
+
   {"", 0}
 };
 
@@ -619,6 +626,19 @@ static WordKeyValue AtOper[] = {
   {"=", SCMP_EQAL},
   {"", 0}
 };
+
+static short fcmp(float a, float b, int oper) {
+  switch (oper) {
+  case SCMP_GTHN:
+    return (a > b);
+  case SCMP_LTHN:
+    return (a < b);
+  case SCMP_EQAL:
+    return (a == b);
+  }
+  printf("ERROR: invalid operator %d\n", oper);
+  return false;
+}
 
 #define cINTER_ENTRIES 11
 
@@ -9663,7 +9683,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
 
 
 /*========================================================================*/
-static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base)
+static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state)
 {
   int a;
   int c = 0;
@@ -9679,6 +9699,68 @@ static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base)
   base->sele = Calloc(int, I->NAtom);
   ErrChkPtr(G, base->sele);
   switch (base->code) {
+  case SELE_XVLx:
+  case SELE_YVLx:
+  case SELE_ZVLx:
+    oper = WordKey(G, AtOper, base[1].text, 4, ignore_case, &exact);
+    switch (oper) {
+    case SCMP_GTHN:
+    case SCMP_LTHN:
+    case SCMP_EQAL:
+      if(sscanf(base[2].text, "%f", &comp1) != 1)
+        ok = ErrMessage(G, "Selector", "Invalid Number");
+      break;
+    default:
+      ok = ErrMessage(G, "Selector", "Invalid Operator.");
+      break;
+    }
+    if(ok) {
+      ObjectMolecule *obj;
+      CoordSet *cs;
+      int at, idx, s, s0 = 0, sN = I->NCSet;
+
+      if(state != -1) {
+        s0 = (state < -1) ? SceneGetState(G) : state;
+        sN = s0 + 1;
+      }
+
+      for(a = cNDummyAtoms; a < I->NAtom; a++)
+        base[0].sele[a] = false;
+
+      for(s = s0; s < sN; s++) {
+        for(a = cNDummyAtoms; a < I->NAtom; a++) {
+          if(base[0].sele[a])
+            continue;
+
+          obj = I->Obj[I->Table[a].model];
+          if(s >= obj->NCSet)
+            continue;
+
+          at = I->Table[a].atom;
+          cs = obj->CSet[s];
+          if(!obj->DiscreteFlag) {
+            idx = cs->AtmToIdx[at];
+          } else if(cs == obj->DiscreteCSet[at]) {
+            idx = obj->DiscreteAtmToIdx[at];
+          } else {
+            continue;
+          }
+          if(idx < 0)
+            continue;
+
+          idx *= 3;
+          switch (base->code) {
+          case SELE_ZVLx:
+            idx++;
+          case SELE_YVLx:
+            idx++;
+          }
+
+          base[0].sele[a] = fcmp(cs->Coord[idx], comp1, oper);
+        }
+      }
+    }
+    break;
   case SELE_PCHx:
   case SELE_FCHx:
   case SELE_BVLx:
@@ -11041,7 +11123,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
                    && (Stack[depth - 1].type == STYP_VALU)
                    && (Stack[depth].type == STYP_VALU)) {
                   /* 2 argument value operator */
-                  ok = SelectorSelect2(G, &Stack[depth - 2]);
+                  ok = SelectorSelect2(G, &Stack[depth - 2], state);
                   opFlag = true;
                   for(a = depth + 1; a <= totDepth; a++)
                     Stack[a - 2] = Stack[a];
