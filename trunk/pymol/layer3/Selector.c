@@ -6472,6 +6472,7 @@ PyObject *SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int qui
   SelectorUpdateTable(G, state, -1);
 
   if(ok) {
+    ObjectMolecule *prevobj = NULL;
     int nAtom = 0;
     int a;
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
@@ -6489,7 +6490,10 @@ PyObject *SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int qui
       int s = obj->AtomInfo[at].selEntry;
       I->Table[a].index = 0;
       if(SelectorIsMember(G, s, sele)) {
+        if(obj != prevobj) {
 	ObjectMoleculeUpdateAtomTypeInfoForState(G, obj, state, 1, format);
+          prevobj = obj;
+        }
 	nAtom++;
       }
     }

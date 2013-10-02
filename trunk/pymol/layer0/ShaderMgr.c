@@ -1456,6 +1456,8 @@ int CShaderPrg_Disable(CShaderPrg * p)
 
 int CShaderPrg_DisableARB(CShaderPrg * p)
 {
+  if (p)
+    p->G->ShaderMgr->current_shader = 0;
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
   glDisable(GL_VERTEX_PROGRAM_ARB);
   return 1;
@@ -1959,6 +1961,7 @@ CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G){
   CShaderPrg *shaderPrg = NULL;
 #ifdef _PYMOL_OPENGL_SHADERS
   /* load the vertex program */
+  CShaderPrg_Disable(G->ShaderMgr->current_shader);
   shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "sphere_arb");
   glBindProgramARB(GL_VERTEX_PROGRAM_ARB, shaderPrg->vid);
   
@@ -1966,13 +1969,12 @@ CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G){
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shaderPrg->fid);
   
   /* load some safe initial values  */
-  
-  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 0, 0.0F, 0.0F, 1.0, 0.0F);
+  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 0, 0.0F, 0.0F, 1.0F, 0.0F);
   glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, 0.5F, 2.0F, 0.0F, 0.0F);
-  
+
   glEnable(GL_VERTEX_PROGRAM_ARB);
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
-  
+
 #endif
   return shaderPrg;
 }
