@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2013-10-01 Thomas Holder <speleo3@users.sf.net>, Blaine Bell <blaine.bell@schrodinger.com>
+
+	* major re-work/organization of RepSphere.c and fixed sphere picking
+
+	* fix color type settings return format for hex colors (0x prefix)
+
+	* fix special keys in wizard input prompt
+
 2013-09-09 Thomas Holder
 
 	* add "x" "y" "z" selection operators

@@ -763,9 +763,9 @@ char *ColorGetName(PyMOLGlobals * G, int index)
     index = (((index & 0xFFFFFF) | ((index << 2) & 0xFC000000) |        /* convert 6 bits of trans into 8 */
               ((index >> 4) & 0x03000000)));
     if(index & 0xFF000000)      /* if transparent */
-      sprintf(I->RGBName, "%08x", index);
+      sprintf(I->RGBName, "0x%08x", index);
     else                        /* else */
-      sprintf(I->RGBName, "%06x", index);
+      sprintf(I->RGBName, "0x%06x", index);
     return I->RGBName;
   } else if(index <= cColorExtCutoff) {
     int a = cColorExtCutoff - index;

@@ -2375,6 +2375,10 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
 	}
       }
       SceneInvalidate(G);
+      if (SettingGetGlobal_b(G, cSetting_sphere_use_shader)){
+	ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
+	changed = 1;
+      }
       if (SettingGetGlobal_b(G, cSetting_ribbon_use_shader)){
 	ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
 	changed = 1;

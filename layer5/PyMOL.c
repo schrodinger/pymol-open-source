@@ -3944,7 +3944,7 @@ void PyMOL_Special(CPyMOL * I, int k, int x, int y, int modifiers)
   char buffer[255];
   (void)buffer;
   if(!grabbed)
-    grabbed = WizardDoKey(G, (unsigned char) k, x, y, modifiers);
+    grabbed = WizardDoSpecial(G, (unsigned char) k, x, y, modifiers);
 
   switch (k) {
   case P_GLUT_KEY_UP:

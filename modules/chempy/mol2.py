@@ -85,6 +85,7 @@ class MOL2(Storage):
                    4       : "ar",
                    "dummy"          : "du",
                    "unknown"        : "un",
+                   0                : "nc",
                    "not_connected"  : "nc" }
                    
 
