@@ -1959,7 +1959,8 @@ void OrthoRenderCGO(PyMOLGlobals * G){
     SceneDrawImageOverlay(G, NULL);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
-    CGORenderGL(I->orthoCGO, NULL, NULL, NULL, NULL, NULL);
+    if (I->orthoCGO)
+      CGORenderGL(I->orthoCGO, NULL, NULL, NULL, NULL, NULL);
     if (I->orthoFastCGO)
       CGORenderGL(I->orthoFastCGO, NULL, NULL, NULL, NULL, NULL);
     CShaderPrg_Disable(CShaderPrg_Get_Current_Shader(G));

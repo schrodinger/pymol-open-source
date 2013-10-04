@@ -482,7 +482,7 @@ int PConvPyListToFloatArray(PyObject * obj, float **f)
     *f = NULL;
     ok = false;
   } else {
-    l = PyList_Size(obj);
+    l = (int) PyList_Size(obj);
     if(!l)
       ok = -1;
     else

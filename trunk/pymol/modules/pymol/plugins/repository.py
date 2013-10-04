@@ -229,6 +229,7 @@ ARGUMENTS
     import urllib2, re, os
     from pymol import cmd, CmdException
 
+    title = title.strip()
     quiet = int(quiet)
     if dest is None:
         dest = cmd.get('fetch_path')

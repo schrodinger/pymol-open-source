@@ -496,8 +496,6 @@ int *MatrixFilter(float cutoff, int window, int n_pass, int nv, float *v1, float
     copy3f(v2, center2);
     for(a = 1; a < nv; a++) {
       if(flag[a]) {
-        vv1 = v1 + 3 * a;
-        vv2 = v2 + 3 * a;
         add3f(v1, center1, center1);
         add3f(v2, center2, center2);
         cc++;

@@ -212,13 +212,4 @@ DESCRIPTION
         '''
         WARNING: buggy argument list, state get's decremented twice!
         '''
-        _self = cmd
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.load_coords(_self._COb, str(oname).strip(), model,
-                    int(state)-2, cmd.loadable.model)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
-        return r
+        return pymol.importing.load_coords(model, oname, int(state)-1)

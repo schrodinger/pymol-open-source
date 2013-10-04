@@ -8487,39 +8487,41 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
   return NULL;
 #else
   CoordSet *cset = NULL;
-  int ok = true;
-  int a, l;
+  int a, b, l;
   PyObject *v;
   float *f;
-  a = 0;
-  while(a < I->NCSet) {
-    if(I->CSet[a]) {
-      cset = I->CSet[a];
-      break;
-    }
-    a++;
+
+  if(!PySequence_Check(coords)) {
+    ErrMessage(G, "LoadCoords", "passed argument is not a sequence");
+    th_raise(1);
   }
 
-  if(!PyList_Check(coords))
-    ErrMessage(G, "LoadsCoords", "passed argument is not a list");
-  else {
-    l = PyList_Size(coords);
-    if(l == cset->NIndex) {
-      cset = CoordSetCopy(cset);
-      f = cset->Coord;
-      for(a = 0; a < l; a++) {
-        v = PyList_GetItem(coords, a);
+  // find any coordinate set
+  for(a = 0; !cset && a < I->NCSet; a++)
+    cset = I->CSet[a];
+  th_assert(1, cset);
+  cset = CoordSetCopy(cset);
 
-
-/* no error checking */
-        *(f++) = (float) PyFloat_AsDouble(PyList_GetItem(v, 0));
-        *(f++) = (float) PyFloat_AsDouble(PyList_GetItem(v, 1));
-        *(f++) = (float) PyFloat_AsDouble(PyList_GetItem(v, 2));
-      }
-    }
+  // check atom count
+  l = PySequence_Size(coords);
+  if(l != cset->NIndex) {
+    ErrMessage(G, "LoadCoords", "atom count mismatch");
+    th_raise(1);
   }
+
+  // copy coordinates
+  f = cset->Coord;
+  for(a = 0; a < l; a++) {
+    v = PySequence_GetItem(coords, a);
+
+    for(b = 0; b < 3; b++)
+      f[a * 3 + b] = (float) PyFloat_AsDouble(PySequence_GetItem(v, b));
+
+    th_assert(2, !PyErr_Occurred());
+  }
+
   /* include coordinate set */
-  if(ok) {
+  {
     if(cset->fInvalidateRep)
       cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
 
@@ -8533,7 +8535,18 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
     I->CSet[frame] = cset;
     SceneCountFrames(G);
   }
+
+  // success
   return (I);
+
+  // error handling
+th_except2:
+  PyErr_Print();
+th_except1:
+  if(cset)
+    cset->fFree(cset);
+  ErrMessage(G, "LoadCoords", "failed");
+  return NULL;
 #endif
 }
 

@@ -28,4 +28,7 @@ int ErrMessage(PyMOLGlobals * G, const char *where, const char *what);
 
 #define CHECKOK(ok, var) ok &= var ? true : false;
 
+#define th_raise(x) goto th_except ## x
+#define th_assert(x, c) {if(!(c)) th_raise(x);}
+
 #endif

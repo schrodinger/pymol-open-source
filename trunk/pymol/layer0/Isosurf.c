@@ -181,6 +181,7 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
   if(ok) {
     result->data = NULL;
     result->points = NULL;
+    result->gradients = NULL;
   }
   if(ok)
     ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list, 0), result->dimensions, 3);
@@ -208,7 +209,6 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
       result = NULL;
     }
   }
-  result->gradients = NULL;
   return (result);
 #endif
 }
