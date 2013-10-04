@@ -774,17 +774,15 @@ def color_objs(selection='(all)',quiet=1,_self=cmd):
             cmd.color(_color_cycle[c],"(?%s)"%(a),quiet=quiet)
         c = (c + 1) % _color_cycle_len
 
-def chainbow(selection='(all)',first_color=7,_self=cmd):
-    pymol=_self._pymol
-    cmd=_self # NOT THREAD SAFE
+def chainbow(selection='(all)', palette="rainbow", quiet=1, _self=cmd):
     '''
     Color all chains in rainbow
     '''
-    for a in cmd.get_chains(selection):
-        if len(a):
-            cmd.spectrum('count',selection="(chain %s and (%s))"%(a,selection),byres=1)
-        else:
-            cmd.spectrum('count',selection="(chain '' and (%s))"%selection,byres=1)
+    for model in _self.get_object_list('(' + selection + ')'):
+        for a in _self.get_chains('model %s & (%s)' % (model, selection)) or ['']:
+            _self.spectrum('count', palette,
+                    "(chain '%s' & model %s & (%s))" % (a, model, selection),
+                    byres=1, quiet=quiet)
             
 color_chains = cbc
 

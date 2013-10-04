@@ -1415,3 +1415,25 @@ NOTES
                 _self.unblock_flush(_self)
         return r
         
+    def load_coords(coords, object, state=0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    API only. Load object coordinates.
+
+ARGUMENTS
+
+    coords = list: 3xN float array
+
+    object = str: object name
+
+    state = int: object state, or 0 for append {default: 0}
+        '''
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _cmd.load_coords(_self._COb, object, coords, int(state)-1)
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
+        return r

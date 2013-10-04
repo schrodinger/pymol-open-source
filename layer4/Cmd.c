@@ -7044,51 +7044,43 @@ static PyObject *CmdLoadCoords(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *oname;
   PyObject *model;
-  CObject *origObj = NULL, *obj;
-  OrthoLineType buf;
-  int frame, type;
-  int ok = false;
+  CObject *origObj = NULL;
+  ObjectMolecule *obj;
+  int frame;
 
-  buf[0] = 0;
-
-  ok = PyArg_ParseTuple(args, "OsOii", &self, &oname, &model, &frame, &type);
-
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
+  if(!PyArg_ParseTuple(args, "OsOi", &self, &oname, &model, &frame)) {
     API_HANDLE_ERROR;
+    th_raise(1);
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    origObj = ExecutiveFindObjectByName(G, oname);
 
-    /* TODO check for existing object of wrong type */
-    if(!origObj) {
-      ErrMessage(G, "LoadCoords", "named object not found.");
-      ok = false;
-    } else {
-      switch (type) {
-      case cLoadTypeChemPyModel:
-        PBlock(G);              /*PBlockAndUnlockAPI(); */
-        obj =
-          (CObject *) ObjectMoleculeLoadCoords(G, (ObjectMolecule *) origObj, model,
-                                               frame);
-        PUnblock(G);            /*PLockAPIAndUnblock(); */
-        if(frame < 0)
-          frame = ((ObjectMolecule *) obj)->NCSet - 1;
-        sprintf(buf, " CmdLoad: Coordinates appended into object \"%s\", state %d.\n",
-                oname, frame + 1);
-        break;
-      }
-    }
-    if(origObj) {
-      PRINTFB(G, FB_Executive, FB_Actions)
-        "%s", buf ENDFB(G);
-      OrthoRestorePrompt(G);
-    }
-    APIExit(G);
+  API_SETUP_PYMOL_GLOBALS;
+  th_assert(1, G && APIEnterNotModal(G));
+
+  origObj = ExecutiveFindObjectByName(G, oname);
+  if(!origObj || !origObj->type == cObjectMolecule) {
+    ErrMessage(G, "LoadCoords", "named object molecule not found.");
+    th_raise(2);
   }
-  return APIResultOk(ok);
+
+  PBlock(G);              /*PBlockAndUnlockAPI(); */
+  obj = ObjectMoleculeLoadCoords(G, (ObjectMolecule *) origObj, model, frame);
+  PUnblock(G);            /*PLockAPIAndUnblock(); */
+  th_assert(2, obj);
+
+  if(frame < 0)
+    frame = obj->NCSet - 1;
+
+  PRINTFB(G, FB_Executive, FB_Actions)
+    " CmdLoad: Coordinates appended into object \"%s\", state %d.\n",
+    oname, frame + 1 ENDFB(G);
+  OrthoRestorePrompt(G);
+
+  APIExit(G);
+  return APISuccess();
+th_except2:
+  APIExit(G);
+th_except1:
+  return APIFailure();
 }
 
 static PyObject *CmdLoad(PyObject * self, PyObject * args)

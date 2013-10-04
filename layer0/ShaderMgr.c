@@ -427,6 +427,10 @@ OVstatus ShaderMgrInit(PyMOLGlobals * G) {
   OVreturn_word result;
   CShaderMgr *I = G->ShaderMgr = CShaderMgr_New(G);
   OVContext *C = G->Context;
+
+  if(!I)
+    return_OVstatus_FAILURE;						\
+
   I->reload_bits = 0;
   G->ShaderMgr->is_picking = 0;
 
@@ -867,7 +871,7 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
   CShaderPrg_BindAttribLocations(G, "default");
   CShaderPrg_BindAttribLocations(G, "defaultscreen");
 
-  hasShaders = (defaultShader!=0);
+  hasShaders &= (defaultShader!=0);
 
   CShaderMgr_AddShaderPrg(G->ShaderMgr, defaultShader);
   CShaderMgr_AddShaderPrg(G->ShaderMgr, defaultScreenShader);

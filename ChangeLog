@@ -2,6 +2,17 @@
 CHANGE LOG
 =========================================================================
 
+2013-10-04 Thomas Holder <speleo3@users.sf.net>
+
+	* fix segfault in OrthoRenderCGO
+	  https://sourceforge.net/p/pymol/bugs/137/
+
+	* importing.load_coords
+
+	* improve util.chainbow
+
+	* fix plugin manager PyMOLWiki URL install: strip whitespace
+
 2013-10-01 Thomas Holder <speleo3@users.sf.net>, Blaine Bell <blaine.bell@schrodinger.com>
 
 	* major re-work/organization of RepSphere.c and fixed sphere picking
