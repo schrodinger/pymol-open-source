@@ -55,7 +55,7 @@ try:
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--osx-frameworks', action="store_true")
-    options, sys.argv = parser.parse_known_args(namespace=options)
+    options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 except ImportError:
     print "argparse not available"
 
