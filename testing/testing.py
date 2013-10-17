@@ -432,6 +432,18 @@ else:
                     for (m, t) in test.timings)
             self.stream.writeln(msg)
 
+            filename = os.getenv("PYMOLTESTTIMINGS",
+                    os.path.join(pymol_test_dir, "timings.tab"))
+            with open(filename, "a") as handle:
+                for i, (m, t) in enumerate(test.timings):
+                    print >> handle, "%f\t%s.%s-(%s)\t%f" % (
+                        time.time(),
+                        type(test).__name__,
+                        test._testMethodName,
+                        m or i,
+                        t,
+                    )
+
     def run_testfiles(filenames='all', verbosity=2, out=sys.stderr, **kwargs):
         '''
 DESCRIPTION
