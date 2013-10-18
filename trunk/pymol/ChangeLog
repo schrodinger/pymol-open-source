@@ -4,6 +4,8 @@ CHANGE LOG
 
 2013-10-18 Thomas Holder <speleo3@users.sf.net>
 
+	* remove out-dated pymol.opengl module
+
 	* enhance get_version command, quiet=-1 gives build information
 
 	* remove max_triangles setting (was unused)
