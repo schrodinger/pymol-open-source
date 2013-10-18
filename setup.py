@@ -313,13 +313,5 @@ distribution = setup ( # Distribution meta-data
             get_sources(['contrib/champ']),
             include_dirs=["contrib/champ"],
         ),
-
-        pyogl_extension("pymol.opengl.glu._glu_num", ["contrib/pyopengl/_glu_nummodule.c"]),
-        pyogl_extension("pymol.opengl.glu._glu", ["contrib/pyopengl/_glumodule.c"]),
-        pyogl_extension("pymol.opengl.glut._glut", ["contrib/pyopengl/_glutmodule.c"]),
-        pyogl_extension("pymol.opengl.gl._opengl_num", ["contrib/pyopengl/_opengl_nummodule.c"]),
-        pyogl_extension("pymol.opengl.gl._opengl", ["contrib/pyopengl/_openglmodule.c"]),
-        pyogl_extension("pymol.opengl.gl.openglutil", ["contrib/pyopengl/openglutil.c"]),
-        pyogl_extension("pymol.opengl.gl.openglutil_num", ["contrib/pyopengl/openglutil_num.c"]),
     ],
 )
