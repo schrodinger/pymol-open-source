@@ -7,9 +7,10 @@ together with an index.html file.
 """
 
 import os, sys, tempfile, re, socket, time
+import datetime
 from optparse import OptionParser
 from collections import defaultdict
-from matplotlib import pyplot, rcParams
+from matplotlib import pyplot, rcParams, dates
 
 # plot setup
 rcParams['figure.figsize'] = 5.0, 2.5
@@ -25,13 +26,18 @@ options = parser.parse_args()[0]
 tabname = os.getenv("PYMOLTESTTIMINGS", "timings.tab")
 
 # read file
-db = defaultdict(list)
+db = defaultdict(lambda: defaultdict(list))
 for line in open(tabname):
-    a = line.split("\t")
+    a = line.rstrip('\n').split("\t")
     timestamp = float(a[0])
-    key = a[1]
+    try:
+        mac = a[9] + ' ' + a[8]
+    except:
+        mac = a[1]
+        mac = ':'.join(mac[i:i+2] for i in range(0, len(mac), 2))
     value = float(a[2])
-    db[key].append((timestamp, value))
+    key = '%s(%s)' % (a[3], a[4])
+    db[key][mac].append((timestamp, value))
 
 # helper function for unique PNG filenames
 used_png = set()
@@ -51,13 +57,24 @@ print >> htmlout, time.strftime("%D-%T"), "</h1>"
 
 # make plots
 for key in sorted(db):
-    x, y = zip(*db[key])
+    data = db[key]
     pyplot.clf()
-    pyplot.ylim(0, max(y) * 1.1)
-    pyplot.title(key)
-    pyplot.ylabel("Timing in Seconds")
+    fig, ax = pyplot.subplots(1)
+    maxy = 0.0
+    for mac in data:
+        x, y = zip(*data[mac])
+        x = map(datetime.datetime.fromtimestamp, x)
+        maxy = max(maxy, max(y))
+        ax.plot(x, y, "o-", label=mac[:24])
+
+    fig.autofmt_xdate()
+    ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))
+    ax.yaxis.set_label_text("Seconds")
+    ax.set_title(key)
+
     pyplot.grid(True)
-    pyplot.plot(x, y)
+    pyplot.ylim(0, maxy * 1.1)
+    pyplot.legend(loc="best")
     pngname = get_unused_png(key)
     pyplot.savefig(os.path.join(outdir, pngname), dpi=70)
     print >> htmlout, "<img src='%s'>" % (pngname)

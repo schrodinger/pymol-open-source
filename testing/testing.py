@@ -13,6 +13,7 @@ import os
 import sys
 import pymol
 import collections
+import platform
 
 def compareListFunction(x, y):
     return collections.Counter(x) == collections.Counter(y)
@@ -38,6 +39,7 @@ if __name__ != 'pymol.testing':
     pymol.testing.cli()
 
 else:
+    import uuid
     import time
     import unittest
     import itertools
@@ -436,13 +438,20 @@ else:
                     os.path.join(pymol_test_dir, "timings.tab"))
             with open(filename, "a") as handle:
                 for i, (m, t) in enumerate(test.timings):
-                    print >> handle, "%f\t%s.%s-(%s)\t%f" % (
-                        time.time(),
-                        type(test).__name__,
-                        test._testMethodName,
-                        m or i,
-                        t,
-                    )
+                    version = cmd.get_version()
+                    buildinfo = version[3:] or [0, "", 0]
+                    print >> handle, '\t'.join([
+                        '%f' % time.time(),
+                        '%012x' % uuid.getnode(),
+                        '%f' % t,
+                        type(test).__name__ + '.' + test._testMethodName,
+                        str(m or i),
+                        version[0],
+                        buildinfo[1],
+                        '%d' % buildinfo[2],
+                        platform.platform(),
+                        platform.node(),
+                    ])
 
     def run_testfiles(filenames='all', verbosity=2, out=sys.stderr, **kwargs):
         '''
