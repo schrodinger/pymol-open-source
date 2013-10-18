@@ -162,6 +162,7 @@ if __name__=='pymol.cmd':
         lock_api_allow_flush = 1
         
         from locking import *
+        lockcm = LockCM()
 
         #--------------------------------------------------------------------
         # status monitoring

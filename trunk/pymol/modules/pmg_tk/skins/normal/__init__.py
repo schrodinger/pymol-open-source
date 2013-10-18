@@ -759,7 +759,8 @@ class Normal(PMGSkin):
             if self.multiple_files_option.getvalue()=="one file" and len(sels)>=1:
                 # save one or more objects to ONE file
                 if self.multiple_files_option.getvalue()=="one file":
-                    sfile = string.join(sels,"_") # +".pdb"
+                    sfile = '_'.join(sels) if len(sels) < 3 else \
+                            sels[0] + '-and-%d-more' % (len(sels) - 1)
                     self.my_withdraw(self.dialog)
                     del self.dialog
                     if result=='OK':

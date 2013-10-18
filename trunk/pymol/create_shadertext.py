@@ -1,5 +1,18 @@
 import sys, os, cStringIO
+import time
+from os.path import dirname
+from subprocess import Popen, PIPE
 from distutils import dir_util
+
+def create_all(generated_dir, pymoldir="."):
+    '''
+    Generate various stuff
+    '''
+    create_shadertext(
+            os.path.join(pymoldir, "data", "shaders"), "shadertext.txt",
+            os.path.join(generated_dir, "ShaderText.h"),
+            os.path.join(generated_dir, "ShaderText.c"))
+    create_buildinfo(generated_dir, pymoldir)
 
 class openw(object):
     """
@@ -64,5 +77,29 @@ def create_shadertext(shaderdir, inputfile, outputheader, outputfile):
     outputheader.close()
     outputfile.close()
 
+def create_buildinfo(outputdir, pymoldir='.'):
+
+    try:
+        sha = Popen(['git', 'rev-parse', 'HEAD'], cwd=pymoldir,
+                stdout=PIPE).stdout.read().strip()
+    except OSError:
+        sha = ''
+
+    rev = 0
+    try:
+        for line in Popen(['svn', 'info'], cwd=pymoldir, stdout=PIPE).stdout:
+            if line.startswith('Last Changed Rev'):
+                rev = int(line.split()[3])
+    except OSError:
+        pass
+
+    with openw(os.path.join(outputdir, 'PyMOLBuildInfo.h')) as out:
+        print >> out, '''
+#define _PyMOL_BUILD_DATE %d
+#define _PYMOL_BUILD_GIT_SHA "%s"
+#define _PyMOL_BUILD_SVN_REV %d
+        ''' % (time.time(), sha, rev)
+
 if __name__ == "__main__":
     create_shadertext(*sys.argv[1:5])
+    create_buildinfo(dirname(sys.argv[3]), dirname(dirname(sys.argv[1])))

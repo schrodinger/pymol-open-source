@@ -634,7 +634,7 @@ static short fcmp(float a, float b, int oper) {
   case SCMP_LTHN:
     return (a < b);
   case SCMP_EQAL:
-    return (a == b);
+    return fabs(a - b) < R_SMALL4;
   }
   printf("ERROR: invalid operator %d\n", oper);
   return false;

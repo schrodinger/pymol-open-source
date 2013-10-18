@@ -44,6 +44,17 @@ def lock_without_glut(_self=cmd):
     finally:
         _self.unlock_glut(_self)
 
+class LockCM(object):
+    '''
+    API lock context manager
+    '''
+    def __init__(self, _self=cmd):
+        self.cmd = _self
+    def __enter__(self):
+        lock(self.cmd)
+    def __exit__(self, type, value, traceback):
+        unlock(None, self.cmd)
+
 def lock(_self=cmd): # INTERNAL -- API lock
 #      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
     if not _self.lock_api.acquire(0):

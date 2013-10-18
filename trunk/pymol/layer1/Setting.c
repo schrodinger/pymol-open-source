@@ -3783,8 +3783,6 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 
     set_b(I, cSetting_static_singletons, 1);
 
-    set_i(I, cSetting_max_triangles, 1000000);  /* no longer used */
-
     set_b(I, cSetting_depth_cue, 1);
 
     set_f(I, cSetting_specular, 1.0F);

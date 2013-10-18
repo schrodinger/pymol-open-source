@@ -1020,7 +1020,7 @@ USAGE
                     reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
                     reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
                     reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
-            r = _self.load_model(model,str(object),quiet=quiet,zoom=zoom)
+            r = _self.load_model(model,str(object),quiet=quiet,zoom=zoom, _self=_self)
         except IOError:
             print "Error: unable to load fragment '%s'." % name
         except:
