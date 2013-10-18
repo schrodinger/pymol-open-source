@@ -118,7 +118,6 @@ if __name__=='pymol.setting':
         selection_width                    = 80 
         selection_overlay                  = 81 
         static_singletons                  = 82 
-        max_triangles                      = 83 
         depth_cue                          = 84 
         specular                           = 85 
         shininess                          = 86 

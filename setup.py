@@ -152,11 +152,7 @@ class install_pymol(install):
 generated_dir = os.path.join(os.environ.get("PYMOL_BLD", "build"), "generated")
 
 import create_shadertext
-create_shadertext.create_shadertext(
-        "data/shaders",
-        "shadertext.txt",
-        generated_dir + "/ShaderText.h",
-        generated_dir + "/ShaderText.c")
+create_shadertext.create_all(generated_dir)
 
 pymol_src_dirs = [
     "ov/src",

@@ -1862,12 +1862,22 @@ static PyObject *CmdGetRenderer(PyObject * self, PyObject * args)
   return Py_BuildValue("(sss)", vendor, renderer, version);
 }
 
+#include <PyMOLBuildInfo.h>
+
 static PyObject *CmdGetVersion(PyObject * self, PyObject * args)
 {
-  double ver_num = _PyMOL_VERSION_double;
-  WordType ver_str;
-  strcpy(ver_str, _PyMOL_VERSION);
-  return Py_BuildValue("(sdi)", ver_str, ver_num, _PyMOL_VERSION_int);
+  return Py_BuildValue("(sdiisi)",
+      _PyMOL_VERSION,
+      _PyMOL_VERSION_double,
+      _PyMOL_VERSION_int,
+#ifdef _PyMOL_BUILD_DATE
+      _PyMOL_BUILD_DATE,
+      _PYMOL_BUILD_GIT_SHA,
+      _PyMOL_BUILD_SVN_REV
+#else
+      0, "", 0
+#endif
+      );
 }
 
 static PyObject *CmdTranslateAtom(PyObject * self, PyObject * args)

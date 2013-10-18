@@ -246,7 +246,6 @@ typedef struct _CPyMOL {
   ov_word lex_selection_width;
   ov_word lex_selection_overlay;
   ov_word lex_static_singletons;
-  ov_word lex_max_triangles;
   ov_word lex_depth_cue;
   ov_word lex_specular;
   ov_word lex_shininess;
@@ -1167,7 +1166,6 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(selection_width, 80);
   LEX_SETTING(selection_overlay, 81);
   LEX_SETTING(static_singletons, 82);
-  LEX_SETTING(max_triangles, 83);
   LEX_SETTING(depth_cue, 84);
   LEX_SETTING(specular, 85);
   LEX_SETTING(shininess, 86);

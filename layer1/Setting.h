@@ -286,7 +286,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_selection_width              80
 #define cSetting_selection_overlay            81
 #define cSetting_static_singletons            82
-#define cSetting_max_triangles                83
 #define cSetting_depth_cue                    84
 #define cSetting_specular                     85
 #define cSetting_shininess                    86

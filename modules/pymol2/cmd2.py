@@ -56,6 +56,7 @@ class Cmd:
             self.lock_api_status = global_cmd._pymol.lock_api_status
 
         self.lock_api_allow_flush = 1
+        self.lockcm = global_cmd.LockCM(self)
 
         # now we create the command langauge
 
