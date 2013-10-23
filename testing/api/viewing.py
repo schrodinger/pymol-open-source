@@ -1,7 +1,30 @@
 import random
 from pymol import cmd, testing, stored
 
+expr_list = [
+    'segi', 'chain', 'resn', 'resi', 'name', 'alt', 'elem', 'text_type',
+    'formal_charge', 'numeric_type', 'ID',
+    'q', 'b', 'partial_charge', 'vdw',
+]
+
 class TestViewing(testing.PyMOLTestCase):
+
+    def _assertIterate(self, expr, selection):
+        stored.v = []
+        cmd.iterate(selection, 'stored.v.append(%s)' % expr)
+        self.assertEqual(len(stored.v), cmd.count_atoms(selection))
+        return stored.v
+
+    def assertEqualIterate(self, a, b, selection='*', msg=None):
+        for va, vb in self._assertIterate('(%s,%s)' % (a, b), selection):
+            for t in (float, int):
+                if isinstance(va, t) or isinstance(vb, t):
+                    va, vb = t(va), t(vb)
+            self.assertEqual(va, vb, '%s=%s != %s=%s' % (a, repr(va), b, repr(vb)))
+
+    def assertTrueIterate(self, expr, selection='*', msg=None):
+        for v in self._assertIterate(expr, selection):
+            self.assertTrue(v, expr)
 
     def assertViewIs(self, view):
         view = [round(v, 2) for v in view]
@@ -219,13 +242,14 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.rock(-1)
         self.assertFalse(cmd.get_setting_int('rock'))
 
-    def testLabel(self):
-        cmd.label
-        self.skipTest('TODO')
-
-    def testLabel2(self):
-        cmd.label2
-        self.skipTest('TODO')
+    @testing.foreach(cmd.label, cmd.label2)
+    def testLabel(self, func):
+        cmd.pseudoatom('m1')
+        for expr in expr_list + ['resn + " " + resi']:
+            func('*', expr)
+            self.assertEqualIterate('label', expr)
+        func()
+        self.assertTrueIterate('label == ""')
 
     def testWindow(self):
         cmd.window
