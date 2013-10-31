@@ -138,6 +138,8 @@ static void APIEnter(PyMOLGlobals * G)
 #ifdef WIN32
     abort();
 #endif
+
+
 /* END PROPRIETARY CODE SEGMENT */
     exit(0);
   }
@@ -2248,18 +2250,29 @@ static PyObject *CmdGetSettingUpdates(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "O", &self);;
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
+  int state;
+  char *name;
+  CSetting **handle, *csetting = NULL;
+
+  if(!PyArg_ParseTuple(args, "Osi", &self, &name, &state)) {
     API_HANDLE_ERROR;
+    th_raise(2);
   }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    result = SettingGetUpdateList(G, NULL);
-    APIExitBlocked(G);
+
+  API_SETUP_PYMOL_GLOBALS;
+  th_assert(2, G && APIEnterBlockedNotModal(G));
+
+  if(name[0]) {
+    CObject *obj = ExecutiveFindObjectByName(G, name);
+    th_assert(1, obj);
+    th_assert(1, handle = obj->fGetSettingHandle(obj, state));
+    csetting = *handle;
   }
+
+  result = SettingGetUpdateList(G, csetting);
+th_except1:
+  APIExitBlocked(G);
+th_except2:
   return (APIAutoNone(result));
 }
 

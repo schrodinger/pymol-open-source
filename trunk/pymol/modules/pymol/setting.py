@@ -865,12 +865,8 @@ PYMOL API
         if selection2 == None:
             selection2 = selection1
         if log:
-            if ',' in str(value):
-                value = str(cmd.safe_list_eval(str(value)))
-            if len(selection2):
-                cmd.log("set_bond %s,%s,%s\n"%(str(name),str(value),str(selection1),str(selection2)))
-            else:
-                cmd.log("set_bond %s,%s\n"%(str(name),str(value),str(selection1)))           
+            cmd.log("/cmd.set_bond('%s',%s,%s,%s,%s)\n" % (name, repr(value),
+                repr(selection1), repr(selection2), state))
         index = _get_index(str(name))
         if(index<0):
             print "Error: unknown setting '%s'."%name
@@ -1029,12 +1025,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         selection = str(selection)
         if log:
-            if ',' in str(value):
-                value = str(cmd.safe_list_eval(str(value)))
-            if len(selection):
-                cmd.log("set %s,%s,%s\n"%(str(name),str(value),str(selection)))
-            else:
-                cmd.log("set %s,%s\n"%(str(name),str(value)))            
+            cmd.log("/cmd.set('%s',%s,%s,%s)\n" % (name, repr(value), repr(selection), state))
         index = name if isinstance(name, int) else _get_index(str(name))
         if(index<0):
             print "Error: unknown setting '%s'."%name
@@ -1150,10 +1141,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         selection = str(selection)
         if log:
-            if(len(selection)):
-                cmd.log("unset %s,%s\n"%(str(name),str(selection)))
-            else:
-                cmd.log("set %s,0\n"%(str(name)))
+            cmd.log("/cmd.unset('%s',%s,%s)\n" % (name, repr(selection), state))
         index = _get_index(str(name))
         if(index<0):
             print "Error: unknown setting '%s'."%name
@@ -1196,10 +1184,8 @@ USAGE
             selection2 = selection1
         selection2 = str(selection2)
         if log:
-            if(len(selection2)):
-                cmd.log("unset %s,%s\n"%(str(name),str(selection1),str(selection2)))
-            else:
-                cmd.log("set %s,%s\n"%(str(name),str(selection1)))
+            cmd.log("/cmd.unset_bond('%s',%s,%s,%s)\n" % (name,
+                repr(selection1), repr(selection2), state))
         index = _get_index(str(name))
         if(index<0):
             print "Error: unknown setting '%s'."%name
@@ -1401,11 +1387,11 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def get_setting_updates(_self=cmd): # INTERNAL
+    def get_setting_updates(object='', state=0, _self=cmd): # INTERNAL
         r = []
         if lock_attempt(_self):
             try:
-                r = _cmd.get_setting_updates(_self._COb)
+                r = _cmd.get_setting_updates(_self._COb, object, state-1)
             finally:
                 _self.unlock(r,_self)
         return r
