@@ -1004,10 +1004,10 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     }
 
     if (ok)
-      I->V = VLAMalloc(1000, sizeof(float), 9, false);
+      I->V = (float*) VLAMalloc(1000, sizeof(float), 9, false);
     CHECKOK(ok, I->V);
     if (ok)
-      I->N = VLAMalloc(100, sizeof(int), 9, false);
+      I->N = (int*) VLAMalloc(100, sizeof(int), 9, false);
     CHECKOK(ok, I->N);
     if (ok)
       I->N[0] = 0;
@@ -1301,7 +1301,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     RepMeshFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }
 
 int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,

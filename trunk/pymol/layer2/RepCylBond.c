@@ -2346,7 +2346,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     RepCylBondFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }
 
 static void subdivide(int n, float *x, float *y)

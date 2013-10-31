@@ -4,7 +4,7 @@
 OVContext *OVContext_New(void)
 {
   OVContext *I = NULL;
-  OVHeap *heap = OVHeap_New();
+  OVHeap *heap = (OVHeap*) OVHeap_New();
   if(heap) {
     I = OVHeap_ALLOC(heap, OVContext);
     if(I) {

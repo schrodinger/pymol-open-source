@@ -5,8 +5,6 @@
 import os,sys
 from pymol.wizard import Wizard
 from pymol import cmd
-import pymol
-import string
 import traceback
 # global dictionary for saving result on a per-object basis
 
@@ -33,23 +31,20 @@ class Filter(Wizard):
         # initialize parent class
         
         Wizard.__init__(self,_self)
+
+        self.update_object_menu()
         
         # restore previous state from global storage
 
         self.dict = static_dict
-        self.object = default_object
+        self.object = default_object if default_object in self.avail_objects else None
         self.browse = default_browse
-        self.avail_objects = []
         self.state_dict = {}
         
         # if we don't have a current object, choose the first multi-state object
         
-        if self.object == None:
-            for a in cmd.get_names('objects'):
-                if cmd.get_type(a)=='object:molecule':
-                    if cmd.count_states(a)>1:
-                        self.object = a
-                        break
+        if not self.object and self.avail_objects:
+            self.object = self.avail_objects[0]
 
         # menu for
         
@@ -62,6 +57,13 @@ class Filter(Wizard):
             [1, 'Browse Remaining','cmd.get_wizard().set_browse(5)'],         
             ]
 
+        self.menu['create'] = [
+            [2, 'Create Filtered Object', ''],
+            [1, 'Accepted','cmd.get_wizard().create_object("Accept")'],
+            [1, 'Rejected','cmd.get_wizard().create_object("Reject")'],
+            [1, 'Deferred','cmd.get_wizard().create_object("Defer")'],
+            ]
+
         self.count_object()
         self.load_state_dict()
         self.update_object_menu()
@@ -71,6 +73,18 @@ class Filter(Wizard):
         cmd.set_key('right',lambda s=self:s.forward())
         cmd.set_key('left',lambda s=self:s.backward())
         
+    def do_select(self,name):
+        try:
+            obj_name = cmd.index('first ?' + name)[0][0]
+            self.set_object(obj_name)
+        except:
+            pass
+        self.cmd.deselect()
+
+    def do_pick(self,bondFlag):
+        self.do_select('pk1')
+        self.cmd.unpick()
+
     def update_object_menu(self):
 
         # find objects with > 1 state
@@ -123,7 +137,7 @@ class Filter(Wizard):
             lst.sort()
             if len(lst)==0:
                 print " Filter-Error: No matching compounds."
-            cmd.mset(string.join(map(str,lst),' '))
+            cmd.mset(' '.join(map(str,lst)))
             cmd.rewind()
         cmd.refresh_wizard()
 
@@ -151,7 +165,7 @@ class Filter(Wizard):
         if so!=None:
             cnt = cmd.count_states(so)
             for a in range(1,cnt+1):
-                sd[cmd.get_title(so,a)] = a
+                sd[self.get_ident(so,a)] = a
 
     def count_object(self):
         # record how many molecular are in an object, etc.
@@ -190,16 +204,21 @@ class Filter(Wizard):
         return [
             [ 1, 'Filtering Wizard',''],
             [ 3, self.menu['browse'][self.browse][1], 'browse' ],
-            [ 3, str(self.object), 'object' ],
+            [ 3, 'Object: %s' % (self.object), 'object' ],
             [ 2, 'Accept (F1)','cmd.get_wizard().accept()'],
             [ 2, 'Reject (F2)','cmd.get_wizard().reject()'],
             [ 2, 'Defer (F3)','cmd.get_wizard().defer()'],
             [ 2, 'Forward (->)','cmd.get_wizard().forward()'],                  
             [ 2, 'Back (<-)','cmd.get_wizard().backward()'],
+            [ 3, 'Create Filtered Object', 'create'],
             [ 2, save_str,'cmd.get_wizard().save()'],
             [ 2, 'Refresh','cmd.refresh_wizard()'],                  
             [ 2, 'Done','cmd.set_wizard()'],
             ]
+
+    def get_ident(self, object, state):
+        return '%d/%d %s' % (state, self.tota,
+                self.cmd.get_title(self.object, state))
 
     def get_prompt(self):
 
@@ -209,11 +228,10 @@ class Filter(Wizard):
         if self.object == None:
             self.prompt = [ 'Please select a multi-state object...' ]
         else:
-            cnt = cmd.count_states(self.object)
-            self.prompt = [ '%s: %d total, %d accepted, %d rejected, %d deferred, %d remaining'%(
-                self.object,self.tota,self.acce,self.reje,self.defe,self.togo) ]
+            self.prompt = [ '%s: %d accepted, %d rejected, %d deferred, %d remaining'%(
+                self.object,self.acce,self.reje,self.defe,self.togo) ]
             state = cmd.get_state()
-            ident = cmd.get_title(self.object,state)
+            ident = self.get_ident(self.object,state)
             sdo=self.dict[self.object]
             if sdo.has_key(ident):
                 self.prompt.append('%s: %s'%(ident,sdo[ident]))
@@ -239,7 +257,7 @@ class Filter(Wizard):
             print " Filter-Error: Please choose an object first"
         else:
             state = cmd.get_state()
-            ident = cmd.get_title(self.object,state)
+            ident = self.get_ident(self.object,state)
             print " Filter: Accepting '%s'"%ident
             self.count(ident,accept_str)
         cmd.forward()         
@@ -251,7 +269,7 @@ class Filter(Wizard):
             print " Filter-Error: Please choose an object first"
         else:
             state = cmd.get_state()
-            ident = cmd.get_title(self.object,state)
+            ident = self.get_ident(self.object,state)
             print " Filter: Rejecting '%s'"%ident
             self.check_object_dict()
             self.count(ident,reject_str)
@@ -264,7 +282,7 @@ class Filter(Wizard):
             print " Filter-Error: Please choose an object first"
         else:
             state = cmd.get_state()
-            ident = cmd.get_title(self.object,state)
+            ident = self.get_ident(self.object,state)
             print " Filter: Deferring '%s'"%ident
             self.check_object_dict()
             self.count(ident,defer_str)
@@ -281,6 +299,13 @@ class Filter(Wizard):
         cmd.backward()
         cmd.refresh_wizard()
         
+    def create_object(self, what='Accept'):
+        name = self.cmd.get_unused_name(self.object + '_' + what, 0)
+        sdo = self.dict[self.object]
+        lst = [self.state_dict[ident] for (ident, w) in sdo.iteritems() if w == what]
+        for state in sorted(lst):
+            self.cmd.create(name, self.object, state, -1)
+
     def save(self):
         # write compounds to a file
         if self.object==None:
@@ -294,14 +319,7 @@ class Filter(Wizard):
             except:
                 print " Filter-Warning: '"+fname+"' in current directory is not writable."
                 print " Filter-Warning: attempting to write in home directory."
-                if sys.platform[0:3]!="win":
-                    fname = "$HOME/"+fname
-                    fname = os.path.expandvars(fname)               
-                else:
-                    fname = "$HOMEPATH\\"+fname
-                    fname = os.path.expandvars(fname)
-                    fname = "$HOMEDRIVE"+fname
-                    fname = os.path.expandvars(fname)
+                fname = cmd.exp_path(os.path.join('~', fname))
             try:
                 f=open(fname,'w')
                 sd = self.state_dict

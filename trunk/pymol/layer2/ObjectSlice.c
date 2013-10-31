@@ -1638,7 +1638,7 @@ ObjectSlice *ObjectSliceNew(PyMOLGlobals * G)
   ObjectInit(G, (CObject *) I);
 
   I->NState = 0;
-  I->State = VLAMalloc(10, sizeof(ObjectSliceState), 5, true);  /* autozero important */
+  I->State = VLACalloc(ObjectSliceState, 10);  /* autozero important */
 
   I->Obj.type = cObjectSlice;
 

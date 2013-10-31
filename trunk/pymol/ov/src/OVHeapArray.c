@@ -69,9 +69,9 @@ void *_OVHeapArray_Alloc(OVHeap * heap, ov_size unit_size, ov_size size, int zer
 {
   _OVHeapArray *vla;
   if(zero) {
-    vla = ov_array_calloc(heap, 1, sizeof(_OVHeapArray) + (unit_size * size));
+    vla = (_OVHeapArray *) ov_array_calloc(heap, 1, sizeof(_OVHeapArray) + (unit_size * size));
   } else {
-    vla = ov_array_malloc(heap, sizeof(_OVHeapArray) + (unit_size * size));
+    vla = (_OVHeapArray *) ov_array_malloc(heap, sizeof(_OVHeapArray) + (unit_size * size));
   }
   if(!vla) {
 #ifdef OVHeapArray_COMPLAIN
@@ -149,7 +149,7 @@ void *_OVHeapArray_SetSize(void *ptr, ov_size new_size
   _OVHeapArray *vla, *new_vla;
   vla = &((_OVHeapArray *) ptr)[-1];
   new_vla =
-    (void *) ov_array_realloc(vla->heap, vla,
+    (_OVHeapArray *) ov_array_realloc(vla->heap, vla,
                               (vla->unit_size * new_size) + sizeof(_OVHeapArray));
   if(!new_vla) {
 #ifdef OVHeapArray_COMPLAIN

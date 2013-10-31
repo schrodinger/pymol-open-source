@@ -771,5 +771,5 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
     I->VP = ReallocForSure(I->VP, float, (v - I->VP));
   }
   FreeP(active);
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

@@ -1685,7 +1685,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     RepWireBondFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }
 
 static void RepValence(float *v, float *v1, float *v2, int *other,

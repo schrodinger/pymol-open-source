@@ -1325,7 +1325,7 @@ ObjectMesh *ObjectMeshNew(PyMOLGlobals * G)
 
   if (ok){
     I->NState = 0;
-    I->State = VLAMalloc(10, sizeof(ObjectMeshState), 5, true);   /* autozero important */
+    I->State = VLACalloc(ObjectMeshState, 10);   /* autozero important */
     CHECKOK(ok, I->State);
   }
   if (ok){

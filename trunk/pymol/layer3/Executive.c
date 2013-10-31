@@ -73,13 +73,7 @@
 #include"ShaderMgr.h"
 
 #ifndef _PYMOL_NOPY
-#include"ce_types.h"
-/* Externals for CEAlign  */
-extern double** calcDM(pcePoint coords, int len);
-extern double** calcS(double** d1, double** d2, int lenA, int lenB, int wSize);
-extern pcePoint getCoords(PyObject *L, int length);
-extern pathCache findPath(double** S, double** dA, double** dB, int lenA, int lenB, float D0, float D1, int winSize, int gapMax, int * bufferSize);
-extern PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int bufferSize, int smaller, int winSize);
+#include "ce_types.h"
 #endif
 
 /* HACK */
@@ -6360,7 +6354,7 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals * G, char *name, int max_bond, int max
 #define cMapOperatorCopy     5
 #define cMapOperatorUnique   6
 
-int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator, char *operands,
+int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator_, char *operands,
                     int target_state, int source_state, int zoom, int quiet)
 {
   CExecutive *I = G->Executive;
@@ -6449,7 +6443,7 @@ int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator, char *operands,
     if(!target) {               /* target map doesn't exist... */
       int need_union_geometry = false;
       int need_first_geometry = false;
-      switch (operator) {
+      switch (operator_) {
       case cMapOperatorSum:
       case cMapOperatorAverage:
       case cMapOperatorMinimum:
@@ -6600,7 +6594,7 @@ int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator, char *operands,
                   register int *flg = inside;
                   register int *pre = present;
 
-                  switch (operator) {
+                  switch (operator_) {
                   case cMapOperatorCopy:
                     for(a = 0; a < n_pnt; a++) {
                       if(flg) {
@@ -6723,7 +6717,7 @@ int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator, char *operands,
           register float *lv = l_value;
           register int *pre = present;
 
-          switch (operator) {
+          switch (operator_) {
           case cMapOperatorUnique:
             lv = l_value;
             for(a = 0; a < n_pnt; a++) {

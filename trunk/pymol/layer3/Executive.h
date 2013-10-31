@@ -166,7 +166,7 @@ int ExecutivePseudoatom(PyMOLGlobals * G, char *object_name, char *sele,
                         float b, float q, char *label, float *pos, int color,
                         int state, int mode, int quiet);
 
-int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator, char *operands,
+int ExecutiveMapSet(PyMOLGlobals * G, char *name, int, char *operands,
                     int target_state, int source_state, int zoom, int quiet);
 
 int ExecutiveAlign(PyMOLGlobals * G, char *s1, char *s2, char *mat_file,

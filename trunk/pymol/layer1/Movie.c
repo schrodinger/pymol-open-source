@@ -1968,7 +1968,7 @@ int MovieInit(PyMOLGlobals * G)
     OrthoAttach(G, I->Block, cOrthoTool);
 
     I->Playing = false;
-    I->Image = VLAMalloc(10, sizeof(ImageType), 5, true);       /* auto-zero */
+    I->Image = VLACalloc(ImageType *, 10);       /* auto-zero */
     I->Sequence = NULL;
     I->Cmd = NULL;
     I->ViewElem = NULL;

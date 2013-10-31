@@ -21,50 +21,98 @@ import Tkinter
 from Tkinter import IntVar
 import time
 
-from pymol import cmd
+from pymol import cmd, Scratch_Storage
 
 class PymolVar(Tkinter.Variable, object):
-    def __init__(self, index, v):
+    '''Tk variable synced with PyMOL setting'''
+
+    _items = False
+
+    def __init__(self, sinst, index, v):
+        self.s = sinst     # pmg_tk.Setting.Setting instance
+        self.index = index # setting index
+        self.skip_w = -1   # prevent trace_w/update loops
+
         super(PymolVar, self).__init__()
         self.set(v)
-        self.index = index
-        self.skip_w = -1
         self.trace_variable('w', self.trace_w)
+
+    def trace_w(self, *args):
+        '''Set the PyMOL setting to this var's value'''
+        if self.skip_w > 0:
+            self.skip_w -= 1
+            return
+        self.s.set(self.index, self.get())
+
+    def update(self):
+        '''Set this var's value to the PyMOL setting's value'''
+        self.skip_w += 1
+        if not self.skip_w:
+            return
+        vt = self.s.get_setting_tuple(self.index)[1]
+        if self._items:
+            self.set(str(vt))
+            for item, v in zip(self._items, vt):
+                item.skip_w += 1
+                item.set(v)
+        else:
+            self.set(vt[0])
+
+    def __getitem__(self, i):
+        '''For 3f settings: provide sub-variables for items'''
+        if not self._items:
+            self._items = []
+        N = len(self._items)
+        if N <= i:
+            v = self.s.get_setting_tuple(self.index)[1]
+            for j in range(N, i+1):
+                self._items.append(ListVarItem(j,
+                    self.s, self.index, round(v[j], 5)))
+        return self._items[i]
+
+class ListVarItem(PymolVar):
+    '''Tk variable for 3f setting items'''
+    def __init__(self, i, *args, **kwargs):
+        self.i = i
+        super(ListVarItem, self).__init__(*args, **kwargs)
 
     def trace_w(self, *args):
         if self.skip_w > 0:
             self.skip_w -= 1
             return
-        cmd.set(self.index, self.get(), log=1)
+        v = list(self.s.get_setting_tuple(self.index)[1])
+        try:
+            v[self.i] = float(self.get())
+        except ValueError:
+            return
+        self.s.set(self.index, v)
 
     def update(self):
-        self.skip_w += 1
-        if not self.skip_w:
-            return
-        v = cmd.get_setting_tuple(self.index)[1][0]
-        self.set(v)
-
-    def set(self, v):
-        if isinstance(v, float):
-            v = round(v, 6)
-        super(PymolVar, self).set(v)
+        raise NotImplementedError
 
 class ColorVar(PymolVar):
+    '''Numeric color variable'''
     def set(self, v):
         if isinstance(v, str) and v.strip():
             v = cmd.get_color_index(v)
         super(ColorVar, self).set(v)
 
 class Setting:
+    '''Proxy to global or object level PyMOL settings'''
 
-    def __init__(self,app):
+    def __init__(self,app, sele='', state=0):
         self.cmd = app.pymol.cmd
         self.pymol = app.pymol
+        self.sele = sele
+        self.state = state
         
         while not self.cmd.ready(): # make sure PyMOL is ready for action...
             time.sleep(0.1)
 
-        self.active_dict = {}
+        g_i = self.pymol.setting._get_index
+        self.active_dict = {
+            g_i('scenes_changed'): self.update_scenes,
+        }
 
         self.F=[ None,
                     IntVar(),
@@ -97,21 +145,33 @@ class Setting:
                     IntVar(),
                     ]
 
+    def set(self, name, value):
+        self.cmd.set(name, value, self.sele, self.state, log=1)
+
+    def get(self, name):
+        return self.cmd.get(name, self.sele, self.state)
+
+    def get_setting_tuple(self, name):
+        r = self.cmd.get_setting_tuple(name, self.sele, self.state)
+        if r[0] == 0:
+            r = self.cmd.get_setting_tuple(name)
+        return r
+
     def __getattr__(self, name):
         index = self.pymol.setting._get_index(name)
-        v_type, v_list = self.cmd.get_setting_tuple(name)
+        v_type, v_list = self.get_setting_tuple(name)
 
         if v_type < 4: # bool, int, float
-            var = PymolVar(index, v_list[0])
+            var = PymolVar(self, index, v_list[0])
         elif v_type == 4: # 3f vector
-            raise UserWarning(name)
+            var = PymolVar(self, index, self.get(name))
         elif v_type == 5: # color
-            var = ColorVar(index, v_list[0])
+            var = ColorVar(self, index, v_list[0])
         else: # text
-            var = PymolVar(index, v_list[0])
+            var = PymolVar(self, index, v_list[0])
 
         setattr(self, name, var)
-        self.active_dict[index] = var
+        self.active_dict[index] = var.update
         return var
 
     def update_scenes(self):
@@ -128,8 +188,8 @@ class Setting:
                     self.SHFTF[x].set(0)
                 
     def refresh(self): # get any settings changes from PyMOL and update menus
-        lst = self.cmd.get_setting_updates()
-        if lst!=None:
-            for a in lst:
-                if a in self.active_dict:
-                    self.active_dict[a].update()
+        for a in self.cmd.get_setting_updates(self.sele, self.state) or ():
+            try:
+                self.active_dict[a]()
+            except KeyError:
+                pass

@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 typedef int PyObject;
 #else
 #include"Python.h"
+#include<pythread.h>
 #endif
 
 #include "os_predef.h"

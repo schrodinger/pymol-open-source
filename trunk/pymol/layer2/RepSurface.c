@@ -5663,7 +5663,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
     RepSurfaceFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }
 
 static SolventDot *SolventDotNew(PyMOLGlobals * G,

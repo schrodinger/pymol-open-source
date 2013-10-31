@@ -31,10 +31,10 @@ typedef int *OVHeap;
 
 /* convenience macros */
 
-#define OVHeap_ALLOC(I,type) OVHeap_Calloc(I,1,sizeof(type))
+#define OVHeap_ALLOC(I,type) (type*) OVHeap_Calloc(I,1,sizeof(type))
 
-#define OVHeap_MALLOC(I,type,num) OVHeap_Malloc(I,sizeof(type)*(num))
-#define OVHeap_CALLOC(I,type,num) OVHeap_Calloc(I,num,sizeof(type))
+#define OVHeap_MALLOC(I,type,num) (type*) OVHeap_Malloc(I,sizeof(type)*(num))
+#define OVHeap_CALLOC(I,type,num) (type*) OVHeap_Calloc(I,num,sizeof(type))
 #define OVHeap_REALLOC(I,ptr,type,num) OVHeap_Realloc(I,ptr,sizeof(type)*(num))
 #define OVHeap_FREE_AUTO_NULL(I,ptr) { if(ptr) {OVHeap_Free(I,ptr); ptr = NULL;}}
 
@@ -115,10 +115,10 @@ typedef int *OVHeap;
 
 /* convenience macros */
 
-#define OVHeap_ALLOC(I,type) OVHeap_Calloc(I,1,sizeof(type))
+#define OVHeap_ALLOC(I,type) (type*) OVHeap_Calloc(I,1,sizeof(type))
 
-#define OVHeap_MALLOC(I,type,num) OVHeap_Malloc(I,sizeof(type)*(num))
-#define OVHeap_CALLOC(I,type,num) OVHeap_Calloc(I,num,sizeof(type))
+#define OVHeap_MALLOC(I,type,num) (type*) OVHeap_Malloc(I,sizeof(type)*(num))
+#define OVHeap_CALLOC(I,type,num) (type*) OVHeap_Calloc(I,num,sizeof(type))
 #define OVHeap_REALLOC(I,ptr,type,num) OVHeap_Realloc(I,ptr,sizeof(type)*(num))
 #define OVHeap_FREE_AUTO_NULL(I,ptr) { if(ptr) {OVHeap_Free(I,ptr); ptr = NULL;}}
 

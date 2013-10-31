@@ -263,7 +263,7 @@ char *RawReadPtr(CRaw * I, int type, int *size)
             PRINTFD(G, FB_Raw)
               " RawReadPtr-Debug: Type mismatch.\n" ENDFD;
           } else {
-            result = mmalloc(I->header[0]);
+            result = (char*) mmalloc(I->header[0]);
             if(fread(result, I->header[0], 1, I->f) != 1) {
               FreeP(result);
               PRINTFB(G, FB_Raw, FB_Errors)
@@ -306,7 +306,7 @@ char *RawReadVLA(CRaw * I, int type, unsigned int rec_size, int grow_factor,
               " RawReadVLA-Debug: Type mismatch %d != %d.\n", I->header[1], type ENDFD;
 
           } else {
-            result =
+            result = (char*)
               VLAMalloc((I->header[0] / rec_size), rec_size, grow_factor, auto_zero);
             if(fread(result, I->header[0], 1, I->f) != 1) {
               VLAFreeP(result);

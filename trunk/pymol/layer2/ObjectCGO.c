@@ -533,7 +533,7 @@ ObjectCGO *ObjectCGONew(PyMOLGlobals * G)
 
   ObjectInit(G, (CObject *) I);
 
-  I->State = VLAMalloc(10, sizeof(ObjectCGOState), 5, true);
+  I->State = VLACalloc(ObjectCGOState, 10);
   I->NState = 0;
   I->Obj.type = cObjectCGO;
   I->Obj.fFree = (void (*)(CObject *)) ObjectCGOFree;

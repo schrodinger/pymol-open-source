@@ -1294,7 +1294,7 @@ static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals * G)
 
   ObjectInit(G, (CObject *) I);
 
-  I->State = VLAMalloc(10, sizeof(ObjectAlignmentState), 5, true);      /* auto-zero */
+  I->State = VLACalloc(ObjectAlignmentState, 10);      /* auto-zero */
   I->NState = 0;
   I->SelectionState = -1;
   I->ForceState = -1;

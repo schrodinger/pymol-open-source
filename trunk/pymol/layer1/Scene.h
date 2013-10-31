@@ -179,6 +179,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, char *scene_name);
 void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty);
 void SceneGetPos(PyMOLGlobals * G, float *pos);
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height);
+void SceneGetViewPortWidthHeight(PyMOLGlobals * G, int *width, int *height);
 int SceneMultipick(PyMOLGlobals * G, Multipick * smp);
 void SceneInvalidateCopy(PyMOLGlobals * G, int free_buffer);
 

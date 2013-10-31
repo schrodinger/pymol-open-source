@@ -95,7 +95,7 @@ struct _CShaderMgr {
   char **shader_update_replace_with;
   short print_warnings;
   int reload_bits;
-} _CShaderMgr;
+};
 
 #include "OVreturns.h"
 

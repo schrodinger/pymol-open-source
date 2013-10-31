@@ -4,9 +4,9 @@
 #include"os_gl_pre.h"
 
 #if defined(WIN32) || defined(_PYMOL_LIB)
-#define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = malloc(size * sizeof(tname));
+#define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = (tname*) malloc(size * sizeof(tname));
 #else
-#define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = malloc(size * sizeof(tname)); assert(variablename);
+#define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = (tname*) malloc(size * sizeof(tname)); assert(variablename);
 #endif
 #define DEALLOCATE_ARRAY(variablename) free(variablename);
 

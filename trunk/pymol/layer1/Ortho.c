@@ -46,6 +46,7 @@ Z* -------------------------------------------------------------------
 #include "ShaderMgr.h"
 #include "Vector.h"
 #include "CGO.h"
+#include "MyPNG.h"
 
 #ifndef true
 #define true 1

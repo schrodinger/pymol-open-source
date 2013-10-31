@@ -1500,7 +1500,7 @@ void SettingInit(PyMOLGlobals * G, CSetting * I)
   I->G = G;
   I->size = sizeof(int);        /* insures offset is never zero, except when undef */
   I->data = VLAlloc(char, 10);
-  I->info = VLAMalloc(cSetting_INIT, sizeof(SettingRec), 5, 1); /* auto-zero */
+  I->info = (SettingRec*) VLAMalloc(cSetting_INIT, sizeof(SettingRec), 5, 1); /* auto-zero */
 }
 
 
@@ -2706,6 +2706,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
 	SettingSet_i(G->Setting, cSetting_cgo_sphere_quality, (NUMBER_OF_SPHERE_LEVELS-1));
 	return ;
       }
+    }
   case cSetting_nb_spheres_quality:
     {
       int nb_spheres_quality = SettingGetGlobal_i(G, cSetting_nb_spheres_quality);
@@ -2732,6 +2733,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
       SceneChanged(G);
     }
   case cSetting_cgo_debug:
+    {
       ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvRep);
       SceneChanged(G);
       break;
@@ -3285,7 +3287,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
       char *lsetting;
       int i;
       setting = SettingGetGlobal_s(G, cSetting_atom_type_format);
-      lsetting = mmalloc(strlen(setting)+1);
+      lsetting = (char*) mmalloc(strlen(setting)+1);
       for (i=0; i<=strlen(setting); i++){
 	lsetting[i] = tolower(setting[i]);
       }

@@ -394,5 +394,5 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
     RepEllipsoidFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

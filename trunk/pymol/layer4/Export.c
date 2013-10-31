@@ -82,7 +82,7 @@ ExportCoords *ExportCoordsExport(PyMOLGlobals * G, char *name, int state, int or
       }
     }
   }
-  return ((void *) io);
+  return io;
 }
 
 int ExportCoordsImport(PyMOLGlobals * G, char *name, int state, ExportCoords * io,
@@ -185,7 +185,7 @@ ExportDotsObj *ExportDots(PyMOLGlobals * G, char *name, int csIndex)
     else {
       result = Alloc(ExportDotsObj, 1);
       ErrChkPtr(G, result);
-      result->export.fFree = (void (*)(struct Export *)) ExportDotsObjFree;
+      result->export_.fFree = (void (*)(struct Export *)) ExportDotsObjFree;
       /* cannabilize the data structures */
       result->point = rep->V;
       rep->V = NULL;

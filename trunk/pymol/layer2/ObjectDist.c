@@ -536,7 +536,7 @@ ObjectDist *ObjectDistNew(PyMOLGlobals * G)
   OOAlloc(G, ObjectDist);
   ObjectInit(G, (CObject *) I);
   I->Obj.type = cObjectMeasurement;
-  I->DSet = VLAMalloc(10, sizeof(DistSet *), 5, true);  /* auto-zero */
+  I->DSet = VLACalloc(DistSet *, 10);  /* auto-zero */
   I->NDSet = 0;
   I->Obj.fRender = (void (*)(CObject *, RenderInfo * info)) ObjectDistRender;
   I->Obj.fFree = (void (*)(CObject *)) ObjectDistFree;

@@ -251,7 +251,7 @@ int MapSetupExpressXY(MapType * I, int n_vert, int negative_start)
     CacheCalloc(G, int, mapSize, I->group_id, I->block_base + cCache_map_ehead_offset);
   CHECKOK(ok, I->EHead);
   if (ok)
-    I->EList = VLACacheMalloc(G, n_alloc, sizeof(int), ELIST_GROW_FACTOR, 0,
+    I->EList = (int*) VLACacheMalloc(G, n_alloc, sizeof(int), ELIST_GROW_FACTOR, 0,
 			      I->group_id, I->block_base + cCache_map_elist_offset);
   CHECKOK(ok, I->EList);
   if (ok)
@@ -346,7 +346,7 @@ int MapSetupExpressXYVert(MapType * I, float *vert, int n_vert, int negative_sta
 			   I->group_id, I->block_base + cCache_map_emask_offset);
   CHECKOK(ok, I->EMask);
   if (ok)
-    I->EList = VLACacheMalloc(G, n_alloc, sizeof(int), ELIST_GROW_FACTOR, 0, I->group_id, I->block_base + cCache_map_elist_offset);       /* autozero */
+    I->EList = (int*) VLACacheMalloc(G, n_alloc, sizeof(int), ELIST_GROW_FACTOR, 0, I->group_id, I->block_base + cCache_map_elist_offset);       /* autozero */
   CHECKOK(ok, I->EList);  
 
   n = 1;
@@ -462,7 +462,7 @@ int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
                          I->group_id, I->block_base + cCache_map_ehead_offset);
   CHECKOK(ok, I->EHead);
   if (ok)
-    I->EList = VLACacheMalloc(G, n_alloc, sizeof(int), ELIST_GROW_FACTOR, 0,
+    I->EList = (int*) VLACacheMalloc(G, n_alloc, sizeof(int), ELIST_GROW_FACTOR, 0,
 			      I->group_id, I->block_base + cCache_map_elist_offset);
   CHECKOK(ok, I->EList);
   if (ok)
@@ -605,7 +605,7 @@ int MapSetupExpress(MapType * I)
     CacheCalloc(G, int, mapSize, group_id, I->block_base + cCache_map_ehead_offset);
   CHECKOK(ok, I->EHead);
   if (ok)
-    e_list = VLACacheMalloc(G, 1000, sizeof(int), 5, 0, group_id, block_offset);
+    e_list = (int*) VLACacheMalloc(G, 1000, sizeof(int), 5, 0, group_id, block_offset);
   CHECKOK(ok, e_list);
 
   n = 1;

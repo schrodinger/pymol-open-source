@@ -1546,7 +1546,7 @@ ObjectSurface *ObjectSurfaceNew(PyMOLGlobals * G)
   ObjectInit(G, (CObject *) I);
 
   I->NState = 0;
-  I->State = VLAMalloc(10, sizeof(ObjectSurfaceState), 5, true);        /* autozero important */
+  I->State = VLACalloc(ObjectSurfaceState, 10);        /* autozero important */
 
   I->Obj.type = cObjectSurface;
 

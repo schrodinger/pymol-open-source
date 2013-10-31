@@ -585,5 +585,5 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
     RepDotFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

@@ -85,6 +85,7 @@ void OrthoCommandIn(PyMOLGlobals * G, char *buffer);
 int OrthoCommandSize(PyMOLGlobals * G);
 int OrthoCommandOut(PyMOLGlobals * G, char *buffer);
 void OrthoCommandNest(PyMOLGlobals * G, int dir);
+int OrthoCommandOutSize(PyMOLGlobals * G);
 
 void OrthoFeedbackIn(PyMOLGlobals * G, char *buffer);
 int OrthoFeedbackOut(PyMOLGlobals * G, char *buffer);

@@ -30,7 +30,7 @@ Z* -------------------------------------------------------------------
 void *MemoryReallocForSureSafe(void *ptr, unsigned int new_size, unsigned int old_size)
 {
   if(new_size < old_size) {
-    float *tmp = mmalloc(new_size);
+    float *tmp = (float*) mmalloc(new_size);
     if(tmp && new_size && old_size) {
       memcpy(tmp, ptr, new_size);
     }
@@ -43,7 +43,7 @@ void *MemoryReallocForSureSafe(void *ptr, unsigned int new_size, unsigned int ol
 
 void *MemoryReallocForSure(void *ptr, unsigned int new_size)
 {                               /* unsafe -- replace with above */
-  float *tmp = mmalloc(new_size);
+  float *tmp = (float*) mmalloc(new_size);
   if(tmp)
     memcpy(tmp, ptr, new_size);
   FreeP(ptr);
@@ -89,12 +89,12 @@ void *VLAExpand(void *ptr, ov_size rec)
       vla->size = rec + 1;
     {
       VLARec *old_vla = vla;
-      vla = (void *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
+      vla = (VLARec *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
       while(!vla) {             /* back off on the request size until it actually fits */
         vla = old_vla;
         vla->grow_factor = (vla->grow_factor - 1.0F) / 2.0F + 1.0F;
         vla->size = ((unsigned int) (rec * vla->grow_factor)) + 1;
-        vla = (void *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
+        vla = (VLARec *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
         if(!vla) {
           if(old_vla->grow_factor < 1.001F) {
             printf("VLAExpand-ERR: realloc failed.\n");
@@ -154,9 +154,9 @@ void *_VLAMalloc(const char *file, int line, ov_size init_size,
   VLARec *vla;
   char *start, *stop;
 #ifndef _MemoryDebug_ON
-  vla = (void *) mmalloc((init_size * unit_size) + sizeof(VLARec));
+  vla = (VLARec*) mmalloc((init_size * unit_size) + sizeof(VLARec));
 #else
-  vla =
+  vla = (VLARec*)
     MemoryDebugMalloc((init_size * unit_size) + sizeof(VLARec), file, line, _MDPointer);
 #endif
 
@@ -248,7 +248,7 @@ void *VLANewCopy(void *ptr)
     unsigned int size;
     vla = &((VLARec *) ptr)[-1];
     size = (vla->unit_size * vla->size) + sizeof(VLARec);
-    new_vla = (void *) mmalloc(size);
+    new_vla = (VLARec*) mmalloc(size);
     if(!new_vla) {
       printf("VLACopy-ERR: mmalloc failed\n");
       exit(EXIT_FAILURE);
@@ -338,7 +338,7 @@ void *VLASetSize(void *ptr, unsigned int new_size)
     soffset = sizeof(VLARec) + (vla->unit_size * vla->size);
   }
   vla->size = new_size;
-  vla = (void *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
+  vla = (VLARec*) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
   if(!vla) {
     printf("VLASetSize-ERR: realloc failed.\n");
     DieOutOfMemory();
@@ -432,13 +432,13 @@ void *VLASetSizeForSure(void *ptr, unsigned int new_size)
     soffset = sizeof(VLARec) + (vla->unit_size * vla->size);
   }
   if(new_size < vla->size) {
-    vla = MemoryReallocForSureSafe(vla,
+    vla = (VLARec*) MemoryReallocForSureSafe(vla,
                                    (vla->unit_size * new_size) + sizeof(VLARec),
                                    (vla->unit_size * vla->size) + sizeof(VLARec));
     vla->size = new_size;
   } else {
     vla->size = new_size;
-    vla = (void *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
+    vla = (VLARec*) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
   }
   if(!vla) {
     printf("VLASetSize-ERR: realloc failed.\n");

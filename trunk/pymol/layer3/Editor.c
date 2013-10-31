@@ -1857,11 +1857,11 @@ void EditorRender(PyMOLGlobals * G, int state)
       CGOStop(shaderCGO);
       CHECKOK(ok, shaderCGO);
       convertcgo = CGOCombineBeginEnd(shaderCGO, 0);
-      CHECKOK(ok, shaderCGO);
+      CHECKOK(ok, convertcgo);
       CGOFree(shaderCGO);
       if (ok)
 	I->shaderCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
-      CHECKOK(ok, shaderCGO);
+      CHECKOK(ok, I->shaderCGO);
       CGOFree(convertcgo);
       if (ok){
 	I->shaderCGO->use_shader = true;

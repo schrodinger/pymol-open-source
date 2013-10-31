@@ -1165,16 +1165,16 @@ void ObjectUseColorCGO(CGO *cgo, CObject * I)
 }
 
 /*========================================================================*/
-static void ObjectInvalidate(CObject * this, int rep, int level, int state)
+static void ObjectInvalidate(CObject * this_, int rep, int level, int state)
 {
 
 }
 
 
 /*========================================================================*/
-static void ObjectRenderUnitBox(CObject * this, RenderInfo * info)
+static void ObjectRenderUnitBox(CObject * this_, RenderInfo * info)
 {
-  register PyMOLGlobals *G = this->G;
+  register PyMOLGlobals *G = this_->G;
   if(G->HaveGUI && G->ValidContext) {
 #ifdef _PYMOL_GL_DRAWARRAYS
     {

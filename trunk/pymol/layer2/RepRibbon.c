@@ -600,7 +600,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   int sampling;
   float power_a = 5;
   float power_b = 5;
-  float throw;
+  float throw_;
   int visFlag;
   float dev;
   int trace, trace_mode;
@@ -630,7 +630,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   RepInit(G, &I->R);
   power_a = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_power);
   power_b = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_power_b);
-  throw = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_throw);
+  throw_ = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_throw);
   trace = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_trace_atoms);
   trace_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trace_atoms_mode);
   na_mode =
@@ -928,7 +928,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
         AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index2, cSetting_ribbon_color,
                                  c2, &c2);
 
-        dev = throw * (*d);
+        dev = throw_ * (*d);
 
         for(b = 0; b < sampling; b++) { /* needs optimization */
 
@@ -1033,7 +1033,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   else
     I->V = ReallocForSure(I->V, float, 1);
 
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }
 
 void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)

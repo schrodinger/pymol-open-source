@@ -2920,8 +2920,8 @@ int ColorInit(PyMOLGlobals * G)
     testPtr = (unsigned char *) &test;
     I->BigEndian = (*testPtr) && 1;
 
-    I->Color = VLAMalloc(5500, sizeof(ColorRec), 5, true);
-    I->Ext = VLAMalloc(2, sizeof(ExtRec), 5, true);
+    I->Color = VLACalloc(ColorRec, 5500);
+    I->Ext = VLACalloc(ExtRec, 2);
     I->Gamma = 1.0F;
 
     ColorReset(G);              /* will alloc I->Idx and I->Lex */
