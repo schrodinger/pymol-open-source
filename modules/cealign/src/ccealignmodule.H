@@ -48,33 +48,5 @@
 // tranpose of a matrix
 TA2<double> transpose( const TA2<double>& v );
 
-// C-linkage declarations
-#ifdef __cplusplus
-extern "C" { 
-#endif
-
 #include"ce_types.h"
 #include"os_std.h"
-#include <math.h>
-
-/////////////////////////////////////////////////////////////////////////////
-// Function Declarations
-/////////////////////////////////////////////////////////////////////////////
-// Calculates the CE Similarity Matrix
-double** calcS(double** d1, double** d2, int lenA, int lenB, int wSize);
-
-// calculates a simple distance matrix
-double** calcDM(pcePoint coords, int len);
-
-// Converter: Python Object -> C Structs
-pcePoint getCoords( PyObject* L, int len );
-
-// Optimal path finding algorithm (CE).
-pathCache findPath(double** S, double** dA, double**dB, int lenA, int lenB, float D0, float D1, int winSize, int gapMax, int* bufferSize);
-
-// filter through the results and find the best
-PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int bufferSize, int smaller, int winSize );
-
-#ifdef __cplusplus
-}
-#endif

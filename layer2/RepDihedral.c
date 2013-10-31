@@ -575,5 +575,5 @@ Rep *RepDihedralNew(DistSet * ds, int state)
     RepDihedralFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

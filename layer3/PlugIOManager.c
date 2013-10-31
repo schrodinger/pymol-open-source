@@ -67,6 +67,10 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
 
 #include "molfile_plugin.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _CPlugIOManager {
   int NPlugin;
   molfile_plugin_t **PluginVLA;
@@ -474,5 +478,9 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
   }
   return obj;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

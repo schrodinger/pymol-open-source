@@ -3243,7 +3243,7 @@ PyObject *SelectorAsPyList(PyMOLGlobals * G, int sele1)
   PyObject *idx_pyobj;
   PyObject *tag_pyobj;
 
-  vla_list = VLAMalloc(10, sizeof(SelAtomTag *), 5, true);
+  vla_list = VLACalloc(SelAtomTag *, 10);
   obj_list = VLAlloc(ObjectMolecule *, 10);
 
   n_idx = 0;

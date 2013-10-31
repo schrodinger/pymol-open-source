@@ -454,5 +454,5 @@ Rep *RepDistDashNew(DistSet * ds, int state)
     RepDistDashFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

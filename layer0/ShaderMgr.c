@@ -238,7 +238,7 @@ char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, ch
     }
   } else {
     shader_path = "/data/shaders/";
-    fullFile = malloc( sizeof(char) * (strlen(pymol_path)+strlen(shader_path)+strlen(fileName)+1));
+    fullFile = Alloc(char, strlen(pymol_path) + strlen(shader_path) + strlen(fileName) + 1);
     fullFile = strcpy(fullFile, pymol_path);
     fullFile = strcat(fullFile, shader_path);
     fullFile = strcat(fullFile, fileName);
@@ -1156,7 +1156,7 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
   }
   /* make this a setting */
   shader_path = "/data/shaders/";
-  fullFile = malloc( sizeof(char) * (strlen(pymol_path)+strlen(shader_path)+strlen(fileName)+1));
+  fullFile = Alloc(char, strlen(pymol_path) + strlen(shader_path) + strlen(fileName) + 1);
   fullFile = strcpy(fullFile, pymol_path);
   fullFile = strcat(fullFile, shader_path);
   fullFile = strcat(fullFile, fileName);

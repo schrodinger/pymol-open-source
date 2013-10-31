@@ -941,7 +941,7 @@ static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp * I)
 {
   int ok = true;
   if(I->NLevel < 1) {
-    I->Level = VLASetSize(I->Level, 1);
+    VLASize(I->Level, float, 1);
     I->NLevel = 1;
     I->Level[0] = 0.0F;
   }
@@ -949,13 +949,13 @@ static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp * I)
     int n_color = VLAGetSize(I->Color) / 3;
 
     if(!n_color) {
-      I->Color = VLASetSize(I->Color, 3);
+      VLASize(I->Color, float, 3);
       I->Color[0] = I->Color[1] = I->Color[2] = 1.0F;
       n_color++;
     }
 
     if(n_color < I->NLevel) {
-      I->Color = VLASetSize(I->Color, 3 * I->NLevel);
+      VLASize(I->Color, float, 3 * I->NLevel);
       while(n_color < I->NLevel) {
         float *v0 = I->Color + 3 * (n_color - 1);
         float *v1 = v0 + 3;
@@ -973,7 +973,7 @@ static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp * I)
           copy3f(I->Color + (3 * I->NLevel) + 3, I->Extreme + 3);
         }
       }
-      I->Color = VLASetSize(I->Color, 3 * I->NLevel);
+      VLASize(I->Color, float, 3 * I->NLevel);
     }
   }
   if(ok && I->Color && I->NLevel) {     /* detect default coloring as negative R */

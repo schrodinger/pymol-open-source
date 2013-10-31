@@ -32,6 +32,10 @@ Z* -------------------------------------------------------------------
 #include "Character.h"
 #include "Util.h"
 
+#include "Executive.h"
+#include "Ortho.h"
+#include "ShaderMgr.h"
+
 #define POS_START  2
 
 typedef struct  {

@@ -3143,5 +3143,5 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     RepSphereFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

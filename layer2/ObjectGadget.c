@@ -513,7 +513,7 @@ void ObjectGadgetInit(PyMOLGlobals * G, ObjectGadget * I)
   ObjectInit(G, (CObject *) I);
 
   I->Obj.type = cObjectGadget;
-  I->GSet = VLAMalloc(10, sizeof(GadgetSet *), 5, true);        /* auto-zero */
+  I->GSet = VLACalloc(GadgetSet *, 10);        /* auto-zero */
   I->NGSet = 0;
   I->Changed = true;
 

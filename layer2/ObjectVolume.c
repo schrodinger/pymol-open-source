@@ -632,7 +632,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
           vs->displayListInvalid = true;
         }
         if (!vs->Histogram) {
-          vs->Histogram = malloc(sizeof(float) * (HISTOGRAM_SIZE + 4)); 
+          vs->Histogram = Alloc(float, HISTOGRAM_SIZE + 4);
         }
         range =  SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_data_range);
         ObjectMapStateGetHistogram(I->Obj.G, oms, HISTOGRAM_SIZE, range, vs->Histogram);
@@ -1067,7 +1067,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 		    
                   /* don't need to create more space, just overwrite the values */
             		  if (vs->colors) free(vs->colors);
-            		  vs->colors = calloc(volume_nColors, sizeof(float)*4);
+            		  vs->colors = Calloc(float, volume_nColors * 4);
 
           		    /* default rep? */
           		    for (i=0; i<volume_nColors; i++) {
@@ -1493,7 +1493,7 @@ ObjectVolume *ObjectVolumeNew(PyMOLGlobals * G)
   ObjectInit(G, (CObject *) I);
 
   I->NState = 0;
-  I->State = VLAMalloc(10, sizeof(ObjectVolumeState), 5, true);   /* autozero important */
+  I->State = VLACalloc(ObjectVolumeState, 10);   /* autozero important */
 
   I->Obj.type = cObjectVolume;
   I->Obj.Color = 0;  /* 0 = auto; 1 = user */

@@ -34,7 +34,7 @@ typedef struct Export {
 typedef char ExportAtomType[5];
 
 typedef struct {
-  Export export;
+  Export export_;
   float *point;
   float *normal;
   float *area;

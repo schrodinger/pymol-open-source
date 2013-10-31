@@ -147,5 +147,6 @@ typedef struct Rep {
 
 void RepInit(PyMOLGlobals * G, Rep * I);
 void RepPurge(Rep * I);
+void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level);
 
 #endif

@@ -2321,7 +2321,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
 	atInfo = I->AtomInfo;
       isNew = true;
     } else {                    /* never */
-      atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
+      atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
       CHECKOK(ok, atInfo);
       isNew = false;
     }
@@ -2715,7 +2715,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * I, CRaw
         atInfo = I->AtomInfo;
         isNew = true;
       } else {
-        atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);  /* autozero here is important */
+        atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);  /* autozero here is important */
         isNew = false;
       }
       if(isNew) {
@@ -2878,7 +2878,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule * I, char *fname, FILE * f, int state
         raw = RawOpenAppend(I->Obj.G, fname);
       }
       if(raw) {
-        aiVLA = VLAMalloc(1000, sizeof(AtomInfoType), 5, true);
+        aiVLA = VLACalloc(AtomInfoType, 1000);
         bondVLA = VLACalloc(BondType, 4000);
         if(state < 0) {
           start = 0;
@@ -3759,7 +3759,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
       atInfo = I->AtomInfo;
       isNew = true;
     } else {
-      atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
+      atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
       isNew = false;
     }
     if(isNew) {
@@ -8335,7 +8335,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
       atInfo = I->AtomInfo;
       isNew = true;
     } else {
-      atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
+      atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
       isNew = false;
       if (discrete)
 	ObjectMoleculeSetDiscrete(G, I, true);
@@ -9613,7 +9613,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       I = (ObjectMolecule *) ObjectMoleculeNew(G, (discrete > 0));
       atInfo = I->AtomInfo;
     } else {
-      atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
+      atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);    /* autozero here is important */
     }
 
     if(isNew) {
@@ -12610,7 +12610,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   }
   zero3f(coord);
 
-  atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);        /* autozero here is important */
+  atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);        /* autozero here is important */
   CHECKOK(ok, atInfo);
   if (!ok){
     VLAFreeP(coord);
@@ -12682,7 +12682,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
   I->NAtom = 0;
   I->NBond = 0;
   I->AtomInfo = NULL;
-  I->CSet = VLAMalloc(10, sizeof(CoordSet *), 5, true); /* auto-zero */
+  I->CSet = VLACalloc(CoordSet *, 10); /* auto-zero */
   CHECKOK(ok, I->CSet);
   if (!ok){
     OOFreeP(I);
@@ -12729,7 +12729,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
     ObjectMoleculeGetObjectState;
 
   I->Obj.fGetCaption = (char *(*)(CObject *, char *, int)) ObjectMoleculeGetCaption;
-  I->AtomInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);   /* autozero here is important */
+  I->AtomInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);   /* autozero here is important */
   CHECKOK(ok, I->AtomInfo);
   if (!ok){
     ObjectMoleculeFree(I);
@@ -12765,7 +12765,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule * obj)
   /* ListInit(I->UndoData); */
   for(a = 0; a <= cUndoMask; a++)
     I->UndoCoord[a] = NULL;
-  I->CSet = VLAMalloc(I->NCSet, sizeof(CoordSet *), 5, true);   /* auto-zero */
+  I->CSet = VLACalloc(CoordSet *, I->NCSet);   /* auto-zero */
   for(a = 0; a < I->NCSet; a++) {
     I->CSet[a] = CoordSetCopy(obj->CSet[a]);
     if (I->CSet[a])
@@ -12894,7 +12894,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
     I = (ObjectMolecule *) ObjectMoleculeNew(G, discrete);
     atInfo = I->AtomInfo;
   } else {
-    atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);
+    atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);
     /* autozero here is important */
   }
 
@@ -13062,7 +13062,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
 	  atInfo = I->AtomInfo;
         isNew = true;
       } else {
-        atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);  /* autozero here is important */
+        atInfo = (AtomInfoType*) VLAMalloc(10, sizeof(AtomInfoType), 2, true);  /* autozero here is important */
 	CHECKOK(ok, atInfo);
         isNew = false;
       }

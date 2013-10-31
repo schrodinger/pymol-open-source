@@ -19,8 +19,14 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void init_cmd(void);
 
-extern PyObject *PM_Globals;
+#ifdef __cplusplus
+}
+#endif
 
 #endif

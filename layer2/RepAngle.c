@@ -504,5 +504,5 @@ Rep *RepAngleNew(DistSet * ds, int state)
     RepAngleFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

@@ -109,8 +109,6 @@ extern int do_window(int code,int x,int y,int w, int h);
 #endif /* _MACPYMOL_XCODE */
 /* END PROPRIETARY CODE SEGMENT */
 
-int PyThread_get_thread_ident(void);
-
 #define API_SETUP_PYMOL_GLOBALS \
   if(self && PyCObject_Check(self)) { \
     PyMOLGlobals **G_handle = (PyMOLGlobals**)PyCObject_AsVoidPtr(self); \
@@ -426,7 +424,7 @@ static PyObject *CmdRayAntiThread(PyObject * self, PyObject * args)
   if(ok)
     ok = PyCObject_Check(py_thread_info);
   if(ok)
-    ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info)) != NULL);
+    ok = ((thread_info = (CRayAntiThreadInfo *) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -453,7 +451,7 @@ static PyObject *CmdRayHashThread(PyObject * self, PyObject * args)
   if(ok)
     ok = PyCObject_Check(py_thread_info);
   if(ok)
-    ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info)) != NULL);
+    ok = ((thread_info = (CRayHashThreadInfo*) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -478,7 +476,7 @@ static PyObject *CmdRayTraceThread(PyObject * self, PyObject * args)
   if(ok)
     ok = PyCObject_Check(py_thread_info);
   if(ok)
-    ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info)) != NULL);
+    ok = ((thread_info = (CRayThreadInfo*) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -505,7 +503,7 @@ static PyObject *CmdCoordSetUpdateThread(PyObject * self, PyObject * args)
   if(ok)
     ok = PyCObject_Check(py_thread_info);
   if(ok)
-    ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info)) != NULL);
+    ok = ((thread_info = (CCoordSetUpdateThreadInfo*) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -530,7 +528,7 @@ static PyObject *CmdObjectUpdateThread(PyObject * self, PyObject * args)
   if(ok)
     ok = PyCObject_Check(py_thread_info);
   if(ok)
-    ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info)) != NULL);
+    ok = ((thread_info = (CObjectUpdateThreadInfo*) PyCObject_AsVoidPtr(py_thread_info)) != NULL);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -1754,12 +1752,12 @@ static PyObject *CmdMapSet(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *name, *operands;
-  int target_state, source_state, operator;
+  int target_state, source_state, operator_;
   int zoom, quiet;
   int ok = false;
 
   ok =
-    PyArg_ParseTuple(args, "Osisiiii", &self, &name, &operator, &operands, &target_state,
+    PyArg_ParseTuple(args, "Osisiiii", &self, &name, &operator_, &operands, &target_state,
                      &source_state, &zoom, &quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -1769,7 +1767,7 @@ static PyObject *CmdMapSet(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     ok =
-      ExecutiveMapSet(G, name, operator, operands, target_state, source_state, zoom,
+      ExecutiveMapSet(G, name, operator_, operands, target_state, source_state, zoom,
                       quiet);
     APIExit(G);
   }
@@ -2490,7 +2488,7 @@ static PyObject *CmdImportCoords(PyObject * self, PyObject * args)
       mmdat = PyCObject_AsVoidPtr(cObj);
     if((ok = APIEnterNotModal(G))) {
       if(mmdat)
-        ok = ExportCoordsImport(G, str1, int1, mmdat, 0);
+        ok = ExportCoordsImport(G, str1, int1, (ExportCoords*) mmdat, 0);
       APIExit(G);
     }
   }

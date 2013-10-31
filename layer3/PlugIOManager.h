@@ -22,6 +22,10 @@ Z* -------------------------------------------------------------------
 #include "ObjectMolecule.h"
 #include "ObjectMap.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int PlugIOManagerInit(PyMOLGlobals * G);
 int PlugIOManagerFree(PyMOLGlobals * G);
 int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
@@ -31,5 +35,9 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                           float *shift, int quiet, char *plugin_type);
 ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
                                 char *fname, int state, int quiet, char *plugin_type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

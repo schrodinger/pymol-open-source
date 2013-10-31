@@ -29,7 +29,7 @@ int FeedbackInit(PyMOLGlobals * G, int quiet)
   register CFeedback *I;
   I = (G->Feedback = Calloc(CFeedback, 1));
 
-  I->Stack = VLAMalloc(FB_Total, sizeof(char), 5, 0);
+  I->Stack = VLAlloc(char, FB_Total);
   I->Depth = 0;
   G->Feedback->Mask = I->Stack;
 

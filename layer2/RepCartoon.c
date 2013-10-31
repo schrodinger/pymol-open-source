@@ -1646,7 +1646,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
   float helix_radius;
   float loop_radius;
   int nucleic_color = 0;
-  float throw;
+  float throw_;
   float power_a = 5;
   float power_b = 5;
   int refine;
@@ -1750,7 +1750,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
   refine = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_refine);
   power_a = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_power);
   power_b = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_power_b);
-  throw = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_throw);
+  throw_ = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_throw);
   loop_radius =
     SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_loop_radius);
   if(loop_radius < 0.01F)
@@ -2230,7 +2230,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
             }                   /* not contig */
           }
 
-          dev = throw * (*d);
+          dev = throw_ * (*d);
           for(b = 0; b < sampling; b++) {       /* needs optimization */
 
             if(n_p == 0) {
@@ -3965,5 +3965,5 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   FreeP(flag_tmp);
   FreeP(nuc_flag);
   VLAFreeP(ring_anchor);
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

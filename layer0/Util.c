@@ -244,7 +244,8 @@ void *UtilArrayCalloc(unsigned int *dim,ov_size ndim,ov_size atom_size)
   ov_size sum,product;
   ov_size chunk;
   ov_size a,b,c;
-  void *result,**p;
+  void *result;
+  char **p;
   char *q;
   
   sum = 0;
@@ -262,7 +263,7 @@ void *UtilArrayCalloc(unsigned int *dim,ov_size ndim,ov_size atom_size)
 
   if(result) {
     chunk = 1;
-    p = result;
+    p = (char**) result;
     for(c=0;c<(ndim-1);c++) {
       if(c<(ndim-2)) {
         chunk = dim[c+1] * sizeof(void*);

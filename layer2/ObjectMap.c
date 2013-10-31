@@ -2168,7 +2168,7 @@ ObjectMap *ObjectMapNew(PyMOLGlobals * G)
   I->Obj.type = cObjectMap;
 
   I->NState = 0;
-  I->State = VLAMalloc(1, sizeof(ObjectMapState), 5, true);     /* autozero important */
+  I->State = VLACalloc(ObjectMapState, 1);     /* autozero important */
 
   {
     int a;

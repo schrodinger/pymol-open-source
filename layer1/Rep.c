@@ -31,7 +31,6 @@ Z* -------------------------------------------------------------------
 
 /*========================================================================*/
 
-void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level);
 struct Rep *RepUpdate(struct Rep *I, struct CoordSet *cs, int state, int rep);
 struct Rep *RepRebuild(struct Rep *I, struct CoordSet *cs, int state, int rep);
 
@@ -127,9 +126,9 @@ void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level)
 
 
 /*========================================================================*/
-static void RepRenderBox(struct Rep *this, RenderInfo * info)
+static void RepRenderBox(struct Rep *this_, RenderInfo * info)
 {
-  register PyMOLGlobals *G = this->G;
+  register PyMOLGlobals *G = this_->G;
   if(G->HaveGUI && G->ValidContext) {
 #ifdef _PYMOL_GL_DRAWARRAYS
     {

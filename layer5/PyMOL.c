@@ -3613,6 +3613,10 @@ void PyMOL_ConfigureShadersGL(CPyMOL * I){
 #endif
 
 #ifdef _PYMOL_API_HAS_PYTHON
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void init_cmd(void);
 
 /* 
@@ -3620,6 +3624,10 @@ void init_cmd(void);
  * void initsglite(void);
 */
 void init_champ(void);
+
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 /* END PROPRIETARY CODE SEGMENT */
@@ -4350,7 +4358,7 @@ PyMOLreturn_int_array PyMOL_GetImageDataReturned(CPyMOL * I,
   ((int*)buffer)[0] = ('A'<<24)|('B'<<16)|('G'<<8)|'R';
   ok = SceneCopyExternal(I->G, width, height, row_bytes, (unsigned char *) buffer, mode);
   if(ok) {
-    result.array = buffer;
+    result.array = (int*) buffer;
     result.size = size;
   } else {
     result.status = PyMOLstatus_FAILURE;

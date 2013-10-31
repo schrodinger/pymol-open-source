@@ -502,5 +502,5 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     RepDistLabelFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

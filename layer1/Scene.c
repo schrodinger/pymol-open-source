@@ -1890,9 +1890,9 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
 
       buffer_size = 4 * I->Width * I->Height;
       if(save_stereo)
-        image = (GLvoid *) Alloc(char, buffer_size * 2);
+        image = Alloc(unsigned char, buffer_size * 2);
       else
-        image = (GLvoid *) Alloc(char, buffer_size);
+        image = Alloc(unsigned char, buffer_size);
       CHECKOK(ok, image);
       if (!ok)
 	return NULL;
@@ -1950,7 +1950,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
   return (unsigned char *) image;
 }
 
-static void SceneImageFinish(PyMOLGlobals * G, char *image)
+static void SceneImageFinish(PyMOLGlobals * G, GLvoid *image)
 {
   register CScene *I = G->Scene;
   if(I->Image) {
@@ -2128,7 +2128,7 @@ int ScenePNG(PyMOLGlobals * G, char *png, float dpi, int quiet,
   if(image && I->Image) {
     int width = I->Image->width;
     int height = I->Image->height;
-    unsigned char *save_image = image;
+    unsigned char *save_image = (unsigned char*) image;
 
     if((image == I->Image->data) && I->Image->stereo) {
       width = I->Image->width;
@@ -4950,7 +4950,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
   float sticks, lines, spheres, labels, ribbon, cartoon;
   float polar_contacts, polar_cutoff, nonbonded, nb_spheres;
   char byres[10] = "byres";
-  char not[4] = "not";
+  char not_[4] = "not";
   char empty[1] = "";
   char *p1;
   char *p2;
@@ -4988,7 +4988,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 
     if(sticks != 0.0F) {
       if(sticks < 0.0F) {
-        p1 = not;
+        p1 = not_;
         sticks = (float) fabs(sticks);
       } else {
         p1 = empty;
@@ -5003,7 +5003,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 
     if(lines != 0.0F) {
       if(lines < 0.0F) {
-        p1 = not;
+        p1 = not_;
         lines = (float) fabs(lines);
       } else {
         p1 = empty;
@@ -5018,7 +5018,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 
     if(labels != 0.0F) {
       if(labels < 0.0F) {
-        p1 = not;
+        p1 = not_;
         labels = (float) fabs(labels);
       } else {
         p1 = empty;
@@ -5033,7 +5033,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 
     if(spheres != 0.0F) {
       if(spheres < 0.0F) {
-        p1 = not;
+        p1 = not_;
         spheres = (float) fabs(spheres);
       } else {
         p1 = empty;
@@ -5048,7 +5048,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 
     if(cartoon != 0.0F) {
       if(cartoon < 0.0F) {
-        p1 = not;
+        p1 = not_;
         cartoon = (float) fabs(cartoon);
       } else {
         p1 = empty;
@@ -5063,7 +5063,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 
     if(ribbon != 0.0F) {
       if(ribbon < 0.0F) {
-        p1 = not;
+        p1 = not_;
         ribbon = (float) fabs(ribbon);
       } else {
         p1 = empty;
@@ -5080,7 +5080,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
     if(polar_contacts != 0.0F) {
       int label_flag = 0;
       if(polar_contacts < 0.0F) {
-        p1 = not;
+        p1 = not_;
         polar_contacts = (float) fabs(polar_contacts);
       } else {
         p1 = empty;
@@ -5100,7 +5100,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 
     if(nonbonded != 0.0F) {
       if(nonbonded < 0.0F) {
-        p1 = not;
+        p1 = not_;
         nonbonded = (float) fabs(nonbonded);
       } else {
         p1 = empty;
@@ -5115,7 +5115,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 
     if(nb_spheres != 0.0F) {
       if(nb_spheres < 0.0F) {
-        p1 = not;
+        p1 = not_;
         nb_spheres = (float) fabs(nb_spheres);
       } else {
         p1 = empty;
@@ -7069,7 +7069,7 @@ void SceneRay(PyMOLGlobals * G,
       case 0:                  /* mode 0 is built-in */
         {
           unsigned int buffer_size = 4 * ray_width * ray_height;
-          unsigned int *buffer = (GLvoid *) Alloc(char, buffer_size);
+          unsigned int *buffer = (unsigned int*) Alloc(unsigned char, buffer_size);
           unsigned int background;
           ErrChkPtr(G, buffer);
 
@@ -7087,7 +7087,7 @@ void SceneRay(PyMOLGlobals * G,
               I->Image = Calloc(ImageType, 1);
               if(I->Image) {
                 unsigned int tot_size = 4 * tot_width * tot_height;
-                I->Image->data = (GLvoid *) Alloc(char, tot_size);
+                I->Image->data = Alloc(unsigned char, tot_size);
                 I->Image->size = tot_size;
                 I->Image->width = tot_width;
                 I->Image->height = tot_height;
@@ -7506,7 +7506,7 @@ static void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_win
       buffer_size = 4 * w * h;
       if(buffer_size) {
         I->Image = Calloc(ImageType, 1);
-        I->Image->data = (GLvoid *) Alloc(char, buffer_size);
+        I->Image->data = Alloc(unsigned char, buffer_size);
         I->Image->size = buffer_size;
         I->Image->width = w;
         I->Image->height = h;

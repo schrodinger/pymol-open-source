@@ -433,8 +433,6 @@ static void PLockAPIWhileBlocked(PyMOLGlobals * G);
 
 #define xxxPYMOL_NEW_THREADS 1
 
-unsigned int PyThread_get_thread_ident(void);   /* critical functionality */
-
 void PRunStringModule(PyMOLGlobals * G, char *str);
 
 void PLockStatus(PyMOLGlobals * G)
@@ -1583,18 +1581,19 @@ int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
 #ifndef _PYMOL_EMBEDDED
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* 
  *  void        initExtensionClass(void);
  *   void        initsglite(void);
  */
 void init_champ(void);
-void init_opengl(void);
-void init_opengl_num(void);
-void init_glu(void);
-void init_glu_num(void);
-void init_glut(void);
-void initopenglutil(void);
-void initopenglutil_num(void);
+
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 #ifdef _PYMOL_MONOLITHIC
@@ -1618,6 +1617,9 @@ void initranlib();
 
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_EMBEDDED
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * void        initExtensionClass(void);
@@ -1627,13 +1629,10 @@ void init_champ(void);
 #ifdef _PYMOL_PYOMM
 void init_pyomm(void);
 #endif
-void init_opengl(void);
-void init_opengl_num(void);
-void init_glu(void);
-void init_glu_num(void);
-void init_glut(void);
-void initopenglutil(void);
-void initopenglutil_num(void);
+
+#ifdef __cplusplus
+}
+#endif
 #endif
 #endif
 

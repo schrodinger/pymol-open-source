@@ -318,5 +318,5 @@ Rep *RepLabelNew(CoordSet * cs, int state)
       FreeP(I->R.P);
     }
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

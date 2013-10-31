@@ -648,5 +648,5 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     RepNonbondedSphereFree(I);
     I = NULL;
   }
-  return ((void *) (struct Rep *) I);
+  return (Rep *) I;
 }

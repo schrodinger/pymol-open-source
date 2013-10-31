@@ -161,7 +161,7 @@ ObjectCallback *ObjectCallbackNew(PyMOLGlobals * G)
 
   ObjectInit(G, (CObject *) I);
 
-  I->State = VLAMalloc(10, sizeof(ObjectCallbackState), 5, true);       /* autozero */
+  I->State = VLACalloc(ObjectCallbackState, 10);       /* autozero */
   I->NState = 0;
 
   I->Obj.type = cObjectCallback;
