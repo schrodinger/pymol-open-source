@@ -4,6 +4,8 @@ CHANGE LOG
 
 2013-10-31 Thomas Holder <speleo3@users.sf.net>
 
+	* fix splash.png sRGB profile (bug #136)
+
 	* improve Filter Wizard, "Create Filtered Object"
 
 	* consider "ignore_pdb_segi" setting when saving to PDB
