@@ -947,6 +947,29 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_bg_image_mode                           713
 #define cSetting_bg_image_tilesize                       714
 #define cSetting_bg_image_linear                         715
+#define cSetting_load_object_props_default               716
+#define cSetting_load_atom_props_default                 717
+#define cSetting_label_placement_offset                  718
+#define cSetting_pdb_conect_nodup                        719
+#define cSetting_label_connector                         720
+#define cSetting_label_connector_mode                    721
+#define cSetting_label_connector_color                   722
+#define cSetting_label_connector_width                   723
+#define cSetting_label_connector_ext_length              724
+#define cSetting_label_bg_color                          725
+#define cSetting_use_geometry_shaders                    726
+#define cSetting_label_relative_mode                     727
+#define cSetting_label_screen_point                      728
+#define cSetting_label_multiline_spacing                 729
+#define cSetting_label_multiline_justification           730
+#define cSetting_label_padding                           731
+#define cSetting_label_bg_transparency                   732
+#define cSetting_label_bg_outline                        733
+#define cSetting_ray_label_connector_flat                734
+#define cSetting_dash_transparency                       735
+#define cSetting_pick_labels                             736
+#define cSetting_label_z_target                          737
+#define cSetting_session_embeds_data                     738
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -957,6 +980,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       716
+#define cSetting_INIT                       739
 
 #endif

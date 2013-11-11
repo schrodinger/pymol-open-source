@@ -850,7 +850,12 @@ NOTES
             _self.unlock(r,_self)
         return r
             
-    def get_renderer(_self=cmd):  # 
+    def get_renderer(quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Prints OpenGL renderer information.
+        '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -858,6 +863,13 @@ NOTES
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
+
+        if not int(quiet):
+            print " OpenGL graphics engine:"
+            print "  GL_VENDOR:   ", r[0]
+            print "  GL_RENDERER: ", r[1]
+            print "  GL_VERSION:  ", r[2]
+
         return r
 
     def get_phipsi(selection="(name ca)",state=-1,_self=cmd):

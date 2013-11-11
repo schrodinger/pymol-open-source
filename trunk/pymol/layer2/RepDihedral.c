@@ -361,8 +361,8 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   I->R.fFree = (void (*)(struct Rep *)) RepDihedralFree;
   I->R.fRecolor = NULL;
   I->R.cs = NULL;
-  if (ds && ds->Rep && state >= 0 && ds->Rep[state])
-    I->R.cs = ds->Rep[state]->cs;
+  if (ds && ds->Rep && ds->Rep[cRepDihedral])
+    I->R.cs = ds->Rep[cRepDihedral]->cs;
 
   dash_len = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dash_length);
   dash_gap = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dash_gap);

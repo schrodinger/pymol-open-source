@@ -10173,7 +10173,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
             b--;
           }
           if(b < 0)
-            break_atom_low = -1;
+            break_atom_low = 0;
           b = a + 1;
           while(b < n_atom) {
             if(!base_0_sele[b]) {

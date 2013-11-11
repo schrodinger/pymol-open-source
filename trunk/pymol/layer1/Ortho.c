@@ -203,6 +203,10 @@ void OrthoDrawBuffer(PyMOLGlobals * G, GLenum mode)
 #ifndef _PYMOL_GL_DRAWARRAYS
 	      /* NEED TODO FOR _PYMOL_GL_DRAWARRAYS */
     glDrawBuffer(mode);
+    if(glGetError()) {
+      PRINTFB(G, FB_OpenGL, FB_Warnings)
+        " WARNING: glDrawBuffer caused GL error\n" ENDFB(G);
+    }
 #endif
     I->ActiveGLBuffer = mode;
   }

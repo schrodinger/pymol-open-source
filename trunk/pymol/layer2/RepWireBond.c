@@ -828,6 +828,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 
       
       if (generate_shader_cgo){
+	float curColor[3];
 	while(ok && c--) {
 	  //	  float cylinder_width = line_width;
 	  float cylinder_width = line_width_setting;
@@ -841,6 +842,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	  }
 	  if (ok){
 	    ok &= CGOColorv(I->shaderCGO, v);
+	    copy3f(v, curColor);
 	    v += 3;
 	  }
 	  if (ok){
@@ -852,8 +854,23 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	      axis[1] = v[1] - origin[1];
 	      axis[2] = v[2] - origin[2];
 	      v += 3;
-	      /* Storing the cylinder_width divided by the current line_width setting */
-	      ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, cylinder_width/line_width_setting, 15);
+
+	      {
+		if (c && equal3f(&v[-3], &v[3]) && !equal3f(curColor, v)){
+		  /* if successive bonds share midpoint, then draw one cylinder with two colors */
+		  origin = &v[-6];
+		  axis[0] = v[6] - origin[0];
+		  axis[1] = v[7] - origin[1];
+		  axis[2] = v[8] - origin[2];
+		  // if next bond has same half-point, then draw one cylinder with two colors
+		  ok &= CGOShaderCylinder2ndColor(I->shaderCGO, origin, axis, cylinder_width/line_width_setting, 15, v);
+		  v += 9;
+		  c--;
+		} else {
+		  /* Storing the cylinder_width divided by the current line_width setting */
+		  ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, cylinder_width/line_width_setting, 15);
+		}
+	      }
 	    } else {
 	      ok &= CGOBegin(I->shaderCGO, GL_LINES);
 	      if (ok){

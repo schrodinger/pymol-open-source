@@ -11,6 +11,43 @@ indi_sele = "_indicate_mw"
 obj_prefix = "measure"
 
 class Measurement(Wizard):
+    modes = [
+        'pairs',
+        'angle',
+        'dihed',
+        'polar',
+        'heavy',
+        'neigh',
+        'hbond',
+        ]
+    mode_name = {
+        'polar':'Polar Neighbors',
+        'heavy':'Heavy Neighbors',
+        'neigh':'Neighbors',
+        'pairs':'Distances',
+        'angle':'Angles',
+        'dihed':'Dihedrals',
+        'hbond':'Polar Contacts',
+        }
+    neighbor_modes = [
+        'same',
+        'other',
+        'enabled',
+        'all',
+        'in_object',
+        'in_selection'
+        ]
+    object_modes = [
+        'merge',
+        'overwr',
+        'append',
+        ]
+    object_mode_name = {
+        'merge':'Merge With Previous',
+        'overwr':'Replace Previous',
+        'append':'Create New Object',
+        }
+
     def __init__(self,_self=cmd):
         Wizard.__init__(self,_self)
 
@@ -28,35 +65,6 @@ class Measurement(Wizard):
         # mode selection subsystem
         self.mode = self.session.get('default_mode','pairs')
         
-        self.modes = [
-            'pairs',
-            'angle',
-            'dihed', 
-            'polar',
-            'heavy',
-            'neigh',
-            'hbond',
-            ]
-        
-        self.mode_name = {
-            'polar':'Polar Neighbors',
-            'heavy':'Heavy Neighbors',
-            'neigh':'Neighbors',
-            'pairs':'Distances',
-            'angle':'Angles',
-            'dihed':'Dihedrals',
-            'hbond':'Polar Contacts',
-            }
-        # users can now specify how they're finding neighbors
-        self.neighbor_modes = [
-            'same',
-            'other',
-            'enabled',
-            'all',
-            'in_object',
-            'in_selection'
-            ]
-        
         self.neighbor_target = ""
 
         # TODO: 
@@ -73,16 +81,6 @@ class Measurement(Wizard):
 
         # overwrite mode selection subsystem
         self.object_mode = self.session.get('default_object_mode','append')
-        self.object_modes = [
-            'merge', 
-            'overwr',
-            'append',
-            ]
-        self.object_mode_name = {
-            'merge':'Merge With Previous',
-            'overwr':'Replace Previous',
-            'append':'Create New Object',         
-            }
 
         smm = []
         smm.append([ 2, 'New Measurements?', '' ])

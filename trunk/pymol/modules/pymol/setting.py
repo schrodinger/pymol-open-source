@@ -754,6 +754,33 @@ if __name__=='pymol.setting':
         suspend_undo_atom_count            = 709
         suspend_deferred                   = 710
         pick_surface                       = 711
+        bg_image_filename                  = 712
+        bg_image_mode                      = 713
+        bg_image_tilesize                  = 714
+        bg_image_linear                    = 715
+        load_object_props_default          = 716
+        load_atom_props_default            = 717
+        label_placement_offset             = 718
+        pdb_conect_nodup                   = 719
+        label_connector                    = 720
+        label_connector_mode               = 721
+        label_connector_color              = 722
+        label_connector_width              = 723
+        label_connector_ext_length         = 724
+        label_bg_color                     = 725
+        use_geometry_shaders               = 726
+        label_relative_mode                = 727
+        label_screen_point                 = 728
+        label_multiline_spacing            = 729
+        label_multiline_justification      = 730
+        label_padding                      = 731
+        label_bg_transparency              = 732
+        label_bg_outline                   = 733
+        ray_label_connector_flat           = 734
+        dash_transparency                  = 735
+        pick_labels                        = 736
+        label_z_target                     = 737
+        session_embeds_data                = 738
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
@@ -1033,10 +1060,11 @@ SEE ALSO
         else:
             try:
                 _self.lock(_self)
-                type = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))[0]
-                if type==None:
+                stuple = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))
+                if stuple is None:
                     print "Error: unable to get setting type."
                     raise QuietException
+                type = stuple[0]
                 try:
                     if type==1: # boolean (also support non-zero float for truth)
                         handled = 0
@@ -1452,6 +1480,7 @@ PYMOL API
                    int state, int updates, quiet=1)
 
        '''
+        state, quiet = int(state), int(quiet)
         r = DEFAULT_ERROR
         selection1 = str(selection1)
         if selection2 == None:
@@ -1486,4 +1515,13 @@ PYMOL API
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            
+        if not quiet:
+            suffix = ' state %d' % state if state > 0 else ''
+            for model, vlist in r:
+                print ' %s = %s for object %s' % (name, cmd.get(name, model), model)
+                for idx1, idx2, value in vlist:
+                    if value is None:
+                        continue
+                    print ' %s = %s between (%s`%d)-(%s`%d%s)' % (name,
+                            value, model, idx1, model, idx2, suffix)
         return r

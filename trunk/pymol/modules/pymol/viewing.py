@@ -1037,7 +1037,7 @@ PYMOL API
                         output=0
                 if output and (not quiet) and (output<3):
                     print "### cut below here and paste into script ###"
-                    print "viewport ( %14.9f, %14.9f )"% r
+                    print "viewport %4d, %4d"% r
                     print "### cut above here and paste into script ###"
             if output==3:
                 return ("viewport ( %14.9f, %14.9f )\n"% r)

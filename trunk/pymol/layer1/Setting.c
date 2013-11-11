@@ -3343,6 +3343,32 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_selection_round_points:
     ExecutiveInvalidateSelectionIndicatorsCGO(G);
     break;
+  case cSetting_dash_transparency:
+  case cSetting_label_bg_color:
+  case cSetting_label_bg_outline:
+  case cSetting_label_bg_transparency:
+  case cSetting_label_connector:
+  case cSetting_label_connector_color:
+  case cSetting_label_connector_ext_length:
+  case cSetting_label_connector_mode:
+  case cSetting_label_connector_width:
+  case cSetting_label_multiline_justification:
+  case cSetting_label_multiline_spacing:
+  case cSetting_label_padding:
+  case cSetting_label_placement_offset:
+  case cSetting_label_relative_mode:
+  case cSetting_label_screen_point:
+  case cSetting_label_z_target:
+  case cSetting_load_atom_props_default:
+  case cSetting_load_object_props_default:
+  case cSetting_pdb_conect_nodup:
+  case cSetting_pick_labels:
+  case cSetting_ray_label_connector_flat:
+  case cSetting_session_embeds_data:
+  case cSetting_use_geometry_shaders:
+    PRINTFB(G, FB_Setting, FB_Warnings)
+      "Setting-Warning: not supported in open-source version of PyMOL\n"
+      ENDFB(G);
   default:
     break;
   }
@@ -3614,6 +3640,28 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_f(I, cSetting_bonding_vdw_cutoff, 0.2F);
 
     set_f(I, cSetting_min_mesh_spacing, 0.6F);
+
+    set_b(I, cSetting_pdb_conect_nodup, 0);
+
+    set_f(I, cSetting_label_multiline_spacing, 1.2f);
+
+    set_f(I, cSetting_label_multiline_justification, 1.f);
+
+    set_3f(I, cSetting_label_padding, 0.2F, 0.2F, 0.0F);
+
+    set_f(I, cSetting_label_bg_transparency, .6f);
+
+    set_b(I, cSetting_label_bg_outline, 0);
+
+    set_b(I, cSetting_ray_label_connector_flat, 1);
+
+    set_f(I, cSetting_dash_transparency, 0.0f);
+
+    set_b(I, cSetting_session_embeds_data, 1);
+
+    set_i(I, cSetting_label_z_target, -1);
+
+    set_i(I, cSetting_pick_labels, 1);
 
     set_i(I, cSetting_dot_density, 2);
 
