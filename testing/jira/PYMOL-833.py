@@ -6,6 +6,7 @@ png file gets not written instantly if width/height arguments given
 import os
 from pymol import cmd, testing, stored
 import threading
+import unittest
 
 class TestPYMOL833(testing.PyMOLTestCase):
 
@@ -14,9 +15,9 @@ class TestPYMOL833(testing.PyMOLTestCase):
         cmd.draw()
         if sync_in_thread:
             cmd.sync()
-    @testing.requires('gui')
 
     @testing.foreach( (True, False), (False, True), (False, False) )
+    @unittest.skip("PYMOL-833 is outstanding")
     def testPngExists(self, sync_in_main_thread, sync_in_thread):
         '''
         Save a PNG image with width/height specified and
