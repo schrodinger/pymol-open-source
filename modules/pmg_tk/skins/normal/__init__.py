@@ -3,6 +3,7 @@ import sys, string
 import re
 import threading
 import os
+import time
 
 from Tkinter import *
 from tkFileDialog import *
@@ -62,7 +63,7 @@ class Normal(PMGSkin):
     
     appname        = 'The PyMOL Molecular Graphics System'
     appversion     = '0.0.0.0' # will be set in __init__
-    copyright      = ('Copyright (C) 2003-2012 \n' +
+    copyright      = ('Copyright (C) 2003-%d\n' % (time.localtime().tm_year,) +
                       'Schrodinger LLC.\n'+
                       'All rights reserved.')
     contactweb     = 'http://www.pymol.org'

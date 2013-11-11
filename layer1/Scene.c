@@ -61,6 +61,18 @@ Z* -------------------------------------------------------------------
 #include "IncentiveCopyToClipboard.h"
 #endif
 
+void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
+  PRINTFB(G, FB_OpenGL, FB_Warnings)
+    " WARNING: glReadBuffer caused GL error 0x%04x\n", e ENDFB(G);
+}
+// TH 2013-11-01: glReadBuffer fails in JyMOL when picking, OSX 10.9, Intel Graphics
+// for minor cases (i.e., png is called) this might get called outside of the main
+// thread (from ExecutiveDrawNow()) in this case, just don't call glReadBuffer for 
+// now, it should be ok because i believe it is used to figure out the size of the
+// 3D window (using SceneImagePrepareImpl) in situations where the size gets changed.
+#define glReadBuffer(b) {   int e; if (PIsGlutThread()) glReadBuffer(b);	\
+    if((e = glGetError())) glReadBufferError(G, b, e); }
+
 #ifdef _PYMOL_SHARP3D
 #define cSliceMin 0.1F
 #else
@@ -1925,26 +1937,11 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
   if(image) {
     int opaque_back = SettingGetGlobal_b(G, cSetting_opaque_background);
     if(opaque_back && reset_alpha) {
-      unsigned char *p = (unsigned char *) image;
-      int x, y;
-      int width = I->Image->width;
-      int height = I->Image->height;
-      if(I->Image && (I->Image->data == (unsigned char *) image))
+      int i, s = I->Image->size;
+      for(i = 3; i < s; i += 4)
+        image[i] = 0xFF;
+      if(I->Image->data == image)
         I->Image->needs_alpha_reset = false;
-      for(y = 0; y < height; y++) {
-        for(x = 0; x < width; x++) {
-          p[3] = 0xFF;
-          p += 4;
-        }
-      }
-      if(save_stereo) {
-        for(y = 0; y < height; y++) {
-          for(x = 0; x < width; x++) {
-            p[3] = 0xFF;
-            p += 4;
-          }
-        }
-      }
     }
   }
   return (unsigned char *) image;

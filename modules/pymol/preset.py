@@ -69,10 +69,7 @@ def _prepare(selection,polar_contacts=None,_self=cmd):
             cmd.delete(polar_contacts)
         
 def prepare(selection="(all)",_self=cmd):
-    cmd=_self
-    s = tmp_sele
-    cmd.select(s,selection)
-    _prepare(s,_self=cmd)
+    _prepare(selection, _self=_self)
 
 def simple(selection="(all)",_self=cmd):
     cmd=_self
@@ -101,6 +98,7 @@ def simple_no_solv(selection="(all)",_self=cmd):
     s = tmp_sele
     cmd.select(s,selection)
     cmd.hide("nonbonded","("+solv_sele+" and "+s+")")
+    cmd.delete(s)
 
 def ligands(selection="(all)",_self=cmd):
     cmd=_self
@@ -146,6 +144,7 @@ def ligands(selection="(all)",_self=cmd):
         cmd.delete(lig)
     except:
         traceback.print_exc()
+    cmd.delete(s)
 
 def ball_and_stick(selection="(all)",mode=1,_self=cmd):
     cmd=_self
@@ -167,6 +166,7 @@ def ball_and_stick(selection="(all)",mode=1,_self=cmd):
         cmd.set("stick_ball_ratio",-1.0)
         cmd.set("stick_ball_color","atomic")
         cmd.show("sticks",s)
+    cmd.delete(s)
     
 def b_factor_putty(selection="(name ca or name p)",_self=cmd):
     cmd=_self
@@ -178,6 +178,7 @@ def b_factor_putty(selection="(name ca or name p)",_self=cmd):
     cmd.set("cartoon_flat_sheets",0,selection)
     cmd.cartoon("putty",s)
     cmd.spectrum("b",selection=s)
+    cmd.delete(s)
 
 def ligand_cartoon(selection="(all)",_self=cmd):
     cmd=_self
@@ -188,6 +189,7 @@ def ligand_cartoon(selection="(all)",_self=cmd):
     cmd.show("cartoon","rep ribbon")
     cmd.hide("ribbon")
     cmd.hide("surface")
+    cmd.delete(s)
     
 def ligand_sites(selection="(all)",_self=cmd):
     cmd=_self
@@ -240,6 +242,7 @@ def ligand_sites(selection="(all)",_self=cmd):
         cmd.delete(lig)
     except:
         traceback.print_exc()
+    cmd.delete(s)
 
 def ligand_sites_hq(selection="(all)",_self=cmd):
     cmd=_self
@@ -248,6 +251,7 @@ def ligand_sites_hq(selection="(all)",_self=cmd):
     cmd.select(s,selection)
     cmd.set("surface_quality","1",selection)
     cmd.set("surface_type",0,selection)
+    cmd.delete(s)
 
 def ligand_sites_trans(selection="(all)",_self=cmd):
     cmd=_self
@@ -259,6 +263,7 @@ def ligand_sites_trans(selection="(all)",_self=cmd):
     cmd.set("transparency","0.33",s)
     cmd.set("surface_type",0,selection)
     cmd.set("surface_quality",0,selection)
+    cmd.delete(s)
 
 def ligand_sites_trans_hq(selection="(all)",_self=cmd):
     cmd=_self
@@ -270,6 +275,7 @@ def ligand_sites_trans_hq(selection="(all)",_self=cmd):
     cmd.set("transparency","0.33",s)
     cmd.set("surface_type",0,selection)
     cmd.set("surface_quality",1,selection)
+    cmd.delete(s)
     
 def ligand_sites_mesh(selection="(all)",_self=cmd):
     cmd=_self
@@ -281,6 +287,7 @@ def ligand_sites_mesh(selection="(all)",_self=cmd):
     cmd.set("surface_type","2",selection)
     cmd.set("surface_quality","0",selection)
     cmd.set("mesh_normals",0,s)
+    cmd.delete(s)
     
 def ligand_sites_dots(selection="(all)",_self=cmd):
     cmd=_self
@@ -292,6 +299,7 @@ def ligand_sites_dots(selection="(all)",_self=cmd):
     cmd.set("surface_type","1",selection)
     cmd.set("surface_quality","1",selection)
     cmd.set("dot_normals",0,s)
+    cmd.delete(s)
 
 def technical(selection="(all)",_self=cmd):
     cmd=_self
@@ -313,6 +321,7 @@ def technical(selection="(all)",_self=cmd):
         cmd.hide("labels",polar_contacts)
         cmd.show("dashes",polar_contacts)
     cmd.show("nonbonded","(("+lig_sele+"|resn hoh+wat+h2o) and ("+s+"))")
+    cmd.delete(s)
 
 def pretty_solv(selection="(all)",_self=cmd):
     cmd=_self
@@ -337,6 +346,7 @@ def pretty_solv(selection="(all)",_self=cmd):
         cmd.disable(polar_contacts)
     if cmd.count_atoms(s):
         cmd.zoom(s)
+    cmd.delete(s)
         
 def pretty(selection,_self=cmd):
     cmd=_self
@@ -344,6 +354,7 @@ def pretty(selection,_self=cmd):
     s = tmp_sele
     cmd.select(s,selection)
     cmd.hide("nb_spheres","("+s+" and "+lig_sele+"|resn hoh+wat+h2o)")
+    cmd.delete(s)
 
 pretty_no_solv = pretty
 
@@ -359,6 +370,7 @@ def pub_solv(selection="(all)",_self=cmd):
     cmd.set("cartoon_side_chain_helper",0,selection)   
     if cmd.count_atoms(s):
         cmd.zoom(s)
+    cmd.delete(s)
 
 def publication(selection="(all)",_self=cmd):
     cmd=_self
@@ -366,6 +378,7 @@ def publication(selection="(all)",_self=cmd):
     s = tmp_sele
     cmd.select(s,selection)
     cmd.hide("nb_spheres","(("+lig_sele+"|resn hoh+wat+h2o) and "+s+")")
+    cmd.delete(s)
 
 pub_no_solv = publication
 
@@ -382,4 +395,5 @@ def default(selection="(all)",_self=cmd):
     else:
         util.cnc(selection,_self=cmd)
         cmd.color(str(color),"("+s+") and elem c")
+    cmd.delete(s)
         

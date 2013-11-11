@@ -128,12 +128,10 @@ void main(void)
                        2nd - endcap
                        3rd - frontcapround
                        4th - endcapround
-		       5th - smooth_half_bonds
      */
     float fcap = cap;
     float frontcap = 0.0, frontcapround = 0.0;
     float endcap = 0.0, endcapround = 0.0;
-    float smooth_half_bonds = 0.0;
 
     frontcap = mod(fcap, 2.0);
     fcap = ( fcap - frontcap ) / 2.0;
@@ -144,11 +142,9 @@ void main(void)
     endcapround = floor((mod(fcap, 2.0) + no_flat_caps) / 2.0);
     fcap = ( fcap - endcapround ) / 2.0;
     
-    smooth_half_bonds = floor((mod(fcap, 2.0) + no_flat_caps) / 2.0);
-
     vec4 color;
 
-    float dp = clamp(-half_bond*new_point.z*inv_height, 0., .5) * smooth_half_bonds;
+    float dp = clamp(-half_bond*new_point.z*inv_height, 0., .5);
     color = mix(color1, color2, smoothstep(.5 - dp, .5 + dp, ratio));
 
     // test front cap

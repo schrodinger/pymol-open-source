@@ -403,6 +403,8 @@ CGO *CGONew(PyMOLGlobals * G)
 #endif
   I->enable_shaders = 0;
   I->no_pick = 0;
+  I->current_pick_color_index = 0;
+  I->current_pick_color_bond = cPickableNoPick;
   return (I);
 }
 
@@ -426,6 +428,8 @@ CGO *CGONewSized(PyMOLGlobals * G, int size)
 #endif
   I->enable_shaders = 0;
   I->no_pick = 0;
+  I->current_pick_color_index = 0;
+  I->current_pick_color_bond = cPickableNoPick;
   return (I);
 }
 
@@ -2395,12 +2399,11 @@ void SetVertexValuesForVBO(PyMOLGlobals * G, CGO *cgo, int arrays, int pl, int p
     }
   }
   if (arrays & CGO_PICK_COLOR_ARRAY){
-    CGO_put_int(pickColorVals + pcc, CGO_get_int(pickColorValsDA + pcco));
-    CGO_put_int(pickColorVals + pcc + 1, CGO_get_int(pickColorValsDA + pcco + 1));
-  } else {
-    CGO_put_int(pickColorVals + pcc, cgo->current_pick_color_index);
-    CGO_put_int(pickColorVals + pcc + 1, cgo->current_pick_color_bond);
+    cgo->current_pick_color_index = CGO_get_int(pickColorValsDA + pcco);
+    cgo->current_pick_color_bond = CGO_get_int(pickColorValsDA + pcco + 1);
   }
+  CGO_put_int(pickColorVals + pcc, cgo->current_pick_color_index);
+  CGO_put_int(pickColorVals + pcc + 1, cgo->current_pick_color_bond);
   if (arrays & CGO_ACCESSIBILITY_ARRAY){
     accessibilityVals[pl/3] = accessibilityValsDA[cnt];
   }
@@ -4330,7 +4333,6 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
    second vertex is cylinder axis vector
    third vertex is a corner flag (radius, right, up)
 */
-
   if (num_total_cylinders>0) {
     float *originVals = 0, *axisVals = 0;
     float *colorVals = 0, *color2Vals = 0;
@@ -5001,6 +5003,10 @@ CGO *CGOSimplify(CGO * I, int est)
   while(ok && (op = (CGO_MASK & CGO_read_int(pc)))) {
     save_pc = pc;
     switch (op) {
+    case CGO_PICK_COLOR:
+      cgo->current_pick_color_index = CGO_get_int(pc);
+      cgo->current_pick_color_bond = CGO_get_int(pc + 1);
+      break;
     case CGO_SHADER_CYLINDER:
       {
 	float v2[3];
@@ -5183,7 +5189,7 @@ CGO *CGOSimplify(CGO * I, int est)
 		colorVals[plc] = tmp_ptr[0]; colorVals[plc+1] = tmp_ptr[1]; 
 		colorVals[plc+2] = tmp_ptr[2]; colorVals[plc+3] = tmp_ptr[3]; 
 	      }
-	      if (notHaveValue & CGO_PICK_COLOR_ARRAY){
+	      if (pickColorVals){
 		CGO_put_int(pickColorVals + pla * 2, cgo->current_pick_color_index);
 		CGO_put_int(pickColorVals + pla * 2 + 1, cgo->current_pick_color_bond);
 	      }

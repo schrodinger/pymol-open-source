@@ -685,6 +685,10 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
           ms->RecolorFlag = false;
         }
       }
+      if (ms->shaderCGO){
+        CGOFree(ms->shaderCGO);
+        ms->shaderCGO = NULL;
+      }
     }
   }
   if(!I->Obj.ExtentFlag) {

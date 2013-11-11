@@ -3893,10 +3893,14 @@ void PyMOL_DrawWithoutLock(CPyMOL * I)
                          (char *) glGetString(GL_VERSION));
         if(G->Option->show_splash && !G->Option->quiet) {
 
-          printf(" OpenGL graphics engine:\n");
-          printf("  GL_VENDOR: %s\n", (char *) glGetString(GL_VENDOR));
-          printf("  GL_RENDERER: %s\n", (char *) glGetString(GL_RENDERER));
-          printf("  GL_VERSION: %s\n", (char *) glGetString(GL_VERSION));
+          PRINTFB(G, FB_OpenGL, FB_Results)
+            " OpenGL graphics engine:\n"
+            "  GL_VENDOR:   %s\n"
+            "  GL_RENDERER: %s\n"
+            "  GL_VERSION:  %s\n",
+            (char *) glGetString(GL_VENDOR),
+            (char *) glGetString(GL_RENDERER),
+            (char *) glGetString(GL_VERSION) ENDFB(G);
           if(Feedback(G, FB_OpenGL, FB_Blather)) {
             printf("  GL_EXTENSIONS: %s\n", (char *) glGetString(GL_EXTENSIONS));
           }

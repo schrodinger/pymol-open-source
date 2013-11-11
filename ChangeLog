@@ -2,6 +2,46 @@
 CHANGE LOG
 =========================================================================
 
+2013-11-11 Blaine Bell, Thomas Holder
+
+	* fix segfault in SceneImagePrepareImpl
+
+	* fix dihedral rep for objects with >20 states
+
+	* cmd.png: consider image_dots_per_inch with _unit2px
+
+	* preset.py: delete temporary selections
+
+	* fixed CGO demo crash in CGOSimplify
+
+	* print OpenGL info not only to STDOUT, but to PyMOL text output
+
+	* fix tcl/tk window placement on OS X 10.9
+
+	* get_viewport: do not print int as float
+
+	* fix: do not set wiz.cmd to None when saving PSE
+
+	* fix cartoon picking bug
+
+	* fix crash during selection
+
+	* fix two_sided_lighting cartoon shader bug
+
+	* fix isolevel command for isosurface with shaders
+
+	* mol2 writing with multiple objects
+
+	* fix removing non-polar hydrogens
+
+	* fix crash during select bychain
+
+	* fixed line_as_cylinder bug
+
+	* fixed smooth half bonds with line as cylinders
+
+	* get_bond command
+
 2013-10-31 Thomas Holder <speleo3@users.sf.net>
 
 	* fix splash.png sRGB profile (bug #136)

@@ -173,8 +173,6 @@ DESCRIPTION
     def session_save_wizard(session,_self=cmd):
         # double-pickle so that session file is class-independent
         stack = cmd.get_wizard_stack(_self=_self)
-        for wiz in stack: 
-            wiz.cmd = None
         session['wizard']=cPickle.dumps(stack,1)
         return 1
 

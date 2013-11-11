@@ -21,6 +21,11 @@ class Wizard:
         self.cmd = _self
         self._validate_instance() 
         
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d.pop('cmd', None)
+        return d
+
     def _validate_instance(self):
         _pymol = self.cmd._pymol
         if not hasattr(_pymol.session, 'wizard_storage'):
