@@ -15,6 +15,11 @@ import pymol
 import collections
 import platform
 
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
+
 def compareListFunction(x, y):
     return collections.Counter(x) == collections.Counter(y)
 
