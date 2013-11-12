@@ -16,16 +16,37 @@ class TestControlling(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testMask(self):
-        cmd.mask
-        self.skipTest("TODO")
+        cmd.fragment('ala')
+        cmd.mask('elem C')
+        self.assertEqual(3, cmd.count_atoms('masked'))
+        cmd.unmask('name CA')
+        self.assertEqual(2, cmd.count_atoms('masked'))
 
     def testMouse(self):
         cmd.mouse
         self.skipTest("TODO")
 
     def testOrder(self):
-        cmd.order
-        self.skipTest("TODO")
+        # proper group ordering only in incentive, see jira/PYMOL-1382.py
+
+        for i in range(3):
+            cmd.pseudoatom('m%i' % i)
+        self.assertEqual(cmd.get_names(), ['m0', 'm1', 'm2'])
+
+        cmd.order('m2 m1')
+        self.assertEqual(cmd.get_names(), ['m0', 'm2', 'm1'])
+
+        cmd.order('m2 m1', location="top")
+        self.assertEqual(cmd.get_names(), ['m2', 'm1', 'm0'])
+
+        cmd.order('m2', location="bottom")
+        self.assertEqual(cmd.get_names(), ['m1', 'm0', 'm2'])
+
+        cmd.order('m2 m0', location="upper")
+        self.assertEqual(cmd.get_names(), ['m1', 'm2', 'm0'])
+
+        cmd.order('*', 'yes')
+        self.assertEqual(cmd.get_names(), ['m0', 'm1', 'm2'])
 
     def testSetKey(self):
         cmd.fragment('gly')
@@ -40,6 +61,6 @@ class TestControlling(testing.PyMOLTestCase):
         self.assertEqual(N, cmd.count_atoms('rep spheres'))
 
     def testUnmask(self):
-        cmd.unmask
-        self.skipTest("TODO")
+        # see testMask
+        pass
 
