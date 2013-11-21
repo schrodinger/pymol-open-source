@@ -7,7 +7,6 @@ uniform float isPicking;
 uniform sampler2D bgTextureMap;
 uniform vec3 fogSolidColor;
 uniform float fogIsSolidColor;
-uniform float fog_enabled;
 varying float fog;
 varying vec3 normalizedViewCoordinate;
 #define bgTextureLookup normalizedViewCoordinate.xy
@@ -26,11 +25,11 @@ uniform vec2 halfPixel;
 
 void main()
 {
-  float cfog = clamp(mix(1.0, clamp(fog, 0.0, 1.0), fog_enabled), 0.0, 1.0); // not sure why extra clamp is needed on ipad, not simulator
-  vec4 finalColor = texture2D(textureMap, textureLookup);
-  vec4 fogColor = ComputeFogColor();
-  finalColor.xyz = mix(fogColor.xyz, finalColor.xyz, finalColor.a);
-  vec4 fColor = vec4(mix(fogColor.xyz, finalColor.xyz, cfog), finalColor.a);
+  vec4 fColor = texture2D(textureMap, textureLookup);
+  if (fog < 1.0) {
+      vec4 fogColor = ComputeFogColor();
+      fColor.rgb = mix(fogColor.rgb, fColor.rgb, fog);
+  }
 #ifdef PYMOL_IOS
   vec4 npColor = (1. - isPicking) * fColor;
   if (npColor.a < .1)

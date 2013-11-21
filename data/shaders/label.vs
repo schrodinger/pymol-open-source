@@ -14,6 +14,7 @@ uniform float aspectRatioAdjustment;
 uniform float screenOriginVertexScale;
 
 varying float fog;
+uniform float fog_enabled; // actually bool
 
 void main()
 {
@@ -27,7 +28,11 @@ void main()
   gl_Position = transformedPosition;
   textureLookup = attr_texcoords;
   normalizedViewCoordinate = (gl_Position.xyz/gl_Position.w) / 2.0 + 0.5;
-  vec3 eye_pos = vec3(gl_ModelViewMatrix * attr_worldpos);
-  fog = (gl_Fog.end - abs(eye_pos.z)) * gl_Fog.scale;
+  if (fog_enabled > 0.5) {
+    vec3 eye_pos = vec3(gl_ModelViewMatrix * attr_worldpos);
+    fog = max(0.0, (gl_Fog.end - abs(eye_pos.z)) * gl_Fog.scale);
+  } else {
+    fog = 1.1; // >= 1.0
+  }
   pickcolor = attr_pickcolor;
 }

@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2013-11-21 Thomas Holder <speleo3@users.sf.net>
+
+	* fix label shader fog blending
+
 2013-11-11 Blaine Bell, Thomas Holder
 
 	* fix segfault in SceneImagePrepareImpl
