@@ -97,13 +97,40 @@ class TestMoving(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testMadd(self):
-        cmd.madd
-        self.skipTest("TODO")
+        # test clearing
+        self.prep_movie()
+        self.assertEquals(cmd.count_frames(),60)
+
+        # test states and frame mapping
+        cmd.madd("1x10 1 -10 10 -1")
+        self.assertEquals(cmd.count_frames(),90)
+        
+        cmd.frame(1)
+        self.assertEquals(cmd.get_frame(),1)
+        self.assertEquals(cmd.get("state"),"1")
+        cmd.frame(10)
+        self.assertEquals(cmd.get_frame(),10)
+        self.assertEquals(cmd.get("state"),"1")
+        cmd.frame(72)
+        self.assertEquals(cmd.get_frame(),72)
+        self.assertEquals(cmd.get("state"),"2")
+        cmd.frame(82)
+        self.assertEquals(cmd.get_frame(),82)
+        self.assertEquals(cmd.get("state"),"9")
+        cmd.frame(90)
+        self.assertEquals(cmd.get_frame(),90)
+        self.assertEquals(cmd.get("state"),"1")
 
     def testMappend(self):
-        cmd.mappend
-        self.skipTest("TODO")
+        self.prep_movie()
+        cmd.fragment("ala")
+        cmd.mappend(5,"delete *")
+        cmd.mappend(5,"frame 1")
+        cmd.frame(5)
+        self.assertEquals(len(cmd.get_names()),0)
+        self.assertEquals(cmd.get_frame(),1)
 
+        
     def testMclear(self):
         cmd.mclear
         self.skipTest("TODO")
