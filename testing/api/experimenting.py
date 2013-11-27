@@ -33,13 +33,6 @@ class TestExperimenting(testing.PyMOLTestCase):
         cmd.import_coords
         self.skipTest("TODO")
 
-    def testLoadCoords(self):
-        cmd.fragment('gly', 'm1')
-        coords = cmd.get_model('m1').get_coord_list()
-        # buggy state argument
-        cmd.load_coords(coords, 'm1', state=2+1)
-        self.assertEqual(2, cmd.count_states('m1'))
-
     @testing.requires('incentive')
     def testFocalblur(self):
         cmd.viewport(100, 100)

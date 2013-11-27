@@ -181,3 +181,9 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.space('cmyk', 0.7)
         cmd.space('rgb')
 
+    def testLoadCoords(self):
+        cmd.fragment('gly', 'm1')
+        coords = cmd.get_model('m1').get_coord_list()
+        cmd.load_coords(coords, 'm1', state=2)
+        self.assertEqual(2, cmd.count_states('m1'))
+
