@@ -3176,8 +3176,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
       /* clamp this value */
       float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
       {
-	int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
-	if (!bg_gradient){
+	if(!OrthoBackgroundDataIsSet(G)) {
 	  ColorUpdateFront(G, v);
 	  ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
 	}

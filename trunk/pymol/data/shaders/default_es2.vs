@@ -26,19 +26,21 @@ uniform bool lighting_enabled;
 uniform bool bg_gradient;
 uniform float ambient_occlusion_scale;
 uniform int accessibility_mode;
+uniform float accessibility_mode_on;
 
 void main()
 {
   NORMAL = normalize(gl_NormalMatrix * a_Normal);
   vec3 eye_pos = vec3(gl_ModelViewMatrix * a_Vertex);
+  vec4 COLORa;
   if (accessibility_mode == 1){
-    COLOR = vec4(clamp(a_Color.xyz * (1.-(ambient_occlusion_scale*a_Accessibility)), 0., 1.), a_Color.w);
+    COLORa = vec4(clamp(a_Color.xyz * (1.-(ambient_occlusion_scale*a_Accessibility)), 0., 1.), a_Color.w);
   } else if (accessibility_mode == 2){
-    COLOR = vec4(a_Color.xyz * cos(90.*radians(clamp(ambient_occlusion_scale*a_Accessibility, 0., 1.))), a_Color.w);
+    COLORa = vec4(a_Color.xyz * cos(90.*radians(clamp(ambient_occlusion_scale*a_Accessibility, 0., 1.))), a_Color.w);
   } else {
-    COLOR = vec4(clamp(a_Color.xyz * (1. / (1. + pow(E, 0.5 * ( (ambient_occlusion_scale * a_Accessibility) - 10.)))), 0., 1.), a_Color.w);
+    COLORa = vec4(clamp(a_Color.xyz * (1. / (1. + pow(E, 0.5 * ( (ambient_occlusion_scale * a_Accessibility) - 10.)))), 0., 1.), a_Color.w);
   }
-  
+  COLOR = mix(a_Color, COLORa, accessibility_mode_on);
   // This was breaking fog on ATI/Linux
   //  gl_FogFragCoord = -eye_pos.z;
   //  fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;

@@ -931,26 +931,6 @@ int AtomInfoKnownPolymerResName(char *resn)
 
 /*========================================================================*/
 
-static int AtomInfoInOrder(PyMOLGlobals * G, AtomInfoType * atom, int atom1, int atom2)
-{
-  return (AtomInfoCompare(G, atom + atom1, atom + atom2) <= 0);
-}
-
-static int AtomInfoInOrderIgnoreHet(PyMOLGlobals * G, AtomInfoType * atom, int atom1,
-                                    int atom2)
-{
-  return (AtomInfoCompareIgnoreHet(G, atom + atom1, atom + atom2) <= 0);
-}
-
-static int AtomInfoInOrigOrder(PyMOLGlobals * G, AtomInfoType * atom, int atom1,
-                               int atom2)
-{
-  if(atom[atom1].rank != atom[atom2].rank)
-    return (atom[atom1].rank < atom[atom2].rank);
-  else
-    return (AtomInfoCompare(G, atom + atom1, atom + atom2) <= 0);
-}
-
 int AtomResvFromResi(char *resi)
 {
   int result = 1;
@@ -2390,39 +2370,6 @@ int AtomInfoGetColorWithElement(PyMOLGlobals * G, AtomInfoType * at1, char *n)
     }
   }
   return (color);
-}
-
-int *AtomInfoGetSortedIndex(PyMOLGlobals * G, CObject * obj, AtomInfoType * rec, int n,
-                            int **outdex)
-{
-  int *index;
-  int a;
-  CSetting *setting = NULL;
-  int ok = true;
-  index = Alloc(int, n + 1);
-  CHECKOK(ok, index);
-  if (ok)
-    (*outdex) = Alloc(int, n + 1);
-  CHECKOK(ok, *outdex);
-  if (!ok){
-    FreeP(index);
-    return NULL;
-  }
-  if(obj)
-    setting = obj->Setting;
-
-  if(SettingGet_b(G, setting, NULL, cSetting_retain_order)) {
-    UtilSortIndexGlobals(G, n, rec, index, (UtilOrderFnGlobals *) AtomInfoInOrigOrder);
-  } else if(SettingGet_b(G, setting, NULL, cSetting_pdb_hetatm_sort)) {
-    UtilSortIndexGlobals(G, n, rec, index, (UtilOrderFnGlobals *) AtomInfoInOrder);
-  } else {
-    UtilSortIndexGlobals(G, n, rec, index,
-                         (UtilOrderFnGlobals *) AtomInfoInOrderIgnoreHet);
-  }
-
-  for(a = 0; a < n; a++)
-    (*outdex)[index[a]] = a;
-  return (index);
 }
 
 void AtomInfoFreeSortedIndexes(PyMOLGlobals * G, int **index, int **outdex)

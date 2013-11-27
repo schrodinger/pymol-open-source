@@ -141,8 +141,6 @@ static float ShakerDoTors(int type, float *v0, float *v1, float *v2, float *v3,
         result = result / 5.0F;
     } else if(dp < 0.5) {
       result = -0.5F - dp;
-      if(result < tole)         /* discontinuous low bottom well */
-        result = result;
     } else {
       result = 1.0F - dp;
     }

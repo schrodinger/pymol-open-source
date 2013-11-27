@@ -13596,7 +13596,6 @@ int ExecutiveWindowZoom(PyMOLGlobals * G, char *name, float buffer,
     " ExecutiveWindowZoom-DEBUG: entered\n" ENDFD;
   if(ExecutiveGetExtent(G, name, mn, mx, true, state, true)) {
     if(buffer != 0.0F) {
-      buffer = buffer;
       mx[0] += buffer;
       mx[1] += buffer;
       mx[2] += buffer;
@@ -16751,6 +16750,7 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, char *pattern)
       }
       break; 
     }
+    SceneUpdateStereo(G);
   } else {
     {
       CTracker *I_Tracker = I->Tracker;
