@@ -52,6 +52,7 @@ Z* -------------------------------------------------------------------
 #define INDICATOR_VS_FILENAME "indicator.vs"
 #define INDICATOR_FS_FILENAME "indicator.fs"
 
+static const float mat3identity[] = { 1., 0., 0., 0., 1., 0., 0., 0., 1. };
 
 void getGLVersion(PyMOLGlobals * G, int *major, int* minor);
 void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor);
@@ -1535,7 +1536,7 @@ int CShaderPrg_Set2f(CShaderPrg * p, const char * name, float f1, float f2)
   return 1;
 }
 
-int CShaderPrg_SetMat3f_Impl(CShaderPrg * p, const char * name, GLfloat* m, GLboolean transpose) {
+int CShaderPrg_SetMat3f_Impl(CShaderPrg * p, const char * name, const GLfloat* m, GLboolean transpose) {
   if (p && p->id) {
     GLint loc = glGetUniformLocation(p->id, name);
     if (loc < 0)
@@ -1555,7 +1556,7 @@ int CShaderPrg_SetMat4f_Impl(CShaderPrg * p, const char * name, GLfloat* m, GLbo
   return 1;
 }
 
-int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, GLfloat * m){
+int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, const GLfloat * m){
   return (CShaderPrg_SetMat3f_Impl(p, name, m, GL_TRUE));
 }
 
@@ -1733,8 +1734,10 @@ void CShaderPrg_Set_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shaderPrg, int m
   extern float anaglyphL_constants[6][9];
   /** Coefficients from: http://3dtv.at/Knowhow/AnaglyphComparison_en.aspx */
   /** anaglyph[R|L]_constants are found in Scene.c b/c of ray tracing */
-  CShaderPrg_SetMat3f(shaderPrg, "matR", anaglyphR_constants[mode]);
-  CShaderPrg_SetMat3f(shaderPrg, "matL", anaglyphL_constants[mode]);
+  CShaderPrg_SetMat3f
+      (shaderPrg, "matL", G->ShaderMgr->stereo_flag < 0 ?
+                          anaglyphL_constants[mode] :
+                          anaglyphR_constants[mode]);
   CShaderPrg_Set1f(shaderPrg, "gamma", SettingGetGlobal_f(G, cSetting_gamma));
 }
 
@@ -1745,11 +1748,10 @@ void CShaderPrg_Set_Stereo_And_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shade
   stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
 
   if (stereo && stereo_mode==cStereo_anaglyph){
-    CShaderPrg_Set1f(shaderPrg, "stereo_flag_l", G->ShaderMgr->stereo_flag < 0 ? 1.f : 0.f);
-    CShaderPrg_Set1f(shaderPrg, "stereo_flag_r", G->ShaderMgr->stereo_flag > 0 ? 1.f : 0.f);
     CShaderPrg_Set_AnaglyphMode(G, shaderPrg, SettingGetGlobal_i(G, cSetting_anaglyph_mode));
   } else {
-    CShaderPrg_Set1f(shaderPrg, "stereo_flag", G->ShaderMgr->stereo_flag==0 ? 1.f : 0.f);
+    CShaderPrg_SetMat3f(shaderPrg, "matL", mat3identity);
+    CShaderPrg_Set1f(shaderPrg, "gamma", 1.0);
   }
 }
 
@@ -1814,6 +1816,7 @@ CShaderPrg *CShaderPrg_Enable_DefaultShaderImpl(PyMOLGlobals * G, CShaderPrg * s
   CShaderPrg_Set1i(shaderPrg, "light_count", SettingGetGlobal_i(G, cSetting_light_count));
   CShaderPrg_Set1f(shaderPrg, "ambient_occlusion_scale", 0.f);
   CShaderPrg_Set1i(shaderPrg, "accessibility_mode", SettingGetGlobal_i(G, cSetting_ambient_occlusion_mode) / 4);
+  CShaderPrg_Set1f(shaderPrg, "accessibility_mode_on", SettingGetGlobal_i(G, cSetting_ambient_occlusion_mode) ? 1.f : 0.f);
   {
     int interior_color = SettingGet_i(G, set1, set2, cSetting_ray_interior_color);
     float *color, inter[] = { 0.f, 0.f, 0.f }, threshold = 0.f;

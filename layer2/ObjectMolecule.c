@@ -9784,7 +9784,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
 
   /* first, sort the coodinate set */
 
-  index = AtomInfoGetSortedIndex(G, &I->Obj, ai, cs->NIndex, &outdex);
+  index = AtomInfoGetSortedIndex(G, I, ai, cs->NIndex, &outdex);
   CHECKOK(ok, index);
   if (!ok)
     return false;
@@ -13516,4 +13516,58 @@ void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAto
       }
     }
   }   
+}
+
+static int AtomInfoInOrder(PyMOLGlobals * G, AtomInfoType * atom, int atom1, int atom2)
+{
+  return (AtomInfoCompare(G, atom + atom1, atom + atom2) <= 0);
+}
+
+static int AtomInfoInOrderIgnoreHet(PyMOLGlobals * G, AtomInfoType * atom,
+    int atom1, int atom2)
+{
+  return (AtomInfoCompareIgnoreHet(G, atom + atom1, atom + atom2) <= 0);
+}
+
+static int AtomInfoInOrigOrder(PyMOLGlobals * G, AtomInfoType * atom,
+    int atom1, int atom2)
+{
+  if(atom[atom1].rank == atom[atom2].rank)
+    return (AtomInfoCompare(G, atom + atom1, atom + atom2) <= 0);
+  return (atom[atom1].rank < atom[atom2].rank);
+}
+
+int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj,
+    AtomInfoType * rec, int n, int **outdex)
+{
+  int *index;
+  int a;
+  CSetting *setting = NULL;
+
+  th_assert(1, index = Alloc(int, n + 1));
+  th_assert(1, (*outdex) = Alloc(int, n + 1));
+
+  if(obj && obj->DiscreteFlag) {
+    for(a = 0; a < n; a++)
+      index[a] = a;
+  } else {
+    if(obj)
+      setting = obj->Obj.Setting;
+
+    UtilSortIndexGlobals(G, n, rec, index, (UtilOrderFnGlobals *) (
+        SettingGet_b(G, setting, NULL, cSetting_retain_order) ?
+          AtomInfoInOrigOrder :
+        SettingGet_b(G, setting, NULL, cSetting_pdb_hetatm_sort) ?
+          AtomInfoInOrder :
+          AtomInfoInOrderIgnoreHet));
+  }
+
+  for(a = 0; a < n; a++)
+    (*outdex)[index[a]] = a;
+
+  return index;
+
+th_except1:
+  FreeP(index);
+  return NULL;
 }

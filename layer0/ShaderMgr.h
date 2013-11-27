@@ -165,7 +165,7 @@ int CShaderPrg_Set3f(CShaderPrg * I, const char * name, float f1, float f2, floa
 int CShaderPrg_Set4fv(CShaderPrg * p, const char * name, float *f);
 int CShaderPrg_Set3fv(CShaderPrg * p, const char * name, float *f);
 int CShaderPrg_Set4f(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4);
-int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, GLfloat * m);
+int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, const GLfloat * m);
 int CShaderPrg_SetMat4f(CShaderPrg * p, const char * name, GLfloat * m);
 //int CShaderPrg_SetTexture2D(CShaderPrg * p, const char * name, GLuint );
 

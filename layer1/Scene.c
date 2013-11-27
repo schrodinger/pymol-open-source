@@ -1892,7 +1892,6 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
 {
   register CScene *I = G->Scene;
   unsigned char *image = NULL;
-  int reset_alpha = false;
   int save_stereo = (I->StereoMode == 1);
   int ok = true;
 
@@ -1920,9 +1919,9 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
         PyMOLReadPixels(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height,
                         GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *) (image + buffer_size));
       }
-      reset_alpha = true;
       ScenePurgeImage(G);
       I->Image = Calloc(ImageType, 1);
+      I->Image->needs_alpha_reset = true;
       I->Image->data = image;
       I->Image->height = I->Height;
       I->Image->width = I->Width;
@@ -1932,16 +1931,14 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
     }
   } else if(I->Image) {
     image = I->Image->data;
-    reset_alpha = I->Image->needs_alpha_reset;
   }
   if(image) {
     int opaque_back = SettingGetGlobal_b(G, cSetting_opaque_background);
-    if(opaque_back && reset_alpha) {
-      int i, s = I->Image->size;
+    if(opaque_back && I->Image->needs_alpha_reset) {
+      int i, s = I->Image->width * I->Image->height;
       for(i = 3; i < s; i += 4)
         image[i] = 0xFF;
-      if(I->Image->data == image)
-        I->Image->needs_alpha_reset = false;
+      I->Image->needs_alpha_reset = false;
     }
   }
   return (unsigned char *) image;
@@ -8669,7 +8666,9 @@ void InitializeViewPort(PyMOLGlobals * G, CScene *I, int x, int y, int oversize_
       *stereo_mode = 0;
       break;
     }
+#if 0 // this disables anaglyph stereo
     *stereo_using_mono_matrix = true;
+#endif
     *width_scale = ((float) (oversize_width)) / I->Width;
   } else {
     glViewport(I->Block->rect.left, I->Block->rect.bottom, I->Width, I->Height);

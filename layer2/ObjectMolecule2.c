@@ -4311,7 +4311,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
     int n_bytes = sizeof(int) * I->NAtom;
     int already_in_order = true;
     int i_NAtom = I->NAtom;
-    index = AtomInfoGetSortedIndex(I->Obj.G, &I->Obj, I->AtomInfo, i_NAtom, &outdex);
+    index = AtomInfoGetSortedIndex(I->Obj.G, I, I->AtomInfo, i_NAtom, &outdex);
     CHECKOK(ok, index);
     if (ok){
       for(a = 0; a < i_NAtom; a++) {
