@@ -200,10 +200,6 @@ class TestMoving(testing.PyMOLTestCase):
         cmd.mpng
         self.skipTest("TODO")
 
-    def testMray(self):
-        cmd.mray
-        self.skipTest("TODO")
-
     def testMset(self):
         # basic tet
         self.prep_movie()
