@@ -37,4 +37,4 @@ class TestExperimenting(testing.PyMOLTestCase):
     def testFocalblur(self):
         cmd.viewport(100, 100)
         cmd.fragment('gly', 'm1')
-        cmd.focalblur(4.0, 3)
+        cmd.focal_blur(4.0, 3)
