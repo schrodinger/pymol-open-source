@@ -309,7 +309,7 @@ class PMGApp(Pmw.MegaWidget):
             # define the size of the root window
             
             import platform
-            if platform.mac_ver()[0] >= '10.9':
+            if sys.platform == 'darwin' and platform.mac_ver()[0] >= '10.9':
                 # let OS X Maverics place the window automatically, to avoid
                 # off-screen placement in multi-monitor setup
                 self.root.geometry('%dx%d' % (self.frameWidth, self.frameHeight))

@@ -299,7 +299,6 @@ from moving import \
       mtoggle,           \
       mstop,             \
       mpng,              \
-      mray,              \
       frame,             \
       get_movie_playing, \
       set_frame,         \

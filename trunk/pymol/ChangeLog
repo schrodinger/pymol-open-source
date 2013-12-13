@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2013-12-13 Blaine Bell, Thomas Holder
+
+	* fix antialiasing internal edges, ray tracing
+
+	* fix clicking volume panel dots at zero alpha
+
+	* fix molecular weight w/ aromatic bonds & missing hydrogens
+
+	* fixed sequence text/background when scrollbar isn't shown
+
+	* remove deprecated mray command
+
 2013-11-26 Blaine Bell, Thomas Holder
 
 	* remove self assignments

@@ -34,6 +34,8 @@ class ColorRamp:
     GAUSSIAN = 1
     EXPONENTIAL = 2
 
+    CIRCLE_RADIUS = 3
+
     def __init__(self, nColors, *args, **kwargs):
         # size of this ramp
         self.nColors = nColors
@@ -51,7 +53,6 @@ class ColorRamp:
             self.name = kwargs['name']
         # list of unique ids for objects on the map canvas
         self.canvas_ids = {}
-        self.CIRCLE_RADIUS = 3
 
     def __str__(self):
         """

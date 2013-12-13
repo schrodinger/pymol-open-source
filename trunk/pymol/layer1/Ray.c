@@ -2902,9 +2902,9 @@ static void RayTraceSpawn(CRayThreadInfo * Thread, int n_thread)
 #endif
 
 static int find_edge(unsigned int *ptr, float *depth, unsigned int width,
-                     int threshold, int back, short use_background)
+                     int threshold, int back)
 {                               /* can only be called for a pixel NOT on the edge */
-  if (use_background){    // color testing 
+  {                             /* color testing */
     register int compare0, compare1, compare2, compare3, compare4, compare5, compare6,
       compare7, compare8;
     {
@@ -3521,7 +3521,7 @@ int RayTraceThread(CRayThreadInfo * T)
               if(x && y && (x < (T->width - 1)) && (y < (T->height - 1))) {     /* not on the edge... */
                 if(find_edge(T->edging + (pixel - T->image),
                              depth + (pixel - T->image),
-                             T->width, T->edging_cutoff, bkrd_value, 0)) {
+                             T->width, T->edging_cutoff, bkrd_value)) {
                   register unsigned char *pixel_c = (unsigned char *) pixel;
                   register unsigned int c1, c2, c3, c4;
                   edge_cnt = 1;
