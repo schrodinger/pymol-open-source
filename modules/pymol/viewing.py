@@ -1575,7 +1575,10 @@ SEE ALSO
                 elif action=='clear':
                     if key=='auto':
                         key = setting.get("scene_current_name",_self=_self)
-                    key = pymol._scene_dict_sc.auto_err(key,'scene')
+                        if not key and _feedback(fb_module.scene,fb_mask.actions,_self):
+                            print " scene: no current scene"
+                    else:
+                        key = pymol._scene_dict_sc.auto_err(key,'scene')
                     if pymol._scene_dict.has_key(key):
                         scene_list = pymol._scene_dict[key]
                         if len(scene_list)>3:

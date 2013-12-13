@@ -169,7 +169,6 @@ def get_command_keywords(self_cmd=cmd):
         'mpng'          : [ self_cmd.mpng              , 0 , 0 , ''  , parsing.SECURE ],
         'mplay'         : [ self_cmd.mplay             , 0 , 0 , ''  , parsing.STRICT ],
         'mtoggle'       : [ self_cmd.mtoggle           , 0 , 0 , ''  , parsing.STRICT ],         
-        'mray'          : [ self_cmd.mray              , 0 , 0 , ''  , parsing.STRICT ],
         'mstop'         : [ self_cmd.mstop             , 0 , 0 , ''  , parsing.STRICT ],
         'mclear'        : [ self_cmd.mclear            , 0 , 0 , ''  , parsing.STRICT ],
         'middle'        : [ self_cmd.middle            , 0 , 0 , ''  , parsing.STRICT ],

@@ -317,15 +317,15 @@ static void SeqDraw(Block * block ORTHOCGOARG)
     } else {
       copy3f(ColorGet(G, SettingGetGlobal_color(G, cSetting_bg_rgb)), bg_color);
     }
-    if(I->ScrollBarActive) {
-      if(!SettingGetGlobal_b(G, cSetting_seq_view_overlay)) {
-	if (orthoCGO){
-	  CGOColorv(orthoCGO, bg_color);
-	} else {
-	  glColor3fv(bg_color);
-	}
-	BlockFill(I->Block ORTHOCGOARGVAR);
+    if(!SettingGetGlobal_b(G, cSetting_seq_view_overlay)) {
+      if (orthoCGO){
+	CGOColorv(orthoCGO, bg_color);
+      } else {
+	glColor3fv(bg_color);
       }
+      BlockFill(I->Block ORTHOCGOARGVAR);
+    }
+    if(I->ScrollBarActive) {
       ScrollBarSetBox(I->ScrollBar, I->Block->rect.bottom + I->ScrollBarWidth,
                       I->Block->rect.left + I->ScrollBarMargin,
                       I->Block->rect.bottom + 2,

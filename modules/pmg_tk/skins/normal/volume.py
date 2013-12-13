@@ -452,7 +452,7 @@ class Volume(Frame):
         # check bounds
         if X<0 or X>self.COLOR_MAP_WIDTH-2*self.padX:
             return
-        if Y<0 or Y>self.COLOR_MAP_HEIGHT-2*self.padY:
+        if Y<0 or Y>self.COLOR_MAP_HEIGHT-2*self.padY + ColorRamp.CIRCLE_RADIUS:
             return
         # get color
         chooser = SimpleColorChooser(parent=self.winfo_toplevel(),title="Simple Color Chooser",buttons=False,user_accept=setColor)

@@ -99,7 +99,6 @@ class VolumeHist:
 
         # Frame/Canvas
         self.c = Canvas(root, height=H, width=W, bg="white")
-        self.c.pack(anchor=NW)
 
         # hist values
         m = min(self.hist)

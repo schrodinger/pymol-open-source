@@ -248,21 +248,6 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mray(_self=cmd): # deprecated
-        '''
-DESCRIPTION
-
-    "mray" is an unsupported command of unknown function.
-    '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)   
-            r = _cmd.mplay(_self._COb,2)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
-
     def mdo(frame,command,_self=cmd):
         '''
 DESCRIPTION
