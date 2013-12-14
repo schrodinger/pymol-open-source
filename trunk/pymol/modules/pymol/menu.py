@@ -1534,7 +1534,7 @@ def pick_option(self_cmd, sele, title, object=0):
         save_sele = sele
     result = [
         [ 2, title, '' ],
-        [ 1, 'color'      , mol_color(self_cmd, sele) ],
+        [ 1, 'color'      , lambda: mol_color(self_cmd, sele) ],
         [ 1, 'show'      , mol_show(self_cmd, sele) ],
         [ 1, 'hide'      , mol_hide(self_cmd, sele) ],
         [ 1, 'preset'  , presets(self_cmd, sele)       ],      

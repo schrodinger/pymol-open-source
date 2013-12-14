@@ -73,6 +73,36 @@ void PopUpDraw(Block * block ORTHOCGOARG);
 int PopUpDrag(Block * block, int x, int y, int mod);
 int PopUpConvertY(CPopUp * I, int value, int mode);
 
+/*========================================================================
+ * If Sub[a] is a list, return it, otherwise assume it's callable so
+ * call it, assign the result to Sub[a] and return the result.
+ *
+ * @param Sub : array of lists or callables
+ * @param a   : array index
+ */
+static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
+  PyObject *elem = Sub[a];
+  th_assert(1, elem);
+
+  if(!PyList_Check(elem)) {
+    PBlock(G);
+    elem = PyObject_CallObject(elem, NULL);
+    PUnblock(G);
+
+    th_assert(2, elem);
+
+    Py_DECREF(Sub[a]);
+    Py_INCREF(Sub[a] = elem);
+  }
+
+  return elem;
+
+th_except2:
+  if(PyErr_Occurred())
+    PyErr_Print();
+th_except1:
+  return NULL;
+}
 
 /*========================================================================*/
 static Block *PopUpRecursiveFind(Block * block, int x, int y)
@@ -199,7 +229,7 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
     if(command) {
       if(PyString_Check(command)) {
 	strcpy(I->Command[a], PyString_AsString(command));
-      } else if(PyList_Check(command)) {
+      } else {
 	Py_INCREF(command);
 	I->Sub[a] = command;
       }
@@ -490,15 +520,18 @@ int PopUpDrag(Block * block, int x, int y, int mod)
 
       if(I->Code[a] != 1)
         I->Selected = -1;
-      else if(I->Sub[a]) {
+      else {
         /* activate submenu */
-        if(!I->Child) {
+        PyObject * sub_a = SubGetItem(G, I->Sub, a);
+        if(!sub_a) {
+          // do nothing
+        } else if(!I->Child) {
           I->ChildLine = a;
           if(I->ChildDelay > UtilGetSeconds(G)) {
             PyMOL_NeedFakeDrag(G->PyMOL);       /* keep coming back here... */
           } else {
             I->Child = PopUpNew(G, I->LastX - 300, I->LastY, I->LastX, I->LastY,
-                                false, I->Sub[a], I->Block);
+                                false, sub_a, I->Block);
             {
               int target_y =
                 block->rect.top - (PopUpConvertY(I, a, true) + cPopUpCharMargin);
@@ -519,8 +552,7 @@ int PopUpDrag(Block * block, int x, int y, int mod)
           I->ChildDelay = UtilGetSeconds(G) + cChildDelay;      /* keep child here for a while */
         }
         I->Selected = a;
-      } else
-        I->Selected = a;
+      }
     }
   }
   /* delay updates, etc. so that child menus 

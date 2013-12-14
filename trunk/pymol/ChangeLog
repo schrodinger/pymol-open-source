@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2013-12-14 Thomas Holder
+
+	* submenus can be callables which return a list
+
 2013-12-13 Blaine Bell, Thomas Holder
 
 	* fix antialiasing internal edges, ray tracing
