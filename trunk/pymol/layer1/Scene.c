@@ -4840,21 +4840,20 @@ float SceneGetScreenVertexScale(PyMOLGlobals * G, float *v1)
   float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
   float modelView[16];
 
-  if(!v1)
-    v1 = I->Origin;
-  identity44f(modelView);
-  MatrixTranslateC44f(modelView, I->Pos[0], I->Pos[1], I->Pos[2]);
-  MatrixMultiplyC44f(I->RotMatrix, modelView);
-  MatrixTranslateC44f(modelView, -I->Origin[0], -I->Origin[1], -I->Origin[2]);
-
-  MatrixTransformC44f3f(modelView, v1, vt);
   if(SettingGetGlobal_i(G, cSetting_ortho)) {
-    ratio = 2 * (float) (fabs(I->Pos[2]) * tan((fov / 2.0) * cPI / 180.0)) / (I->Height);
+    vt[2] = I->Pos[2];
   } else {
-    float front_size =
-      2 * I->FrontSafe * ((float) tan((fov / 2.0F) * PI / 180.0F)) / (I->Height);
-    ratio = fabs(front_size * (-vt[2] / I->FrontSafe));
+    if(!v1)
+      v1 = I->Origin;
+    identity44f(modelView);
+    MatrixTranslateC44f(modelView, I->Pos[0], I->Pos[1], I->Pos[2]);
+    MatrixMultiplyC44f(I->RotMatrix, modelView);
+    MatrixTranslateC44f(modelView, -I->Origin[0], -I->Origin[1], -I->Origin[2]);
+
+    MatrixTransformC44f3f(modelView, v1, vt);
   }
+  // FIXME: max(0.0, ...) instead of abs(...) would make more sense
+  ratio = fabs(2.0 * -vt[2] * tanf(fov * PI / 360.0) / I->Height);
   return ratio;
 }
 

@@ -2371,7 +2371,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
       I->Symmetry = SymmetryCopy(cset->Symmetry);
       CHECKOK(ok, I->Symmetry);
       if (ok)
-	ok &= SymmetryAttemptGeneration(I->Symmetry, false);
+	SymmetryAttemptGeneration(I->Symmetry, false);
     }
 
     if(I->CSTmpl)

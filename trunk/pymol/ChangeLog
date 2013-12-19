@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2013-12-19 Thomas Holder
+
+	* fix warnings about unused data argument; patch by Jack Howarth
+	  https://sourceforge.net/p/pymol/bugs/144/
+
 2013-12-14 Thomas Holder
 
 	* submenus can be callables which return a list
