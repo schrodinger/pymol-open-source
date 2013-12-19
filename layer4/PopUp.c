@@ -81,6 +81,7 @@ int PopUpConvertY(CPopUp * I, int value, int mode);
  * @param a   : array index
  */
 static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
+#ifndef _PYMOL_NOPY
   PyObject *elem = Sub[a];
   th_assert(1, elem);
 
@@ -101,6 +102,7 @@ th_except2:
   if(PyErr_Occurred())
     PyErr_Print();
 th_except1:
+#endif
   return NULL;
 }
 

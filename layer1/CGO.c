@@ -6631,7 +6631,7 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
   CShaderPrg * shaderPrg;
   int attr_a_Vertex, attr_a_Normal, attr_a_Color, attr_a_Accessibility;
   GLenum err ;
-  CHECK_GL_ERROR_OK("beginning of CGO_gl_draw_buffers_indexed\n");
+  CHECK_GL_ERROR_OK("beginning of CGO_gl_draw_buffers_indexed returns err=%d\n");
   if (I->enable_shaders){
     shaderPrg = CShaderPrg_Enable_DefaultShader(I->G);
   } else {
@@ -6757,9 +6757,9 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
     mode = CGOConvertDebugMode(I->debug, mode);
   }
 
-  CHECK_GL_ERROR_OK("CGO_gl_draw_buffers_indexed: before glDrawElements\n");
+  CHECK_GL_ERROR_OK("CGO_gl_draw_buffers_indexed: before glDrawElements returns err=%d\n");
   glDrawElements(mode, nindices, GL_C_INT_ENUM, 0);
-  CHECK_GL_ERROR_OK("CGO_gl_draw_buffers_indexed: after glDrawElements\n");
+  CHECK_GL_ERROR_OK("CGO_gl_draw_buffers_indexed: after glDrawElements returns err=%d\n");
 
 #ifdef OPENGL_ES_2
   if (I->use_shader){
@@ -6804,7 +6804,7 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
     CShaderPrg_Disable(shaderPrg);
   }
 #endif
-CHECK_GL_ERROR_OK("CGO_gl_draw_buffers_indexed: end\n");
+CHECK_GL_ERROR_OK("CGO_gl_draw_buffers_indexed: end returns err=%d\n");
 }
 
 static void CGO_gl_draw_buffers_not_indexed(CCGORenderer * I, float **pc){
