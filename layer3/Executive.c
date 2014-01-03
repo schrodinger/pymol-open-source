@@ -4956,6 +4956,11 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
           strcpy(rec->name, new_name);
         }
 
+        // replace existing object (unless auto_rename_duplicate_objects=1)
+        if(ExecutiveValidName(G, rec->name)) {
+          ExecutiveDelete(G, rec->name);
+        }
+
         switch (rec->type) {
         case cExecObject:
           if(rec->visible) {

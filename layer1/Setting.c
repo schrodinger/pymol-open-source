@@ -724,7 +724,6 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
     cSetting_logging,
     cSetting_mouse_grid,
     cSetting_mouse_scale,
-    cSetting_use_shaders,
     cSetting_cylinder_shader_ff_workaround,
     // adjust the size of values_keep_i when adding items
     0
@@ -916,6 +915,7 @@ static int set_list(CSetting * I, PyObject * list)
       case cSetting_stereo_double_pump_mono:
       case cSetting_max_threads:
       case cSetting_session_migration:
+      case cSetting_use_shaders:
         set_type = false;
         break;
       default:
@@ -4772,8 +4772,11 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
       set_b(I, cSetting_internal_gui, 1);
     }
     set_b(I, cSetting_render_as_cylinders, 1);
+
+    if(alloc) // don't set use_shaders on reinitialize
+      set_b(I, cSetting_use_shaders, 0);
+
 #ifdef _PYMOL_LIB
-    set_b(I, cSetting_use_shaders, 1);
     set_b(I, cSetting_stick_ball, true);
     set_b(I, cSetting_cgo_shader_ub_color, 1);
     set_b(I, cSetting_cgo_shader_ub_normal, 1);
@@ -4781,7 +4784,6 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_i(I, cSetting_cgo_sphere_quality, 2);
     set_i(I, cSetting_sphere_mode, 9);
 #else
-    set_b(I, cSetting_use_shaders, 0);
     set_b(I, cSetting_stick_ball, false);
     set_b(I, cSetting_cgo_shader_ub_color, 0);
     set_b(I, cSetting_cgo_shader_ub_normal, 0);
