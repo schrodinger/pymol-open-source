@@ -1876,7 +1876,9 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
       break;
     case CGO_BEGIN:
       {
-	float *origpc = pc;
+	float *origpc = pc, firstColor[3], firstAlpha;
+	char hasFirstColor = 0, hasFirstAlpha = 0;
+	int ncolors = 0;
 	int nverts = 0, damode = CGO_VERTEX_ARRAY, err = 0, end = 0;
 	int mode = CGO_read_int(pc);
 
@@ -1890,6 +1892,13 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	    damode |= CGO_NORMAL_ARRAY;
 	    break;
 	  case CGO_COLOR:
+	    if (!nverts){
+	      hasFirstColor = 1;
+	      firstColor[0] = pc[0]; firstColor[1] = pc[1]; firstColor[2] = pc[2];
+	    } else {
+	      hasFirstColor = 0;
+	    } 
+	    I->color[0] = *pc; I->color[1] = *(pc + 1); I->color[2] = *(pc + 2);
 	    damode |= CGO_COLOR_ARRAY;
 	    break;
 	  case CGO_PICK_COLOR:
@@ -1906,6 +1915,13 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	    break;
 	  case CGO_ALPHA:
 	    I->alpha = *pc;
+	    if (!nverts){
+	      hasFirstAlpha = 1;
+	      firstAlpha = I->alpha;
+	    } else {
+	      hasFirstAlpha = 0;
+	    }
+	    damode |= CGO_COLOR_ARRAY;
 	  default:
 	    break;
 	  }
@@ -1918,6 +1934,15 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	  float *normalVals, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0, *accessibilityVals = 0;
 	  uchar *pickColorValsUC;
 	  short notHaveValue = 0, nxtn = 3;
+	  if (hasFirstAlpha || hasFirstColor){
+	    if (hasFirstAlpha){
+	      CGOAlpha(cgo, firstAlpha);
+	    }
+	    if (hasFirstColor){
+	      CGOColorv(cgo, firstColor);
+	    }
+	    damode ^= CGO_COLOR_ARRAY;
+	  }
 	  nxtVals = vertexVals = CGODrawArrays(cgo, mode, damode, nverts);
 	  ok &= vertexVals ? true : false;
 	  if (!ok)
@@ -1951,8 +1976,10 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	      notHaveValue = notHaveValue ^ CGO_NORMAL_ARRAY;
 	      break;
 	    case CGO_COLOR:
-	      colorVals[plc] = pc[0]; colorVals[plc+1] = pc[1]; colorVals[plc+2] = pc[2]; colorVals[plc+3] = I->alpha;
-	      notHaveValue = notHaveValue ^ CGO_COLOR_ARRAY;
+	      if (colorVals){
+		colorVals[plc] = pc[0]; colorVals[plc+1] = pc[1]; colorVals[plc+2] = pc[2]; colorVals[plc+3] = I->alpha;
+		notHaveValue = notHaveValue ^ CGO_COLOR_ARRAY;
+	      }
 	      break;
 	    case CGO_PICK_COLOR:
 	      /* TODO need to move uchar and index/bond separately into pickColorVals */

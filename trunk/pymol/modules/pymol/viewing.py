@@ -1032,7 +1032,7 @@ PYMOL API
                     if not quiet:
                         print " get_viewport: data written to log file."
                     _self.log("_ viewport (\\\n","cmd.viewport((\\\n")
-                    _self.log("_  %14.9f, %14.9f ))\n"% r)
+                    _self.log("_  %14.9f, %14.9f )\n"% r)
                     if output<2: # suppress if we have a log file open
                         output=0
                 if output and (not quiet) and (output<3):

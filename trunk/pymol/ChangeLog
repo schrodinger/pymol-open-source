@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2014-01-03 Thomas Holder, Blaine Bell
+
+	* fix ramp coloring when loaded from PSE
+
+	* don't set use_shaders with PSE or reinitialize
+
+	* delete duplicates when loading PSE w/ partial=1
+
+	* fix incomplete CGO loading from session file
+
+	* fix viewport logging syntax error
+
 2013-12-19 Thomas Holder
 
 	* fix warnings about unused data argument; patch by Jack Howarth

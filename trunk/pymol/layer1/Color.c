@@ -267,6 +267,7 @@ void ColorRegisterExt(PyMOLGlobals * G, char *name, void *ptr, int type)
     {
       OVreturn_word result = OVLexicon_GetFromCString(I->Lex, name);
       if(OVreturn_IS_OK(result)) {
+        OVOneToOne_Set(I->Idx, result.word, cColorExtCutoff - a);
         I->Ext[a].Name = result.word;
       } else {
         I->Ext[a].Name = 0;
@@ -290,6 +291,7 @@ void ColorForgetExt(PyMOLGlobals * G, char *name)
       OVLexicon_DecRef(I->Lex, I->Ext[a].Name);
       OVOneToOne_DelForward(I->Idx, I->Ext[a].Name);
     }
+    I->Ext[a].Name = 0;
     I->Ext[a].Ptr = NULL;
   }
 }
@@ -447,7 +449,7 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
         OVreturn_word result;
         ok = PConvPyStrToStr(PyList_GetItem(rec, 0), name, sizeof(WordType));
         if(OVreturn_IS_OK(result = OVLexicon_GetFromCString(I->Lex, name))) {
-          OVOneToOne_Set(I->Idx, result.word, a);
+          OVOneToOne_Set(I->Idx, result.word, cColorExtCutoff - a);
           ext->Name = result.word;
         } else {
           ext->Name = 0;
@@ -734,9 +736,9 @@ int ColorGetIndex(PyMOLGlobals * G, char *name)
       }
     }
     if(best || (color < 0)) {
-      ext_color = ColorFindExtByName(G, name, false, &ext_best);
+      ext_color = ColorFindExtByName(G, name, true, &ext_best);
       if(ext_color >= 0) {
-        ext_color = -10 - ext_color;    /* indicates external */
+        ext_color = cColorExtCutoff - ext_color;    /* indicates external */
         if((!ext_best) || (ext_best > best))    /* perfect or better match? */
           color = ext_color;
       }

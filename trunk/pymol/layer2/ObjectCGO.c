@@ -66,7 +66,7 @@ static int ObjectCGOStateFromPyList(PyMOLGlobals * G, ObjectCGOState * I, PyObje
                                     int version)
 {
   int ok = true;
-  int ll;
+  int ll, pl = 0;
   PyObject *tmp;
   if(ok)
     ok = (list != NULL);
@@ -76,19 +76,21 @@ static int ObjectCGOStateFromPyList(PyMOLGlobals * G, ObjectCGOState * I, PyObje
     ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
-  if(ok) {
+
+  if(ok && ll==2) {
     tmp = PyList_GetItem(list, 0);
     if(tmp == Py_None)
       I->std = NULL;
     else
-      ok = ((I->std = CGONewFromPyList(G, PyList_GetItem(list, 0), version)) != NULL);
+      ok = ((I->std = CGONewFromPyList(G, tmp, version)) != NULL);
+    pl++;
   }
   if(ok) {
-    tmp = PyList_GetItem(list, 1);
+    tmp = PyList_GetItem(list, pl);
     if(tmp == Py_None)
       I->ray = NULL;
     else
-      ok = ((I->ray = CGONewFromPyList(G, PyList_GetItem(list, 1), version)) != NULL);
+      ok = ((I->ray = CGONewFromPyList(G, tmp, version)) != NULL);
     if (!I->std && I->ray){
       I->std = CGOSimplify(I->ray, 0);
     }
