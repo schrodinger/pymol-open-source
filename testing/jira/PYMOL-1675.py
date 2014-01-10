@@ -9,6 +9,7 @@ from pymol import cmd, CmdException, testing, stored
 class Test(testing.PyMOLTestCase):
 
     def test(self):
+        cmd.set('suspend_updates')
         cmd.set('ambient', 1)
         cmd.set('specular', 0)
         cmd.set('stereo_angle', 10)
