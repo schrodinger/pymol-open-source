@@ -238,6 +238,7 @@ void SymmetryUpdate(CSymmetry * I)
 {
   if(I->Crystal)
     CrystalUpdate(I->Crystal);
+  SymmetryAttemptGeneration(I, false);
 }
 
 void SymmetryDump(CSymmetry * I)

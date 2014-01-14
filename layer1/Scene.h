@@ -235,4 +235,5 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG);
 
 int SceneIsGridModeActive(PyMOLGlobals * G);
 
+int SceneGetCopyType(PyMOLGlobals * G);
 #endif

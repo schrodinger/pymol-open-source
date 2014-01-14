@@ -24,7 +24,6 @@ Z* -------------------------------------------------------------------
 typedef struct {
   PyMOLGlobals *G;
   CCrystal *Crystal;
-  WordType PDBSpaceGroup;
   int PDBZValue;
   WordType SpaceGroup;
   ov_size NSymMat;

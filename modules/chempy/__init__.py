@@ -172,10 +172,11 @@ class Storage:
         return result
 
     def toFile(self,indexed,fname,**params):
+        lines = self.toList(indexed, **params)
         if feedback['io']:
             print ' chempy: writing "%s".' % fname
         fp = open(fname,'w')
-        result = fp.writelines(apply(self.toList,(indexed,),params))
+        result = fp.writelines(lines)
         fp.close()
 
 class PseudoFile:

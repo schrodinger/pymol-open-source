@@ -2,6 +2,30 @@
 CHANGE LOG
 =========================================================================
 
+2014-01-14 Thomas Holder, Blaine Bell
+
+	* read space group from CCP4 maps
+
+	* handle empty space group like P1 (for best support of map formats
+	  which do not have a space group)
+
+	* map_auto_expand_sym: take symmetry from map if molecular object
+	  doesn't have symmetry information
+
+	* gracefully reject writing MOL format with >999 atoms
+
+	* fix: saving MOL2 format with empty atom name
+
+	* fix: ray+png in batch mode ray traces twice
+
+	* disable seq_view in mpng
+
+	* change movie_quality default to 90 (was 60)
+
+	* fix needs_alpha_reset
+
+	* apbs_tools PDB writing: disable putting spaces before dashes
+
 2014-01-03 Thomas Holder, Blaine Bell
 
 	* fix ramp coloring when loaded from PSE

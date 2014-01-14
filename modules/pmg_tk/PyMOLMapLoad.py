@@ -227,53 +227,7 @@ class PyMOLMapLoad:
     def show_help(self,msg=None,title=None):
         # TODO -- CHANGE THE HELP TEXT
         if msg==None:
-            helpText = """
-PyMOL>help map_gen
- 
-DESCRIPTION
- 
-    "map_generate" generates a map object from a PDB object or selection and
-    reflection data.
- 
-    Experimental use with caution.
-    
-USAGE
- 
-    map_generate name, object, reflection_file [, reflection_file_format [,
-                 map_weight1 [, map_weight2 [, state [, normalize ]]]]]
- 
-ARGUMENTS
- 
-    name = string: name of the map object to create or modify
- 
-    obj = string: molecular object from which Fc is calculated.
- 
-    reflection_file = string: name of reflection file on disk; if None, then
-                      PyMOL attempts to download the CIF file from the PDB.
-                      Default = None; attempt to download from PDB.
- 
-    reflection_file_format = string: format of the reflection file.  Valid
-                             options are "mtz", "cns", "cif"
-                             Default: "mtz"
- 
-    map_weight1 = float: For an xFo-yFc, map_weight1 is 'x' and map_weight2
-                  is 'y'.  (Eg. map_u=2, map_v=1, would make a 2FoFc map.)
-                  Default 2.0;
- 
-    map_weight2 = float: See map_weight1.
-                  Default 1.0;
- 
-    state = 0 : use global state
- 
-    state = 1 : use object's state
- 
-NOTES
- 
-    This function can be used to Xray maps from the reflection data.
-    Supported reflection file formats are "mtz", "cns" and "cif".
- 
-    New in PyMOL v1.4. 
-"""
+            helpText = pymol.cmd.map_generate.__doc__
         else:
             helpText = msg
 
@@ -326,9 +280,14 @@ select an amplitude column name from the file and try again.
                 self.show_help(missing_phases, "Missing Phases Column Name")
                 return None
             
-            r = pymol.cmd.map_generate(pfx, self._fileName, 
+            try:
+                r = pymol.cmd.map_generate(pfx, self._fileName,
                                        self._amplitudes, self._phases, self._weights,
                                        self._min_res, self._max_res, 1, 1)
+            except pymol.CmdException as e:
+                print " MapLoad-Error:", e.args
+                return None
+
             if r==None or r=="None" or r=="":
                 print " MapLoad-Error: PyMOL could not load the MTZ file '%s' due to an unspecified error." % self._fileName
                 print " MapLoad-Error: This typically occurs with bad data or blank column names. Please try again"

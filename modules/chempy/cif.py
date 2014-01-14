@@ -149,7 +149,7 @@ class CIFRec:
         while self.line != None: 
             if string.lower(self.line[0:5])=='loop_':
                 break
-            elif self.line[0:1]=='_':
+            elif string.strip(self.line)[0:1]=='_':
                 fields.append(string.lower(string.strip(self.line)))
             else:
                 self.parse_loop_body(fields)

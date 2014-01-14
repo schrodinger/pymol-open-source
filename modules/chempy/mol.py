@@ -15,6 +15,11 @@
 from chempy.models import Indexed
 from chempy import Storage,Atom,Bond
 
+try:
+    from pymol import CmdException
+except ImportError:
+    CmdException = Exception
+
 import string
 
 class MOL(Storage):
@@ -83,6 +88,8 @@ class MOL(Storage):
 
 #------------------------------------------------------------------------------
     def toList(self,model):
+        if len(model.atom) > 999:
+            raise CmdException("Cannot write file, too many atoms for MOL format: %d > 999." % len(model.atom))
 
         molList = []
 
