@@ -164,7 +164,9 @@ class MOL2(Storage):
         for a in range(len(model.atom)):
             at = model.atom[a]
             molList.append("%d\t%4s\t%.3f\t%.3f\t%.3f\t%2s\t%.3f\n" %
-                           (at.index,at.name,at.coord[0],at.coord[1],at.coord[2],
+                           (at.index,
+                               at.name or at.symbol or "X",
+                               at.coord[0],at.coord[1],at.coord[2],
                             at.text_type, at.q))
 
         # RTI BOND

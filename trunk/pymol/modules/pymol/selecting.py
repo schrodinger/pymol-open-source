@@ -218,7 +218,24 @@ PYMOL API
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
+    def objsele_state_iter(selection, state=0, _self=cmd):
+        '''
+DESCRIPTION
 
+    API only. Get (object-specific-selection, object-state) tuples for all
+    objects in selection.
+        '''
+        for oname in _self.get_object_list('(' + selection + ')'):
+            osele = '(%s) & ?%s' % (selection, oname)
+            if state < 0:
+                first = last = pymol.querying.get_object_state(oname)
+            elif state == 0:
+                first = 1
+                last = cmd.count_states(oname)
+            else:
+                first = last = state
+            for ostate in range(first, last + 1):
+                yield osele, ostate
 
 
 

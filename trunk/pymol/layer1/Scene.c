@@ -1935,7 +1935,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
   if(image) {
     int opaque_back = SettingGetGlobal_b(G, cSetting_opaque_background);
     if(opaque_back && I->Image->needs_alpha_reset) {
-      int i, s = I->Image->width * I->Image->height;
+      int i, s = 4 * I->Image->width * I->Image->height;
       for(i = 3; i < s; i += 4)
         image[i] = 0xFF;
       I->Image->needs_alpha_reset = false;
@@ -9907,4 +9907,8 @@ void SceneGLClear(PyMOLGlobals * G, GLbitfield mask){
 int SceneIsGridModeActive(PyMOLGlobals * G){
   register CScene *I = G->Scene;
   return I->grid.active;
+}
+
+int SceneGetCopyType(PyMOLGlobals * G) {
+  return G->Scene->CopyType;
 }

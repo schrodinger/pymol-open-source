@@ -44,6 +44,57 @@ typedef PyArrayObject MyArrayObject;
 #endif
 #endif
 
+#define n_space_group_numbers 231
+static const char * space_group_numbers[] = {
+"",
+"P 1",         "P -1",        "P 2",         "P 21",        "C 2",
+"P M",         "P C",         "C M",         "C C",         "P 2/M",
+"P 21/M",      "C 2/M",       "P 2/C",       "P 21/C",      "C 2/C",
+"P 2 2 2",     "P 2 2 21",    "P 21 21 2",   "P 21 21 21",  "C 2 2 21",
+"C 2 2 2",     "F 2 2 2",     "I 2 2 2",     "I 21 21 21",  "P M M 2",
+"P M C 21",    "P C C 2",     "P M A 2",     "P C A 21",    "P N C 2",
+"P M N 21",    "P B A 2",     "P N A 21",    "P N N 2",     "C M M 2",
+"C M C 21",    "C C C 2",     "A M M 2",     "A B M 2",     "A M A 2",
+"A B A 2",     "F M M 2",     "F D D 2",     "I M M 2",     "I B A 2",
+"I M A 2",     "P M M M",     "P N N N",     "P C C M",     "P B A N",
+"P M M A",     "P N N A",     "P M N A",     "P C C A",     "P B A M",
+"P C C N",     "P B C M",     "P N N M",     "P M M N",     "P B C N",
+"P B C A",     "P N M A",     "C M C M",     "C M C A",     "C M M M",
+"C C C M",     "C M M A",     "C C C A",     "F M M M",     "F D D D",
+"I M M M",     "I B A M",     "I B C A",     "I M M A",     "P 4",
+"P 41",        "P 42",        "P 43",        "I 4",         "I 41",
+"P -4",        "I -4",        "P 4/M",       "P 42/M",      "P 4/N",
+"P 42/N",      "I 4/M",       "I 41/A",      "P 4 2 2",     "P 4 21 2",
+"P 41 2 2",    "P 41 21 2",   "P 42 2 2",    "P 42 21 2",   "P 43 2 2",
+"P 43 21 2",   "I 4 2 2",     "I 41 2 2",    "P 4 M M",     "P 4 B M",
+"P 42 C M",    "P 42 N M",    "P 4 C C",     "P 4 N C",     "P 42 M C",
+"P 42 B C",    "I 4 M M",     "I 4 C M",     "I 41 M D",    "I 41 C D",
+"P -4 2 M",    "P -4 2 C",    "P -4 21 M",   "P -4 21 C",   "P -4 M 2",
+"P -4 C 2",    "P -4 B 2",    "P -4 N 2",    "I -4 M 2",    "I -4 C 2",
+"I -4 2 M",    "I -4 2 D",    "P 4/M M M",   "P 4/M C C",   "P 4/N B M",
+"P 4/N N C",   "P 4/M B M",   "P 4/M N C",   "P 4/N M M",   "P 4/N C C",
+"P 42/M M C",  "P 42/M C M",  "P 42/N B C",  "P 42/N N M",  "P 42/M B C",
+"P 42/M N M",  "P 42/N M C",  "P 42/N C M",  "I 4/M M M",   "I 4/M C M",
+"I 41/A M D",  "I 41/A C D",  "P 3",         "P 31",        "P 32",
+"R 3",         "P -3",        "R -3",        "P 3 1 2",     "P 3 2 1",
+"P 31 1 2",    "P 31 2 1",    "P 32 1 2",    "P 32 2 1",    "R 3 2",
+"P 3 M 1",     "P 3 1 M",     "P 3 C 1",     "P 3 1 C",     "R 3 M",
+"R 3 C",       "P -3 1 M",    "P -3 1 C",    "P -3 M 1",    "P -3 C 1",
+"R -3 M",      "R -3 C",      "P 6",         "P 61",        "P 65",
+"P 62",        "P 64",        "P 63",        "P -6",        "P 6/M",
+"P 63/M",      "P 6 2 2",     "P 61 2 2",    "P 65 2 2",    "P 62 2 2",
+"P 64 2 2",    "P 63 2 2",    "P 6 M M",     "P 6 C C",     "P 63 C M",
+"P 63 M C",    "P -6 M 2",    "P -6 C 2",    "P -6 2 M",    "P -6 2 C",
+"P 6/M M M",   "P 6/M C C",   "P 63/M C M",  "P 63/M M C",  "P 2 3",
+"F 2 3",       "I 2 3",       "P 21 3",      "I 21 3",      "P M -3",
+"P N -3",      "F M -3",      "F D -3",      "I M -3",      "P A -3",
+"I A -3",      "P 4 3 2",     "P 42 3 2",    "F 4 3 2",     "F 41 3 2",
+"I 4 3 2",     "P 43 3 2",    "P 41 3 2",    "I 41 3 2",    "P -4 3 M",
+"F -4 3 M",    "I -4 3 M",    "P -4 3 N",    "F -4 3 C",    "I -4 3 D",
+"P M -3 M",    "P N -3 N",    "P M -3 N",    "P N -3 M",    "F M -3 M",
+"F M -3 C",    "F D -3 M",    "F D -3 C",    "I M -3 M",    "I A -3 D",
+};
+
 /* MapState::ValidXtal -- determines whether the MapState's Xtal type passed in is valid
  * PARAMS
  *  ms, MapState
@@ -2370,6 +2421,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   int ncstart, nrstart, nsstart;
   int nx, ny, nz;
   float xlen, ylen, zlen, alpha, beta, gamma;
+  int ispg; // space group number
   int sym_skip;
   int mapc, mapr, maps;
   int cc[3], xref[3];
@@ -2493,7 +2545,9 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
       " ObjectMapCCP4: MAPC %d   MAPR %d  MAPS  %d \n", mapc, mapr, maps ENDFB(I->Obj.G);
   }
 
-  i += 4;
+  i += 3;
+
+  ispg = *(i++);
   sym_skip = *(i++);
 
   {
@@ -2612,6 +2666,10 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ms->Symmetry->Crystal->Angle[0] = alpha;
   ms->Symmetry->Crystal->Angle[1] = beta;
   ms->Symmetry->Crystal->Angle[2] = gamma;
+
+  if(ispg < n_space_group_numbers) {
+    UtilNCopy(ms->Symmetry->SpaceGroup, space_group_numbers[ispg], WordLength);
+  }
 
   /* -- JV; for vol 
   ms->Mean = mean;

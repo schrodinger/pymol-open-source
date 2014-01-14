@@ -1397,8 +1397,9 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
   ObjectMesh *I = NULL;
   ObjectMeshState *ms = NULL;
   ObjectMapState *oms = NULL;
+  int created = !obj;
 
-  if(!obj) {
+  if(created) {
     I = ObjectMeshNew(G);
   } else {
     I = obj;
@@ -1462,7 +1463,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
         max_ext = ms->ExtentMax;
       }
 
-      {
+      if(sym) {
         int eff_range[6];
 
         if(IsosurfGetRange
@@ -1508,9 +1509,10 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
             ms->Range[a] = eff_range[a];
           }
         }
+      } else {
+        IsosurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, ms->Range, true);
       }
     }
-    ms->ExtentFlag = true;
   }
   if(ok) {
     if(carve != 0.0) {
@@ -1524,7 +1526,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
     I->Obj.ExtentFlag = true;
     /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]); */
   }
-  if(!ok) {
+  if(!ok && created) {
     ObjectMeshFree(I);
     I = NULL;
   }
@@ -1541,98 +1543,8 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * ma
                               float level, int meshMode,
                               float carve, float *vert_vla, float alt_level, int quiet)
 {
-  ObjectMesh *I = NULL;
-  ObjectMeshState *ms = NULL;
-  ObjectMapState *oms = NULL;
-  int ok = true;
-  int created = !obj;
-
-  if(created) {
-    I = ObjectMeshNew(G);
-  } else {
-    I = obj;
-  }
-  CHECKOK(ok, I);
-  if (ok){
-    if(state < 0)
-      state = I->NState;
-    if(I->NState <= state) {
-      VLACheck(I->State, ObjectMeshState, state);
-      CHECKOK(ok, I->State);
-      if (ok)
-	I->NState = state + 1;
-    }
-  }
-
-  if (ok){
-    ms = I->State + state;
-    ObjectMeshStateInit(G, ms);
-    
-    strcpy(ms->MapName, map->Obj.Name);
-    ms->MapState = map_state;
-    oms = ObjectMapGetState(map, map_state);
-    
-    ms->Level = level;
-    ms->AltLevel = alt_level;
-    ms->MeshMode = meshMode;
-    ms->quiet = quiet;
-  }
-  if(ok && oms) {
-
-    if((meshMode == 3) && (ms->AltLevel < ms->Level)) {
-      /* gradient object -- need to auto-set range */
-      if(!ObjectMapStateGetDataRange(G, oms, &ms->Level, &ms->AltLevel)) {
-        ms->Level = -1.0F;
-        ms->AltLevel = 1.0F;
-      }
-    }
-
-    copy3f(mn, ms->ExtentMin);  /* this is not exactly correct...should actually take vertex points from range */
-    copy3f(mx, ms->ExtentMax);
-
-    if(oms->State.Matrix) {
-      ok &= ObjectStateSetMatrix(&ms->State, oms->State.Matrix);
-    } else if(ms->State.Matrix) {
-      ObjectStateResetMatrix(&ms->State);
-    }
-
-    if (ok) {
-      float *min_ext, *max_ext;
-      float tmp_min[3], tmp_max[3];
-      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
-                                         ms->ExtentMin, ms->ExtentMax,
-                                         tmp_min, tmp_max)) {
-        min_ext = tmp_min;
-        max_ext = tmp_max;
-      } else {
-        min_ext = ms->ExtentMin;
-        max_ext = ms->ExtentMax;
-      }
-
-      IsosurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, ms->Range, true);
-      ms->ExtentFlag = true;
-    }
-  }
-  if(ok && carve != 0.0) {
-    ms->CarveFlag = true;
-    ms->CarveBuffer = carve;
-    ms->AtomVertex = vert_vla;
-  }
-  if(ok && I) {
-    ObjectMeshRecomputeExtent(I);
-  }
-  if (ok)
-    I->Obj.ExtentFlag = true;
-  /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]); */
-  if (ok){
-    SceneChanged(G);
-    SceneCountFrames(G);
-  }
-  if (!ok && created){
-    ObjectMeshFree(I);
-    I = NULL;
-  }
-  return (I);
+  return ObjectMeshFromXtalSym(G, obj, map, NULL, map_state, state, mn, mx,
+      level, meshMode, carve, vert_vla, alt_level, quiet);
 }
 
 

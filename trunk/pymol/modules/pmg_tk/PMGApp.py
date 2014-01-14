@@ -30,6 +30,26 @@ from tkFileDialog import *
 import tkMessageBox
 import Pmw
 
+try:
+    # monkey patch Pmw's error message box
+    def _reporterror(func, args):
+        import pymol
+
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+
+        if issubclass(exc_type, (pymol.CmdException, pymol.cmd.QuietException)):
+            tkMessageBox.showerror(getattr(exc_value, 'label', 'Error'), str(exc_value).strip())
+        else:
+            _reporterror.orig(func, args)
+
+    PmwBase = sys.modules[Pmw.MegaWidget.__module__]
+    _reporterror.orig = PmwBase._reporterror
+    PmwBase._reporterror = _reporterror
+
+    del PmwBase
+except Exception as e:
+    print 'monkey patching _reporterror failed:', e
+
 class PMGApp(Pmw.MegaWidget):
 
     def initOS(self):

@@ -1257,8 +1257,6 @@ int SettingStringToTypedValue(PyMOLGlobals * G, int index, char *st, int *type,
   case cSetting_color:
     {
       int color_index = ColorGetIndex(G, st);
-      if((color_index < 0) && (color_index > cColorExtCutoff))
-        color_index = 0;
       if (*(value) != color_index){
           *(value) = color_index;
       } else {
@@ -4665,7 +4663,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_movie_auto_store, -1);
     set_b(I, cSetting_movie_auto_interpolate, 1);
     set_i(I, cSetting_movie_panel_row_height, 15);
-    set_i(I, cSetting_movie_quality, 60);
+    set_i(I, cSetting_movie_quality, 90);
     set_i(I, cSetting_scene_frame_mode,-1);
     set_i(I, cSetting_surface_cavity_mode,0);
     set_f(I, cSetting_surface_cavity_radius, 7.0F);

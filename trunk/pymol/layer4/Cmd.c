@@ -1653,7 +1653,7 @@ static PyObject * CmdMapGenerate(PyObject * self, PyObject * args)
   double reso_high, reso_low, cell[6];
 
 
-  ok = PyArg_ParseTuple(args, "Ossssssddsddddddii", &self, &name, &reflection_file, &tempFile,
+  ok = PyArg_ParseTuple(args, "Ossssszddsddddddii", &self, &name, &reflection_file, &tempFile,
 			&amplitudes, &phases, &weights, &reso_low, &reso_high,
 			&space_group, &cell[0], &cell[1], &cell[2], &cell[3], &cell[4],
 			&cell[5],&quiet, &zoom);
@@ -5972,21 +5972,24 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    if(prior) {
-      if(ScenePNG(G, str1, dpi, quiet, prior, format))
-        result = 1;             /* signal success by returning 1 instead of 0, or -1 for error  */
-    } else {
-      ExecutiveDrawNow(G);      /* TODO STATUS */
-      if(ray || !G->HaveGUI) {  /* should !G->HaveGUI be here?  It should not re-ray trace if 
-				   it already exists.  Works if taken out on OSX */
+    // with prior=1 other arguments (width, height, ray) are ignored
+
+    if(!prior) {
+      if(ray || !G->HaveGUI && (!SceneGetCopyType(G) || width || height)) {
         SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
-        ok = ScenePNG(G, str1, dpi, quiet, false, format);
+        prior = 1;
       } else if(width || height) {
         SceneDeferImage(G, width, height, str1, -1, dpi, quiet, format);
+        result = 1;
       } else {
-        ok = ScenePNG(G, str1, dpi, quiet, false, format);
+        ExecutiveDrawNow(G);      /* TODO STATUS */
       }
+    }
+
+    if(!result) {
+      if(ScenePNG(G, str1, dpi, quiet, prior, format))
+        result = 1;             /* signal success by returning 1 instead of 0, or -1 for error  */
     }
     APIExit(G);
   }

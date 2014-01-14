@@ -183,15 +183,13 @@ DESCRIPTION
     
 USAGE
 
-    map_generate name, object, reflection_file, amplitudes, phases, weights [,
+    map_generate name, reflection_file, amplitudes, phases, weights [,
         reso_low [, reso_high ]]
 
 ARGUMENTS
 
     name = string: name of the map object to create or modify
 	
-    obj = string: molecular object from which Fc is calculated.
-
     reflection_file = string: name of reflection file on disk; if None, then
                       PyMOL attempts to download the CIF file from the PDB.
                       Default = None; attempt to download from PDB.
@@ -222,7 +220,7 @@ NOTES
     New in PyMOL v1.4 for Mac and Linux.
     
     '''
-        # preprocess selection
+        quiet = int(quiet)
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -235,66 +233,47 @@ NOTES
             mtzFile = headering.MTZHeader(reflection_file)
                 
             # FORMAT: crystal/dataset/column
-            dataset = string.split(amplitudes,"/")
-            if len(dataset):
-                datasetName = dataset[1]
-                
-            for d in mtzFile.datasets.keys():
-                if mtzFile.datasets[d]["name"]==datasetName:
+            _, datasetName, ampColName = ('//' + amplitudes).rsplit('/', 2)
+
+            # if datasetName is empty, take any dataset that has ampColName
+            for dataset in mtzFile.datasets.values():
+                if (not datasetName or dataset["name"] == datasetName) and \
+                        ampColName in dataset["cols"]:
                     break
-            dataset = mtzFile.datasets[d]
+            else:
+                raise pymol.CmdException("no dataset found")
+
             cellX, cellY, cellZ = dataset['x'], dataset['y'], dataset['z']
             cellAlpha, cellBeta, cellGamma = dataset['alpha'], dataset['beta'], dataset['gamma']
             if reso_low==reso_high:
                 reso_low, reso_high = mtzFile.reso_min, mtzFile.reso_max
             space_group = mtzFile.space_group
 
-            #print "space_group = '%s'" % space_group
-            
-            # got data, now parse for driver
-            
-            origAmplitudes = amplitudes
-            amplitudes = string.split(amplitudes,'/')
-            if len(amplitudes):
-                amplitudes = amplitudes[-1]
-            else:
-                print " MapGenerate-Error: Improperly formatted amplitude name, '%s'.  Please specify it as" % origAmplitudes
-                print "  dataset_name/crystal_name/amplitude_column_name."
-                return None
+            phases = phases.rsplit('/', 1)[-1]
+            if not phases:
+                raise pymol.CmdException("phase name missing")
 
-            origPhases = phases
-            phases = string.split(phases,'/')
-            if len(phases):
-                phases=phases[-1]
-            else:
-                print " MapGenerate-Error: Improperly formatted phase name, '%s'.  Please specify it as" % origPhases
-                print "  dataset_name/crystal_name/phase_column_name."
-                return None
-
-            if weights!="None":
-                origWeights = weights
-                weights = string.split(weights,'/')
-                if len(weights):
-                    weights = weights[-1]
-                else:
-                    print " MapGenerate-Error: Improperly formatted weight name, '%s'.  Please specify it as" % origWeights
-                    print "  dataset_name/crystal_name/weight_column_name."
-                    return None
+            if weights and weights!="None":
+                weights = weights.rsplit('/', 1)[-1]
+                if not weights:
+                    raise pymol.CmdException("Improperly formatted weights name")
 
             tempFile = tempfile.NamedTemporaryFile(delete=False)
             tempFileName = tempFile.name
             tempFile.close()
 
-            r = _cmd.map_generate(_self._COb,str(name),str(reflection_file),str(tempFileName),str(amplitudes),str(phases),
+            r = _cmd.map_generate(_self._COb,str(name),str(reflection_file),str(tempFileName),
+                              str(ampColName),str(phases),
                               str(weights),float(reso_low),float(reso_high),str(space_group),
                               float(cellX), float(cellY), float(cellZ),
                               float(cellAlpha), float(cellBeta), float(cellGamma),
                               int(quiet),int(zoom))
             if r!=None:
-                print "Loading map '%s'" % (name)
-                pymol.cmd.load(r, name, format="ccp4", finish=1)
-                # setting?
-                os.remove(r)
+                if not quiet:
+                    print "Loading map '%s'" % (name)
+                r = _self.load(r, name, format="ccp4", finish=1)
+
+            os.remove(tempFileName)
 
         except ImportError:
             print " MapGenerate-Error: Cannot import headering module.  Cannot read MTZ file or make map."

@@ -613,20 +613,15 @@ SEE ALSO
                 print " Save: wrote \""+filename+"\"."
         elif format=='sdf':
             state = int(state)
-            if state==0:
-                first_state = 1
-                last_state = cmd.count_states(selection)
-            else:
-                first_state = state
-                last_state = state
             sdf = SDF(filename,'w')
-            for state in range(first_state, last_state+1):
+            for i, (selection, state) in enumerate(
+                    pymol.selecting.objsele_state_iter(selection, state)):
                 rec = SDFRec(io.mol.toList(_self.get_model(selection,state,ref,ref_state))
                              + ["$$$$\n"])
                 sdf.write(rec)
             r = DEFAULT_SUCCESS
             if not quiet:
-                print " Save: wrote %d states to \"%s\"."%(1+last_state-first_state,filename)
+                print " Save: wrote %d states to \"%s\"." % (i + 1, filename)
         elif format=='mol':
             io.mol.toFile(_self.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS
@@ -636,16 +631,7 @@ SEE ALSO
             state = int(state)
             recList = []
             entrycount = 0
-            for oname in cmd.get_object_list('(' + selection + ')'):
-                osele = '(%s) and ?%s' % (selection, oname)
-                if state < 0:
-                    first_state = last_state = pymol.querying.get_object_state(oname)
-                elif state == 0:
-                    first_state = 1
-                    last_state = cmd.count_states(oname)
-                else:
-                    first_state = last_state = state
-                for ostate in range(first_state, last_state+1):
+            for osele, ostate in pymol.selecting.objsele_state_iter(selection, state):
                     assign_atom_types(osele, "mol2", ostate, 1, _self)
                     recList.extend(io.mol2.toList(_self.get_model(osele,
                         ostate, ref, ref_state), selection=osele, state=ostate))

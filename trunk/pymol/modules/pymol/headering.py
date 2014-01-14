@@ -51,9 +51,9 @@ class baseHeader:
             if len(defaultNames):
                 defaultNames = string.split(defaultNames)
                 if len(defaultNames):
-                    if mapType=="2FoFc":
+                    if mapType.lower() == "2fofc":
                         defaultF, defaultP = defaultNames[0], defaultNames[1]
-                    elif mapType=="FoFc":
+                    elif mapType.lower() == "fofc":
                         defaultF, defaultP = defaultNames[2], defaultNames[3]
                 else:
                     print "Error: Please provide the setting 'default_%s_names' a comma separated string" % (prg)
@@ -320,46 +320,19 @@ class MTZHeader(baseHeader):
                     elif field.startswith(H["SORT"]):
                         self.sort = string.split(tokens)
                     elif field.startswith(H["SYMINF"]):
-                        tokens = string.split(tokens,maxsplit=4)
+                        tokens = filter(None, pymol.parsing.split(tokens, " "))
                         self.nsymmop  = tokens[0]
                         self.nprimop  = tokens[1]
                         self.lattice  = tokens[2]
                         self.groupnum = tokens[3]
 
                         # try official MTZ format
-                        # first 10 chars are the space_group
-                        # from 10 on (6-chars) are the pt group
-                        self.space_group = string.strip(tokens[4][:10],"'")
-                        self.pt_group = string.strip(string.strip(tokens[4][10:],"'"))
+                        self.space_group = pymol.cmd.safe_eval(tokens[4])
+                        self.pt_group    = pymol.cmd.safe_eval(tokens[5])
 
                         # valid format for MTZ space group?
-                        if self.space_group not in space_group_map.values():
-                            # invalid format; try to guess
-                            # SPCGP => S P C GP; maybe in the keys?
-                            if self.space_group in space_group_map:
-                                self.space_group = space_group_map[self.space_group]
+                        self.space_group = space_group_map.get(self.space_group, self.space_group)
 
-                        # new refmac; smarter parsing
-                        if self.space_group not in space_group_map.values():
-                            m = re.match("'(?P<spc_gp>.*)' +(?P<pt_gp>.*)", tokens[4])
-                            if m!=None:
-                                self.space_group, self.pt_group = m.group('spc_gp'), m.group('pt_gp')
-                                if self.space_group in space_group_map:
-                                    self.space_group = space_group_map[self.space_group]
-
-                        # still?
-                        try:
-                            if self.space_group not in space_group_map.values():
-                                # eek, even worse (Buster); try to guess
-                                (self.space_group, self.pt_group) = string.split(tokens[4])
-                                self.space_group = string.strip(self.space_group,"'")
-                                self.pt_group = string.strip(self.pt_group,"'")
-
-                                if self.space_group in space_group_map:
-                                    self.space_group = space_group_map[self.space_group]
-                        except Exception as e:
-                            pass
-                        
                     elif field.startswith(H["SYMM"]):
                         tokens = string.split(tokens)
                         tokens = map(lambda x: string.strip(string.strip(x, ",")),tokens)
@@ -371,6 +344,8 @@ class MTZHeader(baseHeader):
                     elif field.startswith(H["VALM"]):
                         self.missing_flag = tokens
                     elif field.startswith(H["COL"]):
+                        if field == "COLSRC":
+                            raise pymol.cmd.QuietException
                         (lab,typ,m,M,i) = string.split(tokens)
                         if i not in self.datasets:
                             self.datasets[i] = {}
@@ -422,6 +397,7 @@ class MTZHeader(baseHeader):
                 except ValueError:
                     print "Error: Parsing MTZ Header poorly formatted MTZ file"
                     print "       bad field: '%s'" % field
+                except pymol.cmd.QuietException:
                     pass
 
                 curLine = struct.unpack("80s", f.read(80))[0]

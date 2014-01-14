@@ -1006,6 +1006,8 @@ void MainReshape(int width, int height)
     I->ReshapeTime = (double) UtilGetSeconds(G);
     I->DrawnFlag = false;
 
+    if (width==0 || height==0)
+      return;
     if(PLockAPIAsGlut(G, true)) {
       if(G->HaveGUI) {
         glViewport(0, 0, (GLint) width, (GLint) height);

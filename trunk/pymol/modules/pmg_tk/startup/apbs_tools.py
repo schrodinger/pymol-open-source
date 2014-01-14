@@ -1394,6 +1394,9 @@ Citation for PDB2PQR:
         because pdb2pqr will debump things and write them out with
         3 digits post-decimal. Bleh.
         """
+        # disabled whitespace splitting in pdb2pqr (PYMOL-1739), 2014-01-07 --th
+        return
+        '''
         f = open(filename,'r')
         txt = f.read()
         f.close()
@@ -1405,6 +1408,7 @@ Citation for PDB2PQR:
         txt = txt.replace('-',' -')
         f.write(txt)
         f.close()
+        '''
                 
     def getUnassignedAtomsFromPqr(self,fname):
         """

@@ -891,6 +891,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
   ObjectMapState *ms;
   OrthoLineType s1;
   ObjectMolecule *sele_obj = NULL;
+  CSymmetry *symm;
 
   /* (pattern) if old_name(origObj) exists, overwrite it */
   origObj = ExecutiveFindObjectByName(G, mesh_name);
@@ -992,10 +993,19 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
           " Isomesh: buffer %8.3f carve %8.3f \n", fbuf, carve ENDFB(G);
         if(sele_obj
            && SettingGet_b(G, NULL, sele_obj->Obj.Setting, cSetting_map_auto_expand_sym)
-           && (sele_obj->Symmetry) && ObjectMapValidXtal(mapObj, state)) {
+           && (sele_obj->Symmetry)) {
+          // legacy default: take symmetry from molecular object
+          symm = sele_obj->Symmetry;
+        } else if(SettingGet_b(G, NULL, mapObj->Obj.Setting, cSetting_map_auto_expand_sym)) {
+          // fallback: take symmetry from map state
+          symm = ms->Symmetry;
+        } else {
+          symm = NULL;
+        }
 
+        if(symm && ObjectMapValidXtal(mapObj, state)) {
           obj = (CObject *) ObjectMeshFromXtalSym(G, (ObjectMesh *) origObj, mapObj,
-                                                  sele_obj->Symmetry,
+                                                  symm,
                                                   map_state, state, mn, mx, lvl,
                                                   mesh_mode, carve, vert_vla, alt_lvl,
                                                   quiet);
@@ -5854,7 +5864,6 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
   ObjectMap *objMap;
   int ok = true;
   CSymmetry *symmetry = NULL;
-  CCrystal *crystal = NULL;
   int n_obj;
   int i, s;
   int do_all_states = false;
@@ -5873,6 +5882,18 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
     state--;
   }
 
+  /* create a new symmetry object for copying */
+  symmetry = SymmetryNew(G);
+  th_assert(1, ok = symmetry);
+  symmetry->Crystal->Dim[0] = a;
+  symmetry->Crystal->Dim[1] = b;
+  symmetry->Crystal->Dim[2] = c;
+  symmetry->Crystal->Angle[0] = alpha;
+  symmetry->Crystal->Angle[1] = beta;
+  symmetry->Crystal->Angle[2] = gamma;
+  UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
+  SymmetryAttemptGeneration(symmetry, false);
+
   objVLA = ExecutiveSeleToObjectVLA(G, sele);
   n_obj = VLAGetSize(objVLA);
   if(n_obj) {
@@ -5880,17 +5901,6 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
       obj = objVLA[i];
       switch (obj->type) {
       case cObjectMolecule:
-        if(!symmetry) {
-          symmetry = SymmetryNew(G);
-          symmetry->Crystal->Dim[0] = a;
-          symmetry->Crystal->Dim[1] = b;
-          symmetry->Crystal->Dim[2] = c;
-          symmetry->Crystal->Angle[0] = alpha;
-          symmetry->Crystal->Angle[1] = beta;
-          symmetry->Crystal->Angle[2] = gamma;
-          UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
-          SymmetryAttemptGeneration(symmetry, false);
-        }
         objMol = (ObjectMolecule *) obj;
         if(symmetry) {
 	  /* right now, ObjectMolecules only have one-state symmetry information */
@@ -5905,17 +5915,6 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
         }
         break;
       case cObjectMap:
-	/* create a new symmetry object for copying */
-	symmetry = SymmetryNew(G);
-	symmetry->Crystal->Dim[0] = a;
-	symmetry->Crystal->Dim[1] = b;
-	symmetry->Crystal->Dim[2] = c;
-	symmetry->Crystal->Angle[0] = alpha;
-	symmetry->Crystal->Angle[1] = beta;
-	symmetry->Crystal->Angle[2] = gamma;
-	UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
-	SymmetryAttemptGeneration(symmetry, false);
-
 	objMap = (ObjectMap *) obj;
 	
 	if(symmetry) {
@@ -5952,11 +5951,10 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
     PRINTFB(G, FB_Executive, FB_Errors)
       " ExecutiveSetSymmetry: no object selected\n" ENDFB(G);
   }
-  if(crystal)
-    CrystalFree(crystal);
   if(symmetry)
     SymmetryFree(symmetry);
   VLAFreeP(objVLA);
+th_except1:
   return (ok);
 }
 
