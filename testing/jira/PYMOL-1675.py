@@ -17,6 +17,7 @@ class Test(testing.PyMOLTestCase):
         cmd.show_as('sphere')
         cmd.zoom()
         cmd.stereo('anaglyph')
+        cmd.unset('suspend_updates')
         cmd.draw(40, 40, 0)
         img = self.get_imagearray(prior=1)
         self.assertImageHasColor('0xff0000', img)
