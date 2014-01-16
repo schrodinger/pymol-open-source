@@ -91,7 +91,7 @@ if __name__=='pymol.invocation':
     py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
 
     def get_user_config():
-        for d in [os.getcwd(), '$HOME', '$HOMEPATH$HOMEDRIVE', '$PYMOL_PATH']:
+        for d in [os.getcwd(), '$HOME', '$HOMEDRIVE$HOMEPATH', '$PYMOL_PATH']:
             d = os.path.expandvars(d)
             for pat in [pymolrc_pat1, pymolrc_pat2]:
                 lst = glob.glob(d + os.sep + pat)
