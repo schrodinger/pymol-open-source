@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2014-01-20 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* mutagenesis wizard: use PYMOL_DATA (patch by Michael Banck)
+
+	* updating version 1.7.0.1
+
 2014-01-14 Thomas Holder, Blaine Bell
 
 	* read space group from CCP4 maps
