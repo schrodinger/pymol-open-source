@@ -52,8 +52,8 @@ class Mutagenesis(Wizard):
         
         self.dep = default_dep
 
-        self.ind_library = io.pkl.fromFile(os.environ['PYMOL_PATH']+
-                                           "/data/chempy/sidechains/sc_bb_ind.pkl")
+        self.ind_library = io.pkl.fromFile(os.environ['PYMOL_DATA']+
+                                           "/chempy/sidechains/sc_bb_ind.pkl")
         self.load_library()
         self.status = 0 # 0 no selection, 1 mutagenizing
         self.bump_check = 1
@@ -217,8 +217,8 @@ class Mutagenesis(Wizard):
     def load_library(self):
         if self.dep == 'dep':
             if not hasattr(self,'dep_library'):
-                self.dep_library = io.pkl.fromFile(os.environ['PYMOL_PATH']+
-                                           "/data/chempy/sidechains/sc_bb_dep.pkl")
+                self.dep_library = io.pkl.fromFile(os.environ['PYMOL_DATA']+
+                                           "/chempy/sidechains/sc_bb_dep.pkl")
             
     def set_mode(self,mode):
         cmd=self.cmd
