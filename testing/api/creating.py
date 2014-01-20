@@ -49,13 +49,25 @@ class TestCreating(testing.PyMOLTestCase):
     def testGradient(self):
         pass
 
-    @unittest.skip("Not yet implemented.")
     def testCopy(self):
-        pass
+        cmd.fragment('ala', 'm1')
+        cmd.copy('m2', 'm1')
+        self.assertEqual(
+                cmd.count_atoms('m1'),
+                cmd.count_atoms('m2'))
 
-    @unittest.skip("Not yet implemented.")
     def testSymexp(self):
-        pass
+        cmd.load(self.datafile('1oky.pdb.gz'), 'm1')
+        n = cmd.count_atoms()
+        cmd.symexp('s', 'm1', '%m1 & resi 283', 20.0)
+        x = cmd.get_object_list()
+        self.assertEqual(x, [
+            'm1',
+            's01000000',
+            's03000000',
+            's04000000',
+            ])
+        self.assertEqual(n * 4, cmd.count_atoms())
 
     @unittest.skip("Not yet implemented.")
     def testFragment(self):
@@ -135,11 +147,11 @@ class TestCreating(testing.PyMOLTestCase):
     def testCreateManyLarge(self):
         pass
         
-
-
-    @unittest.skip("Not yet implemented.")
     def testExtract(self):
-        pass
+        cmd.fragment('ala', 'm1')
+        cmd.extract('m2', 'elem C')
+        self.assertEqual(cmd.count_atoms('m1'), 7)
+        self.assertEqual(cmd.count_atoms('m2'), 3)
     
     @unittest.skip("Not yet implemented.")
     def testUnquote(self):
