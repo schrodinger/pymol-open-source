@@ -12,15 +12,38 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-#from Numeric import *
+import numpy
 
-from numpy import *
-import copy
+class Brick(object):
+    '''
+    Map object to load into PyMOL with
 
-class Brick:
+    >>> pymol.importing.load_brick(brickinstance, "name")
+    '''
     
     def __init__(self):
         self.valid = None
+
+    @classmethod
+    def from_numpy(cls, data, grid, origin=(0.0, 0.0, 0.0)):
+        '''
+        @param data: numpy float array with len(data.shape) == 3
+        @param range: 3f sequence
+        @param origin: 3f sequence
+        '''
+        data = numpy.asfarray(data)
+        assert len(data.shape) == 3
+
+        self = cls()
+        self.lvl = data
+        self.grid = list(grid)
+        self.origin = list(origin)
+
+        # redundant information
+        self.dim = list(data.shape)
+        self.range = [g * (d - 1) for (g, d) in zip(self.grid, self.dim)]
+
+        return self
 
     def setup_from_min_max(self,mn,mx,grid,buffer=0.0):
         self.origin = [
@@ -38,8 +61,8 @@ class Brick:
             1 + int(self.range[1]/grid[1]),
             1 + int(self.range[2]/grid[2])
             ]
-        self.grid = copy.deepcopy(grid)
-        self.lvl = zeros(self.dim,float)
+        self.grid = list(grid)
+        self.lvl = numpy.zeros(self.dim,float)
         
         
 
