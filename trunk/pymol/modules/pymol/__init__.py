@@ -135,6 +135,7 @@ if pymol_launch != 3: # if this isn't a dry run
 
     if __name__!='__main__':
         if not os.environ.has_key("PYMOL_PATH"):
+            os.environ['PYMOL_PATH'] = '.'
             try:
                 pymol_file = __file__
                 # first, see if we've got "site-packages/pymol/pymol_path"
@@ -231,19 +232,6 @@ if pymol_launch != 3: # if this isn't a dry run
 
         _init_internals(sys.modules['pymol'])
         
-        # special handling for win32
-
-        if sys.platform=='win32':
-            # include modules directory (if it isn't already and it exists)
-            loc2 = os.environ['PYMOL_PATH']+'/modules'
-            if os.path.exists(loc2):
-                if loc2 not in sys.path:
-                    sys.path.insert(0,loc2)
-            # include installed numpy
-            loc1 = os.environ['PYMOL_PATH']+'/modules/numeric'
-            if os.path.exists(loc1):
-                sys.path.insert(0,loc1)
-
         if '' not in sys.path: # make sure cwd is in path like normal Python
             sys.path.insert(0,'') 
 
