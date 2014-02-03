@@ -231,14 +231,20 @@ char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, ch
   int ifdefstacksize = 1;
   ifdefstack[0] = 1;
 
-  pymol_path = getenv("PYMOL_PATH");
+  pymol_path = getenv("PYMOL_DATA");
+  if(pymol_path && pymol_path[0]) {
+    shader_path = "/shaders/";
+  } else {
+    pymol_path = getenv("PYMOL_PATH");
+    shader_path = "/data/shaders/";
+  }
+
   if (!pymol_path){
     if (I->print_warnings){
       PRINTFB(G, FB_ShaderMgr, FB_Warnings)
 	" CShaderPrg_ReadFromFile_Or_Use_String: PYMOL_PATH not set, cannot read shader config files from disk\n" ENDFB(G);
     }
   } else {
-    shader_path = "/data/shaders/";
     fullFile = Alloc(char, strlen(pymol_path) + strlen(shader_path) + strlen(fileName) + 1);
     fullFile = strcpy(fullFile, pymol_path);
     fullFile = strcat(fullFile, shader_path);
