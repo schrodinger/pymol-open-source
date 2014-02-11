@@ -1235,7 +1235,7 @@ def level(self_cmd, sele):
             [ 1, 'level 0.0'         , 'cmd.isolevel("'+sele+'",0.0)'      ],
             [ 1, 'level -0.5'         , 'cmd.isolevel("'+sele+'",-0.5)'      ],
             [ 1, 'level -1.0'         , 'cmd.isolevel("'+sele+'",-1.0)'      ],
-            [ 1, 'level -1.0'         , 'cmd.isolevel("'+sele+'",-1.5)'      ],            
+            [ 1, 'level -1.5'         , 'cmd.isolevel("'+sele+'",-1.5)'      ],
             [ 1, 'level -2.0'         , 'cmd.isolevel("'+sele+'",-2.0)'      ],
             [ 1, 'level -3.0'         , 'cmd.isolevel("'+sele+'",-3.0)'      ],
             [ 1, 'level -4.0'         , 'cmd.isolevel("'+sele+'",-4.0)'      ],
