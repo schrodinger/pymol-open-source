@@ -1513,6 +1513,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
         IsosurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, ms->Range, true);
       }
     }
+    ms->ExtentFlag = true;
   }
   if(ok) {
     if(carve != 0.0) {
