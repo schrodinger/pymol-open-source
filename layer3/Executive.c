@@ -5884,7 +5884,7 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
 
   /* create a new symmetry object for copying */
   symmetry = SymmetryNew(G);
-  th_assert(1, ok = symmetry);
+  ok_assert(1, ok = symmetry);
   symmetry->Crystal->Dim[0] = a;
   symmetry->Crystal->Dim[1] = b;
   symmetry->Crystal->Dim[2] = c;
@@ -5954,7 +5954,7 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
   if(symmetry)
     SymmetryFree(symmetry);
   VLAFreeP(objVLA);
-th_except1:
+ok_except1:
   return (ok);
 }
 

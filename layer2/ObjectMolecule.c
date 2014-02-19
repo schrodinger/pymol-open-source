@@ -8493,20 +8493,20 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
 
   if(!PySequence_Check(coords)) {
     ErrMessage(G, "LoadCoords", "passed argument is not a sequence");
-    th_raise(1);
+    ok_raise(1);
   }
 
   // find any coordinate set
   for(a = 0; !cset && a < I->NCSet; a++)
     cset = I->CSet[a];
-  th_assert(1, cset);
+  ok_assert(1, cset);
   cset = CoordSetCopy(cset);
 
   // check atom count
   l = PySequence_Size(coords);
   if(l != cset->NIndex) {
     ErrMessage(G, "LoadCoords", "atom count mismatch");
-    th_raise(1);
+    ok_raise(1);
   }
 
   // copy coordinates
@@ -8517,7 +8517,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
     for(b = 0; b < 3; b++)
       f[a * 3 + b] = (float) PyFloat_AsDouble(PySequence_GetItem(v, b));
 
-    th_assert(2, !PyErr_Occurred());
+    ok_assert(2, !PyErr_Occurred());
   }
 
   /* include coordinate set */
@@ -8540,9 +8540,9 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
   return (I);
 
   // error handling
-th_except2:
+ok_except2:
   PyErr_Print();
-th_except1:
+ok_except1:
   if(cset)
     cset->fFree(cset);
   ErrMessage(G, "LoadCoords", "failed");
@@ -13544,8 +13544,8 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj,
   int a;
   CSetting *setting = NULL;
 
-  th_assert(1, index = Alloc(int, n + 1));
-  th_assert(1, (*outdex) = Alloc(int, n + 1));
+  ok_assert(1, index = Alloc(int, n + 1));
+  ok_assert(1, (*outdex) = Alloc(int, n + 1));
 
   if(obj && obj->DiscreteFlag) {
     for(a = 0; a < n; a++)
@@ -13567,7 +13567,7 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj,
 
   return index;
 
-th_except1:
+ok_except1:
   FreeP(index);
   return NULL;
 }
