@@ -2256,23 +2256,23 @@ static PyObject *CmdGetSettingUpdates(PyObject * self, PyObject * args)
 
   if(!PyArg_ParseTuple(args, "Osi", &self, &name, &state)) {
     API_HANDLE_ERROR;
-    th_raise(2);
+    ok_raise(2);
   }
 
   API_SETUP_PYMOL_GLOBALS;
-  th_assert(2, G && APIEnterBlockedNotModal(G));
+  ok_assert(2, G && APIEnterBlockedNotModal(G));
 
   if(name[0]) {
     CObject *obj = ExecutiveFindObjectByName(G, name);
-    th_assert(1, obj);
-    th_assert(1, handle = obj->fGetSettingHandle(obj, state));
+    ok_assert(1, obj);
+    ok_assert(1, handle = obj->fGetSettingHandle(obj, state));
     csetting = *handle;
   }
 
   result = SettingGetUpdateList(G, csetting);
-th_except1:
+ok_except1:
   APIExitBlocked(G);
-th_except2:
+ok_except2:
   return (APIAutoNone(result));
 }
 
@@ -7074,22 +7074,22 @@ static PyObject *CmdLoadCoords(PyObject * self, PyObject * args)
 
   if(!PyArg_ParseTuple(args, "OsOi", &self, &oname, &model, &frame)) {
     API_HANDLE_ERROR;
-    th_raise(1);
+    ok_raise(1);
   }
 
   API_SETUP_PYMOL_GLOBALS;
-  th_assert(1, G && APIEnterNotModal(G));
+  ok_assert(1, G && APIEnterNotModal(G));
 
   origObj = ExecutiveFindObjectByName(G, oname);
   if(!origObj || !origObj->type == cObjectMolecule) {
     ErrMessage(G, "LoadCoords", "named object molecule not found.");
-    th_raise(2);
+    ok_raise(2);
   }
 
   PBlock(G);              /*PBlockAndUnlockAPI(); */
   obj = ObjectMoleculeLoadCoords(G, (ObjectMolecule *) origObj, model, frame);
   PUnblock(G);            /*PLockAPIAndUnblock(); */
-  th_assert(2, obj);
+  ok_assert(2, obj);
 
   if(frame < 0)
     frame = obj->NCSet - 1;
@@ -7101,9 +7101,9 @@ static PyObject *CmdLoadCoords(PyObject * self, PyObject * args)
 
   APIExit(G);
   return APISuccess();
-th_except2:
+ok_except2:
   APIExit(G);
-th_except1:
+ok_except1:
   return APIFailure();
 }
 

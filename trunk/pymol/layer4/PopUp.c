@@ -83,14 +83,14 @@ int PopUpConvertY(CPopUp * I, int value, int mode);
 static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
 #ifndef _PYMOL_NOPY
   PyObject *elem = Sub[a];
-  th_assert(1, elem);
+  ok_assert(1, elem);
 
   if(!PyList_Check(elem)) {
     PBlock(G);
     elem = PyObject_CallObject(elem, NULL);
     PUnblock(G);
 
-    th_assert(2, elem);
+    ok_assert(2, elem);
 
     Py_DECREF(Sub[a]);
     Py_INCREF(Sub[a] = elem);
@@ -98,10 +98,10 @@ static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
 
   return elem;
 
-th_except2:
+ok_except2:
   if(PyErr_Occurred())
     PyErr_Print();
-th_except1:
+ok_except1:
 #endif
   return NULL;
 }
