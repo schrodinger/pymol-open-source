@@ -7217,7 +7217,7 @@ static void CGO_gl_draw_labels(CCGORenderer * I, float **pc) {
   int ntextures = CGO_get_int(*pc);
   int bufs[4] = { CGO_get_int(*pc+1), CGO_get_int(*pc+2), CGO_get_int(*pc+3), CGO_get_int(*pc+4) };
   CShaderPrg * shaderPrg;
-  int attr_worldpos, attr_screenoffset, attr_screenworldoffset, attr_texcoords, attr_pickcolor = 0;
+  int attr_worldpos, attr_screenoffset, attr_screenworldoffset, attr_texcoords, attr_t_pickcolor = 0;
 
   if (I->enable_shaders){
     shaderPrg = CShaderPrg_Enable_LabelShader(I->G);
@@ -7232,17 +7232,19 @@ static void CGO_gl_draw_labels(CCGORenderer * I, float **pc) {
   attr_screenoffset = CShaderPrg_GetAttribLocation(shaderPrg, "attr_screenoffset");
   attr_screenworldoffset = CShaderPrg_GetAttribLocation(shaderPrg, "attr_screenworldoffset");
   attr_texcoords = CShaderPrg_GetAttribLocation(shaderPrg, "attr_texcoords");
-  if (I->isPicking){
-    attr_pickcolor = CShaderPrg_GetAttribLocation(shaderPrg, "attr_pickcolor");    
-  }
+  attr_t_pickcolor = CShaderPrg_GetAttribLocation(shaderPrg, "attr_t_pickcolor");    
   glEnableVertexAttribArray(attr_worldpos);
   glEnableVertexAttribArray(attr_screenoffset);
   glEnableVertexAttribArray(attr_screenworldoffset);
   glEnableVertexAttribArray(attr_texcoords);
-  if (attr_pickcolor){
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(attr_pickcolor);
-    glVertexAttribPointer(attr_pickcolor, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_TRUE, 0, *pc + 4);
+  if (attr_t_pickcolor >= 0){
+    if (I->isPicking){
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glEnableVertexAttribArray(attr_t_pickcolor);
+      glVertexAttribPointer(attr_t_pickcolor, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_TRUE, 0, *pc + 5);
+    } else {
+      glVertexAttrib4f(attr_t_pickcolor, 0.f, 0.f, 0.f, 0.f);
+    }
   }
   glBindBuffer(GL_ARRAY_BUFFER, bufs[0]);
   glVertexAttribPointer(attr_worldpos, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -7257,8 +7259,8 @@ static void CGO_gl_draw_labels(CCGORenderer * I, float **pc) {
   glDisableVertexAttribArray(attr_screenoffset);
   glDisableVertexAttribArray(attr_screenworldoffset);
   glDisableVertexAttribArray(attr_texcoords);
-  if (attr_pickcolor){
-    glDisableVertexAttribArray(attr_pickcolor);
+  if (attr_t_pickcolor >= 0){
+    glDisableVertexAttribArray(attr_t_pickcolor);
   }
 
   if (I->enable_shaders){
@@ -7271,7 +7273,7 @@ static void CGO_gl_draw_textures(CCGORenderer * I, float **pc) {
   int ntextures = CGO_get_int(*pc);
   int bufs[3] = { CGO_get_int(*pc+1), CGO_get_int(*pc+2), CGO_get_int(*pc+3) };
   CShaderPrg * shaderPrg;
-  int attr_worldpos, attr_screenoffset, attr_texcoords, attr_pickcolor = 0;
+  int attr_worldpos, attr_screenoffset, attr_texcoords, attr_t_pickcolor = 0;
 
   if (I->enable_shaders){
     shaderPrg = CShaderPrg_Enable_LabelShader(I->G);
@@ -7286,15 +7288,15 @@ static void CGO_gl_draw_textures(CCGORenderer * I, float **pc) {
   attr_screenoffset = CShaderPrg_GetAttribLocation(shaderPrg, "attr_screenoffset");
   attr_texcoords = CShaderPrg_GetAttribLocation(shaderPrg, "attr_texcoords");
   if (I->isPicking){
-    attr_pickcolor = CShaderPrg_GetAttribLocation(shaderPrg, "attr_pickcolor");    
+    attr_t_pickcolor = CShaderPrg_GetAttribLocation(shaderPrg, "attr_t_pickcolor");    
   }
   glEnableVertexAttribArray(attr_worldpos);
   glEnableVertexAttribArray(attr_screenoffset);
   glEnableVertexAttribArray(attr_texcoords);
-  if (attr_pickcolor){
+  if (attr_t_pickcolor){
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(attr_pickcolor);
-    glVertexAttribPointer(attr_pickcolor, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_TRUE, 0, *pc + 4);
+    glEnableVertexAttribArray(attr_t_pickcolor);
+    glVertexAttribPointer(attr_t_pickcolor, VERTEX_COLOR_SIZE, GL_UNSIGNED_BYTE, GL_TRUE, 0, *pc + 4);
   }
   glBindBuffer(GL_ARRAY_BUFFER, bufs[0]);
   glVertexAttribPointer(attr_worldpos, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -7306,8 +7308,8 @@ static void CGO_gl_draw_textures(CCGORenderer * I, float **pc) {
   glDisableVertexAttribArray(attr_worldpos);
   glDisableVertexAttribArray(attr_screenoffset);
   glDisableVertexAttribArray(attr_texcoords);
-  if (attr_pickcolor){
-    glDisableVertexAttribArray(attr_pickcolor);
+  if (attr_t_pickcolor){
+    glDisableVertexAttribArray(attr_t_pickcolor);
   }
 
   if (I->enable_shaders){

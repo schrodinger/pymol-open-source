@@ -1,8 +1,11 @@
+
 attribute vec4 attr_worldpos;
 attribute vec3 attr_screenoffset;
 attribute vec2 attr_texcoords;
 attribute vec3 attr_screenworldoffset;
-attribute vec4 attr_pickcolor;
+attribute vec4 attr_t_pickcolor; // changed name for ATI, optional attribute
+                                 // cannot be first/0 index, ATI sets index
+                                 // alphabetically
 varying vec2 textureLookup ;
 varying vec3 normalizedViewCoordinate;
 varying vec4 pickcolor ;
@@ -34,5 +37,5 @@ void main()
   } else {
     fog = 1.1; // >= 1.0
   }
-  pickcolor = attr_pickcolor;
+  pickcolor = attr_t_pickcolor;
 }

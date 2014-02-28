@@ -515,6 +515,24 @@ void CShaderPrg_BindAttribLocations(PyMOLGlobals * G, char *name){
 #endif
 }
 
+void CShaderPrg_BindLabelAttribLocations(PyMOLGlobals * G){
+  GLenum err ;
+  CShaderPrg *I;
+  if (err = glGetError()){
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR: BindLabelAttribLocations begin: %d\n", err ENDFB(G);
+  }
+#ifdef OPENGL_ES_2
+  I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, "label");
+  if (I){
+    printf("glBindAttribLocation: attr_worldpos\n");
+    glBindAttribLocation(I->id, 0, "attr_worldpos");
+    if (err = glGetError()){
+      PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR: attr_worldpos: %d\n", err ENDFB(G);
+    }
+  }
+#endif
+}
+
 void CShaderPrg_BindCylinderAttribLocations(PyMOLGlobals * G){
 #ifdef OPENGL_ES_2
   CShaderPrg *I = CShaderPrg_Get_CylinderShader_NoSet(G);
@@ -647,6 +665,7 @@ void CShaderPrg_Update_Shaders_For_Background(PyMOLGlobals * G) {
   I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_vs")] = vs;
   I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_fs")] = fs;
   CShaderPrg_Reload(G, "label", vs, fs);  
+  CShaderPrg_BindLabelAttribLocations(G);  
 
   vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "labelscreen", "labelscreen.vs", (char*)labelscreen_vs);
   fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "labelscreen", "labelscreen.fs", (char*)labelscreen_fs);
@@ -806,8 +825,10 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
   labelShader = CShaderPrg_New(G, "label", I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_vs")],
                                            I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_fs")]);
   if (labelShader){
+      GLenum err ;
       CShaderPrg_Link(labelShader);
       CShaderMgr_AddShaderPrg(G->ShaderMgr, labelShader);
+      CShaderPrg_BindLabelAttribLocations(G);
   }
 
   PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in labelscreen.vs and labelscreen.fs\n" ENDFB(G);
@@ -1756,7 +1777,7 @@ void CShaderPrg_Set_Stereo_And_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shade
   if (stereo && stereo_mode==cStereo_anaglyph){
     CShaderPrg_Set_AnaglyphMode(G, shaderPrg, SettingGetGlobal_i(G, cSetting_anaglyph_mode));
   } else {
-    CShaderPrg_SetMat3f(shaderPrg, "matL", mat3identity);
+    CShaderPrg_SetMat3f(shaderPrg, "matL", (GLfloat*)mat3identity);
     CShaderPrg_Set1f(shaderPrg, "gamma", 1.0);
   }
 }
