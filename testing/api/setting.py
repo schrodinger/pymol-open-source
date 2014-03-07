@@ -54,14 +54,23 @@ class TestSetting(testing.PyMOLTestCase):
             ('', 'ala', '(elem O)'),
             ('sphere_scale',),
             (2.3,),
+            (1.0,),
             )
     @testing.requires('incentive')
-    def testSet(self, sele, name, value, ):
+    def testSet(self, sele, name, value, defaultvalue):
         cmd.fragment('ala')
         cmd.set(name, value, sele)
         n = cmd.iterate('first (%s)' % (sele or 'all'), 'stored.v = s.' + name)
         self.assertEqual(n, 1)
         self.assertAlmostEqual(stored.v, value)
+
+        cmd.unset(name, sele)
+        n = cmd.iterate('first (%s)' % (sele or 'all'), 'stored.v = s.' + name)
+        self.assertEqual(n, 1)
+        if sele:
+            self.assertEqual(stored.v, defaultvalue)
+        else:
+            self.assertAlmostEqual(stored.v, 0.0)
 
     def testSetBond(self):
         value = 2.3
@@ -77,8 +86,8 @@ class TestSetting(testing.PyMOLTestCase):
         # self.assertEqual(v_list, [])
 
     def testUnset(self):
-        cmd.unset
-        self.skipTest("TODO")
+        # see testSet
+        pass
 
     def testUnsetBond(self):
         # see testSetBond
