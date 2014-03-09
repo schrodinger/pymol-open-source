@@ -229,13 +229,14 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
   /* alternate C implementation which bypasses Python expressions -- works
      only for simple label formats "..."+property+... */
 
-  int result = true;
+  int result = false;
   OrthoLineType label;
   int label_len = 0;
   int label_max = sizeof(OrthoLineType);
   OrthoLineType buffer;
   char ch, quote = 0;
   int escaped = false;
+  char *origexpr = expr;
 
   label[0] = 0;
   while((ch = *(expr++))) {
@@ -248,6 +249,7 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
         /* nop */
       } else if(ch > 32) {
         WordType tok;
+	int tokresult = true;
         expr--;
         if(label_next_token(tok, &expr)) {
           /* brain-dead linear string matching */
@@ -331,23 +333,32 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
             sprintf(buffer, "%d", at->id);
           } else if(!strcmp(tok, "str")) {
             /* nop */
-          }
+          } else {
+	    tokresult = false;
+	  }
           if(buffer[0]) {
             label_len = label_copy_text(label, buffer, label_len, label_max);
           }
         } else {
-          label_len = label_copy_text(label, "?", label_len, label_max);
-          label_len = label_copy_text(label, tok, label_len, label_max);
-        }
+	  if (tok && tok[0]){
+	    label_len = label_copy_text(label, "?", label_len, label_max);
+	    label_len = label_copy_text(label, tok, label_len, label_max);
+	  } else {
+	    tokresult = false;
+	  }
+	}
+	result |= tokresult;
       } else {
         if(label_len < label_max) {
           label[label_len] = '?';
           label_len++;
+	  result = true;
         }
       }
     } else {
       if(ch == quote) {
         quote = 0;
+	result = true;
       } else if(ch == '\\') {
         if(!escaped) {
           escaped = true;
@@ -368,20 +379,29 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
     }
   }
 
-  if(result) {
+  {
     if(at->label) {
       OVLexicon_DecRef(G->Lexicon, at->label);
       at->label = 0;
     }
 
-    if(label[0]) {
-      OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon, label);
-      if(OVreturn_IS_OK(ret)) {
-        at->label = ret.word;
+    {
+      OVreturn_word ret;
+      if (!result && !label[0]){
+	// if label is not set, just use expression as a string for label
+	strncpy(label, origexpr, OrthoLineLength);
+	result = true;
+      }
+      if (result && label[0]){
+	ret = OVLexicon_GetFromCString(G->Lexicon, label);
+	if(OVreturn_IS_OK(ret)) {
+	  at->label = ret.word;
+	  result = true;
+	}
+	//    } else {
+	//      ErrMessage(G, "Label", "Aborting on error. Labels may be incomplete.");
       }
     }
-  } else {
-    ErrMessage(G, "Label", "Aborting on error. Labels may be incomplete.");
   }
   return (result);
 }

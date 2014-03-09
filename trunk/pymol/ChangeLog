@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2014-03-09 Thomas Holder, Blaine Bell
+
+	* updated splash
+
+	* cmd.label2 fixes
+
+	* fix: roving details linger for polar contacts
+
+	* fix crash in RepCylBond with order=0
+
+	* fix cylinder picking bug
+
 2014-01-20 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* mutagenesis wizard: use PYMOL_DATA (patch by Michael Banck)

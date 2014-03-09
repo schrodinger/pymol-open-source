@@ -293,7 +293,7 @@ def _copy_image(_self=cmd,quiet=1):
 
 # loading
 
-def file_read(finfo):
+def file_read(finfo, _self=cmd):
     '''
     Read a file, possibly gzipped or bzipped, and return the
     uncompressed file contents as a string.
@@ -304,8 +304,10 @@ def file_read(finfo):
         if not isinstance(finfo, basestring):
             handle = finfo
         elif '://' in finfo:
-            import urllib2 as urllib
-            handle = urllib.urlopen(finfo)
+            import urllib2
+            req = urllib2.Request(finfo,
+                    headers={'User-Agent': 'PyMOL/' + _self.get_version()[0]})
+            handle = urllib2.urlopen(req)
         else:
             handle = open(finfo, 'rb')
         contents = handle.read()
@@ -352,7 +354,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
             try:
                 # BEGIN PROPRIETARY CODE SEGMENT
                 from epymol import moe
-                moe_str = file_read(finfo)
+                moe_str = _self.file_read(finfo)
                 r = moe.read_moestr(moe_str,str(oname),int(state),
                                 int(finish),int(discrete),int(quiet),int(zoom),_self=_self)
 
@@ -365,7 +367,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
             try:
                 # BEGIN PROPRIETARY CODE SEGMENT
                 from epymol import mae
-                mae_str = file_read(finfo)
+                mae_str = _self.file_read(finfo)
                 r = mae.read_maestr(mae_str,str(oname),
                                     int(state),
                                     int(finish),int(discrete),
@@ -383,7 +385,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 # NOTE: we could safely always do this, not only for URLs and
                 # compressed files. But I don't want to change the old behavior
                 # that regular files are read from the C function.
-                finfo = file_read(finfo)
+                finfo = _self.file_read(finfo)
                 ftype = _load2str[ftype]
             r = _cmd.load(_self._COb,str(oname),finfo,int(state)-1,int(ftype),
                           int(finish),int(discrete),int(quiet),

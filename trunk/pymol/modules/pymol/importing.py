@@ -1242,7 +1242,6 @@ PYMOL API
         path = str: fetch_path
         file = str or file: file name or open file handle
         '''
-        from . import internal
 
         fetch_host_list = [x if '://' in x else fetchHosts[x]
                 for x in _self.get("fetch_host", _self=_self).split()]
@@ -1289,7 +1288,12 @@ PYMOL API
             url = url.format(mid=code[1:3], code=code, type=type)
 
             try:
-                contents = internal.file_read(url)
+                contents = _self.file_read(url)
+
+                # assume HTML content means error on server side without error HTTP code
+                if '<html' in contents[:500].lower():
+                    raise pymol.CmdException
+
             except pymol.CmdException:
                 if not quiet:
                     print " Warning: failed to fetch from", url
