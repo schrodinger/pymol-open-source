@@ -456,7 +456,6 @@ static int RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
   /* we have a coordinate system */
 
   /* Next, we need to determine how many cylinders */
-
   switch (ord) {
   case 2:
     {
@@ -1588,12 +1587,11 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     for(a = 0; a < obj->NBond; a++) {
       b1 = b->index[0];
       b2 = b->index[1];
-
-      b++;
-      if(ai1[b1].visRep[cRepCyl] || ai1[b2].visRep[cRepCyl]) {
-        visFlag = true;
-        break;
+      if(b->order && (ai1[b1].visRep[cRepCyl] || ai1[b2].visRep[cRepCyl])) {
+	visFlag = true;
+	break;
       }
+      b++;
     }
   if(!visFlag) {
     OOFreeP(I);
@@ -1689,7 +1687,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     b++;
     ok &= !G->Interrupt;
   }
-
   nEdge = (int) SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_quality);
   radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_radius);
   half_bonds = (int) SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_half_bonds);
@@ -1755,7 +1752,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           a1 = cs->AtmToIdx[b1];
           a2 = cs->AtmToIdx[b2];
         }
-        if((a1 >= 0) && (a2 >= 0)) {
+        if(ord && (a1 >= 0) && (a2 >= 0)) {
           register AtomInfoType *ati1 = obj->AtomInfo + b1;
           register AtomInfoType *ati2 = obj->AtomInfo + b2;
 
@@ -1865,6 +1862,10 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       b1 = b->index[0];
       b2 = b->index[1];
       ord = b->order;
+      if (!ord){
+	b++;
+	continue;
+      }
       if(obj->DiscreteFlag) {
         if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
           a1 = obj->DiscreteAtmToIdx[b1];
@@ -1998,7 +1999,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
             I->NSPC++;
           }
 
-	  if(s2 && (!marked[b2]) && (!stick_ball_filter_single_atoms || (ord==1 || adjacent_atoms[a2] && adjacent_atoms[a2][0] > 1))) {
+	  if(s2 && (!marked[b2]) && (!stick_ball_filter_single_atoms || (ord==1 || (adjacent_atoms[a2] && adjacent_atoms[a2][0] > 1)))) {
 	      /* just once for each atom..., if stick_ball_filter is on, then only for atoms that have more than one adjacent atom */
             float vdw =
               stick_ball_ratio * ((ati2->protons == cAN_H) ? bd_radius : bd_radius_full);
@@ -2162,12 +2163,20 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 		capdraw2 = caps_req;		
 	      }
 	      if (shader_mode){
-		if (capdraw1)
-		  if (capdrawn[a1]) capdraw1 = 0;
-		  else capdrawn[a1] = 1;
-		if (capdraw2)
-		  if (capdrawn[a2]) capdraw2 = 0;
-		  else capdrawn[a2] = 1;
+		if (capdraw1){
+		  if (capdrawn[a1]){
+		    capdraw1 = 0;
+		  } else {
+		    capdrawn[a1] = 1;
+		  }
+		}
+		if (capdraw2){
+		  if (capdrawn[a2]){
+		    capdraw2 = 0;
+		  } else {
+		    capdrawn[a2] = 1;
+		  }
+		}
 	      }
 	      if (ok)
 		ok &= RepCylinder(G, I, Vcgo, v1, v2, nEdge, capdraw1, capdraw2, bd_radius, overlap_r,

@@ -5033,6 +5033,7 @@ CGO *CGOSimplify(CGO * I, int est)
     case CGO_PICK_COLOR:
       cgo->current_pick_color_index = CGO_get_int(pc);
       cgo->current_pick_color_bond = CGO_get_int(pc + 1);
+      CGOPickColor(cgo, cgo->current_pick_color_index, cgo->current_pick_color_bond);
       break;
     case CGO_SHADER_CYLINDER:
       {

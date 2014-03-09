@@ -5083,7 +5083,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
         polar_cutoff = (float) fabs(polar_cutoff);
       }
       sprintf(buffer,
-              "cmd.dist('rov_pc','%s & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=2,label=%d,quiet=2)",
+              "cmd.delete('rov_pc');cmd.dist('rov_pc','%s & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=2,label=%d,quiet=2)",
               s, p1, p2, polar_contacts, polar_cutoff, label_flag);
       PParse(G, buffer);
       PFlush(G);

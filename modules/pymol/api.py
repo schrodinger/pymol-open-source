@@ -399,6 +399,9 @@ from experimenting import \
       spheroid,           \
       test
 
+from internal import      \
+      file_read
+
 #--------------------------------------------------------------------
 #from m4x import \
 #     metaphorics
