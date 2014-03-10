@@ -1972,8 +1972,9 @@ void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height)
 void SceneGetImageSizeFast(PyMOLGlobals * G, int *width, int *height)
 {
   register CScene *I = G->Scene;
-    *width = I->Width;
-    *height = I->Height;
+  SceneGetViewPortWidthHeight(G, width, height);
+  if(stereo_via_adjacent_array(I->StereoMode))
+    *width /= 2.f;
 }
 void SceneGetImageSizeFastAdjustForGrid(PyMOLGlobals * G, int *width, int *height){
   register CScene *I = G->Scene;
@@ -1981,8 +1982,7 @@ void SceneGetImageSizeFastAdjustForGrid(PyMOLGlobals * G, int *width, int *heigh
     *width = I->grid.cur_viewport_size[0];
     *height = I->grid.cur_viewport_size[1];
   } else {
-      *width = I->Width;
-      *height = I->Height;
+    SceneGetViewPortWidthHeight(G, width, height);
   }
 }
 
