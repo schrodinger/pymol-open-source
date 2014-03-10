@@ -1972,13 +1972,8 @@ void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height)
 void SceneGetImageSizeFast(PyMOLGlobals * G, int *width, int *height)
 {
   register CScene *I = G->Scene;
-  if(I->Image) {
-    *width = I->Image->width;
-    *height = I->Image->height;
-  } else {
     *width = I->Width;
     *height = I->Height;
-  }
 }
 void SceneGetImageSizeFastAdjustForGrid(PyMOLGlobals * G, int *width, int *height){
   register CScene *I = G->Scene;
@@ -1986,13 +1981,8 @@ void SceneGetImageSizeFastAdjustForGrid(PyMOLGlobals * G, int *width, int *heigh
     *width = I->grid.cur_viewport_size[0];
     *height = I->grid.cur_viewport_size[1];
   } else {
-    if(I->Image) {
-      *width = I->Image->width;
-      *height = I->Image->height;
-    } else {
       *width = I->Width;
       *height = I->Height;
-    }
   }
 }
 

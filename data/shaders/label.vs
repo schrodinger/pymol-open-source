@@ -21,16 +21,15 @@ uniform float fog_enabled; // actually bool
 
 void main()
 {
-  vec4 transformedPosition = gl_ModelViewProjectionMatrix * attr_worldpos;
-  transformedPosition.xyz = transformedPosition.xyz/transformedPosition.w;
-  transformedPosition.w = 1.;
-  transformedPosition.xy = transformedPosition.xy + attr_screenworldoffset.xy/(screenSize*screenOriginVertexScale);
-  transformedPosition.z = transformedPosition.z + attr_screenworldoffset.z/(screenSize.x*screenOriginVertexScale);
-  transformedPosition.x = transformedPosition.x + aspectRatioAdjustment * attr_screenoffset.x * 2./screenSize.x;
-  transformedPosition.y = transformedPosition.y + attr_screenoffset.y * 2./screenSize.y;
-  gl_Position = transformedPosition;
+  vec4 pos = gl_ModelViewProjectionMatrix * attr_worldpos;
+  pos /= pos.w;
+  pos.xyz += attr_screenworldoffset / (screenSize.xyx * screenOriginVertexScale);
+  pos.xy += attr_screenoffset.xy * 2. / screenSize * vec2(aspectRatioAdjustment, 1.);
+
+  gl_Position = pos;
   textureLookup = attr_texcoords;
-  normalizedViewCoordinate = (gl_Position.xyz/gl_Position.w) / 2.0 + 0.5;
+  normalizedViewCoordinate = pos.xyz / 2.0 + 0.5;
+
   if (fog_enabled > 0.5) {
     vec3 eye_pos = vec3(gl_ModelViewMatrix * attr_worldpos);
     fog = max(0.0, (gl_Fog.end - abs(eye_pos.z)) * gl_Fog.scale);
