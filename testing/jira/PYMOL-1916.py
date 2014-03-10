@@ -19,7 +19,7 @@ class Test1916(testing.PyMOLTestCase):
         b = Bond()
         b.index = [0, 1]
         b.order = 0
-        m.add_bond(b1)
+        m.add_bond(b)
 
         cmd.load_model(m, 'foo')
 
