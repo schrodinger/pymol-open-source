@@ -2,6 +2,17 @@
 CHANGE LOG
 =========================================================================
 
+2014-03-12 Thomas Holder
+
+	* volume API and panel improvements
+	  - volume presets
+	  - new commands volume_color, volume_ramp_new
+	  - improved volume panel/UI
+	  - custom volume ramps/presets
+	  - support for volumes from maps with transformation matrix
+
+	* 1.7.1.0 (beta)
+
 2014-03-09 Thomas Holder, Blaine Bell
 
 	* updated splash

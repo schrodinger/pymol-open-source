@@ -524,7 +524,6 @@ void CShaderPrg_BindLabelAttribLocations(PyMOLGlobals * G){
 #ifdef OPENGL_ES_2
   I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, "label");
   if (I){
-    printf("glBindAttribLocation: attr_worldpos\n");
     glBindAttribLocation(I->id, 0, "attr_worldpos");
     if (err = glGetError()){
       PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR: attr_worldpos: %d\n", err ENDFB(G);
