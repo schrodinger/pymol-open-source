@@ -44,7 +44,12 @@ from creating import \
       symexp,             \
       ramp_new,           \
       ungroup,            \
-      volume,             \
+      volume
+
+#--------------------------------------------------------------------
+from colorramping import \
+      volume_ramp_new,   \
+      volume_panel,   \
       volume_color
 
 #--------------------------------------------------------------------
@@ -122,8 +127,6 @@ from querying import \
       get_version,        \
       get_volume_field,   \
       get_volume_histogram, \
-      get_volume_ramp, \
-      set_volume_ramp, \
       get_volume_is_updated, \
       get_vrml,           \
       id_atom,            \

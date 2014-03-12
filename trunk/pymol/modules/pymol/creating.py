@@ -28,7 +28,6 @@ if __name__=='pymol.creating':
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
           is_tuple
     import tempfile
-    from colorramping import ColorRamp
     import sys
 
     from chempy import fragments
@@ -554,53 +553,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
-
-    def get_volume_palette(name):
-        r = ColorRamp(360)
-        r.addColor(0, (0,0,0,0))
-        r.addColor(359, (0,0,0,0))
-        print "Get volume pallete number: %d\n", name
-        if name==-1:
-            r.addColor(345, (0, 0.2, 0.7, 0.4))
-            r.addColor(315, (0, 0.2, 0.7, 0.1))
-        elif name==-2:
-            pass
-        elif name==-3:
-            pass
-        elif name==-4:
-            pass
-        elif name==-5:
-            pass
-
-        return r.getRamp()
-
-
-
-    def volume_color(name, colors, _self=cmd):
-        """
-DESCRIPTION -- untested do not use
-ALSO -- this belongs in a different module
-        """
-        if not (is_list(colors) or is_tuple(colors)):
-            colors = safe_list_eval(colors)
-        # tuple of tuples to list of float
-        cList = []
-        map(lambda x: cList.extend(x), colors)
-        cList = map(lambda x: float(x), cList)
-
-        try:
-            _self.lock(_self)
-            r = _cmd.volume_color(_self._COb, str(name), cList)
-        finally:
-            _self.unlock(r,_self)
-        
-        if _self._raising(r,_self): raise pymol.CmdException
-
-        # unlock and then use this to differentiate our viz
-        return r        
-
-
-    def volume(name, map, level=1.0, selection='', buffer=0.0,
+    def volume(name, map, ramp='', selection='', buffer=0.0,
                 state=1, carve=None, source_state=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
@@ -609,13 +562,15 @@ DESCRIPTION
 
 USAGE
 
-    volume name, map, [, selection [, carve ]]]]
+    volume name, map [, ramp [, selection [, buffer [, state [, carve ]]]]]
 
 ARGUMENTS
 
     name = the name for the new volume object.
 
     map = the name of the map object to use for computing the volume.
+
+    ramp = str: named color ramp {default: }
 
     selection = an atom selection about which to display the mesh with
         an additional "buffer" (if provided).
@@ -637,7 +592,7 @@ EXAMPLE
 
 SEE ALSO
 
-    map_new, isosurface, isomesh
+    map_new, isosurface, isomesh, volume_color, volume_ramp_new
 
 '''
         r = DEFAULT_ERROR
@@ -653,6 +608,13 @@ SEE ALSO
 
         if carve==None:
             carve=0.0
+
+        try:
+            # legacy
+            level = float(ramp)
+            ramp = ''
+        except ValueError:
+            level = 0.0
         
         try:
             _self.lock(_self)
@@ -667,6 +629,9 @@ SEE ALSO
             _self.unlock(r,_self)
         
         if _self._raising(r,_self): raise pymol.CmdException
+
+        if ramp:
+            _self.volume_color(name, ramp)
 
         # unlock and then use this to differentiate our viz
         return r

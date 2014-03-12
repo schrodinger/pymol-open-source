@@ -437,10 +437,13 @@ char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, char *name);
 int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict);
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G);
 PyObject *ExecutiveGetVolumeField(PyMOLGlobals * G, char * objName);
-PyObject *ExecutiveGetVolumeHistogram(PyMOLGlobals * G, char * objName);
-PyObject *ExecutiveSetVolumeRamp(PyMOLGlobals * G, char * objName, float *ramp_list, int list_size);
+int       ExecutiveSetVolumeRamp(PyMOLGlobals * G, char * objName, float *ramp_list, int list_size);
 PyObject *ExecutiveGetVolumeRamp(PyMOLGlobals * G, char * objName);
-PyObject* ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName);
+int       ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName);
+
+float * ExecutiveGetHistogram(PyMOLGlobals * G, char* objName, int n_points,
+        float min_val, float max_val);
+
 int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj,
                                    void **hidden);
 int ExecutiveSetObjectColor(PyMOLGlobals * G, char *name, char *color, int quiet);

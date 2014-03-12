@@ -312,17 +312,9 @@ select an amplitude column name from the file and try again.
                     else:
                         # setup volume view
                         volName = pymol.cmd.get_unused_name(r+"-vol")
-                        pymol.cmd.volume(volName, pfx)
+                        pymol.cmd.volume(volName, pfx, "fofc")
                         # if you don't do this, PyMOL will crash
                         # when it tries to load the panel
-                        if skin.volFrame not in skin.dataArea.slaves():
-                            skin.toggleFrame(skin.volFrame,startup=1)
-                        skin.volFrame.addWithoutGUI(volName, data=3.0, alpha=0.5,
-                                                    col=[0.0, 0.85, 0.0 ],
-                                                    kind="triplet")
-                        skin.volFrame.addWithoutGUI(volName, data=-3.0, alpha=0.5,
-                                                    col=[0.85, 0.0, 0.0 ],
-                                                    kind="triplet")
                 else:
                     toShow = pymol.cmd.get_setting_text("default_2fofc_map_rep")
                     if toShow=="isosurface":
@@ -336,14 +328,9 @@ select an amplitude column name from the file and try again.
                     else:
                         # setup volume view
                         volName = pymol.cmd.get_unused_name(r+"-vol")
-                        pymol.cmd.volume(volName, pfx)
+                        pymol.cmd.volume(volName, pfx, "2fofc")
                         # if you don't do this, PyMOL will crash
                         # when it tries to load the panel
-                        if skin.volFrame not in skin.dataArea.slaves():
-                            skin.toggleFrame(skin.volFrame,startup=1)
-                        skin.volFrame.addWithoutGUI(volName, data=1.0, alpha=0.5,
-                                                    col=[0.0, 0.0, 0.85 ],
-                                                    kind="triplet")
                         
             except:
                 pass

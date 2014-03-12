@@ -569,17 +569,17 @@ def all_colors(self_cmd, sele):
     
         ]
 
-#def vol_color(self_cmd, sele):
-#    print "Be sure to finish the color_volume colorRamps"
-#    return [
-#        [2, 'Colors:',            ''],
-#        [1, 'High Focus',         'cmd.volume_color("'+sele+'","-1")' ],
-#        [1, 'Med. Focus',         'cmd.volume_color("'+sele+'","-2")' ],
-#        [1, 'Low  Focus',         'cmd.volume_color("'+sele+'","-3")' ],
-#        [1, 'Solvent Focus',      'cmd.volume_color("'+sele+'","-4")' ],
-#        [1, 'Ion Focus',          'cmd.volume_color("'+sele+'","-5")' ],
-#        ]
-
+def vol_color(self_cmd, sele):
+    from pymol.colorramping import namedramps
+    rsele = repr(sele)
+    return [
+        [2, 'Coloring:', '' ],
+        [1, 'panel', 'cmd.volume_panel(%s)' % (rsele)],
+        [0, '', ''],
+    ] + [
+        [1, p, 'cmd.volume_color(%s, "%s")' % (rsele, p) ]
+        for p in sorted(namedramps)
+    ]
 
 
 def color_auto(self_cmd, sele):
@@ -1172,9 +1172,14 @@ def map_mesh(self_cmd, sele):
             ]
 
 def map_volume(self_cmd, sele):
+    from pymol.colorramping import namedramps
     return [[ 2, 'Volume:', ''],
-            [ 1, 'default'              , 'cmd.volume("'+sele+'_volume","'+sele+'",1.0)'  ]
-           ]
+            [ 1, 'default'              , 'cmd.volume("'+sele+'_volume","'+sele+'")'  ],
+            [ 0, '', '' ],
+        ] + [
+            [ 1, p, 'cmd.volume("%s_volume","%s","%s")' % (sele, sele, p) ]
+            for p in sorted(namedramps)
+        ]
 
 def map_surface(self_cmd, sele):
     return [[ 2, 'Surface:',  '' ],

@@ -685,7 +685,7 @@ if __name__=='pymol.setting':
         use_shaders                        = 647
         shader_path                        = 648
         volume_bit_depth                   = 649
-        volume_color                       = 650
+#        volume_color                       = 650
         volume_layers                      = 651
         volume_data_range                  = 652
         auto_defer_atom_count              = 653

@@ -991,19 +991,20 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
         }
         PRINTFB(G, FB_CCmd, FB_Blather)
           " Isomesh: buffer %8.3f carve %8.3f \n", fbuf, carve ENDFB(G);
-        if(sele_obj
-           && SettingGet_b(G, NULL, sele_obj->Obj.Setting, cSetting_map_auto_expand_sym)
-           && (sele_obj->Symmetry)) {
-          // legacy default: take symmetry from molecular object
-          symm = sele_obj->Symmetry;
-        } else if(SettingGet_b(G, NULL, mapObj->Obj.Setting, cSetting_map_auto_expand_sym)) {
-          // fallback: take symmetry from map state
-          symm = ms->Symmetry;
-        } else {
-          symm = NULL;
+
+        symm = NULL;
+        if(sele_obj &&  ObjectMapValidXtal(mapObj, state)) {
+          if(SettingGet_b(G, NULL, sele_obj->Obj.Setting, cSetting_map_auto_expand_sym)
+              && (sele_obj->Symmetry)) {
+            // legacy default: take symmetry from molecular object
+            symm = sele_obj->Symmetry;
+          } else if(SettingGet_b(G, NULL, mapObj->Obj.Setting, cSetting_map_auto_expand_sym)) {
+            // fallback: take symmetry from map state
+            symm = ms->Symmetry;
+          }
         }
 
-        if(symm && ObjectMapValidXtal(mapObj, state)) {
+        if(symm) {
           obj = (CObject *) ObjectMeshFromXtalSym(G, (ObjectMesh *) origObj, mapObj,
                                                   symm,
                                                   map_state, state, mn, mx, lvl,
@@ -1066,6 +1067,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
 int ExecutiveVolumeColor(PyMOLGlobals * G, char * volume_name, float * colors, int ncolors) {
  
   int ok = true;
+#if 0 
   CObject * origObj = NULL;
   
   origObj = ExecutiveFindObjectByName(G, volume_name);
@@ -1084,6 +1086,7 @@ int ExecutiveVolumeColor(PyMOLGlobals * G, char * volume_name, float * colors, i
     ok = false;
   }
 
+#endif
   return ok;
 }
 
@@ -1104,6 +1107,7 @@ int ExecutiveVolume(PyMOLGlobals * G, char *volume_name, char *map_name,
   ObjectMapState *ms;
   OrthoLineType s1;
   ObjectMolecule *sele_obj = NULL;
+  CSymmetry *symm;
 
   /* Goal: make a new volume map from the object or selection
    *
@@ -1235,20 +1239,29 @@ int ExecutiveVolume(PyMOLGlobals * G, char *volume_name, char *map_name,
         }
         PRINTFB(G, FB_CCmd, FB_Blather)
           " Volume: buffer %8.3f carve %8.3f \n", fbuf, carve ENDFB(G);
-/*
-        if(sele_obj
-           && SettingGet_b(G, NULL, sele_obj->Obj.Setting, cSetting_map_auto_expand_sym)
-           && (sele_obj->Symmetry) && ObjectMapValidXtal(mapObj, state)) {
 
+        symm = NULL;
+        if(sele_obj && ObjectMapValidXtal(mapObj, state)) {
+          if(SettingGet_b(G, NULL, sele_obj->Obj.Setting, cSetting_map_auto_expand_sym)
+              && (sele_obj->Symmetry)) {
+            // legacy default: take symmetry from molecular object
+            symm = sele_obj->Symmetry;
+          } else if(SettingGet_b(G, NULL, mapObj->Obj.Setting, cSetting_map_auto_expand_sym)) {
+            // fallback: take symmetry from map state
+            symm = ms->Symmetry;
+          }
+        }
+
+        if(symm) {
           obj = (CObject *) ObjectVolumeFromXtalSym(G, (ObjectVolume *) origObj, mapObj,
-                                                  sele_obj->Symmetry,
+                                                  symm,
                                                   map_state, state, mn, mx, lvl,
                                                   mesh_mode, carve, vert_vla, alt_lvl,
                                                   quiet);
         } else {
           obj = NULL;
         }
-*/
+
         if(!obj) {
           obj = (CObject *) ObjectVolumeFromBox(G, (ObjectVolume *) origObj, mapObj,
                                               map_state, state, mn, mx, lvl, mesh_mode,
@@ -4460,25 +4473,37 @@ PyObject* ExecutiveGetVolumeField(PyMOLGlobals * G, char* objName) {
 #endif
 }
 
-PyObject* ExecutiveGetVolumeHistogram(PyMOLGlobals * G, char* objName) {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
+/*
+ * returns allocated memory
+ */
+float * ExecutiveGetHistogram(PyMOLGlobals * G, char* objName, int n_points, float min_val, float max_val) {
   CObject *obj;
-  PyObject* result = NULL;
-
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeHistogram Entered.\n" ENDFD;
+  ObjectMapState *oms = NULL;
 
   obj = ExecutiveFindObjectByName(G, objName);
-  if(obj && obj->type==cObjectVolume) {
-    result = ObjectVolumeGetHistogram((ObjectVolume *) obj);
+  ok_assert(1, obj);
+
+  switch (obj->type) {
+  case cObjectMap:
+    oms = ObjectMapGetState((ObjectMap *) obj, 0);
+    break;
+  case cObjectVolume:
+    oms = ObjectVolumeGetMapState((ObjectVolume *) obj);
+    break;
+  default:
+    PRINTFB(G, FB_Executive, FB_Errors)
+      " GetHistogram-Error: wrong object type.", objName ENDFB(G);
   }
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeHistogram Exited.\n" ENDFD;
+  if(oms) {
+    float *hist = Calloc(float, n_points + 4);
+    float range = SettingGet_f(G, obj->Setting, NULL, cSetting_volume_data_range);
+    ObjectMapStateGetHistogram(G, oms, n_points, range, hist, min_val, max_val);
+    return hist;
+  }
 
-  return result;
-
-#endif
+ok_except1:
+  return NULL;
 }
 
 PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, char* objName) {
@@ -4502,12 +4527,9 @@ PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, char* objName) {
 #endif
 }
 
-PyObject* ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName) {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
+int ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName) {
   CObject *obj;
-  PyObject* result = NULL;
+  int result = -1;
 
   PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Entered.\n" ENDFD;
 
@@ -4519,29 +4541,18 @@ PyObject* ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName) {
   PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Exited.\n" ENDFD;
 
   return result;
-
-#endif
 }
 
-PyObject* ExecutiveSetVolumeRamp(PyMOLGlobals * G, char* objName, float *ramp_list, int list_size) {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
+int ExecutiveSetVolumeRamp(PyMOLGlobals * G, char* objName, float *ramp_list, int list_size) {
   CObject *obj;
-  PyObject* result = NULL;
-
-  PRINTFD(G, FB_Executive) "Executive-SetVolumeRamp Entered.\n" ENDFD;
+  int result = false;
 
   obj = ExecutiveFindObjectByName(G, objName);
   if(obj && obj->type==cObjectVolume) {
     result = ObjectVolumeSetRamp((ObjectVolume *) obj, ramp_list, list_size);
   }
 
-  PRINTFD(G, FB_Executive) "Executive-SetVolumeRamp Exited.\n" ENDFD;
-
   return result;
-
-#endif
 }
 
 int ExecutiveIsolevel(PyMOLGlobals * G, char *name, float level, int state, int query,
@@ -15440,8 +15451,7 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                     MenuActivate(G, mx, my, x, y, false, "slice_color", namesele);
                     break;
                   case cObjectVolume:
-		    /* TODO: Create better automated coloring for volumes */
-                    MenuActivate(G, mx, my, x, y, false, "general_color", namesele);
+                    MenuActivate(G, mx, my, x, y, false, "vol_color", namesele);
                     break;
                   }
                   break;

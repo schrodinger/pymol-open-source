@@ -3263,15 +3263,10 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     }
     break;
   case cSetting_volume_bit_depth:
-    ExecutiveInvalidateRep(G, inv_sele, cRepVolume, cRepInvColor);
-    SceneInvalidate(G);
-    break;
-  case cSetting_volume_data_range:
     ExecutiveInvalidateRep(G, inv_sele, cRepVolume, cRepInvAll);
     SceneInvalidate(G);
     break;
   case cSetting_volume_layers:
-    ExecutiveInvalidateRep(G, inv_sele, cRepVolume, cRepInvAll);
     SceneInvalidate(G);
     break;
   case cSetting_cgo_transparency:
@@ -4687,7 +4682,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_line_use_shader, 1);
     set_b(I, cSetting_sphere_use_shader, 1);
     set_s(I, cSetting_shader_path, "data/shaders");
-    set_i(I, cSetting_volume_bit_depth, 8);
+    set_i(I, cSetting_volume_bit_depth, 16);
     set_color(I, cSetting_volume_color, "-1");
     set_f(I, cSetting_volume_layers, 256);
     set_f(I, cSetting_volume_data_range, 5.0);

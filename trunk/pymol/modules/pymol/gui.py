@@ -19,6 +19,13 @@ if __name__=='pymol.gui':
     import pymol
     import cmd
 
+def get_pmgapp():
+    '''
+    TODO move to this module
+    '''
+    from pymol import plugins
+    return plugins.get_pmgapp()
+
 # external gui control 
 
 def ext_hide(_self=cmd):

@@ -19,7 +19,6 @@ from pmg_tk.ColorEditor import ColorEditor
 
 from pmg_tk.skins import PMGSkin
 from builder import Builder
-from volume import Volume
 
 import traceback
 
@@ -224,10 +223,33 @@ class Normal(PMGSkin):
                                               lambda s=self:
                                               s.toggleFrame(s.buildFrame))
         self.volB = self.buttonAdd(row4, 'Volume',
-                                   lambda s=self:
-                                       s.toggleFrame(s.volFrame))
+                                    self.newVolumeFrame)
         # initialize disabled
         self.volB.config(state=DISABLED)
+
+    def newVolumeFrame(self):
+        volumes = self.cmd.get_names_of_type("object:volume", public=1)
+        if not volumes:
+            return
+        if len(volumes) == 1:
+            self.cmd.volume_panel(volumes[0])
+            return
+        def callback():
+            sels = listbox.getcurselection()
+            if sels:
+                self.cmd.volume_panel(sels[0])
+            window.destroy()
+        title = 'Select a volume object'
+        window = Toplevel(self.app.root)
+        window.title(title)
+        listbox = Pmw.ScrolledListBox(window,
+                labelpos='nw',
+                label_text=title,
+                items=volumes,
+                selectioncommand=callback)
+        listbox.pack(padx=5, pady=5)
+        x, y = window.winfo_pointerxy()
+        window.geometry('+%d+%d' % (x - 20, y - 20))
 
     def destroyButtonArea(self):
         self.app.destroycomponent('row1')
@@ -343,7 +365,6 @@ class Normal(PMGSkin):
 
         self.cmdFrame = Frame(self.dataArea)
         self.buildFrame = Builder(self.app, self.dataArea)
-        self.volFrame = Volume(self.app, self.dataArea)
         
         self.toggleFrame(self.cmdFrame,startup=1)
 
@@ -415,7 +436,6 @@ class Normal(PMGSkin):
         if self.app.allow_after:
             self.output.after(100,self.update_feedback)
             self.output.after(100,self.update_menus)
-            self.output.after(100,self.update_volume)
             
         self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)
         self.app.bind(self.entry, 'Command Input Area')
@@ -522,22 +542,11 @@ class Normal(PMGSkin):
                 self.cmd.set("valence","1")
                 self.auto_overlay = self.cmd.get("auto_overlay")
                 self.cmd.set("auto_overlay",1)
-            elif frame == self.volFrame:
-                frame.deferred_activate()
             
     def update_menus(self):
         self.setting.refresh()
-        if self.app.allow_after:
-            self.output.after(500,self.update_menus) # twice a second
 
-    def update_volume(self):
-        # if the volume frame is open, update it
-        if self.volFrame in self.dataArea.slaves():
-            if self.volFrame.update_is_needed():
-                self.volFrame.update_object_list()
-                self.volFrame.update_listbox()
-                self.volFrame.update_transferframe()
-        else:
+        if True:
             # volume frame is closed, update the button
             if len(self.cmd.get_names_of_type("object:volume",public=1))>0:
                 self.volB.config(state=NORMAL)
@@ -545,7 +554,7 @@ class Normal(PMGSkin):
                 self.volB.config(state=DISABLED)
         # keep calling
         if self.app.allow_after:
-            self.output.after(500,self.update_volume) 
+            self.output.after(500,self.update_menus) # twice a second
 
     def file_open(self,tutorial=0):
         # FIXME: finish
@@ -898,6 +907,24 @@ class Normal(PMGSkin):
         self.cmd.log("util.hide_sele()\n","util.hide_sele()\n")
         self.util.hide_sele()
             
+    def edit_pymolrc(self):
+        import tkSimpleDialog
+        from pmg_tk.TextEditor import TextEditor
+
+        try:
+            pymolrc = self.pymol.invocation.options.pymolrc[0]
+        except (AttributeError, IndexError):
+            if sys.platform.startswith('win'):
+                pymolrc = os.path.expandvars(r'$HOMEDRIVE$HOMEPATH\pymolrc.pml')
+            else:
+                pymolrc = os.path.expandvars(r'$HOME/.pymolrc')
+            pymolrc = tkSimpleDialog.askstring('Create new pymolrc?',
+                    'Filename of new pymolrc',
+                    initialvalue=pymolrc)
+
+        if pymolrc:
+            TextEditor(self.root, pymolrc, 'pymolrc (%s)' % pymolrc)
+
     def file_run(self):
         ofile = askopenfilename(initialdir = os.getcwd(),
                          filetypes=[("All Runnable","*.pml"),
@@ -1328,6 +1355,12 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('File', 'command', 'Run program or script.',
                                 label='Run...',
                                 command=self.file_run)
+        
+        self.menuBar.addmenuitem('File', 'separator', '')
+
+        self.menuBar.addmenuitem('File', 'command', 'Edit pymolrc',
+                                label='Edit pymolrc',
+                                command=self.edit_pymolrc)
 
         self.menuBar.addmenuitem('File', 'separator', '')
 

@@ -72,6 +72,7 @@ if __name__=='pymol.invocation':
     options.no_quit = 0
     options.plugins = 2
     options.exit_on_error = 0
+    options.pymolrc = None
 
     options.win_py = { 'irix':240,
                        'darwin': 214, # hmm...need to set to 192 for Leopard?...
@@ -107,9 +108,9 @@ if __name__=='pymol.invocation':
         second = []
         for a in lst:
             if py_re.search(a):
-                first.append("_do__ run "+a) # preceeding "_ " cloaks
+                first.append(a) # preceeding "_ " cloaks
             elif script_re.search(a):
-                second.append("_do__ @"+a) # preceeding "_ " cloaks 
+                second.append(a) # preceeding "_ " cloaks 
 
         first.sort()
         second.sort()
@@ -381,7 +382,9 @@ if __name__=='pymol.invocation':
                 options.deferred.append(a)
                 loaded_something = 1
         if pymolrc != None:
-            options.deferred = pymolrc + options.deferred
+            options.deferred = [('_do__ @' + a) if script_re.search(a) else a
+                    for a in pymolrc] + options.deferred
+            options.pymolrc = pymolrc
         if options.plugins == 1:
             # Load plugins independent of PMGApp (will not add menu items)
             options.deferred.append('_do__ /import pymol.plugins;pymol.plugins.initialize(-1)')

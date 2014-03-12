@@ -104,6 +104,7 @@ def createlegacypmgapp():
     app.menuBar.addmenuitem = \
     app.menuBar.deletemenuitems = \
     app.menuBar.addcascademenu = lambda *x, **y: None
+    app.execute = lambda c: eval(c) if isinstance(c, str) else c()
 
     def starttk():
         import Tkinter

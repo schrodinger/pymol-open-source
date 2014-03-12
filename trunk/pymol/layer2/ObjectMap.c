@@ -348,6 +348,8 @@ int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min
  * h_points - number of histogram points
  * limit - limit the data to (mean - limit * stdev, mean + limit * stdev)
  *         if limit <= 0, don't trim the histogram
+ * min_arg, max_arg - limit the data, has priority over "limit" param;
+ *         Unused if min_arg==max_arg
  *
  * OUTPUT PARAMS
  *
@@ -356,7 +358,8 @@ int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min
  *             of non-normalized histogram counts.
  */
 int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms, 
-                               int n_points, float limit, float *histogram)
+                               int n_points, float limit, float *histogram,
+                               float min_arg, float max_arg)
 {
   float max_val = 0.0f, min_val = 0.0f;
   float sum = 0.0f, sumsq = 0.0f;
@@ -367,6 +370,8 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
   float *raw_data = (float *) data->data;
   if(cnt) {
     int a;
+
+    // compute min/max/mean/stdev
     sum = min_val = (max_val = *(raw_data++));
     sumsq = sum*sum;
     for(a = 1; a < cnt; a++) {
@@ -380,8 +385,12 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
     }
     mean = (float) (sum / cnt);
     stdev = (float) sqrt1d((sumsq - (sum * sum / cnt)) / (cnt));
-    // Compute the histogram
-    if (limit > 0.0F) {
+
+    // adjust min/max to limit
+    if (min_arg != max_arg) {
+      min_his = min_arg;
+      max_his = max_arg;
+    } else if (limit > 0.0F) {
       min_his = mean - limit*stdev;
       if (min_his < min_val)
         min_his = min_val;
@@ -392,15 +401,19 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
       min_his = min_val;
       max_his = max_val;
     }
-    irange = (float)(n_points-1) / (max_his - min_his);
-    for (a = 0; a < n_points; a++) 
-      histogram[a+4] = 0.0f;
-    raw_data = (float *) data->data;
-    for (a = 0; a < cnt; a++) {
-      double f_val = *(raw_data++);
-      pos = (int)(irange * (f_val-min_his));
-      if (pos >= 0 && pos < n_points) {
-        histogram[pos+4] += 1.0;
+
+    // Compute the histogram
+    if(n_points > 0) {
+      irange = (float)(n_points-1) / (max_his - min_his);
+      for (a = 0; a < n_points; a++)
+        histogram[a+4] = 0.0f;
+      raw_data = (float *) data->data;
+      for (a = 0; a < cnt; a++) {
+        double f_val = *(raw_data++);
+        pos = (int)(irange * (f_val-min_his));
+        if (pos >= 0 && pos < n_points) {
+          histogram[pos+4] += 1.0;
+        }
       }
     }
     histogram[0] = min_his;
