@@ -173,7 +173,10 @@ class PMGApp(Pmw.MegaWidget):
         while not self.fifo.empty():
             try:
                 cmmd = self.fifo.get(0)
-                exec cmmd
+                if isinstance(cmmd, str):
+                    exec cmmd
+                else:
+                    cmmd()
             except:
                 traceback.print_exc()
         

@@ -44,20 +44,12 @@ if __name__=='pymol.querying':
             _self.unlock(r,_self)
         return r
 
-    def get_volume_histogram(objName,_self=cmd):
+    def get_volume_histogram(objName, bins=64, range=None, _self=cmd):
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _self._cmd.get_volume_histogram(_self._COb,objName)
-        finally:
-            _self.unlock(r,_self)
-        return r
-
-    def get_volume_ramp(objName,_self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _self._cmd.get_volume_ramp(_self._COb,objName)
+            r = _self._cmd.get_volume_histogram(_self._COb,objName,
+                    int(bins), range or (0., 0.))
         finally:
             _self.unlock(r,_self)
         return r
@@ -71,16 +63,6 @@ if __name__=='pymol.querying':
             _self.unlock(r,_self)
         return r
  
-    # SHOULD BE MOVED SOMWHERE ELSE
-    def set_volume_ramp(objName, ramp, _self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _self._cmd.set_volume_ramp(_self._COb,objName,ramp)
-        finally:
-            _self.unlock(r,_self)
-        return r
-
     def get_unused_name(prefix="tmp",alwaysnumber=1,_self=cmd):
         r = DEFAULT_ERROR        
         # should replace this with a C function

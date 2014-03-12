@@ -765,7 +765,9 @@ static PyObject * CmdGetVolumeHistogram(PyObject * self, PyObject * args)
   PyObject *result = NULL;
   int ok = false;
   char* objName;
-  ok = PyArg_ParseTuple(args, "Os", &self, &objName);
+  float min_val = 0.f, max_val = 0.f;
+  int n_points = 64;
+  ok = PyArg_ParseTuple(args, "Os|i(ff)", &self, &objName, &n_points, &min_val, &max_val);
 
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -774,7 +776,11 @@ static PyObject * CmdGetVolumeHistogram(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    result = ExecutiveGetVolumeHistogram(G,objName);
+    float * hist = ExecutiveGetHistogram(G, objName, n_points, min_val, max_val);
+    if (hist) {
+      result = PConvFloatArrayToPyList(hist, n_points + 4);
+      mfree(hist);
+    }
     APIExitBlocked(G);
   }
 
@@ -824,7 +830,8 @@ static PyObject * CmdGetVolumeIsUpdated(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    result = ExecutiveGetVolumeIsUpdated(G,objName);
+    result = PyInt_FromLong(
+        ExecutiveGetVolumeIsUpdated(G,objName));
     APIExitBlocked(G);
   }
   
@@ -837,33 +844,33 @@ static PyObject * CmdGetVolumeIsUpdated(PyObject * self, PyObject * args)
 static PyObject * CmdSetVolumeRamp(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  PyObject *result = NULL;
   int ok = false;
   char* objName;
   PyObject *ramp_list;
   float *float_array;
+  int list_len;
 
-  ok = PyArg_ParseTuple(args, "OsO", &self, &objName, &ramp_list);
-
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
+  if(!PyArg_ParseTuple(args, "OsO", &self, &objName, &ramp_list)) {
     API_HANDLE_ERROR;
+    ok_raise(1);
   }
-  if(ok)
-    ok = PyList_Check(ramp_list);
-  if(ok)
-    ok = PConvPyListToFloatArray(ramp_list, &float_array);
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    int list_len = PyList_Size(ramp_list);
-    result = ExecutiveSetVolumeRamp(G,objName,float_array,list_len);
-    APIExitBlocked(G);
-  }
-  if(!result) {
-    return APIFailure();
-  } else
-    return result;
+
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(1, G && APIEnterBlockedNotModal(G));
+
+  ok_assert(2, PyList_Check(ramp_list));
+  ok_assert(2, list_len = PyList_Size(ramp_list));
+  ok_assert(2, PConvPyListToFloatArray(ramp_list, &float_array));
+
+  ok = ExecutiveSetVolumeRamp(G, objName, float_array, list_len);
+
+  if(!ok)
+    free(float_array);
+
+ok_except2:
+  APIExitBlocked(G);
+ok_except1:
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetVis(PyObject * self, PyObject * args)

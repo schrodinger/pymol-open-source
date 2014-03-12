@@ -1,5 +1,7 @@
 uniform sampler3D volumeTex;
 uniform sampler1D colorTex;
+uniform float volumeScale;
+uniform float volumeBias;
 
 uniform float fog_enabled;
 uniform sampler2D bgTextureMap;
@@ -25,7 +27,11 @@ uniform vec2 halfPixel;
 
 void main()
 {
-  vec4 color = texture1D(colorTex, texture3D(volumeTex, gl_TexCoord[0].xyz).x);
+  float v = texture3D(volumeTex, gl_TexCoord[0].xyz).r;
+  v = v * volumeScale + volumeBias;
+  if (v < 0. || v > 1.) discard;
+  vec4 color = texture1D(colorTex, v);
+
   if (color.a == 0.0) discard;
   float cfog = mix(1.0, clamp(fog, 0.0, 1.0), fog_enabled);
   vec4 fogColor = ComputeFogColor();

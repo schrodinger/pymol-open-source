@@ -2195,3 +2195,17 @@ static int IsosurfCodeVertices(CIsosurf * II)
     VCount = 0;
   return (VCount);
 }
+
+/*
+ * corner: output buffer of size 8 * 3
+ */
+int IsofieldGetCorners(PyMOLGlobals * G, Isofield * field, float * corner) {
+  CField * points = field->points;
+  int a, i, j, k;
+  for(a = 0; a < 8; a++) {
+    i = (a & 1) ? (points->dim[0] - 1) : 0;
+    j = (a & 2) ? (points->dim[1] - 1) : 0;
+    k = (a & 4) ? (points->dim[2] - 1) : 0;
+    memcpy(corner + a * 3, F3Ptr(points, i, j, k), 3 * sizeof(float));
+  }
+}

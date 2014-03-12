@@ -6,6 +6,10 @@ expr_sc = cmd.Shortcut([
     'q', 'b', 'partial_charge', 'vdw',
 ])
 
+def vol_ramp_sc():
+    from . import colorramping
+    return cmd.Shortcut(colorramping.namedramps)
+
 aa_exp_e = [ expr_sc                    , 'expression'      , ''   ]
 aa_sel_e = [ cmd.selection_sc           , 'selection'       , ''   ]
 aa_sel_c = [ cmd.selection_sc           , 'selection'       , ', ' ]
@@ -15,6 +19,7 @@ aa_obj_c = [ cmd.object_sc              , 'object'          , ', ' ]
 aa_set_c = [ cmd.setting.setting_sc     , 'setting'         , ', ' ]
 aa_map_c = [ cmd.map_sc                 , 'map object'      , ', ' ]
 aa_rep_c = [ cmd.repres_sc              , 'representation'  , ', ' ]
+aa_v_r_c = [ vol_ramp_sc                , 'volume ramp'     , ', ' ]
 
 def wizard_sc():
     import os, pymol.wizard
@@ -23,6 +28,10 @@ def wizard_sc():
     return cmd.Shortcut(names_glob)
 
 def get_auto_arg_list(self_cmd=cmd):
+    aa_vol_c = [ lambda:
+            cmd.Shortcut(self_cmd.get_names_of_type('object:volume')),
+            'volume', '' ]
+
     return [
 # 1st
         {
@@ -103,6 +112,8 @@ def get_auto_arg_list(self_cmd=cmd):
         'unset_bond'     : aa_set_c,
         'update'         : aa_sel_e,
         'valence'        : [ self_cmd.editing.order_sc       , 'order'           , ', ' ],
+        'volume_color'   : aa_vol_c,
+        'volume_panel'   : aa_vol_c,
         'view'           : [ self_cmd._pymol._view_dict_sc   , 'view'            , ''   ],         
         'window'         : [ self_cmd.window_sc              , 'action'          , ', ' ],      
         'wizard'         : [ wizard_sc                       , 'wizard'          , ', '   ],
@@ -158,6 +169,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'update'         : aa_sel_e,
         'ramp_new'       : aa_map_c,
         'valence'        : aa_sel_c,
+        'volume_color'   : aa_v_r_c,
         },
 #3rd
         {
@@ -176,6 +188,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'symexp'         : aa_sel_c,
         'unset_bond'     : aa_sel_c,
         'valence'        : aa_sel_c,
+        'volume'         : aa_v_r_c,
         },
 #4th
         {

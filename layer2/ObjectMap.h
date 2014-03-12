@@ -155,7 +155,8 @@ void ObjectMapStateRegeneratePoints(ObjectMapState * ms);
 int ObjectMapStateGetDataRange(PyMOLGlobals * G, ObjectMapState * ms, float *min,
                                float *max);
 int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
-                               int n_points, float limit, float *histogram);
+                               int n_points, float limit, float *histogram,
+                               float min_arg, float max_arg);
 
 
 #endif

@@ -26,33 +26,26 @@ typedef struct {
   int MapState;
   CCrystal Crystal;
   int Active;
-  int *N, *RC, VCsize, base_n_V;
-  int OneColor;
-  float *V, *VC;
   int Range[6];
   float ExtentMin[3], ExtentMax[3];
   int ExtentFlag;
-  float Level, Radius;
+  // TODO difference between Resurface, Recolor, Refresh???
   int RefreshFlag;
   int ResurfaceFlag;
-  int quiet;
   int RecolorFlag;
   float *AtomVertex;
   int CarveFlag;
   float CarveBuffer;
   int VolumeMode;
   CGO *UnitCellCGO;
-  int displayList;
-  int displayListInvalid;
   WordType caption;
-  float AltLevel;
   float Corner[24];
   int textures[2];
   CField *volume;
-  float *Histogram;
   /* not stored */
-  float *colors;
-  Isofield *Field; 
+  Isofield *Field;
+  float data_min, data_range;
+  float ramp_min, ramp_range;
   int RampSize;
   float *Ramp;
   int isUpdated; 
@@ -76,20 +69,18 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
                                   float level, int meshMode,
                                   float carve, float *vert_vla,
                                   float alt_level, int quiet);
-void ObjectVolumeDump(ObjectVolume * I, char *fname, int state);
 
 PyObject *ObjectVolumeAsPyList(ObjectVolume * I);
 int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume ** result);
-int ObjectVolumeSetLevel(ObjectVolume * I, float level, int state, int quiet);
-int ObjectVolumeGetLevel(ObjectVolume * I, int state, float *result);
 int ObjectVolumeInvalidateMapName(ObjectVolume * I, char *name);
 
 int ObjectVolumeColor(ObjectVolume * I, float * colors, int ncolors);
 
 PyObject * ObjectVolumeGetField(ObjectVolume* I);
-PyObject * ObjectVolumeGetHistogram(ObjectVolume* I);
 PyObject * ObjectVolumeGetRamp(ObjectVolume* I);
-PyObject * ObjectVolumeSetRamp(ObjectVolume* I, float *ramp_list, int list_size);
-PyObject * ObjectVolumeGetIsUpdated(ObjectVolume *I);
+int        ObjectVolumeSetRamp(ObjectVolume* I, float *ramp_list, int list_size);
+int        ObjectVolumeGetIsUpdated(ObjectVolume *I);
+
+ObjectMapState * ObjectVolumeGetMapState(ObjectVolume * I);
 
 #endif
