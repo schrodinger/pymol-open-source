@@ -722,12 +722,8 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo, 
             cgo = font_cgo;
           }
           est = CGOCheckComplex(cgo);
-          if(est) {
-            I->State[state].ray = cgo;
-            I->State[state].std = CGOSimplify(cgo, est);
-          } else {
-            I->State[state].std = cgo;
-          }
+	  I->State[state].ray = cgo;
+	  I->State[state].std = CGOSimplify(cgo, est);
           I->State[state].valid = true;
         } else {
           ErrMessage(G, "ObjectCGO", "could not parse CGO List.");
