@@ -1,4 +1,7 @@
 
+import sys
+import pymol
+import __main__
 from pymol import cmd, testing, stored
 
 class TestCommanding(testing.PyMOLTestCase):
@@ -109,3 +112,25 @@ class TestCommanding(testing.PyMOLTestCase):
     def testSync(self):
         cmd.sync()
 
+    @testing.foreach(
+        ('local', 'pymol', False),
+        ('global', 'pymol', True),
+        ('module', '', False),
+        ('main', '__main__', True),
+        ('private', '__main__', False),
+    )
+    def testRun(self, namespace, mod, rw):
+        stored.tmp = False
+        with testing.mktemp('.py') as filename:
+            varname = '_tmp_' + namespace
+            with open(filename, 'w') as handle:
+                print >> handle, 'from pymol import stored'
+                if mod:
+                    print >> handle, 'stored.tmp = (__name__ == "%s")' % (mod)
+                else:
+                    print >> handle, 'stored.tmp = True'
+                print >> handle, varname + ' = True'
+            cmd.do('run %s, %s' % (filename, namespace), 0, 0)
+            self.assertTrue(stored.tmp)
+            if mod:
+                self.assertEqual(rw, hasattr(sys.modules[mod], varname))
