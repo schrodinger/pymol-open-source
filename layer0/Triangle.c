@@ -381,7 +381,7 @@ static int TriangleAdjustNormals(TriangleSurfaceRec * II, float *v, float *vn, i
   if(final_pass) {
     int repeat = true;
     int max_cyc = 5;
-    float *va = Alloc(float, 3 * I->nTri), *va0, *va1, *va2;
+    float *va = Alloc(float, 3 * n), *va0, *va1, *va2;
     float vt[3];
     while(repeat && max_cyc) {
       repeat = false;

@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2014-04-08 Thomas Holder, Blaine Bell
+
+	* never assign atom_type (noInvalidateMMStereoAndTextType)
+
+	* fix ExecutivePurgeSpec memory leak
+
+	* fix cartoon memory leak
+
+	* fixed small solvent_radius crashes surface generation
+
 2014-03-12 Thomas Holder
 
 	* volume API and panel improvements

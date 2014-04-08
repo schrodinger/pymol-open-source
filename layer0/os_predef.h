@@ -112,7 +112,9 @@ typedef float aliased_float;
 #define fmax max
 #define fmin min
 #pragma warning (disable:4996)
+#ifndef snprintf
 #define snprintf sprintf_s
+#endif
 #endif
 
 #include "ov_types.h"

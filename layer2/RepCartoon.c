@@ -3910,6 +3910,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
       CGO *convertcgo = NULL;
       convertcgo = CGOCombineBeginEnd(I->ray, 0);
       CHECKOK(ok, convertcgo);
+      CGOFree(I->ray);
       I->preshader = I->ray = convertcgo;
     } else {
       I->preshader = I->ray;

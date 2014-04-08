@@ -23,7 +23,6 @@
 #ifdef WIN32
 #include <signal.h>
 #include <tchar.h>
-#include <stdafx.h>
 #endif
 
 /* END PROPRIETARY CODE SEGMENT */
@@ -1795,9 +1794,8 @@ static int decoy_input_hook(void) { return 0; }
 
 int main_exec(int argc, char **argv)
 {
-  is_shared = 0;
-
   PyMOLGlobals *G = SingletonPyMOLGlobals;
+  is_shared = 0;
   myArgc = argc;
   myArgv = argv;
 

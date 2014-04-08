@@ -1058,7 +1058,7 @@ void ObjectSliceDrawSlice(CGO *cgo, float *points, int n_points, float *zaxis)
     c = dot_product3f(v, w);
     s = dot_product3f(zaxis, q);
     a = atan2(s, c);
-    if (a < 0.0f) a += 2.0f * M_PI;
+    if (a < 0.0f) a += 2.0f * PI;
     j = i-1;
     while (j>=0 && angles[j]>a) {
       angles[j+1] = angles[j];

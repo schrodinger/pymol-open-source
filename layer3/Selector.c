@@ -6459,14 +6459,10 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
 }
 
 
-PyObject *SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, int format)
+int SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, int format)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
+#ifndef NO_MMLIBS
   register CSelector *I = G->Selector;
-  //  PyObject *model = NULL;
   int ok = true;
 
   SelectorUpdateTable(G, state, -1);
@@ -6498,7 +6494,9 @@ PyObject *SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int qui
       }
     }
   }
-  return NULL;
+  return 1;
+#else
+  return 0;
 #endif
 }
 
