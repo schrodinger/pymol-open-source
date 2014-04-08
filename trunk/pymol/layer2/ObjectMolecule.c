@@ -159,7 +159,6 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
 	      I->DiscreteCSet[I->NAtom] = cs;
 	      I->DiscreteAtmToIdx[I->NAtom] = idx;
 	      cs->IdxToAtm[idx] = I->NAtom;
-	      cs->AtmToIdx[I->NAtom] = idx;
 	      I->NAtom++;
 	    }
 	  }
@@ -173,6 +172,7 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
 		  newatm2 = newatm[b->index[1]];
 		if (I->DiscreteCSet[newatm1]==cs && I->DiscreteCSet[newatm2]==cs){
 		  VLACheck(I->Bond, BondType, I->NBond+1);
+                  b = &I->Bond[k];
 		  AtomInfoBondCopy(G, b, &I->Bond[I->NBond]);
 		  if (addedinstate[b->index[0]])
 		    I->Bond[I->NBond].index[0] = newatm1;
@@ -8995,7 +8995,6 @@ static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *
       ai->formalCharge = fcharge;
     }
   }
-  cset->noInvalidateMMStereoAndTextType = 0;
 }
 
 /*========================================================================*/
@@ -12109,6 +12108,7 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
         if(cset->fInvalidateRep) {
           cset->fInvalidateRep(cset, rep, level);
         }
+#ifndef NO_MMLIBS
 	if (!cset->noInvalidateMMStereoAndTextType){
 	  /* update mmstereo */
 	  int ai, atm;
@@ -12136,6 +12136,7 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
 	    "ObjectMoleculeInvalidate: state=%d not setting mmstereo or textType\n", a
 	    ENDFD;
 	}
+#endif
       }
     }
   }

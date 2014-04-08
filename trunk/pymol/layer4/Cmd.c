@@ -8501,7 +8501,8 @@ static PyObject *CmdAssignAtomTypes(PyObject *self, PyObject *args)
     ok = (SelectorGetTmp(G, sele, s1) >= 0);
     if(ok){
       /* format : 1: mol/sybyl, 2: macromodel/mmd */
-      result = ExecutiveAssignAtomTypes(G, s1, format, state, quiet);
+      result = PyInt_FromLong(
+          ExecutiveAssignAtomTypes(G, s1, format, state, quiet));
       SelectorFreeTmp(G, s1);
     }
     APIExitBlocked(G);

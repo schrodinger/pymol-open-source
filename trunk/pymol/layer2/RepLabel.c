@@ -90,12 +90,12 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
     }
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
+      Pickable *p = I->R.P;
+      int i;
       if (I->shaderCGO){
 	CGORenderGLPicking(I->shaderCGO, pick, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
 	return;
       }
-      Pickable *p = I->R.P;
-      int i;
       SceneSetupGLPicking(G);
       if(c) {
         char *st;

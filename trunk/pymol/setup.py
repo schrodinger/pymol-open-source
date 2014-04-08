@@ -168,6 +168,12 @@ pymol_src_dirs = [
 ]
 
 def_macros = [
+    ("_PYMOL_LIBPNG", None),
+    ("_PYMOL_INLINE", None),
+    ("_PYMOL_OPENGL_SHADERS", None),
+    ("_PYMOL_CGO_DRAWARRAYS", None),
+    ("_PYMOL_CGO_DRAWBUFFERS", None),
+    ("_PYMOL_GL_CALLLISTS", None),
 ]
 
 libs = []
@@ -214,15 +220,9 @@ elif sys.platform=='cygwin':
 else: # unix style (linux, mac, ...)
 
     def_macros += [
-            ("_PYMOL_LIBPNG",None),
             ("_PYMOL_FREETYPE",None),
-            ("_PYMOL_INLINE",None),
-            ("_PYMOL_OPENGL_SHADERS",None),
             ("NO_MMLIBS",None),
-            ("_PYMOL_CGO_DRAWARRAYS",None),
-            ("_PYMOL_CGO_DRAWBUFFERS",None),
             ("_CGO_DRAWARRAYS",None),
-            ("_PYMOL_GL_CALLLISTS",None),
             ("OPENGL_ES_2",None),
             ]
 
@@ -279,9 +279,26 @@ def get_packages(base, parent='', r=None):
             get_packages(base, join(parent, name), r)
     return r
 
-def pyogl_extension(name, sources):
-    return Extension(name, sources, inc_dirs, def_macros, None, lib_dirs, pyogl_libs,
-            extra_compile_args=ext_comp_args, extra_link_args=ext_link_args)
+package_dir = dict((x, os.path.join(base, x))
+        for base in ['modules']
+        for x in get_packages(base))
+
+ext_modules = [
+    Extension("pymol._cmd",
+              get_sources(pymol_src_dirs),
+              include_dirs = inc_dirs,
+              libraries = libs,
+              library_dirs = lib_dirs,
+              define_macros = def_macros,
+              extra_link_args = ext_link_args,
+              extra_compile_args = ext_comp_args,
+    ),
+
+    Extension("chempy.champ._champ",
+        get_sources(['contrib/champ']),
+        include_dirs=["contrib/champ"],
+    ),
+]
 
 distribution = setup ( # Distribution meta-data
     cmdclass  = {'install': install_pymol},
@@ -295,23 +312,8 @@ distribution = setup ( # Distribution meta-data
         "surfaces, and trajectories. It also includes molecular editing, "
         "ray tracing, and movies. Open Source PyMOL is free to everyone!"),
 
-    package_dir = {'' : 'modules'},
-    packages = get_packages('modules'),
+    package_dir = package_dir,
+    packages = list(package_dir),
 
-    ext_modules = [
-        Extension("pymol._cmd",
-                  get_sources(pymol_src_dirs),
-                  include_dirs = inc_dirs,
-                  libraries = libs,
-                  library_dirs = lib_dirs,
-                  define_macros = def_macros,
-                  extra_link_args = ext_link_args,
-                  extra_compile_args = ext_comp_args,
-        ),
-
-        Extension("chempy.champ._champ",
-            get_sources(['contrib/champ']),
-            include_dirs=["contrib/champ"],
-        ),
-    ],
+    ext_modules = ext_modules,
 )

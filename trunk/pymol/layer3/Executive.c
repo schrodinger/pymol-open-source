@@ -14828,8 +14828,7 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
     }
     ExecutiveDelKey(I, rec);
     SelectorDelete(G, rec->name);
-    if(rec->obj->type != cObjectMolecule)
-      rec->obj->fFree(rec->obj);
+    rec->obj->fFree(rec->obj);
     rec->obj = NULL;
     TrackerDelCand(I->Tracker, rec->cand_id);
     break;
@@ -15700,12 +15699,10 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
     SceneChanged(G);
   }
 }
-PyObject *ExecutiveAssignAtomTypes(PyMOLGlobals * G, char *s1, int format, int state, int quiet)
+
+int ExecutiveAssignAtomTypes(PyMOLGlobals * G, char *s1, int format, int state, int quiet)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-  PyObject *result = NULL;
+  int result = 0;
   int sele1;
 
   sele1 = SelectorIndexByName(G, s1);
@@ -15716,12 +15713,9 @@ PyObject *ExecutiveAssignAtomTypes(PyMOLGlobals * G, char *s1, int format, int s
     if(sele1 >= 0) {
       result = SelectorAssignAtomTypes(G, sele1, state, quiet, format);
     }
-    if(PyErr_Occurred())
-      PyErr_Print();
     PAutoUnblock(G, unblock);   /*    PUnblock(G);  PLockAPIAndUnblock(); */
   }
   return (result);
-#endif
 }
 
 static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)

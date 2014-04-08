@@ -157,4 +157,9 @@ typedef struct {
 #define _PYMOL_XRAY
 #endif
 
+// no MMLIBS in open-source
+#ifndef NO_MMLIBS
+#define NO_MMLIBS
+#endif
+
 #endif
