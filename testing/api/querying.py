@@ -218,10 +218,6 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.get_volume_is_updated
         self.skipTest("TODO")
 
-    def testGetVolumeRamp(self):
-        cmd.get_volume_ramp
-        self.skipTest("TODO")
-
     def testGetVrml(self):
         cmd.get_vrml
         self.skipTest("TODO")
@@ -257,9 +253,5 @@ class TestQuerying(testing.PyMOLTestCase):
 
     def testPhiPsi(self):
         cmd.phi_psi
-        self.skipTest("TODO")
-
-    def testSetVolumeRamp(self):
-        cmd.set_volume_ramp
         self.skipTest("TODO")
 
