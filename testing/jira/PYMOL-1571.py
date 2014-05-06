@@ -6,7 +6,7 @@ import shutil
 import os, unittest
 from pymol import cmd, testing
 
-@testing.requires('incentive')
+@testing.requires('incentive', 'gui')
 class Test1571(testing.PyMOLTestCase):
 
     def test(self):
