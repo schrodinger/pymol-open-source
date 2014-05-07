@@ -1501,7 +1501,7 @@ DESCRIPTION
 
     Returns the effective object state.
         '''
-        states = cmd.count_states(name)
+        states = cmd.count_states('%' + name)
         if states < 2 and cmd.get_setting_boolean('static_singletons'):
             return 1
         state = cmd.get_setting_int('state', name)

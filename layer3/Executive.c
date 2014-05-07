@@ -1407,6 +1407,7 @@ static void ExecutiveUpdateGridSlots(PyMOLGlobals * G, int force)
           case cObjectSlice:
           case cObjectGadget:
           case cObjectGroup:
+          case cObjectVolume:
 	    ExecutiveSetGridSlot(rec, ++grid_slot_count);
             break;
           }
@@ -4360,7 +4361,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
 #else
   int pos = 0;
 #endif
-  SpecRec *rec;
+  SpecRec *rec, *grec, **recstack = NULL;
   int n_vis;
   int rep;
   int a;
@@ -4373,6 +4374,9 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
 
     SceneObjectDel(G, NULL, true);    /* remove all objects from scene */
     ExecutiveInvalidateSceneMembers(G);
+
+    // stack for putative visible records
+    recstack = Calloc(SpecRec*, PyDict_Size(dict) + 1);
 
     while(PyDict_Next(dict, &pos, &key, &list)) {
       if(!PConvPyStrToStr(key, name, sizeof(WordType))) {
@@ -4441,12 +4445,23 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
             }
           }
           if(rec->visible && (rec->type == cExecObject)) {
-            rec->in_scene = SceneObjectAdd(G, rec->obj);
-            ExecutiveInvalidateSceneMembers(G);
+            (*(++recstack)) = rec;
           }
         }
       }
     }
+
+    // add visible objects to scene
+    for(; (rec = *recstack); recstack--) {
+      // check visibility of all parent groups
+      for(grec = rec; grec->visible && (grec = grec->group););
+      if(!grec) {
+        // ok, no invisible parent found
+        rec->in_scene = SceneObjectAdd(G, rec->obj);
+        ExecutiveInvalidateSceneMembers(G);
+      }
+    }
+    mfree(recstack);
   }
   return ok;
 #endif

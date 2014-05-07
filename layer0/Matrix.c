@@ -784,6 +784,7 @@ void MatrixTransformC44f4f(float *m, float *q, float *p)
 
 
 /*========================================================================*/
+// same as transform44f3fas33f3f
 void MatrixInvTransformC44fAs33f3f(float *m, float *q, float *p)
 {
   /* multiplying a column major rotation matrix as row-major will

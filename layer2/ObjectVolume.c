@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"Field.h"
 
+#define clamp(x,l,h) ((x) < (l) ? (l) : (x) > (h) ? (h) : (x))
 
 ObjectVolume *ObjectVolumeNew(PyMOLGlobals * G);
 
@@ -50,14 +51,6 @@ static void ObjectVolumeFree(ObjectVolume * I);
 static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int state);
 void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs);
 void ObjectVolumeRecomputeExtent(ObjectVolume * I);
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#define HISTOGRAM_SIZE 64
-  
-#define volume_nColors 360
 
 static ObjectVolumeState * ObjectVolumeGetActiveState(ObjectVolume * I) {
   int a;
@@ -70,7 +63,6 @@ ok_except1:
 }
 
 ObjectMapState * ObjectVolumeStateGetMapState(ObjectVolumeState * vs) {
-  ObjectMapState *oms = NULL;
   ObjectMap *map = NULL;
 
   PyMOLGlobals * G = vs->State.G;
@@ -432,7 +424,6 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
   int a;
   ObjectVolumeState *vs;
   ObjectMapState *oms = NULL;
-  ObjectMap *map = NULL;
   float carve_buffer;
   int avoid_flag = false;
   int flag;
@@ -464,34 +455,33 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
       } else if(vs->State.Matrix) {
         ObjectStateResetMatrix(&vs->State);
       }
+
+      // data min/max/mean/stdev
+      range = SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_data_range);
+      ObjectMapStateGetHistogram(I->Obj.G, oms, 0, range, vs->min_max_mean_stdev, 0.f, 0.f);
     }
 
     // handle legacy or default color ramp
     if(!vs->Ramp || vs->RampSize && vs->Ramp[0] == 0.f
         && vs->Ramp[5 * (vs->RampSize - 1)] == 359.f) {
-      float min_max_mean_stdev[4];
-
-      // data min/max
-      range =  SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_data_range);
-      ObjectMapStateGetHistogram(I->Obj.G, oms, 0, range, min_max_mean_stdev, 0.f, 0.f);
 
       if(vs->Ramp) {
         // legacy color ramp (0..359)
-        range = min_max_mean_stdev[1] - min_max_mean_stdev[0];
+        range = vs->min_max_mean_stdev[1] - vs->min_max_mean_stdev[0];
         PRINTFB(G, FB_ObjectVolume, FB_Warnings)
           " ObjectVolumeUpdate: detected legacy color ramp\n" ENDFB(G);
         for (i = 0; i < vs->RampSize * 5; i += 5) {
-          vs->Ramp[i] = vs->Ramp[i] / 359.f * range + min_max_mean_stdev[0];
+          vs->Ramp[i] = vs->Ramp[i] / 359.f * range + vs->min_max_mean_stdev[0];
         }
       } else {
         // default color ramp (1.0 sigma peak)
         if(!vs->Ramp) {
           float defaultramp[] = {
-            min_max_mean_stdev[2] + 0.7 * min_max_mean_stdev[3],
+            vs->min_max_mean_stdev[2] + 0.7 * vs->min_max_mean_stdev[3],
             0., 0., 1., 0.0,
-            min_max_mean_stdev[2] + 1.0 * min_max_mean_stdev[3],
+            vs->min_max_mean_stdev[2] + 1.0 * vs->min_max_mean_stdev[3],
             0., 1., 1., 0.2,
-            min_max_mean_stdev[2] + 1.3 * min_max_mean_stdev[3],
+            vs->min_max_mean_stdev[2] + 1.3 * vs->min_max_mean_stdev[3],
             0., 0., 1., 0.0
           };
           vs->RecolorFlag = true;
@@ -634,15 +624,16 @@ int ObjectVolumeAddSlicePoint(float *p0, float *p1, float *zaxis, float d, float
 void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float *zaxis);
 
 /*
- * Converting Ramp to `volume_nColors * 4` sized interpolated RGBA color
+ * Converting Ramp to `count * 4` sized interpolated RGBA color
  * array. Returns allocated memory.
  * Assigns data minimum and range covered by ramp to `ramp_min` and `ramp_range`.
  */
 float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * ovs,
-    float *ramp_min, float *ramp_range) {
+    int count, float *ramp_min, float *ramp_range) {
   int i, j, k;
   int lowerId, upperId;
-  float mixc, mixcincr, r_min, range, binsize;
+  float mixc, mixcincr, r_min, range;
+  float stdev = ovs->min_max_mean_stdev[3];
   float * colors;
 
   ok_assert(1, ovs->Ramp && ovs->RampSize > 1);
@@ -652,16 +643,15 @@ float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * ovs,
 
   ok_assert(1, range > R_SMALL4);
 
-  binsize = range / volume_nColors;
-  r_min -= binsize * 2;
-  range += binsize * 4;
+  r_min -= stdev * 0.5;
+  range += stdev;
 
-  colors = Calloc(float, 4 * volume_nColors);
+  colors = Calloc(float, 4 * count);
   ok_assert(1, colors);
 
   for (i = 0; i < ovs->RampSize; i++) {
     lowerId = upperId;
-    upperId = (int) (volume_nColors * (ovs->Ramp[i * 5] - r_min) / range);
+    upperId = (int) (count * (ovs->Ramp[i * 5] - r_min) / range);
 
     if(i == 0)
       continue;
@@ -669,7 +659,7 @@ float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * ovs,
     mixcincr = 1.f / (upperId - lowerId);
 
     for (j = lowerId, mixc = 1.f; j < upperId; j++, mixc -= mixcincr){
-      if(j < 0 || j >= volume_nColors)
+      if(j < 0 || j >= count)
         continue;
 
       for (k = 0; k < 4; k++)
@@ -688,32 +678,47 @@ ok_except1:
 }
 
 /*
+ * Adjust alpha values in the given RGBA array (in place) by:
+ *   alpha_new = 1 - exp(-alpha * factor)
+ */
+void ColorsAdjustAlpha(float * colors, int count, float factor) {
+  int j;
+  for (j = 3; j < count * 4; j += 4) {
+    colors[j] = 1. - expf(-colors[j] * factor);
+  }
+}
+
+/*
  * Render bounding box
  * TODO: duplicate in other reps?
  */
 static void ExtentRender(float * corner) {
-  int i, j, ci[] = {
+  int i, ci[] = {
      0,  3,  3,  9,  9,  6,  6,  0,
     12, 15, 15, 21, 21, 18, 18, 12,
      0, 12,  3, 15,  9, 21,  6, 18
   };
 #ifndef PURE_OPENGL_ES_2
-#ifdef _PYMOL_GL_DRAWARRAYS
-  GLfloat polyVerts[8 * 3 * 3];
-  for(i = 0; i < 8 * 3; i++)
-    for(j = 0; j < 3; j++)
-      polyVerts[i * 3 + j] = corner[ci[i] + j];
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(3, GL_FLOAT, 0, polyVerts);
-  glDrawArrays(GL_LINES, 0, 24);
-  glDisableClientState(GL_VERTEX_ARRAY);
-#else
   glBegin(GL_LINES);
   for(i = 0; i < 8 * 3; i++)
     glVertex3fv(corner + ci[i]);
   glEnd();
 #endif
-#endif
+}
+
+static GLuint createColorTexture(const float *colors, const int count)
+{
+  GLuint texname = 0;
+
+  glGenTextures(1, &texname);
+  glBindTexture(GL_TEXTURE_1D, texname);
+  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, count, 0, GL_RGBA, GL_FLOAT, colors);
+
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S,     GL_CLAMP );
+
+  return texname;
 }
 
 static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
@@ -723,7 +728,6 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   int state = info->state;
   CRay *ray = info->ray;
   int pass = info->pass;
-  int *n = NULL;
   int a = 0;
   ObjectVolumeState *vs = NULL;
   float volume_layers =  SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_layers);
@@ -731,7 +735,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   GLint alpha_func;
   GLfloat alpha_ref;
   float tex_corner[24];
-  float *corner, *m;
+  float *corner, *ttt;
   float zaxis[3];
   float points[36], tex_coords[36];
   int n_points;
@@ -783,22 +787,24 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 
     // upload color ramp texture
     if (vs->RecolorFlag) {
-      float * colors = ObjectVolumeStateGetColors(G, vs, &vs->ramp_min, &vs->ramp_range);
+      const int volume_nColors = 512;
+
+      float * colors = ObjectVolumeStateGetColors(G, vs, volume_nColors, &vs->ramp_min, &vs->ramp_range);
       if(!colors)
         continue;
 
+      // volume_layers default is 256, adjust alpha to maintain integrated
+      // opacity with different layer numbers
+      ColorsAdjustAlpha(colors, volume_nColors, 256. / volume_layers);
+
       if (vs->textures[1]) {
         glDeleteTextures(1, (const GLuint *) &vs->textures[1]);
-        vs->textures[1] = 0;
       }
 
-      glGenTextures(1, (GLuint *) &vs->textures[1]);
-      glBindTexture(GL_TEXTURE_1D, vs->textures[1]);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+      {
+        vs->textures[1] = createColorTexture(colors, volume_nColors);
+      }
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, volume_nColors, 0, GL_RGBA, GL_FLOAT, colors);
 
       mfree(colors);
       vs->RecolorFlag = false;
@@ -858,14 +864,16 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       }
 
       // for z-axis
-      m = SceneGetMatrix(G);
+      SceneGetViewNormal(G, zaxis);
 
       for(j = 0; j < 3; j++) {
         // map center
         origin[j] = corner[j] + 0.5 * (corner[21 + j] - corner[j]);
-        // z-axis
-        zaxis[j] = m[j * 4 + 2];
       }
+
+      // TTT (movie object motions)
+      if(ObjectGetTTT(&I->Obj, &ttt, -1))
+        MatrixTransformC44fAs33f3f(ttt, zaxis, zaxis);
 
       // determine number of slices based on max extent
       // and slice option
@@ -979,7 +987,7 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
       c = dot_product3f(v, w);
       s = dot_product3f(zaxis, q);
       a = atan2(s, c);
-      if (a < 0.0f) a += 2.0f * M_PI;
+      if (a < 0.0f) a += 2.0f * PI;
       j = i-1;
       while (j>=0 && angles[j]>a) {
         angles[j+1] = angles[j];
@@ -991,37 +999,12 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
     }
 
     // Now the vertices are sorted so draw the polygon
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int nverts = n_points, pl = 0;
-      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-      ALLOCATE_ARRAY(GLfloat,texVals,nverts*3)
-      float *tmp_ptr;
-      for (i=0; i<n_points; i++) {
-	tmp_ptr = &tex_coords[3*vertices[(i)%n_points]];
-	texVals[pl] = tmp_ptr[0]; texVals[pl+1] = tmp_ptr[1]; texVals[pl+2] = tmp_ptr[2];	
-	tmp_ptr = &points[3*vertices[(i)%n_points]];
-	vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];	
-	pl += 3;
-      }
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-      glTexCoordPointer(3, GL_FLOAT, 0, texVals);
-      glDrawArrays(GL_TRIANGLE_FAN, 0, nverts);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-      DEALLOCATE_ARRAY(vertVals)
-      DEALLOCATE_ARRAY(texVals)
-    }
-#else
     glBegin(GL_POLYGON);
     for (i=0; i<n_points; i++) {
       glTexCoord3fv(&tex_coords[3 * vertices[i]]);
       glVertex3fv(&points[3 * vertices[i]]);
     }
     glEnd();
-#endif
 }
 
 int ObjectVolumeAddSlicePoint(float *pt0, float *pt1, float *zaxis, float d, 
@@ -1327,7 +1310,6 @@ PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
 int ObjectVolumeSetRamp(ObjectVolume * I, float *ramp_list, int list_size)
 {
   /* TODO: Allow for multi-state maps? */
-  float min_val, max_val;
   ObjectVolumeState *ovs = ObjectVolumeGetActiveState(I);
 
   ok_assert(1, ovs && ramp_list && list_size > 0);

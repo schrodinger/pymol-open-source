@@ -735,25 +735,28 @@ int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_si
   return a3;
 }
 
-int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, char *name)
+/* Check if atom is bonded to an atom with given name
+ *
+ * param same_res:
+ *    0 = must not be in same residue
+ *    1 = must be in same residue
+ *   -1 = don't check residue
+ */
+int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, char *name, int same_res)
 {
   int a2, s;
-  int bonded = false;
+  PyMOLGlobals * G = obj->Obj.G;
+  AtomInfoType *ai2, *ai0 = obj->AtomInfo + a0;
 
   if(a0 >= 0) {
-    s = obj->Neighbor[a0];
-    s++;                        /* skip count */
-    while(1) {
-      a2 = obj->Neighbor[s];
-      if(a2 < 0)
-        break;
-      if(WordMatch(obj->Obj.G, obj->AtomInfo[a2].name, name, true) < 0)
-        bonded = true;
-      break;
-      s += 2;
+    ITERNEIGHBORATOMS(obj->Neighbor, a0, a2, s) {
+      ai2 = obj->AtomInfo + a2;
+      if(WordMatch(G, ai2->name, name, true) < 0 &&
+          (same_res < 0 || (same_res == AtomInfoSameResidue(G, ai0, ai2))))
+        return true;
     }
   }
-  return bonded;
+  return false;
 }
 
 int ObjectMoleculeAreAtomsBonded2(ObjectMolecule * obj0, int a0, ObjectMolecule * obj1,

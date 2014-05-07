@@ -2961,6 +2961,18 @@ class Normal(PMGSkin):
                                  command = lambda s=self:
                                  s.cmd.do("_ cmd.set('surface_mode',3)"))
 
+        self.menuBar.addcascademenu('Setting', 'Volume', label='Volume')
+
+        self.menuBar.addmenuitem('Volume', 'checkbutton', label='Pre-integrated Rendering',
+                                state='disabled',
+                                variable = self.setting.volume_mode)
+
+        self.menuBar.addcascademenu('Volume', 'VolumeLayers', label='Number of Layers')
+
+        for i in (100., 256., 500., 1000.):
+            self.menuBar.addmenuitem('VolumeLayers', 'radiobutton', label='%.0f' % i,
+                    value=i, variable=self.setting.volume_layers)
+
         self.menuBar.addcascademenu('Setting', 'Transparency', 'Transparency',
                                              label='Transparency')
 

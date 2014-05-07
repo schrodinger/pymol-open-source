@@ -44,7 +44,7 @@ typedef struct {
   CField *volume;
   /* not stored */
   Isofield *Field;
-  float data_min, data_range;
+  float min_max_mean_stdev[4];
   float ramp_min, ramp_range;
   int RampSize;
   float *Ramp;

@@ -231,7 +231,7 @@ DESCRIPTION
                 first = last = pymol.querying.get_object_state(oname)
             elif state == 0:
                 first = 1
-                last = cmd.count_states(oname)
+                last = cmd.count_states('%' + oname)
             else:
                 first = last = state
             for ostate in range(first, last + 1):

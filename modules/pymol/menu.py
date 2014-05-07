@@ -894,7 +894,7 @@ def polar(self_cmd, sele):
                  'cmd.dist("'+sele+'_polar_conts","('+sele+')","('+sele+
                  ') & !bb.",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'just intra-side chain'  ,
-                 'cmd.dist("'+sele+'_polar_conts","('+sele+') & sc.)","('+sele+') & sc.",'
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') & sc.","('+sele+') & sc.",'
                  'quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+
                  '_polar_conts")'],
               [ 1, 'just intra-main chain'  ,

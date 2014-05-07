@@ -1560,6 +1560,17 @@ float *SceneGetMatrix(PyMOLGlobals * G)
   return (I->RotMatrix);
 }
 
+float *SceneGetModMatrix(PyMOLGlobals * G)
+{
+  return G->Scene->ModMatrix;
+}
+
+float *SceneGetPmvMatrix(PyMOLGlobals * G)
+{
+  register CScene *I = G->Scene;
+  return (I->PmvMatrix);
+}
+
 
 /*========================================================================*/
 

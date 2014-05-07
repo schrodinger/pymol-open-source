@@ -2864,14 +2864,7 @@ int AtomInfoSameResidue(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2
 int AtomInfoSameResidueP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 {
   if(at1 && at2)
-    if(at1->hetatm == at2->hetatm)
-      if(at1->chain[0] == at2->chain[0])
-        if(at1->resv == at2->resv)
-          if(at1->discrete_state == at2->discrete_state)
-            if(WordMatch(G, at1->resi, at2->resi, true) < 0)
-              if(WordMatch(G, at1->segi, at2->segi, true) < 0)
-                if(WordMatch(G, at1->resn, at2->resn, true) < 0)
-                  return 1;
+    return AtomInfoSameResidue(G, at1, at2);
   return 0;
 }
 

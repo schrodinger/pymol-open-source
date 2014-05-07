@@ -1229,7 +1229,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
               case 0:
                 found_c = true;
                 found_cn_bond =
-                  ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "N");
+                  ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "N", 0);
                 break;
               case 'A':
                 switch (name[2]) {
@@ -1273,7 +1273,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
               case 0:
                 found_n = true;
                 found_nc_bond =
-                  ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "C");
+                  ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "C", 0);
                 break;
               }
             }
@@ -1297,7 +1297,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
                 case '\'':
                   found_o3star = true;
                   found_o3_bond =
-                    ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "P");
+                    ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "P", 0);
                   break;
                 }
                 break;
@@ -1319,8 +1319,8 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
               switch (name[1]) {
               case 0:
                 found_p_bond =
-                  (ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "O3*")
-                   || ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "O3'"));
+                  (ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "O3*", 0)
+                   || ObjectMoleculeIsAtomBondedToName(obj, I->Table[aa].atom, "O3'", 0));
                 break;
               }
             }
@@ -1344,12 +1344,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
 
       ai0 = obj->AtomInfo + I->Table[a0].atom;
       if(preserve) {
-        for(aa = a0; aa <= a1; aa++) {
-          if(SelectorIsMember(G, ai0->selEntry, sele))
-            if(!(ai0->flags & cAtomFlag_class_mask))
-              ai0->flags = (ai0->flags & cAtomFlag_class_mask) | mask;
-          ai0++;
-        }
+        printf("NOT IMPLEMENTED\n");
       } else {
         for(aa = a0; aa <= a1; aa++) {
           if(SelectorIsMember(G, ai0->selEntry, sele))
@@ -2214,6 +2209,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
       }
 
       if(n1) {
+        short too_many_atoms = false;
         map = MapNewFlagged(G, -cutoff, I->Vertex, I->NAtom, NULL, I->Flag1);
         if(map) {
           MapSetupExpress(map);
@@ -2231,6 +2227,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
               if(MapExclLocus(map, v0, &h, &k, &l)) {
                 i = *(MapEStart(map, h, k, l));
                 if(i) {
+                  int nat = 0;
                   as1 = map->EList[i++];
                   while(as1 >= 0) {
                     v1 = I->Vertex + 3 * as1;
@@ -2284,6 +2281,11 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
                       }
                     }
                     as1 = map->EList[i++];
+		    nat++;
+                  }
+                  if (nat > 1000){ // if map returns more than 1000 atoms within 4, should be a dss error
+                    too_many_atoms = true;
+                    break;
                   }
                 }
               }
@@ -2291,6 +2293,10 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
           }
         }
         MapFree(map);
+	if (too_many_atoms){
+	  PRINTFB(G, FB_Selector, FB_Errors)
+	    " SelectorAssignSS: ERROR: Unreasonable number of neighbors for dss, cannot assign secondary structure.\n" ENDFB(G);
+	}
       }
       FreeP(zero);
       FreeP(scratch);

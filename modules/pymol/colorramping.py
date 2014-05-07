@@ -142,7 +142,7 @@ EXAMPLE
     with _self.lockcm:
         r = cmd._cmd.set_volume_ramp(_self._COb, name, ramplist)
 
-    if _guiupdate:
+    if _guiupdate and name in _volume_windows:
         from pymol import gui
         def func():
             import Tkinter
