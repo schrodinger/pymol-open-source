@@ -781,6 +781,7 @@ if __name__=='pymol.setting':
         pick_labels                        = 736
         label_z_target                     = 737
         session_embeds_data                = 738
+        volume_mode                        = 739
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
@@ -962,12 +963,12 @@ PYMOL API
                                  "("+selection1+")","("+selection2+")",
                                  int(state)-1,int(quiet),
                                  int(updates))
+                except QuietException:
+                    pass
                 except:
-                    traceback.print_exc()
                     if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                         traceback.print_exc()
-                        print "Error: unable to read setting value."
-                    raise QuietException
+                    raise _self.pymol.CmdException("invalid value: %s" % repr(value))
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            
@@ -1120,11 +1121,12 @@ SEE ALSO
                                      selection,
                                      int(state)-1,int(quiet),
                                      int(updates))
+                except QuietException:
+                    pass
                 except:
                     if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                         traceback.print_exc()
-                        print "Error: unable to read setting value."
-                    raise QuietException
+                    raise _self.pymol.CmdException("invalid value: %s" % repr(value))
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            

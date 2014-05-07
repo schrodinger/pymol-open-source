@@ -970,6 +970,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_pick_labels                             736
 #define cSetting_label_z_target                          737
 #define cSetting_session_embeds_data                     738
+#define cSetting_volume_mode                             739
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -980,6 +981,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       739
+#define cSetting_INIT                       740
 
 #endif

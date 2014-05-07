@@ -100,6 +100,8 @@ void SceneCountFrames(PyMOLGlobals * G);
 int SceneGetNFrame(PyMOLGlobals * G, int *has_movie);
 void SceneSetMatrix(PyMOLGlobals * G, float *);
 float *SceneGetMatrix(PyMOLGlobals * G);
+float *SceneGetModMatrix(PyMOLGlobals * G);
+float *SceneGetPmvMatrix(PyMOLGlobals * G);
 
 void SceneReshape(Block * block, int width, int height);
 float SceneGetScreenVertexScale(PyMOLGlobals * G, float *v1);

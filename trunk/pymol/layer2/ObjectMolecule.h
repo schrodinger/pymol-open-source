@@ -246,6 +246,20 @@ typedef struct {
   ObjectNameType name;
 } ObjMolMultiplexType;
 
+/* loop iterators for the ObjectMolecule::Neighbor array
+ *
+ * Arguments: (Neighbor array, const int atom-index, int neighbor-atom-or-bond-index, int used-internally)
+ *
+ * Example:
+ * // iterate over neighbors of obj->AtomInfo[at]
+ * int neighbor_at, tmp;
+ * ITERNEIGHBORATOMS(obj->Neighbor, at, neighbor_at, tmp) {
+ *   // do something with obj->AtomInfo[neighbor_at]
+ * }
+ */
+#define ITERNEIGHBORATOMS(N, a, n, i) for(i = N[a] + 1; (n = N[i]) > -1; i += 2)
+#define ITERNEIGHBORBONDS(N, a, b, i) for(i = N[a] + 1; (b = N[i + 1]), N[i] > -1; i += 2)
+
 void M4XAnnoInit(M4XAnnoType * m4x);
 void M4XAnnoPurge(M4XAnnoType * m4x);
 
@@ -273,7 +287,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, char *scri
 /* */
 int ObjectMoleculeAreAtomsBonded2(ObjectMolecule * obj0, int a0, ObjectMolecule * obj1,
                                   int a1);
-int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, char *name);
+int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, char *name, int);
 void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec * op);
 int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                 ObjectMolecule ** result);

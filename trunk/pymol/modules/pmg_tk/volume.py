@@ -378,6 +378,8 @@ class VRGBACanvas(object):
             self.canvas.bind('<Button-%d>' % i, self.onmousedown)
             self.canvas.bind('<ButtonRelease-%d>' % i, self.onmouseup)
             self.canvas.bind('<Button%d-Motion>' % i, self.ondrag)
+        for i in range(4, 6):
+            self.canvas.bind('<Button-%d>' % i, self.onmousewheel)
 
         # buttons
         Tkinter.Button(self.buttonbox, text='Get colors as script',
@@ -797,6 +799,17 @@ class VRGBACanvas(object):
         if d2 > (CIRCLE_RADIUS + pad) ** 2:
             return None
         return a[0]
+
+    def onmousewheel(self, event):
+        '''
+        Mouse wheel event handler
+        '''
+        factor = 1.05 if event.num == 4 else 0.95;
+
+        for p in self.ramp:
+            p.alpha *= factor
+
+        self.ramp_changed()
 
     def onmousedown(self, event):
         '''

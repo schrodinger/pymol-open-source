@@ -7501,14 +7501,12 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I)
 int ObjectMoleculeGetTotalAtomValence(ObjectMolecule * I, int atom)
 {
   int result = 0;
-  int n0;
+  int b, i;
   ObjectMoleculeUpdateNeighbors(I);
   if(atom < I->NAtom) {
-    n0 = I->Neighbor[atom] + 1;
-    while(I->Neighbor[n0] >= 0) {
-      result += I->Neighbor[n0 + 1];
+    ITERNEIGHBORBONDS(I->Neighbor, atom, b, i) {
+      result += I->Bond[b].order;
     }
-    n0 += 2;
   } else {
     result = -1;                /* error */
   }

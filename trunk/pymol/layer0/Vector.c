@@ -817,6 +817,7 @@ void transform44d3fas33d3f(double *m1, float *m2, float *m3)
   m3[2] = (float) (m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2);
 }
 
+// same as MatrixInvTransformC44fAs33f3f
 void transform44f3fas33f3f(float *m1, float *m2, float *m3)
 {
   register float m2r0 = m2[0];

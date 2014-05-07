@@ -2582,6 +2582,10 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_line_as_cylinders:
   case cSetting_ribbon_as_cylinders:
   case cSetting_dash_as_cylinders:
+    if (index == cSetting_dash_as_cylinders) {
+      ExecutiveInvalidateRep(G, inv_sele, cRepAngle, cRepInvRep);
+      ExecutiveInvalidateRep(G, inv_sele, cRepDihedral, cRepInvRep);
+    }
   case cSetting_nonbonded_as_cylinders:
   case cSetting_alignment_as_cylinders:
   case cSetting_cartoon_nucleic_acid_as_cylinders:
@@ -3267,7 +3271,13 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     SceneInvalidate(G);
     break;
   case cSetting_volume_layers:
+    ExecutiveInvalidateRep(G, inv_sele, cRepVolume, cRepInvColor);
     SceneInvalidate(G);
+    break;
+  case cSetting_volume_mode:
+    PRINTFB(G, FB_Setting, FB_Warnings)
+      "Setting-Warning: volume_mode is not supported in open-source version of PyMOL\n"
+      ENDFB(G);
     break;
   case cSetting_cgo_transparency:
     SceneInvalidate(G);
@@ -3651,7 +3661,9 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 
     set_b(I, cSetting_session_embeds_data, 1);
 
-    set_i(I, cSetting_label_z_target, -1);
+    set_i(I, cSetting_volume_mode, 0);
+
+    set_i(I, cSetting_label_z_target, 0);
 
     set_i(I, cSetting_pick_labels, 1);
 

@@ -2,6 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2014-05-07 Thomas Holder, Blaine Bell
+
+	* volume improvments:
+	    - grid_mode support
+	    - adjust volume ramp alphas by number of layers
+	    - support TTT matrix
+	    - bind mouse wheel to volume panel to adjust all alphas at once
+
+	* CCP4 map type 0 support
+
+	* fixed polymer detection for intra-residue N->C and O3'->P bonds
+
+	* raise exception when assigning arbitrary string to int setting
+
+	* fix group visibility issue in movie making
+
 2014-04-08 Thomas Holder, Blaine Bell
 
 	* never assign atom_type (noInvalidateMMStereoAndTextType)

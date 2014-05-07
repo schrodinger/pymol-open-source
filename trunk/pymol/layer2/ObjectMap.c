@@ -2415,14 +2415,41 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
 
 
 /*========================================================================*/
+static float ccp4_next_value(char ** pp, int mode) {
+  char * p = *pp;
+  switch(mode) {
+    case 0:
+      *pp += 1;
+      return (float) *((int8_t *) p);
+    case 1:
+      *pp += 2;
+      return (float) *((int16_t *) p);
+    case 2:
+      *pp += 4;
+      return *((float *) p);
+  }
+  printf("ERROR unsupported mode\n");
+  return 0.f;
+}
+
+/* swaps n*width bytes in memory starting at p */
+static void swap_endian(char * p, int n, int width) {
+  char tmp, *q, *pstop = p + (n - 1) * width + 1;
+  int w2 = width/2, wm1 = width - 1;
+  for(; p < pstop; p += w2) {
+    for(q = p + wm1; p < q; p++, q--) {
+      tmp = *p; *p = *q; *q = tmp;
+    }
+  }
+}
+
 static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int state,
                                  int quiet)
 {
   char *p;
   int *i;
-  unsigned int *u;
-  unsigned char *uc, c0, c1, c2, c3;
-  float *f;
+  size_t bytes_per_pt;
+  char *q;
   float dens;
   int a, b, c, d, e;
   float v[3], vr[3], maxd, mind;
@@ -2445,6 +2472,12 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ObjectMapState *ms;
   int expectation;
 
+  if(bytes < 256 * sizeof(int)) {
+    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
+      " ObjectMapCCP4: Map appears to be truncated -- aborting." ENDFB(I->Obj.G);
+    return (0);
+  }
+
   /* state check */
   if(state < 0)
     state = I->NState;
@@ -2457,39 +2490,19 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   ObjectMapStateInit(I->Obj.G, ms);
 
   normalize = SettingGetGlobal_b(I->Obj.G, cSetting_normalize_ccp4_maps);
-  maxd = -FLT_MAX;
-  mind = FLT_MAX;
+
   p = CCP4Str;
   little_endian = *((char *) &little_endian);
-  map_endian = (*p || *(p + 1));
+  map_endian = (*p || *(p + 1)); // NOTE: this assumes 0x0 < NC < 0x10000
 
-  if(bytes < 256 * sizeof(int)) {
-    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      " ObjectMapCCP4: Map appears to be truncated -- aborting." ENDFB(I->Obj.G);
-    return (0);
-  }
   if(little_endian != map_endian) {
     if(!quiet) {
       PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
         " ObjectMapCCP4: Map appears to be reverse endian, swapping...\n" ENDFB(I->Obj.G);
     }
-    c = bytes;
-    u = (unsigned int *) p;
-    uc = (unsigned char *) u;
-    while(c > 3) {
-      c0 = *(uc++);
-      c1 = *(uc++);
-      c2 = *(uc++);
-      c3 = *(uc++);
-      uc = (unsigned char *) u;
-      *(uc++) = c3;
-      *(uc++) = c2;
-      *(uc++) = c1;
-      *(uc++) = c0;
-      u++;
-      c -= 4;
-    }
+    swap_endian(p, 256, sizeof(int));
   }
+
   i = (int *) p;
   nc = *(i++);                  /* columns */
   nr = *(i++);                  /* rows */
@@ -2500,9 +2513,19 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   }
   map_mode = *(i++);            /* mode */
 
-  if(map_mode != 2) {
+  switch(map_mode) {
+  case 0:
+    bytes_per_pt = 1; // int8_t
+    break;
+  case 1:
+    bytes_per_pt = 2; // int16_t
+    break;
+  case 2:
+    bytes_per_pt = 4; // float
+    break;
+  default:
     PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-      "ObjectMapCCP4-ERR: Only map mode 2 currently supported (this map is mode %d)",
+      "ObjectMapCCP4-ERR: Only map mode 0-2 currently supported (this map is mode %d)",
       map_mode ENDFB(I->Obj.G);
     return (0);
   }
@@ -2558,7 +2581,10 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
       " ObjectMapCCP4: MAPC %d   MAPR %d  MAPS  %d \n", mapc, mapr, maps ENDFB(I->Obj.G);
   }
 
-  i += 3;
+  // AMIN, AMAX, AMEAN
+  mind = *(float *) (i++);
+  maxd = *(float *) (i++);
+  mean = *(float *) (i++);
 
   ispg = *(i++);
   sym_skip = *(i++);
@@ -2572,6 +2598,14 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
         ENDFB(I->Obj.G);
       return (0);
     }
+  }
+
+  i += 54 - 25;
+  stdev = *(float *) (i++);
+
+  if(!quiet) {
+    PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
+      " ObjectMapCCP4: AMIN %f AMAX %f AMEAN %f ARMS %f\n", mind, maxd, mean, stdev ENDFB(I->Obj.G);
   }
 
   n_pts = nc * ns * nr;
@@ -2588,7 +2622,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     }
   }
 
-  expectation = sym_skip + sizeof(int) * (256 + n_pts);
+  expectation = sym_skip + sizeof(int) * 256 + bytes_per_pt * n_pts;
 
   if(!quiet) {
     PRINTFB(I->Obj.G, FB_ObjectMap, FB_Blather)
@@ -2615,14 +2649,20 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     }
   }
 
+  q = p + (sizeof(int) * 256) + sym_skip;
+
+  if(little_endian != map_endian && bytes_per_pt > 1) {
+    swap_endian(q, n_pts, bytes_per_pt);
+  }
+
   if(n_pts > 1) {
-    f = (float *) (p + (sizeof(int) * 256) + sym_skip);
     c = n_pts;
     sum = 0.0;
     sumsq = 0.0;
     while(c--) {
-      sumsq += (*f) * (*f);
-      sum += *f++;
+      dens = ccp4_next_value(&q, map_mode);
+      sumsq += dens * dens;
+      sum += dens;
     }
     mean = (float) (sum / n_pts);
     stdev = (float) sqrt1d((sumsq - (sum * sum / n_pts)) / (n_pts - 1));
@@ -2634,7 +2674,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     stdev = 1.0;
   }
 
-  f = (float *) (p + (sizeof(int) * 256) + sym_skip);
+  q = p + (sizeof(int) * 256) + sym_skip;
   mapc--;                       /* convert to C indexing... */
   mapr--;
   maps--;
@@ -2701,6 +2741,9 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     ms->MapSource = cMapSourceCCP4;
     ms->Field->save_points = false;
 
+    maxd = -FLT_MAX;
+    mind = FLT_MAX;
+
     for(cc[maps] = 0; cc[maps] < ms->FDim[maps]; cc[maps]++) {
       v[maps] = (cc[maps] + ms->Min[maps]) / ((float) ms->Div[maps]);
 
@@ -2710,16 +2753,15 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
         for(cc[mapc] = 0; cc[mapc] < ms->FDim[mapc]; cc[mapc]++) {
           v[mapc] = (cc[mapc] + ms->Min[mapc]) / ((float) ms->Div[mapc]);
 
+          dens = ccp4_next_value(&q, map_mode);
+
           if(normalize)
-            dens = (*f - mean) / stdev;
-          else
-            dens = *f;
+            dens = (dens - mean) / stdev;
           F3(ms->Field->data, cc[0], cc[1], cc[2]) = dens;
-          if(maxd < *f)
+          if(maxd < dens)
             maxd = dens;
-          if(mind > *f)
+          if(mind > dens)
             mind = dens;
-          f++;
           transform33f3f(ms->Symmetry->Crystal->FracToReal, v, vr);
           for(e = 0; e < 3; e++)
             F4(ms->Field->points, cc[0], cc[1], cc[2], e) = vr[e];

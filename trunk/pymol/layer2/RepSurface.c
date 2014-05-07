@@ -223,7 +223,10 @@ void RepSurfaceSortIX(PyMOLGlobals * G, RepSurface *I, int t_mode){
 }
 
 int AtomInfoIsMasked(ObjectMolecule *obj, int atm){
-  AtomInfoType *ait = &obj->AtomInfo[atm];
+  AtomInfoType *ait;
+  if (atm < 0)
+    return cPickableNoPick;
+  ait = &obj->AtomInfo[atm];
   return (ait->masked ? cPickableNoPick : cPickableAtom);
 }
 

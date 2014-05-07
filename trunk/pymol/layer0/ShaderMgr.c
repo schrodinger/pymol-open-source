@@ -31,9 +31,12 @@ Z* -------------------------------------------------------------------
 
 #define MAX_LOG_LEN 1024
 
+#define SCENEGETIMAGESIZE SceneGetImageSizeFast
+
 #include "ShaderText.h"
 
-#if defined(OPENGL_ES_2)
+#if defined(PURE_OPENGL_ES_2)
+#elif defined(OPENGL_ES_2)
 #define DEFAULT_VS_FILENAME "default_es2.vs"
 #define DEFAULT_FS_FILENAME "default_es2.fs"
 #else
@@ -52,6 +55,13 @@ Z* -------------------------------------------------------------------
 #define INDICATOR_VS_FILENAME "indicator.vs"
 #define INDICATOR_FS_FILENAME "indicator.fs"
 
+#define WARNING_IF_GLERROR(msg) { \
+  GLenum err; \
+  if ((err = glGetError())){ \
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR 0x%04x: " msg "\n", err ENDFB(G); \
+  } \
+}
+
 static const float mat3identity[] = { 1., 0., 0., 0., 1., 0., 0., 0., 1. };
 
 void getGLVersion(PyMOLGlobals * G, int *major, int* minor);
@@ -64,16 +74,13 @@ void CShaderPrg_SetFogUniforms(PyMOLGlobals * G, CShaderPrg * shaderPrg){
   int bg_width, bg_height;
   int scene_width, scene_height;
   int ortho_width, ortho_height;
-  int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
 
-  CShaderPrg_Set1f(shaderPrg, "fogIsSolidColor", bg_gradient ? 0.f : 1.f);
   CShaderPrg_Set3fv(shaderPrg, "fogSolidColor", ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb)));
 
   SceneGetWidthHeight(G, &scene_width, &scene_height);
 
   OrthoGetBackgroundSize(G, &bg_width, &bg_height);
   OrthoGetSize(G, &ortho_width, &ortho_height);
-  CShaderPrg_Set1f(shaderPrg, "isStretched", bg_gradient ? 1.f : 0.f);
   CShaderPrg_Set2f(shaderPrg, "viewImageSize", bg_width/(float)scene_width, bg_height/(float)scene_height);
   CShaderPrg_Set2f(shaderPrg, "pixelSize", 1.f/(float)scene_width, 1.f/(float)scene_height);
   CShaderPrg_Set2f(shaderPrg, "tPixelSize", 1.f/(float)ortho_width, 1.f/(float)ortho_height);
@@ -220,7 +227,7 @@ char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, ch
   CShaderMgr *I = G->ShaderMgr;
   FILE* f = NULL;
   long size;
-  char* buffer = NULL, *p, *pymol_path, *shader_path, *fullFile = NULL, *pl, *newpl, *tpl;
+  char* buffer = NULL, *p, *pymol_path, *shader_path, *fullFile = NULL, *pl, *newpl, *tpl, *chrsp, *chrnl;
   size_t res;
   char *newbuffer;
   int newbuffersize;
@@ -278,14 +285,15 @@ char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, ch
   pl = buffer;
   i = 1;
 
-  while ((pl - buffer) < res){
+  while (((size_t)(pl - buffer)) < res){
     short pass_line = 0;
     newpl = strchr(pl, '\n');
     len = newpl - pl + 1;
     strncpy(tmp_line, pl, len);
     tmp_line[len] = 0;
-
-    tpl = (char*)MIN_CHAR(strchr(pl, ' '), strchr(pl, '\n'));
+    chrsp = strchr(pl, ' ');
+    chrnl = strchr(pl, '\n');
+    tpl = (char*)MIN_CHAR(chrsp, chrnl);
     if (tpl <= newpl){ // && tlen < len){
       short ifl = 0, ifdefl = 0, ifdefnot = 0, elsel = 0, endifl = 0, includel = 0, lookup = 0;
       tlen = tpl - pl;
@@ -425,7 +433,6 @@ void CShaderMgr_Reload_Shader_Variables(PyMOLGlobals * G){
 
 }
 
-
 /* ============================================================================
  * ShaderMgrInit is called from PyMOL.c during start up; it just allocates
  * the global ShaderMgr
@@ -533,10 +540,11 @@ void CShaderPrg_BindLabelAttribLocations(PyMOLGlobals * G){
 }
 
 void CShaderPrg_BindCylinderAttribLocations(PyMOLGlobals * G){
+  GLenum err ;
+  CShaderPrg *I;
 #ifdef OPENGL_ES_2
-  CShaderPrg *I = CShaderPrg_Get_CylinderShader_NoSet(G);
+  I = CShaderPrg_Get_CylinderShader_NoSet(G);
   if (I){
-    GLenum err ;
     glBindAttribLocation(I->id, CYLINDER_ORIGIN, "attr_origin");
     if (err = glGetError()){
       PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR: attr_origin: %d\n", err ENDFB(G);
@@ -689,7 +697,7 @@ void CShaderPrg_Update_Shaders_For_Background(PyMOLGlobals * G) {
 }
 
 int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f){
-  int status, howLong;
+  int status, howLong, needAttach = 0;
   char infoLog[MAX_LOG_LEN];
   CShaderPrg * I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, name);
   if (!I){
@@ -699,7 +707,8 @@ int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f){
 	" CShaderPrg_Reload: cannot find shader '%s'\n", name ENDFB(G);
     }
     return 0;
-  } else if(v) {
+  }
+  if(v) {
     if (I->v)
       free(I->v);
     I->v = strdup(v);
@@ -756,8 +765,8 @@ int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f){
 void ShaderMgrConfig(PyMOLGlobals * G) {
   int major, minor;
   char buf[50];
-  CShaderPrg *defaultShader, *volumeShader, *sphereShader, *defaultScreenShader,
-    *cylinderShader, *spheredirectShader, *labelShader, *labelScreenShader, *indicatorShader, *bgShader, *screenShader, *rampShader;
+  CShaderPrg *defaultShader = NULL, *volumeShader = NULL, *sphereShader = NULL, *defaultScreenShader = NULL,
+    *cylinderShader = NULL, *spheredirectShader = NULL, *labelShader = NULL, *labelScreenShader = NULL, *indicatorShader = NULL, *bgShader = NULL, *screenShader = NULL, *rampShader;
   int hasShaders = 0, hasCylinderShader = 0;
   int ok = 0;
   GLenum err; 
@@ -1333,7 +1342,7 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
   char infoLog[MAX_LOG_LEN];
   /* if v == f == NULL, read 'name.vs' and 'name.fs' from disk */
   CShaderPrg * I = NULL;
-  DListElemAlloc(G, I, CShaderPrg);
+  DListElemCalloc(G, I, CShaderPrg);
   DListElemInit(I, prev, next);
 
   I->G = G;
@@ -1342,10 +1351,10 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
   I->id = glCreateProgram();
   PRINTFB(G, FB_ShaderMgr, FB_Debugging)
     "Created program with id: %d\n", I->id ENDFB(G);
+  ok_assert(1, I->id);
 
-  /* VERTEX shader setup */
-  /* CShaderPrg_InitShader(I, GL_VERTEX_SHADER); */
   if (v){
+    /* VERTEX shader setup */
     I->v = strdup(v);
     I->vid = glCreateShader(GL_VERTEX_SHADER);
     PRINTFB(G, FB_ShaderMgr, FB_Debugging)
@@ -1363,7 +1372,7 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	  "shader: %s\n", I->v ENDFB(G);
       }
-      return 0;
+      ok_raise(1);
     }
     PRINTFB(G, FB_ShaderMgr, FB_Debugging)
       "CShaderPrg_New-Message: vertex shader compiled.\n" ENDFB(G);
@@ -1392,20 +1401,21 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	  "infoLog=%s\n", infoLog ENDFB(G);
       }
-      return 0;
+      ok_raise(1);
     }    
     glAttachShader(I->id, I->fid);
   }
 
   if (v && f){
     /* Link the new program */
-    if (!CShaderPrg_Link(I)){
-      CShaderPrg_Delete(I);
-      return NULL;
-    }
+    ok_assert(1, CShaderPrg_Link(I));
   }
   I->uniform_set = 0;
+
   return I;
+ok_except1:
+  CShaderPrg_Delete(I);
+  return NULL;
 }
 
 
@@ -1428,7 +1438,6 @@ CShaderPrg * CShaderPrg_NewFromFile(PyMOLGlobals * G, const char * name, const c
 			vFileStr, 
 			fFileStr);
 }
-
 
 void CShaderPrg_Delete(CShaderPrg * I)
 {
@@ -2110,7 +2119,7 @@ CShaderPrg *CShaderPrg_Enable_LabelShaderImpl(PyMOLGlobals * G, CShaderPrg *shad
   CShaderPrg_Set1i(shaderPrg, "textureMap", 3);
   if (!(shaderPrg->uniform_set & 8)){
     int width, height;
-    SceneGetImageSizeFast(G, &width, &height);
+    SCENEGETIMAGESIZE(G, &width, &height);
     CShaderPrg_Set2f(shaderPrg, "screenSize", width, height);
     CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", 1.f);
     shaderPrg->uniform_set |= 8;
