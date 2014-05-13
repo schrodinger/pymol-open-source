@@ -323,7 +323,7 @@ else:
             noff = numpy.sum(abs(data1 - data2) > delta)
             self.assertLessEqual(noff, count * data1.shape[-1], msg + ' (%d)' % noff)
 
-        def assertImageHasColor(self, color, img=None, delta=0):
+        def _imageHasColor(self, color, img=None, delta=0):
             if isinstance(color, str):
                 color = [int(v*255) for v in cmd.get_color_tuple(color)]
             else:
@@ -335,8 +335,15 @@ else:
             if isinstance(delta, list) and dim == len(delta) + 1:
                 delta.append(0)
             diff = abs(img.reshape((-1, dim)) - color)
-            self.assertTrue((diff - delta <= 0).prod(1).sum(),
+            return (diff - delta <= 0).prod(1).sum()
+
+        def assertImageHasColor(self, color, img=None, delta=0):
+            self.assertTrue(self._imageHasColor(color, img, delta),
                     'no such color: ' + str(color))
+
+        def assertImageHasNotColor(self, color, img=None, delta=0):
+            self.assertFalse(self._imageHasColor(color, img, delta),
+                    'color found: ' + str(color))
 
         def assertImageHasTransparency(self, img=None):
             img = self.get_imagearray(img)
@@ -427,6 +434,12 @@ else:
             cmd.unset('antialias')
             cmd.png(filename, *args, **kwargs)
             cmd.draw()
+
+        def ambientOnly(self):
+            cmd.set('ambient', 1)
+            cmd.set('antialias', 0)
+            cmd.set('light_count', 1)
+            cmd.set('depth_cue', 0)
 
     class PyMOLTestResult(unittest.runner.TextTestResult):
         def addSuccess(self, test):

@@ -29,10 +29,24 @@ class TestCreating(testing.PyMOLTestCase):
     def testIsomesh(self):
         pass
 
-    @unittest.skip("Not yet implemented.")
+    @testing.requires('gui')
     def testVolume(self):
-        pass
-    
+        cmd.fetch('1ubq', 'map', type='2fofc')
+        cmd.volume('vol', 'map', '2fofc')
+        x = cmd.get_volume_ramp('vol', 'sigma')
+        y = [.9, 0., 0., 1., .0,
+             1., 0., 0., 1., .2,
+            1.4, 0., 0., 1., .0,]
+        import numpy
+        self.assertArrayEqual(x[5:-5], y, delta=0.1)
+        cmd.set_volume_ramp('vol', 'esp')
+        x = cmd.get_volume_ramp('vol', 'sigma')
+        y = [-1., 1., 0., 0., .2,
+             -.1, 1., 0., 0., .0,
+              .1, 0., 0., 1., .0,
+              1., 0., 0., 1., .2]
+        self.assertArrayEqual(x[5:-5], y, delta=0.1)
+
     @unittest.skip("Not yet implemented.")
     def testIsosurface(self):
         pass
