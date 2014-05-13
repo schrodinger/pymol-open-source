@@ -150,22 +150,14 @@ static char *_FontTypeRenderOpenGL(RenderInfo * info,
         } else if(rpos[1] > _1) {
           screenWorldOffset[1] -= (rpos[1] - _1);
         }
-        z_indent = rpos[2];
-        if(z_indent < _0) {     /* leave room for fonts of finite depth */
-          z_indent += _1;
-          if(z_indent > _0)
-            z_indent = _0;
-        } else if(z_indent > _0) {
-          z_indent -= _1;
-          if(z_indent < _0)
-            z_indent = _0;
-        }
+	/* leave room for fonts of finite depth */
+	z_indent = (rpos[2] < _m1) ? (rpos[2]+1.f) : (rpos[2] > 1.f) ? (rpos[2]-1.f) : 0.f;
+
 	if (!shaderCGO){
 	  x_indent += screenWorldOffset[0] / v_scale;
 	  y_indent += screenWorldOffset[1] / v_scale;
-	} else {
-          screenWorldOffset[2] += rpos[2];
 	}
+	screenWorldOffset[2] += z_indent; // need to take into account weird -1 to 1, and sub 1 from abs val 
       }
       if(!pushed) {
         float *v = TextGetPos(G);
@@ -281,17 +273,8 @@ static char *FontTypeRenderRay(CRay * ray, CFontType * I, char *st, float size,
 
     if(rpos) {
       float loc[3];
-      z_indent = rpos[2];
-      if(z_indent < _0) {       /* leave room for fonts of finite depth */
-        z_indent += _1;
-        if(z_indent > _0)
-          z_indent = _0;
-      } else if(z_indent > _0) {
-        z_indent -= _1;
-        if(z_indent < _0)
-          z_indent = _0;
-      }
-
+      /* leave room for fonts of finite depth */
+      z_indent = (rpos[2] < _m1) ? (rpos[2]+1.f) : (rpos[2] > 1.f) ? (rpos[2]-1.f) : 0.f;
       v = TextGetPos(I->G);
 
       if(ray->Ortho) {

@@ -1552,7 +1552,8 @@ SEE ALSO
                         for rep_name in rep_list:
                             name = "_scene_"+key+"_"+rep_name
                             _self.select(name,"rep "+rep_name)
-                    if message:
+                    if is_string(message):
+                        if message:
                             if (message[0:1] in [ '"',"'"] and
                                  message[-1:] in [ '"',"'"]):
                                 message=message[1:-1]
