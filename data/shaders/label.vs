@@ -23,9 +23,15 @@ void main()
 {
   vec4 pos = gl_ModelViewProjectionMatrix * attr_worldpos;
   pos /= pos.w;
-  pos.xyz += attr_screenworldoffset / (screenSize.xyx * screenOriginVertexScale);
+  pos.xy += attr_screenworldoffset.xy / (screenSize.xy * screenOriginVertexScale);
   pos.xy += attr_screenoffset.xy * 2. / screenSize * vec2(aspectRatioAdjustment, 1.);
 
+  vec3 viewVector = vec3(gl_ModelViewMatrixTranspose * vec4(0.,0., -1.,0.));
+  vec4 a_center = (attr_worldpos + attr_screenworldoffset.z * vec4(viewVector, 0.));
+  vec4 transformedPositionZ = gl_ModelViewProjectionMatrix * a_center;
+  transformedPositionZ.xyz = transformedPositionZ.xyz/transformedPositionZ.w;
+  transformedPositionZ.w = 1.;
+  pos.z = transformedPositionZ.z;
   gl_Position = pos;
   textureLookup = attr_texcoords;
   normalizedViewCoordinate = pos.xyz / 2.0 + 0.5;

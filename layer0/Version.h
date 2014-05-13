@@ -1,5 +1,5 @@
 #ifndef _PyMOL_VERSION
-#define _PyMOL_VERSION "1.7.1.2"
+#define _PyMOL_VERSION "1.7.1.3"
 #endif
 
 #ifndef _PYMOL_1_x
@@ -7,12 +7,12 @@
 #endif
 
 #ifndef _PyMOL_VERSION_double
-#define _PyMOL_VERSION_double 1.712
+#define _PyMOL_VERSION_double 1.713
 #endif
 
 
 /* for session file compatibility */
 
 #ifndef _PyMOL_VERSION_int
-#define _PyMOL_VERSION_int 1712
+#define _PyMOL_VERSION_int 1713
 #endif

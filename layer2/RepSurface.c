@@ -5299,7 +5299,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
         }
       }
 
-      if((circumscribe < 0) || (!surface_solvent))
+      if((circumscribe < 0) && (!surface_solvent))
         circumscribe = 0;
 
       RepInit(G, &I->R);
