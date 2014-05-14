@@ -20,6 +20,8 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
+#include <stdint.h>
+
 #include"OOMac.h"
 #include"ObjectMap.h"
 #include"Base.h"
@@ -36,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"PyMOLGlobals.h"
 #include"Matrix.h"
+#include"Util.h"
 
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_NUMPY
