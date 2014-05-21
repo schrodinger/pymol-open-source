@@ -1,6 +1,7 @@
 
 from pymol import cmd, testing, stored, colorramping
 
+@testing.requires_version('1.7.1')
 class TestColorramping(testing.PyMOLTestCase):
 
     def _sample_data(self):

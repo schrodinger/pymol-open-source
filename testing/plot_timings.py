@@ -31,7 +31,7 @@ for line in open(tabname):
     a = line.rstrip('\n').split("\t")
     timestamp = float(a[0])
     try:
-        mac = a[9] + ' ' + a[8]
+        mac = a[9] + a[5]
     except:
         mac = a[1]
         mac = ':'.join(mac[i:i+2] for i in range(0, len(mac), 2))
@@ -65,7 +65,7 @@ for key in sorted(db):
         x, y = zip(*data[mac])
         x = map(datetime.datetime.fromtimestamp, x)
         maxy = max(maxy, max(y))
-        ax.plot(x, y, "o-", label=mac[:24])
+        ax.plot(x, y, "o-", label=mac[:290])
 
     fig.autofmt_xdate()
     ax.xaxis.set_major_formatter(dates.DateFormatter('%Y-%m-%d'))

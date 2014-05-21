@@ -7,6 +7,8 @@ mtzfiles = [
     '/schrodinger/tasks/other_maps/refine.mtz',
     '/schrodinger/tasks/other_maps/refine_without_eIF1A.mtz',
     '/schrodinger/tmp/1atx4.mtz',
+    '/Users/thomas/Downloads/example1.mtz',
+    '/Users/thomas/Downloads/primex_polish_1atp_cns-out-2fofc.mtz',
 ]
 
 class TestHeadering(testing.PyMOLTestCase):

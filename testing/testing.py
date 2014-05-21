@@ -71,6 +71,37 @@ else:
 
     deferred_unlink = []
 
+    class requires_version(object):
+        '''
+        Decorator for restricting to PyMOL version
+        '''
+        VERSION = cmd.get_version()
+
+        def __init__(self, version):
+            self.version = version
+
+        def _tupleize(self, strversion):
+            r = []
+            for x in strversion.split('.'):
+                try:
+                    r.append(int(x))
+                except ValueError:
+                    break
+            return tuple(r)
+
+        def __call__(self, func):
+            if isinstance(self.version, int):
+                test = self.version <= self.VERSION[2]
+            elif isinstance(self.version, float):
+                test = self.version <= self.VERSION[1]
+            else:
+                test = self._tupleize(self.version) <= self._tupleize(self.VERSION[0])
+
+            if not test:
+                return unittest.skip('version %s' % (self.version))(func)
+
+            return func
+
     class requires(object):
         '''
         Decorator for test methods which only should be executed

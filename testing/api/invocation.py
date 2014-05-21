@@ -4,6 +4,7 @@ from pymol import cmd, testing, stored, invocation
 class TestInvocation(testing.PyMOLTestCase):
 
     @testing.foreach.zip(('.pymolrc.py', '.pymolrc', 'pymolrc.pml', 'pymolrcextra.py'))
+    @testing.requires_version('1.7.1')
     def test_get_user_config(self, basename):
         '''
         pymolrc finding test
