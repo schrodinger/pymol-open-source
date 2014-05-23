@@ -20,6 +20,8 @@ try:
 except NameError:
     WindowsError = None
 
+print "running testing.py"
+
 def compareListFunction(x, y):
     return collections.Counter(x) == collections.Counter(y)
 
