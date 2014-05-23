@@ -20,8 +20,6 @@ try:
 except NameError:
     WindowsError = None
 
-print "running testing.py"
-
 def compareListFunction(x, y):
     return collections.Counter(x) == collections.Counter(y)
 
@@ -36,7 +34,6 @@ def import_from_file(filename, name=None):
         raise ValueError('invalid extension: "%s"' % filename)
     return imp.load_module(name, open(filename), filename, suffix)
 
-print "testing.py: __name__='", __name__, "'"
 if __name__ != 'pymol.testing':
     # pymol foo.py    -> __name__ == 'pymol'
     # pymol -r foo.py -> __name__ == '__main__'
@@ -516,7 +513,6 @@ USAGE
     run_testfiles file1 file2 ... [, verbosity [, out ]]
         '''
         import glob
-        print "run_testfiles: filenames=", filenames
 
         if filenames in ('all', ['all']):
             global run_all
@@ -568,6 +564,4 @@ USAGE
         cmd.quit(nfail)
 
     cmd.extend('run_testfiles', run_testfiles)
-
-print "testing.py END"
 
