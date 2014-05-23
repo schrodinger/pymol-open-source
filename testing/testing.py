@@ -20,7 +20,7 @@ try:
 except NameError:
     WindowsError = None
 
-print "running testing.py __name__='", __name__, ' sys.argv=", sys.argv
+print "running testing.py __name__='", __name__, "' sys.argv=", sys.argv
 
 def compareListFunction(x, y):
     return collections.Counter(x) == collections.Counter(y)
