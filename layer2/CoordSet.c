@@ -1290,7 +1290,7 @@ static void CoordSetUpdate(CoordSet * I, int state)
           }
 	}
       } else {
-        for(a = 0; a < I->Obj->NAtom; a++) {
+        for(a = 0; a < I->NAtIndex; a++) {
           i = I->AtmToIdx[a];
           if(i >= 0){
             I->Color[i] = obj->AtomInfo[a].color;

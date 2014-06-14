@@ -385,36 +385,8 @@ if pymol_launch != 3: # if this isn't a dry run
             # table size to reflect available RAM
 
             try:
-                ncpu = 1
-                if sys.platform=='darwin':
-                    if os.path.exists("/usr/sbin/sysctl"):
-                        f=os.popen("/usr/sbin/sysctl hw.ncpu hw.physmem")
-                        l=f.readlines()
-                        f.close()
-                        if len(l):
-                            for ll in l:
-                                ll = string.split(string.strip(ll))
-                                if ll[0][0:7]=='hw.ncpu':
-                                    ncpu = int(ll[-1])
-                                elif ll[0][0:10]=='hw.physmem':
-                                    mem = int(ll[-1:][0])
-                                    if mem>1000000000: # Gig or more
-                                        cmd.set("hash_max",130)
-                                    elif mem>500000000:
-                                        cmd.set("hash_max",100)
-                                    elif mem<256000000:
-                                        cmd.set("hash_max",70)
-                elif sys.platform[0:5]=='linux':
-                    f=os.popen(
-         "egrep -c '^processor[^A-Za-z0-9:]*: [0-9]' /proc/cpuinfo")
-                    l=f.readlines()
-                    f.close()
-                    ncpu = int(l[0])
-                elif sys.platform[0:4]=='irix':
-                    f=os.popen("hinv | grep IP | grep Processor | grep HZ")
-                    l=f.readlines()
-                    f.close()
-                    ncpu=int(string.split(string.strip(l[0]))[0])
+                import multiprocessing
+                ncpu = multiprocessing.cpu_count()
                 if ncpu>1:
                      cmd.set("max_threads",ncpu)
                      if invocation.options.show_splash:  

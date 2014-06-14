@@ -2466,7 +2466,7 @@ int AtomInfoCompare(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
      at2->segi,at2->chain,at2->resv,at2->resi,at2->resn,at2->priority,at2->name);
    */
 
-  wc = WordCompare(G, at1->segi, at2->segi, true);
+  wc = WordCompare(G, at1->segi, at2->segi, false);
   if(!wc) {
     if(at1->chain[0] == at2->chain[0]) {
       if(at1->hetatm == at2->hetatm) {
@@ -2569,7 +2569,7 @@ int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoT
     if((p1[0] != p2[0]) ||
        (p1[0] && ((p1[1] != p2[1]) ||
                   (p1[1] && ((p1[2] != p2[2]) || (p1[2] && (p1[3] != p2[3])))))))
-      wc = WordCompare(G, p1, p2, true);
+      wc = WordCompare(G, p1, p2, false);
   }
   if(!wc) {
     if(at1->chain[0] == at2->chain[0]) {
@@ -2660,7 +2660,7 @@ int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType
     if((p1[0] != p2[0]) ||
        (p1[0] && ((p1[1] != p2[1]) ||
                   (p1[1] && ((p1[2] != p2[2]) || (p1[2] && (p1[3] != p2[3])))))))
-      wc = WordCompare(G, p1, p2, true);
+      wc = WordCompare(G, p1, p2, false);
   }
   if(!wc) {
     if(at1->chain[0] == at2->chain[0]) {
@@ -2750,7 +2750,7 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType 
      at2->segi,at2->chain,at2->resv,at2->resi,at2->resn,at2->priority,at2->name);
    */
 
-  wc = WordCompare(G, at1->segi, at2->segi, true);
+  wc = WordCompare(G, at1->segi, at2->segi, false);
   if(!wc) {
     if(at1->chain[0] == at2->chain[0]) {
       if(at1->resv == at2->resv) {
@@ -2855,7 +2855,7 @@ int AtomInfoSameResidue(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2
 
         if(at1->discrete_state == at2->discrete_state)
           if(WordMatch(G, at1->resi, at2->resi, true) < 0)
-            if(WordMatch(G, at1->segi, at2->segi, true) < 0)
+            if(WordMatch(G, at1->segi, at2->segi, false) < 0)
               if(WordMatch(G, at1->resn, at2->resn, true) < 0)
                 return 1;
   return 0;
@@ -2872,7 +2872,7 @@ int AtomInfoSameChainP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 {
   if(at1 && at2)
     if(at1->chain[0] == at2->chain[0])
-      if(WordMatch(G, at1->segi, at2->segi, true) < 0)
+      if(WordMatch(G, at1->segi, at2->segi, false) < 0)
         return 1;
   return 0;
 }
@@ -2880,7 +2880,7 @@ int AtomInfoSameChainP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 int AtomInfoSameSegmentP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 {
   if(at1 && at2)
-    if(WordMatch(G, at1->segi, at2->segi, true) < 0)
+    if(WordMatch(G, at1->segi, at2->segi, false) < 0)
       return 1;
   return 0;
 }
@@ -2892,7 +2892,7 @@ int AtomInfoSequential(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
   if(mode > 0) {
     if(at1->hetatm == at2->hetatm) {
       if(mode > 1) {
-        if(WordMatch(G, at1->segi, at2->segi, true) < 0) {
+        if(WordMatch(G, at1->segi, at2->segi, false) < 0) {
           if(mode > 2) {
             if(at1->chain[0] == at2->chain[0]) {
               if(mode > 3) {
@@ -2939,7 +2939,7 @@ int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
     if(WordMatch(G, at1->name, at2->name, true) < 0)
       if(WordMatch(G, at1->resi, at2->resi, true) < 0)
         if(WordMatch(G, at1->resn, at2->resn, true) < 0)
-          if(WordMatch(G, at1->segi, at2->segi, true) < 0)
+          if(WordMatch(G, at1->segi, at2->segi, false) < 0)
             if((tolower(at1->alt[0])) == (tolower(at2->alt[0])))
               return 1;
   return 0;

@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef __WIN32
-PFNGLTEXIMAGE3DPROC getTexImage3D();
+static PFNGLTEXIMAGE3DPROC getTexImage3D;
 static PFNGLTEXIMAGE3DPROC glTexImage3D;
 static PFNGLACTIVETEXTUREPROC glActiveTexture = -100l;
 static PFNGLGENPROGRAMSARBPROC glGenProgramsARB;
