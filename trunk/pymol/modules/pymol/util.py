@@ -71,117 +71,181 @@ _color_cycle = [
 
 _color_cycle_len = len(_color_cycle)
 
-def color_by_area(sele,mode="molecular",state=0,_self=cmd):
+def color_by_area(sele, mode="molecular", state=0, palette='rainbow', _self=cmd):
     """
+DESCRIPTION
+
     Colors molecule by surface area
-    
-    mode => 0 = molecular (default)
-    => 1 = solvent accessible
-    """
-    z = _self.get("auto_zoom")
-    d = _self.get("dot_solvent")
-    dd = _self.get("dot_density")
 
-    asa = 0
+ARGUMENTS
+
+    sele = str: atom selection
+
+    mode = str: "molecular" {default} or "solvent"
+    """
+    asa = 1 if mode=="solvent" else 0
+
+    tmpObj = _self.get_unused_name("_tmp")
+    tmpSel = _self.get_unused_name("_sel")
+    orgSel = _self.get_unused_name("_org")
+
+    orgN = _self.select(orgSel, sele, 0)
+    _self.create(tmpObj, "byobj ?%s & ! solvent" % (orgSel), zoom=0)
+    tmpN = _self.select(tmpSel, '?%s in ?%s' % (tmpObj, orgSel), 0)
+
     try:
-        asa = 1 if mode=="solvent" else 0
-    except ValueError:
-	# default to molecular
-	asa = 0
-	
-    _self.set("auto_zoom", 0)
-    _self.set("dot_solvent", asa)
-    _self.set("dot_density", 3)
-	
-    tmpName = "tmp"
-    _self.create(tmpName, sele)
-	
-    l = []
-    _self.cmd.get_area(tmpName, load_b=1)
-    _self.cmd.iterate(tmpName, "l.append(b)", space={'l':l})
-    m,M = min(l), max(l)
-    l = []
-    _self.cmd.spectrum("b","rainbow",tmpName, minimum=m, maximum=M)
-    _self.cmd.iterate(tmpName, "l.append(color)", space={'l':l})
-    _self.cmd.alter(sele,"color=l.pop(0)", space={'l':l})
+        if orgN != tmpN:
+            raise pymol.CmdException('color_by_area failed')
 
-    _self.cmd.recolor(sele)
-    
-    _self.cmd.delete(tmpName)
-	
-    _self.cmd.set("auto_zoom",z)
-    _self.cmd.set("dot_solvent",d)
-    _self.cmd.set("dot_density", dd)
+        _self.set("dot_solvent", asa, tmpObj)
+        _self.set("dot_density", 3, tmpObj)
 
-def find_surface_atoms(sele, _self=cmd):
-	"""
-	finds those residues on the surface of a protein
-	that have at least 'cutoff' exposed A**2 surface area.
+        l = []
+        _self.get_area(tmpSel, load_b=1)
+        _self.spectrum("b", palette, tmpSel)
+        _self.iterate(tmpSel, "l_a(color)", space={'l_a': l.append})
+        _self.alter(orgSel, "color=l_n()", space={'l_n': iter(l).next})
 
-	PARAMS
-		objSel (string)
-			the object or selection in which to find
-			exposed residues
-	RETURNS
-		(list: (chain, resv ) )
-			A Python list of residue numbers corresponding
-			to those residues w/more exposure than the cutoff.
+        _self.recolor(orgSel)
+    finally:
+        _self.delete(tmpSel)
+        _self.delete(tmpObj)
+        _self.delete(orgSel)
 
-	"""
-        from pymol import stored
-
-        z = _self.get("auto_zoom")
-        d = _self.get("dot_solvent")
-
-	tmpObj=_self.get_unused_name("__tmp")
-
-	_self.create(tmpObj, sele + " and polymer");
-
-	_self.set("dot_solvent");
-        _self.set("auto_zoom", 0)
-
-	_self.get_area(selection=tmpObj, load_b=1)
-
-	# threshold on what one considers an "exposed" atom (in A**2):
-        surface_residue_cutoff = str(_self.get("surface_residue_cutoff"))
-	_self.remove(tmpObj + " and b < %s" % surface_residue_cutoff)
-
-	stored.tmp_dict = {}
-	_self.iterate(tmpObj, "stored.tmp_dict[(chain,resv)]=1")
-	exposed = stored.tmp_dict.keys()
-	exposed.sort()
-
-	selName = _self.get_unused_name("exposed")
-	_self.select(selName, sele + " in " + tmpObj )
-
-        # clean up
-	_self.delete(tmpObj)
-        _self.set("dot_solvent", d)
-        _self.set("auto_zoom", z)
-
-	return exposed
-
-
-def get_sasa(sele, _self=cmd):
+def find_surface_residues(sele, name='', _self=cmd):
     """
-    get solvent accesible surface area
+DESCRIPTION
+
+    Finds those residues on the surface of a protein
+    that have at least 'surface_residue_cutoff' (setting)
+    exposed A**2 surface area.
+
+    Returns the name of the selection.
+
+ARGUMENTS
+
+    sele = str: the object or selection in which to find exposed residues
+
+    name = str: name of selection to create {default: exposed??}
     """
-    # get user settings before we change them, so we can restore them later
-    z = _self.get("auto_zoom")
-    d = _self.get("dot_density")
-    s = _self.get("dot_solvent")
-    _self.set("auto_zoom", 0)
-    _self.set("dot_solvent", 1)
-    _self.set("dot_density", 5)
-    n = _self.get_unused_name("_")
-    _self.create(n, sele, quiet=1)
-    _self.alter(n, 'vdw=vdw+1.4')
-    _self.get_area(n, quiet=0, _self=_self)
-    _self.delete(n)
-    _self.set("auto_zoom", z)
-    _self.set("dot_density", d)
-    _self.set("dot_solvent", s)
-    
+    from pymol import stored
+    from collections import defaultdict
+
+    tmpObj = _self.get_unused_name("__tmp")
+    selName = name or _self.get_unused_name("exposed")
+
+    _self.select(selName, sele)
+    _self.create(tmpObj, "(byobj ?%s) & ! solvent" % (selName), zoom=0)
+    _self.select(selName, '?%s in ?%s' % (tmpObj, selName))
+
+    _self.set("dot_solvent", 1, tmpObj);
+    _self.get_area(selName, load_b=1)
+
+    # threshold on what one considers an "exposed" atom (in A**2):
+    surface_residue_cutoff = _self.get_setting_float("surface_residue_cutoff")
+
+    res_area = defaultdict(int)
+    _self.iterate(selName, "res_area[segi, chain, resi] += b", space=locals())
+
+    _self.select(selName, 'none')
+    _self.delete(tmpObj)
+
+    for (k, v) in res_area.iteritems():
+        if v < surface_residue_cutoff:
+            continue
+        _self.select(selName, 'segi %s & chain %s & resi %s' % k, merge=1)
+
+    return selName
+
+
+def find_surface_atoms(sele, name='', cutoff=-1, _self=cmd):
+    """
+DESCRIPTION
+
+    Finds those atoms on the surface of a protein
+    that have at least 'cutoff' (argument) or 'surface_residue_cutoff'
+    (setting) exposed A**2 surface area.
+
+    Returns the name of the selection.
+
+ARGUMENTS
+
+    sele = str: the object or selection in which to find exposed residues
+
+    name = str: name of selection to create {default: exposed??}
+    """
+    tmpObj = _self.get_unused_name("_tmp")
+    tmpSel = _self.get_unused_name("_sel")
+
+    _self.select(tmpSel, sele, 0)
+    _self.create(tmpObj, "(byobj ?%s) & ! solvent" % (tmpSel), zoom=0)
+
+    selName = name or _self.get_unused_name("exposed")
+    _self.select(selName, '?%s in ?%s' % (tmpObj, tmpSel))
+
+    _self.set("dot_solvent", 1, tmpObj);
+    _self.get_area(selName, load_b=1)
+
+    cutoff = float(cutoff)
+    if cutoff < 0.0:
+        cutoff = _self.get_setting_float("surface_residue_cutoff")
+
+    _self.select(selName, '?%s in (?%s and b > %f)' % (tmpSel, selName, cutoff))
+    _self.delete(tmpObj)
+    _self.delete(tmpSel)
+
+    return selName
+
+
+def get_area(sele, state=-1, dot_solvent=0, dot_density=5, quiet=1, _self=cmd):
+    '''
+DESCRIPTION
+
+    Wrapper for cmd.get_area that works on a copy of the selected object
+    to set dot_solvent and dot_density.
+
+SEE ALSO
+
+    get_area command, dot_solvent and dot_density settings
+    '''
+    state, dot_density, quiet = int(state), int(dot_density), int(quiet)
+
+    tmpSel = _self.get_unused_name("_sel")
+    _self.select(tmpSel, sele, 0)
+
+    if state < 1:
+        from pymol import querying
+        state = querying.get_selection_state(tmpSel)
+
+    tmpObj = _self.get_unused_name("_tmp")
+    _self.create(tmpObj, "(byobj ?%s) & ! solvent" % (tmpSel), state, zoom=0)
+    _self.select(tmpSel, '?%s in ?%s' % (tmpObj, tmpSel), 0)
+
+    _self.set("dot_solvent", dot_solvent, tmpObj);
+    if dot_density > -1:
+        _self.set('dot_density', dot_density, tmpObj)
+
+    r = _self.get_area(tmpSel, quiet=int(quiet))
+
+    _self.delete(tmpSel)
+    _self.delete(tmpObj)
+
+    return r
+
+
+def get_sasa(sele, state=-1, dot_density=5, quiet=1, _self=cmd):
+    '''
+DESCRIPTION
+
+    Get solvent accesible surface area
+
+SEE ALSO
+
+    get_area command, dot_solvent and dot_density settings
+    '''
+    return get_area(sele, state, 1, dot_density, quiet, _self)
+
+
 def mass_align(target,enabled_only=0,max_gap=50,_self=cmd):
     pymol=_self._pymol
     cmd=_self

@@ -12,192 +12,221 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import string
 import re
-import copy
 
-from chempy import io, Atom, Bond
+from chempy import Atom, Bond
 from chempy.models import Indexed
 
 # OMG what a horrid file format.
 
-single_quote_re = re.compile(r"'[^']*[']*'") # doesn't yet handle ESC
-double_quote_re = re.compile(r'"[^"]*["]*"') # ditto
-bracket_quote_re = re.compile(r'\[[^\]]*\]') # ditto
+# set asym_id as chain AND segi
+ASYM_ID_AS_SEGI = True
 
-clean_float_re = re.compile(r'[^0-9+\-.eE].*')
-clean_int_re = re.compile(r'[^0-9+\-].*')
+# matches any valid CIF token
+token_re = re.compile(r'(?:\s*('
+    r"'.*?'(?=\s)|"
+    r'".*?"(?=\s)|'
+    r'^;.*?^;|'
+    r'#.*?$|'
+    r'\S+'
+    r'))', re.I | re.DOTALL | re.MULTILINE)
 
-class CIFRec:
+# matches numbers in parentheses
+floatuncert_sub = re.compile(r'\([0-9]+\)').sub
 
-    def get_quoted_value(self):
-        if self.line[0:1] == "'":
-            mo = single_quote_re.match(self.line)
-        elif self.line[0:1] == '"':
-            mo = double_quote_re.match(self.line)
-        elif self.line[0:1] == '[':
-            mo = bracket_quote_re.match(self.line)
+def unquote(s):
+    '''
+    Remove quotes from a CIF token
+    '''
+    s0 = s[0]
+    if s0 in ('"', "'"):
+        return s[1:-1]
+    if s0 == ';':
+        return s[1:-2]
+    if s0 == '[':
+        raise ValueError('found reserved "[" character')
+    return s
+
+def scifloat(s):
+    '''
+    Convert string to float. Accepts numbers which match the CIF regex
+    for floats, which may contain an uncertenty in parentheses
+    '''
+    # strip uncertenty notation from string: 123(4)E02 -> 123E02
+    return float(floatuncert_sub('', s))
+
+class ciftokeniter(object):
+    '''
+    Tokenize a CIF string. Skip comments, preserve quotes. Provides
+    sub-iterators for loop keys and data.
+    '''
+    def __init__(self, starstr):
+        self._next = token_re.finditer(starstr).next
+        self._prev = []
+    def __iter__(self):
+        return self
+    def next(self):
+        if self._prev:
+            return self._prev.pop()
+        s = self._next().group(1)
+        if s[0] == '#':
+            return self.next()
+        return s
+    def loopdataiter(self):
+        for s in self:
+            if s[0] == '_' or s[:5].lower() in ('loop_', 'data_', 'save_'):
+                self._prev.append(s)
+                break
+            yield s
+    def loopkeysiter(self):
+        for s in self:
+            if s[0] != '_':
+                self._prev.append(s)
+                break
+            yield s
+
+def parse_cif(cifstr):
+    '''
+    Parse a CIF string and return an iterator over CIFData records.
+    '''
+    current_data = current_block = None
+
+    token_it = ciftokeniter(cifstr)
+
+    for s in token_it:
+        s_lower = s.lower()
+        if s[0] == '_':
+            key = s_lower.replace('.', '_')
+            current_block.key_value[s_lower] = token_it.next()
+        elif s_lower == 'loop_':
+            loop = CIFLoop()
+            current_block.loops.append(loop)
+            for i, key in enumerate(token_it.loopkeysiter()):
+                key = key.lower().replace('.', '_')
+                loop.keys[key] = i
+            ncols = len(loop.keys)
+            for i, value in enumerate(token_it.loopdataiter()):
+                if i % ncols == 0:
+                    row = []
+                    loop.rows.append(row)
+                row.append(value)
+        elif s_lower[:5] == 'data_':
+            if current_data is not None:
+                yield current_data
+            current_block = current_data = CIFData(s[5:])
+        elif s_lower[:5] == 'save_':
+            if len(s) > 5:
+                current_block = CIFData(s[5:])
+                current_data.saveframes.append(current_block)
+            else:
+                current_block = current_data
         else:
-            mo = None
-        if mo != None:
-            result = self.line[:mo.end()]
-            self.line = self.line[mo.end():]
-            if len(string.strip(self.line[0:1])): # followed by non-whitespace...
-                self.line = result[-1:] + self.line
-                result = result[:-1] + self.get_quoted_value()
-            self.check_line()
-        else:
-            result = None # shouldn't happen
-        return result
-    
-    def get_delimited_value(self):
-        result = ''
-        while 1:
-            if self.line[0:1] == ';':
-                self.line = self.line[1:]
-                self.check_line()
-                break
-            result = result + self.line
-            self.next_line()
-        return result
+            raise ValueError(s)
 
-    def get_next_word(self):
-        result = None
-        mo = re.search("\s+", self.line)
-        if mo == None:
-            result = self.line
-            self.next_line()
-        else:
-            result = self.line[:mo.start()]
-            self.line = self.line[mo.end():]
-            self.check_line()
-        return result
-    
-    def trim_leading_whitespace(self):
-        while self.line != None:
-            mo = re.match("\s",self.line)
-            if mo != None:
-                self.line = self.line[mo.end():]
-                self.check_line()
-            else:
-                break
+    if current_data is not None:
+        yield current_data
 
-    def get_next_value(self):
-        self.trim_leading_whitespace()
-        if self.line != None:
-            if self.line[0:1] == '_':
-                return None
-            elif self.line[0:1] == ';':
-                self.line = self.line[1:]
-                self.check_line()
-                return self.get_delimited_value()
-            elif string.lower(self.line[0:5]) in ['loop_','data_','save_']:
-                return None
-            elif string.lower(self.line[0:6]) == 'GLOBAL':
-                return None
-            elif self.line[0:1] in [ "'", '"']: #  '[' ]: bracket quote fubar with PDB's mmCIF data???
-                return self.get_quoted_value()
-            else:
-                return self.get_next_word()
-        return None
-        
-    def check_line(self):
-        if self.line != None:
-            while not len(string.strip(self.line)):
-                self.next_line()
-                if self.line == None:
-                    break
+def _row_get(row, i, d, cast):
+    if i < 0:
+        return d
+    v = row[i]
+    if v in ('.', '?'):
+        return d
+    return cast(v)
 
-    def next_line(self):
-        self.line = None
-        while len(self.list):
-            self.line = self.list.pop()
-            # nuke hash comments 
-            hash = string.find(self.line,'#')
-            if hash>=0:
-                self.line = self.line[0:hash]
-            # and only return non-blank lines
-            if len(string.strip(self.line)):
-                break
-#        print "next_line:", self.line,
-        
-    def parse_loop_body(self,fields):
-        len_fields = len(fields)
-        records = []
-        record = []
-        cnt = len_fields
-        while self.line != None: 
-            value = self.get_next_value()
-            if value == None:
-                break
-            else:
-                record.append(value)
-                cnt = cnt - 1
-                if not cnt:
-                    cnt = len_fields
-                    if len(record) == len_fields:
-                        records.append(record)
-                    record = []
-#                print "loop_read [%s]=[%s]"%(fields[0],value)
-        if len(record) == len_fields:
-            records.append(record)
-        self.loops.append( (fields,records) )
-        
-    def parse_loop(self):
-#        print "parsing loop..."
-        fields = []
-        while self.line != None: 
-            if string.lower(self.line[0:5])=='loop_':
-                break
-            elif string.strip(self.line)[0:1]=='_':
-                fields.append(string.lower(string.strip(self.line)))
-            else:
-                self.parse_loop_body(fields)
-                break
-            self.next_line()
-                
-    def parse_name_value(self):
-        data_name = self.get_next_word()
-        data_value = self.get_next_value()
-        self.key_value[data_name] = data_value
-#        print "data_read [%s]=[%s]"%(data_name,data_value)
-        
-    def parse_normal(self):
-        while self.line != None:
-            if self.line[0:1] == '_': # data name
-                self.parse_name_value()
-            elif string.lower(self.line[0:5])=='loop_':
-                print "entering loop",self.line
-                self.line = self.line[5:]
-                self.check_line()
-                self.parse_loop()
-                print "exiting loop",self.line                
-            else: # shouldn't happen
-                print "unhandled: [%s]"%self.line
-                self.next_line()
+class CIFLoop:
+    '''
+    CIF loop (table)
+    '''
+    def __init__(self):
+        self.keys = {}
+        self.rows = []
+
+    def get_col_idx_opt(self, *names):
+        '''
+        Get column index for first found name in names, or -1
+        '''
+        for name in names:
+            idx = self.keys.get(name.replace('.', '_'))
+            if idx is not None:
+                return idx
+        return -1
+
+    def get_col_idx(self, *names):
+        '''
+        Get column index for first found name in names, or raise KeyError
+        '''
+        idx = self.get_col_idx_opt(*names)
+        if idx == -1:
+            raise KeyError
+        return idx
+
+class CIFData:
+    '''
+    CIF data
+    '''
+    def __init__(self, name):
+        self.name = name
+        self.loops = []
+        self.key_value = {}
+        self.saveframes = {}
+
+    def __repr__(self):
+        return '<%s:%s #kv=%d #loops=%d>' % (type(self).__name__,
+                self.name, len(self.key_value), len(self.loops))
+
+    def _get(self, key, d, cast):
+        v = self.key_value[key]
+        if v in ('.', '?'):
+            return d
+        return cast(v)
 
     def to_float(self, key):
-        value = self.key_value[key]
-        value = clean_float_re.sub("",value)
-        return float(value)
+        return self._get(key, 0.0, scifloat)
 
     def to_str(self, key):
-        value = self.key_value[key]
-        if value[0:1]=="'" and value[-1:] =="'":
-            value = value[1:-1]
-        if value[0:1]=='"' and value[-1:] =='"':
-            value = value[1:-1]
-        return value
+        return self._get(key, '', unquote)
     
-    def read_symmetry(self):
-        kv = self.key_value
+    def index_to_int(self, index, value):
+        return _row_get(value, index, 0, int)
 
-        if ( kv.has_key("_cell_length_a") and
-             kv.has_key("_cell_length_b") and
-             kv.has_key("_cell_length_c") and
-             kv.has_key("_cell_angle_alpha") and
-             kv.has_key("_cell_angle_beta") and
-             kv.has_key("_cell_angle_gamma")):
+    def index_to_float(self, index, value):
+        return _row_get(value, index, 0.0, scifloat)
+
+    def index_to_str(self, index, value):
+        return _row_get(value, index, '', unquote)
+
+class CIFRec(CIFData):
+    '''
+    CIF record
+    '''
+    def __init__(self, datablock):
+        self.loops = datablock.loops
+        self.key_value = datablock.key_value
+        self.name = datablock.name
+
+        # now build the molecule record
+        self.model = Indexed()
+        self.model.molecule.title = datablock.name
+
+        # coordinates for state 2-N
+        self.extra_coords = []
+
+        # by default, indicate that we want PyMOL to automatically
+        # detect bonds based on coordinates
+        self.model.connect_mode = 3
+
+        self.read_symmetry()
+
+        if self.read_atom_site():
+            self.read_geom_bond()
+            self.read_struct_conn()
+            self.read_ss()
+        elif self.read_chem_comp_atom():
+            self.read_chem_comp_bond()
+
+    def read_symmetry(self):
+        try:
             self.model.cell = [
                 self.to_float("_cell_length_a"),
                 self.to_float("_cell_length_b"),
@@ -205,36 +234,26 @@ class CIFRec:
                 self.to_float("_cell_angle_alpha"),
                 self.to_float("_cell_angle_beta"),
                 self.to_float("_cell_angle_gamma")]
-#        if hasattr(self.model,'cell'):
-#            print self.model.cell
-        if kv.has_key("_symmetry_space_group_name_h-m"):
+        except (KeyError, ValueError):
+            return False
+
+        try:
             self.model.spacegroup = self.to_str('_symmetry_space_group_name_h-m')
-#        if hasattr(self.model,'spacegroup'):
-#            print self.model.spacegroup
+        except KeyError:
+            pass
 
-    def index_to_int(self, index, value):
-        result = clean_int_re.sub("",value[index])
-        return int(result)
+        return True
 
-    def index_to_float(self, index, value):
-        result = clean_float_re.sub("",value[index])
-        if len(result):
-            return float(result)
-        else:
-            return 0.0
-        
-
-    def index_to_str(self, index, value):
-        return value[index]
-                
     def read_chem_comp_atom_model_cartn(self,fields,field_dict,values):
-        cartn_x = field_dict['_chem_comp_atom_model_cartn_x']
-        cartn_y = field_dict['_chem_comp_atom_model_cartn_y']
-        cartn_z = field_dict['_chem_comp_atom_model_cartn_z']
-        print cartn_x,cartn_y,cartn_z
+        try:
+            cartn_x = field_dict['_chem_comp_atom_model_cartn_x']
+            cartn_y = field_dict['_chem_comp_atom_model_cartn_y']
+            cartn_z = field_dict['_chem_comp_atom_model_cartn_z']
+        except KeyError:
+            return False
         name = field_dict.get('_chem_comp_atom_atom_id',None)
         symbol = field_dict.get('_chem_comp_atom_type_symbol',None)
-        resn = field_dict.get('_chem_comp_atom.comp_id',None)
+        resn = field_dict.get('_chem_comp_atom_comp_id',None)
         partial_charge = field_dict.get('_chem_comp_atom_partial_charge',None)
         formal_charge = field_dict.get('chem_comp_atom_charge',None)
         str_fields = []
@@ -253,29 +272,31 @@ class CIFRec:
                 self.index_to_float(cartn_z,value)]
             self.model.atom.append(atom)
             for field in str_fields:
-                setattr(atom,field[0],value[field[1]])
+                setattr(atom,field[0],self.index_to_str(field[1],value))
             for field in float_fields:
                 setattr(atom,field[0],self.index_to_float(field[1],value))
             for field in int_fields:
                 setattr(atom,field[0],self.index_to_int(field[1],value))
+        return True
 
     def read_chem_comp_atom(self):
-        self.atom_site_label_index = {}
         for loop in self.loops:
-            (fields, field_dict, values) = loop
-            if (field_dict.has_key("_chem_comp_atom_model_cartn_x") and
-                field_dict.has_key("_chem_comp_atom_model_cartn_y") and
-                field_dict.has_key("_chem_comp_atom_model_cartn_z")): 
-                self.read_chem_comp_atom_model_cartn(fields,field_dict,values)
+            if self.read_chem_comp_atom_model_cartn(None, loop.keys, loop.rows):
+                return True
+        return False
 
     def read_atom_site_fract(self,fields,field_dict,values):
+        try:
+            fract_x = field_dict['_atom_site_fract_x']
+            fract_y = field_dict['_atom_site_fract_y']
+            fract_z = field_dict['_atom_site_fract_z']
+        except KeyError:
+            return False
         self.model.fractional = 1
-
-        fract_x = field_dict['_atom_site_fract_x']
-        fract_y = field_dict['_atom_site_fract_y']
-        fract_z = field_dict['_atom_site_fract_z']
         symbol = field_dict.get('_atom_site_type_symbol',None)
         name = field_dict.get('_atom_site_label',None)
+        if name is None:
+            name = field_dict.get('_atom_site_id',None)
         u = field_dict.get('_atom_site_u_iso_or_equiv',None)                
         str_fields = []
         if symbol != None: str_fields.append( ('symbol',symbol) )
@@ -296,11 +317,15 @@ class CIFRec:
                 setattr(atom,field[0],self.index_to_float(field[1],value))
             for field in int_fields:
                 setattr(atom,field[0],self.index_to_int(field[1],value))
+        return True
 
     def read_atom_site_cartn(self,fields,field_dict,values):
-        cartn_x = field_dict['_atom_site_cartn_x']
-        cartn_y = field_dict['_atom_site_cartn_y']
-        cartn_z = field_dict['_atom_site_cartn_z']
+        try:
+            cartn_x = field_dict['_atom_site_cartn_x']
+            cartn_y = field_dict['_atom_site_cartn_y']
+            cartn_z = field_dict['_atom_site_cartn_z']
+        except KeyError as e:
+            return False
         group_pdb = field_dict.get('_atom_site_group_pdb',None)
         symbol = field_dict.get('_atom_site_type_symbol',None)
         name = field_dict.get('_atom_site_label_atom_id',None)
@@ -308,6 +333,8 @@ class CIFRec:
         resi = field_dict.get('_atom_site_label_seq_id',None)
         chain = field_dict.get('_atom_site_label_asym_id',None)
         ins_code = field_dict.get('_atom_site_pdbx_pdb_ins_code',None)
+        alt = field_dict.get('_atom_site_label_alt_id', None)
+        model_num = field_dict.get('_atom_site_pdbx_pdb_model_num', None)
         # use auth fields preferentially, if provided
         auth_resn = field_dict.get('_atom_site_auth_comp_id',None)
         auth_resi = field_dict.get('_atom_site_auth_seq_id',None)
@@ -325,7 +352,11 @@ class CIFRec:
         if name != None: str_fields.append( ('name',name) )
         if resn != None: str_fields.append( ('resn',resn) )
         if resi != None: str_fields.append( ('resi',resi) )
-        if chain != None: str_fields.append( ('chain',chain) )        
+        if chain != None:
+            str_fields.append( ('chain',chain) )
+            if ASYM_ID_AS_SEGI:
+                str_fields.append( ('segi',chain) )
+        if alt != None: str_fields.append( ('alt',alt) )
         if ins_code != None: str_fields.append( ('ins_code',ins_code) )
         float_fields = []
         if q != None: float_fields.append( ('q',q) )
@@ -334,11 +365,19 @@ class CIFRec:
         if ID != None: int_fields.append( ('id',ID) )                                
 
         for value in values:
-            atom = Atom()
-            atom.coord = [
+            coord = [
                 self.index_to_float(cartn_x,value),
                 self.index_to_float(cartn_y,value),
                 self.index_to_float(cartn_z,value)]
+
+            if model_num is not None:
+                v = self.index_to_int(model_num, value)
+                if v > 1:
+                    self.extra_coords.extend(coord)
+                    continue
+
+            atom = Atom()
+            atom.coord = coord
             self.model.atom.append(atom)
             if group_pdb != None:
                 if value[group_pdb] == 'ATOM':
@@ -346,29 +385,30 @@ class CIFRec:
                 else:
                     atom.hetatm = 1
             for field in str_fields:
-                setattr(atom,field[0],value[field[1]])
+                setattr(atom,field[0],self.index_to_str(field[1],value))
             for field in float_fields:
                 setattr(atom,field[0],self.index_to_float(field[1],value))
             for field in int_fields:
                 setattr(atom,field[0],self.index_to_int(field[1],value))
-                
-#        for a in self.model.atom:
-#            print a.coord
-        
+        return True
+
     def read_atom_site_aniso(self,fields,field_dict,values):
+        try:
+            label = field_dict['_atom_site_aniso_label']
+            u11 = field_dict['_atom_site_aniso_u_11']
+            u22 = field_dict['_atom_site_aniso_u_22']
+            u33 = field_dict['_atom_site_aniso_u_33']
+            u12 = field_dict['_atom_site_aniso_u_12']
+            u13 = field_dict['_atom_site_aniso_u_13']
+            u23 = field_dict['_atom_site_aniso_u_23']
+        except KeyError:
+            return False
         cnt = 0
         name_dict = {}
         for atom in self.model.atom:
             if hasattr(atom,'name'):
                 name_dict[atom.name] = cnt
             cnt = cnt + 1
-        label = field_dict['_atom_site_aniso_label']
-        u11 = field_dict['_atom_site_aniso_u_11']
-        u22 = field_dict['_atom_site_aniso_u_22']
-        u33 = field_dict['_atom_site_aniso_u_33']
-        u12 = field_dict['_atom_site_aniso_u_12']
-        u13 = field_dict['_atom_site_aniso_u_13']
-        u23 = field_dict['_atom_site_aniso_u_23']
         for value in values:
             atom = name_dict[self.index_to_str(label,value)]
             self.model.atom[atom].u_aniso = [
@@ -379,29 +419,90 @@ class CIFRec:
                 self.index_to_float(u13,value),
                 self.index_to_float(u23,value)
                 ]
+        return True
 
     def read_atom_site(self):
-        self.atom_site_label_index = {}
         for loop in self.loops:
-            (fields, field_dict, values) = loop
-            if (field_dict.has_key("_atom_site_fract_x") and
-                field_dict.has_key("_atom_site_fract_y") and
-                field_dict.has_key("_atom_site_fract_z")): # fractional coords
-                self.read_atom_site_fract(fields,field_dict,values)
-            elif (field_dict.has_key("_atom_site_cartn_x") and
-                  field_dict.has_key("_atom_site_cartn_y") and
-                  field_dict.has_key("_atom_site_cartn_z")): # cartesian coords
-                self.read_atom_site_cartn(fields,field_dict,values)
-            elif (field_dict.has_key("_atom_site_aniso_label") and
-                  field_dict.has_key("_atom_site_aniso_u_11") and
-                  field_dict.has_key("_atom_site_aniso_u_22") and
-                  field_dict.has_key("_atom_site_aniso_u_33") and
-                  field_dict.has_key("_atom_site_aniso_u_12") and
-                  field_dict.has_key("_atom_site_aniso_u_13") and
-                  field_dict.has_key("_atom_site_aniso_u_23")): # anisotropics
-                self.read_atom_site_aniso(fields,field_dict,values)
+            if self.read_atom_site_fract(None, loop.keys, loop.rows) or \
+               self.read_atom_site_cartn(None, loop.keys, loop.rows):
+                for loop in self.loops:
+                    if self.read_atom_site_aniso(None, loop.keys, loop.rows):
+                        break
+                return True
+        return False
+
+    def read_struct_conn_(self, loop):
+        try:
+            type_id   = loop.get_col_idx('_struct_conn.conn_type_id')
+
+            asym_id_1 = loop.get_col_idx('_struct_conn.ptnr1_auth_asym_id',
+                                         '_struct_conn.ptnr1_label_asym_id')
+            comp_id_1 = loop.get_col_idx('_struct_conn.ptnr1_auth_comp_id',
+                                         '_struct_conn.ptnr1_label_comp_id')
+            seq_id_1  = loop.get_col_idx('_struct_conn.ptnr1_auth_seq_id',
+                                         '_struct_conn.ptnr1_label_seq_id')
+            atom_id_1 = loop.get_col_idx('_struct_conn.ptnr1_label_atom_id')
+
+            asym_id_2 = loop.get_col_idx('_struct_conn.ptnr2_auth_asym_id',
+                                         '_struct_conn.ptnr2_label_asym_id')
+            comp_id_2 = loop.get_col_idx('_struct_conn.ptnr2_auth_comp_id',
+                                         '_struct_conn.ptnr2_label_comp_id')
+            seq_id_2  = loop.get_col_idx('_struct_conn.ptnr2_auth_seq_id',
+                                         '_struct_conn.ptnr2_label_seq_id')
+            atom_id_2 = loop.get_col_idx('_struct_conn.ptnr2_label_atom_id')
+        except KeyError:
+            return False
+
+        alt_id_1   = loop.get_col_idx_opt('_struct_conn.pdbx_ptnr1_label_alt_id')
+        ins_code_1 = loop.get_col_idx_opt('_struct_conn.pdbx_ptnr1_pdb_ins_code')
+        symm_1     = loop.get_col_idx_opt('_struct_conn.ptnr1_symmetry')
+        alt_id_2   = loop.get_col_idx_opt('_struct_conn.pdbx_ptnr2_label_alt_id')
+        ins_code_2 = loop.get_col_idx_opt('_struct_conn.pdbx_ptnr2_pdb_ins_code')
+        symm_2     = loop.get_col_idx_opt('_struct_conn.ptnr2_symmetry')
+
+        idxs_1 = [asym_id_1, comp_id_1, seq_id_1, ins_code_1, atom_id_1, alt_id_1]
+        idxs_2 = [asym_id_2, comp_id_2, seq_id_2, ins_code_2, atom_id_2, alt_id_2]
+
+        # atoms indexed by atomic identifiers
+        atom_dict = dict(((a.chain, a.resn, a.resi,
+            getattr(a, 'ins_code', ''), a.name, a.alt), i)
+            for (i, a) in enumerate(self.model.atom))
+
+        for row in loop.rows:
+            if self.index_to_str(symm_1, value) != self.index_to_str(symm_2, value):
+                # don't bond to symmetry mates
+                continue
+            key_1 = tuple(self.index_to_str(i, row) for i in idxs_1)
+            key_2 = tuple(self.index_to_str(i, row) for i in idxs_2)
+            bond = Bond()
+            bond.index = [atom_dict[key_1], atom_dict[key_2]]
+            bond.order = 0 if self.index_to_str(type_id, row) == 'metalc' else 1
+            self.model.bond.append(bond)
+        return True
+
+    def read_struct_conn(self):
+        '''
+        Create bonds from STRUCT_CONN category
+        '''
+        for loop in self.loops:
+            if self.read_struct_conn_(loop):
+                return True
+        return False
 
     def read_geom_bond_atom_site_labels(self,fields,field_dict,values):
+        try:
+            label_1 = field_dict.get('_geom_bond_atom_site_id_1', None)
+            if label_1 is not None:
+                label_2 = field_dict['_geom_bond_atom_site_id_2']
+            else:
+                label_1 = field_dict['_geom_bond_atom_site_label_1']
+                label_2 = field_dict['_geom_bond_atom_site_label_2']
+        except KeyError:
+            return False
+
+        symm_1 = field_dict.get('_geom_bond_site_symmetry_1', -1)
+        symm_2 = field_dict.get('_geom_bond_site_symmetry_2', -1)
+
         # create index of atom name
         cnt = 0
         name_dict = {}
@@ -409,25 +510,33 @@ class CIFRec:
             if hasattr(atom,'name'):
                 name_dict[atom.name] = cnt
             cnt = cnt + 1
-        label_1 = field_dict['_geom_bond_atom_site_label_1']
-        label_2 = field_dict['_geom_bond_atom_site_label_2']
         for value in values:
+            if self.index_to_str(symm_1, value) != self.index_to_str(symm_2, value):
+                # don't bond to symmetry mates
+                continue
             bond = Bond()
             bond.index = [
                 name_dict[self.index_to_str(label_1,value)],
                 name_dict[self.index_to_str(label_2,value)]]
             bond.order = 1
             self.model.bond.append(bond)
+        return True
 
     def read_geom_bond(self):
-        self.atom_site_label_index = {}
+        '''
+        Create bonds from GEOM_BOND category
+        '''
         for loop in self.loops:
-            (fields, field_dict, values) = loop
-            if (field_dict.has_key("_geom_bond_atom_site_label_1") and
-                field_dict.has_key("_geom_bond_atom_site_label_2")):
-                self.read_geom_bond_atom_site_labels(fields,field_dict,values)
+            if self.read_geom_bond_atom_site_labels(None, loop.keys, loop.rows):
+                return True
+        return False
     
     def read_chem_comp_bond_atom_ids(self,fields,field_dict,values):
+        try:
+            label_1 = field_dict['_chem_comp_bond_atom_id_1']
+            label_2 = field_dict['_chem_comp_bond_atom_id_2']
+        except KeyError:
+            return False
         order_table = { 'sing' : 1, 'doub' : 2, 'trip' :3, 'delo': 4 }
         # create index of atom name
         cnt = 0
@@ -436,8 +545,6 @@ class CIFRec:
             if hasattr(atom,'name'):
                 name_dict[atom.name] = cnt
             cnt = cnt + 1
-        label_1 = field_dict['_chem_comp_bond_atom_id_1']
-        label_2 = field_dict['_chem_comp_bond_atom_id_2']
         order = field_dict.get('_chem_comp_bond_value_order',None)
         for value in values:
             bond = Bond()
@@ -445,138 +552,125 @@ class CIFRec:
                 name_dict[self.index_to_str(label_1,value)],
                 name_dict[self.index_to_str(label_2,value)]]
             if order != None:
-                order_string = string.lower(self.index_to_str(order,value))
+                order_string = self.index_to_str(order,value).lower()
                 bond.order = order_table.get(order_string[0:4],1)
             else:
                 bond.order = 1
             self.model.bond.append(bond)
+        # don't do distance-based bonding
+        self.model.connect_mode = 1
+        return True
 
     def read_chem_comp_bond(self):
-        self.atom_site_label_index = {}
+        '''
+        Create bonds from CHEM_COMP_BOND category.
+
+        If successfull, don't do any distance-based bonding.
+        '''
         for loop in self.loops:
-            (fields, field_dict, values) = loop
-            if (field_dict.has_key("_chem_comp_bond_atom_id_1") and
-                field_dict.has_key("_chem_comp_bond_atom_id_2")):
-                self.read_chem_comp_bond_atom_ids(fields,field_dict,values)
+            if self.read_chem_comp_bond_atom_ids(None, loop.keys, loop.rows):
+                return True
+        return False
 
-    def create_field_dicts(self):
-        new_loops = []
+    def read_ss_(self, loop, ss, ssrecords):
+        '''
+        Populate ssrecords dictionary with secondary structure records from
+        STRUCT_CONF or STRUCT_SHEET_RANGE category.
+        '''
+        prefix = '_struct_conf' if ss == 'H' else '_struct_sheet_range'
+
+        try:
+            Beg_NDB_Strand_ID = loop.get_col_idx(prefix + '.beg_auth_asym_id',
+                                                 prefix + '.beg_label_asym_id')
+            Beg_NDB_res_num   = loop.get_col_idx(prefix + '.beg_auth_seq_id',
+                                                 prefix + '.beg_label_seq_id')
+            End_NDB_Strand_ID = loop.get_col_idx(prefix + '.end_auth_asym_id',
+                                                 prefix + '.end_label_asym_id')
+            End_NDB_res_num   = loop.get_col_idx(prefix + '.end_auth_seq_id',
+                                                 prefix + '.end_label_seq_id')
+        except KeyError:
+            return False
+
+        Beg_NDB_ins_code = loop.get_col_idx_opt(prefix + '.pdbx_beg_pdb_ins_code')
+        End_NDB_ins_code = loop.get_col_idx_opt(prefix + '.pdbx_end_pdb_ins_code')
+
+        idxs_1 = [Beg_NDB_Strand_ID, Beg_NDB_res_num, Beg_NDB_ins_code]
+        idxs_2 = [End_NDB_Strand_ID, End_NDB_res_num, End_NDB_ins_code]
+
+        for row in loop.rows:
+            key = tuple(self.index_to_str(i, row) for i in idxs_1)
+            ssrecords[key] = [ss, tuple(self.index_to_str(i, row) for i in idxs_2)]
+
+        return True
+
+    def read_ss(self):
+        '''
+        Read secondary structre (sheets and helices) from STRUCT_CONF and
+        STRUCT_SHEET_RANGE categories and assign to CA atoms.
+        '''
+        ssrecords = {}
+
         for loop in self.loops:
-            (fields, values) = loop
-            field_dict = {}
-            cnt = 0
-            for field in fields:
-                field_dict[field] = cnt
-                cnt = cnt + 1
-            new_loops.append( (fields,field_dict,values) )
-        self.loops = new_loops
-                
-    def convert_dot_to_underscore(self):
-        for key in self.key_value.keys():
-            if string.find(key,".")>=0:
-                new_key = string.replace(key,".","_")
-            else:
-                new_key = key
-            new_key = string.lower(new_key)
-            if new_key != key:
-                self.key_value[new_key] = self.key_value[key]
-                del self.key_value[key]
-        new_loops = []
+            if self.read_ss_(loop, 'H', ssrecords):
+                break
+
         for loop in self.loops:
-            (fields, values) = loop
-            fields = map(lambda x:string.replace(x,".","_"),fields)
-            fields = map(lambda x:string.lower(x),fields)            
-            new_loops.append( (fields,values) )
-        self.loops = new_loops
-        
-    def __init__(self,cif_list):
-        cif_list.reverse()
-        self.list = cif_list
-        data_line = self.list.pop()
-        self.loops = []
-        self.key_value = {}
-        self.data_name = string.strip(data_line[5:])
-        self.next_line()
-        self.parse_normal()
-        print ' CIF: For data block "%s"...'%self.data_name
-        print " CIF: Read %d key/value pair(s)."%len(self.key_value)
-        print " CIF: Read %d table(s)."%len(self.loops)
+            if self.read_ss_(loop, 'S', ssrecords):
+                break
 
-        self.convert_dot_to_underscore()
-        self.create_field_dicts()
+        if not ssrecords:
+            return False
 
-        # now build the molecule record
-        self.model = Indexed()
+        atoms = self.model.atom
 
-        # by default, indicate that we want PyMOL to automatically
-        # detect bonds based on coordinates
+        for i, a in enumerate(atoms):
+            if a.name != 'CA':
+                continue
 
-        self.model.connect_mode = 3
-        
-        self.read_symmetry()
-        self.read_atom_site()
-        self.read_chem_comp_atom()
+            try:
+                ss, endkey = ssrecords[a.chain, a.resi,
+                        getattr(a, 'ins_code', '')]
+            except KeyError:
+                continue
 
-        self.read_geom_bond()
-        self.read_chem_comp_bond()
-    def toList(self):
-        return r
+            for j in xrange(i, len(atoms)):
+                aj = atoms[j]
+                if aj.name != 'CA':
+                    continue
+                aj.ss = ss
+                if (aj.chain, aj.resi, getattr(aj, 'ins_code', '')) == endkey:
+                    break
+
+        return True
+
 
 class CIF:
     
-    def __init__(*args):
-        mode = 'r'
-        if len(args)<2:
-            raise ValueError
-        self = args[0]
-        self.input_line = None
-        fname = args[1]
-        if len(args)==3:
-            mode = args[2]
-        self.mode = mode
-        self.at_eof = 0
-        if mode not in ('w','r','wa','pf','url'):
+    def __init__(self, fname, mode='r'):
+        if mode not in ('r','pf'):
             print " CIF: bad mode"
             return None
         if mode=='pf': # pseudofile
-            self.file = fname
-        elif (mode[0:1]=='r') and (string.find(fname,':')>1):
-            # does this look like a URL? (but not a DOS path)
-            from urllib import urlopen
-            self.file = urlopen(fname)
+            contents = fname.read()
         else:
-            self.file = open(fname,mode)
+            try:
+                from pymol.internal import file_read
+                contents = file_read(fname)
+            except ImportError:
+                contents = open(fname, mode).read()
+        self.datablocks_it = parse_cif(contents)
 
-    def write(self,rec):
-        lst = rec.toList()
-        for a in lst:
-            self.file.write(a)
-        self.file.write('$$$$\n')
-        
-    def read(self): # returns CIFRec or None at end of file
-        cur = []
-        data_seen = 0
-        while 1:
-            if self.input_line == None:
-                s = self.file.readline()
-            else:
-                s = self.input_line
-                self.input_line = None
-            if not s: # end of file
-                if len(cur)>0:
-                    return CIFRec(cur)
-                else:
-                    return None
-            elif string.lower(s[0:5]) == r'data_': # signals start of new record
-                data_seen = 1
-                if len(cur)>0:
-                    self.input_line = s # save for next time
-                    return CIFRec(cur)
-                elif data_seen:
-                    cur.append(s)
-            elif data_seen:
-                cur.append(s)
-    def close(self):
-        self.file.close()
-        
-    
+    def __iter__(self):
+        return self
+
+    def next(self):
+        rec = CIFRec(self.datablocks_it.next())
+        if rec.model.atom:
+            return rec
+        return self.next()
+
+    def read(self):
+        try:
+            return self.next()
+        except StopIteration:
+            return None

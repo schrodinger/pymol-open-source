@@ -2247,7 +2247,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   switch (index) {
   case cSetting_stereo:
     SceneUpdateStereo(G);
-    ShaderMgrResetUniformSet(G);
     break;
   case cSetting_pickable:
     ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvAll);
@@ -2298,7 +2297,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     PParse(G, "cmd.viewport(-1,-1)");
     break;
   case cSetting_stereo_mode:
-    ShaderMgrResetUniformSet(G);
   case cSetting_anaglyph_mode:
     {
       int a_mode = SettingGetGlobal_i(G, cSetting_anaglyph_mode);

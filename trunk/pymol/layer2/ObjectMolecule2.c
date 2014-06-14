@@ -1617,6 +1617,131 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
 /*========================================================================*/
 #define PDB_MAX_TAGS 64
 
+/*
+ * Datastructure for efficient array-based secondary structure lookup.
+ */
+typedef struct {
+  int n_ss;         // number of ss_list items
+  int *(ss[256]);   // one array for each chain identifier
+  SSEntry *ss_list; // VLA
+} SSHash;
+
+static void sshash_free(SSHash *hash) {
+  int a;
+  if(!hash)
+    return;
+  for(a = 0; a <= 255; a++)
+    FreeP(hash->ss[a]);
+  VLAFreeP(hash->ss_list);
+  FreeP(hash);
+}
+
+static SSHash * sshash_new() {
+  SSHash *hash = Calloc(SSHash, 1);
+  ok_assert(1, hash);
+  hash->n_ss = 1;
+  hash->ss_list = VLAlloc(SSEntry, 50);
+  ok_assert(1, hash->ss_list);
+  return hash;
+ok_except1:
+  sshash_free(hash);
+  return NULL;
+}
+
+/*
+ * Insert a secondary structure record into the hash table.
+ */
+static int sshash_register_rec(SSHash * hash,
+    unsigned char ss_chain1, char *ss_resi1,
+    unsigned char ss_chain2, char *ss_resi2,
+    char SSCode) {
+  /* pretty confusing how this works... the following efficient (i.e. array-based)
+     secondary structure lookup even when there are multiple insertion codes
+     and where there may be multiple SS records for the residue using different
+     insertion codes */
+
+  unsigned char chain;
+  int ss_found = false, ssi = 0, a, b, index, ss_resv1, ss_resv2;
+  SSEntry *sst;
+
+  // bail if resi numeric parsing fails
+  if(!sscanf(ss_resi1, "%d", &ss_resv1))
+    return false;
+  if(!sscanf(ss_resi2, "%d", &ss_resv2))
+    return false;
+
+  // up to two iterations:
+  // 1) assume chain1==chain2
+  // 2) chains are not the same (undefined in PDB spec?)
+  for (a = 0, chain = ss_chain1; a < 2; a++, chain = ss_chain2) {
+    // allocate new array for chain if necc.
+    if(!hash->ss[chain]) {
+      ok_assert(1, hash->ss[chain] = Calloc(int, cResvMask + 1));
+    }
+
+    sst = NULL;
+    // iterate over all residues indicated
+    for(b = ss_resv1; b <= ss_resv2; b++) {
+      index = b & cResvMask;
+
+      if(hash->ss[chain][index]) {
+        // make a unique copy in the event of multiple entries for one resv
+        sst = NULL;
+      }
+
+      if(!sst) {
+        VLACheck(hash->ss_list, SSEntry, hash->n_ss);
+        ok_assert(1, hash->ss_list);
+        ssi = (hash->n_ss)++;
+        sst = hash->ss_list + ssi;
+        sst->resv1 = ss_resv1;
+        sst->resv2 = ss_resv2;
+        sst->chain1 = ss_chain1;
+        sst->chain2 = ss_chain2;
+        sst->type = SSCode;
+        strcpy(sst->resi1, ss_resi1);
+        strcpy(sst->resi2, ss_resi2);
+        ss_found = true;
+      }
+      sst->next = hash->ss[chain][index];
+      hash->ss[chain][index] = ssi;
+      if(sst->next)
+        sst = NULL;           /* force another unique copy */
+    }
+  }
+  return ss_found;
+ok_except1:
+  return false;
+}
+
+/*
+ * Assign ai->ssType
+ */
+static void sshash_lookup(SSHash *hash, AtomInfoType *ai) {
+  int index, ssi;
+  unsigned char ss_chain1;
+  SSEntry *sst = NULL;
+
+  ss_chain1 = ai->chain[0];
+  index = ai->resv & cResvMask;
+  if(hash->ss[ss_chain1]) {
+    ssi = hash->ss[ss_chain1][index];
+    while(ssi) {
+      sst = hash->ss_list + ssi;
+      /* contains shared entry, or unique linked list for each residue */
+      if(    ai->resv >= sst->resv1
+          && ai->resv <= sst->resv2
+          && (ai->resv != sst->resv1 || WordCompare(NULL, ai->resi, sst->resi1, true) >= 0)
+          && (ai->resv != sst->resv2 || WordCompare(NULL, ai->resi, sst->resi2, true) <= 0))
+      {
+        ai->ssType[0] = sst->type;
+        return;
+      }
+      ssi = sst->next;
+    }
+  }
+}
+
 CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                                         char *buffer,
                                         AtomInfoType ** atInfoPtr,
@@ -1655,17 +1780,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int ss_resv1 = 0, ss_resv2 = 0;
   ResIdent ss_resi1 = "", ss_resi2 = "";
   unsigned char ss_chain1 = 0, ss_chain2 = 0;
-  SSEntry *ss_list = NULL;
-  int n_ss = 1;
-  int *(ss[256]);               /* one array for each chain identifier */
-  int ss_is_init = 0;
+  SSHash *ss_hash = NULL;
   char cc[MAXLINELEN], tags[MAXLINELEN];
   char cc_saved, ctmp;
-  int index;
   int ignore_pdb_segi = 0;
   int ss_valid, ss_found = false;
-  SSEntry *sst;
-  int ssi = 0;
   int only_read_one_model = false;
   int ignore_conect = SettingGetGlobal_b(G, cSetting_pdb_ignore_conect);
   int have_bond_order = false;
@@ -1974,12 +2093,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     " ObjectMoleculeReadPDB: Found %i atoms...\n", nAtom ENDFB(G);
 
   if(ok && ssFlag) {
-    for(a = 0; a <= 255; a++) {
-      ss[a] = 0;
-    }
-    ss_is_init = true;
-    ss_list = VLAlloc(SSEntry, 50);
-    CHECKOK(ok, ss_list);
+    ss_hash = sshash_new();
   }
 
   a = 0;                        /* WATCHOUT */
@@ -2569,77 +2683,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     /* Secondary structure records */
 
     if(ok && SSCode) {
-
-      /* pretty confusing how this works... the following efficient (i.e. array-based)
-         secondary structure lookup even when there are multiple insertion codes
-         and where there may be multiple SS records for the residue using different 
-         insertion codes */
-
-      if(!ss[ss_chain1]) {      /* allocate new array for chain if necc. */
-        ss[ss_chain1] = Calloc(int, cResvMask + 1);
-	CHECKOK(ok, ss[ss_chain1]);
-      }
-
-      sst = NULL;
-      for(b = ss_resv1; ok && b <= ss_resv2; b++) {   /* iterate over all residues indicated */
-        index = b & cResvMask;
-        if(ss[ss_chain1][index])
-          sst = NULL;           /* make a unique copy in the event of multiple entries for one resv */
-        if(!sst) {
-          VLACheck(ss_list, SSEntry, n_ss);
-	  CHECKOK(ok, ss_list);
-	  if (ok){
-	    ssi = n_ss++;
-	    sst = ss_list + ssi;
-	    sst->resv1 = ss_resv1;
-	    sst->resv2 = ss_resv2;
-	    sst->chain1 = ss_chain1;
-	    sst->chain2 = ss_chain2;
-	    sst->type = SSCode;
-	    strcpy(sst->resi1, ss_resi1);
-	    strcpy(sst->resi2, ss_resi2);
-	    ss_found = true;
-	  }
-        }
-	if (ok){
-	  sst->next = ss[ss_chain1][index];
-	  ss[ss_chain1][index] = ssi;
-	  if(sst->next)
-	    sst = NULL;           /* force another unique copy */
-	}
-      }
-
-      if(ok && ss_chain2 != ss_chain1) {      /* handle case where chains are not the same (undefined in PDB spec?) */
-        if(!ss[ss_chain2]) {
-          ss[ss_chain2] = Calloc(int, cResvMask + 1);
-	  CHECKOK(ok, ss[ss_chain2]);
-        }
-        sst = NULL;
-        for(b = ss_resv1; ok && b <= ss_resv2; b++) { /* iterate over all residues indicated */
-          index = b & cResvMask;
-          if(ss[ss_chain2][index])
-            sst = NULL;         /* make a unique copy in the event of multiple entries for one resv */
-          if(!sst) {
-            VLACheck(ss_list, SSEntry, n_ss);
-	    CHECKOK(ok, ss_list);
-	    if (ok){
-	      ssi = n_ss++;
-	      sst = ss_list + ssi;
-	      sst->resv1 = ss_resv1;
-	      sst->resv2 = ss_resv2;
-	      sst->chain1 = ss_chain1;
-	      sst->chain2 = ss_chain2;
-	      sst->type = SSCode;
-	      strcpy(sst->resi1, ss_resi1);
-	      strcpy(sst->resi2, ss_resi2);
-	    }
-          }
-          sst->next = ss[ss_chain2][index];
-          ss[ss_chain2][index] = ssi;
-          if(sst->next)
-            sst = NULL;         /* force another unique copy */
-        }
-      }
+      ss_found = sshash_register_rec(ss_hash,
+          ss_chain1, ss_resi1,
+          ss_chain2, ss_resi2, SSCode);
     }
     /* Atom records */
 
@@ -2769,31 +2815,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       ai->resv = AtomResvFromResi(ai->resi);
 
       if(ssFlag) {              /* get secondary structure information (if avail) */
-
-        ss_chain1 = ai->chain[0];
-        index = ai->resv & cResvMask;
-        if(ss[ss_chain1]) {
-          ssi = ss[ss_chain1][index];
-          while(ssi) {
-            sst = ss_list + ssi;        /* contains shared entry, or unique linked list for each residue */
-            /*                printf("%d<=%d<=%d, %s<=%s<=%s ", 
-               sst->resv1,ai->resv,sst->resv2,
-               sst->resi1,ai->resi,sst->resi2); */
-            if(ai->resv >= sst->resv1)
-              if(ai->resv <= sst->resv2)
-                if((ai->resv != sst->resv1)
-                   || (WordCompare(G, ai->resi, sst->resi1, true) >= 0))
-                  if((ai->resv != sst->resv2)
-                     || (WordCompare(G, ai->resi, sst->resi2, true) <= 0)) {
-                    ai->ssType[0] = sst->type;
-                    /*                          printf(" Y\n"); */
-                    break;
-                  }
-            /*                printf(" N\n"); */
-            ssi = sst->next;
-          }
-        }
-
+        sshash_lookup(ss_hash, ai);
       } else {
         ai->cartoon = cCartoon_tube;
       }
@@ -3101,12 +3123,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       VLAFreeP(bond);
     }
   }
-  if(ssFlag && ss_is_init) {
-    for(a = 0; a <= 255; a++) {
-      FreeP(ss[a]);
-    }
-    VLAFreeP(ss_list);
-  }
+  sshash_free(ss_hash);
   
   if (ok){
     if(!seen_model)

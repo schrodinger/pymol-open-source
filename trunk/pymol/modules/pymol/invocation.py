@@ -282,22 +282,18 @@ if __name__=='pymol.invocation':
                         options.deferred.append(
                             "_do_%s"%string.replace(av.pop(),'%',' '))
                     if ("J" in a): # cd to user's home directory on startup (if possible)
+                        path = os.path.expanduser('~')
                         if sys.platform == 'win32':
-                            if os.environ.has_key("HOMEDRIVE") and os.environ.has_key("HOMEPATH"):
-                                path = os.environ["HOMEDRIVE"] + os.environ["HOMEPATH"]
-                                if os.path.isdir(path) and os.path.exists(path):
-                                    my_docs = os.path.join(path,"Documents") # for VISTA compatibility
-                                    if os.path.isdir(my_docs): # start in Documents (if exists)
-                                        path = my_docs
-                                    else:
-                                        my_docs = os.path.join(path,"My Documents")                                    
-                                        if os.path.isdir(my_docs): # start in My Documents (if exists)
-                                            path = my_docs
-                                    options.deferred.append("_do__ cmd.cd('''%s''',complain=0)"%string.replace(path,"\\","\\\\"))
-                        elif os.environ.has_key("HOME"):
-                            path = os.environ["HOME"]
-                            if os.path.isdir(path):
-                                options.deferred.append("_do__ cmd.cd('''%s''',complain=0)"%string.replace(path,"\\","\\\\"))
+                            for my_docs_name in ['Documents', 'My Documents']:
+                                my_docs = os.path.join(path, my_docs_name)
+                                if os.path.isdir(my_docs):
+                                    path = my_docs
+                                    break
+                        try:
+                            # immediatly chdir (was: options.deferred.append(...))
+                            os.chdir(path)
+                        except OSError:
+                            print " Error: could not chdir to", repr(path)
                     if ("l" in a):
                         options.deferred.append("_do_spawn %s"%av.pop())
                     if ("r" in a):

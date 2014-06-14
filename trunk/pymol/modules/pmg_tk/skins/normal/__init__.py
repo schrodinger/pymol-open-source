@@ -70,6 +70,18 @@ class Normal(PMGSkin):
     
     # responsible for setup and takedown of the normal skin
 
+    @property
+    def initialdir(self):
+        '''
+        Be in sync with cd/pwd on the console until the first file has been
+        browsed, then remember the last directory.
+        '''
+        return self._initialdir or os.getcwd()
+
+    @initialdir.setter
+    def initialdir(self, value):
+        self._initialdir = value
+
     def complete(self,event):
         st = self.cmd._parser.complete(self.command.get())
         if st:
@@ -386,7 +398,6 @@ class Normal(PMGSkin):
         self.entry.bind('<Control-Up>', lambda e: self.back_search())
         self.root.protocol("WM_DELETE_WINDOW", lambda s=self: s.confirm_quit())
         
-        self.initialdir = os.getcwd()
         self.log_file = "log.pml"      
 
 #      self.entry = self.app.createcomponent('entry', (), None,
@@ -3699,6 +3710,7 @@ class Normal(PMGSkin):
         self.auto_overlay = None
         self.edit_mode = None
         self.valence = None
+        self._initialdir = ''
 
 def __init__(app):
     return Normal(app)

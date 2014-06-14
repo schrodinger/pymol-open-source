@@ -401,13 +401,25 @@ SEE ALSO
         return r
     
     def _processCIF(cif,oname,state,quiet,discrete,_self=cmd):
-        while 1:
-            rec = cif.read()
-            if not rec: break
-            if len(rec.model.atom):
-                r = _self.load_model(rec.model,oname,state,quiet=quiet,
-                                     discrete=discrete)
-        del cif
+        '''
+        Load all molecules (data records) from a CIF file. If more than one
+        molecule is loaded, use the data record name as object name instead
+        of "oname".
+        '''
+        for i, rec in enumerate(cif):
+            if i == 1:
+                _self.set_name(oname, title)
+            title = rec.model.molecule.title
+            if i > 0:
+                oname = title
+            r = _self.load_model(rec.model,oname,state,quiet=quiet,
+                    discrete=discrete)
+            if len(rec.extra_coords):
+                import numpy
+                extra_coords = numpy.asfarray(rec.extra_coords)
+                for coords in extra_coords.reshape(
+                        (-1, len(rec.model.atom), 3)):
+                    _self.load_coords(coords, oname)
 #        _cmd.finish_object(_self._COb,str(oname))
 #        if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
 #            _self._do("zoom (%s)"%oname)

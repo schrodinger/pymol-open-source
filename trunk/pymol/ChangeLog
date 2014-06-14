@@ -2,6 +2,31 @@
 CHANGE LOG
 =========================================================================
 
+2014-06-14 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* refactor chempy.cif
+	    - support for multi-model
+	    - read secondary structure
+	    - rewritten tokenizer
+
+	* atom sorting: make segi match case sensitive
+
+	* fix/improve:
+	    A > compute > surface area > ...
+	    A > generate > selection > surface atoms
+
+	* PDB parser: factor out SS handling for readability
+
+	* open file dialog in CWD until the first file was selected, then
+	  remember that directory
+
+	* with -J immediatly cd to $HOME (or $HOME/Documents on Windows).
+	  This allowes to put a "cd ..." in pymolrc
+
+	* fix stereo shader invalidation
+
+	* 1.7.1.4 (beta)
+
 2014-05-13 Thomas Holder, Blaine Bell
 
 	* fix label depth issues with label_position
