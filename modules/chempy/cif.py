@@ -469,6 +469,9 @@ class CIFRec(CIFData):
             for (i, a) in enumerate(self.model.atom))
 
         for row in loop.rows:
+            if self.index_to_str(type_id, row).lower() != 'covale':
+                # ignore non-covalent bonds (metalc, hydrog)
+                continue
             if self.index_to_str(symm_1, row) != self.index_to_str(symm_2, row):
                 # don't bond to symmetry mates
                 continue
@@ -476,7 +479,6 @@ class CIFRec(CIFData):
             key_2 = tuple(self.index_to_str(i, row) for i in idxs_2)
             bond = Bond()
             bond.index = [atom_dict[key_1], atom_dict[key_2]]
-            bond.order = 0 if self.index_to_str(type_id, row) == 'metalc' else 1
             self.model.bond.append(bond)
         return True
 
