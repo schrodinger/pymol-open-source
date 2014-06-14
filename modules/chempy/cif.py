@@ -469,7 +469,7 @@ class CIFRec(CIFData):
             for (i, a) in enumerate(self.model.atom))
 
         for row in loop.rows:
-            if self.index_to_str(symm_1, value) != self.index_to_str(symm_2, value):
+            if self.index_to_str(symm_1, row) != self.index_to_str(symm_2, row):
                 # don't bond to symmetry mates
                 continue
             key_1 = tuple(self.index_to_str(i, row) for i in idxs_1)
