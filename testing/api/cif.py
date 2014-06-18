@@ -1,5 +1,6 @@
 from pymol import cmd, testing, stored
 
+@testing.requires_version('1.7.1')
 class TestCIF(testing.PyMOLTestCase):
 
     def testPYMOL1737(self):
