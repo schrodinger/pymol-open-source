@@ -20,8 +20,6 @@ try:
 except NameError:
     WindowsError = None
 
-print "running testing.py __name__='", __name__, "' sys.argv=", sys.argv
-
 def compareListFunction(x, y):
     return collections.Counter(x) == collections.Counter(y)
 
@@ -42,9 +40,7 @@ if __name__ != 'pymol.testing':
 
     _cli = __name__ in ('pymol', '__main__')
     _file = pymol.__script__ if _cli else __file__
-    print "before import_from_file: __name__=", __name__
     pymol.testing = import_from_file(_file, 'pymol.testing')
-    print "after import_from_file: __name__=", __name__
     pymol.testing.cli()
 
 else:
@@ -569,4 +565,3 @@ USAGE
 
     cmd.extend('run_testfiles', run_testfiles)
 
-print "end testing.py __name__='", __name__, "' sys.argv=", sys.argv
