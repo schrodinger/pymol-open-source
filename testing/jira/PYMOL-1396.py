@@ -7,9 +7,9 @@ from pymol import cmd, testing, stored
 
 class Test1356(testing.PyMOLTestCase):
 
+    @testing.requires('gui')
     @testing.foreach(True, False)
-    def test(self, use_shader):
-
+    def testSpheresForSpheroidTrajectory(self, use_shader):
         pdbfile = self.datafile("sampletrajectory.pdb")
         dcdfile = self.datafile("sampletrajectory.dcd")
         cmd.load(pdbfile)
@@ -18,6 +18,6 @@ class Test1356(testing.PyMOLTestCase):
         cmd.spheroid("SampleTrajectory", 100)
         cmd.set('ambient', 1)
         cmd.set('specular', 0)
-        cmd.show_as('spheres')
         cmd.color('blue')
+        cmd.show_as('spheres')
         self.assertImageHasColor('blue')
