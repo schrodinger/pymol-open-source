@@ -1,6 +1,6 @@
 '''
 PYMOL-1356
-rotate ANISOU when aligning molecules
+spheroid command does not work
 '''
 
 from pymol import cmd, testing, stored
