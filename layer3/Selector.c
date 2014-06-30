@@ -3573,7 +3573,7 @@ int SelectorGetPairIndices(PyMOLGlobals * G, int sele1, int state1, int sele2, i
   float angle_cutoff = 0.0;
 
   if(mode == 1) {
-    angle_cutoff = (float) cos(PI * h_angle / 180.8);
+    angle_cutoff = (float) cos(PI * h_angle / 180.0);
   }
 
   if(state1 < 0)

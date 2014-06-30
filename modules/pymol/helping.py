@@ -331,30 +331,41 @@ NOTES
     '''
         _self.help(spawn)
 
-    def api(_self=cmd):
+    def api(name, _self=cmd):
         '''
 DESCRIPTION
+
+    API helper function. Get the full function name (incl. module) of
+    given command.
+
+ARGUMENTS
+
+    name = string: name of a PyMOL command
+
+NOTES
 
     The PyMOL Python Application Programming Interface (API) should be
     accessed exclusively through the "cmd" module (never "_cmd"!).  Nearly
     all command-line functions have a corresponding API method.
 
-USAGE
-
     from pymol import cmd
     result = cmd.<command-name>( argument , ... ) 
-
-NOTES
 
     Although the PyMOL core is not multi-threaded, the API is
     thread-safe and can be called asynchronously by external python
     programs.  PyMOL handles the necessary locking to insure that
     internal states do not get corrupted.  This makes it very easy to
     build complicated systems which involve direct realtime visualization.
-
         '''
-
-        _self.help('api')
+        import sys
+        name = _self.kwhash.auto_err(name, 'command')
+        func = cmd.keyword[name][0]
+        print ' CMD:', name
+        print ' API: %s.%s' % (func.__module__, func.__name__)
+        if func == getattr(_self, func.__name__, None):
+            print ' API: cmd.' + func.__name__
+        print ' FILE:', sys.modules[func.__module__].__file__
+        return func
 
     def keyboard(_self=cmd):
         '''

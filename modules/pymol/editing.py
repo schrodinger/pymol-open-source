@@ -119,6 +119,9 @@ EXAMPLE
     split_states docking_hits, prefix=hit
     delete docking_hits
     
+SEE ALSO
+
+    join_states
         '''
         r = DEFAULT_SUCCESS
         object = str(object)
@@ -2469,6 +2472,30 @@ SEE ALSO
 
         if group:
             cmd.group(group, ' '.join(names_list), 'add')
+
+    def alphatoall(selection='polymer', properties='b', operator='byca',
+            quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Expand any given property of the CA atoms to all atoms in the residue
+
+ARGUMENTS
+
+    selection = string: atom selection {default: polymer}
+
+    properties = string: space separated list of atom properties {default: b}
+        '''
+        properties = '(' + ','.join(properties.split()) + ')'
+        space = {'props': {}}
+        _self.iterate('%s (%s)' % (operator, selection),
+                'props[model,segi,chain,resi] = ' + properties,
+                space=space)
+        _self.alter(selection,
+                properties + ' = props.get((model,segi,chain,resi), ' + properties + ')',
+                space=space)
+        if not int(quiet):
+            print ' Modified %d residues' % (len(space['props']))
 
     def mse2met(selection='all', quiet=1, _self=cmd):
         '''

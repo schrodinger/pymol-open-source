@@ -1524,4 +1524,53 @@ DESCRIPTION
             raise pymol.CmdException('Selection spans multiple object states')
         return state_set.pop()
 
+    def centerofmass(selection='(all)', state=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Calculates the center of mass. Considers atom mass and occupancy.
+
+ARGUMENTS
+
+    selection = string: atom selection {default: all}
+
+    state = integer: object state, -1 for current state, 0 for all states
+    {default: -1}
+
+NOTES
+
+    If occupancy is 0.0 for an atom, set it to 1.0 for the calculation
+    (assume it was loaded from a file without occupancy information).
+
+SEE ALSO
+
+    get_extent
+        '''
+        from chempy import cpv
+        state, quiet = int(state), int(quiet)
+
+        if state < 0:
+            states = [get_selection_state(selection)]
+        elif state == 0:
+            states = range(1, _self.count_states(selection)+1)
+        else:
+            states = [state]
+
+        com = cpv.get_null()
+        totmass = 0.0
+
+        for state in states:
+            model = _self.get_model(selection, state)
+            for a in model.atom:
+                m = a.get_mass() * (a.q or 1.0)
+                com = cpv.add(com, cpv.scale(a.coord, m))
+                totmass += m
+
+        if not totmass:
+            raise pymol.CmdException('mass is zero')
+
+        com = cpv.scale(com, 1./totmass)
+        if not quiet:
+            print ' Center of Mass: [%8.3f,%8.3f,%8.3f]' % tuple(com)
+        return com
 

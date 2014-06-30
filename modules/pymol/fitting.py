@@ -135,8 +135,65 @@ SEE ALSO
                 if _self._raising(r,_self): raise pymol.CmdException             
                 return ( {"alignment_length": aliLen, "RMSD" : RMSD, "rotation_matrix" : rotMat } )
 
+        def extra_fit(selection='(all)', reference='', method='align', zoom=1,
+                quiet=0, _self=cmd, **kwargs):
+            '''
+DESCRIPTION
 
-        def alignto(target=None,method="cealign",quiet=1,_self=cmd, **kwargs):
+    Like "intra_fit", but for multiple objects instead of
+    multiple states.
+
+ARGUMENTS
+
+    selection = string: atom selection of multiple objects {default: all}
+
+    reference = string: reference object name {default: first object in selection}
+
+    method = string: alignment method (command that takes "mobile" and "target"
+    arguments, like "align", "super", "cealign" {default: align}
+
+    ... extra arguments are passed to "method"
+
+SEE ALSO
+
+    align, super, cealign, intra_fit, util.mass_align
+            '''
+            zoom, quiet = int(zoom), int(quiet)
+            sele_name = _self.get_unused_name('_')
+            _self.select(sele_name, selection, 0)
+            models = _self.get_object_list(sele_name)
+
+            if not reference:
+                reference = models[0]
+                models = models[1:]
+            elif reference in models:
+                models.remove(reference)
+            else:
+                _self.select(sele_name, reference, merge=1)
+
+            if _self.is_string(method):
+                if method in _self.keyword:
+                    method = _self.keyword[method][0]
+                else:
+                    raise pymol.CmdException(method, 'Unknown method')
+
+            for model in models:
+                x = method(mobile='?%s & ?%s' % (sele_name, model),
+                        target='?%s & ?%s' % (sele_name, reference), **kwargs)
+                if not quiet:
+                    if _self.is_sequence(x):
+                        print '%-20s RMS = %8.3f (%d atoms)' % (model, x[0], x[1])
+                    elif isinstance(x, float):
+                        print '%-20s RMS = %8.3f' % (model, x)
+                    else:
+                        print '%-20s' % (model,)
+
+            if zoom:
+                _self.zoom(sele_name)
+            _self.delete(sele_name)
+
+
+        def alignto(target='', method="cealign", selection='', quiet=1, _self=cmd, **kwargs):
                 """
 DESCRIPTION
 
@@ -162,22 +219,14 @@ EXAMPLE
 
 SEE ALSO
 
-        align, super, cealign, fit, rms, rms_cur, intra_fit
+        extra_fit, align, super, cealign, fit, rms, rms_cur, intra_fit
                 """
-                if cmd.is_string(method):
-                    if method in cmd.keyword:
-                        method = cmd.keyword[method][0]
-                    else:
-                        raise CmdException('Unknown method: ' + method)
-                names = cmd.get_names("public_objects", 1)
-                if not target:
-                    target = names[0]
-                for x in names:
-                        if x == target:
-                            continue
-                        if not quiet:
-                                print "Aligning %s to %s" % (x, target)
-                        method(mobile=x, target=target, **kwargs)
+                if not selection:
+                    names = cmd.get_names("public_objects", 1)
+                    if not names:
+                        raise pymol.CmdException('no public objects')
+                    selection = '%' + ' %'.join(names)
+                return extra_fit(selection, target, method, 0, quiet, _self, **kwargs)
                                 
 
 

@@ -2,6 +2,24 @@
 CHANGE LOG
 =========================================================================
 
+2014-06-30 Thomas Holder, Blaine Bell
+
+	* report clash score in mutagenesis wizard
+
+	* change defaults for settings "ribbon_as_cylinders" and
+	  "nonbonded_as_cylinders" to 0
+
+	* new commands (ported from PSICO): join_states, alphatoall, loadall,
+	  centerofmass, extra_fit, api
+
+	* pubchem and emd fetch support
+
+	* support to run pml and py script with the "load" command
+
+	* Fix text mode (text=1) with white background color
+
+	* 1.7.1.6 (beta)
+
 2014-06-14 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* refactor chempy.cif

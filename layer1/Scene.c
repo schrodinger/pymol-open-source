@@ -1087,7 +1087,7 @@ int SceneMultipick(PyMOLGlobals * G, Multipick * smp)
     SceneUpdate(G, true);
 
   if(OrthoGetOverlayStatus(G) || SettingGetGlobal_i(G, cSetting_text))
-    SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0);       /* remove overlay if present */
+    SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0, 0);       /* remove overlay if present */
   SceneDontCopyNext(G);
   if(stereo_via_adjacent_array(I->StereoMode)) {
     if(smp->x > (I->Width / 2))
@@ -1096,7 +1096,7 @@ int SceneMultipick(PyMOLGlobals * G, Multipick * smp)
       click_side = -1;
     smp->x = smp->x % (I->Width / 2);
   }
-  SceneRender(G, NULL, 0, 0, smp, 0, 0, click_side, 0);
+  SceneRender(G, NULL, 0, 0, smp, 0, 0, click_side, 0, 0);
   SceneDirty(G);
   return (1);
 }
@@ -1752,7 +1752,7 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
 	    //            SceneGLClearColor(v[0], v[1], v[2], alpha);
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             SceneInvalidateCopy(G, false);
-            SceneRender(G, NULL, x_offset, y_offset, NULL, width, height, 0, 0);
+            SceneRender(G, NULL, x_offset, y_offset, NULL, width, height, 0, 0, 0);
             SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
 
             if(draw_both) {
@@ -2422,7 +2422,7 @@ int SceneMakeMovieImage(PyMOLGlobals * G, int show_timing, int validate, int mod
         }
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         /* insert OpenGL context validation code here? */
-        SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0);
+        SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0, 0);
         SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
         if(draw_both) {
           SceneCopy(G, GL_BACK_LEFT, true, false);
@@ -3885,11 +3885,11 @@ static int SceneDoXYPick(PyMOLGlobals * G, int x, int y, int click_side)
     SceneUpdate(G, true);
   CShaderPrg_SetIsPicking(G, true);
   if(OrthoGetOverlayStatus(G) || SettingGetGlobal_i(G, cSetting_text))
-    SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0);       /* remove overlay if present */
+    SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0, 0, 0);       /* remove overlay if present */
   SceneDontCopyNext(G);
 
   I->LastPicked.context.object = NULL;
-  SceneRender(G, &I->LastPicked, x, y, NULL, 0, 0, click_side, 0);
+  SceneRender(G, &I->LastPicked, x, y, NULL, 0, 0, click_side, 0, 0);
   CShaderPrg_SetIsPicking(G, false);
   return (I->LastPicked.context.object != NULL);
   /* did we pick something? */
@@ -9031,7 +9031,7 @@ void SceneSetupGLPicking(PyMOLGlobals * G){
 /*========================================================================*/
 void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                  Multipick * smp, int oversize_width, int oversize_height,
-                 int click_side, int force_copy)
+                 int click_side, int force_copy, int just_background)
 {
   /* think in terms of the camera's world */
   register CScene *I = G->Scene;
@@ -9509,6 +9509,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
         times = 2;
         break;
       }
+      if (just_background) times = 0;
       PRINTFD(G, FB_Scene)
         " SceneRender: I->StereoMode %d must_render_stereo %d\n    mono_as_quad_stereo %d  StereoCapable %d\n",
         stereo_mode, must_render_stereo, mono_as_quad_stereo, G->StereoCapable ENDFD;
