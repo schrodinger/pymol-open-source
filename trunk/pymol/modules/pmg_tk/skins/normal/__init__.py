@@ -767,6 +767,14 @@ class Normal(PMGSkin):
         self.my_show(self.dialog)
         
     def file_save2(self,result):
+        filetypes_save = [
+            ("PDB File","*.pdb"),
+            ("MOL File","*.mol"),
+            ("MOL2 File","*.mol2"),
+            ("MMD File","*.mmd"),
+            ("PKL File","*.pkl"),
+            ("SDF File","*.sdf"),
+        ]
         # user hit [CANCEL] button
         if result!='OK':
             self.my_withdraw(self.dialog)
@@ -788,13 +796,7 @@ class Normal(PMGSkin):
                         sfile = asksaveasfilename(defaultextension = _def_ext(".pdb"),
                                                   initialfile = sfile,
                                                   initialdir = self.initialdir,
-                                                  filetypes=[
-                                                      ("PDB File","*.pdb"),
-                                                      ("MOL File","*.mol"),
-                                                      ("MOL2 File","*.mol2"),
-                                                      ("MMD File","*.mmd"),
-                                                      ("PKL File","*.pkl"),
-                                                      ])
+                                                  filetypes=filetypes_save)
                         if len(sfile):
                             # maybe use PDBSTRs for saving multiple files to multiple states
                             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
@@ -845,13 +847,7 @@ class Normal(PMGSkin):
                         sfile = asksaveasfilename(defaultextension = _def_ext(".pdb"),
                                                   initialfile = curName,
                                                   initialdir = self.initialdir,
-                                                  filetypes = [
-                                                      ("PDB File", "*.pdb"),
-                                                      ("MOL File","*.mol"),
-                                                      ("MOL2 File","*.mol2"),
-                                                      ("MMD File","*.mmd"),
-                                                      ("PKL File","*.pkl"),
-                                                      ])
+                                                  filetypes = filetypes_save)
                         # now save the file (customizing states as necessary)
 #                        print "sfile is: ", sfile
 
@@ -924,7 +920,7 @@ class Normal(PMGSkin):
 
         try:
             pymolrc = self.pymol.invocation.options.pymolrc[0]
-        except (AttributeError, IndexError):
+        except (TypeError, IndexError):
             if sys.platform.startswith('win'):
                 pymolrc = os.path.expandvars(r'$HOMEDRIVE$HOMEPATH\pymolrc.pml')
             else:

@@ -585,7 +585,8 @@ DESCRIPTION
 
 USAGE
 
-    load filename [,object [,state [,format ]]
+    load filename [, object [, state [, format [, finish [, discrete [, quiet
+            [, multiplex [, zoom [, partial [, mimic ]]]]]]]]]]
 
 ARGUMENTS
 
@@ -730,7 +731,7 @@ SEE ALSO
                     ftype = loadable.png
                 elif re.search("\.moe$",fname_no_gz,re.I):
                     ftype = loadable.moe
-                elif re.search("\.mae$",fname_no_gz,re.I):
+                elif re.search(r"\.(mae|maegz|cms)$",fname_no_gz,re.I):
                     ftype = loadable.mae
                 elif re.search("\.cube$",fname_no_gz,re.I):
                     ftype = loadable.cube
@@ -744,6 +745,14 @@ SEE ALSO
                     ftype = loadable.aln
                 elif re.search("\.fasta$",fname_no_gz,re.I):
                     ftype = loadable.fasta
+                elif re.search("\.mtz$",fname_no_gz,re.I):
+                    raise CmdException('mtz loading only available in incentive PyMOL')
+                elif re.search("\.vis$",fname_no_gz,re.I):
+                    try:
+                        from epymol.vis import load_vis
+                    except ImportError:
+                        raise CmdException('vis file only available in incentive PyMOL')
+                    return load_vis(filename, object, mimic, quiet=quiet, _self=_self)
                 elif re.search("\.map$",fname_no_gz,re.I):
                     r = DEFAULT_ERROR
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'
@@ -753,6 +762,10 @@ SEE ALSO
                         raise pymol.CmdException
                     else:
                         return r
+                elif re.search(r"\.py$|\.pym|\.pyc$", fname_no_gz, re.I):
+                    return _self.do("_ run %s" % filename)
+                elif re.search(r"\.pml$", fname_no_gz, re.I):
+                    return _self.do("_ @%s" % filename)
                 else:
                     ftype = loadable.pdb # default is PDB
             elif _self.is_string(type):
@@ -957,7 +970,8 @@ NOTES
                         discrete = -1
                     r = mae.read_maestr(string.join(data,''),
                                         name,state,finish,discrete,
-                                        quiet,zoom,multiplex,mimic)
+                                        quiet,zoom,multiplex,mimic,
+                                        object_props, atom_props)
                     # END PROPRIETARY CODE SEGMENT
                 except ImportError:
                     print "Error: .MAE format not supported by this PyMOL build."
@@ -1238,6 +1252,11 @@ PYMOL API
         "cif"  : "/data/structures/divided/structure_factors/{mid}/r{code}sf.ent.gz",
         "2fofc" : "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}.omap",
         "fofc": "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}_diff.omap",
+        "pubchem": [
+            "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=3DSaveSDF",
+            "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
+        ],
+        "emd": "ftp://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
     }
 
     def _fetch(code, name, state, finish, discrete, multiplex, zoom, type, path,
@@ -1260,34 +1279,37 @@ PYMOL API
 
         # file types can be: fofc, 2fofc, pdb, pdb1, pdb2, pdb3, etc...
         # bioType is the string representation of the type
-        # typeExt is the file name extension based on type
+        # nameFmt is the file name pattern after download
         bioType = type
+        nameFmt = '{code}.{type}'
         if type == 'pdb':
-            typeExt = '.pdb'
+            pass
         elif type in ('fofc', '2fofc'):
-            typeExt = '_%s.omap' % type
+            nameFmt = '{code}_{type}.omap'
+        elif type == 'emd':
+            nameFmt = '{type}_{code}.ccp4'
+        elif type in ('cid', 'sid'):
+            bioType = 'pubchem'
+            nameFmt = '{type}_{code}.sdf'
         elif type == 'cif':
-            typeExt = '.sf'
+            nameFmt = '{code}.sf'
         elif re.match(r'pdb\d+$', type):
             bioType = 'bio'
-            typeExt = '.' + type
         else:
             raise ValueError('type')
 
         url = hostPaths[bioType]
-        url_list = [url] if '://' in url else [fetch_host + url
+        url_list = []
+        for url in url if cmd.is_sequence(url) else [url]:
+            url_list += [url] if '://' in url else [fetch_host + url
                 for fetch_host in fetch_host_list]
 
-        if not name:
-            name = code
-            if bioType not in ('pdb', 'bio'):
-                name += '_' + type
         code = code.lower()
 
         fobj = None
 
         if not file or file in (1, '1', 'auto'):
-            file = os.path.join(path, code.lower() + typeExt)
+            file = os.path.join(path, nameFmt.format(code=code.lower(), type=type))
 
         if not isinstance(file, basestring):
             fobj = file
@@ -1333,8 +1355,7 @@ PYMOL API
             break
 
         if os.path.exists(file):
-            r = _self.load(file, name, state,
-                    'brix' if bioType in ('fofc', '2fofc') else 'pdb',
+            r = _self.load(file, name, state, '',
                     finish, discrete, quiet, multiplex, zoom)
             if not _self.is_error(r):
                 return name
@@ -1351,19 +1372,35 @@ PYMOL API
             discrete = 1 # by default, select discrete  when loading
             # multiple PDB entries into a single object
 
+        all_type = type
         for obj_code in code_list:
             obj_name = name
+            type = all_type
+
+            if obj_code[:4].upper() in ('CID_', 'SID_', 'EMD_'):
+                if not obj_name:
+                    obj_name = obj_code
+                type = obj_code[:3].lower()
+                obj_code = obj_code[4:]
+
+            if not obj_name:
+                obj_name = obj_code
+                if type.endswith('fofc'):
+                    obj_name += '_' + type
+                elif type == 'emd':
+                    obj_name = 'emd_' + obj_code
 
             chain = None
             if len(obj_code) in (5,6) and type == 'pdb':
-                if not obj_name:
-                    obj_name = obj_code
                 obj_code, chain = obj_code[:4], obj_code[-1]
 
             r = _fetch(obj_code, obj_name, state, finish,
                     discrete, multiplex, zoom, type, path, file, quiet, _self)
 
             if chain and isinstance(r, str):
+                if _self.count_atoms('?%s & c. %s' % (r, chain)) == 0:
+                    _self.delete(r)
+                    raise pymol.CmdException('no such chain: ' + chain)
                 _self.remove('?%s and not chain %s' % (r, chain))
 
         return r
@@ -1453,3 +1490,37 @@ ARGUMENTS
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
+
+    def loadall(pattern, group='', quiet=1, _self=cmd, **kwargs):
+        '''
+DESCRIPTION
+
+    Load all files matching given globbing pattern
+
+USAGE
+
+    loadall pattern [, group ]
+
+EXAMPLE
+
+    loadall *.pdb
+        '''
+        import glob
+
+        filenames = glob.glob(_self.exp_path(pattern))
+
+        for filename in filenames:
+            if not quiet:
+                print ' Loading', filename
+            _self.load(filename, **kwargs)
+
+        if group:
+            if kwargs.get('object', '') != '':
+                print ' Warning: group and object arguments given'
+                members = [kwargs['object']]
+            else:
+                from pymol.cmd import file_ext_re, gz_ext_re, safe_oname_re
+                members = [gz_ext_re.sub('', file_ext_re.sub('',
+                    safe_oname_re.sub('_', os.path.split(filename)[-1])))
+                    for filename in filenames]
+            _self.group(group, ' '.join(members))

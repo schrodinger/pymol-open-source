@@ -18,7 +18,9 @@ def get_command_keywords(self_cmd=cmd):
         'alter'         : [ self_cmd.alter             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
         '_alt'          : [ self_cmd._alt              , 0 , 0 , ''  , parsing.STRICT ],                
         'alter_state'   : [ self_cmd.alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
+        'alphatoall'    : [ self_cmd.alphatoall        , 0 , 0 , ''  , parsing.STRICT ],
         'angle'         : [ self_cmd.angle             , 0 , 0 , ''  , parsing.STRICT ],          
+        'api'           : [ self_cmd.helping.api       , 0 , 0 , ''  , parsing.STRICT ],
         'as'            : [ self_cmd.show_as           , 0 , 0 , ''  , parsing.STRICT ],          
         'assert'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
         'attach'        : [ self_cmd.attach            , 0 , 0 , ''  , parsing.STRICT ],
@@ -31,6 +33,7 @@ def get_command_keywords(self_cmd=cmd):
         'cartoon'       : [ self_cmd.cartoon           , 0 , 0 , ''  , parsing.STRICT ],
         'capture'       : [ self_cmd.capture           , 0 , 0 , ''  , parsing.STRICT ],
         'cealign'       : [ self_cmd.cealign	       , 0 , 0 , ''  , parsing.STRICT ],
+        'centerofmass'  : [ self_cmd.centerofmass      , 0 , 0 , ''  , parsing.STRICT ],
         'cd'            : [ self_cmd.cd                , 0 , 0 , ''  , parsing.STRICT ],
         'center'        : [ self_cmd.center            , 0 , 0 , ''  , parsing.STRICT ],     
         'check'         : [ self_cmd.check             , 0 , 0 , ''  , parsing.STRICT ],
@@ -73,6 +76,7 @@ def get_command_keywords(self_cmd=cmd):
         'enable'        : [ self_cmd.enable            , 0 , 0 , ''  , parsing.STRICT ],
         'ending'        : [ self_cmd.ending            , 0 , 0 , ''  , parsing.STRICT ],
         'except'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],      
+        'extra_fit'     : [ self_cmd.extra_fit         , 0 , 0 , ''  , parsing.STRICT ],
         'extract'       : [ self_cmd.extract           , 0 , 0 , ''  , parsing.STRICT ],            
         'exec'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
         'export_dots'   : [ self_cmd.export_dots       , 0 , 0 , ''  , parsing.STRICT ],
@@ -132,8 +136,10 @@ def get_command_keywords(self_cmd=cmd):
         'isosurface'    : [ self_cmd.isosurface        , 0 , 0 , ''  , parsing.LEGACY ],
         'iterate'       : [ self_cmd.iterate           , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
         'iterate_state' : [ self_cmd.iterate_state     , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
+        'join_states'   : [ self_cmd.join_states       , 0 , 0 , ''  , parsing.STRICT ],
         'label'         : [ self_cmd.label             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
         'load'          : [ self_cmd.load              , 0 , 0 , ''  , parsing.STRICT ],
+        'loadall'       : [ self_cmd.loadall           , 0 , 0 , ''  , parsing.STRICT ],
         'space'         : [ self_cmd.space             , 0 , 0 , ''  , parsing.STRICT ],
         'load_embedded' : [ self_cmd.load_embedded     , 0 , 0 , ''  , parsing.STRICT ],
         'load_png'      : [ self_cmd.load_png          , 0 , 0 , ''  , parsing.STRICT ],
@@ -345,7 +351,6 @@ def fix_dict(keyword):
 
 def get_help_only_keywords(self_cmd=cmd):
     return {  
-        'api'                   : [ self_cmd.helping.api ],
         'editing'               : [ self_cmd.helping.editing ],  
         'edit_keys'             : [ self_cmd.helping.edit_keys ],
         'examples'              : [ self_cmd.helping.examples ],

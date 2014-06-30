@@ -122,9 +122,11 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
       } else {
 	float mid[3];
 	average3f(vptr + 7, vptr + 10, mid);
-	ok &= ray->fSausage3fv(ray, vptr + 7, mid, *(vptr + 6), vptr, vptr);
+	ok &= ray->fCustomCylinder3fv(ray, vptr + 7, mid, *(vptr + 6), vptr, vptr,
+            cCylCapRound, cCylCapNone);
 	if (ok)
-	  ok &= ray->fSausage3fv(ray, mid, vptr + 10, *(vptr + 6), vptr + 3, vptr + 3);
+	  ok &= ray->fCustomCylinder3fv(ray, mid, vptr + 10, *(vptr + 6), vptr + 3, vptr + 3,
+              cCylCapNone, cCylCapRound);
       }
       vptr += 13;
     }

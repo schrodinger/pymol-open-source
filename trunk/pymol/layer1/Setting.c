@@ -4741,9 +4741,9 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 
     set_b(I, cSetting_mesh_as_cylinders, 0);
     set_b(I, cSetting_line_as_cylinders, 0);
-    set_b(I, cSetting_ribbon_as_cylinders, 1);
+    set_b(I, cSetting_ribbon_as_cylinders, 0);
     set_b(I, cSetting_dash_as_cylinders, 1);
-    set_b(I, cSetting_nonbonded_as_cylinders, 1);
+    set_b(I, cSetting_nonbonded_as_cylinders, 0);
     set_b(I, cSetting_alignment_as_cylinders, 1);
     set_i(I, cSetting_cartoon_nucleic_acid_as_cylinders, 1); /* 0 - none, 1 - just ladder, 2 - just strand, 3 - both ladder and strand */
     set_b(I, cSetting_offscreen_rendering_for_antialiasing, 0);

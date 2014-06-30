@@ -613,7 +613,7 @@ SEE ALSO
             # legacy
             level = float(ramp)
             ramp = ''
-        except ValueError:
+        except (ValueError, TypeError):
             level = 0.0
         
         try:
@@ -1132,4 +1132,68 @@ NOTES
         if _self._raising(r,_self): raise pymol.CmdException                                    
         return r
         
+    def join_states(name, selection='all', mode=2, zoom=0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    The reverse of split_states. Create a multi-state object from a
+    selection which spans multiple objects.
+
+ARGUMENTS
+
+    name = string: name of object to create or modify
+
+    selection = string: atoms to include in the new object
+
+    mode = int: how to match states {default: 2}
+      0: Create discrete object, input objects can be (totally) different
+      1: Assume identical topology (same number of atoms and matching atom
+         identifiers) in all input objects
+      2: Assume matching atom identifiers in all input objects, but also
+         check for missing atoms and only include atoms that are present
+         in all input objects
+      3: match atoms by sequence alignment, slowest but most robust option
+
+EXAMPLE
+
+    fragment ala
+    fragment his
+    join_states multi, (ala|his), mode=0
+        '''
+
+        mode, quiet = int(mode), int(quiet)
+
+        if mode == 3:
+            aln_name = _self.get_unused_name('_join_states_aln')
+
+        sele_name = _self.get_unused_name('_join_states_sele1')
+        msel_name = _self.get_unused_name('_join_states_sele2')
+
+        _self.select(sele_name, selection, 0)
+        models = _self.get_object_list('?' + sele_name)
+
+        for i, model in enumerate(models):
+            _self.select(msel_name, '?%s & ?%s' % (sele_name, model), 0)
+            if mode == 2 and i > 0:
+                _self.remove('?%s & ! ((alt A+) & (?%s in ?%s))' % (name, name, msel_name))
+                _self.create(name, '?%s in ?%s' % (msel_name, name), 0, -1, 0, 0, quiet)
+            elif mode == 3 and i > 0:
+                _self.align(msel_name, name, cycles=0, transform=0, object=aln_name)
+                _self.select(msel_name, '?%s & ?%s' % (sele_name, aln_name), 0)
+                _self.remove('?%s and not ?%s' % (name, aln_name))
+                _self.delete(aln_name)
+
+                n = _self.count_states('?' + name)
+                for j in range(_self.count_states('?' + model)):
+                    _self.create(name, name, 1, -1, 0, 0, quiet)
+                    _self.update(name, '?' + msel_name, n + j + 1, 1, 0, quiet)
+            else:
+                _self.create(name, msel_name, 0, -1, mode == 0, 0, quiet)
+
+        _self.delete(sele_name)
+        _self.delete(msel_name)
+        _self.rebuild('?' + name)
+
+        if int(zoom):
+            _self.zoom(name, state=0)
 

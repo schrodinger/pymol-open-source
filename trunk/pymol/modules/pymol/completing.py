@@ -20,6 +20,7 @@ aa_set_c = [ cmd.setting.setting_sc     , 'setting'         , ', ' ]
 aa_map_c = [ cmd.map_sc                 , 'map object'      , ', ' ]
 aa_rep_c = [ cmd.repres_sc              , 'representation'  , ', ' ]
 aa_v_r_c = [ vol_ramp_sc                , 'volume ramp'     , ', ' ]
+aa_ali_e = [ cmd.Shortcut(['align', 'super', 'cealign']), 'alignment method', '']
 
 def wizard_sc():
     import os, pymol.wizard
@@ -38,6 +39,8 @@ def get_auto_arg_list(self_cmd=cmd):
         'align'          : aa_sel_c,
         'alignto'        : aa_obj_c,
         'alter'          : aa_sel_e,
+        'alphatoall'     : aa_sel_c,
+        'api'            : [ self_cmd.kwhash, 'command', '' ],
         'bond'           : aa_sel_e,
         'as'             : aa_rep_c,
         'bg_color'       : [ lambda c=self_cmd:c._get_color_sc(c), 'color'       , ''   ],      
@@ -46,6 +49,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'cache'          : [ self_cmd.exporting.cache_action_sc , 'cache mode'   , ', ' ],
         'center'         : aa_sel_e,
         'cealign'        : aa_sel_e,
+        'centerofmass'   : aa_sel_e,
         'color'          : [ lambda c=self_cmd:c._get_color_sc(c), 'color'       , ', ' ],
         'config_mouse'   : [ self_cmd.controlling.ring_dict_sc, 'mouse cycle'    , ''   ],
         'clean'          : aa_sel_c,
@@ -57,6 +61,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'distance'       : aa_obj_e,
         'dss'            : aa_sel_e,
         'enable'         : aa_obj_s,
+        'extra_fit'      : aa_sel_e,
         'extract'        : aa_obj_e,
         'feedback'       : [ self_cmd.fb_action_sc           , 'action'          , ', ' ],
         'fit'            : aa_sel_e,
@@ -122,7 +127,9 @@ def get_auto_arg_list(self_cmd=cmd):
 # 2nd
         {
         'align'          : aa_sel_e,
+        'alignto'        : aa_ali_e,
         'alter'          : aa_exp_e,
+        'alphatoall'     : aa_exp_e,
         'as'             : aa_sel_e,
         'bond'           : aa_sel_e,
         'button'         : [ self_cmd.controlling.but_mod_sc , 'modifier'        , ', ' ],
@@ -131,6 +138,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'color'          : aa_sel_e,
         'create'         : aa_sel_c,
         'distance'       : aa_sel_e,
+        'extra_fit'      : aa_obj_e,
         'extract'        : aa_sel_e,
         'feedback'       : [ self_cmd.fb_module_sc           , 'module'          , ', ' ],
         'flag'           : aa_sel_c,
@@ -142,6 +150,8 @@ def get_auto_arg_list(self_cmd=cmd):
         'isomesh'        : aa_map_c,
         'isosurface'     : aa_map_c,
         'iterate'        : aa_exp_e,
+        'iterate_state'  : aa_sel_e,
+        'join_states'    : aa_sel_e,
         'volume'         : aa_map_c,
         'select'         : aa_sel_e,
         'save'           : aa_sel_c,
@@ -175,6 +185,7 @@ def get_auto_arg_list(self_cmd=cmd):
         {
         'button'         : [ self_cmd.controlling.but_act_sc , 'button action'   , ''   ],
         'distance'       : aa_sel_e,
+        'extra_fit'      : aa_ali_e,
         'feedback'       : [ self_cmd.fb_mask_sc             , 'mask'            , ''   ],            
         'flag'           : [ self_cmd.editing.flag_action_sc , 'flag action'     , ''   ],
         'get_bond'       : aa_sel_e,

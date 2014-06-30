@@ -4,6 +4,7 @@
 from importing import \
       finish_object,      \
       load,               \
+      loadall,            \
       load_brick,         \
       load_callback,      \
       load_cgo,           \
@@ -37,6 +38,7 @@ from creating import \
       isolevel,           \
       isomesh,            \
       isosurface,         \
+      join_states,        \
       map_generate,        \
       map_new,            \
       pseudoatom,         \
@@ -84,6 +86,7 @@ from controlling import \
 from querying import \
       angle,              \
       auto_measure,       \
+      centerofmass,       \
       count_atoms,        \
       count_frames,       \
       count_states,       \
@@ -162,6 +165,7 @@ from editing import \
       alter,              \
       alter_list,         \
       alter_state,        \
+      alphatoall,         \
       attach,             \
       bond,               \
       cycle_valence,      \
@@ -257,6 +261,7 @@ from wizarding import \
 from fitting import \
       align,             \
       alignto,		 \
+      extra_fit,	 \
       fit,               \
       super,             \
       rms,               \
@@ -386,6 +391,7 @@ from setting import \
 import helping
 from helping import \
       abort,               \
+      api,                 \
       show_help,           \
       help,                \
       commands

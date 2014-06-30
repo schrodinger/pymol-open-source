@@ -1629,8 +1629,11 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
     if(render && (render_mode < 2))
       SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0,
-                  SettingGetGlobal_b(G, cSetting_image_copy_always));
-
+                  SettingGetGlobal_b(G, cSetting_image_copy_always), 0);
+    else if (text){
+      SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0,
+                  SettingGetGlobal_b(G, cSetting_image_copy_always), 1 /* just_background */);
+    }
     SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
 
     origtimes = times;

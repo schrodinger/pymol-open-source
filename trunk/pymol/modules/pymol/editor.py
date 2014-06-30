@@ -381,6 +381,24 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
 
 def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,
         dir=1,hydro=-1,ss=0,async=-1,quiet=1,_self=cmd):
+    '''
+DESCRIPTION
+
+    Build a peptide
+
+ARGUMENTS
+
+    input = str: sequence in one-letter code
+
+    name = str: name of object to create {default: }
+
+    ss = int: Secondary structure 1=alpha helix, 2=antiparallel beta, 3=parallel beta, 4=flat
+
+EXAMPLE
+
+    fab ACDEFGH
+    fab ACDEFGH, helix, ss=1
+    '''
     if async<1:
         r = _fab(input,name,mode,resi,chain,segi,
                  state,dir,hydro,ss,quiet,_self)

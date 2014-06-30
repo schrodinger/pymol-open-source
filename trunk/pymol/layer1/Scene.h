@@ -85,7 +85,7 @@ int SceneRenderCached(PyMOLGlobals * G);
 int SceneSetFog(PyMOLGlobals *G, float *fog);
 void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                  Multipick * smp, int oversize_width, int oversize_height,
-                 int click_side, int force_copy);
+                 int click_side, int force_copy, int just_background);
 void SceneSetFrame(PyMOLGlobals * G, int mode, int frame);
 int SceneSetNames(PyMOLGlobals * G, PyObject * list);
 int SceneGetFrame(PyMOLGlobals * G);
