@@ -2,14 +2,22 @@
 Python installation tests
 '''
 
+import sys
 from pymol import testing
 
 required_modules = [
     'Image',
     'numpy',
     'matplotlib',
-    'OpenGL',
 ]
+
+# when building on OSX with system python, some modules are not
+# available by default. Only test for them if we build with our
+# own python distribution which should ship all these modules.
+if not sys.executable.startswith('/System/Library/Frameworks/Python.framework/Versions/2.7'):
+    required_modules += [
+        'OpenGL',
+    ]
 
 class TestSystem(testing.PyMOLTestCase):
 
