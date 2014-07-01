@@ -5,9 +5,9 @@ spheroid command does not work
 
 from pymol import cmd, testing, stored
 
+@testing.requires('gui')
 class Test1356(testing.PyMOLTestCase):
 
-    @testing.requires('gui')
     @testing.foreach(True, False)
     def testSpheresForSpheroidTrajectory(self, use_shader):
         pdbfile = self.datafile("sampletrajectory.pdb")
