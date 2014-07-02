@@ -8,7 +8,6 @@ from pymol import testing
 required_modules = [
     'Image',
     'numpy',
-    'matplotlib',
 ]
 
 # when building on OSX with system python, some modules are not
@@ -17,6 +16,7 @@ required_modules = [
 if not sys.executable.startswith('/System/Library/Frameworks/Python.framework/Versions/2.7'):
     required_modules += [
         'OpenGL',
+        'matplotlib',
     ]
 
 class TestSystem(testing.PyMOLTestCase):
