@@ -518,7 +518,7 @@ USAGE
         if filenames in ('all', ['all']):
             global run_all
             run_all = True
-            filenames = os.path.join(pymol_test_dir, '*', '*.py')
+            filenames = os.path.join(pymol_test_dir, 'tests', '*', '*.py')
 
         if isinstance(filenames, basestring):
             filenames = [filename
