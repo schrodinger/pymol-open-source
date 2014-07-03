@@ -338,14 +338,17 @@ class _XMLTestResult(_TextTestResult):
                 _XMLTestResult._report_testcase(suite, test, testsuite, doc)
             _XMLTestResult._report_output(test_runner, testsuite, doc)
             xml_content = doc.toprettyxml(indent='\t')
-
             if type(test_runner.output) is str:
-                report_file = open(
-                    '%s%sTEST-%s-%s.xml' % (
+                fn = '%s%sTEST-%s-%s.xml' % (
                         test_runner.output, os.sep, suite,
                         test_runner.outsuffix
-                    ), 'w'
-                )
+                    )
+                try:
+                    # if directories aren't created, create them
+                    os.makedirs(os.path.dirname(fn))
+                except:
+                    pass
+                report_file = open(fn, 'w')
                 try:
                     report_file.write(xml_content)
                 finally:

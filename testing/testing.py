@@ -525,9 +525,6 @@ USAGE
                     for pattern in filenames.split()
                     for filename in glob.glob(cmd.exp_path(pattern))]
 
-        if isinstance(out, str):
-            out = open(out, 'w')
-
         suite = unittest.TestSuite()
 
         for filename in filenames:
@@ -548,6 +545,8 @@ USAGE
             import xmlrunner
             testresult = xmlrunner.XMLTestRunner(output=out, verbosity=int(verbosity)).run(suite)
         else:
+            if isinstance(out, str):
+                out = open(out, 'w')
             testresult = unittest.TextTestRunner(stream=out,
                                                  resultclass=PyMOLTestResult, verbosity=int(verbosity)).run(suite)
 
