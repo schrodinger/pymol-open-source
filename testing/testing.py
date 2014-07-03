@@ -56,6 +56,7 @@ else:
 
     usage = 'pymol [pymol options] %s [test options]' % (os.path.basename(__file__))
     parser = argparse.ArgumentParser(usage=usage)
+    parser.add_argument('--xml', action='store_true')
     parser.add_argument('--run', dest='filenames', nargs='*', default=[])
     parser.add_argument('--out', default=sys.stdout)
     parser.add_argument('--offline', action='store_true')
@@ -543,9 +544,12 @@ USAGE
             suite.addTest(unittest.defaultTestLoader
                     .loadTestsFromModule(mod))
 
-        testresult = unittest.TextTestRunner(stream=out,
-                resultclass=PyMOLTestResult,
-                verbosity=int(verbosity)).run(suite)
+        if kwargs['xml']:
+            import xmlrunner
+            testresult = xmlrunner.XMLTestRunner(output=out, verbosity=int(verbosity)).run(suite)
+        else:
+            testresult = unittest.TextTestRunner(stream=out,
+                                                 resultclass=PyMOLTestResult, verbosity=int(verbosity)).run(suite)
 
         while deferred_unlink:
             os.unlink(deferred_unlink.pop())
