@@ -71,6 +71,7 @@ else:
     pymol_test_dir = os.path.abspath(os.path.dirname(__file__))
 
     deferred_unlink = []
+    deferred_rmtree = []
 
     class requires_version(object):
         '''
@@ -180,7 +181,10 @@ else:
         def __exit__(self, exc_type, exc_value, traceback):
             import shutil
             if os.path.exists(self.name):
-                shutil.rmtree(self.name)
+                try:
+                    shutil.rmtree(self.name)
+                except WindowsError:
+                    deferred_rmtree.append(self.name)
 
     class foreachList(list):
         pass
@@ -552,6 +556,9 @@ USAGE
 
         while deferred_unlink:
             os.unlink(deferred_unlink.pop())
+
+        while deferred_rmtree:
+            shutil.rmtree(deferred_rmtree.pop())
 
         return len(testresult.errors) + len(testresult.failures)
 
