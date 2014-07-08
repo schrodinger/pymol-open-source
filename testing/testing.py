@@ -558,6 +558,7 @@ USAGE
             os.unlink(deferred_unlink.pop())
 
         while deferred_rmtree:
+            import shutil
             shutil.rmtree(deferred_rmtree.pop())
 
         return len(testresult.errors) + len(testresult.failures)
