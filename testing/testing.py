@@ -545,6 +545,8 @@ USAGE
             suite.addTest(unittest.defaultTestLoader
                     .loadTestsFromModule(mod))
 
+        if not 'xml' in kwargs:
+            kwargs['xml'] = False
         if kwargs['xml']:
             import xmlrunner
             testresult = xmlrunner.XMLTestRunner(output=out, verbosity=int(verbosity)).run(suite)
