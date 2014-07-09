@@ -339,8 +339,8 @@ class VRGBACanvas(object):
         self.canvas_width = 0
         self.canvas_height = 0
 
-        self.vmin = -5.
-        self.vmax = 5.
+        self._vmin = -5.
+        self._vmax = 5.
         self._amin = 0.
         self._amax = 1.
 
@@ -474,6 +474,22 @@ class VRGBACanvas(object):
             flat.extend(p.rgb)
             flat.append(p.alpha)
         return flat
+
+    @property
+    def vmin(self):
+        return self._vmin
+
+    @property
+    def vmax(self):
+        return self._vmax
+
+    @vmin.setter
+    def vmin(self, v):
+        self._vmin = min(v, self._vmax - 1e-2)
+
+    @vmax.setter
+    def vmax(self, v):
+        self._vmax = max(v, self._vmin + 1e-2)
 
     @property
     def vrange(self):

@@ -1716,15 +1716,15 @@ float get_angle3f(float *v1, float *v2)
 {
   double denom;
   double result;
+  double arg1, arg2;
+  arg1 = ((v1[0] * v1[0]) + (v1[1] * v1[1]) + (v1[2] * v1[2]));
+  arg2 = ((v2[0] * v2[0]) + (v2[1] * v2[1]) + (v2[2] * v2[2]));
+  denom = sqrt1d(arg1) * sqrt1d(arg2);
 
-  denom = sqrt1f(((v1[0] * v1[0]) +
-                  (v1[1] * v1[1]) +
-                  (v1[2] * v1[2]))) *
-    sqrt1f(((v2[0] * v2[0]) + (v2[1] * v2[1]) + (v2[2] * v2[2])));
-
-  if(denom > R_SMALL)
-    result = (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) / denom;
-  else
+  if(denom > R_SMALL){
+    arg1 = (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]);
+    result = arg1 / denom;
+  } else
     result = _0;
   if(result < -_1)
     result = -_1;

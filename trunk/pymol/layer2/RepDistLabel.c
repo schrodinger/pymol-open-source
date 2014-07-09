@@ -34,7 +34,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"CoordSet.h"
 
-typedef char DistLabel[8];
+typedef char DistLabel[12];
 
 typedef struct RepDistLabel {
   Rep R;
@@ -270,7 +270,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
 	if (!ok)
 	  break;
         v = I->V + 6 * n;
-        strcpy(I->L[n], buffer);
+        UtilNCopy(I->L[n], buffer, sizeof(DistLabel));
         copy3f(d, v);
         *(lc++) = v[0];
         *(lc++) = v[1];
@@ -359,7 +359,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
 	if (!ok)
 	  break;
         v = I->V + 6 * n;
-        strcpy(I->L[n], buffer);
+        UtilNCopy(I->L[n], buffer, sizeof(DistLabel));
         copy3f(avg, v);
         *(lc++) = v[0];
         *(lc++) = v[1];
@@ -460,7 +460,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
 	  VLACheck(I->L, DistLabel, n);
 	CHECKOK(ok, I->L);
         v = I->V + 6 * n;
-        strcpy(I->L[n], buffer);
+        UtilNCopy(I->L[n], buffer, sizeof(DistLabel));
         copy3f(avg, v);
         *(lc++) = v[0];
         *(lc++) = v[1];
