@@ -712,51 +712,6 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
   }
 }
 #ifdef _PYMOL_GL_DRAWARRAYS
-void RepSphereRenderTriangleStripsES(int nvertsarg, float *varg){
-  int nverts = nvertsarg;
-  float *v = varg;
-  ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-  ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-  int pl = 0;
-  float restart;
-  while (nverts>0){
-    restart = *(v++);
-    if (restart){
-      if (restart == 2.0){
-	normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	vertexVals[pl] = v[3]; vertexVals[pl+1] = v[4]; vertexVals[pl+2] = v[5];
-	nverts--;
-	pl += 3;
-      }
-      normalVals[pl] = v[0]; normalVals[pl++] = v[1]; normalVals[pl++] = v[2];
-      v += 3;
-      vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-      v += 3;
-      pl += 3;
-      normalVals[pl] = v[0]; normalVals[pl++] = v[1]; normalVals[pl++] = v[2];
-      v += 3;
-      vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-      v += 3;
-      pl += 3;
-      nverts -= 2;
-    }
-    normalVals[pl] = v[0]; normalVals[pl++] = v[1]; normalVals[pl++] = v[2];
-    v += 3;
-    vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-    nverts--;
-    v += 3;
-    pl += 3;
-  }
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_NORMAL_ARRAY);
-  glNormalPointer(GL_FLOAT, 0, normalVals);
-  glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, nvertsarg);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  DEALLOCATE_ARRAY(vertexVals)
-  DEALLOCATE_ARRAY(normalVals)
-}
 void RepSphereRenderPointsES(int nvertsarg, float *varg, float *vnarg){
   float *v = varg, *vn = vnarg;
   int nverts = nvertsarg, plc = 0;
@@ -1561,256 +1516,6 @@ void RenderSphereMode_1_or_6(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, fl
   glEnable(GL_ALPHA_TEST);
 }
 
-void RenderSphereMode_Default(PyMOLGlobals *G, RepSphere *I, int carg, float **vptr, float alpha, SphereRec *sp){
-  int cc, c = carg, flag, a;
-  int variable_alpha = I->VariableAlphaFlag;
-  int use_dlst;
-  int *nt;
-  float *v = *vptr;
-  float restart;
-  use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
-  
-#ifdef _PYMOL_GL_CALLLISTS
-  if(use_dlst && I->R.displayList) {
-    glCallList(I->R.displayList);
-  } else {                /* display list */
-    if(use_dlst) {
-      if(!I->R.displayList) {
-	I->R.displayList = glGenLists(1);
-	if(I->R.displayList) {
-	  glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	}
-      }
-    }
-#endif
-    if(I->cullFlag && I->NT) {
-      if((alpha == 1.0) && (!variable_alpha)) {
-	nt = I->NT;       /* number of passes for each sphere */
-	while(c--) {      /* iterate through all atoms */
-	  glColor3fv(v);
-	  (*vptr)+=4; v = *vptr;
-	  cc = *(nt++);
-	  flag = 0;
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  {
-	    int nverts=0;
-	    float *vstart = v;
-	    while(cc--) {   /* execute loop this many times */
-	      restart = *(v++);
-	      if(restart) {
-		if(flag) {
-		  RepSphereRenderTriangleStripsES(nverts, vstart);
-		  nverts = 0;
-		  vstart = v - 1;
-		}
-		if(restart == 2.0) {        /* swap triangle polarity */
-		  nverts++;
-		}
-		nverts += 2;
-		(*vptr)+=12; v = *vptr;
-	      }
-	      nverts++;
-	      (*vptr)+=6; v = *vptr;
-	      flag = 1;
-	    }
-	    if (nverts>0){
-	      RepSphereRenderTriangleStripsES(nverts, vstart);
-	    }
-	  }
-#else
-	  glBegin(GL_TRIANGLE_STRIP);
-	  while(cc--) {   /* execute loop this many times */
-	    restart = *v;
-	    (*vptr)++; v = *vptr;
-	    if(restart) {
-	      if(flag) {
-		glEnd();
-		glBegin(GL_TRIANGLE_STRIP);
-	      }
-	      if(restart == 2.0) {        /* swap triangle polarity */
-		glNormal3fv(v);
-		glVertex3fv(v + 3);
-	      }
-	      glNormal3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	      glVertex3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	      glNormal3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	      glVertex3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	    }
-	    glNormal3fv(v);
-	    (*vptr)+=3; v = *vptr;
-	    glVertex3fv(v);
-	    (*vptr)+=3; v = *vptr;
-	    flag = 1;
-	  }
-	  glEnd();
-#endif
-	}
-      } else {
-	nt = I->NT;       /* number of passes for each sphere */
-	while(c--) {      /* iterate through all atoms */
-	  glColor4f(v[0], v[1], v[2], v[3]);
-	  (*vptr)+=4; v = *vptr;
-	  cc = *(nt++);
-	  flag = 0;
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  {
-	    int nverts=0;
-	    float *vstart = v;
-	    while(cc--) {   /* execute loop this many times */
-	      restart = *(v++);
-	      if(restart) {
-		if(flag) {
-		  RepSphereRenderTriangleStripsES(nverts, vstart);
-		  nverts = 0;
-		  vstart = v - 1;
-		}
-		if(restart == 2.0) {        /* swap triangle polarity */
-		  nverts++;
-		}
-		nverts += 2;
-		(*vptr)+=12; v = *vptr;
-	      }
-	      nverts++;
-	      (*vptr)+=6; v = *vptr;
-	      flag = 1;
-	    }
-	    if (nverts>0){
-	      RepSphereRenderTriangleStripsES(nverts, vstart);
-	    }
-	  }
-#else
-	  glBegin(GL_TRIANGLE_STRIP);
-	  while(cc--) {   /* execute loop this many times */
-	    restart = *v;
-	    (*vptr)++; v = *vptr;
-	    if(restart) {
-	      if(flag) {
-		glEnd();
-		glBegin(GL_TRIANGLE_STRIP);
-	      }
-	      if(restart == 2.0) {        /* swap triangle polarity */
-		glNormal3fv(v);
-		glVertex3fv(v + 3);
-	      }
-	      glNormal3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	      glVertex3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	      glNormal3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	      glVertex3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	    }
-	    glNormal3fv(v);
-	    (*vptr)+=3; v = *vptr;
-	    glVertex3fv(v);
-	    (*vptr)+=3; v = *vptr;
-	    flag = 1;
-	  }
-	  glEnd();
-#endif
-	}
-      }
-    } else if(sp) {
-      if((alpha == 1.0) && !variable_alpha) {
-	while(c--) {
-	  glColor3fv(v);
-	  (*vptr)+=4; v = *vptr;
-	  for(a = 0; a < sp->NStrip; a++) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-	    cc = sp->StripLen[a];
-	    {
-	      int nverts = cc;
-	      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-	      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-	      int pl = 0;
-	      
-	      while(cc--) {
-		normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-		(*vptr)+=3; v = *vptr;
-		vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-		(*vptr)+=3; v = *vptr;
-		pl += 3;
-	      }
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_NORMAL_ARRAY);
-	      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-	      glNormalPointer(GL_FLOAT, 0, normalVals);
-	      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	      glDisableClientState(GL_NORMAL_ARRAY);
-	      DEALLOCATE_ARRAY(normalVals)
-	      DEALLOCATE_ARRAY(vertexVals)
-	    }
-#else
-	    glBegin(GL_TRIANGLE_STRIP);
-	    cc = sp->StripLen[a];
-	    while(cc--) {
-	      glNormal3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	      glVertex3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	    }
-	    glEnd();
-#endif
-	  }
-	}
-      } else {
-	while(c--) {
-	  glColor4f(v[0], v[1], v[2], v[3]);
-	  (*vptr)+=4; v = *vptr;
-	  for(a = 0; a < sp->NStrip; a++) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-	    {
-	      int nverts = cc;
-	      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-	      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-	      int pl = 0;
-	      
-	      while(cc--) {
-		normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-		(*vptr)+=3; v = *vptr;
-		vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-		(*vptr)+=3; v = *vptr;
-		pl += 3;
-	      }
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_NORMAL_ARRAY);
-	      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-	      glNormalPointer(GL_FLOAT, 0, normalVals);
-	      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	      glDisableClientState(GL_NORMAL_ARRAY);
-	      DEALLOCATE_ARRAY(normalVals)
-	      DEALLOCATE_ARRAY(vertexVals)
-	    }
-#else
-	    glBegin(GL_TRIANGLE_STRIP);
-	    cc = sp->StripLen[a];
-	    while(cc--) {
-	      glNormal3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	      glVertex3fv(v);
-	      (*vptr)+=3; v = *vptr;
-	    }
-	    glEnd();
-#endif
-	  }
-	}
-      }
-    }
-#ifdef _PYMOL_GL_CALLLISTS
-    if(use_dlst && I->R.displayList) {
-      glEndList();
-    }
-  }
-#endif
-}
-
 void RepSpheresPrepPickingIfNoSphereGeometry(RepSphere * I, int sphere_mode, float *pixel_scale){
   PyMOLGlobals *G = I->R.G;
   switch (sphere_mode) {
@@ -2185,10 +1890,6 @@ static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, float alpha, i
 	glEnd();
 
 	RepSpheresRenderEndOfPicking(sphere_mode);
-	/*
-	if (hasBegun){
-	  glEnd();
-	  }*/
       }
     }
     (*pick)[0].src.index = i;
@@ -2220,12 +1921,8 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
       if (sphere_mode == 5 && G->HaveGUI && G->ValidContext && !sphereARBShaderPrg){
 	sphereARBShaderPrg = CShaderPrg_NewARB(G, "sphere_arb", sphere_arb_vs, sphere_arb_fs);
       }
-      if (!use_shader || !CShaderMgr_ShaderPrgExists(G->ShaderMgr, "spheredirect")){
-	switch (sphere_mode){
-	case 5:
-	case 9:
-	  sphere_mode = 0;
-	}
+      if ((sphere_mode == 5 || sphere_mode == 9) && (!use_shader || !CShaderMgr_ShaderPrgExists(G->ShaderMgr, "spheredirect"))){
+	sphere_mode = 0;
       }
     }
   }
@@ -2324,7 +2021,7 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
         }
 #endif
       } else {                  /* real spheres, drawn with triangles -- not points or impostors */
-	RenderSphereMode_Default(G, I, c, &v, alpha, sp);
+	ok &= RenderSphereMode_Direct(G, I, info, c, &v, alpha, I->SSP);
       }
     }
   }
@@ -2993,7 +2690,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
       I->cullFlag = false;
     if((I->cullFlag < 2) && (SettingGetGlobal_f(G, cSetting_roving_spheres) != 0.0F))
       I->cullFlag = false;
-    if(sp && ((I->cullFlag < 2) && (!spheroidFlag) ) ) {
+    if(sp && ((I->cullFlag < 2) ) ) {
       /* don't cull unless forced */
       I->SSP = sp;
       sp = NULL;

@@ -2,6 +2,20 @@
 CHANGE LOG
 =========================================================================
 
+2014-07-09 Thomas Holder, Blaine Bell
+
+	* fix label_digits crash
+
+	* fixed get_angle3f to use doubles internally
+
+	* avoid ZeroDivisionError in Volume Panel
+
+	* support opaque_background with "draw"
+
+	* fix spheroid command for use_shaders=0
+
+	* 1.7.1.7 (beta)
+
 2014-06-30 Thomas Holder, Blaine Bell
 
 	* report clash score in mutagenesis wizard

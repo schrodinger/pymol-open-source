@@ -1753,7 +1753,7 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             SceneInvalidateCopy(G, false);
             SceneRender(G, NULL, x_offset, y_offset, NULL, width, height, 0, 0, 0);
-            SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
+	    SceneGLClearColor(0.0, 0.0, 0.0, SettingGetGlobal_b(G, cSetting_opaque_background) ? 1.f : 0.0f);
 
             if(draw_both) {
               SceneCopy(G, GL_BACK_LEFT, true, false);

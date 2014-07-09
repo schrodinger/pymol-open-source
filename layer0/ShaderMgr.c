@@ -718,7 +718,7 @@ int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f){
     if (!status) {
       if (G && G->Option && !G->Option->quiet) {
 	PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_Reload-Error: vertex shader compilation failed name='%s'; log follows.\n", I->name ENDFB(G);
-	glGetShaderInfoLog(I->vid, MAX_LOG_LEN, &howLong, infoLog);
+	glGetShaderInfoLog(I->vid, MAX_LOG_LEN-1, &howLong, infoLog);
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	  "infoLog=%s\n", infoLog ENDFB(G);
       }
@@ -737,7 +737,7 @@ int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f){
     if (!status) {
       if (G && G->Option && !G->Option->quiet) {
 	PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_Reload-Error: vertex shader compilation failed name='%s'; log follows.\n", I->name ENDFB(G);
-	glGetShaderInfoLog(I->fid, MAX_LOG_LEN, &howLong, infoLog);
+	glGetShaderInfoLog(I->fid, MAX_LOG_LEN-1, &howLong, infoLog);
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	  "infoLog=%s\n", infoLog ENDFB(G);
       }
@@ -1366,7 +1366,7 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
     if (!status) {
       if (G && G->Option && !G->Option->quiet) {
 	PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_New-Error: vertex shader compilation failed name='%s'; log follows.\n", I->name ENDFB(G);
-	glGetShaderInfoLog(I->vid, MAX_LOG_LEN, &howLong, infoLog);
+	glGetShaderInfoLog(I->vid, MAX_LOG_LEN-1, &howLong, infoLog);
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	  "infoLog=%s\n", infoLog ENDFB(G);
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
@@ -1397,7 +1397,7 @@ CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v,
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	  " CShaderPrg-Error: fragment shader compilation failed name='%s'; log follows.\n", I->name
 	  ENDFB(G);
-	glGetShaderInfoLog(I->fid, MAX_LOG_LEN, &howLong, infoLog);
+	glGetShaderInfoLog(I->fid, MAX_LOG_LEN-1, &howLong, infoLog);
 	PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	  "infoLog=%s\n", infoLog ENDFB(G);
       }

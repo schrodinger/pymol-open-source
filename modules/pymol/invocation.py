@@ -91,6 +91,17 @@ if __name__=='pymol.invocation':
     script_re = re.compile(r"pymolrc$|\.pml$|\.PML$|\.p1m$|\.P1M$")
     py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
 
+    def get_personal_folder():
+        if sys.platform.startswith('win'):
+            try:
+                import _winreg as winreg
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                        r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders') as key:
+                    return winreg.QueryValueEx(key, "Personal")[0]
+            except:
+                print ' Warning: failed to query "My Documents" from registry'
+        return os.path.expanduser('~')
+
     def get_user_config():
         for d in [os.getcwd(), '$HOME', '$HOMEDRIVE$HOMEPATH', '$PYMOL_PATH']:
             d = os.path.expandvars(d)
@@ -282,16 +293,12 @@ if __name__=='pymol.invocation':
                         options.deferred.append(
                             "_do_%s"%string.replace(av.pop(),'%',' '))
                     if ("J" in a): # cd to user's home directory on startup (if possible)
-                        path = os.path.expanduser('~')
-                        if sys.platform == 'win32':
-                            for my_docs_name in ['Documents', 'My Documents']:
-                                my_docs = os.path.join(path, my_docs_name)
-                                if os.path.isdir(my_docs):
-                                    path = my_docs
-                                    break
+                        path = get_personal_folder()
                         try:
                             # immediatly chdir (was: options.deferred.append(...))
                             os.chdir(path)
+                            # clear PYMOL_WD, which may be set by MacPyMOL
+                            os.environ.pop('PYMOL_WD', None)
                         except OSError:
                             print " Error: could not chdir to", repr(path)
                     if ("l" in a):
