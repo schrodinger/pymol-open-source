@@ -107,96 +107,139 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
 
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I);
 
+/*
+ * Make a non-discrete object discrete (the reverse is not supported).
+ */
 int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete)
 {
-  /* currently only works for object with no coordinates that need to
-     become discrete */
-  int ok = true;
-  if((discrete > 0) && (!I->DiscreteFlag)) {
-    I->DiscreteFlag = discrete;
-    I->NDiscrete = 0;
-    if(I->DiscreteFlag) {
-      I->NDiscrete = I->NAtom;
-      I->DiscreteAtmToIdx = VLACalloc(int, I->NAtom);
-      I->DiscreteCSet = VLACalloc(CoordSet*, I->NAtom);
-      if (I->NCSet==1){
-	int i;
-	CoordSet *cs = I->CSet[0];
-	for (i=0;i<I->NAtom;i++){
-	  I->DiscreteCSet[i] = cs;
-	  I->DiscreteAtmToIdx[i] = cs->AtmToIdx[i];
-	  I->AtomInfo[i].discrete_state = 1;
-	}
-	VLAFreeP(cs->AtmToIdx);
-	cs->AtmToIdx = NULL;
-      } else {
-	/* if more than one state already, then
-	   atoms need to be moved into discrete CoordSets, 
-	   if there is more than one used, then it needs to 
-	   be added and copied. same for the bonds */
-	int i,j, origNAtom = I->NAtom;
-	char *used = VLACalloc(char, origNAtom);
-	for (i=0; i<I->NCSet; i++){
-	  CoordSet *cs = I->CSet[i];
-	  char *addedinstate = VLACalloc(char, origNAtom);
-	  int *newatm = VLACalloc(int, origNAtom);
-	  for (j=0; j<cs->NIndex; j++){
-	    int at = cs->IdxToAtm[j];
-	    if (!used[at]){
-	      I->DiscreteCSet[at] = cs;
-	      I->DiscreteAtmToIdx[at] = cs->AtmToIdx[at];
-	      used[at] = true;
-	    } else {
-	      /* for atoms already used, need to duplicate them,
-		 and fix all of the references */
-	      int idx = cs->AtmToIdx[at];
-	      addedinstate[at] = true;
-	      newatm[at] = I->NAtom;
-	      VLACheck(I->DiscreteAtmToIdx, int, I->NAtom+1);
-	      VLACheck(I->DiscreteCSet, CoordSet*, I->NAtom+1);
-	      VLACheck(I->AtomInfo, AtomInfoType, I->NAtom+1);
-	      AtomInfoCopy(G, &I->AtomInfo[at], &I->AtomInfo[I->NAtom]);
-	      I->DiscreteCSet[I->NAtom] = cs;
-	      I->DiscreteAtmToIdx[I->NAtom] = idx;
-	      cs->IdxToAtm[idx] = I->NAtom;
-	      I->NAtom++;
-	    }
-	  }
-	  /* for all states, we need to add the bonds for that state */
-	  {
-	    int k, origNBond = I->NBond;
-	    for(k = 0; k < origNBond; k++) {
-	      BondType *b = &I->Bond[k];
-	      if (addedinstate[b->index[0]] || addedinstate[b->index[1]]){
-		int newatm1 = newatm[b->index[0]],
-		  newatm2 = newatm[b->index[1]];
-		if (I->DiscreteCSet[newatm1]==cs && I->DiscreteCSet[newatm2]==cs){
-		  VLACheck(I->Bond, BondType, I->NBond+1);
-                  b = &I->Bond[k];
-		  AtomInfoBondCopy(G, b, &I->Bond[I->NBond]);
-		  if (addedinstate[b->index[0]])
-		    I->Bond[I->NBond].index[0] = newatm1;
-		  if (addedinstate[b->index[1]])
-		    I->Bond[I->NBond].index[1] = newatm2;
-		  I->NBond++;
-		}
-	      }
-	    }
-	  }
-	  VLAFreeP(newatm);
-	  VLAFreeP(addedinstate);
-	  VLAFreeP(cs->AtmToIdx);
-	  cs->AtmToIdx = NULL;
-	}
-	VLAFreeP(used);
-	I->NDiscrete = I->NAtom;
+  int state, idx, ao, an, ao1, ao2, an1, an2;
+  int maxnatom, natom = I->NAtom, nbond = I->NBond;
+  int *aostate2an = NULL;
+  char *bondseen = NULL;
+  BondType *bond;
+  CoordSet *cs;
+
+  if (!discrete) {
+    if (!I->DiscreteFlag)
+      return true;
+
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " ObjectMoleculeSetDiscrete: Setting objects to non-discrete not supported\n" ENDFB(G);
+    return false;
+  }
+
+  if (I->DiscreteFlag)
+    return true;
+
+  // upper bound for number of discrete atoms
+  maxnatom = I->NAtom * I->NCSet;
+
+  // mapping (for bonds): atom_old -> atom_new
+  ok_assert(1, aostate2an = Alloc(int, I->NAtom));
+  ok_assert(1, bondseen = Calloc(char , I->NBond));
+
+  // discrete setup
+  I->DiscreteFlag = discrete;
+  ok_assert(1, I->DiscreteAtmToIdx = VLACalloc(int, maxnatom));
+  ok_assert(1, I->DiscreteCSet = VLACalloc(CoordSet*, maxnatom));
+
+  // for all coordinate sets
+  for (state = 0; state < I->NCSet; state++) {
+    cs = I->CSet[state];
+
+    if (!cs)
+      continue;
+
+    // init the atom_old -> atom_new array
+    for (ao = 0; ao < I->NAtom; ao++)
+      aostate2an[ao] = -1;
+
+    // for all atoms in coordinate set
+    for (idx = 0; idx < cs->NIndex; idx++) {
+      ao = an = cs->IdxToAtm[idx];
+
+      if (I->DiscreteCSet[ao]) {
+        // seen before, have to copy
+        an = natom++;
+
+        VLACheck(I->AtomInfo, AtomInfoType, an);
+        ok_assert(1, I->AtomInfo);
+
+        AtomInfoCopy(G,
+            I->AtomInfo + ao,
+            I->AtomInfo + an);
+        cs->IdxToAtm[idx] = an;
       }
-    } else {
-      I->DiscreteAtmToIdx = NULL;
-      I->DiscreteCSet = NULL;
+
+      I->AtomInfo[an].discrete_state = state + 1; // 1-based :-(
+      I->DiscreteCSet[an] = cs;
+      I->DiscreteAtmToIdx[an] = cs->AtmToIdx[ao];
+
+      // mapping (for bonds): (atom_old, state) -> atom_new
+      aostate2an[ao] = an;
+    }
+
+    // unused in discrete coordsets
+    VLAFreeP(cs->AtmToIdx);
+
+    // for all old bonds
+    for (idx = 0; idx < I->NBond; idx++) {
+      bond = I->Bond + idx;
+
+      // old atom indices
+      ao1 = bond->index[0];
+      ao2 = bond->index[1];
+
+      // new atom indices
+      an1 = aostate2an[ao1];
+      an2 = aostate2an[ao2];
+
+      // do both atoms exist in this coord set?
+      if (an1 == -1 || an2 == -1)
+        continue;
+
+      if (bondseen[idx]) {
+        // seen before, have to copy
+        VLACheck(I->Bond, BondType, nbond);
+        ok_assert(1, I->Bond);
+
+        bond = I->Bond + (nbond++);
+        AtomInfoBondCopy(G, I->Bond + idx, bond);
+      } else {
+        bondseen[idx] = true;
+      }
+
+      bond->index[0] = an1;
+      bond->index[1] = an2;
     }
   }
-  return ok;
+
+  // not needed anymore
+  mfree(aostate2an);
+  mfree(bondseen);
+
+  // update N* count fields
+  I->NDiscrete = natom;
+  I->NAtom = natom;
+  I->NBond = nbond;
+  for (state = 0; state < I->NCSet; state++)
+    if ((cs = I->CSet[state]))
+      cs->NAtIndex = natom;
+
+  // trim VLAs memory to actual size
+  VLASize(I->Bond, BondType, I->NBond);
+  VLASize(I->AtomInfo, AtomInfoType, I->NAtom);
+  VLASize(I->DiscreteAtmToIdx, int, I->NDiscrete);
+  VLASize(I->DiscreteCSet, CoordSet*, I->NDiscrete);
+
+  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+
+  return true;
+
+ok_except1:
+  PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+    " ObjectMoleculeSetDiscrete: memory allocation failed\n" ENDFB(G);
+  return false;
 }
 
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int state)
