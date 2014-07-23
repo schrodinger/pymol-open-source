@@ -320,6 +320,7 @@ class Mutagenesis(Wizard):
         cmd=self.cmd
         pymol=cmd._pymol
         self.status=0
+        self.bump_scores = []
         cmd.delete(tmp_obj1)
         cmd.delete(tmp_obj2)
         cmd.delete(tmp_obj3)
