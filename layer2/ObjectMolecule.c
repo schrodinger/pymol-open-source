@@ -227,8 +227,10 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
       cs->NAtIndex = natom;
 
   // trim VLAs memory to actual size
-  VLASize(I->Bond, BondType, I->NBond);
-  VLASize(I->AtomInfo, AtomInfoType, I->NAtom);
+  if (I->NBond)
+    VLASize(I->Bond, BondType, I->NBond);
+  if (I->NAtom)
+    VLASize(I->AtomInfo, AtomInfoType, I->NAtom);
   VLASize(I->DiscreteAtmToIdx, int, I->NDiscrete);
   VLASize(I->DiscreteCSet, CoordSet*, I->NDiscrete);
 
