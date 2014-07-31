@@ -564,7 +564,7 @@ def modernize_rendering(mode,_self=cmd):
     cmd=_self
     
     cmd.set("use_display_lists",0)
-    cmd.set("texture_fonts",1)
+    cmd.set("cylinder_shader_ff_workaround", 1)
     cmd.set("max_ups",0)
 
     enable_all_shaders(cmd)

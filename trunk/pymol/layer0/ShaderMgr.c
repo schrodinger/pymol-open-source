@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 
 #define MAX_LOG_LEN 1024
 
-#define SCENEGETIMAGESIZE SceneGetImageSizeFast
+#define SCENEGETIMAGESIZE SceneGetWidthHeight
 
 #include "ShaderText.h"
 
@@ -82,7 +82,7 @@ void CShaderPrg_SetFogUniforms(PyMOLGlobals * G, CShaderPrg * shaderPrg){
   OrthoGetBackgroundSize(G, &bg_width, &bg_height);
   OrthoGetSize(G, &ortho_width, &ortho_height);
   CShaderPrg_Set2f(shaderPrg, "viewImageSize", bg_width/(float)scene_width, bg_height/(float)scene_height);
-  CShaderPrg_Set2f(shaderPrg, "pixelSize", 1.f/(float)scene_width, 1.f/(float)scene_height);
+  CShaderPrg_Set2f(shaderPrg, "pixelSize", 2.f/(float)scene_width, 2.f/(float)scene_height);
   CShaderPrg_Set2f(shaderPrg, "tPixelSize", 1.f/(float)ortho_width, 1.f/(float)ortho_height);
   CShaderPrg_Set2f(shaderPrg, "t2PixelSize", 2.f/(float)ortho_width, 2.f/(float)ortho_height);
   {
@@ -2121,16 +2121,16 @@ CShaderPrg *CShaderPrg_Enable_LabelShaderImpl(PyMOLGlobals * G, CShaderPrg *shad
     int width, height;
     SCENEGETIMAGESIZE(G, &width, &height);
     CShaderPrg_Set2f(shaderPrg, "screenSize", width, height);
+    CShaderPrg_Set2f(shaderPrg, "pixelSize", 2.f/(float)width, 2.f/(float)height);
     CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", 1.f);
     shaderPrg->uniform_set |= 8;
   }
   if (SceneIsGridModeActive(G)){
-    int width, height, gwidth, gheight;
     float aspectRatioAdjustment;
-    SceneGetImageSizeFast(G, &width, &height);
-    SceneGetImageSizeFastAdjustForGrid(G, &gwidth, &gheight);
-    aspectRatioAdjustment = (width/(float)height) / (gwidth/(float)gheight);
+    aspectRatioAdjustment = SceneGetGridAspectRatio(G);
     CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", aspectRatioAdjustment);
+  } else if (StereoIsAdjacent(G)){
+    CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", 2.f);
   }
   CShaderPrg_Set1f(shaderPrg, "isPicking", G->ShaderMgr->is_picking ? 1.f : 0.f );
 

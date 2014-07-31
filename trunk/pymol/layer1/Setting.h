@@ -925,7 +925,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_alignment_as_cylinders     692
 #define cSetting_cartoon_nucleic_acid_as_cylinders       693
 #define cSetting_cgo_shader_ub_flags        694
-#define cSetting_offscreen_rendering_for_antialiasing        695
+#define cSetting_antialias_shader        695
 #define cSetting_offscreen_rendering_multiplier        696
 #define cSetting_cylinder_shader_ff_workaround       697
 #define cSetting_surface_color_smoothing       698

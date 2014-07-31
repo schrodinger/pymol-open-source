@@ -305,12 +305,6 @@ if pymol_launch != 3: # if this isn't a dry run
         def adapt_to_hardware(self):
             cmd=self.cmd
 
-            # optimize for VISTA
-            if sys.platform[0:3]=='win':
-                if sys.getwindowsversion()[0]>5:
-                    # improves performance 
-                    cmd.set('texture_fonts') 
-                    
             # optimize for (or workaround) specific hardware
             (vendor,renderer,version) = cmd.get_renderer()
 

@@ -364,6 +364,8 @@ class CIFRec(CIFData):
         int_fields = []
         if ID != None: int_fields.append( ('id',ID) )                                
 
+        first_model_num = self.index_to_int(model_num, values[0])
+
         for value in values:
             coord = [
                 self.index_to_float(cartn_x,value),
@@ -372,7 +374,7 @@ class CIFRec(CIFData):
 
             if model_num is not None:
                 v = self.index_to_int(model_num, value)
-                if v > 1:
+                if v != first_model_num:
                     self.extra_coords.extend(coord)
                     continue
 

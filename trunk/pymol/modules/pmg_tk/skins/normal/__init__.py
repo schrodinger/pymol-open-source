@@ -2543,12 +2543,6 @@ class Normal(PMGSkin):
                                 )
 
         self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Texture Fonts',
-                                 label='Texture Fonts',
-                                variable = self.setting.texture_fonts,
-                                )
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
                                  'Animation',
                                  label='Animation',
                                 variable = self.setting.animation,

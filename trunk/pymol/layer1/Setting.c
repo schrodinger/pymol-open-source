@@ -3317,20 +3317,18 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
     ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvColor);    
     SceneChanged(G);
     break;
-  case cSetting_offscreen_rendering_for_antialiasing:
   case cSetting_offscreen_rendering_multiplier:
-#if defined(WIN32) || defined(WIN64)
-    if(SettingGetGlobal_b(G, cSetting_offscreen_rendering_for_antialiasing)){
-      if (!quiet){
-	PRINTFB(G, FB_Setting, FB_Warnings)
-	  "Setting-Warning: offscreen_rendering_for_antialiasing is currently not supported on Windows.\n                 Please use graphics card controls to address anti-aliasing.\n"
-	  ENDFB(G);
-      }
-      SettingSet_b(G->Setting, cSetting_offscreen_rendering_for_antialiasing, 0);
+    if (!quiet){
+      PRINTFB(G, FB_Setting, FB_Warnings)
+        "Setting-Warning: offscreen_rendering_multiplier is not necessary and no longer used\n"
+        ENDFB(G);
     }
-#else
+    break;
+  case cSetting_antialias_shader:
+    PRINTFB(G, FB_Setting, FB_Warnings)
+      "Setting-Warning: antialias_shader is not supported in open-source version of PyMOL\n"
+      ENDFB(G);
     SceneChanged(G);
-#endif
     break;
   case cSetting_smooth_half_bonds:
     SceneChanged(G);
@@ -4746,7 +4744,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_nonbonded_as_cylinders, 0);
     set_b(I, cSetting_alignment_as_cylinders, 1);
     set_i(I, cSetting_cartoon_nucleic_acid_as_cylinders, 1); /* 0 - none, 1 - just ladder, 2 - just strand, 3 - both ladder and strand */
-    set_b(I, cSetting_offscreen_rendering_for_antialiasing, 0);
+    set_i(I, cSetting_antialias_shader, 0); /* 0 - none, 1 - fxaa, 2 - smaa */
     set_f(I, cSetting_offscreen_rendering_multiplier, 4.f);
     set_b(I, cSetting_cylinder_shader_ff_workaround, 1);
     set_i(I, cSetting_surface_color_smoothing, 1);
