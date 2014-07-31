@@ -11,6 +11,7 @@ varying vec3 normalizedViewCoordinate;
 varying vec4 pickcolor ;
 
 uniform vec2 screenSize;
+uniform vec2 pixelSize;
 
 uniform float aspectRatioAdjustment;
 
@@ -26,12 +27,14 @@ void main()
   pos.xy += attr_screenworldoffset.xy / (screenSize.xy * screenOriginVertexScale);
   pos.xy += attr_screenoffset.xy * 2. / screenSize * vec2(aspectRatioAdjustment, 1.);
 
+  // rounding to nearest pixel
+  pos.xy = (pixelSize * floor((pos.xy + 1.) / pixelSize)) - 1.;
+
   vec3 viewVector = vec3(gl_ModelViewMatrixTranspose * vec4(0.,0., -1.,0.));
   vec4 a_center = (attr_worldpos + attr_screenworldoffset.z * vec4(viewVector, 0.));
   vec4 transformedPositionZ = gl_ModelViewProjectionMatrix * a_center;
-  transformedPositionZ.xyz = transformedPositionZ.xyz/transformedPositionZ.w;
-  transformedPositionZ.w = 1.;
-  pos.z = transformedPositionZ.z;
+  pos.z = transformedPositionZ.z / transformedPositionZ.w;
+
   gl_Position = pos;
   textureLookup = attr_texcoords;
   normalizedViewCoordinate = pos.xyz / 2.0 + 0.5;

@@ -521,6 +521,11 @@ static int stereo_via_stencil(int stereo_mode)
   return false;
 }
 
+int StereoIsAdjacent(PyMOLGlobals * G){
+  register CScene *I = G->Scene;
+  return stereo_via_adjacent_array(I->StereoMode);
+}
+
 static int get_stereo_x(int x, int *last_x, int width, int *click_side)
 {
   int width_2 = width / 2;
@@ -989,22 +994,17 @@ static void ScenePrepareUnitContext(SceneUnitContext * context, int width, int h
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
 {
   register CScene *I = G->Scene;
-  short created = I->offscreen_width && I->offscreen_height;
-  short offscreen = SettingGetGlobal_b(G, cSetting_offscreen_rendering_for_antialiasing);
-  if (offscreen && created && !I->offscreen_error){
-    *width = I->offscreen_width;
-    *height = I->offscreen_height;
-  } else {
-    *width = I->Width;
-    *height = I->Height;
-  }
+  *width = I->Width;
+  *height = I->Height;
 }
 
-void SceneGetViewPortWidthHeight(PyMOLGlobals * G, int *width, int *height)
+void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height)
 {
   register CScene *I = G->Scene;
   *width = I->Width;
   *height = I->Height;
+  if (stereo_via_adjacent_array(I->StereoMode))
+    *width /= 2.f;
 }
 
 void SceneSetCardInfo(PyMOLGlobals * G, char *vendor, char *renderer, char *version)
@@ -1985,18 +1985,18 @@ void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height)
 void SceneGetImageSizeFast(PyMOLGlobals * G, int *width, int *height)
 {
   register CScene *I = G->Scene;
-  SceneGetViewPortWidthHeight(G, width, height);
-  if(stereo_via_adjacent_array(I->StereoMode))
-    *width /= 2.f;
-}
-void SceneGetImageSizeFastAdjustForGrid(PyMOLGlobals * G, int *width, int *height){
-  register CScene *I = G->Scene;
-  if (I->grid.active){
-    *width = I->grid.cur_viewport_size[0];
-    *height = I->grid.cur_viewport_size[1];
+  if(I->Image) {
+    *width = I->Image->width;
+    *height = I->Image->height;
   } else {
-    SceneGetViewPortWidthHeight(G, width, height);
+    *width = I->Width;
+    *height = I->Height;
   }
+}
+float SceneGetGridAspectRatio(PyMOLGlobals * G){
+  register CScene *I = G->Scene;
+  return (I->Width / (float)I->Height) /
+    (float)(I->grid.cur_viewport_size[0] / (float)I->grid.cur_viewport_size[1]);
 }
 
 int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
@@ -9488,10 +9488,13 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       short offscreen = 0;
       /* STANDARD RENDERING */
 
-      offscreen = SettingGetGlobal_b(G, cSetting_offscreen_rendering_for_antialiasing);
+#if 0
+      // DISABLED - implementation is buggy and replaced by SMAA/FXAA in Incentive PyMOL
+      offscreen = SettingGetGlobal_b(G, cSetting_antialias_shader);
       if(offscreen) {
 	SceneRenderOffscreen(G, I, offscreen, &I->grid);
       }
+#endif
       /* rendering for visualization */
 
 /*** THIS IS AN UGLY EXPERIMENTAL 

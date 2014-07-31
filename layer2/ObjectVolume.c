@@ -927,6 +927,10 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       // we set glBlendFunct explicitely here
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+      // Cheap hack, should be replaced with non-immediate calls
+      glFlush();
+      glFinish();
+
       // draw slices
       {
         int i, cornerindices[] = {

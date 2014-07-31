@@ -2,6 +2,20 @@
 CHANGE LOG
 =========================================================================
 
+2014-07-31 Thomas Holder, Blaine Bell, Gabriel Marques
+
+	* Improve ObjectVolume rendering latency
+
+	* Improve label edge pixel rounding
+
+	* alter_state auto completion
+
+	* improve "Label" wizard
+
+	* re-implemented ObjectMoleculeSetDiscrete
+
+	* 1.7.1.9 (release candidate)
+
 2014-07-09 Thomas Holder, Blaine Bell
 
 	* fix label_digits crash

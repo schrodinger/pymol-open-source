@@ -880,8 +880,7 @@ typedef struct _CPyMOL {
   ov_word lex_alignment_as_cylinders;
   ov_word lex_cartoon_nucleic_acid_as_cylinders;
   ov_word lex_cgo_shader_ub_flags;
-  ov_word lex_offscreen_rendering_for_antialiasing;
-  ov_word lex_offscreen_rendering_multiplier;
+  ov_word lex_antialias_shader;
   ov_word lex_cylinder_shader_ff_workaround;
   ov_word lex_surface_color_smoothing;
   ov_word lex_surface_color_smoothing_threshold;
@@ -1788,8 +1787,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(alignment_as_cylinders, 692)
   LEX_SETTING(cartoon_nucleic_acid_as_cylinders, 693)
   LEX_SETTING(cgo_shader_ub_flags, 694);
-  LEX_SETTING(offscreen_rendering_for_antialiasing, 695);
-  LEX_SETTING(offscreen_rendering_multiplier, 696);
+  LEX_SETTING(antialias_shader, 695);
   LEX_SETTING(cylinder_shader_ff_workaround, 697);
   LEX_SETTING(surface_color_smoothing, 698);
   LEX_SETTING(surface_color_smoothing_threshold, 699);

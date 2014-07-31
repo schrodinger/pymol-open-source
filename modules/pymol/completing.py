@@ -129,6 +129,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'align'          : aa_sel_e,
         'alignto'        : aa_ali_e,
         'alter'          : aa_exp_e,
+        'alter_state'    : aa_sel_e,
         'alphatoall'     : aa_exp_e,
         'as'             : aa_sel_e,
         'bond'           : aa_sel_e,
@@ -183,6 +184,7 @@ def get_auto_arg_list(self_cmd=cmd):
         },
 #3rd
         {
+        'alter_state'    : aa_exp_e,
         'button'         : [ self_cmd.controlling.but_act_sc , 'button action'   , ''   ],
         'distance'       : aa_sel_e,
         'extra_fit'      : aa_ali_e,

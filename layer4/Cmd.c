@@ -2326,7 +2326,7 @@ static PyObject *CmdGetViewPort(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    SceneGetViewPortWidthHeight(G, &width, &height);
+    SceneGetWidthHeight(G, &width, &height);
     APIExit(G);
     return (Py_BuildValue
             ("(ii)", width, height

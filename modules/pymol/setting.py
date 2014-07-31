@@ -421,7 +421,6 @@ if __name__=='pymol.setting':
         cartoon_side_chain_helper          = 383             
         surface_optimize_subsets           = 384 
         multiplex                          = 385 
-        texture_fonts                      = 386 
         pqr_no_chain_id                    = 387 
         animation                          = 388 
         animation_duration                 = 389 
@@ -737,8 +736,8 @@ if __name__=='pymol.setting':
         alignment_as_cylinders             = 692
         cartoon_nucleic_acid_as_cylinders  = 693
         cgo_shader_ub_flags                = 694
-        offscreen_rendering_for_antialiasing = 695
-        offscreen_rendering_multiplier     = 696
+        antialias_shader                   = 695
+        # offscreen_rendering_multiplier     = 696
         cylinder_shader_ff_workaround      = 697
         surface_color_smoothing            = 698
         surface_color_smoothing_threshold  = 699
