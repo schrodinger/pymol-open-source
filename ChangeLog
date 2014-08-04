@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2014-08-04 Thomas Holder, Blaine Bell, Gabriel Marques
+
+	* 1.7.2.0
+
+	* chempy.cif: fix symmetry loading
+
 2014-07-31 Thomas Holder, Blaine Bell, Gabriel Marques
 
 	* Improve ObjectVolume rendering latency

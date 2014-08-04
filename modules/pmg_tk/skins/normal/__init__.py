@@ -3639,7 +3639,7 @@ class Normal(PMGSkin):
              'For more information, browse to: %s\n or send email to: %s' %\
              (self.contactweb, self.contactemail))
         self.about = Pmw.AboutDialog(self.root, applicationname=self.appname)
-        self.about.activate()
+        self.my_activate(self.about)
         self.about.withdraw()
         
     def createInterface(self):

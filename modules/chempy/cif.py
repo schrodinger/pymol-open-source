@@ -97,7 +97,7 @@ def parse_cif(cifstr):
         s_lower = s.lower()
         if s[0] == '_':
             key = s_lower.replace('.', '_')
-            current_block.key_value[s_lower] = token_it.next()
+            current_block.key_value[key] = token_it.next()
         elif s_lower == 'loop_':
             loop = CIFLoop()
             current_block.loops.append(loop)
