@@ -9,8 +9,8 @@ from pymol import cmd, testing, stored
 @testing.requires('incentive')
 class TestPYMOL317(testing.PyMOLTestCase):
 
-    @unittest.skip("skipping testSelectByAtomType b/c win32 gets weird crashes on build machine")
     def testSelectByAtomType(self):
+        self.skip('skipping testSelectByAtomType b/c win32 gets weird crashes on build machine')
         cmd.load(self.datafile('1oky.pdb.gz'))
         cmd.remove("alt 'B'")
         cmd.label('resn STU', 'text_type')
