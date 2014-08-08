@@ -5,6 +5,7 @@ can't select by atom type
 
 import os
 from pymol import cmd, testing, stored
+import unittest
 
 @testing.requires('incentive')
 class TestPYMOL317(testing.PyMOLTestCase):
