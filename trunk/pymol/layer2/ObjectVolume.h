@@ -34,15 +34,14 @@ typedef struct {
   int ResurfaceFlag;
   int RecolorFlag;
   float *AtomVertex;
-  int CarveFlag;
   float CarveBuffer;
-  int VolumeMode;
   CGO *UnitCellCGO;
   WordType caption;
   float Corner[24];
-  int textures[2];
-  CField *volume;
   /* not stored */
+  int textures[3];
+  CField *carvemask;
+  unsigned int dim[3];
   Isofield *Field;
   float min_max_mean_stdev[4];
   float ramp_min, ramp_range;
@@ -76,10 +75,9 @@ int ObjectVolumeInvalidateMapName(ObjectVolume * I, char *name);
 
 int ObjectVolumeColor(ObjectVolume * I, float * colors, int ncolors);
 
-PyObject * ObjectVolumeGetField(ObjectVolume* I);
+CField   * ObjectVolumeGetField(ObjectVolume* I);
 PyObject * ObjectVolumeGetRamp(ObjectVolume* I);
 int        ObjectVolumeSetRamp(ObjectVolume* I, float *ramp_list, int list_size);
-int        ObjectVolumeGetIsUpdated(ObjectVolume *I);
 
 ObjectMapState * ObjectVolumeGetMapState(ObjectVolume * I);
 

@@ -2,6 +2,8 @@ uniform sampler3D volumeTex;
 uniform sampler1D colorTex;
 uniform float volumeScale;
 uniform float volumeBias;
+uniform sampler3D carvemask;
+uniform bool carvemaskFlag;
 
 uniform float fog_enabled;
 uniform sampler2D bgTextureMap;
@@ -25,8 +27,15 @@ uniform vec2 halfPixel;
 
 #include ComputeFogColor
 
+bool iscarvemasked(vec3 t) {
+  return carvemaskFlag && texture3D(carvemask, t).r > 0.5;
+}
+
 void main()
 {
+  if (iscarvemasked(gl_TexCoord[0].xyz))
+    discard;
+
   float v = texture3D(volumeTex, gl_TexCoord[0].xyz).r;
   v = v * volumeScale + volumeBias;
   if (v < 0. || v > 1.) discard;

@@ -100,13 +100,10 @@ static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
   PyList_SetItem(result, 7, PConvAutoNone(NULL) /* PConvIntArrayToPyList(I->Range, 6) */);
   PyList_SetItem(result, 8, PyFloat_FromDouble(0.0 /* I->Level */));
   PyList_SetItem(result, 9, PyFloat_FromDouble(0.0 /* I->Radius */));
-  PyList_SetItem(result, 10, PyInt_FromLong(I->CarveFlag));
+  PyList_SetItem(result, 10, PyInt_FromLong(/* I->CarveFlag */ I->AtomVertex != NULL));
   PyList_SetItem(result, 11, PyFloat_FromDouble(I->CarveBuffer));
-  if(I->CarveFlag && I->AtomVertex) {
-    PyList_SetItem(result, 12, PConvFloatVLAToPyList(I->AtomVertex));
-  } else {
-    PyList_SetItem(result, 12, PConvAutoNone(NULL));
-  }
+  PyList_SetItem(result, 12, I->AtomVertex ?
+      PConvFloatVLAToPyList(I->AtomVertex) : PConvAutoNone(NULL));
   PyList_SetItem(result, 13, PyInt_FromLong(0 /* I->VolumeMode */));
   PyList_SetItem(result, 14, PyFloat_FromDouble(0.0 /* I->AltLevel */));
   PyList_SetItem(result, 15, PyInt_FromLong(1 /* I->quiet */));
@@ -188,9 +185,9 @@ static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
         ok = PConvPyFloatToFloat(PyList_GetItem(list, 8), &I->Level);
       if(ok)
         ok = PConvPyFloatToFloat(PyList_GetItem(list, 9), &I->Radius);
-#endif
       if(ok)
         ok = PConvPyIntToInt(PyList_GetItem(list, 10), &I->CarveFlag);
+#endif
       if(ok)
         ok = PConvPyFloatToFloat(PyList_GetItem(list, 11), &I->CarveBuffer);
       if(ok) {
@@ -200,8 +197,10 @@ static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
         else
           ok = PConvPyListToFloatVLA(tmp, &I->AtomVertex);
       }
+#if 0
       if(ok)
         ok = PConvPyIntToInt(PyList_GetItem(list, 13), &I->VolumeMode);
+#endif
       if(ok) {
         I->RefreshFlag = true;
         I->ResurfaceFlag = true;
@@ -313,38 +312,24 @@ PyObject *ObjectVolumeAsPyList(ObjectVolume * I)
 #endif
 }
 
+/*
+ * Does actually NOT free the instance, only it's fields.
+ */
 static void ObjectVolumeStateFree(ObjectVolumeState * vs)
 {
-    int t;
+  // the instance is only "Active" when it has been initialized. Never free
+  // uninitialized instances.
+  if(!vs->Active)
+    return;
   ObjectStatePurge(&vs->State);
   if(vs->State.G->HaveGUI) {
-    for (t=0; t<2; t++) {
-      if (vs->textures[t]) {
-        glDeleteTextures(1, (const GLuint *) &vs->textures[t]);
-	vs->textures[t] = 0;
-	/*
-        if(PIsGlutThread()) {
-          if(vs->State.G->ValidContext) {
-            glDeleteTextures(1, (const GLuint *) &vs->textures[t]);
-            vs->textures[t] = 0;
-          }
-        } else {
-          char buffer[255];       // pass this off to the main thread
-          sprintf(buffer, "_cmd.gl_delete_texture(cmd._COb,%d)\n", vs->textures[t]);
-          PParse(vs->State.G, buffer);
-          vs->textures[t] = 0;
-        }
-      */
-      }
-    }
+    glDeleteTextures(3, (const GLuint *) vs->textures);
   }
   if(vs->Field) {
     IsosurfFieldFree(vs->State.G, vs->Field);
     vs->Field = NULL;
   }
-  if(vs->volume) {
-    FieldFree(vs->volume);
-  }
+  FieldFreeP(vs->carvemask);
   VLAFreeP(vs->AtomVertex);
   if (vs->Ramp)
     FreeP(vs->Ramp);
@@ -355,14 +340,7 @@ static void ObjectVolumeFree(ObjectVolume * I)
 {
   int a,i;
   for(a = 0; a < I->NState; a++) {
-    for (i=0; i<2; i++){
-      if (I->State[a].textures[i]){
-       glDeleteTextures(1, (const GLuint *) &I->State[a].textures[i]);
-       I->State[a].textures[i] = 0;
-      }
-    }
-    if(I->State[a].Active)
-      ObjectVolumeStateFree(I->State + a);
+    ObjectVolumeStateFree(I->State + a);
   }
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
@@ -417,6 +395,36 @@ static void ObjectVolumeInvalidate(ObjectVolume * I, int rep, int level, int sta
         break;
     }
   }
+}
+
+/*
+ * Get the field either from the associated map, or from vs->Field in case
+ * this is a reduced or symmetry expanded volume.
+ */
+static CField * ObjectVolumeStateGetField(ObjectVolumeState * vs) {
+  if (!vs)
+    return NULL;
+  if(vs->Field)
+    return vs->Field->data;
+  return ObjectVolumeStateGetMapState(vs)->Field->data;
+}
+
+CField * ObjectVolumeGetField(ObjectVolume * I) {
+  return ObjectVolumeStateGetField(ObjectVolumeGetActiveState(I));
+}
+
+/*
+ * Get a 4x4 (incl. translation) FracToReal from corner array
+ */
+static void get44FracToRealFromCorner(const float * corner, float * frac2real)
+{
+  float tmp[16];
+  identity44f(tmp);
+  subtract3f(corner +  3, corner, tmp);
+  subtract3f(corner +  6, corner, tmp + 4);
+  subtract3f(corner + 12, corner, tmp + 8);
+  copy3f(corner, tmp + 12);
+  transpose44f44f(tmp, frac2real);
 }
 
 static void ObjectVolumeUpdate(ObjectVolume * I)
@@ -516,11 +524,8 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
           max_ext = vs->ExtentMax;
         }
 
-        if (vs->volume)
-          FieldFree(vs->volume);
-
-        vs->volume = FieldNewCopy(I->Obj.G, field->data);
-
+        // get bounds and dimension data from field
+        copy3(field->data->dim, vs->dim);
         IsofieldGetCorners(G, field, vs->Corner);
 
         // transform corners by state matrix
@@ -532,7 +537,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
         }
       }
 
-      if(vs->volume && vs->CarveFlag && vs->AtomVertex) {
+      if(/* CarveFlag */ vs->AtomVertex) {
 
         carve_buffer = vs->CarveBuffer;
         if(vs->CarveBuffer < 0.0F) {
@@ -548,61 +553,42 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
 
           int x, y, z;
           int dx, dy, dz;
-          float fx, fy, fz;
           float vv[3];
-          float *fdata = (float*)vs->volume->data;
-          float min_val = fdata[0];
-          float idx, idy, idz;
-
-          float vx[3] = {vs->Corner[3]-vs->Corner[0],
-            vs->Corner[4]-vs->Corner[1],
-            vs->Corner[5]-vs->Corner[2]};
-          float vy[3] = {vs->Corner[6]-vs->Corner[0],
-            vs->Corner[7]-vs->Corner[1],
-            vs->Corner[8]-vs->Corner[2]};
-          float vz[3] = {vs->Corner[12]-vs->Corner[0],
-            vs->Corner[13]-vs->Corner[1],
-            vs->Corner[14]-vs->Corner[2]};
+          float frac2real[16];
 
           MapSetupExpress(voxelmap);
 
+          dx = vs->dim[0];
+          dy = vs->dim[1];
+          dz = vs->dim[2];
 
-          dx = vs->volume->dim[0];
-          dy = vs->volume->dim[1];
-          dz = vs->volume->dim[2];
-          for (x=0;x<dx*dy*dz;x++) {
-            if (fdata[x] < min_val) min_val = fdata[x];
-          }
-          idx = 1.0 / dx;
-          idy = 1.0 / dy;
-          idz = 1.0 / dz;
-          for (z=0; z<dz; z++) {
-            fz = z * idz;
-            for (y=0; y<dy; y++) {
-              fy = y * idy;
-              for (x=0; x<dx; x++) {
-                fx = x * idx;
-                vv[0] = vs->Corner[0] + fx * vx[0] + fy * vy[0] + fz * vz[0];
-                vv[1] = vs->Corner[1] + fx * vx[1] + fy * vy[1] + fz * vz[1];
-                vv[2] = vs->Corner[2] + fx * vx[2] + fy * vy[2] + fz * vz[2];
-                flag = false;
+          get44FracToRealFromCorner(vs->Corner, frac2real);
+
+          // initialize carve mask
+          FieldFreeP(vs->carvemask);
+          vs->carvemask = FieldNew(G, vs->dim, 3, sizeof(GLubyte), cFieldOther);
+
+          // loop over voxels
+          for (z = 0; z < dz; z++) {
+            for (y = 0; y < dy; y++) {
+              for (x = 0; x < dx; x++) {
+                float frac[3] = {(x + .5f) / dx, (y + .5f) / dy, (z + .5f) / dz};
+
+                transform44f3f(frac2real, frac, vv);
+                flag = avoid_flag;
+
+                // loop over close atoms
                 MapLocus(voxelmap, vv, &h, &k, &l);
-                i = *(MapEStart(voxelmap, h, k, l));
-                if(i) {
-                  j = voxelmap->EList[i++];
-                  while(j >= 0) {
-                    if(within3f(vs->AtomVertex + 3 * j, vv, carve_buffer)) {
-                      flag = true;
-                      break;
-                    }
-                    j = voxelmap->EList[i++];
+                for(i = *(MapEStart(voxelmap, h, k, l));
+                    i && (j = voxelmap->EList[i]) >= 0; i++) {
+                  if(within3f(vs->AtomVertex + 3 * j, vv, carve_buffer)) {
+                    flag = !flag;
+                    break;
                   }
                 }
-                if(avoid_flag)
-                  flag = !flag;
-                if(!flag) { 
-                  *Ffloat3p(vs->volume, x, y, z) = min_val;
-                }
+
+                // 0xFF (masked) or 0 (not masked), will be 1.0 or 0.0 in shader
+                *((GLubyte*)F3p(vs->carvemask, x, y, z)) = flag ? 0x0 : 0xFF;
               }
             }
           }
@@ -721,6 +707,26 @@ static GLuint createColorTexture(const float *colors, const int count)
   return texname;
 }
 
+#ifndef PURE_OPENGL_ES_2
+/*
+ * Generate, bind and set parameters for a 3D volume texture
+ */
+static GLuint tex3dGenBind()
+{
+  GLuint texname = 0;
+
+  glGenTextures(1, &texname);
+  glBindTexture(GL_TEXTURE_3D, texname);
+
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+  return texname;
+}
+#endif
+
 static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 {
 #ifndef PURE_OPENGL_ES_2
@@ -813,6 +819,13 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     // upload map data texture
     if (!vs->textures[0] || vs->RefreshFlag) {
       int volume_bit_depth;
+      CField * field = ObjectVolumeStateGetField(vs);
+
+      if(!field) {
+        PRINTFB(G, FB_ObjectVolume, FB_Errors)
+          " ObjectVolumeRender-Error: Could not get field data.\n" ENDFB(G);
+        return;
+      }
 
       volume_bit_depth = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_volume_bit_depth);
       volume_bit_depth = (volume_bit_depth < 17) ? GL_R16F : GL_R32F;
@@ -834,17 +847,27 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
         glDeleteTextures(1, (const GLuint *) &vs->textures[0]);
         vs->textures[0] = 0;
       }
-      // Create a 3D texture
-      glGenTextures(1, (GLuint *) &vs->textures[0]);
-      glBindTexture(GL_TEXTURE_3D, vs->textures[0]);
-      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      if (vs->textures[2]) {
+        glDeleteTextures(1, (const GLuint *) &vs->textures[2]);
+        vs->textures[2] = 0;
+      }
 
+      // Create a 3D texture
+      vs->textures[0] = tex3dGenBind();
       glTexImage3D(GL_TEXTURE_3D, 0, volume_bit_depth,
-          vs->volume->dim[2], vs->volume->dim[1], vs->volume->dim[0], 0, 
-          GL_RED, GL_FLOAT, vs->volume->data);
+          field->dim[2], field->dim[1], field->dim[0], 0,
+          GL_RED, GL_FLOAT, field->data);
+
+      // Create 3D carve mask texture
+      if(vs->carvemask) {
+        vs->textures[2] = tex3dGenBind();
+        glTexImage3D(GL_TEXTURE_3D, 0, GL_R8,
+            vs->carvemask->dim[2], vs->carvemask->dim[1], vs->carvemask->dim[0], 0,
+            GL_RED, GL_UNSIGNED_BYTE, vs->carvemask->data);
+
+        // not needed anymore, data now in texture memory
+        FieldFreeP(vs->carvemask);
+      }
 
       vs->RefreshFlag = false;
     }
@@ -857,7 +880,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 
       // half grid cell inset in texture corners (texture coordinate units)
       for(j = 0; j < 3; j++) {
-        float offset = 0.5 / vs->volume->dim[2 - j];
+        float offset = 0.5 / vs->dim[2 - j];
         int bit = 1 << (2 - j);
         for(i = 0; i < 8; i++)
           tex_corner[i * 3 + j] = (i & bit) ? 1.0 - offset : offset;
@@ -887,6 +910,8 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       CShaderPrg_Enable(shaderPrg);
       CShaderPrg_Set1i(shaderPrg, "volumeTex", 0);
       CShaderPrg_Set1i(shaderPrg, "colorTex", 1);
+      CShaderPrg_Set1i(shaderPrg, "carvemask", 5);
+      CShaderPrg_Set1i(shaderPrg, "carvemaskFlag", vs->textures[2] != 0);
       CShaderPrg_Set1f(shaderPrg, "volumeScale", 1.0 / vs->ramp_range);
       CShaderPrg_Set1f(shaderPrg, "volumeBias", (-vs->ramp_min) / vs->ramp_range);
 
@@ -916,6 +941,11 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       glBindTexture(GL_TEXTURE_1D, vs->textures[1]);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_3D, vs->textures[0]);
+
+      if (vs->textures[2]) {
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_3D, vs->textures[2]);
+      }
 
       // alpha: everything passes
       // Not sure if we really need to restore this
@@ -1087,14 +1117,14 @@ void ObjectVolumeStateInit(PyMOLGlobals * G, ObjectVolumeState * vs)
   vs->ResurfaceFlag = true;
   vs->RecolorFlag = true;
   vs->ExtentFlag = false;
-  vs->CarveFlag = false;
   vs->CarveBuffer = 0.0;
   vs->AtomVertex = NULL;
   vs->caption[0] = 0;
-  vs->Field = NULL;
-  vs->volume = NULL;
-  vs->textures[0] = 0;
-  vs->textures[1] = 0;
+  zero3i(vs->dim);
+  vs->carvemask = NULL;
+  vs->textures[0] = 0; // 3D volume (map)
+  vs->textures[1] = 0; // 1D/2D color table
+  vs->textures[2] = 0; // 3D carvemask
   vs->isUpdated = false;
   // Initial ramp
   vs->RampSize = 0;
@@ -1107,11 +1137,10 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
                                   CSymmetry * sym,
                                   int map_state,
                                   int state, float *mn, float *mx,
-                                  float level, int meshMode,
+                                  float level, int box_mode,
                                   float carve, float *vert_vla,
                                   float alt_level, int quiet)
 {
-  int ok = true;
   ObjectVolume *I;
   ObjectVolumeState *vs;
   ObjectMapState *oms;
@@ -1163,11 +1192,12 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
         max_ext = vs->ExtentMax;
       }
 
-      if(sym) {
+      if(sym && box_mode) {
         int eff_range[6];
 
-        if(IsosurfGetRange
-           (G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false)) {
+        IsosurfGetRange(G, oms->Field, oms->Symmetry->Crystal, min_ext, max_ext, eff_range, false);
+
+        {
           int fdim[3];
           int expand_result;
           /* need to generate symmetry-expanded temporary map */
@@ -1181,7 +1211,6 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
             IsosurfExpand(oms->Field, vs->Field, oms->Symmetry->Crystal, sym, eff_range);
 
           if(expand_result == 0) {
-            ok = false;
             if(!quiet) {
               PRINTFB(G, FB_ObjectVolume, FB_Warnings)
                 " ObjectVolume-Warning: no symmetry expanded map points found.\n" ENDFB(G);
@@ -1198,18 +1227,12 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
     }
     vs->ExtentFlag = true;
   }
-  if(ok) {
-    if(carve != 0.0) {
-      vs->CarveFlag = true;
-      vs->CarveBuffer = carve;
-      vs->AtomVertex = vert_vla;
-    }
-    I->Obj.ExtentFlag = false;
-  }
-  if(!ok && created) {
-    ObjectVolumeStateFree(vs);
-    I = NULL;
-  }
+
+  vs->CarveBuffer = carve;
+  vs->AtomVertex = vert_vla;
+
+  I->Obj.ExtentFlag = false;
+
   SceneChanged(G);
   SceneCountFrames(G);
   return (I);
@@ -1268,28 +1291,6 @@ void ObjectVolumeRecomputeExtent(ObjectVolume * I)
 
 
 /*==============================================================================*/
-PyObject * ObjectVolumeGetField(ObjectVolume * I)
-{
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-  /* TODO: Allow for multi-state maps? */
-  CField* F;
-  int n_elem;
-  PyObject * result = NULL;
-  ObjectVolumeState *ovs;
-
-  if(I && (ovs = ObjectVolumeGetActiveState(I))) {
-    F = ovs->volume;
-    n_elem = F->size / F->base_size;
-    result = PConvFloatArrayToPyList((float *) F->data, n_elem);
-  }
-
-  return (PConvAutoNone(result));
-#endif
-}
-
-/*==============================================================================*/
 PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
 {
 #ifdef _PYMOL_NOPY
@@ -1331,16 +1332,3 @@ ok_except1:
     "ObjectVolumeSetRamp failed" ENDFB(I->Obj.G);
   return false;
 }
-
-/*==============================================================================*/
-int ObjectVolumeGetIsUpdated(ObjectVolume * I)
-{
-  /* TODO: Allow for multi-state maps? */
-  ObjectVolumeState * ovs = ObjectVolumeGetActiveState(I);
-
-  if (!ovs)
-    return -1;
-
-  return ovs->isUpdated;
-}
-

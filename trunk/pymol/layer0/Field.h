@@ -36,61 +36,39 @@ typedef struct {
 } CField;
 
 /* accessors for getting data from a field */
-#define Ffloat3(f,a,b,c) (*((float*)((f)->data + \
-                                     (a)*(f)->stride[0] + \
-                                     (b)*(f)->stride[1] + \
-                                     (c)*(f)->stride[2])))
 
-#define Ffloat3p(f,a,b,c) ((float*)((f)->data + \
-                                   (a)*(f)->stride[0] + \
-                                   (b)*(f)->stride[1] + \
-                                   (c)*(f)->stride[2]))
+#define F3p(f,a,b,c) ((f)->data + \
+        (a)*(f)->stride[0] + \
+        (b)*(f)->stride[1] + \
+        (c)*(f)->stride[2])
 
-#define Ffloat4(f,a,b,c,d) (*((float*)((f)->data + \
-                                     (a)*(f)->stride[0] + \
-                                     (b)*(f)->stride[1] + \
-                                     (c)*(f)->stride[2] + \
-                                     (d)*(f)->stride[3])))
+#define F4p(f,a,b,c,d) ((f)->data + \
+        (a)*(f)->stride[0] + \
+        (b)*(f)->stride[1] + \
+        (c)*(f)->stride[2] + \
+        (d)*(f)->stride[3])
 
-#define Ffloat4p(f,a,b,c,d) ((float*)((f)->data + \
-                                     (a)*(f)->stride[0] + \
-                                     (b)*(f)->stride[1] + \
-                                     (c)*(f)->stride[2] + \
-                                     (d)*(f)->stride[3]))
+#define Ffloat3p(f,a,b,c) ((float*)F3p(f,a,b,c))
+#define Ffloat3(f,a,b,c) (*(Ffloat3p(f,a,b,c)))
 
-#define Fint3(f,a,b,c) (*((int*)((f)->data + \
-                                     (a)*(f)->stride[0] + \
-                                     (b)*(f)->stride[1] + \
-                                     (c)*(f)->stride[2])))
+#define Ffloat4p(f,a,b,c,d) ((float*)F4p(f,a,b,c,d))
+#define Ffloat4(f,a,b,c,d) (*(Ffloat4p(f,a,b,c,d)))
 
-#define Fint3p(f,a,b,c) ((int*)((f)->data + \
-                                   (a)*(f)->stride[0] + \
-                                   (b)*(f)->stride[1] + \
-                                   (c)*(f)->stride[2]))
+#define Fint3p(f,a,b,c) ((int*)F3p(f,a,b,c))
+#define Fint3(f,a,b,c) (*(Fint3p(f,a,b,c)))
 
-#define Fint4(f,a,b,c,d) (*((int*)((f)->data + \
-                                     (a)*(f)->stride[0] + \
-                                     (b)*(f)->stride[1] + \
-                                     (c)*(f)->stride[2] + \
-                                     (d)*(f)->stride[3])))
+#define Fint4p(f,a,b,c,d) ((int*)F4p(f,a,b,c,d))
+#define Fint4(f,a,b,c,d) (*(Fint4p(f,a,b,c,d)))
 
-#define Fint4p(f,a,b,c,d) ((int*)((f)->data + \
-                                     (a)*(f)->stride[0] + \
-                                     (b)*(f)->stride[1] + \
-                                     (c)*(f)->stride[2] + \
-                                     (d)*(f)->stride[3]))
-
-#define Fvoid4p(f,a,b,c,d) ((void*)((f)->data + \
-                                     (a)*(f)->stride[0] + \
-                                     (b)*(f)->stride[1] + \
-                                     (c)*(f)->stride[2] + \
-                                     (d)*(f)->stride[3]))
+#define Fvoid4p(f,a,b,c,d) ((void*)F4p(f,a,b,c,d))
 
 CField *FieldNew(PyMOLGlobals * G, int *dim, int n_dim, unsigned int base_size, int type);
 void FieldZero(CField * I);
 void FieldFree(CField * I);
 float FieldInterpolatef(CField * I, int a, int b, int c, float x, float y, float z);
 void FieldInterpolate3f(CField * I, int *locus, float *fract, float *result);
+
+#define FieldFreeP(ptr) {if(ptr){FieldFree(ptr);ptr=NULL;}}
 
 PyObject *FieldAsPyList(CField * I);
 CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list);

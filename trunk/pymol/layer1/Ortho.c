@@ -1374,9 +1374,6 @@ void bg_grad(PyMOLGlobals * G) {
   int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
   short bg_is_solid = 0;
   int ok = true;
-  if (!SettingGetGlobal_b(G, cSetting_opaque_background)){
-    return;
-  }
   copy3f(ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top)), top);
   copy3f(ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom)), bottom);
 
@@ -1637,7 +1634,8 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       SceneRender(G, NULL, 0, 0, NULL, 0, 0, 0,
                   SettingGetGlobal_b(G, cSetting_image_copy_always), 1 /* just_background */);
     }
-    SceneGLClearColor(0.0, 0.0, 0.0, SettingGetGlobal_b(G, cSetting_opaque_background) ? 1.f : 0.0);
+    SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
+
     origtimes = times;
     while(times--) {
 

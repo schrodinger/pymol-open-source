@@ -35,16 +35,28 @@ if __name__=='pymol.querying':
                     _self.distance()
         _self.unpick()   
 
-    def get_volume_field(objName,_self=cmd):
+    def get_volume_field(objName, state=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    EXPERIMENTAL AND SUBJECT TO CHANGE - DO NOT USE
+    Get the raw data of a map or volume object.
+        '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _self._cmd.get_volume_field(_self._COb,objName)
+            r = _self._cmd.get_volume_field(_self._COb, objName, int(state) - 1)
         finally:
             _self.unlock(r,_self)
         return r
 
     def get_volume_histogram(objName, bins=64, range=None, _self=cmd):
+        '''
+DESCRIPTION
+
+    API ONLY.  Get min, max, mean, stdev and histogram of a map or volume
+    object as a list of length bins + 4.
+        '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -55,13 +67,8 @@ if __name__=='pymol.querying':
         return r
 
     def get_volume_is_updated(objName,_self=cmd):
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _self._cmd.get_volume_is_updated(_self._COb,objName)
-        finally:
-            _self.unlock(r,_self)
-        return r
+        print ' DEPRECATED: get_volume_is_updated'
+        return 1
  
     def get_unused_name(prefix="tmp",alwaysnumber=1,_self=cmd):
         r = DEFAULT_ERROR        

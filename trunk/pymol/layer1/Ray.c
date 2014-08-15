@@ -5492,6 +5492,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 
   bkrd_is_gradient = SettingGetGlobal_b(I->G, cSetting_bg_gradient);
 
+  if (!opaque_back){
+    bkrd_is_gradient = 0;
+  }
   if (bkrd_is_gradient){
     bkrd_ptr = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_top));
     copy3f(bkrd_ptr, bkrd_top);
