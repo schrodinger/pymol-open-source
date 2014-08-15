@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"Block.h"
 #include"Text.h"
+#include"CGO.h"
 
 #define cWizBlank      0
 #define cWizTypeText   1

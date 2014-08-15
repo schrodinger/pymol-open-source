@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include "Text.h"
 #include "Util.h"
 #include "Ortho.h"
+#include "CGO.h"
 
 #define cControlBoxSize 17
 #define cControlLeftMargin 8

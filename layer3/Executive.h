@@ -436,10 +436,9 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, char *pattern);
 char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, char *name);
 int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict);
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G);
-PyObject *ExecutiveGetVolumeField(PyMOLGlobals * G, char * objName);
+CField   *ExecutiveGetVolumeField(PyMOLGlobals * G, char * objName, int state);
 int       ExecutiveSetVolumeRamp(PyMOLGlobals * G, char * objName, float *ramp_list, int list_size);
 PyObject *ExecutiveGetVolumeRamp(PyMOLGlobals * G, char * objName);
-int       ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName);
 
 float * ExecutiveGetHistogram(PyMOLGlobals * G, char* objName, int n_points,
         float min_val, float max_val);

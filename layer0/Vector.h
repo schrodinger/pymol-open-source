@@ -247,6 +247,9 @@ void transform5f3f(oMatrix5f m, float *v1, float *v2);
 
 #define USE_VECTOR_MACROS
 
+#define zero3i(v1) { (v1)[0]=0;(v1)[1]=0;(v1)[2]=0; }
+#define copy3(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
+
 #ifndef USE_VECTOR_MACROS
 
 float dot_product3f(float *v1, float *v2);

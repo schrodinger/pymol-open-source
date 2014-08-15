@@ -231,10 +231,6 @@ PyObject *MainComplete(char *str)
 #else
 
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-
-/* END PROPRIETARY CODE SEGMENT */
-
 void MainFree(void);
 void MainReshape(int width, int height);
 static void MainDrawLocked(void);
@@ -398,12 +394,6 @@ static void DrawBlueLine(PyMOLGlobals * G)
     glPopAttrib();
   }
 }
-
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-
-/* END PROPRIETARY CODE SEGMENT */
-
 
 /*========================================================================*/
 

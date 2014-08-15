@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"CGO.h"
 #include"CoordSet.h"
+#include"Util.h"
 
 typedef char DistLabel[12];
 

@@ -1256,7 +1256,7 @@ int ExecutiveVolume(PyMOLGlobals * G, char *volume_name, char *map_name,
           obj = (CObject *) ObjectVolumeFromXtalSym(G, (ObjectVolume *) origObj, mapObj,
                                                   symm,
                                                   map_state, state, mn, mx, lvl,
-                                                  mesh_mode, carve, vert_vla, alt_lvl,
+                                                  box_mode, carve, vert_vla, alt_lvl,
                                                   quiet);
         } else {
           obj = NULL;
@@ -1264,7 +1264,7 @@ int ExecutiveVolume(PyMOLGlobals * G, char *volume_name, char *map_name,
 
         if(!obj) {
           obj = (CObject *) ObjectVolumeFromBox(G, (ObjectVolume *) origObj, mapObj,
-                                              map_state, state, mn, mx, lvl, mesh_mode,
+                                              map_state, state, mn, mx, lvl, box_mode,
                                               carve, vert_vla, alt_lvl, quiet);
         }
         /* copy the map's TTT */
@@ -4467,25 +4467,27 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
 #endif
 }
 
-PyObject* ExecutiveGetVolumeField(PyMOLGlobals * G, char* objName) {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
+/*
+ * returns a pointer to the data in a volume or map object
+ */
+CField * ExecutiveGetVolumeField(PyMOLGlobals * G, char* objName, int state) {
+  ObjectMapState *oms;
   CObject *obj;
-  PyObject* result = NULL;
-
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeField Entered.\n" ENDFD;
 
   obj = ExecutiveFindObjectByName(G, objName);
-  if(obj && obj->type==cObjectVolume) {
-    result = ObjectVolumeGetField((ObjectVolume *) obj);
+  ok_assert(1, obj);
+
+  switch (obj->type) {
+  case cObjectVolume:
+    return ObjectVolumeGetField((ObjectVolume *) obj);
+  case cObjectMap:
+    oms = ObjectMapGetState((ObjectMap *) obj, state);
+    ok_assert(1, oms && oms->Field);
+    return oms->Field->data;
   }
 
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeField Exited.\n" ENDFD;
-
-  return result;
-
-#endif
+ok_except1:
+  return NULL;
 }
 
 /*
@@ -4540,22 +4542,6 @@ PyObject* ExecutiveGetVolumeRamp(PyMOLGlobals * G, char* objName) {
   return result;
 
 #endif
-}
-
-int ExecutiveGetVolumeIsUpdated(PyMOLGlobals * G, char* objName) {
-  CObject *obj;
-  int result = -1;
-
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Entered.\n" ENDFD;
-
-  obj = ExecutiveFindObjectByName(G, objName);
-  if(obj && obj->type==cObjectVolume) {
-    result = ObjectVolumeGetIsUpdated((ObjectVolume *) obj);
-  }
-
-  PRINTFD(G, FB_Executive) "Executive-GetVolumeIsUpdated Exited.\n" ENDFD;
-
-  return result;
 }
 
 int ExecutiveSetVolumeRamp(PyMOLGlobals * G, char* objName, float *ramp_list, int list_size) {

@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"Menu.h"
 #include"View.h"
 #include"Seq.h"
+#include"CGO.h"
 
 #define cMovieDragModeMoveKey   1
 #define cMovieDragModeInsDel    2

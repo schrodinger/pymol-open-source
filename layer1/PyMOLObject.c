@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 
 #include"Executive.h"
+#include"CGO.h"
 
 int ObjectGetNFrames(CObject * I);
 

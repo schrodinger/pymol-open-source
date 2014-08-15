@@ -2,6 +2,27 @@
 CHANGE LOG
 =========================================================================
 
+2014-08-15 Thomas Holder, Blaine Bell
+
+	* reimplement volume carving
+	  - use a carve mask texture
+
+	* fix boxed volume around selection (with or without carving)
+	  - this only worked for symmetry expanded volumes
+	  - still limited to maps with symmetry information (TODO)
+
+	* removed ObjectVolumeGetIsUpdated, deprecate get_volume_is_updated
+
+	* refactored ObjectVolumeStateGetField, ObjectVolumeGetField
+	  - don't keep a redundant vs->volume copy in memory
+
+	* revert a 1.7.2 opaque_background change
+	  - real-time rendering background was always black with
+	    opaque_background=0
+	  - removes opaque_background support for "draw"
+
+	* 1.7.2.1
+
 2014-08-04 Thomas Holder, Blaine Bell, Gabriel Marques
 
 	* 1.7.2.0

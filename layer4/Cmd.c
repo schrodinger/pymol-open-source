@@ -738,9 +738,10 @@ static PyObject * CmdGetVolumeField(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
+  int state = 0;
   int ok = false;
   char* objName;
-  ok = PyArg_ParseTuple(args, "Os", &self, &objName);
+  ok = PyArg_ParseTuple(args, "Os|i", &self, &objName, &state);
 
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -749,7 +750,11 @@ static PyObject * CmdGetVolumeField(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    result = ExecutiveGetVolumeField(G,objName);
+    CField * field = ExecutiveGetVolumeField(G, objName, state);
+    if (field) {
+      int n_elem = field->size / field->base_size;
+      result = PConvFloatArrayToPyList((float *) field->data, n_elem);
+    }
     APIExitBlocked(G);
   }
 
@@ -809,32 +814,6 @@ static PyObject * CmdGetVolumeRamp(PyObject * self, PyObject * args)
     APIExitBlocked(G);
   }
 
-  if(!result) {
-    return APIFailure();
-  } else
-    return result;
-}
-
-static PyObject * CmdGetVolumeIsUpdated(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  PyObject *result = NULL;
-  int ok = false;
-  char* objName;
-  ok = PyArg_ParseTuple(args, "Os", &self, &objName);
-
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    result = PyInt_FromLong(
-        ExecutiveGetVolumeIsUpdated(G,objName));
-    APIExitBlocked(G);
-  }
-  
   if(!result) {
     return APIFailure();
   } else
@@ -8642,7 +8621,6 @@ static PyMethodDef Cmd_methods[] = {
   {"get_volume_histogram", CmdGetVolumeHistogram, METH_VARARGS},
   {"get_volume_ramp", CmdGetVolumeRamp, METH_VARARGS},
   {"set_volume_ramp", CmdSetVolumeRamp, METH_VARARGS},
-  {"get_volume_is_updated", CmdGetVolumeIsUpdated, METH_VARARGS},
   {"get_vrml", CmdGetVRML, METH_VARARGS},
   {"get_wizard", CmdGetWizard, METH_VARARGS},
   {"get_wizard_stack", CmdGetWizardStack, METH_VARARGS},
