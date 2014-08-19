@@ -6252,6 +6252,7 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
   int use_ter = SettingGetGlobal_i(G, cSetting_pdb_use_ter_records);
   int retain_ids = SettingGetGlobal_b(G, cSetting_pdb_retain_ids);
   int conect_all = SettingGetGlobal_b(G, cSetting_pdb_conect_all);
+  int conect_nodup = SettingGetGlobal_b(G, cSetting_pdb_conect_nodup);
   double matrix[16];
   double *matrix_ptr = NULL;
   double matrix_full[16]; // for ANISOU
@@ -6393,10 +6394,11 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
             int i_b2 = SelectorGetObjAtmOffset(I, obj, b2);
             if((i_b1 >= 0) && (i_b2 >= 0)) {
               if(I->Table[i_b1].index && I->Table[i_b2].index) {
-                VLACheck(bond, BondType, nBond + (2 * ii1->order) + 2);
+                int order = conect_nodup ? 1 : ii1->order;
+                VLACheck(bond, BondType, nBond + (2 * order) + 2);
                 b1 = I->Table[i_b1].index;
                 b2 = I->Table[i_b2].index;
-                for(d = 0; d < ii1->order; d++) {
+                for(d = 0; d < order; d++) {
                   bond[nBond].index[0] = b1;
                   bond[nBond].index[1] = b2;
                   nBond++;
