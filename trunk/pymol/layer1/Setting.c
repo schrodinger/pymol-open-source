@@ -3359,7 +3359,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_label_z_target:
   case cSetting_load_atom_props_default:
   case cSetting_load_object_props_default:
-  case cSetting_pdb_conect_nodup:
   case cSetting_pick_labels:
   case cSetting_ray_label_connector_flat:
   case cSetting_session_embeds_data:
