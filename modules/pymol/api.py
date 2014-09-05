@@ -12,6 +12,7 @@ from importing import \
       load_embedded,      \
       load_map,           \
       load_model,         \
+      load_mtz,           \
       load_object,        \
       load_traj,          \
       load_raw,           \
@@ -90,6 +91,7 @@ from querying import \
       count_atoms,        \
       count_frames,       \
       count_states,       \
+      count_discrete,     \
       dist,               \
       dihedral,           \
       distance,           \
@@ -153,6 +155,7 @@ from exporting import \
       cache,              \
       export_coords,      \
       get_pdbstr,         \
+      get_cifstr,         \
       get_session,        \
       get_fastastr,       \
       multisave,          \
@@ -281,6 +284,10 @@ from preset import \
       publication
 
 #--------------------------------------------------------------------
+from morphing import \
+    morph
+
+#--------------------------------------------------------------------
 import moving
 from moving import \
       madd,              \
@@ -388,12 +395,18 @@ from setting import \
       get_setting_text
 
 #--------------------------------------------------------------------
+from parsing import \
+      run, \
+      spawn
+
+#--------------------------------------------------------------------
 import helping
 from helping import \
       abort,               \
       api,                 \
       show_help,           \
       help,                \
+      help_setting,        \
       commands
 
 #--------------------------------------------------------------------
@@ -406,6 +419,9 @@ from experimenting import \
       mem,                \
       minimize,           \
       spheroid,           \
+      focal_blur,         \
+      callout,            \
+      desaturate,         \
       test
 
 from internal import      \

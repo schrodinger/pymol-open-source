@@ -595,26 +595,21 @@ PYMOL API
     cmd.get_version(int quiet)
 
 	'''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)   
-            r = _cmd.get_version(_self._COb)
-        finally:
-            _self.unlock(r,_self)
+        # get_version doesn't need the _COb and doesn't require a lock
+        r = _cmd.get_version()
         if _raising(r,_self):
             raise pymol.CmdException
         else:
             quiet = int(quiet)
             if quiet < 1 and _feedback(fb_module.cmd, fb_mask.results, _self):
-                print " version: %s (%2.3f) %d," % r[:3],
-                print "Incentive Product" if pymol.invocation.options.incentive_product else "Open-Source"
+                import re
+                p = pymol.get_version_message(r)
+                print re.sub(r'^', ' ', p, re.M)
                 if quiet < 0:
                     if r[3]:
                         print ' build date:', time.strftime('%c %Z', time.localtime(r[3]))
                     if r[4]:
                         print ' git sha:', r[4]
-                    if r[5]:
-                        print ' svn rev:', r[5]
         return r
 
     def get_vrml(version=2,_self=cmd): 
@@ -1452,6 +1447,18 @@ PYMOL API
         if not quiet: print " count_atoms: %d atoms"%r
         if _raising(r,_self): raise pymol.CmdException
         return r
+
+    def count_discrete(selection, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Count the number of discrete objects in selection.
+        '''
+        with _self.lockcm:
+            r = _cmd.count_discrete(_self._COb, str(selection))
+            if not int(quiet):
+                print ' count_discrete: %d' % r
+            return r
 
     def get_names_of_type(type,public=1,_self=cmd):
         """

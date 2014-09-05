@@ -98,7 +98,7 @@ DESCRIPTION
             realtime.assign("("+selection+")",int(preserve))
             realtime.setup("("+selection+")")
 
-    def fast_minimize(*arg):
+    def fast_minimize(*args, **kwargs):
         '''
 DESCRIPTION
 
@@ -107,28 +107,10 @@ DESCRIPTION
     molecular structure.
     
 '''        
-        from chempy.tinker import realtime  
-        grad  = 0.01
-        iter = 500
-        interval = 50
-        la = len(arg)
-        if not la:
-            arg = cmd.get_names("objects")
-            arg = arg[0:1]
-            la = len(arg)
-        if la:
-            sele  = "("+arg[0]+")"
-            if la>1:
-                iter = int(arg[1])
-            if la>2:
-                grad = float(arg[2])
-            if la>3:
-                interval = int(arg[3])
-            t = threading.Thread(target=realtime.mini,args=(iter,grad,interval,arg[0]))
-            t.setDaemon(1)
-            t.start()
+        kwargs['_setup'] = 0
+        return minimize(*args, **kwargs)
 
-    def minimize(*arg):
+    def minimize(sele='', iter=500, grad=0.01, interval=50, _setup=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -137,28 +119,18 @@ DESCRIPTION
     
 '''        
         from chempy.tinker import realtime  
-        grad  = 0.01
-        iter = 500
-        interval = 50
-        la = len(arg)
-        if not la:
-            arg = cmd.get_names("objects")
-            arg = arg[0:1]
-            la = len(arg)
-        if la:
-            sele  = "("+arg[0]+")"
-            if la>1:
-                iter = int(arg[1])
-            if la>2:
-                grad = float(arg[2])
-            if la>3:
-                interval = int(arg[3])
-            if realtime.setup(sele):
-                t = threading.Thread(target=realtime.mini,args=(iter,grad,interval,arg[0]))
-                t.setDaemon(1)
-                t.start()
-            else:
-                print " minimize: missing parameters, can't continue"
+
+        if not sele:
+            names = _self.get_names("objects")
+            if not names:
+                return
+            sele = names[0]
+        sele = '(' + sele + ')'
+
+        if not int(_setup) or realtime.setup(sele):
+            _self.async(realtime.mini, int(iter), float(grad), int(interval), sele)
+        else:
+            print " minimize: missing parameters, can't continue"
 
 
     def dump(fnam,obj,_self=cmd):
@@ -213,3 +185,70 @@ DESCRIPTION
         WARNING: buggy argument list, state get's decremented twice!
         '''
         return pymol.importing.load_coords(model, oname, int(state)-1)
+
+    def focal_blur(aperture=2.0, samples=10, ray=0, filename='', quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Creates fancy figures by introducing a focal blur to the image.
+    The object at the origin will be in focus.
+
+USAGE
+
+    focal_blur [ aperture [, samples [, ray [, filename ]]]]
+
+ARGUMENTS
+
+    aperture = float: aperture angle in degrees {default: 2.0}
+
+    samples = int: number of images for averaging {default: 10}
+
+    ray = 0/1: {default: 0}
+
+    filename = str: write image to file {default: temporary}
+
+AUTHORS
+
+    Jarl Underhaug, Jason Vertrees and Thomas Holder
+
+EXAMPLES
+
+    focal_blur 3.0, 50
+        '''
+        raise pymol.IncentiveOnlyException()
+
+    def callout(name, label, pos='', screen='auto', state=-1, color='front',
+            quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Create a new screen-stabilized callout object.
+
+ARGUMENTS
+
+    name = str: object name
+
+    label = str: label text
+
+    pos = str or list: anchor in model space as 3-float coord list or atom
+    selection. If empty, don't draw an arrow. {default: }
+
+    screen = str or list: position on screen as 2-float list between [-1,-1]
+    (lower left) and [1,1] (upper right) or "auto" for smart placement.
+    {default: auto}
+        '''
+        raise pymol.IncentiveOnlyException()
+
+    def desaturate(selection="all", a=0.5, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Desaturate the colors in the given selection.
+
+ARGUMENTS
+
+    selection = str: atom selection {default: all}
+
+    a = float [0..1]: desaturation factor {default: 0.5}
+        '''
+        raise pymol.IncentiveOnlyException()

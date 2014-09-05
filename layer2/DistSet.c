@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"ListMacros.h"
 #include"Selector.h"
 #include "PyMOL.h"
+#include "Executive.h"
 
 static void DistSetUpdate(DistSet * I, int state);
 static void DistSetFree(DistSet * I);
@@ -84,116 +85,156 @@ int DistSetMoveLabel(DistSet * I, int at, float *v, int mode)
 }
 
 
-/* -- JV */
+/* -- JV, refactored by TH */
+/*
+ * PARAMS
+ *   I:   measurement set, must not be NULL
+ *   obj: object molecule, can be NULL so then all items in I will be updated
+ * RETURNS
+ *   number of updated coordinates
+ */
 int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
 {
-  /* TODO:
-   *  3.  Make this multi-threaded
-   */
   PyMOLGlobals * G = I->State.G;
 
-  int a, idx, rVal=0, passedNAtoms = 0, totalNAtoms = 0;
-  float *src, *dst;
+  int i, N, rVal = 0;
   CMeasureInfo * memb = NULL;
-  CoordSet * cs;
-  short update = 0;
+  ExecutiveObjectOffset *eoo = NULL;
+  OVOneToOne *id2eoo = NULL;
+  OVreturn_word offset;
+  float * varDst;
 
   PRINTFD(G, FB_DistSet)
     " DistSet: adjusting distance vertex\n" ENDFD;
 
-  /* If the user doesn't provide the Object obj, we should consider
-   * looping over all atoms in Selector->Table instead of bailing */
-  if (!I || !obj) return 0;
+  ok_assert(1, I);
+  ok_assert(1, ExecutiveGetUniqueIDObjectOffsetVLADict(G, &eoo, &id2eoo));
 
-  DListIterate(I->MeasureInfo, memb, next){
-    if (memb && memb->obj==obj) {
-      totalNAtoms += obj->NAtom;
-    }
-  }
-  memb = NULL;
-  DListIterate(I->MeasureInfo, memb, next)
-    {
-      /* if this distance set belongs to this object */
-      PyMOL_SetProgress(G->PyMOL, PYMOL_PROGRESS_FAST, passedNAtoms, totalNAtoms);
-      if (memb && memb->obj==obj) {
-	for (a=0; a<obj->NAtom; a++ ) {
-	  passedNAtoms++;
-	  /* matched on OBJ above and now ATOM ID within the object */
-	  if (obj->AtomInfo[a].id == memb->id) {
+  for(memb = I->MeasureInfo; memb; memb = memb->next) {
+    varDst = NULL;
 
-	    /* if the state we found in our record could be right */
-	    if (memb->state < obj->NCSet) {
-	      /* get the coordinate set for this state */
-	      cs = obj->CSet[memb->state];
-	      
-	      /* get proper index based on state and discrete flags */
-	      if (obj->DiscreteFlag) {
-		if (cs==obj->DiscreteCSet[a]) {
-		  idx = obj->DiscreteAtmToIdx[a];
-		} else {
-		  idx = -1;
-		}
-	      } else {
-		idx = cs->AtmToIdx[a];
-	      }
-
-	      /* given a valid index, update the coordinate, finally */
-	      if (idx>=0) {
-		/* valid offset */
-		float * varDst = NULL;
-		if (memb->measureType==cRepDash && memb->offset < I->NIndex) {
-		  varDst = I->Coord;
-		  I->fInvalidateRep(I, cRepDash, cRepInvCoord);
-		  update = 1;
-		} else if (memb->measureType==cRepAngle && memb->offset < I->NAngleIndex) {
-		  varDst = I->AngleCoord;
-		  I->fInvalidateRep(I, cRepAngle, cRepInvCoord);
-		  update = 1;
-		} else if (memb->measureType==cRepDihedral && memb->offset < I->NDihedralIndex) {
-		  varDst = I->DihedralCoord;
-		  I->fInvalidateRep(I, cRepDihedral, cRepInvCoord);
-		  update = 1;
-		}
-		/* update the coordinates */
-		if (varDst) {
-		  src = cs->Coord + 3 * idx;
-		  dst = varDst + 3 * memb->offset;
-		  copy3f(src,dst);
-		  
-		  /* no matter what, update labels */
-		  I->fInvalidateRep(I, cRepLabel, cRepInvCoord);
-		  rVal |= 1;
-		}
-	      }
-	    }
-	  }
-	}
-      }
+    switch(memb->measureType) {
+    case cRepDash:
+      N = 2;
+      if(memb->offset < I->NIndex + 1)
+        varDst = I->Coord;
+      break;
+    case cRepAngle:
+      N = 3;
+      if(memb->offset < I->NAngleIndex + 2)
+        varDst = I->AngleCoord;
+      break;
+    case cRepDihedral:
+      N = 4;
+      if(memb->offset < I->NDihedralIndex + 3)
+        varDst = I->DihedralCoord;
+      break;
     }
 
-  if (update){ 
-    /* We need to update these representations right away since this could be 
-       called during the scene rendering loop, and update might not be called
-       on this object again.  This is ok since update checks to see if the reps
-       exist, and if they already do, then the overhead is minimal, so multiple
-       calls to update won't normally happen, but when they do, it won't hurt. */
-    I->fUpdate(I, -1);
+    if(!varDst)
+      continue;
+
+    varDst += 3 * memb->offset;
+
+    for(i = 0; i < N; i++) {
+      if(!OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, memb->id[i])))
+        continue;
+
+      if(obj && obj != eoo[offset.word].obj)
+        continue;
+
+      if(ObjectMoleculeGetAtomVertex(
+            eoo[offset.word].obj, memb->state[i],
+            eoo[offset.word].offset, varDst + i * 3))
+        rVal++;
+    }
   }
-  
+
+  if (rVal)
+    I->fInvalidateRep(I, -1, cRepInvCoord);
+
   PRINTFD(G, FB_DistSet)
     " DistSet: done updating distance set's vertex\n" ENDFD;
 
+ok_except1:
+  OVOneToOne_DEL_AUTO_NULL(id2eoo);
+  VLAFreeP(eoo);
   return rVal;
+}
+
+CMeasureInfo * MeasureInfoListFromCPythonVal(PyMOLGlobals * G, CPythonVal * list)
+{
+  int i, ll, N;
+  CMeasureInfo *item = NULL, *I= NULL;
+  CPythonVal *val, *tmp;
+
+  ok_assert(1, list && CPythonVal_PyList_Check(list));
+  ll = CPythonVal_PyList_Size(list);
+
+  for (i = 0; i < ll; i++) {
+    ok_assert(1, item = Alloc(CMeasureInfo, 1));
+    ListPrepend(I, item, next);
+
+    val = CPythonVal_PyList_GetItem(G, list, i);
+    if(val && CPythonVal_PyList_Check(val) &&
+              CPythonVal_PyList_Size(val) > 2) {
+
+      tmp = CPythonVal_PyList_GetItem(G, val, 1);
+      N = CPythonVal_PyList_Size(tmp);
+      ok_assert(1, N < 5);
+
+      item->measureType = (N == 2) ? cRepDash :
+                          (N == 3) ? cRepAngle : cRepDihedral;
+
+      CPythonVal_PConvPyIntToInt_From_List(G, val, 0, &item->offset);
+      CPythonVal_PConvPyListToIntArrayInPlace(G, tmp, item->id, N);
+      CPythonVal_PConvPyListToIntArrayInPlace_From_List(G, val, 2, item->state, N);
+      CPythonVal_Free(tmp);
+    }
+    CPythonVal_Free(val);
+  }
+
+ok_except1:
+  return I;
+}
+
+PyObject *MeasureInfoListAsPyList(CMeasureInfo * I)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  int N;
+  PyObject *item, *result = PyList_New(0);
+  ok_assert(1, result);
+
+  while (I) {
+    switch(I->measureType) {
+      case cRepDash: N = 2; break;
+      case cRepAngle: N = 3; break;
+      default: N = 4;
+    }
+
+    ok_assert(1, item = PyList_New(3));
+    PyList_Append(result, item);
+
+    PyList_SetItem(item, 0, PyInt_FromLong(I->offset));
+    PyList_SetItem(item, 1, PConvIntArrayToPyList(I->id, N));
+    PyList_SetItem(item, 2, PConvIntArrayToPyList(I->state, N));
+
+    I = I->next;
+  }
+
+ok_except1:
+  return PConvAutoNone(result);
+#endif
 }
 
 int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   DistSet *I = NULL;
-  int ok = true;
   int ll = 0;
+  CPythonVal *val;
+
   if(*cs) {
     DistSetFree(*cs);
     *cs = NULL;
@@ -201,51 +242,51 @@ int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
 
   if(list == Py_None) {         /* allow None for CSet */
     *cs = NULL;
-  } else {
+    return true;
+  }
 
-    if(ok)
-      I = DistSetNew(G);
-    if(ok)
-      ok = (I != NULL);
-    if(ok)
-      ok = (list != NULL);
-    if(ok)
-      ok = PyList_Check(list);
-    if(ok)
-      ll = PyList_Size(list);
+  ok_assert(1, list && CPythonVal_PyList_Check(list));
+  ok_assert(1, I = DistSetNew(G));
+
+  ll = PyList_Size(list);
     /* TO SUPPORT BACKWARDS COMPATIBILITY...
        Always check ll when adding new PyList_GetItem's */
-    if(ok)
-      ok = PConvPyIntToInt(PyList_GetItem(list, 0), &I->NIndex);
-    if(ok)
-      ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, 1), &I->Coord);
 
-    if(ok && (ll > 2)) {        /* have angles and torsions too... */
-      if(ok)
-        ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, 2), &I->LabCoord);
-      if(ok)
-        ok = PConvPyIntToInt(PyList_GetItem(list, 3), &I->NAngleIndex);
-      if(ok)
-        ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, 4), &I->AngleCoord);
-      if(ok)
-        ok = PConvPyIntToInt(PyList_GetItem(list, 5), &I->NDihedralIndex);
-      if(ok)
-        ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, 6), &I->DihedralCoord);
-    }
-    if(ok && (ll > 7))
-      I->Setting = SettingNewFromPyList(G, PyList_GetItem(list, 7));    /* state settings */
-    if(ok && (ll > 8))
-      ok = PConvPyListToLabPosVLA(PyList_GetItem(list, 8), &I->LabPos);
+  ok_assert(1, CPythonVal_PConvPyIntToInt_From_List(G, list, 0, &I->NIndex));
+  ok_assert(1, CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, 1, &I->Coord));
 
-    if(!ok) {
-      if(I)
-        DistSetFree(I);
-    } else {
-      *cs = I;
-    }
-  }
-  return (ok);
-#endif
+  ok_assert(2, ll > 2);
+
+  I->LabCoord = NULL; // will be calculated in RepDistLabelNew
+  ok_assert(1, CPythonVal_PConvPyIntToInt_From_List(G, list, 3, &I->NAngleIndex));
+  ok_assert(1, CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, 4, &I->AngleCoord));
+  ok_assert(1, CPythonVal_PConvPyIntToInt_From_List(G, list, 5, &I->NDihedralIndex));
+  ok_assert(1, CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, 6, &I->DihedralCoord));
+
+  ok_assert(2, ll > 7);
+
+  val = CPythonVal_PyList_GetItem(G, list, 7);
+  I->Setting = SettingNewFromPyList(G, val);    /* state settings */
+  CPythonVal_Free(val);
+
+  ok_assert(2, ll > 8);
+
+  val = CPythonVal_PyList_GetItem(G, list, 8);
+  ok_assert(1, CPythonVal_PConvPyListToLabPosVLA(G, val, &I->LabPos));
+  CPythonVal_Free(val);
+
+  ok_assert(2, ll > 9);
+
+  val = CPythonVal_PyList_GetItem(G, list, 9);
+  I->MeasureInfo = MeasureInfoListFromCPythonVal(G, val);
+  CPythonVal_Free(val);
+
+ok_except2:
+  *cs = I;
+  return true;
+ok_except1:
+  DistSetFree(I);
+  return false;
 }
 
 PyObject *DistSetAsPyList(DistSet * I)
@@ -260,7 +301,7 @@ PyObject *DistSetAsPyList(DistSet * I)
 
     PyList_SetItem(result, 0, PyInt_FromLong(I->NIndex));
     PyList_SetItem(result, 1, PConvFloatArrayToPyListNullOkay(I->Coord, I->NIndex * 3));
-    PyList_SetItem(result, 2, PConvFloatArrayToPyListNullOkay(I->LabCoord, I->NLabel));
+    PyList_SetItem(result, 2, PConvAutoNone(NULL)); // I->LabCoord recalculated in RepDistLabelNew
     PyList_SetItem(result, 3, PyInt_FromLong(I->NAngleIndex));
     PyList_SetItem(result, 4,
                    PConvFloatArrayToPyListNullOkay(I->AngleCoord, I->NAngleIndex * 3));
@@ -274,6 +315,7 @@ PyObject *DistSetAsPyList(DistSet * I)
     } else {
       PyList_SetItem(result, 8, PConvAutoNone(NULL));
     }
+    PyList_Append(result, MeasureInfoListAsPyList(I->MeasureInfo));
     /* TODO setting ... */
   }
   return (PConvAutoNone(result));
@@ -415,8 +457,27 @@ static void DistSetRender(DistSet * I, RenderInfo * info)
   int a;
   Rep *r;
   for(a = 0; a < I->NRep; a++)
+  {
+    if(!I->Obj->Obj.RepVis[a])
+      continue;
+    if(!I->Rep[a]) {
+      switch(a) {
+      case cRepDash:
+        I->Rep[a] = RepDistDashNew(I, -1);
+        break;
+      case cRepLabel:
+        I->Rep[a] = RepDistLabelNew(I, -1);
+        break;
+      case cRepAngle:
+        I->Rep[a] = RepAngleNew(I, -1);
+        break;
+      case cRepDihedral:
+        I->Rep[a] = RepDihedralNew(I, -1);
+        break;
+      }
+    }
     if(I->Rep[a])
-      if(I->Obj->Obj.RepVis[a]) {
+      {
         r = I->Rep[a];
         if(ray || pick) {
           if(ray)
@@ -440,6 +501,7 @@ static void DistSetRender(DistSet * I, RenderInfo * info)
           }
         }
       }
+  }
 }
 
 
@@ -468,7 +530,7 @@ DistSet *DistSetNew(PyMOLGlobals * G)
   I->NLabel = 0;
   for(a = 0; a < I->NRep; a++)
     I->Rep[a] = NULL;
-  DListInit(I->MeasureInfo, prev, next, CMeasureInfo);
+  I->MeasureInfo = NULL;
   return (I);
 }
 
@@ -488,16 +550,13 @@ static void DistSetFree(DistSet * I)
     VLAFreeP(I->LabPos);
     VLAFreeP(I->Coord);
     VLAFreeP(I->Rep);
-    if (I->MeasureInfo) {
-      ptr = I->MeasureInfo->next;
-      while(ptr != I->MeasureInfo) {
-	target = ptr;
-	ptr = ptr->next;
-	DListRemove(target,prev,next);
-	DListElemFree(target);
-	target = NULL;
-      }	
+
+    ptr = I->MeasureInfo;
+    while(target = ptr) {
+      ptr = target->next;
+      ListElemFree(target);
     }
+
       /* need to find and decrement the number of dist sets on the objects */
     SettingFreeP(I->Setting);
     OOFreeP(I);

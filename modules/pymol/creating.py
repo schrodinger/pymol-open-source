@@ -975,7 +975,7 @@ USAGE
 
     def create(name, selection, source_state=0,
                target_state=0, discrete=0, zoom=-1, quiet=1,
-               singletons=0, extract=None, _self=cmd):
+               singletons=0, extract=None, copy_properties=False, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1015,6 +1015,8 @@ SEE ALSO
         target_state = int(target_state)
         if target_state == -1:
             target_state = _self.count_states('?' + name) + 1
+        if copy_properties:
+            print ' Warning: properties are not supported in Open-Source PyMOL'
         # preprocess selection
         selection = selector.process(selection)
         #      
@@ -1067,12 +1069,14 @@ SEE ALSO
 
     pseudoatom_mode_sc =  Shortcut(pseudoatom_mode_dict.keys())
 
-    unquote_re = re.compile(r"'[^']*'|\"[^\"]*\"")
+    unquote_re = re.compile(r"r?('.*'|\".*\")$")
     
     def unquote(s):
-        s = str(s)
-        if unquote_re.search(s):
-            return s[1:-1]
+        if unquote_re.match(s):
+            try:
+                return cmd.safe_eval(s)
+            except SyntaxError:
+                print " Warning: unquote failed for", repr(s)
         return s
     
     def pseudoatom(object='', selection='', name='PS1', resn='PSD', resi='1', chain='P',

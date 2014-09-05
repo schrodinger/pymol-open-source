@@ -90,22 +90,25 @@ class CleanJob:
         if state<1:
             state = self_cmd.get_state()
         # this code will moved elsewhere
-        ok = 1
+        self.ok = 1
         try:
             from freemol import mengine
         except:
-            ok = 0
+            self.ok = 0
             print "Error: unable to import freemol.mengine module."
             print "This PyMOL build appears not to include full modeling capabilities."
-        if ok:
+            return
+        if self.ok:
             if not mengine.validate():
-                ok = 0
+                self.ok = 0
                 print "Error: Unable to validate freemol.mengine"
-        if ok:
+                return
+        if self.ok:
             if self_cmd.count_atoms(sele) > 999:
-                ok = 0
+                self.ok = 0
                 print "Error: Sorry, clean is currently limited to 999 atoms"
-        if not ok:
+                return
+        if not self.ok:
             pass
             # we can't call warn because this is the not the tcl-tk gui thread
             # warn("Please be sure that FreeMOL is correctly installed.")
@@ -113,7 +116,7 @@ class CleanJob:
             if message != None:
                 self.cmd.do("_ cmd.wizard('message','''%s''')"%message)
             obj_list = self_cmd.get_object_list("bymol ("+sele+")")
-            ok = 0
+            self.ok = 0
             result = None
             if is_list(obj_list) and (len(obj_list)==1):
                 obj_name = obj_list[0]
@@ -133,11 +136,17 @@ class CleanJob:
                     if len(result):
                         clean_sdf = result[0]
                         clean_rec = clean_sdf.split("$$$$")[0]
-                        energy = get_energy_from_rec(clean_rec)
-                        if len(clean_rec) and int(energy) != 9999:
-                            clean_name = "builder_clean_tmp"
-                            self_cmd.set("suspend_updates")
-                            try:
+                        clean_name = ""
+                        self.energy = get_energy_from_rec(clean_rec)
+                        try:
+                            if len(clean_rec) and int(self.energy) != 9999:
+                                clean_name = "builder_clean_tmp"
+                                self_cmd.set("suspend_updates")
+                                self.ok = 1
+                            else:
+                                self.ok = 0
+
+                            if self.ok:
                                 self_cmd.read_molstr(clean_rec, clean_name, zoom=0)
                                 # need to insert some error checking here
                                 if clean_name in self_cmd.get_names("objects"):
@@ -150,11 +159,17 @@ class CleanJob:
                                                     source_state=1, target_state=state)
                                     self_cmd.sculpt_activate(obj_name) 
                                     self_cmd.sculpt_deactivate(obj_name)
-                                    ok = 1
-                            finally:
-                                self_cmd.delete(clean_name)
-                                self_cmd.unset("suspend_updates")
-            if not ok:
+                                    self.ok = 1
+                                    message = "Clean: Finished. Energy = %3.2f" % self.energy
+                                    if message != None:
+                                        self.cmd.do("_ cmd.wizard('message','''%s''')"%message)
+                                        self.cmd.do("_ wizard")
+                        except ValueError:
+                            self.ok = 0
+                        finally:
+                            self_cmd.delete(clean_name)
+                            self_cmd.unset("suspend_updates")
+            if not self.ok:
                 # we can't call warn because this is the not the tcl-tk gui thread
                 if result != None:
                     if len(result)>1:
@@ -190,7 +205,7 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
     clean2_sele = "_clean2_tmp"
     clean_obj = "_clean_obj"
     r = DEFAULT_SUCCESS
-
+    c = None
     if self_cmd.select(clean1_sele,selection,enable=0)>0:
         try:
             if present=='':
@@ -198,6 +213,8 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
             else:
                 self_cmd.select(clean2_sele, clean1_sele+" or ("+present+")",enable=0)
 
+            suspend_undo = self_cmd.get("suspend_undo")
+            self_cmd.set("suspend_undo", updates=0)
             self_cmd.set("suspend_updates")
             self_cmd.rename(clean2_sele) # ensure identifiers are unique
             self_cmd.create(clean_obj, clean2_sele, zoom=0, source_state=state,target_state=1)
@@ -211,20 +228,26 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
 
             if message == None:
                 at_cnt = self_cmd.count_atoms(clean_obj)
-                message = 'Cleaning %d atoms.  Please wait...'%at_cnt
+                message = 'Clean: Cleaning %d atoms.  Please wait...'%at_cnt
 
-            CleanJob(self_cmd, clean_obj, state, message=message)
-            
-            self_cmd.push_undo(clean1_sele)
-            self_cmd.update(clean1_sele, clean_obj, 
-                            source_state=1, target_state=state)
+            c = CleanJob(self_cmd, clean_obj, state, message=message)
 
+            if c.ok:
+                self_cmd.set("suspend_undo", suspend_undo, updates=0)
+                self_cmd.push_undo(selection)
+                self_cmd.update(clean1_sele, clean_obj, 
+                                source_state=1, target_state=state)
+            self_cmd.set("suspend_undo", True, updates=0)
             self_cmd.delete(clean_obj)
             self_cmd.delete(clean1_sele)
             self_cmd.delete(clean2_sele)
+            self_cmd.set("suspend_undo", suspend_undo, updates=0)
         except:
             traceback.print_exc()
-    return r
+    if hasattr(c,"energy"):
+        return c.energy
+    else:
+        return None
 
 def clean(selection, present='', state=-1, fix='', restrain='',
           method='mmff', async=0, save_undo=1, message=None,

@@ -110,6 +110,10 @@ extern CPyMOLOptions *MacPyMOLOption;
 #endif
 #define IDLE_AND_READY 3
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _CPyMOL {
   PyMOLGlobals *G;
   int FakeDragFlag;
@@ -928,6 +932,28 @@ typedef struct _CPyMOL {
 #include "palettes_lex_def.h"
 
 #endif
+
+#ifndef _PYMOL_NOPY
+  AtomPropertyInfo AtomPropertyInfos[NUM_ATOM_PROPERTIES];
+#endif
+  OVOneToOne *AtomPropertyLexicon;
+  ov_word lex_atom_prop_model, lex_atom_prop_index, lex_atom_prop_type,
+    lex_atom_prop_name, lex_atom_prop_resn, lex_atom_prop_resi,
+    lex_atom_prop_resv, lex_atom_prop_chain, lex_atom_prop_alt,
+    lex_atom_prop_segi, lex_atom_prop_elem,
+    lex_atom_prop_ss, lex_atom_prop_text_type, 
+    lex_atom_prop_custom, lex_atom_prop_label, lex_atom_prop_numeric_type,
+    lex_atom_prop_q, lex_atom_prop_b, lex_atom_prop_vdw,
+    lex_atom_prop_elec_radius, lex_atom_prop_partial_charge, lex_atom_prop_formal_charge,
+    lex_atom_prop_stereo, lex_atom_prop_cartoon, lex_atom_prop_color,
+    lex_atom_prop_ID, lex_atom_prop_rank, lex_atom_prop_flags,
+    lex_atom_prop_geom, lex_atom_prop_valence,
+    lex_atom_prop_x, lex_atom_prop_y, lex_atom_prop_z,
+    lex_atom_prop_settings, lex_atom_prop_properties,
+    lex_atom_prop_s, lex_atom_prop_p, lex_atom_prop_state; 
+  /*
+    lex_atom_prop_, lex_atom_prop_, lex_atom_prop_,
+    lex_atom_prop_, lex_atom_prop_, lex_atom_prop_,*/
 
 } _CPyMOL;
 
@@ -1967,6 +1993,74 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
 
 #endif
 
+
+  I->AtomPropertyLexicon = OVOneToOne_New(C->heap);
+  if(!I->AtomPropertyLexicon)
+    return_OVstatus_FAILURE;
+
+#define LEX_ATM_PROP(ARG)  \
+  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#ARG))))  \
+    return_OVstatus_FAILURE \
+    else \
+      I -> lex_atom_prop_ ## ARG = result.word;
+#define LEX_ATOM_PROP(NAME,CODE,TYPE,OFFSET) LEX_ATM_PROP(NAME)		\
+    if(!OVreturn_IS_OK( OVOneToOne_Set(I->AtomPropertyLexicon,I->lex_atom_prop_ ## NAME, CODE)))  \
+      return_OVstatus_FAILURE;     \
+    I->AtomPropertyInfos[CODE].id = CODE;    \
+    I->AtomPropertyInfos[CODE].Ptype = TYPE;    \
+    I->AtomPropertyInfos[CODE].offset = OFFSET;  \
+    I->AtomPropertyInfos[CODE].maxlen = 0;
+
+#define LEX_ATOM_PROP_S(NAME,CODE,TYPE,OFFSET,MAXLEN) LEX_ATM_PROP(NAME)	\
+    if(!OVreturn_IS_OK( OVOneToOne_Set(I->AtomPropertyLexicon,I->lex_atom_prop_ ## NAME, CODE)))  \
+      return_OVstatus_FAILURE;     \
+    I->AtomPropertyInfos[CODE].id = CODE;    \
+    I->AtomPropertyInfos[CODE].Ptype = TYPE;    \
+    I->AtomPropertyInfos[CODE].offset = OFFSET;  \
+    I->AtomPropertyInfos[CODE].maxlen = MAXLEN;
+
+  /*TEMP*/
+#ifndef _PYMOL_NOPY
+  LEX_ATOM_PROP(model, 0, cPType_model, 0);
+  LEX_ATOM_PROP(index, 1, cPType_index, 0);
+  LEX_ATOM_PROP(type, 2, cPType_char_as_type, offsetof(AtomInfoType,hetatm));
+  LEX_ATOM_PROP_S(name, 3, cPType_string, offsetof(AtomInfoType,name), cAtomNameLen);
+  LEX_ATOM_PROP_S(resn, 4, cPType_string, offsetof(AtomInfoType,resn), cResnLen);
+  LEX_ATOM_PROP_S(resi, 5, cPType_string, offsetof(AtomInfoType,resi), cResiLen);
+  LEX_ATOM_PROP(resv, 6, cPType_int, offsetof(AtomInfoType,resv));
+  LEX_ATOM_PROP(chain, 7, cPType_int_as_string, offsetof(AtomInfoType,chain));
+  LEX_ATOM_PROP_S(alt, 8, cPType_string, offsetof(AtomInfoType,alt), 1);
+  LEX_ATOM_PROP_S(segi, 9, cPType_string, offsetof(AtomInfoType,segi), cSegiLen);
+  LEX_ATOM_PROP_S(elem, 10, cPType_string, offsetof(AtomInfoType,elem), cElemNameLen);
+  LEX_ATOM_PROP_S(ss, 11, cPType_string, offsetof(AtomInfoType,ssType), 1);
+  LEX_ATOM_PROP(text_type, 12, cPType_int_as_string, offsetof(AtomInfoType,textType));
+  LEX_ATOM_PROP(custom, 13, cPType_int_as_string, offsetof(AtomInfoType,custom));
+  LEX_ATOM_PROP(label, 14, cPType_int_as_string, offsetof(AtomInfoType,label));
+  LEX_ATOM_PROP(numeric_type, 15, cPType_int_custom_type, offsetof(AtomInfoType,customType));
+  LEX_ATOM_PROP(q, 16, cPType_float, offsetof(AtomInfoType,q));
+  LEX_ATOM_PROP(b, 17, cPType_float, offsetof(AtomInfoType,b));
+  LEX_ATOM_PROP(vdw, 18, cPType_float, offsetof(AtomInfoType,vdw));
+  LEX_ATOM_PROP(elec_radius, 19, cPType_float, offsetof(AtomInfoType,elec_radius));
+  LEX_ATOM_PROP(partial_charge, 20, cPType_float, offsetof(AtomInfoType,partialCharge));
+  LEX_ATOM_PROP(formal_charge, 21, cPType_int, offsetof(AtomInfoType,formalCharge));
+  LEX_ATOM_PROP(stereo, 22, cPType_stereo, offsetof(AtomInfoType,mmstereo));
+  LEX_ATOM_PROP(cartoon, 23, cPType_int, offsetof(AtomInfoType,cartoon));
+  LEX_ATOM_PROP(color, 24, cPType_int, offsetof(AtomInfoType,color));
+  LEX_ATOM_PROP(ID, 25, cPType_int, offsetof(AtomInfoType,id));
+  LEX_ATOM_PROP(rank, 26, cPType_int, offsetof(AtomInfoType,rank));
+  LEX_ATOM_PROP(flags, 27, cPType_int, offsetof(AtomInfoType,flags));
+  LEX_ATOM_PROP(geom, 28, cPType_int, offsetof(AtomInfoType,geom));
+  LEX_ATOM_PROP(valence, 29, cPType_int, offsetof(AtomInfoType,valence));
+  LEX_ATOM_PROP(x, 30, cPType_xyz_float, 0);
+  LEX_ATOM_PROP(y, 31, cPType_xyz_float, 1);
+  LEX_ATOM_PROP(z, 32, cPType_xyz_float, 2);
+  LEX_ATOM_PROP(settings, 33, cPType_settings, 0);
+  LEX_ATOM_PROP(properties, 34, cPType_properties, 0);
+  LEX_ATOM_PROP(s, 35, cPType_settings, 0);
+  LEX_ATOM_PROP(p, 36, cPType_properties, 0);
+  LEX_ATOM_PROP(state, 37, cPType_state, 0);
+  //  LEX_ATOM_PROP(, );
+#endif
   return_OVstatus_SUCCESS;
 }
 
@@ -3316,6 +3410,8 @@ CPyMOLOptions *PyMOLOptions_New(void)
 }
 
 #ifndef _PYMOL_NOPY
+void init_cmd(void);
+
 static void init_python(int argc, char *argv[])
 {
   Py_Initialize();
@@ -3340,46 +3436,18 @@ static void init_python(int argc, char *argv[])
 
   PyEval_InitThreads();
 
-#ifdef _PYMOL_OWN_INTERP
-  {                             /* NOTE this doesn't work 'cause we can't unpack code in restricted environments! */
-
-    /* get us a brand new interpreter, independent of any other */
-
-    PyThreadState *tstate = Py_NewInterpreter();
-
-    /* now release the first interpreter and use the second */
-    PyThreadState_Swap(tstate);
-  }
-#endif
-
   PyUnicode_SetDefaultEncoding("utf-8");        /* is this safe & legal? */
   PyRun_SimpleString("import sys");
   PyRun_SimpleString("import os");
   PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')");
 
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-/* END PROPRIETARY CODE SEGMENT */
-
-  PyRun_SimpleString("import __main__");
-  {
-    PyObject *P_main = PyImport_AddModule("__main__");
-    if(!P_main)
-      printf("PyMOL can't find '__main__'\n");
-
-    /* set up a dry run through 'import pymol' */
-
-    PyObject_SetAttrString(P_main, "pymol_launch", PyInt_FromLong(3));
-  }
-
-  /* initiate PyMOL dry run to create __main__.pymol */
+  /* initialize our embedded C modules */
+  init_cmd();
 
   PyRun_SimpleString("import pymol");
 
   /* parse arguments */
-
   PyRun_SimpleString("pymol.invocation.parse_args(sys.argv)");
-
 }
 
 
@@ -3595,70 +3663,10 @@ void PyMOL_ConfigureShadersGL(CPyMOL * I){
 
 #ifndef _PYMOL_NOPY
 
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifndef _PYMOL_API_HAS_PYTHON
-
-#ifdef _MACPYMOL_XCODE
-#define _PYMOL_API_HAS_PYTHON
-#else
-
-#ifdef _PYMOL_LIB_HAS_PYTHON
-#define _PYMOL_API_HAS_PYTHON
-#endif
-
-#endif
-#endif
-
-#ifdef _PYMOL_API_HAS_PYTHON
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void init_cmd(void);
-
-/* 
- * void initExtensionClass(void);
- * void initsglite(void);
-*/
-void init_champ(void);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
-
 void PyMOL_StartWithPython(CPyMOL * I)
 {
   PyMOL_Start(I);
   PyMOL_ConfigureShadersGL_WithoutLock(I);
-
-  {
-    PyObject *P_main = PyImport_AddModule("__main__");
-    if(!P_main)
-      printf("PyMOL can't find '__main__'\n");
-
-    /* set up for embedded-style launch */
-    PyObject_SetAttrString(P_main, "pymol_launch", PyInt_FromLong(5));
-  }
-
-  /* initialize our embedded C modules */
-
-#ifdef _PYMOL_API_HAS_PYTHON
-  init_cmd();
-  /* 
-   * initExtensionClass();
-   * initsglite();
-   */
-
-  init_champ();
-#endif
-
-  /* launch pymol's Python subsystems */
-
-  PyRun_SimpleString("import sys;reload(sys.modules['pymol'])");
 
   /* now locate all the C to Python function hooks and objects we need */
 
@@ -3678,7 +3686,6 @@ void PyMOL_StartWithPython(CPyMOL * I)
   MacPyMOLOption = I->G->Option;
   MacPyMOLReady = &I->G->Ready;
 #endif
-
 /* END PROPRIETARY CODE SEGMENT */
 }
 
@@ -3739,19 +3746,6 @@ void PyMOL_Free(CPyMOL * I)
     /* take PyMOL down gracefully */
     PyMOLOptions_Free(I->G->Option);
   FreeP(I->G);
-#ifndef _PYMOL_NOPY
-#ifdef _PYMOL_OWN_INTERP
-  if(I->PythonInitStage) {      /* shut down this interpreter gracefully, then free the GIL for others to use */
-    PBlock(G);
-    {                           /* should this be moved into a PDestroy?() to clear out the thread record too? */
-      PyThreadState *tstate = PyEval_SaveThread();
-      PyEval_AcquireThread(tstate);
-      Py_EndInterpreter(tstate);
-      PyEval_ReleaseLock();
-    }
-  }
-#endif
-#endif
   FreeP(I);
   return;
 #ifndef _PYMOL_ACTIVEX
@@ -4301,7 +4295,7 @@ char *PyMOL_GetClickString(CPyMOL * I, int reset)
                   ai->rank,
                   ai->id,
                   ai->segi,
-                  ai->chain,
+                  LexStr(I->G, ai->chain),
                   ai->resn,
                   ai->resi, ai->name, ai->alt, butstr, modstr, I->ClickedX, I->ClickedY, posstr);
         }
@@ -4585,18 +4579,32 @@ PyMOLreturn_status PyMOL_CmdRock(CPyMOL * I, int mode){
 
 
 PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int enabled_only){
-  char *res, *arg;
-  int numstrs;
+  char *res;
+  char *p;
+  int c = 0;
+  int numstrs = 0;
   long reslen, pl = 0;
+  int ok = false;
+  OrthoLineType str0 = "";
   PyMOLreturn_string_array result = { PyMOLstatus_SUCCESS };
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
 
-  arg = s0;
   if (s0[0]){
-    arg = "*";
+    ok = (SelectorGetTmp(G, s0, str0) >= 0);
   }
 
-  res = ExecutiveGetObjectNames(G, mode, s0, enabled_only, &numstrs);
+  res = ExecutiveGetNames(G, mode, enabled_only, str0);
+
+  if(str0[0])
+      SelectorFreeTmp(G, str0);
+
+  // count strings
+  p = res;
+  c = VLAGetSize(res);
+  while(c--) {                  /* count strings */
+    if(!*(p++))
+      numstrs++;
+  }
 
   if (numstrs){
     reslen = VLAGetSize(res);
@@ -4867,3 +4875,22 @@ PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I){
   };
   PYMOL_API_UNLOCK return result;
 }
+
+#ifndef _PYMOL_NOPY
+AtomPropertyInfo *PyMOL_GetAtomPropertyInfo(CPyMOL * I, char *atompropname)
+{
+  OVreturn_word result;
+  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, atompropname))))
+    return NULL;
+  result = OVOneToOne_GetForward(I->AtomPropertyLexicon, result.word);
+  if(!OVreturn_IS_OK(result))
+    return NULL;
+  return &I->AtomPropertyInfos[result.word];
+}
+
+
+#endif
+
+#ifdef __cplusplus
+}
+#endif

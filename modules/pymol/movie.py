@@ -21,6 +21,12 @@ import glob
 import threading
 import time
 
+def get_movie_fps(_self):
+    r = _self.get_setting_float('movie_fps')
+    if r <= 0:
+        return 30
+    return r
+
 def sweep(pause=0,cycles=1,_self=cmd):
     pause = int(pause)
     cycles = int(cycles)
@@ -243,7 +249,7 @@ def screw(first,last,step=1,angle=30,phase=0,loop=1,axis='y',_self=cmd):
         a = a + 1
 
 def timed_roll(period=12.0,cycles=1,axis='y',_self=cmd):
-    frames_per_sec = float(_self.get('movie_fps'))
+    frames_per_sec = get_movie_fps(_self)
     if frames_per_sec<1.0:
         frames_per_sec=30.0
     frames_per_cycle = int(period*frames_per_sec)
@@ -268,7 +274,7 @@ def add_blank(duration=12.0,start=0,_self=cmd):
     if not start:
         start = cmd.get_movie_length()+1
     duration = float(duration)
-    fps = float(cmd.get('movie_fps'))
+    fps = get_movie_fps(_self)
     n_frame = int(round(fps * duration))
     if n_frame > 0:
         cmd.mset("1 x%d"%n_frame,start)
@@ -281,7 +287,7 @@ def add_roll(duration=12.0,loop=1,axis='y',start=0,_self=cmd):
     if not start:
         start = cmd.get_movie_length()+1
     duration = float(duration)
-    fps = float(cmd.get('movie_fps'))
+    fps = get_movie_fps(_self)
     n_frame = int(round(fps * duration))
     if n_frame > 0:
         cmd.mset("1 x%d"%n_frame,start,freeze=1)
@@ -315,7 +321,7 @@ def add_rock(duration=8.0,angle=30.0,loop=1,axis='y',start=0,_self=cmd):
     duration = float(duration)
     angle=float(angle)
     loop=int(loop)
-    fps = float(cmd.get('movie_fps'))
+    fps = get_movie_fps(_self)
     n_frame = int(round(fps * duration))
     if n_frame > 0:
         cmd.mset("1 x%d"%n_frame,start,freeze=1)
@@ -334,7 +340,7 @@ def add_state_sweep(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd
     if not start:
         start = cmd.get_movie_length() + 1
     loop = int(loop)
-    fps = float(cmd.get('movie_fps'))
+    fps = get_movie_fps(_self)
     n_state = cmd.count_states()
     duration = (2 * pause) + (2 * factor * n_state) / fps
     n_frame = int(round(fps * duration))
@@ -356,7 +362,7 @@ def add_state_loop(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd)
     if not start:
         start = cmd.get_movie_length() + 1
     loop = int(loop)
-    fps = float(cmd.get('movie_fps'))
+    fps = get_movie_fps(_self)
     n_state = cmd.count_states()
     duration = (pause) + (factor * n_state) / fps
     n_frame = int(round(fps * duration))
@@ -382,7 +388,7 @@ def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1,
     angle = float(angle)
     spiral = int(spiral)
     loop = int(loop)
-    fps = float(cmd.get('movie_fps'))
+    fps = get_movie_fps(_self)
     n_frame = int(round(fps * duration))
     if n_frame > 0:
         cmd.mset("1 x%d"%n_frame,start,freeze=1)
@@ -435,7 +441,7 @@ def _nutate_sub(start_frame, stop_frame, angle=15.0, spiral=0, loop=1,
     angle = float(angle)
     spiral = int(spiral)
     loop = int(loop)
-    fps = float(cmd.get('movie_fps'))
+    fps = get_movie_fps(_self)
     duration = (stop_frame - start_frame)/fps
     n_frame = int(round(fps * duration))
     if n_frame > 0:
@@ -494,7 +500,7 @@ def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,
         names = cmd.safe_alpha_list_eval(names)
     n_scene = len(names)
     duration = n_scene*(pause+animate)
-    fps = float(cmd.get('movie_fps'))
+    fps = get_movie_fps(_self)
     n_frame = int(round(fps * duration))
 
     if not loop:
@@ -617,10 +623,7 @@ def _encode(filename,mode,first,last,preserve,
             done_event = None
             if not quiet:
                 done_event = threading.Event()
-                t = threading.Thread(target=_watch,
-                                     args=(filename,done_event))
-                t.setDaemon(1)
-                t.start()
+                _self.async(_watch, filename, done_event, _self=_self)
 
             try:
                 result = mpeg_encode.run(input)

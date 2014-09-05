@@ -48,6 +48,10 @@ Z* -------------------------------------------------------------------
  * You have been warned!
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PYMOL_BUTTON_DOWN           0
 #define PYMOL_BUTTON_UP             1
 
@@ -118,6 +122,41 @@ typedef struct _CPyMOL CPyMOL;
 #define CPyMOL_DEFINED
 #endif
 
+#define ATOM_PROP_MODEL 0
+#define ATOM_PROP_INDEX 1
+#define ATOM_PROP_TYPE  2
+#define ATOM_PROP_NAME  3
+#define ATOM_PROP_RESN  4
+#define ATOM_PROP_RESI  5
+#define ATOM_PROP_RESV  6
+#define ATOM_PROP_CHAIN 7
+#define ATOM_PROP_ALT   8
+#define ATOM_PROP_SEGI  9
+#define ATOM_PROP_ELEM 10
+#define ATOM_PROP_SS        11
+#define ATOM_PROP_TEXT_TYPE 12
+#define ATOM_PROP_CUSTOM    13
+#define ATOM_PROP_LABEL     14
+#define ATOM_PROP_NUMERIC_TYPE 15
+#define ATOM_PROP_Q 16
+#define ATOM_PROP_B 17
+#define ATOM_PROP_VDW 18
+#define ATOM_PROP_ELEC_RADIUS 19
+#define ATOM_PROP_PARTIAL_CHARGE 20
+#define ATOM_PROP_FORMAL_CHARGE 21
+#define ATOM_PROP_STEREO 22
+#define ATOM_PROP_CARTOON 23
+#define ATOM_PROP_COLOR 24
+#define ATOM_PROP_ID 25
+#define ATOM_PROP_RANK 26
+#define ATOM_PROP_FLAGS 27
+#define ATOM_PROP_GEOM  28
+#define ATOM_PROP_VALENCE 29
+#define ATOM_PROP_X 30
+#define ATOM_PROP_Y 31
+#define ATOM_PROP_Z 32
+#define ATOM_PROP_SETTINGS 33
+#define ATOM_PROP_PROPERTIES 34
 
 /* return status values */
 
@@ -535,4 +574,18 @@ PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I);
 
 PyMOLreturn_status PyMOL_GetSettingString(CPyMOL * I, int settingid, char *deststr);
 
+typedef struct _P_AtomProperty {
+  int id;
+  short Ptype;
+  int offset;
+  int maxlen;
+} AtomPropertyInfo;
+
+#ifndef _PYMOL_NOPY
+AtomPropertyInfo *PyMOL_GetAtomPropertyInfo(CPyMOL * I, char *atompropname);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 #endif

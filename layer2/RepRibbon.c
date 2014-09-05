@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Feedback.h"
 #include"ShaderMgr.h"
+#include"CGO.h"
 
 typedef struct RepRibbon {
   Rep R;
@@ -565,20 +566,6 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
     I->shaderCGO = NULL;
     I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
     I->R.cs->Active[cRepRibbon] = false;
-  }
-}
-
-static float smooth(float x, float power)
-{
-
-  if(x <= 0.5) {
-    if(x <= 0.0)
-      x = 0.0;
-    return ((float) (0.5 * pow(2.0 * x, power)));
-  } else {
-    if(x >= 1.0)
-      x = 1.0;
-    return ((float) (1.0 - (0.5 * pow(2 * (1.0 - x), power))));
   }
 }
 

@@ -25,6 +25,9 @@ if __name__=='pymol.wizarding':
     
     import cPickle
     import traceback
+
+    class WizardError(Exception):
+        pass
     
     def _wizard(name,arg,kwd,replace,_self=cmd):
         r = DEFAULT_ERROR
@@ -42,7 +45,11 @@ if __name__=='pymol.wizarding':
                 r = DEFAULT_SUCCESS
                 if hasattr(mod_obj,oname):
                     kwd['_self']=_self
-                    wiz = apply(getattr(mod_obj,oname),arg,kwd)
+                    try:
+                        wiz = apply(getattr(mod_obj,oname),arg,kwd)
+                    except WizardError as e:
+                        from pymol.wizard.message import Message
+                        wiz = Message("Error: %s" % e.message, _self=_self)
                     if wiz:
                         _self.set_wizard(wiz,replace)
                         _self.do("_ refresh_wizard")

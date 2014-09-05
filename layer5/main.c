@@ -90,7 +90,7 @@ int MainFeedbackOut(char *st)
   return OrthoFeedbackOut(G, st);
 }
 
-void MainRunCommand(char *str1)
+void MainRunCommand(const char *str1)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
 
@@ -116,7 +116,7 @@ void MainRunCommand(char *str1)
   }
 }
 
-PyObject *MainGetStringResult(char *str)
+PyObject *MainGetStringResult(const char *str)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PyObject *result;
@@ -124,7 +124,7 @@ PyObject *MainGetStringResult(char *str)
   return (result);
 }
 
-void MainRunString(char *str)
+void MainRunString(const char *str)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PBlock(G);
@@ -218,7 +218,7 @@ int MainSceneCopy(int width, int height, int rowbytes, void *ptr)
   return result;
 }
 
-PyObject *MainComplete(char *str)
+PyObject *MainComplete(const char *str)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PyObject *result = NULL;

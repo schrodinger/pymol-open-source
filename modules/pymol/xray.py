@@ -13,80 +13,69 @@
 #Z* -------------------------------------------------------------------
 
 import traceback
-import string
 import sys
 
-try:
-    from cmd import QuietException, \
-          _feedback,fb_module,fb_mask 
+# xray.py 
+# This section contains python code for supporting
+# x-ray crystallography functions
 
-    # xray.py 
-    # This section contains python code for supporting
-    # x-ray crystallography functions
 
-    
-    def old_sg_sym_to_mat_list(sgsymbol):
-        import sglite
-        sgsymbol = hex_to_rhom_xHM.get(sgsymbol,sgsymbol)
-        try:
-            Symbols_Inp = sglite.SgSymbolLookup(sgsymbol)
-            if(Symbols_Inp):
-                HallSymbol = Symbols_Inp['Hall']
-                SgOps = sglite.SgOps(HallSymbol)
-                nLTr = SgOps.get_nLTr()
-                fInv = SgOps.get_fInv()
-                nSMx = SgOps.get_nSMx()
-                result = []
-                rb = float(sglite.SRBF)
-                tb = float(sglite.STBF)
-                for iLTr in xrange(nLTr):
-                    for iInv in xrange(fInv):
-                        for iSMx in xrange(nSMx):
-                            Mx = SgOps.getLISMx(iLTr, iInv, iSMx, +1)
-                            result.append([[ Mx[0]/rb, Mx[1]/rb, Mx[2]/rb, Mx[9 ]/tb],
-                                           [ Mx[3]/rb, Mx[4]/rb, Mx[5]/rb, Mx[10]/tb],
-                                           [ Mx[6]/rb, Mx[7]/rb, Mx[8]/rb, Mx[11]/tb],
-                                           [      0.0,      0.0,      0.0,       1.0]] )
-        except:
-            if(_feedback(fb_module.symmetry,fb_mask.errors)):
-                print "Symmetry-Error: Urecognized space group symbol '"+sgsymbol+"'."
-            result = None
-        return result
-
-    def sg_sym_to_mat_list(sgsymbol): # TODO _self
-        result = None
-        key = string.strip(string.upper(sgsymbol))
-        sym_op = sym_dict.get(key,None)
-        if sym_op != None:
+def old_sg_sym_to_mat_list(sgsymbol):
+    import sglite
+    sgsymbol = hex_to_rhom_xHM.get(sgsymbol,sgsymbol)
+    try:
+        Symbols_Inp = sglite.SgSymbolLookup(sgsymbol)
+        if(Symbols_Inp):
+            HallSymbol = Symbols_Inp['Hall']
+            SgOps = sglite.SgOps(HallSymbol)
+            nLTr = SgOps.get_nLTr()
+            fInv = SgOps.get_fInv()
+            nSMx = SgOps.get_nSMx()
             result = []
-            for op in sym_op:
-                mat = []
-                try:
-                    # WORKAROUND: Not sure why the string op can have difficulty
-                    # being split, but calling this inside a try/except block before
-                    # it gets called in the below for loop seems to fix it
-                    # TODO : NEED TO FIGURE OUT : it could have something to do with
-                    # how sym_dict/sym_base is instantiated, and how PyMOL in P.c
-                    # imports this module directly
-                    # the error that is thrown is "IndexError: list index out of range"
-                    string.split(op,',')
-                except:
-#                    traceback.print_exc()
-                    pass
-                for expr in string.split(op,','):
-                    mat.append( expr_to_vect[expr] )
-                mat.append([0.0,0.0,0.0,1.0])
-                result.append(mat)
-        else:
+            rb = float(sglite.SRBF)
+            tb = float(sglite.STBF)
+            for iLTr in xrange(nLTr):
+                for iInv in xrange(fInv):
+                    for iSMx in xrange(nSMx):
+                        Mx = SgOps.getLISMx(iLTr, iInv, iSMx, +1)
+                        result.append([[ Mx[0]/rb, Mx[1]/rb, Mx[2]/rb, Mx[9 ]/tb],
+                                       [ Mx[3]/rb, Mx[4]/rb, Mx[5]/rb, Mx[10]/tb],
+                                       [ Mx[6]/rb, Mx[7]/rb, Mx[8]/rb, Mx[11]/tb],
+                                       [      0.0,      0.0,      0.0,       1.0]] )
+    except:
+        try:
+            from cmd import QuietException, \
+                 _feedback,fb_module,fb_mask 
             if(_feedback(fb_module.symmetry,fb_mask.errors)):
-                print "Symmetry-Error: Urecognized space group symbol '"+sgsymbol+"'."
-        return result
+                print "Symmetry-Error: Unrecognized space group symbol '"+sgsymbol+"'."
+        except:
+            pass
+        result = None
+    return result
 
-except:
-    traceback.print_exc()
-    print "Error: unable to import xray module (no symmetry support)."
-    def sg_sym_to_mat_list(sgsymbol):
-        return None
+def sg_sym_to_mat_list(sgsymbol): # TODO _self
+    import re
+    result = None
+    key = re.sub(r'\s+', ' ', sgsymbol.strip().upper())
+    key = space_group_map.get(key, key)
+    sym_op = sym_dict.get(key,None)
+    if sym_op != None:
+        result = []
+        for op in sym_op:
+            mat = []
+            for expr in op.split(','):
+                mat.append( expr_to_vect[expr] )
+            mat.append([0.0,0.0,0.0,1.0])
+            result.append(mat)
+    else:
+        try:
+            from cmd import QuietException, \
+                 _feedback,fb_module,fb_mask 
+            if(_feedback(fb_module.symmetry,fb_mask.errors)):
+                print "Symmetry-Error: Unrecognized space group symbol '"+sgsymbol+"'."
+        except:
+            pass
+    return result
 
 hex_to_rhom_xHM = {
     #  extended Hermann Mauguin symbol translation

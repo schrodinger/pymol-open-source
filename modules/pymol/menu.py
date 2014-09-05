@@ -17,6 +17,29 @@
 # shared main chain/side chain atoms
 sele_ms_shared = '(n. CA|n. N&r. PRO)'
 
+class menucontext(object):
+    '''
+    Singleton context manager class to store expensive metadata
+    which is used several times in submenus.
+
+    @ivar ramps: list with ramp object names
+    @ivar props: list with atom properties keys
+    '''
+    count = 0
+    def __call__(self, cmd, sele=''):
+        if self.count == 0:
+            names = cmd.get_names()
+            self.ramps = filter(lambda n: cmd.get_type(n) == 'object:ramp', names)
+            self.props = []
+        self.count += 1
+        return self
+    def __enter__(self):
+        return self
+    def __exit__(self, type, value, traceback):
+        self.count -= 1
+
+menucontext = menucontext()
+
 def extract(self_cmd, sele):
     return [[ 2, 'Extract', '' ],
             [ 1, 'object', 'cmd.create(None,"'+sele+'",extract="'+sele+'",zoom=0)' ],
@@ -387,7 +410,7 @@ def by_ss(self_cmd, sele):
               ]
 
 def spectrum(self_cmd, sele):
-    return [
+    r = [
         [ 2, 'Spectrum:'     ,''                               ],
         [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(e. c)',
           'cmd.spectrum("count",selection="('+sele+')&e. c")'],           
@@ -402,6 +425,7 @@ def spectrum(self_cmd, sele):
         [ 1, 'area (molecular)', 'util.color_by_area(("'+sele+'"),"molecular")'         ],
         [ 1, 'area (solvent)'  , 'util.color_by_area(("'+sele+'"),"solvent")'         ],
         ]
+    return r
 
 def by_chain(self_cmd, sele):
     return [
@@ -417,158 +441,130 @@ def by_chain(self_cmd, sele):
                  'util.chainbow("('+sele+')",_self=cmd)'],                                 
         ]
 
+all_colors_list = [
+    ('reds', [
+        ('900', 'red'),
+        ('922', 'tv_red'),
+        ('634', 'raspberry'),
+        ('755', 'darksalmon'),
+        ('955', 'salmon'),
+        ('944', 'deepsalmon'),
+        ('824', 'warmpink'),
+        ('611', 'firebrick'),
+        ('522', 'ruby'),
+        ('521', 'chocolate'),
+        ('632', 'brown'),
+    ]),
+    ('greens', [
+        ('090', 'green'),
+        ('292', 'tv_green'),
+        ('490', 'chartreuse'),
+        ('570', 'splitpea'),
+        ('564', 'smudge'),
+        ('686', 'palegreen'),
+        ('094', 'limegreen'),
+        ('494', 'lime'),
+        ('792', 'limon'),
+        ('252', 'forest'),
+    ]),
+    ('blues', [
+        ('009', 'blue'),
+        ('339', 'tv_blue'),
+        ('049', 'marine'),
+        ('449', 'slate'),
+        ('779', 'lightblue'),
+        ('247', 'skyblue'),
+        ('409', 'purpleblue'),
+        ('226', 'deepblue'),
+        ('115', 'density'),
+    ]),
+    ('yellows', [
+        ('990', 'yellow'),
+        ('992', 'tv_yellow'),
+        ('994', 'paleyellow'),
+        ('983', 'yelloworange'),
+        ('792', 'limon'),
+        ('976', 'wheat'),
+        ('653', 'sand'),
+    ]),
+    ('magentas', [
+        ('909', 'magenta'),
+        ('927', 'lightmagenta'),
+        ('904', 'hotpink'),
+        ('968', 'pink'),
+        ('978', 'lightpink'),
+        ('644', 'dirtyviolet'),
+        ('949', 'violet'),
+        ('525', 'violetpurple'),
+        ('707', 'purple'),
+        ('515', 'deeppurple'),
+    ]),
+    ('cyans', [
+        ('099', 'cyan'),
+        ('799', 'palecyan'),
+        ('499', 'aquamarine'),
+        ('297', 'greencyan'),
+        ('077', 'teal'),
+        ('155', 'deepteal'),
+        ('466', 'lightteal'),
+    ]),
+    ('oranges', [
+        ('950', 'orange'),
+        ('951', 'tv_orange'),
+        ('962', 'brightorange'),
+        ('985', 'lightorange'),
+        ('983', 'yelloworange'),
+        ('760', 'olive'),
+        ('551', 'deepolive'),
+    ]),
+    ('tints', [
+        ('976', 'wheat'),
+        ('686', 'palegreen'),
+        ('779', 'lightblue'),
+        ('994', 'paleyellow'),
+        ('978', 'lightpink'),
+        ('799', 'palecyan'),
+        ('985', 'lightorange'),
+        ('889', 'bluewhite'),
+    ]),
+    ('grays', [
+        ('999', 'white'),
+        ('999', 'gray90'),
+        ('888', 'gray80'),
+        ('777', 'gray70'),
+        ('666', 'gray60'),
+        ('555', 'gray50'),
+        ('444', 'gray40'),
+        ('333', 'gray30'),
+        ('222', 'gray20'),
+        ('222', 'gray10'),
+        ('222', 'black'),
+    ]),
+]
 
-def reds(self_cmd, sele):
-    return [
-        [ 2, 'Reds'     ,''                               ],
-        [1,'\\900red','cmd.color(4,"'+sele+'")'],
-        [1,'\\922tv_red','cmd.color(32,"'+sele+'")'],
-        [1,'\\634raspberry','cmd.color(5268,"'+sele+'")'],
-        [1,'\\755darksalmon','cmd.color(5280,"'+sele+'")'],
-        [1,'\\955salmon','cmd.color(9,"'+sele+'")'],
-        [1,'\\944deepsalmon','cmd.color(5258,"'+sele+'")'],
-        [1,'\\824warmpink','cmd.color(5279,"'+sele+'")'],
-        [1,'\\611firebrick','cmd.color(49,"'+sele+'")'],
-        [1,'\\522ruby','cmd.color(21,"'+sele+'")'],
-        [1,'\\521chocolate','cmd.color(50,"'+sele+'")'],
-        [1,'\\632brown','cmd.color(51,"'+sele+'")'],
-        ]
+def colorramps(self_cmd, expr):
+    with menucontext(self_cmd) as mc:
+        return [[ 1, name, expr.format(name) ]
+                for name in mc.ramps]
 
-def greens(self_cmd, sele):
-    return [
-        [ 2, 'Greens'     ,''                               ],
-        [1,'\\090green','cmd.color(3,"'+sele+'")'],
-        [1,'\\292tv_green','cmd.color(33,"'+sele+'")'],
-        [1,'\\490chartreuse','cmd.color(14,"'+sele+'")'],
-        [1,'\\570splitpea','cmd.color(5267,"'+sele+'")'],
-        [1,'\\564smudge','cmd.color(5270,"'+sele+'")'],
-        [1,'\\686palegreen','cmd.color(5259,"'+sele+'")'],
-        [1,'\\094limegreen','cmd.color(15,"'+sele+'")'],
-        [1,'\\494lime','cmd.color(10,"'+sele+'")'],
-        [1,'\\792limon','cmd.color(5276,"'+sele+'")'],      
-        [1,'\\252forest','cmd.color(22,"'+sele+'")'],
-        ]
-
-def blues(self_cmd, sele):
-    return [
-        [ 2, 'Blues'     ,''                               ],
-        [1,'\\009blue','cmd.color(2,"'+sele+'")'],
-        [1,'\\339tv_blue','cmd.color(34,"'+sele+'")'],
-        [1,'\\049marine','cmd.color(17,"'+sele+'")'],
-        [1,'\\449slate','cmd.color(11,"'+sele+'")'],
-        [1,'\\779lightblue','cmd.color(5263,"'+sele+'")'],
-        [1,'\\247skyblue','cmd.color(5277,"'+sele+'")'],
-        [1,'\\409purpleblue','cmd.color(16,"'+sele+'")'],
-        [1,'\\226deepblue','cmd.color(23,"'+sele+'")'],
-        [1,'\\115density','cmd.color(4155,"'+sele+'")'],
-        ]
-
-def yellows(self_cmd, sele):
-    return [
-        [ 2, 'Yellows'     ,''                               ],
-        [1,'\\990yellow','cmd.color(6,"'+sele+'")'],
-        [1,'\\992tv_yellow','cmd.color(35,"'+sele+'")'],
-        [1,'\\994paleyellow','cmd.color(5256,"'+sele+'")'],
-        [1,'\\983yelloworange','cmd.color(36,"'+sele+'")'],            
-        [1,'\\792limon','cmd.color(5276,"'+sele+'")'],
-        [1,'\\976wheat','cmd.color(52,"'+sele+'")'],
-        [1,'\\653sand','cmd.color(5269,"'+sele+'")'],
-        ]
-
-def magentas(self_cmd, sele):
-    return [
-        [ 2, 'Magentas'     ,''                               ],
-        [1,'\\909magenta','cmd.color(8,"'+sele+'")'],
-        [1,'\\927lightmagenta','cmd.color(154,"'+sele+'")'],
-        [1,'\\904hotpink','cmd.color(12,"'+sele+'")'],
-        [1,'\\968pink','cmd.color(48,"'+sele+'")'],
-        [1,'\\978lightpink','cmd.color(5274,"'+sele+'")'],
-        [1,'\\644dirtyviolet','cmd.color(5272,"'+sele+'")'],
-        [1,'\\949violet','cmd.color(53,"'+sele+'")'],
-        [1,'\\525violetpurple','cmd.color(5271,"'+sele+'")'],
-        [1,'\\707purple','cmd.color(19,"'+sele+'")'],
-        [1,'\\515deeppurple','cmd.color(5261,"'+sele+'")'],
-        ]
-
-def cyans(self_cmd, sele):
-    return [
-        [ 2, 'Cyans'     ,''                               ],
-        [1,'\\099cyan','cmd.color(5,"'+sele+'")'],
-        [1,'\\799palecyan','cmd.color(5265,"'+sele+'")'],
-        [1,'\\499aquamarine','cmd.color(5257,"'+sele+'")'],
-        [1,'\\297greencyan','cmd.color(5275,"'+sele+'")'],
-        [1,'\\077teal','cmd.color(20,"'+sele+'")'],
-        [1,'\\155deepteal','cmd.color(5262,"'+sele+'")'],
-        [1,'\\466lightteal','cmd.color(5266,"'+sele+'")'],
-        ]
-
-def oranges(self_cmd, sele):
-    return [
-        [ 2, 'Oranges'     ,''                               ],
-        [1,'\\950orange','cmd.color(13,"'+sele+'")'],
-        [1,'\\951tv_orange','cmd.color(37,"'+sele+'")'],
-        [1,'\\962brightorange','cmd.color(30,"'+sele+'")'],
-        [1,'\\985lightorange','cmd.color(5264,"'+sele+'")'],      
-        [1,'\\983yelloworange','cmd.color(36,"'+sele+'")'],      
-        [1,'\\760olive','cmd.color(18,"'+sele+'")'],
-        [1,'\\551deepolive','cmd.color(5260,"'+sele+'")'],
-        ]
-
-def tints(self_cmd, sele):
-    return [
-        [ 2, 'Tints'     ,''                               ],
-        [1,'\\976wheat','cmd.color(52,"'+sele+'")'],
-        [1,'\\686palegreen','cmd.color(5259,"'+sele+'")'],
-        [1,'\\779lightblue','cmd.color(5263,"'+sele+'")'],      
-        [1,'\\994paleyellow','cmd.color(5256,"'+sele+'")'],
-        [1,'\\978lightpink','cmd.color(5274,"'+sele+'")'],
-        [1,'\\799palecyan','cmd.color(5265,"'+sele+'")'],
-        [1,'\\985lightorange','cmd.color(5264,"'+sele+'")'],            
-        [1,'\\889bluewhite','cmd.color(5278,"'+sele+'")'],
-        ]
-    
-def grays(self_cmd, sele):
-    return [
-        [ 2, 'Grays'     ,''                               ],
-        [ 1, '\\999white ', 'cmd.color("white","'+sele+'")'  ],
-        [ 1, '\\999gray90 ', 'cmd.color("grey90","'+sele+'")'  ],
-        [ 1, '\\888gray80 ', 'cmd.color("grey80","'+sele+'")'  ],
-        [ 1, '\\777gray70 ', 'cmd.color("grey70","'+sele+'")'  ],
-        [ 1, '\\666gray60 ', 'cmd.color("grey60","'+sele+'")'  ],
-        [ 1, '\\555gray50 ', 'cmd.color("grey50","'+sele+'")'  ],
-        [ 1, '\\444gray40 ', 'cmd.color("grey40","'+sele+'")'  ],
-        [ 1, '\\333gray30 ', 'cmd.color("grey30","'+sele+'")'  ],
-        [ 1, '\\222gray20 ', 'cmd.color("grey20","'+sele+'")'  ],
-        [ 1, '\\222gray10 ', 'cmd.color("grey10","'+sele+'")'  ],
-        [ 1, '\\222black ', 'cmd.color("black","'+sele+'")'  ],
-        ]
+def all_colors_generic(self_cmd, expr):
+    r = [
+        [ 1, '\\' + c_list[0][0] + gn, [[2, gn.capitalize(), '']] + [
+            [1, '\\' + c3 + cn, expr.format(cn)]
+            for (c3, cn) in c_list
+        ]]
+        for (gn, c_list) in all_colors_list
+    ]
+    ramps = colorramps(self_cmd, expr)
+    if ramps:
+        r += [[ 0, '', '' ], [ 1, 'ramps', ramps ]]
+    return r
 
 def all_colors(self_cmd, sele):
-    return [
-    [ 1, '\\900reds'        ,reds(self_cmd, sele) ],
-    [ 1, '\\090greens'      ,greens(self_cmd, sele) ],
-    [ 1, '\\009blues'       ,blues(self_cmd, sele) ],
-    [ 1, '\\990yellows'      ,yellows(self_cmd, sele) ],
-    [ 1, '\\909magentas'    , magentas(self_cmd, sele) ],
-    [ 1, '\\099cyans'        , cyans(self_cmd, sele) ],
-    [ 1, '\\950oranges'        , oranges(self_cmd, sele) ],   
-    [ 1, '\\978tints'        ,tints(self_cmd, sele) ],
-    [ 1, '\\666grays'        ,grays(self_cmd, sele) ],
-#   [ 0, '', ''],
-#   [ 1, '\\900red'         ,'cmd.color("red","'+sele+'")'  ],
-#   [ 1, '\\090green'       ,'cmd.color("green","'+sele+'")'  ],
-#   [ 1, '\\009blue'        ,'cmd.color("blue","'+sele+'")'  ],
-#   [ 1, '\\990yellow'      ,'cmd.color("yellow","'+sele+'")'  ],
-#   [ 1, '\\909magenta' ,'cmd.color("magenta","'+sele+'")'  ],
-#   [ 1, '\\099cyan'  ,'cmd.color("cyan","'+sele+'")'  ],           
-#   [ 1, '\\955salmon'      ,'cmd.color("salmon","'+sele+'")'  ],
-#   [1,  '\\940orange','cmd.color(13,"'+sele+'")'],
-#   
-#   [ 1, '\\555gray'    ,'cmd.color("gray","'+sele+'")'  ],
-#   [ 1, '\\999white'       ,'cmd.color("white","'+sele+'")'  ],
-    
-        ]
-
+    expr = 'cmd.color("{0}", ' + repr(sele) + ')'
+    with menucontext(self_cmd, sele):
+        return all_colors_generic(self_cmd, expr)
+ 
 def vol_color(self_cmd, sele):
     from pymol.colorramping import namedramps
     rsele = repr(sele)
@@ -581,6 +577,9 @@ def vol_color(self_cmd, sele):
         for p in sorted(namedramps)
     ]
 
+def slice_color(self_cmd, sele):
+    expr = 'cmd.color("{0}", %s)' % (repr(sele))
+    return colorramps(self_cmd, expr)
 
 def color_auto(self_cmd, sele):
     return [
@@ -596,7 +595,8 @@ def color_auto(self_cmd, sele):
         ]
    
 def mol_color(self_cmd, sele):
-    return (
+    with menucontext(self_cmd, sele):
+      return (
         [[ 2, 'Color:'     ,''                               ],
          [ 1, 'by element'  , by_elem(self_cmd, sele) ],
          [ 1, 'by chain' , by_chain(self_cmd, sele) ],
@@ -1022,6 +1022,7 @@ def sele_action(self_cmd, sele):
               [ 1, 'align', sele_align(self_cmd, sele) ],
               [ 0, ''               ,''                             ],
               [ 1, 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
+              [ 1, 'hydrogens' , hydrogens(self_cmd, sele) ],
               [ 0, ''          ,''                                              ],
               [ 1, 'duplicate'      ,'cmd.select(None,"'+sele+'")'          ], # broken...
               [ 1, 'copy to object' ,'cmd.create(None,"'+sele+'",zoom=0)'     ],
@@ -1205,6 +1206,8 @@ def map_slice(self_cmd, sele):
             [ 1, 'default'         , 'cmd.slice_new("'+sele+'_slice","'+sele+'");cmd.ramp_new("'+sele+
               '_slice_ramp","'+sele+'");cmd.color("'+sele+'_slice_ramp","'+sele+'_slice");'+
               'cmd.set("slice_track_camera",1,"'+sele+'_slice");'+
+              'cmd.set("two_sided_lighting",1,"'+sele+'_slice");'+
+              'cmd.set("ray_interior_color",0,"'+sele+'_slice");'+
               'cmd.set("slice_dynamic_grid",1,"'+sele+'_slice")'],
             ]
 
@@ -1348,7 +1351,8 @@ def label_ids(self_cmd, sele):
               ]
               
 def mol_labels(self_cmd, sele):
-    return [[ 2, 'Label:'        , ''                                  ],
+    with menucontext(self_cmd, sele) as mc:
+        return [[ 2, 'Label:'        , ''                                  ],
               [ 1, 'clear'          , 'cmd.label("'+sele+'","\'\'")'         ],
               [ 0, ''               , ''                                  ],
               [ 1, 'residues'       , """cmd.label('''(name """+self_cmd.get("label_anchor")+"""+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
@@ -1589,7 +1593,8 @@ def pick_menu(self_cmd, sele1, sele2):
         title = sele1[0:-1]
     else:
         title = sele1
-    return [[ 2, title     , '' ],
+    with menucontext(self_cmd, sele2):
+        return [[ 2, title     , '' ],
             [ 1, 'drag object matrix'      ,'cmd.drag("(byobj ('+sele2+'))",mode=1)'            ],
             [ 1, 'drag object coords'      ,'cmd.drag("(byobj ('+sele2+'))")'            ],
             [ 0, ''             , ''                      ],

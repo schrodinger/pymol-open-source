@@ -9167,7 +9167,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     glGetIntegerv(GL_VIEWPORT, (GLint *) (void *) view_save);
     InitializeViewPort(G, I, x, y, oversize_width, oversize_height, &stereo_mode, &stereo_using_mono_matrix, &width_scale);
 
-    if(!(pick || smp) && !must_render_stereo)
+    if(!(pick || smp))
       bg_grad(G);
     debug_pick = SettingGetGlobal_i(G, cSetting_debug_pick);
 

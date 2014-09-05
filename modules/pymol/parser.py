@@ -16,20 +16,22 @@
 # Python parser module for PyMol
 #
 
+from __future__ import absolute_import
+
 if __name__=='pymol.parser':
     
     import pymol
     import traceback
     import string
     import re
-    import parsing
     import types
     import glob
     import sys
     import os
     import __main__
 
-    from cmd import _feedback,fb_module,fb_mask,exp_path
+    from . import parsing
+    from .cmd import _feedback,fb_module,fb_mask,exp_path
 
     QuietException = parsing.QuietException
     CmdException = pymol.CmdException
@@ -132,7 +134,7 @@ if __name__=='pymol.parser':
 
         # main parser routine
 
-        def parse(self,s,secure):
+        def parse(self,s,secure=0):
             layer = self.layer.get(self.nest,None)
             self.result = None
 # report any uncaught errors...
@@ -304,53 +306,6 @@ if __name__=='pymol.parser':
                                                 #
                                                 self.result=apply(layer.kw[0],layer.args)
                                                 #                           
-                                            elif layer.kw[4]==parsing.SPAWN:
-                                                if not secure:
-                                                    path = exp_path(layer.args[0])                                                    
-                                                    if re.search("\.pml$",path) != None:
-                                                        if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
-                                                            print "Warning: use '@' instead of 'spawn' with PyMOL command scripts?"
-                                                    # spawn command
-                                                    if len(layer.args)==1: # default: module
-                                                        parsing.run_file_as_module(path,spawn=1)
-                                                    elif layer.args[1]=='main':
-                                                        parsing.spawn_file(path,__main__.__dict__,__main__.__dict__)
-                                                    elif layer.args[1]=='private':
-                                                        parsing.spawn_file(path,__main__.__dict__,{})
-                                                    elif layer.args[1]=='local':
-                                                        parsing.spawn_file(path,self.pymol_names,{})
-                                                    elif layer.args[1]=='global':
-                                                        parsing.spawn_file(path,self.pymol_names,self.pymol_names)
-                                                    elif layer.args[1]=='module':
-                                                        parsing.run_file_as_module(path,spawn=1)
-                                                else:
-                                                    layer.next = []                                    
-                                                    print 'Error: spawn disallowed in this file.'
-                                                    return None
-                                            elif layer.kw[4]==parsing.RUN: # synchronous
-                                                if not secure:
-                                                    path = exp_path(layer.args[0])
-                                                    if re.search("\.pml$",path) != None:
-                                                        if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
-                                                            print "Warning: use '@' instead of 'run' with PyMOL command scripts?"
-                                                    # run command
-                                                    if len(layer.args)==1: # default: global
-                                                        parsing.run_file(path,self.pymol_names,self.pymol_names)
-                                                    elif layer.args[1]=='main':
-                                                        parsing.run_file(path,__main__.__dict__,__main__.__dict__)
-                                                    elif layer.args[1]=='private':
-                                                        parsing.run_file(path,__main__.__dict__,{})
-                                                    elif layer.args[1]=='local':
-                                                        parsing.run_file(path,self.pymol_names,{})
-                                                    elif layer.args[1]=='global':
-                                                        parsing.run_file(path,self.pymol_names,self.pymol_names)
-                                                    elif layer.args[1]=='module':
-                                                        parsing.run_file_as_module(path,spawn=0)
-                                                    self.cmd._pymol.__script__ = layer.sc_path
-                                                else:
-                                                    layer.next = []                                    
-                                                    print 'Error: run disallowed in this file.'
-                                                    return None                                    
                                             elif (layer.kw[4]==parsing.EMBED):
                                                 layer.next = []
                                                 if secure or self.nest==0: # only legal on top level and p1m files
@@ -481,7 +436,7 @@ if __name__=='pymol.parser':
                     print "Parser: QuietException caught"
                 p_result = 0 # notify caller that an error was encountered
             except CmdException as e:
-                if e.args:
+                if e.message:
                     print e
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):         
                     print "Parser: CmdException caught."
@@ -520,11 +475,15 @@ if __name__=='pymol.parser':
                         if self.layer[0].embed_sentinel!=None:
                             self.parse(l)
                         else:
-                            self.cmd.do(l)
+                            self.cmd.do(l, flush=True)
                     else:
-                        self.cmd.do(l)
+                        self.cmd.do(l, flush=True)
                 elif not self.cmd._pymol.invocation.options.keep_thread_alive:
                     self.cmd.quit()
+                else:
+                    import time
+                    time.sleep(.1)
+
             self.cmd._pymol._stdin_reader_thread = None
 
         def complete(self,st):

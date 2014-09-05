@@ -816,7 +816,7 @@ static int TriangleBuildObvious(TriangleSurfaceRec * II, int i1, int i2, float *
                   minDist2 = dif2;
                   maxDot = dot;
                   i0 = j;
-                } else if((dif2 / minDist2) < (float) pow(2 * (dot / maxDot), 2.0)) {
+                } else if((dif2 / minDist2) < powf(2 * (dot / maxDot), 2.0f)) {
                   minDist2 = dif2;
                   maxDot = dot;
                   i0 = j;
@@ -1021,7 +1021,7 @@ static int TriangleBuildSecondPass(TriangleSurfaceRec * II, int i1, int i2, floa
                   minDist2 = dif2;
                   maxDot = dot;
                   i0 = j;
-                } else if((dif2 / minDist2) < pow(2 * (dot / maxDot), 2.0)) {
+                } else if((dif2 / minDist2) < powf(2 * (dot / maxDot), 2.0f)) {
                   maxDot = dot;
                   minDist2 = dif2;
                   i0 = j;

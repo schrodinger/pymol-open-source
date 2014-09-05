@@ -3,12 +3,14 @@
 
 #include"os_gl_pre.h"
 
-#if defined(WIN32) || defined(_PYMOL_LIB)
+//#if defined(WIN32) || defined(_PYMOL_PURE_OPENGL_ES)
+#if 1
 #define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = (tname*) malloc(size * sizeof(tname));
-#else
-#define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = (tname*) malloc(size * sizeof(tname)); assert(variablename);
-#endif
 #define DEALLOCATE_ARRAY(variablename) free(variablename);
+#else
+#define ALLOCATE_ARRAY(tname,variablename, size) tname variablename[size];
+#define DEALLOCATE_ARRAY(variablename)
+#endif
 
 #if defined(OPENGL_ES_2)
 #define GL_LABEL_SCREEN_SHADER  0xfff0

@@ -449,14 +449,13 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
 int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete);
 
 float ObjectMoleculeGetMaxVDW(ObjectMolecule * I);
-int ObjectMoleculeGetCheckHBond(int *h_is_real,
+int ObjectMoleculeGetCheckHBond(AtomInfoType **h_real,
                                 float *h_crd_ret,
                                 ObjectMolecule * don_obj,
                                 int don_atom,
                                 int don_state,
                                 ObjectMolecule * acc_obj,
-                                int acc_atom, int acc_state, HBondCriteria * hbc,
-				int * h_idx);
+                                int acc_atom, int acc_state, HBondCriteria * hbc);
 void ObjectMoleculeInitHBondCriteria(PyMOLGlobals * G, HBondCriteria * hbc);
 int ObjectMoleculeConvertIDsToIndices(ObjectMolecule * I, int *id, int n_id);
 

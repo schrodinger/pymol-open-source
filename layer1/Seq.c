@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include "Menu.h"
 #include "Executive.h"
 #include "Ortho.h"
+#include "CGO.h"
 
 struct _CSeq {
   Block *Block;

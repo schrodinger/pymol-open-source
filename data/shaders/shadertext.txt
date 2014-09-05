@@ -1,5 +1,11 @@
 #include "os_gl.h"
-#if defined(OPENGL_ES_2)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if defined(PURE_OPENGL_ES_2)
+#elif defined(OPENGL_ES_2)
 /* these are the shaders that uses ES2 */
 read default_vs default_es2.vs
 read default_fs default_es2.fs
@@ -36,3 +42,7 @@ read anaglyph_fs anaglyph.fs
 read anaglyph_header_fs anaglyph_header.fs
 read ramp_vs ramp.vs
 read ramp_fs ramp.fs
+
+#ifdef __cplusplus
+}
+#endif

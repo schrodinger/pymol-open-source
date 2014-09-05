@@ -42,6 +42,12 @@ Z* -------------------------------------------------------------------
   (Elem)->Link = NULL; \
 }
 
+#define ListPrepend(List,Elem,Link) \
+{ \
+  (Elem)->Link = List; \
+  (List) = Elem; \
+}
+
 #define ListInsert(List,Elem,After,Link,ElemType) \
 { \
   register ElemType *current = List; \

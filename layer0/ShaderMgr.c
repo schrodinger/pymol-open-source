@@ -28,6 +28,8 @@ Z* -------------------------------------------------------------------
 #include "Color.h"
 #include "Vector.h"
 #include "Util.h"
+#include "Texture.h"
+#include "File.h"
 
 #define MAX_LOG_LEN 1024
 
@@ -225,10 +227,8 @@ void CShaderPrg_Reload_All_Shaders(PyMOLGlobals * G){
 
 char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, char *name, char *fileName, char *fallback_str, char **replaceStrings){
   CShaderMgr *I = G->ShaderMgr;
-  FILE* f = NULL;
-  long size;
   char* buffer = NULL, *p, *pymol_path, *shader_path, *fullFile = NULL, *pl, *newpl, *tpl, *chrsp, *chrnl;
-  size_t res;
+  long res;
   char *newbuffer;
   int newbuffersize;
   short allocated = 0;
@@ -257,9 +257,9 @@ char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, ch
     fullFile = strcat(fullFile, shader_path);
     fullFile = strcat(fullFile, fileName);
     /* read the file from disk */
-    f = fopen(fullFile, "rb");
+    buffer = FileGetContents(fullFile, &res);
   }
-  if (!f) {
+  if (!buffer) {
     if (I->print_warnings){
       PRINTFB(G, FB_ShaderMgr, FB_Errors)
 	" CShaderPrg_ReadFromFile_Or_Use_String-Error: Unable to open file '%s' loading from memory\n", fullFile ENDFB(G);
@@ -267,16 +267,7 @@ char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, ch
     buffer = fallback_str;
     res = strlen(buffer) -1;
   } else {
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    buffer = (char*) Alloc(char, size+255);
     allocated = 1;
-    ErrChkPtr(G,buffer);
-    p = buffer;
-    fseek(f, 0, SEEK_SET);
-    res = fread(p, size, 1, f);
-    if (res) res = size;
   }
   newbuffer = VLAlloc(char, 1000);
   newbuffer[0] = 0;
@@ -388,8 +379,6 @@ char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, ch
   VLAFreeP(ifdefstack);
   if (fullFile)
     free(fullFile);
-  if (f)
-    fclose(f);
   return newbuffer;
 }
 
@@ -1169,10 +1158,7 @@ int CShaderMgr_ShadersPresent(CShaderMgr * I)
 }
 
 char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
-  FILE* f;
-  long size;
   char* buffer = NULL, *p, *pymol_path, *shader_path, *fullFile;
-  size_t res;
 
   PRINTFB(G, FB_ShaderMgr, FB_Debugging)
     "CShaderMgr_ReadShaderFromDisk: fileName='%s'\n", fileName
@@ -1197,10 +1183,9 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
   fullFile = strcat(fullFile, shader_path);
   fullFile = strcat(fullFile, fileName);
 
-  /* read the file from disk */
-  f = fopen(fullFile, "rb");
+  buffer = FileGetContents(fullFile, NULL);
 
-  if (!f) {
+  if (!buffer) {
     PRINTFB(G, FB_ShaderMgr, FB_Errors)
       " PyMOLShader_NewFromFile-Error: Unable to open file '%s' PYMOL_PATH='%s'\n", fullFile, pymol_path ENDFB(G);
     return NULL;
@@ -1209,26 +1194,6 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
       " PyMOLShader_NewFromFile: Loading shader from '%s'.\n", fullFile ENDFB(G);
   }
   
-  /* rewind and get file size */
-  fseek(f, 0, SEEK_END);
-  size = ftell(f);
-  fseek(f, 0, SEEK_SET);
-
-  buffer = (char*) mmalloc(size+255);
-  ErrChkPtr(G,buffer);
-  p = buffer;
-  fseek(f, 0, SEEK_SET);
-  res = fread(p, size, 1, f);
-  /* error reading shader */
-  if(1!=res) {
-    PRINTFB(G, FB_ShaderMgr, FB_Errors)
-      " PyMOLShader_NewFromFile-Error: size(%ld)!=res(%ld)\n", size,res ENDFB(G);
-    return NULL;
-  }
-
-  p[size] = 0;
-  fclose(f);
-
   free(fullFile);
   return buffer;
 }

@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Scene.h"
 #include"ShaderMgr.h"
+#include"CGO.h"
 
 void RepDotFree(RepDot * I);
 

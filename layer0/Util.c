@@ -81,7 +81,7 @@ double UtilGetSeconds(PyMOLGlobals *G)
 #endif
 }
 
-char *UtilConcat(char *where,char *what)
+char *UtilConcat(char *where,const char *what)
 {
   while(*what)
 	 *(where++)=*(what++);
@@ -89,9 +89,9 @@ char *UtilConcat(char *where,char *what)
   return(where);
 }
 
-void UtilConcatVLA(char **vla,ov_size *cc,char *str)
+void UtilConcatVLA(char **vla,ov_size *cc,const char *str)
 {
-  char *what;
+  const char *what;
   char *where;
   ov_size len;
 
@@ -139,7 +139,7 @@ void UtilFillVLA(char **vla,ov_size *cc,char what,ov_size len)
 }
 
 
-void UtilNConcat(char *dst,char *src,ov_size n) { /* copies up to N-1 chars */
+void UtilNConcat(char *dst,const char *src,ov_size n) { /* copies up to N-1 chars */
   ov_size l;
   l=strlen(dst);
   if(n>l) {
@@ -147,7 +147,7 @@ void UtilNConcat(char *dst,char *src,ov_size n) { /* copies up to N-1 chars */
   }
 }
 
-void UtilNCopy(char *dst,char *src,ov_size n) 
+void UtilNCopy(char *dst,const char *src,ov_size n)
 { /* copies up to N-1 chars */
   if(n--) {
     while(n--) {
@@ -160,7 +160,7 @@ void UtilNCopy(char *dst,char *src,ov_size n)
   *dst=0;
 }
 
-void UtilNCopyToLower(char *dst,char *src,ov_size n)
+void UtilNCopyToLower(char *dst,const char *src,ov_size n)
 {
   if(n--) {
     while(n--) {
@@ -209,7 +209,7 @@ void UtilZeroMem(void *ptr,ov_size howMuch)
   MemoryZero(p,q);
 }
 
-void UtilCopyMem(void *dst,void *src,ov_size howMuch) /* optimize! */
+void UtilCopyMem(void *dst,const void *src,ov_size howMuch) /* optimize! */
 {
   /* need to determine the memory is non-overlapping.  If so, then use memcpy. */
   char *c,*d;

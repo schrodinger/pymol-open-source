@@ -29,7 +29,7 @@ CQueue *QueueNew(PyMOLGlobals * G, unsigned int mask);
 void QueueFree(CQueue * I);
 int QueueStrCheck(CQueue * I);
 
-void QueueStrIn(CQueue * I, char *c);
+void QueueStrIn(CQueue * I, const char *c);
 int QueueStrOut(CQueue * I, char *c);
 
 #endif

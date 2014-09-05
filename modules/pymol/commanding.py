@@ -72,6 +72,18 @@ SEE ALSO
 
         def close(self):
             del self.queue
+
+    re_fetch = re.compile(r'(\bfetch\s+\w[^;\r\n\'"]+)')
+
+    class LogFile(file):
+        def _append_async0(self, m):
+            s = m.group()
+            if 'async' in s:
+                return s
+            return s.rstrip(',') + ', async=0'
+        def write(self, s):
+            s = re_fetch.sub(self._append_async0, s)
+            file.write(self, s)
  
     def log_open(filename='log.pml', mode='w', _self=cmd):
         '''
@@ -101,7 +113,7 @@ SEE ALSO
                             del pymol._log_file
                 except:
                     pass
-                pymol._log_file = open(filename,mode)
+                pymol._log_file = LogFile(filename,mode)
                 if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
                     if mode!='a':
                         print " Cmd: logging to '%s'."%filename
@@ -394,11 +406,15 @@ DESCRIPTION
 
 USAGE
 
-    quit
+    quit [code]
+
+ARGUMENTS
+
+    code = int: exit the application with status "code" {default: 0}
 
 PYMOL API
 
-    cmd.quit()
+    cmd.quit(int code)
         '''
         code = int(code)
         if thread.get_ident() == pymol.glutThread:
@@ -559,7 +575,7 @@ DESCRIPTION
             try:
                 func(*args, **kwargs)
             except (pymol.CmdException, cmd.QuietException) as e:
-                if e.args:
+                if e.message:
                     print e
             finally:
                 _self.set_wizard_stack(filter(lambda w: w != wiz,

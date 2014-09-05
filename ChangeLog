@@ -2,6 +2,34 @@
 CHANGE LOG
 =========================================================================
 
+2014-09-04 Thomas Holder, Blaine Bell
+
+	* 1.7.3.0 (unstable/experimental)
+
+	* sync various pieces of code with Incentive PyMOL
+
+	* faster iterate/alter implementation ported from Incentive PyMOL
+
+	* experimental mmCIF write support (atoms only)
+
+	* partial multi-letter chain support
+
+	* super: use guide instead of CA, enables nuc acid alignment
+
+	* fix movie panel not shown until resize
+
+	* eliminate some deprecated parsing modes
+
+	* python: convert some files to absolute_import
+
+	* --help and --version
+
+	* dynamic_measures refactoring, fixes duplicated IDs bug
+
+	* get_type returns object:alignment and object:ramp
+
+	* new "command" Wizard ported from Incentive PyMOL
+
 2014-08-15 Thomas Holder, Blaine Bell
 
 	* reimplement volume carving

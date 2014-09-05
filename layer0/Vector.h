@@ -481,4 +481,7 @@ float ave2(float val1, float val2);
 void white4f(float *rgba, float value);
 void add4f(float *v1, float *v2, float *sum);
 
+int countchrs(char *str, char ch);
+
+float smooth(float x, float power);
 #endif

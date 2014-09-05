@@ -23,6 +23,17 @@ tmp4 = _prefix + "4"
 # routines to assist in molecular editing
 
 def attach_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
+    '''
+ARGUMENTS
+
+    selection = str: must be "pk1"
+
+    fragment = str: fragment name to load from fragment library
+
+    hydrogen = int: hydrogen atom ID in fragment to fuse
+
+    anchor = int: none-hydrogen atom ID in fragment to fuse
+    '''
     if not selection in _self.get_names("selections"):
         if fragment in _self.get_names("objects"):
             print " Error: an object with than name already exists"
@@ -91,6 +102,7 @@ ARGUMENTS
     r = DEFAULT_SUCCESS
     ss = int(ss)
     center = int(center)
+
     if hydro<0:
         hydro = not int(_self.get_setting_legacy("auto_remove_hydrogens"))
     if (selection not in _self.get_names('all')):
@@ -107,15 +119,15 @@ ARGUMENTS
             _self.edit("((%s) and name c)"%object)
         elif _self.count_atoms("((%s) and name n)"%object):
             _self.edit("((%s) and name n)"%object)
-    elif _self.select(tmp_connect,"(%s) & name N,C"%selection) != 1:
+    elif _self.select(tmp_connect,"(%s) & elem N,C"%selection) != 1:
         print "Error: invalid connection point: must be one atom, name N or C."
         _self.delete(tmp_wild)
         raise QuietException
-    elif amino_acid in ["nhh","nme"] and _self.select(tmp_connect,"(%s) & name C"%selection) != 1:
+    elif amino_acid in ["nhh","nme"] and _self.select(tmp_connect,"(%s) & elem C"%selection) != 1:
         print "Error: invalid connection point: must be C for residue '%s'"%(amino_acid)
         _self.delete(tmp_wild)
         raise QuietException
-    elif amino_acid in ["ace"] and _self.select(tmp_connect,"(%s) & name N"%selection) != 1:
+    elif amino_acid in ["ace"] and _self.select(tmp_connect,"(%s) & elem N"%selection) != 1:
         print "Error: invalid connection point: must be N for residue '%s'"%(amino_acid)
         _self.delete(tmp_wild)
         raise QuietException

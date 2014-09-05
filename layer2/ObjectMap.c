@@ -39,6 +39,9 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"Matrix.h"
 #include"Util.h"
+#include"ShaderMgr.h"
+#include"CGO.h"
+#include"File.h"
 
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_NUMPY
@@ -4590,46 +4593,24 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, char *fname, int
                              int is_string, int bytes, int quiet)
 {
   ObjectMap *I = NULL;
-  int ok = true;
-  FILE *f = NULL;
-  char *buffer, *p;
+  char *buffer;
   long size;
-  size_t res;
 
   if(!is_string) {
+    if (!quiet)
+      PRINTFB(G, FB_ObjectMap, FB_Actions)
+        " ObjectMapLoadCCP4File: Loading from '%s'.\n", fname ENDFB(G);
 
-    f = fopen(fname, "rb");
-    if(!f)
-      ok = ErrMessage(G, "ObjectMapLoadCCP4File", "Unable to open file!");
+    buffer = FileGetContents(fname, &size);
+
+    if(!buffer)
+      ErrMessage(G, "ObjectMapLoadCCP4File", "Unable to open file!");
+  } else {
+    buffer = fname;
+    size = (long) bytes;
   }
 
-  if(f || is_string) {
-
-    if(!quiet) {
-      if((!is_string) && Feedback(G, FB_ObjectMap, FB_Actions)) {
-        printf(" ObjectMapLoadCCP4File: Loading from '%s'.\n", fname);
-      }
-    }
-
-    if(!is_string) {
-      fseek(f, 0, SEEK_END);
-      size = ftell(f);
-      fseek(f, 0, SEEK_SET);
-
-      buffer = (char *) mmalloc(size);
-      ErrChkPtr(G, buffer);
-      p = buffer;
-      fseek(f, 0, SEEK_SET);
-      res = fread(p, size, 1, f);
-      /* error reading file */
-      if(1!=res)
-	return NULL;
-      fclose(f);
-    } else {
-      buffer = fname;
-      size = (long) bytes;
-    }
-
+  if (buffer) {
     I = ObjectMapReadCCP4Str(G, obj, buffer, size, state, quiet);
 
     if(!is_string)
@@ -4761,46 +4742,24 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, char *fname, int 
 {
 
   ObjectMap *I = NULL;
-  int ok = true;
-  FILE *f = NULL;
   long size;
-  char *buffer, *p;
-  size_t res;
+  char *buffer;
 
   if(!is_string) {
+    if (!quiet)
+      PRINTFB(G, FB_ObjectMap, FB_Actions)
+        " ObjectMapLoadPHIFile: Loading from '%s'.\n", fname ENDFB(G);
 
-    f = fopen(fname, "rb");
-    if(!f)
-      ok = ErrMessage(G, "ObjectMapLoadPHIFile", "Unable to open file!");
+    buffer = FileGetContents(fname, &size);
+
+    if(!buffer)
+      ErrMessage(G, "ObjectMapLoadPHIFile", "Unable to open file!");
+  } else {
+    buffer = fname;
+    size = (long) bytes;
   }
 
-  if(f || is_string) {
-
-    if(!quiet) {
-      if((!is_string) && Feedback(G, FB_ObjectMap, FB_Actions)) {
-        printf(" ObjectMapLoadPHIFile: Loading from '%s'.\n", fname);
-      }
-    }
-
-    if(!is_string) {
-      fseek(f, 0, SEEK_END);
-      size = ftell(f);
-      fseek(f, 0, SEEK_SET);
-
-      buffer = (char *) mmalloc(size);
-      ErrChkPtr(G, buffer);
-      p = buffer;
-      fseek(f, 0, SEEK_SET);
-      res = fread(p, size, 1, f);
-      /* error reading file */
-      if(1!=res)
-	return NULL;
-      fclose(f);
-    } else {
-      buffer = fname;
-      size = (long) bytes;
-    }
-
+  if(buffer) {
     I = ObjectMapReadPHIStr(G, obj, buffer, size, state, quiet);
 
     if(!is_string)
@@ -5116,36 +5075,20 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, i
                                int quiet)
 {
   ObjectMap *I = NULL;
-  int ok = true;
-  FILE *f;
   long size;
-  char *buffer, *p;
+  char *buffer;
   float mat[9];
-  size_t res;
 
-  f = fopen(fname, "rb");
-  if(!f) {
-    ok = ErrMessage(G, "ObjectMapLoadDXFile", "Unable to open file!");
+  buffer = FileGetContents(fname, &size);
+
+  if(!buffer) {
+    ErrMessage(G, "ObjectMapLoadDXFile", "Unable to open file!");
     PRINTFB(G, FB_ObjectMap, FB_Errors)
       "ObjectMapLoadDXFile: Does '%s' exist?\n", fname ENDFB(G);
   } else {
     if(Feedback(G, FB_ObjectMap, FB_Actions)) {
       printf(" ObjectMapLoadDXFile: Loading from '%s'.\n", fname);
     }
-
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    buffer = (char *) mmalloc(size);
-    ErrChkPtr(G, buffer);
-    p = buffer;
-    fseek(f, 0, SEEK_SET);
-    res = fread(p, size, 1, f);
-    /* error reading file */
-    if(1!=res)
-      return NULL;
-    fclose(f);
 
     I = ObjectMapReadDXStr(G, obj, buffer, size, state, quiet);
 
@@ -5364,35 +5307,20 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
                                  int state, int quiet)
 {
   ObjectMap *I = NULL;
-  int ok = true;
-  FILE *f;
   long size;
-  char *buffer, *p;
+  char *buffer;
   float mat[9];
-  size_t res;
   
-  f = fopen(fname, "rb");
-  if(!f) {
-    ok = ErrMessage(G, "ObjectMapLoadACNTFile", "Unable to open file!");
+  buffer = FileGetContents(fname, &size);
+
+  if(!buffer) {
+    ErrMessage(G, "ObjectMapLoadACNTFile", "Unable to open file!");
     PRINTFB(G, FB_ObjectMap, FB_Errors)
       "ObjectMapLoadACNTFile: Does '%s' exist?\n", fname ENDFB(G);
   } else {
     if(Feedback(G, FB_ObjectMap, FB_Actions)) {
       printf(" ObjectMapLoadACNTFile: Loading from '%s'.\n", fname);
     }
-
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    buffer = (char *) mmalloc(size);
-    ErrChkPtr(G, buffer);
-    p = buffer;
-    fseek(f, 0, SEEK_SET);
-    res = fread(p, size, 1, f);
-    if(1!=res)
-      return NULL;
-    fclose(f);
 
     I = ObjectMapReadACNTStr(G, obj, buffer, size, state, quiet);
 
@@ -5417,34 +5345,18 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
                                 int quiet)
 {
   ObjectMap *I = NULL;
-  int ok = true;
-  FILE *f;
   long size;
-  char *buffer, *p;
+  char *buffer;
   float mat[9];
-  size_t res;
 
-  f = fopen(fname, "rb");
-  if(!f)
-    ok = ErrMessage(G, "ObjectMapLoadFLDFile", "Unable to open file!");
-  else {
+  buffer = FileGetContents(fname, &size);
+
+  if(!buffer) {
+    ErrMessage(G, "ObjectMapLoadFLDFile", "Unable to open file!");
+  } else {
     if(Feedback(G, FB_ObjectMap, FB_Actions)) {
       printf(" ObjectMapLoadFLDFile: Loading from '%s'.\n", fname);
     }
-
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    buffer = (char *) mmalloc(size);
-    ErrChkPtr(G, buffer);
-    p = buffer;
-    fseek(f, 0, SEEK_SET);
-    res = fread(p, size, 1, f);
-    /* error reading file */
-    if(1!=res)
-      return NULL;
-    fclose(f);
 
     I = ObjectMapReadFLDStr(G, obj, buffer, size, state, quiet);
 
@@ -5469,36 +5381,18 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
                                  int state, int quiet)
 {
   ObjectMap *I = NULL;
-  int ok = true;
-  FILE *f = NULL;
   long size;
-  char *buffer, *p;
+  char *buffer;
   float mat[9];
-  size_t res;
 
-  f = fopen(fname, "rb");
-  if(!f)
-    ok = ErrMessage(G, "ObjectMapLoadBRIXFile", "Unable to open file!");
-  if(ok) {
+  buffer = FileGetContents(fname, &size);
+
+  if(!buffer) {
+    ErrMessage(G, "ObjectMapLoadBRIXFile", "Unable to open file!");
+  } else {
     if(Feedback(G, FB_ObjectMap, FB_Actions)) {
       printf(" ObjectMapLoadBRIXFile: Loading from '%s'.\n", fname);
     }
-
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    buffer = (char *) mmalloc(size + 255);
-    ErrChkPtr(G, buffer);
-    p = buffer;
-    fseek(f, 0, SEEK_SET);
-    res = fread(p, size, 1, f);
-    /* error reading file */
-    if(1!=res)
-      return NULL;
-    
-    p[size] = 0;
-    fclose(f);
 
     I = ObjectMapReadBRIXStr(G, obj, buffer, size, state, quiet);
 
@@ -5524,35 +5418,18 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
                                 int quiet)
 {
   ObjectMap *I = NULL;
-  int ok = true;
-  FILE *f = NULL;
   long size;
-  char *buffer, *p;
+  char *buffer;
   float mat[9];
-  size_t res;
 
-  f = fopen(fname, "rb");
-  if(!f)
-    ok = ErrMessage(G, "ObjectMapLoadGRDFile", "Unable to open file!");
-  if(ok) {
+  buffer = FileGetContents(fname, &size);
+
+  if(!buffer) {
+    ErrMessage(G, "ObjectMapLoadGRDFile", "Unable to open file!");
+  } else {
     if(Feedback(G, FB_ObjectMap, FB_Actions)) {
       printf(" ObjectMapLoadGRDFile: Loading from '%s'.\n", fname);
     }
-
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    buffer = (char *) mmalloc(size + 255);
-    ErrChkPtr(G, buffer);
-    p = buffer;
-    fseek(f, 0, SEEK_SET);
-    res = fread(p, size, 1, f);
-    /* error reading file */
-    if(1!=res)
-      return NULL;
-    p[size] = 0;
-    fclose(f);
 
     I = ObjectMapReadGRDStr(G, obj, buffer, size, state, quiet);
 
@@ -5578,43 +5455,25 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, char *fname,
                               int state, int is_file, int quiet)
 {
   ObjectMap *I = NULL;
-  int ok = true;
-  FILE *f = NULL;
   long size;
-  char *buffer, *p;
-  size_t res;
+  char *buffer;
 
   if(is_file) {
-    f = fopen(fname, "rb");
-    if(!f)
-      ok = ErrMessage(G, "ObjectMapLoadXPLOR", "Unable to open file!");
+    buffer = FileGetContents(fname, &size);
+
+    if(!buffer)
+      ErrMessage(G, "ObjectMapLoadXPLOR", "Unable to open file!");
+  } else {
+    buffer = fname;
   }
-  if(ok) {
+
+  if (buffer) {
     if((!quiet) && (Feedback(G, FB_ObjectMap, FB_Actions))) {
       if(is_file) {
         printf(" ObjectMapLoadXPLOR: Loading from '%s'.\n", fname);
       } else {
         printf(" ObjectMapLoadXPLOR: Loading...\n");
       }
-    }
-
-    if(is_file) {
-      fseek(f, 0, SEEK_END);
-      size = ftell(f);
-      fseek(f, 0, SEEK_SET);
-
-      buffer = (char *) mmalloc(size + 255);
-      ErrChkPtr(G, buffer);
-      p = buffer;
-      fseek(f, 0, SEEK_SET);
-      res = fread(p, size, 1, f);
-      /* error reading file */
-      if(1!=res)
-	return NULL;
-      p[size] = 0;
-      fclose(f);
-    } else {
-      buffer = fname;
     }
 
     I = ObjectMapReadXPLORStr(G, obj, buffer, state, quiet);

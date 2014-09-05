@@ -40,6 +40,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"Matrix.h"
 #include"ShaderMgr.h"
+#include"CGO.h"
 
 ObjectSurface *ObjectSurfaceNew(PyMOLGlobals * G);
 

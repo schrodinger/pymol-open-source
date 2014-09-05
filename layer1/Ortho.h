@@ -58,8 +58,8 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod);
 
 void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod);
 
-void OrthoAddOutput(PyMOLGlobals * G, char *str);
-void OrthoNewLine(PyMOLGlobals * G, char *prompt, int crlf);
+void OrthoAddOutput(PyMOLGlobals * G, const char *str);
+void OrthoNewLine(PyMOLGlobals * G, const char *prompt, int crlf);
 
 int OrthoDrag(PyMOLGlobals * G, int x, int y, int mod);
 
@@ -76,24 +76,24 @@ int OrthoGetDirty(PyMOLGlobals * G);
 void OrthoWorking(PyMOLGlobals * G);
 void OrthoClear(PyMOLGlobals * G);
 void OrthoFakeDrag(PyMOLGlobals * G);
-void OrthoBusyMessage(PyMOLGlobals * G, char *message);
+void OrthoBusyMessage(PyMOLGlobals * G, const char *message);
 void OrthoBusySlow(PyMOLGlobals * G, int progress, int total);
 void OrthoBusyFast(PyMOLGlobals * G, int progress, int total);
 void OrthoBusyPrime(PyMOLGlobals * G);
 void OrthoCommandSetBusy(PyMOLGlobals * G, int busy);
-void OrthoCommandIn(PyMOLGlobals * G, char *buffer);
+void OrthoCommandIn(PyMOLGlobals * G, const char *buffer);
 int OrthoCommandSize(PyMOLGlobals * G);
 int OrthoCommandOut(PyMOLGlobals * G, char *buffer);
 void OrthoCommandNest(PyMOLGlobals * G, int dir);
 int OrthoCommandOutSize(PyMOLGlobals * G);
 
-void OrthoFeedbackIn(PyMOLGlobals * G, char *buffer);
+void OrthoFeedbackIn(PyMOLGlobals * G, const char *buffer);
 int OrthoFeedbackOut(PyMOLGlobals * G, char *buffer);
 
 void OrthoSetWizardPrompt(PyMOLGlobals * G, char *vla);
 
 int OrthoGetOverlayStatus(PyMOLGlobals * G);
-void OrthoPasteIn(PyMOLGlobals * G, char *buffer);
+void OrthoPasteIn(PyMOLGlobals * G, const char *buffer);
 
 void OrthoRemoveSplash(PyMOLGlobals * G);
 void OrthoRemoveAutoOverlay(PyMOLGlobals * G);

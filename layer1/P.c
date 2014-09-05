@@ -64,7 +64,7 @@ the initialization functions for these libraries on startup.
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
 
-static int label_copy_text(char *dst, char *src, int len, int max)
+static int label_copy_text(char *dst, const char *src, int len, int max)
 {
   dst += len;
   while(len < max) {
@@ -272,7 +272,7 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
           } else if(!strcmp(tok, "resv")) {
             sprintf(buffer, "%d", at->resv);
           } else if(!strcmp(tok, "chain")) {
-            label_len = label_copy_text(label, at->chain, label_len, label_max);
+            label_len = label_copy_text(label, LexStr(G, at->chain), label_len, label_max);
           } else if(!strcmp(tok, "alt")) {
             label_len = label_copy_text(label, at->alt, label_len, label_max);
           } else if(!strcmp(tok, "segi")) {
@@ -284,16 +284,10 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
           } else if(!strcmp(tok, "elec_radius")) {
             sprintf(buffer, "%1.2f", at->elec_radius);
           } else if(!strcmp(tok, "text_type")) {
-            char null_st[1] = "";
-            char *st = null_st;
-            if(at->textType)
-              st = OVLexicon_FetchCString(G->Lexicon, at->textType);
+            const char *st = LexStr(G, at->textType);
             label_len = label_copy_text(label, st, label_len, label_max);
           } else if(!strcmp(tok, "custom")) {
-            char null_st[1] = "";
-            char *st = null_st;
-            if(at->custom)
-              st = OVLexicon_FetchCString(G->Lexicon, at->custom);
+            const char *st = LexStr(G, at->custom);
             label_len = label_copy_text(label, st, label_len, label_max);
           } else if(!strcmp(tok, "elem")) {
             label_len = label_copy_text(label, at->elem, label_len, label_max);
@@ -379,30 +373,15 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
     }
   }
 
-  {
-    if(at->label) {
-      OVLexicon_DecRef(G->Lexicon, at->label);
-      at->label = 0;
-    }
-
-    {
-      OVreturn_word ret;
-      if (!result && !label[0]){
-	// if label is not set, just use expression as a string for label
-	strncpy(label, origexpr, OrthoLineLength);
-	result = true;
-      }
-      if (result && label[0]){
-	ret = OVLexicon_GetFromCString(G->Lexicon, label);
-	if(OVreturn_IS_OK(ret)) {
-	  at->label = ret.word;
-	  result = true;
-	}
-	//    } else {
-	//      ErrMessage(G, "Label", "Aborting on error. Labels may be incomplete.");
-      }
-    }
+  if (!result && !label[0]){
+    // if label is not set, just use expression as a string for label
+    strncpy(label, origexpr, OrthoLineLength);
+    result = true;
   }
+
+  LexDec(G, at->label);
+  at->label = result ? LexIdx(G, label) : 0;
+
   return (result);
 }
 
@@ -437,6 +416,301 @@ PyObject *P_chempy = NULL;      /* okay as global */
 PyObject *P_models = NULL;      /* okay as global */
 PyObject *P_setting = NULL;     /* okay as global -- just used for names */
 
+static PyMappingMethods wrapperMappingMethods;
+static PyTypeObject Wrapper_Type = {
+  PyObject_HEAD_INIT(NULL)
+};
+
+Py_ssize_t WrapperObjectLen(PyObject *obj){
+  return 0;
+}
+
+static PyObject* PyObject_GenericGetAttrOrItem(PyObject *o, PyObject *key) {
+  PyObject *ret = PyObject_GenericGetAttr(o, key);
+  if (!PyErr_Occurred())
+    return ret;
+  PyErr_Clear();
+  return PyObject_GetItem(o, key);
+}
+
+int PyObject_GenericSetAttrAsItem(PyObject *o, PyObject *key, PyObject *value) {
+  return PyObject_SetItem(o, key, value);
+}
+
+PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
+  WrapperObject *wobj = (WrapperObject*)obj;
+  char *aprop;
+  AtomPropertyInfo *ap;
+  PyObject *ret = NULL;
+  if (!wobj || !wobj->obj){
+    /* ERROR */
+    PRINTFB(wobj->G, FB_Python, FB_Errors)
+      "Error: wrappers cannot be used outside of the iterate/alter/alter_state commands\n" ENDFB(wobj->G);
+    return NULL;
+  }
+  aprop = PyString_AS_STRING(PyObject_Str(key));
+  ap = PyMOL_GetAtomPropertyInfo(wobj->G->PyMOL, aprop);
+  if (ap){
+    switch (ap->Ptype){
+    case cPType_string:
+      {
+	char *val = (char*)(((char*)wobj->atomInfo) + ap->offset);
+	ret = PyString_FromString(val);
+      }
+      break;
+    case cPType_int:
+      {
+	int val = *(int*)(((char*)wobj->atomInfo) + ap->offset);
+	ret = PyInt_FromLong((long)val);
+      }
+      break;
+    case cPType_int_as_string:
+      {
+	int val = *(int*)(((char*)wobj->atomInfo) + ap->offset);
+	const char *st = LexStr(wobj->G, val);
+	ret = PyString_FromString(st);
+      }
+      break;
+    case cPType_float:
+      {
+	float val = *(float*)(((char*)wobj->atomInfo) + ap->offset);
+	ret = PyFloat_FromDouble(val);
+      }
+      break;
+    case cPType_stereo:
+      {
+	char val = *(char*)(((char*)wobj->atomInfo) + ap->offset);	
+	char mmstereotype[2];
+	mmstereotype[0] = convertStereoToChar(val);
+	mmstereotype[1] = 0;
+	ret = PyString_FromString(mmstereotype);
+      }
+      break;
+    case cPType_char_as_type:
+      {
+	char val = *(char*)(((char*)wobj->atomInfo) + ap->offset);
+	char atype[7];
+	if(val)
+	  strcpy(atype, "HETATM");
+	else
+	  strcpy(atype, "ATOM");
+	ret = PyString_FromString(atype);
+      }
+      break;
+    case cPType_model:
+      {
+	if (wobj->model){
+	  ret = PyString_FromString(wobj->model);
+	}
+      }
+      break;
+    case cPType_index:
+      {
+	ret = PyInt_FromLong((long)wobj->index + 1);
+      }
+      break;
+    case cPType_int_custom_type:
+      {
+	int val = *(int*)(((char*)wobj->atomInfo) + ap->offset);
+	if(val != cAtomInfoNoType){
+	  ret = PyInt_FromLong((long)val);
+	} else {
+	  ret = PyString_FromString("?");
+	}
+      }
+      break;
+    case cPType_xyz_float:
+      {
+	if (wobj->v){
+	  ret = PyFloat_FromDouble(wobj->v[ap->offset]);
+	} else {
+	  PRINTFB(wobj->G, FB_Python, FB_Errors)
+	    " PLabelAtom/PAlterAtom: Warning: x/y/z cannot be set in alter/iterate/label function\n" ENDFB(wobj->G);
+	}
+      }
+      break;
+    case cPType_settings:
+    case cPType_properties:
+      PRINTFB(wobj->G, FB_Python, FB_Errors)
+        " PLabelAtom/PAlterAtom: Warning: Accessing settings and properties not supported in Open-Source PyMOL\n" ENDFB(wobj->G);
+      break;
+    case cPType_state:
+      {
+	if (wobj->v){
+	  ret = PyInt_FromLong((long)wobj->state);
+	} else {
+	  PRINTFB(wobj->G, FB_Python, FB_Errors)
+	    " PLabelAtom/PAlterAtom: Warning: state cannot be set in alter/iterate/label function\n" ENDFB(wobj->G);
+	}
+      }
+    }
+  } else {
+    /* if not an atom property, check if local variable in dict */
+    ret = PyDict_GetItem(wobj->dict, key);
+  }
+  PXIncRef(ret);
+  return ret;
+}
+
+float PyObject_as_Number(PyObject *obj){
+  if (PyInt_Check(obj)){
+    return PyInt_AS_LONG(obj);
+  } else if (PyFloat_Check(obj)){
+    return PyFloat_AS_DOUBLE(obj);
+  } 
+  return 0.f;
+}
+
+int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
+  WrapperObject *wobj = (WrapperObject*)obj;
+  if (!wobj || !wobj->obj){
+    /* ERROR */
+    PRINTFB(wobj->G, FB_Python, FB_Errors)
+      "Error: wrappers cannot be used outside of the iterate/alter/alter_state commands\n" ENDFB(wobj->G);
+    return -1;
+  }
+  {
+    char *aprop = PyString_AS_STRING(PyObject_Str(key));
+    AtomPropertyInfo *ap;
+    ap = PyMOL_GetAtomPropertyInfo(wobj->G->PyMOL, aprop);
+    if (ap){
+      short changed = false;
+      if (wobj->read_only){
+	PRINTFB(wobj->G, FB_Python, FB_Errors)
+	  " PIterateAtom/PLabelAtom: Warning: properties cannot be set in iterate/label function\n" ENDFB(wobj->G);
+	return -1;
+      }
+      if (wobj->v){ // PAlterAtomState, must be setting x/y/z or flags
+	if (ap->Ptype != cPType_xyz_float && ap->id != ATOM_PROP_FLAGS){
+	  PRINTFB(wobj->G, FB_Python, FB_Errors)
+	    " PAlterAtomState: Warning: properties cannot be set in alter_state function\n" ENDFB(wobj->G);
+	  return -1;
+	}
+      }
+
+      switch (ap->Ptype){
+      case cPType_string:
+	{
+	  char *valstr = PyString_AS_STRING(PyObject_Str(val));
+	  char *dest = (char*)(((char*)wobj->atomInfo) + ap->offset);
+	  if (strlen(valstr) > ap->maxlen){
+	    strncpy(dest, valstr, ap->maxlen);
+	  } else {
+	    strcpy(dest, valstr);
+	  }
+	  changed = true;
+	}
+	break;
+      case cPType_int:
+	{
+	  int valint = PyInt_AsLong(val);
+	  int *dest;
+	  if (valint == -1 && PyErr_Occurred())
+	    break;
+	  dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
+	  *dest = valint;
+	  changed = true;
+	}
+	break;
+      case cPType_int_as_string:
+	{
+	  int *dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
+	  char *valstr = PyString_AS_STRING(PyObject_Str(val));
+	  LexDec(wobj->G, *dest);
+	  *dest = LexIdx(wobj->G, valstr);
+	  changed = true;
+	}
+	break;
+      case cPType_float:
+	{
+	  float valfloat = PyObject_as_Number(val);
+	  float *dest = (float*)(((char*)wobj->atomInfo) + ap->offset);
+	  *dest = valfloat;
+	  changed = true;
+	}
+	break;	
+      case cPType_stereo:
+	{
+	  char *stereo = PyString_AS_STRING(PyObject_Str(val));
+	  if (stereo){
+	    wobj->atomInfo->mmstereo = convertStereoToChar(stereo[0]);
+	  }
+	}
+	break;
+      case cPType_char_as_type:
+	{
+	  signed char *dest = (signed char *)(((char*)wobj->atomInfo) + ap->offset);
+	  char *valstr = PyString_AS_STRING(PyObject_Str(val));
+	  *dest = ((valstr[0] == 'h') || (valstr[0] == 'H'));
+	  changed = true;
+	}
+	break;
+      case cPType_model:
+	PRINTFB(wobj->G, FB_Python, FB_Errors)
+	  " PAlterAtom: Warning: cannot change model value for individual atoms, please rename object\n" ENDFB(wobj->G);
+	break;
+      case cPType_index:
+	PRINTFB(wobj->G, FB_Python, FB_Errors)
+	  " PAlterAtom: Warning: cannot change index value for atoms\n" ENDFB(wobj->G);
+	break;
+      case cPType_int_custom_type:
+	{
+	  char *valstr = PyString_AS_STRING(PyObject_Str(val));
+	  int *dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
+	  if (valstr[0] == '?'){
+	    *dest = cAtomInfoNoType;
+	  } else {
+	    int valint = PyInt_AS_LONG(val);
+	    *dest = valint;
+	  }
+	  changed = true;
+	}
+	break;
+      case cPType_xyz_float:
+	if (wobj->v){
+	  float valfloat = PyObject_as_Number(val);
+	  wobj->v[ap->offset] = valfloat;
+	} else {
+	  PRINTFB(wobj->G, FB_Python, FB_Errors)
+	    " PAlterAtom: Warning: can only set x/y/z in alter_state\n" ENDFB(wobj->G);
+	}
+	break;
+      case cPType_settings:
+      case cPType_properties:
+	PRINTFB(wobj->G, FB_Python, FB_Errors)
+	  " PLabelAtom/PAlterAtom/PIterateAtom: Warning: settings or properties object cannot be set\n" ENDFB(wobj->G);
+      }
+      if (changed){
+	switch (ap->id){
+	case ATOM_PROP_ELEM:
+	  AtomInfoAssignParameters(wobj->G, wobj->atomInfo);
+	  break;
+	case ATOM_PROP_RESI:
+	  wobj->atomInfo->resv = AtomResvFromResi(wobj->atomInfo->resi);
+	  break;
+	case ATOM_PROP_RESV:
+	  {
+	    WordType buf;
+	    sprintf(buf, "%d", wobj->atomInfo->resv);
+	    buf[sizeof(ResIdent) - 1] = 0;
+	    strcpy(wobj->atomInfo->resi, buf);
+	  }
+	  break;
+	case ATOM_PROP_SS:
+	  wobj->atomInfo->ssType[0] = toupper(wobj->atomInfo->ssType[0]);
+	  break;
+	case ATOM_PROP_FORMAL_CHARGE:
+	  wobj->atomInfo->chemFlag = false;
+	  break;
+	}
+      }
+    } else {
+      /* if not an atom property, then its a local variable, store it */
+      PyDict_SetItem(wobj->dict, key, val);
+    }
+  }
+  return 0; /* 0 success, -1 failure */
+}
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
@@ -452,8 +726,6 @@ static void PLockAPIWhileBlocked(PyMOLGlobals * G);
 #define P_log_file_str "_log_file"
 
 #define xxxPYMOL_NEW_THREADS 1
-
-void PRunStringModule(PyMOLGlobals * G, char *str);
 
 void PLockStatus(PyMOLGlobals * G)
 {                               /* assumes we have the GIL */
@@ -515,7 +787,7 @@ PyObject *PGetFontDict(PyMOLGlobals * G, float size, int face, int style)
   PyObject *result = NULL;
 
   if(!P_vfont) {
-    PRunStringModule(G, "import vfont\n");
+    PRunStringModule(G, "import pymol.vfont\n");
     P_vfont = PyDict_GetItemString(P_pymol_dict, "vfont");
     Py_XINCREF(P_vfont);
   }
@@ -814,625 +1086,91 @@ void PDumpException()
 }
 
 int PAlterAtomState(PyMOLGlobals * G, float *v, PyCodeObject *expr_co, int read_only,
-                    AtomInfoType * at, char *model, int index, PyObject * space)
+                    ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, char *model, int index, int csindex, int state, PyObject * space)
 
 /* assumes Blocked python interpreter */
 {
-  PyObject *dict;
   int result = true;
-  float f[3];
-  PyObject *x_id1, *x_id2 = NULL, *y_id1, *y_id2 = NULL, *z_id1, *z_id2 = NULL;
-  char atype[7], mmstereotype[2];
-  PyObject *flags_id1 = NULL, *flags_id2 = NULL;
-  int flags;
-  dict = PyDict_New();
 
-  if(at) {
-    if(at->hetatm)
-      strcpy(atype, "HETATM");
-    else
-      strcpy(atype, "ATOM");
+  G->P_inst->wrapperObject->obj = obj;
+  G->P_inst->wrapperObject->cs = cs;
+  G->P_inst->wrapperObject->atomInfo = at;
+  G->P_inst->wrapperObject->model = model;
+  G->P_inst->wrapperObject->index = index;
+  G->P_inst->wrapperObject->csindex = csindex;
+  G->P_inst->wrapperObject->read_only = read_only;
+  G->P_inst->wrapperObject->v = v;
+  G->P_inst->wrapperObject->state = state + 1;
 
-    /* immutables */
-    PConvStringToPyDictItem(dict, "model", model);
-    PConvIntToPyDictItem(dict, "index", index + 1);
+  PXDecRef(PyEval_EvalCode(expr_co, space, (PyObject*)G->P_inst->wrapperObject));
+  WrapperObjectReset(G->P_inst->wrapperObject);
 
-    PConvStringToPyDictItem(dict, "type", atype);
-    PConvStringToPyDictItem(dict, "name", at->name);
-    PConvStringToPyDictItem(dict, "resn", at->resn);
-    PConvStringToPyDictItem(dict, "resi", at->resi);
-    PConvIntToPyDictItem(dict, "resv", at->resv);       /* subordinate to resi */
-    PConvStringToPyDictItem(dict, "chain", at->chain);
-    PConvStringToPyDictItem(dict, "alt", at->alt);
-    PConvStringToPyDictItem(dict, "segi", at->segi);
-    PConvStringToPyDictItem(dict, "elem", at->elem);
-    PConvStringToPyDictItem(dict, "ss", at->ssType);
-
-    {
-      char null_st[1] = "";
-      char *st = null_st;
-
-      if(at->textType)
-        st = OVLexicon_FetchCString(G->Lexicon, at->textType);
-      PConvStringToPyDictItem(dict, "text_type", st);
-
-      if(at->custom)
-        st = OVLexicon_FetchCString(G->Lexicon, at->custom);
-      PConvStringToPyDictItem(dict, "custom", st);
-
-      st = null_st;
-      if(at->label)
-        st = OVLexicon_FetchCString(G->Lexicon, at->label);
-      PConvStringToPyDictItem(dict, "label", st);
-    }
-    PConvIntToPyDictItem(dict, "numeric_type", at->customType);
-    PConvFloatToPyDictItem(dict, "q", at->q);
-    PConvFloatToPyDictItem(dict, "b", at->b);
-    PConvFloatToPyDictItem(dict, "vdw", at->vdw);
-    PConvFloatToPyDictItem(dict, "elec_radius", at->elec_radius);
-    PConvFloatToPyDictItem(dict, "partial_charge", at->partialCharge);
-    PConvIntToPyDictItem(dict, "formal_charge", at->formalCharge);
-    mmstereotype[0] = convertStereoToChar(at->mmstereo);
-    mmstereotype[1] = 0;
-    PConvStringToPyDictItem(dict, "stereo", mmstereotype);
-    PConvIntToPyDictItem(dict, "cartoon", at->cartoon);
-    PConvIntToPyDictItem(dict, "color", at->color);
-    PConvIntToPyDictItem(dict, "ID", at->id);
-    PConvIntToPyDictItem(dict, "rank", at->rank);
-
-    /* mutables */
-    flags_id1 = PConvIntToPyDictItem(dict, "flags", at->flags);
-  }
-  x_id1 = PConvFloatToPyDictItem(dict, "x", v[0]);
-  y_id1 = PConvFloatToPyDictItem(dict, "y", v[1]);
-  z_id1 = PConvFloatToPyDictItem(dict, "z", v[2]);
-  PXDecRef(PyEval_EvalCode(expr_co, space, dict));
   if(PyErr_Occurred()) {
     PyErr_Print();
     result = false;
-  } else if(!read_only) {
-    if(result) {
-      if(!(x_id2 = PyDict_GetItemString(dict, "x")))
-        result = false;
-      else if(!(y_id2 = PyDict_GetItemString(dict, "y")))
-        result = false;
-      else if(!(z_id2 = PyDict_GetItemString(dict, "z")))
-        result = false;
-      else if(at) {
-        if(!(flags_id2 = PyDict_GetItemString(dict, "flags")))
-          result = false;
-      }
-      if(PyErr_Occurred()) {
-        PyErr_Print();
-        result = false;
-        ErrMessage(G, "AlterState", "Aborting on error. Assignment may be incomplete.");
-      }
-    }
-    if(result) {
-      f[0] = (float) PyFloat_AsDouble(x_id2);
-      f[1] = (float) PyFloat_AsDouble(y_id2);
-      f[2] = (float) PyFloat_AsDouble(z_id2);
-      if(at)
-        if(flags_id1 != flags_id2) {
-          if(!PConvPyObjectToInt(flags_id2, &flags))
-            result = false;
-          else
-            at->flags = flags;
-        }
-      if(PyErr_Occurred()) {
-        PyErr_Print();
-        result = false;
-        ErrMessage(G, "AlterState", "Aborting on error. Assignment may be incomplete.");
-      } else {
-        v[0] = f[0];
-        v[1] = f[1];
-        v[2] = f[2];
-      }
-    }
-
   }
-  Py_DECREF(dict);
   return result;
 }
 
 int PAlterAtom(PyMOLGlobals * G,
-               AtomInfoType * at, PyCodeObject *expr_co, int read_only,
+               ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co, int read_only,
                char *model, int index, PyObject * space)
 {
-  /* assumes Blocked python interpreter */
-  WordType buf;
-  AtomName name;
-  PyObject *name_id1, *name_id2 = NULL;
-  ElemName elem;
-  PyObject *elem_id1, *elem_id2 = NULL;
-  ResName resn;
-  PyObject *resn_id1, *resn_id2 = NULL;
-  ResIdent resi;
-  PyObject *resi_id1, *resi_id2 = NULL;
-  int resv;
-  PyObject *resv_id1, *resv_id2 = NULL;
-  Chain chain;
-  PyObject *chain_id1, *chain_id2 = NULL;
-  Chain alt;
-  PyObject *alt_id1, *alt_id2 = NULL;
-  SegIdent segi;
-  PyObject *flags_id1, *flags_id2 = NULL;
-  int flags;
-  PyObject *segi_id1, *segi_id2 = NULL;
-  PyObject *text_type_id1, *text_type_id2 = NULL;
-  PyObject *custom_id1, *custom_id2 = NULL;
-  SSType ssType;
-  PyObject *ss_id1, *ss_id2 = NULL;
-  char atype[7], mmstereotype[2];
-  PyObject *type_id1, *type_id2 = NULL;
-  float b, q, partialCharge, vdw, elec_radius;
-  PyObject *b_id1, *b_id2 = NULL;
-  PyObject *q_id1, *q_id2 = NULL;
-  PyObject *partial_charge_id1, *partial_charge_id2 = NULL;
-  PyObject *vdw_id1, *vdw_id2 = NULL;
-  PyObject *elec_radius_id1, *elec_radius_id2 = NULL;
-  int formalCharge, numericType;
-  PyObject *formal_charge_id1, *formal_charge_id2 = NULL;
-  PyObject *numeric_type_id1, *numeric_type_id2 = NULL;
-  char stereo[2];
-  PyObject *stereo_id1, *stereo_id2 = NULL;
-  int cartoon;
-  PyObject *cartoon_id1, *cartoon_id2 = NULL;
-  int color;
-  PyObject *color_id1, *color_id2 = NULL;
-  PyObject *label_id1, *label_id2 = NULL;
-  int id;
-  PyObject *ID_id1, *ID_id2 = NULL;
-  int rank;
-  PyObject *rank_id1, *rank_id2 = NULL;
-  PyObject *state_id1, *state_id2 = NULL;
-  int state;
-  PyObject *dict;
   int result = true;
 
-  if(at->hetatm)
-    strcpy(atype, "HETATM");
-  else
-    strcpy(atype, "ATOM");
+  G->P_inst->wrapperObject->obj = obj;
+  G->P_inst->wrapperObject->cs = cs;
+  G->P_inst->wrapperObject->atomInfo = at;
+  G->P_inst->wrapperObject->model = model;
+  G->P_inst->wrapperObject->index = index;
+  G->P_inst->wrapperObject->read_only = read_only;
+  G->P_inst->wrapperObject->v = NULL;
+  G->P_inst->wrapperObject->state = -1;
 
-  /* PBlockAndUnlockAPI() is not safe, thus these
-   * expressions must not call the PyMOL API...
-   * what if "at" is destroyed by another thread? */
+  PXDecRef(PyEval_EvalCode(expr_co, space, (PyObject*)G->P_inst->wrapperObject));
+  WrapperObjectReset(G->P_inst->wrapperObject);
 
-  dict = PyDict_New();
-
-  /* immutables */
-  PConvStringToPyDictItem(dict, "model", model);
-  PConvIntToPyDictItem(dict, "index", index + 1);
-
-  /* mutables */
-  type_id1 = PConvStringToPyDictItem(dict, "type", atype);
-  name_id1 = PConvStringToPyDictItem(dict, "name", at->name);
-  resn_id1 = PConvStringToPyDictItem(dict, "resn", at->resn);
-  flags_id1 = PConvIntToPyDictItem(dict, "flags", at->flags);
-  resi_id1 = PConvStringToPyDictItem(dict, "resi", at->resi);
-  resv_id1 = PConvIntToPyDictItem(dict, "resv", at->resv);      /* subordinate to resi */
-  chain_id1 = PConvStringToPyDictItem(dict, "chain", at->chain);
-  alt_id1 = PConvStringToPyDictItem(dict, "alt", at->alt);
-  segi_id1 = PConvStringToPyDictItem(dict, "segi", at->segi);
-  elem_id1 = PConvStringToPyDictItem(dict, "elem", at->elem);
-  ss_id1 = PConvStringToPyDictItem(dict, "ss", at->ssType);
-  numeric_type_id1 = PConvIntToPyDictItem(dict, "numeric_type", at->customType);
-  q_id1 = PConvFloatToPyDictItem(dict, "q", at->q);
-  b_id1 = PConvFloatToPyDictItem(dict, "b", at->b);
-  vdw_id1 = PConvFloatToPyDictItem(dict, "vdw", at->vdw);
-  elec_radius_id1 = PConvFloatToPyDictItem(dict, "elec_radius", at->elec_radius);
-  partial_charge_id1 = PConvFloatToPyDictItem(dict, "partial_charge", at->partialCharge);
-  formal_charge_id1 = PConvIntToPyDictItem(dict, "formal_charge", at->formalCharge);
-  mmstereotype[0] = convertStereoToChar(at->mmstereo);
-  mmstereotype[1] = 0;
-  stereo_id1 = PConvStringToPyDictItem(dict, "stereo", mmstereotype);
-  cartoon_id1 = PConvIntToPyDictItem(dict, "cartoon", at->cartoon);
-
-  {
-    char null_st[1] = "";
-    char *st = null_st;
-
-    if(at->textType)
-      st = OVLexicon_FetchCString(G->Lexicon, at->textType);
-    text_type_id1 = PConvStringToPyDictItem(dict, "text_type", st);
-
-    st = null_st;
-
-    if(at->custom)
-      st = OVLexicon_FetchCString(G->Lexicon, at->custom);
-    custom_id1 = PConvStringToPyDictItem(dict, "custom", st);
-
-    st = null_st;
-    if(at->label)
-      st = OVLexicon_FetchCString(G->Lexicon, at->label);
-    label_id1 = PConvStringToPyDictItem(dict, "label", st);
-  }
-
-  color_id1 = PConvIntToPyDictItem(dict, "color", at->color);
-  ID_id1 = PConvIntToPyDictItem(dict, "ID", at->id);
-  state_id1 = PConvIntToPyDictItem(dict, "state", at->discrete_state);
-  rank_id1 = PConvIntToPyDictItem(dict, "rank", at->rank);
-
-  PXDecRef(PyEval_EvalCode(expr_co, space, dict));
-  if(PyErr_Occurred()) {
-    ErrMessage(G, "Alter", "Aborting on error. Assignment may be incomplete.");
-    PyErr_Print();
-    result = false;
-  } else if(read_only) {
-    result = true;
-  }
   if(PyErr_Occurred()) {
     PyErr_Print();
     result = false;
-  } else if(!read_only) {
-
-    if(result) {
-      /* get new object IDs */
-
-      if(!(type_id2 = PyDict_GetItemString(dict, "type")))
-        result = false;
-      else if(!(name_id2 = PyDict_GetItemString(dict, "name")))
-        result = false;
-      else if(!(elem_id2 = PyDict_GetItemString(dict, "elem")))
-        result = false;
-      else if(!(resn_id2 = PyDict_GetItemString(dict, "resn")))
-        result = false;
-      else if(!(flags_id2 = PyDict_GetItemString(dict, "flags")))
-        result = false;
-      else if(!(resi_id2 = PyDict_GetItemString(dict, "resi")))
-        result = false;
-      else if(!(resv_id2 = PyDict_GetItemString(dict, "resv")))
-        result = false;
-      else if(!(segi_id2 = PyDict_GetItemString(dict, "segi")))
-        result = false;
-      else if(!(alt_id2 = PyDict_GetItemString(dict, "alt")))
-        result = false;
-      else if(!(chain_id2 = PyDict_GetItemString(dict, "chain")))
-        result = false;
-      else if(!(text_type_id2 = PyDict_GetItemString(dict, "text_type")))
-        result = false;
-      else if(!(custom_id2 = PyDict_GetItemString(dict, "custom")))
-        result = false;
-      else if(!(ss_id2 = PyDict_GetItemString(dict, "ss")))
-        result = false;
-      else if(!(b_id2 = PyDict_GetItemString(dict, "b")))
-        result = false;
-      else if(!(q_id2 = PyDict_GetItemString(dict, "q")))
-        result = false;
-      else if(!(vdw_id2 = PyDict_GetItemString(dict, "vdw")))
-        result = false;
-      else if(!(elec_radius_id2 = PyDict_GetItemString(dict, "elec_radius")))
-        result = false;
-      else if(!(partial_charge_id2 = PyDict_GetItemString(dict, "partial_charge")))
-        result = false;
-      else if(!(formal_charge_id2 = PyDict_GetItemString(dict, "formal_charge")))
-        result = false;
-      else if(!(stereo_id2 = PyDict_GetItemString(dict, "stereo")))
-        result = false;
-      else if(!(cartoon_id2 = PyDict_GetItemString(dict, "cartoon")))
-        result = false;
-      else if(!(color_id2 = PyDict_GetItemString(dict, "color")))
-        result = false;
-      else if(!(label_id2 = PyDict_GetItemString(dict, "label")))
-        result = false;
-      if(!(numeric_type_id2 = PyDict_GetItemString(dict, "numeric_type")))
-        result = false;
-      if(!(ID_id2 = PyDict_GetItemString(dict, "ID")))
-        result = false;
-      if(!(state_id2 = PyDict_GetItemString(dict, "state")))
-        result = false;
-      if(!(rank_id2 = PyDict_GetItemString(dict, "rank")))
-        result = false;
-
-      if(PyErr_Occurred()) {
-        PyErr_Print();
-        result = false;
-      }
-    }
-    if(result) {
-      if(type_id1 != type_id2) {
-        if(!PConvPyObjectToStrMaxLen(type_id2, atype, 6))
-          result = false;
-        else
-          at->hetatm = ((atype[0] == 'h') || (atype[0] == 'H'));
-      }
-      if(name_id1 != name_id2) {
-        if(!PConvPyObjectToStrMaxLen(name_id2, name, sizeof(AtomName) - 1))
-          result = false;
-        else
-          strcpy(at->name, name);
-      }
-      if(elem_id1 != elem_id2) {
-        if(!PConvPyObjectToStrMaxLen(elem_id2, elem, sizeof(ElemName) - 1))
-          result = false;
-        else {
-          strcpy(at->elem, elem);
-          AtomInfoAssignParameters(G, at);
-        }
-      }
-      if(resn_id1 != resn_id2) {
-        if(!PConvPyObjectToStrMaxLen(resn_id2, resn, sizeof(ResName) - 1))
-          result = false;
-        else
-          strcpy(at->resn, resn);
-      }
-      if(resi_id1 != resi_id2) {
-        if(!PConvPyObjectToStrMaxLen(resi_id2, resi, sizeof(ResIdent) - 1))
-          result = false;
-        else {
-          if(strcmp(at->resi, resi) != 0)
-            at->resv = AtomResvFromResi(resi);
-          strcpy(at->resi, resi);
-        }
-      } else if(resv_id1 != resv_id2) {
-        if(!PConvPyObjectToInt(resv_id2, &resv))
-          result = false;
-        else {
-          sprintf(buf, "%d", resv);
-          buf[sizeof(ResIdent) - 1] = 0;
-          strcpy(at->resi, buf);
-        }
-
-      }
-      if(segi_id1 != segi_id2) {
-        if(!PConvPyObjectToStrMaxLen(segi_id2, segi, sizeof(SegIdent) - 1))
-          result = false;
-        else
-          strcpy(at->segi, segi);
-
-      }
-      if(chain_id1 != chain_id2) {
-        if(!PConvPyObjectToStrMaxLen(chain_id2, chain, sizeof(Chain) - 1))
-          result = false;
-        else
-          strcpy(at->chain, chain);
-      }
-      if(alt_id1 != alt_id2) {
-        if(!PConvPyObjectToStrMaxLen(alt_id2, alt, sizeof(Chain) - 1))
-          result = false;
-        else
-          strcpy(at->alt, alt);
-      }
-      if(text_type_id1 != text_type_id2) {
-
-        OrthoLineType temp;
-        if(at->textType) {
-          OVLexicon_DecRef(G->Lexicon, at->textType);
-        }
-        at->textType = 0;
-
-        if(PConvPyObjectToStrMaxLen(text_type_id2, temp, sizeof(OrthoLineType) - 1)) {
-          if(temp[0]) {
-            OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
-            if(OVreturn_IS_OK(result)) {
-              at->textType = result.word;
-            }
-          }
-        }
-      }
-      if(custom_id1 != custom_id2) {
-
-        OrthoLineType temp;
-        if(at->custom) {
-          OVLexicon_DecRef(G->Lexicon, at->custom);
-        }
-        at->custom = 0;
-
-        if(PConvPyObjectToStrMaxLen(custom_id2, temp, sizeof(OrthoLineType) - 1)) {
-          if(temp[0]) {
-            OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
-            if(OVreturn_IS_OK(result)) {
-              at->custom = result.word;
-            }
-          }
-        }
-      }
-      if(ss_id1 != ss_id2) {
-        if(!PConvPyObjectToStrMaxLen(ss_id2, ssType, sizeof(SSType) - 1))
-          result = false;
-        else {
-          strcpy(at->ssType, ssType);
-          at->ssType[0] = toupper(at->ssType[0]);
-        }
-      }
-      if(b_id1 != b_id2) {
-        if(!PConvPyObjectToFloat(b_id2, &b))
-          result = false;
-        else
-          at->b = b;
-      }
-      if(q_id1 != q_id2) {
-        if(!PConvPyObjectToFloat(q_id2, &q))
-          result = false;
-        else
-          at->q = q;
-      }
-      if(vdw_id1 != vdw_id2) {
-        if(!PConvPyObjectToFloat(vdw_id2, &vdw))
-          result = false;
-        else
-          at->vdw = vdw;
-
-      }
-      if(elec_radius_id1 != elec_radius_id2) {
-        if(!PConvPyObjectToFloat(elec_radius_id2, &elec_radius))
-          result = false;
-        else
-          at->elec_radius = elec_radius;
-      }
-      if(partial_charge_id1 != partial_charge_id2) {
-        if(!PConvPyObjectToFloat(partial_charge_id2, &partialCharge))
-          result = false;
-        else
-          at->partialCharge = partialCharge;
-
-      }
-      if(formal_charge_id1 != formal_charge_id2) {
-        if(!PConvPyObjectToInt(formal_charge_id2, &formalCharge))
-          result = false;
-        else {
-          at->formalCharge = formalCharge;
-          at->chemFlag = false; /* invalidate chemistry info for this atom */
-        }
-
-      }
-      if(stereo_id1 != stereo_id2) {
-        if(!PConvPyObjectToStrMaxLen(stereo_id2, stereo, 2))
-          result = false;
-        else
-          at->mmstereo = convertStereoToChar(stereo[0]);
-      }
-      if(cartoon_id1 != cartoon_id2) {
-        if(!PConvPyObjectToInt(cartoon_id2, &cartoon))
-          result = false;
-        else
-          at->cartoon = cartoon;
-      }
-      if(color_id1 != color_id2) {
-        if(!PConvPyObjectToInt(color_id2, &color))
-          result = false;
-        else
-          at->color = color;
-      }
-      if(state_id1 != state_id2) {
-        if(!PConvPyObjectToInt(state_id2, &state))
-          result = false;
-        else
-          at->discrete_state = state;
-      }
-      if(label_id1 != label_id2) {
-        OrthoLineType temp;
-        if(at->label) {
-          OVLexicon_DecRef(G->Lexicon, at->label);
-        }
-        at->label = 0;
-
-        if(PConvPyObjectToStrMaxLen(label_id2, temp, sizeof(OrthoLineType) - 1)) {
-          if(temp[0]) {
-            OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
-            if(OVreturn_IS_OK(result)) {
-              at->label = result.word;
-            }
-          }
-        }
-      }
-      if(flags_id1 != flags_id2) {
-        if(!PConvPyObjectToInt(flags_id2, &flags))
-          result = false;
-        else
-          at->flags = flags;
-      }
-
-      if(numeric_type_id1 != numeric_type_id2) {
-        if(!PConvPyObjectToInt(numeric_type_id2, &numericType))
-          result = false;
-        else
-          at->customType = numericType;
-      }
-      if(ID_id1 != ID_id2) {
-        if(!PConvPyObjectToInt(ID_id2, &id))
-          result = false;
-        else
-          at->id = id;
-      }
-      if(rank_id1 != rank_id2) {
-        if(!PConvPyObjectToInt(rank_id2, &rank))
-          result = false;
-        else
-          at->rank = rank;
-      }
-
-      if(PyErr_Occurred()) {
-        PyErr_Print();
-        result = false;
-      }
-    }
-    if(!result) {
-      ErrMessage(G, "Alter", "Aborting on error. Assignment may be incomplete.");
-    }
   }
-  Py_DECREF(dict);
-  return (result);
+  return result;
 }
 
-int PLabelAtom(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, int index)
+int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co, char *model, int index)
 {
-  PyObject *dict;
+  int result = true;
   PyObject *P_inst_dict = G->P_inst->dict;
-  int result;
+  PyObject *dict, *resultPyObject;
   OrthoLineType label;
-  char atype[7], mmstereotype[2];
-  OrthoLineType buffer;
-  if(at->hetatm)
-    strcpy(atype, "HETATM");
-  else
-    strcpy(atype, "ATOM");
-  PBlock(G);
   dict = PyDict_New();
 
-  PConvStringToPyDictItem(dict, "model", model);
-  PConvIntToPyDictItem(dict, "index", index + 1);
-  PConvStringToPyDictItem(dict, "type", atype);
-  PConvStringToPyDictItem(dict, "name", at->name);
-  PConvStringToPyDictItem(dict, "resn", at->resn);
-  PConvStringToPyDictItem(dict, "resi", at->resi);
-  PConvIntToPyDictItem(dict, "resv", at->resv);
-  PConvStringToPyDictItem(dict, "chain", at->chain);
-  PConvStringToPyDictItem(dict, "alt", at->alt);
-  PConvStringToPyDictItem(dict, "segi", at->segi);
-  PConvStringToPyDictItem(dict, "ss", at->ssType);
-  PConvFloatToPyDictItem(dict, "vdw", at->vdw);
-  PConvFloatToPyDictItem(dict, "elec_radius", at->elec_radius);
-  {
-    char null_st[1] = "";
-    char *st = null_st;
+  G->P_inst->wrapperObject->obj = obj;
+  G->P_inst->wrapperObject->cs = cs;
+  G->P_inst->wrapperObject->atomInfo = at;
+  G->P_inst->wrapperObject->model = model;
+  G->P_inst->wrapperObject->index = index;
+  G->P_inst->wrapperObject->read_only = true;
+  G->P_inst->wrapperObject->v = NULL;
+  G->P_inst->wrapperObject->state = -1;
 
-    if(at->textType)
-      st = OVLexicon_FetchCString(G->Lexicon, at->textType);
-    PConvStringToPyDictItem(dict, "text_type", st);
-
-    st = null_st;
-    if(at->custom)
-      st = OVLexicon_FetchCString(G->Lexicon, at->custom);
-    PConvStringToPyDictItem(dict, "custom", st);
-
-    st = null_st;
-    if(at->label)
-      st = OVLexicon_FetchCString(G->Lexicon, at->label);
-    PConvStringToPyDictItem(dict, "label", st);
+  if (!expr_co){
+    // unsetting label
+    if(at->label) {
+      OVLexicon_DecRef(G->Lexicon, at->label);
+    }
+    at->label = 0;
+    return true;
   }
-  PConvStringToPyDictItem(dict, "elem", at->elem);
-  PConvIntToPyDictItem(dict, "geom", at->geom);
-  PConvIntToPyDictItem(dict, "valence", at->valence);
-  PConvIntToPyDictItem(dict, "rank", at->rank);
-  if(at->flags) {
-    sprintf(buffer, "%X", at->flags);
-    PConvStringToPyDictItem(dict, "flags", buffer);
-  } else {
-    PConvStringToPyDictItem(dict, "flags", "0");
-  }
-  PConvFloatToPyDictItem(dict, "q", at->q);
-  PConvFloatToPyDictItem(dict, "b", at->b);
-  if(at->customType != cAtomInfoNoType)
-    PConvIntToPyDictItem(dict, "numeric_type", at->customType);
-  else
-    PConvStringToPyDictItem(dict, "numeric_type", "?");
-  PConvFloatToPyDictItem(dict, "partial_charge", at->partialCharge);
-  PConvIntToPyDictItem(dict, "formal_charge", at->formalCharge);
-  mmstereotype[0] = convertStereoToChar(at->mmstereo);
-  mmstereotype[1] = 0;
-  PConvStringToPyDictItem(dict, "stereo", mmstereotype);
-  PConvIntToPyDictItem(dict, "color", at->color);
-  PConvIntToPyDictItem(dict, "cartoon", at->cartoon);
-  PConvIntToPyDictItem(dict, "ID", at->id);
-  PXDecRef(PyRun_String(expr, Py_single_input, P_inst_dict, dict));
+  resultPyObject = PyEval_EvalCode(expr_co, P_inst_dict, (PyObject*)G->P_inst->wrapperObject);
+  WrapperObjectReset(G->P_inst->wrapperObject);
+
   if(PyErr_Occurred()) {
     PyErr_Print();
     result = false;
   } else {
     result = true;
-    if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict, "label"),
+    if(!PConvPyObjectToStrMaxLen(resultPyObject,
                                  label, sizeof(OrthoLineType) - 1))
       result = false;
     if(PyErr_Occurred()) {
@@ -1440,24 +1178,13 @@ int PLabelAtom(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, int
       result = false;
     }
     if(result) {
-      if(at->label) {
-        OVLexicon_DecRef(G->Lexicon, at->label);
-      }
-      at->label = 0;
-
-      if(label[0]) {
-        OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon, label);
-        if(OVreturn_IS_OK(ret)) {
-          /*printf("alloc'd %d [%s]\n",OVLexicon_GetNActive(G->Lexicon),label); */
-          at->label = ret.word;
-        }
-      }
+      LexDec(G, at->label);
+      at->label = LexIdx(G, label);
     } else {
       ErrMessage(G, "Label", "Aborting on error. Labels may be incomplete.");
     }
   }
-  Py_DECREF(dict);
-  PUnblock(G);
+  PXDecRef(resultPyObject);
   return (result);
 }
 
@@ -1694,7 +1421,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
                                    Conveniently, this doesn't hide the window when launched from a
                                    command window. */
     HWND hwndFound;
-    if(hwndFound = FindWindow(NULL, argv[0])) {
+    if(hwndFound = FindWindowA(NULL, argv[0])) {
       ShowWindow(hwndFound, SW_HIDE);
     }
   }
@@ -1732,8 +1459,8 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
     {
       OrthoLineType path_buffer;
       HKEY phkResult;
-      int lpcbData;
-      int lpType = REG_SZ;
+      DWORD lpcbData;
+      DWORD lpType = REG_SZ;
       int r1, r2;
       char *pymol_path;
       char *pythonhome;
@@ -1744,7 +1471,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
       pythonhome = getenv("PYTHONHOME");
       if((!pymol_path) || (!pythonhome)) {
         lpcbData = sizeof(OrthoLineType) - 1;
-        r1 = RegOpenKeyEx(HKEY_CLASSES_ROOT,
+        r1 = RegOpenKeyExA(HKEY_CLASSES_ROOT,
 #ifdef PYMOL_EVAL
 			"Software\\PyMOL\\PyMOL Eval\\PYMOL_PATH",
 #else
@@ -1752,7 +1479,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
 #endif
                           0, KEY_EXECUTE, &phkResult);
         if(r1 != ERROR_SUCCESS) {
-          r1 = RegOpenKeyEx(HKEY_CURRENT_USER,
+          r1 = RegOpenKeyExA(HKEY_CURRENT_USER,
 #ifdef PYMOL_EVAL
 			"Software\\PyMOL\\PyMOL Eval\\PYMOL_PATH",
 #else
@@ -1761,7 +1488,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
                             0, KEY_EXECUTE, &phkResult);
         }
         if(r1 == ERROR_SUCCESS) {
-          r2 = RegQueryValueEx(phkResult, "", NULL, &lpType, path_buffer, &lpcbData);
+          r2 = RegQueryValueExA(phkResult, "", NULL, &lpType, (LPBYTE) path_buffer, &lpcbData);
           if(r2 == ERROR_SUCCESS) {
             /* use environment variable PYMOL_PATH first, registry entry
                second */
@@ -1839,12 +1566,12 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
         {
           LPSECURITY_ATTRIBUTES lpSA = NULL;
           PSECURITY_DESCRIPTOR lpSD = NULL;
-          STARTUPINFO si;
+          STARTUPINFOA si;
           PROCESS_INFORMATION pi;
           HANDLE hProcess = GetCurrentProcess();
 
-          ZeroMemory(&si, sizeof(STARTUPINFO));
-          si.cb = sizeof(STARTUPINFO);
+          ZeroMemory(&si, sizeof(STARTUPINFOA));
+          si.cb = sizeof(STARTUPINFOA);
           si.dwFlags = STARTF_USESHOWWINDOW;
           si.wShowWindow = SW_HIDE;
 
@@ -1853,13 +1580,13 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
             InitializeSecurityDescriptor(lpSD, SECURITY_DESCRIPTOR_REVISION);
             SetSecurityDescriptorDacl(lpSD, -1, 0, 0);
 
-            lpSA = GlobalAlloc(GPTR, sizeof(SECURITY_ATTRIBUTES));
+            lpSA = (LPSECURITY_ATTRIBUTES) GlobalAlloc(GPTR, sizeof(SECURITY_ATTRIBUTES));
             lpSA->nLength = sizeof(SECURITY_ATTRIBUTES);
             lpSA->lpSecurityDescriptor = lpSD;
             lpSA->bInheritHandle = TRUE;
           }
 
-          if(CreateProcessA(NULL, (LPTSTR) cmd_line, lpSA, NULL, TRUE,
+          if(CreateProcessA(NULL, (LPSTR) cmd_line, lpSA, NULL, TRUE,
                             0, NULL, NULL, &si, &pi)) {
 
             WaitForSingleObject(pi.hProcess, INFINITE);
@@ -2183,14 +1910,23 @@ void PGetOptions(CPyMOLOptions * rec)
   Py_XDECREF(options);
 }
 
-void PRunStringModule(PyMOLGlobals * G, char *str)
+void PRunStringModule(PyMOLGlobals * G, const char *str)
 {                               /* runs a string in the namespace of the pymol global module */
   PXDecRef(PyObject_CallFunction(G->P_inst->exec, "Os", P_pymol, str));
 }
 
-void PRunStringInstance(PyMOLGlobals * G, char *str)
+void PRunStringInstance(PyMOLGlobals * G, const char *str)
 {                               /* runs a string in the namespace of the pymol instance */
   PXDecRef(PyObject_CallFunction(G->P_inst->exec, "Os", G->P_inst->obj, str));
+}
+
+void WrapperObjectReset(WrapperObject *wo){
+  wo->obj = NULL;
+  wo->cs = NULL;
+  wo->atomInfo = NULL;
+  wo->model = NULL;
+  wo->v = NULL;
+  PyDict_Clear(wo->dict);
 }
 
 void PInit(PyMOLGlobals * G, int global_instance)
@@ -2291,7 +2027,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     if(!P_traceback)
       ErrFatal(G, "PyMOL", "can't find 'traceback'");
 
-    PRunStringModule(G, "import cmd\n");
+    PRunStringModule(G, "import pymol.cmd\n");
     P_cmd = PyDict_GetItemString(P_pymol_dict, "cmd");
     Py_XINCREF(P_cmd);
     if(!P_cmd)
@@ -2364,26 +2100,26 @@ void PInit(PyMOLGlobals * G, int global_instance)
 
     /* invariant stuff */
 
-    PRunStringModule(G, "import menu\n");
+    PRunStringModule(G, "import pymol.menu\n");
     P_menu = PyDict_GetItemString(P_pymol_dict, "menu");
     Py_XINCREF(P_menu);
     if(!P_menu)
       ErrFatal(G, "PyMOL", "can't find module 'menu'");
 
-    PRunStringModule(G, "import setting\n");
+    PRunStringModule(G, "import pymol.setting\n");
     P_setting = PyDict_GetItemString(P_pymol_dict, "setting");
     Py_XINCREF(P_setting);
     if(!P_setting)
       ErrFatal(G, "PyMOL", "can't find module 'setting'");
 
-    PRunStringModule(G, "import povray\n");
+    PRunStringModule(G, "import pymol.povray\n");
     P_povray = PyDict_GetItemString(P_pymol_dict, "povray");
     Py_XINCREF(P_povray);
     if(!P_povray)
       ErrFatal(G, "PyMOL", "can't find module 'povray'");
 
 #ifdef _PYMOL_XRAY
-    PRunStringModule(G, "import xray\n");
+    PRunStringModule(G, "import pymol.xray\n");
     P_xray = PyDict_GetItemString(P_pymol_dict, "xray");
     Py_XINCREF(P_xray);
     if(!P_xray)
@@ -2405,7 +2141,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
 #endif
     /* END PROPRIETARY CODE SEGMENT */
 
-    PRunStringModule(G, "import parser\n");
+    PRunStringModule(G, "import pymol.parser\n");
     P_parser = PyDict_GetItemString(P_pymol_dict, "parser");
     Py_XINCREF(P_parser);
     if(!P_parser)
@@ -2441,9 +2177,9 @@ void PInit(PyMOLGlobals * G, int global_instance)
     if(!P_models)
       ErrFatal(G, "PyMOL", "can't find 'chempy.models'");
 
-    PRunStringModule(G, "import util\n");
-    PRunStringModule(G, "import preset\n");
-    PRunStringModule(G, "import contrib\n");
+    PRunStringModule(G, "import pymol.util\n");
+    PRunStringModule(G, "import pymol.preset\n");
+    PRunStringModule(G, "import pymol.contrib\n");
 
     PRunStringModule(G, "import string\n");
 
@@ -2473,6 +2209,24 @@ void PInit(PyMOLGlobals * G, int global_instance)
     PyRun_SimpleString
       ("if not os.environ.has_key('PYMOL_SCRIPTS'): os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
 
+    Wrapper_Type.tp_name = "wrapper.Wrapper";
+    Wrapper_Type.tp_basicsize = sizeof(WrapperObject);
+    Wrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
+    wrapperMappingMethods.mp_length = &WrapperObjectLen;
+    wrapperMappingMethods.mp_subscript = &WrapperObjectSubScript;
+    wrapperMappingMethods.mp_ass_subscript = &WrapperObjectAssignSubScript;
+    Wrapper_Type.tp_as_mapping = &wrapperMappingMethods;
+    
+    if (PyType_Ready(&Wrapper_Type) < 0){
+      PRINTFB(G, FB_Python, FB_Errors)
+	" PInit: Wrapper_Type, settingWrapper_Type, propertyWrapper_Type not ready\n" ENDFB(G);
+      return;
+    }
+    Py_INCREF(&Wrapper_Type);
+    G->P_inst->wrapperObject = (WrapperObject *)PyType_GenericNew(&Wrapper_Type, Py_None, Py_None);
+    G->P_inst->wrapperObject->G = G;
+    G->P_inst->wrapperObject->dict = PyDict_New();
+    Py_INCREF(G->P_inst->wrapperObject);
   }
 }
 
@@ -2526,12 +2280,12 @@ void PExit(PyMOLGlobals * G, int code)
   Py_Exit(code);
 }
 
-void PParse(PyMOLGlobals * G, char *str)
+void PParse(PyMOLGlobals * G, const char *str)
 {
   OrthoCommandIn(G, str);
 }
 
-void PDo(PyMOLGlobals * G, char *str)
+void PDo(PyMOLGlobals * G, const char *str)
 {                               /* assumes we already hold the re-entrant API lock */
   int blocked;
   PyObject *ret ;
@@ -2541,14 +2295,14 @@ void PDo(PyMOLGlobals * G, char *str)
   PAutoUnblock(G, blocked);
 }
 
-void PLog(PyMOLGlobals * G, char *str, int format)
+void PLog(PyMOLGlobals * G, const char *str, int format)
 
 /* general log routine can write PML 
 
    or PYM commands to appropriate log file */
 {
   int mode;
-  int a;
+  int a = sizeof(OrthoLineType) - 15;
   int blocked;
   PyObject *log;
   OrthoLineType buffer = "";
@@ -2579,15 +2333,10 @@ void PLog(PyMOLGlobals * G, char *str, int format)
           switch (format) {
           case cPLog_pml_lf:
             a = strlen(str);
-            while(a) {          /* trim CR/LF etc. */
-              if(*(str + a) >= 32)
-                break;
-              *(str + a) = 0;
-              a--;
-            }
+            while(a && str[a - 1] < 32) a--; /* trim CR/LF etc. */
           case cPLog_pml:
             strcpy(buffer, "cmd.do('''");
-            strcat(buffer, str);
+            strncat(buffer, str, a);
             strcat(buffer, "''')\n");
             break;
           case cPLog_pym:
@@ -2906,7 +2655,7 @@ void PLockAPIAndUnblock(PyMOLGlobals * G)
   PUnblock(G);
 }
 
-void PDefineFloat(PyMOLGlobals * G, char *name, float value)
+void PDefineFloat(PyMOLGlobals * G, const char *name, float value)
 {
   char buffer[OrthoLineLength];
   sprintf(buffer, "%s = %f\n", name, value);

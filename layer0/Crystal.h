@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #define _H_Crystal
 
 #include"Vector.h"
-#include"CGO.h"
+#include"CGOStruct.h"
 #include"os_python.h"
 
 typedef struct {

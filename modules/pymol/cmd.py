@@ -107,7 +107,6 @@ if __name__=='pymol.cmd':
         import pymol
         import os
         import parsing
-        import __main__
         import time
 
         _pymol = pymol

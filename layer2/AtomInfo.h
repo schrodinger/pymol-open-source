@@ -237,7 +237,7 @@ typedef struct AtomInfoType {
   signed char hb_donor;
   signed char hb_acceptor;
   signed char has_setting;      /* setting based on unique_id */
-  Chain chain;
+  ov_word chain;
   Chain alt;
   ResIdent resi;
   SegIdent segi;
