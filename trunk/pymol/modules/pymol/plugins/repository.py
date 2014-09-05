@@ -59,7 +59,7 @@ class Repository():
 
     def copy(self, name, dst):
         '''
-        Copy file. The destination may be a directory.
+        Copy file. The destination may be a directory. Returns the copy file name.
         '''
         import os
 
@@ -70,6 +70,8 @@ class Repository():
         f = open(dst, 'wb')
         f.write(content)
         f.close()
+
+        return dst
 
     def is_supported(self, name):
         if len(name) == 0 or name[0] in ['.', '_']:
@@ -107,7 +109,8 @@ class HttpRepository(Repository):
         for attribs in re_a.findall(content):
             for name in re_href.findall(attribs):
                 if name[0] in ['"', "'"]:
-                    assert name[0] == name[-1]
+                    if name[0] != name[-1]:
+                        continue
                     name = name[1:-1]
                 if '#' in name:
                     name = re_anchor.sub('', name)
@@ -124,6 +127,16 @@ class HttpRepository(Repository):
         handle.close()
 
         return content
+
+    def get_full_url(self, name):
+        import re
+        if '://' in name:
+            return name
+        if name.startswith('/'):
+            baseurl = '/'.join(self.url.split('/')[:3])
+        else:
+            baseurl = re.sub(r'/[^/]*$', '', self.url)
+        return baseurl + '/' + name
 
 class GithubRepository(HttpRepository):
     '''
@@ -193,6 +206,7 @@ class LocalRepository(Repository):
         import shutil
         url = self.get_full_url(name)
         shutil.copy(url, dst)
+        return dst
 
     def get_full_url(self, name):
         import os
@@ -240,14 +254,15 @@ ARGUMENTS
 
     # github
     git_master = 'https://raw.github.com/Pymol-Scripts/Pymol-script-repo/master/'
-    m = re.match(r'https://(?:raw\.)?github\.com/Pymol-Scripts/Pymol-script-repo/(?:raw/|blob/)?master/(.*)', title)
+    m = re.match(r'https://(raw\.)?github\.com/.+', title)
     if m is not None:
-        filename = m.group(1)
-        url = git_master + filename
+        filename = url = title
+        if not m.group(1):
+            url = url.replace('/blob/', '/raw/', 1)
         rawscript = 1
 
     # pymolwiki
-    else:
+    elif '://' not in title or 'pymolwiki.org' in title:
         if title.startswith('http'):
             a = title.split('pymolwiki.org/index.php/', 2)
             if len(a) == 2:
@@ -263,6 +278,11 @@ ARGUMENTS
         url = "http://pymolwiki.org/index.php?title=%s&action=raw" % (title)
         filename = title + '.py'
         rawscript = 0
+
+    # any url
+    else:
+        filename = url = title
+        rawscript = 1
 
     filename = os.path.join(dest, filename.rsplit('/')[-1])
 

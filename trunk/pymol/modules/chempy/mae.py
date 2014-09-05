@@ -302,7 +302,6 @@ class MAE(Storage):
                 
             elif mp_ent[0]=='p_m_ct' and full_model!=None:
                 model = copy.deepcopy(full_model)
-
                 f_m_ct = mp_ent[1]
                 if f_m_ct.has_key('s_m_title'):
                     model.molecule.title = string.strip(f_m_ct['s_m_title'])

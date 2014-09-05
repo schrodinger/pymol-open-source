@@ -412,7 +412,11 @@ class CIFRec(CIFData):
                 name_dict[atom.name] = cnt
             cnt = cnt + 1
         for value in values:
-            atom = name_dict[self.index_to_str(label,value)]
+            try:
+                atom = name_dict[self.index_to_str(label,value)]
+            except KeyError:
+                print " CIF _atom_site_aniso_label, invalid key:", value
+                continue
             self.model.atom[atom].u_aniso = [
                 self.index_to_float(u11,value),
                 self.index_to_float(u22,value),
@@ -479,8 +483,13 @@ class CIFRec(CIFData):
                 continue
             key_1 = tuple(self.index_to_str(i, row) for i in idxs_1)
             key_2 = tuple(self.index_to_str(i, row) for i in idxs_2)
+            try:
+                index = [atom_dict[key_1], atom_dict[key_2]]
+            except KeyError:
+                print " CIF _struct_conn, invalid keys:", row
+                continue
             bond = Bond()
-            bond.index = [atom_dict[key_1], atom_dict[key_2]]
+            bond.index = index
             self.model.bond.append(bond)
         return True
 
@@ -518,10 +527,14 @@ class CIFRec(CIFData):
             if self.index_to_str(symm_1, value) != self.index_to_str(symm_2, value):
                 # don't bond to symmetry mates
                 continue
+            try:
+                index = [name_dict[self.index_to_str(label_1, value)],
+                         name_dict[self.index_to_str(label_2, value)]]
+            except KeyError:
+                print " CIF _geom_bond_atom_site_label, invalid keys:", value
+                continue
             bond = Bond()
-            bond.index = [
-                name_dict[self.index_to_str(label_1,value)],
-                name_dict[self.index_to_str(label_2,value)]]
+            bond.index = index
             bond.order = 1
             self.model.bond.append(bond)
         return True
@@ -551,10 +564,14 @@ class CIFRec(CIFData):
             cnt = cnt + 1
         order = field_dict.get('_chem_comp_bond_value_order',None)
         for value in values:
+            try:
+                index = [name_dict[self.index_to_str(label_1, value)],
+                         name_dict[self.index_to_str(label_2, value)]]
+            except KeyError:
+                print " CIF _chem_comp_bond_atom_id, invalid keys:", value
+                continue
             bond = Bond()
-            bond.index = [
-                name_dict[self.index_to_str(label_1,value)],
-                name_dict[self.index_to_str(label_2,value)]]
+            bond.index = index
             if order != None:
                 order_string = self.index_to_str(order,value).lower()
                 bond.order = order_table.get(order_string[0:4],1)

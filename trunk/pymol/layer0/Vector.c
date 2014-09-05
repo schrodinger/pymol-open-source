@@ -2227,3 +2227,32 @@ void add4f(float *v1, float *v2, float *v3)
   v3[3] = v1[3] + v2[3];
 }
 
+int countchrs(char *str, char ch){
+  int cnt = 0;
+  char *tmp = str;
+  while (tmp = strchr(tmp, ch)){
+    cnt++;
+    tmp++;
+  }
+  return cnt;
+}
+
+/*
+ * sigmoid smoothstep function with
+ * smooth(0) = 0
+ * smooth(1) = 1
+ * smooth'(0) = 0
+ * smooth'(1) = 0
+ */
+float smooth(float x, float power)
+{
+
+  if(x <= 0.5F) {
+    if(x <= 0.0F)
+      return 0.0F;
+    return 0.5F * powf(2.0F * x, power);
+  }
+  if(x >= 1.0F)
+    return 1.0F;
+  return 1.0F - (0.5F * powf(2.0F * (1.0F - x), power));
+}

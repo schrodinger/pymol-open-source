@@ -285,7 +285,7 @@ select an amplitude column name from the file and try again.
                                        self._amplitudes, self._phases, self._weights,
                                        self._min_res, self._max_res, 1, 1)
             except pymol.CmdException as e:
-                print " MapLoad-Error:", e.args
+                print e
                 return None
 
             if r==None or r=="None" or r=="":

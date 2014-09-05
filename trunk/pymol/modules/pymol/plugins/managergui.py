@@ -6,6 +6,7 @@ License: BSD-2-Clause
 
 '''
 
+import sys
 import Pmw
 import Tkinter
 from .legacysupport import tkMessageBox, tkFileDialog
@@ -203,12 +204,12 @@ class PluginManager(Pmw.MegaToplevel):
             shutil.rmtree(tmpdir)
             self.f_installed.reload()
 
-        w = Pmw.Group(page, tag_text='Install from PyMOLWiki')
+        w = Pmw.Group(page, tag_text='Install from PyMOLWiki or any URL')
         w.pack(**default_top)
         w = w.interior()
 
         l_repo = Tkinter.Label(w,
-                text='Paste a PyMOLWiki url, the page will be downloaded and '
+                text='Paste a link to a script or plugin, or a PyMOLWiki url which then will be downloaded and '
                 'scanned for scripts that extend the PyMOL API', justify='left', anchor='w', wraplength=500)
         l_repo.pack(**default_top)
 
@@ -262,8 +263,7 @@ class PluginManager(Pmw.MegaToplevel):
             tmpdirs = [tmpdir]
             try:
                 name = sels[0]
-                repo_tmp.r.copy(name, tmpdir)
-                filename = os.path.join(tmpdir, name)
+                filename = repo_tmp.r.copy(name, tmpdir)
                 name, ext = get_name_and_ext(filename)
                 if ext in zip_extensions:
                     tmpdir, dirnames = extract_zipfile(filename, ext)
@@ -282,19 +282,22 @@ class PluginManager(Pmw.MegaToplevel):
             '''
             Download plugin from repository and install it.
             '''
-            from .installation import installPluginFromFile
+            from .installation import installPluginFromFile, get_plugdir
             sels = slb_right.getcurselection()
             if len(sels) == 0:
+                return
+            plugdir = get_plugdir(self.interior())
+            if not plugdir:
                 return
             import tempfile, shutil, os
             tmpdir = tempfile.mkdtemp()
             try:
-                name = sels[0]
-                repo_tmp.r.copy(name, tmpdir)
-                filename = os.path.join(tmpdir, name)
-                installPluginFromFile(filename, self.interior())
+                for name in sels:
+                    filename = repo_tmp.r.copy(name, tmpdir)
+                    installPluginFromFile(filename, self.interior(), plugdir)
             except:
-                tkMessageBox.showinfo('Error', 'Could not install plugin')
+                err = str(sys.exc_info()[1])
+                tkMessageBox.showinfo('Error', 'Could not install plugin ' + name + '\n\n' + err)
             finally:
                 shutil.rmtree(tmpdir)
             self.f_installed.reload()
@@ -310,6 +313,7 @@ class PluginManager(Pmw.MegaToplevel):
             selectioncommand=selecmd_left)
 
         slb_right = Pmw.ScrolledListBox(pane_right, items=(),
+            listbox_selectmode=Tkinter.EXTENDED,
             listbox_height=30, labelpos='nw', label_text='Items',)
 
         repo_bb_left = Pmw.ButtonBox(pane_left)
@@ -318,8 +322,30 @@ class PluginManager(Pmw.MegaToplevel):
         def dummy_command():
             showinfo = tkMessageBox.showinfo
             showinfo('Dummy', 'Not implemented', parent=self.interior())
-        repo_bb_left.add('Add ...', command=dummy_command)
-        repo_bb_left.add('Remove', command=dummy_command)
+
+        def slb_left_setlist(items):
+            slb_left.setlist(items)
+            self.b_save.configure(background='red')
+
+        def slb_left_add():
+            import tkSimpleDialog
+            url = tkSimpleDialog.askstring('Repository URL', 'Please enter Repository URL', parent=self.interior())
+            if not url:
+                return
+            items = list(slb_left.get())
+            items.append(url)
+            slb_left_setlist(items)
+            slb_left.setvalue([url]) # provide list to avoid unicode problem
+
+        def slb_left_remove():
+            v = slb_left.getvalue()
+            items = list(slb_left.get())
+            for item in v:
+                items.remove(item)
+            slb_left_setlist(items)
+
+        repo_bb_left.add('Add ...', command=slb_left_add)
+        repo_bb_left.add('Remove', command=slb_left_remove)
         repo_bb_right.add('Info', command=infocmd_right)
         repo_bb_right.add('Install', command=selecmd_right)
 

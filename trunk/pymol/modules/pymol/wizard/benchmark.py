@@ -21,7 +21,6 @@ class Benchmark(Wizard):
 
     def configure(self):
         self.cmd.reinitialize()
-        self.cmd.set('use_display_lists',1)
         
     def __init__(self,arg0=None,_self=cmd):
         Wizard.__init__(self,_self)        

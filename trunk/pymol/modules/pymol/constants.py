@@ -22,6 +22,7 @@ file_ext_re = re.compile(string.join([
     r"\.pmo$|", # Experimental molecular object format
     r"\.moe$|", # MOE (proprietary)
     r"\.mae$|", # MAE (proprietary)
+    r"\.cms$|", # CMS (proprietary)
     r"\.ccp4$|", # CCP4
     r"\.top$|", # AMBER Topology
     r"\.trj$|", # AMBER Trajectory
@@ -278,6 +279,11 @@ class fb_module:
     vfont                     =60
     # in layer0
     shader                    =61
+    shadermgr                 =62
+    shaderprg                 =63
+    session                   =64
+    # in layer1
+    property                  =65
 
     executive                 =70
     selector                  =71

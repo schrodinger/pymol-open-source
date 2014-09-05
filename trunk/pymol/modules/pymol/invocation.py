@@ -17,6 +17,97 @@
 # This module unifies argument handling for embedded and modular PyMOL
 #
 
+helptext1 = '''Copyright (C) Schrodinger, LLC
+
+Usage: pymol [OPTIONS]... [FILES]... [-- CUSTOM SCRIPT ARGUMENTS]
+
+Options
+
+  --help    display this help and exit
+  --version display PyMOL version and exit
+
+  -1        config_mouse one_button
+  -2        config_mouse two_button
+  -a N      alias for -A
+  -A N      application configuration:
+    -A1     simple viewer window          (-qxiF -X 68 -Y 100)
+    -A3     internal GUI only, no splash  (-qx -X 68 -Y 100)
+    -A4     used by PYMOLVIEWER           (-X 68 -Y 100)
+    -A5     helper application            (-QxiICUF -X 68 -Y 100)
+    -A6     full screen presentation      (-qxieICUPF)
+  -b[N]     benchmark wizard
+  -B        (DEPRECATED)
+  -c        launch in command-line only mode for batch processing
+  -C        don't terminate on Ctrl-C
+  -d cmd    execute PyMOL command
+  -D N      defer_builds_mode=N
+  -e        full screen
+  -E N      multisampling (GL_MULTISAMPLE_ARB)
+  -f N      internal_feedback=N
+  -F        internal_feedback=0
+  -g file   save image (png) or movie (mpg)
+  -G        game mode (DEPRECATED)
+  -h        generic helper application (no controls, no feedback)
+  -H N      window height in pixels
+  -i        internal_gui=0
+  -I        auto_reinitialize=1 (Mac only)
+  -j        side-by-side stereo (stereo_mode=4)
+  -J        cd to user's home directory
+  -k        don't load pymolrc or plugins
+  -K        keep alive: when running without a GUI, don't quit after the input
+            is exhausted
+  -l file   run python script in thread (spawn)
+  -L file   load file after everything else (only if something was loaded before)
+  -m        INTERNAL - do not use (mac external GUI)
+  -M        force mono
+  -n        INTERNAL - do not use (incentive_product=1)
+  -N name   UNSUPPORTED - external gui type (default: pmg_tk) (same as -w)
+  -o        disable security protections
+  -O N      sphere_mode=N
+  -p        read commands from STDIN
+  -P        handle scenes as if the session were opened in presentation mode
+  -q        supress startup message
+  -Q        quiet, suppress all text output
+  -r file   run python script
+  -R        launch RPC Server
+  -s file   log to file
+  -S        force stereo
+  -t N      stereo_mode=N
+  -T name   UNSUPPORTED - Tcl/Tk GUI skin
+  -u file   resume log file (execute existing content and append new log output)
+  -U        UNSUPPORTED reuse the helper application
+  -v        UNUSED
+  -V N      external GUI window height in pixels
+  -w name   UNSUPPORTED - external gui type (default: pmg_tk) (same as -N)
+  -W N      window width in pixels
+  -x        no external gui
+  -X N      window x position on screen
+  -y        exit on error
+  -Y N      window y position on screen
+  -z N      window_visible=N
+  -Z N      zoom_mode=N
+
+File Extensions
+
+  pdb,sdf,...     molecular structure files
+  ccp4,dx,...     map files
+
+  py,pym,pyc      python script
+  pml             PyMOL command script
+
+  p5m             implies -A5 (PDB File)
+  psw             implies -A6 (PyMOL Show File)
+  pwg             PyMOL web GUI
+
+  Any unrecognized file extension will be treated as PDB format.
+
+Active "pymolrc" Files
+'''
+
+helptext2 = '''
+Mail bug reports to https://lists.sourceforge.net/lists/listinfo/pymol-users
+'''
+
 if __name__=='pymol.invocation':
 
     import copy
@@ -91,6 +182,15 @@ if __name__=='pymol.invocation':
     script_re = re.compile(r"pymolrc$|\.pml$|\.PML$|\.p1m$|\.P1M$")
     py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
 
+    def get_pwg_options(filename):
+        for line in open(filename):
+            a = line.split()
+            if not a or a[0].startswith('#'):
+                continue
+            if a[0].lower() == 'options':
+                return a[1:]
+        return []
+
     def get_personal_folder():
         if sys.platform.startswith('win'):
             try:
@@ -154,16 +254,30 @@ if __name__=='pymol.invocation':
             a = re.sub(r'''^"|"$|^'|'$''','',a) # strip extra quotes
             if a[0:1]=='-':
                 if (a[1:2]=='-'):
-                    # double hypen signals end of PyMOL arguments
-                    if python_script == None:
-                        python_script = argv[0]
-                    rev_av = copy.deepcopy(av)
-                    rev_av.reverse()
-                    if len(a)>2:
-                        sys.argv = [python_script] + [a] + rev_av
+                    if a in ('--version', '--help'):
+                        import pymol
+                        print pymol.get_version_message()
+                        if a == '--help':
+                            print helptext1
+                            if pymolrc:
+                                for filename in pymolrc:
+                                    print '  ' + filename
+                            else:
+                                print '  (no pymolrc file found)'
+                            print helptext2
+                        sys.exit()
                     else:
-                        sys.argv = [python_script] + rev_av
-                    break
+                        # double hypen signals end of PyMOL arguments
+                        if python_script == None:
+                            python_script = argv[0]
+                        rev_av = copy.deepcopy(av)
+                        rev_av.reverse()
+                        if len(a)>2:
+                            sys.argv = [python_script] + [a] + rev_av
+                        else:
+                            sys.argv = [python_script] + rev_av
+                        break
+                    continue
                 if ("A" in a) or ("a" in a): # application configuration
                     new_args = []
                     # ====== mode 1 - simple viewer window ======
@@ -367,19 +481,9 @@ if __name__=='pymol.invocation':
                     python_script = a
                 elif suffix in [ 'pwg' ]:
                     try:
-                        lines = open(a,'rb').readlines()
-                        pseudo_argv = ["pymol"]
-                        for line in lines:
-                            line = line.strip()
-                            if len(line) and line[0:1] != '#':
-                                input = line.split(None,1)
-                                if len(input) and input[0]!='#':
-                                    keyword = input[0].lower()
-                                    if keyword == 'options':
-                                        if len(input)>1:
-                                            pseudo_argv = ['pymol'] + input[1].split()
-                                            parse_args(pseudo_argv, _pymol=_pymol,
-                                                       options=options, restricted=1)
+                        pwg_options = get_pwg_options(a)
+                        if pwg_options:
+                            parse_args(['pymol'] + pwg_options, _pymol, options, 1)
                     except:
                         traceback.print_exc()
                 options.deferred.append(a)

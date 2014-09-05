@@ -750,7 +750,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
   AtomName name;
   ResIdent resi;
   ResName resn;
-  Chain chain;
+  ov_word chain;
 
   char formalCharge[4];
   int rl;
@@ -935,8 +935,8 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
     z[8] = 0;
     linelen =
       sprintf((*charVLA) + (*c),
-              "%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s%6.2f%6.2f      %-4s%2s%2s\n", aType,
-              cnt + 1, name, ai->alt, resn, ai->chain, resi, x, y, z, ai->q, ai->b,
+              "%6s%5i %-4s%1s%-4s%1.1s%5s   %s%s%s%6.2f%6.2f      %-4s%2s%2s\n", aType,
+              cnt + 1, name, ai->alt, resn, LexStr(G, ai->chain), resi, x, y, z, ai->q, ai->b,
               ignore_pdb_segi ? "" :
               ai->segi, ai->elem, formalCharge);
     if(ai->U11 || ai->U22 || ai->U33 || ai->U12 || ai->U13 || ai->U23) {
@@ -981,13 +981,12 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
             resi[rl + 2] = 0;
           }
       }
-      chain[0] = 0;             /* no chain IDs */
+      chain = 0;                /* no chain IDs */
       alt[0] = 0;               /* not alt conf identifiers */
     } else {
       alt[0] = ai->alt[0];
       alt[1] = 0;
-      chain[0] = ai->chain[0];
-      chain[1] = 0;
+      chain = ai->chain;
     }
     sprintf(x, "%8.3f", v[0]);
     if(x[0] != 32)
@@ -1003,9 +1002,9 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
       sprintf(z, " %7.2f", v[2]);
     z[8] = 0;
 
-    (*c) += sprintf((*charVLA) + (*c), "%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s %11.8f %7.3f\n",
+    (*c) += sprintf((*charVLA) + (*c), "%6s%5i %-4s%1s%-4s%1.1s%5s   %s%s%s %11.8f %7.3f\n",
                     aType, cnt + 1, name, alt, resn,
-                    chain, resi, x, y, z, ai->partialCharge, ai->elec_radius);
+                    LexStr(G, chain), resi, x, y, z, ai->partialCharge, ai->elec_radius);
   }
 
 }
@@ -1039,7 +1038,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, float *v
     PConvStringToPyObjAttr(atom, "ss", ai->ssType);
     PConvIntToPyObjAttr(atom, "resi_number", ai->resv);
     PConvIntToPyObjAttr(atom, "stereo", ai->stereo);
-    PConvStringToPyObjAttr(atom, "chain", ai->chain);
+    PConvStringToPyObjAttr(atom, "chain", LexStr(G, ai->chain));
     if(ai->alt[0])
       PConvStringToPyObjAttr(atom, "alt", ai->alt);
     PConvStringToPyObjAttr(atom, "segi", ai->segi);
@@ -1119,7 +1118,7 @@ void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoT
   }
 
   (*c) += sprintf((*charVLA) + (*c),
-                  "%3s   %5i      %3s %1s%5s\n", "TER", ter_id, resn, ai->chain, resi);
+                  "%3s   %5i      %3s %1.1s%5s\n", "TER", ter_id, resn, LexStr(G, ai->chain), resi);
 
 }
 

@@ -53,7 +53,7 @@ struct _CWordMatcher {
 #define cMatchWildcard 3
 
 #ifndef _PYMOL_INLINE
-int WordCompare(PyMOLGlobals * G, char *p, char *q, int ignCase)
+int WordCompare(PyMOLGlobals * G, const char *p, const char *q, int ignCase)
 
 
 /* all things equal, shorter is smaller */
@@ -408,7 +408,7 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals * G, char *st, CWordMatchOptions * opt
   return result;
 }
 
-static int recursive_match(CWordMatcher * I, MatchNode * cur_node, char *text,
+static int recursive_match(CWordMatcher * I, MatchNode * cur_node, const char *text,
                            int *value_ptr)
 {
   int ignore_case = I->ignore_case;
@@ -416,7 +416,7 @@ static int recursive_match(CWordMatcher * I, MatchNode * cur_node, char *text,
   case cMatchLiteral:
     {
       char *q = I->charVLA + cur_node->literal1;
-      char *p = text;
+      const char *p = text;
       while((*p) && (*q)) {
         if(*p != *q) {
           if(!ignore_case)
@@ -438,7 +438,7 @@ static int recursive_match(CWordMatcher * I, MatchNode * cur_node, char *text,
     break;
   case cMatchWildcard:
     {
-      char *p;
+      const char *p;
       p = text;
       if(!cur_node->continued)
         return true;
@@ -484,7 +484,7 @@ static int recursive_match(CWordMatcher * I, MatchNode * cur_node, char *text,
   return false;
 }
 
-int WordMatcherMatchAlpha(CWordMatcher * I, char *text)
+int WordMatcherMatchAlpha(CWordMatcher * I, const char *text)
 {
   register MatchNode *cur_node = I->node;
   register int n_node = I->n_node;
@@ -503,7 +503,7 @@ int WordMatcherMatchAlpha(CWordMatcher * I, char *text)
   return false;
 }
 
-int WordMatcherMatchMixed(CWordMatcher * I, char *text, int value)
+int WordMatcherMatchMixed(CWordMatcher * I, const char *text, int value)
 {
   register MatchNode *cur_node = I->node;
   register int n_node = I->n_node;
@@ -692,7 +692,7 @@ void WordPrimeCommaMatch(PyMOLGlobals * G, char *p)
   }
 }
 
-int WordMatchExact(PyMOLGlobals * G, char *p, char *q, int ignCase)
+int WordMatchExact(PyMOLGlobals * G, const char *p, const char *q, int ignCase)
 
 
 /* 0 = no match
@@ -713,7 +713,7 @@ int WordMatchExact(PyMOLGlobals * G, char *p, char *q, int ignCase)
   return 1;
 }
 
-int WordMatchNoWild(PyMOLGlobals * G, char *p, char *q, int ignCase)
+int WordMatchNoWild(PyMOLGlobals * G, const char *p, const char *q, int ignCase)
 
 
 /* allows for p to match when shorter than q.
@@ -747,7 +747,7 @@ negative = perfect match  */
   return (i);
 }
 
-int WordMatch(PyMOLGlobals * G, char *p, char *q, int ignCase)
+int WordMatch(PyMOLGlobals * G, const char *p, const char *q, int ignCase)
 
 
 /* allows for terminal wildcard (*) in p
@@ -791,18 +791,18 @@ negative = perfect/wildcard match  */
   return (i);
 }
 
-int WordMatchComma(PyMOLGlobals * G, char *pp, char *qq, int ignCase)
+int WordMatchComma(PyMOLGlobals * G, const char *pp, const char *qq, int ignCase)
 
 
 /* allows for comma list in p, also allows wildcards (*) in p */
 {
-  register char *p = pp, *q = qq;
+  register const char *p = pp, *q = qq;
   register int i = 0;
   register char WILDCARD = '*';
   register char pc, qc;
   register int ic = ignCase;
   int best_i = 0;
-  char *q_copy;
+  const char *q_copy;
   int blank;
   int trailing_comma = 0;
 
@@ -866,14 +866,14 @@ int WordMatchComma(PyMOLGlobals * G, char *pp, char *qq, int ignCase)
   return (best_i);
 }
 
-int WordMatchCommaExact(PyMOLGlobals * G, char *p, char *q, int ignCase)
+int WordMatchCommaExact(PyMOLGlobals * G, const char *p, const char *q, int ignCase)
 
 
 /* allows for comma list in p, no wildcards */
 {
   int i = 0;
   int best_i = 0;
-  char *q_copy;
+  const char *q_copy;
   int blank;
   int trailing_comma = 0;
 
@@ -937,7 +937,7 @@ int WordMatchCommaExact(PyMOLGlobals * G, char *p, char *q, int ignCase)
   return (best_i);
 }
 
-int WordMatchCommaInt(PyMOLGlobals * G, char *p, int number)
+int WordMatchCommaInt(PyMOLGlobals * G, const char *p, int number)
 {
   WordType buffer;
   sprintf(buffer, "%d", number);

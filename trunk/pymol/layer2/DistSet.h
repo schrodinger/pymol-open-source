@@ -23,19 +23,14 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 
 typedef struct CMeasureInfo {
-  /* ObjectMolecule-level atom ID */
-  int id;
+  /* AtomInfoType.unique_id */
+  int id[4];
   /* offset into this distance set's Coord list */
   int offset;
-  /* The ObjectMolecule in which this atom lives */
-  struct ObjectMolecule* obj;
   /* save object state */
-  int state;
-  /* Global selection ID */
-  int selection;
+  int state[4];
   /* distance, angle, or dihedral */
   int measureType;
-  struct CMeasureInfo* prev;
   struct CMeasureInfo* next;
 } CMeasureInfo;
 

@@ -59,6 +59,8 @@
 # None. However, function must have real arguments for error checking.
 # 
 
+from __future__ import absolute_import
+
 if __name__=='pymol.parsing':
 
     import re
@@ -265,8 +267,8 @@ if __name__=='pymol.parsing':
                         print "Error: "+" "*cc+"^ syntax error (type 3)."
                         raise QuietException
         if __name__!='__main__':
-            if _self._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
-                cmd.fb_debug.write(" parsing-DEBUG: tup: "+str(result)+"\n")
+            if _self._feedback(_self.fb_module.parser, _self.fb_mask.debugging):
+                _self.fb_debug.write(" parsing-DEBUG: tup: "+str(result)+"\n")
         return result
 
     def dump_str_list(list):
@@ -361,7 +363,7 @@ if __name__=='pymol.parsing':
             if "quiet" in arg_nam:
                 if not kw.has_key("quiet"):
                     if __name__!='__main__':
-                        if _self._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
+                        if _self._feedback(_self.fb_module.cmd, _self.fb_mask.results):
                             kw["quiet"] = 0
             if not kw.has_key("_self"): # always send _self in the dictionary
                 kw["_self"]=_self
@@ -423,19 +425,100 @@ if __name__=='pymol.parsing':
             # set feedback argument (quiet), if extant, results enabled, and not overridden
             if arg_dct.has_key("quiet"):
                 if not kw.has_key("quiet"):
-                    if _self._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
+                    if _self._feedback(_self.fb_module.cmd, _self.fb_mask.results):
                         kw["quiet"] = 0
             # make sure command knows which PyMOL instance to message
             if "_self" in arg_nam:
                 if not kw.has_key("_self"):
                     kw["_self"]=_self
         if __name__!='__main__':
-            if _self._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
-                cmd.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")      
+            if _self._feedback(_self.fb_module.parser, _self.fb_mask.debugging):
+                _self.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")
         return (arg,kw)
 
 
     # launching routines
+
+    def run(filename, namespace='global', _spawn=0, _self=None):
+        '''
+DESCRIPTION
+
+    "run" executes an external Python script in a local name space,
+    the main Python namespace, the global PyMOL namespace, or in its
+    own namespace (as a module).
+
+USAGE
+
+    run file [, namespace ]
+
+ARGUMENTS
+
+    file = string: a Python program, typically ending in .py or .pym.
+
+    namespace = local, global, module, main, or private {default: global}
+
+NOTES
+
+    Due to an idiosyncracy in Pickle, you can not pickle objects
+    directly created at the main level in a script run as "module",
+    (because the pickled object becomes dependent on that module).
+    Workaround: delegate construction to an imported module.
+
+SEE ALSO
+
+    spawn
+        '''
+        from __main__ import __dict__ as ns_main
+        from pymol    import __dict__ as ns_pymol
+
+        if not _self:
+            from pymol import cmd as _self
+
+        if filename.endswith('.pml'):
+            return _self.load(filename)
+
+        path = _self.exp_path(filename)
+        spawn = int(_spawn)
+        run_ = spawn_file if spawn else run_file
+
+        if namespace == 'global':
+            run_(path, ns_pymol, ns_pymol)
+        elif namespace == 'local':
+            run_(path, ns_pymol, {})
+        elif namespace == 'main':
+            run_(path, ns_main, ns_main)
+        elif namespace == 'private':
+            run_(path, ns_main, {})
+        elif namespace == 'module':
+            run_file_as_module(path, spawn=spawn)
+        else:
+            raise ValueError('invalid namespace "%s"' % namespace)
+
+    def spawn(filename, namespace='module', _self=None):
+        '''
+DESCRIPTION
+
+    "spawn" launches a Python script in a new thread which will run
+    concurrently with the PyMOL interpreter. It can be run in its own
+    namespace (like a Python module, default), a local name space, or
+    in the global namespace.
+
+USAGE
+
+    spawn file [, namespace ]
+
+NOTES
+
+    The default namespace for spawn is "module".
+
+    The best way to spawn processes at startup is to use the -l option
+    (see "help launching").
+
+SEE ALSO
+
+    run
+        '''
+        return run(filename, namespace, 1, _self)
 
     def execfile(filename, global_ns, local_ns):
         if '://' in filename:
@@ -722,7 +805,3 @@ if __name__=='pymol.parsing':
 
     #   tv = list_to_str_list(['hello','world','this-long-string','hi','dude'])
     #   print tv
-    else:
-        import cmd
-
-        

@@ -682,9 +682,11 @@ SEE ALSO
 		'''
 		_self = kw.get('_self',cmd)
 		r = DEFAULT_ERROR	   
-		new_arg = []
-		for a in arg:
-			new_arg.append(selector.process(a))
+		if len(arg) < 2:
+		    raise pymol.CmdException('need at least 2 selection')
+		if len(arg) % 2:
+		    raise pymol.CmdException('need even number of selections')
+		new_arg = map(selector.process, arg)
 		try:
 			_self.lock(_self)	
 			r = _cmd.fit_pairs(_self._COb,new_arg)

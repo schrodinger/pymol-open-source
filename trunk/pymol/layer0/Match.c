@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Feedback.h"
 #include"Parse.h"
+#include"File.h"
 
 #ifndef int2
 typedef int int2[2];
@@ -256,7 +257,6 @@ int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
   PyMOLGlobals *G = I->G;
 
   int ok = 1;
-  FILE *f;
   char *buffer = NULL;
   char *p;
   char cc[255];
@@ -264,7 +264,6 @@ int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
   unsigned int x, y;
   int a;
   int n_entry;
-  unsigned int size;
   size_t res;
 
   if(fname && fname[0]
@@ -273,25 +272,11 @@ int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
      && !(strcmp(fname, "BLOSUM62") == 0)
 #endif
     ) {
-    f = fopen(fname, "rb");
-    if(!f) {
+    buffer = FileGetContents(fname, NULL);
+    if (!buffer) {
       PRINTFB(G, FB_Match, FB_Errors)
         " Match-Error: unable to open matrix file '%s'.\n", fname ENDFB(G);
       ok = false;
-    } else {
-      fseek(f, 0, SEEK_END);
-      size = ftell(f);
-      fseek(f, 0, SEEK_SET);
-
-      buffer = (char *) mmalloc(size + 255);
-      ErrChkPtr(G, buffer);
-      p = buffer;
-      fseek(f, 0, SEEK_SET);
-      res = fread(p, size, 1, f);
-      if(1!=res) 
-	return 0;
-      p[size] = 0;
-      fclose(f);
     }
   } else {
     buffer = Alloc(char, BLOSUM62_ROWS * BLOSUM62_COLS);

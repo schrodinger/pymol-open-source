@@ -60,11 +60,11 @@ void MainCheckWindowFit(PyMOLGlobals * G);
 #ifdef _MACPYMOL_XCODE
 void MainUnblock(void);
 int MainCheckRedundantOpen(char *file);
-void MainRunString(char *str);
-PyObject *MainGetStringResult(char *str);
-void MainDoCommand(char *str1);
+void MainRunString(const char *str);
+PyObject *MainGetStringResult(const char *str);
+void MainDoCommand(const char *str1);
 int MainFeedbackOut(char *st);
-void MainRunCommand(char *str1);
+void MainRunCommand(const char *str1);
 void MainMoviePrepareCopy(int *width, int *height, int *length);
 int MainMovieCopy(int frame, int width, int height, int rowbytes, void *ptr);
 void MainMovieCopyPrepare(int *width, int *height, int *length);

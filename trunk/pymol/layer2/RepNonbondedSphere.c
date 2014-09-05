@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"ShaderMgr.h"
 #include"Scene.h"
+#include"CGO.h"
 
 typedef struct RepNonbondedSphere {
   Rep R;

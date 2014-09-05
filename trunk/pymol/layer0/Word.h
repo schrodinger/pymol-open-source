@@ -61,11 +61,11 @@ void WordMatchOptionsConfigNameList(CWordMatchOptions * I, char wildcard,
 
 CWordMatcher *WordMatcherNew(PyMOLGlobals * G, char *st, CWordMatchOptions * option,
                              int force);
-int WordMatcherMatchAlpha(CWordMatcher * I, char *text);
-int WordMatcherMatchMixed(CWordMatcher * I, char *text, int value);
+int WordMatcherMatchAlpha(CWordMatcher * I, const char *text);
+int WordMatcherMatchMixed(CWordMatcher * I, const char *text, int value);
 int WordMatcherMatchInteger(CWordMatcher * I, int value);
 void WordMatcherFree(CWordMatcher * I);
-int WordMatchNoWild(PyMOLGlobals * G, char *p, char *q, int ignCase);
+int WordMatchNoWild(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 
 CWordList *WordListNew(PyMOLGlobals * G, char *st);
 void WordListFreeP(CWordList * I);
@@ -77,12 +77,12 @@ int WordInit(PyMOLGlobals * G);
 void WordFree(PyMOLGlobals * G);
 
 void WordSetWildcard(PyMOLGlobals * G, char wc);
-int WordMatch(PyMOLGlobals * G, char *p, char *q, int ignCase);
-int WordMatchExact(PyMOLGlobals * G, char *p, char *q, int ignCase);
+int WordMatch(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
+int WordMatchExact(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 void WordPrimeCommaMatch(PyMOLGlobals * G, char *p);
-int WordMatchComma(PyMOLGlobals * G, char *p, char *q, int ignCase);
-int WordMatchCommaInt(PyMOLGlobals * G, char *p, int number);
-int WordMatchCommaExact(PyMOLGlobals * G, char *p, char *q, int ignCase);
+int WordMatchComma(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
+int WordMatchCommaInt(PyMOLGlobals * G, const char *p, int number);
+int WordMatchCommaExact(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 
 
 /* (<0) exact match, (>0) inexact match, =0 no match */
@@ -92,7 +92,7 @@ int WordKey(PyMOLGlobals * G, WordKeyValue * list, char *word, int minMatch, int
             int *exact);
 
 #ifdef _PYMOL_INLINE
-__inline__ static int WordCompare(PyMOLGlobals * G, char *p, char *q, int ignCase)
+__inline__ static int WordCompare(PyMOLGlobals * G, const char *p, const char *q, int ignCase)
 
 
 /* all things equal, shorter is smaller */
@@ -133,7 +133,7 @@ __inline__ static int WordCompare(PyMOLGlobals * G, char *p, char *q, int ignCas
   return 0;
 }
 #else
-int WordCompare(PyMOLGlobals * G, char *p, char *q, int ignCase);
+int WordCompare(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 
 #endif
 

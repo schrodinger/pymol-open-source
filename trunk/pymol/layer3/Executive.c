@@ -71,6 +71,7 @@
 #include"OVOneToAny.h"
 
 #include"ShaderMgr.h"
+#include"File.h"
 
 #ifndef _PYMOL_NOPY
 #include "ce_types.h"
@@ -161,7 +162,10 @@ struct _CExecutive {
   short selectorIsRound;
 };
 
-#ifdef _PYMOL_INCENTIVE
+#ifndef NO_MMLIBS
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern void primex_pymol_driver(int natom, double * x, double * y, double * z, double * tfactor, double * occupancy,
 				int * formal_charge, int * atomic_number, double *vdw_radius, int * isH2O, 
 				int * is_ion_atom, const char * space_group, double cell[6], double reso_high, double reso_low,
@@ -392,6 +396,9 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
     }
     TrackerDelList(I_Tracker, list_id);
     TrackerDelIter(I_Tracker, iter_id);
+
+    // fix for PYMOL-1465
+    OrthoReshape(G, -1, -1, false);
   }
   ExecutiveCountMotions(G);
   return ok;
@@ -1843,20 +1850,32 @@ void ExecutiveUpdateCoordDepends(PyMOLGlobals * G, ObjectMolecule * mol)
 
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
+  ObjectGadget *gadget;
+  int done_inv_all = false;
+  int dynamic_measures = SettingGet_b(G, mol ? mol->Obj.Setting : NULL, NULL,
+      cSetting_dynamic_measures);
 
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->type == cExecObject) {
-      if(rec->obj->type == cObjectGadget) {
-        ObjectGadget *gadget = (ObjectGadget *) rec->obj;
+      switch(rec->obj->type) {
+      case cObjectGadget:
+        if(done_inv_all)
+          break;
+        gadget = (ObjectGadget *) rec->obj;
         if(gadget->GadgetType == cGadgetRamp) {
           ObjectGadgetRamp *ramp = (ObjectGadgetRamp *) gadget;
           if(ramp->RampType == cRampMol) {
             if(ramp->Mol == mol) {
               ExecutiveInvalidateRep(G, cKeywordAll, cRepAll, cRepInvColor);
-              break;
+              done_inv_all = true;
             }
           }
         }
+        break;
+      case cObjectMeasurement:
+        if(dynamic_measures)
+          ObjectDistMoveWithObject((ObjectDist*) rec->obj, mol);
+        break;
       }
     }
   }
@@ -3510,7 +3529,6 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
 
     if(!already_handled) {
 
-      FILE *f;
       long size = 0;
       char *buffer = NULL, *p;
       CObject *obj = NULL;
@@ -3518,15 +3536,14 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
       char *next_entry = NULL;
       int repeat_flag = true;
       int n_processed = 0;
-      size_t res;
 
       if(is_string) {
         buffer = content;
         size = (long) content_length;
       } else {
-        f = fopen(content, "rb");
+        buffer = FileGetContents(content, &size);
 
-        if(!f) {
+        if(!buffer) {
           PRINTFB(G, FB_Executive, FB_Errors)
             "ExecutiveLoad-Error: Unable to open file '%s'.\n", content ENDFB(G);
           ok = false;
@@ -3534,20 +3551,6 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
 
           PRINTFB(G, FB_Executive, FB_Blather)
             " ExecutiveLoad: Loading from %s.\n", content ENDFB(G);
-
-          fseek(f, 0, SEEK_END);
-          size = ftell(f);
-          fseek(f, 0, SEEK_SET);
-
-          buffer = (char *) mmalloc(size + 255);
-          ErrChkPtr(G, buffer);
-          p = buffer;
-          fseek(f, 0, SEEK_SET);
-          res = fread(p, size, 1, f);
-	  if(1!=res)
-	    ok = false;
-          p[size] = 0;
-          fclose(f);
         }
       }
 
@@ -3804,8 +3807,6 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
                             int is_string, int multiplex, int zoom)
 {
   int ok = true;
-  FILE *f;
-  long size;
   char *buffer = NULL, *p;
   CObject *obj;
   char pdb_name[WordLength] = "";
@@ -3821,7 +3822,6 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
   PDBInfoRec pdb_info_rec;
   int model_number;
   CObject *deferred_zoom_obj = NULL;
-  size_t res;
 
   if(!pdb_info) {
     UtilZeroMem(&pdb_info_rec, sizeof(PDBInfoRec));
@@ -3831,29 +3831,12 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
   if(is_string) {
     buffer = fname;
   } else {
-    f = fopen(fname, "rb");
+    buffer = FileGetContents(fname, NULL);
 
-    if(!f) {
+    if(!buffer) {
       PRINTFB(G, FB_ObjectMolecule, FB_Errors)
         "ExecutiveProcessPDBFile-Error: Unable to open file '%s'.\n", fname ENDFB(G);
       ok = false;
-    } else {
-      PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-        " ExecutiveProcessPDBFile: Loading from %s.\n", fname ENDFB(G);
-
-      fseek(f, 0, SEEK_END);
-      size = ftell(f);
-      fseek(f, 0, SEEK_SET);
-
-      buffer = (char *) mmalloc(size + 255);
-      ErrChkPtr(G, buffer);
-      p = buffer;
-      fseek(f, 0, SEEK_SET);
-      res = fread(p, size, 1, f);
-      if(1!=res)
-	ok = false;
-      p[size] = 0;
-      fclose(f);
     }
   }
 
@@ -5896,7 +5879,7 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, char *sele, int state, float a, float
 
   /* create a new symmetry object for copying */
   symmetry = SymmetryNew(G);
-  ok_assert(1, ok = symmetry);
+  ok_assert(1, ok = (symmetry != NULL));
   symmetry->Crystal->Dim[0] = a;
   symmetry->Crystal->Dim[1] = b;
   symmetry->Crystal->Dim[2] = c;
@@ -9053,6 +9036,10 @@ int ExecutiveGetType(PyMOLGlobals * G, char *name, WordType type)
         strcat(type, "group");
       else if(rec->obj->type == cObjectVolume)
 	strcat(type, "volume");
+      else if(rec->obj->type == cObjectAlignment)
+       strcat(type, "alignment");
+      else if(rec->obj->type == cObjectGadget)
+       strcat(type, "ramp");
     } else if(rec->type == cExecSelection) {
       strcpy(type, "selection");
     }
@@ -10704,7 +10691,7 @@ int ExecutiveIterateList(PyMOLGlobals * G, char *name,
 	  }
           ok =
             (expr_co != NULL) &&
-            PAlterAtom(G, obj->AtomInfo + index - 1, expr_co, read_only, name, index - 1,
+            PAlterAtom(G, obj, cs, obj->AtomInfo + index - 1, expr_co, read_only, name, index - 1,
                        space);
           Py_XDECREF(expr_co);
         }

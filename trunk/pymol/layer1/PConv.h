@@ -43,6 +43,32 @@ Z* -------------------------------------------------------------------
 
 */
 
+// CPythonVal macros
+#define CPythonVal PyObject
+#define CPythonVal_PyString_Check                       PyString_Check
+#define CPythonVal_PyList_Check                         PyList_Check
+#define CPythonVal_PyList_Size                          PyList_Size
+#define CPythonVal_PyList_GetItem(G, list, i)           PyList_GetItem(list, i)
+#define CPythonVal_PyDict_GetItemString(G, p, key)      PyDict_GetItemString(p, key)
+#define CPythonVal_PConvPyIntToInt                                              PConvPyIntToInt
+#define CPythonVal_PConvPyIntToInt_From_List(G, list, i, ptr)                   PConvPyIntToInt(PyList_GetItem(list, i), ptr)
+#define CPythonVal_PConvPyListToIntArrayInPlace(G, obj, ff, ll)                 PConvPyListToIntArrayInPlace(obj, ff, ll)
+#define CPythonVal_PConvPyListToIntArrayInPlace_From_List(G, list, i, ff, ll)   PConvPyListToIntArrayInPlace(PyList_GetItem(list, i), ff, ll)
+#define CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, i, f)       PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, i), f)
+#define CPythonVal_PConvPyListToLabPosVLA(G, obj, vla_ptr)                      PConvPyListToLabPosVLA(obj, vla_ptr)
+#define CPythonVal_Free(obj)
+#define CPythonVal_FreeAll(PYOBJECT)
+
+#define CPythonVal_As_String(PYOBJECT)                  PyString_AS_STRING(PyObject_Str(PYOBJECT))
+#define CPythonVal_New(G, PYOBJECT)                     PYOBJECT
+#define CPythonVal_Append_List(LIST, ITEM)              PyList_Append(LIST, ITEM)
+#define CPythonVal_New_List()                           PyList_New(0)
+#define CPythonVal_New_Tuple(SIZE)                      PyTuple_New(SIZE)
+#define CPythonVal_Tuple_SetItem(TUPLE, ITEM, VAL)      PyTuple_SetItem(TUPLE, ITEM, VAL)
+#define CPythonVal_New_String(BUF, LEN)                 PyString_FromStringAndSize(BUF, LEN)
+#define CPythonVal_New_Boolean(VAL)                     (VAL ? PyBool_FromLong(1) : PyBool_FromLong(0))
+#define CPythonVal_New_Integer(VAL)                     PyInt_FromLong(VAL)
+#define CPythonVal_New_Float(VAL)                       PyFloat_FromDouble(VAL)
 
 /* == error-checking routines: true = success, false = failure. */
 
@@ -69,6 +95,7 @@ int PConvPyStrToLexRef(PyObject * obj, OVLexicon * lex, int *lex_ref);
 int PConvPyFloatToFloat(PyObject * obj, float *ptr);
 int PConvPyIntToChar(PyObject * obj, char *ptr);
 int PConvPyIntToInt(PyObject * obj, int *ptr);
+int PConvPyBoolToInt(PyObject * obj, int *ptr);
 int PConvPyListToLabPosVLA(PyObject * obj, LabPosType ** vla_ptr);
 
 
@@ -97,17 +124,17 @@ PyObject *PConvLabPosVLAToPyList(LabPosType * vla, int l);
  * only for efficient detection of changes to dictionary values
  * following evaluation of some expression in the context of the
  * dictionary PAlter, PAlterState, etc. */
-PyObject *PConvFloatToPyDictItem(PyObject * dict, char *key, float f);
-PyObject *PConvStringToPyDictItem(PyObject * dict, char *key, char *f);
-PyObject *PConvIntToPyDictItem(PyObject * dict, char *key, int i);
+PyObject *PConvFloatToPyDictItem(PyObject * dict, const char *key, float f);
+PyObject *PConvStringToPyDictItem(PyObject * dict, const char *key, const char *f);
+PyObject *PConvIntToPyDictItem(PyObject * dict, const char *key, int i);
 
 /* end WARNING */
 
-void PConvFloat3ToPyObjAttr(PyObject * obj, char *attr, float *v);
-void PConvFloatToPyObjAttr(PyObject * obj, char *attr, float f);
-void PConvIntToPyObjAttr(PyObject * obj, char *attr, int i);
-void PConvInt2ToPyObjAttr(PyObject * obj, char *attr, int *v);
-void PConvStringToPyObjAttr(PyObject * obj, char *attr, char *f);
+void PConvFloat3ToPyObjAttr(PyObject * obj, const char *attr, const float *v);
+void PConvFloatToPyObjAttr(PyObject * obj, const char *attr, float f);
+void PConvIntToPyObjAttr(PyObject * obj, const char *attr, int i);
+void PConvInt2ToPyObjAttr(PyObject * obj, const char *attr, const int *v);
+void PConvStringToPyObjAttr(PyObject * obj, const char *attr, const char *f);
 
 int PConvPyObjectToFloat(PyObject * object, float *value);
 int PConvPyObjectToInt(PyObject * object, int *value);

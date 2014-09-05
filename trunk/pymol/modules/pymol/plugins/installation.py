@@ -139,7 +139,40 @@ def extract_zipfile(ofile, ext):
 
     return tempdir, names[0]
 
-def installPluginFromFile(ofile, parent=None):
+def get_plugdir(parent=None):
+    '''
+    Get plugin directory, ask user if startup path has more than one entry
+    '''
+    from . import get_startup_path
+    plugdirs = get_startup_path()
+
+    if len(plugdirs) == 1:
+        return plugdirs[0]
+
+    dialog_selection = []
+    def plugdir_callback(result):
+        if result == 'OK':
+            dialog_selection[:] = dialog.getcurselection()
+        dialog.destroy()
+
+    import Pmw
+    dialog = Pmw.SelectionDialog(parent, title='Select plugin directory',
+            buttons = ('OK', 'Cancel'), defaultbutton='OK',
+            scrolledlist_labelpos='n',
+            label_text='In which directory should the plugin be installed?',
+            scrolledlist_items=plugdirs,
+            command=plugdir_callback)
+    dialog.component('scrolledlist').selection_set(0)
+
+    # wait for dialog to be closed
+    dialog.wait_window()
+
+    if not dialog_selection:
+        return ''
+
+    return dialog_selection[0]
+
+def installPluginFromFile(ofile, parent=None, plugdir=None):
     '''
     Install plugin from file.
 
@@ -157,31 +190,11 @@ def installPluginFromFile(ofile, parent=None):
     askyesno = tkMessageBox.askyesno
 
     plugdirs = get_startup_path()
-    if len(plugdirs) == 1:
-        plugdir = plugdirs[0]
-    else:
-        dialog_selection = []
-        def plugdir_callback(result):
-            if result == 'OK':
-                dialog_selection[:] = dialog.getcurselection()
-            dialog.destroy()
 
-        import Pmw
-        dialog = Pmw.SelectionDialog(parent, title='Select plugin directory',
-                buttons = ('OK', 'Cancel'), defaultbutton='OK',
-                scrolledlist_labelpos='n',
-                label_text='In which directory should the plugin be installed?',
-                scrolledlist_items=plugdirs,
-                command=plugdir_callback)
-        dialog.component('scrolledlist').selection_set(0)
-
-        # wait for dialog to be closed
-        dialog.wait_window()
-
-        if len(dialog_selection) == 0:
+    if not plugdir:
+        plugdir = get_plugdir()
+        if not plugdir:
             return
-
-        plugdir = dialog_selection[0]
 
     if not is_writable(plugdir):
         user_plugdir = get_default_user_plugin_path()

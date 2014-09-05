@@ -261,6 +261,7 @@ else: # unix style (linux, mac, ...)
     libs += pyogl_libs
 
     ext_comp_args += ["-ffast-math", "-funroll-loops", "-O3", "-fcommon"]
+    ext_comp_args += ["-Werror=implicit-function-declaration", "-Werror=declaration-after-statement"]
 
 def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open('layer0/Version.h').read())[0]

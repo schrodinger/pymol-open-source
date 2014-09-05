@@ -440,7 +440,19 @@ class Normal(PMGSkin):
         text.configure(font = self.my_fw_font)
         text.configure(width=74)
 
-        self.balloon.bind(self.entry, 'Command Input Area')
+        self.balloon.bind(self.entry, '''Command Input Area
+
+Get the list of commands by hitting <TAB>
+
+Get the list of arguments for one command with a questionmark:
+PyMOL> color ?
+
+Read the online help for a command with "help":
+PyMOL> help color
+
+Get autocompletion for many arguments by hitting <TAB>
+PyMOL> color ye<TAB>    (will autocomplete "yellow")
+''')
         
         self.focus_entry=0
         self.refocus_entry=0
@@ -1040,10 +1052,10 @@ class Normal(PMGSkin):
         
         self.menuBar.addcascademenu('Transparency', name, label, label=label)
         
+        var = getattr(self.setting, setting_name)
         for lab, val in [ ('Off', 0.0), ('20%', 0.2), ('40%', 0.4), 
                                 ('50%', 0.5), ('60%', 0.6), ('80%', 0.8) ]:
-            self.menuBar.addmenuitem(name,  'command', lab, label=lab,
-                                             command = lambda v=val,s=self,sn=setting_name: s.cmd.set(sn, v))
+            self.menuBar.addmenuitem(name, 'radiobutton', label=lab, value=val, variable=var)
 
     def cat_terms(self):
         for path in [ "$PYMOL_PATH/LICENSE.txt", "$PYMOL_PATH/LICENSE.TXT", "$PYMOL_PATH/LICENSE" ]:
@@ -1080,6 +1092,8 @@ class Normal(PMGSkin):
         self.menuBar = Pmw.MenuBar(self.root, balloon=self.balloon,
                                    hull_relief=RAISED, hull_borderwidth=1) 
         self.menuBar.pack(fill=X)
+
+        addmenuitem = self.menuBar.addmenuitem
 
 #        self.menuBar.addmenu('Tutorial', 'Tutorial', side='right')      
 
@@ -1289,11 +1303,6 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('File', 'command', 'Open structure file.',
                                 label='Open...',
                                 command=self.file_open)
-
-        if _wincheck():
-            self.menuBar.addmenuitem('File', 'command', 'Autoload MTZ file.',
-                                     label='Open MTZ with Defaults...',
-                                     command=self.file_autoload_mtz)
 
         self.menuBar.addmenuitem('File', 'command', 'Save session.',
                                 label='Save Session',
@@ -1670,17 +1679,14 @@ class Normal(PMGSkin):
 
 
         self.menuBar.addmenuitem('Residue', 'separator', '')
-        self.menuBar.addmenuitem('Residue', 'command', 'Helix',
-                                         label='Helix',
-                                         command = lambda s=self: s.cmd.do("_ set secondary_structure,1"))
 
-        self.menuBar.addmenuitem('Residue', 'command', 'Antiparallel Beta Sheet',
-                                         label='Antiparallel Beta Sheet',
-                                         command = lambda s=self: s.cmd.do("_ set secondary_structure,2"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Parallel Beta Sheet',
-                                         label='Parallel Beta Sheet',
-                                         command = lambda s=self: s.cmd.do("_ set secondary_structure,3"))
+        var = self.setting.secondary_structure
+        for lab, val in [
+                ('Helix', 1),
+                ('Antiparallel Beta Sheet', 2),
+                ('Parallel Beta Sheet', 3),
+            ]:
+            addmenuitem('Residue', 'radiobutton', label=lab, value=val, variable=var)
 
         self.menuBar.addmenuitem('Build', 'separator', '')
 
@@ -1716,33 +1722,12 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Sculpting', 'separator', '')
 
-        self.menuBar.addmenuitem('Sculpting', 'command', '1 Cycle/Update',
-                                         label='1 Cycle per Update',
-                                         command = lambda s=self: s.cmd.do("_ set sculpting_cycles=1"))
+        addmenuitem('Sculpting', 'radiobutton', label='1 Cycle per Update', value=1,
+                variable=self.setting.sculpting_cycles)
 
-        self.menuBar.addmenuitem('Sculpting', 'command', '3 Cycles/Update',
-                                         label='3 Cycles per Update',
-                                         command = lambda s=self: s.cmd.do("_ set sculpting_cycles=3"))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', '10 Cycles/Update',
-                                         label='10 Cycles per Update',
-                                         command = lambda s=self: s.cmd.do("_ set sculpting_cycles=10"))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', '33 Cycles/Update',
-                                         label='33 Cycles per Update',
-                                         command = lambda s=self: s.cmd.do("_ set sculpting_cycles=33"))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', '100 Cycles/Update',
-                                         label='100 Cycles per Update',
-                                         command = lambda s=self: s.cmd.do("_ set sculpting_cycles=100"))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', '333 Cycles/Update',
-                                         label='333 Cycles per Update',
-                                         command = lambda s=self: s.cmd.do("_ set sculpting_cycles=333"))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', '1000 Cycles/Update',
-                                         label='1000 Cycles per Update',
-                                         command = lambda s=self: s.cmd.do("_ set sculpting_cycles=1000"))
+        for val in [3, 10, 33, 100, 333, 1000]:
+            addmenuitem('Sculpting', 'radiobutton', label='%d Cycles per Update' % val, value=val,
+                    variable=self.setting.sculpting_cycles)
 
         self.menuBar.addmenuitem('Sculpting', 'separator', '')
 
@@ -1755,35 +1740,16 @@ class Normal(PMGSkin):
 #define cSculptVDW14 0x40
 #define cSculptTors  0x80
 
-        self.menuBar.addmenuitem('Sculpting', 'command', 'Bonds Only',
-                                         label='Bonds Only',
-                                         command = lambda s=self: s.cmd.do("_ set sculpt_field_mask=%d"%(
-            0x01)))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', 'Bonds & Angles Only',
-                                         label='Bonds & Angles Only',
-                                         command = lambda s=self: s.cmd.do("_ set sculpt_field_mask=%d"%(
-            0x01+0x02)))
-        
-        self.menuBar.addmenuitem('Sculpting', 'command', 'Local Geometry Only',
-                                         label='Local Geometry Only',
-                                         command = lambda s=self: s.cmd.do("_ set sculpt_field_mask=%d"%(
-            0x01+0x02+0x04+0x08+0x10)))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', 'All Except VDW',
-                                         label='All Except VDW',
-                                         command = lambda s=self: s.cmd.do("_ set sculpt_field_mask=%d"%(
-            0x01+0x02+0x04+0x08+0x10+0x80)))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', 'All Except 1-4 VDW & Torsions',
-                                         label='All Except 1-4 VDW & Torsions',
-                                         command = lambda s=self: s.cmd.do("_ set sculpt_field_mask=%d"%(
-            0x01+0x02+0x04+0x08+0x10+0x20)))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', 'All Terms',
-                                         label='All Terms',
-                                         command = lambda s=self: s.cmd.do("_ set sculpt_field_mask=%d"%(
-            0xFF)))
+        var = self.setting.sculpt_field_mask
+        for lab, val in [
+                ('Bonds Only', 0x01),
+                ('Bonds & Angles Only', 0x01+0x02),
+                ('Local Geometry Only', 0x01+0x02+0x04+0x08+0x10),
+                ('All Except VDW', 0x01+0x02+0x04+0x08+0x10+0x80),
+                ('All Except 1-4 VDW & Torsions', 0x01+0x02+0x04+0x08+0x10+0x20),
+                ('All Terms', 0xFF),
+            ]:
+            addmenuitem('Sculpting', 'radiobutton', label=lab, value=val, variable=var)
 
 
         self.menuBar.addmenuitem('Build', 'separator', '')
@@ -2165,10 +2131,6 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Movie', 'Frame Rate', 'Playback Frame Rate',
                                     label='Frame Rate')
 
-        self.menuBar.addmenuitem('Frame Rate', 'command', 'Maximum',
-                                         label='Maximum',
-                                         command = lambda s=self: s.cmd.set("movie_fps","-1",log=1))
-
         self.menuBar.addmenuitem('Frame Rate', 'command', '30 FPS',
                                          label='30 FPS',
                                          command = lambda s=self: s.cmd.set("movie_fps","30",log=1))
@@ -2271,43 +2233,26 @@ class Normal(PMGSkin):
 
 
 
-        self.menuBar.addmenuitem('Sequence', 'command', 'Residue Codes',
-                                         label='Residue Codes',
-                                         command = lambda s=self: s.cmd.do("_ set seq_view_format,0"))
-
-        self.menuBar.addmenuitem('Sequence', 'command', 'Residue Names',
-                                         label='Residues',
-                                         command = lambda s=self: s.cmd.do("_ set seq_view_format,1"))
-
-        self.menuBar.addmenuitem('Sequence', 'command', 'Chain Identifiers',
-                                         label='Chains',
-                                         command = lambda s=self: s.cmd.do("_ set seq_view_format,3"))
-
-        self.menuBar.addmenuitem('Sequence', 'command', 'Atom Names',
-                                         label='Atoms',
-                                         command = lambda s=self: s.cmd.do("_ set seq_view_format,2"))
-
-        self.menuBar.addmenuitem('Sequence', 'command', 'States',
-                                         label='States',
-                                         command = lambda s=self: s.cmd.do("_ set seq_view_format,4"))
+        var = self.setting.seq_view_format
+        for lab, val in [
+                ('Residue Codes', 0),
+                ('Residue Names', 1),
+                ('Chain Identifiers', 3),
+                ('Atom Names', 2),
+                ('States', 4),
+            ]:
+            addmenuitem('Sequence', 'radiobutton', label=lab, value=val, variable=var)
 
         self.menuBar.addmenuitem('Sequence', 'separator', '')
 
-        self.menuBar.addmenuitem('Sequence', 'command', 'All Residue Numbers',
-                                         label='All Residue Numbers',
-                                         command = lambda s=self: s.cmd.do("_ set seq_view_label_mode,2"))
-
-        self.menuBar.addmenuitem('Sequence', 'command', 'Top Sequence Only',
-                                 label='Top Sequence Only',
-                                 command = lambda s=self: s.cmd.do("_ set seq_view_label_mode,1"))
-
-        self.menuBar.addmenuitem('Sequence', 'command', 'Object Names Only',
-                                 label='Object Names Only',
-                                 command = lambda s=self: s.cmd.do("_ set seq_view_label_mode,0"))
-
-        self.menuBar.addmenuitem('Sequence', 'command', 'No Labels',
-                                 label='No Labels',
-                                 command = lambda s=self: s.cmd.do("_ set seq_view_label_mode,3"))
+        var = self.setting.seq_view_label_mode
+        for lab, val in [
+                ('All Residue Numbers', 2),
+                ('Top Sequence Only', 1),
+                ('Object Names Only', 0),
+                ('No Labels', 3),
+            ]:
+            addmenuitem('Sequence', 'radiobutton', label=lab, value=val, variable=var)
 
         self.menuBar.addmenuitem('Display', 'checkbutton',
                                  'Stereo',
@@ -2341,6 +2286,10 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Stereo', 'command', 'Quad-Buffered Stereo',
                                          label='Quad-Buffered Stereo',
                                          command = lambda s=self: s.cmd.do("_ stereo quadbuffer"))
+
+        self.menuBar.addmenuitem('Stereo', 'command', 'Zalman Stereo',
+                                         label='Zalman Stereo',
+                                         command = lambda s=self: s.cmd.do("_ stereo byrow"))
 
         self.menuBar.addmenuitem('Stereo', 'separator', '')
 
@@ -2429,21 +2378,14 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Background', 'separator', '')
         
-        self.menuBar.addmenuitem('Background', 'command', 'White Background',
-                                         label='White',
-                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('white')"))
-
-        self.menuBar.addmenuitem('Background', 'command', 'Light Grey',
-                                         label='Light Grey',
-                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('grey80')"))
-
-        self.menuBar.addmenuitem('Background', 'command', 'Grey Background',
-                                         label='Grey',
-                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('grey50')"))
-
-        self.menuBar.addmenuitem('Background', 'command', 'Black Background',
-                                         label='Black',
-                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('black')"))
+        var = self.setting.bg_rgb
+        for lab, val in [
+                ('White', 0), # white
+                ('Light Grey', 134), # grey80
+                ('Grey', 104), # grey50
+                ('Black', 1), # black
+            ]:
+            addmenuitem('Background', 'radiobutton', label=lab, value=val, variable=var)
 
 
         self.menuBar.addcascademenu('Display', 'Color Space', 'Color Space',
@@ -2484,17 +2426,13 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Display', 'Grid', 'Grid',
                                              label='Grid')
 
-        self.menuBar.addmenuitem('Grid', 'command', 'By Object',
-                                         label='By Object',
-                                         command = lambda s=self: s.cmd.do("_ set grid_mode, 1"))
-
-        self.menuBar.addmenuitem('Grid', 'command', 'By State',
-                                         label='By State',
-                                         command = lambda s=self: s.cmd.do("_ set grid_mode, 2"))
-                                 
-        self.menuBar.addmenuitem('Grid', 'command', 'Disable',
-                                         label='Disable',
-                                         command = lambda s=self: s.cmd.do("_ set grid_mode, 0"))
+        var = self.setting.grid_mode
+        for lab, val in [
+                ('By Object', 1),
+                ('By State', 2),
+                ('Disable', 0),
+            ]:
+            addmenuitem('Grid', 'radiobutton', label=lab, value=val, variable=var)
         
         self.menuBar.addmenuitem('Display', 'separator', '')
         
@@ -3006,7 +2944,7 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Rendering', 'checkbutton',
                                  'Smooth raytracing.',
-                                 label='Antialias',
+                                 label='Antialias (Ray Tracing)',
                                 variable = self.setting.antialias,
                                 )
 
@@ -3184,40 +3122,9 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Setting', 'Control', 'Control Size',
                                              label='Control Size')
 
-        self.menuBar.addmenuitem('Control', 'command', '12',
-                                         label='12',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set internal_gui_control_size,12,quiet=1"))
-
-        self.menuBar.addmenuitem('Control', 'command', '14',
-                                         label='14',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set internal_gui_control_size,14,quiet=1"))
-
-        self.menuBar.addmenuitem('Control', 'command', '16',
-                                         label='16',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set internal_gui_control_size,16,quiet=1"))
-
-        self.menuBar.addmenuitem('Control', 'command', '18',
-                                         label='18 (default)',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set internal_gui_control_size,18,quiet=1"))
-
-        self.menuBar.addmenuitem('Control', 'command', '20',
-                                         label='20',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set internal_gui_control_size,20,quiet=1"))
-
-        self.menuBar.addmenuitem('Control', 'command', '24',
-                                         label='24',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set internal_gui_control_size,24,quiet=1"))
-
-        self.menuBar.addmenuitem('Control', 'command', '30',
-                                         label='30',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set internal_gui_control_size,30,quiet=1"))
+        for val in [12, 14, 16, 18, 20, 24, 30]:
+            addmenuitem('Control', 'radiobutton', label=str(val), value=val,
+                    variable=self.setting.internal_gui_control_size)
 
         self.menuBar.addmenuitem('Setting', 'separator', '')
         
@@ -3381,44 +3288,22 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Mouse', 'SelectionMode', 'Selection Mode',
                                              label='Selection Mode')
 
-        self.menuBar.addmenuitem('SelectionMode', 'command', 'Atoms',
-                                         label='Atoms',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set mouse_selection_mode,0,quiet=1"))
-
-        self.menuBar.addmenuitem('SelectionMode', 'command', 'Residues',
-                                         label='Residues',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set mouse_selection_mode,1,quiet=1"))
-
-        self.menuBar.addmenuitem('SelectionMode', 'command', 'Chains',
-                                         label='Chains',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set mouse_selection_mode,2,quiet=1"))
-
-        self.menuBar.addmenuitem('SelectionMode', 'command', 'Segments',
-                                         label='Segments',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set mouse_selection_mode,3,quiet=1"))
-
-        self.menuBar.addmenuitem('SelectionMode', 'command', 'Objects',
-                                         label='Objects',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set mouse_selection_mode,4,quiet=1"))
-
-        self.menuBar.addmenuitem('SelectionMode', 'separator', '')
-
-        self.menuBar.addmenuitem('SelectionMode', 'command', 'Molecules',
-                                         label='Molecules',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set mouse_selection_mode,5,quiet=1"))
-
-        self.menuBar.addmenuitem('SelectionMode', 'separator', '')
-
-        self.menuBar.addmenuitem('SelectionMode', 'command', 'C-alphas',
-                                         label='C-alphas',
-                                         command = lambda s=self:
-                                         s.cmd.do("_ set mouse_selection_mode,6,quiet=1"))
+        var = self.setting.mouse_selection_mode
+        for lab, val in [
+                ('Atoms', 0),
+                ('Residues', 1),
+                ('Chains', 2),
+                ('Segments', 3),
+                ('Objects', 4),
+                ('', -1),
+                ('Molecules', 5),
+                ('', -1),
+                ('C-alphas', 6),
+            ]:
+            if not lab:
+                addmenuitem('SelectionMode', 'separator', '')
+            else:
+                addmenuitem('SelectionMode', 'radiobutton', label=lab, value=val, variable=var)
 
         self.menuBar.addmenuitem('Mouse', 'separator', '')
 

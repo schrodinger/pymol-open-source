@@ -28,20 +28,6 @@ Z* -------------------------------------------------------------------
 
 void ExtrudeInit(PyMOLGlobals * G, CExtrude * I);
 
-static float smooth(float x, float power)
-{
-
-  if(x <= 0.5) {
-    if(x <= 0.0)
-      x = 0.0;
-    return ((float) (0.5F * pow(2.0 * x, power)));
-  } else {
-    if(x >= 1.0)
-      x = 1.0;
-    return ((float) (1.0F - (0.5 * pow(2 * (1.0 - x), power))));
-  }
-}
-
 #define CopyArray(dst,src,type,count) memcpy(dst,src,sizeof(type)*(count))
 
 CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude * orig)

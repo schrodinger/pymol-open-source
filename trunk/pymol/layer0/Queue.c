@@ -32,7 +32,7 @@ CQueue *QueueNew(PyMOLGlobals * G, unsigned int mask)
   return (I);
 }
 
-void QueueStrIn(CQueue * I, char *c)
+void QueueStrIn(CQueue * I, const char *c)
 {
   int i = I->inp;
   while(*c) {

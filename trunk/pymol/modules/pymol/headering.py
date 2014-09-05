@@ -262,6 +262,8 @@ class MTZHeader(baseHeader):
             self.wordsize = 4
         
     def parseFile(self):
+        import shlex
+
         if self.checkFile():
             f = open(self.filename,'rb')
 
@@ -320,15 +322,13 @@ class MTZHeader(baseHeader):
                     elif field.startswith(H["SORT"]):
                         self.sort = string.split(tokens)
                     elif field.startswith(H["SYMINF"]):
-                        tokens = filter(None, pymol.parsing.split(tokens, " "))
+                        tokens = shlex.split(tokens)
                         self.nsymmop  = tokens[0]
                         self.nprimop  = tokens[1]
                         self.lattice  = tokens[2]
                         self.groupnum = tokens[3]
-
-                        # try official MTZ format
-                        self.space_group = pymol.cmd.safe_eval(tokens[4])
-                        self.pt_group    = pymol.cmd.safe_eval(tokens[5])
+                        self.space_group = tokens[4]
+                        self.pt_group    = tokens[5]
 
                         # valid format for MTZ space group?
                         self.space_group = space_group_map.get(self.space_group, self.space_group)

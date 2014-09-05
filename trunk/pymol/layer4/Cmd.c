@@ -6025,6 +6025,10 @@ static PyObject *CmdMSet(PyObject * self, PyObject * args)
     SceneCountFrames(G);
     APIExit(G);
   }
+
+  // fix for PYMOL-1465
+  OrthoReshape(G, -1, -1, false);
+
   return APIResultOk(ok);
 }
 
@@ -8489,6 +8493,36 @@ static PyObject *CmdAssignAtomTypes(PyObject *self, PyObject *args)
   return (APIAutoNone(result));
 }
 
+static PyObject *CmdCountDiscrete(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char *str1;
+  OrthoLineType s1;
+  ObjectMolecule **list;
+  int discrete = 0;
+
+  ok_assert(1, PyArg_ParseTuple(args, "Os", &self, &str1));
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(1, G && APIEnterBlockedNotModal(G));
+  ok_assert(2, SelectorGetTmp(G, str1, s1) >= 0);
+
+  if((list = ExecutiveGetObjectMoleculeVLA(G, s1))) {
+    unsigned int i, size = VLAGetSize(list);
+    for(i = 0; i < size; i++)
+      if(list[i]->DiscreteFlag)
+        discrete++;
+    VLAFreeP(list);
+  }
+
+  SelectorFreeTmp(G, s1);
+ok_except2:
+  APIExitBlocked(G);
+  return Py_BuildValue("i", discrete);
+ok_except1:
+  API_HANDLE_ERROR;
+  return APIAutoNone(NULL);
+}
+
 static PyMethodDef Cmd_methods[] = {
   {"_get_c_threading_api", CmdGetCThreadingAPI, METH_VARARGS},
   {"_set_scene_names", CmdSetSceneNames, METH_VARARGS},
@@ -8531,6 +8565,7 @@ static PyMethodDef Cmd_methods[] = {
   {"create", CmdCreate, METH_VARARGS},
   {"count_states", CmdCountStates, METH_VARARGS},
   {"count_frames", CmdCountFrames, METH_VARARGS},
+  {"count_discrete", CmdCountDiscrete, METH_VARARGS},
   {"cycle_valence", CmdCycleValence, METH_VARARGS},
   {"debug", CmdDebug, METH_VARARGS},
   {"decline", CmdDecline, METH_VARARGS},
@@ -8770,15 +8805,23 @@ static PyMethodDef Cmd_methods[] = {
   {NULL, NULL}                  /* sentinel */
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void init_cmd(void)
 {
   /*  Py_InitModule("_cmd", Cmd_methods); */
-  Py_InitModule4("_cmd",
+  Py_InitModule4("pymol._cmd",
                  Cmd_methods,
                  "PyMOL _cmd internal API -- PRIVATE: DO NOT USE!",
                  PyCObject_FromVoidPtr((void *) &SingletonPyMOLGlobals, NULL),
                  PYTHON_API_VERSION);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #else
 typedef int this_file_is_no_longer_empty;

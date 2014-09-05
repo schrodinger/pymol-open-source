@@ -1906,7 +1906,7 @@ NOTES
             if len(str(expression))==0:
                 r= _cmd.label(_self._COb,"("+str(selection)+")",'',quiet)
             else:
-                r = _cmd.label(_self._COb,"("+str(selection)+")",'label='+str(expression),quiet)
+                r = _cmd.label(_self._COb,"("+str(selection)+")",str(expression),quiet)
         finally:
             _self.unlock(r,_self)   
         if _self._raising(r,_self): raise QuietException

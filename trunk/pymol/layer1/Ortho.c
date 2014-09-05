@@ -490,7 +490,7 @@ void OrthoClear(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void OrthoFeedbackIn(PyMOLGlobals * G, char *buffer)
+void OrthoFeedbackIn(PyMOLGlobals * G, const char *buffer)
 {
   register COrtho *I = G->Ortho;
   if(G->HaveGUI) {
@@ -525,7 +525,7 @@ void OrthoDirty(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void OrthoBusyMessage(PyMOLGlobals * G, char *message)
+void OrthoBusyMessage(PyMOLGlobals * G, const char *message)
 {
   register COrtho *I = G->Ortho;
   if(strlen(message) < 255)
@@ -1141,11 +1141,12 @@ void OrthoParseCurrentLine(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void OrthoAddOutput(PyMOLGlobals * G, char *str)
+void OrthoAddOutput(PyMOLGlobals * G, const char *str)
 {
   register COrtho *I = G->Ortho;
   int curLine;
-  char *p, *q;
+  const char *p;
+  char *q;
   int cc;
   int wrap;
   curLine = I->CurLine & OrthoSaveLines;
@@ -1209,7 +1210,7 @@ void OrthoAddOutput(PyMOLGlobals * G, char *str)
 
 
 /*========================================================================*/
-void OrthoNewLine(PyMOLGlobals * G, char *prompt, int crlf)
+void OrthoNewLine(PyMOLGlobals * G, const char *prompt, int crlf)
 {
   int curLine;
   register COrtho *I = G->Ortho;
@@ -2741,7 +2742,7 @@ int OrthoGetPushed(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-void OrthoCommandIn(PyMOLGlobals * G, char *buffer)
+void OrthoCommandIn(PyMOLGlobals * G, const char *buffer)
 {
   register COrtho *I = G->Ortho;
   if(I->cmdActiveQueue)
@@ -2754,7 +2755,7 @@ void OrthoCommandSetBusy(PyMOLGlobals * G, int busy){
 }
 
 /*========================================================================*/
-void OrthoPasteIn(PyMOLGlobals * G, char *buffer)
+void OrthoPasteIn(PyMOLGlobals * G, const char *buffer)
 {
   register COrtho *I = G->Ortho;
   int curLine = I->CurLine & OrthoSaveLines;

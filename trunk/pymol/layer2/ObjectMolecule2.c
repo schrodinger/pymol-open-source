@@ -224,7 +224,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
     ai->geom = cAtomInfoNone;
     ai->q = q;
     ai->b = b;
-    strcpy(ai->chain, chain);
+    ai->chain = LexIdx(G, chain);
     strcpy(ai->resi, resi);
     strcpy(ai->segi, segi);
     strcpy(ai->resn, resn);
@@ -262,7 +262,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
     if(!quiet) {
       PRINTFB(G, FB_ObjectMolecule, FB_Actions)
         " ObjMol: created %s/%s/%s/%s`%s/%s\n",
-        I->Obj.Name, ai->segi, ai->chain, ai->resn, ai->resi, ai->name ENDFB(G);
+        I->Obj.Name, ai->segi, LexStr(G, ai->chain), ai->resn, ai->resi, ai->name ENDFB(G);
     }
   }
 
@@ -1717,12 +1717,10 @@ ok_except1:
 /*
  * Assign ai->ssType
  */
-static void sshash_lookup(SSHash *hash, AtomInfoType *ai) {
+static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain1) {
   int index, ssi;
-  unsigned char ss_chain1;
   SSEntry *sst = NULL;
 
-  ss_chain1 = ai->chain[0];
   index = ai->resv & cResvMask;
   if(hash->ss[ss_chain1]) {
     ssi = hash->ss[ss_chain1][index];
@@ -2802,11 +2800,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       }
 
       p = ncopy(cc, p, 1);
-      if(*cc == ' ')
-        ai->chain[0] = 0;
-      else {
-        ai->chain[0] = *cc;
-        ai->chain[1] = 0;
+      if(*cc == ' ') {
+        ss_chain1 = 0;
+        ai->chain = 0;
+      } else {
+        ss_chain1 = *cc;
+        ai->chain = LexIdx(G, cc);
       }
 
       p = ncopy(cc, p, 5);      /* we treat insertion records as part of the residue identifier */
@@ -2815,7 +2814,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       ai->resv = AtomResvFromResi(ai->resi);
 
       if(ssFlag) {              /* get secondary structure information (if avail) */
-        sshash_lookup(ss_hash, ai);
+        sshash_lookup(ss_hash, ai, ss_chain1);
       } else {
         ai->cartoon = cCartoon_tube;
       }
@@ -3295,8 +3294,8 @@ static int ObjectMoleculeTestHBond(float *donToAcc, float *donToH, float *hToAcc
   /* interpolate cutoff based on ADH angle */
 
   if(hbc->maxDistAtMaxAngle != 0.0F) {
-    curve = (pow(angle, hbc->power_a) * hbc->factor_a +
-             pow(angle, hbc->power_b) * hbc->factor_b);
+    curve = (pow(angle, (double) hbc->power_a) * hbc->factor_a +
+             pow(angle, (double) hbc->power_b) * hbc->factor_b);
 
     cutoff = (hbc->maxDistAtMaxAngle * curve) + (hbc->maxDistAtZero * (1.0 - curve));
   } else {
@@ -3323,7 +3322,7 @@ static int ObjectMoleculeTestHBond(float *donToAcc, float *donToH, float *hToAcc
 static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
                                         int atom,
                                         int state, float *dir, float *best, 
-					int *is_real, int * h_idx)
+                                        AtomInfoType **h_real)
 {
   int result = 0;
   CoordSet *cs;
@@ -3372,8 +3371,8 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
           result = true;
           best_dot = dot_product3f(best, dir);
           add3f(orig, best, best);
-          if(is_real)
-            *is_real = false;
+          if(h_real)
+            *h_real = NULL;
         }
       }
       /* iterate through real hydrogens looking for best match
@@ -3391,20 +3390,18 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
             normalize3f(cand_dir);
             cand_dot = dot_product3f(cand_dir, dir);
             if(result) {        /* improved */
-              if((best_dot < cand_dot) || ((is_real) && (!*is_real))) {
+              if((best_dot < cand_dot) || (h_real && !*h_real)) {
                 best_dot = cand_dot;
                 copy3f(cand, best);
-		*h_idx = I->AtomInfo[a1].id;
-                if(is_real)
-                  *is_real = true;
+                if(h_real)
+                  *h_real = I->AtomInfo + a1;
               }
             } else {            /* first */
               result = true;
               copy3f(cand, best);
-	      *h_idx = I->AtomInfo[a1].id;
               best_dot = cand_dot;
-              if(is_real)
-                *is_real = true;
+              if(h_real)
+                *h_real = I->AtomInfo + a1;
             }
           }
         }
@@ -3417,7 +3414,7 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule * I,
 
 /*========================================================================*/
 
-int ObjectMoleculeGetCheckHBond(int *h_is_real,
+int ObjectMoleculeGetCheckHBond(AtomInfoType **h_real,
                                 float *h_crd_ret,
                                 ObjectMolecule * don_obj,
                                 int don_atom,
@@ -3425,8 +3422,7 @@ int ObjectMoleculeGetCheckHBond(int *h_is_real,
                                 ObjectMolecule * acc_obj,
                                 int acc_atom, 
 				int acc_state, 
-				HBondCriteria * hbc,
-				int * h_idx)
+				HBondCriteria * hbc)
 {
   int result = 0;
   CoordSet *csD, *csA;
@@ -3481,7 +3477,7 @@ int ObjectMoleculeGetCheckHBond(int *h_is_real,
       subtract3f(vAcc, vDon, donToAcc);
 
       if(ObjectMoleculeFindBestDonorH(don_obj,
-                                      don_atom, don_state, donToAcc, bestH, h_is_real, h_idx)) {
+                                      don_atom, don_state, donToAcc, bestH, h_real)) {
 
         subtract3f(bestH, vDon, donToH);
         subtract3f(vAcc, bestH, hToAcc);
@@ -3491,7 +3487,7 @@ int ObjectMoleculeGetCheckHBond(int *h_is_real,
           vAccPlane = &accPlane[0];
         }
         result = ObjectMoleculeTestHBond(donToAcc, donToH, hToAcc, vAccPlane, hbc);
-        if(result && h_crd_ret && h_is_real && *h_is_real)
+        if(result && h_crd_ret && h_real && *h_real)
           copy3f(bestH, h_crd_ret);
       }
     }
@@ -4030,7 +4026,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                            
                            
                            ((discrete_chains < 1) || /* we allow intra-chain bonds */
-                            (ai1->chain[0] == ai2->chain[0])) && /* or atoms are in the same chain, AND */
+                            (ai1->chain == ai2->chain)) && /* or atoms are in the same chain, AND */
                            
                            (connect_bonded || /* we're allowing explicitly bonded atoms to be auto-connected */
                             (!(ai1->bonded && ai2->bonded))) /* or neither atom was previously bonded */

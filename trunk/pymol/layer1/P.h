@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 #include"AtomInfo.h"
+#include"ObjectMolecule.h"
+#include"CoordSet.h"
 #include"PyMOLGlobals.h"
 
 #define cLockAPI 1
@@ -30,7 +32,26 @@ Z* -------------------------------------------------------------------
 #define cPLog_pym       2
 #define cPLog_no_flush  3
 
-char convertStereoToChar(int stereo);
+#define cPType_string          1
+#define cPType_int             2
+#define cPType_int_as_string   3
+#define cPType_float           4
+#define cPType_stereo          5
+#define cPType_char_as_type    6
+#define cPType_model           7
+#define cPType_index           8
+#define cPType_int_custom_type 9
+#define cPType_xyz_float      10
+#define cPType_settings       11
+#define cPType_properties     12
+#define cPType_state          13
+
+#define NUM_ATOM_PROPERTIES    38
+
+#define cPRunType_alter          1
+#define cPRunType_alter_state    2
+#define cPRunType_label          3
+
 
 int PLabelExprUsesVariable(PyMOLGlobals * G, char *expr, char *var);
 
@@ -92,10 +113,10 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr,
 #define PConvertOptions(a,b)
 #define PGetOptions(a)
 
-#define PAlterAtom(G,a,b,c,d,e,f) 0
-#define PLabelAtom(G,a,b,c,d) 0
+#define PAlterAtom(G,a,b,c,d,e,f,g,h) 0
+#define PLabelAtom(G,a,b,c,d,e,f) 0
 
-#define PAlterAtomState(G,a,b,c,d,e,f,g) 0
+#define PAlterAtomState(G,a,b,c,d,e,f,g,h,i,j,k) 0
 
 #else
 
@@ -114,16 +135,16 @@ void PGetOptions(CPyMOLOptions * rec);
 
 void PFree(void);
 void PExit(PyMOLGlobals * G, int code);
-void PParse(PyMOLGlobals * G, char *str);       /* only accepts one command */
-void PDo(PyMOLGlobals * G, char *str);  /* accepts multple commands seperated by newlines */
+void PParse(PyMOLGlobals * G, const char *str);       /* only accepts one command */
+void PDo(PyMOLGlobals * G, const char *str);  /* accepts multple commands seperated by newlines */
 
-int PAlterAtom(PyMOLGlobals * G, AtomInfoType * at, PyCodeObject *expr_co,
+int PAlterAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co,
                int read_only, char *model, int index, PyObject * space);
-int PLabelAtom(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, int index);
+int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co, char *model, int index);
 int PAlterAtomState(PyMOLGlobals * G, float *v, PyCodeObject *expr_co, int read_only,
-                    AtomInfoType * at, char *model, int index, PyObject * space);
+                    ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, char *model, int index, int csindex, int state, PyObject * space);
 
-void PLog(PyMOLGlobals * G, char *str, int lf);
+void PLog(PyMOLGlobals * G, const char *str, int lf);
 void PLogFlush(PyMOLGlobals * G);
 
 void PSleep(PyMOLGlobals * G, int usec);
@@ -159,10 +180,10 @@ int PFlushFast(PyMOLGlobals * G);
 void PXDecRef(PyObject * obj);
 PyObject *PXIncRef(PyObject * obj);
 void PSGIStereo(PyMOLGlobals * G, int flag);
-void PDefineFloat(PyMOLGlobals * G, char *name, float value);
+void PDefineFloat(PyMOLGlobals * G, const char *name, float value);
 
-void PRunStringModule(PyMOLGlobals * G, char *str);
-void PRunStringInstance(PyMOLGlobals * G, char *str);
+void PRunStringModule(PyMOLGlobals * G, const char *str);
+void PRunStringInstance(PyMOLGlobals * G, const char *str);
 
 void PDumpTraceback(PyObject * err);
 void PDumpException(void);
@@ -185,6 +206,23 @@ typedef struct {
   PyThreadState *state;
 } SavedThreadRec;
 
+typedef struct {
+  PyObject_HEAD
+  //  PyObject* dict;
+  ObjectMolecule *obj;
+  CoordSet *cs;
+  AtomInfoType *atomInfo;
+  char *model;
+  int index;
+  int csindex;
+  float *v; // for PAlterAtomState x/y/z
+  int state;
+  short read_only; // set for PLabelAtom
+  PyMOLGlobals * G;
+  PyObject *dict;
+} WrapperObject;
+
+void WrapperObjectReset(WrapperObject *);
 
 /* instance-specific Python object, containers, closures, and threads */
 
@@ -221,6 +259,8 @@ struct _CP_inst {
 
   int glut_thread_keep_out;
   SavedThreadRec savedThread[MAX_SAVED_THREAD];
+
+  WrapperObject *wrapperObject;
 };
 
 
@@ -235,8 +275,16 @@ extern PyObject *P_xray;        /* used by Symmetry */
 extern PyObject *P_chempy;      /* used by CoordSet and Selector for construction of models */
 extern PyObject *P_models;      /* used by Selector for construction of models */
 extern PyObject *P_setting;     /* used by Setting.c */
+extern PyTypeObject *P_wrapper;     /* used by P.c for lazy-loading settings/properties/attributes */
 
 extern unsigned int P_glut_thread_id;
 
 #endif
+
+#ifndef _PYMOL_NOPY
+void PSetAtomPropertyInfo(PyMOLGlobals * G, int propid, short pt, int off);
+#endif
+
+char convertStereoToChar(int stereo);
+
 #endif

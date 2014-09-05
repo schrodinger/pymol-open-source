@@ -566,7 +566,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
 
           // initialize carve mask
           FieldFreeP(vs->carvemask);
-          vs->carvemask = FieldNew(G, vs->dim, 3, sizeof(GLubyte), cFieldOther);
+          vs->carvemask = FieldNew(G, (int*) vs->dim, 3, sizeof(GLubyte), cFieldOther);
 
           // loop over voxels
           for (z = 0; z < dz; z++) {

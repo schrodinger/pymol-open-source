@@ -14,18 +14,34 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_RepMesh
-#define _H_RepMesh
+#ifndef _H_CGOStruct
+#define _H_CGOStruct
 
-#include"Rep.h"
-#include"CoordSet.h"
-#include"CGO.h"
+#include"Base.h"
 
-Rep *RepMeshNew(CoordSet * cset, int state);
-void RepMeshInit(void);
-
-#define cRepMesh_by_flags     0
-#define cRepMesh_all          1
-#define cRepMesh_heavy_atoms  2
+struct _CGO {
+  PyMOLGlobals *G;
+  float *op;
+  int c;
+  int z_flag;
+  float z_min, z_max;
+  float z_vector[3];
+  float alpha;
+  int *i_start, i_size;
+#ifdef _PYMOL_CGO_DRAWARRAYS
+  short has_begin_end;
+#endif
+  int current_pick_color_index, current_pick_color_bond;
+#ifdef _PYMOL_CGO_DRAWBUFFERS
+  float current_accessibility;
+  short has_draw_buffers, has_draw_cylinder_buffers, has_draw_sphere_buffers;
+  float normal[3], color[3], texture[2];
+  uchar pickColor[4];
+#endif
+  short use_shader, cgo_shader_ub_color, cgo_shader_ub_normal;
+  short debug;
+  short enable_shaders;
+  short no_pick;
+};
 
 #endif

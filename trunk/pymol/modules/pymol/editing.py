@@ -1692,7 +1692,8 @@ PYMOL API
                     _self.unlock(r,_self)
                 if not is_sequence(origin):
                     print " Error: rotate: unknown object '%s'."%object
-                    if _self._raising(r,_self): raise pymol.CmdException                                
+                    if _self._raising(r,_self):
+                        raise pymol.CmdException                                
             elif object_mode==1:
                 
                 matrix = [mat[0][0],mat[0][1],mat[0][2], origin[0],     
@@ -1931,7 +1932,8 @@ SEE ALSO
                                                  int(quiet))
             finally:
                 _self.unlock(r,_self)
-            if _self._raising(r,_self): raise pymol.CmdException            
+            if _self._raising(r,_self):
+                raise pymol.CmdException            
         return r
 
     def matrix_reset(name, state=1, mode=-1, log=0, quiet=1,_self=cmd):
@@ -1962,7 +1964,8 @@ SEE ALSO
                                          int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException            
+        if _self._raising(r,_self):
+            raise pymol.CmdException            
         return r
 
         

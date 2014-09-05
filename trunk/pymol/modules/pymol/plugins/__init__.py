@@ -260,6 +260,8 @@ class PluginInfo(object):
             if verbose:
                 import traceback
                 traceback.print_exc()
+            else:
+                print sys.exc_info()[1]
             print "Unable to initialize plugin '%s' (%s)." % (self.name, self.mod_name)
             return False
 

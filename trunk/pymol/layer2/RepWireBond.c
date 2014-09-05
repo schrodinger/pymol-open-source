@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Setting.h"
 #include"ShaderMgr.h"
+#include"CGO.h"
 
 typedef struct RepWireBond {
   Rep R;

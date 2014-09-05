@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 #include"Setting.h"
-#include"CGO.h"
+#include"CGOStruct.h"
 
 typedef struct GadgetSet {
   void (*fUpdate) (struct GadgetSet * I);

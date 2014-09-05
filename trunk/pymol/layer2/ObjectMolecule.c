@@ -50,6 +50,7 @@ Z* -------------------------------------------------------------------
 #include"OVOneToOne.h"
 #include"OVLexicon.h"
 #include"ListMacros.h"
+#include"File.h"
 
 #define cMaxNegResi 100
 
@@ -1181,9 +1182,9 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                           r_cent[1] /= r_cnt;
                           r_cent[2] /= r_cnt;
                           transform33f3f(cs->PeriodicBox->RealToFrac, r_cent, r_cent);
-                          r_trans[0] = (float) fmod(1000.0 + shift[0] + r_cent[0], 1.0F);
-                          r_trans[1] = (float) fmod(1000.0 + shift[1] + r_cent[1], 1.0F);
-                          r_trans[2] = (float) fmod(1000.0 + shift[2] + r_cent[2], 1.0F);
+                          r_trans[0] = fmodf(1000.0F + shift[0] + r_cent[0], 1.0F);
+                          r_trans[1] = fmodf(1000.0F + shift[1] + r_cent[1], 1.0F);
+                          r_trans[2] = fmodf(1000.0F + shift[2] + r_cent[2], 1.0F);
                           r_trans[0] -= r_cent[0];
                           r_trans[1] -= r_cent[1];
                           r_trans[2] -= r_cent[2];
@@ -1283,7 +1284,6 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
   int a, b, c;
   int zoom_flag = false;
   CoordSet *cs = NULL;
-  int size;
   size_t res;
   char ncolumn = 6; // number of coordinates per line
   char nbyte = 12;  // width of one coordinate
@@ -1296,9 +1296,6 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
 #define BUFSIZE 4194304
 #define GETTING_LOW 10000
 
-  f = fopen(fname, "rb");
-  if(!f)
-    ok = ErrMessage(G, "ObjectMoleculeLoadRSTFile", "Unable to open file!");
   else {
     if(I->CSTmpl) {
       cs = CoordSetCopy(I->CSTmpl);
@@ -1313,21 +1310,9 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     if (ok){
       PRINTFB(G, FB_ObjectMolecule, FB_Blather)
 	" ObjMolLoadRSTFile: Loading from \"%s\".\n", fname ENDFB(G);
-      fseek(f, 0, SEEK_END);
-      size = ftell(f);
-      fseek(f, 0, SEEK_SET);
-
-      buffer = (char *) mmalloc(size + 255);
-      CHECKOK(ok, buffer);
-      if (ok){
-	p = buffer;
-	fseek(f, 0, SEEK_SET);
-	res = fread(p, size, 1, f);
-	/* error reading file */
-	ok &= (1==res);
-	p[size] = 0;
-      }
-      fclose(f);
+      buffer = FileGetContents(fname, NULL);
+      if(!buffer)
+        ok = ErrMessage(G, "ObjectMoleculeLoadRSTFile", "Unable to open file!");
     }
     if (ok){
       p = nextline(p);
@@ -2445,36 +2430,17 @@ ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj
                                           char *fname, int frame, int discrete)
 {
   ObjectMolecule *I = NULL;
-  int ok = true;
-  FILE *f;
-  long size;
   char *buffer, *p;
-  size_t res;
 
-  f = fopen(fname, "rb");
-  if(!f)
-    ok = ErrMessage(G, "ObjectMoleculeLoadTOPFile", "Unable to open file!");
+  buffer = FileGetContents(fname, NULL);
+
+  if(!buffer)
+    ErrMessage(G, "ObjectMoleculeLoadTOPFile", "Unable to open file!");
   else {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " ObjectMoleculeLoadTOPFile: Loading from %s.\n", fname ENDFB(G);
 
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    buffer = (char *) mmalloc(size + 255);
-    CHECKOK(ok, buffer);
-    if (ok){
-      p = buffer;
-      fseek(f, 0, SEEK_SET);
-      res = fread(p, size, 1, f);
-      /* error reading file */
-      ok &= (1==res);
-      p[size] = 0;
-      fclose(f);
-    }
-    if (ok)
-      I = ObjectMoleculeReadTOPStr(G, obj, buffer, frame, discrete);
+    I = ObjectMoleculeReadTOPStr(G, obj, buffer, frame, discrete);
     mfree(buffer);
   }
 
@@ -3645,7 +3611,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
 
         strcpy(ai->resn, "UNK");
         ai->alt[0] = 0;
-        ai->chain[0] = 0;
+        ai->chain = 0;
         ai->resv = atomCount + 1;
 
         ai->q = 1.0;
@@ -3684,7 +3650,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
 
       ai->alt[0] = 0;
       strcpy(ai->resn, "UNK");
-      ai->chain[0] = 0;
+      ai->chain = 0;
 
       ai->resv = atomCount + 1;
       sprintf(ai->resi, "%d", ai->resv);
@@ -3746,7 +3712,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
     if(valid_atom) {
       PRINTFD(G, FB_ObjectMolecule)
         " ObjectMolecule-DEBUG: %s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
-        ai->name, ai->resn, ai->resi, ai->chain,
+        ai->name, ai->resn, ai->resi, LexStr(G, ai->chain),
         *(coord + a), *(coord + a + 1), *(coord + a + 2), ai->b, ai->q, ai->segi ENDFD;
 
       a += 3;
@@ -3878,33 +3844,15 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals * G, ObjectMolecule * obj
                                           char *fname, int frame, int discrete)
 {
   ObjectMolecule *I = NULL;
-  int ok = true;
-  FILE *f;
-  long size;
-  char *buffer, *p;
-  size_t res;
+  char *buffer;
 
-  f = fopen(fname, "rb");
-  if(!f)
-    ok = ErrMessage(G, "ObjectMoleculeLoadXYZFile", "Unable to open file!");
+  buffer = FileGetContents(fname, NULL);
+
+  if(!buffer)
+    ErrMessage(G, "ObjectMoleculeLoadXYZFile", "Unable to open file!");
   else {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " ObjectMoleculeLoadXYZFile: Loading from %s.\n", fname ENDFB(G);
-
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    buffer = (char *) mmalloc(size + 255);
-    ErrChkPtr(G, buffer);
-    p = buffer;
-    fseek(f, 0, SEEK_SET);
-    res = fread(p, size, 1, f);
-    /* error reading file */
-    if(1!=res)
-      return NULL;
-    p[size] = 0;
-    fclose(f);
 
     I = ObjectMoleculeReadXYZStr(G, obj, buffer, frame, discrete);
 
@@ -5159,7 +5107,8 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
     ai->geom = ai0->geom;       /* ? */
     ai->q = ai0->q;
     ai->b = ai0->b;
-    strcpy(ai->chain, ai0->chain);
+    ai->chain = ai0->chain;
+    LexInc(I->Obj.G, ai->chain);
     strcpy(ai->alt, ai0->alt);
     strcpy(ai->resi, ai0->resi);
     strcpy(ai->segi, ai0->segi);
@@ -8012,9 +7961,11 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
       }
 
       if(ok) {
+        OrthoLineType temp = "";
         tmp = PyObject_GetAttrString(atom, "chain");
         if(tmp)
-          ok = PConvPyObjectToStrMaxClean(tmp, ai->chain, sizeof(Chain) - 1);
+          PConvPyObjectToStrMaxClean(tmp, temp, sizeof(OrthoLineType) - 1);
+        ai->chain = LexIdx(G, temp);
         if(!ok)
           ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read chain");
         Py_XDECREF(tmp);
@@ -9359,7 +9310,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
         if(ok) {
           WordType subst_name;
           SegIdent segment;     /* what MOL2 calls chain */
-          Chain chain;
+          ov_word chain;
           WordType subst_type;
           ResIdent resi;
           ResName resn;
@@ -9396,7 +9347,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
           for(a = 0; a < nSubst; a++) {
             segment[0] = 0;
             subst_name[0] = 0;
-            chain[0] = 0;
+            chain = 0;
             resn[0] = 0;
             resi[0] = 0;
             end_line = false;
@@ -9459,8 +9410,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
               } else {
                 seg_flag = true;
                 if(!segment[1]) {       /* if segment is single letter, then also assign to chain field */
-                  chain[0] = segment[0];
-                  chain[1] = 0;
+                  chain = LexIdx(G, segment);
                   chain_flag = true;
                 }
               }
@@ -9527,7 +9477,8 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                     /* we have the resv, so now get the chain if there is one */
                     char *pp = subst_name;
                     if(!((pp[0] >= '0') && (pp[0] <= '9'))) {
-                      chain[0] = pp[0];
+                      char tmp[2] = {pp[0], 0};
+                      chain = LexIdx(G, tmp);
                       chain_flag = true;
                       pp++;
                     }
@@ -9580,7 +9531,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                         if(resi_flag)
                           UtilNCopy(ai->resi, resi, cResiLen);
                         if(chain_flag) {
-                          ai->chain[0] = chain[0];
+                          ai->chain = chain;
                         }
                         if(resn_flag)
                           UtilNCopy(ai->resn, resn, cResnLen);
@@ -10193,21 +10144,38 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
   CoordSet *cs;
   AtomInfoType *ai, *ai0, *ai_option;
   PyMOLGlobals *G = I->Obj.G;
+#ifndef _PYMOL_NOPY
   PyCodeObject *expr_co = NULL;
-
+  int compileType = Py_single_input;
+#endif
   PRINTFD(G, FB_ObjectMolecule)
     " ObjectMoleculeSeleOp-DEBUG: sele %d op->code %d\n", sele, op->code ENDFD;
   if(sele >= 0) {
+    char *errstr = "Alter";
     /* always run on entry */
     switch (op->code) {
+    case OMOP_LABL:
+      errstr = "Label";
+      if (op->i2 != cExecutiveLabelEvalOn){
+	break;
+      }
+#ifndef _PYMOL_NOPY
+      compileType = Py_eval_input;
+#endif
     case OMOP_ALTR:
     case OMOP_AlterState:
       PBlock(G);
-      expr_co = (PyCodeObject*)Py_CompileString(op->s1, "", Py_single_input);
-      if(expr_co == NULL) {
-        if(PyErr_Occurred())
-          PyErr_Print();
-        ok = ErrMessage(G, "Alter", "failed to compile expression");
+      if (op->s1 && op->s1[0]){
+#ifndef _PYMOL_NOPY
+	expr_co = (PyCodeObject*)Py_CompileString(op->s1, "", compileType);
+	if(expr_co == NULL) {
+	  if(PyErr_Occurred())
+	    PyErr_Print();
+	  ok = ErrMessage(G, errstr, "failed to compile expression");
+	}
+#else
+	  ok = ErrMessage(G, errstr, "failed to compile expression");
+#endif
       }
       /* PBlockAndUnlockAPI() is not safe.
        * what if "v" is invalidated by another thread? */
@@ -10304,7 +10272,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
           if(op->i1 != 3) {
             ai->hetatm = ai0->hetatm;
             ai->flags = ai0->flags;
-            strcpy(ai->chain, ai0->chain);
+            ai->chain = ai0->chain;
             strcpy(ai->alt, ai0->alt);
             strcpy(ai->segi, ai0->segi);
           }
@@ -10853,7 +10821,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
-          op->ii1[(int) ai->chain[0]]++;
+          op->ii1[(int) LexStr(G, ai->chain)[0]]++;
           op->i1++;
         }
         ai++;
@@ -11235,7 +11203,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     case cExecutiveLabelEvalOn:
 		      {
 			/* python label expression evaluation */
-			if(PLabelAtom(I->Obj.G, &I->AtomInfo[a], I->Obj.Name, op->s1, a)) {
+			CoordSet *cs = NULL;
+			if(I->DiscreteFlag && I->DiscreteCSet) {
+			  cs = I->DiscreteCSet[a];
+			} else if (I->NCSet == 1){
+			  cs = I->CSet[0];
+			}
+#ifndef _PYMOL_NOPY
+			if(PLabelAtom(I->Obj.G, I, cs, &I->AtomInfo[a], expr_co, I->Obj.Name, a)) {
 			  if (ai->label && !OVLexicon_IsEmpty(G->Lexicon, ai->label)){
 			    op->i1++; /* only if the string has been set, report labelled */
 			  }
@@ -11244,6 +11219,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 			} else {
 			  ok = false;
 			}
+#else
+			ok = false;
+#endif
 		      }
                       break;
                     case cExecutiveLabelEvalAlt:
@@ -11282,11 +11260,19 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 break;
               case OMOP_ALTR:
                 if(ok) {
+		  CoordSet *cs = NULL;
+		  if(I->DiscreteFlag && I->DiscreteCSet) {
+		    cs = I->DiscreteCSet[a];
+		  } else if (I->NCSet == 1){
+		    cs = I->CSet[0];
+		  }
+#ifndef _PYMOL_NOPY
                   if(PAlterAtom
-                     (I->Obj.G, &I->AtomInfo[a], expr_co, op->i2, I->Obj.Name, a,
+                     (I->Obj.G, I, cs, &I->AtomInfo[a], expr_co, op->i2, I->Obj.Name, a,
                       op->py_ob1))
                     op->i1++;
                   else
+#endif
                     ok = false;
                 }
                 break;
@@ -11307,11 +11293,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                           ai_option = I->AtomInfo + a;
                         else
                           ai_option = NULL;
+#ifndef _PYMOL_NOPY
                         if(PAlterAtomState(I->Obj.G, cs->Coord + (a1 * 3), expr_co, op->i3,
-                                           ai_option, I->Obj.Name, a, op->py_ob1)) {
+                                           I, cs, ai_option, I->Obj.Name, a, a1, op->i2, op->py_ob1)) {
                           op->i1++;
                           hit_flag = true;
                         } else
+#endif
                           ok = false;
                       }
                     }
@@ -11812,6 +11800,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 
     /* always run on exit... */
     switch (op->code) {
+    case OMOP_LABL:
+      if (op->i2 != cExecutiveLabelEvalOn){
+	break;
+      }
     case OMOP_ALTR:
     case OMOP_AlterState:
       Py_XDECREF(expr_co);
@@ -11824,30 +11816,23 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 
 
 /*========================================================================*/
-void ObjectMoleculeDescribeElement(ObjectMolecule * I, int index, char *buffer)
-{
-  AtomInfoType *ai;
-  ai = I->AtomInfo + index;
-  if(ai->alt[0])
-    sprintf(buffer, "/%s/%s/%s/%s`%s/%s`%s", I->Obj.Name, ai->segi, ai->chain, ai->resn,
-            ai->resi, ai->name, ai->alt);
-  else
-    sprintf(buffer, "/%s/%s/%s/%s`%s/%s", I->Obj.Name, ai->segi, ai->chain, ai->resn,
-            ai->resi, ai->name);
-}
-
-
-/*========================================================================*/
 void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer)
 {
   AtomInfoType *ai;
   ai = I->AtomInfo + index;
-  if(ai->alt[0])
-    sprintf(buffer, "/%s/%s/%s/%s`%s/%s`%s", I->Obj.Name, ai->segi, ai->chain, ai->resn,
-            ai->resi, ai->name, ai->alt);
-  else
-    sprintf(buffer, "/%s/%s/%s/%s`%s/%s`", I->Obj.Name, ai->segi, ai->chain, ai->resn,
-            ai->resi, ai->name);
+  sprintf(buffer, "/%s/%s/%s/%s`%s/%s`%s", I->Obj.Name, ai->segi,
+      LexStr(I->Obj.G, ai->chain), ai->resn, ai->resi, ai->name, ai->alt);
+}
+
+
+/*========================================================================*/
+void ObjectMoleculeDescribeElement(ObjectMolecule * I, int index, char *buffer)
+{
+  ObjectMoleculeGetAtomSele(I, index, buffer);
+  if(!I->AtomInfo[index].alt[0]) {
+    // don't include the trailing backtick
+    buffer[strlen(buffer) - 1] = 0;
+  }
 }
 
 
@@ -11855,21 +11840,18 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer)
 void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, int quote)
 {
   AtomInfoType *ai;
-  char quo[5] = "";
-  if(quote) {
-    quo[0] = '"';
-    quo[1] = 0;
-  }
+  char *p = quote ? buffer + 1 : buffer;
+
   if(SettingGetGlobal_b(I->Obj.G, cSetting_robust_logs)) {
-    ai = I->AtomInfo + index;
-    if(ai->alt[0])
-      sprintf(buffer, "%s/%s/%s/%s/%s`%s/%s`%s%s", quo, I->Obj.Name, ai->segi, ai->chain,
-              ai->resn, ai->resi, ai->name, ai->alt, quo);
-    else
-      sprintf(buffer, "%s/%s/%s/%s/%s`%s/%s`%s", quo, I->Obj.Name, ai->segi, ai->chain,
-              ai->resn, ai->resi, ai->name, quo);
+    ObjectMoleculeGetAtomSele(I, index, p);
   } else {
-    sprintf(buffer, "%s(%s`%d)%s", quo, I->Obj.Name, index + 1, quo);
+    sprintf(p, "(%s`%d)", I->Obj.Name, index + 1);
+  }
+
+  if (quote) {
+    int len = strlen(p);
+    buffer[0] = buffer[len + 1] = '"';
+    buffer[len + 2] = 0;
   }
 }
 
@@ -11885,9 +11867,9 @@ void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer)
   } else {
     strcpy(segi, "s;''");
   }
-  if(ai->chain[0]) {
+  if(ai->chain) {
     strcpy(chain, "c;");
-    strcat(chain, ai->chain);
+    strcat(chain, LexStr(I->Obj.G, ai->chain));
   } else {
     strcpy(chain, "c;''");
   }
@@ -12068,27 +12050,6 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
       }
     }
   } /* end block */
-
-  /* JV--dyndist */
-  PRINTFD(G, FB_ObjectMolecule)
-    " ObjectMolecule: update distances here for object %s.\n", I->Obj.Name ENDFD;
-  /* this can be broken up into N-threads for N-distance measures. */
-
-  /* move measurement objects if the user wants */
-  if (SettingGet_b(G, I->Obj.Setting, NULL, cSetting_dynamic_measures)) {
-    /* get all distance objects */
-    ObjectDist** measureList = (ObjectDist**) ExecutiveFindObjectsByType(G, cObjectMeasurement);
-    if (measureList) {
-      int len = VLAGetSize(measureList);
-      int cur = 0;
-      /* should I just call rep->invalidate instead and put this  */
-      /* in the ObjectDistUpdate...? */
-      while(len && cur < len) {
-	ObjectDistMoveWithObject((ObjectDist*) measureList[cur++], I);
-      }
-      VLAFree(measureList);
-    }
-  }
 
   PRINTFD(G, FB_ObjectMolecule)
     " ObjectMolecule: updates complete for object %s.\n", I->Obj.Name ENDFD;
@@ -13013,34 +12974,18 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals * G, ObjectMolecule * obj
 {
   ObjectMolecule *I = NULL;
   int ok = true;
-  FILE *f;
   int oCnt = 0;
-  long size;
   char *buffer, *p;
   char cc[MAXLINELEN], oName[WordLength];
   int nLines;
-  size_t res;
 
-  f = fopen(fname, "rb");
-  if(!f)
+  buffer = FileGetContents(fname, NULL);
+
+  if(!buffer)
     ok = ErrMessage(G, "ObjectMoleculeLoadMMDFile", "Unable to open file!");
   else {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " ObjectMoleculeLoadMMDFile: Loading from %s.\n", fname ENDFB(G);
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    buffer = (char *) mmalloc(size + 255);
-    ErrChkPtr(G, buffer);
-    p = buffer;
-    fseek(f, 0, SEEK_SET);
-    res = fread(p, size, 1, f);
-    /* error reading file */
-    if(1!=res)
-      return NULL;
-
-    p[size] = 0;
-    fclose(f);
     p = buffer;
     while(ok) {
       ncopy(cc, p, 6);

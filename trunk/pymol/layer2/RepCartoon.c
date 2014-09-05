@@ -237,20 +237,6 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
   }
 }
 
-static float smooth(float x, float power)
-{
-
-  if(x <= 0.5) {
-    if(x <= 0.0)
-      x = 0.0;
-    return ((float) (0.5 * pow(2.0 * x, power)));
-  } else {
-    if(x >= 1.0)
-      x = 1.0;
-    return ((float) (1.0 - (0.5 * pow(2 * (1.0 - x), power))));
-  }
-}
-
 #define NUCLEIC_NORMAL0 "C2"
 #define NUCLEIC_NORMAL1 "C3*"
 #define NUCLEIC_NORMAL2 "C3'"

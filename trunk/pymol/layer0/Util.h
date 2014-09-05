@@ -24,15 +24,15 @@ Z* -------------------------------------------------------------------
 #include "Base.h"
 
 void UtilZeroMem(void *ptr, ov_size howMuch);
-void UtilCopyMem(void *dst, void *src, ov_size howMuch);
+void UtilCopyMem(void *dst, const void *src, ov_size howMuch);
 void *UtilArrayCalloc(unsigned int *dim, ov_size ndim, ov_size atom_size);
-char *UtilConcat(char *where, char *what);
-void UtilNConcat(char *dst, char *str, ov_size n);
-void UtilConcatVLA(char **vla, ov_size * cc, char *str);
+char *UtilConcat(char *where,const char *what);
+void UtilNConcat(char *dst, const char *str, ov_size n);
+void UtilConcatVLA(char **vla, ov_size * cc, const char *str);
 void UtilNPadVLA(char **vla, ov_size * cc, char *str, ov_size len);
 void UtilFillVLA(char **vla, ov_size * cc, char what, ov_size len);
-void UtilNCopy(char *dst, char *src, ov_size n);        /* up to N-1 chars */
-void UtilNCopyToLower(char *dst, char *src, ov_size n); /* up to N-1 chars */
+void UtilNCopy(char *dst, const char *src, ov_size n);        /* up to N-1 chars */
+void UtilNCopyToLower(char *dst, const char *src, ov_size n); /* up to N-1 chars */
 void UtilCleanStr(char *s);
 int UtilCountStringVLA(char *vla);
 

@@ -1307,7 +1307,7 @@ void SeekerUpdate(PyMOLGlobals * G)
           UtilConcatVLA(&lab->txt, &lab->len, "/");
           UtilConcatVLA(&lab->txt, &lab->len, ai->segi);
           UtilConcatVLA(&lab->txt, &lab->len, "/");
-          UtilConcatVLA(&lab->txt, &lab->len, ai->chain);
+          UtilConcatVLA(&lab->txt, &lab->len, LexStr(G, ai->chain));
           UtilConcatVLA(&lab->txt, &lab->len, "/");
         } else {
           UtilConcatVLA(&lab->txt, &lab->len, "///");
@@ -1356,7 +1356,7 @@ void SeekerUpdate(PyMOLGlobals * G)
           UtilConcatVLA(&lab->txt, &lab->len, "/");
           UtilConcatVLA(&lab->txt, &lab->len, ai->segi);
           UtilConcatVLA(&lab->txt, &lab->len, "/");
-          UtilConcatVLA(&lab->txt, &lab->len, ai->chain);
+          UtilConcatVLA(&lab->txt, &lab->len, LexStr(G, ai->chain));
           UtilConcatVLA(&lab->txt, &lab->len, "/");
           l1->stop = lab->len;
           st_len = l1->stop - l1->start;
@@ -1390,7 +1390,7 @@ void SeekerUpdate(PyMOLGlobals * G)
           l1 = lab->col + nCol;
           l1->start = lab->len;
           UtilConcatVLA(&lab->txt, &lab->len, "/");
-          UtilConcatVLA(&lab->txt, &lab->len, ai->chain);
+          UtilConcatVLA(&lab->txt, &lab->len, LexStr(G, ai->chain));
           UtilConcatVLA(&lab->txt, &lab->len, "/");
           l1->stop = lab->len;
           st_len = l1->stop - l1->start;
@@ -1523,8 +1523,8 @@ void SeekerUpdate(PyMOLGlobals * G)
             r1->start = row->len;
             first_atom_in_label = true;
 
-            if(ai->chain[0])
-              UtilConcatVLA(&row->txt, &row->len, ai->chain);
+            if(ai->chain)
+              UtilConcatVLA(&row->txt, &row->len, LexStr(G, ai->chain));
             else
               UtilConcatVLA(&row->txt, &row->len, "''");
             r1->stop = row->len;

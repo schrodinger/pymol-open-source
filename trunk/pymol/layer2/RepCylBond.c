@@ -32,6 +32,7 @@
 #include"Sphere.h"
 #include"ShaderMgr.h"
 #include"Scene.h"
+#include"CGO.h"
 
 typedef struct RepCylBond {
   Rep R;

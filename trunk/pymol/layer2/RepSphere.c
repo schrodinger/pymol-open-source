@@ -31,6 +31,9 @@
 #include"Feedback.h"
 #include "ShaderMgr.h"
 #include "Scene.h"
+#include"CGO.h"
+
+#include "ShaderText.h"
 
 #ifdef NT
 #undef NT

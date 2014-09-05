@@ -542,7 +542,8 @@ SEE ALSO
                         elif keyword == 'delete':
                             os.unlink(fname)
                         elif keyword == 'options':
-                            os.unlink(fname)
+                            # parsed during invocation
+                            pass
                         elif keyword == 'wrap_native_return_types':
                             wrap_native = 1
                         else:
@@ -575,7 +576,7 @@ SEE ALSO
     
     def load(filename, object='', state=0, format='', finish=1,
              discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0,
-             mimic=1,_self=cmd):
+             mimic=1, object_props=None, atom_props=None, _self=cmd):
         '''
 DESCRIPTION
 
@@ -586,7 +587,8 @@ DESCRIPTION
 USAGE
 
     load filename [, object [, state [, format [, finish [, discrete [, quiet
-            [, multiplex [, zoom [, partial [, mimic ]]]]]]]]]]
+            [, multiplex [, zoom [, partial [, mimic [, object_props
+            [, atom_props ]]]]]]]]]]]]
 
 ARGUMENTS
 
@@ -639,6 +641,8 @@ SEE ALSO
     save, load_traj, fetch
         '''
         r = DEFAULT_ERROR
+        if object_props or atom_props:
+            print ' Warning: properties are not supported in Open-Source PyMOL'
         try:
             _self.lock(_self)
             type = format
@@ -746,7 +750,7 @@ SEE ALSO
                 elif re.search("\.fasta$",fname_no_gz,re.I):
                     ftype = loadable.fasta
                 elif re.search("\.mtz$",fname_no_gz,re.I):
-                    raise CmdException('mtz loading only available in incentive PyMOL')
+                    return load_mtz(fname, object, quiet=quiet, _self=_self)
                 elif re.search("\.vis$",fname_no_gz,re.I):
                     try:
                         from epymol.vis import load_vis
@@ -901,7 +905,8 @@ SEE ALSO
         return r
 
     def load_embedded(key=None, name=None, state=0, finish=1, discrete=1,
-                      quiet=1, zoom=-1, multiplex=-2, _self=cmd):
+                      quiet=1, zoom=-1, multiplex=-2, object_props=None,
+                      atom_props=None, _self=cmd):
         '''
 DESCRIPTION
 
@@ -931,6 +936,8 @@ NOTES
     
     '''
         r = DEFAULT_ERROR
+        if object_props or atom_props:
+            print ' Warning: properties are not supported in Open-Source PyMOL'
         list = _self._parser.get_embedded(key)
         if list == None:
             print "Error: embedded data '%s' not found."%key
@@ -1018,7 +1025,7 @@ NOTES
         return r
         
     def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
-                    zoom=-1,multiplex=-2,_self=cmd):
+                    zoom=-1,multiplex=-2,object_props=None,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1042,6 +1049,8 @@ NOTES
     objects save memory but can not be edited.
         '''
         r = DEFAULT_ERROR
+        if object_props:
+            print ' Warning: properties are not supported in Open-Source PyMOL'
         try:
             _self.lock(_self)
             r = _cmd.load(_self._COb,str(name),str(sdfstr),int(state)-1,
@@ -1273,6 +1282,7 @@ PYMOL API
         path = str: fetch_path
         file = str or file: file name or open file handle
         '''
+        r = DEFAULT_ERROR
 
         fetch_host_list = [x if '://' in x else fetchHosts[x]
                 for x in _self.get("fetch_host", _self=_self).split()]
@@ -1307,6 +1317,7 @@ PYMOL API
         code = code.lower()
 
         fobj = None
+        contents = None
 
         if not file or file in (1, '1', 'auto'):
             file = os.path.join(path, nameFmt.format(code=code.lower(), type=type))
@@ -1337,12 +1348,13 @@ PYMOL API
                 try:
                     fobj = open(file, 'wb')
                 except IOError:
-                    raise pymol.CmdException('Cannot write to "%s"' % file)
+                    print ' Warning: Cannot write to "%s"' % file
 
-            fobj.write(contents)
-            fobj.flush()
-            if file:
-                fobj.close()
+            if fobj:
+                fobj.write(contents)
+                fobj.flush()
+                if file:
+                    fobj.close()
 
             if not file:
                 return DEFAULT_SUCCESS
@@ -1357,8 +1369,12 @@ PYMOL API
         if os.path.exists(file):
             r = _self.load(file, name, state, '',
                     finish, discrete, quiet, multiplex, zoom)
-            if not _self.is_error(r):
-                return name
+        elif contents and bioType in ('pdb', 'bio'):
+            r = _self.read_pdbstr(contents, name, state,
+                    finish, discrete, quiet, zoom, multiplex)
+
+        if not _self.is_error(r):
+            return name
 
         print " Error-fetch: unable to load '%s'." % code
         return DEFAULT_ERROR
@@ -1490,6 +1506,41 @@ ARGUMENTS
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
+
+    def load_mtz(filename, prefix='', amplitudes='', phases='', weights='None',
+            reso_low=0, reso_high=0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Load a MTZ file as two map objects (fofc, 2fofc) or if amplitudes and
+    phases column names are given, as one map object.
+
+USAGE
+
+    load_mtz filename [, prefix [, amplitudes, phases [, weights
+        [, reso_low [, reso_high ]]]]]
+
+ARGUMENTS
+
+    filename = str: filename
+
+    prefix = str: object name or prefix {default: filename without extension}
+
+    amplitudes = str: amplitudes column name, guess if blank {default: }
+
+    phases = str: phases column name, required if amplitudes are given {default: }
+
+    weights = str: weights column name, optional {default: None}
+
+    reso_low = float: minimum resolution {default: 0, read from file}
+
+    reso_high = float: maximum resolution {default: 0, read from file}
+
+SEE ALSO
+
+    map_generate
+        '''
+        raise pymol.IncentiveOnlyException()
 
     def loadall(pattern, group='', quiet=1, _self=cmd, **kwargs):
         '''

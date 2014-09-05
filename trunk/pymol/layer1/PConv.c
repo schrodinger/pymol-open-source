@@ -387,7 +387,7 @@ int PConvPyObjectToStrMaxClean(PyObject * object, char *value, int ln)
   return (result);
 }
 
-PyObject *PConvFloatToPyDictItem(PyObject * dict, char *key, float f)
+PyObject *PConvFloatToPyDictItem(PyObject * dict, const char *key, float f)
 {
   PyObject *tmp;
   tmp = PyFloat_FromDouble((double) f);
@@ -396,7 +396,7 @@ PyObject *PConvFloatToPyDictItem(PyObject * dict, char *key, float f)
   return (tmp);
 }
 
-PyObject *PConvIntToPyDictItem(PyObject * dict, char *key, int i)
+PyObject *PConvIntToPyDictItem(PyObject * dict, const char *key, int i)
 {
   PyObject *tmp;
   tmp = PyInt_FromLong(i);
@@ -405,7 +405,7 @@ PyObject *PConvIntToPyDictItem(PyObject * dict, char *key, int i)
   return (tmp);
 }
 
-PyObject *PConvStringToPyDictItem(PyObject * dict, char *key, char *f)
+PyObject *PConvStringToPyDictItem(PyObject * dict, const char *key, const char *f)
 {
   PyObject *tmp;
   tmp = PyString_FromString(f);
@@ -414,7 +414,7 @@ PyObject *PConvStringToPyDictItem(PyObject * dict, char *key, char *f)
   return (tmp);
 }
 
-void PConvFloat3ToPyObjAttr(PyObject * obj, char *attr, float *v)
+void PConvFloat3ToPyObjAttr(PyObject * obj, const char *attr, const float *v)
 {
   PyObject *t1, *t2, *t3, *tmp;
 
@@ -431,7 +431,7 @@ void PConvFloat3ToPyObjAttr(PyObject * obj, char *attr, float *v)
   Py_XDECREF(tmp);
 }
 
-void PConvInt2ToPyObjAttr(PyObject * obj, char *attr, int *v)
+void PConvInt2ToPyObjAttr(PyObject * obj, const char *attr, const int *v)
 {
   PyObject *t1, *t2, *tmp;
 
@@ -446,7 +446,7 @@ void PConvInt2ToPyObjAttr(PyObject * obj, char *attr, int *v)
   Py_XDECREF(tmp);
 }
 
-void PConvFloatToPyObjAttr(PyObject * obj, char *attr, float f)
+void PConvFloatToPyObjAttr(PyObject * obj, const char *attr, float f)
 {
   PyObject *tmp;
   tmp = PyFloat_FromDouble((double) f);
@@ -454,7 +454,7 @@ void PConvFloatToPyObjAttr(PyObject * obj, char *attr, float f)
   Py_DECREF(tmp);
 }
 
-void PConvIntToPyObjAttr(PyObject * obj, char *attr, int i)
+void PConvIntToPyObjAttr(PyObject * obj, const char *attr, int i)
 {
   PyObject *tmp;
   tmp = PyInt_FromLong(i);
@@ -462,7 +462,7 @@ void PConvIntToPyObjAttr(PyObject * obj, char *attr, int i)
   Py_DECREF(tmp);
 }
 
-void PConvStringToPyObjAttr(PyObject * obj, char *attr, char *f)
+void PConvStringToPyObjAttr(PyObject * obj, const char *attr, const char *f)
 {
   PyObject *tmp;
   tmp = PyString_FromString(f);
