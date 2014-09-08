@@ -133,7 +133,7 @@ typedef struct {
 } ListMember;
 
 struct _CExecutive {
-  Block *Block;
+  ::Block *Block;
   SpecRec *Spec;
   CTracker *Tracker;
   int Width, Height, HowFarDown;

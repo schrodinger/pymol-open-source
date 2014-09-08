@@ -69,7 +69,7 @@ typedef struct {
 } CMovieModal;
 
 struct _CMovie {
-  Block *Block;
+  ::Block *Block;
   ImageType **Image;
   int *Sequence;
   MovieCmdType *Cmd;

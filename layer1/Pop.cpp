@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 #define cPopMargin 3
 
 struct _CPop {
-  Block *Block;
+  ::Block *Block;
 };
 
 void PopReshape(Block * I, int width, int height);

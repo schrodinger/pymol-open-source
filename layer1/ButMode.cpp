@@ -39,7 +39,7 @@
 #define cButModeBottomMargin 2
 
 struct _CButMode {
-  Block *Block;
+  ::Block *Block;
   CodeType Code[cButModeCount + 1];
   int NCode;
   int Mode[cButModeInputCount];

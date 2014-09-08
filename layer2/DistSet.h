@@ -43,7 +43,7 @@ typedef struct DistSet {
   struct ObjectDist *Obj;
   float *Coord;
   int NIndex;
-  Rep **Rep;                    /* an array of pointers to representations */
+  ::Rep **Rep;                    /* an array of pointers to representations */
   int NRep;
   CSetting *Setting;
   /* extended for mobile distance labels */

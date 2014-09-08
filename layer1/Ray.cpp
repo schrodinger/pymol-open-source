@@ -38,10 +38,11 @@ Z* -------------------------------------------------------------------
 #include"PyMOL.h"
 #include"Scene.h"
 #include"PConv.h"
+#include"MyPNG.h"
 
 #ifdef _PYMOL_INLINE
 #undef _PYMOL_INLINE
-#include"Basis.c"
+#include"Basis.cpp"
 #define _PYMOL_INLINE
 #endif
 

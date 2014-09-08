@@ -47,9 +47,9 @@ Z* -------------------------------------------------------------------
 #define cDirtyDelay 0.05
 
 typedef struct CPopUp {
-  Block *Block;
-  Block *Parent;
-  Block *Child;
+  ::Block *Block;
+  ::Block *Parent;
+  ::Block *Child;
   int ChildLine;
   int LastX, LastY;
   int StartX, StartY;
