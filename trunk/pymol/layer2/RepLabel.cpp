@@ -29,7 +29,6 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Scene.h"
 #include"Text.h"
-#include"Sphere.h"
 #include"Matrix.h"
 #include"ShaderMgr.h"
 #include"CGO.h"

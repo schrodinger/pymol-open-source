@@ -314,7 +314,7 @@ int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
     if(!n_entry)
       ok = false;
     else {
-      code = (char *) Calloc(int, n_entry);
+      code = (char *) Calloc(char, n_entry * sizeof(int));
 
       /* read codes */
 

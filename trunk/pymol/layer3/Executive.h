@@ -286,7 +286,7 @@ int ExecutiveWindowZoom(PyMOLGlobals * G, char *name, float buffer,
                         int state, int inclusive, float animate, int quiet);
 int ExecutiveGetMoment(PyMOLGlobals * G, char *name, double *mi, int state);
 
-char *ExecutiveGetChains(PyMOLGlobals * G, char *sele, int state, int *null_chain);
+const char **ExecutiveGetChains(PyMOLGlobals * G, char *sele, int state);
 
 void ExecutiveOrient(PyMOLGlobals * G, char *sele, double *mi,
                      int state, float animate, int complete, float buffer, int quiet);

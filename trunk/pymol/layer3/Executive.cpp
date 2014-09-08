@@ -18,6 +18,8 @@
 #include"os_std.h"
 #include"os_gl.h"
 
+#include <set>
+
 #include"Version.h"
 #include"main.h"
 #include"Base.h"
@@ -3076,7 +3078,7 @@ ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, char *sele)
     ObjectMoleculeOpRec op;
     ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_GetObjects;
-    op.obj1VLA = (ObjectMolecule **) VLAlloc(CObject *, 10);
+    op.obj1VLA = (ObjectMolecule **) VLAlloc(ObjectMolecule *, 10);
     op.i1 = 0;
     ExecutiveObjMolSeleOp(G, s1, &op);
     result = (ObjectMolecule **) op.obj1VLA;
@@ -4687,43 +4689,37 @@ int ExecutiveSpectrum(PyMOLGlobals * G, char *s1, char *expr, float min, float m
   return (ok);
 }
 
-char *ExecutiveGetChains(PyMOLGlobals * G, char *sele, int state, int *null_chain)
+static int fStrOrderFn(const char ** array, int l, int r) {
+  return strcmp(array[l], array[r]) < 0;
+}
+
+/*
+ * Returns an VLA with pointers into G->Lexicon
+ */
+const char **ExecutiveGetChains(PyMOLGlobals * G, char *sele, int state)
 {
   int sele1;
-  char *result = NULL;
-  int chains[256];
-  int a, c;
+  const char **result = NULL;
+  std::set<ov_word> chains;
+  int c = 0;
   ObjectMoleculeOpRec op;
 
   sele1 = SelectorIndexByName(G, sele);
   if(sele1 >= 0) {
 
-    for(a = 0; a < 256; a++) {
-      chains[a] = 0;
-    }
     ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_GetChains;
-    op.ii1 = chains;
+    op.ii1 = (int*) (void*) &chains; // pointer pack
     op.i1 = 0;
     ExecutiveObjMolSeleOp(G, sele1, &op);
-    c = 0;
-    for(a = 1; a < 256; a++) {
-      if(chains[a])
-        c++;
+    result = VLAlloc(const char*, chains.size());
+    for (std::set<ov_word>::iterator it = chains.begin(),
+        it_end = chains.end(); it != it_end; ++it) {
+      result[c++] = LexStr(G, *it);
     }
-    result = Calloc(char, c + 1);
-    if(c) {
-      c = 0;
-      *null_chain = chains[0];
-      for(a = 1; a < 256; a++) {
-        if(chains[a]) {
-          result[c] = (char) a;
-          c++;
-        }
-      }
-    } else {
-        result[0] = 0;
-    }
+    // sort the array
+    UtilSortInPlace(G, result, chains.size(), sizeof(char *),
+        (UtilOrderFn *) fStrOrderFn);
   } else {
     ErrMessage(G, "ExecutiveGetChains", "Bad selection.");
   }
