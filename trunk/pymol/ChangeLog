@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2014-09-08 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* migrate all C files to C++ (rename c -> cpp)
+
+	* multi-letter chain support
+
+	* added missing function pymol.menu.measurement_color
+
+	* fix small regression bug in pymol.creating.unquote
+
 2014-09-04 Thomas Holder, Blaine Bell
 
 	* 1.7.3.0 (unstable/experimental)

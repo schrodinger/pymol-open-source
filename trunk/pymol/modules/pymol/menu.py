@@ -608,6 +608,13 @@ def mol_color(self_cmd, sele):
          ] +
         all_colors(self_cmd, sele))
 
+def measurement_color(self_cmd, sele):
+    r = [
+        [ 2, 'Color:', '' ],
+    ]
+    r += all_colors(self_cmd, sele)
+    return r
+
 def general_color(self_cmd, sele):
     return [[ 2, 'Color:'     ,''                        ]] + all_colors(self_cmd, sele)
 
