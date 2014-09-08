@@ -41,7 +41,7 @@ typedef struct CoordSet {
   int *IdxToAtm;
   int *AtmToIdx;
   int NIndex, NAtIndex, prevNIndex, prevNAtIndex;
-  Rep *Rep[cRepCnt];            /* an array of pointers to representations */
+  ::Rep *Rep[cRepCnt];            /* an array of pointers to representations */
   int Active[cRepCnt];          /* active flags */
   int NTmpBond;                 /* optional, temporary (for coord set transfers) */
   BondType *TmpBond;            /* actual bond info is stored in ObjectMolecule */

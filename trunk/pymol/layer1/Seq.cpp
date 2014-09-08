@@ -35,7 +35,7 @@ Z* -------------------------------------------------------------------
 #include "CGO.h"
 
 struct _CSeq {
-  Block *Block;
+  ::Block *Block;
   int DragFlag;
   int ScrollBarActive;
   int NSkip;

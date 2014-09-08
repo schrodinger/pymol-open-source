@@ -59,7 +59,7 @@ typedef struct {
 } WizardLine;
 
 struct _CWizard {
-  Block *Block;
+  ::Block *Block;
   PyObject **Wiz;
   WizardLine *Line;
   ov_size NLine;

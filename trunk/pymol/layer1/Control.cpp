@@ -48,7 +48,7 @@ Z* -------------------------------------------------------------------
 #define SDOF_QUEUE_MASK 0x1F
 
 struct _CControl {
-  Block *Block;
+  ::Block *Block;
   int DragFlag;
   int LastPos;
   int ExtraSpace;

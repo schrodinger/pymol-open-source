@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 typedef struct CScrollBar {
-  Block *Block;
+  ::Block *Block;
   int HorV;
   float BackColor[3];
   float BarColor[3];

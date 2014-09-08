@@ -1072,6 +1072,7 @@ SEE ALSO
     unquote_re = re.compile(r"r?('.*'|\".*\")$")
     
     def unquote(s):
+        s = str(s)
         if unquote_re.match(s):
             try:
                 return cmd.safe_eval(s)

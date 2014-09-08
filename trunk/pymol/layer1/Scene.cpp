@@ -160,7 +160,7 @@ typedef struct {
 #define MAX_ANI_ELEM 300
 
 struct _CScene {
-  Block *Block;
+  ::Block *Block;
   ObjRec *Obj;
   float RotMatrix[16];          /* WARNING: column major, as per OpenGL spec */
   float InvMatrix[16];          /* WARNING: column major, as per OpenGL spec */
