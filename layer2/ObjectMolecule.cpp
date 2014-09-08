@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
+#include <set>
+
 #include"Base.h"
 #include"Debug.h"
 #include"Parse.h"
@@ -10821,7 +10823,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       for(a = 0; a < I->NAtom; a++) {
         s = ai->selEntry;
         if(SelectorIsMember(G, s, sele)) {
-          op->ii1[(int) LexStr(G, ai->chain)[0]]++;
+          // pointer hack
+          ((std::set<ov_word> *) (void*) op->ii1)->insert(ai->chain);
           op->i1++;
         }
         ai++;

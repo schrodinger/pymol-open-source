@@ -7065,7 +7065,7 @@ void SceneRay(PyMOLGlobals * G,
       case 0:                  /* mode 0 is built-in */
         {
           unsigned int buffer_size = 4 * ray_width * ray_height;
-          unsigned int *buffer = (unsigned int*) Alloc(unsigned char, buffer_size);
+          unsigned int *buffer = (unsigned int*) Alloc(unsigned int, ray_width * ray_height);
           unsigned int background;
           ErrChkPtr(G, buffer);
 

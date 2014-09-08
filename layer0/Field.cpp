@@ -88,12 +88,12 @@ CField *FieldNewCopy(PyMOLGlobals * G, CField * src)
     unsigned int n_elem = I->size / I->base_size;
     switch (I->type) {
     case cFieldInt:
-      ok = ((I->data = (char *) Alloc(int, n_elem)) != NULL);
+      ok = ((I->data = (char *) Alloc(char, n_elem * sizeof(int))) != NULL);
       if(ok)
         memcpy(I->data, src->data, sizeof(int) * n_elem);
       break;
     case cFieldFloat:
-      ok = ((I->data = (char *) Alloc(float, n_elem)) != NULL);
+      ok = ((I->data = (char *) Alloc(char, n_elem * sizeof(float))) != NULL);
       if(ok)
         memcpy(I->data, src->data, sizeof(float) * n_elem);
       break;
@@ -416,8 +416,8 @@ CField *FieldNew(PyMOLGlobals * G, int *dim, int n_dim, unsigned int base_size, 
   OOAlloc(G, CField);
   I->type = type;
   I->base_size = base_size;
-  I->stride = (unsigned int *) Alloc(int, n_dim);
-  I->dim = (unsigned int *) Alloc(int, n_dim);
+  I->stride = (unsigned int *) Alloc(unsigned int, n_dim);
+  I->dim = (unsigned int *) Alloc(unsigned int, n_dim);
 
   stride = base_size;
   for(a = n_dim - 1; a >= 0; a--) {

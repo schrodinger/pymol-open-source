@@ -1518,11 +1518,9 @@ static PyObject *CmdGetChains(PyObject * self, PyObject * args)
   int int1;
   OrthoLineType s1 = "";
   PyObject *result = NULL;
-  char *chain_str = NULL;
+  char **vla = NULL;
   int ok = false;
   int c1 = 0;
-  int a, l;
-  int null_chain = false;
   ok = PyArg_ParseTuple(args, "Osi", &self, &str1, &int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -1534,22 +1532,14 @@ static PyObject *CmdGetChains(PyObject * self, PyObject * args)
     if(str1[0])
       c1 = SelectorGetTmp(G, str1, s1);
     if(c1 >= 0)
-      chain_str = ExecutiveGetChains(G, s1, int1, &null_chain);
+      vla = (char**) ExecutiveGetChains(G, s1, int1);
     APIExit(G);
-    if(chain_str) {
-      l = (int) strlen(chain_str);
-      if(null_chain)
-        l++;
-      result = PyList_New(l);
-      if(null_chain) {
-        l--;
-        PyList_SetItem(result, l, PyString_FromString(""));
-      }
-      for(a = 0; a < l; a++)
-        PyList_SetItem(result, a, PyString_FromStringAndSize(chain_str + a, 1));
 
+    if(vla) {
+      result = PConvStringListToPyList(VLAGetSize(vla), vla);
+      VLAFreeP(vla);
     }
-    FreeP(chain_str);
+
     if(s1[0])
       SelectorFreeTmp(G, s1);
   }
