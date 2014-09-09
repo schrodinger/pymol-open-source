@@ -12815,14 +12815,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule * obj)
   a0 = I->AtomInfo;
   a1 = obj->AtomInfo;
   for(a = 0; a < I->NAtom; a++)
-    *(a0++) = *(a1++);
-
-  a0 = I->AtomInfo;
-  for(a = 0; a < I->NAtom; a++) {
-    a0->selEntry = 0;
-    a0->unique_id = 0;
-    a0++;
-  }
+    AtomInfoCopy(obj->Obj.G, a1++, a0++);
 
   return (I);
 
