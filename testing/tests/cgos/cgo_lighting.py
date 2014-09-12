@@ -5,9 +5,9 @@ import unittest
 
 class TestCGOLighting(testing.PyMOLTestCase):
 
+    @testing.foreach((0),(1))
     @testing.requires('gui')
     @testing.requires_version('1.7.3')
-    @testing.foreach((0),(1))
     # if normals are set, then object's cgo_lighting should be set
     def test_cgo_lighting_setting(self, has_normal):
         objname = 'simpletri'
@@ -26,9 +26,9 @@ class TestCGOLighting(testing.PyMOLTestCase):
         cgo_lighting = cmd.get('cgo_lighting', objname)
         self.assertEqual(int(cgo_lighting), int(has_normal))
 
+    @testing.foreach.product((0,1), (0,1), (0,1), (0,1), (0,1), (0,1))
     @testing.requires('gui')
     @testing.requires_version('1.7.3')
-    @testing.foreach.product((0,1), (0,1), (0,1), (0,1), (0,1), (0,1))
     def testBackfaceLighting(self, use_shader, has_normal, two_sided_lighting, backface_cull, cgo_lighting, back):
         objname = 'simpletri'
         obj = []
