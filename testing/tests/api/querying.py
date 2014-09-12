@@ -206,9 +206,20 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.get_version
         self.skipTest("TODO")
 
+    @testing.requires_version('1.7.3.0')
     def testGetVolumeField(self):
-        cmd.get_volume_field
-        self.skipTest("TODO")
+        import numpy
+        cmd.load(self.datafile('emd_1155.ccp4'), 'map1')
+        fieldcopy = cmd.get_volume_field('map1')
+        field = cmd.get_volume_field('map1', copy=0)
+        self.assertEqual(field.shape, (141, 91, 281))
+        self.assertTrue(numpy.allclose(field, fieldcopy))
+
+        # data manipulation with copy=0
+        mean1 = field.mean()
+        field += 5.0
+        mean2 = cmd.get_volume_field('map1', copy=0)[:].mean()
+        self.assertAlmostEqual(mean1 + 5.0, mean2, delta=1e-2)
 
     def testGetVolumeHistogram(self):
         cmd.get_volume_histogram

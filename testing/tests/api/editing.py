@@ -394,6 +394,26 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(v[-1], sym[-1])
         self.assertArrayEqual(v[:-1], sym[:-1], 1e-4)
 
+    @testing.requires_version('1.7.3.0')
+    def test_set_state_order(self):
+        import numpy
+
+        cmd.fragment('ala', 'm1')
+        for i in (2, 3):
+            cmd.create('m1', 'm1', i - 1, i);
+            cmd.rotate('x', 10.0, 'm1', i)
+
+        coords1 = cmd.get_coordset('m1', 1)
+        coords3 = cmd.get_coordset('m1', 3)
+
+        self.assertEqual(coords1.shape, (10, 3))
+        self.assertFalse(numpy.allclose(coords1, coords3))
+
+        cmd.set_state_order('m1', (3, 2, 1))
+
+        self.assertTrue(numpy.allclose(coords1, cmd.get_coordset('m1', 3)))
+        self.assertTrue(numpy.allclose(coords3, cmd.get_coordset('m1', 1)))
+
     def test_set_title(self):
         text = 'foo'
         cmd.pseudoatom('m1')

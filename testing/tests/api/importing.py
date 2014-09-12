@@ -181,9 +181,23 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.space('cmyk', 0.7)
         cmd.space('rgb')
 
+    @testing.requires_version('1.7.3.0')
     def testLoadCoords(self):
+        import numpy
         cmd.fragment('gly', 'm1')
-        coords = cmd.get_model('m1').get_coord_list()
-        cmd.load_coords(coords, 'm1', state=2)
+        coords = cmd.get_coords('m1')
+        coords += 5.0
+        cmd.load_coords(coords, 'm1')
+        self.assertTrue(numpy.allclose(coords, cmd.get_coords('m1')))
+
+    @testing.requires_version('1.7.3.0')
+    def testLoadCoordset(self):
+        import numpy
+        cmd.fragment('gly', 'm1')
+        coords = cmd.get_coordset('m1')
+        cmd.load_coordset(coords, 'm1', state=2)
         self.assertEqual(2, cmd.count_states('m1'))
 
+        # data manipulation with copy=0
+        cmd.get_coordset('m1', copy=0)[:] += 5.0
+        self.assertTrue(numpy.allclose(coords + 5.0, cmd.get_coords('m1')))
