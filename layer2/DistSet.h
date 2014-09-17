@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Rep.h"
 #include"Setting.h"
-#include"PyMOLObject.h"
+#include"ObjectDist.h"
 
 typedef struct CMeasureInfo {
   /* AtomInfoType.unique_id */
@@ -60,8 +60,6 @@ typedef struct DistSet {
   /* -- JV end */
 } DistSet;
 
-#include"ObjectDist.h"
-
 DistSet *DistSetNew(PyMOLGlobals * G);
 PyObject *DistSetAsPyList(DistSet * I);
 int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs);
@@ -71,4 +69,5 @@ int DistSetGetLabelVertex(DistSet * I, int at, float *v);
 /* -- JV */
 int DistSetMoveWithObject(DistSet* I, struct ObjectMolecule * O);
 /* -- JV end */
+
 #endif

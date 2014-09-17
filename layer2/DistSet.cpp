@@ -552,7 +552,7 @@ static void DistSetFree(DistSet * I)
     VLAFreeP(I->Rep);
 
     ptr = I->MeasureInfo;
-    while(target = ptr) {
+    while((target = ptr)) {
       ptr = target->next;
       ListElemFree(target);
     }

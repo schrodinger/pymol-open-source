@@ -298,6 +298,8 @@ char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state);
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int state);
 void ObjectMoleculeFree(ObjectMolecule * I);    /* only for friends of ObjectMolecule */
 
+int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len);
+
 int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
                                 char *resn, char *resi, char *chain,
                                 char *segi, char *elem, float vdw,

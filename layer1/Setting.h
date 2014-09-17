@@ -23,7 +23,6 @@ Z* -------------------------------------------------------------------
 
 typedef char SettingName[255];
 
-
 /* for atomic settings */
 
 typedef struct {
@@ -982,5 +981,28 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
 #define cSetting_INIT                       740
+
+/*
+ * State index iterator which iterates either over a single state (state >= 0),
+ * the current state (state == -2), or all states (state == -1). Takes
+ * static singletons into account. Zero iterations if state >= nstate.
+ *
+ * StateIterator iter(G, I->Obj.Setting, state, I->NState);
+ * while(iter.next()) {
+ *   printf("in state %d\n", iter.state);
+ * }
+ */
+class StateIterator {
+  int end;
+
+public:
+  int state;
+
+  StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int nstate);
+
+  bool next() {
+    return (++state < end);
+  };
+};
 
 #endif

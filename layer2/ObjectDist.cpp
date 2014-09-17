@@ -376,7 +376,7 @@ PyObject *ObjectDistAsPyList(ObjectDist * I)
   PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
   PyList_SetItem(result, 1, PyInt_FromLong(I->NDSet));
   PyList_SetItem(result, 2, ObjectDistDSetAsPyList(I));
-  PyList_SetItem(result, 3, PyInt_FromLong(I->CurDSet));
+  PyList_SetItem(result, 3, PConvAutoNone(Py_None));
 
   return (PConvAutoNone(result));
 #endif
@@ -405,8 +405,6 @@ int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** res
     ok = PConvPyIntToInt(PyList_GetItem(list, 1), &I->NDSet);
   if(ok)
     ok = ObjectDistDSetFromPyList(I, PyList_GetItem(list, 2));
-  if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 3), &I->CurDSet);
 
   ObjectDistInvalidateRep(I, cRepAll);
   if(ok) {
@@ -461,32 +459,18 @@ void ObjectDistInvalidateRep(ObjectDist * I, int rep)
 /*========================================================================*/
 static void ObjectDistRender(ObjectDist * I, RenderInfo * info)
 {
-  int a;
   int state = info->state;
   int pass = info->pass;
   CRay *ray = info->ray;
 
   if((pass == 0) || (pass == -1)) {
     ObjectPrepareContext(&I->Obj, ray);
-    /* render all states */
-    if(state < 0) {
-      for(a = 0; a < I->NDSet; a++)
-        if(I->DSet[a])
-          if(I->DSet[a]->fRender)
-            I->DSet[a]->fRender(I->DSet[a], info);
-    } else if(state < I->NDSet) {
-      /* if a specific state to render */
-      I->CurDSet = state % I->NDSet;
-      if(I->DSet[I->CurDSet]) {
-        if(I->DSet[I->CurDSet]->fRender)
-          I->DSet[I->CurDSet]->fRender(I->DSet[I->CurDSet], info);
-      }
-    } else if(I->NDSet == 1) {  /* if only one coordinate set, assume static */
-      if(I->DSet[0]->fRender) {
-        if(SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_static_singletons)) {
-          I->DSet[0]->fRender(I->DSet[0], info);
-        }
-      }
+
+    for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NDSet);
+        iter.next();) {
+      DistSet * ds = I->DSet[iter.state];
+      if(ds && ds->fRender)
+        ds->fRender(ds, info);
     }
   }
 }
@@ -507,26 +491,12 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 }
 
 void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
-  int a;
   ObjectDist * I = (ObjectDist*)Iarg;
-  if(state < 0) {
-    for(a = 0; a < I->NDSet; a++)
-      if(I->DSet[a])
-	if(I->DSet[a]->fInvalidateRep)
-	  I->DSet[a]->fInvalidateRep(I->DSet[a], rep, level);
-  } else if(state < I->NDSet) {
-    /* if a specific state to render */
-    I->CurDSet = state % I->NDSet;
-    if(I->DSet[I->CurDSet]) {
-      if(I->DSet[I->CurDSet]->fInvalidateRep)
-	I->DSet[I->CurDSet]->fInvalidateRep(I->DSet[I->CurDSet], rep, level);
-    }
-  } else if(I->NDSet == 1) {  /* if only one coordinate set, assume static */
-    if(I->DSet[0]->fInvalidateRep) {
-      if(SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_static_singletons)) {
-	I->DSet[0]->fInvalidateRep(I->DSet[0], rep, level);
-      }
-    }
+  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NDSet);
+      iter.next();) {
+    DistSet * ds = I->DSet[iter.state];
+    if(ds && ds->fInvalidateRep)
+      ds->fInvalidateRep(ds, rep, level);
   }
 }
 
@@ -546,7 +516,6 @@ ObjectDist *ObjectDistNew(PyMOLGlobals * G)
   I->Obj.fGetSettingHandle = (CSetting ** (*)(CObject *, int state))
     ObjectDistGetSettingHandle;
   I->Obj.fDescribeElement = NULL;
-  I->CurDSet = 0;
   I->Obj.Color = ColorGetIndex(G, "dash");
   return (I);
 }
@@ -564,7 +533,6 @@ static void ObjectDistReset(PyMOLGlobals * G, ObjectDist * I)
       I->DSet[a] = NULL;
     }
   I->NDSet = 0;
-  I->CurDSet = 0; /* -- JV */
 }
 
 

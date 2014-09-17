@@ -539,4 +539,6 @@ int *ExecutiveGetRepsForObject(PyMOLGlobals *G, const char *name);
 
 char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, char *name, int enabled_only, int *numstrs);
 
+CoordSet * ExecutiveGetCoordSet(PyMOLGlobals * G, const char * name, int state, ObjectMolecule ** omp=NULL);
+
 #endif

@@ -128,7 +128,7 @@ extern int do_window(int code,int x,int y,int w, int h);
 static void APIEnter(PyMOLGlobals * G)
 {                               /* assumes API is locked */
   PRINTFD(G, FB_API)
-    " APIEnter-DEBUG: as thread 0x%x.\n", PyThread_get_thread_ident()
+    " APIEnter-DEBUG: as thread %ld.\n", PyThread_get_thread_ident()
     ENDFD;
 
   if(G->Terminating) {          /* try to bail */
@@ -163,7 +163,7 @@ static void APIEnterBlocked(PyMOLGlobals * G)
 {                               /* assumes API is locked */
 
   PRINTFD(G, FB_API)
-    " APIEnterBlocked-DEBUG: as thread 0x%x.\n", PyThread_get_thread_ident()
+    " APIEnterBlocked-DEBUG: as thread %ld.\n", PyThread_get_thread_ident()
     ENDFD;
 
   if(G->Terminating) {          /* try to bail */
@@ -199,7 +199,7 @@ static void APIExit(PyMOLGlobals * G)
   if(!PIsGlutThread())
     G->P_inst->glut_thread_keep_out--;
   PRINTFD(G, FB_API)
-    " APIExit-DEBUG: as thread 0x%x.\n", PyThread_get_thread_ident()
+    " APIExit-DEBUG: as thread %ld.\n", PyThread_get_thread_ident()
     ENDFD;
 }
 
@@ -209,7 +209,7 @@ static void APIExitBlocked(PyMOLGlobals * G)
   if(!PIsGlutThread())
     G->P_inst->glut_thread_keep_out--;
   PRINTFD(G, FB_API)
-    " APIExitBlocked-DEBUG: as thread 0x%x.\n", PyThread_get_thread_ident()
+    " APIExitBlocked-DEBUG: as thread %ld.\n", PyThread_get_thread_ident()
     ENDFD;
 }
 
@@ -741,7 +741,8 @@ static PyObject * CmdGetVolumeField(PyObject * self, PyObject * args)
   int state = 0;
   int ok = false;
   char* objName;
-  ok = PyArg_ParseTuple(args, "Os|i", &self, &objName, &state);
+  short copy = 1;
+  ok = PyArg_ParseTuple(args, "Os|ih", &self, &objName, &state, &copy);
 
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -752,8 +753,7 @@ static PyObject * CmdGetVolumeField(PyObject * self, PyObject * args)
   if(ok && (ok = APIEnterBlockedNotModal(G))) {
     CField * field = ExecutiveGetVolumeField(G, objName, state);
     if (field) {
-      int n_elem = field->size / field->base_size;
-      result = PConvFloatArrayToPyList((float *) field->data, n_elem);
+      result = FieldAsNumPyArray(field, copy);
     }
     APIExitBlocked(G);
   }
@@ -1822,7 +1822,7 @@ static PyObject *CmdMapHalve(PyObject * self, PyObject * args)
 static PyObject *CmdGetRenderer(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  char *vendor, *renderer, *version;
+  char *vendor = NULL, *renderer = NULL, *version = NULL;
   int ok = false;
   ok = PyArg_ParseTuple(args, "O", &self);
   if(ok) {
@@ -2220,6 +2220,67 @@ static PyObject *CmdAlign(PyObject * self, PyObject * args)
   } else {
     return APIFailure();
   }
+}
+
+static PyObject *CmdGetCoordsAsNumPy(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char *str1;
+  int state = 0;
+  OrthoLineType s1;
+  PyObject *result = NULL;
+
+  if(!PyArg_ParseTuple(args, "Os|i", &self, &str1, &state)) {
+    API_HANDLE_ERROR;
+    ok_raise(2);
+  }
+
+  ok_assert(2, str1[0]);
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(2, G && APIEnterBlockedNotModal(G));
+
+  if(SelectorGetTmp(G, str1, s1) >= 0) {
+    int sele1 = SelectorIndexByName(G, s1);
+    if(sele1 >= 0) {
+      int unblock = PAutoBlock(G);
+      result = SelectorGetCoordsAsNumPy(G, sele1, state);
+      PAutoUnblock(G, unblock);
+    }
+    SelectorFreeTmp(G, s1);
+  }
+
+  APIExitBlocked(G);
+ok_except2:
+  return (APIAutoNone(result));
+}
+
+static PyObject *CmdGetCoordSetAsNumPy(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  CoordSet *cs;
+  int state = 0;
+  char *name;
+  short copy = 1;
+
+  if(!PyArg_ParseTuple(args, "Os|ih", &self, &name, &state, &copy)) {
+    API_HANDLE_ERROR;
+    ok_raise(2);
+  }
+
+  ok_assert(2, name[0]);
+  ok_assert(2, state >= 0);
+
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(2, G && APIEnterBlockedNotModal(G));
+
+  ok_assert(1, cs = ExecutiveGetCoordSet(G, name, state));
+  result = CoordSetAsNumPyArray(cs, copy);
+
+ok_except1:
+  APIExitBlocked(G);
+ok_except2:
+  return (APIAutoNone(result));
 }
 
 static PyObject *CmdGetSettingUpdates(PyObject * self, PyObject * args)
@@ -7043,7 +7104,86 @@ static PyObject *CmdLoadObject(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdSetStateOrder(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char *oname;
+  PyObject *order;
+  CObject *obj = NULL;
+  int *int_array = NULL;
+  int ok = false;
+
+  if(!PyArg_ParseTuple(args, "OsO", &self, &oname, &order)) {
+    API_HANDLE_ERROR;
+    ok_raise(1);
+  }
+
+  ok_assert(1, PyList_Check(order));
+
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(1, G && APIEnterNotModal(G));
+
+  obj = ExecutiveFindObjectByName(G, oname);
+  if(!obj || obj->type != cObjectMolecule) {
+    ErrMessage(G, "SetStateOrder", "named object molecule not found.");
+    ok_raise(2);
+  }
+
+  if(PConvPyListToIntArray(order, &int_array)) {
+    int len = PyList_Size(order);
+
+    PBlock(G);
+    ok = ObjectMoleculeSetStateOrder((ObjectMolecule *) obj, int_array, len);
+    PUnblock(G);
+
+    FreeP(int_array);
+  } else {
+    ErrMessage(G, "SetStateOrder", "not an integer list.");
+    ok_raise(2);
+  }
+
+  APIExit(G);
+  return APIResultOk(ok);
+ok_except2:
+  APIExit(G);
+ok_except1:
+  return APIFailure();
+}
+
 static PyObject *CmdLoadCoords(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char *str1;
+  int result = false, state = 0;
+  OrthoLineType s1;
+  PyObject *coords = NULL;
+
+  if(!PyArg_ParseTuple(args, "OsO|i", &self, &str1, &coords, &state)) {
+  PyErr_Print();
+    API_HANDLE_ERROR;
+    ok_raise(2);
+  }
+
+  ok_assert(2, str1[0]);
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(2, G && APIEnterBlockedNotModal(G));
+
+  if(SelectorGetTmp(G, str1, s1) >= 0) {
+    int sele1 = SelectorIndexByName(G, s1);
+    if(sele1 >= 0) {
+      int unblock = PAutoBlock(G);
+      result = SelectorLoadCoords(G, coords, sele1, state);
+      PAutoUnblock(G, unblock);
+    }
+    SelectorFreeTmp(G, s1);
+  }
+
+  APIExitBlocked(G);
+ok_except2:
+  return APIResultOk(result);
+}
+
+static PyObject *CmdLoadCoordSet(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *oname;
@@ -7061,7 +7201,7 @@ static PyObject *CmdLoadCoords(PyObject * self, PyObject * args)
   ok_assert(1, G && APIEnterNotModal(G));
 
   origObj = ExecutiveFindObjectByName(G, oname);
-  if(!origObj || !origObj->type == cObjectMolecule) {
+  if(!origObj || origObj->type != cObjectMolecule) {
     ErrMessage(G, "LoadCoords", "named object molecule not found.");
     ok_raise(2);
   }
@@ -8598,6 +8738,8 @@ static PyMethodDef Cmd_methods[] = {
   {"get_chains", CmdGetChains, METH_VARARGS},
   {"get_color", CmdGetColor, METH_VARARGS},
   {"get_colorection", CmdGetColorection, METH_VARARGS},
+  {"get_coords", CmdGetCoordsAsNumPy, METH_VARARGS},
+  {"get_coordset", CmdGetCoordSetAsNumPy, METH_VARARGS},
   {"get_distance", CmdGetDistance, METH_VARARGS},
   {"get_dihe", CmdGetDihe, METH_VARARGS},
   {"get_drag_object_name", CmdGetDragObjectName, METH_VARARGS},
@@ -8669,6 +8811,7 @@ static PyMethodDef Cmd_methods[] = {
   {"load", CmdLoad, METH_VARARGS},
   {"load_color_table", CmdLoadColorTable, METH_VARARGS},
   {"load_coords", CmdLoadCoords, METH_VARARGS},
+  {"load_coordset", CmdLoadCoordSet, METH_VARARGS},
   {"load_png", CmdLoadPNG, METH_VARARGS},
   {"load_object", CmdLoadObject, METH_VARARGS},
   {"load_traj", CmdLoadTraj, METH_VARARGS},
@@ -8755,6 +8898,7 @@ static PyMethodDef Cmd_methods[] = {
   {"set_object_ttt", CmdSetObjectTTT, METH_VARARGS},
   {"set_object_color", CmdSetObjectColor, METH_VARARGS},
   {"set_session", CmdSetSession, METH_VARARGS},
+  {"set_state_order", CmdSetStateOrder, METH_VARARGS},
   {"set_symmetry", CmdSetSymmetry, METH_VARARGS},
   {"set_title", CmdSetTitle, METH_VARARGS},
   {"set_wizard", CmdSetWizard, METH_VARARGS},

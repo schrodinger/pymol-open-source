@@ -40,14 +40,14 @@ static void ObjectCallbackFree(ObjectCallback * I)
 #ifndef _PYMOL_NOPY
   int a;
   PyMOLGlobals *G = I->Obj.G;
-  PBlock(G);
+  int blocked = PAutoBlock(G);
   for(a = 0; a < I->NState; a++) {
     if(I->State[a].PObj) {
       Py_DECREF(I->State[a].PObj);
       I->State[a].PObj = NULL;
     }
   }
-  PUnblock(G);
+  PAutoUnblock(G, blocked);
 #endif
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
@@ -74,11 +74,8 @@ static void ObjectCallbackRender(ObjectCallback * I, RenderInfo * info)
   int pass = info->pass;
   PyMOLGlobals *G = I->Obj.G;
   ObjectCallbackState *sobj = NULL;
-  int a;
 
-  PyObject *pobj = NULL;
-
-  if(pass>0) { /* for now, the callback should be called during the first pass (opaque), so 
+  if(pass != 1) /* for now, the callback should be called during the first pass (opaque), so 
 		  that it is possible to set positions for any object that is rendered in the 
 		  opaque pass.  This is still a kludge, since the callback should probably 
 		  happen in a pass before this (should we add a new pass 2?  this will probably
@@ -88,60 +85,31 @@ static void ObjectCallbackRender(ObjectCallback * I, RenderInfo * info)
 		  We also might want to have arguments on the callback for whether it gets called
 		  at the beginning (pre-first pass) or end (post-last pass).
 	       */
-    //  if(!pass) {
+    return;
 
-    ObjectPrepareContext(&I->Obj, ray);
-    if(I->Obj.RepVis[cRepCallback]) {
-      if(state < I->NState) {
-        sobj = I->State + state;
-      }
-      if(state < 0) {
-        if(I->State) {
-          PBlock(G);
-          for(a = 0; a < I->NState; a++) {
-            sobj = I->State + a;
-            pobj = sobj->PObj;
-            if(ray) {
-            } else if(G->HaveGUI && G->ValidContext) {
-              if(pick) {
-              } else {
-                if(PyObject_HasAttrString(pobj, "__call__")) {
-		  PyObject *ret ;
-                  ret = PyObject_CallMethod(pobj, "__call__", "");
-		  Py_XDECREF(ret);
-                }
-                if(PyErr_Occurred())
-                  PyErr_Print();
-              }
-            }
-          }
-          PUnblock(G);
-        }
-      } else {
-        if(!sobj) {
-          if(I->NState && SettingGetGlobal_b(G, cSetting_static_singletons))
-            sobj = I->State;
-        }
-        if(ray) {
-        } else if(G->HaveGUI && G->ValidContext) {
-          if(pick) {
-          } else {
-            if(sobj) {
-              pobj = sobj->PObj;
-              PBlock(G);
-              if(PyObject_HasAttrString(pobj, "__call__")) {
-		PyObject *ret ;
-                ret = PyObject_CallMethod(pobj, "__call__", "");
-		Py_XDECREF(ret);
-              }
-              if(PyErr_Occurred())
-                PyErr_Print();
-              PUnblock(G);
-            }
-          }
-        }
-      }
+  if(ray || pick)
+    return;
+
+  if(!(G->HaveGUI && G->ValidContext))
+    return;
+
+  if(!I->State || I->NState == 0)
+    return;
+
+  ObjectPrepareContext(&I->Obj, ray);
+
+  if(I->Obj.RepVis[cRepCallback]) {
+    int blocked = PAutoBlock(G);
+    for(StateIterator iter(G, I->Obj.Setting, state, I->NState); iter.next();) {
+      sobj = I->State + iter.state;
+      if(!sobj->is_callable)
+        continue;
+
+      Py_DecRef(PyObject_CallObject(sobj->PObj, NULL));
+      if(PyErr_Occurred())
+        PyErr_Print();
     }
+    PAutoUnblock(G, blocked);
   }
 #endif
 }
@@ -200,6 +168,7 @@ ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
   if(I->State[state].PObj) {
     Py_DECREF(I->State[state].PObj);
   }
+  I->State[state].is_callable = PyCallable_Check(pobj);
   I->State[state].PObj = pobj;
   Py_INCREF(pobj);
   if(I->NState <= state)
@@ -251,3 +220,134 @@ void ObjectCallbackRecomputeExtent(ObjectCallback * I)
   I->Obj.ExtentFlag = extent_flag;
 
 }
+
+/*========================================================================*/
+
+#ifndef _PYMOL_NOPY
+
+static int ObjectCallbackStateFromPyObject(PyMOLGlobals * G, ObjectCallbackState * I,
+    PyObject * pobj)
+{
+  Py_XINCREF(pobj);
+  I->PObj = pobj;
+  I->is_callable = PyCallable_Check(pobj);
+
+  return true;
+}
+
+static int ObjectCallbackAllStatesFromPyObject(ObjectCallback * I, PyObject * obj)
+{
+  int a, result = false;
+  PyObject *list = NULL;
+
+  if(PyList_Check(obj)) {
+    list = obj;
+    Py_INCREF(list);
+  } else {
+    // unpickle list from string
+    ok_assert(1, list = PConvPickleLoads(obj));
+    ok_assert(1, PyList_Check(list));
+  }
+
+  I->NState = PyList_Size(list);
+  VLACheck(I->State, ObjectCallbackState, I->NState);
+
+  for(a = 0; a < I->NState; a++) {
+    PyObject *val = PyList_GetItem(list, a);
+    ObjectCallbackStateFromPyObject(I->Obj.G, I->State + a, val);
+  }
+
+  result = true;
+ok_except1:
+  if(PyErr_Occurred()) {
+    PyErr_Print();
+
+    PRINTFB(I->Obj.G, FB_ObjectCallback, FB_Warnings)
+      " Warning: could not load callback object\n"
+      ENDFB(I->Obj.G);
+  }
+
+  Py_XDECREF(list);
+  return result;
+}
+
+int ObjectCallbackNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCallback ** result)
+{
+  int ll;
+  ObjectCallback *I;
+  PyObject *val;
+
+  ok_assert(1, list != NULL);
+  ok_assert(1, PyList_Check(list));
+
+  ll = PyList_Size(list);
+
+  ok_assert(1, I = ObjectCallbackNew(G));
+
+  val = PyList_GetItem(list, 0);
+  ok_assert(2, ObjectFromPyList(G, val, &I->Obj));
+
+  val = PyList_GetItem(list, 1);
+  ok_assert(2, ObjectCallbackAllStatesFromPyObject(I, val));
+
+  ObjectCallbackRecomputeExtent(I);
+
+  *result = I;
+  return true;
+ok_except2:
+  ObjectCallbackFree(I);
+ok_except1:
+  *result = NULL;
+  return false;
+}
+
+/*========================================================================*/
+
+static PyObject *ObjectCallbackStateAsPyObject(ObjectCallbackState * I)
+{
+  Py_XINCREF(I->PObj);
+  return I->PObj;
+}
+
+static PyObject *ObjectCallbackAllStatesAsPyObject(ObjectCallback * I)
+{
+  int a;
+  PyObject *result = NULL;
+  PyObject *list = PyList_New(I->NState);
+
+  for(a = 0; a < I->NState; a++) {
+    PyList_SetItem(list, a, ObjectCallbackStateAsPyObject(I->State + a));
+  }
+
+  // pickle the list to a string
+  result = PConvPickleDumps(list);
+
+ok_except1:
+  Py_XDECREF(list);
+
+  if(PyErr_Occurred()) {
+    PyErr_Print();
+
+    PRINTFB(I->Obj.G, FB_ObjectCallback, FB_Warnings)
+      " Warning: callable needs to be picklable for session storage\n"
+      ENDFB(I->Obj.G);
+  }
+
+  return result;
+}
+
+PyObject *ObjectCallbackAsPyList(ObjectCallback * I)
+{
+  PyObject *result = NULL, *states;
+
+  ok_assert(1, states = ObjectCallbackAllStatesAsPyObject(I));
+
+  result = PyList_New(2);
+  PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result, 1, states);
+
+ok_except1:
+  return PConvAutoNone(result);
+}
+
+#endif

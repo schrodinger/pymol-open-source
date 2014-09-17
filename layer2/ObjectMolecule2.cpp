@@ -46,6 +46,44 @@
 
 #define cMaxOther 6
 
+static int strstartswith(const char * s, const char * prefix) {
+  while(*prefix)
+    if(*s++ != *prefix++)
+      return false;
+  return true;
+}
+
+static int strstartswithword(const char * s, const char * word) {
+  while(*word)
+    if(*s++ != *word++)
+      return false;
+  switch(*s) {
+    case ' ':
+    case '\t':
+    case '\r':
+    case '\n':
+    case '\0':
+      return true;
+  }
+  return false;
+}
+
+void AddOrthoOutputIfMatchesTags(PyMOLGlobals * G, int n_tags, int nAtom, char *tag_start[], char *p, char *cc, int quiet){
+  if(n_tags && !quiet && !(nAtom > 0 && strstartswith(p, "HEADER"))) { 
+    // HEADER is the mark for a new object, this is a new object, and
+    // gets processed on the next pass, when nAtom=0
+    register int tc = 0;
+    for(; tc < n_tags; tc++) {
+      if(!strstartswithword(p, tag_start[tc]))
+	continue;
+      ParseNTrimRight(cc, p, MAXLINELEN - 1);
+      OrthoAddOutput(G, cc);
+      OrthoNewLine(G, NULL, true);
+      break;
+    }
+  }
+}
+
 typedef struct {
   int n_cyclic_arom, cyclic_arom[cMaxOther];
   int n_arom, arom[cMaxOther];
@@ -1510,36 +1548,16 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule * I, int *id, int n_id)
 static char *check_next_pdb_object(char *p, int skip_to_next)
 {
   char *start = p;
-  char *line_start;
-  char cc[MAXLINELEN];
   while(*p) {
-    line_start = p;
-    p = ncopy(cc, p, 6);
-    if((cc[0] == 'H') &&
-       (cc[1] == 'E') &&
-       (cc[2] == 'A') && (cc[3] == 'D') && (cc[4] == 'E') && (cc[5] == 'R')) {
+    if(strstartswith(p, "HEADER")) {
       if(skip_to_next)
-        return line_start;
-      else
-        return start;
-    } else if(((cc[0] == 'A') &&        /* ATOM */
-               (cc[1] == 'T') && (cc[2] == 'O') && (cc[3] == 'M') && (cc[4] == ' ') && (cc[5] == ' ')) || ((cc[0] == 'H') &&    /* HETATM */
-                                                                                                           (cc[1] == 'E') && (cc[2] == 'T') && (cc[3] == 'A') && (cc[4] == 'T') && (cc[5] == 'M'))) {
-      p = nskip(p, 5);
-      ParseNTrim(cc, p, 14);
-      /* this is a special workaround for the bogus HETATM entry in PDB 4ZN2:
-         HETATM20829              0       0.000   0.000   0.000  1.00  0.00      4ZN20773
-         which screws up our PDB test case */
-      if(cc[0]) {
-        return start;
-      }
-    } else if(((cc[0] == 'E') &&        /* if we pass over the END of the current PDB file, then reset start */
-               (cc[1] == 'N') && (cc[2] == 'D'))) {
-      if(strcmp("END", cc) == 0) {      /* END */
-        if(skip_to_next) {
-          start = line_start;
-        }
-      }
+        return p;
+      return start;
+    } else if(strstartswith(p, "ATOM ") || strstartswith(p, "HETATM")) {
+      return start;
+    } else if(skip_to_next && strcmp("END", p) == 0) {
+      /* if we pass over the END of the current PDB file, then reset start */
+      start = p;
     }
     p = nextline(p);
   }
@@ -1552,12 +1570,8 @@ static int get_multi_object_status(char *p)
                                    other way to determine
                                    this information */
   int seen_header = 0;
-  char cc[MAXLINELEN];
   while(*p) {
-    p = ncopy(cc, p, 6);
-    if((cc[0] == 'H') &&
-       (cc[1] == 'E') &&
-       (cc[2] == 'A') && (cc[3] == 'D') && (cc[4] == 'E') && (cc[5] == 'R')) {
+    if(strstartswith(p, "HEADER")) {
       if(seen_header) {
         return 1;
       } else {
@@ -1616,6 +1630,182 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
 
 /*========================================================================*/
 #define PDB_MAX_TAGS 64
+
+void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
+    char **restart_model, char *parg, int n_tags, char *tag_start[],
+    int *nAtom, char cc[], int quiet, int *bogus_name_alignment,
+    int *ssFlag, char **next_pdb, PDBInfoRec *info, int only_read_one_model,
+    int *ignore_conect, int *bondFlag, M4XAnnoType * m4x, int *have_bond_order) {
+  int seen_end_of_atoms = false;
+  register char *p = parg;
+  *restart_model = NULL;
+  while(*ok && *p) {
+    AddOrthoOutputIfMatchesTags(G, n_tags, *nAtom, tag_start, p, cc, quiet);
+    if((strstartswith(p, "ATOM  ") ||
+          strstartswith(p, "HETATM")) && (!*restart_model)) {
+      if(!seen_end_of_atoms)
+        (*nAtom)++;
+      if(*bogus_name_alignment) {
+        ncopy(cc, nskip(p, 12), 4);   /* copy the atom field */
+        if((cc[0] == 32) && (cc[1] != 32)) {  /* check to see if indentation was followed correctly, 32 - space */
+          *bogus_name_alignment = false;
+        }
+      }
+    } else if(strstartswith(p, "HELIX ")){
+      *ssFlag = true;
+    }else if(strstartswith(p, "SHEET ")){
+      *ssFlag = true;
+    }else if(strstartswith(p, "HEADER")) {
+      if(*nAtom > 0) {         /* if we've already found atom records, then this must be a new pdb */
+        (*next_pdb) = p;
+        break;
+      }
+    } else if(strstartswith(p, "REMARK")) {
+      //        char * start = p;  // USED TO SAVE REMARKS (TODO)
+      do {
+        if(info && strncmp("    GENERATED BY TRJCONV", p + 6, 24) == 0)
+          info->ignore_header_names = true;
+        p = nextline(p);
+        AddOrthoOutputIfMatchesTags(G, n_tags, *nAtom, tag_start, p, cc, quiet);
+      } while(strstartswith(p, "REMARK"));
+      // REMARKS are string from start to p, but not saved currently (TODO)
+      continue;
+    } else if(strstartswith(p, "ENDMDL") && (!*restart_model)) {
+      *restart_model = nextline(p);
+      seen_end_of_atoms = true;
+      if(only_read_one_model)
+        break;
+    } else if(strstartswith(p, "END")) {      /* stop parsing after END */
+      ntrim(cc, p, 6);
+      if(strcmp("END", cc) == 0) {    /* END */
+        seen_end_of_atoms = true;
+        if(next_pdb) {
+          p = nextline(p);
+          ncopy(cc, p, 6);
+          if(strcmp("HEADER", cc) == 0) {
+            (*next_pdb) = p;  /* found another PDB file after this one... */
+          } else if(strcmp("ENDMDL", cc) == 0) {
+            seen_end_of_atoms = false;
+          }
+        }
+        break;
+      }
+    } else if(strstartswith(p, "CONECT")) {
+      if(!*ignore_conect) 
+        *bondFlag = true;
+    } else if(strstartswith(p, "USER") && (!*restart_model)) {
+      /* Metaphorics key now 'USER M4X ', changed from 'USER    ' */
+      if(strstartswith(p + 4, " M4X ") && m4x) {
+        p = nskip(p, 10);
+        p = ntrim(cc, p, 6);
+        m4x->annotated_flag = true;
+        switch (cc[0]) {
+        case 'H':
+          if(WordMatchExact(G, "HINT", cc, true)) {
+            p = nskip(p, 1);
+            p = ntrim(cc, p, 6);      /* get context name */
+            if(WordMatchExact(G, "ALIGN", cc, true)) {        /* ALIGN is special */
+              if(!m4x->align) {
+                m4x->align = Calloc(M4XAlignType, 1);
+                CHECKOK(*ok, m4x->align);
+                if (*ok){
+                  M4XAlignInit(m4x->align);
+                  p = nskip(p, 8);
+                  p = ntrim(cc, p, 6);  /* get visibility of this structure */
+                }
+              }
+            } else if(WordMatchExact(G, "HIDE", cc, true)) {
+              m4x->invisible = 1;
+            } else {
+              if(!m4x->context) {
+                m4x->context = VLACalloc(M4XContextType, 10);
+                CHECKOK(*ok, m4x->context);
+              }
+              if(*ok && m4x->context) {
+                int cn;
+                int found = false;
+
+                /* does context already exist ? */
+                for(cn = 0; cn < m4x->n_context; cn++) {
+                  if(WordMatchExact(G, m4x->context[cn].name, cc, true)) {
+                    found = true;
+                    break;
+                  }
+                }
+
+                /* if not, then create it */
+                if(!found) {
+                  cn = m4x->n_context++;
+                  VLACheck(m4x->context, M4XContextType, cn);
+                  CHECKOK(*ok, m4x->context);
+                  if (*ok){
+                    UtilNCopy(m4x->context[cn].name, cc, sizeof(WordType));
+                  }
+                }
+
+                while(*ok && *cc) {
+                  p = nskip(p, 1);
+                  p = ntrim(cc, p, 6);
+                  switch (cc[0]) {
+                    case 'B':
+                      if(WordMatchExact(G, "BORDER", cc, true)) {
+                        /* ignore PDB CONECT if BORDER present */
+                        *ignore_conect = true;
+                        *have_bond_order = true;
+                        *bondFlag = true;
+                      }
+                      break;
+                    case 'S':
+                      if(WordMatchExact(G, "SITE", cc, true)) {
+                        if(!m4x->context[cn].site) {
+                          m4x->context[cn].site = VLAlloc(int, 50);
+                          CHECKOK(*ok, m4x->context[cn].site);
+                        }
+                      }
+                      break;
+                    case 'L':
+                      if(WordMatchExact(G, "LIGAND", cc, true)) {
+                        if(!m4x->context[cn].ligand) {
+                          m4x->context[cn].ligand = VLAlloc(int, 50);
+                          CHECKOK(*ok, m4x->context[cn].ligand);
+                        }
+                      }
+                      break;
+                    case 'W':
+                      if(WordMatchExact(G, "WATER", cc, true)) {
+                        if(!m4x->context[cn].water) {
+                          m4x->context[cn].water = VLAlloc(int, 50);
+                          CHECKOK(*ok, m4x->context[cn].water);
+                        }
+                      }
+                      break;
+                    case 'H':
+                      if(WordMatchExact(G, "HBOND", cc, true)) {
+                        if(!m4x->context[cn].hbond) {
+                          m4x->context[cn].hbond = VLAlloc(M4XBondType, 50);
+                          CHECKOK(*ok, m4x->context[cn].hbond);
+                        }
+                      }
+                      break;
+                    case 'N':
+                      if(WordMatchExact(G, "NBOND", cc, true)) {
+                        if(!m4x->context[cn].nbond) {
+                          m4x->context[cn].nbond = VLAlloc(M4XBondType, 50);
+                          CHECKOK(*ok, m4x->context[cn].nbond);
+                        }
+                      }
+                      break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    p = nextline(p);
+  }
+}
 
 /*
  * Datastructure for efficient array-based secondary structure lookup.
@@ -1751,9 +1941,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                                         PDBInfoRec * info, int quiet, int *model_number)
 {
 
-  register char *p;
+  char *p;
   int nAtom;
-  int a, b, c;
+  int a, c;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL, *ai;
@@ -1788,7 +1978,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int have_bond_order = false;
   int seen_model, in_model = false;
   int seen_conect = false;
-  int have_conect = false;
   int is_end_of_object = false;
   int literal_names = SettingGetGlobal_b(G, cSetting_pdb_literal_names);
   int bogus_name_alignment = true;
@@ -1843,231 +2032,22 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     }
   }
   /* PASS 1 */
-  {
-    int seen_end_of_atoms = false;
+  ObjectMoleculePDBStr2CoordSetPASS1(G, &ok, restart_model, p, n_tags,
+      tag_start, &nAtom, cc, quiet, &bogus_name_alignment, &ssFlag, next_pdb,
+      info, only_read_one_model, &ignore_conect, &bondFlag, m4x, &have_bond_order);
+  /* INPUT USED:
+     only_read_one_model - only reads one pdb model if set
+     n_tags, tag_start - tags defined to report in log
+     cc - just temporary char * buffer that is used, no input/output 
+     OUTPUT USED:
+     bogus_name_alignment - whether all ATOM/HETATM has correct names in PDB (12-16, starting with space
+     ssFlag - if PDB has HELIX and/or SHEET records
+     m4x - M4XAnnoType information from Metaphorics (USER records)
+     both INPUT/OUTPUT:
+     nAtom - returns the number of atoms read in, also uses it to detect multiple PDBs
+     ignore_conect - do not set bondFlag if set, also set if Metaphorics has BORDER info (bondFlag will also be set in this case)
 
-    *restart_model = NULL;
-    while(ok && *p) {
-      if(n_tags && !quiet) {
-        int skip = false;
-
-        if((p[0] == 'H') &&
-           (p[1] == 'E') &&
-           (p[2] == 'A') && (p[3] == 'D') && (p[4] == 'E') && (p[5] == 'R')) {
-          if(nAtom > 0) {
-            /* don't print HEADER until next time */
-            skip = true;
-          }
-        }
-        if(!skip) {
-          /* fast unrolled string match */
-          register int tc = 0;
-          register char *q;
-          register int same;
-          while(tc < n_tags) {
-            same = true;
-            q = tag_start[tc];
-            if(p[0] != q[0])
-              same = false;
-            else if(p[0] && q[0]) {
-              if((p[1] != q[1]) && !((p[1] == ' ') && !q[1]))
-                same = false;
-              else if(p[1] && q[1]) {
-                if((p[2] != q[2]) && !((p[2] == ' ') && !q[2]))
-                  same = false;
-                else if(p[3] && q[3]) {
-                  if((p[3] != q[3]) && !((p[3] == ' ') && !q[3]))
-                    same = false;
-                  else if(p[4] && q[4]) {
-                    if((p[4] != q[4]) && !((p[4] == ' ') && !q[4]))
-                      same = false;
-                    else if(p[5] && q[5]) {
-                      if((p[5] != q[5]) && !((p[5] == ' ') && !q[5]))
-                        same = false;
-                    }
-                  }
-                }
-              }
-            }
-            if(same) {
-              ParseNTrimRight(cc, p, MAXLINELEN - 1);
-              /*              OrthoAddOutput(G," PDB: "); */
-              OrthoAddOutput(G, cc);
-              OrthoNewLine(G, NULL, true);
-            }
-            tc++;
-          }
-        }
-      }
-      if(((p[0] == 'A') && (p[1] == 'T') && (p[2] == 'O') && (p[3] == 'M')) ||  /* ATOM */
-         ((p[0] == 'H') && (p[1] == 'E') && (p[2] == 'T') &&    /* HETATM */
-          (p[3] == 'A') && (p[4] == 'T') && (p[5] == 'M') && (!*restart_model))) {
-        if(!seen_end_of_atoms)
-          nAtom++;
-        if(bogus_name_alignment) {
-          ncopy(cc, nskip(p, 12), 4);   /* copy the atom field */
-          if((cc[0] == 32) && (cc[1] != 32)) {  /* check to see if indentation was followed correctly */
-            bogus_name_alignment = false;
-          }
-        }
-      } else if((p[0] == 'H') && (p[1] == 'E') && (p[2] == 'L') && (p[3] == 'I') && (p[4] == 'X'))      /* HELIX */
-        ssFlag = true;
-      else if((p[0] == 'S') && (p[1] == 'H') && (p[2] == 'E') && (p[3] == 'E') && (p[4] == 'T'))        /* SHEET */
-        ssFlag = true;
-      else if((p[0] == 'H') &&  /* HEADER */
-              (p[1] == 'E') &&
-              (p[2] == 'A') && (p[3] == 'D') && (p[4] == 'E') && (p[5] == 'R')) {
-        if(nAtom > 0) {         /* if we've already found atom records, then this must be a new pdb */
-          (*next_pdb) = p;
-          break;
-        }
-      } else if((p[0] == 'R') && (p[1] == 'E') && (p[2] == 'M') &&      /* REMARK */
-                (p[3] == 'A') && (p[4] == 'R') && (p[5] == 'K')) {
-        ntrim(cc, p, 30);
-        if(strcmp("REMARK    GENERATED BY TRJCONV", cc) == 0)
-          if(info)
-            info->ignore_header_names = true;
-      } else if((p[0] == 'E') && (p[1] == 'N') && (p[2] == 'D') &&      /* ENDMDL */
-                (p[3] == 'M') && (p[4] == 'D') && (p[5] == 'L') && (!*restart_model)) {
-        *restart_model = nextline(p);
-        seen_end_of_atoms = true;
-        if(only_read_one_model)
-          break;
-      } else if((p[0] == 'E') && (p[1] == 'N') && (p[2] == 'D')) {      /* stop parsing after END */
-        ntrim(cc, p, 6);
-        if(strcmp("END", cc) == 0) {    /* END */
-          seen_end_of_atoms = true;
-          if(next_pdb) {
-            p = nextline(p);
-            ncopy(cc, p, 6);
-            if(strcmp("HEADER", cc) == 0) {
-              (*next_pdb) = p;  /* found another PDB file after this one... */
-            } else if(strcmp("ENDMDL", cc) == 0) {
-              seen_end_of_atoms = false;
-            }
-          }
-          break;
-        }
-      } else if((p[0] == 'C') && (p[1] == 'O') && (p[2] == 'N') && (p[3] == 'E') && (p[4] == 'C') && (p[5] == 'T')) {   /* CONECT */
-        have_conect = true;
-        if(!ignore_conect) 
-          bondFlag = true;
-      } else if((p[0] == 'U') && (p[1] == 'S') && (p[2] == 'E') &&
-                (p[3] == 'R') && (!*restart_model)) {
-
-        /* Metaphorics key now 'USER M4X ', changed from 'USER    ' */
-        if((p[4] == ' ') && (p[5] == 'M') && (p[6] == '4') &&
-           (p[7] == 'X') && (p[8] == ' ') && m4x) {
-          p = nskip(p, 10);
-          p = ntrim(cc, p, 6);
-          m4x->annotated_flag = true;
-          switch (cc[0]) {
-          case 'H':
-            if(WordMatchExact(G, "HINT", cc, true)) {
-              p = nskip(p, 1);
-              p = ntrim(cc, p, 6);      /* get context name */
-              if(WordMatchExact(G, "ALIGN", cc, true)) {        /* ALIGN is special */
-                if(!m4x->align) {
-                  m4x->align = Calloc(M4XAlignType, 1);
-		  CHECKOK(ok, m4x->align);
-		  if (ok){
-		    M4XAlignInit(m4x->align);
-		    p = nskip(p, 8);
-		    p = ntrim(cc, p, 6);  /* get visibility of this structure */
-		  }
-                }
-              } else if(WordMatchExact(G, "HIDE", cc, true)) {
-                m4x->invisible = 1;
-              } else {
-                if(!m4x->context) {
-                  m4x->context = VLACalloc(M4XContextType, 10);
-		  CHECKOK(ok, m4x->context);
-                }
-                if(ok && m4x->context) {
-                  int cn;
-                  int found = false;
-
-                  /* does context already exist ? */
-                  for(cn = 0; cn < m4x->n_context; cn++) {
-                    if(WordMatchExact(G, m4x->context[cn].name, cc, true)) {
-                      found = true;
-                      break;
-                    }
-                  }
-
-                  /* if not, then create it */
-                  if(!found) {
-                    cn = m4x->n_context++;
-                    VLACheck(m4x->context, M4XContextType, cn);
-		    CHECKOK(ok, m4x->context);
-		    if (ok){
-		      UtilNCopy(m4x->context[cn].name, cc, sizeof(WordType));
-		    }
-                  }
-
-                  while(ok && *cc) {
-                    p = nskip(p, 1);
-                    p = ntrim(cc, p, 6);
-                    switch (cc[0]) {
-                    case 'B':
-                      if(WordMatchExact(G, "BORDER", cc, true)) {
-                        /* ignore PDB CONECT if BORDER present */
-                        ignore_conect = true;
-                        have_bond_order = true;
-                        bondFlag = true;
-                      }
-                      break;
-                    case 'S':
-                      if(WordMatchExact(G, "SITE", cc, true)) {
-                        if(!m4x->context[cn].site) {
-                          m4x->context[cn].site = VLAlloc(int, 50);
-			  CHECKOK(ok, m4x->context[cn].site);
-                        }
-                      }
-                      break;
-                    case 'L':
-                      if(WordMatchExact(G, "LIGAND", cc, true)) {
-                        if(!m4x->context[cn].ligand) {
-                          m4x->context[cn].ligand = VLAlloc(int, 50);
-			  CHECKOK(ok, m4x->context[cn].ligand);
-                        }
-                      }
-                      break;
-                    case 'W':
-                      if(WordMatchExact(G, "WATER", cc, true)) {
-                        if(!m4x->context[cn].water) {
-                          m4x->context[cn].water = VLAlloc(int, 50);
-			  CHECKOK(ok, m4x->context[cn].water);
-                        }
-                      }
-                      break;
-                    case 'H':
-                      if(WordMatchExact(G, "HBOND", cc, true)) {
-                        if(!m4x->context[cn].hbond) {
-                          m4x->context[cn].hbond = VLAlloc(M4XBondType, 50);
-			  CHECKOK(ok, m4x->context[cn].hbond);
-                        }
-                      }
-                      break;
-                    case 'N':
-                      if(WordMatchExact(G, "NBOND", cc, true)) {
-                        if(!m4x->context[cn].nbond) {
-                          m4x->context[cn].nbond = VLAlloc(M4XBondType, 50);
-			  CHECKOK(ok, m4x->context[cn].nbond);
-                        }
-                      }
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      p = nextline(p);
-    }
-  }
+     END PASS 1 */
 
   *restart_model = NULL;
   if (ok){
@@ -2104,16 +2084,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     /*      printf("%c%c%c%c%c%c\n",p[0],p[1],p[2],p[3],p[4],p[5]); */
     AFlag = false;
     SSCode = 0;
-    if((p[0] == 'A') &&         /* ATOM */
-       (p[1] == 'T') && (p[2] == 'O') && (p[3] == 'M'))
+    if(strstartswith(p, "ATOM"))
       AFlag = 1;
-    else if((p[0] == 'H') &&    /* HETATM */
-            (p[1] == 'E') &&
-            (p[2] == 'T') && (p[3] == 'A') && (p[4] == 'T') && (p[5] == 'M'))
+    else if(strstartswith(p, "HETATM"))
       AFlag = 2;
-    else if((p[0] == 'H') &&    /* HEADER */
-            (p[1] == 'E') &&
-            (p[2] == 'A') && (p[3] == 'D') && (p[4] == 'E') && (p[5] == 'R')) {
+    else if(strstartswith(p, "HEADER")) {
 
       if(pdb_name) {
         if(atomCount > 0) {
@@ -2134,8 +2109,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           }
         }
       }
-    } else if((p[0] == 'M') &&  /* MODEL */
-              (p[1] == 'O') && (p[2] == 'D') && (p[3] == 'E') && (p[4] == 'L')) {
+    } else if(strstartswith(p, "MODEL ")) {
       if(model_number) {
         int tmp;
         p = nskip(p, 10);
@@ -2145,8 +2119,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       }
       seen_model = true;
       in_model = true;
-    } else if((p[0] == 'H') &&  /* HELIX */
-              (p[1] == 'E') && (p[2] == 'L') && (p[3] == 'I') && (p[4] == 'X')) {
+    } else if(strstartswith(p, "HELIX ")) {
       ss_valid = true;
 
       p = nskip(p, 19);
@@ -2180,8 +2153,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       if(ss_chain2 == ' ')
         ss_chain2 = 0;
 
-    } else if((p[0] == 'S') &&  /* SHEET */
-              (p[1] == 'H') && (p[2] == 'E') && (p[3] == 'E') && (p[4] == 'T')) {
+    } else if(strstartswith(p, "SHEET ")) {
       ss_valid = true;
       p = nskip(p, 21);
       ss_chain1 = (*p);
@@ -2212,9 +2184,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       if(ss_chain2 == ' ')
         ss_chain2 = 0;
 
-    } else if((p[0] == 'E') &&  /* ENDMDL */
-              (p[1] == 'N') &&
-              (p[2] == 'D') && (p[3] == 'M') && (p[4] == 'D') && (p[5] == 'L')) {
+    } else if(strstartswith(p, "ENDMDL")) {
       if(*restart_model)
         in_model = false;
       else {
@@ -2223,8 +2193,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         if(only_read_one_model) {
           char *pp;
           pp = nextline(p);
-          if((pp[0] == 'E') &&  /* END we're going to be starting a new object... */
-             (pp[1] == 'N') && (pp[2] == 'D')) {
+          if(strstartswith(pp, "END")) {   /* END we're going to be starting a new object... */
             (*next_pdb) = check_next_pdb_object(nextline(pp), true);
             if(info && (info->multiplex == 0)) {
               /* multiplex == 0:  FORCED multimodel behavior with concatenated PDB files */
@@ -2235,8 +2204,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
             } else {
               is_end_of_object = true;
             }
-          } else if((pp[0] == 'M') &&   /* not a new object...just a new state (model) */
-                    (pp[1] == 'O') && (pp[2] == 'D') && (pp[3] == 'E') && (pp[4] == 'L')) {
+          } else if(strstartswith(pp, "MODEL")) {   /* not a new object...just a new state (model) */
             if(info && (info->multiplex > 0)) { /* end object if we're multiplexing */
               (*next_pdb) = check_next_pdb_object(pp, true);
               (*restart_model) = NULL;
@@ -2251,8 +2219,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           break;
         }
       }
-    } else if((p[0] == 'E') &&  /* END */
-              (p[1] == 'N') && (p[2] == 'D')) {
+    } else if(strstartswith(p, "END")) {
       ntrim(cc, p, 6);
       if((strcmp("END", cc) == 0) && (!in_model)) {     /* stop parsing here... */
         char *pp;
@@ -2281,10 +2248,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
             break;
         }
       }
-    } else if((p[0] == 'C') &&  /* CRYST1 */
-              (p[1] == 'R') &&
-              (p[2] == 'Y') &&
-              (p[3] == 'S') && (p[4] == 'T') && (p[5] == '1') && (!*restart_model)) {
+    } else if(strstartswith(p, "CRYST1") && (!*restart_model)) {
       if(!symmetry){
         symmetry = SymmetryNew(G);
 	CHECKOK(ok, symmetry);
@@ -2325,10 +2289,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           symmetry = NULL;
         }
       }
-    } else if((p[0] == 'S') &&  /* SCALEn */
-              (p[1] == 'C') &&
-              (p[2] == 'A') &&
-              (p[3] == 'L') && (p[4] == 'E') && (!*restart_model) && info) {
+    } else if(strstartswith(p, "SCALE") && (!*restart_model) && info) { /* SCALEn */
       switch (p[5]) {
       case '1':
       case '2':
@@ -2362,12 +2323,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         }
         break;
       }
-    } else if((p[0] == 'C') &&  /* CONECT */
-              (p[1] == 'O') &&
-              (p[2] == 'N') &&
-              (p[3] == 'E') &&
-              (p[4] == 'C') &&
-              (p[5] == 'T') &&
+    } else if(strstartswith(p, "CONECT") &&
               bondFlag && (!ignore_conect) && ((!*restart_model) || (!in_model))) {
       seen_conect = true;
       p = nskip(p, 6);
@@ -2398,11 +2354,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
             }
           }
         }
-    } else if((p[0] == 'U') &&  /* USER */
-              (p[1] == 'S') && (p[2] == 'E') && (p[3] == 'R') && (!*restart_model)) {
+    } else if(strstartswith(p, "USER") && (!*restart_model)) {
       /* Metaphorics key 'USER M4X ' was 'USER     ' */
-      if((p[4] == ' ') &&
-         (p[5] == 'M') && (p[6] == '4') && (p[7] == 'X') && (p[8] == ' ') && m4x) {
+      if(strstartswith(p + 4, " M4X ") && m4x) {
 
         int parsed_flag = false;
 
@@ -2634,11 +2588,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           }
         }
       }
-    } else if((p[0] == 'A') &&  /* ANISOU */
-              (p[1] == 'N') &&
-              (p[2] == 'I') &&
-              (p[3] == 'S') &&
-              (p[4] == 'O') && (p[5] == 'U') && (!*restart_model) && (atomCount)) {
+    } else if(strstartswith(p, "ANISOU") && (!*restart_model) && (atomCount)) {
       ai = atInfo + atomCount - 1;
 
       /* TODO: check atom identifier match */
@@ -2946,7 +2896,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
       PRINTFD(G, FB_ObjectMolecule)
         "%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
-        ai->name, ai->resn, ai->resi, ai->chain,
+        ai->name, ai->resn, ai->resi, LexStr(G, ai->chain),
         *(coord + a), *(coord + a + 1), *(coord + a + 2), ai->b, ai->q, ai->segi ENDFD;
 
       if(atomCount < nAtom) {     /* safety */
@@ -3091,18 +3041,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 	 make sure there is another model to read... */
       p = *restart_model;
       while(*p) {
-	if((p[0] == 'H') && (p[1] == 'E') && (p[2] == 'A') &&
-	   (p[3] == 'D') && (p[4] == 'E') && (p[5] == 'R')) {
+	if(strstartswith(p, "HEADER")) {
 	  /* seeing HEADER means we're off the end of the existing file */
 	  break;
-	}
-	if((p[0] == 'M') && (p[1] == 'O') && (p[2] == 'D') &&
-	   (p[3] == 'E') && (p[4] == 'L') && (p[5] == ' ')) {
-	  foundNextModelFlag = true;
-	  break;
-	}
-	if((p[0] == 'E') && (p[1] == 'N') && (p[2] == 'D') &&
-	   (p[3] == 'M') && (p[4] == 'D') && (p[5] == 'L')) {
+	} else if(strstartswith(p, "MODEL ") ||
+	          strstartswith(p, "ENDMDL")) {
 	  foundNextModelFlag = true;
 	  break;
 	}
@@ -3540,8 +3483,6 @@ static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule * I)
   PyObject *result = NULL;
   return(PConvAutoNone(result));
   }*/
-
-#ifndef _PYMOL_NOPY
 static int ObjectMoleculeCSetFromPyList(ObjectMolecule * I, PyObject * list)
 {
   int ok = true;
@@ -3563,7 +3504,6 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule * I, PyObject * list)
   }
   return (ok);
 }
-#endif
 
 #ifndef _PYMOL_NOPY
 static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
@@ -3592,7 +3532,6 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
 }
 #endif
 
-#ifndef _PYMOL_NOPY
 static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
 {
   int ok = true;
@@ -3606,6 +3545,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     ok = ((I->Bond = VLAlloc(BondType, I->NBond)) != NULL);
   bond = I->Bond;
   for(a = 0; a < I->NBond; a++) {
+    bond_list = NULL;
     if(ok)
       bond_list = PyList_GetItem(list, a);
     if(ok)
@@ -3644,7 +3584,6 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
 
   return (ok);
 }
-#endif
 
 #ifndef _PYMOL_NOPY
 static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
@@ -3663,7 +3602,6 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
 }
 #endif
 
-#ifndef _PYMOL_NOPY
 static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
 {
   int ok = true;
@@ -3684,14 +3622,10 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     " ObjectMoleculeAtomFromPyList: ok %d \n", ok ENDFB(I->Obj.G);
   return (ok);
 }
-#endif
 
 int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                 ObjectMolecule ** result)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int ok = true;
   ObjectMolecule *I = NULL;
   int discrete_flag;
@@ -3782,9 +3716,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
         ObjectMoleculeFree(I);
     (*result) = NULL;
   }
-
   return (ok);
-#endif
 }
 
 
@@ -4321,7 +4253,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
   register int a, b;
   CoordSet *cs, **dcs;
   AtomInfoType *atInfo;
-  int *dAtmToIdx;
+  int *dAtmToIdx = NULL;
   int ok = true;
   if(!I->DiscreteFlag) {        /* currently, discrete objects are never sorted */
     int n_bytes = sizeof(int) * I->NAtom;

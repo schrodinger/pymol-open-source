@@ -205,11 +205,14 @@ OVstatus OVLexicon_Pack(OVLexicon * uk)
 OVstatus OVLexicon_DecRef(OVLexicon * uk, ov_word id)
 {
   if((!uk->entry) || (id < 1) || (id > (ov_word) uk->n_entry)) {        /* range checking */
+    if(id)
+      printf("OVLexicon_DecRef-Warning: key %d not found, this might be a bug\n", id);
     return_OVstatus_NOT_FOUND;
   } else {
     register lex_entry *cur_entry = uk->entry + id;
     ov_word ref_cnt = (--cur_entry->ref_cnt);
     if(ref_cnt < 0) {
+      printf("OVLexicon_DecRef-Warning: key %d with ref_cnt %d, this might be a bug\n", id, ref_cnt);
       return_OVstatus_INVALID_REF_CNT;
     } else if(!ref_cnt) {
       OVreturn_word result = OVOneToOne_GetForward(uk->up, cur_entry->hash);

@@ -5001,7 +5001,7 @@ int ChampSmiToPat(CChamp *I,char *c)
     }
     if(sym==cSym_Null) {
       PRINTFB(FB_smiles_parsing,FB_errors)
-        " champ: error parsing smiles string at '%c' (char %ld) in\n champ: '%s'\n",*c,c-orig_c,orig_c        
+        " champ: error parsing smiles string at '%c' (char %ld) in\n champ: '%s'\n",*c,c-orig_c,orig_c
         ENDFB;
       ok=false;
     }

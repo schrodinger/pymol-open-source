@@ -14,13 +14,14 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <stdint.h>
+
 #include"os_python.h"
 
 #include"os_predef.h"
 #include"os_std.h"
 #include"os_gl.h"
-
-#include <stdint.h>
 
 #include"OOMac.h"
 #include"ObjectMap.h"
@@ -42,13 +43,6 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 #include"File.h"
-
-#ifndef _PYMOL_NOPY
-#ifdef _PYMOL_NUMPY
-#include <numpy/ndarrayobject.h>
-typedef PyArrayObject MyArrayObject;
-#endif
-#endif
 
 #define n_space_group_numbers 231
 static const char * space_group_numbers[] = {
@@ -1863,10 +1857,15 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
   Picking **pick = info->pick;
   int pass = info->pass;
   ObjectMapState *ms = NULL;
-  if(!pass) {
-    if(state < I->NState)
-      if(I->State[state].Active)
-        ms = &I->State[state];
+
+  if(pass)
+    return;
+
+  for(StateIterator iter(G, I->Obj.Setting, state, I->NState);
+      iter.next();) {
+    state = iter.state;
+    if(I->State[state].Active)
+      ms = &I->State[state];
 
     if(ms) {
       float *corner = ms->Corner;
@@ -5526,12 +5525,11 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
   int a, b, c, d, e;
   float v[3], dens, maxd, mind;
   int ok = true;
-#ifdef _PYMOL_NUMPY
-  MyArrayObject *pao;
-#endif
+  void * ptr;
 
 #ifdef _PYMOL_NUMPY
-  pao = (MyArrayObject *) ary;
+  PyArrayObject * pao = (PyArrayObject *) ary;
+  const int itemsize = PyArray_ITEMSIZE(pao);
 #endif
   maxd = -FLT_MAX;
   mind = FLT_MAX;
@@ -5552,10 +5550,17 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
           for(a = 0; a < ms->FDim[0]; a++) {
             v[0] = ms->Origin[0] + ms->Grid[0] * a;
 #ifdef _PYMOL_NUMPY
-            dens = (float) (*((double *)
-                              (pao->data +
-                               (pao->strides[0] * a) +
-                               (pao->strides[1] * b) + (pao->strides[2] * c))));
+            ptr = PyArray_GETPTR3(pao, a, b, c);
+            switch(itemsize) {
+              case sizeof(double):
+                dens = (float) *((double*)ptr);
+                break;
+              case sizeof(float):
+                dens = *((float*)ptr);
+                break;
+              default:
+                printf("no itemsize match\n");
+            }
 #else
             dens = 0.0;
 #endif

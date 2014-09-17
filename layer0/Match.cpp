@@ -264,7 +264,6 @@ int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
   unsigned int x, y;
   int a;
   int n_entry;
-  size_t res;
 
   if(fname && fname[0]
 #ifdef _PYMOL_NOPY

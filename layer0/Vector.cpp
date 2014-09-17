@@ -508,6 +508,50 @@ void identity44d(double *m1)
     m1[a] = _d1;
 }
 
+/*
+ * Check a nxn matrix for identity
+ */
+bool is_identityf(int n, float *m, float threshold)
+{
+  int n_sq = n * n, stride = n + 1;
+  for (int a = 0; a < n_sq; a++) {
+    float e = (a % stride) ? _0 : _1;
+    if (fabsf(m[a] - e) > threshold)
+      return false;
+  }
+  return true;
+}
+
+/*
+ * Check if two matrices are the same. The two matrices may have different
+ * number of rows and columns, in that case only the overlaying upper left
+ * (nrow x min(ncol1, ncol2)) submatrix is compared.
+ */
+bool is_allclosef(int nrow, float *m1, int ncol1, float *m2, int ncol2, float threshold)
+{
+  int ncol = (ncol1 < ncol2) ? ncol1 : ncol2;
+  for (int i = 0; i < nrow; i++) {
+    for (int j = 0; j < ncol; j++) {
+      int a1 = i * ncol1 + j, a2 = i * ncol2 + j;
+      if (fabsf(m1[a1] - m2[a2]) > threshold)
+        return false;
+    }
+  }
+  return true;
+}
+
+/*
+ * Determinant of the upper left 3x3 submatrix.
+ */
+double determinant33f(float *m, int ncol)
+{
+  int &a = ncol, b = ncol * 2;
+  return
+    m[0] * (m[a + 1] * (double) m[b + 2] - m[a + 2] * (double) m[b + 1]) -
+    m[1] * (m[a + 0] * (double) m[b + 2] - m[a + 2] * (double) m[b + 0]) +
+    m[2] * (m[a + 0] * (double) m[b + 1] - m[a + 1] * (double) m[b + 0]);
+}
+
 void copy44f(float *src, float *dst)
 {
   *(dst++) = *(src++);
@@ -2230,7 +2274,7 @@ void add4f(float *v1, float *v2, float *v3)
 int countchrs(char *str, char ch){
   int cnt = 0;
   char *tmp = str;
-  while (tmp = strchr(tmp, ch)){
+  while((tmp = strchr(tmp, ch))) {
     cnt++;
     tmp++;
   }

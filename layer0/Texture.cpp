@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include "Setting.h"
 #include "Character.h"
 #include "Util.h"
+#include "Feedback.h"
 
 #include "Executive.h"
 #include "Ortho.h"

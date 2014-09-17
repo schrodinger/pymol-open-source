@@ -6545,7 +6545,7 @@ static void SceneApplyImageGamma(PyMOLGlobals * G, unsigned int *buffer, int wid
 
   test = 0xFF000000;
   testPtr = (unsigned char *) &test;
-  big_endian = (*testPtr) && 1;
+  big_endian = (*testPtr) & 0x01;
 
   if(buffer && height && width) {
     register float _inv3 = 1 / (255 * 3.0F);
@@ -7288,7 +7288,7 @@ void SceneRay(PyMOLGlobals * G,
             unsigned char *testPtr;
             test = 0xFF000000;
             testPtr = (unsigned char *) &test;
-            big_endian = (*testPtr) && 1;
+            big_endian = (*testPtr) & 0x01;
           }
           {
             unsigned int *l = (unsigned int *) stereo_image->data;
@@ -7636,7 +7636,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
       /* update all gadgets first (single-threaded since they're thread-unsafe) */
       rec = NULL;
       while(ListIterate(I->Obj, rec, next)) {
-        if((rec->obj->type == cObjectGadget)) {
+        if(rec->obj->type == cObjectGadget) {
           if(rec->obj->fUpdate)
             rec->obj->fUpdate(rec->obj);
         }

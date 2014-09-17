@@ -216,6 +216,26 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
+    def set_state_order(name, order, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    API only. Set the order of states for an object.
+
+ARGUMENTS
+
+    name = str: object name
+
+    order = list of int: index array (1-based state indices)
+
+EXAMPLE
+
+    # reverse the order of a 20 model object
+    cmd.set_state_order('1nmr', range(20, 0, -1))
+        '''
+        with _self.lockcm:
+            return _cmd.set_state_order(_self._COb, name, [i - 1 for i in order])
+
     def set_symmetry(selection, a, b, c, alpha, beta, gamma, spacegroup="P1", state=-1, _self=cmd):
 
         '''

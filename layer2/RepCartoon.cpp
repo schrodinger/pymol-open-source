@@ -2601,7 +2601,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 
 #ifdef _PYMOL_CGO_DRAWARRAYS
 	int nverts = nAt * 4, pl = 0;
-	float *vertexVals, *tmp_ptr;
+	float *vertexVals = NULL, *tmp_ptr;
 	if (ok)
 	  vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
 	CHECKOK(ok, vertexVals);

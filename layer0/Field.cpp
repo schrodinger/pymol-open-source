@@ -26,6 +26,66 @@ Z* -------------------------------------------------------------------
 #include"Field.h"
 #include"Vector.h"
 
+/*
+ * Get a field as NumPy array. If copy is false, then return an array wrapper
+ * around the internal data of field. USE WITH CAUTION, the data pointer will
+ * be invalid if the field is freed (e.g. its map object is deleted). If copy
+ * is true, then the returned array will have it's own memory (safe).
+ */
+PyObject *FieldAsNumPyArray(CField * field, short copy)
+{
+#ifndef _PYMOL_NUMPY
+  printf("No numpy support\n");
+  return NULL;
+#else
+
+  PyObject *result;
+  int typenum = -1;
+  npy_intp * dims = NULL;
+
+  import_array1(NULL);
+
+  if(field->type == cFieldFloat) {
+    switch(field->base_size) {
+#ifdef NPY_FLOAT16
+      case 2: typenum = NPY_FLOAT16; break;
+#endif
+      case 4: typenum = NPY_FLOAT32; break;
+      case 8: typenum = NPY_FLOAT64; break;
+    }
+  } else {
+    switch(field->base_size) {
+      case 1: typenum = NPY_INT8; break;
+      case 2: typenum = NPY_INT16; break;
+      case 4: typenum = NPY_INT32; break;
+      case 8: typenum = NPY_INT64; break;
+    }
+  }
+
+  if(typenum == -1) {
+    printf("error: no typenum for type %d and base_size %d\n",
+        field->type, field->base_size);
+    return NULL;
+  }
+
+  ok_assert(1, dims = Alloc(npy_intp, field->n_dim));
+  copyN(field->dim, dims, field->n_dim);
+
+  if(copy) {
+    if((result = PyArray_SimpleNew(field->n_dim, dims, typenum)))
+      memcpy(PyArray_DATA(result), field->data, field->size);
+  } else {
+    result = PyArray_SimpleNewFromData(field->n_dim, dims, typenum, field->data);
+  }
+
+  mfree(dims);
+  return result;
+ok_except1:
+  printf("FieldAsNumPyArray failed\n");
+  return NULL;
+#endif
+}
+
 PyObject *FieldAsPyList(CField * I)
 {
 #ifdef _PYMOL_NOPY

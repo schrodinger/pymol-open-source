@@ -163,8 +163,8 @@ static void EditorConfigMouse(PyMOLGlobals * G)
   int scheme = EditorGetScheme(G);
   char *mouse_mode = SettingGetGlobal_s(G, cSetting_button_mode_name);
 
-  if(mouse_mode && ((!strcmp(mouse_mode, "3-Button Editing") == 0) ||
-                    (!strcmp(mouse_mode, "3-Button Motions") == 0))) {        
+  if(mouse_mode && (!strcmp(mouse_mode, "3-Button Editing") ||
+                    !strcmp(mouse_mode, "3-Button Motions"))) {
     /* WEAK! */
     int button;
 

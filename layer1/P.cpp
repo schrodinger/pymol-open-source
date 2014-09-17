@@ -1191,7 +1191,7 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType
 void PUnlockAPIAsGlut(PyMOLGlobals * G)
 {                               /* must call with unblocked interpreter */
   PRINTFD(G, FB_Threads)
-    " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n", PyThread_get_thread_ident()
+    " PUnlockAPIAsGlut-DEBUG: entered as thread %ld\n", PyThread_get_thread_ident()
     ENDFD;
   PBlock(G);
   PXDecRef(PyObject_CallFunction(G->P_inst->unlock, "iO", 0, G->P_inst->cmd));  /* NOTE this may flush the command buffer! */
@@ -1205,7 +1205,7 @@ void PUnlockAPIAsGlut(PyMOLGlobals * G)
 void PUnlockAPIAsGlutNoFlush(PyMOLGlobals * G)
 {                               /* must call with unblocked interpreter */
   PRINTFD(G, FB_Threads)
-    " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n", PyThread_get_thread_ident()
+    " PUnlockAPIAsGlut-DEBUG: entered as thread %ld\n", PyThread_get_thread_ident()
     ENDFD;
   PBlock(G);
   PXDecRef(PyObject_CallFunction(G->P_inst->unlock, "iO", -1, G->P_inst->cmd)); /* prevents flushing of the buffer */
@@ -1256,7 +1256,7 @@ static int get_api_lock(PyMOLGlobals * G, int block_if_busy)
 int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
 {
   PRINTFD(G, FB_Threads)
-    "*PLockAPIAsGlut-DEBUG: entered as thread 0x%x\n", PyThread_get_thread_ident()
+    "*PLockAPIAsGlut-DEBUG: entered as thread %ld\n", PyThread_get_thread_ident()
     ENDFD;
 
   PBlock(G);
@@ -1268,7 +1268,7 @@ int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
   PUnlockStatus(G);
 
   PRINTFD(G, FB_Threads)
-    "#PLockAPIAsGlut-DEBUG: acquiring lock as thread 0x%x\n", PyThread_get_thread_ident()
+    "#PLockAPIAsGlut-DEBUG: acquiring lock as thread %ld\n", PyThread_get_thread_ident()
     ENDFD;
 
   if(!get_api_lock(G, block_if_busy)) {
@@ -1286,7 +1286,7 @@ int PLockAPIAsGlut(PyMOLGlobals * G, int block_if_busy)
        holding the API lock, therefore it is safe even through increment
        isn't atomic. */
     PRINTFD(G, FB_Threads)
-      "-PLockAPIAsGlut-DEBUG: glut_thread_keep_out 0x%x\n", PyThread_get_thread_ident()
+      "-PLockAPIAsGlut-DEBUG: glut_thread_keep_out %ld\n", PyThread_get_thread_ident()
       ENDFD;
 
     PXDecRef(PyObject_CallFunction(G->P_inst->unlock, "iO", -1, G->P_inst->cmd));       /* prevent buffer flushing */
@@ -2381,7 +2381,7 @@ int PFlush(PyMOLGlobals * G)
       /* don't run if we're currently banned */
       char *buffer = 0;
       int size, curSize = 0;
-      while(size = OrthoCommandOutSize(G)){
+      while((size = OrthoCommandOutSize(G))){
 	if (!curSize){
 	  buffer = VLACalloc(char, size);
 	  curSize = size;
@@ -2425,7 +2425,7 @@ int PFlushFast(PyMOLGlobals * G)
   int did_work = false;
   char *buffer = 0;
   int size, curSize = 0;
-  while(size = OrthoCommandOutSize(G)){
+  while((size = OrthoCommandOutSize(G))){
     if (!curSize){
       buffer = VLACalloc(char, size);
       curSize = size;
@@ -2437,7 +2437,7 @@ int PFlushFast(PyMOLGlobals * G)
     OrthoCommandNest(G, 1);
     did_work = true;
     PRINTFD(G, FB_Threads)
-      " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n", buffer,
+      " PFlushFast-DEBUG: executing '%s' as thread %ld\n", buffer,
       PyThread_get_thread_ident()
       ENDFD;
     if(PyErr_Occurred()) {
@@ -2533,7 +2533,7 @@ int PAutoBlock(PyMOLGlobals * G)
       PXDecRef(PyObject_CallFunction(G->P_inst->unlock_c, "O", G->P_inst->cmd));
 
       PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: blocked 0x%x (0x%x, 0x%x, 0x%x)\n",
+        " PAutoBlock-DEBUG: blocked %ld (%d, %d, %d)\n",
         PyThread_get_thread_ident(), SavedThread[MAX_SAVED_THREAD - 1].id,
         SavedThread[MAX_SAVED_THREAD - 2].id, SavedThread[MAX_SAVED_THREAD - 3].id ENDFD;
 
@@ -2542,7 +2542,7 @@ int PAutoBlock(PyMOLGlobals * G)
     a--;
   }
   PRINTFD(G, FB_Threads)
-    " PAutoBlock-DEBUG: 0x%x not found, thus already blocked.\n",
+    " PAutoBlock-DEBUG: %ld not found, thus already blocked.\n",
     PyThread_get_thread_ident()
     ENDFD;
   return 0;
@@ -2563,7 +2563,7 @@ void PUnblock(PyMOLGlobals * G)
   SavedThreadRec *SavedThread = G->P_inst->savedThread;
   /* NOTE: ASSUMES a locked API */
   PRINTFD(G, FB_Threads)
-    " PUnblock-DEBUG: entered as thread 0x%x\n", PyThread_get_thread_ident()
+    " PUnblock-DEBUG: entered as thread %ld\n", PyThread_get_thread_ident()
     ENDFD;
 
   /* reserve a space while we have a lock */

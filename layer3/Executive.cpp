@@ -32,6 +32,7 @@
 #include"ObjectAlignment.h"
 #include"ObjectGroup.h"
 #include"ObjectVolume.h"
+#include"ObjectCallback.h"
 #include"ObjectMap.h"
 #include"ListMacros.h"
 #include"MyPNG.h"
@@ -3532,7 +3533,7 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
     if(!already_handled) {
 
       long size = 0;
-      char *buffer = NULL, *p;
+      char *buffer = NULL;
       CObject *obj = NULL;
       char new_name[WordLength] = "";
       char *next_entry = NULL;
@@ -3809,7 +3810,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
                             int is_string, int multiplex, int zoom)
 {
   int ok = true;
-  char *buffer = NULL, *p;
+  char *buffer = NULL;
   CObject *obj;
   char pdb_name[WordLength] = "";
   char cur_name[WordLength] = "";
@@ -4494,7 +4495,7 @@ float * ExecutiveGetHistogram(PyMOLGlobals * G, char* objName, int n_points, flo
     break;
   default:
     PRINTFB(G, FB_Executive, FB_Errors)
-      " GetHistogram-Error: wrong object type.", objName ENDFB(G);
+      " GetHistogram-Error: wrong object type." ENDFB(G);
   }
 
   if(oms) {
@@ -4817,7 +4818,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
   int ok = true;
   int skip = false;
   int a = 0, l = 0, ll = 0;
-  PyObject *cur;
+  PyObject *cur, *el;
   SpecRec *rec = NULL;
   int extra_int;
   int incomplete = false;
@@ -4855,52 +4856,38 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
         ok = PConvPyIntToInt(PyList_GetItem(cur, 4), &extra_int);
       switch (rec->type) {
       case cExecObject:
+        if(!ok)
+          break;
+
+        el = PyList_GetItem(cur, 5);
+
         switch (extra_int) {
         case cObjectMolecule:
-          if(ok)
-            ok = ObjectMoleculeNewFromPyList(G, PyList_GetItem(cur, 5),
-                                             (ObjectMolecule **) (void *) &rec->obj);
+          ok = ObjectMoleculeNewFromPyList(G, el, (ObjectMolecule **) (void *) &rec->obj);
           break;
         case cObjectMeasurement:
-          if(ok)
-            ok = ObjectDistNewFromPyList(G, PyList_GetItem(cur, 5),
-                                         (ObjectDist **) (void *) &rec->obj);
+          ok = ObjectDistNewFromPyList(G, el, (ObjectDist **) (void *) &rec->obj);
           break;
         case cObjectMap:
-          if(ok)
-            ok = ObjectMapNewFromPyList(G, PyList_GetItem(cur, 5),
-                                        (ObjectMap **) (void *) &rec->obj);
+          ok = ObjectMapNewFromPyList(G, el, (ObjectMap **) (void *) &rec->obj);
           break;
         case cObjectMesh:
-          if(ok)
-            ok = ObjectMeshNewFromPyList(G, PyList_GetItem(cur, 5),
-                                         (ObjectMesh **) (void *) &rec->obj);
+          ok = ObjectMeshNewFromPyList(G, el, (ObjectMesh **) (void *) &rec->obj);
           break;
         case cObjectSlice:
-          if(ok)
-            ok = ObjectSliceNewFromPyList(G, PyList_GetItem(cur, 5),
-                                          (ObjectSlice **) (void *) &rec->obj);
+          ok = ObjectSliceNewFromPyList(G, el, (ObjectSlice **) (void *) &rec->obj);
           break;
         case cObjectSurface:
-          if(ok)
-            ok = ObjectSurfaceNewFromPyList(G, PyList_GetItem(cur, 5),
-                                            (ObjectSurface **) (void *) &rec->obj);
+          ok = ObjectSurfaceNewFromPyList(G, el, (ObjectSurface **) (void *) &rec->obj);
           break;
         case cObjectCGO:
-          if(ok){
-            ok = ObjectCGONewFromPyList(G, PyList_GetItem(cur, 5),
-                                        (ObjectCGO **) (void *) &rec->obj, version);
-	  }
+          ok = ObjectCGONewFromPyList(G, el, (ObjectCGO **) (void *) &rec->obj, version);
           break;
         case cObjectGadget:
-          if(ok)
-            ok = ObjectGadgetNewFromPyList(G, PyList_GetItem(cur, 5),
-                                           (ObjectGadget **) (void *) &rec->obj, version);
+          ok = ObjectGadgetNewFromPyList(G, el, (ObjectGadget **) (void *) &rec->obj, version);
           break;
         case cObjectAlignment:
-          if(ok)
-            ok = ObjectAlignmentNewFromPyList(G, PyList_GetItem(cur, 5),
-                                              (ObjectAlignment **) (void *) &rec->obj,
+          ok = ObjectAlignmentNewFromPyList(G, el, (ObjectAlignment **) (void *) &rec->obj,
                                               version);
           break;
         case cObjectGroup:
@@ -4912,16 +4899,17 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
               break;
             }
           }
-          if(ok)
-            ok = ObjectGroupNewFromPyList(G, PyList_GetItem(cur, 5),
-                                          (ObjectGroup **) (void *) &rec->obj, version);
+          ok = ObjectGroupNewFromPyList(G, el, (ObjectGroup **) (void *) &rec->obj, version);
           break;
         case cObjectVolume:
-          if(ok)
-            ok = ObjectVolumeNewFromPyList(G, PyList_GetItem(cur, 5),
-                                         (ObjectVolume **) (void *) &rec->obj);
+          ok = ObjectVolumeNewFromPyList(G, el, (ObjectVolume **) (void *) &rec->obj);
           break;
-
+#ifndef _PYMOL_NOPY
+        case cObjectCallback:
+          // skip dummy entries from old sessions and failed-to-pickle sessions
+          skip = !ObjectCallbackNewFromPyList(G, el, (ObjectCallback **) (void *) &rec->obj);
+          break;
+#endif
         default:
           PRINTFB(G, FB_Executive, FB_Errors)
             " Executive: skipping unrecognized object \"%s\" of type %d.\n",
@@ -4929,10 +4917,13 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int vers
           skip = true;
           break;
         }
+
+        CPythonVal_Free(el);
+
         break;
-      case cExecSelection:     /* on the first pass, just create an entry in the rec list */
+      case cExecSelection:     // on the first pass, just create an entry in the rec list
         rec->sele_color = extra_int;
-        if(part_rest || part_sess) {    /* don't attempt to restore selections with partial sessions */
+        if(part_rest || part_sess) {    // don't attempt to restore selections with partial sessions
           skip = true;
         }
         break;
@@ -5109,6 +5100,9 @@ static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals * G, SpecRec * rec)
     break;
   case cObjectVolume:
     PyList_SetItem(result, 5, ObjectVolumeAsPyList((ObjectVolume *) rec->obj));
+    break;
+  case cObjectCallback:
+    PyList_SetItem(result, 5, ObjectCallbackAsPyList((ObjectCallback *) rec->obj));
     break;
   default:
     PyList_SetItem(result, 5, PConvAutoNone(NULL));
@@ -15912,7 +15906,7 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
                           ExecutiveSpecSetVisibility(G, rec, true, mod, false);
                           I->LastChanged = rec;
                         }
-                        if((mod == (cOrthoSHIFT | cOrthoCTRL))) {
+                        if(mod == (cOrthoSHIFT | cOrthoCTRL)) {
                           if(rec != I->LastZoomed)
                             ExecutiveWindowZoom(G, rec->name, 0.0F, -1, false, -1.0F,
                                                 true);
@@ -17047,4 +17041,25 @@ char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, char *name, int enable
     VLASize(res, char, size);
   }
   return (res);
+}
+
+/*
+ * Get the coord set for the given object name and state index. If "omp" is
+ * not NULL, then also store a pointer to the object molecule.
+ */
+CoordSet * ExecutiveGetCoordSet(PyMOLGlobals * G, const char * name, int state, ObjectMolecule ** omp) {
+  CObject * obj;
+  ObjectMolecule * om = NULL;
+  CoordSet * cs = NULL;
+
+  ok_assert(1, obj = ExecutiveFindObjectByName(G, (char*) name));
+  ok_assert(1, obj->type == cObjectMolecule);
+
+  om = (ObjectMolecule*) obj;
+  ok_assert(1, cs = ObjectMoleculeGetCoordSet(om, state));
+
+ok_except1:
+  if (omp != NULL)
+    *omp = om;
+  return cs;
 }

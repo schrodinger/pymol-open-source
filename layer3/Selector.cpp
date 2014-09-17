@@ -6509,6 +6509,258 @@ int SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, in
 
 
 /*========================================================================*/
+void SeleCoordIterator::reset() {
+  a = cNDummyAtoms - 1;
+  if(statearg < 0) {
+    state = 0;
+    statemax = 0;
+  }
+}
+
+/*
+ * advance the internal state to the next atom, return false if there is no
+ * next atom
+ */
+bool SeleCoordIterator::next() {
+  CSelector *I = G->Selector;
+
+  for (a++; a < I->NAtom; a++) {
+    at = I->Table[a].atom;
+    obj = I->Obj[I->Table[a].model];
+
+    if(statearg < 0 && statemax < obj->NCSet)
+      statemax = obj->NCSet;
+
+    if(state >= obj->NCSet || !(cs = obj->CSet[state]))
+      continue;
+
+    if(!SelectorIsMember(G, obj->AtomInfo[at].selEntry, sele))
+      continue;
+
+    if(obj->DiscreteFlag) {
+      if(cs != obj->DiscreteCSet[at])
+        continue;
+      idx = obj->DiscreteAtmToIdx[at];
+    } else {
+      idx = cs->AtmToIdx[at];
+    }
+
+    if(idx < 0)
+      continue;
+
+    return true;
+  }
+
+  if(statearg < 0 && (++state) < statemax) {
+    a = cNDummyAtoms - 1;
+    return next();
+  }
+
+  return false;
+}
+
+/*========================================================================*/
+/*
+ * Get selection coordinates as Nx3 numpy array. Equivalent to
+ *
+ * PyMOL> coords = []
+ * PyMOL> cmd.iterate_state(state, sele, 'coords.append([x,y,z])')
+ * PyMOL> coords = numpy.array(coords)
+ */
+PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state)
+{
+#ifndef _PYMOL_NUMPY
+  printf("No numpy support\n");
+  return NULL;
+#else
+
+  double matrix[16];
+  double *matrix_ptr = NULL;
+  float *v_ptr, v_tmp[3], *dataptr;
+  int i, nAtom = 0;
+  int typenum = -1;
+  const int base_size = sizeof(float);
+  SeleCoordIterator iter(G, sele, state);
+  CoordSet *mat_cs = NULL;
+  PyObject *result = NULL;
+  npy_intp dims[2] = {0, 3};
+
+  SelectorUpdateTable(G, state, -1);
+
+  for(iter.reset(); iter.next();)
+    nAtom++;
+
+  if(!nAtom)
+    return NULL;
+
+  dims[0] = nAtom;
+
+  import_array1(NULL);
+
+  switch(base_size) {
+    case 4: typenum = NPY_FLOAT32; break;
+    case 8: typenum = NPY_FLOAT64; break;
+  }
+
+  if(typenum == -1) {
+    printf("error: no typenum for float size %d\n", base_size);
+    return NULL;
+  }
+
+  result = PyArray_SimpleNew(2, dims, typenum);
+  dataptr = (float*) PyArray_DATA(result);
+
+  for(i = 0, iter.reset(); iter.next(); i++) {
+    v_ptr = iter.getCoord();
+
+    if(mat_cs != iter.cs) {
+      /* compute the effective matrix for output coordinates */
+      matrix_ptr = ObjectGetTotalMatrix(&iter.obj->Obj, state, false, matrix) ? matrix : NULL;
+      mat_cs = iter.cs;
+    }
+
+    if(matrix_ptr) {
+      transform44d3f(matrix_ptr, v_ptr, v_tmp);
+      v_ptr = v_tmp;
+    }
+
+    copy3f(v_ptr, dataptr + i * 3);
+  }
+
+  return result;
+#endif
+}
+
+/*========================================================================*/
+/*
+ * Load coordinates from a Nx3 sequence into the given selection.
+ * Most efficiant with numpy arrays. Equivalent to
+ *
+ * PyMOL> coords = iter(coords)
+ * PyMOL> cmd.alter_state(state, sele, '(x,y,z) = coords.next()')
+ */
+int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
+{
+#ifdef _PYMOL_NOPY
+  return false;
+#else
+
+  double matrix[16];
+  double *matrix_ptr = NULL;
+  float v_xyz[3];
+  int a, b, nAtom = 0, itemsize;
+  SeleCoordIterator iter(G, sele, state);
+  CoordSet *mat_cs = NULL;
+  PyObject *v, *w;
+  bool is_np_array = false;
+  void * ptr;
+
+  if(!PySequence_Check(coords)) {
+    ErrMessage(G, "LoadCoords", "passed argument is not a sequence");
+    ok_raise(1);
+  }
+
+  SelectorUpdateTable(G, state, -1);
+
+  // atom count in selection
+  while(iter.next())
+    nAtom++;
+
+  // sequence length must match atom count
+  if(nAtom != PySequence_Size(coords)) {
+    ErrMessage(G, "LoadCoords", "atom count mismatch");
+    return false;
+  }
+
+  // detect numpy arrays, allows faster data access (see below)
+#ifdef _PYMOL_NUMPY
+  import_array1(false);
+
+  if(PyArray_Check(coords)) {
+    if(PyArray_NDIM(coords) != 2 || PyArray_DIM(coords, 1) != 3) {
+      ErrMessage(G, "LoadCoords", "numpy array shape mismatch");
+      return false;
+    }
+    itemsize = PyArray_ITEMSIZE(coords);
+    switch(itemsize) {
+      case sizeof(double):
+      case sizeof(float):
+        is_np_array = true;
+        break;
+      default:
+        PRINTFB(G, FB_Selector, FB_Warnings)
+          " LoadCoords-Warning: numpy array with unsupported dtype\n" ENDFB(G);
+    }
+  }
+#endif
+
+  for(a = 0, iter.reset(); iter.next(); a++) {
+    // get xyz from python
+    if (is_np_array) {
+      // fast implementation for numpy arrays only
+#ifdef _PYMOL_NUMPY
+      for(b = 0; b < 3; b++) {
+        ptr = PyArray_GETPTR2(coords, a, b);
+
+        switch(itemsize) {
+          case sizeof(double):
+            v_xyz[b] = (float) *((double*)ptr);
+            break;
+          default:
+            v_xyz[b] = *((float*)ptr);
+        }
+      }
+#endif
+    } else {
+      // general implementation for any 2d sequence
+      v = PySequence_ITEM(coords, a);
+
+      // get xyz from python sequence item
+      for(b = 0; b < 3; b++) {
+        if(!(w = PySequence_GetItem(v, b)))
+          break;
+
+        v_xyz[b] = (float) PyFloat_AsDouble(w);
+        Py_DECREF(w);
+      }
+
+      Py_DECREF(v);
+    }
+
+    ok_assert(2, !PyErr_Occurred());
+
+    // coord set specific stuff
+    if(mat_cs != iter.cs) {
+      // update matrix
+      matrix_ptr = ObjectGetTotalMatrix(&iter.obj->Obj, state, false, matrix) ? matrix : NULL;
+      mat_cs = iter.cs;
+
+      // invalidate reps
+      if(iter.cs->fInvalidateRep)
+        iter.cs->fInvalidateRep(iter.cs, cRepAll, cRepInvRep);
+    }
+
+    // handle matrix
+    if(matrix_ptr) {
+      inverse_transform44d3f(matrix_ptr, v_xyz, v_xyz);
+    }
+
+    // copy coordinates
+    copy3f(v_xyz, iter.getCoord());
+  }
+
+  return true;
+
+  // error handling
+ok_except2:
+  PyErr_Print();
+ok_except1:
+  ErrMessage(G, "LoadCoords", "failed");
+  return false;
+#endif
+}
+
+/*========================================================================*/
 PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *ref)
 {
 #ifdef _PYMOL_NOPY
