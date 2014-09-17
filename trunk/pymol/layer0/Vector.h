@@ -120,6 +120,11 @@ void identity33f(float *m1);
 void identity33d(double *m);
 void identity44f(float *m1);
 void identity44d(double *m1);
+
+bool is_identityf(int n, float *m, float threshold=1.0E-6F);
+bool is_allclosef(int nrow, float *m1, int ncol1, float *m2, int ncol2, float threshold=1.0E-6F);
+double determinant33f(float *m, int ncol=3);
+
 #define GLORTHO(l,r,b,t,n,f) glOrtho(l,r,b,t,n,f)
 #define GLFRUSTUM(l,r,b,t,n,f) glFrustumf(l,r,b,t,n,f)
 
@@ -249,6 +254,7 @@ void transform5f3f(oMatrix5f m, float *v1, float *v2);
 
 #define zero3i(v1) { (v1)[0]=0;(v1)[1]=0;(v1)[2]=0; }
 #define copy3(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
+#define copyN(src,dst,N) {int _i;for(_i=0;_i<(N);_i++)(dst)[_i]=(src)[_i];}
 
 #ifndef USE_VECTOR_MACROS
 

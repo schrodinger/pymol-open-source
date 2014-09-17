@@ -193,7 +193,7 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 	      ok &= CGOColorv(cgo, v);
 	      v += 3;
 	    }
-           /*      if(normals)  /* NORMALS do not get set for points 
+           /*      if(normals)  // NORMALS do not get set for points 
                    CGONormalv(cgo, v);*/
 	    v += 3;
 	    if (ok)
@@ -211,7 +211,7 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 	    I->shaderCGO = CGOOptimizeSpheresToVBONonIndexed(cgo, CGO_BOUNDING_BOX_SZ + CGO_DRAW_SPHERE_BUFFERS_SZ);
 	    CHECKOK(ok, I->shaderCGO);
 	  } else {
-	    CGO *convertcgo = CGOCombineBeginEnd(cgo, 0), *tmpCGO;
+	    CGO *convertcgo = CGOCombineBeginEnd(cgo, 0), *tmpCGO = NULL;
 	    CHECKOK(ok, convertcgo);
 	    if (ok)
 	      tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, CGO_BOUNDING_BOX_SZ + I->N * 3 + 7);
@@ -345,7 +345,7 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
   float *countPtr = NULL;
   int colorCnt, lastColor;
   Vector3f v1;
-  MapType *map;
+  MapType *map = NULL;
   SphereRec *sp = G->Sphere->Sphere[0];
   int ds;
   float max_vdw = MAX_VDW;

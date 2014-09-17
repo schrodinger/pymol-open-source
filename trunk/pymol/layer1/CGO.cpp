@@ -47,7 +47,7 @@ Z* -------------------------------------------------------------------
 #define CLIP_NORMAL_VALUE(cv)  ((cv>1.f) ? 127 :  (cv < -1.f) ? -128 : pymol_roundf(((cv + 1.f)/2.f) * 255) - 128 )
 
 #define CHECK_GL_ERROR_OK(printstr)	\
-  if (err = glGetError()){    \
+  if ((err = glGetError()) != 0){						\
      PRINTFB(I->G, FB_CGO, FB_Errors) printstr, err ENDFB(I->G);	   \
   }
 
@@ -1878,7 +1878,6 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
       {
 	float *origpc = pc, firstColor[3], firstAlpha;
 	char hasFirstColor = 0, hasFirstAlpha = 0;
-	int ncolors = 0;
 	int nverts = 0, damode = CGO_VERTEX_ARRAY, err = 0, end = 0;
 	int mode = CGO_read_int(pc);
 
@@ -2310,7 +2309,7 @@ void CGOCountNumVerticesForScreen(CGO *I, int *num_total_vertices, int *num_tota
   *num_total_vertices = 0;
   *num_total_indexes = 0;
 
-  while(op = (CGO_MASK & CGO_read_int(pc))) {
+  while((op = (CGO_MASK & CGO_read_int(pc)))) {
     save_pc = pc;
     err = 0;
     switch (op) {
@@ -2327,7 +2326,7 @@ void CGOCountNumVerticesForScreen(CGO *I, int *num_total_vertices, int *num_tota
 	int nverts = 0, err = 0, end = 0;
 	int mode = CGO_read_int(pc);
 	int sz;
-	while(!err && !end && (op = (CGO_MASK & CGO_read_int(pc)))) {
+	while(!err && !end && ((op = (CGO_MASK & CGO_read_int(pc))))) {
 	  switch (op) {
 	  case CGO_DRAW_ARRAYS:
 	    PRINTFB(I->G, FB_CGO, FB_Warnings) " CGOSimplify: CGO_DRAW_ARRAYS encountered inside CGO_BEGIN/CGO_END\n" ENDFB(I->G);
@@ -4368,7 +4367,7 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
     GL_C_INT_TYPE *indexVals = 0;
     int tot = 4 * 4 * 3 * num_total_cylinders;
     short copyToLeftOver, copyColorToLeftOver, copyPickColorToLeftOver, copyAlphaToLeftOver, copyToReturnCGO ;
-    float *org_originVals;
+    float *org_originVals = NULL;
     float *org_axisVals;
     float *org_colorVals;
     float *org_color2Vals = NULL;
@@ -9564,7 +9563,7 @@ int CGOCountNumberCustomCylinders(CGO *I, int *has_2nd_color){
 int CGOChangeShadersTo(CGO *I, int frommode, int tomode){
   register float *pc = I->op;
   int op = 0, totops = 0;
-  while(op = (CGO_MASK & CGO_read_int(pc))) {
+  while((op = (CGO_MASK & CGO_read_int(pc)))) {
     totops++;
     switch (op) {
     case CGO_ENABLE:

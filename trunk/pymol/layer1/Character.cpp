@@ -264,18 +264,6 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
 	  }
       } else {
 	{
-	  const GLfloat vertexVals [] = {
-	    v0[0], v0[1], v0[2],
-	    v0[0], v1[1], v0[2],
-	    v1[0], v0[1], v0[2],
-	    v1[0], v1[1], v0[2]
-	  };	
-	  const GLfloat texVals [] = {
-	    rec->extent[0], rec->extent[1],
-	    rec->extent[0], rec->extent[3],
-	    rec->extent[2], rec->extent[1],
-	    rec->extent[2], rec->extent[3]
-	  };	
 	  glBegin(GL_QUADS);
 	  glTexCoord2f(rec->extent[0], rec->extent[1]);
 	  glVertex3f(v0[0], v0[1], v0[2]);

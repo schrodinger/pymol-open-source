@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectSurface
 #define _H_ObjectSurface
 
+#include"os_gl.h"
 #include"ObjectMap.h"
 
 typedef struct {

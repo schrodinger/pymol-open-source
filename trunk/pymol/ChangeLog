@@ -2,6 +2,30 @@
 CHANGE LOG
 =========================================================================
 
+2014-09-17 Thomas Holder, Blaine Bell
+
+	* ignore SCALEn if CRYST1 is 1x1x1 or invalid
+
+	* new/refactored API functions for accessing coordinates and maps
+	  as numpy arrays:
+	  * load_coords
+	  * load_coordset (was: load_coords)
+	  * get_coords
+	  * get_coordset
+	  * get_volume_field now returns numpy array
+
+	* new API function: cmd.set_state_order
+
+	* Session file (PSE) support for callback objects
+
+	* fix/silence many compiler warnings
+
+	* fix bg_rgb_top/bg_rgb_bottom side effects
+
+	* revert "fix setting surface_circumscribe"
+
+	* delete some obsolete files
+
 2014-09-08 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* migrate all C files to C++ (rename c -> cpp)

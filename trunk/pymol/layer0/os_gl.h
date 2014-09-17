@@ -130,7 +130,7 @@ int PyMOLCheckOpenGLErr(char *pos);
 #ifndef _PYMOL_OSX
 #include<GL/glut.h>
 #else
-#include<glut.h>
+#import <GLUT/glut.h>
 #endif
 
 #ifdef FREEGLUT

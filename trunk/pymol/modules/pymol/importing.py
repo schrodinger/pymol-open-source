@@ -419,7 +419,7 @@ SEE ALSO
                 extra_coords = numpy.asfarray(rec.extra_coords)
                 for coords in extra_coords.reshape(
                         (-1, len(rec.model.atom), 3)):
-                    _self.load_coords(coords, oname)
+                    _self.load_coordset(coords, oname)
 #        _cmd.finish_object(_self._COb,str(oname))
 #        if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
 #            _self._do("zoom (%s)"%oname)
@@ -879,7 +879,11 @@ SEE ALSO
             # special handling of pse files
             if ftype == loadable.pse:
                 ftype = -1
-                r = _self.set_session(io.pkl.fromFile(fname),quiet=quiet,
+                try:
+                    session = io.pkl.fromFile(fname)
+                except AttributeError as e:
+                    raise pymol.CmdException('PSE contains objects which cannot be unpickled (%s)' % e.message)
+                r = _self.set_session(session, quiet=quiet,
                                       partial=partial,steal=1)
                 if not partial:
                     fname = fname.replace("\\","/") # always use unix-like path separators	
@@ -1484,27 +1488,55 @@ NOTES
                 _self.unblock_flush(_self)
         return r
         
-    def load_coords(coords, object, state=0, quiet=1, _self=cmd):
+    def load_coordset(coords, object, state=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    API only. Load object coordinates.
+    API only. Load object coordinates. Loads them in the original atom
+    order (order from PDB file for example), not in the atom property
+    sorted order (like cmd.iterate, cmd.load_coods, etc.).
 
 ARGUMENTS
 
-    coords = list: 3xN float array
+    coords = list: Nx3 float array
 
     object = str: object name
 
     state = int: object state, or 0 for append {default: 0}
+
+SEE ALSO
+
+    cmd.load_coords
         '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.load_coords(_self._COb, object, coords, int(state)-1)
+            r = _cmd.load_coordset(_self._COb, object, coords, int(state)-1)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
+        return r
+
+    def load_coords(coords, selection, state=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    API only. Load selection coordinates.
+
+    CHANGED IN VERSION 1.7.3: This used to be the load_coordset function.
+    load_coordset may load coordinates in different order (original order from
+    PDB file) than load_coords (atom sorted order).
+
+ARGUMENTS
+
+    coords = list: Nx3 float array
+
+    selection = str: atom selection
+
+    state = int: object state {default: 1}
+        '''
+        with _self.lockcm:
+            r = _cmd.load_coords(_self._COb, selection, coords, int(state)-1)
         return r
 
     def load_mtz(filename, prefix='', amplitudes='', phases='', weights='None',

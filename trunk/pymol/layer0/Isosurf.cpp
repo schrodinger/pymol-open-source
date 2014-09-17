@@ -880,14 +880,15 @@ int IsosurfVolume(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
                   Isofield * field, float level, int **num,
                   float **vert, int *range, int mode, int skip, float alt_level)
 {
+  int ok = true;
   register CIsosurf *I;
   if(PIsGlutThread()) {
     I = G->Isosurf;
   } else {
     I = IsosurfNew(G);
   }
+  CHECKOK(ok, I);
   {
-    int ok = true;
     int Steps[3];
     int c, i, j, k;
     int x, y, z;
@@ -1005,8 +1006,8 @@ int IsosurfVolume(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
     if(!PIsGlutThread()) {
       _IsosurfFree(I);
     }
-    return (ok);
   }
+  return (ok);
 }
 
 
@@ -1146,13 +1147,13 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
     CField *points = field->points;
 
     /* flags marking excluded regions to avoid (currently wasteful) */
-    int *flag;
+    int *flag = NULL;
 
     /* variable length array for recording segment paths */
     int *active_cell = VLAlloc(int, 1000);
 
     /* ordered list of coordinates for processing */
-    int *order;
+    int *order = NULL;
 
     int range_size;             /* total points in region being drawn */
     int range_dim[3];           /* dimension of drawn region */

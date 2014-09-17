@@ -2920,7 +2920,7 @@ int ColorInit(PyMOLGlobals * G)
 
     test = 0xFF000000;
     testPtr = (unsigned char *) &test;
-    I->BigEndian = (*testPtr) && 1;
+    I->BigEndian = (*testPtr) & 0x01;
 
     I->Color = VLACalloc(ColorRec, 5500);
     I->Ext = VLACalloc(ExtRec, 2);
@@ -3066,7 +3066,6 @@ int ColorGetEncoded(PyMOLGlobals * G, int index, float *color)
 
 int Color3fToInt(PyMOLGlobals * G, float *rgb){
   unsigned int rc, gc, bc;
-  unsigned int result;
   rc = pymol_roundf(rgb[0] * 255.);
   gc = pymol_roundf(rgb[1] * 255.);
   bc = pymol_roundf(rgb[2] * 255.);

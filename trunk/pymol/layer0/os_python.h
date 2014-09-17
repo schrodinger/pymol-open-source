@@ -24,9 +24,15 @@ Z* -------------------------------------------------------------------
 
 #ifdef _PYMOL_NOPY
 typedef int PyObject;
+#undef _PYMOL_NUMPY
 #else
 #include"Python.h"
 #include<pythread.h>
+
+#ifdef _PYMOL_NUMPY
+#include <numpy/arrayobject.h>
+#endif
+
 #endif
 
 #include "os_predef.h"

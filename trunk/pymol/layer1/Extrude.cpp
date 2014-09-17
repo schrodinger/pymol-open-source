@@ -673,7 +673,7 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overrid
   float *v;
   float *n;
   float *c;
-  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV, *TN;
+  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL;
   float v0[3];
   int start, stop;
   int ok = true;
@@ -1373,7 +1373,7 @@ int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_over
   float *v;
   float *n;
   float *c;
-  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV, *TN;
+  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL;
   float v0[3];
   int ok = true;
 
@@ -1691,7 +1691,7 @@ int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color_
   float *v;
   float *n;
   float *c;
-  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV, *TN;
+  float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL;
   float v0[3], n0[3], s0[3], z[3] = { 1.0, 0.0, 1.0 };
   int subN;
   int ok = true;

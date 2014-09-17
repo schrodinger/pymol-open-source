@@ -483,25 +483,14 @@ static void ObjectGadgetRender(ObjectGadget * I, RenderInfo * info)
   int state = info->state;
   CRay *ray = info->ray;
   int pass = info->pass;
-  int a;
   if(!pass) {
 
     ObjectPrepareContext(&I->Obj, ray);
-    if(state < 0) {
-      for(a = 0; a < I->NGSet; a++)
-        if(I->GSet[a])
-          if(I->GSet[a]->fRender)
-            I->GSet[a]->fRender(I->GSet[a], info);
-    } else if(state < I->NGSet) {
-      I->CurGSet = state;
-      if(I->GSet[I->CurGSet]) {
-        if(I->GSet[I->CurGSet]->fRender)
-          I->GSet[I->CurGSet]->fRender(I->GSet[I->CurGSet], info);
-      }
-    } else if(I->NGSet == 1) {  /* if only one coordinate set, assume static */
-      if(I->GSet[0]->fRender)
-        I->GSet[0]->fRender(I->GSet[0], info);
-      I->CurGSet = 0;
+    for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NGSet);
+        iter.next();) {
+      GadgetSet * gs = I->GSet[iter.state];
+      if(gs->fRender)
+        gs->fRender(gs, info);
     }
   }
 }

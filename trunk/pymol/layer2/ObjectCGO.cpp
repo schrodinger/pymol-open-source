@@ -299,7 +299,6 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
   Picking **pick = info->pick;
   int pass = info->pass;
   ObjectCGOState *sobj = NULL;
-  int a;
   float *color;
   int use_shader = 0;
   
@@ -311,119 +310,13 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 
   color = ColorGet(G, I->Obj.Color);
 
+  if(!I->State)
+    return;
+
   if((pass == 1) || info->ray) {
     if(I->Obj.RepVis[cRepCGO]) {
-
-      if(state < I->NState) {
-        sobj = I->State + state;
-      }
-      if(state < 0) {
-        if(I->State) {
-          for(a = 0; a < I->NState; a++) {
-            sobj = I->State + a;
-#ifdef _PYMOL_CGO_DRAWBUFFERS
-	    if (use_shader){
-	      CGO *convertcgo = NULL;
-	      if (!sobj->shaderCGO){
-		float colorWithA[4];
-		if (color){
-		  colorWithA[0] = color[0]; colorWithA[1] = color[1]; colorWithA[2] = color[2];
-		} else {
-		  colorWithA[0] = 1.f; colorWithA[1] = 1.f; colorWithA[2] = 1.f;
-		}
-		colorWithA[3] = 1.f - SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_transparency);
-		{
-		  CGO *convertcgo = NULL;
-		  if(sobj->std && sobj->std->has_begin_end){
-		    convertcgo = CGOCombineBeginEnd(sobj->std, 0);
-		    CGOFree(sobj->std);
-		    sobj->std = convertcgo;
-		  }
-		}
-		if (CGOHasCylinderOperations(sobj->std)){
-		  convertcgo = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(sobj->std, 0);
-		  //		  convertcgo->enable_shaders = true;
-		} else {
-		  convertcgo = CGOOptimizeToVBOIndexedWithColor(sobj->std, 0, colorWithA);
-		}
-		sobj->shaderCGO = convertcgo;
-	      }
-	    } else if (sobj->shaderCGO){
-	      CGOFree(sobj->shaderCGO);	      
-	      sobj->shaderCGO = 0;
-	    }
-#endif
-            if(ray) {
-	      int try_std = false;
-              if(sobj->ray){
-                int rayok = CGORenderRay(sobj->ray, ray, color, I->Obj.Setting, NULL);
-		if (!rayok){
-		  CGOFree(sobj->ray);
-		  sobj->ray = NULL;
-		  try_std = true;
-		}
-	      } else {
-		try_std = true;
-	      }
-	      if (try_std && sobj->std){
-		int rayok = CGORenderRay(sobj->std, ray, color, I->Obj.Setting, NULL);
-		if (!rayok){
-		  CGOFree(sobj->std);
-		  sobj->std = NULL;
-		}
-	      }
-            } else if(G->HaveGUI && G->ValidContext) {
-              if(pick) {
-              } else {
-		CShaderPrg *shaderPrg;
-		int cgo_lighting, two_sided_lighting;
-		cgo_lighting = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_cgo_lighting);
-		two_sided_lighting = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_two_sided_lighting);
-		if (two_sided_lighting<0){
-		  two_sided_lighting = SceneGetTwoSidedLighting(G);
-		}
-		if (use_shader && sobj->shaderCGO){
-		  shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-		  CShaderPrg_SetLightingEnabled(shaderPrg, cgo_lighting);
-		  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", two_sided_lighting);
-		  sobj->shaderCGO->use_shader = use_shader;
-		  sobj->shaderCGO->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-		  CGORenderGL(sobj->shaderCGO, color, I->Obj.Setting, NULL, info, NULL);
-		  CShaderPrg_Disable(shaderPrg);
-		} else {
-		  sobj->std->use_shader = use_shader;
-		  sobj->std->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-		  if (cgo_lighting){
-		    glEnable(GL_LIGHTING);
-		  } else {
-		    glDisable(GL_LIGHTING);
-		  }
-		  if (two_sided_lighting){
-		    GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-		  } else {
-		    GLLIGHTMODELI(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-		  }
-		  sobj->std->use_shader = use_shader;
-		  sobj->std->debug = SettingGetGlobal_i(G, cSetting_cgo_debug);
-		  CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info, NULL);
-		  if (SceneGetTwoSidedLighting(G)){
-		    glEnable(GL_VERTEX_PROGRAM_TWO_SIDE);
-		  } else {
-		    glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
-		  }
-          if (!cgo_lighting){
-		    glEnable(GL_LIGHTING);
-		  }
-		}
-              }
-            }
-          }
-        }
-      } else {
-        if(!sobj) {
-          if(I->NState && SettingGetGlobal_b(G, cSetting_static_singletons))
-            sobj = I->State;
-        }
+      for(StateIterator iter(G, I->Obj.Setting, state, I->NState); iter.next();) {
+        sobj = I->State + iter.state;
 #ifdef _PYMOL_CGO_DRAWBUFFERS
 	if (use_shader){
 	  if (!sobj->shaderCGO && sobj->std){

@@ -10,7 +10,7 @@
 #    cmd.get_frame()
 #    cmd.get_state() 
 
-class Callback:
+class Callback(object):
     def __call__(self):
         pass
 

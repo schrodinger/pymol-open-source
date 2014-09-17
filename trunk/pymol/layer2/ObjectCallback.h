@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct {
   PyObject *PObj;
+  bool is_callable;
 } ObjectCallbackState;
 
 typedef struct ObjectCallback {
@@ -35,5 +36,10 @@ ObjectCallback *ObjectCallbackNew(PyMOLGlobals * G);
 ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
                                      PyObject * PObj, int state);
 void ObjectCallbackRecomputeExtent(ObjectCallback * I);
+
+#ifndef _PYMOL_NOPY
+PyObject *ObjectCallbackAsPyList(ObjectCallback * I);
+int ObjectCallbackNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCallback ** result);
+#endif
 
 #endif

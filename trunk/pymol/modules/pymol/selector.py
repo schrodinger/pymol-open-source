@@ -11,16 +11,6 @@ obj_name_re = re.compile(r'([A-Za-z0-9_\+\-]+)')
 def is_tuple(obj):
     return isinstance(obj,types.TupleType)
 
-def work_around_model(model): # ugly workaround to support use of 'model' as object name
-    list = obj_name_re.split(model)
-    new_list = []
-    for entry in list:
-        if entry == 'model':
-            new_list.append("(object model)")
-        else:
-            new_list.append(entry)
-    return string.join(new_list,'')
-    
 def process(sele): # expand slash notation into a standard atom selection
     # convert object/index tuples into selection strings
     if is_tuple(sele):
@@ -66,8 +56,7 @@ def process(sele): # expand slash notation into a standard atom selection
         # lst
         lst = []
         if model!='':
-            model = (model.replace("+","|")).replace("\\|","+")
-            model = work_around_model(model)
+            model = '%' + (model.replace("+","|%")).replace("\\|%","+")
             lst.append("("+model+")")
         if segment!='': lst.append("s;"+string.replace(segment,'+',','))
         if chain!='': lst.append("c;"+string.replace(chain,'+',','))

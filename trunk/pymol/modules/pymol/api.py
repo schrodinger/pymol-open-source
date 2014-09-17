@@ -9,6 +9,7 @@ from importing import \
       load_callback,      \
       load_cgo,           \
       load_coords,        \
+      load_coordset,      \
       load_embedded,      \
       load_map,           \
       load_model,         \
@@ -106,6 +107,8 @@ from querying import \
       get_object_list,    \
       get_color_tuple,    \
       get_atom_coords,    \
+      get_coords,         \
+      get_coordset,       \
       get_dihedral,       \
       get_distance,       \
       get_drag_object_name, \
@@ -212,6 +215,7 @@ from editing import \
       set_geometry,       \
       set_object_color,   \
       set_object_ttt,     \
+      set_state_order,    \
       set_symmetry,       \
       set_title,          \
       smooth,             \

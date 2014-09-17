@@ -35,17 +35,28 @@ if __name__=='pymol.querying':
                     _self.distance()
         _self.unpick()   
 
-    def get_volume_field(objName, state=1, _self=cmd):
+    def get_volume_field(objName, state=1, copy=1, _self=cmd):
         '''
 DESCRIPTION
 
     EXPERIMENTAL AND SUBJECT TO CHANGE - DO NOT USE
-    Get the raw data of a map or volume object.
+    API only. Get the raw data of a map or volume object.
+
+ARGUMENTS
+
+    objName = str: object name
+
+    state = int: state index {default: 1}
+
+    copy = 0/1: {default: 1} WARNING: only use copy=0 if you know what you're
+    doing. copy=0 will return a numpy array which is a wrapper of the internal
+    memory. If the internal memory gets freed or reallocated, this wrapper
+    will become invalid.
         '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _self._cmd.get_volume_field(_self._COb, objName, int(state) - 1)
+            r = _self._cmd.get_volume_field(_self._COb, objName, int(state) - 1, int(copy))
         finally:
             _self.unlock(r,_self)
         return r
@@ -888,9 +899,47 @@ DESCRIPTION
             if _self._raising(_self=_self): raise pymol.CmdException
         elif not quiet:
             for a in r:
-                print " cmd.get_coords: [%8.3f,%8.3f,%8.3f]"%(a)
+                print " cmd.get_atom_coords: [%8.3f,%8.3f,%8.3f]"%(a)
         if _raising(r,_self): raise pymol.CmdException
         return r
+
+    def get_coords(selection='all', state=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    API only. Get selection coordinates as numpy array.
+
+ARGUMENTS
+
+    selection = str: atom selection {default: all}
+
+    state = int: state index or all states if state=0 {default: 1}
+        '''
+        selection = selector.process(selection)
+        with _self.lockcm:
+            r = _cmd.get_coords(_self._COb, selection, int(state) - 1)
+            return r
+
+    def get_coordset(name, state=1, copy=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    API only. Get object coordinates as numpy array.
+
+ARGUMENTS
+
+    selection = str: atom selection {default: all}
+
+    state = int: state index {default: 1}
+
+    copy = 0/1: {default: 1} WARNING: only use copy=0 if you know what you're
+    doing. copy=0 will return a numpy array which is a wrapper of the internal
+    coordinate set memory. If the internal memory gets freed or reallocated,
+    this wrapper will become invalid.
+        '''
+        with _self.lockcm:
+            r = _cmd.get_coordset(_self._COb, name, int(state) - 1, int(copy))
+            return r
 
     
     def get_position(quiet=1, _self=cmd):

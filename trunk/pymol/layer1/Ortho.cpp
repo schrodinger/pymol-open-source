@@ -1020,7 +1020,7 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
         curLine = I->CurLine & OrthoSaveLines;
         if(I->PromptChar) {
           strcpy(buffer, I->Line[curLine]);
-          if(PComplete(G, buffer + I->PromptChar, sizeof(OrthoLineType) - I->PromptChar));      /* just print, don't complete */
+          PComplete(G, buffer + I->PromptChar, sizeof(OrthoLineType) - I->PromptChar);      /* just print, don't complete */
         }
       }
       break;
@@ -1043,7 +1043,7 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
       break;
     case 27:                   /* ESCAPE */
       if(SettingGetGlobal_b(G, cSetting_presentation)
-         && !(mod & (cOrthoCTRL || cOrthoSHIFT))) {
+         && !(mod & (cOrthoCTRL | cOrthoSHIFT))) {
         PParse(G, "_quit");
       } else {
         if(I->SplashFlag) {
@@ -1401,7 +1401,7 @@ void bg_grad(PyMOLGlobals * G) {
 
   {
     if (!I->bgCGO) {
-      CGO *cgo = CGONew(G), *cgo2;
+      CGO *cgo = CGONew(G), *cgo2 = NULL;
       ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
       if (ok)
 	ok &= CGOVertex(cgo, -1.f, -1.f, 0.98f);
@@ -2302,7 +2302,7 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
 
     block = MovieGetBlock(G);
     BlockSetMargin(block, height - textBottom, 0, 0, 0);
-    block->active = (textBottom && true);
+    block->active = textBottom ? true : false;
 
     block = SceneGetBlock(G);
     BlockSetMargin(block, sceneTop, 0, sceneBottom, sceneRight);
@@ -2337,7 +2337,7 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
     block->fReshape(block, I->Width, I->Height);
     block = WizardGetBlock(G);
     block->fReshape(block, I->Width, I->Height);
-    block->active = (wizHeight && true);
+    block->active = wizHeight ? true : false;
   }
 }
 

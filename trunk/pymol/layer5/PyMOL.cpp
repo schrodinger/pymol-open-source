@@ -4584,14 +4584,12 @@ PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int e
   int c = 0;
   int numstrs = 0;
   long reslen, pl = 0;
-  int ok = false;
   OrthoLineType str0 = "";
   PyMOLreturn_string_array result = { PyMOLstatus_SUCCESS };
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
 
-  if (s0[0]){
-    ok = (SelectorGetTmp(G, s0, str0) >= 0);
-  }
+  ok_assert(1, s0[0]);
+  ok_assert(1, SelectorGetTmp(G, s0, str0) >= 0);
 
   res = ExecutiveGetNames(G, mode, enabled_only, str0);
 
@@ -4617,6 +4615,7 @@ PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int e
       numstrs++;
     }
   } else {
+ok_except1:
     result.array = NULL;
     result.size = 0;
   }

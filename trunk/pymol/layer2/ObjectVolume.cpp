@@ -338,7 +338,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
 
 static void ObjectVolumeFree(ObjectVolume * I)
 {
-  int a,i;
+  int a;
   for(a = 0; a < I->NState; a++) {
     ObjectVolumeStateFree(I->State + a);
   }
@@ -448,7 +448,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
 
     PRINTFD(G, FB_ObjectVolume)
       "ObjectVolumeUpdate: state=%d, refresh=%d, resurface=%d.\n",
-      a, vs->RefreshFlag, vs->ResurfaceFlag ENDFD(G);
+      a, vs->RefreshFlag, vs->ResurfaceFlag ENDFD;
 
     oms = ObjectVolumeStateGetMapState(vs);
 

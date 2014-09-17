@@ -37,7 +37,7 @@ Mechanism
 
 PYMOL_DATA and PYMOL_SCRIPTS dominate if provided.  Otherwise, if
 PYMOL_PATH is defined, PYMOL_DATA becomes $PYMOL_PATH/data, and
-PYMOL_SCRIPTS becomes $PYMOL_PATH/scripts. 
+PYMOL_SCRIPTS becomes $PYMOL_PATH/scripts.
 
 if $PYMOL_PATH is defined and $PYMOL_PATH/modules exists, then
 $PYMOL_PATH/modules is added to the Python module search path.

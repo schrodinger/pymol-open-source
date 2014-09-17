@@ -1279,14 +1279,12 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
    *           http://ambermd.org/formats.html
    */
   int ok = true;
-  FILE *f;
   char *buffer, *p;
   char cc[MAXLINELEN];
   float f0, f1, f2, *fp;
   int a, b, c;
   int zoom_flag = false;
   CoordSet *cs = NULL;
-  size_t res;
   char ncolumn = 6; // number of coordinates per line
   char nbyte = 12;  // width of one coordinate
 
@@ -1312,7 +1310,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     if (ok){
       PRINTFB(G, FB_ObjectMolecule, FB_Blather)
 	" ObjMolLoadRSTFile: Loading from \"%s\".\n", fname ENDFB(G);
-      buffer = FileGetContents(fname, NULL);
+      p = buffer = FileGetContents(fname, NULL);
       if(!buffer)
         ok = ErrMessage(G, "ObjectMoleculeLoadRSTFile", "Unable to open file!");
     }
@@ -1671,6 +1669,15 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
 
   }
 
+  if(!ok) {
+    ErrMessage(G, "TOPStrToCoordSet", "Error reading counts lines");
+    ok_raise(1);
+  } else {
+    PRINTFB(G, FB_ObjectMolecule, FB_Blather)
+      " TOPStr2CoordSet: read counts line nAtom %d NBONA %d NBONH %d\n",
+      nAtom, NBONA, NBONH ENDFB(G);
+  }
+
   switch (IFBOX) {
   case 2:
     cset->PeriodicBoxType = cCSet_Octahedral;
@@ -1688,14 +1695,6 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
   }
 
   p = nextline(p);
-
-  if(!ok) {
-    ErrMessage(G, "TOPStrToCoordSet", "Error reading counts lines");
-  } else {
-    PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-      " TOPStr2CoordSet: read counts line nAtom %d NBONA %d NBONH %d\n",
-      nAtom, NBONA, NBONH ENDFB(G);
-  }
 
   if(ok) {
     VLACheck(atInfo, AtomInfoType, nAtom);
@@ -2123,6 +2122,8 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
       p = ncopy(cc, p, wid);
       ok = ok && (sscanf(cc, "%d", &NSPSOL) == 1);
 
+      ok_assert(1, ok);
+
       p = nextline(p);
 
       if(amber7) {
@@ -2320,8 +2321,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
     cset->TmpBond = bond;
     cset->NTmpBond = nBond;
   } else {
+ok_except1:
     if(cset)
       cset->fFree(cset);
+    ErrMessage(G, "ObjectMoleculeTOPStr2CoordSet", "failed");
   }
   if(atInfoPtr)
     *atInfoPtr = atInfo;
@@ -2432,7 +2435,7 @@ ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj
                                           char *fname, int frame, int discrete)
 {
   ObjectMolecule *I = NULL;
-  char *buffer, *p;
+  char *buffer;
 
   buffer = FileGetContents(fname, NULL);
 
@@ -3258,10 +3261,9 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
     register AtomInfoType *atInfo = I->AtomInfo, *ai;
 
 #ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      if(curState >= 0) {
-	if(curState < I->NCSet) {
-	  if((cs = I->CSet[curState])) {
+    for(StateIterator iter(G, I->Obj.Setting, curState, I->NCSet);
+        iter.next();) {
+      if((cs = I->CSet[iter.state])) {
 	    idx2atm = cs->IdxToAtm;
 	    nIndex = cs->NIndex;
 	    coord = cs->Coord;
@@ -3289,57 +3291,15 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 		}
 	      }
 	    }
-	  }
-	} else if(SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons)) {
-	  if(I->NCSet == 1) {
-	    if((cs = I->CSet[0])) {
-	      idx2atm = cs->IdxToAtm;
-	      nIndex = cs->NIndex;
-	      coord = cs->Coord;
-	      for(a = 0; a < nIndex; a++) {
-		if(SelectorIsMember(G, atInfo[*(idx2atm++)].selEntry, sele)) {
-		  if(all_vis)
-		    flag = true;
-		  else {
-		    flag = true;
-		  }
-		  if(flag) {
-		    nverts++;
-		  }
-		}
-	      }
-	    }
-	  }
-	}
-      } else {                    /* all states */
-	for(curState = 0; curState < I->NCSet; curState++) {
-	  if((cs = I->CSet[curState])) {
-	    idx2atm = cs->IdxToAtm;
-	    nIndex = cs->NIndex;
-	    coord = cs->Coord;
-	    for(a = 0; a < nIndex; a++) {
-	      if(SelectorIsMember(G, atInfo[*(idx2atm++)].selEntry, sele)) {
-		if(all_vis)
-		  flag = true;
-		else {
-		  flag = true;
-		}
-		if(flag) {
-		  nverts++;
-		}
-	      }
-	    }
-	  }
-	}
       }
     }
     {
       ALLOCATE_ARRAY(GLfloat,ptVals,nverts*3)
       int pl = 0;
 #endif
-      if(curState >= 0) {
-	if(curState < I->NCSet) {
-	  if((cs = I->CSet[curState])) {
+    for(StateIterator iter(G, I->Obj.Setting, curState, I->NCSet);
+        iter.next();) {
+      if((cs = I->CSet[iter.state])) {
 	    idx2atm = cs->IdxToAtm;
 	    nIndex = cs->NIndex;
 	    coord = cs->Coord;
@@ -3397,71 +3357,6 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 	      }
 	    }
 	  }
-	} else if(SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons)) {
-	  if(I->NCSet == 1) {
-	    if((cs = I->CSet[0])) {
-	      idx2atm = cs->IdxToAtm;
-	      nIndex = cs->NIndex;
-	      coord = cs->Coord;
-	      for(a = 0; a < nIndex; a++) {
-		if(SelectorIsMember(G, atInfo[*(idx2atm++)].selEntry, sele)) {
-		  if(all_vis)
-		    flag = true;
-		  else {
-		    flag = true;
-		  }
-		  if(flag) {
-		    v = coord + a + a + a;
-		    if(matrix) {
-		      transform44f3f(matrix, v, v_tmp);
-		      if (SELINDICATORVAR)
-			CGOVertexv(SELINDICATORVAR, v_tmp);
-		      else
-			glVertex3fv(v_tmp);
-		    } else {
-		      if (SELINDICATORVAR)
-			CGOVertexv(SELINDICATORVAR, v);
-		      else
-			glVertex3fv(v);
-		    }
-		  }
-		}
-	      }
-	    }
-	  }
-	}
-      } else {                    /* all states */
-	for(curState = 0; curState < I->NCSet; curState++) {
-	  if((cs = I->CSet[curState])) {
-	    idx2atm = cs->IdxToAtm;
-	    nIndex = cs->NIndex;
-	    coord = cs->Coord;
-	    for(a = 0; a < nIndex; a++) {
-	      if(SelectorIsMember(G, atInfo[*(idx2atm++)].selEntry, sele)) {
-		if(all_vis)
-		  flag = true;
-		else {
-		  flag = true;
-		}
-		if(flag) {
-		  v = coord + a + a + a;
-		  if(matrix) {
-		    transform44f3f(matrix, v, v_tmp);
-		    if (SELINDICATORVAR)
-		      CGOVertexv(SELINDICATORVAR, v_tmp);
-		    else
-		      glVertex3fv(v_tmp);			
-		  } else {
-		    if (SELINDICATORVAR)
-		      CGOVertexv(SELINDICATORVAR, v);
-		    else
-		      glVertex3fv(v);
-		  }
-		}
-	      }
-	    }
-	  }
-	}
       }
 #ifdef _PYMOL_GL_DRAWARRAYS
       glEnableClientState(GL_VERTEX_ARRAY);
@@ -4426,32 +4321,21 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai)
   AtomInfoType *ai;
   int n, nn;
   float v[3], v0[3], d;
-  CoordSet *cs;
-  int ok = true;
+  CoordSet *cs = NULL;
+  int ok = false;
 
-  ok &= ObjectMoleculeUpdateNeighbors(I);
+  ok_assert(1, ObjectMoleculeUpdateNeighbors(I));
+
   ai = I->AtomInfo + index;
   n = I->Neighbor[index];
   nn = I->Neighbor[n++];
 
-  if (ok)
-    cs = CoordSetNew(I->Obj.G);
-  CHECKOK(ok, cs);
-  if (!ok)
-    return ok;
-  cs->Coord = VLAlloc(float, 3);
-  CHECKOK(ok, cs->Coord);
-  if (!ok){
-    CoordSetFree(cs);
-    return ok;
-  }
+  ok_assert(1, cs = CoordSetNew(I->Obj.G));
+  ok_assert(1, cs->Coord = VLAlloc(float, 3));
+
   cs->NIndex = 1;
-  cs->TmpLinkBond = VLACalloc(BondType, 1);
-  CHECKOK(ok, cs->TmpLinkBond);
-  if (!ok){
-    CoordSetFree(cs);
-    return ok;
-  }
+  ok_assert(1, cs->TmpLinkBond = VLACalloc(BondType, 1));
+
   BondTypeInit(cs->TmpLinkBond);
   cs->NTmpLinkBond = 1;
   cs->TmpLinkBond->index[0] = index;
@@ -4462,31 +4346,30 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai)
   cs->TmpLinkBond->id = -1;
   if(cs->fEnumIndices)
     cs->fEnumIndices(cs);
-  if (ok)
-    ok &= ObjectMoleculePrepareAtom(I, index, nai);
+
+  ok_assert(1, ObjectMoleculePrepareAtom(I, index, nai));
   d = AtomInfoGetBondLength(I->Obj.G, ai, nai);
-  if (ok)
-    ok &= ObjectMoleculeMerge(I, nai, cs, false, cAIC_AllMask, true);   /* will free nai and cs->TmpLinkBond  */
-  if (ok)
-    ok &= ObjectMoleculeExtendIndices(I, -1);
-  if (ok)
-    ok &= ObjectMoleculeUpdateNeighbors(I);
-  for(a = 0; ok && a < I->NCSet; a++) {       /* add atom to each coordinate set */
+
+  ok_assert(1, ObjectMoleculeMerge(I, nai, cs, false, cAIC_AllMask, true)); // will free nai and cs->TmpLinkBond
+  ok_assert(1, ObjectMoleculeExtendIndices(I, -1));
+  ok_assert(1, ObjectMoleculeUpdateNeighbors(I));
+
+  for(a = 0; a < I->NCSet; a++) {       /* add atom to each coordinate set */
     if(I->CSet[a]) {
       ObjectMoleculeGetAtomVertex(I, a, index, v0);
       ObjectMoleculeFindOpenValenceVector(I, a, index, v, NULL, -1);
       scale3f(v, d, v);
       add3f(v0, v, cs->Coord);
-      if (ok)
-	ok &= CoordSetMerge(I, I->CSet[a], cs);
+      ok_assert(1, CoordSetMerge(I, I->CSet[a], cs));
     }
   }
-  if (ok)
-    ok &= ObjectMoleculeSort(I);
-  if (ok)
-    ObjectMoleculeUpdateIDNumbers(I);
-  if(cs->fFree)
-    cs->fFree(cs);
+
+  ok_assert(1, ObjectMoleculeSort(I));
+  ObjectMoleculeUpdateIDNumbers(I);
+
+  ok = true;
+ok_except1:
+  CoordSetFree(cs);
   return ok;
 }
 
@@ -8484,7 +8367,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
 #else
   CoordSet *cset = NULL;
   int a, b, l;
-  PyObject *v;
+  PyObject *v, *w;
   float *f;
 
   if(!PySequence_Check(coords)) {
@@ -8508,11 +8391,17 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
   // copy coordinates
   f = cset->Coord;
   for(a = 0; a < l; a++) {
-    v = PySequence_GetItem(coords, a);
+    v = PySequence_ITEM(coords, a);
 
-    for(b = 0; b < 3; b++)
-      f[a * 3 + b] = (float) PyFloat_AsDouble(PySequence_GetItem(v, b));
+    for(b = 0; b < 3; b++) {
+      if(!(w = PySequence_GetItem(v, b)))
+        break;
 
+      f[a * 3 + b] = (float) PyFloat_AsDouble(w);
+      Py_DECREF(w);
+    }
+
+    Py_DECREF(v);
     ok_assert(2, !PyErr_Occurred());
   }
 
@@ -9763,7 +9652,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
 			CoordSet * cs, int bondSearchFlag, int aic_mask, int invalidate)
 {
   PyMOLGlobals *G = I->Obj.G;
-  int *index, *outdex, *a2i, *i2a;
+  int *index, *outdex, *a2i = NULL, *i2a = NULL;
   BondType *bond = NULL;
   register int a, b, lb = 0, ac;
   int c, nb, a1, a2;
@@ -10274,6 +10163,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
           if(op->i1 != 3) {
             ai->hetatm = ai0->hetatm;
             ai->flags = ai0->flags;
+            LexInc(G, ai0->chain);
+            LexDec(G, ai->chain);
             ai->chain = ai0->chain;
             strcpy(ai->alt, ai0->alt);
             strcpy(ai->segi, ai0->segi);
@@ -10564,7 +10455,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 rms = MatrixFitRMSTTTf(G, op->nvv1, op->vv1, vt, NULL, op->ttt);
               else
                 rms = MatrixGetRMS(G, op->nvv1, op->vv1, vt, NULL);
-              if((op->i1 == 2)) {
+              if(op->i1 == 2) {
                 ObjectMoleculeTransformTTTf(I, op->ttt, b);
 
                 if(op->i3) {
@@ -11842,7 +11733,6 @@ void ObjectMoleculeDescribeElement(ObjectMolecule * I, int index, char *buffer)
 /*========================================================================*/
 void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, int quote)
 {
-  AtomInfoType *ai;
   char *p = quote ? buffer + 1 : buffer;
 
   if(SettingGetGlobal_b(I->Obj.G, cSetting_robust_logs)) {
@@ -12821,6 +12711,35 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule * obj)
 
 }
 
+/*========================================================================*/
+/*
+ * Set the order of coordinate sets with an index array
+ */
+int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len) {
+  int a;
+  CoordSet ** csets = VLAlloc(CoordSet *, I->NCSet);
+
+  ok_assert(1, len == I->NCSet);
+
+  // invalidate
+  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+
+  // new coord set array
+  for(a = 0; a < I->NCSet; a++) {
+    int i = order[a];
+    ok_assert(1, 0 <= i && i < I->NCSet);
+    csets[a] = I->CSet[i];
+  }
+
+  VLAFreeP(I->CSet);
+  I->CSet = csets;
+
+  return true;
+ok_except1:
+  ErrMessage(I->Obj.G, "ObjectMoleculeSetStateOrder", "failed");
+  VLAFreeP(csets);
+  return false;
+}
 
 /*========================================================================*/
 void ObjectMoleculeFree(ObjectMolecule * I)
@@ -13026,7 +12945,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
   int repeatFlag = true;
   int successCnt = 0;
   unsigned int aic_mask = cAIC_PDBMask;
-  const float _1 = 1.0F;
 
   SegIdent segi_override = "";  /* saved segi for corrupted NMR pdb files */
 
@@ -13129,84 +13047,31 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
             float *r2f = I->Symmetry->Crystal->RealToFrac, *sca = pdb_info->scale.matrix;
 
             /* are the matrices sufficiently close to be the same? */
-            if(fabs(r2f[0] - sca[0]) > threshold)
-              skipit = false;
-            else if(fabs(r2f[1] - sca[1]) > threshold)
-              skipit = false;
-            else if(fabs(r2f[2] - sca[2]) > threshold)
-              skipit = false;
-            else if(fabs(r2f[3] - sca[4]) > threshold)
-              skipit = false;
-            else if(fabs(r2f[4] - sca[5]) > threshold)
-              skipit = false;
-            else if(fabs(r2f[5] - sca[6]) > threshold)
-              skipit = false;
-            else if(fabs(r2f[6] - sca[8]) > threshold)
-              skipit = false;
-            else if(fabs(r2f[7] - sca[9]) > threshold)
-              skipit = false;
-            else if(fabs(r2f[8] - sca[10]) > threshold)
-              skipit = false;
-            else if(fabs(sca[3]) > threshold)
-              skipit = false;
-            else if(fabs(sca[7]) > threshold)
-              skipit = false;
-            else if(fabs(sca[11]) > threshold)
-              skipit = false;
+            skipit = is_allclosef(3, r2f, 3, sca, 4, threshold);
 
+            /* is the cell a orthogonal 1x1x1? If so, then it should probably be ignored... */
             /* is SCALEn the identity matrix?  If so, then it
                should probably be ignored... */
-            {
-              int is_identity = true;
-              if(fabs(sca[0] - _1) > threshold)
-                is_identity = false;
-              else if(fabs(sca[1]) > threshold)
-                is_identity = false;
-              else if(fabs(sca[2]) > threshold)
-                is_identity = false;
-              else if(fabs(sca[4]) > threshold)
-                is_identity = false;
-              else if(fabs(sca[5] - _1) > threshold)
-                is_identity = false;
-              else if(fabs(sca[6]) > threshold)
-                is_identity = false;
-              else if(fabs(sca[8]) > threshold)
-                is_identity = false;
-              else if(fabs(sca[9]) > threshold)
-                is_identity = false;
-              else if(fabs(sca[10] - _1) > threshold)
-                is_identity = false;
-              else if(fabs(sca[3]) > threshold)
-                is_identity = false;
-              else if(fabs(sca[7]) > threshold)
-                is_identity = false;
-              else if(fabs(sca[11]) > threshold)
-                is_identity = false;
-              if(is_identity) {
+            sca[15] = 1.0F;
+            if(!skipit && (
+                  is_identityf(3, r2f, threshold) ||
+                  is_identityf(4, sca, threshold))) {
                 skipit = true;
                 if(!quiet) {
                   PRINTFB(G, FB_ObjectMolecule, FB_Blather)
                     " ObjectMolReadPDBStr: ignoring SCALEn (identity matrix).\n" ENDFB(G);
                 }
-              }
             }
             /* is SCALEn invalid?  If so, then it
                should definitely be ignored... */
-            {
-              int is_valid = true;
-              if(length3f(sca) < R_SMALL8)
-                is_valid = false;
-              if(length3f(sca + 4) < R_SMALL8)
-                is_valid = false;
-              if(length3f(sca + 8) < R_SMALL8)
-                is_valid = false;
-              if(!is_valid) {
+            if(!skipit && (
+                  fabs(determinant33f(sca, 4)) < R_SMALL8 ||
+                  fabs(determinant33f(r2f, 3)) < R_SMALL8)) {
                 skipit = true;
                 if(!quiet) {
                   PRINTFB(G, FB_ObjectMolecule, FB_Blather)
                     " ObjectMolReadPDBStr: ignoring SCALEn (invalid matrix).\n" ENDFB(G);
                 }
-              }
             }
             if(!skipit) {
               if(!quiet) {

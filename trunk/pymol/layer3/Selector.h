@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 #include"ObjectMolecule.h"
+#include"CoordSet.h"
 #include"DistSet.h"
 #include"ObjectMap.h"
 #include"OVOneToAny.h"
@@ -74,6 +75,8 @@ int SelectorCheckTmp(PyMOLGlobals * G, char *name);
 int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int state,
                    int conectFlag, PDBInfoRec * pdb_info, int *counter, double *ref,
                    ObjectMolecule * single_object);
+int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state);
+PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state);
 PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *ref);
 float SelectorSumVDWOverlap(PyMOLGlobals * G, int sele1, int state1,
                             int sele2, int state2, float adjust);
@@ -238,5 +241,49 @@ __inline__ static int SelectorIsMember(PyMOLGlobals * G, int s, int sele)
 }
 
 #endif
+
+/*
+ * State specific iterator over an atom selection. Similar to cmd.iterate_state.
+ * If state is -1 then iterate over all states.
+ *
+ * SeleCoordIterator iter(G, sele, state);
+ * while(iter.next()) {
+ *   dump3f(iter.getCoord(), "coords");
+ * }
+ */
+class SeleCoordIterator {
+  PyMOLGlobals * G;
+  int sele;     // selection
+  int a;        // index in selection
+  int state;    // current state
+  int statearg; // state argument, can be -1
+  int statemax; // largest state in selection
+  int at;       // atom index in object molecule
+  int idx;      // atom index in coordset
+
+public:
+  ObjectMolecule * obj;
+  CoordSet * cs;
+
+  SeleCoordIterator(PyMOLGlobals * G_, int sele_, int state_) : G(G_), sele(sele_) {
+    statearg = state = state_;
+    reset();
+  };
+
+  // resets the internal state to start over
+  void reset();
+
+  // advance the internal state to the next atom, return false if there is no
+  // next atom
+  bool next();
+
+  AtomInfoType * getAtomInfo() {
+    return obj->AtomInfo + at;
+  };
+
+  float * getCoord() {
+    return cs->Coord + (3 * idx);
+  };
+};
 
 #endif

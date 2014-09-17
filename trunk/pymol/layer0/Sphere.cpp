@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_predef.h"
 #include"os_std.h"
+#include"os_gl.h"
 
 #include"Base.h"
 #include"Sphere.h"

@@ -184,7 +184,7 @@ DESCRIPTION
         '''
         WARNING: buggy argument list, state get's decremented twice!
         '''
-        return pymol.importing.load_coords(model, oname, int(state)-1)
+        return pymol.importing.load_coordset(model, oname, int(state)-1)
 
     def focal_blur(aperture=2.0, samples=10, ray=0, filename='', quiet=1, _self=cmd):
         '''

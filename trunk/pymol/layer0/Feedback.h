@@ -132,7 +132,6 @@ function name.
 #define FB_Rep                       23
 #define FB_Shaker                    24
 
-
 /* layer 2 */
 
 #define FB_CoordSet                  25

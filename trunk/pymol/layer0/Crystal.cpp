@@ -29,25 +29,6 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"PConv.h"
 
-CCrystal *CrystalNewFromPyList(PyMOLGlobals * G, PyObject * list)
-{
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
-  CCrystal *I = NULL;
-  I = CrystalNew(G);
-  if(I) {
-    if(!CrystalFromPyList(I, list)) {
-      CrystalFree(I);
-      I = NULL;
-    }
-  }
-  return (I);
-#endif
-
-}
-
 PyObject *CrystalAsPyList(CCrystal * I)
 {
 #ifdef _PYMOL_NOPY

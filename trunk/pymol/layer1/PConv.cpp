@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_std.h"
 
+#include"Err.h"
 #include"MemoryDebug.h"
 #include"Base.h"
 #include"PConv.h"
@@ -28,6 +29,32 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 
 #ifndef _PYMOL_NOPY
+
+/* Return value: New reference.
+ * Load a pickle from the given string
+ */
+PyObject *PConvPickleLoads(PyObject * str)
+{
+  PyObject *picklemod = NULL, *obj = NULL;
+  ok_assert(1, picklemod = PyImport_ImportModule("cPickle"));
+  obj = PyObject_CallMethod(picklemod, "loads", "O", str);
+ok_except1:
+  Py_XDECREF(picklemod);
+  return obj;
+}
+
+/* Return value: New reference.
+ * Return a string containing an object in pickle format.
+ */
+PyObject *PConvPickleDumps(PyObject * obj)
+{
+  PyObject *picklemod = NULL, *str = NULL;
+  ok_assert(1, picklemod = PyImport_ImportModule("cPickle"));
+  str = PyObject_CallMethod(picklemod, "dumps", "Oi", obj, 1);
+ok_except1:
+  Py_XDECREF(picklemod);
+  return str;
+}
 
 PyObject *PConvAutoNone(PyObject * result)
 {                               /* automatically own Py_None */

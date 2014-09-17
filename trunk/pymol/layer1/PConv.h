@@ -175,6 +175,8 @@ int PConvPyListToSCharArrayInPlaceAutoZero(PyObject * obj, signed char *ii, ov_s
 
 PyObject *PConv3DIntArrayTo3DPyList(int ***array, int *dim);
 
+PyObject *PConvPickleLoads(PyObject * str);
+PyObject *PConvPickleDumps(PyObject * obj);
 PyObject *PConvAutoNone(PyObject * result);     /* automatically own Py_None */
 
 #endif

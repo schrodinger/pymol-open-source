@@ -3136,35 +3136,12 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
       ENDFB(G);
     break;
   case cSetting_bg_rgb_top:
-    {
-      /* clamp this value */
-      float vv[3], *v = SettingGetfv(G, cSetting_bg_rgb_top);
-      if((v[0] > 1.0F) || (v[1] > 1.0F) || (v[2] > 1.0F)) {
-        vv[0] = v[0] / 255.0F;
-        vv[1] = v[1] / 255.0F;
-        vv[2] = v[2] / 255.0F;
-        SettingSet_3fv(G->Setting, cSetting_bg_rgb_top, vv);
-      }
-      if(SettingGetGlobal_b(G, cSetting_bg_gradient)) {
-	ColorUpdateFrontFromSettings(G);
-	ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
-	OrthoBackgroundTextureNeedsUpdate(G);
-      }
-    }
-    SceneChanged(G);
-    break;
   case cSetting_bg_rgb_bottom:
     {
       /* clamp this value */
-      float vv[3], *v = SettingGetfv(G, cSetting_bg_rgb_bottom);
-      if((v[0] > 1.0F) || (v[1] > 1.0F) || (v[2] > 1.0F)) {
-        vv[0] = v[0] / 255.0F;
-        vv[1] = v[1] / 255.0F;
-        vv[2] = v[2] / 255.0F;
-        SettingSet_3fv(G->Setting, cSetting_bg_rgb_bottom, vv);
-      }
-      if(SettingGetGlobal_b(G, cSetting_bg_gradient)) {
-	ColorUpdateFrontFromSettings(G);
+      if(
+          SettingGetGlobal_b(G, cSetting_bg_gradient) && !OrthoBackgroundDataIsSet(G)) {
+        ColorUpdateFrontFromSettings(G);
 	ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
 	OrthoBackgroundTextureNeedsUpdate(G);
       }
@@ -4793,4 +4770,32 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 #endif
   }
   CShaderMgr_Set_Reload_Bits(G, RELOAD_ALL_SHADERS);
+}
+
+/*
+ * State index iterator constructor, see Setting.h for documentation.
+ */
+StateIterator::StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int nstate) {
+  if(state_ == -2) {
+    // current state
+    state = SettingGet_i(G, set, NULL, cSetting_state);
+    end = state + 1;
+  } else if(state_ == -1) {
+    // all states
+    state = 0;
+    end = nstate;
+  } else {
+    // given state or static singleton
+    state = (state_ > 0 && nstate == 1
+        && SettingGet_b(G, set, NULL, cSetting_static_singletons)) ? 0 : state_;
+    end = state + 1;
+  }
+
+  if (state < 0)
+    state = 0;
+
+  if (end > nstate)
+    end = nstate;
+
+  state--;
 }

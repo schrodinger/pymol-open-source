@@ -175,6 +175,47 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 #endif
 }
 
+/*
+ * Coord set as numpy array
+ */
+PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
+{
+#ifndef _PYMOL_NUMPY
+  PRINTFB(cs->State.G, FB_CoordSet, FB_Errors)
+    "No numpy support\n" ENDFB(cs->State.G);
+  return NULL;
+#else
+
+  PyObject *result = NULL;
+  const int base_size = sizeof(float);
+  int typenum = -1;
+  npy_intp dims[2] = {0, 3};
+
+  import_array1(NULL);
+
+  switch(base_size) {
+    case 4: typenum = NPY_FLOAT32; break;
+    case 8: typenum = NPY_FLOAT64; break;
+  }
+
+  if(typenum == -1) {
+    printf("error: no typenum for float size %d\n", base_size);
+    return NULL;
+  }
+
+  dims[0] = cs->NIndex;
+
+  if(copy) {
+    if((result = PyArray_SimpleNew(2, dims, typenum)))
+      memcpy(PyArray_DATA(result), cs->Coord, cs->NIndex * 3 * base_size);
+  } else {
+    result = PyArray_SimpleNewFromData(2, dims, typenum, cs->Coord);
+  }
+
+  return result;
+#endif
+}
+
 PyObject *CoordSetAsPyList(CoordSet * I)
 {
 #ifdef _PYMOL_NOPY

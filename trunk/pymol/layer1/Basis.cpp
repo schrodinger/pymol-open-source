@@ -2868,11 +2868,11 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
   float ll;
   CPrimitive *prm;
   register int i;
-  register int *tempRef;
-  int n, h, q, x, y, z, j, k, l, e;
+  register int *tempRef = NULL;
+  int n = 0, h, q, x, y, z, j, k, l, e;
   int extra_vert = 0;
   float p[3], dd[3], *d1, *d2, vd[3], cx[3], cy[3];
-  float *tempVertex;
+  float *tempVertex = NULL;
   float xs, ys;
   int remapMode = true;         /* remap mode means that some objects will span more
                                  * than one voxel, so we have to worry about populating

@@ -638,7 +638,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
       but_bottom = y - (cControlBoxSize - 1);
       but_height = cControlBoxSize;
 
-      if((but_num == I->Active)) {
+      if(but_num == I->Active) {
         draw_button(but_left, but_bottom,
                     but_width, but_height, lightEdge, darkEdge, pushed ORTHOCGOARGVAR);
       } else if(((but_num == 6) && (SettingGetGlobal_b(G, cSetting_seq_view))) ||

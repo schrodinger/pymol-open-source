@@ -95,6 +95,7 @@ typedef void (*fUpdateFn) (CoordSet *, int);
 int BondInOrder(BondType * a, int b1, int b2);
 int BondCompare(BondType * a, BondType * b);
 
+PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy);
 PyObject *CoordSetAsPyList(CoordSet * I);
 int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs);
 

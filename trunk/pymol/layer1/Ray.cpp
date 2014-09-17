@@ -7297,7 +7297,7 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
   I->G = G;
   test = 0xFF000000;
   testPtr = (unsigned char *) &test;
-  I->BigEndian = (*testPtr) && 1;
+  I->BigEndian = (*testPtr) & 0x01;
   I->Trans = 0.0F;
   I->Wobble = 0;
   I->TTTFlag = false;

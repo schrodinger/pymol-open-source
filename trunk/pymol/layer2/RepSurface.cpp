@@ -3307,7 +3307,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    if (ok)
 	      convertcgo->use_shader = true;
 	  } else if (I->Type == 2) {
-	    CGO *convertcgo2, *simple;
+	    CGO *convertcgo2, *simple = NULL;
 	    convertcgo2 = CGOConvertLinesToShaderCylinders(I->shaderCGO, 0);
 	    CHECKOK(ok, convertcgo2);
 	    if (ok)
@@ -4506,7 +4506,7 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
         }
 	ok &= !G->Interrupt;
         if(ok) {
-          MapType *map, *solv_map;
+          MapType *map, *solv_map = NULL;
           map = MapNewFlagged(G, I->maxVdw + probe_rad_more,
                               I->coord, VLAGetSize(I->coord) / 3, NULL, NULL);
 	  CHECKOK(ok, map);
@@ -5299,7 +5299,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
         }
       }
 
-      if((circumscribe < 0) && (!surface_solvent))
+      if((circumscribe < 0) || (!surface_solvent))
         circumscribe = 0;
 
       RepInit(G, &I->R);
@@ -5750,7 +5750,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                 SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                 if(j > a)       /* only check if this is atom trails */
                   if((!present) || present[j]) {
-                    if((j_atom_info->vdw == a_atom_info->vdw)) {        /* handle singularities */
+                    if(j_atom_info->vdw == a_atom_info->vdw) {        /* handle singularities */
                       float *v1 = coord + 3 * j;
                       if((v0[0] == v1[0]) && (v0[1] == v1[1]) && (v0[2] == v1[2]))
                         skip_flag = true;
@@ -5845,7 +5845,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                   SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                   if(j > a)     /* only check if this is atom trails */
                     if((!present) || present[j]) {
-                      if((j_atom_info->vdw == a_atom_info->vdw)) {      /* handle singularities */
+                      if(j_atom_info->vdw == a_atom_info->vdw) {      /* handle singularities */
                         float *v2 = coord + 3 * j;
                         if((v0[0] == v2[0]) && (v0[1] == v2[1]) && (v0[2] == v2[2]))
                           skip_flag = true;
@@ -6005,7 +6005,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                   SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                   if(j > a)       /* only check if this is atom trails */
                     if((!present) || present[j]) {
-                      if((j_atom_info->vdw == a_atom_info->vdw)) {        /* handle singularities */
+                      if(j_atom_info->vdw == a_atom_info->vdw) {        /* handle singularities */
                         float *v1 = coord + 3 * j;
                         if((v0[0] == v1[0]) && (v0[1] == v1[1]) && (v0[2] == v1[2]))
                           skip_flag = true;

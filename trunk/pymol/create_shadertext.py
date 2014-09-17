@@ -1,5 +1,6 @@
 import sys, os, cStringIO
 import time
+import re
 from os.path import dirname
 from subprocess import Popen, PIPE
 from distutils import dir_util
@@ -9,7 +10,9 @@ def create_all(generated_dir, pymoldir="."):
     Generate various stuff
     '''
     create_shadertext(
-            os.path.join(pymoldir, "data", "shaders"), "shadertext.txt",
+            os.path.join(pymoldir, "data", "shaders"),
+            generated_dir,
+            "shadertext.txt",
             os.path.join(generated_dir, "ShaderText.h"),
             os.path.join(generated_dir, "ShaderText.c"))
     create_buildinfo(generated_dir, pymoldir)
@@ -46,7 +49,7 @@ class openw(object):
     def __del__(self):
         self.close()
 
-def create_shadertext(shaderdir, inputfile, outputheader, outputfile):
+def create_shadertext(shaderdir, shaderdir2, inputfile, outputheader, outputfile):
 
     outputheader = openw(outputheader)
     outputfile = openw(outputfile)
@@ -64,7 +67,10 @@ def create_shadertext(shaderdir, inputfile, outputheader, outputfile):
                     filename = lspl[2]
                     outputheader.write("extern const char* %s;\n" % varname)
                     outputfile.write("const char* %s =\n" % varname)
-                    with open(os.path.join(shaderdir, filename)) as f2:
+                    sd = shaderdir
+                    if not os.path.exists(os.path.join(shaderdir, filename)):
+                        sd = shaderdir2
+                    with open(os.path.join(sd, filename)) as f2:
                         for l2 in f2:
                             st = l2.strip("\n")
                             if len(st)>0:
@@ -101,5 +107,5 @@ def create_buildinfo(outputdir, pymoldir='.'):
         ''' % (time.time(), sha, rev)
 
 if __name__ == "__main__":
-    create_shadertext(*sys.argv[1:5])
-    create_buildinfo(dirname(sys.argv[3]), dirname(dirname(sys.argv[1])))
+    create_shadertext(*sys.argv[1:6])
+    create_buildinfo(dirname(sys.argv[4]), dirname(dirname(sys.argv[1])))

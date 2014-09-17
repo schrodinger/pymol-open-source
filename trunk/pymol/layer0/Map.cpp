@@ -588,7 +588,7 @@ int MapSetupExpress(MapType * I)
   register int *link = I->Link;
   register int st, flag;
   register int *i_ptr3, *i_ptr4, *i_ptr5;
-  register int *e_list;
+  register int *e_list = NULL;
 #ifdef _MemoryCache_ON
   register int block_offset = I->block_base + cCache_map_elist_offset;
   register int group_id = I->group_id;

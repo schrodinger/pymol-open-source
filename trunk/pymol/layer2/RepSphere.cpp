@@ -1093,7 +1093,7 @@ void RenderSphereMode_Sprites(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, i
   }
 }
  
-void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, float radius, int carg){
+static void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int carg){
   register float _1 = 1.0F;
   register float _2 = 2.0F;
   float pixel_scale = 1.0F / info->vertex_scale;
@@ -1251,7 +1251,9 @@ void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, fl
  glDisable(GL_POINT_SMOOTH);
 }
 
-void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int n_quad_verts, float **vptr, float radius, int carg){
+static void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, float **vptr, int carg){
+  int n_quad_verts;
+  float radius;
   int c = carg;
   int vc = 0;
   int cc = 0;
@@ -1908,8 +1910,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
   int c = I->N;
   SphereRec *sp = I->SP;
   float alpha;
-  int n_quad_verts;
-  float radius;
   int ok = true;
   short use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) & 
                      SettingGetGlobal_b(G, cSetting_use_shaders);
@@ -2003,13 +2003,13 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
 	    RenderSphereMode_Sprites(G, I, info, sphere_mode, c, &v, &vn);
 	    break;
           case 4:
-	    RenderSphereMode_Points(G, I, info, radius, c);
+	    RenderSphereMode_Points(G, I, info, c);
 	    break;
 	  case 5:          /* use vertex/fragment program */
 	    RenderSphereMode_ARB(G, info, &v, c);
 	    break;
 	  case 9: // use GLSL shader
-	    RenderSphereMode_9(G, I, info, n_quad_verts, &v, radius, c);
+	    RenderSphereMode_9(G, I, info, &v, c);
 	    break;
 	  default:
 	    RenderSphereMode_1_or_6(G, I, info, &v, &vn, c, alpha);
