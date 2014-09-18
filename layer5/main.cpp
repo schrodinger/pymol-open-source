@@ -443,6 +443,16 @@ static void MainButton(int button, int state, int x, int y)
 
   CMain *I = G->Main;
 
+#ifdef WIN32
+  // fix wheel x/y on Windows (PYMOL-2173)
+  switch(button) {
+  case P_GLUT_BUTTON_SCROLL_FORWARD:
+  case P_GLUT_BUTTON_SCROLL_BACKWARD:
+    x -= p_glutGet(P_GLUT_WINDOW_X);
+    y -= p_glutGet(P_GLUT_WINDOW_Y);
+  }
+#endif
+
   glMod = p_glutGetModifiers();
 
   if(PLockAPIAsGlut(G, false)) {
