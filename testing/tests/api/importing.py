@@ -88,6 +88,30 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load
         self.skipTest("TODO")
 
+    @testing.foreach.product(
+            ['sdf', 'mol2', 'xyz', 'pdb'],
+            [0, 1],
+            )
+    def testLoad_multi(self, ext, discrete):
+        '''
+        Load multi-state files with discrete=0/1 and multiplex=0/1
+        '''
+        N = 10
+        filename = self.datafile('ligs3d.' + ext)
+
+        # mutiplex=0
+        cmd.load(filename, discrete=discrete, multiplex=0)
+        self.assertEqual(cmd.count_discrete('*'), discrete)
+        self.assertEqual(cmd.count_states(), N)
+        self.assertEqual(len(cmd.get_object_list()), 1)
+
+        # mutiplex=1
+        cmd.delete('*')
+        cmd.load(filename, discrete=discrete, multiplex=1)
+        self.assertEqual(cmd.count_discrete('*'), discrete * N)
+        self.assertEqual(cmd.count_states(), 1)
+        self.assertEqual(len(cmd.get_object_list()), N)
+
     def testLoadBrick(self):
         cmd.load_brick
         self.skipTest("TODO")
