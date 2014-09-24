@@ -15,7 +15,7 @@ class Test1356(testing.PyMOLTestCase):
         cmd.load(pdbfile)
         cmd.load_traj(dcdfile)
         cmd.set('use_shaders', use_shader)
-        cmd.spheroid("SampleTrajectory", 100)
+        cmd.spheroid("sampletrajectory", 3)
         cmd.set('ambient', 1)
         cmd.set('specular', 0)
         cmd.color('blue')

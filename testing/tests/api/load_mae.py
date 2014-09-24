@@ -8,7 +8,7 @@ mae_filenames = [
     'data/foo.mae',
     'data/foo.mae.gz',
     'data/foo.cms',
-    'data/foo.cms.gz',
+#    'data/foo.cms.gz',
 ]
 
 mae_urls = [

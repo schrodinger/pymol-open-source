@@ -88,8 +88,17 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load
         self.skipTest("TODO")
 
+    def testLoad_pqr(self):
+        cmd.load(self.datafile('example.pqr'))
+        charges = []
+        radii = []
+        n = cmd.iterate('all', 'charges.append(partial_charge);radii.append(elec_radius)', space=locals())
+        self.assertEqual(n, 191)
+        self.assertTrue(any(x != 0.0 for x in charges))
+        self.assertTrue(any(x != 0.0 for x in radii))
+
     @testing.foreach.product(
-            ['sdf', 'mol2', 'xyz', 'pdb'],
+            ['sdf', 'mol2', 'xyz', 'pdb', 'mmd'],
             [0, 1],
             )
     def testLoad_multi(self, ext, discrete):
@@ -104,6 +113,9 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_discrete('*'), discrete)
         self.assertEqual(cmd.count_states(), N)
         self.assertEqual(len(cmd.get_object_list()), 1)
+
+        if ext in ['mmd']:
+            return
 
         # mutiplex=1
         cmd.delete('*')
@@ -147,28 +159,34 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load_raw
         self.skipTest("TODO")
 
-    def testLoadTraj(self):
-        pdbfile = self.datafile("sampletrajectory.pdb")
-        dcdfile = self.datafile("sampletrajectory.dcd")
+    @testing.foreach(
+            ['.pdb', '.dcd'],
+            ['.pdb', '.crd'],
+            ['.gro', '.xtc'],
+            )
+    @testing.requires_version('1.7.3.0')
+    def testLoadTraj(self, topext, trjext):
+        pdbfile = self.datafile("sampletrajectory" + topext)
+        dcdfile = self.datafile("sampletrajectory" + trjext)
 
         cmd.load(pdbfile)
         cmd.load_traj(dcdfile)
-        self.assertEqual(501, cmd.count_states())
+        self.assertEqual(11, cmd.count_states())
         cmd.delete('*')
 
         cmd.load(pdbfile)
-        cmd.load_traj(dcdfile, state=1, interval=5, max=20)
-        self.assertEqual(20, cmd.count_states())
+        cmd.load_traj(dcdfile, state=1, interval=2, max=3)
+        self.assertEqual(3, cmd.count_states())
         cmd.delete('*')
 
         cmd.load(pdbfile)
-        cmd.load_traj(dcdfile, state=1, start=31, stop=40)
-        self.assertEqual(10, cmd.count_states())
+        cmd.load_traj(dcdfile, state=1, start=3, stop=5)
+        self.assertEqual(3, cmd.count_states())
         cmd.delete('*')
 
         cmd.load(pdbfile)
-        cmd.load_traj(dcdfile, state=1, stop=30, average=3)
-        self.assertEqual(10, cmd.count_states())
+        cmd.load_traj(dcdfile, state=1, stop=9, average=3)
+        self.assertEqual(3, cmd.count_states())
         cmd.delete('*')
 
     def testReadMmodstr(self):
