@@ -57,7 +57,7 @@ else:
     usage = 'pymol [pymol options] %s [test options]' % (os.path.basename(__file__))
     parser = argparse.ArgumentParser(usage=usage)
     parser.add_argument('--xml', action='store_true')
-    parser.add_argument('--run', dest='filenames', nargs='*', default=[])
+    parser.add_argument('filenames', nargs='*', default=[])
     parser.add_argument('--out', default=sys.stdout)
     parser.add_argument('--offline', action='store_true')
     parser.add_argument('--verbosity', type=int, default=2)

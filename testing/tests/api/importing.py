@@ -1,3 +1,4 @@
+import os
 from pymol import cmd, testing, stored
 
 pdbstr = '''ATOM      1  N   GLY    22      -1.195   0.201  -0.206  1.00  0.00           N  
@@ -88,6 +89,12 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load
         self.skipTest("TODO")
 
+    @testing.requires_version('1.7.3.0')
+    def testLoad_idx(self):
+        cmd.load(self.datafile('desmond/Bace_mapper_20143_3a51a59_e85111a_solvent_11_replica0-out.idx'))
+        self.assertEqual(cmd.count_states(), 210)
+        self.assertEqual(cmd.count_atoms(), 2482)
+
     def testLoad_pqr(self):
         cmd.load(self.datafile('example.pqr'))
         charges = []
@@ -123,6 +130,25 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_discrete('*'), discrete * N)
         self.assertEqual(cmd.count_states(), 1)
         self.assertEqual(len(cmd.get_object_list()), N)
+
+    @testing.foreach(
+            ['.ccp4', True],
+            ['.brix', True],
+            ['.spi', False],
+            )
+    @testing.requires_version('1.7.3.0')
+    def testLoad_map(self, ext, check_extent):
+        filename = self.datafile('emd_1155' + ext)
+        if not os.path.exists(filename):
+            self.skipTest("missing " + filename)
+
+        cmd.load(filename, 'map1')
+        field = cmd.get_volume_field('map1', copy=0)
+        self.assertEqual(field.shape, (141, 91, 281))
+
+        if check_extent:
+            extent = cmd.get_extent('map1')
+            self.assertArrayEqual(extent, [[0.0, 0.0, 0.0], [2296.0, 1476.0, 4592.0]], delta=1e-2)
 
     def testLoadBrick(self):
         cmd.load_brick
