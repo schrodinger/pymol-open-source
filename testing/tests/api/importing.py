@@ -150,6 +150,16 @@ class TestImporting(testing.PyMOLTestCase):
             extent = cmd.get_extent('map1')
             self.assertArrayEqual(extent, [[0.0, 0.0, 0.0], [2296.0, 1476.0, 4592.0]], delta=1e-2)
 
+    def testLoad_cube(self):
+        cmd.load(self.datafile('h2o-elf.cube'))
+        extent = cmd.get_extent('h2o-elf')
+        self.assertArrayEqual(extent, [
+            [  -0.075,  -0.075,  -0.075],
+            [   5.925,   5.925,   5.925]], delta=1e3)
+        field = cmd.get_volume_field('h2o-elf', copy=0)
+        self.assertEqual(field.shape, (40, 40, 40))
+        self.assertAlmostEqual(field.mean(), 0.06915, delta=1e-4)
+
     def testLoadBrick(self):
         cmd.load_brick
         self.skipTest("TODO")
