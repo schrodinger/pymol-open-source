@@ -150,6 +150,7 @@ class TestImporting(testing.PyMOLTestCase):
             extent = cmd.get_extent('map1')
             self.assertArrayEqual(extent, [[0.0, 0.0, 0.0], [2296.0, 1476.0, 4592.0]], delta=1e-2)
 
+    @testing.requires_version('1.7.3.0')
     def testLoad_cube(self):
         cmd.load(self.datafile('h2o-elf.cube'))
         extent = cmd.get_extent('h2o-elf')
