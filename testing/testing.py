@@ -373,13 +373,15 @@ else:
             diff = abs(img.reshape((-1, dim)) - color)
             return (diff - delta <= 0).prod(1).sum()
 
-        def assertImageHasColor(self, color, img=None, delta=0):
-            self.assertTrue(self._imageHasColor(color, img, delta),
-                    'no such color: ' + str(color))
+        def assertImageHasColor(self, color, img=None, delta=0, msg=''):
+            if not msg:
+                msg = 'no such color: ' + str(color)
+            self.assertTrue(self._imageHasColor(color, img, delta), msg)
 
-        def assertImageHasNotColor(self, color, img=None, delta=0):
-            self.assertFalse(self._imageHasColor(color, img, delta),
-                    'color found: ' + str(color))
+        def assertImageHasNotColor(self, color, img=None, delta=0, msg=''):
+            if not msg:
+                msg = 'color found: ' + str(color)
+            self.assertFalse(self._imageHasColor(color, img, delta), msg)
 
         def assertImageHasTransparency(self, img=None):
             img = self.get_imagearray(img)
