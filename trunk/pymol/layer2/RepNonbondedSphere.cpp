@@ -88,19 +88,19 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 
   if(ray) {
     int variable_alpha = I->VariableAlphaFlag;
-    ray->fTransparentf(ray, 1.0F - alpha);
+    ray->transparentf(1.0F - alpha);
     v = I->VC;
     c = I->NC;
     while(ok && c--) {
       if(variable_alpha) {
-        ray->fTransparentf(ray, 1.0F - v[3]);
+        ray->transparentf(1.0F - v[3]);
       }
-      ray->fColor3fv(ray, v);
+      ray->color3fv(v);
       v += 4;
-      ok &= ray->fSphere3fv(ray, v, *(v + 3));
+      ok &= ray->sphere3fv(v, *(v + 3));
       v += 4;
     }
-    ray->fTransparentf(ray, 0.0);
+    ray->transparentf(0.0);
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
 

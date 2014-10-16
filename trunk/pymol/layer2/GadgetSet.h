@@ -22,10 +22,14 @@ Z* -------------------------------------------------------------------
 #include"CGOStruct.h"
 
 typedef struct GadgetSet {
-  void (*fUpdate) (struct GadgetSet * I);
-  void (*fRender) (struct GadgetSet * I, RenderInfo * info);
-  void (*fFree) (struct GadgetSet * I);
-  void (*fInvalidateRep) (struct GadgetSet * I, int type, int level);
+  // methods (not fully refactored yet)
+  void fFree();
+
+  // methods
+  void update();
+  void render(RenderInfo * info);
+  void invalidateRep(int type, int level);
+
   PyMOLGlobals *G;
   struct ObjectGadget *Obj;     /* NOT pickled -- restore manually */
   int State;                    /* NOT pickled -- restore manually */

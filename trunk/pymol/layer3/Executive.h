@@ -76,7 +76,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeCUBEMap 48
 #define cLoadTypeXYZStr 49
 
-/* 50 is CIFStr */
+/* 50 is Python-based CIF (cif1) */
 #define cLoadTypePHIStr 51
 
 /* 52 is PIM */
@@ -89,6 +89,12 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeACNTMap 56
 
 #define cLoadTypeDTR 57
+/* 58/59 are pze, pzw */
+#define cLoadTypeCIF 60
+#define cLoadTypeCIFStr 61
+
+#define cLoadTypeSpider 62
+#define cLoadTypeCMS 63
 
 /* NOTE: if you add new content/object type above, then be sure to add
    corresponding code in: CmdLoad ExecutiveGetExistingCompatible
@@ -132,9 +138,10 @@ int ExecutiveOrder(PyMOLGlobals * G, char *s1, int sort, int location);
 int ExecutiveFixChemistry(PyMOLGlobals * G, char *s1, char *s2, int invalidate,
                           int quiet);
 int ExecutiveGetAtomVertex(PyMOLGlobals * G, char *s1, int state, int index, float *v);
-int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname, char *oname,
+int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
+                            char *fname, char *buffer, char *oname,
                             int frame, int discrete, int finish, OrthoLineType buf,
-                            PDBInfoRec * pdb_info, int quiet, int is_string,
+                            bool is_pqr_file, int quiet,
                             int multiplex, int zoom);
 
 int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals * G,
@@ -146,7 +153,8 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
                   int content_format,
                   char *object_name,
                   int state, int zoom,
-                  int discrete, int finish, int multiplex, int quiet, char *plugin);
+                  int discrete, int finish, int multiplex, int quiet, char *plugin,
+                  short loadpropertiesall=false, OVLexicon *loadproplex=NULL);
 
 int ExecutiveDebug(PyMOLGlobals * G, char *name);
 
@@ -203,7 +211,7 @@ int ExecutiveSelectList(PyMOLGlobals * G, char *sele_name, char *s1, int *list,
 int ExecutiveLabel(PyMOLGlobals * G, char *s1, char *expr, int quiet, int eval_mode);
 
 int ExecutiveCountMotions(PyMOLGlobals * G);
-void ExecutiveIterateState(PyMOLGlobals * G, int i1, char *s1, char *expr, int read_only,
+int ExecutiveIterateState(PyMOLGlobals * G, int i1, char *s1, char *expr, int read_only,
                            int atomic_props, int quiet, PyObject * space);
 int ExecutiveColor(PyMOLGlobals * G, char *name, char *color, int flags, int quiet);
 int ExecutiveInit(PyMOLGlobals * G);

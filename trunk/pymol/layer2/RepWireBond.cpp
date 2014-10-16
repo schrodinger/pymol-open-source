@@ -617,11 +617,17 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
   float line_width_setting =
     SettingGetGlobal_f(G, cSetting_line_width);
+  // 0.018f is found by trial and error
+  // TODO: this is not sufficient to solve the problem of disappearing cylinders
+  float scale_bound = SettingGetGlobal_f(G, cSetting_field_of_view)  * cPI / 180.0f * 0.018f;
 
   if(ray) {
 
     float radius;
-
+    float pixel_radius = ray->PixelRadius;
+    if (pixel_radius < scale_bound) {
+      pixel_radius = scale_bound;
+    }
     if(I->Radius <= 0.0F) {
       radius = ray->PixelRadius * line_width / 2.0F;
     } else {
@@ -641,7 +647,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
         vw++;
       }
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]); */
-      ok &= ray->fSausage3fv(ray, v + 3, v + 6, radius, v, v);
+      ok &= ray->sausage3fv(v + 3, v + 6, radius, v, v);
       v += 9;
     }
 
@@ -772,6 +778,8 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	} else {
 	  CShaderPrg *shaderPrg;
 	  if (line_as_cylinders){
+	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
+	    float vertex_scale = info->vertex_scale;
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;
@@ -964,6 +972,8 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	if (ok){
 	  CShaderPrg *shaderPrg;
 	  if (line_as_cylinders){
+	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
+	    float vertex_scale = info->vertex_scale;
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;

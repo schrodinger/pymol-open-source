@@ -1738,7 +1738,7 @@ static int RepSphereRenderRay(RepSphere * I, RenderInfo * info, float alpha)
   int cc = 0;
   float *v = I->V, *vc;
   int a;
-  ray->fTransparentf(ray, 1.0 - alpha);
+  ray->transparentf(1.0 - alpha);
   if(I->spheroidFlag) {
     if(sp) {
       while(c--) {
@@ -1747,7 +1747,7 @@ static int RepSphereRenderRay(RepSphere * I, RenderInfo * info, float alpha)
 	for(a = 0; ok && a < sp->NStrip; a++) {
 	  cc = sp->StripLen[a];
 	  while(ok && (cc--) > 2) {
-	    ok &= ray->fTriangle3fv(ray, v + 3, v + 9, v + 15, v, v + 6, v + 12, vc, vc, vc);
+	    ok &= ray->triangle3fv(v + 3, v + 9, v + 15, v, v + 6, v + 12, vc, vc, vc);
 	    v += 6;
             }
 	  v += 12;
@@ -1760,15 +1760,15 @@ static int RepSphereRenderRay(RepSphere * I, RenderInfo * info, float alpha)
     c = I->NC;
     while(ok && c--) {
       if(variable_alpha) {
-	ray->fTransparentf(ray, 1.0F - v[3]);
+	ray->transparentf(1.0F - v[3]);
       }
-      ray->fColor3fv(ray, v);
+      ray->color3fv(v);
       v += 4;
-      ok &= ray->fSphere3fv(ray, v, *(v + 3));
+      ok &= ray->sphere3fv(v, *(v + 3));
       v += 4;
     }
   }
-  ray->fTransparentf(ray, 0.0);
+  ray->transparentf(0.0);
   return ok;
 }
 

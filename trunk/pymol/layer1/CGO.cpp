@@ -6028,7 +6028,7 @@ static int CGORenderQuadricRay(CRay * ray, float *v, float r, float *q)
   float r_el, n0[3], n1[3], n2[3];
   int ok = true;
   if(CGOQuadricToEllipsoid(v, r, q, &r_el, n0, n1, n2))
-    ok &= ray->fEllipsoid3fv(ray, v, r_el, n0, n1, n2);
+    ok &= ray->ellipsoid3fv(v, r_el, n0, n1, n2);
   return ok;
 }
 
@@ -6076,7 +6076,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
     c0 = color;
   else
     c0 = white;
-  ray->fTransparentf(ray, 1.0F - I->G->CGORenderer->alpha);
+  ray->transparentf(1.0F - I->G->CGORenderer->alpha);
 
   while(ok && (op = (CGO_MASK & CGO_read_int(pc)))) {
     switch (op) {
@@ -6089,7 +6089,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
       switch (mode) {
       case GL_LINE_LOOP:
         if(vc > 1)
-          ok &= ray->fSausage3fv(ray, v0, v2, lineradius, c0, c2);
+          ok &= ray->sausage3fv(v0, v2, lineradius, c0, c2);
         break;
       }
       mode = -1;
@@ -6112,33 +6112,33 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
       break;
     case CGO_COLOR:
       c0 = pc;
-      ray->fColor3fv(ray, c0);
+      ray->color3fv(c0);
       break;
     case CGO_ALPHA:
       I->G->CGORenderer->alpha = *pc;
-      ray->fTransparentf(ray, 1.0F - *pc);
+      ray->transparentf(1.0F - *pc);
       break;
     case CGO_VERTEX:
       v0 = pc;
       switch (mode) {
       case GL_POINTS:
-        ok &= ray->fSphere3fv(ray, v0, dotradius);
+        ok &= ray->sphere3fv(v0, dotradius);
         break;
       case GL_LINES:
         if(vc & 0x1)
-          ok &= ray->fSausage3fv(ray, v0, v1, lineradius, c0, c1);
+          ok &= ray->sausage3fv(v0, v1, lineradius, c0, c1);
         v1 = v0;
         c1 = c0;
         break;
       case GL_LINE_STRIP:
         if(vc)
-          ok &= ray->fSausage3fv(ray, v0, v1, lineradius, c0, c1);
+          ok &= ray->sausage3fv(v0, v1, lineradius, c0, c1);
         v1 = v0;
         c1 = c0;
         break;
       case GL_LINE_LOOP:
         if(vc)
-          ok &= ray->fSausage3fv(ray, v0, v1, lineradius, c0, c1);
+          ok &= ray->sausage3fv(v0, v1, lineradius, c0, c1);
         else {
           v2 = v0;
           c2 = c0;
@@ -6148,7 +6148,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
         break;
       case GL_TRIANGLES:
 	if( ((vc + 1) % 3) == 0)
-          ok &= ray->fTriangle3fv(ray, v0, v1, v2, n0, n1, n2, c0, c1, c2);
+          ok &= ray->triangle3fv(v0, v1, v2, n0, n1, n2, c0, c1, c2);
         v2 = v1;
         c2 = c1;
         n2 = n1;
@@ -6158,7 +6158,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
         break;
       case GL_TRIANGLE_STRIP:
         if(vc > 1)
-          ok &= ray->fTriangle3fv(ray, v0, v1, v2, n0, n1, n2, c0, c1, c2);
+          ok &= ray->triangle3fv(v0, v1, v2, n0, n1, n2, c0, c1, c2);
         v2 = v1;
         c2 = c1;
         n2 = n1;
@@ -6168,7 +6168,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
         break;
       case GL_TRIANGLE_FAN:
         if(vc > 1)
-          ok &= ray->fTriangle3fv(ray, v0, v1, v2, n0, n1, n2, c0, c1, c2);
+          ok &= ray->triangle3fv(v0, v1, v2, n0, n1, n2, c0, c1, c2);
         else if(!vc) {
           n2 = n0;
           v2 = v0;
@@ -6182,33 +6182,33 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
       vc++;
       break;
     case CGO_SPHERE:
-      ray->fColor3fv(ray, c0);
-      ok &= ray->fSphere3fv(ray, pc, *(pc + 3));
+      ray->color3fv(c0);
+      ok &= ray->sphere3fv(pc, *(pc + 3));
       break;
     case CGO_ELLIPSOID:
-      ray->fColor3fv(ray, c0);
-      ok &= ray->fEllipsoid3fv(ray, pc, *(pc + 3), pc + 4, pc + 7, pc + 10);
+      ray->color3fv(c0);
+      ok &= ray->ellipsoid3fv(pc, *(pc + 3), pc + 4, pc + 7, pc + 10);
       break;
     case CGO_QUADRIC:
-      ray->fColor3fv(ray, c0);
+      ray->color3fv(c0);
       ok &= CGORenderQuadricRay(ray, pc, *(pc + 3), pc + 4);
       break;
     case CGO_CONE:
-      ok &= ray->fCone3fv(ray, pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
+      ok &= ray->cone3fv(pc, pc + 3, *(pc + 6), *(pc + 7), pc + 8, pc + 11,
 			  (int) *(pc + 14), (int) *(pc + 15));
       break;
     case CGO_CUSTOM_CYLINDER:
-      ok &= ray->fCustomCylinder3fv(ray, pc, pc + 3, *(pc + 6), pc + 7, pc + 10,
+      ok &= ray->customCylinder3fv(pc, pc + 3, *(pc + 6), pc + 7, pc + 10,
 				    (int) *(pc + 13), (int) *(pc + 14));
       break;
     case CGO_CYLINDER:
-      ok &= ray->fCylinder3fv(ray, pc, pc + 3, *(pc + 6), pc + 7, pc + 10);
+      ok &= ray->cylinder3fv(pc, pc + 3, *(pc + 6), pc + 7, pc + 10);
       break;
     case CGO_SAUSAGE:
-      ok &= ray->fSausage3fv(ray, pc, pc + 3, *(pc + 6), pc + 7, pc + 10);
+      ok &= ray->sausage3fv(pc, pc + 3, *(pc + 6), pc + 7, pc + 10);
       break;
     case CGO_TRIANGLE:
-      ok &= ray->fTriangle3fv(ray, pc, pc + 3, pc + 6, pc + 9, pc + 12, pc + 15, pc + 18,
+      ok &= ray->triangle3fv(pc, pc + 3, pc + 6, pc + 9, pc + 12, pc + 15, pc + 18,
 			      pc + 21, pc + 24);
       break;
 #ifdef _PYMOL_CGO_DRAWARRAYS
@@ -6237,30 +6237,30 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
 	  }
 	  if (colorVals){
 	    c0 = &colorVals[plc];
-	    ray->fColor3fv(ray, c0);
+	    ray->color3fv(c0);
 	  }
 	  if (vertexVals){
 	    v0 = &vertexVals[pl];
 	  }
 	  switch (mode){
 	  case GL_POINTS:
-	    ok &= ray->fSphere3fv(ray, v0, dotradius);
+	    ok &= ray->sphere3fv(v0, dotradius);
 	    break;
 	  case GL_LINES:
 	    if(vc & 0x1)
-	      ok &= ray->fSausage3fv(ray, v0, v1, lineradius, c0, c1);
+	      ok &= ray->sausage3fv(v0, v1, lineradius, c0, c1);
 	    v1 = v0;
 	    c1 = c0;
 	    break;
 	  case GL_LINE_STRIP:
 	    if(vc)
-	      ok &= ray->fSausage3fv(ray, v0, v1, lineradius, c0, c1);
+	      ok &= ray->sausage3fv(v0, v1, lineradius, c0, c1);
 	    v1 = v0;
 	    c1 = c0;
 	    break;
 	  case GL_LINE_LOOP:
 	    if(vc)
-	      ok &= ray->fSausage3fv(ray, v0, v1, lineradius, c0, c1);
+	      ok &= ray->sausage3fv(v0, v1, lineradius, c0, c1);
 	    else {
 	      v2 = v0;
 	      c2 = c0;
@@ -6270,7 +6270,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
 	    break;
 	  case GL_TRIANGLES:
 	    if( ((vc + 1) % 3) == 0)
-	      ok &= ray->fTriangle3fv(ray, v0, v1, v2, n0, n1, n2, c0, c1, c2);
+	      ok &= ray->triangle3fv(v0, v1, v2, n0, n1, n2, c0, c1, c2);
 	    v2 = v1;
 	    c2 = c1;
 	    n2 = n1;
@@ -6280,7 +6280,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
 	    break;
 	  case GL_TRIANGLE_STRIP:
 	    if(vc > 1)
-	      ok &= ray->fTriangle3fv(ray, v0, v1, v2, n0, n1, n2, c0, c1, c2);
+	      ok &= ray->triangle3fv(v0, v1, v2, n0, n1, n2, c0, c1, c2);
 	    v2 = v1;
 	    c2 = c1;
 	    n2 = n1;
@@ -6290,7 +6290,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
 	    break;
 	  case GL_TRIANGLE_FAN:
 	    if(vc > 1)
-	      ok &= ray->fTriangle3fv(ray, v0, v1, v2, n0, n1, n2, c0, c1, c2);
+	      ok &= ray->triangle3fv(v0, v1, v2, n0, n1, n2, c0, c1, c2);
 	    else if(!vc) {
 	      n2 = n0;
 	      v2 = v0;
@@ -6313,7 +6313,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
   }
 
   if (ok)
-    ray->fTransparentf(ray, 0.0F);
+    ray->transparentf(0.0F);
   return ok;
 }
 
@@ -7386,6 +7386,16 @@ static void CGO_gl_linewidth_special(CCGORenderer * I, float **pc)
   case LINEWIDTH_DYNAMIC_WITH_SCALE:
     {
       float line_width = SceneGetDynamicLineWidth(I->info, SettingGet_f(I->G, NULL, NULL, cSetting_line_width));
+      if (I->info->width_scale_flag){
+	glLineWidth(line_width * I->info->width_scale);
+      } else {
+	glLineWidth(line_width);
+      }
+    }
+    break;
+  case LINEWIDTH_WITH_SCALE:
+    {
+      float line_width = SettingGet_f(I->G, NULL, NULL, cSetting_line_width);
       if (I->info->width_scale_flag){
 	glLineWidth(line_width * I->info->width_scale);
       } else {

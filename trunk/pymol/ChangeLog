@@ -2,6 +2,33 @@
 CHANGE LOG
 =========================================================================
 
+2014-10-16 Thomas Holder, Blaine Bell
+
+	* fast PDBx/mmCIF and core CIF loading in C++
+
+	* new connect_mode=4 does bonding with components.cif dictionary
+	  (mmCIF only, components.cif needs to be present in current
+	  directory)
+
+	* gray out residues in the sequence viewer that are missing from the
+	  current state; Read missing residues from mmCIF files
+	  (_pdbx_unobs_or_zero_occ_residues records) so that they show up in
+	  the sequence viewer
+
+	* add spider map reading support
+
+	* load "map" as ccp4 instead of throwing "ambiguous" error
+
+	* xyz write support
+
+	* Improve right-button zoom: use origin instead of clipping slab
+	  center as depth indicator, fixes zoom speed when far clipping plane
+	  is very far away
+
+	* don't use dynamic_width for nonbonded rep
+
+	* 1.7.3.1 (unstable/experimental)
+
 2014-09-17 Thomas Holder, Blaine Bell
 
 	* ignore SCALEn if CRYST1 is 1x1x1 or invalid

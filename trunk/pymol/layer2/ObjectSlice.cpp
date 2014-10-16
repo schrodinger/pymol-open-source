@@ -1158,7 +1158,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
           SceneViewType view;
           float pos[3];
 
-          SceneGetPos(G, pos);
+          SceneGetCenter(G, pos);
           SceneGetView(G, view);
 
           if(track_camera) {
@@ -1218,7 +1218,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
       if(oss->Active) {
         if(ray) {
 
-          ray->fTransparentf(ray, 1.0F - alpha);
+          ray->transparentf(1.0F - alpha);
           if(I->Obj.RepVis[cRepSlice]) {
             float normal[3], *n0, *n1, *n2;
             int *strip = oss->strips;
@@ -1264,7 +1264,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
                     }
 
                     if(tri_count & 0x1) {       /* get the handedness right ... */
-                      ray->fTriangle3fv(ray,
+                      ray->triangle3fv(
                                         point + 3 * offset0,
                                         point + 3 * offset1,
                                         point + 3 * offset2,
@@ -1272,7 +1272,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
                                         color + 3 * offset0,
                                         color + 3 * offset1, color + 3 * offset2);
                     } else {
-                      ray->fTriangle3fv(ray,
+                      ray->triangle3fv(
                                         point + 3 * offset1,
                                         point + 3 * offset0,
                                         point + 3 * offset2,
@@ -1286,7 +1286,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
               }
             }
           }
-          ray->fTransparentf(ray, 0.0);
+          ray->transparentf(0.0);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
             int i = (*pick)->src.index;

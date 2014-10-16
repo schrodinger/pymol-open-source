@@ -397,13 +397,13 @@ int WizardDoPosition(PyMOLGlobals * G, int force)
         int changed = force;
         if(!changed) {
           float pos[3];
-          SceneGetPos(G, pos);
+          SceneGetCenter(G, pos);
           changed = ((fabs(pos[0] - I->LastUpdatedPosition[0]) > R_SMALL4) ||
                      (fabs(pos[1] - I->LastUpdatedPosition[1]) > R_SMALL4) ||
                      (fabs(pos[2] - I->LastUpdatedPosition[2]) > R_SMALL4));
         }
         if(changed) {
-          SceneGetPos(G, I->LastUpdatedPosition);
+          SceneGetCenter(G, I->LastUpdatedPosition);
           PBlock(G);
           if(I->Stack >= 0)
             if(I->Wiz[I->Stack]) {
@@ -521,7 +521,7 @@ int WizardDoState(PyMOLGlobals * G)
     if(I->Stack >= 0)
       if(I->Wiz[I->Stack]) {
         OrthoLineType buffer;
-        int state = SettingGetGlobal_i(G, cSetting_state) + 1;
+        int state = SettingGetGlobal_i(G, cSetting_state);
         sprintf(buffer, "cmd.get_wizard().do_state(%d)", state);
         PLog(G, buffer, cPLog_pym);
         PBlock(G);

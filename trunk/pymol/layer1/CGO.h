@@ -296,6 +296,7 @@ int CGOLinewidthSpecial(CGO * I, int v);
 #define LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON 4
 #define LINEWIDTH_DYNAMIC_WITH_SCALE_DASH 5
 #define CYLINDERWIDTH_DYNAMIC_MESH  6
+#define LINEWIDTH_WITH_SCALE 7
 int CGODotwidth(CGO * I, float v);
 int CGOChar(CGO * I, char c);
 int CGOFontVertex(CGO * I, float x, float y, float z);

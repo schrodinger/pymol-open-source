@@ -37,10 +37,6 @@ Z* -------------------------------------------------------------------
 #include "PyMOL.h"
 #include "Executive.h"
 
-static void DistSetUpdate(DistSet * I, int state);
-static void DistSetFree(DistSet * I);
-static void DistSetInvalidateRep(DistSet * I, int type, int level);
-
 int DistSetGetLabelVertex(DistSet * I, int at, float *v)
 {
   if((at >= 0) && (at < I->NLabel) && I->LabCoord) {
@@ -151,7 +147,7 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
   }
 
   if (rVal)
-    I->fInvalidateRep(I, -1, cRepInvCoord);
+    I->invalidateRep(-1, cRepInvCoord);
 
   PRINTFD(G, FB_DistSet)
     " DistSet: done updating distance set's vertex\n" ENDFD;
@@ -236,7 +232,7 @@ int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
   CPythonVal *val;
 
   if(*cs) {
-    DistSetFree(*cs);
+    (*cs)->fFree();
     *cs = NULL;
   }
 
@@ -285,7 +281,7 @@ ok_except2:
   *cs = I;
   return true;
 ok_except1:
-  DistSetFree(I);
+  I->fFree();
   return false;
 }
 
@@ -371,8 +367,9 @@ int DistSetGetExtent(DistSet * I, float *mn, float *mx)
 
 
 /*========================================================================*/
-static void DistSetInvalidateRep(DistSet * I, int type, int level)
+void DistSet::invalidateRep(int type, int level)
 {
+  DistSet * I = this;
   int a;
   PRINTFD(I->State.G, FB_DistSet)
     " DistSetInvalidateRep: entered.\n" ENDFD;
@@ -411,8 +408,9 @@ static void DistSetInvalidateRep(DistSet * I, int type, int level)
 
 
 /*========================================================================*/
-static void DistSetUpdate(DistSet * I, int state)
+void DistSet::update(int state)
 {
+  DistSet * I = this;
   /* status bar 0% */
   OrthoBusyFast(I->State.G, 0, I->NRep);
   if(!I->Rep[cRepDash]) {
@@ -445,8 +443,9 @@ static void DistSetUpdate(DistSet * I, int state)
 
 
 /*========================================================================*/
-static void DistSetRender(DistSet * I, RenderInfo * info)
+void DistSet::render(RenderInfo * info)
 {
+  DistSet * I = this;
   CRay *ray = info->ray;
   int pass = info->pass;
   Picking **pick = info->pick;
@@ -455,7 +454,7 @@ static void DistSetRender(DistSet * I, RenderInfo * info)
                                   I->Obj->Obj.Setting,
                                   cSetting_float_labels);
   int a;
-  Rep *r;
+  ::Rep *r;
   for(a = 0; a < I->NRep; a++)
   {
     if(!I->Obj->Obj.RepVis[a])
@@ -481,7 +480,7 @@ static void DistSetRender(DistSet * I, RenderInfo * info)
         r = I->Rep[a];
         if(ray || pick) {
           if(ray)
-            ray->fColor3fv(ray, ColorGet(I->State.G, I->Obj->Obj.Color));
+            ray->color3fv(ColorGet(I->State.G, I->Obj->Obj.Color));
           r->fRender(r, info);
         } else {
           ObjectUseColor((CObject *) I->Obj);
@@ -512,10 +511,6 @@ DistSet *DistSetNew(PyMOLGlobals * G)
   OOAlloc(G, DistSet);
   I->State.G = G;
   I->State.Matrix = NULL;
-  I->fFree = DistSetFree;
-  I->fRender = DistSetRender;
-  I->fUpdate = DistSetUpdate;
-  I->fInvalidateRep = DistSetInvalidateRep;
   I->NIndex = 0;
   I->Coord = NULL;
   I->Rep = VLAlloc(Rep *, cRepCnt);
@@ -536,8 +531,20 @@ DistSet *DistSetNew(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-static void DistSetFree(DistSet * I)
+#if 0
+static void DistSetStrip(DistSet * I)
 {
+  int a;
+  for(a = 0; a < I->NRep; a++)
+    if(I->Rep[a])
+      I->Rep[a]->fFree(I->Rep[a]);
+  I->NRep = 0;
+}
+#endif
+
+void DistSet::fFree()
+{
+  DistSet * I = this;
   int a;
   CMeasureInfo * ptr, *target;
   if(I) {

@@ -41,6 +41,10 @@ if __name__=='pymol.importing':
     
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
+    def auto_zoom(zoom, selection, state=0, _self=cmd):
+        if zoom > 0 or zoom < 0 and _self.get_setting_int("auto_zoom"):
+            _self.zoom(selection, state=state)
+
     def set_session(session,partial=0,quiet=1,cache=1,steal=-1,_self=cmd):
         r = DEFAULT_SUCCESS
         if is_string(session): # string implies compressed session data 
@@ -332,38 +336,25 @@ SEE ALSO
             #   
 
             fname = _self.exp_path(filename)
-            
-            if not len(str(type)):
+
+            if plugin:
+                type = -1
+            elif not type:
                 # determine file type if possible
                 if re.search("\.trj$",filename,re.I):
                     ftype = loadable.trj
+                    plugin = ""
                     try: # autodetect gromacs TRJ
                         magic = map(ord,open(fname,'r').read(4))
                         if (201 in magic) and (7 in magic):
                             ftype = loadable.trj2
-                            if plugin=="": plugin = "trj"
+                            plugin = "trj"
                     except:
                         traceback.print_exc()
-                elif re.search("\.xtc$",filename,re.I):
-                    ftype = loadable.xtc
-                    if plugin=="": plugin = "xtc" 
-                elif re.search("\.trr$",filename,re.I):
-                    ftype = loadable.trr
-                    if plugin=="": plugin = "trr"
-                elif re.search("\.dtr$",filename,re.I):
-                    ftype = loadable.dtr
-                    if plugin=="": plugin = "dtr"
-                elif re.search("\.gro$",filename,re.I):
-                    ftype = loadable.gro
-                    if plugin=="": plugin = "gro"
-                elif re.search("\.g96$",filename,re.I):
-                    ftype = loadable.g96
-                    if plugin=="": plugin = "g96"
-                elif re.search("\.dcd$",filename,re.I):
-                    ftype = loadable.dcd
-                    if plugin=="": plugin = "dcd"
                 else:
-                    raise pymol.CmdException
+                    # take file extension as plugin identifier
+                    plugin = filename.rsplit('.', 1)[-1]
+                    type = -1
             elif _self.is_string(type):
                 try:
                     ftype = int(type)
@@ -388,7 +379,7 @@ SEE ALSO
             else:
                 oname = string.strip(object)
 
-            if ftype>=0:
+            if ftype>=0 or plugin:
                 r = _cmd.load_traj(_self._COb,str(oname),fname,int(state)-1,int(ftype),
                                          int(interval),int(average),int(start),
                                          int(stop),int(max),str(selection),
@@ -671,7 +662,7 @@ SEE ALSO
                     ftype = loadable.mmod
                 elif re.search("\.xplor$",fname_no_gz,re.I):
                     ftype = loadable.xplor
-                elif re.search("\.ccp4$",fname_no_gz,re.I):
+                elif re.search("\.(ccp4|mrc|map)$",fname_no_gz,re.I):
                     ftype = loadable.ccp4
                 elif re.search("\.pkl$",fname_no_gz,re.I):
                     ftype = loadable.model
@@ -735,12 +726,18 @@ SEE ALSO
                     ftype = loadable.png
                 elif re.search("\.moe$",fname_no_gz,re.I):
                     ftype = loadable.moe
-                elif re.search(r"\.(mae|maegz|cms)$",fname_no_gz,re.I):
+                elif re.search(r"\.(mae|maegz)$", fname_no_gz, re.I):
                     ftype = loadable.mae
+                elif re.search(r"\.cms$", fname_no_gz, re.I):
+                    ftype = loadable.cms
+                elif re.search("\.idx$",fname_no_gz,re.I):
+                    ftype = "idx" # should be numeric
                 elif re.search("\.cube$",fname_no_gz,re.I):
                     ftype = loadable.cube
+                elif re.search("\.spi(der)?$",fname_no_gz,re.I):
+                    ftype = loadable.spider
                 elif re.search("\.cif$",fname_no_gz,re.I):
-                    ftype = loadable.cif1
+                    ftype = loadable.cif
                 elif re.search("\.pim$",fname_no_gz,re.I):
                     ftype = loadable.pim
                 elif re.search("\.pwg$",fname_no_gz,re.I):
@@ -757,15 +754,6 @@ SEE ALSO
                     except ImportError:
                         raise CmdException('vis file only available in incentive PyMOL')
                     return load_vis(filename, object, mimic, quiet=quiet, _self=_self)
-                elif re.search("\.map$",fname_no_gz,re.I):
-                    r = DEFAULT_ERROR
-                    print 'Error: .map is ambiguous.  Please add format or use another extension:'
-                    print 'Error: For example, "load fofc.map, format=ccp4" or "load 2fofc.xplor".'
-                    
-                    if _self._raising(r,_self):
-                        raise pymol.CmdException
-                    else:
-                        return r
                 elif re.search(r"\.py$|\.pym|\.pyc$", fname_no_gz, re.I):
                     return _self.do("_ run %s" % filename)
                 elif re.search(r"\.pml$", fname_no_gz, re.I):
@@ -808,6 +796,9 @@ SEE ALSO
                     oname = 'obj01'
             else:
                 oname = string.strip(object)
+
+            if ftype == 'idx':
+                return load_idx(filename, oname, state, quiet, zoom, _self=_self)
 
             # loadable.sdf1 is for the old Python-based SDF file reader
             if ftype == loadable.sdf1:
@@ -880,7 +871,9 @@ SEE ALSO
             if ftype == loadable.pse:
                 ftype = -1
                 try:
-                    session = io.pkl.fromFile(fname)
+                    import cPickle
+                    contents = _self.file_read(fname)
+                    session = cPickle.loads(contents)
                 except AttributeError as e:
                     raise pymol.CmdException('PSE contains objects which cannot be unpickled (%s)' % e.message)
                 r = _self.set_session(session, quiet=quiet,
@@ -1262,7 +1255,7 @@ PYMOL API
     hostPaths = {
         "bio"  : "/data/biounit/coordinates/divided/{mid}/{code}.{type}.gz",
         "pdb"  : "/data/structures/divided/pdb/{mid}/pdb{code}.ent.gz",
-        "cif"  : "/data/structures/divided/structure_factors/{mid}/r{code}sf.ent.gz",
+        "cif"  : "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
         "2fofc" : "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}.omap",
         "fofc": "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}_diff.omap",
         "pubchem": [
@@ -1306,7 +1299,7 @@ PYMOL API
             bioType = 'pubchem'
             nameFmt = '{type}_{code}.sdf'
         elif type == 'cif':
-            nameFmt = '{code}.sf'
+            pass
         elif re.match(r'pdb\d+$', type):
             bioType = 'bio'
         else:
@@ -1361,11 +1354,6 @@ PYMOL API
                     fobj.close()
 
             if not file:
-                return DEFAULT_SUCCESS
-
-            if bioType == 'cif':
-                if not quiet:
-                    print " Downloaded CIF file to '%s'." % (file)
                 return DEFAULT_SUCCESS
 
             break
@@ -1537,6 +1525,33 @@ ARGUMENTS
         '''
         with _self.lockcm:
             r = _cmd.load_coords(_self._COb, selection, coords, int(state)-1)
+        return r
+
+    def load_idx(filename, oname, state=0, quiet=1, zoom=-1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Load a Desmond trajectory (including topology) from an IDX file.
+        '''
+        state, quiet, zoom = int(state), int(quiet), int(zoom)
+        dirname = os.path.dirname(filename)
+        data = {}
+
+        with open(filename) as handle:
+            for line in handle:
+                k, v = line.split('=', 1)
+                data[k.strip()] = v.strip()
+
+        _self.delete(oname)
+        r = _self.load(
+                os.path.join(dirname, data['structure']), oname, state, quiet=quiet, zoom=0)
+
+        if not is_error(r):
+            _self.load_traj(
+                os.path.join(dirname, data['trajectory'], 'clickme.dtr'), oname, state)
+
+            auto_zoom(zoom, oname, _self=_self)
+
         return r
 
     def load_mtz(filename, prefix='', amplitudes='', phases='', weights='None',

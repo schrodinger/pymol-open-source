@@ -969,7 +969,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
             vc = ms->VC;
             rc = ms->RC;
             if(ms->MeshMode == 1) {
-              ray->fColor3fv(ray, cc);
+              ray->color3fv(cc);
               while(ok && *n) {
                 c = *(n++);
                 while(ok && c--) {
@@ -980,11 +980,11 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
                         ColorGetEncoded(G, rc[0], (cA = colA));
                       rc++;
                     }
-                    ray->fColor3fv(ray, cA);
-                    ok &= ray->fSphere3fv(ray, v, radius);
+                    ray->color3fv(cA);
+                    ok &= ray->sphere3fv(v, radius);
                     vc += 3;
                   } else {
-                    ok &= ray->fSphere3fv(ray, v, radius);
+                    ok &= ray->sphere3fv(v, radius);
                   }
                   v += 3;
                 }
@@ -1009,10 +1009,10 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
                           ColorGetEncoded(G, rc[0], (cB = colB));
                         rc++;
                       }
-                      ok &= ray->fSausage3fv(ray, v - 3, v, radius, cA, cB);
+                      ok &= ray->sausage3fv(v - 3, v, radius, cA, cB);
                       vc += 3;
                     } else {
-                      ok &= ray->fSausage3fv(ray, v - 3, v, radius, cc, cc);
+                      ok &= ray->sausage3fv(v - 3, v, radius, cc, cc);
                     }
                     v += 3;
                   }

@@ -229,7 +229,7 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G)
   I->GSet[0] = gs;
   I->NGSet = 1;
   I->Obj.Context = 1;
-  gs->fUpdate(gs);
+  gs->update();
   ObjectGadgetUpdateExtents(I);
   return (I);
 
@@ -430,8 +430,7 @@ void ObjectGadgetPurge(ObjectGadget * I)
   SceneObjectDel(I->Obj.G, (CObject *) I, false);
   for(a = 0; a < I->NGSet; a++)
     if(I->GSet[a]) {
-      if(I->GSet[a]->fFree)
-        I->GSet[a]->fFree(I->GSet[a]);
+      I->GSet[a]->fFree();
       I->GSet[a] = NULL;
     }
   VLAFreeP(I->GSet);
@@ -452,8 +451,7 @@ void ObjectGadgetUpdateStates(ObjectGadget * I)
     if(I->GSet[a]) {
       OrthoBusySlow(I->Obj.G, a, I->NGSet);
       /*           printf(" ObjectGadget: updating state %d of \"%s\".\n" , a+1, I->Obj.Name); */
-      if(I->GSet[a]->fUpdate)
-        I->GSet[a]->fUpdate(I->GSet[a]);
+      I->GSet[a]->update();
     }
 }
 
@@ -489,8 +487,7 @@ static void ObjectGadgetRender(ObjectGadget * I, RenderInfo * info)
     for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NGSet);
         iter.next();) {
       GadgetSet * gs = I->GSet[iter.state];
-      if(gs->fRender)
-        gs->fRender(gs, info);
+      gs->render(info);
     }
   }
 }

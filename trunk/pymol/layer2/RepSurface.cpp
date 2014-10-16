@@ -266,7 +266,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
   if(ray) {
-    ray->fTransparentf(ray, 1.0F - alpha);
+    ray->transparentf(1.0F - alpha);
     if(I->Type == 1) {
       /* dot surface */
       float radius;
@@ -280,16 +280,16 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       if(I->oneColorFlag) {
         float col[3];
         ColorGetEncoded(G, I->oneColor, col);
-        ray->fColor3fv(ray, col);
+        ray->color3fv(col);
       }
 
       if(c)
         while(ok && c--) {
           if(*vi) {
             if(!I->oneColorFlag) {
-              ray->fColor3fv(ray, vc);
+              ray->color3fv(vc);
             }
-            ok &= ray->fSphere3fv(ray, v, radius);
+            ok &= ray->sphere3fv(v, radius);
           }
           vi++;
           vc += 3;
@@ -330,7 +330,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	      mult3f(col2, ao2, col2);
 	      mult3f(col3, ao3, col3);
 	    }
-	    ok &= ray->fTriangle3fv(ray, v + (*t) * 3, v + (*(t + 1)) * 3, v + (*(t + 2)) * 3,
+	    ok &= ray->triangle3fv(v + (*t) * 3, v + (*(t + 1)) * 3, v + (*(t + 2)) * 3,
 				    vn + (*t) * 3, vn + (*(t + 1)) * 3, vn + (*(t + 2)) * 3,
 				    col1, col2, col3);
 	  }
@@ -382,12 +382,12 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		mult3f(cC, ao3, cC);
 	      }
               if(va) {
-                ok &= ray->fTriangleTrans3fv(ray, v + ttA3, v + ttB3, v + ttC3,
+                ok &= ray->triangleTrans3fv(v + ttA3, v + ttB3, v + ttC3,
 					     vn + ttA3, vn + ttB3, vn + ttC3,
 					     cA, cB, cC,
 					     1.0F - va[ttA], 1.0F - va[ttB], 1.0F - va[ttC]);
               } else {
-                ok &= ray->fTriangle3fv(ray, v + ttA3, v + ttB3, v + ttC3,
+                ok &= ray->triangle3fv(v + ttA3, v + ttB3, v + ttC3,
 					vn + ttA3, vn + ttB3, vn + ttC3, cA, cB, cC);
               }
             }
@@ -424,11 +424,11 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    if((I->proximity && ((*(vi + t0)) || (*(vi + t1)) || (*(vi + t2)))) ||
 	       ((*(vi + t0)) && (*(vi + t1)) && (*(vi + t2)))) {
 	      if(!check_and_add(cache, spacing, t0, t1))
-		ok &= ray->fSausage3fv(ray, v + t0 * 3, v + t1 * 3, radius, col, col);
+		ok &= ray->sausage3fv(v + t0 * 3, v + t1 * 3, radius, col, col);
 	      if(!check_and_add(cache, spacing, t1, t2))
-		ok &= ray->fSausage3fv(ray, v + t1 * 3, v + t2 * 3, radius, col, col);
+		ok &= ray->sausage3fv(v + t1 * 3, v + t2 * 3, radius, col, col);
 	      if(!check_and_add(cache, spacing, t2, t0))
-		ok &= ray->fSausage3fv(ray, v + t2 * 3, v + t0 * 3, radius, col, col);
+		ok &= ray->sausage3fv(v + t2 * 3, v + t0 * 3, radius, col, col);
 	    }
 	    t += 3;
 	  }
@@ -442,13 +442,13 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	       ((*(vi + t0)) && (*(vi + t1)) && (*(vi + t2))))
 	      if((*(vi + t0)) || (*(vi + t1)) || (*(vi + t2))) {
 		if(!check_and_add(cache, spacing, t0, t1))
-		  ok &= ray->fSausage3fv(ray, v + t0 * 3, v + t1 * 3, radius, vc + t0 * 3,
+		  ok &= ray->sausage3fv(v + t0 * 3, v + t1 * 3, radius, vc + t0 * 3,
 					 vc + t1 * 3);
 		if(!check_and_add(cache, spacing, t1, t2))
-		  ok &= ray->fSausage3fv(ray, v + t1 * 3, v + t2 * 3, radius, vc + t1 * 3,
+		  ok &= ray->sausage3fv(v + t1 * 3, v + t2 * 3, radius, vc + t1 * 3,
 					 vc + t2 * 3);
 		if(!check_and_add(cache, spacing, t2, t0))
-		  ok &= ray->fSausage3fv(ray, v + t2 * 3, v + t0 * 3, radius, vc + t2 * 3,
+		  ok &= ray->sausage3fv(v + t2 * 3, v + t0 * 3, radius, vc + t2 * 3,
 					 vc + t0 * 3);
 	      }
 	    t += 3;
@@ -458,7 +458,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       }
     }
     if (ok){
-      ray->fTransparentf(ray, 0.0);
+      ray->transparentf(0.0);
     } else {
       /* If not ok, then Clear Entire RepSurface, not just the ray object */
       

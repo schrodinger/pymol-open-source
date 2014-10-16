@@ -1205,8 +1205,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                   }
 
                   /* add new coord set */
-                  if(cs->fInvalidateRep)
-                    cs->fInvalidateRep(cs, cRepAll, cRepInvRep);
+                  cs->invalidateRep(cRepAll, cRepInvRep);
                   if(frame < 0)
                     frame = I->NCSet;
                   if(!I->NCSet) {
@@ -1217,7 +1216,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                   if(I->NCSet <= frame)
                     I->NCSet = frame + 1;
                   if(I->CSet[frame])
-                    I->CSet[frame]->fFree(I->CSet[frame]);
+                    I->CSet[frame]->fFree();
                   I->CSet[frame] = cs;
                   ncnt++;
 
@@ -1258,7 +1257,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
     mfree(buffer);
   }
   if(cs)
-    cs->fFree(cs);
+    cs->fFree();
   SceneChanged(G);
   SceneCountFrames(G);
   if(zoom_flag)
@@ -1348,8 +1347,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
               p = nextline(p);
             b = 0;
             /* add new coord set */
-            if(cs->fInvalidateRep)
-              cs->fInvalidateRep(cs, cRepAll, cRepInvRep);
+            cs->invalidateRep(cRepAll, cRepInvRep);
             if(frame < 0)
               frame = I->NCSet;
             if(!I->NCSet) {
@@ -1362,7 +1360,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
 	      if(I->NCSet <= frame)
 		I->NCSet = frame + 1;
 	      if(I->CSet[frame])
-		I->CSet[frame]->fFree(I->CSet[frame]);
+		I->CSet[frame]->fFree();
 	      I->CSet[frame] = cs;
 	    }
             PRINTFB(G, FB_ObjectMolecule, FB_Details)
@@ -1387,7 +1385,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
     mfree(buffer);
   }
   if(cs)
-    cs->fFree(cs);
+    cs->fFree();
 
   SceneChanged(G);
   SceneCountFrames(G);
@@ -2323,7 +2321,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
   } else {
 ok_except1:
     if(cset)
-      cset->fFree(cset);
+      cset->fFree();
     ErrMessage(G, "ObjectMoleculeTOPStr2CoordSet", "failed");
   }
   if(atInfoPtr)
@@ -2382,9 +2380,8 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
     }
 
     cset->Obj = I;
-    cset->fEnumIndices(cset);
-    if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
+    cset->enumIndices();
+    cset->invalidateRep(cRepAll, cRepInvRep);
     if(isNew) {
       I->AtomInfo = atInfo;     /* IMPORTANT to reassign: this VLA may have moved! */
     } else if (ok){
@@ -2410,8 +2407,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
     }
 
     if(I->CSTmpl)
-      if(I->CSTmpl->fFree)
-        I->CSTmpl->fFree(I->CSTmpl);
+      I->CSTmpl->fFree();
     I->CSTmpl = cset;           /* save template coordinate set */
 
     SceneCountFrames(G);
@@ -2762,9 +2758,8 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * I, CRaw
       }
 
       cset->Obj = I;
-      cset->fEnumIndices(cset);
-      if(cset->fInvalidateRep)
-        cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
+      cset->enumIndices();
+      cset->invalidateRep(cRepAll, cRepInvRep);
       if(!isNew && ok) {
         ok &= ObjectMoleculeMerge(I, atInfo, cset, true, cAIC_AllMask, true); /* NOTE: will release atInfo */
       }
@@ -2777,7 +2772,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * I, CRaw
       if(I->NCSet <= frame)
         I->NCSet = frame + 1;
       if(I->CSet[frame])
-        I->CSet[frame]->fFree(I->CSet[frame]);
+        I->CSet[frame]->fFree();
       I->CSet[frame] = cset;
       if(ok && isNew)
         ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, false, -1);
@@ -3230,6 +3225,19 @@ char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state)
     result = I->CSet[state]->Name;
   }
   return (result);
+}
+
+
+/*========================================================================*/
+/*
+ * Get the effective state (0-indexed) of an object, based on the "state" and
+ * "static_singletons" settings.
+ */
+int ObjectMolecule::getState() {
+  if (NCSet == 1
+      && SettingGet_b(Obj.G, Obj.Setting, NULL, cSetting_static_singletons))
+    return 0;
+  return SettingGet_i(Obj.G, Obj.Setting, NULL, cSetting_state) - 1;
 }
 
 
@@ -3695,10 +3703,8 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
     }
 
     cset->Obj = I;
-    if(cset->fEnumIndices)
-      cset->fEnumIndices(cset);
-    if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
+    cset->enumIndices();
+    cset->invalidateRep(cRepAll, cRepInvRep);
     if(isNew) {
       I->AtomInfo = atInfo;     /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
@@ -3713,7 +3719,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
     if(I->NCSet <= frame)
       I->NCSet = frame + 1;
     if(I->CSet[frame])
-      I->CSet[frame]->fFree(I->CSet[frame]);
+      I->CSet[frame]->fFree();
     I->CSet[frame] = cset;
     if(ok && isNew)
       ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, !have_bonds, -1);
@@ -3890,8 +3896,8 @@ int ObjectMoleculeAddSeleHydrogens(ObjectMolecule * I, int sele, int state)
 	      }
 	    }
 	  }
-          if(ok && cs->fEnumIndices)
-            cs->fEnumIndices(cs);
+          if(ok)
+            cs->enumIndices();
 
 	  if (ok){
 	    cs->TmpLinkBond = VLACalloc(BondType, nH);
@@ -3933,8 +3939,7 @@ int ObjectMoleculeAddSeleHydrogens(ObjectMolecule * I, int sele, int state)
             }
           }
           FreeP(index);
-          if(cs->fFree)
-            cs->fFree(cs);
+          cs->fFree();
           if (ok)
 	    ok &= ObjectMoleculeSort(I);
           ObjectMoleculeUpdateIDNumbers(I);
@@ -4179,8 +4184,8 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       }
     }
 
-    if(ok && cs->fEnumIndices)
-      cs->fEnumIndices(cs);
+    if(ok)
+      cs->enumIndices();
 
     if (ok){
       d = AtomInfoGetBondLength(I->Obj.G, ai0 + at0, ai1 + at1);
@@ -4259,8 +4264,7 @@ int ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
     }
   }
   if(cs)
-    if(cs->fFree)
-      cs->fFree(cs);
+    cs->fFree();
   FreeP(backup);
   return ok;
 }
@@ -4344,8 +4348,7 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai)
   cs->TmpLinkBond->stereo = 0;
 
   cs->TmpLinkBond->id = -1;
-  if(cs->fEnumIndices)
-    cs->fEnumIndices(cs);
+  cs->enumIndices();
 
   ok_assert(1, ObjectMoleculePrepareAtom(I, index, nai));
   d = AtomInfoGetBondLength(I->Obj.G, ai, nai);
@@ -4369,7 +4372,7 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai)
 
   ok = true;
 ok_except1:
-  CoordSetFree(cs);
+  cs->fFree();
   return ok;
 }
 
@@ -4421,8 +4424,8 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 	}
       }
       
-      if(ok && cs->fEnumIndices)
-        cs->fEnumIndices(cs);
+      if(ok)
+        cs->enumIndices();
       if (ok)
 	nai = (AtomInfoType *) VLAMalloc(1, sizeof(AtomInfoType), 1, true);
       CHECKOK(ok, nai);
@@ -4449,8 +4452,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
 	    ok &= CoordSetMerge(I, I->CSet[a], cs);
         }
       }
-      if(cs->fFree)
-        cs->fFree(cs);
+      cs->fFree();
       result++;
       flag = true;
     }
@@ -4939,8 +4941,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
       for(b = first + 1; b < last; b++) {
         cs = I->CSet[b];
         if(cs) {
-          if(cs->fFree)
-            cs->fFree(cs);
+          cs->fFree();
         }
         I->CSet[b] = NULL;
       }
@@ -5168,8 +5169,7 @@ void ObjectMoleculeUndo(ObjectMolecule * I, int dir)
         memcpy(cs->Coord, I->UndoCoord[I->UndoIter], sizeof(float) * cs->NIndex * 3);
         I->UndoState[I->UndoIter] = -1;
         FreeP(I->UndoCoord[I->UndoIter]);
-        if(cs->fInvalidateRep)
-          cs->fInvalidateRep(cs, cRepAll, cRepInvCoord);
+        cs->invalidateRep(cRepAll, cRepInvCoord);
         SceneChanged(I->Obj.G);
       }
     }
@@ -7288,7 +7288,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
           }
         }
         if(flag) {
-          cs->fInvalidateRep(cs, cRepAll, cRepInvCoord);
+          cs->invalidateRep(cRepAll, cRepInvCoord);
           ExecutiveUpdateCoordDepends(G, I);
         }
       }
@@ -8315,9 +8315,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     }
 
     cset->Obj = I;
-    cset->fEnumIndices(cset);
-    if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
+    cset->enumIndices();
+    cset->invalidateRep(cRepAll, cRepInvRep);
     if(isNew) {
       I->AtomInfo = atInfo;     /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
@@ -8331,7 +8330,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     if(I->NCSet <= frame)
       I->NCSet = frame + 1;
     if(I->CSet[frame])
-      I->CSet[frame]->fFree(I->CSet[frame]);
+      I->CSet[frame]->fFree();
     I->CSet[frame] = cset;
     if(fractional && cset->Symmetry && cset->Symmetry->Crystal) {
       CrystalUpdate(cset->Symmetry->Crystal);
@@ -8407,8 +8406,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
 
   /* include coordinate set */
   {
-    if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
+    cset->invalidateRep(cRepAll, cRepInvRep);
 
     if(frame < 0)
       frame = I->NCSet;
@@ -8416,7 +8414,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
     if(I->NCSet <= frame)
       I->NCSet = frame + 1;
     if(I->CSet[frame])
-      I->CSet[frame]->fFree(I->CSet[frame]);
+      I->CSet[frame]->fFree();
     I->CSet[frame] = cset;
     SceneCountFrames(G);
   }
@@ -8429,7 +8427,7 @@ ok_except2:
   PyErr_Print();
 ok_except1:
   if(cset)
-    cset->fFree(cset);
+    cset->fFree();
   ErrMessage(G, "LoadCoords", "failed");
   return NULL;
 #endif
@@ -8473,7 +8471,7 @@ void ObjectMoleculeBlindSymMovie(ObjectMolecule * I)
               I->NCSet++;
             }
           }
-    frac->fFree(frac);
+    frac->fFree();
   }
   SceneChanged(I->Obj.G);
 }
@@ -8484,33 +8482,25 @@ int ObjectMoleculeExtendIndices(ObjectMolecule * I, int state)
 {
   int a;
   CoordSet *cs;
-  int ok = true;
 
   if(I->DiscreteFlag && (state >= 0)) {
     /* if object is discrete, then we don't need to extend each state,
        just the current one (which updates object DiscreteAtmToIdx) */
     cs = I->CSTmpl;
-    if(cs)
-      if(cs->fExtendIndices)
-        ok &= cs->fExtendIndices(cs, I->NAtom);
-    if(ok && state < I->NCSet) {
+    ok_assert(1, (!cs) || cs->extendIndices(I->NAtom));
+    if(state < I->NCSet) {
       cs = I->CSet[state];
-      if(cs)
-        if(cs->fExtendIndices)
-          ok &= cs->fExtendIndices(cs, I->NAtom);
+      ok_assert(1, (!cs) || cs->extendIndices(I->NAtom));
     }
   } else {                      /* do all states */
-    for(a = -1; ok && a < I->NCSet; a++) {
-      if(a < 0)
-        cs = I->CSTmpl;
-      else
-        cs = I->CSet[a];
-      if(cs)
-        if(cs->fExtendIndices)
-          ok &= cs->fExtendIndices(cs, I->NAtom);
+    for(a = -1; a < I->NCSet; a++) {
+      cs = (a < 0) ? I->CSTmpl : I->CSet[a];
+      ok_assert(1, (!cs) || cs->extendIndices(I->NAtom));
     }
   }
-  return ok;
+  return true;
+ok_except1:
+  return false;
 }
 
 
@@ -9463,17 +9453,26 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
   return (cset);
 }
 
+/*
+ * Read one molecule in MOL2, MOL, SDF or XYZ format from the string pointed
+ * to by (*next_entry). All these formats (except MOL) support multiple
+ * concatenated entries in one file. If multiplex=1, then read only one
+ * molecule (one state) and set the next_entry pointer to the beginning of the
+ * next entry. Otherwise, read a multi-state molecule.
+ */
 ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                      char *st, int content_format, int frame,
+                                      char **next_entry,
+                                      int content_format, int frame,
                                       int discrete, int quiet, int multiplex,
-                                      char *new_name, char **next_entry)
+                                      char *new_name,
+				      short loadpropertiesall, OVLexicon *loadproplex)
 {
   int ok = true;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
   int isNew;
   int nAtom;
-  char *restart = NULL, *start;
+  char *restart = NULL, *start = *next_entry;
   int repeatFlag = true;
   int successCnt = 0;
   char tmpName[WordLength];
@@ -9483,7 +9482,6 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
   int set_formal_charges = false;
   *next_entry = NULL;
 
-  start = st;
   while(repeatFlag) {
     repeatFlag = false;
     skip_out = false;
@@ -9578,9 +9576,8 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
         UtilNCopy(tmpName, cset->Name, WordLength);
 
       cset->Obj = I;
-      cset->fEnumIndices(cset);
-      if(cset->fInvalidateRep)
-        cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
+      cset->enumIndices();
+      cset->invalidateRep(cRepAll, cRepInvRep);
       if(isNew) {
         I->AtomInfo = atInfo;   /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
@@ -9596,7 +9593,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(I->NCSet <= frame)
         I->NCSet = frame + 1;
       if(I->CSet[frame])
-        I->CSet[frame]->fFree(I->CSet[frame]);
+        I->CSet[frame]->fFree();
       I->CSet[frame] = cset;
 
       if(ok && isNew)
@@ -10005,8 +10002,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule * I, float *ttt, int frame)
     if((frame < 0) || (frame == b)) {
       cs = I->CSet[b];
       if(cs) {
-        if(cs->fInvalidateRep)
-          cs->fInvalidateRep(I->CSet[b], cRepAll, cRepInvCoord);
+        cs->invalidateRep(cRepAll, cRepInvCoord);
         MatrixTransformTTTfN3f(cs->NIndex, cs->Coord, ttt, cs->Coord);
         CoordSetRecordTxfApplied(cs, ttt, false);
       }
@@ -10128,8 +10124,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               }
             }
             if(inv_flag && cs) {
-              if(cs->fInvalidateRep)
-                cs->fInvalidateRep(cs, cRepAll, cRepInvRep);
+              cs->invalidateRep(cRepAll, cRepInvRep);
             }
           }
         }
@@ -11605,12 +11600,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     if(op->i1 < 0) {
                       /* invalidate all representations */
                       for(d = 0; d < cRepCnt; d++) {
-                        if(cs->fInvalidateRep)
-                          cs->fInvalidateRep(cs, d, op->i2);
+                        cs->invalidateRep(d, op->i2);
                       }
-                    } else if(cs->fInvalidateRep)
+                    } else
                       /* invalidate only that particular representation */
-                      cs->fInvalidateRep(cs, op->i1, op->i2);
+                      cs->invalidateRep(op->i1, op->i2);
                   }
                   break;
                 }
@@ -11801,8 +11795,8 @@ struct _CCoordSetUpdateThreadInfo {
 
 void CoordSetUpdateThread(CCoordSetUpdateThreadInfo * T)
 {
-  if(T->cs && T->cs->fUpdate) {
-    T->cs->fUpdate(T->cs, T->a);
+  if(T->cs) {
+    T->cs->update(T->a);
   }
 }
 
@@ -11925,9 +11919,7 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
             PRINTFB(G, FB_ObjectMolecule, FB_Blather)
               " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n",
               a + 1, I->Obj.Name ENDFB(G);
-            if(I->CSet[a]->fUpdate) {
-              I->CSet[a]->fUpdate(I->CSet[a], a);
-            }
+            I->CSet[a]->update(a);
           }
         }
       }
@@ -12002,9 +11994,7 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
       CoordSet *cset = 0;
       cset = I->CSet[a];
       if(cset) {
-        if(cset->fInvalidateRep) {
-          cset->fInvalidateRep(cset, rep, level);
-        }
+        cset->invalidateRep(rep, level);
 #ifndef NO_MMLIBS
 	if (!cset->noInvalidateMMStereoAndTextType){
 	  /* update mmstereo */
@@ -12083,7 +12073,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, float *v, i
     cs = I->CSet[state];
     if(cs) {
       result = CoordSetMoveAtom(I->CSet[state], index, v, mode);
-      cs->fInvalidateRep(cs, cRepAll, cRepInvCoord);
+      cs->invalidateRep(cRepAll, cRepInvCoord);
       ExecutiveUpdateCoordDepends(G, I);
     }
   }
@@ -12118,7 +12108,7 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float 
     cs = I->CSet[state];
     if(cs) {
       result = CoordSetMoveAtomLabel(I->CSet[state], index, v, mode);
-      cs->fInvalidateRep(cs, cRepLabel, cRepInvCoord);
+      cs->invalidateRep(cRepLabel, cRepInvCoord);
     }
   }
   return (result);
@@ -12433,11 +12423,11 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
   if(state < 0) {
     for(a = 0; a < I->NCSet; a++) {
       cs = I->CSet[a];
-      if(cs && cs->fRender) {
+      if(cs) {
         if(use_matrices)
           pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State, info);
         /* need to apply object state matrix here */
-        cs->fRender(cs, info);
+        cs->render(info);
         if(pop_matrix)
           ObjectStatePopMatrix(&cs->State, info);
 
@@ -12445,20 +12435,20 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
     }
   } else if(state < I->NCSet) {
     cs = I->CSet[(I->CurCSet = state % I->NCSet)];
-    if(cs && cs->fRender) {
+    if(cs) {
       if(use_matrices)
         pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State, info);
-      cs->fRender(cs, info);
+      cs->render(info);
       if(pop_matrix)
         ObjectStatePopMatrix(&cs->State, info);
     }
   } else if(I->NCSet == 1) {    /* if only one coordinate set, assume static */
     cs = I->CSet[0];
     if(SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_static_singletons))
-      if(cs && cs->fRender) {
+      if(cs) {
         if(use_matrices)
           pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State, info);
-        cs->fRender(cs, info);
+        cs->render(info);
         if(pop_matrix)
           ObjectStatePopMatrix(&cs->State, info);
       }
@@ -12476,7 +12466,7 @@ void ObjectMoleculeDummyUpdate(ObjectMolecule * I, int mode)
     SceneOriginGet(I->Obj.G, I->CSet[0]->Coord);
     break;
   case cObjectMoleculeDummyCenter:
-    SceneGetPos(I->Obj.G, I->CSet[0]->Coord);
+    SceneGetCenter(I->Obj.G, I->CSet[0]->Coord);
     break;
   }
 }
@@ -12530,7 +12520,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
   strcpy(cset->Name, "_origin");
 
   cset->Obj = I;
-  cset->fEnumIndices(cset);
+  cset->enumIndices();
 
   ok &= ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_IDMask, true);       /* NOTE: will release atInfo */
   if (ok){
@@ -12542,7 +12532,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals * G, int type)
       if(I->NCSet <= frame)
 	I->NCSet = frame + 1;
       if(I->CSet[frame])
-	I->CSet[frame]->fFree(I->CSet[frame]);
+	I->CSet[frame]->fFree();
       I->CSet[frame] = cset;
       
       I->NBond = 0;
@@ -12749,8 +12739,7 @@ void ObjectMoleculeFree(ObjectMolecule * I)
   SelectorPurgeObjectMembers(I->Obj.G, I);
   for(a = 0; a < I->NCSet; a++){
     if(I->CSet[a]) {
-      if(I->CSet[a]->fFree)
-        I->CSet[a]->fFree(I->CSet[a]);
+      I->CSet[a]->fFree();
       I->CSet[a] = NULL;
     }
   }
@@ -12788,8 +12777,7 @@ void ObjectMoleculeFree(ObjectMolecule * I)
   if(I->Sculpt)
     SculptFree(I->Sculpt);
   if(I->CSTmpl)
-    if(I->CSTmpl->fFree)
-      I->CSTmpl->fFree(I->CSTmpl);
+    I->CSTmpl->fFree();
   ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
@@ -12849,10 +12837,8 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
     }
 
     cset->Obj = I;
-    if(cset->fEnumIndices)
-      cset->fEnumIndices(cset);
-    if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
+    cset->enumIndices();
+    cset->invalidateRep(cRepAll, cRepInvRep);
     if(isNew) {
       I->AtomInfo = atInfo;     /* IMPORTANT to reassign: this VLA may have moved! */
       I->NAtom = nAtom;
@@ -13005,9 +12991,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       }
 
       cset->Obj = I;
-      cset->fEnumIndices(cset);
-      if(cset->fInvalidateRep)
-        cset->fInvalidateRep(cset, cRepAll, cRepInvRep);
+      cset->enumIndices();
+      cset->invalidateRep(cRepAll, cRepInvRep);
       if(isNew) {
         I->AtomInfo = atInfo;   /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
@@ -13028,7 +13013,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
 	if(I->NCSet <= state)
 	  I->NCSet = state + 1;
 	if(I->CSet[state])
-	  I->CSet[state]->fFree(I->CSet[state]);
+	  I->CSet[state]->fFree();
 	I->CSet[state] = cset;
       }
       if(ok && isNew)

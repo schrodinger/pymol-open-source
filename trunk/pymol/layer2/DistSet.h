@@ -35,10 +35,14 @@ typedef struct CMeasureInfo {
 } CMeasureInfo;
 
 typedef struct DistSet {
-  void (*fUpdate) (struct DistSet * I, int state);
-  void (*fRender) (struct DistSet * I, RenderInfo *);
-  void (*fFree) (struct DistSet * I);
-  void (*fInvalidateRep) (struct DistSet * I, int type, int level);
+  // methods (not fully refactored yet)
+  void fFree();
+
+  // methods
+  void update(int state);
+  void render(RenderInfo *);
+  void invalidateRep(int type, int level);
+
   CObjectState State;
   struct ObjectDist *Obj;
   float *Coord;

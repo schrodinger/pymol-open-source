@@ -1885,19 +1885,19 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
           float *vc;
           float radius = ray->PixelRadius / 1.4142F;
           vc = ColorGet(G, I->Obj.Color);
-          ray->fColor3fv(ray, vc);
-          ray->fSausage3fv(ray, corner + 3 * 0, corner + 3 * 1, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 0, corner + 3 * 2, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 2, corner + 3 * 3, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 1, corner + 3 * 3, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 0, corner + 3 * 4, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 1, corner + 3 * 5, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 2, corner + 3 * 6, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 3, corner + 3 * 7, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 4, corner + 3 * 5, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 4, corner + 3 * 6, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 6, corner + 3 * 7, radius, vc, vc);
-          ray->fSausage3fv(ray, corner + 3 * 5, corner + 3 * 7, radius, vc, vc);
+          ray->color3fv(vc);
+          ray->sausage3fv(corner + 3 * 0, corner + 3 * 1, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 0, corner + 3 * 2, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 2, corner + 3 * 3, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 1, corner + 3 * 3, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 0, corner + 3 * 4, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 1, corner + 3 * 5, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 2, corner + 3 * 6, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 3, corner + 3 * 7, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 4, corner + 3 * 5, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 4, corner + 3 * 6, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 6, corner + 3 * 7, radius, vc, vc);
+          ray->sausage3fv(corner + 3 * 5, corner + 3 * 7, radius, vc, vc);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
@@ -2007,8 +2007,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
       }
 
       if(I->Obj.RepVis[cRepDot]) {
-        /* note, the following rep doesn't work with state matrices yet */
-
         if(!ms->have_range) {
           double sum = 0.0, sumsq = 0.0;
           CField *data = ms->Field->data;
@@ -2044,7 +2042,16 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
           }
           if(data && points) {
             register float *raw_data = (float *) data->data;
-            register float *raw_point = (float *) points->data;
+            float raw_point[3], *raw_point_ptr = (float *) points->data;
+
+#define RAW_POINT_TRANSFORM(ptr, v3f) { \
+  if(ms->State.Matrix) \
+    transform44d3f(ms->State.Matrix, ptr, v3f); \
+  else \
+    copy3f(ptr, v3f); \
+  ptr += 3; \
+}
+
             register float *raw_gradient = NULL;
             register float high_cut = ms->high_cutoff, low_cut = ms->low_cutoff;
             register float width =
@@ -2063,14 +2070,14 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
 
               for(a = 0; a < cnt; a++) {
                 register float f_val = *(raw_data++);
+                RAW_POINT_TRANSFORM(raw_point_ptr, raw_point);
                 if((f_val >= high_cut) || (f_val <= low_cut)) {
                   if(ramped) {
                     ColorGetRamped(G, color, raw_point, vc, state);
-                    ray->fColor3fv(ray, vc);
+                    ray->color3fv(vc);
                   }
-                  ray->fSphere3fv(ray, raw_point, radius);
+                  ray->sphere3fv(raw_point, radius);
                 }
-                raw_point += 3;
               }
             } else if(G->HaveGUI && G->ValidContext) {
               if(pick) {
@@ -2111,6 +2118,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
 
 		      for(a = 0; a < cnt; a++) {
 			register float f_val = *(raw_data++);
+			RAW_POINT_TRANSFORM(raw_point_ptr, raw_point);
 			if(f_val >= high_cut) {
 			  if(raw_gradient) {
 			    normalize23f(raw_gradient, gt);
@@ -2134,7 +2142,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
 			}
 			if(raw_gradient)
 			  raw_gradient += 3;
-			raw_point += 3;
 			pl += 3;
 			plc += 4;
 		      }
@@ -2169,6 +2176,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
                   ObjectUseColor(&I->Obj);
                   for(a = 0; a < cnt; a++) {
                     register float f_val = *(raw_data++);
+                    RAW_POINT_TRANSFORM(raw_point_ptr, raw_point);
                     if(f_val >= high_cut) {
                       if(raw_gradient) {
                         normalize23f(raw_gradient, gt);
@@ -2193,7 +2201,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
                     }
                     if(raw_gradient)
                       raw_gradient += 3;
-                    raw_point += 3;
                   }
                   glEnd();
 #endif

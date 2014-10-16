@@ -744,7 +744,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
             CGORenderRay(ms->UnitCellCGO, ray, ColorGet(G, I->Obj.Color),
                          I->Obj.Setting, NULL);
 
-          ray->fTransparentf(ray, 1.0F - alpha);
+          ray->transparentf(1.0F - alpha);
           ms->Radius = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_mesh_radius);
           if(ms->Radius == 0.0F) {
             ms->Radius = ray->PixelRadius *
@@ -779,11 +779,11 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
                         ColorGetEncoded(G, rc[2], (cC = colC));
                       rc++;
                     }
-                    ray->fTriangle3fv(ray, v - 9, v - 3, v + 3,
+                    ray->triangle3fv(v - 9, v - 3, v + 3,
                                       v - 12, v - 6, v, cA, cB, cC);
                     vc += 3;
                   } else {
-                    ray->fTriangle3fv(ray, v - 9, v - 3, v + 3,
+                    ray->triangle3fv(v - 9, v - 3, v + 3,
                                       v - 12, v - 6, v, cc, cc, cc);
                   }
                   v += 6;
@@ -805,10 +805,10 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
                         ColorGetEncoded(G, rc[1], (cB = colB));
                       rc++;
                     }
-                    ray->fSausage3fv(ray, v - 3, v, ms->Radius, cA, cB);
+                    ray->sausage3fv(v - 3, v, ms->Radius, cA, cB);
                     vc += 3;
                   } else
-                    ray->fSausage3fv(ray, v - 3, v, ms->Radius, cc, cc);
+                    ray->sausage3fv(v - 3, v, ms->Radius, cc, cc);
                   v += 3;
                   c--;
                 }
@@ -817,10 +817,10 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
               default:
                 while(c > 0) {
                   if(vc) {
-                    ray->fColor3fv(ray, vc);
+                    ray->color3fv(vc);
                     vc += 3;
                   }
-                  ray->fSphere3fv(ray, v, ms->Radius);
+                  ray->sphere3fv(v, ms->Radius);
                   v += 3;
                   c--;
                 }
@@ -829,7 +829,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
             }
 
           }
-          ray->fTransparentf(ray, 0.0);
+          ray->transparentf(0.0);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {

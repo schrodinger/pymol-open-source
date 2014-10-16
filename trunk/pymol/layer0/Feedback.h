@@ -171,6 +171,9 @@ function name.
 #define FB_Shader                    61
 #define FB_ShaderMgr                 62
 #define FB_ShaderPrg                 63
+#define FB_Session                   64
+// in layer1
+#define FB_Property                  65
 
 /* layer 3 */
 

@@ -98,34 +98,19 @@ static OVstatus OVLexicon_CheckStorage(OVLexicon * uk, ov_word entry_size,
  */
 static ov_word _GetCStringHash(ov_uchar8 * str)
 {
-  register ov_uchar8 *p = str;
-  register ov_word x;
-  register ov_size len = 0;
-  register ov_uchar8 c;
+  const ov_uchar8 *p = str;
+  ov_word x;
+  ov_size len = 0;
+  ov_uchar8 c;
 
   x = *p << 7;
   while((c = *(p++))) {
-#if 0
-    x = (1000003 * x) + c;      /* PYTHON (time: G5 = 3.2, P3 = 19.3, P4=11.1) */
-#endif
-#if 0
-    x = (x << 6) + (x << 16) - x + c;   /* aho (G5 = 3.6 sec, P3 = 15.2?!, P4=3.6) */
-#endif
-#if 1
     x = (x << 5) + x + c;       /*  djb2 (G5 = 2.8, P3 = 18.7, P4=2.9) FASTEST OVERALL */
-#endif
     len++;
   }
   x ^= len;
   return x;
 }
-
-#if 0
-ov_word OVLexicon_GetCStringHash(ov_char8 * str)
-{
-  return _GetCStringHash((ov_uchar8 *) str);
-}
-#endif
 
 OVstatus OVLexicon_Pack(OVLexicon * uk)
 {
@@ -262,7 +247,7 @@ OVstatus OVLexicon_IncRef(OVLexicon * uk, ov_word id)
   }
 }
 
-OVreturn_word OVLexicon_GetFromCString(OVLexicon * uk, ov_char8 * str)
+OVreturn_word OVLexicon_GetFromCString(OVLexicon * uk, const ov_char8 * str)
 {
   ov_word hash = _GetCStringHash((ov_uchar8 *) str);
   OVreturn_word search = OVOneToOne_GetForward(uk->up, hash);
@@ -354,7 +339,7 @@ OVreturn_word OVLexicon_GetFromCString(OVLexicon * uk, ov_char8 * str)
   }
 }
 
-OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, ov_char8 * str)
+OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, const ov_char8 * str)
 {
   /* get hash token for this word */
   ov_word hash = _GetCStringHash((ov_uchar8 *) str);

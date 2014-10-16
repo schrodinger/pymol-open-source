@@ -197,6 +197,9 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
   Pickable *p;
   float alpha;
   int ok = true;
+  // 0.018f is found by trial and error
+  // TODO: this is not sufficient to solve the problem of disappearing cylinders
+  float scale_bound = SettingGetGlobal_f(G, cSetting_field_of_view)  * cPI / 180.0f * 0.018f;
 
   alpha =
     SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_transparency);
@@ -205,7 +208,8 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
     alpha = 1.0F;
   if(ray) {
     float radius;
-    ray->fTransparentf(ray, 1.0F - alpha);
+    float pixel_radius = ray->PixelRadius;
+    ray->transparentf(1.0F - alpha);
 
     if(I->Radius == 0.0F) {
       radius = ray->PixelRadius * I->Width / 2.0F;
@@ -218,14 +222,14 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
 
     while(ok && c--) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]); */
-      ok &= ray->fSausage3fv(ray, v + 3, v + 6, radius, v, v);
+      ok &= ray->sausage3fv(v + 3, v + 6, radius, v, v);
       if (ok)
-	ok &= ray->fSausage3fv(ray, v + 9, v + 12, radius, v, v);
+	ok &= ray->sausage3fv(v + 9, v + 12, radius, v, v);
       if (ok)
-	ok &= ray->fSausage3fv(ray, v + 15, v + 18, radius, v, v);
+	ok &= ray->sausage3fv(v + 15, v + 18, radius, v, v);
       v += 21;
     }
-    ray->fTransparentf(ray, 0.0);
+    ray->transparentf(0.0);
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
 
@@ -355,6 +359,8 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
 	} else {
 	  CShaderPrg *shaderPrg;
 	  if (nonbonded_as_cylinders){
+	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
+	    float vertex_scale = info->vertex_scale;
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;
@@ -388,7 +394,7 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
       v = I->V;
       c = I->N;
       if (ok && generate_shader_cgo){
-	ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE);
+	ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_WITH_SCALE);
 	if(ok && !info->line_lighting)
 	  ok &= CGODisable(I->shaderCGO, GL_LIGHTING);
 	if (nonbonded_as_cylinders){
@@ -589,6 +595,8 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
 	if (ok){
 	  CShaderPrg *shaderPrg;
 	  if (nonbonded_as_cylinders){
+	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
+	    float vertex_scale = info->vertex_scale;
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;

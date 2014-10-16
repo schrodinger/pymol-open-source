@@ -23,7 +23,9 @@ file_ext_re = re.compile(string.join([
     r"\.moe$|", # MOE (proprietary)
     r"\.mae$|", # MAE (proprietary)
     r"\.cms$|", # CMS (proprietary)
-    r"\.ccp4$|", # CCP4
+    r"\.idx$|", # Desmond Traj (proprietary)
+    r"\.spi$|\.spider$|", # Spider Map
+    r"\.ccp4$|\.mrc$|\.map$|", # CCP4
     r"\.top$|", # AMBER Topology
     r"\.trj$|", # AMBER Trajectory
     r"\.crd$|", # AMBER coordinate file
@@ -97,8 +99,13 @@ class loadable:
     dtr = 57      # DESRES / Desmond
     pze = 58
     pzw = 59
+    cif = 60      # C++ based CIF parser
+    cifstr = 61
+    spider = 62   # spider map
+    cms = 63
 
 _load2str = { loadable.pdb : loadable.pdbstr,
+              loadable.cif : loadable.cifstr,
               loadable.mol : loadable.molstr,
               loadable.xplor : loadable.xplorstr,
               loadable.mol2 : loadable.mol2str,

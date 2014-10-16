@@ -116,28 +116,8 @@ struct _CRayAntiThreadInfo {
 };
 
 void RayRelease(CRay * I);
-void RayWobble(CRay * I, int mode, float *v);
-void RayTransparentf(CRay * I, float v);
 
 void RaySetup(CRay * I);
-void RayColor3fv(CRay * I, float *v);
-int RaySphere3fv(CRay * I, float *v, float r);
-int RayCharacter(CRay * I, int char_id);
-int RayCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2);
-int RaySausage3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2);
-void RayInteriorColor3fv(CRay * I, float *v, int passive);
-int RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
-                float *c1, float *c2, int cap1, int cap2);
-int RayTriangle3fv(CRay * I,
-		   float *v1, float *v2, float *v3,
-		   float *n1, float *n2, float *n3, float *c1, float *c2, float *c3);
-
-int RayTriangleTrans3fv(CRay * I,
-			float *v1, float *v2, float *v3,
-			float *n1, float *n2, float *n3,
-			float *c1, float *c2, float *c3, float t1, float t2, float t3);
-int RayEllipsoid3fv(CRay * I, float *v, float r, float *n1, float *n2, float *n3);
-
 void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p);
 void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], float3 * p);
 
@@ -151,8 +131,6 @@ void RayTransformInverseNormals33(unsigned int n, float3 * q, const float m[16],
                                   float3 * p);
 void RayProjectTriangle(CRay * I, RayInfo * r, float *light, float *v0, float *n0,
                         float scale);
-int RayCustomCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2,
-			 int cap1, int cap2);
 void RaySetContext(CRay * I, int context)
 {
   if(context >= 0)
@@ -2546,7 +2524,7 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
       float loc[3] = { 0.0F, 0.0F, 0.0F };
       SceneViewType view;
 
-      SceneGetPos(I->G, look);
+      SceneGetCenter(I->G, look);
       SceneGetView(I->G, view);
       loc[2] = -view[18];
       MatrixInvTransformC44fAs33f3f(view, loc, loc);
@@ -2606,7 +2584,7 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
       float look[3];
       SceneViewType view;
 
-      SceneGetPos(I->G, look);
+      SceneGetCenter(I->G, look);
       SceneGetView(I->G, view);
 
       lite[0] = -light[0] * 10000.0F;
@@ -6443,8 +6421,9 @@ void RayRenderColorTable(CRay * I, int width, int height, int *image)
 
 
 /*========================================================================*/
-void RayWobble(CRay * I, int mode, float *v)
+void CRay::wobble(int mode, float *v)
 {
+  CRay * I = this;
   I->Wobble = mode;
   if(v)
     copy3f(v, I->WobbleParam);
@@ -6452,8 +6431,9 @@ void RayWobble(CRay * I, int mode, float *v)
 
 
 /*========================================================================*/
-void RayTransparentf(CRay * I, float v)
+void CRay::transparentf(float v)
 {
+  CRay * I = this;
   if(v > 1.0F)
     v = 1.0F;
   if(v < 0.0F)
@@ -6461,8 +6441,9 @@ void RayTransparentf(CRay * I, float v)
   I->Trans = v;
 }
 
-void RayInteriorColor3fv(CRay * I, float *v, int passive)
+void CRay::interiorColor3fv(float *v, int passive)
 {
+  CRay * I = this;
   I->IntColor[0] = (*v++);
   I->IntColor[1] = (*v++);
   I->IntColor[2] = (*v++);
@@ -6472,8 +6453,9 @@ void RayInteriorColor3fv(CRay * I, float *v, int passive)
 
 
 /*========================================================================*/
-void RayColor3fv(CRay * I, float *v)
+void CRay::color3fv(float *v)
 {
+  CRay * I = this;
   I->CurColor[0] = (*v++);
   I->CurColor[1] = (*v++);
   I->CurColor[2] = (*v++);
@@ -6481,8 +6463,9 @@ void RayColor3fv(CRay * I, float *v)
 
 
 /*========================================================================*/
-int RaySphere3fv(CRay * I, float *v, float r)
+int CRay::sphere3fv(float *v, float r)
 {
+  CRay * I = this;
   CPrimitive *p;
   int ok = true;
   float *vv;
@@ -6560,8 +6543,9 @@ void RayGetScaledAxes(CRay * I, float *xn, float *yn)
 
 
 /*========================================================================*/
-int RayCharacter(CRay * I, int char_id)
+int CRay::character(int char_id)
 {
+  CRay * I = this;
   CPrimitive *p;
   float *v;
   float vt[3];
@@ -6698,8 +6682,9 @@ int RayCharacter(CRay * I, int char_id)
 
 
 /*========================================================================*/
-int RayCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2)
+int CRay::cylinder3fv(float *v1, float *v2, float r, float *c1, float *c2)
 {
+  CRay * I = this;
   CPrimitive *p;
   int ok = true;
   float *vv;
@@ -6766,9 +6751,10 @@ int RayCylinder3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2
 
 
 /*========================================================================*/
-int RayCustomCylinder3fv(CRay * I, float *v1, float *v2, float r,
+int CRay::customCylinder3fv(float *v1, float *v2, float r,
 			 float *c1, float *c2, int cap1, int cap2)
 {
+  CRay * I = this;
   CPrimitive *p;
   int ok = true;
   float *vv;
@@ -6833,9 +6819,10 @@ int RayCustomCylinder3fv(CRay * I, float *v1, float *v2, float r,
   return true;
 }
 
-int RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
+int CRay::cone3fv(float *v1, float *v2, float r1, float r2,
 	       float *c1, float *c2, int cap1, int cap2)
 {
+  CRay * I = this;
   CPrimitive *p;
   float r_max = (r1 > r2) ? r1 : r2;
   float *vv;
@@ -6927,8 +6914,9 @@ int RayCone3fv(CRay * I, float *v1, float *v2, float r1, float r2,
 
 
 /*========================================================================*/
-int RaySausage3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2)
+int CRay::sausage3fv(float *v1, float *v2, float r, float *c1, float *c2)
 {
+  CRay * I = this;
   CPrimitive *p;
   int ok = true;
   float *vv;
@@ -6991,9 +6979,9 @@ int RaySausage3fv(CRay * I, float *v1, float *v2, float r, float *c1, float *c2)
   return true;
 }
 
-int RayEllipsoid3fv(CRay * I, float *v, float r, float *n1, float *n2, float *n3)
+int CRay::ellipsoid3fv(float *v, float r, float *n1, float *n2, float *n3)
 {
-
+  CRay * I = this;
   CPrimitive *p;
   int ok = true;
   float *vv;
@@ -7095,12 +7083,26 @@ int RayEllipsoid3fv(CRay * I, float *v, float r, float *n1, float *n2, float *n3
   return true;
 }
 
+int CRay::setLastToNoLighting(char no_lighting)
+{
+#if 0
+  CRay * I = this;
+  CPrimitive *p;
+  if (!I->NPrimitive)
+    return false;
+  p = I->Primitive + I->NPrimitive - 1;
+  p->no_lighting = no_lighting;
+  return true;
+#endif
+}
+
 
 /*========================================================================*/
-int RayTriangle3fv(CRay * I,
+int CRay::triangle3fv(
 		   float *v1, float *v2, float *v3,
 		   float *n1, float *n2, float *n3, float *c1, float *c2, float *c3)
 {
+  CRay * I = this;
   CPrimitive *p;
   int ok = true;
   float *vv;
@@ -7266,14 +7268,15 @@ int RayTriangle3fv(CRay * I,
   return true;
 }
 
-int RayTriangleTrans3fv(CRay * I,
+int CRay::triangleTrans3fv(
 			float *v1, float *v2, float *v3,
 			float *n1, float *n2, float *n3,
 			float *c1, float *c2, float *c3, float t1, float t2, float t3)
 {
+  CRay * I = this;
   CPrimitive *p;
   int ok = true;
-  ok = RayTriangle3fv(I, v1, v2, v3, n1, n2, n3, c1, c2, c3);
+  ok = I->triangle3fv(v1, v2, v3, n1, n2, n3, c1, c2, c3);
   if (!ok)
     return false;
   p = I->Primitive + I->NPrimitive - 1;
@@ -7312,19 +7315,6 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
   I->NBasis = 2;
   I->Primitive = NULL;
   I->NPrimitive = 0;
-  I->fColor3fv = RayColor3fv;
-  I->fSphere3fv = RaySphere3fv;
-  I->fCylinder3fv = RayCylinder3fv;
-  I->fCone3fv = RayCone3fv;
-  I->fCustomCylinder3fv = RayCustomCylinder3fv;
-  I->fSausage3fv = RaySausage3fv;
-  I->fTriangle3fv = RayTriangle3fv;
-  I->fTriangleTrans3fv = RayTriangleTrans3fv;
-  I->fCharacter = RayCharacter;
-  I->fInteriorColor3fv = RayInteriorColor3fv;
-  I->fWobble = RayWobble;
-  I->fTransparentf = RayTransparentf;
-  I->fEllipsoid3fv = RayEllipsoid3fv;
   I->TTTStackVLA = NULL;
   I->TTTStackDepth = 0;
   I->CheckInterior = false;

@@ -329,6 +329,7 @@ int ObjectMotion(CObject * I, int action, int first,
             state_flag = true;
           } else if(SettingGetIfDefined_i(G, I->Setting, cSetting_state, &state_tmp)) {
             state_flag = true;
+            state_tmp--;
           }
         
           for(frame = first; frame <= last; frame++) {

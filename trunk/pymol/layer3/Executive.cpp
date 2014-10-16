@@ -1334,7 +1334,7 @@ int ExecutivePseudoatom(PyMOLGlobals * G, char *object_name, char *sele,
   if(sele && sele[0]) {
     if(WordMatch(G, cKeywordCenter, sele, 1) < 0) {
       sele = NULL;
-      SceneGetPos(G, local_pos);
+      SceneGetCenter(G, local_pos);
       pos = local_pos;
     } else if(WordMatch(G, cKeywordOrigin, sele, 1) < 0) {
       sele = NULL;
@@ -3445,284 +3445,299 @@ int ExecutiveSetName(PyMOLGlobals * G, char *old_name, char *new_name)
   return ok;
 }
 
+/*
+ * Load any file type which is implemented in C.
+ *
+ * origObj:     Existing object to extend or replace, or NULL
+ * content:     Either file name or file contents, depending on "content_format"
+ * content_length:      Length of "content", if it's not a file name
+ * content_format:      File type code
+ * object_name:         New object name
+ * state:       Object state to start loading new coordsets in
+ * zoom:        Zoom on new loaded atoms
+ * discrete:    Make discrete states
+ * finish:      update object selection & zoom
+ * multiplex:   Split new states into objects
+ * quiet:       Suppress feedback
+ * loadpropertiesall:   Load all atom and object properties
+ * loadproplex:         ?
+ */
 int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
                   char *content, int content_length,
                   int content_format,
                   char *object_name,
                   int state, int zoom,
-                  int discrete, int finish, int multiplex, int quiet, char *plugin)
+                  int discrete, int finish, int multiplex, int quiet,
+                  char * /* unused */,
+		  short loadpropertiesall, OVLexicon *loadproplex)
 {
   int ok = true;
-  int is_string = false;
-  int is_handled_by_python = false;
+  char * fname = content;
+  char * buffer = NULL;
+  long size = (long) content_length;
+  OrthoLineType buf = "";
+  char plugin[16] = "";
+  CObject *obj = NULL;
+  bool is_pqr_file = false;
 
   switch (content_format) {
+  // string loading functions
   case cLoadTypePDBStr:
-  case cLoadTypeMOLStr:
-  case cLoadTypeMMDStr:
+  case cLoadTypeCIFStr:
   case cLoadTypeXPLORStr:
-  case cLoadTypeMOL2Str:
   case cLoadTypeCCP4Str:
-  case cLoadTypeSDF2Str:
   case cLoadTypePHIStr:
-    is_string = true;
+  case cLoadTypeMMDStr:
+  case cLoadTypeMOLStr:
+  case cLoadTypeMOL2Str:
+  case cLoadTypeSDF2Str:
+  case cLoadTypeXYZStr:
+    fname = NULL;
     break;
-  case cLoadTypeP1M:
-  case cLoadTypePMO:
-  case cLoadTypeXYZ:
-  case cLoadTypePDB:
-  case cLoadTypeMOL:
-  case cLoadTypeMMD:
-  case cLoadTypeMMDSeparate:
-  case cLoadTypeTOP:
-  case cLoadTypeTRJ:
-  case cLoadTypeCRD:
-  case cLoadTypeRST:
   case cLoadTypePQR:
-  case cLoadTypeMOL2:
-  case cLoadTypeSDF2:
+  case cLoadTypePDB:
+  case cLoadTypeCIF:
   case cLoadTypeXPLORMap:
   case cLoadTypeCCP4Map:
   case cLoadTypePHIMap:
-  case cLoadTypeFLDMap:
-  case cLoadTypeBRIXMap:
-  case cLoadTypeGRDMap:
-  case cLoadTypeDXMap:
-    is_string = false;
-    break;
-  case cLoadTypeCUBEMap:
-    is_string = true;           /* this is a lie: content is actually the filename */
-    break;
-  case cLoadTypeCGO:
-    is_string = true;           /* this is a lie: contet is actually an array of floats */
-    break;
-  case cLoadTypePSE:
-  case cLoadTypeSDF1:
-  case cLoadTypeChemPyModel:
-  case cLoadTypeChemPyBrick:
-  case cLoadTypeChemPyMap:
-  case cLoadTypeCallback:
-  case cLoadTypeR3D:
-    /* should never get here... */
+  case cLoadTypeMMD:
+  case cLoadTypeMOL:
+  case cLoadTypeMOL2:
+  case cLoadTypeSDF2:
+  case cLoadTypeXYZ:
+    buffer = FileGetContents(fname, &size);
+    content = buffer;
 
-    is_handled_by_python = true;
+    if(!buffer) {
+      PRINTFB(G, FB_Executive, FB_Errors)
+        "ExecutiveLoad-Error: Unable to open file '%s'.\n", fname ENDFB(G);
+      return false;
+    } else {
+      PRINTFB(G, FB_Executive, FB_Blather)
+        " ExecutiveLoad: Loading from %s.\n", fname ENDFB(G);
+    }
+
+    break;
+
+  // molfile_plugin based formats
+  case cLoadTypeCUBEMap:
+    strcpy(plugin, "cube");
+    break;
+  case cLoadTypeSpider:
+    strcpy(plugin, "spider");
+    break;
+  case cLoadTypeXTC:
+    strcpy(plugin, "xtc");
+    break;
+  case cLoadTypeTRR:
+    strcpy(plugin, "trr");
+    break;
+  case cLoadTypeGRO:
+    strcpy(plugin, "gro");
+    break;
+  case cLoadTypeG96:
+    strcpy(plugin, "g96");
+    break;
+  case cLoadTypeTRJ2:
+    strcpy(plugin, "trj");
+    break;
+  case cLoadTypeDCD:
+    strcpy(plugin, "dcd");
+    break;
+  case cLoadTypeDTR:
+    strcpy(plugin, "dtr");
+    break;
+  case cLoadTypeCMS:
+    strcpy(plugin, "mae");
     break;
   }
 
-  if(is_handled_by_python) {
-    PRINTFB(G, FB_Executive, FB_Errors)
-      "ExecutiveLoad-Error: unable to read that file type from C\n" ENDFB(G);
-  } else {
-    OrthoLineType buf = "";
-    int already_handled = false;
-
-    switch (content_format) {
-    case cLoadTypePDB:
-    case cLoadTypePDBStr:
-      {
-
-        ok = ExecutiveProcessPDBFile(G, origObj, content, object_name,
-                                     state, discrete, finish, buf, NULL,
-                                     quiet, is_string, multiplex, zoom);
-        /* missing return status */
-      }
-      already_handled = true;
-      break;
-    }
-
-    if(!already_handled) {
-
-      long size = 0;
-      char *buffer = NULL;
-      CObject *obj = NULL;
-      char new_name[WordLength] = "";
-      char *next_entry = NULL;
-      int repeat_flag = true;
-      int n_processed = 0;
-
-      if(is_string) {
-        buffer = content;
-        size = (long) content_length;
-      } else {
-        buffer = FileGetContents(content, &size);
-
-        if(!buffer) {
-          PRINTFB(G, FB_Executive, FB_Errors)
-            "ExecutiveLoad-Error: Unable to open file '%s'.\n", content ENDFB(G);
-          ok = false;
-        } else {
-
-          PRINTFB(G, FB_Executive, FB_Blather)
-            " ExecutiveLoad: Loading from %s.\n", content ENDFB(G);
-        }
-      }
-
-      while(repeat_flag && ok) {
-        char *start_at = buffer;
-        int is_repeat_pass = false;
-        int eff_state = state;
-        int is_new = false;
-
-        if(next_entry) {
-          start_at = next_entry;
-          is_repeat_pass = true;
-        }
-
-        PRINTFD(G, FB_CCmd) " ExecutiveLoad: loading...\n" ENDFD;
-
-        repeat_flag = false;
-        next_entry = NULL;
-
-        if(!origObj)            /* this is a new object */
-          is_new = true;
-
-        new_name[0] = 0;
-
-        switch (content_format) {
-        case cLoadTypeMOL:
-        case cLoadTypeMOLStr:
+  // file type dependent multiplex and discrete default
+  if(discrete < 0) {
+    if(multiplex == 1) {
+      discrete = 0;
+    } else {
+      switch (content_format) {
         case cLoadTypeMOL2:
         case cLoadTypeMOL2Str:
-        case cLoadTypeSDF2:
+          discrete = -1;        /* content-dependent behavior... */
+        case cLoadTypeSDF2:     /* SDF files currently default to discrete */
         case cLoadTypeSDF2Str:
-        case cLoadTypeXYZ:
-        case cLoadTypeXYZStr:
-          obj = (CObject *) ObjectMoleculeReadStr(G, (ObjectMolecule *) origObj,
-                                                  start_at, content_format,
-                                                  eff_state, discrete,
-                                                  quiet, multiplex, new_name,
-                                                  &next_entry);
           break;
-        case cLoadTypeXPLORMap:
-        case cLoadTypeXPLORStr:
-          obj =
-            (CObject *) ObjectMapLoadXPLOR(G, (ObjectMap *) origObj, start_at, eff_state,
-                                           false, quiet);
+        default:
+          discrete = 0;
           break;
-        case cLoadTypePHIMap:
-        case cLoadTypePHIStr:
-          obj =
-            (CObject *) ObjectMapLoadPHI(G, (ObjectMap *) origObj, start_at, eff_state,
-                                         true, size, quiet);
-          break;
-        case cLoadTypeCCP4Map:
-        case cLoadTypeCCP4Str:
-          obj =
-            (CObject *) ObjectMapLoadCCP4(G, (ObjectMap *) origObj, start_at, eff_state,
-                                          true, size, quiet);
-          break;
-        case cLoadTypeCUBEMap:
-          if(plugin) {
-            obj =
-              (CObject *) PlugIOManagerLoadVol(G, (ObjectMap *) origObj, start_at,
-                                               eff_state, quiet, plugin);
-          }
-          break;
-        case cLoadTypeCGO:
-          obj = (CObject *) ObjectCGOFromFloatArray(G, (ObjectCGO *) origObj,
-                                                    (float *) start_at, size, eff_state,
-                                                    quiet);
-          break;
-	case cLoadTypeMMDStr:
-	  obj =
-	    (CObject *) ObjectMoleculeReadMMDStr(G, (ObjectMolecule *) origObj, content, eff_state,
-						 discrete);
-	  if(!origObj) {
-	    if(obj) {
-	      ObjectSetName(obj, new_name);
-	    }
-	  } else if(origObj) {
-	    if(finish)
-	      ExecutiveUpdateObjectSelection(G, origObj);
-	  }
-	  break;
-	case cLoadTypeMMD:
-	  obj =
-	    (CObject *) ObjectMoleculeLoadMMDFile(G, (ObjectMolecule *) origObj, content, eff_state,
-						  NULL, discrete);
-	  if(!origObj) {
-	    if(obj) {
-	      ObjectSetName(obj, new_name);
-	    }
-	  } else if(origObj) {
-	    if(finish)
-	      ExecutiveUpdateObjectSelection(G, origObj);
-	  }
-	  break;
-        }
-
-        if(obj) {
-          if(next_entry) {      /* if set, then we will assume multiple objects are present,
-                                   and thus need to give this object its own name */
-            repeat_flag = true;
-          }
-
-          /* assign the name (if necessary) */
-
-          if(next_entry || is_repeat_pass) {
-            if(is_new && (new_name[0] == 0)) {  /* if there wasn't a name assigned */
-              sprintf(new_name, "%s_%d", object_name, n_processed + 1); /* assign a default name */
-            }
-
-            ObjectSetName(obj, new_name);       /* from file */
-            ExecutiveDelete(G, new_name);       /* just in case there is a collision */
-
-            is_new = true;      /* from now on, treat this as a new object, since indeed it is */
-
-          } else {
-            ObjectSetName(obj, object_name);    /* from filename/parameter */
-          }
-
-          if(obj) {
-
-            if(is_new) {
-              ExecutiveManageObject(G, obj, zoom, true);        /* quiet=true -- suppressing output... */
-            }
-            if(obj->type == cObjectMolecule) {
-              if(finish) {
-                ExecutiveUpdateObjectSelection(G, obj);
-                ExecutiveDoZoom(G, origObj, false, zoom, quiet);
-              }
-            }
-            switch (obj->type) {
-            case cObjectMolecule:
-            case cObjectMap:
-              if(eff_state < 0)
-                eff_state = ((ObjectMolecule *) obj)->NCSet - 1;
-              break;
-            }
-            if(n_processed > 0) {
-              if(!is_string) {
-                sprintf(buf, " ExecutiveLoad: loaded %d objects from \"%s\".\n",
-                        n_processed + 1, content);
-              } else {
-                sprintf(buf, " ExecutiveLoad: loaded %d objects from string.\n",
-                        n_processed + 1);
-              }
-            } else {
-              if(!is_string)
-                sprintf(buf,
-                        " ExecutiveLoad: \"%s\" loaded as \"%s\", through state %d.\n",
-                        content, object_name, eff_state + 1);
-              else
-                sprintf(buf,
-                        " ExecutiveLoad: content loaded into object \"%s\", through state %d.\n",
-                        object_name, eff_state + 1);
-            }
-          }
-          n_processed++;
-        }
-
-      }
-      if((!is_string) && buffer) {
-        mfree(buffer);
       }
     }
+  }
 
-    if(!quiet && buf[0]) {
-      PRINTFB(G, FB_Executive, FB_Actions)
-        "%s", buf ENDFB(G);
+  // downstream file type reading functions
+  switch (content_format) {
+  case cLoadTypePQR:
+    is_pqr_file = true;
+  case cLoadTypePDB:
+  case cLoadTypePDBStr:
+    ok = ExecutiveProcessPDBFile(G, origObj, fname, content, object_name,
+        state, discrete, finish, buf, is_pqr_file,
+        quiet, multiplex, zoom);
+    break;
+  case cLoadTypeCIF:
+  case cLoadTypeCIFStr:
+    obj = (CObject *) ObjectMoleculeReadCifStr(G, (ObjectMolecule *) origObj,
+        content, state, discrete, quiet, multiplex, NULL);
+    break;
+  case cLoadTypeTOP:
+    if(origObj) {
+      /* always reinitialize topology objects from scratch */
+      ExecutiveDelete(G, origObj->Name);
+      origObj = NULL;
     }
+    obj = (CObject *) ObjectMoleculeLoadTOPFile(G, NULL, fname, state, discrete);
+    break;
+  case cLoadTypeTRJ:
+    if(origObj) {
+      ObjectMoleculeLoadTRJFile(G, (ObjectMolecule *) origObj, fname, state,
+          1, 1, 1, -1, -1, NULL, 1, NULL, quiet);
+    } else {
+      PRINTFB(G, FB_CCmd, FB_Errors)
+        "CmdLoad-Error: must load object topology before loading trajectory!" ENDFB(G);
+      ok = false;
+    }
+    break;
+  case cLoadTypeCRD:
+    if(origObj) {
+      ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, state, quiet, 1);
+    } else {
+      PRINTFB(G, FB_CCmd, FB_Errors)
+        "CmdLoad-Error: must load object topology before loading coordinate file!"
+        ENDFB(G);
+      ok = false;
+    }
+    break;
+  case cLoadTypeRST:
+    if(origObj) {
+      ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, state, quiet, 0);
+    } else {
+      PRINTFB(G, FB_CCmd, FB_Errors)
+        "CmdLoad-Error: must load object topology before loading restart file!"
+        ENDFB(G);
+      ok = false;
+    }
+    break;
+  case cLoadTypePMO:
+    obj = (CObject *) ObjectMoleculeLoadPMOFile(G, (ObjectMolecule *) origObj, fname,
+        state, discrete);
+    break;
+  case cLoadTypeDXMap:
+    obj = (CObject *) ObjectMapLoadDXFile(G, (ObjectMap *) origObj, fname,
+        state, quiet);
+    break;
+  case cLoadTypeFLDMap:
+    obj = (CObject *) ObjectMapLoadFLDFile(G, (ObjectMap *) origObj, fname,
+        state, quiet);
+    break;
+  case cLoadTypeBRIXMap:
+    obj = (CObject *) ObjectMapLoadBRIXFile(G, (ObjectMap *) origObj, fname,
+        state, quiet);
+    break;
+  case cLoadTypeGRDMap:
+    obj = (CObject *) ObjectMapLoadGRDFile(G, (ObjectMap *) origObj, fname,
+        state, quiet);
+    break;
+  case cLoadTypeACNTMap:
+    obj = (CObject *) ObjectMapLoadACNTFile(G, (ObjectMap *) origObj, fname,
+        state, quiet);
+    break;
+  case cLoadTypeXPLORMap:
+  case cLoadTypeXPLORStr:
+    obj = (CObject *) ObjectMapLoadXPLOR(G, (ObjectMap *) origObj, content,
+        state, false, quiet);
+    break;
+  case cLoadTypePHIMap:
+  case cLoadTypePHIStr:
+    obj = (CObject *) ObjectMapLoadPHI(G, (ObjectMap *) origObj, content,
+        state, true, size, quiet);
+    break;
+  case cLoadTypeCCP4Map:
+  case cLoadTypeCCP4Str:
+    obj = (CObject *) ObjectMapLoadCCP4(G, (ObjectMap *) origObj, content,
+        state, true, size, quiet);
+    break;
+  case cLoadTypeCGO:
+    obj = (CObject *) ObjectCGOFromFloatArray(G, (ObjectCGO *) origObj,
+        (float *) content, size, state,
+        quiet);
+    break;
+  case cLoadTypeMMDStr:
+    obj = (CObject *) ObjectMoleculeReadMMDStr(G, (ObjectMolecule *) origObj,
+        content, state, discrete);
+    break;
+  case cLoadTypeMMD:
+    obj = (CObject *) ObjectMoleculeLoadMMDFile(G, (ObjectMolecule *) origObj,
+        fname, state, NULL, discrete);
+    break;
+  case cLoadTypeMOL:
+  case cLoadTypeMOLStr:
+  case cLoadTypeMOL2:
+  case cLoadTypeMOL2Str:
+  case cLoadTypeSDF2:
+  case cLoadTypeSDF2Str:
+  case cLoadTypeXYZ:
+  case cLoadTypeXYZStr:
+    {
+      char * next_entry = content;
+      char new_name[WordLength] = "";
+
+      // (some of) these file types support multiple molecules per file,
+      // and we support to load them into separate objects (multiplex).
+      do {
+        obj = (CObject *) ObjectMoleculeReadStr(G, (ObjectMolecule *) origObj,
+            &next_entry, content_format,
+            state, discrete,
+            quiet, multiplex, new_name,
+            loadpropertiesall, loadproplex);
+
+        if(new_name[0]) {
+          // multiplexing
+          ObjectSetName(obj, new_name);
+          ExecutiveDelete(G, new_name);       // just in case there is a collision
+          ExecutiveManageObject(G, obj, zoom, true);
+          new_name[0] = 0;
+          obj = NULL;
+        }
+      } while(next_entry);
+    }
+    break;
+  default:
+    if(plugin[0]) {
+      obj = PlugIOManagerLoad(G, origObj ? &origObj : NULL, fname, state, quiet, plugin);
+    } else {
+      PRINTFB(G, FB_Executive, FB_Errors)
+        "ExecutiveLoad-Error: unable to read that file type from C\n" ENDFB(G);
+      return false;
+    }
+  }
+
+  if(origObj) {
+    if(finish)
+      ExecutiveUpdateObjectSelection(G, origObj);
+
+    if(fname)
+      sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+          fname, object_name, state + 1);
+  } else if(obj) {
+    ObjectSetName(obj, object_name);
+    ExecutiveManageObject(G, obj, zoom, true);
+
+    if(fname)
+      sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, object_name);
+  }
+
+  mfree(buffer);
+
+  if(!quiet && buf[0]) {
+    PRINTFB(G, FB_Executive, FB_Actions)
+      "%s", buf ENDFB(G);
   }
   return (ok);
 
@@ -3752,6 +3767,8 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, char *oname, int type)
     case cLoadTypeChemPyModel:
     case cLoadTypePDB:
     case cLoadTypePDBStr:
+    case cLoadTypeCIF:
+    case cLoadTypeCIFStr:
     case cLoadTypeXYZ:
     case cLoadTypeXYZStr:
     case cLoadTypeMOL:
@@ -3796,7 +3813,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, char *oname, int type)
       new_type = cObjectCGO;
       break;
     }
-    if(new_type != origObj->type) {
+    if(new_type != -1 && new_type != origObj->type) {
       ExecutiveDelete(G, origObj->Name);
       origObj = NULL;
     }
@@ -3804,13 +3821,13 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, char *oname, int type)
   return origObj;
 }
 
-int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
+int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
+                            char *fname, char *buffer,
                             char *oname, int frame, int discrete, int finish,
-                            OrthoLineType buf, PDBInfoRec * pdb_info, int quiet,
-                            int is_string, int multiplex, int zoom)
+                            OrthoLineType buf, bool is_pqr_file, int quiet,
+                            int multiplex, int zoom)
 {
   int ok = true;
-  char *buffer = NULL;
   CObject *obj;
   char pdb_name[WordLength] = "";
   char cur_name[WordLength] = "";
@@ -3822,26 +3839,14 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
   ProcPDBRec *target_rec = NULL;
   char nbrhood_sele[] = "m4x_nearby";
   ProcPDBRec *current = NULL;
-  PDBInfoRec pdb_info_rec;
+  PDBInfoRec pdb_info_rec, *pdb_info = NULL;
   int model_number;
   CObject *deferred_zoom_obj = NULL;
 
-  if(!pdb_info) {
-    UtilZeroMem(&pdb_info_rec, sizeof(PDBInfoRec));
-    pdb_info = &pdb_info_rec;
-  }
+  UtilZeroMem(&pdb_info_rec, sizeof(PDBInfoRec));
+  pdb_info = &pdb_info_rec;
   pdb_info->multiplex = multiplex;
-  if(is_string) {
-    buffer = fname;
-  } else {
-    buffer = FileGetContents(fname, NULL);
-
-    if(!buffer) {
-      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-        "ExecutiveProcessPDBFile-Error: Unable to open file '%s'.\n", fname ENDFB(G);
-      ok = false;
-    }
-  }
+  pdb_info->is_pqr_file = is_pqr_file;
 
   if(ok) {
     processed = VLACalloc(ProcPDBRec, 10);
@@ -3891,7 +3896,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
       if(eff_frame < 0)
         eff_frame = ((ObjectMolecule *) origObj)->NCSet - 1;
       if(buf) {
-        if(!is_string)
+        if(fname)
           sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
                   fname, oname, eff_frame + 1);
         else
@@ -3991,14 +3996,14 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
             eff_frame = ((ObjectMolecule *) obj)->NCSet - 1;
           if(buf) {
             if(n_processed < 1) {
-              if(!is_string)
+              if(fname)
                 sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, oname);
               else
                 sprintf(buf,
                         " CmdLoad: PDB-string loaded into object \"%s\", state %d.\n",
                         oname, eff_frame + 1);
             } else {
-              if(!is_string) {
+              if(fname) {
                 sprintf(buf, " CmdLoad: loaded %d objects from \"%s\".\n",
                         n_processed + 1, fname);
               } else {
@@ -4197,10 +4202,6 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
   /* END METAPHORICS ANNOTATION AND ALIGNMENT CODE */
 
   VLAFreeP(processed);
-  if((!is_string) && buffer) {
-    mfree(buffer);
-  }
-
   return ok;
 }
 
@@ -6973,7 +6974,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
     }
     if(center && (center[3] > 1.0F)) {
       float pos[3];
-      SceneGetPos(G, pos);
+      SceneGetCenter(G, pos);
       center[3] = 1.0F / center[3];
       scale3f(center, center[3], center);
       center[7] = 1.0F / center[7];
@@ -10718,7 +10719,7 @@ int ExecutiveIterateList(PyMOLGlobals * G, char *name,
 
 
 /*========================================================================*/
-void ExecutiveIterateState(PyMOLGlobals * G, int state, char *s1, char *expr,
+int ExecutiveIterateState(PyMOLGlobals * G, int state, char *s1, char *expr,
                            int read_only, int atomic_props, int quiet, PyObject * space)
 {
   int sele1;
@@ -10762,11 +10763,15 @@ void ExecutiveIterateState(PyMOLGlobals * G, int state, char *s1, char *expr,
           " IterateState: iterated over %i atom coordinate states.\n", op1.i1 ENDFB(G);
       }
     }
+
+    return op1.i1;
   } else {
     if(!quiet) {
       PRINTFB(G, FB_Executive, FB_Warnings)
         "ExecutiveIterateState: No atoms selected.\n" ENDFB(G);
     }
+
+    return 0;
   }
 }
 
@@ -13216,7 +13221,7 @@ int ExecutiveGetExtent(PyMOLGlobals * G, char *name, float *mn, float *mx,
   int a;
 
   if(WordMatch(G, cKeywordCenter, name, 1) < 0) {
-    SceneGetPos(G, mn);
+    SceneGetCenter(G, mn);
     copy3f(mn, mx);
     return 1;
   }

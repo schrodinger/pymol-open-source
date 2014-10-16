@@ -55,11 +55,10 @@ static char *_FontTypeRenderOpenGL(RenderInfo * info,
 
     sampling = info->sampling;
     if(st && (*st)) {
-      float origin[3], v_scale;
+      float v_scale;
       float screenWorldOffset[3] = { 0.0F, 0.0F, 0.0F };
       
-      SceneOriginGet(G, origin);
-      v_scale = SceneGetScreenVertexScale(G, origin);
+      v_scale = SceneGetScreenVertexScale(G, NULL);
       if(size < _0) {
         size = (int) (0.5F - size / v_scale);
       }
@@ -267,9 +266,7 @@ static char *FontTypeRenderRay(CRay * ray, CFontType * I, char *st, float size,
   int unicnt = 0;
 
   if(st && (*st)) {
-    float origin[3], v_scale;
-    SceneOriginGet(G, origin);
-    v_scale = SceneGetScreenVertexScale(G, origin);
+    float v_scale = SceneGetScreenVertexScale(G, NULL);
 
     if(rpos) {
       float loc[3];
@@ -421,7 +418,7 @@ static char *FontTypeRenderRay(CRay * ray, CFontType * I, char *st, float size,
               add3f(v, x_adj, pos);
               TextSetPos(I->G, pos);
             }
-            ray->fCharacter(ray, id);   /* handles advance */
+            ray->character(id);   /* handles advance */
 
             kern_flag = true;
             last_c = c;

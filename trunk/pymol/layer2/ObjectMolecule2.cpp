@@ -354,7 +354,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
         }
       } else if(!pos) {
         pos = pos_array;
-        SceneGetPos(I->Obj.G, pos);
+        SceneGetCenter(I->Obj.G, pos);
       }
 
       if(pos) {                 /* only add coordinate to state if we have position for it */
@@ -370,8 +370,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
         cset->NTmpBond = 0;
 
         cset->Obj = I;
-        if(cset->fEnumIndices)
-          cset->fEnumIndices(cset);
+        cset->enumIndices();
         if(!ai_merged) {
 	  if (ok)
 	    ok &= ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);      /* NOTE: will release atInfo */
@@ -393,10 +392,8 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
           /* merge coordinate set */
 	  if (ok)
 	    ok &= CoordSetMerge(I, I->CSet[state], cset);
-          if(cset->fFree) {
-            cset->fFree(cset);
-            cset = NULL;
-          }
+          cset->fFree();
+          cset = NULL;
         }
       }
     }
@@ -3058,7 +3055,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   }
   if (!ok){
     if (cset){
-      CoordSetFree(cset);
+      cset->fFree();
       cset = NULL;
     } else {
       VLAFreeP(coord);

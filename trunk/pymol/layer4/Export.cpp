@@ -135,8 +135,7 @@ int ExportCoordsImport(PyMOLGlobals * G, char *name, int state, ExportCoords * i
               }
             }
 
-            if(cs->fInvalidateRep)
-              cs->fInvalidateRep(cs, cRepAll, cRepInvAll);
+            cs->invalidateRep(cRepAll, cRepInvAll);
             SceneChanged(G);
             result = true;
           }
