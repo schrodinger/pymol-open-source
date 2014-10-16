@@ -74,9 +74,7 @@ static char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, char *st, fl
 
     if(st && (*st)) {
 
-      float origin[3], v_scale;
-      SceneOriginGet(G, origin);
-      v_scale = SceneGetScreenVertexScale(G, origin);
+      float v_scale = SceneGetScreenVertexScale(G, NULL);
 
       first = font_info->first;
       last = first + font_info->num_chars;
@@ -258,9 +256,7 @@ static char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, char *st, float size,
   sampling = ray->Sampling;
 
   if(st && (*st)) {
-    float origin[3], v_scale;
-    SceneOriginGet(G, origin);
-    v_scale = SceneGetScreenVertexScale(G, origin);
+    float v_scale = SceneGetScreenVertexScale(G, NULL);
 
     if(rpos) {
       float loc[3];
@@ -357,7 +353,7 @@ static char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, char *st, float size,
                                           (float) ch->advance, &fprnt, sampling);
             }
             if(id)
-              ray->fCharacter(ray, id); /* handles advance */
+              ray->character(id); /* handles advance */
           }
         }
       }

@@ -4588,9 +4588,9 @@ PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int e
   PyMOLreturn_string_array result = { PyMOLstatus_SUCCESS };
   PYMOL_API_LOCK PyMOLGlobals * G = I->G;
 
-  ok_assert(1, s0[0]);
-  ok_assert(1, SelectorGetTmp(G, s0, str0) >= 0);
-
+  if (s0[0]){
+    ok_assert(1, SelectorGetTmp(G, s0, str0) >= 0);
+  }
   res = ExecutiveGetNames(G, mode, enabled_only, str0);
 
   if(str0[0])

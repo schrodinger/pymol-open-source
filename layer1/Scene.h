@@ -105,6 +105,7 @@ float *SceneGetPmvMatrix(PyMOLGlobals * G);
 
 void SceneReshape(Block * block, int width, int height);
 float SceneGetScreenVertexScale(PyMOLGlobals * G, float *v1);
+float SceneGetRawDepth(PyMOLGlobals * G, float *v1);
 
 void SceneTest(PyMOLGlobals * G);
 void SceneIdle(PyMOLGlobals * G);
@@ -179,7 +180,7 @@ void SceneRestartSweepTimer(PyMOLGlobals * G);
 int SceneViewEqual(SceneViewType left, SceneViewType right);
 void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, char *scene_name);
 void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty);
-void SceneGetPos(PyMOLGlobals * G, float *pos);
+void SceneGetCenter(PyMOLGlobals * G, float *pos);
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height);
 void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height);
 int SceneMultipick(PyMOLGlobals * G, Multipick * smp);

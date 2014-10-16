@@ -114,6 +114,9 @@ class PMGApp(Pmw.MegaWidget):
                 ("All Readable","*.cif"),
                 ("All Readable","*.moe"), # proprietary format
                 ("All Readable","*.mae"), # proprietary format
+                ("All Readable","*.maegz"), # proprietary format
+                ("All Readable","*.cms"), # proprietary format
+                ("All Readable","*.idx"), # proprietary format
                 ("All Readable","*.fasta"),
                 ("All Readable","*.aln"),
                 ("All Readable","*.acnt"),
@@ -143,6 +146,10 @@ class PMGApp(Pmw.MegaWidget):
                 ("MOL File","*.mol"),
                 ("MOE File","*.moe"), # proprietary format
                 ("MAE File","*.mae"), # proprietary format  
+                ("MAE File","*.maegz"), # proprietary format
+                ("MAE File","*.cms"), # proprietary format
+                ("Desmond Trajectory","*.idx"), # proprietary format
+                ("VIS File","*.vis"),
                 ("ChemPy Model","*.pkl"),
                 ("Raster3D Scene","*.r3d"),
                 ("SDF File","*.sdf"),

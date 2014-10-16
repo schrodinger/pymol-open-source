@@ -29,12 +29,16 @@ extern "C" {
 int PlugIOManagerInit(PyMOLGlobals * G);
 int PlugIOManagerFree(PyMOLGlobals * G);
 int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
-                          char *fname, int frame,
+                          const char *fname, int frame,
                           int interval, int average, int start,
                           int stop, int max, char *sele, int image,
-                          float *shift, int quiet, char *plugin_type);
+                          float *shift, int quiet, const char *plugin_type);
 ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
-                                char *fname, int state, int quiet, char *plugin_type);
+    const char *fname, int state, int quiet, const char *plugin_type);
+ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
+    const char *fname, int state, int quiet, const char *plugin_type);
+CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
+    const char *fname, int state, int quiet, const char *plugin_type);
 
 #ifdef __cplusplus
 }

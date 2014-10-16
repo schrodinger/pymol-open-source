@@ -6736,8 +6736,7 @@ int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
       mat_cs = iter.cs;
 
       // invalidate reps
-      if(iter.cs->fInvalidateRep)
-        iter.cs->fInvalidateRep(iter.cs, cRepAll, cRepInvRep);
+      iter.cs->invalidateRep(cRepAll, cRepInvRep);
     }
 
     // handle matrix
@@ -7377,7 +7376,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, char *name,
 
   cs = CoordSetNew(G);          /* set up a dummy coordinate set for the merge xref */
   cs->NIndex = nAtom;
-  cs->fEnumIndices(cs);
+  cs->enumIndices();
   cs->TmpBond = bond;           /* load up the bonds */
   cs->NTmpBond = nBond;
   bond = NULL;
@@ -7486,14 +7485,14 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, char *name,
       if(targ->NCSet <= ts)
         targ->NCSet = ts + 1;
       if(targ->CSet[ts])
-        targ->CSet[ts]->fFree(targ->CSet[ts]);
+        targ->CSet[ts]->fFree();
       targ->CSet[ts] = cs2;
       cs2->Obj = targ;
     }
   }
   VLAFreeP(bond);               /* null-safe */
   if(cs)
-    cs->fFree(cs);
+    cs->fFree();
   if(targ->DiscreteFlag) {      /* if the new object is discrete, then eliminate the AtmToIdx array */
     for(d = 0; d < targ->NCSet; d++) {
       cs = targ->CSet[d];

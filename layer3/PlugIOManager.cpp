@@ -17,12 +17,14 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 #include "os_std.h"
 #include "MemoryDebug.h"
+#include "Err.h"
 #include "PlugIOManager.h"
 #include "Selector.h"
 #include "CoordSet.h"
 #include "Feedback.h"
 #include "Scene.h"
 #include "Executive.h"
+#include "AtomInfo.h"
 
 #ifndef _PYMOL_VMD_PLUGINS
 int PlugIOManagerInit(PyMOLGlobals * G)
@@ -42,10 +44,10 @@ int PlugIOManagerRegister(PyMOLGlobals * G, void *ptr)
 }
 
 int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
-                          char *fname, int frame,
+                          const char *fname, int frame,
                           int interval, int average, int start,
                           int stop, int max, char *sele, int image,
-                          float *shift, int quiet, char *plugin_type)
+                          float *shift, int quiet, const char *plugin_type)
 {
 
   PRINTFB(G, FB_ObjectMolecule, FB_Errors)
@@ -55,12 +57,31 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
 }
 
 ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
-                                char *fname, int state, int quiet, char *plugin_type)
+                                const char *fname, int state, int quiet,
+                                const char *plugin_type)
 {
   PRINTFB(G, FB_ObjectMolecule, FB_Errors)
     " ObjectMap-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
     ENDFB(G);
   return NULL;
+}
+
+ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
+    const char *fname, int state, int quiet, const char *plugin_type)
+{
+  PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+    " ObjectMolecule-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
+    ENDFB(G);
+  return 0;
+}
+
+CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
+    const char *fname, int state, int quiet, const char *plugin_type)
+{
+  PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+    " ObjectMolecule-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
+    ENDFB(G);
+  return 0;
 }
 
 #else
@@ -117,37 +138,47 @@ int PlugIOManagerRegister(PyMOLGlobals * G, vmdplugin_t * header)
     return VMDPLUGIN_ERROR;
 }
 
+static molfile_plugin_t * find_plugin(CPlugIOManager * I, const char * plugin_type) {
+  for (int a = 0; a < I->NPlugin; a++)
+    if(!strcmp(plugin_type, I->PluginVLA[a]->name))
+      return I->PluginVLA[a];
+  return NULL;
+}
+
 int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
-                          char *fname, int frame,
+                          const char *fname, int frame,
                           int interval, int average, int start,
                           int stop, int max, char *sele, int image,
-                          float *shift, int quiet, char *plugin_type)
+                          float *shift, int quiet, const char *plugin_type)
 {
+  CPlugIOManager *I = G->PlugIOManager;
+  molfile_plugin_t *plugin = NULL;
 
-  if(G && G->PlugIOManager && obj) {
-    CPlugIOManager *I = G->PlugIOManager;
-    molfile_plugin_t *plugin = NULL;
-    /*    int sele0 = SelectorIndexByName(G,sele); */
+  ok_assert(1, I && obj);
+  plugin = find_plugin(I, plugin_type);
 
-    {
-      /* does this reader exist? */
-      int a;
-      for(a = 0; a < I->NPlugin; a++) {
-        if(!strcmp(plugin_type, I->PluginVLA[a]->name)) {
-          plugin = I->PluginVLA[a];
-          break;
-        }
-      }
-    }
-    if(!plugin) {
-      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-        " ObjectMolecule: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
-    } else {
+  if(!plugin) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " PlugIOManager: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
+    return false;
+  }
+
+  if(plugin->read_next_timestep == NULL) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " PlugIOManager: not a trajectory plugin '%s'\n", plugin_type ENDFB(G);
+    return false;
+  }
+
+  {
       int natoms;
       molfile_timestep_t timestep;
       void *file_handle;
       int zoom_flag = false;
-      CoordSet *cs_tmpl = obj->CSet[0];
+      int cnt = 0;
+      int icnt = interval;
+      int n_avg = 0;
+      int ncnt = 0;
+      CoordSet *cs = obj->NCSet > 0 ? obj->CSet[0] : obj->CSTmpl ? obj->CSTmpl : NULL;
 
       timestep.coords = NULL;
       timestep.velocities = NULL;
@@ -157,20 +188,33 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
       if(!file_handle) {
         PRINTFB(G, FB_ObjectMolecule, FB_Errors)
           " ObjectMolecule: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
-      } else if (natoms!=obj->NAtom) {
-	PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-          " ObjectMolecule: plugin '%s' cannot open file because the number of atoms in the object (%d) did not equal the number of atoms in the '%s' (%d) file.\n", plugin_type, obj->NAtom, plugin_type, natoms ENDFB(G);
-      } else if(cs_tmpl) {
-	/* by this point, we have opened the DCD file, and we have a valid topology file (obj->CSet[0] exists) */
-        CoordSet *cs = CoordSetCopy(cs_tmpl);
-        /*        printf("%p\n",file_handle); */
-        timestep.coords = (float *) cs->Coord;
-        {
-          int cnt = 0;
-          int icnt = interval;
-          int n_avg = 0;
-          int ncnt = 0;
+        return false;
+      }
 
+      if(natoms == -1) {
+        natoms = obj->NAtom;
+      } else if(natoms != obj->NAtom) {
+	PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+          " ObjectMolecule: plugin '%s' cannot open file because the number "
+          "of atoms in the object (%d) did not equal the number of atoms in "
+          "the '%s' (%d) file.\n", plugin_type, obj->NAtom, plugin_type, natoms ENDFB(G);
+        return false;
+      }
+
+      if(cs) {
+        ok_assert(1, cs = CoordSetCopy(cs));
+      } else {
+        ok_assert(1, cs = CoordSetNew(G));
+        ok_assert(1, cs->Coord = VLAlloc(float, 3 * natoms));
+
+        cs->Obj = obj;
+        cs->NIndex = natoms;
+        cs->enumIndices();
+      }
+
+      timestep.coords = (float *) cs->Coord;
+
+      {
 	  /* read_next_timestep fills in &timestep for each iteration; we need
 	   * to copy that out to a new CoordSet, each time. */
           while(!plugin->read_next_timestep(file_handle, natoms, &timestep)) {
@@ -203,7 +247,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                     }
                   }
                   /* add new coord set */
-                  if(cs->fInvalidateRep) cs->fInvalidateRep(cs, cRepAll, cRepInvRep);
+                  cs->invalidateRep(cRepAll, cRepInvRep);
                   if(frame < 0) frame = obj->NCSet;
                   if(!obj->NCSet) zoom_flag = true;
 
@@ -213,7 +257,8 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
 		  /* bump the object's state count */
                   if(obj->NCSet <= frame) obj->NCSet = frame + 1;
 		  /* if there's data in this state's coordset, emtpy it */
-                  if(obj->CSet[frame]) obj->CSet[frame]->fFree(obj->CSet[frame]);
+                  if(obj->CSet[frame])
+                    obj->CSet[frame]->fFree();
 		  /* set this state's coordset to cs */
                   obj->CSet[frame] = cs;
                   ncnt++;
@@ -248,116 +293,87 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
           } /* end while */
         }
         plugin->close_file_read(file_handle);
-        if(cs) cs->fFree(cs);
+        if(cs)
+          cs->fFree();
         SceneChanged(G);
         SceneCountFrames(G);
         if(zoom_flag)
           if(SettingGetGlobal_i(G, cSetting_auto_zoom)) {
             ExecutiveWindowZoom(G, obj->Obj.Name, 0.0, -1, 0, 0, quiet);        /* auto zoom (all states) */
           }
-      }
-    }
   }
-  return 0;
+  return true;
+ok_except1:
+  return false;
 }
 
 ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
-                                char *fname, int state, int quiet, char *plugin_type)
+                                const char *fname, int state, int quiet,
+                                const char *plugin_type)
 {
-  int ok = true;
-  printf("[%s %s]\n", fname, plugin_type);
+  CPlugIOManager *I = G->PlugIOManager;
+  molfile_plugin_t *plugin = NULL;
+  molfile_volumetric_t *metadata;
+  int setsinfile = 0;
+  int natoms;
+  void *file_handle = NULL;
+  float *datablock = NULL;
 
-  if(G && G->PlugIOManager) {
-    CPlugIOManager *I = G->PlugIOManager;
-    molfile_plugin_t *plugin = NULL;
-    int natoms;
-    void *file_handle = NULL;
+  ok_assert(1, I);
+  plugin = find_plugin(I, plugin_type);
 
-    {
-      /* does this reader exist? */
-      int a;
-      for(a = 0; a < I->NPlugin; a++) {
-        if(!strcmp(plugin_type, I->PluginVLA[a]->name)) {
-          plugin = I->PluginVLA[a];
-          break;
-        }
-      }
-      if(!plugin) {
-        PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-          " ObjectMolecule: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
-        ok = false;
-      }
-    }
+  if(!plugin) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " PlugIOManager: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
+    ok_raise(1);
+  }
 
-    if(ok) {
-      file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
-      if(!file_handle) {
-        PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-          " ObjectMolecule: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
-        ok = false;
-      }
-    }
+  if(plugin->read_volumetric_data == NULL || plugin->read_volumetric_metadata == NULL) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " PlugIOManager: not a map plugin '%s'\n", plugin_type ENDFB(G);
+    ok_raise(1);
+  }
 
-    if(ok) {
-      molfile_volumetric_t *metadata;
-      int setsinfile = 0;
-      plugin->read_volumetric_metadata(file_handle, &setsinfile, &metadata);
+  file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
 
-      /* for now, just read in all sets of data in the file */
+  if(!file_handle) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " PlugIOManager: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
+    ok_raise(1);
+  }
 
-      {
-        int i;
-        for(i = 0; i < setsinfile; i++) {
+  if(plugin->read_volumetric_metadata(file_handle, &setsinfile, &metadata) != MOLFILE_SUCCESS) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " PlugIOManager: read_volumetric_metadata failed\n" ENDFB(G);
+    ok_raise(1);
+  }
+
+  /* for now, just read in all sets of data in the file */
+
+  for(int i = 0; i < setsinfile; i++) {
 
           const molfile_volumetric_t *v = metadata + i;
-
-          float *datablock = NULL, *colorblock = NULL;
           size_t size = v->xsize * v->ysize * v->zsize;
 
-          datablock = Alloc(float, size);
-          if(v->has_color) {
-            colorblock = Alloc(float, size);
+          if(!size) {
+            PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
+              " PlugIOManagerLoadVol-Waring: 0 values, skipping set %d\n", i ENDFB(G);
+            continue;
           }
 
-          if(plugin->read_volumetric_data(file_handle, i, datablock, colorblock)) {
+          ok_assert(1, datablock = Alloc(float, size));
+
+          if(plugin->read_volumetric_data(file_handle, i, datablock, NULL) != MOLFILE_SUCCESS) {
             PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-              " ObjectMap: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
-            ok = false;
-          } else {
-            /* check map type */
-
-            if((fabs(v->xaxis[1]) > R_SMALL8) ||
-               (fabs(v->xaxis[2]) > R_SMALL8) ||
-               (fabs(v->yaxis[0]) > R_SMALL4) ||
-               (fabs(v->yaxis[2]) > R_SMALL4) ||
-               (fabs(v->zaxis[0]) > R_SMALL4) || (fabs(v->zaxis[1]) > R_SMALL4)) {
-
-              /*              dump3f(v->xaxis,"x");
-                 dump3f(v->yaxis,"y");
-                 dump3f(v->zaxis,"z");
-               */
-
-              PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-                " ObjectMap-Error: PyMOL only handles XYZ-axes-aligned CUBE files.\n"
-                ENDFB(G);
-              ok = false;
-            }
+              " PlugIOManager: read_volumetric_data failed\n" ENDFB(G);
+            ok_raise(1);
           }
 
-          if(ok) {
-
-            int isNew = false;
-            if(!obj) {
-              obj = (ObjectMap *) ObjectMapNew(G);
-              if(!obj)
-                ok = false;
-              else
-                isNew = true;
-            }
-          }
-
-          if(ok) {
+          {
             ObjectMapState *ms = NULL;
+
+            if(!obj)
+              ok_assert(1, obj = ObjectMapNew(G));
 
             if(state < 0)
               state = obj->NState;
@@ -373,32 +389,53 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             ms->FDim[2] = v->zsize;
             ms->FDim[3] = 3;
 
-            {
-              int a = 0;
-              for(a = 0; a < 3; a++) {
-                ms->Min[a] = 0;
-                ms->Max[a] = ms->FDim[a] - 1;
-              }
-            }
-
             ms->Grid = Alloc(float, 3);
             ms->Dim = Alloc(int, 3);
-            ms->Origin = Alloc(float, 3);
+            ms->Origin = Calloc(float, 3);
             ms->Range = Alloc(float, 3);
 
-            ms->Grid[0] = v->xaxis[0] / (ms->FDim[0] - 1);      /* we only support this special case: orthogonal & cartesian-aligned */
-            ms->Grid[1] = v->yaxis[1] / (ms->FDim[1] - 1);
-            ms->Grid[2] = v->zaxis[2] / (ms->FDim[2] - 1);
-
+            // set corners to a unit cube, and manage world space with the state matrix
             {
-              int a;
-              for(a = 0; a < 3; a++) {
+              double m44d[16];
+
+              if(!ms->State.Matrix)
+                ms->State.Matrix = Alloc(double, 16);
+
+              // state matrix transformation
+              identity44d(m44d);
+              copy3(v->xaxis, m44d + 0);
+              copy3(v->yaxis, m44d + 4);
+              copy3(v->zaxis, m44d + 8);
+              copy3(v->origin, m44d + 12);
+              transpose44d44d(m44d, ms->State.Matrix);
+            }
+
+            // axis and corner stuff in a unit cube
+            {
+              // prime min+max
+              zero3f(ms->ExtentMin);
+              ones3f(ms->ExtentMax);
+              ones3f(ms->Range);
+
+              for(int a = 0; a < 3; a++) {
+                int dimL1 = ms->FDim[a] - 1;
+
+                // min+max indices
+                ms->Min[a] = 0;
+                ms->Max[a] = dimL1;
+
+                ms->Grid[a] = 1.f / dimL1;
+
+                // (redundant)
                 ms->Dim[a] = ms->FDim[a];
-                ms->Origin[a] = v->origin[a];
-                ms->Range[a] = ms->Grid[a] * (ms->Dim[a] - 1);
+
+                // corner enumeration
+                for(int b = 0; b < 8; b++)
+                  ms->Corner[3 * b + a] = (b >> a) & 0x1;
               }
             }
 
+            // field
             ms->Field = IsosurfFieldAlloc(G, ms->FDim);
             ms->MapSource = cMapSourceVMDPlugin;
             ms->Field->save_points = false;     /* save points in RAM only, not session file */
@@ -406,77 +443,348 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
 
             ObjectMapStateRegeneratePoints(ms);
 
-            dump3f(ms->Grid, "grid");
-            dump3f(ms->Origin, "origin");
-
+            // copy data
             {
               int a, b, c;
               float *data_ptr = datablock;
-              float max_level = -FLT_MAX;
-              float min_level = FLT_MAX;
 
               /* VMD plugins appear to use fast-x med-y slow-z ordering: "&datablock[z*xysize + y*xsize + x]" */
 
               for(c = 0; c < ms->FDim[2]; c++) {
                 for(b = 0; b < ms->FDim[1]; b++) {
                   for(a = 0; a < ms->FDim[0]; a++) {
-                    register float level = *(data_ptr++);
-                    if(max_level < level)
-                      max_level = level;
-                    if(min_level > level)
-                      min_level = level;
-
-                    F3(ms->Field->data, a, b, c) = level;
+                    F3(ms->Field->data, a, b, c) = *(data_ptr++);
                   }
                 }
               }
 
               PRINTFB(G, FB_ObjectMap, FB_Details)
-                " ObjectMap: read %d values between %1.6f and %1.6f.\n",
-                ms->FDim[0] * ms->FDim[1] * ms->FDim[2], min_level, max_level ENDFB(G);
+                " ObjectMap: read %d values\n", size ENDFB(G);
             }
 
-            if(ok) {
-              int a, b, c, d;
-              float v[3];
-              d = 0;
-              for(c = 0; c < ms->FDim[2]; c += ms->FDim[2] - 1) {
-                v[2] = ms->Origin[2] + ms->Grid[2] * (c + ms->Min[2]);
-
-                for(b = 0; b < ms->FDim[1]; b += ms->FDim[1] - 1) {
-                  v[1] = ms->Origin[1] + ms->Grid[1] * (b + ms->Min[1]);
-
-                  for(a = 0; a < ms->FDim[0]; a += ms->FDim[0] - 1) {
-                    v[0] = ms->Origin[0] + ms->Grid[0] * (a + ms->Min[0]);
-                    copy3f(v, ms->Corner + 3 * d);
-                    d++;
-                  }
-                }
-              }
-            }
-
-            if(ok) {
-              int a;
-              for(a = 0; a < 3; a++) {
-                ms->ExtentMin[a] = ms->Origin[a] + ms->Grid[a] * ms->Min[a];
-                ms->ExtentMax[a] = ms->Origin[a] + ms->Grid[a] * ms->Max[a];
-              }
-            }
           }
           FreeP(datablock);
-          FreeP(colorblock);
-        }
-      }
-    }
-    if(file_handle)
-      plugin->close_file_read(file_handle);
   }
-  if(ok) {
+  if(obj) {
     ObjectMapUpdateExtents(obj);
     SceneChanged(G);
     SceneCountFrames(G);
   }
+
+ok_except1:
+  // close
+  if (plugin && file_handle)
+    plugin->close_file_read(file_handle);
+
   return obj;
+}
+
+static void atomicnumber2elem(char * dst, int protons) {
+  const char * p = NULL;
+  switch(protons) {
+    case cAN_LP: p = "LP"; break;
+    case cAN_H:  p = "H";  break;
+    case cAN_He: p = "He"; break;
+    case cAN_Li: p = "Li"; break;
+    case cAN_Be: p = "Be"; break;
+    case cAN_B:  p = "B";  break;
+    case cAN_C:  p = "C";  break;
+    case cAN_N:  p = "N";  break;
+    case cAN_O:  p = "O";  break;
+    case cAN_F:  p = "F";  break;
+    case cAN_Ne: p = "Ne"; break;
+    case cAN_Na: p = "Na"; break;
+    case cAN_Mg: p = "Mg"; break;
+    case cAN_Al: p = "Al"; break;
+    case cAN_Si: p = "Si"; break;
+    case cAN_P:  p = "P";  break;
+    case cAN_S:  p = "S";  break;
+    case cAN_Cl: p = "Cl"; break;
+    case cAN_Ar: p = "Ar"; break;
+    case cAN_K:  p = "K";  break;
+    case cAN_Ca: p = "Ca"; break;
+    case cAN_Ti: p = "Ti"; break;
+    case cAN_Cr: p = "Cr"; break;
+    case cAN_Mn: p = "Mn"; break;
+    case cAN_Fe: p = "Fe"; break;
+    case cAN_Co: p = "Co"; break;
+    case cAN_Ni: p = "Ni"; break;
+    case cAN_Cu: p = "Cu"; break;
+    case cAN_Zn: p = "Zn"; break;
+    case cAN_Ga: p = "Ga"; break;
+    case cAN_Ge: p = "Ge"; break;
+    case cAN_As: p = "As"; break;
+    case cAN_Se: p = "Se"; break;
+    case cAN_Br: p = "Br"; break;
+    case cAN_Kr: p = "Kr"; break;
+    case cAN_Rb: p = "Rb"; break;
+    case cAN_Sr: p = "Sr"; break;
+    case cAN_Pd: p = "Pd"; break;
+    case cAN_Ag: p = "Ag"; break;
+    case cAN_Cd: p = "Cd"; break;
+    case cAN_In: p = "In"; break;
+    case cAN_Sn: p = "Sn"; break;
+    case cAN_Sb: p = "Sb"; break;
+    case cAN_Te: p = "Te"; break;
+    case cAN_I:  p = "I";  break;
+    case cAN_Xe: p = "Xe"; break;
+    case cAN_Cs: p = "Cs"; break;
+    case cAN_Ba: p = "Ba"; break;
+    case cAN_Ce: p = "Ce"; break;
+    case cAN_Pt: p = "Pt"; break;
+    case cAN_Au: p = "Au"; break;
+    case cAN_Hg: p = "Hg"; break;
+    case cAN_Tl: p = "Tl"; break;
+    case cAN_Pb: p = "Pb"; break;
+    case cAN_U:  p = "U";  break;
+    default:     p = "X";
+  }
+  strncpy(dst, p, cElemNameLen);
+}
+
+static CSymmetry * SymmetryNewFromTimestep(PyMOLGlobals * G, molfile_timestep_t * ts)
+{
+  CSymmetry * symm = NULL;
+  ok_assert(1,
+      ts->A > 0.f && ts->B > 0.f && ts->C > 0.f &&
+      ts->alpha > 0.f && ts->beta > 0.f && ts->gamma > 0.f);
+  ok_assert(1, symm = SymmetryNew(G));
+  symm->Crystal->Dim[0] = ts->A;
+  symm->Crystal->Dim[1] = ts->B;
+  symm->Crystal->Dim[2] = ts->C;
+  symm->Crystal->Angle[0] = ts->alpha;
+  symm->Crystal->Angle[1] = ts->beta;
+  symm->Crystal->Angle[2] = ts->gamma;
+  strcpy(symm->SpaceGroup, "P1");
+  SymmetryAttemptGeneration(symm, false);
+ok_except1:
+  return symm;
+}
+
+ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
+    const char *fname, int state, int quiet, const char *plugin_type)
+{
+  CPlugIOManager *manager = G->PlugIOManager;
+  int natoms, nbonds = 0, *from, *to;
+  int optflags = 0;
+  float *order;
+  void *file_handle = NULL;
+  molfile_plugin_t * plugin = NULL;
+  molfile_timestep_t timestep;
+  molfile_atom_t * atoms = NULL;
+  ObjectMolecule *I = NULL;
+  CoordSet * cs = NULL;
+  int *bondtype, nbondtypes;
+  char **bondtypename;
+
+  ok_assert(1, manager);
+  plugin = find_plugin(manager, plugin_type);
+
+  if (!plugin) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " ObjectMolecule: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
+    ok_raise(1);
+  }
+
+  // open file
+  file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
+
+  if(!file_handle) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " ObjectMolecule: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
+    ok_raise(1);
+  }
+
+  // read atoms
+  atoms = Calloc(molfile_atom_t, natoms);
+  if (plugin->read_structure(file_handle, &optflags, atoms) != MOLFILE_SUCCESS) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " ObjectMolecule: plugin '%s' failed to read atoms.\n", plugin_type ENDFB(G);
+    ok_raise(1);
+  }
+
+  // Create ObjectMolecule
+  ok_assert(1, I = ObjectMoleculeNew(G, false));
+  I->Obj.Color = AtomInfoUpdateAutoColor(G);
+  I->AtomInfo = VLACalloc(AtomInfoType, natoms);
+  I->NAtom = natoms;
+
+  // copy atom info
+  for (int i = 0; i < natoms; i++) {
+    AtomInfoType *ai = I->AtomInfo + i;
+    molfile_atom_t *a = atoms + i;
+
+    ai->rank = i;
+    ai->id = i + 1;
+    ai->b = a->bfactor;
+    ai->q = a->occupancy;
+    ai->vdw = a->radius;
+    ai->partialCharge = a->charge;
+    ai->alt[0] = a->altloc[0];
+
+    strncpy(ai->segi, a->segid, cSegiLen);
+    strncpy(ai->resn, a->resname, cResnLen);
+    strncpy(ai->name, a->name, cAtomNameLen);
+    if (a->atomicnumber > 0)
+      atomicnumber2elem(ai->elem, a->atomicnumber);
+
+    ai->chain = LexIdx(G, a->chain);
+    ai->textType = LexIdx(G, a->type);
+
+    ai->hetatm = 0;
+
+    ai->resv = a->resid;
+    snprintf(ai->resi, cResnLen, "%d%s", a->resid, a->insertion);
+
+    memset((void*) ai->visRep, 0, sizeof(ai->visRep));
+    ai->visRep[cRepLine] = true;
+    ai->visRep[cRepNonbonded] = true;
+
+    AtomInfoAssignParameters(G, ai);
+    AtomInfoAssignColors(G, ai);
+  }
+
+  // read coordinates
+  while (/* true */ plugin->read_next_timestep != NULL) {
+    ok_assert(1, cs = CoordSetNew(G));
+    ok_assert(1, cs->Coord = VLAlloc(float, 3 * natoms));
+
+    timestep.coords = cs->Coord;
+    timestep.velocities = NULL;
+
+    if (plugin->read_next_timestep(file_handle, natoms, &timestep) != MOLFILE_SUCCESS) {
+      cs->fFree();
+      break;
+    }
+
+    cs->Obj = I;
+    cs->NIndex = natoms;
+    cs->enumIndices();
+
+    // append to object
+    VLACheck(I->CSet, CoordSet*, I->NCSet);
+    I->CSet[I->NCSet++] = cs;
+  }
+
+  // read bonds
+  if (plugin->read_bonds &&
+      plugin->read_bonds(file_handle, &nbonds, &from, &to, &order,
+        &bondtype, &nbondtypes, &bondtypename) != MOLFILE_SUCCESS) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " ObjectMolecule: plugin '%s' failed to read bonds.\n", plugin_type ENDFB(G);
+    ok_raise(1);
+  }
+
+  // copy bonds
+  if (nbonds) {
+    I->NBond = nbonds;
+    I->Bond = VLACalloc(BondType, nbonds);
+    for (int i = 0; i < nbonds; i++) {
+      BondTypeInit2(I->Bond + i, from[i] - 1, to[i] - 1,
+          order ? (int) order[i] : 1);
+    }
+  } else if (I->NCSet) {
+    ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, I->CSet[0], true, -1);
+  }
+
+  // symmetry
+  I->Symmetry = SymmetryNewFromTimestep(G, &timestep);
+
+  // finalize
+  ObjectMoleculeSort(I);
+  ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
+  ObjectMoleculeUpdateIDNumbers(I);
+  ObjectMoleculeUpdateNonbonded(I);
+
+  // merge
+  if(origObj) {
+    // TODO
+  }
+
+  SceneCountFrames(G);
+
+ok_except1:
+  // close
+  if (plugin && file_handle)
+    plugin->close_file_read(file_handle);
+
+  if(atoms)
+    free(atoms);
+
+  return I;
+}
+
+/*
+ * Load any object type with the given plugin. If obj_ptr's object type
+ * doesn't match the plugin, the object will be deleted and a new one created
+ * (not for trajectories).
+ */
+CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
+    const char *fname, int state, int quiet, const char *plugin_type)
+{
+  CObject *obj = obj_ptr ? *obj_ptr : NULL;
+  CPlugIOManager *manager = G->PlugIOManager;
+  molfile_plugin_t *plugin;
+
+  ok_assert(1, manager);
+  plugin = find_plugin(manager, plugin_type);
+
+  if (!plugin) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Blather)
+      " PlugIOManagerLoad: no plugin '%s'\n", plugin_type ENDFB(G);
+    return NULL;
+  }
+
+  if (plugin->read_volumetric_data != NULL) {
+    // maps
+
+    if (obj && obj->type != cObjectMap) {
+      ExecutiveDelete(G, obj->Name);
+      obj = *obj_ptr = NULL;
+    }
+
+    return (CObject *) PlugIOManagerLoadVol(G, (ObjectMap *) obj,
+        fname, state, quiet, plugin_type);
+
+  } else if (plugin->read_structure != NULL) {
+    // molecules
+
+    if (obj
+#if 0
+        && obj->type != cObjectMolecule
+#else
+        // TODO no merge support yet, always delete existing object
+#endif
+        ) {
+      ExecutiveDelete(G, obj->Name);
+      obj = *obj_ptr = NULL;
+    }
+
+    return (CObject *) PlugIOManagerLoadMol(G, (ObjectMolecule *) obj,
+        fname, state, quiet, plugin_type);
+
+  } else if (plugin->read_next_timestep != NULL) {
+    // trajectories
+
+    float shift[] = {0.f, 0.f, 0.f};
+
+    if (obj && obj->type != cObjectMolecule) {
+      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+        " PlugIOManagerLoad: can't load trajectory into object '%s'\n", obj->Name ENDFB(G);
+      return NULL;
+    }
+
+    PlugIOManagerLoadTraj(G, (ObjectMolecule *) obj,
+        fname, state, 1, 1, 1, -1, -1, "all", 1, shift, quiet, plugin_type);
+    return NULL;
+
+  }
+
+  PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+    " PlugIOManagerLoad: '%s' doesn't provide any read function\n", plugin_type ENDFB(G);
+
+ok_except1:
+  return NULL;
 }
 
 #ifdef __cplusplus

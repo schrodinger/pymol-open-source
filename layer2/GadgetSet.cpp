@@ -32,10 +32,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"Ray.h"
 
-void GadgetSetUpdate(GadgetSet * I);
-void GadgetSetFree(GadgetSet * I);
 void GadgetSetStrip(GadgetSet * I);
-void GadgetSetInvalidateRep(GadgetSet * I, int type, int level);
 
 int GadgetSetGetVertex(GadgetSet * I, int index, int base, float *v)
 {
@@ -95,7 +92,7 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
   PyObject *tmp = NULL;
 
   if(*gs) {
-    GadgetSetFree(*gs);
+    (*gs)->fFree();
     *gs = NULL;
   }
 
@@ -148,7 +145,7 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
 
     if(!ok) {
       if(I)
-        GadgetSetFree(I);
+        I->fFree();
     } else {
       *gs = I;
     }
@@ -226,9 +223,10 @@ int GadgetSetGetExtent(GadgetSet * I, float *mn, float *mx)
 
 
 /*========================================================================*/
-void GadgetSetInvalidateRep(GadgetSet * I, int type, int level)
+void GadgetSet::invalidateRep(int type, int level)
 {
 #if TO_DO
+  GadgetSet * I = this;
   int a;
   PRINTFD(I->G, FB_GadgetSet)
     " GadgetSetInvalidateRep: entered.\n" ENDFD;
@@ -266,8 +264,9 @@ void GadgetSetInvalidateRep(GadgetSet * I, int type, int level)
 
 
 /*========================================================================*/
-void GadgetSetUpdate(GadgetSet * I)
+void GadgetSet::update()
 {
+  GadgetSet * I = this;
   if(I->StdCGO) {
     CGOFree(I->StdCGO);
     I->StdCGO = NULL;
@@ -280,8 +279,9 @@ void GadgetSetUpdate(GadgetSet * I)
 
 
 /*========================================================================*/
-static void GadgetSetRender(GadgetSet * I, RenderInfo * info)
+void GadgetSet::render(RenderInfo * info)
 {
+  GadgetSet * I = this;
   int pass = info->pass;
   CRay *ray = info->ray;
   Picking **pick = info->pick;
@@ -386,10 +386,6 @@ GadgetSet *GadgetSetNew(PyMOLGlobals * G)
 {
   OOAlloc(G, GadgetSet);
   I->G = G;
-  I->fFree = GadgetSetFree;
-  I->fRender = GadgetSetRender;
-  I->fUpdate = GadgetSetUpdate;
-  I->fInvalidateRep = GadgetSetInvalidateRep;
   I->NCoord = 0;
   I->NColor = 0;
   I->NNormal = 0;
@@ -413,8 +409,9 @@ void GadgetSetStrip(GadgetSet * I)
 
 
 /*========================================================================*/
-void GadgetSetFree(GadgetSet * I)
+void GadgetSet::fFree()
 {
+  GadgetSet * I = this;
   if(I) {
     CGOFree(I->PickCGO);
     CGOFree(I->PickShapeCGO);

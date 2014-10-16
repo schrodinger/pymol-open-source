@@ -2116,9 +2116,7 @@ CShaderPrg *CShaderPrg_Enable_LabelShaderImpl(PyMOLGlobals * G, CShaderPrg *shad
     SceneSetFog(G, fog);
   }
   {
-    float origin[3], v_scale;
-    SceneOriginGet(G, origin);
-    v_scale = SceneGetScreenVertexScale(G, origin);
+    float v_scale = SceneGetScreenVertexScale(G, NULL);
     CShaderPrg_Set1f(shaderPrg, "screenOriginVertexScale", v_scale/2.f);
   }
   return shaderPrg;

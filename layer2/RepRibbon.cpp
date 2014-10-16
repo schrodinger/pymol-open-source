@@ -107,8 +107,8 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
 
     if(c > 0) {
       while(ok && c--) {
-	ray->fTransparentf(ray, 1.0F - alpha);
-        ok &= ray->fSausage3fv(ray, v + 4, v + 11, radius, v + 1, v + 8);
+	ray->transparentf(1.0F - alpha);
+        ok &= ray->sausage3fv(v + 4, v + 11, radius, v + 1, v + 8);
         v += 18;
       }
     }

@@ -107,7 +107,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
     alpha = 1.0F;
   if(ray) {
     int stick_ball = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_stick_ball);
-    ray->fTransparentf(ray, 1.0F - alpha);
+    ray->transparentf(1.0F - alpha);
     PRINTFD(G, FB_RepCylBond)
       " RepCylBondRender: rendering raytracable...\n" ENDFD;
 
@@ -116,17 +116,17 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
     var_alpha = I->VarAlphaRay;
     while(ok && c--) {
       if(var_alpha) {
-        ray->fTransparentf(ray, 1.0F - *(var_alpha++));
+        ray->transparentf(1.0F - *(var_alpha++));
       }
       if (vptr[0] == vptr[3] && vptr[1] == vptr[4] && vptr[2] == vptr[5]){
-	ok &= ray->fSausage3fv(ray, vptr + 7, vptr + 10, *(vptr + 6), vptr, vptr + 3);
+	ok &= ray->sausage3fv(vptr + 7, vptr + 10, *(vptr + 6), vptr, vptr + 3);
       } else {
 	float mid[3];
 	average3f(vptr + 7, vptr + 10, mid);
-	ok &= ray->fCustomCylinder3fv(ray, vptr + 7, mid, *(vptr + 6), vptr, vptr,
+	ok &= ray->customCylinder3fv(vptr + 7, mid, *(vptr + 6), vptr, vptr,
             cCylCapRound, cCylCapNone);
 	if (ok)
-	  ok &= ray->fCustomCylinder3fv(ray, mid, vptr + 10, *(vptr + 6), vptr + 3, vptr + 3,
+	  ok &= ray->customCylinder3fv(mid, vptr + 10, *(vptr + 6), vptr + 3, vptr + 3,
               cCylCapNone, cCylCapRound);
       }
       vptr += 13;
@@ -137,17 +137,17 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
       c = I->NSPC;
       while(ok && c--) {
         if(var_alpha) {
-          ray->fTransparentf(ray, 1.0F - *(var_alpha++));
+          ray->transparentf(1.0F - *(var_alpha++));
         }
-        ray->fColor3fv(ray, vptr);
+        ray->color3fv(vptr);
         vptr += 3;
 	if (stick_ball){
-	  ok &= ray->fSphere3fv(ray, vptr, *(vptr + 3));
+	  ok &= ray->sphere3fv(vptr, *(vptr + 3));
 	}
         vptr += 4;
       }
     }
-    ray->fTransparentf(ray, 0.0);
+    ray->transparentf(0.0);
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       PRINTFD(G, FB_RepCylBond)

@@ -81,6 +81,9 @@ typedef struct ObjectMolecule {
   struct CSculpt *Sculpt;
   int RepVisCacheValid;
   signed char RepVisCache[cRepCnt];     /* for transient storage during updates */
+
+  // methods
+  int getState();
 } ObjectMolecule;
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
@@ -338,9 +341,11 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * obj, CR
                                       int frame, int discrete);
 
 ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                      char *st, int content_format, int frame,
+                                      char **next_entry,
+                                      int content_format, int frame,
                                       int discrete, int quiet, int multiplex,
-                                      char *new_name, char **next_entry);
+                                      char *new_name,
+				      short loadpropertiesall=false, OVLexicon *loadproplex=NULL);
 
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * obj,
                                          char *molstr, int frame, int discrete,
@@ -491,4 +496,8 @@ void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAto
 
 int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj, AtomInfoType * rec, int n,
                             int **outdex);
+
+ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
+    char *st, int frame, int discrete, int quiet, int multiplex, char *new_name);
+
 #endif

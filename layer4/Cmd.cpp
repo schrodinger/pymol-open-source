@@ -2084,7 +2084,7 @@ static PyObject *CmdGetPosition(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    SceneGetPos(G, v);
+    SceneGetCenter(G, v);
     APIExit(G);
   }
   result = PConvFloatArrayToPyList(v, 3);
@@ -4035,6 +4035,7 @@ static PyObject *CmdAlterState(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str1, *str2;
   int i1, i2, i3, quiet;
+  int result = -1;
   OrthoLineType s1;
   PyObject *obj;
   int ok = false;
@@ -4048,12 +4049,11 @@ static PyObject *CmdAlterState(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    ExecutiveIterateState(G, i1, s1, str2, i2, i3, quiet, obj); /* TODO STATUS */
+    result = ExecutiveIterateState(G, i1, s1, str2, i2, i3, quiet, obj);
     SelectorFreeTmp(G, s1);
     APIExit(G);
   }
-  return APIResultOk(ok);
-
+  return PyInt_FromLong(result);
 }
 
 static PyObject *CmdCopy(PyObject * self, PyObject * args)
@@ -7231,8 +7231,7 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *fname, *oname;
-  CObject *origObj = NULL, *obj;
-  OrthoLineType buf;
+  CObject *origObj = NULL;
   int frame, type;
   int finish, discrete;
   int quiet;
@@ -7251,7 +7250,7 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     ObjectNameType valid_name = "";
-    buf[0] = 0;
+
     PRINTFD(G, FB_CCmd)
       "CmdLoad-DEBUG %s %s %d %d %d %d\n",
       oname, fname, frame, type, finish, discrete ENDFD;
@@ -7259,393 +7258,16 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
       multiplex = SettingGetGlobal_i(G, cSetting_multiplex);
     /* default is -1 -> default/automatic behaviors */
 
-    if(discrete < 0) {          /* use default discrete behavior for the file format 
-                                 * this will be the case for MOL2 and SDF */
-      if(multiplex == 1)        /* if also multiplexing, then default discrete
-                                 * behavior is not load as discrete objects */
-        discrete = 0;
-      else {
-        switch (type) {
-        case cLoadTypeSDF2:    /* SDF files currently default to discrete */
-        case cLoadTypeSDF2Str:
-          break;
-        case cLoadTypeMOL2:
-        case cLoadTypeMOL2Str:
-          discrete = -1;        /* content-dependent behavior... */
-          break;
-        default:
-          discrete = 0;
-          break;
-        }
-      }
-    }
-
     ExecutiveProcessObjectName(G, oname, valid_name);
 
     if(multiplex != 1)
       origObj = ExecutiveGetExistingCompatible(G, valid_name, type);
 
-    switch (type) {
-    case cLoadTypePDB:
-      ok = ExecutiveProcessPDBFile(G, origObj, fname, valid_name,
-                                   frame, discrete, finish, buf, NULL, quiet,
-                                   false, multiplex, zoom);
-      break;
-    case cLoadTypePQR:
-      {
-        PDBInfoRec pdb_info;
-        UtilZeroMem(&pdb_info, sizeof(PDBInfoRec));
-
-        pdb_info.is_pqr_file = true;
-        ok = ExecutiveProcessPDBFile(G, origObj, fname, valid_name,
-                                     frame, discrete, finish, buf, &pdb_info,
-                                     quiet, false, multiplex, zoom);
-      }
-      break;
-    case cLoadTypeTOP:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading TOP\n" ENDFD;
-      if(origObj) {             /* always reinitialize topology objects from scratch */
-        ExecutiveDelete(G, origObj->Name);
-        origObj = NULL;
-      }
-      if(!origObj) {
-        obj = (CObject *) ObjectMoleculeLoadTOPFile(G, NULL, fname, frame, discrete);
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, obj, false, true);
-          if(frame < 0)
-            frame = ((ObjectMolecule *) obj)->NCSet - 1;
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      }
-      break;
-      /* VMD plugin-based trajectory readers */
-    case cLoadTypeXTC:
-    case cLoadTypeTRR:
-    case cLoadTypeGRO:
-    case cLoadTypeG96:
-    case cLoadTypeTRJ2:
-    case cLoadTypeDCD:
-    case cLoadTypeDTR:
-      {
-        char *plugin = NULL;
-        char xtc[] = "xtc", trr[] = "trr", gro[] = "gro", g96[] = "g96", trj[] =
-          "trj", dcd[] = "dcd", dtr[] = "dtr";
-        switch (type) {
-        case cLoadTypeXTC:
-          plugin = xtc;
-          break;
-        case cLoadTypeTRR:
-          plugin = trr;
-          break;
-        case cLoadTypeGRO:
-          plugin = gro;
-          break;
-        case cLoadTypeG96:
-          plugin = g96;
-          break;
-        case cLoadTypeTRJ2:
-          plugin = trj;
-          break;
-        case cLoadTypeDCD:
-          plugin = dcd;
-          break;
-        case cLoadTypeDTR:
-          plugin = dtr;
-          break;
-        }
-        if(plugin) {
-          if(origObj) {         /* always reinitialize topology objects from scratch */
-            PlugIOManagerLoadTraj(G, (ObjectMolecule *) origObj, fname, frame,
-                                  1, 1, 1, -1, -1, NULL, 1, NULL, quiet, plugin);
-            /* if(finish)
-               ExecutiveUpdateObjectSelection(G,origObj); unnecc */
-            sprintf(buf,
-                    " CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
-                    fname, valid_name, ((ObjectMolecule *) origObj)->NCSet);
-          } else {
-            PRINTFB(G, FB_CCmd, FB_Errors)
-              "CmdLoad-Error: must load object topology before loading trajectory."
-              ENDFB(G);
-          }
-        } else {
-          PRINTFB(G, FB_CCmd, FB_Errors)
-            "CmdLoad-Error: plugin not found" ENDFB(G);
-        }
-      }
-      break;
-      /* VMD plugin-based volume readers */
-    case cLoadTypeCUBEMap:
-      {
-        char *plugin = NULL;
-        char cube[] = "cube";
-        switch (type) {
-        case cLoadTypeCUBEMap:
-          plugin = cube;
-          break;
-        }
-
-        if(plugin) {
-          ok = ExecutiveLoad(G, origObj,
-                             fname, 0, type,
-                             valid_name, frame, zoom,
-                             discrete, finish, multiplex, quiet, plugin);
-        } else {
-          PRINTFB(G, FB_CCmd, FB_Errors)
-            "CmdLoad-Error: plugin not found" ENDFB(G);
-        }
-      }
-      break;
-    case cLoadTypeTRJ:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading TRJ\n" ENDFD;
-      if(origObj) {             /* always reinitialize topology objects from scratch */
-        ObjectMoleculeLoadTRJFile(G, (ObjectMolecule *) origObj, fname, frame,
-                                  1, 1, 1, -1, -1, NULL, 1, NULL, quiet);
-        /* if(finish)
-           ExecutiveUpdateObjectSelection(G,origObj); unnecc */
-        sprintf(buf,
-                " CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
-                fname, valid_name, ((ObjectMolecule *) origObj)->NCSet);
-      } else {
-        PRINTFB(G, FB_CCmd, FB_Errors)
-          "CmdLoad-Error: must load object topology before loading trajectory!" ENDFB(G);
-      }
-      break;
-    case cLoadTypeCRD:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading CRD\n" ENDFD;
-      if(origObj) {             /* always reinitialize topology objects from scratch */
-        ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, frame, quiet, 1);
-        /* if(finish)
-           ExecutiveUpdateObjectSelection(G,origObj); unnecc */
-        sprintf(buf,
-                " CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
-                fname, valid_name, ((ObjectMolecule *) origObj)->NCSet);
-      } else {
-        PRINTFB(G, FB_CCmd, FB_Errors)
-          "CmdLoad-Error: must load object topology before loading coordinate file!"
-          ENDFB(G);
-      }
-      break;
-    case cLoadTypeRST:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading RST\n" ENDFD;
-      if(origObj) {             /* always reinitialize topology objects from scratch */
-        ObjectMoleculeLoadRSTFile(G, (ObjectMolecule *) origObj, fname, frame, quiet, 0);
-        /* if(finish)
-           ExecutiveUpdateObjectSelection(G,origObj); unnecc */
-        sprintf(buf,
-                " CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
-                fname, valid_name, ((ObjectMolecule *) origObj)->NCSet);
-      } else {
-        PRINTFB(G, FB_CCmd, FB_Errors)
-          "CmdLoad-Error: must load object topology before loading restart file!"
-          ENDFB(G);
-      }
-      break;
-    case cLoadTypePMO:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading PMO\n" ENDFD;
-      if(!origObj) {
-        obj = (CObject *) ObjectMoleculeLoadPMOFile(G, NULL, fname, frame, discrete);
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, obj, zoom, true);
-          if(frame < 0)
-            frame = ((ObjectMolecule *) obj)->NCSet - 1;
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else {
-        ObjectMoleculeLoadPMOFile(G, (ObjectMolecule *) origObj, fname, frame, discrete);
-        if(finish)
-          ExecutiveUpdateObjectSelection(G, origObj);
-        if(frame < 0)
-          frame = ((ObjectMolecule *) origObj)->NCSet - 1;
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname, valid_name, frame + 1);
-      }
-      break;
-    case cLoadTypePDBStr:
-      ok = ExecutiveProcessPDBFile(G, origObj, fname, valid_name,
-                                   frame, discrete, finish, buf, NULL,
-                                   quiet, true, multiplex, zoom);
-      break;
-    case cLoadTypeMOL:
-    case cLoadTypeMOLStr:
-    case cLoadTypeXYZ:
-    case cLoadTypeXYZStr:
-    case cLoadTypeSDF2:
-    case cLoadTypeSDF2Str:
-    case cLoadTypeMOL2:
-    case cLoadTypeMOL2Str:
-
-      /*      ExecutiveLoadMOL2(G,origObj,fname,oname,frame,
-         discrete,finish,buf,multiplex,quiet,false,zoom); */
-
-      ok = ExecutiveLoad(G, origObj,
-                         fname, 0, type,
-                         valid_name, frame, zoom,
-                         discrete, finish, multiplex, quiet, NULL);
-      break;
-      /*
-         case cLoadTypeMOL2Str:
-         ExecutiveLoadMOL2(G,origObj,fname,oname,frame,
-         discrete,finish,buf,multiplex,quiet,true,zoom);
-         break; */
-
-    case cLoadTypeMMD:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading MMD\n" ENDFD;
-      obj =
-        (CObject *) ObjectMoleculeLoadMMDFile(G, (ObjectMolecule *) origObj, fname, frame,
-                                              NULL, discrete);
-      if(!origObj) {
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, obj, zoom, true);
-          if(frame < 0)
-            frame = ((ObjectMolecule *) obj)->NCSet - 1;
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else if(origObj) {
-        if(finish)
-          ExecutiveUpdateObjectSelection(G, origObj);
-        if(frame < 0)
-          frame = ((ObjectMolecule *) origObj)->NCSet - 1;
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname, valid_name, frame + 1);
-      }
-      break;
-    case cLoadTypeMMDSeparate:
-      ObjectMoleculeLoadMMDFile(G, (ObjectMolecule *) origObj, fname, frame, valid_name,
-                                discrete);
-      break;
-    case cLoadTypeMMDStr:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading MMDStr\n" ENDFD;
-      obj =
-        (CObject *) ObjectMoleculeReadMMDStr(G, (ObjectMolecule *) origObj, fname, frame,
-                                             discrete);
-      if(!origObj) {
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, obj, zoom, true);
-          if(frame < 0)
-            frame = ((ObjectMolecule *) obj)->NCSet - 1;
-          sprintf(buf, " CmdLoad: MMD-string loaded as \"%s\".\n", valid_name);
-        }
-      } else if(origObj) {
-        if(finish)
-          ExecutiveUpdateObjectSelection(G, origObj);
-        if(frame < 0)
-          frame = ((ObjectMolecule *) origObj)->NCSet - 1;
-        sprintf(buf, " CmdLoad: MMD-string appended into object \"%s\", state %d\n",
-                valid_name, frame + 1);
-      }
-      break;
-    case cLoadTypeXPLORMap:
-    case cLoadTypeXPLORStr:
-    case cLoadTypeCCP4Map:
-    case cLoadTypeCCP4Str:
-    case cLoadTypePHIMap:
-    case cLoadTypePHIStr:
-      ok = ExecutiveLoad(G, origObj,
+    ok = ExecutiveLoad(G, origObj,
                          fname, bytes, type,
                          valid_name, frame, zoom,
                          discrete, finish, multiplex, quiet, NULL);
-      break;
-      /*
-         case cLoadTypePHIMap:
-         PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading Delphi Map\n" ENDFD;
-         if(!origObj) {
-         obj=(CObject*)ObjectMapLoadPHIFile(G,NULL,fname,frame,quiet);
-         if(obj) {
-         ObjectSetName(obj,valid_name);
-         ExecutiveManageObject(G,(CObject*)obj,zoom,true);
-         sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
-         }
-         } else {
-         ObjectMapLoadPHIFile(G,(ObjectMap*)origObj,fname,frame,quiet);
-         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-         fname,valid_name);
-         }
-         break;
-       */
-    case cLoadTypeDXMap:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading DX Map\n" ENDFD;
-      if(!origObj) {
-        obj = (CObject *) ObjectMapLoadDXFile(G, NULL, fname, frame, quiet);
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, (CObject *) obj, zoom, true);
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else {
-        ObjectMapLoadDXFile(G, (ObjectMap *) origObj, fname, frame, quiet);
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname, valid_name);
-      }
-      break;
-    case cLoadTypeFLDMap:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading AVS Map\n" ENDFD;
-      if(!origObj) {
-        obj = (CObject *) ObjectMapLoadFLDFile(G, NULL, fname, frame, quiet);
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, (CObject *) obj, zoom, true);
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else {
-        ObjectMapLoadFLDFile(G, (ObjectMap *) origObj, fname, frame, quiet);
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname, valid_name);
-      }
-      break;
-    case cLoadTypeBRIXMap:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading BRIX/DSN6 Map\n" ENDFD;
-      if(!origObj) {
-        obj = (CObject *) ObjectMapLoadBRIXFile(G, NULL, fname, frame, quiet);
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, (CObject *) obj, zoom, true);
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else {
-        ObjectMapLoadFLDFile(G, (ObjectMap *) origObj, fname, frame, quiet);
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname, valid_name);
-      }
-      break;
-    case cLoadTypeGRDMap:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading GRD Map\n" ENDFD;
-      if(!origObj) {
-        obj = (CObject *) ObjectMapLoadGRDFile(G, NULL, fname, frame, quiet);
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, (CObject *) obj, zoom, true);
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else {
-        ObjectMapLoadGRDFile(G, (ObjectMap *) origObj, fname, frame, quiet);
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname, valid_name);
-      }
-      break;
-    case cLoadTypeACNTMap:
-      PRINTFD(G, FB_CCmd) " CmdLoad-DEBUG: loading ACNT Map\n" ENDFD;
-      if(!origObj) {
-        obj = (CObject *) ObjectMapLoadACNTFile(G, NULL, fname, frame, quiet);
-        if(obj) {
-          ObjectSetName(obj, valid_name);
-          ExecutiveManageObject(G, (CObject *) obj, zoom, true);
-          sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, valid_name);
-        }
-      } else {
-        ObjectMapLoadACNTFile(G, (ObjectMap *) origObj, fname, frame, quiet);
-        sprintf(buf, " CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname, valid_name);
-      }
-      break;
-    }
-    if(!quiet && buf[0]) {
-      PRINTFB(G, FB_Executive, FB_Actions)
-        "%s", buf ENDFB(G);
-    }
+
     OrthoRestorePrompt(G);
     APIExit(G);
   }
@@ -7695,17 +7317,6 @@ static PyObject *CmdLoadTraj(PyObject * self, PyObject * args)
     /*printf("plugin %s %d\n",plugin,type); */
     if(origObj) {
       switch (type) {
-      case cLoadTypeXTC:
-      case cLoadTypeTRR:
-      case cLoadTypeGRO:
-      case cLoadTypeG96:
-      case cLoadTypeTRJ2:
-      case cLoadTypeDCD:
-      case cLoadTypeDTR:
-        PlugIOManagerLoadTraj(G, (ObjectMolecule *) origObj, fname, frame,
-                              interval, average, start, stop, max, s1, image, shift,
-                              quiet, plugin);
-        break;
       case cLoadTypeTRJ:       /* this is the ascii AMBER trajectory format... */
         PRINTFD(G, FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
         ObjectMoleculeLoadTRJFile(G, (ObjectMolecule *) origObj, fname, frame,
@@ -7717,6 +7328,10 @@ static PyObject *CmdLoadTraj(PyObject * self, PyObject * args)
                 " CmdLoadTraj: \"%s\" appended into object \"%s\".\n CmdLoadTraj: %d total states in the object.\n",
                 fname, oname, ((ObjectMolecule *) origObj)->NCSet);
         break;
+      default:
+        ok = PlugIOManagerLoadTraj(G, (ObjectMolecule *) origObj, fname, frame,
+                              interval, average, start, stop, max, s1, image, shift,
+                              quiet, plugin);
       }
     } else {
       PRINTFB(G, FB_CCmd, FB_Errors)

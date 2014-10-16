@@ -134,9 +134,9 @@ typedef struct VLARec {
 
 #define VLAlloc(type,init_size) (type*)VLAMalloc(init_size,sizeof(type),5,0)
 #define VLACalloc(type,init_size) (type*)VLAMalloc(init_size,sizeof(type),5,1)
-#define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
 #define VLASizeForSure(ptr,type,size) {ptr=(type*)VLASetSizeForSure(ptr,size);}
+#define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define VLACopy(ptr,type) (type*)VLANewCopy(ptr);
 #define VLAInsert(ptr,type,index,count) {ptr=(type*)VLAInsertRaw(ptr,index,count);}
 #define VLADelete(ptr,type,index,count) {ptr=(type*)VLADeleteRaw(ptr,index,count);}

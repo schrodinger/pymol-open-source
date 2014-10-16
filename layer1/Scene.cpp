@@ -258,7 +258,8 @@ static void SceneDoRoving(PyMOLGlobals * G, float old_front,
                           float old_back, float old_origin,
                           int adjust_flag, int zoom_flag);
 
-static float SceneGetExactScreenVertexScale(PyMOLGlobals * G, float *v1);
+#define SceneGetExactScreenVertexScale SceneGetScreenVertexScale
+
 static void SceneRestartPerfTimer(PyMOLGlobals * G);
 static void SceneRotateWithDirty(PyMOLGlobals * G, float angle, float x, float y, float z,
                                  int dirty);
@@ -716,24 +717,32 @@ int SceneLoopRelease(Block * block, int button, int x, int y, int mod)
   return 1;
 }
 
-static float GetFrontSafe(float front, float back)
+/*
+ * Set FrontSafe and BackSafe
+ */
+static void UpdateFrontBackSafe(CScene *I)
 {
-  if(front > R_SMALL4) {
-    if((back / front) > 100.0F)
-      front = back / 100.0F;
-  }
-  if(front > back)
-    front = back;
-  if(front < cSliceMin)
-    front = cSliceMin;
-  return front;
-}
+  float front = I->Front;
+  float back = I->Back;
 
-static float GetBackSafe(float front_safe, float back)
-{
-  if((back - front_safe) < cSliceMin)
-    back = front_safe + cSliceMin;
-  return back;
+  // minimum slab
+  if(back - front < cSliceMin) {
+    float avg = (back + front) / 2.0;
+    back = avg + cSliceMin / 2.0;
+    front = avg - cSliceMin / 2.0;
+  }
+
+  // minimum front
+  if (front < cSliceMin) {
+    front = cSliceMin;
+
+    // minimum slab
+    if (back < front + cSliceMin)
+      back = front + cSliceMin;
+  }
+
+  I->FrontSafe = front;
+  I->BackSafe = back;
 }
 
 #define SELE_MODE_MAX 7
@@ -1035,36 +1044,19 @@ void SceneSuppressMovieFrame(PyMOLGlobals * G)
   I->MovieFrameFlag = false;
 }
 
-void SceneGetPos(PyMOLGlobals * G, float *pos)
+/*
+ * Get center of screen in world coordinates
+ */
+void SceneGetCenter(PyMOLGlobals * G, float *pos)
 {
-  /* returns realspace coordinates for center of screen */
-
   register CScene *I = G->Scene;
-
-  PRINTFD(G, FB_Scene)
-    " SceneGetPos: origin of rotation" ENDFD3f(I->Origin);
-  /* take origin into camera coords */
 
   MatrixTransformC44fAs33f3f(I->RotMatrix, I->Origin, pos);
 
-  PRINTFD(G, FB_Scene)
-    " SceneGetPos: origin in camera  " ENDFD3f(pos);
-
-  /* find offset in camera coordinates */
-
-  pos[0] = pos[0] - I->Pos[0];
-  pos[1] = pos[1] - I->Pos[1];
-  /*  pos[2]=pos[2]+I->Pos[2]; +(I->FrontSafe+I->Back)/2; */
-  PRINTFD(G, FB_Scene)
-    " SceneGetPos: center in camera  " ENDFD3f(pos);
-
-  /* convert back to real coordinates */
+  pos[0] -= I->Pos[0];
+  pos[1] -= I->Pos[1];
 
   MatrixInvTransformC44fAs33f3f(I->RotMatrix, pos, pos);
-
-  PRINTFD(G, FB_Scene)
-    " SceneGetPos: center            " ENDFD3f(pos);
-
 }
 
 
@@ -1251,13 +1243,7 @@ void SceneTranslate(PyMOLGlobals * G, float x, float y, float z)
   I->Pos[0] += x;
   I->Pos[1] += y;
   I->Pos[2] += z;
-  I->Back -= z;
-  I->Front -= z;
-  if(I->Front > I->Back)
-    I->Front = I->Back + cSliceMin;
-  I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-  I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
-  SceneInvalidate(G);
+  SceneClipSet(G, I->Front - z, I->Back - z);
 }
 
 void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_mode)
@@ -1281,8 +1267,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
         I->Pos[2] += factor;
         I->Front -= factor;
         I->Back -= factor;
-        I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-        I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+        UpdateFrontBackSafe(I);
       }
       invalidate = true;
     }
@@ -1340,7 +1325,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
     SceneInvalidate(G);
     if(SettingGetGlobal_b(G, cSetting_roving_origin)) {
       float v2[3];
-      SceneGetPos(G, v2);       /* gets position of center of screen */
+      SceneGetCenter(G, v2);       /* gets position of center of screen */
       SceneOriginSet(G, v2, true);
     }
     if(SettingGetGlobal_b(G, cSetting_roving_detail)) {
@@ -1421,12 +1406,19 @@ void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_
 static void SceneClipSetWithDirty(PyMOLGlobals * G, float front, float back, int dirty)
 {
   register CScene *I = G->Scene;
+
+  // minimum slab
+  if(back - front < cSliceMin) {
+    float avg = (back + front) / 2.0;
+    back = avg + cSliceMin / 2.0;
+    front = avg - cSliceMin / 2.0;
+  }
+
   I->Front = front;
   I->Back = back;
-  if(I->Front > I->Back)
-    I->Front = I->Back + cSliceMin;
-  I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-  I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+
+  UpdateFrontBackSafe(I);
+
   if(dirty)
     SceneInvalidate(G);
   else
@@ -1505,13 +1497,12 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, char *sele, int stat
     break;
   case 5:                      /* scaling */
     {
-      float width = I->Front - I->Back;
-      float new_width = movement * width;
-      float avg = (I->Front + I->Back) / 2;
-      float new_front = avg + new_width / 2.0F;
-      float new_back = avg - new_width / 2.0F;
+      double avg = (I->Front / 2.0) + (I->Back / 2.0);
+      double width_half = I->Back - avg;
+      double new_w_half = fmin(movement * width_half,
+          width_half + 1000.0); // prevent exploding of clipping planes
 
-      SceneClipSet(G, new_front, new_back);
+      SceneClipSet(G, avg - new_w_half, avg + new_w_half);
     }
     break;
   case 6:                      /* proportional movement */
@@ -2304,7 +2295,7 @@ void SceneSetFrame(PyMOLGlobals * G, int mode, int frame)
       ExecutiveInvalidateSelectionIndicatorsCGO(G);
     }
     MovieSetScrollBarFrame(G, newFrame);
-    SceneInvalidate(G);
+    SeqChanged(G); // SceneInvalidate(G);
   }
   PRINTFD(G, FB_Scene)
     " SceneSetFrame: leaving...\n" ENDFD;
@@ -2577,39 +2568,37 @@ void SceneIdle(PyMOLGlobals * G)
   }
 }
 
+/*
+ * Get the field-of-view width at a depth of 1.0
+ */
+static float GetFovWidth(PyMOLGlobals * G)
+{
+  float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
+  return 2.f * tanf(fov * PI / 360.f);
+}
 
 /*========================================================================*/
+/*
+ * Zoom to location and radius
+ */
 void SceneWindowSphere(PyMOLGlobals * G, float *location, float radius)
 {
   register CScene *I = G->Scene;
   float v0[3];
-  float dist;
-  float aspRat;
-  float fov;
-
-  if(I->Height && I->Width) {
-    aspRat = ((float) I->Width) / ((float) I->Height);
-  } else {
-    aspRat = 1.3333F;
-  }
+  float dist = 2.f * radius / GetFovWidth(G);
 
   /* find where this point is in relationship to the origin */
   subtract3f(I->Origin, location, v0);
 
-  dist = I->Pos[2];
-
   MatrixTransformC44fAs33f3f(I->RotMatrix, v0, I->Pos); /* convert to view-space */
-  fov = SettingGetGlobal_f(G, cSetting_field_of_view);
-  if(aspRat < 1.0)
-    fov *= aspRat;
 
-  dist = (float) (radius / tan((fov / 2.0) * cPI / 180.0));
+  if (I->Height > I->Width && I->Height && I->Width)
+    dist *= I->Height / I->Width;
 
   I->Pos[2] -= dist;
   I->Front = (-I->Pos[2] - radius * 1.2F);
   I->Back = (-I->Pos[2] + radius * 1.2F);
-  I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-  I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+  UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
 }
 
@@ -2627,6 +2616,10 @@ void SceneRelocate(PyMOLGlobals * G, float *location)
   /* find out how far camera was from previous origin */
   dist = I->Pos[2];
 
+  // stay in front of camera, empirical value to show at least 1 bond
+  if (dist > -5.f)
+    dist = -5.f;
+
   /* find where this point is in relationship to the origin */
   subtract3f(I->Origin, location, v0);
 
@@ -2637,14 +2630,17 @@ void SceneRelocate(PyMOLGlobals * G, float *location)
   I->Pos[2] = dist;
   I->Front = (-I->Pos[2] - (slab_width * 0.50F));
   I->Back = (-I->Pos[2] + (slab_width * 0.50F));
-  I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-  I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+  UpdateFrontBackSafe(I);
   SceneRovingDirty(G);
 
 }
 
 
 /*========================================================================*/
+/*
+ * Get the origin of rotation in model space
+ * cmd.get_view()[12:15]
+ */
 void SceneOriginGet(PyMOLGlobals * G, float *origin)
 {
   register CScene *I = G->Scene;
@@ -3992,7 +3988,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
   I->LastMod = mod;
   I->Threshold = 0;
 
-  SceneGetPos(G, I->LastClickVertex);
+  SceneGetCenter(G, I->LastClickVertex);
   {
     float vScale = SceneGetExactScreenVertexScale(G, I->LastClickVertex);
     float v[3];
@@ -4106,8 +4102,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           I->Pos[2] += factor;
           I->Front -= factor;
           I->Back -= factor;
-          I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-          I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+          UpdateFrontBackSafe(I);
         }
       }
       break;
@@ -4120,8 +4115,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           I->Pos[2] += factor;
           I->Front -= factor;
           I->Back -= factor;
-          I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-          I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+          UpdateFrontBackSafe(I);
         }
       }
       break;
@@ -4809,6 +4803,16 @@ void ScenePopRasterMatrix(PyMOLGlobals * G)
   glPopMatrix();
 }
 
+/*
+ * Compose the ModelViewMatrix from Pos, RotMatrix and Origin
+ * See also: CScene.ModMatrix (queried from OpenGL)
+ */
+void SceneComposeModelViewMatrix(CScene * I, float * modelView) {
+  identity44f(modelView);
+  MatrixTranslateC44f(modelView, I->Pos[0], I->Pos[1], I->Pos[2]);
+  MatrixMultiplyC44f(I->RotMatrix, modelView);
+  MatrixTranslateC44f(modelView, -I->Origin[0], -I->Origin[1], -I->Origin[2]);
+}
 
 /*========================================================================*/
 void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal)
@@ -4817,10 +4821,7 @@ void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal)
   float p1[4], p2[4];
   float modelView[16];
 
-  identity44f(modelView);
-  MatrixTranslateC44f(modelView, I->Pos[0], I->Pos[1], I->Pos[2]);
-  MatrixMultiplyC44f(I->RotMatrix, modelView);
-  MatrixTranslateC44f(modelView, -I->Origin[0], -I->Origin[1], -I->Origin[2]);
+  SceneComposeModelViewMatrix(I, modelView);
 
   copy3f(v1, p1);
   p1[3] = 1.0;
@@ -4831,69 +4832,46 @@ void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal)
   invert3f3f(p2, normal);
 }
 
+/*
+ * Get the depth (camera space Z) of v1
+ *
+ * v1: point (3f) in world space or NULL (= origin)
+ */
+float SceneGetRawDepth(PyMOLGlobals * G, float *v1)
+{
+  register CScene *I = G->Scene;
+  float vt[3];
+  float modelView[16];
+
+  if(!v1 || SettingGetGlobal_i(G, cSetting_ortho))
+    return -I->Pos[2];
+
+  SceneComposeModelViewMatrix(I, modelView);
+
+  MatrixTransformC44f3f(modelView, v1, vt);
+  return -vt[2];
+}
 
 /*========================================================================*/
+/*
+ * Get the angstrom per pixel factor at v1. If v1 is NULL, return the
+ * factor at the origin, but clamped to an empirical positive value.
+ *
+ * v1: point (3f) in world space or NULL (= origin)
+ */
 float SceneGetScreenVertexScale(PyMOLGlobals * G, float *v1)
 
 /* does not require OpenGL-provided matrices */
 {
-  float ratio;
-  register CScene *I = G->Scene;
-  float vt[3];
-  float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
-  float modelView[16];
+  float depth = SceneGetRawDepth(G, v1);
+  float ratio = depth * GetFovWidth(G) / G->Scene->Height;
 
-  if(SettingGetGlobal_i(G, cSetting_ortho)) {
-    vt[2] = I->Pos[2];
-  } else {
-    if(!v1)
-      v1 = I->Origin;
-    identity44f(modelView);
-    MatrixTranslateC44f(modelView, I->Pos[0], I->Pos[1], I->Pos[2]);
-    MatrixMultiplyC44f(I->RotMatrix, modelView);
-    MatrixTranslateC44f(modelView, -I->Origin[0], -I->Origin[1], -I->Origin[2]);
+  if(!v1 && ratio < R_SMALL4)
+    // origin depth, return a safe clipped value (origin must not be
+    // behind or very close in front of the camera)
+    ratio = R_SMALL4;
 
-    MatrixTransformC44f3f(modelView, v1, vt);
-  }
-  // FIXME: max(0.0, ...) instead of abs(...) would make more sense
-  ratio = fabs(2.0 * -vt[2] * tanf(fov * PI / 360.0) / I->Height);
   return ratio;
-}
-
-static float SceneGetExactScreenVertexScale(PyMOLGlobals * G, float *v1)
-
-/* requires the OpenGL-computed matrices */
-{
-  /* get conversion factor from screen point to atomic coodinate */
-  register CScene *I = G->Scene;
-  float vl, p1[4], p2[4];
-  float height_factor = I->Height / 2.0F;
-
-  return SceneGetScreenVertexScale(G, v1);
-  if(!v1)
-    v1 = I->Origin;
-
-  /* now, scale properly given the current projection matrix */
-  copy3f(v1, p1);
-  p1[3] = 1.0;
-  MatrixTransformC44f4f(I->ModMatrix, p1, p2);  /* modelview transformation */
-  copy4f(p2, p1);
-  p2[1] += 1.0;
-  /* projection transformation */
-  MatrixTransformC44f4f(I->ProMatrix, p1, p1);
-  MatrixTransformC44f4f(I->ProMatrix, p2, p2);
-  /*  dump44f(I->ProMatrix,"pro"); */
-  /* perspective division */
-  p1[1] = p1[1] / p1[3];
-  p2[1] = p2[1] / p2[3];
-  p1[1] = (p1[1] + 1.0F) * (height_factor);     /* viewport transformation */
-  p2[1] = (p2[1] + 1.0F) * (height_factor);
-  vl = (float) fabs(p1[1] - p2[1]);
-
-  if(vl < R_SMALL4)
-    vl = 100.0F;
-
-  return (1.0F / vl);
 }
 
 void SceneRovingChanged(PyMOLGlobals * G)
@@ -5562,6 +5540,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
                                               I->LastPicked.src.index, v1)) {
               /* scale properly given the current projection matrix */
               vScale = SceneGetExactScreenVertexScale(G, v1);
+
               if(stereo_via_adjacent_array(I->StereoMode)) {
                 x = get_stereo_x(x, &I->LastX, I->Width, NULL);
               }
@@ -5737,7 +5716,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
 
       EditorFavorOrigin(G, NULL);
       if(moved_flag && SettingGetGlobal_b(G, cSetting_roving_origin)) {
-        SceneGetPos(G, v2);     /* gets position of center of screen */
+        SceneGetCenter(G, v2);     /* gets position of center of screen */
         SceneOriginSet(G, v2, true);
       }
       if(moved_flag && SettingGetGlobal_b(G, cSetting_roving_detail)) {
@@ -5861,18 +5840,18 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
         }
         break;
       case cButModeTransZ:
+        // zoom
         if(I->LastY != y) {
-          float factor = 400 / ((I->FrontSafe + I->BackSafe) / 2);
-          if(factor >= 0.0F) {
-            factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) * 
-              (((float) y) - I->LastY) / factor;
+          {
+            // the 5.0 min depth below is an empirical value
+            float factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) *
+              (y - I->LastY) / 400.0 * fmax(5.f, -I->Pos[2]);
             if(!SettingGetGlobal_b(G, cSetting_legacy_mouse_zoom))
               factor = -factor;
             I->Pos[2] += factor;
             I->Front -= factor;
             I->Back -= factor;
-            I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-            I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+            UpdateFrontBackSafe(I);
           }
           I->LastY = y;
           SceneInvalidate(G);
@@ -5882,62 +5861,33 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
       case cButModeClipNF:
         if(I->LastX != x) {
           I->Back -= (((float) x) - I->LastX) / 10;
-          if(I->Back < I->Front)
-            I->Back = I->Front + cSliceMin;
           I->LastX = x;
-          SceneInvalidate(G);
           moved_flag = true;
         }
         if(I->LastY != y) {
           I->Front -= (((float) y) - I->LastY) / 10;
-          if(I->Front > I->Back)
-            I->Front = I->Back + cSliceMin;
           I->LastY = y;
-          SceneInvalidate(G);
           moved_flag = true;
         }
         if(moved_flag) {
-          I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-          I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+          SceneClipSet(G, I->Front, I->Back);
         }
         break;
       case cButModeClipN:
-        if(I->LastX != x) {
-          I->Front -= (((float) x) - I->LastX) / 10;
-          if(I->Front > I->Back)
-            I->Front = I->Back + cSliceMin;
-          I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-          I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+        if(I->LastX != x || I->LastY != y) {
+          I->Front -= (x - I->LastX + y - I->LastY) / 10.f;
           I->LastX = x;
-          SceneInvalidate(G);
-          moved_flag = true;
-        }
-        if(I->LastY != y) {
-          I->Front -= (((float) y) - I->LastY) / 10;
-          if(I->Front > I->Back)
-            I->Front = I->Back + cSliceMin;
-          I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-          I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
           I->LastY = y;
-          SceneInvalidate(G);
+          SceneClipSet(G, I->Front, I->Back);
           moved_flag = true;
         }
         break;
       case cButModeClipF:
-        if(I->LastX != x) {
-          I->Back -= (((float) x) - I->LastX) / 10;
-          if(I->Back < I->Front)
-            I->Back = I->Front + cSliceMin;
+        if(I->LastX != x || I->LastY != y) {
+          I->Back -= (x - I->LastX + y - I->LastY) / 10.f;
           I->LastX = x;
-          SceneInvalidate(G);
-          moved_flag = true;
-        }
-        if(I->LastY != y) {
-          I->Back -= (((float) y) - I->LastY) / 10;
-          if(I->Back < I->Front)
-            I->Back = I->Front + cSliceMin;
           I->LastY = y;
-          SceneInvalidate(G);
+          SceneClipSet(G, I->Front, I->Back);
           moved_flag = true;
         }
         break;
@@ -6285,8 +6235,7 @@ void SceneSetDefaultView(PyMOLGlobals * G)
 
   I->Front = 40.0F;
   I->Back = 100.0F;
-  I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-  I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+  UpdateFrontBackSafe(I);
 
   I->Scale = 1.0F;
 
@@ -6955,7 +6904,6 @@ void SceneRay(PyMOLGlobals * G,
 
       {
         float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-        float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
 
         if(pixel_scale_value < 0)
           pixel_scale_value = 1.0F;
@@ -6974,7 +6922,6 @@ void SceneRay(PyMOLGlobals * G,
           float back_height;
           float back_width;
           float pos;
-          float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
           pos = I->Pos[2];
 
           if((-pos) < I->FrontSafe) {
@@ -7021,23 +6968,23 @@ void SceneRay(PyMOLGlobals * G,
               int icx;
               ColorGetEncoded(G, obj_color, color);
               RaySetContext(ray, rec->obj->Context);
-              ray->fColor3fv(ray, color);
+              ray->color3fv(color);
 
               if(SettingGetIfDefined_i
                  (G, rec->obj->Setting, cSetting_ray_interior_color, &icx)) {
                 float icolor[3];
                 if(icx != -1) {
                   if(icx == cColorObject) {
-                    ray->fInteriorColor3fv(ray, color, false);
+                    ray->interiorColor3fv(color, false);
                   } else {
                     ColorGetEncoded(G, icx, icolor);
-                    ray->fInteriorColor3fv(ray, icolor, false);
+                    ray->interiorColor3fv(icolor, false);
                   }
                 } else {
-                  ray->fInteriorColor3fv(ray, color, true);
+                  ray->interiorColor3fv(color, true);
                 }
               } else {
-                ray->fInteriorColor3fv(ray, color, true);
+                ray->interiorColor3fv(color, true);
               }
               if((!I->grid.active) || (I->grid.mode != 2)) {
                 info.state = ObjectGetCurrentState(rec->obj, false);
@@ -9098,8 +9045,6 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     aspRat = aspRat / 2;
     break;
   }
-
-  fov = SettingGetGlobal_f(G, cSetting_field_of_view);
   if(G->HaveGUI && G->ValidContext) {
 
     if(Feedback(G, FB_OpenGL, FB_Debugging))
@@ -9203,9 +9148,10 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       curState = SettingGetGlobal_i(G, cSetting_state) - 1;
     }
     if(!SettingGetGlobal_b(G, cSetting_ortho)) {
+      float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
       gluPerspective(fov, aspRat, I->FrontSafe, I->BackSafe);
     } else {
-      height = (float) (fabs(I->Pos[2]) * tan((fov / 2.0) * cPI / 180.0));
+      height = fmax(R_SMALL4, -I->Pos[2]) * GetFovWidth(G) / 2.f;
       width = height * aspRat;
 
       GLORTHO(-width, width, -height, height, I->FrontSafe, I->BackSafe);
@@ -9233,7 +9179,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 
     /* make note of how large pixels are at the origin  */
 
-    I->VertexScale = SceneGetScreenVertexScale(G, I->Origin);
+    I->VertexScale = SceneGetScreenVertexScale(G, NULL);
 
     /* determine the direction in which we are looking relative */
 
@@ -9854,8 +9800,7 @@ void SceneZoom(PyMOLGlobals * G, float scale){
   I->Pos[2] += factor;
   I->Front -= factor;
   I->Back -= factor;
-  I->FrontSafe = GetFrontSafe(I->Front, I->Back);
-  I->BackSafe = GetBackSafe(I->FrontSafe, I->Back);
+  UpdateFrontBackSafe(I);
   SceneInvalidate(G);
 }
 

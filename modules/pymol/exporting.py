@@ -466,6 +466,11 @@ SEE ALSO
 
     load, get_model
         '''
+        import cPickle
+        import gzip
+
+        do_gzip = False
+
         # preprocess selection
         input_selection = selection
         selection = selector.process(input_selection)
@@ -489,8 +494,8 @@ SEE ALSO
                 format = 'sdf'
             elif re.search("\.pkl$",lc_filename):
                 format = 'pkl'
-            elif re.search("\.pkl$",lc_filename):
-                format = 'pkla'
+            elif re.search("\.xyz$",lc_filename):
+                format = 'xyz'
             elif re.search("\.mmd$",lc_filename):
                 format = 'mmod'
             elif re.search("\.out$",lc_filename):
@@ -506,6 +511,9 @@ SEE ALSO
             elif re.search("\.png$",lc_filename):
                 format = 'png'
             elif re.search("\.pse$|\.psw$",lc_filename):
+                format = 'pse'
+            elif re.search("\.pze$|\.pzw$",lc_filename):
+                do_gzip = True
                 format = 'pse'
             elif re.search("\.aln$",lc_filename):
                 format = 'aln'
@@ -612,7 +620,10 @@ SEE ALSO
                 input_selection=''
             if not quiet:
                 print " Save: Please wait -- writing session file..."
-            io.pkl.toFile(_self.get_session(str(input_selection),int(partial),int(quiet)),filename)
+            session = _self.get_session(input_selection, partial, quiet)
+            contents = cPickle.dumps(session, 1)
+            with (gzip.open if do_gzip else open)(filename, 'wb') as handle:
+                handle.write(contents)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
@@ -621,6 +632,22 @@ SEE ALSO
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
+        elif format == 'xyz':
+            state = int(state)
+            buf = []
+            for i, (selection, state) in enumerate(
+                    pymol.selecting.objsele_state_iter(selection, state)):
+                n_atoms_i = len(buf)
+                buf.append('') # natoms (deferred)
+                buf.append('') # comment
+                n = _self.iterate_state(state, selection,
+                        '_buf.append("%s %f %f %f" % (elem, x, y, z))',
+                        space={'_buf': buf})
+                buf[n_atoms_i] = str(n)
+            with open(filename, 'w') as handle:
+                print >> handle, '\n'.join(buf)
+            if not quiet:
+                print " Save: wrote %d states to \"%s\"." % (i + 1, filename)
         elif format=='sdf':
             state = int(state)
             sdf = SDF(filename,'w')

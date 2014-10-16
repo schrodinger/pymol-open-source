@@ -2393,11 +2393,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
               }
             }
           }
-          if(cs->fInvalidateRep) {
-            cs->fInvalidateRep(cs, cRepAll, cRepInvCoord);
-          } else {
-            ObjectMoleculeInvalidate(obj, cRepAll, cRepInvCoord, -1);
-          }
+          cs->invalidateRep(cRepAll, cRepInvCoord);
         } else if(cgo) {
           SceneDirty(G);
         }

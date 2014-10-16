@@ -618,7 +618,10 @@ class VRGBACanvas(object):
         '''
         vmin, vmax = hist[:2]
         hist = hist[4:]
-        ihistmax = 1.0 / max(hist)
+        try:
+            ihistmax = 1.0 / max(hist)
+        except ZeroDivisionError:
+            ihistmax = 0.0
         binwidth = (vmax - vmin) / float(len(hist) - 1)
         if not self._histcoords:
             self.vmin = vmin

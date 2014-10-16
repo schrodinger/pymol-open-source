@@ -48,15 +48,6 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"PyMOLObject.h"
 
-static void CoordSetUpdate(CoordSet * I, int state);
-
-void CoordSetFree(CoordSet * I);
-void CoordSetRender(CoordSet * I, RenderInfo * info);
-void CoordSetEnumIndices(CoordSet * I);
-void CoordSetInvalidateRep(CoordSet * I, int type, int level);
-int CoordSetExtendIndices(CoordSet * I, int nAtom);
-void CoordSetAppendIndices(CoordSet * I, int offset);
-
 
 /*========================================================================*/
 static char sATOM[] = "ATOM  ";
@@ -122,7 +113,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
   int ll = 0;
 
   if(*cs) {
-    CoordSetFree(*cs);
+    (*cs)->fFree();
     *cs = NULL;
   }
 
@@ -165,7 +156,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
       ok = PConvPyListToLabPosVLA(PyList_GetItem(list, 8), &I->LabPos);
     if(!ok) {
       if(I)
-        CoordSetFree(I);
+        I->fFree();
         *cs = NULL;
     } else {
       *cs = I;
@@ -332,9 +323,8 @@ int CoordSetMerge(ObjectMolecule *OM, CoordSet * I, CoordSet * cs)
     } else if(I->RefPos) {
       VLACheck(I->RefPos, RefPosType, nIndex);
     }
+    I->invalidateRep(cRepAll, cRepInvAll);
   }
-  if(ok && I->fInvalidateRep)
-    I->fInvalidateRep(I, cRepAll, cRepInvAll);
   I->NIndex = nIndex;
 
   return ok;
@@ -419,8 +409,7 @@ void CoordSetPurge(CoordSet * I)
     VLASize(I->IdxToAtm, int, I->NIndex);
     PRINTFD(I->State.G, FB_CoordSet)
       " CoordSetPurge-Debug: I->IdxToAtm shrunk to %d\n", I->NIndex ENDFD;
-    if(I->fInvalidateRep)
-      I->fInvalidateRep(I, cRepAll, cRepInvAtoms);      /* this will free Color */
+    I->invalidateRep(cRepAll, cRepInvAtoms);      /* this will free Color */
   }
   PRINTFD(I->State.G, FB_CoordSet)
     " CoordSetPurge-Debug: leaving NAtIndex %d NIndex %d...\n",
@@ -1165,8 +1154,9 @@ void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoT
 
 
 /*========================================================================*/
-void CoordSetInvalidateRep(CoordSet * I, int type, int level)
+void CoordSet::invalidateRep(int type, int level)
 {
+  CoordSet * I = this;
   int a;
   if(level >= cRepInvVisib) {
     if (I->Obj)
@@ -1178,31 +1168,31 @@ void CoordSetInvalidateRep(CoordSet * I, int type, int level)
     if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
                     cSetting_cartoon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
-        CoordSetInvalidateRep(I, cRepCartoon, cRepInvVisib2);
+        invalidateRep(cRepCartoon, cRepInvVisib2);
       else if(type == cRepCartoon) {
-        CoordSetInvalidateRep(I, cRepLine, cRepInvVisib2);
-        CoordSetInvalidateRep(I, cRepCyl, cRepInvVisib2);
-        CoordSetInvalidateRep(I, cRepSphere, cRepInvVisib2);
+        invalidateRep(cRepLine, cRepInvVisib2);
+        invalidateRep(cRepCyl, cRepInvVisib2);
+        invalidateRep(cRepSphere, cRepInvVisib2);
       }
     }
     /* ribbon_side_chain_helper */
     if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
                     cSetting_ribbon_side_chain_helper)) {
       if((type == cRepCyl) || (type == cRepLine) || (type == cRepSphere))
-        CoordSetInvalidateRep(I, cRepRibbon, cRepInvVisib2);
+        invalidateRep(cRepRibbon, cRepInvVisib2);
       else if(type == cRepRibbon) {
-        CoordSetInvalidateRep(I, cRepLine, cRepInvVisib2);
-        CoordSetInvalidateRep(I, cRepCyl, cRepInvVisib2);
-        CoordSetInvalidateRep(I, cRepSphere, cRepInvVisib2);
+        invalidateRep(cRepLine, cRepInvVisib2);
+        invalidateRep(cRepCyl, cRepInvVisib2);
+        invalidateRep(cRepSphere, cRepInvVisib2);
       }
     }
     /* line_stick helper  */
     if(SettingGet_b(I->State.G, I->Setting, I->Obj->Obj.Setting,
                     cSetting_line_stick_helper)) {
       if(type == cRepCyl)
-        CoordSetInvalidateRep(I, cRepLine, cRepInvVisib2);
+        invalidateRep(cRepLine, cRepInvVisib2);
       else if(type == cRepLine) {
-        CoordSetInvalidateRep(I, cRepCyl, cRepInvVisib2);
+        invalidateRep(cRepCyl, cRepInvVisib2);
       }
     }
   }
@@ -1302,8 +1292,9 @@ OrthoBusyFast(I->State.G,rep,cRepCnt);\
 }
 
 /*========================================================================*/
-static void CoordSetUpdate(CoordSet * I, int state)
+void CoordSet::update(int state)
 {
+  CoordSet * I = this;
   int a;
   int i;
   PyMOLGlobals *G = I->Obj->Obj.G;
@@ -1397,8 +1388,9 @@ void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff)
 
 
 /*========================================================================*/
-void CoordSetRender(CoordSet * I, RenderInfo * info)
+void CoordSet::render(RenderInfo * info)
 {
+  CoordSet * I = this;
   PyMOLGlobals *G = I->State.G;
   PRINTFD(G, FB_CoordSet)
     " CoordSetRender: entered (%p).\n", (void *) I ENDFD;
@@ -1424,7 +1416,7 @@ void CoordSetRender(CoordSet * I, RenderInfo * info)
     CRay *ray = info->ray;
     Picking **pick = info->pick;
     int a, aa;
-    Rep *r;
+    ::Rep *r;
     int float_labels = SettingGet_i(G, I->Setting,
                                     I->Obj->Obj.Setting,
                                     cSetting_float_labels);
@@ -1484,7 +1476,7 @@ void CoordSetRender(CoordSet * I, RenderInfo * info)
           ObjectUseColor((CObject *) I->Obj);
         } else {
           if(I->Obj)
-            ray->fWobble(ray,
+            ray->wobble(
                          SettingGet_i(G, I->Setting,
                                       I->Obj->Obj.Setting,
                                       cSetting_ray_texture),
@@ -1492,12 +1484,12 @@ void CoordSetRender(CoordSet * I, RenderInfo * info)
                                         I->Obj->Obj.Setting,
                                         cSetting_ray_texture_settings));
           else
-            ray->fWobble(ray,
+            ray->wobble(
                          SettingGet_i(G, I->Setting,
                                       NULL, cSetting_ray_texture),
                          SettingGet_3fv(G, I->Setting, NULL,
                                         cSetting_ray_texture_settings));
-          ray->fColor3fv(ray, ColorGet(G, I->Obj->Obj.Color));
+          ray->color3fv(ColorGet(G, I->Obj->Obj.Color));
         }
 
         if(r->fRender) {        /* do OpenGL rendering in three passes */
@@ -1607,13 +1599,6 @@ CoordSet *CoordSetNew(PyMOLGlobals * G)
   OOCalloc(G, CoordSet);        /* NULL-initializes all fields */
   ObjectStateInit(G, &I->State);
   I->State.G = G;
-  I->fFree = CoordSetFree;
-  I->fRender = CoordSetRender;
-  I->fUpdate = CoordSetUpdate;
-  I->fEnumIndices = CoordSetEnumIndices;
-  I->fExtendIndices = CoordSetExtendIndices;
-  I->fAppendIndices = CoordSetAppendIndices;
-  I->fInvalidateRep = CoordSetInvalidateRep;
   I->PeriodicBoxType = cCSet_NoPeriodicity;
 
   I->SpheroidSphereSize = I->State.G->Sphere->Sphere[1]->nDot;  /* does this make any sense? */
@@ -1677,7 +1662,7 @@ CoordSet *CoordSetCopyImpl(CoordSet * cs)
   I->IdxToAtm = VLACalloc(int, I->NIndex);
   UtilCopyMem(I->IdxToAtm, cs->IdxToAtm, sizeof(int) * I->NIndex);
 
-  UtilZeroMem(I->Rep, sizeof(Rep *) * cRepCnt);
+  UtilZeroMem(I->Rep, sizeof(::Rep *) * cRepCnt);
 
   I->TmpBond = NULL;
   I->Color = NULL;
@@ -1689,8 +1674,9 @@ CoordSet *CoordSetCopyImpl(CoordSet * cs)
 
 
 /*========================================================================*/
-int CoordSetExtendIndices(CoordSet * I, int nAtom)
+int CoordSet::extendIndices(int nAtom)
 {
+  CoordSet * I = this;
   int a, b;
   ObjectMolecule *obj = I->Obj;
   int ok = true;
@@ -1746,8 +1732,9 @@ int CoordSetExtendIndices(CoordSet * I, int nAtom)
 
 
 /*========================================================================*/
-void CoordSetAppendIndices(CoordSet * I, int offset)
+void CoordSet::appendIndices(int offset)
 {
+  CoordSet * I = this;
   int a, b;
   ObjectMolecule *obj = I->Obj;
 
@@ -1780,8 +1767,9 @@ void CoordSetAppendIndices(CoordSet * I, int offset)
 
 
 /*========================================================================*/
-void CoordSetEnumIndices(CoordSet * I)
+void CoordSet::enumIndices()
 {
+  CoordSet * I = this;
   /* set up for simple case where 1 = 1, etc. */
   int a;
   I->AtmToIdx = VLACalloc(int, I->NIndex);
@@ -1799,8 +1787,9 @@ void CoordSetEnumIndices(CoordSet * I)
 
 
 /*========================================================================*/
-void CoordSetFree(CoordSet * I)
+void CoordSet::fFree()
 {
+  CoordSet * I = this;
   int a;
   ObjectMolecule *obj;
   if(I) {

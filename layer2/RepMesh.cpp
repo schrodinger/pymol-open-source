@@ -111,7 +111,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 
       if(I->oneColorFlag)
         col = ColorGet(G, I->oneColor);
-      ray->fColor3fv(ray, ColorGet(G, I->R.obj->Color));
+      ray->color3fv(ColorGet(G, I->R.obj->Color));
       switch (I->mesh_type) {
       case 0:
         while(ok && *n) {
@@ -121,13 +121,13 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
             v += 3;
             if(I->oneColorFlag) {
               while(ok && c--) {
-                ok &= ray->fSausage3fv(ray, v - 3, v, radius, col, col);
+                ok &= ray->sausage3fv(v - 3, v, radius, col, col);
                 v += 3;
                 vc += 3;
               }
             } else {
               while(ok && c--) {
-                ok &= ray->fSausage3fv(ray, v - 3, v, radius, vc - 3, vc);
+                ok &= ray->sausage3fv(v - 3, v, radius, vc - 3, vc);
                 v += 3;
                 vc += 3;
               }
@@ -138,16 +138,16 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
         while(ok && *n) {
           c = *(n++);
           if(I->oneColorFlag) {
-            ray->fColor3fv(ray, col);
+            ray->color3fv(col);
             while(ok && c--) {
-              ok &= ray->fSphere3fv(ray, v, radius);
+              ok &= ray->sphere3fv(v, radius);
               v += 3;
               vc += 3;
             }
           } else {
             while(ok && c--) {
-              ray->fColor3fv(ray, vc);
-              ok &= ray->fSphere3fv(ray, v, radius);
+              ray->color3fv(vc);
+              ok &= ray->sphere3fv(v, radius);
               v += 3;
               vc += 3;
             }

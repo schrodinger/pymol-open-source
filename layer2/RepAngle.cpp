@@ -97,9 +97,9 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
     while(ok && c > 0) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]); */
       if(round_ends) {
-        ok &= ray->fSausage3fv(ray, v, v + 3, radius, vc, vc);
+        ok &= ray->sausage3fv(v, v + 3, radius, vc, vc);
       } else {
-        ok &= ray->fCustomCylinder3fv(ray, v, v + 3, radius, vc, vc, cCylCapFlat, cCylCapFlat);
+        ok &= ray->customCylinder3fv(v, v + 3, radius, vc, vc, cCylCapFlat, cCylCapFlat);
       }
       v += 6;
       c -= 2;

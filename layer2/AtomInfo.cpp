@@ -287,6 +287,19 @@ void BondTypeInit(BondType *bt){
   bt->unique_id = 0;
   bt->has_setting = 0;
 }
+
+/*
+ * Set atom indices and bond order, and invalidate all other fields.
+ */
+void BondTypeInit2(BondType *bond, int i1, int i2, int order)
+{
+  BondTypeInit(bond);
+  bond->index[0] = i1;
+  bond->index[1] = i2;
+  bond->order = order;
+  bond->id = -1;
+}
+
 int AtomInfoInit(PyMOLGlobals * G)
 {
   register CAtomInfo *I = NULL;
@@ -650,6 +663,8 @@ int AtomInfoKnownWaterResName(PyMOLGlobals * G, char *resn)
   case 'T':
     switch (resn[1]) {
     case 'I':
+    case '3': // T3P
+    case '4': // T4P
       switch (resn[2]) {
       case 'P':
         return true;
@@ -3768,7 +3783,7 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
   case cAN_H:
     vdw = 1.20F;
     break;
-    /* NOTE: Rowland and Taylor J. Phys. Chem. 100 (18): 7384–91 suggest
+    /* NOTE: Rowland and Taylor J. Phys. Chem. 100 (18): 7384-91 suggest
        1.09 would be more consistent with Hydrogen crystal data */
 
   case cAN_He:

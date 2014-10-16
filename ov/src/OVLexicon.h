@@ -20,13 +20,13 @@ void OVLexicon_Del(OVLexicon * I);
 
 #define OVLexicon_DEL_AUTO_NULL(I) { if(I) { OVLexicon_Del(I); I=OV_NULL; }}
 
-OVreturn_word OVLexicon_GetFromCString(OVLexicon * uk, ov_char8 * str);
+OVreturn_word OVLexicon_GetFromCString(OVLexicon * uk, const ov_char8 * str);
 
 OVstatus OVLexicon_IncRef(OVLexicon * uk, ov_word id);
 OVstatus OVLexicon_DecRef(OVLexicon * uk, ov_word id);
 
 ov_char8 *OVLexicon_FetchCString(OVLexicon * uk, ov_word id);
-OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, ov_char8 * str);
+OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, const ov_char8 * str);
 
 ov_uword OVLexicon_GetNActive(OVLexicon * uk);
 

@@ -888,7 +888,7 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
   gs->State = 0;
 
   ObjectGadgetRampUpdateCGO(I, gs);
-  gs->fUpdate(gs);
+  gs->update();
 
 }
 

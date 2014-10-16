@@ -84,7 +84,7 @@ int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode
     result = DistSetMoveLabel(I->DSet[state], index, v, mode);
     /* force this object to redraw itself; invalidate the Label's coordinates
      * with the new data set, ds */
-    ds->fInvalidateRep(ds, cRepLabel, cRepInvCoord);
+    ds->invalidateRep(cRepLabel, cRepInvCoord);
     /*      ExecutiveUpdateCoordDepends(I->Obj.G,I); */
   }
   return (result);
@@ -279,8 +279,7 @@ ObjectDist *ObjectDistNewFromM4XBond(PyMOLGlobals * G, ObjectDist * oldObj,
     I = oldObj;
     for(a = 0; a < I->NDSet; a++)
       if(I->DSet[a]) {
-        if(I->DSet[a]->fFree)
-          I->DSet[a]->fFree(I->DSet[a]);
+        I->DSet[a]->fFree();
         I->DSet[a] = NULL;
       }
     I->NDSet = 0;
@@ -435,8 +434,7 @@ void ObjectDistUpdate(ObjectDist * I)
     if(I->DSet[a]) {
       OrthoBusySlow(I->Obj.G, a, I->NDSet);
       /*           printf(" ObjectDist: updating state %d of \"%s\".\n" , a+1, I->Obj.Name); */
-      if(I->DSet[a]->fUpdate)
-        I->DSet[a]->fUpdate(I->DSet[a], a);
+      I->DSet[a]->update(a);
     }
 }
 
@@ -450,8 +448,7 @@ void ObjectDistInvalidateRep(ObjectDist * I, int rep)
 
   for(a = 0; a < I->NDSet; a++)
     if(I->DSet[a]) {
-      if(I->DSet[a]->fInvalidateRep)
-        I->DSet[a]->fInvalidateRep(I->DSet[a], rep, cRepInvAll);
+      I->DSet[a]->invalidateRep(rep, cRepInvAll);
     }
 }
 
@@ -469,8 +466,8 @@ static void ObjectDistRender(ObjectDist * I, RenderInfo * info)
     for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NDSet);
         iter.next();) {
       DistSet * ds = I->DSet[iter.state];
-      if(ds && ds->fRender)
-        ds->fRender(ds, info);
+      if(ds)
+        ds->render(info);
     }
   }
 }
@@ -495,8 +492,8 @@ void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
   for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NDSet);
       iter.next();) {
     DistSet * ds = I->DSet[iter.state];
-    if(ds && ds->fInvalidateRep)
-      ds->fInvalidateRep(ds, rep, level);
+    if(ds)
+      ds->invalidateRep(rep, level);
   }
 }
 
@@ -528,8 +525,7 @@ static void ObjectDistReset(PyMOLGlobals * G, ObjectDist * I)
   int a;
   for(a = 0; a < I->NDSet; a++)
     if(I->DSet[a]) {
-      if(I->DSet[a]->fFree)
-        I->DSet[a]->fFree(I->DSet[a]);
+      I->DSet[a]->fFree();
       I->DSet[a] = NULL;
     }
   I->NDSet = 0;
@@ -898,8 +894,7 @@ void ObjectDistFree(ObjectDist * I)
   SceneObjectDel(I->Obj.G, (CObject *) I, false);
   for(a = 0; a < I->NDSet; a++)
     if(I->DSet[a]) {
-      if(I->DSet[a]->fFree)
-        I->DSet[a]->fFree(I->DSet[a]);
+      I->DSet[a]->fFree();
       I->DSet[a] = NULL;
     }
   VLAFreeP(I->DSet);

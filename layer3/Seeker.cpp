@@ -1201,6 +1201,9 @@ void SeekerUpdate(PyMOLGlobals * G)
       int est_col = obj->NAtom / 5 + 1;
       int est_char = obj->NAtom * 4;
       int first_atom_in_label;
+      int missing_color = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_fill_color);
+      CoordSet *cs = obj->DiscreteFlag ? NULL : ObjectMoleculeGetCoordSet(obj, obj->getState());
+      bool atom_in_state;
 
       int min_pad = -1;
       CSeqCol *r1 = NULL, *l1 = NULL;   /* *col */
@@ -1412,6 +1415,8 @@ void SeekerUpdate(PyMOLGlobals * G)
         if(min_pad < 0)
           min_pad = strlen(ai->resi) + row->len + 1;
 
+        atom_in_state = (cs && a < cs->NAtIndex && cs->AtmToIdx[a] >= 0);
+
         switch (codes) {
         case 0:                /* one letter residue codes */
           if(!AtomInfoSameResidueP(G, last, ai)) {
@@ -1449,7 +1454,10 @@ void SeekerUpdate(PyMOLGlobals * G)
               r1->is_abbr = true;
               r1->stop = row->len;
             }
-            if(default_color < 0)
+
+            if(!atom_in_state)
+              r1->color = missing_color;
+            else if(default_color < 0)
               r1->color = SeekerFindColor(G, ai, obj->NAtom - a);
             else
               r1->color = default_color;
@@ -1479,7 +1487,10 @@ void SeekerUpdate(PyMOLGlobals * G)
             else
               UtilConcatVLA(&row->txt, &row->len, "''");
             r1->stop = row->len;
-            if(default_color < 0)
+
+            if(!atom_in_state)
+              r1->color = missing_color;
+            else if(default_color < 0)
               r1->color = SeekerFindColor(G, ai, obj->NAtom - a);
             else
               r1->color = default_color;
@@ -1502,7 +1513,10 @@ void SeekerUpdate(PyMOLGlobals * G)
           else
             UtilConcatVLA(&row->txt, &row->len, "''");
           r1->stop = row->len;
-          if(default_color < 0)
+
+          if(!atom_in_state)
+            r1->color = missing_color;
+          else if(default_color < 0)
             r1->color = ai->color;
           else
             r1->color = default_color;
