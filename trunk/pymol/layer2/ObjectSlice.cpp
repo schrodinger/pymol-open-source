@@ -45,11 +45,6 @@ Z* -------------------------------------------------------------------
 #define START_STRIP -1
 #define STOP_STRIP -2
 
-typedef struct ObjRec {
-  CObject *obj;
-  struct ObjRec *next;
-} ObjRec;
-
 ObjectSlice *ObjectSliceNew(PyMOLGlobals * G);
 
 static void ObjectSliceFree(ObjectSlice * I);

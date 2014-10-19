@@ -2,6 +2,13 @@
 CHANGE LOG
 =========================================================================
 
+2014-10-19 Jared Sampson, Thomas Holder
+
+	* COLLADA (dae) export support.
+	  Implemented by Jared Sampson as his POSF project.
+
+	* 1.7.3.2 (unstable/experimental)
+
 2014-10-16 Thomas Holder, Blaine Bell
 
 	* fast PDBx/mmCIF and core CIF loading in C++

@@ -450,8 +450,9 @@ PYMOL API
 NOTES
 
     The file format is automatically chosen if the extesion is one of
-    the supported output formats: pdb, pqr, mol, pkl, mmd, mmod, pov,
-    png, pse, aln, obj, mtl, or wrl.
+    the supported output formats: pdb, pqr, mol, sdf, pkl, pkla, mmd, out,
+    dat, mmod, pmo, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, idtf,
+    or mol2.
 
     If the file format is not recognized, then a PDB file is written
     by default.
@@ -525,6 +526,8 @@ SEE ALSO
                 format = 'mtl'
             elif re.search("\.wrl$",lc_filename):
                 format = 'wrl'
+            elif re.search("\.dae$",lc_filename):
+                format = 'dae'
             elif re.search("\.idtf$",lc_filename):
                 format = 'idtf'
             elif re.search("\.mol2$",lc_filename):
@@ -714,6 +717,16 @@ SEE ALSO
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
             r = DEFAULT_SUCCESS
+        elif format=='dae':
+            txt = _self.get_collada()
+            if txt:
+                with open(filename, "w") as f:
+                    f.write(txt)
+                if not quiet:
+                    print " Save: wrote \""+filename+"\"."
+                r = DEFAULT_SUCCESS
+            elif not quiet:
+                print " COLLADA export failed, no file written"
         elif format=='idtf':
             tup = _self.get_idtf()
             f=open(filename,"w")

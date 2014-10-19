@@ -37,6 +37,7 @@ typedef struct {
 #define SDOF_CLIP_MODE 1
 #define SDOF_DRAG_MODE 2
 
+// TODO: define remaining cSceneRay_MODEs (VRML, COLLADA, etc.)
 #define cSceneRay_MODE_IDTF 7
 
 #define cSceneImage_Default -1

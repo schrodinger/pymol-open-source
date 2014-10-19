@@ -644,6 +644,25 @@ PYMOL API
         if _raising(r,_self): raise pymol.CmdException
         return r
 
+    def get_collada(version=2, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_collada" returns a COLLADA string representing the content
+    currently displayed.
+
+PYMOL API
+
+    cmd.get_collada()
+
+        '''
+        r = DEFAULT_ERROR
+        with _self.lockcm:
+            r = _cmd.get_collada(_self._COb,int(version))
+        if _raising(r,_self): raise pymol.CmdException
+        return r
+
+
     def count_states(selection="(all)", quiet=1, _self=cmd):
         '''
 DESCRIPTION
