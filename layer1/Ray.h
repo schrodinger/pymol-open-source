@@ -50,6 +50,8 @@ void RayRenderVRML1(CRay * I, int width, int height,
 void RayRenderVRML2(CRay * I, int width, int height,
                     char **vla_ptr, float front, float back,
                     float fov, float angle, float z_corr);
+void RayRenderCOLLADA(CRay * I, int width, int height,
+                    char **vla_ptr, float front, float back, float fov);
 void RayRenderObjMtl(CRay * I, int width, int height, char **objVLA_ptr,
                      char **mtlVLA_ptr, float front, float back, float fov,
                      float angle, float z_corr);
@@ -68,6 +70,13 @@ void RayGetScaledAxes(CRay * I, float *xn, float *yn);
 
 int RayHashThread(CRayHashThreadInfo * T);
 int RayAntiThread(CRayAntiThreadInfo * T);
+
+// JMS: added so they can be used in COLLADA.c
+int RayExpandPrimitives(CRay * I);
+int RayTransformFirst(CRay * I, int perspective, int identity);
+void RayComputeBox(CRay * I);
+int TriangleReverse(CPrimitive * p);
+
 
 typedef struct {
   int op;

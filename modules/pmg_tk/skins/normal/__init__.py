@@ -984,6 +984,15 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
             self.cmd.save(sfile,quiet=0)
             
+    def file_save_dae(self):
+        sfile = asksaveasfilename(defaultextension = _def_ext(".dae"),
+                                  initialdir = self.initialdir,
+                 filetypes=[("COLLADA File","*.dae")])
+        if len(sfile):
+            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
+            self.cmd.save(sfile,quiet=0)
+
     def file_save_pov(self):
         sfile = asksaveasfilename(defaultextension = _def_ext(".pov"),
                                   initialdir = self.initialdir,
@@ -1333,6 +1342,10 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                 label='VRML 2...',
                                 command=self.file_save_wrl)
         
+        self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as COLLADA.',
+                                label='COLLADA...',
+                                command=self.file_save_dae)
+
         self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as PovRay input.',
                                 label='POV-Ray...',
                                 command=self.file_save_pov)

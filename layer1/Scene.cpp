@@ -7162,6 +7162,13 @@ void SceneRay(PyMOLGlobals * G,
           RayRenderIDTF(ray, headerVLA_ptr, charVLA_ptr);
         }
         break;
+      case 8:                   /* mode 8 is COLLADA (.dae) */
+        {
+          *charVLA_ptr = VLACalloc(char, 100000);
+          RayRenderCOLLADA(ray, ray_width, ray_height, charVLA_ptr,
+                            I->FrontSafe, I->BackSafe, fov);
+        }
+        break;
 
       }
       RayFree(ray);

@@ -4606,6 +4606,8 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_pdb_formal_charges, 1);
     set_i(I, cSetting_ati_bugs, 0);
     set_i(I, cSetting_geometry_export_mode, 0);
+    set_i(I, cSetting_collada_export_lighting, 0);
+    set_i(I, cSetting_collada_geometry_mode, 0);
     set_b(I, cSetting_mouse_grid, 1);
     set_s(I, cSetting_mesh_carve_selection, "");
     set_i(I, cSetting_mesh_carve_state, 0);

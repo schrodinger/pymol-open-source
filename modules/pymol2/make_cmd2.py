@@ -88,6 +88,7 @@ if 1:
         'get_bond_print',
         'get_busy',
         'get_chains',
+        'get_collada',
         'get_color_index',
         'get_color_indices',
         'get_color_tuple',

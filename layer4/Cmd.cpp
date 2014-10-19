@@ -3085,6 +3085,37 @@ static PyObject *CmdGetVRML(PyObject * self, PyObject * args)
   return (APIAutoNone(result));
 }
 
+/*
+ * Return a COLLADA string or None on failure
+ */
+static PyObject *CmdGetCOLLADA(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ver;
+  char *vla = NULL;
+
+  ok_assert(1, PyArg_ParseTuple(args, "Oi", &self, &ver));
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(1, G && APIEnterNotModal(G));
+
+  SceneRay(G, 0, 0, 8,     /* mode 8 = COLLADA */
+      NULL, &vla, 0.0F, 0.0F, false, NULL, false, -1);
+
+  ok_assert(2, vla && vla[0]);
+  result = Py_BuildValue("s", vla);
+
+ok_except2:
+  VLAFreeP(vla);
+
+  APIExit(G);
+  return APIAutoNone(result);
+ok_except1:
+  API_HANDLE_ERROR;
+  return APIAutoNone(NULL);
+}
+
+
 static PyObject *CmdGetIdtf(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -8351,6 +8382,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_bond_print", CmdGetBondPrint, METH_VARARGS},
   {"get_busy", CmdGetBusy, METH_VARARGS},
   {"get_chains", CmdGetChains, METH_VARARGS},
+  {"get_collada", CmdGetCOLLADA, METH_VARARGS},
   {"get_color", CmdGetColor, METH_VARARGS},
   {"get_colorection", CmdGetColorection, METH_VARARGS},
   {"get_coords", CmdGetCoordsAsNumPy, METH_VARARGS},

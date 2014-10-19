@@ -57,6 +57,7 @@ try:
     parser = argparse.ArgumentParser()
     parser.add_argument('--osx-frameworks', action="store_true")
     parser.add_argument('--jobs', '-j', type=int)
+    parser.add_argument('--no-libxml', action="store_true")
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 except ImportError:
     print "argparse not available"
@@ -206,6 +207,13 @@ if True:
         ("_PYMOL_VMD_PLUGINS", None),
     ]
 
+if not options.no_libxml:
+    # COLLADA support
+    def_macros += [
+        ("_HAVE_LIBXML", None)
+    ]
+    libs += ["xml2"]
+
 inc_dirs = list(pymol_src_dirs)
 
 #============================================================================
@@ -259,7 +267,7 @@ else: # unix style (linux, mac, ...)
         prefix_path = ["/usr", "/usr/X11", "/opt/local", "/sw"]
 
     for prefix in prefix_path:
-        inc_dirs += filter(os.path.isdir, [prefix + s for s in ["/include", "/include/freetype2"]])
+        inc_dirs += filter(os.path.isdir, [prefix + s for s in ["/include", "/include/freetype2", "/include/libxml2"]])
         lib_dirs += filter(os.path.isdir, [prefix + s for s in ["/lib64", "/lib"]])
 
     if sys.platform == 'darwin' and options.osx_frameworks:

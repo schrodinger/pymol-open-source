@@ -629,7 +629,7 @@ int RayExpandPrimitives(CRay * I)
 
 
 /*========================================================================*/
-static void RayComputeBox(CRay * I)
+void RayComputeBox(CRay * I)
 {
 
 #define minmax(v,r) { \
@@ -708,7 +708,7 @@ static void RayComputeBox(CRay * I)
   I->max_box[2] = zmax;
 }
 
-static int RayTransformFirst(CRay * I, int perspective, int identity)
+int RayTransformFirst(CRay * I, int perspective, int identity)
 {
   CBasis *basis0, *basis1;
   CPrimitive *prm;
@@ -1105,7 +1105,7 @@ void RayRenderVRML1(CRay * I, int width, int height,
   *vla_ptr = vla;
 }
 
-static int TriangleReverse(CPrimitive * p)
+int TriangleReverse(CPrimitive * p)
 {
   float s1[3], s2[3], n0[3];
 
