@@ -18,7 +18,12 @@ class Test(testing.PyMOLTestCase):
         cmd.zoom()
         cmd.stereo('anaglyph')
         cmd.unset('suspend_updates')
-        cmd.draw(40, 40, 0)
+
+        wh = (40, 40)
+        cmd.draw(*wh, antialias=0)
+        cmd.sync()
+
         img = self.get_imagearray(prior=1)
+        self.assertEqual(wh, img.shape[:2])
         self.assertImageHasColor('0xff0000', img)
         self.assertImageHasColor('0x00ffff', img)

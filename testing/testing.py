@@ -168,7 +168,10 @@ else:
             return self.filename
         def __exit__(self, exc_type, exc_value, traceback):
             if os.path.exists(self.filename):
-                os.remove(self.filename)
+                try:
+                    os.remove(self.filename)
+                except WindowsError:
+                    deferred_unlink.append(self.filename)
 
     class mkdtemp(object):
         '''
@@ -342,7 +345,7 @@ else:
 
             count is the number of allowed pixel mismatches.
             '''
-            import numpy
+            import Image, numpy
 
             if isinstance(img1, basestring) and not \
                     os.path.exists(img1):
@@ -356,15 +359,22 @@ else:
             self.assertEqual(data1.shape, data2.shape,
                     'image shapes not equal ')
 
-            noff = numpy.sum(abs(data1 - data2) > delta)
-            self.assertLessEqual(noff, count * data1.shape[-1], msg + ' (%d)' % noff)
+            diff = abs(data1 - data2)
 
-        def _imageHasColor(self, color, img=None, delta=0):
+            noff = numpy.sum(diff > delta)
+            if noff > count * data1.shape[-1]:
+                filename = tempfile.mktemp('diff.png')
+
+                diffimg = Image.fromarray((255 - diff.reshape(data1.shape)).astype(numpy.uint8))
+                diffimg.save(filename)
+
+                self.assertTrue(False, msg + ' (%d) %s' % (noff, filename))
+
+        def _imageHasColor(self, color, img, delta=0):
             if isinstance(color, str):
                 color = [int(v*255) for v in cmd.get_color_tuple(color)]
             else:
                 color = list(color)
-            img = self.get_imagearray(img)
             dim = img.shape[-1]
             if dim == len(color) + 1:
                 color.append(255)
@@ -373,15 +383,29 @@ else:
             diff = abs(img.reshape((-1, dim)) - color)
             return (diff - delta <= 0).prod(1).sum()
 
+        def _assertImageHasColor(self, test, color, img, delta, msg):
+            import Image, numpy
+
+            img = self.get_imagearray(img)
+            has_color = self._imageHasColor(color, img, delta)
+
+            if bool(has_color) != test:
+                filename = tempfile.mktemp('diff.png')
+
+                diffimg = Image.fromarray(img)
+                diffimg.save(filename)
+
+                self.assertTrue(False, msg + ', ' + filename)
+
         def assertImageHasColor(self, color, img=None, delta=0, msg=''):
             if not msg:
                 msg = 'no such color: ' + str(color)
-            self.assertTrue(self._imageHasColor(color, img, delta), msg)
+            self._assertImageHasColor(True, color, img, delta, msg)
 
         def assertImageHasNotColor(self, color, img=None, delta=0, msg=''):
             if not msg:
                 msg = 'color found: ' + str(color)
-            self.assertFalse(self._imageHasColor(color, img, delta), msg)
+            self._assertImageHasColor(False, color, img, delta, msg)
 
         def assertImageHasTransparency(self, img=None):
             img = self.get_imagearray(img)
@@ -443,15 +467,9 @@ else:
             import Image, numpy
             
             if img is None:
-                filename = tempfile.mktemp('.png')
-                try:
+                with mktemp('.png') as filename:
                     self.png(filename, **kwargs)
                     return self.get_imagearray(filename)
-                finally:
-                    try:
-                        os.unlink(filename)
-                    except WindowsError:
-                        deferred_unlink.append(filename)
 
             if isinstance(img, numpy.ndarray):
                 return img
