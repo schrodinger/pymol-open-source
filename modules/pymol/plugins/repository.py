@@ -181,8 +181,9 @@ class GithubRepository(HttpRepository):
     list = list_scan
 
     def fetchjson(self, url):
+        import json
         handle = urlopen('https://api.github.com' + url)
-        return eval(handle.read())
+        return json.loads(handle.read())
 
 class LocalRepository(Repository):
     def __init__(self, url):
