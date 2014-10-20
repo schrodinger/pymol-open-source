@@ -51,6 +51,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 class options:
     osx_frameworks = False
     jobs = int(os.getenv('JOBS', 0))
+    no_libxml = False
 
 try:
     import argparse
