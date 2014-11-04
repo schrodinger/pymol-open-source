@@ -781,8 +781,9 @@ if __name__=='pymol.setting':
         label_z_target                     = 737
         session_embeds_data                = 738
         volume_mode                        = 739
-        collada_export_lighting            = 740
-        collada_geometry_mode              = 741
+        # trilines                           = 740
+        collada_export_lighting            = 741
+        collada_geometry_mode              = 742
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

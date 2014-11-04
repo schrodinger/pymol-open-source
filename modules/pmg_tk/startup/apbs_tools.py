@@ -658,7 +658,6 @@ class APBSTools2:
         page = self.notebook.add('Configuration')
 
         group = Pmw.Group(page,tag_text='Dielectric Constants')
-        group.pack(fill = 'both', expand = 1, padx = 4, pady = 5)
         group.grid(column=0, row=0)
         self.interior_dielectric = Pmw.EntryField(group.interior(),labelpos='w',
                                    label_text = 'Protein Dielectric:',
@@ -677,7 +676,6 @@ class APBSTools2:
             #entry.pack(side='left',fill='both',expand=1,padx=4) # side-by-side
             entry.pack(fill='x',expand=1,padx=4,pady=1) # vertical
         group = Pmw.Group(page,tag_text='Other')
-        group.pack(fill='both',expand=1, padx=4, pady=5)
         group.grid(column=1, row=1,columnspan=4)
         self.max_mem_allowed = Pmw.EntryField(group.interior(),labelpos='w',
                                               label_text = 'Maximum Memory Allowed (MB):',
@@ -735,7 +733,6 @@ class APBSTools2:
 
 
         group = Pmw.Group(page,tag_text='Ions')
-        group.pack(fill='both',expand=1, padx=4, pady=5)
         group.grid(column=0, row=1, )
         self.ion_plus_one_conc = Pmw.EntryField(group.interior(),
                                                 labelpos='w',
@@ -794,7 +791,6 @@ class APBSTools2:
             entry.pack(fill='x',expand=1,padx=4)
 
         group = Pmw.Group(page,tag_text = 'Coarse Mesh Length')
-        group.pack(fill = 'both', expand = 1, padx = 4, pady = 5)
         group.grid(column = 1, row = 0)
         for coord in 'x y z'.split():
             setattr(self,'grid_coarse_%s'%coord,Pmw.EntryField(group.interior(),
@@ -809,7 +805,6 @@ class APBSTools2:
 
 
         group = Pmw.Group(page,tag_text = 'Fine Mesh Length')
-        group.pack(fill = 'both', expand = 1, padx = 4, pady = 5)
         group.grid(column = 2, row = 0)
         for coord in 'x y z'.split():
             setattr(self,'grid_fine_%s'%coord,Pmw.EntryField(group.interior(),
@@ -824,7 +819,6 @@ class APBSTools2:
 
 
         group = Pmw.Group(page,tag_text = 'Grid Center')
-        group.pack(fill = 'both', expand = 1, padx = 4, pady = 5)
         group.grid(column = 3, row = 0)
         for coord in 'x y z'.split():
             setattr(self,'grid_center_%s'%coord,Pmw.EntryField(group.interior(),
@@ -838,7 +832,6 @@ class APBSTools2:
             getattr(self,'grid_center_%s'%coord).pack(fill='x', expand=1, padx=4, pady=1)
 
         group = Pmw.Group(page,tag_text = 'Grid Points')
-        group.pack(fill = 'both', expand = 1, padx = 4, pady = 5)
         group.grid(column = 4, row = 0)
         for coord in 'x y z'.split():
             setattr(self,'grid_points_%s'%coord,Pmw.EntryField(group.interior(),

@@ -1089,7 +1089,7 @@ void MainDoReshape(int width, int height)
       /* do we need to become full-screen? */
 
       if(SettingGetGlobal_b(G, cSetting_full_screen) && G->HaveGUI && G->ValidContext) {
-#ifndef __APPLE__
+#ifndef _PYMOL_NO_GLUT
         p_glutFullScreen();
 #else
         int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);

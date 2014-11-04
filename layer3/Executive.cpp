@@ -13952,7 +13952,7 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
 
       SettingSet(G, cSetting_full_screen, (float) flag);
       if(flag) {
-#ifndef __APPLE__
+#ifndef _PYMOL_NO_GLUT
         p_glutFullScreen();
 #else
         int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
