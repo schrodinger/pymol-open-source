@@ -806,12 +806,9 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
     int a, tri, pos, norm, col;
     CPrimitive *prim;
-    float *vert;
     int mesh_obj = false;
-    int mesh_start = 0;
     int largest_dim = 10;
     float cur_trans = 0.0f;
-    int mesh_trans = false;
 
     /* Initialize data string VLAs and character counts. */
     char *positions_str = VLACalloc(char, 1000);
@@ -823,15 +820,12 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
     ov_size  col_str_cc = 0;
     ov_size    p_str_cc = 0;
 
-    CBasis *base = I->Basis + 1;
-
     /*
      * Loop through primitives, plus one extra time to finish writing a
      * triangle mesh if necessary.
      */
     for (a = 0; a <= I->NPrimitive; a++) {
       prim = I->Primitive + a;
-      vert = base->Vertex + (3 * prim->vert);
 
       /* Handle transitions between/after triangle meshes. */
       if (mesh_obj) {
@@ -855,7 +849,6 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
           geom += 1;
           mesh_obj = false;
-          mesh_trans = false;
 
           VLAFree(positions_str);
           VLAFree(normals_str);
@@ -924,11 +917,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
           if(prim->type == cPrimTriangle){
 
             /* Track the open triangle mesh. */
-            mesh_start = a;
             mesh_obj = true;
-            if (TRANS_PRECISION <= cur_trans) {
-              mesh_trans = true;
-            }
           }
         }
         else {
@@ -1254,7 +1243,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             float d[3], t[3], p0[3], p1[3], p2[3];
             float v_buf[9], *v, vv1[3], vv2[3], vvv1[3], vvv2[3];
             float x[DAE_MAX_EDGE + 1], y[DAE_MAX_EDGE + 1];
-            float overlap, overlap2, nub, nub2, r2;
+            float overlap, overlap2, nub, nub2, r2 = 0.F;
             int nEdge, c; //colorFlag;
             int i;
             char *next = (char *) malloc(200 * sizeof(char));
@@ -1815,37 +1804,39 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
         xmlTextWriterEndElement(w);  // node
 
-        float light_pos[3];
+        float *light_pos_ptr, light_pos[3];
         for(i = 1; i < lc; i++){
           switch(i){
             case 1:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light), light_pos);
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light);
               break;
             case 2:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light2), light_pos);
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light2);
               break;
             case 3:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light3), light_pos);
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light3);
               break;
             case 4:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light4), light_pos);
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light4);
               break;
             case 5:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light5), light_pos);
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light5);
               break;
             case 6:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light6), light_pos);
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light6);
               break;
             case 7:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light7), light_pos);
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light7);
               break;
             case 8:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light8), light_pos);
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light8);
               break;
-            case 9:
-              copy3f(SettingGetGlobal_3fv(G, cSetting_light9), light_pos);
+            default:
+              light_pos_ptr = SettingGetGlobal_3fv(G, cSetting_light9);
               break;
           }
+
+          copy3f(light_pos_ptr, light_pos);
           normalize3f(light_pos);
 
           xmlTextWriterStartElement(w, BAD_CAST "node");
