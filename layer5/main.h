@@ -46,8 +46,6 @@ int MainSavingUnderWhileIdle(void);
 int MainFromPyList(PyObject * list);
 PyObject *MainAsPyList(void);
 
-void MainRepositionWindowDefault(PyMOLGlobals * G);
-
 void MainSetWindowVisibility(int mode);
 void MainMaximizeWindow(PyMOLGlobals * G);
 void MainSetWindowSize(PyMOLGlobals * G, int w, int h);

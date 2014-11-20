@@ -177,7 +177,7 @@ if __name__=='pymol.setting':
         ray_texture                        = 139
         ray_texture_settings               = 140
         suspend_updates                    = 141
-        full_screen                        = 142
+        full_screen                        = 142 # deprecated
         surface_mode                       = 143
         surface_color                      = 144
         mesh_mode                          = 145

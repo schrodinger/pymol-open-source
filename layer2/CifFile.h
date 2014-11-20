@@ -17,13 +17,6 @@
 #endif
 
 /*
- * C string comparison class which matches '.' and '_' with '?'.
- */
-struct strless1_t {
-  bool operator()(const char * a, const char * b) const;
-};
-
-/*
  * C string comparison class
  */
 struct strless2_t {
@@ -38,7 +31,7 @@ class cif_loop;
 class cif_array;
 typedef std::vector<cif_loop*> v_cifloopp_t;
 typedef std::map<const char*, cif_data*, strless2_t> m_str_cifdatap_t;
-typedef std::map<const char*, cif_array, strless1_t> m_str_cifarray_t;
+typedef std::map<const char*, cif_array, strless2_t> m_str_cifarray_t;
 
 // atof with uncertanty notation handling
 double scifloat(const char *);

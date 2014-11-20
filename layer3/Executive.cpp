@@ -75,6 +75,7 @@
 
 #include"ShaderMgr.h"
 #include"File.h"
+#include"MacPyMOL.h"
 
 #ifndef _PYMOL_NOPY
 #include "ce_types.h"
@@ -149,7 +150,10 @@ struct _CExecutive {
   SpecRec *LastChanged, *LastZoomed, *RecoverPressed;
   int ReorderFlag;
   OrthoLineType ReorderLog;
-  int oldPX, oldPY, oldWidth, oldHeight, sizeFlag;
+#ifndef FREEGLUT
+  // freeglut has glutLeaveFullScreen, no need to remember window dimensions
+  int oldPX, oldPY, oldWidth, oldHeight;
+#endif
   int all_names_list_id, all_obj_list_id, all_sel_list_id;
   OVLexicon *Lex;
   OVOneToOne *Key;
@@ -13926,60 +13930,78 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
 
 
 /*========================================================================*/
+/*
+ * Full screen state fallback in case we can't get get the state from
+ * the window manager.
+ */
+static bool _is_full_screen = false;
+
+/*========================================================================*/
+/*
+ * Get the fullscreen state from the window manager or return -1 if
+ * not available.
+ */
+bool ExecutiveIsFullScreen(PyMOLGlobals * G) {
+  if(!G->HaveGUI)
+    return false;
+
+  int flag = -1;
+
+#ifdef _MACPYMOL_XCODE
+  flag = MacPyMOL_fullScreenActive();
+#elif defined(GLUT_FULL_SCREEN)
+  flag = glutGet(GLUT_FULL_SCREEN);
+#endif
+
+  PRINTFD(G, FB_Executive)
+    " ExecutiveIsFullScreen: flag=%d fallback=%d.\n",
+    flag, _is_full_screen ENDFD;
+
+  if (flag > -1)
+    return flag;
+  return _is_full_screen;
+}
+
+/*========================================================================*/
 void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
 {
-  if(flag < 0)
-    flag = !SettingGetGlobal_b(G, cSetting_full_screen);
+  if(!G->HaveGUI)
+    return;
+
+  int wm_flag = ExecutiveIsFullScreen(G);
+
+  if(flag < 0) {
+    flag = !wm_flag;
+  }
+
+  _is_full_screen = (flag != 0);
+
 #ifndef _PYMOL_NO_GLUT
-  {
-    register CExecutive *I = G->Executive;
-    if(G->HaveGUI && G->ValidContext) {
-      if(!SettingGetGlobal_b(G, cSetting_full_screen)) {
-        I->oldPX = p_glutGet(P_GLUT_WINDOW_X)
-#ifdef FREEGLUT
-          - p_glutGet(P_GLUT_WINDOW_BORDER_WIDTH)
-#endif
-          ;
-        I->oldPY = p_glutGet(P_GLUT_WINDOW_Y)
-#ifdef FREEGLUT
-          - p_glutGet(P_GLUT_WINDOW_HEADER_HEIGHT)
-#endif
-          ;
+  if(G->HaveGUI && G->ValidContext) {
+    CExecutive *I = G->Executive;
+    if (flag) {
+#ifndef FREEGLUT
+      if(wm_flag < 1) {
+        I->oldPX = p_glutGet(P_GLUT_WINDOW_X);
+        I->oldPY = p_glutGet(P_GLUT_WINDOW_Y);
         I->oldWidth = p_glutGet(P_GLUT_WINDOW_WIDTH);
         I->oldHeight = p_glutGet(P_GLUT_WINDOW_HEIGHT);
-        I->sizeFlag = true;
       }
+#endif
 
-      SettingSet(G, cSetting_full_screen, (float) flag);
-      if(flag) {
-#ifndef _PYMOL_NO_GLUT
-        p_glutFullScreen();
+      p_glutFullScreen();
+    } else {
+#ifndef FREEGLUT
+      p_glutReshapeWindow(I->oldWidth, I->oldHeight);
+      p_glutPositionWindow(I->oldPX, I->oldPY);
 #else
-        int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
-        int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
-        height = height - 44;
-        p_glutInitWindowPosition(0, 0);
-        p_glutInitWindowSize(width, height);
+      glutLeaveFullScreen();
 #endif
-      } else {
-        if(I->sizeFlag) {
-          p_glutPositionWindow(I->oldPX, I->oldPY);
-          p_glutReshapeWindow(I->oldWidth, I->oldHeight);
-        } else {
-#ifndef _PYMOL_NO_MAIN
-          MainRepositionWindowDefault(G);
-#endif
-        }
-      }
     }
   }
 #endif
-  SettingSet(G, cSetting_full_screen, (float) flag);
-  if(flag) {
-    PyMOL_NeedReshape(G->PyMOL, 1, 0, 0, 0, 0); /* zoom full-screen */
-  } else {
-    PyMOL_NeedReshape(G->PyMOL, 0, 0, 0, 0, 0); /* return to non-zoomed size */
-  }
+
+  PyMOL_NeedReshape(G->PyMOL, flag, 0, 0, 0, 0);
   SceneChanged(G);
 }
 
@@ -16809,7 +16831,10 @@ int ExecutiveInit(PyMOLGlobals * G)
     I->NSkip = 0;
     I->HowFarDown = 0;
     I->DragMode = 0;
-    I->sizeFlag = false;
+#ifndef FREEGLUT
+    I->oldWidth = 640;
+    I->oldHeight = 480;
+#endif
     I->LastZoomed = NULL;
     I->LastChanged = NULL;
     I->ValidGroups = false;

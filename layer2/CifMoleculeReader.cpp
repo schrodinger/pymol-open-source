@@ -368,7 +368,7 @@ CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
   VLASize(coord, float, 3 * atomCount);
   VLASize(*atInfoPtr, AtomInfoType, atomCount);
 
-  CoordSet ** csets = VLAlloc(CoordSet*, 1);
+  CoordSet ** csets = VLACalloc(CoordSet*, 1);
   csets[0] = CoordSetNew(G);
   csets[0]->NIndex = atomCount;
   csets[0]->Coord = coord;
@@ -425,9 +425,10 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
   const char * resi;
   AtomInfoType *ai;
   int atomCount = 0;
+  int first_model_num = arr_mod_num->as_i(0);
 
   for (int i = 0, n = nrows; i < n; i++) {
-    if (arr_mod_num->as_i(i, 1) != 1)
+    if (arr_mod_num->as_i(i) != first_model_num)
       continue;
 
     VLACheck(*atInfoPtr, AtomInfoType, atomCount);
@@ -474,7 +475,7 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
 
   float * coord = NULL;
   int ncsets = 0, mod_num, current_mod_num = 0;
-  CoordSet ** csets = VLAlloc(CoordSet*, nrows / atomCount);
+  CoordSet ** csets = VLACalloc(CoordSet*, nrows / atomCount);
 
   for (int i = 0; i < nrows; i++) {
     mod_num = arr_mod_num->as_i(i, 1);
