@@ -1827,7 +1827,7 @@ NOTES
         else:
             try:
                 _self.lock(_self)
-                r = _self._do("_cmd.full_screen(_self._COb,%d)"%int(toggle))
+                r = _self._do("full_screen %s" % (toggle), echo=0)
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException

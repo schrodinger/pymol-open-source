@@ -50,6 +50,7 @@
 #include "Util.h"
 #include "Control.h"
 #include "Movie.h"
+#include "Executive.h"
 
 #ifdef _PYMOL_NO_MAIN
 
@@ -1044,6 +1045,9 @@ void MainDoReshape(int width, int height)
   PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   if(G) {
+    /* if width and height are negative and we are in full screen, don't reshape window */
+    bool keep_fullscreen = (width < 0 && height < 0 && ExecutiveIsFullScreen(G));
+
     /* if width is negative, force a reshape based on the current width */
 
     if(width < 0) {
@@ -1069,7 +1073,7 @@ void MainDoReshape(int width, int height)
 
     /* if we have a GUI, for a reshape event */
 
-    if(G->HaveGUI && G->ValidContext && width && height) {
+    if(G->HaveGUI && G->ValidContext && width > 0 && height > 0) {
       p_glutReshapeWindow(width, height);
       glViewport(0, 0, (GLint) width, (GLint) height);
     }
@@ -1087,17 +1091,8 @@ void MainDoReshape(int width, int height)
       }
 
       /* do we need to become full-screen? */
-
-      if(SettingGetGlobal_b(G, cSetting_full_screen) && G->HaveGUI && G->ValidContext) {
-#ifndef _PYMOL_NO_GLUT
+      if(keep_fullscreen) {
         p_glutFullScreen();
-#else
-        int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
-        int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
-        height = height - 44;
-        p_glutInitWindowPosition(0, 0);
-        p_glutInitWindowSize(width, height);
-#endif
       }
     }
   }
@@ -1440,18 +1435,6 @@ static void MainBusyIdle(void)
 
 }
 
-void MainRepositionWindowDefault(PyMOLGlobals * G)
-{
-#ifdef _PYMOL_FINK
-  p_glutPositionWindow(G->Option->winPX, G->Option->winPY - 22);
-  /* something is wrong with FinkGlut's window positioning... */
-#else
-  p_glutPositionWindow(G->Option->winPX, G->Option->winPY);
-#endif
-
-  p_glutReshapeWindow(G->Option->winX, G->Option->winY);
-}
-
 void MainSetWindowPosition(PyMOLGlobals * G, int x, int y)
 {
 #ifdef _PYMOL_FINK
@@ -1697,17 +1680,11 @@ static void launch(CPyMOLOptions * options, int own_the_options)
 
       p_glutInitWindowSize(G->Option->winX, G->Option->winY);
 
-      if(G->Option->full_screen) {
-        int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
-        int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
-#ifdef __APPLE__
-        height = height - 44;
-#endif
-        p_glutInitWindowPosition(0, 0);
-        p_glutInitWindowSize(width, height);
-      }
-
       theWindow = p_glutCreateWindow("PyMOL Viewer");
+
+      if(G->Option->full_screen) {
+        p_glutFullScreen();
+      }
 
       if(G->Option->window_visible) {
         p_glutShowWindow();
@@ -1880,7 +1857,9 @@ int MainFromPyList(PyObject * list)
   if(ok)
     ll = PyList_Size(list);
   if(ok && (ll >= 2)) {
-    if(!G->Option->presentation) {
+    if(!G->Option->presentation &&
+        !G->Option->full_screen &&
+        !ExecutiveIsFullScreen(G)) {
       if(ok)
         ok = PConvPyIntToInt(PyList_GetItem(list, 0), &win_x);
       if(ok)

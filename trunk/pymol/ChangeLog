@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2014-11-20 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* cif: read first_model_num
+
+	* fixed _foo?bar lookup could fail in mmCIF parsing
+
+	* deprecated full_screen setting (use full_screen command)
+
+	* 1.7.3.4 (unstable/experimental)
+
 2014-10-19 Jared Sampson, Thomas Holder
 
 	* COLLADA (dae) export support.

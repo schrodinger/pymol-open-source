@@ -20,28 +20,6 @@
 // basic IO and string handling
 
 /*
- * C string comparison with '?' matching '.' and '_'. This allows for
- * generalizing mmcif and core cif parsing.
- */
-bool strless1_t::operator()(const char * a, const char * b) const {
-  while (*a) {
-    if (!*b)
-      return false;
-    if (*a == *b ||
-        (*a == '?' ?  (*b == '_' || *b == '.') :
-         *b == '?' && (*a == '_' || *a == '.'))) {
-      a++;
-      b++;
-      continue;
-    }
-    if (*a < *b)
-      return true;
-    return false;
-  }
-  return (*b);
-}
-
-/*
  * atof which ignores uncertainty notation
  * 1.23(45)e2 -> 1.23e2
  */
@@ -144,8 +122,34 @@ double cif_array::as_d(int row, double d) const {
   return s ? scifloat(s) : d;
 }
 
-// Get a pointer to array or NULL if not found
+/*
+ * Get a pointer to array or NULL if not found
+ *
+ * Can lookup up to 3 different aliases, the first one found is returned.
+ * Also supports an alias shortcut for the trivial case where mmCIF uses
+ * a colon and CIF uses an underscore: (key="_foo?bar") is identical to
+ * (key="_foo.bar", alias1="_foo_bar")
+ */
 cif_array * cif_data::get_arr(const char * key, const char * alias1, const char * alias2) {
+  std::string tmp1, tmp2;
+  const char * p;
+
+  // support alias shortcut: '?' matches '.' and '_'
+  if (!alias1 && (p = strchr(key, '?'))) {
+    int i = p - key;
+
+    // '.' version
+    tmp1 = key;
+    tmp1[i] = '.';
+    key = tmp1.c_str();
+
+    // '_' version
+    tmp2 = key;
+    tmp2[i] = '_';
+    alias1 = tmp2.c_str();
+  }
+
+  // dict lookup, return first hit
   m_str_cifarray_t::iterator arr, end = dict.end();
   if ((arr = dict.find(key)) != end ||
       alias1 && (arr = dict.find(alias1)) != end ||

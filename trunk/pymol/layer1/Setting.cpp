@@ -697,7 +697,6 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
   int ok = true;
   int i;
 
-  int full_screen = SettingGetGlobal_b(G, cSetting_full_screen);
   int internal_gui = SettingGetGlobal_b(G, cSetting_internal_gui);
   int internal_feedback = SettingGetGlobal_b(G, cSetting_internal_feedback);
   register CSetting *I = G->Setting;
@@ -759,7 +758,6 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
     SettingSet_f(I, settings_keep_f[i], values_keep_f[i]);
 
   if(G->Option->presentation) {
-    SettingSet_b(I, cSetting_full_screen, full_screen);
     SettingSet_b(I, cSetting_presentation, 1);
     SettingSet_b(I, cSetting_internal_gui, internal_gui);
     SettingSet_b(I, cSetting_internal_feedback, internal_feedback);
@@ -2230,7 +2228,6 @@ int SettingGetName(PyMOLGlobals * G, int index, SettingName name)
 #endif
 }
 
-
 /*========================================================================*/
 void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int state, int quiet)
 {
@@ -2245,8 +2242,14 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   }
 
   switch (index) {
+  case cSetting_full_screen:
+    PRINTFB(G, FB_Setting, FB_Warnings)
+      "Setting-Warning: full_screen setting is not used anymore (use the full_screen command)\n"
+      ENDFB(G);
+    break;
   case cSetting_stereo:
     SceneUpdateStereo(G);
+    CShaderMgr_Set_Reload_Bits(G, RELOAD_ALL_SHADERS);
     break;
   case cSetting_pickable:
     ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvAll);

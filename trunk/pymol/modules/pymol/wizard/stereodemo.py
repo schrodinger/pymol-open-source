@@ -70,7 +70,7 @@ class Stereodemo(Wizard):
             [ 2, 'Interactive Modeling', 'cmd.get_wizard().launch("sculpt")'],
             [ 1, 'Configuration', ''],
 	    [ 2, 'Toggle Fullscreen', 
-	      'cmd.full_screen(apply(lambda x:{ "off":"on", "on":"off"}[x],(cmd.get("full_screen"),)))'],
+	      'cmd.full_screen()'],
 	    [ 2, 'Toggle Stereo 3D', 
 	      'cmd.stereo(apply(lambda x:{ "off":"on", "on":"off"}[x],(cmd.get("stereo"),)))'],
 #            [ 2, 'End Demonstration', 'cmd.get_wizard().launch("finish")' ],

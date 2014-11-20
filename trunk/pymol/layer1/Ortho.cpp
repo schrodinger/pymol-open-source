@@ -47,6 +47,7 @@ Z* -------------------------------------------------------------------
 #include "Vector.h"
 #include "CGO.h"
 #include "MyPNG.h"
+#include "MacPyMOL.h"
 
 #ifndef true
 #define true 1
@@ -604,13 +605,6 @@ void OrthoBusyPrime(PyMOLGlobals * G)
   I->BusyLastUpdate = UtilGetSeconds(G);
 }
 
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
-void MacPyMOLSetProgress(float value);
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
 
 /*========================================================================*/
 void OrthoBusyDraw(PyMOLGlobals * G, int force)

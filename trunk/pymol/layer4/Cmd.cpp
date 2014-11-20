@@ -83,6 +83,8 @@ Z* -------------------------------------------------------------------
 #include"OVContext.h"
 #include"PlugIOManager.h"
 #include"Seeker.h"
+#include"ListMacros.h"
+#include"MacPyMOL.h"
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -102,12 +104,6 @@ static int run_only_once = true;
 #endif
 #endif
 #endif
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
-extern int do_window(int code,int x,int y,int w, int h);
-#endif /* _MACPYMOL_XCODE */
-/* END PROPRIETARY CODE SEGMENT */
 
 #define API_SETUP_PYMOL_GLOBALS \
   if(self && PyCObject_Check(self)) { \
@@ -6175,9 +6171,8 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
   }
   if(ok) {
     if((ok = APIEnterNotModal(G))) {
-      if(!SettingGetGlobal_b(G,cSetting_full_screen)) {
-      
-        
+      if(!(w < 1 && h < 1 && ExecutiveIsFullScreen(G))) {
+
         if(((w > 0) && (h <= 0)) || ((h > 0) && (w <= 0))) {
           int cw, ch;
           SceneGetWidthHeight(G, &cw, &ch);
@@ -6188,27 +6183,28 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
             w = (h * cw) / ch;
           }
         }
+
         if((w > 0) && (h > 0)) {
           if(w < 10)
             w = 10;
           if(h < 10)
             h = 10;
-          if(!SettingGetGlobal_b(G, cSetting_full_screen)) {
-            if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
-              w += SettingGetGlobal_i(G, cSetting_internal_gui_width);
-            }
-            if(SettingGetGlobal_i(G, cSetting_internal_feedback)) {
-              h += (SettingGetGlobal_i(G, cSetting_internal_feedback) - 1) * cOrthoLineHeight +
-                cOrthoBottomSceneMargin;
-            }
+
+          if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
+            w += SettingGetGlobal_i(G, cSetting_internal_gui_width);
           }
-          {
-            h += MovieGetPanelHeight(G);
+
+          if(SettingGetGlobal_i(G, cSetting_internal_feedback)) {
+            h += (SettingGetGlobal_i(G, cSetting_internal_feedback) - 1) * cOrthoLineHeight +
+              cOrthoBottomSceneMargin;
           }
+
+          h += MovieGetPanelHeight(G);
         } else {
           w = -1;
           h = -1;
         }
+
 #ifndef _PYMOL_NO_MAIN
         if(G->Main) {
           MainDoReshape(w, h);    /* should be moved into Executive */
@@ -6216,6 +6212,7 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
 #else
         PyMOL_NeedReshape(G->PyMOL, 2, 0, 0, w, h);
 #endif
+
       } else {
 #ifndef _PYMOL_NO_MAIN
         if(G->Main) {
@@ -6227,6 +6224,7 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
       }
       APIExit(G);
     }
+
   }
   return APIResultOk(ok);
 }
@@ -8066,7 +8064,7 @@ static PyObject *CmdWindow(PyObject * self, PyObject * args)
 #endif
 #ifdef _MACPYMOL_XCODE
     default:
-      do_window(int1, x, y, width, height);
+      MacPyMOL_doWindow(int1, x, y, width, height);
       break;
 #endif
     }
