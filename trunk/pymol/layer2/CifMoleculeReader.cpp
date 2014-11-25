@@ -385,7 +385,7 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
   cif_array *arr_x, *arr_y, *arr_z;
   cif_array *arr_name, *arr_resn, *arr_resi, *arr_chain, *arr_symbol,
             *arr_group_pdb, *arr_alt, *arr_ins_code, *arr_b, *arr_u,
-            *arr_q, *arr_ID, *arr_mod_num, *arr_entity_id;
+            *arr_q, *arr_ID, *arr_mod_num, *arr_entity_id, *arr_segi;
 
   if ((arr_x = data->get_arr("_atom_site?cartn_x")) &&
       (arr_y = data->get_arr("_atom_site?cartn_y")) &&
@@ -407,8 +407,8 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
                                   "_atom_site.label_comp_id");
   arr_resi        = data->get_opt("_atom_site.auth_seq_id",
                                   "_atom_site.label_seq_id");
-  arr_chain       = data->get_opt("_atom_site.auth_asym_id",
-                                  "_atom_site.label_asym_id");
+  arr_chain       = data->get_arr("_atom_site.auth_asym_id");
+  arr_segi        = data->get_opt("_atom_site.label_asym_id");
   arr_symbol      = data->get_opt("_atom_site?type_symbol");
   arr_group_pdb   = data->get_opt("_atom_site.group_pdb");
   arr_alt         = data->get_opt("_atom_site.label_alt_id");
@@ -420,6 +420,9 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
                                   "_atom_site_label");
   arr_mod_num     = data->get_opt("_atom_site.pdbx_pdb_model_num");
   arr_entity_id   = data->get_arr("_atom_site.label_entity_id"); // NULL
+
+  if (!arr_chain)
+    arr_chain = arr_segi;
 
   int nrows = arr_x->get_nrows();
   const char * resi;
@@ -446,6 +449,7 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
     strncpy(ai->name, arr_name->as_s(i), cAtomNameLen);
     strncpy(ai->resn, arr_resn->as_s(i), cResnLen);
     strncpy(ai->elem, arr_symbol->as_s(i), cElemNameLen);
+    strncpy(ai->segi, arr_segi->as_s(i), cSegiLen);
 
     ai->chain = LexIdx(G, arr_chain->as_s(i));
 
@@ -510,20 +514,23 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
 bool read_pdbx_unobs_or_zero_occ_residues(PyMOLGlobals * G, cif_data * data,
     AtomInfoType ** atInfoPtr) {
 
-  cif_array *arr_resn, *arr_resi, *arr_chain,
+  cif_array *arr_resn, *arr_resi, *arr_chain, *arr_segi,
             *arr_poly_flag, *arr_ins_code, *arr_mod_num;
 
   if((arr_resn    = data->get_arr("_pdbx_unobs_or_zero_occ_residues.auth_comp_id",
                                   "_pdbx_unobs_or_zero_occ_residues.label_comp_id")) == NULL ||
      (arr_resi    = data->get_arr("_pdbx_unobs_or_zero_occ_residues.auth_seq_id",
-                                  "_pdbx_unobs_or_zero_occ_residues.label_seq_id")) == NULL ||
-     (arr_chain   = data->get_arr("_pdbx_unobs_or_zero_occ_residues.auth_asym_id",
-                                  "_pdbx_unobs_or_zero_occ_residues.label_asym_id")) == NULL)
+                                  "_pdbx_unobs_or_zero_occ_residues.label_seq_id")) == NULL)
     return false;
 
   arr_poly_flag   = data->get_opt("_pdbx_unobs_or_zero_occ_residues.polymer_flag");
   arr_ins_code    = data->get_opt("_pdbx_unobs_or_zero_occ_residues.pdb_ins_code");
   arr_mod_num     = data->get_opt("_pdbx_unobs_or_zero_occ_residues.pdb_model_num");
+  arr_segi        = data->get_opt("_pdbx_unobs_or_zero_occ_residues.label_asym_id");
+  arr_chain       = data->get_arr("_pdbx_unobs_or_zero_occ_residues.auth_asym_id");
+
+  if (!arr_chain)
+    arr_chain = arr_segi;
 
   int nrows = arr_resn->get_nrows();
   const char * resi;
@@ -550,6 +557,7 @@ bool read_pdbx_unobs_or_zero_occ_residues(PyMOLGlobals * G, cif_data * data,
     strncpy(ai->name, "CA", cAtomNameLen);
     strncpy(ai->resn, arr_resn->as_s(i), cResnLen);
     ai->elem[0] = 'C';
+    strncpy(ai->segi, arr_segi->as_s(i), cSegiLen);
 
     ai->chain = LexIdx(G, arr_chain->as_s(i));
 

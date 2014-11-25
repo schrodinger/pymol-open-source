@@ -823,7 +823,6 @@ _atom_site.type_symbol
 _atom_site.label_atom_id
 _atom_site.label_alt_id
 _atom_site.label_comp_id
-_atom_site.auth_asym_id
 _atom_site.label_asym_id
 _atom_site.label_entity_id
 _atom_site.label_seq_id
@@ -834,22 +833,27 @@ _atom_site.Cartn_z
 _atom_site.occupancy
 _atom_site.B_iso_or_equiv
 _atom_site.pdbx_formal_charge
+_atom_site.auth_asym_id
 _atom_site.pdbx_PDB_model_num
 ''')
 
         def callback(type_, ID, elem, name, alt, resn, segi, chain, resi,
-                x, y, z, q, b, formal_charge, state):
-            chain = cifrepr(chain)
-            segi = cifrepr(segi) if segi else chain
+                x, y, z, q, b, formal_charge, state, entity_id):
             resv, ins = (resi[:-1], resi[-1]) if resi[-1].isalpha() else (resi, '')
-            buf.append('%-6s %-3d %s %-3s %s %-3s %s %s ? %-2s %s %6.3f %6.3f %6.3f %4.2f %5.2f %d %d\n' % (
-                type_, ID, cifrepr(elem), cifrepr(name), cifrepr(alt),
-                cifrepr(resn), segi, chain, resv, cifrepr(ins),
-                x, y, z, q, b, formal_charge, state,
+            buf.append('%-6s %-3d %s %-3s '
+                    '%s %-3s %s %s '
+                    '%-2s %s %6.3f %6.3f %6.3f '
+                    '%4.2f %6.2f %d %s %d\n' % (
+                type_, ID, cifrepr(elem), cifrepr(name),
+                cifrepr(alt), cifrepr(resn), cifrepr(segi),
+                cifrepr(entity_id),
+                resv, cifrepr(ins), x, y, z,
+                q, b, formal_charge, cifrepr(chain), state,
             ))
 
-        _self.iterate_state(state, '?%s & ?%s' % (model, tmp), 'callback(type, ID, '
-            'elem, name, alt, resn, segi, chain, resi, x, y, z, q, b, formal_charge, state)',
+        _self.iterate_state(state, '?%s & ?%s' % (model, tmp),
+            'callback(type, ID, elem, name, alt, resn, segi, chain, resi, '
+            'x, y, z, q, b, formal_charge, state, "")',
             space={'callback': callback})
 
         _self.delete(tmp)
