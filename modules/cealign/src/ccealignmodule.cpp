@@ -29,7 +29,23 @@
 //  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include "ccealignmodule.H"
+
+#include "os_python.h"
+#include "os_std.h"
+
+#include "ce_types.h"
+
+#include "tnt/tnt.h"
+#include "tnt/jama_lu.h"
+#include "tnt/jama_svd.h"
+
+#define TA1 TNT::Array1D
+#define TA2 TNT::Array2D
+
+
+// tranpose of a matrix
+TA2<double> transpose(const TA2<double>& v);
+
 
 /////////////////////////////////////////////////////////////////////////////
 // CE Specific

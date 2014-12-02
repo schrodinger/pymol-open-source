@@ -1248,21 +1248,24 @@ PYMOL API
 
     fetchHosts = {
         "pdb"  : "ftp://ftp.wwpdb.org/pub/pdb",
-        "pdbe" : "ftp://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated",
-        "pdbj" : "ftp://pdb.protein.osaka-u.ac.jp/pub/pdb",
+        "pdbe" : "ftp://ftp.ebi.ac.uk/pub/databases/pdb",
+        "pdbj" : "ftp://ftp.pdbj.org/pub/pdb",
     }
 
     hostPaths = {
         "bio"  : "/data/biounit/coordinates/divided/{mid}/{code}.{type}.gz",
         "pdb"  : "/data/structures/divided/pdb/{mid}/pdb{code}.ent.gz",
-        "cif"  : "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
+        "cif"  : [
+            "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
+            "/data/large_structures/mmCIF/{code}.cif.gz",
+        ],
         "2fofc" : "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}.omap",
         "fofc": "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}_diff.omap",
         "pubchem": [
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=3DSaveSDF",
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
         ],
-        "emd": "ftp://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
+        "emd": "/../emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
     }
 
     def _fetch(code, name, state, finish, discrete, multiplex, zoom, type, path,

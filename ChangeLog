@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2014-12-02 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* use COMPONENTS_CIF environment variable to look for components.cif
+
+	* update fetchHosts and hostPaths URLs
+
+	* 1.7.3.6 (unstable/experimental)
+
 2014-11-20 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* cif: read first_model_num
