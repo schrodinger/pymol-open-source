@@ -13942,7 +13942,7 @@ static bool _is_full_screen = false;
  * not available.
  */
 bool ExecutiveIsFullScreen(PyMOLGlobals * G) {
-  if(!G->HaveGUI)
+  if(!G->HaveGUI || !G->ValidContext)
     return false;
 
   int flag = -1;

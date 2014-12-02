@@ -173,6 +173,10 @@ void cif_file::init(char * source, int mode) {
   switch (mode) {
     case 0:
       contents = FileGetContents(source, NULL);
+
+      if (!contents)
+        std::cerr << "ERROR: Failed to load file '" << source << "'" << std::endl;
+
       break;
     case 2:
       owncontents = false;
@@ -188,7 +192,7 @@ void cif_file::init(char * source, int mode) {
 // destructor
 cif_file::~cif_file() {
   for (m_str_cifdatap_t::iterator it = datablocks.begin(),
-      it_end = datablocks.end(); it != it_end; it++)
+      it_end = datablocks.end(); it != it_end; ++it)
     delete it->second;
 
   if (contents && owncontents)
@@ -198,11 +202,11 @@ cif_file::~cif_file() {
 // destructor
 cif_data::~cif_data() {
   for (m_str_cifdatap_t::iterator it = saveframes.begin(),
-      it_end = saveframes.end(); it != it_end; it++)
+      it_end = saveframes.end(); it != it_end; ++it)
     delete it->second;
 
   for (v_cifloopp_t::iterator it = loops.begin(),
-      it_end = loops.end(); it != it_end; it++)
+      it_end = loops.end(); it != it_end; ++it)
     delete *it;
 }
 

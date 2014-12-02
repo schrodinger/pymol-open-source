@@ -1,10 +1,6 @@
 #ifndef _CE_TYPES_H
 #define _CE_TYPES_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include"os_python.h"
 
 /*
@@ -41,9 +37,5 @@ pathCache findPath(double** S, double** dA, double**dB, int lenA, int lenB, floa
 
 // filter through the results and find the best
 PyObject* findBest( pcePoint coordsA, pcePoint coordsB, pathCache paths, int bufferSize, int smaller, int winSize );
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

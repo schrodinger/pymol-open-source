@@ -167,7 +167,6 @@ pymol_src_dirs = [
     "layer4",
     "layer5",
     "modules/cealign/src",
-    "modules/cealign/src/tnt",
     generated_dir,
 ]
 

@@ -86,7 +86,6 @@ bond_dict_t bond_dict;
  * parse components.cif into dictionary
  */
 void update_components_bond_dict() {
-  const char *filename = "components.cif";
   const char *name1, *name2;
   int order_value;
   const cif_array *arr_id_1, *arr_id_2, *arr_order;
@@ -94,10 +93,14 @@ void update_components_bond_dict() {
   if (bond_dict.size())
     return;
 
+  const char *filename = getenv("COMPONENTS_CIF");
+  if (!filename || !filename[0])
+    filename = "components.cif";
+
   cif_file * cif = new cif_file(filename);
 
   for (m_str_cifdatap_t::iterator data_it = cif->datablocks.begin(),
-      data_it_end = cif->datablocks.end(); data_it != data_it_end; data_it++) {
+      data_it_end = cif->datablocks.end(); data_it != data_it_end; ++data_it) {
 
     const std::string &resn = data_it->first;
     cif_data * data = data_it->second;
@@ -184,6 +187,16 @@ int ObjectMoleculeConnectComponents(ObjectMolecule * I)
   // read components.cif
   update_components_bond_dict();
 
+  // user feedback if components.cif not available
+  if (bond_dict.empty()) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " Error: Please download 'components.cif' from http://www.wwpdb.org/ccd.html\n"
+      " and place it in the current directory or set the COMPONENTS_CIF environment"
+      " variable.\n"
+      ENDFB(G);
+    return false;
+  }
+
   // reserve some memory for new bonds
   if (!I->Bond) {
     I->Bond = VLACalloc(BondType, I->NAtom * 4);
@@ -261,7 +274,7 @@ void sshashmap_clear(PyMOLGlobals * G, sshashmap &ssrecords) {
   // decrement Lexicon references (should go into ~sshashkey(), but
   // the PyMOLGlobals is not known there)
   for (sshashmap::iterator it = ssrecords.begin(),
-      it_end = ssrecords.end(); it != it_end; it++) {
+      it_end = ssrecords.end(); it != it_end; ++it) {
     LexDec(G, it->first.asym_id);
     LexDec(G, it->second.end.asym_id);
   }
