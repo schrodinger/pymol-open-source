@@ -1323,7 +1323,7 @@ static PyObject *CmdSculptIterate(PyObject * self, PyObject * args)
     total_strain = ExecutiveSculptIterate(G, str1, int1, int2);
     APIExit(G);
   }
-  return (APIIncRef(PyFloat_FromDouble((double) total_strain)));
+  return PyFloat_FromDouble((double) total_strain);
 }
 
 static PyObject *CmdSetObjectTTT(PyObject * self, PyObject * args)
