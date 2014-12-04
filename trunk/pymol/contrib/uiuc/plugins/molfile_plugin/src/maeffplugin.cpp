@@ -1983,7 +1983,7 @@ namespace {
       }
     }
     catch (std::exception &e) {
-      fprintf(stderr, e.what());
+      fprintf(stderr, "%s", e.what());
       return MOLFILE_ERROR;
     }
     return MOLFILE_SUCCESS;
