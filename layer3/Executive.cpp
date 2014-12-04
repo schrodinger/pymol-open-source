@@ -150,7 +150,7 @@ struct _CExecutive {
   SpecRec *LastChanged, *LastZoomed, *RecoverPressed;
   int ReorderFlag;
   OrthoLineType ReorderLog;
-#ifndef FREEGLUT
+#ifndef GLUT_FULL_SCREEN
   // freeglut has glutLeaveFullScreen, no need to remember window dimensions
   int oldPX, oldPY, oldWidth, oldHeight;
 #endif
@@ -13980,7 +13980,7 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
   if(G->HaveGUI && G->ValidContext) {
     CExecutive *I = G->Executive;
     if (flag) {
-#ifndef FREEGLUT
+#ifndef GLUT_FULL_SCREEN
       if(wm_flag < 1) {
         I->oldPX = p_glutGet(P_GLUT_WINDOW_X);
         I->oldPY = p_glutGet(P_GLUT_WINDOW_Y);
@@ -13991,9 +13991,14 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
 
       p_glutFullScreen();
     } else {
-#ifndef FREEGLUT
+#ifndef GLUT_FULL_SCREEN
+      // freeglut < 2.6
       p_glutReshapeWindow(I->oldWidth, I->oldHeight);
       p_glutPositionWindow(I->oldPX, I->oldPY);
+#elif !defined(GLUT_HAS_MULTI)
+      // freeglut < 2.8
+      if(wm_flag)
+        glutFullScreenToggle();
 #else
       glutLeaveFullScreen();
 #endif
@@ -16831,7 +16836,7 @@ int ExecutiveInit(PyMOLGlobals * G)
     I->NSkip = 0;
     I->HowFarDown = 0;
     I->DragMode = 0;
-#ifndef FREEGLUT
+#ifndef GLUT_FULL_SCREEN
     I->oldWidth = 640;
     I->oldHeight = 480;
 #endif
