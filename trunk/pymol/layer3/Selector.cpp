@@ -6608,7 +6608,7 @@ PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state)
   }
 
   result = PyArray_SimpleNew(2, dims, typenum);
-  dataptr = (float*) PyArray_DATA(result);
+  dataptr = (float*) PyArray_DATA((PyArrayObject *)result);
 
   for(i = 0, iter.reset(); iter.next(); i++) {
     v_ptr = iter.getCoord();
@@ -6677,11 +6677,12 @@ int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
   import_array1(false);
 
   if(PyArray_Check(coords)) {
-    if(PyArray_NDIM(coords) != 2 || PyArray_DIM(coords, 1) != 3) {
+    if(PyArray_NDIM((PyArrayObject *)coords) != 2 ||
+        PyArray_DIM((PyArrayObject *)coords, 1) != 3) {
       ErrMessage(G, "LoadCoords", "numpy array shape mismatch");
       return false;
     }
-    itemsize = PyArray_ITEMSIZE(coords);
+    itemsize = PyArray_ITEMSIZE((PyArrayObject *)coords);
     switch(itemsize) {
       case sizeof(double):
       case sizeof(float):
@@ -6700,7 +6701,7 @@ int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state)
       // fast implementation for numpy arrays only
 #ifdef _PYMOL_NUMPY
       for(b = 0; b < 3; b++) {
-        ptr = PyArray_GETPTR2(coords, a, b);
+        ptr = PyArray_GETPTR2((PyArrayObject *)coords, a, b);
 
         switch(itemsize) {
           case sizeof(double):

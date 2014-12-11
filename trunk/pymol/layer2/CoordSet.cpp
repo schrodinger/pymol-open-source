@@ -198,7 +198,7 @@ PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
 
   if(copy) {
     if((result = PyArray_SimpleNew(2, dims, typenum)))
-      memcpy(PyArray_DATA(result), cs->Coord, cs->NIndex * 3 * base_size);
+      memcpy(PyArray_DATA((PyArrayObject *)result), cs->Coord, cs->NIndex * 3 * base_size);
   } else {
     result = PyArray_SimpleNewFromData(2, dims, typenum, cs->Coord);
   }

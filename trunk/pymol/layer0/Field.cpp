@@ -73,7 +73,7 @@ PyObject *FieldAsNumPyArray(CField * field, short copy)
 
   if(copy) {
     if((result = PyArray_SimpleNew(field->n_dim, dims, typenum)))
-      memcpy(PyArray_DATA(result), field->data, field->size);
+      memcpy(PyArray_DATA((PyArrayObject *)result), field->data, field->size);
   } else {
     result = PyArray_SimpleNewFromData(field->n_dim, dims, typenum, field->data);
   }
