@@ -259,7 +259,7 @@ static int read_pbeq_data(void *v, int set, float *datablock,
         int addr = z*nclx*ncly + y*nclx + x;
         if (fread(datablock + addr, 4, 1, fd) != 1) {
           printf("pbeqplugin) Error reading potential map cell: %d,%d,%d\n", x, y, z);
-          printf("pbeqplugin) offset: %d\n", ftell(fd));
+          printf("pbeqplugin) offset: %ld\n", ftell(fd));
           return MOLFILE_ERROR;
         }
         count++;

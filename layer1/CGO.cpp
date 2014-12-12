@@ -7134,7 +7134,7 @@ static void CGO_gl_draw_label(CCGORenderer * I, float **pc) {
   int  texture_id = CGO_get_int(*pc);
   float worldPos[4], screenMin[3], screenMax[3], textExtent[4];
   CShaderPrg * shaderPrg;
-  int buf1, buf2, attr_worldpos, attr_screenoffset, attr_texcoords;
+  int buf1 = 0, buf2 = 0, attr_worldpos, attr_screenoffset, attr_texcoords;
   copy3f(*pc, worldPos);  worldPos[3] = 1.f;
   copy3f(*pc+3, screenMin);
   copy3f(*pc+6, screenMax);
@@ -7175,7 +7175,7 @@ static void CGO_gl_draw_texture(CCGORenderer * I, float **pc) {
   int  texture_id = CGO_get_int(*pc);
   float worldPos[4], screenMin[3], screenMax[3], textExtent[4];
   CShaderPrg * shaderPrg;
-  int buf1, buf2, attr_worldpos, attr_screenoffset, attr_texcoords;
+  int buf1 = 0, buf2 = 0, attr_worldpos, attr_screenoffset, attr_texcoords;
   copy3f(*pc, worldPos);  worldPos[3] = 1.f;
   copy3f(*pc+3, screenMin);
   copy3f(*pc+6, screenMax);

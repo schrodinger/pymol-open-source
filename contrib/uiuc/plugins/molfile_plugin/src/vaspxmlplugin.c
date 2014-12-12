@@ -79,7 +79,7 @@ static void *open_vaspxml_read(const char *filename, const char *filetype, int *
        /* Extract title line */
        char *begin = strstr(lineptr, ">") + 1;
        char *end = strstr(lineptr, "</i>");
-       if (end) end = '\0';
+       if (end) *end = '\0';
        if (begin) data->titleline = strdup(begin);
 
     } else if (strstr(lineptr, "atominfo") != NULL && data->numatoms == 0) {

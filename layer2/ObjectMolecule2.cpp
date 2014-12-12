@@ -3625,7 +3625,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
 {
   int ok = true;
   ObjectMolecule *I = NULL;
-  int discrete_flag;
+  int discrete_flag = 0;
   int ll;
   (*result) = NULL;
 

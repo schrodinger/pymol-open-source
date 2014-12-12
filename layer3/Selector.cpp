@@ -8917,11 +8917,11 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
       b = i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].protons;
       base[0].sele[a] = (
-          b >  2 && b <  5 ||
-          b > 10 && b < 14 ||
-          b > 18 && b < 32 ||
-          b > 36 && b < 51 ||
-          b > 54 && b < 85 ||
+          (b >  2 && b <  5) ||
+          (b > 10 && b < 14) ||
+          (b > 18 && b < 32) ||
+          (b > 36 && b < 51) ||
+          (b > 54 && b < 85) ||
           b > 86);
     }
     break;

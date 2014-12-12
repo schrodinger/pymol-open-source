@@ -274,7 +274,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                       ENDFB(G);
                   }
 
-                  if(stop > 0 && cnt >= stop || max > 0 && ncnt >= max) {
+                  if((stop > 0 && cnt >= stop) || (max > 0 && ncnt >= max)) {
                     cs = NULL;
                     break;
                   }
@@ -459,7 +459,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
               }
 
               PRINTFB(G, FB_ObjectMap, FB_Details)
-                " ObjectMap: read %d values\n", size ENDFB(G);
+                " ObjectMap: read %zu values\n", size ENDFB(G);
             }
 
           }

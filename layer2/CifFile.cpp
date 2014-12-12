@@ -152,8 +152,8 @@ cif_array * cif_data::get_arr(const char * key, const char * alias1, const char 
   // dict lookup, return first hit
   m_str_cifarray_t::iterator arr, end = dict.end();
   if ((arr = dict.find(key)) != end ||
-      alias1 && (arr = dict.find(alias1)) != end ||
-      alias2 && (arr = dict.find(alias2)) != end)
+      (alias1 && (arr = dict.find(alias1)) != end) ||
+      (alias2 && (arr = dict.find(alias2)) != end))
     return &arr->second;
   return NULL;
 }
