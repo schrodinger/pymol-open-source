@@ -7092,8 +7092,8 @@ int CRay::setLastToNoLighting(char no_lighting)
     return false;
   p = I->Primitive + I->NPrimitive - 1;
   p->no_lighting = no_lighting;
-  return true;
 #endif
+  return true;
 }
 
 

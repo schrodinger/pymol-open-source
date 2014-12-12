@@ -1476,7 +1476,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
   int NPHIH, MPHIA, NHPARM, NPARM, NNB, NRES;
   int NBONA, NTHETA, NPHIA, NUMBND, NUMANG, NPTRA;
   int NATYP, NPHB, IFPERT, NBPER, NGPER, NDPER;
-  int MBPER, MGPER, MDPER, IFBOX, NMXRS, IFCAP;
+  int MBPER, MGPER, MDPER, IFBOX = 0, NMXRS, IFCAP;
   int NEXTRA, IPOL = 0;
   int wid, col;
   float BETA;
@@ -2105,7 +2105,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
 
     if(IFBOX > 0) {
 
-      int IPTRES, NSPM, NSPSOL;
+      int IPTRES, NSPM = 0, NSPSOL;
 
       if(amber7) {
         p = findflag(G, buffer, "SOLVENT_POINTERS", "3I8");
@@ -4386,7 +4386,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule * I, int index)
   int result = 0;
   int flag = true;
   float v[3], v0[3], d;
-  CoordSet *cs;
+  CoordSet *cs = NULL;
   int ok = true;
 
   if((index >= 0) && (index <= I->NAtom)) {

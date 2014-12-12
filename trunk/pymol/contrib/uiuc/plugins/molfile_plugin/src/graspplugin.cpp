@@ -104,7 +104,7 @@ void Get_Property_Values(GRASSP *grassp, float *properties, float *colores, int 
 
   ///ojo aqui le quite el  !
   if ((grassp->flag)!=POTENTIALS) {
-    if (index >=0 && index <= 4) 
+    if (index <= 4)
       printf("graspplugin) No data available for '%s' option\n", name[index]);
     else 
       printf("graspplugin) out of range property, flag: %d index: %d\n", grassp->flag, index);

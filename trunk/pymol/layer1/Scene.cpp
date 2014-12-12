@@ -9005,7 +9005,6 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
   int index;
   int curState;
   int nPick, nHighBits, nLowBits;
-  float fov;
   int must_render_stereo = false;
   int mono_as_quad_stereo = false;
   int stereo_using_mono_matrix = false;

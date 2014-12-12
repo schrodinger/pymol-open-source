@@ -6039,7 +6039,7 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
     // with prior=1 other arguments (width, height, ray) are ignored
 
     if(!prior) {
-      if(ray || !G->HaveGUI && (!SceneGetCopyType(G) || width || height)) {
+      if(ray || (!G->HaveGUI && (!SceneGetCopyType(G) || width || height))) {
         SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
         prior = 1;

@@ -470,8 +470,9 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
     }
 
     // handle legacy or default color ramp
-    if(!vs->Ramp || vs->RampSize && vs->Ramp[0] == 0.f
-        && vs->Ramp[5 * (vs->RampSize - 1)] == 359.f) {
+    if(!vs->Ramp || (vs->RampSize
+          && vs->Ramp[0] == 0.f
+          && vs->Ramp[5 * (vs->RampSize - 1)] == 359.f)) {
 
       if(vs->Ramp) {
         // legacy color ramp (0..359)
@@ -921,7 +922,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
         int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
         const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
 
-        CShaderPrg_Set1f(shaderPrg, "fogIsSolidColor", bg_gradient || bg_image_filename && bg_image_filename[0] ? 0.f : 1.f);
+        CShaderPrg_Set1f(shaderPrg, "fogIsSolidColor", bg_gradient || (bg_image_filename && bg_image_filename[0]) ? 0.f : 1.f);
         CShaderPrg_Set3fv(shaderPrg, "fogSolidColor", ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb)));
         CShaderPrg_SetFogUniforms(G, shaderPrg);
         CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGetGlobal_b(G, cSetting_depth_cue) ? 1.f : 0.f);

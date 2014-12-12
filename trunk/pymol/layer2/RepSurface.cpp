@@ -250,7 +250,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
   int t_mode;
   short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
   float ambient_occlusion_scale = 0.f;
-  int ambient_occlusion_mode = ambient_occlusion_mode = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_ambient_occlusion_mode);
+  int ambient_occlusion_mode = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_ambient_occlusion_mode);
   int ambient_occlusion_mode_div_4 = 0;
   if (ambient_occlusion_mode){
     ambient_occlusion_scale = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_ambient_occlusion_scale);

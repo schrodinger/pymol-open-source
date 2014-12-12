@@ -231,7 +231,7 @@ static int vtf_parse_atom(char *line, vtf_data *d) {
     switch (tolower(keyword[0])) {
     case 'n': {
       /* name */
-      if (sscanf(s, "%16s %n", &atom.name, &n) < 1) {
+      if (sscanf(s, "%16s %n", atom.name, &n) < 1) {
 	vtf_error("could not get name in atom record", line);
 	return MOLFILE_ERROR;
       }
@@ -240,7 +240,7 @@ static int vtf_parse_atom(char *line, vtf_data *d) {
     }
     case 't': {
       /* type */
-      if (sscanf(s, "%16s %n", &atom.type, &n) < 1) {
+      if (sscanf(s, "%16s %n", atom.type, &n) < 1) {
 	vtf_error("could not get type in atom record", line);
 	return MOLFILE_ERROR;
       }
@@ -266,7 +266,7 @@ static int vtf_parse_atom(char *line, vtf_data *d) {
       } else if (strcmp(keyword, "res") == 0 || 
 		 strcmp(keyword, "resname") == 0) {
 	/* resname */
-	if (sscanf(s, "%8s %n", &atom.resname, &n) < 1) {
+	if (sscanf(s, "%8s %n", atom.resname, &n) < 1) {
 	  vtf_error("could not get resname in atom record", line);
 	  return MOLFILE_ERROR;
 	}
@@ -281,7 +281,7 @@ static int vtf_parse_atom(char *line, vtf_data *d) {
     }
     case 's': {
       /* segid */
-      if (sscanf(s, "%8s %n", &atom.segid, &n) < 1) {
+      if (sscanf(s, "%8s %n", atom.segid, &n) < 1) {
 	vtf_error("could not get segid in atom record", line);
 	return MOLFILE_ERROR;
       }
@@ -290,7 +290,7 @@ static int vtf_parse_atom(char *line, vtf_data *d) {
     }
     case 'i': {
       /* insertion */
-      if (sscanf(s, "%2s %n", &atom.insertion, &n) < 1) {
+      if (sscanf(s, "%2s %n", atom.insertion, &n) < 1) {
 	vtf_error("could not get insertion in atom record", line);
 	return MOLFILE_ERROR;
       }
@@ -302,7 +302,7 @@ static int vtf_parse_atom(char *line, vtf_data *d) {
       /* chain, charge */
       if (strlen(keyword) == 1 || 
 	  strcmp(keyword, "chain") == 0) {
-	if (sscanf(s, "%2s %n", &atom.chain, &n) < 1) {
+	if (sscanf(s, "%2s %n", atom.chain, &n) < 1) {
 	  vtf_error("could not get chain in atom record", line);
 	  return MOLFILE_ERROR;
 	}
@@ -336,7 +336,7 @@ static int vtf_parse_atom(char *line, vtf_data *d) {
 	}
 	d->optflags |= MOLFILE_ATOMICNUMBER;
       } else if (strcmp(keyword, "altloc")) {
-	if (sscanf(s, "%2s %n", &atom.altloc, &n) < 1) {
+	if (sscanf(s, "%2s %n", atom.altloc, &n) < 1) {
 	  vtf_error("could not get altloc in atom record", line);
 	  return MOLFILE_ERROR;
 	}

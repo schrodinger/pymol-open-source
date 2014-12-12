@@ -99,7 +99,7 @@ static void *open_molden_read(const char *filename,
                               const char *filetype,
                               int *natoms) {
   FILE *fd;
-  qmdata_t *data;
+  qmdata_t *data = NULL;
   moldendata_t *moldendata;
   char buffer[1024];
   char keystring[20];

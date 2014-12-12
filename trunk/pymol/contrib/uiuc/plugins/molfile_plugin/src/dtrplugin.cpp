@@ -483,20 +483,20 @@ bool Timekeys::init(const std::string& path ) {
         }
         /* constant frame size */
         if (keys[i].size() != m_framesize) {
-            fprintf(stderr, "non-constant framesize at frame %ld\n", i);
-            printf("size %d framesize %d\n\n",
+            fprintf(stderr, "non-constant framesize at frame %zd\n", i);
+            printf("size %" PRIu64 " framesize %" PRIu64 "\n\n",
                     keys[i].size(), m_framesize);
             return true;
         }
         /* constant time interval */
         if (fabs((keys[i].time()-keys[i-1].time())-m_interval) > 1e-3) {
             if (getenv("DTRPLUGIN_VERBOSE")) fprintf(stderr, 
-                    "non-constant time interval at frame %ld\n", i);
+                    "non-constant time interval at frame %zd\n", i);
             return true;
         }
         /* constant offset */
         if (keys[i].offset() != m_framesize*( i % m_fpf)) {
-            fprintf(stderr, "unexpected offset for frame %ld\n", i);
+            fprintf(stderr, "unexpected offset for frame %zd\n", i);
             return true;
         }
     }
@@ -677,7 +677,7 @@ namespace {
   public:
       int eno;
       DDException(const std::string &text, int _eno=0) 
-      : std::runtime_error(text + strerror(eno)), eno(_eno){}
+      : std::runtime_error(text + strerror(_eno)), eno(_eno){}
   };
 }
 
@@ -1298,7 +1298,7 @@ static int handle_wrapped_v2(
   }
   Blob pos=blobs["POSITION"];
   if (pos.count != 3*natoms) {
-    fprintf(stderr, "ERROR, Expected %d elements in POSITION; got %ld\n",
+    fprintf(stderr, "ERROR, Expected %d elements in POSITION; got %" PRIu64 "\n",
         3*natoms, pos.count);
     return MOLFILE_ERROR;
   }
@@ -1307,7 +1307,7 @@ static int handle_wrapped_v2(
   if (with_velocity && ts->velocities && blobs.find("VELOCITY")!=blobs.end()) {
     Blob vel=blobs["VELOCITY"];
     if (vel.count != 3*natoms) {
-      fprintf(stderr, "ERROR, Expected %d elements in VELOCITY; got %ld\n",
+      fprintf(stderr, "ERROR, Expected %d elements in VELOCITY; got %" PRIu64 "\n",
           3*natoms, vel.count);
       return MOLFILE_ERROR;
     }
@@ -1569,7 +1569,7 @@ static int handle_wrapped_v1(
   // if required, get velocities
   if (ts->velocities && velblob.count > 0) {
     if (velblob.count != 3*natoms) {
-      fprintf(stderr, "VELOCITY field has %ld values; expected %d\n",
+      fprintf(stderr, "VELOCITY field has %" PRIu64 " values; expected %d\n",
           velblob.count, 3*natoms);
       return MOLFILE_ERROR;
     }

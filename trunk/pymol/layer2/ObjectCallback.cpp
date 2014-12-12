@@ -322,7 +322,6 @@ static PyObject *ObjectCallbackAllStatesAsPyObject(ObjectCallback * I)
   // pickle the list to a string
   result = PConvPickleDumps(list);
 
-ok_except1:
   Py_XDECREF(list);
 
   if(PyErr_Occurred()) {

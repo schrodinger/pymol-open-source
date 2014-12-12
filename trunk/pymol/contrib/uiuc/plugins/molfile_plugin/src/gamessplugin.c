@@ -375,7 +375,7 @@ static void *open_gamess_read(const char *filename,
                   const char *filetype, int *natoms) {
 
   FILE *fd;
-  qmdata_t *data;
+  qmdata_t *data = NULL;
   gmsdata *gms;
 
   /* open the input file */
