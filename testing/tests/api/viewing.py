@@ -208,8 +208,70 @@ class TestViewing(testing.PyMOLTestCase):
         self.assertEqual(a, cmd.get_view())
 
     def testScene(self):
-        cmd.scene
-        self.skipTest('TODO')
+        cmd.fragment('ala', 'm1')
+        cmd.fragment('gly', 'm2')
+        cmd.create('m2', 'm2', 1, 2)
+        cmd.create('m2', 'm2', 1, 3)
+        cmd.create('m2', 'm2', 1, 4)
+
+        # store
+        cmd.show_as('sticks', 'm1')
+        cmd.show_as('spheres', 'm2')
+        cmd.color('blue', 'm1')
+        cmd.color('yellow', 'm2')
+        view_001 = cmd.get_view()
+        cmd.scene('new', 'store', 'hello world')
+
+        # store
+        cmd.frame(3)
+        cmd.show_as('lines')
+        cmd.color('red')
+        cmd.turn('x', 45)
+        view_002 = cmd.get_view()
+        cmd.scene('new', 'store')
+
+        # check auto names
+        self.assertEqual(cmd.get_scene_list(), ['001', '002'])
+
+        # recall
+        cmd.scene('001', 'recall', animate=0)
+        self.assertArrayEqual(view_001, cmd.get_view(), delta=1e-3)
+        self.assertEqual(cmd.count_atoms('m1'), cmd.count_atoms('color blue'))
+        self.assertEqual(cmd.count_atoms('m1'), cmd.count_atoms('rep sticks'))
+        self.assertEqual(cmd.count_atoms('m2'), cmd.count_atoms('color yellow'))
+        self.assertEqual(cmd.count_atoms('m2'), cmd.count_atoms('rep spheres'))
+        self.assertNotEqual(cmd.get_wizard(), None)
+        self.assertEqual(cmd.get_state(), 1)
+
+        # recall
+        cmd.scene('002', 'recall', animate=0)
+        self.assertArrayEqual(view_002, cmd.get_view(), delta=1e-3)
+        self.assertEqual(0, cmd.count_atoms('color blue'))
+        self.assertEqual(0, cmd.count_atoms('rep sticks'))
+        self.assertEqual(cmd.count_atoms(), cmd.count_atoms('color red'))
+        self.assertEqual(cmd.count_atoms(), cmd.count_atoms('rep lines'))
+        self.assertEqual(cmd.get_wizard(), None)
+        self.assertEqual(cmd.get_state(), 3)
+
+        # with movie (not playing) it must not recall the state
+        cmd.mset('1-4')
+        cmd.frame(1)
+        cmd.scene('002', 'recall', animate=0)
+        self.assertEqual(cmd.get_state(), 1)
+
+    def testSceneOrder(self):
+        cmd.scene('Z0', 'store')
+        cmd.scene('F1', 'store')
+        cmd.scene('F10', 'store')
+        cmd.scene('F2', 'store')
+        cmd.scene_order('*', True)
+        self.assertEqual(cmd.get_scene_list(), ['F1', 'F2', 'F10', 'Z0'])
+        cmd.scene_order('F10 F1')
+        self.assertEqual(cmd.get_scene_list(), ['F2', 'F10', 'F1', 'Z0'])
+        cmd.scene_order('F10 F1', location='top')
+        self.assertEqual(cmd.get_scene_list(), ['F10', 'F1', 'F2', 'Z0'])
+        cmd.scene_order('F10 F1', location='bottom')
+        self.assertEqual(cmd.get_scene_list(), ['F2', 'Z0', 'F10', 'F1'])
 
     @testing.requires('gui')
     def testStereo(self):
