@@ -230,11 +230,12 @@ class TestViewing(testing.PyMOLTestCase):
         view_002 = cmd.get_view()
         cmd.scene('new', 'store')
 
-        # check auto names
-        self.assertEqual(cmd.get_scene_list(), ['001', '002'])
+        # we actually don't know the auto naming counter
+        # self.assertEqual(cmd.get_scene_list(), ['001', '002'])
+        names = cmd.get_scene_list()
 
         # recall
-        cmd.scene('001', 'recall', animate=0)
+        cmd.scene(names[0], 'recall', animate=0)
         self.assertArrayEqual(view_001, cmd.get_view(), delta=1e-3)
         self.assertEqual(cmd.count_atoms('m1'), cmd.count_atoms('color blue'))
         self.assertEqual(cmd.count_atoms('m1'), cmd.count_atoms('rep sticks'))
@@ -244,7 +245,7 @@ class TestViewing(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_state(), 1)
 
         # recall
-        cmd.scene('002', 'recall', animate=0)
+        cmd.scene(names[1], 'recall', animate=0)
         self.assertArrayEqual(view_002, cmd.get_view(), delta=1e-3)
         self.assertEqual(0, cmd.count_atoms('color blue'))
         self.assertEqual(0, cmd.count_atoms('rep sticks'))
@@ -256,8 +257,27 @@ class TestViewing(testing.PyMOLTestCase):
         # with movie (not playing) it must not recall the state
         cmd.mset('1-4')
         cmd.frame(1)
-        cmd.scene('002', 'recall', animate=0)
+        cmd.scene(names[1], 'recall', animate=0)
         self.assertEqual(cmd.get_state(), 1)
+
+        # rename and delete
+        cmd.scene('F2', 'store')
+        cmd.scene(names[0], 'rename', new_key='F1')
+        cmd.scene(names[1], 'delete')
+        self.assertEqual(cmd.get_scene_list(), ['F1', 'F2'])
+
+    def testSceneInsertBeforeAfter(self):
+        # insert_before and insert_after
+        cmd.scene('F1', 'store')
+        cmd.scene('F2', 'store')
+        cmd.scene('F1')
+        cmd.scene('new', 'insert_after')
+        cmd.scene('new', 'insert_before')
+        names = cmd.get_scene_list()
+        self.assertEqual(names[0], 'F1')
+        self.assertEqual(names[3], 'F2')
+        # we don't know the auto naming counter, but we know this:
+        self.assertTrue(names[1] > names[2])
 
     def testSceneOrder(self):
         cmd.scene('Z0', 'store')
