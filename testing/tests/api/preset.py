@@ -18,32 +18,32 @@ class TestPreset(testing.PyMOLTestCase):
 
     def testSimple(self):
         cmd.load(self.datafile('1oky.pdb.gz'))
-        preset.simple('*')
+        preset.simple('all')
         self._assertSimpleReps()
 
     def testTechnical(self):
         cmd.load(self.datafile('1oky.pdb.gz'))
-        preset.technical('*')
+        preset.technical('all')
         self._assertSimpleReps()
         self.assertTrue('1oky_pol_conts' in cmd.get_names('all'))
 
     def testPublication(self):
         cmd.load(self.datafile('1oky.pdb.gz'))
-        preset.publication('*')
+        preset.publication('all')
         self._assertPrettyReps()
         self.assertTrue(cmd.get_setting_boolean('cartoon_smooth_loops', '1oky'))
         self.assertTrue(cmd.get_setting_boolean('cartoon_fancy_helices', '1oky'))
 
     def testPretty(self):
         cmd.load(self.datafile('1oky.pdb.gz'))
-        preset.pretty('*')
+        preset.pretty('all')
         self._assertPrettyReps()
         self.assertFalse(cmd.get_setting_boolean('cartoon_smooth_loops', '1oky'))
         self.assertFalse(cmd.get_setting_boolean('cartoon_fancy_helices', '1oky'))
 
     def testLigands(self):
         cmd.load(self.datafile('1oky.pdb.gz'))
-        preset.ligands('*')
+        preset.ligands('all')
         self.assertEqual(cmd.count_atoms('rep cartoon'), 0)
         self.assertGreater(cmd.count_atoms('rep ribbon'), 0)
         self.assertEqual(cmd.count_atoms('rep sticks & organic'), cmd.count_atoms('organic'))
