@@ -34,10 +34,6 @@ class TestSetting(testing.PyMOLTestCase):
         cmd.get_setting_int
         self.skipTest("TODO")
 
-    def testGetSettingLegacy(self):
-        cmd.get_setting_legacy
-        self.skipTest("TODO")
-
     def testGetSettingText(self):
         cmd.get_setting_text
         self.skipTest("TODO")
