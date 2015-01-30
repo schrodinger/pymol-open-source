@@ -720,7 +720,24 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         """
         File->Save Molecule, now with filtering
         """
-        self.dialog = Pmw.SelectionDialog(self.root,
+        def command(result):
+            if result == 'OK':
+                self.file_save2(
+                        dialog.getcurselection(),
+                        multiple_files_option.getvalue(),
+                        states_option.getvalue())
+            self.my_withdraw(dialog)
+
+        def update_save_listbox():
+            lst = self.cmd.get_names('public')
+            searchstr = filter_entry.getvalue()
+
+            if searchstr:
+                lst = filter(lambda x: searchstr in x, lst)
+
+            dialog.component("scrolledlist").setlist(lst)
+
+        dialog = Pmw.SelectionDialog(self.root,
                                           title="Save",
                                           buttons = ('OK', 'Cancel'),
                                           defaultbutton='OK',
@@ -728,57 +745,55 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                           scrolledlist_listbox_selectmode=EXTENDED,
                                           label_text='Which object or selection would you like to save?',
                                           scrolledlist_items = (),  # used to be 'lst'
-                                          command = self.file_save2)
+                                          command = command)
 
-
-        self.filter_entry = Pmw.EntryField(self.dialog.interior(),
-                                     command=self.filter_names,
+        filter_entry = Pmw.EntryField(dialog.interior(),
                                      labelpos='w',
-                                     modifiedcommand=self.update_save_listbox,
+                                     modifiedcommand=update_save_listbox,
                                      validate=None,
                                      value="",
                                      label_text="Filter:")
-        self.filter_entry.pack(pady=6, fill='x', expand=0, padx=10)
+        filter_entry.pack(pady=6, fill='x', expand=0, padx=10)
 
-        self.multiple_files_option = Pmw.RadioSelect( self.dialog.interior(),
+        multiple_files_option = Pmw.RadioSelect( dialog.interior(),
                                                       labelpos='w',
                                                       orient='vertical',
                                                       selectmode='single',
                                                       label_text="Save to...",
                                                       buttontype="radiobutton",
                                                       )
-        self.multiple_files_option.add("one file")
-        self.multiple_files_option.add("multiple files")
-        self.multiple_files_option.invoke("one file")
-        self.multiple_files_option.pack(side='left', pady=8)
+        multiple_files_option.add("one file")
+        multiple_files_option.add("multiple files")
+        multiple_files_option.invoke("one file")
+        multiple_files_option.pack(side='left', pady=8)
                                                       
                                                  
-        self.states_option = Pmw.RadioSelect( self.dialog.interior(),
+        states_option = Pmw.RadioSelect( dialog.interior(),
                                               labelpos='w',
                                               orient='vertical',
                                               selectmode='single',
                                               label_text='Saved state...',
                                               buttontype="radiobutton"
                                               )
-        self.states_option.add("all")
-        self.states_option.add("global")
-        self.states_option.add("object's current")
-        self.states_option.invoke("global")
-        self.states_option.pack(side='right', pady=8)
+        states_option.add("all")
+        states_option.add("global")
+        states_option.add("object's current")
+        states_option.invoke("global")
+        states_option.pack(side='right', pady=8)
                                                
                                                 
 
         # The listbox is created empty.  Fill it now.
-        self.update_save_listbox()
+        update_save_listbox()
 
-        if len(self.dialog.component('scrolledlist').get()):
+        if len(dialog.component('scrolledlist').get()):
             # set focus on the first item
-            listbox = self.dialog.component('scrolledlist')      
+            listbox = dialog.component('scrolledlist')
             listbox.selection_set(0)
 
-        self.my_show(self.dialog)
+        self.my_show(dialog)
         
-    def file_save2(self,result):
+    def file_save2(self, sels, multiple_files_flag, state_flag):
         filetypes_save = [
             ("PDB File","*.pdb"),
             ("MOL File","*.mol"),
@@ -787,24 +802,11 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             ("PKL File","*.pkl"),
             ("SDF File","*.sdf"),
         ]
-        # user hit [CANCEL] button
-        if result!='OK':
-            self.my_withdraw(self.dialog)
-            del self.dialog
-        # user hit [OK] button
-        else:
-            # saves multiple as one file
-            sels = self.dialog.getcurselection()
-
+        if True:
             # save N>1 objects to ONE file
-            if self.multiple_files_option.getvalue()=="one file" and len(sels)>=1:
-                # save one or more objects to ONE file
-                if self.multiple_files_option.getvalue()=="one file":
-                    sfile = '_'.join(sels) if len(sels) < 3 else \
+            if multiple_files_flag == "one file" and len(sels)>=1:
+                        sfile = '_'.join(sels) if len(sels) < 3 else \
                             sels[0] + '-and-%d-more' % (len(sels) - 1)
-                    self.my_withdraw(self.dialog)
-                    del self.dialog
-                    if result=='OK':
                         sfile = asksaveasfilename(defaultextension = _def_ext(".pdb"),
                                                   initialfile = sfile,
                                                   initialdir = self.initialdir,
@@ -815,9 +817,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                             save_sele = string.join(map(lambda x:"("+str(x)+")",sels)," or ")
                             self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
                                          "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
-			    if self.states_option.getvalue()=="all":
+			    if state_flag == "all":
                                 self.cmd.save(sfile,"(%s)"%save_sele,state=0,quiet=0)
-                            elif self.states_option.getvalue() == "object's current":
+                            elif state_flag == "object's current":
                                 ap = 0
                                 for sel in sels:
                                     s = int(self.cmd.get("state", str(sel)))
@@ -828,10 +830,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                             return
             else:
                 # save to many files
-                self.my_withdraw(self.dialog)
-                del self.dialog
-
-                state_flag = self.states_option.getvalue()
 
                 for curName in sels:
                     ## print "Result is: ", result
@@ -855,7 +853,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                     else: # default to current global
                         stateSave = "state=", self.cmd.get_state()
 
-                    if result=='OK':
+                    if True:
                         sfile = asksaveasfilename(defaultextension = _def_ext(".pdb"),
                                                   initialfile = curName,
                                                   initialdir = self.initialdir,
@@ -896,31 +894,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                              "cmd.save('%s','(%s)', state='%s')\n"%(save_file,save_sele,stateSave))
                                 self.cmd.save(save_file,"(%s)"%save_sele,state=stateSave,quiet=0)
 
-
-    def update_save_listbox(self):
-        """
-        Update the scrolled list box to represent the filtered
-        names after a change to the EntryField is caught
-        """
-        self.dialog.component("scrolledlist").setlist(self.filter_names())
-        
-
-    def filter_names(self):
-        """
-        Filter names out of the dialog box if they don't match
-        """
-        #
-        # Because this function is a callback for the modified
-        # EntryField, it must be FAST
-        #
-        groups = self.cmd.get_names_of_type("object:group")
-        lst = filter(lambda x:x[0]!="_", self.cmd.get_names('all'))
-
-        # if the field for filtering is empty, return all names
-        if self.filter_entry.getvalue()=="":
-            return lst
-        else:
-            return filter( lambda x: self.filter_entry.getvalue() in x, lst )
 
     def hide_sele(self):
         self.cmd.log("util.hide_sele()\n","util.hide_sele()\n")

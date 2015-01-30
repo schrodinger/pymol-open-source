@@ -26,7 +26,7 @@ def load():
             name = string.split(name,'.')[0]
             cmd.disable()
             cmd.load(file,name)
-            cmd.as("cartoon",name)
+            cmd.show_as("cartoon",name)
             cmd.refresh()
             cmd.dss(name)
             cmd.refresh()

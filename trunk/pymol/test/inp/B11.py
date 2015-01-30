@@ -43,7 +43,7 @@ def load():
                z = z + 1
    cmd.zoom()
    cmd.set("sphere_mode",1)
-   cmd.as("spheres")
+   cmd.show_as("spheres")
    cmd.rebuild()
    cmd.set("hash_max",250)
    
