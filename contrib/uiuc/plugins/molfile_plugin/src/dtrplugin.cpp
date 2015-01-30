@@ -110,6 +110,10 @@ static const char s_sep = '/';
 #define S_ISDIR(x) (((x) & S_IFMT) == S_IFDIR)
 #endif
 
+#ifndef PRIu64
+#define PRIu64 "I64u"
+#endif
+
 static const char s_sep = '\\';
 
 #endif
