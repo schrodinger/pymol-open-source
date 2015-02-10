@@ -3,6 +3,7 @@ from pymol import cmd, testing, stored
 
 class TestSetting(testing.PyMOLTestCase):
 
+    @testing.requires_version('1.7.5')
     def test_indices(self):
         # setting indices must not change, since they are used in session files
         self.assertEqual(742, cmd.pymol.setting._get_index('collada_geometry_mode'))
