@@ -3,6 +3,10 @@ from pymol import cmd, testing, stored
 
 class TestSetting(testing.PyMOLTestCase):
 
+    def test_indices(self):
+        # setting indices must not change, since they are used in session files
+        self.assertEqual(742, cmd.pymol.setting._get_index('collada_geometry_mode'))
+
     def testGet(self):
         name_bool = 'cartoon_fancy_helices'
         name_obj = 'ala'
