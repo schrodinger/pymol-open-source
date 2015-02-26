@@ -10,6 +10,7 @@ class Test(testing.PyMOLTestCase):
 
     def test(self):
         cmd.set('suspend_updates')
+        cmd.set('depth_cue', 0)
         cmd.set('ambient', 1)
         cmd.set('specular', 0)
         cmd.set('stereo_angle', 10)
@@ -25,5 +26,11 @@ class Test(testing.PyMOLTestCase):
 
         img = self.get_imagearray(prior=1)
         self.assertEqual(wh, img.shape[:2])
-        self.assertImageHasColor('0xff0000', img)
-        self.assertImageHasColor('0x00ffff', img)
+
+        # ray tracing and shaders in PyMOL 1.7.6+:
+        # 0xe50000
+        # 0x00e5e5
+        # -> delta=26 (0x1a)
+
+        self.assertImageHasColor('0xff0000', img, delta=0x1a)
+        self.assertImageHasColor('0x00ffff', img, delta=0x1a)
