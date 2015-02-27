@@ -55,7 +55,7 @@ else:
     from pymol.invocation import options
 
     usage = 'pymol [pymol options] %s [test options]' % (os.path.basename(__file__))
-    parser = argparse.ArgumentParser(usage=usage)
+    parser = argparse.ArgumentParser("pymol", usage=usage)
     parser.add_argument('--xml', action='store_true')
     parser.add_argument('filenames', nargs='*', default=[])
     parser.add_argument('--out', default=sys.stdout)
