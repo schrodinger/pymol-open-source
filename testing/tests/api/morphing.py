@@ -1,9 +1,9 @@
 from pymol import cmd, testing, stored
 
 @testing.requires('incentive')
+@testing.requires('no_edu')
 class TestMorphing(testing.PyMOLTestCase):
 
-    @testing.requires('incentive')
     def testMorphRigimol(self):
         cmd.set('suspend_undo')
         import epymol.rigimol

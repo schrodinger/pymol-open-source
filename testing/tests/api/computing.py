@@ -1,6 +1,7 @@
 
 from pymol import cmd, testing, stored
 
+@testing.requires('no_edu')
 class TestComputing(testing.PyMOLTestCase):
 
     @testing.requires('incentive')

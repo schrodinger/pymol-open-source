@@ -54,6 +54,9 @@ else:
     from pymol import cmd
     from pymol.invocation import options
 
+    PYMOL_VERSION = cmd.get_version()
+    PYMOL_EDU = 'Edu' in PYMOL_VERSION[0]
+
     usage = 'pymol [pymol options] %s [test options]' % (os.path.basename(__file__))
     parser = argparse.ArgumentParser("pymol", usage=usage)
     parser.add_argument('--xml', action='store_true')
@@ -77,7 +80,6 @@ else:
         '''
         Decorator for restricting to PyMOL version
         '''
-        VERSION = cmd.get_version()
 
         def __init__(self, version):
             self.version = version
@@ -93,11 +95,11 @@ else:
 
         def __call__(self, func):
             if isinstance(self.version, int):
-                test = self.version <= self.VERSION[2]
+                test = self.version <= PYMOL_VERSION[2]
             elif isinstance(self.version, float):
-                test = self.version <= self.VERSION[1]
+                test = self.version <= PYMOL_VERSION[1]
             else:
-                test = self._tupleize(self.version) <= self._tupleize(self.VERSION[0])
+                test = self._tupleize(self.version) <= self._tupleize(PYMOL_VERSION[0])
 
             if not test:
                 return unittest.skip('version %s' % (self.version))(func)
@@ -136,6 +138,9 @@ else:
             if hasflag('incentive') and not options.incentive_product:
                 return unittest.skip('no incentive')(func)
 
+            if hasflag('no_edu') and not PYMOL_EDU:
+                return unittest.skip('no edu')(func)
+
             if hasflag('network') and cliargs.offline:
                 return unittest.skip('no network')(func)
 
@@ -148,7 +153,7 @@ else:
             if hasflag('properties') and not options.incentive_product:
                 return unittest.skip('no pymol.properties')(func)
 
-            if hasflag('freemol') and not options.incentive_product:
+            if hasflag('freemol') and not options.incentive_product and not PYMOL_EDU:
                 return unittest.skip('no freemol')(func)
 
             if flags:
