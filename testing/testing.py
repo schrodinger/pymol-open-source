@@ -153,7 +153,7 @@ else:
             if hasflag('properties') and not options.incentive_product:
                 return unittest.skip('no pymol.properties')(func)
 
-            if hasflag('freemol') and not options.incentive_product and not PYMOL_EDU:
+            if hasflag('freemol') and (not options.incentive_product or PYMOL_EDU):
                 return unittest.skip('no freemol')(func)
 
             if flags:
