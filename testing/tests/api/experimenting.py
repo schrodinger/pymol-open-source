@@ -25,6 +25,7 @@ class TestExperimenting(testing.PyMOLTestCase):
         cmd.fast_minimize
         self.skipTest("TODO")
 
+    @testing.requires('no_win64bit')
     def testDump(self):
         cmd.dump
         self.skipTest("TODO")
