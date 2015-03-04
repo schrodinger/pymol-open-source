@@ -8,6 +8,7 @@ from pymol import cmd, testing, stored
 import unittest
 
 @testing.requires('incentive')
+@testing.requires('no_edu')
 class TestPYMOL317(testing.PyMOLTestCase):
 
     @unittest.skip("skipping testSelectByAtomType b/c win32 gets weird crashes on build machine")
