@@ -34,6 +34,7 @@ class TestExperimenting(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     @testing.requires('incentive')
+    @testing.requires('no_win64bit')
     def testFocalblur(self):
         cmd.viewport(100, 100)
         cmd.fragment('gly', 'm1')

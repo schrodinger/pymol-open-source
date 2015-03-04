@@ -56,6 +56,7 @@ else:
 
     PYMOL_VERSION = cmd.get_version()
     PYMOL_EDU = 'Edu' in PYMOL_VERSION[0]
+    is_win64bit = "Windows" in platform.system() and sys.maxsize > 2**32
 
     usage = 'pymol [pymol options] %s [test options]' % (os.path.basename(__file__))
     parser = argparse.ArgumentParser("pymol", usage=usage)
@@ -155,6 +156,9 @@ else:
 
             if hasflag('freemol') and (not options.incentive_product or PYMOL_EDU):
                 return unittest.skip('no freemol')(func)
+
+            if hasflag('no_win64bit') and is_win64bit:
+                return unittest.skip('skip 64bit')(func)
 
             if flags:
                 raise ValueError('unknown flags: ' + ', '.join(flags)
