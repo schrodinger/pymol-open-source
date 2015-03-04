@@ -138,7 +138,7 @@ else:
             if hasflag('incentive') and not options.incentive_product:
                 return unittest.skip('no incentive')(func)
 
-            if hasflag('no_edu') and not PYMOL_EDU:
+            if hasflag('no_edu') and PYMOL_EDU:
                 return unittest.skip('no edu')(func)
 
             if hasflag('network') and cliargs.offline:
