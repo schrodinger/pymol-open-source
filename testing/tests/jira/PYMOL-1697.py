@@ -2,6 +2,7 @@ import os
 from pymol import cmd, testing, stored
 
 @testing.requires('incentive')
+@testing.requires('no_edu')
 class TestPYMOL1697(testing.PyMOLTestCase):
 
     @testing.foreach(1, 0)

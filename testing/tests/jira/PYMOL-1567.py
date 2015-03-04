@@ -7,6 +7,7 @@ import os
 from pymol import cmd, testing, stored
 
 @testing.requires('incentive')
+@testing.requires('no_edu')
 class TestPYMOL1567(testing.PyMOLTestCase):
 
     def testAtomStateLevelSettingsOnRemove(self):

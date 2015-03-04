@@ -6,6 +6,7 @@ import unittest
 from pymol import cmd, testing, stored
 
 @testing.requires('incentive')
+@testing.requires('no_edu')
 class Test1276(testing.PyMOLTestCase):
 
     def test(self):
