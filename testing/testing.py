@@ -51,6 +51,12 @@ else:
     import tempfile
     import argparse
 
+    try:
+        import Image
+    except ImportError:
+        from PIL import Image
+        sys.modules['Image'] = Image
+
     from pymol import cmd
     from pymol.invocation import options
 
@@ -354,7 +360,7 @@ else:
 
             count is the number of allowed pixel mismatches.
             '''
-            import Image, numpy
+            import numpy
 
             if isinstance(img1, basestring) and not \
                     os.path.exists(img1):
@@ -393,7 +399,7 @@ else:
             return (diff - delta <= 0).prod(1).sum()
 
         def _assertImageHasColor(self, test, color, img, delta, msg):
-            import Image, numpy
+            import numpy
 
             img = self.get_imagearray(img)
             has_color = self._imageHasColor(color, img, delta)
@@ -473,7 +479,7 @@ else:
             
             img can be either a filename or a Image (PIL) object.
             '''
-            import Image, numpy
+            import numpy
             
             if img is None:
                 with mktemp('.png') as filename:
