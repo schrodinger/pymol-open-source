@@ -50,7 +50,7 @@ class TestProperties(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_property('int_property_3', 'ala'), val1)
         self.assertEqual(cmd.get_property('int_property_4', 'ala'), val2)
 
-    @testing.foreach((random.random() * 100000, random.random() * 100000), (-random.random() * 100000, -random.random() * 100000))
+    @testing.foreach((random.random() * 100, random.random() * 100), (-random.random() * 100, -random.random() * 100))
     def testFloatType(self, val1, val2):
         cmd.fragment('ala')
         cmd.set_property('float_property_1', val1, 'ala')
