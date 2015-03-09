@@ -1,7 +1,6 @@
 import pymol
 from pymol import cmd, testing, stored
 
-@testing.requires('no_win64bit')
 class TestExperimenting(testing.PyMOLTestCase):
 
     def testGetBondPrint(self):
