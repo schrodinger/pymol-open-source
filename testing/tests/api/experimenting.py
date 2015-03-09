@@ -1,6 +1,7 @@
 import pymol
 from pymol import cmd, testing, stored
 
+@testing.requires('no_win64bit')
 class TestExperimenting(testing.PyMOLTestCase):
 
     def testGetBondPrint(self):
@@ -25,7 +26,6 @@ class TestExperimenting(testing.PyMOLTestCase):
         cmd.fast_minimize
         self.skipTest("TODO")
 
-    @testing.requires('no_win64bit')
     def testDump(self):
         cmd.dump
         self.skipTest("TODO")
@@ -35,7 +35,6 @@ class TestExperimenting(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     @testing.requires('incentive')
-    @testing.requires('no_win64bit')
     def testFocalblur(self):
         cmd.viewport(100, 100)
         cmd.fragment('gly', 'm1')
