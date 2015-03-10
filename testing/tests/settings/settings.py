@@ -6,12 +6,14 @@ import numpy
 from pymol import cmd, testing
 
 class TestSettings(testing.PyMOLTestCase):
-
-    def testStickBall(self):
+    @testing.foreach(True, False)
+    def testStickBall(self, use_shader):
         '''
         Test some stick_ball* settings
         '''
         cmd.viewport(100, 100)
+
+        cmd.set('use_shaders', use_shader)
 
         self.ambientOnly()
 
@@ -68,6 +70,8 @@ class TestSettings(testing.PyMOLTestCase):
         '''
         cmd.viewport(100, 100)
 
+        cmd.set('use_shaders', True)
+
         self.ambientOnly()
 
         cmd.fragment('gly')
@@ -86,29 +90,32 @@ class TestSettings(testing.PyMOLTestCase):
             img = self.get_imagearray()
             self.assertTrue(len(numpy.unique(img[...,:3])) > 2)
 
+    @testing.foreach(0, 1)
     @testing.requires_version('1.7.5')
     @testing.requires('incentive')
     @testing.requires('gui')
-    def testTrilines(self):
+    def testTrilines(self, trilines):
         cmd.viewport(100, 100)
+
+        cmd.set('use_shaders', True)
 
         self.ambientOnly()
 
         cmd.set('dynamic_width', 0)
         cmd.set('line_width', 5)
-        cmd.set('line_smooth', 0)
+        cmd.set('line_smooth', 1)
 
         cmd.fragment('ethylene')
         cmd.show_as('lines')
         cmd.color('white')
         cmd.orient()
 
-        for trilines in (0, 1):
-            cmd.set('trilines', trilines)
+        cmd.set('trilines', trilines)
 
-            # check percentage of covered pixels
-            img = self.get_imagearray()
-            npixels = img.shape[0] * img.shape[1]
-            covered = numpy.count_nonzero(img[...,:3])
+        # check percentage of covered pixels
+        img = self.get_imagearray()
+        npixels = img.shape[0] * img.shape[1]
+        covered = numpy.count_nonzero(img[...,:3])
 
-            self.assertTrue(0.14 < covered / float(npixels) < 0.165)
+        print "covered=", covered, " npixels=" , npixels, " ratio=" , covered / float(npixels)
+        self.assertTrue(0.14 < covered / float(npixels) < 0.165)
