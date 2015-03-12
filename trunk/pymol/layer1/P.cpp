@@ -188,7 +188,6 @@ int convertCharToStereo(char stereo){
 
 int PLabelExprUsesVariable(PyMOLGlobals * G, char *expr, char *var)
 {
-  OrthoLineType buffer;
   char ch, quote = 0;
   int escaped = false;
   while((ch = *(expr++))) {
@@ -203,7 +202,6 @@ int PLabelExprUsesVariable(PyMOLGlobals * G, char *expr, char *var)
         WordType tok;
         expr--;
         if(label_next_token(tok, &expr)) {
-          buffer[0] = 0;
           if(!strcmp(tok, var)) {
 	    return 1;
 	  }
@@ -334,7 +332,7 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr, 
             label_len = label_copy_text(label, buffer, label_len, label_max);
           }
         } else {
-	  if (tok && tok[0]){
+	  if (tok[0]){
 	    label_len = label_copy_text(label, "?", label_len, label_max);
 	    label_len = label_copy_text(label, tok, label_len, label_max);
 	  } else {
@@ -421,10 +419,6 @@ static PyTypeObject Wrapper_Type = {
   PyObject_HEAD_INIT(NULL)
 };
 
-Py_ssize_t WrapperObjectLen(PyObject *obj){
-  return 0;
-}
-
 static PyObject* PyObject_GenericGetAttrOrItem(PyObject *o, PyObject *key) {
   PyObject *ret = PyObject_GenericGetAttr(o, key);
   if (!PyErr_Occurred())
@@ -456,6 +450,12 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       {
 	char *val = (char*)(((char*)wobj->atomInfo) + ap->offset);
 	ret = PyString_FromString(val);
+      }
+      break;
+    case cPType_schar:
+      {
+	signed char val = *(signed char*)(((char*)wobj->atomInfo) + ap->offset);
+	ret = PyInt_FromLong((long)val);
       }
       break;
     case cPType_int:
@@ -601,6 +601,17 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	  changed = true;
 	}
 	break;
+      case cPType_schar:
+	{
+	  int valint = PyInt_AsLong(val);
+	  signed char *dest;
+	  if (valint == -1 && PyErr_Occurred())
+	    break;
+	  dest = (signed char*)(((char*)wobj->atomInfo) + ap->offset);
+	  *dest = valint;
+	  changed = true;
+	}
+        break;
       case cPType_int:
 	{
 	  int valint = PyInt_AsLong(val);
@@ -1141,9 +1152,8 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType
 {
   int result = true;
   PyObject *P_inst_dict = G->P_inst->dict;
-  PyObject *dict, *resultPyObject;
+  PyObject *resultPyObject;
   OrthoLineType label;
-  dict = PyDict_New();
 
   G->P_inst->wrapperObject->obj = obj;
   G->P_inst->wrapperObject->cs = cs;
@@ -2190,7 +2200,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
 
     PRunStringModule(G, "glutThread = thread.get_ident()");
 
-    P_glut_thread_id = PyThread_get_thread_ident();
+    P_glut_thread_id = (unsigned int)PyThread_get_thread_ident();
 
 #ifndef WIN32
     if(G->Option->siginthand) {
@@ -2212,7 +2222,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     Wrapper_Type.tp_name = "wrapper.Wrapper";
     Wrapper_Type.tp_basicsize = sizeof(WrapperObject);
     Wrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
-    wrapperMappingMethods.mp_length = &WrapperObjectLen;
+    wrapperMappingMethods.mp_length = NULL;
     wrapperMappingMethods.mp_subscript = &WrapperObjectSubScript;
     wrapperMappingMethods.mp_ass_subscript = &WrapperObjectAssignSubScript;
     Wrapper_Type.tp_as_mapping = &wrapperMappingMethods;
@@ -2389,6 +2399,7 @@ int PFlush(PyMOLGlobals * G)
 	  VLASize(buffer, char, size);
 	  curSize = size;
 	}
+	OrthoCommandSetBusy(G, true);
 	OrthoCommandOut(G, buffer);
         OrthoCommandNest(G, 1);
         PUnlockAPIWhileBlocked(G);
@@ -2405,6 +2416,7 @@ int PFlush(PyMOLGlobals * G)
             " PFlush: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
         }
         PLockAPIWhileBlocked(G);
+	OrthoCommandSetBusy(G, false);
         /* make sure no commands left at this level */
         while(OrthoCommandWaiting(G))
           PFlushFast(G);
@@ -2433,6 +2445,7 @@ int PFlushFast(PyMOLGlobals * G)
       VLASize(buffer, char, size);
       curSize = size;
     }
+    OrthoCommandSetBusy(G, true);
     OrthoCommandOut(G, buffer);
     OrthoCommandNest(G, 1);
     did_work = true;
@@ -2452,6 +2465,7 @@ int PFlushFast(PyMOLGlobals * G)
       PRINTFB(G, FB_Python, FB_Errors)
         " PFlushFast: Uncaught exception.  PyMOL may have a bug.\n" ENDFB(G);
     }
+    OrthoCommandSetBusy(G, false);
     /* make sure no commands left at this level */
     while(OrthoCommandWaiting(G))
       PFlushFast(G);
@@ -2553,7 +2567,7 @@ int PAutoBlock(PyMOLGlobals * G)
 
 int PIsGlutThread(void)
 {
-  return (PyThread_get_thread_ident() == P_glut_thread_id);
+  return (((unsigned int)PyThread_get_thread_ident()) == P_glut_thread_id);
 }
 
 void PUnblock(PyMOLGlobals * G)

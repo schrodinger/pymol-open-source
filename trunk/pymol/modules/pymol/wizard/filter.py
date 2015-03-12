@@ -300,6 +300,9 @@ class Filter(Wizard):
         cmd.refresh_wizard()
         
     def create_object(self, what='Accept'):
+        if not self.object:
+            print " Filter-Error: Please choose an object first"
+            return
         name = self.cmd.get_unused_name(self.object + '_' + what, 0)
         sdo = self.dict[self.object]
         lst = [self.state_dict[ident] for (ident, w) in sdo.iteritems() if w == what]

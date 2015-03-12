@@ -425,7 +425,7 @@ SEE ALSO
                       loadable.molstr,0,1,quiet,_self=_self)
         del sdf
         _cmd.finish_object(_self._COb,str(oname))
-        if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
+        if _self.get_setting_int("auto_zoom") == 1:
             _self._do("zoom (%s)"%oname)
 
     def _processALN(fname,quiet=1,_self=cmd):
@@ -783,7 +783,7 @@ SEE ALSO
                 go_to_first_scene = 1                
                 ftype = loadable.pse
             elif ftype == loadable.pse:
-                if int(_self.get_setting_legacy("presentation"))!=0:
+                if _self.get_setting_boolean("presentation"):
                     go_to_first_scene = 1
                     
             # get object name
@@ -894,7 +894,7 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if go_to_first_scene:
-            if int(_self.get_setting_legacy("presentation_auto_start"))!=0:
+            if _self.get_setting_boolean("presentation_auto_start"):
                 if(_self.get_movie_length()): # rewind movie
                     _self.rewind()
                 _self.scene("auto","start",animate=0) # go to first scene

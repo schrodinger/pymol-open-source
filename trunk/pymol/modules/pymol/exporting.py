@@ -19,6 +19,7 @@ if __name__=='pymol.exporting':
     import string
     import re
     import copy
+    import cPickle
     
     import pymol
     import cmd
@@ -279,7 +280,7 @@ NOTES
                 compress = _self.get_setting_boolean('session_compression')
             if(compress):
                 import zlib
-                session = zlib.compress(io.pkl.toString(session))
+                session = zlib.compress(cPickle.dumps(session, 1))
             return session
         elif _self._raising(r,_self):
             raise QuietException                  
@@ -467,7 +468,6 @@ SEE ALSO
 
     load, get_model
         '''
-        import cPickle
         import gzip
 
         do_gzip = False

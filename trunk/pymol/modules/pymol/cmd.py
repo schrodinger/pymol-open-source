@@ -77,9 +77,6 @@ def _deferred_init_pymol_internals(_pymol):
     if viewing.session_restore_scenes not in _pymol._session_restore_tasks:
         _pymol._session_restore_tasks.append(viewing.session_restore_scenes)
 
-    if viewing.session_save_scenes not in _pymol._session_save_tasks:
-        _pymol._session_save_tasks.append(viewing.session_save_scenes)
-
     if wizarding.session_restore_wizard not in _pymol._session_restore_tasks:
         _pymol._session_restore_tasks.append(wizarding.session_restore_wizard)
 
@@ -230,7 +227,7 @@ if __name__=='pymol.cmd':
             
         # for extending the language
 
-        from commanding import extend, alias, dummy
+        from commanding import extend, extendaa, alias, dummy
 
         # for documentation etc
 

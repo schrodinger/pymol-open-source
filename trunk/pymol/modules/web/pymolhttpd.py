@@ -539,7 +539,6 @@ class PymolHttpd:
         session['pymol.cmd.get_setting_boolean'] = self_cmd.get_setting_boolean
         session['pymol.cmd.get_setting_int'] = self_cmd.get_setting_int
         session['pymol.cmd.get_setting_float'] = self_cmd.get_setting_float
-        session['pymol.cmd.get_setting_legacy'] = self_cmd.get_setting_legacy
         session['pymol.cmd.get_setting_tuple'] = self_cmd.get_setting_tuple
         session['pymol.cmd.get_setting_text'] = self_cmd.get_setting_text
         session['pymol.cmd.window'] = self_cmd.window

@@ -588,7 +588,6 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   float power_a = 5;
   float power_b = 5;
   float throw_;
-  int visFlag;
   float dev;
   int trace, trace_mode;
   int ribbon_color;
@@ -597,22 +596,14 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   AtomInfoType *trailing_O3p_ai = NULL, *leading_O5p_ai = NULL;
   int trailing_O3p_a = 0, leading_O5p_a = 0, leading_O5p_a1 = 0;
 
+  // skip if not visible
+  if(!cs->hasRep(cRepRibbonBit))
+    return NULL;
+
   Pickable *rp = NULL;
   OOAlloc(G, RepRibbon);
 
   obj = cs->Obj;
-  visFlag = false;
-  if(obj->RepVisCache[cRepRibbon])
-    for(a = 0; a < cs->NIndex; a++) {
-      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepRibbon]) {
-        visFlag = true;
-        break;
-      }
-    }
-  if(!visFlag) {
-    OOFreeP(I);
-    return (NULL);              /* skip if not visible */
-  }
 
   RepInit(G, &I->R);
   power_a = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_power);
@@ -663,7 +654,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
       a = cs->AtmToIdx[a1];
     if(a >= 0) {
       ai = obj->AtomInfo + a1;
-      if(obj->AtomInfo[a1].visRep[cRepRibbon]) {
+      if(GET_BIT(obj->AtomInfo[a1].visRep,cRepRibbon)) {
         if(trace || ((obj->AtomInfo[a1].protons == cAN_C) &&
                      (WordMatch(G, "CA", obj->AtomInfo[a1].name, 1) < 0) &&
                      !AtomInfoSameResidueP(G, last_ai, ai))) {
@@ -900,19 +891,19 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
         ENDFD;
 
       if(*s == *(s + 1)) {
-        int atom_index1 = cs->IdxToAtm[*atp];
-        int atom_index2 = cs->IdxToAtm[*(atp + 1)];
+        AtomInfoType *ai1 = obj->AtomInfo + cs->IdxToAtm[*atp];
+        AtomInfoType *ai2 = obj->AtomInfo + cs->IdxToAtm[*(atp + 1)];
 
-        c1 = *(cs->Color + *atp);
-        c2 = *(cs->Color + *(atp + 1));
+        c1 = ai1->color;
+        c2 = ai2->color;
 
         if(ribbon_color >= 0) {
           c1 = (c2 = ribbon_color);
         }
 
-        AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_ribbon_color,
+        AtomInfoGetSetting_color(G, ai1, cSetting_ribbon_color,
                                  c1, &c1);
-        AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index2, cSetting_ribbon_color,
+        AtomInfoGetSetting_color(G, ai2, cSetting_ribbon_color,
                                  c2, &c2);
 
         dev = throw_ * (*d);
@@ -1218,7 +1209,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
         a = cs->AtmToIdx[a1];
       if(a >= 0) {
         ai = obj_AtomInfo + a1;
-        if(ai->visRep[cRepRibbon]) {
+        if(GET_BIT(ai->visRep,cRepRibbon)) {
           if(trace || ((ai->protons == cAN_C) &&
                        (WordMatch(G, "CA", ai->name, 1) < 0) &&
                        !AtomInfoSameResidueP(G, last_ai, ai))) {

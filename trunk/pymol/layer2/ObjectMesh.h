@@ -71,7 +71,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap 
                                   float level, int meshMode,
                                   float carve, float *vert_vla,
                                   float alt_level, int quiet);
-void ObjectMeshDump(ObjectMesh * I, char *fname, int state);
+void ObjectMeshDump(ObjectMesh * I, const char *fname, int state);
 
 PyObject *ObjectMeshAsPyList(ObjectMesh * I);
 int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** result);

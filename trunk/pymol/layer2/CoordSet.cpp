@@ -50,6 +50,19 @@ Z* -------------------------------------------------------------------
 
 
 /*========================================================================*/
+/*
+ * Get coordinate index for given atom index
+ */
+int CoordSet::atmToIdx(int atm) {
+  if (Obj->DiscreteFlag) {
+    if (this == Obj->DiscreteCSet[atm])
+      return Obj->DiscreteAtmToIdx[atm];
+    return -1;
+  }
+  return AtmToIdx[atm];
+}
+
+/*========================================================================*/
 static char sATOM[] = "ATOM  ";
 static char sHETATM[] = "HETATM";
 
@@ -418,57 +431,37 @@ void CoordSetPurge(CoordSet * I)
 
 
 /*========================================================================*/
-int CoordSetTransformAtomTTTf(CoordSet * I, int at, float *TTT)
+int CoordSetTransformAtomTTTf(CoordSet * I, int at, const float *TTT)
 {
-  ObjectMolecule *obj;
-  int a1 = -1;
-  int result = 0;
+  int a1 = I->atmToIdx(at);
   float *v1;
 
-  obj = I->Obj;
-  if(obj->DiscreteFlag) {
-    if(I == obj->DiscreteCSet[at])
-      a1 = obj->DiscreteAtmToIdx[at];
-  } else
-    a1 = I->AtmToIdx[at];
+  if(a1 < 0)
+    return false;
 
-  if(a1 >= 0) {
-    result = 1;
-    v1 = I->Coord + 3 * a1;
-    MatrixTransformTTTfN3f(1, v1, TTT, v1);
-  }
-
-  return (result);
+  v1 = I->Coord + 3 * a1;
+  MatrixTransformTTTfN3f(1, v1, TTT, v1);
+  return true;
 }
 
 
 /*========================================================================*/
-int CoordSetTransformAtomR44f(CoordSet * I, int at, float *matrix)
+int CoordSetTransformAtomR44f(CoordSet * I, int at, const float *matrix)
 {
-  ObjectMolecule *obj;
-  int a1 = -1;
-  int result = 0;
+  int a1 = I->atmToIdx(at);
   float *v1;
 
-  obj = I->Obj;
-  if(obj->DiscreteFlag) {
-    if(I == obj->DiscreteCSet[at])
-      a1 = obj->DiscreteAtmToIdx[at];
-  } else
-    a1 = I->AtmToIdx[at];
+  if(a1 < 0)
+    return false;
 
-  if(a1 >= 0) {
-    result = 1;
-    v1 = I->Coord + 3 * a1;
-    MatrixTransformR44fN3f(1, v1, matrix, v1);
-  }
-
-  return (result);
+  v1 = I->Coord + 3 * a1;
+  MatrixTransformR44fN3f(1, v1, matrix, v1);
+  return true;
 }
 
 
 /*========================================================================*/
-void CoordSetRecordTxfApplied(CoordSet * I, float *matrix, int homogenous)
+void CoordSetRecordTxfApplied(CoordSet * I, const float *matrix, int homogenous)
 {
   if(I->State.Matrix) {
     double temp[16];
@@ -493,52 +486,31 @@ void CoordSetRecordTxfApplied(CoordSet * I, float *matrix, int homogenous)
 
 
 /*========================================================================*/
-int CoordSetMoveAtom(CoordSet * I, int at, float *v, int mode)
+int CoordSetMoveAtom(CoordSet * I, int at, const float *v, int mode)
 {
-  ObjectMolecule *obj;
-  int a1 = -1;
-  int result = 0;
+  int a1 = I->atmToIdx(at);
   float *v1;
 
-  /* grab the CoordSet's MolecularObject and query
-   * for a discrete load; if so, adjust index. */
-  obj = I->Obj;
-  if(obj->DiscreteFlag) {
-    if(I == obj->DiscreteCSet[at])
-      a1 = obj->DiscreteAtmToIdx[at];
-  } else
-    a1 = I->AtmToIdx[at];
+  if(a1 < 0)
+    return false;
 
-  /* valid index, then set the new coord */
-  if(a1 >= 0) {
-    result = 1;
-    v1 = I->Coord + 3 * a1;
-    if(mode) {
-      add3f(v, v1, v1);
-    } else {
-      copy3f(v, v1);
-    }
+  v1 = I->Coord + 3 * a1;
+  if(mode) {
+    add3f(v, v1, v1);
+  } else {
+    copy3f(v, v1);
   }
-
-  return (result);
+  return true;
 }
 
 
 /*========================================================================*/
-int CoordSetMoveAtomLabel(CoordSet * I, int at, float *v, int mode)
+int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, int mode)
 {
-  ObjectMolecule *obj;
-  int a1 = -1;
+  ObjectMolecule *obj = I->Obj;
+  int a1 = I->atmToIdx(at);
   int result = 0;
   LabPosType *lp;
-
-  /* discrete index adjustments  */
-  obj = I->Obj;
-  if(obj->DiscreteFlag) {
-    if(I == obj->DiscreteCSet[at])
-      a1 = obj->DiscreteAtmToIdx[at];
-  } else
-    a1 = I->AtmToIdx[at];
 
   /* if label is valid, get the label offset
    * and set the new position relative to that */
@@ -570,82 +542,58 @@ int CoordSetMoveAtomLabel(CoordSet * I, int at, float *v, int mode)
 /*========================================================================*/
 int CoordSetGetAtomVertex(CoordSet * I, int at, float *v)
 {
-  register ObjectMolecule *obj;
-  register int a1 = -1;
-  register int result = 0;
+  int a1 = I->atmToIdx(at);
 
-  obj = I->Obj;
-  if(obj->DiscreteFlag) {
-    if(I == obj->DiscreteCSet[at])
-      a1 = obj->DiscreteAtmToIdx[at];
-  } else
-    a1 = I->AtmToIdx[at];
+  if(a1 < 0)
+    return false;
 
-  if(a1 >= 0) {
-    result = 1;
-    copy3f(I->Coord + 3 * a1, v);
-  }
-
-  return (result);
+  copy3f(I->Coord + 3 * a1, v);
+  return true;
 }
 
 
 /*========================================================================*/
 int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v)
 {
-  register ObjectMolecule *obj;
-  register int a1 = -1;
-  register int result = 0;
+  ObjectMolecule *obj = I->Obj;
+  int a1 = I->atmToIdx(at);
 
-  obj = I->Obj;
-  if(obj->DiscreteFlag) {
-    if(I == obj->DiscreteCSet[at])
-      a1 = obj->DiscreteAtmToIdx[at];
-  } else
-    a1 = I->AtmToIdx[at];
+  if(a1 < 0)
+    return false;
 
-  if(a1 >= 0) {
-    result = 1;
-    copy3f(I->Coord + 3 * a1, v);
-    if(I->State.Matrix && (SettingGet_i(I->State.G,
-                                  obj->Obj.Setting, I->Setting,
-                                  cSetting_matrix_mode) > 0)) {
-      /* apply state transformation */
-      transform44d3f(I->State.Matrix, v, v);
-    }
-    if(obj->Obj.TTTFlag) {      /* object transformation */
-      transformTTT44f3f(obj->Obj.TTT, v, v);
-    }
+  copy3f(I->Coord + 3 * a1, v);
+
+  /* apply state transformation */
+  if(I->State.Matrix && (SettingGet_i(I->State.G,
+          obj->Obj.Setting, I->Setting,
+          cSetting_matrix_mode) > 0)) {
+    transform44d3f(I->State.Matrix, v, v);
   }
-  return (result);
+
+  /* object transformation */
+  if(obj->Obj.TTTFlag) {
+    transformTTT44f3f(obj->Obj.TTT, v, v);
+  }
+
+  return true;
 }
 
 
 /*========================================================================*/
-int CoordSetSetAtomVertex(CoordSet * I, int at, float *v)
+int CoordSetSetAtomVertex(CoordSet * I, int at, const float *v)
 {
-  ObjectMolecule *obj;
-  int a1 = -1;
-  int result = 0;
+  int a1 = I->atmToIdx(at);
 
-  obj = I->Obj;
-  if(obj->DiscreteFlag) {
-    if(I == obj->DiscreteCSet[at])
-      a1 = obj->DiscreteAtmToIdx[at];
-  } else
-    a1 = I->AtmToIdx[at];
+  if(a1 < 0)
+   return false;
 
-  if(a1 >= 0) {
-    result = 1;
-    copy3f(v, I->Coord + 3 * a1);
-  }
-
-  return (result);
+  copy3f(v, I->Coord + 3 * a1);
+  return true;
 }
 
 
 /*========================================================================*/
-void CoordSetRealToFrac(CoordSet * I, CCrystal * cryst)
+void CoordSetRealToFrac(CoordSet * I, const CCrystal * cryst)
 {
   int a;
   float *v;
@@ -658,7 +606,7 @@ void CoordSetRealToFrac(CoordSet * I, CCrystal * cryst)
 
 
 /*========================================================================*/
-void CoordSetTransform44f(CoordSet * I, float *mat)
+void CoordSetTransform44f(CoordSet * I, const float *mat)
 {
   int a;
   float *v;
@@ -672,7 +620,7 @@ void CoordSetTransform44f(CoordSet * I, float *mat)
 
 /*========================================================================*/
 
-void CoordSetTransform33f(CoordSet * I, float *mat)
+void CoordSetTransform33f(CoordSet * I, const float *mat)
 {
   int a;
   float *v;
@@ -708,7 +656,7 @@ void CoordSetGetAverage(CoordSet * I, float *v0)
 
 
 /*========================================================================*/
-void CoordSetFracToReal(CoordSet * I, CCrystal * cryst)
+void CoordSetFracToReal(CoordSet * I, const CCrystal * cryst)
 {
   int a;
   float *v;
@@ -719,9 +667,66 @@ void CoordSetFracToReal(CoordSet * I, CCrystal * cryst)
   }
 }
 
+/*
+ * Apply the `sca` (SCALEn) transformation to transform to fractional space,
+ * and then the crystals `FracToReal` transformation to transform back to
+ * cartesian space.
+ *
+ * Don't do anything if pdb_insure_orthogonal=off.
+ *
+ * Don't do anything if SCALEn or CRYST1 look bogus. There is a number of
+ * structures in the PDB which have meaningless values for those.
+ *
+ * Without this, creating symmetry mates might produce wrong results.
+ */
+bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
+    CoordSet * cset,            // coord set to modify
+    const float * sca,          // 4x4 SCALE
+    const CCrystal *cryst,
+    bool quiet)
+{
+  if (!SettingGetGlobal_b(G, cSetting_pdb_insure_orthogonal))
+    return false;
+
+  if (!cryst)
+    cryst = cset->Symmetry->Crystal;
+
+  const float * r2f = cryst->RealToFrac;
+
+  // are the matrices sufficiently close to be the same?
+  if (is_allclosef(3, r2f, 3, sca, 4, R_SMALL4)) {
+    return false;
+  }
+
+  // is the cell a orthogonal 1x1x1? If so, then it should probably be ignored...
+  // is SCALEn the identity matrix?  If so, then it should probably be ignored...
+  if (is_identityf(3, r2f, R_SMALL4) ||
+      is_identityf(4, sca, R_SMALL4)) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Blather)
+      " ObjectMolReadPDBStr: ignoring SCALEn (identity matrix).\n" ENDFB(G);
+    return false;
+  }
+
+  // is SCALEn invalid?  If so, then it should definitely be ignored...
+  if (fabs(determinant33f(sca, 4)) < R_SMALL8 ||
+      fabs(determinant33f(r2f, 3)) < R_SMALL8) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Blather)
+      " ObjectMolReadPDBStr: ignoring SCALEn (invalid matrix).\n" ENDFB(G);
+    return false;
+  }
+
+  PRINTFB(G, FB_ObjectMolecule, quiet ? FB_Blather : FB_Actions)
+    " ObjectMoleculeReadCifStr: using SCALEn to compute orthogonal coordinates.\n"
+    ENDFB(G);
+
+  CoordSetTransform44f(cset, sca);
+  CoordSetFracToReal(cset, cryst);
+
+  return true;
+}
 
 /*========================================================================*/
-static char RotateU(double *matrix, float *anisou)
+static char RotateU(const double *matrix, float *anisou)
 /* Rotates the ANISOU vector
  *
  * matrix: flat 4x4, but only rotation (upper left 3x3) is considered
@@ -1041,8 +1046,8 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
 
 
 /*========================================================================*/
-PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, float *v,
-                                   float *ref, int index, double *matrix)
+PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const float *v,
+                                   const float *ref, int index, const double *matrix)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -1203,9 +1208,6 @@ void CoordSet::invalidateRep(int type, int level)
       FreeP(I->SpheroidNormal);
     }
 
-  if(level >= cRepInvColor)
-    VLAFreeP(I->Color);
-
   /* invalidate basd on one representation, 'type' */
   if(type >= 0) {               /* representation specific */
     if(type < cRepCnt) {
@@ -1307,35 +1309,6 @@ void CoordSet::update(int state)
     I->Obj->Obj.Name, state, (void *) I
     ENDFB(G);
 
-
-  if(!I->Color) {               /* colors invalidated */
-    I->Color = VLAlloc(int, I->NIndex);
-    CHECKOK(ok, I->Color);
-    if(ok && I->Color) {
-      if(obj->DiscreteFlag) {
-        for(a = 0; a < I->Obj->NAtom; a++) {
-          if(obj->DiscreteCSet[a] == I) {
-            i = obj->DiscreteAtmToIdx[a];
-            if(i >= 0)
-              I->Color[i] = obj->AtomInfo[a].color;
-          }
-	}
-      } else {
-        for(a = 0; a < I->NAtIndex; a++) {
-          i = I->AtmToIdx[a];
-          if(i >= 0){
-            I->Color[i] = obj->AtomInfo[a].color;
-	  }
-        }
-      }
-    }
-    if (!ok){
-      PRINTFB(G, FB_CoordSet, FB_Errors) " CoordSetUpdate: Color was not allocated properly I->NIndex=%d\n",
-	I->NIndex
-	ENDFB(G);
-      
-    }
-  }
   OrthoBusyFast(G, 0, cRepCnt);
   RepUpdateMacro(I, cRepLine, RepWireBondNew, state);
   RepUpdateMacro(I, cRepCyl, RepCylBondNew, state);
@@ -1424,7 +1397,7 @@ void CoordSet::render(RenderInfo * info)
 					   I->Obj->Obj.Setting,
 					   cSetting_sculpt_vdw_vis_mode);
     if((!pass) && sculpt_vdw_vis_mode && 
-       I->SculptCGO && (I->Obj->Obj.RepVis[cRepCGO])) {
+       I->SculptCGO && (I->Obj->Obj.visRep & cRepCGOBit)) {
       if(ray) {
         int ok = CGORenderRay(I->SculptCGO, ray,
 			      ColorGet(G, I->Obj->Obj.Color), I->Setting, I->Obj->Obj.Setting);
@@ -1607,65 +1580,39 @@ CoordSet *CoordSetNew(PyMOLGlobals * G)
   return (I);
 }
 
-CoordSet *CoordSetCopyImpl(CoordSet * cs);
-
-CoordSet *CoordSetCopy(CoordSet * cs)
+/*========================================================================*/
+CoordSet *CoordSetCopy(const CoordSet * cs)
 {
   if (!cs)
     return NULL;
-  return (CoordSetCopyImpl(cs));
-}
 
-/*========================================================================*/
-CoordSet *CoordSetCopyImpl(CoordSet * cs)
-{
+  PyMOLGlobals * G = const_cast<PyMOLGlobals*>(cs->State.G);
+
   int nAtom;
   /* OOAlloc declares and defines, I:
    * I = ... */
-  OOCalloc(cs->State.G, CoordSet);
+  OOCalloc(G, CoordSet);
   /* shallow copy */
   (*I) = (*cs);                 /* NOTE: must deep-copy all pointers in this struct */
   /* deep copy state struct */
-  ObjectStateCopy(&cs->State, &I->State);
+  ObjectStateCopy(&I->State, &cs->State);
   /* deep copy & return ptr to new symmetry */
   I->Symmetry = SymmetryCopy(cs->Symmetry);
 
   if(I->PeriodicBox)
     I->PeriodicBox = CrystalCopy(I->PeriodicBox);
-  /* copy the coords */
-  I->Coord = VLACalloc(float, I->NIndex * 3);
-  UtilCopyMem(I->Coord, cs->Coord, sizeof(float) * 3 * I->NIndex);
-  /* copy label positions if present in source */
-  if(cs->LabPos) {
-    I->LabPos = VLACalloc(LabPosType, I->NIndex);
-    UtilCopyMem(I->LabPos, cs->LabPos, sizeof(LabPosType) * I->NIndex);
-  }
-  /* copy ref pos if in source */
-  if(cs->RefPos) {
-    I->RefPos = VLACalloc(RefPosType, I->NIndex);
-    UtilCopyMem(I->RefPos, cs->RefPos, sizeof(RefPosType) * I->NIndex);
-  }
-  /* copy atom to index mapping, if shallow copied from source */
-  if(I->AtmToIdx) {
-    nAtom = cs->Obj->NAtom;
-    I->AtmToIdx = VLACalloc(int, nAtom);
-    UtilCopyMem(I->AtmToIdx, cs->AtmToIdx, sizeof(int) * nAtom);
-  }
 
-  if(cs->MatrixVLA) {           /* not used yet */
-    I->MatrixVLA = VLAlloc(double, 16 * cs->NMatrix * sizeof(double));
-    if(I->MatrixVLA) {
-      UtilCopyMem(I->MatrixVLA, cs->MatrixVLA, sizeof(double) * 16 * cs->NMatrix);
-    }
-  }
-
-  I->IdxToAtm = VLACalloc(int, I->NIndex);
-  UtilCopyMem(I->IdxToAtm, cs->IdxToAtm, sizeof(int) * I->NIndex);
+  // copy VLAs
+  I->Coord      = VLACopy2(cs->Coord);
+  I->LabPos     = VLACopy2(cs->LabPos);
+  I->RefPos     = VLACopy2(cs->RefPos);
+  I->AtmToIdx   = VLACopy2(cs->AtmToIdx);
+  I->IdxToAtm   = VLACopy2(cs->IdxToAtm);
+  I->MatrixVLA  = VLACopy2(cs->MatrixVLA);
 
   UtilZeroMem(I->Rep, sizeof(::Rep *) * cRepCnt);
 
   I->TmpBond = NULL;
-  I->Color = NULL;
   I->Spheroid = NULL;
   I->SpheroidNormal = NULL;
   I->Coord2Idx = NULL;
@@ -1805,7 +1752,6 @@ void CoordSet::fFree()
         }
     VLAFreeP(I->AtmToIdx);
     VLAFreeP(I->IdxToAtm);
-    VLAFreeP(I->Color);
     MapFree(I->Coord2Idx);
     VLAFreeP(I->Coord);
     VLAFreeP(I->TmpBond);
@@ -1824,12 +1770,12 @@ void CoordSet::fFree()
     OOFreeP(I);
   }
 }
-void LabPosTypeCopy(LabPosType * src, LabPosType * dst){
+void LabPosTypeCopy(const LabPosType * src, LabPosType * dst){
   dst->mode = src->mode;
   copy3f(src->pos, dst->pos);
   copy3f(src->offset, dst->offset);
 }
-void RefPosTypeCopy(RefPosType * src, RefPosType * dst){
+void RefPosTypeCopy(const RefPosType * src, RefPosType * dst){
   copy3f(src->coord, dst->coord);
-  dst->specified = dst->specified;
+  dst->specified = src->specified;
 }

@@ -156,29 +156,16 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
   ObjectMolecule *obj;
   int ok = true;
 
+  // skip if no dots are visible
+  if(!cs->hasRep(cRepEllipsoidBit))
+    return NULL;
+
   OOCalloc(G, RepEllipsoid);    /* allocates & sets I */
   CHECKOK(ok, I);
   if (!ok)
     return NULL;
 
   obj = cs->Obj;
-
-  {
-    int visible_flag = false;
-    int a;
-    visible_flag = false;
-    if(obj->RepVisCache[cRepEllipsoid])
-      for(a = 0; a < cs->NIndex; a++) {
-        if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepEllipsoid]) {
-          visible_flag = true;
-          break;
-        }
-      }
-    if(!visible_flag) {
-      OOFreeP(I);
-      return (NULL);            /* skip if no dots are visible */
-    }
-  }
 
   RepInit(G, &I->R);
 
@@ -239,12 +226,11 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
       for(a = 0; a < cs->NIndex; a++) {
         a1 = cs->IdxToAtm[a];
         ai = obj->AtomInfo + a1;
-        vis_flag = ai->visRep[cRepEllipsoid];
-
+        vis_flag = (ai->visRep & cRepEllipsoidBit);
         if(vis_flag &&
-           (!ai->hetatm) &&
-           ((cartoon_side_chain_helper && ai->visRep[cRepCartoon]) ||
-            (ribbon_side_chain_helper && ai->visRep[cRepRibbon]))) {
+            (ai->flags & cAtomFlag_polymer) &&
+            ((cartoon_side_chain_helper && (ai->visRep & cRepCartoonBit)) ||
+             ( ribbon_side_chain_helper && (ai->visRep & cRepRibbonBit)))) {
 
           register char *name1 = ai->name;
           register int prot1 = ai->protons;
@@ -318,7 +304,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
                                        &at_ellipsoid_color);
 
               if(at_ellipsoid_color == -1)
-                c1 = *(cs->Color + a);
+                c1 = ai->color;
               else
                 c1 = at_ellipsoid_color;
 

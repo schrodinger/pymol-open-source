@@ -19,10 +19,13 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
-#ifndef _PYMOL_NOPY
 #include"Base.h"
 #include"OVLexicon.h"
 
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
 /* Convenient conversion routines for C<->Python data interchange
    
@@ -52,10 +55,16 @@ Z* -------------------------------------------------------------------
 #define CPythonVal_PyDict_GetItemString(G, p, key)      PyDict_GetItemString(p, key)
 #define CPythonVal_PConvPyIntToInt                                              PConvPyIntToInt
 #define CPythonVal_PConvPyIntToInt_From_List(G, list, i, ptr)                   PConvPyIntToInt(PyList_GetItem(list, i), ptr)
+#define CPythonVal_PConvPyFloatToFloat_From_List(G, list, i, ptr)               PConvPyFloatToFloat(PyList_GetItem(list, i), ptr)
 #define CPythonVal_PConvPyListToIntArrayInPlace(G, obj, ff, ll)                 PConvPyListToIntArrayInPlace(obj, ff, ll)
 #define CPythonVal_PConvPyListToIntArrayInPlace_From_List(G, list, i, ff, ll)   PConvPyListToIntArrayInPlace(PyList_GetItem(list, i), ff, ll)
+#define CPythonVal_PConvPyListToFloatArrayInPlaceAutoZero_From_List(G, list, i, ...) \
+                   PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list, i), __VA_ARGS__)
 #define CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, i, f)       PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, i), f)
 #define CPythonVal_PConvPyListToLabPosVLA(G, obj, vla_ptr)                      PConvPyListToLabPosVLA(obj, vla_ptr)
+
+#define CPythonVal_PConvPyStrToStrDup_From_List(G, list, i)                     CPythonVal_As_String(PyList_GetItem(list, i))
+
 #define CPythonVal_Free(obj)
 #define CPythonVal_FreeAll(PYOBJECT)
 
@@ -70,6 +79,8 @@ Z* -------------------------------------------------------------------
 #define CPythonVal_New_Integer(VAL)                     PyInt_FromLong(VAL)
 #define CPythonVal_New_Float(VAL)                       PyFloat_FromDouble(VAL)
 
+#define CPythonVal_IsNone(PYOBJECT)                     (PYOBJECT == Py_None)
+
 /* == error-checking routines: true = success, false = failure. */
 
 
@@ -78,6 +89,7 @@ Z* -------------------------------------------------------------------
 
 int PConvAttrToStrMaxLen(PyObject * obj, char *attr, char *str, ov_size ll);
 
+int PConvPyListToBitmask(PyObject * obj, int *bitmask, ov_size ll);
 int PConvPyListToExtent(PyObject * obj, float *mn, float *mx);
 
 int PConvAttrToFloatArrayInPlace(PyObject * obj, char *attr, float *ff, ov_size ll);
@@ -178,6 +190,192 @@ PyObject *PConv3DIntArrayTo3DPyList(int ***array, int *dim);
 PyObject *PConvPickleLoads(PyObject * str);
 PyObject *PConvPickleDumps(PyObject * obj);
 PyObject *PConvAutoNone(PyObject * result);     /* automatically own Py_None */
+PyObject *PConvIntToPyDictItem(PyObject * dict, char *key, int i);
 
-#endif
+/* ============================================================ */
+/*
+ * PConvToPyObject: Convert any standart type (primitives
+ * and c++ std library) to a python object.
+ *
+ * Return value: New reference.
+ */
+inline PyObject * PConvToPyObject(int v) {
+  return PyInt_FromLong(v);
+}
+
+inline PyObject * PConvToPyObject(float v) {
+  return PyFloat_FromDouble(v);
+}
+
+inline PyObject * PConvToPyObject(double v) {
+  return PyFloat_FromDouble(v);
+}
+
+inline PyObject * PConvToPyObject(const std::string &v) {
+  return PyString_FromString(v.c_str());
+}
+
+inline PyObject * PConvToPyObject(const char * v) {
+  return PyString_FromString(v);
+}
+
+inline PyObject * PConvToPyObject(const float * v, int n) {
+  return PConvFloatArrayToPyList((float*)v, n);
+}
+
+template <class T>
+PyObject * PConvToPyObject(const std::vector<T> &v) {
+  int n = v.size();
+  PyObject * o = PyList_New(n);
+
+  for (int i = 0; i < n; ++i) {
+    PyList_SetItem(o, i, PConvToPyObject(v[i]));
+  }
+
+  return o;
+}
+
+/*
+ * Convert a set to a Python list
+ */
+template <class T>
+PyObject * PConvToPyObject(const std::set<T> &v) {
+  size_t i = 0, n = v.size();
+  PyObject * o = PyList_New(n);
+
+  for (auto it = v.begin(); it != v.end(); ++it) {
+    PyList_SET_ITEM(o, i++, PConvToPyObject(*it));
+  }
+
+  return o;
+}
+
+/*
+ * Convert a map to a flat Python list
+ *
+ * {k1: v1, k2: v2, ...} -> [k1, v1, k2, v2, ...]
+ */
+template <class K, class V>
+PyObject * PConvToPyObject(const std::map<K, V> &v) {
+  size_t i = 0, n = v.size();
+  PyObject * o = PyList_New(n * 2);
+
+  for (auto it = v.begin(); it != v.end(); ++it) {
+    PyList_SET_ITEM(o, i++, PConvToPyObject(it->first));
+    PyList_SET_ITEM(o, i++, PConvToPyObject(it->second));
+  }
+
+  return o;
+}
+
+/* ============================================================ */
+/*
+ * PConvFromPyObject: Templated conversion of a python object to a
+ * standart type (primitives and c++ std library).
+ */
+
+inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, int &out) {
+  out = PyInt_AsLong(obj);
+  return true;
+}
+
+inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, float &out) {
+  out = PyFloat_AsDouble(obj);
+  return true;
+}
+
+inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, double &out) {
+  out = PyFloat_AsDouble(obj);
+  return true;
+}
+
+inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, std::string &out) {
+  out = PyString_AsString(obj);
+  return true;
+}
+
+inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, float * out) {
+  return PConvPyListToFloatArrayInPlace(obj, out, 0);
+}
+
+template <class T>
+bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, std::vector<T> &out) {
+  if (!PyList_Check(obj))
+    return false;
+
+  int n = PyList_Size(obj);
+
+  out.clear();
+  out.reserve(n);
+
+  for (int i = 0; i < n; ++i) {
+    PyObject *item = PyList_GET_ITEM(obj, i);
+
+    T t;
+    if (!PConvFromPyObject(G, item, t))
+      return false;
+
+    out.push_back(t);
+  }
+
+  return true;
+}
+
+/*
+ * Convert a Python list to a set
+ */
+template <class T>
+bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, std::set<T> &out) {
+  if (!PyList_Check(obj))
+    return false;
+
+  int n = PyList_Size(obj);
+
+  out.clear();
+
+  for (int i = 0; i < n; ++i) {
+    PyObject *item = PyList_GET_ITEM(obj, i);
+
+    T t;
+    if (!PConvFromPyObject(G, item, t))
+      return false;
+
+    out.insert(t);
+  }
+
+  return true;
+}
+
+/*
+ * Convert a flat Python list to a map, even indices are keys and odd
+ * indices are values.
+ *
+ * [a, b, c, d, ...] -> {a: b, c: d, ...}
+ */
+template <class K, class V>
+bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, std::map<K, V> &out) {
+  if (!PyList_Check(obj))
+    return false;
+
+  int n = PyList_Size(obj);
+
+  out.clear();
+
+  for (int i = 0; i < n - 1;) {
+    PyObject *key   = PyList_GET_ITEM(obj, i++);
+    PyObject *value = PyList_GET_ITEM(obj, i++);
+
+    K k;
+    if (!PConvFromPyObject(G, key, k))
+      return false;
+
+    if (!PConvFromPyObject(G, value, out[k]))
+      return false;
+  }
+
+  return true;
+}
+
+/* ============================================================ */
+
 #endif

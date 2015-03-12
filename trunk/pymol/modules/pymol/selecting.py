@@ -88,15 +88,15 @@ SEE ALSO
             _self.lock(_self)
             if selection=="":
                 selection = name                    
-                if _cmd.get(_self._COb,"auto_number_selections")!=0.0:
-                    sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
-                    _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
+                if _self.get_setting_boolean("auto_number_selections"):
+                    sel_cnt = _self.get_setting_int("sel_counter") + 1
+                    _self.set("sel_counter", sel_cnt)
                     name = "sel%02.0f" % sel_cnt
                 else:
                     name = "sele"
             if name == None:
-                sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
-                _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
+                sel_cnt = _self.get_setting_int("sel_counter") + 1
+                _self.set("sel_counter", sel_cnt)
                 name = "sel%02.0f" % sel_cnt
                 
             # preprocess selection (note: inside TRY)

@@ -74,7 +74,8 @@ def create_shadertext(shaderdir, shaderdir2, inputfile, outputheader, outputfile
                         for l2 in f2:
                             st = l2.strip("\n")
                             if len(st)>0:
-                                outputfile.write("\"%s\\n\"\n" % st)
+                                #if st[0] != '#':
+                                outputfile.write("\"%s\\n\"\n" % st.replace('"', r'\"'))
                         outputfile.write(";\n") # end of variable definition
             else:
                 outputheader.write("%s\n" % l.strip())

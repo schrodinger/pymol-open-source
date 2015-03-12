@@ -659,7 +659,7 @@ def produce(filename, mode='', first=0, last=0, preserve=0,
 
     if _self.is_string(mode):
         if mode == '':
-            if int(cmd.get_setting_legacy('ray_trace_frames')):
+            if cmd.get_setting_boolean('ray_trace_frames'):
                 mode = 'ray'
             elif cmd._pymol.invocation.options.no_gui:
                 mode = 'ray'

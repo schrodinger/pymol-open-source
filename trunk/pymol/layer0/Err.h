@@ -20,8 +20,8 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 
-void ErrFatal(PyMOLGlobals * G, const char *where, const char *what);
-void ErrPointer(PyMOLGlobals * G, const char *file, int line);
+void ErrFatal(const PyMOLGlobals * G, const char *where, const char *what);
+void ErrPointer(const PyMOLGlobals * G, const char *file, int line);
 int ErrMessage(PyMOLGlobals * G, const char *where, const char *what);
 
 #define ErrChkPtr(G,p) {if(!p) ErrPointer(G,__FILE__,__LINE__);}

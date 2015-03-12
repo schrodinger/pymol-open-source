@@ -1430,8 +1430,8 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
 	} else if(ColorCheckRamped(G, bd_stick_color)) {
 	  c1 = (c2 = bd_stick_color);
 	} else {
-	  c1 = *(cs->Color + a1);
-	  c2 = *(cs->Color + a2);
+	  c1 = ati1->color;
+	  c2 = ati2->color;
 	}
       } else {
 	c1 = (c2 = bd_stick_color);
@@ -1439,8 +1439,8 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
       vv1 = cs->Coord + 3 * a1;
       vv2 = cs->Coord + 3 * a2;
       
-      s1 = ati1->visRep[cRepCyl];
-      s2 = ati2->visRep[cRepCyl];
+      s1 = GET_BIT(ati1->visRep, cRepCyl);
+      s2 = GET_BIT(ati2->visRep, cRepCyl);
       
       if(!(s1 && s2))
 	if(!half_bonds) {
@@ -1459,12 +1459,10 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
 	  s1 = s2 = 0;
       }
       
-      if((!ati1->hetatm) && (!ati2->hetatm) &&
-	 ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]
-	   && ati2->visRep[cRepCartoon]) || (ribbon_side_chain_helper
-					     && ati1->visRep[cRepRibbon]
-					     && ati2->visRep[cRepRibbon]))) {
-	RepCylBondFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2, &s1, &s2);
+      if((ati1->flags & ati2->flags & cAtomFlag_polymer) &&
+          (cartoon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepCartoonBit) ||
+           ribbon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepRibbonBit))) {
+        RepCylBondFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2, &s1, &s2);
       }
       if((s1 || s2)) {
 	/* This is a bond that is rendered as a stick */
@@ -1586,11 +1584,13 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   visFlag = false;
   b = obj->Bond;
   ai1 = obj->AtomInfo;
-  if(obj->RepVisCache[cRepCyl])
+  if(obj->RepVisCache & cRepCylBit)
     for(a = 0; a < obj->NBond; a++) {
       b1 = b->index[0];
       b2 = b->index[1];
-      if(b->order && (ai1[b1].visRep[cRepCyl] || ai1[b2].visRep[cRepCyl])) {
+      if((cRepCylBit &
+            ai1[b1].visRep &
+            ai1[b2].visRep)) {
 	visFlag = true;
 	break;
       }
@@ -1759,17 +1759,21 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           register AtomInfoType *ati1 = obj->AtomInfo + b1;
           register AtomInfoType *ati2 = obj->AtomInfo + b2;
 
-          if((!ati1->hetatm) && (!ati2->hetatm)) {
-            if(((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]
-                 && !ati2->visRep[cRepCartoon]) || (ribbon_side_chain_helper
-                                                    && ati1->visRep[cRepRibbon]
-                                                    && !ati2->visRep[cRepRibbon]))) {
+          if((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
+            if((cartoon_side_chain_helper
+                  && (ati1->visRep & cRepCartoonBit)
+                  && !(ati2->visRep & cRepCartoonBit))
+                || (ribbon_side_chain_helper
+                  && (ati1->visRep & cRepRibbonBit)
+                  && !(ati2->visRep & cRepRibbonBit))) {
               marked[b1] = 1;
             }
-            if(((cartoon_side_chain_helper && ati2->visRep[cRepCartoon]
-                 && !ati1->visRep[cRepCartoon]) || (ribbon_side_chain_helper
-                                                    && ati2->visRep[cRepRibbon]
-                                                    && !ati1->visRep[cRepRibbon]))) {
+            if((cartoon_side_chain_helper
+                  && (ati2->visRep & cRepCartoonBit)
+                  && !(ati1->visRep & cRepCartoonBit))
+                || (ribbon_side_chain_helper
+                  && (ati2->visRep & cRepRibbonBit)
+                  && !(ati1->visRep & cRepRibbonBit))) {
               marked[b2] = 1;
             }
           }
@@ -1922,8 +1926,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           } else if(ColorCheckRamped(G, bd_stick_color)) {
             c1 = (c2 = bd_stick_color);
           } else {
-            c1 = *(cs->Color + a1);
-            c2 = *(cs->Color + a2);
+            c1 = ati1->color;
+            c2 = ati2->color;
           }
         } else {
           c1 = (c2 = bd_stick_color);
@@ -1931,8 +1935,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         vv1 = cs->Coord + 3 * a1;
         vv2 = cs->Coord + 3 * a2;
 
-        s1 = ati1->visRep[cRepCyl];
-        s2 = ati2->visRep[cRepCyl];
+        s1 = GET_BIT(ati1->visRep, cRepCyl);
+        s2 = GET_BIT(ati2->visRep, cRepCyl);
 
         if(!(s1 && s2))
           if(!half_bonds) {
@@ -1947,11 +1951,13 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           if(!within3f(vv1, vv2, cutoff))       /* atoms separated by more than 90% of the sum of their vdw radii */
             s1 = s2 = 0;
         }
-        if((!ati1->hetatm) && (!ati2->hetatm) &&
-           ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]
-             && ati2->visRep[cRepCartoon]) || (ribbon_side_chain_helper
-                                               && ati1->visRep[cRepRibbon]
-                                               && ati2->visRep[cRepRibbon]))) {
+        if((ati1->flags & ati2->flags & cAtomFlag_polymer) &&
+            ((cartoon_side_chain_helper 
+              && (ati1->visRep & cRepCartoonBit)
+              && (ati2->visRep & cRepCartoonBit)) ||
+             (ribbon_side_chain_helper
+              && (ati1->visRep & cRepRibbonBit)
+              && (ati2->visRep & cRepRibbonBit)))) {
 	  RepCylBondFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2, &s1, &s2);
         }
 	
@@ -2288,8 +2294,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         if((a1 >= 0) && (a2 >= 0)) {
           ai1 = obj->AtomInfo + b1;
           ai2 = obj->AtomInfo + b2;
-          s1 = ai1->visRep[cRepCyl];
-          s2 = ai2->visRep[cRepCyl];
+          s1 = GET_BIT(ai1->visRep, cRepCyl);
+          s2 = GET_BIT(ai2->visRep, cRepCyl);
 
           if(!(s1 && s2)) {
             if(!half_bonds) {
@@ -2503,8 +2509,8 @@ int RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *v
   int ok = true;
 
   if ( shader_mode ) { // GLSL
-    short cap = 15; // for shaders, always draw rounded caps
-    //    short cap = (frontCap > 0 ? 5 : 0) | (endCap > 0 ? 10 : 0);
+    //short cap = 15; // for shaders, always draw rounded caps
+    short cap = (frontCap > 0 ? 5 : 0) | (endCap > 0 ? 10 : 0);
 
     // These are not really triangles, we are simply passing
     // origin, axis and flags information to CGO    
@@ -3187,7 +3193,8 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
         AtomInfoType *ai1, *ai2;
         bd++;
 
-        if((ai1 = ai + b1)->visRep[cRepCyl] && (ai2 = ai + b2)->visRep[cRepCyl]) {
+        if( ((ai1 = ai + b1)->visRep & cRepCylBit) &&
+            ((ai2 = ai + b2)->visRep & cRepCylBit)) {
           int a1, a2;
           active = true;
           if(discreteFlag) {

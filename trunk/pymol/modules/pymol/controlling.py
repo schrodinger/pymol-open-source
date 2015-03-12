@@ -621,29 +621,29 @@ USAGE
             _self.lock(_self)
 
             if action=='forward':
-                bm = _cmd.get_setting(_self._COb,"button_mode")
+                bm = _self.get_setting_int("button_mode")
                 bm = (int(bm) + 1) % len(mouse_ring)
                 _self.set("button_mode",str(bm),quiet=1)
                 action=None
             elif action=='backward':
-                bm = _cmd.get_setting(_self._COb,"button_mode")
+                bm = _self.get_setting_int("button_mode")
                 bm = (int(bm) - 1) % len(mouse_ring)
                 _self.set("button_mode",str(bm),quiet=1)
                 action=None
             elif action=='select_forward':
-                sm = _cmd.get_setting(_self._COb,"mouse_selection_mode")
+                sm = _self.get_setting_int("mouse_selection_mode")
                 sm = sm + 1
                 if sm>6: sm = 0
                 _self.set("mouse_selection_mode",sm,quiet=1)
             elif action=='select_backward':
-                sm = _cmd.get_setting(_self._COb,"mouse_selection_mode")
+                sm = _self.get_setting_int("mouse_selection_mode")
                 sm = sm - 1
                 if sm<0: sm = 6
                 _self.set("mouse_selection_mode",sm,quiet=1)
             
             mode_list = None
             if action==None:
-                bm = int(_cmd.get_setting(_self._COb,"button_mode"))
+                bm = _self.get_setting_int("button_mode")
                 if bm>=0:
                     bm = bm % len(mouse_ring)
                     mode = mouse_ring[bm]

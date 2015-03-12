@@ -267,7 +267,7 @@ void RenderSphereMode_Immediate_5(PyMOLGlobals *G, RenderInfo *info, CoordSet *c
       float *v = cs->Coord;
       for(a = 0; a < nIndex; a++) {
 	AtomInfoType *ai = atomInfo + *(i2a++);
-	if(ai->visRep[cRepSphere]) {
+	if(GET_BIT(ai->visRep,cRepSphere)) {
 	  float vr[4];
 	  copy3f(v, vr);
 	  vr[3] = ai->vdw * sphere_scale;
@@ -377,7 +377,7 @@ void RenderSphereMode_Immediate_4(PyMOLGlobals *G, RenderInfo *info, CoordSet *c
 	  
           for(a = 0; a < nIndex; a++) {
             AtomInfoType *ai = atomInfo + *(i2a++);
-            if(ai->visRep[cRepSphere]) {
+            if(GET_BIT(ai->visRep,cRepSphere)) {
               float cur_radius = ai->vdw;
               (*repActive) = true;
 
@@ -473,7 +473,7 @@ void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs, ObjectM
     
     for(a = 0; a < nIndex; a++) {
       AtomInfoType *ai = atomInfo + *(i2a++);
-      if(ai->visRep[cRepSphere]) {
+      if(GET_BIT(ai->visRep,cRepSphere)) {
 	float vdw = ai->vdw * sphere_scale;
 	int c = ai->color;
 	float v0 = v[0];
@@ -596,7 +596,7 @@ void RenderSphereMode_Immediate_1_2_3(PyMOLGlobals *G, RenderInfo *info, CoordSe
   glBegin(GL_POINTS);
   for(a = 0; a < nIndex; a++) {
     AtomInfoType *ai = atomInfo + *(i2a++);
-    if(ai->visRep[cRepSphere]) {
+    if(GET_BIT(ai->visRep,cRepSphere)) {
       int c = ai->color;
       (*repActive) = true;
       if(c != last_color) {
@@ -1856,9 +1856,7 @@ static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, float alpha, i
       register float max_size = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting,
 					     cSetting_sphere_point_max_size) * 3;
       register int clamp_size_flag = (max_size >= 0.0F);
-      int sphere_mode = SettingGet_i(G, I->R.cs->Setting,
-				     I->R.obj->Setting,
-				     cSetting_sphere_mode);
+
       short hasBegun = 0;
 #ifdef _PYMOL_GL_DRAWARRAYS
       int starti, nverts = 0;
@@ -2032,30 +2030,26 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
 
 int RepSphereSameVis(RepSphere * I, CoordSet * cs)
 {
-  int same = true;
-  int *lv, *lc, *cc;
+  int *lv, *lc;
   int a;
   AtomInfoType *ai;
   if(I->LastVisib && I->LastColor) {
-    ai = cs->Obj->AtomInfo;
     lv = I->LastVisib;
     lc = I->LastColor;
-    cc = cs->Color;
 
     for(a = 0; a < cs->NIndex; a++) {
-      if(*(lv++) != (ai + cs->IdxToAtm[a])->visRep[cRepSphere]) {
-        same = false;
-        break;
+      ai = cs->getAtomInfo(a);
+      if(*(lv++) != GET_BIT(ai->visRep, cRepSphere)) {
+        return false;
       }
-      if(*(lc++) != *(cc++)) {
-        same = false;
-        break;
+      if(*(lc++) != ai->color) {
+        return false;
       }
     }
   } else {
-    same = false;
+    return false;
   }
-  return (same);
+  return true;
 }
 
 static int RadiusOrder(float *list, int a, int b)
@@ -2067,10 +2061,9 @@ int RepSphereDetermineAtomVisibility(int vis_flag_arg, AtomInfoType *ati1, int c
 {
   int vis_flag = vis_flag_arg;
   if(vis_flag &&
-     (!ati1->hetatm) &&
-     (!(ati1->flags & cAtomFlag_solvent)) &&
-     ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]) ||
-      (ribbon_side_chain_helper && ati1->visRep[cRepRibbon]))) {
+     (ati1->flags & cAtomFlag_polymer) &&
+     ((cartoon_side_chain_helper && GET_BIT(ati1->visRep,cRepCartoon)) ||
+      ( ribbon_side_chain_helper && GET_BIT(ati1->visRep,cRepRibbon)))) {
     register char *name1 = ati1->name;
     register int prot1 = ati1->protons;
     
@@ -2119,7 +2112,7 @@ void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj, CoordS
   *mf = true;
   I->NC++;
   if(at_sphere_color == -1)
-    c1 = *(cs->Color + a);
+    c1 = ati1->color;
   else
     c1 = at_sphere_color;
   v0 = cs->Coord + 3 * a;
@@ -2486,7 +2479,7 @@ int RepSphereGenerateGeometryForSphere(RepSphere *I, ObjectMolecule *obj, CoordS
     (*variable_alpha) = true;
   
   if(at_sphere_color == -1)
-    c1 = *(cs->Color + a);
+    c1 = ati1->color;
   else
     c1 = at_sphere_color;
   v0 = cs->Coord + 3 * a;
@@ -2523,12 +2516,11 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   int ok = true;
   int a, a1;
   float *v;
-  int *lv, *lc, *cc;
+  int *lv, *lc;
   SphereRec *sp = G->Sphere->Sphere[0];
   int sphere_quality, *nt;
   int *visFlag = NULL;
   MapType *map = NULL;
-  int vFlag;
   AtomInfoType *ai2;
   int spheroidFlag = false;
   float spheroid_scale;
@@ -2551,23 +2543,17 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   int draw_quality = (((draw_mode == 1) || (draw_mode == -2) || (draw_mode == 2)));
   short use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) & 
                      SettingGetGlobal_b(G, cSetting_use_shaders);
+
+  // skip if not visible
+  if(!cs->hasRep(cRepSphereBit))
+    return NULL;
+
   OOCalloc(G, RepSphere);
   CHECKOK(ok, I);
   if (!ok)
     return NULL;
   obj = cs->Obj;
-  vFlag = false;
-  if(obj->RepVisCache[cRepSphere])
-    for(a = 0; a < cs->NIndex; a++) {
-      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepSphere]) {
-        vFlag = true;
-        break;
-      }
-    }
-  if(!vFlag) {
-    OOFreeP(I);
-    return (NULL);              /* skip if no spheres are visible */
-  }
+
   marked = Calloc(int, obj->NAtom);
   CHECKOK(ok, marked);
   if (ok)
@@ -2652,7 +2638,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     a1 = cs->IdxToAtm[a];
     ati1 = obj->AtomInfo + a1;
     /* store temporary visibility information */
-    marked[a1] = RepSphereDetermineAtomVisibility(ati1->visRep[cRepSphere], ati1, cartoon_side_chain_helper, ribbon_side_chain_helper);
+    marked[a1] = RepSphereDetermineAtomVisibility(GET_BIT(ati1->visRep,cRepSphere), ati1, cartoon_side_chain_helper, ribbon_side_chain_helper);
     if(marked[a1]) {
       RepSphereAddAtomVisInfoToStoredVC(I, obj, cs, state, v, a1, ati1, a, mf, sphere_scale, sphere_color, transp, &variable_alpha, sphere_add);
       v += 8;
@@ -2800,13 +2786,13 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     if (ok){
       lv = I->LastVisib;
       lc = I->LastColor;
-      cc = cs->Color;
       obj = cs->Obj;
       ai2 = obj->AtomInfo;
       if(sphere_color == -1){
 	for(a = 0; a < cs->NIndex; a++) {
-	  *(lv++) = marked[cs->IdxToAtm[a]];
-	  *(lc++) = *(cc++);
+          int at = cs->IdxToAtm[a];
+	  *(lv++) = marked[at];
+	  *(lc++) = (ai2 + at)->color;
 	}
       } else {
 	for(a = 0; a < cs->NIndex; a++) {

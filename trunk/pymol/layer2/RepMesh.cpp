@@ -644,27 +644,23 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 
 int RepMeshSameVis(RepMesh * I, CoordSet * cs)
 {
-  int same = true;
-  int *lv, *lc, *cc;
+  int *lv, *lc;
   int a;
   AtomInfoType *ai;
 
-  ai = cs->Obj->AtomInfo;
   lv = I->LastVisib;
   lc = I->LastColor;
-  cc = cs->Color;
 
   for(a = 0; a < cs->NIndex; a++) {
-    if(*(lv++) != (ai + cs->IdxToAtm[a])->visRep[cRepMesh]) {
-      same = false;
-      break;
+    ai = cs->getAtomInfo(a);
+    if(*(lv++) != GET_BIT(ai->visRep, cRepMesh)) {
+      return false;
     }
-    if(*(lc++) != *(cc++)) {
-      same = false;
-      break;
+    if(*(lc++) != ai->color) {
+      return false;
     }
   }
-  return (same);
+  return true;
 }
 
 void RepMeshColor(RepMesh * I, CoordSet * cs)
@@ -673,7 +669,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
   MapType *map;
   int a, i0, i, j, h, k, l, c1;
   float *v0, *vc, *c0;
-  int *lv, *lc, *cc;
+  int *lv, *lc;
   int first_color;
   ObjectMolecule *obj;
   float probe_radius;
@@ -699,11 +695,10 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
     I->LastColor = Alloc(int, cs->NIndex);
   lv = I->LastVisib;
   lc = I->LastColor;
-  cc = cs->Color;
-  ai2 = obj->AtomInfo;
   for(a = 0; a < cs->NIndex; a++) {
-    *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepMesh];
-    *(lc++) = *(cc++);
+    ai2 = cs->getAtomInfo(a);
+    *(lv++) = GET_BIT(ai2->visRep, cRepMesh);
+    *(lc++) = ai2->color;
   }
 
   if(I->mesh_type != 1) {
@@ -743,7 +738,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
           j = map->EList[i++];
           while(j >= 0) {
             ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-            if((inclH || (!ai2->hydrogen)) &&
+            if((inclH || (!ai2->isHydrogen())) &&
                ((!cullByFlag) || (!(ai2->flags & cAtomFlag_ignore)))) {
               dist = (float) diff3f(v0, cs->Coord + j * 3) - ai2->vdw;
               if(dist < minDist) {
@@ -765,7 +760,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
           if(at_mesh_color != -1) {
             c1 = at_mesh_color;
           } else {
-            c1 = *(cs->Color + i0);
+            c1 = ai0->color;
           }
           if(I->oneColorFlag) {
             if(first_color >= 0) {
@@ -865,11 +860,11 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     inclH = !(mesh_mode == cRepMesh_heavy_atoms);
   }
   visFlag = false;
-  if(ok && obj->RepVisCache[cRepMesh]){
+  if(ok && (obj->RepVisCache & cRepMeshBit)){
     for(a = 0; a < cs->NIndex; a++) {
       ai1 = obj->AtomInfo + cs->IdxToAtm[a];
-      if(ai1->visRep[cRepMesh] &&
-         (inclH || (!ai1->hydrogen)) &&
+      if((ai1->visRep & cRepMeshBit) &&
+         (inclH || (!ai1->isHydrogen())) &&
          ((!cullByFlag) || (!(ai1->flags & (cAtomFlag_exfoliate | cAtomFlag_ignore))))) {
         visFlag = true;
         break;
@@ -944,8 +939,8 @@ Rep *RepMeshNew(CoordSet * cs, int state)
       CHECKOK(ok, trim_vla);
       for(c = 0; ok && c < cs->NIndex; c++) {
         ai1 = obj->AtomInfo + cs->IdxToAtm[c];
-        if(ai1->visRep[cRepMesh] &&
-           (inclH || (!ai1->hydrogen)) &&
+        if((ai1->visRep & cRepMeshBit) &&
+           (inclH || (!ai1->isHydrogen())) &&
            ((!cullByFlag) ||
             (!(ai1->flags & (cAtomFlag_ignore | cAtomFlag_exfoliate))))) {
           VLACheck(trim_vla, float, nc * 3 + 2);
@@ -1022,8 +1017,8 @@ Rep *RepMeshNew(CoordSet * cs, int state)
 	if(ccs) {
 	  for(c = 0; c < ccs->NIndex; c++) {
 	    ai1 = obj->AtomInfo + ccs->IdxToAtm[c];       /* WLD fixed 011218 */
-	    if(ai1->visRep[cRepMesh] &&
-	       (inclH || (!ai1->hydrogen)) &&
+	    if((ai1->visRep & cRepMeshBit) &&
+	       (inclH || (!ai1->isHydrogen())) &&
 	       ((!cullByFlag) ||
 		(!(ai1->flags & (cAtomFlag_ignore | cAtomFlag_exfoliate))))) {
 	      for(d = 0; d < 3; d++) {
@@ -1099,7 +1094,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
               cur = map->EList[d++];
               while(ok && cur >= 0) {
                 ai1 = obj->AtomInfo + cs->IdxToAtm[cur];
-                if((inclH || (!ai1->hydrogen)) &&
+                if((inclH || (!ai1->isHydrogen())) &&
                    ((!cullByFlag) || (!(ai1->flags & cAtomFlag_ignore)))) {
                   vLen = (float) diff3f(point, cs->Coord + (cur * 3));
                   dist2vdw = vLen - (ai1->vdw + vdw_add);
@@ -1349,7 +1344,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
     for(a = 0; a < cs->NIndex; a++) {
 
       ai1 = obj->AtomInfo + cs->IdxToAtm[a];
-      if((inclH || (!ai1->hydrogen)) &&
+      if((inclH || (!ai1->isHydrogen())) &&
          ((!cullByFlag) || (!(ai1->flags & (cAtomFlag_ignore))))) {
         OrthoBusyFast(G, a, cs->NIndex * 3);
         dotCnt = 0;
@@ -1380,7 +1375,7 @@ int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
               while(j >= 0) {
 
                 ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                if((inclH || (!ai2->hydrogen)) &&
+                if((inclH || (!ai2->isHydrogen())) &&
                    ((!cullByFlag) || (!(ai2->flags & cAtomFlag_ignore))))
                   if(j != a) {
                     a2 = cs->IdxToAtm[j];

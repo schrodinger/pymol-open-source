@@ -32,7 +32,6 @@ class Stereodemo(Wizard):
         Wizard.__init__(self,_self)        
         self.message = []
         self.last = None
-        cmd.set("use_display_lists","on")
         cmd.full_screen("off")
         if not  ("mono" in kw.keys()):
             cmd.stereo("on")
@@ -127,7 +126,6 @@ class DemoInfo:
     def medchem(self,cleanup=0):
 	if not cleanup:
 	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/drugdisc.pse"))
-	    cmd.set("use_display_lists",0)
 	    cmd.do("replace_wizard toggle, Medicinal Chemistry")
 	else:
 	    cmd.set("sphere_scale",1.0)
@@ -136,7 +134,6 @@ class DemoInfo:
 	if not cleanup:
 	    cmd.feedback("disable","objectsurface","actions")
 	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/flagellar.pse"))
-	    cmd.set("use_display_lists",0)
 	    cmd.set("sweep_mode",3)
 	    cmd.set("sweep_angle",3)
 	    cmd.rock()
@@ -147,7 +144,6 @@ class DemoInfo:
 
     def electro(self,cleanup=0):
 	if not cleanup:
-	    cmd.set("use_display_lists",0)
 	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/electro.pse"))
 	    cmd.do("replace_wizard toggle, Computational Chemistry (Electrostatics)")
 	    cmd.rock(1)
@@ -159,7 +155,6 @@ class DemoInfo:
 	    cmd.set("security",0)
 	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/animate.pse"))
 	    cmd.rock(1)
-	    cmd.set("use_display_lists","on")
 	    cmd.set("field_of_view",23)
 	    cmd.rock(1)
 	    cmd.set("sweep_mode",3)

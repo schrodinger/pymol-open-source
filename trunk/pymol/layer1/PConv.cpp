@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Util.h"
 
-#ifndef _PYMOL_NOPY
+#include <vector>
 
 /* Return value: New reference.
  * Load a pickle from the given string
@@ -69,6 +69,23 @@ PyObject *PConvAutoNone(PyObject * result)
 
 
 /* Error-checked utility routines */
+
+int PConvPyListToBitmask(PyObject * obj, int *bitmask, ov_size ll)
+{
+  std::vector<signed char> visRepArr(ll, 0);
+
+  if (ll > 0)
+    ok_assert(1, PConvPyListToSCharArrayInPlaceAutoZero(obj, &visRepArr[0], ll));
+
+  *bitmask = 0;
+  for(int i = 0; i < ll; i++)
+    if(visRepArr[i])
+      SET_BIT(*bitmask, i);
+
+  return true;
+ok_except1:
+  return false;
+}
 
 int PConvPyListToExtent(PyObject * obj, float *mn, float *mx)
 {                               /* [[min_x,min_y,min_z],
@@ -769,7 +786,7 @@ int PConvPyListToFloatArrayInPlace(PyObject * obj, float *ff, ov_size ll)
     ok = false;
   } else {
     l = PyList_Size(obj);
-    if(l != ll)
+    if(ll > 0 && l != ll)
       ok = false;
     else {
       if(!l)
@@ -1195,7 +1212,3 @@ void PConv44PyListTo44f(PyObject * src, float *dest)
     }
   }
 }
-
-#else
-typedef int this_file_is_no_longer_empty;
-#endif

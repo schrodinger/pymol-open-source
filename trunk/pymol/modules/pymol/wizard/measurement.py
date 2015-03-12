@@ -89,7 +89,7 @@ class Measurement(Wizard):
 
         self.menu['object_mode']=smm
         # initially select atoms, but now users can change this
-        self.selection_mode = self.cmd.get_setting_legacy("mouse_selection_mode")
+        self.selection_mode = self.cmd.get_setting_int("mouse_selection_mode")
         self.cmd.set("mouse_selection_mode",0) # set selection mode to atomic
         self.cmd.deselect() # disable the active selection (if any)
         self.mouse_mode = 0

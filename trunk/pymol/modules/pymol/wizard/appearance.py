@@ -65,7 +65,7 @@ class Appearance(Wizard):
         Wizard.__init__(self,_self)
         self.cmd.deselect()
         self.cmd.unpick()
-        self.selection_mode = self.cmd.get_setting_legacy("mouse_selection_mode")
+        self.selection_mode = self.cmd.get_setting_int("mouse_selection_mode")
         self.cmd.set("mouse_selection_mode",0) # set selection mode to atomic      
         self.current_mode = saved_mode
         self.current_what = saved_what

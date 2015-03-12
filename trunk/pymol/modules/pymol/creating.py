@@ -271,6 +271,8 @@ NOTES
                 if not quiet:
                     print "Loading map '%s'" % (name)
                 r = _self.load(r, name, format="ccp4", finish=1)
+            else:
+                print ' Error: Map generation failed'
 
             os.remove(tempFileName)
 
@@ -344,9 +346,9 @@ NOTES
             box = (0.0,0.0,0.0,1.0,1.0,1.0)
             box_flag = 0
         if grid==None:
-            grid = _self.get_setting_legacy('gaussian_resolution')/3.0
+            grid = _self.get_setting_float('gaussian_resolution')/3.0
         if buffer==None:
-            buffer = _self.get_setting_legacy('gaussian_resolution')
+            buffer = -1.0
         grid = float(grid) # for now, uniform xyz; later (x,y,z)
 
         if not is_list(clamp):
@@ -945,7 +947,6 @@ USAGE
     '''
         r = DEFAULT_ERROR
         try:
-            save=_self.get_setting_legacy('auto_zoom')
             if object==None:
                 object=name
             model = fragments.get(str(name))

@@ -403,7 +403,7 @@ if __name__=='pymol.parser':
                                             if pp_result==None: # RECURSION
                                                 break # abort command gets us out
                                             elif pp_result==0: # QuietException
-                                                if self.cmd.get_setting_legacy("stop_on_exceptions"):
+                                                if self.cmd.get_setting_boolean("stop_on_exceptions"):
                                                     p_result = 0 # signal an error occurred
                                                     print"PyMOL: stopped on exception."
                                                     break;

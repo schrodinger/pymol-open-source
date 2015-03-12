@@ -130,7 +130,7 @@ double cif_array::as_d(int row, double d) const {
  * a colon and CIF uses an underscore: (key="_foo?bar") is identical to
  * (key="_foo.bar", alias1="_foo_bar")
  */
-cif_array * cif_data::get_arr(const char * key, const char * alias1, const char * alias2) {
+const cif_array * cif_data::get_arr(const char * key, const char * alias1, const char * alias2) const {
   std::string tmp1, tmp2;
   const char * p;
 
@@ -150,7 +150,7 @@ cif_array * cif_data::get_arr(const char * key, const char * alias1, const char 
   }
 
   // dict lookup, return first hit
-  m_str_cifarray_t::iterator arr, end = dict.end();
+  m_str_cifarray_t::const_iterator arr, end = dict.end();
   if ((arr = dict.find(key)) != end ||
       (alias1 && (arr = dict.find(alias1)) != end) ||
       (alias2 && (arr = dict.find(alias2)) != end))
@@ -159,8 +159,8 @@ cif_array * cif_data::get_arr(const char * key, const char * alias1, const char 
 }
 
 // Get a pointer to array or to a default value if not found
-cif_array * cif_data::get_opt(const char * key, const char * alias1, const char * alias2) {
-  cif_array * arr = get_arr(key, alias1, alias2);
+const cif_array * cif_data::get_opt(const char * key, const char * alias1, const char * alias2) const {
+  const cif_array * arr = get_arr(key, alias1, alias2);
   if (arr == NULL)
     return &EMPTY_ARRAY;
   return arr;

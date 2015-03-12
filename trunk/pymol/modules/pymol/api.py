@@ -346,7 +346,6 @@ from viewing import \
       get_view,           \
       get_viewport,       \
       get_vis,            \
-      get_scene_dict,     \
       get_scene_list,     \
       hide,               \
       label,              \
@@ -366,10 +365,10 @@ from viewing import \
       rock,               \
       scene,              \
       scene_order,        \
+      scene_recall_message, \
       set_color,          \
       set_colour,         \
       set_colorection,    \
-      set_colorection_name,\
       set_vis,            \
       set_view,           \
       show,               \
@@ -394,7 +393,6 @@ from setting import \
       get_setting_boolean, \
       get_setting_int,     \
       get_setting_float,   \
-      get_setting_legacy,  \
       get_setting_tuple,   \
       get_setting_updates, \
       get_setting_text

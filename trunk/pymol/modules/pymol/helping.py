@@ -25,7 +25,7 @@ if __name__=='pymol.helping':
     def show_help(cmmd,_self=cmd): # INTERNAL
         print "PyMOL>help %s" % cmmd
         help(cmmd)
-        if _self.get_setting_legacy("internal_feedback")>0.1:
+        if _self.get_setting_int("internal_feedback") > 0:
             print "(Hit ESC to hide)"
 
 

@@ -314,7 +314,7 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
     return;
 
   if((pass == 1) || info->ray) {
-    if(I->Obj.RepVis[cRepCGO]) {
+    if((I->Obj.visRep & cRepCGOBit)) {
       for(StateIterator iter(G, I->Obj.Setting, state, I->NState); iter.next();) {
         sobj = I->State + iter.state;
 #ifdef _PYMOL_CGO_DRAWBUFFERS

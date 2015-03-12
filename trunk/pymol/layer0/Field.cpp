@@ -122,7 +122,7 @@ PyObject *FieldAsPyList(CField * I)
 
 }
 
-CField *FieldNewCopy(PyMOLGlobals * G, CField * src)
+CField *FieldNewCopy(PyMOLGlobals * G, const CField * src)
 {
   int ok = true;
   OOAlloc(G, CField);

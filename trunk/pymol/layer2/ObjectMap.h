@@ -84,7 +84,7 @@ typedef struct ObjectMapDesc {  /* information for creating a new map */
 
 
 ObjectMap *ObjectMapNew(PyMOLGlobals * G);
-int ObjectMapNewCopy(PyMOLGlobals * G, ObjectMap * src, ObjectMap ** result,
+int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** result,
                      int source_state, int target_state);
 ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
                                           ObjectMapDesc * md, int state, int quiet);

@@ -198,55 +198,92 @@ typedef struct AtomInfoType {
   int customType;
   int priority;
   float b, q, vdw, partialCharge;
-  int formalCharge;
-  int atom;                     /* obsolete?? */
   int selEntry;
   int color;
-  int id;
+  int id;                       // PDB ID
   unsigned int flags;
   int temp1;                    /* kludge fields - to remove */
   int unique_id;                /* introduced in version 0.77 */
   int discrete_state;           /* state+1 for atoms in discrete objects */
   float elec_radius;            /* radius for PB calculations */
   int rank;
-  int atomic_color;             /* what color was this atom originally assigned? */
   int textType;
   int custom;
   int label;
+  int visRep;                   /* bitmask for all reps */
 
   /* be careful not to write at these as (int*) */
 
-  signed char visRep[cRepCnt];
+  signed char formalCharge;     // values typically in range -2..+2
   signed char stereo;           /* for 2D representation */
   signed char mmstereo;           /* from MMStereo */
-  signed char hydrogen;
   signed char cartoon;          /* 0 = default which is auto (use ssType) */
 
+  // boolean flags
   signed char hetatm;
   signed char bonded;
-  signed char chemFlag;
-  signed char geom;
+  signed char chemFlag;         // 0,1,2
+  signed char geom;             // cAtomInfo*
 
   signed char valence;
+
+  // boolean flags
   signed char deleteFlag;
-  signed char updateFlag;
   signed char masked;
-  signed char protekted;
+
+  signed char protekted;        // 0,1,2
 
   signed char protons;          /* atomic number */
+
+  // boolean flags
   signed char hb_donor;
   signed char hb_acceptor;
   signed char has_setting;      /* setting based on unique_id */
+
   ov_word chain;
   Chain alt;
   ResIdent resi;
   SegIdent segi;
   ResName resn;
   AtomName name;
-  ElemName elem;
+  ElemName elem;                // redundant with "protons" ?
+
   SSType ssType;                /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
+
+  // replace with pointer?
   float U11, U22, U33, U12, U13, U23;
   int oldid;
+
+  // methods
+  bool isHydrogen() {
+    return protons == cAN_H;
+  }
+
+  /*
+   * Return true if any representation, which is displayable by this
+   * atom, is shown
+   */
+  bool isVisible() {
+    if(visRep & (
+          // point reps
+          cRepSphereBit | cRepEllipsoidBit | cRepLabelBit |
+          // surface reps
+          cRepSurfaceBit | cRepDotBit | cRepMeshBit |
+          // polymer reps (actually only shown for guide atoms or if
+          // *_trace_atoms=1 or cartoon_ring_finder=4)
+          cRepCartoonBit | cRepRibbonBit)) {
+      return true;
+    } else if(bonded) {
+      // bond reps
+      if (visRep & (cRepCylBit | cRepLineBit))
+        return true;
+    } else {
+      // nonbonded reps
+      if (visRep & (cRepNonbondedSphereBit | cRepNonbondedBit))
+        return true;
+    }
+    return false;
+  }
 } AtomInfoType;
 
 void AtomInfoFree(PyMOLGlobals * G);
@@ -254,7 +291,7 @@ int AtomInfoInit(PyMOLGlobals * G);
 void BondTypeInit(BondType *bt);
 void BondTypeInit2(BondType *bt, int i1, int i2, int order);
 void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai);
-void AtomInfoCopy(PyMOLGlobals * G, AtomInfoType * src, AtomInfoType * dst);
+void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst, int copy_properties=true);
 int AtomInfoReserveUniqueID(PyMOLGlobals * G, int unique_id);
 int AtomInfoIsUniqueIDActive(PyMOLGlobals * G, int unique_id);
 int AtomInfoGetNewUniqueID(PyMOLGlobals * G);
@@ -270,7 +307,7 @@ int AtomInfoGetSetting_f(PyMOLGlobals * G, AtomInfoType * ai, int setting_id,
 int AtomInfoGetSetting_color(PyMOLGlobals * G, AtomInfoType * ai, int setting_id,
                              int current, int *effective);
 
-void AtomInfoBondCopy(PyMOLGlobals * G, BondType * src, BondType * dst);
+void AtomInfoBondCopy(PyMOLGlobals * G, const BondType * src, BondType * dst);
 
 int AtomInfoCheckBondSetting(PyMOLGlobals * G, BondType * bi, int setting_id);
 int AtomInfoGetBondSetting_b(PyMOLGlobals * G, BondType * ai, int setting_id, int current,
@@ -287,7 +324,6 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I);
 void AtomInfoFreeSortedIndexes(PyMOLGlobals * G, int **index, int **outdex);
 void AtomInfoPrimeColors(PyMOLGlobals * G);
 void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1);
-int AtomInfoGetColorWithElement(PyMOLGlobals * G, AtomInfoType * at1, char *n);
 int AtomInfoGetColor(PyMOLGlobals * G, AtomInfoType * at1);
 int AtomInfoGetExpectedValence(PyMOLGlobals * G, AtomInfoType * I);
 int AtomInfoIsFreeCation(PyMOLGlobals * G, AtomInfoType * I);

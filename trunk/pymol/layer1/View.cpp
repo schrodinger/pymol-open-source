@@ -313,7 +313,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
   }
 }
 
-void ViewElemCopy(PyMOLGlobals * G, CViewElem * src, CViewElem * dst)
+void ViewElemCopy(PyMOLGlobals * G, const CViewElem * src, CViewElem * dst)
 {
   if(dst->scene_flag && dst->scene_name) {
     OVLexicon_DecRef(G->Lexicon, dst->scene_name);

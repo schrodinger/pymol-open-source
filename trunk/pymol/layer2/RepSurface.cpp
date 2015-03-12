@@ -3445,7 +3445,7 @@ int RepSurfaceSameVis(RepSurface * I, CoordSet * cs)
   lv = I->LastVisib;
 
   for(a = 0; a < cs->NIndex; a++) {
-    if(*(lv++) != (ai + cs->IdxToAtm[a])->visRep[cRepSurface]) {
+    if(*(lv++) != GET_BIT((ai + cs->IdxToAtm[a])->visRep,cRepSurface)) {
       same = false;
       break;
     }
@@ -3461,26 +3461,25 @@ void RepSurfaceInvalidate(struct Rep *I, struct CoordSet *cs, int level){
 
 int RepSurfaceSameColor(RepSurface * I, CoordSet * cs)
 {
-  int same = true;
-  int *lc, *cc;
+  int *lc;
   int a;
   AtomInfoType *ai;
 
-  same = !I->ColorInvalidated;
-  if (same){
-    ai = cs->Obj->AtomInfo;
+  if(I->ColorInvalidated)
+    return false;
+
+  {
     lc = I->LastColor;
-    cc = cs->Color;
     for(a = 0; a < cs->NIndex; a++) {
-      if((ai + cs->IdxToAtm[a])->visRep[cRepSurface]) {
-	if(*(lc++) != *(cc++)) {
-	  same = false;
-	  break;
-	}
+      ai = cs->getAtomInfo(a);
+      if(ai->visRep & cRepSurfaceBit) {
+        if(*(lc++) != ai->color) {
+          return false;
+        }
       }
     }
   }
-  return (same);
+  return true;
 }
 
 void RepSurfaceColor(RepSurface * I, CoordSet * cs)
@@ -3490,7 +3489,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   int a, i0, i, j, c1;
   float *v0, *vc, *c0, *va;
   float *n0;
-  int *vi, *lc, *cc;
+  int *vi, *lc;
   char *lv;
   int first_color;
   float *v_pos, v_above[3];
@@ -3562,11 +3561,10 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
     I->LastColor = Alloc(int, cs->NIndex);
   lv = I->LastVisib;
   lc = I->LastColor;
-  cc = cs->Color;
-  ai2 = obj->AtomInfo;
   for(a = 0; a < cs->NIndex; a++) {
-    *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSurface] ? 1 : 0;
-    *(lc++) = *(cc++);
+    ai2 = cs->getAtomInfo(a);
+    *(lv++) = GET_BIT(ai2->visRep, cRepSurface);
+    *(lc++) = ai2->color;
   }
 
   if(I->N) {
@@ -3626,8 +3624,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
       int *ap = present;
       for(a = 0; a < cs->NIndex; a++) {
         ai1 = obj->AtomInfo + cs->IdxToAtm[a];
-        if(ai1->visRep[cRepSurface] &&
-           (inclH || (!ai1->hydrogen)) &&
+        if((ai1->visRep & cRepSurfaceBit) &&
+           (inclH || (!ai1->isHydrogen())) &&
            ((!cullByFlag) || (!(ai1->flags & (cAtomFlag_ignore | cAtomFlag_exfoliate)))))
           *ap = 2;
         else
@@ -3959,7 +3957,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
           while(j >= 0) {
 	    atm = cs->IdxToAtm[j];
             ai2 = obj->AtomInfo + atm;
-            if((inclH || (!ai2->hydrogen)) &&
+            if((inclH || (!ai2->isHydrogen())) &&
                ((!cullByFlag) || (!(ai2->flags & cAtomFlag_ignore)))) {
               dist = (float) diff3f(v0, cs->Coord + j * 3) - ai2->vdw;
               if(color_smoothing){
@@ -4013,7 +4011,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
             c1 = at_surface_color;
             distDiff = MAXFLOAT;
           } else {
-            c1 = *(cs->Color + i0);
+            c1 = ai0->color;
           }
 
           if(I->oneColorFlag) {
@@ -4027,8 +4025,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
             *vi = 1;
           else {
             ai2 = obj->AtomInfo + cs->IdxToAtm[i0];
-            if(ai2->visRep[cRepSurface] &&
-               (inclH || (!ai2->hydrogen)) &&
+            if((ai2->visRep & cRepSurfaceBit) &&
+               (inclH || (!ai2->isHydrogen())) &&
                ((!cullByFlag) || (!(ai2->flags &
                                     (cAtomFlag_ignore | cAtomFlag_exfoliate)))))
               *vi = 1;
@@ -4117,7 +4115,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
             }
             weight2 = 2.f - weight;
             c0 = ColorGet(G, c1);
-            c2 = ColorGet(G, *(cs->Color + pi2));
+            c2 = ColorGet(G, pai2->color);
             *(rc++) = c1;
             *(vc++) = ((weight*(*(c0++))) + (weight2*(*(c2++)))) / 2.f;
             *(vc++) = ((weight*(*(c0++))) + (weight2*(*(c2++)))) / 2.f;
@@ -5162,16 +5160,15 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
                       || (surface_mode == cRepSurface_vis_heavy_only));
     int visFlag = false;
 
-    if(obj->RepVisCache[cRepSurface]) {
+    if(GET_BIT(obj->RepVisCache,cRepSurface)) {
       register int *idx_to_atm = cs->IdxToAtm;
       register AtomInfoType *obj_AtomInfo = obj->AtomInfo;
       register int a, cs_NIndex = cs->NIndex;
       for(a = 0; a < cs_NIndex; a++) {
         register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
-        if(ai1->visRep[cRepSurface] &&
-           (inclH || (!ai1->hydrogen)) &&
-           ((!cullByFlag) || (!(ai1->flags &
-                                (cAtomFlag_exfoliate | cAtomFlag_ignore))))) {
+        if((ai1->visRep & cRepSurfaceBit) &&
+           (inclH || (!ai1->isHydrogen())) &&
+           ((!cullByFlag) || (!(ai1->flags & (cAtomFlag_exfoliate | cAtomFlag_ignore))))) {
           visFlag = true;
           break;
         }
@@ -5323,8 +5320,8 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
         register int a, cs_NIndex = cs->NIndex;
         for(a = 0; a < cs_NIndex; a++) {
           register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
-          if(ai1->visRep[cRepSurface] &&
-             (inclH || (!ai1->hydrogen)) &&
+          if((ai1->visRep & cRepSurfaceBit) &&
+             (inclH || (!ai1->isHydrogen())) &&
              ((!cullByFlag) || (!(ai1->flags &
                                   (cAtomFlag_exfoliate | cAtomFlag_ignore)))))
             surface_flag = true;
@@ -5397,8 +5394,8 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
             register int a, cs_NIndex = cs->NIndex;
             for(a = 0; a < cs_NIndex; a++) {
               register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
-              if(ai1->visRep[cRepSurface] &&
-                 (inclH || (!ai1->hydrogen)) &&
+              if((ai1->visRep & cRepSurfaceBit) &&
+                 (inclH || (!ai1->isHydrogen())) &&
                  ((!cullByFlag) || (!(ai1->flags &
                                       (cAtomFlag_ignore | cAtomFlag_exfoliate)))))
                 *ap = 2;
@@ -5423,7 +5420,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
             for(a = 0; ok && a < cs->NIndex; a++){
               if(!present_vla[a]) {
                 AtomInfoType *ai1 = obj->AtomInfo + cs->IdxToAtm[a];
-                if((inclH || (!ai1->hydrogen)) &&
+                if((inclH || (!ai1->isHydrogen())) &&
                    ((!cullByFlag) || 
                     !(ai1->flags & cAtomFlag_ignore))) {
                   float *v0 = cs->Coord + 3 * a;

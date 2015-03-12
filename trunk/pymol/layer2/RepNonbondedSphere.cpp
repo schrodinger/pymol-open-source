@@ -434,17 +434,12 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     active = Alloc(int, cs->NIndex);
   CHECKOK(ok, active);
 
-  if(obj->RepVisCache[cRepNonbondedSphere])
+  if((obj->RepVisCache & cRepNonbondedSphereBit))
     for(a = 0; a < cs->NIndex; a++) {
       ai = obj->AtomInfo + cs->IdxToAtm[a];
-      active[a] = (!ai->bonded) && (ai->visRep[cRepNonbondedSphere]);
+      active[a] = (!ai->bonded && (ai->visRep & cRepNonbondedSphereBit));
       if(active[a]) {
-        if(ai->masked)
-          active[a] = -1;
-        else
-          active[a] = 1;
-      }
-      if(active[a]) {
+        active[a] = (ai->masked) ? -1 : 1;
         nSphere++;
       }
     }
@@ -497,7 +492,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
 	variable_alpha = true;
       
       I->NC++;
-      c1 = *(cs->Color + a);
+      c1 = ai->color;
       v0 = cs->Coord + 3 * a;
       if(ColorCheckRamped(G, c1)) {
 	ColorGetRamped(G, c1, v0, tmpColor, state);
@@ -539,7 +534,7 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
     if(active[a]) {
       float at_transp;
       ai = obj->AtomInfo + cs->IdxToAtm[a];
-      c1 = *(cs->Color + a);
+      c1 = ai->color;
       v0 = cs->Coord + 3 * a;
       vc = ColorGet(G, c1);
       if(AtomInfoGetSetting_f(G, ai, cSetting_nonbonded_transparency, transp, &at_transp))

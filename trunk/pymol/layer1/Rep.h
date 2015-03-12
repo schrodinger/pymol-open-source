@@ -38,38 +38,94 @@ Z* -------------------------------------------------------------------
 /* WARNING: don't change these -- you'll break sessions!
    (you can add to them however, I think) */
 
-#define cRepCyl        0
-#define cRepSphere     1
-#define cRepSurface    2
-#define cRepLabel      3
-#define cRepNonbondedSphere 4
-#define cRepCartoon    5
-#define cRepRibbon     6
-#define cRepLine       7
-#define cRepMesh       8
-#define cRepDot        9
-#define cRepDash       10
-#define cRepNonbonded  11
-#define cRepCell       12
-#define cRepCGO        13
-#define cRepCallback   14
-#define cRepExtent     15
-#define cRepSlice      16
-#define cRepAngle      17
-#define cRepDihedral   18
-#define cRepEllipsoid  19
-#define cRepVolume     20
+enum {
+  cRepCyl,             // 0
+  cRepSphere,          // 1
+  cRepSurface,         // 2
+  cRepLabel,           // 3
+  cRepNonbondedSphere, // 4
+  cRepCartoon,         // 5
+  cRepRibbon,          // 6
+  cRepLine,            // 7
+  cRepMesh,            // 8
+  cRepDot,             // 9
+  cRepDash,            // 10
+  cRepNonbonded,       // 11
+  cRepCell,            // 12
+  cRepCGO,             // 13
+  cRepCallback,        // 14
+  cRepExtent,          // 15
+  cRepSlice,           // 16
+  cRepAngle,           // 17
+  cRepDihedral,        // 18
+  cRepEllipsoid,       // 19
+  cRepVolume,          // 20
+  // rep count
+  cRepCnt
+};
+
+#define cRepCylBit             (1 << 0)
+#define cRepSphereBit          (1 << 1)
+#define cRepSurfaceBit         (1 << 2)
+#define cRepLabelBit           (1 << 3)
+#define cRepNonbondedSphereBit (1 << 4)
+#define cRepCartoonBit         (1 << 5)
+#define cRepRibbonBit          (1 << 6)
+#define cRepLineBit            (1 << 7)
+#define cRepMeshBit            (1 << 8)
+#define cRepDotBit             (1 << 9)
+#define cRepDashBit            (1 << 10)
+#define cRepNonbondedBit       (1 << 11)
+#define cRepCellBit            (1 << 12)
+#define cRepCGOBit             (1 << 13)
+#define cRepCallbackBit        (1 << 14)
+#define cRepExtentBit          (1 << 15)
+#define cRepSliceBit           (1 << 16)
+#define cRepAngleBit           (1 << 17)
+#define cRepDihedralBit        (1 << 18)
+#define cRepEllipsoidBit       (1 << 19)
+#define cRepVolumeBit          (1 << 20)
+
+#define cRepCylBit             (1 << 0)
+#define cRepSphereBit          (1 << 1)
+#define cRepSurfaceBit         (1 << 2)
+#define cRepLabelBit           (1 << 3)
+#define cRepNonbondedSphereBit (1 << 4)
+#define cRepCartoonBit         (1 << 5)
+#define cRepRibbonBit          (1 << 6)
+#define cRepLineBit            (1 << 7)
+#define cRepMeshBit            (1 << 8)
+#define cRepDotBit             (1 << 9)
+#define cRepDashBit            (1 << 10)
+#define cRepNonbondedBit       (1 << 11)
+#define cRepCellBit            (1 << 12)
+#define cRepCGOBit             (1 << 13)
+#define cRepCallbackBit        (1 << 14)
+#define cRepExtentBit          (1 << 15)
+#define cRepSliceBit           (1 << 16)
+#define cRepAngleBit           (1 << 17)
+#define cRepDihedralBit        (1 << 18)
+#define cRepEllipsoidBit       (1 << 19)
+#define cRepVolumeBit          (1 << 20)
 
 /* Add other reps here.  Don't forget to
- * bump the cRepCnt
  * update modules/constants.py::repres{}
  * update modules/constants.py::fb_module, if needed
  * update modules/viewing.py::rep_list
  * create your RepXYZ.h and RepXYZ.c
  */
 
-#define cRepCnt        21
+#define cRepBitmask        ((1 << cRepCnt) - 1)
 
+// all reps which can be shown for atoms
+const int cRepsAtomMask = (cRepCylBit | cRepSphereBit | cRepSurfaceBit | \
+    cRepLabelBit | cRepNonbondedSphereBit | cRepCartoonBit | cRepRibbonBit | \
+    cRepLineBit | cRepMeshBit | cRepDotBit | cRepNonbondedBit | cRepEllipsoidBit);
+
+// all reps which can be shown for objects
+const int cRepsObjectMask = (cRepSurfaceBit | cRepMeshBit | cRepDotBit | \
+    cRepCellBit | cRepCGOBit | cRepCallbackBit | cRepExtentBit | cRepSliceBit | \
+    cRepAngleBit | cRepDihedralBit | cRepVolumeBit | cRepDashBit);
 
 /* Hierarchical invalidation scheme - 
  * each higher level event implies all of the lower levels 
@@ -148,5 +204,7 @@ typedef struct Rep {
 void RepInit(PyMOLGlobals * G, Rep * I);
 void RepPurge(Rep * I);
 void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level);
+
+int RepGetAutoShowMask(PyMOLGlobals * G);
 
 #endif

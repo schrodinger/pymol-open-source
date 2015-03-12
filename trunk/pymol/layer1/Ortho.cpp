@@ -631,7 +631,7 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
       if(I->BusyStatus[3]) {
         busyValue = (I->BusyStatus[2] * 1.0F / I->BusyStatus[3]);
       }
-      MacPyMOLSetProgress(busyValue);
+      MacPyMOL_SetProgress(busyValue);
       /* END PROPRIETARY CODE SEGMENT */
 #else
       if(G->HaveGUI && G->ValidContext) {
@@ -1044,10 +1044,9 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
           OrthoRemoveSplash(G);
         } else {
           if(mod & cOrthoSHIFT)
-            SettingSet(G, cSetting_overlay,
-                       (float) (!(SettingGetGlobal_i(G, cSetting_overlay))));
+            SettingSetGlobal_i(G, cSetting_overlay, !(SettingGetGlobal_i(G, cSetting_overlay)));
           else
-            SettingSet(G, cSetting_text, (float) (!(SettingGetGlobal_b(G, cSetting_text))));
+            SettingSetGlobal_b(G, cSetting_text,    !(SettingGetGlobal_b(G, cSetting_text   )));
         }
       }
       break;

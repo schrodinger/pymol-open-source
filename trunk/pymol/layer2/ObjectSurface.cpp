@@ -275,7 +275,7 @@ static void ObjectSurfaceFree(ObjectSurface * I)
   OOFreeP(I);
 }
 
-void ObjectSurfaceDump(ObjectSurface * I, char *fname, int state)
+void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state)
 {
   float *v;
   int *n;
@@ -517,7 +517,7 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
       if(oms) {
         if(ms->RefreshFlag || ms->ResurfaceFlag) {
           ms->Crystal = *(oms->Symmetry->Crystal);
-          if(I->Obj.RepVis[cRepCell]) {
+          if((I->Obj.visRep & cRepCellBit)) {
             if(ms->UnitCellCGO)
               CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
@@ -532,7 +532,7 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
           ms->RefreshFlag = false;
         }
       }
-      if(map && ms && oms && ms->N && ms->V && I->Obj.RepVis[cRepSurface]) {
+      if(map && ms && oms && ms->N && ms->V && (I->Obj.visRep & cRepSurfaceBit)) {
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag = false;
           ms->RecolorFlag = true;
@@ -740,9 +740,10 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
         v = ms->V;
         n = ms->N;
         if(ray) {
-          if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell]))
+          if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)){
             CGORenderRay(ms->UnitCellCGO, ray, ColorGet(G, I->Obj.Color),
                          I->Obj.Setting, NULL);
+          }
 
           ray->transparentf(1.0F - alpha);
           ms->Radius = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_mesh_radius);
@@ -751,7 +752,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
               SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_width) / 2.0F;
           }
 
-          if(n && v && I->Obj.RepVis[cRepSurface]) {
+          if(n && v && (I->Obj.visRep & cRepSurfaceBit)) {
             float cc[3];
             float colA[3], colB[3], colC[3];
             ColorGetEncoded(G, ms->OneColor, cc);
@@ -906,7 +907,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 		}
 	      }
 
-              if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell])){
+              if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)){
 		if (generate_shader_cgo){
 		  CGOAppendNoStop(ms->shaderCGO, ms->UnitCellCGO);
 		  CGOFree(ms->UnitCellCGO);
@@ -931,8 +932,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 		glColor4f(col[0], col[1], col[2], alpha);
 	      }
 
-                if(n && v && I->Obj.RepVis[cRepSurface]) {
-
+                if(n && v && (I->Obj.visRep & cRepSurfaceBit)) {
                   if((ms->Mode > 1) && (alpha != 1.0)) {        /* transparent */
 
                     if(t_mode) {        /* high quality (sorted) transparency? */

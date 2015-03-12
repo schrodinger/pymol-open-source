@@ -22,7 +22,7 @@ class Pair_fit(Wizard):
         self.status = 0 # 0 no atoms selections, 1 atom selected
         self.message = None
 
-        self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
+        self.selection_mode = cmd.get_setting_int("mouse_selection_mode")
         cmd.set("mouse_selection_mode",0) # set selection mode to atomic
         cmd.deselect() # disable the active selection (if any)
         

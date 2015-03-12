@@ -40,18 +40,18 @@ ARGUMENTS
             raise QuietException
         else:
             _self.fragment(fragment)
-            if _self.get_setting_legacy("auto_remove_hydrogens"):
+            if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and %s)"%fragment)
     else:
         _self.fragment(fragment,tmp_editor)
         if _self.count_atoms("((%s) and elem h)"%selection,quiet=1):
             _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",1)
-            if _self.get_setting_legacy("auto_remove_hydrogens"):
+            if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
         else:
             _self.remove("(%s and id %d)"%(tmp_editor,hydrogen))
             _self.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",1)
-            if _self.get_setting_legacy("auto_remove_hydrogens"):
+            if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
         _self.delete(tmp_editor)
 
@@ -60,11 +60,11 @@ def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
         _self.fragment(fragment,tmp_editor)
         if _self.count_atoms("((%s) and elem h)"%selection,quiet=1):
             _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",3)
-            if _self.get_setting_legacy("auto_remove_hydrogens"):
+            if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
         else:
             _self.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",3)
-            if _self.get_setting_legacy("auto_remove_hydrogens"):
+            if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
         _self.delete(tmp_editor)
 
@@ -104,7 +104,7 @@ ARGUMENTS
     center = int(center)
 
     if hydro<0:
-        hydro = not int(_self.get_setting_legacy("auto_remove_hydrogens"))
+        hydro = not int(_self.get_setting_boolean("auto_remove_hydrogens"))
     if (selection not in _self.get_names('all')):
         if object == "":
             object = amino_acid
@@ -133,7 +133,7 @@ ARGUMENTS
         raise QuietException
     else:
         if ss<0:
-            ss = int(_self.get_setting_legacy("secondary_structure"))
+            ss = _self.get_setting_int("secondary_structure")
         if ss:
             if ss==1: # helix
                 phi=-57.0

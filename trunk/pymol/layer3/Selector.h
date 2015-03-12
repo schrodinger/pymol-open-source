@@ -26,12 +26,14 @@ Z* -------------------------------------------------------------------
 #include"OVOneToAny.h"
 #include"Match.h"
 
+#include "AtomIterators.h"
+
 #define cSelectionAll 0
 #define cSelectionNone 1
 
 int SelectorInit(PyMOLGlobals * G);
 int SelectorInitImpl(PyMOLGlobals * G, CSelector **I, short init2);
-int SelectorCreate(PyMOLGlobals * G, char *name, char *sele, ObjectMolecule * obj,
+int SelectorCreate(PyMOLGlobals * G, const char *name, const char *sele, ObjectMolecule * obj,
                    int quiet, Multipick * mp);
 int SelectorCreateWithStateDomain(PyMOLGlobals * G, char *name, char *sele,
                                   ObjectMolecule * obj, int quiet, Multipick * mp,
@@ -62,16 +64,15 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
 #define cSelectorUpdateTableCurrentState -2
 #define cSelectorUpdateTableEffectiveStates -3
 
-int SelectorIndexByName(PyMOLGlobals * G, char *sele);
+int SelectorIndexByName(PyMOLGlobals * G, const char *sele);
 char *SelectorGetNameFromIndex(PyMOLGlobals * G, int index);
 void SelectorFree(PyMOLGlobals * G);
 void SelectorFreeImpl(PyMOLGlobals * G, CSelector *I, short init2);
-void SelectorDelete(PyMOLGlobals * G, char *sele);
-void SelectorFreeTmp(PyMOLGlobals * G, char *name);
-int SelectorGetTmp(PyMOLGlobals * G, char *input, char *store);
-int SelectorGetTmpQuiet(PyMOLGlobals * G, char *input, char *store);
-int SelectorGetTmpImpl(PyMOLGlobals * G, char *input, char *store, int quiet);
-int SelectorCheckTmp(PyMOLGlobals * G, char *name);
+void SelectorDelete(PyMOLGlobals * G, const char *sele);
+void SelectorFreeTmp(PyMOLGlobals * G, const char *name);
+int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
+int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
+int SelectorCheckTmp(PyMOLGlobals * G, const char *name);
 int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int state,
                    int conectFlag, PDBInfoRec * pdb_info, int *counter, double *ref,
                    ObjectMolecule * single_object);
@@ -199,91 +200,6 @@ typedef struct {
   int next;
 } MemberType;
 
-#ifndef _PYMOL_INLINE
-
-int SelectorIsMemberSlow(PyMOLGlobals * G, int start, int sele);
-#define SelectorIsMember SelectorIsMemberSlow
-
-#else
-
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _PYMOL_WIN32
-#define __inline__ __inline
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
-
-__inline__ static int SelectorIsMember(PyMOLGlobals * G, int s, int sele)
-{
-  /* this is the most heavily called routine in interactive PyMOL */
-  register int s_reg;
-  if((s_reg = s) && (sele > 1)) {
-    /* the first entry of a Selector is the Member (list) pointer, so
-     * we access it via a ptr, and cast it to the MemberType */
-    register MemberType *member = *((MemberType **) (G->Selector));
-    register int sele_reg = sele;
-    register MemberType *mem = member + s_reg;
-    register int test_sele;
-    do {
-      test_sele = mem->selection;
-      s_reg = mem->next;
-      if(test_sele == sele_reg) {
-        return mem->tag;
-      }
-      mem = member + s_reg;
-    } while(s_reg);
-    return false;
-  } else if(!sele)
-    return true;                /* "all" is selection number 0, unordered */
-  else
-    return false;               /* no atom is a member of none (1), and negative selections don't exist */
-}
-
-#endif
-
-/*
- * State specific iterator over an atom selection. Similar to cmd.iterate_state.
- * If state is -1 then iterate over all states.
- *
- * SeleCoordIterator iter(G, sele, state);
- * while(iter.next()) {
- *   dump3f(iter.getCoord(), "coords");
- * }
- */
-class SeleCoordIterator {
-  PyMOLGlobals * G;
-  int sele;     // selection
-  int a;        // index in selection
-  int state;    // current state
-  int statearg; // state argument, can be -1
-  int statemax; // largest state in selection
-  int at;       // atom index in object molecule
-  int idx;      // atom index in coordset
-
-public:
-  ObjectMolecule * obj;
-  CoordSet * cs;
-
-  SeleCoordIterator(PyMOLGlobals * G_, int sele_, int state_) : G(G_), sele(sele_) {
-    statearg = state = state_;
-    reset();
-  };
-
-  // resets the internal state to start over
-  void reset();
-
-  // advance the internal state to the next atom, return false if there is no
-  // next atom
-  bool next();
-
-  AtomInfoType * getAtomInfo() {
-    return obj->AtomInfo + at;
-  };
-
-  float * getCoord() {
-    return cs->Coord + (3 * idx);
-  };
-};
+int SelectorIsMember(PyMOLGlobals * G, int start, int sele);
 
 #endif

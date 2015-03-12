@@ -104,7 +104,7 @@ CCrystal *CrystalNew(PyMOLGlobals * G)
   return (I);
 }
 
-CCrystal *CrystalCopy(CCrystal * other)
+CCrystal *CrystalCopy(const CCrystal * other)
 {
   OOAlloc(other->G, CCrystal);
   UtilCopyMem(I, other, sizeof(CCrystal));

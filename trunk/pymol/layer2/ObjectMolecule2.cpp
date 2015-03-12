@@ -253,9 +253,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
   }
   {
     /* match existing properties of the old atom */
-    int auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
-    int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
-    int auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
     AtomInfoType *ai = atInfo;
     ai->resv = AtomResvFromResi(resi);
     ai->hetatm = hetatm;
@@ -268,9 +265,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
     strcpy(ai->resn, resn);
     strcpy(ai->name, name);
     strcpy(ai->elem, elem);
-    ai->visRep[cRepLine] = auto_show_lines;
-    ai->visRep[cRepNonbonded] = auto_show_nonbonded;
-    ai->visRep[cRepSphere] = auto_show_spheres;
     ai->id = -1;
     ai->rank = -1;
     if(vdw >= 0.0F)
@@ -278,14 +272,10 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
     else
       ai->vdw = 1.0F;
     if(label[0]) {
-      OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon, label);
-      if(OVreturn_IS_OK(ret)) {
-        ai->label = ret.word;
-        ai->visRep[cRepLabel] = true;
-        ai->visRep[cRepLine] = false;
-        ai->visRep[cRepNonbonded] = false;
-        ai->visRep[cRepSphere] = false;
-      }
+      ai->label = LexIdx(G, label);
+      ai->visRep = cRepLabelBit;
+    } else {
+      ai->visRep = RepGetAutoShowMask(G);
     }
     if(color < 0) {
       AtomInfoAssignColors(I->Obj.G, ai);
@@ -1953,9 +1943,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int nBond = 0;
   int b1, b2, nReal, maxAt;
   CSymmetry *symmetry = NULL;
-  int auto_show_lines = SettingGetGlobal_b(G, cSetting_auto_show_lines);
-  int auto_show_nonbonded = SettingGetGlobal_b(G, cSetting_auto_show_nonbonded);
-  int auto_show_spheres = SettingGetGlobal_b(G, cSetting_auto_show_spheres);
+  int auto_show = RepGetAutoShowMask(G);
   int reformat_names = SettingGetGlobal_i(G, cSetting_pdb_reformat_names_mode);
   int truncate_resn = SettingGetGlobal_b(G, cSetting_pdb_truncate_residue_name);
   char *tags_in = SettingGetGlobal_s(G, cSetting_pdb_echo_tags), *tag_start[PDB_MAX_TAGS];
@@ -2845,12 +2833,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           char ctmp = cc[0];
           cc[0] = cc[1];
           cc[1] = ctmp;
-          if(!sscanf(cc, "%d", &ai->formalCharge))
+          if(!sscanf(cc, "%hhi", &ai->formalCharge))
             ai->formalCharge = 0;
-        }
-
-        for(c = 0; c < cRepCnt; c++) {
-          ai->visRep[c] = false;
         }
 
         /* end normal PDB */
@@ -2877,9 +2861,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           ai->elec_radius = 0.0F;
       }
 
-      ai->visRep[cRepLine] = auto_show_lines;   /* show lines by default */
-      ai->visRep[cRepNonbonded] = auto_show_nonbonded;  /* show lines by default */
-      ai->visRep[cRepSphere] = auto_show_spheres;
+      ai->visRep = auto_show;
 
       if(AFlag == 1)
         ai->hetatm = 0;
@@ -3928,7 +3910,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
 
                         /* workaround for hydrogens and sulfurs... */
 
-                        if(ai1->hydrogen || ai2->hydrogen)
+                        if(ai1->isHydrogen() || ai2->isHydrogen())
                           cutoff = cutoff_h;
                         else if(((ai1->elem[0] == 'S') && (!ai1->elem[1])) ||
                                 ((ai2->elem[0] == 'S') && (!ai2->elem[1])))
@@ -3940,7 +3922,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
 
                         if((dst <= cutoff) && /* too close to be non-covalent, AND*/ 
 			  
-                           (!(ai1->hydrogen && ai2->hydrogen)) && /* not both hydrogen (what about H2?), AND */
+                           (!(ai1->isHydrogen() && ai2->isHydrogen())) && /* not both hydrogen (what about H2?), AND */
 
                            (water_flag ||  /* known to be a water */
                             (!cs->TmpBond) || /* or no connectivity information present in file */

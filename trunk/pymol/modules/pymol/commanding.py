@@ -147,15 +147,16 @@ SEE ALSO
         cmd=_self
         if hasattr(pymol,"_log_file"):
             if pymol._log_file!=None:
-                mode = _self.get_setting_legacy("logging")
+                mode = _self.get_setting_int("logging")
                 if mode:
                     if mode==1:
+                        if not text and alt_text:
+                            text = '/' + alt_text
                         pymol._log_file.write(text)
                     elif mode==2:
-                        if alt_text!=None:
-                            pymol._log_file.write(alt_text)
-                        else:
-                            pymol._log_file.write("cmd.do('''%s''')\n"%string.strip(text))
+                        if not alt_text:
+                            alt_text = "cmd.do('''%s''')\n" % text.strip()
+                        pymol._log_file.write(alt_text)
                     pymol._log_file.flush()
 
     def log_close(_self=cmd):
@@ -239,7 +240,7 @@ USAGE
             if os.path.exists(png_path):
                 _self.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
         else:
-            if _self.get_setting_legacy("internal_feedback")>0.1:
+            if _self.get_setting_int("internal_feedback") > 0:
                 _self.set("text","1",quiet=1)
             print
             try:
@@ -364,7 +365,7 @@ USAGE (PYTHON)
             cmmd_list = [ commands ]
         n_cmmd = len(cmmd_list)
         if n_cmmd>1: # if processing a list of commands, defer updates
-            defer = _self.get_setting_legacy("defer_updates")
+            defer = _self.get_setting_int("defer_updates")
             _self.set('defer_updates',1)
         for cmmd in cmmd_list:
             lst = string.split(string.replace(cmmd,chr(13),chr(10)),chr(10))
@@ -507,6 +508,32 @@ SEE ALSO
         return function
 
         # for aliasing compound commands to a single keyword
+
+    def extendaa(*arg, **kw):
+        '''
+DESCRIPTION
+
+    API-only function to decorate a function as a PyMOL command with
+    argument auto-completion.
+
+EXAMPLE
+
+    @cmd.extendaa(cmd.auto_arg[0]['zoom'])
+    def zoom_organic(selection='*'):
+        cmd.zoom('organic & (%s)' % selection)
+        '''
+        _self = kw.get('_self', cmd)
+        auto_arg = _self.auto_arg
+        def wrapper(func):
+            name = func.__name__
+            _self.extend(name, func)
+            for (i, aa) in enumerate(arg):
+                if i == len(auto_arg):
+                    auto_arg.append({})
+                if aa is not None:
+                    auto_arg[i][name] = aa
+            return func
+        return wrapper
 
     def alias(name, command, _self=cmd): 
         '''

@@ -150,7 +150,7 @@ class Normal(PMGSkin):
         self.cmd.set("session_file",session_file)
 
     def confirm_quit(self,e=None):
-        if int(self.cmd.get_setting_legacy("session_changed")):
+        if self.cmd.get_setting_boolean("session_changed"):
             session_file = self.get_current_session_file()
             if session_file != '':
                 message = "Save the current session '%s'?"%os.path.split(session_file)[1]
@@ -444,7 +444,7 @@ class Normal(PMGSkin):
 
 Get the list of commands by hitting <TAB>
 
-Get the list of arguments for one command with a questionmark:
+Get the list of arguments for one command with a question mark:
 PyMOL> color ?
 
 Read the online help for a command with "help":
@@ -2425,7 +2425,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.menuBar.addmenuitem('Display', 'checkbutton',
                                  'Disable perspective.',
                                  label='Orthoscopic View',
-                                variable = self.setting.ortho)
+                                variable = self.setting.orthoscopic)
 
 
         self.menuBar.addmenuitem('Display', 'checkbutton',
@@ -2458,12 +2458,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                  label='Specular Reflections',
                                 variable = self.setting.specular,
                                 onvalue=1.0, offvalue=0.0,
-                                )
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Use Display Lists.',
-                                 label='Use Display Lists',
-                                variable = self.setting.use_display_lists,
                                 )
 
         self.menuBar.addmenuitem('Display', 'checkbutton',
@@ -3178,6 +3172,18 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                          label='Append',
                                          command = lambda s=self: s.cmd.scene('new','store'))
 
+        self.menuBar.addcascademenu('Scene', 'SceneAppend', label='Append...')
+        addmenuitem('SceneAppend', 'command', label='Camera',
+            command = lambda: self.cmd.scene('new', 'store', view=1, color=0, rep=0))
+        addmenuitem('SceneAppend', 'command', label='Color',
+            command = lambda: self.cmd.scene('new', 'store', view=0, color=1, rep=0))
+        addmenuitem('SceneAppend', 'command', label='Color & Camera',
+            command = lambda: self.cmd.scene('new', 'store', view=1, color=1, rep=0))
+        addmenuitem('SceneAppend', 'command', label='Reps',
+            command = lambda: self.cmd.scene('new', 'store', view=0, color=0, rep=1))
+        addmenuitem('SceneAppend', 'command', label='Reps & Color',
+            command = lambda: self.cmd.scene('new', 'store', view=0, color=1, rep=1))
+
         self.menuBar.addmenuitem('Scene', 'command', 'Insert Before',
                                          label='Insert (before)',
                                          command = lambda s=self: s.cmd.scene('','insert_before'))
@@ -3320,10 +3326,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing',
                                          label='2 Button Viewing',
                                          command = lambda s=self: s.cmd.config_mouse('two_button'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Lights',
-                                         label='2 Button Lights',
-                                         command = lambda s=self: s.cmd.config_mouse('two_button_lights'))
 
         self.menuBar.addmenuitem('Mouse', 'command', '1 Button Viewing Mode',
                                          label='1 Button Viewing Mode',

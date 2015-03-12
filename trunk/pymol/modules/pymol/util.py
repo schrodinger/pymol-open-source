@@ -563,8 +563,6 @@ def modernize_rendering(mode,_self=cmd):
     """
     cmd=_self
     
-    cmd.set("use_display_lists",0)
-    cmd.set("cylinder_shader_ff_workaround", 1)
     cmd.set("max_ups",0)
 
     enable_all_shaders(cmd)
@@ -878,9 +876,9 @@ def ray_shadows(mode,_self=cmd):
     gamma_scale = 1/1.3
     ambient_scale = 1.16
     if mode=='none':
-        cmd.set('ray_shadows',0)
+        cmd.set('ray_shadow',0)
     else:
-        cmd.set('ray_shadows',1)
+        cmd.set('ray_shadow',1)
     if mode=='light': 
         cmd.set('light_count',2)
         cmd.set("light","[-0.4,-0.4,-1.0]")

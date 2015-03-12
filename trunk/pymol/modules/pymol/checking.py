@@ -9,7 +9,7 @@ def _raising(code=-1,_self=cmd):
     # WARNING: internal routine, subject to change
     if isinstance(code, types.IntType):
         if code<0:
-            return _self.get_setting_legacy("raise_exceptions")
+            return _self.get_setting_boolean("raise_exceptions")
     return 0
 
 def is_string(obj):

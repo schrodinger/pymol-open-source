@@ -1112,7 +1112,7 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
   color = ColorGet(G, I->Obj.Color);
 
   if(!pass) {
-    if(I->Obj.RepVis[cRepCGO]) {
+    if((I->Obj.visRep & cRepCGOBit)) {
 
       if(state < I->NState) {
         sobj = I->State + state;

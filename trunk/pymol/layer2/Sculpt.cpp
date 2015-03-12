@@ -284,7 +284,7 @@ static int count_branch(CountCall * CNT, int atom, int limit)
   int count = 0;
 
   if(!ai->temp1) {
-    count = (ai->hydrogen ? 0 : 1);
+    count = (ai->isHydrogen() ? 0 : 1);
     if(count) {
       if((CNT->atm2idx1[atom] < 0) || (CNT->atm2idx2[atom] < 0))
         count = 0;
@@ -326,7 +326,7 @@ static void add_triangle_limits(ATLCall * ATL, int prev, int cur, float dist, in
       break;
     case 0:
     default:
-      add_flag = (!I->ai[I->atom0].hydrogen);   /* all heavies */
+      add_flag = (!I->ai[I->atom0].isHydrogen());   /* all heavies */
       break;
     }
     if(add_flag) {
@@ -341,7 +341,7 @@ static void add_triangle_limits(ATLCall * ATL, int prev, int cur, float dist, in
           }
           if(((!I->discCSet) ||
               ((I->cSet == I->discCSet[ref]) && (I->cSet == I->discCSet[atom1]))) &&
-             ((I->mode != 0) || (!I->ai[atom1].hydrogen))) {
+             ((I->mode != 0) || (!I->ai[atom1].isHydrogen()))) {
             register int ia = I->atm2idx[ref];
             register int ib = I->atm2idx[atom1];
             if((ia >= 0) && (ib >= 0)) {

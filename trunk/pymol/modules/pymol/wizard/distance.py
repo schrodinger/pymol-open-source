@@ -67,7 +67,7 @@ class Distance(Wizard):
         for a in self.object_modes:
             smm.append([ 1, self.object_mode_name[a], 'cmd.get_wizard().set_object_mode("'+a+'")'])
         self.menu['object_mode']=smm
-        self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
+        self.selection_mode = cmd.get_setting_int("mouse_selection_mode")
         cmd.set("mouse_selection_mode",0) # set selection mode to atomic
         cmd.deselect() # disable the active selection (if any)
         

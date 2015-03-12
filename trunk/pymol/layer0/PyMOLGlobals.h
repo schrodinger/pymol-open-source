@@ -59,6 +59,8 @@ typedef struct _CMain CMain;
 typedef struct _CPlugIOManager CPlugIOManager;
 typedef struct _CShaderMgr CShaderMgr;
 
+class CMovieScenes;
+
 #ifndef _PYMOL_NOPY
 typedef struct _CP_inst CP_inst;
 #endif
@@ -182,6 +184,9 @@ struct _PyMOLGlobals {
   void *CallbackObject;
   void (*enabledCallback)(void *, const char *, int );
 #endif
+
+  // user defined scenes
+  CMovieScenes * scenes;
 };
 
 

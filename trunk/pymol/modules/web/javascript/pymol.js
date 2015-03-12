@@ -576,10 +576,6 @@ function PyMOL(host, port, bufferMode, prefix) {
             return this._dispatch.apply(this,
                 ["get_setting_float"].concat(Array.prototype.slice.apply(arguments)));
         },
-        get_setting_legacy: function() {
-            return this._dispatch.apply(this,
-                ["get_setting_legacy"].concat(Array.prototype.slice.apply(arguments)));
-        },
         get_setting_tuple: function() {
             return this._dispatch.apply(this,
                 ["get_setting_tuple"].concat(Array.prototype.slice.apply(arguments)));

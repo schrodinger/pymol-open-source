@@ -40,6 +40,7 @@ Z* -------------------------------------------------------------------
 #include"View.h"
 #include"Seq.h"
 #include"CGO.h"
+#include"MovieScene.h"
 
 #define cMovieDragModeMoveKey   1
 #define cMovieDragModeInsDel    2
@@ -258,8 +259,8 @@ void MovieCopyPrepare(PyMOLGlobals * G, int *width, int *height, int *length)
   I->OverlaySave = SettingGetGlobal_i(G, cSetting_overlay);
   if(!I->CacheSave)
     MovieClearImages(G);
-  SettingSet(G, cSetting_cache_frames, 1.0);
-  SettingSet(G, cSetting_overlay, 5);
+  SettingSetGlobal_b(G, cSetting_cache_frames, 1);
+  SettingSetGlobal_i(G, cSetting_overlay, 5);
   nFrame = I->NFrame;
   if(!nFrame) {
     nFrame = SceneGetNFrame(G, NULL);
@@ -406,8 +407,8 @@ void MovieCopyFinish(PyMOLGlobals * G)
 {
   register CMovie *I = G->Movie;
   SceneInvalidate(G);           /* important */
-  SettingSet(G, cSetting_cache_frames, (float) I->CacheSave);
-  SettingSet(G, cSetting_overlay, (float) I->OverlaySave);
+  SettingSetGlobal_b(G, cSetting_cache_frames, I->CacheSave);
+  SettingSetGlobal_i(G, cSetting_overlay, I->OverlaySave);
   MoviePlay(G, cMovieStop);
   if(!I->CacheSave) {
     MovieClearImages(G);
@@ -700,7 +701,7 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
     M->save = SettingGetGlobal_b(G, cSetting_cache_frames);
     if(!M->save)
       MovieClearImages(G);
-    SettingSet(G, cSetting_cache_frames, 1.0);
+    SettingSetGlobal_b(G, cSetting_cache_frames, 1);
     OrthoBusyPrime(G);
     M->nFrame = I->NFrame;
     if(!M->nFrame) {
@@ -867,7 +868,7 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
     SceneInvalidate(G);         /* important */
     PRINTFB(G, FB_Movie, FB_Debugging)
       " MoviePNG-DEBUG: done.\n" ENDFB(G);
-    SettingSet(G, cSetting_cache_frames, (float) M->save);
+    SettingSetGlobal_b(G, cSetting_cache_frames, M->save);
     MoviePlay(G, cMovieStop);
     MovieClearImages(G);
     MovieSetRealtime(G, true);
@@ -1117,16 +1118,9 @@ void MovieDoFrameCommand(PyMOLGlobals * G, int frame)
         if(I->ViewElem[frame].scene_flag) {
           char *st = OVLexicon_FetchCString(G->Lexicon, I->ViewElem[frame].scene_name);
           if(strcmp(st, SettingGetGlobal_s(G, cSetting_scene_current_name))) {
-#ifndef _PYMOL_NOPY
-            PBlock(G);
-            PXDecRef(PyObject_CallMethod(G->P_inst->cmd, "scene",
-                                         "sssiiiii", st, "recall", NULL, 0, 1, 1, 1, 0, 0));
-            if(PyErr_Occurred()) {
-              PyErr_Clear();
-            }
-
-            PUnblock(G);
-#endif
+            MovieSceneRecall(G, st, 0.0,
+                /* view */ false, true, true, true,
+                /* frame */ false);
           }
         }
         SceneFromViewElem(G, I->ViewElem + frame, true);
@@ -1588,6 +1582,7 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
   PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
   int count = ExecutiveCountMotions(G);
+  short scrolldir = 1;
   BlockRect rect = block->rect;
   rect.right -= I->LabelIndent;
 
@@ -1650,6 +1645,19 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
         ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
         break;
       }
+    }
+    break;
+  case P_GLUT_BUTTON_SCROLL_FORWARD:
+    scrolldir = -1;
+  case P_GLUT_BUTTON_SCROLL_BACKWARD:
+    switch(mod) {
+      case (cOrthoCTRL | cOrthoSHIFT):
+        SettingSetGlobal_i(G, cSetting_movie_panel_row_height,
+            SettingGetGlobal_i(G, cSetting_movie_panel_row_height) - scrolldir);
+        OrthoReshape(G,-1,-1,true);
+        break;
+      default:
+        SceneSetFrame(G, 5, scrolldir);
     }
     break;
   }

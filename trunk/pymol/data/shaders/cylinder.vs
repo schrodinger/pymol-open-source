@@ -103,6 +103,25 @@ void main(void)
     point = tvertex.xyz / tvertex.w;
 
     gl_Position = gl_ModelViewProjectionMatrix * vertex;
+
+    // clamp z on front clipping plane if impostor box would be clipped.
+    // (we ultimatly want to clip on the calculated depth in the fragment
+    // shader, not the depth of the box face)
+    if (gl_Position.z / gl_Position.w < -1.0) {
+        // upper bound of possible cylinder z extend
+        float diff = abs(base4.z - end4.z) + radius * 3.5;
+
+        // z-`diff`-offsetted vertex
+        vec4 inset = gl_ModelViewMatrix * vertex;
+        inset.z -= diff;
+        inset = gl_ProjectionMatrix * inset;
+
+        // if offsetted vertex is within front clipping plane, then clamp
+        if (inset.z / inset.w > -1.0) {
+            gl_Position.z = -gl_Position.w;
+        }
+    }
+
     bgTextureLookup = (gl_Position.xy/gl_Position.w) / 2.0 + 0.5;
 }
 

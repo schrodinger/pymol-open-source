@@ -366,14 +366,7 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
     if(mode == cRepDotAreaType) { /* assume all atoms "visible" for area comp. */
       visFlag = true;
     } else {
-      visFlag = false;
-      if(obj->RepVisCache[cRepDot])
-	for(a = 0; a < cs->NIndex; a++) {
-	  if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepDot]) {
-	    visFlag = true;
-	    break;
-	  }
-	}
+      visFlag = cs->hasRep(cRepDotBit);
     }
   }
   if(!ok || !visFlag) {
@@ -464,8 +457,8 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
     for(a = 0; ok && a < cs->NIndex; a++) {
       atm = cs->IdxToAtm[a];
       ai1 = obj->AtomInfo + atm;
-      if(ai1->visRep[cRepDot] || mode == cRepDotAreaType)
-        if((inclH || (!ai1->hydrogen)) &&
+      if((ai1->visRep & cRepDotBit) || mode == cRepDotAreaType)
+        if((inclH || (!ai1->isHydrogen())) &&
            ((!cullByFlag) || (!(ai1->flags & cAtomFlag_exfoliate)))) {
           int at_dot_color;
 
@@ -475,10 +468,7 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
              will have dot surfaces generated for them.
            */
           if(at_dot_color == -1) {
-            if(cs->Color)
-              c1 = *(cs->Color + a);
-            else
-              c1 = 0;
+            c1 = ai1->color;
           } else {
             c1 = at_dot_color;
           }
@@ -498,7 +488,7 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
               j = map->EList[i++];
               while(j >= 0) {
                 ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                if((inclH || (!(ai2->hydrogen))) &&
+                if((inclH || (!(ai2->isHydrogen()))) &&
                    ((!cullByFlag) || (!(ai2->flags & cAtomFlag_ignore))))
                   /* If we are cullilng, flag 25 controls which atoms 
                      are considered "present" in the surface area 

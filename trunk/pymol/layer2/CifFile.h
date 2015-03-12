@@ -147,10 +147,10 @@ private:
 
 public:
   // Get a pointer to array or NULL if not found
-  cif_array * get_arr(const char * key, const char * alias1=NULL, const char * alias2=NULL);
+  const cif_array * get_arr(const char * key, const char * alias1=NULL, const char * alias2=NULL) const;
 
   // Get a pointer to array or to a default value if not found
-  cif_array * get_opt(const char * key, const char * alias1=NULL, const char * alias2=NULL);
+  const cif_array * get_opt(const char * key, const char * alias1=NULL, const char * alias2=NULL) const;
 
   // destructor
   ~cif_data();

@@ -280,8 +280,8 @@ SEE ALSO
             else:
                 try:
                     _self.lock(_self)
-                    cnt = _cmd.get(_self._COb,"dist_counter") + 1.0
-                    r = _cmd.legacy_set(_self._COb,"dist_counter","%1.0f" % cnt)
+                    cnt = _self.get_setting_int("dist_counter") + 1
+                    r = _self.set("dist_counter", cnt)
                     nam = "angle%02.0f" % cnt
                 finally:
                     _self.unlock(r,_self)
@@ -368,8 +368,8 @@ SEE ALSO
             else:
                 try:
                     _self.lock(_self)
-                    cnt = _cmd.get(_self._COb,"dist_counter") + 1.0
-                    r = _cmd.legacy_set(_self._COb,"dist_counter","%1.0f" % cnt)
+                    cnt = _self.get_setting_int("dist_counter") + 1
+                    r = _self.set("dist_counter", cnt)
                     nam = "dihedral%02.0f" % cnt
                 finally:
                     _self.unlock(r,_self)
@@ -486,8 +486,8 @@ PYMOL API
             else:
                 try:
                     _self.lock(_self)
-                    cnt = _cmd.get(_self._COb,"dist_counter") + 1.0
-                    r = _cmd.legacy_set(_self._COb,"dist_counter","%1.0f" % cnt)
+                    cnt = _self.get_setting_int("dist_counter") + 1
+                    r = _self.set("dist_counter", cnt)
                     nam = "dist%02.0f" % cnt
                 finally:
                     _self.unlock(r,_self)

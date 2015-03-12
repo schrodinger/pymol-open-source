@@ -4,6 +4,10 @@
  * (c) 2014 Schrodinger, Inc.
  */
 
+#include <string>
+#include <iostream>
+#include <stdexcept>
+
 #include "os_predef.h"
 #include "os_std.h"
 
@@ -13,6 +17,7 @@
 #include "Base.h"
 #include "Util.h"
 #include "Scene.h"
+#include "Rep.h"
 #include "ObjectMolecule.h"
 #include "CifFile.h"
 
@@ -285,7 +290,7 @@ void sshashmap_clear(PyMOLGlobals * G, sshashmap &ssrecords) {
  * Read CELL and SYMMETRY
  */
 CSymmetry * read_symmetry(PyMOLGlobals * G, cif_data * data) {
-  cif_array * cell[6] = {
+  const cif_array * cell[6] = {
     data->get_arr("_cell?length_a"),
     data->get_arr("_cell?length_b"),
     data->get_arr("_cell?length_c"),
@@ -322,9 +327,9 @@ CSymmetry * read_symmetry(PyMOLGlobals * G, cif_data * data) {
 CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
     AtomInfoType ** atInfoPtr) {
 
-  cif_array * arr_x = data->get_arr("_chem_comp_atom.model_cartn_x");
-  cif_array * arr_y = data->get_arr("_chem_comp_atom.model_cartn_y");
-  cif_array * arr_z = data->get_arr("_chem_comp_atom.model_cartn_z");
+  const cif_array * arr_x = data->get_arr("_chem_comp_atom.model_cartn_x");
+  const cif_array * arr_y = data->get_arr("_chem_comp_atom.model_cartn_y");
+  const cif_array * arr_z = data->get_arr("_chem_comp_atom.model_cartn_z");
 
   if (!arr_x || !arr_y || !arr_z) {
     arr_x = data->get_arr("_chem_comp_atom.pdbx_model_cartn_x_ideal");
@@ -336,16 +341,17 @@ CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
     }
   }
 
-  cif_array * arr_name            = data->get_opt("_chem_comp_atom.atom_id");
-  cif_array * arr_symbol          = data->get_opt("_chem_comp_atom.type_symbol");
-  cif_array * arr_resn            = data->get_opt("_chem_comp_atom.comp_id");
-  cif_array * arr_partial_charge  = data->get_opt("_chem_comp_atom.partial_charge");
-  cif_array * arr_formal_charge   = data->get_opt("_chem_comp_atom.charge");
+  const cif_array * arr_name            = data->get_opt("_chem_comp_atom.atom_id");
+  const cif_array * arr_symbol          = data->get_opt("_chem_comp_atom.type_symbol");
+  const cif_array * arr_resn            = data->get_opt("_chem_comp_atom.comp_id");
+  const cif_array * arr_partial_charge  = data->get_opt("_chem_comp_atom.partial_charge");
+  const cif_array * arr_formal_charge   = data->get_opt("_chem_comp_atom.charge");
 
   int nrows = arr_x->get_nrows();
   AtomInfoType *ai;
   int atomCount = 0, nAtom = nrows;
   float * coord = VLAlloc(float, 3 * nAtom);
+  int auto_show = RepGetAutoShowMask(G);
 
   for (int i = 0; i < nrows; i++) {
     VLACheck(*atInfoPtr, AtomInfoType, atomCount);
@@ -364,9 +370,7 @@ CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
 
     ai->hetatm = 1;
 
-    memset((void*) ai->visRep, 0, sizeof(ai->visRep));
-    ai->visRep[cRepLine] = true;
-    ai->visRep[cRepNonbonded] = true;
+    ai->visRep = auto_show;
 
     AtomInfoAssignParameters(G, ai);
     AtomInfoAssignColors(G, ai);
@@ -395,8 +399,8 @@ CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
 CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
     AtomInfoType ** atInfoPtr, short * fractional) {
 
-  cif_array *arr_x, *arr_y, *arr_z;
-  cif_array *arr_name, *arr_resn, *arr_resi, *arr_chain, *arr_symbol,
+  const cif_array *arr_x, *arr_y, *arr_z;
+  const cif_array *arr_name, *arr_resn, *arr_resi, *arr_chain, *arr_symbol,
             *arr_group_pdb, *arr_alt, *arr_ins_code, *arr_b, *arr_u,
             *arr_q, *arr_ID, *arr_mod_num, *arr_entity_id, *arr_segi;
 
@@ -441,6 +445,7 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
   const char * resi;
   AtomInfoType *ai;
   int atomCount = 0;
+  int auto_show = RepGetAutoShowMask(G);
   int first_model_num = arr_mod_num->as_i(0);
 
   for (int i = 0, n = nrows; i < n; i++) {
@@ -473,9 +478,7 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
     strncpy(ai->resi, resi, cResnLen);
     UtilNConcat(ai->resi, arr_ins_code->as_s(i), sizeof(ResIdent));
 
-    memset((void*) ai->visRep, 0, sizeof(ai->visRep));
-    ai->visRep[cRepLine] = true;
-    ai->visRep[cRepNonbonded] = true;
+    ai->visRep = auto_show;
 
     AtomInfoAssignParameters(G, ai);
     AtomInfoAssignColors(G, ai);
@@ -527,8 +530,8 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
 bool read_pdbx_unobs_or_zero_occ_residues(PyMOLGlobals * G, cif_data * data,
     AtomInfoType ** atInfoPtr) {
 
-  cif_array *arr_resn, *arr_resi, *arr_chain, *arr_segi,
-            *arr_poly_flag, *arr_ins_code, *arr_mod_num;
+  const cif_array *arr_resn, *arr_resi, *arr_chain, *arr_segi,
+                  *arr_poly_flag, *arr_ins_code, *arr_mod_num;
 
   if((arr_resn    = data->get_arr("_pdbx_unobs_or_zero_occ_residues.auth_comp_id",
                                   "_pdbx_unobs_or_zero_occ_residues.label_comp_id")) == NULL ||
@@ -594,8 +597,8 @@ bool read_pdbx_unobs_or_zero_occ_residues(PyMOLGlobals * G, cif_data * data,
  * Read secondary structure from STRUCT_CONF or STRUCT_SHEET_RANGE
  */
 bool read_ss_(PyMOLGlobals * G, cif_data * data, char ss, sshashmap &ssrecords) {
-  cif_array *arr_beg_chain, *arr_beg_resi,
-            *arr_end_chain, *arr_end_resi;
+  const cif_array *arr_beg_chain, *arr_beg_resi,
+                  *arr_end_chain, *arr_end_resi;
 
   std::string prefix = "_struct_conf.";
   if (ss == 'S')
@@ -611,8 +614,8 @@ bool read_ss_(PyMOLGlobals * G, cif_data * data, char ss, sshashmap &ssrecords) 
                                       (prefix + "end_label_seq_id").c_str())))
     return false;
 
-  cif_array *arr_beg_ins_code = data->get_opt((prefix + "pdbx_beg_pdb_ins_code").c_str());
-  cif_array *arr_end_ins_code = data->get_opt((prefix + "pdbx_end_pdb_ins_code").c_str());
+  const cif_array *arr_beg_ins_code = data->get_opt((prefix + "pdbx_beg_pdb_ins_code").c_str());
+  const cif_array *arr_end_ins_code = data->get_opt((prefix + "pdbx_end_pdb_ins_code").c_str());
 
   int nrows = arr_beg_chain->get_nrows();
 
@@ -677,12 +680,42 @@ bool read_ss(PyMOLGlobals * G, cif_data * datablock, AtomInfoType * atInfo) {
 }
 
 /*
+ * Read the SCALEn matrix into 4x4 `matrix`
+ */
+bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data, float * matrix) {
+  const cif_array *arr_transf[12];
+
+  if (!(arr_transf[0] = data->get_arr("_atom_sites.fract_transf_matrix[1][1]", "_atom_sites_fract_tran_matrix_11")))
+    return false;
+
+  arr_transf[1]  = data->get_opt("_atom_sites.fract_transf_matrix[1][2]", "_atom_sites_fract_tran_matrix_12");
+  arr_transf[2]  = data->get_opt("_atom_sites.fract_transf_matrix[1][3]", "_atom_sites_fract_tran_matrix_13");
+  arr_transf[3]  = data->get_opt("_atom_sites.fract_transf_vector[1]", "_atom_sites_fract_tran_vector_1");
+  arr_transf[4]  = data->get_opt("_atom_sites.fract_transf_matrix[2][1]", "_atom_sites_fract_tran_matrix_21");
+  arr_transf[5]  = data->get_opt("_atom_sites.fract_transf_matrix[2][2]", "_atom_sites_fract_tran_matrix_22");
+  arr_transf[6]  = data->get_opt("_atom_sites.fract_transf_matrix[2][3]", "_atom_sites_fract_tran_matrix_23");
+  arr_transf[7]  = data->get_opt("_atom_sites.fract_transf_vector[2]", "_atom_sites_fract_tran_vector_2");
+  arr_transf[8]  = data->get_opt("_atom_sites.fract_transf_matrix[3][1]", "_atom_sites_fract_tran_matrix_31");
+  arr_transf[9]  = data->get_opt("_atom_sites.fract_transf_matrix[3][2]", "_atom_sites_fract_tran_matrix_32");
+  arr_transf[10] = data->get_opt("_atom_sites.fract_transf_matrix[3][3]", "_atom_sites_fract_tran_matrix_33");
+  arr_transf[11] = data->get_opt("_atom_sites.fract_transf_vector[3]", "_atom_sites_fract_tran_vector_3");
+
+  for (int i = 0; i < 12; ++i)
+    matrix[i] = arr_transf[i]->as_d(0);
+
+  zero3f(matrix + 12);
+  matrix[15] = 1.f;
+
+  return true;
+}
+
+/*
  * Read anisotropic temperature factors from ATOM_SITE or ATOM_SITE_ANISOTROP
  */
 bool read_atom_site_aniso(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo) {
 
-  cif_array *arr_label, *arr_u11, *arr_u22, *arr_u33, *arr_u12, *arr_u13, *arr_u23;
+  const cif_array *arr_label, *arr_u11, *arr_u22, *arr_u33, *arr_u12, *arr_u13, *arr_u23;
   bool mmcif = true;
   float factor = 1.0;
 
@@ -765,15 +798,15 @@ bool read_atom_site_aniso(PyMOLGlobals * G, cif_data * data,
 bool read_geom_bond_atom_site_labels(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo, CoordSet * cset) {
 
-  cif_array *arr_ID_1, *arr_ID_2;
+  const cif_array *arr_ID_1, *arr_ID_2;
   if ((arr_ID_1 = data->get_arr("_geom_bond.atom_site_id_1",
                                 "_geom_bond_atom_site_label_1")) == NULL ||
       (arr_ID_2 = data->get_arr("_geom_bond.atom_site_id_2",
                                 "_geom_bond_atom_site_label_2")) == NULL)
     return false;
 
-  cif_array *arr_symm_1 = data->get_opt("_geom_bond?site_symmetry_1");
-  cif_array *arr_symm_2 = data->get_opt("_geom_bond?site_symmetry_2");
+  const cif_array *arr_symm_1 = data->get_opt("_geom_bond?site_symmetry_1");
+  const cif_array *arr_symm_2 = data->get_opt("_geom_bond?site_symmetry_2");
 
   int nrows = arr_ID_1->get_nrows();
   int nAtom = VLAGetSize(atInfo);
@@ -827,9 +860,9 @@ bool read_geom_bond_atom_site_labels(PyMOLGlobals * G, cif_data * data,
 bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo, CoordSet * cset) {
 
-  cif_array *col_type_id;
-  cif_array *col_asym_id[2], *col_comp_id[2], *col_seq_id[2], *col_atom_id[2];
-  cif_array *col_alt_id[2], *col_ins_code[2], *col_symm[2];
+  const cif_array *col_type_id;
+  const cif_array *col_asym_id[2], *col_comp_id[2], *col_seq_id[2], *col_atom_id[2];
+  const cif_array *col_alt_id[2], *col_ins_code[2], *col_symm[2];
 
   if ((col_type_id    = data->get_arr("_struct_conn.conn_type_id")) == NULL ||
       (col_asym_id[0] = data->get_arr("_struct_conn.ptnr1_auth_asym_id",
@@ -928,14 +961,14 @@ bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
 bool read_chem_comp_bond_atom_ids(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo, CoordSet * cset) {
 
-  cif_array *col_ID_1, *col_ID_2, *col_comp_id;
+  const cif_array *col_ID_1, *col_ID_2, *col_comp_id;
 
   if ((col_ID_1    = data->get_arr("_chem_comp_bond.atom_id_1")) == NULL ||
       (col_ID_2    = data->get_arr("_chem_comp_bond.atom_id_2")) == NULL ||
       (col_comp_id = data->get_arr("_chem_comp_bond.comp_id")) == NULL)
     return false;
 
-  cif_array *col_order = data->get_opt("_chem_comp_bond.value_order");
+  const cif_array *col_order = data->get_opt("_chem_comp_bond.value_order");
 
   int nrows = col_ID_1->get_nrows();
   int nAtom = VLAGetSize(atInfo);
@@ -1105,10 +1138,19 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
   if (I->Symmetry) {
     SymmetryAttemptGeneration(I->Symmetry, false);
 
-    if(fractional && I->Symmetry->Crystal) {
+    if(I->Symmetry->Crystal) {
+      float sca[16];
+
       CrystalUpdate(I->Symmetry->Crystal);
-      for (int i = 0; i < ncsets; i++) {
-        CoordSetFracToReal(csets[i], I->Symmetry->Crystal);
+
+      if(fractional) {
+        for (int i = 0; i < ncsets; i++) {
+          CoordSetFracToReal(csets[i], I->Symmetry->Crystal);
+        }
+      } else if (read_atom_site_fract_transf(G, datablock, sca)) {
+        for (int i = 0; i < ncsets; i++) {
+          CoordSetInsureOrthogonal(G, csets[i], sca, I->Symmetry->Crystal);
+        }
       }
     }
   }

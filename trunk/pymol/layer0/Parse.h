@@ -21,6 +21,11 @@ Z* -------------------------------------------------------------------
 char *ParseWordCopy(char *dst, char *src, int n);
 char *ParseWordNumberCopy(char *dst, char *src, int n);
 char *ParseWord(char *dst, char *src, int n);
+
+inline const char *ParseWord(char *dst, const char *src, int n) {
+  return ParseWord(dst, (char*) src, n);
+}
+
 char *ParseNTrim(char *q, char *p, int n);
 char *ParseNTrimRight(char *q, char *p, int n);
 char *ParseNSkip(char *p, int n);
@@ -28,7 +33,7 @@ char *ParseCommaCopy(char *q, char *p, int n);
 char *ParseSkipEquals(char *p);
 char *ParseIntCopy(char *q, char *p, int n);
 char *ParseAlphaCopy(char *q, char *p, int n);
-int ParseFloat3List(char *p, float *vals);
+int ParseFloat3List(const char *p, float *vals);
 
 #ifdef _PYMOL_INLINE
 

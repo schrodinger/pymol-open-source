@@ -117,7 +117,6 @@ PFNGLACTIVETEXTUREPROC getActiveTexture() {
 void disableShaders(PyMOLGlobals * G) {
     /* Auto-disable shader-based rendering */
     SettingSetGlobal_b(G, cSetting_use_shaders, 0);
-    SettingSetGlobal_i(G, cSetting_sphere_mode, 0);
 }
 
 int SHADERLEX_LOOKUP(PyMOLGlobals * G, char *strarg){
@@ -173,6 +172,7 @@ void CShaderPrg_ReplaceStringsInPlace(PyMOLGlobals *G, char *dest_line, char **r
 void CShaderPrg_Reload_CallComputeColorForLight(PyMOLGlobals * G, char *name){
   CShaderMgr *I = G->ShaderMgr;
   int light_count = SettingGetGlobal_i(G, cSetting_light_count);
+  int spec_count = SettingGetGlobal_i(G, cSetting_spec_count);
   char **reparr = Alloc(char*, 5);
   char *accstr, *tmpstr ;
   int tmpstrlen, accstrlen, i, idx;
@@ -195,6 +195,11 @@ void CShaderPrg_Reload_CallComputeColorForLight(PyMOLGlobals * G, char *name){
   }
   for (i=1; i<light_count; i++){
     sprintf(reparr[1], "%d", i);
+
+    if (i == spec_count + 1) {
+      reparr[3] = " * 0.0";
+    }
+
     tmpstr = CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(G, name, "call_compute_color_for_light.fs", (char*)call_compute_color_for_light_fs, reparr);
     tmpstrlen = strlen(tmpstr);
     accstrlen = strlen(accstr);
@@ -394,7 +399,6 @@ void CShaderMgr_Reload_Shader_Variables(PyMOLGlobals * G){
 
   I->shader_include_values[SHADERLEX_LOOKUP(G, "bg_image_mode_solid")] = !bg_gradient;
   I->shader_include_values[SHADERLEX_LOOKUP(G, "bg_image_mode_stretched")] = bg_gradient;
-  I->shader_include_values[SHADERLEX_LOOKUP(G, "cylinder_shader_ff_workaround")] = SettingGetGlobal_b(G, cSetting_cylinder_shader_ff_workaround);
 
   stereo = SettingGetGlobal_i(G, cSetting_stereo);
   stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
@@ -456,7 +460,6 @@ OVstatus ShaderMgrInit(PyMOLGlobals * G) {
   SHADERLEX(bg_fs, 9);
   SHADERLEX(cylinder_vs, 10);
   SHADERLEX(cylinder_fs, 11);
-  SHADERLEX(cylinder_shader_ff_workaround, 12);
   SHADERLEX(label_vs, 13);
   SHADERLEX(label_fs, 14);
   SHADERLEX(sphere_vs, 15);
@@ -665,7 +668,7 @@ void CShaderPrg_Update_Shaders_For_Background(PyMOLGlobals * G) {
 }
 
 int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f){
-  int status, howLong, needAttach = 0;
+  int status, howLong;
   CShaderPrg * I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, name);
   if (!I){
     CShaderMgr *SM = G->ShaderMgr;
@@ -1877,10 +1880,8 @@ CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G){
   ortho = SettingGetGlobal_b(G, cSetting_ortho);
   CShaderPrg_Set1f(shaderPrg, "ortho", ortho ? 1.0 : 0.0);
   CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 1.0);
-  CShaderPrg_Set1i(shaderPrg, "filter_front_facing", SettingGetGlobal_b(G, cSetting_cylinders_shader_filter_faces));
   CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
   CShaderPrg_Set1i(shaderPrg, "light_count", SettingGetGlobal_i(G, cSetting_light_count));
-  CShaderPrg_Set1i(shaderPrg, "filter_front_facing", SettingGetGlobal_b(G, cSetting_cylinders_shader_filter_faces));
   {
     float smooth_half_bonds = (SettingGetGlobal_i(G, cSetting_smooth_half_bonds)) ? .2f : 0.f;
     CShaderPrg_Set1f(shaderPrg, "half_bond", smooth_half_bonds);
@@ -2094,9 +2095,10 @@ CShaderPrg *CShaderPrg_Enable_LabelShaderImpl(PyMOLGlobals * G, CShaderPrg *shad
     shaderPrg->uniform_set |= 8;
   }
   if (SceneIsGridModeActive(G)){
-    float aspectRatioAdjustment;
-    aspectRatioAdjustment = SceneGetGridAspectRatio(G);
-    CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", aspectRatioAdjustment);
+    int width, height;
+    SceneGetGridModeSize(G, &width, &height);
+    CShaderPrg_Set2f(shaderPrg, "screenSize", width, height);
+    CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", 1.f);
   } else if (StereoIsAdjacent(G)){
     CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", 2.f);
   }
@@ -2186,6 +2188,11 @@ void CShaderMgr_Set_Reload_Bits(PyMOLGlobals *G, int bits){
 
 void CShaderMgr_Check_Reload(PyMOLGlobals *G){
   CShaderMgr *I = G->ShaderMgr;
+
+  if(!SettingGetGlobal_b(G, cSetting_use_shaders)) {
+    return;
+  }
+
   if (I->reload_bits){
     if (I->reload_bits & RELOAD_ALL_SHADERS){
       CShaderPrg_Reload_All_Shaders(G);
