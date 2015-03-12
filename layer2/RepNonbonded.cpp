@@ -155,7 +155,7 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
 
       for(a = 0; a < nIndex; a++) {
         AtomInfoType *ai = atomInfo + *(i2a++);
-        if((!ai->bonded) && ai->visRep[cRepNonbonded]) {
+        if((!ai->bonded) && (ai->visRep & cRepNonbondedBit)) {
           int c = ai->color;
           float v0 = v[0];
           float v1 = v[1];
@@ -197,9 +197,6 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
   Pickable *p;
   float alpha;
   int ok = true;
-  // 0.018f is found by trial and error
-  // TODO: this is not sufficient to solve the problem of disappearing cylinders
-  float scale_bound = SettingGetGlobal_f(G, cSetting_field_of_view)  * cPI / 180.0f * 0.018f;
 
   alpha =
     SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_transparency);
@@ -208,7 +205,6 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
     alpha = 1.0F;
   if(ray) {
     float radius;
-    float pixel_radius = ray->PixelRadius;
     ray->transparentf(1.0F - alpha);
 
     if(I->Radius == 0.0F) {
@@ -360,7 +356,6 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
 	  CShaderPrg *shaderPrg;
 	  if (nonbonded_as_cylinders){
 	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
-	    float vertex_scale = info->vertex_scale;
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;
@@ -596,7 +591,6 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
 	  CShaderPrg *shaderPrg;
 	  if (nonbonded_as_cylinders){
 	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
-	    float vertex_scale = info->vertex_scale;
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;
@@ -641,18 +635,14 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
   obj = cs->Obj;
 
   active = Alloc(int, cs->NIndex);
-  if(obj->RepVisCache[cRepNonbonded])
+  if((obj->RepVisCache & cRepNonbondedBit))
     for(a = 0; a < cs->NIndex; a++) {
       ai = obj->AtomInfo + cs->IdxToAtm[a];
-      active[a] = (!ai->bonded) && (ai->visRep[cRepNonbonded]); /*&& (!ai->masked); */
+      active[a] = (!ai->bonded && (ai->visRep & cRepNonbondedBit));
       if(active[a]) {
-        if(ai->masked)
-          active[a] = -1;
-        else
-          active[a] = 1;
-      }
-      if(active[a])
+        active[a] = (ai->masked) ? -1 : 1;
         nAtom++;
+      }
     }
   if(!nAtom) {
     OOFreeP(I);
@@ -684,7 +674,7 @@ Rep *RepNonbondedNew(CoordSet * cs, int state)
   v = I->V;
   for(a = 0; a < cs->NIndex; a++)
     if(active[a]) {
-      c1 = *(cs->Color + a);
+      c1 = (obj->AtomInfo + cs->IdxToAtm[a])->color;
 
       v1 = cs->Coord + 3 * a;
 

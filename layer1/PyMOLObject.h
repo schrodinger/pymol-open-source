@@ -76,7 +76,7 @@ struct _CObject {
   int type;
   ObjectNameType Name;
   int Color;
-  int RepVis[cRepCnt];
+  int visRep;
   float ExtentMin[3], ExtentMax[3];
   int ExtentFlag, TTTFlag;
   float TTT[16];                /* translate, transform, translate matrix (to apply when rendering) */
@@ -89,12 +89,29 @@ struct _CObject {
   int grid_slot;
   CGO *gridSlotSelIndicatorsCGO;
   int Grabbed;
+
+  // methods
+
+  void update() {
+    if (fUpdate)
+      fUpdate(this);
+  }
+
+  void render(RenderInfo * info) {
+    if (fRender)
+      fRender(this, info);
+  }
+
+  void invalidate(int rep, int level, int state) {
+    if (fInvalidate)
+      fInvalidate(this, rep, level, state);
+  }
 };
 
 void ObjectInit(PyMOLGlobals * G, CObject * I);
-int ObjectCopyHeader(CObject * I, CObject * src);
+int ObjectCopyHeader(CObject * I, const CObject * src);
 void ObjectPurge(CObject * I);
-void ObjectSetName(CObject * I, char *name);
+void ObjectSetName(CObject * I, const char *name);
 void ObjectMakeValidName(char *name);
 void ObjectPurgeSettings(CObject * I);
 void ObjectFree(CObject * I);
@@ -123,7 +140,7 @@ void ObjectMotionTrim(CObject *I, int n_frame);
 void ObjectMotionExtend(CObject *I, int n_frame);
 void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames ORTHOCGOARG);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);
-void ObjectStateCopy(CObjectState * dst, CObjectState * src);
+void ObjectStateCopy(CObjectState * dst, const CObjectState * src);
 void ObjectStatePurge(CObjectState * I);
 int ObjectStateSetMatrix(CObjectState * I, double *matrix);
 double *ObjectStateGetMatrix(CObjectState * I);

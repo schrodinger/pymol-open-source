@@ -142,12 +142,12 @@ char *ParseAlphaCopy(char *q, char *p, int n)
 #include <math.h>
 #include <ctype.h>
 /* ParseFloat3List: scan in Python-like list of 3 floats */
-int ParseFloat3List(char *parg, float *vals){
+int ParseFloat3List(const char *parg, float *vals){
   char buf[256], blen;
   int cont = 1;
-  char *p = parg;
+  const char *p = parg;
   int pl = 0, vpl = 0, i;
-  char *npl;
+  const char *npl;
   double dval;
   while (cont){
     switch(p[pl]){

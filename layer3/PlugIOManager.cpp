@@ -576,6 +576,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   CoordSet * cs = NULL;
   int *bondtype, nbondtypes;
   char **bondtypename;
+  int auto_show = RepGetAutoShowMask(G);
 
   ok_assert(1, manager);
   plugin = find_plugin(manager, plugin_type);
@@ -636,9 +637,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     ai->resv = a->resid;
     snprintf(ai->resi, cResnLen, "%d%s", a->resid, a->insertion);
 
-    memset((void*) ai->visRep, 0, sizeof(ai->visRep));
-    ai->visRep[cRepLine] = true;
-    ai->visRep[cRepNonbonded] = true;
+    ai->visRep = auto_show;
 
     AtomInfoAssignParameters(G, ai);
     AtomInfoAssignColors(G, ai);

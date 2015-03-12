@@ -95,7 +95,7 @@ class Box(Wizard):
 	    if fract<0.5: fract = 1.0 - fract
 	    if fract>0.995: fract = 0.995 # minimum 1% distance from clipping planes
 	    
-            fov = float(self.cmd.get_setting_legacy("field_of_view"))
+            fov = self.cmd.get_setting_float("field_of_view")
 	    
 	    tan_half_fov = math.tan(math.pi*fov/360.0)
 	    

@@ -978,23 +978,10 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * I)
   PyList_SetItem(result, 5, PyString_FromString(I->resn));
   PyList_SetItem(result, 6, PyString_FromString(I->name));
   PyList_SetItem(result, 7, PyString_FromString(I->elem));
-
-  {
-    char null_st[1] = "";
-    char *st = null_st;
-
-    if(I->textType)
-      st = OVLexicon_FetchCString(G->Lexicon, I->textType);
-    PyList_SetItem(result, 8, PyString_FromString(st));
-
-    st = null_st;
-    if(I->label)
-      st = OVLexicon_FetchCString(G->Lexicon, I->label);
-    PyList_SetItem(result, 9, PyString_FromString(st));
-  }
-
+  PyList_SetItem(result, 8, PyString_FromString(LexStr(G, I->textType)));
+  PyList_SetItem(result, 9, PyString_FromString(LexStr(G, I->label)));
   PyList_SetItem(result, 10, PyString_FromString(I->ssType));
-  PyList_SetItem(result, 11, PyInt_FromLong((char) I->hydrogen));
+  PyList_SetItem(result, 11, PyInt_FromLong((int) I->isHydrogen())); // TODO redundant
   PyList_SetItem(result, 12, PyInt_FromLong(I->customType));
   PyList_SetItem(result, 13, PyInt_FromLong(I->priority));
   PyList_SetItem(result, 14, PyFloat_FromDouble(I->b));
@@ -1003,7 +990,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * I)
   PyList_SetItem(result, 17, PyFloat_FromDouble(I->partialCharge));
   PyList_SetItem(result, 18, PyInt_FromLong(I->formalCharge));
   PyList_SetItem(result, 19, PyInt_FromLong((int) I->hetatm));
-  PyList_SetItem(result, 20, PConvSCharArrayToPyList(I->visRep, cRepCnt));
+  PyList_SetItem(result, 20, PyInt_FromLong((int) I->visRep));
   PyList_SetItem(result, 21, PyInt_FromLong(I->color));
   PyList_SetItem(result, 22, PyInt_FromLong(I->id));
   PyList_SetItem(result, 23, PyInt_FromLong((char) I->cartoon));
@@ -1022,7 +1009,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * I)
   PyList_SetItem(result, 36, PyInt_FromLong(I->rank));
   PyList_SetItem(result, 37, PyInt_FromLong((int) I->hb_donor));
   PyList_SetItem(result, 38, PyInt_FromLong((int) I->hb_acceptor));
-  PyList_SetItem(result, 39, PyInt_FromLong((int) I->atomic_color));
+  PyList_SetItem(result, 39, PyInt_FromLong(0 /* atomic_color */));
   PyList_SetItem(result, 40, PyInt_FromLong((int) I->has_setting));
   PyList_SetItem(result, 41, PyFloat_FromDouble(I->U11));
   PyList_SetItem(result, 42, PyFloat_FromDouble(I->U22));
@@ -1030,14 +1017,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * I)
   PyList_SetItem(result, 44, PyFloat_FromDouble(I->U12));
   PyList_SetItem(result, 45, PyFloat_FromDouble(I->U13));
   PyList_SetItem(result, 46, PyFloat_FromDouble(I->U23));
-  {
-    char null_st[1] = "";
-    char *st = null_st;
-    st = null_st;
-    if(I->custom)
-      st = OVLexicon_FetchCString(G->Lexicon, I->custom);
-    PyList_SetItem(result, 47, PyString_FromString(st));
-  }
+  PyList_SetItem(result, 47, PyString_FromString(LexStr(G, I->custom)));
 
   return (PConvAutoNone(result));
 #endif
@@ -1099,8 +1079,6 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
   if(ok)
     ok = PConvPyStrToStr(PyList_GetItem(list, 10), I->ssType, sizeof(SSType));
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 11), (char *) &I->hydrogen);
-  if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 12), &I->customType);
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 13), &I->priority);
@@ -1113,15 +1091,19 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
   if(ok)
     ok = PConvPyFloatToFloat(PyList_GetItem(list, 17), &I->partialCharge);
   if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 18), &I->formalCharge);
+    ok = PConvPyIntToChar(PyList_GetItem(list, 18), (char *) &I->formalCharge);
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 19), &hetatm);
   if(ok)
     I->hetatm = hetatm;
-  if(ok)
-    ok =
-      PConvPyListToSCharArrayInPlaceAutoZero(PyList_GetItem(list, 20), I->visRep,
-                                             cRepCnt);
+  if(ok){
+    PyObject *val = PyList_GetItem(list, 20);
+    if (PyList_Check(val)){
+      ok = PConvPyListToBitmask(val, &I->visRep, cRepCnt);
+    } else {
+      ok = PConvPyIntToInt(val, &I->visRep);
+    }
+  }
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 21), &I->color);
   if(ok)
@@ -1166,13 +1148,6 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
     ok = PConvPyIntToChar(PyList_GetItem(list, 37), (char *) &I->hb_donor);
   if(ok && (ll > 38))
     ok = PConvPyIntToChar(PyList_GetItem(list, 38), (char *) &I->hb_acceptor);
-  if(ok && (ll > 39)) {
-    ok = PConvPyIntToInt(PyList_GetItem(list, 39), &I->atomic_color);
-    if(ok)
-      I->atomic_color = ColorConvertOldSessionIndex(G, I->atomic_color);
-  } else {
-    I->atomic_color = AtomInfoGetColor(G, I);
-  }
   if(ok && (ll > 40))
     ok = PConvPyIntToChar(PyList_GetItem(list, 40), (char *) &I->has_setting);
   if(ok && (ll > 46)) {
@@ -1204,7 +1179,7 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
 #endif
 }
 
-void AtomInfoCopy(PyMOLGlobals * G, AtomInfoType * src, AtomInfoType * dst)
+void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst, int copy_properties)
 {
   /* copy, handling resource management issues... */
 
@@ -1232,7 +1207,7 @@ void AtomInfoCopy(PyMOLGlobals * G, AtomInfoType * src, AtomInfoType * dst)
   }
 }
 
-void AtomInfoBondCopy(PyMOLGlobals * G, BondType * src, BondType * dst)
+void AtomInfoBondCopy(PyMOLGlobals * G, const BondType * src, BondType * dst)
 {
   *(dst) = *(src);
 
@@ -1241,8 +1216,8 @@ void AtomInfoBondCopy(PyMOLGlobals * G, BondType * src, BondType * dst)
     if(!SettingUniqueCopyAll(G, src->unique_id, dst->unique_id))
       dst->has_setting = 0;
   } else {
-    src->unique_id = 0;
-    src->has_setting = 0;
+    dst->unique_id = 0;
+    dst->has_setting = 0;
   }
 }
 
@@ -1934,15 +1909,12 @@ float AtomInfoGetBondLength(PyMOLGlobals * G, AtomInfoType * ai1, AtomInfoType *
 
 void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1)
 {
-  at1->atomic_color = (at1->color = AtomInfoGetColor(G, at1));
+  at1->color = AtomInfoGetColor(G, at1);
 }
 
 int AtomInfoGetColor(PyMOLGlobals * G, AtomInfoType * at1)
 {
-  return AtomInfoGetColorWithElement(G, at1, at1->elem);
-}
-int AtomInfoGetColorWithElement(PyMOLGlobals * G, AtomInfoType * at1, char *n)
-{
+  const char *n = at1->elem;
   CAtomInfo *I = G->AtomInfo;
   int color = I->DefaultColor;
 
@@ -2431,7 +2403,6 @@ int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 	  at1->vdw != at2->vdw ||
 	  at1->partialCharge != at2->partialCharge ||
 	  at1->formalCharge != at2->formalCharge ||
-	  at1->atom != at2->atom ||
 	  //	  at1->selEntry != at2->selEntry ||
 	  at1->color != at2->color ||
 	  at1->id != at2->id ||
@@ -2441,14 +2412,12 @@ int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 	  at1->discrete_state != at2->discrete_state ||
 	  at1->elec_radius != at2->elec_radius ||
 	  at1->rank != at2->rank ||
-	  at1->atomic_color != at2->atomic_color ||
 	  at1->textType != at2->textType ||
 	  at1->custom != at2->custom ||
 	  at1->label != at2->label ||
 	  //	  !memcmp(at1->visRep, at2->visRep, sizeof(signed char)*cRepCnt) || // should this be in here?
 	  at1->stereo != at2->stereo ||
 	  at1->mmstereo != at2->mmstereo ||
-	  at1->hydrogen != at2->hydrogen ||
 	  at1->cartoon != at2->cartoon ||
 	  at1->hetatm != at2->hetatm ||
 	  at1->bonded != at2->bonded ||
@@ -2456,7 +2425,6 @@ int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 	  //	  at1->geom != at2->geom ||
 	  //	  at1->valence != at2->valence ||  // Valence should not be in, since it is not initially computed?
 	  at1->deleteFlag != at2->deleteFlag ||
-	  at1->updateFlag != at2->updateFlag ||
 	  at1->masked != at2->masked ||
 	  at1->protekted != at2->protekted ||
 	  at1->protons != at2->protons ||
@@ -2871,16 +2839,14 @@ int AtomInfoNameOrder(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 
 int AtomInfoSameResidue(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 {
-  if(at1->hetatm == at2->hetatm)
-    if(at1->chain == at2->chain)
-      if(at1->resv == at2->resv)
-
-        if(at1->discrete_state == at2->discrete_state)
-          if(WordMatch(G, at1->resi, at2->resi, true) < 0)
-            if(WordMatch(G, at1->segi, at2->segi, false) < 0)
-              if(WordMatch(G, at1->resn, at2->resn, true) < 0)
-                return 1;
-  return 0;
+  return (
+      at1->resv == at2->resv &&
+      at1->chain == at2->chain &&
+      at1->hetatm == at2->hetatm &&
+      at1->discrete_state == at2->discrete_state &&
+      WordMatch(G, at1->resi, at2->resi, true) < 0 &&
+      WordMatch(G, at1->segi, at2->segi, false) < 0 &&
+      WordMatch(G, at1->resn, at2->resn, true) < 0);
 }
 
 int AtomInfoSameResidueP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
@@ -3472,8 +3438,7 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
     if(*(e + 1))
       *(e + 1) = tolower(*(e + 1));
   }
-  I->hydrogen = ((((*I->elem) == 'H') || ((*I->elem) == 'D') || ((*I->elem) == 'Q'))
-                 && (!(*(I->elem + 1))));
+
   n = I->name;
   while((*n >= '0') && (*n <= '9') && (*(n + 1)))
     n++;
@@ -3952,8 +3917,6 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
   if(I->vdw == 0.0)             /* only assigned if not yet assigned */
     I->vdw = vdw;
 
-  if(I->protons == cAN_H)
-    I->hydrogen = true;
   /*  printf("I->name %s I->priority %d\n",I->name,I->priority); */
 }
 

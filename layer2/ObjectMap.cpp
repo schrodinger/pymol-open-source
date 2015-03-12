@@ -1315,7 +1315,6 @@ void ObjectMapStateRegeneratePoints(ObjectMapState * ms)
   }
 }
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectMapStateAsPyList(ObjectMapState * I)
 {
   PyObject *result = NULL;
@@ -1361,8 +1360,7 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState * I)
   PyList_SetItem(result, 15, ObjectStateAsPyList(&I->State));
   return (PConvAutoNone(result));
 }
-#endif
-#ifndef _PYMOL_NOPY
+
 static PyObject *ObjectMapAllStatesAsPyList(ObjectMap * I)
 {
   PyObject *result = NULL;
@@ -1378,8 +1376,8 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap * I)
   return (PConvAutoNone(result));
 
 }
-#endif
-static int ObjectMapStateCopy(PyMOLGlobals * G, ObjectMapState * src, ObjectMapState * I)
+
+static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, ObjectMapState * I)
 {
   int ok = true;
   if(ok) {
@@ -1616,7 +1614,7 @@ int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** resul
 #endif
 }
 
-int ObjectMapNewCopy(PyMOLGlobals * G, ObjectMap * src, ObjectMap ** result,
+int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** result,
                      int source_state, int target_state)
 {
   int ok = true;
@@ -1880,7 +1878,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
         corner = tr_corner;
       }
 
-      if(I->Obj.RepVis[cRepExtent]) {
+      if((I->Obj.visRep & cRepExtentBit)) {
         if(ray) {
           float *vc;
           float radius = ray->PixelRadius / 1.4142F;
@@ -2006,7 +2004,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
         }
       }
 
-      if(I->Obj.RepVis[cRepDot]) {
+      if((I->Obj.visRep & cRepDotBit)) {
         if(!ms->have_range) {
           double sum = 0.0, sumsq = 0.0;
           CField *data = ms->Field->data;
@@ -2246,12 +2244,7 @@ ObjectMap *ObjectMapNew(PyMOLGlobals * G)
   I->NState = 0;
   I->State = VLACalloc(ObjectMapState, 1);     /* autozero important */
 
-  {
-    int a;
-    for(a = 0; a < cRepCnt; a++)
-      I->Obj.RepVis[a] = false;
-    I->Obj.RepVis[cRepExtent] = true;
-  }
+  I->Obj.visRep = cRepExtentBit;
   I->Obj.fFree = (void (*)(CObject *)) ObjectMapFree;
   I->Obj.fUpdate = (void (*)(CObject *)) ObjectMapUpdate;
   I->Obj.fRender = (void (*)(CObject *, RenderInfo *)) ObjectMapRender;

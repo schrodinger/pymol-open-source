@@ -109,7 +109,7 @@ class Setting:
         while not self.cmd.ready(): # make sure PyMOL is ready for action...
             time.sleep(0.1)
 
-        g_i = self.pymol.setting._get_index
+        g_i = self.pymol.setting.index_dict.get
         self.active_dict = {
             g_i('scenes_changed'): self.update_scenes,
         }
@@ -158,7 +158,7 @@ class Setting:
         return r
 
     def __getattr__(self, name):
-        index = self.pymol.setting._get_index(name)
+        index = self.pymol.setting.index_dict[name]
         v_type, v_list = self.get_setting_tuple(name)
 
         if v_type < 4: # bool, int, float
@@ -175,14 +175,14 @@ class Setting:
         return var
 
     def update_scenes(self):
-        dict = self.cmd.get_scene_dict()
-        if dict != None:
+        names = set(self.cmd.get_scene_list())
+        if names:
             for x in range(1,13):
-                if dict.has_key('F%d'%x):
+                if ('F%d'%x) in names:
                     self.F[x].set(1)
                 else:
                     self.F[x].set(0)
-                if dict.has_key('SHFT-F%d'%x):
+                if ('SHFT-F%d'%x) in names:
                     self.SHFTF[x].set(1)
                 else:
                     self.SHFTF[x].set(0)

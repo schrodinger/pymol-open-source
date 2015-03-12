@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Feedback.h"
 
-void ErrFatal(PyMOLGlobals * G, const char *where, const char *what)
+void ErrFatal(const PyMOLGlobals *, const char *where, const char *what)
 {
   fprintf(stderr, "%s-Error: %s\n", where, what);
   fflush(stderr);
@@ -43,7 +43,7 @@ int ErrMessage(PyMOLGlobals * G, const char *where, const char *what)
   return (0);
 }
 
-void ErrPointer(PyMOLGlobals * G, const char *file, int line)
+void ErrPointer(const PyMOLGlobals *, const char *file, int line)
 {
   fprintf(stderr, "NULL-POINTER-ERROR: in %s line %i\n", file, line);
   printf

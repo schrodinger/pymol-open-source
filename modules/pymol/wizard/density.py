@@ -140,7 +140,7 @@ class Density(Wizard):
                     self.cmd.center(sele_name,animate=0.67)
             elif self.track==2:
                 if zoom:
-                    self.cmd.origin(sele_name,animate=0.67)
+                    self.cmd.origin(sele_name)
         self.cmd.refresh_wizard()      
 # generic set routines
 

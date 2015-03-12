@@ -2250,7 +2250,7 @@ void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj,
     if(objMol) {
       ObjectMoleculeSaveUndo(objMol, state, log_trans);
       if(SettingGetGlobal_b(G, cSetting_auto_sculpt)) {
-        SettingSet(G, cSetting_sculpting, 1);
+        SettingSetGlobal_b(G, cSetting_sculpting, 1);
         if(!objMol->Sculpt)
           ObjectMoleculeSculptImprint(objMol, state, -1, 0);
       }

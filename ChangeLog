@@ -2,6 +2,63 @@
 CHANGE LOG
 =========================================================================
 
+2015-03-12 Thomas Holder, Blaine Bell, Gabriel Marques
+
+	* mmCIF _atom_sites.fract_transf support (SCALEn equivalent)
+
+	* Complete port of scenes to C++
+
+	* warn user if setting a setting on the wrong level
+
+	* cmd.extendaa: shortcut for cmd.extend with argument auto-completion
+
+	* reduced memory footprint of AtomInfoType
+
+	* expose "reps" to iterate/alter
+
+	* expose "protons" to iterate/alter
+
+	* adaptive cartoon quality and sampling, depending on number of atoms
+
+	* fix ring center color with cartoon_ring_color=default
+
+	* make SelectorGetTmp strictly molecular, fixes for example "dss" with
+	  group names
+
+	* fix "copy" can cause crash
+
+	* fix "custom" selection operator
+
+	* consider spec_count in shaders
+
+	* don't invalidate shaders for lighting settings
+
+	* don't disable shaders for all Intel chips
+
+	* don't touch sphere_mode when disabling shaders
+
+	* map_new buffer == -1 -> gaussian_resolution
+
+	* fix all_states picking
+
+	* remove cylinder_shader_ff_workaround and cylinders_shader_filter_faces
+
+	* remove unused gl_ambient setting
+
+	* fix Tcl/Tk menu settings logging
+
+	* fix: grid mode scales down label size incorrectly
+
+	* fix: no animate argument for cmd.origin
+
+	* fix side_chain_helper for hetatm polymer atoms
+
+	* fix .mmd export
+
+	* refactor many function to take "const" pointer arguments
+
+	* 1.7.5.0 (unstable/experimental)
+
 2014-12-03 Thomas Holder, Blaine Bell, Gabriel Marques
 
 	* 1.7.4.0

@@ -98,7 +98,7 @@ static void ObjectCallbackRender(ObjectCallback * I, RenderInfo * info)
 
   ObjectPrepareContext(&I->Obj, ray);
 
-  if(I->Obj.RepVis[cRepCallback]) {
+  if((I->Obj.visRep & cRepCallbackBit)) {
     int blocked = PAutoBlock(G);
     for(StateIterator iter(G, I->Obj.Setting, state, I->NState); iter.next();) {
       sobj = I->State + iter.state;

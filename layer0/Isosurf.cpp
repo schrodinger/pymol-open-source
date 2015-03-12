@@ -213,7 +213,7 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
 #endif
 }
 
-Isofield *IsosurfNewCopy(PyMOLGlobals * G, Isofield * src)
+Isofield *IsosurfNewCopy(PyMOLGlobals * G, const Isofield * src)
 {
   int ok = true;
 

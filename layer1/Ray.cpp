@@ -40,6 +40,8 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"MyPNG.h"
 
+#define SettingGetfv SettingGetGlobal_3fv
+
 #ifdef _PYMOL_INLINE
 #undef _PYMOL_INLINE
 #include"Basis.cpp"

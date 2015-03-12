@@ -13,7 +13,6 @@ uniform bool bg_gradient;
 uniform float inv_height;
 uniform float ortho;
 uniform float no_flat_caps;
-uniform bool filter_front_facing;
 uniform bool two_sided_lighting_enabled;
 uniform int light_count;
 uniform float shininess;
@@ -77,12 +76,11 @@ uniform vec2 halfPixel;
 
 void main(void)
 {
-#ifndef cylinder_shader_ff_workaround
     // cull back face - otherwise we are drawing all pixels twice
     // this change gives roughly 2x speedup
-    if (filter_front_facing && !gl_FrontFacing) 
+    // WARNING: !gl_FrontFacing does not work on Intel (bug)
+    if (gl_FrontFacing ? false : true) 
       discard; 
-#endif
 
     vec3 ray_target = surface_point;
     vec3 ray_origin = vec3(0.0);

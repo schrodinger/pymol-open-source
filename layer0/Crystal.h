@@ -35,7 +35,7 @@ typedef struct {
 void CrystalFree(CCrystal * I);
 void CrystalInit(PyMOLGlobals * G, CCrystal * I);
 CCrystal *CrystalNew(PyMOLGlobals * G);
-CCrystal *CrystalCopy(CCrystal * I);
+CCrystal *CrystalCopy(const CCrystal * I);
 void CrystalUpdate(CCrystal * I);
 void CrystalDump(CCrystal * I);
 CGO *CrystalGetUnitCellCGO(CCrystal * I);

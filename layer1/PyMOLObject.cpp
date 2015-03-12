@@ -690,7 +690,7 @@ PyObject *ObjectAsPyList(CObject * I)
   PyList_SetItem(result, 0, PyInt_FromLong(I->type));
   PyList_SetItem(result, 1, PyString_FromString(I->Name));
   PyList_SetItem(result, 2, PyInt_FromLong(I->Color));
-  PyList_SetItem(result, 3, PConvIntArrayToPyList(I->RepVis, cRepCnt));
+  PyList_SetItem(result, 3, PyInt_FromLong(I->visRep));
   PyList_SetItem(result, 4, PConvFloatArrayToPyList(I->ExtentMin, 3));
   PyList_SetItem(result, 5, PConvFloatArrayToPyList(I->ExtentMax, 3));
   PyList_SetItem(result, 6, PyInt_FromLong(I->ExtentFlag));
@@ -736,9 +736,15 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I)
     ok = PConvPyIntToInt(PyList_GetItem(list, 2), &I->Color);
   if(ok)
     I->Color = ColorConvertOldSessionIndex(G, I->Color);
-  if(ok)
-    ok =
-      PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(list, 3), I->RepVis, cRepCnt);
+  if(ok) {
+    PyObject *val = PyList_GetItem(list, 3);
+    if(PyList_Check(val)) {
+      ok = PConvPyListToBitmask(val, &I->visRep, cRepCnt);
+    } else {
+      ok = PConvPyIntToInt(val, &I->visRep);
+    }
+    CPythonVal_Free(val);
+  }
   if(ok)
     ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list, 4), I->ExtentMin, 3);
   if(ok)
@@ -775,7 +781,7 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I)
 #endif
 }
 
-int ObjectCopyHeader(CObject * I, CObject * src)
+int ObjectCopyHeader(CObject * I, const CObject * src)
 {
   int ok = true;
 
@@ -783,11 +789,7 @@ int ObjectCopyHeader(CObject * I, CObject * src)
   I->type = src->type;
   UtilNCopy(I->Name, src->Name, WordLength);
   I->Color = src->Color;
-  {
-    int a;
-    for(a = 0; a < cRepCnt; a++)
-      I->RepVis[a] = src->RepVis[a];
-  }
+  I->visRep = src->visRep;
   copy3f(src->ExtentMin, I->ExtentMin);
   copy3f(src->ExtentMax, I->ExtentMax);
 
@@ -1092,7 +1094,7 @@ void ObjectDescribeElement(CObject * I, int index, char *buffer)
 void ObjectToggleRepVis(CObject * I, int rep)
 {
   if((rep >= 0) && (rep < cRepCnt))
-    I->RepVis[rep] = !I->RepVis[rep];
+    I->visRep ^= (1 << rep);
 }
 
 
@@ -1100,12 +1102,12 @@ void ObjectToggleRepVis(CObject * I, int rep)
 void ObjectSetRepVis(CObject * I, int rep, int state)
 {
   if((rep >= 0) && (rep < cRepCnt))
-    I->RepVis[rep] = state;
+    SET_BIT_TO(I->visRep, rep, state);
 }
 
 
 /*========================================================================*/
-void ObjectSetName(CObject * I, char *name)
+void ObjectSetName(CObject * I, const char *name)
 {
   UtilNCopy(I->Name, name, WordLength);
   if(SettingGetGlobal_b(I->G, cSetting_validate_object_names))
@@ -1273,10 +1275,7 @@ void ObjectInit(PyMOLGlobals * G, CObject * I)
    */
 
   OrthoRemoveSplash(G);         /* HMM... this seems like an inappropriate sideeffect */
-  for(a = 0; a < cRepCnt; a++)
-    I->RepVis[a] = true;
-  I->RepVis[cRepCell] = false;
-  I->RepVis[cRepExtent] = false;
+  I->visRep = cRepBitmask & ~(cRepCellBit | cRepExtentBit);
 }
 
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I)
@@ -1286,7 +1285,7 @@ void ObjectStateInit(PyMOLGlobals * G, CObjectState * I)
 }
 
 /* ObjectStateCopy -- deep copy the State struct from src to dst */
-void ObjectStateCopy(CObjectState * dst, CObjectState * src)
+void ObjectStateCopy(CObjectState * dst, const CObjectState * src)
 {
   /* State is a ptr to globals and an array of matrices. */
   /* Shallow cpy; good enough for G */

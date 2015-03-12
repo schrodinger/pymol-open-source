@@ -540,7 +540,7 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
         int b2 = bd->index[1];
         AtomInfoType *ai1, *ai2;
         bd++;
-        if((ai1 = ai + b1)->visRep[cRepLine] && (ai2 = ai + b2)->visRep[cRepLine]) {
+        if(GET_BIT((ai1 = ai + b1)->visRep,cRepLine) && GET_BIT((ai2 = ai + b2)->visRep,cRepLine)) {
           int a1, a2;
           active = true;
           if(discreteFlag) {
@@ -779,7 +779,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	  CShaderPrg *shaderPrg;
 	  if (line_as_cylinders){
 	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
-	    float vertex_scale = info->vertex_scale;
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;
@@ -973,7 +972,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	  CShaderPrg *shaderPrg;
 	  if (line_as_cylinders){
 	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
-	    float vertex_scale = info->vertex_scale;
 	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
 	    if(pixel_scale_value < 0)
 	      pixel_scale_value = 1.0F;
@@ -1050,12 +1048,12 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
   visFlag = false;
   b = obj->Bond;
-  if(ok && obj->RepVisCache[cRepLine]){
+  if(ok && GET_BIT(obj->RepVisCache,cRepLine)){
     for(a = 0; a < obj->NBond; a++) {
       b1 = b->index[0];
       b2 = b->index[1];
       b++;
-      if(obj->AtomInfo[b1].visRep[cRepLine] || obj->AtomInfo[b2].visRep[cRepLine]) {
+      if(GET_BIT(obj->AtomInfo[b1].visRep,cRepLine) || GET_BIT(obj->AtomInfo[b2].visRep,cRepLine)) {
         visFlag = true;
         break;
       }
@@ -1196,17 +1194,21 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           register AtomInfoType *ati1 = obj->AtomInfo + b1;
           register AtomInfoType *ati2 = obj->AtomInfo + b2;
 
-          if((!ati1->hetatm) && (!ati2->hetatm)) {
-            if(((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]
-                 && !ati2->visRep[cRepCartoon]) || (ribbon_side_chain_helper
-                                                    && ati1->visRep[cRepRibbon]
-                                                    && !ati2->visRep[cRepRibbon]))) {
+          if((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
+            if(((cartoon_side_chain_helper
+                    && GET_BIT(ati1->visRep,cRepCartoon)
+                    && !GET_BIT(ati2->visRep,cRepCartoon))
+                  || (ribbon_side_chain_helper
+                    && GET_BIT(ati1->visRep,cRepRibbon)
+                    && !GET_BIT(ati2->visRep,cRepRibbon)))) {
               marked[b1] = 1;
             }
-            if(((cartoon_side_chain_helper && ati2->visRep[cRepCartoon]
-                 && !ati1->visRep[cRepCartoon]) || (ribbon_side_chain_helper
-                                                    && ati2->visRep[cRepRibbon]
-                                                    && !ati1->visRep[cRepRibbon]))) {
+            if(((cartoon_side_chain_helper
+                    && GET_BIT(ati2->visRep,cRepCartoon)
+                    && !GET_BIT(ati1->visRep,cRepCartoon))
+                  || (ribbon_side_chain_helper
+                    && GET_BIT(ati2->visRep,cRepRibbon)
+                    && !GET_BIT(ati1->visRep,cRepRibbon)))) {
               marked[b2] = 1;
             }
           }
@@ -1245,14 +1247,14 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
         register AtomInfoType *ati1 = obj->AtomInfo + b1;
         register AtomInfoType *ati2 = obj->AtomInfo + b2;
 
-        s1 = ati1->visRep[cRepLine];
-        s2 = ati2->visRep[cRepLine];
+        s1 = GET_BIT(ati1->visRep,cRepLine);
+        s2 = GET_BIT(ati2->visRep,cRepLine);
 
         if((s1 || s2) && !(s1 && s2))
           if(!half_bonds) {
             if(line_stick_helper &&
-               (((!s1) && ati1->visRep[cRepCyl] && (!ati2->visRep[cRepCyl])) ||
-                ((!s2) && ati2->visRep[cRepCyl] && (!ati1->visRep[cRepCyl]))))
+               (((!s1) && GET_BIT(ati1->visRep,cRepCyl) && (!GET_BIT(ati2->visRep,cRepCyl))) ||
+                ((!s2) && GET_BIT(ati2->visRep,cRepCyl) && (!GET_BIT(ati1->visRep,cRepCyl)))))
               s1 = s2 = 1;      /* turn on line when both stick and line are alternately shown */
             else {
               s1 = 0;
@@ -1317,8 +1319,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
             } else if(ColorCheckRamped(G, bd_line_color)) {
               c1 = (c2 = bd_line_color);
             } else {
-              c1 = *(cs->Color + a1);
-              c2 = *(cs->Color + a2);
+              c1 = ati1->color;
+              c2 = ati2->color;
             }
           } else {
             c1 = (c2 = bd_line_color);
@@ -1327,11 +1329,13 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           v1 = cs->Coord + 3 * a1;
           v2 = cs->Coord + 3 * a2;
 
-          if((!ati1->hetatm) && (!ati2->hetatm) &&
-             ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]
-               && ati2->visRep[cRepCartoon]) || (ribbon_side_chain_helper
-                                                 && ati1->visRep[cRepRibbon]
-                                                 && ati2->visRep[cRepRibbon]))) {
+          if((ati1->flags & ati2->flags & cAtomFlag_polymer) &&
+              ((cartoon_side_chain_helper
+                && GET_BIT(ati1->visRep,cRepCartoon)
+                && GET_BIT(ati2->visRep,cRepCartoon)) ||
+               (ribbon_side_chain_helper
+                && GET_BIT(ati1->visRep,cRepRibbon)
+                && GET_BIT(ati2->visRep,cRepRibbon)))) {
 
             register char *name1 = ati1->name;
             register int prot1 = ati1->protons;
@@ -1477,7 +1481,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           }
 
           if(line_stick_helper) {
-            if(ati1->visRep[cRepCyl] && ati2->visRep[cRepCyl])
+            if(GET_BIT(ati1->visRep,cRepCyl) && GET_BIT(ati2->visRep,cRepCyl))
               s1 = s2 = 0;
           }
 
@@ -1633,8 +1637,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
           ai1 = obj->AtomInfo + b1;
           ai2 = obj->AtomInfo + b2;
-          s1 = ai1->visRep[cRepLine];
-          s2 = ai2->visRep[cRepLine];
+          s1 = GET_BIT(ai1->visRep,cRepLine);
+          s2 = GET_BIT(ai2->visRep,cRepLine);
 
           if(!(s1 && s2)) {
             if(!half_bonds) {

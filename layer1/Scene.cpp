@@ -57,6 +57,9 @@ Z* -------------------------------------------------------------------
 #include"ScrollBar.h"
 #include "ShaderMgr.h"
 
+#include <string>
+#include <vector>
+
 #ifdef _PYMOL_IP_EXTRAS
 #include "IncentiveCopyToClipboard.h"
 #endif
@@ -2147,16 +2150,6 @@ int ScenePNG(PyMOLGlobals * G, char *png, float dpi, int quiet,
 
 
 /*========================================================================*/
-void ScenePerspective(PyMOLGlobals * G, int flag)
-{
-  float persp;
-  persp = (float) (!flag);
-  SettingSetfv(G, cSetting_ortho, &persp);
-  SceneInvalidate(G);
-}
-
-
-/*========================================================================*/
 int SceneGetFrame(PyMOLGlobals * G)
 {
   if(MovieDefined(G))
@@ -2778,7 +2771,7 @@ int SceneLoadPNG(PyMOLGlobals * G, char *fname, int movie_flag, int stereo, int 
     I->CopyType = true;
     I->CopyForced = true;
     OrthoRemoveSplash(G);
-    SettingSet(G, cSetting_text, 0.0);
+    SettingSetGlobal_b(G, cSetting_text, 0);
     if(movie_flag &&
        I->Image && I->Image->data &&
        (I->Image->height == I->Height) && (I->Image->width == I->Width)) {
@@ -2903,31 +2896,24 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
   }
 }
 
-int SceneSetNames(PyMOLGlobals * G, PyObject * list)
+/*
+ * Update the G->Scene->SceneVLA names array which is used for scene buttons
+ */
+void SceneSetNames(PyMOLGlobals * G, std::vector<std::string> &list)
 {
-#ifndef _PYMOL_NOPY
   register CScene *I = G->Scene;
-  int ok = PConvPyListToStrVLAList(list, &I->SceneNameVLA, &I->NScene);
-  if(ok) {
-    VLACheck(I->SceneVLA, SceneElem, I->NScene);
-    {
-      int a;
-      char *c = I->SceneNameVLA;
-      SceneElem *elem = I->SceneVLA;
-      for(a = 0; a < I->NScene; a++) {
-        elem->name = c;
-        elem->len = strlen(c);
-        elem->drawn = false;
-        c += elem->len + 1;
-        elem++;
-      }
-    }
+  I->NScene = list.size();
+  VLACheck(I->SceneVLA, SceneElem, I->NScene);
+  SceneElem *elem = I->SceneVLA;
+
+  for(int a = 0; a < I->NScene; ++a) {
+    elem->name = (char*) list[a].c_str();
+    elem->len = list[a].length();
+    elem->drawn = false;
+    elem++;
   }
+
   OrthoDirty(G);
-  return ok;
-#else
-  return 0;
-#endif
 }
 
 
@@ -4602,7 +4588,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
               float v1[3];
 
               if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule *) obj,
-                                                SettingGetGlobal_i(G, cSetting_state) - 1,
+                                                I->LastPicked.context.state,
                                                 I->LastPicked.src.index, v1)) {
                 EditorFavorOrigin(G, v1);
                 ExecutiveOrigin(G, NULL, true, NULL, v1, 0);
@@ -4633,7 +4619,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
               float v1[3];
 
               if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule *) obj,
-                                                SettingGetGlobal_i(G, cSetting_state) - 1,
+                                                I->LastPicked.context.state,
                                                 I->LastPicked.src.index, v1)) {
                 ExecutiveCenter(G, NULL, 0, true, -1, v1, true);
               }
@@ -4642,7 +4628,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
             if(SettingGetGlobal_i(G, cSetting_logging)) {
               objMol = (ObjectMolecule *) obj;
               ObjectMoleculeGetAtomSeleLog(objMol, I->LastPicked.src.index, buf1, false);
-              sprintf(buffer, "cmd.center(\"%s\",state=-1)", buf1);
+              sprintf(buffer, "cmd.center(\"%s\",state=%d)", buf1, I->LastPicked.context.state + 1);
               PLog(G, buffer, cPLog_pym);
             }
             break;
@@ -5106,7 +5092,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
       int auto_save;
 
       auto_save = SettingGetGlobal_i(G, cSetting_auto_zoom);
-      SettingSet(G, cSetting_auto_zoom, 0);
+      SettingSetGlobal_i(G, cSetting_auto_zoom, 0);
 
       name = SettingGet_s(G, NULL, NULL, cSetting_roving_map1_name);
       if(name)
@@ -5146,14 +5132,14 @@ void SceneRovingUpdate(PyMOLGlobals * G)
             PFlush(G);
             refresh_flag = true;
           }
-      SettingSet(G, cSetting_auto_zoom, (float) auto_save);
+      SettingSetGlobal_i(G, cSetting_auto_zoom, auto_save);
     }
 
     if(isosurface != 0.0F) {
       int auto_save;
 
       auto_save = SettingGetGlobal_i(G, cSetting_auto_zoom);
-      SettingSet(G, cSetting_auto_zoom, 0.0F);
+      SettingSetGlobal_i(G, cSetting_auto_zoom, 0);
 
       name = SettingGet_s(G, NULL, NULL, cSetting_roving_map1_name);
       if(name)
@@ -5193,7 +5179,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
             PFlush(G);
             refresh_flag = true;
           }
-      SettingSet(G, cSetting_auto_zoom, (float) auto_save);
+      SettingSetGlobal_i(G, cSetting_auto_zoom, auto_save);
     }
 
     if(refresh_flag) {
@@ -5536,7 +5522,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
             break;
           case cObjectMolecule:
             if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule *) obj,
-                                              SettingGetGlobal_i(G, cSetting_state) - 1,
+                                              I->LastPicked.context.state,
                                               I->LastPicked.src.index, v1)) {
               /* scale properly given the current projection matrix */
               vScale = SceneGetExactScreenVertexScale(G, v1);
@@ -5587,7 +5573,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
                 } else {
                   int log_trans = SettingGetGlobal_b(G, cSetting_log_conformations);
                   ObjectMoleculeMoveAtom((ObjectMolecule *) obj,
-                                         SettingGetGlobal_i(G, cSetting_state) - 1,
+					 I->LastPicked.context.state,
                                          I->LastPicked.src.index, v2, 1, log_trans);
 		  /* -- JV - if this object knows about distances, then move them if necessary */
 		  /* check the dynamic_measures setting and make sure the object has a distance measure, first  */
@@ -5600,7 +5586,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
               } else {
                 int log_trans = SettingGetGlobal_b(G, cSetting_log_conformations);
                 ObjectMoleculeMoveAtomLabel((ObjectMolecule *) obj,
-                                            SettingGetGlobal_i(G, cSetting_state) - 1,
+					    I->LastPicked.context.state,
                                             I->LastPicked.src.index, v2, 1, log_trans);
                 SceneInvalidate(G);
               }
@@ -5638,7 +5624,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
             break;
           case cObjectMeasurement:
             if(ObjectDistGetLabelTxfVertex((ObjectDist *) obj,
-                                           SettingGetGlobal_i(G, cSetting_state) - 1,
+                                           I->LastPicked.context.state,
                                            I->LastPicked.src.index, v1)) {
               /* scale properly given the current projection matrix */
               vScale = SceneGetExactScreenVertexScale(G, v1);
@@ -5673,7 +5659,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
               if(I->LastPicked.src.bond == cPickableLabel) {
                 int log_trans = SettingGetGlobal_b(G, cSetting_log_conformations);
                 ObjectDistMoveLabel((ObjectDist *) obj,
-                                    SettingGetGlobal_i(G, cSetting_state) - 1,
+                                    I->LastPicked.context.state,
                                     I->LastPicked.src.index, v2, 1, log_trans);
                 SceneInvalidate(G);
               }
@@ -6198,7 +6184,7 @@ void SceneFree(PyMOLGlobals * G)
 
   ScenePurgeImage(G);
   CGOFree(G->DebugCGO);
-  FreeP(G->Scene);
+  delete G->Scene;
 }
 
 
@@ -6248,6 +6234,7 @@ int SceneReinitialize(PyMOLGlobals * G)
   SceneCountFrames(G);
   SceneSetFrame(G, 0, 0);
   SceneInvalidate(G);
+  G->Scene->NScene = 0;
   return (ok);
 }
 
@@ -9865,6 +9852,12 @@ void SceneGLClear(PyMOLGlobals * G, GLbitfield mask){
 int SceneIsGridModeActive(PyMOLGlobals * G){
   register CScene *I = G->Scene;
   return I->grid.active;
+}
+
+void SceneGetGridModeSize(PyMOLGlobals * G, int *width, int *height){
+  register CScene *I = G->Scene;
+  *width = I->grid.cur_viewport_size[0];
+  *height = I->grid.cur_viewport_size[1];
 }
 
 int SceneGetCopyType(PyMOLGlobals * G) {

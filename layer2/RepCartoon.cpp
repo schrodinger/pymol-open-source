@@ -34,6 +34,8 @@ Z* -------------------------------------------------------------------
 #include"Extrude.h"
 #include"ShaderMgr.h"
 
+#include "AtomIterators.h"
+
 typedef struct RepCartoon {
   Rep R;                        /* must be first! */
   CGO *ray, *std, *preshader, *pickingCGO;
@@ -277,16 +279,10 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
       int have_atom = false;
       if(nuc_flag[a1])
         nf = true;
-      if(obj->DiscreteFlag) {
-        if(cs == obj->DiscreteCSet[a1])
-          a = obj->DiscreteAtmToIdx[a1];
-        else
-          a = -1;
-      } else
-        a = cs->AtmToIdx[a1];
+      a = cs->atmToIdx(a1);
       if(a >= 0) {
         ai = obj->AtomInfo + a1;
-        if(ai->visRep[cRepCartoon]) {
+        if(ai->visRep & cRepCartoonBit) {
           ai_i[i] = ai;
 
           {
@@ -865,11 +861,9 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
               if((g1 >= 0) && (g2 >= 0)) {
                 AtomInfoType *g1_ai = atomInfo + g1;
                 AtomInfoType *g2_ai = atomInfo + g2;
-                if((g1_ai->visRep[cRepCartoon]) &&
-                   (g2_ai->visRep[cRepCartoon]) &&
-                   ((!sc_helper) || !(g1_ai->visRep[cRepLine] ||
-                                      g1_ai->visRep[cRepCyl] ||
-                                      g1_ai->visRep[cRepSphere]))) {
+                if((g1_ai->visRep & g2_ai->visRep & cRepCartoonBit) &&
+                   ((!sc_helper) ||
+                    !(g1_ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit)))) {
 
                   float *g1p, *g2p;
                   float avg[3];
@@ -993,11 +987,9 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
               {
                 AtomInfoType *sug_ai = atomInfo + sugar_at;
                 AtomInfoType *bas_ai = atomInfo + base_at;
-                if((sug_ai->visRep[cRepCartoon]) &&
-                   (bas_ai->visRep[cRepCartoon]) &&
-                   ((!sc_helper) || !(bas_ai->visRep[cRepLine] ||
-                                      bas_ai->visRep[cRepCyl] ||
-                                      bas_ai->visRep[cRepSphere]))) {
+                if((sug_ai->visRep & bas_ai->visRep & cRepCartoonBit) &&
+                   ((!sc_helper) ||
+                    !(bas_ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit)))) {
 
                   int sug, bas;
                   if(obj->DiscreteFlag) {
@@ -1052,11 +1044,9 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
           if((base_at >= 0) && (sugar_at >= 0)) {
             AtomInfoType *sug_ai = atomInfo + sugar_at;
             AtomInfoType *bas_ai = atomInfo + base_at;
-            if((sug_ai->visRep[cRepCartoon]) &&
-               (bas_ai->visRep[cRepCartoon]) &&
-               ((!sc_helper) || !(bas_ai->visRep[cRepLine] ||
-                                  bas_ai->visRep[cRepCyl] ||
-                                  bas_ai->visRep[cRepSphere]))) {
+            if((sug_ai->visRep & bas_ai->visRep & cRepCartoonBit) &&
+               ((!sc_helper) ||
+                !(bas_ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit)))) {
 
               int sug, bas;
               float *v_outer, tmp[3], outer[3];
@@ -1271,8 +1261,7 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
         if(ring_color >= 0) {
           color = ColorGet(G, ring_color);
         } else {
-          color = ColorGet(G, AtomInfoGetColorWithElement(G, ai, "C")); /* NEED TO CHANGE TO CARBON COLOR */
-	  //          color = avg_col; /* NEED TO CHANGE TO CARBON COLOR */
+          color = avg_col;
         }
 
         CGOColorv(cgo, color);
@@ -1539,13 +1528,7 @@ static void nuc_acid(PyMOLGlobals * G, int a, int a1, AtomInfoType * ai, CoordSe
     for(a3 = st; a3 <= nd; a3++) {
       if(nf)
         *(nf++) = true;         /* mark this residue as being part of a nucleic acid chain */
-      if(obj->DiscreteFlag) {
-        if(cs == obj->DiscreteCSet[a3])
-          a4 = obj->DiscreteAtmToIdx[a3];
-        else
-          a4 = -1;
-      } else
-        a4 = cs->AtmToIdx[a3];
+      a4 = cs->atmToIdx(a3);
       if(a4 >= 0) {
         if(na_mode == 1) {
           if(WordMatchExact(G, NUCLEIC_NORMAL1, obj->AtomInfo[a3].name, 1) ||
@@ -1590,6 +1573,26 @@ static void nuc_acid(PyMOLGlobals * G, int a, int a1, AtomInfoType * ai, CoordSe
   *p_putty_flag = putty_flag;
   *p_vo = vo;
   *p_v = v;
+}
+
+/*
+ * Get cartoon quality setting, adapt to number of atoms if -1
+ */
+static int GetCartoonQuality(CoordSet * cs, int setting, int v1, int v2, int v3, int v4, int min_=3) {
+  int quality =
+    SettingGet_i(cs->State.G, cs->Setting, cs->Obj->Obj.Setting, setting);
+
+  if (quality == -1) {
+    int natom = cs->NIndex;
+    quality =
+      (natom < 100000) ? v1 :
+      (natom < 500000) ? v2 :
+      (natom < 999999) ? v3 : v4;
+  } else if (quality < min_) {
+    quality = min_;
+  }
+
+  return quality;
 }
 
 CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinders_for_strands, short is_picking,
@@ -1714,22 +1717,18 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
     SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_putty_radius);
   /* WLD removed: if(putty_radius<0.01F) putty_radius=0.01F; --
      should not constrain what is effectively a scale factor */
-  tube_quality =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_tube_quality);
-  if(tube_quality < 3)
-    tube_quality = 3;
-  oval_quality =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_oval_quality);
-  if(oval_quality < 3)
-    tube_quality = 3;
-  putty_quality =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_putty_quality);
-  if(putty_quality < 3)
-    putty_quality = 3;
-  loop_quality =
-    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_loop_quality);
-  if(loop_quality < 3)
-    loop_quality = 3;
+
+  tube_quality  = GetCartoonQuality(cs, cSetting_cartoon_tube_quality,   9, 7, 6, 5);
+  oval_quality  = GetCartoonQuality(cs, cSetting_cartoon_oval_quality,  10, 8, 7, 6);
+  putty_quality = GetCartoonQuality(cs, cSetting_cartoon_putty_quality, 11, 9, 7, 5);
+  loop_quality  = GetCartoonQuality(cs, cSetting_cartoon_loop_quality,   6, 6, 5, 4);
+  sampling      = GetCartoonQuality(cs, cSetting_cartoon_sampling,       7, 5, 3, 2, 1);
+
+  PRINTFB(G, FB_RepCartoon, FB_Blather)
+    " RepCartoon: Use settings tube_quality=%d oval_quality=%d putty_quality=%d loop_quality=%d sampling=%d\n",
+    tube_quality, oval_quality, putty_quality, loop_quality, sampling
+    ENDFB(G);
+
   if(SettingGetGlobal_i(G, cSetting_ray_trace_mode) > 0)
     if(loop_quality < 12)
       loop_quality *= 2;
@@ -1756,9 +1755,6 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
   cylindrical_helices =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_cylindrical_helices);
 
-  sampling = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_sampling);
-  if(sampling < 1)
-    sampling = 1;
   sampling_tmp = Alloc(float, sampling * 3);
 
   alpha =
@@ -1906,8 +1902,9 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
         if((a < (nAt - 1)) && (*s == *(s + 1))) {       /* working in the same segment... */
           atom_index1 = cs->IdxToAtm[*atp];
           atom_index2 = cs->IdxToAtm[*(atp + 1)];
-          c1 = *(cs->Color + *atp);
-          c2 = *(cs->Color + *(atp + 1));
+
+          c1 = (obj->AtomInfo + atom_index1)->color;
+          c2 = (obj->AtomInfo + atom_index2)->color;
 
           if(cartoon_color >= 0) {
             c1 = (c2 = cartoon_color);
@@ -2000,7 +1997,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 
         if(n_p > 1) {
           atom_index1 = cs->IdxToAtm[*(atp - 1)];
-          c1 = *(cs->Color + *(atp - 1));
+          c1 = (obj->AtomInfo + atom_index1)->color;
 
           if(cartoon_color >= 0) {
             c1 = cartoon_color;
@@ -2175,10 +2172,11 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
       }
       if(ok && !extrudeFlag) {
         if((a < (nAt - 1)) && (*s == *(s + 1))) {       /* working in the same segment... */
-          c1 = *(cs->Color + *atp);
-          c2 = *(cs->Color + *(atp + 1));
           atom_index1 = cs->IdxToAtm[*atp];
           atom_index2 = cs->IdxToAtm[*(atp + 1)];
+
+          c1 = (obj->AtomInfo + atom_index1)->color;
+          c2 = (obj->AtomInfo + atom_index2)->color;
 
           if(cartoon_color >= 0) {
             c1 = (c2 = cartoon_color);
@@ -2801,7 +2799,7 @@ int RepCartoonSameVis(RepCartoon * I, CoordSet * cs)
   lv = I->LastVisib;
 
   for(a = 0; a < cs->NIndex; a++) {
-    if(*(lv++) != (ai + cs->IdxToAtm[a])->visRep[cRepCartoon]) {
+    if(*(lv++) != GET_BIT((ai + cs->IdxToAtm[a])->visRep, cRepCartoon)) {
       same = false;
       break;
     }
@@ -2838,7 +2836,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   int nSeg;
   int *ss, *fp;
 
-  int visFlag;
   int st, nd;
   float *v_c, *v_n, *v_o, *v_o_last = NULL;
   float t0[3], t1[3], t2[3], t3[3], o0[12], o1[12];
@@ -2879,6 +2876,9 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     (SettingGetGlobal_i(G, cSetting_cartoon_nucleic_acid_as_cylinders) & 2) && 
     SettingGetGlobal_b(G, cSetting_render_as_cylinders);
 
+  // skip if not visible
+  if(!cs->hasRep(cRepCartoonBit))
+    return NULL;
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -2889,17 +2889,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     " RepCartoonNew-Debug: entered.\n" ENDFD;
 
   obj = cs->Obj;
-  visFlag = false;
-  for(a = 0; a < cs->NIndex; a++) {
-    if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepCartoon]) {
-      visFlag = true;
-      break;
-    }
-  }
-  if(!visFlag) {
-    OOFreeP(I);
-    return (NULL);              /* skip if not visible */
-  }
 
   RepInit(G, &I->R);
 
@@ -2997,18 +2986,11 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   lv = I->LastVisib;
   for(a1 = 0; a1 < cs->NAtIndex; a1++) {
-    if(obj->DiscreteFlag) {
-      if(cs == obj->DiscreteCSet[a1])
-        a = obj->DiscreteAtmToIdx[a1];
-      else
-        a = -1;
-    } else {
-      a = cs->AtmToIdx[a1];
-    }
+    a = cs->atmToIdx(a1);
     if(a >= 0) {
       ai = obj->AtomInfo + a1;
-      *(lv++) = ai->visRep[cRepCartoon] ? 1 : 0;
-      if(ai->visRep[cRepCartoon]) {
+      *(lv++) = GET_BIT(ai->visRep, cRepCartoon);
+      if(ai->visRep & cRepCartoonBit) {
         if(ring_anchor && (ai->protons != cAN_H) && ((ring_finder_eff >= 3) ||  /* all 5-7 atom rings */
                                                      ((ring_finder_eff <= 2) && /*  C4-containing rings */
                                                       (WordMatchExact
@@ -3075,7 +3057,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
             *fp = ai->flags;    /* store atom flags */
 
             if(cartoon_side_chain_helper) {
-              if(ai->visRep[cRepLine] || ai->visRep[cRepCyl] || ai->visRep[cRepSphere])
+              if(ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit))
                 *fp |= cAtomFlag_no_smooth;
             }
 
@@ -3134,21 +3116,11 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
             AtomInfoBracketResidueFast(G, obj->AtomInfo, obj->NAtom, a1, &st, &nd);
 
-            if(obj->DiscreteFlag) {
-              if(cs == obj->DiscreteCSet[nd])
-                skip_to = obj->DiscreteAtmToIdx[nd];
-            } else
-              skip_to = cs->AtmToIdx[nd];
+            skip_to = cs->atmToIdx(nd);
 
             for(a3 = st; a3 <= nd; a3++) {
 
-              if(obj->DiscreteFlag) {
-                if(cs == obj->DiscreteCSet[a3])
-                  a4 = obj->DiscreteAtmToIdx[a3];
-                else
-                  a4 = -1;
-              } else
-                a4 = cs->AtmToIdx[a3];
+              a4 = cs->atmToIdx(a3);
               if(a4 >= 0) {
                 if(WordMatch(G, "C", obj->AtomInfo[a3].name, 1) < 0) {
                   v_c = cs->Coord + 3 * a4;
@@ -3265,7 +3237,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     for(a = 0; a < obj->NAtom; a++) {
       ai = obj->AtomInfo + a;
 
-      if(ai->visRep[cRepCartoon]) {
+      if(ai->visRep & cRepCartoonBit) {
         value = ai->b;
         sum += value;
         sumsq += (value * value);

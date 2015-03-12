@@ -115,26 +115,28 @@ class MMD(Storage):
         MMODList = []
         MMODList.append(" %5d  %-70s\n" %(conn.nAtom,conn.molecule.title))
         c = 0
+        neighbors_len = 6
         for i in conn.atom:
             
 # construct neighbor list
-            neighbors = len(conn.bond[c])*[0]
-            bondorders = len(conn.bond[c])*[0]
-            j = 0
-            for b in conn.bond[c]:
+            neighbors = [0] * neighbors_len
+            bondorders = [0] * neighbors_len
+            for j, b in enumerate(conn.bond[c]):
+                if j >= neighbors_len:
+                    print " Warning: too many bonds"
+                    break
                 n = b.index[0]
                 if n == c:
                     n = b.index[1]
                 neighbors[j] = n + 1
                 bondorders[j] = b.order
-                j = j + 1
                 
 # assemble output line
             if i.numeric_type>0:
                 tline = " %3d" % (i.numeric_type)
             else:
                 tline = " %3d" % 64
-            for j in range(len(conn.bond[c])): 
+            for j in range(neighbors_len):
                 tline = tline + " %5d %1d" % (neighbors[j], bondorders[j])
             tline = tline + " %11.6f %11.6f %11.6f " % (i.coord[0], 
                 i.coord[1], i.coord[2])

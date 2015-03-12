@@ -88,7 +88,7 @@ class Mutagenesis(Wizard):
             self.mode_label[a] = ""+a
         self.mode_label['current']="No Mutant"
 
-        self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
+        self.selection_mode = cmd.get_setting_int("mouse_selection_mode")
         cmd.set("mouse_selection_mode",1) 
 
         smm = []

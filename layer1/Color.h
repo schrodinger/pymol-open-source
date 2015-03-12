@@ -82,9 +82,9 @@ void ColorFree(PyMOLGlobals * G);
 
 int ColorGetNext(PyMOLGlobals * G);
 int ColorGetCurrent(PyMOLGlobals * G);
-int ColorGetIndex(PyMOLGlobals * G, char *name);
+int ColorGetIndex(PyMOLGlobals * G, const char *name);
 int ColorConvertOldSessionIndex(PyMOLGlobals * G, int index);
-void ColorUpdateFront(PyMOLGlobals * G, float *back);
+void ColorUpdateFront(PyMOLGlobals * G, const float *back);
 void ColorUpdateFrontFromSettings(PyMOLGlobals * G);
 
 float *ColorGet(PyMOLGlobals * G, int index);   /* pointer maybe invalid after creating a new color */
@@ -92,7 +92,7 @@ float *ColorGetRaw(PyMOLGlobals * G, int index);        /* pointer maybe invalid
 
 float *ColorGetSpecial(PyMOLGlobals * G, int index);
 float *ColorGetNamed(PyMOLGlobals * G, char *name);
-void ColorDef(PyMOLGlobals * G, char *name, float *v, int mode, int quiet);
+void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int quiet);
 int ColorGetNColor(PyMOLGlobals * G);
 char *ColorGetName(PyMOLGlobals * G, int index);
 int ColorGetStatus(PyMOLGlobals * G, int index);

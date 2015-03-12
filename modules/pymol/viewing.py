@@ -478,7 +478,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException            
         return r
 
-    def toggle(representation="", selection="", _self=cmd):
+    def toggle(representation="lines", selection="all", _self=cmd):
         '''
 DESCRIPTION
 
@@ -487,54 +487,39 @@ DESCRIPTION
     
 USAGE
 
-    toggle representation, selection
+    toggle [ representation [, selection ]]
 
 ARGUMENTS
 
-    representation = string
+    representation = string: named representation {default: lines}
 
-    selection = string
+    selection = string: atom selection {default: all}
 
 NOTES
 
-    If no arguments are provided, then lines are toggled for all
-    objects in the aggregate.
-    
+    If the representation is enabled for any atom in the selection, it will
+    be turned off.
+
 PYMOL API
 
     cmd.toggle(string representation, string selection)
 
+SEE ALSO
+
+    show, hide
         '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            if (representation=="") and (selection==""):
-                r = _cmd.toggle(_self._COb,"(all)",repres['lines']); # show lines by default       
-            elif representation=='object':
-                if selection in cmd.get_names('all',enabled_only=1):
-                    r = cmd.disable(selection)
-                else:
-                    r = cmd.enable(selection)
-            elif (representation!="") and (selection!=""):
+            if representation == 'object':
+                repn = -2
+            else:
                 rep = representation
                 rep = repres_sc.auto_err(rep,'representation')
                 repn = repres[rep];
                 # preprocess selection 
                 selection = selector.process(selection)
-                #   
-                r = _cmd.toggle(_self._COb,str(selection),int(repn));
-            elif representation=='all':
-                r = _cmd.toggle(_self._COb,"all",repres['lines']); # toggle lines by default 
-            elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
-                # preprocess selection
-                selection = selector.process(representation)
-                #                  
-                r = _cmd.toggle(_self._COb,str(selection),repres['lines']);
-            else: # selection==""
-                rep = representation
-                rep = repres_sc.auto_err(rep,'representation')
-                repn = repres[rep];
-                r = _cmd.toggle(_self._COb,"all",int(repn));
+            r = _cmd.toggle(_self._COb,str(selection),int(repn));
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
@@ -822,7 +807,7 @@ SEE ALSO
             _self.unlock(r,_self)
         if is_ok(r):
             if len(r):
-                if (_self.get_setting_legacy("logging")!=0.0) and (output<3):
+                if (_self.get_setting_int("logging") != 0) and (output<3):
                     if not quiet:
                         print " get_view: matrix written to log file."
                     _self.log("_ set_view (\\\n","cmd.set_view((\\\n")
@@ -1028,7 +1013,7 @@ PYMOL API
             _self.unlock(r,_self)
         if is_ok(r):
             if len(r):
-                if (_self.get_setting_legacy("logging")!=0.0) and (output<3):
+                if (_self.get_setting_int("logging") != 0) and (output<3):
                     if not quiet:
                         print " get_viewport: data written to log file."
                     _self.log("_ viewport (\\\n","cmd.viewport((\\\n")
@@ -1085,16 +1070,6 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def set_colorection_name(dict,key,new_key,_self=cmd):
-        r = DEFAULT_ERROR      
-        try:
-            _self.lock(_self)         
-            r = _cmd.set_colorection_name(_self._COb,dict,key,new_key)
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
-
     def del_colorection(dict,key,_self=cmd):
         r = DEFAULT_ERROR      
         try:
@@ -1105,78 +1080,9 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def get_scene_dict(_self=cmd):
-        pymol=_self._pymol        
-        r = DEFAULT_ERROR      
-        try:
-            _self.lock(_self)
-            cpy = copy.deepcopy(pymol._scene_dict)
-        finally:
-            _self.unlock(r,_self)
-        return cpy
-
     def get_scene_list(_self=cmd):
-        return copy.deepcopy(_scene_validate_list(_self))
-
-    scene_sort_dict = {
-        'F1' : 'F01',
-        'F2' : 'F02',
-        'F3' : 'F03',
-        'F4' : 'F04',
-        'F5' : 'F05',
-        'F6' : 'F06',
-        'F7' : 'F07',
-        'F8' : 'F08',
-        'F9' : 'F09',
-        'SHFT-F1' : 'SHFT-F01',
-        'SHFT-F2' : 'SHFT-F02',
-        'SHFT-F3' : 'SHFT-F03',
-        'SHFT-F4' : 'SHFT-F04',
-        'SHFT-F5' : 'SHFT-F05',
-        'SHFT-F6' : 'SHFT-F06',
-        'SHFT-F7' : 'SHFT-F07',
-        'SHFT-F8' : 'SHFT-F08',
-        'SHFT-F9' : 'SHFT-F09',
-        }
-
-    def _scene_get_unique_key(_self=cmd):
-        pymol=_self._pymol
-        keys = pymol._scene_dict.keys()
-        while 1:
-            key = "%03d"%pymol._scene_counter
-            if pymol._scene_dict.has_key(key):
-                pymol._scene_counter = pymol._scene_counter + 1
-            else:
-                break;
-        return key
-    
-    def _scene_validate_list(_self=cmd):
-        pymol=_self._pymol
-        new_list = []
-        new_dict = {}
-        
-        for a in pymol._scene_order:
-            if pymol._scene_dict.has_key(a) and not new_dict.has_key(a):
-                new_list.append(a)
-                new_dict[a] = 1
-
-        lst = map(lambda x:(scene_sort_dict.get(x,x),x), pymol._scene_dict.keys())
-        lst.sort()
-        lst = map(lambda x:x[1],lst)
-        for a in lst:
-            if not new_dict.has_key(a):
-                new_list.append(a)
-        pymol._scene_order = new_list
-        # update shortcuts
-        pymol._scene_dict_sc.rebuild( pymol._scene_dict.keys() )
-        # update PyMOL internally
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd._set_scene_names(_self._COb,pymol._scene_order)
-        finally:
-            _self.unlock(r,_self);
-        return pymol._scene_order
+        with _self.lockcm:
+            return _cmd.get_scene_order(_self._COb)
 
     def chain_session(_self=cmd):
         import os
@@ -1236,72 +1142,35 @@ SEE ALSO
 
     scene
     '''
-        pymol=_self._pymol
 
-        r = DEFAULT_ERROR
-        location=location_code[location_sc.auto_err(location,'location')]
+        location = location_sc.auto_err(location,'location')
         if is_string(sort):
             sort=boolean_dict[boolean_sc.auto_err(sort,'sort option')]
-        if is_string(names):
-            if names=='*':
-                names = _scene_validate_list(_self)
-            else:
-                names = names.split()
-        r = DEFAULT_SUCCESS
-        if len(names):
-            name_dict = {}
-            for name in names:
-                if not pymol._scene_dict.has_key(name):
-                    print " Error: scene '%s' is not defined."%name
-                    r = DEFAULT_ERROR
-                name_dict[name] = 1
-            if sort: # special F-key-name aware sort
-                sort_list = [] 
-                fkey_re = re.compile("[fF]([1-9][0-9]*).*")
-                for name in names:
-                    mo = fkey_re.match(name)
-                    if mo != None:
-                        sort_list.append( ("F%02d\n"%int(mo.group(1)),name) )
-                    else:
-                        sort_list.append( (name,name) )
-                sort_list.sort()
-                names = []
-                for name in sort_list:
-                    names.append(name[1])
-            if not is_error(r):
-                old_list = _scene_validate_list(_self)
-                if location < 0: # top
-                    new_list = names
-                    for name in old_list:
-                        if not name_dict.has_key(name):
-                            new_list.append(name)
-                    pymol._scene_order = new_list
-                elif location == 0: # current
-                    start = old_list.index(names[0])
-                    if start >= 0: # guaranteed?
-                        new_list = []
-                        for name in old_list[:start]:
-                            if not name_dict.has_key(name):
-                                new_list.append(name)
-                        new_list.extend(names)
-                        for name in old_list[start:]:
-                            if not name_dict.has_key(name):
-                                new_list.append(name)
-                        pymol._scene_order = new_list
-                else: # bottom
-                    new_list = []
-                    for name in old_list:
-                        if not name_dict.has_key(name):
-                            new_list.append(name)
-                    new_list.extend(names)
-                    pymol._scene_order = new_list
-        if _self._raising(r,_self):
-            raise pymol.CmdException
-        _scene_validate_list(_self) # force scene buttons to be updated
-        if not quiet and not is_error(r):
-            _self.scene('*')
-        return r
-        
+
+        with _self.lockcm:
+            return _cmd.scene_order(_self._COb, names, sort, location)
+
+    def scene_recall_message(message, _self=cmd):
+        '''
+        INTERNAL, DO NOT USE.
+        Display a scene message.
+        '''
+        wiz = _self.get_wizard()
+        replace_flag = (wiz is not None
+                and str(wiz.__class__) == 'pymol.wizard.message.Message'
+                and hasattr(wiz, 'from_scene'))
+
+        if message:
+            if is_string(message):
+                message = message.splitlines()
+            elif not is_list(message):
+                raise TypeError("message %s" % (type(message)))
+            wizard_func = _self.replace_wizard if replace_flag else _self.wizard
+            wizard_func("message", *message)
+            _self.get_wizard().from_scene = 1
+        elif replace_flag:
+            _self.wizard()
+
     def scene(key='auto', action='recall', message=None, view=1,
               color=1, active=1, rep=1, frame=1, animate=-1,
               new_key=None, hand=1, quiet=1, _self=cmd):
@@ -1354,332 +1223,44 @@ SEE ALSO
     view, set_view, get_view
 
         '''
-        pymol=_self._pymol
-        r = DEFAULT_SUCCESS
-        view = int(view)
-        rep = int(rep)
-        color = int(color)
-        active = int(active)
-        frame = int(frame)
-        quiet = int(quiet)
+        action = scene_action_sc.auto_err(action, 'action')
 
-        if not view:
-            animate=0
-        elif animate<0:
-            scene_animation = int(_self.get_setting_legacy("scene_animation"))
-            if scene_animation<0:
-                scene_animation = int(_self.get_setting_legacy("animation"))
-            if scene_animation!=0:
-                animate = _self.get_setting_legacy("scene_animation_duration")
-            else:
-                animate = 0
-        try:
-            _self.lock(_self) # manipulating global data, so need lock
-            if key=='auto':
-                action = scene_action_sc.auto_err(action,'action')
-                if action=='recall':
-                    action='next'
-                if action=='start':
-                    lst = _scene_validate_list(_self)
-                    if len(lst):
-                        key = lst[0]
-                        action='recall'
-            if action == 'delete':
-                action='clear'             
-            if action == 'append':
-                action='store'
-            if key=='*':
-                action = scene_action_sc.auto_err(action,'action')
-                if action=='clear':
-                    for key in pymol._scene_dict.keys():
-                        # free selections
-                        scene_list = pymol._scene_dict[key]
-                        if len(scene_list)>3:
-                            colorection = scene_list[3]
-                            if colorection!=None:
-                                _self.del_colorection(colorection,key) 
-                        name = "_scene_"+key+"_*"
-                        _self.delete(name)
-                    pymol._scene_dict = {}
-                    pymol._scene_order = []
-                    _scene_validate_list(_self)
-                elif action in ['sort']:
-                    _self.scene_order(key,1,quiet=quiet)                    
-                else:
-                    print " scene: current order:"
-                    lst = _scene_validate_list(_self)
-                    parsing.dump_str_list(lst)
-            else:
-                action = scene_action_sc.auto_err(action,'action')
-                
-                if action=='insert_before':
-                    key = _scene_get_unique_key(_self=_self)
-                    cur_scene = setting.get("scene_current_name",_self=_self)
-                    _scene_validate_list(_self)
-                    if cur_scene in pymol._scene_order:
-                        ix = pymol._scene_order.index(cur_scene)
-                    else:
-                        ix = 0
-                    pymol._scene_order.insert(ix,key)
-                    action='store'
-                elif action=='rename':
-                    if not pymol._scene_dict.has_key(key):
-                        print "Error: scene '%s' not found."%key
-                    elif new_key==None:
-                        print "Error: must provide the 'new_key' argument"
-                    elif new_key == key:
-                        print "scene: '%s' not changed" % key
-                    else:
-                        new_scene_order = []
-                        for a in pymol._scene_order:
-                            if a==key:
-                                new_scene_order.append(new_key)
-                            else:
-                                new_scene_order.append(a)
-                        pymol._scene_order=new_scene_order
-                        pymol._scene_dict[new_key] = pymol._scene_dict[key]
-                        del pymol._scene_dict[key]
-                        valid_names = _self.get_names("all")
-                        for rep_name in rep_list:
-                            name = "_scene_"+key+"_"+rep_name
-                            if name in valid_names:
-                                new_name = "_scene_"+new_key+"_"+rep_name
-                                _self.set_name(name,new_name)
-                        scene_list = pymol._scene_dict[new_key]
-                        if len(scene_list)>3:
-                            _self.set_colorection_name(scene_list[3],key,new_key)
-                        print" scene: '%s' renamed to '%s'."%(key,new_key)
-                        pymol._scene_dict_sc.rebuild( pymol._scene_dict.keys())
-                        _self.set("session_changed",1,quiet=1)
-                        _scene_validate_list(_self) # force update of scene buttons                        
-                elif action=='insert_after':
-                    key = _scene_get_unique_key(_self=_self)            
-                    cur_scene = setting.get("scene_current_name",_self=_self)
-                    _scene_validate_list(_self)                    
-                    if cur_scene in pymol._scene_order:
-                        ix = pymol._scene_order.index(cur_scene) + 1
-                    else:
-                        ix = len(pymol._scene_order)
-                    pymol._scene_order.insert(ix,key)
-                    action='store'
-                if action=='recall':
-                    _self.set("scenes_changed",1,quiet=1);
-                    key = pymol._scene_dict_sc.auto_err(key,'scene')
-                    _self.set('scene_current_name', key, quiet=1)               
-                    scene_list = pymol._scene_dict[key]
-                    ll = len(scene_list)
-                    if (ll>1) and (active):
-                        if scene_list[1]!=None:
-                            _self.disable()
-                            _self.deselect()
-                            _self.set_vis(scene_list[1])
-                    if (ll>2) and (frame):
-                        if scene_list[2]!=None:
-                            if not _self.get_movie_playing(): # don't set frame when movie is already playing
-                                if _self.get_frame()!=scene_list[2]: # only set the frame when it isn't already correct
-                                    _self.frame(scene_list[2],scene=1) # let frame know that it is being set by a scene
-                            else:
-                                _self.set_frame(1,10) # seek scene
-                    if (ll>3) and (color):
-                        if scene_list[3]!=None:
-                            _self.set_colorection(scene_list[3],key)
-                    if (ll>4) and (rep):
-                        if scene_list[4]==None:
-                            rep = 0
-                    if (ll>5) and (message==None):
-                        if scene_list[5]!=None:
-                            message=scene_list[5]
-                    if rep!=0:
-                        _self.hide("(all)")
-                        valid_names = _self.get_names("all")
-                        for rep_name in rep_list:
-                            name = "_scene_"+key+"_"+rep_name
-                            if name in valid_names:
-                                _self.show(rep_name,name)
-                    replace_flag = 0
-                    wiz = _self.get_wizard()
-                    if wiz!=None:
-                        if str(wiz.__class__) == 'pymol.wizard.message.Message':
-                            if hasattr(wiz,'from_scene'):
-                                replace_flag = 1
-                    mess_flag = 0
-                    if message!=None:
-                        if is_string(message):
-                            if len(message):
-                                if(replace_flag):
-                                    _self.replace_wizard("message",message)
-                                else:
-                                    _self.wizard("message",message)
-                                _self.get_wizard().from_scene = 1
-                                mess_flag = 1
-                        if is_list(message):
-                            if len(message):
-                                if(replace_flag):
-                                    apply(_self.replace_wizard,("message",)+tuple(message))
-                                else:
-                                    apply(_self.wizard,("message",)+tuple(message))
-                                _self.get_wizard().from_scene = 1
-                                mess_flag = 1
-                    if replace_flag and not mess_flag:
-                        _self.wizard()
-                    if (ll>0) and (view):
-                        if scene_list[0]!=None:
-                            _self.set_view(scene_list[0],animate,quiet,hand)
-                    if not quiet and _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
-                        print " scene: \"%s\" recalled."%key
-                elif (action=='store') or (action=='update'):
-                    if key =='new':
-                        key=_scene_get_unique_key(_self=_self)               
-                    if key =='auto':
-                        key = setting.get("scene_current_name",_self=_self)
-                        if key=='':
-                            key=_scene_get_unique_key(_self=_self)
-                    if not pymol._scene_dict.has_key(key):
-                        pymol._scene_dict_sc.append(key)
-                    else: # get rid of existing one (if exists)
-                        scene_list = pymol._scene_dict[key]
-                        if (action=='update') and (message==None) and len(scene_list)>5:
-                            message = pymol._scene_dict[key][5]
-                        if len(scene_list)>3:
-                            colorection = scene_list[3]
-                            if colorection!=None:
-                                _self.del_colorection(colorection,key) # important -- free RAM
-                        name = "_scene_"+key+"_*"
-                        _self.delete(name)
-                    if key not in pymol._scene_order:
-                        pymol._scene_order.append(key)
-                    if rep:
-                        for rep_name in rep_list:
-                            name = "_scene_"+key+"_"+rep_name
-                            _self.select(name,"rep "+rep_name)
-                    if is_string(message):
-                        if message:
-                            if (message[0:1] in [ '"',"'"] and
-                                 message[-1:] in [ '"',"'"]):
-                                message=message[1:-1]
-                            else:
-                                message = message.splitlines()
-                    pymol._scene_dict[key] = [
-                        _self.get_view(0) if view else None,
-                        _self.get_vis() if active else None,
-                        _self.get_frame() if frame else None,
-                        _self.get_colorection(key) if color else None,
-                        1 if rep else None,
-                        message,
-                    ]
-                    if _feedback(fb_module.scene,fb_mask.actions,_self):
-                        print " scene: scene "+action+"d as \"%s\"."%key
-                    _scene_validate_list(_self)                        
-                    _self.set("scenes_changed",1,quiet=1);
-                    _self.set('scene_current_name',key,quiet=1)
-                    _self.set("session_changed",1,quiet=1)
-                elif action=='clear':
-                    if key=='auto':
-                        key = setting.get("scene_current_name",_self=_self)
-                        if not key and _feedback(fb_module.scene,fb_mask.actions,_self):
-                            print " scene: no current scene"
-                    else:
-                        key = pymol._scene_dict_sc.auto_err(key,'scene')
-                    if pymol._scene_dict.has_key(key):
-                        scene_list = pymol._scene_dict[key]
-                        if len(scene_list)>3:
-                            colorection = scene_list[3]
-                            if colorection!=None:
-                                _self.del_colorection(colorection,key) # important -- free RAM
-                        lst = _scene_validate_list(_self)
-                        if key == setting.get("scene_current_name",_self=_self):
-                            ix = lst.index(key) - 1
-                            if ix<0:
-                                ix = lst.index(key) + 1
-                            if ix>=0 and ix < len(lst):
-                                setting.set("scene_current_name",lst[ix],quiet=1,_self=_self)
-                            else:
-                                setting.set("scene_current_name","",quiet=1,_self=_self) 
-                        _self.set("scenes_changed",1,quiet=1);               
-                        del pymol._scene_dict[key]
-                        name = "_scene_"+key+"_*"
-                        _self.delete(name)
-                        _scene_validate_list(_self)
-                        if _feedback(fb_module.scene,fb_mask.actions,_self):
-                            print " scene: '%s' deleted."%key
-                    _self.set("session_changed",1,quiet=1)
-                elif action=='next':
-                    lst = _scene_validate_list(_self)
-                    if (len(lst)==0) and cmd.get_movie_length()>0:
-                        _self.do("mtoggle") # alternate SPACEBAR behavior if no scenes defined...
-                        return
-                    cur_scene = setting.get('scene_current_name',quiet=1,_self=_self)
-                    if cur_scene in lst:
-                        ix = lst.index(cur_scene) + 1
-                    else:
-                        ix = 0
-                        animate = 0
-                        if ((pymol._scene_quit_on_action==action) and
-                             (setting.get("presentation",_self=_self)=="on") and 
-                             (setting.get("presentation_auto_quit",_self=_self)=="on")):
-                            _self.quit()
-                    if ix<len(lst):
-                        scene_name = lst[ix]
-                        _self.set('scene_current_name', scene_name, quiet=1)
-                        scene(scene_name,'recall',animate=animate,_self=_self)
-                    elif setting.get("scene_loop",_self=_self)=="on": # loop back to the beginning
-                        if len(lst):
-                            scene_name = lst[0]
-                            _self.set('scene_current_name', scene_name, quiet=1)
-                            scene(scene_name,'recall',animate=animate,_self=_self)
-                    else: # otherwise put up blank screen
-                        _self.set('scene_current_name','',quiet=1)
-                        chained = 0
-                        if (setting.get("presentation",_self=_self)=="on"):
-                            chained = chain_session(_self)
-                            if (not chained) and (setting.get("presentation_auto_quit",_self=_self)=="on"):
-                                pymol._scene_quit_on_action = action
-                        if not chained: # and len(lst):
-                            _self.disable() # just hide everything
-                            _self.wizard()
-                            _self.mstop() # and stop movie from playing...
+        if is_list(message):
+            message = '\n'.join(message)
 
-                elif action=='previous':
-                    lst = _scene_validate_list(_self)            
-                    cur_scene = setting.get('scene_current_name',quiet=1,_self=_self)
-                    if cur_scene in lst:
-                        ix = lst.index(cur_scene) - 1
-                    else:
-                        ix = len(lst)-1
-                        animate = 0
-                        if ((pymol._scene_quit_on_action==action) and
-                             (setting.get("presentation",_self=_self)=="on") and 
-                             (setting.get("presentation_auto_quit",_self=_self)=="on")):
-                            _self.quit()
-                        elif setting.get("presentation",_self=_self)=="on":
-                            if _self.get_movie_length()>0:
-                                _self.mplay() # restart movie
-                    if ix>=0:
-                        scene_name = lst[ix]
-                        scene(scene_name,'recall',animate=animate,hand=-1,_self=_self)
-                    elif setting.get("scene_loop",_self=_self)=="on": # loop back to the end
-                        print setting.get("scene_loop",_self=_self)
-                        if len(lst):
-                            scene_name = lst[-1]
-                            _self.set('scene_current_name', scene_name, quiet=1)
-                            scene(scene_name,'recall',animate=animate,hand=-1,_self=_self)
-                    else: # otherwise put up blank screen
-                        _self.set('scene_current_name','',quiet=1)
-                        if ((setting.get("presentation",_self=_self)=="on") and 
-                             (setting.get("presentation_auto_quit",_self=_self)=="on")):
-                            pymol._scene_quit_on_action = action
-                        if len(lst):
-                            _self.disable() # just hide everything
-                            _self.wizard()
-                elif action=='order':
-                    _self.scene_order(key,quiet=quiet)
-                elif action=='sort':
-                    _self.scene_order(key,1,quiet=quiet)
-                elif action=='first':
-                    _self.scene_order(key,location='top',quiet=quiet)
-                
-        finally:
-            _self.unlock(r,_self)
+        # default when called with no arguments
+        if key == 'auto':
+            if action == 'recall':
+                action = 'next'
+
+        # aliases (DEPRECATED)
+        if action == 'clear':
+            action = 'delete'
+        elif action == 'append' or action == 'update':
+            action = 'store'
+
+        # presentation auto quit
+        if (pymol._scene_quit_on_action == action and
+                action in ('next', 'previous') and 
+                _self.get_setting_boolean("presentation") and
+                _self.get_setting_boolean("presentation_auto_quit") and
+                _self.get("scene_current_name") == ""):
+            if not chain_session(_self):
+                _self.quit()
+
+        # call C function
+        with _self.lockcm:
+            r = _cmd.scene(_self._COb, key, action, message, int(view),
+                    int(color), int(active), int(rep), int(frame),
+                    float(animate), new_key, int(hand))
+
+        # autocomplete
+        if action in ('store', 'delete') or action.startswith('insert_'):
+            _self._pymol._scene_dict_sc.rebuild(_self.get_scene_list())
+
+        # for presentation auto quit
+        pymol._scene_quit_on_action = action
+
         return r
                         
     def session_save_views(session,_self=cmd):
@@ -1694,25 +1275,63 @@ SEE ALSO
             pymol._view_dict_sc.rebuild(pymol._view_dict.keys())
         return 1
 
-
-    def session_save_scenes(session,_self=cmd):
-        pymol=_self._pymol        
-        session['scene_dict']=copy.deepcopy(pymol._scene_dict)
-        session['scene_order']=copy.deepcopy(pymol._scene_order)
-        return 1
-
     def session_restore_scenes(session,_self=cmd):
-        pymol=_self._pymol        
+        # Restore scenes from old session files (<= 1.7.4)
+
         if session.has_key('scene_dict'):
-            pymol._scene_dict = copy.deepcopy(session['scene_dict'])
-            pymol._scene_dict_sc.rebuild(pymol._scene_dict.keys())
+            _self.scene('*', 'clear')
+
+            frame = 0
+            if _self.get_movie_playing():
+                _self.mstop()
+                frame = _self.get_frame()
+
+            for key, data in session['scene_dict'].items():
+                _convert_legacy_scene(key, data, _self)
+
+            if frame:
+                _self.frame(frame)
+                _self.mplay()
+
         if session.has_key('scene_order'):
-            pymol._scene_order = copy.deepcopy(session['scene_order'])
-        else:
-            pymol._scene_order = []
-        _scene_validate_list(_self=_self)         
+            _self.scene_order(' '.join(session['scene_order']))
+
+        _self._pymol._scene_dict_sc.rebuild(_self.get_scene_list())
+
         return 1
 
+    def _convert_legacy_scene(key, scene_list, _self=cmd):
+        # Create a scene from the given legacy scene list and finally delete
+        # the colorection and rep selections.
+
+        scene_list += [None] * 5
+
+        view, active, frame, color, rep = [(0 if x is None else 1)
+                for x in scene_list[:5]]
+
+        if frame:
+            _self.frame(scene_list[2])
+
+        if view:
+            _self.set_view(scene_list[0], 0.0)
+
+        if active:
+            _self.disable()
+            _self.deselect()
+            _self.set_vis(scene_list[1])
+
+        if color:
+            _self.set_colorection(scene_list[3], key)
+            _self.del_colorection(scene_list[3], key)
+
+        if rep:
+            # only atomic representations
+            _self.hide('everything', '(*)')
+            for rep_name in rep_list:
+                _self.show(rep_name, "?_scene_" + key + "_" + rep_name)
+            _self.delete("_scene_" + key + "_*")
+
+        _self.scene(key, 'store', scene_list[5], view, color, active, rep, frame)
 
     def stereo(toggle='on', quiet=1, _self=cmd):
         '''
@@ -2170,7 +1789,7 @@ SEE ALSO
         # stop movies and sculpting if they're on...
         if _self.get_movie_playing():
             _self.mstop()
-        if int(_self.get_setting_legacy("sculpting"))!=0:
+        if _self.get_setting_boolean("sculpting"):
             _self.set("sculpting","off",quiet=1)
         # make sure that there aren't any pending display events
         _self.refresh()
@@ -2254,7 +1873,7 @@ SEE ALSO
         # stop movies, rocking, and sculpting if they're on...
         if _self.get_movie_playing():
             _self.mstop()
-        if int(_self.get_setting_legacy("sculpting"))!=0:
+        if _self.get_setting_boolean("sculpting"):
             _self.set("sculpting","off",quiet=1)
         if _self.rock(-2)>0:
             _self.rock(0)

@@ -80,7 +80,7 @@ typedef struct ObjectMolecule {
   /* not stored */
   struct CSculpt *Sculpt;
   int RepVisCacheValid;
-  signed char RepVisCache[cRepCnt];     /* for transient storage during updates */
+  int RepVisCache;     /* for transient storage during updates */
 
   // methods
   int getState();
@@ -311,7 +311,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
 
 ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag);
 int ObjectMoleculeSort(ObjectMolecule * I);
-ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule * obj);
+ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj);
 void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int invalidate);
 
 ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals * G, ObjectMolecule * obj,
@@ -336,6 +336,10 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * obj
 
 ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
                                          PyObject * coords, int frame);
+ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
+                                         const float * coords, int coords_len, int frame=-1);
+ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, const char * name,
+                                         const float * coords, int coords_len, int frame=-1);
 
 ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * obj, CRaw * pmo,
                                       int frame, int discrete);

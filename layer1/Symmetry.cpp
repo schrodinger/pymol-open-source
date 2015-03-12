@@ -211,7 +211,7 @@ CSymmetry *SymmetryNew(PyMOLGlobals * G)
   return (I);
 }
 
-CSymmetry *SymmetryCopy(CSymmetry * other)
+CSymmetry *SymmetryCopy(const CSymmetry * other)
 {
   OOAlloc(other->G, CSymmetry);
   if(!other) {
@@ -225,7 +225,7 @@ CSymmetry *SymmetryCopy(CSymmetry * other)
   return (I);
 }
 
-CSymmetry *SymmetryCopyTo(CSymmetry *other, CSymmetry *I)
+CSymmetry *SymmetryCopyTo(const CSymmetry *other, CSymmetry *I)
 {
   UtilCopyMem(I, other, sizeof(CSymmetry));
   I->Crystal = CrystalCopy(I->Crystal);

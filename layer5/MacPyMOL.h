@@ -4,13 +4,18 @@
  * (c) 2014 Schrodinger, Inc.
  */
 
-#ifdef _MACPYMOL_XCODE
 #ifndef _H_MACPYMOL
 #define _H_MACPYMOL
 
-void MacPyMOLSetProgress(float value);
+#ifdef _MACPYMOL_XCODE
+void MacPyMOL_SetProgress(float value);
 int MacPyMOL_doWindow(int code, int x,int y,int w, int h);
 int MacPyMOL_fullScreenActive();
-
 #endif
+
+#ifdef _PYMOL_IOS
+float IOS_getContentScaleFactor();
+#define getContentScaleFactor IOS_getContentScaleFactor
+#endif
+
 #endif

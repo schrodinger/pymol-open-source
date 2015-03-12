@@ -241,10 +241,11 @@ unsigned int VLAGetSize(void *ptr)
   return (vla->size);
 }
 
-void *VLANewCopy(void *ptr)
+void *VLANewCopy(const void *ptr)
 {
   if(ptr) {                     /* NULL protected */
-    VLARec *vla, *new_vla;
+    const VLARec *vla;
+    VLARec *new_vla;
     unsigned int size;
     vla = &((VLARec *) ptr)[-1];
     size = (vla->unit_size * vla->size) + sizeof(VLARec);

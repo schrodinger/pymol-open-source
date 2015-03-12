@@ -106,6 +106,26 @@ typedef struct {
   int offset;
 } ExecutiveObjectOffset;
 
+class SpecRec;
+
+/*
+ * Iterator over objects (uses SpecRec list)
+ */
+class ObjectIterator {
+  PyMOLGlobals * G;
+  SpecRec *rec;
+
+public:
+  ObjectIterator(PyMOLGlobals * G) : G(G) {
+    reset();
+  };
+
+  void reset();
+  bool next();
+  CObject * getObject();
+};
+
+
 const char * ExecutiveMapGenerate(PyMOLGlobals * G, char * name, char * reflection_file, char * tempFile,
 				  char * amplitudes, char * phases, char * weights, double reso_low,
 				  double reso_high, char * space_group, double cell[6], int quiet, int zoom);
@@ -128,7 +148,7 @@ int ExecutiveCheckGroupMembership(PyMOLGlobals * G, int list_id, CObject * obj);
 #define cExecutiveGroupPurge 9
 #define cExecutiveGroupExcise 10
 
-int ExecutiveGroup(PyMOLGlobals * G, char *name, char *members, int action, int quiet);
+int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int action, int quiet);
 
 void ExecutiveInvalidateGroups(PyMOLGlobals * G, int force);
 void ExecutiveUpdateGroups(PyMOLGlobals * G, int force);
@@ -221,14 +241,13 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int allow_zoom, int 
 void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, CObject * obj);
 void ExecutiveManageSelection(PyMOLGlobals * G, char *name);
 Block *ExecutiveGetBlock(PyMOLGlobals * G);
-CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, char *name);
+CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, const char *name);
 ObjectMolecule *ExecutiveFindObjectMoleculeByName(PyMOLGlobals * G, char *name);
 CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType);
 int ExecutiveIterateObject(PyMOLGlobals * G, CObject ** obj, void **hidden);
-void ExecutiveDelete(PyMOLGlobals * G, char *name);
-void ExecutiveDump(PyMOLGlobals * G, char *fname, char *obj);
-void ExecutiveSetControlsOff(PyMOLGlobals * G, char *name);
-void ExecutiveSort(PyMOLGlobals * G, char *name);
+void ExecutiveDelete(PyMOLGlobals * G, const char *name);
+void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj);
+void ExecutiveSort(PyMOLGlobals * G, const char *name);
 PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index, 
 				  char *s1, char *s2, int state, int quiet, int updates);
 int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
@@ -319,7 +338,7 @@ int ExecutiveSeleToObject(PyMOLGlobals * G, char *name, char *s1, int source, in
                           int discrete, int zoom, int quiet, int singletons);
 PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals * G, char *s1, int state,
                                      char *ref_object, int ref_state);
-void ExecutiveInvalidateRep(PyMOLGlobals * G, char *name, int rep, int level);
+void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int level);
 void ExecutiveFlag(PyMOLGlobals * G, int flag, char *s1, int action, int quiet);
 void ExecutiveRemoveAtoms(PyMOLGlobals * G, char *s1, int quiet);
 void ExecutiveProtect(PyMOLGlobals * G, char *s1, int mode, int quiet);
@@ -334,6 +353,7 @@ void ExecutiveFuse(PyMOLGlobals * G, char *s0, char *s1, int mode, int recolor,
 void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, char *name, int force, int quiet);
 int ExecutiveInvert(PyMOLGlobals * G, int quiet);
 char *ExecutiveGetNames(PyMOLGlobals * G, int mode, int enabled_only, char *s0);
+bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name);
 int ExecutiveGetType(PyMOLGlobals * G, char *name, WordType type);
 float ExecutiveGetArea(PyMOLGlobals * G, char *s0, int sta0, int load_b);
 void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals *G);
@@ -442,7 +462,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, char *s1, char *expr, float min, float m
                       float *min_ret, float *max_ret);
 
 int ExecutiveReinitialize(PyMOLGlobals * G, int what, char *pattern);
-char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, char *name);
+const char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, const char *name);
 int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict);
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G);
 CField   *ExecutiveGetVolumeField(PyMOLGlobals * G, char * objName, int state);

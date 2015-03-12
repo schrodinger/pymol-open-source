@@ -133,9 +133,7 @@ def _init_internals(_pymol):
 
     # stored scenes
 
-    _pymol._scene_dict = {}
     _pymol._scene_dict_sc = None
-    _pymol._scene_order = []
     _pymol._scene_counter = 1
     _pymol._scene_quit_on_action = ''
 
@@ -284,14 +282,9 @@ def adapt_to_hardware(self):
             if invocation.options.show_splash:
                 print " Adapting to Quadro hardware."
             cmd.set('stereo_double_pump_mono', 1)
-            cmd.set('cylinder_shader_ff_workaround', 1)
 
     elif vendor.startswith('Mesa'):
         if renderer[0:18]=='Mesa GLX Indirect':
-            pass
-
-    elif vendor.startswith('Parallels'):
-        if renderer[0:8]=='Parallel':
             pass
 
     elif vendor.startswith('ATI'):
@@ -309,12 +302,7 @@ def adapt_to_hardware(self):
             if invocation.options.show_splash:
                 print " Adjusting settings to improve performance for ATI cards."
 
-            # use display lists to minimize use of OpenGL
-            # immediate mode rendering (unreasonably slow on
-            # Radeon HD cards!)
             if cmd.get_setting_int("use_shaders")==0:
-                cmd.set("use_display_lists")
-
                 # limit frame rate to 30 fps to avoid ATI "jello"
                 # where screen updates fall way behind the user.
                 cmd.set("max_ups", 30)
@@ -325,22 +313,13 @@ def adapt_to_hardware(self):
             cmd.set('spec_direct', 0.7)
 
     elif vendor.startswith("Intel"):
-        if invocation.options.show_splash:
-            print " Adjusting settings to improve performance for Intel cards."
-
-        # disable shaders until Intel gets its act together
-        cmd.set("use_shaders", 0)
-        cmd.set("sphere_mode", 0)
+        if "Express" in renderer:
+            if invocation.options.show_splash:
+                print " Disabling shaders for Intel Express graphics"
+            cmd.set("use_shaders", 0)
 
     elif vendor == 'nouveau':
         cmd.set("use_shaders", 0)
-        cmd.set("sphere_mode", 0)
-
-    else:
-        if ("Intel" in renderer) and (("HD" in renderer) or ("Express" in renderer)):
-            cmd.set("use_shaders", 0)
-            cmd.set("sphere_mode", 0)
-
 
     # find out how many processors we have, and adjust hash
     # table size to reflect available RAM
@@ -478,7 +457,7 @@ class IncentiveOnlyException(CmdException):
                 self.message = '"%s" is not available in Open-Source PyMOL' % (funcname,)
             except:
                 self.message = 'Not available in Open-Source PyMOL'
-            self.message += '\n\n' \
+        self.message += '\n\n' \
                     '    Please visit http://pymol.org if you are interested in the\n' \
                     '    full featured "Incentive PyMOL" version.\n'
 

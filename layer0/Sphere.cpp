@@ -27,7 +27,9 @@ Z* -------------------------------------------------------------------
 
 #include"MemoryDebug.h"
 
+#define FAST_SPHERE_INIT
 
+#ifndef FAST_SPHERE_INIT
 /* Twelve vertices of icosahedron on unit sphere */
 #define tau 0.8506508084F       /* t=(1+sqrt(5))/2, tau=t/sqrt(1+t^2)  */
 #define one 0.5257311121F       /* one=1/sqrt(1+t^2) , unit sphere     */
@@ -69,6 +71,7 @@ static const int icosahedron[21][3] = {
   {7, 2, 9},
   {6, 10, 2}
 };
+#endif
 
 static const int mesh[30][2] = {
   {0, 3},
@@ -102,8 +105,6 @@ static const int mesh[30][2] = {
   {8, 11},
   {9, 10}
 };
-
-#define FAST_SPHERE_INIT
 
 #ifdef FAST_SPHERE_INIT
 #include"SphereData.h"

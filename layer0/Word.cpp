@@ -151,7 +151,7 @@ void WordMatchOptionsConfigNameList(CWordMatchOptions * I, char wildcard, int ig
   I->space_lists = true;
 }
 
-CWordMatcher *WordMatcherNew(PyMOLGlobals * G, char *st, CWordMatchOptions * option,
+CWordMatcher *WordMatcherNew(PyMOLGlobals * G, const char *st, CWordMatchOptions * option,
                              int force)
 {
 
@@ -166,7 +166,7 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals * G, char *st, CWordMatchOptions * opt
     return NULL;
   {                             /* first determine if we need to incur the overhead of the matcher */
     int escape = false;
-    char *p = st;
+    const char *p = st;
     while((*p) && (!needed)) {
       if(!escape) {
         switch (*p) {
@@ -215,7 +215,8 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals * G, char *st, CWordMatchOptions * opt
     I->G = G;
     /* build up the matcher structure... */
     {
-      char *p = st, c, *q;
+      const char *p = st;
+      char c, *q;
       int escape = false;
       int token_active = false;
       int node_active = false;

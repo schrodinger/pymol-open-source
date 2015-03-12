@@ -1214,7 +1214,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
         if(ray) {
 
           ray->transparentf(1.0F - alpha);
-          if(I->Obj.RepVis[cRepSlice]) {
+          if((I->Obj.visRep & cRepSliceBit)) {
             float normal[3], *n0, *n1, *n2;
             int *strip = oss->strips;
             float *point = oss->points;
@@ -1293,7 +1293,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
             p.src.index = state + 1;
             p.src.bond = 0;
 
-            if(I->Obj.RepVis[cRepSlice]) {
+            if((I->Obj.visRep & cRepSliceBit)) {
               int *strip = oss->strips;
               float *point = oss->points;
               int n = oss->n_strips;
@@ -1459,7 +1459,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 		    }
 		  }
 #endif
-		  if(I->Obj.RepVis[cRepSlice]) {
+		  if((I->Obj.visRep & cRepSliceBit)) {
 		    int *strip = oss->strips;
 		    float *point = oss->points;
 		    float *color = oss->colors;

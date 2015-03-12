@@ -152,7 +152,7 @@ int ColorGetNext(PyMOLGlobals * G)
   next++;
   if(next >= nAutoColor)
     next = 0;
-  SettingSet(G, cSetting_auto_color_next, (float) next);
+  SettingSetGlobal_i(G, cSetting_auto_color_next, next);
   return (result);
 }
 
@@ -222,7 +222,7 @@ int ColorGetRamped(PyMOLGlobals * G, int index, float *vertex, float *color, int
   return (ok);
 }
 
-static int ColorFindExtByName(PyMOLGlobals * G, char *name, int null_okay, int *best)
+static int ColorFindExtByName(PyMOLGlobals * G, const char *name, int null_okay, int *best)
 {
   register CColor *I = G->Color;
   int result = -1;
@@ -568,7 +568,7 @@ int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 }
 
 /*========================================================================*/
-void ColorDef(PyMOLGlobals * G, char *name, float *v, int mode, int quiet)
+void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int quiet)
 {
   register CColor *I = G->Color;
   int color = -1;
@@ -642,7 +642,7 @@ void ColorDef(PyMOLGlobals * G, char *name, float *v, int mode, int quiet)
 
 
 /*========================================================================*/
-int ColorGetIndex(PyMOLGlobals * G, char *name)
+int ColorGetIndex(PyMOLGlobals * G, const char *name)
 {
   register CColor *I = G->Color;
   int color = -1;               /* default for unknown is white */
@@ -655,7 +655,7 @@ int ColorGetIndex(PyMOLGlobals * G, char *name)
   int found = false;
 
   {
-    char *c;
+    const char *c;
     c = name;
     while(*c) {
       if((((*c) < '0') || ((*c) > '9')) && ((*c) != '-')) {
@@ -2936,7 +2936,7 @@ int ColorInit(PyMOLGlobals * G)
   }
 }
 
-void ColorUpdateFront(PyMOLGlobals * G, float *back)
+void ColorUpdateFront(PyMOLGlobals * G, const float *back)
 {
   register CColor *I = G->Color;
   copy3f(back, I->Back);

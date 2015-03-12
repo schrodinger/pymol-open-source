@@ -193,7 +193,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj;
-  int a, a1, vFlag, c1;
+  int a, a1, c1;
   float *v, *v0, *vc;
   float *lab_pos;
   int *l;
@@ -201,26 +201,18 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   LabPosType *lp = NULL;
   Pickable *rp = NULL;
   AtomInfoType *ai;
+
+  // skip if no labels are visible
+  if(!cs->hasRep(cRepLabelBit))
+    return NULL;
+
   OOAlloc(G, RepLabel);
   RepLabelInit(I);
   obj = cs->Obj;
-  vFlag = false;
-  if(obj->RepVisCache[cRepLabel])
-    for(a = 0; a < cs->NIndex; a++) {
-      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepLabel]) {
-        vFlag = true;
-        break;
-      }
-    }
-  if(!vFlag) {
-    OOFreeP(I);
-    return (NULL);              /* skip if no label are visible */
-  }
 
   label_color = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_label_color);
   RepInit(G, &I->R);
 
-  obj = cs->Obj;
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepLabelRender;
   I->R.fFree = (void (*)(struct Rep *)) RepLabelFree;
   I->R.fRecolor = NULL;
@@ -257,7 +249,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
     if(cs->LabPos) {
       lp = cs->LabPos + a;
     }
-    if(ai->visRep[cRepLabel] && (ai->label)) {
+    if((ai->visRep & cRepLabelBit) && (ai->label)) {
       int at_label_color;
       AtomInfoGetSetting_color(G, ai, cSetting_label_color, label_color, &at_label_color);
 
@@ -274,7 +266,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
 	 (at_label_color == cColorBack))
         c1 = at_label_color;
       else
-        c1 = *(cs->Color + a);
+        c1 = ai->color;
       vc = ColorGet(G, c1);     /* save new color */
       *(v++) = *(vc++);
       *(v++) = *(vc++);

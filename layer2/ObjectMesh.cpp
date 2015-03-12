@@ -373,7 +373,7 @@ int ObjectMeshInvalidateMapName(ObjectMesh * I, char *name)
   return result;
 }
 
-void ObjectMeshDump(ObjectMesh * I, char *fname, int state)
+void ObjectMeshDump(ObjectMesh * I, const char *fname, int state)
 {
   float *v;
   int *n;
@@ -628,7 +628,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
             ms->Crystal = *(oms->Symmetry->Crystal);
           }
 
-          if(I->Obj.RepVis[cRepCell]) {
+          if((I->Obj.visRep & cRepCellBit)) {
             if(ms->UnitCellCGO)
               CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
@@ -644,7 +644,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
         }
       }
 
-      if(map && oms && ms->N && ms->V && I->Obj.RepVis[cRepMesh]) {
+      if(map && oms && ms->N && ms->V && (I->Obj.visRep & cRepMeshBit)) {
         if(ms->ResurfaceFlag) {
           Isofield *field = NULL;
           ms->RecolorFlag = true;
@@ -938,7 +938,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
         v = ms->V;
         n = ms->N;
         if(ok && ray) {
-          if(ms->UnitCellCGO && (I->Obj.RepVis[cRepCell])){
+          if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)){
             ok &= CGORenderRay(ms->UnitCellCGO, ray, ColorGet(I->Obj.G, I->Obj.Color),
 			       I->Obj.Setting, NULL);
 	    if (!ok){
@@ -962,7 +962,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
             }
           }
 
-          if(ok && n && v && I->Obj.RepVis[cRepMesh]) {
+          if(ok && n && v && (I->Obj.visRep & cRepMeshBit)) {
             float cc[3];
             float colA[3], colB[3];
             ColorGetEncoded(G, ms->OneColor, cc);
@@ -1049,7 +1049,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		shaderCGO->use_shader = true;
 	      }
 
-	      if(ms->UnitCellCGO && I->Obj.RepVis[cRepCell]) {
+	      if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)) {
 		float *color = ColorGet(I->Obj.G, I->Obj.Color);
 		if (!use_shader) {
 		  CGORenderGL(ms->UnitCellCGO, color, I->Obj.Setting, NULL, info, NULL);
@@ -1098,7 +1098,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      } else {
 		SceneResetNormal(I->Obj.G, false);
 	      }
-	      if(n && v && I->Obj.RepVis[cRepMesh]) {
+	      if(n && v && (I->Obj.visRep & cRepMeshBit)) {
 		if(use_shader) {
 		  vc = ms->VC;
 

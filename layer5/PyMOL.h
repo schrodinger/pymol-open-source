@@ -18,7 +18,6 @@ Z* -------------------------------------------------------------------
 #ifndef _H_CPyMOL
 #define _H_CPyMOL
 
-
 /* WARNING: DO NOT DEVELOP APPLICATIONS AGAINST THIS PyMOL_* API.  
  * 
  * This is a internal interface to PyMOL for the exclusive use of
@@ -47,6 +46,8 @@ Z* -------------------------------------------------------------------
  *
  * You have been warned!
  */
+
+#include "OVreturns.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -571,8 +572,6 @@ PyMOLreturn_status PyMOL_ZoomScene(CPyMOL * I, float scale);
 PyMOLreturn_status PyMOL_TranslateScene(CPyMOL * I, float x, float y, float z);
 
 PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I);
-
-PyMOLreturn_status PyMOL_GetSettingString(CPyMOL * I, int settingid, char *deststr);
 
 typedef struct _P_AtomProperty {
   int id;

@@ -59,7 +59,7 @@ void WordMatchOptionsConfigMixed(CWordMatchOptions * I, char wildcard, int ignor
 void WordMatchOptionsConfigNameList(CWordMatchOptions * I, char wildcard,
                                     int ignore_case);
 
-CWordMatcher *WordMatcherNew(PyMOLGlobals * G, char *st, CWordMatchOptions * option,
+CWordMatcher *WordMatcherNew(PyMOLGlobals * G, const char *st, CWordMatchOptions * option,
                              int force);
 int WordMatcherMatchAlpha(CWordMatcher * I, const char *text);
 int WordMatcherMatchMixed(CWordMatcher * I, const char *text, int value);

@@ -64,18 +64,18 @@ typedef char SelectorWordType[SelectorWordLength];
 #define cColorectionFormat "_!c_%s_%d"
 
 static WordKeyValue rep_names[] = {
-  {"spheres", cRepSphere},
-  {"sticks", cRepCyl},
-  {"surface", cRepSurface},
-  {"labels", cRepLabel},
-  {"nb_spheres", cRepNonbondedSphere},
-  {"cartoon", cRepCartoon},
-  {"ribbon", cRepRibbon},
-  {"lines", cRepLine},
-  {"dots", cRepDot},
-  {"mesh", cRepMesh},
-  {"nonbonded", cRepNonbonded},
-  {"ellipsoid", cRepEllipsoid},
+  {"spheres", cRepSphereBit},
+  {"sticks", cRepCylBit},
+  {"surface", cRepSurfaceBit},
+  {"labels", cRepLabelBit},
+  {"nb_spheres", cRepNonbondedSphereBit},
+  {"cartoon", cRepCartoonBit},
+  {"ribbon", cRepRibbonBit},
+  {"lines", cRepLineBit},
+  {"dots", cRepDotBit},
+  {"mesh", cRepMeshBit},
+  {"nonbonded", cRepNonbondedBit},
+  {"ellipsoid", cRepEllipsoidBit},
   {"",},
 };
 
@@ -147,7 +147,7 @@ typedef struct {
   int frag;
 } WalkDepthRec;
 
-static int *SelectorSelect(PyMOLGlobals * G, char *sele, int state, int domain, int quiet);
+static int *SelectorSelect(PyMOLGlobals * G, const char *sele, int state, int domain, int quiet);
 static int SelectorGetInterstateVLA(PyMOLGlobals * G, int sele1, int state1, int sele2,
                                     int state2, float cutoff, int **vla);
 
@@ -161,7 +161,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * base, int state);
 static int SelectorLogic2(PyMOLGlobals * G, EvalElem * base);
 static int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state);
 static int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int quiet);
-static SelectorWordType *SelectorParse(PyMOLGlobals * G, char *s);
+static SelectorWordType *SelectorParse(PyMOLGlobals * G, const char *s);
 static void SelectorPurgeMembers(PyMOLGlobals * G, int sele);
 static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
                                   ObjectMolecule * obj, int no_dummies, int exec_manage);
@@ -178,6 +178,29 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * o
                                             int no_dummies, int *idx,
                                             int n_idx, int numbered_tags);
 
+
+/*========================================================================*/
+/*
+ * SelectorAtomIterator methods, see AtomIterators.h for documentation.
+ */
+void SelectorAtomIterator::reset() {
+  a = cNDummyAtoms - 1;
+}
+
+bool SelectorAtomIterator::next() {
+  if ((++a) >= selector->NAtom)
+    return false;
+
+  TableRec *table_a = selector->Table + a;
+
+  atm = table_a->atom;
+  obj = selector->Obj[table_a->model];
+
+  return true;
+}
+
+
+/*========================================================================*/
 static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offset)
 {
   if(I->SeleBaseOffsetsValid) {
@@ -359,9 +382,11 @@ static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offs
 #define SELE_METz ( 0x4C00 | STYP_SEL0 | 0x90 )
 #define SELE_BB_z ( 0x4D00 | STYP_SEL0 | 0x90 )
 #define SELE_SC_z ( 0x4E00 | STYP_SEL0 | 0x90 )
+#define SELE_PROP ( 0x4F00 | STYP_SEL3 | 0x80 )
 #define SELE_XVLx ( 0x5000 | STYP_SEL2 | 0x80 )
 #define SELE_YVLx ( 0x5100 | STYP_SEL2 | 0x80 )
 #define SELE_ZVLx ( 0x5200 | STYP_SEL2 | 0x80 )
+#define SELE_CUST ( 0x5300 | STYP_SEL1 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -504,7 +529,7 @@ static WordKeyValue Keyword[] = {
   {"nt.", SELE_NTYs},
 
   {"text_type", SELE_TTYs},
-  {"custom", SELE_TTYs},
+  {"custom", SELE_CUST},
   {"tt;", SELE_TTYs},           /* deprecated */
   {"tt.", SELE_TTYs},
 
@@ -744,7 +769,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
             register int mem0, mem1, mem2, mem3, mem4;
             register int nbr0, nbr1, nbr2, nbr3;
             float *v_ca1 = cs->Coord + 3 * idx_ca1;
-            int at_cb1, idx_cb1 = -1;
+            int idx_cb1 = -1;
             int cnt = 0;
 
             copy3f(v_ca1, vv_ca);
@@ -757,15 +782,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
             while((mem1 = neighbor[nbr0]) >= 0) {
               if((atomInfo[mem1].protons == cAN_C) &&
                  (strcmp(atomInfo[mem1].name, "CB") == 0)) {
-                at_cb1 = mem1;
-
-                if(obj->DiscreteFlag) {
-                  if(cs == obj->DiscreteCSet[at_cb1])
-                    idx_cb1 = obj->DiscreteAtmToIdx[at_cb1];
-                  else
-                    idx_cb1 = -1;
-                } else
-                  idx_cb1 = cs->AtmToIdx[at_cb1];
+                idx_cb1 = cs->atmToIdx(mem1);
                 break;
               }
               nbr0 += 2;
@@ -783,21 +800,14 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                 nbr1 = neighbor[mem1] + 1;
                 while((mem2 = neighbor[nbr1]) >= 0) {
                   if(mem2 != mem0) {
-                    int at_ca2, idx_ca2 = -1;
+                    int idx_ca2 = -1;
 
                     nbr2 = neighbor[mem2] + 1;
                     while((mem3 = neighbor[nbr2]) >= 0) {
                       if((mem3 != mem1) && (mem3 != mem0)) {
                         if((atomInfo[mem3].protons == cAN_C) &&
                            (strcmp(atomInfo[mem3].name, "CA") == 0)) {
-                          at_ca2 = mem3;
-                          if(obj->DiscreteFlag) {
-                            if(cs == obj->DiscreteCSet[at_ca2])
-                              idx_ca2 = obj->DiscreteAtmToIdx[at_ca2];
-                            else
-                              idx_ca2 = -1;
-                          } else
-                            idx_ca2 = cs->AtmToIdx[at_ca2];
+                          idx_ca2 = cs->atmToIdx(mem3);
                           break;
                         }
                       }
@@ -815,14 +825,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                             if((mem4 != mem2) && (mem4 != mem1) && (mem4 != mem0)) {
                               if((atomInfo[mem4].protons == cAN_C) &&
                                  (strcmp(atomInfo[mem4].name, "CB") == 0)) {
-                                int at_cb2 = mem4;
-                                if(obj->DiscreteFlag) {
-                                  if(cs == obj->DiscreteCSet[at_cb2])
-                                    idx_cb2 = obj->DiscreteAtmToIdx[at_cb2];
-                                  else
-                                    idx_cb2 = -1;
-                                } else
-                                  idx_cb2 = cs->AtmToIdx[at_cb2];
+                                idx_cb2 = cs->atmToIdx(mem4);
                                 break;
                               }
                             }
@@ -1507,13 +1510,7 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
               else
                 cs = NULL;
               if(cs) {
-                if(obj->DiscreteFlag) {
-                  if(cs == obj->DiscreteCSet[at])
-                    idx = obj->DiscreteAtmToIdx[at];
-                  else
-                    idx = -1;
-                } else
-                  idx = cs->AtmToIdx[at];
+                idx = cs->atmToIdx(at);
               } else {
                 idx = -1;
               }
@@ -1543,7 +1540,7 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
   return (result);
 }
 
-static ov_diff SelectGetNameOffset(PyMOLGlobals * G, char *name, ov_size minMatch,
+static ov_diff SelectGetNameOffset(PyMOLGlobals * G, const char *name, ov_size minMatch,
                                    int ignCase)
 {
 
@@ -2061,13 +2058,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
                 at = I->Table[res[a].ca].atom;
                 break;
               }
-              if(obj->DiscreteFlag) {
-                if(cs == obj->DiscreteCSet[at])
-                  idx = obj->DiscreteAtmToIdx[at];
-                else
-                  idx = -1;
-              } else
-                idx = cs->AtmToIdx[at];
+              idx = cs->atmToIdx(at);
             } else
               idx = -1;
             if(idx < 0) {
@@ -2087,7 +2078,6 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
       int n1;
       int c, i, h, k, l;
       int at;
-      int idx;
 
       int a, aa;
       int a0, a1;               /* SS res space */
@@ -2167,15 +2157,8 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
             else
               cs = NULL;
             if(cs) {
-              if(obj0->DiscreteFlag) {
-                if(cs == obj0->DiscreteCSet[at])
-                  idx = obj0->DiscreteAtmToIdx[at];
-                else
-                  idx = -1;
-              } else
-                idx = cs->AtmToIdx[at];
-              if(idx >= 0) {
-                copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * aa);      /* record coordinate */
+              if(CoordSetGetAtomVertex(cs, at,
+                    I->Vertex + 3 * aa /* record coordinate */)) {
                 I->Flag1[aa] = true;
                 n1++;
               }
@@ -2191,18 +2174,9 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
             else
               cs = NULL;
             if(cs) {
-              if(obj0->DiscreteFlag) {
-                if(cs == obj0->DiscreteCSet[at])
-                  idx = obj0->DiscreteAtmToIdx[at];
-                else
-                  idx = -1;
-              } else
-                idx = cs->AtmToIdx[at];
-              if(idx >= 0) {
-                copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * aa);      /* record coordinate */
-              }
+              CoordSetGetAtomVertex(cs, at,
+                  I->Vertex + 3 * aa /* record coordinate */);
             }
-
           }
         }
       }
@@ -3152,10 +3126,6 @@ int SelectorColorectionFree(PyMOLGlobals * G, PyObject * list, char *prefix)
 
 PyObject *SelectorSecretsAsPyList(PyMOLGlobals * G)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   register CSelector *I = G->Selector;
   int n_secret;
   int a;
@@ -3179,14 +3149,10 @@ PyObject *SelectorSecretsAsPyList(PyMOLGlobals * G)
     }
   }
   return (result);
-#endif
 }
 
 int SelectorSecretsFromPyList(PyMOLGlobals * G, PyObject * list)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int ok = true;
   ov_size n_secret = 0;
   ov_size a;
@@ -3220,7 +3186,6 @@ int SelectorSecretsFromPyList(PyMOLGlobals * G, PyObject * list)
     }
   }
   return (ok);
-#endif
 }
 
 typedef struct {
@@ -3610,26 +3575,8 @@ int SelectorGetPairIndices(PyMOLGlobals * G, int sele1, int state1, int sele2, i
           ai1 = obj1->AtomInfo + at1;
           ai2 = obj2->AtomInfo + at2;
 
-          if(obj1->DiscreteFlag) {
-            if(cs1 == obj1->DiscreteCSet[at1]) {
-              idx1 = obj1->DiscreteAtmToIdx[at1];
-            } else {
-              idx1 = -1;
-            }
-          } else {
-            idx1 = cs1->AtmToIdx[at1];
-          }
-
-          if(obj2->DiscreteFlag) {
-            if(cs2 == obj2->DiscreteCSet[at2]) {
-              idx2 = obj2->DiscreteAtmToIdx[at2];
-            } else {
-              idx2 = -1;
-            }
-
-          } else {
-            idx2 = cs2->AtmToIdx[at2];
-          }
+          idx1 = cs1->atmToIdx(at1);
+          idx2 = cs2->atmToIdx(at2);
 
           if((idx1 >= 0) && (idx2 >= 0)) {
             subtract3f(cs1->Coord + 3 * idx1, cs2->Coord + 3 * idx2, dir);
@@ -3904,14 +3851,7 @@ int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
    */
   register CSelector *I = G->Selector;
   int *result = NULL, *r;
-  int a;
-  int c;
   AtomInfoType *ai1 = NULL, *ai2;
-  int at1 = 0, at2;
-  unsigned int rcode;
-  ResName rn;
-  int mod1 = 0;
-  ObjectMolecule *obj;
 
   /* update the selector's table */
   SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
@@ -3923,76 +3863,27 @@ int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
   PRINTFD(G, FB_Selector)
     " SelectorGetResidueVLA-DEBUG: entry, sele = %d\n", sele ENDFD;
 
-  if(I->NAtom) {
-    if(ca_only) {
-      for(a = cNDummyAtoms; a < I->NAtom; a++) {
-        mod1 = I->Table[a].model;
-        at1 = I->Table[a].atom;
-        obj = I->Obj[mod1];
-        ai1 = obj->AtomInfo + at1;
-        if(obj != exclude) {
-          if(SelectorIsMember(G, ai1->selEntry, sele)) {
-            if(ai1->flags & cAtomFlag_guide) {
-              *(r++) = mod1;
-              *(r++) = at1;
-              for(c = 0; c < sizeof(ResName); c++)
-                rn[c] = 0;
-              strcpy(rn, ai1->resn);    /* store residue code as a number */
-              rcode = 0;
-              for(c = 0; c < 3; c++) {
-                rcode = (rcode << 8) | rn[c];
-              }
-              *(r++) = rcode;
-            }
-          }
-        }
-      }
-    } else {
-      for(a = cNDummyAtoms; a < I->NAtom; a++) {
-        obj = I->Obj[I->Table[a].model];
-        if(obj != exclude) {
-          at2 = I->Table[a].atom;
-          if(SelectorIsMember(G, obj->AtomInfo[at2].selEntry, sele)) {
-            if(!ai1) {
-              mod1 = I->Table[a].model;
-              at1 = at2;
-              ai1 = obj->AtomInfo + at1;
-            }
-            ai2 = obj->AtomInfo + at2;
-            if(!AtomInfoSameResidue(G, ai1, ai2)) {
-              if(ai1) {
-                *(r++) = mod1;
-                *(r++) = at1;
-                for(c = 0; c < sizeof(ResName); c++)
-                  rn[c] = 0;
-                strcpy(rn, ai1->resn);  /* store residue code as a number */
-                rcode = 0;
-                for(c = 0; c < 3; c++) {
-                  rcode = (rcode << 8) | rn[c];
-                }
-                *(r++) = rcode;
+  for(SeleAtomIterator iter(G, sele); iter.next();) {
+    if(iter.obj == exclude)
+      continue;
 
-                at1 = at2;
-                ai1 = ai2;
-                mod1 = I->Table[a].model;
-              }
-            }
-          }
-        }
-      }
-      if(ai1) {                 /* handle last residue */
-        *(r++) = mod1;
-        *(r++) = at1;
-        for(c = 0; c < sizeof(ResName); c++)
-          rn[c] = 0;
-        strcpy(rn, ai1->resn);  /* store residue code as a number */
-        rcode = 0;
-        for(c = 0; c < 3; c++) {
-          rcode = (rcode << 8) | rn[c];
-        }
-        *(r++) = rcode;
-      }
+    ai2 = iter.getAtomInfo();
+
+    if(ca_only) {
+      if(!(ai2->flags & cAtomFlag_guide))
+        continue;
+    } else if(ai1 && AtomInfoSameResidue(G, ai1, ai2)) {
+      continue;
     }
+
+    *(r++) = I->Table[iter.a].model;
+    *(r++) = I->Table[iter.a].atom;
+    *(r++) =
+      (ai2->resn[0] << (8 * 2)) |
+      (ai2->resn[1] << (8 * 1)) |
+      (ai2->resn[2] << (8 * 0));
+
+    ai1 = ai2;
   }
   if(result) {
     VLASize(result, int, (ov_size) (r - result));
@@ -4124,31 +4015,26 @@ void SelectorLogSele(PyMOLGlobals * G, char *name)
 
 
 /*========================================================================*/
-#ifndef _PYMOL_INLINE
-int SelectorIsMemberSlow(PyMOLGlobals * G, int s, int sele)
+/*
+ * This is the most heavily called routine in interactive PyMOL
+ *
+ * s:    AtomInfoType.selEntry
+ * sele: selection index or 0 for "all"
+ */
+int SelectorIsMember(PyMOLGlobals * G, int s, int sele)
 {
-  register int s_reg;
-  register MemberType *member = G->Selector->Member;
-  if((s_reg = s) && (sele > 1)) {
-    register int sele_reg = sele;
-    register MemberType *mem = member + s_reg;
-    register int test_sele;
-    do {
-      test_sele = mem->selection;
-      s_reg = mem->next;
-      if(test_sele == sele_reg) {
+  if(sele > 1) {
+    const MemberType *mem, *member = G->Selector->Member;
+    for(; s; s = mem->next) {
+      mem = member + s;
+      if(mem->selection == sele)
         return mem->tag;
-      }
-      mem = member + s_reg;
-    } while(s_reg);
-    return false;
+    }
   } else if(!sele)
     return true;                /* "all" is selection number 0, unordered */
-  else
-    return false;               /* no atom is a member of none (1), and negative selections don't exist */
+  return false;
 }
 
-#endif
 
 /*========================================================================*/
 int SelectorMoveMember(PyMOLGlobals * G, int s, int sele_old, int sele_new)
@@ -5113,14 +4999,7 @@ int SelectorGetSeleNCSet(PyMOLGlobals * G, int sele)
 
     while(a--) {
       cs = obj->CSet[a];
-
-      if(obj->DiscreteFlag) {
-        if(cs == obj->DiscreteCSet[at])
-          idx = obj->DiscreteAtmToIdx[at];
-        else
-          idx = -1;
-      } else
-        idx = cs->AtmToIdx[at];
+      idx = cs->atmToIdx(at);
       if(idx >= 0) {
         result = a + 1;
         break;
@@ -5271,21 +5150,7 @@ static int SelectorGetInterstateVLA(PyMOLGlobals * G,
       else
         cs = NULL;
       if(cs) {
-        if(obj->DiscreteFlag) {
-	  /* if we have a valid coordinate set, and the discrete flag is set,
-	   * and the current coordinate set equals this atom's discrete cset,
-	   * then we grab the atom index from the cset using Selectors->DiscreteAtmToIdx
-	   * otherwise, idx = -1 */
-          if(cs == obj->DiscreteCSet[at])
-            idx = obj->DiscreteAtmToIdx[at];
-          else
-            idx = -1;
-        } else
-          idx = cs->AtmToIdx[at];
-	/* above: if not using DiscreteFlag, then the index doesn't need to be remapped,
-	 * just use the current cset's index */
-        if(idx >= 0) {
-          copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * a);
+        if(CoordSetGetAtomVertex(cs, at, I->Vertex + 3 * a)) {
           I->Flag1[a] = true;
           n1++;
         }
@@ -5309,13 +5174,7 @@ static int SelectorGetInterstateVLA(PyMOLGlobals * G,
           else
             cs = NULL;
           if(cs) {
-            if(obj->DiscreteFlag) {
-              if(cs == obj->DiscreteCSet[at])
-                idx = obj->DiscreteAtmToIdx[at];
-              else
-                idx = -1;
-            } else
-              idx = cs->AtmToIdx[at];
+            idx = cs->atmToIdx(at);
             if(idx >= 0) {
               v2 = cs->Coord + (3 * idx);
               if(MapExclLocus(map, v2, &h, &k, &l)) {
@@ -5355,7 +5214,7 @@ int SelectorMapMaskVDW(PyMOLGlobals * G, int sele1, ObjectMapState * oMap, float
   int n1, n2;
   int a, b, c, i, j, h, k, l;
   int at;
-  int s, idx;
+  int s;
   AtomInfoType *ai;
   ObjectMolecule *obj;
   CoordSet *cs;
@@ -5385,15 +5244,7 @@ int SelectorMapMaskVDW(PyMOLGlobals * G, int sele1, ObjectMapState * oMap, float
         else
           cs = NULL;
         if(cs) {
-          if(obj->DiscreteFlag) {
-            if(cs == obj->DiscreteCSet[at])
-              idx = obj->DiscreteAtmToIdx[at];
-            else
-              idx = -1;
-          } else
-            idx = cs->AtmToIdx[at];
-          if(idx >= 0) {
-            copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * a);
+          if(CoordSetGetAtomVertex(cs, at, I->Vertex + 3 * a)) {
             I->Flag1[a] = true;
             n1++;
           }
@@ -5506,7 +5357,7 @@ int SelectorMapGaussian(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
   float blur_factor = 1.0F;
 
   {
-    if(fabs(resolution) < R_SMALL4) 
+    if(resolution < R_SMALL4)
       resolution = SettingGetGlobal_f(G, cSetting_gaussian_resolution);
     if(resolution < 1.0 ) 
       resolution = 1.0F;
@@ -5760,13 +5611,7 @@ int SelectorMapGaussian(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
         else
           cs = NULL;
         if(cs) {
-          if(obj->DiscreteFlag) {
-            if(cs == obj->DiscreteCSet[at])
-              idx = obj->DiscreteAtmToIdx[at];
-            else
-              idx = -1;
-          } else
-            idx = cs->AtmToIdx[at];
+          idx = cs->atmToIdx(at);
           if(idx >= 0) {
             n1++;
           }
@@ -5811,15 +5656,7 @@ int SelectorMapGaussian(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
         else
           cs = NULL;
         if(cs) {
-          if(obj->DiscreteFlag) {
-            if(cs == obj->DiscreteCSet[at])
-              idx = obj->DiscreteAtmToIdx[at];
-            else
-              idx = -1;
-          } else
-            idx = cs->AtmToIdx[at];
-          if(idx >= 0) {
-            copy3f(cs->Coord + (3 * idx), fp);
+          if(CoordSetGetAtomVertex(cs, at, fp)) {
             prot = ai->protons;
             if(sf[prot][0] == -1.0F)
               prot = cAN_C;
@@ -6041,13 +5878,7 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
         else
           cs = NULL;
         if(cs) {
-          if(obj->DiscreteFlag) {
-            if(cs == obj->DiscreteCSet[at])
-              idx = obj->DiscreteAtmToIdx[at];
-            else
-              idx = -1;
-          } else
-            idx = cs->AtmToIdx[at];
+          idx = cs->atmToIdx(at);
           if(idx >= 0) {
             n_occur++;
             n_at++;
@@ -6071,13 +5902,7 @@ int SelectorMapCoulomb(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
           else
             cs = NULL;
           if(cs) {
-            if(obj->DiscreteFlag) {
-              if(cs == obj->DiscreteCSet[at])
-                idx = obj->DiscreteAtmToIdx[at];
-              else
-                idx = -1;
-            } else
-              idx = cs->AtmToIdx[at];
+            idx = cs->atmToIdx(at);
             if(idx >= 0) {
               VLACheck(point, float, 3 * n_point + 2);
               VLACheck(charge, float, n_point);
@@ -6285,13 +6110,7 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
       else
         cs = NULL;
       if(cs) {
-        if(obj->DiscreteFlag) {
-          if(cs == obj->DiscreteCSet[at])
-            idx = obj->DiscreteAtmToIdx[at];
-          else
-            idx = -1;
-        } else
-          idx = cs->AtmToIdx[at];
+        idx = cs->atmToIdx(at);
         if(idx >= 0) {
 
           if(mat_cs != cs) {
@@ -6476,7 +6295,6 @@ int SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, in
 
   if(ok) {
     ObjectMolecule *prevobj = NULL;
-    int nAtom = 0;
     int a;
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
       int at = I->Table[a].atom;
@@ -6492,21 +6310,19 @@ int SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, in
       ObjectMolecule *obj = I->Obj[I->Table[a].model];
       int s = obj->AtomInfo[at].selEntry;
       I->Table[a].index = 0;
-      if(SelectorIsMember(G, s, sele)) {
-        if(obj != prevobj) {
+      if(obj != prevobj && SelectorIsMember(G, s, sele)) {
 	ObjectMoleculeUpdateAtomTypeInfoForState(G, obj, state, 1, format);
           prevobj = obj;
-        }
-	nAtom++;
       }
     }
   }
   return 1;
 #else
+  PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
+    " NO_MMLIBS-Warning: automatic 'text_type' assignment not supported in this PyMOL build.\n" ENDFB(G);
   return 0;
 #endif
 }
-
 
 /*========================================================================*/
 void SeleCoordIterator::reset() {
@@ -6525,7 +6341,7 @@ bool SeleCoordIterator::next() {
   CSelector *I = G->Selector;
 
   for (a++; a < I->NAtom; a++) {
-    at = I->Table[a].atom;
+    atm = I->Table[a].atom;
     obj = I->Obj[I->Table[a].model];
 
     if(statearg < 0 && statemax < obj->NCSet)
@@ -6534,16 +6350,10 @@ bool SeleCoordIterator::next() {
     if(state >= obj->NCSet || !(cs = obj->CSet[state]))
       continue;
 
-    if(!SelectorIsMember(G, obj->AtomInfo[at].selEntry, sele))
+    if(!SelectorIsMember(G, obj->AtomInfo[atm].selEntry, sele))
       continue;
 
-    if(obj->DiscreteFlag) {
-      if(cs != obj->DiscreteCSet[at])
-        continue;
-      idx = obj->DiscreteAtmToIdx[at];
-    } else {
-      idx = cs->AtmToIdx[at];
-    }
+    idx = cs->atmToIdx(atm);
 
     if(idx < 0)
       continue;
@@ -6554,6 +6364,31 @@ bool SeleCoordIterator::next() {
   if(statearg < 0 && (++state) < statemax) {
     a = cNDummyAtoms - 1;
     return next();
+  }
+
+  return false;
+}
+
+/*========================================================================*/
+void SeleAtomIterator::reset() {
+  a = cNDummyAtoms - 1;
+}
+
+/*
+ * advance the internal state to the next atom, return false if there is no
+ * next atom
+ */
+bool SeleAtomIterator::next() {
+  CSelector *I = G->Selector;
+
+  while ((++a) < I->NAtom) {
+    atm = I->Table[a].atom;
+    obj = I->Obj[I->Table[a].model];
+
+    if(!SelectorIsMember(G, obj->AtomInfo[atm].selEntry, sele))
+      continue;
+
+    return true;
   }
 
   return false;
@@ -6792,13 +6627,7 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
           cs = NULL;
         if(cs) {
           int idx;
-          if(obj->DiscreteFlag) {
-            if(cs == obj->DiscreteCSet[at])
-              idx = obj->DiscreteAtmToIdx[at];
-            else
-              idx = -1;
-          } else
-            idx = cs->AtmToIdx[at];
+          idx = cs->atmToIdx(at);
           if(idx >= 0) {
             I->Table[a].index = nAtom + 1;      /* NOTE marking with "1" based indexes here */
             nAtom++;
@@ -6827,13 +6656,7 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
             int at = I->Table[a].atom;
             obj = I->Obj[I->Table[a].model];
             cs = obj->CSet[state];      /* assuming this is valid... */
-            if(obj->DiscreteFlag) {
-              if(obj->CSet[state] == obj->DiscreteCSet[at])
-                idx = obj->DiscreteAtmToIdx[at];
-              else
-                idx = -1;
-            } else
-              idx = cs->AtmToIdx[at];
+            idx = cs->atmToIdx(at);
             if(idx >= 0) {
 
               if(mat_cs != cs) {
@@ -7035,7 +6858,7 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
   CoordSet *cs0, *cs1;
   int matched_flag;
   int b_start;
-  int ci0, ci1;
+  int ci0;
   int ccc = 0;
 
   PRINTFD(G, FB_Selector)
@@ -7198,30 +7021,10 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
               }
 
               if(cs0) {
+                ci0 = cs0->atmToIdx(at0);
 
-                /* old broken code: 
-                   ci0 = cs0->AtmToIdx[at0];
-                   ci1 = cs1->AtmToIdx[at1];
-                 */
-
-                if(obj0->DiscreteFlag) {
-                  if(cs0 == obj0->DiscreteCSet[at0])
-                    ci0 = obj0->DiscreteAtmToIdx[at0];
-                  else
-                    ci0 = -1;
-                } else
-                  ci0 = cs0->AtmToIdx[at0];
-
-                if(obj1->DiscreteFlag) {
-                  if(cs1 == obj1->DiscreteCSet[at1])
-                    ci1 = obj1->DiscreteAtmToIdx[at1];
-                  else
-                    ci1 = -1;
-                } else
-                  ci1 = cs1->AtmToIdx[at1];
-
-                if((ci0 >= 0) && (ci1 >= 0))
-                  copy3f(cs1->Coord + 3 * ci1, cs0->Coord + 3 * ci0);
+                if(ci0 >= 0)
+                  CoordSetGetAtomVertex(cs1, at1, cs0->Coord + 3 * ci0);
               }
             }
           }
@@ -7258,7 +7061,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, char *name,
 {
   register CSelector *I = G->Selector;
   int ok = true;
-  int a, b, a1, a2, b1, b2, c, d, s, at;
+  int a, b, a2, b1, b2, c, d, s, at;
   BondType *ii1, *bond = NULL;
   int nBond = 0;
   int nCSet, nAtom, ts;
@@ -7455,15 +7258,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, char *name,
             if((!cs2->Name[0]) && (cs1->Name[0]))       /* copy the molecule name (if any) */
               strcpy(cs2->Name, cs1->Name);
 
-            if(obj->DiscreteFlag) {
-              if(cs1 == obj->DiscreteCSet[at])
-                a1 = obj->DiscreteAtmToIdx[at];
-              else
-                a1 = -1;
-            } else
-              a1 = cs1->AtmToIdx[at];   /* coord index in existing object */
-            if(a1 >= 0) {
-              copy3f(cs1->Coord + a1 * 3, cs2->Coord + c * 3);
+            if(CoordSetGetAtomVertex(cs1, at, cs2->Coord + c * 3)) {
               a2 = cs->IdxToAtm[I->Table[a].index];     /* actual merged atom index */
               cs2->IdxToAtm[c] = a2;
               cs2->AtmToIdx[a2] = c;
@@ -7515,6 +7310,8 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, char *name,
     PRINTFB(G, FB_Selector, FB_Details)
       " Selector: found %d atoms.\n", nAtom ENDFB(G);
   }
+  if (ok)
+    ok &= ObjectMoleculeSort(targ);
   ObjectMoleculeSort(targ);
   if(isNew) {
     ObjectSetName((CObject *) targ, name);
@@ -7553,7 +7350,7 @@ int SelectorSetName(PyMOLGlobals * G, char *new_name, char *old_name)
  * RETURNS
  *   (int) index #, or -1 if not found
  */
-int SelectorIndexByName(PyMOLGlobals * G, char *sname)
+int SelectorIndexByName(PyMOLGlobals * G, const char *sname)
 {
   OrthoLineType name;
   register CSelector *I = G->Selector;
@@ -7561,14 +7358,14 @@ int SelectorIndexByName(PyMOLGlobals * G, char *sname)
   ov_diff i = -1;
 
   if(sname) {
-    char *tname = sname;
+    const char *tname = sname;
     while((tname[0] == '%') || (tname[0] == '?'))
       tname++;
     strcpy(name, tname);
     i = SelectGetNameOffset(G, name, 1, ignore_case);
 
     if((i >= 0) && (name[0] != '_')) {  /* don't do checking on internal selections */
-      char *best;
+      const char *best;
       best = ExecutiveFindBestNameMatch(G, sname);      /* suppress spurious matches
                                                            of selections with non-selections */
       if((best != sname) && (strcmp(best, I->Name[i])))
@@ -7635,7 +7432,7 @@ int SelectorPurgeObjectMembers(PyMOLGlobals * G, ObjectMolecule * obj)
   short changed = 0;
 
   register CSelector *I = G->Selector;
-  if(I->Member){
+  if(I->Member) {
     for(a = 0; a < obj->NAtom; a++) {
       s = obj->AtomInfo[a].selEntry;
       while(s) {
@@ -7656,7 +7453,7 @@ int SelectorPurgeObjectMembers(PyMOLGlobals * G, ObjectMolecule * obj)
 
 
 /*========================================================================*/
-void SelectorDelete(PyMOLGlobals * G, char *sele)
+void SelectorDelete(PyMOLGlobals * G, const char *sele)
 
 
 /* should (only) be called by Executive or by Selector, unless the
@@ -7680,17 +7477,15 @@ void SelectorGetUniqueTmpName(PyMOLGlobals * G, char *name_buffer)
   sprintf(name_buffer, "%s%d", cSelectorTmpPrefix, I->TmpCounter++);
 }
 
-int SelectorGetTmp(PyMOLGlobals * G, char *input, char *store)
-{
-  return SelectorGetTmpImpl(G, input, store, 0);
-}
-
-int SelectorGetTmpQuiet(PyMOLGlobals * G, char *input, char *store)
-{
-  return SelectorGetTmpImpl(G, input, store, 1);
-}
 /*========================================================================*/
-int SelectorGetTmpImpl(PyMOLGlobals * G, char *input, char *store, int quiet)
+/*
+ * If `input` is already a name of an object or a valid position keyword
+ * (center, origin, all, ...), then simply copy it to `store`. Otherwise
+ * process the selection expression and create a temporary named selection.
+ *
+ * Unlike `SelectorGetTmp`, this will accept names of maps, groups, etc.
+ */
+int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet)
 {
   int count = 0;
   /* ASSUMES that store is at least as big as an OrthoLineType */
@@ -7724,7 +7519,7 @@ int SelectorGetTmpImpl(PyMOLGlobals * G, char *input, char *store, int quiet)
      */
 
     int is_selection = false;
-    char *p = input;
+    const char *p = input;
     OrthoLineType word;
     OVreturn_word result;
 
@@ -7778,7 +7573,39 @@ int SelectorGetTmpImpl(PyMOLGlobals * G, char *input, char *store, int quiet)
 
 }
 
-int SelectorCheckTmp(PyMOLGlobals * G, char *name)
+/*========================================================================*/
+/*
+ * Like SelectorGetTmp2, but doesn't accept names from any non-molecular
+ * entities like groups or map objects (those will be processed as selection
+ * expressions).
+ */
+int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet)
+{
+  int count = 0;
+  CSelector *I = G->Selector;
+
+  store[0] = 0;
+
+  // trivial (but valid) case: empty selection string
+  ok_assert(1, input[0]);
+
+  // if object molecule or named selection, then don't create a temp selection
+  if (ExecutiveIsMoleculeOrSelection(G, input)) {
+    strcpy(store, input);
+    return 0;
+  }
+
+  // evaluate expression and create a temp selection
+  sprintf(store, "%s%d", cSelectorTmpPrefix, I->TmpCounter++);
+  count = SelectorCreate(G, store, input, NULL, quiet, NULL);
+  if(count < 0)
+    store[0] = 0;
+
+ok_except1:
+  return count;
+}
+
+int SelectorCheckTmp(PyMOLGlobals * G, const char *name)
 {
   if(WordMatch(G, cSelectorTmpPattern, name, false) + 1 ==
      -(int) strlen(cSelectorTmpPrefix))
@@ -7789,7 +7616,7 @@ int SelectorCheckTmp(PyMOLGlobals * G, char *name)
 
 
 /*========================================================================*/
-void SelectorFreeTmp(PyMOLGlobals * G, char *name)
+void SelectorFreeTmp(PyMOLGlobals * G, const char *name)
 {                               /* remove temporary selections */
   if(name && name[0]) {
     if(strncmp(name, cSelectorTmpPrefix, strlen(cSelectorTmpPrefix)) == 0) {
@@ -7928,8 +7755,6 @@ static int SelectorEmbedSelection(PyMOLGlobals * G, int *atom, char *name,
   if(exec_managed) {
     if(newFlag)
       ExecutiveManageSelection(G, name);
-    else
-      ExecutiveSetControlsOff(G, name);
   }
   PRINTFD(G, FB_Selector)
     " Selector: Embedded %s, %d atoms.\n", name, c ENDFD;
@@ -8001,7 +7826,7 @@ static int *SelectorSelectFromTagDict(PyMOLGlobals * G, OVOneToAny * id2tag)
 
 /*========================================================================*/
 
-static int _SelectorCreate(PyMOLGlobals * G, char *sname, char *sele,
+static int _SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele,
                            ObjectMolecule ** obj, int quiet, Multipick * mp,
                            CSeqRow * rowVLA, int nRow, int **obj_idx, int *n_idx,
                            int n_obj, OVOneToAny * id2tag, int executive_manage,
@@ -8131,7 +7956,7 @@ int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals * G, char *sname,
                          NULL, -1, -1, -1);
 }
 
-int SelectorCreate(PyMOLGlobals * G, char *sname, char *sele, ObjectMolecule * obj,
+int SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele, ObjectMolecule * obj,
                    int quiet, Multipick * mp)
 {
   return _SelectorCreate(G, sname, sele, &obj, quiet, mp, NULL, 0, NULL, 0, 0, NULL, -1,
@@ -8273,13 +8098,7 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * o
     if(cs) {
       for(a = 0; a < obj->NAtom; a++) {
         int ix;
-        if(obj->DiscreteFlag) {
-          if(cs == obj->DiscreteCSet[a])
-            ix = obj->DiscreteAtmToIdx[a];
-          else
-            ix = -1;
-        } else
-          ix = cs->AtmToIdx[a];
+        ix = cs->atmToIdx(a);
         if(ix >= 0) {
           rec->model = modelCnt;
           rec->atom = a;
@@ -8485,13 +8304,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
               else
                 cs = NULL;
               if(cs) {
-                if(obj->DiscreteFlag) {
-                  if(cs == obj->DiscreteCSet[a])
-                    idx = obj->DiscreteAtmToIdx[a];
-                  else
-                    idx = -1;
-                } else
-                  idx = cs->AtmToIdx[a];
+                idx = cs->atmToIdx(a);
                 if(idx >= 0) {
                   rec->model = modelCnt;
                   rec->atom = a;
@@ -8508,13 +8321,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
               else
                 cs = NULL;
               if(cs) {
-                if(obj->DiscreteFlag) {
-                  if(cs == obj->DiscreteCSet[a])
-                    idx = obj->DiscreteAtmToIdx[a];
-                  else
-                    idx = -1;
-                } else
-                  idx = cs->AtmToIdx[a];
+                idx = cs->atmToIdx(a);
                 if(idx >= 0) {
                   if(SelectorIsMember(G, ai->selEntry, domain)) {
                     rec->model = modelCnt;
@@ -8551,7 +8358,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
 
 
 /*========================================================================*/
-static int *SelectorSelect(PyMOLGlobals * G, char *sele, int state, int domain, int quiet)
+static int *SelectorSelect(PyMOLGlobals * G, const char *sele, int state, int domain, int quiet)
 {
   SelectorWordType *parsed;
   int *result = NULL;
@@ -8628,15 +8435,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
             else
               cs = NULL;
             if(cs) {
-              if(obj->DiscreteFlag) {
-                if(cs == obj->DiscreteCSet[at])
-                  idx = obj->DiscreteAtmToIdx[at];
-                else
-                  idx = -1;
-              } else
-                idx = cs->AtmToIdx[at];
-              if(idx >= 0) {
-                copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * a);
+              if(CoordSetGetAtomVertex(cs, at, I->Vertex + 3 * a)) {
                 I->Flag1[a] = true;
                 n1++;
               }
@@ -8645,11 +8444,11 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
           if(n1) {
             map = MapNewFlagged(G, -dist, I->Vertex, I->NAtom, NULL, I->Flag1);
             if(map) {
-              MapSetupExpress(map);
+              ok &= MapSetupExpress(map);
               nCSet = SelectorGetArrayNCSet(G, base[1].sele, false);
-              for(e = 0; e < nCSet; e++) {
+              for(e = 0; ok && e < nCSet; e++) {
                 if((state < 0) || (e == state)) {
-                  for(a = 0; a < I->NAtom; a++) {
+                  for(a = 0; ok && a < I->NAtom; a++) {
                     if(base[1].sele[a]) {
                       at = I->Table[a].atom;
                       obj = I->Obj[I->Table[a].model];
@@ -8658,13 +8457,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
                       else
                         cs = NULL;
                       if(cs) {
-                        if(obj->DiscreteFlag) {
-                          if(cs == obj->DiscreteCSet[at])
-                            idx = obj->DiscreteAtmToIdx[at];
-                          else
-                            idx = -1;
-                        } else
-                          idx = cs->AtmToIdx[at];
+                        idx = cs->atmToIdx(at);
                         if(idx >= 0) {
                           v2 = cs->Coord + (3 * idx);
                           MapLocus(map, v2, &h, &k, &l);
@@ -8754,15 +8547,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
             else
               cs = NULL;
             if(cs) {
-              if(obj->DiscreteFlag) {
-                if(cs == obj->DiscreteCSet[at])
-                  idx = obj->DiscreteAtmToIdx[at];
-                else
-                  idx = -1;
-              } else
-                idx = cs->AtmToIdx[at];
-              if(idx >= 0) {
-                copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * a);
+              if(CoordSetGetAtomVertex(cs, at, I->Vertex + 3 * a)) {
                 I->Flag1[a] = true;
                 n1++;
               }
@@ -8774,9 +8559,9 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
                             I->Flag1);
             if(map) {
 
-              MapSetupExpress(map);
+              ok &= MapSetupExpress(map);
               nCSet = SelectorGetArrayNCSet(G, base[1].sele, false);
-              for(e = 0; e < nCSet; e++) {
+              for(e = 0; ok && e < nCSet; e++) {
                 if((state < 0) || (e == state)) {
                   for(a = 0; a < I->NAtom; a++) {
                     if(base[1].sele[a]) {
@@ -8787,13 +8572,7 @@ static int SelectorModulate1(PyMOLGlobals * G, EvalElem * base, int state)
                       else
                         cs = NULL;
                       if(cs) {
-                        if(obj->DiscreteFlag) {
-                          if(cs == obj->DiscreteCSet[at])
-                            idx = obj->DiscreteAtmToIdx[at];
-                          else
-                            idx = -1;
-                        } else
-                          idx = cs->AtmToIdx[at];
+                        idx = cs->atmToIdx(at);
 
                         if(idx >= 0) {
                           v2 = cs->Coord + (3 * idx);
@@ -8851,12 +8630,10 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
   register int a, b, flag;
   register EvalElem *base = passed_base;
   int c = 0;
-  signed char *vis;
   int state;
   int static_singletons;
   ObjectMolecule *obj, *cur_obj = NULL;
   CoordSet *cs;
-  int at_idx;
 
   base->type = STYP_LIST;
   base->sele = Calloc(int, I->NAtom);
@@ -8911,7 +8688,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     break;
   case SELE_HYDz:
     for(a = cNDummyAtoms; a < I->NAtom; a++)
-      base[0].sele[a] = i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hydrogen;
+      base[0].sele[a] = i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].isHydrogen();
     break;
   case SELE_METz:
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
@@ -9016,15 +8793,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
         cur_obj = obj;
       }
       if(flag && cs) {
-        at_idx = i_table[a].atom;
-        if(obj->DiscreteFlag) {
-          if(cs == obj->DiscreteCSet[at_idx]) {
-            if(obj->DiscreteAtmToIdx[at_idx] >= 0) {
-              base[0].sele[a] = true;
-              c++;
-            }
-          }
-        } else if(cs->AtmToIdx[at_idx] >= 0) {
+        if(cs->atmToIdx(i_table[a].atom) >= 0) {
           base[0].sele[a] = true;
           c++;
         }
@@ -9059,14 +8828,11 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     {
       ObjectMolecule *last_obj = NULL;
       AtomInfoType *ai;
-      int bonded;
       for(a = cNDummyAtoms; a < I->NAtom; a++) {
         flag = false;
         obj = i_obj[i_table[a].model];
         if(obj->Obj.Enabled) {
           ai = obj->AtomInfo + i_table[a].atom;
-          vis = ai->visRep;
-          bonded = ai->bonded;
 
           if(last_obj != obj) {
             ObjectMoleculeUpdateNeighbors(obj);
@@ -9074,35 +8840,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
             last_obj = obj;
           }
 
-          for(b = 0; b < cRepCnt; b++) {
-            switch (b) {
-            case cRepCartoon:
-            case cRepRibbon:
-            case cRepLine:
-            case cRepCyl:
-              if(bonded && vis[b])
-                flag = true;
-              break;
-            case cRepNonbonded:
-            case cRepNonbondedSphere:
-              if((!bonded) && (vis[b]))
-                flag = true;
-              break;
-            case cRepDash:     /* not current applicable to atom selections */
-            case cRepCell:
-            case cRepCGO:
-            case cRepCallback:
-            case cRepExtent:
-              break;
-            default:
-              if(vis[b]) {
-                flag = true;
-                break;
-              }
-            }
-            if(flag)
-              break;
-          }
+          flag = ai->isVisible();
         }
         base[0].sele[a] = flag;
         if(flag)
@@ -9138,12 +8876,12 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
   register int I_NAtom = I->NAtom;
   register int *base_0_sele_a;
 
-  int model, sele, s, at_idx, col_idx;
+  int model, sele, s, col_idx;
   int flag;
   int ok = true;
   int index, state;
   char *np;
-  int rep_mask[cRepCnt];
+  int rep_mask;
   char *wildcard = SettingGetGlobal_s(G, cSetting_wildcard);
 
   ObjectMolecule *cur_obj = NULL;
@@ -9339,7 +9077,6 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
   case SELE_TTYs:
     {
       CWordMatchOptions options;
-      int prevmodel;
 
       WordMatchOptionsConfigAlphaList(&options, wildcard[0], ignore_case);
 
@@ -9350,18 +9087,18 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         char null_st[1] = "";
         char *st;
 	AtomInfoType * ai;
+        int prevmodel;
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
 
 	prevmodel = -1;
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
           ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
+#ifndef NO_MMLIBS
+#endif
           st = null_st;
           if(ai->textType) {
             if(!(st = OVLexicon_FetchCString(G->Lexicon, ai->textType)))
-              st = null_st;
-          } else if (ai->custom){
-            if(!(st = OVLexicon_FetchCString(G->Lexicon, ai->custom)))
               st = null_st;
 	  }
           if((*base_0_sele_a = WordMatcherMatchAlpha(matcher, st)))
@@ -9415,6 +9152,8 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
 	prevmodel = -1;
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
+#ifndef NO_MMLIBS
+#endif
 	  mmstereotype[0] = convertStereoToChar(i_obj[table_a->model]->AtomInfo[table_a->atom].mmstereo);
           if((*base_0_sele_a =
               WordMatcherMatchAlpha(matcher,mmstereotype)))
@@ -9452,25 +9191,18 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     }
     break;
   case SELE_REPs:
-    for(a = 0; a < cRepCnt; a++)
-      rep_mask[a] = false;
+    rep_mask = 0;
     WordPrimeCommaMatch(G, base[1].text);
-    a = 0;
-    while(1) {
-      if(!rep_names[a].word[0])
-        break;
+    for(a = 0; rep_names[a].word[0]; a++) {
       if(WordMatchComma(G, base[1].text, rep_names[a].word, ignore_case) < 0)
-        rep_mask[rep_names[a].value] = true;
-      a++;
+        rep_mask |= rep_names[a].value;
     }
-    for(a = cNDummyAtoms; a < I_NAtom; a++) {
-      base[0].sele[a] = false;
-      for(b = 0; b < cRepCnt; b++) {
-        if(rep_mask[b] && i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].visRep[b]) {
-          base[0].sele[a] = true;
-          c++;
-          break;
-        }
+    for(SelectorAtomIterator iter(G); iter.next();) {
+      if(iter.getAtomInfo()->visRep & rep_mask) {
+        base[0].sele[iter.a] = true;
+        c++;
+      } else {
+        base[0].sele[iter.a] = false;
       }
     }
     break;
@@ -9521,6 +9253,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     }
     break;
   case SELE_CHNs:
+  case SELE_CUST:
     {
       CWordMatchOptions options;
 
@@ -9529,6 +9262,18 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
       table_a = i_table + cNDummyAtoms;
       base_0_sele_a = &base[0].sele[cNDummyAtoms];
 
+      int offset = 0;
+      switch (base->code) {
+        case SELE_CHNs:
+          offset = offsetof(AtomInfoType, chain);
+          break;
+        case SELE_CUST:
+          offset = offsetof(AtomInfoType, custom);
+          break;
+        default:
+          printf("coding error: missing case\n");
+      }
+
       if((matcher = WordMatcherNew(G, base[1].text, &options, true))) {
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
@@ -9536,8 +9281,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
           if((*base_0_sele_a =
               WordMatcherMatchAlpha(matcher, LexStr(G,
-                                    i_obj[table_a->model]->AtomInfo[table_a->atom].
-                                    chain))))
+                  *(int*)(((char*)(i_obj[table_a->model]->AtomInfo + table_a->atom)) + offset)))))
             c++;
           table_a++;
           base_0_sele_a++;
@@ -9596,15 +9340,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
           cur_obj = obj;
         }
         if(flag && cs) {
-          at_idx = i_table[a].atom;
-          if(obj->DiscreteFlag) {
-            if(cs == obj->DiscreteCSet[at_idx]) {
-              if(obj->DiscreteAtmToIdx[at_idx] >= 0) {
-                base[0].sele[a] = true;
-                c++;
-              }
-            }
-          } else if(cs->AtmToIdx[at_idx] >= 0) {
+          if(cs->atmToIdx(i_table[a].atom) >= 0) {
             base[0].sele[a] = true;
             c++;
           }
@@ -9999,13 +9735,7 @@ static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state)
 
           at = I->Table[a].atom;
           cs = obj->CSet[s];
-          if(!obj->DiscreteFlag) {
-            idx = cs->AtmToIdx[at];
-          } else if(cs == obj->DiscreteCSet[at]) {
-            idx = obj->DiscreteAtmToIdx[at];
-          } else {
-            continue;
-          }
+          idx = cs->atmToIdx(at);
           if(idx < 0)
             continue;
 
@@ -10650,13 +10380,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                 cryst = obj->Symmetry->Crystal;
               if(cryst) {
                 int idx;
-                if(obj->DiscreteFlag) {
-                  if(cs == obj->DiscreteCSet[at])
-                    idx = obj->DiscreteAtmToIdx[at];
-                  else
-                    idx = -1;
-                } else
-                  idx = cs->AtmToIdx[at];
+                idx = cs->atmToIdx(at);
                 if(idx >= 0) {
                   transform33f3f(cryst->RealToFrac, cs->Coord + (3 * idx),
                                  I->Vertex + 3 * a);
@@ -10688,13 +10412,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                           cryst = obj->Symmetry->Crystal;
                         if(cryst) {
                           int idx;
-                          if(obj->DiscreteFlag) {
-                            if(cs == obj->DiscreteCSet[at])
-                              idx = obj->DiscreteAtmToIdx[at];
-                            else
-                              idx = -1;
-                          } else
-                            idx = cs->AtmToIdx[at];
+                          idx = cs->atmToIdx(at);
                           if(idx >= 0) {
                             float probe[3], probe_i[3];
                             int h, i, j, k, l;
@@ -10964,15 +10682,7 @@ int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state)
             else
               cs = NULL;
             if(cs) {
-              if(obj->DiscreteFlag) {
-                if(cs == obj->DiscreteCSet[at])
-                  idx = obj->DiscreteAtmToIdx[at];
-                else
-                  idx = -1;
-              } else
-                idx = cs->AtmToIdx[at];
-              if(idx >= 0) {
-                copy3f(cs->Coord + (3 * idx), I->Vertex + 3 * a);
+              if(CoordSetGetAtomVertex(cs, at, I->Vertex + 3 * a)) {
                 I->Flag1[a] = true;
                 n1++;
               }
@@ -10981,9 +10691,9 @@ int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state)
           if(n1) {
             map = MapNewFlagged(G, -dist, I->Vertex, I->NAtom, NULL, I->Flag1);
             if(map) {
-              MapSetupExpress(map);
+              ok &= MapSetupExpress(map);
               nCSet = SelectorGetArrayNCSet(G, base[4].sele, false);
-              for(e = 0; e < nCSet; e++) {
+              for(e = 0; ok && e < nCSet; e++) {
                 if((state < 0) || (e == state)) {
                   for(a = 0; a < I->NAtom; a++) {
                     if(base[4].sele[a]) {
@@ -10994,13 +10704,7 @@ int SelectorOperator22(PyMOLGlobals * G, EvalElem * base, int state)
                       else
                         cs = NULL;
                       if(cs) {
-                        if(obj->DiscreteFlag) {
-                          if(cs == obj->DiscreteCSet[at])
-                            idx = obj->DiscreteAtmToIdx[at];
-                          else
-                            idx = -1;
-                        } else
-                          idx = cs->AtmToIdx[at];
+                        idx = cs->atmToIdx(at);
                         if(idx >= 0) {
                           v2 = cs->Coord + (3 * idx);
                           MapLocus(map, v2, &h, &k, &l);
@@ -11102,13 +10806,13 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
   int depth = 0;
   int a, b, c = 0;
   int ok = true;
-  unsigned int code;
+  unsigned int code = 0;
   int valueFlag = 0;            /* are we expecting? */
   int *result = NULL;
   int opFlag, opFlag2, maxLevel;
   char *q, *cc1, *cc2;
   int totDepth = 0;
-  int exact;
+  int exact = 0;
   char *np;
 
   register int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
@@ -11117,7 +10821,9 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
   EvalElem *Stack = NULL, *e;
   SelectorWordType tmpKW;
   Stack = VLAlloc(EvalElem, 100);
-
+  CHECKOK(ok, Stack);
+  if (!ok)
+    return NULL;
   UtilZeroMem(Stack, sizeof(EvalElem)); /* blank first entry */
 
   /* converts all keywords into code, adds them into a operation list */
@@ -11214,6 +10920,9 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
             break;
           case STYP_SEL2:
             valueFlag = 2;
+            break;
+          case STYP_SEL3:
+            valueFlag = 3;
             break;
           case STYP_OPR1:
             valueFlag = 0;
@@ -11500,7 +11209,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
 
 
 /*========================================================================*/
-SelectorWordType *SelectorParse(PyMOLGlobals * G, char *s)
+SelectorWordType *SelectorParse(PyMOLGlobals * G, const char *s)
 {
 
   /* break a selection down into its constituent strings and
@@ -11511,7 +11220,7 @@ SelectorWordType *SelectorParse(PyMOLGlobals * G, char *s)
   int w_flag = false;
   int quote_flag = false;
   char quote_char = '"';
-  char *p = s;
+  const char *p = s;
   char *q = NULL, *q_base = NULL;
   r = VLAlloc(SelectorWordType, 100);
   while(*p) {
@@ -11734,9 +11443,9 @@ int SelectorInit(PyMOLGlobals * G)
 }
 
 int SelectorInitImpl(PyMOLGlobals * G, CSelector **Iarg, short init2){
-{
   register CSelector *I = NULL;
-  if((I = Calloc(CSelector, 1))) {
+  ok_assert(1, I = Calloc(CSelector, 1));
+
     *Iarg = I;
 
     I->Vertex = NULL;
@@ -11769,8 +11478,7 @@ int SelectorInitImpl(PyMOLGlobals * G, CSelector **Iarg, short init2){
       I->Info = GI->Info;      
     }
     return 1;
-  }
- }
+ok_except1:
  return 0;
 }
  
@@ -11925,27 +11633,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
           ai1 = obj1->AtomInfo + at1;
           ai2 = obj2->AtomInfo + at2;
 	  
-	  /* if the objects were loaded as discrete, then bump their atom indices as necessary */
-          if(obj1->DiscreteFlag) {
-            if(cs1 == obj1->DiscreteCSet[at1]) {
-              idx1 = obj1->DiscreteAtmToIdx[at1];
-            } else {
-              idx1 = -1;
-            }
-          } else {
-            idx1 = cs1->AtmToIdx[at1];
-          }
-
-          if(obj2->DiscreteFlag) {
-            if(cs2 == obj2->DiscreteCSet[at2]) {
-              idx2 = obj2->DiscreteAtmToIdx[at2];
-            } else {
-              idx2 = -1;
-            }
-
-          } else {
-            idx2 = cs2->AtmToIdx[at2];
-          }
+          idx1 = cs1->atmToIdx(at1);
+          idx2 = cs2->atmToIdx(at2);
 
           if((idx1 >= 0) && (idx2 >= 0)) {
 	    /* actual distance calculation from ptA to ptB */
@@ -12189,15 +11878,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
             cs1 = obj1->CSet[state1];
 
             if(cs1) {
-              if(obj1->DiscreteFlag) {
-                if(cs1 == obj1->DiscreteCSet[at1]) {
-                  idx1 = obj1->DiscreteAtmToIdx[at1];
-                } else {
-                  idx1 = -1;
-                }
-              } else {
-                idx1 = cs1->AtmToIdx[at1];
-              }
+              idx1 = cs1->atmToIdx(at1);
 
               if(idx1 >= 0) {
 
@@ -12211,15 +11892,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
                     cs2 = obj2->CSet[state2];
 
                     if(cs2) {
-                      if(obj2->DiscreteFlag) {
-                        if(cs2 == obj2->DiscreteCSet[at2]) {
-                          idx2 = obj2->DiscreteAtmToIdx[at2];
-                        } else {
-                          idx2 = -1;
-                        }
-                      } else {
-                        idx2 = cs2->AtmToIdx[at2];
-                      }
+                      idx2 = cs2->atmToIdx(at2);
 
                       if(idx2 >= 0) {
 			/* neighbor table like BPRec */
@@ -12242,15 +11915,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
                                 cs3 = obj3->CSet[state3];
 
                                 if(cs3) {
-                                  if(obj3->DiscreteFlag) {
-                                    if(cs3 == obj3->DiscreteCSet[at3]) {
-                                      idx3 = obj3->DiscreteAtmToIdx[at3];
-                                    } else {
-                                      idx3 = -1;
-                                    }
-                                  } else {
-                                    idx3 = cs3->AtmToIdx[at3];
-                                  }
+                                  idx3 = cs3->atmToIdx(at3);
 
                                   if(idx3 >= 0) {
 
@@ -12518,15 +12183,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
             cs1 = obj1->CSet[state1];
 
             if(cs1) {
-              if(obj1->DiscreteFlag) {
-                if(cs1 == obj1->DiscreteCSet[at1]) {
-                  idx1 = obj1->DiscreteAtmToIdx[at1];
-                } else {
-                  idx1 = -1;
-                }
-              } else {
-                idx1 = cs1->AtmToIdx[at1];
-              }
+              idx1 = cs1->atmToIdx(at1);
 
               if(idx1 >= 0) {
 
@@ -12540,15 +12197,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
                     cs2 = obj2->CSet[state2];
 
                     if(cs2) {
-                      if(obj2->DiscreteFlag) {
-                        if(cs2 == obj2->DiscreteCSet[at2]) {
-                          idx2 = obj2->DiscreteAtmToIdx[at2];
-                        } else {
-                          idx2 = -1;
-                        }
-                      } else {
-                        idx2 = cs2->AtmToIdx[at2];
-                      }
+                      idx2 = cs2->atmToIdx(at2);
 
                       if(idx2 >= 0) {
 
@@ -12565,15 +12214,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
                               cs3 = obj3->CSet[state3];
 
                               if(cs3) {
-                                if(obj3->DiscreteFlag) {
-                                  if(cs3 == obj3->DiscreteCSet[at3]) {
-                                    idx3 = obj3->DiscreteAtmToIdx[at3];
-                                  } else {
-                                    idx3 = -1;
-                                  }
-                                } else {
-                                  idx3 = cs3->AtmToIdx[at3];
-                                }
+                                idx3 = cs3->atmToIdx(at3);
 
                                 if(idx3 >= 0) {
 
@@ -12600,15 +12241,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
                                             cs4 = obj4->CSet[state4];
 
                                             if(cs4) {
-                                              if(obj4->DiscreteFlag) {
-                                                if(cs4 == obj4->DiscreteCSet[at4]) {
-                                                  idx4 = obj4->DiscreteAtmToIdx[at4];
-                                                } else {
-                                                  idx4 = -1;
-                                                }
-                                              } else {
-                                                idx4 = cs3->AtmToIdx[at4];
-                                              }
+                                              idx4 = cs3->atmToIdx(at4);
 
                                               if(idx4 >= 0) {
 

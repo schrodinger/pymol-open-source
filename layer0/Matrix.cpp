@@ -60,7 +60,7 @@ Z* -------------------------------------------------------------------
 #define XX_MAT(skip,row,col) (((row)*(skip)) + col)
 
 xx_boolean xx_matrix_jacobi_solve(xx_float64 * e_vec, xx_float64 * e_val,
-                                  xx_word * n_rot, xx_float64 * input, xx_word size)
+                                  xx_word * n_rot, const xx_float64 * input, xx_word size)
 
 
 /* eigenvalues and eigenvectors for a real symmetric matrix 
@@ -335,7 +335,7 @@ static void xx_matrix_back_substitute(xx_float64 * result, xx_float64 * decomp,
   }
 }
 
-xx_boolean xx_matrix_invert(xx_float64 * result, xx_float64 * input, xx_word size)
+xx_boolean xx_matrix_invert(xx_float64 * result, const xx_float64 * input, xx_word size)
 {
   xx_float64 stack_mat_tmp[XX_MATRIX_STACK_STORAGE_MAX * XX_MATRIX_STACK_STORAGE_MAX];
   xx_float64 stack_dbl_tmp[XX_MATRIX_STACK_STORAGE_MAX];
@@ -387,8 +387,8 @@ xx_boolean xx_matrix_invert(xx_float64 * result, xx_float64 * input, xx_word siz
 
 #undef XX_MAT
 
-int MatrixInvTransformExtentsR44d3f(double *matrix,
-                                    float *old_min, float *old_max,
+int MatrixInvTransformExtentsR44d3f(const double *matrix,
+                                    const float *old_min, const float *old_max,
                                     float *new_min, float *new_max)
 {
   /* just brute-forcing this for now... */
@@ -428,8 +428,8 @@ int MatrixInvTransformExtentsR44d3f(double *matrix,
   return 1;
 }
 
-int MatrixTransformExtentsR44d3f(double *matrix,
-                                 float *old_min, float *old_max,
+int MatrixTransformExtentsR44d3f(const double *matrix,
+                                 const float *old_min, const float *old_max,
                                  float *new_min, float *new_max)
 {
   /* just brute-forcing this for now... */
@@ -470,12 +470,12 @@ int MatrixTransformExtentsR44d3f(double *matrix,
 }
 
 /*========================================================================*/
-int *MatrixFilter(float cutoff, int window, int n_pass, int nv, float *v1, float *v2)
+int *MatrixFilter(float cutoff, int window, int n_pass, int nv, const float *v1, const float *v2)
 {
   int *flag;
   float center1[3], center2[3];
   int a, b, c, cc;
-  float *vv1, *vv2;
+  const float *vv1, *vv2;
   float *dev, avg_dev;
   int wc;
   int start, finish;
@@ -635,7 +635,7 @@ int *MatrixFilter(float cutoff, int window, int n_pass, int nv, float *v1, float
 
 
 /*========================================================================*/
-void MatrixTransformTTTfN3f(unsigned int n, float *q, float *m, float *p)
+void MatrixTransformTTTfN3f(unsigned int n, float *q, const float *m, const float *p)
 {
   register const float m0 = m[0], m4 = m[4], m8 = m[8], m12 = m[12];
   register const float m1 = m[1], m5 = m[5], m9 = m[9], m13 = m[13];
@@ -654,7 +654,7 @@ void MatrixTransformTTTfN3f(unsigned int n, float *q, float *m, float *p)
 
 
 /*========================================================================*/
-void MatrixTransformR44fN3f(unsigned int n, float *q, float *m, float *p)
+void MatrixTransformR44fN3f(unsigned int n, float *q, const float *m, const float *p)
 {
   register const float m0 = m[0], m4 = m[4], m8 = m[8];
   register const float m1 = m[1], m5 = m[5], m9 = m[9];
@@ -673,8 +673,8 @@ void MatrixTransformR44fN3f(unsigned int n, float *q, float *m, float *p)
 
 
 /*========================================================================*/
-void MatrixGetRotationC44f(float *m44, const float angle,
-                           const float x, const float y, const float z)
+void MatrixGetRotationC44f(float *m44, float angle,
+                           float x, float y, float z)
 {
   float m33[9];
   rotation_matrix3f(angle, x, y, z, m33);
@@ -698,8 +698,7 @@ void MatrixGetRotationC44f(float *m44, const float angle,
 
 
 /*========================================================================*/
-void MatrixRotateC44f(float *m, const float angle, const float x, const float y,
-                      const float z)
+void MatrixRotateC44f(float *m, float angle, float x, float y, float z)
 {
   float m33[9];
   float m44[16];
@@ -725,7 +724,7 @@ void MatrixRotateC44f(float *m, const float angle, const float x, const float y,
 
 
 /*========================================================================*/
-void MatrixTranslateC44f(float *m, const float x, const float y, const float z)
+void MatrixTranslateC44f(float *m, float x, float y, float z)
 {
   m[12] = m[0] * x + m[4] * y + m[8] * z + m[12];
   m[13] = m[1] * x + m[5] * y + m[9] * z + m[13];
@@ -763,7 +762,7 @@ void MatrixMultiplyC44f(const float *b, float *m)
 
 
 /*========================================================================*/
-void MatrixTransformC44f3f(float *m, float *q, float *p)
+void MatrixTransformC44f3f(const float *m, const float *q, float *p)
 {
   register float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
   p[0] = m[0] * q0 + m[4] * q1 + m[8] * q2 + m[12];
@@ -773,7 +772,7 @@ void MatrixTransformC44f3f(float *m, float *q, float *p)
 
 
 /*========================================================================*/
-void MatrixTransformC44f4f(float *m, float *q, float *p)
+void MatrixTransformC44f4f(const float *m, const float *q, float *p)
 {
   register float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
   p[0] = m[0] * q0 + m[4] * q1 + m[8] * q2 + m[12];
@@ -785,7 +784,7 @@ void MatrixTransformC44f4f(float *m, float *q, float *p)
 
 /*========================================================================*/
 // same as transform44f3fas33f3f
-void MatrixInvTransformC44fAs33f3f(float *m, float *q, float *p)
+void MatrixInvTransformC44fAs33f3f(const float *m, const float *q, float *p)
 {
   /* multiplying a column major rotation matrix as row-major will
    * give the inverse rotation */
@@ -797,7 +796,7 @@ void MatrixInvTransformC44fAs33f3f(float *m, float *q, float *p)
 
 
 /*========================================================================*/
-void MatrixTransformC44fAs33f3f(float *m, float *q, float *p)
+void MatrixTransformC44fAs33f3f(const float *m, const float *q, float *p)
 {
   register float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
   p[0] = m[0] * q0 + m[4] * q1 + m[8] * q2;
@@ -807,11 +806,11 @@ void MatrixTransformC44fAs33f3f(float *m, float *q, float *p)
 
 
 /*========================================================================*/
-float MatrixGetRMS(PyMOLGlobals * G, int n, float *v1, float *v2, float *wt)
+float MatrixGetRMS(PyMOLGlobals * G, int n, const float *v1, const float *v2, float *wt)
 {
   /* Just Compute RMS given current coordinates */
 
-  float *vv1, *vv2;
+  const float *vv1, *vv2;
   float err, etmp, tmp;
   int a, c;
   float sumwt = 0.0F;
@@ -852,7 +851,7 @@ float MatrixGetRMS(PyMOLGlobals * G, int n, float *v1, float *v2, float *wt)
 
 
 /*========================================================================*/
-float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, float *v1, float *v2, float *wt,
+float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, const float *v1, const float *v2, const float *wt,
                        float *ttt)
 {
   /*
@@ -899,7 +898,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, float *v1, float *v2, float *wt,
   /* Calculate center-of-mass vectors */
 
   {
-    float *vv1 = v1, *vv2 = v2;
+    const float *vv1 = v1, *vv2 = v2;
 
     if(wt) {
       for(c = 0; c < n; c++) {
@@ -937,7 +936,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, float *v1, float *v2, float *wt,
   {
     /* Calculate correlation matrix */
     double x[3], xx[3];
-    float *vv1 = v1, *vv2 = v2;
+    const float *vv1 = v1, *vv2 = v2;
     for(c = 0; c < n; c++) {
       if(wt) {
         for(a = 0; a < 3; a++) {
@@ -1271,7 +1270,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, float *v1, float *v2, float *wt,
   /* At this point, we should have a converged rotation matrix (M).  Calculate
      the weighted RMS error. */
   {
-    float *vv1 = v1, *vv2 = v2;
+    const float *vv1 = v1, *vv2 = v2;
     double etmp, tmp;
     double err = 0.0;
     for(c = 0; c < n; c++) {
@@ -1405,7 +1404,7 @@ typedef long int ftnint;
 
 /*========================================================================*/
 
-int MatrixEigensolveC33d(PyMOLGlobals * G, double *a, double *wr, double *wi, double *v)
+int MatrixEigensolveC33d(PyMOLGlobals * G, const double *a, double *wr, double *wi, double *v)
 {
   integer n, nm;
   integer iv1[3];
@@ -1441,7 +1440,7 @@ int MatrixEigensolveC33d(PyMOLGlobals * G, double *a, double *wr, double *wi, do
   return (ierr);
 }
 
-int MatrixEigensolveC44d(PyMOLGlobals * G, double *a, double *wr, double *wi, double *v)
+int MatrixEigensolveC44d(PyMOLGlobals * G, const double *a, double *wr, double *wi, double *v)
 {
   integer n, nm;
   integer iv1[4];

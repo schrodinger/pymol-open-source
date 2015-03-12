@@ -86,6 +86,8 @@ Z* -------------------------------------------------------------------
 #include"ListMacros.h"
 #include"MacPyMOL.h"
 
+#include "MovieScene.h"
+
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
 #define tmpSele2 "_tmp2"
@@ -304,7 +306,7 @@ static PyObject *CmdPseudoatom(PyObject * self, PyObject * args)
     }
     if((ok = APIEnterBlockedNotModal(G))) {
       if(sele[0])
-        ok = (SelectorGetTmp(G, sele, s1) >= 0);
+        ok = (SelectorGetTmp2(G, sele, s1) >= 0);
       else
         s1[0] = 0;
       if(ok) {
@@ -317,26 +319,6 @@ static PyObject *CmdPseudoatom(PyObject * self, PyObject * args)
         SelectorFreeTmp(G, s1);
       APIExitBlocked(G);
     }
-  }
-  return APIResultOk(ok);
-}
-
-static PyObject *CmdSetSceneNames(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  PyObject *list;
-  int ok = false;
-
-  ok = PyArg_ParseTuple(args, "OO", &self, &list);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterBlockedNotModal(G))) {
-    ok = SceneSetNames(G, list);
-    APIExitBlocked(G);
   }
   return APIResultOk(ok);
 }
@@ -1024,7 +1006,7 @@ static PyObject *CmdSetSymmetry(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     if(ok)
       ok = ExecutiveSetSymmetry(G, s1, state, a, b, c, alpha, beta, gamma, str2);
     SelectorFreeTmp(G, s1);
@@ -1052,7 +1034,7 @@ static PyObject *CmdGetSymmetry(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     if(ok)
       ok = ExecutiveGetSymmetry(G, s1, state, &a, &b, &c, &alpha, &beta, &gamma, sg, &defined);
     APIExit(G);
@@ -1264,6 +1246,82 @@ static PyObject *CmdSculptPurge(PyObject * self, PyObject * args)
     APIExit(G);
   }
   return APIResultOk(ok);
+}
+
+static PyObject *CmdScene(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = false;
+
+  const char *key, *action, *message = NULL, *new_key = NULL;
+  unsigned char store_view = true,
+                store_color = true,
+                store_active = true,
+                store_rep = true,
+                store_frame = true,
+                hand = true;
+  float animate = -1.0;
+
+  if(!PyArg_ParseTuple(args, "Oss|zbbbbbfzb", &self, &key, &action, &message,
+        &store_view, &store_color, &store_active, &store_rep, &store_frame,
+        &animate, &new_key, &hand)) {
+    API_HANDLE_ERROR;
+    ok_raise(2);
+  }
+
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(2, G && APIEnterBlockedNotModal(G));
+
+  ok = MovieSceneFunc(G, key, action, message,
+      store_view, store_color, store_active, store_rep, store_frame,
+      animate, new_key, hand);
+
+  APIExitBlocked(G);
+ok_except2:
+  return APIResultOk(ok);
+}
+
+static PyObject *CmdSceneOrder(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = false;
+
+  const char *names, *location;
+  unsigned char sort;
+
+  if(!PyArg_ParseTuple(args, "Osbs", &self, &names, &sort, &location)) {
+    API_HANDLE_ERROR;
+    ok_raise(2);
+  }
+
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(2, G && APIEnterBlockedNotModal(G));
+
+  ok = MovieSceneOrder(G, names, sort, location);
+
+  APIExitBlocked(G);
+ok_except2:
+  return APIResultOk(ok);
+}
+
+static PyObject *CmdGetSceneOrder(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject * result = NULL;
+
+  if(!PyArg_ParseTuple(args, "O", &self)) {
+    API_HANDLE_ERROR;
+    ok_raise(2);
+  }
+
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(2, G && APIEnterBlockedNotModal(G));
+
+  result = PConvToPyObject(MovieSceneGetOrder(G));
+
+  APIExitBlocked(G);
+ok_except2:
+  return (APIAutoNone(result));
 }
 
 static PyObject *CmdSculptDeactivate(PyObject * self, PyObject * args)
@@ -1766,7 +1824,7 @@ static PyObject *CmdMapTrim(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, sele, s1) >= 0);
+    ok = (SelectorGetTmp2(G, sele, s1) >= 0);
     ok = ExecutiveMapTrim(G, name, s1, buffer, map_state, sele_state, quiet);
     SelectorFreeTmp(G, s1);
     APIExit(G);
@@ -2285,7 +2343,6 @@ static PyObject *CmdGetSettingUpdates(PyObject * self, PyObject * args)
   PyObject *result = NULL;
   int state;
   char *name;
-  CSetting **handle, *csetting = NULL;
 
   if(!PyArg_ParseTuple(args, "Osi", &self, &name, &state)) {
     API_HANDLE_ERROR;
@@ -2295,18 +2352,16 @@ static PyObject *CmdGetSettingUpdates(PyObject * self, PyObject * args)
   API_SETUP_PYMOL_GLOBALS;
   ok_assert(2, G && APIEnterBlockedNotModal(G));
 
-  if(name[0]) {
-    CObject *obj = ExecutiveFindObjectByName(G, name);
-    ok_assert(1, obj);
-    ok_assert(1, handle = obj->fGetSettingHandle(obj, state));
-    csetting = *handle;
-  }
+  result = PConvToPyObject(SettingGetUpdateList(G, name, state));
 
-  result = SettingGetUpdateList(G, csetting);
-ok_except1:
   APIExitBlocked(G);
 ok_except2:
   return (APIAutoNone(result));
+}
+
+static PyObject *CmdGetSettingIndices(PyObject * self, PyObject * args)
+{
+  return SettingGetSettingIndices();
 }
 
 static PyObject *CmdGetView(PyObject * self, PyObject * args)
@@ -4125,7 +4180,7 @@ static PyObject *CmdRecolor(PyObject * self, PyObject * args)
       if(WordMatch(G, str1, "all", true) < 0)
         ExecutiveInvalidateRep(G, str1, rep, cRepInvColor);
       else {
-        ok = (SelectorGetTmp(G, str1, s1) >= 0);
+        ok = (SelectorGetTmp2(G, str1, s1) >= 0);
         ExecutiveInvalidateRep(G, s1, rep, cRepInvColor);
         SelectorFreeTmp(G, s1);
       }
@@ -4159,7 +4214,7 @@ static PyObject *CmdRebuild(PyObject * self, PyObject * args)
       if(WordMatch(G, str1, "all", true) < 0)
         ExecutiveRebuildAll(G);
       else {
-        ok = (SelectorGetTmp(G, str1, s1) >= 0);
+        ok = (SelectorGetTmp2(G, str1, s1) >= 0);
         if(SettingGetGlobal_b(G, cSetting_defer_builds_mode))
           ExecutiveInvalidateRep(G, s1, rep, cRepInvPurge);
         else
@@ -4535,7 +4590,7 @@ static PyObject *CmdCountStates(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     count = ExecutiveCountStates(G, s1);
     if(count < 0)
       ok = false;
@@ -5677,9 +5732,9 @@ static PyObject *CmdSetFrame(PyObject * self, PyObject * args)
 static PyObject *CmdFrame(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int frm,trigger,from_scene;
+  int frm,trigger;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Oiii", &self, &frm,&trigger,&from_scene);
+  ok = PyArg_ParseTuple(args, "Oii", &self, &frm, &trigger);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -5687,19 +5742,10 @@ static PyObject *CmdFrame(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok) {
-    frm--;
     if(frm < 0)
       frm = 0;
     if((ok = APIEnterNotModal(G))) {
-      int suppress = 0;
-      int scene_frame_mode = SettingGetGlobal_i(G,cSetting_scene_frame_mode);
-      if(from_scene) {
-        if((scene_frame_mode == 0) ||
-           ((scene_frame_mode<0) && MovieDefined(G)))
-          suppress = true;
-      }
-      if(!suppress)
-        SceneSetFrame(G, trigger ? 4 : 0, frm);
+      SceneSetFrame(G, trigger ? 4 : 0, frm);
       APIExit(G);
     }
   }
@@ -5787,7 +5833,7 @@ static PyObject *CmdGetMinMax(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     flag = ExecutiveGetExtent(G, s1, mn, mx, true, state, false);
     SelectorFreeTmp(G, s1);
     APIExit(G);
@@ -6046,7 +6092,7 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
       } else if(width || height) {
         SceneDeferImage(G, width, height, str1, -1, dpi, quiet, format);
         result = 1;
-      } else {
+      } else if(!SceneGetCopyType(G)) {
         ExecutiveDrawNow(G);      /* TODO STATUS */
       }
     }
@@ -6271,7 +6317,7 @@ static PyObject *CmdColor(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     if(ok) {
       ok = ExecutiveColor(G, s1, color, flags, quiet);
     }
@@ -6372,7 +6418,7 @@ static PyObject *CmdClip(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     switch (sname[0]) {         /* TODO STATUS */
     case 'N':
     case 'n':
@@ -6462,25 +6508,6 @@ static PyObject *CmdTurn(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
-static PyObject *CmdLegacySet(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  char *sname, *value;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Oss", &self, &sname, &value);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = SettingSetNamed(G, sname, value);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
-}
-
 static PyObject *CmdUnset(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6505,7 +6532,7 @@ static PyObject *CmdUnset(PyObject * self, PyObject * args)
       strcpy(s1, str3);
     } else if(str3[0] != 0) {
       tmpFlag = true;
-      ok = (SelectorGetTmp(G, str3, s1) >= 0);
+      ok = (SelectorGetTmp2(G, str3, s1) >= 0);
     }
     if(ok)
       ok = ExecutiveUnsetSetting(G, index, s1, state, quiet, updates);
@@ -6576,7 +6603,7 @@ static PyObject *CmdSet(PyObject * self, PyObject * args)
       strcpy(s1, str3);
     } else if(str3[0] != 0) {
       tmpFlag = true;
-      ok = (SelectorGetTmp(G, str3, s1) >= 0);
+      ok = (SelectorGetTmp2(G, str3, s1) >= 0);
     }
     if(ok)
       ok = ExecutiveSetSetting(G, index, value, s1, state, quiet, updates);
@@ -6655,29 +6682,6 @@ static PyObject *CmdGetBond(PyObject * self, PyObject * args)
   return APIAutoNone(result);
 }
 
-static PyObject *CmdGet(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  char *sname;
-  PyObject *result = Py_None;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Os", &self, &sname);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    float f;
-    APIEnterBlocked(G);
-    f = SettingGetNamed(G, sname);
-    APIExitBlocked(G);
-    result = Py_BuildValue("f", f);
-  }
-  return APIAutoNone(result);
-}
-
 static PyObject *CmdDelete(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6741,7 +6745,7 @@ static PyObject *CmdShowHide(PyObject * self, PyObject * args)
     if(sname[0] == '@') {
       ExecutiveSetAllVisib(G, state);
     } else {
-      ok = (SelectorGetTmp(G, sname, s1) >= 0);
+      ok = (SelectorGetTmp2(G, sname, s1) >= 0);
       ExecutiveSetRepVisib(G, s1, rep, state);
       SelectorFreeTmp(G, s1);
     }
@@ -6765,7 +6769,7 @@ static PyObject *CmdOnOffBySele(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {        /* TODO STATUS */
-    ok = (SelectorGetTmp(G, sname, s1) >= 0);
+    ok = (SelectorGetTmp2(G, sname, s1) >= 0);
     if(ok)
       ok = ExecutiveSetOnOffBySele(G, s1, onoff);
     SelectorFreeTmp(G, s1);
@@ -6800,7 +6804,6 @@ static PyObject *CmdToggle(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *sname;
   int rep;
-  OrthoLineType s1;
   int ok = false;
   ok = PyArg_ParseTuple(args, "Osi", &self, &sname, &rep);
   if(ok) {
@@ -6810,14 +6813,7 @@ static PyObject *CmdToggle(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    if(sname[0] == '@') {
-      /* TODO */
-    } else {
-      ok = (SelectorGetTmp(G, sname, s1) >= 0);
-      if(ok)
-        ok = ExecutiveToggleRepVisib(G, s1, rep);
-      SelectorFreeTmp(G, s1);
-    }
+    ok = ExecutiveToggleRepVisib(G, sname, rep);
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -7395,7 +7391,7 @@ static PyObject *CmdOrigin(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     if(str1[0])
-      ok = (SelectorGetTmp(G, str1, s1) >= 0);
+      ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     else
       s1[0] = 0;                /* no selection */
     ok = ExecutiveOrigin(G, s1, 1, obj, v, state);      /* TODO STATUS */
@@ -7520,7 +7516,7 @@ static PyObject *CmdCenter(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     if(ok)
       ok = ExecutiveCenter(G, s1, state, origin, animate, NULL, quiet);
     SelectorFreeTmp(G, s1);
@@ -7575,7 +7571,7 @@ static PyObject *CmdZoom(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     if(ok)
       ok = ExecutiveWindowZoom(G, s1, buffer, state, inclusive, animate, quiet);
     SelectorFreeTmp(G, s1);
@@ -7958,7 +7954,7 @@ static PyObject *CmdDrag(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str0, s0) >= 0);
+    ok = (SelectorGetTmp2(G, str0, s0) >= 0);
     if(ok) {
       ok = ExecutiveSetDrag(G, s0, quiet,mode);
       SelectorFreeTmp(G, s0);
@@ -7984,7 +7980,7 @@ static PyObject *CmdRename(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
+    ok = (SelectorGetTmp2(G, str1, s1) >= 0);
     ExecutiveRenameObjectAtoms(G, s1, int1, int2);      /* TODO STATUS */
     SelectorFreeTmp(G, s1);
     APIExit(G);
@@ -8299,7 +8295,6 @@ ok_except1:
 
 static PyMethodDef Cmd_methods[] = {
   {"_get_c_threading_api", CmdGetCThreadingAPI, METH_VARARGS},
-  {"_set_scene_names", CmdSetSceneNames, METH_VARARGS},
   {"_del", Cmd_Del, METH_VARARGS},
   {"_get_global_C_object", Cmd_GetGlobalCObject, METH_VARARGS},
   {"_new", Cmd_New, METH_VARARGS},
@@ -8373,7 +8368,6 @@ static PyMethodDef Cmd_methods[] = {
   {"dss", CmdAssignSS, METH_VARARGS},
   {"full_screen", CmdFullScreen, METH_VARARGS},
   {"fuse", CmdFuse, METH_VARARGS},
-  {"get", CmdGet, METH_VARARGS},
   {"get_angle", CmdGetAngle, METH_VARARGS},
   {"get_area", CmdGetArea, METH_VARARGS},
   {"get_atom_coords", CmdGetAtomCoords, METH_VARARGS},
@@ -8415,11 +8409,11 @@ static PyMethodDef Cmd_methods[] = {
   {"get_raw_alignment", CmdGetRawAlignment, METH_VARARGS},
   {"get_seq_align_str", CmdGetSeqAlignStr, METH_VARARGS},
   {"get_session", CmdGetSession, METH_VARARGS},
-  {"get_setting", CmdGet, METH_VARARGS},        /* deprecated */
   {"get_setting_of_type", CmdGetSettingOfType, METH_VARARGS},
   {"get_setting_tuple", CmdGetSettingTuple, METH_VARARGS},
   {"get_setting_text", CmdGetSettingText, METH_VARARGS},
   {"get_setting_updates", CmdGetSettingUpdates, METH_VARARGS},
+  {"get_setting_indices", CmdGetSettingIndices, METH_VARARGS},
   {"get_object_list", CmdGetObjectList, METH_VARARGS},
   {"get_symmetry", CmdGetSymmetry, METH_VARARGS},
   {"get_state", CmdGetState, METH_VARARGS},
@@ -8526,7 +8520,9 @@ static PyMethodDef Cmd_methods[] = {
   {"set", CmdSet, METH_VARARGS},
   {"set_bond", CmdSetBond, METH_VARARGS},
   {"get_bond", CmdGetBond, METH_VARARGS},
-  {"legacy_set", CmdLegacySet, METH_VARARGS},
+  {"scene", CmdScene, METH_VARARGS},
+  {"scene_order", CmdSceneOrder, METH_VARARGS},
+  {"get_scene_order", CmdGetSceneOrder, METH_VARARGS},
   {"sculpt_deactivate", CmdSculptDeactivate, METH_VARARGS},
   {"sculpt_activate", CmdSculptActivate, METH_VARARGS},
   {"sculpt_iterate", CmdSculptIterate, METH_VARARGS},

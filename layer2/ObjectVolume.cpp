@@ -501,7 +501,7 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
       }
     }
 
-    if(I->Obj.RepVis[cRepVolume] && vs->ResurfaceFlag) {
+    if((I->Obj.visRep & cRepVolumeBit) && vs->ResurfaceFlag) {
       Isofield *field = NULL;
       vs->ResurfaceFlag = false;
       if(vs->Field) {
@@ -785,7 +785,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     SceneResetNormal(I->Obj.G, false);
 
     // render bounding box
-    if(I->Obj.RepVis[cRepExtent]) {
+    if((I->Obj.visRep & cRepExtentBit)) {
       if(!info->line_lighting)
         glDisable(GL_LIGHTING);
       ObjectUseColor(&I->Obj);
@@ -874,7 +874,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     }
 
     // render volume
-    if(I->Obj.RepVis[cRepVolume]) {
+    if((I->Obj.visRep & cRepVolumeBit)) {
       int i, j;
 
       glDisable(GL_LIGHTING);

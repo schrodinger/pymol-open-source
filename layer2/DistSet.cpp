@@ -367,43 +367,36 @@ int DistSetGetExtent(DistSet * I, float *mn, float *mx)
 
 
 /*========================================================================*/
+/*
+ * Invalidate reps
+ *
+ * type: rep enum, e.g. cRepDash
+ * level: e.g. cRepInvColor
+ */
 void DistSet::invalidateRep(int type, int level)
 {
-  DistSet * I = this;
-  int a;
-  PRINTFD(I->State.G, FB_DistSet)
-    " DistSetInvalidateRep: entered.\n" ENDFD;
+  int a = 0, a_stop = NRep;
+  bool changed = false;
+
   /* if representation type is specified, adjust it */
   if(type >= 0) {
-    if(type < I->NRep) {
-      if(I->Rep[type]) {
-        SceneChanged(I->State.G);
-        I->Rep[type]->fFree(I->Rep[type]);
-        I->Rep[type] = NULL;
-      }
-    }
-  } else {
-    /* reset all representation types */
-    for(a = 0; a < I->NRep; a++) {
-      if(I->Rep[a]) {
-        SceneChanged(I->State.G);
-        switch (level) {
-        case cRepInvColor:
-          if(I->Rep[a]->fRecolor) {
-            I->Rep[a]->fInvalidate(I->Rep[a], (struct CoordSet *) I, level);
-          } else {
-            I->Rep[a]->fFree(I->Rep[a]);
-            I->Rep[a] = NULL;
-          }
-          break;
-        default:
-          I->Rep[a]->fFree(I->Rep[a]);
-          I->Rep[a] = NULL;
-          break;
-        }
-      }
+    if(type >= NRep)
+      return;
+
+    a = type;
+    a_stop = a + 1;
+  }
+
+  for(; a < a_stop; a++) {
+    if(Rep[a]) {
+      changed = true;
+      Rep[a]->fFree(Rep[a]);
+      Rep[a] = NULL;
     }
   }
+
+  if (changed)
+    SceneChanged(State.G);
 }
 
 
@@ -457,7 +450,7 @@ void DistSet::render(RenderInfo * info)
   ::Rep *r;
   for(a = 0; a < I->NRep; a++)
   {
-    if(!I->Obj->Obj.RepVis[a])
+    if(!GET_BIT(I->Obj->Obj.visRep, a))
       continue;
     if(!I->Rep[a]) {
       switch(a) {

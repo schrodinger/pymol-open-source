@@ -168,7 +168,7 @@ void *VLASetSize(void *ptr, unsigned int newSize);
 void *VLASetSizeForSure(void *ptr, unsigned int newSize);
 
 unsigned int VLAGetSize(void *ptr);
-void *VLANewCopy(void *ptr);
+void *VLANewCopy(const void *ptr);
 void MemoryZero(char *p, char *q);
 
 #ifndef _MemoryDebug_ON
@@ -243,5 +243,13 @@ extern "C" {
 
 #endif
 #endif
+
+/*
+ * Templated version of the `VLACopy` macro
+ */
+template <typename T>
+T * VLACopy2(const T * vla) {
+  return VLACopy((void*)vla, T);
+}
 
 #endif

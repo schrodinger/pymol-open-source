@@ -88,7 +88,6 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                  Multipick * smp, int oversize_width, int oversize_height,
                  int click_side, int force_copy, int just_background);
 void SceneSetFrame(PyMOLGlobals * G, int mode, int frame);
-int SceneSetNames(PyMOLGlobals * G, PyObject * list);
 int SceneGetFrame(PyMOLGlobals * G);
 int SceneGetState(PyMOLGlobals * G);
 int SceneGetButtonMargin(PyMOLGlobals * G);
@@ -137,7 +136,6 @@ void SceneResetMatrix(PyMOLGlobals * G);
 
 void SceneRestartFrameTimer(PyMOLGlobals * G);
 
-void ScenePerspective(PyMOLGlobals * G, int flag);
 void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal);
 
 void SceneRotate(PyMOLGlobals * G, float angle, float x, float y, float z);
@@ -238,6 +236,7 @@ void SceneSetupGLPicking(PyMOLGlobals * G);
 int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG);
 
 int SceneIsGridModeActive(PyMOLGlobals * G);
+void SceneGetGridModeSize(PyMOLGlobals * G, int *width, int *height);
 
 int SceneGetCopyType(PyMOLGlobals * G);
 

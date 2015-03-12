@@ -265,7 +265,7 @@ static int ControlDrag(Block * block, int x, int y, int mod)
         width = OrthoGetWidth(G) + delta;
         I->LastPos = x;
         I->SaveWidth = 0;
-        SettingSet(G, cSetting_internal_gui_width, (float) gui_width);
+        SettingSetGlobal_i(G, cSetting_internal_gui_width, gui_width);
         OrthoReshape(G, -1, -1, false);
       }
     } else {
@@ -301,7 +301,7 @@ static int ControlRelease(Block * block, int button, int x, int y, int mod)
     case 2:
       MoviePlay(G, cMovieStop);
       if(SettingGetGlobal_b(G, cSetting_sculpting))
-        SettingSet(G, cSetting_sculpting, 0);
+        SettingSetGlobal_b(G, cSetting_sculpting, 0);
       if(SettingGetGlobal_b(G, cSetting_rock))
         SettingSetGlobal_b(G, cSetting_rock, false);
       ExecutiveDrawNow(G);
@@ -453,12 +453,12 @@ static int ControlClick(Block * block, int button, int x, int y, int mod)
       double now = UtilGetSeconds(block->G);
       if((now - I->LastClickTime) < 0.35) {
         if(I->SaveWidth) {
-          SettingSet(G, cSetting_internal_gui_width, (float) I->SaveWidth);
+          SettingSetGlobal_i(G, cSetting_internal_gui_width, I->SaveWidth);
           OrthoReshape(G, -1, -1, false);
           I->SaveWidth = 0;
         } else {
           I->SaveWidth = SettingGetGlobal_i(G, cSetting_internal_gui_width);
-          SettingSet(G, cSetting_internal_gui_width, (float) cControlMinWidth);
+          SettingSetGlobal_i(G, cSetting_internal_gui_width, cControlMinWidth);
           OrthoReshape(G, -1, -1, false);
         }
         I->SkipRelease = true;
