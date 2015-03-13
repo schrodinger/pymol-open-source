@@ -58,7 +58,7 @@ struct _CButMode {
 /*========================================================================*/
 Block *ButModeGetBlock(PyMOLGlobals * G)
 {
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
   {
     return (I->Block);
   }
@@ -76,7 +76,7 @@ int ButModeGetHeight(PyMOLGlobals * G)
 /*========================================================================*/
 int ButModeGet(PyMOLGlobals * G, int button)
 {
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
   if((button >= 0) && (button < I->NBut)) {
     return I->Mode[button];
   }
@@ -85,7 +85,7 @@ int ButModeGet(PyMOLGlobals * G, int button)
 
 void ButModeSet(PyMOLGlobals * G, int button, int action)
 {
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
   if((button >= 0) && (button < I->NBut) && (action >= 0) && (action < I->NCode)) {
     I->Mode[button] = action;
     OrthoDirty(G);
@@ -96,7 +96,7 @@ void ButModeSet(PyMOLGlobals * G, int button, int action)
 /*========================================================================*/
 void ButModeSetRate(PyMOLGlobals * G, float interval)
 {
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
 
   if(interval >= 0.001F) {      /* sub-millisecond, defer... */
     if(I->DeferCnt) {
@@ -125,7 +125,7 @@ void ButModeSetRate(PyMOLGlobals * G, float interval)
 /*========================================================================*/
 void ButModeResetRate(PyMOLGlobals * G)
 {
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
   I->Samples = 0.0;
   I->Rate = 0.0;
   I->RateShown = 0;
@@ -136,7 +136,7 @@ void ButModeResetRate(PyMOLGlobals * G)
 /*========================================================================*/
 void ButModeFree(PyMOLGlobals * G)
 {
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
   OrthoFreeBlock(G, I->Block);
   FreeP(G->ButMode);
 }
@@ -196,7 +196,7 @@ short ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG);
 static void ButModeDraw(Block * block ORTHOCGOARG)
 {
   PyMOLGlobals *G = block->G;
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
   int x, y, a;
   int mode;
   float *textColor = I->Block->TextColor;
@@ -407,7 +407,7 @@ short ButModeDrawFast(Block * block ORTHOCGOARG){
 short ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG)
 {
   PyMOLGlobals *G = block->G;
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
   int x, y;
   float *textColor = I->Block->TextColor;
   float *textColor2 = I->TextColor2;
@@ -421,28 +421,27 @@ short ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG)
   
   TextSetColor(G, I->Block->TextColor);
   y -= cButModeLineHeight;
-  {
-    int buffer;
-#ifndef _PYMOL_GL_DRAWARRAYS
-    /* TODO : Why do we only do this for the back right buffer,
-       for performance? */
-    glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
-    if(buffer != GL_BACK_RIGHT) {
+#ifndef PURE_OPENGL_ES_2
+    {
+        int buffer;
+        /* TODO : Why do we only do this for the back right buffer,
+         for performance? */
+        glGetIntegerv(GL_DRAW_BUFFER, (GLint *) & buffer);
+        if(buffer != GL_BACK_RIGHT) {
 #else
-      (void) buffer;
+    {
+        {
 #endif
-      if(I->Delay <= 0.0F) {
-	if(I->Samples > 0.0F)
-	  I->RateShown = (I->Rate / I->Samples);
-	else
-	  I->RateShown = 0.0F;
-	I->Delay = 0.2F;
-      }
-#ifndef _PYMOL_GL_DRAWARRAYS
+            if(I->Delay <= 0.0F) {
+                if(I->Samples > 0.0F)
+                    I->RateShown = (I->Rate / I->Samples);
+                else
+                    I->RateShown = 0.0F;
+                I->Delay = 0.2F;
+            }
+        }
     }
-#endif
-  }
-  
+
   {
     int has_movie = false;
     int frame_rate = SettingGetGlobal_b(G, cSetting_show_frame_rate);
@@ -482,7 +481,7 @@ short ButModeDrawFastImpl(Block * block, short definitely ORTHOCGOARG)
 /*========================================================================*/
 int ButModeInit(PyMOLGlobals * G)
 {
-  register CButMode *I = NULL;
+  CButMode *I = NULL;
   if((I = (G->ButMode = Calloc(CButMode, 1)))) {
 
     int a;
@@ -611,7 +610,7 @@ int ButModeCheckPossibleSingleClick(PyMOLGlobals * G, int button, int mod)
 int ButModeTranslate(PyMOLGlobals * G, int button, int mod)
 {
   int mode = cButModeNothing;
-  register CButMode *I = G->ButMode;
+  CButMode *I = G->ButMode;
   switch (button) {
   case P_GLUT_LEFT_BUTTON:
     mode = 0;

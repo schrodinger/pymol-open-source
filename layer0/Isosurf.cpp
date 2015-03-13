@@ -439,7 +439,7 @@ void IsosurfFieldFree(PyMOLGlobals * G, Isofield * field)
 /*===========================================================================*/
 static void IsosurfCode(CIsosurf * II, char *bits1, char *bits2)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   int c;
   int b;
   int sum1, sum2;
@@ -481,7 +481,7 @@ static void IsosurfCode(CIsosurf * II, char *bits1, char *bits2)
 static CIsosurf *IsosurfNew(PyMOLGlobals * G)
 {
   int c;
-  register CIsosurf *I = Calloc(CIsosurf, 1);
+  CIsosurf *I = Calloc(CIsosurf, 1);
   I->G = G;
   I->VertexCodes = NULL;
   I->ActiveEdges = NULL;
@@ -881,7 +881,7 @@ int IsosurfVolume(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
                   float **vert, int *range, int mode, int skip, float alt_level)
 {
   int ok = true;
-  register CIsosurf *I;
+  CIsosurf *I;
   if(PIsGlutThread()) {
     I = G->Isosurf;
   } else {
@@ -1014,7 +1014,7 @@ int IsosurfVolume(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
 /*===========================================================================*/
 static int IsosurfAlloc(PyMOLGlobals * G, CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
 
   int ok = true;
   int dim4[4];
@@ -1043,7 +1043,7 @@ static int IsosurfAlloc(PyMOLGlobals * G, CIsosurf * II)
 /*===========================================================================*/
 static void IsosurfPurge(CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   if(I->VertexCodes) {
     FieldFree(I->VertexCodes);
     I->VertexCodes = NULL;
@@ -1062,7 +1062,7 @@ static void IsosurfPurge(CIsosurf * II)
 /*===========================================================================*/
 static int IsosurfCurrent(CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   int ok = true;
   if(IsosurfCodeVertices(I)) {
     if(ok)
@@ -1079,7 +1079,7 @@ static int IsosurfCurrent(CIsosurf * II)
 /*===========================================================================*/
 static int IsosurfPoints(CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   int ok = true;
   if(IsosurfCodeVertices(I)) {
     if(ok)
@@ -1097,7 +1097,7 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
                             CIsosurf * II, Isofield * field,
                             int *range, float min_level, float max_level)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   int ok = true;
 
   /* use local copies for performance reasons */
@@ -1222,7 +1222,7 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
           for(a = 0; a < range_size; a++) {
             int *p = order + 3 * (int) (range_size * OVRandom_Get_float64_exc1(my_rand));
             int *q = order + 3 * (int) (range_size * OVRandom_Get_float64_exc1(my_rand));
-            register int t0 = p[0], t1 = p[1], t2 = p[2];
+            int t0 = p[0], t1 = p[1], t2 = p[2];
             p[0] = q[0];
             p[1] = q[1];
             p[2] = q[2];
@@ -1465,16 +1465,16 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
 
               int *ac = active_cell;
               int b;
-              register int cutoff_sq = spacing * spacing;
+              int cutoff_sq = spacing * spacing;
               for(b = 0; b < n_active_cell; b++) {
-                register int ii = ac[0], jj = ac[1], kk = ac[2];
+                int ii = ac[0], jj = ac[1], kk = ac[2];
                 int i0 = ii - spacing;
                 int j0 = jj - spacing;
                 int k0 = kk - spacing;
 
-                register int i1 = ii + spacing + 1;
-                register int j1 = jj + spacing + 1;
-                register int k1 = kk + spacing + 1;
+                int i1 = ii + spacing + 1;
+                int j1 = jj + spacing + 1;
+                int k1 = kk + spacing + 1;
 
                 if(i0 < range[0])
                   i0 = range[0];
@@ -1490,7 +1490,7 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
                   k1 = range[5] - 1;
 
                 {
-                  register int i, j, k;
+                  int i, j, k;
                   int *flag1 = flag + (((i0 - range[0]) * flag_stride[0]) +
                                        ((j0 - range[1]) * flag_stride[1]) +
                                        ((k0 - range[2]) * flag_stride[2]));
@@ -1503,14 +1503,14 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
                     kk_sq = kk_sq * kk_sq;
 
                     for(j = j0; j < j1; j++) {
-                      register int *flag3 = flag2;
-                      register int jj_sq = (jj - j);
+                      int *flag3 = flag2;
+                      int jj_sq = (jj - j);
                       jj_sq = (jj_sq * jj_sq) + kk_sq;
 
                       if(!(jj_sq > cutoff_sq)) {
                         for(i = i0; i < i1; i++) {
                           if(!*flag3) {
-                            register int tot_sq = (ii - i);
+                            int tot_sq = (ii - i);
                             tot_sq = (tot_sq * tot_sq) + jj_sq;
                             if(!(tot_sq > cutoff_sq)) {
                               *flag3 = true;
@@ -1552,7 +1552,7 @@ static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
 /*===========================================================================*/
 static int IsosurfDrawPoints(CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   float *a, *b;
   int i, j, k;
   int ok = true;
@@ -1707,7 +1707,7 @@ static int IsosurfDrawPoints(CIsosurf * II)
 /*===========================================================================*/
 static int IsosurfDrawLines(CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   int c, i, j, k;
   float *a, *b;
   int ok = true;
@@ -1812,7 +1812,7 @@ static int IsosurfDrawLines(CIsosurf * II)
 /*===========================================================================*/
 static int IsosurfFindLines(CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   int i, j, k, ip1, jp1, kp1;
   int ok = true;
   int index, cod;
@@ -2041,7 +2041,7 @@ static int IsosurfFindLines(CIsosurf * II)
 /*===========================================================================*/
 static int IsosurfFindActiveEdges(CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   int i, j, k;
   int ok = true;
 #ifdef Trace
@@ -2168,7 +2168,7 @@ static int IsosurfFindActiveEdges(CIsosurf * II)
 /*===========================================================================*/
 static int IsosurfCodeVertices(CIsosurf * II)
 {
-  register CIsosurf *I = II;
+  CIsosurf *I = II;
   int i, j, k;
   int VCount = 0;
   int ok = true;

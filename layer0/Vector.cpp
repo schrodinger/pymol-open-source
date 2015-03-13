@@ -844,9 +844,9 @@ void transform33Tf3f(const float *m1, const float *m2, float *m3)
  * m3 = A x m2 */
 void transform44f3f(const float *m1, const float *m2, float *m3)
 {
-  register float m2r0 = m2[0];
-  register float m2r1 = m2[1];
-  register float m2r2 = m2[2];
+  float m2r0 = m2[0];
+  float m2r1 = m2[1];
+  float m2r2 = m2[2];
   m3[0] = m1[0] * m2r0 + m1[1] * m2r1 + m1[2] * m2r2 + m1[3];
   m3[1] = m1[4] * m2r0 + m1[5] * m2r1 + m1[6] * m2r2 + m1[7];
   m3[2] = m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2 + m1[11];
@@ -854,9 +854,9 @@ void transform44f3f(const float *m1, const float *m2, float *m3)
 /* Multi the upper left 3x3 of a 4x4 by a 3x1 vector; so effectively, [3x3]*[3x1] = [3x1] */
 void transform44d3f(const double *m1, const float *m2, float *m3)
 {
-  register double m2r0 = m2[0];
-  register double m2r1 = m2[1];
-  register double m2r2 = m2[2];
+  double m2r0 = m2[0];
+  double m2r1 = m2[1];
+  double m2r2 = m2[2];
   m3[0] = (float) (m1[0] * m2r0 + m1[1] * m2r1 + m1[2] * m2r2 + m1[3]);
   m3[1] = (float) (m1[4] * m2r0 + m1[5] * m2r1 + m1[6] * m2r2 + m1[7]);
   m3[2] = (float) (m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2 + m1[11]);
@@ -864,9 +864,9 @@ void transform44d3f(const double *m1, const float *m2, float *m3)
 
 void transform44d3d(const double *m1, const double *m2, double *m3)
 {
-  register double m2r0 = m2[0];
-  register double m2r1 = m2[1];
-  register double m2r2 = m2[2];
+  double m2r0 = m2[0];
+  double m2r1 = m2[1];
+  double m2r2 = m2[2];
   m3[0] = (float) (m1[0] * m2r0 + m1[1] * m2r1 + m1[2] * m2r2 + m1[3]);
   m3[1] = (float) (m1[4] * m2r0 + m1[5] * m2r1 + m1[6] * m2r2 + m1[7]);
   m3[2] = (float) (m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2 + m1[11]);
@@ -874,9 +874,9 @@ void transform44d3d(const double *m1, const double *m2, double *m3)
 
 void transform44d3fas33d3f(const double *m1, const float *m2, float *m3)
 {
-  register double m2r0 = m2[0];
-  register double m2r1 = m2[1];
-  register double m2r2 = m2[2];
+  double m2r0 = m2[0];
+  double m2r1 = m2[1];
+  double m2r2 = m2[2];
   m3[0] = (float) (m1[0] * m2r0 + m1[1] * m2r1 + m1[2] * m2r2);
   m3[1] = (float) (m1[4] * m2r0 + m1[5] * m2r1 + m1[6] * m2r2);
   m3[2] = (float) (m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2);
@@ -885,9 +885,9 @@ void transform44d3fas33d3f(const double *m1, const float *m2, float *m3)
 // same as MatrixInvTransformC44fAs33f3f
 void transform44f3fas33f3f(const float *m1, const float *m2, float *m3)
 {
-  register float m2r0 = m2[0];
-  register float m2r1 = m2[1];
-  register float m2r2 = m2[2];
+  float m2r0 = m2[0];
+  float m2r1 = m2[1];
+  float m2r2 = m2[2];
   m3[0] = (m1[0] * m2r0 + m1[1] * m2r1 + m1[2] * m2r2);
   m3[1] = (m1[4] * m2r0 + m1[5] * m2r1 + m1[6] * m2r2);
   m3[2] = (m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2);
@@ -895,9 +895,9 @@ void transform44f3fas33f3f(const float *m1, const float *m2, float *m3)
 
 void inverse_transformC44f3f(const float *m1, const float *m2, float *m3)
 {
-  register float m2r0 = m2[0] - m1[12];
-  register float m2r1 = m2[1] - m1[13];
-  register float m2r2 = m2[2] - m1[14];
+  float m2r0 = m2[0] - m1[12];
+  float m2r1 = m2[1] - m1[13];
+  float m2r2 = m2[2] - m1[14];
   m3[0] = (float) (m1[0] * m2r0 + m1[1] * m2r1 + m1[2] * m2r2);
   m3[1] = (float) (m1[4] * m2r0 + m1[5] * m2r1 + m1[6] * m2r2);
   m3[2] = (float) (m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2);
@@ -905,9 +905,9 @@ void inverse_transformC44f3f(const float *m1, const float *m2, float *m3)
 
 void inverse_transform44f3f(const float *m1, const float *m2, float *m3)
 {
-  register float m2r0 = m2[0] - m1[3];
-  register float m2r1 = m2[1] - m1[7];
-  register float m2r2 = m2[2] - m1[11];
+  float m2r0 = m2[0] - m1[3];
+  float m2r1 = m2[1] - m1[7];
+  float m2r2 = m2[2] - m1[11];
   m3[0] = (float) (m1[0] * m2r0 + m1[4] * m2r1 + m1[8] * m2r2);
   m3[1] = (float) (m1[1] * m2r0 + m1[5] * m2r1 + m1[9] * m2r2);
   m3[2] = (float) (m1[2] * m2r0 + m1[6] * m2r1 + m1[10] * m2r2);
@@ -915,9 +915,9 @@ void inverse_transform44f3f(const float *m1, const float *m2, float *m3)
 
 void inverse_transform44d3f(const double *m1, const float *m2, float *m3)
 {
-  register double m2r0 = m2[0] - m1[3];
-  register double m2r1 = m2[1] - m1[7];
-  register double m2r2 = m2[2] - m1[11];
+  double m2r0 = m2[0] - m1[3];
+  double m2r1 = m2[1] - m1[7];
+  double m2r2 = m2[2] - m1[11];
   m3[0] = (float) (m1[0] * m2r0 + m1[4] * m2r1 + m1[8] * m2r2);
   m3[1] = (float) (m1[1] * m2r0 + m1[5] * m2r1 + m1[9] * m2r2);
   m3[2] = (float) (m1[2] * m2r0 + m1[6] * m2r1 + m1[10] * m2r2);
@@ -925,9 +925,9 @@ void inverse_transform44d3f(const double *m1, const float *m2, float *m3)
 
 void inverse_transform44d3d(const double *m1, const double *m2, double *m3)
 {
-  register double m2r0 = m2[0] - m1[3];
-  register double m2r1 = m2[1] - m1[7];
-  register double m2r2 = m2[2] - m1[11];
+  double m2r0 = m2[0] - m1[3];
+  double m2r1 = m2[1] - m1[7];
+  double m2r2 = m2[2] - m1[11];
   m3[0] = (float) (m1[0] * m2r0 + m1[4] * m2r1 + m1[8] * m2r2);
   m3[1] = (float) (m1[1] * m2r0 + m1[5] * m2r1 + m1[9] * m2r2);
   m3[2] = (float) (m1[2] * m2r0 + m1[6] * m2r1 + m1[10] * m2r2);
@@ -1000,12 +1000,12 @@ void convertTTTfR44d(const float *ttt, double *homo)
   /* takes the PyMOL-specific TTT matrix and 
      makes a homogenous 4x4 txf matrix homo of it */
 
-  register double ttt_3 = (double) ttt[3];
-  register double ttt_7 = (double) ttt[7];
-  register double ttt_11 = (double) ttt[11];
-  register double ttt_12 = (double) ttt[12];
-  register double ttt_13 = (double) ttt[13];
-  register double ttt_14 = (double) ttt[14];
+  double ttt_3 = (double) ttt[3];
+  double ttt_7 = (double) ttt[7];
+  double ttt_11 = (double) ttt[11];
+  double ttt_12 = (double) ttt[12];
+  double ttt_13 = (double) ttt[13];
+  double ttt_14 = (double) ttt[14];
 
   /*  dump44f(ttt,"ttt"); */
 
@@ -1037,12 +1037,12 @@ void convertTTTfR44f(const float *ttt, float *homo)
   /* takes the PyMOL-specific TTT matrix and 
      makes a homogenous 4x4 txf matrix homo of it */
 
-  register float ttt_3 = ttt[3];
-  register float ttt_7 = ttt[7];
-  register float ttt_11 = ttt[11];
-  register float ttt_12 = ttt[12];
-  register float ttt_13 = ttt[13];
-  register float ttt_14 = ttt[14];
+  float ttt_3 = ttt[3];
+  float ttt_7 = ttt[7];
+  float ttt_11 = ttt[11];
+  float ttt_12 = ttt[12];
+  float ttt_13 = ttt[13];
+  float ttt_14 = ttt[14];
 
   homo[0] = ttt[0];
   homo[1] = ttt[1];
@@ -1114,10 +1114,10 @@ void convertR44dTTTf(const double *homo, float *ttt)
 
 void multiply44d44d44d(double *left, double *right, double *product)
 {
-  register double rA = right[0];
-  register double rB = right[4];
-  register double rC = right[8];
-  register double rD = right[12];
+  double rA = right[0];
+  double rB = right[4];
+  double rC = right[8];
+  double rD = right[12];
 
   product[0] = left[0] * rA + left[1] * rB + left[2] * rC + left[3] * rD;
   product[4] = left[4] * rA + left[5] * rB + left[6] * rC + left[7] * rD;
@@ -1157,10 +1157,10 @@ void multiply44d44d44d(double *left, double *right, double *product)
 
 void left_multiply44d44d(double *left, double *right)
 {
-  register double rA = right[0];
-  register double rB = right[4];
-  register double rC = right[8];
-  register double rD = right[12];
+  double rA = right[0];
+  double rB = right[4];
+  double rC = right[8];
+  double rD = right[12];
 
   right[0] = left[0] * rA + left[1] * rB + left[2] * rC + left[3] * rD;
   right[4] = left[4] * rA + left[5] * rB + left[6] * rC + left[7] * rD;
@@ -1200,10 +1200,10 @@ void left_multiply44d44d(double *left, double *right)
 
 void right_multiply44d44d(double *left, double *right)
 {
-  register double cA = left[0];
-  register double cB = left[1];
-  register double cC = left[2];
-  register double cD = left[3];
+  double cA = left[0];
+  double cB = left[1];
+  double cC = left[2];
+  double cD = left[3];
 
   left[0] = cA * right[0] + cB * right[4] + cC * right[8] + cD * right[12];
   left[1] = cA * right[1] + cB * right[5] + cC * right[9] + cD * right[13];
@@ -1244,10 +1244,10 @@ void right_multiply44d44d(double *left, double *right)
 
 void multiply44f44f44f(float *left, float *right, float *product)
 {
-  register float rA = right[0];
-  register float rB = right[4];
-  register float rC = right[8];
-  register float rD = right[12];
+  float rA = right[0];
+  float rB = right[4];
+  float rC = right[8];
+  float rD = right[12];
 
   product[0] = left[0] * rA + left[1] * rB + left[2] * rC + left[3] * rD;
   product[4] = left[4] * rA + left[5] * rB + left[6] * rC + left[7] * rD;
@@ -1287,10 +1287,10 @@ void multiply44f44f44f(float *left, float *right, float *product)
 
 void left_multiply44f44f(float *left, float *right)
 {
-  register float rA = right[0];
-  register float rB = right[4];
-  register float rC = right[8];
-  register float rD = right[12];
+  float rA = right[0];
+  float rB = right[4];
+  float rC = right[8];
+  float rD = right[12];
 
   right[0] = left[0] * rA + left[1] * rB + left[2] * rC + left[3] * rD;
   right[4] = left[4] * rA + left[5] * rB + left[6] * rC + left[7] * rD;
@@ -1330,10 +1330,10 @@ void left_multiply44f44f(float *left, float *right)
 
 void right_multiply44f44f(float *left, float *right)
 {
-  register float cA = left[0];
-  register float cB = left[1];
-  register float cC = left[2];
-  register float cD = left[3];
+  float cA = left[0];
+  float cB = left[1];
+  float cC = left[2];
+  float cD = left[3];
 
   left[0] = cA * right[0] + cB * right[4] + cC * right[8] + cD * right[12];
   left[1] = cA * right[1] + cB * right[5] + cC * right[9] + cD * right[13];
@@ -1865,7 +1865,7 @@ double length3d(double *v1)
 
 double slow_diff3f(const float *v1, const float *v2)
 {
-  register float dx, dy, dz;
+  float dx, dy, dz;
   dx = (v1[0] - v2[0]);
   dy = (v1[1] - v2[1]);
   dz = (v1[2] - v2[2]);
@@ -1874,7 +1874,7 @@ double slow_diff3f(const float *v1, const float *v2)
 
 float slow_diffsq3f(const float *v1, const float *v2)
 {
-  register float dx, dy, dz;
+  float dx, dy, dz;
   dx = (v1[0] - v2[0]);
   dy = (v1[1] - v2[1]);
   dz = (v1[2] - v2[2]);
@@ -1885,7 +1885,7 @@ float slow_diffsq3f(const float *v1, const float *v2)
 
 int slow_within3f(float *v1, float *v2, float dist)
 {
-  register float dx, dy, dz;
+  float dx, dy, dz;
   dx = (v1[0] - v2[0]);
   if(fabs(dx) > dist)
     return (false);
@@ -1900,7 +1900,7 @@ int slow_within3f(float *v1, float *v2, float dist)
 
 int slow_within3fsq(float *v1, float *v2, float dist, float dist2)
 {
-  register float dx, dy, dz;
+  float dx, dy, dz;
   dx = (v1[0] - v2[0]);
   if(fabs(dx) > dist)
     return (false);
@@ -1916,7 +1916,7 @@ int slow_within3fsq(float *v1, float *v2, float dist, float dist2)
 int slow_within3fret(float *v1, float *v2, float cutoff, float cutoff2, float *diff,
                      float *dist)
 {
-  register float dx, dy, dz, dist2;
+  float dx, dy, dz, dist2;
   dx = (float) fabs((diff[0] = v1[0] - v2[0]));
   dy = (float) fabs((diff[1] = v1[1] - v2[1]));
   if(dx > cutoff)
@@ -2006,7 +2006,7 @@ void matrix_inverse_transform33f3f(const Matrix33f m1, const float *v1, float *v
 #if 0
 double matdiffsq(float *v1, oMatrix5f m, float *v2)
 {
-  register double dx, dy, dz;
+  double dx, dy, dz;
   float vx, vy, vz;
 
   dx = v2[0] - m[3][0];
@@ -2028,7 +2028,7 @@ double matdiffsq(float *v1, oMatrix5f m, float *v2)
 
 void transform5f3f(const oMatrix5f m, const float *v1, float *v2)
 {
-  register double dx, dy, dz;
+  double dx, dy, dz;
   double vx, vy, vz;
 
   dx = v1[0] - m[3][0];

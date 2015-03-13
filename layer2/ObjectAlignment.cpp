@@ -56,13 +56,13 @@ static int GroupOrderKnown(ExecutiveObjectOffset * eoo,
                            int cur_start,
                            int new_start, ObjectMolecule * guide, int *action)
 {
-  register int order_known = false;
+  int order_known = false;
   if(guide) {
-    register int c, id;
+    int c, id;
     OVreturn_word offset;
 
-    register int cur_offset = -1;
-    register int new_offset = -1;
+    int cur_offset = -1;
+    int new_offset = -1;
 
     /* find lowest offset within the cur group */
     c = cur_start;
@@ -102,8 +102,8 @@ static int GroupOrderKnown(ExecutiveObjectOffset * eoo,
 static int AlignmentFindTag(PyMOLGlobals * G, AtomInfoType * ai, int sele,
                             int n_more_plus_one)
 {
-  register int result = 0;      /* default -- no tag */
-  register AtomInfoType *ai0 = ai;
+  int result = 0;      /* default -- no tag */
+  AtomInfoType *ai0 = ai;
   while(1) {
     int tag = SelectorIsMember(G, ai0->selEntry, sele);
     if(tag && (ai0->flags & cAtomFlag_guide))   /* use guide atom if present */
@@ -565,7 +565,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
              curVLA[cur_start] && newVLA[new_start]) {
             /* both lists active */
 
-            register int c, id;
+            int c, id;
             int overlapping = false;
 
             OVOneToAny_Reset(active);
@@ -590,7 +590,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
               /* non-overlapping, so we need to figure out which goes first... */
               if(!GroupOrderKnown(eoo, id2eoo, curVLA, newVLA,
                                   cur_start, new_start, guide, &action)) {
-                register int c, id;
+                int c, id;
                 OVreturn_word offset;
                 ObjectMolecule *obj, *last_obj = NULL;
                 c = cur_start;
@@ -624,7 +624,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
           /* take action */
 
           {
-            register int id;
+            int id;
 
             switch (action) {
             case -1:           /* insert new */
@@ -887,7 +887,7 @@ void ObjectAlignmentRecomputeExtent(ObjectAlignment * I)
 /*========================================================================*/
 void ObjectAlignmentUpdate(ObjectAlignment * I)
 {
-  register PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->Obj.G;
   int update_needed = false;
   short use_shader = SettingGetGlobal_b(G, cSetting_alignment_as_cylinders) && 
     SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
@@ -1098,7 +1098,7 @@ static int ObjectAlignmentGetNState(ObjectAlignment * I)
 
 static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
 {
-  register PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
   Picking **pick = info->pick;

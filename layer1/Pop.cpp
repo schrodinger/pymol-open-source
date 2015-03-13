@@ -41,7 +41,7 @@ void PopReshape(Block * I, int width, int height)
 /*========================================================================*/
 Block *PopGetBlock(PyMOLGlobals * G)
 {
-  register CPop *I = G->Pop;
+  CPop *I = G->Pop;
   {
     return (I->Block);
   }
@@ -51,7 +51,7 @@ Block *PopGetBlock(PyMOLGlobals * G)
 /*========================================================================*/
 void PopFree(PyMOLGlobals * G)
 {
-  register CPop *I = G->Pop;
+  CPop *I = G->Pop;
   OrthoFreeBlock(G, I->Block);
   FreeP(G->Pop);
 }
@@ -60,7 +60,7 @@ void PopFree(PyMOLGlobals * G)
 /*========================================================================*/
 int PopInit(PyMOLGlobals * G)
 {
-  register CPop *I = NULL;
+  CPop *I = NULL;
   if((I = (G->Pop = Calloc(CPop, 1)))) {
 
     I->Block = OrthoNewBlock(G, NULL);
@@ -82,7 +82,7 @@ int PopInit(PyMOLGlobals * G)
 /*========================================================================*/
 void PopFitBlock(Block * block)
 {
-  register CPop *I = block->G->Pop;
+  CPop *I = block->G->Pop;
   int delta;
 
   if((block->rect.bottom - cPopMargin) < (I->Block->rect.bottom)) {

@@ -302,7 +302,7 @@ void BondTypeInit2(BondType *bond, int i1, int i2, int order)
 
 int AtomInfoInit(PyMOLGlobals * G)
 {
-  register CAtomInfo *I = NULL;
+  CAtomInfo *I = NULL;
   if((I = (G->AtomInfo = Calloc(CAtomInfo, 1)))) {
     AtomInfoPrimeColors(G);
     I->NextUniqueID = 1;
@@ -1924,7 +1924,7 @@ int AtomInfoGetColor(PyMOLGlobals * G, AtomInfoType * at1)
       n++;
   }
   {
-    register char c1 = n[0], c2 = n[1];
+    char c1 = n[0], c2 = n[1];
     c2 = tolower(c2);
     if(c2 <= 32)
       c2 = 0;
@@ -2541,8 +2541,8 @@ int AtomInfoCompare(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 
 int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 {
-  register int result;
-  register int wc = 0;
+  int result;
+  int wc = 0;
   /* order by segment, chain, residue value, residue id, residue name, priority,
      and lastly by name */
 
@@ -2553,7 +2553,7 @@ int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoT
    */
   {
     /* attempt to optimize the segi comparison for equality */
-    register char *p1, *p2;
+    char *p1, *p2;
     p1 = at1->segi;
     p2 = at2->segi;
     if((p1[0] != p2[0]) ||
@@ -2632,8 +2632,8 @@ int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoT
 
 int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 {
-  register int result;
-  register int wc = 0;
+  int result;
+  int wc = 0;
   /* order by segment, chain, residue value, residue id, residue name, priority,
      and lastly by name */
 
@@ -2644,7 +2644,7 @@ int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType
    */
   {
     /* attempt to optimize the segi comparison for equality */
-    register char *p1, *p2;
+    char *p1, *p2;
     p1 = at1->segi;
     p2 = at2->segi;
     if((p1[0] != p2[0]) ||

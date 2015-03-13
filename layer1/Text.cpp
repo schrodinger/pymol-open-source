@@ -68,7 +68,7 @@ static void TextUpdateUColor(CText * I)
 
 void TextSetPosNColor(PyMOLGlobals * G, float *pos, float *color)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   copy3f(pos, I->Pos);
   copy3f(color, I->Color);
   I->Flat = false;
@@ -87,7 +87,7 @@ void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, char *text
   if((!labpos) || (!labpos->mode))
     TextSetPos(G, pos);
   else {
-    register CText *I = G->Text;
+    CText *I = G->Text;
     switch (labpos->mode) {
     default:
       copy3f(pos, I->Pos);
@@ -99,37 +99,37 @@ void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, char *text
 
 void TextIndent(PyMOLGlobals * G, float x, float y)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   I->Pos[0] -= x;
   I->Pos[1] -= y;
 }
 
 void TextSetPos(PyMOLGlobals * G, float *pos)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   copy3f(pos, I->Pos);
   I->Pos[3] = 1.0F;
 }
 
 void TextSetWorldPos(PyMOLGlobals * G, float *pos)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   copy3f(pos, I->WorldPos);
   I->WorldPos[3] = 1.0F;
 }
 float *TextGetWorldPos(PyMOLGlobals * G){
-  register CText *I = G->Text;
+  CText *I = G->Text;
   return I->WorldPos;
 }
 void TextSetScreenWorldOffset(PyMOLGlobals * G, float *pos)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   I->ScreenWorldOffset[0] = -pos[0];
   I->ScreenWorldOffset[1] = -pos[1];
   I->ScreenWorldOffset[2] = -pos[2];
 }
 float *TextGetScreenWorldOffset(PyMOLGlobals * G){
-  register CText *I = G->Text;
+  CText *I = G->Text;
   return I->ScreenWorldOffset;
 }
 
@@ -158,7 +158,7 @@ void TextDrawCharRepeat(PyMOLGlobals * G, char c, int x, int y, int start, int n
 
 void TextSetPos2i(PyMOLGlobals * G, int x, int y)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   I->Pos[0] = (float) x;
   I->Pos[1] = (float) y;
   I->Pos[2] = 0.0F;
@@ -167,7 +167,7 @@ void TextSetPos2i(PyMOLGlobals * G, int x, int y)
 
 static void TextSetPos3f(PyMOLGlobals * G, float x, float y, float z)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   I->Pos[0] = x;
   I->Pos[1] = y;
   I->Pos[2] = z;
@@ -176,7 +176,7 @@ static void TextSetPos3f(PyMOLGlobals * G, float x, float y, float z)
 
 void TextSetColor(PyMOLGlobals * G, float *color)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   copy3f(color, I->Color);
   I->Color[3] = 1.0F;
   I->Flat = false;
@@ -185,7 +185,7 @@ void TextSetColor(PyMOLGlobals * G, float *color)
 
 void TextSetColor3f(PyMOLGlobals * G, float red, float green, float blue)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   I->Flat = false;
   I->Color[0] = red;
   I->Color[1] = green;
@@ -196,7 +196,7 @@ void TextSetColor3f(PyMOLGlobals * G, float red, float green, float blue)
 
 void TextSetOutlineColor(PyMOLGlobals * G, int color)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   if(color >= 0) {
     float *fcolor = ColorGet(G, color);
     I->OutlineColor[0] = (unsigned char) (_255 * fcolor[0]);
@@ -212,7 +212,7 @@ static const float _inv255 = 1.0F / 255.0F;
 
 void TextSetPickColor(PyMOLGlobals * G, int first_pass, int index)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   if(!first_pass)
     index = (index >> 12);      /* high order bits */
 
@@ -230,20 +230,20 @@ void TextSetPickColor(PyMOLGlobals * G, int first_pass, int index)
 
 float *TextGetPos(PyMOLGlobals * G)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   return I->Pos;
 }
 
 float *TextGetColor(PyMOLGlobals * G)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   return I->Color;
 }
 
 void TextGetColorUChar(PyMOLGlobals * G, unsigned char *red,
                        unsigned char *green, unsigned char *blue, unsigned char *alpha)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   *red = I->UColor[0];
   *green = I->UColor[1];
   *blue = I->UColor[2];
@@ -254,7 +254,7 @@ void TextGetOutlineColor(PyMOLGlobals * G,
                          unsigned char *red,
                          unsigned char *green, unsigned char *blue, unsigned char *alpha)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   *red = I->OutlineColor[0];
   *green = I->OutlineColor[1];
   *blue = I->OutlineColor[2];
@@ -264,7 +264,7 @@ void TextGetOutlineColor(PyMOLGlobals * G,
 char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
                        char *st, float size, float *rpos, CGO *shaderCGO)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   CFont *font;
   FontRenderOpenGLFn *fn;
   if((text_id < 0) || (text_id >= I->NActive))
@@ -289,21 +289,21 @@ char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
 
 void TextDrawStrAt(PyMOLGlobals * G, char *st, int x, int y ORTHOCGOARG)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   TextSetPos3f(G, (float) x, (float) y, 0.0F);
   TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
 }
 
 void TextDrawStr(PyMOLGlobals * G, char *st ORTHOCGOARG)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
 }
 
 void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG)
 {
   char st[2] = { 0, 0 };
-  register CText *I = G->Text;
+  CText *I = G->Text;
   st[0] = ch;
   TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
 }
@@ -311,7 +311,7 @@ void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG)
 char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
                     char *st, float size, float *rpos)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   CFont *font;
   FontRenderRayFn *fn;
 
@@ -337,7 +337,7 @@ char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
 
 int TextInit(PyMOLGlobals * G)
 {
-  register CText *I = NULL;
+  CText *I = NULL;
   if((I = (G->Text = Calloc(CText, 1)))) {
 
     I->NActive = 0;
@@ -564,7 +564,7 @@ int TextInit(PyMOLGlobals * G)
 int TextGetFontID(PyMOLGlobals * G, int src, int code, char *name, int mode, int style)
 {
   /* first, return the font code if it is already active */
-  register CText *I = G->Text;
+  CText *I = G->Text;
   {
     int a;
     ActiveRec *rec = I->Active;
@@ -597,7 +597,7 @@ int TextGetFontID(PyMOLGlobals * G, int src, int code, char *name, int mode, int
 
 void TextFree(PyMOLGlobals * G)
 {
-  register CText *I = G->Text;
+  CText *I = G->Text;
   int a;
   CFont *fp;
   for(a = 0; a < I->NActive; a++) {

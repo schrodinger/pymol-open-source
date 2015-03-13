@@ -31,12 +31,9 @@ Z* -------------------------------------------------------------------
 
 */
 
-#ifdef _PYMOL_CGO_DRAWARRAYS
 #define CGO_read_int(p) (*((int*)((p)++)))
-#else
-#define CGO_read_int(p) (*((int*)(p++)))
-#endif
 #define CGO_get_int(p) (*((int*)(p)))
+#define CGO_get_uint(p) (uint)(*((int*)(p)))
 #define CGO_write_int(p,i) ((*((int*)(p++)))=(i))
 #define CGO_put_int(p,i) ((*((int*)(p)))=(i))
 
@@ -122,7 +119,6 @@ Z* -------------------------------------------------------------------
 #define CGO_RESET_NORMAL_SZ      1
 #define CGO_PICK_COLOR           0x1F
 #define CGO_PICK_COLOR_SZ        2
-#ifdef _PYMOL_CGO_DRAWARRAYS
 /* CGO_DRAW_ARRAYS : operation that calls glDrawArrays with all arrays in memory 
    (i.e., stored in the CGO array). There can be up to 4 arrays (vertex, normal, color, 
    and pick color array, where each are stored using GL_FLOAT array (except for the pick  
@@ -138,8 +134,7 @@ Z* -------------------------------------------------------------------
 */
 #define CGO_DRAW_ARRAYS          0x1C
 #define CGO_DRAW_ARRAYS_SZ       0
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
+#define CGO_DRAW_ARRAYS_HEADER       4
 /* CGO_DRAW_BUFFERS : operation that uses glDrawArrays with VBOs.  This is not currently
    used, since CGO_DRAW_BUFFERS_INDEXED is a bit more flexible where an index can be specified
    for vertex order.  However, this is useful for when all primitives are defined only once 
@@ -187,7 +182,6 @@ Z* -------------------------------------------------------------------
 #define CGO_DRAW_CYLINDER_BUFFERS       0x25
 #define CGO_DRAW_CYLINDER_BUFFERS_SZ    7
 
-#endif
 #define CGO_SHADER_CYLINDER             0x26
 #define CGO_SHADER_CYLINDER_SZ          8
 
@@ -251,7 +245,7 @@ CGO *CGODrawText(CGO * I, int est, float *camera);
 CGO *CGOSimplify(CGO * I, int est);
 
 CGO *CGOCombineBeginEnd(CGO * I, int est);
-#ifdef _PYMOL_CGO_DRAWBUFFERS
+
 void CGOFreeVBOs(CGO *I);
 CGO *CGOOptimizeToVBOIndexedWithColor(CGO * I, int est, float *color);
 CGO *CGOOptimizeToVBOIndexedNoShader(CGO * I, int est);
@@ -260,7 +254,6 @@ CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short, float *
 CGO *CGOOptimizeToVBONotIndexed(CGO * I, int est);
 CGO *CGOOptimizeSpheresToVBONonIndexedImpl(CGO * I, int est, CGO *leftOverCGO);
 CGO *CGOOptimizeSpheresToVBONonIndexed(CGO * I, int est);
-#endif
 
 void CGOReserve(CGO * ptr, int est);
 
@@ -309,12 +302,11 @@ int CGOWriteIndent(CGO * I, char *str, float indent);
 
 GLfloat *CGODrawArrays(CGO *I, GLenum mode, short arrays, int nverts);
 
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 int CGODrawBuffers(CGO *I, GLenum mode, short arrays, int nverts, uint *bufs);
 GLfloat *CGODrawBuffersIndexed(CGO *I, GLenum mode, short arrays, int nindices, int nverts, uint *bufs);
 int CGOBoundingBox(CGO *I, float *min, float *max);
 int CGOAccessibility(CGO * I, float a);
-#endif
+
 int CGODrawTexture(CGO *I, int texture_id, float *worldPos, float *screenMin, float *screenMax, float *textExtent);
 int CGODrawLabel(CGO *I, int texture_id, float *worldPos, float *screenWorldOffset, float *screenMin, float *screenMax, float *textExtent);
 CGO *CGOOptimizeLabels(CGO * I, int est);

@@ -69,7 +69,7 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
   Picking **pick = info->pick;
-  register PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;
   int cc = 0;
@@ -111,54 +111,6 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
       p = I->R.P;
 
       SceneSetupGLPicking(G);
-#ifdef _PYMOL_GL_DRAWARRAYS
-      {
-	int nverts = c * 6, pl, plc = 0;
-	GLubyte *tmp_ptr;
-	ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-	ALLOCATE_ARRAY(GLubyte,colorVals,nverts*4)
-	pl = 0;
-	while(c--) {
-	  i++;
-	  if(!(*pick)[0].src.bond) {
-	    /* pass 1 - low order bits */
-	    colorVals[plc++] = (uchar) ((i & 0xF) << 4);
-	    colorVals[plc++] = (uchar) ((i & 0xF0) | 0x8);
-	    colorVals[plc++] = (uchar) ((i & 0xF00) >> 4);
-	    colorVals[plc++] = (uchar) 255;
-	    VLACheck((*pick), Picking, i);
-	    p++;
-	    (*pick)[i].src = *p;  /* copy object and atom info */
-	    (*pick)[i].context = I->R.context;
-	  } else {
-	    /* pass 2 - high order bits */
-	    j = i >> 12;
-	    colorVals[plc++] = (uchar) ((j & 0xF) << 4);
-	    colorVals[plc++] = (uchar) ((j & 0xF0) | 0x8);
-	    colorVals[plc++] = (uchar) ((j & 0xF00) >> 4);
-	    colorVals[plc++] = (uchar) 255;
-	  }
-	  memcpy(&vertVals[pl], v, 18*sizeof(GLfloat));
-	  v += 18;
-	  pl += 18;
-	  tmp_ptr = &colorVals[plc-4];
-	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
-	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
-	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
-	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
-	  colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = tmp_ptr[3];
-	}
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, vertVals);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorVals);
-	glDrawArrays(GL_LINES, 0, nverts);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-	DEALLOCATE_ARRAY(vertVals)
-	DEALLOCATE_ARRAY(colorVals)
-      }
-#else
       glBegin(GL_LINES);
       while(c--) {
         i++;
@@ -190,7 +142,6 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
         v += 3;
       }
       glEnd();
-#endif
       (*pick)[0].src.index = i;
 
     } else { /* rendering */
@@ -211,13 +162,6 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 	}
       }
 
-#ifdef _PYMOL_GL_CALLLISTS
-        if(use_display_lists && I->R.displayList) {
-          glCallList(I->R.displayList);
-	  return;
-	}
-#endif
-
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
@@ -231,19 +175,6 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 	  return;
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists) {
-	if(!I->R.displayList) {
-	  I->R.displayList = glGenLists(1);
-	  if(I->R.displayList) {
-	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	  }
-	}
-      }
-#else
-      (void) use_display_lists;
-#endif
-
       sp = I->SP;
 
       if (generate_shader_cgo){
@@ -314,28 +245,8 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 	  v += 4;
 	  for(a = 0; a < sp->NStrip; a++) {
 	    cc = sp->StripLen[a];
-#ifdef _PYMOL_GL_DRAWARRAYS
-	    {
-	      int nverts = cc, pl;
-	      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-	      ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-	      pl = 0;
-	      while(cc--) {
-		normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-		v += 3;
-		vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-		v += 3;
-	      }
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_NORMAL_ARRAY);
-	      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-	      glNormalPointer(GL_FLOAT, 0, normVals);
-	      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-	      glDisableClientState(GL_NORMAL_ARRAY);
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	      DEALLOCATE_ARRAY(vertVals)
-	      DEALLOCATE_ARRAY(normVals)
-	    }
+#ifdef PURE_OPENGL_ES_2
+            /* TODO */
 #else
 	    glBegin(GL_TRIANGLE_STRIP);
 	    while(cc--) {
@@ -354,17 +265,12 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 	if (ok && generate_shader_cgo){
 	  CGO *convertcgo = NULL;
 	  ok &= CGOStop(I->shaderCGO);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	  if (ok)
 	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
 	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);    
 	  I->shaderCGO = convertcgo;
 	  convertcgo = NULL;
-#else
-	  (void)convertcgo;
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 	  if (ok){
 	    if (use_sphere_shader){
 	      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, 0);
@@ -379,9 +285,6 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 	    I->shaderCGO->use_shader = true;
 	    convertcgo = NULL;
 	  }
-#else
-	  (void)convertcgo;
-#endif
 	}
 	
 	if (ok) {
@@ -390,12 +293,6 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
 	  return;
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if (use_display_lists && I->R.displayList){
-	glEndList();
-	glCallList(I->R.displayList);      
-      }
-#endif
     }
   }
   if (!ok){

@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #define _H_Vector
 
 #include"os_predef.h"
-#include"os_gl_pre.h"
+#include"os_gl.h"
 #include<math.h>
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
@@ -357,9 +357,9 @@ __inline__ static double inline_sqrt1d(double f)
 
 __inline__ static void inline_normalize3f(float *v1)
 {
-  register double vlen = length3f(v1);
+  double vlen = length3f(v1);
   if(vlen > R_SMALLd_inline) {
-    register float inV = (float) (_1d_inline / vlen);
+    float inV = (float) (_1d_inline / vlen);
     v1[0] *= inV;
     v1[1] *= inV;
     v1[2] *= inV;
@@ -370,7 +370,7 @@ __inline__ static void inline_normalize3f(float *v1)
 
 __inline__ static double inline_diff3f(const float *v1, const float *v2)
 {
-  register float dx, dy, dz;
+  float dx, dy, dz;
   dx = (v1[0] - v2[0]);
   dy = (v1[1] - v2[1]);
   dz = (v1[2] - v2[2]);
@@ -379,7 +379,7 @@ __inline__ static double inline_diff3f(const float *v1, const float *v2)
 
 __inline__ static float inline_diffsq3f(const float *v1, const float *v2)
 {
-  register float dx, dy, dz;
+  float dx, dy, dz;
   dx = (v1[0] - v2[0]);
   dy = (v1[1] - v2[1]);
   dx = dx * dx;
@@ -390,7 +390,7 @@ __inline__ static float inline_diffsq3f(const float *v1, const float *v2)
 
 __inline__ static int inline_within3f(const float *v1, const float *v2, float dist)
 {
-  register float dx, dy, dz, dist2;
+  float dx, dy, dz, dist2;
   dx = (float) fabs(v1[0] - v2[0]);
   dy = (float) fabs(v1[1] - v2[1]);
   if(dx > dist)
@@ -409,7 +409,7 @@ __inline__ static int inline_within3f(const float *v1, const float *v2, float di
 __inline__ static int inline_within3fsq(const float *v1, const float *v2, float dist, float dist2)
 {
   /* manually optimized to take advantage of parallel execution units */
-  register float dx, dy, dz;
+  float dx, dy, dz;
   dx = v1[0] - v2[0];
   dy = v1[1] - v2[1];
   dx = (float) fabs(dx);
@@ -434,7 +434,7 @@ __inline__ static int inline_within3fsq(const float *v1, const float *v2, float 
 __inline__ static int inline_within3fret(const float *v1, const float *v2, float cutoff,
                                          const float cutoff2, float *diff, float *dist)
 {
-  register float dx, dy, dz, dist2;
+  float dx, dy, dz, dist2;
   dx = (float) fabs((diff[0] = v1[0] - v2[0]));
   dy = (float) fabs((diff[1] = v1[1] - v2[1]));
   if(dx > cutoff)
@@ -454,7 +454,7 @@ __inline__ static int inline_within3fret(const float *v1, const float *v2, float
 
 __inline__ static void inline_remove_component3f(const float *v1, const float *unit, float *result)
 {
-  register float dot;
+  float dot;
 
   dot = v1[0] * unit[0] + v1[1] * unit[1] + v1[2] * unit[2];
   result[0] = v1[0] - unit[0] * dot;
@@ -464,7 +464,7 @@ __inline__ static void inline_remove_component3f(const float *v1, const float *u
 
 __inline__ static float inline_project3f(const float *v1, const float *v2, float *proj)
 {
-  register float dot;
+  float dot;
 
   dot = v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
   proj[0] = v2[0] * dot;

@@ -81,10 +81,10 @@ int MapCacheInit(MapCache * M, MapType * I, int group_id, int block_base)
 
 void MapCacheReset(MapCache * M)
 {
-  register int i = M->CacheStart;
-  register int *cachep = M->Cache;
-  register int *clinkp = M->CacheLink;
-  register int i1 = 0, i2 = 0, i3 = 0, i4 = 0, ii;
+  int i = M->CacheStart;
+  int *cachep = M->Cache;
+  int *clinkp = M->CacheLink;
+  int i1 = 0, i2 = 0, i3 = 0, i4 = 0, ii;
   while(i >= 0) {               /* believe it or not, unrolling gives us almost 10%!!! */
     ii = clinkp[i];
     i1 = i;
@@ -123,8 +123,8 @@ void MapCacheFree(MapCache * M, int group_id, int block_base)
 
 int MapInside(MapType * I, float *v, int *a, int *b, int *c)
 {                               /* special version for ray-tracing */
-  register int atmp, btmp, ctmp;
-  register float iDiv = I->recipDiv;
+  int atmp, btmp, ctmp;
+  float iDiv = I->recipDiv;
 
   atmp = (int) ((v[0] - I->Min[0]) * iDiv) + MapBorder;
   btmp = (int) ((v[1] - I->Min[1]) * iDiv) + MapBorder;
@@ -237,7 +237,7 @@ int MapSetupExpressXY(MapType * I, int n_vert, int negative_start)
 {                               /* setup a list of XY neighbors for each square */
   PyMOLGlobals *G = I->G;
   int n, a, b, c, flag;
-  register int d, e, i;
+  int d, e, i;
   unsigned int mapSize;
   int st, dim2;
   int n_alloc = n_vert * 15;    /* emprical est. */
@@ -368,7 +368,7 @@ int MapSetupExpressXYVert(MapType * I, float *vert, int n_vert, int negative_sta
           int flag = false;
           int *hPtr1 = hBase + dim2 * (b - 1) + (c - 1);
 
-          register int d, e, f;
+          int d, e, f;
 
           for(d = a - 1; ok && d <= a + 1; d++) {
             int *hPtr2 = hPtr1;
@@ -376,7 +376,7 @@ int MapSetupExpressXYVert(MapType * I, float *vert, int n_vert, int negative_sta
               int *hPtr3 = hPtr2;
               for(f = c - 1; ok && f <= c + 1; f++) {
                 /*                register int i = *MapFirst(I,d,e,f); */
-                register int i = *hPtr3;
+                int i = *hPtr3;
 
                 if(i > -1) {
                   flag = true;
@@ -443,16 +443,16 @@ int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
   int n_alloc = nVertHint * 15; /* emprical est. */
   int ok = true;
 
-  register int iMin0 = I->iMin[0];
-  register int iMin1 = I->iMin[1];
-  register int iMax0 = I->iMax[0];
-  register int iMax1 = I->iMax[1];
-  register float iDiv = I->recipDiv;
-  register float min0 = I->Min[0] * iDiv;
-  register float min1 = I->Min[1] * iDiv;
-  register float base0, base1;
-  register float perp_factor, premult, *v0;
-  register int *emask, dim1, *link, *ptr1, *ptr2;
+  int iMin0 = I->iMin[0];
+  int iMin1 = I->iMin[1];
+  int iMax0 = I->iMax[0];
+  int iMax1 = I->iMax[1];
+  float iDiv = I->recipDiv;
+  float min0 = I->Min[0] * iDiv;
+  float min1 = I->Min[1] * iDiv;
+  float base0, base1;
+  float perp_factor, premult, *v0;
+  int *emask, dim1, *link, *ptr1, *ptr2;
 
   PRINTFD(G, FB_Map)
     " MapSetupExpress-Debug: entered.\n" ENDFD;
@@ -480,7 +480,7 @@ int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
     for(b = (iMin1 - 1); ok && b <= (iMax1 + 1); b++)
       for(c = (I->iMin[2] - 1); ok && c <= (I->iMax[2] + 1); c++) {
 
-        register int d, e, f;
+        int d, e, f;
 
         /* compute a "shadow" mask for all vertices */
 
@@ -527,13 +527,13 @@ int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
           const int am1 = a - 1, ap1 = a + 1, bm1 = b - 1, bp1 = b + 1, cm1 = c - 1, cp1 =
             c + 1;
           const int dim2 = I->Dim[2];
-          register int flag = false;
-          register int *hPtr1 = I->Head + ((am1) * I->D1D2) + ((bm1) * dim2) + cm1;
+          int flag = false;
+          int *hPtr1 = I->Head + ((am1) * I->D1D2) + ((bm1) * dim2) + cm1;
           st = n;
           for(d = am1; ok && d <= ap1; d++) {
-            register int *hPtr2 = hPtr1;
+            int *hPtr2 = hPtr1;
             for(e = bm1; ok && e <= bp1; e++) {
-              register int *hPtr3 = hPtr2;
+              int *hPtr3 = hPtr2;
               for(f = cm1; ok && f <= cp1; f++) {
                 i = *(hPtr3++);
                 /*                i=*MapFirst(I,d,e,f); */
@@ -581,17 +581,17 @@ int MapSetupExpressPerp(MapType * I, float *vert, float front, int nVertHint,
 
 int MapSetupExpress(MapType * I)
 {                               /* setup a list of neighbors for each square */
-  register PyMOLGlobals *G = I->G;
-  register int n = 0;
-  register int c, d, e, f, i, cm1, cp2, D1D2 = I->D1D2, D2 = I->Dim[2];
-  register int mx2 = I->iMax[2];
-  register int *link = I->Link;
-  register int st, flag;
-  register int *i_ptr3, *i_ptr4, *i_ptr5;
-  register int *e_list = NULL;
+  PyMOLGlobals *G = I->G;
+  int n = 0;
+  int c, d, e, f, i, cm1, cp2, D1D2 = I->D1D2, D2 = I->Dim[2];
+  int mx2 = I->iMax[2];
+  int *link = I->Link;
+  int st, flag;
+  int *i_ptr3, *i_ptr4, *i_ptr5;
+  int *e_list = NULL;
 #ifdef _MemoryCache_ON
-  register int block_offset = I->block_base + cCache_map_elist_offset;
-  register int group_id = I->group_id;
+  int block_offset = I->block_base + cCache_map_elist_offset;
+  int group_id = I->group_id;
 #endif
   int mx0 = I->iMax[0], mx1 = I->iMax[1], a, am1, ap2, *i_ptr1, b, bm1, bp2, *i_ptr2;
   unsigned int mapSize;
@@ -703,7 +703,7 @@ void MapLocus(MapType * I, float *v, int *a, int *b, int *c)
 
 int *MapLocusEStart(MapType * I, float *v)
 {
-  register int a, b, c;
+  int a, b, c;
   float invDiv = I->recipDiv;
   a = (int) (((v[0] - I->Min[0]) * invDiv) + MapBorder);
   b = (int) (((v[1] - I->Min[1]) * invDiv) + MapBorder);

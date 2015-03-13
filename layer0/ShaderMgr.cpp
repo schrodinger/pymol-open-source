@@ -37,14 +37,8 @@ Z* -------------------------------------------------------------------
 
 #include "ShaderText.h"
 
-#if defined(PURE_OPENGL_ES_2)
-#elif defined(OPENGL_ES_2)
 #define DEFAULT_VS_FILENAME "default_es2.vs"
 #define DEFAULT_FS_FILENAME "default_es2.fs"
-#else
-#define DEFAULT_VS_FILENAME "default.vs"
-#define DEFAULT_FS_FILENAME "default.fs"
-#endif
 
 #define DEFAULTSCREEN_VS_FILENAME "defaultscreen.vs"
 #define DEFAULTSCREEN_FS_FILENAME "defaultscreen.fs"
@@ -493,7 +487,6 @@ OVstatus ShaderMgrInit(PyMOLGlobals * G) {
 }
 
 void CShaderPrg_BindAttribLocations(PyMOLGlobals * G, char *name){
-#ifdef OPENGL_ES_2
   CShaderPrg *I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, name);
   if (I){
     glBindAttribLocation(I->id, VERTEX_POS, "a_Vertex");
@@ -504,24 +497,21 @@ void CShaderPrg_BindAttribLocations(PyMOLGlobals * G, char *name){
     WARNING_IF_GLERROR("a_Color");
     CShaderPrg_Link(I);
   }
-#endif
 }
 
 void CShaderPrg_BindLabelAttribLocations(PyMOLGlobals * G){
   CShaderPrg *I;
   WARNING_IF_GLERROR("BindLabelAttribLocations begin");
-#ifdef OPENGL_ES_2
   I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, "label");
   if (I){
     glBindAttribLocation(I->id, 0, "attr_worldpos");
     WARNING_IF_GLERROR("attr_worldpos");
   }
-#endif
 }
 
 void CShaderPrg_BindCylinderAttribLocations(PyMOLGlobals * G){
   CShaderPrg *I;
-#ifdef OPENGL_ES_2
+  WARNING_IF_GLERROR("BindCylinderAttribLocations begin");
   I = CShaderPrg_Get_CylinderShader_NoSet(G);
   if (I){
     glBindAttribLocation(I->id, CYLINDER_ORIGIN, "attr_origin");
@@ -534,7 +524,6 @@ void CShaderPrg_BindCylinderAttribLocations(PyMOLGlobals * G){
     WARNING_IF_GLERROR("attr_color2");
     CShaderPrg_Link(I);	  
   }
-#endif
 }
 void CShaderMgr_Reload_Sphere_Shader(PyMOLGlobals *G){
   CShaderMgr *I = G->ShaderMgr;

@@ -127,18 +127,18 @@ __inline__
 static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float *color,
                                         float *table, float *extreme)
 {
-  register float *i_level = I->Level;
-  register int n_level = I->NLevel;
+  float *i_level = I->Level;
+  int n_level = I->NLevel;
   const float _0 = 0.0F;
   const float _1 = 1.0F;
   int ok = true;
   if(i_level && table) {
-    register int level_is_ge = -1;
-    register int level_is_le = n_level;
-    register int i = 0;
+    int level_is_ge = -1;
+    int level_is_le = n_level;
+    int i = 0;
     i = n_level - 1;
     while(i >= 0) {
-      register float f = i_level[i];
+      float f = i_level[i];
       if(level >= f) {
         level_is_ge = i;
         break;
@@ -147,7 +147,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float
     }
     i = 0;
     while(i < n_level) {
-      register float f = i_level[i];
+      float f = i_level[i];
       if(level <= f) {
         level_is_le = i;
         break;
@@ -156,7 +156,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float
     }
     if(level_is_ge != level_is_le) {
       if(level_is_le == 0) {    /* lower extreme */
-        register float *v;
+        float *v;
         if(extreme) {
           v = extreme;
         } else {
@@ -164,7 +164,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float
         }
         copy3f(v, color);
       } else if(level_is_ge == (n_level - 1)) { /* upper extreme */
-        register float *v;
+        float *v;
         if(extreme) {
           v = extreme + 3;
         } else {
@@ -172,7 +172,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float
         }
         copy3f(v, color);
       } else {
-        register float d, x0, x1;
+        float d, x0, x1;
 
         d = i_level[level_is_ge] - i_level[level_is_le];
         if(fabs(d) > R_SMALL8) {
@@ -183,7 +183,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float
           }
           clamp3f(color);
         } else {
-          register float *v = table + 3 * level_is_ge;
+          float *v = table + 3 * level_is_ge;
           copy3f(v, color);
         }
       }
@@ -216,8 +216,8 @@ static int _ObjectGadgetRampBlend(ObjectGadgetRamp * I, float *color,
 {
   /* this capability needs to be re-thought */
 
-  register float *i_level = I->Level;
-  register int n_level = I->NLevel;
+  float *i_level = I->Level;
+  int n_level = I->NLevel;
   const float _1 = 1.0F;
   float avg[3];
   int ok = true;
@@ -318,20 +318,20 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp * I,
 
   float stack_color[MAX_COLORS * 3];
   float stack_extreme[6];
-  register float *i_level = I->Level;
-  register float *i_color = I->Color;
-  register int *i_special = I->Special;
+  float *i_level = I->Level;
+  float *i_color = I->Color;
+  int *i_special = I->Special;
   if(i_level && i_color && i_special) {
-    register int i = 0;
-    register int n_level = I->NLevel;
-    register float *i_extreme = I->Extreme;
-    register float *extreme = i_extreme;
+    int i = 0;
+    int n_level = I->NLevel;
+    float *i_extreme = I->Extreme;
+    float *extreme = i_extreme;
     /* mix special coloring into the table */
-    register float *src = i_color, *dst = stack_color;
+    float *src = i_color, *dst = stack_color;
     if((n_level + 2) > MAX_COLORS)
       n_level = MAX_COLORS - 2;
     while(i < n_level) {
-      register int index = i_special[i];
+      int index = i_special[i];
       switch (index) {
       case 0:
         *(dst++) = *(src++);
@@ -368,7 +368,7 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp * I,
       src = i_extreme;
       dst = stack_extreme;
       while(i < 2) {
-        register int index = i_special[i + n_level];
+        int index = i_special[i + n_level];
         switch (index) {
         case 0:
           *(dst++) = *(src++);

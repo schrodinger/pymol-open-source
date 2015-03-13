@@ -392,137 +392,6 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
     SceneResetNormal(G, true);
     if(!info->line_lighting)
       glDisable(GL_LIGHTING);
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int nverts = 0;
-      {
-	int a;
-	int nBond = obj->NBond;
-	BondType *bd = obj->Bond;
-	AtomInfoType *ai = obj->AtomInfo;
-	int *atm2idx = cs->AtmToIdx;
-	int discreteFlag = obj->DiscreteFlag;
-	for(a = 0; a < nBond; a++) {
-	  int b1 = bd->index[0];
-	  int b2 = bd->index[1];
-	  AtomInfoType *ai1, *ai2;
-	  bd++;
-	  if((ai1 = ai + b1)->visRep[cRepLine] && (ai2 = ai + b2)->visRep[cRepLine]) {
-	    int a1, a2;
-	    active = true;
-	    if(discreteFlag) {
-	      /* not optimized */
-	      if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-		a1 = obj->DiscreteAtmToIdx[b1];
-		a2 = obj->DiscreteAtmToIdx[b2];
-	      } else {
-		a1 = -1;
-		a2 = -1;
-	      }
-	    } else {
-	      a1 = atm2idx[b1];
-	      a2 = atm2idx[b2];
-	    }
-	    if((a1 >= 0) && (a2 >= 0)) {
-	      int c1 = ai1->color;
-	      int c2 = ai2->color;
-	      if(c1 == c2) {      /* same colors -> one line */
-		nverts += 2;
-	      } else {            /* different colors -> two lines */
-		nverts += 4;
-	      }
-	    }
-	  }
-	}
-      }
-      {
-	ALLOCATE_ARRAY(GLfloat,lineVals,nverts*3)
-	ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-	int pl = 0, plc = 0;
-	int a;
-	int nBond = obj->NBond;
-	BondType *bd = obj->Bond;
-	AtomInfoType *ai = obj->AtomInfo;
-	int *atm2idx = cs->AtmToIdx;
-	int discreteFlag = obj->DiscreteFlag;
-	int last_color = -9;
-	float *coord = cs->Coord;
-	const float _pt5 = 0.5F;
-	for(a = 0; a < nBond; a++) {
-	  int b1 = bd->index[0];
-	  int b2 = bd->index[1];
-	  AtomInfoType *ai1, *ai2;
-	  bd++;
-	  if((ai1 = ai + b1)->visRep[cRepLine] && (ai2 = ai + b2)->visRep[cRepLine]) {
-	    int a1, a2;
-	    active = true;
-	    if(discreteFlag) {
-	      /* not optimized */
-	      if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-		a1 = obj->DiscreteAtmToIdx[b1];
-		a2 = obj->DiscreteAtmToIdx[b2];
-	      } else {
-		a1 = -1;
-		a2 = -1;
-	      }
-	    } else {
-	      a1 = atm2idx[b1];
-	      a2 = atm2idx[b2];
-	    }
-	    if((a1 >= 0) && (a2 >= 0)) {
-	      int c1 = ai1->color;
-	      int c2 = ai2->color;
-	      float *v1 = coord + 3 * a1;
-	      float *v2 = coord + 3 * a2;
-	      float *tmp_ptr;
-	      if(c1 == c2) {      /* same colors -> one line */
-		if(c1 != last_color) {
-		  last_color = c1;
-		}
-		tmp_ptr = ColorGet(G, c1);
-		colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-		lineVals[pl++] = v1[0]; lineVals[pl++] = v1[1]; lineVals[pl++] = v1[2];
-		colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-		lineVals[pl++] = v2[0]; lineVals[pl++] = v2[1]; lineVals[pl++] = v2[2];
-		/* we done */
-	      } else {            /* different colors -> two lines */
-		float avg[3];
-		avg[0] = (v1[0] + v2[0]) * _pt5;
-		avg[1] = (v1[1] + v2[1]) * _pt5;
-		avg[2] = (v1[2] + v2[2]) * _pt5;
-		if(c1 != last_color) {
-		  last_color = c1;
-		}
-		tmp_ptr = ColorGet(G, c1);
-		colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-		lineVals[pl++] = v1[0]; lineVals[pl++] = v1[1]; lineVals[pl++] = v1[2];
-		colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-		lineVals[pl++] = avg[0]; lineVals[pl++] = avg[1]; lineVals[pl++] = avg[2];
-
-		if(c2 != last_color) {
-		  last_color = c2;
-		}
-		tmp_ptr = ColorGet(G, c2);
-		colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-		lineVals[pl++] = avg[0]; lineVals[pl++] = avg[1]; lineVals[pl++] = avg[2];
-		colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-		lineVals[pl++] = v2[0]; lineVals[pl++] = v2[1]; lineVals[pl++] = v2[2];
-	      }
-	    }
-	  }
-	}
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, lineVals);
-	glColorPointer(4, GL_FLOAT, 0, colorVals);
-	glDrawArrays(GL_LINES, 0, nverts);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-	DEALLOCATE_ARRAY(lineVals)
-	DEALLOCATE_ARRAY(colorVals)
-      }
-    }
-#else
     glBegin(GL_LINES);
     {
       int a;
@@ -596,7 +465,6 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
       }
     }
     glEnd();
-#endif
     glEnable(GL_LIGHTING);
     if(!active)
       cs->Active[cRepLine] = false;
@@ -652,7 +520,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
     }
 
   } else if(G->HaveGUI && G->ValidContext) {
-    register int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
+    int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
 
     if(pick) {
 
@@ -662,49 +530,8 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
       c = I->NP;
       p = I->R.P;
 
-#ifdef _PYMOL_GL_DRAWARRAYS
+#ifdef PURE_OPENGL_ES_2
       (void) nvidia_bugs;
-      {
-	int nverts = c * 2, pl, plc = 0;
-	ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-	ALLOCATE_ARRAY(GLubyte,colorVals,nverts*4)
-	pl = 0;
-	while(c--) {
-	  i++;
-	  if(!(*pick)[0].src.bond) {
-	    /* pass 1 - low order bits */
-	    colorVals[plc++] = (uchar) ((i & 0xF) << 4);
-	    colorVals[plc++] = (uchar) ((i & 0xF0) | 0x8);
-	    colorVals[plc++] = (uchar) ((i & 0xF00) >> 4);
-	    colorVals[plc++] = (uchar) 255;
-	    VLACheck((*pick), Picking, i);
-	    p++;
-	    (*pick)[i].src = *p;  /* copy object and atom info */
-	    (*pick)[i].context = I->R.context;
-	  } else {
-	    /* pass 2 - high order bits */
-	    j = i >> 12;
-	    colorVals[plc++] = (uchar) ((j & 0xF) << 4);
-	    colorVals[plc++] = (uchar) ((j & 0xF0) | 0x8);
-	    colorVals[plc++] = (uchar) ((j & 0xF00) >> 4);
-	    colorVals[plc++] = (uchar) 255;
-	  }
-	  colorVals[plc+4] = colorVals[plc++]; colorVals[plc+4] = colorVals[plc++];
-	  colorVals[plc+4] = colorVals[plc++]; colorVals[plc+4] = colorVals[plc++];
-	  vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-	  vertVals[pl++] = v[3]; vertVals[pl++] = v[4]; vertVals[pl++] = v[5];
-	  v += 6;
-	}
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, vertVals);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorVals);
-	glDrawArrays(GL_LINES, 0, nverts);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-	DEALLOCATE_ARRAY(vertVals)
-	DEALLOCATE_ARRAY(colorVals)
-      }
 #else
       glBegin(GL_LINES);
 
@@ -745,7 +572,7 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
     } else { /* else not pick i.e., when rendering */
       short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
       short line_as_cylinders ;
-      register int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
+      int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
       use_shader = SettingGetGlobal_b(G, cSetting_line_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
       use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
@@ -760,13 +587,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = 0;
       }
-
-#ifdef _PYMOL_GL_CALLLISTS
-        if(use_display_lists && I->R.displayList) {
-          glCallList(I->R.displayList);
-	  return;
-	}
-#endif
 
       if (use_shader){
 	if (!I->shaderCGO){
@@ -800,18 +620,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	  return;
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists) {
-	if(!I->R.displayList) {
-	  I->R.displayList = glGenLists(1);
-	  if(I->R.displayList) {
-	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	  }
-	}
-      }
-#else
-      (void) use_display_lists; (void) nvidia_bugs;
-#endif
 
       v = I->V;
       c = I->N;
@@ -903,18 +711,8 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	    }
 	    vw++;
 	  }
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  glColor3fv(v);
-	  v += 3;
-	  {
-	    GLfloat lineVerts[2*3];
-	    memcpy(lineVerts, v, 2*3*sizeof(GLfloat));
-	    v += 6;
-	    glEnableClientState(GL_VERTEX_ARRAY);
-	    glVertexPointer(3, GL_FLOAT, 0, lineVerts);
-	    glDrawArrays(GL_LINES, 0, 2);
-	    glDisableClientState(GL_VERTEX_ARRAY);
-	  }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
 	  glBegin(GL_LINES);
 	  glColor3fv(v);
@@ -941,7 +739,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	  CGO *convertcgo = NULL;
 	  if (ok)
 	    ok &= CGOStop(I->shaderCGO);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	  if (ok){
 	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
 	    CGOFree(I->shaderCGO);    
@@ -949,10 +746,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	    CHECKOK(ok, I->shaderCGO);
 	    convertcgo = NULL;
 	  }
-#else
-	  (void)convertcgo;
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 	  if (ok && I->shaderCGO){
 	    if (line_as_cylinders){
               convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
@@ -963,9 +756,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
       CGOFree(I->shaderCGO);
       I->shaderCGO = convertcgo;
       CHECKOK(ok, I->shaderCGO);
-#else
-	  (void)convertcgo;
-#endif
 	}
 	
 	if (ok){
@@ -993,12 +783,6 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 	  CShaderPrg_Disable(shaderPrg);
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if (use_display_lists && I->R.displayList){
-	glEndList();
-	glCallList(I->R.displayList);
-      }
-#endif
     }
   }
   if (!ok){
@@ -1013,7 +797,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj = cs->Obj;
-  register int a1, a2, b1, b2;
+  int a1, a2, b1, b2;
   int a, c1, c2, s1, s2, ord;
   BondType *b;
   int half_bonds, *other = NULL;
@@ -1191,8 +975,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           a2 = cs->AtmToIdx[b2];
         }
         if((a1 >= 0) && (a2 >= 0)) {
-          register AtomInfoType *ati1 = obj->AtomInfo + b1;
-          register AtomInfoType *ati2 = obj->AtomInfo + b2;
+          AtomInfoType *ati1 = obj->AtomInfo + b1;
+          AtomInfoType *ati2 = obj->AtomInfo + b2;
 
           if((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
             if(((cartoon_side_chain_helper
@@ -1244,8 +1028,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
       }
       if((a1 >= 0) && (a2 >= 0)) {
 
-        register AtomInfoType *ati1 = obj->AtomInfo + b1;
-        register AtomInfoType *ati2 = obj->AtomInfo + b2;
+        AtomInfoType *ati1 = obj->AtomInfo + b1;
+        AtomInfoType *ati2 = obj->AtomInfo + b2;
 
         s1 = GET_BIT(ati1->visRep,cRepLine);
         s2 = GET_BIT(ati2->visRep,cRepLine);
@@ -1337,10 +1121,10 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
                 && GET_BIT(ati1->visRep,cRepRibbon)
                 && GET_BIT(ati2->visRep,cRepRibbon)))) {
 
-            register char *name1 = ati1->name;
-            register int prot1 = ati1->protons;
-            register char *name2 = ati2->name;
-            register int prot2 = ati2->protons;
+            char *name1 = ati1->name;
+            int prot1 = ati1->protons;
+            char *name2 = ati2->name;
+            int prot2 = ati2->protons;
 
             if(prot1 == cAN_C) {
               if((name1[1] == 'A') && (name1[0] == 'C') && (!name1[2])) {       /* CA */

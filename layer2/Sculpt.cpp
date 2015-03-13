@@ -76,7 +76,7 @@ static float ShakerDoDist(float target, float *v0, float *v1, float *d0to1, floa
                           float wt)
 {
   float d[3], push[3];
-  register float len, dev, dev_2, sc, result;
+  float len, dev, dev_2, sc, result;
 
   subtract3f(v0, v1, d);
   len = (float) length3f(d);
@@ -199,7 +199,7 @@ static float ShakerDoDistLimit(float target, float *v0, float *v1, float *d0to1,
                                float *d1to0, float wt)
 {
   float d[3], push[3];
-  register float len, dev, dev_2, sc;
+  float len, dev, dev_2, sc;
 
   subtract3f(v0, v1, d);
   len = (float) length3f(d);
@@ -223,7 +223,7 @@ static float ShakerDoDistMinim(float target, float *v0, float *v1, float *d0to1,
                                float *d1to0, float wt)
 {
   float d[3], push[3];
-  register float len, dev, dev_2, sc;
+  float len, dev, dev_2, sc;
 
   subtract3f(v0, v1, d);
   len = (float) length3f(d);
@@ -305,7 +305,7 @@ static int count_branch(CountCall * CNT, int atom, int limit)
 
 static void add_triangle_limits(ATLCall * ATL, int prev, int cur, float dist, int count)
 {
-  register ATLCall *I = ATL;
+  ATLCall *I = ATL;
   int n0;
   int n1;
   float dist_limit;
@@ -313,7 +313,7 @@ static void add_triangle_limits(ATLCall * ATL, int prev, int cur, float dist, in
 
   n0 = I->neighbor[cur];
   if((count >= I->min) && (count > 1)) {
-    register int add_flag = false;
+    int add_flag = false;
     switch (I->mode) {
     case 1:
       add_flag = 1;             /* all */
@@ -335,18 +335,18 @@ static void add_triangle_limits(ATLCall * ATL, int prev, int cur, float dist, in
       /* first mark and register */
       while((atom1 = I->neighbor[n1]) >= 0) {
         if((!I->ai[atom1].temp1) && (I->atom0 < atom1)) {
-          register int ref = prev;
+          int ref = prev;
           if(count & 0x1) {     /* odd */
             ref = cur;
           }
           if(((!I->discCSet) ||
               ((I->cSet == I->discCSet[ref]) && (I->cSet == I->discCSet[atom1]))) &&
              ((I->mode != 0) || (!I->ai[atom1].isHydrogen()))) {
-            register int ia = I->atm2idx[ref];
-            register int ib = I->atm2idx[atom1];
+            int ia = I->atm2idx[ref];
+            int ib = I->atm2idx[atom1];
             if((ia >= 0) && (ib >= 0)) {
-              register float *va = I->coord + 3 * ia;
-              register float *vb = I->coord + 3 * ib;
+              float *va = I->coord + 3 * ia;
+              float *vb = I->coord + 3 * ib;
               dist_limit = dist + diff3f(va, vb);
               ShakerAddDistCon(I->Shaker, I->atom0, atom1, dist_limit, cShakerDistLimit,
                                1.0F);
@@ -368,11 +368,11 @@ static void add_triangle_limits(ATLCall * ATL, int prev, int cur, float dist, in
         if(!(count & 0x1)) {    /* accumulate distances between even atoms only */
           if((!I->discCSet)
              || ((I->cSet == I->discCSet[prev]) && (I->cSet == I->discCSet[atom1]))) {
-            register int ia = I->atm2idx[prev];
-            register int ib = I->atm2idx[atom1];
+            int ia = I->atm2idx[prev];
+            int ib = I->atm2idx[atom1];
             if((ia >= 0) && (ib >= 0)) {
-              register float *va = I->coord + 3 * ia;
-              register float *vb = I->coord + 3 * ib;
+              float *va = I->coord + 3 * ia;
+              float *vb = I->coord + 3 * ib;
               dist_limit += diff3f(va, vb);
             }
           }
@@ -1420,7 +1420,7 @@ __inline__
 #endif
 static int SculptCheckBump(float *v1, float *v2, float *diff, float *dist, float cutoff)
 {
-  register float d2;
+  float d2;
   diff[0] = (v1[0] - v2[0]);
   diff[1] = (v1[1] - v2[1]);
   if(fabs(diff[0]) > cutoff)
@@ -1447,10 +1447,10 @@ static int SculptCGOBump(float *v1, float *v2,
                          float min, float mid, float max,
                          float *good_color, float *bad_color, int mode, CGO * cgo)
 {
-  register float d2;
+  float d2;
   float diff[3];
-  register float dist;
-  register float min_cutoff = cutoff - min;
+  float dist;
+  float min_cutoff = cutoff - min;
   diff[0] = (v1[0] - v2[0]);
   diff[1] = (v1[1] - v2[1]);
   if(fabs(diff[0]) > min_cutoff)
@@ -1490,25 +1490,11 @@ static int SculptCGOBump(float *v1, float *v2,
           if(good_bad > mid) {
             CGOLinewidth(cgo, 1 + color_factor * 3);
             CGOColorv(cgo, color);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	    {
-	      int nverts = 2, pl = 0;
-	      float *vertexVals;
-	      const float vVals[] = {
-		v1[0], v1[1], v1[2],
-		v2[0], v2[1], v2[2]
-	      };
-	      vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
-	      for (pl=0; pl<3*nverts; pl++){
-		vertexVals[pl] = vVals[pl];
-	      }
+	      float *vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, 2);
+	      copy3f(v1, vertexVals);
+	      copy3f(v2, &vertexVals[3]);
 	    }
-#else
-            CGOBegin(cgo, GL_LINES);
-            CGOVertexv(cgo, v1);
-            CGOVertexv(cgo, v2);
-            CGOEnd(cgo);
-#endif
           }
           break;
         case 1:
@@ -1532,7 +1518,7 @@ static int SculptCGOBump(float *v1, float *v2,
             scale3f(v1, vdw2, tmp);
             add3f(tmp, avg, avg);
             {
-              register float inv = 1.0F / (vdw1 + vdw2);
+              float inv = 1.0F / (vdw1 + vdw2);
               scale3f(avg, inv, avg);
             }
             scale3f(v1, delta, vv1);
@@ -1545,25 +1531,11 @@ static int SculptCGOBump(float *v1, float *v2,
               CGOLinewidth(cgo, 1 + color_factor * 3);
               CGOResetNormal(cgo, true);
               CGOColorv(cgo, color);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	      {
-		int nverts = 2, pl = 0;
-		float *vertexVals;
-		const float vVals[] = {
-		  vv1[0], vv1[1], vv1[2],
-		  vv2[0], vv2[1], vv2[2],
-		};
-		vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
-		for (pl=0; pl<3*nverts; pl++){
-		  vertexVals[pl] = vVals[pl];
-		}
+		float *vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, 2);
+		copy3f(vv1, vertexVals);
+		copy3f(vv2, &vertexVals[3]);
 	      }
-#else
-              CGOBegin(cgo, GL_LINES);
-              CGOVertexv(cgo, vv1);
-              CGOVertexv(cgo, vv2);
-              CGOEnd(cgo);
-#endif
             } else {
               CGOCustomCylinderv(cgo, vv1, vv2, radius, color, color, 1, 1);
             }
@@ -1611,9 +1583,9 @@ __inline__
 static int SculptCheckAvoid(float *v1, float *v2, float *diff,
                             float *dist, float avoid, float range)
 {
-  register float d2, l2;
-  register float cutoff = avoid + range;
-  register float low_cutoff;
+  float d2, l2;
+  float cutoff = avoid + range;
+  float low_cutoff;
   diff[0] = (v1[0] - v2[0]);
   diff[1] = (v1[1] - v2[1]);
   if(fabs(diff[0]) > cutoff)
@@ -1669,8 +1641,8 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                           int state, int n_cycle, float *center)
 {
   PyMOLGlobals *G = I->G;
-  register CShaker *shk;
-  register int a0, a1, a2, a3, b0, b3;
+  CShaker *shk;
+  int a0, a1, a2, a3, b0, b3;
   int aa;
   CoordSet *cs;
   float *disp = NULL;
@@ -1702,7 +1674,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
   int active_flag = false;
   float hb_overlap, hb_overlap_base;
   int *active, n_active;
-  register int *exclude;
+  int *exclude;
   AtomInfoType *ai0, *ai1;
   double task_time;
   float vdw_magnify, vdw_magnified = 1.0F;
@@ -1810,7 +1782,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
     n_active = 0;
     ai0 = obj->AtomInfo;
     {
-      register int a;
+      int a;
       for(a = 0; a < obj->NAtom; a++) {
         if(ai0->flags & cAtomFlag_exclude) {
           exclude[a] = true;
@@ -1851,7 +1823,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         for(aa = 0; aa < n_active; aa++) {
           a = *(a_ptr++);
           {
-            register AtomInfoType *ai = obj->AtomInfo + a;
+            AtomInfoType *ai = obj->AtomInfo + a;
             if((ai->protekted != 1) && !(ai->flags & cAtomFlag_fix)) {
               v2 = cs_coord + 3 * atm2idx[a];
               center[4] += *(v2);
@@ -1883,8 +1855,8 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* apply distance constraints */
 
         {
-          register ShakerDistCon *sdc = shk->DistCon;
-          register int a,ndc = shk->NDistCon;
+          ShakerDistCon *sdc = shk->DistCon;
+          int a,ndc = shk->NDistCon;
           for(a = 0; a < ndc; a++) {
             int sdc_type = sdc->type;
             int b1 = sdc->at0;
@@ -1972,7 +1944,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* apply line constraints */
 
         if(cSculptLine & mask) {
-          register ShakerLineCon *slc = shk->LineCon;
+          ShakerLineCon *slc = shk->LineCon;
           int nlc = shk->NLineCon;
           int a,b1,b2;
           for(a = 0; a < nlc; a++) {
@@ -2003,7 +1975,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* apply pyramid constraints */
 
         if(cSculptPyra & mask) {
-          register ShakerPyraCon *spc = shk->PyraCon;
+          ShakerPyraCon *spc = shk->PyraCon;
           int npc = shk->NPyraCon;
           int a,b1,b2;
           for(a = 0; a < npc; a++) {
@@ -2042,7 +2014,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         }
 
         if(cSculptPlan & mask) {
-          register ShakerPlanCon *snc = shk->PlanCon;
+          ShakerPlanCon *snc = shk->PlanCon;
           int npc = shk->NPlanCon;
           int a,b1,b2;
           /* apply planarity constraints */
@@ -2085,7 +2057,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* apply torsion constraints */
 
         if(cSculptTors & mask) {
-          register ShakerTorsCon *stc = shk->TorsCon;
+          ShakerTorsCon *stc = shk->TorsCon;
           int ntc = shk->NTorsCon;
           int a,b1,b2;
           /* apply planarity constraints */
@@ -2185,10 +2157,10 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                         if(b1 > b0) {
                           /* determine exclusion (if any) */
                           {
-                            register int xoffset;
-                            register int *I_EXList = I->EXList;
-                            register int ex1;
-                            register int *j;
+                            int xoffset;
+                            int *I_EXList = I->EXList;
+                            int ex1;
+                            int *j;
                             xoffset = *(I->EXHash + (x0i | ex_hash_i1(b1)));
                             ex = 10;
                             while(xoffset) {
@@ -2303,10 +2275,10 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
                         if(b1 > b0) {
                           /* determine exclusion (if any) */
                           {
-                            register int xoffset;
-                            register int *I_EXList = I->EXList;
-                            register int ex1;
-                            register int *j;
+                            int xoffset;
+                            int *I_EXList = I->EXList;
+                            int ex1;
+                            int *j;
                             xoffset = *(I->EXHash + (x0i | ex_hash_i1(b1)));
                             ex = 10;
                             while(xoffset) {
@@ -2359,9 +2331,9 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         if(n_cycle >= 0) {
           int cnt_a,a;
           float _1 = 1.0F;
-          register float inv_cnt;
+          float inv_cnt;
           int *a_ptr = active;
-          register float *lookup_inverse = I->inverse;
+          float *lookup_inverse = I->inverse;
           for(aa = 0; aa < n_active; aa++) {
             if((cnt_a = cnt[(a = *(a_ptr++))])) {
               AtomInfoType *ai = obj->AtomInfo + a;

@@ -84,11 +84,7 @@ void TextureInitTextTexture(PyMOLGlobals *G){
   }
   if(I->text_texture_id){
     if (CShaderMgr_ShadersPresent(G->ShaderMgr)){
-#ifdef OPENGL_ES_1
-      glActiveTexture(GL_TEXTURE1);
-#else
       glActiveTexture(GL_TEXTURE3);
-#endif
     }
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glBindTexture(GL_TEXTURE_2D, I->text_texture_id);
@@ -181,11 +177,7 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 	texture_id = I->text_texture_id;
 	if(I->text_texture_id && OVreturn_IS_OK(OVOneToOne_Set(I->ch2tex, char_id, I->num_chars++))) {
 	  if (use_shader && CShaderMgr_ShadersPresent(G->ShaderMgr)){
-#ifdef OPENGL_ES_1
-	    glActiveTexture(GL_TEXTURE1);
-#else
 	    glActiveTexture(GL_TEXTURE3);
-#endif
 	  }
           glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
           glBindTexture(GL_TEXTURE_2D, texture_id);

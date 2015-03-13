@@ -236,23 +236,6 @@ PyObject *ObjectSurfaceAsPyList(ObjectSurface * I)
 static void ObjectSurfaceStateFree(ObjectSurfaceState * ms)
 {
   ObjectStatePurge(&ms->State);
-  if(ms->State.G->HaveGUI) {
-#ifdef _PYMOL_GL_CALLLISTS
-    if(ms->displayList) {
-      if(PIsGlutThread()) {
-        if(ms->State.G->ValidContext) {
-          glDeleteLists(ms->displayList, 1);
-          ms->displayList = 0;
-        }
-      } else {
-        char buffer[255];       /* pass this off to the main thread */
-        sprintf(buffer, "_cmd.gl_delete_lists(cmd._COb,%d,%d)\n", ms->displayList, 1);
-        PParse(ms->State.G, buffer);
-      }
-    }
-#endif
-  }
-
   VLAFreeP(ms->N);
   VLAFreeP(ms->V);
   FreeP(ms->VC);
@@ -770,7 +753,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
                 c -= 4;
                 while(c > 0) {
                   if(vc) {
-                    register float *cA = vc - 6, *cB = vc - 3, *cC = vc;
+                    float *cA = vc - 6, *cB = vc - 3, *cC = vc;
                     if(rc) {
                       if(rc[0] < -1)
                         ColorGetEncoded(G, rc[0], (cA = colA));
@@ -798,7 +781,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
                   vc += 3;
                 while(c > 0) {
                   if(vc) {
-                    register float *cA = vc - 3, *cB = vc;
+                    float *cA = vc - 3, *cB = vc;
                     if(rc) {
                       if(rc[0] < -1)
                         ColorGetEncoded(G, rc[0], (cA = colA));
@@ -861,33 +844,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 	      CGOFree(ms->shaderCGO);
 	      ms->shaderCGO = 0;
 	    }
-
-#ifdef _PYMOL_GL_CALLLISTS
-	    if(!use_display_lists && ms->displayList && ms->displayListInvalid) {
-	      glDeleteLists(ms->displayList, 1);
-	      ms->displayList = 0;
-	      ms->displayListInvalid = false;
-	    }
-	    if(use_display_lists && ms->displayList) {
-	      glCallList(ms->displayList);
-	      if(state >= 0)
-		break;                    /* only rendering one state */
-	      a = a + 1;
-	      if(a >= I->NState)
-		break;
-	      continue;
-	    } else {
-	      if(use_display_lists) {
-		if(!ms->displayList) {
-		  ms->displayList = glGenLists(1);
-		  if(ms->displayList) {
-		    glNewList(ms->displayList, GL_COMPILE_AND_EXECUTE);
-		  }
-		}
-	      }
-	    }
-#endif
-
             if(render_now) {
 	      if (use_shader){
 		if (!ms->shaderCGO){
@@ -1064,68 +1020,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			}
 			CGOEnd(ms->shaderCGO);
 		      } else {
-#ifdef _PYMOL_GL_DRAWARRAYS
-			{
-			  int nverts = n_tri * 3, pl = 0, plc = 0;
-			  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-			  ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-			  ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-			  float *tmp_ptr;
-			  for(c = 0; c < n_tri; c++) {
-			    tb = t_buf + 6 * ix[c];
-			    if(vc)
-			      tc = c_buf + 3 * ix[c];
-			    if(vc) {
-			      colorVals[plc++] = tc[0][0]; colorVals[plc++] = tc[0][1]; 
-			      colorVals[plc++] = tc[0][2]; colorVals[plc++] = alpha;
-			      tc++;
-			    }
-			    tmp_ptr = *(tb++);
-			    normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
-			    tmp_ptr = *(tb++);
-			    vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
-			    pl += 3;
-			    if(vc) {
-			      colorVals[plc++] = tc[0][0]; colorVals[plc++] = tc[0][1]; 
-			      colorVals[plc++] = tc[0][2]; colorVals[plc++] = alpha;
-			      tc++;
-			    }
-			    tmp_ptr = *(tb++);
-			    normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
-			    tmp_ptr = *(tb++);
-			    vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
-			    pl += 3;
-			    if(vc) {
-			      colorVals[plc++] = tc[0][0]; colorVals[plc++] = tc[0][1]; 
-			      colorVals[plc++] = tc[0][2]; colorVals[plc++] = alpha;
-			      tc++;
-			    }
-			    tmp_ptr = *(tb++);
-			    normalVals[pl] = tmp_ptr[0]; normalVals[pl+1] = tmp_ptr[1]; normalVals[pl+2] = tmp_ptr[2];
-			    tmp_ptr = *(tb++);
-			    vertexVals[pl] = tmp_ptr[0]; vertexVals[pl+1] = tmp_ptr[1]; vertexVals[pl+2] = tmp_ptr[2];
-			    pl += 3;
-			  }
-			  
-			  glEnableClientState(GL_VERTEX_ARRAY);
-			  glEnableClientState(GL_NORMAL_ARRAY);
-			  if (vc){
-			    glEnableClientState(GL_COLOR_ARRAY);
-			    glColorPointer(4, GL_FLOAT, 0, colorVals);
-			  }
-			  glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-			  glNormalPointer(GL_FLOAT, 0, normalVals);
-			  glDrawArrays(GL_TRIANGLES, 0, nverts);
-			  glDisableClientState(GL_VERTEX_ARRAY);
-			  if (vc){
-			    glDisableClientState(GL_COLOR_ARRAY);
-			  }
-			  glDisableClientState(GL_NORMAL_ARRAY);
-			  DEALLOCATE_ARRAY(colorVals)
-			  DEALLOCATE_ARRAY(normalVals)
-			  DEALLOCATE_ARRAY(vertexVals)
-			}
-#else
 			glBegin(GL_TRIANGLES);
 			for(c = 0; c < n_tri; c++) {
 			  tb = t_buf + 6 * ix[c];
@@ -1151,7 +1045,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			  glVertex3fv(*(tb++));
 			}
 			glEnd();
-#endif
 		      }
 
                       FreeP(ix);
@@ -1221,44 +1114,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			} else {
 			  while(*n) {
 			    c = *(n++);
-#ifdef _PYMOL_GL_DRAWARRAYS
-			    {
-			      int nverts = c/2, pl = 0, plc = 0;;
-			      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-			      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-			      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-			      while(c > 0) {
-				normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-				v += 3;
-				if(vc) {
-				  colorVals[plc] = vc[0]; colorVals[plc+1] = vc[1]; colorVals[plc+2] = vc[2]; colorVals[plc+3] = 1.f;
-				  vc += 3;
-				}
-				vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-				v += 3;
-				c -= 2;
-				pl += 3;
-				plc += 4;
-			      }
-			      glEnableClientState(GL_VERTEX_ARRAY);
-			      glEnableClientState(GL_NORMAL_ARRAY);
-			      if (vc){
-				glEnableClientState(GL_COLOR_ARRAY);
-				glColorPointer(4, GL_FLOAT, 0, colorVals);
-			      }
-			      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-			      glNormalPointer(GL_FLOAT, 0, normalVals);
-			      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-			      glDisableClientState(GL_VERTEX_ARRAY);
-			      if (vc){
-				glDisableClientState(GL_COLOR_ARRAY);
-			      }
-			      glDisableClientState(GL_NORMAL_ARRAY);
-			      DEALLOCATE_ARRAY(colorVals)
-			      DEALLOCATE_ARRAY(normalVals)
-			      DEALLOCATE_ARRAY(vertexVals)
-			    }
-#else
+#ifndef PURE_OPENGL_ES_2
 			    glBegin(GL_TRIANGLE_STRIP);
 			    while(c > 0) {
 			      glNormal3fv(v);
@@ -1339,43 +1195,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			switch (ms->Mode) {
 			case 3:
 			case 2:
-#ifdef _PYMOL_GL_DRAWARRAYS
-			  {
-			    int nverts = c/2, pl = 0, plc = 0;
-			    ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-			    ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-			    ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-			    while(c > 0) {
-			      normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-			      v += 3;
-			      if(vc) {
-				colorVals[plc++] = vc[0]; colorVals[plc++] = vc[1]; colorVals[plc++] = vc[2]; colorVals[plc++] = 1.f;
-				vc += 3;
-			      }
-			      vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-			      v += 3;
-			      c -= 2;
-			      pl += 3;
-			    }
-			    glEnableClientState(GL_VERTEX_ARRAY);
-			    glEnableClientState(GL_NORMAL_ARRAY);
-			    if (vc){
-			      glEnableClientState(GL_COLOR_ARRAY);
-			      glColorPointer(4, GL_FLOAT, 0, colorVals);
-			    }
-			    glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-			    glNormalPointer(GL_FLOAT, 0, normalVals);
-			    glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-			    glDisableClientState(GL_VERTEX_ARRAY);
-			    if (vc){
-			      glDisableClientState(GL_COLOR_ARRAY);
-			    }
-			    glDisableClientState(GL_NORMAL_ARRAY);
-			    DEALLOCATE_ARRAY(colorVals)
-			    DEALLOCATE_ARRAY(normalVals)
-			    DEALLOCATE_ARRAY(vertexVals)
-			  }
-#else
+#ifndef PURE_OPENGL_ES_2
 			  glBegin(GL_TRIANGLE_STRIP);
 			  while(c > 0) {
 			    glNormal3fv(v);
@@ -1392,36 +1212,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 #endif
 			  break;
 			case 1:
-#ifdef _PYMOL_GL_DRAWARRAYS
-			  {
-			    int nverts = c, pl = 0, plc = 0;
-			    ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-			    ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-			    while(c > 0) {
-			      if(vc) {
-				colorVals[plc++] = vc[0]; colorVals[plc++] = vc[1]; colorVals[plc++] = vc[2]; colorVals[plc++] = 1.f;
-				vc += 3;
-			      }
-			      vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-			      v += 3;
-			      c--;
-			      pl += 3;
-			    }
-			    glEnableClientState(GL_VERTEX_ARRAY);
-			    if (vc){
-			      glEnableClientState(GL_COLOR_ARRAY);
-			      glColorPointer(4, GL_FLOAT, 0, colorVals);
-			    }
-			    glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-			    glDrawArrays(GL_LINES, 0, nverts);
-			    glDisableClientState(GL_VERTEX_ARRAY);
-			    if (vc){
-			      glDisableClientState(GL_COLOR_ARRAY);
-			    }
-			    DEALLOCATE_ARRAY(colorVals)
-			    DEALLOCATE_ARRAY(vertexVals)
-			  }
-#else
+#ifndef PURE_OPENGL_ES_2
 			  glBegin(GL_LINES);
 			  while(c > 0) {
 			    if(vc) {
@@ -1437,37 +1228,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 			  break;
 			case 0:
 			default:
-#ifdef _PYMOL_GL_DRAWARRAYS
-			  {
-			    int nverts = c, pl = 0, plc = 0;
-			    ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-			    ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-
-			    while(c > 0) {
-			      if(vc) {
-				colorVals[plc++] = vc[0]; colorVals[plc++] = vc[1]; colorVals[plc++] = vc[2]; colorVals[plc++] = 1.f;
-				vc += 3;
-			      }
-			      vertexVals[pl] = v[0]; vertexVals[pl+1] = v[1]; vertexVals[pl+2] = v[2];
-			      v += 3;
-			      c--;
-			      pl += 3;
-			    }
-			    glEnableClientState(GL_VERTEX_ARRAY);
-			    if (vc){
-			      glEnableClientState(GL_COLOR_ARRAY);
-			      glColorPointer(4, GL_FLOAT, 0, colorVals);
-			    }
-			    glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-			    glDrawArrays(GL_POINTS, 0, nverts);
-			    glDisableClientState(GL_VERTEX_ARRAY);
-			    if (vc){
-			      glDisableClientState(GL_COLOR_ARRAY);
-			    }
-			    DEALLOCATE_ARRAY(colorVals)
-			    DEALLOCATE_ARRAY(vertexVals)
-			  }
-#else
+#ifndef PURE_OPENGL_ES_2
 			  glBegin(GL_POINTS);
 			  while(c > 0) {
 			    if(vc) {
@@ -1486,31 +1247,17 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 		    }
 		  }
 		}
-#ifdef _PYMOL_GL_CALLLISTS
-		if(use_display_lists && ms->displayList) {
-		  glEndList();
-		  glCallList(ms->displayList);
-		}
-#endif
 		if (use_shader && generate_shader_cgo){
 		  CGO *convertcgo = NULL;
 		  CGOStop(ms->shaderCGO);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 		  convertcgo = CGOCombineBeginEnd(ms->shaderCGO, 0);    
 		  CGOFree(ms->shaderCGO);    
 		  ms->shaderCGO = convertcgo;
-#else
-		  (void)convertcgo;
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 		  convertcgo = CGOOptimizeToVBOIndexed(ms->shaderCGO, 0);
 		  if (convertcgo){
 		    CGOFree(ms->shaderCGO);
 		    ms->shaderCGO = convertcgo;
 		  }
-#else
-		  (void)convertcgo;
-#endif
 		  {
 		    CShaderPrg * shaderPrg = 0;
 		    shaderPrg = CShaderPrg_Enable_DefaultShader(G);

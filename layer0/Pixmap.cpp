@@ -47,7 +47,7 @@ void PixmapInitFromBitmap(PyMOLGlobals * G, CPixmap * I, int width, int height,
     unsigned char cur = 0;
     unsigned char *src;
     unsigned char *dst;
-    register unsigned char red, blue, green, alpha;
+    unsigned char red, blue, green, alpha;
     PixmapInit(G, I, width * sampling, height * sampling);
     red = rgba[0];
     green = rgba[1];
@@ -119,8 +119,8 @@ void PixmapInitFromBytemap(PyMOLGlobals * G, CPixmap * I,
     int x, y;
     unsigned char *src, *sa, alp;
     unsigned char *dst;
-    register unsigned char red, blue, green, alpha, no_alpha;
-    register unsigned char ored = 0, oblue = 0, ogreen = 0;
+    unsigned char red, blue, green, alpha, no_alpha;
+    unsigned char ored = 0, oblue = 0, ogreen = 0;
     if(!outline_rgb[3])
       outline_rgb = NULL;
     else {

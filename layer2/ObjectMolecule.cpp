@@ -256,14 +256,14 @@ ok_except1:
 
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int state)
 {
-  register PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->Obj.G;
   int result = false;
   if((state >= 0) && (state < I->NCSet)) {
-    register AtomInfoType *ai = I->AtomInfo;
-    register CoordSet *cs = I->CSet[state];
+    AtomInfoType *ai = I->AtomInfo;
+    CoordSet *cs = I->CSet[state];
     if(cs) {
-      register int a;
-      register int at;
+      int a;
+      int at;
       result = true;
       for(a = 0; a < cs->NIndex; a++) {
         at = cs->IdxToAtm[a];
@@ -3245,66 +3245,27 @@ int ObjectMolecule::getState() {
 void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vis_only SELINDICATORARG)
 {
 
-  register PyMOLGlobals *G = I->Obj.G;
-  register CoordSet *cs;
-  register int a, *idx2atm, nIndex;
-  register float *coord, *v;
-  register int flag = true;
-  register int all_vis = !vis_only;
-  register int visRep;
+  PyMOLGlobals *G = I->Obj.G;
+  CoordSet *cs;
+  int a, *idx2atm, nIndex;
+  float *coord, *v;
+  int flag = true;
+  int all_vis = !vis_only;
+  int visRep;
   float tmp_matrix[16], v_tmp[3], *matrix = NULL;
   int objState;
   int frozen = SettingGetIfDefined_i(I->Obj.G, I->Obj.Setting, cSetting_state, &objState);
-#ifdef _PYMOL_GL_DRAWARRAYS
-  int nverts = 0;
-#endif
-  register int use_matrices =
+  int use_matrices =
     SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+
   if(use_matrices<0) use_matrices = 0;
 
   if(frozen)
     curState = objState - 1;
 
   if(G->HaveGUI && G->ValidContext) {
-    register AtomInfoType *atInfo = I->AtomInfo, *ai;
+    AtomInfoType *atInfo = I->AtomInfo, *ai;
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-    for(StateIterator iter(G, I->Obj.Setting, curState, I->NCSet);
-        iter.next();) {
-      if((cs = I->CSet[iter.state])) {
-	    idx2atm = cs->IdxToAtm;
-	    nIndex = cs->NIndex;
-	    coord = cs->Coord;
-	    for(a = 0; a < nIndex; a++) {
-	      if(SelectorIsMember(G, atInfo[*(idx2atm++)].selEntry, sele)) {
-		if(all_vis)
-		  flag = true;
-		else {
-		  visRep = atInfo[idx2atm[-1]].visRep;
-		  ai = atInfo + idx2atm[-1];
-		  flag = false;
-		  if(visRep[cRepCyl] ||
-		     visRep[cRepSphere] ||
-		     visRep[cRepSurface] ||
-		     visRep[cRepLabel] ||
-		     visRep[cRepNonbondedSphere] ||
-		     visRep[cRepCartoon] ||
-		     visRep[cRepRibbon] ||
-		     visRep[cRepLine] ||
-		     visRep[cRepMesh] || visRep[cRepDot] || visRep[cRepNonbonded])
-		    flag = true;
-		}
-		if(flag) {
-		  nverts++;
-		}
-	      }
-	    }
-      }
-    }
-    {
-      ALLOCATE_ARRAY(GLfloat,ptVals,nverts*3)
-      int pl = 0;
-#endif
     for(StateIterator iter(G, I->Obj.Setting, curState, I->NCSet);
         iter.next();) {
       if((cs = I->CSet[iter.state])) {
@@ -3361,15 +3322,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 	      }
 	    }
 	  }
-      }
-#ifdef _PYMOL_GL_DRAWARRAYS
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, ptVals);
-      glDrawArrays(GL_POINTS, 0, nverts);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      DEALLOCATE_ARRAY(ptVals)
     }
-#endif
   }
 }
 
@@ -5801,7 +5754,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
           int *atmToIdx = NULL;
           const int ESCAPE_MAX = 500;
 
-          register int escape_count;
+          int escape_count;
 
           if(!I->DiscreteFlag)
             atmToIdx = cs->AtmToIdx;
@@ -6365,7 +6318,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
           int *atmToIdx = NULL;
           const int ESCAPE_MAX = 500;
 
-          register int escape_count;
+          int escape_count;
 
           if(!I->DiscreteFlag)
             atmToIdx = cs->AtmToIdx;
@@ -7337,11 +7290,11 @@ int ObjectMoleculeGetAtomIndex(ObjectMolecule * I, int sele)
 /*========================================================================*/
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I)
 {
-  register int a;
-  register BondType *b;
-  register AtomInfoType *ai;
-  register int nAtom = I->NAtom;
-  register int nBond = I->NBond;
+  int a;
+  BondType *b;
+  AtomInfoType *ai;
+  int nAtom = I->NAtom;
+  int nBond = I->NBond;
 
   ai = I->AtomInfo;
 
@@ -9694,9 +9647,9 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
   PyMOLGlobals *G = I->Obj.G;
   int *index, *outdex, *a2i = NULL, *i2a = NULL;
   BondType *bond = NULL;
-  register int a, b, lb = 0, ac;
+  int a, b, lb = 0, ac;
   int c, nb, a1, a2;
-  register int found;
+  int found;
   int nAt, nBd, nBond;
   int expansionFlag = false;
   AtomInfoType *ai2;
@@ -9738,9 +9691,9 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
   }
 
   if (ok) {
-    register int n_index = cs->NIndex;
-    register int n_atom = I->NAtom;
-    register AtomInfoType *atInfo = I->AtomInfo, *ai_a;
+    int n_index = cs->NIndex;
+    int n_atom = I->NAtom;
+    AtomInfoType *atInfo = I->AtomInfo, *ai_a;
     CompareFn *fCompare;
 
     if(SettingGetGlobal_b(G, cSetting_pdb_hetatm_sort)) {
@@ -9754,7 +9707,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
     lb = 0;
 
     for(a = 0; a < n_index; a++) {
-      register int reverse = false;
+      int reverse = false;
       ai_a = ai + a;
       found = false;
       if(!I->DiscreteFlag) {    /* don't even try matching for discrete objects */
@@ -10057,8 +10010,8 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule * I, float *ttt, int frame)
 /*========================================================================*/
 void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op)
 {
-  register float *coord;
-  register int a, b, s;
+  float *coord;
+  int a, b, s;
   int c, d, t_i;
   int a1 = 0, ind;
   float r, rms;
@@ -10070,7 +10023,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
   int match_flag = false;
   int offset;
   int priority;
-  register int use_matrices = false;
+  int use_matrices = false;
   CoordSet *cs;
   AtomInfoType *ai, *ai0, *ai_option;
   PyMOLGlobals *G = I->Obj.G;
@@ -10289,8 +10242,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
     case OMOP_AVRT:            /* average vertex coordinate */
       {
-        register int op_i2 = op->i2;
-        register int obj_TTTFlag = I->Obj.TTTFlag;
+        int op_i2 = op->i2;
+        int obj_TTTFlag = I->Obj.TTTFlag;
         if(op_i2) {
           use_matrices =
             SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
@@ -10358,8 +10311,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
     case OMOP_StateVRT:        /* state vertex coordinate */
       {
-        register int op_i2 = op->i2;
-        register int obj_TTTFlag = I->Obj.TTTFlag;
+        int op_i2 = op->i2;
+        int obj_TTTFlag = I->Obj.TTTFlag;
         if(op_i2) {
           use_matrices =
             SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
@@ -10913,14 +10866,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
     case OMOP_SUMC:            /* performance optimized to speed center & zoom actions */
       {
 				/* given a selection, sum up all the coordinates (for centering) */
-        register float *op_v1 = op->v1;
-        register int op_i1 = op->i1;
-        register int op_i2 = op->i2;
-        register int obj_TTTFlag = I->Obj.TTTFlag;
-        register int i_NCSet = I->NCSet;
-        register int i_NAtom = I->NAtom;
-        register int i_DiscreteFlag = I->DiscreteFlag;
-        register CoordSet **i_CSet = I->CSet;
+        float *op_v1 = op->v1;
+        int op_i1 = op->i1;
+        int op_i2 = op->i2;
+        int obj_TTTFlag = I->Obj.TTTFlag;
+        int i_NCSet = I->NCSet;
+        int i_NAtom = I->NAtom;
+        int i_DiscreteFlag = I->DiscreteFlag;
+        CoordSet **i_CSet = I->CSet;
         if(op_i2) {
           use_matrices =
             SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
@@ -10972,15 +10925,15 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
     case OMOP_MNMX:            /* performance optimized to speed center & zoom actions */
       {
-        register float *op_v1 = op->v1;
-        register float *op_v2 = op->v2;
-        register int op_i1 = op->i1;
-        register int op_i2 = op->i2;
-        register int obj_TTTFlag = I->Obj.TTTFlag;
-        register int i_NCSet = I->NCSet;
-        register int i_NAtom = I->NAtom;
-        register int i_DiscreteFlag = I->DiscreteFlag;
-        register CoordSet **i_CSet = I->CSet;
+        float *op_v1 = op->v1;
+        float *op_v2 = op->v2;
+        int op_i1 = op->i1;
+        int op_i2 = op->i2;
+        int obj_TTTFlag = I->Obj.TTTFlag;
+        int i_NCSet = I->NCSet;
+        int i_NAtom = I->NAtom;
+        int i_DiscreteFlag = I->DiscreteFlag;
+        CoordSet **i_CSet = I->CSet;
         if(op_i2) {
           use_matrices =
             SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
@@ -11904,10 +11857,10 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
   /* if the cached representation is invalid, reset state */
   if(!I->RepVisCacheValid) {
     /* note which representations are active */
-    register int b;
+    int b;
     /* for each atom in each coordset, blank out the representation cache */
     if(I->NCSet > 1) {
-      register AtomInfoType *ai = I->AtomInfo;
+      AtomInfoType *ai = I->AtomInfo;
       I->RepVisCache = 0;
       for(a = 0; a < I->NAtom; a++) {
         I->RepVisCache |= ai->visRep;

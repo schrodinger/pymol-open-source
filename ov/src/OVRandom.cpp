@@ -81,8 +81,8 @@ OVRandom *OVRandom_NewBySeed(OVHeap * heap, ov_uint32 seed)
 
   if(I) {
 
-    register ov_uint32 *mt = I->mt;
-    register ov_int32 mti = N + 1;
+    ov_uint32 *mt = I->mt;
+    ov_int32 mti = N + 1;
 
     I->heap = heap;
     mt[0] = seed & 0xffffffffUL;
@@ -115,8 +115,8 @@ OVRandom *OVRandom_NewByArray(OVHeap * heap, ov_uint32 init_key[], ov_int32 key_
 {
   OVRandom *I = OVRandom_NewBySeed(heap, 19650218UL);
   if(I) {
-    register int i, j, k;
-    register ov_uint32 *mt = I->mt;
+    int i, j, k;
+    ov_uint32 *mt = I->mt;
     i = 1;
     j = 0;
     k = (N > key_length ? N : key_length);
@@ -153,10 +153,10 @@ OVRandom *OVRandom_NewByArray(OVHeap * heap, ov_uint32 init_key[], ov_int32 key_
 /* generates a random number on [0,0xffffffff]-interval */
 ov_uint32 OVRandom_Get_int32(OVRandom * I)
 {
-  register ov_uint32 y;
-  register ov_uint32 *mt = I->mt;
-  register ov_uint32 *mag01 = I->mag01;
-  register ov_uint32 mti = I->mti;
+  ov_uint32 y;
+  ov_uint32 *mt = I->mt;
+  ov_uint32 *mag01 = I->mag01;
+  ov_uint32 mti = I->mti;
 
   /* mag01[x] = x * MATRIX_A  for x=0,1 */
 

@@ -486,12 +486,12 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
         // default color ramp (1.0 sigma peak)
         if(!vs->Ramp) {
           float defaultramp[] = {
-            vs->min_max_mean_stdev[2] + 0.7 * vs->min_max_mean_stdev[3],
-            0., 0., 1., 0.0,
-            vs->min_max_mean_stdev[2] + 1.0 * vs->min_max_mean_stdev[3],
-            0., 1., 1., 0.2,
-            vs->min_max_mean_stdev[2] + 1.3 * vs->min_max_mean_stdev[3],
-            0., 0., 1., 0.0
+            vs->min_max_mean_stdev[2] + 0.7f * vs->min_max_mean_stdev[3],
+            0.f, 0.f, 1.f, 0.0f,
+            vs->min_max_mean_stdev[2] + 1.0f * vs->min_max_mean_stdev[3],
+            0.f, 1.f, 1.f, 0.2f,
+            vs->min_max_mean_stdev[2] + 1.3f * vs->min_max_mean_stdev[3],
+            0.f, 0.f, 1.f, 0.0f
           };
           vs->RecolorFlag = true;
           vs->RampSize = 3;

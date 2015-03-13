@@ -101,7 +101,7 @@ int PlugIOManagerInitAll(PyMOLGlobals * G);     /* defined externally */
 
 int PlugIOManagerInit(PyMOLGlobals * G)
 {
-  register CPlugIOManager *I = NULL;
+  CPlugIOManager *I = NULL;
   if((I = (G->PlugIOManager = Calloc(CPlugIOManager, 1)))) {
     I->NPlugin = 0;
     I->PluginVLA = VLAlloc(molfile_plugin_t *, 10);

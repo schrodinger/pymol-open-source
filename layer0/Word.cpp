@@ -59,7 +59,7 @@ int WordCompare(PyMOLGlobals * G, const char *p, const char *q, int ignCase)
 /* all things equal, shorter is smaller */
 {
   int result = 0;
-  register char cp, cq, tlp, tlq;
+  char cp, cq, tlp, tlq;
   if(ignCase) {
     while((cp = *p) && (cq = *q)) {
       p++;
@@ -206,8 +206,8 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals * G, const char *st, CWordMatchOptions
   }
 
   if(needed) {                  /* if so, then convert the expression into a match tree */
-    register int n_char = 0;
-    register int n_node = 0;
+    int n_char = 0;
+    int n_node = 0;
     OOCalloc(G, CWordMatcher);
     I->charVLA = VLACalloc(char, 10);   /* auto_zeroing... */
     I->node = VLACalloc(MatchNode, 10);
@@ -487,8 +487,8 @@ static int recursive_match(CWordMatcher * I, MatchNode * cur_node, const char *t
 
 int WordMatcherMatchAlpha(CWordMatcher * I, const char *text)
 {
-  register MatchNode *cur_node = I->node;
-  register int n_node = I->n_node;
+  MatchNode *cur_node = I->node;
+  int n_node = I->n_node;
 
   while((n_node--) > 0) {
     if(recursive_match(I, cur_node, text, NULL))
@@ -506,8 +506,8 @@ int WordMatcherMatchAlpha(CWordMatcher * I, const char *text)
 
 int WordMatcherMatchMixed(CWordMatcher * I, const char *text, int value)
 {
-  register MatchNode *cur_node = I->node;
-  register int n_node = I->n_node;
+  MatchNode *cur_node = I->node;
+  int n_node = I->n_node;
 
   while((n_node--) > 0) {
     if(recursive_match(I, cur_node, text, &value))
@@ -542,8 +542,8 @@ static int integer_match(CWordMatcher * I, MatchNode * cur_node, int value)
 
 int WordMatcherMatchInteger(CWordMatcher * I, int value)
 {
-  register MatchNode *cur_node = I->node;
-  register int n_node = I->n_node;
+  MatchNode *cur_node = I->node;
+  int n_node = I->n_node;
 
   while((n_node--) > 0) {
     if(integer_match(I, cur_node, value))
@@ -668,7 +668,7 @@ int WordListMatch(PyMOLGlobals * G, CWordList * I, char *name, int ignore_case)
 
 int WordInit(PyMOLGlobals * G)
 {
-  register CWord *I = NULL;
+  CWord *I = NULL;
 
   I = (G->Word = Calloc(CWord, 1));
   if(I) {
@@ -760,7 +760,7 @@ positive = match out to N characters
 negative = perfect/wildcard match  */
 {
   int i = 1;
-  register char WILDCARD = '*';
+  char WILDCARD = '*';
   while((*p) && (*q)) {
     if(*p != *q) {
       if(*p == WILDCARD) {
@@ -797,11 +797,11 @@ int WordMatchComma(PyMOLGlobals * G, const char *pp, const char *qq, int ignCase
 
 /* allows for comma list in p, also allows wildcards (*) in p */
 {
-  register const char *p = pp, *q = qq;
-  register int i = 0;
-  register char WILDCARD = '*';
-  register char pc, qc;
-  register int ic = ignCase;
+  const char *p = pp, *q = qq;
+  int i = 0;
+  char WILDCARD = '*';
+  char pc, qc;
+  int ic = ignCase;
   int best_i = 0;
   const char *q_copy;
   int blank;

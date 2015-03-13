@@ -57,7 +57,7 @@ static void FontGLUTRestore(CFontGLUT * I)
 static char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, char *st, float size,
                                   float *rpos SHADERCGOARG)
 {
-  register PyMOLGlobals *G = I->Font.G;
+  PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
     int c;
     FontGLUTBitmapFontRec *font_info = I->glutFont;
@@ -193,9 +193,10 @@ static char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, char *st, fl
           if(ch) {
             if(!textured) {
 
-	      /* NEED TODO FOR _PYMOL_GL_DRAWARRAYS */
+#ifndef PURE_OPENGL_ES_2
               glBitmap(ch->width, ch->height,
                        ch->xorig, ch->yorig, ch->advance, 0, ch->bitmap);
+#endif
               TextAdvance(G, ch->advance);
             } else {
               CharFngrprnt fprnt;

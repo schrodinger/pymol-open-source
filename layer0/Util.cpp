@@ -222,7 +222,7 @@ void UtilCopyMem(void *dst,const void *src,ov_size howMuch) /* optimize! */
 void UtilExpandArrayElements(void *src,void *dst,int n_entries,int old_rec_size,int new_rec_size)
 {
   /* simple but ineffient byte-based copy */
-  register char *p,*q,*p_stop,*q_stop;
+  char *p,*q,*p_stop,*q_stop;
   int a;
   for(a=0;a<n_entries;a++) {
     p=((char*)src)+(old_rec_size*a); 
@@ -287,7 +287,7 @@ void *UtilArrayCalloc(unsigned int *dim,ov_size ndim,ov_size atom_size)
 
 void UtilApplySortedIndices(int n,int *x, int rec_size, void *src, void *dst)
 {
-  register int a;
+  int a;
   for(a=0;a<n;a++) {
     memcpy(((char*)dst)+(a*rec_size),
            ((char*)src)+(x[a]*rec_size),
@@ -298,7 +298,7 @@ void UtilApplySortedIndices(int n,int *x, int rec_size, void *src, void *dst)
 
 void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered)
 {
-  register int l,a,r,t,i;
+  int l,a,r,t,i;
 
   if(n<1) return;
   else if(n==1) { x[0]=0; return; }
@@ -395,13 +395,13 @@ int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
   /* both arrays will always be the number of values, i.e., n. */
   int ok = true;
   if(n>0) {
-    register float min,max,*f,v;
-    register float range, scale;
-    register int a;
-    register int *start1;
-    register int *next1;
-    register int idx1;
-    register int n_minus_one;
+    float min,max,*f,v;
+    float range, scale;
+    int a;
+    int *start1;
+    int *next1;
+    int idx1;
+    int n_minus_one;
 
     start1 = Calloc(int,n*2);
     CHECKOK(ok, start1);
@@ -441,8 +441,8 @@ int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
       }
       /* now read out */
       {
-        register int c=0;
-        register int cur1;        
+        int c=0;
+        int cur1;        
         a=0;
         while(a<n) {
           if( (cur1 = start1[a]) ) {

@@ -63,7 +63,7 @@ int TypeFaceCharacterNew(CTypeFace * I, CharFngrprnt * fprnt, float size)
 
 CTypeFace *TypeFaceLoad(PyMOLGlobals * G, unsigned char *dat, unsigned int len)
 {
-  register CType *I = G->Type;
+  CType *I = G->Type;
   int ok = true;
   CTypeFace *result = Calloc(CTypeFace, 1);
   if(result) {
@@ -128,7 +128,7 @@ void TypeFaceFree(CTypeFace * I)
 
 int TypeInit(PyMOLGlobals * G)
 {
-  register CType *I;
+  CType *I;
   if((I = (G->Type = Calloc(CType, 1)))) {
     FT_Error error = FT_Init_FreeType(&I->library);
     return !error;
@@ -138,7 +138,7 @@ int TypeInit(PyMOLGlobals * G)
 
 void TypeFree(PyMOLGlobals * G)
 {
-  register CType *I = G->Type;
+  CType *I = G->Type;
   FT_Done_FreeType(I->library);
   FreeP(G->Type);
 }

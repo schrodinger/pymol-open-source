@@ -51,14 +51,14 @@ static int ZLineToSphere(float *base, float *point, float *dir, float radius,
   float point0 = point[0];
   float point1 = point[1];
   float point2 = point[2];
-  register float perpAxis0 = pre[0];    /* was cross_product(MinusZ,dir,perpAxis),normalize */
-  register float perpAxis1 = pre[1];
+  float perpAxis0 = pre[0];    /* was cross_product(MinusZ,dir,perpAxis),normalize */
+  float perpAxis1 = pre[1];
   float intra0 = point0 - base[0];
   float intra1 = point1 - base[1];
   const float dir0 = dir[0];
   const float dir1 = dir[1];
   const float dir2 = dir[2];
-  register float dot, perpDist;
+  float dot, perpDist;
 
   /* the perpAxis defines a perp-plane which includes the cyl-axis */
 
@@ -168,16 +168,16 @@ static int LineToSphere(float *base, float *ray, float *point, float *dir, float
   /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
 
-  register float perpDist, radial, axial, axial_sum, dangle, ab_dangle, axial_perp;
-  register float radialsq, tan_acos_dangle;
-  register float perpAxis0, perpAxis1, perpAxis2;
-  register float intra0, intra1, intra2;
-  register float intra_p0, intra_p1, intra_p2;
-  register float vradial0, vradial1, vradial2;
-  register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
-  register float ray0 = ray[0], ray1 = ray[1], ray2 = ray[2];
+  float perpDist, radial, axial, axial_sum, dangle, ab_dangle, axial_perp;
+  float radialsq, tan_acos_dangle;
+  float perpAxis0, perpAxis1, perpAxis2;
+  float intra0, intra1, intra2;
+  float intra_p0, intra_p1, intra_p2;
+  float vradial0, vradial1, vradial2;
+  float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
+  float ray0 = ray[0], ray1 = ray[1], ray2 = ray[2];
   float point0 = point[0], point1 = point[1], point2 = point[2];
-  register float dot;
+  float dot;
 
   const float _0 = 0.0F;
   const float _1 = 1.0F;
@@ -193,7 +193,7 @@ static int LineToSphere(float *base, float *ray, float *point, float *dir, float
 
   /* normalize3f(perpAxis) */
   {
-    register float len =
+    float len =
       (float) sqrt1d((perpAxis0 * perpAxis0) + (perpAxis1 * perpAxis1) +
                      (perpAxis2 * perpAxis2));
     intra1 = point1 - base[1];
@@ -1185,13 +1185,13 @@ __inline__
 static int LineClipPoint(float *base, float *ray,
                          float *point, float *dist, float cutoff, float cutoff2)
 {
-  register float hyp0, hyp1, hyp2;
-  register float opp0, opp1, opp2;
-  register float adj0, adj1, adj2;
-  register float ray0, ray1, ray2;
-  register float proj;
-  register double dcutoff = (double) cutoff;
-  register float opp_len_sq;
+  float hyp0, hyp1, hyp2;
+  float opp0, opp1, opp2;
+  float adj0, adj1, adj2;
+  float ray0, ray1, ray2;
+  float proj;
+  double dcutoff = (double) cutoff;
+  float opp_len_sq;
 
   /* this routine determines whether or not a vector starting at "base"
      heading in the direction "ray" intersects a sphere located at "point".
@@ -1297,13 +1297,13 @@ static int LineClipEllipsoidPoint(float *base, float *ray,
    */
 
   {
-    register float hyp0, hyp1, hyp2;
-    register float opp0, opp1, opp2;
-    register float adj0, adj1, adj2;
-    register float ray0, ray1, ray2;
-    register float proj;
-    register double dcutoff = (double) cutoff;
-    register float opp_len_sq;
+    float hyp0, hyp1, hyp2;
+    float opp0, opp1, opp2;
+    float adj0, adj1, adj2;
+    float ray0, ray1, ray2;
+    float proj;
+    double dcutoff = (double) cutoff;
+    float opp_len_sq;
 
     /* this routine determines whether or not a vector starting at "base"
        heading in the direction "ray" intersects a sphere located at "point".
@@ -1748,11 +1748,11 @@ int BasisHitPerspective(BasisCallRec * BC)
                   float *d10 = BI_Precomp + BI_Vert2Normal[i] * 3;
                   float *d20 = d10 + 3;
                   float *v0;
-                  register float det, inv_det;
-                  register float pvec0, pvec1, pvec2;
-                  register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
-                  register float d20_0 = d20[0], d20_1 = d20[1], d20_2 = d20[2];
-                  register float d10_0 = d10[0], d10_1 = d10[1], d10_2 = d10[2];
+                  float det, inv_det;
+                  float pvec0, pvec1, pvec2;
+                  float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
+                  float d20_0 = d20[0], d20_1 = d20[1], d20_2 = d20[2];
+                  float d10_0 = d10[0], d10_1 = d10[1], d10_2 = d10[2];
 
                   /* cross_product3f(dir, d20, pvec); */
 
@@ -1766,8 +1766,8 @@ int BasisHitPerspective(BasisCallRec * BC)
 
                   v0 = BI_Vertex + prm->vert * 3;
                   if((det >= EPSILON) || (det <= -EPSILON)) {
-                    register float tvec0, tvec1, tvec2;
-                    register float qvec0, qvec1, qvec2;
+                    float tvec0, tvec1, tvec2;
+                    float qvec0, qvec1, qvec2;
 
                     inv_det = _1 / det;
 
@@ -2039,7 +2039,7 @@ int BasisHitOrthoscopic(BasisCallRec * BC)
   RayInfo *r = BC->rr;
 
   if(MapInsideXY(BI->Map, r->base, &a, &b, &c)) {
-    register int minIndex = -1;
+    int minIndex = -1;
     int v2p;
     int i, ii;
     int *xxtmp;
@@ -2355,7 +2355,7 @@ int BasisHitShadow(BasisCallRec * BC)
   const float _1 = 1.0F;
   float oppSq, dist = _0, tri1, tri2;
   float sph[3], vt[3];
-  register int h, *ip;
+  int h, *ip;
   int a, b, c;
   int excl_trans_flag;
   int check_interior_flag;
@@ -2367,14 +2367,14 @@ int BasisHitShadow(BasisCallRec * BC)
   RayInfo *r = BC->rr;
 
   if(MapInsideXY(BI->Map, r->base, &a, &b, &c)) {
-    register int minIndex = -1;
-    register int v2p;
-    register int i, ii;
+    int minIndex = -1;
+    int v2p;
+    int i, ii;
     int *xxtmp;
 
     int n_vert = BI->NVertex, n_eElem = BI->Map->NEElem;
-    register int except1 = BC->except1;
-    register int except2 = BC->except2;
+    int except1 = BC->except1;
+    int except2 = BC->except2;
     const int *vert2prim = BC->vert2prim;
     const int trans_shadows = BC->trans_shadows;
     const int nearest_shadow = BC->nearest_shadow;
@@ -2382,14 +2382,14 @@ int BasisHitShadow(BasisCallRec * BC)
     const float BasisFudge0 = BC->fudge0;
     const float BasisFudge1 = BC->fudge1;
     const int label_shadow_mode = BC->label_shadow_mode;
-    register MapCache *cache = &BC->cache;
+    MapCache *cache = &BC->cache;
     int *cache_cache = cache->Cache;
     int *cache_CacheLink = cache->CacheLink;
-    register CPrimitive *BC_prim = BC->prim;
+    CPrimitive *BC_prim = BC->prim;
 
-    register float r_tri1 = _0, r_tri2 = _0, r_dist;    /* zero inits to suppress compiler warnings */
-    register float r_sphere0 = _0, r_sphere1 = _0, r_sphere2 = _0;
-    register float r_trans = _0;
+    float r_tri1 = _0, r_tri2 = _0, r_dist;    /* zero inits to suppress compiler warnings */
+    float r_sphere0 = _0, r_sphere1 = _0, r_sphere2 = _0;
+    float r_trans = _0;
     CPrimitive *r_prim = NULL;
 
     check_interior_flag = BC->check_interior;
@@ -2426,7 +2426,7 @@ int BasisHitShadow(BasisCallRec * BC)
           v2p = vert2prim[i];
           do_loop = ((ii >= 0) && (ii < n_vert));
           if((v2p != except1) && (v2p != except2) && !MapCached(cache, v2p)) {
-            register CPrimitive *prm = BC_prim + v2p;
+            CPrimitive *prm = BC_prim + v2p;
             int prm_type;
 
             /*MapCache(cache,v2p); */
@@ -2864,11 +2864,11 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
 		 int group_id, int block_base,
 		 int perspective, float front, float size_hint)
 {
-  register float *v;
+  float *v;
   float ll;
   CPrimitive *prm;
-  register int i;
-  register int *tempRef = NULL;
+  int i;
+  int *tempRef = NULL;
   int n = 0, h, q, x, y, z, j, k, l, e;
   int extra_vert = 0;
   float p[3], dd[3], *d1, *d2, vd[3], cx[3], cy[3];
@@ -2909,7 +2909,7 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
   v += 3;
 
   {
-    register int a;
+    int a;
     for(a = 1; a < I->NVertex; a++) {
       if(min[0] > v[0])
         min[0] = v[0];
@@ -2994,13 +2994,13 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
    * efficiently encode our primitives into the map in a way that doesn't
    * require expanding the map cutoff to the size of the largest object*/
   if(remapMode) {
-    register int a, b, c;
+    int a, b, c;
     
     if(sep < size_hint)         /* this keeps us from wasting time & memory on unnecessary subdivision */
       sep = size_hint;
     
     {
-      register int *vert2prim_a = vert2prim;
+      int *vert2prim_a = vert2prim;
       for(a = 0; a < I->NVertex; a++) {
         prm = prim + *(vert2prim_a++);
 
@@ -3054,7 +3054,7 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
     ok &= !I->G->Interrupt;
 
     if (ok){
-      register float *vv, *d;
+      float *vv, *d;
       int *vert2prim_a = vert2prim;
 
       n = I->NVertex;
@@ -3345,12 +3345,12 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
     }
 
     if (ok) {
-      register MapType *map = I->Map;
-      register int *sp, *ip, *ip0, ii;
-      register int *elist = map->EList, *ehead = map->EHead;
-      register int *elist_new = elist, *ehead_new = ehead;
-      register int newelem = 0, neelem = -map->NEElem;
-      register int i_nVertex = I->NVertex;
+      MapType *map = I->Map;
+      int *sp, *ip, *ip0, ii;
+      int *elist = map->EList, *ehead = map->EHead;
+      int *elist_new = elist, *ehead_new = ehead;
+      int newelem = 0, neelem = -map->NEElem;
+      int i_nVertex = I->NVertex;
       const int iMin0 = map->iMin[0];
       const int iMin1 = map->iMin[1];
       const int iMin2 = map->iMin[2];
@@ -3382,7 +3382,7 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
                 }
 
                 while(i >= 0) {
-                  register int ii = *(sp++);
+                  int ii = *(sp++);
                   if(i >= i_nVertex)    /* reference -- remap */
                     i = tempRef[i];
                   if(!tempRef[i]) {     /*eliminate duplicates */
@@ -3433,13 +3433,13 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
 
           if(perspective) {     /* for normal maps */
 
-            register int *iPtr1 =
+            int *iPtr1 =
               map->EHead + ((j - 1) * map->D1D2) + ((k - 1) * map->Dim[2]) + (l - 1);
             for(a = jm1; a <= jp1; a++) {
-              register int *iPtr2 = iPtr1;
+              int *iPtr2 = iPtr1;
               if((a >= iMin0) && (a <= iMax0)) {
                 for(b = km1; b <= kp1; b++) {
-                  register int *iPtr3 = iPtr2;
+                  int *iPtr3 = iPtr2;
                   if((b >= iMin1) && (b <= iMax1)) {
                     for(c = lm1; c <= lp1; c++) {
                       if((c >= iMin2) && (c <= iMax2)) {
@@ -3459,7 +3459,7 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
                           }
 
                           while(i >= 0) {
-                            register int ii = *(sp++);
+                            int ii = *(sp++);
                             if(i >= i_nVertex)
                               i = tempRef[i];
                             if(!tempRef[i]) {   /*eliminate duplicates */
@@ -3502,12 +3502,12 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
 
             c = l;
             {
-              register int *iPtr1 =
+              int *iPtr1 =
                 ehead + ((j - 1) * map->D1D2) + ((k - 1) * map->Dim[2]) + c;
               if((c >= iMin2) && (c <= iMax2)) {
 
                 for(a = jm1; a <= jp1; a++) {
-                  register int *iPtr2 = iPtr1;
+                  int *iPtr2 = iPtr1;
                   if((a >= iMin0) && (a <= iMax0)) {
 
                     for(b = km1; b <= kp1; b++) {
@@ -3528,7 +3528,7 @@ int BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
                           }
 
                           while(i >= 0) {
-                            register int ii = *(sp++);
+                            int ii = *(sp++);
 
                             if(i >= i_nVertex)
                               i = tempRef[i];

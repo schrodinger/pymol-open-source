@@ -249,21 +249,21 @@ float FieldInterpolatef(CField * I, int a, int b, int c, float x, float y, float
 {
   /* basic trilinear interpolation */
 
-  register float x1, y1, z1;
-  register float result1 = 0.0F, result2 = 0.0F;
-  register float product1, product2;
+  float x1, y1, z1;
+  float result1 = 0.0F, result2 = 0.0F;
+  float product1, product2;
   x1 = 1.0F - x;
   y1 = 1.0F - y;
   z1 = 1.0F - z;
 
   {
-    register char *data = I->data;
-    register int a_st = I->stride[0];
-    register int b_st = I->stride[1];
-    register int c_st = I->stride[2];
-    register int a_bs = a * a_st;
-    register int b_bs = b * b_st;
-    register int c_bs = c * c_st;
+    char *data = I->data;
+    int a_st = I->stride[0];
+    int b_st = I->stride[1];
+    int c_st = I->stride[2];
+    int a_bs = a * a_st;
+    int b_bs = b * b_st;
+    int c_bs = c * c_st;
 
     if((product1 = x1 * y1 * z1) != 0.0F)
       result1 += product1 * (*((float *) (data + a_bs + b_bs + c_bs)));
@@ -323,33 +323,33 @@ void FieldInterpolate3f(CField * I, int *locus, float *fract, float *result)
 {
   /* basic trilinear interpolation */
 
-  register float x = fract[0];
-  register float y = fract[1];
-  register float z = fract[2];
-  register float x1, y1, z1;
-  register float result1, result2;
-  register float product1, product2;
-  register int a = locus[0];
-  register int b = locus[1];
-  register int c = locus[2];
-  register int d;
+  float x = fract[0];
+  float y = fract[1];
+  float z = fract[2];
+  float x1, y1, z1;
+  float result1, result2;
+  float product1, product2;
+  int a = locus[0];
+  int b = locus[1];
+  int c = locus[2];
+  int d;
 
   x1 = 1.0F - x;
   y1 = 1.0F - y;
   z1 = 1.0F - z;
 
   {
-    register char *data = I->data;
-    register int a_st = I->stride[0];
-    register int b_st = I->stride[1];
-    register int c_st = I->stride[2];
-    register int d_st = I->stride[3];
-    register int a_bs = a * a_st;
-    register int b_bs = b * b_st;
-    register int c_bs = c * c_st;
+    char *data = I->data;
+    int a_st = I->stride[0];
+    int b_st = I->stride[1];
+    int c_st = I->stride[2];
+    int d_st = I->stride[3];
+    int a_bs = a * a_st;
+    int b_bs = b * b_st;
+    int c_bs = c * c_st;
 
     for(d = 0; d < 3; d++) {
-      register int d_bs = d * d_st;
+      int d_bs = d * d_st;
       result1 = 0.0F;
       result2 = 0.0F;
 
@@ -382,19 +382,19 @@ void FieldInterpolate3f(CField * I, int *locus, float *fract, float *result)
 
 int FieldSmooth3f(CField * I)
 {
-  register int a, b, c;
-  register int na = I->dim[0], nb = I->dim[1], nc = I->dim[2];
+  int a, b, c;
+  int na = I->dim[0], nb = I->dim[1], nc = I->dim[2];
   int n_pts = na * nb * nc;
   char *data = (char *) mmalloc(sizeof(float) * n_pts);
-  register int x, y, z;
-  register int da, db, dc;
-  register double tot;
-  register float cur;
-  register double inp_sum = 0.0;
-  register double inp_sumsq = 0.0;
-  register double out_sum = 0.0;
-  register double out_sumsq = 0.0;
-  register int mult, cnt;
+  int x, y, z;
+  int da, db, dc;
+  double tot;
+  float cur;
+  double inp_sum = 0.0;
+  double inp_sumsq = 0.0;
+  double out_sum = 0.0;
+  double out_sumsq = 0.0;
+  int mult, cnt;
   float inp_mean, out_mean, inp_stdev, out_stdev;
 
   if(data) {

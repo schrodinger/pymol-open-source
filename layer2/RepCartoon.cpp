@@ -67,10 +67,9 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
   Picking **pick = info->pick;
-  register PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->R.G;
   int ok = true;
 
-#ifdef _PYMOL_CGO_DRAWBUFFERS
   if (!ray && I->preshader){
     int use_shaders, cartoon_use_shader, has_cylinders_to_optimize;
     use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
@@ -151,14 +150,6 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
     }
     I->preshader = NULL;
   }
-#else
-  if (I->preshader){
-    I->std = I->preshader;
-    //    I->pickingCGO = I->std = I->preshader;
-    I->preshader = NULL;
-  }
-
-#endif
 
   if(ray) {
     int try_std = false;
@@ -198,19 +189,6 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       int use_dlst;
       use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_dlst && I->R.displayList) {
-        glCallList(I->R.displayList);
-      } else {
-        if(use_dlst) {
-          if(!I->R.displayList) {
-            I->R.displayList = glGenLists(1);
-            if(I->R.displayList) {
-              glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-            }
-          }
-        }
-#endif
 
         PRINTFD(G, FB_RepCartoon)
           " RepCartoonRender: rendering GL...\n" ENDFD;
@@ -221,12 +199,6 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 	  I->std->enable_shaders = true;
           CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
 	}
-#ifdef _PYMOL_GL_CALLLISTS
-        if(use_dlst && I->R.displayList) {
-          glEndList();
-        }
-      }
-#endif
     }
   }
   if (!ok || !CGOHasOperationsOfType(I->ray, 0)){
@@ -357,9 +329,9 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
       int i;
       int a1;
       AtomInfoType *ai2;
-      register AtomInfoType *atomInfo = obj->AtomInfo;
-      register int mem0, mem1, mem2, mem3, mem4, mem5, mem6, mem7;
-      register int *neighbor = obj->Neighbor;
+      AtomInfoType *atomInfo = obj->AtomInfo;
+      int mem0, mem1, mem2, mem3, mem4, mem5, mem6, mem7;
+      int *neighbor = obj->Neighbor;
       int nbr[7];
       int sugar_at = -1, base_at = -1;
       int phos3_at = -1, phos5_at = -1;
@@ -1141,8 +1113,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
     }
     if((!nf) && ((have_C4_prime >= 0) || (have_C4 >= 0))) {
       int nbr[9];
-      register int *neighbor = obj->Neighbor;
-      register int mem0, mem1, mem2, mem3, mem4, mem5, mem6, mem7, mem8, mem9;
+      int *neighbor = obj->Neighbor;
+      int mem0, mem1, mem2, mem3, mem4, mem5, mem6, mem7, mem8, mem9;
       /* see if any of the neighbors are confirmed nucleic acids... */
       if(have_C4_prime >= 0)
         mem0 = have_C4_prime;
@@ -1788,13 +1760,9 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
       v4 = NULL;
       v = pv;
       if(nAt > 1) {
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	int nverts = nAt - 3, pl = 0;
 	float *vertexVals, *tmp_ptr;
 	vertexVals = CGODrawArrays(cgo, GL_LINE_STRIP, CGO_VERTEX_ARRAY, nverts);      
-#else
-        CGOBegin(cgo, GL_LINE_STRIP);
-#endif
         for(a = 0; a < nAt; a++) {
           v4 = v3;
           v3 = v2;
@@ -1810,18 +1778,11 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
             scale3f(t1, 0.2870F, t1);
 
             add3f(t0, t1, t0);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	    tmp_ptr = t0;
 	    vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-#else
-            CGOVertexv(cgo, t0);
-#endif
           }
           v += 3;
         }
-#ifndef _PYMOL_CGO_DRAWARRAYS
-        CGOEnd(cgo);
-#endif
       }
     }
   }
@@ -2373,7 +2334,6 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
             vn = ex->n + 3;
 	    if (ok)
 	      ok &= CGODisable(cgo, GL_LIGHTING);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	    if (ok) {
 	      int nverts = n_p * 2, pl = 0;
 	      float *vertexVals, *tmp_ptr;
@@ -2389,20 +2349,6 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 		vn += 9;
 	      }
 	    }
-#else
-	    if (ok)
-	      ok &= CGOBegin(cgo, GL_LINES);
-            for(b = 0; ok && b < n_p; b++) {
-              ok &= CGOVertexv(cgo, v);
-              add3f(v, vn, t0);
-	      if (ok)
-		ok &= CGOVertexv(cgo, t0);
-              v += 3;
-              vn += 9;
-            }
-	    if (ok)
-	      ok &= CGOEnd(cgo);
-#endif
             if (ok)
 	      ok &= CGOEnable(cgo, GL_LIGHTING);
           }
@@ -2597,21 +2543,15 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
       ok &= CGODisable(cgo, GL_LIGHTING);
       {
 
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	int nverts = nAt * 4, pl = 0;
 	float *vertexVals = NULL, *tmp_ptr;
 	if (ok)
 	  vertexVals = CGODrawArrays(cgo, GL_LINES, CGO_VERTEX_ARRAY, nverts);      
 	CHECKOK(ok, vertexVals);
-#else
-	if (ok)
-	  ok &= CGOBegin(cgo, GL_LINES);
-#endif
 	v1 = pv;
 	v2 = pvo;
 	v3 = tv;
 	for(a = 0; ok && a < nAt; a++) {
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	  tmp_ptr = v1;
 	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
 	  add3f(v1, v2, t0);
@@ -2624,30 +2564,10 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 	  add3f(v1, v3, t0);
 	  tmp_ptr = t0;
 	  vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-#else
-	  ok &= CGOVertexv(cgo, v1);
-	  if (ok){
-	    add3f(v1, v2, t0);
-	    add3f(v2, t0, t0);
-	    ok &= CGOVertexv(cgo, t0);
-	  }
-	  if (ok){
-	    subtract3f(v1, v3, t0);
-	    ok &= CGOVertexv(cgo, t0);
-	  }
-	  if (ok){
-	    add3f(v1, v3, t0);
-	    ok &= CGOVertexv(cgo, t0);
-	  }
-#endif
 	  v1 += 3;
 	  v2 += 3;
 	  v3 += 3;
 	}
-#ifndef _PYMOL_CGO_DRAWARRAYS
-	if (ok)
-	  ok &= CGOEnd(cgo);
-#endif
       }
       if (ok)
 	ok &= CGOEnable(cgo, GL_LIGHTING);
@@ -2666,8 +2586,8 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
     int *marked = Calloc(int, obj->NAtom);
     float *moved = Calloc(float, obj->NAtom * 3);
 
-    register int escape_count;
-    register int *atmToIdx = NULL;
+    int escape_count;
+    int *atmToIdx = NULL;
 
     if(!obj->DiscreteFlag)
       atmToIdx = cs->AtmToIdx;
@@ -3862,7 +3782,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   I->ray = GenerateRepCartoonCGO(cs, obj, na_strands_as_cylinders, false, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
 				 putty_mean, putty_stdev, putty_min, putty_max, ring_anchor, n_ring);
   CHECKOK(ok, I->ray);
-#ifdef _PYMOL_CGO_DRAWARRAYS
   if (ok){
     if (I->ray && I->ray->has_begin_end){
       CGO *convertcgo = NULL;
@@ -3874,9 +3793,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
       I->preshader = I->ray;
     }
   }
-#else
-  I->preshader = I->ray;
-#endif
 
   if (ok){
     int has_picking_cgo = 0;

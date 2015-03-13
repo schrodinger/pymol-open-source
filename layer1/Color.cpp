@@ -175,7 +175,7 @@ int ColorCheckRamped(PyMOLGlobals * G, int index)
 
 ObjectGadgetRamp *ColorGetRamp(PyMOLGlobals * G, int index)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   ObjectGadgetRamp *result = NULL;
   if(index <= cColorExtCutoff) {
     index = cColorExtCutoff - index;
@@ -195,7 +195,7 @@ ObjectGadgetRamp *ColorGetRamp(PyMOLGlobals * G, int index)
 
 int ColorGetRamped(PyMOLGlobals * G, int index, float *vertex, float *color, int state)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   int ok = false;
   if(index <= cColorExtCutoff) {
     index = cColorExtCutoff - index;
@@ -224,7 +224,7 @@ int ColorGetRamped(PyMOLGlobals * G, int index, float *vertex, float *color, int
 
 static int ColorFindExtByName(PyMOLGlobals * G, const char *name, int null_okay, int *best)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   int result = -1;
   int wm;
   int a;
@@ -256,7 +256,7 @@ static int ColorFindExtByName(PyMOLGlobals * G, const char *name, int null_okay,
 
 void ColorRegisterExt(PyMOLGlobals * G, char *name, void *ptr, int type)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   int a;
 
   a = ColorFindExtByName(G, name, true, NULL);
@@ -282,7 +282,7 @@ void ColorRegisterExt(PyMOLGlobals * G, char *name, void *ptr, int type)
 
 void ColorForgetExt(PyMOLGlobals * G, char *name)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   int a;
   a = ColorFindExtByName(G, name, true, NULL);
 
@@ -301,7 +301,7 @@ PyObject *ColorExtAsPyList(PyMOLGlobals * G)
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   PyObject *result, *list;
   ExtRec *ext;
   int a;
@@ -329,7 +329,7 @@ PyObject *ColorAsPyList(PyMOLGlobals * G)
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   PyObject *result, *list;
   ColorRec *color;
   int n_custom = 0;
@@ -368,7 +368,7 @@ PyObject *ColorAsPyList(PyMOLGlobals * G)
 /*========================================================================*/
 int ColorConvertOldSessionIndex(PyMOLGlobals * G, int index)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   if(index > cColorExtCutoff) {
     if(I->HaveOldSessionColors) {
       ColorRec *col = I->Color + (I->NColor - 1);
@@ -404,7 +404,7 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
   int a;
   int ok = true;
   int ll;
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   PyObject *rec;
   ExtRec *ext;
 
@@ -481,7 +481,7 @@ int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
   int index = 0, old_session_index = 0;
   int ok = true;
   int ll = 0;
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   PyObject *rec;
   ColorRec *color = NULL;
 
@@ -570,7 +570,7 @@ int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 /*========================================================================*/
 void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int quiet)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   int color = -1;
   int a;
   int best;
@@ -644,7 +644,7 @@ void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int 
 /*========================================================================*/
 int ColorGetIndex(PyMOLGlobals * G, const char *name)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   int color = -1;               /* default for unknown is white */
   int ext_color;
   int a;
@@ -758,7 +758,7 @@ float *ColorGetNamed(PyMOLGlobals * G, char *name)
 /*========================================================================*/
 char *ColorGetName(PyMOLGlobals * G, int index)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   if((index >= 0) && (index < I->NColor)) {
     return OVLexicon_FetchCString(I->Lex, I->Color[index].Name);
   } else if((index & cColor_TRGB_Mask) == cColor_TRGB_Bits) {
@@ -783,7 +783,7 @@ char *ColorGetName(PyMOLGlobals * G, int index)
 /*========================================================================*/
 int ColorGetStatus(PyMOLGlobals * G, int index)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   /* return 0 if color is invalid, -1 if hidden; 
      1 otherwise */
   int result = 0;
@@ -808,7 +808,7 @@ int ColorGetStatus(PyMOLGlobals * G, int index)
 /*========================================================================*/
 int ColorGetNColor(PyMOLGlobals * G)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   return (I->NColor);
 }
 
@@ -816,7 +816,7 @@ int ColorGetNColor(PyMOLGlobals * G)
 /*========================================================================*/
 void ColorFree(PyMOLGlobals * G)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   if(I->ColorTable) {
     FreeP(I->ColorTable);
   }
@@ -885,9 +885,9 @@ void ColorReset(PyMOLGlobals * G)
 
 */
 
-  register CColor *I = G->Color;
-  register ColorRec *color = I->Color;
-  register int n_color = 0;
+  CColor *I = G->Color;
+  ColorRec *color = I->Color;
+  int n_color = 0;
 
   char name[10];
   int a;
@@ -2491,7 +2491,7 @@ void ColorReset(PyMOLGlobals * G)
 
 int ColorTableLoad(PyMOLGlobals * G, char *fname, float gamma, int quiet)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   int ok = true;
 
   I->Gamma = gamma;
@@ -2860,7 +2860,7 @@ void ColorUpdateFromLut(PyMOLGlobals * G, int index)
 {
   int i;
   int once = false;
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   float *color, *new_color;
 
   I->LUTActive = (I->ColorTable || (I->Gamma != 1.0F));
@@ -2899,7 +2899,7 @@ void ColorUpdateFromLut(PyMOLGlobals * G, int index)
 /*========================================================================*/
 int ColorLookupColor(PyMOLGlobals * G, float *color)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   if(I->LUTActive) {
     lookup_color(I, color, color, I->BigEndian);
     return true;
@@ -2938,7 +2938,7 @@ int ColorInit(PyMOLGlobals * G)
 
 void ColorUpdateFront(PyMOLGlobals * G, const float *back)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   copy3f(back, I->Back);
   I->Front[0] = 1.0F - back[0];
   I->Front[1] = 1.0F - back[1];
@@ -2975,7 +2975,7 @@ float *ColorGetSpecial(PyMOLGlobals * G, int index)
   if(index >= 0)
     return ColorGet(G, index);
   else {
-    register CColor *I = G->Color;
+    CColor *I = G->Color;
     I->RGBColor[0] = (float) index;
     I->RGBColor[1] = -1.0F;
     I->RGBColor[2] = -1.0F;
@@ -2985,7 +2985,7 @@ float *ColorGetSpecial(PyMOLGlobals * G, int index)
 
 float *ColorGet(PyMOLGlobals * G, int index)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   float *ptr;
   if((index >= 0) && (index < I->NColor)) {
     if(I->Color[index].LutColorFlag && SettingGetGlobal_b(G, cSetting_clamp_colors))
@@ -3012,7 +3012,7 @@ float *ColorGet(PyMOLGlobals * G, int index)
 
 float *ColorGetRaw(PyMOLGlobals * G, int index)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   float *ptr;
   if((index >= 0) && (index < I->NColor)) {
     ptr = I->Color[index].Color;
@@ -3030,7 +3030,7 @@ float *ColorGetRaw(PyMOLGlobals * G, int index)
 
 int ColorGetEncoded(PyMOLGlobals * G, int index, float *color)
 {
-  register CColor *I = G->Color;
+  CColor *I = G->Color;
   float *ptr;
   if((index >= 0) && (index < I->NColor)) {
     if(I->Color[index].LutColorFlag && SettingGetGlobal_b(G, cSetting_clamp_colors))

@@ -56,7 +56,7 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
   Picking **pick = info->pick;
   int ok = true;
 
-  register PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->R.G;
   if(ray) {
     int try_std = false;
     PRINTFD(G, FB_RepEllipsoid)
@@ -93,20 +93,7 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
       use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
       
       use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_dlst && I->R.displayList) {
-        glCallList(I->R.displayList);
-      } else {
 
-        if(use_dlst) {
-          if(!I->R.displayList) {
-            I->R.displayList = glGenLists(1);
-            if(I->R.displayList) {
-              glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-            }
-          }
-        }
-#endif
         PRINTFD(G, FB_RepEllipsoid)
           " RepEllipsoidRender: rendering GL...\n" ENDFD;
 
@@ -128,12 +115,6 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
 	} else if(I->std){
           CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
 	}
-#ifdef _PYMOL_GL_CALLLISTS
-        if(use_dlst && I->R.displayList) {
-          glEndList();
-        }
-      }
-#endif
     }
   }
 }
@@ -232,12 +213,12 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
             ((cartoon_side_chain_helper && (ai->visRep & cRepCartoonBit)) ||
              ( ribbon_side_chain_helper && (ai->visRep & cRepRibbonBit)))) {
 
-          register char *name1 = ai->name;
-          register int prot1 = ai->protons;
+          char *name1 = ai->name;
+          int prot1 = ai->protons;
 
           if(prot1 == cAN_N) {
             if((!name1[1]) && (name1[0] == 'N')) {      /* N */
-              register char *resn1 = ai->resn;
+              char *resn1 = ai->resn;
               if(!((resn1[0] == 'P') && (resn1[1] == 'R') && (resn1[2] == 'O')))
                 vis_flag = false;
             }

@@ -28,8 +28,8 @@ Z* -------------------------------------------------------------------
 
 #define ListAppend(List,Elem,Link,ElemType) \
 { \
-  register ElemType *current = (List); \
-  register ElemType *previous = NULL; \
+  ElemType *current = (List); \
+  ElemType *previous = NULL; \
   while(current) \
 	 { \
 		previous = current; \
@@ -50,8 +50,8 @@ Z* -------------------------------------------------------------------
 
 #define ListInsert(List,Elem,After,Link,ElemType) \
 { \
-  register ElemType *current = List; \
-  register ElemType *previous = NULL; \
+  ElemType *current = List; \
+  ElemType *previous = NULL; \
   while(current) \
 		{ \
 		  if(previous == (After)) \
@@ -73,8 +73,8 @@ Z* -------------------------------------------------------------------
 
 #define ListFree(List,Link,ElemType) \
 { \
-  register ElemType *current = List; \
-  register ElemType *previous = NULL; \
+  ElemType *current = List; \
+  ElemType *previous = NULL; \
   while(current) \
 	 { \
       if(previous) \
@@ -89,8 +89,8 @@ Z* -------------------------------------------------------------------
 
 #define ListDetach(List,Elem,Link,ElemType) \
 { \
-  register ElemType *current = List; \
-  register ElemType *previous = NULL; \
+  ElemType *current = List; \
+  ElemType *previous = NULL; \
   while(current) \
 	 { \
 		if(current == (Elem)) \
@@ -110,7 +110,7 @@ Z* -------------------------------------------------------------------
 
 #define ListDelete(List,Elem,Link,ElemType) \
 { \
-   register ElemType *copy = (Elem); \
+   ElemType *copy = (Elem); \
    ListDetach(List,copy,Link,ElemType); \
    mfree(copy); \
 }
@@ -146,7 +146,7 @@ Z* -------------------------------------------------------------------
 
 #define GetListLength(VAR, List,Link,ElemType)	\
 {					  \
-  register ElemType *current = (List); \
+  ElemType *current = (List); \
   int length = 0; \
   while(current) \
 	 { \

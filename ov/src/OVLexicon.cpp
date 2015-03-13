@@ -152,13 +152,13 @@ OVstatus OVLexicon_Pack(OVLexicon * uk)
       }
 
       {                         /* copy data */
-        register ov_word a;
-        register ov_size n_entry = uk->n_entry, new_size = 0;
-        register lex_entry *cur_entry = uk->entry + 1;  /* NOTE: 1-based array */
-        register ov_char8 *data = old_data;
-        register ov_char8 *new_data = uk->data;
-        register ov_word free_index = 0;
-        register ov_size entry_size;
+        ov_word a;
+        ov_size n_entry = uk->n_entry, new_size = 0;
+        lex_entry *cur_entry = uk->entry + 1;  /* NOTE: 1-based array */
+        ov_char8 *data = old_data;
+        ov_char8 *new_data = uk->data;
+        ov_word free_index = 0;
+        ov_size entry_size;
 
         for(a = 1; a <= (ov_word) n_entry; a++) {
           if(cur_entry->ref_cnt > 0) {
@@ -194,7 +194,7 @@ OVstatus OVLexicon_DecRef(OVLexicon * uk, ov_word id)
       printf("OVLexicon_DecRef-Warning: key %zd not found, this might be a bug\n", id);
     return_OVstatus_NOT_FOUND;
   } else {
-    register lex_entry *cur_entry = uk->entry + id;
+    lex_entry *cur_entry = uk->entry + id;
     ov_word ref_cnt = (--cur_entry->ref_cnt);
     if(ref_cnt < 0) {
       printf("OVLexicon_DecRef-Warning: key %zd with ref_cnt %zd, this might be a bug\n", id, ref_cnt);
@@ -202,10 +202,10 @@ OVstatus OVLexicon_DecRef(OVLexicon * uk, ov_word id)
     } else if(!ref_cnt) {
       OVreturn_word result = OVOneToOne_GetForward(uk->up, cur_entry->hash);
       if(OVreturn_IS_OK(result)) {
-        register ov_word index = result.word;
+        ov_word index = result.word;
         if(index != id) {
-          register lex_entry *entry = uk->entry;
-          register ov_word next;
+          lex_entry *entry = uk->entry;
+          ov_word next;
           while(index && (next = entry[index].next) != id)
             index = next;
           if(index)
@@ -233,7 +233,7 @@ OVstatus OVLexicon_IncRef(OVLexicon * uk, ov_word id)
   if((!uk->entry) || (id < 1) || (id > (ov_word) uk->n_entry)) {        /* range checking */
     return_OVstatus_NOT_FOUND;
   } else {
-    register lex_entry *entry = uk->entry + id;
+    lex_entry *entry = uk->entry + id;
     ov_word ref_cnt = (++entry->ref_cnt);
     if(ref_cnt < 2) {           /* was reference count zero or less? */
       /* safety precauations */
@@ -251,15 +251,15 @@ OVreturn_word OVLexicon_GetFromCString(OVLexicon * uk, const ov_char8 * str)
 {
   ov_word hash = _GetCStringHash((ov_uchar8 *) str);
   OVreturn_word search = OVOneToOne_GetForward(uk->up, hash);
-  register ov_word index = 0;
+  ov_word index = 0;
   ov_word cur_index = 0;
   ov_char8 *c;
 
   if(OVreturn_IS_OK(search)) {
     /* the hash key has been registered, so follow the chain
      * looking for a match... */
-    register ov_char8 *data = uk->data;
-    register lex_entry *entry = uk->entry, *entry_ptr;
+    ov_char8 *data = uk->data;
+    lex_entry *entry = uk->entry, *entry_ptr;
     cur_index = (index = search.word);
     while(index) {              /* found */
       c = data + (entry_ptr = (entry + index))->offset;
@@ -273,7 +273,7 @@ OVreturn_word OVLexicon_GetFromCString(OVLexicon * uk, const ov_char8 * str)
   if(!index) {
     /* no match was found (or hash is new) so add this string to the lexicon */
     ov_size st_size = strlen(str) + 1;
-    register lex_entry *entry, *entry_ptr, *cur_entry_ptr;
+    lex_entry *entry, *entry_ptr, *cur_entry_ptr;
     OVstatus status;
     {
       ov_size new_size = uk->data_size + st_size;
@@ -344,7 +344,7 @@ OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, const ov_char8 * str)
   /* get hash token for this word */
   ov_word hash = _GetCStringHash((ov_uchar8 *) str);
   OVreturn_word search = OVOneToOne_GetForward(uk->up, hash);
-  register ov_word index = 0;
+  ov_word index = 0;
   ov_word cur_index = 0;
   ov_char8 *c;
 
@@ -354,8 +354,8 @@ OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, const ov_char8 * str)
   } else {
     /* the hash key has been registered, so follow the chain
      * looking for a match... */
-    register ov_char8 *data = uk->data;
-    register lex_entry *entry = uk->entry, *entry_ptr;
+    ov_char8 *data = uk->data;
+    lex_entry *entry = uk->entry, *entry_ptr;
     cur_index = (index = search.word);
     while(index) {              /* found */
       c = data + (entry_ptr = (entry + index))->offset;

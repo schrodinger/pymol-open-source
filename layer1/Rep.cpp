@@ -139,39 +139,10 @@ int RepGetAutoShowMask(PyMOLGlobals * G)
 /*========================================================================*/
 static void RepRenderBox(struct Rep *this_, RenderInfo * info)
 {
-  register PyMOLGlobals *G = this_->G;
+  PyMOLGlobals *G = this_->G;
   if(G->HaveGUI && G->ValidContext) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      const GLfloat lineVerts[] = {
-	-0.5F, -0.5F, -0.5F,
-	-0.5F, -0.5F, 0.5F,
-	-0.5F, 0.5F, 0.5F,
-	-0.5F, 0.5F, -0.5F,
-	0.5F, 0.5F, -0.5F,
-	0.5F, 0.5F, 0.5F,
-	0.5F, -0.5F, 0.5F,
-	0.5F, -0.5F, -0.5F
-      };
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, lineVerts);
-      glDrawArrays(GL_LINE_LOOP, 0, 8);
-      glDisableClientState(GL_VERTEX_ARRAY);
-    }
-    {
-      const GLint lineVerts[] = {
-	0, 0, 0,
-	1, 0, 0,
-	0, 0, 0,
-	0, 2, 0,
-	0, 0, 0,
-	0, 0, 3
-      };
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(3, GL_INT, 0, lineVerts);
-      glDrawArrays(GL_LINES, 0, 6);
-      glDisableClientState(GL_VERTEX_ARRAY);
-    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
     glBegin(GL_LINE_LOOP);
     glVertex3f(-0.5F, -0.5F, -0.5F);
@@ -217,9 +188,9 @@ void RepInit(PyMOLGlobals * G, Rep * I)
 /*========================================================================*/
 void RepPurge(Rep * I)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   if(G->HaveGUI) {
-#ifndef _PYMOL_GL_DRAWARRAYS
+#ifndef PURE_OPENGL_ES_2
     if(I->displayList) {
       if(PIsGlutThread()) {
         if(G->ValidContext) {

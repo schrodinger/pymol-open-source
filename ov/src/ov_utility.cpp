@@ -9,8 +9,8 @@ void ov_utility_zero_range(void *start, void *stop)
   if(q - p)
     memset(p, 0, q - p);
 #else
-  register unsigned long count;
-  register long *a;
+  unsigned long count;
+  long *a;
   int mask;
 
   count = q - p;

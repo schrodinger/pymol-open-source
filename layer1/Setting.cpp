@@ -134,7 +134,7 @@ void SettingPurgeDefault(PyMOLGlobals * G)
 
 void SettingUniqueDetachChain(PyMOLGlobals * G, int unique_id)
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   OVreturn_word result;
   if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
     int offset = result.word;
@@ -159,7 +159,7 @@ void SettingUniqueDetachChain(PyMOLGlobals * G, int unique_id)
 
 static void SettingUniqueExpand(PyMOLGlobals * G)
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
 
   if(!I->next_free) {
     int new_n_alloc = (I->n_alloc * 3) / 2;
@@ -175,7 +175,7 @@ static void SettingUniqueExpand(PyMOLGlobals * G)
 
 int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id)
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   OVreturn_word result;
   if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
     int offset = result.word;
@@ -195,7 +195,7 @@ int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id)
 static int SettingUniqueGetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
                                       int setting_type, void *value)
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   OVreturn_word result;
   if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
     int offset = result.word;
@@ -304,7 +304,7 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 
 /* set value to NULL in order to delete setting */
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   OVreturn_word result;
   int isset = false;
 
@@ -406,7 +406,7 @@ void SettingUniqueSet_color(PyMOLGlobals * G, int unique_id, int setting_id, int
 
 void SettingUniqueResetAll(PyMOLGlobals * G)
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
 
   OVOneToOne_Reset(I->id2offset);
   {
@@ -425,7 +425,7 @@ void SettingUniqueResetAll(PyMOLGlobals * G)
 int SettingUniquePrintAll(PyMOLGlobals * G, int src_unique_id)
 {
   int ok = true;
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   OVreturn_word src_result;
   printf("SettingUniquePrintAll: ");
   if(OVreturn_IS_OK(src_result = OVOneToOne_GetForward(I->id2offset, src_unique_id))) {
@@ -468,7 +468,7 @@ int SettingUniquePrintAll(PyMOLGlobals * G, int src_unique_id)
 int SettingUniqueCopyAll(PyMOLGlobals * G, int src_unique_id, int dst_unique_id)
 {
   int ok = true;
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   OVreturn_word dst_result;
 
   if(OVreturn_IS_OK((dst_result = OVOneToOne_GetForward(I->id2offset, dst_unique_id)))) {       /* setting list exists for atom */
@@ -577,7 +577,7 @@ int SettingUniqueCopyAll(PyMOLGlobals * G, int src_unique_id, int dst_unique_id)
 
 static void SettingUniqueInit(PyMOLGlobals * G)
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
 
   if((I = (G->SettingUnique = Calloc(CSettingUnique, 1)))) {
     I->id2offset = OVOneToOne_New(G->Context->heap);
@@ -596,7 +596,7 @@ static void SettingUniqueInit(PyMOLGlobals * G)
 
 static void SettingUniqueFree(PyMOLGlobals * G)
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   VLAFreeP(I->entry);
   OVOneToOne_Del(I->id2offset);
   if(I->old2new)
@@ -606,7 +606,7 @@ static void SettingUniqueFree(PyMOLGlobals * G)
 
 int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
 {
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   int unique_id = old_unique_id;
   if(I->old2new) {
     OVreturn_word ret;
@@ -620,7 +620,7 @@ int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
 int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
   int ok = true;
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   if(!partial_restore) {
     SettingUniqueResetAll(G);
     if(I->old2new) {
@@ -712,7 +712,7 @@ int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_resto
 PyObject *SettingUniqueAsPyList(PyMOLGlobals * G)
 {
   PyObject *result = NULL;
-  register CSettingUnique *I = G->SettingUnique;
+  CSettingUnique *I = G->SettingUnique;
   {
     ov_word hidden = 0;
     OVreturn_word ret;
@@ -813,7 +813,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
 {
   int ok = true;
 
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
 
   if(list)
     if(PyList_Check(list))
@@ -835,7 +835,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
 PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals * G)
 {
   PyObject *result = NULL;
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   result = SettingAsPyList(I);
   return (PConvAutoNone(result));
 }
@@ -1842,7 +1842,7 @@ int SettingSet_3fv(CSetting * I, int index, const float *vector)
 /*========================================================================*/
 int SettingGetGlobal_b(PyMOLGlobals * G, int index)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   return (get_b(I, index));
 }
 
@@ -1850,7 +1850,7 @@ int SettingGetGlobal_b(PyMOLGlobals * G, int index)
 /*========================================================================*/
 int SettingGetGlobal_i(PyMOLGlobals * G, int index)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   return (get_i(I, index));
 }
 
@@ -1858,7 +1858,7 @@ int SettingGetGlobal_i(PyMOLGlobals * G, int index)
 /*========================================================================*/
 float SettingGetGlobal_f(PyMOLGlobals * G, int index)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   return (get_f(I, index));
 }
 
@@ -1867,13 +1867,13 @@ float SettingGetGlobal_f(PyMOLGlobals * G, int index)
 // should be `const char *`
 char *SettingGetGlobal_s(PyMOLGlobals * G, int index)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   return (get_s(I, index));
 }
 
 int SettingGetGlobal_color(PyMOLGlobals * G, int index)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   return (get_color(I, index));
 }
 
@@ -1881,7 +1881,7 @@ int SettingGetGlobal_color(PyMOLGlobals * G, int index)
 /*========================================================================*/
 void SettingGetGlobal_3f(PyMOLGlobals * G, int index, float *value)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   float *ptr;
   ptr = I->info[index].float3_;
   copy3f(ptr, value);
@@ -1891,7 +1891,7 @@ void SettingGetGlobal_3f(PyMOLGlobals * G, int index, float *value)
 /*========================================================================*/
 float *SettingGetGlobal_3fv(PyMOLGlobals * G, int index)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   return I->info[index].float3_;
 }
 
@@ -3291,7 +3291,7 @@ int SettingSetGlobal_3f(PyMOLGlobals * G, int index, float value1, float value2,
 /*========================================================================*/
 void SettingFreeGlobal(PyMOLGlobals * G)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
   SettingUniqueFree(G);
   SettingPurge(I);
   if(G->Default) {
@@ -3305,7 +3305,7 @@ void SettingFreeGlobal(PyMOLGlobals * G)
 /*========================================================================*/
 void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_default)
 {
-  register CSetting *I = G->Setting;
+  CSetting *I = G->Setting;
 
   /* use function pointers to prevent the compiler from inlining every
      call in this block (a waste of RAM and time) */

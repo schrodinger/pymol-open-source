@@ -77,10 +77,10 @@ static void SeekerSelectionToggleRange(PyMOLGlobals * G, CSeqRow * rowVLA, int r
     char prefix[3] = "";
     int logging = SettingGetGlobal_i(G, cSetting_logging);
     int col_num;
-    register int *atom_vla = NULL;
-    register int n_at = 0;
-    register int at_idx;
-    register int *atom_list;
+    int *atom_vla = NULL;
+    int n_at = 0;
+    int at_idx;
+    int *atom_list;
 
     ObjectMolecule *obj;
     if(logging == cPLog_pml)
@@ -332,7 +332,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, CSeqRow * rowVLA, int button, int 
   CSeqRow *row;
   CSeqCol *col;
   /*  char selName[WordLength]; */
-  register CSeeker *I = G->Seeker;
+  CSeeker *I = G->Seeker;
   int logging = SettingGetGlobal_i(G, cSetting_logging);
   int continuation = false;
   if((row_num < 0) || (col_num < 0)) {
@@ -498,11 +498,11 @@ static void SeekerRefresh(PyMOLGlobals * G, CSeqRow * rowVLA)
       row = rowVLA + b;
 
       if((obj = ExecutiveFindObjectMoleculeByName(G, row->name))) {
-        register int a;
-        register AtomInfoType *atInfo = obj->AtomInfo;
-        register int at;
-        register int selected;
-        register int not_selected;
+        int a;
+        AtomInfoType *atInfo = obj->AtomInfo;
+        int at;
+        int selected;
+        int not_selected;
 
         if(sele < 0) {
           for(a = 0; a < row->nCol; a++) {
@@ -542,7 +542,7 @@ static void SeekerRefresh(PyMOLGlobals * G, CSeqRow * rowVLA)
 
 static CSeqRow *SeekerDrag(PyMOLGlobals * G, CSeqRow * rowVLA, int row, int col, int mod)
 {
-  register CSeeker *I = G->Seeker;
+  CSeeker *I = G->Seeker;
   int a;
 
   if((row >= 0) && (col >= 0) && (I->dragging)) {
@@ -723,7 +723,7 @@ static CSeqRow *SeekerDrag(PyMOLGlobals * G, CSeqRow * rowVLA, int row, int col,
 static CSeqRow *SeekerRelease(PyMOLGlobals * G, CSeqRow * rowVLA, int button,
                               int row, int col, int mod)
 {
-  register CSeeker *I = G->Seeker;
+  CSeeker *I = G->Seeker;
   I->dragging = false;
 
   I->handler.box_active = false;
@@ -946,8 +946,8 @@ char SeekerGetAbbr(PyMOLGlobals * G, char *abbr, char water, char unknown)
 
 static int SeekerFindColor(PyMOLGlobals * G, AtomInfoType * ai, int n_more_plus_one)
 {
-  register int result = ai->color;      /* default -- use first atom color */
-  register AtomInfoType *ai0 = ai;
+  int result = ai->color;      /* default -- use first atom color */
+  AtomInfoType *ai0 = ai;
   while(1) {
     if(ai0->flags & cAtomFlag_guide)    /* best use guide color */
       return ai0->color;
@@ -967,8 +967,8 @@ static int SeekerFindColor(PyMOLGlobals * G, AtomInfoType * ai, int n_more_plus_
 static int SeekerFindTag(PyMOLGlobals * G, AtomInfoType * ai, int sele, int codes,
                          int n_more_plus_one)
 {
-  register int result = 0;      /* default -- no tag */
-  register AtomInfoType *ai0 = ai;
+  int result = 0;      /* default -- no tag */
+  AtomInfoType *ai0 = ai;
   while(1) {
     int tag = SelectorIsMember(G, ai0->selEntry, sele);
     if(tag && (codes < 2) && (ai0->flags & cAtomFlag_guide))    /* use guide atom if present */
@@ -2084,7 +2084,7 @@ void SeekerUpdate(PyMOLGlobals * G)
 
 int SeekerInit(PyMOLGlobals * G)
 {
-  register CSeeker *I = NULL;
+  CSeeker *I = NULL;
   if((I = (G->Seeker = Calloc(CSeeker, 1)))) {
 
     UtilZeroMem(I, sizeof(CSeeker));

@@ -317,7 +317,7 @@ static CTetsurf *TetsurfNew(PyMOLGlobals * G)
 #define cM_101_111 0x20000
 #define cM_110_111 0x40000
 
-  register CTetsurf *I = Calloc(CTetsurf, 1);
+  CTetsurf *I = Calloc(CTetsurf, 1);
   int c;
   int nv = 1;
   int last_nv;
@@ -528,7 +528,7 @@ int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
                   float carvebuffer, int side)
 {
 
-  register CTetsurf *I;
+  CTetsurf *I;
   if(PIsGlutThread()) {
     I = G->Tetsurf;
   } else {
@@ -639,7 +639,7 @@ int TetsurfVolume(PyMOLGlobals * G, Isofield * field, float level, int **num,
 /*===========================================================================*/
 static int TetsurfAlloc(CTetsurf * II)
 {
-  register CTetsurf *I = II;
+  CTetsurf *I = II;
   PyMOLGlobals *G = I->G;
 
   int ok = true;
@@ -675,7 +675,7 @@ static int TetsurfAlloc(CTetsurf * II)
 /*===========================================================================*/
 static void TetsurfPurge(CTetsurf * II)
 {
-  register CTetsurf *I = II;
+  CTetsurf *I = II;
   if(I->Tri) {
     VLAFreeP(I->Tri);
   }
@@ -769,7 +769,7 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, int mode, int *n_strip, int n_v
                                   MapType * voxelmap, float *a_vert,
                                   float carvebuffer, int side)
 {
-  register CTetsurf *I = II;
+  CTetsurf *I = II;
   int a, b, c, i, j, k, h, l;
 #ifdef Trace
   int ECount = 0;
@@ -1506,7 +1506,7 @@ static int TetsurfFindActiveBoxes(CTetsurf * II, int mode, int *n_strip, int n_v
 /*===========================================================================*/
 static int TetsurfCodeVertices(CTetsurf * II)
 {
-  register CTetsurf *I = II;
+  CTetsurf *I = II;
   int i, j, k;
   int b0, b1;
   int flag1 = false;

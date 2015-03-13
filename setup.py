@@ -174,9 +174,6 @@ def_macros = [
     ("_PYMOL_LIBPNG", None),
     ("_PYMOL_INLINE", None),
     ("_PYMOL_OPENGL_SHADERS", None),
-    ("_PYMOL_CGO_DRAWARRAYS", None),
-    ("_PYMOL_CGO_DRAWBUFFERS", None),
-    ("_PYMOL_GL_CALLLISTS", None),
 ]
 
 libs = []
@@ -244,8 +241,6 @@ else: # unix style (linux, mac, ...)
     def_macros += [
             ("_PYMOL_FREETYPE",None),
             ("NO_MMLIBS",None),
-            ("_CGO_DRAWARRAYS",None),
-            ("OPENGL_ES_2",None),
             ]
 
     try:
