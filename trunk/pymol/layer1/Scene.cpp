@@ -387,12 +387,12 @@ static void GridUpdate(GridInfo * I, float asp_ratio, int mode, int size)
     I->size = size;
     I->mode = mode;
     {
-      register int n_row = 1;
-      register int n_col = 1;
-      register int r_size = size;
+      int n_row = 1;
+      int n_col = 1;
+      int r_size = size;
       while((n_row * n_col) < r_size) {
-        register float asp1 = asp_ratio * (n_row + 1.0) / n_col;
-        register float asp2 = asp_ratio * (n_row) / (n_col + 1.0);
+        float asp1 = asp_ratio * (n_row + 1.0) / n_col;
+        float asp2 = asp_ratio * (n_row) / (n_col + 1.0);
         if(asp1 < 1.0F)
           asp1 = 1.0 / asp1;
         if(asp2 < 1.0F)
@@ -420,7 +420,7 @@ static void GridUpdate(GridInfo * I, float asp_ratio, int mode, int size)
 
 void SceneInvalidateStencil(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->StencilValid = false;
 }
 
@@ -526,7 +526,7 @@ static int stereo_via_stencil(int stereo_mode)
 }
 
 int StereoIsAdjacent(PyMOLGlobals * G){
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return stereo_via_adjacent_array(I->StereoMode);
 }
 
@@ -567,7 +567,7 @@ int SceneLoopClick(Block * block, int button, int x, int y, int mod);
 
 void SceneAbortAnimation(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(I->cur_ani_elem < I->n_ani_elem) { /* allow user to override animation */
     I->cur_ani_elem = I->n_ani_elem;
   }
@@ -603,7 +603,7 @@ static float SceneGetFPS(PyMOLGlobals * G)
 
 static void ScenePurgeImage(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(I->MovieOwnsImageFlag) {
     I->MovieOwnsImageFlag = false;
     I->Image = NULL;
@@ -619,7 +619,7 @@ static void ScenePurgeImage(PyMOLGlobals * G)
 
 void SceneInvalidateCopy(PyMOLGlobals * G, int free_buffer)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(I) {
     if(I->MovieOwnsImageFlag) {
       I->MovieOwnsImageFlag = false;
@@ -672,7 +672,7 @@ void SceneLoadAnimation(PyMOLGlobals * G, double duration, int hand)
 int SceneLoopClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->LoopRect.left = x;
   I->LoopRect.top = y;
   I->LoopRect.right = x;
@@ -687,7 +687,7 @@ int SceneLoopClick(Block * block, int button, int x, int y, int mod)
 int SceneLoopDrag(Block * block, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->LoopRect.right = x;
   I->LoopRect.bottom = y;
   OrthoSetLoopRect(G, true, &I->LoopRect);
@@ -697,7 +697,7 @@ int SceneLoopDrag(Block * block, int x, int y, int mod)
 int SceneLoopRelease(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int tmp;
   int mode;
   mode = ButModeTranslate(G, button, I->LoopMod);
@@ -762,9 +762,9 @@ static const char SelModeKW[][20] = {
 
 static void SceneUpdateInvMatrix(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
-  register float *rm = I->RotMatrix;
-  register float *im = I->InvMatrix;
+  CScene *I = G->Scene;
+  float *rm = I->RotMatrix;
+  float *im = I->InvMatrix;
   im[0] = rm[0];
   im[1] = rm[4];
   im[2] = rm[8];
@@ -810,7 +810,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, char *scene_name)
 {
   float *fp;
   double *dp;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
 
   /* copy rotation matrix */
   elem->matrix_flag = true;
@@ -882,7 +882,7 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, char *scene_name)
 
 void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float *fp;
   double *dp;
   int changed_flag = false;
@@ -961,7 +961,7 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
 void SceneCleanupStereo(PyMOLGlobals * G)
 {
 #ifndef _PYMOL_NOPY
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(I->StereoMode == 1)
     PSGIStereo(G, 0);
 #endif
@@ -1005,14 +1005,14 @@ static void ScenePrepareUnitContext(SceneUnitContext * context, int width, int h
 
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   *width = I->Width;
   *height = I->Height;
 }
 
 void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   *width = I->Width;
   *height = I->Height;
   if (stereo_via_adjacent_array(I->StereoMode))
@@ -1021,7 +1021,7 @@ void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height)
 
 void SceneSetCardInfo(PyMOLGlobals * G, char *vendor, char *renderer, char *version)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   UtilNCopy(I->vendor, vendor, sizeof(OrthoLineType) - 1);
   UtilNCopy(I->renderer, renderer, sizeof(OrthoLineType) - 1);
   UtilNCopy(I->version, version, sizeof(OrthoLineType) - 1);
@@ -1029,13 +1029,13 @@ void SceneSetCardInfo(PyMOLGlobals * G, char *vendor, char *renderer, char *vers
 
 int SceneGetStereo(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return (I->StereoMode);
 }
 
 void SceneGetCardInfo(PyMOLGlobals * G, char **vendor, char **renderer, char **version)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   (*vendor) = I->vendor;
   (*renderer) = I->renderer;
   (*version) = I->version;
@@ -1043,7 +1043,7 @@ void SceneGetCardInfo(PyMOLGlobals * G, char **vendor, char **renderer, char **v
 
 void SceneSuppressMovieFrame(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->MovieFrameFlag = false;
 }
 
@@ -1052,7 +1052,7 @@ void SceneSuppressMovieFrame(PyMOLGlobals * G)
  */
 void SceneGetCenter(PyMOLGlobals * G, float *pos)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
 
   MatrixTransformC44fAs33f3f(I->RotMatrix, I->Origin, pos);
 
@@ -1066,7 +1066,7 @@ void SceneGetCenter(PyMOLGlobals * G, float *pos)
 /*========================================================================*/
 void SceneApplyRotMatrix(PyMOLGlobals * G, float *src, float *dst)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   MatrixTransformC44fAs33f3f(I->RotMatrix, src, dst);
 }
 
@@ -1074,7 +1074,7 @@ void SceneApplyRotMatrix(PyMOLGlobals * G, float *src, float *dst)
 /*========================================================================*/
 int SceneMultipick(PyMOLGlobals * G, Multipick * smp)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int click_side = 0;
   int defer_builds_mode = SettingGetGlobal_b(G, cSetting_defer_builds_mode);
 
@@ -1100,7 +1100,7 @@ int SceneMultipick(PyMOLGlobals * G, Multipick * smp)
 /*========================================================================*/
 int SceneGetNFrame(PyMOLGlobals * G, int *has_movie)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(has_movie)
     *has_movie = I->HasMovie;
   return (I->NFrame);
@@ -1112,7 +1112,7 @@ void SceneGetView(PyMOLGlobals * G, SceneViewType view)
 {
   float *p;
   int a;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   p = view;
   for(a = 0; a < 16; a++)
     *(p++) = I->RotMatrix[a];
@@ -1136,7 +1136,7 @@ void SceneSetView(PyMOLGlobals * G, SceneViewType view,
 {
   float *p;
   int a;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
 
   if(animate < 0.0F) {
     if(SettingGetGlobal_b(G, cSetting_animation))
@@ -1196,7 +1196,7 @@ void SceneDontCopyNext(PyMOLGlobals * G)
 
 /* disables automatic copying of the image for the next rendering run */
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->CopyNextFlag = false;
 }
 
@@ -1204,7 +1204,7 @@ void SceneDontCopyNext(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneUpdateStereoMode(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(I->StereoMode) {
     SceneSetStereo(G, true);
   }
@@ -1214,7 +1214,7 @@ void SceneUpdateStereoMode(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneSetStereo(PyMOLGlobals * G, int flag)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int cur_stereo = I->StereoMode;
 
   if(flag) {
@@ -1242,7 +1242,7 @@ void SceneSetStereo(PyMOLGlobals * G, int flag)
 /*========================================================================*/
 void SceneTranslate(PyMOLGlobals * G, float x, float y, float z)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->Pos[0] += x;
   I->Pos[1] += y;
   I->Pos[2] += z;
@@ -1251,7 +1251,7 @@ void SceneTranslate(PyMOLGlobals * G, float x, float y, float z)
 
 void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_mode)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int invalidate = false;
 
   switch (sdof_mode) {
@@ -1339,7 +1339,7 @@ void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_
 
 void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_mode)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int invalidate = false;
   float axis[3];
   switch (sdof_mode) {
@@ -1408,7 +1408,7 @@ void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_
 
 static void SceneClipSetWithDirty(PyMOLGlobals * G, float front, float back, int dirty)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
 
   // minimum slab
   if(back - front < cSliceMin) {
@@ -1439,7 +1439,7 @@ void SceneClipSet(PyMOLGlobals * G, float front, float back)
 /*========================================================================*/
 void SceneClip(PyMOLGlobals * G, int plane, float movement, char *sele, int state)
 {                               /* 0=front, 1=back */
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float avg;
   float mn[3], mx[3], cent[3], v0[3], offset[3], origin[3];
   switch (plane) {
@@ -1526,7 +1526,7 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, char *sele, int stat
 /*========================================================================*/
 void SceneSetMatrix(PyMOLGlobals * G, float *m)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int a;
   for(a = 0; a < 16; a++)
     I->RotMatrix[a] = m[a];
@@ -1537,7 +1537,7 @@ void SceneSetMatrix(PyMOLGlobals * G, float *m)
 /*========================================================================*/
 void SceneGetViewNormal(PyMOLGlobals * G, float *v)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   copy3f(I->ViewNormal, v);
 }
 
@@ -1552,7 +1552,7 @@ int SceneGetState(PyMOLGlobals * G)
 /*========================================================================*/
 float *SceneGetMatrix(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return (I->RotMatrix);
 }
 
@@ -1563,7 +1563,7 @@ float *SceneGetModMatrix(PyMOLGlobals * G)
 
 float *SceneGetPmvMatrix(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return (I->PmvMatrix);
 }
 
@@ -1572,7 +1572,7 @@ float *SceneGetPmvMatrix(PyMOLGlobals * G)
 
 int SceneCaptureWindow(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int ok = true;
 
   /* check assumptions */
@@ -1605,7 +1605,7 @@ int SceneCaptureWindow(PyMOLGlobals * G)
 
 static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int antialias)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int ok = true;
   int save_flag = false;
   int save_width = 0, save_height = 0;
@@ -1804,9 +1804,9 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
             unsigned char *p = (unsigned char *) final_image;
             unsigned char *buffer = Alloc(unsigned char, 4 * width * height);
             unsigned char *q = buffer;
-            register unsigned char *pp, *ppp, *pppp;
-            register int a, b, c, d;
-            register unsigned int c1, c2, c3, c4, alpha;
+            unsigned char *pp, *ppp, *pppp;
+            int a, b, c, d;
+            unsigned int c1, c2, c3, c4, alpha;
             unsigned int factor_col_bytes = factor * 4;
             unsigned int factor_row_bytes = factor * src_row_bytes;
 
@@ -1897,7 +1897,7 @@ static int SceneMakeSizedImage(PyMOLGlobals * G, int width, int height, int anti
 /*========================================================================*/
 static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   unsigned char *image = NULL;
   int save_stereo = (I->StereoMode == 1);
   int ok = true;
@@ -1953,7 +1953,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals * G, int prior_only)
 
 static void SceneImageFinish(PyMOLGlobals * G, GLvoid *image)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(I->Image) {
     if(I->Image->data != (unsigned char *) image)       /* purge the image if this isn't the active copy */
       FreeP(image);
@@ -1964,7 +1964,7 @@ static void SceneImageFinish(PyMOLGlobals * G, GLvoid *image)
 
 void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   GLvoid *image = SceneImagePrepare(G, false);
   if(image && I->Image) {
     *width = I->Image->width;
@@ -1978,7 +1978,7 @@ void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height)
 
 void SceneGetImageSizeFast(PyMOLGlobals * G, int *width, int *height)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(I->Image) {
     *width = I->Image->width;
     *height = I->Image->height;
@@ -1988,7 +1988,7 @@ void SceneGetImageSizeFast(PyMOLGlobals * G, int *width, int *height)
   }
 }
 float SceneGetGridAspectRatio(PyMOLGlobals * G){
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return (I->Width / (float)I->Height) /
     (float)(I->grid.cur_viewport_size[0] / (float)I->grid.cur_viewport_size[1]);
 }
@@ -1997,7 +1997,7 @@ int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
                       int rowbytes, unsigned char *dest, int mode)
 {
   GLvoid *image = SceneImagePrepare(G, false);
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int result = false;
   int i, j;
   int premultiply_alpha = true;
@@ -2077,7 +2077,7 @@ int SceneCopyExternal(PyMOLGlobals * G, int width, int height,
 
 static void interlace(unsigned int *dst, unsigned int *src, int width, int height)
 {
-  register int a, b;
+  int a, b;
   unsigned int *p0 = src, *p1 = src + (height * width);
   unsigned int *q = dst;
   for(a = 0; a < height; a++) {
@@ -2093,7 +2093,7 @@ static void interlace(unsigned int *dst, unsigned int *src, int width, int heigh
 static void deinterlace(unsigned int *dst, unsigned int *src,
                         int width, int height, int swap)
 {
-  register int a, b;
+  int a, b;
   unsigned int *p = src;
   unsigned int *q0 = dst, *q1 = dst + (height * width);
   if(swap) {
@@ -2114,7 +2114,7 @@ static void deinterlace(unsigned int *dst, unsigned int *src,
 int ScenePNG(PyMOLGlobals * G, char *png, float dpi, int quiet,
              int prior_only, int format)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   GLvoid *image = SceneImagePrepare(G, prior_only);
   if(image && I->Image) {
     int width = I->Image->width;
@@ -2162,7 +2162,7 @@ int SceneGetFrame(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneCountFrames(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ObjRec *rec = NULL;
   int n;
   int mov_len;
@@ -2191,7 +2191,7 @@ void SceneCountFrames(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneSetFrame(PyMOLGlobals * G, int mode, int frame)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int newFrame;
   int newState = 0;
   int movieCommand = false;
@@ -2303,7 +2303,7 @@ void SceneDirty(PyMOLGlobals * G)
 
    needs to be updated */
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
 
   PRINTFD(G, FB_Scene)
     " SceneDirty: called.\n" ENDFD;
@@ -2320,7 +2320,7 @@ void SceneDirty(PyMOLGlobals * G)
 
 void SceneRovingPostpone(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float delay;
   if(SettingGetGlobal_b(G, cSetting_roving_detail)) {
     delay = SettingGetGlobal_f(G, cSetting_roving_delay);
@@ -2332,7 +2332,7 @@ void SceneRovingPostpone(PyMOLGlobals * G)
 
 void SceneRovingDirty(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
 
   if(SettingGetGlobal_b(G, cSetting_roving_detail)) {
     SceneRovingPostpone(G);
@@ -2344,7 +2344,7 @@ void SceneRovingDirty(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneChanged(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->ChangedFlag = true;
   SceneInvalidateCopy(G, false);
   SceneDirty(G);
@@ -2356,7 +2356,7 @@ void SceneChanged(PyMOLGlobals * G)
 /*========================================================================*/
 Block *SceneGetBlock(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return (I->Block);
 }
 
@@ -2364,7 +2364,7 @@ Block *SceneGetBlock(PyMOLGlobals * G)
 /*========================================================================*/
 int SceneMakeMovieImage(PyMOLGlobals * G, int show_timing, int validate, int mode)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   //  float *v;
   int valid = true;
   PRINTFB(G, FB_Scene, FB_Blather)
@@ -2436,7 +2436,7 @@ int SceneMakeMovieImage(PyMOLGlobals * G, int show_timing, int validate, int mod
 static void SceneUpdateCameraRock(PyMOLGlobals * G, int dirty)
 {
 
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float ang_cur, disp, diff;
   float sweep_angle = SettingGetGlobal_f(G, cSetting_sweep_angle);
   float sweep_speed = SettingGetGlobal_f(G, cSetting_sweep_speed);
@@ -2491,7 +2491,7 @@ static void SceneUpdateCameraRock(PyMOLGlobals * G, int dirty)
 /*========================================================================*/
 void SceneIdle(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   double renderTime;
   double minTime;
   int frameFlag = false;
@@ -2576,7 +2576,7 @@ static float GetFovWidth(PyMOLGlobals * G)
  */
 void SceneWindowSphere(PyMOLGlobals * G, float *location, float radius)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float v0[3];
   float dist = 2.f * radius / GetFovWidth(G);
 
@@ -2599,7 +2599,7 @@ void SceneWindowSphere(PyMOLGlobals * G, float *location, float radius)
 /*========================================================================*/
 void SceneRelocate(PyMOLGlobals * G, float *location)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float v0[3];
   float slab_width;
   float dist;
@@ -2636,7 +2636,7 @@ void SceneRelocate(PyMOLGlobals * G, float *location)
  */
 void SceneOriginGet(PyMOLGlobals * G, float *origin)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   copy3f(I->Origin, origin);
 }
 
@@ -2644,7 +2644,7 @@ void SceneOriginGet(PyMOLGlobals * G, float *origin)
 /*========================================================================*/
 void SceneOriginSet(PyMOLGlobals * G, float *origin, int preserve)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float v0[3], v1[3];
 
   if(preserve) {                /* preserve current viewing location */
@@ -2662,7 +2662,7 @@ void SceneOriginSet(PyMOLGlobals * G, float *origin, int preserve)
 /*========================================================================*/
 int SceneObjectAdd(PyMOLGlobals * G, CObject * obj)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ObjRec *rec = NULL;
   ListElemAlloc(G, rec, ObjRec);
   rec->next = NULL;
@@ -2679,7 +2679,7 @@ int SceneObjectAdd(PyMOLGlobals * G, CObject * obj)
 int SceneObjectIsActive(PyMOLGlobals * G, CObject * obj)
 {
   int result = false;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ObjRec *rec = NULL;
   while(ListIterate(I->Obj, rec, next))
     if(rec->obj == obj) {
@@ -2691,7 +2691,7 @@ int SceneObjectIsActive(PyMOLGlobals * G, CObject * obj)
 
 int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ObjRec *rec = NULL;
   int defer_builds_mode = SettingGetGlobal_b(G, cSetting_defer_builds_mode);
 
@@ -2731,7 +2731,7 @@ int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge)
 /*========================================================================*/
 int SceneLoadPNG(PyMOLGlobals * G, char *fname, int movie_flag, int stereo, int quiet)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int ok = false;
   if(I->Image) {
     if(I->MovieOwnsImageFlag) {
@@ -2901,7 +2901,7 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
  */
 void SceneSetNames(PyMOLGlobals * G, std::vector<std::string> &list)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->NScene = list.size();
   VLACheck(I->SceneVLA, SceneElem, I->NScene);
   SceneElem *elem = I->SceneVLA;
@@ -2922,7 +2922,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
 {
 #ifndef _PYMOL_NOPY
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int x, y, xx, x2;
   char *c = NULL;
   float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
@@ -3105,7 +3105,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
 }
 
 int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int drawn = false;
   int text = SettingGetGlobal_b(G, cSetting_text);
     /* is the text/overlay (ESC) on? */
@@ -3144,8 +3144,8 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
       {
 	int factor = 1;
 	int shift = 0;
-	register int tmp_height = I->Image->height;
-	register int tmp_width = I->Image->width;
+	int tmp_height = I->Image->height;
+	int tmp_width = I->Image->width;
 	int src_row_bytes = I->Image->width * 4;
 	unsigned int color_word;
 	float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
@@ -3170,9 +3170,9 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
 	  if(buffer && data) {
 	    unsigned char *p = data;
 	    unsigned char *q = buffer;
-	    register unsigned char *pp, *ppp, *pppp;
-	    register int a, b, c, d;
-	    register unsigned int c1, c2, c3, c4, alpha, tot, bg;
+	    unsigned char *pp, *ppp, *pppp;
+	    int a, b, c, d;
+	    unsigned int c1, c2, c3, c4, alpha, tot, bg;
 	    unsigned int factor_col_bytes = factor * 4;
 	    unsigned int factor_row_bytes = factor * src_row_bytes;
 	    
@@ -3271,15 +3271,15 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
       
       unsigned int color_word;
       float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-      register unsigned int tmp_height = height + 2;
-      register unsigned int tmp_width = width + 2;
+      unsigned int tmp_height = height + 2;
+      unsigned int tmp_width = width + 2;
       unsigned int n_word = tmp_height * tmp_width;
       unsigned int *tmp_buffer = Alloc(unsigned int, n_word);
       ColorGetBkrdContColor(G, rgba, false);
       color_word = ColorGet32BitWord(G, rgba);
       
       if(tmp_buffer) {
-	register unsigned int a, b;
+	unsigned int a, b;
 	unsigned int *p = (unsigned int *) data;
 	unsigned int *q = tmp_buffer;
 	for(b = 0; b < tmp_width; b++)
@@ -3335,7 +3335,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
       color_word = ColorGet32BitWord(G, rgba);
       
       if(tmp_buffer) {
-	register unsigned int a, b;
+	unsigned int a, b;
 	unsigned int *p = (unsigned int *) data;
 	unsigned int *q = tmp_buffer;
 	for(a = 0; a < (unsigned int) height; a++) {
@@ -3391,7 +3391,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
 void SceneDraw(Block * block ORTHOCGOARG) /* returns true if scene was drawn (using a cached image) */
 {
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int drawn = false; 
 
   if(G->HaveGUI && G->ValidContext) {
@@ -3415,7 +3415,7 @@ void SceneDraw(Block * block ORTHOCGOARG) /* returns true if scene was drawn (us
 
 int SceneGetButtonMargin(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return I->ButtonMargin;
 }
 
@@ -3633,7 +3633,7 @@ unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
 static int SceneRelease(Block * block, int button, int x, int y, int mod, double when)
 {
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int release_handled = false;
   if(I->ButtonsShown && I->PressMode) {
     if(I->ScrollBarActive) {
@@ -3772,7 +3772,7 @@ static void SceneDoRoving(PyMOLGlobals * G, float old_front,
   EditorFavorOrigin(G, NULL);
   if(SettingGetGlobal_b(G, cSetting_roving_origin)) {
 
-    register CScene *I = G->Scene;
+    CScene *I = G->Scene;
     float delta_front, delta_back;
     float front_weight, back_weight, slab_width;
     float z_buffer = 3.0;
@@ -3890,12 +3890,12 @@ static void SceneNoteMouseInteraction(PyMOLGlobals * G)
 static int SceneClick(Block * block, int button, int x, int y, int mod, double when)
 {
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   CObject *obj;
   ObjectMolecule *objMol;
   OrthoLineType buffer, buf1, buf2;
   WordType selName = "";
-  register int mode = 0;        /* trying to work around something... */
+  int mode = 0;        /* trying to work around something... */
   int atIndex;
   char empty_string[1] = "";
   char *sel_mode_kw = empty_string;
@@ -4772,7 +4772,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 
 void ScenePushRasterMatrix(PyMOLGlobals * G, float *v)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float scale = SceneGetExactScreenVertexScale(G, v);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -4803,7 +4803,7 @@ void SceneComposeModelViewMatrix(CScene * I, float * modelView) {
 /*========================================================================*/
 void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float p1[4], p2[4];
   float modelView[16];
 
@@ -4825,7 +4825,7 @@ void SceneGetEyeNormal(PyMOLGlobals * G, float *v1, float *normal)
  */
 float SceneGetRawDepth(PyMOLGlobals * G, float *v1)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float vt[3];
   float modelView[16];
 
@@ -4862,14 +4862,14 @@ float SceneGetScreenVertexScale(PyMOLGlobals * G, float *v1)
 
 void SceneRovingChanged(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   SceneRovingDirty(G);
   I->RovingCleanupFlag = true;
 }
 
 static void SceneRovingCleanup(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   char *s;
   char buffer[OrthoLineLength];
 
@@ -4905,7 +4905,7 @@ static void SceneRovingCleanup(PyMOLGlobals * G)
 
 void SceneRovingUpdate(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   char buffer[OrthoLineLength];
   float sticks, lines, spheres, labels, ribbon, cartoon;
   float polar_contacts, polar_cutoff, nonbonded, nb_spheres;
@@ -5197,7 +5197,7 @@ void SceneRovingUpdate(PyMOLGlobals * G)
 static int SceneDrag(Block * block, int x, int y, int mod, double when)
 {
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float scale, vScale;
   float v1[3], v2[3], n1[3], n2[3], r1, r2, cp[3], v3[3];
   float dx, dy, dt;
@@ -6155,7 +6155,7 @@ int SceneDeferRelease(Block * block, int button, int x, int y, int mod)
 /*========================================================================*/
 void SceneFree(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   short created = I->offscreen_width && I->offscreen_height;
   if (created){
     /* Cleaning up offscreen buffer if exists */
@@ -6191,7 +6191,7 @@ void SceneFree(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneResetMatrix(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   identity44f(I->RotMatrix);
   SceneUpdateInvMatrix(G);
 }
@@ -6200,7 +6200,7 @@ void SceneResetMatrix(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneSetDefaultView(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
 
   identity44f(I->RotMatrix);
   identity44f(I->ModMatrix);
@@ -6242,7 +6242,7 @@ int SceneReinitialize(PyMOLGlobals * G)
 /*========================================================================*/
 int SceneInit(PyMOLGlobals * G)
 {
-  register CScene *I = NULL;
+  CScene *I = NULL;
   if((I = (G->Scene = Calloc(CScene, 1)))) {
 
     /* all defaults to zero, so only initialize non-zero elements */
@@ -6313,7 +6313,7 @@ int SceneInit(PyMOLGlobals * G)
 void SceneReshape(Block * block, int width, int height)
 {
   PyMOLGlobals *G = block->G;
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int y = height;
 
   if(I->Block->margin.right) {
@@ -6370,7 +6370,7 @@ void SceneReshape(Block * block, int width, int height)
 /*========================================================================*/
 void SceneDone(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(I->Block)
     OrthoFreeBlock(G, I->Block);
 }
@@ -6379,7 +6379,7 @@ void SceneDone(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneResetNormal(PyMOLGlobals * G, int lines)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(G->HaveGUI && G->ValidContext) {
     if(lines)
       glNormal3fv(I->LinesNormal);
@@ -6390,7 +6390,7 @@ void SceneResetNormal(PyMOLGlobals * G, int lines)
 
 void SceneResetNormalCGO(PyMOLGlobals * G, CGO *cgo, int lines)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(G->HaveGUI && G->ValidContext) {
     if(lines)
       CGONormalv(cgo, I->LinesNormal);
@@ -6401,9 +6401,10 @@ void SceneResetNormalCGO(PyMOLGlobals * G, CGO *cgo, int lines)
 
 void SceneResetNormalUseShader(PyMOLGlobals * G, int lines, short use_shader)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(G->HaveGUI && G->ValidContext) {
-#if defined(OPENGL_ES_2)
+#ifdef PURE_OPENGL_ES_2
+#else
     if (use_shader){
       if(lines)
 	glVertexAttrib3fv(VERTEX_NORMAL, I->LinesNormal);
@@ -6415,20 +6416,16 @@ void SceneResetNormalUseShader(PyMOLGlobals * G, int lines, short use_shader)
       else
 	glNormal3fv(I->ViewNormal);
     }
-#else
-    if(lines)
-      glNormal3fv(I->LinesNormal);
-    else
-      glNormal3fv(I->ViewNormal);
 #endif
   }
 }
 
 void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_shader, int attr)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if(G->HaveGUI && G->ValidContext) {
-#if defined(OPENGL_ES_2)
+#ifdef PURE_OPENGL_ES_2
+#else
     if (use_shader){
       if(lines)
 	glVertexAttrib3fv(attr, I->LinesNormal);
@@ -6440,20 +6437,14 @@ void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_s
       else
 	glNormal3fv(I->ViewNormal);
     }
-#else
-    if(lines)
-      glNormal3fv(I->LinesNormal);
-    else
-      glNormal3fv(I->ViewNormal);
 #endif
   }
 }
 
 
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 void SceneGetResetNormal(PyMOLGlobals * G, float *normal, int lines)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float *norm;
   if(G->HaveGUI && G->ValidContext) {
     if(lines)
@@ -6463,7 +6454,6 @@ void SceneGetResetNormal(PyMOLGlobals * G, float *normal, int lines)
     normal[0] = norm[0]; normal[1] = norm[1]; normal[2] = norm[2];
   }
 }
-#endif
 
 /*========================================================================*/
 static void SceneApplyImageGamma(PyMOLGlobals * G, unsigned int *buffer, int width,
@@ -6484,12 +6474,12 @@ static void SceneApplyImageGamma(PyMOLGlobals * G, unsigned int *buffer, int wid
   big_endian = (*testPtr) & 0x01;
 
   if(buffer && height && width) {
-    register float _inv3 = 1 / (255 * 3.0F);
-    register float _1 = 1 / 3.0F;
-    register unsigned char *p;
-    register int x, y;
-    register float c1, c2, c3, inp, sig;
-    register unsigned int i1, i2, i3;
+    float _inv3 = 1 / (255 * 3.0F);
+    float _1 = 1 / 3.0F;
+    unsigned char *p;
+    int x, y;
+    float c1, c2, c3, inp, sig;
+    unsigned int i1, i2, i3;
     p = (unsigned char *) buffer;
     for(y = 0; y < height; y++) {
       for(x = 0; x < width; x++) {
@@ -6578,7 +6568,7 @@ int SceneDeferRay(PyMOLGlobals * G,
 
 void SceneUpdateAnimation(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int rockFlag = false;
   int dirty = false;
   int movie_rock = SettingGetGlobal_b(G, cSetting_movie_rock);
@@ -6682,7 +6672,7 @@ static int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot)
 
 int SceneGetDrawFlagGrid(PyMOLGlobals * G, GridInfo * grid, int slot)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return SceneGetDrawFlag(grid, I->SlotVLA, slot);
 }
 
@@ -6693,7 +6683,7 @@ void SceneRay(PyMOLGlobals * G,
               float shift, int quiet, G3dPrimitive ** g3d, int show_timing, int antialias)
 {
 
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ObjRec *rec = NULL;
   CRay *ray = NULL;
   float height, width;
@@ -7196,8 +7186,8 @@ void SceneRay(PyMOLGlobals * G,
           unsigned int *q = (unsigned int *) merged_image;
           unsigned int *l;
           unsigned int *r;
-          register int height, width;
-          register int a, b;
+          int height, width;
+          int a, b;
 
           if(I->StereoMode == 2) {
             l = (unsigned int *) stereo_image->data;
@@ -7239,8 +7229,8 @@ void SceneRay(PyMOLGlobals * G,
 	    float * a_r = anaglyphR_constants[anaglyph_mode];
 	    float * a_l = anaglyphL_constants[anaglyph_mode];
 
-            register int height, width;
-            register int a, b;
+            int height, width;
+            int a, b;
 	    float _r[3] = {0.F,0.F,0.F}, _l[3] = {0.F,0.F,0.F}, _b[3] = {0.F,0.F,0.F};
             height = I->Image->height;
             width = I->Image->width;
@@ -7329,8 +7319,8 @@ void SceneRay(PyMOLGlobals * G,
           unsigned int *q = (unsigned int *) merged_image;
           unsigned int *l;
           unsigned int *r;
-          register int height, width;
-          register int a, b;
+          int height, width;
+          int a, b;
           int parity = 0;
 
           if(I->StereoMode == cStereo_stencil_by_row) {
@@ -7420,7 +7410,7 @@ void SceneRay(PyMOLGlobals * G,
 /*========================================================================*/
 static void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   unsigned int buffer_size;
 
   if(force || (!(I->StereoMode ||
@@ -7463,7 +7453,7 @@ static void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_win
 /*========================================================================*/
 int SceneRovingCheckDirty(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return (I->RovingDirtyFlag);
 }
 
@@ -7507,7 +7497,7 @@ static void SceneObjectUpdateSpawn(PyMOLGlobals * G, CObjectUpdateThreadInfo * T
 
 static void SceneStencilCheck(PyMOLGlobals *G) 
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   if( I->StereoMode == cStereo_stencil_by_row ) {
     int bottom = p_glutGet(P_GLUT_WINDOW_Y) + p_glutGet(P_GLUT_WINDOW_HEIGHT);
     int parity = bottom & 0x1;
@@ -7521,7 +7511,7 @@ static void SceneStencilCheck(PyMOLGlobals *G)
 
 void SceneUpdateObjectMoleculesSingleThread(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ObjRec *rec = NULL;
   while(ListIterate(I->Obj, rec, next)) {
     if(rec->obj->type == cObjectMolecule) {
@@ -7534,7 +7524,7 @@ void SceneUpdateObjectMoleculesSingleThread(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneUpdate(PyMOLGlobals * G, int force)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ObjRec *rec = NULL;
   int cur_state = SettingGetGlobal_i(G, cSetting_state) - 1;
   int defer_builds_mode = SettingGetGlobal_b(G, cSetting_defer_builds_mode);
@@ -7732,7 +7722,7 @@ int SceneRenderCached(PyMOLGlobals * G)
 {
   /* sets up a cached image buffer is one is available, or if we are
    * using cached images by default */
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ImageType *image;
   int renderedFlag = false;
   int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
@@ -7802,7 +7792,7 @@ float SceneGetSpecularValue(PyMOLGlobals * G, float spec, int limit)
 float SceneGetReflectScaleValue(PyMOLGlobals * G, int limit)
 {
   float result = 1.0F;
-  register float _1 = 1.0F;
+  float _1 = 1.0F;
   int n_light = SettingGetGlobal_i(G, cSetting_light_count);
   if(n_light > limit)
     n_light = limit;
@@ -8075,15 +8065,10 @@ void SceneRenderAllObject(PyMOLGlobals * G, CScene *I, SceneUnitContext * contex
 	glLoadIdentity();
 	{
 	  float vv[4] = { 0.f, 0.f, -1.f, 0.f }, dif[4] = { 1.f, 1.f, 1.f, 1.f };
-#ifdef OPENGL_ES_2
 	  if (!use_shader){
 	    glLightfv(GL_LIGHT0, GL_POSITION, vv);
 	    glLightfv(GL_LIGHT0, GL_DIFFUSE, dif);
 	  }
-#else
-	  glLightfv(GL_LIGHT0, GL_POSITION, vv);
-	  glLightfv(GL_LIGHT0, GL_DIFFUSE, dif);
-#endif
 	}
 	if(!grid->active) {
 	  GLORTHO(context->unit_left,
@@ -8115,8 +8100,7 @@ void SceneRenderAllObject(PyMOLGlobals * G, CScene *I, SceneUnitContext * contex
 	SceneProgramLighting(G);  /* an expensive workaround... */
 
 	if(pickVLA) {
-#ifdef OPENGL_ES_2
-#else
+#ifndef PURE_OPENGL_ES_2
 	  glDisable(GL_FOG);
 	  glDisable(GL_COLOR_MATERIAL);
 	  glDisable(GL_LIGHTING);
@@ -8142,7 +8126,7 @@ void SceneRenderAllObject(PyMOLGlobals * G, CScene *I, SceneUnitContext * contex
 
       if(Feedback(G, FB_OpenGL, FB_Debugging))
 	if(normal)
-#ifdef OPENGL_ES_2
+#ifdef PURE_OPENGL_ES_2
 	  ;
 #else
 	  glNormal3fv(normal);
@@ -8168,7 +8152,7 @@ static void SceneRenderAll(PyMOLGlobals * G, SceneUnitContext * context,
                            int pass, int fat, float width_scale,
                            GridInfo * grid, int dynamic_pass)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   ObjRec *rec = NULL;
   int state = SceneGetState(G);
   RenderInfo info;
@@ -8619,7 +8603,7 @@ void InitializeViewPort(PyMOLGlobals * G, CScene *I, int x, int y, int oversize_
 }
 
 int SceneSetFog(PyMOLGlobals *G, float *fog){
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   int fog_active = false;
   float *v;
   float fog_density = SettingGetGlobal_f(G, cSetting_fog);
@@ -8713,27 +8697,8 @@ void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode){
       {
 	int parity = I->StencilParity;
 	int y;
-#ifdef _PYMOL_GL_DRAWARRAYS
-	{
-	  ALLOCATE_ARRAY(GLint,lineVerts, h * 2)
-	  int pl;
-	  pl = 0;
-	  for(y = 0; y < h; y += 2) {
-	    lineVerts[pl] = 0;
-	    pl++;
-	    lineVerts[pl] = y + parity;
-	    pl++;
-	    lineVerts[pl] = w;
-	    pl++;
-	    lineVerts[pl] = y + parity;
-	    pl++;
-	  }
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glVertexPointer(2, GL_INT, 0, lineVerts);
-	  glDrawArrays(GL_LINES, 0, h);
-	  glDisableClientState(GL_VERTEX_ARRAY);
-	  DEALLOCATE_ARRAY(lineVerts)
-	}
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
 #else
 	glBegin(GL_LINES);
 	for(y = 0; y < h; y += 2) {
@@ -8747,27 +8712,8 @@ void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode){
     case cStereo_stencil_by_column:
       {
 	int x;
-#ifdef _PYMOL_GL_DRAWARRAYS
-	{
-	  ALLOCATE_ARRAY(GLint,lineVerts, w * 2)
-	  int pl;
-	  pl = 0;
-	  for(x = 0; x < w; x += 2) {
-	    lineVerts[pl] = x;
-	    pl++;
-	    lineVerts[pl] = 0;
-	    pl++;
-	    lineVerts[pl] = x;
-	    pl++;
-	    lineVerts[pl] = h;
-	    pl++;
-	  }
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glVertexPointer(2, GL_INT, 0, lineVerts);
-	  glDrawArrays(GL_LINES, 0, w);
-	  glDisableClientState(GL_VERTEX_ARRAY);
-	  DEALLOCATE_ARRAY(lineVerts)
-	}
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
 #else
 	glBegin(GL_LINES);
 	for(x = 0; x < w; x += 2) {
@@ -8781,27 +8727,8 @@ void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode){
     case cStereo_stencil_checkerboard:
       {
 	int i, m = 2 * ((h > w) ? h : w);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	{
-	  ALLOCATE_ARRAY(GLint,lineVerts, m * 2)
-	  int pl;
-	  pl = 0;
-	  for(i = 0; i < m; i += 2) {
-	    lineVerts[pl] = i;
-	    pl++;
-	    lineVerts[pl] = 0;
-	    pl++;
-	    lineVerts[pl] = 0;
-	    pl++;
-	    lineVerts[pl] = i;
-	    pl++;
-	  }
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glVertexPointer(2, GL_INT, 0, lineVerts);
-	  glDrawArrays(GL_LINES, 0, m);
-	  glDisableClientState(GL_VERTEX_ARRAY);
-	  DEALLOCATE_ARRAY(lineVerts)
-	}
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
 #else
 	glBegin(GL_LINES);
 	for(i = 0; i < m; i += 2) {
@@ -8975,7 +8902,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                  int click_side, int force_copy, int just_background)
 {
   /* think in terms of the camera's world */
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float fog[4];
   unsigned int lowBits, highBits;
   unsigned int *lowBitVLA = NULL, *highBitVLA = NULL;
@@ -9648,20 +9575,20 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 /*========================================================================*/
 void SceneRestartFrameTimer(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->LastFrameTime = UtilGetSeconds(G);
 }
 
 static void SceneRestartPerfTimer(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->LastRender = UtilGetSeconds(G);
   I->RenderTime = 0.0;
 }
 
 void SceneRestartSweepTimer(PyMOLGlobals * G)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->LastSweep = 0.0F;          /* continue to defer rocking until this is done */
   I->LastSweepX = 0.0F;
   I->LastSweepY = 0.0F;
@@ -9674,7 +9601,7 @@ void SceneRestartSweepTimer(PyMOLGlobals * G)
 /*========================================================================*/
 void ScenePrepareMatrix(PyMOLGlobals * G, int mode)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
 
   float stAng, stShift;
 
@@ -9732,7 +9659,7 @@ void ScenePrepareMatrix(PyMOLGlobals * G, int mode)
 static void SceneRotateWithDirty(PyMOLGlobals * G, float angle, float x, float y, float z,
                                  int dirty)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float temp[16];
   int a;
   angle = (float) (-PI * angle / 180.0);
@@ -9765,7 +9692,7 @@ void SceneRotate(PyMOLGlobals * G, float angle, float x, float y, float z)
 /*========================================================================*/
 void SceneApplyMatrix(PyMOLGlobals * G, float *m)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   MatrixMultiplyC44f(m, I->RotMatrix);
   SceneDirty(G);
 
@@ -9781,13 +9708,13 @@ void SceneApplyMatrix(PyMOLGlobals * G, float *m)
 /*========================================================================*/
 void SceneScale(PyMOLGlobals * G, float scale)
 {
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   I->Scale *= scale;
   SceneInvalidate(G);
 }
 
 void SceneZoom(PyMOLGlobals * G, float scale){
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   float factor = -((I->FrontSafe + I->BackSafe) / 2) * 0.1 * scale;
   /*    SettingGetGlobal_f(G, cSetting_mouse_wheel_scale); */
   I->Pos[2] += factor;
@@ -9850,12 +9777,12 @@ void SceneGLClear(PyMOLGlobals * G, GLbitfield mask){
 }
 
 int SceneIsGridModeActive(PyMOLGlobals * G){
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   return I->grid.active;
 }
 
 void SceneGetGridModeSize(PyMOLGlobals * G, int *width, int *height){
-  register CScene *I = G->Scene;
+  CScene *I = G->Scene;
   *width = I->grid.cur_viewport_size[0];
   *height = I->grid.cur_viewport_size[1];
 }

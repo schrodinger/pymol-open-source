@@ -108,24 +108,16 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else {
-      short use_shader, generate_shader_cgo = 0, use_display_lists = 0, dash_as_cylinders = 0;
+      short use_shader, generate_shader_cgo = 0, dash_as_cylinders = 0;
 
       use_shader = SettingGetGlobal_b(G, cSetting_dash_use_shader) & 
 	           SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
       dash_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_dash_as_cylinders);
 
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = 0;
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists && I->R.displayList) {
-	glCallList(I->R.displayList);
-	return;
-      }
-#endif
-
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
@@ -159,18 +151,6 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 	  return;
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists) {
-	if(!I->R.displayList) {
-	  I->R.displayList = glGenLists(1);
-	  if(I->R.displayList) {
-	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	  }
-	}
-      }
-#else
-      (void) use_display_lists;
-#endif
 
       if (generate_shader_cgo){
 	if (ok)
@@ -230,26 +210,6 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 
         if(!info->line_lighting)
           glDisable(GL_LIGHTING);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	{
-	  int pl, cinit;
-	  ALLOCATE_ARRAY(GLfloat,lineVerts,c)
-	  pl = 0;
-	  cinit = c;
-	  while(c > 0) {
-	    lineVerts[pl++] = v[0]; lineVerts[pl++] = v[1]; lineVerts[pl++] = v[2];
-	    v += 3;
-	    lineVerts[pl++] = v[0]; lineVerts[pl++] = v[1]; lineVerts[pl++] = v[2];
-	    v += 3;
-	    c -= 2;
-	  }
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glVertexPointer(3, GL_FLOAT, 0, lineVerts);
-	  glDrawArrays(GL_LINE_LOOP, 0, cinit);
-	  glDisableClientState(GL_VERTEX_ARRAY);
-	  DEALLOCATE_ARRAY(lineVerts)
-	}
-#else
         glBegin(GL_LINES);
         while(c > 0) {
           glVertex3fv(v);
@@ -259,7 +219,6 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
           c -= 2;
         }
         glEnd();
-#endif
         glEnable(GL_LIGHTING);
       }
       if (use_shader) {
@@ -267,17 +226,12 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 	  CGO *convertcgo = NULL;
 	  if (ok)
 	    ok &= CGOStop(I->shaderCGO);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	  if (ok)
 	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
 	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);    
 	  I->shaderCGO = convertcgo;
 	  convertcgo = NULL;
-#else
-	  (void)convertcgo;
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 	  if (ok){
 	    if (dash_as_cylinders){
 	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
@@ -291,9 +245,6 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 	    I->shaderCGO = convertcgo;
 	    convertcgo = NULL;
 	  }
-#else
-	  (void)convertcgo;
-#endif
 	}
 	
 	if (ok) {
@@ -321,12 +272,6 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 	  CShaderPrg_Disable(shaderPrg);
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if (use_display_lists && I->R.displayList){
-	glEndList();
-	glCallList(I->R.displayList);      
-      }
-#endif
     }
   }
   if (!ok){

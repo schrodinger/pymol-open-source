@@ -387,7 +387,7 @@ int TrackerDelCand(CTracker * I, int cand_id)
             }
 
             {                   /* continue along the chain */
-              register int member_index_copy = member_index;
+              int member_index_copy = member_index;
               member_index = member->cand_next;
               ReleaseMember(I, member_index_copy);
             }
@@ -672,7 +672,7 @@ int TrackerDelList(CTracker * I, int list_id)
                this member */
 
             {                   /* continue along the chain */
-              register int member_index_copy = member_index;
+              int member_index_copy = member_index;
               member_index = member->list_next;
               ReleaseMember(I, member_index_copy);
             }

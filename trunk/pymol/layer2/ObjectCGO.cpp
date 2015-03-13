@@ -288,12 +288,11 @@ static int ObjectCGOGetNState(ObjectCGO * I)
   return (I->NState);
 }
 
-
 /*========================================================================*/
 
 static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 {
-  register PyMOLGlobals *G = I->Obj.G;
+  PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
   Picking **pick = info->pick;
@@ -317,7 +316,6 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
     if((I->Obj.visRep & cRepCGOBit)) {
       for(StateIterator iter(G, I->Obj.Setting, state, I->NState); iter.next();) {
         sobj = I->State + iter.state;
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 	if (use_shader){
 	  if (!sobj->shaderCGO && sobj->std){
 	    float colorWithA[4];
@@ -346,7 +344,6 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
 	  CGOFree(sobj->shaderCGO);	      
 	  sobj->shaderCGO = 0;
 	}
-#endif
         if(ray) {
           if(sobj) {
 	    int try_std = false;

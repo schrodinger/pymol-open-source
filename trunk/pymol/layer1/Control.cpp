@@ -219,7 +219,7 @@ int ControlRocking(PyMOLGlobals * G)
 static void ControlReshape(Block * block, int width, int height)
 {
   PyMOLGlobals *G = block->G;
-  register CControl *I = G->Control;
+  CControl *I = G->Control;
   BlockReshape(block, width, height);
   /* this is a pragmatic workaround for mac X11 where the nub gets
      hidden by the window expansion tab */
@@ -253,7 +253,7 @@ static int ControlDrag(Block * block, int x, int y, int mod)
   int delta;
   int gui_width;
   PyMOLGlobals *G = block->G;
-  register CControl *I = G->Control;
+  CControl *I = G->Control;
   if(!I->SkipRelease) {
     delta = x - I->LastPos;
     if(I->DragFlag) {
@@ -282,7 +282,7 @@ static int ControlDrag(Block * block, int x, int y, int mod)
 static int ControlRelease(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CControl *I = G->Control;
+  CControl *I = G->Control;
 
   int sel = 0;
 
@@ -378,7 +378,7 @@ static int ControlRelease(Block * block, int button, int x, int y, int mod)
 
 Block *ControlGetBlock(PyMOLGlobals * G)
 {
-  register CControl *I = G->Control;
+  CControl *I = G->Control;
   {
     return (I->Block);
   }
@@ -407,7 +407,7 @@ void ControlInterrupt(PyMOLGlobals * G)
 /*========================================================================*/
 void ControlFree(PyMOLGlobals * G)
 {
-  register CControl *I = G->Control;
+  CControl *I = G->Control;
   OrthoFreeBlock(G, I->Block);
   FreeP(G->Control);
 }
@@ -445,7 +445,7 @@ int ControlRock(PyMOLGlobals * G, int mode)
 static int ControlClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CControl *I = G->Control;
+  CControl *I = G->Control;
   I->SkipRelease = false;
   if(x < (I->Block->rect.left + cControlLeftMargin)) {
     y -= I->Block->rect.top - cControlTopMargin;
@@ -538,7 +538,7 @@ static void draw_button(int x2, int y2, int w, int h, float *light, float *dark,
 static void ControlDraw(Block * block ORTHOCGOARG)
 {
   PyMOLGlobals *G = block->G;
-  register CControl *I = G->Control;
+  CControl *I = G->Control;
   int x, y;
   int nButton = I->NButton;
   int but_num;
@@ -849,7 +849,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
 /*========================================================================*/
 int ControlInit(PyMOLGlobals * G)
 {
-  register CControl *I = NULL;
+  CControl *I = NULL;
 
   if((I = (G->Control = Calloc(CControl, 1)))) {
 

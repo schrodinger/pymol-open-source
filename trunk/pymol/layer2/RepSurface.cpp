@@ -338,10 +338,10 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
         }
       } else {
         while(ok && c--) {
-          register int ttA = *t, ttB = *(t + 1), ttC = *(t + 2);
+          int ttA = *t, ttB = *(t + 1), ttC = *(t + 2);
           if((I->proximity && ((*(vi + ttA)) || (*(vi + ttB)) || (*(vi + ttC)))) ||
              ((*(vi + ttA)) && (*(vi + ttB)) && (*(vi + ttC)))) {
-            register int ttA3 = ttA * 3, ttB3 = ttB * 3, ttC3 = ttC * 3;
+            int ttA3 = ttA * 3, ttB3 = ttB * 3, ttC3 = ttC * 3;
             float cA[3], cB[3], cC[3];
 	    copy3f(vc + ttA3, cA);
 	    copy3f(vc + ttB3, cB);
@@ -484,12 +484,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = NULL;
       }
-#ifdef _PYMOL_GL_CALLLISTS
-        if(use_display_lists && I->R.displayList) {
-          glCallList(I->R.displayList);
-	  return;
-	}
-#endif
       
       if (use_shader){
 	if (!I->shaderCGO){
@@ -570,17 +564,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	  return;
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists) {
-	if(!I->R.displayList) {
-	  I->R.displayList = glGenLists(1);
-	  if(I->R.displayList) {
-	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	  }
-	}
-      }
-#endif
-
 
       if(I->debug)
         CGORenderGL(I->debug, NULL, NULL, NULL, info, &I->R);
@@ -668,67 +651,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                       (G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
           if(c) {
             glColor3f(1.0, 0.0, 0.0);
-#ifdef _PYMOL_GL_DRAWARRAYS
-            if(I->oneColorFlag) {
-              glColor3fv(ColorGet(G, I->oneColor));
-            }
-	    {
-	      int nverts = 0, cinit = c;
-	      {
-		while(c--) {
-		  if(*vi) {
-		    nverts++;
-		  }
-		}
-	      }
-	      c = cinit; 
-	      {
-		int pl = 0, plc = 0;
-		ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-		ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-		while(c--) {
-		  if(*vi) {
-		    if(!I->oneColorFlag) {
-		      colorVals[plc++] = vc[0]; colorVals[plc++] = vc[1]; colorVals[plc++] = vc[2]; colorVals[plc++] = 1.f;
-		    }
-		    if(normals){
-		      normalVals[pl] = vn[0]; normalVals[pl+1] = vn[1]; normalVals[pl+2] = vn[2];
-		    }
-		    ptsVals[pl] = v[0]; ptsVals[pl+1] = v[1]; ptsVals[pl+2] = v[2];
-		  }
-		  vi++;
-		  vc += 3;
-		  vn += 3;
-		  v += 3;
-		  pl += 3;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		if(!I->oneColorFlag) {
-		  glEnableClientState(GL_COLOR_ARRAY);
-		}
-		if (normals){
-		  glEnableClientState(GL_NORMAL_ARRAY);
-		  glNormalPointer(GL_FLOAT, 0, normalVals);
-		}
-		glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-		if(!I->oneColorFlag) {
-		  glColorPointer(4, GL_FLOAT, 0, colorVals);
-		}
-		glDrawArrays(GL_POINTS, 0, nverts);
-		glDisableClientState(GL_VERTEX_ARRAY);
-		if(!I->oneColorFlag) {
-		  glDisableClientState(GL_COLOR_ARRAY);
-		}
-		if (normals){
-		  glDisableClientState(GL_NORMAL_ARRAY);
-		}
-		DEALLOCATE_ARRAY(ptsVals)
-		DEALLOCATE_ARRAY(colorVals)
-		DEALLOCATE_ARRAY(normalVals)
-	      }
-	    }
-#else
             glBegin(GL_POINTS);
             if(I->oneColorFlag) {
               glColor3fv(ColorGet(G, I->oneColor));
@@ -749,7 +671,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
               v += 3;
             }
             glEnd();
-#endif
           }
 	  } /* else use shader */
 	  if(!lighting)
@@ -866,40 +787,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
                    || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))) {
                   if(normals) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      float *tmp_ptr;
-		      ALLOCATE_ARRAY(GLfloat,vertVals,4*3)
-		      ALLOCATE_ARRAY(GLfloat,normVals,4*3)
-		      tmp_ptr = v + (*(t + 2)) * 3;
-		      vertVals[0] = tmp_ptr[0]; vertVals[1] = tmp_ptr[1]; vertVals[2] = tmp_ptr[2];
-		      tmp_ptr = vn + (*(t + 2)) * 3;
-		      normVals[0] = tmp_ptr[0]; normVals[1] = tmp_ptr[1]; normVals[2] = tmp_ptr[2];
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[3] = tmp_ptr[0]; vertVals[4] = tmp_ptr[1]; vertVals[5] = tmp_ptr[2];
-		      tmp_ptr = vn + (*t) * 3;
-		      normVals[3] = tmp_ptr[0]; normVals[4] = tmp_ptr[1]; normVals[5] = tmp_ptr[2];
-		      t++;
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[6] = tmp_ptr[0]; vertVals[7] = tmp_ptr[1]; vertVals[8] = tmp_ptr[2];
-		      tmp_ptr = vn + (*t) * 3;
-		      normVals[6] = tmp_ptr[0]; normVals[7] = tmp_ptr[1]; normVals[8] = tmp_ptr[2];
-		      t++;
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[9] = tmp_ptr[0]; vertVals[10] = tmp_ptr[1]; vertVals[11] = tmp_ptr[2];
-		      tmp_ptr = vn + (*t) * 3;
-		      normVals[9] = tmp_ptr[0]; normVals[10] = tmp_ptr[1]; normVals[11] = tmp_ptr[2];
-		      t++;
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      glEnableClientState(GL_NORMAL_ARRAY);
-		      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		      glNormalPointer(GL_FLOAT, 0, normVals);
-		      glDrawArrays(GL_LINE_STRIP, 0, 4);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      glDisableClientState(GL_NORMAL_ARRAY);
-		      DEALLOCATE_ARRAY(vertVals)
-		      DEALLOCATE_ARRAY(normVals)
-		    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
                     glBegin(GL_LINE_STRIP);
 
@@ -918,27 +807,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     glEnd();
 #endif
                   } else {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      float *tmp_ptr;
-		      ALLOCATE_ARRAY(GLfloat,vertVals,4*3)
-		      tmp_ptr = v + (*(t + 2)) * 3;
-		      vertVals[0] = tmp_ptr[0]; vertVals[1] = tmp_ptr[1]; vertVals[2] = tmp_ptr[2];
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[3] = tmp_ptr[0]; vertVals[4] = tmp_ptr[1]; vertVals[5] = tmp_ptr[2];
-		      t++;
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[6] = tmp_ptr[0]; vertVals[7] = tmp_ptr[1]; vertVals[8] = tmp_ptr[2];
-		      t++;
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[9] = tmp_ptr[0]; vertVals[10] = tmp_ptr[1]; vertVals[11] = tmp_ptr[2];
-		      t++;
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		      glDrawArrays(GL_LINE_STRIP, 0, 4);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      DEALLOCATE_ARRAY(vertVals)
-		    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
                     glBegin(GL_LINE_STRIP);
 
@@ -1056,54 +926,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
                    || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2)))))) {
                   if(normals) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      float *tmp_ptr;
-		      ALLOCATE_ARRAY(GLfloat,colorVals,4*4)
-		      ALLOCATE_ARRAY(GLfloat,normVals,4*3)
-		      ALLOCATE_ARRAY(GLfloat,vertVals,4*3)
-		      tmp_ptr = v + (*(t + 2)) * 3;
-		      vertVals[0] = tmp_ptr[0]; vertVals[1] = tmp_ptr[1]; vertVals[2] = tmp_ptr[2];
-		      tmp_ptr = vn + (*(t + 2)) * 3;
-		      normVals[0] = tmp_ptr[0]; normVals[1] = tmp_ptr[1]; normVals[2] = tmp_ptr[2];
-		      tmp_ptr = vc + (*(t + 2)) * 3;
-		      colorVals[0] = tmp_ptr[0]; colorVals[1] = tmp_ptr[1]; colorVals[2] = tmp_ptr[2]; colorVals[3] = 1.f;
-
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[3] = tmp_ptr[0]; vertVals[4] = tmp_ptr[1]; vertVals[5] = tmp_ptr[2];
-		      tmp_ptr = vn + (*t) * 3;
-		      normVals[3] = tmp_ptr[0]; normVals[4] = tmp_ptr[1]; normVals[5] = tmp_ptr[2];
-		      tmp_ptr = vc + (*t) * 3;
-		      colorVals[4] = tmp_ptr[0]; colorVals[5] = tmp_ptr[1]; colorVals[6] = tmp_ptr[2]; colorVals[7] = 1.f;
-		      t++;
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[6] = tmp_ptr[0]; vertVals[7] = tmp_ptr[1]; vertVals[8] = tmp_ptr[2];
-		      tmp_ptr = vn + (*t) * 3;
-		      normVals[6] = tmp_ptr[0]; normVals[7] = tmp_ptr[1]; normVals[8] = tmp_ptr[2];
-		      tmp_ptr = vc + (*t) * 3;
-		      colorVals[8] = tmp_ptr[0]; colorVals[9] = tmp_ptr[1]; colorVals[10] = tmp_ptr[2]; colorVals[11] = 1.f;
-		      t++;
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[9] = tmp_ptr[0]; vertVals[10] = tmp_ptr[1]; vertVals[11] = tmp_ptr[2];
-		      tmp_ptr = vn + (*t) * 3;
-		      normVals[9] = tmp_ptr[0]; normVals[10] = tmp_ptr[1]; normVals[11] = tmp_ptr[2];
-		      tmp_ptr = vc + (*t) * 3;
-		      colorVals[12] = tmp_ptr[0]; colorVals[13] = tmp_ptr[1]; colorVals[14] = tmp_ptr[2]; colorVals[15] = 1.f;
-		      t++;
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      glEnableClientState(GL_NORMAL_ARRAY);
-		      glEnableClientState(GL_COLOR_ARRAY);
-		      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		      glColorPointer(4, GL_FLOAT, 0, colorVals);
-		      glNormalPointer(GL_FLOAT, 0, normVals);
-		      glDrawArrays(GL_LINE_STRIP, 0, 4);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      glDisableClientState(GL_NORMAL_ARRAY);
-		      glDisableClientState(GL_COLOR_ARRAY);
-		      DEALLOCATE_ARRAY(colorVals)
-		      DEALLOCATE_ARRAY(normVals)
-		      DEALLOCATE_ARRAY(vertVals)
-		    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
                     glBegin(GL_LINE_STRIP);
 
@@ -1126,41 +950,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                     glEnd();
 #endif
                   } else {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      float *tmp_ptr;
-		      ALLOCATE_ARRAY(GLfloat,vertVals,4*3)
-		      ALLOCATE_ARRAY(GLfloat,colorVals,4*4)
-		      tmp_ptr = v + (*(t + 2)) * 3;
-		      vertVals[0] = tmp_ptr[0]; vertVals[1] = tmp_ptr[1]; vertVals[2] = tmp_ptr[2];
-		      tmp_ptr = vc + (*(t + 2)) * 3;
-		      colorVals[0] = tmp_ptr[0]; colorVals[1] = tmp_ptr[1]; colorVals[2] = tmp_ptr[2]; colorVals[3] = 1.f;
-
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[3] = tmp_ptr[0]; vertVals[4] = tmp_ptr[1]; vertVals[5] = tmp_ptr[2];
-		      tmp_ptr = vc + (*t) * 3;
-		      colorVals[4] = tmp_ptr[0]; colorVals[5] = tmp_ptr[1]; colorVals[6] = tmp_ptr[2]; colorVals[7] = 1.f;
-		      t++;
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[6] = tmp_ptr[0]; vertVals[7] = tmp_ptr[1]; vertVals[8] = tmp_ptr[2];
-		      tmp_ptr = vc + (*t) * 3;
-		      colorVals[8] = tmp_ptr[0]; colorVals[9] = tmp_ptr[1]; colorVals[10] = tmp_ptr[2]; colorVals[11] = 1.f;
-		      t++;
-		      tmp_ptr = v + (*t) * 3;
-		      vertVals[9] = tmp_ptr[0]; vertVals[10] = tmp_ptr[1]; vertVals[11] = tmp_ptr[2];
-		      tmp_ptr = vc + (*t) * 3;
-		      colorVals[12] = tmp_ptr[0]; colorVals[13] = tmp_ptr[1]; colorVals[14] = tmp_ptr[2]; colorVals[15] = 1.f;
-		      t++;
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      glEnableClientState(GL_COLOR_ARRAY);
-		      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		      glColorPointer(4, GL_FLOAT, 0, colorVals);
-		      glDrawArrays(GL_LINE_STRIP, 0, 4);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      glDisableClientState(GL_COLOR_ARRAY);
-		      DEALLOCATE_ARRAY(vertVals)
-		      DEALLOCATE_ARRAY(colorVals)
-		    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
                     glBegin(GL_LINE_STRIP);
 
@@ -1367,44 +1158,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		    ok &= CGOEnd(I->shaderCGO);
 	      } else {
 		glColor4f(col[0], col[1], col[2], alpha);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts = n_tri*3;
-		  int pl;
-		  ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		  ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-		  float *tmp_ptr;
-		  pl = 0;
-		  for(c = 0; c < n_tri; c++) {
-		    tb = t_buf + 6 * ix[c];
-		    tmp_ptr = *(tb++);
-		    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		    tmp_ptr = *(tb++);
-		    vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-		    pl += 3;
-		    tmp_ptr = *(tb++);
-		    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		    tmp_ptr = *(tb++);
-		    vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-		    pl += 3;
-		    tmp_ptr = *(tb++);
-		    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		    tmp_ptr = *(tb++);
-		    vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-		    pl += 3;
-		  }
-		  
-		  glEnableClientState(GL_VERTEX_ARRAY);
-		  glEnableClientState(GL_NORMAL_ARRAY);
-		  glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		  glNormalPointer(GL_FLOAT, 0, normVals);
-		  glDrawArrays(GL_TRIANGLES, 0, nverts);
-		  glDisableClientState(GL_VERTEX_ARRAY);
-		  glDisableClientState(GL_NORMAL_ARRAY);
-		  DEALLOCATE_ARRAY(vertVals)
-		  DEALLOCATE_ARRAY(normVals)
-		}
-#else
 		glBegin(GL_TRIANGLES);
 		for(c = 0; c < n_tri; c++) {
 		  tb = t_buf + 6 * ix[c];
@@ -1416,7 +1169,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		  glVertex3fv(*(tb++));
 		}
 		glEnd();
-#endif
 	      } /* end if else use_shader */
 	      }
             } else { /* else I->oneColorFlag */
@@ -1469,62 +1221,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		  }
 		  if (ok) ok &= CGOEnd(I->shaderCGO);
 	      } else {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts = n_tri*3;
-		  int pl, plc;
-		  float *tmp_ptr;
-		  ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		  ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-		  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		  pl = 0; plc = 0;
-		  for(c = 0; c < n_tri; c++) {
-		    tb = t_buf + 12 * ix[c];
-		    colorVals[plc+3] = **(tb++);
-		    tmp_ptr = *(tb++);
-		    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; 
-		    plc++;
-		    tmp_ptr = *(tb++);
-		    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		    tmp_ptr = *(tb++);
-		    vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-		    pl += 3;
-		    
-		    colorVals[plc+3] = **(tb++);
-		    tmp_ptr = *(tb++);
-		    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; 
-		    plc++;
-		    tmp_ptr = *(tb++);
-		    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		    tmp_ptr = *(tb++);
-		    vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-		    pl += 3;
-		    
-		    colorVals[plc+3] = **(tb++);
-		    tmp_ptr = *(tb++);
-		    colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; 
-		    plc++;
-		    tmp_ptr = *(tb++);
-		    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		    tmp_ptr = *(tb++);
-		    vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-		    pl += 3;
-		  }
-		  
-		  glEnableClientState(GL_VERTEX_ARRAY);
-		  glEnableClientState(GL_NORMAL_ARRAY);
-		  glEnableClientState(GL_COLOR_ARRAY);
-		  glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		  glColorPointer(4, GL_FLOAT, 0, colorVals);
-		  glNormalPointer(GL_FLOAT, 0, normVals);
-		  glDrawArrays(GL_TRIANGLES, 0, nverts);
-		  glDisableClientState(GL_VERTEX_ARRAY);
-		  glDisableClientState(GL_COLOR_ARRAY);
-		  glDisableClientState(GL_NORMAL_ARRAY);
-		  DEALLOCATE_ARRAY(vertVals)
-		  DEALLOCATE_ARRAY(normVals)
-		  DEALLOCATE_ARRAY(colorVals)
-		}
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
 		glBegin(GL_TRIANGLES);
 		for(c = 0; c < n_tri; c++) {
@@ -1738,40 +1436,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		    glColor4f(col[0], col[1], col[2], alpha);
 		    c = *(s++);
 		    while(c) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		      {
-			int nverts = c + 2;
-			int pl = 0;
-			float *tmp_ptr;
-			ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-			ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-			while(c--) {
-			  tmp_ptr = vn + (*s) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			  tmp_ptr = v + (*s) * 3;
-			  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			  s++;
-			}
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glVertexPointer(3, GL_FLOAT, 0, vertVals);
-			glNormalPointer(GL_FLOAT, 0, normVals);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_NORMAL_ARRAY);
-			DEALLOCATE_ARRAY(vertVals)
-			DEALLOCATE_ARRAY(normVals)
-		      }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
 		      glBegin(GL_TRIANGLE_STRIP);
 		      glNormal3fv(vn + (*s) * 3);
@@ -1853,66 +1519,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		    c = *(s++);
 		    while(c) {
 		      float *col;
-#ifdef _PYMOL_GL_DRAWARRAYS
-		      {
-			int nverts = 2 + c;
-			int pl = 0, plc = 0;
-			float *tmp_ptr;
-			ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-			ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-			ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-			col = vc + (*s) * 3;
-			colorVals[plc++] = col[0]; colorVals[plc++] = col[1]; colorVals[plc++] = col[2]; 
-			if(va) {
-			  colorVals[plc++] = va[(*s)];
-			} else {
-			  colorVals[plc++] = alpha;
-			}
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-			col = vc + (*s) * 3;
-			colorVals[plc++] = col[0]; colorVals[plc++] = col[1]; colorVals[plc++] = col[2]; 
-			if(va) {
-			  colorVals[plc++] = va[(*s)];
-			} else {
-			  colorVals[plc++] = alpha;
-			}
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-			while(c--) {
-			  col = vc + (*s) * 3;
-			  colorVals[plc++] = col[0]; colorVals[plc++] = col[1]; colorVals[plc++] = col[2]; 
-			  if(va) {
-			    colorVals[plc++] = va[(*s)];
-			  } else {
-			    colorVals[plc++] = alpha;
-			  }
-			  tmp_ptr = vn + (*s) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			  tmp_ptr = v + (*s) * 3;
-			  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			  s++;
-			}
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glEnableClientState(GL_COLOR_ARRAY);
-			glVertexPointer(3, GL_FLOAT, 0, vertVals);
-			glColorPointer(4, GL_FLOAT, 0, colorVals);
-			glNormalPointer(GL_FLOAT, 0, normVals);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_COLOR_ARRAY);
-			glDisableClientState(GL_NORMAL_ARRAY);
-			DEALLOCATE_ARRAY(vertVals)
-			DEALLOCATE_ARRAY(normVals)
-			DEALLOCATE_ARRAY(colorVals)
-		      }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
 		      glBegin(GL_TRIANGLE_STRIP);
 		      col = vc + (*s) * 3;
@@ -2072,147 +1680,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		} else {  /* end generate_shader_cgo */
                 c = I->NT;
                 if(c) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		  {
-		    int nverts = 0, cinit = c;
-		    {
-		      while(c--) {
-			if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
-					     || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
-									   &&
-									   (*
-									    (vi +
-									     (*(t + 1))))
-									   &&
-									   (*
-									    (vi +
-									     (*(t + 2))))))
-			  {
-			    nverts += 3;
-			  }
-			t += 3;
-		      }
-		    }
-		    {
-		      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		      int pl = 0, plc = 0;
-		      c = cinit;
-		      if(I->oneColorFlag) {
-			float color[3];
-			float *col, *tmp_ptr;
-			ColorGetEncoded(G, I->oneColor, color);
-			
-			while(c--) {
-			  if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
-					       || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
-									     &&
-									     (*
-									      (vi +
-									       (*(t + 1))))
-									     &&
-									     (*
-									      (vi +
-									       (*(t + 2)))))) {
-			      col = vc + (*t) * 3;
-			      tmp_ptr = vn + (*t) * 3;
-			      normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			      tmp_ptr = v + (*t) * 3;
-			      vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			      colorVals[plc++] = color[0]; colorVals[plc++] = color[1]; colorVals[plc++] = color[2]; 
-			      colorVals[plc++] = alpha;
-			      t++;
-			      col = vc + (*t) * 3;
-			      tmp_ptr = vn + (*t) * 3;
-			      normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			      tmp_ptr = v + (*t) * 3;
-			      vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			      colorVals[plc++] = color[0]; colorVals[plc++] = color[1]; colorVals[plc++] = color[2]; 
-			      colorVals[plc++] = alpha;
-			      t++;
-			      col = vc + (*t) * 3;
-			      tmp_ptr = vn + (*t) * 3;
-			      normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			      tmp_ptr = v + (*t) * 3;
-			      vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			      colorVals[plc++] = color[0]; colorVals[plc++] = color[1]; colorVals[plc++] = color[2]; 
-			      colorVals[plc++] = alpha;
-			      t++;
-			  } else {
-			    t += 3;
-			  }
-			}
-		      } else {
-			float *col, *tmp_ptr;
-			while(c--) {
-			  if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
-					       || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
-									     &&
-									     (*
-									      (vi +
-									       (*(t + 1))))
-									     &&
-									     (*
-									      (vi +
-									       (*(t + 2)))))){
-			    col = vc + (*t) * 3;
-			    tmp_ptr = vn + (*t) * 3;
-			    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			    tmp_ptr = v + (*t) * 3;
-			    vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			    colorVals[plc++] = col[0]; colorVals[plc++] = col[1]; colorVals[plc++] = col[2];
-			    if(va) {
-			      colorVals[plc++] = va[(*t)];
-			    } else {
-			      colorVals[plc++] = alpha;
-			    }
-			    t++;
-			    col = vc + (*t) * 3;
-			    tmp_ptr = vn + (*t) * 3;
-			    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			    tmp_ptr = v + (*t) * 3;
-			    vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			    colorVals[plc++] = col[0]; colorVals[plc++] = col[1]; colorVals[plc++] = col[2];
-			    if(va) {
-			      colorVals[plc++] = va[(*t)];
-			    } else {
-			      colorVals[plc++] = alpha;
-			    }
-			    t++;
-
-			    col = vc + (*t) * 3;
-			    tmp_ptr = vn + (*t) * 3;
-			    normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			    tmp_ptr = v + (*t) * 3;
-			    vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			    colorVals[plc++] = col[0]; colorVals[plc++] = col[1]; colorVals[plc++] = col[2];
-			    if(va) {
-			      colorVals[plc++] = va[(*t)];
-			    } else {
-			      colorVals[plc++] = alpha;
-			    }
-			    t++;
-			  } else {
-			    t += 3;
-			  }
-			}
-		      }
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      glEnableClientState(GL_NORMAL_ARRAY);
-		      glEnableClientState(GL_COLOR_ARRAY);
-		      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		      glColorPointer(4, GL_FLOAT, 0, colorVals);
-		      glNormalPointer(GL_FLOAT, 0, normVals);
-		      glDrawArrays(GL_TRIANGLES, 0, nverts);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      glDisableClientState(GL_NORMAL_ARRAY);
-		      glDisableClientState(GL_COLOR_ARRAY);
-		      DEALLOCATE_ARRAY(vertVals)
-		      DEALLOCATE_ARRAY(normVals)
-		      DEALLOCATE_ARRAY(colorVals)
-		    }
-		  }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
                   glBegin(GL_TRIANGLES);
 
@@ -2350,44 +1819,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		    glColor3fv(ColorGet(G, I->oneColor));
 		    c = *(s++);
 		    while(c) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		      {
-			int nverts = c*3;
-			int pl = 0;
-			float *tmp_ptr;
-			ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-			ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-			s += 2;
-			while(c--) {
-			  s -= 2;
-			  tmp_ptr = vn + (*s) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			  tmp_ptr = v + (*s) * 3;
-			  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			  s++;
-			  tmp_ptr = vn + (*s) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			  tmp_ptr = v + (*s) * 3;
-			  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			  pl += 3;
-			  s++;
-			  tmp_ptr = vn + (*s) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			  tmp_ptr = v + (*s) * 3;
-			  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			  pl += 3;
-			  s++;
-			}		      
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glVertexPointer(3, GL_FLOAT, 0, vertVals);
-			glNormalPointer(GL_FLOAT, 0, normVals);
-			glDrawArrays(GL_TRIANGLES, 0, nverts);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_NORMAL_ARRAY);
-			DEALLOCATE_ARRAY(vertVals)
-			DEALLOCATE_ARRAY(normVals)
-		      }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
 		      glBegin(GL_TRIANGLES);
 		      s += 2;
@@ -2447,40 +1880,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		    glColor3fv(ColorGet(G, I->oneColor));
 		    c = *(s++);
 		    while(c) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		      {
-			int nverts = c + 2;
-			int pl = 0;
-			float *tmp_ptr;
-			ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-			ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-			while(c--) {
-			  tmp_ptr = vn + (*s) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];		      
-			  tmp_ptr = v + (*s) * 3;
-			  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			  s++;
-			}		      
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glVertexPointer(3, GL_FLOAT, 0, vertVals);
-			glNormalPointer(GL_FLOAT, 0, normVals);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_NORMAL_ARRAY);
-			DEALLOCATE_ARRAY(vertVals)
-			DEALLOCATE_ARRAY(normVals)
-		      }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
 		      glBegin(GL_TRIANGLE_STRIP);
 		      glNormal3fv(vn + (*s) * 3);
@@ -2581,53 +1982,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                 if(use_display_lists && simplify) {      /* simplify: try to help display list optimizer */
                   c = *(s++);
                   while(c) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      int nverts = c*3;
-		      int pl = 0, plc = 0;
-		      float *tmp_ptr;
-		      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		      s += 2;
-		      while(c--) {
-			s -= 2;
-			tmp_ptr = vc + (*s) * 3;
-			colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-			tmp_ptr = vc + (*s) * 3;
-			colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-			tmp_ptr = vc + (*s) * 3;
-			colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1]; colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-			s++;
-		      }
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      glEnableClientState(GL_NORMAL_ARRAY);
-		      glEnableClientState(GL_COLOR_ARRAY);
-		      glColorPointer(4, GL_FLOAT, 0, colorVals);
-		      glNormalPointer(GL_FLOAT, 0, normVals);
-		      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		      glDrawArrays(GL_TRIANGLES, 0, nverts);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      glDisableClientState(GL_NORMAL_ARRAY);
-		      glDisableClientState(GL_COLOR_ARRAY);
-		      DEALLOCATE_ARRAY(vertVals)
-		      DEALLOCATE_ARRAY(normVals)
-		      DEALLOCATE_ARRAY(colorVals)
-		    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
                     glBegin(GL_TRIANGLES);
                     s += 2;
@@ -2653,56 +2009,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                 } else {
                   c = *(s++);
                   while(c) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      int nverts = c + 2;
-		      int pl = 0, plc = 0;
-		      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		      float *tmp_ptr;
-		      tmp_ptr = vc + (*s) * 3;
-		      colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1];
-		      colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-		      tmp_ptr = vn + (*s) * 3;
-		      normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		      tmp_ptr = v + (*s) * 3;
-		      vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-		      s++; pl += 3;
-		      tmp_ptr = vc + (*s) * 3;
-		      colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1];
-		      colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-		      tmp_ptr = vn + (*s) * 3;
-		      normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		      tmp_ptr = v + (*s) * 3;
-		      vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-		      s++; pl += 3;
-		      while(c--) {
-			tmp_ptr = vc + (*s) * 3;
-			colorVals[plc++] = tmp_ptr[0]; colorVals[plc++] = tmp_ptr[1];
-			colorVals[plc++] = tmp_ptr[2]; colorVals[plc++] = 1.f;
-			tmp_ptr = vn + (*s) * 3;
-			normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-			tmp_ptr = v + (*s) * 3;
-			vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-			pl += 3;
-			s++;
-		      }		      
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      glEnableClientState(GL_NORMAL_ARRAY);
-		      glEnableClientState(GL_COLOR_ARRAY);
-		      glColorPointer(4, GL_FLOAT, 0, colorVals);
-		      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		      glNormalPointer(GL_FLOAT, 0, normVals);
-		      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-		      glDisableClientState(GL_COLOR_ARRAY);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      glDisableClientState(GL_NORMAL_ARRAY);
-		      DEALLOCATE_ARRAY(vertVals)
-		      DEALLOCATE_ARRAY(normVals)
-		      DEALLOCATE_ARRAY(colorVals)
-		    }
-
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
                     glBegin(GL_TRIANGLE_STRIP);
                     glColor3fv(vc + (*s) * 3);
@@ -2818,103 +2126,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	      } else {  /* if else generate_shader_cgo */
               c = I->NT;
               if(c) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts = 0, cinit = c, *tinit = t;
-		  {
-		    while(c--) {
-		      if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
-					   || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
-									 &&
-									 (*
-									  (vi + (*(t + 1))))
-									 &&
-									 (*
-									  (vi +
-									   (*(t + 2)))))) {
-			nverts += 3;
-		      }
-		      t += 3;
-		    }
-		    {
-		      int pl = 0, plc = 0;
-		      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		      float *tmp_ptr;
-		      c = cinit;
-		      t = tinit;
-		      pl = plc = 0;
-		      if(I->oneColorFlag) {
-			glColor3fv(ColorGet(G, I->oneColor));
-		      }
-		      while(c--) {
-			if((I->proximity && ((*(vi + (*t))) || (*(vi + (*(t + 1))))
-					     || (*(vi + (*(t + 2)))))) || ((*(vi + (*t)))
-									   &&
-									   (*
-									    (vi + (*(t + 1))))
-									   &&
-									   (*
-									    (vi +
-									     (*(t + 2)))))) {
-			  if(!I->oneColorFlag) {
-			    tmp_ptr = vc + (*t) * 3;
-			    colorVals[plc] = tmp_ptr[0]; colorVals[plc+1] = tmp_ptr[1]; colorVals[plc+2] = tmp_ptr[2];
-			    colorVals[plc+3] = 1.;
-			    plc+=4;
-			  }
-			  tmp_ptr = vn + (*t) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-			  tmp_ptr = v + (*t) * 3;
-			  vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-			  t++; pl += 3;
-			  if(!I->oneColorFlag) {
-			    tmp_ptr = vc + (*t) * 3;
-			    colorVals[plc] = tmp_ptr[0]; colorVals[plc+1] = tmp_ptr[1]; colorVals[plc+2] = tmp_ptr[2];
-			    colorVals[plc+3] = 1.;
-			    plc+=4;
-			  }
-			  tmp_ptr = vn + (*t) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-			  tmp_ptr = v + (*t) * 3;
-			  vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-			  t++; pl += 3;
-			  if(!I->oneColorFlag) {
-			    tmp_ptr = vc + (*t) * 3;
-			    colorVals[plc] = tmp_ptr[0]; colorVals[plc+1] = tmp_ptr[1]; colorVals[plc+2] = tmp_ptr[2];
-			    colorVals[plc+3] = 1.;
-			    plc+=4;
-			  }
-			  tmp_ptr = vn + (*t) * 3;
-			  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-			  tmp_ptr = v + (*t) * 3;
-			  vertVals[pl] = tmp_ptr[0]; vertVals[pl+1] = tmp_ptr[1]; vertVals[pl+2] = tmp_ptr[2];
-			  t++; pl += 3;
-			} else {
-			  t += 3;
-			}
-		      }
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      glEnableClientState(GL_NORMAL_ARRAY);
-		      if(!I->oneColorFlag) {
-			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(4, GL_FLOAT, 0, colorVals);
-		      }
-		      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		      glNormalPointer(GL_FLOAT, 0, normVals);
-		      glDrawArrays(GL_TRIANGLES, 0, nverts);
-		      if(!I->oneColorFlag) {
-			glDisableClientState(GL_COLOR_ARRAY);
-		      }
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      glDisableClientState(GL_NORMAL_ARRAY);
-		      DEALLOCATE_ARRAY(vertVals)
-		      DEALLOCATE_ARRAY(normVals)
-		      DEALLOCATE_ARRAY(colorVals)
-		    }
-		  }
-		}
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
                 glBegin(GL_TRIANGLES);
                 if(I->oneColorFlag) {
@@ -3025,62 +2238,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	} else {
 
         if(c) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  {
-	    int nverts = 0, cinit = c, *tinit = t;
-	    while(c--) {
-	      if(I->allVisibleFlag
-		 ||
-		 ((I->proximity
-		   && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
-		  || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2))))))) {
-		nverts += 3;
-	      }
-	      t += 3;
-	    }
-	    {
-	      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-	      ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-	      int pl = 0;
-	      float *tmp_ptr;
-	      c = cinit;
-	      t = tinit;
-	      while(c--) {
-		if(I->allVisibleFlag
-		   ||
-		   ((I->proximity
-		     && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
-		    || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2))))))) {
-		  tmp_ptr = vn + (*t) * 3;
-		  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		  tmp_ptr = v + (*t) * 3;
-		  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-		  t++;
-		  tmp_ptr = vn + (*t) * 3;
-		  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		  tmp_ptr = v + (*t) * 3;
-		  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-		  t++;
-		  tmp_ptr = vn + (*t) * 3;
-		  normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-		  tmp_ptr = v + (*t) * 3;
-		  vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-		  t++;
-		} else {
-		  t += 3;
-		}
-	      }
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_NORMAL_ARRAY);
-	      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-	      glNormalPointer(GL_FLOAT, 0, normVals);
-	      glDrawArrays(GL_TRIANGLES, 0, nverts);
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	      glDisableClientState(GL_NORMAL_ARRAY);
-	      DEALLOCATE_ARRAY(vertVals)
-	      DEALLOCATE_ARRAY(normVals)
-	    }
-	  }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
           glBegin(GL_TRIANGLES);
           while(c--) {
@@ -3148,43 +2307,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
           glColor3f(0.0, 1.0, 0.0);
           glLineWidth(1.0F);
           while(c--) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-            if(I->allVisibleFlag
-               ||
-               ((I->proximity
-                 && ((*(vi + (*t))) || (*(vi + (*(t + 1)))) || (*(vi + (*(t + 2))))))
-                || ((*(vi + (*t))) && (*(vi + (*(t + 1)))) && (*(vi + (*(t + 2))))))) {
-	      float *tmp_ptr;
-	      int pl = 0;
-	      ALLOCATE_ARRAY(GLfloat,vertVals,3*3)
-	      ALLOCATE_ARRAY(GLfloat,normVals,3*3)
-	      tmp_ptr = vn + (*t) * 3;
-	      normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-	      tmp_ptr = v + (*t) * 3;
-	      vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-	      t++;
-	      tmp_ptr = vn + (*t) * 3;
-	      normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-	      tmp_ptr = v + (*t) * 3;
-	      vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-	      t++;
-	      tmp_ptr = vn + (*t) * 3;
-	      normVals[pl] = tmp_ptr[0]; normVals[pl+1] = tmp_ptr[1]; normVals[pl+2] = tmp_ptr[2];
-	      tmp_ptr = v + (*t) * 3;
-	      vertVals[pl++] = tmp_ptr[0]; vertVals[pl++] = tmp_ptr[1]; vertVals[pl++] = tmp_ptr[2];
-	      t++;
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_NORMAL_ARRAY);
-	      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-	      glNormalPointer(GL_FLOAT, 0, normVals);
-	      glDrawArrays(GL_LINE_STRIP, 0, 3);
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	      glDisableClientState(GL_NORMAL_ARRAY);
-	      DEALLOCATE_ARRAY(vertVals)
-	      DEALLOCATE_ARRAY(normVals)
-            } else {
-              t += 3;
-            }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
 	    /* glBegin/glEnd should be inside the if statement, right? - BB */
             glBegin(GL_LINE_STRIP);
@@ -3231,25 +2355,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
         if(c) {
           SceneResetNormal(G, true);
           glColor3f(1.0, 0.0, 0.0);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  {
-	    int nverts = c * 2, pl = 0;
-	    ALLOCATE_ARRAY(GLfloat,lineVerts,nverts)
-	    while(c--) {
-	      lineVerts[pl++] = v[0]; lineVerts[pl++] = v[1]; lineVerts[pl++] = v[2];
-	      lineVerts[pl++] = v[0] + vn[0] / 2;
-	      lineVerts[pl++] = v[1] + vn[1] / 2;
-	      lineVerts[pl++] = v[2] + vn[2] / 2;
-	      v += 3;
-	      vn += 3;
-	    }
-	    glEnableClientState(GL_VERTEX_ARRAY);
-	    glVertexPointer(3, GL_FLOAT, 0, lineVerts);
-	    glDrawArrays(GL_LINES, 0, nverts);
-	    glDisableClientState(GL_VERTEX_ARRAY);
-	    DEALLOCATE_ARRAY(lineVerts)
-	  }
-#else
           glBegin(GL_LINES);
           while(c--) {
             glVertex3fv(v);
@@ -3258,7 +2363,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
             vn += 3;
           }
           glEnd();
-#endif
         }
       } /* end else use_shader */ 
       }
@@ -3268,8 +2372,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	if (generate_shader_cgo){
 	  CGO *convertcgo = NULL;
 	  if (ok) ok &= CGOStop(I->shaderCGO);
-#ifdef _PYMOL_CGO_DRAWARRAYS
-
 
 	  if (I->Type != 2){
 	    if (ok)
@@ -3293,10 +2395,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	      CGOFree(simple);
 	    }
 	  }
-#else
-	  (void)convertcgo;
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 	  if(I->Type == 1){
 	    if (dot_as_spheres) {
 	      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, CGO_BOUNDING_BOX_SZ + CGO_DRAW_SPHERE_BUFFERS_SZ);
@@ -3352,9 +2450,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    I->shaderCGO = convertcgo;
 	    convertcgo = NULL;
 	  }
-#else
-	  (void)convertcgo;
-#endif
 	}
 
 	if (I->Type == 1){
@@ -3418,12 +2513,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
         }
     }
       }
-#ifdef _PYMOL_GL_CALLLISTS
-    if (use_display_lists && I->R.displayList){
-      glEndList();
-      glCallList(I->R.displayList);      
-    }
-#endif
     }
   }
   if (!ok){
@@ -4045,7 +3134,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
             if(i && carve_map->EList) {
               j = carve_map->EList[i++];
               while(j >= 0) {
-                register float *v_targ = carve_vla + 3 * j;
+                float *v_targ = carve_vla + 3 * j;
                 if(within3f(v_targ, v0, carve_cutoff)) {
                   if(!carve_normal_flag) {
                     *vi = 1;
@@ -4174,21 +3263,6 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
       I->ix = 0;
     }
     I->n_tri = 0;
-#ifdef _PYMOL_GL_CALLLISTS
-    if(I->R.displayList) {
-      if(PIsGlutThread()) {
-        if(G->ValidContext) {
-          glDeleteLists(I->R.displayList, 1);
-          I->R.displayList = 0;
-        }
-      } else {
-        char buffer[255];       /* pass this off to the main thread */
-        sprintf(buffer, "_cmd.gl_delete_lists(cmd._COb,%d,%d)\n", I->R.displayList, 1);
-        PParse(G, buffer);
-        I->R.displayList = 0;
-      }
-    }
-#endif
   }
 
   if(I->VA && (!variable_alpha)) {
@@ -4547,17 +3621,17 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                         int ii;
 			ii = *(MapLocusEStart(solv_map, v));
                         if(ii && solv_map->EList) {
-                          register float *i_dot = sol_dot->dot;
-                          register float dist = probe_rad_less;
-                          register int *elist_ii = solv_map->EList + ii;
-                          register float v_0 = v[0];
-                          register int jj_next, jj = *(elist_ii++);
-                          register float v_1 = v[1];
-                          register float *v1 = i_dot + 3 * jj;
-                          register float v_2 = v[2];
+                          float *i_dot = sol_dot->dot;
+                          float dist = probe_rad_less;
+                          int *elist_ii = solv_map->EList + ii;
+                          float v_0 = v[0];
+                          int jj_next, jj = *(elist_ii++);
+                          float v_1 = v[1];
+                          float *v1 = i_dot + 3 * jj;
+                          float v_2 = v[2];
                           while(jj >= 0) {
                             /* huge bottleneck -- optimized for superscaler processors */
-                            register float dx = v1[0], dy, dz;
+                            float dx = v1[0], dy, dz;
                             jj_next = *(elist_ii++);
                             dx -= v_0;
                             if(jj != a) {
@@ -4591,9 +3665,9 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                            so now we need to further trim that surface to cover atoms that are present */
 
                         if(flag) {
-                          register int i = *(MapLocusEStart(map, v));
+                          int i = *(MapLocusEStart(map, v));
                           if(i && map->EList) {
-                            register int j = map->EList[i++];
+                            int j = map->EList[i++];
                             while(j >= 0) {
                               SurfaceJobAtomInfo *atom_info = I_atom_info + j;
                               if((!present_vla) || present_vla[j]) {
@@ -4703,9 +3777,9 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
             v = I->V;
             vn = I->VN;
             for(a = 0; ok && a < I->N; a++) {
-              register int i = *(MapLocusEStart(map, v));
+              int i = *(MapLocusEStart(map, v));
               if(i && map->EList) {
-                register int j = map->EList[i++];
+                int j = map->EList[i++];
                 while(ok && j >= 0) {
                   if(j > a) {
                     float *v0 = I->V + 3 * j;
@@ -4722,10 +3796,10 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                           add_new = true;
                         else {
                           /* if points are too far apart, insert a new one */
-                          register int ii = *(MapLocusEStart(map, v1));
+                          int ii = *(MapLocusEStart(map, v1));
                           if(ii) {
                             int found = false;
-                            register int jj = map->EList[ii++];
+                            int jj = map->EList[ii++];
                             while(jj >= 0) {
                               if(jj != j) {
                                 float *vv0 = I->V + 3 * jj;
@@ -4801,9 +3875,9 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
 	    ok &= MapSetupExpress(map);
           v = I->V;
           for(a = 0; ok && a < I->N; a++) {
-            register int i = *(MapLocusEStart(map, v));
+            int i = *(MapLocusEStart(map, v));
             if(i && map->EList) {
-              register int j = map->EList[i++];
+              int j = map->EList[i++];
               while(j >= 0) {
                 SurfaceJobAtomInfo *atom_info = I_atom_info + j;
                 if((!present_vla) || present_vla[j]) {
@@ -4868,10 +3942,10 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
             repeat_flag = false;
 
             if(surface_type >= 3) {
-              register int jj;
+              int jj;
               float dist;
-              register float nearest;
-              register float min_sep2 = point_sep * point_sep;
+              float nearest;
+              float min_sep2 = point_sep * point_sep;
               float diff[3];
               {
                 int a;
@@ -4888,9 +3962,9 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
                 vn = I->VN;
                 for(a = 0; ok && a < I->N; a++) {
                   if(dot_flag[a]) {
-                    register int i = *(MapLocusEStart(map, v));
+                    int i = *(MapLocusEStart(map, v));
                     if(i && map->EList) {
-                      register int j = map->EList[i++];
+                      int j = map->EList[i++];
                       jj = I->N;
                       nearest = point_sep + 1.0F;
                       while(j >= 0) {
@@ -4943,9 +4017,9 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
               vn = I->VN;
               for(a = 0; ok && a < I->N; a++) {
                 if(dot_flag[a]) {
-                  register int i = *(MapLocusEStart(map, v));
+                  int i = *(MapLocusEStart(map, v));
                   if(i && map->EList) {
-                    register int j = map->EList[i++];
+                    int j = map->EList[i++];
                     while(j >= 0) {
                       if(j != a) {
                         if(dot_flag[j]) {
@@ -5028,9 +4102,9 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
             vn = I->VN;
             for(a = 0; ok && a < I->N; a++) {
               if(dot_flag[a]) {
-                register int i = *(MapLocusEStart(map, v));
+                int i = *(MapLocusEStart(map, v));
                 if(i && map->EList) {
-                  register int j = map->EList[i++];
+                  int j = map->EList[i++];
                   n_nbr = 0;
                   dot_sum = 0.0F;
                   while(j >= 0) {
@@ -5161,11 +4235,11 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
     int visFlag = false;
 
     if(GET_BIT(obj->RepVisCache,cRepSurface)) {
-      register int *idx_to_atm = cs->IdxToAtm;
-      register AtomInfoType *obj_AtomInfo = obj->AtomInfo;
-      register int a, cs_NIndex = cs->NIndex;
+      int *idx_to_atm = cs->IdxToAtm;
+      AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+      int a, cs_NIndex = cs->NIndex;
       for(a = 0; a < cs_NIndex; a++) {
-        register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
+        AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
         if((ai1->visRep & cRepSurfaceBit) &&
            (inclH || (!ai1->isHydrogen())) &&
            ((!cullByFlag) || (!(ai1->flags & (cAtomFlag_exfoliate | cAtomFlag_ignore))))) {
@@ -5315,11 +4389,11 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
 
       /* don't waist time computing a Surface unless we need it!! */
       {
-        register int *idx_to_atm = cs->IdxToAtm;
-        register AtomInfoType *obj_AtomInfo = obj->AtomInfo;
-        register int a, cs_NIndex = cs->NIndex;
+        int *idx_to_atm = cs->IdxToAtm;
+        AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+        int a, cs_NIndex = cs->NIndex;
         for(a = 0; a < cs_NIndex; a++) {
-          register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
+          AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
           if((ai1->visRep & cRepSurfaceBit) &&
              (inclH || (!ai1->isHydrogen())) &&
              ((!cullByFlag) || (!(ai1->flags &
@@ -5388,12 +4462,12 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
           present_vla = VLAlloc(int, cs->NIndex);
 	  CHECKOK(ok, present_vla);
           if (ok){
-            register int *ap = present_vla;
-            register int *idx_to_atm = cs->IdxToAtm;
-            register AtomInfoType *obj_AtomInfo = obj->AtomInfo;
-            register int a, cs_NIndex = cs->NIndex;
+            int *ap = present_vla;
+            int *idx_to_atm = cs->IdxToAtm;
+            AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+            int a, cs_NIndex = cs->NIndex;
             for(a = 0; a < cs_NIndex; a++) {
-              register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
+              AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
               if((ai1->visRep & cRepSurfaceBit) &&
                  (inclH || (!ai1->isHydrogen())) &&
                  ((!cullByFlag) || (!(ai1->flags &
@@ -5734,7 +4808,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
         for(a = 0; ok && a < n_coord; a++) {
           OrthoBusyFast(G, a, n_coord * 5);
           if((!present) || (present[a])) {
-            register int i;
+            int i;
             float *v0 = coord + 3 * a;
             vdw = a_atom_info->vdw + probe_radius;
 
@@ -5742,7 +4816,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
 
             i = *(MapLocusEStart(map, v0));
             if(i && map->EList) {
-              register int j = map->EList[i++];
+              int j = map->EList[i++];
               while(ok && j >= 0) {
                 SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                 if(j > a)       /* only check if this is atom trails */
@@ -5760,14 +4834,14 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
             if(ok && !skip_flag) {
               for(b = 0; ok && b < sp->nDot; b++) {
                 float *sp_dot_b = (float*)(sp_dot + b);
-                register int i;
+                int i;
                 int flag = true;
                 v[0] = v0[0] + vdw * (n[0] = sp_dot_b[0]);
                 v[1] = v0[1] + vdw * (n[1] = sp_dot_b[1]);
                 v[2] = v0[2] + vdw * (n[2] = sp_dot_b[2]);
                 i = *(MapLocusEStart(map, v));
                 if(i) {
-                  register int j = map->EList[i++];
+                  int j = map->EList[i++];
                   while(ok && j >= 0) {
                     SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                     if((!present) || present[j]) {
@@ -5827,7 +4901,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
           ok &= MapSetupExpress(map2);
           for(a = 0; ok && a < n_coord; a++) {
             if((!present) || present[a]) {
-              register int i;
+              int i;
               float vdw2;
               float *v0 = coord + 3 * a;
               vdw = a_atom_info->vdw + probe_radius;
@@ -5837,7 +4911,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
 
               i = *(MapLocusEStart(map2, v0));
               if(i) {
-                register int j = map2->EList[i++];
+                int j = map2->EList[i++];
                 while(ok && j >= 0) {
                   SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                   if(j > a)     /* only check if this is atom trails */
@@ -5854,9 +4928,9 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
               }
 
               if(ok && !skip_flag) {
-                register int ii = *(MapLocusEStart(map2, v0));
+                int ii = *(MapLocusEStart(map2, v0));
                 if(ii) {
-                  register int jj = map2->EList[ii++];
+                  int jj = map2->EList[ii++];
                   while(jj >= 0) {
                     SurfaceJobAtomInfo *jj_atom_info = atom_info + jj;
                     float dist;
@@ -5894,7 +4968,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
 
                             i = *(MapLocusEStart(map, v));
                             if(i && map->EList) {
-                              register int j = map->EList[i++];
+                              int j = map->EList[i++];
                               while(ok && j >= 0) {
                                 SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                                 if((!present) || present[j])
@@ -5991,13 +5065,13 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
           SurfaceJobAtomInfo *a_atom_info = atom_info;
           for(a = 0; a < n_coord; a++) {
             if((!present) || (present[a])) {
-              register int i;
+              int i;
               float *v0 = coord + 3 * a;
               vdw = a_atom_info->vdw + cavity_radius;
               skip_flag = false;
               i = *(MapLocusEStart(map, v0));
               if(i && map->EList) {
-                register int j = map->EList[i++];
+                int j = map->EList[i++];
                 while(j >= 0) {
                   SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                   if(j > a)       /* only check if this is atom trails */
@@ -6014,14 +5088,14 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
               if(!skip_flag) {
                 for(b = 0; b < sp->nDot; b++) {
                   float *sp_dot_b = (float*)(sp_dot + b);
-                  register int i;
+                  int i;
                   int flag = true;
                   v[0] = v0[0] + vdw * (sp_dot_b[0]);
                   v[1] = v0[1] + vdw * (sp_dot_b[1]);
                   v[2] = v0[2] + vdw * (sp_dot_b[2]);
                   i = *(MapLocusEStart(map, v));
                   if(i) {
-                    register int j = map->EList[i++];
+                    int j = map->EList[i++];
                     while(j >= 0) {
                       SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                       if((!present) || present[j]) {
@@ -6070,9 +5144,9 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
             float *v = I->dot;
             int a;
             for(a = 0; a < I->nDot; a++) {
-              register int i = *(MapLocusEStart(map, v));
+              int i = *(MapLocusEStart(map, v));
               if(i && map->EList) {
-                register int j = map->EList[i++];
+                int j = map->EList[i++];
                 while(j >= 0) {
                   if(within3f(cavityDot + (3 * j), v, cavity_cutoff)) {
                     *p = true;
@@ -6143,11 +5217,11 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
           flag = false;
           for(a = 0; ok && a < I->nDot; a++) {
             if(!dot_flag[a]) {
-              register int i = *(MapLocusEStart(map, v));
+              int i = *(MapLocusEStart(map, v));
               int cnt = 0;
 
               if(i && map->EList) {
-                register int j = map->EList[i++];
+                int j = map->EList[i++];
                 while(j >= 0) {
                   if(j != a) {
                     if(within3f(I->dot + (3 * j), v, probe_radius_plus)) {

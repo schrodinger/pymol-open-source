@@ -2335,6 +2335,7 @@ static void setup_gl_state(void)
      glMatrixMode(GL_MODELVIEW);
      glLoadIdentity(); */
 
+#ifndef PURE_OPENGL_ES_2
   glDisable(GL_ALPHA_TEST);
   glDisable(GL_COLOR_LOGIC_OP);
   glDisable(GL_COLOR_MATERIAL);
@@ -2344,15 +2345,13 @@ static void setup_gl_state(void)
   glDisable(GL_LIGHT1);
   glDisable(GL_LINE_SMOOTH);
   glDisable(GL_NORMALIZE);
-
-#ifndef _PYMOL_GL_DRAWARRAYS
-  glDisable(GL_AUTO_NORMAL);
 #endif
+
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_DITHER);
-#ifndef _PYMOL_GL_DRAWARRAYS
+#ifndef PURE_OPENGL_ES_2
   glDisable(GL_POLYGON_SMOOTH);
 #endif
 }

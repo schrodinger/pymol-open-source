@@ -124,13 +124,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	I->shaderCGO = 0;
       }
 
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists && I->R.displayList) {
-	glCallList(I->R.displayList);
-	return;
-      }
-#endif
-
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
@@ -164,18 +157,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	  return;
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists) {
-	if(!I->R.displayList) {
-	  I->R.displayList = glGenLists(1);
-	  if(I->R.displayList) {
-	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	  }
-	}
-      }
-#else
-      (void) use_display_lists;
-#endif
 
       if (generate_shader_cgo){
 	if (ok)
@@ -234,25 +215,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	c = I->N;
 	if(!info->line_lighting)
 	  glDisable(GL_LIGHTING);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	{
-	  int nverts = c, pl;	  
-	  ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-	  pl = 0;
-	  while(c > 0) {
-	    vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-	    v += 3;
-	    vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-	    v += 3;
-	    c -= 2;
-	  }
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glVertexPointer(3, GL_FLOAT, 0, vertVals);
-	  glDrawArrays(GL_LINES, 0, nverts);
-	  glDisableClientState(GL_VERTEX_ARRAY);
-	  DEALLOCATE_ARRAY(vertVals)
-	}
-#else
 	glBegin(GL_LINES);
 	while(c > 0) {
 	  glVertex3fv(v);
@@ -262,7 +224,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	  c -= 2;
 	}
 	glEnd();
-#endif
 	glEnable(GL_LIGHTING);
       }
       if (use_shader) {
@@ -270,17 +231,12 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	  CGO *convertcgo = NULL;
 	  if (ok)
 	    ok &= CGOStop(I->shaderCGO);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	  if (ok)
 	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
 	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);    
 	  I->shaderCGO = convertcgo;
 	  convertcgo = NULL;
-#else
-	  (void)convertcgo;
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 	  if (ok){
 	    if (dash_as_cylinders){
 	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
@@ -294,9 +250,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	    I->shaderCGO = convertcgo;
 	    convertcgo = NULL;
 	  }
-#else
-	  (void)convertcgo;
-#endif
 	}
 	
 	if (ok) {
@@ -327,12 +280,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
 	  CShaderPrg_Disable(shaderPrg);
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if (use_display_lists && I->R.displayList){
-	glEndList();
-	glCallList(I->R.displayList);      
-      }
-#endif
     }
   }
   if (!ok){

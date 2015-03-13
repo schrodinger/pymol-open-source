@@ -98,7 +98,7 @@ __inline__ static int WordCompare(PyMOLGlobals * G, const char *p, const char *q
 /* all things equal, shorter is smaller */
 {
   int result = 0;
-  register char cp, cq, tlp, tlq;
+  char cp, cq, tlp, tlq;
   if(ignCase) {
     while((cp = *p) && (cq = *q)) {
       p++;

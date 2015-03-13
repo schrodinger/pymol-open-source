@@ -111,7 +111,7 @@ static int TriangleEdgeStatus(TriangleSurfaceRec * II, int i1, int i2)
 
 static int *TriangleMakeStripVLA(TriangleSurfaceRec * II, float *v, float *vn, int n)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int *tFlag, tmp_int;
   int c, a, cc = 0;
   int *s, *sc, *strip;
@@ -310,7 +310,7 @@ static int *TriangleMakeStripVLA(TriangleSurfaceRec * II, float *v, float *vn, i
 static int TriangleAdjustNormals(TriangleSurfaceRec * II, float *v, float *vn, int n,
                                  int final_pass)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   /* points all normals to the average of the intersecting triangles in order to maximum surface smoothness */
   float *tNorm = NULL, *tWght;
@@ -451,7 +451,7 @@ static int TriangleAdjustNormals(TriangleSurfaceRec * II, float *v, float *vn, i
 
 static int TriangleActivateEdges(TriangleSurfaceRec * II, int low)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int l;
   l = I->edgeStatus[low];
   while(l) {
@@ -468,7 +468,7 @@ static int TriangleActivateEdges(TriangleSurfaceRec * II, int low)
 
 static void TriangleDeleteEdge(TriangleSurfaceRec * II, int i1, int i2)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int l, low, high;
   int prev = 0;
   low = (i1 > i2 ? i2 : i1);
@@ -493,7 +493,7 @@ static void TriangleDeleteEdge(TriangleSurfaceRec * II, int i1, int i2)
 
 static void TriangleEdgeSetStatus(TriangleSurfaceRec * II, int i1, int i2, int value)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int l, low, high;
   low = (i1 > i2 ? i2 : i1);
   high = (i1 > i2 ? i1 : i2);
@@ -520,7 +520,7 @@ static void TriangleEdgeSetStatus(TriangleSurfaceRec * II, int i1, int i2, int v
 
 static void TriangleMove(TriangleSurfaceRec * II, int from, int to)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int i0, i1, i2, s01, s02, s12;
 
   i0 = I->tri[from * 3];
@@ -583,7 +583,7 @@ static void AddActive(TriangleSurfaceRec * II, int i1, int i2)
 {
   int t;
 
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   if(i1 > i2) {
     t = i1;
     i1 = i2;
@@ -604,7 +604,7 @@ static void AddActive(TriangleSurfaceRec * II, int i1, int i2)
 static void TriangleAdd(TriangleSurfaceRec * II, int i0, int i1, int i2, float *tNorm,
                         float *v, float *vn)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int s01, s12, s02, it;
   float *v0, *v1, *v2, *n0, *n1, *n2, *ft;
   float vt[3], vt1[3], vt2[3], vt3[3];
@@ -757,7 +757,7 @@ static int TriangleBuildObvious(TriangleSurfaceRec * II, int i1, int i2, float *
   /* this routine builds obvious, easy triagles where the closest point 
    * to the edge is always tried */
 
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   MapType *map;
   int ok = true;
   float *v1, *v2, *v0, *v4, vt[3], vt1[3], vt2[3], vt3[3], vt4[3], *n0, *n1, *n2,
@@ -970,7 +970,7 @@ static int TriangleBuildSecondPass(TriangleSurfaceRec * II, int i1, int i2, floa
 
   /* in this version, the closest active point is tried.  Closed points
      are skipped. */
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   MapType *map;
   float *v1, *v2, *v0, *v4, vt[3], vt1[3], vt2[3], vt3[3], vt4[3], *n0, *n1, *n2,
@@ -1142,7 +1142,7 @@ static int TriangleBuildSecondSecondPass(TriangleSurfaceRec * II, int i1, int i2
   /* in this version, the closest active point is tried.  Closed points
      are skipped. */
 
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   MapType *map;
   float *v1, *v2, *v0, *v4, vt[3], vt1[3], vt2[3], vt3[3], vt4[3], *n0, *n1, *n2,
@@ -1296,7 +1296,7 @@ static void TriangleBuildSingle(TriangleSurfaceRec * II, int i1, int i2, float *
                                 float *vn, int n)
 {
 
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   MapType *map;
   float *v1, *v2, *v0, *v4, vt[3], vt1[3], vt2[3], vt3[3], vt4[3], *n0, *n1, *n2,
     tNorm[3];
@@ -1432,7 +1432,7 @@ static int TriangleBuildThirdPass(TriangleSurfaceRec * II, int i1, int i2, float
 {
   /* This routine fills in triangles surrounded by three active edges */
 
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   MapType *map;
   float *v1, *v2, *v0, vt1[3], vt2[3], vt3[3], vt4[3], *n0, *n1, *n2, tNorm[3];
@@ -1501,7 +1501,7 @@ static int TriangleBuildLast(TriangleSurfaceRec * II, int i1, int i2, float *v, 
 {
   /* this routine is a hack to fill in the odd-ball situations */
 
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   MapType *map;
   float *v1, *v2, *v0, vt1[3], vt2[3], vt3[3], vt4[3], *n0, *n1, *n2, tNorm[3];
@@ -1569,7 +1569,7 @@ static int TriangleBuildLast(TriangleSurfaceRec * II, int i1, int i2, float *v, 
 
 static int FollowActives(TriangleSurfaceRec * II, float *v, float *vn, int n, int mode)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   int i1, i2;
 
@@ -1613,7 +1613,7 @@ static int FollowActives(TriangleSurfaceRec * II, float *v, float *vn, int n, in
 static int TriangleFill(TriangleSurfaceRec * II, float *v, float *vn, int n,
                         int first_time)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   int lastTri, lastTri2, lastTri3;
   int a, i, j, h, k, l;
@@ -1813,7 +1813,7 @@ static int TriangleFill(TriangleSurfaceRec * II, float *v, float *vn, int n,
 
 static int TriangleTxfFolds(TriangleSurfaceRec * II, float *v, float *vn, int n)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   int a, b, c, d, l, s01, s02, t1, t2;
   float *v0, *v1, *v2, *v3, d10[3], n10[3], d20[3], d30[3], d21[3], d31[3], d32[3];
@@ -2008,7 +2008,7 @@ static int TriangleTxfFolds(TriangleSurfaceRec * II, float *v, float *vn, int n)
 
 static int TriangleFixProblems(TriangleSurfaceRec * II, float *v, float *vn, int n)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   int problemFlag;
   int a, l, e;
@@ -2147,7 +2147,7 @@ static int TriangleFixProblems(TriangleSurfaceRec * II, float *v, float *vn, int
 static int TriangleBruteForceClosure(TriangleSurfaceRec * II, float *v, float *vn, int n,
                                      float cutoff)
 {
-  register TriangleSurfaceRec *I = II;
+  TriangleSurfaceRec *I = II;
   int ok = true;
   int a, b, c, d;
   int i0, i1, i2;
@@ -2283,7 +2283,7 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
                              float cutoff, int *nTriPtr, int **stripPtr,
                              float *extent, int cavity_mode)
 {
-  register TriangleSurfaceRec *I = NULL;
+  TriangleSurfaceRec *I = NULL;
   int ok = true;
   int *result = NULL;
   MapType *map;

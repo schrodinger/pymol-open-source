@@ -28,16 +28,12 @@ struct _CGO {
   float z_vector[3];
   float alpha;
   int *i_start, i_size;
-#ifdef _PYMOL_CGO_DRAWARRAYS
   short has_begin_end;
-#endif
   int current_pick_color_index, current_pick_color_bond;
-#ifdef _PYMOL_CGO_DRAWBUFFERS
   float current_accessibility;
   short has_draw_buffers, has_draw_cylinder_buffers, has_draw_sphere_buffers;
   float normal[3], color[3], texture[2];
   uchar pickColor[4];
-#endif
   short use_shader, cgo_shader_ub_color, cgo_shader_ub_normal;
   short debug;
   short enable_shaders;

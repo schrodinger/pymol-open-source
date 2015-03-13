@@ -128,72 +128,14 @@ void RepSphereFree(RepSphere * I)
 /* MULTI-INSTSANCE TODO:  isn't this a conflict? */
 static CShaderPrg *sphereARBShaderPrg = NULL;
 #endif
-#ifdef _PYMOL_GL_DRAWARRAYS
+#ifdef PURE_OPENGL_ES_2
 void RepSphereRenderImmediatePointsES(PyMOLGlobals *G, int sphere_mode, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, float *varg){
-  int a, *i2a = i2aarg, pl = 0, plc = 0;
-  ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-  float *cur_color, *v = varg;
-  int last_color = -1;
-
-  for(a = starta; a < enda; a++) {
-    AtomInfoType *ai = atomInfo + *(i2a++);
-    if(ai->visRep[cRepSphere]) {
-      int c = ai->color;
-      if(c != last_color) {
-	last_color = c;
-	cur_color = ColorGet(G, c);
-      }
-      switch (sphere_mode) {
-      case 1:
-      case 2:
-      case 3:
-	colorVals[plc++] = cur_color[0]; colorVals[plc++] = cur_color[1]; colorVals[plc++] = cur_color[2]; colorVals[plc++] = 1.f;
-	ptsVals[pl++] = v[0]; ptsVals[pl++] = v[1]; ptsVals[pl++] = v[2];
-      }
-    }
-    v += 3;
-  }
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-  glColorPointer(4, GL_FLOAT, 0, colorVals);
-  glDrawArrays(GL_LINES, 0, nverts);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-  DEALLOCATE_ARRAY(ptsVals)
-  DEALLOCATE_ARRAY(colorVals)
+    /* TODO */
 }
-
 void RepSphereRenderImmediateMode4PointsES(PyMOLGlobals *G, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, float *varg, 
 					   float zz_factor, float s_factor, float *dim_add, float _1){
-  int a, *i2a = i2aarg, pl = 0, plc = 0;
-  ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-  float *v = varg;
-  for(a = starta; a < enda; a++) {
-    AtomInfoType *ai = atomInfo + *(i2a++);
-    if(ai->visRep[cRepSphere]) {
-      float *vc = ColorGet(G, ai->color);
-      float r = zz_factor * vc[0] + s_factor;
-      float g = zz_factor * vc[1] + s_factor;
-      float b = zz_factor * vc[2] + s_factor;
-      colorVals[plc++] = r > _1 ? _1 : r; colorVals[plc++] = g > _1 ? _1 : g; colorVals[plc++] = b > _1 ? _1 : b; colorVals[plc++] = 1.f;
-      ptsVals[pl++] = v[0] + dim_add[0]; ptsVals[pl++] = v[1] + dim_add[1]; ptsVals[pl++] = v[2] + dim_add[2];
-    }
-    v += 3;
-  }
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-  glColorPointer(4, GL_FLOAT, 0, colorVals);
-  glDrawArrays(GL_POINTS, 0, nverts);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-  DEALLOCATE_ARRAY(ptsVals)
-  DEALLOCATE_ARRAY(colorVals)
+    /* TODO */
 }
-
 #endif
 
 void RepSphereRenderOneSphere_ARB(PyMOLGlobals *G, RenderInfo *info, float *color, float *last_radius, float *cur_radius, float *fog_info, float *v){
@@ -284,19 +226,17 @@ void RenderSphereMode_Immediate_5(PyMOLGlobals *G, RenderInfo *info, CoordSet *c
 #endif
 
 void RenderSphereMode_Immediate_4(PyMOLGlobals *G, RenderInfo *info, CoordSet *cs, ObjectMolecule *obj, int *repActive, float pixel_scale){
+#ifndef PURE_OPENGL_ES_2
         int repeat = true;
         const float _1 = 1.0F;
         const float _2 = 2.0F;
         float x_add = 0.0F, y_add = 0.0F, z_add = 0.0F;
-#ifdef _PYMOL_GL_DRAWARRAYS
-	float dim_add[3] = { 0.0F, 0.0F, 0.0F };
-#endif
         float z_factor = 0.0F, r_factor = 1.0F;
         float s_factor = 0.0F;
         int pass = 0;
-        register float max_size = SettingGet_f(G, cs->Setting, obj->Obj.Setting,
+        float max_size = SettingGet_f(G, cs->Setting, obj->Obj.Setting,
                                                cSetting_sphere_point_max_size);
-        register int clamp_size_flag = (max_size >= 0.0F);
+        int clamp_size_flag = (max_size >= 0.0F);
         while(repeat) {
 
           int a;
@@ -313,66 +253,7 @@ void RenderSphereMode_Immediate_4(PyMOLGlobals *G, RenderInfo *info, CoordSet *c
             zz_factor = 0.45F;
 
           repeat = false;
-#ifdef _PYMOL_GL_DRAWARRAYS
-	  {
-	    int *starti2a = i2a, starta = 0, nverts = 0;
-	    float *startv = v;  
-	    for(a = 0; a < nIndex; a++) {
-	      AtomInfoType *ai = atomInfo + *(i2a++);
-	      if(ai->visRep[cRepSphere]) {
-		float cur_radius = ai->vdw;
-		(*repActive) = true;
-		if(last_radius != cur_radius) {
-		  float clamp_radius = cur_radius;
-		  float size = cur_radius * pixel_scale;
-		  if(clamp_size_flag)
-		    if(size > max_size) {
-		      size = max_size;
-		      clamp_radius = size / pixel_scale;
-		    }
-		  size *= r_factor;
-		  if(size != last_size) {
-		    if (nverts>0){
-		      RepSphereRenderImmediateMode4PointsES(G, atomInfo, starta, a, nverts, starti2a, startv, zz_factor, s_factor, dim_add, _1);
-		      nverts = 0;
-		      starta = a;
-		      startv = v;
-		      starti2a = i2a;
-		    }
-		    if(size > largest)
-		      largest = size;
-		    if(size < _2) {
-		      if(!pass) {
-			zz_factor = 1.0F;
-			s_factor = 0.0F;
-		      }
-		    }
-		    if(size < _1) {
-		      size = _1;
-		      glDisable(GL_POINT_SMOOTH);
-		      glDisable(GL_ALPHA_TEST);
-		    } else {
-		      glEnable(GL_POINT_SMOOTH);
-		      glEnable(GL_ALPHA_TEST);
-		    }
-		    glPointSize(size);
-		  }
-		  x_add = z_factor * clamp_radius * info->view_normal[0];
-		  y_add = z_factor * clamp_radius * info->view_normal[1];
-		  z_add = z_factor * clamp_radius * info->view_normal[2];
-		  dim_add[0] = x_add; dim_add[1] = y_add; dim_add[2] = z_add; 
-		  last_radius = cur_radius;
-		  last_size = size;
-		}
-		nverts++;
-	      }
-	      v += 3;
-	    }
-	    if (nverts>0){
-	      RepSphereRenderImmediateMode4PointsES(G, atomInfo, starta, a, nverts, starti2a, startv, zz_factor, s_factor, dim_add, _1);
-	    }
-	  }
-#else
+
           glBegin(GL_POINTS);
 	  
           for(a = 0; a < nIndex; a++) {
@@ -434,7 +315,7 @@ void RenderSphereMode_Immediate_4(PyMOLGlobals *G, RenderInfo *info, CoordSet *c
           }
 
           glEnd();
-#endif
+
           if(largest > 2.0F) {
             float reduce = (largest - 2.0F) / largest;
             r_factor *= reduce;
@@ -446,6 +327,7 @@ void RenderSphereMode_Immediate_4(PyMOLGlobals *G, RenderInfo *info, CoordSet *c
         }
         glDisable(GL_POINT_SMOOTH);
 	printf("pass=%d\n", pass);
+#endif
 }
 
 void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs, ObjectMolecule *obj, int *repActive, float sphere_scale){
@@ -492,29 +374,8 @@ void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs, ObjectM
 	  int b;
 	  for(b = 0; b < sp_NStrip; b++) {
 	    int nc = *(s++);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	    {
-	      int nverts = nc;
-	      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-	      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-	      int pl = 0;
-	      for(c = 0; c < nc; c++) {
-		float *sp_dot_q = &sp_dot[*(q++)][0];
-		normalVals[pl] = sp_dot_q[0]; normalVals[pl+1] = sp_dot_q[1]; normalVals[pl+2] = sp_dot_q[2];
-		vertexVals[pl++] = v0 + vdw * sp_dot_q[0];
-		vertexVals[pl++] = v1 + vdw * sp_dot_q[1];
-		vertexVals[pl++] = v2 + vdw * sp_dot_q[2];
-	      }
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_NORMAL_ARRAY);
-	      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-	      glNormalPointer(GL_FLOAT, 0, normalVals);
-	      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	      glDisableClientState(GL_NORMAL_ARRAY);
-	      DEALLOCATE_ARRAY(vertexVals)
-	      DEALLOCATE_ARRAY(normalVals)
-	    }
+#ifdef PURE_OPENGL_ES_2
+	    /* TODO */
 #else
 	    glBegin(GL_TRIANGLE_STRIP);
 	    for(c = 0; c < nc; c++) {
@@ -550,49 +411,6 @@ void RenderSphereMode_Immediate_1_2_3(PyMOLGlobals *G, RenderInfo *info, CoordSe
   if(!info->line_lighting)
     glDisable(GL_LIGHTING);
   
-#ifdef _PYMOL_GL_DRAWARRAYS
-  {
-    int *starti2a = i2a, starta = 0, nverts = 0;
-    float *startv = v;
-    (void)last_color;
-    for(a = 0; a < nIndex; a++) {
-      AtomInfoType *ai = atomInfo + *(i2a++);
-      if(ai->visRep[cRepSphere]) {
-	repActive = true;
-	switch (sphere_mode) {
-	case 1:
-	  nverts++;
-	  break;
-	case 2:
-	case 3:
-	  {
-	    float cur_radius = ai->vdw * pixel_scale;
-	    if(last_radius != cur_radius) {
-	      glPointSize(last_radius);
-	      if (nverts>0){
-		RepSphereRenderImmediatePointsES(G, sphere_mode, atomInfo, starta, a, nverts, starti2a, startv);
-	      }
-	      if(clamp_size_flag)
-		if(cur_radius > max_radius)
-		  cur_radius = max_radius;
-	      glPointSize(cur_radius);
-	      last_radius = cur_radius;
-	      starta = a;
-	      startv = v;
-	      nverts = 0;
-	    }
-	    nverts++;
-	  }
-	  break;
-	}
-      }
-      v += 3;
-    }
-    if (nverts>0){
-      RepSphereRenderImmediatePointsES(G, sphere_mode, atomInfo, starta, a, nverts, starti2a, startv);
-    }
-  }
-#else
   glBegin(GL_POINTS);
   for(a = 0; a < nIndex; a++) {
     AtomInfoType *ai = atomInfo + *(i2a++);
@@ -631,7 +449,7 @@ void RenderSphereMode_Immediate_1_2_3(PyMOLGlobals *G, RenderInfo *info, CoordSe
     v += 3;
   }
   glEnd();
-#endif
+
   glEnable(GL_LIGHTING);
   
   if(sphere_mode == 3) {
@@ -714,116 +532,16 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
       cs->Active[cRepSphere] = false;
   }
 }
-#ifdef _PYMOL_GL_DRAWARRAYS
+#ifdef PURE_OPENGL_ES_2
+void RepSphereRenderPointsES(int nvertsarg, float *varg, float *vnarg);
+void RepSphereRenderMode5PointsES(int nvertsarg, float *varg, float zz_factor, float s_factor, float *dim_add, float _1);
+void RepSphereRenderPointsDefaultES(RepSphere * I, Picking **pick, int nvertsarg, int iarg, Pickable *parg, float *varg);
 void RepSphereRenderPointsES(int nvertsarg, float *varg, float *vnarg){
-  float *v = varg, *vn = vnarg;
-  int nverts = nvertsarg, plc = 0;
-  ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-  ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-  int pl = 0;
-
-  while (nverts>0){
-    colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; colorVals[plc++] = v[2]; colorVals[plc++] = 1.f;
-    v += 4;
-    if (vn){
-      normalVals[pl] = vn[0]; normalVals[pl+1] = vn[1]; normalVals[pl+2] = vn[2];
-      vn += 3;
-    }
-    ptsVals[pl++] = v[0]; ptsVals[pl++] = v[1]; ptsVals[pl++] = v[2];    
-    v += 4;
-    nverts--;
-  }
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  glEnableClientState(GL_NORMAL_ARRAY);
-  glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-  glColorPointer(4, GL_FLOAT, 0, colorVals);
-  glNormalPointer(GL_FLOAT, 0, normalVals);
-  glDrawArrays(GL_POINTS, 0, nvertsarg);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-  DEALLOCATE_ARRAY(ptsVals)
-  DEALLOCATE_ARRAY(colorVals)
-  DEALLOCATE_ARRAY(normalVals)
+    /* TODO */
 }
-
 void RepSphereRenderMode5PointsES(int nvertsarg, float *varg, float zz_factor, float s_factor, float *dim_add, float _1){
-  int nverts = nvertsarg;
-  ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-    int pl = 0, plc = 0;
-  float r,g,b, *v = varg;
-  while (nverts>0){
-    r = zz_factor * v[0] + s_factor;
-    g = zz_factor * v[1] + s_factor;
-    b = zz_factor * v[2] + s_factor;
-    colorVals[plc++] = r > _1 ? _1 : r; colorVals[plc++] = g > _1 ? _1 : g; colorVals[plc++] = b > _1 ? _1 : b; colorVals[plc++] = 1.f;
-    v += 4;
-    ptsVals[pl++] = v[0] + dim_add[0]; ptsVals[pl++] = v[1] + dim_add[1]; ptsVals[pl++] = v[2] + dim_add[2];
-    v += 4;
-    nverts--;
-  }
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-  glColorPointer(4, GL_FLOAT, 0, colorVals);
-  glDrawArrays(GL_POINTS, 0, nvertsarg);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-  DEALLOCATE_ARRAY(ptsVals)
-  DEALLOCATE_ARRAY(colorVals)
 }
 void RepSphereRenderPointsDefaultES(RepSphere * I, Picking **pick, int nvertsarg, int iarg, Pickable *parg, float *varg){
-  int nverts = nvertsarg;
-  float cur_color[3] = { 0.F, 0.F, 0.F };
-  int i = iarg;
-  Pickable *p = parg;
-  float *v = varg;
-  ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-  ALLOCATE_ARRAY(GLubyte,colorVals,nverts*3)
-  int pl = 0, j, plc = 0;
-  while(nverts>0){
-    int skip = (p[1].index < 0);
-    if(!skip) {
-      i++;
-      if(!(*pick)[0].src.bond) {
-	/* pass 1 - low order bits *            */
-	cur_color[0] = (uchar) ((i & 0xF) << 4);
-	cur_color[1] = (uchar) ((i & 0xF0) | 0x8);
-	cur_color[2] = (uchar) ((i & 0xF00) >> 4);
-	VLACheck((*pick), Picking, i);
-	p++;
-	(*pick)[i].src = *p;    /* copy object and atom info */
-	(*pick)[i].context = I->R.context;
-      } else {
-	/* pass 2 - high order bits */
-	j = i >> 12;
-	cur_color[0] = (uchar) ((j & 0xF) << 4);
-	cur_color[1] = (uchar) ((j & 0xF0) | 0x8);
-	cur_color[2] = (uchar) ((j & 0xF00) >> 4);
-      }
-    } else {
-      p++;
-    }
-    v += 4;
-    if (!skip){
-      colorVals[plc++] = cur_color[0]; colorVals[plc++] = cur_color[1]; colorVals[plc++] = cur_color[2]; colorVals[plc++] = 1.f;
-      ptsVals[pl++] = v[0]; ptsVals[pl++] = v[1]; ptsVals[pl++] = v[2];
-      nverts--;
-    }
-    v += 4;
-  }
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-  glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorVals);
-  glDrawArrays(GL_POINTS, 0, nvertsarg);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-  DEALLOCATE_ARRAY(ptsVals)
-  DEALLOCATE_ARRAY(colorVals)
 }
 #endif
 
@@ -871,7 +589,7 @@ int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I, RenderInfo * info, in
 	(*vptr)+=4; v = *vptr;
 
 	if (ok){
-	  register float vdw = v[3];
+	  float vdw = v[3];
 	  last_vdw = vdw;
 	  q = sp->Sequence;
 	  s = sp->StripLen;
@@ -927,46 +645,16 @@ int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I, RenderInfo * info, in
 	  glColor4f(v[0], v[1], v[2], alpha);
 	(*vptr)+=4; v = *vptr;
 	{
-	  register float vdw = v[3];
+	  float vdw = v[3];
 	  glTranslatef(v[0], v[1], v[2]);
 	  if((vdw != last_vdw) || (!dlist)) {
 	    last_vdw = vdw;
 	    q = sp->Sequence;
 	    s = sp->StripLen;
-#ifdef _PYMOL_GL_CALLLISTS
-	    if(!dlist)
-	      dlist = glGenLists(1);
-	    if(dlist) {
-	      glNewList(dlist, GL_COMPILE_AND_EXECUTE);
-	    }
-#endif
-	    
+
+#ifndef PURE_OPENGL_ES_2
 	    for(b = 0; b < sp->NStrip; b++) {
 	      int d;
-#ifdef _PYMOL_GL_DRAWARRAYS
-	      {
-		int nverts = *s;
-		ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-		ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-		int pl = 0;
-		
-		for(d = 0; d < (*s); d++) {
-		  float *norm = sp_dot[*(q++)];
-		  normalVals[pl] = norm[0]; normalVals[pl+1] = norm[1]; normalVals[pl+2] = norm[2];
-		  vertexVals[pl++] = vdw * norm[0]; vertexVals[pl++] = vdw * norm[1];
-		  vertexVals[pl++] = vdw * norm[2];
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-		glNormalPointer(GL_FLOAT, 0, normalVals);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_NORMAL_ARRAY);
-		DEALLOCATE_ARRAY(vertexVals)
-		DEALLOCATE_ARRAY(normalVals)
-	      }
-#else
 	      glBegin(GL_TRIANGLE_STRIP);
 	      for(d = 0; d < (*s); d++) {
 		float *norm = sp_dot[*(q++)];
@@ -974,25 +662,14 @@ int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I, RenderInfo * info, in
 		glVertex3f(vdw * norm[0], vdw * norm[1], vdw * norm[2]);
 	      }
 	      glEnd();
-#endif
 	      s++;
 	    }
-#ifdef _PYMOL_GL_CALLLISTS
-	    if(dlist) {
-	      glEndList();
-	    }
-	  } else {
-	    glCallList(dlist);
 #endif
 	  }
 	  glTranslatef(-v[0], -v[1], -v[2]);
 	}
 	(*vptr)+=4; v = *vptr;
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(dlist)
-	glDeleteLists(dlist, 1);
-#endif
     }
   }
   
@@ -1032,36 +709,7 @@ void RenderSphereMode_Sprites(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, i
   }
   if((sphere_mode == 7) || (sphere_mode == 8))
     glEnable(GL_LIGHTING);
-#ifdef _PYMOL_GL_DRAWARRAYS
-  {
-    float *startv = v, *startvn = vn;
-    int nverts = 0;
-    while(c--) {
-      if(last_radius != (cur_radius = v[7])) {
-	size = cur_radius * pixel_scale;
-	if (nverts>0){
-	  RepSphereRenderPointsES(nverts, startv, startvn);
-	  nverts = 0;
-	  startv = v;
-	  startvn = vn;
-	}
-	if(clamp_size_flag)
-	  if(size > max_size)
-	    size = max_size;
-	glPointSize(size);
-	last_radius = cur_radius;
-      }
-      if(vn) {
-	(*vnptr)+=3; vn = *vnptr;
-      }
-      nverts++;
-      (*vptr)+=8; v = *vptr;
-    }
-    if (nverts>0){
-      RepSphereRenderPointsES(nverts, startv, startvn);
-    }
-  }
-#else
+
   glBegin(GL_POINTS);
   while(c--) {
     if(last_radius != (cur_radius = v[7])) {
@@ -1084,7 +732,7 @@ void RenderSphereMode_Sprites(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, i
     (*vptr)+=4; v = *vptr;
   }
   glEnd();
-#endif
+
   if(sphere_mode == 3) {
     glDisable(GL_POINT_SMOOTH);
     glAlphaFunc(GL_GREATER, 0.05F);
@@ -1094,21 +742,19 @@ void RenderSphereMode_Sprites(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, i
 }
  
 static void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int carg){
-  register float _1 = 1.0F;
-  register float _2 = 2.0F;
+#ifndef PURE_OPENGL_ES_2
+  float _1 = 1.0F;
+  float _2 = 2.0F;
   float pixel_scale = 1.0F / info->vertex_scale;
   int repeat = true;
-  register float x_add = 0.0F, y_add = 0.0F, z_add = 0.0F;
-#ifdef _PYMOL_GL_DRAWARRAYS
-  float dim_add[3] = { 0.0F, 0.0F, 0.0F };
-#endif
-  register float z_factor = 0.0F, r_factor = 1.0F;
-  register float largest;
-  register float r, g, b;
-  register float s_factor = 0.0F;
-  register float zz_factor;
-  register float clamp_radius;
-  register float last_size;
+  float x_add = 0.0F, y_add = 0.0F, z_add = 0.0F;
+  float z_factor = 0.0F, r_factor = 1.0F;
+  float largest;
+  float r, g, b;
+  float s_factor = 0.0F;
+  float zz_factor;
+  float clamp_radius;
+  float last_size;
   int pass = 0;
   float *v, last_radius, cur_radius, size;
   int c;
@@ -1134,61 +780,7 @@ static void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *i
     last_radius = -1.0F;
     last_size = -1.0F;
     repeat = false;
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int nverts;
-      float *startv = v;  
-      (void)r; (void)g; (void)b;
-      nverts = 0;
-      while(c--) {
-	if(last_radius != (cur_radius = v[7])) {
-	  size = cur_radius * pixel_scale;
-	  clamp_radius = cur_radius;
-	  if(clamp_size_flag)
-	    if(size > max_size) {
-	      size = max_size;
-	      clamp_radius = size / pixel_scale;
-	    }
-	  size *= r_factor;
-	  if(size != last_size) {
-	    if (nverts>0){
-	      RepSphereRenderMode5PointsES(nverts, startv, zz_factor, s_factor, dim_add, _1);
-	      startv = v;
-	      nverts = 0;
-	    }
-	    if(size > largest)
-	      largest = size;
-	    if(size < _2) {
-	      if(!pass) {
-		zz_factor = 1.0F;
-		s_factor = 0.0F;
-	      }
-	    }
-	    if(size < _1) {
-	      size = _1;
-	    glDisable(GL_POINT_SMOOTH);
-	    glDisable(GL_ALPHA_TEST);
-	  } else {
-	    glEnable(GL_POINT_SMOOTH);
-	    glEnable(GL_ALPHA_TEST);
-	  }
-	  glPointSize(size);
-	}
-	x_add = z_factor * clamp_radius * info->view_normal[0];
-	y_add = z_factor * clamp_radius * info->view_normal[1];
-	z_add = z_factor * clamp_radius * info->view_normal[2];
-	dim_add[0] = x_add; dim_add[1] = y_add; dim_add[2] = z_add;
-	last_radius = cur_radius;
-	last_size = size;
-      }
-      nverts++;
-      v += 8;
-    }
-    if (nverts>0){
-      RepSphereRenderMode5PointsES(nverts, startv, zz_factor, s_factor, dim_add, _1);
-    }
-  }
-#else
+
   glBegin(GL_POINTS);
   while(c--) {
     if(last_radius != (cur_radius = v[7])) {
@@ -1238,7 +830,7 @@ static void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *i
     v += 4;
   }
   glEnd();
-#endif
+
   if(largest > 2.0F) {
     float reduce = (largest - 2.0F) / largest;
     r_factor *= reduce;
@@ -1249,6 +841,7 @@ static void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *i
   }
 }
  glDisable(GL_POINT_SMOOTH);
+#endif
 }
 
 static void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, float **vptr, int carg){
@@ -1432,46 +1025,6 @@ void RenderSphereMode_1_or_6(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, fl
   glDisable(GL_POINT_SMOOTH);
   glDisable(GL_ALPHA_TEST);
   
-#ifdef _PYMOL_GL_DRAWARRAYS
-  {
-    int nverts = c;
-    ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-    ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-    ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-    int pl =0, plc = 0;
-    while (c--){
-      colorVals[plc++] = v[0]; colorVals[plc++] = v[1]; 
-      colorVals[plc++] = v[2]; colorVals[plc++] = alpha;
-      (*vptr)+=4; v = *vptr;
-      if (vn){
-	normalVals[pl] = vn[0]; normalVals[pl+1] = vn[1]; normalVals[pl+2] = vn[2];
-	(*vnptr)+=3; vn = *vnptr;
-      }
-      vertexVals[pl++] = v[0]; vertexVals[pl++] = v[1]; 
-      vertexVals[pl++] = v[2]; 
-      (*vptr)+=4; v = *vptr;
-    }
-    glEnable(GL_LIGHTING);
-    
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-    if (vn){
-      glEnableClientState(GL_NORMAL_ARRAY);
-      glNormalPointer(GL_FLOAT, 0, normalVals);
-    }
-    glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-    glColorPointer(4, GL_FLOAT, 0, colorVals);
-    glDrawArrays(GL_POINTS, 0, nverts);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-    if (vn){
-      glDisableClientState(GL_NORMAL_ARRAY);
-    }
-    DEALLOCATE_ARRAY(colorVals)
-    DEALLOCATE_ARRAY(normalVals)
-    DEALLOCATE_ARRAY(vertexVals)
-  }
-#else
   glBegin(GL_POINTS);
   if(alpha == 1.0) {
     if(vn) {
@@ -1517,7 +1070,7 @@ void RenderSphereMode_1_or_6(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, fl
     }
   }
   glEnd();
-#endif
+
   glEnable(GL_ALPHA_TEST);
 }
 
@@ -1552,10 +1105,8 @@ void RepSpheresSetColorForPicking(RepSphere * I, Picking **pick, int *i, int *j,
 	       (uchar) ((*i & 0xF00) >> 4));
     VLACheck((*pick), Picking, *i);
     (*p)++;
-#ifndef _PYMOL_GL_DRAWARRAYS
     (*pick)[*i].src = **p;    /* copy object and atom info */
     (*pick)[*i].context = I->R.context;
-#endif
   } else {
     /* pass 2 - high order bits */
     (*j) = *i >> 12;
@@ -1569,29 +1120,10 @@ void RepSpheresRenderSphereGeometryForPicking(SphereRec *sp, float *v0, float vd
   q = sp->Sequence;
   s = sp->StripLen;
   for(b = 0; b < sp->NStrip; b++) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int nverts = *s;
-      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-      int pl = 0;
-      for(cc = 0; cc < (*s); cc++) {
-	normalVals[pl] = sp->dot[*q][0]; normalVals[pl+1] = sp->dot[*q][1]; normalVals[pl+2] = sp->dot[*q][2];
-	vertexVals[pl++] = v0[0] + vdw * sp->dot[*q][0]; vertexVals[pl++] = v0[1] + vdw * sp->dot[*q][1]; 
-	vertexVals[pl++] = v0[2] + vdw * sp->dot[*q][2];
-	q++;
-      }
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glEnableClientState(GL_NORMAL_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-      glNormalPointer(GL_FLOAT, 0, normalVals);
-      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      glDisableClientState(GL_NORMAL_ARRAY);
-      DEALLOCATE_ARRAY(vertexVals)
-      DEALLOCATE_ARRAY(normalVals)
-    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
+
     glBegin(GL_TRIANGLE_STRIP);
     for(cc = 0; cc < (*s); cc++) {
       glNormal3f(sp->dot[*q][0], sp->dot[*q][1], sp->dot[*q][2]);
@@ -1615,29 +1147,6 @@ void RepSpheresRenderSphereRecAtVertex(SphereRec *sp, float *v0, float vdw){
     s = sp->StripLen;
     for(b = 0; b < sp->NStrip; b++) {
       int d;
-#ifdef _PYMOL_GL_DRAWARRAYS
-      {
-	int nverts = *s;
-	ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-	ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-	int pl = 0;
-	for(d = 0; d < (*s); d++) {
-	  float *norm = sp_dot[*(q++)];
-	  normalVals[pl] = norm[0]; normalVals[pl+1] = norm[1]; normalVals[pl+2] = norm[2];
-	  vertexVals[pl++] = vdw * norm[0]; vertexVals[pl++] = vdw * norm[1];
-	  vertexVals[pl++] = vdw * norm[2];
-	}
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-	glNormalPointer(GL_FLOAT, 0, normalVals);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-	DEALLOCATE_ARRAY(vertexVals)
-	DEALLOCATE_ARRAY(normalVals)
-      }
-#else
       glBegin(GL_TRIANGLE_STRIP);
       for(d = 0; d < (*s); d++) {
 	float *norm = sp_dot[*(q++)];
@@ -1645,7 +1154,6 @@ void RepSpheresRenderSphereRecAtVertex(SphereRec *sp, float *v0, float vdw){
 	glVertex3f(vdw * norm[0], vdw * norm[1], vdw * norm[2]);
       }
       glEnd();
-#endif
       s++;
     }
     glTranslatef(-v0[0], -v0[1], -v0[2]);
@@ -1653,6 +1161,7 @@ void RepSpheresRenderSphereRecAtVertex(SphereRec *sp, float *v0, float vdw){
 }
 
 void RepSpheresRenderPointForPicking(RepSphere * I, float vdw, float *v, int sphere_mode, float *last_radius, float *cur_radius, float pixel_scale, int clamp_size_flag, float max_size, short *hasBegun){
+#ifndef PURE_OPENGL_ES_2
   float size;
   float *v0 = &v[4];
   SphereRec *sp = I->R.G->Sphere->Sphere[0];
@@ -1674,42 +1183,26 @@ void RepSpheresRenderPointForPicking(RepSphere * I, float vdw, float *v, int sph
       {
 	(*cur_radius) = v[7];
 	size = (*cur_radius) * pixel_scale;
-#ifdef _PYMOL_GL_DRAWARRAYS
-	/* TODO Need to draw points */
-	if (nverts>0){
-	  RepSphereRenderPointsDefaultES(I, pick, nverts, starti, startp, startv);
-	  starti = i;
-	  startp = p;
-	  startv = v;
-	  nverts = 0;
-	}
-#else
 	if (*hasBegun){
 	  glEnd();
 	  (*hasBegun) = 0;
 	}
-#endif
 	if(clamp_size_flag)
 	  if(size > max_size)
 	    size = max_size;
 	glPointSize(size);
-#ifndef _PYMOL_GL_DRAWARRAYS
 	glBegin(GL_POINTS);
 	(*hasBegun) = 1;
-#endif
 	*last_radius = *cur_radius;
       }
     }
-#ifndef _PYMOL_GL_DRAWARRAYS
     glVertex3fv(v0);
-#endif
     break;
   default:         /* simple, default point width points */
-#ifndef _PYMOL_GL_DRAWARRAYS
     glVertex3fv(v0);
-#endif
     break;
   }
+#endif
 }
 
 void RepSpheresRenderEndOfPicking(int sphere_mode){
@@ -1812,28 +1305,6 @@ static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, float alpha, i
 	for(a = 0; a < sp->NStrip; a++) {
 	  cc = sp->StripLen[a];
 	  if(!skip) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-	    {
-	      int nverts = cc-1;
-	      ALLOCATE_ARRAY(GLfloat,vertexVals,nverts*3)
-	      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-	      int pl = 0;
-	      while((cc--) > 0) {
-		normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-		vertexVals[pl++] = v[3]; vertexVals[pl++] = v[4]; vertexVals[pl++] = v[5];
-		v += 6;
-	      }
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glEnableClientState(GL_NORMAL_ARRAY);
-	      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-	      glNormalPointer(GL_FLOAT, 0, normalVals);
-	      glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	      glDisableClientState(GL_NORMAL_ARRAY);
-	      DEALLOCATE_ARRAY(vertexVals)
-	      DEALLOCATE_ARRAY(normalVals)
-	    }
-#else
 	    glBegin(GL_TRIANGLE_STRIP);
 	    while((cc--) > 0) {
 	      glNormal3fv(v);
@@ -1841,7 +1312,6 @@ static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, float alpha, i
 	      v += 6;
 	    }
 	    glEnd();
-#endif
 	  } else {
 	    while((cc--) > 0) {
 	      v += 6;
@@ -1853,16 +1323,11 @@ static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, float alpha, i
       float last_radius = -1.0F;
       float cur_radius;
       float pixel_scale = 1.0F / info->vertex_scale;
-      register float max_size = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting,
+      float max_size = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting,
 					     cSetting_sphere_point_max_size) * 3;
-      register int clamp_size_flag = (max_size >= 0.0F);
+      int clamp_size_flag = (max_size >= 0.0F);
 
       short hasBegun = 0;
-#ifdef _PYMOL_GL_DRAWARRAYS
-      int starti, nverts = 0;
-      float *startv;
-      Pickable *startp;	  
-#endif
       if(!sp) {
 	RepSpheresPrepPickingIfNoSphereGeometry(I, sphere_mode, &pixel_scale);
 	glBegin(GL_POINTS);
@@ -1870,11 +1335,6 @@ static void RepSphereRenderPick(RepSphere * I, RenderInfo * info, float alpha, i
       }
       v = I->VC;
       c = I->NC;
-#ifdef _PYMOL_GL_DRAWARRAYS
-      starti = i;
-      startp = p;
-      startv = v;
-#endif
       while(c--) {
 	int skip = (p[1].index < 0);
 	if(!skip) {
@@ -1945,18 +1405,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
         v = I->VC;
         c = I->NC;
 
-#ifdef _PYMOL_GL_CALLLISTS
-	switch (sphere_mode){
-	case 2: case 3: case 7: case 8:
-	  /* scaleable reps... */
-          if(I->R.displayList) {
-            if(I->LastVertexScale != info->vertex_scale) {
-              glDeleteLists(I->R.displayList, 1);
-              I->R.displayList = 0;
-            }
-          }
-        }
-#endif
         I->LastVertexScale = info->vertex_scale;
 
         use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
@@ -1965,20 +1413,9 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
           use_dlst = 0;
           break;
         }
-#ifdef _PYMOL_GL_CALLLISTS
-        if(use_dlst && I->R.displayList) {
-          glCallList(I->R.displayList);
-        } else {                /* display list */
-
-          if(use_dlst) {
-            if(!I->R.displayList) {
-              I->R.displayList = glGenLists(1);
-              if(I->R.displayList) {
-                glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-              }
-            }
-          }
-#endif
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
           if((sphere_mode > 0) && (!info->line_lighting))
             glDisable(GL_LIGHTING);
 	  if((sphere_mode == 5)
@@ -2014,12 +1451,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
             break;
           }
           glEnable(GL_LIGHTING);
-
-#ifdef _PYMOL_GL_CALLLISTS
-          if(use_dlst && I->R.displayList) {
-            glEndList();
-          }
-        }
 #endif
       } else {                  /* real spheres, drawn with triangles -- not points or impostors */
 	ok &= RenderSphereMode_Direct(G, I, info, c, &v, alpha, I->SSP);
@@ -2064,12 +1495,12 @@ int RepSphereDetermineAtomVisibility(int vis_flag_arg, AtomInfoType *ati1, int c
      (ati1->flags & cAtomFlag_polymer) &&
      ((cartoon_side_chain_helper && GET_BIT(ati1->visRep,cRepCartoon)) ||
       ( ribbon_side_chain_helper && GET_BIT(ati1->visRep,cRepRibbon)))) {
-    register char *name1 = ati1->name;
-    register int prot1 = ati1->protons;
+    char *name1 = ati1->name;
+    int prot1 = ati1->protons;
     
     if(prot1 == cAN_N) {
       if((!name1[1]) && (name1[0] == 'N')) {  /* N */
-	register char *resn1 = ati1->resn;
+	char *resn1 = ati1->resn;
 	if(!((resn1[0] == 'P') && (resn1[1] == 'R') && (resn1[2] == 'O')))
 	  vis_flag = false;
       }
@@ -2135,7 +1566,7 @@ void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj, CoordS
 
 int RepSphereComputeSphereNormals(RepSphere *I){
   PyMOLGlobals *G = I->R.G;
-  register float range = 6.0F;
+  float range = 6.0F;
   float *vc = I->VC;
   float *dot = G->Sphere->Sphere[1]->dot[0];
   int n_dot = G->Sphere->Sphere[1]->nDot;
@@ -2168,11 +1599,11 @@ int RepSphereComputeSphereNormals(RepSphere *I){
       CHECKOK(ok, I->VN);
       if(ok && map && I->VN) {
 	float dst;
-	register float *vv;
-	register int nbr_flag;
-	register int n_dot_active, *da;
-	register float cut_mult = -1.0F;
-	register float range2 = range * range;
+	float *vv;
+	int nbr_flag;
+	int n_dot_active, *da;
+	float cut_mult = -1.0F;
+	float range2 = range * range;
 
 	ok &= MapSetupExpress(map);
 	if (ok){
@@ -2201,7 +1632,7 @@ int RepSphereComputeSphereNormals(RepSphere *I){
 	      if(j != a) {
 		vv = v_tmp + 3 * j;
 		if(within3fret(vv, v, range, range2, v1, &dst)) {
-		  register float cutoff = dst * cut_mult;
+		  float cutoff = dst * cut_mult;
 		  b = 0;
 		  while(b < n_dot_active) {
 		    vv = dot + active[b];

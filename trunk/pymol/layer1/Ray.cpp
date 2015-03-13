@@ -945,7 +945,7 @@ G3dPrimitive *RayRenderG3d(CRay * I, int width, int height,
 {
   /* generate a rendering stream for Miguel's G3d java rendering engine */
 
-  register float scale_x, scale_y, scale_z;
+  float scale_x, scale_y, scale_z;
   int shift_x, shift_y;
   float *d;
   CBasis *base;
@@ -1556,7 +1556,7 @@ static int VectorHash_GetOrSetKeyValue(VectorHash * I, float *key, float *alpha,
   unsigned int hash;
   /* returns non-zero if the entry is new */
   {
-    register unsigned int a, b, c;
+    unsigned int a, b, c;
 
     a = ((unsigned int *) key)[0];
     b = ((unsigned int *) key)[1];
@@ -2747,12 +2747,12 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
 void RayProjectTriangle(CRay * I, RayInfo * r, float *light, float *v0, float *n0,
                         float scale)
 {
-  register float w2;
+  float w2;
   float d1[3], d2[3], d3[3];
   float p1[3], p2[3], p3[3];
-  register int c = 0;
-  register const float _0 = 0.0F;
-  register float *impact = r->impact;
+  int c = 0;
+  const float _0 = 0.0F;
+  float *impact = r->impact;
 
   if(dot_product3f(light, n0 - 3) >= _0)
     c++;
@@ -2886,10 +2886,10 @@ static int find_edge(unsigned int *ptr, float *depth, unsigned int width,
                      int threshold, int back)
 {                               /* can only be called for a pixel NOT on the edge */
   {                             /* color testing */
-    register int compare0, compare1, compare2, compare3, compare4, compare5, compare6,
+    int compare0, compare1, compare2, compare3, compare4, compare5, compare6,
       compare7, compare8;
     {
-      register int back_test, back_two = false;
+      int back_test, back_two = false;
       compare0 = (signed int) *(ptr);
       compare1 = (signed int) *(ptr - 1);
       back_test = (compare0 == back);
@@ -2912,9 +2912,9 @@ static int find_edge(unsigned int *ptr, float *depth, unsigned int width,
     }
     
     {
-      register int current;
-      register unsigned int shift = 0;
-      register int sum1 = 0, sum2 = 3, sum3 = 0, sum4 = 0, sum5 = 0, sum6 = 0, sum7 = 0, sum8 = 0;
+      int current;
+      unsigned int shift = 0;
+      int sum1 = 0, sum2 = 3, sum3 = 0, sum4 = 0, sum5 = 0, sum6 = 0, sum7 = 0, sum8 = 0;
       int a;
       for(a = 0; a < 4; a++) {
 	current = ((compare0 >> shift) & 0xFF);
@@ -2948,9 +2948,9 @@ static int find_edge(unsigned int *ptr, float *depth, unsigned int width,
   }
 
   if(depth) {                   /* depth testing */
-    register float compare0, compare1, compare2, compare3, compare4, compare5, compare6,
+    float compare0, compare1, compare2, compare3, compare4, compare5, compare6,
       compare7, compare8;
-    register float dcutoff = threshold / 128.0F;
+    float dcutoff = threshold / 128.0F;
 
     compare1 = *(depth - 1);
     compare0 = *(depth);
@@ -3001,7 +3001,7 @@ static int find_edge(unsigned int *ptr, float *depth, unsigned int width,
 static void RayPrimGetColorRamped(PyMOLGlobals * G, float *matrix, RayInfo * r, float *fc)
 {
   float fc1[3], fc2[3], fc3[3];
-  register float *c1, *c2, *c3, w2;
+  float *c1, *c2, *c3, w2;
   float back_pact[3];
   const float _0 = 0.0F, _1 = 1.0F, _01 = 0.1F;
   CPrimitive *lprim = r->prim;
@@ -3118,7 +3118,7 @@ int RayTraceThread(CRayThreadInfo * T)
     settingSpecDirect;
   float settingSpecDirectPower;
   float invHgt, invFrontMinusBack, inv1minusFogStart, invWdth, invHgtRange;
-  register float invWdthRange, vol0;
+  float invWdthRange, vol0;
   float vol2;
   CBasis *bp1, *bp2;
   int render_height;
@@ -3503,8 +3503,8 @@ int RayTraceThread(CRayThreadInfo * T)
                 if(find_edge(T->edging + (pixel - T->image),
                              depth + (pixel - T->image),
                              T->width, T->edging_cutoff, bkrd_value)) {
-                  register unsigned char *pixel_c = (unsigned char *) pixel;
-                  register unsigned int c1, c2, c3, c4;
+                  unsigned char *pixel_c = (unsigned char *) pixel;
+                  unsigned int c1, c2, c3, c4;
                   edge_cnt = 1;
                   edge_sampling = true;
 
@@ -3527,8 +3527,8 @@ int RayTraceThread(CRayThreadInfo * T)
               if(edge_cnt == 5) {
                 /* done with edging, so store averaged value */
 
-                register unsigned char *pixel_c = (unsigned char *) pixel;
-                register unsigned int c1, c2, c3, c4;
+                unsigned char *pixel_c = (unsigned char *) pixel;
+                unsigned int c1, c2, c3, c4;
 
                 edge_sampling = false;
                 /* done with edging, so store averaged value */
@@ -3615,7 +3615,7 @@ int RayTraceThread(CRayThreadInfo * T)
             }
             normalize3f(r1.dir);
             {
-              register float scale = I->max_box[2] / r1.base[2];
+              float scale = I->max_box[2] / r1.base[2];
 
               r1.skip[0] = r1.base[0] * scale;
               r1.skip[1] = r1.base[1] * scale;
@@ -3827,8 +3827,8 @@ int RayTraceThread(CRayThreadInfo * T)
               }
 
               {
-                register double pow_dotgle;
-                register float pow_surfnormal2;
+                double pow_dotgle;
+                float pow_surfnormal2;
 
                 if(settingPower != _1) {
                   pow_dotgle = pow(dotgle, settingPower);
@@ -3894,7 +3894,7 @@ int RayTraceThread(CRayThreadInfo * T)
 
                   if(lit > _0) {
                     {
-                      register double pow_dotgle;
+                      double pow_dotgle;
 
                       dotgle = -dot_product3f(r1.surfnormal, bp->LightNormal);
                       if(dotgle < _0)
@@ -4303,7 +4303,7 @@ int RayTraceThread(CRayThreadInfo * T)
 	  {
 	    /* If final pixel has alpha, then the background should be 
 	       blended into it */
-	    register unsigned char *pixel_c = (unsigned char *) pixel;
+	    unsigned char *pixel_c = (unsigned char *) pixel;
 	    if (pixel_c[3] < 255){
 	      float pixa = (pixel_c[3]/255.f);
 	      float pixam1 = _1 - pixa;
@@ -4323,8 +4323,8 @@ int RayTraceThread(CRayThreadInfo * T)
              so accumulate averages */
           {
 
-            register unsigned char *pixel_c = (unsigned char *) pixel;
-            register unsigned int c1, c2, c3, c4;
+            unsigned char *pixel_c = (unsigned char *) pixel;
+            unsigned int c1, c2, c3, c4;
 
             edge_avg[0] += (c1 = pixel_c[0]);
             edge_avg[1] += (c2 = pixel_c[1]);
@@ -4487,8 +4487,8 @@ int RayAntiThread(CRayAntiThreadInfo * T)
     y = (yy + offset) % height; /* make sure threads write to different pages */
 
     if((y % T->n_thread) == T->phase) { /* this is my scan line */
-      register unsigned long c1, c2, c3, c4, a;
-      register unsigned char *c;
+      unsigned long c1, c2, c3, c4, a;
+      unsigned char *c;
 
       pSrc = T->image + src_row_pixels * (y * T->mag);
       pDst = T->image_copy + width * y;
@@ -5488,8 +5488,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   }
   {                             /* adjust bkrd and trace to offset the effect of gamma correction */
     float gamma = SettingGetGlobal_f(I->G, cSetting_gamma);
-    register float inp;
-    register float sig;
+    float inp;
+    float sig;
     inp = (bkrd_top[0] + bkrd_top[1] + bkrd_top[2]) / 3.0F;
     if(inp < R_SMALL4)
       sig = 1.0F;
@@ -5506,8 +5506,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       bkrd_top[2] = 1.0F;
 
     if (bkrd_is_gradient) {
-      register float inp;
-      register float sig;
+      float inp;
+      float sig;
       inp = (bkrd_bottom[0] + bkrd_bottom[1] + bkrd_bottom[2]) / 3.0F;
       if(inp < R_SMALL4)
         sig = 1.0F;
@@ -5526,8 +5526,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       copy3f(bkrd_top, bkrd_bottom);      
     }
     if(ray_trace_mode) {
-      register float inp;
-      register float sig;
+      float inp;
+      float sig;
       int trace_color = SettingGetGlobal_color(I->G, cSetting_ray_trace_color);
       float trgb[3], *trgb_v = ColorGet(I->G, trace_color);
 
@@ -5962,8 +5962,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     int x, y;
     CHECKOK(ok, delta);
     if (ok) {
-      register int xc, yc;
-      register float d, dzdx, dzdy, *p, *q, dd;
+      int xc, yc;
+      float d, dzdx, dzdy, *p, *q, dd;
       p = depth;
       q = delta;
       for(y = 0; y < height; y++)
@@ -6106,9 +6106,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
           float slope_f = SettingGetGlobal_f(I->G, cSetting_ray_trace_slope_factor);
           float depth_f = SettingGetGlobal_f(I->G, cSetting_ray_trace_depth_factor);
           float disco_f = SettingGetGlobal_f(I->G, cSetting_ray_trace_disco_factor);
-          register float diff, max_depth;
-          register float dot, min_dot, max_slope, max_dz, max_pz;
-          register float dx, dy, dz, px = 0.0F, py = 0.0F, pz = 0.0F, ddx, ddy;
+          float diff, max_depth;
+          float dot, min_dot, max_slope, max_dz, max_pz;
+          float dx, dy, dz, px = 0.0F, py = 0.0F, pz = 0.0F, ddx, ddy;
           const float _8 = 0.08F;
           const float _4 = 0.4F;
           const float _25 = 0.25F;

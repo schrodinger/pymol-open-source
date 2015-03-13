@@ -94,7 +94,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
   float *vptr, *var_alpha;
   int c;
   float alpha;
-  register PyMOLGlobals *G = I->R.G;
+  PyMOLGlobals *G = I->R.G;
   int width, height;
   int ok = true;
 
@@ -170,13 +170,6 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	I->shaderCGOmode = 0;
       }
 
-#ifdef _PYMOL_GL_CALLLISTS
-        if(use_display_lists && I->R.displayList) {
-          glCallList(I->R.displayList);
-	  return;
-	}
-#endif
-
       if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
@@ -212,16 +205,6 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	  }
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists) {
-	if(!I->R.displayList) {
-	  I->R.displayList = glGenLists(1);
-	  if(I->R.displayList) {
-	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	  }
-	}
-      }
-#endif
       c = I->N;
       var_alpha = I->VarAlpha;
       PRINTFD(G, FB_RepCylBond)
@@ -280,28 +263,8 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	    vptr += 3;
 	    for(a = 0; a < sp->NStrip; a++) {
 	      cc = sp->StripLen[a];
-#ifdef _PYMOL_GL_DRAWARRAYS
-	      {
-		int numverts = cc, pl;
-		ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
-		ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
-		pl = 0;
-		while(cc--) {
-		  normVals[pl] = vptr[0]; normVals[pl+1] = vptr[1]; normVals[pl+2] = vptr[2];
-		  vptr += 3;
-		  vertVals[pl++] = vptr[0]; vertVals[pl++] = vptr[1]; vertVals[pl++] = vptr[2];
-		  vptr += 3;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		glNormalPointer(GL_FLOAT, 0, normVals);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
-		glDisableClientState(GL_NORMAL_ARRAY);
-		glDisableClientState(GL_VERTEX_ARRAY);
-		DEALLOCATE_ARRAY(vertVals)
-		DEALLOCATE_ARRAY(normVals)
-	      }
+#ifdef PURE_OPENGL_ES_2
+	      /* TODO */
 #else
 	      glBegin(GL_TRIANGLE_STRIP);
 	      while(cc--) {
@@ -325,7 +288,6 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	  CGO *convertcgo = NULL;
 	  ok &= CGOStop(I->shaderCGO);
 
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 	  if (ok && shader_mode == 1 && CShaderMgr_ShaderPrgExists(G->ShaderMgr, "cylinder")) { //GLSL
 	    convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
 	    CHECKOK(ok, convertcgo);
@@ -350,9 +312,6 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	    convertcgo = NULL;
 	    CGOSetUseShader(I->shaderCGO, true);
 	  }
-#else
-	  (void)convertcgo;
-#endif
 	}
 
 	if (ok){
@@ -384,12 +343,6 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	  I->R.cs->Active[cRepCyl] = false;
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if (use_display_lists && I->R.displayList){
-	glEndList();
-	glCallList(I->R.displayList);      
-      }
-#endif
     }
   }
 }
@@ -1235,10 +1188,10 @@ static int RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
 }
 
 void RepCylBondFilterBond(int *marked, AtomInfoType *ati1, AtomInfoType *ati2, int b1, int b2, int na_mode, int *c1, int *c2, int *s1, int *s2){
-  register char *name1 = ati1->name;
-  register int prot1 = ati1->protons;
-  register char *name2 = ati2->name;
-  register int prot2 = ati2->protons;
+  char *name1 = ati1->name;
+  int prot1 = ati1->protons;
+  char *name2 = ati2->name;
+  int prot2 = ati2->protons;
   if(prot1 == cAN_C) {
     if((name1[1] == 'A') && (name1[0] == 'C') && (!name1[2])) { /* CA */
       if(prot2 == cAN_C) {
@@ -1377,9 +1330,9 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
 
 int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, CoordSet * cs, int *marked){
   PyMOLGlobals *G = cs->State.G;
-  register BondType *b = obj->Bond;
+  BondType *b = obj->Bond;
   int a, ord, a1, a2, stick_color, c1, c2, s1, s2, half_bonds, hide_long = false;
-  register int b1, b2;
+  int b1, b2;
   float *vv1, *vv2;
   float radius, transp, h_scale;
   int cartoon_side_chain_helper = 0;
@@ -1419,8 +1372,8 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
       a2 = cs->AtmToIdx[b2];
     }
     if((a1 >= 0) && (a2 >= 0)) {
-      register AtomInfoType *ati1 = obj->AtomInfo + b1;
-      register AtomInfoType *ati2 = obj->AtomInfo + b2;
+      AtomInfoType *ati1 = obj->AtomInfo + b1;
+      AtomInfoType *ati2 = obj->AtomInfo + b2;
       int bd_stick_color;
       AtomInfoGetBondSetting_color(G, b, cSetting_stick_color, stick_color,
 				   &bd_stick_color);
@@ -1523,8 +1476,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj;
   int a, a1, a2, c1, c2, s1, s2;
-  register int b1, b2;
-  register BondType *b;
+  int b1, b2;
+  BondType *b;
   float *vv1, *vv2, *v0, *vr, *vspc;
   float *vsp;
   float v1[3], v2[3], h[3];
@@ -1540,7 +1493,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   int stick_ball, stick_ball_color = -1;
   float stick_ball_ratio = 1.0F;
   unsigned int v_size, vr_size;
-  register AtomInfoType *ai1, *ai2;
+  AtomInfoType *ai1, *ai2;
   SphereRec *sp = NULL;
   float *rgb1, *rgb2, rgb1_buf[3], rgb2_buf[3];
   int fixed_radius = false;
@@ -1756,8 +1709,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           a2 = cs->AtmToIdx[b2];
         }
         if(ord && (a1 >= 0) && (a2 >= 0)) {
-          register AtomInfoType *ati1 = obj->AtomInfo + b1;
-          register AtomInfoType *ati2 = obj->AtomInfo + b2;
+          AtomInfoType *ati1 = obj->AtomInfo + b1;
+          AtomInfoType *ati2 = obj->AtomInfo + b2;
 
           if((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
             if((cartoon_side_chain_helper
@@ -1886,8 +1839,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         a2 = cs->AtmToIdx[b2];
       }
       if((a1 >= 0) && (a2 >= 0)) {
-        register AtomInfoType *ati1 = obj->AtomInfo + b1;
-        register AtomInfoType *ati2 = obj->AtomInfo + b2;
+        AtomInfoType *ati1 = obj->AtomInfo + b1;
+        AtomInfoType *ati2 = obj->AtomInfo + b2;
         int bd_stick_color;
         float bd_radius, bd_radius_full;
         float overlap_r, nub_r;
@@ -2214,7 +2167,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     }
     if (ok)
       ok &= CGOStop(Vcgo);
-#ifdef _PYMOL_CGO_DRAWARRAYS
     if (ok && Vcgo){
       CGO *convertcgo = NULL;
       convertcgo = CGOCombineBeginEnd(Vcgo, 0);    
@@ -2223,7 +2175,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       Vcgo = 0;
       I->Vcgo = convertcgo;
     }
-#endif
 
     /*    PRINTFD(G, FB_RepCylBond)
 	  " RepCylBond-DEBUG: %d triplets\n", (int) (vptr - I->V) / 3 ENDFD;*/
@@ -2336,7 +2287,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       if (ok)
 	ok &= CGOStop(I->VPcgo);
 
-#ifdef _PYMOL_CGO_DRAWARRAYS
       if (ok) {
 	CGO *convertcgo = CGOCombineBeginEnd(I->VPcgo, 0);    
 	CHECKOK(ok, convertcgo);
@@ -2344,6 +2294,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 	I->VPcgo = convertcgo;
 
       }
+#ifdef PURE_OPENGL_ES_2
 #endif
     }
   }
@@ -2946,45 +2897,8 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
   normalize3f(p2);
 
   /* now we have a coordinate system */
-#ifdef _PYMOL_GL_DRAWARRAYS
-  {
-    int nverts = (nEdge+1) * 2;
-    int pl;
-    ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-    ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-    pl = 0;
-    for(c = nEdge; c >= 0; c--) {
-      x = (float) radius * cos(c * 2 * PI / nEdge);
-      y = (float) radius * sin(c * 2 * PI / nEdge);
-      v[0] = p1[0] * x + p2[0] * y;
-      v[1] = p1[1] * x + p2[1] * y;
-      v[2] = p1[2] * x + p2[2] * y;
-      
-      vv[0] = v1[0] + v[0];
-      vv[1] = v1[1] + v[1];
-      vv[2] = v1[2] + v[2];
-      
-      vvv[0] = vv[0] + d[0];
-      vvv[1] = vv[1] + d[1];
-      vvv[2] = vv[2] + d[2];
-
-      normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-      vertVals[pl] = vv[0]; vertVals[pl+1] = vv[1]; vertVals[pl+2] = vv[2];
-      pl += 3;
-      normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-      vertVals[pl] = vvv[0]; vertVals[pl+1] = vvv[1]; vertVals[pl+2] = vvv[2];
-      pl += 3;
-    }
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertVals);
-    glNormalPointer(GL_FLOAT, 0, normVals);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, nverts);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    DEALLOCATE_ARRAY(vertVals)
-    DEALLOCATE_ARRAY(normVals)
-  }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
   glBegin(GL_TRIANGLE_STRIP);
 
@@ -3020,39 +2934,8 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
     vv[1] = v1[1] - p0[1] * nub;
     vv[2] = v1[2] - p0[2] * nub;
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int nverts = nEdge+2, pl;
-      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-      ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-
-      normVals[0] = v[0]; normVals[1] = v[1]; normVals[2] = v[2];
-      vertVals[0] = vv[0]; vertVals[1] = vv[1]; vertVals[2] = vv[2];
-      pl = 3;
-      for(c = nEdge; c >= 0; c--) {
-	x = (float) radius * cos(c * 2 * PI / nEdge);
-	y = (float) radius * sin(c * 2 * PI / nEdge);
-	v[0] = p1[0] * x + p2[0] * y;
-	v[1] = p1[1] * x + p2[1] * y;
-	v[2] = p1[2] * x + p2[2] * y;
-	
-	vv[0] = v1[0] + v[0];
-	vv[1] = v1[1] + v[1];
-	vv[2] = v1[2] + v[2];
-	
-	normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-	vertVals[pl++] = vv[0]; vertVals[pl++] = vv[1]; vertVals[pl++] = vv[2];
-      }
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glEnableClientState(GL_NORMAL_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-      glNormalPointer(GL_FLOAT, 0, normVals);
-      glDrawArrays(GL_TRIANGLE_FAN, 0, nverts);
-      glDisableClientState(GL_NORMAL_ARRAY);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      DEALLOCATE_ARRAY(vertVals)
-      DEALLOCATE_ARRAY(normVals)
-    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
     glBegin(GL_TRIANGLE_FAN);
 
@@ -3088,38 +2971,8 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
     vv[1] = v2[1] + p0[1] * nub;
     vv[2] = v2[2] + p0[2] * nub;
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int nverts = nEdge+2, pl;
-      ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-      ALLOCATE_ARRAY(GLfloat,normVals,nverts*3)
-
-      normVals[0] = v[0]; normVals[1] = v[1]; normVals[2] = v[2];
-      vertVals[0] = vv[0]; vertVals[1] = vv[1]; vertVals[2] = vv[2];
-      pl = 3;
-      for(c = 0; c <= nEdge; c++) {
-	x = (float) radius * cos(c * 2 * PI / nEdge);
-	y = (float) radius * sin(c * 2 * PI / nEdge);
-	v[0] = p1[0] * x + p2[0] * y;
-	v[1] = p1[1] * x + p2[1] * y;
-	v[2] = p1[2] * x + p2[2] * y;
-	
-	vv[0] = v2[0] + v[0];
-	vv[1] = v2[1] + v[1];
-	vv[2] = v2[2] + v[2];
-	normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-	vertVals[pl++] = vv[0]; vertVals[pl++] = vv[1]; vertVals[pl++] = vv[2];
-      }
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glEnableClientState(GL_NORMAL_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-      glNormalPointer(GL_FLOAT, 0, normVals);
-      glDrawArrays(GL_TRIANGLE_FAN, 0, nverts);
-      glDisableClientState(GL_NORMAL_ARRAY);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      DEALLOCATE_ARRAY(vertVals)
-      DEALLOCATE_ARRAY(normVals)
-    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
     glBegin(GL_TRIANGLE_FAN);
 

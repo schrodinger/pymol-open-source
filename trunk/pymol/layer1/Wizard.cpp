@@ -79,14 +79,14 @@ struct _CWizard {
 
 void WizardDirty(PyMOLGlobals * G)
 {
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   I->Dirty = true;
   OrthoDirty(G);
 }
 
 int WizardUpdate(PyMOLGlobals * G)
 {
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
 
   if(OrthoGetDirty(G)) {
@@ -122,7 +122,7 @@ void WizardPurgeStack(PyMOLGlobals * G)
 #ifndef _PYMOL_NOPY
   int blocked;
   ov_diff a;
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   blocked = PAutoBlock(G);
   for(a = I->Stack; a >= 0; a--)
     Py_XDECREF(I->Wiz[a]);
@@ -141,7 +141,7 @@ int WizardDoSelect(PyMOLGlobals * G, char *name)
 #else
   /* grab 'this' */
   OrthoLineType buf;
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
 
   /* if the event is a selection and we're listening for selections */
@@ -170,7 +170,7 @@ void WizardRefresh(PyMOLGlobals * G)
 {
 
 #ifndef _PYMOL_NOPY
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   char *vla = NULL;
   PyObject *P_list;
   ov_size ll;
@@ -258,7 +258,7 @@ void WizardRefresh(PyMOLGlobals * G)
 void WizardSet(PyMOLGlobals * G, PyObject * wiz, int replace)
 {
 #ifndef _PYMOL_NOPY
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int blocked;
   blocked = PAutoBlock(G);
   if(I->Wiz) {
@@ -301,7 +301,7 @@ void WizardSet(PyMOLGlobals * G, PyObject * wiz, int replace)
 /*========================================================================*/
 int WizardActive(PyMOLGlobals * G)
 {
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   if(!I->Wiz)
     return (false);
   if(I->Stack < 0)
@@ -313,7 +313,7 @@ int WizardActive(PyMOLGlobals * G)
 /*========================================================================*/
 Block *WizardGetBlock(PyMOLGlobals * G)
 {
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   {
     return (I->Block);
   }
@@ -329,7 +329,7 @@ int WizardDoPick(PyMOLGlobals * G, int bondFlag)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
 
   /* process the pick if it happened and we're listening for it */
@@ -361,7 +361,7 @@ int WizardDoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
   if(I->EventMask & cWizEventKey)
     if(I->Stack >= 0)
@@ -389,7 +389,7 @@ int WizardDoPosition(PyMOLGlobals * G, int force)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
   if(I->EventMask & cWizEventPosition)
     if(I->Stack >= 0)
@@ -425,7 +425,7 @@ int WizardDoView(PyMOLGlobals * G, int force)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
   if(I->EventMask & cWizEventView)
     if(I->Stack >= 0)
@@ -459,7 +459,7 @@ int WizardDoScene(PyMOLGlobals * G)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
   if(I->EventMask & cWizEventScene)
     if(I->Stack >= 0)
@@ -487,7 +487,7 @@ int WizardDoDirty(PyMOLGlobals * G)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
   if(I->EventMask & cWizEventDirty)
     if(I->Stack >= 0)
@@ -515,7 +515,7 @@ int WizardDoState(PyMOLGlobals * G)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
   if(I->EventMask & cWizEventState)
     if(I->Stack >= 0)
@@ -544,7 +544,7 @@ int WizardDoFrame(PyMOLGlobals * G)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
   if(I->EventMask & cWizEventFrame)
     if(I->Stack >= 0)
@@ -573,7 +573,7 @@ int WizardDoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int result = false;
 
   if(I->EventMask & cWizEventSpecial)
@@ -605,7 +605,7 @@ static int WizardClick(Block * block, int button, int x, int y, int mod)
   return 0;
 #else
   PyMOLGlobals *G = block->G;
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int a;
   PyObject *menuList = NULL;
   int LineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
@@ -656,7 +656,7 @@ static int WizardDrag(Block * block, int x, int y, int mod)
 
   PyMOLGlobals *G = block->G;
 
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int LineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
 
   int a;
@@ -690,7 +690,7 @@ static int WizardRelease(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
 
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int LineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
 
   int a;
@@ -832,7 +832,7 @@ static void WizardDraw(Block * block ORTHOCGOARG)
 {
   PyMOLGlobals *G = block->G;
 
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int x, y;
   int a;
 
@@ -925,7 +925,7 @@ static void WizardDraw(Block * block ORTHOCGOARG)
 /*========================================================================*/
 PyObject *WizardGet(PyMOLGlobals * G)
 {
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   if(!I->Wiz)
     return (NULL);
   if(I->Stack < 0)
@@ -940,7 +940,7 @@ PyObject *WizardGetStack(PyMOLGlobals * G)
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   PyObject *result;
 
   result = PyList_New(I->Stack - (-1));
@@ -963,7 +963,7 @@ int WizardSetStack(PyMOLGlobals * G, PyObject * list)
   return 0;
 #else
 
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   int ok = true;
 
   if(I->Wiz) {
@@ -996,7 +996,7 @@ int WizardSetStack(PyMOLGlobals * G, PyObject * list)
 /*========================================================================*/
 int WizardInit(PyMOLGlobals * G)
 {
-  register CWizard *I = NULL;
+  CWizard *I = NULL;
   if((I = (G->Wizard = Calloc(CWizard, 1)))) {
 
     I->Block = OrthoNewBlock(G, NULL);
@@ -1031,7 +1031,7 @@ int WizardInit(PyMOLGlobals * G)
 /*========================================================================*/
 void WizardFree(PyMOLGlobals * G)
 {
-  register CWizard *I = G->Wizard;
+  CWizard *I = G->Wizard;
   WizardPurgeStack(G);
   OrthoFreeBlock(G, I->Block);
   VLAFreeP(I->Line);

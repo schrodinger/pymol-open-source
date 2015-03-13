@@ -32,8 +32,8 @@ Z* -------------------------------------------------------------------
 
 static unsigned int get_hash(CharFngrprnt * fprnt)
 {
-  register unsigned int result = 0;
-  register unsigned short int *data = fprnt->u.d.data;
+  unsigned int result = 0;
+  unsigned short int *data = fprnt->u.d.data;
   result = (data[0] << 1) + data[1];
   result = ((result << 4) + data[2]);
   result = ((result << 7) + data[3]) + (result >> 16);
@@ -48,8 +48,8 @@ static unsigned int get_hash(CharFngrprnt * fprnt)
 
 static int equal_fprnt(CharFngrprnt * f1, CharFngrprnt * f2)
 {
-  register unsigned short int *data1 = f1->u.d.data;
-  register unsigned short int *data2 = f2->u.d.data;
+  unsigned short int *data1 = f1->u.d.data;
+  unsigned short int *data2 = f2->u.d.data;
 
   /* must compare all fields in fingerprint */
 
@@ -78,7 +78,7 @@ static int equal_fprnt(CharFngrprnt * f1, CharFngrprnt * f2)
 
 int CharacterFind(PyMOLGlobals * G, CharFngrprnt * fprnt)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   unsigned int hash_code = get_hash(fprnt);
   int id = I->Hash[hash_code];
   /*
@@ -121,7 +121,7 @@ int CharacterFind(PyMOLGlobals * G, CharFngrprnt * fprnt)
 
 unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals * G, int id)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   if(id) {
     CharRec *rec = I->Char + id;
     return rec->Pixmap.buffer;
@@ -134,7 +134,7 @@ int CharacterNewFromBitmap(PyMOLGlobals * G, int width, int height,
                            float x_orig, float y_orig, float advance,
                            CharFngrprnt * fprnt, int sampling)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   int id = CharacterGetNew(G);
   if((id > 0) && (id <= I->MaxAlloc)) {
     CharRec *rec = I->Char + id;
@@ -166,7 +166,7 @@ int CharacterNewFromBytemap(PyMOLGlobals * G, int width, int height,
                             float x_orig, float y_orig, float advance,
                             CharFngrprnt * fprnt)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   int id = CharacterGetNew(G);
   if((id > 0) && (id <= I->MaxAlloc)) {
     CharRec *rec = I->Char + id;
@@ -195,7 +195,7 @@ int CharacterNewFromBytemap(PyMOLGlobals * G, int width, int height,
 
 float CharacterGetAdvance(PyMOLGlobals * G, int sampling, int id)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   CharRec *rec = I->Char + id;
   return rec->Advance / sampling;
 }
@@ -230,7 +230,7 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
 
 /* need orientation matrix */
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   CharRec *rec = I->Char + id;
 
   int texture_id = TextureGetFromChar(G, id, rec->extent);
@@ -263,7 +263,7 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
 	    CGODrawTexture(shaderCGO, texture_id, worldPos, v0, v1, rec->extent);
 	  }
       } else {
-	{
+#ifndef PURE_OPENGL_ES_2
 	  glBegin(GL_QUADS);
 	  glTexCoord2f(rec->extent[0], rec->extent[1]);
 	  glVertex3f(v0[0], v0[1], v0[2]);
@@ -274,7 +274,7 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
 	  glTexCoord2f(rec->extent[2], rec->extent[1]);
 	  glVertex3f(v1[0], v0[1], v0[2]);
 	  glEnd();
-	}
+#endif
       }
     }
      TextAdvance(G, rec->Advance / sampling);
@@ -283,7 +283,7 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
 
 int CharacterGetWidth(PyMOLGlobals * G, int id)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   if((id > 0) && (id <= I->MaxAlloc)) {
     return I->Char[id].Width;
   }
@@ -294,7 +294,7 @@ const float _inv255 = 1.0F / 255.0F;
 
 float CharacterInterpolate(PyMOLGlobals * G, int id, float *v)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   int x = (int) v[0];
   int y = (int) v[1];
   unsigned char *src;
@@ -327,7 +327,7 @@ float CharacterInterpolate(PyMOLGlobals * G, int id, float *v)
 
 int CharacterGetHeight(PyMOLGlobals * G, int id)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   if((id > 0) && (id <= I->MaxAlloc)) {
     return I->Char[id].Height;
   }
@@ -338,7 +338,7 @@ int CharacterGetGeometry(PyMOLGlobals * G, int id,
                          int *width, int *height,
                          float *xorig, float *yorig, float *advance)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   if((id > 0) && (id <= I->MaxAlloc)) {
     CharRec *ch = I->Char + id;
     *width = ch->Width;
@@ -352,7 +352,7 @@ int CharacterGetGeometry(PyMOLGlobals * G, int id,
 
 int CharacterInit(PyMOLGlobals * G)
 {
-  register CCharacter *I = NULL;
+  CCharacter *I = NULL;
   if((I = (G->Character = Calloc(CCharacter, 1)))) {
     I->MaxAlloc = 5;
     I->Char = VLACalloc(CharRec, I->MaxAlloc + 1);
@@ -371,7 +371,7 @@ int CharacterInit(PyMOLGlobals * G)
 
 static void CharacterAllocMore(PyMOLGlobals * G)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   int new_max = I->MaxAlloc * 2;
   VLACheck(I->Char, CharRec, new_max);
   {
@@ -386,13 +386,13 @@ static void CharacterAllocMore(PyMOLGlobals * G)
 
 void CharacterSetRetention(PyMOLGlobals * G, int retain_all)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   I->RetainAll = retain_all;
 }
 
 static void CharacterPurgeOldest(PyMOLGlobals * G)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   int max_kill = 10;
 
   while(I->NUsed > I->TargetMaxUsage) {
@@ -444,7 +444,7 @@ static void CharacterPurgeOldest(PyMOLGlobals * G)
 
 int CharacterGetNew(PyMOLGlobals * G)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   int result = 0;
   if(!I->LastFree)
     CharacterAllocMore(G);
@@ -478,7 +478,7 @@ int CharacterGetNew(PyMOLGlobals * G)
 
 void CharacterFree(PyMOLGlobals * G)
 {
-  register CCharacter *I = G->Character;
+  CCharacter *I = G->Character;
   {
     int a;
     a = I->NewestUsed;

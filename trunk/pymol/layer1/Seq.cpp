@@ -58,7 +58,7 @@ struct _CSeq {
 static int SeqFindRowCol(PyMOLGlobals * G, int x, int y, int *row_num_ptr,
                          int *col_num_ptr, int fixed_row)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   int result = 0;
   int row_num = 0;
   int col_num = 0;
@@ -109,7 +109,7 @@ static int SeqFindRowCol(PyMOLGlobals * G, int x, int y, int *row_num_ptr,
 
 void SeqUpdate(PyMOLGlobals * G)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
 
   if(I->Changed) {
     SeekerUpdate(G);
@@ -127,7 +127,7 @@ void SeqUpdate(PyMOLGlobals * G)
 static void SeqReshape(Block * block, int width, int height)
 {
   PyMOLGlobals *G = block->G;
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   BlockReshape(block, width, height);
 
   {                             /* get current sequence sizes */
@@ -158,14 +158,14 @@ static void SeqReshape(Block * block, int width, int height)
 
 void SeqDirty(PyMOLGlobals * G)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   I->Dirty = true;
   SceneInvalidate(G);
 }
 
 void SeqChanged(PyMOLGlobals * G)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   I->Changed = true;
   SceneInvalidate(G);
 }
@@ -173,7 +173,7 @@ void SeqChanged(PyMOLGlobals * G)
 static int SeqDrag(Block * block, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   int pass = 0;
   int row_num;
   int col_num;
@@ -195,7 +195,7 @@ static int SeqDrag(Block * block, int x, int y, int mod)
 static int SeqRelease(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   int pass = 0;
   /*
      if(I->ScrollBarActive) {
@@ -232,7 +232,7 @@ static int SeqRelease(Block * block, int button, int x, int y, int mod)
 
 int SeqGetHeight(PyMOLGlobals * G)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   int height = 0;
 
   if(I->NRow) {
@@ -245,14 +245,14 @@ int SeqGetHeight(PyMOLGlobals * G)
 
 void SeqSetHandler(PyMOLGlobals * G, CSeqHandler * handler)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   I->Handler = handler;
 }
 
 static int SeqClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   int pass = 0;
   int row_num;
   int col_num;
@@ -298,7 +298,7 @@ static int SeqClick(Block * block, int button, int x, int y, int mod)
 static void SeqDraw(Block * block ORTHOCGOARG)
 {
   PyMOLGlobals *G = block->G;
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
 
   if(G->HaveGUI && G->ValidContext) {
 
@@ -551,7 +551,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
           int start_col = I->Handler->box_start_col;
           int stop_col = I->Handler->box_stop_col;
           if(start_col > stop_col) {
-            register int tmp = stop_col;
+            int tmp = stop_col;
             stop_col = start_col;
             start_col = tmp;
           }
@@ -738,7 +738,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
 
 int SeqInit(PyMOLGlobals * G)
 {
-  register CSeq *I = NULL;
+  CSeq *I = NULL;
   if((I = (G->Seq = Calloc(CSeq, 1)))) {
 
     I->Block = OrthoNewBlock(G, NULL);
@@ -772,7 +772,7 @@ int SeqInit(PyMOLGlobals * G)
 
 static void SeqPurgeRowVLA(PyMOLGlobals * G)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   if(I->Row) {
     int a;
     CSeqRow *row;
@@ -790,7 +790,7 @@ static void SeqPurgeRowVLA(PyMOLGlobals * G)
 
 void SeqSetRowVLA(PyMOLGlobals * G, CSeqRow * row, int nRow)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   SeqPurgeRowVLA(G);
   I->Row = row;
   I->NRow = nRow;
@@ -798,7 +798,7 @@ void SeqSetRowVLA(PyMOLGlobals * G, CSeqRow * row, int nRow)
 
 void SeqFree(PyMOLGlobals * G)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
 
   SeqPurgeRowVLA(G);
   if(I->ScrollBar)
@@ -809,7 +809,7 @@ void SeqFree(PyMOLGlobals * G)
 
 Block *SeqGetBlock(PyMOLGlobals * G)
 {
-  register CSeq *I = G->Seq;
+  CSeq *I = G->Seq;
   {
     return (I->Block);
   }

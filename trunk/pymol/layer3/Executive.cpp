@@ -247,7 +247,7 @@ void ReportEnabledChange(PyMOLGlobals * G, SpecRec *rec){
 int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
                                 int index, int count, int target, int freeze)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetExpandedGroupList(G,group->Name);
@@ -274,7 +274,7 @@ int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
                          int simple, float linear, int wrap,
                          int hand, int window, int cycles, int state, int quiet)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetExpandedGroupList(G,group->Name);
@@ -298,7 +298,7 @@ int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
 
 int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, float *ttt, int reverse_order, int store)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetExpandedGroupList(G,group->Name);
@@ -322,7 +322,7 @@ int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, float *ttt, int re
 
 int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int store)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetExpandedGroupList(G,group->Name);
@@ -353,7 +353,7 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
 {
   int ok = true;
 
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
 
   if(wrap < 0) {
     wrap = SettingGetGlobal_b(G, cSetting_movie_loop);
@@ -437,7 +437,7 @@ void ExecutiveMotionViewModify(PyMOLGlobals *G, int action,
                                int index, int count, int target, char *name,
                                int freeze,int quiet)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   if((!name)||(!name[0])||
      (!strcmp(name,cKeywordNone))||
      (!strcmp(name,cKeywordSame))||
@@ -490,7 +490,7 @@ void ExecutiveMotionViewModify(PyMOLGlobals *G, int action,
 
 void ExecutiveMotionReinterpolate(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   while(ListIterate(I->Spec, rec, next)) {
     switch(rec->type) {
@@ -511,7 +511,7 @@ void ExecutiveMotionReinterpolate(PyMOLGlobals * G)
 void ExecutiveMotionTrim(PyMOLGlobals * G)
 {
   int n_frame = MovieGetLength(G);
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   while(ListIterate(I->Spec, rec, next)) {
     switch(rec->type) {
@@ -528,7 +528,7 @@ void ExecutiveMotionExtend(PyMOLGlobals * G, int freeze)
 {
   int n_frame = 0;
   int max_length = 0;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   if(MovieGetSpecLevel(G,-1)>0)
     n_frame = MovieGetLength(G);
@@ -565,7 +565,7 @@ void ExecutiveMotionExtend(PyMOLGlobals * G, int freeze)
 int ExecutiveCountMotions(PyMOLGlobals * G)
 {
   int count = 0;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   if(MovieGetLength(G)) {
     SpecRec *rec = NULL;
     while(ListIterate(I->Spec, rec, next)) {
@@ -594,7 +594,7 @@ int ExecutiveCountMotions(PyMOLGlobals * G)
 
 void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected ORTHOCGOARG)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   int frames = MovieGetLength(G);
   BlockRect draw_rect = *rect;
@@ -635,7 +635,7 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected ORTHOCG
 void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int passive, 
                                  int x, int y, int same)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   BlockRect draw_rect = *rect;
   int count = 0;
@@ -696,7 +696,7 @@ void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected
 
 void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect,int mode, int expected, int x, int y, int nearest)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   BlockRect draw_rect = *rect;
   int count = 0;
@@ -850,7 +850,7 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
           carve = 0.0F;
           break;
         case 1:                /* using selection to get extents */
-          ok = (SelectorGetTmp(G, sele, s1) >= 0);
+          ok = (SelectorGetTmp2(G, sele, s1) >= 0);
           ExecutiveGetExtent(G, s1, mn, mx, false, -1, false);  /* TODO state */
           if(carve != 0.0F) {
             vert_vla = ExecutiveGetVertexVLA(G, s1, state);
@@ -1000,7 +1000,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals * G,
           break;
         case 1:                /* just do area around selection */
 	  /* determine the selected object */
-          ok = (SelectorGetTmp(G, sele, s1) >= 0);
+          ok = (SelectorGetTmp2(G, sele, s1) >= 0);
           if(ok) {
             int sele1 = SelectorIndexByName(G, s1);
             if(sele1 >= 0)
@@ -1248,7 +1248,7 @@ int ExecutiveVolume(PyMOLGlobals * G, char *volume_name, char *map_name,
           carve = -0.0;         /* impossible */
           break;
         case 1:                /* just do area around selection */
-          ok = (SelectorGetTmp(G, sele, s1) >= 0);
+          ok = (SelectorGetTmp2(G, sele, s1) >= 0);
           if(ok) {
             int sele1 = SelectorIndexByName(G, s1);
             if(sele1 >= 0)
@@ -1403,7 +1403,7 @@ int ExecutivePseudoatom(PyMOLGlobals * G, char *object_name, char *sele,
 
 static void ExecutiveInvalidateGridSlots(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   I->ValidGridSlots = false;
 }
 
@@ -1416,7 +1416,7 @@ static void ExecutiveSetGridSlot(SpecRec *rec, int new_grid_slot){
 }
 static void ExecutiveUpdateGridSlots(PyMOLGlobals * G, int force)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int grid_slot_count = 0;
   int grid_by_group = 1;        /* grid slots are inherited this many levels */
 
@@ -1458,7 +1458,7 @@ static void ExecutiveUpdateGridSlots(PyMOLGlobals * G, int force)
           if(OVreturn_IS_OK((result = OVOneToOne_GetForward(I->Key, result.word)))) {
             if(TrackerGetCandRef(I_Tracker, result.word,
                                  (TrackerRef **) (void *) &group_rec)) {
-              register int grid_slot_group_depth = grid_by_group;
+              int grid_slot_group_depth = grid_by_group;
               {
                 SpecRec *check_rec = group_rec;
                 while(check_rec && grid_slot_group_depth) {
@@ -1495,7 +1495,7 @@ static void ExecutiveUpdateGridSlots(PyMOLGlobals * G, int force)
 
 static void ExecutiveInvalidatePanelList(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   if(I->ValidPanel) {
     if(I->Panel)
       ListFree(I->Panel, next, PanelRec);
@@ -1507,7 +1507,7 @@ static void ExecutiveInvalidatePanelList(PyMOLGlobals * G)
 static PanelRec *PanelListGroup(PyMOLGlobals * G, PanelRec * panel, SpecRec * group,
                                 int level, int hide_underscore)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   PanelRec *result = NULL;
   SpecRec *rec = NULL;
   /* set up recursion prevention */
@@ -1557,7 +1557,7 @@ static PanelRec *PanelListGroup(PyMOLGlobals * G, PanelRec * panel, SpecRec * gr
 
 static void ExecutiveUpdatePanelList(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
   if(!I->ValidPanel) {
     /* brute-force & inefficient -- need to optimize algorithm */
@@ -1568,13 +1568,13 @@ static void ExecutiveUpdatePanelList(PyMOLGlobals * G)
 
 static void ExecutiveInvalidateSceneMembers(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   I->ValidSceneMembers = false;
 }
 
 static void ExecutiveUpdateSceneMembers(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   ExecutiveUpdateGroups(G, false);
   ExecutiveUpdateGridSlots(G, false);
   if(!I->ValidSceneMembers) {
@@ -1602,7 +1602,7 @@ static void ExecutiveUpdateSceneMembers(PyMOLGlobals * G)
 
 void ExecutiveInvalidateGroups(PyMOLGlobals * G, int force)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   if(force || I->ValidGroups) {
     CTracker *I_Tracker = I->Tracker;
     SpecRec *rec = NULL;
@@ -1626,7 +1626,7 @@ void ExecutiveInvalidateGroups(PyMOLGlobals * G, int force)
 
 void ExecutiveUpdateGroups(PyMOLGlobals * G, int force)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
 
   if(force || (!I->ValidGroups)) {
     CTracker *I_Tracker = I->Tracker;
@@ -1810,7 +1810,7 @@ static int ExecutiveDelKey(CExecutive * I, SpecRec * rec)
 
 static SpecRec *ExecutiveUnambiguousNameMatch(PyMOLGlobals * G, const char *name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *result = NULL;
   SpecRec *rec = NULL;
   int best = 0;
@@ -1835,7 +1835,7 @@ static SpecRec *ExecutiveUnambiguousNameMatch(PyMOLGlobals * G, const char *name
 
 static SpecRec *ExecutiveAnyCaseNameMatch(PyMOLGlobals * G, const char *name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *result = NULL;
   SpecRec *rec = NULL;
 
@@ -1851,7 +1851,7 @@ static SpecRec *ExecutiveAnyCaseNameMatch(PyMOLGlobals * G, const char *name)
 
 void ExecutiveUpdateColorDepends(PyMOLGlobals * G, ObjectMolecule * mol)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
 
   while(ListIterate(I->Spec, rec, next)) {
@@ -1875,7 +1875,7 @@ void ExecutiveUpdateColorDepends(PyMOLGlobals * G, ObjectMolecule * mol)
 void ExecutiveUpdateCoordDepends(PyMOLGlobals * G, ObjectMolecule * mol)
 {                               /* nasty, ugly, inefficient hack */
 
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectGadget *gadget;
   int done_inv_all = false;
@@ -1935,7 +1935,7 @@ int ExecutiveValidNamePattern(PyMOLGlobals * G, char *name)
 
 static void ExecutiveExpandGroupsInList(PyMOLGlobals * G, int list_id, int expand_groups)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
   int new_member_added = true;
   SpecRec *rec;
@@ -1986,7 +1986,7 @@ static void ExecutiveExpandGroupsInList(PyMOLGlobals * G, int list_id, int expan
 static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
                                             int allow_partial, int expand_groups)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = 0;
   CWordMatcher *matcher;
   CWordMatchOptions options;
@@ -2207,7 +2207,7 @@ int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals * G,
                                             ExecutiveObjectOffset ** return_vla,
                                             OVOneToOne ** return_dict)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   OVOneToOne *o2o = OVOneToOne_New(G->Context->heap);
   ExecutiveObjectOffset *vla = VLAlloc(ExecutiveObjectOffset, 1000);
   int n_oi = 0;
@@ -2217,8 +2217,8 @@ int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals * G,
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
           ObjectMolecule *obj = (ObjectMolecule *) rec->obj;
-          register int a, id, n_atom = obj->NAtom;
-          register AtomInfoType *ai = obj->AtomInfo;
+          int a, id, n_atom = obj->NAtom;
+          AtomInfoType *ai = obj->AtomInfo;
           for(a = 0; a < n_atom; a++) {
             if((id = ai->unique_id)) {
               if(OVOneToOne_GetForward(o2o, id).status == OVstatus_NOT_FOUND) {
@@ -2440,7 +2440,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
      mode 2: state matrix
      mode 3 (source only): camera matrix transformation */
 
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
   SpecRec *src_rec = NULL;
   int ok = true;
@@ -2732,7 +2732,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
 
 static void ExecutiveInvalidateMapDependents(PyMOLGlobals * G, char *map_name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->type == cExecObject) {
@@ -2755,7 +2755,7 @@ static void ExecutiveInvalidateMapDependents(PyMOLGlobals * G, char *map_name)
 void ExecutiveResetMatrix(PyMOLGlobals * G,
                           char *name, int mode, int state, int log, int quiet)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
@@ -2908,7 +2908,7 @@ int ExecutiveSetObjectMatrix(PyMOLGlobals * G, char *name, int state, double *ma
 static int ExecutiveCountNames(PyMOLGlobals * G)
 {
   int count = 0;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   while(ListIterate(I->Spec, rec, next))
     count++;
@@ -2923,7 +2923,7 @@ static int ReorderOrderFn(PyMOLGlobals * G, SpecRec ** rec, int l, int r)
 
 int ExecutiveOrder(PyMOLGlobals * G, char *s1, int sort, int location)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
   int ok = true;
   CWordList *word_list = WordListNew(G, s1);
@@ -3235,7 +3235,7 @@ int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G)
     align_sele = SelectorIndexByName(G, alignment);
   } else {                      /* otherwise, use the first active alignment */
     SpecRec *rec = NULL;
-    register CExecutive *I = G->Executive;
+    CExecutive *I = G->Executive;
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->visible) {
         if(rec->type == cExecObject)
@@ -3268,7 +3268,7 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int
 
   int result = false;
   SpecRec *rec = NULL;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   while(ListIterate(I->Spec, rec, next)){
     if(rec->type == cExecSelection){
       if(rec->visible) {
@@ -3310,7 +3310,7 @@ int ExecutiveFixChemistry(PyMOLGlobals * G, char *s1, char *s2, int invalidate, 
   int sele2 = SelectorIndexByName(G, s2);
   int ok = true;
   SpecRec *rec = NULL;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
 
   if((sele1 >= 0) && (sele2 >= 0)) {
     while(ListIterate(I->Spec, rec, next)) {
@@ -3395,7 +3395,7 @@ int ExecutiveSetName(PyMOLGlobals * G, char *old_name, char *new_name)
 {
   int ok = true;
   SpecRec *rec = NULL;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int found = false;
   ObjectNameType name;
   UtilNCopy(name, new_name, sizeof(ObjectNameType));
@@ -4255,7 +4255,7 @@ PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G)
   return NULL;
 #else
   PyObject *result = NULL, *list;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   result = PyDict_New();
   while(ListIterate(I->Spec, rec, next)) {
@@ -4708,7 +4708,7 @@ int ExecutiveValidateObjectPtr(PyMOLGlobals * G, CObject * ptr, int object_type)
 {
   /* this routine needs to be sped up significantly... */
 
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int ok = false;
   SpecRec *rec = NULL;
 
@@ -4791,7 +4791,7 @@ int ExecutiveRampNew(PyMOLGlobals * G, char *name, char *src_name,
 static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int version,
                                     int part_rest, int part_sess)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int ok = true;
   int skip = false;
   int a = 0, l = 0, ll = 0;
@@ -5111,7 +5111,7 @@ static PyObject *ExecutiveGetExecSeleAsPyList(PyMOLGlobals * G, SpecRec * rec)
 
 static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals * G, int list_id, int partial)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
   PyObject *result = NULL;
   int count = 0, total_count = 0;
@@ -5703,7 +5703,7 @@ static CObject **ExecutiveSeleToObjectVLA(PyMOLGlobals * G, char *s1)
   /* return VLA containing list of atoms references by selection */
 
   CObject **result = NULL;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   CObject *obj = NULL;
   int n = 0;
@@ -6568,11 +6568,11 @@ int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator_, char *operands,
                 ObjectMap *obj = (ObjectMap *) rec->obj;
                 ObjectMapInterpolate(obj, src_state, pnt, r_value, inside, n_pnt);
                 {
-                  register int a;
-                  register float *rv = r_value;
-                  register float *lv = l_value;
-                  register int *flg = inside;
-                  register int *pre = present;
+                  int a;
+                  float *rv = r_value;
+                  float *lv = l_value;
+                  int *flg = inside;
+                  int *pre = present;
 
                   switch (operator_) {
                   case cMapOperatorCopy:
@@ -6693,9 +6693,9 @@ int ExecutiveMapSet(PyMOLGlobals * G, char *name, int operator_, char *operands,
         }
 
         {
-          register int a;
-          register float *lv = l_value;
-          register int *pre = present;
+          int a;
+          float *lv = l_value;
+          int *pre = present;
 
           switch (operator_) {
           case cMapOperatorUnique:
@@ -6944,7 +6944,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
   int active = false;
   float center_array[8] = { 0.0F, 0.0F, 0.0F, 0.0F };
   float *center = center_array;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
   CGOReset(G->DebugCGO);
@@ -6995,7 +6995,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
 float ExecutiveSculptIterate(PyMOLGlobals * G, char *name, int state, int n_cycle)
 {
   CObject *obj = ExecutiveFindObjectByName(G, name);
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int ok = true;
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
@@ -7036,7 +7036,7 @@ int ExecutiveSculptActivate(PyMOLGlobals * G, char *name, int state, int match_s
   CObject *obj = ExecutiveFindObjectByName(G, name);
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int ok = true;
   if(state < 0)
     state = SceneGetState(G);
@@ -7072,7 +7072,7 @@ int ExecutiveSculptDeactivate(PyMOLGlobals * G, char *name)
   CObject *obj = ExecutiveFindObjectByName(G, name);
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
 
   int ok = true;
 
@@ -7128,7 +7128,7 @@ int ExecutiveSetGeometry(PyMOLGlobals * G, char *s1, int geom, int valence)
 int ExecutiveMultiSave(PyMOLGlobals * G, char *fname, char *name, int state,
                        int append, int format, int quiet)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
@@ -7191,7 +7191,7 @@ int ExecutiveMultiSave(PyMOLGlobals * G, char *fname, char *name, int state,
 
 int ExecutiveMapSetBorder(PyMOLGlobals * G, char *name, float level, int state)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
@@ -7222,7 +7222,7 @@ int ExecutiveMapSetBorder(PyMOLGlobals * G, char *name, float level, int state)
 
 int ExecutiveMapDouble(PyMOLGlobals * G, char *name, int state)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
@@ -7254,7 +7254,7 @@ int ExecutiveMapDouble(PyMOLGlobals * G, char *name, int state)
 
 int ExecutiveMapHalve(PyMOLGlobals * G, char *name, int state, int smooth)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
@@ -7287,7 +7287,7 @@ int ExecutiveMapHalve(PyMOLGlobals * G, char *name, int state, int smooth)
 int ExecutiveMapTrim(PyMOLGlobals * G, char *name,
                      char *sele, float buffer, int map_state, int sele_state, int quiet)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = true;
   float mn[3], mx[3];
   if(ExecutiveGetExtent(G, sele, mn, mx, true, sele_state, false)) {
@@ -7495,7 +7495,7 @@ int ExecutiveTranslateAtom(PyMOLGlobals * G, char *sele, float *v, int state, in
 int ExecutiveCombineObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int reverse_order, int store)
 {
   int ok = true;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
     SpecRec *rec = NULL;
     while(ListIterate(I->Spec, rec, next)) {
@@ -7549,7 +7549,7 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int reve
 int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, char *name, float *trans, int store, int quiet)
 {
   int ok = true;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
     SpecRec *rec = NULL;
     while(ListIterate(I->Spec, rec, next)) {
@@ -7601,7 +7601,7 @@ int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, char *name, float *trans, int 
 int ExecutiveSetObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int state, int quiet, int store)
 {
   int ok = true;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
     SpecRec *rec = NULL;
     while(ListIterate(I->Spec, rec, next)) {
@@ -8191,7 +8191,7 @@ PyObject *ExecutiveGetSettingTuple(PyMOLGlobals * G, int index, char *object, in
 /*========================================================================*/
 void ExecutiveSetLastObjectEdited(PyMOLGlobals * G, CObject * o)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   I->LastEdited = o;
 }
 
@@ -8199,7 +8199,7 @@ void ExecutiveSetLastObjectEdited(PyMOLGlobals * G, CObject * o)
 /*========================================================================*/
 CObject *ExecutiveGetLastObjectEdited(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   return (I->LastEdited);
 }
 
@@ -8260,7 +8260,7 @@ char *ExecutiveGetTitle(PyMOLGlobals * G, char *name, int state)
 /*========================================================================*/
 void ExecutiveHideSelections(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
 
   while(ListIterate(I->Spec, rec, next)) {
@@ -8276,13 +8276,13 @@ void ExecutiveHideSelections(PyMOLGlobals * G)
 }
 
 void ExecutiveInvalidateSelectionIndicators(PyMOLGlobals *G){
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   ExecutiveInvalidateSelectionIndicatorsCGO(G);
   I->selectorTextureSize = 0;
 }
 
 void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G){
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   if (I){
     if (I->selIndicatorsCGO){
@@ -8302,7 +8302,7 @@ void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G){
 
 #include "Texture.h"
 void ExecutiveRegenerateTextureForSelector(PyMOLGlobals *G, int round_points, int *widths_arg){
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   unsigned char *temp_buffer = Alloc(unsigned char, widths_arg[0] * widths_arg[0] * 4);
   int a, b;
   float mid_point, disty, distx, dist, wminusd;
@@ -8384,7 +8384,7 @@ void ExecutiveRegenerateTextureForSelector(PyMOLGlobals *G, int round_points, in
 }
 
 void ExecutiveRenderIndicatorCGO(PyMOLGlobals * G, CGO *selIndicatorsCGO){
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CShaderPrg *shaderPrg;
   float text_texture_dim = TextureGetTextTextureSize(G);
   float textureScale;
@@ -8456,7 +8456,7 @@ void ExecutiveSetupIndicatorPassGLImmediate(PyMOLGlobals * G, SpecRec *rec, int 
 /*========================================================================*/
 void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInfo *grid)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   int any_active = false;
   int no_depth = (int) SettingGetGlobal_f(G, cSetting_selection_overlay);
@@ -8937,7 +8937,7 @@ float ExecutiveGetArea(PyMOLGlobals * G, char *s0, int sta0, int load_b)
 /*========================================================================*/
 char *ExecutiveGetNames(PyMOLGlobals * G, int mode, int enabled_only, char *s0)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   char *result;
   int size = 0;
@@ -9007,7 +9007,8 @@ char *ExecutiveGetNames(PyMOLGlobals * G, int mode, int enabled_only, char *s0)
  */
 bool ExecutiveIsMoleculeOrSelection(PyMOLGlobals * G, const char *name)
 {
-  if (!strcmp(name, cKeywordAll))
+  if (!strcmp(name, cKeywordAll) ||
+      !strcmp(name, cKeywordSame))
     return true;
 
   SpecRec *rec = ExecutiveFindSpec(G, name);
@@ -9176,7 +9177,7 @@ void ExecutiveFuse(PyMOLGlobals * G, char *s0, char *s1, int mode,
 /*========================================================================*/
 void ExecutiveSpheroid(PyMOLGlobals * G, char *name, int average)
 {                               /* EXPERIMENTAL */
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CObject *os = NULL;
   ObjectMolecule *obj;
   SpecRec *rec = NULL;
@@ -9209,7 +9210,7 @@ void ExecutiveSpheroid(PyMOLGlobals * G, char *name, int average)
 /*========================================================================*/
 void ExecutiveRebuildAll(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   PRINTFD(G, FB_Executive)
     " ExecutiveRebuildAll: entered.\n" ENDFD;
@@ -9246,7 +9247,7 @@ void ExecutiveRebuildAll(PyMOLGlobals * G)
 /*========================================================================*/
 void ExecutiveRebuildAllObjectDist(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->type == cExecObject) {
@@ -9262,7 +9263,7 @@ void ExecutiveRebuildAllObjectDist(PyMOLGlobals * G)
 /*========================================================================*/
 void ExecutiveUndo(PyMOLGlobals * G, int dir)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CObject *o;
   ObjectMolecule *obj = NULL, *compObj;
   SpecRec *rec = NULL;
@@ -9293,7 +9294,7 @@ void ExecutiveUndo(PyMOLGlobals * G, int dir)
 /*========================================================================*/
 void ExecutiveSort(PyMOLGlobals * G, const char *name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   ObjectMolecule *obj;
   SpecRec *rec = NULL;
   ObjectMoleculeOpRec op;
@@ -9375,7 +9376,7 @@ void ExecutiveSort(PyMOLGlobals * G, const char *name)
 void ExecutiveRemoveAtoms(PyMOLGlobals * G, char *s1, int quiet)
 {
   int sele;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   ObjectMoleculeOpRec op;
@@ -9695,7 +9696,7 @@ int ExecutiveBond(PyMOLGlobals * G, char *s1, char *s2, int order, int mode, int
   int ok = true;
   int sele1, sele2;
   int cnt;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   int flag = false;
 
@@ -10026,7 +10027,7 @@ char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, char *name, int state, int
     name = SettingGetGlobal_s(G, cSetting_seq_view_alignment);
     if(name[0] == 0) {
       SpecRec *rec = NULL;
-      register CExecutive *I = G->Executive;
+      CExecutive *I = G->Executive;
       while(ListIterate(I->Spec, rec, next)) {
         if(rec->visible) {
           if(rec->type == cExecObject)
@@ -10825,7 +10826,7 @@ static int fAtomTemp1Ordered(AtomInfoType ** array, int l, int r)
 
 static void PackSortedIndices(int n, int *x, int rec_size, void *data)
 {
-  register int a;
+  int a;
   for(a = 0; a < n; a++) {
     if(a != x[a]) {
       memcpy(((char *) data) + (a * rec_size),
@@ -11673,7 +11674,7 @@ int ExecutiveReset(PyMOLGlobals * G, int cmd, char *name)
     SceneResetMatrix(G);
     ExecutiveWindowZoom(G, cKeywordAll, 0.0, -1, 0, 0, true);   /* reset does all states */
   } else {
-    register CExecutive *I = G->Executive;
+    CExecutive *I = G->Executive;
     if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
       SpecRec *rec = NULL;
       while(ListIterate(I->Spec, rec, next)) {
@@ -11783,7 +11784,7 @@ void ExecutiveDrawNow(PyMOLGlobals * G)
 /*========================================================================*/
 int ExecutiveCountStates(PyMOLGlobals * G, char *s1)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int sele1;
   int result = 0;
   int n_state;
@@ -11870,7 +11871,7 @@ int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
                                       char *s1, char *s2, int state,
                                       int quiet, int updates)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   int sele1, sele2;
@@ -11999,7 +12000,7 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
 #ifdef _PYMOL_NOPY
   return 0;
 #else
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   int sele1, sele2;
@@ -12121,7 +12122,7 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
   return 0;
 #else
 
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   int sele1, sele2;
@@ -12235,7 +12236,7 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
 int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, char *s1, char *s2,
                               int state, int quiet, int updates)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   SettingName name;
@@ -12301,7 +12302,7 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, char *sel
   return 0;
 #else
 
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   int sele1;
@@ -12599,7 +12600,7 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
                                   int index, char *value, char *sele,
                                   int state, int quiet, int updates)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   int sele1;
@@ -12805,7 +12806,7 @@ int ExecutiveSetObjSettingFromString(PyMOLGlobals * G,
 int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, char *sele,
                           int state, int quiet, int updates)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   int sele1;
@@ -12942,7 +12943,7 @@ int ExecutiveColor(PyMOLGlobals * G, char *name, char *color, int flags, int qui
      0x1 -- ignore or suppress selection name matches
    */
 
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int col_ind;
   int ok = false;
   col_ind = ColorGetIndex(G, color);
@@ -13048,7 +13049,7 @@ int ExecutiveColor(PyMOLGlobals * G, char *name, char *color, int flags, int qui
 const char *ExecutiveFindBestNameMatch(PyMOLGlobals * G, const char *name)
 {
   const char *result;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL, *best_rec = NULL;
   int best;
   int wm;
@@ -13092,7 +13093,7 @@ static int count_objects(PyMOLGlobals * G, int public_only)
 
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals * G, const char *name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   // ignore % prefix
   if(name[0] && name[0] == '%')
@@ -13117,7 +13118,7 @@ static SpecRec *ExecutiveFindSpec(PyMOLGlobals * G, const char *name)
 /*========================================================================*/
 void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   int update_table = true;
@@ -13209,7 +13210,7 @@ int ExecutiveGetExtent(PyMOLGlobals * G, char *name, float *mn, float *mx,
 {
   int sele;
   ObjectMoleculeOpRec op, op2;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CObject *obj;
   int result = false;
   SpecRec *rec = NULL;
@@ -13446,7 +13447,7 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals * G, char *name, float *pos, flo
 {
   int sele;
   ObjectMoleculeOpRec op, op2;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CObject *obj;
   int flag = false;
   SpecRec *rec = NULL;
@@ -13826,7 +13827,7 @@ int ExecutiveGetMoment(PyMOLGlobals * G, char *name, double *mi, int state)
 /*========================================================================*/
 int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   PRINTFD(G, FB_Executive)
     " ExecutiveSetObjVisib: entered.\n" ENDFD;
   {
@@ -14010,7 +14011,7 @@ void ExecutiveSetAllVisib(PyMOLGlobals * G, int state)
   ObjectMolecule *obj;
   int rep;
   int sele;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
 
   PRINTFD(G, FB_Executive)
@@ -14117,7 +14118,7 @@ void ExecutiveSetRepVisib(PyMOLGlobals * G, char *name, int rep, int state)
     " ExecutiveSetRepVisib: entered.\n" ENDFD;
 
   {
-    register CExecutive *I = G->Executive;
+    CExecutive *I = G->Executive;
     CTracker *I_Tracker = I->Tracker;
     SpecRec *rec = NULL;
     int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
@@ -14212,7 +14213,7 @@ static void ExecutiveSetAllRepVisib(PyMOLGlobals * G, int rep, int state)
   int sele;
   int a;
 
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   PRINTFD(G, FB_Executive)
     " ExecutiveSetAllRepVisib: entered.\n" ENDFD;
@@ -14260,7 +14261,7 @@ static void ExecutiveSetAllRepVisib(PyMOLGlobals * G, int rep, int state)
 /*========================================================================*/
 void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int level)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   ObjectMoleculeOpRec op;
   SpecRec *rec = NULL;
   if((!name) || (!name[0]))
@@ -14309,7 +14310,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int lev
 
 int ExecutiveCheckGroupMembership(PyMOLGlobals * G, int list_id, CObject * obj)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = false;
   CTracker *I_Tracker = I->Tracker;
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
@@ -14328,7 +14329,7 @@ int ExecutiveCheckGroupMembership(PyMOLGlobals * G, int list_id, CObject * obj)
 
 int ExecutiveGetExpandedGroupListFromPattern(PyMOLGlobals * G, char *name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = 0;
   CWordMatcher *matcher;
   CWordMatchOptions options;
@@ -14380,7 +14381,7 @@ int ExecutiveGetExpandedGroupListFromPattern(PyMOLGlobals * G, char *name)
 
 int ExecutiveGetExpandedGroupList(PyMOLGlobals * G, char *name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int result = 0;
   int list_id = 0;
 
@@ -14398,7 +14399,7 @@ int ExecutiveGetExpandedGroupList(PyMOLGlobals * G, char *name)
 
 void ExecutiveFreeGroupList(PyMOLGlobals * G, int list_id)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   TrackerDelList(I->Tracker, list_id);
 }
 
@@ -14417,7 +14418,7 @@ CObject *ExecutiveFindObjectByName(PyMOLGlobals * G, const char *name)
 /*========================================================================*/
 /* returns NULL if none found */
 CObject ** ExecutiveFindObjectsByType(PyMOLGlobals * G, int objType) {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   int n = 0;
   CObject** rVal = VLAlloc(CObject*, 1);
@@ -14472,7 +14473,7 @@ ObjectMolecule *ExecutiveFindObjectMoleculeByName(PyMOLGlobals * G, char *name)
 /*========================================================================*/
 Block *ExecutiveGetBlock(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   return (I->Block);
 }
 
@@ -14714,7 +14715,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
 
 static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
 
   if (rec->gridSlotSelIndicatorsCGO){
     CGOFree(rec->gridSlotSelIndicatorsCGO);
@@ -14773,7 +14774,7 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
 /*========================================================================*/
 void ExecutiveDelete(PyMOLGlobals * G, const char *name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   CTracker *I_Tracker = I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G, name, false, false);
@@ -14818,7 +14819,7 @@ void ExecutiveDelete(PyMOLGlobals * G, const char *name)
 
 ObjectMolecule **ExecutiveGetObjectMoleculeListVLA(PyMOLGlobals * G, char *name)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule **result = NULL;
   int n = 0;
@@ -14849,7 +14850,7 @@ ObjectMolecule **ExecutiveGetObjectMoleculeListVLA(PyMOLGlobals * G, char *name)
 void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj)
 {
   SpecRec *rec = NULL;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
 
   SceneUpdate(G, false);
 
@@ -14877,7 +14878,7 @@ void ExecutiveDump(PyMOLGlobals * G, const char *fname, const char *obj)
 /*========================================================================*/
 void ExecutiveMemoryDump(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   fprintf(stderr, " Executive: %d candidate(s) %d list(s) %d link(s).\n",
           TrackerGetNCand(I->Tracker),
           TrackerGetNList(I->Tracker), TrackerGetNLink(I->Tracker));
@@ -14920,7 +14921,7 @@ void ExecutiveDoZoom(PyMOLGlobals * G, CObject * obj, int is_new, int zoom, int 
 
 static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int auto_mode = SettingGetGlobal_i(G, cSetting_group_auto_mode);
   if(auto_mode && (rec->name[0] != '_')) {
     char *period = rec->name + strlen(rec->name);
@@ -14967,7 +14968,7 @@ static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
 void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
 {
   SpecRec *rec = NULL;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int exists = false;
   int previousVisible;
 
@@ -15075,7 +15076,7 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
 {
 
   SpecRec *rec = NULL;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int hide_all = SettingGetGlobal_b(G, cSetting_active_selections);
   if(name[0] == '_')
     hide_all = false;           /* hidden selections don't change active selection */
@@ -15134,7 +15135,7 @@ void ExecutiveManageSelection(PyMOLGlobals * G, char *name)
 static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int n, a;
   SpecRec *rec = NULL;
   PanelRec *panel = NULL;
@@ -15637,7 +15638,7 @@ int ExecutiveAssignAtomTypes(PyMOLGlobals * G, char *s1, int format, int state, 
 static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   PanelRec *panel = NULL;
   int pass = false;
@@ -15732,7 +15733,7 @@ static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)
 static int ExecutiveDrag(Block * block, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int xx, t;
   int ExecLineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
@@ -16172,7 +16173,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
 
   SpecRec *rec = NULL;
   PanelRec *panel = NULL;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int n_ent;
   int n_disp;
   int skip = 0;
@@ -16559,7 +16560,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
 /*========================================================================*/
 int ExecutiveIterateObject(PyMOLGlobals * G, CObject ** obj, void **hidden)
 {
-  register SpecRec **rec = (SpecRec **) hidden, *I_Spec = G->Executive->Spec;
+  SpecRec **rec = (SpecRec **) hidden, *I_Spec = G->Executive->Spec;
   while(ListIterate(I_Spec, (*rec), next)) {
     if((*rec)->type == cExecObject)
       break;
@@ -16575,7 +16576,7 @@ int ExecutiveIterateObject(PyMOLGlobals * G, CObject ** obj, void **hidden)
 /*========================================================================*/
 int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj, void **hidden)
 {
-  register SpecRec **rec = (SpecRec **) hidden, *I_Spec = G->Executive->Spec;
+  SpecRec **rec = (SpecRec **) hidden, *I_Spec = G->Executive->Spec;
   while(ListIterate(I_Spec, (*rec), next)) {
     if(((*rec)->type == cExecObject) && ((*rec)->obj->type == cObjectMolecule))
       break;
@@ -16592,7 +16593,7 @@ int ExecutiveIterateObjectMolecule(PyMOLGlobals * G, ObjectMolecule ** obj, void
 static void ExecutiveReshape(Block * block, int width, int height)
 {
   PyMOLGlobals *G = block->G;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
 
   BlockReshape(block, width, height);
 
@@ -16605,7 +16606,7 @@ static void ExecutiveReshape(Block * block, int width, int height)
 /*========================================================================*/
 int ExecutiveReinitialize(PyMOLGlobals * G, int what, char *pattern)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   int ok = true;
 #ifndef _PYMOL_NOPY
   int blocked = false;
@@ -16705,7 +16706,7 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, char *pattern)
 /*========================================================================*/
 int ExecutiveInit(PyMOLGlobals * G)
 {
-  register CExecutive *I = NULL;
+  CExecutive *I = NULL;
   if((I = (G->Executive = Calloc(CExecutive, 1)))) {
 
     SpecRec *rec = NULL;
@@ -16774,7 +16775,7 @@ int ExecutiveInit(PyMOLGlobals * G)
 /*========================================================================*/
 void ExecutiveFree(PyMOLGlobals * G)
 {
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   if (I->selIndicatorsCGO)
     CGOFree(I->selIndicatorsCGO);
@@ -16936,7 +16937,7 @@ PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB
 char *ExecutiveGetObjectNames(PyMOLGlobals * G, int mode, char *name, int enabled_only, int *numstrs){
   char *res;
   int size=0, stlen;
-  register CExecutive *I = G->Executive;
+  CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
   *numstrs = 0;
   {

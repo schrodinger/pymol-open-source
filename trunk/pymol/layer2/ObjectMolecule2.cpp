@@ -72,7 +72,7 @@ void AddOrthoOutputIfMatchesTags(PyMOLGlobals * G, int n_tags, int nAtom, char *
   if(n_tags && !quiet && !(nAtom > 0 && strstartswith(p, "HEADER"))) { 
     // HEADER is the mark for a new object, this is a new object, and
     // gets processed on the next pass, when nAtom=0
-    register int tc = 0;
+    int tc = 0;
     for(; tc < n_tags; tc++) {
       if(!strstartswithword(p, tag_start[tc]))
 	continue;
@@ -103,7 +103,7 @@ static int populate_other(OtherRec * other, int at, AtomInfoType * ai, BondType 
   {
     int mem[9], nbr[7];
     const int ESCAPE_MAX = 500;
-    register int escape_count;
+    int escape_count;
 
     escape_count = ESCAPE_MAX;  /* don't get bogged down with structures 
                                    that have unreasonable connectivity */
@@ -544,7 +544,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, float *point,
   int result = -1;
   float tot_weight = 0.0F;
   float cutoff2 = cutoff * cutoff;
-  register float nearest = -1.0F;
+  float nearest = -1.0F;
 
   color[0] = 0.0F;
   color[1] = 0.0F;
@@ -565,8 +565,8 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, float *point,
       nearest = cutoff2;
       if((map = cs->Coord2Idx)) {
         int a, b, c, d, e, f, j;
-        register float test;
-        register float *v;
+        float test;
+        float *v;
         MapLocus(map, point, &a, &b, &c);
         for(d = a - 1; d <= a + 1; d++)
           for(e = b - 1; e <= b + 1; e++)
@@ -598,8 +598,8 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, float *point,
               }
             }
       } else {
-        register int j;
-        register float test, *v = cs->Coord;
+        int j;
+        float test, *v = cs->Coord;
         for(j = 0; j < cs->NIndex; j++) {
           test = diffsq3f(v, point);
           if(sub_vdw) {
@@ -647,7 +647,7 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, float *point, float cu
                                       int state, float *dist)
 {
   int result = -1;
-  register float nearest = -1.0F;
+  float nearest = -1.0F;
   if(state < 0)
     state = ObjectGetCurrentState(&I->Obj, true);
   if((state >= 0) && (state < I->NCSet)) {
@@ -658,8 +658,8 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, float *point, float cu
       nearest = cutoff * cutoff;
       if((map = cs->Coord2Idx)) {
         int a, b, c, d, e, f, j;
-        register float test;
-        register float *v;
+        float test;
+        float *v;
         MapLocus(map, point, &a, &b, &c);
         for(d = a - 1; d <= a + 1; d++)
           for(e = b - 1; e <= b + 1; e++)
@@ -676,8 +676,8 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, float *point, float cu
               }
             }
       } else {
-        register int j;
-        register float test, *v = cs->Coord;
+        int j;
+        float test, *v = cs->Coord;
         for(j = 0; j < cs->NIndex; j++) {
           test = diffsq3f(v, point);
           if(test <= nearest) {
@@ -1592,9 +1592,9 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
   }
 
   if(wildcard) {
-    register int a;
-    register char *p, ch;
-    register AtomInfoType *ai = I->AtomInfo;
+    int a;
+    char *p, ch;
+    AtomInfoType *ai = I->AtomInfo;
 
     for(a = 0; a < I->NAtom; a++) {
       p = ai->name;
@@ -1624,7 +1624,7 @@ void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
     int *ssFlag, char **next_pdb, PDBInfoRec *info, int only_read_one_model,
     int *ignore_conect, int *bondFlag, M4XAnnoType * m4x, int *have_bond_order) {
   int seen_end_of_atoms = false;
-  register char *p = parg;
+  char *p = parg;
   *restart_model = NULL;
   while(*ok && *p) {
     AddOrthoOutputIfMatchesTags(G, n_tags, *nAtom, tag_start, p, cc, quiet);
@@ -4107,7 +4107,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
       ii2 = cs->TmpBond;
     }
     if (ok) {
-      register int n_atom = I->NAtom;
+      int n_atom = I->NAtom;
       for(a = 0; a < cs->NTmpBond; a++) {
         a1 = cs->IdxToAtm[ii2->index[0]];       /* convert bonds from index space */
         a2 = cs->IdxToAtm[ii2->index[1]];       /* to atom space */
@@ -4229,7 +4229,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
 {                               /* sorts atoms and bonds */
   int *index;
   int *outdex = NULL;
-  register int a, b;
+  int a, b;
   CoordSet *cs, **dcs;
   AtomInfoType *atInfo;
   int *dAtmToIdx = NULL;
@@ -4263,9 +4263,9 @@ int ObjectMoleculeSort(ObjectMolecule * I)
         }
 
         if(cs) {
-          register int cs_NIndex = cs->NIndex;
-          register int *cs_IdxToAtm = cs->IdxToAtm;
-          register int *cs_AtmToIdx = cs->AtmToIdx;
+          int cs_NIndex = cs->NIndex;
+          int *cs_IdxToAtm = cs->IdxToAtm;
+          int *cs_AtmToIdx = cs->AtmToIdx;
           for(b = 0; b < cs_NIndex; b++)
             cs_IdxToAtm[b] = outdex[cs_IdxToAtm[b]];
           if(cs_AtmToIdx) {

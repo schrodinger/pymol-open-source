@@ -109,8 +109,8 @@ int ObjectMotionModify(CObject *I,int action, int index, int count,int target,in
 
 static void TTTToViewElem(float *TTT, CViewElem * elem)
 {
-  register float *fp = TTT;
-  register double *dp;
+  float *fp = TTT;
+  double *dp;
 
   /* convert row-major TTT to column-major ViewElem */
 
@@ -157,8 +157,8 @@ static void TTTToViewElem(float *TTT, CViewElem * elem)
 
 static void TTTFromViewElem(float *TTT, CViewElem * elem)
 {
-  register float *fp = TTT;
-  register double *dp;
+  float *fp = TTT;
+  double *dp;
 
   if(elem->matrix_flag) {
     dp = elem->matrix;
@@ -232,7 +232,7 @@ int ObjectMotion(CObject * I, int action, int first,
                int simple, float linear, int wrap,
                int hand, int window, int cycles, int state, int quiet)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   if(I->type == cObjectGroup) { /* propagate */
     return ExecutiveGroupMotion(G,I,action,first,last, power,bias,simple,linear,
                                 wrap,hand,window,cycles,state,quiet);
@@ -1154,7 +1154,7 @@ int ObjectGetNFrames(CObject * I)
 /*========================================================================*/
 void ObjectUseColor(CObject * I)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
     glColor3fv(ColorGet(I->G, I->Color));
   }
@@ -1162,7 +1162,7 @@ void ObjectUseColor(CObject * I)
 
 void ObjectUseColorCGO(CGO *cgo, CObject * I)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
     CGOColorv(cgo, ColorGet(I->G, I->Color));
   }
@@ -1178,25 +1178,10 @@ static void ObjectInvalidate(CObject * this_, int rep, int level, int state)
 /*========================================================================*/
 static void ObjectRenderUnitBox(CObject * this_, RenderInfo * info)
 {
-  register PyMOLGlobals *G = this_->G;
+  PyMOLGlobals *G = this_->G;
   if(G->HaveGUI && G->ValidContext) {
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      const GLint lineVerts[] = {
-	-1, -1, -1,
-	-1, -1, 1,
-	-1, 1, 1,
-	-1, 1, -1,
-	1, 1, -1,
-	1, 1, 1,
-	1, -1, 1,
-	1, -1, -1
-      };
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(3, GL_INT, 0, lineVerts);
-      glDrawArrays(GL_LINE_LOOP, 0, 8);
-      glDisableClientState(GL_VERTEX_ARRAY);
-    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
     glBegin(GL_LINE_LOOP);
     glVertex3i(-1, -1, -1);
@@ -1209,24 +1194,7 @@ static void ObjectRenderUnitBox(CObject * this_, RenderInfo * info)
     glVertex3i(1, -1, 1);
     glVertex3i(1, -1, -1);
     glEnd();
-#endif
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      const GLint lineVerts[] = {
-	0, 0, 0,
-	1, 0, 0,
-	0, 0, 0,
-	0, 3, 0,
-	0, 0, 0,
-	0, 0, 9
-      };
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(3, GL_INT, 0, lineVerts);
-      glDrawArrays(GL_LINES, 0, 6);
-      glDisableClientState(GL_VERTEX_ARRAY);
-    }
-#else
     glBegin(GL_LINES);
     glVertex3i(0, 0, 0);
     glVertex3i(1, 0, 0);
@@ -1382,9 +1350,9 @@ void ObjectStateTransformMatrix(CObjectState * I, double *matrix)
 
 int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   float matrix[16];
-  register double *i_matrix = I->Matrix;
+  double *i_matrix = I->Matrix;
   int result = false;
   if(i_matrix) {
     if(info->ray) {
@@ -1424,7 +1392,7 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
 
 void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   if(info->ray) {
     RayPopTTT(info->ray);
   } else if(G->HaveGUI && G->ValidContext) {

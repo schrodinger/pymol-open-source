@@ -4,16 +4,9 @@
 extern "C" {
 #endif
 
-#if defined(PURE_OPENGL_ES_2)
-#elif defined(OPENGL_ES_2)
-/* these are the shaders that uses ES2 */
 read default_vs default_es2.vs
 read default_fs default_es2.fs
-#else
-/* these are the original default shaders */
-read default_vs default.vs
-read default_fs default.fs
-#endif
+
 read volume_vs volume.vs
 read volume_fs volume.fs
 read sphere_vs sphere.vs

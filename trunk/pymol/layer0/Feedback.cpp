@@ -26,7 +26,7 @@ int FeedbackInit(PyMOLGlobals * G, int quiet)
 {
   int a;
 
-  register CFeedback *I;
+  CFeedback *I;
   I = (G->Feedback = Calloc(CFeedback, 1));
 
   I->Stack = VLAlloc(char, FB_Total);
@@ -51,7 +51,7 @@ int FeedbackInit(PyMOLGlobals * G, int quiet)
 
 void FeedbackFree(PyMOLGlobals * G)
 {
-  register CFeedback *I = G->Feedback;
+  CFeedback *I = G->Feedback;
 
   VLAFreeP(I->Stack);
   FreeP(G->Feedback);
@@ -66,7 +66,7 @@ to quietly perform complex actions.  */
 
 void FeedbackPush(PyMOLGlobals * G)
 {
-  register CFeedback *I = G->Feedback;
+  CFeedback *I = G->Feedback;
   int a;
   I->Depth++;
   VLACheck(I->Stack, char, (I->Depth + 1) * FB_Total);
@@ -79,7 +79,7 @@ void FeedbackPush(PyMOLGlobals * G)
 
 void FeedbackPop(PyMOLGlobals * G)
 {
-  register CFeedback *I = G->Feedback;
+  CFeedback *I = G->Feedback;
   if(I->Depth) {
     I->Depth--;
     G->Feedback->Mask = I->Stack + (I->Depth * FB_Total);

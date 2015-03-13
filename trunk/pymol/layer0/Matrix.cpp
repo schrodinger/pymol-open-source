@@ -637,11 +637,11 @@ int *MatrixFilter(float cutoff, int window, int n_pass, int nv, const float *v1,
 /*========================================================================*/
 void MatrixTransformTTTfN3f(unsigned int n, float *q, const float *m, const float *p)
 {
-  register const float m0 = m[0], m4 = m[4], m8 = m[8], m12 = m[12];
-  register const float m1 = m[1], m5 = m[5], m9 = m[9], m13 = m[13];
-  register const float m2 = m[2], m6 = m[6], m10 = m[10], m14 = m[14];
-  register const float m3 = m[3], m7 = m[7], m11 = m[11];
-  register float p0, p1, p2;
+  const float m0 = m[0], m4 = m[4], m8 = m[8], m12 = m[12];
+  const float m1 = m[1], m5 = m[5], m9 = m[9], m13 = m[13];
+  const float m2 = m[2], m6 = m[6], m10 = m[10], m14 = m[14];
+  const float m3 = m[3], m7 = m[7], m11 = m[11];
+  float p0, p1, p2;
   while(n--) {
     p0 = *(p++) + m12;
     p1 = *(p++) + m13;
@@ -656,11 +656,11 @@ void MatrixTransformTTTfN3f(unsigned int n, float *q, const float *m, const floa
 /*========================================================================*/
 void MatrixTransformR44fN3f(unsigned int n, float *q, const float *m, const float *p)
 {
-  register const float m0 = m[0], m4 = m[4], m8 = m[8];
-  register const float m1 = m[1], m5 = m[5], m9 = m[9];
-  register const float m2 = m[2], m6 = m[6], m10 = m[10];
-  register const float m3 = m[3], m7 = m[7], m11 = m[11];
-  register float p0, p1, p2;
+  const float m0 = m[0], m4 = m[4], m8 = m[8];
+  const float m1 = m[1], m5 = m[5], m9 = m[9];
+  const float m2 = m[2], m6 = m[6], m10 = m[10];
+  const float m3 = m[3], m7 = m[7], m11 = m[11];
+  float p0, p1, p2;
   while(n--) {
     p0 = *(p++);
     p1 = *(p++);
@@ -764,7 +764,7 @@ void MatrixMultiplyC44f(const float *b, float *m)
 /*========================================================================*/
 void MatrixTransformC44f3f(const float *m, const float *q, float *p)
 {
-  register float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
+  float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
   p[0] = m[0] * q0 + m[4] * q1 + m[8] * q2 + m[12];
   p[1] = m[1] * q0 + m[5] * q1 + m[9] * q2 + m[13];
   p[2] = m[2] * q0 + m[6] * q1 + m[10] * q2 + m[14];
@@ -774,7 +774,7 @@ void MatrixTransformC44f3f(const float *m, const float *q, float *p)
 /*========================================================================*/
 void MatrixTransformC44f4f(const float *m, const float *q, float *p)
 {
-  register float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
+  float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
   p[0] = m[0] * q0 + m[4] * q1 + m[8] * q2 + m[12];
   p[1] = m[1] * q0 + m[5] * q1 + m[9] * q2 + m[13];
   p[2] = m[2] * q0 + m[6] * q1 + m[10] * q2 + m[14];
@@ -788,7 +788,7 @@ void MatrixInvTransformC44fAs33f3f(const float *m, const float *q, float *p)
 {
   /* multiplying a column major rotation matrix as row-major will
    * give the inverse rotation */
-  register float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
+  float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
   p[0] = m[0] * q0 + m[1] * q1 + m[2] * q2;
   p[1] = m[4] * q0 + m[5] * q1 + m[6] * q2;
   p[2] = m[8] * q0 + m[9] * q1 + m[10] * q2;
@@ -798,7 +798,7 @@ void MatrixInvTransformC44fAs33f3f(const float *m, const float *q, float *p)
 /*========================================================================*/
 void MatrixTransformC44fAs33f3f(const float *m, const float *q, float *p)
 {
-  register float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
+  float q0 = *q, q1 = *(q + 1), q2 = *(q + 2);
   p[0] = m[0] * q0 + m[4] * q1 + m[8] * q2;
   p[1] = m[1] * q0 + m[5] * q1 + m[9] * q2;
   p[2] = m[2] * q0 + m[6] * q1 + m[10] * q2;

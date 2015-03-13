@@ -305,23 +305,6 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
 static void ObjectMeshStateFree(ObjectMeshState * ms)
 {
   ObjectStatePurge(&ms->State);
-  if(ms->State.G->HaveGUI) {
-#ifdef _PYMOL_GL_CALLLISTS
-    if(ms->displayList) {
-      if(PIsGlutThread()) {
-        if(ms->State.G->ValidContext) {
-          glDeleteLists(ms->displayList, 1);
-          ms->displayList = 0;
-        }
-      } else {
-        char buffer[255];       /* pass this off to the main thread */
-        sprintf(buffer, "_cmd.gl_delete_lists(cmd._COb,%d,%d)\n", ms->displayList, 1);
-        PParse(ms->State.G, buffer);
-        ms->displayList = 0;
-      }
-    }
-#endif
-  }
   if(ms->Field) {
     IsosurfFieldFree(ms->State.G, ms->Field);
     ms->Field = NULL;
@@ -974,7 +957,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
                 c = *(n++);
                 while(ok && c--) {
                   if(vc) {
-                    register float *cA = vc;
+                    float *cA = vc;
                     if(rc) {
                       if(rc[0] < -1)
                         ColorGetEncoded(G, rc[0], (cA = colA));
@@ -1001,7 +984,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
                   }
                   while(ok && c--) {
                     if(vc) {
-                      register float *cA = vc - 3, *cB = vc;
+                      float *cA = vc - 3, *cB = vc;
                       if(rc) {
                         if(rc[-1] < -1)
                           ColorGetEncoded(G, rc[-1], (cA = colA));
@@ -1063,26 +1046,6 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  ms->shaderUnitCellCGO->enable_shaders = false;
 		}
 	      }
-
-#ifdef _PYMOL_GL_CALLLISTS
-	      if (ms->displayList && ms->displayListInvalid) {
-		glDeleteLists(ms->displayList, 1);
-		ms->displayList = 0;
-		ms->displayListInvalid = false;
-	      }
-	      if(use_display_lists){
-		if (ms->displayList) {
-		  glCallList(ms->displayList);
-		  /* instead of returning, need to check if all states are being rendered */
-		  if(state >= 0)
-		    break;
-		  a = a + 1;
-		  if(a >= I->NState)
-		    break;
-		  continue;
-		}
-	      }
-#endif
 
 	      if(info && !info->line_lighting){
 		if(!use_shader){
@@ -1182,40 +1145,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  }
 		  while(*n) {
 		    c = *(n++);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		    {
-		      int nverts = c;
-		      ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		      int pl = 0, plc = 0;
-		      GLenum mode = GL_LINE_STRIP;
-		      if(ms->MeshMode == 1){
-			mode = GL_POINTS;
-		      }
-		      while(c--) {
-			if(vc) {
-			  colorVals[plc] = vc[0]; colorVals[plc+1] = vc[1]; colorVals[plc+2] = vc[2]; colorVals[plc+3] = 1.f;
-			  vc += 3;
-			}
-			ptsVals[pl] = v[0]; ptsVals[pl+1] = v[1]; ptsVals[pl+2] = v[2];
-			v += 3;
-			pl += 3;
-			plc += 4;
-		      }
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      if (vc){
-			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(4, GL_FLOAT, 0, colorVals);
-		      }
-		      glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-		      glDrawArrays(mode, 0, nverts);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      if (vc){
-			glDisableClientState(GL_COLOR_ARRAY);
-		      }
-		      DEALLOCATE_ARRAY(ptsVals)
-		      DEALLOCATE_ARRAY(colorVals)
-		    }
+#ifdef PURE_OPENGL_ES_2
+		    /* TODO */
 #else
 		    if(ms->MeshMode == 1)
 		      glBegin(GL_POINTS);
@@ -1247,16 +1178,11 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  CGO *convertcgo = NULL;
 		  if (ok)
 		    ok &= CGOStop(shaderCGO);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 		  if (ok)
 		    convertcgo = CGOCombineBeginEnd(shaderCGO, 0);
 		  CHECKOK(ok, convertcgo);
 		  CGOFree(shaderCGO);    
 		  shaderCGO = convertcgo;
-#else
-		  (void)convertcgo;
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 		  if (returnCGO){
 		    return (shaderCGO);
 		  } else {
@@ -1274,23 +1200,12 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		    CGOFree(ms->shaderCGO);
 		    ms->shaderCGO = convertcgo;
 		  }
-#else
-		  (void)convertcgo;
-#endif
 		}
 		
 		if(!ok) break;
 
                 ok &= ObjectMeshStateRenderShader(ms, I, info, mesh_as_cylinders, mesh_width);
 	      }
-	      
-#ifdef _PYMOL_GL_CALLLISTS
-	      if (use_display_lists && ms->displayList){
-		glEndList();
-		glCallList(ms->displayList);      
-	      }
-#endif
-      
 	  }
 	}
     }

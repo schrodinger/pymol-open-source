@@ -372,18 +372,18 @@ int MatchAlign(CMatch * I, float gap_penalty, float ext_penalty,
                int max_gap, int max_skip, int quiet, int window, float ante)
 {
   PyMOLGlobals *G = I->G;
-  register int a, b, f, g;
-  register int nf, ng;
-  register int sf, sg;
-  register float **score;
-  register float **da, **db;
-  register int na = I->na, nb = I->nb;
+  int a, b, f, g;
+  int nf, ng;
+  int sf, sg;
+  float **score;
+  float **da, **db;
+  int na = I->na, nb = I->nb;
   unsigned int dim[2];
-  register int2 **point;
+  int2 **point;
   float mxv;
   int mxa, mxb;
   float tst = 0.0;
-  register int gap = 0;
+  int gap = 0;
   int *p;
   int cnt;
   int ok = true;
@@ -441,7 +441,7 @@ int MatchAlign(CMatch * I, float gap_penalty, float ext_penalty,
             tst = score[f][g];
 
             if(window) {
-              register int aa = a, bb = b, ff = f, gg = g, cc;
+              int aa = a, bb = b, ff = f, gg = g, cc;
               tst += ante;
               for(cc = 0; cc < window; cc++) {
                 if((ff >= 0) && (gg >= 0) && (ff < na) && (gg < nb)) {
@@ -472,7 +472,7 @@ int MatchAlign(CMatch * I, float gap_penalty, float ext_penalty,
             tst = score[f][g];
 
             if(window) {
-              register int aa = a, bb = b, ff = f, gg = g, cc;
+              int aa = a, bb = b, ff = f, gg = g, cc;
               tst += ante;
               for(cc = 0; cc < window; cc++) {
                 if((ff >= 0) && (gg >= 0) && (ff < na) && (gg < nb)) {
@@ -513,7 +513,7 @@ int MatchAlign(CMatch * I, float gap_penalty, float ext_penalty,
                 tst = score[f][g];
 
                 if(window) {
-                  register int aa = a, bb = b, ff = f, gg = g, cc;
+                  int aa = a, bb = b, ff = f, gg = g, cc;
                   tst += ante;
                   for(cc = 0; cc < window; cc++) {
                     if((ff >= 0) && (gg >= 0) && (ff < na) && (gg < nb)) {

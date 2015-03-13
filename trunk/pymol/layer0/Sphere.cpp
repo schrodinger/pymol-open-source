@@ -263,7 +263,7 @@ static void SphereDumpAll(CSphere *I)
 
 void SphereInit(PyMOLGlobals * G)
 {
-  register CSphere *I = (G->Sphere = Calloc(CSphere, 1));
+  CSphere *I = (G->Sphere = Calloc(CSphere, 1));
 
 #ifdef FAST_SPHERE_INIT
   I->Array = Alloc(SphereRec, Sphere_NSpheres);
@@ -318,7 +318,7 @@ static void SpherePurge(SphereRec * I)
 
 void SphereFree(PyMOLGlobals * G)
 {
-  register CSphere *I = G->Sphere;
+  CSphere *I = G->Sphere;
 
 #ifndef FAST_SPHERE_INIT
   SpherePurge(I->Sphere[0]);

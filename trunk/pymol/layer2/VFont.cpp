@@ -57,7 +57,7 @@ static VFontRec *VFontRecNew(PyMOLGlobals * G)
 int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
                     char *text, float *pos, float *scale, float *matrix)
 {
-  register CVFont *I = G->VFont;
+  CVFont *I = G->VFont;
   VFontRec *fr = NULL;
   int ok = true;
   float base[3], pen[3];
@@ -138,7 +138,7 @@ int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
 int VFontIndent(PyMOLGlobals * G, int font_id, char *text, float *pos, float *scale,
                 float *matrix, float dir)
 {
-  register CVFont *I = G->VFont;
+  CVFont *I = G->VFont;
   VFontRec *fr = NULL;
   int ok = true;
   float base[3], pen[3];
@@ -268,10 +268,10 @@ static void VFontRecFree(PyMOLGlobals * G, VFontRec * I)
 
 int VFontInit(PyMOLGlobals * G)
 {
-  register CVFont *I = NULL;
+  CVFont *I = NULL;
   if((I = (G->VFont = Calloc(CVFont, 1)))) {
 
-    register CVFont *I = G->VFont;
+    CVFont *I = G->VFont;
     I->Font = VLAlloc(VFontRec *, 10);
     I->NFont = 0;
     return 1;
@@ -282,7 +282,7 @@ int VFontInit(PyMOLGlobals * G)
 
 void VFontFree(PyMOLGlobals * G)
 {
-  register CVFont *I = G->VFont;
+  CVFont *I = G->VFont;
   int a;
   for(a = 1; a <= I->NFont; a++) {
     VFontRecFree(G, I->Font[a]);
@@ -293,7 +293,7 @@ void VFontFree(PyMOLGlobals * G)
 
 int VFontLoad(PyMOLGlobals * G, float size, int face, int style, int can_load_new)
 {
-  register CVFont *I = G->VFont;
+  CVFont *I = G->VFont;
   VFontRec *fr;
   int a;
   int result = 0;

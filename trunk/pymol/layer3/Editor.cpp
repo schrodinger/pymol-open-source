@@ -65,7 +65,7 @@ void EditorInvalidateShaderCGO(PyMOLGlobals * G);
 
 int EditorGetScheme(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   int scheme = EDITOR_SCHEME_OBJ;
 
   if(EditorActive(G))
@@ -82,7 +82,7 @@ int EditorGetScheme(PyMOLGlobals * G)
 
 void EditorFavorOrigin(PyMOLGlobals * G, float *v1)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   if(v1) {
     I->FavorOrigin = true;
     copy3f(v1, I->FavoredOrigin);
@@ -103,7 +103,7 @@ static void EditorDrawDihedral(PyMOLGlobals * G)
       obj1 = SelectorGetFastSingleAtomObjectIndex(G, sele1, &at1);
       obj2 = SelectorGetFastSingleAtomObjectIndex(G, sele2, &at2);
       if(obj1 && (obj1 == obj2)) {
-        register CEditor *I = G->Editor;
+        CEditor *I = G->Editor;
 
         I->DihedObject = obj1;
         at0 = ObjectMoleculeGetTopNeighbor(G, obj1, at1, at2);
@@ -144,7 +144,7 @@ static void EditorDrawDihedral(PyMOLGlobals * G)
 
 void EditorDihedralInvalid(PyMOLGlobals * G, ObjectMolecule * obj)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   if(!obj)
     I->DihedralInvalid = true;
   else if(obj == I->DihedObject)
@@ -153,7 +153,7 @@ void EditorDihedralInvalid(PyMOLGlobals * G, ObjectMolecule * obj)
 
 void EditorMouseInvalid(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   I->MouseInvalid = true;
 }
 
@@ -291,7 +291,7 @@ static void EditorConfigMouse(PyMOLGlobals * G)
 
 void EditorUpdate(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   if(I->DihedralInvalid) {
     EditorDrawDihedral(G);
     I->DihedralInvalid = false;
@@ -326,7 +326,7 @@ static int EditorGetEffectiveState(PyMOLGlobals * G, CObject * obj, int state)
 
 int EditorGetNFrag(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   if(EditorActive(G)) {
     return I->NFrag;
   }
@@ -355,7 +355,7 @@ void EditorDefineExtraPks(PyMOLGlobals * G)
 int EditorDeselectIfSelected(PyMOLGlobals * G, ObjectMolecule * obj, int index,
                              int update)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   int result = false;
   int s, sele;
   if(obj) {
@@ -391,7 +391,7 @@ int EditorDeselectIfSelected(PyMOLGlobals * G, ObjectMolecule * obj, int index,
 
 int EditorIsBondMode(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   return (I->BondMode);
 }
 
@@ -401,7 +401,7 @@ PyObject *EditorAsPyList(PyMOLGlobals * G)
   return NULL;
 #else
   PyObject *result = NULL;
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
 
   if(!EditorActive(G)) {
     result = PyList_New(0);     /* not editing? return null list */
@@ -463,13 +463,13 @@ int EditorFromPyList(PyMOLGlobals * G, PyObject * list)
 
 int EditorActive(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   return (I->Active);
 }
 
 CObject *EditorDragObject(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   return I->DragObject;
 }
 
@@ -504,7 +504,7 @@ int EditorGetSinglePicked(PyMOLGlobals * G, char *name)
 
 void EditorGetNextMultiatom(PyMOLGlobals * G, char *name)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   int sele;
   sele = SelectorIndexByName(G, cEditorSele1);
   if(sele < 0) {
@@ -549,7 +549,7 @@ void EditorGetNextMultiatom(PyMOLGlobals * G, char *name)
 /*========================================================================*/
 int EditorLogState(PyMOLGlobals * G, int pkresi)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   if(SettingGetGlobal_i(G, cSetting_logging)) {
 
     OrthoLineType buffer, buf1 = "None", buf2 = "None", buf3 = "None", buf4 = "None";
@@ -615,7 +615,7 @@ int EditorLogState(PyMOLGlobals * G, int pkresi)
 
 int EditorInvert(PyMOLGlobals * G, int quiet)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   int sele0, sele1, sele2;
   int i0, frg;
   int ia0 = -1;
@@ -703,7 +703,7 @@ int EditorInvert(PyMOLGlobals * G, int quiet)
 /*========================================================================*/
 int EditorTorsion(PyMOLGlobals * G, float angle)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   int sele0, sele1, sele2;
   int i0, i1;
   float v0[3], v1[3];
@@ -904,7 +904,7 @@ int EditorIsAnActiveObject(PyMOLGlobals * G, ObjectMolecule * obj)
 /*========================================================================*/
 void EditorCycleValence(PyMOLGlobals * G, int quiet)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   int sele0, sele1;
 
   if(EditorActive(G)) {
@@ -986,7 +986,7 @@ void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet)
   if(EditorActive(G)) {
     OrthoLineType buf;
 
-    register CEditor *I = G->Editor;
+    CEditor *I = G->Editor;
     int sele0 = SelectorIndexByName(G, cEditorSele1);
     ObjectMolecule *obj0 = SelectorGetFastSingleObjectMolecule(G, sele0);
     ObjectMoleculeVerifyChemistry(obj0, -1);    /* remember chemistry for later */
@@ -1230,41 +1230,10 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1, CGO *shaderCGO)
     }
     CGOEnd(shaderCGO);
   } else {
-  glColor3fv(ColorGet(G, 0));
-#ifdef _PYMOL_GL_DRAWARRAYS
-  {
-    int numverts = 2*(nEdge+1), pl;
-    ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
-    ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
-    pl = 0;
-    for(a = 0; a <= nEdge; a++) {
-      c = a % nEdge;
-      v[0] = n1[0] * x[c] + n2[0] * y[c];
-      v[1] = n1[1] * x[c] + n2[1] * y[c];
-      v[2] = n1[2] * x[c] + n2[2] * y[c];
-      normalize3f(v);
-      normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-      normVals[pl+3] = v[0]; normVals[pl+4] = v[1]; normVals[pl+5] = v[2];
-      v[0] = v2[0] + n1[0] * tube_size1 * x[c] + n2[0] * tube_size1 * y[c];
-      v[1] = v2[1] + n1[1] * tube_size1 * x[c] + n2[1] * tube_size1 * y[c];
-      v[2] = v2[2] + n1[2] * tube_size1 * x[c] + n2[2] * tube_size1 * y[c];
-      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-      v[0] = v3[0] + n1[0] * tube_size1 * x[c] + n2[0] * tube_size1 * y[c];
-      v[1] = v3[1] + n1[1] * tube_size1 * x[c] + n2[1] * tube_size1 * y[c];
-      v[2] = v3[2] + n1[2] * tube_size1 * x[c] + n2[2] * tube_size1 * y[c];
-      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-    }
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertVals);
-    glNormalPointer(GL_FLOAT, 0, normVals);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    DEALLOCATE_ARRAY(vertVals)
-    DEALLOCATE_ARRAY(normVals)
-  }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
+  glColor3fv(ColorGet(G, 0));
   glBegin(GL_TRIANGLE_STRIP);
   for(a = 0; a <= nEdge; a++) {
     c = a % nEdge;
@@ -1286,29 +1255,8 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1, CGO *shaderCGO)
   glEnd();
 #endif
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-  glNormal3fv(n0);
-  {
-    int numverts = 2*(nEdge+1), pl;
-    ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
-    pl = 0;
-    for(a = 0; a <= nEdge; a++) {
-      c = a % nEdge;
-      v[0] = v2[0] + n1[0] * tube_size3 * x[c] + n2[0] * tube_size3 * y[c];
-      v[1] = v2[1] + n1[1] * tube_size3 * x[c] + n2[1] * tube_size3 * y[c];
-      v[2] = v2[2] + n1[2] * tube_size3 * x[c] + n2[2] * tube_size3 * y[c];
-      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-      v[0] = v2[0] + n1[0] * tube_size1 * x[c] + n2[0] * tube_size1 * y[c];
-      v[1] = v2[1] + n1[1] * tube_size1 * x[c] + n2[1] * tube_size1 * y[c];
-      v[2] = v2[2] + n1[2] * tube_size1 * x[c] + n2[2] * tube_size1 * y[c];
-      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-    }
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertVals);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    DEALLOCATE_ARRAY(vertVals)
-  }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
   glBegin(GL_TRIANGLE_STRIP);
   glNormal3fv(n0);
@@ -1326,30 +1274,8 @@ static void draw_bond(PyMOLGlobals * G, float *v0, float *v1, CGO *shaderCGO)
   glEnd();
 #endif
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-  scale3f(n0, -1.0F, v);
-  glNormal3fv(v);
-  {
-    int numverts = 2*(nEdge+1), pl;
-    ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
-    pl = 0;
-    for(a = 0; a <= nEdge; a++) {
-      c = a % nEdge;
-      v[0] = v3[0] + n1[0] * tube_size1 * x[c] + n2[0] * tube_size1 * y[c];
-      v[1] = v3[1] + n1[1] * tube_size1 * x[c] + n2[1] * tube_size1 * y[c];
-      v[2] = v3[2] + n1[2] * tube_size1 * x[c] + n2[2] * tube_size1 * y[c];
-      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-      v[0] = v3[0] + n1[0] * tube_size3 * x[c] + n2[0] * tube_size3 * y[c];
-      v[1] = v3[1] + n1[1] * tube_size3 * x[c] + n2[1] * tube_size3 * y[c];
-      v[2] = v3[2] + n1[2] * tube_size3 * x[c] + n2[2] * tube_size3 * y[c];
-      vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-    }
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertVals);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    DEALLOCATE_ARRAY(vertVals)
-  }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
   glBegin(GL_TRIANGLE_STRIP);
   scale3f(n0, -1.0F, v);
@@ -1527,45 +1453,8 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number, CGO *shaderCGO)
       }
       CGOEnd(shaderCGO);
     } else {
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int numverts = 2*(nEdge+1), pl;
-      ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
-      ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
-      pl = 0;
-      for(a = 0; a <= nEdge; a++) {
-	c = a % nEdge;
-	v[0] = n1[0] * x[c] + n2[0] * y[c];
-	v[1] = n1[1] * x[c] + n2[1] * y[c];
-	v[2] = n1[2] * x[c] + n2[2] * y[c];
-	normalize3f(v);
-	normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-	normVals[pl+3] = v[0]; normVals[pl+4] = v[1]; normVals[pl+5] = v[2];
-	v[0] =
-	  v2[0] + n1[0] * radius * x[c] + n2[0] * radius * y[c] + n0[0] * (offset + width);
-	v[1] =
-	  v2[1] + n1[1] * radius * x[c] + n2[1] * radius * y[c] + n0[1] * (offset + width);
-	v[2] =
-	  v2[2] + n1[2] * radius * x[c] + n2[2] * radius * y[c] + n0[2] * (offset + width);
-	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-	v[0] =
-	  v2[0] + n1[0] * radius * x[c] + n2[0] * radius * y[c] + n0[0] * (offset - width);
-	v[1] =
-	  v2[1] + n1[1] * radius * x[c] + n2[1] * radius * y[c] + n0[1] * (offset - width);
-	v[2] =
-	  v2[2] + n1[2] * radius * x[c] + n2[2] * radius * y[c] + n0[2] * (offset - width);
-	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-      }
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glEnableClientState(GL_NORMAL_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-      glNormalPointer(GL_FLOAT, 0, normVals);
-      glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
-      glDisableClientState(GL_NORMAL_ARRAY);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      DEALLOCATE_ARRAY(vertVals)
-      DEALLOCATE_ARRAY(normVals)
-    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
     glBegin(GL_TRIANGLE_STRIP);
     for(a = 0; a <= nEdge; a++) {
@@ -1593,45 +1482,8 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number, CGO *shaderCGO)
     glEnd();
 #endif
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int numverts = 2*(nEdge+1), pl;
-      ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
-      ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
-      pl = 0;
-      for(a = 0; a <= nEdge; a++) {
-	c = a % nEdge;
-	v[0] = n2[0] * x[c] + n0[0] * y[c];
-	v[1] = n2[1] * x[c] + n0[1] * y[c];
-	v[2] = n2[2] * x[c] + n0[2] * y[c];
-	normalize3f(v);
-	normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-	normVals[pl+3] = v[0]; normVals[pl+4] = v[1]; normVals[pl+5] = v[2];
-	v[0] =
-	  v2[0] + n2[0] * radius * x[c] + n0[0] * radius * y[c] + n1[0] * (offset + width);
-	v[1] =
-	  v2[1] + n2[1] * radius * x[c] + n0[1] * radius * y[c] + n1[1] * (offset + width);
-	v[2] =
-	  v2[2] + n2[2] * radius * x[c] + n0[2] * radius * y[c] + n1[2] * (offset + width);
-	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-	v[0] =
-	  v2[0] + n2[0] * radius * x[c] + n0[0] * radius * y[c] + n1[0] * (offset - width);
-	v[1] =
-	  v2[1] + n2[1] * radius * x[c] + n0[1] * radius * y[c] + n1[1] * (offset - width);
-	v[2] =
-	  v2[2] + n2[2] * radius * x[c] + n0[2] * radius * y[c] + n1[2] * (offset - width);
-	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-      }
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glEnableClientState(GL_NORMAL_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-      glNormalPointer(GL_FLOAT, 0, normVals);
-      glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
-      glDisableClientState(GL_NORMAL_ARRAY);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      DEALLOCATE_ARRAY(vertVals)
-      DEALLOCATE_ARRAY(normVals)
-    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
     glBegin(GL_TRIANGLE_STRIP);
     for(a = 0; a <= nEdge; a++) {
@@ -1659,45 +1511,8 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number, CGO *shaderCGO)
     glEnd();
 #endif
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      int numverts = 2*(nEdge+1), pl;
-      ALLOCATE_ARRAY(GLfloat,vertVals,numverts*3)
-      ALLOCATE_ARRAY(GLfloat,normVals,numverts*3)
-      pl = 0;
-      for(a = 0; a <= nEdge; a++) {
-	c = a % nEdge;
-	v[0] = n0[0] * x[c] + n1[0] * y[c];
-	v[1] = n0[1] * x[c] + n1[1] * y[c];
-	v[2] = n0[2] * x[c] + n1[2] * y[c];
-	normalize3f(v);
-	normVals[pl] = v[0]; normVals[pl+1] = v[1]; normVals[pl+2] = v[2];
-	normVals[pl+3] = v[0]; normVals[pl+4] = v[1]; normVals[pl+5] = v[2];
-	v[0] =
-	  v2[0] + n0[0] * radius * x[c] + n1[0] * radius * y[c] + n2[0] * (offset + width);
-	v[1] =
-	  v2[1] + n0[1] * radius * x[c] + n1[1] * radius * y[c] + n2[1] * (offset + width);
-	v[2] =
-	  v2[2] + n0[2] * radius * x[c] + n1[2] * radius * y[c] + n2[2] * (offset + width);
-	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-	v[0] =
-	  v2[0] + n0[0] * radius * x[c] + n1[0] * radius * y[c] + n2[0] * (offset - width);
-	v[1] =
-	  v2[1] + n0[1] * radius * x[c] + n1[1] * radius * y[c] + n2[1] * (offset - width);
-	v[2] =
-	  v2[2] + n0[2] * radius * x[c] + n1[2] * radius * y[c] + n2[2] * (offset - width);
-	vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-      }
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glEnableClientState(GL_NORMAL_ARRAY);
-      glVertexPointer(3, GL_FLOAT, 0, vertVals);
-      glNormalPointer(GL_FLOAT, 0, normVals);
-      glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
-      glDisableClientState(GL_NORMAL_ARRAY);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      DEALLOCATE_ARRAY(vertVals)
-      DEALLOCATE_ARRAY(normVals)
-    }
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
 #else
     glBegin(GL_TRIANGLE_STRIP);
     for(a = 0; a <= nEdge; a++) {
@@ -1754,7 +1569,7 @@ static void draw_string(float *v,char *l)
 /*========================================================================*/
 void EditorRender(PyMOLGlobals * G, int state)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   int sele1, sele2, sele3, sele4;
   float v0[3], v1[3];
   float vp[12], *vv;
@@ -1876,7 +1691,7 @@ void EditorRender(PyMOLGlobals * G, int state)
 /*========================================================================*/
 void EditorInactivate(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
 
   PRINTFD(G, FB_Editor)
     " EditorInactivate-Debug: callend.\n" ENDFD;
@@ -1914,7 +1729,7 @@ void EditorActivate(PyMOLGlobals * G, int state, int enable_bond)
 {
   int sele1, sele2, sele3, sele4;
 
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
 
   sele1 = SelectorIndexByName(G, cEditorSele1);
   sele2 = SelectorIndexByName(G, cEditorSele2);
@@ -1981,7 +1796,7 @@ void EditorSetDrag(PyMOLGlobals * G, CObject * obj, int sele, int quiet, int sta
 
 void EditorReadyDrag(PyMOLGlobals * G, int state)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   if(I->DragObject && (I->DragIndex == -1)) {
     EditorPrepareDrag(G, I->DragObject, I->DragSelection, -1, state, 0);
   }
@@ -1998,7 +1813,7 @@ void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj,
   WordType name;
   int seleFlag = false;
   int i0, i1, i2, i3;
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   int log_trans = SettingGetGlobal_b(G, cSetting_log_conformations);
   int drag_sele = -1;
   ObjectMolecule *objMol = NULL;
@@ -2267,7 +2082,7 @@ void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj,
 
 int EditorDraggingObjectMatrix(PyMOLGlobals *G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   if(I->DragObject && (I->DragSelection < 0) && (I->DragIndex == -1)) {
       return true;
   }
@@ -2277,7 +2092,7 @@ int EditorDraggingObjectMatrix(PyMOLGlobals *G)
 void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
                 float *pt, float *mov, float *z_dir)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   float v0[3], v1[3], v2[3], v3[3], v4[4], cp[3];
   float d0[3], d1[3], d2[3], n0[3], n1[3], n2[3];
   float opp, adj, theta;
@@ -2529,7 +2344,7 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
 /*========================================================================*/
 int EditorInit(PyMOLGlobals * G)
 {
-  register CEditor *I = NULL;
+  CEditor *I = NULL;
   if((I = (G->Editor = Calloc(CEditor, 1)))) {
 
     I->DihedObject = NULL;
@@ -2554,13 +2369,13 @@ int EditorInit(PyMOLGlobals * G)
 /*========================================================================*/
 void EditorFree(PyMOLGlobals * G)
 {
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   VLAFreeP(I->PosVLA);
   FreeP(G->Editor);
 }
 
 void EditorInvalidateShaderCGO(PyMOLGlobals * G){
-  register CEditor *I = G->Editor;
+  CEditor *I = G->Editor;
   if (I->shaderCGO){
     CGOFree(I->shaderCGO);
     I->shaderCGO = NULL;

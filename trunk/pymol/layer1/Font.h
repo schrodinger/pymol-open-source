@@ -34,7 +34,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct _CFont CFont;
 
-#include "os_gl_pre.h"
+#include "os_gl.h"
 
 #define SHADERCGOARG , CGO *shaderCGO
 #define SHADERCGOARGVAR ,shaderCGO

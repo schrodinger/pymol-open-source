@@ -1,18 +1,9 @@
 #ifndef _H_os_gl
 #define _H_os_gl
 
-#include"os_gl_pre.h"
-
-//#if defined(WIN32) || defined(_PYMOL_PURE_OPENGL_ES)
-#if 1
 #define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = (tname*) malloc(size * sizeof(tname));
 #define DEALLOCATE_ARRAY(variablename) free(variablename);
-#else
-#define ALLOCATE_ARRAY(tname,variablename, size) tname variablename[size];
-#define DEALLOCATE_ARRAY(variablename)
-#endif
 
-#if defined(OPENGL_ES_2)
 #define GL_LABEL_SCREEN_SHADER  0xfff0
 #define GL_LABEL_SHADER  0xfffa
 #define GL_BACKGROUND_SHADER  0xfffb
@@ -21,7 +12,6 @@
 #define GL_SHADER_LIGHTING 0xfffe
 #define GL_SCREEN_SHADER  0xfff1
 #define GL_RAMP_SHADER  0xfff2
-#endif
 
 #ifndef _PYMOL_OSX
 
@@ -37,25 +27,28 @@
 #include<GL/gl.h>
 #include<GL/glu.h>
 #endif
+
 #define GLDOUBLEMULTMATRIX glMultMatrixd
 #define GLDOUBLETRANSLATE glTranslated
 
 #else
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-
+#ifndef PURE_OPENGL_ES_2
 #include<GL/glew.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/glext.h>
 #define GLDOUBLEMULTMATRIX glMultMatrixd
 #define GLDOUBLETRANSLATE glTranslated
+#else
+#endif
 
 /* END PROPRIETARY CODE SEGMENT */
 #endif
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-#define GLLIGHTMODELI glLightModelf
+#ifdef PURE_OPENGL_ES_2
+#define GLLIGHTMODELI(arg1, arg2)  /* nothing */
 #else
 #define GLLIGHTMODELI glLightModeli
 #endif
@@ -336,29 +329,6 @@ void p_glutMainLoop(void);
 
 #endif
 
-
-#define DEFINE_RENDER_DATA(vartype, var, ...) const vartype var[] = { __VA_ARGS__ }; 
-
-#if defined(_PYMOL_GL_DRAWARRAYS)
-
-#define CHANGE_COLOR3fv(colarr)  glColor3fv(white);
-#define RENDER_DEFINED_DATA(mode, size, type, len, var) \
-	glEnableClientState(GL_VERTEX_ARRAY);   \
-	glVertexPointer(size, type, 0, var);    \
-	glDrawArrays(mode, 0, len); \
-	glDisableClientState(GL_VERTEX_ARRAY);
-#else
-#define CHANGE_COLOR3fv(colarr)  glColor3fv(white);
-#define RENDER_DEFINED_DATA(mode, size, type, len, var) \
-	glBegin(mode); \
-	{ \
-		int i, maxi = len*size; \
-		for (i=0;i<maxi;i+=size){ \
-		  glVertex2i(var[i], var[i+1]);	\
-		} \
-	} \
-	glEnd();
-#endif
 
 #define GL_C_INT_TYPE uint
 #define GL_C_INT_ENUM GL_UNSIGNED_INT

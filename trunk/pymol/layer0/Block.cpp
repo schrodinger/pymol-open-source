@@ -46,7 +46,7 @@ void BlockInit(PyMOLGlobals * G, Block * I)
 /*========================================================================*/
 void BlockFill(Block * I ORTHOCGOARG)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
     if (orthoCGO){
       CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
@@ -70,7 +70,7 @@ void BlockFill(Block * I ORTHOCGOARG)
 /*========================================================================*/
 void BlockDrawLeftEdge(Block * I ORTHOCGOARG)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
     if (orthoCGO){
       CGOColor(orthoCGO, .3f, .3f, .3f);
@@ -95,33 +95,13 @@ void BlockDrawLeftEdge(Block * I ORTHOCGOARG)
 /*========================================================================*/
 void BlockDrawTopEdge(Block * I)
 {
-  register PyMOLGlobals *G = I->G;
+  PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
     glColor3f(0.3, 0.3, 0.3);
-#ifdef _PYMOL_GL_DRAWARRAYS
-    {
-      const GLint lineVerts[] = {
-	I->rect.right, I->rect.top,
-	I->rect.left, I->rect.top
-      };
-#if defined(OPENGL_ES_1)
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(2, GL_INT, 0, lineVerts);
-      glDrawArrays(GL_LINES, 0, 2);
-      glDisableClientState(GL_VERTEX_ARRAY);
-#elif defined(OPENGL_ES_2)
-      glVertexAttribPointer(0, 2, GL_INT, GL_FALSE, 0, lineVerts);
-      glEnableVertexAttribArray(0);
-      glDrawArrays(GL_LINES, 0, 2);
-      glDisableVertexAttribArray(0);
-#endif
-    }
-#else
     glBegin(GL_LINES);
     glVertex2i(I->rect.right, I->rect.top);
     glVertex2i(I->rect.left, I->rect.top);
     glEnd();
-#endif
   }
 }
 

@@ -113,13 +113,13 @@ void MovieViewReinterpolate(PyMOLGlobals *G)
 
 int MovieXtoFrame(PyMOLGlobals *G, BlockRect *rect, int frames, int x, int nearest)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   return ViewElemXtoFrame(G,I->ViewElem,rect,frames,x,nearest);
 }
 
 void MovieViewTrim(PyMOLGlobals *G,int n_frame)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   if(n_frame>=0) {
     if(!I->Sequence) {
       I->Sequence = VLACalloc(int, n_frame);
@@ -143,7 +143,7 @@ void MovieViewTrim(PyMOLGlobals *G,int n_frame)
 
 int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target, int freeze, int localize)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int ok = true;
   MovieClearImages(G);
   if( (ok = ViewElemModify(G,&I->ViewElem, action, index, count, target)) ) {
@@ -212,7 +212,7 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
 
 int MovieGetSpecLevel(PyMOLGlobals *G,int frame)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   if(I->ViewElem) {
     int size = VLAGetSize(I->ViewElem);
     if(frame<0) {
@@ -233,13 +233,13 @@ int MovieGetSpecLevel(PyMOLGlobals *G,int frame)
 
 void MovieSetRealtime(PyMOLGlobals * G, int realtime)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   I->RealtimeFlag = realtime;
 }
 
 int MovieGetRealtime(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   return I->RealtimeFlag;
 }
 
@@ -252,7 +252,7 @@ void MovieCopyPrepare(PyMOLGlobals * G, int *width, int *height, int *length)
    * TODO: develop an interrupt mechanism */
 
   int start, stop;
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int nFrame;
 
   I->CacheSave = SettingGetGlobal_b(G, cSetting_cache_frames);
@@ -311,7 +311,7 @@ void MovieCopyPrepare(PyMOLGlobals * G, int *width, int *height, int *length)
 
 void MovieFlushCommands(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   I->RecursionFlag = true;
   PFlush(G);
   I->RecursionFlag = false;
@@ -320,7 +320,7 @@ void MovieFlushCommands(PyMOLGlobals * G)
 int MovieCopyFrame(PyMOLGlobals * G, int frame, int width, int height, int rowbytes,
                    void *ptr)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int result = false;
   int nFrame;
   nFrame = I->NFrame;
@@ -379,7 +379,7 @@ int MovieCopyFrame(PyMOLGlobals * G, int frame, int width, int height, int rowby
 
 int MoviePurgeFrame(PyMOLGlobals * G, int frame)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int result = false;
   int nFrame;
   int i;
@@ -405,7 +405,7 @@ int MoviePurgeFrame(PyMOLGlobals * G, int frame)
 
 void MovieCopyFinish(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   SceneInvalidate(G);           /* important */
   SettingSetGlobal_b(G, cSetting_cache_frames, I->CacheSave);
   SettingSetGlobal_i(G, cSetting_overlay, I->OverlaySave);
@@ -417,13 +417,13 @@ void MovieCopyFinish(PyMOLGlobals * G)
 
 int MovieLocked(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   return (I->Locked);
 }
 
 void MovieSetLock(PyMOLGlobals * G, int lock)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   I->Locked = lock;
 }
 
@@ -432,7 +432,7 @@ void MovieSetLock(PyMOLGlobals * G, int lock)
 void MovieDump(PyMOLGlobals * G)
 {
   int a;
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int flag = false;
   char buffer[OrthoLineLength + 100];
 
@@ -463,7 +463,7 @@ void MovieDump(PyMOLGlobals * G)
 static int MovieCmdFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
 {
 
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int ok = true;
   int a;
   int warn = false;
@@ -493,7 +493,7 @@ int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
 #else
 
   int ok = true;
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int ll = 0;
 
   MovieReset(G);
@@ -546,7 +546,7 @@ int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
 static PyObject *MovieCmdAsPyList(PyMOLGlobals * G)
 {
 
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   PyObject *result = NULL;
   int a;
 
@@ -567,7 +567,7 @@ PyObject *MovieAsPyList(PyMOLGlobals * G)
   return NULL;
 #else
 
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   PyObject *result = NULL;
 
   result = PyList_New(7);
@@ -609,7 +609,7 @@ PyObject *MovieAsPyList(PyMOLGlobals * G)
 /*========================================================================*/
 int MoviePlaying(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   if(I->Locked)
     return false;
   if(I->Playing && G->Interrupt) {
@@ -624,7 +624,7 @@ int MoviePlaying(PyMOLGlobals * G)
 /*========================================================================*/
 void MoviePlay(PyMOLGlobals * G, int cmd)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   switch (cmd) {
   case cMovieToggle:
     I->Playing = !I->Playing;
@@ -658,7 +658,7 @@ void MoviePlay(PyMOLGlobals * G, int cmd)
 /*========================================================================*/
 int MovieMatrix(PyMOLGlobals * G, int action)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int result = false;
   switch (action) {
   case cMovieMatrixClear:
@@ -882,7 +882,7 @@ static void MovieModalDraw(PyMOLGlobals * G);
 
 static void MovieModalDraw(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   MovieModalPNG(G, I, &I->Modal);
   if(!I->Modal.complete)        /* force modalic return until job is done */
     PyMOL_SetModalDraw(G->PyMOL, (PyMOLModalDrawFn *) MovieModalDraw);
@@ -892,7 +892,7 @@ int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start,
              int stop, int missing_only, int modal, int format, int mode, int quiet)
 {
   /* assumes locked api, blocked threads, and master thread on entry */
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
 
   /* new routine allows PyMOL to workaround XP and Vista Windowing
      issues */
@@ -942,7 +942,7 @@ int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start,
 /*========================================================================*/
 void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int c = 0;
   int i;
   /*  int old_NFrame = I->NFrame; */
@@ -1036,7 +1036,7 @@ int MovieFrameToImage(PyMOLGlobals * G, int frame)
 /*========================================================================*/
 int MovieFrameToIndex(PyMOLGlobals * G, int frame)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   if(I->Sequence && I->NFrame) {
     if(frame >= I->NFrame) {
       frame = I->NFrame - 1;
@@ -1052,7 +1052,7 @@ int MovieFrameToIndex(PyMOLGlobals * G, int frame)
 /*========================================================================*/
 void MovieSetImage(PyMOLGlobals * G, int index, ImageType * image)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
 
   PRINTFB(G, FB_Movie, FB_Blather)
     " MovieSetImage: setting movie image %d\n", index + 1 ENDFB(G);
@@ -1067,7 +1067,7 @@ void MovieSetImage(PyMOLGlobals * G, int index, ImageType * image)
 
 int MovieSeekScene(PyMOLGlobals * G, int loop)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int result = -1;
   OVreturn_word ret;
   char *scene_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
@@ -1104,7 +1104,7 @@ int MovieSeekScene(PyMOLGlobals * G, int loop)
 /*========================================================================*/
 void MovieDoFrameCommand(PyMOLGlobals * G, int frame)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   if(frame == 0)
     MovieMatrix(G, cMovieMatrixRecall);
   if(!I->Locked) {
@@ -1133,7 +1133,7 @@ void MovieDoFrameCommand(PyMOLGlobals * G, int frame)
 /*========================================================================*/
 void MovieSetCommand(PyMOLGlobals * G, int frame, char *command)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int a, len;
   if((frame >= 0) && (frame < I->NFrame)) {
     len = strlen(command);
@@ -1157,7 +1157,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
               int hand, int window, int cycles,
               char *scene_name, float scene_cut, int state, int quiet)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int frame;
   
   if(wrap<0) {
@@ -1446,7 +1446,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
 /*========================================================================*/
 void MovieAppendCommand(PyMOLGlobals * G, int frame, char *command)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int a, len, cur_len;
   if((frame >= 0) && (frame < I->NFrame)) {
     len = strlen(command);
@@ -1467,7 +1467,7 @@ void MovieAppendCommand(PyMOLGlobals * G, int frame, char *command)
 /*========================================================================*/
 ImageType *MovieGetImage(PyMOLGlobals * G, int index)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   if((index >= 0) && (index < I->NImage))
     return (I->Image[index]);
   else
@@ -1478,7 +1478,7 @@ ImageType *MovieGetImage(PyMOLGlobals * G, int index)
 /*========================================================================*/
 int MovieDefined(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   return (I->NFrame > 0);
 }
 
@@ -1486,7 +1486,7 @@ int MovieDefined(PyMOLGlobals * G)
 /*========================================================================*/
 int MovieGetLength(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int len;
   if(!I->NFrame)
     len = -I->NImage;
@@ -1499,7 +1499,7 @@ int MovieGetLength(PyMOLGlobals * G)
 /*========================================================================*/
 void MovieClearImages(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   int a;
 
   PRINTFB(G, FB_Movie, FB_Blather)
@@ -1522,7 +1522,7 @@ void MovieClearImages(PyMOLGlobals * G)
 /*========================================================================*/
 void MovieReset(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   MovieClearImages(G);
 
   VLAFreeP(I->Cmd);
@@ -1539,7 +1539,7 @@ void MovieReset(PyMOLGlobals * G)
 /*========================================================================*/
 void MovieFree(PyMOLGlobals * G)
 {
-  register CMovie *I = G->Movie;
+  CMovie *I = G->Movie;
   MovieClearImages(G);
   VLAFree(I->Image);
   VLAFreeP(I->ViewElem);
@@ -1971,7 +1971,7 @@ static void MovieReshape(Block * block, int width, int height)
 /*========================================================================*/
 int MovieInit(PyMOLGlobals * G)
 {
-  register CMovie *I = NULL;
+  CMovie *I = NULL;
 
   if((I = (G->Movie = Calloc(CMovie, 1)))) {
     int a;

@@ -105,12 +105,6 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 	I->shaderCGO = 0;
       }
 
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists && I->R.displayList) {
-	glCallList(I->R.displayList);
-	return;
-      }
-#endif
       if (use_shader){
 	if (!I->shaderCGO){
 	  generate_shader_cgo = 1;
@@ -146,16 +140,6 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 		    been rendered */
 	}
       }
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists) {
-	if(!I->R.displayList) {
-	  I->R.displayList = glGenLists(1);
-	  if(I->R.displayList) {
-	    glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	  }
-	}
-      }
-#endif
 
       if (generate_shader_cgo){
 	CGO *cgo = CGONew(G);
@@ -246,46 +230,8 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 	else
 	  glPointSize(I->Width);
 
-#ifdef _PYMOL_GL_DRAWARRAYS
-	{
-	  int pl = 0, nverts = c, plc = 0;
-	  ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-	  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-	  ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-	  float *cur_color;
-	  while(c--) {
-	    if(!cc) {             /* load up the current vertex color */
-	      cc = (int) (*(v++));
-	      cur_color = v;
-	      v += 3;
-	    }
-	    colorVals[plc++] = cur_color[0]; colorVals[plc++] = cur_color[1]; colorVals[plc++] = cur_color[2]; colorVals[plc++] = 1.f;
-	    if(normals){
-	      normalVals[pl] = v[0]; normalVals[pl+1] = v[1]; normalVals[pl+2] = v[2];
-	    }
-	    v += 3;
-	    ptsVals[pl++] = v[0]; ptsVals[pl++] = v[1]; ptsVals[pl++] = v[2];
-	    v += 3;
-	    cc--;
-	  }
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glEnableClientState(GL_COLOR_ARRAY);
-	  if (normals){
-	    glEnableClientState(GL_NORMAL_ARRAY);
-	    glNormalPointer(GL_FLOAT, 0, normalVals);
-	  }
-	  glColorPointer(4, GL_FLOAT, 0, colorVals);
-	  glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-	  glDrawArrays(GL_POINTS, 0, nverts);
-	  glDisableClientState(GL_COLOR_ARRAY);
-	  glDisableClientState(GL_VERTEX_ARRAY);
-	  if (normals){
-	    glDisableClientState(GL_NORMAL_ARRAY);
-	  }	  
-	  DEALLOCATE_ARRAY(ptsVals)
-	  DEALLOCATE_ARRAY(colorVals)
-	  DEALLOCATE_ARRAY(normalVals)
-	}
+#ifdef PURE_OPENGL_ES_2
+	/* TODO */
 #else
         glBegin(GL_POINTS);
         while(c--) {
@@ -306,12 +252,6 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 
         if(!lighting)
           glEnable(GL_LIGHTING);
-#ifdef _PYMOL_GL_CALLLISTS
-	if (use_display_lists && I->R.displayList){
-	  glEndList();
-	  glCallList(I->R.displayList);      
-	}
-#endif
       }
     }
   }

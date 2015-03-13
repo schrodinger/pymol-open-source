@@ -260,20 +260,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	}
       }
 
-#ifdef _PYMOL_GL_CALLLISTS
-      if (I->R.displayList && I->R.displayListInvalid) {
-	glDeleteLists(I->R.displayList, 1);
-	I->R.displayList = 0;
-	I->R.displayListInvalid = false;
-      }
-      if(use_display_lists){
-	if (I->R.displayList) {
-	  glCallList(I->R.displayList);
-	  return;
-	}
-      }
-#endif
-
       if (ok){
 	if (generate_shader_cgo){
 	  ok &= CGOResetNormal(I->shaderCGO, false);
@@ -282,17 +268,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	}
       }
 
-#ifdef _PYMOL_GL_CALLLISTS
-      if(use_display_lists && !I->R.displayList){
-	I->R.displayList = glGenLists(1);
-	if(I->R.displayList) {
-	  glNewList(I->R.displayList, GL_COMPILE_AND_EXECUTE);
-	}
-      }
-#else
-      (void) use_display_lists;
-#endif
-      
       switch (I->mesh_type) {
       case 0:
 	if(n) {
@@ -378,21 +353,8 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	      while(*n) {
 		glColor3fv(ColorGet(G, I->oneColor));
 		c = *(n++);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts = c, pl;		  
-		  ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		  pl = 0;
-		  while(c--) {
-		    vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-		    v += 3;
-		  }
-		  glEnableClientState(GL_VERTEX_ARRAY);
-		  glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		  glDrawArrays(GL_LINE_STRIP, 0, nverts);
-		  glDisableClientState(GL_VERTEX_ARRAY);
-		  DEALLOCATE_ARRAY(vertVals)
-		}
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
 #else
 		glBegin(GL_LINE_STRIP);
 		while(c--) {
@@ -405,28 +367,8 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	    } else {
 	      while(*n) {
 		c = *(n++);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts = c, pl, plc = 0;		  
-		  ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		  pl = 0;
-		  while(c--) {
-		    colorVals[plc++] = vc[0]; colorVals[plc++] = vc[1]; colorVals[plc++] = vc[2]; colorVals[plc++] = 1.f;
-		    vc += 3;
-		    vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-		    v += 3;
-		  }
-		  glEnableClientState(GL_VERTEX_ARRAY);
-		  glEnableClientState(GL_COLOR_ARRAY);
-		  glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		  glColorPointer(4, GL_FLOAT, 0, colorVals);
-		  glDrawArrays(GL_LINE_STRIP, 0, nverts);
-		  glDisableClientState(GL_VERTEX_ARRAY);
-		  glDisableClientState(GL_COLOR_ARRAY);
-		  DEALLOCATE_ARRAY(vertVals)
-		  DEALLOCATE_ARRAY(colorVals)
-		}
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
 #else
 		glBegin(GL_LINE_STRIP);
 		while(c--) {
@@ -488,21 +430,8 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	      while(*n) {
 		glColor3fv(ColorGet(G, I->oneColor));
 		c = *(n++);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts = c, pl;		  
-		  ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		  pl = 0;
-		  while(c--) {
-		    vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-		    v += 3;
-		  }
-		  glEnableClientState(GL_VERTEX_ARRAY);
-		  glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		  glDrawArrays(GL_POINTS, 0, nverts);
-		  glDisableClientState(GL_VERTEX_ARRAY);
-		  DEALLOCATE_ARRAY(vertVals)
-		}
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
 #else
 		glBegin(GL_POINTS);
 		while(c--) {
@@ -515,28 +444,8 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	    } else {
 	      while(*n) {
 		c = *(n++);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		{
-		  int nverts = c, pl, plc = 0;		  
-		  ALLOCATE_ARRAY(GLfloat,vertVals,nverts*3)
-		  ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		  pl = 0;
-		  while(c--) {
-		    colorVals[plc++] = vc[0]; colorVals[plc++] = vc[1]; colorVals[plc++] = vc[2]; colorVals[plc++] = 1.f;
-		    vc += 3;
-		    vertVals[pl++] = v[0]; vertVals[pl++] = v[1]; vertVals[pl++] = v[2];
-		    v += 3;
-		  }
-		  glEnableClientState(GL_VERTEX_ARRAY);
-		  glEnableClientState(GL_COLOR_ARRAY);
-		  glVertexPointer(3, GL_FLOAT, 0, vertVals);
-		  glColorPointer(4, GL_FLOAT, 0, colorVals);
-		  glDrawArrays(GL_POINTS, 0, nverts);
-		  glDisableClientState(GL_VERTEX_ARRAY);
-		  glDisableClientState(GL_COLOR_ARRAY);
-		  DEALLOCATE_ARRAY(vertVals)
-		  DEALLOCATE_ARRAY(colorVals)
-		}
+#ifdef PURE_OPENGL_ES_2
+		/* TODO */
 #else
 		glBegin(GL_POINTS);
 		while(c--) {
@@ -559,17 +468,12 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	if (ok && generate_shader_cgo){
 	  CGO *convertcgo = NULL;
 	  ok &= CGOStop(I->shaderCGO);
-#ifdef _PYMOL_CGO_DRAWARRAYS
 	  if (ok)
 	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
 	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);    
 	  I->shaderCGO = convertcgo;
 	  convertcgo = NULL;
-#else
-	  (void)convertcgo;
-#endif
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 	  if (ok){
 	    if (dot_as_spheres){
 	      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, CGO_BOUNDING_BOX_SZ + CGO_DRAW_SPHERE_BUFFERS_SZ);	    
@@ -588,9 +492,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	    I->shaderCGO = convertcgo;
 	    convertcgo = NULL;
 	  }
-#else
-	  (void)convertcgo;
-#endif
 	}
 	
 	if (ok){
@@ -623,13 +524,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	}
       }
       
-#ifdef _PYMOL_GL_CALLLISTS
-      if (use_display_lists && I->R.displayList){
-	glEndList();
-	glCallList(I->R.displayList);      
-      }
-#endif
-
       if(!lighting)
         glEnable(GL_LIGHTING);
     }
@@ -1184,11 +1078,11 @@ Rep *RepMeshNew(CoordSet * cs, int state)
           while(c--) {
             int a_keeper = false;
             if(trim_map) {
-              register int i = *(MapLocusEStart(trim_map, v));
+              int i = *(MapLocusEStart(trim_map, v));
               if(i) {
-                register int j = trim_map->EList[i++];
+                int j = trim_map->EList[i++];
                 while(j >= 0) {
-                  register float *v_targ = trim_vla + 3 * j;
+                  float *v_targ = trim_vla + 3 * j;
                   if(within3f(v_targ, v, trim_cutoff)) {
                     a_keeper = true;
                     break;
@@ -1201,12 +1095,12 @@ Rep *RepMeshNew(CoordSet * cs, int state)
             }
 
             if(a_keeper && carve_map) {
-              register int i = *(MapLocusEStart(carve_map, v));
+              int i = *(MapLocusEStart(carve_map, v));
               a_keeper = false;
               if(i) {
-                register int j = carve_map->EList[i++];
+                int j = carve_map->EList[i++];
                 while(j >= 0) {
-                  register float *v_targ = carve_vla + 3 * j;
+                  float *v_targ = carve_vla + 3 * j;
                   if(within3f(v_targ, v, carve_cutoff)) {
                     a_keeper = true;
                     break;
@@ -1217,9 +1111,9 @@ Rep *RepMeshNew(CoordSet * cs, int state)
             }
 
             if(clear_map) {
-              register int i = *(MapLocusEStart(clear_map, v));
+              int i = *(MapLocusEStart(clear_map, v));
               if(i) {
-                register int j = clear_map->EList[i++];
+                int j = clear_map->EList[i++];
                 while(j >= 0) {
                   if(within3f(clear_vla + 3 * j, v, clear_cutoff)) {
                     a_keeper = false;

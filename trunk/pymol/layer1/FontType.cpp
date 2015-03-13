@@ -40,7 +40,7 @@ static char *_FontTypeRenderOpenGL(RenderInfo * info,
                                    CFontType * I, char *st,
                                    float size, int flat, float *rpos SHADERCGOARG)
 {
-  register PyMOLGlobals *G = I->Font.G;
+  PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
     unsigned int c;
     int pushed = OrthoGetPushed(G);
@@ -254,7 +254,7 @@ static char *FontTypeRenderOpenGLFlat(RenderInfo * info, CFontType * I, char *st
 static char *FontTypeRenderRay(CRay * ray, CFontType * I, char *st, float size,
                                float *rpos)
 {
-  register PyMOLGlobals *G = I->Font.G;
+  PyMOLGlobals *G = I->Font.G;
   unsigned int c;
   int kern_flag = false;
   unsigned int last_c = 0;
@@ -432,7 +432,7 @@ static char *FontTypeRenderRay(CRay * ray, CFontType * I, char *st, float size,
 
 static void FontTypeFree(CFont * font)
 {
-  register CFontType *I = (CFontType *) font;
+  CFontType *I = (CFontType *) font;
   TypeFaceFree(I->TypeFace);
   OOFreeP(I);
 }

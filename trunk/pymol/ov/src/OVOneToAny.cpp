@@ -94,12 +94,12 @@ static void Reload(OVOneToAny * up)
 #ifdef DEBUG_UP
   fprintf(stderr, "Reload-Debug: entered\n");
 #endif
-  register ov_uword mask = up->mask;
+  ov_uword mask = up->mask;
 
   if(up->elem && mask) {
     {
-      register up_element *elem = up->elem;
-      register ov_uword a;
+      up_element *elem = up->elem;
+      ov_uword a;
       for(a = 0; a < up->size; a++) {
         if(elem->active) {
           elem->forward_next = 0;       /* 0 is the sentinel for end of list */
@@ -109,12 +109,12 @@ static void Reload(OVOneToAny * up)
     }
 
     {
-      register ov_uword a;
-      register ov_word *forward = up->forward;
-      register up_element *elem = up->elem;
+      ov_uword a;
+      ov_word *forward = up->forward;
+      up_element *elem = up->elem;
       {
-        register ov_word fwd;
-        register ov_word fwd_val;
+        ov_word fwd;
+        ov_word fwd_val;
         for(a = 0; a < up->size; a++) {
           if(elem->active) {
             fwd_val = elem->forward_value;
@@ -147,12 +147,12 @@ OVreturn_word OVOneToAny_GetKey(OVOneToAny * up, ov_word forward_value)
     OVreturn_word result = { OVstatus_NULL_PTR };
     return result;
   } else {
-    register ov_uword mask = up->mask;
+    ov_uword mask = up->mask;
     if(mask) {
       ov_word hash = HASH(forward_value, mask);
-      register up_element *elem = up->elem;
-      register ov_word index = up->forward[hash];
-      register up_element *cur_elem = elem + (index - 1);
+      up_element *elem = up->elem;
+      ov_word index = up->forward[hash];
+      up_element *cur_elem = elem + (index - 1);
 #ifdef DEBUG_OVOneToAny
       fprintf(stderr, "OVOneToAnyGetKey-Debug: hash %d index %d\n", hash, index);
 #endif
@@ -281,16 +281,16 @@ OVstatus OVOneToAny_DelKey(OVOneToAny * up, ov_word forward_value)
   if(!up) {
     return_OVstatus_NULL_PTR;
   } else {
-    register ov_word mask = up->mask;
+    ov_word mask = up->mask;
     if(mask) {
-      register ov_word fwd_hash = HASH(forward_value, mask);
-      register ov_word fwd = up->forward[fwd_hash];
+      ov_word fwd_hash = HASH(forward_value, mask);
+      ov_word fwd = up->forward[fwd_hash];
       if(!fwd) {
         return_OVstatus_NOT_FOUND;
       } else {
-        register up_element *fwd_elem = NULL;
-        register up_element *elem = up->elem;
-        register ov_word fwd_last = 0;
+        up_element *fwd_elem = NULL;
+        up_element *elem = up->elem;
+        ov_word fwd_last = 0;
 
         while(fwd) {
           fwd_elem = elem + (fwd - 1);
@@ -366,11 +366,11 @@ OVstatus OVOneToAny_SetKey(OVOneToAny * up, ov_word forward_value, ov_word rever
   if(!up) {
     return_OVstatus_NULL_PTR;
   } else {
-    register ov_word mask = up->mask;
-    register ov_word fwd_hash = HASH(forward_value, mask);
-    register up_element *fwd_elem = NULL;
-    register up_element *rev_elem = NULL;
-    register ov_word fwd;
+    ov_word mask = up->mask;
+    ov_word fwd_hash = HASH(forward_value, mask);
+    up_element *fwd_elem = NULL;
+    up_element *rev_elem = NULL;
+    ov_word fwd;
     if(!mask) {
       fwd = 0;
     } else {
@@ -385,7 +385,7 @@ OVstatus OVOneToAny_SetKey(OVOneToAny * up, ov_word forward_value, ov_word rever
 
       {                         /* find elements if they exist, and detect erroneous conditions */
 
-        register up_element *elem = up->elem;
+        up_element *elem = up->elem;
 
 #ifdef DEBUG_OVOneToAny
         {

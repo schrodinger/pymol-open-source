@@ -89,11 +89,11 @@ int CoordSetValidateRefPos(CoordSet * I)
 /*========================================================================*/
 int BondCompare(BondType * a, BondType * b)
 {
-  register int ai0 = a->index[0];
-  register int bi0 = b->index[0];
+  int ai0 = a->index[0];
+  int bi0 = b->index[0];
   if(ai0 == bi0) {
-    register int ai1 = a->index[1];
-    register int bi1 = b->index[1];
+    int ai1 = a->index[1];
+    int bi1 = b->index[1];
     if(ai1 == bi1) {
       return 0;
     } else if(ai1 > bi1) {

@@ -1051,10 +1051,10 @@ int ObjectMapHalve(ObjectMap * I, int state, int smooth)
 
 int ObjectMapStateContainsPoint(ObjectMapState * ms, float *point)
 {
-  register int result = false;
-  register float x, y, z;
-  register int x_floor, y_floor, z_floor;
-  register int x_ceil, y_ceil, z_ceil;
+  int result = false;
+  float x, y, z;
+  int x_floor, y_floor, z_floor;
+  int x_ceil, y_ceil, z_ceil;
 
   if(ObjectMapStateValidXtal(ms)) {
     float frac[3];
@@ -1901,65 +1901,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
           } else {
             ObjectUseColor(&I->Obj);
             glDisable(GL_LIGHTING);
-#ifdef _PYMOL_GL_DRAWARRAYS
-	    {
-	      GLfloat vertexVals [24*3];
-	      float *tmp_ptr;
-	      int pl = 0;
-	      tmp_ptr = corner + 3 * 0;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 1;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 0;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 2;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 2;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 3;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 1;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 3;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 0;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 4;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 1;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 5;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 2;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 6;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 3;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 7;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 4;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 5;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 4;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 6;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 6;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 7;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 5;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      tmp_ptr = corner + 3 * 7;
-	      vertexVals[pl++] = tmp_ptr[0]; vertexVals[pl++] = tmp_ptr[1]; vertexVals[pl++] = tmp_ptr[2];
-	      glEnableClientState(GL_VERTEX_ARRAY);
-	      glVertexPointer(3, GL_FLOAT, 0, vertexVals);
-	      glDrawArrays(GL_LINES, 0, 24);	      
-	      glDisableClientState(GL_VERTEX_ARRAY);
-	    }
-#else
             glBegin(GL_LINES);
             glVertex3fv(corner + 3 * 0);
             glVertex3fv(corner + 3 * 1);
@@ -1998,7 +1939,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
             glVertex3fv(corner + 3 * 7);
 
             glEnd();
-#endif
             glEnable(GL_LIGHTING);
           }
         }
@@ -2029,9 +1969,9 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
           IsofieldComputeGradients(G, ms->Field);
         }
         if(ms->have_range) {
-          register int a;
+          int a;
           CField *data = ms->Field->data;
-          register int cnt = data->dim[0] * data->dim[1] * data->dim[2];
+          int cnt = data->dim[0] * data->dim[1] * data->dim[2];
           CField *points = ms->Field->points;
           CField *gradients = NULL;
 
@@ -2039,7 +1979,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
             gradients = ms->Field->gradients;
           }
           if(data && points) {
-            register float *raw_data = (float *) data->data;
+            float *raw_data = (float *) data->data;
             float raw_point[3], *raw_point_ptr = (float *) points->data;
 
 #define RAW_POINT_TRANSFORM(ptr, v3f) { \
@@ -2050,9 +1990,9 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
   ptr += 3; \
 }
 
-            register float *raw_gradient = NULL;
-            register float high_cut = ms->high_cutoff, low_cut = ms->low_cutoff;
-            register float width =
+            float *raw_gradient = NULL;
+            float high_cut = ms->high_cutoff, low_cut = ms->low_cutoff;
+            float width =
               SettingGet_f(G, NULL, I->Obj.Setting, cSetting_dot_width);
 
             if(ray) {
@@ -2067,7 +2007,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
               }
 
               for(a = 0; a < cnt; a++) {
-                register float f_val = *(raw_data++);
+                float f_val = *(raw_data++);
                 RAW_POINT_TRANSFORM(raw_point_ptr, raw_point);
                 if((f_val >= high_cut) || (f_val <= low_cut)) {
                   if(ramped) {
@@ -2093,87 +2033,10 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
 
                   glPointSize(width);
                   glDisable(GL_POINT_SMOOTH);
-#ifdef _PYMOL_GL_DRAWARRAYS
-		  {
-		    float *init_raw_data = raw_data;
-		    int nverts = 0;
-		    {
-		      for(a = 0; a < cnt; a++) {
-			register float f_val = *(raw_data++);
-			if(f_val >= high_cut || f_val <= low_cut) {
-			  nverts++;
-			}
-		      }
-		    }
-		    raw_data = init_raw_data;
-		    {
-		      int pl = 0, plc = 0;
-		      ALLOCATE_ARRAY(GLfloat,ptsVals,nverts*3)
-		      ALLOCATE_ARRAY(GLfloat,colorVals,nverts*4)
-		      ALLOCATE_ARRAY(GLfloat,normalVals,nverts*3)
-
-		      ObjectUseColor(&I->Obj);
-
-		      for(a = 0; a < cnt; a++) {
-			register float f_val = *(raw_data++);
-			RAW_POINT_TRANSFORM(raw_point_ptr, raw_point);
-			if(f_val >= high_cut) {
-			  if(raw_gradient) {
-			    normalize23f(raw_gradient, gt);
-			    invert3f(gt);
-			    normalVals[pl] = gt[0]; normalVals[pl+1] = gt[1]; normalVals[pl+2] = gt[2];
-			  }
-			  if(ramped) {
-			    ColorGetRamped(G, color, raw_point, vc, state);
-			    colorVals[plc] = vc[0]; colorVals[plc+1] = vc[1]; colorVals[plc+2] = vc[2]; colorVals[plc+3] = 1.f;
-			  }
-			  ptsVals[pl] = raw_point[0]; ptsVals[pl+1] = raw_point[1]; ptsVals[pl+2] = raw_point[2];
-			} else if(f_val <= low_cut) {
-			  if(raw_gradient) {
-			    normalize23f(raw_gradient, gt);
-			    normalVals[pl] = gt[0]; normalVals[pl+1] = gt[1]; normalVals[pl+2] = gt[2];
-			  }
-			  if(ramped) {
-			    ColorGetRamped(G, color, raw_point, vc, state);
-			    colorVals[plc] = vc[0]; colorVals[plc+1] = vc[1]; colorVals[plc+2] = vc[2]; colorVals[plc+3] = 1.f;
-			  }
-			}
-			if(raw_gradient)
-			  raw_gradient += 3;
-			pl += 3;
-			plc += 4;
-		      }
-		      
-		      glEnableClientState(GL_VERTEX_ARRAY);
-		      if (ramped){
-			glEnableClientState(GL_COLOR_ARRAY);
-		      }
-		      if (raw_gradient){
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glNormalPointer(GL_FLOAT, 0, normalVals);
-		      }
-		      glVertexPointer(3, GL_FLOAT, 0, ptsVals);
-		      if (ramped){
-			glColorPointer(4, GL_FLOAT, 0, colorVals);
-		      }
-		      glDrawArrays(GL_POINTS, 0, nverts);
-		      glDisableClientState(GL_VERTEX_ARRAY);
-		      if (ramped){
-			glDisableClientState(GL_COLOR_ARRAY);
-		      }
-		      if (raw_gradient){
-			glDisableClientState(GL_NORMAL_ARRAY);
-		      }
-		      DEALLOCATE_ARRAY(ptsVals)
-		      DEALLOCATE_ARRAY(colorVals)
-		      DEALLOCATE_ARRAY(normalVals)
-		    }
-		  }		    
-#else
                   glBegin(GL_POINTS);
                   ObjectUseColor(&I->Obj);
                   for(a = 0; a < cnt; a++) {
-                    register float f_val = *(raw_data++);
+                    float f_val = *(raw_data++);
                     RAW_POINT_TRANSFORM(raw_point_ptr, raw_point);
                     if(f_val >= high_cut) {
                       if(raw_gradient) {
@@ -2201,7 +2064,6 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
                       raw_gradient += 3;
                   }
                   glEnd();
-#endif
                 glEnable(GL_POINT_SMOOTH);
                 }
               }
@@ -4775,7 +4637,7 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, char *fname, int 
 static int is_number(char *p)
 {
   int result = (*p != 0);
-  register char c;
+  char c;
   if(result)
     while((c = *(p++))) {
       if(!((c == '.') ||

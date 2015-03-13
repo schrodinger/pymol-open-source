@@ -153,9 +153,7 @@ void SceneResetNormalCGO(PyMOLGlobals * G, CGO *cgo, int lines);
 void SceneResetNormal(PyMOLGlobals * G, int lines);
 void SceneResetNormalUseShader(PyMOLGlobals * G, int lines, short use_shader);
 void SceneResetNormalUseShaderAttribute(PyMOLGlobals * G, int lines, short use_shader, int attr);
-#ifdef _PYMOL_CGO_DRAWBUFFERS
 void SceneGetResetNormal(PyMOLGlobals * G, float *normal, int lines);
-#endif
 
 int SceneObjectAdd(PyMOLGlobals * G, CObject * obj);
 int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge);
