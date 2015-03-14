@@ -479,6 +479,9 @@ else:
             
             img can be either a filename or a Image (PIL) object.
             '''
+            if PYMOL_EDU and (options.no_gui or 'ray' in kwargs):
+                self.skipTest("edu no-ray")
+
             import numpy
             
             if img is None:

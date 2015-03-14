@@ -57,6 +57,7 @@ class TestExporting(testing.PyMOLTestCase):
         (100, 0, -1, (100, 75)),               # px, only width
         (0, 75, -1, (100, 75)),                # px, only height
     )
+    @testing.requires('no_edu') # ray
     def testPng(self, w, h, dpi, size):
         with testing.mktemp('.png') as filename:
             cmd.png(filename, w, h, dpi, ray=1)
