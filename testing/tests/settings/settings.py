@@ -103,7 +103,7 @@ class TestSettings(testing.PyMOLTestCase):
 
         cmd.set('dynamic_width', 0)
         cmd.set('line_width', 5)
-        cmd.set('line_smooth', 1)
+        cmd.set('line_smooth', 0)
 
         cmd.fragment('ethylene')
         cmd.show_as('lines')
@@ -116,6 +116,6 @@ class TestSettings(testing.PyMOLTestCase):
         img = self.get_imagearray()
         npixels = img.shape[0] * img.shape[1]
         covered = numpy.count_nonzero(img[...,:3])
-
-        print "covered=", covered, " npixels=" , npixels, " ratio=" , covered / float(npixels)
-        self.assertTrue(0.14 < covered / float(npixels) < 0.165)
+        ratio = covered / float(npixels)
+        msg = "covered=%d npixels=%d ratio=%f" % (covered, npixels, ratio)
+        self.assertTrue(0.14 < ratio < 0.165, msg)
