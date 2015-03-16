@@ -21,14 +21,14 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 
 void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
-                  int passive, char *name, char *sele);
+                  int passive, const char *name, const char *sele);
 void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
-                      int passive, char *name);
+                      int passive, const char *name);
 void MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
-                      int passive, char *name, char *arg1);
+                      int passive, const char *name, const char *arg1);
 void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
-                      int passive, char *name, char *sele1, char *sele2);
+                      int passive, const char *name, const char *sele1, const char *sele2);
 void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
-                     char *name, float *xyz);
+                     const char *name, const float *xyz);
 
 #endif

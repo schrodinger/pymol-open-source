@@ -198,7 +198,7 @@ void ObjectCallbackRecomputeExtent(ObjectCallback * I)
   for(a = 0; a < I->NState; a++)
     if(I->State[a].PObj) {
       if(PyObject_HasAttrString(I->State[a].PObj, "get_extent")) {
-        py_ext = PyObject_CallMethod(I->State[a].PObj, "get_extent", "");
+        py_ext = PYOBJECT_CALLMETHOD(I->State[a].PObj, "get_extent", "");
         if(PyErr_Occurred())
           PyErr_Print();
         if(py_ext) {

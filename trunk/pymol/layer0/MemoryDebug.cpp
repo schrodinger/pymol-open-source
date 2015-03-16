@@ -234,9 +234,9 @@ void VLACacheFree(PyMOLGlobals * G, void *ptr, int thread, int id, int force)
 }
 #endif
 
-unsigned int VLAGetSize(void *ptr)
+unsigned int VLAGetSize(const void *ptr)
 {
-  VLARec *vla;
+  const VLARec *vla;
   vla = &((VLARec *) ptr)[-1];
   return (vla->size);
 }

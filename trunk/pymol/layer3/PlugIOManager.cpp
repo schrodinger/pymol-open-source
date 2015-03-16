@@ -46,7 +46,7 @@ int PlugIOManagerRegister(PyMOLGlobals * G, void *ptr)
 int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                           const char *fname, int frame,
                           int interval, int average, int start,
-                          int stop, int max, char *sele, int image,
+                          int stop, int max, const char *sele, int image,
                           float *shift, int quiet, const char *plugin_type)
 {
 
@@ -148,7 +148,7 @@ static molfile_plugin_t * find_plugin(CPlugIOManager * I, const char * plugin_ty
 int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                           const char *fname, int frame,
                           int interval, int average, int start,
-                          int stop, int max, char *sele, int image,
+                          int stop, int max, const char *sele, int image,
                           float *shift, int quiet, const char *plugin_type)
 {
   CPlugIOManager *I = G->PlugIOManager;

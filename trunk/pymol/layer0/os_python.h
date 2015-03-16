@@ -38,4 +38,7 @@ typedef int PyObject;
 
 #include "os_predef.h"
 
+#define PYOBJECT_CALLMETHOD(o, m, ...) PyObject_CallMethod(o, (char*)m, (char*)__VA_ARGS__)
+#define PYOBJECT_CALLFUNCTION(o, ...) PyObject_CallFunction(o, (char*)__VA_ARGS__)
+
 #endif

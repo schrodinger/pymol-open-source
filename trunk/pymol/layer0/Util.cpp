@@ -105,9 +105,9 @@ void UtilConcatVLA(char **vla,ov_size *cc,const char *str)
   *(cc)+=len;
 }
 
-void UtilNPadVLA(char **vla,ov_size *cc,char *str,ov_size len)
+void UtilNPadVLA(char **vla,ov_size *cc,const char *str,ov_size len)
 {
-  char *what;
+  const char *what;
   char *where;
   ov_size n = 0;
   VLACheck((*vla),char,len + *cc +1); 

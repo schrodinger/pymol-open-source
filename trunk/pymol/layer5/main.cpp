@@ -223,7 +223,7 @@ PyObject *MainComplete(const char *str)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PyObject *result = NULL;
-  result = PyObject_CallFunction(G->P_inst->complete, "s", str);
+  result = PYOBJECT_CALLFUNCTION(G->P_inst->complete, "s", str);
   return (result);
 }
 
@@ -377,7 +377,7 @@ void MainOnExit(void)
      so, no graceful exit is possible -- in fact under Window's we'll
      crash unless we take the drastic way out 
    */
-  if(!G->Terminating) {
+  if(G && !G->Terminating) {
     G->Terminating = true;
     printf(" PyMOL: abrupt program termination.\n");
 
@@ -570,12 +570,12 @@ static void MainDrawLocked(void)
     if(PyErr_Occurred())
       PyErr_Print();
 
-    PXDecRef(PyObject_CallMethod(G->P_inst->obj, "launch_gui", "O", G->P_inst->obj));
+    PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->obj, "launch_gui", "O", G->P_inst->obj));
 
     if(PyErr_Occurred())
       PyErr_Print();
 
-    PXDecRef(PyObject_CallMethod
+    PXDecRef(PYOBJECT_CALLMETHOD
              (G->P_inst->obj, "adapt_to_hardware", "O", G->P_inst->obj));
 
     if(PyErr_Occurred())
@@ -602,7 +602,7 @@ static void MainDrawLocked(void)
         PyErr_Print();
     }
 
-    PXDecRef(PyObject_CallMethod(G->P_inst->obj, "exec_deferred", "O", G->P_inst->obj));
+    PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->obj, "exec_deferred", "O", G->P_inst->obj));
 
     if(PyErr_Occurred())
       PyErr_Print();

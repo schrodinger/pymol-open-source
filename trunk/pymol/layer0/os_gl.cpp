@@ -91,7 +91,7 @@ void PyMOLDrawPixels(GLsizei width,
 
 }
 
-int PyMOLCheckOpenGLErr(char *pos)
+int PyMOLCheckOpenGLErr(const char *pos)
 {
   int flag = 0;
   GLenum glerr = glGetError();

@@ -37,7 +37,7 @@ PyObject *PConvPickleLoads(PyObject * str)
 {
   PyObject *picklemod = NULL, *obj = NULL;
   ok_assert(1, picklemod = PyImport_ImportModule("cPickle"));
-  obj = PyObject_CallMethod(picklemod, "loads", "O", str);
+  obj = PYOBJECT_CALLMETHOD(picklemod, "loads", "O", str);
 ok_except1:
   Py_XDECREF(picklemod);
   return obj;
@@ -50,7 +50,7 @@ PyObject *PConvPickleDumps(PyObject * obj)
 {
   PyObject *picklemod = NULL, *str = NULL;
   ok_assert(1, picklemod = PyImport_ImportModule("cPickle"));
-  str = PyObject_CallMethod(picklemod, "dumps", "Oi", obj, 1);
+  str = PYOBJECT_CALLMETHOD(picklemod, "dumps", "Oi", obj, 1);
 ok_except1:
   Py_XDECREF(picklemod);
   return str;
@@ -136,7 +136,7 @@ int PConvPyListToStrVLAList(PyObject * obj, char **vla, int *n_str)
   return (ok);
 }
 
-int PConvAttrToIntArrayInPlace(PyObject * obj, char *attr, int *f, ov_size ll)
+int PConvAttrToIntArrayInPlace(PyObject * obj, const char *attr, int *f, ov_size ll)
 {
   int ok = true;
   PyObject *tmp;
@@ -152,7 +152,7 @@ int PConvAttrToIntArrayInPlace(PyObject * obj, char *attr, int *f, ov_size ll)
   return (ok);
 }
 
-int PConvAttrToFloatArrayInPlace(PyObject * obj, char *attr, float *f, ov_size ll)
+int PConvAttrToFloatArrayInPlace(PyObject * obj, const char *attr, float *f, ov_size ll)
 {
   int ok = true;
   PyObject *tmp;
@@ -168,7 +168,7 @@ int PConvAttrToFloatArrayInPlace(PyObject * obj, char *attr, float *f, ov_size l
   return (ok);
 }
 
-int PConvAttrToStrMaxLen(PyObject * obj, char *attr, char *str, ov_size ll)
+int PConvAttrToStrMaxLen(PyObject * obj, const char *attr, char *str, ov_size ll)
 {
   int ok = true;
   PyObject *tmp;
@@ -184,7 +184,7 @@ int PConvAttrToStrMaxLen(PyObject * obj, char *attr, char *str, ov_size ll)
   return (ok);
 }
 
-int PConvAttrToPtr(PyObject * obj, char *attr, void **cobj)
+int PConvAttrToPtr(PyObject * obj, const char *attr, void **cobj)
 {
   PyObject *tmp;
   int ok = true;
@@ -444,15 +444,6 @@ PyObject *PConvIntToPyDictItem(PyObject * dict, const char *key, int i)
 {
   PyObject *tmp;
   tmp = PyInt_FromLong(i);
-  PyDict_SetItemString(dict, key, tmp);
-  Py_XDECREF(tmp);
-  return (tmp);
-}
-
-PyObject *PConvStringToPyDictItem(PyObject * dict, const char *key, const char *f)
-{
-  PyObject *tmp;
-  tmp = PyString_FromString(f);
   PyDict_SetItemString(dict, key, tmp);
   Py_XDECREF(tmp);
   return (tmp);
@@ -1062,10 +1053,10 @@ PyObject *PConvStringListToPyList(int l, char **str)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvStringVLAToPyList(char *vla)
+PyObject *PConvStringVLAToPyList(const char *vla)
 {
   int a, c, n = 0;
-  char *p;
+  const char *p;
   PyObject *result = NULL;
   p = vla;
   c = VLAGetSize(vla);

@@ -167,7 +167,7 @@ void VLAFree(void *ptr);
 void *VLASetSize(void *ptr, unsigned int newSize);
 void *VLASetSizeForSure(void *ptr, unsigned int newSize);
 
-unsigned int VLAGetSize(void *ptr);
+unsigned int VLAGetSize(const void *ptr);
 void *VLANewCopy(const void *ptr);
 void MemoryZero(char *p, char *q);
 

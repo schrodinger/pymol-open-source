@@ -131,13 +131,13 @@ void FeedbackEnable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask)
 
 }
 
-void FeedbackAutoAdd(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask, char *str)
+void FeedbackAutoAdd(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask, const char *str)
 {
   if(Feedback(G, sysmod, mask))
     OrthoAddOutput(G, str);
 }
 
-void FeedbackAdd(PyMOLGlobals * G, char *str)
+void FeedbackAdd(PyMOLGlobals * G, const char *str)
 {
   OrthoAddOutput(G, str);
 }

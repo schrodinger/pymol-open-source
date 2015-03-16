@@ -82,7 +82,7 @@ void TextAdvance(PyMOLGlobals * G, float advance)
   G->Text->Pos[0] += advance;
 }
 
-void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, char *text)
+void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, const char *text)
 {
   if((!labpos) || (!labpos->mode))
     TextSetPos(G, pos);
@@ -133,7 +133,7 @@ float *TextGetScreenWorldOffset(PyMOLGlobals * G){
   return I->ScreenWorldOffset;
 }
 
-void TextDrawSubStrFast(PyMOLGlobals * G, char *c, int x, int y, int start, int n ORTHOCGOARG)
+void TextDrawSubStrFast(PyMOLGlobals * G, const char *c, int x, int y, int start, int n ORTHOCGOARG)
 {
   c += start;
   TextSetPos2i(G, x, y);
@@ -261,8 +261,8 @@ void TextGetOutlineColor(PyMOLGlobals * G,
   *alpha = I->OutlineColor[3];
 }
 
-char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
-                       char *st, float size, float *rpos, CGO *shaderCGO)
+const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
+                       const char *st, float size, float *rpos, CGO *shaderCGO)
 {
   CText *I = G->Text;
   CFont *font;
@@ -287,14 +287,14 @@ char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
   return st;
 }
 
-void TextDrawStrAt(PyMOLGlobals * G, char *st, int x, int y ORTHOCGOARG)
+void TextDrawStrAt(PyMOLGlobals * G, const char *st, int x, int y ORTHOCGOARG)
 {
   CText *I = G->Text;
   TextSetPos3f(G, (float) x, (float) y, 0.0F);
   TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
 }
 
-void TextDrawStr(PyMOLGlobals * G, char *st ORTHOCGOARG)
+void TextDrawStr(PyMOLGlobals * G, const char *st ORTHOCGOARG)
 {
   CText *I = G->Text;
   TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
@@ -308,8 +308,8 @@ void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG)
   TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
 }
 
-char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
-                    char *st, float size, float *rpos)
+const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
+    const char *st, float size, float *rpos)
 {
   CText *I = G->Text;
   CFont *font;
@@ -561,7 +561,7 @@ int TextInit(PyMOLGlobals * G)
 
 }
 
-int TextGetFontID(PyMOLGlobals * G, int src, int code, char *name, int mode, int style)
+int TextGetFontID(PyMOLGlobals * G, int src, int code, const char *name, int mode, int style)
 {
   /* first, return the font code if it is already active */
   CText *I = G->Text;

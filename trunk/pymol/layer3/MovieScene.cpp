@@ -338,7 +338,7 @@ static void MovieSceneRecallFrame(PyMOLGlobals * G, int frame)
   SceneSetFrame(G, mode, frame);
 #else
   // PBlock fails with SceneSetFrame. Workaround: call from Python
-  PXDecRef(PyObject_CallMethod(G->P_inst->cmd, "set_frame", "ii", frame + 1, mode));
+  PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->cmd, "set_frame", "ii", frame + 1, mode));
 #endif
 }
 

@@ -91,7 +91,7 @@ int ViewElemSmooth(CViewElem * first, CViewElem * last, int window, int loop);
 int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
                         float power, float bias,
                         int simple, float linearity, int hand, float cut);
-void ViewElemDraw(PyMOLGlobals *G, CViewElem * src, BlockRect *rect, int frames, char *title ORTHOCGOARG);
+void ViewElemDraw(PyMOLGlobals *G, CViewElem * src, BlockRect *rect, int frames, const char *title ORTHOCGOARG);
 
 #define cViewElemModifyInsert 1
 #define cViewElemModifyDelete -1

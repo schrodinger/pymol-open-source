@@ -767,7 +767,7 @@ int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_si
  *    1 = must be in same residue
  *   -1 = don't check residue
  */
-int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, char *name, int same_res)
+int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, const char *name, int same_res)
 {
   int a2, s;
   PyMOLGlobals * G = obj->Obj.G;

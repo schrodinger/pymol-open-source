@@ -227,8 +227,8 @@ void FeedbackPush(PyMOLGlobals * G);
 void FeedbackPop(PyMOLGlobals * G);
 
 void FeedbackAutoAdd(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask,
-                     char *str);
-void FeedbackAdd(PyMOLGlobals * G, char *str);
+                     const char *str);
+void FeedbackAdd(PyMOLGlobals * G, const char *str);
 
 void FeedbackSetMask(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
 void FeedbackDisable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);

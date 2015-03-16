@@ -54,7 +54,7 @@ static void FontGLUTRestore(CFontGLUT * I)
   glPixelStorei(GL_UNPACK_ALIGNMENT, I->alignment);
 }
 
-static char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, char *st, float size,
+static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const char *st, float size,
                                   float *rpos SHADERCGOARG)
 {
   PyMOLGlobals *G = I->Font.G;
@@ -82,7 +82,7 @@ static char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, char *st, fl
       if(rpos) {
         if(rpos[0] < _1) {      /* we need to measure the string width before starting to draw */
           float factor = rpos[0] / 2.0F - 0.5F;
-          char *sst = st;
+          const char *sst = st;
           if(factor < _m1)
             factor = _m1;
           if(factor > _0)
@@ -240,7 +240,7 @@ static char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, char *st, fl
   return st;
 }
 
-static char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, char *st, float size,
+static const char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, const char *st, float size,
                                float *rpos)
 {
   PyMOLGlobals *G = I->Font.G;
@@ -288,7 +288,7 @@ static char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, char *st, float size,
 
       if(rpos[0] < _1) {        /* we need to measure the string width before starting to draw */
         float factor = rpos[0] / 2.0F - 0.5F;
-        char *sst = st;
+        const char *sst = st;
         if(factor < _m1)
           factor = -_1;
         if(factor > _0)

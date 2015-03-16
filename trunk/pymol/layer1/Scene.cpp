@@ -1019,7 +1019,10 @@ void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height)
     *width /= 2.f;
 }
 
-void SceneSetCardInfo(PyMOLGlobals * G, char *vendor, char *renderer, char *version)
+void SceneSetCardInfo(PyMOLGlobals * G,
+    const char *vendor,
+    const char *renderer,
+    const char *version)
 {
   CScene *I = G->Scene;
   UtilNCopy(I->vendor, vendor, sizeof(OrthoLineType) - 1);

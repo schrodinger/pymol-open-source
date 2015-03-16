@@ -290,7 +290,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, char *scri
 /* */
 int ObjectMoleculeAreAtomsBonded2(ObjectMolecule * obj0, int a0, ObjectMolecule * obj1,
                                   int a1);
-int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, char *name, int);
+int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, const char *name, int);
 void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec * op);
 int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                 ObjectMolecule ** result);
