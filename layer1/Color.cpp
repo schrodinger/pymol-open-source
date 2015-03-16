@@ -832,7 +832,7 @@ void ColorFree(PyMOLGlobals * G)
 
 /*========================================================================*/
 
-static int reg_name(OVLexicon * lex, OVOneToOne * o2o, int index, char *name)
+static int reg_name(OVLexicon * lex, OVOneToOne * o2o, int index, const char *name)
 {
   OVreturn_word result;
   if(OVreturn_IS_OK(result = OVLexicon_GetFromCString(lex, name))) {

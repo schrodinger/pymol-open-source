@@ -36,8 +36,8 @@ typedef struct {
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-static char *_FontTypeRenderOpenGL(RenderInfo * info,
-                                   CFontType * I, char *st,
+static const char *_FontTypeRenderOpenGL(RenderInfo * info,
+                                   CFontType * I, const char *st,
                                    float size, int flat, float *rpos SHADERCGOARG)
 {
   PyMOLGlobals *G = I->Font.G;
@@ -65,7 +65,7 @@ static char *_FontTypeRenderOpenGL(RenderInfo * info,
 
       if(rpos) {
         if(rpos[0] < _1) {      /* we need to measure the string width before starting to draw */
-          char *sst = st;
+          const char *sst = st;
           while((c = *(sst++))) {
             if(unicnt) {
               if(!(c & 0x80))   /* corrupt UTF8 */
@@ -239,19 +239,19 @@ static char *_FontTypeRenderOpenGL(RenderInfo * info,
   return st;
 }
 
-static char *FontTypeRenderOpenGL(RenderInfo * info, CFontType * I, char *st, float size,
+static const char *FontTypeRenderOpenGL(RenderInfo * info, CFontType * I, const char *st, float size,
                                   float *rpos SHADERCGOARG)
 {
   return _FontTypeRenderOpenGL(info, I, st, size, false, rpos SHADERCGOARGVAR);
 }
 
-static char *FontTypeRenderOpenGLFlat(RenderInfo * info, CFontType * I, char *st,
+static const char *FontTypeRenderOpenGLFlat(RenderInfo * info, CFontType * I, const char *st,
                                       float size, float *rpos SHADERCGOARG)
 {
   return _FontTypeRenderOpenGL(info, I, st, size, true, rpos SHADERCGOARGVAR);
 }
 
-static char *FontTypeRenderRay(CRay * ray, CFontType * I, char *st, float size,
+static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, float size,
                                float *rpos)
 {
   PyMOLGlobals *G = I->Font.G;
@@ -297,11 +297,8 @@ static char *FontTypeRenderRay(CRay * ray, CFontType * I, char *st, float size,
 
       if(rpos[0] < _1) {        /* we need to measure the string width before starting to draw */
         float factor = rpos[0] / 2.0F - 0.5F;
-        char *sst = st;
-        if(factor < _m1)
-          factor = -_1;
-        if(factor > _0)
-          factor = _0;
+        const char *sst = st;
+	factor = (factor < _m1) ? _m1 : (factor > _0) ? _0 : factor;
         while((c = *(sst++))) {
           if(unicnt) {
             if(!(c & 0x80))     /* corrupt UTF8 */

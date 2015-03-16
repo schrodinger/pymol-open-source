@@ -96,7 +96,7 @@ static void IsosurfInterpolate(CIsosurf * II, float *v1, float *l1, float *v2, f
 static int IsosurfFindActiveEdges(CIsosurf * II);
 static int IsosurfFindLines(CIsosurf * II);
 static int IsosurfDrawLines(CIsosurf * II);
-static void IsosurfCode(CIsosurf * II, char *bits1, char *bits2);
+static void IsosurfCode(CIsosurf * II, const char *bits1, const char *bits2);
 static int IsosurfDrawPoints(CIsosurf * II);
 static int IsosurfPoints(CIsosurf * II);
 static int IsosurfGradients(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
@@ -437,7 +437,7 @@ void IsosurfFieldFree(PyMOLGlobals * G, Isofield * field)
 
 
 /*===========================================================================*/
-static void IsosurfCode(CIsosurf * II, char *bits1, char *bits2)
+static void IsosurfCode(CIsosurf * II, const char *bits1, const char *bits2)
 {
   CIsosurf *I = II;
   int c;

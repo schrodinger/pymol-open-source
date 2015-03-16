@@ -2220,7 +2220,6 @@ void PyMOL_Stop(CPyMOL * I)
 {
   PyMOLGlobals *G = I->G;
   G->Terminating = true;
-  CShaderMgrFree(G);
   TetsurfFree(G);
   IsosurfFree(G);
   WizardFree(G);
@@ -2239,6 +2238,7 @@ void PyMOL_Stop(CPyMOL * I)
   SceneFree(G);
   MovieScenesFree(G);
   OrthoFree(G);
+  CShaderMgrFree(G);
   SettingFreeGlobal(G);
   CharacterFree(G);
   TextFree(G);
@@ -2553,11 +2553,11 @@ int PyMOL_Idle(CPyMOL * I)
       /* restore working directory if asked to */
       PRunStringModule(G,
                        "if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
-      PXDecRef(PyObject_CallMethod(G->P_inst->obj, "launch_gui", "O", G->P_inst->obj));
+      PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->obj, "launch_gui", "O", G->P_inst->obj));
 #endif
       /* END PROPRIETARY CODE SEGMENT */
 
-      PXDecRef(PyObject_CallMethod
+      PXDecRef(PYOBJECT_CALLMETHOD
                (G->P_inst->obj, "adapt_to_hardware", "O", G->P_inst->obj));
       
       if(PyErr_Occurred())
@@ -2578,7 +2578,7 @@ int PyMOL_Idle(CPyMOL * I)
                        "Error: The requested multisampling mode is not available.");
       }
 
-      PXDecRef(PyObject_CallMethod(G->P_inst->obj, "exec_deferred", "O", G->P_inst->obj));
+      PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->obj, "exec_deferred", "O", G->P_inst->obj));
 
       if(PyErr_Occurred())
         PyErr_Print();

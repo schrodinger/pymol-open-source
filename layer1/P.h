@@ -54,9 +54,9 @@ Z* -------------------------------------------------------------------
 #define cPRunType_label          3
 
 
-int PLabelExprUsesVariable(PyMOLGlobals * G, char *expr, char *var);
+int PLabelExprUsesVariable(PyMOLGlobals * G, const char *expr, const char *var);
 
-int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, char *model, char *expr,
+int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const char *expr,
                   int index);
 
 #ifdef _PYMOL_NOPY
@@ -140,10 +140,10 @@ void PParse(PyMOLGlobals * G, const char *str);       /* only accepts one comman
 void PDo(PyMOLGlobals * G, const char *str);  /* accepts multple commands seperated by newlines */
 
 int PAlterAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co,
-               int read_only, char *model, int index, PyObject * space);
-int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co, char *model, int index);
+               int read_only, const char *model, int index, PyObject * space);
+int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co, const char *model, int index);
 int PAlterAtomState(PyMOLGlobals * G, float *v, PyCodeObject *expr_co, int read_only,
-                    ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, char *model, int index, int csindex, int state, PyObject * space);
+                    ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, const char *model, int index, int csindex, int state, PyObject * space);
 
 void PLog(PyMOLGlobals * G, const char *str, int lf);
 void PLogFlush(PyMOLGlobals * G);
@@ -191,12 +191,12 @@ void PDumpException(void);
 
 int PComplete(PyMOLGlobals * G, char *str, int buf_size);
 
-int PTruthCallStr(PyObject * object, char *method, char *argument);
-int PTruthCallStr0(PyObject * object, char *method);
-int PTruthCallStr1i(PyObject * object, char *method, int argument);
-int PTruthCallStr1s(PyObject * object, char *method, char *argument);
-int PTruthCallStr4i(PyObject * object, char *method, int a1, int a2, int a3, int a4);
-int PPovrayRender(PyMOLGlobals * G, char *header, char *inp, char *file, int width,
+int PTruthCallStr(PyObject * object, const char *method, const char *argument);
+int PTruthCallStr0(PyObject * object, const char *method);
+int PTruthCallStr1i(PyObject * object, const char *method, int argument);
+int PTruthCallStr1s(PyObject * object, const char *method, const char *argument);
+int PTruthCallStr4i(PyObject * object, const char *method, int a1, int a2, int a3, int a4);
+int PPovrayRender(PyMOLGlobals * G, const char *header, const char *inp, const char *file, int width,
                   int height, int antialias);
 int PIsGlutThread(void);
 
@@ -213,7 +213,7 @@ typedef struct {
   ObjectMolecule *obj;
   CoordSet *cs;
   AtomInfoType *atomInfo;
-  char *model;
+  const char *model;
   int index;
   int csindex;
   float *v; // for PAlterAtomState x/y/z

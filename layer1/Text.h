@@ -71,12 +71,12 @@ Z* -------------------------------------------------------------------
 #define cTextSrcFreeType  2
 
 int TextInit(PyMOLGlobals * G);
-int TextGetFontID(PyMOLGlobals * G, int src, int code, char *name, int size_mode,
+int TextGetFontID(PyMOLGlobals * G, int src, int code, const char *name, int size_mode,
                   int style);
 
 void TextFree(PyMOLGlobals * G);
 
-void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, char *text);
+void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, const char *text);
 void TextSetPickColor(PyMOLGlobals * G, int index, int pass);
 
 void TextSetWorldPos(PyMOLGlobals * G, float *pos);
@@ -97,18 +97,18 @@ float *TextGetPos(PyMOLGlobals * G);
 void TextGetColorUChar(PyMOLGlobals * G, unsigned char *red,
                        unsigned char *green, unsigned char *blue, unsigned char *alpha);
 
-char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id, char *st,
+const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id, const char *st,
                        float size, float *rpos, CGO *shaderCGO);
-char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id, char *st, float size,
+const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id, const char *st, float size,
                     float *rpos);
 
-void TextDrawStrAt(PyMOLGlobals * G, char *st, int x, int y ORTHOCGOARG);
-void TextDrawStr(PyMOLGlobals * G, char *st ORTHOCGOARG);
+void TextDrawStrAt(PyMOLGlobals * G, const char *st, int x, int y ORTHOCGOARG);
+void TextDrawStr(PyMOLGlobals * G, const char *st ORTHOCGOARG);
 void TextIndent(PyMOLGlobals * G, float x, float y);
 void TextAdvance(PyMOLGlobals * G, float advance);
 void TextSetPos2i(PyMOLGlobals * G, int x, int y);
 void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG);
-void TextDrawSubStrFast(PyMOLGlobals * G, char *c, int x, int y, int start, int n ORTHOCGOARG);
+void TextDrawSubStrFast(PyMOLGlobals * G, const char *c, int x, int y, int start, int n ORTHOCGOARG);
 void TextDrawCharRepeat(PyMOLGlobals * G, char c, int x, int y, int start, int n ORTHOCGOARG);
 
 #endif

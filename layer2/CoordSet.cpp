@@ -1052,10 +1052,9 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  int ok = true;
-  PyObject *atom = PyObject_CallMethod(P_chempy, "Atom", "");
+  PyObject *atom = PYOBJECT_CALLMETHOD(P_chempy, "Atom", "");
   if(!atom)
-    ok = ErrMessage(G, "CoordSetAtomToChemPyAtom", "can't create atom");
+    ErrMessage(G, "CoordSetAtomToChemPyAtom", "can't create atom");
   else {
     float tmp_array[6] = { ai->U11, ai->U22, ai->U33, ai->U12, ai->U13, ai->U23 };
 

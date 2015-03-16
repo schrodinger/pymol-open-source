@@ -87,14 +87,14 @@ Z* -------------------------------------------------------------------
 /* NOTE: the string routines will write strings up to the specified
  * length, PLUS a NULL...so watch out for array overruns */
 
-int PConvAttrToStrMaxLen(PyObject * obj, char *attr, char *str, ov_size ll);
+int PConvAttrToStrMaxLen(PyObject * obj, const char *attr, char *str, ov_size ll);
 
 int PConvPyListToBitmask(PyObject * obj, int *bitmask, ov_size ll);
 int PConvPyListToExtent(PyObject * obj, float *mn, float *mx);
 
-int PConvAttrToFloatArrayInPlace(PyObject * obj, char *attr, float *ff, ov_size ll);
-int PConvAttrToIntArrayInPlace(PyObject * obj, char *attr, int *ff, ov_size ll);
-int PConvAttrToPtr(PyObject * obj, char *name, void **cobj);
+int PConvAttrToFloatArrayInPlace(PyObject * obj, const char *attr, float *ff, ov_size ll);
+int PConvAttrToIntArrayInPlace(PyObject * obj, const char *attr, int *ff, ov_size ll);
+int PConvAttrToPtr(PyObject * obj, const char *name, void **cobj);
 
 int PConvCObjectToPtr(PyObject * obj, void **ptr);
 int PConvPyListToStrVLAList(PyObject * obj, char **vla, int *n_str);
@@ -132,16 +132,6 @@ PyObject *PConvSCharArrayToPyList(signed char *f, int l);
 PyObject *PConvLabPosVLAToPyList(LabPosType * vla, int l);
 
 
-/* WARNING: the returned PyObject is unowned - it is intended for use
- * only for efficient detection of changes to dictionary values
- * following evaluation of some expression in the context of the
- * dictionary PAlter, PAlterState, etc. */
-PyObject *PConvFloatToPyDictItem(PyObject * dict, const char *key, float f);
-PyObject *PConvStringToPyDictItem(PyObject * dict, const char *key, const char *f);
-PyObject *PConvIntToPyDictItem(PyObject * dict, const char *key, int i);
-
-/* end WARNING */
-
 void PConvFloat3ToPyObjAttr(PyObject * obj, const char *attr, const float *v);
 void PConvFloatToPyObjAttr(PyObject * obj, const char *attr, float f);
 void PConvIntToPyObjAttr(PyObject * obj, const char *attr, int i);
@@ -160,7 +150,7 @@ int PConvPyObjectToStrMaxLen(PyObject * object, char *value, int ln);
 int PConvPyObjectToStrMaxClean(PyObject * object, char *value, int ln);
 
 PyObject *PConvStringListToPyList(int l, char **str);
-PyObject *PConvStringVLAToPyList(char *str);
+PyObject *PConvStringVLAToPyList(const char *str);
 
 void PConv44PyListTo44f(PyObject * src, float *dest);   /* note loss of precision */
 
@@ -190,7 +180,7 @@ PyObject *PConv3DIntArrayTo3DPyList(int ***array, int *dim);
 PyObject *PConvPickleLoads(PyObject * str);
 PyObject *PConvPickleDumps(PyObject * obj);
 PyObject *PConvAutoNone(PyObject * result);     /* automatically own Py_None */
-PyObject *PConvIntToPyDictItem(PyObject * dict, char *key, int i);
+PyObject *PConvIntToPyDictItem(PyObject * dict, const char *key, int i);
 
 /* ============================================================ */
 /*

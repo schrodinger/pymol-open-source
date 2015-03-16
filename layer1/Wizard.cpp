@@ -184,7 +184,7 @@ void WizardRefresh(PyMOLGlobals * G)
     if(I->Wiz[I->Stack]) {
       vla = NULL;
       if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_prompt")) {
-        P_list = PyObject_CallMethod(I->Wiz[I->Stack], "get_prompt", "");
+        P_list = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_prompt", "");
         if(PyErr_Occurred())
           PyErr_Print();
         if(P_list)
@@ -204,7 +204,7 @@ void WizardRefresh(PyMOLGlobals * G)
       I->EventMask = cWizEventPick + cWizEventSelect;
 
       if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_event_mask")) {
-        i = PyObject_CallMethod(I->Wiz[I->Stack], "get_event_mask", "");
+        i = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_event_mask", "");
         if(PyErr_Occurred())
           PyErr_Print();
         if(!PConvPyIntToInt(i, &I->EventMask))
@@ -213,7 +213,7 @@ void WizardRefresh(PyMOLGlobals * G)
       }
 
       if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_panel")) {
-        P_list = PyObject_CallMethod(I->Wiz[I->Stack], "get_panel", "");
+        P_list = PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_panel", "");
         if(PyErr_Occurred())
           PyErr_Print();
         if(P_list) {
@@ -274,7 +274,7 @@ void WizardSet(PyMOLGlobals * G, PyObject * wiz, int replace)
         if(old_wiz) {
           /* then call cleanup, etc. */
           if(PyObject_HasAttrString(old_wiz, "cleanup")) {
-            PXDecRef(PyObject_CallMethod(old_wiz, "cleanup", ""));
+            PXDecRef(PYOBJECT_CALLMETHOD(old_wiz, "cleanup", ""));
             if(PyErr_Occurred())
               PyErr_Print();
           }
@@ -624,7 +624,7 @@ static int WizardClick(Block * block, int button, int x, int y, int mod)
         if(I->Wiz[I->Stack]) {
           if(PyObject_HasAttrString(I->Wiz[I->Stack], "get_menu")) {
             menuList =
-              PyObject_CallMethod(I->Wiz[I->Stack], "get_menu", "s", I->Line[a].code);
+              PYOBJECT_CALLMETHOD(I->Wiz[I->Stack], "get_menu", "s", I->Line[a].code);
             if(PyErr_Occurred())
               PyErr_Print();
           }

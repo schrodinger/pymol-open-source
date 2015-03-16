@@ -107,7 +107,7 @@ CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list)
 
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
-static void SymmetryDump44f(PyMOLGlobals * G, float *m, char *prefix)
+static void SymmetryDump44f(PyMOLGlobals * G, const float *m, const char *prefix)
 {
   if(prefix) {
     PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n", prefix, m[0], m[1], m[2], m[3] ENDF(G);
@@ -130,8 +130,6 @@ int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
   PyMOLGlobals *G = I->G;
-  PyObject *mats;
-  ov_size a, l;
   CrystalUpdate(I->Crystal);
   if(!quiet) {
     if(Feedback(G, FB_Symmetry, FB_Blather)) {
@@ -145,7 +143,9 @@ int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
     } else */
   if(P_xray) {
     int blocked = PAutoBlock(G);
-    mats = PyObject_CallMethod(P_xray, "sg_sym_to_mat_list", "s", I->SpaceGroup);
+    ov_size a, l;
+    PyObject *mats;
+    mats = PYOBJECT_CALLMETHOD(P_xray, "sg_sym_to_mat_list", "s", I->SpaceGroup);
     if(mats && (mats != Py_None)) {
       l = PyList_Size(mats);
       VLACheck(I->SymMatVLA, float, 16 * l);

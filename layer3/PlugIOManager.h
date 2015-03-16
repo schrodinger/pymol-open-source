@@ -31,7 +31,7 @@ int PlugIOManagerFree(PyMOLGlobals * G);
 int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
                           const char *fname, int frame,
                           int interval, int average, int start,
-                          int stop, int max, char *sele, int image,
+                          int stop, int max, const char *sele, int image,
                           float *shift, int quiet, const char *plugin_type);
 ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
     const char *fname, int state, int quiet, const char *plugin_type);

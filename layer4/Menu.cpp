@@ -27,14 +27,14 @@ Z* -------------------------------------------------------------------
 #include "Ortho.h"
 
 void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
-                  char *name, char *sele)
+                  const char *name, const char *sele)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(G);
 
-  list = PyObject_CallMethod(P_menu, name, "Os", G->P_inst->cmd, sele);
+  list = PYOBJECT_CALLMETHOD(P_menu, name, "Os", G->P_inst->cmd, sele);
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
@@ -47,7 +47,7 @@ void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int pa
 }
 
 void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
-                     char *name, float *xyz)
+                     const char *name, const float *xyz)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
@@ -55,7 +55,7 @@ void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int
   PBlock(G);
 
   list =
-    PyObject_CallMethod(P_menu, name, "O(fff)", G->P_inst->cmd, xyz[0], xyz[1], xyz[2]);
+    PYOBJECT_CALLMETHOD(P_menu, name, "O(fff)", G->P_inst->cmd, xyz[0], xyz[1], xyz[2]);
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
@@ -67,14 +67,14 @@ void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int
 }
 
 void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
-                      char *name, char *sele1, char *sele2)
+                      const char *name, const char *sele1, const char *sele2)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(G);
 
-  list = PyObject_CallMethod(P_menu, name, "Oss", G->P_inst->cmd, sele1, sele2);
+  list = PYOBJECT_CALLMETHOD(P_menu, name, "Oss", G->P_inst->cmd, sele1, sele2);
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
@@ -86,14 +86,14 @@ void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, in
 }
 
 void MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
-                      char *name, char *arg1)
+                      const char *name, const char *arg1)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(G);
 
-  list = PyObject_CallMethod(P_menu, name, "Os", G->P_inst->cmd, arg1);
+  list = PYOBJECT_CALLMETHOD(P_menu, name, "Os", G->P_inst->cmd, arg1);
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
@@ -105,14 +105,14 @@ void MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, in
 }
 
 void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
-                      char *name)
+                      const char *name)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(G);
 
-  list = PyObject_CallMethod(P_menu, name, "O", G->P_inst->cmd);
+  list = PYOBJECT_CALLMETHOD(P_menu, (char*)name, "O", G->P_inst->cmd);
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {

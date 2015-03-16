@@ -2808,7 +2808,7 @@ static void RayHashSpawn(CRayHashThreadInfo * Thread, int n_thread, int n_total)
       }
       n++;
     }
-    PXDecRef(PyObject_CallMethod
+    PXDecRef(PYOBJECT_CALLMETHOD
              (G->P_inst->cmd, "_ray_hash_spawn", "OO", info_list, G->P_inst->cmd));
     Py_DECREF(info_list);
   }
@@ -2833,7 +2833,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo * Thread, int n_thread)
   for(a = 0; a < n_thread; a++) {
     PyList_SetItem(info_list, a, PyCObject_FromVoidPtr(Thread + a, NULL));
   }
-  PXDecRef(PyObject_CallMethod
+  PXDecRef(PYOBJECT_CALLMETHOD
            (G->P_inst->cmd, "_ray_anti_spawn", "OO", info_list, G->P_inst->cmd));
   Py_DECREF(info_list);
   PAutoUnblock(G, blocked);
@@ -2874,7 +2874,7 @@ static void RayTraceSpawn(CRayThreadInfo * Thread, int n_thread)
   for(a = 0; a < n_thread; a++) {
     PyList_SetItem(info_list, a, PyCObject_FromVoidPtr(Thread + a, NULL));
   }
-  PXDecRef(PyObject_CallMethod
+  PXDecRef(PYOBJECT_CALLMETHOD
            (G->P_inst->cmd, "_ray_spawn", "OO", info_list, G->P_inst->cmd));
   Py_DECREF(info_list);
   PAutoUnblock(G, blocked);

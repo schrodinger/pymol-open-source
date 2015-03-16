@@ -111,10 +111,7 @@ typedef struct _CPyMOLOptions CPyMOLOptions;
 CPyMOLOptions *PyMOLOptions_New(void);
 void PyMOLOptions_Free(CPyMOLOptions * option);
 
-#ifndef PYMOL_NO_PY
 CPyMOLOptions *PyMOLOptions_NewWithPython(int argc, char *argv[]);
-#endif
-
 
 /* PyMOL instance type */
 
@@ -237,9 +234,7 @@ void PyMOL_Free(CPyMOL * I);
 
 void PyMOL_Start(CPyMOL * I);
 void PyMOL_ConfigureShadersGL(CPyMOL * I);
-#ifndef PYMOL_NO_PY
 void PyMOL_StartWithPython(CPyMOL * I);
-#endif
 void PyMOL_Stop(CPyMOL * I);
 
 

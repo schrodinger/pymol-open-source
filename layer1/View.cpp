@@ -157,7 +157,8 @@ void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect, int first, int last,
   }
 }
 
-void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames, char *title ORTHOCGOARG)
+void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames,
+    const char *title ORTHOCGOARG)
 {
   if(G->HaveGUI && G->ValidContext && view_elem) {
     int size = VLAGetSize(view_elem);

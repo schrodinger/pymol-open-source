@@ -1413,8 +1413,8 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
       }
       
       if((ati1->flags & ati2->flags & cAtomFlag_polymer) &&
-          (cartoon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepCartoonBit) ||
-           ribbon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepRibbonBit))) {
+          ((cartoon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepCartoonBit)) ||
+           (ribbon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepRibbonBit)))) {
         RepCylBondFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2, &s1, &s2);
       }
       if((s1 || s2)) {

@@ -29,7 +29,7 @@ void *UtilArrayCalloc(unsigned int *dim, ov_size ndim, ov_size atom_size);
 char *UtilConcat(char *where,const char *what);
 void UtilNConcat(char *dst, const char *str, ov_size n);
 void UtilConcatVLA(char **vla, ov_size * cc, const char *str);
-void UtilNPadVLA(char **vla, ov_size * cc, char *str, ov_size len);
+void UtilNPadVLA(char **vla, ov_size * cc, const char *str, ov_size len);
 void UtilFillVLA(char **vla, ov_size * cc, char what, ov_size len);
 void UtilNCopy(char *dst, const char *src, ov_size n);        /* up to N-1 chars */
 void UtilNCopyToLower(char *dst, const char *src, ov_size n); /* up to N-1 chars */

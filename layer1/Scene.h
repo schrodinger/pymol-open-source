@@ -183,7 +183,7 @@ void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height);
 int SceneMultipick(PyMOLGlobals * G, Multipick * smp);
 void SceneInvalidateCopy(PyMOLGlobals * G, int free_buffer);
 
-void SceneSetCardInfo(PyMOLGlobals * G, char *vendor, char *renderer, char *version);
+void SceneSetCardInfo(PyMOLGlobals * G, const char *vendor, const char *renderer, const char *version);
 void SceneGetCardInfo(PyMOLGlobals * G, char **vendor, char **renderer, char **version);
 int SceneLoadPNG(PyMOLGlobals * G, char *fname, int movie_flag, int stereo, int quiet);
 

@@ -79,7 +79,7 @@ static WordKeyValue rep_names[] = {
   {"",},
 };
 
-static char *backbone_names[] = {
+static const char *backbone_names[] = {
   // protein
   "CA", "C", "O", "N", "OXT", "H",
   // nucleic acid
@@ -6608,7 +6608,7 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
 
   SelectorUpdateTable(G, state, -1);
 
-  model = PyObject_CallMethod(P_models, "Indexed", "");
+  model = PYOBJECT_CALLMETHOD(P_models, "Indexed", "");
   if(!model)
     ok = ErrMessage(G, "CoordSetAtomToChemPyAtom", "can't create model");
   if(ok) {
@@ -6808,7 +6808,7 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
               int b;
               PyObject_SetAttrString(model, "bond", bond_list);
               for(b = 0; b < nBond; b++) {
-                PyObject *bnd = PyObject_CallMethod(P_chempy, "Bond", "");
+                PyObject *bnd = PYOBJECT_CALLMETHOD(P_chempy, "Bond", "");
                 if(bnd) {
                   PConvInt2ToPyObjAttr(bnd, "index", ii1->index);
                   PConvIntToPyObjAttr(bnd, "order", ii1->order);
