@@ -160,13 +160,12 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
     if(pick) {
       /* no picking meshes */
     } else {
-      short use_shader, generate_shader_cgo = 0, use_display_lists;
+      short use_shader, generate_shader_cgo = 0;
       short mesh_as_cylinders ;
       int lighting =
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
       use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
       mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
 
       if (I->shaderCGO && !use_shader){
@@ -602,7 +601,6 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
     I->Width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_dot_width);
     I->Radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_dot_radius);
   }
-  I->R.displayListInvalid = true;
 
   if(I->NTot) {
     obj = cs->Obj;

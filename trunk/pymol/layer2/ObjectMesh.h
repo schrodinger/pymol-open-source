@@ -43,8 +43,6 @@ typedef struct {
   float CarveBuffer;
   int MeshMode;
   CGO *UnitCellCGO;
-  int displayList;
-  int displayListInvalid;
   WordType caption;
   float AltLevel;
   /* not stored */

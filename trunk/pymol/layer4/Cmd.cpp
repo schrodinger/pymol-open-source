@@ -349,49 +349,6 @@ static PyObject *CmdFixChemistry(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
-static PyObject *CmdGLDeleteLists(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  int int1, int2;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Oii", &self, &int1, &int2);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    if(G->HaveGUI) {
-      if(G->ValidContext) {
-        glDeleteLists(int1, int2);
-      }
-    }
-  }
-  return APISuccess();
-}
-
-static PyObject *CmdGLDeleteTexture(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  unsigned int int1;
-  int ok = false;
-  ok = PyArg_ParseTuple(args, "Oi", &self, &int1);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    if(G->HaveGUI) {
-      if(G->ValidContext) {
-        glDeleteTextures(1, &int1);
-      }
-    }
-  }
-  return APISuccess();
-}
 static PyObject *CmdRayAntiThread(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -8340,8 +8297,6 @@ static PyMethodDef Cmd_methods[] = {
   {"decline", CmdDecline, METH_VARARGS},
   {"del_colorection", CmdDelColorection, METH_VARARGS},
   {"fake_drag", CmdFakeDrag, METH_VARARGS},
-  {"gl_delete_lists", CmdGLDeleteLists, METH_VARARGS},
-  {"gl_delete_texture", CmdGLDeleteTexture, METH_VARARGS},
   {"delete", CmdDelete, METH_VARARGS},
   {"dirty", CmdDirty, METH_VARARGS},
   {"dirty_wizard", CmdDirtyWizard, METH_VARARGS},

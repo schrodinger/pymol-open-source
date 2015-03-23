@@ -197,8 +197,6 @@ typedef struct Rep {
   int (*fSameColor) (struct Rep * I, struct CoordSet * cs);
   struct Rep *(*fRebuild) (struct Rep * I, struct CoordSet * cs, int state, int rep);
   struct Rep *(*fNew) (struct CoordSet * cs, int state);
-  int displayList;
-  int displayListInvalid;
 } Rep;
 
 void RepInit(PyMOLGlobals * G, Rep * I);

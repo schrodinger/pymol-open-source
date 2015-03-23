@@ -88,12 +88,9 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
                            I->R.cs->Setting, I->R.obj->Setting);
       }
     } else {
-      int use_dlst;
       int use_shaders;
       use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
       
-      use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
-
         PRINTFD(G, FB_RepEllipsoid)
           " RepEllipsoidRender: rendering GL...\n" ENDFD;
 

@@ -109,11 +109,10 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else {
-      short use_shader, generate_shader_cgo = 0, use_display_lists = 0, dash_as_cylinders = 0;
+      short use_shader, generate_shader_cgo = 0, dash_as_cylinders = 0;
 
       use_shader = SettingGetGlobal_b(G, cSetting_dash_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
       dash_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_dash_as_cylinders);
 
       if (!use_shader && I->shaderCGO){

@@ -623,7 +623,6 @@ static void ObjectMeshUpdate(ObjectMesh * I)
             ObjectStateResetMatrix(&ms->State);
           }
           ms->RefreshFlag = false;
-          ms->displayListInvalid = true;
         }
       }
 
@@ -1005,11 +1004,10 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
           }
         } else if(G->HaveGUI && G->ValidContext) {
           if(!pick && !pass) {
-	      short use_shader, use_display_lists;
+	      short use_shader;
 	      short mesh_as_cylinders ;
 	      CGO *shaderCGO = NULL;
 	      use_shader = ( SettingGetGlobal_b(G, cSetting_mesh_use_shader) & SettingGetGlobal_b(G, cSetting_use_shaders)) | returnCGO;
-	      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 	      mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && ms->MeshMode != 1;
 
 	      if (ms->shaderCGO && (!use_shader || (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers))){
@@ -1290,8 +1288,6 @@ void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms)
   ms->CarveBuffer = 0.0;
   ms->AtomVertex = NULL;
   ms->UnitCellCGO = NULL;
-  ms->displayList = 0;
-  ms->displayListInvalid = true;
   ms->caption[0] = 0;
   ms->Field = NULL;
   ms->shaderCGO = NULL;

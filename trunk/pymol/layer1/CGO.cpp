@@ -4560,7 +4560,8 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
 
 #define VALUES_PER_IMPOSTER_SPACE_COORD 1
 
-CGO *CGOOptimizeSpheresToVBONonIndexed(CGO * I, int est){
+CGO *CGOOptimizeSpheresToVBONonIndexed(CGO * I, int est, bool addshaders, CGO *leftOverCGO)
+{
   return (CGOOptimizeSpheresToVBONonIndexedImpl(I, est, NULL));
 }
 

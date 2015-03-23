@@ -157,10 +157,9 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
 	CGORenderGLPicking(I->VPcgo, pick, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
       }
     } else { /* else not pick, i.e., when rendering */
-      short use_shader, generate_shader_cgo = 0, use_display_lists = 0, shader_mode = 0;
+      short use_shader, generate_shader_cgo = 0, shader_mode = 0;
       use_shader = SettingGetGlobal_b(G, cSetting_stick_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
       shader_mode = use_shader && SettingGetGlobal_b(G, cSetting_stick_as_cylinders) 
 	&& SettingGetGlobal_b(G, cSetting_render_as_cylinders);
 

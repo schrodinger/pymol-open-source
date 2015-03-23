@@ -474,10 +474,9 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	CGORenderGLPicking(I->pickingCGO, pick, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
       }
     } else {
-      short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
+      short use_shader, generate_shader_cgo = 0;
       use_shader = SettingGetGlobal_b(G, cSetting_surface_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
       if (I->shaderCGO && (!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO) ||
 			   (I->Type == 1 && I->dot_as_spheres != dot_as_spheres))){
@@ -1775,73 +1774,9 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
                glDepthMask(GL_TRUE); */
           }
         } else if (ok) {                /* opaque */
-          int simplify = 0; //, use_shader;
-          simplify = SettingGetGlobal_b(G, cSetting_simplify_display_lists);
             if(I->allVisibleFlag) {
               if(I->oneColorFlag) {
-                if(use_display_lists && simplify) {      /* simplify: try to help display list optimizer */
-		    if (generate_shader_cgo){
-		      ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
-		      c = *(s++);
-		      while(ok && c) {
-			ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
-			s += 2;
-			while(ok && c--) {
-			  s -= 2;
-			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (ok) 
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
-			  if (ok && I->VAO){
-			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
-			  }
-			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
-			  s++;
-			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (ok)
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
-			  if (ok && I->VAO){
-			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
-			  }
-			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
-			  s++;
-			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (ok && I->VAO){
-			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
-			  }
-			  if (ok) 
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
-			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
-			  s++;
-			}
-			if (ok) ok &= CGOEnd(I->shaderCGO);
-		      }
-		  } else {
-		    glColor3fv(ColorGet(G, I->oneColor));
-		    c = *(s++);
-		    while(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-		      glBegin(GL_TRIANGLES);
-		      s += 2;
-		      while(c--) {
-			s -= 2;
-			glNormal3fv(vn + (*s) * 3);
-			glVertex3fv(v + (*s) * 3);
-			s++;
-			glNormal3fv(vn + (*s) * 3);
-			glVertex3fv(v + (*s) * 3);
-			s++;
-			glNormal3fv(vn + (*s) * 3);
-			glVertex3fv(v + (*s) * 3);
-			s++;
-		      }
-		      glEnd();
-#endif
-		      c = *(s++);
-		    }
-		  } /* end if else use_shader */
-                } else if (ok) {
+                if (ok) {
 		    if (generate_shader_cgo){
 		      CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
 		      c = *(s++);
@@ -1899,49 +1834,11 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 #endif
 		      c = *(s++);
 		    }
-		  }               /* use_display_lists&&simplify */
+		  }
 		} /* end if else generate_shader_cgo */
 	      } else {          /* not one color */
 		  if (generate_shader_cgo){
-		    if(use_display_lists && simplify) {      /* simplify: try to help display list optimizer */
-		      c = *(s++);
-		      while(ok && c) {
-			ok &= CGOBegin(I->shaderCGO, GL_TRIANGLES);
-			s += 2;
-			while(ok && c--) {
-			  s -= 2;
-			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (ok && I->VAO){
-			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
-			  }
-			  if (ok) 
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
-			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
-			  s++;
-			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (ok && I->VAO){
-			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
-			  }
-			  if (ok) 
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
-			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
-			  s++;
-			  if (ok) ok &= CGOColorv(I->shaderCGO, vc + (*s) * 3);
-			  if (ok) ok &= CGONormalv(I->shaderCGO, vn + (*s) * 3);
-			  if (ok && I->VAO){
-			    ok &= CGOAccessibility(I->shaderCGO, *(I->VAO + *s));
-			  }
-			  if (ok) 
-			    ok &= CGOPickColor(I->shaderCGO, I->AT[*s], AtomInfoIsMasked((ObjectMolecule*)I->R.obj, I->AT[*s]));
-			  if (ok) ok &= CGOVertexv(I->shaderCGO, v + (*s) * 3);
-			  s++;
-			}
-			if (ok) ok &= CGOEnd(I->shaderCGO);
-			c = *(s++);
-		      }
-		    } else {
+                    {
 		      c = *(s++);
 		      while(ok && c) {
 			ok &= CGOBegin(I->shaderCGO, GL_TRIANGLE_STRIP);
@@ -1979,34 +1876,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		      }
 		    }
 		  } else {
-                if(use_display_lists && simplify) {      /* simplify: try to help display list optimizer */
-                  c = *(s++);
-                  while(c) {
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-                    glBegin(GL_TRIANGLES);
-                    s += 2;
-                    while(c--) {
-                      s -= 2;
-                      glColor3fv(vc + (*s) * 3);
-                      glNormal3fv(vn + (*s) * 3);
-                      glVertex3fv(v + (*s) * 3);
-                      s++;
-                      glColor3fv(vc + (*s) * 3);
-                      glNormal3fv(vn + (*s) * 3);
-                      glVertex3fv(v + (*s) * 3);
-                      s++;
-                      glColor3fv(vc + (*s) * 3);
-                      glNormal3fv(vn + (*s) * 3);
-                      glVertex3fv(v + (*s) * 3);
-                      s++;
-                    }
-                    glEnd();
-#endif
-                    c = *(s++);
-                  }
-                } else {
+                {
                   c = *(s++);
                   while(c) {
 #ifdef PURE_OPENGL_ES_2

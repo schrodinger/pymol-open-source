@@ -253,7 +253,9 @@ CGO *CGOOptimizeToVBOIndexed(CGO * I, int est);
 CGO *CGOOptimizeToVBONotIndexedWithReturnedData(CGO * I, int est, short, float **);
 CGO *CGOOptimizeToVBONotIndexed(CGO * I, int est);
 CGO *CGOOptimizeSpheresToVBONonIndexedImpl(CGO * I, int est, CGO *leftOverCGO);
-CGO *CGOOptimizeSpheresToVBONonIndexed(CGO * I, int est);
+
+CGO *CGOOptimizeSpheresToVBONonIndexed(CGO * I, int est=0, bool addshaders=false, CGO *leftOverCGO=NULL);
+#define CGOOptimizeSpheresToVBONonIndexedNoShader(I, est) CGOOptimizeSpheresToVBONonIndexed(I, est, false, NULL)
 
 void CGOReserve(CGO * ptr, int est);
 

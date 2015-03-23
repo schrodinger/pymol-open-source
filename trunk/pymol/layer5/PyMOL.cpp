@@ -3265,10 +3265,10 @@ PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, char *modename){
 
   PYMOL_API_LOCK
     {
-        ALLOCATE_ARRAY(char*, nmodename, strlen(modename)+1)
+        char *nmodename = (char*)malloc(strlen(modename)+1);
 	UtilNCopyToLower((char*)nmodename, modename, strlen(modename)+1);
         ok = OVreturn_IS_OK(mode = get_mouse_mode(I, (char*)nmodename));
-        DEALLOCATE_ARRAY(nmodename)
+        free(nmodename);
     }
   if (ok){
     result.status =  PyMOLstatus_SUCCESS;
@@ -3353,7 +3353,7 @@ PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, 
   char prefix[2];
   OVreturn_word pal_word;
   OrthoLineType s1;
-  ALLOCATE_ARRAY(char*, palette, strlen(pal)+1)
+  char *palette = (char*)malloc(strlen(pal)+1);
     UtilNCopyToLower((char*)palette, pal, strlen(pal)+1);
   
   if(selection[0])
@@ -3363,7 +3363,7 @@ PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, 
 
   if (ok)
     ok = OVreturn_IS_OK(pal_word = get_palette(I, (char*)palette));  
-  DEALLOCATE_ARRAY(palette)
+  free(palette);
   prefix[0] = palette_prefix[pal_word.word];
   prefix[1] = 0;
   array_pl = pal_word.word * 3;

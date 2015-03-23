@@ -570,12 +570,11 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 #endif
       (*pick)[0].src.index = i; /* pass the count */
     } else { /* else not pick i.e., when rendering */
-      short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
+      short use_shader, generate_shader_cgo = 0;
       short line_as_cylinders ;
       int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
       use_shader = SettingGetGlobal_b(G, cSetting_line_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
       line_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_line_as_cylinders);
       if (!use_shader && I->shaderCGO){

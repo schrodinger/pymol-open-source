@@ -174,14 +174,13 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
         (*pick)[0].src.index = i;       /* pass the count */
       }
     } else {
-      short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
+      short use_shader, generate_shader_cgo = 0;
       int ribbon_smooth;
       short ribbon_as_cylinders ;
       float alpha = SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
 
       use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
       ribbon_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_ribbon_as_cylinders);
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);

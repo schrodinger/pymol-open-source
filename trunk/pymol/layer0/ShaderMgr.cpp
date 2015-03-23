@@ -1182,12 +1182,7 @@ char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
 }
 
 
-#ifdef _PYMOL_OPENGL_SHADERS
-
-#ifndef GL_FRAGMENT_PROGRAM_ARB
-#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
-#endif
-
+#ifdef _PYMOL_ARB_SHADERS
 static GLboolean ProgramStringIsNative(PyMOLGlobals * G,
                                        GLenum target, GLenum format,
                                        GLsizei len, const GLvoid * string)
@@ -1206,15 +1201,9 @@ static GLboolean ProgramStringIsNative(PyMOLGlobals * G,
   }
   return GL_FALSE;
 }
-#endif
 
-/* ============================================================================
- * CShaderPrg -- Simple Shader class
- */
 CShaderPrg * CShaderPrg_NewARB(PyMOLGlobals * G, const char * name, const char * v, const char * f)
 {
-  /* if v == f == NULL, read 'name.vs' and 'name.fs' from disk */
-
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   if(!(glGenProgramsARB && glBindProgramARB &&
@@ -1236,7 +1225,6 @@ CShaderPrg * CShaderPrg_NewARB(PyMOLGlobals * G, const char * name, const char *
   {
     /* END PROPRIETARY CODE SEGMENT */
 
-#ifdef _PYMOL_OPENGL_SHADERS
     int ok = true;
     GLuint programs[2];
     glGenProgramsARB(2, programs);
@@ -1276,10 +1264,18 @@ CShaderPrg * CShaderPrg_NewARB(PyMOLGlobals * G, const char * name, const char *
     } else {
       glDeleteProgramsARB(2, programs);
     }
-#endif
   }
   return NULL;
 }
+
+int CShaderPrg_DisableARB(CShaderPrg * p) {
+  if (p)
+    p->G->ShaderMgr->current_shader = 0;
+  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+  glDisable(GL_VERTEX_PROGRAM_ARB);
+  return 1;
+}
+#endif
 
 /* ============================================================================
  * CShaderPrg -- Simple Shader class
@@ -1447,15 +1443,6 @@ int CShaderPrg_Disable(CShaderPrg * p)
     p->G->ShaderMgr->current_shader = 0;
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE0);
-  return 1;
-}
-
-int CShaderPrg_DisableARB(CShaderPrg * p)
-{
-  if (p)
-    p->G->ShaderMgr->current_shader = 0;
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
-  glDisable(GL_VERTEX_PROGRAM_ARB);
   return 1;
 }
 
@@ -1958,9 +1945,9 @@ CShaderPrg *CShaderPrg_Enable_SphereShader(PyMOLGlobals * G, char *name){
   return (shaderPrg);
 }
 
+#ifdef _PYMOL_ARB_SHADERS
 CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G){
   CShaderPrg *shaderPrg = NULL;
-#ifdef _PYMOL_OPENGL_SHADERS
   /* load the vertex program */
   CShaderPrg_Disable(G->ShaderMgr->current_shader);
   shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "sphere_arb");
@@ -1976,9 +1963,9 @@ CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G){
   glEnable(GL_VERTEX_PROGRAM_ARB);
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
 
-#endif
   return shaderPrg;
 }
+#endif
 
 CShaderPrg *CShaderPrg_Get_DefaultShader(PyMOLGlobals * G){
   return CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
