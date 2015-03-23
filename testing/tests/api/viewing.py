@@ -402,10 +402,7 @@ class TestViewing(testing.PyMOLTestCase):
         cmd.pseudoatom('m2', pos=(0,0,0))
         cmd.pseudoatom('m3', pos=(2,0,0))
         cmd.show_as('spheres')
-        cmd.set('ambient', 1)
-        cmd.set('specular', 0)
-        cmd.set('reflect', 0)
-        cmd.set('direct', 0)
+        self.ambientOnly()
         cmd.viewport(40,20)
         cmd.zoom()
 
