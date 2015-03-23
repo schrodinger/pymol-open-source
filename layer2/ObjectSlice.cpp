@@ -705,7 +705,6 @@ static void ObjectSliceUpdate(ObjectSlice * I)
 
         if(oss->RefreshFlag) {
           oss->RefreshFlag = false;
-          oss->displayListInvalid = true;
           PRINTFB(I->Obj.G, FB_ObjectSlice, FB_Blather)
             " ObjectSlice: updating \"%s\".\n", I->Obj.Name ENDFB(I->Obj.G);
           if(oms->Field) {
@@ -1250,7 +1249,6 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
               render_now = (!pass);
 
             if(render_now) {
-              int use_dlst;
 	      int already_rendered = false;
 	      int generate_shader_cgo = false;
 	      if (use_shaders){
@@ -1279,7 +1277,6 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 		  */
 		  ObjectUseColor(&I->Obj);
 		}
-		use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
 		
 		  if((I->Obj.visRep & cRepSliceBit)) {
 		    int *strip = oss->strips;
@@ -1439,7 +1436,6 @@ ObjectSlice *ObjectSliceNew(PyMOLGlobals * G)
 void ObjectSliceStateInit(PyMOLGlobals * G, ObjectSliceState * oss)
 {
   oss->G = G;
-  oss->displayList = 0;
   oss->Active = true;
   oss->RefreshFlag = true;
   oss->ExtentFlag = false;

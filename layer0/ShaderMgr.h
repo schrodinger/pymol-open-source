@@ -22,10 +22,6 @@ Z* -------------------------------------------------------------------
 #include "OVContext.h"
 #include "Rep.h"
 
-#ifndef GL_FRAGMENT_PROGRAM_ARB
-#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
-#endif
-
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 PFNGLTEXIMAGE3DPROC getTexImage3D();
@@ -114,7 +110,12 @@ void ShaderMgrConfig(PyMOLGlobals * G);
 
 /* New */
 CShaderMgr * CShaderMgr_New(PyMOLGlobals * G);
+
+#ifdef _PYMOL_ARB_SHADERS
 CShaderPrg * CShaderPrg_NewARB(PyMOLGlobals * G, const char * name, const char * v, const char * f);
+int CShaderPrg_DisableARB(CShaderPrg *I);
+#endif
+
 /* Delete */
 void CShaderMgr_Delete(CShaderMgr * I);
 void CShaderMgrFree(PyMOLGlobals *G);
@@ -152,7 +153,6 @@ int CShaderPrg_Enable(CShaderPrg * I);
 
 /* Disable */
 int CShaderPrg_Disable(CShaderPrg * I);
-int CShaderPrg_DisableARB(CShaderPrg *I);
 
 /* Link and IsLinked */
 int CShaderPrg_Link(CShaderPrg * I);
@@ -191,7 +191,9 @@ CShaderPrg *CShaderPrg_Enable_DefaultScreenShader(PyMOLGlobals * G);
 CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G);
 CShaderPrg *CShaderPrg_Enable_DefaultSphereShader(PyMOLGlobals * G);
 CShaderPrg *CShaderPrg_Enable_SphereShader(PyMOLGlobals * G, char *name);
+#ifdef _PYMOL_ARB_SHADERS
 CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G);
+#endif
 CShaderPrg *CShaderPrg_Enable_RampShader(PyMOLGlobals * G);
 
 CShaderPrg *CShaderPrg_Get_ScreenShader(PyMOLGlobals * G);

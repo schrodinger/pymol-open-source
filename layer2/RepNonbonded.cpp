@@ -205,13 +205,11 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
       (*pick)[0].src.index = i;
     } else {
       /* not pick, but render */
-      short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
+      short use_shader, generate_shader_cgo = 0;
       short nonbonded_as_cylinders ;
       int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
       use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
-
       nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);

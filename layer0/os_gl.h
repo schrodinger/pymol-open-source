@@ -1,8 +1,10 @@
 #ifndef _H_os_gl
 #define _H_os_gl
 
-#define ALLOCATE_ARRAY(tname,variablename, size) tname *variablename = (tname*) malloc(size * sizeof(tname));
-#define DEALLOCATE_ARRAY(variablename) free(variablename);
+#include"os_predef.h"
+#include"os_proprietary.h"
+
+#define _PYMOL_ARB_SHADERS
 
 #define GL_LABEL_SCREEN_SHADER  0xfff0
 #define GL_LABEL_SHADER  0xfffa
@@ -13,56 +15,23 @@
 #define GL_SCREEN_SHADER  0xfff1
 #define GL_RAMP_SHADER  0xfff2
 
-#ifndef _PYMOL_OSX
-
-#ifdef _PYMOL_OPENGL_SHADERS
 #ifndef WIN32
 #define GL_GLEXT_PROTOTYPES
 #endif
+
 #include<GL/glew.h>
 #include<GL/gl.h>
 #include<GL/glu.h>
 #include<GL/glext.h>
-#else
-#include<GL/gl.h>
-#include<GL/glu.h>
-#endif
 
 #define GLDOUBLEMULTMATRIX glMultMatrixd
 #define GLDOUBLETRANSLATE glTranslated
-
-#else
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifndef PURE_OPENGL_ES_2
-#include<GL/glew.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#include <OpenGL/glext.h>
-#define GLDOUBLEMULTMATRIX glMultMatrixd
-#define GLDOUBLETRANSLATE glTranslated
-#else
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
-#endif
 
 #ifdef PURE_OPENGL_ES_2
 #define GLLIGHTMODELI(arg1, arg2)  /* nothing */
 #else
 #define GLLIGHTMODELI glLightModeli
 #endif
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef WIN32
-#include<GL/glu.h>
-#ifdef _PYMOL_OPENGL_SHADERS
-#include<GL/glext.h>
-#endif
-#endif
-
-
-/* END PROPRIETARY CODE SEGMENT */
 
 void PyMOLReadPixels(GLint x,
                      GLint y,
@@ -333,5 +302,9 @@ void p_glutMainLoop(void);
 #define GL_C_INT_TYPE uint
 #define GL_C_INT_ENUM GL_UNSIGNED_INT
 #define SceneGLClearColor(red,green,blue,alpha) glClearColor(red,green,blue,alpha);
+
+#ifndef GL_FRAGMENT_PROGRAM_ARB
+#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
+#endif
 
 #endif

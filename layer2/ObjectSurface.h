@@ -47,8 +47,6 @@ typedef struct {
   int DotFlag;
   CGO *UnitCellCGO;
   int Side;
-  int displayList;
-  int displayListInvalid;
   CGO *shaderCGO;
 } ObjectSurfaceState;
 

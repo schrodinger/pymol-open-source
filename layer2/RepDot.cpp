@@ -88,7 +88,7 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else { /* else not pick, i.e., when rendering */
-      short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
+      short use_shader, generate_shader_cgo = 0;
       int normals =
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_normals);
       int lighting =
@@ -97,7 +97,6 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 
       use_shader = SettingGetGlobal_b(G, cSetting_dot_use_shader) & 
                    SettingGetGlobal_b(G, cSetting_use_shaders);
-      use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
       if (I->shaderCGO && ((!use_shader || CGOCheckWhetherToFree(G, I->shaderCGO)) ||
 			   I->shaderCGO_as_spheres!= dot_as_spheres)){

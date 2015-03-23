@@ -2270,15 +2270,12 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     }
     break;
   case cSetting_use_display_lists:
-    {
-      if (SettingGetGlobal_b(G, cSetting_excl_display_lists_shaders) && SettingGetGlobal_i(G, cSetting_use_display_lists) && SettingGetGlobal_b(G, cSetting_use_shaders)){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Details)
-	    "Setting-Details: use_shaders and use_display_lists are exclusive, turning off use_shaders\n"
-	    ENDFB(G);
-	}
-	SettingSet_b(G->Setting, cSetting_use_shaders, 0);
-      }
+  case cSetting_simplify_display_lists:
+  case cSetting_excl_display_lists_shaders:
+    if (!quiet){
+      PRINTFB(G, FB_Setting, FB_Debugging)
+	"Setting-Details: display lists were depreciated in PyMOL 1.7.x.  The settings use_display_lists, simplify_display_lists, and excl_display_lists_shaders no longer work.\n"
+	ENDFB(G);
     }
   case cSetting_use_shaders:
     {

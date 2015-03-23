@@ -186,10 +186,6 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
                            I->R.cs->Setting, I->R.obj->Setting);
       }
     } else {
-      int use_dlst;
-      use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
-
-
         PRINTFD(G, FB_RepCartoon)
           " RepCartoonRender: rendering GL...\n" ENDFD;
 

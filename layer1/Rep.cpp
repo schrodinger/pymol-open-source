@@ -188,22 +188,5 @@ void RepInit(PyMOLGlobals * G, Rep * I)
 /*========================================================================*/
 void RepPurge(Rep * I)
 {
-  PyMOLGlobals *G = I->G;
-  if(G->HaveGUI) {
-#ifndef PURE_OPENGL_ES_2
-    if(I->displayList) {
-      if(PIsGlutThread()) {
-        if(G->ValidContext) {
-          glDeleteLists(I->displayList, 1);
-          I->displayList = 0;
-        }
-      } else {
-        char buffer[255];       /* pass this off to the main thread */
-        sprintf(buffer, "_cmd.gl_delete_lists(cmd._COb,%d,%d)\n", I->displayList, 1);
-        PParse(G, buffer);
-      }
-    }
-#endif
-  }
   FreeP(I->P);
 }

@@ -173,7 +173,6 @@ pymol_src_dirs = [
 def_macros = [
     ("_PYMOL_LIBPNG", None),
     ("_PYMOL_INLINE", None),
-    ("_PYMOL_OPENGL_SHADERS", None),
 ]
 
 libs = []

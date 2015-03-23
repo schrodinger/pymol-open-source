@@ -511,7 +511,6 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
           } else if(ms->State.Matrix) {
             ObjectStateResetMatrix(&ms->State);
           }
-          ms->displayListInvalid = true;
           ms->RefreshFlag = false;
         }
       }
@@ -819,21 +818,17 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
           } else {
             int render_now = false;
             int t_mode;
-	    short use_shader, generate_shader_cgo = 0, use_display_lists = 0;
+	    short use_shader, generate_shader_cgo = 0;
 	    use_shader = SettingGetGlobal_b(G, cSetting_surface_use_shader) & 
 	                 SettingGetGlobal_b(G, cSetting_use_shaders);
-	    use_display_lists = SettingGetGlobal_i(G, cSetting_use_display_lists);
 
             t_mode = SettingGet_i(G, NULL, I->Obj.Setting, cSetting_transparency_mode);
 
             if(info && info->alpha_cgo) {
               render_now = (pass == 1);
               t_mode = 0;
-              if(alpha != 1.0F)
-                use_display_lists = false;
 	      use_shader = false;
             } else if(alpha < 1.0F) {
-              use_display_lists = false;
               render_now = (pass == -1);
 	      use_shader = false;
             } else {
@@ -1341,8 +1336,6 @@ void ObjectSurfaceStateInit(PyMOLGlobals * G, ObjectSurfaceState * ms)
   ms->AtomVertex = NULL;
   ms->UnitCellCGO = NULL;
   ms->Side = 0;
-  ms->displayList = 0;
-  ms->displayListInvalid = true;
   ms->shaderCGO = 0;
 }
 

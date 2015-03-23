@@ -32,6 +32,7 @@
 #include "ShaderMgr.h"
 #include "Scene.h"
 #include"CGO.h"
+#include"ObjectMolecule.h"
 
 #include "ShaderText.h"
 
@@ -73,41 +74,11 @@ typedef struct RepSphere {
   CGO *shaderCGO;
 } RepSphere;
 
-#include"ObjectMolecule.h"
-
-#ifdef _PYMOL_OPENGL_SHADERS
-
-#ifndef GL_FRAGMENT_PROGRAM_ARB
-#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
-#endif
-
-
-#include "ShaderMgr.h"
-
-/* END PROPRIETARY CODE SEGMENT */
-
-
-/* NOTE -- right now this shader program only runs in perspective mode */
-
-#include "ShaderText.h"
-
-/*
-  normal depth routine...does not work!  why?
-  "#MAD_SAT fogFactor.x, fogInfo.x, fragment.texcoord.w, fogInfo.y;\n",
-  "#LRP color.xyz, fogFactor.x, color, fogColor;\n",
-*/
-
-#endif
-
 void RepSphereFree(RepSphere * I);
 int RepSphereSameVis(RepSphere * I, CoordSet * cs);
 
 void RepSphereFree(RepSphere * I)
 {
-#ifdef _PYMOL_OPENGL_SHADERS
-  if(I->R.G->HaveGUI && I->R.G->ValidContext) {
-  }
-#endif
   if (I->shaderCGO ){
     CGOFree(I->shaderCGO);
     I->shaderCGO = 0;
@@ -123,11 +94,9 @@ void RepSphereFree(RepSphere * I)
   OOFreeP(I);
 }
 
-#ifdef _PYMOL_OPENGL_SHADERS
-
 /* MULTI-INSTSANCE TODO:  isn't this a conflict? */
 static CShaderPrg *sphereARBShaderPrg = NULL;
-#endif
+
 #ifdef PURE_OPENGL_ES_2
 void RepSphereRenderImmediatePointsES(PyMOLGlobals *G, int sphere_mode, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, float *varg){
     /* TODO */
@@ -138,6 +107,7 @@ void RepSphereRenderImmediateMode4PointsES(PyMOLGlobals *G, AtomInfoType *atomIn
 }
 #endif
 
+#ifdef _PYMOL_ARB_SHADERS
 void RepSphereRenderOneSphere_ARB(PyMOLGlobals *G, RenderInfo *info, float *color, float *last_radius, float *cur_radius, float *fog_info, float *v){
   static const float _00[2] = { 0.0F, 0.0F };
   static const float _01[2] = { 0.0F, 1.0F };
@@ -164,6 +134,7 @@ void RepSphereRenderOneSphere_ARB(PyMOLGlobals *G, RenderInfo *info, float *colo
   glTexCoord2fv(_01);
   glVertex3fv(v);
 }
+#endif
 
 void RenderSpherePopulateVariables(PyMOLGlobals *G, RenderInfo *info, float *nv, float *fog_info, float *z_front, float *z_back){
   /* compute -Ze = (Wc) of fog start */
@@ -184,7 +155,7 @@ void RenderSpherePopulateVariables(PyMOLGlobals *G, RenderInfo *info, float *nv,
   (*z_back) = info->back + ((info->back + info->front) * 0.25);
 }
 
-#ifdef _PYMOL_OPENGL_SHADERS
+#ifdef _PYMOL_ARB_SHADERS
 void RenderSphereMode_Immediate_5(PyMOLGlobals *G, RenderInfo *info, CoordSet *cs, ObjectMolecule *obj, int *repActive, float sphere_scale){
   if (!sphereARBShaderPrg){
     sphereARBShaderPrg = CShaderPrg_NewARB(G, "sphere_arb", sphere_arb_vs, sphere_arb_fs);
@@ -513,7 +484,7 @@ void RepSphereRenderImmediate(CoordSet * cs, RenderInfo * info)
       float pixel_scale = 1.0F / info->vertex_scale;
       RenderImmediate_DoPreGL(G, sphere_mode, &pixel_scale, cs, obj, sphere_scale);
       switch (sphere_mode){
-#ifdef _PYMOL_OPENGL_SHADERS
+#ifdef _PYMOL_ARB_SHADERS
       case 5:
 	RenderSphereMode_Immediate_5(G, info, cs, obj, &repActive, sphere_scale);
 	break;
@@ -544,6 +515,7 @@ void RepSphereRenderMode5PointsES(int nvertsarg, float *varg, float zz_factor, f
 void RepSphereRenderPointsDefaultES(RepSphere * I, Picking **pick, int nvertsarg, int iarg, Pickable *parg, float *varg){
 }
 #endif
+
 
 int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I, RenderInfo * info, int carg, float **vptr, float alpha, SphereRec *sphereRecPtr){
   short use_shader, generate_shader_cgo = 0;
@@ -845,15 +817,8 @@ static void RenderSphereMode_Points(PyMOLGlobals *G, RepSphere *I, RenderInfo *i
 }
 
 static void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, float **vptr, int carg){
-  int n_quad_verts;
-  float radius;
   int c = carg;
-  int vc = 0;
-  int cc = 0;
-  int ac = 0;
-  int attr;
-  CShaderPrg *shaderPrg;
-  short use_shader, generate_shader_cgo = 0;
+  short use_shader;
   float *v = *vptr;
   use_shader = SettingGetGlobal_b(G, cSetting_sphere_use_shader) & 
                SettingGetGlobal_b(G, cSetting_use_shaders);
@@ -866,124 +831,35 @@ static void RenderSphereMode_9(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, 
     if (!I->shaderCGO){
       I->shaderCGO = CGONew(G);
       I->shaderCGO->use_shader = true;
-      generate_shader_cgo = 1;
-    } else {
-      I->shaderCGO->enable_shaders = true;
-      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-      return;
-    }
-  }
-  
-  if (generate_shader_cgo){
-    CGOEnable(I->shaderCGO, GL_LIGHTING);
-    while (c--) {
-      CGOAlpha(I->shaderCGO, v[3]);
-      CGOColorv(I->shaderCGO, v);
-      CGOSphere(I->shaderCGO, v+4, v[7]);
-      (*vptr)+=8; v = *vptr;
-    }
-    CGOStop(I->shaderCGO);
-    {
-      CGO *convertcgo = NULL;
-      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, 0);
-      if (convertcgo){
-	CGOFree(I->shaderCGO);    
-	I->shaderCGO = convertcgo;
+
+      // generating shader
+#ifndef PURE_OPENGL_ES_2
+      CGOEnable(I->shaderCGO, GL_LIGHTING);
+#endif
+      while (c--) {
+	CGOAlpha(I->shaderCGO, v[3]);
+	CGOColorv(I->shaderCGO, v);
+	CGOSphere(I->shaderCGO, v+4, v[7]);
+	(*vptr)+=8; v = *vptr;
+      }
+      CGOStop(I->shaderCGO);
+      {
+	CGO *convertcgo = NULL;
+	convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, 0, true);
+	if (convertcgo){
+	  CGOFree(I->shaderCGO);    
+	  I->shaderCGO = convertcgo;
+	}
       }
     }
-    
-    {
+    if (I->shaderCGO){
       I->shaderCGO->enable_shaders = true;
       CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-      return;
-    }
-  } else {
-    shaderPrg = CShaderPrg_Enable_SphereShader(G, "spheredirect");
-    if (!shaderPrg){
-      /* this should never happen, since we check 
-	 the sphere_mode at the beginning of RepSphereRender */
-      return;
-    }
-    {
-    ALLOCATE_ARRAY(GLfloat,colorVals,c*4*4)
-    ALLOCATE_ARRAY(GLfloat,vertexVals,c*4*3)
-    ALLOCATE_ARRAY(GLfloat,attribVals,c*4*3)
-    n_quad_verts = c * 4;
-    if(Feedback(G, FB_OpenGL, FB_Debugging)) {
-      PRINTF "GLSL Sphere Shader: n_quad_verts: %d\n", 
-	n_quad_verts ENDF(G);
-    }
-    attr = CShaderPrg_GetAttribLocation(shaderPrg, "sphere_attributes");
-    
-    while (c--) {
-      radius = v[7];
-      attribVals[ac++] = -1.0;
-      attribVals[ac++] = -1.0;
-      attribVals[ac++] = radius;
-      colorVals[cc++] = v[0];
-      colorVals[cc++] = v[1];
-      colorVals[cc++] = v[2];
-      colorVals[cc++] = v[3];
-      vertexVals[vc++] = v[4];
-      vertexVals[vc++] = v[5];
-      vertexVals[vc++] = v[6];
-      
-      attribVals[ac++] =  1.0;
-      attribVals[ac++] = -1.0;
-      attribVals[ac++] = radius;
-      colorVals[cc++] = v[0];
-      colorVals[cc++] = v[1];
-      colorVals[cc++] = v[2];
-      colorVals[cc++] = v[3];
-      vertexVals[vc++] = v[4];
-      vertexVals[vc++] = v[5];
-      vertexVals[vc++] = v[6];
-      
-      attribVals[ac++] = 1.0;
-      attribVals[ac++] = 1.0;
-      attribVals[ac++] = radius;
-      colorVals[cc++] = v[0];
-      colorVals[cc++] = v[1];
-      colorVals[cc++] = v[2];
-      colorVals[cc++] = v[3];
-      vertexVals[vc++] = v[4];
-      vertexVals[vc++] = v[5];
-      vertexVals[vc++] = v[6];
-      
-      attribVals[ac++] = -1.0;
-      attribVals[ac++] =  1.0;
-      attribVals[ac++] = radius;
-      colorVals[cc++] = v[0];
-      colorVals[cc++] = v[1];
-      colorVals[cc++] = v[2];
-      colorVals[cc++] = v[3];
-      vertexVals[vc++] = v[4];
-      vertexVals[vc++] = v[5];
-      vertexVals[vc++] = v[6];
-      
-      glBegin(GL_QUADS);
-      glColor4f(v[0], v[1], v[2], v[3]);
-      glVertexAttrib3f(attr, -1.0, -1.0, radius);
-      glVertex3f(v[4], v[5], v[6]);
-      glVertexAttrib3f(attr,  1.0, -1.0, radius);
-      glVertex3f(v[4], v[5], v[6]);
-      glVertexAttrib3f(attr,  1.0,  1.0, radius);
-      glVertex3f(v[4], v[5], v[6]);
-      glVertexAttrib3f(attr, -1.0,  1.0, radius);
-      glVertex3f(v[4], v[5], v[6]);
-      glEnd();
-      
-      (*vptr)+=8; v = *vptr;
-    }
-    CShaderPrg_Disable(shaderPrg);
-    
-    DEALLOCATE_ARRAY(colorVals)
-    DEALLOCATE_ARRAY(vertexVals)
-    DEALLOCATE_ARRAY(attribVals)
     }
   }
 }
 
+#ifdef _PYMOL_ARB_SHADERS
 void RenderSphereMode_ARB(PyMOLGlobals *G, RenderInfo *info, float **vptr, int carg){
   int c = carg;
   float fog_info[3];
@@ -1013,6 +889,7 @@ void RenderSphereMode_ARB(PyMOLGlobals *G, RenderInfo *info, float **vptr, int c
       PyMOLCheckOpenGLErr("after shader");
   }
 }
+#endif
 
 /* simple, default point width points -- modes 1 or 6 */
 void RenderSphereMode_1_or_6(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, float **vptr, float **vnptr, int carg, float alpha){
@@ -1375,19 +1252,27 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
 				 I->R.obj->Setting,
 				 cSetting_sphere_mode);
 
-#ifdef _PYMOL_OPENGL_SHADERS
-  /* TO DO -- garbage collect -- IMPORTANT! */
-  {
-    if (!ray){
-      if (sphere_mode == 5 && G->HaveGUI && G->ValidContext && !sphereARBShaderPrg){
+  if (sphere_mode < 0) {
+    sphere_mode = 0;
+  } else if (!ray) {
+    if (sphere_mode == 5) {
+#ifdef _PYMOL_ARB_SHADERS
+      if (!sphereARBShaderPrg && G->HaveGUI && G->ValidContext) {
 	sphereARBShaderPrg = CShaderPrg_NewARB(G, "sphere_arb", sphere_arb_vs, sphere_arb_fs);
       }
-      if ((sphere_mode == 5 || sphere_mode == 9) && (!use_shader || !CShaderMgr_ShaderPrgExists(G->ShaderMgr, "spheredirect"))){
-	sphere_mode = 0;
+      if (!sphereARBShaderPrg)
+#endif
+      {
+        PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+          " Warning: ARB shaders (sphere_mode=5) not supported.\n" ENDFB(G);
+        sphere_mode = 9;
       }
     }
+
+    if ((sphere_mode == 9) && (!use_shader || !CShaderMgr_ShaderPrgExists(G->ShaderMgr, "spheredirect"))){
+      sphere_mode = 0;
+    }
   }
-#endif
   alpha =
     SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_sphere_transparency);
   alpha = 1.0F - alpha;
@@ -1401,29 +1286,13 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
     } else {                    /* not pick */      
       if(!sp) {
         /* no sp -- we're rendering as points */
-        int use_dlst;
         v = I->VC;
         c = I->NC;
 
         I->LastVertexScale = info->vertex_scale;
 
-        use_dlst = SettingGetGlobal_i(G, cSetting_use_display_lists);
-        switch (sphere_mode) {
-        case -1: case 0: case 4: case 5: case 9:
-          use_dlst = 0;
-          break;
-        }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
           if((sphere_mode > 0) && (!info->line_lighting))
             glDisable(GL_LIGHTING);
-	  if((sphere_mode == 5)
-#ifdef _PYMOL_OPENGL_SHADERS
-	     && (!sphereARBShaderPrg)
-#endif
-	     )
-	    sphere_mode = 4;
 
           switch (sphere_mode) {
           case -1:
@@ -1441,8 +1310,10 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
 	    RenderSphereMode_Points(G, I, info, c);
 	    break;
 	  case 5:          /* use vertex/fragment program */
+#ifdef _PYMOL_ARB_SHADERS
 	    RenderSphereMode_ARB(G, info, &v, c);
 	    break;
+#endif
 	  case 9: // use GLSL shader
 	    RenderSphereMode_9(G, I, info, &v, c);
 	    break;
@@ -1451,7 +1322,6 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
             break;
           }
           glEnable(GL_LIGHTING);
-#endif
       } else {                  /* real spheres, drawn with triangles -- not points or impostors */
 	ok &= RenderSphereMode_Direct(G, I, info, c, &v, alpha, I->SSP);
       }
@@ -1488,7 +1358,7 @@ static int RadiusOrder(float *list, int a, int b)
   return (list[a * 8 + 7] <= list[b * 8 + 7]);
 }
 
-int RepSphereDetermineAtomVisibility(int vis_flag_arg, AtomInfoType *ati1, int cartoon_side_chain_helper, int ribbon_side_chain_helper)
+int RepSphereDetermineAtomVisibility(PyMOLGlobals *G, int vis_flag_arg, AtomInfoType *ati1, int cartoon_side_chain_helper, int ribbon_side_chain_helper)
 {
   int vis_flag = vis_flag_arg;
   if(vis_flag &&
@@ -2069,7 +1939,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     a1 = cs->IdxToAtm[a];
     ati1 = obj->AtomInfo + a1;
     /* store temporary visibility information */
-    marked[a1] = RepSphereDetermineAtomVisibility(GET_BIT(ati1->visRep,cRepSphere), ati1, cartoon_side_chain_helper, ribbon_side_chain_helper);
+    marked[a1] = RepSphereDetermineAtomVisibility(G, GET_BIT(ati1->visRep,cRepSphere), ati1, cartoon_side_chain_helper, ribbon_side_chain_helper);
     if(marked[a1]) {
       RepSphereAddAtomVisInfoToStoredVC(I, obj, cs, state, v, a1, ati1, a, mf, sphere_scale, sphere_color, transp, &variable_alpha, sphere_add);
       v += 8;
@@ -2134,14 +2004,17 @@ Rep *RepSphereNew(CoordSet * cs, int state)
 
       if(ok && vc_tmp && pk_tmp && ix) {
         UtilCopyMem(vc_tmp, I->VC, sizeof(float) * 8 * I->NC);
-        UtilCopyMem(pk_tmp, I->R.P, sizeof(Pickable) * (I->NP + 1));
+        if (I->R.P)
+          UtilCopyMem(pk_tmp, I->R.P, sizeof(Pickable) * (I->NP + 1));
 
         UtilSortIndex(I->NC, I->VC, ix, (UtilOrderFn *) RadiusOrder);
 
-        UtilCopyMem(I->R.P, pk_tmp, sizeof(Pickable));
+        if (I->R.P)
+          UtilCopyMem(I->R.P, pk_tmp, sizeof(Pickable));
         for(a = 0; a < I->NC; a++) {
           UtilCopyMem(I->VC + (a * 8), vc_tmp + (8 * ix[a]), sizeof(float) * 8);
-          UtilCopyMem(I->R.P + (a + 1), pk_tmp + ix[a] + 1, sizeof(Pickable));
+          if (I->R.P)
+            UtilCopyMem(I->R.P + (a + 1), pk_tmp + ix[a] + 1, sizeof(Pickable));
         }
       }
       FreeP(vc_tmp);
