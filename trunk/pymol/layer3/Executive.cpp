@@ -5478,8 +5478,8 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
   }
   if(ok) {
     tmp = PyDict_GetItemString(session, "settings");
-    if(tmp) {
-      ok = SettingSetGlobalsFromPyList(G, tmp);
+    if(tmp && !partial_restore) {
+      SettingSetGlobalsFromPyList(G, tmp);
     }
 
     if(tmp || (!(partial_restore | partial_session))) { /* ignore missing if partial restore */

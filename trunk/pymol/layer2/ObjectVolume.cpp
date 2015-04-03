@@ -834,8 +834,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
       glTexImage3D = getTexImage3D(); 
-      glActiveTexture = getActiveTexture();
-      if (! glActiveTexture || ! glTexImage3D) {
+      if (! glTexImage3D) {
         PRINTFB(G, FB_ObjectVolume, FB_Errors)
           " ObjectVolumeRender-Error: Could not bind the glActiveTexture or glTexImage3D function.\n"
           ENDFB(G);

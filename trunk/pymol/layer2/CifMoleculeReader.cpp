@@ -25,6 +25,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <algorithm>
+
 /*
  * Add one bond without checking if it already exists
  */
@@ -85,60 +87,82 @@ static int bondOrderLookup(const char * order) {
 typedef std::map<std::string,
         std::map<std::string,
         std::map<std::string, int> > > bond_dict_t;
-bond_dict_t bond_dict;
 
 /*
- * parse components.cif into dictionary
+ * Read bonds from CHEM_COMP_BOND in `bond_dict` dictionary
  */
-void update_components_bond_dict() {
-  const char *name1, *name2;
+static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_dict) {
+  const cif_array *arr_id_1, *arr_id_2, *arr_order, *arr_comp_id;
+
+  if( !(arr_id_1  = data->get_arr("_chem_comp_bond.atom_id_1")) ||
+      !(arr_id_2  = data->get_arr("_chem_comp_bond.atom_id_2")) ||
+      !(arr_order = data->get_arr("_chem_comp_bond.value_order")) ||
+      !(arr_comp_id = data->get_arr("_chem_comp_bond.comp_id")))
+    return false;
+
+  const char *name1, *name2, *resn;
   int order_value;
-  const cif_array *arr_id_1, *arr_id_2, *arr_order;
+  int nrows = arr_id_1->get_nrows();
 
-  if (bond_dict.size())
-    return;
+  for (int i = 0; i < nrows; i++) {
+    resn = arr_comp_id->as_s(i);
+    name1 = arr_id_1->as_s(i);
+    name2 = arr_id_2->as_s(i);
 
-  const char *filename = getenv("COMPONENTS_CIF");
-  if (!filename || !filename[0])
-    filename = "components.cif";
+    // make sure name1 < name2
+    if (strcmp(name1, name2) < 0) {
+      std::swap(name1, name2);
+    }
 
-  cif_file * cif = new cif_file(filename);
+    const char *order = arr_order->as_s(i);
+    order_value = bondOrderLookup(order);
 
-  for (m_str_cifdatap_t::iterator data_it = cif->datablocks.begin(),
-      data_it_end = cif->datablocks.end(); data_it != data_it_end; ++data_it) {
+    bond_dict[resn][name1][name2] = order_value;
+  }
 
-    const std::string &resn = data_it->first;
-    cif_data * data = data_it->second;
+  return true;
+}
 
-    if( !(arr_id_1  = data->get_arr("_chem_comp_bond.atom_id_1")) ||
-        !(arr_id_2  = data->get_arr("_chem_comp_bond.atom_id_2")) ||
-        !(arr_order = data->get_arr("_chem_comp_bond.value_order")))
-      continue;
+/*
+ * parse components.cif (or $COMPONENTS_CIF) into dictionary. The file is
+ * only parsed once and the dictionary is global (static). Return NULL
+ * if file not available.
+ */
+static const bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
+  static bond_dict_t bond_dict;
 
-    int nrows = arr_id_1->get_nrows();
+  if (bond_dict.empty()) {
+    const char *filename = getenv("COMPONENTS_CIF");
+    if (!filename || !filename[0])
+      filename = "components.cif";
 
-    for (int i = 0; i < nrows; i++) {
-      name1 = arr_id_1->as_s(i);
-      name2 = arr_id_2->as_s(i);
+    cif_file * cif = new cif_file(filename);
 
-      // make sure name1 < name2
-      if (strcmp(name1, name2) < 0) {
-        const char *tmp = name1; name1 = name2; name2 = tmp;
-      }
+    for (m_str_cifdatap_t::iterator data_it = cif->datablocks.begin(),
+        data_it_end = cif->datablocks.end(); data_it != data_it_end; ++data_it) {
+      read_chem_comp_bond_dict(data_it->second, bond_dict);
+    }
 
-      const char *order = arr_order->as_s(i);
-      order_value = bondOrderLookup(order);
-
-      bond_dict[resn][name1][name2] = order_value;
+    if (bond_dict.empty()) {
+      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+        " Error: Please download 'components.cif' from http://www.wwpdb.org/data/ccd\n"
+        " and place it in the current directory or set the COMPONENTS_CIF environment"
+        " variable.\n"
+        ENDFB(G);
+      return NULL;
     }
   }
+
+  return &bond_dict;
 }
 
 /*
  * Add bonds for one residue, with atoms spanning from i_start to i_end-1,
  * based on components.cif
  */
-void ConnectComponent(ObjectMolecule * I, int i_start, int i_end) {
+static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
+    const bond_dict_t * bond_dict) {
+
   if (i_end - i_start < 2)
     return;
 
@@ -147,8 +171,8 @@ void ConnectComponent(ObjectMolecule * I, int i_start, int i_end) {
   bond_dict_t::const_iterator d_it;
 
   // get residue bond dictionary
-  d_it = bond_dict.find(ai[i_start].resn);
-  if (d_it == bond_dict.end())
+  d_it = bond_dict->find(ai[i_start].resn);
+  if (d_it == bond_dict->end())
     return;
 
   // for all pairs of atoms in given set
@@ -184,22 +208,16 @@ void ConnectComponent(ObjectMolecule * I, int i_start, int i_end) {
  * Add intra residue bonds based on components.cif, and common polymer
  * connecting bonds (C->N, O3*->P)
  */
-int ObjectMoleculeConnectComponents(ObjectMolecule * I)
-{
+static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
+    const bond_dict_t * bond_dict=NULL) {
+
   PyMOLGlobals * G = I->Obj.G;
   int i_start = 0, i_prev_c = 0, i_prev_o3 = 0;
 
-  // read components.cif
-  update_components_bond_dict();
-
-  // user feedback if components.cif not available
-  if (bond_dict.empty()) {
-    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-      " Error: Please download 'components.cif' from http://www.wwpdb.org/ccd.html\n"
-      " and place it in the current directory or set the COMPONENTS_CIF environment"
-      " variable.\n"
-      ENDFB(G);
-    return false;
+  if (!bond_dict) {
+    // read components.cif
+    if (!(bond_dict = get_global_components_bond_dict(G)))
+      return false;
   }
 
   // reserve some memory for new bonds
@@ -209,14 +227,17 @@ int ObjectMoleculeConnectComponents(ObjectMolecule * I)
     VLACheck(I->Bond, BondType, I->NAtom * 4);
   }
 
-  for (int i = 0; i < I->NAtom; i++) {
-    const char *name = I->AtomInfo[i].name;
-
+  for (int i = 0;; ++i) {
     // intra-residue
     if(!AtomInfoSameResidue(G, I->AtomInfo + i_start, I->AtomInfo + i)) {
-      ConnectComponent(I, i_start, i);
+      ConnectComponent(I, i_start, i, bond_dict);
       i_start = i;
     }
+
+    if (i == I->NAtom)
+      break;
+
+    const char *name = I->AtomInfo[i].name;
 
     // inter-residue polymer bonds
     if (strcmp("C", name) == 0) {
@@ -237,9 +258,6 @@ int ObjectMoleculeConnectComponents(ObjectMolecule * I)
       }
     }
   }
-
-  // intra-residue (last residue)
-  ConnectComponent(I, i_start, I->NAtom);
 
   // clean up
   VLASize(I->Bond, BondType, I->NBond);
@@ -957,6 +975,10 @@ bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
 
 /*
  * Read bonds from CHEM_COMP_BOND
+ *
+ * Output:
+ *   cset->TmpBond
+ *   cset->NTmpBond
  */
 bool read_chem_comp_bond_atom_ids(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo, CoordSet * cset) {
@@ -1163,7 +1185,11 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
 
   // create bonds
   if(isNew) {
-    if(SettingGetGlobal_i(G, cSetting_connect_mode) == 4) {
+    bond_dict_t bond_dict_local;
+    if (read_chem_comp_bond_dict(datablock, bond_dict_local)) {
+      ObjectMoleculeConnectComponents(I, &bond_dict_local);
+    } else if(SettingGetGlobal_i(G, cSetting_connect_mode) == 4) {
+      // read components.cif
       ObjectMoleculeConnectComponents(I);
     } else {
       ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, csets[0], true, -1);

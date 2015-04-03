@@ -921,15 +921,19 @@ def polar(self_cmd, sele):
               [ 1, 'to any excluding solvent',
                  'cmd.dist("'+sele+'_polar_conts","('+sele+') and not solvent","(not ('+sele+
                  ')) and not solvent",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
+              [ 0, '', '' ],
+              [ 1, 'between chains',
+                 'util.interchain_distances("'+sele+'_interchain_polar","'+sele+'",mode=2)'],
               ]
 
-def polar_inter(self_cmd, sele):
-    return [[ 2, 'Polar Contacts:', ''],
-              ]
 
 def find(self_cmd, sele):
     return [[ 2, 'Find:', ''],
               [ 1, 'polar contacts', polar(self_cmd, sele) ],
+              [ 1, 'any contacts', [[ 2, 'Any Contacts:', '']] + [
+                  [ 1, 'between chains within %.1fA' % d, 'util.interchain_distances("'+sele+'_interchain_any","'+sele+'",cutoff=%f)' % d]
+                  for d in (3.0, 3.5, 4.0)
+              ]],
               ]
 
 def align_to_object(self_cmd, sele):

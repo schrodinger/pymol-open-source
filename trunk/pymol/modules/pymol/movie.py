@@ -655,6 +655,19 @@ produce_mode_sc = cmd.Shortcut(produce_mode_dict.keys())
 
 def produce(filename, mode='', first=0, last=0, preserve=0,
             encoder='mpeg_encode', quality=60, quiet=1, _self=cmd):
+    '''
+DESCRIPTION
+
+    Export a movie to an MPEG file.
+
+    Requires FREEMOL.
+    '''
+    try:
+        from freemol import mpeg_encode
+    except ImportError:
+        print " Error: This PyMOL build is not set up with FREEMOL (freemol.mpeg_encode import failed)"
+        return _self.DEFAULT_ERROR
+
     prefix = _prefix
 
     if _self.is_string(mode):

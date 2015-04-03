@@ -75,10 +75,10 @@ void BlockDrawLeftEdge(Block * I ORTHOCGOARG)
     if (orthoCGO){
       CGOColor(orthoCGO, .3f, .3f, .3f);
       CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-      CGOVertex(orthoCGO, I->rect.left - 1.f, I->rect.bottom, 0.f);
       CGOVertex(orthoCGO, I->rect.left, I->rect.bottom, 0.f);
-      CGOVertex(orthoCGO, I->rect.left - 1.f, I->rect.top, 0.f);
+      CGOVertex(orthoCGO, I->rect.left + 1.f, I->rect.bottom, 0.f);
       CGOVertex(orthoCGO, I->rect.left, I->rect.top, 0.f);
+      CGOVertex(orthoCGO, I->rect.left + 1.f, I->rect.top, 0.f);
       CGOEnd(orthoCGO);
     } else {
       if(G->HaveGUI && G->ValidContext) {

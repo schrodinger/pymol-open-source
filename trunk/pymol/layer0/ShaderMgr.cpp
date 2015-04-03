@@ -96,13 +96,6 @@ PFNGLTEXIMAGE3DPROC getTexImage3D(){
     my_glTexImage3D = (PFNGLTEXIMAGE3DPROC) wglGetProcAddress("glTexImage3D");
   return my_glTexImage3D;
 }
-
-PFNGLACTIVETEXTUREPROC getActiveTexture() {
-  static PFNGLACTIVETEXTUREPROC my_glActiveTexture = NULL;
-  if (!my_glActiveTexture)
-    my_glActiveTexture = (PFNGLACTIVETEXTUREPROC) wglGetProcAddress("glActiveTexture");
-  return my_glActiveTexture;
-}
 #endif
 
 /*
