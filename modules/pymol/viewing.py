@@ -1281,6 +1281,12 @@ SEE ALSO
         if session.has_key('scene_dict'):
             _self.scene('*', 'clear')
 
+            # save initial scene
+            tempname = '_initial_scene'
+            while tempname in session['scene_dict']:
+                tempname += '_'
+            _self.scene(tempname, 'store')
+
             frame = 0
             if _self.get_movie_playing():
                 _self.mstop()
@@ -1292,6 +1298,10 @@ SEE ALSO
             if frame:
                 _self.frame(frame)
                 _self.mplay()
+
+            # restore initial scene
+            _self.scene(tempname, 'recall', animate=0)
+            _self.scene(tempname, 'clear')
 
         if session.has_key('scene_order'):
             _self.scene_order(' '.join(session['scene_order']))

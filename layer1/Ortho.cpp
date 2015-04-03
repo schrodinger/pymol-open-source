@@ -1717,10 +1717,10 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 	  if (generate_shader_cgo){
 	    CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
 	    CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
-	    CGOVertex(orthoCGO, I->Width - internal_gui_width - 1.f, 0.f, 0.f);
 	    CGOVertex(orthoCGO, I->Width - internal_gui_width, 0.f, 0.f);
-	    CGOVertex(orthoCGO, I->Width - internal_gui_width -1.f, I->Height, 0.f);
+	    CGOVertex(orthoCGO, I->Width - internal_gui_width + 1.f, 0.f, 0.f);
 	    CGOVertex(orthoCGO, I->Width - internal_gui_width, I->Height, 0.f);
+	    CGOVertex(orthoCGO, I->Width - internal_gui_width + 1.f, I->Height, 0.f);
 	    CGOEnd(orthoCGO);
 	  } else {
 	    glColor3f(0.3, 0.3, 0.3);

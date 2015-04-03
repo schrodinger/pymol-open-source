@@ -231,7 +231,12 @@ def exec_deferred(self):
     '''
     Execute the stuff from invocations.options.deferred
     '''
-    import socket
+    try:
+        from socket import error as socket_error
+    except ImportError:
+        socket_error = None
+        print 'import socket failed'
+
     import pymol as _pymol
 
     cmd = self.cmd
@@ -255,10 +260,10 @@ def exec_deferred(self):
                     cmd.do(a[4:])
                 else:
                     cmd.load(a, quiet=0)
-    except CmdException:
-        traceback.print_exc()
+    except CmdException as e:
+        print e
         print " Error: Argument processing aborted due to exception (above)."
-    except socket.error:
+    except socket_error:
         # this (should) only happen if we're opening a PWG file on startup
         # and the port is busy.  For now, simply bail...
         cmd.wizard("message",["Socket.error: ","",

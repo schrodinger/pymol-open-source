@@ -1599,3 +1599,22 @@ def colors(scheme="",_self=cmd):
         cmd.recolor()
 
 
+def interchain_distances(name, selection, cutoff=None, mode=None, label=0, reset=1, _self=cmd):
+    '''
+DESCRIPTION
+
+    Find distances between all chains in selection
+    '''
+    import itertools
+
+    if int(reset):
+        _self.distance(name, 'none', 'none', 1.0, reset=1)
+
+    chains = _self.get_chains(selection)
+
+    for c1, c2 in itertools.combinations(chains, 2):
+        s1 = '(%s) & chain "%s"' % (selection, c1)
+        s2 = '(%s) & chain "%s"' % (selection, c2)
+        _self.distance(name, s1, s2, cutoff, mode, label=label)
+
+    _self.enable(name)

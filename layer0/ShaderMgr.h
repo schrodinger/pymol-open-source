@@ -25,34 +25,16 @@ Z* -------------------------------------------------------------------
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 PFNGLTEXIMAGE3DPROC getTexImage3D();
-PFNGLACTIVETEXTUREPROC getActiveTexture();
 static PFNGLTEXIMAGE3DPROC glTexImage3D;
-static PFNGLACTIVETEXTUREPROC glActiveTexture;
 static PFNGLGENPROGRAMSARBPROC glGenProgramsARB;
 static PFNGLBINDPROGRAMARBPROC glBindProgramARB;
 static PFNGLDELETEPROGRAMSARBPROC glDeleteProgramsARB;
 static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB;
 static PFNGLPROGRAMENVPARAMETER4FARBPROC glProgramEnvParameter4fARB;
 static PFNGLGETPROGRAMIVARBPROC glGetProgramivARB;
-static PFNGLGETPROGRAMIVARBPROC glGetProgramiv;
-static PFNGLATTACHSHADERPROC glAttachShader;
-static PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
-static PFNGLGETSHADERIVPROC glGetShaderiv;
-static PFNGLCOMPILESHADERPROC glCompileShader;
-static PFNGLSHADERSOURCEPROC glShaderSource;
-static PFNGLCREATESHADERPROC glCreateShader;
-static PFNGLCREATEPROGRAMPROC glCreateProgram;
-static PFNGLDELETEPROGRAMPROC glDeleteProgram;
-static PFNGLDELETESHADERPROC glDeleteShader;
-static PFNGLUSEPROGRAMPROC glUseProgram;
-static PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
-static PFNGLLINKPROGRAMPROC glLinkProgram;
-static PFNGLUNIFORM1IPROC glUniform1i;
-static PFNGLUNIFORM1FPROC glUniform1f;
-static PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
 #endif
-
 /* END PROPRIETARY CODE SEGMENT */
+
 typedef struct _CShaderPrg {
   PyMOLGlobals * G;
   /* for retrieving from the ShaderMgr */
