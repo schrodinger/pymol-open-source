@@ -119,3 +119,26 @@ class TestSettings(testing.PyMOLTestCase):
         ratio = covered / float(npixels)
         msg = "covered=%d npixels=%d ratio=%f" % (covered, npixels, ratio)
         self.assertTrue(0.14 < ratio < 0.165, msg)
+
+    @testing.requires_version('1.7.5')
+    @testing.requires('incentive')
+    @testing.requires('gui')
+    def testChromadepth(self):
+        cmd.viewport(100, 100)
+
+        self.ambientOnly()
+
+        cmd.set('use_shaders')
+        cmd.set('chromadepth')
+        cmd.set('orthoscopic')
+
+        cmd.pseudoatom(pos=(0, 0, -5))
+        cmd.pseudoatom(pos=(0, 0, 5))
+        cmd.color('gray')
+        cmd.show_as('spheres')
+        cmd.zoom()
+        cmd.turn('y', 20)
+
+        img = self.get_imagearray()
+        self.assertImageHasColor('blue', img)
+        self.assertImageHasColor('red', img)
