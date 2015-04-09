@@ -71,7 +71,7 @@ ObjectVolume *ObjectVolumeFromXtalSym(PyMOLGlobals * G, ObjectVolume * obj, Obje
 
 PyObject *ObjectVolumeAsPyList(ObjectVolume * I);
 int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume ** result);
-int ObjectVolumeInvalidateMapName(ObjectVolume * I, char *name);
+int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name);
 
 int ObjectVolumeColor(ObjectVolume * I, float * colors, int ncolors);
 

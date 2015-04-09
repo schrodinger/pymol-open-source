@@ -68,7 +68,7 @@ Z* -------------------------------------------------------------------
 
 int ObjectMoleculeUpdateMMStereoInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize);
 
-int OVLexicon_IsEmpty(OVLexicon * uk, ov_word id){
+static int OVLexicon_IsEmpty(OVLexicon * uk, ov_word id){
   char null_st[1] = "";
   char *st = null_st;
   int i = 0, stlen, is_empty = 1;
@@ -84,18 +84,13 @@ int OVLexicon_IsEmpty(OVLexicon * uk, ov_word id){
 }
 
 void ObjectMoleculeCylinders(ObjectMolecule * I);
-CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, char *buffer,
+CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
                                         AtomInfoType ** atInfoPtr);
 
 int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele);
 
 void ObjectMoleculeAppendAtoms(ObjectMolecule * I, AtomInfoType * atInfo,
                                CoordSet * cset);
-
-void ObjectMoleculeUpdate(ObjectMolecule * I);
-int ObjectMoleculeGetNFrames(ObjectMolecule * I);
-
-void ObjectMoleculeDescribeElement(ObjectMolecule * I, int index, char *buffer);
 
 void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op);
 
@@ -107,13 +102,7 @@ void ObjectMoleculeBracketResidue(ObjectMolecule * I, AtomInfoType * ai, int *st
 
 int ObjectMoleculeAddSeleHydrogens(ObjectMolecule * I, int sele, int state);
 
-CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule * I, int state);
 void ObjectMoleculeInferAmineGeomFromBonds(ObjectMolecule * I, int state);
-CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
-                                        AtomInfoType ** atInfoPtr);
-
-ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                         char *TOPStr, int frame, int discrete);
 
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule * I);
 
@@ -285,7 +274,7 @@ int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int stat
  * NOTES
  *   User owns the buffer so must clean up after it
  */
-static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char* ch, int len)
+static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char * ch, int len)
 {
   int objState;
   int n = 0;
@@ -799,7 +788,7 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
   return ok;
 }
 
-static char *skip_fortran(int num, int per_line, char *p)
+static const char *skip_fortran(int num, int per_line, const char *p)
 {
   int a, b;
   b = 0;
@@ -889,13 +878,14 @@ int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
-                                          char *fname, int frame, int interval,
+                                          const char *fname, int frame, int interval,
                                           int average, int start, int stop, int max,
-                                          char *sele, int image, float *shift, int quiet)
+                                          const char *sele, int image, float *shift, int quiet)
 {
   int ok = true;
   FILE *f;
-  char *buffer, *p;
+  char *buffer;
+  const char *p;
   char cc[MAXLINELEN];
   int n_read;
   int to_go;
@@ -1276,7 +1266,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
 }
 
 ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
-                                          char *fname, int frame, int quiet, char mode)
+                                          const char *fname, int frame, int quiet, char mode)
 {
   /*
    * mode = 0: AMBER coordinate/restart file (one frame only)
@@ -1404,7 +1394,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * I,
   return (I);
 }
 
-static char *findflag(PyMOLGlobals * G, char *p, const char *flag, const char *format)
+static const char *findflag(PyMOLGlobals * G, const char *p, const char *flag, const char *format)
 {
 
   char cc[MAXLINELEN];
@@ -1453,10 +1443,10 @@ static char *findflag(PyMOLGlobals * G, char *p, const char *flag, const char *f
 
 
 /*========================================================================*/
-CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, char *buffer,
+static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buffer,
                                         AtomInfoType ** atInfoPtr)
 {
-  char *p;
+  const char *p;
   int nAtom;
   int a, b, c, bi, last_i, at_i, aa, rc;
   float *coord = NULL;
@@ -2332,7 +2322,7 @@ ok_except1:
 
 
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
+static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
                                          char *TOPStr, int frame, int discrete)
 {
   CoordSet *cset = NULL;
@@ -2428,7 +2418,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule * I,
 }
 
 ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int discrete)
+                                          const char *fname, int frame, int discrete)
 {
   ObjectMolecule *I = NULL;
   char *buffer;
@@ -2815,7 +2805,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * I, CRaw
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int discrete)
+                                          const char *fname, int frame, int discrete)
 {
   ObjectMolecule *I = NULL;
   int ok = true;
@@ -2837,7 +2827,7 @@ ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals * G, ObjectMolecule * obj
 
 
 /*========================================================================*/
-int ObjectMoleculeMultiSave(ObjectMolecule * I, char *fname, FILE * f, int state,
+int ObjectMoleculeMultiSave(ObjectMolecule * I, const char *fname, FILE * f, int state,
                             int append, int format, int quiet)
 {
   CRaw *raw = NULL;
@@ -3171,7 +3161,7 @@ static CObjectState *ObjectMoleculeGetObjectState(ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
-CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule * I, int state)
+static CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule * I, int state)
 {
 
   if(state < 0) {
@@ -3189,7 +3179,7 @@ CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule * I, int state)
 
 
 /*========================================================================*/
-int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, char *text)
+int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text)
 {
   int result = false;
   if(state < 0)
@@ -3210,7 +3200,7 @@ int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, char *text)
 
 
 /*========================================================================*/
-char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state)
+const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state)
 {
   char *result = NULL;
   if(state < 0)
@@ -3327,10 +3317,10 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 }
 
 /*========================================================================*/
-static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
-                                               AtomInfoType ** atInfoPtr, char **restart)
+static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buffer,
+                                               AtomInfoType ** atInfoPtr, const char **restart)
 {
-  char *p, *p_store;
+  const char *p, *p_store;
   int nAtom;
   int a, c;
   float *coord = NULL;
@@ -3366,7 +3356,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
   }
 
   if(tinker_xyz && nAtom) {     /* test Tinker XYZ formatting assumption */
-    char *pp = p;
+    const char *pp = p;
     int dummy_int;
     float dummy_float;
     AtomName dummy_name;
@@ -3393,7 +3383,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
   }
 
   if(!tinker_xyz) {
-    char *pp = p;
+    const char *pp = p;
     int have_atom_line = true;
     float dummy_float;
     AtomName dummy_name;
@@ -3589,15 +3579,15 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, char *buffer,
 
 
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                         char *PDBStr, int frame, int discrete)
+static ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
+                                         const char *PDBStr, int frame, int discrete)
 {
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
-  char *restart = NULL;
+  const char *restart = NULL;
 
   if(!I)
     isNew = true;
@@ -3680,7 +3670,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int discrete)
+                                          const char *fname, int frame, int discrete)
 {
   ObjectMolecule *I = NULL;
   char *buffer;
@@ -3888,7 +3878,8 @@ int ObjectMoleculeAddSeleHydrogens(ObjectMolecule * I, int sele, int state)
   return ok;
 }
 
-int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs, int *AtmToIdx, CoordSet *cs, float *backup, int mode, int at0, 
+static int AddCoordinateIntoCoordSet(ObjectMolecule * I, int a, CoordSet *tcs,
+    int *AtmToIdx, CoordSet *cs, float *backup, int mode, int at0,
 			       int index0, int move_flag, float *va1, float *vh1, 
 			       float *x1, float *y1, float *z1, float d, int ca0){
   float *f0, *f1;
@@ -4917,7 +4908,6 @@ void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
 int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
 {
   /* match existing properties of the old atom */
-  int a;
   AtomInfoType *ai0;
   int ok = true;
 
@@ -7109,7 +7099,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
 /*========================================================================*/
 int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
                                      int sele, float *matrix, int log,
-                                     char *sname, int homogenous, int global)
+                                     const char *sname, int homogenous, int global)
 {
   /* called from "translate [5,5,5], objSele" */
   /* if sele == -1, then the whole object state is transformed */
@@ -8521,12 +8511,12 @@ ok_except1:
 
 /*========================================================================*/
 
-static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, char *buffer,
-                                               AtomInfoType ** atInfoPtr, char **restart)
+static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buffer,
+                                               AtomInfoType ** atInfoPtr, const char **restart)
 {
-  char *p;
+  const char *p;
   int nAtom, nBond;
-  int a, c, cnt, atm, chg;
+  int a, cnt, atm, chg;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL;
@@ -8718,12 +8708,12 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, char *buffer,
 
 /*========================================================================*/
 
-static CoordSet *ObjectMoleculeSDF2Str2CoordSet(PyMOLGlobals * G, char *buffer,
+static CoordSet *ObjectMoleculeSDF2Str2CoordSet(PyMOLGlobals * G, const char *buffer,
                                                 AtomInfoType ** atInfoPtr,
-                                                char **next_mol)
+                                                const char **next_mol)
 {
   char cc[MAXLINELEN];
-  char *p;
+  const char *p;
   CoordSet *result = NULL;
   result = ObjectMoleculeMOLStr2CoordSet(G, buffer, atInfoPtr, next_mol);
   p = *next_mol;
@@ -8742,7 +8732,7 @@ static CoordSet *ObjectMoleculeSDF2Str2CoordSet(PyMOLGlobals * G, char *buffer,
   return result;
 }
 
-int isRegularRes( const char *resname )
+static int isRegularRes( const char *resname )
 {
 
   if( strcmp( resname, "ALA" ) == 0 )
@@ -8881,19 +8871,19 @@ static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *
 /*========================================================================*/
 
 static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
-                                                char *buffer,
+                                                const char *buffer,
                                                 AtomInfoType ** atInfoPtr,
-                                                char **next_mol)
+                                                const char **next_mol)
 {
-  char *p;
+  const char *p;
   int nAtom, nBond, nSubst, nFeat, nSet;
-  int a, c;
+  int a;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL;
   char cc[MAXLINELEN];
   float *f;
-  char *last_p;
+  const char *last_p;
   BondType *ii;
   BondType *bond = NULL;
   int ok = true;
@@ -9237,7 +9227,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
             resv_flag = false;
 
             if(ok) {
-              char *save_p = p;
+              const char *save_p = p;
               p = ParseWordCopy(cc, p, 20);
               if(sscanf(cc, "%d", &id) != 1) {
                 if(cc[0] != '@')
@@ -9457,7 +9447,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
  * next entry. Otherwise, read a multi-state molecule.
  */
 ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                      char **next_entry,
+                                      const char **next_entry,
                                       int content_format, int frame,
                                       int discrete, int quiet, int multiplex,
                                       char *new_name,
@@ -9468,7 +9458,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
   AtomInfoType *atInfo;
   int isNew;
   int nAtom;
-  char *restart = NULL, *start = *next_entry;
+  const char *restart = NULL, *start = *next_entry;
   int repeatFlag = true;
   int successCnt = 0;
   char tmpName[WordLength];
@@ -11148,7 +11138,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                       {
                         /* simple string label text */
                         AtomInfoType *ai = I->AtomInfo + a;
-                        char *label = op->s1;
+                        const char *label = op->s1;
                         if(ai->label) {
                           OVLexicon_DecRef(I->Obj.G->Lexicon, ai->label);
                         }
@@ -11732,7 +11722,7 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer)
 
 
 /*========================================================================*/
-void ObjectMoleculeDescribeElement(ObjectMolecule * I, int index, char *buffer)
+static void ObjectMoleculeDescribeElement(ObjectMolecule * I, int index, char *buffer)
 {
   ObjectMoleculeGetAtomSele(I, index, buffer);
   if(!I->AtomInfo[index].alt[0]) {
@@ -11801,7 +11791,7 @@ void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer)
 
 
 /*========================================================================*/
-int ObjectMoleculeGetNFrames(ObjectMolecule * I)
+static int ObjectMoleculeGetNFrames(ObjectMolecule * I)
 {
   return I->NCSet;
 }
@@ -11848,7 +11838,7 @@ static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals * G,
 
 
 /*========================================================================*/
-void ObjectMoleculeUpdate(ObjectMolecule * I)
+static void ObjectMoleculeUpdate(ObjectMolecule * I)
 {
   int a; /*, ok; */
   PyMOLGlobals *G = I->Obj.G;
@@ -11857,7 +11847,6 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
   /* if the cached representation is invalid, reset state */
   if(!I->RepVisCacheValid) {
     /* note which representations are active */
-    int b;
     /* for each atom in each coordset, blank out the representation cache */
     if(I->NCSet > 1) {
       AtomInfoType *ai = I->AtomInfo;
@@ -11951,7 +11940,7 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
     " ObjectMolecule: updates complete for object %s.\n", I->Obj.Name ENDFD;
 }
 
-AtomInfoType *get_atom_info_type(ObjectMolecule *obj, int state, int idx){
+static AtomInfoType *get_atom_info_type(ObjectMolecule *obj, int state, int idx){
   int atm;
   if (state>=0 && state < obj->NCSet && obj->CSet[state] && obj->CSet[state]->NIndex > idx){   
     atm = obj->CSet[state]->IdxToAtm[idx];
@@ -12796,7 +12785,7 @@ void ObjectMoleculeFree(ObjectMolecule * I)
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                         char *MMDStr, int frame, int discrete)
+                                         const char *MMDStr, int frame, int discrete)
 {
   int ok = true;
   CoordSet *cset = NULL;
@@ -12881,13 +12870,14 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, char *sepPrefix,
+                                          const char *fname, int frame, const char *sepPrefix,
                                           int discrete)
 {
   ObjectMolecule *I = NULL;
   int ok = true;
   int oCnt = 0;
-  char *buffer, *p;
+  const char *p;
+  char *buffer;
   char cc[MAXLINELEN], oName[WordLength];
   int nLines;
 
@@ -12928,9 +12918,9 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals * G, ObjectMolecule * obj
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                         char *PDBStr, int state, int discrete,
+                                         const char *PDBStr, int state, int discrete,
                                          M4XAnnoType * m4x, char *pdb_name,
-                                         char **next_pdb, PDBInfoRec * pdb_info,
+                                         const char **next_pdb, PDBInfoRec * pdb_info,
                                          int quiet, int *model_number)
 {
   CoordSet *cset = NULL;
@@ -12938,7 +12928,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
   int ok = true;
   int isNew = true;
   unsigned int nAtom = 0;
-  char *start, *restart = NULL;
+  const char *start, *restart = NULL;
   int repeatFlag = true;
   int successCnt = 0;
   unsigned int aic_mask = cAIC_PDBMask;
@@ -13085,10 +13075,10 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
 
 
 /*========================================================================*/
-CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, char *buffer,
+CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
                                         AtomInfoType ** atInfoPtr)
 {
-  char *p;
+  const char *p;
   int nAtom, nBond;
   int a, c, bPart, bOrder;
   float *coord = NULL;

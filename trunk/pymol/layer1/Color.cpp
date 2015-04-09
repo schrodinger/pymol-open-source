@@ -254,7 +254,7 @@ static int ColorFindExtByName(PyMOLGlobals * G, const char *name, int null_okay,
   return (result);
 }
 
-void ColorRegisterExt(PyMOLGlobals * G, char *name, void *ptr, int type)
+void ColorRegisterExt(PyMOLGlobals * G, const char *name, void *ptr, int type)
 {
   CColor *I = G->Color;
   int a;
@@ -280,7 +280,7 @@ void ColorRegisterExt(PyMOLGlobals * G, char *name, void *ptr, int type)
   }
 }
 
-void ColorForgetExt(PyMOLGlobals * G, char *name)
+void ColorForgetExt(PyMOLGlobals * G, const char *name)
 {
   CColor *I = G->Color;
   int a;
@@ -749,7 +749,7 @@ int ColorGetIndex(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-float *ColorGetNamed(PyMOLGlobals * G, char *name)
+float *ColorGetNamed(PyMOLGlobals * G, const char *name)
 {
   return (ColorGet(G, ColorGetIndex(G, name)));
 }

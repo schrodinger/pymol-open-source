@@ -166,23 +166,14 @@ const cif_array * cif_data::get_opt(const char * key, const char * alias1, const
   return arr;
 }
 
-// constructor - mode = 0: filename, mode = 1: content (free), mode = 2: content (don't free)
-void cif_file::init(char * source, int mode) {
-  owncontents = true;
-
-  switch (mode) {
-    case 0:
-      contents = FileGetContents(source, NULL);
-
-      if (!contents)
-        std::cerr << "ERROR: Failed to load file '" << source << "'" << std::endl;
-
-      break;
-    case 2:
-      owncontents = false;
-    default:
-      contents = source;
-      break;
+// constructor
+cif_file::cif_file(const char* filename, const char* contents_) {
+  if (contents_) {
+    contents = strdup(contents_);
+  } else {
+    contents = FileGetContents(filename, NULL);
+    if (!contents)
+      std::cerr << "ERROR: Failed to load file '" << filename << "'" << std::endl;
   }
 
   if (contents)
@@ -195,7 +186,7 @@ cif_file::~cif_file() {
       it_end = datablocks.end(); it != it_end; ++it)
     delete it->second;
 
-  if (contents && owncontents)
+  if (contents)
     free(contents);
 }
 

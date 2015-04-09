@@ -67,6 +67,6 @@ int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list,
 PyObject *ObjectSurfaceAsPyList(ObjectSurface * I);
 int ObjectSurfaceSetLevel(ObjectSurface * I, float level, int state, int quiet);
 int ObjectSurfaceGetLevel(ObjectSurface * I, int state, float *result);
-int ObjectSurfaceInvalidateMapName(ObjectSurface * I, char *name);
+int ObjectSurfaceInvalidateMapName(ObjectSurface * I, const char *name);
 
 #endif

@@ -252,7 +252,7 @@ static char blosum62[BLOSUM62_ROWS][BLOSUM62_COLS] = {
   ""
 };
 
-int MatchMatrixFromFile(CMatch * I, char *fname, int quiet)
+int MatchMatrixFromFile(CMatch * I, const char *fname, int quiet)
 {
   PyMOLGlobals *G = I->G;
 

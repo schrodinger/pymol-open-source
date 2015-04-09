@@ -91,8 +91,6 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
       short use_shader, generate_shader_cgo = 0;
       int normals =
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_normals);
-      int lighting =
-        SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_lighting);
       short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
 
       use_shader = SettingGetGlobal_b(G, cSetting_dot_use_shader) & 
@@ -219,6 +217,8 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
       } else {
 	if(!normals)
 	  SceneResetNormal(G, true);
+        int lighting =
+          SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_lighting);
 	if(!lighting) {
 	  if(!info->line_lighting)
 	    glDisable(GL_LIGHTING);
@@ -229,9 +229,6 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 	else
 	  glPointSize(I->Width);
 
-#ifdef PURE_OPENGL_ES_2
-	/* TODO */
-#else
         glBegin(GL_POINTS);
         while(c--) {
           if(!cc) {             /* load up the current vertex color */
@@ -247,7 +244,6 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
           cc--;
         }
         glEnd();
-#endif
 
         if(!lighting)
           glEnable(GL_LIGHTING);

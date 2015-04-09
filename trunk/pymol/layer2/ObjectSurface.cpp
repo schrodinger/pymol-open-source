@@ -325,7 +325,7 @@ static void ObjectSurfaceInvalidate(ObjectSurface * I, int rep, int level, int s
   }
 }
 
-int ObjectSurfaceInvalidateMapName(ObjectSurface * I, char *name)
+int ObjectSurfaceInvalidateMapName(ObjectSurface * I, const char *name)
 {
   int a;
   ObjectSurfaceState *ms;

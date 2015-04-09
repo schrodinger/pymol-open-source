@@ -339,7 +339,7 @@ static void ObjectMeshFree(ObjectMesh * I)
   OOFreeP(I);
 }
 
-int ObjectMeshInvalidateMapName(ObjectMesh * I, char *name)
+int ObjectMeshInvalidateMapName(ObjectMesh * I, const char *name)
 {
   int a;
   ObjectMeshState *ms;

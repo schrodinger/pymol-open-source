@@ -293,7 +293,7 @@ public:
   sshashkey end;
 };
 typedef std::map<sshashkey, sshashvalue> sshashmap;
-void sshashmap_clear(PyMOLGlobals * G, sshashmap &ssrecords) {
+static void sshashmap_clear(PyMOLGlobals * G, sshashmap &ssrecords) {
   // decrement Lexicon references (should go into ~sshashkey(), but
   // the PyMOLGlobals is not known there)
   for (sshashmap::iterator it = ssrecords.begin(),
@@ -307,7 +307,7 @@ void sshashmap_clear(PyMOLGlobals * G, sshashmap &ssrecords) {
 /*
  * Read CELL and SYMMETRY
  */
-CSymmetry * read_symmetry(PyMOLGlobals * G, cif_data * data) {
+static CSymmetry * read_symmetry(PyMOLGlobals * G, cif_data * data) {
   const cif_array * cell[6] = {
     data->get_arr("_cell?length_a"),
     data->get_arr("_cell?length_b"),
@@ -342,7 +342,7 @@ CSymmetry * read_symmetry(PyMOLGlobals * G, cif_data * data) {
 /*
  * Read CHEM_COMP_ATOM
  */
-CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
+static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
     AtomInfoType ** atInfoPtr) {
 
   const cif_array * arr_x = data->get_arr("_chem_comp_atom.model_cartn_x");
@@ -414,7 +414,7 @@ CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
 /*
  * Read ATOM_SITE
  */
-CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
+static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
     AtomInfoType ** atInfoPtr, short * fractional) {
 
   const cif_array *arr_x, *arr_y, *arr_z;
@@ -545,7 +545,7 @@ CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
  * Append CA atoms to atInfoPtr, with no modification to coord sets. Sorting
  * will be necesarry to move those atoms to the correct place in the sequence.
  */
-bool read_pdbx_unobs_or_zero_occ_residues(PyMOLGlobals * G, cif_data * data,
+static bool read_pdbx_unobs_or_zero_occ_residues(PyMOLGlobals * G, cif_data * data,
     AtomInfoType ** atInfoPtr) {
 
   const cif_array *arr_resn, *arr_resi, *arr_chain, *arr_segi,
@@ -614,7 +614,7 @@ bool read_pdbx_unobs_or_zero_occ_residues(PyMOLGlobals * G, cif_data * data,
 /*
  * Read secondary structure from STRUCT_CONF or STRUCT_SHEET_RANGE
  */
-bool read_ss_(PyMOLGlobals * G, cif_data * data, char ss, sshashmap &ssrecords) {
+static bool read_ss_(PyMOLGlobals * G, cif_data * data, char ss, sshashmap &ssrecords) {
   const cif_array *arr_beg_chain, *arr_beg_resi,
                   *arr_end_chain, *arr_end_resi;
 
@@ -657,7 +657,7 @@ bool read_ss_(PyMOLGlobals * G, cif_data * data, char ss, sshashmap &ssrecords) 
 /*
  * Read secondary structure
  */
-bool read_ss(PyMOLGlobals * G, cif_data * datablock, AtomInfoType * atInfo) {
+static bool read_ss(PyMOLGlobals * G, cif_data * datablock, AtomInfoType * atInfo) {
   sshashmap ssrecords;
 
   read_ss_(G, datablock, 'H', ssrecords);
@@ -700,7 +700,7 @@ bool read_ss(PyMOLGlobals * G, cif_data * datablock, AtomInfoType * atInfo) {
 /*
  * Read the SCALEn matrix into 4x4 `matrix`
  */
-bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data, float * matrix) {
+static bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data, float * matrix) {
   const cif_array *arr_transf[12];
 
   if (!(arr_transf[0] = data->get_arr("_atom_sites.fract_transf_matrix[1][1]", "_atom_sites_fract_tran_matrix_11")))
@@ -730,7 +730,7 @@ bool read_atom_site_fract_transf(PyMOLGlobals * G, const cif_data * data, float 
 /*
  * Read anisotropic temperature factors from ATOM_SITE or ATOM_SITE_ANISOTROP
  */
-bool read_atom_site_aniso(PyMOLGlobals * G, cif_data * data,
+static bool read_atom_site_aniso(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo) {
 
   const cif_array *arr_label, *arr_u11, *arr_u22, *arr_u33, *arr_u12, *arr_u13, *arr_u23;
@@ -813,7 +813,7 @@ bool read_atom_site_aniso(PyMOLGlobals * G, cif_data * data,
 /*
  * Read GEOM_BOND
  */
-bool read_geom_bond_atom_site_labels(PyMOLGlobals * G, cif_data * data,
+static bool read_geom_bond_atom_site_labels(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo, CoordSet * cset) {
 
   const cif_array *arr_ID_1, *arr_ID_2;
@@ -875,7 +875,7 @@ bool read_geom_bond_atom_site_labels(PyMOLGlobals * G, cif_data * data,
 /*
  * Read bonds from STRUCT_CONN
  */
-bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
+static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo, CoordSet * cset) {
 
   const cif_array *col_type_id;
@@ -980,7 +980,7 @@ bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
  *   cset->TmpBond
  *   cset->NTmpBond
  */
-bool read_chem_comp_bond_atom_ids(PyMOLGlobals * G, cif_data * data,
+static bool read_chem_comp_bond_atom_ids(PyMOLGlobals * G, cif_data * data,
     AtomInfoType * atInfo, CoordSet * cset) {
 
   const cif_array *col_ID_1, *col_ID_2, *col_comp_id;
@@ -1039,7 +1039,7 @@ bool read_chem_comp_bond_atom_ids(PyMOLGlobals * G, cif_data * data,
  * States are returned as a coord set VLA, atoms are written to atInfoPtr, and
  * bonds are stored with first coordinate set.
  */
-CoordSet ** ObjectMoleculeCifData2CoordSets(PyMOLGlobals * G, cif_data * datablock,
+static CoordSet ** ObjectMoleculeCifData2CoordSets(PyMOLGlobals * G, cif_data * datablock,
     AtomInfoType ** atInfoPtr, short * fractional) {
 
   CoordSet ** csets = NULL;
@@ -1069,7 +1069,7 @@ CoordSet ** ObjectMoleculeCifData2CoordSets(PyMOLGlobals * G, cif_data * datablo
 }
 
 ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                      char *st, int frame,
+                                      const char *st, int frame,
                                       int discrete, int quiet, int multiplex,
                                       char *new_name)
 {
@@ -1080,7 +1080,7 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
   short fractional = false;
 
   cif_data * datablock;
-  cif_file * cif = new cif_file(st, 2);
+  cif_file * cif = new cif_file(NULL, st);
   ok_assert(1, cif);
   ok_assert(2, cif->datablocks.size());
   datablock = cif->datablocks.begin()->second;

@@ -75,7 +75,7 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I);
 int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** result);
 int ObjectMeshSetLevel(ObjectMesh * I, float level, int state, int quiet);
 int ObjectMeshGetLevel(ObjectMesh * I, int state, float *result);
-int ObjectMeshInvalidateMapName(ObjectMesh * I, char *name);
+int ObjectMeshInvalidateMapName(ObjectMesh * I, const char *name);
 int ObjectMeshAllMapsInStatesExist(ObjectMesh * I);
 
 #endif

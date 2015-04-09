@@ -774,8 +774,8 @@ int EditorTorsion(PyMOLGlobals * G, float angle)
 
 
 /*========================================================================*/
-int EditorSelect(PyMOLGlobals * G, char *s0, char *s1, char *s2,
-                 char *s3, int pkresi, int pkbond, int quiet)
+int EditorSelect(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2,
+                 const char *s3, int pkresi, int pkbond, int quiet)
 {
   int i0 = -1;
   int i1 = -1;
@@ -926,8 +926,8 @@ void EditorCycleValence(PyMOLGlobals * G, int quiet)
 
 
 /*========================================================================*/
-void EditorAttach(PyMOLGlobals * G, char *elem, int geom, int valence,
-                  char *name, int quiet)
+void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
+                  const char *name, int quiet)
 {
   int i0;
   int sele0, sele1;
@@ -1080,7 +1080,7 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
 
 
 /*========================================================================*/
-void EditorHFix(PyMOLGlobals * G, char *sele, int quiet)
+void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet)
 {
   int sele0, sele1;
   ObjectMolecule *obj0, *obj1;
@@ -1107,7 +1107,7 @@ void EditorHFix(PyMOLGlobals * G, char *sele, int quiet)
 
 
 /*========================================================================*/
-void EditorReplace(PyMOLGlobals * G, char *elem, int geom, int valence, char *name,
+void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, const char *name,
                    int quiet)
 {
   int i0;

@@ -45,20 +45,11 @@ public:
   m_str_cifdatap_t datablocks;
 
   // constructors & destructor
-  cif_file() { contents = NULL; owncontents = false; }
-  cif_file(char * source, int mode = 0) {
-    init(source, mode);
-  };
-  cif_file(const char * filename) {
-    init((char *) filename, 0);
-  };
+  cif_file(const char* filename, const char* contents=NULL);
   ~cif_file();
 
 private:
-  void init(char * source, int mode);
-
   char * contents;
-  bool owncontents;
 
   std::vector<char*> tokens;
 

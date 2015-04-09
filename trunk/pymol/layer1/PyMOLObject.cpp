@@ -38,7 +38,6 @@ Z* -------------------------------------------------------------------
 
 int ObjectGetNFrames(CObject * I);
 
-void ObjectDescribeElement(CObject * I, int index, char *buffer);
 CSetting **ObjectGetSettingHandle(CObject * I, int state);
 
 void ObjectPurgeSettings(CObject * I)
@@ -1084,7 +1083,7 @@ CSetting **ObjectGetSettingHandle(CObject * I, int state)
 
 
 /*========================================================================*/
-void ObjectDescribeElement(CObject * I, int index, char *buffer)
+static void ObjectDescribeElement(CObject * I, int index, char *buffer)
 {
   buffer[0] = 0;
 }
@@ -1214,7 +1213,6 @@ static void ObjectRenderUnitBox(CObject * this_, RenderInfo * info)
 /*========================================================================*/
 void ObjectInit(PyMOLGlobals * G, CObject * I)
 {
-  int a;
   UtilZeroMem(I, sizeof(CObject));
 
   I->G = G;

@@ -716,7 +716,7 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
   }
 
   PRINTFB(G, FB_ObjectMolecule, quiet ? FB_Blather : FB_Actions)
-    " ObjectMoleculeReadCifStr: using SCALEn to compute orthogonal coordinates.\n"
+    " ObjectMolecule: using SCALEn to compute orthogonal coordinates.\n"
     ENDFB(G);
 
   CoordSetTransform44f(cset, sca);
@@ -1297,10 +1297,8 @@ void CoordSet::update(int state)
 {
   CoordSet * I = this;
   int a;
-  int i;
   PyMOLGlobals *G = I->Obj->Obj.G;
   ObjectMolecule *obj;
-  int ok = true;
 
   obj = I->Obj;
 
@@ -1587,7 +1585,6 @@ CoordSet *CoordSetCopy(const CoordSet * cs)
 
   PyMOLGlobals * G = const_cast<PyMOLGlobals*>(cs->State.G);
 
-  int nAtom;
   /* OOAlloc declares and defines, I:
    * I = ... */
   OOCalloc(G, CoordSet);

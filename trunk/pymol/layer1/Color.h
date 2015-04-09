@@ -91,7 +91,7 @@ float *ColorGet(PyMOLGlobals * G, int index);   /* pointer maybe invalid after c
 float *ColorGetRaw(PyMOLGlobals * G, int index);        /* pointer maybe invalid after creating a new color */
 
 float *ColorGetSpecial(PyMOLGlobals * G, int index);
-float *ColorGetNamed(PyMOLGlobals * G, char *name);
+float *ColorGetNamed(PyMOLGlobals * G, const char *name);
 void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int quiet);
 int ColorGetNColor(PyMOLGlobals * G);
 char *ColorGetName(PyMOLGlobals * G, int index);
@@ -103,8 +103,8 @@ int ColorCheckRamped(PyMOLGlobals * G, int index);
 
 struct ObjectGadgetRamp *ColorGetRamp(PyMOLGlobals * G, int index);
 
-void ColorRegisterExt(PyMOLGlobals * G, char *name, void *extPtr, int type);
-void ColorForgetExt(PyMOLGlobals * G, char *name);
+void ColorRegisterExt(PyMOLGlobals * G, const char *name, void *extPtr, int type);
+void ColorForgetExt(PyMOLGlobals * G, const char *name);
 
 PyObject *ColorAsPyList(PyMOLGlobals * G);
 int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore);

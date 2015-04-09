@@ -97,18 +97,11 @@ void RepSphereFree(RepSphere * I)
 /* MULTI-INSTSANCE TODO:  isn't this a conflict? */
 static CShaderPrg *sphereARBShaderPrg = NULL;
 
-#ifdef PURE_OPENGL_ES_2
-void RepSphereRenderImmediatePointsES(PyMOLGlobals *G, int sphere_mode, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, float *varg){
-    /* TODO */
-}
-void RepSphereRenderImmediateMode4PointsES(PyMOLGlobals *G, AtomInfoType *atomInfo, int starta, int enda, int nverts, int *i2aarg, float *varg, 
-					   float zz_factor, float s_factor, float *dim_add, float _1){
-    /* TODO */
-}
-#endif
-
 #ifdef _PYMOL_ARB_SHADERS
-void RepSphereRenderOneSphere_ARB(PyMOLGlobals *G, RenderInfo *info, float *color, float *last_radius, float *cur_radius, float *fog_info, float *v){
+static void RepSphereRenderOneSphere_ARB(PyMOLGlobals *G, RenderInfo *info,
+    float *color, float *last_radius, float *cur_radius, float *fog_info,
+    float *v)
+{
   static const float _00[2] = { 0.0F, 0.0F };
   static const float _01[2] = { 0.0F, 1.0F };
   static const float _11[2] = { 1.0F, 1.0F };
@@ -136,7 +129,9 @@ void RepSphereRenderOneSphere_ARB(PyMOLGlobals *G, RenderInfo *info, float *colo
 }
 #endif
 
-void RenderSpherePopulateVariables(PyMOLGlobals *G, RenderInfo *info, float *nv, float *fog_info, float *z_front, float *z_back){
+static void RenderSpherePopulateVariables(PyMOLGlobals *G, RenderInfo *info,
+    float *nv, float *fog_info, float *z_front, float *z_back)
+{
   /* compute -Ze = (Wc) of fog start */
   nv[3] =
     (info->front +
@@ -196,7 +191,9 @@ void RenderSphereMode_Immediate_5(PyMOLGlobals *G, RenderInfo *info, CoordSet *c
 }
 #endif
 
-void RenderSphereMode_Immediate_4(PyMOLGlobals *G, RenderInfo *info, CoordSet *cs, ObjectMolecule *obj, int *repActive, float pixel_scale){
+static void RenderSphereMode_Immediate_4(PyMOLGlobals *G, RenderInfo *info,
+    CoordSet *cs, ObjectMolecule *obj, int *repActive, float pixel_scale)
+{
 #ifndef PURE_OPENGL_ES_2
         int repeat = true;
         const float _1 = 1.0F;
@@ -301,7 +298,9 @@ void RenderSphereMode_Immediate_4(PyMOLGlobals *G, RenderInfo *info, CoordSet *c
 #endif
 }
 
-void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs, ObjectMolecule *obj, int *repActive, float sphere_scale){
+static void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs,
+    ObjectMolecule *obj, int *repActive, float sphere_scale)
+{
   /* triangle-based spheres */
   SphereRec *sp = G->Sphere->Sphere[0];
   int ds = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sphere_quality);
@@ -365,7 +364,10 @@ void RenderSphereMode_Immediate_Triangles(PyMOLGlobals *G, CoordSet *cs, ObjectM
   }
 }
 
-void RenderSphereMode_Immediate_1_2_3(PyMOLGlobals *G, RenderInfo *info, CoordSet *cs, ObjectMolecule *obj, int *repActive, float pixel_scale, int sphere_mode){
+static void RenderSphereMode_Immediate_1_2_3(PyMOLGlobals *G, RenderInfo *info,
+    CoordSet *cs, ObjectMolecule *obj, int *repActive, float pixel_scale,
+    int sphere_mode)
+{
   /* sphere_mode is 1, 2, or 3 */
   float max_radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting,
 				  cSetting_sphere_point_max_size) * 3 * pixel_scale;
@@ -517,7 +519,10 @@ void RepSphereRenderPointsDefaultES(RepSphere * I, Picking **pick, int nvertsarg
 #endif
 
 
-int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I, RenderInfo * info, int carg, float **vptr, float alpha, SphereRec *sphereRecPtr){
+static int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I,
+    RenderInfo * info, int carg, float **vptr, float alpha,
+    SphereRec *sphereRecPtr)
+{
   short use_shader, generate_shader_cgo = 0;
   float *v = *vptr;
   int c = carg;
@@ -655,7 +660,9 @@ int RenderSphereMode_Direct(PyMOLGlobals *G, RepSphere *I, RenderInfo * info, in
 }
    //, float radius, int carg, float pixel_scale, int clamp_size_flag, float max_size){
 
-void RenderSphereMode_Sprites(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, int sphere_mode, int carg, float **vptr, float **vnptr){
+static void RenderSphereMode_Sprites(PyMOLGlobals *G, RepSphere *I,
+    RenderInfo *info, int sphere_mode, int carg, float **vptr, float **vnptr)
+{
    int c = carg;
    float pixel_scale = 1.0F / info->vertex_scale;
    float last_radius = -1.0F, cur_radius;
@@ -892,9 +899,13 @@ void RenderSphereMode_ARB(PyMOLGlobals *G, RenderInfo *info, float **vptr, int c
 #endif
 
 /* simple, default point width points -- modes 1 or 6 */
-void RenderSphereMode_1_or_6(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, float **vptr, float **vnptr, int carg, float alpha){
+static void RenderSphereMode_1_or_6(PyMOLGlobals *G, RepSphere *I,
+    RenderInfo *info, float **vptr, float **vnptr, int carg, float alpha)
+{
+#ifndef PURE_OPENGL_ES_2
   int c = carg;
   float *v = *vptr, *vn = *vnptr;
+
   glPointSize(SettingGet_f
 	      (G, I->R.cs->Setting, I->R.obj->Setting,
 	       cSetting_sphere_point_size));
@@ -949,9 +960,12 @@ void RenderSphereMode_1_or_6(PyMOLGlobals *G, RepSphere *I, RenderInfo *info, fl
   glEnd();
 
   glEnable(GL_ALPHA_TEST);
+#endif
 }
 
-void RepSpheresPrepPickingIfNoSphereGeometry(RepSphere * I, int sphere_mode, float *pixel_scale){
+static void RepSpheresPrepPickingIfNoSphereGeometry(RepSphere * I,
+    int sphere_mode, float *pixel_scale)
+{
   PyMOLGlobals *G = I->R.G;
   switch (sphere_mode) {
   case 2:
@@ -974,7 +988,7 @@ void RepSpheresPrepPickingIfNoSphereGeometry(RepSphere * I, int sphere_mode, flo
   }
 }
 
-void RepSpheresSetColorForPicking(RepSphere * I, Picking **pick, int *i, int *j, Pickable **p){
+static void RepSpheresSetColorForPicking(RepSphere * I, Picking **pick, int *i, int *j, Pickable **p){
   (*i)++;
   if(!(*pick)[0].src.bond) {
     /* pass 1 - low order bits *            */
@@ -992,7 +1006,7 @@ void RepSpheresSetColorForPicking(RepSphere * I, Picking **pick, int *i, int *j,
   }
 }
 
-void RepSpheresRenderSphereGeometryForPicking(SphereRec *sp, float *v0, float vdw){
+static void RepSpheresRenderSphereGeometryForPicking(SphereRec *sp, float *v0, float vdw){
   int *s, *q, b, cc;
   q = sp->Sequence;
   s = sp->StripLen;
@@ -1015,7 +1029,8 @@ void RepSpheresRenderSphereGeometryForPicking(SphereRec *sp, float *v0, float vd
   }
 }
 
-void RepSpheresRenderSphereRecAtVertex(SphereRec *sp, float *v0, float vdw){
+static void RepSpheresRenderSphereRecAtVertex(SphereRec *sp, float *v0, float vdw){
+#ifndef PURE_OPENGL_ES_2
   Vector3f *sp_dot = sp->dot;
   int b, *q, *s;
   {
@@ -1035,9 +1050,13 @@ void RepSpheresRenderSphereRecAtVertex(SphereRec *sp, float *v0, float vdw){
     }
     glTranslatef(-v0[0], -v0[1], -v0[2]);
   }
+#endif
 }
 
-void RepSpheresRenderPointForPicking(RepSphere * I, float vdw, float *v, int sphere_mode, float *last_radius, float *cur_radius, float pixel_scale, int clamp_size_flag, float max_size, short *hasBegun){
+static void RepSpheresRenderPointForPicking(RepSphere * I, float vdw, float *v,
+    int sphere_mode, float *last_radius, float *cur_radius, float pixel_scale,
+    int clamp_size_flag, float max_size, short *hasBegun)
+{
 #ifndef PURE_OPENGL_ES_2
   float size;
   float *v0 = &v[4];
@@ -1082,7 +1101,7 @@ void RepSpheresRenderPointForPicking(RepSphere * I, float vdw, float *v, int sph
 #endif
 }
 
-void RepSpheresRenderEndOfPicking(int sphere_mode){
+static void RepSpheresRenderEndOfPicking(int sphere_mode){
   switch (sphere_mode) {
   case -1:
   case 0:
@@ -1358,7 +1377,8 @@ static int RadiusOrder(float *list, int a, int b)
   return (list[a * 8 + 7] <= list[b * 8 + 7]);
 }
 
-int RepSphereDetermineAtomVisibility(PyMOLGlobals *G, int vis_flag_arg, AtomInfoType *ati1, int cartoon_side_chain_helper, int ribbon_side_chain_helper)
+static int RepSphereDetermineAtomVisibility(PyMOLGlobals *G, int vis_flag_arg,
+    AtomInfoType *ati1, int cartoon_side_chain_helper, int ribbon_side_chain_helper)
 {
   int vis_flag = vis_flag_arg;
   if(vis_flag &&
@@ -1385,7 +1405,11 @@ int RepSphereDetermineAtomVisibility(PyMOLGlobals *G, int vis_flag_arg, AtomInfo
   return vis_flag;
 }
 
-void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj, CoordSet * cs, int state, float *varg, int a1, AtomInfoType *ati1, int a, int *mf, float sphere_scale, int sphere_color, float transp, int *variable_alpha, float sphere_add){
+static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
+    CoordSet * cs, int state, float *varg, int a1, AtomInfoType *ati1, int a,
+    int *mf, float sphere_scale, int sphere_color, float transp,
+    int *variable_alpha, float sphere_add)
+{
   PyMOLGlobals *G = cs->State.G;
   float at_sphere_scale;
   int at_sphere_color;
@@ -1434,7 +1458,7 @@ void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj, CoordS
   *(v++) = obj->AtomInfo[a1].vdw * at_sphere_scale + sphere_add;    /* radius */
 }
 
-int RepSphereComputeSphereNormals(RepSphere *I){
+static int RepSphereComputeSphereNormals(RepSphere *I){
   PyMOLGlobals *G = I->R.G;
   float range = 6.0F;
   float *vc = I->VC;
@@ -1549,7 +1573,10 @@ int RepSphereComputeSphereNormals(RepSphere *I){
   return ok;
 }
 
-int RepSphereWriteSphereRecIntoArray(SphereRec *sp, int spheroidFlag, CoordSet * cs, float **varg, int a1, float *v0, float vdw, float spheroid_scale){
+static int RepSphereWriteSphereRecIntoArray(SphereRec *sp, int spheroidFlag,
+    CoordSet * cs, float **varg, int a1, float *v0, float vdw,
+    float spheroid_scale)
+{
   PyMOLGlobals *G = cs->State.G;
   float *v = *varg;
   int b, *q, *s, c, ok = true;
@@ -1599,7 +1626,11 @@ int RepSphereWriteSphereRecIntoArray(SphereRec *sp, int spheroidFlag, CoordSet *
 
  sphere_add - the setting solvent_radius 
 */
-int RepSphereGenerateGeometryCullForSphere(SphereRec *sp, ObjectMolecule *obj, CoordSet * cs, float **varg, MapType *map, float vdw, float *v0, int *visFlag, int *marked, float sphere_scale, int a, float sphere_add, int *nt){
+static int RepSphereGenerateGeometryCullForSphere(SphereRec *sp,
+    ObjectMolecule *obj, CoordSet * cs, float **varg, MapType *map,
+    float vdw, float *v0, int *visFlag, int *marked, float sphere_scale,
+    int a, float sphere_add, int *nt)
+{
   PyMOLGlobals *G = cs->State.G;
   float *v = *varg;
   int ok = true;
@@ -1760,7 +1791,12 @@ int RepSphereGenerateGeometryCullForSphere(SphereRec *sp, ObjectMolecule *obj, C
   return ok;
 }
 
-int RepSphereGenerateGeometryForSphere(RepSphere *I, ObjectMolecule *obj, CoordSet * cs, int state, int a1, AtomInfoType *ati1, int a, float sphere_scale, int sphere_color, float spheroid_scale, float transp, int *variable_alpha, float sphere_add, int spheroidFlag, SphereRec *sp, int *visFlag, int *marked, MapType *map, int *nt, float **varg){
+static int RepSphereGenerateGeometryForSphere(RepSphere *I, ObjectMolecule *obj,
+    CoordSet * cs, int state, int a1, AtomInfoType *ati1, int a,
+    float sphere_scale, int sphere_color, float spheroid_scale, float transp,
+    int *variable_alpha, float sphere_add, int spheroidFlag, SphereRec *sp,
+    int *visFlag, int *marked, MapType *map, int *nt, float **varg)
+{
   PyMOLGlobals *G = cs->State.G;
   float *v = *varg;
   float at_sphere_scale;

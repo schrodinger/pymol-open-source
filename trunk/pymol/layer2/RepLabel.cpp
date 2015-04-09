@@ -48,7 +48,7 @@ typedef struct RepLabel {
 
 void RepLabelFree(RepLabel * I);
 
-void RepLabelInit(RepLabel *I)
+static void RepLabelInit(RepLabel *I)
 {
   I->shaderCGO = NULL;
 }

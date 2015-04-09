@@ -95,6 +95,7 @@ void BlockDrawLeftEdge(Block * I ORTHOCGOARG)
 /*========================================================================*/
 void BlockDrawTopEdge(Block * I)
 {
+#ifndef PURE_OPENGL_ES_2
   PyMOLGlobals *G = I->G;
   if(G->HaveGUI && G->ValidContext) {
     glColor3f(0.3, 0.3, 0.3);
@@ -103,6 +104,7 @@ void BlockDrawTopEdge(Block * I)
     glVertex2i(I->rect.left, I->rect.top);
     glEnd();
   }
+#endif
 }
 
 

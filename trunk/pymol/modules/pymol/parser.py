@@ -521,9 +521,11 @@ if __name__=='pymol.parser':
                     except:
                         traceback.print_exc()
                 if not flag: # otherwise fallback onto filename completion
-                    loc = 1 + max(map(st.rfind, ', ])@'))
+                    loc = 1 + max(map(st.rfind, ',@'))
+                    if not loc:
+                        loc = 1 + st.find(' ')
                     pre = st[:loc]
-                    st3 = st[loc:]
+                    st3 = st[loc:].lstrip()
                     flist = glob.glob(exp_path(st3)+"*")
                     lf = len(flist)
                     if lf == 0:

@@ -62,7 +62,7 @@ ok_except1:
   return NULL;
 }
 
-ObjectMapState * ObjectVolumeStateGetMapState(ObjectVolumeState * vs) {
+static ObjectMapState * ObjectVolumeStateGetMapState(ObjectVolumeState * vs) {
   ObjectMap *map = NULL;
 
   PyMOLGlobals * G = vs->State.G;
@@ -348,7 +348,7 @@ static void ObjectVolumeFree(ObjectVolume * I)
   OOFreeP(I);
 }
 
-int ObjectVolumeInvalidateMapName(ObjectVolume * I, char *name)
+int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name)
 {
   int a;
   ObjectVolumeState *vs;
@@ -615,7 +615,7 @@ void ObjectVolumeDrawSlice(float *points, float *tex_coords, int n_points, float
  * array. Returns allocated memory.
  * Assigns data minimum and range covered by ramp to `ramp_min` and `ramp_range`.
  */
-float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * ovs,
+static float * ObjectVolumeStateGetColors(PyMOLGlobals * G, ObjectVolumeState * ovs,
     int count, float *ramp_min, float *ramp_range) {
   int i, j, k;
   int lowerId, upperId;
@@ -668,7 +668,7 @@ ok_except1:
  * Adjust alpha values in the given RGBA array (in place) by:
  *   alpha_new = 1 - exp(-alpha * factor)
  */
-void ColorsAdjustAlpha(float * colors, int count, float factor) {
+static void ColorsAdjustAlpha(float * colors, int count, float factor) {
   int j;
   for (j = 3; j < count * 4; j += 4) {
     colors[j] = 1. - expf(-colors[j] * factor);
@@ -680,12 +680,12 @@ void ColorsAdjustAlpha(float * colors, int count, float factor) {
  * TODO: duplicate in other reps?
  */
 static void ExtentRender(float * corner) {
+#ifndef PURE_OPENGL_ES_2
   int i, ci[] = {
      0,  3,  3,  9,  9,  6,  6,  0,
     12, 15, 15, 21, 21, 18, 18, 12,
      0, 12,  3, 15,  9, 21,  6, 18
   };
-#ifndef PURE_OPENGL_ES_2
   glBegin(GL_LINES);
   for(i = 0; i < 8 * 3; i++)
     glVertex3fv(corner + ci[i]);
@@ -696,6 +696,7 @@ static void ExtentRender(float * corner) {
 static GLuint createColorTexture(const float *colors, const int count)
 {
   GLuint texname = 0;
+#ifndef PURE_OPENGL_ES_2
 
   glGenTextures(1, &texname);
   glBindTexture(GL_TEXTURE_1D, texname);
@@ -705,6 +706,7 @@ static GLuint createColorTexture(const float *colors, const int count)
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S,     GL_CLAMP );
 
+#endif
   return texname;
 }
 

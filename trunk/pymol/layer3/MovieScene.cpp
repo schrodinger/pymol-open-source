@@ -220,7 +220,7 @@ bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
  * store_rep:       store reps
  * store_frame:     store movie frame
  */
-bool MovieSceneStore(PyMOLGlobals * G, const char * name,
+static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     const char * message,
     bool store_view,
     bool store_color,
@@ -414,6 +414,12 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
     }
   }
 
+  // disable all objects
+  if (recall_active) {
+    // need to control SpecRec
+    ExecutiveSetObjVisib(G, "*", false, false);
+  }
+
   // objectdata
   for (ObjectIterator iter(G); iter.next();) {
     CObject * obj = iter.getObject();
@@ -440,7 +446,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
 
     // "enabled" state is first bit in visRep
     int enabled = GET_BIT(sceneobj.visRep, 0);
-    if(recall_active && obj->Enabled != enabled) {
+    if(recall_active && enabled) {
       // need to control SpecRec
       ExecutiveSetObjVisib(G, obj->Name, enabled, false);
     }
@@ -477,7 +483,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
  * name: name to rename or delete, or "*" to delete all
  * new_name: new scene name to rename, or NULL to delete
  */
-bool MovieSceneRename(PyMOLGlobals * G, const char * name, const char * new_name = NULL) {
+static bool MovieSceneRename(PyMOLGlobals * G, const char * name, const char * new_name = NULL) {
 
   if (strcmp(name, "*") == 0) {
     // delete all scenes

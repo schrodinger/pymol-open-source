@@ -631,6 +631,7 @@ static void ColladaEndTristripsElement(xmlTextWriterPtr w)
 }
 
 
+#if 0
 /*
  * Opens a <trifans> element, including inputs.  Must be followed by at
  * least one <p> element.
@@ -652,6 +653,7 @@ static void ColladaEndTrifansElement(xmlTextWriterPtr w)
 {
   xmlTextWriterEndElement(w);
 }
+#endif
 
 
 /* Writes a complete <geometry> element for a triangle mesh. */

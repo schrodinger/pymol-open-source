@@ -2482,7 +2482,7 @@ static PyObject *CmdSetTitle(PyObject * self, PyObject * args)
 static PyObject *CmdGetTitle(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  char *str1, *str2;
+  char *str1;
   int int1;
   int ok = false;
   PyObject *result = Py_None;
@@ -2494,7 +2494,7 @@ static PyObject *CmdGetTitle(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    str2 = ExecutiveGetTitle(G, str1, int1);
+    const char *str2 = ExecutiveGetTitle(G, str1, int1);
     APIExit(G);
     if(str2)
       result = PyString_FromString(str2);

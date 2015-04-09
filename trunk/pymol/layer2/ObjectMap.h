@@ -98,27 +98,27 @@ int ObjectMapStateGetRange(PyMOLGlobals * G, ObjectMapState * ms, float *range);
 
 void ObjectMapStateClamp(ObjectMapState * I, float clamp_floor, float clamp_ceiling);
 
-ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, char *fname,
+ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                               int state, int is_file, int quiet);
 
-ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, char *fname,
+ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                              int state, int is_string, int bytes, int quiet);
 
-ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                             int is_string, int bytes, int quiet);
 
-ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                int quiet);
-ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                 int quiet);
-ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
+ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                                  int state, int quiet);
-ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                 int quiet);
-ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
+ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                                  int state, int quiet);
 
-ObjectMap *ObjectMapLoad(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state);
+ObjectMap *ObjectMapLoad(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state);
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * Map,
                                     int state, int discrete, int quiet);
 ObjectMap *ObjectMapLoadCObject(PyMOLGlobals * G, ObjectMap * obj, int state);

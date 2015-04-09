@@ -355,7 +355,7 @@ void AtomInfoBracketResidueFast(PyMOLGlobals * G, AtomInfoType * ai0, int n0, in
 int AtomInfoUniquefyNames(PyMOLGlobals * G, AtomInfoType * atInfo0, int n0,
                           AtomInfoType * atInfo1, int *flag1, int n1);
 int AtomInfoGetCarbColor(PyMOLGlobals * G);
-int AtomResvFromResi(char *resi);
+int AtomResvFromResi(const char *resi);
 
 int AtomInfoKnownWaterResName(PyMOLGlobals * G, char *resn);
 int AtomInfoKnownPolymerResName(char *resn);

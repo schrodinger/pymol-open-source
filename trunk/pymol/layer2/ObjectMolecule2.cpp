@@ -68,7 +68,9 @@ static int strstartswithword(const char * s, const char * word) {
   return false;
 }
 
-void AddOrthoOutputIfMatchesTags(PyMOLGlobals * G, int n_tags, int nAtom, char *tag_start[], char *p, char *cc, int quiet){
+static void AddOrthoOutputIfMatchesTags(PyMOLGlobals * G, int n_tags,
+    int nAtom, const char* const* tag_start, const char *p, char *cc, int quiet)
+{
   if(n_tags && !quiet && !(nAtom > 0 && strstartswith(p, "HEADER"))) { 
     // HEADER is the mark for a new object, this is a new object, and
     // gets processed on the next pass, when nAtom=0
@@ -216,10 +218,10 @@ static int append_index(int *result, int offset, int a1, int a2, int score, int 
   return offset;
 }
 
-int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
-                                char *resn, char *resi, char *chain,
-                                char *segi, char *elem, float vdw,
-                                int hetatm, float b, float q, char *label,
+int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *name,
+                                const char *resn, const char *resi, const char *chain,
+                                const char *segi, const char *elem, float vdw,
+                                int hetatm, float b, float q, const char *label,
                                 float *pos, int color, int state, int mode, int quiet)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -1532,9 +1534,9 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule * I, int *id, int n_id)
 
 }
 
-static char *check_next_pdb_object(char *p, int skip_to_next)
+static const char *check_next_pdb_object(const char *p, int skip_to_next)
 {
-  char *start = p;
+  const char *start = p;
   while(*p) {
     if(strstartswith(p, "HEADER")) {
       if(skip_to_next)
@@ -1551,7 +1553,7 @@ static char *check_next_pdb_object(char *p, int skip_to_next)
   return NULL;
 }
 
-static int get_multi_object_status(char *p)
+static int get_multi_object_status(const char *p)
 {                               /* expensive -- only call
                                    this if there is no
                                    other way to determine
@@ -1618,13 +1620,12 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
 /*========================================================================*/
 #define PDB_MAX_TAGS 64
 
-void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
-    char **restart_model, char *parg, int n_tags, char *tag_start[],
+static void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
+    const char **restart_model, const char *p, int n_tags, const char* const* tag_start,
     int *nAtom, char cc[], int quiet, int *bogus_name_alignment,
-    int *ssFlag, char **next_pdb, PDBInfoRec *info, int only_read_one_model,
+    int *ssFlag, const char **next_pdb, PDBInfoRec *info, int only_read_one_model,
     int *ignore_conect, int *bondFlag, M4XAnnoType * m4x, int *have_bond_order) {
   int seen_end_of_atoms = false;
-  char *p = parg;
   *restart_model = NULL;
   while(*ok && *p) {
     AddOrthoOutputIfMatchesTags(G, n_tags, *nAtom, tag_start, p, cc, quiet);
@@ -1918,19 +1919,19 @@ static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain
 }
 
 CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
-                                        char *buffer,
+                                        const char *buffer,
                                         AtomInfoType ** atInfoPtr,
-                                        char **restart_model,
+                                        const char **restart_model,
                                         char *segi_override,
                                         M4XAnnoType * m4x,
                                         char *pdb_name,
-                                        char **next_pdb,
+                                        const char **next_pdb,
                                         PDBInfoRec * info, int quiet, int *model_number)
 {
 
-  char *p;
+  const char *p;
   int nAtom;
-  int a, c;
+  int a;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL, *ai;
@@ -2082,7 +2083,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           break;
         } else if((!info) || (!info->ignore_header_names)) {
           /* if this isn't an MD trajectory... */
-          char *pp;
+          const char *pp;
           pp = nskip(p, 62);    /* is there a four-letter PDB code? */
           pp = ntrim(pdb_name, pp, 4);
           if(pdb_name[0] == 0) {        /* if not, is there a plain name (for MERCK!) */
@@ -2176,7 +2177,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         *restart_model = nextline(p);
         in_model = false;
         if(only_read_one_model) {
-          char *pp;
+          const char *pp;
           pp = nextline(p);
           if(strstartswith(pp, "END")) {   /* END we're going to be starting a new object... */
             (*next_pdb) = check_next_pdb_object(nextline(pp), true);
@@ -2207,7 +2208,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     } else if(strstartswith(p, "END")) {
       ntrim(cc, p, 6);
       if((strcmp("END", cc) == 0) && (!in_model)) {     /* stop parsing here... */
-        char *pp;
+        const char *pp;
         pp = nextline(p);       /* ...unless we're in MODEL or next line is itself ENDMDL */
         p = ncopy(cc, p, 6);
         if(!((cc[0] == 'E') && (cc[1] == 'N') && (cc[2] == 'D') && (cc[3] == 'M') && (cc[4] == 'D') && (cc[5] == 'L'))) {       /* NOTE: this test seems unnecessary given strcmp above... */
@@ -3065,7 +3066,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
 /*========================================================================*/
 
-void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, char *script_file,
+void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char *script_file,
                                int match_colors, int nbr_sele)
 {
   int a;
