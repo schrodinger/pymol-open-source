@@ -58,9 +58,9 @@ followed by any number of records with the following header...
 
 */
 
-CRaw *RawOpenRead(PyMOLGlobals * G, char *fname);
-CRaw *RawOpenWrite(PyMOLGlobals * G, char *fname);
-CRaw *RawOpenAppend(PyMOLGlobals * G, char *fname);
+CRaw *RawOpenRead(PyMOLGlobals * G, const char *fname);
+CRaw *RawOpenWrite(PyMOLGlobals * G, const char *fname);
+CRaw *RawOpenAppend(PyMOLGlobals * G, const char *fname);
 void RawFree(CRaw * I);
 
 int RawWrite(CRaw * I, int type, unsigned int size, int serial, char *bytes);

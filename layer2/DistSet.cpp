@@ -158,7 +158,7 @@ ok_except1:
   return rVal;
 }
 
-CMeasureInfo * MeasureInfoListFromCPythonVal(PyMOLGlobals * G, CPythonVal * list)
+static CMeasureInfo * MeasureInfoListFromPyList(PyMOLGlobals * G, PyObject * list)
 {
   int i, ll, N;
   CMeasureInfo *item = NULL, *I= NULL;
@@ -194,7 +194,7 @@ ok_except1:
   return I;
 }
 
-PyObject *MeasureInfoListAsPyList(CMeasureInfo * I)
+static PyObject *MeasureInfoListAsPyList(CMeasureInfo * I)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -274,7 +274,7 @@ int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
   ok_assert(2, ll > 9);
 
   val = CPythonVal_PyList_GetItem(G, list, 9);
-  I->MeasureInfo = MeasureInfoListFromCPythonVal(G, val);
+  I->MeasureInfo = MeasureInfoListFromPyList(G, val);
   CPythonVal_Free(val);
 
 ok_except2:

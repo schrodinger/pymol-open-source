@@ -39,7 +39,7 @@ u=*(((char*)(a))+1); \
 *(((char*)(a))+1)=*(((char*)(a))+2); \
 *(((char*)(a))+2)=u; }
 
-CRaw *RawOpenRead(PyMOLGlobals * G, char *fname)
+CRaw *RawOpenRead(PyMOLGlobals * G, const char *fname)
 {
   int target = 0x04030201;
   int reverse = 0x01020304;
@@ -81,7 +81,7 @@ CRaw *RawOpenRead(PyMOLGlobals * G, char *fname)
   return (I);
 }
 
-CRaw *RawOpenWrite(PyMOLGlobals * G, char *fname)
+CRaw *RawOpenWrite(PyMOLGlobals * G, const char *fname)
 {
   int target = 0x04030201;
   int ok = true;
@@ -104,7 +104,7 @@ CRaw *RawOpenWrite(PyMOLGlobals * G, char *fname)
   return (I);
 }
 
-CRaw *RawOpenAppend(PyMOLGlobals * G, char *fname)
+CRaw *RawOpenAppend(PyMOLGlobals * G, const char *fname)
 {
   int target = 0x04030201;
   int ok = true;

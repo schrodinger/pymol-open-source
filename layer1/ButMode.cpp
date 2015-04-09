@@ -400,7 +400,7 @@ static void ButModeDraw(Block * block ORTHOCGOARG)
   }
 }
 
-short ButModeDrawFast(Block * block ORTHOCGOARG){
+static short ButModeDrawFast(Block * block ORTHOCGOARG){
   return ButModeDrawFastImpl(block, false ORTHOCGOARGVAR);
 }
 

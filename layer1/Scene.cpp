@@ -64,7 +64,11 @@ Z* -------------------------------------------------------------------
 #include "IncentiveCopyToClipboard.h"
 #endif
 
-void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
+#include <iostream>
+
+using namespace std;
+
+static void glReadBufferError(PyMOLGlobals *G, GLenum b, GLenum e){
   PRINTFB(G, FB_OpenGL, FB_Warnings)
     " WARNING: glReadBuffer caused GL error 0x%04x\n", e ENDFB(G);
 }
@@ -806,7 +810,7 @@ unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
 void SceneDraw(Block * block ORTHOCGOARG);
 void ScenePrepareMatrix(PyMOLGlobals * G, int mode);
 
-void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, char *scene_name)
+void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 {
   float *fp;
   double *dp;
@@ -1207,8 +1211,7 @@ void SceneDontCopyNext(PyMOLGlobals * G)
 /*========================================================================*/
 void SceneUpdateStereoMode(PyMOLGlobals * G)
 {
-  CScene *I = G->Scene;
-  if(I->StereoMode) {
+  if(G->Scene->StereoMode) {
     SceneSetStereo(G, true);
   }
 }
@@ -1440,7 +1443,7 @@ void SceneClipSet(PyMOLGlobals * G, float front, float back)
 
 
 /*========================================================================*/
-void SceneClip(PyMOLGlobals * G, int plane, float movement, char *sele, int state)
+void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, int state)
 {                               /* 0=front, 1=back */
   CScene *I = G->Scene;
   float avg;
@@ -2732,7 +2735,7 @@ int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge)
 
 
 /*========================================================================*/
-int SceneLoadPNG(PyMOLGlobals * G, char *fname, int movie_flag, int stereo, int quiet)
+int SceneLoadPNG(PyMOLGlobals * G, const char *fname, int movie_flag, int stereo, int quiet)
 {
   CScene *I = G->Scene;
   int ok = false;
@@ -4775,8 +4778,8 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
 
 void ScenePushRasterMatrix(PyMOLGlobals * G, float *v)
 {
-  CScene *I = G->Scene;
   float scale = SceneGetExactScreenVertexScale(G, v);
+  CScene *I = G->Scene;
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glTranslatef(v[0], v[1], v[2]);       /* go to this position */
@@ -4796,7 +4799,7 @@ void ScenePopRasterMatrix(PyMOLGlobals * G)
  * Compose the ModelViewMatrix from Pos, RotMatrix and Origin
  * See also: CScene.ModMatrix (queried from OpenGL)
  */
-void SceneComposeModelViewMatrix(CScene * I, float * modelView) {
+static void SceneComposeModelViewMatrix(CScene * I, float * modelView) {
   identity44f(modelView);
   MatrixTranslateC44f(modelView, I->Pos[0], I->Pos[1], I->Pos[2]);
   MatrixMultiplyC44f(I->RotMatrix, modelView);
@@ -6047,7 +6050,7 @@ static int SceneDeferredImage(DeferredImage * di)
 }
 
 int SceneDeferImage(PyMOLGlobals * G, int width, int height,
-                    char *filename, int antialias, float dpi, int format, int quiet)
+                    const char *filename, int antialias, float dpi, int format, int quiet)
 {
   DeferredImage *di = Calloc(DeferredImage, 1);
   if(di) {

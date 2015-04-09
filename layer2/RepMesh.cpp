@@ -162,9 +162,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
     } else {
       short use_shader, generate_shader_cgo = 0;
       short mesh_as_cylinders ;
-      int lighting =
-        SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
-      use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) & 
+      use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) &
                    SettingGetGlobal_b(G, cSetting_use_shaders);
       mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
 
@@ -219,6 +217,8 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	}
       }
 
+      int lighting =
+        SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
       if(!lighting) {
         if(!info->line_lighting){
 	  if (generate_shader_cgo){

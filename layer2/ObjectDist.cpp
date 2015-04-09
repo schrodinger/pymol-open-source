@@ -487,7 +487,7 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
   }
 }
 
-void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
+static void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
   ObjectDist * I = (ObjectDist*)Iarg;
   for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NDSet);
       iter.next();) {

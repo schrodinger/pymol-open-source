@@ -4450,7 +4450,7 @@ static ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals * G, ObjectMap * I, char *XP
 
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                              int is_string, int bytes, int quiet)
 {
   ObjectMap *I = NULL;
@@ -4467,7 +4467,7 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals * G, ObjectMap * obj, char *fname, int
     if(!buffer)
       ErrMessage(G, "ObjectMapLoadCCP4File", "Unable to open file!");
   } else {
-    buffer = fname;
+    buffer = (char*) fname;
     size = (long) bytes;
   }
 
@@ -4598,7 +4598,7 @@ static ObjectMap *ObjectMapReadPHIStr(PyMOLGlobals * G, ObjectMap * I, char *Map
 
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                             int is_string, int bytes, int quiet)
 {
 
@@ -4616,7 +4616,7 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals * G, ObjectMap * obj, char *fname, int 
     if(!buffer)
       ErrMessage(G, "ObjectMapLoadPHIFile", "Unable to open file!");
   } else {
-    buffer = fname;
+    buffer = (char*) fname;
     size = (long) bytes;
   }
 
@@ -4932,7 +4932,7 @@ static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals * G, ObjectMap * I,
 
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                int quiet)
 {
   ObjectMap *I = NULL;
@@ -5164,7 +5164,7 @@ static ObjectMap *ObjectMapReadACNTStr(PyMOLGlobals * G, ObjectMap * I,
   return (I);
 }
 
-ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
+ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                                  int state, int quiet)
 {
   ObjectMap *I = NULL;
@@ -5202,7 +5202,7 @@ ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
 
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                 int quiet)
 {
   ObjectMap *I = NULL;
@@ -5238,7 +5238,7 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
 
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
+ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                                  int state, int quiet)
 {
   ObjectMap *I = NULL;
@@ -5275,7 +5275,7 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals * G, ObjectMap * obj, char *fname,
 
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, int state,
+ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, const char *fname, int state,
                                 int quiet)
 {
   ObjectMap *I = NULL;
@@ -5312,7 +5312,7 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals * G, ObjectMap * obj, char *fname, 
 
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, char *fname,
+ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, const char *fname,
                               int state, int is_file, int quiet)
 {
   ObjectMap *I = NULL;
@@ -5325,7 +5325,7 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals * G, ObjectMap * obj, char *fname,
     if(!buffer)
       ErrMessage(G, "ObjectMapLoadXPLOR", "Unable to open file!");
   } else {
-    buffer = fname;
+    buffer = (char*) fname;
   }
 
   if (buffer) {

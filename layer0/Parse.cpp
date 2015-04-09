@@ -19,9 +19,10 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"Parse.h"
 
-#ifndef _PYMOL_INLINE
+#include <stdio.h>
+#include <string.h>
 
-char *ParseNextLine(char *p)
+const char *ParseNextLine(const char *p)
 {
   char ch;
   const char mask = -16;        /* 0xF0 */
@@ -43,7 +44,7 @@ char *ParseNextLine(char *p)
 
 /*========================================================================*/
 
-char *ParseNCopy(char *q, char *p, int n)
+const char *ParseNCopy(char *q, const char *p, int n)
 {                               /* n character copy */
   char ch;
   while((ch = *p)) {
@@ -59,9 +60,7 @@ char *ParseNCopy(char *q, char *p, int n)
   return p;
 }
 
-#endif
-
-char *ParseSkipEquals(char *p)
+const char *ParseSkipEquals(const char *p)
 {
   while(*p) {
     if(*p != '=')
@@ -82,9 +81,20 @@ char *ParseSkipEquals(char *p)
   return p;
 }
 
+/*
+ * Skip all characters in `chars`
+ *
+ * Example to skip all whitespace:
+ * p = ParseSkipChars(p, " \t\r\n");
+ */
+static const char *ParseSkipChars(const char *p, const char *chars) {
+  while (*p && strchr(chars, *p)) { ++p; }
+  return p;
+}
+
 
 /*========================================================================*/
-char *ParseIntCopy(char *q, char *p, int n)
+const char *ParseIntCopy(char *q, const char *p, int n)
 {                               /* integer copy */
   while(*p) {
     if((*p == 0xD) || (*p == 0xA))      /* don't skip end of lines */
@@ -112,7 +122,7 @@ char *ParseIntCopy(char *q, char *p, int n)
 
 
 /*========================================================================*/
-char *ParseAlphaCopy(char *q, char *p, int n)
+const char *ParseAlphaCopy(char *q, const char *p, int n)
 {                               /* integer copy */
   while(*p) {
     if((*p == 0xD) || (*p == 0xA))      /* don't skip end of lines */
@@ -137,65 +147,28 @@ char *ParseAlphaCopy(char *q, char *p, int n)
   *q = 0;
   return p;
 }
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <ctype.h>
+
 /* ParseFloat3List: scan in Python-like list of 3 floats */
 int ParseFloat3List(const char *parg, float *vals){
-  char buf[256], blen;
-  int cont = 1;
-  const char *p = parg;
-  int pl = 0, vpl = 0, i;
-  const char *npl;
-  double dval;
-  while (cont){
-    switch(p[pl]){
-    case ' ':
-      pl++;
-      break;
-    default:
-      cont = 0;
-    }
+  int n;
+
+  // skip white space and opening brackets
+  parg = ParseSkipChars(parg, "([ \t\r\n");
+
+  for (int i = 0; i < 3; ++i) {
+    if (!sscanf(parg, "%f%n", vals, &n))
+      return false;
+
+    // skip white space and commas
+    parg = ParseSkipChars(parg + n, ", \t\r\n");
+    ++vals;
   }
-  if (p[pl] == '[') pl++;
-  cont = 1;
-  while (vpl<3){
-    while (p[pl] == ' '){
-      pl++;
-    }
-    if (!p[pl])
-      break;
-    npl = strchr(&p[pl], ',');
-    if (npl){
-      blen = (npl- &p[pl] );
-      strncpy(buf, &p[pl], blen);
-      buf[blen] = 0;
-      for (i=0; i<blen; i++){
-	if (!isdigit(buf[i]) && buf[i]!='.'){
-	  cont = 0;
-	}
-      }
-    } else {
-      strcpy(buf, &p[pl]);
-      blen = strlen(buf);
-      if (buf[blen-1]==']')
-	buf[blen-1] = 0;
-    }
-    cont &= sscanf(buf, "%lf", &dval);
-    if (!cont) break;
-    vals[vpl++] = (float)dval;
-    if (npl){
-      pl = npl-p + 1;
-    } else {
-      break;
-    }
-  }
-  return vpl==3;
+
+  return true;
 }
 
 /*========================================================================*/
-char *ParseWordCopy(char *q, char *p, int n)
+const char *ParseWordCopy(char *q, const char *p, int n)
 {                               /* word copy */
   while(*p) {
     if((*p == 0xD) || (*p == 0xA))      /* don't skip end of lines */
@@ -224,7 +197,7 @@ char *ParseWordCopy(char *q, char *p, int n)
 
 
 /*========================================================================*/
-char *ParseWordNumberCopy(char *q, char *p, int n)
+const char *ParseWordNumberCopy(char *q, const char *p, int n)
 {                               /* word copy */
   int digit_seen_last = 0;
   while(*p) {
@@ -269,7 +242,7 @@ char *ParseWordNumberCopy(char *q, char *p, int n)
  *    word of p.  Eg.  "im a temp selection" => " a temp selection" and
  *    the return value *q = "im"
  */
-char *ParseWord(char *q, char *p, int n)
+const char *ParseWord(char *q, const char *p, int n)
 {                               /* word copy, across lines */
   /* increment ptr past non character input, like spaces and line feeds, bells. */
   while(*p) {
@@ -294,7 +267,7 @@ char *ParseWord(char *q, char *p, int n)
 
 
 /*========================================================================*/
-char *ParseNTrim(char *q, char *p, int n)
+const char *ParseNTrim(char *q, const char *p, int n)
 {                               /* n character trimmed copy */
   char *q_orig = q;
   while(*p) {
@@ -326,7 +299,7 @@ char *ParseNTrim(char *q, char *p, int n)
 
 
 /*========================================================================*/
-char *ParseNTrimRight(char *q, char *p, int n)
+const char *ParseNTrimRight(char *q, const char *p, int n)
 {                               /* n character trimmed copy */
   char *q_orig = q;
   while(*p) {
@@ -349,7 +322,7 @@ char *ParseNTrimRight(char *q, char *p, int n)
 
 
 /*========================================================================*/
-char *ParseCommaCopy(char *q, char *p, int n)
+const char *ParseCommaCopy(char *q, const char *p, int n)
 {                               /* n character copy up to comma */
   while(*p) {
     if(!n)
@@ -367,7 +340,7 @@ char *ParseCommaCopy(char *q, char *p, int n)
 
 
 /*========================================================================*/
-char *ParseNSkip(char *p, int n)
+const char *ParseNSkip(const char *p, int n)
 {                               /* n character skip */
   while(*p) {
     if(!n)

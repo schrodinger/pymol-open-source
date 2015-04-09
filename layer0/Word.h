@@ -67,11 +67,11 @@ int WordMatcherMatchInteger(CWordMatcher * I, int value);
 void WordMatcherFree(CWordMatcher * I);
 int WordMatchNoWild(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 
-CWordList *WordListNew(PyMOLGlobals * G, char *st);
+CWordList *WordListNew(PyMOLGlobals * G, const char *st);
 void WordListFreeP(CWordList * I);
-void WordListDump(CWordList * I, char *prefix);
-int WordListIterate(PyMOLGlobals * G, CWordList * I, char **ptr, int *hidden);
-int WordListMatch(PyMOLGlobals * G, CWordList * I, char *name, int ignore_case);
+void WordListDump(CWordList * I, const char *prefix);
+int WordListIterate(PyMOLGlobals * G, CWordList * I, const char **ptr, int *hidden);
+int WordListMatch(PyMOLGlobals * G, CWordList * I, const char *name, int ignore_case);
 
 int WordInit(PyMOLGlobals * G);
 void WordFree(PyMOLGlobals * G);
@@ -87,8 +87,8 @@ int WordMatchCommaExact(PyMOLGlobals * G, const char *p, const char *q, int ignC
 
 /* (<0) exact match, (>0) inexact match, =0 no match */
 
-int WordIndex(PyMOLGlobals * G, WordType * list, char *word, int minMatch, int ignCase);
-int WordKey(PyMOLGlobals * G, WordKeyValue * list, char *word, int minMatch, int ignCase,
+int WordIndex(PyMOLGlobals * G, WordType * list, const char *word, int minMatch, int ignCase);
+int WordKey(PyMOLGlobals * G, WordKeyValue * list, const char *word, int minMatch, int ignCase,
             int *exact);
 
 #ifdef _PYMOL_INLINE

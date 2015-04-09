@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "File.h"
+
 /*
  * Get the size from the current file pointer to the end of the file
  */

@@ -10,12 +10,14 @@
 #include <string>
 #include <vector>
 
+#include "Util2.h"
+
 /*
  * strsplit: split string `s` by character `delim`
  *
  * If `delim` is null, then do whitespace split.
  */
-std::vector<std::string> strsplit(const std::string &s, char delim=0) {
+std::vector<std::string> strsplit(const std::string &s, char delim) {
   std::vector<std::string> elems;
   std::istringstream iss(s);
   std::string item;

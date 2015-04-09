@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 
 int MyPNGWrite(PyMOLGlobals * G, char *file_name, unsigned char *p,
                unsigned int width, unsigned int height, float dpi, int format, int quiet);
-int MyPNGRead(char *file_name, unsigned char **p_ptr, unsigned int *width_ptr,
+int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_ptr,
               unsigned int *height_ptr);
 
 #endif

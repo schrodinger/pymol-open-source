@@ -46,8 +46,8 @@ struct _CSeeker {
   double LastClickTime;
 };
 
-static void SeekerBuildSeleFromAtomList(PyMOLGlobals * G, char *obj_name, int *atom_list,
-                                        char *sele_name, int start_fresh)
+static void SeekerBuildSeleFromAtomList(PyMOLGlobals * G, const char *obj_name, int *atom_list,
+                                        const char *sele_name, int start_fresh)
 {
   ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G, obj_name);
 
@@ -730,7 +730,7 @@ static CSeqRow *SeekerRelease(PyMOLGlobals * G, CSeqRow * rowVLA, int button,
   return NULL;
 }
 
-char SeekerGetAbbr(PyMOLGlobals * G, char *abbr, char water, char unknown)
+char SeekerGetAbbr(PyMOLGlobals * G, const char *abbr, char water, char unknown)
 {
 
   switch (abbr[0]) {

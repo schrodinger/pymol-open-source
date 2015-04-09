@@ -3852,7 +3852,7 @@ CGO *CGOOptimizeToVBOIndexedWithColorImpl(CGO * I, int est, float *color, short 
     GL_C_INT_TYPE *vertexIndexes; 
     uchar *colorValsUC = 0;
     uchar *normalValsC = 0;
-    int pl = 0, plc = 0, idxpl = 0, vpl = 0, tot, sz, hasNormals = 0;
+    int pl = 0, plc = 0, idxpl = 0, vpl = 0, tot, sz;
 
     pc = I->op;
 

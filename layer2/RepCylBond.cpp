@@ -1186,7 +1186,9 @@ static int RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
   return ok;
 }
 
-void RepCylBondFilterBond(int *marked, AtomInfoType *ati1, AtomInfoType *ati2, int b1, int b2, int na_mode, int *c1, int *c2, int *s1, int *s2){
+static void RepCylBondFilterBond(int *marked, AtomInfoType *ati1, AtomInfoType *ati2,
+    int b1, int b2, int na_mode, int *c1, int *c2, int *s1, int *s2)
+{
   char *name1 = ati1->name;
   int prot1 = ati1->protons;
   char *name2 = ati2->name;

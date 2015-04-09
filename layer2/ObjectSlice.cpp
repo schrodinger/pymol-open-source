@@ -858,15 +858,7 @@ int ObjectSliceGetOrigin(ObjectSlice * I, int state, float *origin)
   return ok;
 }*/
 
-#ifdef PURE_OPENGL_ES_2
-void ObjectSliceRenderStripES(int nverts, int *strip, int abegin, int aend, float *vnormal, float *color, float *point, float alpha){
-    /* TODO */
-}
-void ObjectSliceRenderStripTrianglesES(Picking **pick, Picking *p, int nverts, int *strip, int abegin, int aend, float *point, int iarg){
-}
-#endif
-
-int ObjectSliceAddSlicePoint(float *pt0, float *pt1, float *zaxis, float d, 
+static int ObjectSliceAddSlicePoint(float *pt0, float *pt1, float *zaxis, float d,
 			     float *coords, float *origin)
 {
     

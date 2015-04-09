@@ -161,6 +161,8 @@ char convertStereoToChar(int stereo){
   }
   return ' ';
 }
+
+#if 0
 int convertCharToStereo(char stereo){
   switch (stereo){
   case 'R':
@@ -184,6 +186,7 @@ int convertCharToStereo(char stereo){
   }
   return MMSTEREO_NO_CHIRALITY;
 }
+#endif
 
 
 int PLabelExprUsesVariable(PyMOLGlobals * G, const char *expr, const char *var)

@@ -576,7 +576,7 @@ typedef struct _P_AtomProperty {
 } AtomPropertyInfo;
 
 #ifndef _PYMOL_NOPY
-AtomPropertyInfo *PyMOL_GetAtomPropertyInfo(CPyMOL * I, char *atompropname);
+AtomPropertyInfo *PyMOL_GetAtomPropertyInfo(CPyMOL * I, const char *atompropname);
 #endif
 
 #ifdef __cplusplus

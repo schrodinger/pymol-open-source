@@ -61,20 +61,20 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
 
 void EditorActivate(PyMOLGlobals * G, int state, int enable_bond);
 CObject *EditorDragObject(PyMOLGlobals * G);
-void EditorReplace(PyMOLGlobals * G, char *elem, int geom, int valence, char *name,
+void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, const char *name,
                    int quiet);
-void EditorAttach(PyMOLGlobals * G, char *elem, int geom, int valence, char *name,
+void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence, const char *name,
                   int quiet);
 void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet);
 void EditorHFill(PyMOLGlobals * G, int quiet);
-void EditorHFix(PyMOLGlobals * G, char *sele, int quiet);
+void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet);
 void EditorCycleValence(PyMOLGlobals * G, int quiet);
 void EditorInactivate(PyMOLGlobals * G);
 void EditorUpdateState(PyMOLGlobals * G);
 
 int EditorIsAnActiveObject(PyMOLGlobals * G, ObjectMolecule * obj);
 
-int EditorSelect(PyMOLGlobals * G, char *s0, char *s1, char *s2, char *s3, int pkresi,
+int EditorSelect(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3, int pkresi,
                  int pkbond, int quiet);
 int EditorTorsion(PyMOLGlobals * G, float angle);
 int EditorInvert(PyMOLGlobals * G, int quiet);

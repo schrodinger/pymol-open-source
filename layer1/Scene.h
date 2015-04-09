@@ -144,7 +144,7 @@ void SceneTranslate(PyMOLGlobals * G, float x, float y, float z);
 void SceneTranslateScaled(PyMOLGlobals * G, float x, float y, float z, int sdof_mode);
 void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_mode);
 
-void SceneClip(PyMOLGlobals * G, int plane, float movement, char *sele, int state);
+void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, int state);
 void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height);
 void SceneGetImageSizeFast(PyMOLGlobals * G, int *width, int *height);
 float SceneGetGridAspectRatio(PyMOLGlobals * G);
@@ -175,7 +175,7 @@ void SceneSetView(PyMOLGlobals * G, SceneViewType view,
                   int quiet, float animate, int hand);
 void SceneRestartSweepTimer(PyMOLGlobals * G);
 int SceneViewEqual(SceneViewType left, SceneViewType right);
-void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, char *scene_name);
+void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name);
 void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty);
 void SceneGetCenter(PyMOLGlobals * G, float *pos);
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height);
@@ -185,7 +185,7 @@ void SceneInvalidateCopy(PyMOLGlobals * G, int free_buffer);
 
 void SceneSetCardInfo(PyMOLGlobals * G, const char *vendor, const char *renderer, const char *version);
 void SceneGetCardInfo(PyMOLGlobals * G, char **vendor, char **renderer, char **version);
-int SceneLoadPNG(PyMOLGlobals * G, char *fname, int movie_flag, int stereo, int quiet);
+int SceneLoadPNG(PyMOLGlobals * G, const char *fname, int movie_flag, int stereo, int quiet);
 
 void SceneSetDefaultView(PyMOLGlobals * G);
 void SceneApplyRotMatrix(PyMOLGlobals * G, float *src, float *dst);
@@ -201,7 +201,7 @@ void SceneSuppressMovieFrame(PyMOLGlobals * G);
 int SceneDeferClick(Block * block, int button, int x, int y, int mod);
 int SceneDeferRelease(Block * block, int button, int x, int y, int mod);
 int SceneDeferDrag(Block * block, int x, int y, int mod);
-int SceneDeferImage(PyMOLGlobals * G, int width, int height, char *filename,
+int SceneDeferImage(PyMOLGlobals * G, int width, int height, const char *filename,
                     int antialias, float dpi, int format, int quiet);
 char *SceneGetSeleModeKeyword(PyMOLGlobals * G);
 void SceneUpdateStereo(PyMOLGlobals * G);

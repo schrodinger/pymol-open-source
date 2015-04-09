@@ -237,7 +237,7 @@ static int ObjectCallbackStateFromPyObject(PyMOLGlobals * G, ObjectCallbackState
 
 static int ObjectCallbackAllStatesFromPyObject(ObjectCallback * I, PyObject * obj)
 {
-  int a, result = false;
+  int result = false;
   PyObject *list = NULL;
 
   if(PyList_Check(obj)) {
@@ -252,7 +252,7 @@ static int ObjectCallbackAllStatesFromPyObject(ObjectCallback * I, PyObject * ob
   I->NState = PyList_Size(list);
   VLACheck(I->State, ObjectCallbackState, I->NState);
 
-  for(a = 0; a < I->NState; a++) {
+  for(int a = 0; a < I->NState; a++) {
     PyObject *val = PyList_GetItem(list, a);
     ObjectCallbackStateFromPyObject(I->Obj.G, I->State + a, val);
   }

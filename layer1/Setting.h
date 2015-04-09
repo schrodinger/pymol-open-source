@@ -170,6 +170,8 @@ int SettingSet_3fv(CSetting * I, int index, const float *value);
 
 int SettingGetTextValue(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
                         char *buffer);
+const char * SettingGetTextPtr(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
+                               int index, char *buffer);
 
 int SettingUnset(CSetting * I, int index);
 
@@ -253,7 +255,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 // The following defines the enum with all cSetting_<settingname> indices
 #include "SettingInfo.h"
 
-#define cStereo_default              0
+#define cStereo_default              0  /* stereo_mode=0 only used for startup */
 #define cStereo_quadbuffer           1
 #define cStereo_crosseye             2
 #define cStereo_walleye              3
@@ -263,7 +265,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cStereo_stencil_by_column    7
 #define cStereo_stencil_checkerboard 8
 #define cStereo_stencil_custom       9  /* for hardware developers to use */
-#define cStereo_anaglyph            10  /* not yet implemented */
+#define cStereo_anaglyph            10
 #define cStereo_dynamic             11  /* dynamic polarization */
 #define cStereo_clone_dynamic       12
 

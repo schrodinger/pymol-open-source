@@ -640,7 +640,6 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
       if(G->HaveGUI && G->ValidContext) {
         char *c;
         int x, y;
-        float black[3] = { 0, 0, 0 };
         float white[3] = { 1, 1, 1 };
         int draw_both = SceneMustDrawBoth(G);
 	CGO *orthoCGO = I->orthoCGO;
@@ -658,7 +657,8 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
               OrthoDrawBuffer(G, GL_FRONT);     /* draw into the front buffer */
             }
 
-            glColor3fv(black);
+#ifndef PURE_OPENGL_ES_2
+            glColor3f(0.f, 0.f, 0.f); // black
             glBegin(GL_TRIANGLE_STRIP);
             glVertex2i(0, I->Height);
             glVertex2i(cBusyWidth, I->Height);
@@ -666,7 +666,7 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
             glVertex2i(cBusyWidth, I->Height - cBusyHeight);
             glEnd();
             glColor3fv(white);
-
+#endif
             y = I->Height - cBusyMargin;
             c = I->BusyMessage;
             if(*c) {

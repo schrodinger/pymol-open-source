@@ -677,8 +677,6 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
       } else if(I->Type == 2) { /* rendering triangle mesh */
         int normals =
           SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_normals);
-        int lighting =
-          SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
         if(ok && !normals){
 	  if (generate_shader_cgo){
 	    ok &= CGOResetNormal(I->shaderCGO, true);
@@ -686,6 +684,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 	    SceneResetNormal(G, true);
 	  }
 	}
+        int lighting =
+          SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
         if(!lighting)
           if(!info->line_lighting)
             glDisable(GL_LIGHTING);
@@ -1517,10 +1517,8 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
 		  } else {
 		    c = *(s++);
 		    while(c) {
+#ifndef PURE_OPENGL_ES_2
 		      float *col;
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
 		      glBegin(GL_TRIANGLE_STRIP);
 		      col = vc + (*s) * 3;
 		      if(va) {
@@ -2412,13 +2410,13 @@ int RepSurfaceSameVis(RepSurface * I, CoordSet * cs)
   return (same);
 }
 
-void RepSurfaceInvalidate(struct Rep *I, struct CoordSet *cs, int level){
+static void RepSurfaceInvalidate(struct Rep *I, struct CoordSet *cs, int level){
   RepInvalidate(I, cs, level);
   if (level >= cRepInvColor)
     ((RepSurface*)I)->ColorInvalidated = true;
 }
 
-int RepSurfaceSameColor(RepSurface * I, CoordSet * cs)
+static int RepSurfaceSameColor(RepSurface * I, CoordSet * cs)
 {
   int *lc;
   int a;
@@ -3223,6 +3221,7 @@ OV_INLINE PyObject *SurfaceJobAtomInfoAsPyTuple(SurfaceJobAtomInfo * atom_info)
   return (PConvAutoNone(result));
 }
 
+#if 0
 OV_INLINE SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject * tuple)
 {
   SurfaceJobAtomInfo *result = NULL;
@@ -3247,6 +3246,7 @@ OV_INLINE SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject * tuple)
   }
   return (result);
 }
+#endif
 
 OV_INLINE PyObject *SurfaceJobInputAsTuple(PyMOLGlobals * G, SurfaceJob * I)
 {

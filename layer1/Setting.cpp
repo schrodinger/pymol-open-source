@@ -263,7 +263,7 @@ int SettingUniqueGet_color(PyMOLGlobals * G, int unique_id, int setting_id, int 
   return SettingUniqueGetTypedValue(G, unique_id, setting_id, cSetting_color, value);
 }
 
-int SettingUniqueEntry_IsSame(SettingUniqueEntry *entry, int setting_type, const void *value){
+static int SettingUniqueEntry_IsSame(SettingUniqueEntry *entry, int setting_type, const void *value){
   if (SettingInfo[entry->setting_id].type != setting_type){
     return 0;
   }
@@ -275,7 +275,7 @@ int SettingUniqueEntry_IsSame(SettingUniqueEntry *entry, int setting_type, const
   }
 }
 
-void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int setting_type, const void *value){
+static void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int setting_type, const void *value){
   if (SettingInfo[entry->setting_id].type != setting_type){
     printf("SettingUniqueEntry_Set-Warning: type mismatch %s(%d) %d != %d\n",
         SettingInfo[entry->setting_id].name, entry->setting_id,
@@ -1112,19 +1112,38 @@ void SettingCheckHandle(PyMOLGlobals * G, CSetting ** handle)
 /*========================================================================*/
 int SettingGetTextValue(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
                         char *buffer)
+{
+  const char * sptr = SettingGetTextPtr(G, set1, set2, index, buffer);
+  if(!sptr)
+    return 0;
 
-/* not range checked */
+  if (sptr != buffer) {
+    if(strlen(sptr) > OrthoLineLength) {
+      PRINTFB(G, FB_Setting, FB_Warnings)
+        "Setting-Warning: text longer than OrthoLineLength" ENDFB(G);
+    }
+
+    strncpy(buffer, sptr, OrthoLineLength);
+  }
+
+  return 1;
+}
+
+/*========================================================================*/
+/*
+ * Returns a pointer to the internal string representation if available,
+ * or it formats the value into buffer and returns a pointer to buffer.
+ */
+const char * SettingGetTextPtr(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
+                               int index, char *buffer)
 {
   int type;
-  int ok = true;
+  char *sptr = NULL;
   float *ptr;
   type = SettingGetType(G, index);
   switch (type) {
   case cSetting_boolean:
-    if(SettingGet_b(G, set1, set2, index))
-      sprintf(buffer, "on");
-    else
-      sprintf(buffer, "off");
+    sprintf(buffer, SettingGet_b(G, set1, set2, index) ? "on" : "off");
     break;
   case cSetting_int:
     sprintf(buffer, "%d", SettingGet_i(G, set1, set2, index));
@@ -1139,8 +1158,7 @@ int SettingGetTextValue(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int 
   case cSetting_color:
     {
       int color = SettingGet_color(G, set1, set2, index);
-      if(color < 0) {
-        switch (color) {
+      switch (color) {
         case cColorAtomic:
           strcpy(buffer, "atomic");
           break;
@@ -1153,38 +1171,30 @@ int SettingGetTextValue(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int 
         case cColorBack:
           strcpy(buffer, "back");
           break;
-        default:
-          if(color > cColorExtCutoff) {
-            strcpy(buffer, "default");
-          } else {
-            char *st = ColorGetName(G, color);
-            if(st)
-              strcpy(buffer, st);
-            else
-              strcpy(buffer, "invalid");
-          }
+        case -1:
+          strcpy(buffer, "default");
           break;
-        }
-      } else {
-        /* assuming valid color */
-        strcpy(buffer, ColorGetName(G, color));
+        default:
+          sptr = ColorGetName(G, color);
+          if(sptr)
+            return sptr;
+              strcpy(buffer, "invalid");
       }
     }
     break;
   case cSetting_string:
-    strcpy(buffer, SettingGet_s(G, set1, set2, index));
+    return SettingGet_s(G, set1, set2, index);
     break;
   default:
-    ok = false;
-    break;
+    return NULL;
   }
-  return (ok);
+  return buffer;
 }
 
 
+#ifndef _PYMOL_NOPY
 /*========================================================================*/
 int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tuple)
-
 /* must have interpret locked to make this call */
 {
   PyObject *value;
@@ -1225,6 +1235,7 @@ int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tu
   }
   return (ok);
 }
+#endif
 
 /*========================================================================*/
 int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *type,
@@ -1699,7 +1710,7 @@ int SettingSet_i(CSetting * I, int index, int value)
 
 
 /*========================================================================*/
-int SettingSet_color_from_3f(CSetting * I, int index, const float * vector)
+static int SettingSet_color_from_3f(CSetting * I, int index, const float * vector)
 {
   int color_index;
   float vals[3];

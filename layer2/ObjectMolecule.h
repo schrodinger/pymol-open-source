@@ -96,7 +96,7 @@ typedef struct ObjectMoleculeOpRec {
   double d[3][3], d1;
   float *vv1, *vv2;
   char *charVLA;
-  char *s1;
+  const char *s1;
   ObjectMolecule **obj1VLA, *obj3;
   AtomInfoType *ai, **ai1VLA;
   PyObject *py_ob1;
@@ -283,7 +283,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, float *point, float
 int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, struct CoordSet *cs);
 int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided);
 
-void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, char *script_file,
+void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char *script_file,
                                int match_colors, int nbr_sele);
 
 
@@ -296,17 +296,17 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                 ObjectMolecule ** result);
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I);
 int ObjectMoleculeGetSerial(ObjectMolecule * I);
-int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, char *text);
-char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state);
+int ObjectMoleculeSetStateTitle(ObjectMolecule * I, int state, const char *text);
+const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state);
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule * I, int sele, int state);
 void ObjectMoleculeFree(ObjectMolecule * I);    /* only for friends of ObjectMolecule */
 
 int ObjectMoleculeSetStateOrder(ObjectMolecule * I, int * order, int len);
 
-int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, char *name,
-                                char *resn, char *resi, char *chain,
-                                char *segi, char *elem, float vdw,
-                                int hetatm, float b, float q, char *label,
+int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *name,
+                                const char *resn, const char *resi, const char *chain,
+                                const char *segi, const char *elem, float vdw,
+                                int hetatm, float b, float q, const char *label,
                                 float *pos, int color, int state, int more, int quiet);
 
 ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag);
@@ -315,24 +315,24 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj);
 void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int invalidate);
 
 ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int discrete);
+                                          const char *fname, int frame, int discrete);
 ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int discrete);
+                                          const char *fname, int frame, int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, char *sepPrefix,
+                                          const char *fname, int frame, const char *sepPrefix,
                                           int discrete);
 ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int discrete);
+                                          const char *fname, int frame, int discrete);
 ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G, ObjectMolecule * I,
                                               PyObject * model, int frame, int discrete);
 
 ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int interval,
+                                          const char *fname, int frame, int interval,
                                           int average, int start, int stop, int max,
-                                          char *sele, int image, float *shift, int quiet);
+                                          const char *sele, int image, float *shift, int quiet);
 
 ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          char *fname, int frame, int quiet, char mode);
+                                          const char *fname, int frame, int quiet, char mode);
 
 ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
                                          PyObject * coords, int frame);
@@ -345,22 +345,20 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * obj, CR
                                       int frame, int discrete);
 
 ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                      char **next_entry,
+                                      const char **next_entry,
                                       int content_format, int frame,
                                       int discrete, int quiet, int multiplex,
                                       char *new_name,
 				      short loadpropertiesall=false, OVLexicon *loadproplex=NULL);
 
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * obj,
-                                         char *molstr, int frame, int discrete,
+                                         const char *molstr, int frame, int discrete,
                                          M4XAnnoType * m4x, char *pdb_name,
-                                         char **next_pdb, PDBInfoRec * pdb_info,
+                                         const char **next_pdb, PDBInfoRec * pdb_info,
                                          int quiet, int *model_number);
 
 ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                         char *MMDStr, int frame, int discrete);
-ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                         char *PDBStr, int frame, int discrete);
+                                         const char *MMDStr, int frame, int discrete);
 
 int ObjectMoleculeExtendIndices(ObjectMolecule * I, int state);
 
@@ -387,7 +385,7 @@ int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule * I, int state, int index, flo
 int ObjectMoleculeGetAtomIndex(ObjectMolecule * I, int sele);
 int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
                                      int sele, float *TTT, int log,
-                                     char *sname, int homogenous, int global);
+                                     const char *sname, int homogenous, int global);
 int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele);
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule * I, int state);
 void ObjectMoleculeInferChemForProtein(ObjectMolecule * I, int state);
@@ -433,7 +431,7 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi,
 void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer);
 void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer);
 void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, int quote);
-int ObjectMoleculeMultiSave(ObjectMolecule * I, char *fname, FILE * f, int state,
+int ObjectMoleculeMultiSave(ObjectMolecule * I, const char *fname, FILE * f, int state,
                             int append, int format, int quiet);
 
 void ObjectMoleculeResetIDNumbers(ObjectMolecule * I);
@@ -483,13 +481,13 @@ void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, float *matri
 /* internal to ObjectMolecule */
 
 struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
-                                               char *buffer,
+                                               const char *buffer,
                                                AtomInfoType ** atInfoPtr,
-                                               char **restart_model,
+                                               const char **restart_model,
                                                char *segi_override,
                                                M4XAnnoType * m4x,
                                                char *pdb_name,
-                                               char **next_pdb,
+                                               const char **next_pdb,
                                                PDBInfoRec * pdb_info,
                                                int quiet, int *model_number);
 
@@ -502,6 +500,6 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj, AtomInfoType
                             int **outdex);
 
 ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
-    char *st, int frame, int discrete, int quiet, int multiplex, char *new_name);
+    const char *st, int frame, int discrete, int quiet, int multiplex, char *new_name);
 
 #endif

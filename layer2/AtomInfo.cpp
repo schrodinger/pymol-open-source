@@ -946,10 +946,10 @@ int AtomInfoKnownPolymerResName(char *resn)
 
 /*========================================================================*/
 
-int AtomResvFromResi(char *resi)
+int AtomResvFromResi(const char *resi)
 {
   int result = 1;
-  char *start = resi;
+  const char *start = resi;
   while(*start) {
     if(sscanf(start, "%d", &result))
       break;

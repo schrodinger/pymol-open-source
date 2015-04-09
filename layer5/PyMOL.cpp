@@ -1584,8 +1584,8 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, char *name, char *map, float *ra
   PYMOL_API_UNLOCK return result;
 }
 
-static PyMOLreturn_status Loader(CPyMOL * I, char *content, char *content_type,
-                                 int content_length, char *content_format,
+static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *content_type,
+                                 int content_length, const char *content_format,
                                  char *object_name, int state,
                                  int discrete, int finish,
                                  int quiet, int multiplex, int zoom)
@@ -1628,7 +1628,7 @@ static PyMOLreturn_status Loader(CPyMOL * I, char *content, char *content_type,
     {                           /* if object_name is blank and content is a filename, then 
                                    compute the object_name from the file prefix */
       if((!object_name[0]) && (type_code == I->lex_filename)) {
-        char *start, *stop;
+        const char *start, *stop;
         stop = start = content + strlen(content) - 1;
         while(start > content) {        /* known path separators */
           if((start[-1] == ':') || (start[-1] == '\'') || (start[-1] == '/'))
@@ -1645,8 +1645,8 @@ static PyMOLreturn_status Loader(CPyMOL * I, char *content, char *content_type,
         if((stop - start) >= sizeof(WordType))
           stop = start + sizeof(WordType) - 1;
         {
-          char *p, *q;
-          p = start;
+          char *q;
+          const char *p = start;
           q = obj_name;
           while(p < stop) {
             *(q++) = *(p++);
@@ -3403,7 +3403,7 @@ PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I){
 }
 
 #ifndef _PYMOL_NOPY
-AtomPropertyInfo *PyMOL_GetAtomPropertyInfo(CPyMOL * I, char *atompropname)
+AtomPropertyInfo *PyMOL_GetAtomPropertyInfo(CPyMOL * I, const char *atompropname)
 {
   OVreturn_word result;
   if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, atompropname))))
