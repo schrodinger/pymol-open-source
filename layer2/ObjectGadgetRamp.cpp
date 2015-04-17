@@ -429,7 +429,7 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
 
   result = PyList_New(11);
 
-  PyList_SetItem(result, 0, ObjectGadgetPlainAsPyList(&I->Gadget));
+  PyList_SetItem(result, 0, ObjectGadgetPlainAsPyList(&I->Gadget, false));
   PyList_SetItem(result, 1, PyInt_FromLong(I->RampType));
   PyList_SetItem(result, 2, PyInt_FromLong(I->NLevel));
   if(I->Level && I->NLevel) {

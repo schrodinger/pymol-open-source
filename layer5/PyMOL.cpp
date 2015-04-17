@@ -2272,8 +2272,10 @@ void PyMOL_Free(CPyMOL * I)
     /* take PyMOL down gracefully */
     PyMOLOptions_Free(I->G->Option);
 
+#ifndef _PYMOL_NOPY
   if(I->G == SingletonPyMOLGlobals)
     SingletonPyMOLGlobals = NULL;
+#endif
 
   FreeP(I->G);
   FreeP(I);

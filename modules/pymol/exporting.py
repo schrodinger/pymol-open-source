@@ -242,6 +242,96 @@ NOTES
             result = str(obj)
         return result
     
+    def _session_convert_legacy(session, _self=cmd):
+        '''
+        Convert session contents to be PyMOL 1.2 compatible
+        '''
+        def bitmaskToList(mask):
+            if not isinstance(mask, int):
+                return mask
+            r = []
+            while (mask >> len(r)):
+                r.append(1 if ((mask >> len(r)) & 1) else 0)
+            return r
+
+        def convert_settings(settings_list):
+            if not settings_list:
+                return
+
+            # get index -> setting dict
+            settings = dict((s[0], s) for s in settings_list if s is not None)
+
+            # changed type
+            cast_fn = {
+                3: float,
+                4: lambda v: list(_self.get_color_tuple(v)),
+            }
+            for (i, old, new) in [
+                    (6, 4, 5),          # bg_rgb
+                    (254, 3, 1),        # scenes_changed
+                    ]:
+                if i in settings and settings[i][1] == new:
+                    settings[i][1] = old
+                    settings[i][2] = cast_fn[old](settings[i][2])
+
+            # changed defaults
+            for (i, old, new) in [
+                    (91, 7, -1),        # cartoon_sampling
+                    (93, 6., -1.),      # cartoon_loop_quality
+                    (102, 10., -1.),    # cartoon_oval_quality
+                    (104, 9., -1.),     # cartoon_tube_quality
+                    (378, 11., -1.),    # cartoon_putty_quality
+                    (421, -1, 9),       # sphere_mode
+                    ]:
+                if i in settings and settings[i][2] == new:
+                    settings[i][2] = old
+
+        if 'settings' in session:
+            convert_settings(session['settings'])
+
+        # objects
+        for name in  session['names']:
+            if name is None:
+                continue
+
+            # spec repOn
+            if name[3] is None:
+                name[3] = [0] * 20
+
+            # only continue for objects
+            if name[1] != 0:
+                continue
+
+            if name[4] == 8: # gadget
+                cobject = name[5][0][0]
+            else:
+                cobject = name[5][0]
+
+            # object visRep
+            cobject[3] = bitmaskToList(cobject[3])
+
+            # object settings
+            convert_settings(cobject[8])
+
+            # molecule
+            if name[4] == 1:
+                # atoms visRep
+                for atom in name[5][7]:
+                    atom[20] = bitmaskToList(atom[20])
+                # state settings
+                for cset in name[5][4]:
+                    if cset:
+                        convert_settings(cset[7])
+
+            # map
+            elif name[4] == 2:
+                # symmetry
+                try:
+                    if isinstance(name[5][2][0][1][0][0], list):
+                        name[5][2][0][1] = name[5][2][0][1][0]
+                except IndexError:
+                    pass
+
     def get_session(names='', partial=0, quiet=1, compress=-1, cache=-1, _self=cmd):
         session = {}
         r = DEFAULT_SUCCESS
@@ -276,6 +366,12 @@ NOTES
                     print "Error: An error occurred when trying to generate session."
                     print "Error: The resulting session file may be incomplete."
         if is_ok(r):
+            if 1e-6 < _self.get_setting_float('pse_export_version') < _self.get_version()[1] - 1e-6:
+                try:
+                    _session_convert_legacy(session, _self)
+                except Exception as e:
+                    print ' Warning: failed to backport session:', e
+
             if(compress<0):
                 compress = _self.get_setting_boolean('session_compression')
             if(compress):

@@ -6,7 +6,7 @@ import os
 import time
 
 from Tkinter import *
-from tkFileDialog import *
+import tkFileDialog
 import tkMessageBox
 
 import Pmw
@@ -21,6 +21,28 @@ from pmg_tk.skins import PMGSkin
 from builder import Builder
 
 import traceback
+
+def encode(s):
+    if isinstance(s, unicode):
+        try:
+            s = s.encode(sys.getfilesystemencoding())
+        except UnicodeEncodeError:
+            s = s.encode('latin1')
+    return s
+
+def asksaveasfilename(*args, **kwargs):
+    filename = tkFileDialog.asksaveasfilename(*args, **kwargs)
+    return encode(filename)
+
+def askopenfilename(*args, **kwargs):
+    filename = tkFileDialog.askopenfilename(*args, **kwargs)
+    if isinstance(filename, (list, tuple)):
+        filename = map(encode, filename)
+    elif isinstance(filename, basestring):
+        filename = encode(filename)
+        if filename.startswith('{'):
+            filename = filename[1:-1].split('} {')
+    return filename
 
 def _darwin_browser_open(url):
     os.popen("open "+url,'r').read()
@@ -597,10 +619,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         else:
             ofile_list = [ askopenfilename(initialdir = initdir,
                                          filetypes=ftypes) ]
-        # strange windows bugfix; askopenfiles returns
-        # the unicode unparsed tcl list, instead of a Python list
-        if ofile_list.__class__==u"".__class__:
-            ofile_list = self.app.root.tk.splitlist(ofile_list)
 
         for ofile in ofile_list:
             if len(ofile):

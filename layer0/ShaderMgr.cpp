@@ -895,20 +895,6 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
   ok_assert(1, sphereShader);
   CShaderMgr_AddShaderPrg(G->ShaderMgr, sphereShader);
 
-  spheredirectShader = CShaderPrg_NewFromFile(G, "spheredirect", "spheredirect.vs", 0);
-  if (!spheredirectShader){
-    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-      " PyMOLShader_NewFromFile-Warning: sphere shader files not found, loading from memory.\n" ENDFB(G);
-    spheredirectShader = CShaderPrg_New(G, "spheredirect", spheredirect_vs, 0);
-  }
-  if (sphereShader){
-    spheredirectShader->fid = sphereShader->fid;
-    glAttachShader(spheredirectShader->id, spheredirectShader->fid);
-    CShaderPrg_Link(spheredirectShader);
-  }
-  ok_assert(1, spheredirectShader);
-  CShaderMgr_AddShaderPrg(G->ShaderMgr, spheredirectShader);
-  
   CShaderPrg_Reload_CallComputeColorForLight(G, "cylinder");
   I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "cylinder_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "cylinder", CYLINDER_VS_FILENAME, (char*)cylinder_vs);
   I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "cylinder_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "cylinder", CYLINDER_FS_FILENAME, (char*)cylinder_fs);

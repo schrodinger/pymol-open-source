@@ -136,10 +136,10 @@ static const bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
     if (!filename || !filename[0])
       filename = "components.cif";
 
-    cif_file * cif = new cif_file(filename);
+    cif_file cif(filename);
 
-    for (m_str_cifdatap_t::iterator data_it = cif->datablocks.begin(),
-        data_it_end = cif->datablocks.end(); data_it != data_it_end; ++data_it) {
+    for (m_str_cifdatap_t::iterator data_it = cif.datablocks.begin(),
+        data_it_end = cif.datablocks.end(); data_it != data_it_end; ++data_it) {
       read_chem_comp_bond_dict(data_it->second, bond_dict);
     }
 

@@ -47,8 +47,7 @@ ObjectGadget *ObjectGadgetFromCGO(PyMOLGlobals * G, ObjectGadget * obj, CGO * cg
 void ObjectGadgetRecomputeExtent(ObjectGadget * I);
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget * I);
-PyObject *ObjectGadgetAsPyList(ObjectGadget * I);
-PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I);
+PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I, bool incl_cgos=true);
 
 int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget ** result,
                               int version);
