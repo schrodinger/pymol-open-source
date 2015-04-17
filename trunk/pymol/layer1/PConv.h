@@ -189,6 +189,10 @@ PyObject *PConvIntToPyDictItem(PyObject * dict, const char *key, int i);
  *
  * Return value: New reference.
  */
+inline PyObject * PConvToPyObject(PyObject * v) {
+  return v;
+}
+
 inline PyObject * PConvToPyObject(int v) {
   return PyInt_FromLong(v);
 }

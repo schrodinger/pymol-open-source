@@ -255,15 +255,14 @@ void ObjectGadgetUpdateExtents(ObjectGadget * I)
   }
 }
 
-#ifndef _PYMOL_NOPY
-static PyObject *ObjectGadgetGSetAsPyList(ObjectGadget * I)
+static PyObject *ObjectGadgetGSetAsPyList(ObjectGadget * I, bool incl_cgos)
 {
   PyObject *result = NULL;
   int a;
   result = PyList_New(I->NGSet);
   for(a = 0; a < I->NGSet; a++) {
     if(I->GSet[a]) {
-      PyList_SetItem(result, a, GadgetSetAsPyList(I->GSet[a]));
+      PyList_SetItem(result, a, GadgetSetAsPyList(I->GSet[a], incl_cgos));
     } else {
       PyList_SetItem(result, a, PConvAutoNone(Py_None));
     }
@@ -271,8 +270,7 @@ static PyObject *ObjectGadgetGSetAsPyList(ObjectGadget * I)
   return (PConvAutoNone(result));
 
 }
-#endif
-#ifndef _PYMOL_NOPY
+
 static int ObjectGadgetGSetFromPyList(ObjectGadget * I, PyObject * list, int version)
 {
 
@@ -293,14 +291,10 @@ static int ObjectGadgetGSetFromPyList(ObjectGadget * I, PyObject * list, int ver
   }
   return (ok);
 }
-#endif
+
 int ObjectGadgetInitFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget * I,
                                int version)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   int ll;
   if(ok)
@@ -329,16 +323,11 @@ int ObjectGadgetInitFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget *
     /* cleanup? */
   }
   return (ok);
-#endif
 }
 
 int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget ** result,
                               int version)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   ObjectGadget *I = NULL;
   int gadget_type = -1;
@@ -378,15 +367,10 @@ int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget **
       break;
     }
   return (ok);
-#endif
 }
 
-PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I)
+PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I, bool incl_cgos)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   /* first, dump the atoms */
@@ -395,18 +379,13 @@ PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I)
   PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
   PyList_SetItem(result, 1, PyInt_FromLong(I->GadgetType));
   PyList_SetItem(result, 2, PyInt_FromLong(I->NGSet));
-  PyList_SetItem(result, 3, ObjectGadgetGSetAsPyList(I));
+  PyList_SetItem(result, 3, ObjectGadgetGSetAsPyList(I, incl_cgos));
   PyList_SetItem(result, 4, PyInt_FromLong(I->CurGSet));
   return (PConvAutoNone(result));
-#endif
 }
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   /* first, dump the atoms */
@@ -420,7 +399,6 @@ PyObject *ObjectGadgetAsPyList(ObjectGadget * I)
     break;
   }
   return (PConvAutoNone(result));
-#endif
 }
 
 void ObjectGadgetPurge(ObjectGadget * I)

@@ -845,12 +845,16 @@ static PyObject *get_list(CSetting * I, int index)
   PyObject *result = NULL, *value = NULL;
   int setting_type = SettingInfo[index].type;
 
+  if (SettingInfo[index].level == cSettingLevel_unused) {
+    return NULL;
+  }
+
   switch (index) {
   case cSetting_internal_feedback:
   case cSetting_internal_gui:
   case cSetting_internal_prompt:
   case cSetting_render_as_cylinders:
-    return (PConvAutoNone(Py_None));
+    return NULL;
   }
 
   switch (setting_type) {
@@ -878,28 +882,28 @@ static PyObject *get_list(CSetting * I, int index)
     PyList_SetItem(result, 2, value);
   }
 
-  return (PConvAutoNone(result));
+  return result;
 }
 
 PyObject *SettingAsPyList(CSetting * I)
 {
   PyObject *result = NULL;
-  int cnt = 0;
   int a;
 
   if(I) {
-    for(a = 0; a < cSetting_INIT; a++) {
-      if(I->info[a].defined)
-        cnt++;
-    }
-    result = PyList_New(cnt);
-    cnt = 0;
+    std::vector<PyObject*> list;
+    list.reserve(cSetting_INIT);
+
     for(a = 0; a < cSetting_INIT; a++) {
       if(I->info[a].defined) {
-        PyList_SetItem(result, cnt, get_list(I, a));
-        cnt++;
+        PyObject * item = get_list(I, a);
+        if (item != NULL) {
+          list.push_back(item);
+        }
       }
     }
+
+    result = PConvToPyObject(list);
   }
   return (PConvAutoNone(result));
 }
@@ -3055,14 +3059,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_UPDATE_FOR_BACKGROUND);
     SceneChanged(G);
     break;
-  case cSetting_bg_image_mode:
-  case cSetting_bg_image_filename:
-  case cSetting_bg_image_linear:
-  case cSetting_bg_image_tilesize:
-    PRINTFB(G, FB_Setting, FB_Warnings)
-      "Setting-Warning: bg_image is not supported in open-source version of PyMOL\n"
-      ENDFB(G);
-    break;
   case cSetting_bg_rgb_top:
   case cSetting_bg_rgb_bottom:
     {
@@ -3173,64 +3169,28 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepVolume, cRepInvColor);
     SceneInvalidate(G);
     break;
-  case cSetting_volume_mode:
-    PRINTFB(G, FB_Setting, FB_Warnings)
-      "Setting-Warning: volume_mode is not supported in open-source version of PyMOL\n"
-      ENDFB(G);
-    break;
   case cSetting_cgo_transparency:
     SceneInvalidate(G);
     SceneChanged(G);
-    break;
-  case cSetting_atom_type_format:
-    {
-      char *setting;
-      char *lsetting;
-      int i;
-      setting = SettingGetGlobal_s(G, cSetting_atom_type_format);
-      lsetting = (char*) mmalloc(strlen(setting)+1);
-      for (i=0; i<=strlen(setting); i++){
-	lsetting[i] = tolower(setting[i]);
-      }
-      if (strcmp(lsetting, "mol2") && 
-	  strcmp(lsetting, "sybyl") && 
-	  strcmp(lsetting, "macromodel") &&
-	  strcmp(lsetting, "mmd")){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: atom_type_format needs to be either mol2/sybyl or macromodel/mmd setting back to default mol2\n"
-	    ENDFB(G);
-	}
-	SettingSet_s(G->Setting, cSetting_atom_type_format, "mol2");	
-      } else if (strcmp(setting, lsetting)){
-	SettingSet_s(G->Setting, cSetting_atom_type_format, lsetting);
-      }
-      mfree(lsetting);
-      ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvAll);
-    }
     break;
   case cSetting_surface_color_smoothing:
   case cSetting_surface_color_smoothing_threshold:
     ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvColor);    
     SceneChanged(G);
     break;
-  case cSetting_antialias_shader:
-    PRINTFB(G, FB_Setting, FB_Warnings)
-      "Setting-Warning: antialias_shader is not supported in open-source version of PyMOL\n"
-      ENDFB(G);
-    SceneChanged(G);
-    break;
   case cSetting_smooth_half_bonds:
     SceneChanged(G);
     break;    
-  case cSetting_suspend_undo:
-    PRINTFB(G, FB_Setting, FB_Warnings)
-      "Setting-Warning: undo is not supported in open-source version of PyMOL\n"
-      ENDFB(G);
-    break;
   case cSetting_selection_round_points:
     ExecutiveInvalidateSelectionIndicatorsCGO(G);
     break;
+  case cSetting_antialias_shader:
+  case cSetting_atom_type_format:
+  case cSetting_bg_image_mode:
+  case cSetting_bg_image_filename:
+  case cSetting_bg_image_linear:
+  case cSetting_bg_image_tilesize:
+  case cSetting_chromadepth:
   case cSetting_dash_transparency:
   case cSetting_label_bg_color:
   case cSetting_label_bg_outline:
@@ -3250,11 +3210,16 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_load_atom_props_default:
   case cSetting_load_object_props_default:
   case cSetting_pick_labels:
+  case cSetting_precomputed_lighting:
   case cSetting_ray_label_connector_flat:
   case cSetting_session_embeds_data:
+  case cSetting_shaders_from_disk:
+  case cSetting_suspend_undo:
   case cSetting_use_geometry_shaders:
+  case cSetting_volume_mode:
     PRINTFB(G, FB_Setting, FB_Warnings)
-      "Setting-Warning: not supported in open-source version of PyMOL\n"
+      " Setting-Warning: %s is not supported in Open-Source version of PyMOL\n",
+      SettingInfo[index].name
       ENDFB(G);
   default:
     break;

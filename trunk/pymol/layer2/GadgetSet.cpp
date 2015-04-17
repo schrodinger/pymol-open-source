@@ -155,7 +155,7 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
 #endif
 }
 
-PyObject *GadgetSetAsPyList(GadgetSet * I)
+PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -189,13 +189,13 @@ PyObject *GadgetSetAsPyList(GadgetSet * I)
       PyList_SetItem(result, 5, PConvAutoNone(NULL));
     }
 
-    if(I->ShapeCGO) {
+    if(incl_cgos && I->ShapeCGO) {
       PyList_SetItem(result, 6, CGOAsPyList(I->ShapeCGO));
     } else {
       PyList_SetItem(result, 6, PConvAutoNone(NULL));
     }
 
-    if(I->PickShapeCGO) {
+    if(incl_cgos && I->PickShapeCGO) {
       PyList_SetItem(result, 7, CGOAsPyList(I->PickShapeCGO));
     } else {
       PyList_SetItem(result, 7, PConvAutoNone(NULL));

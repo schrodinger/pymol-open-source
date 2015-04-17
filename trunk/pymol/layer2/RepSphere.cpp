@@ -1271,10 +1271,9 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
 				 I->R.obj->Setting,
 				 cSetting_sphere_mode);
 
-  if (sphere_mode < 0) {
-    sphere_mode = 0;
-  } else if (!ray) {
-    if (sphere_mode == 5) {
+  if (!ray) {
+    switch (sphere_mode) {
+    case 5:
 #ifdef _PYMOL_ARB_SHADERS
       if (!sphereARBShaderPrg && G->HaveGUI && G->ValidContext) {
 	sphereARBShaderPrg = CShaderPrg_NewARB(G, "sphere_arb", sphere_arb_vs, sphere_arb_fs);
@@ -1286,10 +1285,13 @@ static void RepSphereRender(RepSphere * I, RenderInfo * info)
           " Warning: ARB shaders (sphere_mode=5) not supported.\n" ENDFB(G);
         sphere_mode = 9;
       }
-    }
-
-    if ((sphere_mode == 9) && (!use_shader || !CShaderMgr_ShaderPrgExists(G->ShaderMgr, "spheredirect"))){
-      sphere_mode = 0;
+      break;
+    case -1:
+      sphere_mode = 9;
+    case 9:
+      if (!use_shader || !CShaderMgr_ShaderPrgExists(G->ShaderMgr, "sphere")) {
+        sphere_mode = 0;
+      }
     }
   }
   alpha =

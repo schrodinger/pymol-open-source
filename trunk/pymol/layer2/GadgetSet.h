@@ -51,7 +51,7 @@ typedef struct GadgetSet {
 #include"ObjectGadget.h"
 
 GadgetSet *GadgetSetNew(PyMOLGlobals * G);
-PyObject *GadgetSetAsPyList(GadgetSet * I);
+PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos);
 int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** cs, int version);
 int GadgetSetGetExtent(GadgetSet * I, float *mn, float *mx);
 int GadgetSetGetVertex(GadgetSet * I, int index, int base, float *v);

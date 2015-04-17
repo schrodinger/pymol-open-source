@@ -740,7 +740,7 @@ enum {
   REC_b( 645, line_use_shader                         , global    , 1 ),
   REC_b( 646, sphere_use_shader                       , global    , 1 ),
   REC_b( 647, use_shaders                             , ostate    , 0 ),
-  REC_s( 648, shader_path                             , global    , "data/shaders" ),
+  REC_b( 648, shaders_from_disk                       , global    , 0 ),
   REC_i( 649, volume_bit_depth                        , object    , 16 ),
   REC_c( 650, volume_color                            , unused    , "-1" ),
   REC_f( 651, volume_layers                           , object    , 256.f ),
@@ -813,7 +813,7 @@ enum {
   REC_s( 716, load_object_props_default               , global    , "" ),
   REC_s( 717, load_atom_props_default                 , global    , "" ),
   REC_3( 718, label_placement_offset                  , astate    , 0.f, 0.f, 0.f ),
-  REC_b( 719, pdb_conect_nodup                        , global    , 0 ),
+  REC_b( 719, pdb_conect_nodup                        , global    , 1 ),
   REC_b( 720, label_connector                         , astate    , 0 ),
   // 0 - line from target to closest corner/midpoint
   // 1 - line from target to center (stops at bbx)
@@ -845,6 +845,9 @@ enum {
   REC_b( 740, trilines                                , global    , 0 ),
   REC_i( 741, collada_export_lighting                 , global    , 0 ),
   REC_i( 742, collada_geometry_mode                   , global    , 0 ),
+  REC_b( 743, precomputed_lighting                    , global    , 0 ),
+  REC_b( 744, chromadepth                             , global    , 0 ),
+  REC_f( 745, pse_export_version                      , global    , 0.f ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION
