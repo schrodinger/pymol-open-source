@@ -166,7 +166,8 @@ typedef struct {
 #define TRN_BKG 0x30
 #define MAX_ANI_ELEM 300
 
-struct _CScene {
+class CScene {
+ public:
   ::Block *Block;
   ObjRec *Obj;
   float RotMatrix[16];          /* WARNING: column major, as per OpenGL spec */
@@ -6249,7 +6250,8 @@ int SceneReinitialize(PyMOLGlobals * G)
 int SceneInit(PyMOLGlobals * G)
 {
   CScene *I = NULL;
-  if((I = (G->Scene = Calloc(CScene, 1)))) {
+  I = (G->Scene = new CScene());
+  if(I) {
 
     /* all defaults to zero, so only initialize non-zero elements */
 

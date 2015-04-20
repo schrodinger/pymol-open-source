@@ -40,7 +40,7 @@ typedef struct _CWord CWord;
 typedef struct _CCGORenderer CCGORenderer;
 typedef struct _CCharacter CCharacter;
 typedef struct _CPop CPop;
-typedef struct _CScene CScene;
+class CScene;
 typedef struct _CSeq CSeq;
 typedef struct _CSetting CSetting;
 typedef struct _CSettingUnique CSettingUnique;
