@@ -242,10 +242,15 @@ NOTES
             result = str(obj)
         return result
     
-    def _session_convert_legacy(session, _self=cmd):
+    def _session_convert_legacy(session, version, _self=cmd):
         '''
-        Convert session contents to be PyMOL 1.2 compatible
+        Convert session contents to be compatible with previous PyMOL versions
         '''
+        if version >= _self.get_version()[1]:
+            return
+
+        print " Applying pse_export_version=%.3f compatibility" % (version)
+
         def bitmaskToList(mask):
             if not isinstance(mask, int):
                 return mask
@@ -275,14 +280,20 @@ NOTES
                     settings[i][2] = cast_fn[old](settings[i][2])
 
             # changed defaults
-            for (i, old, new) in [
+            changed = []
+            if version < 1.76:
+                changed += [
                     (91, 7, -1),        # cartoon_sampling
                     (93, 6., -1.),      # cartoon_loop_quality
                     (102, 10., -1.),    # cartoon_oval_quality
                     (104, 9., -1.),     # cartoon_tube_quality
                     (378, 11., -1.),    # cartoon_putty_quality
+                ]
+            if version < 1.5:
+                changed += [
                     (421, -1, 9),       # sphere_mode
-                    ]:
+                ]
+            for (i, old, new) in changed:
                 if i in settings and settings[i][2] == new:
                     settings[i][2] = old
 
@@ -295,7 +306,7 @@ NOTES
                 continue
 
             # spec repOn
-            if name[3] is None:
+            if version < 1.76 and name[3] is None:
                 name[3] = [0] * 20
 
             # only continue for objects
@@ -308,7 +319,8 @@ NOTES
                 cobject = name[5][0]
 
             # object visRep
-            cobject[3] = bitmaskToList(cobject[3])
+            if version < 1.76:
+                cobject[3] = bitmaskToList(cobject[3])
 
             # object settings
             convert_settings(cobject[8])
@@ -316,8 +328,9 @@ NOTES
             # molecule
             if name[4] == 1:
                 # atoms visRep
-                for atom in name[5][7]:
-                    atom[20] = bitmaskToList(atom[20])
+                if version < 1.76:
+                    for atom in name[5][7]:
+                        atom[20] = bitmaskToList(atom[20])
                 # state settings
                 for cset in name[5][4]:
                     if cset:
@@ -325,12 +338,19 @@ NOTES
 
             # map
             elif name[4] == 2:
-                # symmetry
-                try:
-                    if isinstance(name[5][2][0][1][0][0], list):
-                        name[5][2][0][1] = name[5][2][0][1][0]
-                except IndexError:
-                    pass
+                if version < 1.5:
+                    # crystal -> [crystal, spacegroup]
+                    for state in name[5][2]:
+                        if state and state[1]:
+                            state[1] = state[1][0]
+
+            # cgo
+            elif name[4] == 6:
+                if version < 1.506:
+                    for state in name[5][2]:
+                        if len(state) == 1:
+                            # std and ray CGO
+                            state.append(state[0])
 
     def get_session(names='', partial=0, quiet=1, compress=-1, cache=-1, _self=cmd):
         session = {}
@@ -366,9 +386,10 @@ NOTES
                     print "Error: An error occurred when trying to generate session."
                     print "Error: The resulting session file may be incomplete."
         if is_ok(r):
-            if 1e-6 < _self.get_setting_float('pse_export_version') < _self.get_version()[1] - 1e-6:
+            pse_export_version = round(_self.get_setting_float('pse_export_version'), 4)
+            if pse_export_version > 0.0:
                 try:
-                    _session_convert_legacy(session, _self)
+                    _session_convert_legacy(session, pse_export_version, _self)
                 except Exception as e:
                     print ' Warning: failed to backport session:', e
 

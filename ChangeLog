@@ -2,6 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2015-04-20 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* new setting: pse_export_version to save to old session formats
+
+	* fix memory leak in get_global_components_bond_dict
+
+	* change setting default: pdb_conect_nodup 0 -> 1
+
+	* fix Tcl/Tk File menu unicode handling
+
+	* fix auto-complete for filenames with spaces
+
+	* mmCIF: support CHEM_COMP_BOND from mmCIF file
+
+	* residue information for MOL2 export
+
 2015-03-12 Thomas Holder, Blaine Bell, Gabriel Marques
 
 	* mmCIF _atom_sites.fract_transf support (SCALEn equivalent)
