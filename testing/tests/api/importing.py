@@ -226,6 +226,16 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(3, cmd.count_states())
         cmd.delete('*')
 
+    def testLoadTOP(self):
+        '''
+        Data files from:
+        http://ambermd.org/tutorials/basic/tutorial2/section6.htm
+        '''
+        cmd.load(self.datafile("TRPcage.top"))
+        cmd.load_traj(self.datafile("heat1.crd"), "TRPcage")
+        self.assertEqual(304, cmd.count_atoms())
+        self.assertEqual(10, cmd.count_states())
+
     def testReadMmodstr(self):
         cmd.read_mmodstr(mmodstr, 'm1')
         self.assertEqual(7, cmd.count_atoms())
