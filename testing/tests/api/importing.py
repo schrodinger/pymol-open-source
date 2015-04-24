@@ -236,6 +236,27 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(304, cmd.count_atoms())
         self.assertEqual(10, cmd.count_states())
 
+    def testLoadPSF(self):
+        cmd.load(self.datafile("ubiquitin.psf"))
+        self.assertEqual(26190, cmd.count_atoms())
+        self.assertEqual(0, cmd.count_states())
+
+    def testLoadVaspCHGCAR(self):
+        cmd.load(self.datafile("vasp.CHGCAR"))
+        self.assertEqual(cmd.get_type('vasp.CHGCAR'), 'object:map')
+        extend = cmd.get_extent('vasp.CHGCAR')
+        self.assertArrayEqual(extend, [[0.0, 0.0, 0.0], [6.5, 6.5, 7.7]], delta=1e-2)
+
+    def testLoadVaspOUTCAR(self):
+        cmd.load(self.datafile("vasp.OUTCAR"))
+        self.assertEqual(2, cmd.count_atoms())
+        self.assertEqual(11, cmd.count_states())
+
+    def testLoadVaspPOSCAR(self):
+        cmd.load(self.datafile("vasp.POSCAR"))
+        self.assertEqual(2, cmd.count_atoms())
+        self.assertEqual(1, cmd.count_states())
+
     def testReadMmodstr(self):
         cmd.read_mmodstr(mmodstr, 'm1')
         self.assertEqual(7, cmd.count_atoms())
