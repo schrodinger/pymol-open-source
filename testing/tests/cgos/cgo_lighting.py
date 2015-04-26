@@ -31,6 +31,9 @@ class TestCGOLighting(testing.PyMOLTestCase):
     @testing.requires('gui')
     @testing.requires_version('1.7.3')
     def testBackfaceLighting(self, use_shader, has_normal, two_sided_lighting, backface_cull, cgo_lighting, back):
+        viewport = (50, 50)
+        cmd.viewport(*viewport)
+
         objname = 'simpletri'
         obj = []
         if has_normal: # specifies a normal
@@ -59,7 +62,7 @@ class TestCGOLighting(testing.PyMOLTestCase):
 
         # to see the images
         #        cmd.png("%d__%d_%d_%d_%d_%d_%d_test.png" % (back and backface_cull, use_shader, has_normal, two_sided_lighting, backface_cull, cgo_lighting, back))
-        img = self.get_imagearray(width=100, height=100)
+        img = self.get_imagearray(width=viewport[0], height=viewport[1])
         if not two_sided_lighting and not backface_cull and cgo_lighting and back:
             # this is where a shaded back side is rendered
             redmask = (img[:,:,0] > 0)
