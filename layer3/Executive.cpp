@@ -3512,7 +3512,7 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
                   const char *object_name,
                   int state, int zoom,
                   int discrete, int finish, int multiplex, int quiet,
-                  const char * /* unused */,
+                  const char * plugin_arg,
 		  short loadpropertiesall, OVLexicon *loadproplex)
 {
   int ok = true;
@@ -3593,6 +3593,10 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
     break;
   case cLoadTypeCMS:
     strcpy(plugin, "mae");
+    break;
+  default:
+    if (plugin_arg)
+      strcpy(plugin, plugin_arg);
     break;
   }
 
@@ -3846,6 +3850,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int
     case cLoadTypeCCP4Map:
     case cLoadTypeCCP4Str:
     case cLoadTypeFLDMap:
+    case cLoadTypeBRIXMap:
     case cLoadTypeGRDMap:
     case cLoadTypeDXMap:
       new_type = cObjectMap;
@@ -3857,7 +3862,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int
       new_type = cObjectCGO;
       break;
     }
-    if(new_type != -1 && new_type != origObj->type) {
+    if(new_type == -1 || new_type != origObj->type) {
       ExecutiveDelete(G, origObj->Name);
       origObj = NULL;
     }
@@ -5828,6 +5833,8 @@ int ExecutiveGetSymmetry(PyMOLGlobals * G, const char *sele, int state, float *a
     break;
   }
 
+  VLAFreeP(objVLA);
+
   return (ok);
 }
 
@@ -5841,22 +5848,7 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a,
   int ok = true;
   CSymmetry *symmetry = NULL;
   int n_obj;
-  int i, s;
-  int do_all_states = false;
-
-  /* TODO */
-  /* Need to handle states */
-  /* if state==-1 then state=1
-   * if state==0 then all states
-   * otherwise use the specified state
-   */
-  if(0==state) {
-    do_all_states = true;
-  } else if (state<0) {
-    state = 0;
-  } else if(state>0) {
-    state--;
-  }
+  int i;
 
   /* create a new symmetry object for copying */
   symmetry = SymmetryNew(G);
@@ -5880,42 +5872,18 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a,
         objMol = (ObjectMolecule *) obj;
         if(symmetry) {
 	  /* right now, ObjectMolecules only have one-state symmetry information */
-	  CSymmetry *sym = objMol->Symmetry;
-	  if (sym){
-	    SymmetryClear(sym);
-	  } else {
-	    sym = SymmetryNew(G);
-	    objMol->Symmetry = sym;
-	  }
-	  SymmetryCopyTo(symmetry, sym);
+	  SymmetryFree(objMol->Symmetry);
+	  objMol->Symmetry = SymmetryCopy(symmetry);
         }
         break;
       case cObjectMap:
 	objMap = (ObjectMap *) obj;
 	
 	if(symmetry) {
-	  if(do_all_states) {
-	    /* copy symmetry to all states */
-	    for(s=0; s<objMap->NState; s++) {
-	      CSymmetry *sym = (objMap->State + s)->Symmetry;
-	      if (sym){
-		SymmetryClear(sym);
-	      } else {
-		sym = SymmetryNew(G);
-		(objMap->State + s)->Symmetry = sym;
-	      }
-	      SymmetryCopyTo(symmetry, sym);
-	    }
-	  } else {
-	    /* single state */
-	    CSymmetry *sym = (objMap->State + state)->Symmetry;
-	    if (sym){
-	      SymmetryClear(sym);
-	    } else {
-	      sym = SymmetryNew(G);
-	      (objMap->State + state)->Symmetry = sym;
-	    }
-	    SymmetryCopyTo(symmetry, sym);
+	  for(StateIterator iter(G, obj->Setting, state, objMap->NState); iter.next();) {
+	    ObjectMapState *oms = objMap->State + iter.state;
+	    SymmetryFree(oms->Symmetry);
+	    oms->Symmetry = SymmetryCopy(symmetry);
 	  }
 	  ObjectMapRegeneratePoints(objMap);
 	}
@@ -16866,7 +16834,7 @@ PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB
   double **dmA ,**dmB, **S;
   int bufferSize;
   pcePoint coordsA, coordsB;
-  pathCache paths;
+  pathCache paths = NULL;
   PyObject * result;
 
   smaller = lenA < lenB ? lenA : lenB;
@@ -16894,6 +16862,9 @@ PyObject * ExecutiveCEAlign(PyMOLGlobals * G, PyObject * listA, PyObject * listB
   /* release memory */
   free(coordsA);
   free(coordsB);
+  for ( i = 0; i < bufferSize; ++i )
+    free(paths[i]);
+  free(paths);
 	
   /* distance matrices	 */
   for ( i = 0; i < lenA; i++ )

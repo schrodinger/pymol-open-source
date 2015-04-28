@@ -89,14 +89,16 @@ bool SettingLevelCheck(PyMOLGlobals * G, int index, unsigned char level) {
 
 /* ================================================================== */
 
-static CSetting *SettingCopyAll(PyMOLGlobals * G, CSetting * src, CSetting * dst)
+static CSetting *SettingCopyAll(PyMOLGlobals * G, const CSetting * src, CSetting * dst)
 {
   if(!dst) {
     dst = Calloc(CSetting, 1);
-    if(dst) {
-      SettingInit(G, dst);
-    }
+  } else {
+    SettingPurge(dst);
   }
+
+  SettingInit(G, dst);
+
   if(dst && src) {
 
     /* simply overwriting existing data (if any) ... in the future we
@@ -854,6 +856,7 @@ static PyObject *get_list(CSetting * I, int index)
   case cSetting_internal_gui:
   case cSetting_internal_prompt:
   case cSetting_render_as_cylinders:
+  case cSetting_shaders_from_disk:
     return NULL;
   }
 
@@ -968,6 +971,7 @@ static int set_list(CSetting * I, PyObject * list)
   case cSetting_stereo_mode:
   case cSetting_show_progress:
   case cSetting_defer_updates:
+  case cSetting_shaders_from_disk:
   case cSetting_suspend_updates:
   case cSetting_suspend_undo:
   case cSetting_suspend_undo_atom_count:

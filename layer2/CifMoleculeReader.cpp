@@ -273,8 +273,12 @@ public:
   int asym_id;
   std::string resi;
   sshashkey() {};
-  sshashkey(int asym_id_, const char *resi_, const char *ins_code = NULL)
-    : asym_id(asym_id_), resi(resi_) {
+  sshashkey(int asym_id_, const char *resi_, const char *ins_code = NULL) {
+    assign(asym_id_, resi_, ins_code);
+  }
+  void assign(int asym_id_, const char *resi_, const char *ins_code) {
+    asym_id = asym_id_;
+    resi.assign(resi_);
     if (ins_code)
       resi.append(ins_code);
   }
@@ -645,7 +649,7 @@ static bool read_ss_(PyMOLGlobals * G, cif_data * data, char ss, sshashmap &ssre
 
     sshashvalue &value = ssrecords[key];
     value.ss = ss;
-    new (&value.end) sshashkey(
+    value.end.assign(
         LexIdx(G, arr_end_chain->as_s(i)),
         arr_end_resi->as_s(i),
         arr_end_ins_code->as_s(i));

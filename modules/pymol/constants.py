@@ -30,6 +30,7 @@ file_ext_re = re.compile(string.join([
     r"\.trj$|", # AMBER Trajectory
     r"\.crd$|", # AMBER coordinate file
     r"\.rst7?$|", # AMBER restart
+    r"\.psf$|", # protein structure file
     r"\.cex$|", # CEX format (used by metaphorics)
     r"\.phi$|", # PHI format (delphi)
     r"\.fld$|", # FLD format (AVS)
@@ -103,6 +104,7 @@ class loadable:
     cifstr = 61
     spider = 62   # spider map
     cms = 63
+    plugin = 64
 
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.cif : loadable.cifstr,

@@ -11356,6 +11356,10 @@ void SelectorFreeImpl(PyMOLGlobals * G, CSelector *I, short init2)
     VLAFreeP(I->Member);
     VLAFreeP(I->Name);
     VLAFreeP(I->Info);
+
+    OVLexicon_DEL_AUTO_NULL(I->Lex);
+    OVOneToAny_DEL_AUTO_NULL(I->Key);
+    OVOneToOne_DEL_AUTO_NULL(I->NameOffset);
   }
   FreeP(I);
 }

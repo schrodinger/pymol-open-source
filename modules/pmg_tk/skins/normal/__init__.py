@@ -22,6 +22,8 @@ from builder import Builder
 
 import traceback
 
+root = None
+
 def encode(s):
     if isinstance(s, unicode):
         try:
@@ -40,8 +42,8 @@ def askopenfilename(*args, **kwargs):
         filename = map(encode, filename)
     elif isinstance(filename, basestring):
         filename = encode(filename)
-        if filename.startswith('{'):
-            filename = filename[1:-1].split('} {')
+        if kwargs.get('multiple', 0):
+            filename = root.tk.splitlist(filename)
     return filename
 
 def _darwin_browser_open(url):
@@ -61,12 +63,6 @@ def _def_ext(ext): # platform-specific default extension handling
     if sys.platform != 'win32': 
         ext = None # default extensions don't work right under X11/Tcl/Tk
     return ext
-
-def _wincheck():
-    # disable map_gen for v1.4 release; 
-    # map_gen will hit windows in v1.4r1
-    #return sys.platform not in ("win32", "cygwin")
-    return False
 
 
 ## class askfileopenfilter(askopenfilename):
@@ -602,8 +598,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             self.output.after(500,self.update_menus) # twice a second
 
     def file_open(self,tutorial=0):
-        # FIXME: finish
-        REFLECTION_FORMATS = ( "MTZ", "mtz", "CIF", "cif" )
         
         if not tutorial:
             initdir = self.initialdir
@@ -624,24 +618,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             if len(ofile):
                 if not tutorial:
                     self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
-                try:
-                    self.cmd.log("load %s\n"%ofile,"cmd.load('%s',quiet=0)\n"%ofile)
-                    if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
-                        self.save_file = '' # remove ambiguous default
-                    if ofile[-3:] in REFLECTION_FORMATS and _wincheck():
-                        try:
-                            from pmg_tk import PyMOLMapLoad
-                            map_loader = PyMOLMapLoad.PyMOLMapLoad(self.app.root,self.app,ofile)
-                            map_loader.pack_and_show()
-                        except:
-                            print "Could not load reflection file."
-                            traceback.print_exc()
-                            return None
-                    else:
-                        self.cmd.load(ofile,quiet=0)
-                    
-                except self.pymol.CmdException:
-                    print "Error: unable to open file '%s'"%ofile
+                if ofile[-4:].lower() == '.pse' and ofile != self.save_file:
+                    self.save_file = '' # remove ambiguous default
+                self.cmd.do('_ /cmd.load(%s, quiet=0)' % repr(ofile))
 
     def log_open(self):
         sfile = asksaveasfilename(initialfile = self.log_file,
@@ -3579,6 +3558,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.menuBar.destroy()
         
     def __init__(self,app):
+        global root
+        root = app.root
 
         PMGSkin.__init__(self,app)
         Normal.appversion = app.pymol.cmd.get_version()[0]

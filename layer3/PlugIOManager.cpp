@@ -578,6 +578,8 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   char **bondtypename;
   int auto_show = RepGetAutoShowMask(G);
 
+  memset(&timestep, 0, sizeof(molfile_timestep_t));
+
   ok_assert(1, manager);
   plugin = find_plugin(manager, plugin_type);
 
@@ -607,7 +609,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   // Create ObjectMolecule
   ok_assert(1, I = ObjectMoleculeNew(G, false));
   I->Obj.Color = AtomInfoUpdateAutoColor(G);
-  I->AtomInfo = VLACalloc(AtomInfoType, natoms);
+  VLASize(I->AtomInfo, AtomInfoType, natoms);
   I->NAtom = natoms;
 
   // copy atom info
@@ -690,7 +692,6 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
   I->Symmetry = SymmetryNewFromTimestep(G, &timestep);
 
   // finalize
-  ObjectMoleculeSort(I);
   ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
   ObjectMoleculeUpdateIDNumbers(I);
   ObjectMoleculeUpdateNonbonded(I);

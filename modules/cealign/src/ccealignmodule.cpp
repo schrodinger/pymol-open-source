@@ -427,6 +427,14 @@ pathCache findPath( double** S, double** dA, double** dB, int lenA, int lenB, fl
     } // ROF -- end for iB
   } // ROF -- end for iA
 
+  // free memory
+  for ( i = 0; i < smaller; i++ )
+    free(allScoreBuffer[i]);
+  free(allScoreBuffer);
+  free(tIndex);
+  free(winCache);
+  free(bestPath);
+
   return pathBuffer;
 }
 

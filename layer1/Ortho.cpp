@@ -2631,6 +2631,9 @@ void OrthoFree(PyMOLGlobals * G)
     FreeP(I->bgData);
     I->bgData = NULL;
   }
+  if (I->bgCGO){
+    CGOFree(I->bgCGO);
+  }
   FreeP(G->Ortho);
 }
 

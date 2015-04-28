@@ -176,10 +176,10 @@ int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
 
 void SymmetryFree(CSymmetry * I)
 {
-  if(I->Crystal)
-    CrystalFree(I->Crystal);
-  VLAFreeP(I->SymMatVLA);
-  VLAFreeP(I->SymOpVLA);
+  if (!I)
+    return;
+
+  SymmetryClear(I);
   OOFreeP(I);
 }
 
@@ -213,25 +213,25 @@ CSymmetry *SymmetryNew(PyMOLGlobals * G)
 
 CSymmetry *SymmetryCopy(const CSymmetry * other)
 {
-  OOAlloc(other->G, CSymmetry);
-  if(!other) {
-    OOFreeP(I);
+  if (!other) {
     return NULL;
   }
-  UtilCopyMem(I, other, sizeof(CSymmetry));
-  I->Crystal = CrystalCopy(I->Crystal);
-  I->SymMatVLA = VLACopy(I->SymMatVLA, float);
-  I->SymOpVLA = VLACopy(I->SymOpVLA, WordType);
-  return (I);
-}
 
-CSymmetry *SymmetryCopyTo(const CSymmetry *other, CSymmetry *I)
-{
+  OOAlloc(other->G, CSymmetry);
+  ok_assert(1, I);
+
   UtilCopyMem(I, other, sizeof(CSymmetry));
   I->Crystal = CrystalCopy(I->Crystal);
   I->SymMatVLA = VLACopy(I->SymMatVLA, float);
   I->SymOpVLA = VLACopy(I->SymOpVLA, WordType);
+
+  ok_assert(2, I->Crystal && I->SymMatVLA && I->SymOpVLA);
+
   return (I);
+ok_except2:
+  SymmetryFree(I);
+ok_except1:
+  return NULL;
 }
 
 void SymmetryUpdate(CSymmetry * I)

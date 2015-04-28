@@ -4687,7 +4687,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
       last = current + 1;
     }
 
-    if(cscount == average) {
+    if(cscount == average || current == I->NCSet - 1) {
       PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Details)
         " ObjectMolecule: computing spheroid from states %d to %d.\n",
         first + 1, last ENDFB(I->Obj.G);
@@ -7488,9 +7488,10 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
         ok = ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't get coordinates");
       else {
         for(c = 0; c < 3; c++) {
-          tmp = PyList_GetItem(crd, c);
+          tmp = PySequence_GetItem(crd, c);
           if(tmp)
             ok = PConvPyObjectToFloat(tmp, f++);
+          Py_XDECREF(tmp);
           if(!ok) {
             ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read coordinates");
             break;
@@ -7966,6 +7967,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
             sprintf(color_name, "0x%08x", trgb);
 	    atInfo[a].color = ColorGetIndex(G, color_name);
           }
+          Py_DECREF(tmp);
         }
       }
 
@@ -8200,6 +8202,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
           if(PConvPyIntToInt(tmp, &tmp_int)) {
             fractional = tmp_int;
           }
+          Py_DECREF(tmp);
         }
       }
       if(PyObject_HasAttrString(model, "connect_mode")) {
@@ -8210,6 +8213,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
             auto_bond = true;
             connect_mode = tmp_int;
           }
+          Py_DECREF(tmp);
         }
       }
       nAtom = cset->NIndex;

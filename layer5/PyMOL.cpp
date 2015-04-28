@@ -643,7 +643,14 @@ static OVstatus PyMOL_PurgeAPI(CPyMOL * I)
   OVOneToOne_DEL_AUTO_NULL(I->MouseButtonCodeLexicon);
   OVOneToOne_DEL_AUTO_NULL(I->MouseButtonModCodeLexicon);
   OVOneToOne_DEL_AUTO_NULL(I->MouseButtonActionCodeLexicon);
+  OVOneToOne_DEL_AUTO_NULL(I->MouseModeLexicon);
+  OVOneToOne_DEL_AUTO_NULL(I->PaletteLexicon);
+  OVOneToOne_DEL_AUTO_NULL(I->CartoonLexicon);
+  OVOneToOne_DEL_AUTO_NULL(I->FlagLexicon);
+  OVOneToOne_DEL_AUTO_NULL(I->FlagActionLexicon);
 #endif
+
+  OVOneToOne_DEL_AUTO_NULL(I->AtomPropertyLexicon);
 
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   return_OVstatus_SUCCESS;

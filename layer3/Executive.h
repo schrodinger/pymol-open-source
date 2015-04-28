@@ -95,6 +95,7 @@ Z* -------------------------------------------------------------------
 
 #define cLoadTypeSpider 62
 #define cLoadTypeCMS 63
+#define cLoadTypePlugin 64
 
 /* NOTE: if you add new content/object type above, then be sure to add
    corresponding code in: CmdLoad ExecutiveGetExistingCompatible

@@ -120,7 +120,9 @@ class PMGApp(Pmw.MegaWidget):
                 ("All Readable","*.fasta"),
                 ("All Readable","*.aln"),
                 ("All Readable","*.acnt"),
-                #("All Readable","*.mtz"),                 
+                ("All Readable","*.mtz"),                 
+                ("All Readable","*.vis"),
+                ("All Readable","*.psf"),
                 ("PDB File","*.pdb"),
                 ("PDB1 File","*.pdb1"),                
                 ("All Files","*.*"),
@@ -159,6 +161,7 @@ class PMGApp(Pmw.MegaWidget):
                 ("Fasta File","*.fasta"),
                 ("CLUSTAL file","*.aln"),
                 ("ACNT Map","*.acnt"),                 
+                ("Protein Structure File","*.psf"),
                 ]
 
     def initializeTk_colors_common(self):
