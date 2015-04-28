@@ -109,6 +109,8 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 	  CGOFreeWithoutVBOs(sphereVBOs);
 	  sphereVBOs = NULL;
 	} else {
+	  if (leftOverAfterSpheresCGO)
+	    CGOFree(leftOverAfterSpheresCGO);
 	  leftOverAfterSpheresCGO = leftOverCGO;
 	}
 	/* For the rest of the primitives that exist, simplify them into Geometry

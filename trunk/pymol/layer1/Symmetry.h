@@ -40,7 +40,6 @@ CSymmetry *SymmetryNew(PyMOLGlobals * G);
 void SymmetryUpdate(CSymmetry * I);
 void SymmetryDump(CSymmetry * I);
 CSymmetry *SymmetryCopy(const CSymmetry * other);
-CSymmetry *SymmetryCopyTo(const CSymmetry * other,CSymmetry *dest);
 PyObject *SymmetryAsPyList(CSymmetry * I);
 int SymmetryFromPyList(CSymmetry * I, PyObject * list);
 CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list);

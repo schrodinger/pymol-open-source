@@ -263,7 +263,7 @@ PYMOL API
         selection = selector.process(selection)
         try:
             _self.lock(_self)
-            r = _cmd.set_symmetry(_self._COb,str(selection), int(state),
+            r = _cmd.set_symmetry(_self._COb,str(selection), int(state) - 1,
                                          float(a),float(b),float(c),
                                          float(alpha),float(beta),float(gamma),
                                          str(spacegroup))

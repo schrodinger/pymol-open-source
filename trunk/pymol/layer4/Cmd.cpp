@@ -7212,7 +7212,8 @@ ok_except1:
 static PyObject *CmdLoad(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  char *fname, *oname;
+  char *fname, *oname, *load_properties = NULL;
+  char *plugin = NULL;
   CObject *origObj = NULL;
   int frame, type;
   int finish, discrete;
@@ -7221,9 +7222,10 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   int multiplex;
   int zoom;
   int bytes;
-  ok = PyArg_ParseTuple(args, "Oss#iiiiiii", &self,
+  ok = PyArg_ParseTuple(args, "Oss#iiiiiii|zz", &self,
                         &oname, &fname, &bytes, &frame, &type,
-                        &finish, &discrete, &quiet, &multiplex, &zoom);
+                        &finish, &discrete, &quiet, &multiplex, &zoom,
+                        &plugin, &load_properties);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -7248,7 +7250,7 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
     ok = ExecutiveLoad(G, origObj,
                          fname, bytes, type,
                          valid_name, frame, zoom,
-                         discrete, finish, multiplex, quiet, NULL);
+                         discrete, finish, multiplex, quiet, plugin);
 
     OrthoRestorePrompt(G);
     APIExit(G);

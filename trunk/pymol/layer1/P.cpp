@@ -2392,14 +2392,12 @@ int PFlush(PyMOLGlobals * G)
     if(!(PIsGlutThread() && G->P_inst->glut_thread_keep_out)) {
       /* don't run if we're currently banned */
       char *buffer = 0;
-      int size, curSize = 0;
+      int size;
       while((size = OrthoCommandOutSize(G))){
-	if (!curSize){
+	if (!buffer){
 	  buffer = VLACalloc(char, size);
-	  curSize = size;
-	} else if (size < curSize){
-	  VLASize(buffer, char, size);
-	  curSize = size;
+	} else {
+	  VLACheck(buffer, char, size);
 	}
 	OrthoCommandSetBusy(G, true);
 	OrthoCommandOut(G, buffer);
@@ -2438,14 +2436,12 @@ int PFlushFast(PyMOLGlobals * G)
   PyObject *err;
   int did_work = false;
   char *buffer = 0;
-  int size, curSize = 0;
+  int size;
   while((size = OrthoCommandOutSize(G))){
-    if (!curSize){
+    if (!buffer){
       buffer = VLACalloc(char, size);
-      curSize = size;
-    } else if (size < curSize){
-      VLASize(buffer, char, size);
-      curSize = size;
+    } else {
+      VLACheck(buffer, char, size);
     }
     OrthoCommandSetBusy(G, true);
     OrthoCommandOut(G, buffer);

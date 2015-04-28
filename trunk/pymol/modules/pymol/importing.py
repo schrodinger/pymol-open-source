@@ -41,6 +41,15 @@ if __name__=='pymol.importing':
     
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
+    molfile_plugin_types = {
+        'cube',     # CUBE map
+        'psf',      # protein structure file
+        'CHGCAR',   # VASP map
+        'OUTCAR',   # VASP molecule
+        'POSCAR',   # VASP molecule
+        'XDATCAR',  # VASP molecule
+    }
+
     def auto_zoom(zoom, selection, state=0, _self=cmd):
         if zoom > 0 or zoom < 0 and _self.get_setting_int("auto_zoom"):
             _self.zoom(selection, state=state)
@@ -638,6 +647,7 @@ SEE ALSO
             _self.lock(_self)
             type = format
             ftype = 0
+            plugin = ''
             state = int(state)
             finish = int(finish)
             zoom = int(zoom)
@@ -654,6 +664,7 @@ SEE ALSO
             if not len(str(type)):
                 # guess the file type from the extension
                 fname_no_gz = gz_ext_re.sub("",filename) # strip gz
+                ext = fname_no_gz.rsplit('.', 1)[-1]
                 if re.search("\.pdb$|\.pdb\d+$|\.ent$|\.p5m",fname_no_gz,re.I):
                     ftype = loadable.pdb
                 elif re.search("\.mol$",fname_no_gz,re.I):
@@ -732,8 +743,9 @@ SEE ALSO
                     ftype = loadable.cms
                 elif re.search("\.idx$",fname_no_gz,re.I):
                     ftype = "idx" # should be numeric
-                elif re.search("\.cube$",fname_no_gz,re.I):
-                    ftype = loadable.cube
+                elif ext in molfile_plugin_types:
+                    ftype = loadable.plugin
+                    plugin = ext
                 elif re.search("\.spi(der)?$",fname_no_gz,re.I):
                     ftype = loadable.spider
                 elif re.search("\.cif$",fname_no_gz,re.I):
@@ -764,6 +776,9 @@ SEE ALSO
                 # user specified the file type
                 if hasattr(loadable,type):
                     ftype = getattr(loadable,type)
+                elif type in molfile_plugin_types:
+                    ftype = loadable.plugin
+                    plugin = type
                 else:
                     try:
                         ftype = int(type) # for some reason, these exceptions aren't always caught...
@@ -890,7 +905,10 @@ SEE ALSO
             # standard file handling
             if ftype>=0:
                 r = _load(oname,fname,state,ftype,finish,
-                          discrete,quiet,multiplex,zoom,mimic,_self=_self)
+                          discrete,quiet,multiplex,zoom,mimic,
+                          plugin,
+                          object_props,
+                          atom_props,_self=_self)
         finally:
             _self.unlock(r,_self)
         if go_to_first_scene:

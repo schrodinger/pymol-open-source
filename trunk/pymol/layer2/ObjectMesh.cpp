@@ -317,6 +317,7 @@ static void ObjectMeshStateFree(ObjectMeshState * ms)
   if (ms->shaderCGO){
     CGOFree(ms->shaderCGO);
     ms->shaderCGO = NULL;
+    CGOFree(ms->shaderUnitCellCGO);
     ms->shaderUnitCellCGO = NULL;
   }
   if(ms->UnitCellCGO) {
@@ -401,6 +402,7 @@ static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state)
 	if (ms && ms->shaderCGO){
 	  CGOFree(ms->shaderCGO);
 	  ms->shaderCGO = NULL;
+	  CGOFree(ms->shaderUnitCellCGO);
 	  ms->shaderUnitCellCGO = NULL;
 	}
       }
@@ -409,6 +411,7 @@ static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state)
       if (ms && ms->shaderCGO){
 	CGOFree(ms->shaderCGO);
 	ms->shaderCGO = NULL;
+	CGOFree(ms->shaderUnitCellCGO);
 	ms->shaderUnitCellCGO = NULL;
       }
     }
@@ -816,6 +819,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
       if (ms->shaderCGO){
 	CGOFree(ms->shaderCGO);
 	ms->shaderCGO = NULL;
+	CGOFree(ms->shaderUnitCellCGO);
 	ms->shaderUnitCellCGO = NULL;
       }
     }
@@ -1013,6 +1017,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      if (ms->shaderCGO && (!use_shader || (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers))){
 		CGOFree(ms->shaderCGO);
 		ms->shaderCGO = NULL;
+		CGOFree(ms->shaderUnitCellCGO);
 		ms->shaderUnitCellCGO = NULL;
 	      }
 

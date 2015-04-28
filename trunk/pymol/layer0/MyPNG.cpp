@@ -182,7 +182,7 @@ int MyPNGWrite(PyMOLGlobals * G, char *file_name, unsigned char *data_ptr,
       png_write_end(png_ptr, info_ptr);
 
       /* clean up after the write, and free any memory allocated */
-      png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+      png_destroy_write_struct(&png_ptr, &info_ptr);
 
     cleanup:
       if(fp) {

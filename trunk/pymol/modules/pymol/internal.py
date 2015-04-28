@@ -328,7 +328,9 @@ def file_read(finfo, _self=cmd):
 
 def _load(oname,finfo,state,ftype,finish,discrete,
           quiet=1,multiplex=0,zoom=-1,mimic=1,
-          _self=cmd):
+          plugin='',
+          object_props=None,
+          atom_props=None, _self=cmd):
     # WARNING: internal routine, subject to change
     # caller must already hold API lock
     # NOTE: state index assumes 1-based state
@@ -389,7 +391,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 ftype = _load2str[ftype]
             r = _cmd.load(_self._COb,str(oname),finfo,int(state)-1,int(ftype),
                           int(finish),int(discrete),int(quiet),
-                          int(multiplex),int(zoom))
+                          int(multiplex),int(zoom), plugin, object_props)
     else:
         try:
             x = io.pkl.fromFile(finfo)
