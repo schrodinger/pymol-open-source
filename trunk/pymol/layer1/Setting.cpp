@@ -1009,7 +1009,7 @@ static int set_list(CSetting * I, PyObject * list)
     SettingSet_3fv(I, index, val_3f);
     break;
   case cSetting_string:
-    ok_assert(1, val_s = CPythonVal_PConvPyStrToStrDup_From_List(I->G, list, 2));
+    ok_assert(1, val_s = PyString_AsString(PyList_GetItem(list, 2)));
     SettingSet_s(I, index, val_s);
     break;
   default:

@@ -445,8 +445,10 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       "Error: wrappers cannot be used outside of the iterate/alter/alter_state commands\n" ENDFB(wobj->G);
     return NULL;
   }
-  aprop = PyString_AS_STRING(PyObject_Str(key));
+  PyObject *keyobj = PyObject_Str(key);
+  aprop = PyString_AS_STRING(keyobj);
   ap = PyMOL_GetAtomPropertyInfo(wobj->G->PyMOL, aprop);
+  Py_DECREF(keyobj);
   if (ap){
     switch (ap->Ptype){
     case cPType_string:
@@ -573,9 +575,11 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
     return -1;
   }
   {
-    char *aprop = PyString_AS_STRING(PyObject_Str(key));
+    PyObject *keyobj = PyObject_Str(key);
+    char *aprop = PyString_AS_STRING(keyobj);
     AtomPropertyInfo *ap;
     ap = PyMOL_GetAtomPropertyInfo(wobj->G->PyMOL, aprop);
+    Py_DECREF(keyobj);
     if (ap){
       short changed = false;
       if (wobj->read_only){
@@ -594,13 +598,15 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       switch (ap->Ptype){
       case cPType_string:
 	{
-	  char *valstr = PyString_AS_STRING(PyObject_Str(val));
+          PyObject *valobj = PyObject_Str(val);
+	  char *valstr = PyString_AS_STRING(valobj);
 	  char *dest = (char*)(((char*)wobj->atomInfo) + ap->offset);
 	  if (strlen(valstr) > ap->maxlen){
 	    strncpy(dest, valstr, ap->maxlen);
 	  } else {
 	    strcpy(dest, valstr);
 	  }
+          Py_DECREF(valobj);
 	  changed = true;
 	}
 	break;
@@ -629,9 +635,11 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       case cPType_int_as_string:
 	{
 	  int *dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
-	  char *valstr = PyString_AS_STRING(PyObject_Str(val));
+          PyObject *valobj = PyObject_Str(val);
+	  char *valstr = PyString_AS_STRING(valobj);
 	  LexDec(wobj->G, *dest);
 	  *dest = LexIdx(wobj->G, valstr);
+          Py_DECREF(valobj);
 	  changed = true;
 	}
 	break;
@@ -645,17 +653,21 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	break;	
       case cPType_stereo:
 	{
-	  char *stereo = PyString_AS_STRING(PyObject_Str(val));
+          PyObject *valobj = PyObject_Str(val);
+	  char *stereo = PyString_AS_STRING(valobj);
 	  if (stereo){
 	    wobj->atomInfo->mmstereo = convertStereoToChar(stereo[0]);
 	  }
+          Py_DECREF(valobj);
 	}
 	break;
       case cPType_char_as_type:
 	{
 	  signed char *dest = (signed char *)(((char*)wobj->atomInfo) + ap->offset);
-	  char *valstr = PyString_AS_STRING(PyObject_Str(val));
+          PyObject *valobj = PyObject_Str(val);
+          char *valstr = PyString_AS_STRING(valobj);
 	  *dest = ((valstr[0] == 'h') || (valstr[0] == 'H'));
+          Py_DECREF(valobj);
 	  changed = true;
 	}
 	break;
@@ -669,7 +681,8 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	break;
       case cPType_int_custom_type:
 	{
-	  char *valstr = PyString_AS_STRING(PyObject_Str(val));
+          PyObject *valobj = PyObject_Str(val);
+	  char *valstr = PyString_AS_STRING(valobj);
 	  int *dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
 	  if (valstr[0] == '?'){
 	    *dest = cAtomInfoNoType;
@@ -677,6 +690,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	    int valint = PyInt_AS_LONG(val);
 	    *dest = valint;
 	  }
+          Py_DECREF(valobj);
 	  changed = true;
 	}
 	break;

@@ -311,7 +311,7 @@ PyObject *ColorExtAsPyList(PyMOLGlobals * G)
   for(a = 0; a < I->NExt; a++) {
     list = PyList_New(2);
     {
-      char *name = OVLexicon_FetchCString(I->Lex, ext->Name);
+      const char *name = ext->Name ? OVLexicon_FetchCString(I->Lex, ext->Name) : "";
       PyList_SetItem(list, 0, PyString_FromString(name));
     }
     PyList_SetItem(list, 1, PyInt_FromLong(ext->Type));
