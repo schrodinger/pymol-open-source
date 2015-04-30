@@ -63,12 +63,9 @@ Z* -------------------------------------------------------------------
 #define CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, i, f)       PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, i), f)
 #define CPythonVal_PConvPyListToLabPosVLA(G, obj, vla_ptr)                      PConvPyListToLabPosVLA(obj, vla_ptr)
 
-#define CPythonVal_PConvPyStrToStrDup_From_List(G, list, i)                     CPythonVal_As_String(PyList_GetItem(list, i))
-
 #define CPythonVal_Free(obj)
 #define CPythonVal_FreeAll(PYOBJECT)
 
-#define CPythonVal_As_String(PYOBJECT)                  PyString_AS_STRING(PyObject_Str(PYOBJECT))
 #define CPythonVal_New(G, PYOBJECT)                     PYOBJECT
 #define CPythonVal_Append_List(LIST, ITEM)              PyList_Append(LIST, ITEM)
 #define CPythonVal_New_List()                           PyList_New(0)

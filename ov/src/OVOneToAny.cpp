@@ -253,7 +253,7 @@ OVstatus OVOneToAny_Pack(OVOneToAny * up)
       }
       up->n_inactive = 0;
       up->next_inactive = 0;
-      if(new_size < up->size) {
+      if(new_size > 0 && new_size < up->size) {
         if(!OVHeapArray_SET_SIZE(up->elem, up_element, new_size))
           ov_utility_zero_range(up->elem + new_size, up->elem + up->size);
       }

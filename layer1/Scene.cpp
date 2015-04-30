@@ -7773,7 +7773,6 @@ int SceneRenderCached(PyMOLGlobals * G)
     } else {
       renderedFlag = false;
     }
-    I->DirtyFlag = false;
   } else if(I->CopyType == true) {      /* true vs. 2 */
     renderedFlag = true;
   }
