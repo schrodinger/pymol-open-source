@@ -2,6 +2,24 @@
 CHANGE LOG
 =========================================================================
 
+2015-05-04 Thomas Holder, Blaine Bell, Gabriel Marques
+
+	* 1.7.6.0
+
+	* VASP file support for: CHGCAR, OUTCAR, POSCAR, XDATCAR
+
+	* psf file support
+
+	* ignore SCALE matrices with negative determinant
+
+	* fix crash when loading malformed CIF file
+
+	* fix cif export for natoms = 0
+
+	* fix several memory leaks
+
+	* fix crash when saving PSE with deleted ramp
+
 2015-04-20 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* new setting: pse_export_version to save to old session formats
