@@ -968,10 +968,16 @@ _atom_site.auth_asym_id
 _atom_site.pdbx_PDB_model_num
 ''')
 
+            loop_i = len(buf) - 1
+
             _self.iterate_state(state, '?%s & ?%s' % (model, tmp),
                 'callback(type, ID, elem, name, alt, resn, segi, chain, resi, '
                 'x, y, z, q, b, formal_charge, state, "")',
                 space={'callback': callback})
+
+            # no loop header for zero rows
+            if loop_i == len(buf) - 1:
+                buf[loop_i] = '#'
 
         _self.delete(tmp)
 
