@@ -275,7 +275,7 @@ bool cif_file::parse() {
       }
 
       // columns
-      while (codes[++i] != 'Q' && tokens[i][0] == '_') {
+      while (++i < n && codes[i] != 'Q' && tokens[i][0] == '_') {
         tolowerinplace(tokens[i]);
 
         if (current_frame) {

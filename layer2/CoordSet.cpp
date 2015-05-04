@@ -708,8 +708,8 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
   }
 
   // is SCALEn invalid?  If so, then it should definitely be ignored...
-  if (fabs(determinant33f(sca, 4)) < R_SMALL8 ||
-      fabs(determinant33f(r2f, 3)) < R_SMALL8) {
+  if (determinant33f(sca, 4) < R_SMALL8 ||
+      determinant33f(r2f, 3) < R_SMALL8) {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " ObjectMolReadPDBStr: ignoring SCALEn (invalid matrix).\n" ENDFB(G);
     return false;
