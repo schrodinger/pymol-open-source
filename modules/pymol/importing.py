@@ -41,14 +41,14 @@ if __name__=='pymol.importing':
     
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
-    molfile_plugin_types = {
+    molfile_plugin_types = set([
         'cube',     # CUBE map
         'psf',      # protein structure file
         'CHGCAR',   # VASP map
         'OUTCAR',   # VASP molecule
         'POSCAR',   # VASP molecule
         'XDATCAR',  # VASP molecule
-    }
+    ])
 
     def auto_zoom(zoom, selection, state=0, _self=cmd):
         if zoom > 0 or zoom < 0 and _self.get_setting_int("auto_zoom"):
