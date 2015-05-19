@@ -46,3 +46,16 @@ class TestCIF(testing.PyMOLTestCase):
             self.assertEqual(len(model.bond), nbonds)
         # for 000, test bond orders
         self.assertEqual([b.order for b in model.bond], [1, 2, 1, 1, 1, 1, 1, 1])
+
+    @testing.requires_version('1.7.7')
+    def test_assembly(self):
+        cmd.load(self.datafile('4m4b-minimal-w-assembly.cif'))
+        self.assertEqual(cmd.count_states(), 1)
+        self.assertEqual(cmd.get_chains(), ['A', 'B'])
+
+        cmd.delete('*')
+        cmd.set('assembly', '1')
+
+        cmd.load(self.datafile('4m4b-minimal-w-assembly.cif'))
+        self.assertEqual(cmd.count_states(), 2)
+        self.assertEqual(cmd.get_chains(), ['B'])
