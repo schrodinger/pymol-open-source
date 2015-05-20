@@ -19,6 +19,7 @@
 #include"os_gl.h"
 
 #include <set>
+#include <algorithm>
 
 #include"Version.h"
 #include"main.h"
@@ -3632,7 +3633,7 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
   case cLoadTypeCIF:
   case cLoadTypeCIFStr:
     obj = (CObject *) ObjectMoleculeReadCifStr(G, (ObjectMolecule *) origObj,
-        content, state, discrete, quiet, multiplex, NULL);
+        content, state, discrete, quiet, multiplex, zoom);
     break;
   case cLoadTypeTOP:
     if(origObj) {
@@ -3766,7 +3767,7 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
     }
   }
 
-  if(origObj) {
+  if(origObj && obj) {
     if(finish)
       ExecutiveUpdateObjectSelection(G, origObj);
 
@@ -5860,7 +5861,7 @@ int ExecutiveSetSymmetry(PyMOLGlobals * G, const char *sele, int state, float a,
   symmetry->Crystal->Angle[1] = beta;
   symmetry->Crystal->Angle[2] = gamma;
   UtilNCopy(symmetry->SpaceGroup, sgroup, sizeof(WordType));
-  SymmetryAttemptGeneration(symmetry, false);
+  SymmetryUpdate(symmetry);
 
   objVLA = ExecutiveSeleToObjectVLA(G, sele);
   n_obj = VLAGetSize(objVLA);
@@ -6808,7 +6809,7 @@ int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid,
     subtract3f(md->MaxCorner, md->MinCorner, v);
     for(a = 0; a < 3; a++) {
       if(v[a] < 0.0)
-        swap1f(md->MaxCorner + a, md->MinCorner + a);
+        std::swap(md->MaxCorner[a], md->MinCorner[a]);
     };
     subtract3f(md->MaxCorner, md->MinCorner, v);
 
@@ -12769,9 +12770,27 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
     " ExecutiveUnsetSetting: entered. sele \"%s\"\n", sele ENDFD;
   unblock = PAutoBlock(G);
   if(sele[0] == 0) {
-    /* do nothing -- in future, restore the default */
+    // Set global setting to an "off" value.
+    // NOTE: It would be nice if this would restore the default setting, but
+    //       that's not how Warren implemented it and we don't want to break
+    //       legacy PyMOL behavior.
+    switch (SettingGetType(G, index)) {
+      case cSetting_string:
+        SettingSetGlobal_s(G, index, "");
+        break;
+      case cSetting_float3:
+        SettingSetGlobal_3f(G, index, 0.f, 0.f, 0.f);
+        break;
+      case cSetting_color:
+        SettingSetGlobal_i(G, index, -1);
+        break;
+      default:
+        SettingSetGlobal_i(G, index, 0);
+        break;
+    }
   }
   else {
+    // Undefine per-object, per-state, or per-atom settings.
     CTracker *I_Tracker = I->Tracker;
     int list_id = ExecutiveGetNamesListFromPattern(G, sele, true, true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
@@ -14460,7 +14479,9 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
     ErrMessage(G, "ExecutiveSymExp", "Invalid object");
   } else if(!obj->Symmetry) {
     ErrMessage(G, "ExecutiveSymExp", "No symmetry loaded!");
-  } else if(!obj->Symmetry->NSymMat) {
+  } else if(!SymmetryAttemptGeneration(obj->Symmetry)) {
+    // unknown space group
+  } else if(obj->Symmetry->getNSymMat() < 1) {
     ErrMessage(G, "ExecutiveSymExp", "No symmetry matrices!");
   } else {
     if(!quiet) {
@@ -14502,6 +14523,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
     if(!op.nvv1) {
       ErrMessage(G, "ExecutiveSymExp", "No atoms indicated!");
     } else {
+      int nsymmat = obj->Symmetry->getNSymMat();
       map = MapNew(G, -cutoff, op.vv1, op.nvv1, NULL);
       if(map) {
         MapSetupExpress(map);
@@ -14509,7 +14531,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
         for(x = -1; x < 2; x++)
           for(y = -1; y < 2; y++)
             for(z = -1; z < 2; z++)
-              for(a = 0; a < obj->Symmetry->NSymMat; a++) {
+              for(a = 0; a < nsymmat; a++) {
 								/* make a copy of the original */
                 new_obj = ObjectMoleculeCopy(obj);
 
@@ -14521,7 +14543,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                     os = obj->CSet[b];
 										/* convert coordinates into fractional, based on unit cell */
                     CoordSetRealToFrac(cs, obj->Symmetry->Crystal);
-                    CoordSetTransform44f(cs, obj->Symmetry->SymMatVLA + (a * 16));
+                    CoordSetTransform44f(cs, obj->Symmetry->getSymMat(a));
                     CoordSetGetAverage(cs, ts);
                     identity44f(m);
                     /* compute the effective translation resulting

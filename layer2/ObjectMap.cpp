@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 */
 
 #include <stdint.h>
+#include <algorithm>
 
 #include"os_python.h"
 
@@ -2145,7 +2146,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
     subtract3f(md->MaxCorner, md->MinCorner, v);
     for(a = 0; a < 3; a++) {
       if(v[a] < 0.0)
-        swap1f(md->MaxCorner + a, md->MinCorner + a);
+        std::swap(md->MaxCorner[a], md->MinCorner[a]);
     };
     subtract3f(md->MaxCorner, md->MinCorner, v);
     for(a = 0; a < 3; a++) {

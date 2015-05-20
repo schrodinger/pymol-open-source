@@ -12,59 +12,31 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import traceback
-import sys
+from __future__ import division
 
 # xray.py 
 # This section contains python code for supporting
 # x-ray crystallography functions
 
+def sg_canonicalize(sg):
+    import re
+    sg = re.sub(r'\s+', ' ', sg.strip().upper())
+    return space_group_map.get(sg, sg)
 
-def old_sg_sym_to_mat_list(sgsymbol):
-    import sglite
-    sgsymbol = hex_to_rhom_xHM.get(sgsymbol,sgsymbol)
-    try:
-        Symbols_Inp = sglite.SgSymbolLookup(sgsymbol)
-        if(Symbols_Inp):
-            HallSymbol = Symbols_Inp['Hall']
-            SgOps = sglite.SgOps(HallSymbol)
-            nLTr = SgOps.get_nLTr()
-            fInv = SgOps.get_fInv()
-            nSMx = SgOps.get_nSMx()
-            result = []
-            rb = float(sglite.SRBF)
-            tb = float(sglite.STBF)
-            for iLTr in xrange(nLTr):
-                for iInv in xrange(fInv):
-                    for iSMx in xrange(nSMx):
-                        Mx = SgOps.getLISMx(iLTr, iInv, iSMx, +1)
-                        result.append([[ Mx[0]/rb, Mx[1]/rb, Mx[2]/rb, Mx[9 ]/tb],
-                                       [ Mx[3]/rb, Mx[4]/rb, Mx[5]/rb, Mx[10]/tb],
-                                       [ Mx[6]/rb, Mx[7]/rb, Mx[8]/rb, Mx[11]/tb],
-                                       [      0.0,      0.0,      0.0,       1.0]] )
-    except:
-        try:
-            from cmd import QuietException, \
-                 _feedback,fb_module,fb_mask 
-            if(_feedback(fb_module.symmetry,fb_mask.errors)):
-                print "Symmetry-Error: Unrecognized space group symbol '"+sgsymbol+"'."
-        except:
-            pass
-        result = None
-    return result
+def sg_register_if_unknown(sg, sym_op):
+    sg = sg_canonicalize(sg)
+    if sg not in sym_dict:
+        sym_dict[sg] = sym_op
 
 def sg_sym_to_mat_list(sgsymbol): # TODO _self
-    import re
     result = None
-    key = re.sub(r'\s+', ' ', sgsymbol.strip().upper())
-    key = space_group_map.get(key, key)
-    sym_op = sym_dict.get(key,None)
+    sym_op = sym_dict.get(sg_canonicalize(sgsymbol))
     if sym_op != None:
         result = []
         for op in sym_op:
             mat = []
             for expr in op.split(','):
-                mat.append( expr_to_vect[expr] )
+                mat.append(expr_to_vect(expr))
             mat.append([0.0,0.0,0.0,1.0])
             result.append(mat)
     else:
@@ -100,54 +72,23 @@ hex_to_rhom_xHM = {
     'H -3 C'   : 'R -3 c :H',
     }
 
-expr_to_vect = {    
-    'x-y': [1.0,-1.0,0.0,0.0],
-    'x-y+1/3': [1.0,-1.0,0.0,1.0/3.0],
-    'x-y+2/3': [1.0,-1.0,0.0,2.0/3.0],
-    'x': [1.0,0.0,0.0,0.0],
-    'x+1/4': [1.0,0.0,0.0,1.0/4.0],
-    'x+1/3': [1.0,0.0,0.0,1.0/3.0],
-    'x+1/2': [1.0,0.0,0.0,1.0/2.0],
-    'x+2/3': [1.0,0.0,0.0,2.0/3.0],
-    'x+3/4': [1.0,0.0,0.0,3.0/4.0],
-    '-x+y': [-1.0,1.0,0.0,0.0],
-    '-x+y+1/3': [-1.0,1.0,0.0,1.0/3.0],
-    '-x+y+2/3': [-1.0,1.0,0.0,2.0/3.0],
-    '-x': [-1.0,0.0,0.0,0.0],
-    '-x+1/4': [-1.0,0.0,0.0,1.0/4.0],
-    '-x+1/3': [-1.0,0.0,0.0,1.0/3.0],
-    '-x+1/2': [-1.0,0.0,0.0,1.0/2.0],
-    '-x+2/3': [-1.0,0.0,0.0,2.0/3.0],
-    '-x+3/4': [-1.0,0.0,0.0,3.0/4.0],
-    'y': [0.0,1.0,0.0,0.0],
-    'y+1/4': [0.0,1.0,0.0,1.0/4.0],
-    'y+1/3': [0.0,1.0,0.0,1.0/3.0],
-    'y+1/2': [0.0,1.0,0.0,1.0/2.0],
-    'y+2/3': [0.0,1.0,0.0,2.0/3.0],
-    'y+3/4': [0.0,1.0,0.0,3.0/4.0],
-    '-y': [0.0,-1.0,0.0,0.0],
-    '-y+1/4': [0.0,-1.0,0.0,1.0/4.0],
-    '-y+1/3': [0.0,-1.0,0.0,1.0/3.0],
-    '-y+1/2': [0.0,-1.0,0.0,1.0/2.0],
-    '-y+2/3': [0.0,-1.0,0.0,2.0/3.0],
-    '-y+3/4': [0.0,-1.0,0.0,3.0/4.0],
-    'z': [0.0,0.0,1.0,0.0],
-    'z+1/6': [0.0,0.0,1.0,1.0/6.0],
-    'z+1/4': [0.0,0.0,1.0,1.0/4.0],
-    'z+1/3': [0.0,0.0,1.0,1.0/3.0],
-    'z+1/2': [0.0,0.0,1.0,1.0/2.0],
-    'z+2/3': [0.0,0.0,1.0,2.0/3.0],
-    'z+3/4': [0.0,0.0,1.0,3.0/4.0],
-    'z+5/6': [0.0,0.0,1.0,5.0/6.0],
-    '-z': [0.0,0.0,-1.0,0.0],
-    '-z+1/6': [0.0,0.0,-1.0,1.0/6.0],
-    '-z+1/4': [0.0,0.0,-1.0,1.0/4.0],
-    '-z+1/3': [0.0,0.0,-1.0,1.0/3.0],
-    '-z+1/2': [0.0,0.0,-1.0,1.0/2.0],
-    '-z+2/3': [0.0,0.0,-1.0,2.0/3.0],
-    '-z+3/4': [0.0,0.0,-1.0,3.0/4.0],
-    '-z+5/6': [0.0,0.0,-1.0,5.0/6.0],
-    }
+def expr_to_vect(e):
+    '''
+    Example:
+    >>> expr_to_vect('x-z+1/2')
+    [1., 0., -1., 0.5]
+    '''
+    import re
+    r = [0., 0., 0., 0.]
+    for sign, var in re.findall(r'(-?)([^-+]+)', e):
+        idx = {'x': 0, 'y': 1, 'z': 2}.get(var, 3)
+        if idx == 3:
+            r[3] = eval(var, {}, {})
+        else:
+            r[idx] = 1.
+        if sign == '-':
+            r[idx] *= -1.
+    return r
 
 sym_base = {
     (

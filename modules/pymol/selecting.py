@@ -72,7 +72,7 @@ NOTES
 EXAMPLES 
 
     select chA, chain A
-    select ( resn his )
+    select ( resn HIS )
     select near142, resi 142 around 5
 
 PYMOL API
@@ -133,7 +133,7 @@ USAGE
     
 EXAMPLE
 
-    select src, name ca
+    select src, name CA
 
     python
     while cmd.pop("tmp","src"):

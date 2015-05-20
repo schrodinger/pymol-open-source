@@ -51,7 +51,7 @@ PyObject *SymmetryAsPyList(CSymmetry * I)
 
 }
 
-int SymmetryFromPyList(CSymmetry * I, PyObject * list)
+static int SymmetryFromPyList(CSymmetry * I, PyObject * list)
 {
 #ifdef _PYMOL_NOPY
   return 0;
@@ -62,8 +62,6 @@ int SymmetryFromPyList(CSymmetry * I, PyObject * list)
 
   if(ok)
     ok = (I != NULL);
-  if(ok)
-    SymmetryReset(I);
   if(ok)
     ok = (list != NULL);
   if(ok)
@@ -84,7 +82,7 @@ int SymmetryFromPyList(CSymmetry * I, PyObject * list)
     }
   }
   if(ok) {
-    SymmetryAttemptGeneration(I, true);
+      SymmetryUpdate(I);
   }
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
@@ -124,8 +122,19 @@ static void SymmetryDump44f(PyMOLGlobals * G, const float *m, const char *prefix
 #endif
 #endif
 
+/*
+ * Lookup the symmetry operations by space group symbol (from Python with
+ * pymol.xray) and populate SymMatVLA.
+ *
+ * Return false if space group unknown.
+ */
 int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
 {
+  if (I->SymMatVLA) {
+    // don't re-run unless SymmetryUpdate() was called
+    return true;
+  }
+
   int ok = false;
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
@@ -148,7 +157,7 @@ int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
     mats = PYOBJECT_CALLMETHOD(P_xray, "sg_sym_to_mat_list", "s", I->SpaceGroup);
     if(mats && (mats != Py_None)) {
       l = PyList_Size(mats);
-      VLACheck(I->SymMatVLA, float, 16 * l);
+      I->SymMatVLA = VLAlloc(float, 16 * l);
       if(!quiet) {
         PRINTFB(G, FB_Symmetry, FB_Details)
         " Symmetry: Found %d symmetry operators.\n", (int) l ENDFB(G);
@@ -161,7 +170,6 @@ int SymmetryAttemptGeneration(CSymmetry * I, int quiet)
           }
         }
       }
-      I->NSymMat = l;
       ok = true;
       Py_DECREF(mats);
     } else {
@@ -188,26 +196,13 @@ void SymmetryClear(CSymmetry * I)
   if(I->Crystal)
     CrystalFree(I->Crystal);
   VLAFreeP(I->SymMatVLA);
-  VLAFreeP(I->SymOpVLA);
-}
-
-void SymmetryReset(CSymmetry * I)
-{
-  I->SpaceGroup[0] = 0;
-  I->NSymMat = 0;
-  I->NSymOp = 0;
 }
 
 CSymmetry *SymmetryNew(PyMOLGlobals * G)
 {
-  OOAlloc(G, CSymmetry);
+  OOCalloc(G, CSymmetry);
   I->G = G;
   I->Crystal = CrystalNew(G);
-  I->SpaceGroup[0] = 0;
-  I->NSymMat = 0;
-  I->SymMatVLA = VLAlloc(float, 16);
-  I->NSymOp = 0;
-  I->SymOpVLA = VLAlloc(WordType, 1);
   return (I);
 }
 
@@ -222,10 +217,9 @@ CSymmetry *SymmetryCopy(const CSymmetry * other)
 
   UtilCopyMem(I, other, sizeof(CSymmetry));
   I->Crystal = CrystalCopy(I->Crystal);
-  I->SymMatVLA = VLACopy(I->SymMatVLA, float);
-  I->SymOpVLA = VLACopy(I->SymOpVLA, WordType);
+  I->SymMatVLA = NULL;
 
-  ok_assert(2, I->Crystal && I->SymMatVLA && I->SymOpVLA);
+  ok_assert(2, I->Crystal);
 
   return (I);
 ok_except2:
@@ -238,9 +232,36 @@ void SymmetryUpdate(CSymmetry * I)
 {
   if(I->Crystal)
     CrystalUpdate(I->Crystal);
-  SymmetryAttemptGeneration(I, false);
+  VLAFreeP(I->SymMatVLA);
 }
 
 void SymmetryDump(CSymmetry * I)
 {
+}
+
+/*
+ * Get the number of symmetry matrices
+ */
+int CSymmetry::getNSymMat() const {
+  if (!SymMatVLA)
+    return 0;
+  return VLAGetSize(SymMatVLA) / 16;
+}
+
+/*
+ * Register a a space group with symmetry operations (if not already registered)
+ *
+ * sg: space group symbol, e.g. "P 1"
+ * sym_op: list of symmetry operations, e.g. ["x,y,z", "-x,-y,z"]
+ */
+void SymmetrySpaceGroupRegister(PyMOLGlobals * G, const char* sg, const std::vector<std::string>& sym_op) {
+#if !defined(_PYMOL_NOPY) && defined(_PYMOL_XRAY)
+  if (!P_xray)
+    return;
+
+  int blocked = PAutoBlock(G);
+  PYOBJECT_CALLMETHOD(P_xray,
+      "sg_register_if_unknown", "sN", sg, PConvToPyObject(sym_op));
+  PAutoUnblock(G, blocked);
+#endif
 }

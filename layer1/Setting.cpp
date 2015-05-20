@@ -2721,9 +2721,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
     SceneChanged(G);
     break;
-  case cSetting_all_states:
-    SceneChanged(G);
-    break;
   case cSetting_sel_counter:
     break;
   case cSetting_cgo_line_width:
@@ -3137,6 +3134,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_security:
     G->Security = SettingGetGlobal_i(G, cSetting_security);
     break;
+  case cSetting_all_states:
   case cSetting_state:
   case cSetting_frame:
     ExecutiveInvalidateSelectionIndicatorsCGO(G);

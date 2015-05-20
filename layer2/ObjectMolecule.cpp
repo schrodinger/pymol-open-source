@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
+#include <algorithm>
 #include <set>
 
 #include"Base.h"
@@ -218,7 +219,6 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
   mfree(bondseen);
 
   // update N* count fields
-  I->NDiscrete = natom;
   I->NAtom = natom;
   I->NBond = nbond;
   for (state = 0; state < I->NCSet; state++)
@@ -230,8 +230,8 @@ int ObjectMoleculeSetDiscrete(PyMOLGlobals * G, ObjectMolecule * I, int discrete
     VLASize(I->Bond, BondType, I->NBond);
   if (I->NAtom)
     VLASize(I->AtomInfo, AtomInfoType, I->NAtom);
-  VLASize(I->DiscreteAtmToIdx, int, I->NDiscrete);
-  VLASize(I->DiscreteCSet, CoordSet*, I->NDiscrete);
+
+  I->setNDiscrete(I->NAtom);
 
   ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
 
@@ -2393,7 +2393,7 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
       I->Symmetry = SymmetryCopy(cset->Symmetry);
       CHECKOK(ok, I->Symmetry);
       if (ok)
-	SymmetryAttemptGeneration(I->Symmetry, false);
+        SymmetryUpdate(I->Symmetry);
     }
 
     if(I->CSTmpl)
@@ -2771,7 +2771,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * I, CRaw
         I->Symmetry = SymmetryCopy(cset->Symmetry);
 	CHECKOK(ok, I->Symmetry);
         if (ok)
-	  SymmetryAttemptGeneration(I->Symmetry, false);
+          SymmetryUpdate(I->Symmetry);
       }
       SceneCountFrames(G);
       if (ok)
@@ -3243,15 +3243,16 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
   int all_vis = !vis_only;
   int visRep;
   float tmp_matrix[16], v_tmp[3], *matrix = NULL;
-  int objState;
-  int frozen = SettingGetIfDefined_i(I->Obj.G, I->Obj.Setting, cSetting_state, &objState);
   int use_matrices =
     SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
 
   if(use_matrices<0) use_matrices = 0;
 
-  if(frozen)
-    curState = objState - 1;
+  if (SettingGetIfDefined_i(G, I->Obj.Setting, cSetting_all_states, &a)) {
+    curState = a ? -1 : SettingGet_i(G, I->Obj.Setting, NULL, cSetting_state);
+  } else if (SettingGetIfDefined_i(G, I->Obj.Setting, cSetting_state, &a)) {
+    curState = a - 1;
+  }
 
   if(G->HaveGUI && G->ValidContext) {
     AtomInfoType *atInfo = I->AtomInfo, *ai;
@@ -3651,7 +3652,7 @@ static ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals * G, ObjectMolecule
       ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, !have_bonds, -1);
     if(cset->Symmetry && (!I->Symmetry)) {
       I->Symmetry = SymmetryCopy(cset->Symmetry);
-      SymmetryAttemptGeneration(I->Symmetry, false);
+      SymmetryUpdate(I->Symmetry);
     }
 
     SceneCountFrames(G);
@@ -5365,15 +5366,7 @@ void ObjectMoleculePurge(ObjectMolecule * I)
     VLASize(I->AtomInfo, AtomInfoType, I->NAtom);
     if (I->DiscreteFlag){
       ObjectMoleculeAdjustDiscreteAtmIdx(I, oldToNew, I->NAtom-offset); /* need to include previous atoms */
-      VLASize(I->DiscreteAtmToIdx, int, I->NAtom);
-      VLASize(I->DiscreteCSet, CoordSet *, I->NAtom);
-      if (I->NDiscrete < I->NAtom){
-	for(a = I->NDiscrete; a < I->NAtom; a++) {
-	  I->DiscreteAtmToIdx[a] = -1;
-	  I->DiscreteCSet[a] = NULL;
-	}
-      }
-      I->NDiscrete = I->NAtom;
+      I->setNDiscrete(I->NAtom);
     }
     for(a = 0; a < I->NCSet; a++)
       if(I->CSet[a])
@@ -8257,7 +8250,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
       ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, auto_bond, connect_mode);
     if(cset->Symmetry && (!I->Symmetry)) {
       I->Symmetry = SymmetryCopy(cset->Symmetry);
-      SymmetryAttemptGeneration(I->Symmetry, false);
+      SymmetryUpdate(I->Symmetry);
     }
     SceneCountFrames(G);
     if (ok)
@@ -8440,49 +8433,6 @@ ok_except1:
   ErrMessage(G, "LoadCoords", "failed");
   return NULL;
 #endif
-}
-
-
-/*========================================================================*/
-void ObjectMoleculeBlindSymMovie(ObjectMolecule * I)
-{
-  CoordSet *frac;
-  ov_size a;
-  int c;
-  int x, y, z;
-  float m[16];
-
-  if(I->NCSet != 1) {
-    ErrMessage(I->Obj.G, "ObjectMolecule:",
-               "SymMovie only works on objects with a single state.");
-  } else if(!I->Symmetry) {
-    ErrMessage(I->Obj.G, "ObjectMolecule:", "No symmetry loaded!");
-  } else if(!I->Symmetry->NSymMat) {
-    ErrMessage(I->Obj.G, "ObjectMolecule:", "No symmetry matrices!");
-  } else if(I->CSet[0]) {
-    frac = CoordSetCopy(I->CSet[0]);
-    CoordSetRealToFrac(frac, I->Symmetry->Crystal);
-    for(x = -1; x < 2; x++)
-      for(y = -1; y < 2; y++)
-        for(z = -1; z < 2; z++)
-          for(a = 0; a < I->Symmetry->NSymMat; a++) {
-            if(!((!a) && (!x) && (!y) && (!z))) {
-              c = I->NCSet;
-              VLACheck(I->CSet, CoordSet *, c);
-              I->CSet[c] = CoordSetCopy(frac);
-              CoordSetTransform44f(I->CSet[c], I->Symmetry->SymMatVLA + (a * 16));
-              identity44f(m);
-              m[3] = (float) x;
-              m[7] = (float) y;
-              m[11] = (float) z;
-              CoordSetTransform44f(I->CSet[c], m);
-              CoordSetFracToReal(I->CSet[c], I->Symmetry->Crystal);
-              I->NCSet++;
-            }
-          }
-    frac->fFree();
-  }
-  SceneChanged(I->Obj.G);
 }
 
 
@@ -9797,21 +9747,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
   }
 
   if(ok && I->DiscreteFlag) {
-    if(I->NDiscrete < nAt) {
-      VLASize(I->DiscreteAtmToIdx, int, nAt);
-      CHECKOK(ok, I->DiscreteAtmToIdx);
-      if (ok)
-	VLASize(I->DiscreteCSet, CoordSet *, nAt);
-      CHECKOK(ok, I->DiscreteCSet);
-      if (ok && I->NDiscrete < nAt){
-	for(a = I->NDiscrete; a < nAt; a++) {
-	  I->DiscreteAtmToIdx[a] = -1;
-	  I->DiscreteCSet[a] = NULL;
-	}
-      }
-      if (ok)
-	I->NDiscrete = nAt;
-    }
+    ok = I->setNDiscrete(nAt);
   }
 
   cs->NAtIndex = nAt;
@@ -12585,7 +12521,6 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
   I->AtomCounter = -1;
   I->BondCounter = -1;
   I->DiscreteFlag = discreteFlag;
-  I->NDiscrete = 0;
   I->UnitCellCGO = NULL;
   I->Sculpt = NULL;
   I->CSTmpl = NULL;
@@ -13025,7 +12960,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
         ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, true, -1);
       if(ok && cset->Symmetry && (!I->Symmetry)) {
         I->Symmetry = SymmetryCopy(cset->Symmetry);
-        if(SymmetryAttemptGeneration(I->Symmetry, quiet)) {
+        SymmetryUpdate(I->Symmetry);
+        if (I->Symmetry->Crystal) {
           /* check scale records */
           if(pdb_info &&
              pdb_info->scale.flag[0] &&
@@ -13360,4 +13296,74 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj,
 ok_except1:
   FreeP(index);
   return NULL;
+}
+
+/*
+ * Set the size of the DiscreteAtmToIdx and DiscreteCSet VLAs and pad
+ * them with -1/NULL if necessary.
+ */
+bool ObjectMolecule::setNDiscrete(int natom) {
+  int n = VLAGetSize(DiscreteAtmToIdx);
+
+  if (n == natom)
+    return true;
+
+  VLASize(DiscreteAtmToIdx, int, natom);
+  VLASize(DiscreteCSet, CoordSet*, natom);
+
+  if (!DiscreteAtmToIdx || !DiscreteCSet)
+    return false;
+
+  for (int i = n; i < natom; ++i) {
+    DiscreteAtmToIdx[i] = -1;
+    DiscreteCSet[i] = NULL;
+  }
+
+  return true;
+}
+
+/*
+ * Update the AtmToIdx or DiscreteAtmToIdx/DiscreteCSet VLAs from the
+ * IdxToAtm arrays
+ */
+bool ObjectMolecule::updateAtmToIdx() {
+  if (DiscreteFlag) {
+    ok_assert(1, setNDiscrete(NAtom));
+  }
+
+  for (int i = -1; i < NCSet; ++i) {
+    CoordSet * cset = (i < 0) ? CSTmpl : CSet[i];
+
+    if (!cset)
+      continue;
+
+    if (!DiscreteFlag) {
+      if (!cset->AtmToIdx) {
+        cset->AtmToIdx = VLACalloc(int, NAtom);
+      } else {
+        VLASize(cset->AtmToIdx, int, NAtom);
+      }
+
+      ok_assert(1, cset->AtmToIdx);
+
+      std::fill_n(cset->AtmToIdx, NAtom, -1);
+    }
+
+    for (int idx = 0; idx < cset->NIndex; ++idx) {
+      int atm = cset->IdxToAtm[idx];
+
+      if (DiscreteFlag) {
+        DiscreteAtmToIdx[atm] = idx;
+        DiscreteCSet[atm] = cset;
+      } else {
+        cset->AtmToIdx[atm] = idx;
+      }
+    }
+
+    cset->NAtIndex = NAtom;
+  }
+
+  return true;
+ok_except1:
+  return false;
 }

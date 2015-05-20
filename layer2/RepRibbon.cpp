@@ -449,7 +449,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   power_a = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_power);
   power_b = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_power_b);
   throw_ = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_throw);
-  trace = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_trace_atoms);
+  int trace_ostate = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_trace_atoms);
   trace_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trace_atoms_mode);
   na_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_nucleic_acid_mode);
@@ -495,6 +495,8 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     if(a >= 0) {
       ai = obj->AtomInfo + a1;
       if(GET_BIT(obj->AtomInfo[a1].visRep,cRepRibbon)) {
+        AtomInfoGetSetting_i(G, ai, cSetting_ribbon_trace_atoms, trace_ostate, &trace);
+
         if(trace || ((obj->AtomInfo[a1].protons == cAN_C) &&
                      (WordMatch(G, "CA", obj->AtomInfo[a1].name, 1) < 0) &&
                      !AtomInfoSameResidueP(G, last_ai, ai))) {
@@ -869,7 +871,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
     int a;
     AtomInfoType *obj_AtomInfo = obj->AtomInfo;
     AtomInfoType *ai, *last_ai = NULL;
-    int trace =
+    int trace, trace_ostate =
       SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_trace_atoms);
     int trace_mode =
       SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trace_atoms_mode);
@@ -896,6 +898,8 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
       if(a >= 0) {
         ai = obj_AtomInfo + a1;
         if(GET_BIT(ai->visRep,cRepRibbon)) {
+          AtomInfoGetSetting_i(G, ai, cSetting_ribbon_trace_atoms, trace_ostate, &trace);
+
           if(trace || ((ai->protons == cAN_C) &&
                        (WordMatch(G, "CA", ai->name, 1) < 0) &&
                        !AtomInfoSameResidueP(G, last_ai, ai))) {

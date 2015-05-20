@@ -57,10 +57,6 @@ float get_random0to1f(void);
 float deg_to_rad(float angle);
 float rad_to_deg(float angle);
 
-double slow_sqrt1f(float f);
-double slow_sqrt1d(double d);
-
-void slow_normalize3f(float *v1);
 void normalize23f(const float *v1, float *v2);
 void normalize3d(double *v1);
 
@@ -79,8 +75,6 @@ void get_system1f3f(float *x, float *y, float *z);      /* make system in direct
 void get_system2f3f(float *x, float *y, float *z);      /* make system in direction of x, perp to x,y */
 
 double dot_product3d(const double *v1, const double *v2);
-float slow_project3f(const float *v1, const float *v2, float *proj);
-void slow_remove_component3f(const float *v1, const float *unit, float *result);
 void remove_component3d(const double *v1, const double *unit, double *result);
 void cross_product3d(const double *v1, const double *v2, double *cross);
 void scale3d(const double *v1, const double v0, double *v2);
@@ -90,13 +84,6 @@ double distance_line2point3f(const float *base, const float *normal, const float
                              float *alongNormalSq);
 double distance_halfline2point3f(float *base, float *normal, float *point,
                                  float *alongNormalSq);
-
-float slow_diffsq3f(const float *v1, const float *v2);
-double slow_diff3f(const float *v1, const float *v2);
-int slow_within3f(float *v1, float *v2, float dist);
-int slow_within3fsq(float *v1, float *v2, float dist, float dist2);
-int slow_within3fret(float *v1, float *v2, float cutoff, float cutoff2, float *diff,
-                     float *dist);
 
 int equal3f(float *v1, float *v2);
 
@@ -255,71 +242,25 @@ void transform3d3f(const oMatrix3d m1, const float *v1, float *v2);
 void transform33d3f(const Matrix33d m1, const float *v1, float *v2);
 void transform5f3f(const oMatrix5f m, const float *v1, float *v2);
 
+void mult4f(const float *vsrc, float val, float *vdest);
+void mult3f(const float *vsrc, float val, float *vdest);
+float max3(float val1, float val2, float val3);
+float max2(float val1, float val2);
+float ave3(float val1, float val2, float val3);
+float ave2(float val1, float val2);
+void white4f(float *rgba, float value);
+void add4f(const float *v1, const float *v2, float *sum);
 
-/* macros */
+int countchrs(const char *str, char ch);
 
-#define USE_VECTOR_MACROS
+float smooth(float x, float power);
 
-#define zero3i(v1) { (v1)[0]=0;(v1)[1]=0;(v1)[2]=0; }
-#define copy3(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
-#define copyN(src,dst,N) {int _i;for(_i=0;_i<(N);_i++)(dst)[_i]=(src)[_i];}
+void subdivide(int n, float *x, float *y);
 
-#ifndef USE_VECTOR_MACROS
-
-float dot_product3f(const float *v1, const float *v2);
-void invert3f(float *v);
-void invert3f3f(const float *v1, float *v2);
-void scale3f(const float *v1, const float v0, float *v2);
-void copy4uc(const uchar *src, uchar *dst);
-void copy3uc(const uchar *src, uchar *dst);
-void copy2f(const float *src, float *dst);
-void copy3f(const float *src, float *dst);
-void copy3d(const double *src, double *dst);
-void copy4f(const float *src, float *dst);
-void add3f(const float *v1, const float *v2, float *sum);
-void subtract3f(const float *v1, const float *v2, float *v3);
-double lengthsq3f(const float *v1);
-double length3f(const float *v1);
-double length2f(const float *v1);
-void cross_product3f(const float *v1, const float *v2, float *cross);
-void average3f(const float *v1, const float *v2, float *avg);
-void zero3f(float *v1)
-     void ones3f(float *v1);
-     void set3f(float *v1, float x, float y, float z);
-     void swap1f(float *f, float *g);
-
-#else
-
-#define set3f(v1,x,y,z) { (v1)[0]=(x);(v1)[1]=(y);(v1)[2]=(z); }
-#define zero3f(v1) { (v1)[0]=0.0;(v1)[1]=0.0;(v1)[2]=0.0; }
-#define ones3f(v1) { (v1)[0]=1.0F;(v1)[1]=1.0F;(v1)[2]=1.0F; }
-#define dot_product3f(v1,v2) ((v1)[0]*(v2)[0] + (v1)[1]*(v2)[1] + (v1)[2]*(v2)[2])
-#define invert3f(v) {(v)[0]=-(v)[0]; (v)[1]=-(v)[1]; (v)[2]=-(v)[2];}
-#define invert3f3f(v1,v2) {(v2)[0]=-(v1)[0]; (v2)[1]=-(v1)[1]; (v2)[2]=-(v1)[2];}
-#define scale3f(v1,v0,v2) {(v2)[0]=(v1)[0]*(v0); (v2)[1]=(v1)[1]*(v0); (v2)[2]=(v1)[2]*(v0);}
-#define copy3uc(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
-#define copy4uc(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2]; (v2)[3]=(v1)[3];}
-#define copy3f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
-#define copy3d(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
-#define copy4f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2]; (v2)[3]=(v1)[3];}
-#define add3f(v1,v2,v3) {(v3)[0]=(v1)[0]+(v2)[0]; (v3)[1]=(v1)[1]+(v2)[1]; (v3)[2]=(v1)[2]+(v2)[2];}
-#define subtract3f(v1,v2,v3) {(v3)[0]=(v1)[0]-(v2)[0]; (v3)[1]=(v1)[1]-(v2)[1]; (v3)[2]=(v1)[2]-(v2)[2];}
-#define lengthsq3f(v1) (((v1)[0]*(v1)[0]) + ((v1)[1]*(v1)[1]) + ((v1)[2]*(v1)[2]))
-#define length3f(v1) (sqrt1f(((v1)[0]*(v1)[0]) + ((v1)[1]*(v1)[1]) + ((v1)[2]*(v1)[2])))
-#define average3f(v1,v2,avg) { \
-  (avg)[0] = ((v1)[0]+(v2)[0])/2; \
-  (avg)[1] = ((v1)[1]+(v2)[1])/2; \
-  (avg)[2] = ((v1)[2]+(v2)[2])/2; \
-}
-#define cross_product3f(v1,v2,cross) { \
-  (cross)[0] = ((v1)[1]*(v2)[2]) - ((v1)[2]*(v2)[1]); \
-  (cross)[1] = ((v1)[2]*(v2)[0]) - ((v1)[0]*(v2)[2]); \
-  (cross)[2] = ((v1)[0]*(v2)[1]) - ((v1)[1]*(v2)[0]); \
-}
-#define swap1f(f,g) { float h;h=*(f);*(f)=*(g);*(g)=h; }
-#endif
-
-#ifdef _PYMOL_INLINE
+//-------------------------------------------------------------------------
+// Small inline functions
+// (many of these were macros up to PyMOL 1.7.6)
+//-------------------------------------------------------------------------
 
 static const float _0f_inline = 0.0F;
 static const double _0d_inline = 0.0;
@@ -339,6 +280,108 @@ static const double R_SMALLd_inline = 0.000000001;
 #define remove_component3f inline_remove_component3f
 #define project3f inline_project3f
 
+inline void set3f(float * v1, float x, float y, float z) {
+  v1[0] = x;
+  v1[1] = y;
+  v1[2] = z;
+}
+
+template <typename T>
+inline void zero3(T * v1) {
+  v1[0] = 0;
+  v1[1] = 0;
+  v1[2] = 0;
+}
+
+#define zero3f zero3
+#define zero3i zero3
+
+inline void ones3f(float * v1) {
+  v1[0] = 1.0F;
+  v1[1] = 1.0F;
+  v1[2] = 1.0F;
+}
+
+inline float dot_product3f(const float * v1, const float * v2) {
+  return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+}
+
+inline void invert3f3f(const float * v1, float * v2) {
+  v2[0] = -v1[0];
+  v2[1] = -v1[1];
+  v2[2] = -v1[2];
+}
+
+inline void invert3f(float * v) {
+  invert3f3f(v, v);
+}
+
+inline void scale3f(const float * v1, float v0, float * v2) {
+  v2[0] = v1[0] * v0;
+  v2[1] = v1[1] * v0;
+  v2[2] = v1[2] * v0;
+}
+
+template <typename S, typename D>
+void copyN(const S * src, D * dst, int N) {
+  for (int i = 0; i < N; ++i)
+    dst[i] = src[i];
+}
+
+template <typename S, typename D>
+void copy2(const S * src, D * dst) {
+  dst[0] = src[0];
+  dst[1] = src[1];
+}
+
+template <typename S, typename D>
+void copy3(const S * src, D * dst) {
+  dst[0] = src[0];
+  dst[1] = src[1];
+  dst[2] = src[2];
+}
+
+template <typename S, typename D>
+void copy4(const S * src, D * dst) {
+  dst[0] = src[0];
+  dst[1] = src[1];
+  dst[2] = src[2];
+  dst[3] = src[3];
+}
+
+#define copy2f copy2<float, float>
+#define copy3f copy3
+#define copy3d copy3<double, double>
+#define copy4f copy4
+
+inline void add3f(const float * v1, const float * v2, float * v3) {
+  v3[0] = v1[0] + v2[0];
+  v3[1] = v1[1] + v2[1];
+  v3[2] = v1[2] + v2[2];
+}
+
+inline void subtract3f(const float * v1, const float * v2, float * v3) {
+  v3[0] = v1[0] - v2[0];
+  v3[1] = v1[1] - v2[1];
+  v3[2] = v1[2] - v2[2];
+}
+
+inline float lengthsq3f(const float * v1) {
+  return (v1[0] * v1[0]) + (v1[1] * v1[1]) + (v1[2] * v1[2]);
+}
+
+inline void average3f(const float * v1, const float * v2, float * avg) {
+  (avg)[0] = ((v1)[0]+(v2)[0])/2;
+  (avg)[1] = ((v1)[1]+(v2)[1])/2;
+  (avg)[2] = ((v1)[2]+(v2)[2])/2;
+}
+
+inline void cross_product3f(const float * v1, const float * v2, float * cross) {
+  cross[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
+  cross[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
+  cross[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
+}
+
 __inline__ static double inline_sqrt1f(float f)
 {                               /* no good as a macro because f is used twice */
   if(f > _0f_inline)
@@ -353,6 +396,14 @@ __inline__ static double inline_sqrt1d(double f)
     return (sqrt(f));
   else
     return (_0d_inline);
+}
+
+inline float length3f(const float * v1) {
+  return sqrt1f(lengthsq3f(v1));
+}
+
+inline float length2f(const float * v1) {
+  return sqrt1f((v1[0] * v1[0]) + (v1[1] * v1[1]));
 }
 
 __inline__ static void inline_normalize3f(float *v1)
@@ -474,30 +525,4 @@ __inline__ static float inline_project3f(const float *v1, const float *v2, float
   return (dot);
 }
 
-#else
-
-#define normalize3f slow_normalize3f
-#define sqrt1f slow_sqrt1f
-#define sqrt1d slow_sqrt1d
-#define diff3f slow_diff3f
-#define diffsq3f slow_diffsq3f
-#define within3f slow_within3f
-#define within3fsq slow_within3fsq
-#define within3fret slow_within3fret
-#define project3f slow_project3f
-#define remove_component3f slow_remove_component3f
-
-#endif
-
-void mult4f(const float *vsrc, float val, float *vdest);
-void mult3f(const float *vsrc, float val, float *vdest);
-float max3(float val1, float val2, float val3);
-float ave3(float val1, float val2, float val3);
-float ave2(float val1, float val2);
-void white4f(float *rgba, float value);
-void add4f(const float *v1, const float *v2, float *sum);
-
-int countchrs(const char *str, char ch);
-
-float smooth(float x, float power);
 #endif

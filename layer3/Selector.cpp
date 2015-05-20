@@ -563,6 +563,7 @@ static WordKeyValue Keyword[] = {
   {"idx.", SELE_IDXs},
 
   {"id", SELE_ID_s},
+  {"ID", SELE_ID_s},
   {"rank", SELE_RNKs},
 
   {"within", SELE_WIT_},

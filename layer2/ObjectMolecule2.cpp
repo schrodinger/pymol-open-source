@@ -3635,16 +3635,16 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     ok = PConvPyIntToInt(PyList_GetItem(list, 3), &I->NAtom);
   if(ok)
     ok = ObjectMoleculeCSetFromPyList(I, PyList_GetItem(list, 4));
-  if(ok)
+  if(ok){
     ok = CoordSetFromPyList(G, PyList_GetItem(list, 5), &I->CSTmpl);
+
+    if(I->CSTmpl)
+      I->CSTmpl->Obj = I;
+  }
   if(ok)
     ok = ObjectMoleculeBondFromPyList(I, PyList_GetItem(list, 6));
   if(ok)
     ok = ObjectMoleculeAtomFromPyList(I, PyList_GetItem(list, 7));
-  if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 8), &I->DiscreteFlag);
-  if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 9), &I->NDiscrete);
   if(ok)
     I->Symmetry = SymmetryNewFromPyList(G, PyList_GetItem(list, 10));
   if(ok)
@@ -3653,39 +3653,9 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     ok = PConvPyIntToInt(PyList_GetItem(list, 12), &I->BondCounter);
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 13), &I->AtomCounter);
-  if(ok && I->DiscreteFlag) {
-    int *dcs = NULL;
-    int a, i;
-    CoordSet *cs;
-    VLACheck(I->DiscreteAtmToIdx, int, I->NDiscrete);
-    CHECKOK(ok, I->DiscreteAtmToIdx);
-    if (ok)
-      VLACheck(I->DiscreteCSet, CoordSet *, I->NDiscrete);
-    CHECKOK(ok, I->DiscreteCSet); 
-    if(ok){
-      ok =
-        PConvPyListToIntArrayInPlace(PyList_GetItem(list, 14), I->DiscreteAtmToIdx,
-                                     I->NDiscrete);
-    }
-    if(ok)
-      ok = PConvPyListToIntArray(PyList_GetItem(list, 15), &dcs);
-    if(ok) {
 
-      for(a = 0; a < I->NDiscrete; a++) {
-        i = dcs[a];
-        I->DiscreteCSet[a] = NULL;
-        if(i >= 0) {
-          if(i < I->NCSet) {
-            cs = I->CSet[i];
-            if(cs) {
-              I->DiscreteCSet[a] = cs;
-            }
-          }
-        }
-      }
-    }
-    FreeP(dcs);
-  }
+  I->updateAtmToIdx();
+
   if (ok)
     ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
   if(ok)
@@ -3720,13 +3690,17 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   PyList_SetItem(result, 6, ObjectMoleculeBondAsPyList(I));
   PyList_SetItem(result, 7, ObjectMoleculeAtomAsPyList(I));
   PyList_SetItem(result, 8, PyInt_FromLong(I->DiscreteFlag));
-  PyList_SetItem(result, 9, PyInt_FromLong(I->NDiscrete));
+  PyList_SetItem(result, 9, PyInt_FromLong(I->DiscreteFlag ? I->NAtom : 0 /* NDiscrete */));
   PyList_SetItem(result, 10, SymmetryAsPyList(I->Symmetry));
   PyList_SetItem(result, 11, PyInt_FromLong(I->CurCSet));
   PyList_SetItem(result, 12, PyInt_FromLong(I->BondCounter));
   PyList_SetItem(result, 13, PyInt_FromLong(I->AtomCounter));
 
-  if(I->DiscreteFlag) {
+  float pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version);
+
+  if(I->DiscreteFlag
+      && pse_export_version > 1e-4
+      && pse_export_version < 1.7699) {
     int *dcs;
     int a;
     CoordSet *cs;
@@ -3740,9 +3714,9 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
       }
     }
 
-    dcs = Alloc(int, I->NDiscrete);
+    dcs = Alloc(int, I->NAtom);
 
-    for(a = 0; a < I->NDiscrete; a++) {
+    for(a = 0; a < I->NAtom; a++) {
       cs = I->DiscreteCSet[a];
       if(cs)
         dcs[a] = cs->tmp_index;
@@ -3750,8 +3724,8 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
         dcs[a] = -1;
     }
 
-    PyList_SetItem(result, 14, PConvIntArrayToPyList(I->DiscreteAtmToIdx, I->NDiscrete));
-    PyList_SetItem(result, 15, PConvIntArrayToPyList(dcs, I->NDiscrete));
+    PyList_SetItem(result, 14, PConvIntArrayToPyList(I->DiscreteAtmToIdx, I->NAtom));
+    PyList_SetItem(result, 15, PConvIntArrayToPyList(dcs, I->NAtom));
     FreeP(dcs);
   } else {
     PyList_SetItem(result, 14, PConvAutoNone(NULL));

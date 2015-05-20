@@ -617,10 +617,11 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
 
   /* compute coordinate points for second field */
 
-  {
+  if (SymmetryAttemptGeneration(sym)) {
     int i, j, k;
     int i_stop, j_stop, k_stop;
     float frac[3];
+    int nMat = sym->getNSymMat();
 
     i_stop = field2->dimensions[0];
     j_stop = field2->dimensions[1];
@@ -634,7 +635,6 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
           float extrapolate_average = 0.0F;
           int cnt = 0;
           int extrapolate_cnt = 0;
-          int n, nMat = sym->NSymMat;
 
           /* first compute the coordinate */
 
@@ -644,8 +644,8 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
 
           /* then compute the value at the coordinate */
 
-          for(n = nMat - 1; n >= 0; n--) {
-            float *matrix = sym->SymMatVLA + (n * 16);
+          for(int n = nMat - 1; n >= 0; n--) {
+            const float *matrix = sym->getSymMat(n);
             float test_frac[3];
 
             transform44f3f(matrix, frac, test_frac);

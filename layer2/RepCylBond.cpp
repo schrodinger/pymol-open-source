@@ -51,7 +51,6 @@ typedef struct RepCylBond {
   int shaderCGOmode;
 } RepCylBond;
 
-static void subdivide(int n, float *x, float *y);
 int RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1, float *v2, int nEdge,
 		int frontCap, int endCap, float tube_size, float overlap, float nub, float **dir, 
 		int shader_mode, float *v2color );
@@ -2317,18 +2316,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     I = NULL;
   }
   return (Rep *) I;
-}
-
-static void subdivide(int n, float *x, float *y)
-{
-  int a;
-  if(n < 3) {
-    n = 3;
-  }
-  for(a = 0; a <= n; a++) {
-    x[a] = (float) cos(a * 2 * PI / n);
-    y[a] = (float) sin(a * 2 * PI / n);
-  }
 }
 
 int RepCylinderBox(RepCylBond *I, CGO *cgo, float *vv1, float *vv2,

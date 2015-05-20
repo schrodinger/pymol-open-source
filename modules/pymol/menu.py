@@ -201,7 +201,7 @@ def mol_show(self_cmd, sele):
 def hide_hydro(self_cmd, sele):
     return ( [[ 2, 'Hide:'     , ''                                ],
               [ 1, 'all' , 'cmd.hide("('+sele+' and hydro)")'   ],
-              [ 1, 'nonpolar' , 'cmd.hide("('+sele+' and hydro and (elem c extend 1))")' ],                            
+              [ 1, 'nonpolar' , 'cmd.hide("('+sele+' and hydro and (elem C extend 1))")' ],
               ] )
 
 def mol_hide(self_cmd, sele):
@@ -412,15 +412,15 @@ def by_ss(self_cmd, sele):
 def spectrum(self_cmd, sele):
     r = [
         [ 2, 'Spectrum:'     ,''                               ],
-        [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(e. c)',
-          'cmd.spectrum("count",selection="('+sele+')&e. c")'],           
-        [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(*/ca)',
-          'cmd.spectrum("count",selection="('+sele+')&*/ca")'],
+        [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(elem C)',
+          'cmd.spectrum("count",selection="('+sele+')&elem C")'],
+        [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(*/CA)',
+          'cmd.spectrum("count",selection="('+sele+')&*/CA")'],
         [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
           'cmd.spectrum("count",selection="'+sele+'",byres=1)'],
         [ 0, ''                                , ''                 ],
         [ 1, 'b-factors'   ,   'cmd.spectrum("b",selection=("'+sele+'"),quiet=0)'         ],
-        [ 1, 'b-factors(*/ca)' , 'cmd.spectrum("b",selection="(('+sele+')&*/ca)",quiet=0)'         ],
+        [ 1, 'b-factors(*/CA)' , 'cmd.spectrum("b",selection="(('+sele+')&*/CA)",quiet=0)'         ],
         [ 0, ''                                , ''                 ],
         [ 1, 'area (molecular)', 'util.color_by_area(("'+sele+'"),"molecular")'         ],
         [ 1, 'area (solvent)'  , 'util.color_by_area(("'+sele+'"),"solvent")'         ],
@@ -430,10 +430,10 @@ def spectrum(self_cmd, sele):
 def by_chain(self_cmd, sele):
     return [
         [ 2, 'By Chain:'     ,''                               ],
-              [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(e. c)',
-                 'util.color_chains("('+sele+' and elem c)",_self=cmd)'],
-              [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(*/ca)',
-                 'util.color_chains("('+sele+' and name ca)",_self=cmd)'],
+              [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(elem C)',
+                 'util.color_chains("('+sele+' and elem C)",_self=cmd)'],
+              [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(*/CA)',
+                 'util.color_chains("('+sele+' and name CA)",_self=cmd)'],
               [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n',
                  'util.color_chains("('+sele+')",_self=cmd)'],
                       [ 0, ''                                , ''                 ],
@@ -584,12 +584,12 @@ def slice_color(self_cmd, sele):
 def color_auto(self_cmd, sele):
     return [
         [ 2, 'Auto'     ,''                               ],
-        [ 1, 'elem c', 'cmd.color("auto","('+sele+') and elem c")' ],
+        [ 1, 'elem C', 'cmd.color("auto","('+sele+') and elem C")' ],
         [ 0, ''                                , ''                 ],
         [ 1, 'all','cmd.color("auto","'+sele+'")' ],                  
         [ 0, ''                                , ''                 ],
-        [ 1, '\\900b\\950y \\090o\\099b\\059j\\999(e. c)',
-          'util.color_objs("('+sele+' and elem c)",_self=cmd)'],
+        [ 1, '\\900b\\950y \\090o\\099b\\059j\\999(elem C)',
+          'util.color_objs("('+sele+' and elem C)",_self=cmd)'],
         [ 1, '\\900b\\950y \\090o\\099b\\059j',
           'util.color_objs("('+sele+')",_self=cmd)'],
         ]
@@ -660,7 +660,10 @@ def hydrogens(self_cmd, sele):
 def state(self_cmd, sele):
     return [[ 2, 'State:'       ,''                        ],
               [ 1, 'freeze'  ,'cmd.set("state",cmd.get_state(),"'+sele+'")'        ],
-              [ 1, 'thaw'  ,'cmd.set("state",cmd.get("state","'+sele+'"));cmd.unset("state","'+sele+'")'        ],           
+              [ 1, 'all states'  ,'cmd.set("state",0,"'+sele+'")' ],
+              [ 1, 'thaw'  ,
+                  'cmd.unset("all_states","'+sele+'");'
+                  'cmd.unset("state","'+sele+'")'        ],
               ]
     
 def movement(self_cmd, sele):
@@ -943,8 +946,8 @@ def align_to_object(self_cmd, sele):
     for a in list:
         if a!=sele:
             result.append([1,a,
-                           'cmd.align("polymer and name ca and ('+sele+')",'+
-                           '"polymer and name ca and ('+a+')",quiet=0,'+
+                           'cmd.align("polymer and name CA and ('+sele+')",'+
+                           '"polymer and name CA and ('+a+')",quiet=0,'+
                            'object="aln_%s_to_%s",reset=1)'%(sele,a)])
     return result
 
@@ -954,8 +957,8 @@ def align_to_sele(self_cmd, sele):
     for a in list:
         if a!= sele:
             result.append([1,a,
-                           'cmd.align("polymer and name ca and ('+sele+')",'+
-                           '"polymer and name ca and ('+a+')",quiet=0,'+
+                           'cmd.align("polymer and name CA and ('+sele+')",'+
+                           '"polymer and name CA and ('+a+')",quiet=0,'+
                            'object="aln_%s_to_%s",reset=1)'%(sele,a)])
     return result
 
@@ -982,7 +985,7 @@ def sele_align(self_cmd, sele):
               [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1,_self=cmd)' ],                                 
               [ 1, 'all to this', 'util.mass_align("'+sele+'",0,_self=cmd)' ],
               [ 0, '', None ],
-              [ 1, 'states (*/ca)', 'cmd.intra_fit("('+sele+') and name ca")' ],                        
+              [ 1, 'states (*/CA)', 'cmd.intra_fit("('+sele+') and name CA")' ],
               [ 1, 'states', 'cmd.intra_fit("'+sele+'")' ],
               ]
 
@@ -994,7 +997,7 @@ def mol_align(self_cmd, sele):
               [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1,_self=cmd)' ],                                 
               [ 1, 'all to this', 'util.mass_align("'+sele+'",0,_self=cmd)' ],
               [ 0, '', None ],
-              [ 1, 'states (*/ca)', 'cmd.intra_fit("('+sele+') and name ca")' ],                        
+              [ 1, 'states (*/CA)', 'cmd.intra_fit("('+sele+') and name CA")' ],
               [ 1, 'states', 'cmd.intra_fit("'+sele+'")' ],
               [ 0, '', None ],
               [ 1, 'matrix from', mat_tran(self_cmd, sele,1) ],
@@ -1367,7 +1370,6 @@ def mol_labels(self_cmd, sele):
               [ 1, 'clear'          , 'cmd.label("'+sele+'","\'\'")'         ],
               [ 0, ''               , ''                                  ],
               [ 1, 'residues'       , """cmd.label('''(name """+self_cmd.get("label_anchor")+"""+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
-#              [ 1, 'residues'       , """cmd.label('''(name ca+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
               [ 1, 'chains'       ,   'util.label_chains("'+sele+'",_self=cmd)'  ],
               [ 1, 'segments'       ,   'util.label_segments("'+sele+'",_self=cmd)'  ],           
               [ 0, ''               , ''                                  ],           

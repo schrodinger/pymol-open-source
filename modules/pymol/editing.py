@@ -500,7 +500,7 @@ DESCRIPTION
     
 USAGE
 
-    valence 2, (name c), (name o)
+    valence 2, (name C), (name O)
 
 PYMOL API
 
@@ -1171,7 +1171,7 @@ SEE ALSO
             raise pymol.CmdException
         try:
             if h_fill: # strip off existing hydrogens
-                remove("((neighbor pk1) and elem h)",quiet=quiet)
+                remove("((neighbor pk1) and elem H)",quiet=quiet)
             _self.lock(_self)
             r = _cmd.replace(_self._COb,str(element),int(geometry),int(valence),str(name),quiet)
         finally:
@@ -1525,7 +1525,7 @@ PYMOL API
 
 EXAMPLES
 
-    translate [1,0,0], name ca
+    translate [1,0,0], name CA
 
 NOTES
 

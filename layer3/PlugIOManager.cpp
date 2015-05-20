@@ -556,7 +556,7 @@ static CSymmetry * SymmetryNewFromTimestep(PyMOLGlobals * G, molfile_timestep_t 
   symm->Crystal->Angle[1] = ts->beta;
   symm->Crystal->Angle[2] = ts->gamma;
   strcpy(symm->SpaceGroup, "P1");
-  SymmetryAttemptGeneration(symm, false);
+  SymmetryUpdate(symm);
 ok_except1:
   return symm;
 }

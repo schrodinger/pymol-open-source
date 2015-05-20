@@ -2,6 +2,32 @@
 CHANGE LOG
 =========================================================================
 
+2015-05-20 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* change default (!) of "ignore_case" setting to off. Case insensitve
+	  identifier matching is not practical anymore with large structures
+	  which use upper and lower case chain identifiers.
+
+	* new setting "assembly" to load assemblies from mmCIF as multi-state
+	  objects with all_states=1
+
+	* new setting "cif_use_auth" controls whether mmCIF "auth" identifiers
+	  are used or not (on by default)
+
+	* mmCIF "CA/P ATOMS ONLY" chains: set atom-level cartoon_trace_atoms
+	  and ribbon_trace_atoms
+
+	* CIF discrete and irregular multi-model loading support
+
+	* support "pdb_honor_model_number" setting for CIF
+
+	* load multiple objects ("data_" blocks) from one CIF file (multiplex=-1)
+
+	* don't store AtmToIdx, DiscreteAtmToIdx or DiscreteCSet to PSE
+	  (unless pse_export_version <= 1.76)
+
+	* 1.7.7.1 (unstable/experimental)
+
 2015-05-04 Thomas Holder, Blaine Bell, Gabriel Marques
 
 	* 1.7.6.0

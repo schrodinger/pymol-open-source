@@ -154,11 +154,6 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
       ok = PConvPyListToFloatVLA(PyList_GetItem(list, 2), &I->Coord);
     if(ok)
       ok = PConvPyListToIntVLA(PyList_GetItem(list, 3), &I->IdxToAtm);
-    if(ok) {
-      tmp = PyList_GetItem(list, 4);    /* Discrete CSets don't have this */
-      if(tmp != Py_None)
-        ok = PConvPyListToIntVLA(tmp, &I->AtmToIdx);
-    }
     if(ok && (ll > 5))
       ok = PConvPyStrToStr(PyList_GetItem(list, 5), I->Name, sizeof(WordType));
     if(ok && (ll > 6))
@@ -229,13 +224,17 @@ PyObject *CoordSetAsPyList(CoordSet * I)
   PyObject *result = NULL;
 
   if(I) {
+    float pse_export_version = SettingGetGlobal_f(I->State.G, cSetting_pse_export_version);
+
     result = PyList_New(9);
 
     PyList_SetItem(result, 0, PyInt_FromLong(I->NIndex));
     PyList_SetItem(result, 1, PyInt_FromLong(I->NAtIndex));
     PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Coord, I->NIndex * 3));
     PyList_SetItem(result, 3, PConvIntArrayToPyList(I->IdxToAtm, I->NIndex));
-    if(I->AtmToIdx)
+    if(I->AtmToIdx
+        && pse_export_version > 1e-4
+        && pse_export_version < 1.7699)
       PyList_SetItem(result, 4, PConvIntArrayToPyList(I->AtmToIdx, I->NAtIndex));
     else
       PyList_SetItem(result, 4, PConvAutoNone(NULL));
@@ -1624,20 +1623,7 @@ int CoordSet::extendIndices(int nAtom)
   ObjectMolecule *obj = I->Obj;
   int ok = true;
   if(obj->DiscreteFlag) {
-    if(obj->NDiscrete < nAtom) {
-      VLASize(obj->DiscreteAtmToIdx, int, nAtom);
-      CHECKOK(ok, obj->DiscreteAtmToIdx);
-      if (ok)
-	VLASize(obj->DiscreteCSet, CoordSet *, nAtom);
-      CHECKOK(ok, obj->DiscreteCSet);
-      if (ok){
-	for(a = obj->NDiscrete; a < nAtom; a++) {
-	  obj->DiscreteAtmToIdx[a] = -1;
-	  obj->DiscreteCSet[a] = NULL;
-	}
-	obj->NDiscrete = nAtom;
-      }
-    }
+    ok = obj->setNDiscrete(nAtom);
 
     if(I->AtmToIdx) {           /* convert to discrete if necessary */
       VLAFree(I->AtmToIdx);

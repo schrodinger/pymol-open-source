@@ -383,12 +383,12 @@ PYMOL API
 
 EXAMPLES
 
-        intra_fit ( name ca )
+        intra_fit ( name CA )
 
 PYTHON EXAMPLE
 
         from pymol import cmd
-        rms = cmd.intra_fit("(name ca)",1)
+        rms = cmd.intra_fit("(name CA)",1)
 
 SEE ALSO
 
@@ -431,7 +431,7 @@ DESCRIPTION
 EXAMPLE
 
         from pymol import cmd
-        rms = cmd.intra_rms("(name ca)",1)
+        rms = cmd.intra_rms("(name CA)",1)
         print rms
 
 PYMOL API
@@ -479,7 +479,7 @@ PYMOL API
 PYTHON EXAMPLE
 
         from pymol import cmd
-        rms = cmd.intra_rms_cur("(name ca)",1)
+        rms = cmd.intra_rms_cur("(name CA)",1)
 
 SEE ALSO
 
@@ -573,7 +573,7 @@ USAGE
 
 EXAMPLES
 
-	fit ( mutant and name ca ), ( wildtype and name ca )
+	fit ( mutant and name CA ), ( wildtype and name CA )
 
 SEE ALSO
 
