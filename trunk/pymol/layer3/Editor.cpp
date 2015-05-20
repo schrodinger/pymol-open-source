@@ -473,8 +473,6 @@ CObject *EditorDragObject(PyMOLGlobals * G)
   return I->DragObject;
 }
 
-static void subdivide(int n, float *x, float *y);
-
 int EditorGetSinglePicked(PyMOLGlobals * G, char *name)
 {
   int cnt = 0;
@@ -861,20 +859,6 @@ int EditorSelect(PyMOLGlobals * G, const char *s0, const char *s1, const char *s
     }
   }
   return (result);
-}
-
-
-/*========================================================================*/
-static void subdivide(int n, float *x, float *y)
-{
-  int a;
-  if(n < 3) {
-    n = 3;
-  }
-  for(a = 0; a <= n; a++) {
-    x[a] = (float) cos(a * 2 * PI / n);
-    y[a] = (float) sin(a * 2 * PI / n);
-  }
 }
 
 
@@ -2250,7 +2234,7 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
           if(I->DragSlowFlag) {
             SceneGetViewNormal(G, v4);
             scale3f(v4, -1.0F, v4);
-            add3f(v3, v4, v4)
+            add3f(v3, v4, v4);
               subtract3f(pt, v4, n0);
             add3f(pt, mov, n1);
             subtract3f(n1, v4, n1);

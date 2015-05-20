@@ -150,7 +150,7 @@ USAGE
 
 EXAMPLES
 
-    chain chain B
+    center chain B
     center 145/
 
 ARGUMENTS
@@ -553,7 +553,7 @@ EXAMPLES
 
     show
     show ribbon
-    show lines, (name ca or name c or name n)
+    show lines, (name CA+C+N)
 
 SEE ALSO
 
@@ -620,7 +620,7 @@ ARGUMENTS
 
 EXAMPLES
 
-    as lines, name ca or name c or name n
+    as lines, name CA+C+N
 
     as ribbon
 
@@ -1506,7 +1506,7 @@ ARGUMENTS
 EXAMPLES
 
     label chain A, chain
-    label name ca,"%s-%s" % (resn,resi)
+    label name CA,"%s-%s" % (resn,resi)
     label resi 200,"%1.3f" % partial_charge
 
 NOTES

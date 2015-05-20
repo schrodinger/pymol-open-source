@@ -39,6 +39,16 @@ typedef struct CoordSet {
   void invalidateRep(int type, int level);
   int atmToIdx(int atm);
 
+  // read/write pointer to coordinate
+  float * coordPtr(int idx) {
+    return Coord + idx * 3;
+  }
+
+  // read pointer to coordinate
+  const float * coordPtr(int idx) const {
+    return Coord + idx * 3;
+  }
+
   AtomInfoType * getAtomInfo(int idx) {
     return Obj->AtomInfo + IdxToAtm[idx];
   }

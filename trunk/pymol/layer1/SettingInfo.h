@@ -273,7 +273,7 @@ enum {
   REC_i( 193, state                                   , object    , 1 ),
   REC_i( 194, frame                                   , global    , 1 ),
   REC_b( 195, ray_shadow                              , global    , 1 ),
-  REC_i( 196, ribbon_trace_atoms                      , ostate    , 0 ),
+  REC_i( 196, ribbon_trace_atoms                      , atom      , 0 ),
   REC_i( 197, security                                , global    , 1 ),
   REC_f( 198, stick_transparency                      , bond      , 0.0F ),
   REC_b( 199, ray_transparency_shadows                , global    , 1 ),
@@ -346,7 +346,7 @@ enum {
   REC_i( 266, retain_order                            , object    , 0 ),
   REC_i( 267, pdb_hetatm_sort                         , object    , 0 ),
   REC_i( 268, pdb_use_ter_records                     , global    , 1 ),
-  REC_i( 269, cartoon_trace_atoms                     , ostate    , 0 ),
+  REC_i( 269, cartoon_trace_atoms                     , atom      , 0 ),
   REC_i( 270, ray_oversample_cutoff                   , global    , 120 ),
   /* note that this setting is ad-hoc and calibrated such that a
      gaussian_resolution of 2.0 returns maps with the straight atomic
@@ -501,7 +501,7 @@ enum {
   REC_f( 411, scene_animation_duration                , global    , 2.25F ),
   REC_s( 412, wildcard                                , object    , "*" ),
   REC_s( 413, atom_name_wildcard                      , object    , "" ),
-  REC_b( 414, ignore_case                             , global    , 1 ),
+  REC_b( 414, ignore_case                             , global    , 0 ), // new default in 1.7.7
   REC_b( 415, presentation_auto_quit                  , global    , 1 ),
   REC_b( 416, editor_auto_dihedral                    , global    , 1 ),
   REC_b( 417, presentation_auto_start                 , global    , 1 ),
@@ -848,6 +848,8 @@ enum {
   REC_b( 743, precomputed_lighting                    , global    , 0 ),
   REC_b( 744, chromadepth                             , global    , 0 ),
   REC_f( 745, pse_export_version                      , global    , 0.f ),
+  REC_b( 746, cif_use_auth                            , global    , 1 ),
+  REC_s( 747, assembly                                , global    , "" ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

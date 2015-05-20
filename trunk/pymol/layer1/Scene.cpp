@@ -802,14 +802,7 @@ char *SceneGetSeleModeKeyword(PyMOLGlobals * G)
   return (char *) SelModeKW[0];
 }
 
-static void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window);
-
-unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer);
-unsigned int *SceneReadTriplets(PyMOLGlobals * G, int x, int y, int w, int h,
-                                GLenum gl_buffer);
-
 void SceneDraw(Block * block ORTHOCGOARG);
-void ScenePrepareMatrix(PyMOLGlobals * G, int mode);
 
 void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, const char *scene_name)
 {
@@ -7416,7 +7409,7 @@ void SceneRay(PyMOLGlobals * G,
 
 
 /*========================================================================*/
-static void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window)
+void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window)
 {
   CScene *I = G->Scene;
   unsigned int buffer_size;

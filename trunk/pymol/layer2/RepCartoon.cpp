@@ -2812,7 +2812,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   cartoon_debug = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_debug);
 
-  trace = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_trace_atoms);
+  int trace_ostate = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_trace_atoms);
   trace_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_trace_atoms_mode);
   alpha =
     1.0F - SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_transparency);
@@ -2926,6 +2926,11 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
         }
         /*                        if(!obj->AtomInfo[a1].hetatm) */
         if((!ai->alt[0]) || (ai->alt[0] == 'A')) {
+
+          // atom level setting
+          AtomInfoGetSetting_i(G, ai, cSetting_cartoon_trace_atoms, trace_ostate, &trace);
+
+          // CA or cartoon_trace_atoms
           if(trace || (((ai->protons == cAN_C) &&
                         (WordMatch(G, "CA", ai->name, 1) < 0)) &&
                        !AtomInfoSameResidueP(G, last_ai, ai))) {

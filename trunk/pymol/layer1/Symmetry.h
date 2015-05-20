@@ -17,23 +17,30 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Symmetry
 #define _H_Symmetry
 
+#include <vector>
+#include <string>
+
 #include"Crystal.h"
 #include"Word.h"
 #include"os_python.h"
 
-typedef struct {
+struct CSymmetry {
   PyMOLGlobals *G;
   CCrystal *Crystal;
   int PDBZValue;
   WordType SpaceGroup;
-  ov_size NSymMat;
   float *SymMatVLA;
-  ov_size NSymOp;
-  WordType *SymOpVLA;
 
-} CSymmetry;
+  // get the number of symmetry matrices
+  int getNSymMat() const;
 
-int SymmetryAttemptGeneration(CSymmetry * I, int quiet);
+  // get the i'th symmetry matrix (pointer to float[16])
+  const float * getSymMat(int i) const {
+    return SymMatVLA + i * 16;
+  }
+};
+
+int SymmetryAttemptGeneration(CSymmetry * I, int quiet=false);
 void SymmetryFree(CSymmetry * I);
 void SymmetryClear(CSymmetry * I);
 CSymmetry *SymmetryNew(PyMOLGlobals * G);
@@ -41,8 +48,8 @@ void SymmetryUpdate(CSymmetry * I);
 void SymmetryDump(CSymmetry * I);
 CSymmetry *SymmetryCopy(const CSymmetry * other);
 PyObject *SymmetryAsPyList(CSymmetry * I);
-int SymmetryFromPyList(CSymmetry * I, PyObject * list);
 CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list);
-void SymmetryReset(CSymmetry * I);
+
+void SymmetrySpaceGroupRegister(PyMOLGlobals * G, const char* sg, const std::vector<std::string>& sym_op);
 
 #endif

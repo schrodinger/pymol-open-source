@@ -886,7 +886,7 @@ DESCRIPTION
 
         return r
 
-    def get_phipsi(selection="(name ca)",state=-1,_self=cmd):
+    def get_phipsi(selection="(name CA)",state=-1,_self=cmd):
         # preprocess selections
         selection = selector.process(selection)
         #   

@@ -424,9 +424,9 @@ MOUSE CONTROLS
         '''
 EXAMPLE ATOM SELECTIONS
 
-    select bk = ( name ca or name c or name n )
+    select bk = ( name CA or name C or name N )
         * can be abbreviated as *
-    sel bk = (n;ca,c,n)
+    sel bk = (n;CA,C,N)
 
     select hev = ( not hydro )
         * can be abbreviated as *

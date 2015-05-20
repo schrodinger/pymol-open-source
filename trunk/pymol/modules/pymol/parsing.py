@@ -684,14 +684,14 @@ SEE ALSO
         tv = parse_arg("command multi word 1  , str2 =  multi word 2 ")
         print tv == [(None, 'multi word 1'), ('str2', 'multi word 2')],tv
 
-        tv = parse_arg("command ( name;ca,c,n ), sel1= (name c,n) ")
-        print tv == [(None, '( name;ca,c,n )'), ('sel1', '(name c,n)')],tv
+        tv = parse_arg("command ( name CA+C+N ), sel1= (name C+N) ")
+        print tv == [(None, '( name CA+C+N )'), ('sel1', '(name C+N)')],tv
 
-        tv = parse_arg("command ( byres (name;ca,c,n) ), sel1= (name c,n) ")
-        print tv==[(None, '( byres (name;ca,c,n) )'), ('sel1', '(name c,n)')],tv
+        tv = parse_arg("command ( byres (name CA+C+N) ), sel1= (name C+N) ")
+        print tv==[(None, '( byres (name CA+C+N) )'), ('sel1', '(name C+N)')],tv
 
-        tv = parse_arg("command ( byres (name;ca,c,n ), sel1= (name c,n)) ")
-        print tv==[(None, '( byres (name;ca,c,n ), sel1= (name c,n))')],tv
+        tv = parse_arg("command ( byres (name CA+C+N), sel1= (name C+N)) ")
+        print tv==[(None, '( byres (name CA+C+N), sel1= (name C+N))')],tv
 
         tv = parse_arg("command test,")
         print tv==[(None,'test')],tv
@@ -721,7 +721,7 @@ SEE ALSO
     # expected exceptions
 
         try:
-            tv = parse_arg("command ( byres (name;ca,c,n ), sel1= (name c,n) ")      
+            tv = parse_arg("command ( byres (name CA+C+N ), sel1= (name C+N) ")
             print 0, "exception missed"
         except QuietException:
             print 1, "exception raised (as expected)"

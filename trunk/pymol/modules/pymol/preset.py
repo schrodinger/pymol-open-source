@@ -118,7 +118,7 @@ def ligands(selection="(all)",_self=cmd):
 
         util.chainbow(host,_self=cmd)
         util.cbc(lig,_self=cmd)
-        util.cbac("(("+s+") and not elem c)",_self=cmd)
+        util.cbac("(("+s+") and not elem C)",_self=cmd)
         cmd.hide("everything",s)
         cmd.show("ribbon",host)
         cmd.show("lines","("+s+" and byres ("+host+" within 5 of "+lig+"))")
@@ -168,12 +168,12 @@ def ball_and_stick(selection="(all)",mode=1,_self=cmd):
         cmd.show("sticks",s)
     cmd.delete(s)
     
-def b_factor_putty(selection="(name ca or name p)",_self=cmd):
+def b_factor_putty(selection="(name CA+P)",_self=cmd):
     cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
     _prepare(s,_self=cmd)
-    cmd.select(s,"(name ca or name p) and ("+selection+")")
+    cmd.select(s,"(name CA+P) and ("+selection+")")
     cmd.show("cartoon",s)
     cmd.set("cartoon_flat_sheets",0,selection)
     cmd.cartoon("putty",s)
@@ -211,7 +211,7 @@ def ligand_sites(selection="(all)",_self=cmd):
 
         util.chainbow(host,_self=cmd)
         util.cbc(lig,_self=cmd)
-        util.cbac("(("+s+") and not elem c)",_self=cmd)
+        util.cbac("(("+s+") and not elem C)",_self=cmd)
         cmd.hide("everything",s)
         cmd.show("ribbon",host)
         cmd.show("lines","("+s+" and byres ("+host+" within 5 of "+lig+"))")
@@ -309,7 +309,7 @@ def technical(selection="(all)",_self=cmd):
     _prepare(s,polar_contacts,_self=cmd)
     util.chainbow(s,_self=cmd)
     util.cbc("("+lig_sele+" and ("+s+"))",_self=cmd)   
-    util.cbac("(("+s+") and not elem c)",_self=cmd)
+    util.cbac("(("+s+") and not elem C)",_self=cmd)
     cmd.show("nonbonded",s)
     cmd.show("lines","((("+s+") and not "+lig_sele+") extend 1)")
     cmd.show("sticks","("+lig_sele+" and ("+s+"))")
@@ -320,7 +320,7 @@ def technical(selection="(all)",_self=cmd):
         cmd.set("dash_width",1.5,polar_contacts)
         cmd.hide("labels",polar_contacts)
         cmd.show("dashes",polar_contacts)
-    cmd.show("nonbonded","(("+lig_sele+"|resn hoh+wat+h2o) and ("+s+"))")
+    cmd.show("nonbonded","(("+lig_sele+"|resn HOH+WAT+H2O) and ("+s+"))")
     cmd.delete(s)
 
 def pretty_solv(selection="(all)",_self=cmd):
@@ -333,10 +333,10 @@ def pretty_solv(selection="(all)",_self=cmd):
     cmd.cartoon("auto",s)
     cmd.show("cartoon",s)
     cmd.show("sticks","("+lig_sele+" and ("+s+"))")
-    cmd.show("nb_spheres","(("+lig_sele+"|resn hoh+wat+h2o) and ("+s+"))")
+    cmd.show("nb_spheres","(("+lig_sele+"|resn HOH+WAT+H2O) and ("+s+"))")
     util.cbc("("+lig_sele+" and ("+s+"))",_self=cmd)
-    util.cbac("("+lig_sele+" and ("+s+") and not elem c)",_self=cmd)
-    cmd.spectrum("count",selection="(elem c and ("+s+") and not "+lig_sele+")")
+    util.cbac("("+lig_sele+" and ("+s+") and not elem C)",_self=cmd)
+    cmd.spectrum("count",selection="(elem C and ("+s+") and not "+lig_sele+")")
     cmd.set("cartoon_highlight_color",-1,selection)
     cmd.set("cartoon_fancy_helices",0,selection)
     cmd.set("cartoon_smooth_loops",0,selection)
@@ -353,7 +353,7 @@ def pretty(selection,_self=cmd):
     pretty_solv(selection,_self)
     s = tmp_sele
     cmd.select(s,selection)
-    cmd.hide("nb_spheres","("+s+" and "+lig_sele+"|resn hoh+wat+h2o)")
+    cmd.hide("nb_spheres","("+s+" and "+lig_sele+"|resn HOH+WAT+H2O)")
     cmd.delete(s)
 
 pretty_no_solv = pretty
@@ -377,7 +377,7 @@ def publication(selection="(all)",_self=cmd):
     pub_solv(selection,_self)
     s = tmp_sele
     cmd.select(s,selection)
-    cmd.hide("nb_spheres","(("+lig_sele+"|resn hoh+wat+h2o) and "+s+")")
+    cmd.hide("nb_spheres","(("+lig_sele+"|resn HOH+WAT+H2O) and "+s+")")
     cmd.delete(s)
 
 pub_no_solv = publication
@@ -394,6 +394,6 @@ def default(selection="(all)",_self=cmd):
         util.cbag(selection,_self=cmd)
     else:
         util.cnc(selection,_self=cmd)
-        cmd.color(str(color),"("+s+") and elem c")
+        cmd.color(str(color),"("+s+") and elem C")
     cmd.delete(s)
         

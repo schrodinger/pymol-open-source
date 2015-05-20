@@ -240,4 +240,8 @@ int SceneGetCopyType(PyMOLGlobals * G);
 
 int StereoIsAdjacent(PyMOLGlobals * G);
 
+void ScenePrepareMatrix(PyMOLGlobals * G, int mode);
+
+void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window);
+
 #endif

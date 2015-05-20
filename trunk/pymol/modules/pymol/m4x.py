@@ -295,8 +295,8 @@ def setup_contexts(context_info):   # Author: Warren DeLano
             zoom_list.append(site)
             # replace cartoon with explicit atoms for "site" atoms
             cmd.hide("cartoon",site)
-            cmd.show("sticks","(byres (neighbor ("+site+" and name c))) and name n+ca")
-            cmd.show("sticks","(byres (neighbor ("+site+" and name n))) and name c+ca+o")
+            cmd.show("sticks","(byres (neighbor ("+site+" and name C))) and name N+CA")
+            cmd.show("sticks","(byres (neighbor ("+site+" and name N))) and name C+CA+O")
         if len(zoom_list):
             if len(key_list):
                 key = key_list.pop(0)
@@ -421,8 +421,8 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
                 cmd.select(m4x_ligands,m4x_ligands+"|"+ligand)
             if site in name_list:
                 cmd.select(m4x_sites,m4x_sites+"|"+site+
-                "|((byres (neighbor ("+site+" and name c))) and name n+ca)"+
-                "|((byres (neighbor ("+site+" and name n))) and name c+ca+o)")
+                "|((byres (neighbor ("+site+" and name C))) and name N+CA)"+
+                "|((byres (neighbor ("+site+" and name N))) and name C+CA+O)")
     cmd.wizard("fedora",doc_list)
     toggle_cgos(1)
     toggle_labels(0)

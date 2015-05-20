@@ -44,7 +44,7 @@ ARGUMENTS
                 _self.remove("(hydro and %s)"%fragment)
     else:
         _self.fragment(fragment,tmp_editor)
-        if _self.count_atoms("((%s) and elem h)"%selection,quiet=1):
+        if _self.count_atoms("((%s) and elem H)"%selection,quiet=1):
             _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",1)
             if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
@@ -58,7 +58,7 @@ ARGUMENTS
 def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
     if selection in _self.get_names("selections"):
         _self.fragment(fragment,tmp_editor)
-        if _self.count_atoms("((%s) and elem h)"%selection,quiet=1):
+        if _self.count_atoms("((%s) and elem H)"%selection,quiet=1):
             _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",3)
             if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
@@ -115,10 +115,10 @@ ARGUMENTS
         r = _self.fragment(amino_acid,object)
         if not hydro:
             _self.remove("(hydro and %s)"%object)
-        if _self.count_atoms("((%s) and name c)"%object):
-            _self.edit("((%s) and name c)"%object)
-        elif _self.count_atoms("((%s) and name n)"%object):
-            _self.edit("((%s) and name n)"%object)
+        if _self.count_atoms("((%s) and name C)"%object):
+            _self.edit("((%s) and name C)"%object)
+        elif _self.count_atoms("((%s) and name N)"%object):
+            _self.edit("((%s) and name N)"%object)
     elif _self.select(tmp_connect,"(%s) & elem N,C"%selection) != 1:
         print "Error: invalid connection point: must be one atom, name N or C."
         _self.delete(tmp_wild)
@@ -148,7 +148,7 @@ ARGUMENTS
                 phi=180.0
                 psi=180.0
         _self.fragment(amino_acid,tmp_editor)
-        if _self.count_atoms("elem n",domain=tmp_connect):
+        if _self.count_atoms("elem N",domain=tmp_connect):
             tmp = [ None ]
             _self.iterate(tmp_connect,"tmp[0]=resv", space={ 'tmp' : tmp })
             tmp[0] = str(tmp[0]-1) # counting down
@@ -162,8 +162,8 @@ ARGUMENTS
             if ((_self.select(tmp1,"?pk1",domain=tmp_domain)==1) and
                 (_self.select(tmp2,"?pk2",domain=tmp_domain)==1)):
 
-                if ((_self.select(tmp3,"(name ca,ch3 & nbr. ?pk1)",domain=tmp_domain)==1) and
-                    (_self.select(tmp4,"(name ca,ch3 & nbr. ?pk2)",domain=tmp_domain)==1)):
+                if ((_self.select(tmp3,"(name CA,CH3 & nbr. ?pk1)",domain=tmp_domain)==1) and
+                    (_self.select(tmp4,"(name CA,CH3 & nbr. ?pk2)",domain=tmp_domain)==1)):
                     _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
 
                 _self.set_geometry(tmp2,3,3) # make nitrogen planer
@@ -174,10 +174,10 @@ ARGUMENTS
                 if ss:
                     if amino_acid[0:3]!='pro':
                         if ((_self.select(tmp4,
-                                          "((!r;pro) & name c  & nbr. (name ca & nbr. "+tmp2+"))",
+                                          "(!(resn PRO) & name C  & nbr. (name CA & nbr. "+tmp2+"))",
                                           domain=tmp_domain)==1) and
                             (_self.select(tmp3,
-                                          "((!r;pro) & name ca & nbr. "+tmp2+")",
+                                          "(!(resn PRO) & name CA & nbr. "+tmp2+")",
                                           domain=tmp_domain)==1)):
                             _self.set_dihedral( # PHI
                                 tmp4, # C
@@ -186,9 +186,9 @@ ARGUMENTS
                                 tmp1, # C
                                 phi)
 
-                    if ((_self.select(tmp4,"(name n & nbr. (name ca & nbr. "+tmp1+"))",
+                    if ((_self.select(tmp4,"(name N & nbr. (name CA & nbr. "+tmp1+"))",
                                       domain=tmp_domain)==1) and
-                        (_self.select(tmp3,"(name ca & nbr. "+tmp1+")",domain=tmp_domain)==1)):
+                        (_self.select(tmp3,"(name CA & nbr. "+tmp1+")",domain=tmp_domain)==1)):
                         _self.set_dihedral( # PSI (n-1)
                             tmp2, # N
                             tmp1, # C
@@ -201,7 +201,7 @@ ARGUMENTS
                 _self.edit(tmp1)
                 if center:
                     _self.center(tmp1,animate=animate)
-        elif _self.count_atoms("elem c",domain=tmp_connect): # forward
+        elif _self.count_atoms("elem C",domain=tmp_connect): # forward
             tmp = [ None ]
             _self.iterate(tmp_connect,"tmp[0]=resv", space={ 'tmp' : tmp })
             tmp[0] = str(tmp[0]+1) # counting up
@@ -216,16 +216,16 @@ ARGUMENTS
                 ( _self.select(tmp2,"?pk2",domain=tmp_domain)==1)):
 
 #                ___mark1 = ___time()
-                if ((_self.select(tmp3,"(name ca,ch3 & nbr. ?pk1)",domain=tmp_domain)==1) and
-                    (_self.select(tmp4,"(name ca,ch3 & nbr. ?pk2)",domain=tmp_domain)==1)):
+                if ((_self.select(tmp3,"(name CA,CH3 & nbr. ?pk1)",domain=tmp_domain)==1) and
+                    (_self.select(tmp4,"(name CA,CH3 & nbr. ?pk2)",domain=tmp_domain)==1)):
                     _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
                 _self.set_geometry("pk1",3,3) # make nitrogen planer
                 if hydro:
                     _self.h_fix("pk1") # fix hydrogen position
                 if ss:
                     if hydro and amino_acid[0:3]=='nhh': # fix amide hydrogens
-                        if ((_self.select(tmp3,"(name h1 & nbr. "+tmp1+")",domain=tmp_domain)==1) and
-                            (_self.select(tmp4,"(name o & nbr. "+tmp2+")",domain=tmp_domain)==1)):
+                        if ((_self.select(tmp3,"(name H1 & nbr. "+tmp1+")",domain=tmp_domain)==1) and
+                            (_self.select(tmp4,"(name O & nbr. "+tmp2+")",domain=tmp_domain)==1)):
                             _self.set_dihedral(
                                 tmp4, # O
                                 tmp2, # C
@@ -233,16 +233,16 @@ ARGUMENTS
                                 tmp3, # H1
                                 180)
                     if amino_acid[0:3]!='pro':
-                        if ((_self.select(tmp3,"(name ca & nbr. "+tmp1+")",domain=tmp_domain)==1) and
-                            (_self.select(tmp4,"(name c & nbr. (name ca & nbr. "+tmp1+"))",domain=tmp_domain)==1)):
+                        if ((_self.select(tmp3,"(name CA & nbr. "+tmp1+")",domain=tmp_domain)==1) and
+                            (_self.select(tmp4,"(name C & nbr. (name CA & nbr. "+tmp1+"))",domain=tmp_domain)==1)):
                             _self.set_dihedral( # PHI
                                 tmp2, # C
                                 tmp1, # N
                                 tmp3, # CA 
                                 tmp4, # C
                                 phi)
-                    if ((_self.select(tmp3,"(name ca & nbr. "+tmp2+")",domain=tmp_domain)==1) and
-                        (_self.select(tmp4,"(name n & nbr. (name ca & nbr. "+tmp2+"))",domain=tmp_domain)==1)):
+                    if ((_self.select(tmp3,"(name CA & nbr. "+tmp2+")",domain=tmp_domain)==1) and
+                        (_self.select(tmp4,"(name N & nbr. (name CA & nbr. "+tmp2+"))",domain=tmp_domain)==1)):
                         _self.set_dihedral( # PSI (n-1)
                             tmp4, # N
                             tmp3, # CA
@@ -257,7 +257,7 @@ ARGUMENTS
                     _self.center(tmp1,animate=animate)
             else:
                 _self.unpick()
-        elif _self.count_atoms("((%s) and elem h)"%selection):
+        elif _self.count_atoms("((%s) and elem H)"%selection):
             print "Error: please pick a nitrogen or carbonyl carbon to grow from."
             _self.delete(tmp_wild)
             raise QuietException            
@@ -368,10 +368,10 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
                     tmp_sel = _self.get_unused_name()
                     if mode == 'peptide':
                         if dir>0:
-                            _self.select(tmp_sel,"name c and "+tmp_obj)
+                            _self.select(tmp_sel,"name C and "+tmp_obj)
                             resi = resi + 1
                         else:
-                            _self.select(tmp_sel,"name n and "+tmp_obj)
+                            _self.select(tmp_sel,"name N and "+tmp_obj)
                             resi = resi - 1
                     _self.edit(name+" in "+tmp_sel) # set the editor's pk1 selection
                     _self.delete(tmp_sel+" "+tmp_obj)

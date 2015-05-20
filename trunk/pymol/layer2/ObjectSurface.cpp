@@ -276,13 +276,20 @@ void ObjectSurfaceDump(ObjectSurface * I, const char *fname, int state)
           v += 12;
           c = *(n++);
           c -= 4;
+          bool backface = true;
+          const float *v1, *v2;
           while(c > 0) {
+            if ((backface = !backface)) {
+              v1 = v - 6;
+              v2 = v - 12;
+            } else {
+              v1 = v - 12;
+              v2 = v - 6;
+            }
             fprintf(f,
                     "%10.4f%10.4f%10.4f%10.4f%10.4f%10.4f\n%10.4f%10.4f%10.4f%10.4f%10.4f%10.4f\n%10.4f%10.4f%10.4f%10.4f%10.4f%10.4f\n",
-                    *(v - 9), *(v - 8), *(v - 7),
-                    *(v - 12), *(v - 11), *(v - 10),
-                    *(v - 3), *(v - 2), *(v - 1),
-                    *(v - 6), *(v - 5), *(v - 4),
+                    *(v1 + 3), *(v1 + 4), *(v1 + 5), *(v1), *(v1 + 1), *(v1 + 2),
+                    *(v2 + 3), *(v2 + 4), *(v2 + 5), *(v2), *(v2 + 1), *(v2 + 2),
                     *(v + 3), *(v + 4), *(v + 5), *(v), *(v + 1), *(v + 2));
 
             v += 6;

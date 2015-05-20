@@ -61,7 +61,7 @@ typedef struct ObjectMolecule {
   int NAtom, prevNAtom;
   int NBond, prevNBond;
 	/* is this object loaded as a discrete object? if so, number of states */
-  int DiscreteFlag, NDiscrete;
+  int DiscreteFlag;
   int *DiscreteAtmToIdx;
   struct CoordSet **DiscreteCSet;
   /* proposed, for storing uniform trajectory data more efficiently:
@@ -84,6 +84,8 @@ typedef struct ObjectMolecule {
 
   // methods
   int getState();
+  bool setNDiscrete(int natom);
+  bool updateAtmToIdx();
 } ObjectMolecule;
 
 /* this is a record that holds information for specific types of Operatations on Molecules, eg. translation/rotation/etc */
@@ -500,6 +502,6 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj, AtomInfoType
                             int **outdex);
 
 ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
-    const char *st, int frame, int discrete, int quiet, int multiplex, char *new_name);
+    const char *st, int frame, int discrete, int quiet, int multiplex, int zoom);
 
 #endif

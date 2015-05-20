@@ -240,7 +240,7 @@ void FeedbackEnable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
  * modules which may contain live debugging code.  
  */
 
-#define Feedback(G,sysmod,mask) (G->Feedback->Mask[sysmod]&mask)
+#define Feedback(G,sysmod,mask) (G->Feedback->Mask[sysmod]&(mask))
 
 
 /* FEEDBACK_MAX_OUTPUT should be as small as is reasonable

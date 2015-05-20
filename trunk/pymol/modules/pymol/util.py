@@ -259,8 +259,8 @@ def mass_align(target,enabled_only=0,max_gap=50,_self=cmd):
     for name in list:
         if name!=target:
             if cmd.count_atoms("(%s) and (%s)"%(target,name))==0:
-                cmd.align('polymer and name ca and (%s)'%name,
-                'polymer and name ca and (%s)'%target,max_gap=max_gap,quiet=0,
+                cmd.align('polymer and name CA and (%s)'%name,
+                'polymer and name CA and (%s)'%target,max_gap=max_gap,quiet=0,
                           object=aln_object)
     
 def sum_formal_charges(selection="(all)",quiet=1,_self=cmd):
@@ -431,7 +431,7 @@ def color_carbon(color,selection="(all)",_self=cmd):
     pymol=_self._pymol
     cmd=_self
     selection = str(selection)
-    cmd.color(color,"(%s) and elem c"%selection)
+    cmd.color(color,"(%s) and elem C"%selection)
     
 def cbss(selection="(all)",helix_color="red",sheet_color="yellow",loop_color="green",quiet=1,_self=cmd):
     pymol=_self._pymol
@@ -1024,9 +1024,9 @@ def b2vdw(*arg,**kw):
 def phipsi(selection="(pk1)",_self=cmd):
     pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
-    n_sele =   "((byres (%s)) & name n)"%selection
-    c_sele =   "((byres (%s)) & name c)"%selection
-    ca_sele =  "((byres (%s)) & name ca)"%selection
+    n_sele =   "((byres (%s)) & name N)"%selection
+    c_sele =   "((byres (%s)) & name C)"%selection
+    ca_sele =  "((byres (%s)) & name CA)"%selection
     cm_sele = "((neighbor (%s)) and not (byres (%s)))"%(n_sele,n_sele)
     np_sele = "((neighbor (%s)) and not (byres (%s)))"%(c_sele,c_sele)
     cmd.feedback("push")
@@ -1052,7 +1052,7 @@ def phipsi(selection="(pk1)",_self=cmd):
     cmd.delete("_pp_np")
     return (phi,psi)
 
-def rainbow(selection="(name ca and alt '',A)",reverse=0,_self=cmd):
+def rainbow(selection="(name CA and alt ''+A)",reverse=0,_self=cmd):
     pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
 
@@ -1092,7 +1092,7 @@ def rainbow(selection="(name ca and alt '',A)",reverse=0,_self=cmd):
             c = c + 1
         last = a
 
-    cas = cmd.index("((byres ("+selection+")) and name ca and not het)")
+    cas = cmd.index("((byres ("+selection+")) and name CA and not het)")
     l = len(cas)
     if not len(cas):
         return
@@ -1104,7 +1104,7 @@ def rainbow(selection="(name ca and alt '',A)",reverse=0,_self=cmd):
 
     cmd.feedback("pop")
     
-def ss(selection="(name ca and alt '',A)",state=1,_self=cmd):
+def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
     pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
 
@@ -1116,7 +1116,7 @@ def ss(selection="(name ca and alt '',A)",state=1,_self=cmd):
     
     ss_pref = "_sss"
     sss1 = ss_pref+"1"
-    cnt = cmd.select(sss1,"((byres ("+selection+")) and name ca and not het)")
+    cnt = cmd.select(sss1,"((byres ("+selection+")) and name CA and not het)")
     print " util.ss: initiating secondary structure assignment on %d residues."%cnt
     cas = cmd.index(sss1)
     if not len(cas):
@@ -1146,15 +1146,15 @@ def ss(selection="(name ca and alt '',A)",state=1,_self=cmd):
     pymol._ss.ca_dict = ca_dict
     cmd.iterate(sss1,
                     '_ss.scr_dict[(model,index)]=(segi,chain,resi)') # CA's
-    cmd.iterate("((byres "+sss1+") and n;n)"
+    cmd.iterate("((byres "+sss1+") and n;N)"
                     ,'_ss.scr_dict[(model,index)]=(segi,chain,resi)') # N's
-    cmd.iterate("((byres "+sss1+") and n;o)",
+    cmd.iterate("((byres "+sss1+") and n;O)",
                     '_ss.scr_dict[(model,index)]=(segi,chain,resi)') # O's
     cmd.iterate(sss1,
                     '_ss.ca_dict[(segi,chain,resi)] = (model,index)')
-    cmd.iterate("((byres "+sss1+") and n;n)",
+    cmd.iterate("((byres "+sss1+") and n;N)",
                     '_ss.n_dict[(segi,chain,resi)] = (model,index)')
-    cmd.iterate("((byres "+sss1+") and n;o)",
+    cmd.iterate("((byres "+sss1+") and n;O)",
                     '_ss.o_dict[(segi,chain,resi)] = (model,index)')
 
     scr_dict[None]=None
@@ -1214,8 +1214,8 @@ def ss(selection="(name ca and alt '',A)",state=1,_self=cmd):
     
     # find all pairwise hydrogen bonds and make note of them in dict
 
-    hb = cmd.find_pairs("((byres "+sss1+") and n;n)",
-                              "((byres "+sss1+") and n;o)",mode=1,
+    hb = cmd.find_pairs("((byres "+sss1+") and n;N)",
+                              "((byres "+sss1+") and n;O)",mode=1,
                               cutoff=3.7,angle=55,
                               state1=state,state2=state)
     
@@ -1595,7 +1595,7 @@ def colors(scheme="",_self=cmd):
         cmd.set_color("oxygen",[1.000,0.051,0.051])
         cmd.set_color("fluorine",[0.567,0.882,0.314])
         cmd.set_color("sulfur",[1.000,1.000,0.189])
-        cmd.color("carbon","elem c")
+        cmd.color("carbon","elem C")
         cmd.recolor()
 
 

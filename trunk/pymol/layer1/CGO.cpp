@@ -171,7 +171,6 @@ typedef CGO_op *CGO_op_fn;
 
 static float *CGO_add(CGO * I, int c);
 static float *CGO_size(CGO * I, int sz);
-static void subdivide(int n, float *x, float *y);
 static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, float *c1,
 			     float *c2, int cap1, int cap2);
 static int CGOSimpleEllipsoid(CGO * I, float *v, float vdw, float *n0, float *n1,
@@ -8063,18 +8062,6 @@ static int CGOSimpleEllipsoid(CGO * I, float *v, float vdw, float *n0, float *n1
     s++;
   }
   return ok;
-}
-
-static void subdivide(int n, float *x, float *y)
-{
-  int a;
-  if(n < 3) {
-    n = 3;
-  }
-  for(a = 0; a <= n; a++) {
-    x[a] = (float) cos(a * 2 * PI / n);
-    y[a] = (float) sin(a * 2 * PI / n);
-  }
 }
 
 static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, float *c1,
