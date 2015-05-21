@@ -391,7 +391,7 @@ def prime_pymol():
 
     # legacy X11 launching on OSX
     if sys.platform == 'darwin' and invocation.options.external_gui == 1:
-        xdpyinfo = "/usr/X11R6/bin/xdpyinfo"
+        xdpyinfo = "/opt/X11/bin/xdpyinfo"
         if not os.path.exists(xdpyinfo) or \
                 os.system(xdpyinfo + " >/dev/null 2>&1"):
             # launch X11 (if needed)

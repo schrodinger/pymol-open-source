@@ -465,7 +465,11 @@ static oper_collection_t parse_oper_expression(const std::string &expr) {
       if (c_d.size() == 2)
         for (int i = atoi(c_d[0].c_str()) + 1,
                  j = atoi(c_d[1].c_str()) + 1; i < j; ++i)
-          ids.push_back(to_string(i));
+        {
+          char i_str[16];
+          snprintf(i_str, sizeof(i_str), "%d", i);
+          ids.push_back(i_str);
+        }
     }
   }
 
