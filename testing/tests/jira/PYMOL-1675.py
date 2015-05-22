@@ -18,7 +18,7 @@ class Test(testing.PyMOLTestCase):
         cmd.show_as('sphere')
         cmd.zoom()
         cmd.stereo('anaglyph')
-        cmd.unset('suspend_updates')
+        cmd.set('suspend_updates', 0)
 
         wh = (40, 40)
         cmd.draw(*wh, antialias=0)

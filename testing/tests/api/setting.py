@@ -65,13 +65,11 @@ class TestSetting(testing.PyMOLTestCase):
         self.assertEqual(n, 1)
         self.assertAlmostEqual(stored.v, value)
 
-        cmd.unset(name, sele)
-        n = cmd.iterate('first (%s)' % (sele or 'all'), 'stored.v = s.' + name)
-        self.assertEqual(n, 1)
         if sele:
+            cmd.unset(name, sele)
+            n = cmd.iterate('first (%s)' % (sele or 'all'), 'stored.v = s.' + name)
+            self.assertEqual(n, 1)
             self.assertEqual(stored.v, defaultvalue)
-        else:
-            self.assertAlmostEqual(stored.v, 0.0)
 
     def testSetBond(self):
         value = 2.3
