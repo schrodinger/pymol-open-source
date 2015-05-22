@@ -505,7 +505,7 @@ else:
             '''
             Save image to filename, with antialias=0.
             '''
-            cmd.unset('antialias')
+            cmd.set('antialias', 0)
             cmd.png(filename, *args, **kwargs)
             cmd.draw()
 
