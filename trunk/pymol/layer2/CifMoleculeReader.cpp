@@ -8,7 +8,6 @@
 #include <string>
 #include <iostream>
 #include <map>
-#include <array>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -418,8 +417,16 @@ static void sshashmap_clear(PyMOLGlobals * G, sshashmap &ssrecords) {
   ssrecords.clear();
 }
 
+// std::array for pre-C++11
+template <typename T, size_t N>
+class myarray {
+  T m_data[N];
+  public:
+  T * data() { return m_data; }
+};
+
 // PDBX_STRUCT_OPER_LIST type
-typedef std::map<std::string, std::array<float, 16> > oper_list_t;
+typedef std::map<std::string, myarray<float, 16> > oper_list_t;
 
 // type for parsed PDBX_STRUCT_OPER_LIST
 typedef std::vector<std::vector<std::string> > oper_collection_t;
@@ -576,8 +583,11 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
     std::set   <std::string> chains_set(chains.begin(), chains.end());
 
     // new coord set VLA
-    int ncsets = 0;
-    CoordSet ** csets = VLACalloc(CoordSet*, 1);
+    int ncsets = 1;
+    for (auto c_it = collection.begin(); c_it != collection.end(); ++c_it) {
+      ncsets *= c_it->size();
+    }
+    CoordSet ** csets = VLACalloc(CoordSet*, ncsets);
 
     // for cartesian product
     const CoordSet * const * c_src = &cset;
@@ -604,12 +614,8 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
           for (int k = 0; k < c_src_len; ++k, ++j) {
 
             // new coord set if needed
-            VLACheck(csets, CoordSet*, j);
             if (csets[j] == NULL)
               csets[j] = CoordSetCopy(c_src[k]);
-
-            if (ncsets < j + 1)
-              ncsets = j + 1;
 
             // transform coordinates
             transform44f3f(oper_list[*s_it].data(),
@@ -627,7 +633,6 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
     }
 
     // return assembly coordsets
-    VLASize(csets, CoordSet*, ncsets);
     return csets;
   }
 

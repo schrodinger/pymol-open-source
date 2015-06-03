@@ -979,26 +979,18 @@ def mat_tran(self_cmd, sele, direction=0):
 
 def sele_align(self_cmd, sele):
     return [[ 2, 'Align:', ''],
-              [ 1, 'to molecule', align_to_object(self_cmd, sele) ],
-              [ 1, 'to selection', align_to_sele(self_cmd, sele) ],
+              [ 1, 'to molecule (*/CA)', align_to_object(self_cmd, sele) ],
+              [ 1, 'to selection (*/CA)', align_to_sele(self_cmd, sele) ],
               [ 0, '', None ],
-              [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1,_self=cmd)' ],                                 
-              [ 1, 'all to this', 'util.mass_align("'+sele+'",0,_self=cmd)' ],
+              [ 1, 'enabled to this (*/CA)', 'util.mass_align("'+sele+'",1,_self=cmd)' ],
+              [ 1, 'all to this (*/CA)', 'util.mass_align("'+sele+'",0,_self=cmd)' ],
               [ 0, '', None ],
               [ 1, 'states (*/CA)', 'cmd.intra_fit("('+sele+') and name CA")' ],
               [ 1, 'states', 'cmd.intra_fit("'+sele+'")' ],
               ]
 
 def mol_align(self_cmd, sele):
-    return [[ 2, 'Align:', ''],
-              [ 1, 'to molecule', align_to_object(self_cmd, sele) ],
-              [ 1, 'to selection', align_to_sele(self_cmd, sele) ],
-              [ 0, '', None ],
-              [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1,_self=cmd)' ],                                 
-              [ 1, 'all to this', 'util.mass_align("'+sele+'",0,_self=cmd)' ],
-              [ 0, '', None ],
-              [ 1, 'states (*/CA)', 'cmd.intra_fit("('+sele+') and name CA")' ],
-              [ 1, 'states', 'cmd.intra_fit("'+sele+'")' ],
+    return sele_align(self_cmd, sele) + [
               [ 0, '', None ],
               [ 1, 'matrix from', mat_tran(self_cmd, sele,1) ],
               [ 1, 'matrix to', mat_tran(self_cmd, sele,0) ],

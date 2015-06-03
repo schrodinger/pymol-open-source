@@ -175,7 +175,9 @@ const char * SettingGetTextPtr(PyMOLGlobals * G, CSetting * set1, CSetting * set
 
 int SettingUnset(CSetting * I, int index);
 
-void SettingClear(CSetting * I, int index);     /* don't call this for the global list! */
+void SettingRestoreDefault(CSetting * I, int index, const CSetting * src=NULL);
+
+bool SettingIsDefaultZero(int index);
 
 int SettingGetType(PyMOLGlobals * G, int index);        /* based on global types, always succeeds */
 
@@ -241,6 +243,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
 
 int SettingGetIndex(PyMOLGlobals * G, const char *name);
 int SettingGetName(PyMOLGlobals * G, int index, SettingName name);
+const char * SettingGetName(int index);
 
 PyObject *SettingAsPyList(CSetting * I);
 int SettingFromPyList(CSetting * I, PyObject * list);

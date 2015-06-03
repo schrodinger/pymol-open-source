@@ -64,6 +64,7 @@ Z* -------------------------------------------------------------------
 #include "IncentiveCopyToClipboard.h"
 #endif
 
+#include <algorithm>
 #include <iostream>
 
 using namespace std;
@@ -642,6 +643,7 @@ void SceneInvalidate(PyMOLGlobals * G)
 {
   SceneInvalidateCopy(G, false);
   SceneDirty(G);
+  PyMOL_NeedRedisplay(G->PyMOL);
 }
 
 void SceneLoadAnimation(PyMOLGlobals * G, double duration, int hand)
@@ -1502,7 +1504,7 @@ void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, in
     {
       double avg = (I->Front / 2.0) + (I->Back / 2.0);
       double width_half = I->Back - avg;
-      double new_w_half = fmin(movement * width_half,
+      double new_w_half = std::min(movement * width_half,
           width_half + 1000.0); // prevent exploding of clipping planes
 
       SceneClipSet(G, avg - new_w_half, avg + new_w_half);
@@ -5831,7 +5833,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
           {
             // the 5.0 min depth below is an empirical value
             float factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) *
-              (y - I->LastY) / 400.0 * fmax(5.f, -I->Pos[2]);
+              (y - I->LastY) / 400.0 * std::max(5.f, -I->Pos[2]);
             if(!SettingGetGlobal_b(G, cSetting_legacy_mouse_zoom))
               factor = -factor;
             I->Pos[2] += factor;
@@ -9071,7 +9073,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
       gluPerspective(fov, aspRat, I->FrontSafe, I->BackSafe);
     } else {
-      height = fmax(R_SMALL4, -I->Pos[2]) * GetFovWidth(G) / 2.f;
+      height = std::max(R_SMALL4, -I->Pos[2]) * GetFovWidth(G) / 2.f;
       width = height * aspRat;
 
       GLORTHO(-width, width, -height, height, I->FrontSafe, I->BackSafe);

@@ -1064,10 +1064,6 @@ function PyMOL(host, port, bufferMode, prefix) {
             return this._dispatch.apply(this,
                 ["view"].concat(Array.prototype.slice.apply(arguments)));
         },
-        get_scene_dict: function() {
-            return this._dispatch.apply(this,
-                ["get_scene_dict"].concat(Array.prototype.slice.apply(arguments)));
-        },
         get_scene_list: function() {
             return this._dispatch.apply(this,
                 ["get_scene_list"].concat(Array.prototype.slice.apply(arguments)));

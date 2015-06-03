@@ -44,7 +44,7 @@ def askopenfilename(*args, **kwargs):
         filename = encode(filename)
         if kwargs.get('multiple', 0):
             filename = root.tk.splitlist(filename)
-    return filename
+    return map(os.path.normpath, filename)
 
 def _darwin_browser_open(url):
     os.popen("open "+url,'r').read()

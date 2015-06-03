@@ -86,8 +86,6 @@ typedef struct CoordSet {
   int PeriodicBoxType;
   int tmp_index;                /* for saving */
 
-  int NMatrix;                  /* number of matrices for this coordinate set */
-  double *MatrixVLA;            /* end-to-end array of 16x16 matrices */
   LabPosType *LabPos;
 
   /* not saved in state */

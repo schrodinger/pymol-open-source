@@ -1410,7 +1410,7 @@ class Builder(Frame):
         self.chemB.grid(row=1, column=1, sticky=N+S+W+E)
 
         self.protB = Button(self, text="Protein", 
-            command = self.toggleChemProtein)
+            command = lambda: self.toggleChemProtein(1))
         self.protB.grid(row=2, column=1, sticky=N+S+W+E)
 
         self.protFrame = ProteinFrame(self)
@@ -1454,8 +1454,8 @@ class Builder(Frame):
             onvalue=1, offvalue=0, command=self.doElectro).grid(row=6, 
             column=1,sticky=W)
 
-    def toggleChemProtein(self):
-        if self.chemFrame.grid_info():
+    def toggleChemProtein(self, prot=0):
+        if prot:
             self.chemB.configure(relief=RAISED)
             self.chemFrame.grid_forget()
             self.protB.configure(relief=SUNKEN)

@@ -109,8 +109,6 @@ typedef float aliased_float;
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
-#define fmax max
-#define fmin min
 #pragma warning (disable:4996)
 #ifndef snprintf
 #define snprintf sprintf_s
