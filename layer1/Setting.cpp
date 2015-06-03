@@ -1542,10 +1542,66 @@ void SettingInit(PyMOLGlobals * G, CSetting * I)
 
 
 /*========================================================================*/
-void SettingClear(CSetting * I, int index)
+bool SettingIsDefaultZero(int index)
 {
-  if(I)
-    I->info[index].defined = false;
+  switch (SettingInfo[index].type) {
+    case cSetting_boolean:
+    case cSetting_int:
+    case cSetting_float:
+      if (SettingInfo[index].value.i[0] == 0)
+        return true;
+  }
+
+  return false;
+}
+
+
+/*========================================================================*/
+/*
+ * Restore the default value from `src` or `SettingInfo`
+ */
+void SettingRestoreDefault(CSetting * I, int index, const CSetting * src)
+{
+  // 1) from stored default if provided
+  if (src) {
+    UtilCopyMem(I->info + index, src->info + index, sizeof(SettingRec));
+
+    // need to properly copy strings
+    if (SettingInfo[index].type == cSetting_string && src->info[index].str_) {
+      I->info[index].str_ = new std::string(*src->info[index].str_);
+    }
+
+    return;
+  }
+
+  // 2) from SettingInfo
+  auto &rec = SettingInfo[index];
+
+  switch (rec.type) {
+    case cSetting_blank:
+      break;
+    case cSetting_boolean:
+    case cSetting_int:
+      I->info[index].set_i(rec.value.i[0]);
+      break;
+    case cSetting_float:
+      I->info[index].set_f(rec.value.f[0]);
+      break;
+    case cSetting_float3:
+      I->info[index].set_3f(rec.value.f);
+      break;
+    case cSetting_string:
+      I->info[index].delete_s();
+      break;
+    case cSetting_color:
+      SettingSet_color(I, index, rec.value.s);
+      break;
+    default:
+      // coding error
+      printf(" ERROR: unkown type\n");
+  };
+
+  I->info[index].defined = false;
 }
 
 
@@ -2145,6 +2201,12 @@ int SettingGetName(PyMOLGlobals * G, int index, SettingName name)
 {
   UtilNCopy(name, SettingInfo[index].name, sizeof(SettingName));
   return (name[0] != 0);
+}
+
+/*========================================================================*/
+const char * SettingGetName(int index)
+{
+  return SettingInfo[index].name;
 }
 
 /*========================================================================*/
@@ -3302,37 +3364,13 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 
     // copy defaults from SettingInfo table
     for(int index = 0; index < cSetting_INIT; ++index) {
-      auto &rec = SettingInfo[index];
-
       if (!reset_gui) switch (index) {
         case cSetting_internal_gui_width:
         case cSetting_internal_gui:
           continue;
       }
 
-      switch (rec.type) {
-        case cSetting_blank:
-          break;
-        case cSetting_boolean:
-        case cSetting_int:
-          I->info[index].set_i(rec.value.i[0]);
-          break;
-        case cSetting_float:
-          I->info[index].set_f(rec.value.f[0]);
-          break;
-        case cSetting_float3:
-          I->info[index].set_3f(rec.value.f);
-          break;
-        case cSetting_string:
-          I->info[index].delete_s();
-          break;
-        case cSetting_color:
-          SettingSet_color(I, index, rec.value.s);
-          break;
-        default:
-          // coding error
-          printf(" ERROR: unkown type\n");
-      };
+      SettingRestoreDefault(I, index);
     }
 
     // open-source has no volume_mode=1

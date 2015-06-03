@@ -32,7 +32,7 @@ the initialization functions for these libraries on startup.
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-#include<windows.h>
+#include"os_proprietary.h"
 #include<process.h>
 #endif
 

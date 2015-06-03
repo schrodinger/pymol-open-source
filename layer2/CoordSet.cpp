@@ -1603,7 +1603,6 @@ CoordSet *CoordSetCopy(const CoordSet * cs)
   I->RefPos     = VLACopy2(cs->RefPos);
   I->AtmToIdx   = VLACopy2(cs->AtmToIdx);
   I->IdxToAtm   = VLACopy2(cs->IdxToAtm);
-  I->MatrixVLA  = VLACopy2(cs->MatrixVLA);
 
   UtilZeroMem(I->Rep, sizeof(::Rep *) * cRepCnt);
 

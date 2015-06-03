@@ -12358,23 +12358,9 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
       }
     }
   }
-  PRINTFD(I->Obj.G, FB_ObjectMolecule)
-    " ObjectMolecule: CGO's complete...\n" ENDFD;
-  if(state < 0) {
-    for(a = 0; a < I->NCSet; a++) {
-      cs = I->CSet[a];
-      if(cs) {
-        if(use_matrices)
-          pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State, info);
-        /* need to apply object state matrix here */
-        cs->render(info);
-        if(pop_matrix)
-          ObjectStatePopMatrix(&cs->State, info);
 
-      }
-    }
-  } else if(state < I->NCSet) {
-    cs = I->CSet[(I->CurCSet = state % I->NCSet)];
+  for(StateIterator iter(G, I->Obj.Setting, state, I->NCSet); iter.next();) {
+    cs = I->CSet[iter.state];
     if(cs) {
       if(use_matrices)
         pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State, info);
@@ -12382,16 +12368,6 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
       if(pop_matrix)
         ObjectStatePopMatrix(&cs->State, info);
     }
-  } else if(I->NCSet == 1) {    /* if only one coordinate set, assume static */
-    cs = I->CSet[0];
-    if(SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_static_singletons))
-      if(cs) {
-        if(use_matrices)
-          pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State, info);
-        cs->render(info);
-        if(pop_matrix)
-          ObjectStatePopMatrix(&cs->State, info);
-      }
   }
   PRINTFD(I->Obj.G, FB_ObjectMolecule)
     " ObjectMolecule: rendering complete for object %s.\n", I->Obj.Name ENDFD;

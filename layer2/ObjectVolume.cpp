@@ -14,6 +14,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <algorithm>
+
 #include"os_python.h"
 
 #include"os_predef.h"
@@ -903,7 +906,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       // determine number of slices based on max extent
       // and slice option
       sliceRange = 0.5*sqrt(2.0) * 
-        fmax(fmax(fabs(corner[21]-corner[0]), fabs(corner[22]-corner[1])), 
+        std::max(std::max(fabs(corner[21]-corner[0]), fabs(corner[22]-corner[1])), 
             fabs(corner[23]-corner[2]));
       sliceDelta = (sliceRange / volume_layers);
 

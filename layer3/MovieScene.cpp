@@ -772,8 +772,7 @@ static bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, MovieScene &out)
   std::map<int, MovieSceneAtom> atomdata_old_ids;
 
   if (!G) {
-    PRINTFB(G, FB_Scene, FB_Errors)
-      " Error: G is NULL\n" ENDFB(G);
+    printf(" Error: G is NULL\n");
     return false;
   }
 
@@ -784,7 +783,7 @@ static bool PConvFromPyObject(PyMOLGlobals * G, PyObject * obj, MovieScene &out)
         out.view,
         atomdata_old_ids,
         out.objectdata))
-    return false;
+    /* ignore */;
 
   // restore atomdata dict but with converted ids
   PConvFromPyObject(G, PyList_GetItem(obj, 4), atomdata_old_ids);

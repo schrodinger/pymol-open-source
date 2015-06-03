@@ -5286,6 +5286,11 @@ int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, in
 
 static void ExecutiveMigrateSession(PyMOLGlobals * G, int session_version)
 {
+  if (session_version < 1700) {
+    if (SettingGetGlobal_i(G, cSetting_seq_view_label_color) == 0 /* white */) {
+      SettingSetGlobal_i(G, cSetting_seq_view_label_color, cColorFront);
+    }
+  }
   if(session_version < 100) {
     /* migrate lighting model */
     SettingSetGlobal_f(G, cSetting_direct, 1.8 * SettingGetGlobal_f(G, cSetting_direct));
@@ -12760,7 +12765,7 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
   int sele1;
   ObjectMoleculeOpRec op;
   CSetting **handle = NULL;
-  SettingName name;
+  const char * name = SettingGetName(index);
   int nObj = 0;
   int unblock;
   int ok = true;
@@ -12774,19 +12779,16 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
     // NOTE: It would be nice if this would restore the default setting, but
     //       that's not how Warren implemented it and we don't want to break
     //       legacy PyMOL behavior.
-    switch (SettingGetType(G, index)) {
-      case cSetting_string:
-        SettingSetGlobal_s(G, index, "");
-        break;
-      case cSetting_float3:
-        SettingSetGlobal_3f(G, index, 0.f, 0.f, 0.f);
-        break;
-      case cSetting_color:
-        SettingSetGlobal_i(G, index, -1);
-        break;
-      default:
-        SettingSetGlobal_i(G, index, 0);
-        break;
+    if (!SettingIsDefaultZero(index)) {
+      PRINTFB(G, FB_Executive, FB_Warnings)
+        " Warning: The behavior of \"unset\" for global numeric settings will change.\n"
+        " Use \"set %s, 0\" to ensure consistent behavior in future PyMOL versions.",
+        name ENDFB(G);
+      SettingSetGlobal_i(G, index, 0);
+    } else {
+      SettingRestoreDefault(G->Setting, index, G->Default);
+      PRINTFB(G, FB_Executive, FB_Actions)
+        " Setting: %s restored to default\n", name ENDFB(G);
     }
   }
   else {
@@ -12817,7 +12819,6 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
           }
           if(Feedback(G, FB_Setting, FB_Actions)) {
             if(nObj && handle) {
-              SettingGetName(G, index, name);
               if(!quiet) {
                 if(state < 0) {
                   PRINTF " Setting: %s unset in %d objects.\n", name, nObj ENDF(G);
@@ -12849,7 +12850,6 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
                   if(updates)
                     side_effects = true;
                   if(!quiet) {
-                    SettingGetName(G, index, name);
                     PRINTF
                       " Setting: %s unset for %d atoms in object \"%s\".\n",
                       name, op.i4, rec->obj->Name ENDF(G);
@@ -12871,14 +12871,12 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
                 if(!quiet) {
                   if(state < 0) {       /* object-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
-                      SettingGetName(G, index, name);
                       PRINTF
                         " Setting: %s unset in object \"%s\".\n",
                         name, rec->obj->Name ENDF(G);
                     }
                   } else {      /* state-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
-                      SettingGetName(G, index, name);
                       PRINTF
                         " Setting: %s unset in object \"%s\", state %d.\n",
                         name, rec->obj->Name, state + 1 ENDF(G);
