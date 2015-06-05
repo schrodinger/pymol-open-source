@@ -68,16 +68,16 @@ class TestImporting(testing.PyMOLTestCase):
             cmd.set('fetch_host', urlparse.urlunsplit(['file', '',
                 self.datafile('pdb.mirror'), '', '']))
 
-            cmd.fetch('1avy')
+            cmd.fetch('1avy', type='pdb')
             names += ['1avy']
             self.assertItemsEqual(cmd.get_names(), names)
 
-            cmd.fetch('1avyB')
+            cmd.fetch('1avyB', type='pdb')
             names += ['1avyB']
             self.assertItemsEqual(cmd.get_names(), names)
             self.assertEqual(cmd.get_chains('1avyB'), ['B'])
 
-            cmd.fetch('1aq5', multiplex=1)
+            cmd.fetch('1aq5', type='pdb', multiplex=1)
             names += ['1aq5_%04d' % (i+1) for i in range(20)]
             self.assertItemsEqual(cmd.get_names(), names)
 
