@@ -33,10 +33,6 @@ class TestCommanding(testing.PyMOLTestCase):
         # tested with other methods
         pass
 
-    def testDummy(self):
-        v = cmd.dummy(1, 2, x=3, _self=cmd)
-        self.assertEqual(v, None)
-
     def testExtend(self):
         def check(v):
             stored.v = None
