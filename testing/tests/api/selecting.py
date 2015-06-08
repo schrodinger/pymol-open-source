@@ -33,3 +33,51 @@ class TestSelecting(testing.PyMOLTestCase):
         cmd.select_list
         self.skipTest("TODO")
 
+    def testMacros(self):
+        '''
+        Test selection macros: /model/segi/chain/resn`resi/name`alt
+        '''
+        cmd.load(self.datafile("1oky.pdb.gz"), "m1")
+        cmd.alter('*', 'segi="X"')
+        cmd.alter('resi 200-238', 'chain="B"')
+        cmd.alter('resi 239-360', 'chain="C"')
+        cmd.alter('resi 150-220', 'segi="Y"')
+        cmd.alter('resi 220-', 'segi="Z"')
+
+        # all atoms
+        self.assertEqual(cmd.count_atoms('/'), cmd.count_atoms())
+        self.assertEqual(cmd.count_atoms('/////'), cmd.count_atoms())
+
+        # model
+        self.assertEqual(cmd.count_atoms('/m1'), cmd.count_atoms('all'))
+        self.assertEqual(cmd.count_atoms('m1////'), cmd.count_atoms('all'))
+
+        # segi
+        self.assertEqual(cmd.count_atoms('//Y'), cmd.count_atoms('segi Y'))
+        self.assertEqual(cmd.count_atoms('//Y+Z'), cmd.count_atoms('segi Y+Z'))
+
+        # chains
+        self.assertEqual(cmd.count_atoms('///B'), cmd.count_atoms('chain B'))
+        self.assertEqual(cmd.count_atoms('///A+B'), cmd.count_atoms('chain A+B'))
+
+        # resn/resi
+        self.assertEqual(cmd.count_atoms('////100'), cmd.count_atoms('resi 100'))
+        self.assertEqual(cmd.count_atoms('////`100'), cmd.count_atoms('resi 100'))
+        self.assertEqual(cmd.count_atoms('////100-110'), cmd.count_atoms('resi 100-110'))
+        self.assertEqual(cmd.count_atoms('////ARG`100'), cmd.count_atoms('resi 100'))
+        self.assertEqual(cmd.count_atoms('////ALA'), cmd.count_atoms('resn ALA'), )
+        self.assertEqual(cmd.count_atoms('ALA/'), cmd.count_atoms('resn ALA'), )
+        self.assertEqual(cmd.count_atoms('////ALA`'), cmd.count_atoms('resn ALA'))
+        self.assertEqual(cmd.count_atoms('////ALA+GLU'), cmd.count_atoms('resn ALA+GLU'), )
+
+        # name/alt
+        self.assertEqual(cmd.count_atoms('/////CG'), cmd.count_atoms('name CG'))
+        self.assertEqual(cmd.count_atoms('*/CG'), cmd.count_atoms('name CG'))
+        self.assertEqual(cmd.count_atoms('/////CG`B'), cmd.count_atoms('name CG & alt B'))
+        self.assertEqual(cmd.count_atoms('/////`B'), cmd.count_atoms('alt B'))
+
+        # combies
+        self.assertEqual(cmd.count_atoms('100/CA'), cmd.count_atoms('resi 100 & name CA'))
+        self.assertEqual(cmd.count_atoms('A//CA'), cmd.count_atoms('chain A & name CA'))
+        self.assertEqual(cmd.count_atoms('A//`B'), cmd.count_atoms('chain A & alt B'))
+        self.assertEqual(cmd.count_atoms('/m1/Y/B/*/CA'), cmd.count_atoms('segi Y & chain B & name CA'))
