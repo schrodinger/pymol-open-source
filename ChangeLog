@@ -11,6 +11,9 @@ CHANGE LOG
 
 	* port selection macro parsing from Python to C
 
+	* fix https://sf.net/p/pymol/bugs/169/ (cmd.fab() with existing object
+	  name produces unexpected results and downstream segfault)
+
 2015-05-20 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* change default (!) of "ignore_case" setting to off. Case insensitve

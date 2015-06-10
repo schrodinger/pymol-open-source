@@ -337,6 +337,9 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
                 input.append("/") # breaks chain
     if name == None:
         name = _self.get_unused_name("obj")
+    elif name in _self.get_names():
+        _self.delete(name)
+
 #    if mode in [ 'smiles' ]: # small molecule (FUTURE)
 #        from chempy.champ import Champ
 #        ch = Champ()
@@ -390,6 +393,11 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
                                 resi = resi - 1
     if not len(sequence):
         r = DEFAULT_SUCCESS
+
+    if _self.get_setting_int('auto_zoom'):
+        _self.zoom(name)
+
+    return r
 
 def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,
         dir=1,hydro=-1,ss=0,async=-1,quiet=1,_self=cmd):
