@@ -63,6 +63,37 @@ typedef char SelectorWordType[SelectorWordLength];
 /* special selections, unknown to executive */
 #define cColorectionFormat "_!c_%s_%d"
 
+#if 1
+// A lot of PyMOL's utility code used to select with lower case atomic
+// identifiers, making the code dependent on "ignore_case=1". The default
+// for this setting was changed to "0 (off)", which required to fix all
+// affected scripts (e.g. mutagenesis wizard, PYMOL-2487).
+// This is a debug/helper function to identify use of lower case
+// identifiers in selection expressions. Remove before the next official
+// release.
+void WARN_IF_LOWERCASE(PyMOLGlobals * G, const char * label, const char * text) {
+  if (!*text)
+    return;
+  for (const char * p = text; *p; ++p)
+    if (isupper(*p))
+      return;
+  PRINTFB(G, FB_Selector, FB_Warnings)
+    "SELECTOR-LOWER-WARNING: %s '%s'\n", label, text
+    ENDFB(G);
+}
+#else
+#define WARN_IF_LOWERCASE(G, a, b)
+#endif
+
+// Count how often `c` occurs in `s`
+static int strchrcount(const char *s, char c) {
+  int i = 0;
+  while(*s)
+    if(*(s++) == c)
+      i++;
+  return i;
+}
+
 static WordKeyValue rep_names[] = {
   {"spheres", cRepSphereBit},
   {"sticks", cRepCylBit},
@@ -9019,6 +9050,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     }
     break;
   case SELE_NAMs:
+    WARN_IF_LOWERCASE(G, "name", base[1].text);
     {
       CWordMatchOptions options;
       char *atom_name_wildcard = SettingGetGlobal_s(G, cSetting_atom_name_wildcard);
@@ -9112,6 +9144,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     }
     break;
   case SELE_ELEs:
+    WARN_IF_LOWERCASE(G, "element", base[1].text);
     {
       CWordMatchOptions options;
 
@@ -9254,6 +9287,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     }
     break;
   case SELE_CHNs:
+    WARN_IF_LOWERCASE(G, "chain", base[1].text);
   case SELE_CUST:
     {
       CWordMatchOptions options;
@@ -9292,6 +9326,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     }
     break;
   case SELE_SSTs:
+    WARN_IF_LOWERCASE(G, "ss", base[1].text);
     {
       CWordMatchOptions options;
 
@@ -9350,6 +9385,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     }
     break;
   case SELE_ALTs:
+    WARN_IF_LOWERCASE(G, "alt", base[1].text);
     {
       CWordMatchOptions options;
 
@@ -9434,6 +9470,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     }
     break;
   case SELE_RSNs:
+    WARN_IF_LOWERCASE(G, "resn", base[1].text);
     {
       CWordMatchOptions options;
 
@@ -10799,6 +10836,28 @@ static void remove_quotes(char *st)
 
 }
 
+#define STACK_PUSH_VALUE(value) { \
+  depth++; \
+  VLACheck(Stack, EvalElem, depth); \
+  e = Stack + depth; \
+  e->level = (level << 4) + 1; \
+  e->imp_op_level = (imp_op_level << 4) + 1; \
+  imp_op_level = level; \
+  e->type = STYP_VALU; \
+  strcpy(e->text, value); \
+  remove_quotes(e->text); \
+}
+
+#define STACK_PUSH_OPERATION(ocode) { \
+  depth++; \
+  VLACheck(Stack, EvalElem, depth); \
+  e = Stack + depth; \
+  e->code = ocode; \
+  e->level = (level << 4) + ((e->code & 0xF0) >> 4); \
+  e->imp_op_level = (imp_op_level << 4) + 1; \
+  imp_op_level = level; \
+  e->type = (e->code & 0xF); \
+}
 
 /*========================================================================*/
 int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int quiet)
@@ -10811,10 +10870,9 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
   int valueFlag = 0;            /* are we expecting? */
   int *result = NULL;
   int opFlag, opFlag2, maxLevel;
-  char *q, *cc1, *cc2;
+  char *q;
   int totDepth = 0;
   int exact = 0;
-  char *np;
 
   int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
   /* CFGs can efficiently be parsed by stacks; use a clean stack w/space
@@ -10862,17 +10920,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
       break;
     default:
       if(valueFlag > 0) {       /* standard operand */
-        depth++;
-        VLACheck(Stack, EvalElem, depth);
-        e = Stack + depth;
-        e->level = (level << 4) + 1;    /* each nested paren is 16 levels of priority */
-        e->imp_op_level = (imp_op_level << 4) + 1;
-        imp_op_level = level;
-        e->type = STYP_VALU;
-        cc1 = word[c];
-        cc2 = e->text;
-        strcpy(e->text, cc1);
-        remove_quotes(e->text);
+        STACK_PUSH_VALUE(word[c]);
         valueFlag--;
       } else if(valueFlag < 0) {        /* operation parameter i.e. around X<-- */
         depth++;
@@ -10904,14 +10952,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
             code = 0;           /* favor selections over partial keyword matches */
         if(code) {
           /* this is a known operation */
-          depth++;
-          VLACheck(Stack, EvalElem, depth);
-          e = Stack + depth;
-          e->code = code;
-          e->level = (level << 4) + ((e->code & 0xF0) >> 4);
-          e->imp_op_level = (imp_op_level << 4) + 1;
-          imp_op_level = level;
-          e->type = (e->code & 0xF);
+          STACK_PUSH_OPERATION(code);
           switch (e->type) {
           case STYP_SEL0:
             valueFlag = 0;
@@ -10939,28 +10980,86 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
             break;
           }
         } else {
-          strcpy(tmpKW, word[c]);       /* handle <object-name>[`index] syntax */
-          if((np = strstr(tmpKW, "`"))) {       /* must be an object name */
-            *np = 0;
-            depth++;
-            VLACheck(Stack, EvalElem, depth);
-            e = Stack + depth;
-            e->code = SELE_MODs;
-            e->level = (level << 4) + ((e->code & 0xF0) >> 4);
-            e->imp_op_level = (imp_op_level << 4) + 1;
-            imp_op_level = level;
-            e->type = STYP_SEL1;
+          strcpy(tmpKW, word[c]);
+
+          if((a = strchrcount(tmpKW, '/'))) { /* handle slash notation */
+            if(a > 5) {
+              ok = ErrMessage(G, "Selector", "too many slashes in macro");
+              break;
+            }
+
+            // macro codes (some special cases apply! see code below)
+            const int macrocodes[] = {SELE_MODs, SELE_SEGs, SELE_CHNs, SELE_RSNs, SELE_NAMs};
+
+            // two code/value pairs to support resn`resi and name`alt
+            int codes[] = {0, 0, 0}; // null-terminated
+            char * values[2];
+
+            q = tmpKW;
+
+            // if macro starts with "/" then read from left, otherwise
+            // read from right
+            if(*q == '/') {
+              a = 4;
+              q++;
+            }
+
+            // loop over macro elements
+            for(b = 0; q && *q; a--) {
+              values[0] = q;
+
+              // null-terminate current element
+              if((q = strchr(q, '/')))
+                *(q++) = '\0';
+
+              // skip empty elements
+              if(!*values[0])
+                continue;
+
+              codes[0] = macrocodes[4 - a];
+              codes[1] = 0;
+
+              // resn`resi or name`alt
+              if (codes[0] == SELE_RSNs || codes[0] == SELE_NAMs) {
+                char * backtick = strchr(values[0], '`');
+                if (backtick) {
+                  if (codes[0] == SELE_RSNs) {
+                    codes[1] = SELE_RSIs;
+                  } else {
+                    codes[1] = SELE_ALTs;
+                  }
+                  values[1] = backtick + 1;
+                  *backtick = '\0';
+                } else if (codes[0] == SELE_RSNs
+                    && values[0][0] >= '0'
+                    && values[0][0] <= '9') {
+                  // numeric -> resi
+                  codes[0] = SELE_RSIs;
+                }
+              }
+
+              for (int i = 0; codes[i]; ++i) {
+                // skip empty and "*" values
+                if (*values[i] && strcmp(values[i], "*")) {
+                  if(b++)
+                    STACK_PUSH_OPERATION(SELE_AND2);
+
+                  STACK_PUSH_OPERATION(codes[i]);
+                  STACK_PUSH_VALUE(values[i]);
+                }
+              }
+            }
+
+            // all-empty slash macro equals "all"
+            if(!b)
+              STACK_PUSH_OPERATION(SELE_ALLz);
+
+          } else if(strstr(tmpKW, "`")) { /* handle <object`index> syntax */
+            STACK_PUSH_OPERATION(SELE_MODs);
             valueFlag = 1;
             c--;
           } else {              /* handle <selection-name> syntax */
-            depth++;
-            VLACheck(Stack, EvalElem, depth);
-            e = Stack + depth;
-            e->code = SELE_SELs;
-            e->level = (level << 4) + ((e->code & 0xF0) >> 4);
-            e->imp_op_level = (imp_op_level << 4) + 1;
-            imp_op_level = level;
-            e->type = STYP_SEL1;
+            STACK_PUSH_OPERATION(SELE_SELs);
             valueFlag = 1;
             c--;
           }

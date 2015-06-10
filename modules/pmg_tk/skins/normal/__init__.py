@@ -1099,6 +1099,11 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                     browser_open = darwin_browser_open
             except:
                 pass
+
+            self.menuBar.addmenuitem('Help', 'command', label='PyMOL Command Reference',
+                    command=lambda: browser_open('http://pymol.org/pymol-command-ref.html'))
+
+            self.menuBar.addmenuitem('Help', 'separator', '')
             
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the Official PyMOL Documentation online',

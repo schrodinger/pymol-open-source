@@ -1420,7 +1420,7 @@ PYMOL API
                     obj_name = 'emd_' + obj_code
 
             chain = None
-            if len(obj_code) in (5,6) and type == 'pdb':
+            if len(obj_code) in (5,6) and type in ('pdb', 'cif'):
                 obj_code, chain = obj_code[:4], obj_code[-1]
 
             r = _fetch(obj_code, obj_name, state, finish,
@@ -1435,7 +1435,7 @@ PYMOL API
         return r
     
     def fetch(code, name='', state=0, finish=1, discrete=-1,
-              multiplex=-2, zoom=-1, type='pdb', async=-1, path='',
+              multiplex=-2, zoom=-1, type='cif', async=-1, path='',
               file=None, quiet=1, _self=cmd):
         
         '''
@@ -1445,7 +1445,8 @@ DESCRIPTION
 
 USAGE
 
-    fetch code [,name [,state]]
+    fetch code [, name [, state [, finish [, discrete [, multiplex
+        [, zoom [, type [, async [, path ]]]]]]]]]
 
 ARGUMENTS
 
@@ -1455,6 +1456,9 @@ ARGUMENTS
     name = the object name into which the file should be loaded.
 
     state = the state number into which the file should loaded.
+
+    type = str: cif, pdb, pdb1, 2fofc, fofc, emd, cid, sid {default: cif
+    (default was "pdb" up to 1.7.6)}
 
 PYMOL API
 
@@ -1604,9 +1608,6 @@ ARGUMENTS
 
     reso_high = float: maximum resolution {default: 0, read from file}
 
-SEE ALSO
-
-    map_generate
         '''
         raise pymol.IncentiveOnlyException()
 

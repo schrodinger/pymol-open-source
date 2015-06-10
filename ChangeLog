@@ -2,6 +2,15 @@
 CHANGE LOG
 =========================================================================
 
+2015-06-10 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fetch 'cif' by default (was: pdb)
+
+	* warn if selecting with lower-case arguments to help identifying
+	  legacy selections which are incompatible with ignore_case=0
+
+	* port selection macro parsing from Python to C
+
 2015-05-20 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* change default (!) of "ignore_case" setting to off. Case insensitve

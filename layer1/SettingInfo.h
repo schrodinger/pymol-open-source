@@ -73,6 +73,9 @@ const static struct {
 #define cSetting_pqr_workarounds        cSetting_pqr_no_chain_id
 #define cSetting_ray_shadows            cSetting_ray_shadow
 
+// for min/max
+#define MAX_SPHERE_QUALITY 4 /* NUMBER_OF_SPHERE_LEVELS-1 */
+
 enum {
 #endif
 
@@ -122,7 +125,7 @@ enum {
   REC_b(  43, line_smooth                             , global    , 1 ),
   REC_f(  44, line_width                              , bond      , 1.49F ),    /* under 1.5F to retain SGI antialiasing */
   REC_b(  45, half_bonds                              , ostate    , 0 ),
-  REC_i(  46, stick_quality                           , ostate    , 8 ),
+  REC_i(  46, stick_quality                           , ostate    , 8, 3, 100 ), /* no actual max */
   REC_f(  47, stick_overlap                           , ostate    , 0.2F ),
   REC_f(  48, stick_nub                               , ostate    , 0.7F ),
   REC_b(  49, all_states                              , object    , 0 ),
@@ -163,7 +166,7 @@ enum {
   REC_b(  84, depth_cue                               , global    , 1 ),
   REC_f(  85, specular                                , global    , 1.0F ),
   REC_f(  86, shininess                               , global    , 55.0F ),
-  REC_i(  87, sphere_quality                          , ostate    , 1 ),
+  REC_i(  87, sphere_quality                          , ostate    , 1, 0, MAX_SPHERE_QUALITY ),
   REC_f(  88, fog                                     , global    , 1.0F ),
   REC_b(  89, isomesh_auto_state                      , global    , 0 ),
   REC_f(  90, mesh_width                              , ostate    , 1.0F ),
@@ -265,8 +268,8 @@ enum {
   REC_i( 185, fit_iterations                          , global    , 1000 ),
   REC_f( 186, fit_tolerance                           , global    , 0.0000001F ),
   REC_s( 187, batch_prefix                            , global    , "tmp_pymol" ),
-  REC_i( 188, stereo_mode                             , global    , 2 ),        /* crosseye by default */
-  REC_i( 189, cgo_sphere_quality                      , global    , 1 ),
+  REC_i( 188, stereo_mode                             , global    , 2, 1, 12 ),        /* crosseye by default */
+  REC_i( 189, cgo_sphere_quality                      , global    , 1, 0, MAX_SPHERE_QUALITY ),
   REC_b( 190, pdb_literal_names                       , global    , 0 ),
   REC_b( 191, wrap_output                             , global    , 0 ),
   REC_f( 192, fog_start                               , global    , 0.45F ),
@@ -781,8 +784,8 @@ enum {
   REC_b( 686, nonbonded_as_cylinders                  , global    , 0 ),
   REC_b( 687, cylinders_shader_filter_faces           , unused    , 1 ),
   REC_f( 688, nb_spheres_size                         , ostate    , 0.25f ),
-  REC_i( 689, nb_spheres_quality                      , ostate    , 1 ),
-  REC_i( 690, nb_spheres_use_shader                   , global    , 1 ),
+  REC_i( 689, nb_spheres_quality                      , ostate    , 1, 0, MAX_SPHERE_QUALITY ),
+  REC_i( 690, nb_spheres_use_shader                   , global    , 1, 0, 2 ),
   REC_b( 691, render_as_cylinders                     , global    , 1 ),
   REC_b( 692, alignment_as_cylinders                  , global    , 1 ),
   /* 0 - none, 1 - just ladder, 2 - just strand, 3 - both ladder and strand */

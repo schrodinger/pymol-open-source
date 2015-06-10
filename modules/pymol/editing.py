@@ -811,7 +811,20 @@ DESCRIPTION
 
 USAGE
 
-    fuse [ selection1 [, selection2 ]]
+    fuse [ selection1 [, selection2 [, mode [, recolor [, move ]]]]]
+
+ARGUMENTS
+
+    selection1 = str: single atom selection (will be copied to object 2)
+
+    selection2 = str: single atom selection
+
+    mode = int: {default: 0}
+      3: don't move and don't create a bond, just combine into single object
+
+    recolor = bool: recolor C atoms to match target {default: 1}
+
+    move = bool: {default: 1}
 
 NOTES
 
@@ -819,10 +832,6 @@ NOTES
     The atoms can both be hydrogens, in which case they are
     eliminated, or they can both be non-hydrogens, in which
     case a bond is formed between the two atoms.
-
-PYMOL API
-
-    cmd.fuse(string selection1, string selection2)
 
 SEE ALSO
 
@@ -1319,6 +1328,9 @@ SEE ALSO
 
     alter_state, iterate, iterate_state, sort
         '''
+        if not expression:
+            raise pymol.CmdException('missing expression')
+
         if space == None:
             space = _self._pymol.__dict__
         r = DEFAULT_ERROR
@@ -1384,6 +1396,8 @@ SEE ALSO
 
     iterate_state, alter, alter_state
         '''
+        if not expression:
+            raise pymol.CmdException('missing expression')
 
         if space == None:
             space = _self._pymol.__dict__
@@ -1430,6 +1444,9 @@ SEE ALSO
 
     iterate_state, alter, iterate
         '''
+        if not expression:
+            raise pymol.CmdException('missing expression')
+
         if space == None:
             space = _self._pymol.__dict__
         r = DEFAULT_ERROR
@@ -1470,6 +1487,9 @@ SEE ALSO
 
     iterate, alter, alter_state
         '''
+        if not expression:
+            raise pymol.CmdException('missing expression')
+
         r = DEFAULT_ERROR
         if space == None:
             space = _self._pymol.__dict__

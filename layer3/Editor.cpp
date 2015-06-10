@@ -1038,10 +1038,10 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
       sele1 = SelectorIndexByName(G, cEditorSele2);
       if(sele0 >= 0) {
         if(sele1 >= 0)
-	  sprintf(buffer, "((neighbor %s) and (elem h) and not %s)",
+	  sprintf(buffer, "((neighbor (%s)) and hydro and not (%s))",
 		  cEditorSele1, cEditorSele2);
         else
-	  sprintf(buffer, "((neighbor %s) and (elem h))", cEditorSele1);
+	  sprintf(buffer, "((neighbor %s) & hydro)", cEditorSele1);
 	SelectorGetTmp(G, buffer, s1);
 	ExecutiveRemoveAtoms(G, s1, quiet);
 	SelectorFreeTmp(G, s1);

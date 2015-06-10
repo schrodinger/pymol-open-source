@@ -25,6 +25,7 @@ Options
 
   --help    display this help and exit
   --version display PyMOL version and exit
+  --retina  use retina resolution (Experimental, MacPyMOL only)
 
   -1        config_mouse one_button
   -2        config_mouse two_button

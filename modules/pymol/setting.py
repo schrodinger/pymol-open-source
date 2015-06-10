@@ -526,7 +526,8 @@ ARGUMENTS
 NOTES
 
     "get" currently only works with global, per-object, and per-state
-    settings.  There is currently no way to retrieve per-atom settings.
+    settings.  Atom level settings get be queried with "iterate" (e.g.
+    iterate all, print s.line_width)
     
 PYMOL API
 

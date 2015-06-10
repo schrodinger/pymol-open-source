@@ -2212,11 +2212,11 @@ const char * SettingGetName(int index)
 /*========================================================================*/
 void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, int state, int quiet)
 {
-  const char all[] = "all";
-  const char *inv_sele;
+  const char *inv_sele = (sele && sele[0]) ? sele : cKeywordAll;
+  auto &rec = SettingInfo[index];
 
-  if (SettingInfo[index].level == cSettingLevel_unused) {
-    const char * name = SettingInfo[index].name;
+  if (rec.level == cSettingLevel_unused) {
+    const char * name = rec.name;
 
     if (!quiet && name && name[0]){
       PRINTFB(G, FB_Setting, FB_Warnings)
@@ -2227,20 +2227,28 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     return;
   }
 
-  if(!sele) {
-    inv_sele = all;
-  } else if(sele[0] == 0) {
-    inv_sele = all;
-  } else {
-    inv_sele = sele;
+  // range check for int (global only)
+  if (rec.type == cSetting_int && rec.hasMinMax() && !(sele && sele[0])) {
+    int value = SettingGetGlobal_i(G, index);
+    bool clamped = true;
+
+    if (value < rec.value.i[1]) {
+      value = rec.value.i[1];
+    } else if (value > rec.value.i[2]) {
+      value = rec.value.i[2];
+    } else {
+      clamped = false;
+    }
+
+    if (clamped) {
+      PRINTFB(G, FB_Setting, FB_Warnings)
+        " Setting-Warning: %s range = [%d,%d]; setting to %d.",
+        rec.name, rec.value.i[1], rec.value.i[2], value ENDFB(G);
+      SettingSetGlobal_i(G, index, value);
+    }
   }
 
   switch (index) {
-  case cSetting_full_screen:
-    PRINTFB(G, FB_Setting, FB_Warnings)
-      "Setting-Warning: full_screen setting is not used anymore (use the full_screen command)\n"
-      ENDFB(G);
-    break;
   case cSetting_stereo:
     SceneUpdateStereo(G);
     CShaderMgr_Set_Reload_Bits(G, RELOAD_ALL_SHADERS);
@@ -2295,21 +2303,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     break;
   case cSetting_stereo_mode:
   case cSetting_anaglyph_mode:
-    {
-      int a_mode = SettingGetGlobal_i(G, cSetting_anaglyph_mode);
-      int ANAGLYPH_MIN = 0, ANAGLYPH_MAX = 4;
-      if((a_mode<ANAGLYPH_MIN) || (a_mode>ANAGLYPH_MAX)) {
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: anaglyph_mode range = [%d,%d]; setting to %d.", ANAGLYPH_MIN, ANAGLYPH_MAX, 4
-	    ENDFB(G);
-	}
-	SettingSet_i(G->Setting, cSetting_anaglyph_mode, 4);
-      }	
     SceneUpdateStereoMode(G);
+    OrthoInvalidateDoDraw(G);
+    OrthoDirty(G);
     PyMOL_NeedRedisplay(G->PyMOL);
     break;
-    }
   case cSetting_light_count:
   case cSetting_spec_count:
     CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_FOR_LIGHTING);
@@ -2423,13 +2421,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_stereo_angle:
   case cSetting_stereo_dynamic_strength:
     SceneInvalidate(G);
-    break;
-  case cSetting_texture_fonts:
-    if (!quiet){
-      PRINTFB(G, FB_Setting, FB_Warnings)
-	"Setting-Warning: texture_fonts is deprecated, it is no longer needed."
-	ENDFB(G);
-    }
     break;
   case cSetting_scene_buttons:
   case cSetting_scene_buttons_mode:
@@ -2547,24 +2538,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     SceneChanged(G);
     break;
   case cSetting_nb_spheres_use_shader:
-    {
-      int nb_spheres_use_shader = SettingGetGlobal_b(G, cSetting_nb_spheres_use_shader);
-      if (nb_spheres_use_shader<0 || nb_spheres_use_shader>2){
-	if (nb_spheres_use_shader<0){
-	  nb_spheres_use_shader = 0;
-	} else {
-	  nb_spheres_use_shader = 2;
-	}
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Error: nb_spheres_use_shader can only be set to 0 (off), 1 (default shader), or 2 (sphere shader), setting to %d\n", nb_spheres_use_shader
-	    ENDFB(G);
-	}
-	SettingSet_b(G->Setting, cSetting_use_shaders, nb_spheres_use_shader);
-	return;
-	
-      }
-    }
     if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       SceneChanged(G);
     }
@@ -2679,54 +2652,12 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);       /* base width */
     SceneChanged(G);
     break;
-  case cSetting_cgo_sphere_quality:
-    {
-      int cgo_sphere_quality = SettingGetGlobal_i(G, cSetting_cgo_sphere_quality);
-      if ( cgo_sphere_quality < 0 ){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: cgo_sphere_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
-	    (NUMBER_OF_SPHERE_LEVELS-1)
-	    ENDFB(G);
-	}
-	SettingSet_i(G->Setting, cSetting_cgo_sphere_quality, 0);
-	return ;
-      } else if (cgo_sphere_quality > NUMBER_OF_SPHERE_LEVELS-1){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: cgo_sphere_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
-	    (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
-	    ENDFB(G);
-	}
-	SettingSet_i(G->Setting, cSetting_cgo_sphere_quality, (NUMBER_OF_SPHERE_LEVELS-1));
-	return ;
-      }
-    }
   case cSetting_nb_spheres_quality:
     {
-      int nb_spheres_quality = SettingGetGlobal_i(G, cSetting_nb_spheres_quality);
-      if ( nb_spheres_quality < 0 ){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: nb_spheres_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
-	    (NUMBER_OF_SPHERE_LEVELS-1)
-	    ENDFB(G);
-	}
-	SettingSet_i(G->Setting, cSetting_nb_spheres_quality, 0);
-	return ;
-      } else if (nb_spheres_quality > NUMBER_OF_SPHERE_LEVELS-1){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: nb_spheres_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
-	    (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
-	    ENDFB(G);
-	}
-	SettingSet_i(G->Setting, cSetting_nb_spheres_quality, (NUMBER_OF_SPHERE_LEVELS-1));
-	return ;
-      }
       ExecutiveInvalidateRep(G, inv_sele, cRepNonbondedSphere, cRepInvRep);
       SceneChanged(G);
     }
+  case cSetting_cgo_sphere_quality:
   case cSetting_cgo_debug:
     {
       ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvRep);
@@ -2734,17 +2665,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
       break;
     }
   case cSetting_stick_quality:
-    {
-      if (SettingGetGlobal_i(G, cSetting_stick_quality) < 3){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: stick_quality needs to be at least 3, setting to 3\n"
-	    ENDFB(G);
-	}
-	SettingSet_i(G->Setting, cSetting_stick_quality, 3);
-	return ;
-      }
-    }
   case cSetting_stick_ball:
   case cSetting_stick_nub:
   case cSetting_stick_ball_ratio:
@@ -2783,13 +2703,8 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
     SceneChanged(G);
     break;
-  case cSetting_sel_counter:
-    break;
   case cSetting_cgo_line_width:
-    SceneInvalidate(G);
-    break;
-  case cSetting_line_width:    /* auto-disable smooth lines if line width > 1 */
-    /*    SettingSet(G,cSetting_line_smooth,0);  NO LONGER */
+  case cSetting_line_width:    
   case cSetting_line_color:
   case cSetting_line_radius:
     ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
@@ -2853,28 +2768,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     SceneInvalidate(G);
     break;
   case cSetting_sphere_quality:
-    {
-      int sphere_quality = SettingGetGlobal_i(G, cSetting_sphere_quality);
-      if ( sphere_quality < 0 ){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: sphere_quality needs to be equal to or greater than 0, and less than %d, setting to 0\n",
-	    (NUMBER_OF_SPHERE_LEVELS-1)
-	    ENDFB(G);
-	}
-	SettingSet_i(G->Setting, cSetting_sphere_quality, 0);
-	return ;
-      } else if (sphere_quality > NUMBER_OF_SPHERE_LEVELS-1){
-	if (!quiet){
-	  PRINTFB(G, FB_Setting, FB_Warnings)
-	    "Setting-Warning: sphere_quality needs to be equal to or greater than 0, and less than %d, setting to %d\n",
-	    (NUMBER_OF_SPHERE_LEVELS-1), (NUMBER_OF_SPHERE_LEVELS-1)
-	    ENDFB(G);
-	}
-	SettingSet_i(G->Setting, cSetting_sphere_quality, (NUMBER_OF_SPHERE_LEVELS-1));
-	return ;
-      }
-    }
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepNonbondedSphere, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);

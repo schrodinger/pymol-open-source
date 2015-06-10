@@ -12286,7 +12286,7 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
         }
       }
       if(updates) {
-        SettingGenerateSideEffects(G, index, cKeywordAll, state, quiet);
+        SettingGenerateSideEffects(G, index, NULL, state, quiet);
       }
     }
   }
@@ -14627,6 +14627,11 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                   if(segi == 1) {
                     SegIdent seg;
 										/* a == index of this symmetryMatrix */
+                    if(a > 61) {
+                      // beyond what can be encoded with a single alphanumeric
+                      // character (PYMOL-2475)
+                      seg[0] = '_';
+                    } else
                     if(a > 35) {
                       seg[0] = 'a' + (a - 36);
                     } else if(a > 25) {
@@ -16629,7 +16634,7 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, const char *pattern)
     case 6:
       if (G->Default){
 	SettingSetGlobal_i(G, cSetting_internal_gui, SettingGet_i(G, G->Default, NULL, cSetting_internal_gui));
-	SettingGenerateSideEffects(G, cSetting_internal_gui, cKeywordAll, -1, 0);
+	SettingGenerateSideEffects(G, cSetting_internal_gui, NULL, -1, 0);
       }
       break; 
     }

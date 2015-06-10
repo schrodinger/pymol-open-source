@@ -28,6 +28,7 @@ def fetchdialog():
     pad = 4
 
     type_options = [
+        "cif (mmCIF)",
         "pdb (Asymmetric Unit)",
         "pdb1 (Biological Unit)",
         "2fofc (Density)",
@@ -39,6 +40,8 @@ def fetchdialog():
 
     var_code = Tkinter.StringVar(self)
     var_chain = Tkinter.StringVar(self)
+    var_assembly = Tkinter.StringVar(self, cmd.get('assembly'))
+    var_name = Tkinter.StringVar(self)
     var_type = Tkinter.StringVar(self, type_options[0])
     var_keep = Tkinter.BooleanVar(self,
             not cmd.get_setting_boolean('autoclose_dialogs'))
@@ -46,10 +49,12 @@ def fetchdialog():
     def callback(*args):
         code = var_code.get()
         type = get_trunc(var_type)
-        if type == 'pdb':
+        if type in ('pdb', 'cif'):
             code += var_chain.get()
+        if type == 'cif':
+            cmd.set('assembly', var_assembly.get())
         try:
-            result = cmd.fetch(code, type=type)
+            result = cmd.fetch(code, var_name.get(), type=type)
             if result == -1:
                 raise CmdException('You entered an invalid pdb code: ' + code)
         except CmdException as e:
@@ -62,14 +67,18 @@ def fetchdialog():
 
     def callback_type(*args):
         v = get_trunc(var_type)
-        if v.startswith('pdb') or v.endswith('fofc'):
+        if v.startswith('pdb') or v.endswith('fofc') or v.startswith('cif'):
             but_code.configure(width=4)
         else:
             but_code.configure(width=20)
-        if v == 'pdb':
+        if v in ('pdb', 'cif'):
             frame_pdb.pack(side=LEFT)
         else:
             frame_pdb.pack_forget()
+        if v == 'cif':
+            frame_assembly.pack(side=LEFT)
+        else:
+            frame_assembly.pack_forget()
 
     def makerow(label=None, parent=None, **kwargs):
         master = Tkinter.Frame(parent or outer)
@@ -93,6 +102,16 @@ def fetchdialog():
     but_chain = Tkinter.Entry(frame_pdb, textvariable=var_chain, width=4)
     but_chain.bind("<Return>", callback)
     but_chain.pack(side=LEFT)
+
+    frame_assembly = makerow("Assembly:", master, side=LEFT, padx=8)
+    but_assembly = Tkinter.Entry(frame_assembly, textvariable=var_assembly, width=4)
+    but_assembly.bind("<Return>", callback)
+    but_assembly.pack(side=LEFT)
+
+    frame_name = makerow("Name of new object:", **padkw)
+    but_name = Tkinter.Entry(frame_name, textvariable=var_name, width=8)
+    but_name.bind("<Return>", callback)
+    but_name.pack(side=LEFT)
 
     master = makerow(padx=pad, pady=(2*pad,0))
     but_ok = Tkinter.Button(master, width=10, text="OK",

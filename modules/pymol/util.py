@@ -445,6 +445,7 @@ def cbss(selection="(all)",helix_color="red",sheet_color="yellow",loop_color="gr
     cmd.color(l,"((not (ss S+H)) and ("+sel+"))",quiet=quiet)
 
 def cbag(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)
@@ -452,6 +453,7 @@ def cbag(selection="(all)",quiet=1,_self=cmd):
     cmd.color("carbon","(elem C and ("+s+"))",quiet=quiet)
     
 def cbac(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)
@@ -459,6 +461,7 @@ def cbac(selection="(all)",quiet=1,_self=cmd):
     cmd.color("cyan","(elem C and ("+s+"))",quiet=quiet)
     
 def cbam(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)   
@@ -466,6 +469,7 @@ def cbam(selection="(all)",quiet=1,_self=cmd):
     cmd.color("lightmagenta","(elem C and ("+s+"))",quiet=quiet)
 
 def cbay(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)   
@@ -473,6 +477,7 @@ def cbay(selection="(all)",quiet=1,_self=cmd):
     cmd.color("yellow","(elem C and ("+s+"))",quiet=quiet)
 
 def cbas(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)   
@@ -480,6 +485,7 @@ def cbas(selection="(all)",quiet=1,_self=cmd):
     cmd.color("salmon","(elem C and ("+s+"))",quiet=quiet)
 
 def cbaw(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)   
@@ -487,6 +493,7 @@ def cbaw(selection="(all)",quiet=1,_self=cmd):
     cmd.color("hydrogen","(elem C and ("+s+"))",quiet=quiet)
 
 def cbab(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)   
@@ -494,6 +501,7 @@ def cbab(selection="(all)",quiet=1,_self=cmd):
     cmd.color("slate","(elem C and ("+s+"))",quiet=quiet)
 
 def cbao(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)   
@@ -501,6 +509,7 @@ def cbao(selection="(all)",quiet=1,_self=cmd):
     cmd.color("brightorange","(elem C and ("+s+"))",quiet=quiet)
 
 def cbap(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)   
@@ -508,6 +517,7 @@ def cbap(selection="(all)",quiet=1,_self=cmd):
     cmd.color("purple","(elem C and ("+s+"))",quiet=quiet)
 
 def cbak(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)   
@@ -515,12 +525,14 @@ def cbak(selection="(all)",quiet=1,_self=cmd):
     cmd.color("pink","(elem C and ("+s+"))",quiet=quiet)
 
 def cnc(selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
 
 def cba(color,selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)
@@ -529,6 +541,7 @@ def cba(color,selection="(all)",quiet=1,_self=cmd):
     cmd.color(color,s,flags=1,quiet=quiet)
 
 def cbh(color,selection="(all)",quiet=1,_self=cmd):
+    '''Wrapper around "color atomic"'''
     pymol=_self._pymol
     cmd=_self
     s = str(selection)
@@ -788,11 +801,10 @@ def hide_sele(_self=cmd):
 #            cutoff)
 
 def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
-    pymol=_self._pymol
-    cmd=_self 
     '''
     Color all chains a different color
     '''
+    cmd=_self
     if int(legacy):
         c = first_color
         for a in cmd.get_chains(selection):
@@ -1053,6 +1065,11 @@ def phipsi(selection="(pk1)",_self=cmd):
     return (phi,psi)
 
 def rainbow(selection="(name CA and alt ''+A)",reverse=0,_self=cmd):
+    '''
+    Legacy spectrum coloring routine. Don't use.
+
+    Use instead: spectrum
+    '''
     pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
 
@@ -1105,6 +1122,11 @@ def rainbow(selection="(name CA and alt ''+A)",reverse=0,_self=cmd):
     cmd.feedback("pop")
     
 def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
+    '''
+    Legacy secondary structure assignment routine. Don't use.
+
+    Use instead: dss
+    '''
     pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
 

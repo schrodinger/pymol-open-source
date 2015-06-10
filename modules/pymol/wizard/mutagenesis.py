@@ -358,10 +358,10 @@ class Mutagenesis(Wizard):
                     cmd.create(tmp_obj1,"(%s and not %s)"%(new_name,src_sele))
 
                     # remove existing c-cap in copy (if any)
-                    cmd.remove("byres (name N and (%s in (neighbor %s)) and resn nme,nhh)"%
+                    cmd.remove("byres (name N and (%s in (neighbor %s)) and resn NME+NHH)"%
                                 (tmp_obj1,src_sele))
                     # remove existing n-cap in copy (if any)
-                    cmd.remove("byres (name C and (%s in (neighbor %s)) and resn ace)"%
+                    cmd.remove("byres (name C and (%s in (neighbor %s)) and resn ACE)"%
                                 (tmp_obj1,src_sele))
                     
                     # save copy for bonded atom reference
@@ -383,7 +383,7 @@ class Mutagenesis(Wizard):
                     # bond N+0 to C-1
                     if ((cmd.select(tmp_sele1, "(name C and (%s in (neighbor %s)))"%
                                   (new_name,src_sele)) == 1) and
-                        (cmd.select(tmp_sele2, "((%s in %s) and n;N)"%
+                        (cmd.select(tmp_sele2, "((%s in %s) & name N)"%
                                     (mut_sele,tmp_obj2)) == 1)):
                         cmd.bond(tmp_sele1,tmp_sele2)
                         cmd.set_geometry(tmp_sele1,3,3) # make amide planer
@@ -391,7 +391,7 @@ class Mutagenesis(Wizard):
                     # bond C+0 to N+1
                     if ((cmd.select(tmp_sele1, "(name N and (%s in (neighbor %s)))"%
                                 (new_name,src_sele)) == 1) and
-                        (cmd.select(tmp_sele2,"((%s in %s) and n;C)"%
+                        (cmd.select(tmp_sele2,"((%s in %s) & name C)"%
                                     (mut_sele,tmp_obj2)) == 1)):
                         cmd.bond(tmp_sele1,tmp_sele2)
                         cmd.set_geometry(tmp_sele1,3,3) # make amide planer
@@ -402,8 +402,7 @@ class Mutagenesis(Wizard):
                     cmd.delete(tmp_sele2)
 
                     # fix N-H hydrogen position (if any exists)
-                    cmd.h_fix("(name N and bound_to (%s in %s and n;H))"%(new_name,tmp_obj2))
-
+                    cmd.h_fix("(name N and bound_to (%s in %s & name H))"%(new_name,tmp_obj2))
                     
                     # now transfer selection back to the modified object
                     cmd.delete(tmp_obj1)
@@ -418,12 +417,12 @@ class Mutagenesis(Wizard):
                     cmd.create(tmp_obj2,obj_name,src_frame,1)
 
                     # remove existing c-cap in copy (if any)
-                    cmd.remove("byres (name N and (%s in (neighbor %s)) and resn nme,nhh)"%
+                    cmd.remove("byres (name N and (%s in (neighbor %s)) and resn NME+NHH)"%
                                 (new_name,src_sele))
                     cmd.remove("(%s) and name OXT"%src_sele)
                     
                     # remove existing n-cap in copy (if any)
-                    cmd.remove("byres (name C and (%s in (neighbor %s)) and resn ace)"%
+                    cmd.remove("byres (name C and (%s in (neighbor %s)) and resn ACE)"%
                                 (new_name,src_sele))
 
                     # save existing conformation on undo stack
@@ -451,9 +450,9 @@ class Mutagenesis(Wizard):
     def do_library(self):
         cmd=self.cmd
         pymol=cmd._pymol
-        if not ((cmd.count_atoms("(%s) and name n"%src_sele)==1) and
-                (cmd.count_atoms("(%s) and name c"%src_sele)==1) and
-                (cmd.count_atoms("(%s) and name o"%src_sele)==1)):
+        if not ((cmd.count_atoms("(%s) and name N"%src_sele)==1) and
+                (cmd.count_atoms("(%s) and name C"%src_sele)==1) and
+                (cmd.count_atoms("(%s) and name O"%src_sele)==1)):
             self.clear()
             return 1
         cmd.feedback("push")
@@ -478,7 +477,7 @@ class Mutagenesis(Wizard):
         self.lib_mode = self.mode
         if self.lib_mode=="current":
             pymol.stored.resn=""
-            cmd.iterate("(%s and n;ca)"%src_sele,"stored.resn=resn")
+            cmd.iterate("(%s & name CA)"%src_sele,"stored.resn=resn")
             rot_type = _rot_type_xref.get(pymol.stored.resn,pymol.stored.resn)
             if (self.c_cap!='none') or (self.n_cap!='none') or (self.hyd != 'auto'):
                 self.lib_mode = rot_type # force fragment-based load
@@ -492,12 +491,12 @@ class Mutagenesis(Wizard):
             frag_type = self.lib_mode
             if (self.n_cap == 'posi') and (frag_type[0:3]!='NT_'):
                 if not ( cmd.count_atoms(
-                    "elem c & !(%s) & (bto. (n;n & (%s))) &! r. ace"%
+                    "elem C & !(%s) & (bto. (name N & (%s))) &! resn ACE"%
                                      (src_sele,src_sele))):
                     # use N-terminal fragment
                     frag_type ="NT_"+frag_type
             if (self.c_cap == 'nega') and (frag_type[0:3]!='CT_'):
-                if not ( cmd.count_atoms("elem n & !(%s) & (bto. (n;c & (%s))) & !r. nme+nhh"%
+                if not ( cmd.count_atoms("elem N & !(%s) & (bto. (name C & (%s))) & !resn NME+NHH"%
                                      (src_sele,src_sele))):
                     # use C-terminal fragment
                     frag_type ="CT_"+frag_type
@@ -512,82 +511,82 @@ class Mutagenesis(Wizard):
                 if cmd.count_atoms("("+src_sele+") and hydro")==0:
                     cmd.remove("("+frag_name+" and hydro)")
             # copy identifying information
-            cmd.iterate("(%s and n;ca)"%src_sele,"stored.chain=chain")
+            cmd.iterate("(%s & name CA)"%src_sele,"stored.chain=chain")
             cmd.alter("(%s)"%frag_name,"chain=stored.chain")
-            cmd.iterate("(%s and n;ca)"%src_sele,"stored.resi=resi")
+            cmd.iterate("(%s & name CA)"%src_sele,"stored.resi=resi")
             cmd.alter("(%s)"%frag_name,"resi=stored.resi")
-            cmd.iterate("(%s and n;ca)"%src_sele,"stored.segi=segi")
+            cmd.iterate("(%s & name CA)"%src_sele,"stored.segi=segi")
             cmd.alter("(%s)"%frag_name,"segi=stored.segi")
-            cmd.iterate("(%s and n;ca)"%src_sele,"stored.ss=ss")
+            cmd.iterate("(%s & name CA)"%src_sele,"stored.ss=ss")
             cmd.alter("(%s)"%frag_name,"ss=stored.ss")
             # move the fragment
-            if ((cmd.count_atoms("(%s and n;cb)"%frag_name)==1) and
-                 (cmd.count_atoms("(%s and n;cb)"%src_sele)==1)):
-                cmd.pair_fit("(%s and n;ca)"%frag_name,
-                             "(%s and n;ca)"%src_sele,
-                             "(%s and n;cb)"%frag_name,
-                             "(%s and n;cb)"%src_sele,
-                             "(%s and n;c)"%frag_name,
-                             "(%s and n;c)"%src_sele,
-                             "(%s and n;n)"%frag_name,
-                             "(%s and n;n)"%src_sele)
+            if ((cmd.count_atoms("(%s & name CB)"%frag_name)==1) and
+                 (cmd.count_atoms("(%s & name CB)"%src_sele)==1)):
+                cmd.pair_fit("(%s & name CA)"%frag_name,
+                             "(%s & name CA)"%src_sele,
+                             "(%s & name CB)"%frag_name,
+                             "(%s & name CB)"%src_sele,
+                             "(%s & name C)"%frag_name,
+                             "(%s & name C)"%src_sele,
+                             "(%s & name N)"%frag_name,
+                             "(%s & name N)"%src_sele)
             else:
-                cmd.pair_fit("(%s and n;ca)"%frag_name,
-                             "(%s and n;ca)"%src_sele,
-                             "(%s and n;c)"%frag_name,
-                             "(%s and n;c)"%src_sele,
-                             "(%s and n;n)"%frag_name,
-                             "(%s and n;n)"%src_sele)
+                cmd.pair_fit("(%s & name CA)"%frag_name,
+                             "(%s & name CA)"%src_sele,
+                             "(%s & name C)"%frag_name,
+                             "(%s & name C)"%src_sele,
+                             "(%s & name N)"%frag_name,
+                             "(%s & name N)"%src_sele)
 
             # fix the carbonyl position...
-            cmd.iterate_state(1,"(%s and n;o)"%src_sele,"stored.list=[x,y,z]")
-            cmd.alter_state(1,"(%s and n;o)"%frag_name,"(x,y,z)=stored.list")
-            if cmd.count_atoms("(%s and n;oxt)"%src_sele):
-                cmd.iterate_state(1,"(%s and n;oxt)"%src_sele,"stored.list=[x,y,z]")
-                cmd.alter_state(1,"(%s and n;oxt)"%frag_name,"(x,y,z)=stored.list")
-            elif cmd.count_atoms("(%s and n;oxt)"%frag_name): # place OXT if no template exists
-                angle = cmd.get_dihedral("(%s and n;n)"%frag_name,
-                                         "(%s and n;ca)"%frag_name,
-                                         "(%s and n;c)"%frag_name,
-                                         "(%s and n;o)"%frag_name)
-                cmd.protect("(%s and n;o)"%frag_name)
-                cmd.set_dihedral("(%s and n;n)"%frag_name,
-                                 "(%s and n;ca)"%frag_name,
-                                 "(%s and n;c)"%frag_name,
-                                 "(%s and n;oxt)"%frag_name,180.0+angle)
+            cmd.iterate_state(1,"(%s & name O)"%src_sele,"stored.list=[x,y,z]")
+            cmd.alter_state(1,"(%s & name O)"%frag_name,"(x,y,z)=stored.list")
+            if cmd.count_atoms("(%s & name OXT)"%src_sele):
+                cmd.iterate_state(1,"(%s & name OXT)"%src_sele,"stored.list=[x,y,z]")
+                cmd.alter_state(1,"(%s & name OXT)"%frag_name,"(x,y,z)=stored.list")
+            elif cmd.count_atoms("(%s & name OXT)"%frag_name): # place OXT if no template exists
+                angle = cmd.get_dihedral("(%s & name N)"%frag_name,
+                                         "(%s & name CA)"%frag_name,
+                                         "(%s & name C)"%frag_name,
+                                         "(%s & name O)"%frag_name)
+                cmd.protect("(%s & name O)"%frag_name)
+                cmd.set_dihedral("(%s & name N)"%frag_name,
+                                 "(%s & name CA)"%frag_name,
+                                 "(%s & name C)"%frag_name,
+                                 "(%s & name OXT)"%frag_name,180.0+angle)
                 cmd.deprotect(frag_name)
 
                 
             # fix the hydrogen position (if any)
-            if cmd.count_atoms("(elem h and bound_to (n;n and (%s)))"%frag_name)==1:
-                if cmd.count_atoms("(elem h and bound_to (n;n and (%s)))"%src_sele)==1:
-                    cmd.iterate_state(1,"(elem h and bound_to (n;n and (%s)))"%src_sele,
+            if cmd.count_atoms("(hydro and bound_to (name N & (%s)))"%frag_name)==1:
+                if cmd.count_atoms("(hydro and bound_to (name N & (%s)))"%src_sele)==1:
+                    cmd.iterate_state(1,"(hydro and bound_to (name N & (%s)))"%src_sele,
                                       "stored.list=[x,y,z]")
-                    cmd.alter_state(1,"(elem h and bound_to (n;n and (%s)))"%frag_name,
+                    cmd.alter_state(1,"(hydro and bound_to (name N & (%s)))"%frag_name,
                                     "(x,y,z)=stored.list")
-                elif cmd.select(tmp_sele1,"(n;c and bound_to (%s and e;n))"%src_sele)==1:
+                elif cmd.select(tmp_sele1,"(name C & bound_to (%s and elem N))"%src_sele)==1:
                     # position hydro based on location of the carbonyl
-                    angle = cmd.get_dihedral("(%s and n;c)"%frag_name,
-                                             "(%s and n;ca)"%frag_name,
-                                             "(%s and n;n)"%frag_name,
+                    angle = cmd.get_dihedral("(%s & name C)"%frag_name,
+                                             "(%s & name CA)"%frag_name,
+                                             "(%s & name N)"%frag_name,
                                              tmp_sele1)
-                    cmd.set_dihedral("(%s and n;c)"%frag_name,
-                                     "(%s and n;ca)"%frag_name,
-                                     "(%s and n;n)"%frag_name,
-                                     "(%s and n;h)"%frag_name,180.0+angle)
+                    cmd.set_dihedral("(%s & name C)"%frag_name,
+                                     "(%s & name CA)"%frag_name,
+                                     "(%s & name N)"%frag_name,
+                                     "(%s & name H)"%frag_name,180.0+angle)
                     cmd.delete(tmp_sele1)
 
             # add c-cap (if appropriate)
             if self.c_cap in [ 'amin', 'nmet' ]:
-                if not cmd.count_atoms("elem n & !(%s) & (bto. (n;c & (%s))) & !r. nme+nhh"%
+                if not cmd.count_atoms("elem N & !(%s) & (bto. (name C & (%s))) & !resn NME+NHH"%
                                        (src_sele,src_sele)):
-                    if cmd.count_atoms("n;c & (%s)"%(frag_name))==1:
+                    if cmd.count_atoms("name C & (%s)"%(frag_name))==1:
                         if self.c_cap == 'amin':
-                            editor.attach_amino_acid("n;c & (%s)"%(frag_name), 'nhh')
+                            editor.attach_amino_acid("name C & (%s)"%(frag_name), 'nhh')
                         elif self.c_cap == 'nmet':
-                            editor.attach_amino_acid("n;c & (%s)"%(frag_name), 'nme')
-                        if cmd.count_atoms("hydro & bound_to (n;n & bound_to (n;c & (%s)))"%frag_name):
-                            cmd.h_fix("n;n & bound_to (n;c & (%s))"%frag_name)
+                            editor.attach_amino_acid("name C & (%s)"%(frag_name), 'nme')
+                        if cmd.count_atoms("hydro & bound_to (name N & bound_to (name C & (%s)))"%frag_name):
+                            cmd.h_fix("name N & bound_to (name C & (%s))"%frag_name)
                         # trim hydrogens
                         if (self.hyd == 'none'):
                             cmd.remove("("+frag_name+" and hydro)")
@@ -597,13 +596,13 @@ class Mutagenesis(Wizard):
                          
             # add n-cap (if appropriate)
             if self.n_cap in [ 'acet' ]:
-                if not cmd.count_atoms("elem c & !(%s) & (bto. (n;n & (%s))) & !r. ace "%
+                if not cmd.count_atoms("elem C & !(%s) & (bto. (name N & (%s))) & !resn ACE "%
                                        (src_sele,src_sele)):
-                    if cmd.count_atoms("n;n & (%s)"%(frag_name))==1:
+                    if cmd.count_atoms("name N & (%s)"%(frag_name))==1:
                         if self.n_cap == 'acet':
-                            editor.attach_amino_acid("n;n & (%s)"%(frag_name), 'ace')
-                        if cmd.count_atoms("hydro & bound_to (n;n & bound_to (n;c & (%s)))"%frag_name):
-                            cmd.h_fix("n;n & (%s)"%frag_name)
+                            editor.attach_amino_acid("name N & (%s)"%(frag_name), 'ace')
+                        if cmd.count_atoms("hydro & bound_to (name N & bound_to (name C & (%s)))"%frag_name):
+                            cmd.h_fix("name N & (%s)"%frag_name)
                         # trim hydrogens
                         if (self.hyd == 'none'):
                             cmd.remove("("+frag_name+" and hydro)")
@@ -614,8 +613,8 @@ class Mutagenesis(Wizard):
 
                     
 
-        cartoon = (cmd.count_atoms("(%s and n;ca and rep cartoon)"%src_sele)>0)
-        sticks = (cmd.count_atoms("(%s and n;ca and rep sticks)"%src_sele)>0)
+        cartoon = (cmd.count_atoms("(%s & name CA & rep cartoon)"%src_sele)>0)
+        sticks = (cmd.count_atoms("(%s & name CA & rep sticks)"%src_sele)>0)
             
         cmd.delete(obj_name)
         key = rot_type
@@ -666,25 +665,25 @@ class Mutagenesis(Wizard):
             if self.bump_check:
                 cmd.delete(bump_name)
                 cmd.create(bump_name,
-                "(((byobj %s) within 6 of (%s and not name n+c+ca+o+h+ha)) and (not (%s)))|(%s)"%
+                "(((byobj %s) within 6 of (%s and not name N+C+CA+O+H+HA)) and (not (%s)))|(%s)"%
                            (src_sele,mut_sele,src_sele,mut_sele),singletons=1)
-                cmd.color("gray50",bump_name+" and elem c")
+                cmd.color("gray50",bump_name+" and elem C")
                 cmd.set("seq_view",0,bump_name,quiet=1)
                 cmd.hide("everything",bump_name)
-                if ((cmd.select(tmp_sele1, "(n;N and (%s in (neighbor %s)))"%
+                if ((cmd.select(tmp_sele1, "(name N & (%s in (neighbor %s)))"%
                                 (bump_name,src_sele)) == 1) and
-                    (cmd.select(tmp_sele2, "(n;C and (%s in %s))"%
+                    (cmd.select(tmp_sele2, "(name C & (%s in %s))"%
                                 (bump_name,mut_sele)) == 1)):
                     cmd.bond(tmp_sele1,tmp_sele2)
-                if ((cmd.select(tmp_sele1,"(n;C and (%s in (neighbor %s)))"%
+                if ((cmd.select(tmp_sele1,"(name C & (%s in (neighbor %s)))"%
                                 (bump_name,src_sele)) == 1) and
-                    (cmd.select(tmp_sele2,"(n;N and (%s in %s))"%
+                    (cmd.select(tmp_sele2,"(name N & (%s in %s))"%
                                 (bump_name,mut_sele)) == 1)):
                     cmd.bond(tmp_sele1,tmp_sele2)
                 cmd.delete(tmp_sele1)
                 cmd.delete(tmp_sele2)
                 
-                cmd.protect("%s and not (%s in (%s and not name n+c+ca+o+h+ha))"%
+                cmd.protect("%s and not (%s in (%s and not name N+C+CA+O+H+HA))"%
                             (bump_name,bump_name,mut_sele))
                 cmd.sculpt_activate(bump_name)
                 cmd.show("cgo",bump_name)
