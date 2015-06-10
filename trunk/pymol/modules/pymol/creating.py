@@ -119,7 +119,7 @@ NOTES
 
 SEE ALSO
 
-    ungroup, order
+    ungroup, order, "group_auto_mode" setting
     
 '''
         
@@ -751,7 +751,8 @@ DESCRIPTION
 
 USAGE
 
-    isodot name = map, level [,(selection) [,buffer [, state ] ] ] 
+    isodot name, map [, level [, selection [, buffer [, state
+        [, carve [, source_state [, quiet ]]]]]]]
 
 ARGUMENTS
 
@@ -828,7 +829,8 @@ DESCRIPTION
 
 USAGE
 
-    gradient name = map, [ minimum, [, maximum [, selection [, buffer [, state ]]]]]
+    gradient name, map [, minimum [, maximum [, selection [, buffer [, state
+        [, carve [, source_state [, quiet ]]]]]]]]
 
 ARGUMENTS
 
@@ -876,15 +878,11 @@ DESCRIPTION
 
 USAGE
 
-    copy target, source
+    copy target, source [, zoom ]
 
 NOTES
 
     Currently, this command only works for molecular objects.
-
-PYMOL API
-
-    cmd.copy(string target, string source)
 
 SEE ALSO
 

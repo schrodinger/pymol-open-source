@@ -437,14 +437,20 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "delete" removes an object or a selection. 
+    "delete" removes objects and named selections
 
 USAGE
 
-    delete name  
-    delete all   # deletes all objects
+    delete name
 
-    name = name of object or selection
+ARGUMENTS
+
+    name = name(s) of object(s) or selection(s), supports wildcards (*)
+
+EXAMPLES
+
+    delete measure*     # delete all objects which names start with "measure"
+    delete all          # delete all objects and selections
 
 PYMOL API
 
@@ -565,19 +571,11 @@ NOTES
 
 SEE ALSO
 
-    extend, api
+    cmd.extend, api
             '''
         _self.keyword[name] = [eval("lambda :do('''%s ''')"%command.replace("'''","")), 
                                0,0,',',parsing.STRICT]
         _self.kwhash.append(name)
-
-    def dummy(*arg, **kw):
-        '''
-DESCRIPTION
-
-    This is a dummy function which returns None.
-            '''
-        return None
 
     async_threads = []
 

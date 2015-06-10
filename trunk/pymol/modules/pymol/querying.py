@@ -1129,7 +1129,23 @@ PYMOL API
 
     def get_area(selection="(all)",state=1,load_b=0,quiet=1,_self=cmd):
         '''
-        PRE-RELEASE functionality - API will change
+DESCRIPTION
+
+    Get the surface area of an selection. Depends on the "dot_solvent"
+    setting. With "dot_solvent=off" (default) it calculates the solvent
+    excluded surface area, else the surface accessible surface.
+
+USAGE
+
+    get_area [ selection [, state [, load_b ]]]
+
+ARGUMENTS
+
+    load_b = bool: store per-atom surface area in b-factors {default: 0}
+
+SEE ALSO
+
+    "dot_solvent" setting, "dots" representation (show dots)
         '''
         # preprocess selection
         selection = selector.process(selection)
@@ -1148,9 +1164,19 @@ PYMOL API
 
     def get_chains(selection="(all)",state=0,quiet=1,_self=cmd):
         '''
-        PRE-RELEASE functionality - API will change
+DESCRIPTION
 
-        state is currently ignored
+    Print the list of chain identifiers in the given selection.
+
+USAGE
+
+    get_chains [ selection [, state ]]
+
+ARGUMENTS
+
+    selection = str: atom selection {default: all}
+
+    state = int: CURRENTLY IGNORED
         '''
         # preprocess selection
         selection = selector.process(selection)
@@ -1495,12 +1521,7 @@ DESCRIPTION
 
 USAGE
 
-    count_atoms (selection)
-
-PYMOL API
-
-    cmd.count_atoms(string selection)
-
+    count_atoms [ selection [, quiet [, state ]]]
         '''
         r = DEFAULT_ERROR
         # preprocess selection
@@ -1521,6 +1542,10 @@ PYMOL API
 DESCRIPTION
 
     Count the number of discrete objects in selection.
+
+USAGE
+
+    count_discrete selection
         '''
         with _self.lockcm:
             r = _cmd.count_discrete(_self._COb, str(selection))

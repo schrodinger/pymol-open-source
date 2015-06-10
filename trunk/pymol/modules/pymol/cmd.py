@@ -227,38 +227,112 @@ if __name__=='pymol.cmd':
             
         # for extending the language
 
-        from commanding import extend, extendaa, alias, dummy
+        from commanding import extend, extendaa, alias
 
         # for documentation etc
 
         from helping import python_help
                 
         def write_html_ref(file):
-            lst = globals()
+            '''Write the PyMOL Command Reference to an HTML file'''
             f=open(file,'w')
-            head = 'H2'
-            f.write("<HTML><BODY><H1>Reference</H1>")
-            kees = lst.keys()
+            kees = [a for a in keywords.get_command_keywords()
+                    if not a.startswith('_')]
             kees.sort()
+            title = 'PyMOL Command Reference'
+            f.write('''<html>
+<head>
+<title>%s</title>
+<style type='text/css'>
+body, p, h1, h2 {
+  font-family: sans-serif;
+}
+p.api {
+  font:small monospace;
+  color:#999;
+}
+pre.example {
+  background-color: #ccc;
+  padding: 5px;
+}
+li {
+  display: block;
+  width: 10em;
+  float: left;
+}
+</style>
+</head>
+<body>
+<h1>%s</h1>
+
+<p>This is the list of all PyMOL commands which can be used in the PyMOL
+command line and in PML scripts. The command descriptions found in this
+file can also be printed to the PyMOL text buffer with the
+<a href="#help">help</a> command. Example:</p>
+
+<pre class="example">PyMOL&gt;help color
+...</pre>
+
+<p>The list of arguments for a command (the "usage") can be queried on
+the command line with a questionmark. Example:</p>
+
+<pre class="example">PyMOL&gt;color ?
+Usage: color color [, selection [, quiet [, flags ]]]</pre>
+
+<p>The square brackets ("[" and "]") indicate optional arguments and are
+not part of the syntax.</p>
+
+<p>If the PyMOL command interpreter doesn't understand some input, it passes
+it to the Python interpreter. This means that single-line Python expressions
+can be put into PML scripts or typed into the command line. Prefixing a line
+with a slash (/) forces the interpreter to pass it to Python. See also the
+<a href="#python">python</a> command to input multi-line Python scripts.</p>
+
+<p>This file can be generated on the PyMOL command line:</p>
+<pre class="example">PyMOL&gt;cmd.write_html_ref('pymol-command-ref.html')</pre>
+
+<hr size=1>
+
+<ul>
+''' % (title, title))
+
             for a in kees:
-                if hasattr(lst[a],'__doc__'):
-                    if (a[0:1]!='_' and
-                        (a not in ['string','thread',
-                                   'setup_global_locks',
-                                   'real_system', 'sys','imp','glob','vl','time',
-                                   'threading', 'repres','re','python_help','os',
-                                   'fb_debug', 'fb_dict','ctrl','auto_arg','alt','a',
-                                   'help_only', 'special','stereo_dict','toggle_dict',
-                                   'palette_dict', 'types' ])):
-                        doc = lst[a].__doc__
-                        if is_string(doc):
-                            if len(doc):
-                                doc = string.strip(doc)
-                                doc = string.replace(doc,"<","&lt;")
-                                f.write("<HR SIZE=1><%s>"%head+a+"</%s>\n"%head)
-                                f.write("<PRE>"+string.strip(doc)+"\n\n</PRE>")
+                f.write("<li><a href='#%s'>%s</a></li>" % (a, a))
+
+            f.write('</ul><br style="clear: both">')
+
+            def make_see_also_link(m):
+                w = m.group()
+                if w in kees:
+                    return "<a href='#%s'>%s</a>" % (w, w)
+                return w
+
+            for a in kees:
+                func = keyword[a][0]
+                doc = (getattr(func, '__doc__') or 'UNDOCUMENTED').strip(). \
+                        replace("<", "&lt;"). \
+                        replace(">", "&gt;").splitlines()
+
+                # attemt to do some HTML formatting
+                isseealso = False
+                for i, line in enumerate(doc):
+                    if not line.strip():
+                        continue
+                    isindented = line[:1].isspace()
+                    if isindented:
+                        if isseealso:
+                            doc[i] = re.sub(r'\w+', make_see_also_link, line)
+                    elif line.isupper():
+                        isseealso = line.startswith('SEE ALSO')
+                        doc[i] = '<b>' + line + '</b>'
+
+                f.write("<hr size=1><h2 id='%s'>%s</h2>" % (a, a))
+                f.write("<pre>%s</pre>" % ('\n'.join(doc)))
+                f.write("<p class='api'>api: %s.%s</p>" % (func.__module__, func.__name__))
             f.write("</BODY></HTML>")
             f.close()
+
+            print "PyMOL Command Reference written to %s" % (os.path.abspath(file))
 
         
         #####################################################################

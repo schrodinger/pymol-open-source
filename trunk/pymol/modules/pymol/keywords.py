@@ -22,12 +22,10 @@ def get_command_keywords(self_cmd=cmd):
         'angle'         : [ self_cmd.angle             , 0 , 0 , ''  , parsing.STRICT ],          
         'api'           : [ self_cmd.helping.api       , 0 , 0 , ''  , parsing.STRICT ],
         'as'            : [ self_cmd.show_as           , 0 , 0 , ''  , parsing.STRICT ],          
-        'assert'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
         'attach'        : [ self_cmd.attach            , 0 , 0 , ''  , parsing.STRICT ],
         'backward'      : [ self_cmd.backward          , 0 , 0 , ''  , parsing.STRICT ],
         'bg_color'      : [ self_cmd.bg_color          , 0 , 0 , ''  , parsing.STRICT ],
         'bond'          : [ self_cmd.bond              , 0 , 0 , ''  , parsing.STRICT ],
-        'break'         : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
         'button'        : [ self_cmd.button            , 0 , 0 , ''  , parsing.STRICT ],
         'cache'         : [ self_cmd.cache             , 0 , 0 , ''  , parsing.STRICT ],
         'callout'       : [ self_cmd.callout           , 0 , 0 , ''  , parsing.STRICT ],
@@ -39,15 +37,12 @@ def get_command_keywords(self_cmd=cmd):
         'center'        : [ self_cmd.center            , 0 , 0 , ''  , parsing.STRICT ],     
         'check'         : [ self_cmd.check             , 0 , 0 , ''  , parsing.STRICT ],
         'clean'         : [ self_cmd.clean             , 0 , 0 , ''  , parsing.STRICT ],
-        'class'         : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
         'clip'          : [ self_cmd.clip              , 0 , 0 , ''  , parsing.STRICT ],
         'cls'           : [ self_cmd.cls               , 0 , 0 , ''  , parsing.STRICT ],
         '_ctrl'         : [ self_cmd._ctrl             , 0 , 0 , ''  , parsing.STRICT ],        
         '_ctsh'         : [ self_cmd._ctsh             , 0 , 0 , ''  , parsing.STRICT ],        
         'color'         : [ self_cmd.color             , 0 , 0 , ''  , parsing.STRICT ],
-        'commands'      : [ self_cmd.helping.commands  , 0 , 0 , ''  , parsing.STRICT ],
         'config_mouse'  : [ self_cmd.config_mouse      , 0 , 0 , ''  , parsing.STRICT ],
-        'continue'      : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'copy'          : [ self_cmd.copy              , 0 , 0 , ''  , parsing.LEGACY ],
         'count_atoms'   : [ self_cmd.count_atoms       , 0 , 0 , ''  , parsing.STRICT ],
         'count_frames'  : [ self_cmd.count_frames      , 0 , 0 , ''  , parsing.STRICT ],   
@@ -57,8 +52,6 @@ def get_command_keywords(self_cmd=cmd):
         'create'        : [ self_cmd.create            , 0 , 0 , ''  , parsing.LEGACY ],
         'decline'       : [ self_cmd.decline           , 0 , 0 , ''  , parsing.STRICT ],      
         'delete'        : [ self_cmd.delete            , 0 , 0 , ''  , parsing.STRICT ],
-        'def'           : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
-        'del'           : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'deprotect'     : [ self_cmd.deprotect         , 0 , 0 , ''  , parsing.STRICT ],
         'desaturate'    : [ self_cmd.desaturate        , 0 , 0 , ''  , parsing.STRICT ],
         'deselect'      : [ self_cmd.deselect          , 0 , 0 , ''  , parsing.STRICT ],
@@ -70,29 +63,21 @@ def get_command_keywords(self_cmd=cmd):
         'draw'          : [ self_cmd.draw              , 0 , 0 , ''  , parsing.STRICT ],
         'dss'           : [ self_cmd.dss               , 0 , 0 , ''  , parsing.STRICT ],
         'dump'          : [ self_cmd.dump              , 0 , 0 , ''  , parsing.STRICT ],
-        'dummy'         : [ self_cmd.dummy             , 0 , 0 , ''  , parsing.STRICT ],   
         'edit'          : [ self_cmd.edit              , 0 , 0 , ''  , parsing.STRICT ],
         'edit_mode'     : [ self_cmd.edit_mode         , 0 , 0 , ''  , parsing.STRICT ],
-        'elif'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-        'else'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'embed'         : [ self_cmd.helping.embed     , 0 , 3 , ',' , parsing.EMBED  ],
         'enable'        : [ self_cmd.enable            , 0 , 0 , ''  , parsing.STRICT ],
         'ending'        : [ self_cmd.ending            , 0 , 0 , ''  , parsing.STRICT ],
-        'except'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],      
         'extra_fit'     : [ self_cmd.extra_fit         , 0 , 0 , ''  , parsing.STRICT ],
         'extract'       : [ self_cmd.extract           , 0 , 0 , ''  , parsing.STRICT ],            
-        'exec'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
         'export_dots'   : [ self_cmd.export_dots       , 0 , 0 , ''  , parsing.STRICT ],
-        'extend'        : [ self_cmd.extend            , 0 , 0 , ''  , parsing.STRICT ],
         'fab'           : [ self_cmd.fab               , 0 , 0 , ''  , parsing.STRICT ],
         'feedback'      : [ self_cmd.feedback          , 0,  0 , ''  , parsing.STRICT ],
         'fetch'         : [ self_cmd.fetch             , 0,  0 , ''  , parsing.STRICT ],
         'fit'           : [ self_cmd.fit               , 0 , 0 , ''  , parsing.STRICT ],
-        'finally'       : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'fix_chemistry' : [ self_cmd.fix_chemistry     , 0 , 0 , ''  , parsing.STRICT ],
         'flag'          : [ self_cmd.flag              , 0 , 0 , ''  , parsing.LEGACY ],
         'focal_blur'    : [ self_cmd.focal_blur        , 0 , 0 , ''  , parsing.STRICT ],
-        'for'           : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'fork'          : [ self_cmd.spawn             , 0 , 0 , ''  , parsing.SECURE ],
         'forward'       : [ self_cmd.forward           , 0 , 0 , ''  , parsing.STRICT ],
         'fragment'      : [ self_cmd.fragment          , 0 , 0 , ''  , parsing.STRICT ],
@@ -115,7 +100,6 @@ def get_command_keywords(self_cmd=cmd):
         'get_version'   : [ self_cmd.get_version       , 0 , 0 , ''  , parsing.STRICT ],            
         'get_view'      : [ self_cmd.get_view          , 0 , 0 , ''  , parsing.STRICT ],
         'get_viewport'  : [ self_cmd.get_viewport      , 0 , 0 , ''  , parsing.STRICT ],
-        'global'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'gradient'      : [ self_cmd.gradient          , 0 , 0 , ''  , parsing.STRICT ],            
         'group'         : [ self_cmd.group             , 0 , 0 , ''  , parsing.STRICT ],
         'h_add'         : [ self_cmd.h_add             , 0 , 0 , ''  , parsing.STRICT ],
@@ -126,8 +110,6 @@ def get_command_keywords(self_cmd=cmd):
         'hide'          : [ self_cmd.hide              , 0 , 0 , ''  , parsing.STRICT ],
         'id_atom'       : [ self_cmd.id_atom           , 0 , 0 , ''  , parsing.STRICT ],
         'identify'      : [ self_cmd.identify          , 0 , 0 , ''  , parsing.STRICT ],
-        'if'            : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-        'import'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
         'index'         : [ self_cmd.index             , 0 , 0 , ''  , parsing.STRICT ],
         'indicate'      : [ self_cmd.indicate          , 0 , 0 , ''  , parsing.STRICT ],   
         'intra_fit'     : [ self_cmd.intra_fit         , 0 , 0 , ''  , parsing.STRICT ],
@@ -158,14 +140,12 @@ def get_command_keywords(self_cmd=cmd):
         'map_set'       : [ self_cmd.map_set           , 0 , 0 , ''  , parsing.STRICT ],
         'map_set_border': [ self_cmd.map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
         'map_double'    : [ self_cmd.map_double        , 0 , 0 , ''  , parsing.STRICT ],
-        'map_generate'  : [ self_cmd.map_generate      , 0 , 0 , ''  , parsing.STRICT ],    
         'map_halve'     : [ self_cmd.map_halve         , 0 , 0 , ''  , parsing.STRICT ],            
         'map_new'       : [ self_cmd.map_new           , 0 , 0 , ''  , parsing.STRICT ],    
         'map_trim'      : [ self_cmd.map_trim          , 0 , 0 , ''  , parsing.STRICT ],                  
         'mappend'       : [ self_cmd.mappend           , 2 , 2 , ':' , parsing.MOVIE  ],
         'matrix_reset'  : [ self_cmd.matrix_reset      , 0 , 0 , ''  , parsing.STRICT ],         
         'matrix_copy'   : [ self_cmd.matrix_copy       , 0 , 0 , ''  , parsing.STRICT ],
-        'matrix_transfer': [ self_cmd.matrix_copy       , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
         'mcopy'         : [ self_cmd.mcopy             , 0 , 0 , ''  , parsing.STRICT ],                
         'mdelete'       : [ self_cmd.mdelete           , 0 , 0 , ''  , parsing.STRICT ],
         'mem'           : [ self_cmd.mem               , 0 , 0 , ''  , parsing.STRICT ],
@@ -193,16 +173,13 @@ def get_command_keywords(self_cmd=cmd):
         'orient'        : [ self_cmd.orient            , 0 , 0 , ''  , parsing.STRICT ],
         'overlap'       : [ self_cmd.overlap           , 0 , 0 , ''  , parsing.STRICT ],
         'pair_fit'      : [ self_cmd.pair_fit          , 0 , 0 , ''  , parsing.STRICT ],
-        'pass'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'phi_psi'       : [ self_cmd.phi_psi           , 0 , 0 , ''  , parsing.STRICT ],
         'pop'           : [ self_cmd.pop               , 0 , 0 , ''  , parsing.STRICT ],
         'protect'       : [ self_cmd.protect           , 0 , 0 , ''  , parsing.STRICT ],
         'pseudoatom'    : [ self_cmd.pseudoatom        , 0 , 0 , ''  , parsing.STRICT ],
-        'push_undo'     : [ self_cmd.push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
         'pwd'           : [ self_cmd.pwd               , 0 , 0 , ''  , parsing.STRICT ],
         'python'        : [ self_cmd.helping.python    , 0 , 2 , ',' , parsing.PYTHON_BLOCK ],
         'skip'          : [ self_cmd.helping.skip      , 0 , 1 , ',' , parsing.SKIP ],
-        'raise'         : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'ramp_new'      : [ self_cmd.ramp_new          , 0 , 0 , ''  , parsing.STRICT ],      
         'ray'           : [ self_cmd.ray               , 0 , 0 , ''  , parsing.STRICT ],
         'rebuild'       : [ self_cmd.rebuild           , 0 , 0 , ''  , parsing.STRICT ],
@@ -220,7 +197,6 @@ def get_command_keywords(self_cmd=cmd):
         'replace_wizard': [ self_cmd.replace_wizard    , 0 , 0 , ''  , parsing.STRICT ],
         'reset'         : [ self_cmd.reset             , 0 , 0 , ''  , parsing.STRICT ],
         'resume'        : [ self_cmd.resume            , 0 , 0 , ''  , parsing.STRICT ],
-        'return'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
         'rewind'        : [ self_cmd.rewind            , 0 , 0 , ''  , parsing.STRICT ],
         #      'rgbfunction'   : [ self_cmd.rgbfunction       , 0 , 0 , ''  , parsing.LEGACY ],         
         'rock'          : [ self_cmd.rock              , 0 , 0 , ''  , parsing.STRICT ],
@@ -264,11 +240,9 @@ def get_command_keywords(self_cmd=cmd):
         'symexp'        : [ self_cmd.symexp            , 0 , 0 , ''  , parsing.LEGACY ],
         'symmetry_copy' : [ self_cmd.symmetry_copy     , 0 , 0 , ''  , parsing.STRICT ],
         'system'        : [ self_cmd.system            , 0 , 0 , ''  , parsing.LITERAL ],
-        'test'          : [ self_cmd.test              , 0 , 0 , ''  , parsing.STRICT ],
         'toggle'        : [ self_cmd.toggle            , 0 , 0 , ''  , parsing.STRICT ],      
         'torsion'       : [ self_cmd.torsion           , 0 , 0 , ''  , parsing.STRICT ], # vs toggle_object
         'translate'     : [ self_cmd.translate         , 0 , 0 , ''  , parsing.STRICT ],
-        'try'           : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'turn'          : [ self_cmd.turn              , 0 , 0 , ''  , parsing.STRICT ],
         'quit'          : [ self_cmd.quit              , 0 , 0 , ''  , parsing.STRICT ],
         '_quit'         : [ self_cmd._quit             , 0 , 0 , ''  , parsing.STRICT ],
@@ -289,7 +263,6 @@ def get_command_keywords(self_cmd=cmd):
         'volume_color'  : [ self_cmd.volume_color      , 0 , 0 , ''  , parsing.STRICT ],
         'volume_panel'  : [ self_cmd.volume_panel      , 0 , 0 , ''  , parsing.STRICT ],
         'window'        : [ self_cmd.window            , 0 , 0 , ''  , parsing.STRICT ],         
-        'while'         : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
         'wizard'        : [ self_cmd.wizard            , 0 , 0 , ''  , parsing.STRICT ],
         'zoom'          : [ self_cmd.zoom              , 0 , 0 , ''  , parsing.STRICT ],
         # utility programs
@@ -306,9 +279,6 @@ def get_command_keywords(self_cmd=cmd):
         'util.cbc'      : [ self_cmd.util.cbc          , 0 , 0 , ''  , parsing.STRICT ],
         'util.chainbow' : [ self_cmd.util.chainbow     , 0 , 0 , ''  , parsing.STRICT ],
         'util.cnc'      : [ self_cmd.util.cnc          , 0 , 0 , ''  , parsing.STRICT ],        
-        'util.colors'   : [ self_cmd.util.colors       , 0 , 0 , ''  , parsing.STRICT ],
-        'util.mrock'    : [ self_cmd.util.mrock        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
-        'util.mroll'    : [ self_cmd.util.mroll        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
         'util.ss'       : [ self_cmd.util.ss           , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
         'util.rainbow'  : [ self_cmd.util.rainbow      , 0 , 0 , ''  , parsing.STRICT ],
         # movie programs
@@ -326,19 +296,9 @@ def get_command_keywords(self_cmd=cmd):
         #   'metaphorics'   : [ self_cmd.metaphorics       , 0 , 0 , ''  , parsing.STRICT ],
         }
 
-def fix_keyword_list(kw_list):
-    # remove legacy commands from the shortcut list
-    
-    kw_list.remove('matrix_transfer')
-    kw_list.remove('util.mroll')
-    kw_list.remove('util.mrock')
-
 def fix_list(kw_list):
     # remove legacy commands from the shortcut list
-    
-    kw_list.remove('matrix_transfer')
-    kw_list.remove('util.mroll')
-    kw_list.remove('util.mrock')
+    pass
 
 def fix_dict(keyword):
 
@@ -353,14 +313,20 @@ def fix_dict(keyword):
     keyword['recolour'] = keyword['recolor']
     keyword['bg_colour'] = keyword['bg_color']
     
+    # legacy
+    keyword['matrix_transfer'] = keyword['matrix_copy']
+    keyword['util.mrock'] = [ cmd.util.mrock, 0, 0, '', parsing.STRICT ]
+    keyword['util.mroll'] = [ cmd.util.mroll, 0, 0, '', parsing.STRICT ]
 
 def get_help_only_keywords(self_cmd=cmd):
     return {  
+        'commands'              : [ self_cmd.helping.commands ],
         'editing'               : [ self_cmd.helping.editing ],  
         'edit_keys'             : [ self_cmd.helping.edit_keys ],
         'examples'              : [ self_cmd.helping.examples ],
+        'extend'                : [ self_cmd.extend ],
         'faster'                : [ self_cmd.helping.faster ],
-        'get_area'              : [ self_cmd.get_area ],
+        'find_pairs'            : [ self_cmd.find_pairs ],
         'get_movie_playing'     : [ self_cmd.get_movie_playing ],
         'get_model'             : [ self_cmd.get_model ],
         'get_mtl_obj'           : [ self_cmd.get_mtl_obj ],
@@ -369,16 +335,10 @@ def get_help_only_keywords(self_cmd=cmd):
         'get_object_matrix'     : [ self_cmd.get_object_matrix ],
         'get_povray'            : [ self_cmd.get_povray  ],
         'get_pdbstr'            : [ self_cmd.get_pdbstr ],
-        'get_symmetry'          : [ self_cmd.get_symmetry ],
-        'get_title'             : [ self_cmd.get_title  ],
-        'get_type'              : [ self_cmd.get_type   ],
-        'get_version'           : [ self_cmd.get_version  ],            
         'keyboard'              : [ self_cmd.helping.keyboard   ],
         'launching'             : [ self_cmd.helping.launching  ],
         'load_model'            : [ self_cmd.load_model  ],
-        'mouse'                 : [ self_cmd.helping.mouse  ],
         'movies'                : [ self_cmd.helping.movies  ],
-        'python'                : [ self_cmd.helping.python  ],        
         'python_help'           : [ self_cmd.python_help   ],        
         'povray'                : [ self_cmd.helping.povray  ],
         'read_molstr'           : [ self_cmd.read_molstr ],
@@ -386,7 +346,6 @@ def get_help_only_keywords(self_cmd=cmd):
         'read_sdfstr'           : [ self_cmd.read_sdfstr ],              
         'release'               : [ self_cmd.helping.release ],   
         'selections'            : [ self_cmd.helping.selections ],
-        'skip'                  : [ self_cmd.helping.skip  ],                
         'sync'                  : [ self_cmd.sync ],
         'stereochemistry'       : [ self_cmd.helping.stereochemistry ],
         'text_type'             : [ self_cmd.helping.text_type ],

@@ -241,8 +241,6 @@ SEE ALSO
                 '''
 DESCRIPTION
 
-        NOTE: This feature is experimental and unsupported.
-        
         "super" performs a residue-based pairwise alignment followed by a
         structural superposition, and then carries out zero or more cycles
         of refinement in order to reject outliers.
@@ -304,35 +302,62 @@ SEE ALSO
                 '''
 DESCRIPTION
 
-        "align" performs a sequence alignment followed by a structural
-        superposition, and then carries out zero or more cycles of
-        refinement in order to reject outliers.
+    "align" performs a sequence alignment followed by a structural
+    superposition, and then carries out zero or more cycles of
+    refinement in order to reject structural outliers found during
+    the fit. "align" does a good job on proteins with decent sequence
+    similarity (identity >30%). For comparing proteins with lower
+    sequence identity, the "super" and "cealign" commands perform
+    better.
 
 USAGE 
 
-        align mobile, target [, object=name ]
+    align mobile, target [, cutoff [, cycles
+        [, gap [, extend [, max_gap [, object
+        [, matrix [, mobile_state [, target_state
+        [, quiet [, max_skip [, transform [, reset ]]]]]]]]]]]]]
 
 ARGUMENTS
 
-        mobile = string: atom selection for mobile atoms
+    mobile = string: atom selection of mobile object
 
-        target = string: atom selection for target atoms
+    target = string: atom selection of target object
 
-        object = string: name of alignment object to create
+    cutoff = float: outlier rejection cutoff in Angstrom {default: 2.0}
+
+    cycles = int: maximum number of outlier rejection cycles {default: 5}
+
+    gap, extend, max_gap: sequence alignment parameters
+
+    object = string: name of alignment object to create {default: (no
+    alignment object)}
+
+    matrix = string: file name of substitution matrix for sequence
+    alignment {default: BLOSUM62}
+
+    mobile_state = int: object state of mobile selection {default: 0 = all states}
+
+    target_state = int: object state of target selection {default: 0 = all states}
+
+    transform = 0/1: do superposition {default: 1}
         
 NOTES
 
-        If object is specified, then align will create an object which
-        indicates paired atoms and supports visualization of the alignment
-        in the sequence viewer.
+    If object is specified, then align will create an object which
+    indicates paired atoms and supports visualization of the alignment
+    in the sequence viewer.
+
+    The RMSD of the aligned atoms (after outlier rejection!) is reported
+    in the text output. The all-atom RMSD can be obtained by setting
+    cycles=0 and thus not doing any outlier rejection.
 
 EXAMPLE
 
-        align protA////CA, protB////CA, object=alnAB
+    align protA////CA, protB////CA, object=alnAB
 
 SEE ALSO
 
-        super, pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
+    super, cealign, pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
                 '''
                 r = DEFAULT_ERROR
                 mobile = selector.process(mobile)
@@ -511,12 +536,37 @@ SEE ALSO
 		'''
 DESCRIPTION
 
-	"fit" superimposes the model in the first selection on to the model
-	in the second selection.
+    "fit" superimposes the model in the first selection on to the model
+    in the second selection. Only matching atoms in both selections will
+    be used for the fit.
 	
 USAGE
 
-	fit mobile, target
+    fit mobile, target [, mobile_state [, target_state [, quiet
+        [, matchmaker [, cutoff [, cycles [, object ]]]]]]]
+
+ARGUMENTS
+
+    mobile = string: atom selection
+
+    target = string: atom selection
+
+    mobile_state = integer: object state {default=0, all states)
+
+    target_state = integer: object state {default=0, all states)
+
+    matchmaker = integer: how to match atom pairs {default: 0}
+        -1:  assume that atoms are stored in the identical order
+        0/1: match based on all atom identifiers (segi,chain,resn,resi,name,alt)
+        2:   match based on ID
+        3:   match based on rank
+        4:   match based on index (same as -1 ?)
+
+    cutoff = float: outlier rejection cutoff (only if cycles>0) {default: 2.0}
+
+    cycles = integer: number of cycles in outlier rejection refinement {default: 0}
+
+    object = string: name of alignment object to create {default: None}
 
 EXAMPLES
 
@@ -524,8 +574,6 @@ EXAMPLES
 
 NOTES
 
-	Only matching atoms in both selections will be used for the fit.
-	
 	Since atoms are matched based on all of their identifiers
 	(including segment and chain identifiers), this command is only
 	helpful when comparing very similar structures.

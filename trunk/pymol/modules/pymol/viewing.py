@@ -599,12 +599,6 @@ DESCRIPTION
 
     "as" turns on and off atom and bond representations.
 
-    The available representations are:
-
-        lines     spheres    mesh      ribbon     cartoon
-        sticks    dots       surface   labels     extent
-        nonbonded nb_spheres slice
-
 USAGE
 
     as representation [, selection ]
@@ -614,7 +608,7 @@ ARGUMENTS
     representation = lines, spheres, mesh, ribbon, cartoon, sticks,
         dots, surface, labels, extent, nonbonded, nb_spheres, slice,
         extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
-        or everything
+        volume or everything
 
     selection = string {default: all}
 
@@ -849,7 +843,7 @@ SEE ALSO
         return r
 
     def set_view(view,animate=0,quiet=1,hand=1,_self=cmd):
-        '''
+        r'''
 DESCRIPTION
 
     "set_view" sets viewing information for the current scene,

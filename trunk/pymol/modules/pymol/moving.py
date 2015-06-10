@@ -277,7 +277,7 @@ EXAMPLE
 NOTES
 
  These commands are usually created
-    by a PyMOL utility program (such as util.mrock).  Command can
+    by a PyMOL utility program (such as movie.rock).  Command can
     actually contain several commands separated by semicolons ';'
     
     The "mset" command must first be used to define the movie before
