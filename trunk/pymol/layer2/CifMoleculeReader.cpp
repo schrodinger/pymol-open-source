@@ -327,6 +327,10 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
     if (i == I->NAtom)
       break;
 
+    // ignore alt coords for inter-residue bonding
+    if (I->AtomInfo[i].alt[0] && I->AtomInfo[i].alt[0] != 'A')
+      continue;
+
     const char *name = I->AtomInfo[i].name;
 
     // inter-residue polymer bonds
@@ -1749,8 +1753,21 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
     } else if (cset) {
       ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, true, 3);
     }
-  } else if (!I->NBond) {
-    I->NBond = VLAGetSize(I->Bond);
+  } else {
+    if (!I->NBond)
+      I->NBond = VLAGetSize(I->Bond);
+
+    // bonds from coordset
+    if (cset && cset->TmpBond && cset->NTmpBond) {
+      for (int i = 0; i < cset->NTmpBond; ++i) {
+        ObjectMoleculeAddBond2(I,
+            cset->IdxToAtm[cset->TmpBond[i].index[0]],
+            cset->IdxToAtm[cset->TmpBond[i].index[1]],
+            cset->TmpBond[i].order);
+      }
+      VLASize(I->Bond, BondType, I->NBond);
+      VLAFreeP(cset->TmpBond);
+    }
   }
 
   // computationally intense update tasks
