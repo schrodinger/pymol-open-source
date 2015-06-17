@@ -100,6 +100,7 @@ from querying import \
       find_pairs,         \
       get_angle,          \
       get_area,           \
+      get_assembly_ids,   \
       get_chains,         \
       get_collada,        \
       get_color_index,    \

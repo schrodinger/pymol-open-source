@@ -8252,6 +8252,36 @@ ok_except1:
   return APIAutoNone(NULL);
 }
 
+/*
+ * Experimental - SUBJECT TO CHANGE
+ */
+static PyObject *CmdGetAssemblyIds(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char *name;
+  ObjectMolecule *obj;
+  PyObject *ids = NULL;
+
+  ok_assert(1, PyArg_ParseTuple(args, "Os", &self, &name));
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(1, G && APIEnterBlockedNotModal(G));
+
+  obj = ExecutiveFindObjectMoleculeByName(G, name);
+
+  if (!obj) {
+    PRINTFB(G, FB_Executive, FB_Errors)
+      " Executive-Error: object '%s' not found.\n", name ENDFB(G);
+  } else if (obj->assembly_ids) {
+    ids = PConvToPyObject(*(obj->assembly_ids));
+  }
+
+  APIExitBlocked(G);
+  return APIAutoNone(ids);
+ok_except1:
+  API_HANDLE_ERROR;
+  return APIAutoNone(NULL);
+}
+
 static PyMethodDef Cmd_methods[] = {
   {"_get_c_threading_api", CmdGetCThreadingAPI, METH_VARARGS},
   {"_del", Cmd_Del, METH_VARARGS},
@@ -8327,6 +8357,7 @@ static PyMethodDef Cmd_methods[] = {
   {"fuse", CmdFuse, METH_VARARGS},
   {"get_angle", CmdGetAngle, METH_VARARGS},
   {"get_area", CmdGetArea, METH_VARARGS},
+  {"get_assembly_ids", CmdGetAssemblyIds, METH_VARARGS},
   {"get_atom_coords", CmdGetAtomCoords, METH_VARARGS},
   {"get_bond_print", CmdGetBondPrint, METH_VARARGS},
   {"get_busy", CmdGetBusy, METH_VARARGS},

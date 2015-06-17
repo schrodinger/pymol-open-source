@@ -12502,6 +12502,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
   I->CSTmpl = NULL;
   I->DiscreteAtmToIdx = NULL;
   I->DiscreteCSet = NULL;
+  I->assembly_ids = NULL;
   if(I->DiscreteFlag) {         /* discrete objects don't share atoms between states */
     I->DiscreteAtmToIdx = VLACalloc(int, 0);
     CHECKOK(ok, I->DiscreteAtmToIdx);
@@ -12612,6 +12613,8 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   for(a = 0; a < I->NAtom; a++)
     AtomInfoCopy(G, a1++, a0++);
 
+  I->assembly_ids = NULL;
+
   return (I);
 
 }
@@ -12665,6 +12668,7 @@ void ObjectMoleculeFree(ObjectMolecule * I)
   VLAFreeP(I->DiscreteAtmToIdx);
   VLAFreeP(I->DiscreteCSet);
   VLAFreeP(I->CSet);
+  DeleteP(I->assembly_ids);
   {
     int nAtom = I->NAtom;
     AtomInfoType *ai = I->AtomInfo;

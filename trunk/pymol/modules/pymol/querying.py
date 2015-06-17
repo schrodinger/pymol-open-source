@@ -1681,3 +1681,15 @@ SEE ALSO
             print ' Center of Mass: [%8.3f,%8.3f,%8.3f]' % tuple(com)
         return com
 
+    def get_assembly_ids(name, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    EXPERIMENTAL AND SUBJECT TO CHANGE!
+    Get the list of assembly ids for an object loaded from mmCIF.
+        '''
+        with _self.lockcm:
+            r = _cmd.get_assembly_ids(_self._COb, name)
+        if r and not int(quiet):
+            print " Assembly IDs:", ', '.join(r)
+        return r

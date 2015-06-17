@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2015-06-17 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* Experimental: cmd.get_assembly_ids
+
+	* mmCIF: support "_atom_site.pdbe_label_seq_id"
+
+	* mmCIF: set "ignore" flag for HETATMSs (no surface)
+
+	* improve memory usage and performance of components.cif parsing
+
 2015-06-10 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fetch 'cif' by default (was: pdb)
