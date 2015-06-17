@@ -81,3 +81,9 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms('A//CA'), cmd.count_atoms('chain A & name CA'))
         self.assertEqual(cmd.count_atoms('A//`B'), cmd.count_atoms('chain A & alt B'))
         self.assertEqual(cmd.count_atoms('/m1/Y/B/*/CA'), cmd.count_atoms('segi Y & chain B & name CA'))
+
+        # or-logic
+        ref = cmd.count_atoms('(resi 100 & name CA) (resi 110 & name CB)')
+        self.assertEqual(cmd.count_atoms('100/CA|110/CB'), ref)
+        self.assertEqual(cmd.count_atoms('100/CA or 110/CB'), ref)
+        self.assertEqual(cmd.count_atoms('100/CA 110/CB'), ref)
