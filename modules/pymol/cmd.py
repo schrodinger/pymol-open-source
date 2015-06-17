@@ -237,7 +237,7 @@ if __name__=='pymol.cmd':
             '''Write the PyMOL Command Reference to an HTML file'''
             f=open(file,'w')
             kees = [a for a in keywords.get_command_keywords()
-                    if not a.startswith('_')]
+                    if not a.startswith('_') and keyword[a][0] != python_help]
             kees.sort()
             title = 'PyMOL Command Reference'
             f.write('''<html>

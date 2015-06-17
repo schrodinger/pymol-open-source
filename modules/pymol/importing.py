@@ -1273,10 +1273,7 @@ PYMOL API
     hostPaths = {
         "bio"  : "/data/biounit/coordinates/divided/{mid}/{code}.{type}.gz",
         "pdb"  : "/data/structures/divided/pdb/{mid}/pdb{code}.ent.gz",
-        "cif"  : [
-            "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
-            "/data/large_structures/mmCIF/{code}.cif.gz",
-        ],
+        "cif"  : "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
         "2fofc" : "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}.omap",
         "fofc": "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}_diff.omap",
         "pubchem": [

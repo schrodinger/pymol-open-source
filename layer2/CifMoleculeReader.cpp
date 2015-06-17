@@ -27,6 +27,7 @@
 #include "Rep.h"
 #include "ObjectMolecule.h"
 #include "CifFile.h"
+#include "CifBondDict.h"
 #include "Util2.h"
 #include "Vector.h"
 
@@ -189,14 +190,6 @@ static int bondOrderLookup(const char * order) {
 }
 
 /*
- * Datastructure for bond_dict
- * bond_dict[resn][name1][name2] = order
- */
-typedef std::map<std::string,
-        std::map<std::string,
-        std::map<std::string, int> > > bond_dict_t;
-
-/*
  * Read bonds from CHEM_COMP_BOND in `bond_dict` dictionary
  */
 static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_dict) {
@@ -217,15 +210,10 @@ static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_di
     name1 = arr_id_1->as_s(i);
     name2 = arr_id_2->as_s(i);
 
-    // make sure name1 < name2
-    if (strcmp(name1, name2) < 0) {
-      std::swap(name1, name2);
-    }
-
     const char *order = arr_order->as_s(i);
     order_value = bondOrderLookup(order);
 
-    bond_dict[resn][name1][name2] = order_value;
+    bond_dict.set(resn, name1, name2, order_value);
   }
 
   return true;
@@ -276,11 +264,10 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
 
   AtomInfoType *a1, *a2, *ai = I->AtomInfo;
   int order;
-  bond_dict_t::const_iterator d_it;
 
   // get residue bond dictionary
-  d_it = bond_dict->find(ai[i_start].resn);
-  if (d_it == bond_dict->end())
+  auto res_dict = bond_dict->get(ai[i_start].resn);
+  if (res_dict == NULL)
     return;
 
   // for all pairs of atoms in given set
@@ -294,15 +281,9 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
         continue;
       }
 
-      // make sure name1 < name2
-      if (strcmp(a1->name, a2->name) < 0) {
-        std::swap(a1, a2);
-      }
-
       // lookup if atoms are bonded
-      try {
-        order = d_it->second.at(a1->name).at(a2->name);
-      } catch (const std::out_of_range& e) {
+      order = res_dict->get(a1->name, a2->name);
+      if (order < 0) {
         continue;
       }
 
@@ -866,7 +847,9 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
 
   if (!arr_name) arr_name = data->get_arr("_atom_site.label_atom_id");
   if (!arr_resn) arr_resn = data->get_opt("_atom_site.label_comp_id");
-  if (!arr_resi) arr_resi = data->get_opt("_atom_site.label_seq_id");
+
+  // PDBe provides unique seq_ids for bulk het groups
+  if (!arr_resi) arr_resi = data->get_opt("_atom_site.pdbe_label_seq_id", "_atom_site.label_seq_id");
 
   if (arr_name) {
     info.type = CIF_MMCIF;
@@ -999,7 +982,10 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
 
     ai->chain = LexIdx(G, arr_chain->as_s(i));
 
-    ai->hetatm = 'H' == arr_group_pdb->as_s(i)[0];
+    if ('H' == arr_group_pdb->as_s(i)[0]) {
+      ai->hetatm = 1;
+      ai->flags = cAtomFlag_ignore;
+    }
 
     resi = arr_resi->as_s(i);
     ai->resv = atoi(resi);
@@ -1664,6 +1650,15 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
 
       SettingCheckHandle(G, &I->Obj.Setting);
       SettingSet_b(I->Obj.Setting, cSetting_all_states, 1);
+    }
+  } else if (!I->assembly_ids) {
+    // store list of assembly ids with ObjectMolecule, for cmd.get_assembly_ids
+    const cif_array *arr_assembly_id = datablock->get_arr("_pdbx_struct_assembly_gen.assembly_id");
+    if (arr_assembly_id) {
+      I->assembly_ids = new std::vector<std::string>;
+      for (int i = 0, n = arr_assembly_id->get_nrows(); i < n; ++i) {
+        I->assembly_ids->push_back(arr_assembly_id->as_s(i));
+      }
     }
   }
 

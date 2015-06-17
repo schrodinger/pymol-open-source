@@ -82,6 +82,9 @@ typedef struct ObjectMolecule {
   int RepVisCacheValid;
   int RepVisCache;     /* for transient storage during updates */
 
+  // for reporting available assembly ids after mmCIF loading - SUBJECT TO CHANGE
+  std::vector<std::string> * assembly_ids;
+
   // methods
   int getState();
   bool setNDiscrete(int natom);
