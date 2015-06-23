@@ -2,6 +2,19 @@
 CHANGE LOG
 =========================================================================
 
+2015-06-23 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix assemblies for cases like 4f3r which have multiple entries in
+	  the _pdbx_struct_assembly_gen table
+
+	* fix ref counts in iterate/alter subscripts
+
+	* improve side_chain_helper and nucleic_adic_mode situation
+
+	* eliminate all "try/catch" blocks for std::map lookups
+
+	* clean up some MemoryDebug stuff and remove unused jenarix wrapper
+
 2015-06-17 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* Experimental: cmd.get_assembly_ids

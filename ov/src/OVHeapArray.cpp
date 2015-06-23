@@ -1,7 +1,5 @@
 #include"OVHeapArray.h"
 
-#ifndef OV_JX
-
 #include"ov_utility.h"
 
 #define OVHeapArray_COMPLAIN
@@ -166,5 +164,3 @@ void *_OVHeapArray_SetSize(void *ptr, ov_size new_size
   }
   return ((void *) &(vla[1]));
 }
-
-#endif

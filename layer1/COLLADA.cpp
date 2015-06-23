@@ -113,6 +113,8 @@ static void ColladaWriteAssetElement(xmlTextWriterPtr w)
 
   xmlTextWriterWriteElement(w, BAD_CAST "created", BAD_CAST ts);
   xmlTextWriterWriteElement(w, BAD_CAST "modified", BAD_CAST ts);
+  free(ts);
+
   xmlTextWriterStartElement(w, BAD_CAST "unit");
   xmlTextWriterWriteAttribute(w, BAD_CAST "meter", BAD_CAST "1e-10");
   xmlTextWriterWriteAttribute(w, BAD_CAST "name", BAD_CAST "Angstrom");

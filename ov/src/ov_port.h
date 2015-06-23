@@ -4,13 +4,6 @@
 #ifndef _H_ov_port
 #define _H_ov_port
 
-#ifdef OV_JX
-
-#include "jx_public.h"
-#include "ov_jx.h"
-
-#else
-
 /* headers */
 
 #include <stdio.h>
@@ -43,5 +36,4 @@
 #define ov_os_abort abort
 #define ov_os_exit exit
 
-#endif
 #endif

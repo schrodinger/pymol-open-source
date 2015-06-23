@@ -1185,167 +1185,128 @@ static int RepValence(RepCylBond *I, CGO *cgo, int *n_ptr,       /* opengl */
   return ok;
 }
 
-static void RepCylBondFilterBond(int *marked, AtomInfoType *ati1, AtomInfoType *ati2,
-    int b1, int b2, int na_mode, int *c1, int *c2, int *s1, int *s2)
+/*
+ * Return true if bond is hidden with side_chain_helper.
+ * c1/c2 are in-out variables for color transfer.
+ */
+bool SideChainHelperFilterBond(const int *marked,
+    const AtomInfoType *ati1,
+    const AtomInfoType *ati2,
+    int b1, int b2, int na_mode, int *c1, int *c2)
 {
-  char *name1 = ati1->name;
-  int prot1 = ati1->protons;
-  char *name2 = ati2->name;
-  int prot2 = ati2->protons;
-  if(prot1 == cAN_C) {
-    if((name1[1] == 'A') && (name1[0] == 'C') && (!name1[2])) { /* CA */
-      if(prot2 == cAN_C) {
-	if((name2[1] == 'B') && (name2[0] == 'C') && (!name2[2]))
-	  *c1 = *c2;      /* CA-CB */
-	else if((!name2[1]) && (name2[0] == 'C') && (!marked[b2]))
-	  *s1 = *s2 = 0;  /* suppress CA-C */
-      } else if(prot2 == cAN_H)
-	*s1 = *s2 = 0;    /* suppress all CA-hydrogens */
-    } else if((na_mode == 1) && (prot2 == cAN_C)) {
-      if((((name2[3] == 0) &&
-	   ((name2[2] == '*') || (name2[2] == '\'')) &&
-	   (name2[1] == '5') &&
-	   (name2[0] == 'C'))) &&
-	 (((name1[3] == 0) &&
-	   ((name1[2] == '*') || (name1[2] == '\'')) &&
-	   (name1[1] == '4') && (name1[0] == 'C'))))
-	*s1 = *s2 = 0;
-    }
-  } else if(prot1 == cAN_N) {
-    if((!name1[1]) && (name1[0] == 'N')) {      /* N */
-      if(prot2 == cAN_C) {
-	if((name2[1] == 'D') && (name2[0] == 'C') && (!name2[2]))
-	  *c1 = *c2;      /* N->CD in PRO */
-	else if((name2[1] == 'A') && (name2[0] == 'C') && (!name2[2])
-		&& (!marked[b1])) {
-	  char *resn2 = ati2->resn;
-	  if(!((resn2[0] == 'P') && (resn2[1] == 'R') && (resn2[2] == 'O')))
-	    *s1 = *s2 = 0;        /* suppress N-CA, except in pro */
-	  else
-	    *c1 = *c2;
-	} else if((!name2[1]) && (name2[0] == 'C') && (!marked[b1]))
-	  *s1 = *s2 = 0;  /* suppress N-C */
-      } else if(prot2 == cAN_H)
-	*s1 = *s2 = 0;    /* suppress all N-hydrogens */
-    }
-  } else if((prot1 == cAN_O) && (prot2 == cAN_C)) {
-    if((!name2[1]) && (name2[0] == 'C') &&
-       (((!name1[1]) && (name1[0] == 'O')) ||
-	((name1[3] == 0) && (name1[2] == 'T') && (name1[1] == 'X')
-	 && (name1[0] == 'O')))
-       && (!marked[b2]))
-      *s1 = *s2 = 0;      /* suppress C-O,OXT */
-    else if(na_mode == 1) {
-      if((((name2[3] == 0) &&
-	   ((name2[2] == '*') || (name2[2] == '\'')) &&
-	   ((name2[1] == '3') || (name2[1] == '5')) &&
-	   (name2[0] == 'C'))) &&
-	 (((name1[3] == 0) &&
-	   ((name1[2] == '*') || (name1[2] == '\'')) &&
-	   ((name1[1] == '3') || (name1[1] == '5')) && (name1[0] == 'O'))))
-	*s1 = *s2 = 0;
-    }
-  } else if((prot1 == cAN_P) && (prot2 == cAN_O)) {
-    if((!name1[1]) && (name1[0] == 'P') &&
-       (((name2[3] == 0) && (name2[2] == 'P') &&
-	 ((name2[1] == '1') || (name2[1] == '2') || (name2[1] == '3'))
-	 && (name2[0] == 'O'))))
-      *s1 = *s2 = 0;      /* suppress P-O1P,O2P,O3P */
-    else if(na_mode == 1) {
-      if((!name1[1]) && (name1[0] == 'P') &&
-	 (((name2[3] == 0) &&
-	   ((name2[2] == '*') || (name2[2] == '\'')) &&
-	   ((name2[1] == '3') || (name2[1] == '5')) && (name2[0] == 'O'))))
-	*s1 = *s2 = 0;
-    }
+  if (ati1->protons == cAN_H ||
+      ati2->protons == cAN_N ||
+      ati2->protons == cAN_O ||
+      (ati1->protons == cAN_C && ati2->protons == cAN_C && !strcmp(ati2->name, "CA"))
+     ) {
+    std::swap(ati1, ati2);
+    std::swap(b1, b2);
+    std::swap(c1, c2);
   }
-  if(prot2 == cAN_C) {
-    if((name2[1] == 'A') && (name2[0] == 'C') && (!name2[2])) { /* CA */
-      if(prot1 == cAN_C) {
-	if((name1[1] == 'B') && (name1[0] == 'C') && (!name1[2]))
-	  *c2 = *c1;      /* CA-CB */
-	else if((!name1[1]) && (name1[0] == 'C') && (!marked[b1]))
-	  *s1 = *s2 = 0;  /* suppress CA-C */
-      } else if(prot1 == cAN_H)
-	*s1 = *s2 = 0;    /* suppress all CA-hydrogens */
-    } else if((na_mode == 1) && (prot2 == cAN_C)) {
-      if((((name1[3] == 0) &&
-	   ((name1[2] == '*') || (name1[2] == '\'')) &&
-	   (name1[1] == '5') &&
-	   (name1[0] == 'C'))) &&
-	 (((name2[3] == 0) &&
-	   ((name2[2] == '*') || (name2[2] == '\'')) &&
-	   (name2[1] == '4') && (name2[0] == 'C'))))
-	*s1 = *s2 = 0;
-    }
-  } else if(prot2 == cAN_N) {
-    if((!name2[1]) && (name2[0] == 'N')) {      /* N */
-      if(prot1 == cAN_C) {
-	if((name1[1] == 'D') && (name1[0] == 'C') && (!name1[2]))
-	  *c2 = *c1;      /* N->CD in PRO */
-	else if((name1[1] == 'A') && (name1[0] == 'C') && (marked[b2])) {
-	  char *resn1 = ati1->resn;
-	  if(!((resn1[0] == 'P') && (resn1[1] == 'R') && (resn1[2] == 'O')))
-	    *s1 = *s2 = 0;        /* suppress N-CA, except in pro */
-	  else
-	    *c2 = *c1;
-	} else if((!name1[1]) && (name1[0] == 'C') && (!marked[b2]))
-	  *s1 = *s2 = 0;  /* suppress N-C */
-      } else if(prot1 == cAN_H)
-	*s1 = *s2 = 0;    /* suppress all N-hydrogens */
-    }
-  } else if((prot2 == cAN_O) && (prot1 == cAN_C)) {
-    if((!name1[1]) && (name1[0] == 'C') &&
-       (((!name2[1]) && (name2[0] == 'O')) ||
-	((name2[3] == 0) && (name2[2] == 'T') && (name2[1] == 'X')
-	 && (name2[0] == 'O')))
-       && (!marked[b1]))
-      *s1 = *s2 = 0;      /* suppress C-O,OXT */
-    else if(na_mode == 1) {
-      if((((name1[3] == 0) &&
-	   ((name1[2] == '*') || (name1[2] == '\'')) &&
-	   ((name1[1] == '3') || (name1[1] == '5')) &&
-	   (name1[0] == 'C'))) &&
-	 (((name2[3] == 0) &&
-	   ((name2[2] == '*') || (name2[2] == '\'')) &&
-	   ((name2[1] == '3') || (name2[1] == '5')) && (name2[0] == 'O'))))
-	*s1 = *s2 = 0;
-    }
-  } else if((prot2 == cAN_P) && (prot1 == cAN_O)) {
-    if((!name2[1]) && (name2[0] == 'P') &&
-       (((name1[3] == 0) && (name1[2] == 'P') &&
-	 ((name1[1] == '1') || (name1[1] == '2') || (name1[1] == '3'))
-	 && (name1[0] == 'O'))))
-      *s1 = *s2 = 0;      /* suppress P-O1P,O2P,O3P */
-    else if(na_mode == 1) {
-      if((!name2[1]) && (name2[0] == 'P') &&
-	 (((name1[3] == 0) &&
-	   ((name1[2] == '*') || (name1[2] == '\'')) &&
-	   ((name1[1] == '3') || (name1[1] == '5')) && (name1[0] == 'O'))))
-	*s1 = *s2 = 0;
-    }
-  }
-}
-int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, CoordSet * cs, int *marked);
 
+  const char *name1 = ati1->name;
+  int prot1 = ati1->protons;
+  const char *name2 = ati2->name;
+  int prot2 = ati2->protons;
+
+  switch (prot1) {
+    case cAN_C:
+      if((name1[1] == 'A') && (name1[0] == 'C') && (!name1[2])) { /* CA */
+        if(prot2 == cAN_C) {
+          if((name2[1] == 'B') && (name2[0] == 'C') && (!name2[2]))
+            *c1 = *c2;      /* CA-CB */
+          else if((!name2[1]) && (name2[0] == 'C') && (!marked[b2]))
+            return true;  /* suppress CA-C */
+        } else if(prot2 == cAN_H)
+          return true;    /* suppress all CA-hydrogens */
+      } else if((na_mode == 1) && (prot2 == cAN_C)) {
+        if (
+            (name2[3] == 0) &&
+            (name2[2] == '*' || name2[2] == '\'') &&
+            (name2[1] == '4' || name2[1] == '5') &&
+            (name2[0] == 'C') &&
+            (name1[3] == 0) &&
+            (name1[2] == '*' || name1[2] == '\'') &&
+            (name1[1] == '4' || name1[1] == '5') &&
+            (name1[0] == 'C'))
+          /* supress C[45][*']-C[45][*'] */
+          return true;
+      }
+      break;
+    case cAN_N:
+      if((!name1[1]) && (name1[0] == 'N')) {      /* N */
+        if(prot2 == cAN_C) {
+          if((name2[1] == 'D') && (name2[0] == 'C') && (!name2[2]))
+            *c1 = *c2;      /* N->CD in PRO */
+          else if((name2[1] == 'A') && (name2[0] == 'C') && (!name2[2])
+              && (!marked[b1])) {
+            if(strcmp("PRO", ati2->resn))
+              return true;        /* suppress N-CA, except in pro */
+            *c1 = *c2;
+          } else if((!name2[1]) && (name2[0] == 'C') && (!marked[b1]))
+            return true;  /* suppress N-C */
+        } else if(prot2 == cAN_H)
+          return true;    /* suppress all N-hydrogens */
+      }
+      break;
+    case cAN_O:
+      if(prot2 == cAN_C) {
+        if((!name2[1]) && (name2[0] == 'C') &&
+            (((!name1[1]) && (name1[0] == 'O')) ||
+             ((name1[3] == 0) && (name1[2] == 'T') && (name1[1] == 'X')
+              && (name1[0] == 'O')))
+            && (!marked[b2]))
+          return true;      /* suppress C-O,OXT */
+        else if(na_mode == 1) {
+          if (
+              (name2[3] == 0) &&
+              (name2[2] == '*' || name2[2] == '\'') &&
+              (name2[1] == '3' || name2[1] == '5') &&
+              (name2[0] == 'C') &&
+              (name1[3] == 0) &&
+              (name1[2] == '*' || name1[2] == '\'') &&
+              (name1[1] == '3' || name1[1] == '5') &&
+              (name1[0] == 'O'))
+            /* supress O[35][*']-C[35][*'] */
+            return true;
+        }
+      } else if(prot2 == cAN_P) {
+        if(!name2[1] && name2[0] == 'P' &&
+            name1[3] == '\0' && name1[0] == 'O' && (
+              (name1[2] == 'P' && (name1[1] == '1' || name1[1] == '2' || name1[1] == '3')) ||
+              (name1[1] == 'P' && (name1[2] == '1' || name1[2] == '2' || name1[2] == '3'))))
+          /* suppress P-O([123]P|P[123]) */
+          return true;
+        else if(na_mode == 1) {
+          if(!name2[1] && name2[0] == 'P' &&
+              (name1[3] == 0) &&
+              (name1[2] == '*' || name1[2] == '\'') &&
+              (name1[1] == '3' || name1[1] == '5') &&
+              (name1[0] == 'O'))
+            /* supress P-O[35][*'] */
+            return true;
+        }
+      }
+      break;
+  }
+
+  return false;
+}
+
+static
 int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, CoordSet * cs, int *marked){
   PyMOLGlobals *G = cs->State.G;
   BondType *b = obj->Bond;
   int a, ord, a1, a2, stick_color, c1, c2, s1, s2, half_bonds, hide_long = false;
   int b1, b2;
   float *vv1, *vv2;
-  float radius, transp, h_scale;
   int cartoon_side_chain_helper = 0;
   int ribbon_side_chain_helper = 1;
   int na_mode;
   const float _0p9 = 0.9F;
-  int n_bonds = 0, n_bonds_bc = 0;
   int ok = true;
 
-  radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_radius);
   stick_color = SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_stick_color);
-  transp = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_transparency);
-  h_scale = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_h_scale);
   half_bonds = (int) SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_half_bonds);
   hide_long = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_hide_long_bonds);
   cartoon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
@@ -1354,11 +1315,12 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
                                           cSetting_ribbon_side_chain_helper);
   na_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_nucleic_acid_mode);
+  int na_mode_ribbon =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_nucleic_acid_mode);
 
   for(a = 0; ok && a < obj->NBond; a++) {
     b1 = b->index[0];
     b2 = b->index[1];
-    ord = b->order;
     if(obj->DiscreteFlag) {
       if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
 	a1 = obj->DiscreteAtmToIdx[b1];
@@ -1401,9 +1363,6 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
 	  s2 = 0;
 	}
       
-      if (s1||s2){
-	n_bonds_bc++;
-      }
       if(hide_long && (s1 || s2)) {
 	float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
 	//	ai1 = obj->AtomInfo + b1;
@@ -1412,15 +1371,18 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
 	  s1 = s2 = 0;
       }
       
-      if((ati1->flags & ati2->flags & cAtomFlag_polymer) &&
-          ((cartoon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepCartoonBit)) ||
-           (ribbon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepRibbonBit)))) {
-        RepCylBondFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2, &s1, &s2);
+      if((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
+        if (cartoon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepCartoonBit)) {
+          if (SideChainHelperFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
+            s1 = s2 = 0;
+        } else if (ribbon_side_chain_helper && (ati1->visRep & ati2->visRep & cRepRibbonBit)) {
+          if (SideChainHelperFilterBond(marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
+            s1 = s2 = 0;
+        }
       }
       if((s1 || s2)) {
-	/* This is a bond that is rendered as a stick */
-	n_bonds++;
-	if (!adjacent_atoms[a1]){
+        /* This is a bond that is rendered as a stick */
+        if (!adjacent_atoms[a1]){
 	  adjacent_atoms[a1] = Calloc(int, 2);
 	  CHECKOK(ok, adjacent_atoms[a1]);
 	  if (ok){
@@ -1485,14 +1447,13 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   int nEdge;
   float valence;
   float overlap, nub;
-  int stick_round_nub;
   int half_bonds, *other = NULL;
   int visFlag;
   int maxCyl;
   int ord;
   int stick_ball, stick_ball_color = -1;
   float stick_ball_ratio = 1.0F;
-  unsigned int v_size, vr_size;
+  unsigned int vr_size;
   AtomInfoType *ai1, *ai2;
   SphereRec *sp = NULL;
   float *rgb1, *rgb2, rgb1_buf[3], rgb2_buf[3];
@@ -1648,6 +1609,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
   half_bonds = (int) SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_half_bonds);
   na_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_nucleic_acid_mode);
+  int na_mode_ribbon =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_nucleic_acid_mode);
   h_scale = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_h_scale);
   RepInit(G, &I->R);
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepCylBondRender;
@@ -1678,7 +1641,6 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     stick_ball = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_stick_ball);
     overlap = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_overlap);
     nub = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_nub);
-    stick_round_nub = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_round_nub);
 
     if(draw_quality) {
       nEdge = 16;
@@ -1748,17 +1710,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 
     /* OpenGL */
 
-    v_size = maxCyl * ((9 + 6 + 6) * (nEdge + 1) + 3) * nEdge;
-    //    v_size = maxCyl * ((9 + 6 + 6) * (nEdge + 1) + 3) ;
     /* each cylinder is 9+6+6+3= 21*(nEdge+1) floats for coordinates
        plus 3 more floats for color */
-
-    if ( shader_mode == 1) { // GLSL
-      v_size = maxCyl * (3 + 3 + 3 + 3);
-      // In GLSL representation each cylinder uses 3 floats for origin,
-      // 3 floats for axis, 3 floats for corner and 3 floats
-      // for color = 12 floats total
-    }
 
     if(ok && variable_alpha){
       I->VarAlpha = Alloc(float, maxCyl);
@@ -1904,18 +1857,18 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           if(!within3f(vv1, vv2, cutoff))       /* atoms separated by more than 90% of the sum of their vdw radii */
             s1 = s2 = 0;
         }
-        if((ati1->flags & ati2->flags & cAtomFlag_polymer) &&
-            ((cartoon_side_chain_helper 
-              && (ati1->visRep & cRepCartoonBit)
-              && (ati2->visRep & cRepCartoonBit)) ||
-             (ribbon_side_chain_helper
-              && (ati1->visRep & cRepRibbonBit)
-              && (ati2->visRep & cRepRibbonBit)))) {
-	  RepCylBondFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2, &s1, &s2);
+        if ((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
+          if (cartoon_side_chain_helper && (ati1->visRep & cRepCartoonBit) && (ati2->visRep & cRepCartoonBit)) {
+            if (SideChainHelperFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
+              s1 = s2 = 0;
+          } else if (ribbon_side_chain_helper && (ati1->visRep & cRepRibbonBit) && (ati2->visRep & cRepRibbonBit)) {
+            if (SideChainHelperFilterBond(marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
+              s1 = s2 = 0;
+          }
         }
-	
+
         if(true) { // (stick_ball) {
-	  //          if(stick_ball_ratio >= 1.0F)  // don't use caps if spheres are big enough
+          //          if(stick_ball_ratio >= 1.0F)  // don't use caps if spheres are big enough
             /* This means that if stick_ball gets changed, the RepCylBond needs to be completely invalidated */
           caps_req = !stick_ball;
 	  if(s1 && (!marked[b1]) && (!stick_ball_filter_single_atoms || (ord==1 || (adjacent_atoms[a1] && adjacent_atoms[a1][0] > 1)))) {

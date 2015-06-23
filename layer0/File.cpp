@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include "File.h"
+#include "MemoryDebug.h"
 
 /*
  * Get the size from the current file pointer to the end of the file
@@ -27,12 +28,12 @@ static long fgetsize(FILE *fp) {
 static char * fgetcontents(FILE *fp, long *size) {
   long filesize = fgetsize(fp);
 
-  char *contents = (char*) malloc(filesize + 255);
+  char *contents = (char*) mmalloc(filesize + 255);
   if (!contents)
     return NULL;
 
   if (1 != fread(contents, filesize, 1, fp)) {
-    free(contents);
+    mfree(contents);
     return NULL;
   }
 

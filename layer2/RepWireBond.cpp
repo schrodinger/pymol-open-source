@@ -873,6 +873,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   hide_long = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_hide_long_bonds);
   na_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_nucleic_acid_mode);
+  int na_mode_ribbon =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_nucleic_acid_mode);
   fancy = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_valence_mode) == 1;
   
   b = obj->Bond;
@@ -1112,160 +1114,16 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           v1 = cs->Coord + 3 * a1;
           v2 = cs->Coord + 3 * a2;
 
-          if((ati1->flags & ati2->flags & cAtomFlag_polymer) &&
-              ((cartoon_side_chain_helper
-                && GET_BIT(ati1->visRep,cRepCartoon)
-                && GET_BIT(ati2->visRep,cRepCartoon)) ||
-               (ribbon_side_chain_helper
-                && GET_BIT(ati1->visRep,cRepRibbon)
-                && GET_BIT(ati2->visRep,cRepRibbon)))) {
-
-            char *name1 = ati1->name;
-            int prot1 = ati1->protons;
-            char *name2 = ati2->name;
-            int prot2 = ati2->protons;
-
-            if(prot1 == cAN_C) {
-              if((name1[1] == 'A') && (name1[0] == 'C') && (!name1[2])) {       /* CA */
-                if(prot2 == cAN_C) {
-                  if((name2[1] == 'B') && (name2[0] == 'C') && (!name2[2]))
-                    c1 = c2;    /* CA-CB */
-                  else if((!name2[1]) && (name2[0] == 'C') && (!marked[b2]))
-                    s1 = s2 = 0;        /* suppress CA-C */
-                } else if(prot2 == cAN_H)
-                  s1 = s2 = 0;  /* suppress all CA-hydrogens */
-              } else if((na_mode == 1) && (prot2 == cAN_C)) {
-                if((((name2[3] == 0) &&
-                     ((name2[2] == '*') || (name2[2] == '\'')) &&
-                     (name2[1] == '5') &&
-                     (name2[0] == 'C'))) &&
-                   (((name1[3] == 0) &&
-                     ((name1[2] == '*') || (name1[2] == '\'')) &&
-                     (name1[1] == '4') && (name1[0] == 'C'))))
-                  s1 = s2 = 0;
-              }
-            } else if(prot1 == cAN_N) {
-              if((!name1[1]) && (name1[0] == 'N')) {    /* N */
-                if(prot2 == cAN_C) {
-                  if((name2[1] == 'D') && (name2[0] == 'C') && (!name2[2]))
-                    c1 = c2;    /* N->CD in PRO */
-                  else if((name2[1] == 'A') && (name2[0] == 'C') && (!name2[2])
-                          && (!marked[b1]))
-                    s1 = s2 = 0;        /* suppress N-CA */
-                  else if((!name2[1]) && (name2[0] == 'C') && (!marked[b1]))
-                    s1 = s2 = 0;        /* suppress N-C */
-                } else if(prot2 == cAN_H)
-                  s1 = s2 = 0;  /* suppress all N-hydrogens */
-              }
-            } else if((prot1 == cAN_O) && (prot2 == cAN_C)) {
-              if((!name2[1]) && (name2[0] == 'C') &&
-                 (((!name1[1]) && (name1[0] == 'O')) ||
-                  ((name1[3] == 0) && (name1[2] == 'T') && (name1[1] == 'X')
-                   && (name1[0] == 'O')))
-                 && (!marked[b2]))
-                s1 = s2 = 0;    /* suppress C-O,OXT */
-              else if(na_mode == 1) {
-                if((((name2[3] == 0) &&
-                     ((name2[2] == '*') || (name2[2] == '\'')) &&
-                     ((name2[1] == '3') || (name2[1] == '5')) &&
-                     (name2[0] == 'C'))) &&
-                   (((name1[3] == 0) &&
-                     ((name1[2] == '*') || (name1[2] == '\'')) &&
-                     ((name1[1] == '3') || (name1[1] == '5')) && (name1[0] == 'O'))))
-                  s1 = s2 = 0;
-              }
-            } else if((prot1 == cAN_P) && (prot2 == cAN_O)) {
-              if((!name1[1]) && (name1[0] == 'P') &&
-                 (((name2[3] == 0) && (name2[2] == 'P') &&
-                   ((name2[1] == '1') || (name2[1] == '2') || (name2[1] == '3'))
-                   && (name2[0] == 'O'))))
-                s1 = s2 = 0;    /* suppress P-O1P,O2P,O3P */
-              if((!name1[1]) && (name1[0] == 'P') &&
-                 (((name2[3] == 0) && (name2[1] == 'P') &&
-                   ((name2[2] == '1') || (name2[2] == '2') || (name2[2] == '3'))
-                   && (name2[0] == 'O'))))
-                s1 = s2 = 0;    /* suppress P-OP1,OP2,OP3 */
-              else if(na_mode == 1) {
-                if((!name1[1]) && (name1[0] == 'P') &&
-                   (((name2[3] == 0) &&
-                     ((name2[2] == '*') || (name2[2] == '\'')) &&
-                     ((name2[1] == '3') || (name2[1] == '5')) && (name2[0] == 'O'))))
-                  s1 = s2 = 0;
-              }
+          if (line_stick_helper && (ati1->visRep & ati2->visRep & cRepCylBit)) {
+            s1 = s2 = 0;
+          } else if ((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
+            if (cartoon_side_chain_helper && GET_BIT(ati1->visRep,cRepCartoon) && GET_BIT(ati2->visRep,cRepCartoon)) {
+              if (SideChainHelperFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
+                s1 = s2 = 0;
+            } else if (ribbon_side_chain_helper && GET_BIT(ati1->visRep,cRepRibbon) && GET_BIT(ati2->visRep,cRepRibbon)) {
+              if (SideChainHelperFilterBond(marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
+                s1 = s2 = 0;
             }
-
-            if(prot2 == cAN_C) {
-              if((name2[1] == 'A') && (name2[0] == 'C') && (!name2[2])) {       /* CA */
-                if(prot1 == cAN_C) {
-                  if((name1[1] == 'B') && (name1[0] == 'C') && (!name1[2]))
-                    c2 = c1;    /* CA-CB */
-                  else if((!name1[1]) && (name1[0] == 'C') && (!marked[b1]))
-                    s1 = s2 = 0;        /* suppress CA-C */
-                } else if(prot1 == cAN_H)
-                  s1 = s2 = 0;  /* suppress all CA-hydrogens */
-              } else if((na_mode == 1) && (prot2 == cAN_C)) {
-                if((((name1[3] == 0) &&
-                     ((name1[2] == '*') || (name1[2] == '\'')) &&
-                     (name1[1] == '5') &&
-                     (name1[0] == 'C'))) &&
-                   (((name2[3] == 0) &&
-                     ((name2[2] == '*') || (name2[2] == '\'')) &&
-                     (name2[1] == '4') && (name2[0] == 'C'))))
-                  s1 = s2 = 0;
-              }
-            } else if(prot2 == cAN_N) {
-              if((!name2[1]) && (name2[0] == 'N')) {    /* N */
-                if(prot1 == cAN_C) {
-                  if((name1[1] == 'D') && (name1[0] == 'C') && (!name1[2]))
-                    c2 = c1;    /* N->CD in PRO */
-                  else if((name1[1] == 'A') && (name1[0] == 'C') && (marked[b2]))
-                    s1 = s2 = 0;        /* suppress N-CA */
-                  else if((!name1[1]) && (name1[0] == 'C') && (!marked[b2]))
-                    s1 = s2 = 0;        /* suppress N-C */
-                } else if(prot1 == cAN_H)
-                  s1 = s2 = 0;  /* suppress all N-hydrogens */
-              }
-            } else if((prot2 == cAN_O) && (prot1 == cAN_C)) {
-              if((!name1[1]) && (name1[0] == 'C') &&
-                 (((!name2[1]) && (name2[0] == 'O')) ||
-                  ((name2[3] == 0) && (name2[2] == 'T') && (name2[1] == 'X')
-                   && (name2[0] == 'O')))
-                 && (!marked[b1]))
-                s1 = s2 = 0;    /* suppress C-O,OXT */
-              else if(na_mode == 1) {
-                if((((name1[3] == 0) &&
-                     ((name1[2] == '*') || (name1[2] == '\'')) &&
-                     ((name1[1] == '3') || (name1[1] == '5')) &&
-                     (name1[0] == 'C'))) &&
-                   (((name2[3] == 0) &&
-                     ((name2[2] == '*') || (name2[2] == '\'')) &&
-                     ((name2[1] == '3') || (name2[1] == '5')) && (name2[0] == 'O'))))
-                  s1 = s2 = 0;
-              }
-            } else if((prot2 == cAN_P) && (prot1 == cAN_O)) {
-              if((!name2[1]) && (name2[0] == 'P') &&
-                 (((name1[3] == 0) && (name1[2] == 'P') &&
-                   ((name1[1] == '1') || (name1[1] == '2') || (name1[1] == '3')) &&
-                   (name1[0] == 'O'))))
-                s1 = s2 = 0;    /* suppress P-O1P,O2P,O3P */
-              if((!name2[1]) && (name2[0] == 'P') &&
-                 (((name1[3] == 0) && (name1[1] == 'P') &&
-                   ((name1[2] == '1') || (name1[2] == '2') || (name1[2] == '3')) &&
-                   (name1[0] == 'O'))))
-                s1 = s2 = 0;    /* suppress P-OP1,OP2,OP3 */
-              else if(na_mode == 1) {
-                if((!name2[1]) && (name2[0] == 'P') &&
-                   (((name1[3] == 0) &&
-                     ((name1[2] == '*') || (name1[2] == '\'')) &&
-                     ((name1[1] == '3') || (name1[1] == '5')) && (name1[0] == 'O'))))
-                  s1 = s2 = 0;
-              }
-            }
-          }
-
-          if(line_stick_helper) {
-            if(GET_BIT(ati1->visRep,cRepCyl) && GET_BIT(ati2->visRep,cRepCyl))
-              s1 = s2 = 0;
           }
 
           if((c1 == c2) && s1 && s2 && (!ColorCheckRamped(G, c1))) {

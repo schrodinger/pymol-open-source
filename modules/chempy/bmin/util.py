@@ -14,8 +14,8 @@ def cap(object):
     # guarantee identical ordering
     cmd.delete(object)
     cmd.load_model(model,object)
-    n_list = cmd.identify("(n;n &!(n;c a;2.0))")
-    c_list = cmd.identify("(n;c &!(n;n a;2.0))")
+    n_list = cmd.identify("(name N &!(name C around 2.0))")
+    c_list = cmd.identify("(name C &!(name N around 2.0))")
     print n_list
     print c_list
     for a in n_list:

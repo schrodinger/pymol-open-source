@@ -179,7 +179,7 @@ class DemoInfo:
                 cmd.show("sticks","(pept and not i;5:7)")
                 cmd.show("surface","(pept and i;5,6)")
                 cmd.show("mesh","(pept and i;1,11,12,13)")
-                cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
+                cmd.show("spheres","(?pept & resi 2+12+9+4 &! name C+N+O+CA)")
                 cmd.show("dots","(i;8)")
                 cmd.dist("pept_dist","(pept and i;1&n;OD2)","(pept and i;13&n;OG1)")
                 cmd.set("dot_width","2");

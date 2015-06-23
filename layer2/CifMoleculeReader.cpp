@@ -103,6 +103,34 @@ static T VLAGetFirstNonNULL(T * vla) {
 }
 
 /*
+ * Lookup one key in a map, return true if found and
+ * assign output reference `value1`
+ */
+template <typename Map, typename Key, typename T>
+inline bool find1(Map& dict, T& value1, const Key& key1) {
+  auto it = dict.find(key1);
+  if (it == dict.end())
+    return false;
+  value1 = it->second;
+  return true;
+}
+
+/*
+ * Lookup two keys in a map, return true if both found and
+ * assign output references `value1` and `value2`.
+ */
+template <typename Map, typename Key, typename T>
+inline bool find2(Map& dict,
+    T& value1, const Key& key1,
+    T& value2, const Key& key2) {
+  if (!find1(dict, value1, key1))
+    return false;
+  if (!find1(dict, value2, key2))
+    return false;
+  return true;
+}
+
+/*
  * Add one bond without checking if it already exists
  */
 static void ObjectMoleculeAddBond2(ObjectMolecule * I, int i1, int i2, int order) {
@@ -555,6 +583,8 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
     }
   }
 
+  CoordSet ** csets = NULL;
+
   // assembly
   for (int i = 0, nrows = arr_oper_expr->get_nrows(); i < nrows; ++i) {
     if (strcmp(assembly_id, arr_assembly_id->as_s(i)))
@@ -572,7 +602,12 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
     for (auto c_it = collection.begin(); c_it != collection.end(); ++c_it) {
       ncsets *= c_it->size();
     }
-    CoordSet ** csets = VLACalloc(CoordSet*, ncsets);
+
+    if (!csets) {
+      csets = VLACalloc(CoordSet*, ncsets);
+    } else {
+      VLACheck(csets, CoordSet*, ncsets - 1);
+    }
 
     // for cartesian product
     const CoordSet * const * c_src = &cset;
@@ -616,12 +651,10 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
       c_src = csets;
       c_src_len = c_it->size();
     }
-
-    // return assembly coordsets
-    return csets;
   }
 
-  return NULL;
+  // return assembly coordsets
+  return csets;
 }
 
 /*
@@ -1284,15 +1317,15 @@ static bool read_atom_site_aniso(PyMOLGlobals * G, cif_data * data,
 
   // read aniso table
   for (int i = 0; i < arr_u11->get_nrows(); i++) {
-    try {
-      if (mmcif) {
-        int key = arr_label->as_i(i);
-        ai = id_dict.at(key);
-      } else {
-        std::string key(arr_label->as_s(i));
-        ai = name_dict.at(key);
-      }
-    } catch (const std::out_of_range& e) {
+    ai = NULL;
+
+    if (mmcif) {
+      find1(id_dict, ai, arr_label->as_i(i));
+    } else {
+      find1(name_dict, ai, arr_label->as_s(i));
+    }
+
+    if (!ai) {
       // expected for multi-models
       continue;
     }
@@ -1352,14 +1385,13 @@ static BondType * read_geom_bond(PyMOLGlobals * G, cif_data * data,
     std::string key1(arr_ID_1->as_s(i));
     std::string key2(arr_ID_2->as_s(i));
 
-    try {
-      int i1 = name_dict.at(key1);
-      int i2 = name_dict.at(key2);
+    int i1, i2;
+    if (find2(name_dict, i1, key1, i2, key2)) {
 
       nBond++;
       BondTypeInit2(bond++, i1, i2, 1);
 
-    } catch (const std::out_of_range& e) {
+    } else {
       std::cout << "name lookup failed " << key1 << ' ' << key2 << std::endl;
     }
   }
@@ -1403,13 +1435,14 @@ static BondType * read_chemical_conn_bond(PyMOLGlobals * G, cif_data * data) {
   }
 
   // read table
+  int i1, i2;
   for (int i = 0; i < nBond; i++) {
-    try {
-      BondTypeInit2(bond++,
-          number_dict.at(arr_atom_1->as_i(i)),
-          number_dict.at(arr_atom_2->as_i(i)),
+    if (find2(number_dict,
+          i1, arr_atom_1->as_i(i),
+          i2, arr_atom_2->as_i(i))) {
+      BondTypeInit2(bond++, i1, i2,
           bondOrderLookup(arr_type->as_s(i)));
-    } catch (const std::out_of_range& e) {
+    } else {
       std::cout << "name lookup failed" << std::endl;
     }
   }
@@ -1517,14 +1550,13 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
           col_alt_id[j]->as_s(i));
     }
 
-    try {
-      int i1 = name_dict.at(key[0]);
-      int i2 = name_dict.at(key[1]);
+    int i1, i2;
+    if (find2(name_dict, i1, key[0], i2, key[1])) {
 
       nBond++;
       BondTypeInit2(bond++, i1, i2, 1);
 
-    } catch (const std::out_of_range& e) {
+    } else {
       std::cout << "name lookup failed " << key[0] << ' ' << key[1] << std::endl;
     }
 
@@ -1579,15 +1611,14 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, cif_data * data,
     std::string key2(col_ID_2->as_s(i));
     const char * order = col_order->as_s(i);
 
-    try {
-      int i1 = name_dict.at(key1);
-      int i2 = name_dict.at(key2);
+    int i1, i2;
+    if (find2(name_dict, i1, key1, i2, key2)) {
       int order_value = bondOrderLookup(order);
 
       nBond++;
       BondTypeInit2(bond++, i1, i2, order_value);
 
-    } catch (const std::out_of_range& e) {
+    } else {
       std::cout << "name lookup failed " << key1 << ' ' << key2 << std::endl;
     }
   }
@@ -1657,7 +1688,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
     }
   } else if (!I->assembly_ids) {
     // store list of assembly ids with ObjectMolecule, for cmd.get_assembly_ids
-    const cif_array *arr_assembly_id = datablock->get_arr("_pdbx_struct_assembly_gen.assembly_id");
+    const cif_array *arr_assembly_id = datablock->get_arr("_pdbx_struct_assembly.id");
     if (arr_assembly_id) {
       I->assembly_ids = new std::vector<std::string>;
       for (int i = 0, n = arr_assembly_id->get_nrows(); i < n; ++i) {
