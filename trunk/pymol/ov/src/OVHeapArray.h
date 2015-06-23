@@ -1,27 +1,6 @@
 #ifndef _H_OVHeapArray
 #define _H_OVHeapArray
 
-#ifdef OV_JX
-
-/* NEW Jenarix-based OVHeapArray wrapper */
-#define _OVHeapArray jx_heap_vla
-
-#ifdef JX_HEAP_TRACKER
-#define _OVHeapArray_Alloc(h,u,s,z,f,l) jx_heap_VlaAllocRaw(u,s,z,f,l)
-#else
-#define _OVHeapArray_Alloc(h,u,s,z) jx_heap_VlaAllocRaw(u,s,z)
-#endif
-
-#define _OVHeapArray_Check jx_heap_VlaAddIndexRaw
-#define _OVHeapArray_Free jx_heap_VlaFreeRaw
-#define _OVHeapArray_SetSize jx_heap_VlaSetSizeRaw
-#define OVHeapArray_GetSize jx_heap_VlaGetSizeRaw
-
-#else
-
-
-/* OLD proven OVHeapArray */
-
 #include "OVHeap.h"
 
 typedef struct {
@@ -60,10 +39,6 @@ ov_size OVHeapArray_GetSize(void *ptr
 #endif
   );
 
-#endif
-
-
-/* OLD & NEW shared implementation */
 
 #ifndef OVHeap_TRACKING
 

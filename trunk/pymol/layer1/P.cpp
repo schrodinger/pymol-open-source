@@ -439,6 +439,8 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   char *aprop;
   AtomPropertyInfo *ap;
   PyObject *ret = NULL;
+  bool borrowed = false;
+
   if (!wobj || !wobj->obj){
     /* ERROR */
     PRINTFB(wobj->G, FB_Python, FB_Errors)
@@ -552,8 +554,11 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   } else {
     /* if not an atom property, check if local variable in dict */
     ret = PyDict_GetItem(wobj->dict, key);
+    borrowed = true;
   }
-  PXIncRef(ret);
+
+  if (borrowed)
+    PXIncRef(ret);
   return ret;
 }
 

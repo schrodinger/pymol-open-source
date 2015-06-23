@@ -89,7 +89,7 @@ class DemoInfo:
                 self.cmd.show("sticks","(pept and not i;5:7)")
                 self.cmd.show("surface","(pept and i;5,6)")
                 self.cmd.show("mesh","(pept and i;1,11,12,13)")
-                self.cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
+                self.cmd.show("spheres","(?pept & resi 2+12+9+4 &! name C+N+O+CA)")
                 self.cmd.show("dots","(i;8)")
                 self.cmd.dist("pept_dist","(pept and i;1&n;OD2)","(pept and i;13&n;OG1)")
                 self.cmd.set("dot_width","2");
@@ -216,10 +216,10 @@ class DemoInfo:
             for a in xrange(1,181):
                 try:
                     self.cmd.set("suspend_updates",1,quiet=1)
-                    self.cmd.edit("(arg and n;cd)","(arg and n;cg)",quiet=1)
+                    self.cmd.edit("(arg & name CD)","(arg & name CG)",quiet=1)
                     self.cmd.torsion("6")
                     self.cmd.unpick()
-                    self.cmd.edit("(arg and n;cb)","(arg and n;ca)",quiet=1)
+                    self.cmd.edit("(arg & name CB)","(arg & name CA)",quiet=1)
                     self.cmd.torsion("2")
                     self.cmd.unpick()
                 finally:
@@ -356,7 +356,7 @@ class DemoInfo:
                 self.cmd.hide("(1tii)")
                 self.cmd.show("cartoon","1tii")
                 self.cmd.zoom("1tii")
-                self.cmd.spectrum("count","rainbow","1tii////ca")
+                self.cmd.spectrum("count","rainbow","1tii////CA")
                 self.cmd.set("cartoon_highlight_color","grey50","1tii")
                 self.cmd.set("cartoon_fancy_helices",1,"1tii")
             finally:

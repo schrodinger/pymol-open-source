@@ -3405,7 +3405,7 @@ PyMOLreturn_value PyMOL_GetVersion(CPyMOL * I){
   PYMOL_API_LOCK
   if(ok) {
     result.type = PYMOL_RETURN_VALUE_IS_STRING;
-    result.string = strdup(_PyMOL_VERSION);
+    result.string = mstrdup(_PyMOL_VERSION);
     result.status = PyMOLstatus_SUCCESS;
   };
   PYMOL_API_UNLOCK return result;

@@ -20,8 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"ov_port.h"
 
-#ifndef OV_JX
-
 #include"MemoryDebug.h"
 #include"MemoryCache.h"
 
@@ -85,8 +83,10 @@ void *VLAExpand(void *ptr, ov_size rec)
     if(vla->auto_zero)
       soffset = sizeof(VLARec) + (vla->unit_size * vla->size);
     vla->size = ((unsigned int) (rec * vla->grow_factor)) + 1;
+#if 0
     if(vla->size <= rec)
       vla->size = rec + 1;
+#endif
     {
       VLARec *old_vla = vla;
       vla = (VLARec *) mrealloc(vla, (vla->unit_size * vla->size) + sizeof(VLARec));
@@ -548,7 +548,7 @@ extern "C" {
   void MemoryDebugHashAdd(DebugRec * rec) {
     int hash;
 
-    hash = (int) rec;
+    hash = (size_t) rec;
     hash = HASH(hash);
     rec->next = HashTable[hash];
     HashTable[hash] = rec;
@@ -560,7 +560,7 @@ extern "C" {
 
     rec = (DebugRec *) ptr;
     rec--;
-    hash = (int) rec;
+    hash = (size_t) rec;
     hash = HASH(hash);
     last = NULL;
     cur = HashTable[hash];
@@ -721,7 +721,7 @@ extern "C" {
           exit(EXIT_FAILURE);
         }
 
-        new_rec = malloc(size + sizeof(DebugRec));
+        new_rec = (DebugRec*) malloc(size + sizeof(DebugRec));
         if(new_rec)
           memcpy(new_rec, rec, size + sizeof(DebugRec));
         free(rec);
@@ -784,13 +784,13 @@ extern "C" {
           exit(EXIT_FAILURE);
         }
         if(old_size > size) {
-          new_rec = malloc(size + sizeof(DebugRec));
+          new_rec = (DebugRec*) malloc(size + sizeof(DebugRec));
           if(new_rec)
             memcpy(new_rec, rec, size + sizeof(DebugRec));
           free(rec);
           rec = new_rec;
         } else {
-          rec = realloc(rec, size + sizeof(DebugRec));
+          rec = (DebugRec*) realloc(rec, size + sizeof(DebugRec));
         }
         if(!rec) {
           printf("MemoryDebug-ERR: realloc() failed reallocation! (%s:%i)\n", file, line);
@@ -838,16 +838,11 @@ extern "C" {
   void MemoryDebugFree(void *ptr, const char *file, int line, int type) {
     DebugRec *rec;
 
+    if(!ptr)
+      return;
+
     if(InitFlag)
       MemoryDebugInit();
-    if(!ptr) {
-      printf("MemoryDebug-ERR: free() called with NULL pointer (%s:%i)\n", file, line);
-#ifdef GDB_ENTRY
-      MemoryDebugDump();
-      abort();
-#endif
-      exit(EXIT_FAILURE);
-    }
     rec = MemoryDebugHashRemove(ptr);
     if(rec) {
       if(rec->type != type) {
@@ -873,9 +868,15 @@ extern "C" {
     Count--;
   }
 
+  // strdup
+  char *MemoryDebugStrDup(const char *s, const char *file, int line, int type) {
+    size_t n = strlen(s) + 1;
+    void *ptr = MemoryDebugMalloc(n, file, line, type);
+    return (char*)memcpy(ptr, s, n);
+  }
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif
 #endif

@@ -1375,13 +1375,13 @@ PyObject *SettingGetPyObject(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
 
   switch (type) {
   case cSetting_boolean:
-    result = SettingGet_b(G, set1, set2, index) ? Py_True : Py_False ;
+    result = CPythonVal_New_Boolean(SettingGet_b(G, set1, set2, index));
     break;
   case cSetting_int:
-    result = Py_BuildValue("i", SettingGet_i(G, set1, set2, index));
+    result = CPythonVal_New_Integer(SettingGet_i(G, set1, set2, index));
     break;
   case cSetting_float:
-    result = Py_BuildValue("f", SettingGet_f(G, set1, set2, index));
+    result = CPythonVal_New_Float(SettingGet_f(G, set1, set2, index));
     break;
   case cSetting_float3:
     ptr = SettingGet_3fv(G, set1, set2, index);
@@ -1394,16 +1394,11 @@ PyObject *SettingGetPyObject(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
 	float *col;
 	col = ColorGet(G, retcol);
 	result = Py_BuildValue("(fff)", col[0], col[1], col[2]);
-      } else {
-	result = PConvAutoNone(Py_None);
       }
     }
     break;
   case cSetting_string:
-    result = Py_BuildValue("s", SettingGet_s(G, set1, set2, index));
-    break;
-  default:
-    result = PConvAutoNone(Py_None);
+    result = PyString_FromString(SettingGet_s(G, set1, set2, index));
     break;
   }
   return result;
@@ -2699,7 +2694,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     SceneChanged(G);
     break;
   case cSetting_ribbon_color:
-  case cSetting_ribbon_nucleic_acid_mode:
     ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
     SceneChanged(G);
     break;
@@ -2883,6 +2877,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
     break;
   case cSetting_cartoon_side_chain_helper:
+  case cSetting_cartoon_nucleic_acid_mode:
     ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
@@ -2890,6 +2885,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     SceneChanged(G);
     break;
   case cSetting_ribbon_side_chain_helper:
+  case cSetting_ribbon_nucleic_acid_mode:
     ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
@@ -2900,7 +2896,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_cartoon_ring_transparency:
   case cSetting_cartoon_trace_atoms:
   case cSetting_cartoon_refine:
-  case cSetting_cartoon_nucleic_acid_mode:
   case cSetting_cartoon_nucleic_acid_color:
   case cSetting_cartoon_ring_mode:
   case cSetting_cartoon_ring_finder:

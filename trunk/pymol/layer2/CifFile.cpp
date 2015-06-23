@@ -16,6 +16,7 @@
 
 #include "CifFile.h"
 #include "File.h"
+#include "MemoryDebug.h"
 
 // basic IO and string handling
 
@@ -165,7 +166,7 @@ const cif_array * cif_data::get_opt(const char * key, const char * alias1, const
 // constructor
 cif_file::cif_file(const char* filename, const char* contents_) {
   if (contents_) {
-    contents = strdup(contents_);
+    contents = mstrdup(contents_);
   } else {
     contents = FileGetContents(filename, NULL);
     if (!contents)
@@ -183,7 +184,7 @@ cif_file::~cif_file() {
     delete it->second;
 
   if (contents)
-    free(contents);
+    mfree(contents);
 }
 
 // destructor

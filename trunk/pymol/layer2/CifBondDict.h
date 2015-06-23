@@ -22,13 +22,14 @@
 // Working with this limitation is currently reasonable in PyMOL,
 // since cResnLen=5 and cAtomNameLen=4 (see AtomInfo.h).
 
+#include <cstdint>
 #include <unordered_map>
 #include <string.h>
 
 // mapped type of bond_dict_t
-class res_bond_dict_t : std::unordered_map<int64_t, signed char> {
+class res_bond_dict_t : std::unordered_map<std::int_fast64_t, signed char> {
   static key_type make_key(const char * name1, const char * name2) {
-    union { char s[4]; int32_t i; } u1, u2;
+    union { char s[4]; std::int32_t i; } u1, u2;
 
     strncpy(u1.s, name1, 4);
     strncpy(u2.s, name2, 4);
@@ -53,7 +54,7 @@ public:
 };
 
 // type for mapping: resn -> ((name1, name2) -> bond order)
-class bond_dict_t : public std::map<int64_t, res_bond_dict_t> {
+class bond_dict_t : public std::map<std::int_fast64_t, res_bond_dict_t> {
   static key_type make_key(const char * s_) {
     union { key_type i; char s[sizeof(key_type)]; };
     strncpy(s, s_, sizeof(s));

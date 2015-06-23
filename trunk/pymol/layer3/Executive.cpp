@@ -12539,7 +12539,7 @@ int ExecutiveGetSettingFromString(PyMOLGlobals * G, PyMOLreturn_value *result,
       {
         OrthoLineType buffer = "";
 	result->type = PYMOL_RETURN_VALUE_IS_STRING;
-	result->string = strdup(SettingGetTextPtr(G, set_ptr2, set_ptr1, index, buffer));
+	result->string = mstrdup(SettingGetTextPtr(G, set_ptr2, set_ptr1, index, buffer));
       }
       break;
     default:

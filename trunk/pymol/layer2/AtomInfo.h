@@ -393,4 +393,9 @@ typedef struct {
 
 int BondTypeCompare(PyMOLGlobals * G, BondType * bt1, BondType * bt2);
 
+bool SideChainHelperFilterBond(const int *marked,
+    const AtomInfoType *ati1,
+    const AtomInfoType *ati2,
+    int b1, int b2, int na_mode, int *c1, int *c2);
+
 #endif

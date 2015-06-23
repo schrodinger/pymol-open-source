@@ -709,7 +709,7 @@ ok_except1:
     plugin->close_file_read(file_handle);
 
   if(atoms)
-    free(atoms);
+    mfree(atoms);
 
   return I;
 }
