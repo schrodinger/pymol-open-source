@@ -16,7 +16,6 @@ class TestSideChainHelper(testing.PyMOLTestCase):
             ['sticks', 'lines'],    # sidechain rep
             ['cartoon', 'ribbon'],  # for setting X_side_chain_helper and X_nucleic_acid_mode
             [0, 1])                 # X_nucleic_acid_mode
-    @testing.requires('incentive')
     @testing.requires_version('1.7.7')
     def test(self, bb_rep, sc_rep, bb_set, n_a_m):
         cmd.viewport(100, 100)
