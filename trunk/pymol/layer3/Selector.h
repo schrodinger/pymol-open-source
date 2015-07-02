@@ -64,7 +64,7 @@ int SelectorUpdateTableImpl(PyMOLGlobals * G, CSelector *I, int req_state, int d
 #define cSelectorUpdateTableCurrentState -2
 #define cSelectorUpdateTableEffectiveStates -3
 
-int SelectorIndexByName(PyMOLGlobals * G, const char *sele);
+int SelectorIndexByName(PyMOLGlobals * G, const char *sele, int ignore_case=-1);
 char *SelectorGetNameFromIndex(PyMOLGlobals * G, int index);
 void SelectorFree(PyMOLGlobals * G);
 void SelectorFreeImpl(PyMOLGlobals * G, CSelector *I, short init2);
@@ -201,5 +201,29 @@ typedef struct {
 } MemberType;
 
 int SelectorIsMember(PyMOLGlobals * G, int start, int sele);
+
+/*
+ * Wrapper around SelectorGetTmp/SelectorFreeTmp/SelectorIndexByName.
+ *
+ * Temporary named selection gets deleted when instance gets out of scope.
+ */
+class SelectorTmp {
+  PyMOLGlobals * m_G;
+  char m_name[1024]; // OrthoLineType
+  int m_count;
+
+public:
+  SelectorTmp(PyMOLGlobals * G, const char * sele) : m_G(G) {
+    m_count = SelectorGetTmp(m_G, sele, m_name);
+  }
+  ~SelectorTmp() {
+    SelectorFreeTmp(m_G, m_name);
+  }
+  const char * getName() { return m_name; }
+  int getAtomCount() { return m_count; }
+  int getIndex() {
+    return m_name[0] ? SelectorIndexByName(m_G, m_name, false) : -1;
+  }
+};
 
 #endif

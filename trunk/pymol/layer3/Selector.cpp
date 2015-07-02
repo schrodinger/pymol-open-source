@@ -51,6 +51,7 @@ Z* -------------------------------------------------------------------
 typedef char SelectorWordType[SelectorWordLength];
 
 #define cSelectorTmpPrefix "_sel_tmp_"
+#define cSelectorTmpPrefixLen 9 /* strlen(cSelectorTmpPrefix) */
 #define cSelectorTmpPattern "_sel_tmp_*"
 
 #define cNDummyModels 2
@@ -1523,7 +1524,6 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
         ObjectMolecule *obj;
         CoordSet *cs;
         int at;
-        AtomInfoType *ai;
         int idx;
         float *src, *dst;
         for(i = 0; i < n; i++) {
@@ -1531,7 +1531,6 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals * G, int sele, int stat
 
           obj = I->Obj[I->Table[a].model];
           at = +I->Table[a].atom;
-          ai = obj->AtomInfo + at;
           for(st = 0; st < I->NCSet; st++) {
 
             if((state < 0) || (st == state)) {
@@ -1595,8 +1594,6 @@ static ov_diff SelectGetNameOffset(PyMOLGlobals * G, const char *name, ov_size m
     offset = 0;
     best_offset = -1;
     best_match = -1;
-    while(name[0] == '?')
-      name++;
 
     while(I_Name[offset][0]) {
       wm = WordMatch(G, name, I_Name[offset], ignCase);
@@ -2108,7 +2105,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
       MapType *map;
       float *v0, *v1;
       int n1;
-      int c, i, h, k, l;
+      int i, h, k, l;
       int at;
 
       int a, aa;
@@ -2165,7 +2162,6 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
         cutoff = hbc->maxDistAtZero;
       }
 
-      c = 0;
       n1 = 0;
 
       for(aa = 0; aa < I->NAtom; aa++) {        /* first, clear flags */
@@ -3556,7 +3552,6 @@ int SelectorGetPairIndices(PyMOLGlobals * G, int sele1, int state1, int sele2, i
   int c;
   float dist;
   int a1, a2;
-  AtomInfoType *ai1, *ai2;
   int at1, at2;
   CoordSet *cs1, *cs2;
   ObjectMolecule *obj1, *obj2;
@@ -3603,10 +3598,6 @@ int SelectorGetPairIndices(PyMOLGlobals * G, int sele1, int state1, int sele2, i
         cs1 = obj1->CSet[state1];
         cs2 = obj2->CSet[state2];
         if(cs1 && cs2) {
-
-          ai1 = obj1->AtomInfo + at1;
-          ai2 = obj2->AtomInfo + at2;
-
           idx1 = cs1->atmToIdx(at1);
           idx2 = cs2->atmToIdx(at2);
 
@@ -5243,7 +5234,7 @@ int SelectorMapMaskVDW(PyMOLGlobals * G, int sele1, ObjectMapState * oMap, float
   CSelector *I = G->Selector;
   MapType *map;
   float *v2;
-  int n1, n2;
+  int n1;
   int a, b, c, i, j, h, k, l;
   int at;
   int s;
@@ -5289,7 +5280,6 @@ int SelectorMapMaskVDW(PyMOLGlobals * G, int sele1, ObjectMapState * oMap, float
   /* now create and apply voxel map */
   c = 0;
   if(n1) {
-    n2 = 0;
     map = MapNewFlagged(G, -(buffer + MAX_VDW), I->Vertex, I->NAtom, NULL, I->Flag1);
     if(map) {
       MapSetupExpress(map);
@@ -7382,21 +7372,20 @@ int SelectorSetName(PyMOLGlobals * G, const char *new_name, const char *old_name
  * RETURNS
  *   (int) index #, or -1 if not found
  */
-int SelectorIndexByName(PyMOLGlobals * G, const char *sname)
+int SelectorIndexByName(PyMOLGlobals * G, const char *sname, int ignore_case)
 {
-  OrthoLineType name;
   CSelector *I = G->Selector;
-  int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
   ov_diff i = -1;
 
   if(sname) {
-    const char *tname = sname;
-    while((tname[0] == '%') || (tname[0] == '?'))
-      tname++;
-    strcpy(name, tname);
-    i = SelectGetNameOffset(G, name, 1, ignore_case);
+    if (ignore_case < 0)
+      ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
 
-    if((i >= 0) && (name[0] != '_')) {  /* don't do checking on internal selections */
+    while((sname[0] == '%') || (sname[0] == '?'))
+      sname++;
+    i = SelectGetNameOffset(G, sname, 1, ignore_case);
+
+    if((i >= 0) && (sname[0] != '_')) {  /* don't do checking on internal selections */
       const char *best;
       best = ExecutiveFindBestNameMatch(G, sname);      /* suppress spurious matches
                                                            of selections with non-selections */
@@ -7640,7 +7629,7 @@ ok_except1:
 int SelectorCheckTmp(PyMOLGlobals * G, const char *name)
 {
   if(WordMatch(G, cSelectorTmpPattern, name, false) + 1 ==
-     -(int) strlen(cSelectorTmpPrefix))
+     - cSelectorTmpPrefixLen)
     return true;
   else
     return false;
@@ -7651,7 +7640,7 @@ int SelectorCheckTmp(PyMOLGlobals * G, const char *name)
 void SelectorFreeTmp(PyMOLGlobals * G, const char *name)
 {                               /* remove temporary selections */
   if(name && name[0]) {
-    if(strncmp(name, cSelectorTmpPrefix, strlen(cSelectorTmpPrefix)) == 0) {
+    if(strncmp(name, cSelectorTmpPrefix, cSelectorTmpPrefixLen) == 0) {
       ExecutiveDelete(G, name);
     }
   }
@@ -8680,11 +8669,8 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     {
       /* first, verify chemistry for all atoms... */
       ObjectMolecule *lastObj = NULL, *obj;
-      int at, s;
       for(a = cNDummyAtoms; a < I->NAtom; a++) {
-        at = i_table[a].atom;
         obj = i_obj[i_table[a].model];
-        s = obj->AtomInfo[at].selEntry;
         if(obj != lastObj) {
           ObjectMoleculeUpdateNeighbors(obj);
           ObjectMoleculeVerifyChemistry(obj, -1);
@@ -10342,7 +10328,6 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
       int s;
       int c = 0;
       int a, at, a1, aa;
-      AtomInfoType *ai;
       ObjectMolecule *obj, *lastObj = NULL;
       int *stk;
       int stkDepth = 0;
@@ -10369,7 +10354,6 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
             base[0].sele[a] = tag;
             c++;
             at = i_table[a].atom;       /* start walk from this location */
-            ai = obj->AtomInfo + at;
 
             s = obj->Neighbor[at];      /* add neighbors onto the stack */
             s++;                /* skip count */
@@ -10869,7 +10853,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
   unsigned int code = 0;
   int valueFlag = 0;            /* are we expecting? */
   int *result = NULL;
-  int opFlag, opFlag2, maxLevel;
+  int opFlag, maxLevel;
   char *q;
   int totDepth = 0;
   int exact = 0;
@@ -11240,7 +11224,6 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
 
               }
           if(opFlag) {
-            opFlag2 = true;     /* make note that we performed an operation */
             depth = 1;          /* start back at the left hand side */
           } else {
             depth = depth + 1;

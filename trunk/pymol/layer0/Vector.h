@@ -169,7 +169,7 @@ void multiply33d33d(const double *m1, const double *m2, double *m3);
 void matrix_transform33f3f(const Matrix33f m1, const float *v1, float *v2);
 void matrix_inverse_transform33f3f(const Matrix33f m1, const float *v1, float *v2);
 
-void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat);
+void rotation_to_matrix33f(const float *axis, float angle, Matrix33f mat);
 void matrix_multiply33f33f(Matrix33f m1, Matrix33f m2, Matrix33f m3);
 void matrix_multiply33d33d(Matrix33d m1, Matrix33d m2, Matrix33d m3);
 
@@ -179,18 +179,18 @@ void matrix_multiply33d33d(Matrix33d m1, Matrix33d m2, Matrix33d m3);
    (2) and a post-translation stored in forth column, first three rows.
    There are certain cases where this representation is more convenient.
  */
-void combineTTT44f44f(float *m1, float *m2, float *m3);
-void transformTTT44f3f(float *m1, float *m2, float *m3);
-void transform_normalTTT44f3f(float *m1, float *m2, float *m3);
+void combineTTT44f44f(const float *m1, const float *m2, float *m3);
+void transformTTT44f3f(const float *m1, const float *m2, float *m3);
+void transform_normalTTT44f3f(const float *m1, const float *m2, float *m3);
 void initializeTTT44f(float *m);
 
-void multiply44d44d44d(double *left, double *right, double *product);
-void left_multiply44d44d(double *left, double *right);
-void right_multiply44d44d(double *left, double *right);
+void multiply44d44d44d(const double *left, const double *right, double *product);
+void left_multiply44d44d(const double *left, double *right);
+void right_multiply44d44d(double *left, const double *right);
 
-void multiply44f44f44f(float *left, float *right, float *product);
-void left_multiply44f44f(float *left, float *right);
-void right_multiply44f44f(float *left, float *right);
+void multiply44f44f44f(const float *left, const float *right, float *product);
+void left_multiply44f44f(const float *left, float *right);
+void right_multiply44f44f(float *left, const float *right);
 
 void reorient44d(double *matrix);
 

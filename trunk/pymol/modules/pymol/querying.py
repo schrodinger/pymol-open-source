@@ -139,6 +139,25 @@ DESCRIPTION
         if _raising(r,_self): raise pymol.CmdException
         return r
 
+    def get_object_ttt(object, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_object_ttt" is an unsupported command
+        '''
+        quiet = int(quiet)
+        with _self.lockcm:
+            r = _cmd.get_object_ttt(_self._COb, str(object), -1, quiet)
+        if not quiet:
+            if r is None:
+                print 'TTT is None'
+            else:
+                for i in range(4):
+                    if i == 3:
+                        print 'TTT ---------------------------+---------'
+                    print 'TTT %8.2f %8.2f %8.2f | %8.2f' % tuple(r[i * 4:i * 4 + 4])
+        return r
+
     def get_object_list(selection="(all)", quiet=1, _self=cmd):
         '''
         

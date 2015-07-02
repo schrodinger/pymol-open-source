@@ -1508,7 +1508,6 @@ static int TriangleBuildLast(TriangleSurfaceRec * II, int i1, int i2, float *v, 
   int i0, s01, s02, s12, i, j, h, k, l;
   float minDist2, dp;
   int used = -1;
-  int both_active;
   map = I->map;
   s12 = TriangleEdgeStatus(I, i1, i2);
   if(s12 > 0)
@@ -1516,7 +1515,6 @@ static int TriangleBuildLast(TriangleSurfaceRec * II, int i1, int i2, float *v, 
   if(s12 >= 0) {
     minDist2 = I->maxEdgeLenSq;
     i0 = -1;
-    both_active = (I->vertActive[i1] && I->vertActive[i2]);
     v1 = v + i1 * 3;
     v2 = v + i2 * 3;
     MapLocus(map, v1, &h, &k, &l);

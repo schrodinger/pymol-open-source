@@ -912,7 +912,7 @@ int PConvPyListToFloatArrayInPlaceAutoZero(PyObject * obj, float *ii, ov_size ll
   return (ok);
 }
 
-PyObject *PConvFloatArrayToPyList(float *f, int l)
+PyObject *PConvFloatArrayToPyList(const float *f, int l)
 {
   int a;
   PyObject *result = PyList_New(l);
@@ -921,7 +921,7 @@ PyObject *PConvFloatArrayToPyList(float *f, int l)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvFloatArrayToPyListNullOkay(float *f, int l)
+PyObject *PConvFloatArrayToPyListNullOkay(const float *f, int l)
 {
   int a;
   PyObject *result = NULL;
@@ -933,7 +933,7 @@ PyObject *PConvFloatArrayToPyListNullOkay(float *f, int l)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvDoubleArrayToPyList(double *f, int l)
+PyObject *PConvDoubleArrayToPyList(const double *f, int l)
 {
   int a;
   PyObject *result = PyList_New(l);
@@ -942,7 +942,7 @@ PyObject *PConvDoubleArrayToPyList(double *f, int l)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvFloatVLAToPyList(float *f)
+PyObject *PConvFloatVLAToPyList(const float *f)
 {
   int a, l;
   PyObject *result = NULL;
@@ -970,7 +970,7 @@ PyObject *PConvFloatVLAToPyTuple(float *vla)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvIntVLAToPyList(int *f)
+PyObject *PConvIntVLAToPyList(const int *f)
 {
   int a, l;
   PyObject *result = NULL;
@@ -997,7 +997,7 @@ PyObject *PConvIntVLAToPyTuple(int *vla)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvIntArrayToPyList(int *f, int l)
+PyObject *PConvIntArrayToPyList(const int *f, int l)
 {
   int a;
   PyObject *result = PyList_New(l);
@@ -1006,7 +1006,7 @@ PyObject *PConvIntArrayToPyList(int *f, int l)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvSIntArrayToPyList(short int *f, int l)
+PyObject *PConvSIntArrayToPyList(const short int *f, int l)
 {
   int a;
   PyObject *result = PyList_New(l);
@@ -1015,7 +1015,7 @@ PyObject *PConvSIntArrayToPyList(short int *f, int l)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvSCharArrayToPyList(signed char *f, int l)
+PyObject *PConvSCharArrayToPyList(const signed char *f, int l)
 {
   int a;
   PyObject *result = PyList_New(l);
@@ -1043,7 +1043,7 @@ PyObject *PConv3DIntArrayTo3DPyList(int ***array, int *dim)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvStringListToPyList(int l, char **str)
+PyObject *PConvStringListToPyList(int l, const char * const *str)
 {
   int a;
   PyObject *result = PyList_New(l);
@@ -1142,10 +1142,10 @@ int PConvPyListToLabPosVLA(PyObject * obj, LabPosType ** vla_ptr)
   return (ok);
 }
 
-PyObject *PConvLabPosVLAToPyList(LabPosType * vla, int l)
+PyObject *PConvLabPosVLAToPyList(const LabPosType * vla, int l)
 {                               /* TO DO error handling */
   int a;
-  LabPosType *p = vla;
+  const LabPosType *p = vla;
   PyObject *result = NULL;
   if(p) {
     PyObject *item;

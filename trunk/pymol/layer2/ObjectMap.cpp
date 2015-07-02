@@ -1733,7 +1733,7 @@ void ObjectMapUpdateExtents(ObjectMap * I)
   }
 
   if(I->Obj.TTTFlag && I->Obj.ExtentFlag) {
-    float *ttt;
+    const float *ttt;
     double tttd[16];
     if(ObjectGetTTT(&I->Obj, &ttt, -1)) {
       convertTTTfR44d(ttt, tttd);

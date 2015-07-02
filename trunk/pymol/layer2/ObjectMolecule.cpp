@@ -12329,7 +12329,6 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   int pass = info->pass;
-  int a;
   CoordSet *cs;
   int pop_matrix = false;
   int use_matrices = SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
