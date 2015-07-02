@@ -121,7 +121,6 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
   return 0;
 #else
   CoordSet *I = NULL;
-  PyObject *tmp;
   int ok = true;
   int ll = 0;
 

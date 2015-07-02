@@ -747,7 +747,8 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   GLint alpha_func;
   GLfloat alpha_ref;
   float tex_corner[24];
-  float *corner, *ttt;
+  float *corner;
+  const float *ttt;
   float zaxis[3];
   float points[36], tex_coords[36];
   int n_points;
@@ -1283,7 +1284,7 @@ void ObjectVolumeRecomputeExtent(ObjectVolume * I)
   I->Obj.ExtentFlag = extent_flag;
 
   if(I->Obj.TTTFlag && I->Obj.ExtentFlag) {
-    float *ttt;
+    const float *ttt;
     double tttd[16];
     if(ObjectGetTTT(&I->Obj, &ttt, -1)) {
       convertTTTfR44d(ttt, tttd);

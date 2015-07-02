@@ -405,8 +405,8 @@ int ExecutiveIdentifyObjects(PyMOLGlobals * G, const char *s1, int mode, int **i
 int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, float *trans, int store, int quiet);
 int ExecutiveCombineObjectTTT(PyMOLGlobals * G, const char *name, float *ttt,
                               int reverse_order, int store);
-int ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, float *ttt, int state, int quiet, int store);
-int ExecutiveGetObjectTTT(PyMOLGlobals * G, const char *name, float **ttt, int state,
+int ExecutiveSetObjectTTT(PyMOLGlobals * G, const char *name, const float *ttt, int state, int quiet, int store);
+int ExecutiveGetObjectTTT(PyMOLGlobals * G, const char *name, const float **ttt, int state,
                           int quiet);
 int ExecutiveGetObjectMatrix(PyMOLGlobals * G, const char *name, int state, double **matrix,
                              int incl_ttt);

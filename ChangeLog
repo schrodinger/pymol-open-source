@@ -2,6 +2,15 @@
 CHANGE LOG
 =========================================================================
 
+2015-07-02 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* mmcif: match pdb1, pdb2, ... files with assembly generation
+	  - fix handling of _pdbx_struct_assembly_gen with repeated asym_id
+	  - create assembly for multi-state objects
+	  - no pdb_insure_orthogonal for assemblies
+
+	* fix "File > Run"
+
 2015-06-23 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix assemblies for cases like 4f3r which have multiple entries in

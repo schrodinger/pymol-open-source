@@ -3361,15 +3361,9 @@ PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, 
   float min_ret, max_ret;
   char prefix[2];
   OVreturn_word pal_word;
-  OrthoLineType s1;
   char *palette = (char*)malloc(strlen(pal)+1);
     UtilNCopyToLower((char*)palette, pal, strlen(pal)+1);
   
-  if(selection[0])
-    ok = (SelectorGetTmp(I->G, selection, s1) >= 0);
-  else
-    s1[0] = 0;
-
   if (ok)
     ok = OVreturn_IS_OK(pal_word = get_palette(I, (char*)palette));  
   free(palette);
@@ -3380,8 +3374,8 @@ PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *pal, 
   first = palette_data[array_pl++];
   last = palette_data[array_pl++];
 
-  ret = ExecutiveSpectrum(I->G, s1, expression, minimum, maximum, first, last, prefix, digits, byres, quiet, &min_ret, &max_ret);
-  SelectorFreeTmp(I->G, s1);
+  ret = ExecutiveSpectrum(I->G, selection, expression, minimum, maximum,
+      first, last, prefix, digits, byres, quiet, &min_ret, &max_ret);
 
   if (ret){
     result.size = 2;

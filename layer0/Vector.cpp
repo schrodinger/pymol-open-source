@@ -781,7 +781,7 @@ void initializeTTT44f(float *m)
     m[4 * a + a] = _1;
 }
 
-void combineTTT44f44f(float *m1, float *m2, float *m3)
+void combineTTT44f44f(const float *m1, const float *m2, float *m3)
 
 
 /* WARNING: this routine is ill-conceived and essentially broken */
@@ -792,7 +792,8 @@ void combineTTT44f44f(float *m1, float *m2, float *m3)
 {
   float m1_homo[16];
   float m2_homo[16];
-  float *src, *dst;
+  const float *src;
+  float *dst;
   float pre[3], post[3];
 
   /* convert the existing TTT into a homogenous transformation matrix */
@@ -939,7 +940,7 @@ void convertR44dTTTf(const double *homo, float *ttt)
   convert44d44f(homo, ttt);
 }
 
-void multiply44d44d44d(double *left, double *right, double *product)
+void multiply44d44d44d(const double *left, const double *right, double *product)
 {
   double rA = right[0];
   double rB = right[4];
@@ -982,7 +983,7 @@ void multiply44d44d44d(double *left, double *right, double *product)
   product[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
 }
 
-void left_multiply44d44d(double *left, double *right)
+void left_multiply44d44d(const double *left, double *right)
 {
   double rA = right[0];
   double rB = right[4];
@@ -1025,7 +1026,7 @@ void left_multiply44d44d(double *left, double *right)
   right[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
 }
 
-void right_multiply44d44d(double *left, double *right)
+void right_multiply44d44d(double *left, const double *right)
 {
   double cA = left[0];
   double cB = left[1];
@@ -1069,7 +1070,7 @@ void right_multiply44d44d(double *left, double *right)
 
 }
 
-void multiply44f44f44f(float *left, float *right, float *product)
+void multiply44f44f44f(const float *left, const float *right, float *product)
 {
   float rA = right[0];
   float rB = right[4];
@@ -1112,7 +1113,7 @@ void multiply44f44f44f(float *left, float *right, float *product)
   product[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
 }
 
-void left_multiply44f44f(float *left, float *right)
+void left_multiply44f44f(const float *left, float *right)
 {
   float rA = right[0];
   float rB = right[4];
@@ -1155,7 +1156,7 @@ void left_multiply44f44f(float *left, float *right)
   right[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
 }
 
-void right_multiply44f44f(float *left, float *right)
+void right_multiply44f44f(float *left, const float *right)
 {
   float cA = left[0];
   float cB = left[1];
@@ -1428,7 +1429,7 @@ void invert_rotation_only44d44d(const double *orig, double *inv)
 
 }
 
-void transformTTT44f3f(float *m1, float *m2, float *m3)
+void transformTTT44f3f(const float *m1, const float *m2, float *m3)
 {
   float m2r0 = m2[0] + m1[12];
   float m2r1 = m2[1] + m1[13];
@@ -1438,7 +1439,7 @@ void transformTTT44f3f(float *m1, float *m2, float *m3)
   m3[2] = m1[8] * m2r0 + m1[9] * m2r1 + m1[10] * m2r2 + m1[11];
 }
 
-void transform_normalTTT44f3f(float *m1, float *m2, float *m3)
+void transform_normalTTT44f3f(const float *m1, const float *m2, float *m3)
 {
   float m2r0 = m2[0];
   float m2r1 = m2[1];
@@ -1518,7 +1519,7 @@ void get_rotation_about3f3fTTTf(float angle, const float *dir, const float *orig
   ttt[15] = 1.0F;
 }
 
-void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat)
+void rotation_to_matrix33f(const float *axis, float angle, Matrix33f mat)
 {
   rotation_matrix3f(angle, axis[0], axis[1], axis[2], &mat[0][0]);
 }

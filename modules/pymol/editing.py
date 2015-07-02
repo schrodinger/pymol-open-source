@@ -576,8 +576,7 @@ SEE ALSO
         try:
             _self.lock(_self)
             r = _cmd.bond(_self._COb,
-                          "("+atom1+")",
-                          "("+atom2+")",
+                          atom1, atom2,
                           int(order),1,int(quiet))
         finally:
             _self.unlock(r,_self)
@@ -647,8 +646,7 @@ SEE ALSO
         try:
             _self.lock(_self)
             r = _cmd.bond(_self._COb,
-                          "("+atom1+")",
-                          "("+atom2+")",
+                          atom1, atom2,
                           0,0,int(quiet))
         finally:
             _self.unlock(r,_self)

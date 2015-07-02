@@ -170,29 +170,35 @@ static void ObjectMoleculeConnectDiscrete(ObjectMolecule * I) {
 /*
  * Get the distance between two atoms in ObjectMolecule
  */
-static float GetDistance(ObjectMolecule * I, int i1, int i2, const CoordSet * cset1) {
-  const CoordSet *cset2;
-  const int *AtmToIdx;
+static float GetDistance(ObjectMolecule * I, int i1, int i2) {
+  const CoordSet *cset;
+  int idx1 = -1, idx2 = -1;
 
+  // find first coordset which contains both atoms
   if (I->DiscreteFlag) {
-    cset1 = I->DiscreteCSet[i1];
-    cset2 = I->DiscreteCSet[i2];
-    AtmToIdx = I->DiscreteAtmToIdx;
+    cset = I->DiscreteCSet[i1];
+    if (cset == I->DiscreteCSet[i2]) {
+      idx1 = I->DiscreteAtmToIdx[i1];
+      idx2 = I->DiscreteAtmToIdx[i2];
+    }
   } else {
-    cset2 = cset1;
-    AtmToIdx = cset1->AtmToIdx;
+    for (int i = 0; i < I->NCSet; ++i) {
+      if ((cset = I->CSet[i])) {
+        if ((idx1 = cset->AtmToIdx[i1]) != -1 &&
+            (idx2 = cset->AtmToIdx[i2]) != -1) {
+          break;
+        }
+      }
+    }
   }
-
-  int idx1 = AtmToIdx[i1];
-  int idx2 = AtmToIdx[i2];
 
   if (idx1 == -1 || idx2 == -1)
     return 999.f;
 
   float v[3];
   subtract3f(
-      cset1->coordPtr(idx1),
-      cset2->coordPtr(idx2), v);
+      cset->coordPtr(idx1),
+      cset->coordPtr(idx2), v);
   return length3f(v);
 }
 
@@ -326,7 +332,6 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
  * connecting bonds (C->N, O3*->P)
  */
 static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
-    const CoordSet * cset,
     const bond_dict_t * bond_dict=NULL) {
 
   PyMOLGlobals * G = I->Obj.G;
@@ -374,7 +379,7 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
 
       if (i_prev >= 0 && !AtomInfoSameResidue(G,
             I->AtomInfo + i_prev, I->AtomInfo + i)
-          && GetDistance(I, i_prev, i, cset) < 1.8) {
+          && GetDistance(I, i_prev, i) < 1.8) {
         // make bond
         ObjectMoleculeAddBond2(I, i_prev, i, 1);
       }
@@ -526,6 +531,35 @@ static bool get_assembly_chains(PyMOLGlobals * G,
 }
 
 /*
+ * Create a coordset for a chain (actually segi = label_asym_id) selection
+ */
+static CoordSet *CoordSetCopyFilterChains(const CoordSet * other,
+    const AtomInfoType * atInfo,
+    const std::set<std::string> &chains_set) {
+
+  std::vector<int> idxmap;
+  idxmap.reserve(other->NIndex);
+
+  for (int idx = 0; idx < other->NIndex; ++idx)
+    if (chains_set.count(atInfo[other->IdxToAtm[idx]].segi) > 0)
+      idxmap.push_back(idx);
+
+  CoordSet * cset = CoordSetNew(other->State.G);
+
+  cset->NIndex = idxmap.size();
+  cset->Coord = VLAlloc(float, cset->NIndex * 3);
+  cset->IdxToAtm = VLAlloc(int, cset->NIndex);
+  cset->Obj = other->Obj;
+
+  for (int idx = 0; idx < cset->NIndex; ++idx) {
+    cset->IdxToAtm[idx] = other->IdxToAtm[idxmap[idx]];
+    copy3f(other->coordPtr(idxmap[idx]), cset->coordPtr(idx));
+  }
+
+  return cset;
+}
+
+/*
  * Read assembly
  *
  * atInfo: atom info array to use for chain check
@@ -547,11 +581,6 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
       (arr_assembly_id  = data->get_arr("_pdbx_struct_assembly_gen.assembly_id")) == NULL ||
       (arr_oper_expr    = data->get_arr("_pdbx_struct_assembly_gen.oper_expression")) == NULL ||
       (arr_asym_id_list = data->get_arr("_pdbx_struct_assembly_gen.asym_id_list")) == NULL)
-    return NULL;
-
-  // skip if identity operation is the only operation
-  if (arr_id->get_nrows() == 1 &&
-      !strcmp("identity operation", data->get_opt("_pdbx_struct_oper_list.type")->as_s()))
     return NULL;
 
   const cif_array * arr_matrix[] = {
@@ -584,6 +613,7 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
   }
 
   CoordSet ** csets = NULL;
+  int csetbeginidx = 0;
 
   // assembly
   for (int i = 0, nrows = arr_oper_expr->get_nrows(); i < nrows; ++i) {
@@ -606,50 +636,43 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
     if (!csets) {
       csets = VLACalloc(CoordSet*, ncsets);
     } else {
-      VLACheck(csets, CoordSet*, ncsets - 1);
+      csetbeginidx = VLAGetSize(csets);
+      VLASize(csets, CoordSet*, csetbeginidx + ncsets);
     }
 
     // for cartesian product
-    const CoordSet * const * c_src = &cset;
     int c_src_len = 1;
 
+    // coord set for subset of atoms
+    CoordSet ** c_csets = csets + csetbeginidx;
+    c_csets[0] = CoordSetCopyFilterChains(cset, atInfo, chains_set);
+
     // build new coord sets
-    for (oper_collection_t::reverse_iterator
-        c_it = collection.rbegin();
-        c_it != collection.rend(); ++c_it) {
-      for (int idx = 0; idx < cset->NIndex; ++idx) {
-        int atm = cset->IdxToAtm[idx];
+    for (auto c_it = collection.rbegin(); c_it != collection.rend(); ++c_it) {
+      // copy
+      int j = c_src_len;
+      while (j < c_src_len * c_it->size()) {
+        // cartesian product
+        for (int k = 0; k < c_src_len; ++k, ++j) {
+          c_csets[j] = CoordSetCopy(c_csets[k]);
+        }
+      }
 
-        // check if operation applies to this atom
-        if (atm < 0 || chains_set.count(atInfo[atm].segi) == 0)
-          continue;
+      // transform
+      j = 0;
+      for (auto s_it = c_it->begin(); s_it != c_it->end(); ++s_it) {
+        const float * matrix = oper_list[*s_it].data();
 
-        // iterate over matrices (states)
-        int j = 0;
-        for (oper_collection_t::value_type::iterator
-            s_it = c_it->begin();
-            s_it != c_it->end(); ++s_it) {
-
-          // cartesian product
-          for (int k = 0; k < c_src_len; ++k, ++j) {
-
-            // new coord set if needed
-            if (csets[j] == NULL)
-              csets[j] = CoordSetCopy(c_src[k]);
-
-            // transform coordinates
-            transform44f3f(oper_list[*s_it].data(),
-                c_src[k]->coordPtr(idx),
-                csets[j]->coordPtr(idx));
-          }
+        // cartesian product
+        for (int k = 0; k < c_src_len; ++k, ++j) {
+          CoordSetTransform44f(c_csets[j], matrix);
         }
       }
 
       // cartesian product
       // Note: currently, "1m4x" seems to be the only structure in the PDB
       // which uses a cartesian product expression
-      c_src = csets;
-      c_src_len = c_it->size();
+      c_src_len *= c_it->size();
     }
   }
 
@@ -940,10 +963,6 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
     if (ncsets < mod_num)
       ncsets = mod_num;
   }
-
-  // no assemblies for multi-state models
-  if (ncsets > 1)
-    info.chains_filter.clear();
 
   // set up coordinate sets
   CoordSet ** csets = VLACalloc(CoordSet*, ncsets);
@@ -1493,11 +1512,17 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
     col_ins_code[1] = data->get_arr("_struct_conn.pdbx_ptnr2_pdb_ins_code");
   }
 
-  if ((!col_asym_id[0] && !(col_asym_id[0] = data->get_arr("_struct_conn.ptnr1_label_asym_id"))) ||
+  // for assembly chain filtering
+  const cif_array *col_label_asym_id[2] = {
+    data->get_arr("_struct_conn.ptnr1_label_asym_id"),
+    data->get_arr("_struct_conn.ptnr2_label_asym_id")
+  };
+
+  if ((!col_asym_id[0] && !(col_asym_id[0] = col_label_asym_id[0])) ||
       (!col_comp_id[0] && !(col_comp_id[0] = data->get_arr("_struct_conn.ptnr1_label_comp_id"))) ||
       (!col_seq_id[0]  && !(col_seq_id[0]  = data->get_arr("_struct_conn.ptnr1_label_seq_id"))) ||
       (!col_atom_id[0] && !(col_atom_id[0] = data->get_arr("_struct_conn.ptnr1_label_atom_id"))) ||
-      (!col_asym_id[1] && !(col_asym_id[1] = data->get_arr("_struct_conn.ptnr2_label_asym_id"))) ||
+      (!col_asym_id[1] && !(col_asym_id[1] = col_label_asym_id[1])) ||
       (!col_comp_id[1] && !(col_comp_id[1] = data->get_arr("_struct_conn.ptnr2_label_comp_id"))) ||
       (!col_seq_id[1]  && !(col_seq_id[1]  = data->get_arr("_struct_conn.ptnr2_label_seq_id"))) ||
       (!col_atom_id[1] && !(col_atom_id[1] = data->get_arr("_struct_conn.ptnr2_label_atom_id"))))
@@ -1538,7 +1563,8 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
     for (int j = 0; j < 2; j++) {
       const char * asym_id = col_asym_id[j]->as_s(i);
 
-      if (info.is_excluded_chain(asym_id))
+      if (col_label_asym_id[j] &&
+          info.is_excluded_chain(col_label_asym_id[j]->as_s(i)))
         goto next_row;
 
       key[j] = make_mm_atom_site_label(G,
@@ -1670,33 +1696,6 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
     return NULL;
   }
 
-  // assemblies
-  if (!info.chains_filter.empty()) {
-    CoordSet **assembly_csets = read_pdbx_struct_assembly(G, datablock,
-        I->AtomInfo, csets[0], assembly_id);
-
-    if (assembly_csets) {
-      PRINTFB(G, FB_Executive, FB_Details)
-        " ExecutiveLoad-Detail: Creating assembly '%s'\n", assembly_id ENDFB(G);
-
-      csets[0]->fFree();
-      VLAFreeP(csets);
-      csets = assembly_csets;
-
-      SettingCheckHandle(G, &I->Obj.Setting);
-      SettingSet_b(I->Obj.Setting, cSetting_all_states, 1);
-    }
-  } else if (!I->assembly_ids) {
-    // store list of assembly ids with ObjectMolecule, for cmd.get_assembly_ids
-    const cif_array *arr_assembly_id = datablock->get_arr("_pdbx_struct_assembly.id");
-    if (arr_assembly_id) {
-      I->assembly_ids = new std::vector<std::string>;
-      for (int i = 0, n = arr_assembly_id->get_nrows(); i < n; ++i) {
-        I->assembly_ids->push_back(arr_assembly_id->as_s(i));
-      }
-    }
-  }
-
   // get number of atoms and coordinate sets
   I->NAtom = VLAGetSize(I->AtomInfo);
   ncsets = VLAGetSize(csets);
@@ -1731,7 +1730,9 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
           if (csets[i])
             CoordSetFracToReal(csets[i], I->Symmetry->Crystal);
         }
-      } else if (read_atom_site_fract_transf(G, datablock, sca)) {
+      } else if (info.chains_filter.empty() &&
+          read_atom_site_fract_transf(G, datablock, sca)) {
+        // don't do this for assemblies
         for (int i = 0; i < ncsets; i++) {
           if (csets[i])
             CoordSetInsureOrthogonal(G, csets[i], sca, I->Symmetry->Crystal);
@@ -1766,10 +1767,10 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
         // macromolecular bonding
         bond_dict_t bond_dict_local;
         if (read_chem_comp_bond_dict(datablock, bond_dict_local)) {
-          ObjectMoleculeConnectComponents(I, cset, &bond_dict_local);
+          ObjectMoleculeConnectComponents(I, &bond_dict_local);
         } else if(SettingGetGlobal_i(G, cSetting_connect_mode) == 4) {
           // read components.cif
-          ObjectMoleculeConnectComponents(I, cset);
+          ObjectMoleculeConnectComponents(I);
         }
       }
       break;
@@ -1798,6 +1799,43 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
       }
       VLASize(I->Bond, BondType, I->NBond);
       VLAFreeP(cset->TmpBond);
+    }
+  }
+
+  // assemblies
+  if (cset && !info.chains_filter.empty()) {
+    PRINTFB(G, FB_Executive, FB_Details)
+      " ExecutiveLoad-Detail: Creating assembly '%s'\n", assembly_id ENDFB(G);
+
+    CoordSet **assembly_csets = read_pdbx_struct_assembly(G, datablock,
+        I->AtomInfo, cset, assembly_id);
+
+    if (assembly_csets) {
+      // remove asymetric unit coordinate sets
+      for (int i = 0; i < I->NCSet; ++i)
+        if (I->CSet[i])
+          I->CSet[i]->fFree();
+      VLAFreeP(I->CSet);
+
+      // get assembly coordinate sets into ObjectMolecule
+      I->CSet = assembly_csets;
+      I->NCSet = VLAGetSize(assembly_csets);
+      I->updateAtmToIdx();
+
+      // all_states for multi-model assembly
+      if (I->NCSet > 1) {
+        SettingCheckHandle(G, &I->Obj.Setting);
+        SettingSet_b(I->Obj.Setting, cSetting_all_states, 1);
+      }
+    }
+  } else if (!I->assembly_ids) {
+    // store list of assembly ids with ObjectMolecule, for cmd.get_assembly_ids
+    const cif_array *arr_assembly_id = datablock->get_arr("_pdbx_struct_assembly.id");
+    if (arr_assembly_id) {
+      I->assembly_ids = new std::vector<std::string>;
+      for (int i = 0, n = arr_assembly_id->get_nrows(); i < n; ++i) {
+        I->assembly_ids->push_back(arr_assembly_id->as_s(i));
+      }
     }
   }
 

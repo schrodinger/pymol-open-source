@@ -119,14 +119,14 @@ ov_status PConvPyTupleToFloatVLA(float **result, PyObject * tuple);
 
 /* categories below... */
 
-PyObject *PConvFloatVLAToPyList(float *vla);
+PyObject *PConvFloatVLAToPyList(const float *vla);
 PyObject *PConvFloatVLAToPyTuple(float *vla);
-PyObject *PConvIntVLAToPyList(int *vla);
+PyObject *PConvIntVLAToPyList(const int *vla);
 PyObject *PConvIntVLAToPyTuple(int *vla);
-PyObject *PConvIntArrayToPyList(int *f, int l);
-PyObject *PConvSIntArrayToPyList(short int *f, int l);
-PyObject *PConvSCharArrayToPyList(signed char *f, int l);
-PyObject *PConvLabPosVLAToPyList(LabPosType * vla, int l);
+PyObject *PConvIntArrayToPyList(const int *f, int l);
+PyObject *PConvSIntArrayToPyList(const short int *f, int l);
+PyObject *PConvSCharArrayToPyList(const signed char *f, int l);
+PyObject *PConvLabPosVLAToPyList(const LabPosType * vla, int l);
 
 
 void PConvFloat3ToPyObjAttr(PyObject * obj, const char *attr, const float *v);
@@ -146,7 +146,7 @@ int PConvPyObjectToChar(PyObject * object, char *value);
 int PConvPyObjectToStrMaxLen(PyObject * object, char *value, int ln);
 int PConvPyObjectToStrMaxClean(PyObject * object, char *value, int ln);
 
-PyObject *PConvStringListToPyList(int l, char **str);
+PyObject *PConvStringListToPyList(int l, const char * const *str);
 PyObject *PConvStringVLAToPyList(const char *str);
 
 void PConv44PyListTo44f(PyObject * src, float *dest);   /* note loss of precision */
@@ -161,9 +161,9 @@ int PConvPyListToFloatArrayInPlaceAutoZero(PyObject * obj, float *ii, ov_size ll
 
 int PConvPyListToDoubleArrayInPlace(PyObject * obj, double *ff, ov_size ll);
 
-PyObject *PConvFloatArrayToPyList(float *f, int l);
-PyObject *PConvFloatArrayToPyListNullOkay(float *f, int l);
-PyObject *PConvDoubleArrayToPyList(double *f, int l);
+PyObject *PConvFloatArrayToPyList(const float *f, int l);
+PyObject *PConvFloatArrayToPyListNullOkay(const float *f, int l);
+PyObject *PConvDoubleArrayToPyList(const double *f, int l);
 
 int PConvPyListToIntArray(PyObject * obj, int **f);
 int PConvPyListToIntArrayInPlace(PyObject * obj, int *ff, ov_size ll);

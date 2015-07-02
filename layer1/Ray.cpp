@@ -2423,8 +2423,7 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   int fogFlag = false;
   int fogRangeFlag = false;
   float fog;
-  float *bkrd, *bkrd_top, *bkrd_bottom;
-  short bkrd_is_gradient;
+  float *bkrd;
   float fog_start = 0.0F;
   float gamma;
   float *d;
@@ -2495,14 +2494,6 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
     antialias = SettingGetGlobal_i(I->G, cSetting_antialias);
 
   bkrd = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
-  bkrd_is_gradient = SettingGetGlobal_b(I->G, cSetting_bg_gradient);
-  if (!bkrd_is_gradient){
-    bkrd_top = bkrd;
-    bkrd_bottom = bkrd;
-  } else {
-    bkrd_top = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_top));
-    bkrd_bottom = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb_bottom));
-  }
   RayExpandPrimitives(I);
   RayTransformFirst(I, 0, identity);
 

@@ -866,7 +866,7 @@ void ObjectTranslateTTT(CObject * I, float *v, int store)
 
 
 /*========================================================================*/
-void ObjectSetTTT(CObject * I, float *ttt, int state, int store)
+void ObjectSetTTT(CObject * I, const float *ttt, int state, int store)
 {
   if(state < 0) {
     if(ttt) {
@@ -896,7 +896,7 @@ void ObjectSetTTT(CObject * I, float *ttt, int state, int store)
 }
 
 /*========================================================================*/
-int ObjectGetTTT(CObject * I, float **ttt, int state)
+int ObjectGetTTT(CObject * I, const float **ttt, int state)
 {
   if(state < 0) {
     if(I->TTTFlag) {
