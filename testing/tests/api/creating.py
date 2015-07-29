@@ -25,6 +25,19 @@ class TestCreating(testing.PyMOLTestCase):
         # see testGroup
         pass
 
+    @testing.requires_version('1.7.7')
+    def testGroupRename(self):
+        '''
+        Rename group entries which have a group name prefix when renaming the group
+        '''
+        cmd.set('group_auto_mode', 2)
+        cmd.pseudoatom('g1.m1')
+        cmd.pseudoatom('g1.m2')
+        cmd.set_name('g1', 'g2')
+        m_list = []
+        cmd.iterate('g2', 'm_list.append(model)', space=locals())
+        self.assertItemsEqual(m_list, ['g2.m1', 'g2.m2'])
+
     @unittest.skip("Not yet implemented.")
     def testIsomesh(self):
         pass
