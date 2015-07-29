@@ -22,11 +22,11 @@ dss source
 
 stored.ss = {}
 
-iterate source and polymer and name ca, stored.ss[resi]=ss
+iterate source and polymer and name CA, stored.ss[resi]=ss
 
 # and assign them to the target protein
 
-alter target and polymer and name ca, ss=stored.ss.get(resi,'')
+alter target and polymer and name CA, ss=stored.ss.get(resi,'')
 
 # rebuild the cartoon
 

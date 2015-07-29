@@ -601,11 +601,12 @@ static void SettingUniqueFree(PyMOLGlobals * G)
   CSettingUnique *I = G->SettingUnique;
   VLAFreeP(I->entry);
   OVOneToOne_Del(I->id2offset);
-  if(I->old2new)
-    OVOneToOne_Del(I->old2new);
   FreeP(I);
 }
 
+/*
+ * For unique_id remapping during partial session loading
+ */
 int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
 {
   CSettingUnique *I = G->SettingUnique;
@@ -614,7 +615,12 @@ int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
     OVreturn_word ret;
     if(OVreturn_IS_OK(ret = OVOneToOne_GetForward(I->old2new, old_unique_id))) {
       unique_id = ret.word;
+    } else {
+      unique_id = AtomInfoGetNewUniqueID(G);
+      OVOneToOne_Set(I->old2new, old_unique_id, unique_id);
     }
+  } else {
+    AtomInfoReserveUniqueID(G, unique_id);
   }
   return unique_id;
 }
@@ -622,19 +628,8 @@ int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
 int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
   int ok = true;
-  CSettingUnique *I = G->SettingUnique;
   if(!partial_restore) {
     SettingUniqueResetAll(G);
-    if(I->old2new) {
-      OVOneToOne_Del(I->old2new);
-      I->old2new = NULL;
-    }
-  } else {
-    if(!I->old2new) {
-      I->old2new = OVOneToOne_New(G->Context->heap);
-    } else {
-      OVOneToOne_Reset(I->old2new);
-    }
   }
   if(list)
     if(PyList_Check(list)) {
@@ -650,12 +645,7 @@ int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_resto
         if(ok)
           ok = PConvPyIntToInt(PyList_GetItem(id_list, 0), &unique_id);
         if(ok && partial_restore) {
-          if(AtomInfoIsUniqueIDActive(G, unique_id)) {
-            /* if this ID is already active, then we need a substitute */
-            int old_unique_id = unique_id;
-            unique_id = AtomInfoGetNewUniqueID(G);
-            OVOneToOne_Set(I->old2new, old_unique_id, unique_id);
-          }
+          unique_id = SettingUniqueConvertOldSessionID(G, unique_id);
         }
         if(ok) {
           ov_size n_set = 0;

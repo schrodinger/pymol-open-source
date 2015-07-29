@@ -33,7 +33,7 @@ cmd.show("sticks","demo")
 
 cmd.show("spheres","resi 10")
 
-cmd.color("yellow","resi 5 and element c")
+cmd.color("yellow","resi 5 and element C")
 
 # turn off some of the chatter about reloading the object...
 

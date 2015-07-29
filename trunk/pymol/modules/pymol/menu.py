@@ -1429,7 +1429,7 @@ def enable_disable(self_cmd, enable):
 def scene_buttons(self_cmd):
     return [[ 2, 'Buttons', '' ],
             [ 1, 'on', 'cmd.set("scene_buttons")'],
-            [ 1, 'off', 'cmd.unset("scene_buttons")']]
+            [ 1, 'off', 'cmd.set("scene_buttons", 0)']]
 
 def scene_main(self_cmd):
     list = self_cmd.get_scene_list()
@@ -1464,7 +1464,7 @@ def main_pseudoatom(self_cmd,pos):
 def movie_panel(self_cmd):
     return [[ 2, 'Panel', '' ],
             [ 1, 'on', 'cmd.set("movie_panel")'],
-            [ 1, 'off', 'cmd.unset("movie_panel")']]
+            [ 1, 'off', 'cmd.set("movie_panel", 0)']]
 
 def movie_main(self_cmd):
     return [

@@ -15,7 +15,7 @@ cmd.show("sticks","demo")
 
 cmd.show("spheres","resi 10")
 
-cmd.color("yellow","resi 5 and element c")
+cmd.color("yellow","resi 5 and element C")
 
 # now loop, updating the coordinates and appending the model
 # onto 99 subsequent frames...

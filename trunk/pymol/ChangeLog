@@ -2,6 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2015-07-29 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix isosurface all_states rendering
+
+	* pdb_hetatm_guess_valences for CIF loading
+
+	* mutagenesis wizard: improve "apply" performance
+
+	* fix measurement and alignment object partial PSE loading
+
+	* some load/save refactoring
+
+	* keep atom IDs when creating object from selection
+
+	* when renaming group "A" to "B", then also rename entry "A.X" to "B.X"
+
 2015-07-02 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* mmcif: match pdb1, pdb2, ... files with assembly generation

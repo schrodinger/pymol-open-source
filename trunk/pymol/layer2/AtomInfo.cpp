@@ -1056,25 +1056,13 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
     ok = PConvPyStrToStr(PyList_GetItem(list, 7), I->elem, sizeof(ElemName));
   if(ok) {
     OrthoLineType temp;
-    PConvPyStrToStr(PyList_GetItem(list, 8), temp, sizeof(OrthoLineType));
-    I->textType = 0;
-    if(temp[0]) {
-      OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
-      if(OVreturn_IS_OK(result)) {
-        I->textType = result.word;
-      }
-    }
+    CPythonVal_PConvPyStrToStr_From_List(G, list, 8, temp, sizeof(OrthoLineType));
+    I->textType = LexIdx(G, temp);
   }
   if(ok) {
     OrthoLineType temp;
-    PConvPyStrToStr(PyList_GetItem(list, 9), temp, sizeof(OrthoLineType));
-    I->textType = 0;
-    if(temp[0]) {
-      OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
-      if(OVreturn_IS_OK(result)) {
-        I->label = result.word;
-      }
-    }
+    CPythonVal_PConvPyStrToStr_From_List(G, list, 9, temp, sizeof(OrthoLineType));
+    I->label = LexIdx(G, temp);
   }
   if(ok)
     ok = PConvPyStrToStr(PyList_GetItem(list, 10), I->ssType, sizeof(SSType));
@@ -1131,10 +1119,7 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 32), &I->unique_id);
   if(ok && I->unique_id) {      /* reserve existing IDs */
-    CAtomInfo *II = G->AtomInfo;
-    AtomInfoPrimeUniqueIDs(G);
     I->unique_id = SettingUniqueConvertOldSessionID(G, I->unique_id);
-    OVOneToAny_SetKey(II->ActiveIDs, I->unique_id, 1);
   }
   if(ok)
     ok = PConvPyIntToChar(PyList_GetItem(list, 33), (char *) &I->stereo);
@@ -1166,14 +1151,8 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
   }
   if(ok && (ll > 47)) {
     OrthoLineType temp;
-    PConvPyStrToStr(PyList_GetItem(list, 47), temp, sizeof(OrthoLineType));
-    I->custom = 0;
-    if(temp[0]) {
-      OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
-      if(OVreturn_IS_OK(result)) {
-        I->custom = result.word;
-      }
-    }
+    CPythonVal_PConvPyStrToStr_From_List(G, list, 47, temp, sizeof(OrthoLineType));
+    I->custom = LexIdx(G, temp);
   }
   return (ok);
 #endif
@@ -1193,18 +1172,12 @@ void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst
     dst->unique_id = 0;
     dst->has_setting = 0;
   }
-  if(dst->label) {
-    OVLexicon_IncRef(G->Lexicon, dst->label);
-  }
-  if(dst->textType) {
-    OVLexicon_IncRef(G->Lexicon, dst->textType);
-  }
-  if(dst->custom) {
-    OVLexicon_IncRef(G->Lexicon, dst->custom);
-  }
-  if(dst->chain) {
-    OVLexicon_IncRef(G->Lexicon, dst->chain);
-  }
+  LexInc(G, dst->label);
+  LexInc(G, dst->textType);
+  LexInc(G, dst->custom);
+  LexInc(G, dst->chain);
+#ifdef _PYMOL_IP_EXTRAS
+#endif
 }
 
 void AtomInfoBondCopy(PyMOLGlobals * G, const BondType * src, BondType * dst)
@@ -1236,24 +1209,22 @@ void AtomInfoPurgeBond(PyMOLGlobals * G, BondType * bi)
 void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai)
 {
   CAtomInfo *I = G->AtomInfo;
-  if(ai->textType) {
-    OVLexicon_DecRef(G->Lexicon, ai->textType);
-  }
-  if(ai->custom) {
-    OVLexicon_DecRef(G->Lexicon, ai->custom);
-  }
+  LexDec(G, ai->textType);
+  LexDec(G, ai->custom);
+  LexDec(G, ai->label);
+  LexDec(G, ai->chain);
+  ai->textType = 0;
+  ai->custom = 0;
+  ai->label = 0;
+  ai->chain = 0;
   if(ai->has_setting && ai->unique_id) {
     SettingUniqueDetachChain(G, ai->unique_id);
   }
   if(ai->unique_id && I->ActiveIDs) {
     OVOneToAny_DelKey(I->ActiveIDs, ai->unique_id);
   }
-  if(ai->label) {
-    OVLexicon_DecRef(G->Lexicon, ai->label);
-  }
-  if(ai->chain) {
-    OVLexicon_DecRef(G->Lexicon, ai->chain);
-  }
+#ifdef _PYMOL_IP_EXTRAS
+#endif
 }
 
 
@@ -1261,13 +1232,10 @@ void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai)
 void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, int mask)
 {
   if(mask & cAIC_tt) {
-    if(dst->textType) {
-      OVLexicon_DecRef(G->Lexicon, dst->textType);
-      dst->textType = 0;
-    }
+    LexDec(G, dst->textType);
     dst->textType = src->textType;
   } else if(src->textType) {
-    OVLexicon_DecRef(G->Lexicon, src->textType);
+    LexDec(G, src->textType);
     src->textType = 0;
   }
   if(mask & cAIC_ct)
@@ -1294,10 +1262,8 @@ void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, i
   /* also keep all existing selections,
      colors, masks, and visible representations */
   {
-    if(src->label) {            /* destroy src label if one exists */
-      OVLexicon_DecRef(G->Lexicon, src->label);
-      src->label = 0;
-    }
+    LexDec(G, src->label);
+    src->label = 0;
     /* leaves dst->label untouched */
   }
 }

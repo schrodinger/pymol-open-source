@@ -2063,10 +2063,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
       if(sscanf(cc, "%s", temp) != 1)
         ok = false;
       else {
-        OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon, temp);
-        if(OVreturn_IS_OK(ret)) {
-          ai->textType = ret.word;
-        }
+        ai->textType = LexIdx(G, temp);
       }
       if((++b) == 20) {
         b = 0;
@@ -2470,6 +2467,14 @@ float ObjectMoleculeSculptIterate(ObjectMolecule * I, int state, int n_cycle,
     return 0.0F;
 }
 
+/*
+ * - Assigns new id to all atoms with AtomInfoType.id == -1
+ * - Assigns new id to all bonds with BondType.id == -1
+ * - Assigns ObjectMolecule.AtomCounter if -1
+ * - Assigns ObjectMolecule.BondCounter if -1
+ *
+ * Cost: O(NAtom + NBond)
+ */
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
 {
   int a;
@@ -2508,27 +2513,6 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I)
   for(a = 0; a < I->NBond; a++) {
     if(!b->id)
       b->id = I->BondCounter++;
-    b++;
-  }
-}
-
-void ObjectMoleculeResetIDNumbers(ObjectMolecule * I)
-{
-  int a;
-  AtomInfoType *ai;
-  BondType *b;
-
-  I->AtomCounter = 0;
-  ai = I->AtomInfo;
-  for(a = 0; a < I->NAtom; a++) {
-    ai->id = I->AtomCounter++;
-    ai++;
-  }
-
-  I->BondCounter = 0;
-  b = I->Bond;
-  for(a = 0; a < I->NBond; a++) {
-    b->id = I->BondCounter++;
     b++;
   }
 }
@@ -7271,6 +7255,11 @@ int ObjectMoleculeGetAtomIndex(ObjectMolecule * I, int sele)
 
 
 /*========================================================================*/
+/*
+ * Update all AtomInfoType.bonded
+ *
+ * Cost: O(NAtom + NBond)
+ */
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I)
 {
   int a;
@@ -7532,12 +7521,8 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           tmp = PyObject_GetAttrString(atom, "text_type");
           if(tmp) {
             OrthoLineType temp;
-            OVreturn_word ret;
             ok = PConvPyObjectToStrMaxClean(tmp, temp, sizeof(OrthoLineType) - 1);
-            ret = OVLexicon_GetFromCString(G->Lexicon, temp);
-            if(OVreturn_IS_OK(ret)) {
-              ai->textType = ret.word;
-            }
+            ai->textType = LexIdx(G, temp);
           }
           if(!ok)
             ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read text_type");
@@ -7551,12 +7536,8 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           tmp = PyObject_GetAttrString(atom, "custom");
           if(tmp) {
             OrthoLineType temp;
-            OVreturn_word ret;
             ok = PConvPyObjectToStrMaxClean(tmp, temp, sizeof(OrthoLineType) - 1);
-            ret = OVLexicon_GetFromCString(G->Lexicon, temp);
-            if(OVreturn_IS_OK(ret)) {
-              ai->custom = ret.word;
-            }
+            ai->custom = LexIdx(G, temp);
           }
           if(!ok)
             ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read custom");
@@ -7819,11 +7800,8 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
       if(ok && PyObject_HasAttrString(atom, "label")) {
         tmp = PyObject_GetAttrString(atom, "label");
         if(tmp) {
-          if(ai->label) {
-            OVLexicon_DecRef(G->Lexicon, ai->label);
-          }
-          if(!PConvPyStrToLexRef(tmp, G->Lexicon, &ai->label))
-            ai->label = 0;
+          if (PyString_Check(tmp))
+            ai->label = LexIdx(G, PyString_AsString(tmp));
         }
         Py_XDECREF(tmp);
       }
@@ -8750,7 +8728,7 @@ static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *
     for(a = 0; a < nAtom; a++) {
       int at, fcharge = 0, isProtein = 0, k, n;
       AtomInfoType *ai;
-      char *atom_type = 0;
+      const char *atom_type = 0;
       char *atom_name = 0;
       char resname_temp[4];
       BondType *bt;
@@ -8759,7 +8737,7 @@ static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *
       strcpy( resname_temp, "" );
       resname_temp[3] = 0;
       if(ai->textType){
-	atom_type = OVLexicon_FetchCString(G->Lexicon, ai->textType);
+	atom_type = LexStr(G, ai->textType);
       } else {
 	PRINTFB(G, FB_Executive, FB_Warnings)
 	  "ObjectMoleculeMOL2SetFormalCharges-Warning: textType invalidated, not setting formal charges\n"
@@ -8951,13 +8929,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
               if(el[2])
                 el[0] = 0;
 
-              ai->textType = 0;
-              if(temp[0]) {
-                OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, temp);
-                if(OVreturn_IS_OK(result)) {
-                  ai->textType = result.word;
-                }
-              }
+              ai->textType = LexIdx(G, temp);
             }
           }
           if(ok) {
@@ -11078,17 +11050,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                       {
                         /* simple string label text */
                         AtomInfoType *ai = I->AtomInfo + a;
-                        const char *label = op->s1;
-                        if(ai->label) {
-                          OVLexicon_DecRef(I->Obj.G->Lexicon, ai->label);
-                        }
-                        ai->label = 0;
-                        if(label && label[0]) {
-                          OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon, label);
-                          if(OVreturn_IS_OK(ret)) {
-                            ai->label = ret.word;
-                          }
-                        }
+                        LexDec(G, ai->label);
+                        ai->label = LexIdx(G, op->s1);
                       }
                       break;
                     }

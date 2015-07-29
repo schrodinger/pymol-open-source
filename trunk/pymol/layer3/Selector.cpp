@@ -7185,7 +7185,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     }
   }
 
-  atInfo = VLAlloc(AtomInfoType, nAtom);
+  atInfo = VLACalloc(AtomInfoType, nAtom);
   /* copy the atom info records and create new zero-based IDs */
   c = 0;
   {
@@ -7213,10 +7213,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
      to the new merged molecule */
 
   ObjectMoleculeExtendIndices(targ, -1);
-  if (isNew)
-    ObjectMoleculeResetIDNumbers(targ);
-  else
-    ObjectMoleculeUpdateIDNumbers(targ);
+  ObjectMoleculeUpdateIDNumbers(targ);
   ObjectMoleculeUpdateNonbonded(targ);
 
   if(!isNew) {                  /* recreate selection table */
@@ -9103,8 +9100,6 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
       base_0_sele_a = &base[0].sele[cNDummyAtoms];
 
       if((matcher = WordMatcherNew(G, base[1].text, &options, true))) {
-        char null_st[1] = "";
-        char *st;
 	AtomInfoType * ai;
         int prevmodel;
         table_a = i_table + cNDummyAtoms;
@@ -9115,12 +9110,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
           ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
 #ifndef NO_MMLIBS
 #endif
-          st = null_st;
-          if(ai->textType) {
-            if(!(st = OVLexicon_FetchCString(G->Lexicon, ai->textType)))
-              st = null_st;
-	  }
-          if((*base_0_sele_a = WordMatcherMatchAlpha(matcher, st)))
+          if((*base_0_sele_a = WordMatcherMatchAlpha(matcher, LexStr(G, ai->textType))))
 	    c++;
           table_a++;
           base_0_sele_a++;
@@ -9302,7 +9292,9 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
           if((*base_0_sele_a =
               WordMatcherMatchAlpha(matcher, LexStr(G,
-                  *(int*)(((char*)(i_obj[table_a->model]->AtomInfo + table_a->atom)) + offset)))))
+                  *reinterpret_cast<ov_word /* decltype(AtomInfoType::chain) */ *>
+                  (((char*)(i_obj[table_a->model]->AtomInfo + table_a->atom)) + offset)
+                  ))))
             c++;
           table_a++;
           base_0_sele_a++;
@@ -10591,7 +10583,7 @@ static int SelectorLogic2(PyMOLGlobals * G, EvalElem * base)
             if(*base_2_sele_b) {
               at2 = &i_obj[table_b->model]->AtomInfo[table_b->atom];
               if(at1->resv == at2->resv)
-                if((tolower(at1->chain)) == (tolower(at2->chain)))
+                if(WordMatchNoWild(G, LexStr(G, at1->chain), LexStr(G, at2->chain), ignore_case) < 0)
                   if(WordMatchNoWild(G, at1->name, at2->name, ignore_case) < 0)
                     if(WordMatchNoWild(G, at1->resi, at2->resi, ignore_case) < 0)
                       if(WordMatchNoWild(G, at1->resn, at2->resn, ignore_case) < 0)

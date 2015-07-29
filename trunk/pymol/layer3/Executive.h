@@ -98,7 +98,8 @@ Z* -------------------------------------------------------------------
 #define cLoadTypePlugin 64
 
 /* NOTE: if you add new content/object type above, then be sure to add
-   corresponding code in: CmdLoad ExecutiveGetExistingCompatible
+   corresponding code in:
+   ExecutiveGetExistingCompatible
    ExecutiveLoad
 */
 
@@ -169,7 +170,7 @@ int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals * G,
                                             ExecutiveObjectOffset ** vla,
                                             OVOneToOne ** dict);
 
-int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
+int ExecutiveLoad(PyMOLGlobals * G,
                   const char *content, int content_length,
                   int content_format,
                   const char *object_name,

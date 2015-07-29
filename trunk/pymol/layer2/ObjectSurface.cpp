@@ -710,22 +710,10 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
 
-  if(state >= 0)
-    if(state < I->NState)
-      if(I->State[state].Active)
-        if(I->State[state].V && I->State[state].N)
-          ms = I->State + state;
-  while(1) {
-    if(state < 0) {             /* all_states */
-      ms = I->State + a;
-    } else {
-      if(!ms) {
-        if(I->NState && ((SettingGetGlobal_b(G, cSetting_static_singletons) && (I->NState == 1))))
-          ms = I->State;
-      }
-    }
-    if(ms) {
-      if(ms->Active && ms->V && ms->N) {
+  StateIterator iter(G, I->Obj.Setting, state, I->NState);
+  while(iter.next()) {
+    ms = I->State + iter.state;
+    if(ms && ms->Active && ms->V && ms->N) {
         v = ms->V;
         n = ms->N;
         if(ray) {
@@ -861,7 +849,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 		  CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
 		  if (shaderPrg)
 		    CShaderPrg_Disable(shaderPrg);
-		  return;
+		  continue;
 		}
 	      }
 
@@ -1273,13 +1261,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 	    }
 	  }
 	}
-      }
     }
-    if(state >= 0)
-      break;                    /* only rendering one state */
-    a = a + 1;
-    if(a >= I->NState)
-      break;
   }
 }
 

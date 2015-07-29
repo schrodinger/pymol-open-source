@@ -3483,10 +3483,18 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
         ok = false;
       else {
         rec = NULL;
+        int old_name_len = strlen(old_name);
+        int new_name_len = strlen(name);
+        ObjectNameType childname;
+        UtilNCopy(childname, name, sizeof(ObjectNameType));
         while(ListIterate(I->Spec, rec, next)) {
           if(WordMatchExact(G, rec->group_name, old_name, true)) {
             UtilNCopy(rec->group_name, name, WordLength);
-            /* may need to rename members too... */
+            // rename group members for group_auto_mode
+            if (strncmp(rec->name, old_name, old_name_len) == 0 && rec->name[old_name_len] == '.') {
+              UtilNCopy(childname + new_name_len, rec->name + old_name_len, sizeof(ObjectNameType) - new_name_len);
+              ExecutiveSetName(G, rec->name, childname);
+            }
           }
         }
         ExecutiveInvalidateGroups(G, false);
@@ -3499,7 +3507,6 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
 /*
  * Load any file type which is implemented in C.
  *
- * origObj:     Existing object to extend or replace, or NULL
  * content:     Either file name or file contents, depending on "content_format"
  * content_length:      Length of "content", if it's not a file name
  * content_format:      File type code
@@ -3513,10 +3520,10 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
  * loadpropertiesall:   Load all atom and object properties
  * loadproplex:         ?
  */
-int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
+int ExecutiveLoad(PyMOLGlobals * G,
                   const char *content, int content_length,
                   int content_format,
-                  const char *object_name,
+                  const char *object_name_proposed,
                   int state, int zoom,
                   int discrete, int finish, int multiplex, int quiet,
                   const char * plugin_arg,
@@ -3529,7 +3536,26 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
   OrthoLineType buf = "";
   char plugin[16] = "";
   CObject *obj = NULL;
+  CObject *origObj = NULL;
   bool is_pqr_file = false;
+
+  // validate proposed object name
+  ObjectNameType object_name = "";
+  ExecutiveProcessObjectName(G, object_name_proposed, object_name);
+
+  // multiplex -2 -> "multiplex" setting
+  // multiplex -1 -> file type dependant default
+  // multiplex 1 -> split entries (don't try to load into existing object)
+  if(multiplex == -2) {
+    multiplex = SettingGetGlobal_i(G, cSetting_multiplex);
+  }
+
+  if (multiplex != 1) {
+    origObj = ExecutiveGetExistingCompatible(G, object_name, content_format);
+  }
+
+#ifndef PYMOL_EDU
+#endif
 
   switch (content_format) {
   // string loading functions
@@ -3794,6 +3820,10 @@ int ExecutiveLoad(PyMOLGlobals * G, CObject * origObj,
     PRINTFB(G, FB_Executive, FB_Actions)
       "%s", buf ENDFB(G);
   }
+
+#ifndef PYMOL_EDU
+#endif
+
   return (ok);
 
 }
@@ -5402,6 +5432,10 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
     }
   }
 
+  if (partial_restore) {
+    G->SettingUnique->old2new = OVOneToOne_New(G->Context->heap);
+  }
+
   if(ok) {
     tmp = PyDict_GetItemString(session, "version");
     if(tmp) {
@@ -5699,6 +5733,9 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
     if(have_active)
       ExecutiveSetObjVisib(G, active, true, false);
   }
+
+  OVOneToOne_DEL_AUTO_NULL(G->SettingUnique->old2new);
+
   if(incomplete) {
     PRINTFB(G, FB_Executive, FB_Warnings)
       "ExectiveSetSession-Warning: restore may be incomplete.\n" ENDFB(G);
@@ -12828,6 +12865,7 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
         " Use \"set %s, 0\" to ensure consistent behavior in future PyMOL versions.",
         name ENDFB(G);
       SettingSetGlobal_i(G, index, 0);
+      side_effects = true;
     } else {
       SettingRestoreDefault(G->Setting, index, G->Default);
       PRINTFB(G, FB_Executive, FB_Actions)

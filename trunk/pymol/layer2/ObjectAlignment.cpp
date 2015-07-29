@@ -761,6 +761,12 @@ static int ObjectAlignmentStateFromPyList(PyMOLGlobals * G, ObjectAlignmentState
   if(ok && (ll > 1)) {
     PConvPyListToIntVLA(PyList_GetItem(list, 0), &I->alignVLA);
     strcpy(I->guide, PyString_AsString(PyList_GetItem(list, 1)));
+
+    for (auto it = I->alignVLA, it_end = I->alignVLA + VLAGetSize(I->alignVLA);
+        it != it_end; ++it) {
+      if (*it)
+        *it = SettingUniqueConvertOldSessionID(G, *it);
+    }
   }
   return (ok);
 }

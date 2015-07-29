@@ -1572,6 +1572,11 @@ static int get_multi_object_status(const char *p)
   return -1;
 }
 
+/*
+ * If any atom in I->AtomInfo contains the wildcard character (from
+ * "atom_name_wildcard" or "wildcard" setting), then set the object-level
+ * "atom_name_wildcard" setting to " " (disables wildcard matching).
+ */
 int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -3554,7 +3559,6 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
         bond->has_setting = (short int) has_setting;
       if(ok && bond->unique_id) {       /* reserve existing IDs */
         bond->unique_id = SettingUniqueConvertOldSessionID(I->Obj.G, bond->unique_id);
-        AtomInfoReserveUniqueID(I->Obj.G, bond->unique_id);
       }
     }
     bond++;

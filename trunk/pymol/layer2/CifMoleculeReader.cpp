@@ -786,7 +786,7 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
   }
 
   if (!arr_x || !arr_y || !arr_z) {
-    return false;
+    return NULL;
   }
 
   PRINTFB(G, FB_Executive, FB_Details)
@@ -934,6 +934,10 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
   arr_mod_num     = data->get_opt("_atom_site.pdbx_pdb_model_num");
   arr_entity_id   = data->get_arr("_atom_site.label_entity_id"); // NULL
 
+  const cif_array * arr_color = data->get_arr("_atom_site.pymol_color");
+  const cif_array * arr_reps  = data->get_opt("_atom_site.pymol_reps");
+  const cif_array * arr_ss    = data->get_opt("_atom_site.pymol_ss");
+
   if (!arr_chain)
     arr_chain = arr_segi;
 
@@ -1051,10 +1055,16 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
       UtilNConcat(ai->resi, arr_ins_code->as_s(i), sizeof(ResIdent));
     }
 
-    ai->visRep = auto_show;
+    ai->visRep = arr_reps->as_i(i, auto_show);
+    ai->ssType[0] = arr_ss->as_s(i)[0];
 
     AtomInfoAssignParameters(G, ai);
-    AtomInfoAssignColors(G, ai);
+
+    if (arr_color) {
+      ai->color = arr_color->as_i(i);
+    } else {
+      AtomInfoAssignColors(G, ai);
+    }
 
     if (arr_entity_id != NULL) {
       /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
@@ -1551,8 +1561,13 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
 
   for (int i = 0; i < nrows; i++) {
     const char * type_id = col_type_id->as_s(i);
-    if (strncasecmp(type_id, "covale", 6) && strcasecmp(type_id, "modres"))
-      // ignore non-covalent bonds (metalc, hydrog)
+    if (strncasecmp(type_id, "covale", 6) &&
+        strcasecmp(type_id, "modres") &&
+#ifdef _PYMOL_IP_EXTRAS
+        strcasecmp(type_id, "metalc") &&
+#endif
+        strcasecmp(type_id, "disulf"))
+      // ignore non-covalent bonds (saltbr, hydrog)
       continue;
     if (strcmp(col_symm[0]->as_s(i),
                col_symm[1]->as_s(i)))
@@ -1578,9 +1593,11 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
 
     int i1, i2;
     if (find2(name_dict, i1, key[0], i2, key[1])) {
+      // zero-order bond for metal coordination
+      int order = strcasecmp(type_id, "metalc") ? 1 : 0;
 
       nBond++;
-      BondTypeInit2(bond++, i1, i2, 1);
+      BondTypeInit2(bond++, i1, i2, order);
 
     } else {
       std::cout << "name lookup failed " << key[0] << ' ' << key[1] << std::endl;
@@ -1613,7 +1630,7 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, cif_data * data,
   if ((col_ID_1    = data->get_arr("_chem_comp_bond.atom_id_1")) == NULL ||
       (col_ID_2    = data->get_arr("_chem_comp_bond.atom_id_2")) == NULL ||
       (col_comp_id = data->get_arr("_chem_comp_bond.comp_id")) == NULL)
-    return false;
+    return NULL;
 
   const cif_array *col_order = data->get_opt("_chem_comp_bond.value_order");
 
@@ -1785,6 +1802,11 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
     } else if (cset) {
       ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, true, 3);
     }
+
+    // guess valences for distance based bonding
+    if (SettingGetGlobal_b(G, cSetting_pdb_hetatm_guess_valences)) {
+      ObjectMoleculeGuessValences(I, 0, NULL, NULL, false);
+    }
   } else {
     if (!I->NBond)
       I->NBond = VLAGetSize(I->Bond);
@@ -1844,6 +1866,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
   ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
   ObjectMoleculeUpdateIDNumbers(I);
   ObjectMoleculeUpdateNonbonded(I);
+  ObjectMoleculeAutoDisableAtomNameWildcard(I);
 
   return I;
 }

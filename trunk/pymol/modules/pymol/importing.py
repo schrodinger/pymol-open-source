@@ -667,80 +667,28 @@ SEE ALSO
                 ext = fname_no_gz.rsplit('.', 1)[-1]
                 if re.search("\.pdb$|\.pdb\d+$|\.ent$|\.p5m",fname_no_gz,re.I):
                     ftype = loadable.pdb
-                elif re.search("\.mol$",fname_no_gz,re.I):
-                    ftype = loadable.mol
                 elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",fname_no_gz,re.I):
                     ftype = loadable.mmod
-                elif re.search("\.xplor$",fname_no_gz,re.I):
-                    ftype = loadable.xplor
                 elif re.search("\.(ccp4|mrc|map)$",fname_no_gz,re.I):
                     ftype = loadable.ccp4
                 elif re.search("\.pkl$",fname_no_gz,re.I):
                     ftype = loadable.model
-                elif re.search("\.r3d$",fname_no_gz,re.I):
-                    ftype = loadable.r3d
-                elif re.search("\.xyz$",fname_no_gz,re.I):
-                    ftype = loadable.xyz
                 elif re.search("\.cc1$|\.cc2$",fname_no_gz,re.I):
                     ftype = loadable.cc1
                 elif re.search("\.xyz_[0-9]*$",fname_no_gz,re.I):
                     ftype = loadable.xyz
                 elif re.search("\.sdf$|\.sd$",fname_no_gz,re.I): 
                     ftype = loadable.sdf2 # now using the C-based SDF reader by default...
-                elif re.search("\.cex$",fname_no_gz,re.I):
-                    ftype = loadable.cex
-                elif re.search("\.pmo$",fname_no_gz,re.I):
-                    ftype = loadable.pmo
-                elif re.search("\.top$",fname_no_gz,re.I):
-                    ftype = loadable.top
-                elif re.search("\.trj$",fname_no_gz,re.I):
-                    ftype = loadable.trj
-                elif re.search("\.trr$",fname_no_gz,re.I):
-                    ftype = loadable.trr
-                elif re.search("\.dtr$",fname_no_gz,re.I):
-                    ftype = loadable.dtr
-                elif re.search("\.xtc$",fname_no_gz,re.I):
-                    ftype = loadable.xtc
-                elif re.search("\.gro$",fname_no_gz,re.I):
-                    ftype = loadable.gro
-                elif re.search("\.g96$",fname_no_gz,re.I):
-                    ftype = loadable.g96
-                elif re.search("\.dcd$",fname_no_gz,re.I):
-                    ftype = loadable.dcd
-                elif re.search("\.crd$",fname_no_gz,re.I):
-                    ftype = loadable.crd
                 elif re.search("\.rst7?$",fname_no_gz,re.I):
                     ftype = loadable.rst
                 elif re.search("\.pse$|\.pze|\.pzw$",fname_no_gz,re.I):
                     ftype = loadable.pse
                 elif re.search("\.psw$",fname_no_gz,re.I):
                     ftype = loadable.psw
-                elif re.search("\.phi$",fname_no_gz,re.I):
-                    ftype = loadable.phi
-                elif re.search("\.mol2$",fname_no_gz,re.I):
-                    ftype = loadable.mol2
-                elif re.search("\.dx$",fname_no_gz,re.I):
-                    ftype = loadable.dx
-                elif re.search("\.fld$",fname_no_gz,re.I):
-                    ftype = loadable.fld
-                elif re.search("\.pqr$",fname_no_gz,re.I):
-                    ftype = loadable.pqr
                 elif re.search("\.o$|\.dsn6$|\.brix$|\.omap$",fname_no_gz,re.I):
                     ftype = loadable.brix
-                elif re.search("\.grd$",fname_no_gz,re.I):
-                    ftype = loadable.grd
-                elif re.search("\.acnt$",fname_no_gz,re.I):
-                    ftype = loadable.acnt
-                elif re.search("\.p1m$",fname_no_gz,re.I):
-                    ftype = loadable.p1m
-                elif re.search("\.png$",fname_no_gz,re.I):
-                    ftype = loadable.png
-                elif re.search("\.moe$",fname_no_gz,re.I):
-                    ftype = loadable.moe
                 elif re.search(r"\.(mae|maegz)$", fname_no_gz, re.I):
                     ftype = loadable.mae
-                elif re.search(r"\.cms$", fname_no_gz, re.I):
-                    ftype = loadable.cms
                 elif re.search("\.idx$",fname_no_gz,re.I):
                     ftype = "idx" # should be numeric
                 elif ext in molfile_plugin_types:
@@ -748,16 +696,6 @@ SEE ALSO
                     plugin = ext
                 elif re.search("\.spi(der)?$",fname_no_gz,re.I):
                     ftype = loadable.spider
-                elif re.search("\.cif$",fname_no_gz,re.I):
-                    ftype = loadable.cif
-                elif re.search("\.pim$",fname_no_gz,re.I):
-                    ftype = loadable.pim
-                elif re.search("\.pwg$",fname_no_gz,re.I):
-                    ftype = loadable.pwg
-                elif re.search("\.aln$",fname_no_gz,re.I):
-                    ftype = loadable.aln
-                elif re.search("\.fasta$",fname_no_gz,re.I):
-                    ftype = loadable.fasta
                 elif re.search("\.mtz$",fname_no_gz,re.I):
                     return load_mtz(fname, object, quiet=quiet, _self=_self)
                 elif re.search("\.vis$",fname_no_gz,re.I):
@@ -770,6 +708,8 @@ SEE ALSO
                     return _self.do("_ run %s" % filename)
                 elif re.search(r"\.pml$", fname_no_gz, re.I):
                     return _self.do("_ @%s" % filename)
+                elif hasattr(loadable, ext):
+                    ftype = getattr(loadable, ext)
                 else:
                     ftype = loadable.pdb # default is PDB
             elif _self.is_string(type):

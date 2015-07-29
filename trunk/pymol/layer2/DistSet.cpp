@@ -186,6 +186,10 @@ static CMeasureInfo * MeasureInfoListFromPyList(PyMOLGlobals * G, PyObject * lis
       CPythonVal_PConvPyListToIntArrayInPlace(G, tmp, item->id, N);
       CPythonVal_PConvPyListToIntArrayInPlace_From_List(G, val, 2, item->state, N);
       CPythonVal_Free(tmp);
+
+      for (int j = 0; j < N; ++j) {
+        item->id[j] = SettingUniqueConvertOldSessionID(G, item->id[j]);
+      }
     }
     CPythonVal_Free(val);
   }
