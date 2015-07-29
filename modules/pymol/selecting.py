@@ -228,10 +228,10 @@ DESCRIPTION
         for oname in _self.get_object_list('(' + selection + ')'):
             osele = '(%s) & ?%s' % (selection, oname)
             if state < 0:
-                first = last = pymol.querying.get_object_state(oname)
+                first = last = _self.get_object_state(oname)
             elif state == 0:
                 first = 1
-                last = cmd.count_states('%' + oname)
+                last = _self.count_states('%' + oname)
             else:
                 first = last = state
             for ostate in range(first, last + 1):

@@ -567,7 +567,7 @@ PYMOL API
         if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def get_idtf(_self=cmd):
+    def get_idtf(quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -586,6 +586,12 @@ PYMOL API
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
+
+        if not quiet:
+            fov = _self.get_setting_float("field_of_view")
+            dist = _self.get_view()[11]
+            print " 3Daac=%3.1f, 3Droll=0, 3Dc2c=0 0 1, 3Droo=%1.2f, 3Dcoo=0 0 %1.2f" % (fov, -dist, dist)
+
         return r
 
     def get_mtl_obj(_self=cmd):
@@ -1621,29 +1627,29 @@ PYMOL API
         if _raising(r,_self): raise pymol.CmdException
         return r
 
-    def get_object_state(name):
+    def get_object_state(name, _self=cmd):
         '''
 DESCRIPTION
 
     Returns the effective object state.
         '''
-        states = cmd.count_states('%' + name)
-        if states < 2 and cmd.get_setting_boolean('static_singletons'):
+        states = _self.count_states('%' + name)
+        if states < 2 and _self.get_setting_boolean('static_singletons'):
             return 1
-        state = cmd.get_setting_int('state', name)
+        state = _self.get_setting_int('state', name)
         if state > states:
             raise pymol.CmdException('Invalid state %d for object %s' % (state, name))
         return state
 
-    def get_selection_state(selection):
+    def get_selection_state(selection, _self=cmd):
         '''
 DESCRIPTION
 
     Returns the effective object state for all objects in given selection.
     Raises exception if objects are in different states.
         '''
-        state_set = set(map(get_object_state,
-            cmd.get_object_list('(' + selection + ')')))
+        state_set = set(map(_self.get_object_state,
+            _self.get_object_list('(' + selection + ')')))
         if len(state_set) != 1:
             if len(state_set) == 0:
                 return 1

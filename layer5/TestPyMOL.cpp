@@ -418,8 +418,8 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
     case 7:
       {
         char *st = get_st(mol_01_02);
-        ExecutiveLoad(G, NULL, st, -1, cLoadTypeMOLStr, "test_01_07", 0, -1, 0, 1, 0, 1,
-                      NULL);
+        ExecutiveLoad(G, st, -1, cLoadTypeMOLStr, "test_01_07", 0, -1, 0, 1, 0, 1,
+                      NULL, 0, NULL);
         ExecutiveSetRepVisib(G, "test_01_07", cRepCyl, 1);
         ExecutiveSetRepVisib(G, "test_01_07", cRepLine, 0);
         SettingSetGlobal_b(G, cSetting_valence, 1);
@@ -433,8 +433,8 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
     case 8:
       {
         char *st = get_st(mol_01_02);
-        ExecutiveLoad(G, NULL, st, -1, cLoadTypeMOLStr, "test_01_08", 0, -1, 0, 1, 0, 1,
-                      NULL);
+        ExecutiveLoad(G, st, -1, cLoadTypeMOLStr, "test_01_08", 0, -1, 0, 1, 0, 1,
+                      NULL, 0, NULL);
         SettingSetGlobal_b(G, cSetting_valence, 1);
         ControlRock(G, 1);
         FreeP(st);
@@ -444,8 +444,8 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
     case 9:
       {
         char *st = get_st(mol_01_02);
-        ExecutiveLoad(G, NULL, st, -1, cLoadTypeMOLStr, "test_01_09", 0, -1, 0, 1, 0, 1,
-                      NULL);
+        ExecutiveLoad(G, st, -1, cLoadTypeMOLStr, "test_01_09", 0, -1, 0, 1, 0, 1,
+                      NULL, 0, NULL);
         ExecutiveSetRepVisib(G, "test_01_09", cRepMesh, 1);
         ExecutiveSetRepVisib(G, "test_01_09", cRepLine, 0);
         SettingSetGlobal_b(G, cSetting_valence, 1);

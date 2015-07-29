@@ -473,8 +473,9 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       break;
     case cPType_int_as_string:
       {
-	int val = *(int*)(((char*)wobj->atomInfo) + ap->offset);
-	const char *st = LexStr(wobj->G, val);
+        const char *st = LexStr(wobj->G,
+            *reinterpret_cast<int*>
+            (((char*)wobj->atomInfo) + ap->offset));
 	ret = PyString_FromString(st);
       }
       break;
@@ -639,7 +640,8 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	break;
       case cPType_int_as_string:
 	{
-	  int *dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
+          auto dest = reinterpret_cast<int*>
+            (((char*)wobj->atomInfo) + ap->offset);
           PyObject *valobj = PyObject_Str(val);
 	  char *valstr = PyString_AS_STRING(valobj);
 	  LexDec(wobj->G, *dest);
@@ -1187,9 +1189,7 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType
 
   if (!expr_co){
     // unsetting label
-    if(at->label) {
-      OVLexicon_DecRef(G->Lexicon, at->label);
-    }
+    LexDec(G, at->label);
     at->label = 0;
     return true;
   }

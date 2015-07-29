@@ -105,7 +105,9 @@ ARGUMENTS
 
     if hydro<0:
         hydro = not int(_self.get_setting_boolean("auto_remove_hydrogens"))
-    if (selection not in _self.get_names('all')):
+    if (selection not in _self.get_names('all')
+            if selection == 'pk1' # legacy, calling functions should pass '?pk1'
+            else _self.count_atoms(selection) == 0):
         if object == "":
             object = amino_acid
         # create new object 

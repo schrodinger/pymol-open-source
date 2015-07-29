@@ -26,7 +26,6 @@ if __name__=='pymol.exporting':
     from cmd import _cmd,lock,unlock,Shortcut,QuietException
     from chempy import io
     from chempy.sdf import SDF,SDFRec
-    from chempy.mol2 import MOL2
     from cmd import _feedback,fb_module,fb_mask, \
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
                      is_list, is_dict, is_tuple, loadable
@@ -569,7 +568,7 @@ NOTES
 
     The file format is automatically chosen if the extesion is one of
     the supported output formats: pdb, pqr, mol, sdf, pkl, pkla, mmd, out,
-    dat, mmod, pmo, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, idtf,
+    dat, mmod, cif, pov, png, pse, psw, aln, fasta, obj, mtl, wrl, dae, idtf,
     or mol2.
 
     If the file format is not recognized, then a PDB file is written
@@ -587,278 +586,107 @@ SEE ALSO
         '''
         import gzip
 
+        quiet = int(quiet)
         do_gzip = False
 
         # preprocess selection
-        input_selection = selection
-        selection = selector.process(input_selection)
+        selection = selector.process(selection)
         #   
         r = DEFAULT_ERROR
-        lc_filename=string.lower(filename)
 
         if format=='':
-            format = 'unknown'
-            # refactor following if/elif cascade 
-            # with a dictionary lookup
-            if re.search("\.pdb$|\.ent$",lc_filename):
+            ext_list = filename.lower().rsplit('.', 2)
+            if ext_list[-1] == 'gz':
+                do_gzip = True
+                ext = ext_list[-2]
+            else:
+                ext = ext_list[-1]
+
+            if ext in ['cif', 'pqr', 'mol', 'sdf', 'pkl', 'xyz', 'pov',
+                    'png', 'aln', 'fasta', 'obj', 'mtl', 'wrl', 'dae', 'idtf',
+                    'mol2']:
+                format = ext
+            elif ext in ["pdb", "ent"]:
                 format = 'pdb'
-            elif re.search("\.cif$",lc_filename):
-                format = 'cif'
-            elif re.search("\.pqr$",lc_filename):
-                format = 'pqr'
-            elif re.search("\.mol$",lc_filename):
-                format = 'mol'
-            elif re.search("\.sdf$",lc_filename):
-                format = 'sdf'
-            elif re.search("\.pkl$",lc_filename):
-                format = 'pkl'
-            elif re.search("\.xyz$",lc_filename):
-                format = 'xyz'
-            elif re.search("\.mmd$",lc_filename):
+            elif ext in ["mmod", "mmd", "out", "dat"]:
                 format = 'mmod'
-            elif re.search("\.out$",lc_filename):
-                format = 'mmod'
-            elif re.search("\.dat$",lc_filename):
-                format = 'mmod'
-            elif re.search("\.mmod$",lc_filename):
-                format = 'mmod'
-            elif re.search("\.pmo$",lc_filename):
-                format = 'pmo'
-            elif re.search("\.pov$",lc_filename):
-                format = 'pov'
-            elif re.search("\.png$",lc_filename):
-                format = 'png'
-            elif re.search("\.pse$|\.psw$",lc_filename):
+            elif ext in ["pse", "psw"]:
                 format = 'pse'
-            elif re.search("\.pze$|\.pzw$",lc_filename):
+            elif ext in ["pze", "pzw"]:
                 do_gzip = True
                 format = 'pse'
-            elif re.search("\.aln$",lc_filename):
-                format = 'aln'
-            elif re.search("\.fasta$",lc_filename):
-                format = 'fasta'
-            elif re.search("\.obj$",lc_filename):
-                format = 'obj'
-            elif re.search("\.mtl$",lc_filename):
-                format = 'mtl'
-            elif re.search("\.wrl$",lc_filename):
-                format = 'wrl'
-            elif re.search("\.dae$",lc_filename):
-                format = 'dae'
-            elif re.search("\.idtf$",lc_filename):
-                format = 'idtf'
-            elif re.search("\.mol2$",lc_filename):
-                format = 'mol2'
             else:
-                format = str(format)
-        if format=='unknown':
-            if not quiet:
-                print " Save-Warning: Unrecognized file type -- defaulting to PDB format."
-            format='pdb'
+                if not quiet:
+                    print " Save-Warning: Unrecognized file type -- defaulting to PDB format."
+                format='pdb'
+
         filename = _self.exp_path(filename)
-        if format=='pdb': # standard PDB file 
-            f=open(filename,"w")
-            if f:
-                st = ''
-                try:
-                    _self.lock(_self)
-                    st = _cmd.get_pdb(_self._COb,"("+str(selection)+")",int(state)-1,0,
-                                      str(ref),int(ref_state)-1,int(quiet))
-                    if st != None:
-                        r = DEFAULT_SUCCESS                    
-                finally:
-                    _self.unlock(r,_self=_self)
-                f.write(st)
-                f.close()
-                if not quiet:
-                    print " Save: wrote \""+filename+"\"."
-        if format=='cif': # mmCIF
-            with open(filename, "w") as f:
-                st = get_cifstr(selection, state, int(quiet), _self=_self)
-                f.write(st)
-                r = DEFAULT_SUCCESS
-                if not quiet:
-                    print " Save: wrote \""+filename+"\"."
-        elif format=='aln':
-            st = ''
-            try:
-                _self.lock(_self)
-                st = _cmd.get_seq_align_str(_self._COb,str(selection),int(state)-1,0,int(quiet))
-                if st != None:
-                    r = DEFAULT_SUCCESS
-            finally:
-                _self.unlock(r,_self)
-            if st!=None:
-                f=open(filename,"w")
-                f.write(st)
-                f.close()
-                if not quiet:
-                    print " Save: wrote \""+filename+"\"."
-            else:
-                r = DEFAULT_ERROR
-        elif format=='fasta':
-            st = _self.get_fastastr(selection)
-            if st != None:
-                r = DEFAULT_SUCCESS
-                f=open(filename,"w")
-                f.write(st)
-                f.close()
-                if not quiet:
-                    print " Save: wrote \""+filename+"\"."
-            else:
-                r = DEFAULT_ERROR
-        elif format=='pqr': # PQR (modified PDB file)
-            f=open(filename,"w")
-            if f:
-                st = ''
-                try:
-                    _self.lock(_self)
-                    st = _cmd.get_pdb(_self._COb,"("+str(selection)+")",int(state)-1,1,
-                                      str(ref),int(ref_state)-1,int(quiet))
-                    if st != None:
-                        r = DEFAULT_SUCCESS
-                finally:
-                    _self.unlock(r,_self)
-                f.write(st)
-                f.close()
-                if not quiet:
-                    print " Save: wrote \""+filename+"\"."
-        elif format=='pkl': # python binary
-            io.pkl.toFile(_self.get_model(selection,state,ref,ref_state),filename)
+
+        func_type1 = {
+            'cif': get_cifstr, # mmCIF
+            'xyz': get_xyzstr,
+            'fasta': get_fastastr,
+            'aln': get_alnstr,
+        }
+
+        func_type2 = {
+            'pdb': get_pdbstr,
+            'pqr': get_pqrstr,
+            'sdf': get_sdfstr,
+            'mol2': get_mol2str,
+        }
+
+        func_type3 = {
+            'dae': _self.get_collada,
+            'wrl': _self.get_vrml,
+            'mtl': lambda: _self.get_mtl_obj()[0],
+            'obj': lambda: _self.get_mtl_obj()[1],
+            'pov': lambda: ''.join(_self.get_povray()),
+            'idtf': lambda: ''.join(_self.get_idtf()),
+        }
+
+        func_type4 = {
+            'mmod': io.mmd.toFile,
+            'pkl': io.pkl.toFile, # binary pickle
+            'pkla': lambda model, filename: io.pkl.toFile(model, filename, bin=0), # ascii pickle
+            'mol': io.mol.toFile,
+        }
+
+        contents = None
+
+        if format in func_type1:
+            contents = func_type1[format](selection, state, quiet, _self=_self)
+        elif format in func_type2:
+            contents = func_type2[format](selection, state, ref, ref_state, quiet, _self=_self)
+        elif format in func_type3:
+            contents = func_type3[format]()
+        elif format in func_type4:
+            func_type4[format](_self.get_model(selection, state, ref, ref_state), filename)
             r = DEFAULT_SUCCESS
-            if not quiet:
-                print " Save: wrote \""+filename+"\"."
-        elif format=='pkla': # ascii override
-            io.pkl.toFile(_self.get_model(selection,state,ref,ref_state),filename,bin=0)
-            r = DEFAULT_SUCCESS
-            if not quiet:
-                print " Save: wrote \""+filename+"\"."
         elif format=='pse': # PyMOL session
             filename = filename.replace("\\","/") # always use unix-like path separators	
             _self.set("session_file",filename,quiet=1)
-            if '(' in input_selection: # ignore selections 
-                input_selection=''
+            if '(' in selection: # ignore selections
+                selection = ''
             if not quiet:
                 print " Save: Please wait -- writing session file..."
-            session = _self.get_session(input_selection, partial, quiet)
-            contents = cPickle.dumps(session, 1)
+            contents = cPickle.dumps(_self.get_session(selection, partial, quiet), 1)
+        elif format=='png':
+            return _self.png(filename, quiet=quiet)
+
+        if isinstance(contents, basestring):
             with (gzip.open if do_gzip else open)(filename, 'wb') as handle:
                 handle.write(contents)
             r = DEFAULT_SUCCESS
-            if not quiet:
-                print " Save: wrote \""+filename+"\"."
-        elif format=='mmod': # macromodel
-            io.mmd.toFile(_self.get_model(selection,state,ref,ref_state),filename)
-            r = DEFAULT_SUCCESS
-            if not quiet:
-                print " Save: wrote \""+filename+"\"."
-        elif format == 'xyz':
-            state = int(state)
-            buf = []
-            for i, (selection, state) in enumerate(
-                    pymol.selecting.objsele_state_iter(selection, state)):
-                n_atoms_i = len(buf)
-                buf.append('') # natoms (deferred)
-                buf.append('') # comment
-                n = _self.iterate_state(state, selection,
-                        '_buf.append("%s %f %f %f" % (elem, x, y, z))',
-                        space={'_buf': buf})
-                buf[n_atoms_i] = str(n)
-            with open(filename, 'w') as handle:
-                print >> handle, '\n'.join(buf)
-            if not quiet:
-                print " Save: wrote %d states to \"%s\"." % (i + 1, filename)
-        elif format=='sdf':
-            state = int(state)
-            sdf = SDF(filename,'w')
-            for i, (selection, state) in enumerate(
-                    pymol.selecting.objsele_state_iter(selection, state)):
-                rec = SDFRec(io.mol.toList(_self.get_model(selection,state,ref,ref_state))
-                             + ["$$$$\n"])
-                sdf.write(rec)
-            r = DEFAULT_SUCCESS
-            if not quiet:
-                print " Save: wrote %d states to \"%s\"." % (i + 1, filename)
-        elif format=='mol':
-            io.mol.toFile(_self.get_model(selection,state,ref,ref_state),filename)
-            r = DEFAULT_SUCCESS
-            if not quiet:
-                print " Save: wrote \""+filename+"\"."
-        elif format=="mol2":
-            state = int(state)
-            recList = []
-            entrycount = 0
-            for osele, ostate in pymol.selecting.objsele_state_iter(selection, state):
-                    assign_atom_types(osele, "mol2", ostate, 1, _self)
-                    recList.extend(io.mol2.toList(_self.get_model(osele,
-                        ostate, ref, ref_state), selection=osele, state=ostate))
-                    entrycount += 1
-            m = MOL2(cmd=cmd)
-            m.strToFile(recList,filename)
-            r = DEFAULT_SUCCESS
-            if not quiet:
-                print ' Save: wrote %d entries to "%s".' % (entrycount, filename)
-        elif format=='png':
-            r = _self.png(filename,quiet=quiet)
-        # refactor below to lift repeated code
-        elif format=='pov':
-            tup = _self.get_povray()
-            f=open(filename,"w")
-            f.write(tup[0])
-            f.write(tup[1])
-            f.flush()
-            f.close()
-            if not quiet:
-                print " Save: wrote \""+filename+"\"."
-            r = DEFAULT_SUCCESS
-        elif format=='obj':
-            tup = _self.get_mtl_obj()
-            f=open(filename,"w")
-            f.write(tup[1])
-            f.flush()
-            f.close()
-            r = DEFAULT_SUCCESS
-        elif format=='mtl':
-            tup = _self.get_mtl_obj()
-            f=open(filename,"w")
-            f.write(tup[0])
-            f.flush()
-            f.close()
-            r = DEFAULT_SUCCESS
-        elif format=='wrl':
-            txt = _self.get_vrml()
-            f=open(filename,"w")
-            f.write(txt)
-            f.flush()
-            f.close()
-            if not quiet:
-                print " Save: wrote \""+filename+"\"."
-            r = DEFAULT_SUCCESS
-        elif format=='dae':
-            txt = _self.get_collada()
-            if txt:
-                with open(filename, "w") as f:
-                    f.write(txt)
-                if not quiet:
-                    print " Save: wrote \""+filename+"\"."
-                r = DEFAULT_SUCCESS
-            elif not quiet:
-                print " COLLADA export failed, no file written"
-        elif format=='idtf':
-            tup = _self.get_idtf()
-            f=open(filename,"w")
-            f.write(tup[0]);
-            f.write(tup[1]);
-            f.flush()
-            f.close()
-            if not quiet:
-                fov = float(cmd.get("field_of_view"))
-                dist = cmd.get_view()[11]
-                print " 3Daac=%3.1f, 3Droll=0, 3Dc2c=0 0 1, 3Droo=%1.2f, 3Dcoo=0 0 %1.2f"%(fov,-dist,dist)
-                print " Save: wrote \""+filename+"\"."
-            r = DEFAULT_SUCCESS
             
         if _self._raising(r,_self): raise QuietException
+
+        if not quiet:
+            if r == DEFAULT_SUCCESS:
+                print ' Save: wrote "' + filename + '".'
+            else:
+                print ' Save-Error: no file written'
+
         return r
 
     # mmCIF export
@@ -982,3 +810,62 @@ _atom_site.pdbx_PDB_model_num
         _self.delete(tmp)
 
         return ''.join(buf)
+
+    def get_xyzstr(selection, state=-1, quiet=1, _self=cmd):
+        state = int(state)
+        buf = []
+
+        for i, (osele, ostate) in enumerate(
+                pymol.selecting.objsele_state_iter(selection, state)):
+            n_atoms_i = len(buf)
+            buf.append('') # natoms (deferred)
+            buf.append('') # comment
+            n = _self.iterate_state(ostate, osele,
+                    r'_buf.append("%s %f %f %f\n" % (elem, x, y, z))',
+                    space={'_buf': buf})
+            buf[n_atoms_i] = str(n)
+
+        if not quiet:
+            print " Save-XYZ: %d object-state(s) in selection." % (i + 1)
+
+        return ''.join(buf)
+
+    def get_sdfstr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
+        state = int(state)
+        buf = []
+
+        for i, (osele, ostate) in enumerate(
+                pymol.selecting.objsele_state_iter(selection, state)):
+            rec = SDFRec(io.mol.toList(_self.get_model(osele, ostate, ref, ref_state)))
+            buf.extend(rec.toList())
+            buf.append('$$$$\n')
+
+        if not quiet:
+            print " Save-SDF: %d object-state(s) in selection." % (i + 1)
+
+        return ''.join(buf)
+
+    def get_mol2str(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
+        state = int(state)
+        buf = []
+
+        for i, (osele, ostate) in enumerate(
+                pymol.selecting.objsele_state_iter(selection, state)):
+            assign_atom_types(osele, "mol2", ostate, 1, _self)
+            buf.extend(io.mol2.toList(_self.get_model(osele,
+                ostate, ref, ref_state), selection=osele, state=ostate))
+
+        if not quiet:
+            print " Save-MOL2: %d object-state(s) in selection." % (i + 1)
+
+        return ''.join(buf)
+
+    def get_alnstr(selection, state=-1, quiet=1, _self=cmd):
+        with _self.lockcm:
+            return _cmd.get_seq_align_str(_self._COb, str(selection),
+                    int(state)-1, 0, int(quiet))
+
+    def get_pqrstr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
+        with _self.lockcm:
+            return _cmd.get_pdb(_self._COb, str(selection), int(state)-1, 1,
+                    str(ref), int(ref_state)-1, int(quiet))

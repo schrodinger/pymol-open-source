@@ -44,7 +44,7 @@ util.cbc()
 
 # store the links as atom text_types
 
-cmd.alter("name ca",r"custom='http://delsci.info/cgi-bin/click.cgi?residue=%s%s%s'%(resn,resi,chain)")
+cmd.alter("name CA",r"custom='http://delsci.info/cgi-bin/click.cgi?residue=%s%s%s'%(resn,resi,chain)")
 
 # put the mouse into single-atom selection mode
 
@@ -56,7 +56,7 @@ cmd.show_as("cartoon")
 
 # set up the labels
 
-cmd.label("name ca","'Link'") 
+cmd.label("name CA","'Link'")
 
 # color the labels white
 

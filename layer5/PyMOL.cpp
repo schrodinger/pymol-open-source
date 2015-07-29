@@ -1624,14 +1624,6 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
     }
   }
   if(ok) {
-
-    /* handling of multiplex option */
-
-    if(multiplex == -2)         /* use setting default value */
-      multiplex = SettingGetGlobal_i(I->G, cSetting_multiplex);
-    if(multiplex < 0)           /* default behavior is not to multiplex */
-      multiplex = 0;
-
     {                           /* if object_name is blank and content is a filename, then 
                                    compute the object_name from the file prefix */
       if((!object_name[0]) && (type_code == I->lex_filename)) {
@@ -1665,7 +1657,6 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
     }
     {
       int pymol_content_type = cLoadTypeUnknown;
-      CObject *existing_object = NULL;
 
       /* convert text format strings into integral load types */
 
@@ -1730,8 +1721,6 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
       }
 
       if(ok) {
-        existing_object = ExecutiveGetExistingCompatible(I->G,
-                                                         object_name, pymol_content_type);
 
       /* measure the length if it wasn't provided */
 
@@ -1740,7 +1729,7 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
           content_length = strlen(content);
       }
 
-        ok = ExecutiveLoad(I->G, existing_object,
+        ok = ExecutiveLoad(I->G,
                            content, content_length,
                            pymol_content_type,
                            object_name,

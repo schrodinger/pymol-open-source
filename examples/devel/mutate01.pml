@@ -16,7 +16,7 @@ cmd.get_wizard().set_mode("ILE")
 
 # pick a residue
 
-cmd.edit("pept///10/ca")
+cmd.edit("pept///10/CA")
 
 # notify the wizard about the picked residue
 # (this will generate the mutation object)

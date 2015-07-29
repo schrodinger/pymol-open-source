@@ -439,7 +439,6 @@ void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, i
 int ObjectMoleculeMultiSave(ObjectMolecule * I, const char *fname, FILE * f, int state,
                             int append, int format, int quiet);
 
-void ObjectMoleculeResetIDNumbers(ObjectMolecule * I);
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I);
 
 void ObjectMoleculeSculptImprint(ObjectMolecule * I, int state, int match_state,

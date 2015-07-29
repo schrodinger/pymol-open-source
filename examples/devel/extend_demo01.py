@@ -7,7 +7,7 @@ from pymol import cmd
 
 # step 1: define your Python function
 
-def my_color(color="red",sele="name ca"):
+def my_color(color="red",sele="name CA"):
     print "I am coloring "+color+ " all atoms in selection: "+sele
     cmd.color(color, sele)
 

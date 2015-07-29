@@ -62,6 +62,7 @@ Z* -------------------------------------------------------------------
                    PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list, i), __VA_ARGS__)
 #define CPythonVal_PConvPyListToFloatVLANoneOkay_From_List(G, list, i, f)       PConvPyListToFloatVLANoneOkay(PyList_GetItem(list, i), f)
 #define CPythonVal_PConvPyListToLabPosVLA(G, obj, vla_ptr)                      PConvPyListToLabPosVLA(obj, vla_ptr)
+#define CPythonVal_PConvPyStrToStr_From_List(G, list, i, ptr, l)                PConvPyStrToStr(PyList_GetItem(list, i), ptr, l)
 
 #define CPythonVal_Free(obj)
 #define CPythonVal_FreeAll(PYOBJECT)

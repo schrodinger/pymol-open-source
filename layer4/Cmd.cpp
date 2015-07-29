@@ -7139,7 +7139,6 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *fname, *oname, *load_properties = NULL;
   char *plugin = NULL;
-  CObject *origObj = NULL;
   int frame, type;
   int finish, discrete;
   int quiet;
@@ -7158,23 +7157,16 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ObjectNameType valid_name = "";
+#ifdef _PYMOL_IP_EXTRAS
+#endif
 
     PRINTFD(G, FB_CCmd)
       "CmdLoad-DEBUG %s %s %d %d %d %d\n",
       oname, fname, frame, type, finish, discrete ENDFD;
-    if(multiplex == -2)         /* means use setting default value */
-      multiplex = SettingGetGlobal_i(G, cSetting_multiplex);
-    /* default is -1 -> default/automatic behaviors */
 
-    ExecutiveProcessObjectName(G, oname, valid_name);
-
-    if(multiplex != 1)
-      origObj = ExecutiveGetExistingCompatible(G, valid_name, type);
-
-    ok = ExecutiveLoad(G, origObj,
+    ok = ExecutiveLoad(G,
                          fname, bytes, type,
-                         valid_name, frame, zoom,
+                         oname, frame, zoom,
                          discrete, finish, multiplex, quiet, plugin);
 
     OrthoRestorePrompt(G);

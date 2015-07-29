@@ -15,9 +15,7 @@ bump_name = "_bump_check"
 obj_name = "mutation"
 frag_name = "_tmp_mut"
 mut_sele = "_tmp_mut_sele"
-tmp_obj1 = "_tmp_obj1"
 tmp_obj2 = "_tmp_obj2"
-tmp_obj3 = "_tmp_obj3"
 tmp_sele1 = "_tmp_sele1"
 tmp_sele2 = "_tmp_sele2"
 
@@ -53,6 +51,9 @@ class Mutagenesis(Wizard):
         
         cmd.unpick()
         
+        self.stored = pymol.Scratch_Storage()
+        self.space = {'stored': self.stored}
+
         self.bump_scores = []
         self.dep = default_dep
 
@@ -324,9 +325,7 @@ class Mutagenesis(Wizard):
         pymol=cmd._pymol
         self.status=0
         self.bump_scores = []
-        cmd.delete(tmp_obj1)
         cmd.delete(tmp_obj2)
-        cmd.delete(tmp_obj3)
         cmd.delete(mut_sele)
         cmd.delete(src_sele)
         cmd.delete(obj_name)
@@ -339,75 +338,47 @@ class Mutagenesis(Wizard):
         pymol=cmd._pymol
         if self.status==1:
             # find the name of the object which contains the selection
-            new_name = None
-            obj_list = cmd.get_names('objects')
-            for a in obj_list:
-                if cmd.get_type(a)=="object:molecule":
-                    if cmd.count_atoms("(%s and %s)"%(a,src_sele)):
-                        new_name = a
-                        break
             src_frame = cmd.get_state()
-            if new_name==None:
+            try:
+                new_name = cmd.get_object_list(src_sele)[0]
+            except IndexError:
                 print " Mutagenesis: object not found."
-            else:
+                return
+
+            if True:
                 auto_zoom = cmd.get_setting_text('auto_zoom')
                 cmd.set('auto_zoom',"0",quiet=1)
                 if self.lib_mode!="current":
-
-                    # create copy w/o residue
-                    cmd.create(tmp_obj1,"(%s and not %s)"%(new_name,src_sele))
-
-                    # remove existing c-cap in copy (if any)
-                    cmd.remove("byres (name N and (%s in (neighbor %s)) and resn NME+NHH)"%
-                                (tmp_obj1,src_sele))
-                    # remove existing n-cap in copy (if any)
-                    cmd.remove("byres (name C and (%s in (neighbor %s)) and resn ACE)"%
-                                (tmp_obj1,src_sele))
-                    
-                    # save copy for bonded atom reference
-                    cmd.create(tmp_obj3,new_name)
-                    # transfer the selection to copy
-                    cmd.select(src_sele,"(%s in %s)"%(tmp_obj3,src_sele))
                     # create copy with mutant in correct frame
-                    cmd.create(tmp_obj2,obj_name,src_frame,1)
-                    cmd.set_title(tmp_obj2,1,'')
-                    cmd.delete(new_name)
+                    state = cmd.get_object_state(new_name)
+                    cmd.create(tmp_obj2, obj_name, src_frame, state)
+                    cmd.set_title(tmp_obj2, state, '')
+                    cmd.color(self.stored.identifiers[4], "?%s & elem C" % tmp_obj2)
+                    cmd.alter(tmp_obj2, 'ID = -1')
+
+                    # select backbone connection atoms
+                    cmd.select(tmp_sele1, 'neighbor ?%s' % (src_sele), 0)
+
+                    # remove residue and neighboring c-cap/n-cap (if any)
+                    cmd.remove("?%s | byres (?%s & "
+                            "(name N & resn NME+NHH | name C & resn ACE))" % (src_sele, tmp_sele1))
 
                     # create the merged molecule
-                    cmd.create(new_name,"(%s or %s)"%(tmp_obj1,tmp_obj2),1) # only one state in merged object...
+                    cmd.create(new_name, "?%s | ?%s" % (new_name, tmp_obj2), state, state)
 
                     # now connect them
-                    cmd.select(mut_sele,"(byres (%s like %s))"%(new_name,src_sele))
-
-
-                    # bond N+0 to C-1
-                    if ((cmd.select(tmp_sele1, "(name C and (%s in (neighbor %s)))"%
-                                  (new_name,src_sele)) == 1) and
-                        (cmd.select(tmp_sele2, "((%s in %s) & name N)"%
-                                    (mut_sele,tmp_obj2)) == 1)):
-                        cmd.bond(tmp_sele1,tmp_sele2)
-                        cmd.set_geometry(tmp_sele1,3,3) # make amide planer
-                        cmd.set_geometry(tmp_sele2,3,3) # make amide planer
-                    # bond C+0 to N+1
-                    if ((cmd.select(tmp_sele1, "(name N and (%s in (neighbor %s)))"%
-                                (new_name,src_sele)) == 1) and
-                        (cmd.select(tmp_sele2,"((%s in %s) & name C)"%
-                                    (mut_sele,tmp_obj2)) == 1)):
-                        cmd.bond(tmp_sele1,tmp_sele2)
-                        cmd.set_geometry(tmp_sele1,3,3) # make amide planer
-                        cmd.set_geometry(tmp_sele2,3,3) # make amide planer
-
-                    
-                    cmd.delete(tmp_sele1)
-                    cmd.delete(tmp_sele2)
+                    cmd.select(tmp_sele2, '/%s/%s/%s/%s' % ((new_name,) + self.stored.identifiers[:3]))
+                    cmd.bond('?%s & name C' % (tmp_sele1), '?%s & name N' % (tmp_sele2), quiet=1)
+                    cmd.bond('?%s & name N' % (tmp_sele1), '?%s & name C' % (tmp_sele2), quiet=1)
+                    cmd.set_geometry('(?%s | ?%s) & name C+N' % (tmp_sele1, tmp_sele2), 3, 3) # make amide planer
 
                     # fix N-H hydrogen position (if any exists)
-                    cmd.h_fix("(name N and bound_to (%s in %s & name H))"%(new_name,tmp_obj2))
+                    cmd.h_fix('?%s & name N' % (tmp_sele2))
                     
-                    # now transfer selection back to the modified object
-                    cmd.delete(tmp_obj1)
+                    # delete temporary objects/selections
+                    cmd.delete(tmp_sele1)
+                    cmd.delete(tmp_sele2)
                     cmd.delete(tmp_obj2)
-                    cmd.delete(tmp_obj3)
                     self.clear()
                     # and return to frame 1
                     cmd.frame(1)
@@ -511,14 +482,8 @@ class Mutagenesis(Wizard):
                 if cmd.count_atoms("("+src_sele+") and hydro")==0:
                     cmd.remove("("+frag_name+" and hydro)")
             # copy identifying information
-            cmd.iterate("(%s & name CA)"%src_sele,"stored.chain=chain")
-            cmd.alter("(%s)"%frag_name,"chain=stored.chain")
-            cmd.iterate("(%s & name CA)"%src_sele,"stored.resi=resi")
-            cmd.alter("(%s)"%frag_name,"resi=stored.resi")
-            cmd.iterate("(%s & name CA)"%src_sele,"stored.segi=segi")
-            cmd.alter("(%s)"%frag_name,"segi=stored.segi")
-            cmd.iterate("(%s & name CA)"%src_sele,"stored.ss=ss")
-            cmd.alter("(%s)"%frag_name,"ss=stored.ss")
+            cmd.alter("?%s & name CA" % src_sele, "stored.identifiers = (segi, chain, resi, ss, color)", space=self.space)
+            cmd.alter("?%s" % frag_name, "(segi, chain, resi, ss) = stored.identifiers[:4]", space=self.space)
             # move the fragment
             if ((cmd.count_atoms("(%s & name CB)"%frag_name)==1) and
                  (cmd.count_atoms("(%s & name CB)"%src_sele)==1)):
