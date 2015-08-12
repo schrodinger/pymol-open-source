@@ -4791,61 +4791,86 @@ int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name,
                      float within, float sigma, int zero, int calc_mode, int quiet)
 {
   ObjectGadgetRamp *obj = NULL;
-  int ok = true;
+  ObjectGadgetRamp *origRamp = NULL;
   CObject *src_obj = NULL;
+  CObject *origObj = ExecutiveFindObjectByName(G, name);
   float *vert_vla = NULL;
-  src_obj = ExecutiveFindObjectByName(G, src_name);
-  if(src_obj) {
-    if((src_obj->type != cObjectMap) && (src_obj->type != cObjectMolecule)) {
-      PRINTFB(G, FB_Executive, FB_Errors)
-        "ExecutiveRampNew: Error: object '%s' is not a map or molecule.\n", src_name
-        ENDFB(G);
-      ok = false;
-    }
-  } else if(WordMatch(G, src_name, cKeywordNone, true)) {
-    src_obj = NULL;
-  } else {
+  int rampType = -1;
+
+  if (origObj &&
+      origObj->type == cObjectGadget &&
+      ((ObjectGadget*)origObj)->GadgetType == cGadgetRamp) {
+    origRamp = (ObjectGadgetRamp*)origObj;
+    rampType = origRamp->RampType;
+  } else if (!range || !(color || calc_mode)) {
     PRINTFB(G, FB_Executive, FB_Errors)
-      "ExecutiveRampNew: Error: object '%s' not found.\n", src_name ENDFB(G);
-    ok = false;
+      " ExecutiveRampNew-Error: missing 'range' or 'color' to create new ramp.\n" ENDFB(G);
+    return false;
   }
-  if(ok) {
-    if(!src_obj) {
-      ok = ok
-        && (obj =
-            ObjectGadgetRampMolNewAsDefined(G, NULL, range, color, src_state, calc_mode));
+
+  if (src_name && src_name[0]) {
+    if (WordMatchExact(G, src_name, cKeywordNone, true)) {
+      rampType = cRampNone;
     } else {
-      switch (src_obj->type) {
-      case cObjectMap:
-	/* mapping this ramp from a selection */
-        if(sele && sele[0]) {
-          vert_vla = ExecutiveGetVertexVLA(G, sele, src_state);
+      src_obj = ExecutiveFindObjectByName(G, src_name);
+      if(src_obj) {
+        switch (src_obj->type) {
+          case cObjectMap:
+            rampType = cRampMap;
+            break;
+          case cObjectMolecule:
+            rampType = cRampMol;
+            break;
+          default:
+            PRINTFB(G, FB_Executive, FB_Errors)
+              "ExecutiveRampNew: Error: object '%s' is not a map or molecule.\n", src_name
+              ENDFB(G);
+            return false;
         }
-        ok = ok && (obj = ObjectGadgetRampMapNewAsDefined(G, (ObjectMap *) src_obj,
-                                                          range, color, src_state,
-                                                          vert_vla, beyond, within,
-                                                          sigma, zero, calc_mode));
-        break;
-      case cObjectMolecule:
-        ok = ok && (obj = ObjectGadgetRampMolNewAsDefined(G, (ObjectMolecule *) src_obj,
-                                                          range, color, src_state,
-                                                          calc_mode));
-        break;
+      } else {
+        PRINTFB(G, FB_Executive, FB_Errors)
+          "ExecutiveRampNew: Error: object '%s' not found.\n", src_name ENDFB(G);
+        return false;
       }
     }
   }
-  if(ok)
+
+  switch (rampType) {
+    case cRampMap:
+      /* mapping this ramp from a selection */
+      if(sele && sele[0]) {
+        vert_vla = ExecutiveGetVertexVLA(G, sele, src_state);
+      }
+      obj = ObjectGadgetRampMapNewAsDefined(G, origRamp, (ObjectMap *) src_obj,
+          range, color, src_state,
+          vert_vla, beyond, within,
+          sigma, zero, calc_mode);
+      VLAFreeP(vert_vla);
+      break;
+    case cRampNone:
+    case cRampMol:
+      obj = ObjectGadgetRampMolNewAsDefined(G, origRamp, (ObjectMolecule *) src_obj,
+          range, color, src_state,
+          calc_mode);
+      break;
+    default:
+      PRINTFB(G, FB_Executive, FB_Errors)
+        " ExecutiveRampNew-Error: missing 'name' to create new ramp.\n" ENDFB(G);
+      return false;
+  }
+
+  if (!obj)
+    return false;
+
+  if (obj != origRamp) {
     ExecutiveDelete(G, name);
-  if(ok)
     ObjectSetName((CObject *) obj, name);
-  if(ok)
     ColorRegisterExt(G, name, (void *) obj, cColorGadgetRamp);
-  if(ok)
     ExecutiveManageObject(G, (CObject *) obj, false, quiet);
-  if(ok)
-    ExecutiveInvalidateRep(G, cKeywordAll, cRepAll, cRepInvColor);      /* recolor everything */
-  VLAFreeP(vert_vla);
-  return (ok);
+  }
+
+  ExecutiveInvalidateRep(G, cKeywordAll, cRepAll, cRepInvColor);      /* recolor everything */
+  return true;
 }
 
 static int ExecutiveSetNamedEntries(PyMOLGlobals * G, PyObject * names, int version,
@@ -12849,7 +12874,6 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
   int nObj = 0;
   int unblock;
   int ok = true;
-  int side_effects = false;
 
   PRINTFD(G, FB_Executive)
     " ExecutiveUnsetSetting: entered. sele \"%s\"\n", sele ENDFD;
@@ -12865,7 +12889,6 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
         " Use \"set %s, 0\" to ensure consistent behavior in future PyMOL versions.",
         name ENDFB(G);
       SettingSetGlobal_i(G, index, 0);
-      side_effects = true;
     } else {
       SettingRestoreDefault(G->Setting, index, G->Default);
       PRINTFB(G, FB_Executive, FB_Actions)
@@ -12892,10 +12915,6 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
                   nObj++;
                 }
               }
-            }
-            if(nObj) {
-              if(updates)
-                side_effects = true;
             }
           }
           if(Feedback(G, FB_Setting, FB_Actions)) {
@@ -12928,8 +12947,6 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
                 op.i4 = 0;
                 ObjectMoleculeSeleOp(obj, sele1, &op);
                 if(op.i4) {
-                  if(updates)
-                    side_effects = true;
                   if(!quiet) {
                     PRINTF
                       " Setting: %s unset for %d atoms in object \"%s\".\n",
@@ -12947,8 +12964,6 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
               SettingCheckHandle(G, handle);
               ok = SettingUnset(*handle, index);
               if(ok) {
-                if(updates)
-                  side_effects = true;
                 if(!quiet) {
                   if(state < 0) {       /* object-specific */
                     if(Feedback(G, FB_Setting, FB_Actions)) {
@@ -12974,7 +12989,7 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
     TrackerDelList(I_Tracker, list_id);
     TrackerDelIter(I_Tracker, iter_id);
   }
-  if(side_effects)
+  if(updates)
     SettingGenerateSideEffects(G, index, sele, state, quiet);
   PAutoUnblock(G, unblock);
   return (ok);
@@ -15422,6 +15437,9 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                     break;
                   case cObjectVolume:
                     MenuActivate(G, mx, my, x, y, false, "vol_color", namesele);
+                    break;
+                  case cObjectGadget:
+                    MenuActivate(G, mx, my, x, y, false, "ramp_color", namesele);
                     break;
                   }
                   break;

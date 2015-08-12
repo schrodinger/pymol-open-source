@@ -123,6 +123,13 @@ double cif_array::as_d(int row, double d) const {
   return s ? scifloat(s) : d;
 }
 
+// templated getters
+template <> const char* cif_array::as<const char* >(int row) const { return as_s(row); }
+template <> std::string cif_array::as<std::string >(int row) const { return as_s(row); }
+template <> int         cif_array::as<int         >(int row) const { return as_i(row); }
+template <> double      cif_array::as<double      >(int row) const { return as_d(row); }
+template <> float       cif_array::as<float       >(int row) const { return as_d(row); }
+
 /*
  * Get a pointer to array or NULL if not found
  *

@@ -3820,7 +3820,9 @@ int ObjectMoleculeAddSeleHydrogens(ObjectMolecule * I, int sele, int state)
 		cs->TmpLinkBond[a].order = 1;
 		cs->TmpLinkBond[a].stereo = 0;
 		cs->TmpLinkBond[a].id = -1;
+#ifdef _PYMOL_IP_EXTRAS
 		cs->TmpLinkBond[a].oldid = -1;
+#endif
 	      }
 	      cs->NTmpLinkBond = nH;
 	    }
@@ -4936,7 +4938,9 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
     if (ok){
       ai->visRep = ai0->visRep;
       ai->id = -1;
+#ifdef _PYMOL_IP_EXTRAS
       ai->oldid = -1;
+#endif
       ai->rank = -1;
       AtomInfoUniquefyNames(I->Obj.G, I->AtomInfo, I->NAtom, ai, NULL, 1);
       AtomInfoAssignParameters(I->Obj.G, ai);
@@ -7574,8 +7578,11 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
       if(ok) {
         if(PTruthCallStr(atom, "has", "stereo")) {
           tmp = PyObject_GetAttrString(atom, "stereo");
-          if(tmp)
-            ok = PConvPyObjectToChar(tmp, (char *) &ai->stereo);
+          if(tmp) {
+            char tmp_char;
+            ok = PConvPyObjectToChar(tmp, &tmp_char);
+            ai->stereo = tmp_char;
+          }
           if(!ok)
             ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read stereo");
           Py_XDECREF(tmp);
@@ -7721,12 +7728,9 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
         if(tmp) {
           float u[6];
           if(PConvPyListToFloatArrayInPlace(tmp, u, 6)) {
-            ai->U11 = u[0];
-            ai->U22 = u[1];
-            ai->U33 = u[2];
-            ai->U12 = u[3];
-            ai->U13 = u[4];
-            ai->U23 = u[5];
+            // only allocate if not all zero
+            if(std::any_of(u, u + 6, [](float ui){return ui;}))
+              std::copy_n(u, 6, ai->get_anisou());
           }
           Py_DECREF(tmp);
         }
@@ -7978,12 +7982,14 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           }
         }
         if(ok) {
+          int order = 0;
           tmp = PyObject_GetAttrString(bnd, "order");
           if(tmp)
-            ok = PConvPyObjectToInt(tmp, &ii->order);
+            ok = PConvPyObjectToInt(tmp, &order);
           if(!ok)
             ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read bond order");
           Py_XDECREF(tmp);
+          ii->order = order;
         }
 
         if(ok && PyObject_HasAttrString(bnd, "stick_radius")) {
@@ -8569,9 +8575,11 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buf
       }
 
       if(ok) {
+        int order = 0;
         p = ncopy(cc, p, 3);
-        if(sscanf(cc, "%d", &ii->order) != 1)
+        if(sscanf(cc, "%d", &order) != 1)
           ok = ErrMessage(G, "ReadMOLFile", "bad bond order");
+        ii->order = order;
       }
       if(ok) {
         int stereo;
@@ -9592,7 +9600,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
   CHECKOK(ok, ai2);
   if (ok){
     for(a = 0; a < cs->NIndex; a++)
-      ai2[a] = ai[index[a]];      /* creates a sorted list of atom info records */
+      ai2[a] = std::move(ai[index[a]]);      /* creates a sorted list of atom info records */
   }
   VLAFreeP(ai);
   ai = ai2;
@@ -9714,7 +9722,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
       if(a2 < oldNAtom)
 	AtomInfoCombine(G, I->AtomInfo + a2, ai + a1, aic_mask);
       else
-	*(I->AtomInfo + a2) = *(ai + a1);
+	*(I->AtomInfo + a2) = std::move(*(ai + a1));
     }
   }
 
@@ -9853,7 +9861,7 @@ void ObjectMoleculeAppendAtoms(ObjectMolecule * I, AtomInfoType * atInfo, CoordS
     dest = I->AtomInfo + I->NAtom;
     src = atInfo;
     for(a = 0; a < cs->NIndex; a++)
-      *(dest++) = *(src++);
+      *(dest++) = std::move(*(src++));
     I->NAtom = nAtom;
     VLAFreeP(atInfo);
   } else {
@@ -12439,32 +12447,21 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
 {
   int a;
   int ok = true;
-  OOAlloc(G, ObjectMolecule);
+  OOCalloc(G, ObjectMolecule);
   CHECKOK(ok, I);
   if (!ok)
     return NULL;
   ObjectInit(G, (CObject *) I);
   I->Obj.type = cObjectMolecule;
-  I->NAtom = 0;
-  I->NBond = 0;
-  I->AtomInfo = NULL;
   I->CSet = VLACalloc(CoordSet *, 10); /* auto-zero */
   CHECKOK(ok, I->CSet);
   if (!ok){
     OOFreeP(I);
     return NULL;
   }
-  I->NCSet = 0;
-  I->Bond = NULL;
   I->AtomCounter = -1;
   I->BondCounter = -1;
   I->DiscreteFlag = discreteFlag;
-  I->UnitCellCGO = NULL;
-  I->Sculpt = NULL;
-  I->CSTmpl = NULL;
-  I->DiscreteAtmToIdx = NULL;
-  I->DiscreteCSet = NULL;
-  I->assembly_ids = NULL;
   if(I->DiscreteFlag) {         /* discrete objects don't share atoms between states */
     I->DiscreteAtmToIdx = VLACalloc(int, 0);
     CHECKOK(ok, I->DiscreteAtmToIdx);
@@ -12501,10 +12498,6 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals * G, int discreteFlag)
     ObjectMoleculeFree(I);
     return NULL;
   }
-  I->CurCSet = 0;
-  I->Symmetry = NULL;
-  I->Neighbor = NULL;
-  I->RepVisCacheValid = false;
   for(a = 0; a <= cUndoMask; a++) {
     I->UndoCoord[a] = NULL;
     I->UndoState[a] = -1;
@@ -12523,7 +12516,7 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   int a;
   BondType *i0, *i1;
   AtomInfoType *a0, *a1;
-  OOAlloc(G, ObjectMolecule);
+  OOCalloc(G, ObjectMolecule);
   (*I) = (*obj);
   I->Symmetry = SymmetryCopy(I->Symmetry);      /* null-safe */
   I->UnitCellCGO = NULL;
@@ -12574,8 +12567,6 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
   a1 = obj->AtomInfo;
   for(a = 0; a < I->NAtom; a++)
     AtomInfoCopy(G, a1++, a0++);
-
-  I->assembly_ids = NULL;
 
   return (I);
 
@@ -12630,7 +12621,8 @@ void ObjectMoleculeFree(ObjectMolecule * I)
   VLAFreeP(I->DiscreteAtmToIdx);
   VLAFreeP(I->DiscreteCSet);
   VLAFreeP(I->CSet);
-  DeleteP(I->assembly_ids);
+  I->m_ciffile.reset(); // free data
+
   {
     int nAtom = I->NAtom;
     AtomInfoType *ai = I->AtomInfo;
@@ -13147,6 +13139,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
   return (cset);
 }
 
+#ifdef _PYMOL_IP_EXTRAS
 void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * obj){
   int i;
   AtomInfoType *ai = obj->AtomInfo;
@@ -13173,6 +13166,8 @@ void ObjectMoleculeSetAtomBondInfoTypeOldIdToNegOne(PyMOLGlobals * G, ObjectMole
     bi++;
   }
 }
+#endif
+
 void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAtom){
   int a, a0;
   if (I->DiscreteAtmToIdx){

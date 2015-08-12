@@ -1291,6 +1291,22 @@ def mesh_action(self_cmd, sele):
 def ramp_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
               [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+              [ 0, '', '' ],
+              [ 1, 'levels', [
+                  [ 1, 'Range +/- %.1f' % (L),
+                      'cmd.ramp_update("%s", range=[%f, %f])' % (sele, -L, L) ]
+                  for L in [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]
+                  ]],
+              ]
+
+def ramp_color(self_cmd, sele):
+    from pymol.creating import ramp_spectrum_dict
+    return [[ 2, 'Color:', '' ],
+            ] + [
+                    [ 1, name, 'cmd.ramp_update("%s", color="%s")' % (sele, name) ]
+                    for name in [
+                        '[red, white, blue]',
+                        ] + list(ramp_spectrum_dict)
               ]
 
 def test1(self_cmd, sele):

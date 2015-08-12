@@ -14,6 +14,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include <utility>
+#include <algorithm>
+
 #include"os_python.h"
 
 #include"os_predef.h"
@@ -283,7 +286,9 @@ int AtomInfoCheckUniqueBondID(PyMOLGlobals * G, BondType * bi)
 }
 
 void BondTypeInit(BondType *bt){
+#ifdef _PYMOL_IP_EXTRAS
   bt->oldid = -1;
+#endif
   bt->unique_id = 0;
   bt->has_setting = 0;
 }
@@ -1011,12 +1016,13 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * I)
   PyList_SetItem(result, 38, PyInt_FromLong((int) I->hb_acceptor));
   PyList_SetItem(result, 39, PyInt_FromLong(0 /* atomic_color */));
   PyList_SetItem(result, 40, PyInt_FromLong((int) I->has_setting));
-  PyList_SetItem(result, 41, PyFloat_FromDouble(I->U11));
-  PyList_SetItem(result, 42, PyFloat_FromDouble(I->U22));
-  PyList_SetItem(result, 43, PyFloat_FromDouble(I->U33));
-  PyList_SetItem(result, 44, PyFloat_FromDouble(I->U12));
-  PyList_SetItem(result, 45, PyFloat_FromDouble(I->U13));
-  PyList_SetItem(result, 46, PyFloat_FromDouble(I->U23));
+
+  const float anisou_stack[] {0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
+  const float * anisou = I->anisou ? I->anisou : anisou_stack;
+  for (int i = 0; i < 6; ++i) {
+    PyList_SetItem(result, 41 + i, PyFloat_FromDouble(anisou[i]));
+  }
+
   PyList_SetItem(result, 47, PyString_FromString(LexStr(G, I->custom)));
 
   return (PConvAutoNone(result));
@@ -1029,7 +1035,7 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
   return 0;
 #else
   int ok = true;
-  int hetatm;
+  int tmp_int;
   ov_size ll = 0;
   if(ok)
     ok = PyList_Check(list);
@@ -1079,11 +1085,11 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
   if(ok)
     ok = PConvPyFloatToFloat(PyList_GetItem(list, 17), &I->partialCharge);
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 18), (char *) &I->formalCharge);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 18, &tmp_int)))
+      I->formalCharge = tmp_int;
   if(ok)
-    ok = PConvPyIntToInt(PyList_GetItem(list, 19), &hetatm);
-  if(ok)
-    I->hetatm = hetatm;
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 19, &tmp_int)))
+      I->hetatm = tmp_int;
   if(ok){
     PyObject *val = PyList_GetItem(list, 20);
     if (PyList_Check(val)){
@@ -1099,21 +1105,28 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 22), &I->id);
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 23), (char *) &I->cartoon);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 23, &tmp_int)))
+      I->cartoon = tmp_int;
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 24), (int *) &I->flags);
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 25), (char *) &I->bonded);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 25, &tmp_int)))
+      I->bonded = tmp_int;
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 26), (char *) &I->chemFlag);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 26, &tmp_int)))
+      I->chemFlag = tmp_int;
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 27), (char *) &I->geom);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 27, &tmp_int)))
+      I->geom = tmp_int;
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 28), (char *) &I->valence);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 28, &tmp_int)))
+      I->valence = tmp_int;
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 29), (char *) &I->masked);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 29, &tmp_int)))
+      I->masked = tmp_int;
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 30), (char *) &I->protekted);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 30, &tmp_int)))
+      I->protekted = tmp_int;
   if(ok)
     ok = PConvPyIntToChar(PyList_GetItem(list, 31), (char *) &I->protons);
   if(ok)
@@ -1122,7 +1135,8 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
     I->unique_id = SettingUniqueConvertOldSessionID(G, I->unique_id);
   }
   if(ok)
-    ok = PConvPyIntToChar(PyList_GetItem(list, 33), (char *) &I->stereo);
+    if((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 33, &tmp_int)))
+      I->stereo = tmp_int;
   if(ok && (ll > 34))
     ok = PConvPyIntToInt(PyList_GetItem(list, 34), &I->discrete_state);
   if(ok && (ll > 35))
@@ -1130,24 +1144,21 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
   if(ok && (ll > 36))
     ok = PConvPyIntToInt(PyList_GetItem(list, 36), &I->rank);
   if(ok && (ll > 37))
-    ok = PConvPyIntToChar(PyList_GetItem(list, 37), (char *) &I->hb_donor);
+    if ((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 37, &tmp_int)))
+      I->hb_donor = tmp_int;
   if(ok && (ll > 38))
-    ok = PConvPyIntToChar(PyList_GetItem(list, 38), (char *) &I->hb_acceptor);
+    if ((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 38, &tmp_int)))
+      I->hb_acceptor = tmp_int;
   if(ok && (ll > 40))
-    ok = PConvPyIntToChar(PyList_GetItem(list, 40), (char *) &I->has_setting);
+    if ((ok = CPythonVal_PConvPyIntToInt_From_List(G, list, 40, &tmp_int)))
+      I->has_setting = tmp_int;
   if(ok && (ll > 46)) {
-    if(ok)
-      ok = PConvPyFloatToFloat(PyList_GetItem(list, 41), &I->U11);
-    if(ok)
-      ok = PConvPyFloatToFloat(PyList_GetItem(list, 42), &I->U22);
-    if(ok)
-      ok = PConvPyFloatToFloat(PyList_GetItem(list, 43), &I->U33);
-    if(ok)
-      ok = PConvPyFloatToFloat(PyList_GetItem(list, 44), &I->U12);
-    if(ok)
-      ok = PConvPyFloatToFloat(PyList_GetItem(list, 45), &I->U13);
-    if(ok)
-      ok = PConvPyFloatToFloat(PyList_GetItem(list, 46), &I->U23);
+    // only allocate if not all zero
+    float u[6];
+    for (int i = 0; ok && i < 6; ++i)
+      ok = CPythonVal_PConvPyFloatToFloat_From_List(G, list, 41 + i, u + i);
+    if(ok && std::any_of(u, u + 6, [](float ui){return ui;}))
+      std::copy_n(u, 6, I->get_anisou());
   }
   if(ok && (ll > 47)) {
     OrthoLineType temp;
@@ -1178,6 +1189,10 @@ void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst
   LexInc(G, dst->chain);
 #ifdef _PYMOL_IP_EXTRAS
 #endif
+  if (src->anisou) {
+    dst->anisou = nullptr;
+    std::copy_n(src->anisou, 6, dst->get_anisou());
+  }
 }
 
 void AtomInfoBondCopy(PyMOLGlobals * G, const BondType * src, BondType * dst)
@@ -1225,18 +1240,20 @@ void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai)
   }
 #ifdef _PYMOL_IP_EXTRAS
 #endif
+  DeleteP(ai->anisou);
 }
 
 
 /*========================================================================*/
+/*
+ * Transfer `mask` selected atomic properties (such as b, q, text_type, etc.)
+ * from `src` to `dst`, while keeping all atomic identifiers untouched.
+ * Purges `src`.
+ */
 void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, int mask)
 {
   if(mask & cAIC_tt) {
-    LexDec(G, dst->textType);
-    dst->textType = src->textType;
-  } else if(src->textType) {
-    LexDec(G, src->textType);
-    src->textType = 0;
+    std::swap(dst->textType, src->textType);
   }
   if(mask & cAIC_ct)
     dst->customType = src->customType;
@@ -1257,15 +1274,18 @@ void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, i
   if(mask & cAIC_rank)
     dst->rank = src->rank;
   dst->temp1 = src->temp1;
-  dst->unique_id = src->unique_id;
+
+  SWAP_NOREF(dst->has_setting, src->has_setting);
+  std::swap(dst->unique_id, src->unique_id);
+  SWAP_NOREF(dst->has_prop, src->has_prop);
+  std::swap(dst->prop_id, src->prop_id);
+
   /* keep all existing names, identifiers, etc. */
   /* also keep all existing selections,
      colors, masks, and visible representations */
-  {
-    LexDec(G, src->label);
-    src->label = 0;
     /* leaves dst->label untouched */
-  }
+
+  AtomInfoPurge(G, src);
 }
 
 

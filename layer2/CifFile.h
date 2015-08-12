@@ -11,6 +11,8 @@
 #include <map>
 #include <stdexcept>
 
+#include <string.h>
+
 #ifdef WIN32
   #define strcasecmp(s1, s2) _stricmp(s1, s2)
   #define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
@@ -121,6 +123,24 @@ public:
   const char * as_s(int row = 0) const;
   int          as_i(int row = 0, int d = 0) const;
   double       as_d(int row = 0, double d = 0.0) const;
+
+  // true if value in ['.', '?']
+  bool is_missing(int row = 0) const {
+    return !get_value(row);
+  }
+
+  // templated getter
+  template <typename T> T as(int row = 0) const;
+
+  // get a copy of the entire array
+  template <typename T> std::vector<T> to_vector() const {
+    int n = get_nrows();
+    std::vector<T> v;
+    v.reserve(n);
+    for (int i = 0; i < n; ++i)
+      v.push_back(as<T>(i));
+    return v;
+  }
 };
 
 /*

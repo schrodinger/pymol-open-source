@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_std.h"
 
+#include <algorithm>
+
 #include"Base.h"
 #include"OOMac.h"
 #include"MemoryDebug.h"
@@ -972,12 +974,13 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
               cnt + 1, name, ai->alt, resn, LexStr(G, ai->chain), resi, x, y, z, ai->q, ai->b,
               ignore_pdb_segi ? "" :
               ai->segi, ai->elem, formalCharge);
-    if(ai->U11 || ai->U22 || ai->U33 || ai->U12 || ai->U13 || ai->U23) {
-      // Warning: anisotropic temperature factors are not rotated with the object matrix
+    if(ai->anisou) {
       // Columns 7 - 27 and 73 - 80 are identical to the corresponding ATOM/HETATM record.
       char *atomline = (*charVLA) + (*c);
       char *anisoline = atomline + linelen;
-      float anisou[6] = { ai->U11, ai->U22, ai->U33, ai->U12, ai->U13, ai->U23 };
+      float anisou[6];
+      std::copy_n(ai->anisou, 6, anisou);
+
       if(matrix && !RotateU(matrix, anisou)) {
         PRINTFB(G, FB_CoordSet, FB_Errors) "RotateU failed\n" ENDFB(G);
         return;
@@ -1054,9 +1057,11 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
   if(!atom)
     ErrMessage(G, "CoordSetAtomToChemPyAtom", "can't create atom");
   else {
-    float tmp_array[6] = { ai->U11, ai->U22, ai->U33, ai->U12, ai->U13, ai->U23 };
+    float tmp_array[6] = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
 
-    if(matrix) {
+    if (ai->anisou) {
+      std::copy_n(ai->anisou, 6, tmp_array);
+      if (matrix)
       RotateU(matrix, tmp_array);
     }
 

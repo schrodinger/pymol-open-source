@@ -2,6 +2,20 @@
 CHANGE LOG
 =========================================================================
 
+2015-08-12 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* cif_keepinmemory, pymol.querying.cif_get_array (experimental)
+
+	* ramp_update (new command)
+
+	* ramp objects now have "A > Range > ..." and "C > ..." menus
+
+	* mmCIF _chem_comp_atom:
+	  - skip atoms with missing coordinates
+	  - prefer ideal over model coordinates
+
+	* cmd.set_key() decorator support
+
 2015-07-29 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix isosurface all_states rendering

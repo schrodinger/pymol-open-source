@@ -32,6 +32,9 @@ def get_auto_arg_list(self_cmd=cmd):
     aa_vol_c = [ lambda:
             cmd.Shortcut(self_cmd.get_names_of_type('object:volume')),
             'volume', '' ]
+    aa_ramp_c = [ lambda:
+            cmd.Shortcut(self_cmd.get_names_of_type('object:ramp')),
+            'volume', '' ]
 
     return [
 # 1st
@@ -97,7 +100,8 @@ def get_auto_arg_list(self_cmd=cmd):
         'pair_fit'       : aa_sel_c,
         'protect'        : aa_sel_e,
         'pseudoatom'     : aa_obj_c,
-        'ramp_new'       : [ self_cmd.object_sc              , 'ramp'            , ', ' ],
+        'ramp_new'       : aa_ramp_c,
+        'ramp_update'    : aa_ramp_c,
         'reference'      : [ self_cmd.editing.ref_action_sc  , 'action'          , ', ' ],
         'remove'         : aa_sel_e,
         'reinitialize'   : [ self_cmd.commanding.reinit_sc   , 'option'          , ''   ],
@@ -186,6 +190,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'unset_bond'     : aa_sel_c,
         'update'         : aa_sel_e,
         'ramp_new'       : aa_map_c,
+        'ramp_update'    : aa_map_c,
         'valence'        : aa_sel_c,
         'volume_color'   : aa_v_r_c,
         },
@@ -217,6 +222,7 @@ def get_auto_arg_list(self_cmd=cmd):
 #4th
         {
         'ramp_new'       : [ self_cmd.creating.ramp_spectrum_sc , 'ramp color spectrum' , ', ' ],      
+        'ramp_update'    : [ self_cmd.creating.ramp_spectrum_sc , 'ramp color spectrum' , ', ' ],
         'map_new'        : aa_sel_c,
         'isosurface'     : aa_sel_c,
         'volume'         : aa_sel_c,

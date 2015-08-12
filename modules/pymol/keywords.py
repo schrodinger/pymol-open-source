@@ -192,6 +192,7 @@ def get_command_keywords(self_cmd=cmd):
         'skip'          : [ self_cmd.helping.skip      , 0 , 1 , ',' , parsing.SKIP ],
         'raise'         : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],
         'ramp_new'      : [ self_cmd.ramp_new          , 0 , 0 , ''  , parsing.STRICT ],      
+        'ramp_update'   : [ self_cmd.ramp_update       , 0 , 0 , ''  , parsing.STRICT ],
         'ray'           : [ self_cmd.ray               , 0 , 0 , ''  , parsing.STRICT ],
         'rebuild'       : [ self_cmd.rebuild           , 0 , 0 , ''  , parsing.STRICT ],
         'recolor'       : [ self_cmd.recolor           , 0 , 0 , ''  , parsing.STRICT ],   

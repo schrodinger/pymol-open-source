@@ -496,13 +496,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       break;
     case cPType_char_as_type:
       {
-	char val = *(char*)(((char*)wobj->atomInfo) + ap->offset);
-	char atype[7];
-	if(val)
-	  strcpy(atype, "HETATM");
-	else
-	  strcpy(atype, "ATOM");
-	ret = PyString_FromString(atype);
+	ret = PyString_FromString(wobj->atomInfo->hetatm ? "HETATM" : "ATOM");
       }
       break;
     case cPType_model:
@@ -670,10 +664,9 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	break;
       case cPType_char_as_type:
 	{
-	  signed char *dest = (signed char *)(((char*)wobj->atomInfo) + ap->offset);
           PyObject *valobj = PyObject_Str(val);
           char *valstr = PyString_AS_STRING(valobj);
-	  *dest = ((valstr[0] == 'h') || (valstr[0] == 'H'));
+          wobj->atomInfo->hetatm = ((valstr[0] == 'h') || (valstr[0] == 'H'));
           Py_DECREF(valobj);
 	  changed = true;
 	}

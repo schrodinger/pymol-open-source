@@ -571,7 +571,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
 #ifndef _PYMOL_NOPY
   LEX_ATOM_PROP(model, 0, cPType_model, 0);
   LEX_ATOM_PROP(index, 1, cPType_index, 0);
-  LEX_ATOM_PROP(type, 2, cPType_char_as_type, offsetof(AtomInfoType,hetatm));
+  LEX_ATOM_PROP(type, 2, cPType_char_as_type, 0);
   LEX_ATOM_PROP_S(name, 3, cPType_string, offsetof(AtomInfoType,name), cAtomNameLen);
   LEX_ATOM_PROP_S(resn, 4, cPType_string, offsetof(AtomInfoType,resn), cResnLen);
   LEX_ATOM_PROP_S(resi, 5, cPType_string, offsetof(AtomInfoType,resi), cResiLen);
