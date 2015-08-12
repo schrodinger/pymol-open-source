@@ -853,6 +853,7 @@ enum {
   REC_f( 745, pse_export_version                      , global    , 0.f ),
   REC_b( 746, cif_use_auth                            , global    , 1 ),
   REC_s( 747, assembly                                , global    , "" ),
+  REC_b( 748, cif_keepinmemory                        , global    , 0 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

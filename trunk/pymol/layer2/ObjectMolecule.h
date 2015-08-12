@@ -27,6 +27,9 @@ Z* -------------------------------------------------------------------
 #include"Raw.h"
 #include"DistSet.h"
 #include "Executive_pre.h"
+#include "CifFile.h"
+
+#include <memory>
 
 #define cKeywordAll "all"
 #define cKeywordNone "none"
@@ -83,7 +86,8 @@ typedef struct ObjectMolecule {
   int RepVisCache;     /* for transient storage during updates */
 
   // for reporting available assembly ids after mmCIF loading - SUBJECT TO CHANGE
-  std::vector<std::string> * assembly_ids;
+  std::shared_ptr<cif_file> m_ciffile;
+  const cif_data * m_cifdata;
 
   // methods
   int getState();

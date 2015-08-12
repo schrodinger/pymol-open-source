@@ -87,6 +87,7 @@ Z* -------------------------------------------------------------------
 #include"MacPyMOL.h"
 
 #include "MovieScene.h"
+#include "CifFile.h"
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -1586,12 +1587,14 @@ static PyObject *CmdRampNew(PyObject * self, PyObject * args)
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G, sele, s1) >= 0);
     if(ok)
-      ok = PConvPyListToFloatVLA(range, &range_vla);
+      if (PyList_Size(range) > 0)
+        ok = PConvPyListToFloatVLA(range, &range_vla);
 
     if(ok) {
-      if(PyList_Check(color))
-        ok = PConvPyList3ToFloatVLA(color, &color_vla);
-      else if(PyInt_Check(color)) {
+      if(PyList_Check(color)) {
+        if (PyList_Size(color) > 0)
+          ok = PConvPyList3ToFloatVLA(color, &color_vla);
+      } else if(PyInt_Check(color)) {
         ok = PConvPyIntToInt(color, &calc_mode);
       }
     }
@@ -8165,14 +8168,14 @@ ok_except1:
 /*
  * Experimental - SUBJECT TO CHANGE
  */
-static PyObject *CmdGetAssemblyIds(PyObject * self, PyObject * args)
+static PyObject *CmdCifGetArray(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  char *name;
+  const char *name, *key, *dtype = "";
   ObjectMolecule *obj;
-  PyObject *ids = NULL;
+  PyObject *ret = NULL;
 
-  ok_assert(1, PyArg_ParseTuple(args, "Os", &self, &name));
+  ok_assert(1, PyArg_ParseTuple(args, "Oss|s", &self, &name, &key, &dtype));
   API_SETUP_PYMOL_GLOBALS;
   ok_assert(1, G && APIEnterBlockedNotModal(G));
 
@@ -8181,12 +8184,27 @@ static PyObject *CmdGetAssemblyIds(PyObject * self, PyObject * args)
   if (!obj) {
     PRINTFB(G, FB_Executive, FB_Errors)
       " Executive-Error: object '%s' not found.\n", name ENDFB(G);
-  } else if (obj->assembly_ids) {
-    ids = PConvToPyObject(*(obj->assembly_ids));
+  } else if (!obj->m_cifdata) {
+    PRINTFB(G, FB_Executive, FB_Warnings)
+      " Executive-Warning: no cif data for object '%s'\n"
+      " ! The 'cif_keepinmemory' setting needs to be set prior to loading a cif file.\n",
+      name ENDFB(G);
+  } else {
+    const cif_array *arr = obj->m_cifdata->get_arr(key);
+    if (!arr) {
+      PRINTFB(G, FB_Executive, FB_Details)
+        " Executive-Details: key '%s' not in cif data for object '%s'.\n", key, name ENDFB(G);
+    } else {
+      switch (dtype[0]) {
+        case 'i': ret = PConvToPyObject(arr->to_vector<int>()); break;
+        case 'f': ret = PConvToPyObject(arr->to_vector<double>()); break;
+        default:  ret = PConvToPyObject(arr->to_vector<const char*>()); break;
+      }
+    }
   }
 
   APIExitBlocked(G);
-  return APIAutoNone(ids);
+  return APIAutoNone(ret);
 ok_except1:
   API_HANDLE_ERROR;
   return APIAutoNone(NULL);
@@ -8222,6 +8240,7 @@ static PyMethodDef Cmd_methods[] = {
   {"cartoon", CmdCartoon, METH_VARARGS},
   {"cealign", CmdCEAlign, METH_VARARGS},
   {"center", CmdCenter, METH_VARARGS},
+  {"cif_get_array", CmdCifGetArray, METH_VARARGS},
   {"clip", CmdClip, METH_VARARGS},
   {"cls", CmdCls, METH_VARARGS},
   {"color", CmdColor, METH_VARARGS},
@@ -8267,7 +8286,6 @@ static PyMethodDef Cmd_methods[] = {
   {"fuse", CmdFuse, METH_VARARGS},
   {"get_angle", CmdGetAngle, METH_VARARGS},
   {"get_area", CmdGetArea, METH_VARARGS},
-  {"get_assembly_ids", CmdGetAssemblyIds, METH_VARARGS},
   {"get_atom_coords", CmdGetAtomCoords, METH_VARARGS},
   {"get_bond_print", CmdGetBondPrint, METH_VARARGS},
   {"get_busy", CmdGetBusy, METH_VARARGS},

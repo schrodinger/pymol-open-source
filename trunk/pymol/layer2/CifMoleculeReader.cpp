@@ -12,6 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <memory>
 
 #include "os_predef.h"
 #include "os_std.h"
@@ -774,15 +775,15 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
 
   const cif_array *arr_x, *arr_y = NULL, *arr_z = NULL;
 
-  if ((arr_x = data->get_arr("_chem_comp_atom.model_cartn_x"))) {
-    arr_y = data->get_arr("_chem_comp_atom.model_cartn_y");
-    arr_z = data->get_arr("_chem_comp_atom.model_cartn_z");
-  } else if ((arr_x = data->get_arr("_chem_comp_atom.pdbx_model_cartn_x_ideal"))) {
+  if ((arr_x = data->get_arr("_chem_comp_atom.pdbx_model_cartn_x_ideal"))) {
     arr_y = data->get_arr("_chem_comp_atom.pdbx_model_cartn_y_ideal");
     arr_z = data->get_arr("_chem_comp_atom.pdbx_model_cartn_z_ideal");
   } else if ((arr_x = data->get_arr("_chem_comp_atom.x"))) {
     arr_y = data->get_arr("_chem_comp_atom.y");
     arr_z = data->get_arr("_chem_comp_atom.z");
+  } else if ((arr_x = data->get_arr("_chem_comp_atom.model_cartn_x"))) {
+    arr_y = data->get_arr("_chem_comp_atom.model_cartn_y");
+    arr_z = data->get_arr("_chem_comp_atom.model_cartn_z");
   }
 
   if (!arr_x || !arr_y || !arr_z) {
@@ -805,6 +806,9 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
   int auto_show = RepGetAutoShowMask(G);
 
   for (int i = 0; i < nrows; i++) {
+    if (arr_x->is_missing(i))
+      continue;
+
     VLACheck(*atInfoPtr, AtomInfoType, atomCount);
     ai = *atInfoPtr + atomCount;
     memset((void*) ai, 0, sizeof(AtomInfoType));
@@ -1359,12 +1363,13 @@ static bool read_atom_site_aniso(PyMOLGlobals * G, cif_data * data,
       continue;
     }
 
-    ai->U11 = arr_u11->as_d(i) * factor;
-    ai->U22 = arr_u22->as_d(i) * factor;
-    ai->U33 = arr_u33->as_d(i) * factor;
-    ai->U12 = arr_u12->as_d(i) * factor;
-    ai->U13 = arr_u13->as_d(i) * factor;
-    ai->U23 = arr_u23->as_d(i) * factor;
+    float * anisou = ai->get_anisou();
+    anisou[0] = arr_u11->as_d(i) * factor;
+    anisou[1] = arr_u22->as_d(i) * factor;
+    anisou[2] = arr_u33->as_d(i) * factor;
+    anisou[3] = arr_u12->as_d(i) * factor;
+    anisou[4] = arr_u13->as_d(i) * factor;
+    anisou[5] = arr_u23->as_d(i) * factor;
   }
 
   return true;
@@ -1850,15 +1855,6 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
         SettingSet_b(I->Obj.Setting, cSetting_all_states, 1);
       }
     }
-  } else if (!I->assembly_ids) {
-    // store list of assembly ids with ObjectMolecule, for cmd.get_assembly_ids
-    const cif_array *arr_assembly_id = datablock->get_arr("_pdbx_struct_assembly.id");
-    if (arr_assembly_id) {
-      I->assembly_ids = new std::vector<std::string>;
-      for (int i = 0, n = arr_assembly_id->get_nrows(); i < n; ++i) {
-        I->assembly_ids->push_back(arr_assembly_id->as_s(i));
-      }
-    }
   }
 
   // computationally intense update tasks
@@ -1895,9 +1891,9 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
     return NULL;
   }
 
-  cif_file cif(NULL, st);
+  auto cif = std::make_shared<cif_file>(nullptr, st);
 
-  for (auto it = cif.datablocks.begin(); it != cif.datablocks.end(); ++it) {
+  for (auto it = cif->datablocks.begin(); it != cif->datablocks.end(); ++it) {
     ObjectMolecule * obj = ObjectMoleculeReadCifData(G, it->second, discrete);
 
     if (!obj) {
@@ -1906,7 +1902,15 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
       continue;
     }
 
-    if (cif.datablocks.size() == 1 || multiplex == 0)
+#ifndef _PYMOL_NOPY
+    // we only provide access from the Python API so far
+    if (SettingGetGlobal_b(G, cSetting_cif_keepinmemory)) {
+      obj->m_cifdata = it->second;
+      obj->m_ciffile = cif;
+    }
+#endif
+
+    if (cif->datablocks.size() == 1 || multiplex == 0)
       return obj;
 
     // multiplexing

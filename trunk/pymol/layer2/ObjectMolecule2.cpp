@@ -14,6 +14,8 @@
    -*
    Z* -------------------------------------------------------------------
 */
+#include <utility>
+
 #include"os_python.h"
 
 #include"os_predef.h"
@@ -233,7 +235,9 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   int ok = true;
 
   AtomInfoType *atInfo = VLACalloc(AtomInfoType, 1);
+#ifdef _PYMOL_IP_EXTRAS
   atInfo->oldid = -1;
+#endif
   if(state >= 0) {              /* specific state */
     start_state = state;
     stop_state = state + 1;
@@ -2591,27 +2595,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         if(!sscanf(cc, "%d", &dummy))
           dummy = 0;
         if(dummy == ai->id) {   /* ATOM ID must match */
-          p = nskip(p, 17);
-          {
             int dummy;
+          float * anisou = ai->get_anisou();
+          p = nskip(p, 17);
+          for (int i = 0; i < 6; ++i) {
             p = ncopy(cc, p, 7);
             if(sscanf(cc, "%d", &dummy))
-              ai->U11 = dummy / 10000.0F;
-            p = ncopy(cc, p, 7);
-            if(sscanf(cc, "%d", &dummy))
-              ai->U22 = dummy / 10000.0F;
-            p = ncopy(cc, p, 7);
-            if(sscanf(cc, "%d", &dummy))
-              ai->U33 = dummy / 10000.0F;
-            p = ncopy(cc, p, 7);
-            if(sscanf(cc, "%d", &dummy))
-              ai->U12 = dummy / 10000.0F;
-            p = ncopy(cc, p, 7);
-            if(sscanf(cc, "%d", &dummy))
-              ai->U13 = dummy / 10000.0F;
-            p = ncopy(cc, p, 7);
-            if(sscanf(cc, "%d", &dummy))
-              ai->U23 = dummy / 10000.0F;
+              anisou[i] = dummy / 10000.0F;
           }
         }
       }
@@ -3542,7 +3532,8 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     if(ok)
       ok = PConvPyIntToInt(PyList_GetItem(bond_list, 1), &bond->index[1]);
     if(ok)
-      ok = PConvPyIntToInt(PyList_GetItem(bond_list, 2), &bond->order);
+      if((ok = CPythonVal_PConvPyIntToInt_From_List(I->Obj.G, bond_list, 2, &stereo)))
+        bond->order = stereo;
     if(ok)
       ok = PConvPyIntToInt(PyList_GetItem(bond_list, 3), &bond->id);
     if(ok)
@@ -4263,7 +4254,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
       if (ok){
 	/* autozero here is important */
 	for(a = 0; a < i_NAtom; a++)
-	  atInfo[a] = I->AtomInfo[index[a]];
+	  atInfo[a] = std::move(I->AtomInfo[index[a]]);
       }
       VLAFreeP(I->AtomInfo);
       I->AtomInfo = atInfo;

@@ -47,6 +47,7 @@ from creating import \
       slice_new,          \
       symexp,             \
       ramp_new,           \
+      ramp_update,        \
       ungroup,            \
       volume
 

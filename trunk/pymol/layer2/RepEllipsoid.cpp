@@ -128,6 +128,27 @@ const double problevel[50] = { 0.4299, 0.5479, 0.6334, 0.7035, 0.7644,
   2.5997, 2.7216, 2.8829, 3.1365, 6.0000
 };
 
+/*
+ * Return true if backbone atom that should be hidden with side_chain_helper
+ */
+static bool is_sidechainhelper_hidden(const AtomInfoType * ai) {
+  if (!(ai->flags & cAtomFlag_polymer))
+    return false;
+
+  auto& name = ai->name;
+
+  switch (ai->protons) {
+    case cAN_C:
+      return (name[0] == 'C' && !name[1]);
+    case cAN_N:
+      return (name[0] == 'N' && !name[1] && strcmp(ai->resn, "PRO"));
+    case cAN_O:
+      return (name[0] == 'O' && !name[1]);
+  }
+
+  return false;
+}
+
 Rep *RepEllipsoidNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->State.G;
@@ -204,56 +225,36 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
       for(a = 0; a < cs->NIndex; a++) {
         a1 = cs->IdxToAtm[a];
         ai = obj->AtomInfo + a1;
-        vis_flag = (ai->visRep & cRepEllipsoidBit);
-        if(vis_flag &&
-            (ai->flags & cAtomFlag_polymer) &&
-            ((cartoon_side_chain_helper && (ai->visRep & cRepCartoonBit)) ||
-             ( ribbon_side_chain_helper && (ai->visRep & cRepRibbonBit)))) {
+        if (!ai->anisou || !(ai->visRep & cRepEllipsoidBit))
+          continue;
 
-          char *name1 = ai->name;
-          int prot1 = ai->protons;
-
-          if(prot1 == cAN_N) {
-            if((!name1[1]) && (name1[0] == 'N')) {      /* N */
-              char *resn1 = ai->resn;
-              if(!((resn1[0] == 'P') && (resn1[1] == 'R') && (resn1[2] == 'O')))
-                vis_flag = false;
-            }
-          } else if(prot1 == cAN_O) {
-            if((!name1[1]) && (name1[0] == 'O'))
-              vis_flag = false;
-          } else if(prot1 == cAN_C) {
-            if((!name1[1]) && (name1[0] == 'C'))
-              vis_flag = false;
-          }
+        if (is_sidechainhelper_hidden(ai)) {
+	  int sc_helper, rsc_helper;
+          AtomInfoGetSetting_b(G, ai, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper, &sc_helper);
+          AtomInfoGetSetting_b(G, ai, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper, &rsc_helper);
+          if ((sc_helper  && (ai->visRep & cRepCartoonBit)) ||
+              (rsc_helper && (ai->visRep & cRepRibbonBit)))
+            continue;
         }
 
-        if(vis_flag) {
-          double u11, u22, u33, u12, u13, u23;
-
-          u11 = ai->U11;
-          u22 = ai->U22;
-          u33 = ai->U33;
-          u12 = ai->U12;
-          u13 = ai->U13;
-          u23 = ai->U23;
-          if(u11 || u22 || u33 || u12 || u13 || u23) {
+        {
+          {
             int n_rot;
             double matrix[16];
             double e_val[4];
             double e_vec[16];
 
-            matrix[0] = u11;
-            matrix[1] = u12;
-            matrix[2] = u13;
+            matrix[0] = ai->anisou[0];  // U11
+            matrix[1] = ai->anisou[3];  // U12
+            matrix[2] = ai->anisou[4];  // U13
             matrix[3] = 0.0;
-            matrix[4] = u12;
-            matrix[5] = u22;
-            matrix[6] = u23;
+            matrix[4] = ai->anisou[3];  // U12
+            matrix[5] = ai->anisou[1];  // U22
+            matrix[6] = ai->anisou[5];  // U23
             matrix[7] = 0.0;
-            matrix[8] = u13;
-            matrix[9] = u23;
-            matrix[10] = u33;
+            matrix[8] = ai->anisou[4];  // U13
+            matrix[9] = ai->anisou[5];  // U23
+            matrix[10] = ai->anisou[2]; // U33
             matrix[11] = 0.0;
             matrix[12] = 0.0;
             matrix[13] = 0.0;

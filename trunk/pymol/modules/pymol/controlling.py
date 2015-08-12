@@ -712,7 +712,7 @@ DESCRIPTION
                         mouse(action='three_button_viewing',quiet=quiet,_self=_self)
         return DEFAULT_SUCCESS
     
-    def set_key(key,fn,arg=(),kw={},_self=cmd):  
+    def set_key(key,fn=None,arg=(),kw={},_self=cmd):
         '''
 DESCRIPTION
 
@@ -759,6 +759,12 @@ SEE ALSO
 
     button, alias
         '''
+        if fn is None:
+            def decorator(func):
+                set_key(key, func, arg, kw, _self)
+                return func
+            return decorator
+
         r = DEFAULT_ERROR
         if isinstance(fn, basestring):
             if arg or kw:

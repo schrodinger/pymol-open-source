@@ -37,9 +37,8 @@ typedef struct ObjectGadgetRamp {
 
   int NLevel;
   float *Level;
+  float *LevelTmp;
   float *Color;
-  int *Special;
-  float *Extreme;
   int var_index;
 
   /* cRampMap */
@@ -78,13 +77,17 @@ typedef struct ObjectGadgetRamp {
 
 ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals * G);
 
-ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals * G, ObjectMap * map,
+ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals * G,
+                                                  ObjectGadgetRamp *I,
+                                                  ObjectMap * map,
                                                   float *level_vla, float *color_vla,
                                                   int map_state, float *vert_vla,
                                                   float beyond, float within, float sigma,
                                                   int zero, int calc_mode);
 
-ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals * G, ObjectMolecule * mol,
+ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals * G,
+                                                  ObjectGadgetRamp *I,
+                                                  ObjectMolecule * mol,
                                                   float *level_vla,
                                                   float *color_vla,
                                                   int mol_state, int calc_mode);

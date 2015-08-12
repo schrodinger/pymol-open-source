@@ -444,7 +444,7 @@ PYMOL API
 
 SEE ALSO
 
-    load, color, create, slice, gradient
+    ramp_update, load, color, create, slice, gradient
     
     '''
         r = DEFAULT_ERROR
@@ -483,6 +483,28 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
+
+    def ramp_update(name, range=[], color=[], quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "ramp_update" updates range and/or color of a color ramp.
+
+USAGE
+
+    ramp_update name [, range [, color ]]
+
+EXAMPLES
+
+    ramp_new    e_pot_color, e_pot_map, [-10,0,10], [red,white,blue]
+    ramp_update e_pot_color, range=[-15,0,15]
+    ramp_update e_pot_color, color=[green,white,orange]
+
+SEE ALSO
+
+    ramp_new
+        '''
+        return ramp_new(name, '', range, color, quiet=quiet, _self=cmd)
 
     def isomesh(name, map, level=1.0, selection='', buffer=0.0,
                 state=1, carve=None, source_state=0, quiet=1, _self=cmd):
