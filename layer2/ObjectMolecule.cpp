@@ -7729,7 +7729,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           float u[6];
           if(PConvPyListToFloatArrayInPlace(tmp, u, 6)) {
             // only allocate if not all zero
-            if(std::any_of(u, u + 6, [](float ui){return ui;}))
+            if(u[0] || u[1] || u[2] || u[3] || u[4] || u[5])
               std::copy_n(u, 6, ai->get_anisou());
           }
           Py_DECREF(tmp);

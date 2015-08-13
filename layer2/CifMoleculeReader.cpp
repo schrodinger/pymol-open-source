@@ -1891,7 +1891,8 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
     return NULL;
   }
 
-  auto cif = std::make_shared<cif_file>(nullptr, st);
+  const char * filename = NULL;
+  auto cif = std::make_shared<cif_file>(filename, st);
 
   for (auto it = cif->datablocks.begin(); it != cif->datablocks.end(); ++it) {
     ObjectMolecule * obj = ObjectMoleculeReadCifData(G, it->second, discrete);

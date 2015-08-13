@@ -1157,7 +1157,7 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
     float u[6];
     for (int i = 0; ok && i < 6; ++i)
       ok = CPythonVal_PConvPyFloatToFloat_From_List(G, list, 41 + i, u + i);
-    if(ok && std::any_of(u, u + 6, [](float ui){return ui;}))
+    if(ok && (u[0] || u[1] || u[2] || u[3] || u[4] || u[5]))
       std::copy_n(u, 6, I->get_anisou());
   }
   if(ok && (ll > 47)) {
@@ -1190,7 +1190,7 @@ void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst
 #ifdef _PYMOL_IP_EXTRAS
 #endif
   if (src->anisou) {
-    dst->anisou = nullptr;
+    dst->anisou = NULL;
     std::copy_n(src->anisou, 6, dst->get_anisou());
   }
 }
