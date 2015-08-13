@@ -50,7 +50,7 @@ def customize_compiler(compiler):
             distutils.sysconfig.get_config_vars('CXX', 'CCSHARED', 'LDCXXSHARED')
 
     cxxflags = os.environ.get('CXXFLAGS', '') + ' ' + os.environ.get('CPPFLAGS', '')
-    ldcxxshared = os.environ.get('LDCXXSHARED', ldcxxshared) + \
+    ldcxxshared = os.environ.get('LDCXXSHARED', ldcxxshared or '') + \
             ' ' + os.environ.get('LDFLAGS', '') + \
             ' ' + os.environ.get('CXXFLAGS', '') + \
             ' ' + os.environ.get('CPPFLAGS', '')
