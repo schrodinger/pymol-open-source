@@ -14,7 +14,7 @@ class Test(testing.PyMOLTestCase):
         obj.extend([
             cgo.BEGIN, cgo.TRIANGLES,
             cgo.COLOR, 1.0, 0., 0.,
-            cgo.VERTEX, 0.0, 0.0, 0.0,
+            cgo.VERTEX, 0.0, 0.0, 1.0,
             cgo.VERTEX, 1.0, 0.0, 0.0,
             cgo.VERTEX, 0.0, 1.0, 0.0,
             cgo.END
