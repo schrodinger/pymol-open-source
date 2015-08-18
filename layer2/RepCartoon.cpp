@@ -161,6 +161,8 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
     if(I->ray){
       int rok = CGORenderRay(I->ray, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
       if (!rok){
+        if (I->ray == I->preshader)
+          I->preshader = NULL;
 	CGOFree(I->ray);
 	I->ray = NULL;
 	try_std = true;
@@ -200,6 +202,8 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
     }
   }
   if (!ok || !CGOHasOperationsOfType(I->ray, 0)){
+    if (I->ray == I->preshader)
+      I->preshader = NULL;
     CGOFree(I->ray);
     I->ray = NULL;
     CGOFree(I->std);
