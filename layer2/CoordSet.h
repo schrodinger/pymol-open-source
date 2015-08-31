@@ -169,4 +169,9 @@ void CoordSetUpdateThread(CCoordSetUpdateThreadInfo * T);
 void LabPosTypeCopy(const LabPosType * src, LabPosType * dst);
 void RefPosTypeCopy(const RefPosType * src, RefPosType * dst);
 
+// object-state level setting
+template <typename V> void SettingSet(int index, V value, CoordSet *cs) {
+  SettingSet(cs->State.G, &cs->Setting, index, value);
+}
+
 #endif

@@ -325,4 +325,29 @@ bool SettingLevelCheck(PyMOLGlobals * G, int index, unsigned char level);
 bool CPyMOLInitSetting(OVLexicon * Lex, OVOneToOne * Setting);
 extern "C" OVreturn_word get_setting_id(CPyMOL * I, const char *setting);
 
+/*
+ * Overloaded setters for templatted programming
+ */
+
+inline void SettingSet(CSetting * s, int i, bool v)         { SettingSet_b(s, i, v); }
+inline void SettingSet(CSetting * s, int i, int v)          { SettingSet_i(s, i, v); }
+inline void SettingSet(CSetting * s, int i, long int v)     { SettingSet_i(s, i, v); }
+inline void SettingSet(CSetting * s, int i, float v)        { SettingSet_f(s, i, v); }
+inline void SettingSet(CSetting * s, int i, const char *v)  { SettingSet_s(s, i, v); }
+inline void SettingSet(CSetting * s, int i, const float *v) { SettingSet_3fv(s, i, v); }
+
+inline void SettingUniqueSet(PyMOLGlobals * G, int uid, int i, bool v)          { SettingUniqueSet_b(G, uid, i, v); }
+inline void SettingUniqueSet(PyMOLGlobals * G, int uid, int i, int v)           { SettingUniqueSet_i(G, uid, i, v); }
+inline void SettingUniqueSet(PyMOLGlobals * G, int uid, int i, float v)         { SettingUniqueSet_f(G, uid, i, v); }
+
+template <typename V> void SettingSet(PyMOLGlobals * G, CSetting ** handle, int index, V value) {
+  SettingCheckHandle(G, handle);
+  SettingSet(*handle, index, value);
+}
+
+// global setting
+template <typename V> void SettingSet(PyMOLGlobals * G, int index, V value) {
+  SettingSet(G->Setting, index, value);
+}
+
 #endif

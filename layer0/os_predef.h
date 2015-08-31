@@ -53,6 +53,11 @@ typedef float aliased_float;
 #define __inline__ __inline
 #endif
 
+#ifdef WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
 
 
 /* commercial product */

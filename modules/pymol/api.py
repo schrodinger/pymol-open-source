@@ -431,6 +431,7 @@ from experimenting import \
       test
 
 from internal import      \
+      download_chem_comp, \
       file_read
 
 #--------------------------------------------------------------------

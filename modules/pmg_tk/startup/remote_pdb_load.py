@@ -36,6 +36,7 @@ def fetchdialog():
         "cid (PubChem Compound)",
         "sid (PubChem Substance)",
         "emd (EMDB Density)",
+        "cc (Chemical Component)",
     ]
 
     var_code = Tkinter.StringVar(self)

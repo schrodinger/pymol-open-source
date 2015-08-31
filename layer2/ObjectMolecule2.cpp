@@ -3776,6 +3776,9 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
     bondSearchMode = true;
     cs->NTmpBond = 0;
     VLAFreeP(cs->TmpBond);
+  } else if (connect_mode == 4) {
+    // mmCIF specific, fall back to default to get any bonds for PDB, XYZ, etc.
+    connect_mode = 0;
   }
 
   /*  FeedbackMask[FB_ObjectMolecule]=0xFF; */

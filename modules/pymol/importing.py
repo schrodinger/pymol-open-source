@@ -1221,6 +1221,7 @@ PYMOL API
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
         ],
         "emd": "/../emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
+        "cc": "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/{code}.cif",
     }
 
     def _fetch(code, name, state, finish, discrete, multiplex, zoom, type, path,
@@ -1258,6 +1259,8 @@ PYMOL API
             nameFmt = '{type}_{code}.sdf'
         elif type == 'cif':
             pass
+        elif type == 'cc':
+            nameFmt = '{code}.cif'
         elif re.match(r'pdb\d+$', type):
             bioType = 'bio'
         else:
@@ -1269,13 +1272,14 @@ PYMOL API
             url_list += [url] if '://' in url else [fetch_host + url
                 for fetch_host in fetch_host_list]
 
-        code = code.lower()
+        if bioType not in ['cc']:
+            code = code.lower()
 
         fobj = None
         contents = None
 
         if not file or file in (1, '1', 'auto'):
-            file = os.path.join(path, nameFmt.format(code=code.lower(), type=type))
+            file = os.path.join(path, nameFmt.format(code=code, type=type))
 
         if not isinstance(file, basestring):
             fobj = file

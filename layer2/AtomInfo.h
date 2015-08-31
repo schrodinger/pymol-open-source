@@ -131,6 +131,7 @@ Z* -------------------------------------------------------------------
 #define cAN_Ca 20
 
 #define cAN_Ti 22
+#define cAN_V  23
 
 #define cAN_Cr 24
 #define cAN_Mn 25
@@ -148,6 +149,7 @@ Z* -------------------------------------------------------------------
 
 #define cAN_Rb 37
 #define cAN_Sr 38
+#define cAN_Y  39
 
 #define cAN_Pd 46
 #define cAN_Ag 47
@@ -401,5 +403,21 @@ bool SideChainHelperFilterBond(const int *marked,
     const AtomInfoType *ati1,
     const AtomInfoType *ati2,
     int b1, int b2, int na_mode, int *c1, int *c2);
+
+void atomicnumber2elem(char * dst, int protons);
+
+// atom-level setting
+template <typename V> void SettingSet(PyMOLGlobals * G, int index, V value, AtomInfoType * ai) {
+  AtomInfoCheckUniqueID(G, ai);
+  ai->has_setting = true;
+  SettingUniqueSet(G, ai->unique_id, index, value);
+}
+
+// bond-level setting
+template <typename V> void SettingSet(PyMOLGlobals * G, int index, V value, BondType * b) {
+  AtomInfoCheckUniqueBondID(G, b);
+  b->has_setting = true;
+  SettingUniqueSet(G, b->unique_id, index, value);
+}
 
 #endif

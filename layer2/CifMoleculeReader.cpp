@@ -23,6 +23,7 @@
 #include "AtomInfo.h"
 #include "Base.h"
 #include "Executive.h"
+#include "P.h"
 #include "Util.h"
 #include "Scene.h"
 #include "Rep.h"
@@ -233,8 +234,16 @@ static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_di
   if( !(arr_id_1  = data->get_arr("_chem_comp_bond.atom_id_1")) ||
       !(arr_id_2  = data->get_arr("_chem_comp_bond.atom_id_2")) ||
       !(arr_order = data->get_arr("_chem_comp_bond.value_order")) ||
-      !(arr_comp_id = data->get_arr("_chem_comp_bond.comp_id")))
+      !(arr_comp_id = data->get_arr("_chem_comp_bond.comp_id"))) {
+
+    if ((arr_comp_id = data->get_arr("_chem_comp_atom.comp_id"))) {
+      // atom(s) but no bonds (e.g. metals)
+      bond_dict.set_unknown(arr_comp_id->as_s());
+      return true;
+    }
+
     return false;
+  }
 
   const char *name1, *name2, *resn;
   int order_value;
@@ -255,32 +264,24 @@ static bool read_chem_comp_bond_dict(const cif_data * data, bond_dict_t &bond_di
 }
 
 /*
- * parse components.cif (or $COMPONENTS_CIF) into dictionary. The file is
- * only parsed once and the dictionary is global (static). Return NULL
- * if file not available.
+ * parse $PYMOL_DATA/chem_comp_bond-top100.cif (subset of components.cif) into
+ * a static (global) dictionary.
  */
-static const bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
+static bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
   static bond_dict_t bond_dict;
 
   if (bond_dict.empty()) {
-    const char *filename = getenv("COMPONENTS_CIF");
-    if (!filename || !filename[0])
-      filename = "components.cif";
+    const char * pymol_data = getenv("PYMOL_DATA");
+    if (!pymol_data || !pymol_data[0])
+      return NULL;
 
-    cif_file cif(filename);
+    std::string path(pymol_data);
+    path.append(PATH_SEP).append("chem_comp_bond-top100.cif");
+    cif_file cif(path.c_str());
 
     for (m_str_cifdatap_t::iterator data_it = cif.datablocks.begin(),
         data_it_end = cif.datablocks.end(); data_it != data_it_end; ++data_it) {
       read_chem_comp_bond_dict(data_it->second, bond_dict);
-    }
-
-    if (bond_dict.empty()) {
-      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-        " Error: Please download 'components.cif' from http://www.wwpdb.org/data/ccd\n"
-        " and place it in the current directory or set the COMPONENTS_CIF environment"
-        " variable.\n"
-        ENDFB(G);
-      return NULL;
     }
   }
 
@@ -292,7 +293,7 @@ static const bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
  * based on components.cif
  */
 static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
-    const bond_dict_t * bond_dict) {
+    bond_dict_t * bond_dict) {
 
   if (i_end - i_start < 2)
     return;
@@ -301,7 +302,7 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
   int order;
 
   // get residue bond dictionary
-  auto res_dict = bond_dict->get(ai[i_start].resn);
+  auto res_dict = bond_dict->get(I->Obj.G, ai[i_start].resn);
   if (res_dict == NULL)
     return;
 
@@ -333,7 +334,7 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
  * connecting bonds (C->N, O3*->P)
  */
 static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
-    const bond_dict_t * bond_dict=NULL) {
+    bond_dict_t * bond_dict=NULL) {
 
   PyMOLGlobals * G = I->Obj.G;
   int i_start = 0, i_prev_c = 0, i_prev_o3 = 0;
@@ -710,10 +711,8 @@ static bool read_pdbx_coordinate_model(PyMOLGlobals * G, cif_data * data, Object
   for (int i = 0, nrows = VLAGetSize(mol->AtomInfo); i < nrows; ++i) {
     AtomInfoType * ai = mol->AtomInfo + i;
     if (asyms.count(ai->segi)) {
-      AtomInfoCheckUniqueID(G, ai);
-      ai->has_setting = true;
-      SettingUniqueSet_i(G, ai->unique_id, cSetting_cartoon_trace_atoms, 1);
-      SettingUniqueSet_i(G, ai->unique_id, cSetting_ribbon_trace_atoms, 1);
+      SettingSet(G, cSetting_cartoon_trace_atoms, true, ai);
+      SettingSet(G, cSetting_ribbon_trace_atoms,  true, ai);
     }
   }
 
@@ -1025,10 +1024,6 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
 
     VLACheck(*atInfoPtr, AtomInfoType, atomCount);
     ai = *atInfoPtr + atomCount;
-
-    if (discrete) {
-      ai->discrete_state = mod_num;
-    }
 
     ai->rank = atomCount;
     ai->alt[0] = arr_alt->as_s(i)[0];
@@ -1851,8 +1846,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
 
       // all_states for multi-model assembly
       if (I->NCSet > 1) {
-        SettingCheckHandle(G, &I->Obj.Setting);
-        SettingSet_b(I->Obj.Setting, cSetting_all_states, 1);
+        SettingSet(cSetting_all_states, true, &I->Obj);
       }
     }
   }
@@ -1919,6 +1913,62 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
     ExecutiveDelete(G, it->first);
     ExecutiveManageObject(G, (CObject*) obj, zoom, true);
   }
+
+  return NULL;
+}
+
+/*
+ * Bond dictionary getter, with on-demand download of residue dictionaries
+ */
+const bond_dict_t::mapped_type * bond_dict_t::get(PyMOLGlobals * G, const char * resn, bool try_download) {
+  auto key = make_key(resn);
+  auto it = find(key);
+
+  if (it != end())
+    return &it->second;
+
+  if (unknown_resn.count(key))
+    return NULL;
+
+#ifndef _PYMOL_NOPY
+  if (try_download) {
+    int blocked = PAutoBlock(G);
+    bool downloaded = false;
+
+    // call into Python
+    PyObject * pyfilename = PYOBJECT_CALLMETHOD(G->P_inst->cmd,
+        "download_chem_comp", "siO", resn,
+        !Feedback(G, FB_Executive, FB_Details),
+        G->P_inst->cmd);
+
+    if (pyfilename) {
+      const char * filename = PyString_AsString(pyfilename);
+
+      // update
+      if ((downloaded = (filename && filename[0]))) {
+        cif_file cif(filename);
+        for (auto it = cif.datablocks.begin(); it != cif.datablocks.end(); ++it)
+          read_chem_comp_bond_dict(it->second, *this);
+      }
+
+      Py_DECREF(pyfilename);
+    }
+
+    PAutoUnblock(G, blocked);
+
+    if (downloaded) {
+      // second attempt to look up, from eventually updated dictionary
+      return get(G, resn, false);
+    }
+  }
+#endif
+
+  PRINTFB(G, FB_Executive, FB_Warnings)
+    " ExecutiveLoad-Warning: No _chem_comp_bond data for residue '%s'\n", resn
+    ENDFB(G);
+
+  // don't try downloading again
+  unknown_resn.insert(key);
 
   return NULL;
 }

@@ -26,6 +26,11 @@ Z* -------------------------------------------------------------------
 typedef int PyObject;
 #undef _PYMOL_NUMPY
 #else
+
+// Python.h will redefine those, undef to avoid compiler warning
+#undef _POSIX_C_SOURCE
+#undef _XOPEN_SOURCE
+
 #include"Python.h"
 #include<pythread.h>
 

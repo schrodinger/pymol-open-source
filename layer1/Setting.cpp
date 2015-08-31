@@ -278,12 +278,6 @@ static int SettingUniqueEntry_IsSame(SettingUniqueEntry *entry, int setting_type
 }
 
 static void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int setting_type, const void *value){
-  if (SettingInfo[entry->setting_id].type != setting_type){
-    printf("SettingUniqueEntry_Set-Warning: type mismatch %s(%d) %d != %d\n",
-        SettingInfo[entry->setting_id].name, entry->setting_id,
-        SettingInfo[entry->setting_id].type, setting_type);
-  }
-
   switch (setting_type) {
     case cSetting_boolean:
     case cSetting_int:
@@ -1844,6 +1838,8 @@ int SettingSet_s(CSetting * I, int index, const char *value)
       case cSetting_string:
         I->info[index].set_s(value);
 	break;
+      case cSetting_color:
+        return SettingSet_color(I, index, value);
       default:
 	PRINTFB(G, FB_Setting, FB_Errors)
 	  "Setting-Error: type set mismatch (string) %d\n", index ENDFB(G);

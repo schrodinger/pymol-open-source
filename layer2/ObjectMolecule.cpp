@@ -13292,6 +13292,7 @@ bool ObjectMolecule::updateAtmToIdx() {
       if (DiscreteFlag) {
         DiscreteAtmToIdx[atm] = idx;
         DiscreteCSet[atm] = cset;
+        AtomInfo[atm].discrete_state = i + 1;
       } else {
         cset->AtmToIdx[atm] = idx;
       }

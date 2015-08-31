@@ -479,69 +479,6 @@ ok_except1:
   return obj;
 }
 
-static void atomicnumber2elem(char * dst, int protons) {
-  const char * p = NULL;
-  switch(protons) {
-    case cAN_LP: p = "LP"; break;
-    case cAN_H:  p = "H";  break;
-    case cAN_He: p = "He"; break;
-    case cAN_Li: p = "Li"; break;
-    case cAN_Be: p = "Be"; break;
-    case cAN_B:  p = "B";  break;
-    case cAN_C:  p = "C";  break;
-    case cAN_N:  p = "N";  break;
-    case cAN_O:  p = "O";  break;
-    case cAN_F:  p = "F";  break;
-    case cAN_Ne: p = "Ne"; break;
-    case cAN_Na: p = "Na"; break;
-    case cAN_Mg: p = "Mg"; break;
-    case cAN_Al: p = "Al"; break;
-    case cAN_Si: p = "Si"; break;
-    case cAN_P:  p = "P";  break;
-    case cAN_S:  p = "S";  break;
-    case cAN_Cl: p = "Cl"; break;
-    case cAN_Ar: p = "Ar"; break;
-    case cAN_K:  p = "K";  break;
-    case cAN_Ca: p = "Ca"; break;
-    case cAN_Ti: p = "Ti"; break;
-    case cAN_Cr: p = "Cr"; break;
-    case cAN_Mn: p = "Mn"; break;
-    case cAN_Fe: p = "Fe"; break;
-    case cAN_Co: p = "Co"; break;
-    case cAN_Ni: p = "Ni"; break;
-    case cAN_Cu: p = "Cu"; break;
-    case cAN_Zn: p = "Zn"; break;
-    case cAN_Ga: p = "Ga"; break;
-    case cAN_Ge: p = "Ge"; break;
-    case cAN_As: p = "As"; break;
-    case cAN_Se: p = "Se"; break;
-    case cAN_Br: p = "Br"; break;
-    case cAN_Kr: p = "Kr"; break;
-    case cAN_Rb: p = "Rb"; break;
-    case cAN_Sr: p = "Sr"; break;
-    case cAN_Pd: p = "Pd"; break;
-    case cAN_Ag: p = "Ag"; break;
-    case cAN_Cd: p = "Cd"; break;
-    case cAN_In: p = "In"; break;
-    case cAN_Sn: p = "Sn"; break;
-    case cAN_Sb: p = "Sb"; break;
-    case cAN_Te: p = "Te"; break;
-    case cAN_I:  p = "I";  break;
-    case cAN_Xe: p = "Xe"; break;
-    case cAN_Cs: p = "Cs"; break;
-    case cAN_Ba: p = "Ba"; break;
-    case cAN_Ce: p = "Ce"; break;
-    case cAN_Pt: p = "Pt"; break;
-    case cAN_Au: p = "Au"; break;
-    case cAN_Hg: p = "Hg"; break;
-    case cAN_Tl: p = "Tl"; break;
-    case cAN_Pb: p = "Pb"; break;
-    case cAN_U:  p = "U";  break;
-    default:     p = "X";
-  }
-  strncpy(dst, p, cElemNameLen);
-}
-
 static CSymmetry * SymmetryNewFromTimestep(PyMOLGlobals * G, molfile_timestep_t * ts)
 {
   CSymmetry * symm = NULL;
