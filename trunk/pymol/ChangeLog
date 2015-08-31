@@ -2,6 +2,15 @@
 CHANGE LOG
 =========================================================================
 
+2015-08-30 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix cartoon_trace_atoms for beta-sheets
+
+	* fast connect_mode=4: Add $PYMOL_DATA/chem_comp_bond-top100.cif
+	  which is a subset of the components.cif dictionary and contains
+	  only bond records for the 100 most frequent monomers in the PDB.
+	  Download other monomers on-demand from PDBeChem.
+
 2015-08-12 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* cif_keepinmemory, pymol.querying.cif_get_array (experimental)

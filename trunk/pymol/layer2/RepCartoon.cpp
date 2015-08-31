@@ -3037,6 +3037,22 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
             fp++;
 
+            if (trace) {
+              if ((a3 = cs->atmToIdx(a1 - 1)) == -1 ||
+                  (a4 = cs->atmToIdx(a1 + 1)) == -1) {
+                zero3f(vo);
+              } else {
+                float t0[3], t1[3];
+                subtract3f(cs->coordPtr(a), cs->coordPtr(a3), t0);
+                subtract3f(cs->coordPtr(a), cs->coordPtr(a4), t1);
+                add3f(t0, t1, vo);
+                normalize3f(vo);
+              }
+              vo += 3;
+              continue;
+            }
+
+            // pointers to C+N+O coordinates
             v_c = NULL;
             v_n = NULL;
             v_o = NULL;

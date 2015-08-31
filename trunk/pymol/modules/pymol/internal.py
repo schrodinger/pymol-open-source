@@ -1,4 +1,5 @@
 
+import os
 import cmd
 import types
 from pymol import _cmd
@@ -325,6 +326,41 @@ def file_read(finfo, _self=cmd):
         return bz2.decompress(contents)
 
     return contents
+
+def download_chem_comp(resn, quiet=1, _self=cmd):
+    '''
+    WARNING: internal routine, subject to change
+
+    Download the chemical components CIF for the given residue name
+    and return its local filename, or an empty string on failure.
+    '''
+    filename = os.path.join(_self.get('fetch_path'), resn + ".cif")
+    if os.path.exists(filename):
+        return filename
+
+    url = "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/" + resn + ".cif"
+    if not quiet:
+        print ' Downloading', url
+
+    try:
+        contents = _self.file_read(url)
+        if not contents: raise
+    except:
+        print ' Error: Download failed'
+        return ''
+
+    try:
+        with open(filename, 'w') as handle:
+            handle.write(contents)
+    except IOError as e:
+        print e
+        print 'Your "fetch_path" setting might point to a read-only directory'
+        return ''
+
+    if not quiet:
+        print '  ->', filename
+
+    return filename
 
 def _load(oname,finfo,state,ftype,finish,discrete,
           quiet=1,multiplex=0,zoom=-1,mimic=1,

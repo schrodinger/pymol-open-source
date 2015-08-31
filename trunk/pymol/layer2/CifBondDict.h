@@ -15,6 +15,9 @@
 #include <map>
 #include <algorithm>
 
+#include "os_std.h"
+#include "PyMOLGlobals.h"
+
 #if 1
 // (2)
 // Optimized implementation, tuned on speed and memory usage.
@@ -61,17 +64,18 @@ class bond_dict_t : public std::map<std::int_fast64_t, res_bond_dict_t> {
     return i;
   }
 
+  std::set<key_type> unknown_resn;
+
 public:
+  void set_unknown(const char * resn) {
+    unknown_resn.insert(make_key(resn));
+  }
+
   void set(const char * resn, const char * name1, const char * name2, int order) {
     (*this)[make_key(resn)].set(name1, name2, order);
   }
 
-  const mapped_type * get(const char * resn) const {
-    auto it = find(make_key(resn));
-    if (it == end())
-      return NULL;
-    return &it->second;
-  }
+  const mapped_type * get(PyMOLGlobals *, const char * resn, bool try_download=true);
 };
 
 #else

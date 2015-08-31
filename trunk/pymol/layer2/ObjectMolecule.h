@@ -510,4 +510,9 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj, AtomInfoType
 ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
     const char *st, int frame, int discrete, int quiet, int multiplex, int zoom);
 
+// object and object-state level setting
+template <typename V> void SettingSet(int index, V value, ObjectMolecule * I, int state=-1) {
+  SettingSet(index, value, (CObject*)I, state);
+}
+
 #endif
