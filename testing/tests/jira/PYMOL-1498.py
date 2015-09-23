@@ -21,4 +21,3 @@ class Test1498(testing.PyMOLTestCase):
         self.assertEqual(60, cmd.count_atoms('repr.x_thinsticks and rep sticks'))
         
         self.assertEqual(60, cmd.count_atoms('repr.x_ballstick and rep sticks'))
-        self.assertEqual(60, cmd.count_atoms('repr.x_ballstick and rep spheres'))
