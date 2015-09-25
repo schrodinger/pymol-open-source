@@ -244,7 +244,7 @@ class TestImporting(testing.PyMOLTestCase):
 
     @testing.requires_version('1.7.5')
     def testLoadVaspCHGCAR(self):
-        cmd.load(self.datafile("vasp.CHGCAR"))
+        cmd.load(self.datafile("vasp.CHGCAR"), 'vasp.CHGCAR')
         self.assertEqual(cmd.get_type('vasp.CHGCAR'), 'object:map')
         extend = cmd.get_extent('vasp.CHGCAR')
         self.assertArrayEqual(extend, [[0.0, 0.0, 0.0], [6.5, 6.5, 7.7]], delta=1e-2)
@@ -315,3 +315,28 @@ class TestImporting(testing.PyMOLTestCase):
         # data manipulation with copy=0
         cmd.get_coordset('m1', copy=0)[:] += 5.0
         self.assertTrue(numpy.allclose(coords + 5.0, cmd.get_coords('m1')))
+
+    @testing.requires_version('1.7.7')
+    def testLoadPDBML(self):
+        cmd.load(self.datafile("1ubq.xml.gz"))
+        self.assertEqual(660, cmd.count_atoms())
+
+    @testing.requires_version('1.7.7')
+    def testLoadCML(self):
+        cmd.load(self.datafile("GLY.cml"))
+        self.assertEqual(10, cmd.count_atoms())
+
+    @testing.requires_version('1.7.7')
+    def testLoadPDBQT(self):
+        cmd.set('retain_order')
+        cmd.load(self.datafile("NSC7810.pdbqt"))
+        charges = []
+        n = cmd.iterate('all', 'charges.append(partial_charge)', space=locals())
+        self.assertEqual(n, 26)
+        charges_expected = [0.002, 0.012, -0.024, 0.012, 0.002, 0.019, 0.052,
+                0.002, -0.013, 0.013, -0.013, 0.002, 0.013, -0.024, 0.052,
+                0.012, 0.012, 0.002, 0.002, 0.019, 0.21, -0.644, -0.644,
+                0.21, -0.644, -0.644]
+        import pprint
+        pprint.pprint(charges)
+        self.assertArrayEqual(charges, charges_expected, delta=1e-4)
