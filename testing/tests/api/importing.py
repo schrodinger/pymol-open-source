@@ -320,6 +320,9 @@ class TestImporting(testing.PyMOLTestCase):
     def testLoadPDBML(self):
         cmd.load(self.datafile("1ubq.xml.gz"))
         self.assertEqual(660, cmd.count_atoms())
+        symmetry = cmd.get_symmetry()
+        self.assertArrayEqual(symmetry[:6], [50.84, 42.77, 28.95, 90.0, 90.0, 90.0], delta=1e-4)
+        self.assertEqual(symmetry[6], 'P 21 21 21')
 
     @testing.requires_version('1.7.7')
     def testLoadCML(self):
@@ -337,6 +340,4 @@ class TestImporting(testing.PyMOLTestCase):
                 0.002, -0.013, 0.013, -0.013, 0.002, 0.013, -0.024, 0.052,
                 0.012, 0.012, 0.002, 0.002, 0.019, 0.21, -0.644, -0.644,
                 0.21, -0.644, -0.644]
-        import pprint
-        pprint.pprint(charges)
         self.assertArrayEqual(charges, charges_expected, delta=1e-4)
