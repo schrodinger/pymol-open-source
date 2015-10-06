@@ -2048,7 +2048,12 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
 {
   int ok = true;
   CExecutive *I = G->Executive;
-  CObject *obj = ExecutiveFindObjectByName(G, name);
+
+  ObjectNameType valid_name;
+  UtilNCopy(valid_name, name, sizeof(ObjectNameType));
+  ObjectMakeValidName(valid_name);
+
+  CObject *obj = ExecutiveFindObjectByName(G, valid_name);
 
   if(obj && (obj->type != cObjectGroup)) {
     if((action != 7) || (members[0])) {
@@ -2060,7 +2065,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
     if((!obj) && (action == cExecutiveGroupAdd)) {
       obj = (CObject *) ObjectGroupNew(G);
       if(obj) {
-        ObjectSetName(obj, name);
+        ObjectSetName(obj, valid_name);
         ExecutiveManageObject(G, obj, false, true);
       }
     }
@@ -2189,7 +2194,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
             if(rec &&
                ((rec->type != cExecObject) ||
                 ((rec->type == cExecObject) && (rec->obj != obj)))) {
-              UtilNCopy(rec->group_name, name, sizeof(WordType));
+              UtilNCopy(rec->group_name, valid_name, sizeof(WordType));
               if(!quiet) {
                 PRINTFB(G, FB_Executive, FB_Actions)
                   " Executive: adding '%s' to group '%s'.\n", rec->name, rec->group_name
@@ -3517,8 +3522,8 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
  * finish:      update object selection & zoom
  * multiplex:   Split new states into objects
  * quiet:       Suppress feedback
- * loadpropertiesall:   Load all atom and object properties
- * loadproplex:         ?
+ * object_props:        names of object properties to load
+ * atom_props:          names of atom properties to load
  */
 int ExecutiveLoad(PyMOLGlobals * G,
                   const char *content, int content_length,
@@ -3527,7 +3532,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
                   int state, int zoom,
                   int discrete, int finish, int multiplex, int quiet,
                   const char * plugin_arg,
-		  short loadpropertiesall, OVLexicon *loadproplex)
+                  const char * object_props,
+                  const char * atom_props)
 {
   int ok = true;
   const char * fname = content;
@@ -3537,7 +3543,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
   char plugin[16] = "";
   CObject *obj = NULL;
   CObject *origObj = NULL;
-  bool is_pqr_file = false;
+  int pdb_variant = PDB_VARIANT_DEFAULT;
 
   // validate proposed object name
   ObjectNameType object_name = "";
@@ -3572,6 +3578,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
     fname = NULL;
     break;
   case cLoadTypePQR:
+  case cLoadTypePDBQT:
   case cLoadTypePDB:
   case cLoadTypeCIF:
   case cLoadTypeXPLORMap:
@@ -3655,11 +3662,14 @@ int ExecutiveLoad(PyMOLGlobals * G,
   // downstream file type reading functions
   switch (content_format) {
   case cLoadTypePQR:
-    is_pqr_file = true;
+    pdb_variant = PDB_VARIANT_PQR;
+  case cLoadTypePDBQT:
+    if (content_format == cLoadTypePDBQT)
+      pdb_variant = PDB_VARIANT_PDBQT;
   case cLoadTypePDB:
   case cLoadTypePDBStr:
     ok = ExecutiveProcessPDBFile(G, origObj, fname, content, object_name,
-        state, discrete, finish, buf, is_pqr_file,
+        state, discrete, finish, buf, pdb_variant,
         quiet, multiplex, zoom);
     break;
   case cLoadTypeCIF:
@@ -3769,6 +3779,9 @@ int ExecutiveLoad(PyMOLGlobals * G,
       const char * next_entry = content;
       char new_name[WordLength] = "";
 
+      OVLexicon *loadproplex = NULL;
+      bool loadpropertiesall = false;
+
       // (some of) these file types support multiple molecules per file,
       // and we support to load them into separate objects (multiplex).
       do {
@@ -3787,6 +3800,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
           obj = NULL;
         }
       } while(next_entry);
+
+      OVLexicon_Del(loadproplex);
     }
     break;
   default:
@@ -3871,6 +3886,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int
     case cLoadTypeSDF2:
     case cLoadTypeSDF2Str:
     case cLoadTypePQR:
+    case cLoadTypePDBQT:
     case cLoadTypeXTC:
     case cLoadTypeDTR:
     case cLoadTypeTRR:
@@ -3910,7 +3926,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int
 int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
                             const char *fname, const char *buffer,
                             const char *oname, int frame, int discrete, int finish,
-                            OrthoLineType buf, bool is_pqr_file, int quiet,
+                            OrthoLineType buf, int variant, int quiet,
                             int multiplex, int zoom)
 {
   int ok = true;
@@ -3932,7 +3948,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
   UtilZeroMem(&pdb_info_rec, sizeof(PDBInfoRec));
   pdb_info = &pdb_info_rec;
   pdb_info->multiplex = multiplex;
-  pdb_info->is_pqr_file = is_pqr_file;
+  pdb_info->variant = variant;
 
   if(ok) {
     processed = VLACalloc(ProcPDBRec, 10);
@@ -5438,6 +5454,9 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
   char active[WordLength] = "";
   int have_active = false;
   int partial_session = false;
+
+  G->Color->HaveOldSessionColors = false;
+  G->Color->HaveOldSessionExtColors = false;
 
   if(!partial_restore) {        /* if user has requested partial restore */
     ExecutiveDelete(G, "all");
@@ -10180,7 +10199,7 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, const char *s1, int state, int con
   }
 
   if(mode == 1) {
-    pdb_info.is_pqr_file = true;
+    pdb_info.variant = PDB_VARIANT_PQR;
     pdb_info.pqr_workarounds = SettingGetGlobal_b(G, cSetting_pqr_workarounds);
   }
 
@@ -10234,7 +10253,7 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, const char *s1, int state, int con
   }
 
   if((!(SettingGetGlobal_i(G, cSetting_pdb_no_end_record)))
-     && !(pdb_info.is_pqr_file))
+     && !(pdb_info.is_pqr_file()))
     /* terminate with END */
   {
     ov_size len = op1.i2;
@@ -12891,6 +12910,7 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
       SettingSetGlobal_i(G, index, 0);
     } else {
       SettingRestoreDefault(G->Setting, index, G->Default);
+      if (!quiet)
       PRINTFB(G, FB_Executive, FB_Actions)
         " Setting: %s restored to default\n", name ENDFB(G);
     }

@@ -127,6 +127,7 @@ from querying import \
       get_legal_name,     \
       get_unused_name,    \
       get_object_matrix,  \
+      get_object_ttt,     \
       get_mtl_obj,        \
       get_phipsi,         \
       get_position,       \

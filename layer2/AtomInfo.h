@@ -19,6 +19,15 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 #include"Setting.h"
+#include"Version.h"
+
+#if _PyMOL_VERSION_int < 1770
+#define AtomInfoVERSION  176
+#define BondInfoVERSION  176
+#else
+#define AtomInfoVERSION  177
+#define BondInfoVERSION  177
+#endif
 
 
 /* FLAGS 0-3 have the following conventional usage for molecular modeling */
@@ -199,8 +208,10 @@ typedef struct BondType {
 } BondType;
 
 typedef struct AtomInfoType {
-  float * anisou;               // only allocate with get_anisou
-
+  union {
+    float * anisou;               // only allocate with get_anisou
+    int64_t dummyanisou;
+  };
   int resv;
   int customType;
   int priority;
@@ -220,8 +231,17 @@ typedef struct AtomInfoType {
   int visRep;                   /* bitmask for all reps */
 #ifdef _PYMOL_IP_EXTRAS
   int oldid;                    // for undo
-#endif
   int prop_id;
+#endif
+
+  // boolean flags
+  bool hetatm : 1;
+  bool bonded : 1;
+  bool deleteFlag : 1;
+  bool masked : 1;
+  bool hb_donor : 1;
+  bool hb_acceptor : 1;
+  bool has_setting : 1;      /* setting based on unique_id */
 
   /* be careful not to write at these as (int*) */
 
@@ -232,30 +252,19 @@ typedef struct AtomInfoType {
   signed char valence;          // 0-4
   signed char protons;          /* atomic number */
 
+  int chain;
+  SegIdent segi; // 4
+  AtomName name; // 4
+  ElemName elem; // 4               // redundant with "protons" ?
+  ResIdent resi; // 5
+  SSType ssType; // 2               /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
+  Chain alt; // 2
+  ResName resn;  // 5
+
   // small value optimized bitfields
   unsigned char stereo : 2;     // 0-3 Only for SDF (MOL) format in/out
   unsigned char chemFlag : 2;   // 0,1,2
   unsigned char protekted : 2;  // 0,1,2
-
-  // boolean flags
-  bool hetatm : 1;
-  bool bonded : 1;
-  bool deleteFlag : 1;
-  bool masked : 1;
-  bool hb_donor : 1;
-  bool hb_acceptor : 1;
-  bool has_setting : 1;      /* setting based on unique_id */
-  bool has_prop : 1;
-
-  ov_word chain;
-  Chain alt;
-  ResIdent resi;
-  SegIdent segi;
-  ResName resn;
-  AtomName name;
-  ElemName elem;                // redundant with "protons" ?
-
-  SSType ssType;                /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
 
   // methods
   bool isHydrogen() {
@@ -290,6 +299,10 @@ typedef struct AtomInfoType {
 
   // get the anisou array, allocate if null
   float * get_anisou() { return (anisou ? anisou : (anisou = new float[6])); }
+
+  // read-only anisou access, no allocation
+  const float * get_anisou() const { return anisou; }
+  bool has_anisou() const { return anisou; }
 } AtomInfoType;
 
 void AtomInfoFree(PyMOLGlobals * G);

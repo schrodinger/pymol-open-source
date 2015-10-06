@@ -26,6 +26,7 @@ def sg_canonicalize(sg):
 def sg_register_if_unknown(sg, sym_op):
     sg = sg_canonicalize(sg)
     if sg not in sym_dict:
+        sym_op = [op.replace(' ', '') for op in sym_op]
         sym_dict[sg] = sym_op
 
 def sg_sym_to_mat_list(sgsymbol): # TODO _self

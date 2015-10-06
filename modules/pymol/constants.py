@@ -11,6 +11,7 @@ gz_ext_re = re.compile(r"(\.?gz|\.bz2)$", re.I)
 
 file_ext_re = re.compile(string.join([
     "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",
+    r"\.pdbml$|\.pdbqt$|\.cml$|",
     r"\.mmod$|\.mmd$|\.dat$|\.out$|\.mol2$|",
     r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 
     r"\.r3d$|\.xyz$|\.xyz_[0-9]*$|", 
@@ -105,6 +106,9 @@ class loadable:
     spider = 62   # spider map
     cms = 63
     plugin = 64
+    mae = 65
+    maestr = 66
+    pdbqt = 67
 
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.cif : loadable.cifstr,

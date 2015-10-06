@@ -3038,7 +3038,8 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
             fp++;
 
             if (trace) {
-              if ((a3 = cs->atmToIdx(a1 - 1)) == -1 ||
+              if (a == 0 || a + 1 == cs->NIndex ||
+                  (a3 = cs->atmToIdx(a1 - 1)) == -1 ||
                   (a4 = cs->atmToIdx(a1 + 1)) == -1) {
                 zero3f(vo);
               } else {

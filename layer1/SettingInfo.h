@@ -854,6 +854,7 @@ enum {
   REC_b( 746, cif_use_auth                            , global    , 1 ),
   REC_s( 747, assembly                                , global    , "" ),
   REC_b( 748, cif_keepinmemory                        , global    , 0 ),
+  REC_b( 749, pse_binary_dump                         , unused    , 0 ), // not fully supported in Open-Source PyMOL
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

@@ -100,7 +100,9 @@ int PConvPyListToStrVLAList(PyObject * obj, char **vla, int *n_str);
 int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr);
 int PConvPyListToIntVLA(PyObject * obj, int **f);
 int PConvPyStrToStr(PyObject * obj, char *ptr, int l);
+#ifndef _PYMOL_NOPY
 int PConvPyStrToStrPtr(PyObject * obj, char **ptr);
+#endif
 int PConvPyStrToLexRef(PyObject * obj, OVLexicon * lex, int *lex_ref);
 int PConvPyFloatToFloat(PyObject * obj, float *ptr);
 int PConvPyIntToChar(PyObject * obj, char *ptr);
@@ -124,11 +126,10 @@ PyObject *PConvFloatVLAToPyList(const float *vla);
 PyObject *PConvFloatVLAToPyTuple(float *vla);
 PyObject *PConvIntVLAToPyList(const int *vla);
 PyObject *PConvIntVLAToPyTuple(int *vla);
-PyObject *PConvIntArrayToPyList(const int *f, int l);
+PyObject *PConvIntArrayToPyList(const int *f, int l, bool dump_binary=false);
 PyObject *PConvSIntArrayToPyList(const short int *f, int l);
 PyObject *PConvSCharArrayToPyList(const signed char *f, int l);
 PyObject *PConvLabPosVLAToPyList(const LabPosType * vla, int l);
-
 
 void PConvFloat3ToPyObjAttr(PyObject * obj, const char *attr, const float *v);
 void PConvFloatToPyObjAttr(PyObject * obj, const char *attr, float f);
@@ -162,7 +163,7 @@ int PConvPyListToFloatArrayInPlaceAutoZero(PyObject * obj, float *ii, ov_size ll
 
 int PConvPyListToDoubleArrayInPlace(PyObject * obj, double *ff, ov_size ll);
 
-PyObject *PConvFloatArrayToPyList(const float *f, int l);
+PyObject *PConvFloatArrayToPyList(const float *f, int l, bool dump_binary=false);
 PyObject *PConvFloatArrayToPyListNullOkay(const float *f, int l);
 PyObject *PConvDoubleArrayToPyList(const double *f, int l);
 
@@ -282,7 +283,7 @@ inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, double &out) {
 }
 
 inline bool PConvFromPyObject(PyMOLGlobals *, PyObject * obj, std::string &out) {
-  out = PyString_AsString(obj);
+  out = PyString_AsSomeString(obj);
   return true;
 }
 

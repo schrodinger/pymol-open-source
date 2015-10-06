@@ -1280,8 +1280,9 @@ void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, i
 
   SWAP_NOREF(dst->has_setting, src->has_setting);
   std::swap(dst->unique_id, src->unique_id);
-  SWAP_NOREF(dst->has_prop, src->has_prop);
+#ifdef _PYMOL_IP_EXTRAS
   std::swap(dst->prop_id, src->prop_id);
+#endif
 
   /* keep all existing names, identifiers, etc. */
   /* also keep all existing selections,
@@ -2822,10 +2823,6 @@ static void set_protons(AtomInfoType * I)
       name++;
 
     protons = get_protons(name);
-
-    if (protons < 0) {
-      protons = 0;
-    }
   }
 
   I->protons = protons;

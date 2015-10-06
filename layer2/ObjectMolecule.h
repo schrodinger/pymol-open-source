@@ -128,12 +128,23 @@ typedef struct {
   float matrix[16];
 } PDBScale;
 
+enum {
+  PDB_VARIANT_DEFAULT = 0,
+  PDB_VARIANT_PQR,
+  PDB_VARIANT_PDBQT,
+};
+
 typedef struct {
-  int is_pqr_file, pqr_workarounds;
+  int variant;
+  int pqr_workarounds;
   PDBScale scale;
   int ignore_header_names;
   int multi_object_status;      /* 0 = unknown, 1 = is multi_object, -1 is not multi_object */
   int multiplex;
+
+  inline bool is_pqr_file() {
+    return variant == PDB_VARIANT_PQR;
+  }
 } PDBInfoRec;
 
 
