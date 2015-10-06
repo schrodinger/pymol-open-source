@@ -124,33 +124,46 @@ SEE ALSO
     join_states
         '''
         r = DEFAULT_SUCCESS
-        object = str(object)
-        if prefix==None:
-            prefix = object+"_"
-            prefix_set = 0
-        else:
-            prefix_set = 1
+        prefix_set = bool(prefix)
         first=int(first)
         last=int(last)
-        n_state = _self.count_states(object)
-        if n_state<0:
-            r = DEFAULT_ERROR
-        else:
-            if last<1:
-                last = n_state
-            for a in range(first,last+1):
-                try:
+        prefix_a = first - 1
+
+        # support selections, not only objects
+        sele = _self.get_unused_name('_sele_Abnqh5s5VS')
+        _self.select(sele, object, 0)
+
+        # all names to check for name conflicts
+        names = set(_self.get_names('all'))
+
+        # iterate over objects
+        for object in _self.get_object_list(sele):
+            olast = _self.count_states('%' + object)
+
+            if 0 < last < olast:
+                olast = last
+
+            for a in range(first, olast + 1):
+                name = None
+                if prefix_set:
+                    prefix_a += 1
+                else:
+                    prefix_a = a
+                    prefix = object + "_"
                     name = _self.get_title(object,a)
-                    if (len(name)==0) or prefix_set:
-                        name = prefix+"%04d"%a
-                except:
-                    name = prefix+"%04d"%a
-                r = _self.frame(a)
+
+                if not name:
+                    name = prefix + "%04d" % prefix_a
+                elif name in names:
+                    name = _self.get_unused_name(name)
+                names.add(name)
+
+                r = _self.create(name, "?%s & ?%s" % (sele, object), a, 1)
+
                 if is_error(r): 
                     break
-                r = _self.create(name,"(%s) and state %d"%(object,a),a,1)
-                if is_error(r): 
-                    break
+
+        _self.delete(sele)
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
      

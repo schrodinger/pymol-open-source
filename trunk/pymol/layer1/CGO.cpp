@@ -5027,7 +5027,13 @@ CGO *CGOSimplify(CGO * I, int est)
 	  pc = origpc + 1;
 	  notHaveValue = damode;
 	  end = 0;
+	  bool skiptoend = false;
 	  while(!err && !end && (op = (CGO_MASK & CGO_read_int(pc)))) {
+	    if (skiptoend && op!=CGO_END){
+	      sz = CGO_sz[op];
+	      pc += sz;
+	      continue;
+	    }
 	    switch (op) {
 	    case CGO_NORMAL:
 	      normalVals[pl] = pc[0]; normalVals[pl+1] = pc[1]; normalVals[pl+2] = pc[2];
@@ -5060,6 +5066,8 @@ CGO *CGOSimplify(CGO * I, int est)
 	      vertexVals[pl++] = pc[0]; vertexVals[pl++] = pc[1]; vertexVals[pl++] = pc[2];
 	      plc += 4;
 	      pla++;
+	      if (pla >= nverts) // anything past the last vertex is ignored
+		skiptoend = true;
 	      notHaveValue = damode;
 	      break;
 	    case CGO_END:

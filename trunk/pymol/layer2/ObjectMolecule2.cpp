@@ -16,6 +16,7 @@
 */
 #include <utility>
 
+#include"Version.h"
 #include"os_python.h"
 
 #include"os_predef.h"
@@ -38,6 +39,14 @@
 #include"P.h"
 #include"ObjectCGO.h"
 #include"Scene.h"
+
+#ifdef _PYMOL_IP_EXTRAS
+#include"AtomInfoHistory.h"
+#include"BondTypeHistory.h"
+#endif
+
+#include <iostream>
+#include <map>
 
 #define ntrim ParseNTrim
 #define nextline ParseNextLine
@@ -2749,7 +2758,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       } else {
         ai->cartoon = cCartoon_tube;
       }
-      if((!info) || (!info->is_pqr_file)) {     /* standard PDB file */
+      if((!info) || (!info->is_pqr_file())) {     /* standard PDB file */
 
         p = nskip(p, 3);
         p = ncopy(cc, p, 8);
@@ -2767,8 +2776,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         if(!sscanf(cc, "%f", &ai->b))
           ai->b = 0.0;
 
-        p = nskip(p, 6);
-        p = ncopy(cc, p, 4);
+        if (info->variant == PDB_VARIANT_PDBQT) {
+          ignore_pdb_segi = true;
+          p = nskip(p, 4);
+          p = ncopy(cc, p, 6);
+          if(!sscanf(cc, "%f", &ai->partialCharge))
+            ai->partialCharge = 0.0;
+
+          // type is 78-79 in pdbqt, 77-78 in pdb
+          p = nskip(p, 1);
+        } else {
+          p = nskip(p, 6);
+          p = ncopy(cc, p, 4);
+        }
+
         if(!ignore_pdb_segi) {
           if(!segi_override[0]) {
             if(!sscanf(cc, "%s", ai->segi))
@@ -2834,7 +2855,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         }
 
         /* end normal PDB */
-      } else if(info && info->is_pqr_file) {
+      } else if(info && info->is_pqr_file()) {
         /* PQR file format...not well defined, but basically PDB
            with charge and radius instead of B and Q.  Right now,
            we insist on PDB column format through the chain ID,
@@ -3480,7 +3501,6 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule * I, PyObject * list)
   return (ok);
 }
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
 {
   PyObject *result = NULL;
@@ -3488,6 +3508,27 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
   BondType *bond;
   int a;
 
+#ifdef _PYMOL_IP_EXTRAS
+  PyMOLGlobals *G = I->Obj.G;
+  int pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version) * 1000;
+
+  if (SettingGetGlobal_b(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765)){
+    /* For the pse_binary_dump, save entire Bond array to a binary string array
+       write them into separate binary string
+     */
+    result = PyList_New(2);
+    if (pse_export_version && pse_export_version < 1770){
+      PyList_SetItem(result, 0, PyInt_FromLong(176));  // currently, we only support saving as 1.765 version
+      void *newBondType = Copy_To_BondType_Version(176, I->Bond, I->NBond);
+      PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(newBondType), I->NBond * sizeof(BondType_1_7_6)));
+      FreeP(newBondType);
+    } else {
+      PyList_SetItem(result, 0, PyInt_FromLong(BondInfoVERSION));
+      PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(I->Bond), I->NBond * sizeof(BondType)));
+    }
+    return result;
+  }
+#endif
   result = PyList_New(I->NBond);
   bond = I->Bond;
   for(a = 0; a < I->NBond; a++) {
@@ -3505,18 +3546,56 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
 
   return (PConvAutoNone(result));
 }
-#endif
 
 static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
 {
+  PyMOLGlobals *G = I->Obj.G;
   int ok = true;
   int a;
   int stereo, ll = 0;
   PyObject *bond_list = NULL;
   BondType *bond;
+
   if(ok)
     ok = PyList_Check(list);
   if(ok)
+    ll = PyList_Size(list);
+
+  bool pse_binary_dump = false;
+
+  if (ll == 2){
+    // checking if from pse_binary_dump
+    // pse_binary_dump saves 2 values: bondInfo_version, BondType binary
+    CPythonVal *val1 = CPythonVal_PyList_GetItem(G, list, 1);
+    pse_binary_dump = PyString_Check(val1);
+    CPythonVal_Free(val1);
+  }
+  if (pse_binary_dump){
+#ifdef _PYMOL_IP_EXTRAS
+    CPythonVal *verobj = CPythonVal_PyList_GetItem(G, list, 0);
+    int bondInfo_version;
+    ok = PConvPyIntToInt(verobj, &bondInfo_version);
+
+    CPythonVal *strobj = CPythonVal_PyList_GetItem(G, list, 1);
+    int slen = PyString_Size(strobj);
+    auto strval = PyString_AsSomeString(strobj);
+
+    if(ok)
+      ok = ((I->Bond = VLAlloc(BondType, I->NBond)) != NULL);
+    if (BondInfoVERSION != bondInfo_version){
+      // version not the same, need to convert
+      Copy_Into_BondType_From_Version(strval.data(), bondInfo_version, I->Bond, I->NBond);
+    } else {
+      memcpy(I->Bond, strval.data(), slen);
+    }
+#else
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " Error: pse_binary_dump not supported in Open-Source PyMOL\n"
+      ENDFB(G);
+    return false;
+#endif
+  } else {
+    if(ok)
     ok = ((I->Bond = VLAlloc(BondType, I->NBond)) != NULL);
   bond = I->Bond;
   for(a = 0; a < I->NBond; a++) {
@@ -3554,19 +3633,71 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     }
     bond++;
   }
+  }
   PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Debugging)
     " ObjectMoleculeBondFromPyList: ok %d after restore\n", ok ENDFB(I->Obj.G);
 
   return (ok);
 }
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
 {
+  PyMOLGlobals *G = I->Obj.G;
   PyObject *result = NULL;
   AtomInfoType *ai;
   int a;
+#ifdef _PYMOL_IP_EXTRAS
+  int pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version) * 1000;
 
+  if (SettingGetGlobal_b(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765)){
+    /* For the pse_binary_dump, record all strings in lex and
+       write them into separate binary string
+     */
+    std::set<int> lexIDs;
+    int totalstlen = 0;
+    AtomInfoType *ai = I->AtomInfo;
+    for(a = 0; a < I->NAtom; a++) {
+      if (ai->textType) lexIDs.insert(ai->textType);
+      if (ai->chain) lexIDs.insert(ai->chain);
+      if (ai->label) lexIDs.insert(ai->label);
+      if (ai->custom) lexIDs.insert(ai->custom);
+      ++ai;
+    }
+    for (auto it = lexIDs.begin(); it != lexIDs.end(); ++it){ // need to calculate totalstlen so we can allocate
+      const char *lexstr = LexStr(G, *it);
+      int lexlen = strlen(lexstr);
+      totalstlen += lexlen + 1;
+    }
+    int strinfolen = totalstlen + sizeof(int) * (lexIDs.size() + 1);
+    void *strinfo = Alloc(unsigned char, strinfolen);
+    int *strval = (int*)strinfo;
+    *(strval++) = lexIDs.size(); // first write number of strings into binary data string
+    char *strpl = (char*)((char*)strinfo + (1 + lexIDs.size()) * sizeof(int));
+    /* write map of lex ids and strings into binary data string as an array of ids
+       and null-terminated strings */
+    for (auto it = lexIDs.begin(); it != lexIDs.end(); ++it){
+      *(strval++) = *it;
+      const char *strptr = LexStr(G, *it);
+      strcpy(strpl, strptr);
+      strpl += strlen(strptr) + 1;
+    }
+    result = PyList_New(3);
+
+    if (pse_export_version && pse_export_version < 1770){
+      PyList_SetItem(result, 0, PyInt_FromLong(176));  // currently, we only support pse_export_version saving as 1.765 version
+      void *newAtomInfo = Copy_To_AtomInfoType_Version(176, I->AtomInfo, I->NAtom);
+      PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(newAtomInfo), I->NAtom * sizeof(AtomInfoType_1_7_6)));
+      FreeP(newAtomInfo);
+    } else {
+      PyList_SetItem(result, 0, PyInt_FromLong(AtomInfoVERSION));
+      PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(I->AtomInfo), I->NAtom * sizeof(AtomInfoType)));
+    }
+    PyList_SetItem(result, 2, PyString_FromStringAndSize(reinterpret_cast<const char*>(strinfo), strinfolen));
+
+    FreeP(strinfo);
+    return result;
+  }
+#endif
   result = PyList_New(I->NAtom);
   ai = I->AtomInfo;
   for(a = 0; a < I->NAtom; a++) {
@@ -3575,23 +3706,112 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
   }
   return (PConvAutoNone(result));
 }
-#endif
+
+#define CONVERT_TO_NEW_LEX(lexval)  \
+  if (lexval){                      \
+    lexval = oldIDtoLexID[lexval];  \
+    LexInc(G, lexval);              \
+  }
 
 static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
 {
+  PyMOLGlobals *G = I->Obj.G;
   int ok = true;
-  int a;
+  int a, ll;
   AtomInfoType *ai;
+
   if(ok)
     ok = PyList_Check(list);
   if (ok)
+    ll = PyList_Size(list);
+
+  bool pse_binary_dump = false;
+
+  if (ll == 3){
+    // checking if from pse_binary_dump
+    // pse_binary_dump saves 3 values: atomInfo_version, AtomInfo binary, and strings array
+    CPythonVal *val1 = CPythonVal_PyList_GetItem(G, list, 1);
+    CPythonVal *val2 = CPythonVal_PyList_GetItem(G, list, 2);
+    pse_binary_dump = PyString_Check(val1) && PyString_Check(val2);
+    CPythonVal_Free(val1);
+    CPythonVal_Free(val2);
+  }
+  if (pse_binary_dump){
+#ifdef _PYMOL_IP_EXTRAS
+    CPythonVal *verobj = CPythonVal_PyList_GetItem(G, list, 0);
+    int atomInfo_version;
+    ok = PConvPyIntToInt(verobj, &atomInfo_version);
+
+    CPythonVal *strlookupobj = CPythonVal_PyList_GetItem(G, list, 2);
+    auto strval_1 = PyString_AsSomeString(strlookupobj);
+    int *strval = (int*)strval_1.data();
+
+    std::map<int, int> oldIDtoLexID;
+    int nstrings = *(strval++);
+    char *strpl = (char*)(strval + nstrings);
+    int strcnt = nstrings;
+    int stlen;
+    // populate oldIDtoLexID with nstrings from binary string data (3rd entry in list)
+    while (strcnt){
+      int idx = LexIdx(G, strpl); // increments ref count, need to take into account
+      int oldidx = *(strval++);
+      oldIDtoLexID[oldidx] = idx;
+      stlen = strlen(strpl);
+      strpl += stlen + 1;
+      strcnt--;
+    }
+
+    CPythonVal *strobj = CPythonVal_PyList_GetItem(G, list, 1);
+    int slen = PyString_Size(strobj);
+    auto strval_2 = PyString_AsSomeString(strobj);
+
     VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + 1);
-  CHECKOK(ok, I->AtomInfo);
-  ai = I->AtomInfo;
-  for(a = 0; ok && a < I->NAtom; a++) {
-    if(ok)
-      ok = AtomInfoFromPyList(I->Obj.G, ai, PyList_GetItem(list, a));
-    ai++;
+    if (AtomInfoVERSION != atomInfo_version){
+      // version not the same, need to convert
+      Copy_Into_AtomInfoType_From_Version(strval_2.data(), atomInfo_version, I->AtomInfo, I->NAtom);
+    } else {
+      memcpy(I->AtomInfo, strval_2.data(), slen);
+    }
+
+    // go through AtomInfo array, swap new strings, convert colors, convert settings
+    // (everything that AtomInfoFromPyList does except set properties, which are currently 
+    //  not saved for pse_binary_dump) 
+    AtomInfoType *ai = I->AtomInfo;
+    for(a = 0; a < I->NAtom; ++a, ++ai) {
+      CONVERT_TO_NEW_LEX(ai->chain);
+      CONVERT_TO_NEW_LEX(ai->textType);
+      CONVERT_TO_NEW_LEX(ai->label);
+      CONVERT_TO_NEW_LEX(ai->custom);
+      ai->color = ColorConvertOldSessionIndex(G, ai->color);
+      if (ai->unique_id){
+        ai->unique_id = SettingUniqueConvertOldSessionID(G, ai->unique_id);
+      }
+      ai->selEntry = 0; // this is not set in AtomInfoFromPyList()
+    }
+    // need to decrement since we call LexIdx() above on each
+    for (auto it = oldIDtoLexID.begin(); it != oldIDtoLexID.end(); ++it){
+      LexDec(G, it->second);
+    }
+    CPythonVal_Free(verobj);
+    CPythonVal_Free(strobj);
+    CPythonVal_Free(strlookupobj);
+#else
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " Error: pse_binary_dump not supported in Open-Source PyMOL\n"
+      ENDFB(G);
+    return false;
+#endif
+  } else {
+    // The old slow way of loading in AtomInfo, using python lists
+    if (ok)
+      VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + 1);
+    CHECKOK(ok, I->AtomInfo);
+    ai = I->AtomInfo;
+    for(a = 0; ok && a < I->NAtom; a++) {
+      if(ok)
+        ok = AtomInfoFromPyList(I->Obj.G, ai, PyList_GetItem(list, a));
+      ai++;
+    }
   }
   PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Debugging)
     " ObjectMoleculeAtomFromPyList: ok %d \n", ok ENDFB(I->Obj.G);
@@ -3657,8 +3877,10 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
     (*result) = I;
   else {
     /* cleanup */
+#ifdef _PYMOL_IP_EXTRAS // incomplete objects can cause crash - prefer the memory leak
     if (I)
         ObjectMoleculeFree(I);
+#endif
     (*result) = NULL;
   }
   return (ok);

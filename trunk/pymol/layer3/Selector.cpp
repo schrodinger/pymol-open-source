@@ -64,7 +64,7 @@ typedef char SelectorWordType[SelectorWordLength];
 /* special selections, unknown to executive */
 #define cColorectionFormat "_!c_%s_%d"
 
-#if 1
+#if 0
 // A lot of PyMOL's utility code used to select with lower case atomic
 // identifiers, making the code dependent on "ignore_case=1". The default
 // for this setting was changed to "0 (off)", which required to fix all
@@ -6114,7 +6114,7 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
     SelectorUpdateTableSingleObject(G, single_object, state, false, NULL, 0, false);
   }
 
-  if(pdb_info->is_pqr_file)
+  if(pdb_info->is_pqr_file())
     use_ter = false;
   if(counter)
     c = *counter;
@@ -6195,7 +6195,7 @@ int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int sta
       }
     }
   }
-  if(conectFlag && !(pdb_info->is_pqr_file)) {
+  if(conectFlag && !(pdb_info->is_pqr_file())) {
     BondType *bond = NULL;
     BondType *ii1;
     int nBond = 0;
@@ -9292,7 +9292,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
           if((*base_0_sele_a =
               WordMatcherMatchAlpha(matcher, LexStr(G,
-                  *reinterpret_cast<ov_word /* decltype(AtomInfoType::chain) */ *>
+                  *reinterpret_cast<int /* decltype(AtomInfoType::chain) */ *>
                   (((char*)(i_obj[table_a->model]->AtomInfo + table_a->atom)) + offset)
                   ))))
             c++;

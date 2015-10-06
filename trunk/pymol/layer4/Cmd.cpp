@@ -7140,7 +7140,9 @@ ok_except1:
 static PyObject *CmdLoad(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  char *fname, *oname, *load_properties = NULL;
+  char *fname, *oname;
+  char *object_props = NULL;
+  char *atom_props = NULL;
   char *plugin = NULL;
   int frame, type;
   int finish, discrete;
@@ -7149,10 +7151,10 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   int multiplex;
   int zoom;
   int bytes;
-  ok = PyArg_ParseTuple(args, "Oss#iiiiiii|zz", &self,
+  ok = PyArg_ParseTuple(args, "Oss#iiiiiii|zzz", &self,
                         &oname, &fname, &bytes, &frame, &type,
                         &finish, &discrete, &quiet, &multiplex, &zoom,
-                        &plugin, &load_properties);
+                        &plugin, &object_props, &atom_props);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -7160,9 +7162,6 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-#ifdef _PYMOL_IP_EXTRAS
-#endif
-
     PRINTFD(G, FB_CCmd)
       "CmdLoad-DEBUG %s %s %d %d %d %d\n",
       oname, fname, frame, type, finish, discrete ENDFD;

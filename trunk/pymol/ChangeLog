@@ -2,6 +2,29 @@
 CHANGE LOG
 =========================================================================
 
+2015-10-06 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* new filetypes: pdbml, pdbqt, cml
+
+	* cell/symmetry: accept alpha=beta=gamma=0.0 as 90.0
+
+	* leave unknown protons as -1 instead of 0 (lonepair), fixes
+	  vdw assingment for unknown elements (1.8 instead of 0.5)
+
+	* reimplement reading full sequence from mmCIF. Only with
+	  cif_use_auth=off and retain_order=off. Fill in missing
+	  CA atoms for polypeptides.
+
+	* new API function cmd.get_object_ttt()
+
+	* APBS Plugin: --whitespace argument for pdb2pqr
+
+	* fix scene next/previous, was broken on Windows 10
+
+	* fix split_states with non-unique titles
+
+	* fix "File > Run" fails if path has spaces
+
 2015-08-30 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix cartoon_trace_atoms for beta-sheets

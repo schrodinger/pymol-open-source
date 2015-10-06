@@ -123,7 +123,8 @@ int PConvPyListToStrVLAList(PyObject * obj, char **vla, int *n_str)
         l = PyString_Size(t);
         nn_ch = n_ch + l + 1;
         VLACheck(*vla, char, nn_ch);
-        UtilNCopy((*vla) + n_ch, PyString_AsString(t), l + 1);
+        auto strval = PyString_AsSomeString(t);
+        UtilNCopy((*vla) + n_ch, strval.c_str(), l + 1);
         n_ch = nn_ch;
       } else {
         VLACheck(*vla, char, n_ch + 1);
@@ -220,11 +221,11 @@ int PConvPyStrToLexRef(PyObject * obj, OVLexicon * lex, int *lex_ref)
   } else if(!PyString_Check(obj)) {
     ok = false;
   } else {
-    char *ptr = PyString_AsString(obj);
-    if(!ptr) {
+    auto strval = PyString_AsSomeString(obj);
+    if(!strval.c_str()) {
       ok = false;
     } else {
-      OVreturn_word result = OVLexicon_GetFromCString(lex, ptr);
+      OVreturn_word result = OVLexicon_GetFromCString(lex, strval.c_str());
       if(OVreturn_IS_OK(result)) {
         *lex_ref = result.word;
       } else {
@@ -235,6 +236,7 @@ int PConvPyStrToLexRef(PyObject * obj, OVLexicon * lex, int *lex_ref)
   return ok;
 }
 
+#ifndef _PYMOL_NOPY
 int PConvPyStrToStrPtr(PyObject * obj, char **ptr)
 {
   int ok = true;
@@ -247,6 +249,7 @@ int PConvPyStrToStrPtr(PyObject * obj, char **ptr)
     *ptr = PyString_AsString(obj);
   return (ok);
 }
+#endif
 
 int PConvPyStrToStr(PyObject * obj, char *ptr, int size)
 {
@@ -258,7 +261,8 @@ int PConvPyStrToStr(PyObject * obj, char *ptr, int size)
     if(size)
       *ptr = 0;
   } else {
-    UtilNCopy(ptr, PyString_AsString(obj), size);
+    auto strval = PyString_AsSomeString(obj);
+    UtilNCopy(ptr, strval.c_str(), size);
   }
   return (ok);
 }
@@ -380,19 +384,18 @@ int PConvPyObjectToChar(PyObject * object, char *value)
 
 int PConvPyObjectToStrMaxLen(PyObject * object, char *value, int ln)
 {
-  char *st;
   PyObject *tmp;
   int result = true;
   if(!object)
     result = false;
   else if(PyString_Check(object)) {
-    st = PyString_AsString(object);
-    strncpy(value, st, ln);
+    auto strval = PyString_AsSomeString(object);
+    strncpy(value, strval.c_str(), ln);
   } else {
     tmp = PyObject_Str(object);
     if(tmp) {
-      st = PyString_AsString(tmp);
-      strncpy(value, st, ln);
+      auto strval = PyString_AsSomeString(tmp);
+      strncpy(value, strval.c_str(), ln);
       Py_DECREF(tmp);
     } else
       result = 0;
@@ -406,19 +409,18 @@ int PConvPyObjectToStrMaxLen(PyObject * object, char *value, int ln)
 
 int PConvPyObjectToStrMaxClean(PyObject * object, char *value, int ln)
 {
-  char *st;
   PyObject *tmp;
   int result = true;
   if(!object)
     result = false;
   else if(PyString_Check(object)) {
-    st = PyString_AsString(object);
-    strncpy(value, st, ln);
+    auto strval = PyString_AsSomeString(object);
+    strncpy(value, strval.c_str(), ln);
   } else {
     tmp = PyObject_Str(object);
     if(tmp) {
-      st = PyString_AsString(tmp);
-      strncpy(value, st, ln);
+      auto strval = PyString_AsSomeString(tmp);
+      strncpy(value, strval.c_str(), ln);
       Py_DECREF(tmp);
     } else
       result = 0;
@@ -569,6 +571,13 @@ int PConvPyListToFloatVLA(PyObject * obj, float **f)
   if(!obj) {
     *f = NULL;
     ok = false;
+  } else if (PyString_Check(obj)){
+    // binary_dump
+    int slen = PyString_Size(obj);
+    l = slen / sizeof(float);
+    (*f) = VLAlloc(float, l);
+    auto strval = PyString_AsSomeString(obj);
+    memcpy(*f, strval.data(), slen);
   } else if(!PyList_Check(obj)) {
     *f = NULL;
     ok = false;
@@ -683,6 +692,13 @@ int PConvPyListToIntVLA(PyObject * obj, int **f)
   if(!obj) {
     *f = NULL;
     l = 0;
+  } else if (PyString_Check(obj)){
+    // binary_dump
+    int slen = PyString_Size(obj);
+    l = slen / sizeof(int);
+    (*f) = VLAlloc(int, l);
+    auto strval = PyString_AsSomeString(obj);
+    memcpy(*f, strval.data(), slen);
   } else if(!PyList_Check(obj)) {
     *f = NULL;
     ok = false;
@@ -912,8 +928,13 @@ int PConvPyListToFloatArrayInPlaceAutoZero(PyObject * obj, float *ii, ov_size ll
   return (ok);
 }
 
-PyObject *PConvFloatArrayToPyList(const float *f, int l)
+PyObject *PConvFloatArrayToPyList(const float *f, int l, bool dump_binary)
 {
+#ifndef PICKLETOOLS
+  if (dump_binary){
+    return PyString_FromStringAndSize(reinterpret_cast<const char*>(f), l * sizeof(float));
+  } 
+#endif
   int a;
   PyObject *result = PyList_New(l);
   for(a = 0; a < l; a++)
@@ -997,8 +1018,13 @@ PyObject *PConvIntVLAToPyTuple(int *vla)
   return (PConvAutoNone(result));
 }
 
-PyObject *PConvIntArrayToPyList(const int *f, int l)
+PyObject *PConvIntArrayToPyList(const int *f, int l, bool dump_binary)
 {
+#ifndef PICKLETOOLS
+  if (dump_binary){
+    return PyString_FromStringAndSize(reinterpret_cast<const char*>(f), l * sizeof(int));
+  }
+#endif
   int a;
   PyObject *result = PyList_New(l);
   for(a = 0; a < l; a++)
@@ -1077,7 +1103,7 @@ PyObject *PConvStringVLAToPyList(const char *vla)
 int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr)
 {
   int a, l, ll;
-  char *vla = NULL, *p, *q;
+  char *vla = NULL, *q;
   PyObject *i;
   if(obj)
     if(PyList_Check(obj)) {
@@ -1086,7 +1112,7 @@ int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr)
       for(a = 0; a < l; a++) {
         i = PyList_GetItem(obj, a);
         if(PyString_Check(i)) {
-          ll += strlen(PyString_AsString(i)) + 1;
+          ll += PyString_Size(i) + 1;
         }
       }
       vla = VLAlloc(char, ll);
@@ -1095,7 +1121,8 @@ int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr)
       for(a = 0; a < l; a++) {
         i = PyList_GetItem(obj, a);
         if(PyString_Check(i)) {
-          p = PyString_AsString(i);
+          auto strval = PyString_AsSomeString(i);
+          auto p = strval.c_str();
           while(*p)
             *(q++) = *(p++);
           *(q++) = 0;
@@ -1152,7 +1179,6 @@ PyObject *PConvLabPosVLAToPyList(const LabPosType * vla, int l)
     result = PyList_New(l);
     for(a = 0; a < l; a++) {
       item = PyList_New(7);
-      if(item) {
         PyList_SetItem(item, 0, PyInt_FromLong(p->mode));
         PyList_SetItem(item, 1, PyFloat_FromDouble((double) p->pos[0]));
         PyList_SetItem(item, 2, PyFloat_FromDouble((double) p->pos[1]));
@@ -1161,8 +1187,6 @@ PyObject *PConvLabPosVLAToPyList(const LabPosType * vla, int l)
         PyList_SetItem(item, 5, PyFloat_FromDouble((double) p->offset[1]));
         PyList_SetItem(item, 6, PyFloat_FromDouble((double) p->offset[2]));
         PyList_SetItem(result, a, item);
-      }
-
       p++;
     }
   }

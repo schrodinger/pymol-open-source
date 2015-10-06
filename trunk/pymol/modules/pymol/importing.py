@@ -50,6 +50,13 @@ if __name__=='pymol.importing':
         'XDATCAR',  # VASP molecule
     ])
 
+    def filename_to_objectname(fname):
+        oname = os.path.basename(fname)
+        oname = gz_ext_re.sub("", oname)        # strip gz
+        oname = file_ext_re.sub("", oname)      # strip extension
+        oname = safe_oname_re.sub("_", oname)   # invalid characters
+        return oname
+
     def auto_zoom(zoom, selection, state=0, _self=cmd):
         if zoom > 0 or zoom < 0 and _self.get_setting_int("auto_zoom"):
             _self.zoom(selection, state=state)
@@ -379,10 +386,7 @@ SEE ALSO
 
     # get object name
             if len(str(object))==0:
-                oname = re.sub(r".*\/|.*\\","",filename) # strip path
-                oname = gz_ext_re.sub("",oname) # strip gz
-                oname = file_ext_re.sub("",oname) # strip extension
-                oname = safe_oname_re.sub("_",oname)
+                oname = filename_to_objectname(filename)
                 if not len(oname): # safety
                     oname = 'obj01'
             else:
@@ -667,6 +671,12 @@ SEE ALSO
                 ext = fname_no_gz.rsplit('.', 1)[-1]
                 if re.search("\.pdb$|\.pdb\d+$|\.ent$|\.p5m",fname_no_gz,re.I):
                     ftype = loadable.pdb
+                elif re.search(r"\.pdbqt$", fname_no_gz, re.I):
+                    ftype = loadable.pdbqt
+                elif re.search(r"\.(pdbml|xml)$", fname_no_gz, re.I):
+                    return load_pdbml(fname, object, discrete, multiplex, zoom=zoom, quiet=quiet, _self=_self)
+                elif re.search(r"\.cml$", fname_no_gz, re.I):
+                    return load_cml(fname, object, discrete, multiplex, zoom=zoom, quiet=quiet, _self=_self)
                 elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",fname_no_gz,re.I):
                     ftype = loadable.mmod
                 elif re.search("\.(ccp4|mrc|map)$",fname_no_gz,re.I):
@@ -702,7 +712,7 @@ SEE ALSO
                     try:
                         from epymol.vis import load_vis
                     except ImportError:
-                        raise CmdException('vis file only available in incentive PyMOL')
+                        raise pymol.CmdException('vis file only available in incentive PyMOL')
                     return load_vis(filename, object, mimic, quiet=quiet, _self=_self)
                 elif re.search(r"\.py$|\.pym|\.pyc$", fname_no_gz, re.I):
                     return _self.do("_ run %s" % filename)
@@ -743,10 +753,7 @@ SEE ALSO
                     
             # get object name
             if len(str(object))==0:
-                oname = re.sub(r".*\/|.*\\","",filename) # strip path
-                oname = gz_ext_re.sub("",oname) # strip gz                
-                oname = file_ext_re.sub("",oname) # strip extension
-                oname = safe_oname_re.sub("_",oname)
+                oname = filename_to_objectname(filename)
                 if not len(oname): # safety
                     oname = 'obj01'
             else:
@@ -1580,8 +1587,210 @@ EXAMPLE
                 print ' Warning: group and object arguments given'
                 members = [kwargs['object']]
             else:
-                from pymol.cmd import file_ext_re, gz_ext_re, safe_oname_re
-                members = [gz_ext_re.sub('', file_ext_re.sub('',
-                    safe_oname_re.sub('_', os.path.split(filename)[-1])))
-                    for filename in filenames]
+                members = map(filename_to_objectname, filenames)
             _self.group(group, ' '.join(members))
+
+    def _import_etree():
+        try:
+            from lxml import etree
+        except ImportError:
+            import xml.etree.ElementTree as etree
+        return etree
+
+    def load_pdbml(filename, object='', discrete=0, multiplex=1, zoom=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Load a PDBML formatted structure file
+        '''
+        etree = _import_etree()
+        from chempy import Atom, models
+        from collections import defaultdict
+
+        multiplex, discrete = int(multiplex), int(discrete)
+        PDBxNS = '{http://pdbml.pdb.org/schema/pdbx-v40.xsd}'
+
+        try:
+            root = etree.fromstring(_self.file_read(filename))
+            atom_site_list = root.findall('.'
+                    '/' + PDBxNS + 'atom_siteCategory'
+                    '/' + PDBxNS + 'atom_site')
+        except etree.XMLSyntaxError:
+            raise pymol.CmdException("File doesn't look like XML")
+        except etree.XPathEvalError:
+            raise pymol.CmdException("XML file doesn't look like a PDBML file")
+
+        if not atom_site_list:
+            raise pymol.CmdException("no PDBx:atom_site nodes found in XML file")
+
+        # state -> model dictionary
+        model_dict = defaultdict(models.Indexed)
+
+        # atoms
+        for atom_site in atom_site_list:
+            atom = Atom()
+            atom.coord = [None, None, None]
+
+            model_num = 1
+
+            for child in atom_site:
+                tag = child.tag
+
+                if tag == PDBxNS + 'Cartn_x':
+                    atom.coord[0] = float(child.text)
+                elif tag == PDBxNS + 'Cartn_y':
+                    atom.coord[1] = float(child.text)
+                elif tag == PDBxNS + 'Cartn_z':
+                    atom.coord[2] = float(child.text)
+                elif tag == PDBxNS + 'B_iso_or_equiv':
+                    atom.b = float(child.text)
+                elif tag == PDBxNS + 'auth_asym_id':
+                    atom.chain = child.text or ''
+                elif tag == PDBxNS + 'auth_atom_id':
+                    atom.name = child.text or ''
+                elif tag == PDBxNS + 'auth_comp_id':
+                    atom.resn = child.text or ''
+                elif tag == PDBxNS + 'auth_seq_id':
+                    atom.resi = child.text or ''
+                elif tag == PDBxNS + 'label_alt_id':
+                    atom.resi = child.text or ''
+                elif tag == PDBxNS + 'label_asym_id':
+                    atom.segi = child.text or ''
+                elif tag == PDBxNS + 'label_atom_id':
+                    if not atom.name:
+                        atom.name = child.text or ''
+                elif tag == PDBxNS + 'label_comp_id':
+                    if not atom.resn:
+                        atom.resn = child.text or ''
+                elif tag == PDBxNS + 'label_seq_id':
+                    if not atom.resi:
+                        atom.resi = child.text or ''
+                elif tag == PDBxNS + 'label_entity_id':
+                    atom.custom = child.text or ''
+                elif tag == PDBxNS + 'occupancy':
+                    atom.q = float(child.text)
+                elif tag == PDBxNS + 'pdbx_PDB_model_num':
+                    model_num = int(child.text)
+                elif tag == PDBxNS + 'type_symbol':
+                    atom.symbol = child.text or ''
+                elif tag == PDBxNS + 'group_PDB':
+                    atom.hetatm = (child.text == 'HETATM')
+
+            if None not in atom.coord:
+                model_dict[model_num].add_atom(atom)
+
+        # symmetry and cell
+        try:
+            node = root.findall('.'
+                    '/' + PDBxNS + 'cellCategory'
+                    '/' + PDBxNS + 'cell')[0]
+            cell = [float(node.findall('./' + PDBxNS + a)[0].text)
+                    for a in ['length_a', 'length_b', 'length_c',
+                        'angle_alpha', 'angle_beta', 'angle_gamma']]
+
+            spacegroup = root.findall('.'
+                    '/' + PDBxNS + 'symmetryCategory'
+                    '/' + PDBxNS + 'symmetry'
+                    '/' + PDBxNS + 'space_group_name_H-M')[0].text
+        except IndexError:
+            cell = None
+            spacegroup = ''
+
+        # object name
+        if not object:
+            object = os.path.basename(filename).split('.', 1)[0]
+
+        # only multiplex if more than one model/state
+        multiplex = multiplex and len(model_dict) > 1
+
+        # load models as objects or states
+        for model_num in sorted(model_dict):
+            if model_num < 1:
+                print " Error: model_num < 1 not supported"
+                continue
+
+            model = model_dict[model_num]
+            model.connect_mode = 3
+
+            if cell:
+                model.cell = cell
+                model.spacegroup = spacegroup
+
+            if multiplex:
+                oname = '%s_%04d' % (object , model_num)
+                model_num = 1
+            else:
+                oname = object
+
+            _self.load_model(model, oname,
+                    state=model_num, zoom=zoom,
+                    discrete=discrete)
+
+    def load_cml(filename, object='', discrete=0, multiplex=1, zoom=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Load a CML formatted structure file
+        '''
+        etree = _import_etree()
+        from chempy import Atom, Bond, models
+
+        multiplex, discrete = int(multiplex), int(discrete)
+
+        try:
+            root = etree.fromstring(_self.file_read(filename))
+        except etree.XMLSyntaxError:
+            raise pymol.CmdException("File doesn't look like XML")
+
+        if root.tag != 'cml':
+            raise pymol.CmdException('not a CML file')
+
+        molecule_list = root.findall('./molecule')
+
+        if len(molecule_list) < 2:
+            multiplex = 0
+        elif not multiplex:
+            discrete = 1
+
+        for model_num, molecule_node in enumerate(molecule_list, 1):
+            model = models.Indexed()
+
+            atom_idx = {}
+
+            for atom_node in molecule_node.findall('./atomArray/atom'):
+                atom = Atom()
+                atom.name = atom_node.get('id', '')
+
+                if 'x3' in atom_node.attrib:
+                    atom.coord = [float(atom_node.get(a)) for a in ['x3', 'y3', 'z3']]
+                elif 'x2' in atom_node.attrib:
+                    atom.coord = [float(atom_node.get(a)) for a in ['x2', 'y2']] + [0.0]
+                else:
+                    print ' Warning: no coordinates for atom', atom.name
+                    continue
+
+                atom.symbol = atom_node.get('elementType', '')
+                atom.formal_charge = int(atom_node.get('formalCharge', 0))
+                atom_idx[atom.name] = len(model.atom)
+                model.add_atom(atom)
+
+            for bond_node in molecule_node.findall('./bondArray/bond'):
+                refs = bond_node.get('atomsRefs2', '').split()
+                if len(refs) == 2:
+                    bnd = Bond()
+                    bnd.index = [int(atom_idx[ref]) for ref in refs]
+                    bnd.order = int(bond_node.get('order', 1))
+                    model.add_bond(bnd)
+
+            # object name
+            if not object:
+                object = os.path.basename(filename).split('.', 1)[0]
+
+            # load models as objects or states
+            if multiplex:
+                oname = molecule_node.get('id') or _self.get_unused_name('unnamed')
+                model_num = 1
+            else:
+                oname = object
+
+            _self.load_model(model, oname, state=model_num, zoom=zoom, discrete=discrete)

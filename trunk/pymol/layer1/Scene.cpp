@@ -6250,6 +6250,15 @@ int SceneInit(PyMOLGlobals * G)
 
     /* all defaults to zero, so only initialize non-zero elements */
 
+    // pointers don't necessarily get initialized on windows (PYMOL-2561)
+    I->Image = NULL;
+    I->View = NULL;
+    I->AlphaCGO = NULL;
+    I->SlotVLA = NULL;
+    I->ReinterpolateFlag = false;
+    I->ReinterpolateObj = NULL;
+    I->MotionGrabbedObj = NULL;
+
     G->DebugCGO = CGONew(G);
 
     ListInit(I->Obj);

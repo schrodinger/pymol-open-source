@@ -297,6 +297,9 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     SET_BIT_TO(sceneobj.visRep, 0, obj->Enabled);
   }
 
+  PRINTFB(G, FB_Scene, FB_Details)
+    " scene: scene stored as \"%s\".\n", key.c_str() ENDFB(G);
+
   return true;
 }
 
@@ -567,7 +570,7 @@ static bool MovieScenePrintOrder(PyMOLGlobals * G) {
  *
  * next: true = next, false = previous
  */
-static std::string MovieSceneGetNextKey(PyMOLGlobals * G, bool next) {
+static const char * MovieSceneGetNextKey(PyMOLGlobals * G, bool next) {
   const char * current_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
   int scene_loop = SettingGetGlobal_b(G, cSetting_scene_loop);
 
@@ -594,7 +597,7 @@ static std::string MovieSceneGetNextKey(PyMOLGlobals * G, bool next) {
     }
   }
 
-  return (*it);
+  return it->c_str();
 }
 
 /*
@@ -661,7 +664,7 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
       strcmp(action, "previous") == 0) {
     ok_assert(NOSCENES, G->scenes->order.size());
 
-    key = MovieSceneGetNextKey(G, action[0] == 'n').c_str();
+    key = MovieSceneGetNextKey(G, action[0] == 'n');
     action = "recall";
   } else if (strcmp(action, "start") == 0) {
     ok_assert(NOSCENES, G->scenes->order.size());

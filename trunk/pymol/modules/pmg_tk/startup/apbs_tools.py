@@ -639,7 +639,7 @@ class APBSTools2:
         self.pdb2pqr_options = Pmw.EntryField(group.interior(),
                                               labelpos='w',
                                               label_text='pdb2pqr command line options: ',
-                                              value='--ff=AMBER',
+                                              value='--ff=AMBER --whitespace',
                                               )
         self.pqr_to_use = Pmw.EntryField(group.interior(),
                                          labelpos='w',
@@ -1666,6 +1666,9 @@ Citation for PDB2PQR:
             print "TESTING"
             #run('/tmp/tmp.py',())
             print "DONE TESTING"
+
+        import shlex
+
         try:
             if not 'pdb2pqr' in sys.modules:
                 import imp
@@ -1689,7 +1692,7 @@ Citation for PDB2PQR:
 
         try:
             args = [pdb2pqr.__file__,
-                self.pdb2pqr_options.getvalue(),
+                ] + shlex.split(self.pdb2pqr_options.getvalue()) + [
                             pdb_filename,
                             self.pymol_generated_pqr_filename.getvalue(),
                             ]

@@ -39,6 +39,26 @@ typedef int PyObject;
 #include <numpy/arrayobject.h>
 #endif
 
+#include <string.h>
+
+/*
+ * For compatibility with the pickletools, this type represents
+ * an optionally owned C string and has to be returned by value.
+ */
+class SomeString {
+  const char * m_str;
+public:
+  SomeString(const char * s) : m_str(s) {}
+  inline const char * data()    const { return m_str; }
+  inline const char * c_str()   const { return m_str; }
+  operator const char * ()      const { return m_str; } // allows assignment to std::string
+  inline size_t length()        const { return m_str ? strlen(m_str) : 0; }
+};
+
+inline SomeString PyString_AsSomeString(PyObject * o) {
+  return PyString_AsString(o);
+}
+
 #endif
 
 #include "os_predef.h"

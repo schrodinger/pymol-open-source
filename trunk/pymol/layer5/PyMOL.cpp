@@ -2717,8 +2717,8 @@ void PyMOL_SetPassive(CPyMOL * I, int onOff)
   I->PassiveFlag = onOff;
 }
 
-void PyMOL_SetClickReady(CPyMOL * I, char *name, int index, int button, int mod, int x,
-                         int y, float *pos, int state)
+void PyMOL_SetClickReady(CPyMOL * I, const char *name, int index, int button, int mod, int x,
+                         int y, const float *pos, int state)
 {
 
   if(name && name[0] && (index >= 0)) {

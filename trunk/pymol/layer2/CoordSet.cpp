@@ -225,18 +225,17 @@ PyObject *CoordSetAsPyList(CoordSet * I)
   PyObject *result = NULL;
 
   if(I) {
-    float pse_export_version = SettingGetGlobal_f(I->State.G, cSetting_pse_export_version);
-
+    int pse_export_version = SettingGetGlobal_f(I->State.G, cSetting_pse_export_version) * 1000;
+    bool dump_binary = SettingGetGlobal_b(I->State.G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765);
     result = PyList_New(9);
-
     PyList_SetItem(result, 0, PyInt_FromLong(I->NIndex));
     PyList_SetItem(result, 1, PyInt_FromLong(I->NAtIndex));
-    PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Coord, I->NIndex * 3));
-    PyList_SetItem(result, 3, PConvIntArrayToPyList(I->IdxToAtm, I->NIndex));
+    PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Coord, I->NIndex * 3, dump_binary));
+    PyList_SetItem(result, 3, PConvIntArrayToPyList(I->IdxToAtm, I->NIndex, dump_binary));
     if(I->AtmToIdx
-        && pse_export_version > 1e-4
-        && pse_export_version < 1.7699)
-      PyList_SetItem(result, 4, PConvIntArrayToPyList(I->AtmToIdx, I->NAtIndex));
+        && pse_export_version > 0
+        && pse_export_version < 1770)
+      PyList_SetItem(result, 4, PConvIntArrayToPyList(I->AtmToIdx, I->NAtIndex, dump_binary));
     else
       PyList_SetItem(result, 4, PConvAutoNone(NULL));
     PyList_SetItem(result, 5, PyString_FromString(I->Name));
@@ -960,7 +959,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
 
   name[4] = 0;
 
-  if((!pdb_info) || (!pdb_info->is_pqr_file)) { /* relying upon short-circuit */
+  if((!pdb_info) || (!pdb_info->is_pqr_file())) { /* relying upon short-circuit */
     short linelen;
     sprintf(x, "%8.3f", v[0]);
     x[8] = 0;
@@ -997,7 +996,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
     (*c) += linelen;
   } else {
     Chain alt;
-    if(pdb_info->is_pqr_file && pdb_info->pqr_workarounds) {
+    if(pdb_info->is_pqr_file() && pdb_info->pqr_workarounds) {
       int non_num = false;
       char *p = resi;
       while(*p) {
