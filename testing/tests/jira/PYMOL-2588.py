@@ -4,6 +4,7 @@ Crash with names selection of length >= 1024
 
 from pymol import cmd, util, testing, stored
 
+@testing.requires('incentive')
 @testing.requires_version('1.7.6.6')
 class Test2588(testing.PyMOLTestCase):
 
