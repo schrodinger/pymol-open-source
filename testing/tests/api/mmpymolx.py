@@ -39,11 +39,14 @@ class TestMMPyMOLx(testing.PyMOLTestCase):
                 'cryst_1/data_1/FP',
                 'cryst_1/data_1/PHIC')
 
+        self.assertEqual(cmd.get_names(), ['foo'])
+
         extent = cmd.get_extent('foo')
         self.assertArrayEqual(extent, [
             [   0.000,   0.000,   0.000],
-            [  37.585,  40.586,  27.214]], delta=1e-3)
+            [  37.585,  40.586,  27.214]], delta=1e-3, msg='extend wrong')
 
         # min, max, mean, stdev
         mmms = cmd.get_volume_histogram('foo', 0)
-        self.assertArrayEqual(mmms, [-2.6767, 4.9998, 0.0, 1.0], delta=1e-4)
+        self.assertArrayEqual(mmms, [-2.6767, 4.9998, 0.0, 1.0], delta=1e-4,
+                msg='histogram wrong')
