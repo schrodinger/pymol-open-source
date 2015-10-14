@@ -13,9 +13,11 @@ required_modules = [
 # when building on OSX with system python, some modules are not
 # available by default. Only test for them if we build with our
 # own python distribution which should ship all these modules.
-if not sys.executable.startswith('/System/Library/Frameworks/Python.framework/Versions/2.7'):
+if (not sys.executable.startswith('/System/Library/Frameworks/Python.framework/Versions/2.7')
+        and not testing.PYMOL_EDU
+        ):
     required_modules += [
-        'OpenGL',
+#        'OpenGL', # we don't have it on Windows for PyMOL > 1.7.6
         'matplotlib',
     ]
 
