@@ -435,6 +435,11 @@ int PyObject_GenericSetAttrAsItem(PyObject *o, PyObject *key, PyObject *value) {
 }
 
 PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
+
+  static PyObject * pystr_HETATM        = PyString_InternFromString("HETATM");
+  static PyObject * pystr_ATOM          = PyString_InternFromString("ATOM");
+  static PyObject * pystr_QuestionMark  = PyString_InternFromString("?");
+
   WrapperObject *wobj = (WrapperObject*)obj;
   char *aprop;
   AtomPropertyInfo *ap;
@@ -496,7 +501,8 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       break;
     case cPType_char_as_type:
       {
-	ret = PyString_FromString(wobj->atomInfo->hetatm ? "HETATM" : "ATOM");
+	ret = wobj->atomInfo->hetatm ? pystr_HETATM : pystr_ATOM;
+	borrowed = true;
       }
       break;
     case cPType_model:
@@ -517,7 +523,8 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
 	if(val != cAtomInfoNoType){
 	  ret = PyInt_FromLong((long)val);
 	} else {
-	  ret = PyString_FromString("?");
+	  ret = pystr_QuestionMark;
+	  borrowed = true;
 	}
       }
       break;

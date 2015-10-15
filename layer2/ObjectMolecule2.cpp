@@ -4474,6 +4474,8 @@ int ObjectMoleculeSort(ObjectMolecule * I)
         }
       }
 
+      ExecutiveUniqueIDAtomDictInvalidate(I->Obj.G);
+
       atInfo = (AtomInfoType *) VLAMalloc(i_NAtom, sizeof(AtomInfoType), 5, true);
       CHECKOK(ok, atInfo);
       if (ok){

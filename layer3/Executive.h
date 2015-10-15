@@ -109,7 +109,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct {
   ObjectMolecule *obj;
-  int offset;
+  int atm;
 } ExecutiveObjectOffset;
 
 class SpecRec;
@@ -170,9 +170,8 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
                             int variant, int quiet,
                             int multiplex, int zoom);
 
-int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals * G,
-                                            ExecutiveObjectOffset ** vla,
-                                            OVOneToOne ** dict);
+const ExecutiveObjectOffset * ExecutiveUniqueIDAtomDictGet(PyMOLGlobals * G, int i);
+void ExecutiveUniqueIDAtomDictInvalidate(PyMOLGlobals * G);
 
 int ExecutiveLoad(PyMOLGlobals * G,
                   const char *content, int content_length,
