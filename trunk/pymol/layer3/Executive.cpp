@@ -168,6 +168,10 @@ struct _CExecutive {
   CGO *selIndicatorsCGO;
   int selectorTexturePosX, selectorTexturePosY, selectorTextureAllocatedSize, selectorTextureSize;
   short selectorIsRound;
+
+  // AtomInfoType::unique_id -> (object, atom-index)
+  ExecutiveObjectOffset *m_eoo; // VLA of (object, atom-index)
+  OVOneToOne *m_id2eoo; // unique_id -> m_eoo-index
 };
 
 #ifndef NO_MMLIBS
@@ -2214,7 +2218,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
   return ok;
 }
 
-int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals * G,
+static int ExecutiveGetUniqueIDAtomVLADict(PyMOLGlobals * G,
                                             ExecutiveObjectOffset ** return_vla,
                                             OVOneToOne ** return_dict)
 {
@@ -2236,7 +2240,7 @@ int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals * G,
                 if(OVreturn_IS_OK(OVOneToOne_Set(o2o, id, n_oi))) {
                   VLACheck(vla, ExecutiveObjectOffset, n_oi);
                   vla[n_oi].obj = obj;
-                  vla[n_oi].offset = a;
+                  vla[n_oi].atm = a;
                   n_oi++;
                 }
               }
@@ -10947,70 +10951,62 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
   }
 
   sele1 = SelectorIndexByName(G, s1);
+  sele2 = SelectorIndexByName(G, s2);
 
-  ObjectMoleculeOpRecInit(&op1);
-  ObjectMoleculeOpRecInit(&op2);
   /* this function operates on stored coordinates -- thus transformation 
      matrices will need to be applied to the resulting atoms */
 
-  if(sele1 >= 0) {
-    if(state1 < 0) {
-      op1.code = OMOP_AVRT;
-    } else {
-      op1.code = OMOP_StateVRT;
-      op1.i1 = state1;
-    }
-    op1.nvv1 = 0;
-    op1.vc1 = (int *) VLAMalloc(1000, sizeof(int), 5, 1);
-    op1.vv1 = (float *) VLAMalloc(1000, sizeof(float), 5, 1);
-    if(mode == 0)
-      op1.i2 = true;            /* if measuring current coordinates, then get global txfd values */
-    if(matchmaker || (oname && oname[0]))
-      op1.ai1VLA = (AtomInfoType **) VLAMalloc(1000, sizeof(AtomInfoType *), 5, 1);
-    if(ordered_selections)
-      op1.vp1 = VLAlloc(int, 1000);
-    ExecutiveObjMolSeleOp(G, sele1, &op1);
-    for(a = 0; a < op1.nvv1; a++) {
-      inv = (float) op1.vc1[a]; /* average over coordinate sets */
-      if(inv) {
-        f = op1.vv1 + (a * 3);
-        inv = 1.0F / inv;
-        *(f++) *= inv;
-        *(f++) *= inv;
-        *(f++) *= inv;
-      }
-    }
-  }
+  // get coordinates
+  {
+    auto sele = sele1;
+    auto state = state1;
+    auto op = &op1;
 
-  sele2 = SelectorIndexByName(G, s2);
-  if(sele2 >= 0) {
+    // for both selections
+    do {
+      ObjectMoleculeOpRecInit(op);
 
-    if(state2 < 0) {
-      op2.code = OMOP_AVRT;
-    } else {
-      op2.code = OMOP_StateVRT;
-      op2.i1 = state2;
-    }
-    op2.nvv1 = 0;
-    op2.vc1 = (int *) VLAMalloc(1000, sizeof(int), 5, 1);
-    op2.vv1 = (float *) VLAMalloc(1000, sizeof(float), 5, 1);
-    if(mode == 0)
-      op2.i2 = true;            /* if measuring current coordinates, then get global txfd values */
-    if(matchmaker || (oname && oname[0]))
-      op2.ai1VLA = (AtomInfoType **) VLAMalloc(1000, sizeof(AtomInfoType *), 5, 1);
-    if(ordered_selections)
-      op2.vp1 = VLAlloc(int, 1000);
-    ExecutiveObjMolSeleOp(G, sele2, &op2);
-    for(a = 0; a < op2.nvv1; a++) {
-      inv = (float) op2.vc1[a]; /* average over coordinate sets */
-      if(inv) {
-        f = op2.vv1 + (a * 3);
-        inv = 1.0F / inv;
-        *(f++) *= inv;
-        *(f++) *= inv;
-        *(f++) *= inv;
+      if(sele >= 0) {
+        if(state < 0) {
+          op->code = OMOP_AVRT;
+        } else {
+          op->code = OMOP_StateVRT;
+          op->i1 = state;
+        }
+
+        op->nvv1 = 0;                       // length of vc1 (number of atoms with coordinates)
+        op->vc1 = VLACalloc(int, 1000);     // number of states per atom
+        op->vv1 = VLACalloc(float, 1000);   // coordinates (sum over states)
+
+        if(mode == 0)
+          op->i2 = true;            /* if measuring current coordinates, then get global txfd values */
+
+        if(matchmaker || (oname && oname[0]))
+          op->ai1VLA = VLACalloc(AtomInfoType*, 1000);
+
+        if(ordered_selections)
+          op->vp1 = VLAlloc(int, 1000);     // selection member "priority"? (MemberType::tag)
+
+        ExecutiveObjMolSeleOp(G, sele, op);
+
+        for(a = 0; a < op->nvv1; a++) {
+          inv = (float) op->vc1[a]; /* average over coordinate sets */
+          if(inv) {
+            f = op->vv1 + (a * 3);
+            scale3f(f, 1.F / inv, f);
+          }
+        }
       }
-    }
+
+      // second iteration done
+      if (sele == sele2)
+        break;
+
+      sele = sele2;
+      state = state2;
+      op = &op2;
+
+    } while (true);
   }
 
   if(op1.vv1 && op2.vv1) {
@@ -11239,8 +11235,24 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
         ErrMessage(G, "ExecutiveRMS", buffer);
         n_pair = 0;
         ok = false;
-      } else
-        n_pair = op1.nvv1;
+      } else {
+        n_pair = 0;
+        for(a = 0; a < op1.nvv1; ++a) { // for atoms in selection
+          if (op1.vc1[a] && op2.vc1[a]) { // check state counts
+            if (n_pair < a) { // copy over if necessary
+              copy3(op1.vv1 + 3 * a, op1.vv1 + 3 * n_pair);
+              copy3(op2.vv1 + 3 * a, op2.vv1 + 3 * n_pair);
+              if(op1.ai1VLA) op1.ai1VLA[n_pair] = op1.ai1VLA[a];
+              if(op2.ai1VLA) op2.ai1VLA[n_pair] = op2.ai1VLA[a];
+              if(op1.vp1) op1.vp1[n_pair] = op1.vp1[a];
+              if(op2.vp1) op2.vp1[n_pair] = op2.vp1[a];
+              op1.vc1[n_pair] = op1.vc1[a];
+              op2.vc1[n_pair] = op2.vc1[a];
+            }
+            ++n_pair;
+          }
+        }
+      }
 
       if(n_pair) {
         /* okay -- we're on track to do an alignment */
@@ -16887,6 +16899,8 @@ void ExecutiveFree(PyMOLGlobals * G)
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   OVOneToOne_DEL_AUTO_NULL(I->Key);
 
+  ExecutiveUniqueIDAtomDictInvalidate(G);
+
   FreeP(G->Executive);
 }
 
@@ -17088,4 +17102,25 @@ ok_except1:
   if (omp != NULL)
     *omp = om;
   return cs;
+}
+
+void ExecutiveUniqueIDAtomDictInvalidate(PyMOLGlobals * G) {
+  CExecutive *I = G->Executive;
+  if (I->m_eoo) {
+    OVOneToOne_DEL_AUTO_NULL(I->m_id2eoo);
+    VLAFreeP(I->m_eoo);
+  }
+}
+
+const ExecutiveObjectOffset * ExecutiveUniqueIDAtomDictGet(PyMOLGlobals * G, int i) {
+  CExecutive *I = G->Executive;
+  OVreturn_word offset;
+
+  if (!I->m_eoo)
+    ExecutiveGetUniqueIDAtomVLADict(G, &I->m_eoo, &I->m_id2eoo);
+
+  if(!OVreturn_IS_OK(offset = OVOneToOne_GetForward(I->m_id2eoo, i)))
+    return NULL;
+
+  return I->m_eoo + offset.word;
 }

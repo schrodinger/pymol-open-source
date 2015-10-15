@@ -2523,7 +2523,8 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     swap_endian(q, n_pts, bytes_per_pt);
   }
 
-  if(n_pts > 1) {
+  // with normalize == 2, use mean and stdev from file header
+  if(normalize == 1 && n_pts > 1) {
     c = n_pts;
     sum = 0.0;
     sumsq = 0.0;
@@ -2536,10 +2537,6 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     stdev = (float) sqrt1d((sumsq - (sum * sum / n_pts)) / (n_pts - 1));
     if(stdev < 0.000001)
       stdev = 1.0;
-
-  } else {
-    mean = 1.0;
-    stdev = 1.0;
   }
 
   q = p + (sizeof(int) * 256) + sym_skip;

@@ -3402,8 +3402,7 @@ void SceneDraw(Block * block ORTHOCGOARG) /* returns true if scene was drawn (us
 
     drawn = SceneDrawImageOverlay(G ORTHOCGOARGVAR);
 
-    if(SettingGetGlobal_b(G, cSetting_scene_buttons) &&
-       (SettingGetGlobal_i(G, cSetting_scene_buttons_mode) == 1)) {
+    if(SettingGetGlobal_b(G, cSetting_scene_buttons)) {
       SceneDrawButtons(block, true ORTHOCGOARGVAR);
     } else {
       I->ButtonMargin = 0;

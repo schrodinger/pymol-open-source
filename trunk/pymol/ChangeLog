@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2015-10-15 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* new default: scene_buttons=on
+
+	* normalize_ccp4_maps=2 -> use mean and stdev from file header
+
+	* fix alignment with atoms w/o coords in a state
+
 2015-10-06 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* new filetypes: pdbml, pdbqt, cml

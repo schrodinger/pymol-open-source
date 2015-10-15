@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"OVOneToAny.h"
 #include"OVContext.h"
 #include"PyMOLObject.h"
+#include"Executive.h"
 
 #include <map>
 
@@ -271,6 +272,7 @@ int AtomInfoGetNewUniqueID(PyMOLGlobals * G)
       }
     }
   }
+  ExecutiveUniqueIDAtomDictInvalidate(G);
   return result;
 }
 
@@ -1238,8 +1240,11 @@ void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai)
   if(ai->has_setting && ai->unique_id) {
     SettingUniqueDetachChain(G, ai->unique_id);
   }
-  if(ai->unique_id && I->ActiveIDs) {
-    OVOneToAny_DelKey(I->ActiveIDs, ai->unique_id);
+  if(ai->unique_id) {
+    ExecutiveUniqueIDAtomDictInvalidate(G);
+
+    if (I->ActiveIDs)
+      OVOneToAny_DelKey(I->ActiveIDs, ai->unique_id);
   }
 #ifdef _PYMOL_IP_EXTRAS
 #endif

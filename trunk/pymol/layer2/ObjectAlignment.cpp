@@ -49,8 +49,7 @@ static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals * G);
 static void ObjectAlignmentFree(ObjectAlignment * I);
 void ObjectAlignmentUpdate(ObjectAlignment * I);
 
-static int GroupOrderKnown(ExecutiveObjectOffset * eoo,
-                           OVOneToOne * id2eoo,
+static int GroupOrderKnown(PyMOLGlobals * G,
                            int *curVLA,
                            int *newVLA,
                            int cur_start,
@@ -59,30 +58,26 @@ static int GroupOrderKnown(ExecutiveObjectOffset * eoo,
   int order_known = false;
   if(guide) {
     int c, id;
-    OVreturn_word offset;
-
     int cur_offset = -1;
     int new_offset = -1;
 
     /* find lowest offset within the cur group */
     c = cur_start;
     while((id = curVLA[c++])) {
-      if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
-        if(eoo[offset.word].obj == guide) {
-          if((cur_offset < 0) || (eoo[offset.word].offset < cur_offset))
-            cur_offset = eoo[offset.word].offset;
-        }
+      auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+      if (eoo && eoo->obj == guide) {
+        if((cur_offset < 0) || (eoo->atm < cur_offset))
+          cur_offset = eoo->atm;
       }
     }
 
     /* find lowest offset within the new group */
     c = new_start;
     while((id = newVLA[c++])) {
-      if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
-        if(eoo[offset.word].obj == guide) {
-          if((new_offset < 0) || (eoo[offset.word].offset < new_offset))
-            new_offset = eoo[offset.word].offset;
-        }
+      auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+      if (eoo && eoo->obj == guide) {
+        if((new_offset < 0) || (eoo->atm < new_offset))
+          new_offset = eoo->atm;
       }
     }
 
@@ -459,10 +454,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
   int n_result = 0;
 
   {
-    ExecutiveObjectOffset *eoo = NULL;
-    OVOneToOne *id2eoo = NULL;
-
-    if(ExecutiveGetUniqueIDObjectOffsetVLADict(G, &eoo, &id2eoo)) {
+    {
 
       int n_cur = VLAGetSize(curVLA);
       int n_new = VLAGetSize(newVLA);
@@ -487,9 +479,9 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
               int cur = cur_start;
               int id;
               while((id = curVLA[cur])) {
-                OVreturn_word offset;
-                if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
-                  obj = eoo[offset.word].obj;
+                auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+                if (eoo) {
+                  obj = eoo->obj;
                   if(obj == flush) {
                     flush_seen = true;
                   } else {
@@ -504,9 +496,9 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
               int cur = cur_start;
               int id;
               while((id = curVLA[cur])) {
-                OVreturn_word offset;
-                if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
-                  obj = eoo[offset.word].obj;
+                auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+                if (eoo) {
+                  obj = eoo->obj;
                   if(obj == flush) {
                     int tmp = cur;
                     while(curVLA[tmp]) {
@@ -588,18 +580,18 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
 
             } else {
               /* non-overlapping, so we need to figure out which goes first... */
-              if(!GroupOrderKnown(eoo, id2eoo, curVLA, newVLA,
+              if(!GroupOrderKnown(G, curVLA, newVLA,
                                   cur_start, new_start, guide, &action)) {
                 int c, id;
                 OVreturn_word offset;
                 ObjectMolecule *obj, *last_obj = NULL;
                 c = cur_start;
                 while((id = curVLA[c++])) {
-
-                  if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
-                    obj = eoo[offset.word].obj;
+                  auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+                  if (eoo) {
+                    obj = eoo->obj;
                     if(obj != last_obj) {
-                      if(GroupOrderKnown(eoo, id2eoo, curVLA, newVLA,
+                      if(GroupOrderKnown(G, curVLA, newVLA,
                                          cur_start, new_start, obj, &action))
                         break;
                       else
@@ -705,8 +697,6 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
         OVOneToAny_DEL_AUTO_NULL(used);
       }
     }
-    OVOneToOne_DEL_AUTO_NULL(id2eoo);
-    VLAFreeP(eoo);
   }
   if(result && n_result && (!result[n_result - 1])) {
     VLACheck(result, int, n_result);
@@ -908,9 +898,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
     }
   }
   if(update_needed) {
-    ExecutiveObjectOffset *eoo = NULL;
-    OVOneToOne *id2eoo = NULL;
-    if(ExecutiveGetUniqueIDObjectOffsetVLADict(G, &eoo, &id2eoo)) {
+    {
       int a;
       for(a = 0; a < I->NState; a++) {
         ObjectAlignmentState *oas = I->State + a;
@@ -947,7 +935,6 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
               int n_coord = 0;
               int tag = SELECTOR_BASE_TAG + 1;
               OVOneToAny *id2tag = oas->id2tag;
-              OVreturn_word offset;
 
               while(b < n_id) {
 
@@ -963,12 +950,13 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                 gvert_valid = false;
                 zero3f(mean);
                 while((id = vla[c++])) {
-                  if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
-                    if(ObjectMoleculeGetAtomVertex(eoo[offset.word].obj, a,
-                                                   eoo[offset.word].offset, vert)) {
+                  auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+                  if (eoo) {
+                    if(ObjectMoleculeGetAtomVertex(eoo->obj, a,
+                                                   eoo->atm, vert)) {
                       n_coord++;
                       add3f(vert, mean, mean);
-                      if(eoo[offset.word].obj == guide_obj) {
+                      if(eoo->obj == guide_obj) {
                         copy3f(vert, gvert);
                         gvert_valid = true;
                       }
@@ -984,11 +972,12 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                   c = b;
                   CGOBegin(cgo, GL_LINES);
                   while((id = vla[c++])) {
-                    if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
-                      if(ObjectMoleculeGetAtomVertex(eoo[offset.word].obj, a,
-                                                     eoo[offset.word].offset, vert)) {
+                    auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+                    if (eoo) {
+                      if(ObjectMoleculeGetAtomVertex(eoo->obj, a,
+                                                     eoo->atm, vert)) {
                         if(gvert_valid) {
-                          if(eoo[offset.word].obj != guide_obj) {
+                          if(eoo->obj != guide_obj) {
                             CGOVertexv(cgo, gvert);
                             CGOVertexv(cgo, vert);
                           }
@@ -1006,9 +995,10 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                   c = b;
                   CGOBegin(cgo, GL_LINES);
                   while((id = vla[c++])) {
-                    if(OVreturn_IS_OK(offset = OVOneToOne_GetForward(id2eoo, id))) {
-                      if(ObjectMoleculeGetAtomVertex(eoo[offset.word].obj, a,
-                                                     eoo[offset.word].offset, vert)) {
+                    auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
+                    if (eoo) {
+                      if(ObjectMoleculeGetAtomVertex(eoo->obj, a,
+                                                     eoo->atm, vert)) {
                         if(first_flag) {
                           copy3f(vert, first);
                           first_flag = false;
@@ -1062,8 +1052,6 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
         }
       }
     }
-    OVOneToOne_DEL_AUTO_NULL(id2eoo);
-    VLAFreeP(eoo);
   }
   if(I->SelectionState < 0) {
     int state = -1;
