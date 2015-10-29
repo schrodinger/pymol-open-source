@@ -1241,7 +1241,7 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
     const seqvec_t * current_seq,
     const char * entity_id)
 {
-  ssize_t i = cai - atInfo;
+  size_t i = cai - atInfo;
 
   for (++current_resv; current_resv < resv; ++current_resv) {
     const char * resn = current_seq->get(current_resv);

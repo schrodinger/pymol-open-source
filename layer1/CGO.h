@@ -238,7 +238,7 @@ int CGOGetExtent(CGO * I, float *mn, float *mx);
 int CGOHasNormals(CGO * I);
 
 void CGOFreeWithoutVBOs(CGO * I);
-void CGOFree(CGO * I);
+void CGOFree(CGO * &I);
 void CGOFreeImpl(CGO * I, short withVBOs);
 CGO *CGODrawText(CGO * I, int est, float *camera);
 

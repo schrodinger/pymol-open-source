@@ -942,6 +942,7 @@ static int set_list(CSetting * I, PyObject * list)
   switch (index) {
   /* don't restore the folllowing settings,
      which are inherently system-dependent */
+  case cSetting_precomputed_lighting:
   case cSetting_stereo_double_pump_mono:
   case cSetting_max_threads:
   case cSetting_session_migration:
@@ -964,12 +965,20 @@ static int set_list(CSetting * I, PyObject * list)
   case cSetting_logging:
   case cSetting_mouse_grid:
   case cSetting_mouse_scale:
+  case cSetting_cylinder_shader_ff_workaround:
   case cSetting_internal_feedback:
   case cSetting_internal_gui:
   case cSetting_no_idle:
   case cSetting_fast_idle:
   case cSetting_slow_idle:
   case cSetting_security:
+  case cSetting_render_as_cylinders:
+  case cSetting_nb_spheres_use_shader:
+  case cSetting_use_geometry_shaders:
+  case cSetting_cgo_shader_ub_color:
+  case cSetting_cgo_shader_ub_normal:
+  case cSetting_cgo_shader_ub_flags:
+  case cSetting_trilines:
 #ifdef _PYMOL_IOS
 #endif
     return true;

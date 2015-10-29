@@ -1248,7 +1248,7 @@ void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai)
   }
 #ifdef _PYMOL_IP_EXTRAS
 #endif
-  DeleteP(ai->anisou);
+  DeleteAP(ai->anisou);
 }
 
 

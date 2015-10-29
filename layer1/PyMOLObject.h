@@ -106,6 +106,11 @@ struct _CObject {
     if (fInvalidate)
       fInvalidate(this, rep, level, state);
   }
+  int getNFrame() {
+    if (fGetNFrame)
+      return fGetNFrame(this);
+    return 0;
+  }
 };
 
 void ObjectInit(PyMOLGlobals * G, CObject * I);

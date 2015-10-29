@@ -1371,14 +1371,16 @@ PYMOL API
             if len(obj_code) in (5,6) and type in ('pdb', 'cif'):
                 obj_code, chain = obj_code[:4], obj_code[-1]
 
+            obj_name = _self.get_legal_name(obj_name)
+
             r = _fetch(obj_code, obj_name, state, finish,
                     discrete, multiplex, zoom, type, path, file, quiet, _self)
 
             if chain and isinstance(r, str):
-                if _self.count_atoms('?%s & c. %s' % (r, chain)) == 0:
+                if _self.count_atoms(r'?%s & c. \%s' % (r, chain)) == 0:
                     _self.delete(r)
                     raise pymol.CmdException('no such chain: ' + chain)
-                _self.remove('?%s and not chain %s' % (r, chain))
+                _self.remove(r'?%s & ! c. \%s' % (r, chain))
 
         return r
     
