@@ -959,6 +959,12 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       glGetFloatv(GL_ALPHA_TEST_REF, &alpha_ref);
       glAlphaFunc(GL_ALWAYS, 0.0);
 
+      // don't write to the depth buffer
+      GLboolean depth_writemask;
+      glGetBooleanv(GL_DEPTH_WRITEMASK, &depth_writemask);
+      if (depth_writemask)
+        glDepthMask(GL_FALSE);
+
       // This is setting used for PyMOL, but just to be on a safe side
       // we set glBlendFunct explicitely here
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -990,6 +996,8 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       CShaderPrg_Disable(shaderPrg);
 
       // restore
+      if (depth_writemask)
+        glDepthMask(GL_TRUE);
       glAlphaFunc(alpha_func, alpha_ref);
     }
 

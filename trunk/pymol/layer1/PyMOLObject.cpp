@@ -614,11 +614,21 @@ void ObjectMakeValidName(char *name)
   if(p) {
     /* currently legal are A to Z, a to z, 0 to 9, -, _, + */
     while(*p) {
-      if((*p < 43) || (*p > 122) ||
-         ((*p > 57) && (*p < 65)) ||
-         ((*p > 90) && (*p < 94)) || (*p == 44) || (*p == 47) || (*p == 60))
+      switch (*p) {
+        case '+':
+        case '-':
+        case '.':
+        case '^':
+        case '_':
+          break;
+        default:
+          if (('A' <= *p && *p <= 'Z') ||
+              ('a' <= *p && *p <= 'z') ||
+              ('0' <= *p && *p <= '9'))
+            break;
         /* must be an ASCII-visible character */
         *p = 1;                 /* placeholder for non-printable */
+      }
       p++;
     }
     /* eliminate sequential and terminal nonprintables */
@@ -660,6 +670,10 @@ int ObjectGetCurrentState(CObject * I, int ignore_all_states)
   if (!ignore_all_states &&
       SettingGet_b(I->G, I->Setting, NULL, cSetting_all_states))
     return -1;
+
+  if (I->getNFrame() == 1 &&
+      SettingGet_b(I->G, I->Setting, NULL, cSetting_static_singletons))
+    return 0;
 
   int state = SettingGet_i(I->G, I->Setting, NULL, cSetting_state) - 1;
 

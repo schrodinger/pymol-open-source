@@ -430,8 +430,9 @@ void CGOFreeWithoutVBOs(CGO * I){
   CGOFreeImpl(I, 0);
 }
 
-void CGOFree(CGO * I){
+void CGOFree(CGO * &I){
   CGOFreeImpl(I, 1);
+  I = NULL;
 }
 
 void CGOFreeImpl(CGO * I, short withVBOs)

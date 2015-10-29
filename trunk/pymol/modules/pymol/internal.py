@@ -624,10 +624,10 @@ def _validate_color_sc(_self=cmd):
     # WARNING: internal routine, subject to change
     if _self.color_sc == None: # update color shortcuts if needed
         lst = _self.get_color_indices()
-        lst.extend([('default',-1),('auto',-2),('current',-3),('atomic',-4)])
-        _self.color_sc = Shortcut(map(lambda x:x[0],lst))
-        color_dict = {}
-        for a in lst: color_dict[a[0]]=a[1]
+        names = [x[0] for x in lst]
+        names.extend(['default', 'auto', 'current', 'atomic'])
+        names.extend(_self.get_names_of_type('object:ramp'))
+        _self.color_sc = Shortcut(names)
 
 def _invalidate_color_sc(_self=cmd):
     # WARNING: internal routine, subject to change

@@ -77,6 +77,7 @@ typedef struct VLARec {
 
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
 #define DeleteP(ptr) {if(ptr) {delete ptr;ptr=NULL;}}
+#define DeleteAP(ptr) {if(ptr) {delete[] ptr;ptr=NULL;}}
 
 void *VLAExpand(void *ptr, ov_size rec);        /* NOTE: rec is index (total-1) */
 void *MemoryReallocForSure(void *ptr, unsigned int newSize);

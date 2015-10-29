@@ -215,6 +215,7 @@ PyObject *ObjectSliceAsPyList(ObjectSlice * I)
 
 static void ObjectSliceStateFree(ObjectSliceState * oss)
 {
+  CGOFree(oss->shaderCGO);
   VLAFreeP(oss->normals);
   VLAFreeP(oss->colors);
   VLAFreeP(oss->values);

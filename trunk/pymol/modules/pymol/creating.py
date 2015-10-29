@@ -479,6 +479,7 @@ SEE ALSO
             r = _cmd.ramp_new(_self._COb,str(name),str(map_name),range,new_color,
                                     int(state)-1,str(selection),float(beyond),float(within),
                                     float(sigma),int(zero),int(quiet))
+            _self._invalidate_color_sc(_self)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
