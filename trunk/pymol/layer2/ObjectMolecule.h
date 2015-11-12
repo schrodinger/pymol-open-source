@@ -86,7 +86,9 @@ typedef struct ObjectMolecule {
   int RepVisCache;     /* for transient storage during updates */
 
   // for reporting available assembly ids after mmCIF loading - SUBJECT TO CHANGE
+#ifndef _PYMOL_NO_CXX11
   std::shared_ptr<cif_file> m_ciffile;
+#endif
   const cif_data * m_cifdata;
 
   // methods

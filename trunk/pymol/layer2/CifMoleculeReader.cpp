@@ -195,7 +195,7 @@ static void ObjectMoleculeConnectDiscrete(ObjectMolecule * I) {
       I->Bond = bond;
     } else {
       VLASize(I->Bond, BondType, I->NBond + nbond);
-      std::copy(bond, bond + nbond, I->Bond + I->NBond);
+      memcpy(I->Bond + I->NBond, bond, nbond * sizeof(*bond));
       VLAFreeP(bond);
     }
 
@@ -2106,7 +2106,12 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
   }
 
   const char * filename = NULL;
+#ifndef _PYMOL_NO_CXX11
   auto cif = std::make_shared<cif_file>(filename, st);
+#else
+  cif_file _cif_stack(filename, st);
+  auto cif = &_cif_stack;
+#endif
 
   for (auto it = cif->datablocks.begin(); it != cif->datablocks.end(); ++it) {
     ObjectMolecule * obj = ObjectMoleculeReadCifData(G, it->second, discrete);
@@ -2117,7 +2122,7 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
       continue;
     }
 
-#ifndef _PYMOL_NOPY
+#if !defined(_PYMOL_NOPY) && !defined(_PYMOL_NO_CXX11)
     // we only provide access from the Python API so far
     if (SettingGetGlobal_b(G, cSetting_cif_keepinmemory)) {
       obj->m_cifdata = it->second;
