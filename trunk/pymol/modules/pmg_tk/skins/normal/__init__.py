@@ -8,6 +8,7 @@ import time
 from Tkinter import *
 import tkFileDialog
 import tkMessageBox
+import tkFont
 
 import Pmw
 
@@ -89,6 +90,31 @@ class Normal(PMGSkin):
     contactemail   = 'sales@schrodinger.com'
     
     # responsible for setup and takedown of the normal skin
+
+    def _inc_fontsize(self, delta, font):
+        size = font.cget('size')
+        sign = -1 if size < 0 else 1
+        size = max(5, abs(size) + delta)
+        font.configure(size=size * sign)
+
+    def inc_fontsize(self, delta=1):
+        for name in tkFont.names():
+            self._inc_fontsize(delta, tkFont.nametofont(name))
+
+    def inc_fontsize_dialog(self):
+        dialog = Toplevel(self.root)
+        grid = dialog
+        kw = {'row': 0, 'sticky': 'w', 'padx': 5, 'pady': 5}
+        col = iter(range(5)).next
+        Button(grid, text=' - ', command=lambda: self.inc_fontsize(-1)).grid(column=col(), **kw)
+        Button(grid, text=' + ', command=lambda: self.inc_fontsize( 1)).grid(column=col(), **kw)
+        Label(grid, text='All GUI Font Sizes').grid(column=col(), **kw)
+        kw['row'] = 1
+        col = iter(range(5)).next
+        Button(grid, text=' - ', command=lambda: self._inc_fontsize(-1, self.fixedfont)).grid(column=col(), **kw)
+        Button(grid, text=' + ', command=lambda: self._inc_fontsize( 1, self.fixedfont)).grid(column=col(), **kw)
+        Label(grid, text='Output Font Size').grid(column=col(), **kw)
+        dialog.title('GUI Font Size')
 
     @property
     def initialdir(self):
@@ -429,35 +455,18 @@ class Normal(PMGSkin):
 
         text = self.output.component('text')
         self.text = text      
-        if sys.platform[:5]=='linux':
-            text.tk.call('tk','scaling',1)
-            if TkVersion < 8.5:
-                self.font = 'fixed' # broken by Tk 8.5 / Xft
-                self.my_fw_font=(self.font,10)
-            else:
-                family = 'Bitstream Vera Sans Mono'
-                size = 9
-                # unfortunately, Tk fonts aren't sized reliably,
-                # so here we try to make sure font is actually legible
-                import tkFont
-                test = tkFont.Font()
-                while size<12:
-                    test.configure(family=family,size=size)
-                    if test.measure("PyMOL")<31:
-                        size = size + 1
-                    else:
-                        break
-                self.font = family
-                self.my_fw_font=(family,size)
-        elif sys.platform[:3]=='win': 
+
+        if sys.platform.startswith('win'):
             self.font = 'lucida console' # only available on windows
             self.my_fw_font=(self.font,8) 
+            self.fixedfont.configure(family=self.font, size=self.my_fw_font[1])
         else:
             text.tk.call('tk','scaling',1)
             self.font = 'fixed' # should be available on any X11-based platform
             self.my_fw_font=(self.font,10)
+            if sys.platform == 'darwin':
+                self.fixedfont.configure(size=11)
 
-        text.configure(font = self.my_fw_font)
         text.configure(width=74)
 
         self.balloon.bind(self.entry, '''Command Input Area
@@ -1075,6 +1084,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.menuBar.pack(fill=X)
 
         addmenuitem = self.menuBar.addmenuitem
+        addcascademenu = self.menuBar.addcascademenu
 
 #        self.menuBar.addmenu('Tutorial', 'Tutorial', side='right')      
 
@@ -2488,121 +2498,45 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                  label='Colors...',
                                          command = lambda s=self: ColorEditor(s))
 
+        addmenuitem('Setting', 'separator', '')
+
         self.menuBar.addcascademenu('Setting', 'Label', 'Label',
                                              label='Label')
 
         self.menuBar.addcascademenu('Label', 'LabelSize', 'Size',
                                              label='Size',tearoff=TRUE)
 
-        self.menuBar.addmenuitem('LabelSize', 'command', '10 Point',
-                                 label='10 Point',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 10)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '14 Point',
-                                 label='14 Point',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 14)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '18 Point',
-                                 label='18 Point',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 18)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '24 Point',
-                                 label='24 Point',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 24)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '36 Point',
-                                 label='36 Point',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 36)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '48 Point',
-                                 label='48 Point',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 48)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '72 Point',
-                                 label='72 Point',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 72)"))
+        for i in [10., 14., 18., 24., 36., 48., 72.]:
+            addmenuitem('LabelSize', 'radiobutton', label='%.0f Point' % i,
+                    value=i, variable=self.setting.label_size)
 
         self.menuBar.addmenuitem('LabelSize', 'separator', '')
 
-        self.menuBar.addmenuitem('LabelSize', 'command', '0.3 Angstrom',
-                                 label='0.3 Angstrom',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -0.3)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '0.5 Angstrom',
-                                 label='0.5 Angstrom',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -0.5)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '1 Angstrom',
-                                 label='1 Angstrom',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -1)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '2 Angstrom',
-                                 label='2 Angstrom',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -2)"))
-
-        self.menuBar.addmenuitem('LabelSize', 'command', '4 Angstrom',
-                                 label='4 Angstrom',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -4)"))
-
+        for i in [-.3, -.5, -1., -2., -4.]:
+            addmenuitem('LabelSize', 'radiobutton', label='%.1f Angstrom' % (-i),
+                    value=i, variable=self.setting.label_size)
 
         self.menuBar.addcascademenu('Label', 'LabelFont', 'Font',
                                     label='Font', tearoff=TRUE)
         
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSans',
-                                 label='DevaVuSans',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',5)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSans Oblique',
-                                 label='DevaVuSans Oblique',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',6)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSans Bold',
-                                 label='DevaVuSans Bold',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',7)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSans Bold Oblique',
-                                 label='DevaVuSans Bold Oblique',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',8)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSerif',
-                                 label='DevaVuSerif',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',9)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSerif Bold',
-                                 label='DevaVuSerif Bold',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',10)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSerif Oblique',
-                                 label='DevaVuSerif Oblique',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',17)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSerif Bold Oblique',
-                                 label='DevaVuSerif Bold Oblique',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',18)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSansMono',
-                                 label='DevaVuSansMono',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',11)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSansMono Oblique',
-                                 label='DevaVuSansMono Oblique',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',12)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSansMono Bold',
-                                 label='DevaVuSansMono Bold',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',13)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSansMono Bold Oblique',
-                                 label='DevaVuSansMono Bold Oblique',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',14)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'Gentium Roman',
-                                 label='Gentium Roman',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',15)"))
-
-        self.menuBar.addmenuitem('LabelFont', 'command', 'Gentium Italic',
-                                 label='Gentium Italic',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',16)"))
+        for label, val in [
+                ('Sans', 5),
+                ('Sans Oblique', 6),
+                ('Sans Bold', 7),
+                ('Sans Bold Oblique', 8),
+                ('Serif', 9),
+                ('Serif Oblique',17),
+                ('Serif Bold', 10),
+                ('Serif Bold Oblique', 18),
+                ('Mono', 11),
+                ('Mono Oblique', 12),
+                ('Mono Bold', 13),
+                ('Mono Bold Oblique', 14),
+                ('Gentium Roman', 15),
+                ('Gentium Italic', 16),
+                ]:
+            addmenuitem('LabelFont', 'radiobutton', label=label, value=val,
+                    variable=self.setting.label_font_id)
 
         self.menuBar.addcascademenu('Setting', 'Cartoon', 'Cartoon',
                                              label='Cartoon')
@@ -2610,44 +2544,26 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.menuBar.addcascademenu('Cartoon', 'Rings', 'Rings & Bases',
                                              label='Rings & Bases')
 
-        self.menuBar.addmenuitem('Rings', 'command', 'Filled Rings (Round Edges)',
-                                 label='Filled Rings (Round Edges)',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 1)"))
-
-        self.menuBar.addmenuitem('Rings', 'command', 'Filled Rings (Flat Edges)',
-                                 label='Filled Rings (Flat Edges)',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 2)"))
-
-        self.menuBar.addmenuitem('Rings', 'command', 'Filled Rings (With Border)',
-                                 label='Filled Rings (with Border)',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 3)"))
-
-        self.menuBar.addmenuitem('Rings', 'command', 'Spheres',
-                                 label='Spheres',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 4)"))
-
-        self.menuBar.addmenuitem('Rings', 'command', 'Base Ladders',
-                                 label='Base Ladders',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 0)"))
+        for label, val in [
+                ('Filled Rings (Round Edges)', 1),
+                ('Filled Rings (Flat Edges)', 2),
+                ('Filled Rings (with Border)', 3),
+                ('Spheres', 4),
+                ('Base Ladders', 0),
+                ]:
+            addmenuitem('Rings', 'radiobutton', label=label, value=val,
+                    variable=self.setting.cartoon_ring_mode)
 
         self.menuBar.addmenuitem('Rings', 'separator', '')
 
-        self.menuBar.addmenuitem('Rings', 'command', 'Bases & Sugars',
-                                 label='Bases & Sugars',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_finder', 1)"))
-
-        self.menuBar.addmenuitem('Rings', 'command', 'Bases Only',
-                                 label='Bases Only',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_finder', 2)"))
-
-
-        self.menuBar.addmenuitem('Rings', 'command', 'Non-protein Rings',
-                                 label='Non-protein Rings',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_finder', 3)"))
-
-        self.menuBar.addmenuitem('Rings', 'command', 'All Rings',
-                                 label='All Rings',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_finder', 4)"))
+        for label, val in [
+                ('Bases & Sugars', 1),
+                ('Bases Only', 2),
+                ('Non-protein Rings', 3),
+                ('All Rings', 4),
+                ]:
+            addmenuitem('Rings', 'radiobutton', label=label, value=val,
+                    variable=self.setting.cartoon_ring_finder)
 
         self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                                  'Side Chain Helper',
@@ -2657,13 +2573,12 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.menuBar.addmenuitem('Rings', 'separator', '')
 
-        self.menuBar.addmenuitem('Rings', 'command', 'Transparent Rings',
-                                 label='Transparent Rings',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_transparency', 0.5)"))
-
-        self.menuBar.addmenuitem('Rings', 'command', 'Default',
-                                 label='Default',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_transparency', -1)"))
+        for label, val in [
+                ('Transparent Rings', .5),
+                ('Default', -1.),
+                ]:
+            addmenuitem('Rings', 'radiobutton', label=label, value=val,
+                    variable=self.setting.cartoon_ring_transparency)
 
         self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                                  'Round Helices',
@@ -2730,129 +2645,70 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                 variable = self.setting.ribbon_trace_atoms,
                                 )
 
+        addmenuitem('Ribbon', 'separator')
+        addmenuitem('Ribbon', 'radiobutton', label='As Lines', value=0,
+                variable=self.setting.ribbon_as_cylinders)
+        addmenuitem('Ribbon', 'radiobutton', label='As Cylinders', value=1,
+                variable=self.setting.ribbon_as_cylinders)
+        addcascademenu('Ribbon', 'RibbonRadius', label='Cylinder Radius')
+        addmenuitem('RibbonRadius', 'radiobutton', label='Match Line Width',
+                value=0., variable=self.setting.ribbon_radius)
+        for val in [.2, .5, 1.]:
+            addmenuitem('RibbonRadius', 'radiobutton', label='%.1f Angstrom' % val,
+                    value=val, variable=self.setting.ribbon_radius)
+
         self.menuBar.addcascademenu('Setting', 'Surface', 'Surface',
                                              label='Surface')
 
         self.menuBar.addcascademenu('Surface', 'Surface Color', 'Color',
                                     label='Color')
 
-        self.menuBar.addmenuitem('Surface Color', 'command', 'White',
-                                 label='White',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_color', 'white')"))
+        for label, val in [
+                ('White', 0),           # white
+                ('Light Grey', 134),    # grey80
+                ('Grey', 24),           # grey
+                ('Default (Atomic)', -1),
+                ]:
+            addmenuitem('Surface Color', 'radiobutton', label=label, value=val,
+                    variable=self.setting.surface_color)
 
-        self.menuBar.addmenuitem('Surface Color', 'command', 'Light Grey',
-                                 label='Light Grey',
-                                 command = lambda s=self: s.cmd.do("_ cmd.set('surface_color', 'grey80')"))
-        
-        self.menuBar.addmenuitem('Surface Color', 'command', 'Grey',
-                                 label='Grey',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_color', 'grey')"))
+        addmenuitem('Surface', 'separator', '')
 
-        self.menuBar.addmenuitem('Surface Color', 'command', 'Default (Atomic)',
-                                 label='Default (Atomic)',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_color', -1)"))
-
-        self.menuBar.addmenuitem('Surface', 'command', 'Dot',
-                                 label='Dot',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_type',1)"))
-
-        self.menuBar.addmenuitem('Surface', 'command', 'Wireframe',
-                                 label='Wireframe',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_type',2)"))
-
-        self.menuBar.addmenuitem('Surface', 'command', 'Solid',
-                                 label='Solid',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_type',0)"))
+        for label, val in [
+                ('Dot', 1),
+                ('Wireframe', 2),
+                ('Solid', 0),
+                ]:
+            addmenuitem('Surface', 'radiobutton', label=label, value=val,
+                    variable=self.setting.surface_type)
 
         self.menuBar.addmenuitem('Surface', 'separator', '')
         
-        self.menuBar.addmenuitem('Surface', 'command', 'Cavities & Pockets Only',
-                                 label='Cavities & Pockets Only',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_mode',1)"))
-
-        self.menuBar.addmenuitem('Surface', 'command', 'Cavities & Pockets (Culled)',
-                                 label='Cavities & Pockets (Culled)',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_mode',2)"))
+        for label, val in [
+                ('Exterior (Normal)', 0),
+                ('Cavities & Pockets Only', 1),
+                ('Cavities & Pockets (Culled)', 2),
+                ]:
+            addmenuitem('Surface', 'radiobutton', label=label, value=val,
+                    variable=self.setting.surface_cavity_mode)
 
         self.menuBar.addcascademenu('Surface', 'Detection', 'Cavity Detection Radius',
                                     label='Cavity Detection Radius')
 
-        self.menuBar.addmenuitem('Detection', 'command', '3 Solvent Radii',
-                                 label='3 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-3)"))
+        for val in [7]:
+            addmenuitem('Detection', 'radiobutton', label='%d Angstrom' % val, value=float(val),
+                    variable=self.setting.surface_cavity_radius)
 
-        self.menuBar.addmenuitem('Detection', 'command', '4 Solvent Radii',
-                                 label='4 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-4)"))
-
-        self.menuBar.addmenuitem('Detection', 'command', '5 Solvent Radii',
-                                 label='5 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-5)"))
-
-        self.menuBar.addmenuitem('Detection', 'command', '6 Solvent Radii',
-                                 label='6 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-6)"))
-
-        self.menuBar.addmenuitem('Detection', 'command', '8 Solvent Radii',
-                                 label='8 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-8)"))
-
-        self.menuBar.addmenuitem('Detection', 'command', '10 Solvent Radii',
-                                 label='10 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-10)"))
-
-        self.menuBar.addmenuitem('Detection', 'command', '20 Solvent Radii',
-                                 label='20 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-20)"))
+        for val in [3, 4, 5, 6, 8, 10, 20]:
+            addmenuitem('Detection', 'radiobutton', label='%d Solvent Radii' % val, value=val * -1.0,
+                    variable=self.setting.surface_cavity_radius)
 
         self.menuBar.addcascademenu('Surface', 'Cutoff', 'Cavity Detection Cutoff',
                                     label='Cavity Detection Cutoff')
 
-        self.menuBar.addmenuitem('Cutoff', 'command', '1 Solvent Radius',
-                                 label='1 Solvent Radius',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-1)"))
-
-        self.menuBar.addmenuitem('Cutoff', 'command', '2 Solvent Radii',
-                                 label='2 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-2)"))
-
-
-        self.menuBar.addmenuitem('Cutoff', 'command', '3 Solvent Radii',
-                                 label='3 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-3)"))
-
-        self.menuBar.addmenuitem('Cutoff', 'command', '4 Solvent Radii',
-                                 label='4 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-4)"))
-
-        self.menuBar.addmenuitem('Cutoff', 'command', '5 Solvent Radii',
-                                 label='5 Solvent Radii',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-5)"))
-
-        self.menuBar.addmenuitem('Surface', 'command', 'Exterior (Normal)',
-                                 label='Exterior (Normal)',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_cavity_mode',0)"))
+        for val in [1, 2, 3, 4, 5]:
+            addmenuitem('Cutoff', 'radiobutton', label='%d Solvent Radii' % val, value=val * -1.0,
+                    variable=self.setting.surface_cavity_cutoff)
 
         self.menuBar.addmenuitem('Surface', 'separator', '')
 
@@ -2864,25 +2720,14 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.menuBar.addmenuitem('Surface', 'separator', '')
         
-        self.menuBar.addmenuitem('Surface', 'command', 'Ignore None',
-                                 label='Ignore None',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_mode',1)"))
-
-        self.menuBar.addmenuitem('Surface', 'command', 'Ignore HETATMs',
-                                 label='Ignore HETATMs',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_mode',0)"))
-
-        self.menuBar.addmenuitem('Surface', 'command', 'Ignore Hydrogens',
-                                 label='Ignore Hydrogens',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_mode',2)"))
-
-        self.menuBar.addmenuitem('Surface', 'command', 'Ignore Unsurfaced',
-                                 label='Ignore Unsurfaced',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cmd.set('surface_mode',3)"))
+        for label, val in [
+                ('Ignore None', 1),
+                ('Ignore HETATMs', 0),
+                ('Ignore Hydrogens', 2),
+                ('Ignore Unsurfaced', 3),
+                ]:
+            addmenuitem('Surface', 'radiobutton', label=label, value=val,
+                    variable=self.setting.surface_mode)
 
         self.menuBar.addcascademenu('Setting', 'Volume', label='Volume')
 
@@ -2905,26 +2750,25 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.transparency_menu('SphereTransparency','Sphere','sphere_transparency')      
 
         self.menuBar.addmenuitem('Transparency', 'separator', '')
-        
 
-        self.menuBar.addmenuitem('Transparency', 'command', 'Uni-Layer',
-                                         label='Uni-Layer',
-                                         command = lambda s=self: s.cmd.do(
-            "_ cmd.set('transparency_mode',2);cmd.set('backface_cull',1);cmd.set('two_sided_lighting',0)"))
-
-        self.menuBar.addmenuitem('Transparency', 'command', 'Multi-Layer',
-                                         label='Multi-Layer',
-                                         command = lambda s=self: s.cmd.do(
-            "_ cmd.set('transparency_mode',1);cmd.set('backface_cull',0);cmd.set('two_sided_lighting',1)"))
-
-        self.menuBar.addmenuitem('Transparency', 'command', 'Fast and Ugly',
-                                         label='Fast and Ugly',
-                                         command = lambda s=self: s.cmd.do(
-            "_ cmd.set('transparency_mode',0);cmd.set('backface_cull',1);cmd.set('two_sided_lighting',0)"))
-
+        for label, val, command in [
+                ('Uni-Layer',       2, '_ set backface_cull, 1; set two_sided_lighting, 0'),
+                ('Multi-Layer',     1, '_ set backface_cull, 0; set two_sided_lighting, 1'),
+                ('Multi-Layer (Real-time OIT)', 3, ''),
+                ('Fast and Ugly',   0, '_ set backface_cull, 1; set two_sided_lighting, 0'),
+                ]:
+            addmenuitem('Transparency', 'radiobutton', label=label,
+                state='disabled' if val == 3 else 'normal', # not available in Open-Source PyMOL
+                value=val, variable=self.setting.transparency_mode,
+                command = lambda c=command: self.cmd.do(c))
                 
         self.menuBar.addcascademenu('Setting', 'Rendering', 'Rendering',
                                              label='Rendering')
+
+        addmenuitem('Rendering', 'checkbutton', label='OpenGL 2.0 Shaders',
+                                variable = self.setting.use_shaders)
+
+        addmenuitem('Rendering', 'separator', '')
 
         self.menuBar.addmenuitem('Rendering', 'checkbutton',
                                  'Smooth raytracing.',
@@ -2982,80 +2826,45 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.menuBar.addcascademenu('Rendering', 'Texture', 'Texture',
                                          label='Texture')
 
-        self.menuBar.addmenuitem('Texture', 'command', 'None',
-                                         label='None',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_texture',0)"))
-
-        self.menuBar.addmenuitem('Texture', 'command', 'Matte 1',
-                                         label='Matte 1',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_texture',1)"))
-
-        self.menuBar.addmenuitem('Texture', 'command', 'Matte 2',
-                                         label='Matte 2',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_texture',4)"))
-
-        self.menuBar.addmenuitem('Texture', 'command', 'Swirl 1',
-                                         label='Swirl 1',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_texture',2)"))
-
-        self.menuBar.addmenuitem('Texture', 'command', 'Swirl 2',
-                                         label='Swirl 2',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_texture',3)"))
-
-        self.menuBar.addmenuitem('Texture', 'command', 'Fiber',
-                                         label='Fiber',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_texture',5)"))
+        for label, val in [
+                ('None', 0),
+                ('Matte 1', 1),
+                ('Matte 2', 4),
+                ('Swirl 1', 2),
+                ('Swirl 2', 3),
+                ('Fiber', 5),
+                ]:
+            addmenuitem('Texture', 'radiobutton', label=label, value=val,
+                    variable=self.setting.ray_texture)
 
         self.menuBar.addcascademenu('Rendering', 'Interior Texture', 'Interior Texture',
                                          label='Interior Texture')
 
-        self.menuBar.addmenuitem('Interior Texture', 'command', 'None',
-                                         label='None',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_interior_texture',0)"))
-
-        self.menuBar.addmenuitem('Interior Texture', 'command', 'Matte 1',
-                                         label='Matte 1',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_interior_texture',1)"))
-
-        self.menuBar.addmenuitem('Interior Texture', 'command', 'Matte 2',
-                                         label='Matte 2',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_interior_texture',4)"))
-
-        self.menuBar.addmenuitem('Interior Texture', 'command', 'Swirl 1',
-                                         label='Swirl 1',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_interior_texture',2)"))
-
-        self.menuBar.addmenuitem('Interior Texture', 'command', 'Swirl 2',
-                                         label='Swirl 2',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_interior_texture',3)"))
-
-        self.menuBar.addmenuitem('Interior Texture', 'command', 'Fiber',
-                                         label='Fiber',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('ray_interior_texture',5)"))
-
+        for label, val in [
+                ('Default', -1),
+                ('None', 0),
+                ('Matte 1', 1),
+                ('Matte 2', 4),
+                ('Swirl 1', 2),
+                ('Swirl 2', 3),
+                ('Fiber', 5),
+                ]:
+            addmenuitem('Interior Texture', 'radiobutton', label=label, value=val,
+                    variable=self.setting.ray_interior_texture)
 
         self.menuBar.addcascademenu('Rendering', 'Memory', 'Memory',
                                          label='Memory')
 
-        self.menuBar.addmenuitem('Memory', 'command', 'Use Less (slower)',
-                                         label='Use Less (slower)',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('hash_max',70,quiet=0)"))
 
-        self.menuBar.addmenuitem('Memory', 'command', 'Use Standard Amount',
-                                         label='Use Standard Amount',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('hash_max',100,quiet=0)"))
-
-        self.menuBar.addmenuitem('Memory', 'command', 'Use More (faster)',
-                                         label='Use More (faster)',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('hash_max',170,quiet=0)"))
-
-        self.menuBar.addmenuitem('Memory', 'command', 'Use Even More',
-                                         label='Use Even More',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('hash_max',230,quiet=0)"))
-
-        self.menuBar.addmenuitem('Memory', 'command', 'Use Most',
-                                         label='Use Most',
-                                         command = lambda s=self: s.cmd.do("_ cmd.set('hash_max',300,quiet=0)"))
+        for label, val in [
+                ('Use Less (slower)', 70),
+                ('Use Standard Amount', 100),
+                ('Use More (faster)', 170),
+                ('Use Even More', 230),
+                ('Use Most', 300),
+                ]:
+            addmenuitem('Memory', 'radiobutton', label=label, value=val,
+                    variable=self.setting.hash_max)
 
         self.menuBar.addmenuitem('Rendering', 'separator', '')
 
@@ -3075,33 +2884,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.menuBar.addmenuitem('Setting', 'separator', '')
 
-        self.menuBar.addcascademenu('Setting', 'Output', 'Output Size',
-                                             label='Output Size')
-
-        self.menuBar.addmenuitem('Output', 'command', '8',
-                                         label='8 Point',
-                                         command = lambda s=self:
-                                         s.text.configure(font=(s.font,8)))
-
-        self.menuBar.addmenuitem('Output', 'command', '9',
-                                         label='9 Point',
-                                         command = lambda s=self:
-                                         s.text.configure(font=(s.font,9)))
-
-        self.menuBar.addmenuitem('Output', 'command', '10',
-                                         label='10 Point',
-                                         command = lambda s=self:
-                                         s.text.configure(font=(s.font,10)))
-
-        self.menuBar.addmenuitem('Output', 'command', '11',
-                                         label='11 Point',
-                                         command = lambda s=self:
-                                         s.text.configure(font=(s.font,11)))
-
-        self.menuBar.addmenuitem('Output', 'command', '12',
-                                         label='12 Point',
-                                         command = lambda s=self:
-                                         s.text.configure(font=(s.font,12)))
+        self.menuBar.addmenuitem('Setting', 'command', label='GUI Font Size (Dialog)',
+                command=self.inc_fontsize_dialog)
 
         self.menuBar.addcascademenu('Setting', 'Control', 'Control Size',
                                              label='Control Size')
@@ -3145,14 +2929,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.menuBar.addmenuitem('Setting', 'separator', '')
 
-
-        self.menuBar.addmenuitem('Setting', 'command', 'Show Text Output',
-                                         label='Show Text',
-                                         command = lambda s=self: s.cmd.set("text","1",log=1))
-
-        self.menuBar.addmenuitem('Setting', 'command', 'Hide Text Output',
-                                         label='Hide Text',
-                                         command = lambda s=self: s.cmd.set("text","0",log=1))
+        addmenuitem('Setting', 'checkbutton', label='Show Text / Hide Graphics [Esc]',
+                                variable = self.setting.text)
 
         self.menuBar.addmenuitem('Setting', 'checkbutton',
                                  'Overlay Text Output on Graphics',
@@ -3580,6 +3358,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.edit_mode = None
         self.valence = None
         self._initialdir = ''
+        self.fixedfont = tkFont.nametofont('TkFixedFont')
 
 def __init__(app):
     return Normal(app)

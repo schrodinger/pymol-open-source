@@ -1331,9 +1331,10 @@ SEE ALSO
         if rep:
             # only atomic representations
             _self.hide('everything', '(*)')
+            sele_prefix = _self.get_legal_name('_scene_' + key + '_')
             for rep_name in rep_list:
-                _self.show(rep_name, "?_scene_" + key + "_" + rep_name)
-            _self.delete("_scene_" + key + "_*")
+                _self.show(rep_name, "?" + sele_prefix + rep_name)
+            _self.delete(sele_prefix + "*")
 
         _self.scene(key, 'store', scene_list[5], view, color, active, rep, frame)
 

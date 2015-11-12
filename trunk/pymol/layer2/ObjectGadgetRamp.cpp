@@ -886,7 +886,7 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp * I)
         {
           float mean = (I->Level[0] + I->Level[1]) / 2.0F;
           I->Level[0] = (I->Level[0] - mean) * scale + mean;
-          I->Level[2] = (I->Level[1] - mean) * scale + mean;
+          I->Level[1] = (I->Level[1] - mean) * scale + mean;
           ExecutiveInvalidateRep(I->Gadget.Obj.G, cKeywordAll, cRepAll, cRepInvColor);
         }
         break;

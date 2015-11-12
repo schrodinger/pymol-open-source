@@ -787,7 +787,7 @@ enum {
   REC_i( 689, nb_spheres_quality                      , ostate    , 1, 0, MAX_SPHERE_QUALITY ),
   REC_i( 690, nb_spheres_use_shader                   , global    , 1, 0, 2 ),
   REC_b( 691, render_as_cylinders                     , global    , 1 ),
-  REC_b( 692, alignment_as_cylinders                  , global    , 1 ),
+  REC_b( 692, alignment_as_cylinders                  , global    , 0 ),
   /* 0 - none, 1 - just ladder, 2 - just strand, 3 - both ladder and strand */
   REC_i( 693, cartoon_nucleic_acid_as_cylinders       , global    , 1, 0, 3 ),
   REC_b( 694, cgo_shader_ub_flags                     , global    , 0 ),
