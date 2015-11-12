@@ -146,7 +146,7 @@ class Setting:
                     ]
 
     def set(self, name, value):
-        self.cmd.set(name, value, self.sele, self.state, log=1)
+        self.cmd.set(name, value, self.sele, self.state, log=1, quiet=0)
 
     def get(self, name):
         return self.cmd.get(name, self.sele, self.state)
