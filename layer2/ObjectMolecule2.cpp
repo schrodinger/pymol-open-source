@@ -48,6 +48,12 @@
 #include <iostream>
 #include <map>
 
+#ifdef _PYMOL_NO_CXX11
+#define STD_MOVE(x) (x)
+#else
+#define STD_MOVE(x) std::move(x)
+#endif
+
 #define ntrim ParseNTrim
 #define nextline ParseNextLine
 #define ncopy ParseNCopy
@@ -4481,7 +4487,7 @@ int ObjectMoleculeSort(ObjectMolecule * I)
       if (ok){
 	/* autozero here is important */
 	for(a = 0; a < i_NAtom; a++)
-	  atInfo[a] = std::move(I->AtomInfo[index[a]]);
+	  atInfo[a] = STD_MOVE(I->AtomInfo[index[a]]);
       }
       VLAFreeP(I->AtomInfo);
       I->AtomInfo = atInfo;

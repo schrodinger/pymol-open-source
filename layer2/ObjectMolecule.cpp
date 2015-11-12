@@ -22,6 +22,12 @@ Z* -------------------------------------------------------------------
 #include <algorithm>
 #include <set>
 
+#ifdef _PYMOL_NO_CXX11
+#define STD_MOVE(x) (x)
+#else
+#define STD_MOVE(x) std::move(x)
+#endif
+
 #include"Base.h"
 #include"Debug.h"
 #include"Parse.h"
@@ -7730,7 +7736,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           if(PConvPyListToFloatArrayInPlace(tmp, u, 6)) {
             // only allocate if not all zero
             if(u[0] || u[1] || u[2] || u[3] || u[4] || u[5])
-              std::copy_n(u, 6, ai->get_anisou());
+	      memcpy(ai->get_anisou(), u, 6 * sizeof(float));
           }
           Py_DECREF(tmp);
         }
@@ -9600,7 +9606,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
   CHECKOK(ok, ai2);
   if (ok){
     for(a = 0; a < cs->NIndex; a++)
-      ai2[a] = std::move(ai[index[a]]);      /* creates a sorted list of atom info records */
+      ai2[a] = STD_MOVE(ai[index[a]]);      /* creates a sorted list of atom info records */
   }
   VLAFreeP(ai);
   ai = ai2;
@@ -9722,7 +9728,7 @@ int ObjectMoleculeMerge(ObjectMolecule * I, AtomInfoType * ai,
       if(a2 < oldNAtom)
 	AtomInfoCombine(G, I->AtomInfo + a2, ai + a1, aic_mask);
       else
-	*(I->AtomInfo + a2) = std::move(*(ai + a1));
+	*(I->AtomInfo + a2) = STD_MOVE(*(ai + a1));
     }
   }
 
@@ -9861,7 +9867,7 @@ void ObjectMoleculeAppendAtoms(ObjectMolecule * I, AtomInfoType * atInfo, CoordS
     dest = I->AtomInfo + I->NAtom;
     src = atInfo;
     for(a = 0; a < cs->NIndex; a++)
-      *(dest++) = std::move(*(src++));
+      *(dest++) = STD_MOVE(*(src++));
     I->NAtom = nAtom;
     VLAFreeP(atInfo);
   } else {
@@ -12561,7 +12567,9 @@ void ObjectMoleculeFree(ObjectMolecule * I)
   VLAFreeP(I->DiscreteAtmToIdx);
   VLAFreeP(I->DiscreteCSet);
   VLAFreeP(I->CSet);
+#ifndef _PYMOL_NO_CXX11
   I->m_ciffile.reset(); // free data
+#endif
 
   {
     int nAtom = I->NAtom;

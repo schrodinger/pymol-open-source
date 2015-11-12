@@ -13,10 +13,12 @@ import distutils.unixccompiler
 # threaded parallel map (optional)
 pmap = map
 
-if sys.platform == 'darwin':
+try:
     import _osx_support
     _osx_support._UNIVERSAL_CONFIG_VARS += ('CXXFLAGS', 'LDCXXSHARED',)
     _osx_support._COMPILER_CONFIG_VARS += ('LDCXXSHARED',)
+except ImportError:
+    _osx_support = None
 
 distutils.unixccompiler.UnixCCompiler.executables.update({
     'compiler_cxx'      : ["c++"],
@@ -86,7 +88,7 @@ def compile(self, sources, output_dir=None, macros=None,
     compiler_so = self.compiler_so
     compiler_so_cxx = self.compiler_so_cxx
 
-    if sys.platform == 'darwin':
+    if sys.platform == 'darwin' and _osx_support is not None:
         compiler_so = _osx_support.compiler_fixup(compiler_so, cc_args + extra_postargs)
         compiler_so_cxx = _osx_support.compiler_fixup(compiler_so_cxx, cc_args + extra_postargs)
 

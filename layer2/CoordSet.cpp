@@ -978,7 +978,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
       char *atomline = (*charVLA) + (*c);
       char *anisoline = atomline + linelen;
       float anisou[6];
-      std::copy_n(ai->anisou, 6, anisou);
+      memcpy(anisou, ai->anisou, 6 * sizeof(float));
 
       if(matrix && !RotateU(matrix, anisou)) {
         PRINTFB(G, FB_CoordSet, FB_Errors) "RotateU failed\n" ENDFB(G);
@@ -1059,7 +1059,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
     float tmp_array[6] = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
 
     if (ai->anisou) {
-      std::copy_n(ai->anisou, 6, tmp_array);
+      memcpy(tmp_array, ai->anisou, 6 * sizeof(float));
       if (matrix)
       RotateU(matrix, tmp_array);
     }

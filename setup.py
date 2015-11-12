@@ -149,7 +149,6 @@ libs = []
 pyogl_libs = []
 lib_dirs = []
 ext_comp_args = [
-    "-Wno-narrowing",
     # warnings as errors
     "-Werror=implicit-function-declaration",
     "-Werror=declaration-after-statement",
@@ -211,6 +210,16 @@ else: # unix style (linux, mac, ...)
     def_macros += [
             ("_PYMOL_FREETYPE",None),
             ("NO_MMLIBS",None),
+            ]
+
+    if sys.platform == 'darwin':
+        import platform
+        if int(platform.mac_ver()[0].split('.')[1]) < 9:
+            # OS X <= 10.8, will still use some C++11 features
+            # like the "auto" keyword, but excludes features which
+            # depend on the C++11 std library.
+            def_macros += [
+                ('_PYMOL_NO_CXX11', None),
             ]
 
     try:
