@@ -70,3 +70,54 @@ class TestExporting(testing.PyMOLTestCase):
             filesize = os.path.getsize(filename)
             self.assertTrue(filesize > 0)
 
+    # cmp_atom : compares all fields in Atom (see chempy/__init__.py)
+    #            except the id (which is unique to the instance)
+    def cmp_atom(self, selfobj,other):
+        return \
+                cmp(type(selfobj), type(other)) or \
+                cmp(selfobj.segi, other.segi) or \
+                cmp(selfobj.chain, other.chain) or \
+                cmp(selfobj.resi_number, other.resi_number) or \
+                cmp(selfobj.resi, other.resi) or \
+                cmp(selfobj.resn, other.resn) or \
+                cmp(selfobj.symbol, other.symbol) or \
+                cmp(selfobj.name, other.name)
+
+    # cmp_bond : compares all fields in Bond (see chempy/__init__.py)
+    def cmp_bond(self, selfobj,other):
+        return \
+                cmp(selfobj.order, other.order) or \
+                cmp(selfobj.stereo, other.stereo)
+
+    def assertModelsAreSame(self, m1, m2):
+        self.assertTrue(len(m1.atom) == len(m2.atom))
+        idx = 0
+        for m1atomidx in m1.atom:
+            self.assertTrue(self.cmp_atom(m1atomidx, m2.atom[idx]) == 0)
+            idx = idx + 1
+        idx = 0
+        for m1bondidx in m1.bond:
+            self.assertTrue(self.cmp_bond(m1bondidx, m2.bond[idx]) == 0)
+            idx = idx + 1
+
+    @testing.requires_version('1.7.6')
+    def testPSEBulkImport(self):
+        cmd.load(self.datafile('1rx1_1766_bulk.pse.gz'))
+        m1 = cmd.get_model()
+        cmd.load(self.datafile('1rx1_176.pse.gz'))
+        m2 = cmd.get_model()
+        self.assertModelsAreSame(m1, m2)
+
+    @testing.requires_version('1.7.6.5')
+    @testing.foreach.product((1.7, 1.76, 1.8), (0, 1))
+    def testPSEBulkExportImport(self, pse_export_version, pse_binary_dump):
+        with testing.mktemp('.pse') as filename:
+            cmd.fetch('1rx1')
+            m1 = cmd.get_model()
+            cmd.set("pse_export_version", pse_export_version)
+            cmd.set("pse_binary_dump", pse_binary_dump)
+            cmd.save(filename)
+            cmd.reinitialize()
+            cmd.load(filename)
+            m2 = cmd.get_model()
+            self.assertModelsAreSame(m1, m2)
