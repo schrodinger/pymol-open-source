@@ -100,6 +100,7 @@ class TestExporting(testing.PyMOLTestCase):
             self.assertTrue(self.cmp_bond(m1bondidx, m2.bond[idx]) == 0)
             idx = idx + 1
 
+    @testing.requires('incentive')
     @testing.requires_version('1.7.6')
     def testPSEBulkImport(self):
         cmd.load(self.datafile('1rx1_1766_bulk.pse.gz'))
@@ -108,8 +109,9 @@ class TestExporting(testing.PyMOLTestCase):
         m2 = cmd.get_model()
         self.assertModelsAreSame(m1, m2)
 
-    @testing.requires_version('1.7.6.5')
     @testing.foreach.product((1.7, 1.76, 1.8), (0, 1))
+    @testing.requires('incentive')
+    @testing.requires_version('1.7.6.5')
     def testPSEBulkExportImport(self, pse_export_version, pse_binary_dump):
         with testing.mktemp('.pse') as filename:
             cmd.fetch('1rx1')
