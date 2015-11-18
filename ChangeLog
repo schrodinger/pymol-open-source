@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2015-11-18 Thomas Holder, Blaine Bell, Gabriel Marques
+
+	* 1.8.0.0
+
+	* Tcl/Tk Settings GUI: feedback, radio buttons, font size dialog
+
+	* default alignment_as_cylinders changed to off
+
 2015-10-15 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* new default: scene_buttons=on

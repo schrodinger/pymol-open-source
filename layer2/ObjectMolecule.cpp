@@ -4918,7 +4918,15 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
     strcpy(ai->resi, ai0->resi);
     strcpy(ai->segi, ai0->segi);
     strcpy(ai->resn, ai0->resn);
-    AtomInfoAssignColors(I->Obj.G, ai);
+    ai->visRep = ai0->visRep;
+    ai->id = -1;
+#ifdef _PYMOL_IP_EXTRAS
+    ai->oldid = -1;
+#endif
+    ai->rank = -1;
+    AtomInfoUniquefyNames(I->Obj.G, I->AtomInfo, I->NAtom, ai, NULL, 1);
+    AtomInfoAssignParameters(I->Obj.G, ai);
+
     if((ai->elem[0] == ai0->elem[0]) && (ai->elem[1] == ai0->elem[1]))
       ai->color = ai0->color;
     else if((ai->elem[0] == 'C') && (ai->elem[1] == 0)) {
@@ -4940,16 +4948,8 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
         /* if no carbon nearby, then color according to the object color */
         ai->color = I->Obj.Color;
       }
-    }
-    if (ok){
-      ai->visRep = ai0->visRep;
-      ai->id = -1;
-#ifdef _PYMOL_IP_EXTRAS
-      ai->oldid = -1;
-#endif
-      ai->rank = -1;
-      AtomInfoUniquefyNames(I->Obj.G, I->AtomInfo, I->NAtom, ai, NULL, 1);
-      AtomInfoAssignParameters(I->Obj.G, ai);
+    } else {
+      AtomInfoAssignColors(I->Obj.G, ai);
     }
   }
   return ok;
