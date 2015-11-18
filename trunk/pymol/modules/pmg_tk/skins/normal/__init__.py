@@ -3348,6 +3348,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         PMGSkin.__init__(self,app)
         Normal.appversion = app.pymol.cmd.get_version()[0]
+        Normal.appversion += " Incentive Product" \
+                if app.pymol.invocation.options.incentive_product else \
+                " Open-Source"
         self.app = app
         self.save_file = ''
         self.cmd = app.pymol.cmd

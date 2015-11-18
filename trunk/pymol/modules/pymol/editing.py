@@ -70,8 +70,16 @@ DESCRIPTION
         '''
 DESCRIPTION
 
-    "sculpt_deactivate" is an unsupported feature.
+    "sculpt_deactivate" deactivates sculpting for the given object and
+    clears the stored restraints.
 
+ARGUMENTS
+
+    object = str: name of a single object or "all"
+
+SEE ALSO
+
+    sculpt_activate
     '''
         r = 0
         try:
@@ -87,8 +95,19 @@ DESCRIPTION
         '''
 DESCRIPTION
 
-    "sculpt_deactivate" is an unsupported feature.
+    "sculpt_activate" enables sculpting for the given object. The current
+    geometry (bond lengths, angles, etc.) of the given state is remembered as
+    the reference geometry.
 
+ARGUMENTS
+
+    object = str: name of a single object or "all"
+
+    state = int: object state or 0 for current state {default: 0}
+
+SEE ALSO
+
+    sculpt_iterate, sculpt_deactivate
     '''
         r = DEFAULT_ERROR
         try:
@@ -169,9 +188,27 @@ SEE ALSO
      
     def sculpt_iterate(object, state=0, cycles=10, _self=cmd):
         '''
-        
-    "sculpt_iterate" is an unsupported feature.
-    
+DESCRIPTION
+
+    "sculpt_iterate" performs a simple energy minimization of atomic
+    coordinates based on the geometry restraints which were defined with
+    the "sculpt_activate" invocation and which are selected in the
+    "sculpt_field_mask" setting. Sculpting currently supports local
+    geometry restraints and vdw repulsion, but no solvation or
+    electrostatic effects.
+
+ARGUMENTS
+
+    object = str: name of a single object or "all"
+
+    state = int: object state or 0 for current state {default: 0}
+
+    cycles = int: number of iterations {default: 10}
+
+SEE ALSO
+
+    commands: sculpt_activate, sculpt_deactivate
+    settings: "sculpting" setting, all "sculpt_*" settings
     '''
         r = DEFAULT_ERROR
         try:
