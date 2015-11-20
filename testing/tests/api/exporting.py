@@ -114,7 +114,7 @@ class TestExporting(testing.PyMOLTestCase):
     @testing.requires_version('1.7.6.5')
     def testPSEBulkExportImport(self, pse_export_version, pse_binary_dump):
         with testing.mktemp('.pse') as filename:
-            cmd.fetch('1rx1')
+            cmd.load(self.datafile("1oky-frag.pdb"))
             m1 = cmd.get_model()
             cmd.set("pse_export_version", pse_export_version)
             cmd.set("pse_binary_dump", pse_binary_dump)

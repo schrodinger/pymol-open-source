@@ -12,7 +12,7 @@ class TestPYMOL834(testing.PyMOLTestCase):
     @testing.foreach((1,0,False), (1,1,True), (0,1,False))
     
     def test2095(self, bg_gradient, opaque_background, hasColor):
-        cmd.fetch("1rx1")
+        cmd.load(self.datafile("1oky-frag.pdb"))
         cmd.zoom(buffer=20)
         cmd.set("bg_gradient", bg_gradient)
         cmd.set("bg_rgb_top", "blue")
