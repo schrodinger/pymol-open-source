@@ -819,11 +819,11 @@ _atom_site.pdbx_PDB_model_num
                 pymol.selecting.objsele_state_iter(selection, state)):
             n_atoms_i = len(buf)
             buf.append('') # natoms (deferred)
-            buf.append('') # comment
+            buf.append('\n') # comment
             n = _self.iterate_state(ostate, osele,
                     r'_buf.append("%s %f %f %f\n" % (elem, x, y, z))',
                     space={'_buf': buf})
-            buf[n_atoms_i] = str(n)
+            buf[n_atoms_i] = str(n) + '\n'
 
         if not quiet:
             print " Save-XYZ: %d object-state(s) in selection." % (i + 1)
