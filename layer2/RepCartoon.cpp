@@ -50,14 +50,12 @@ void RepCartoonFree(RepCartoon * I);
 
 void RepCartoonFree(RepCartoon * I)
 {
-  if(I->ray)
-    CGOFree(I->ray);
+  if (I->ray != I->preshader)
+    CGOFree(I->preshader);
+  CGOFree(I->ray);
   if(I->pickingCGO && (I->pickingCGO != I->std))
     CGOFree(I->pickingCGO);
-  if(I->preshader && (I->ray!=I->preshader))
-    CGOFree(I->preshader);
-  if(I->std)
-    CGOFree(I->std);
+  CGOFree(I->std);
   FreeP(I->LastVisib);
   RepPurge(&I->R);
   OOFreeP(I);
