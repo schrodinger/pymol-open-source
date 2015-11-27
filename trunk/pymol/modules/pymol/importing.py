@@ -1227,7 +1227,7 @@ PYMOL API
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=3DSaveSDF",
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
         ],
-        "emd": "/../emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
+        "emd": "ftp://ftp.wwpdb.org/pub/emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
         "cc": "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/{code}.cif",
     }
 
