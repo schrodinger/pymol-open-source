@@ -61,7 +61,7 @@ class TestFitting(testing.PyMOLTestCase):
 
         # 1 atom
         sele = ('trp and guide', 'his and guide')
-        pos = map(cmd.get_atom_coords, sele)
+        pos = list(map(cmd.get_atom_coords, sele))
         vec = cpv.sub(*pos)
         mat_ref = [
             1.0, 0.0, 0.0, -vec[0],

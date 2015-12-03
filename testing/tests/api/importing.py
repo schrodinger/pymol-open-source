@@ -61,7 +61,10 @@ class TestImporting(testing.PyMOLTestCase):
             self.assertEqual(cmd.get_type('1avy_2fofc'), 'object:map')
 
     def testFetchLocal(self):
-        import urlparse
+        try:
+            import urllib.parse as urlparse
+        except ImportError:
+            import urlparse
         with testing.mkdtemp() as fetch_path:
             names = []
             cmd.set('fetch_path', fetch_path)

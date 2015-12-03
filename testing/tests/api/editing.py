@@ -28,8 +28,8 @@ class TestEditing(testing.PyMOLTestCase):
         cmd.pseudoatom('m1')
 
         for ptype, names in (
-                self.alter_names_atomic.items() +
-                self.alter_names_atomic_special.items()):
+                list(self.alter_names_atomic.items()) +
+                list(self.alter_names_atomic_special.items())):
             stored.v_names = None
             cmd.iterate('all', 'stored.v_names = [' + ','.join(names) + ']')
 
@@ -91,13 +91,13 @@ class TestEditing(testing.PyMOLTestCase):
         cmd.create('ala', 'ala', 1, 2)
         v_count = cmd.count_atoms('all')
 
-        v_mock = [map(float, range(i*3, (i+1)*3)) for i in range(v_count)]
+        v_mock = [list(map(float, list(range(i*3, (i+1)*3)))) for i in range(v_count)]
 
         v_xyz_1_pre = cmd.get_model('all', state=1).get_coord_list()
         v_xyz_2_pre = cmd.get_model('all', state=2).get_coord_list()
 
-        cmd.alter_state(2, 'all', '(x,y,z) = xyz_iter.next()',
-                space={'xyz_iter': iter(v_mock)})
+        cmd.alter_state(2, 'all', '(x,y,z) = next(xyz_iter)',
+                space={'xyz_iter': iter(v_mock), 'next': next})
 
         v_xyz_1_post = cmd.get_model('all', state=1).get_coord_list()
         v_xyz_2_post = cmd.get_model('all', state=2).get_coord_list()

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os, sys
 from pymol import cmd, testing, stored, invocation
 
@@ -29,14 +31,14 @@ class TestInvocation(testing.PyMOLTestCase):
 
             pymolrc = os.path.join(pwd, 'abc', basename) 
             with open(pymolrc, 'w') as handle:
-                print >> handle, '# hello'
+                print('# hello', file=handle)
 
             a = invocation.get_user_config()
             self.assertEqual(pymolrc, os.path.normpath(a[0]))
 
             pymolrc = os.path.join(pwd, basename)
             with open(pymolrc, 'w') as handle:
-                print >> handle, '# hello'
+                print('# hello', file=handle)
 
             a = invocation.get_user_config()
             self.assertEqual(pymolrc, os.path.normpath(a[0]))

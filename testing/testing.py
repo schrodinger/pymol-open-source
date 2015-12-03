@@ -9,6 +9,8 @@ PyMOL test cases should subclass pymol.testing.PyMOLTestCase and provide
 either one "runTest" method or at least one "test*" method.
 '''
 
+from __future__ import print_function
+
 import os
 import sys
 import pymol
@@ -19,6 +21,11 @@ try:
     WindowsError
 except NameError:
     WindowsError = None
+
+try:
+    basestring
+except NameError:
+    basestring = (str, bytes)
 
 def compareListFunction(x, y):
     return collections.Counter(x) == collections.Counter(y)
@@ -285,7 +292,7 @@ else:
             if self.__module__ == 'pymol.testing':
                 return
 
-            for k, v in vars(self).items():
+            for k, v in list(vars(self).items()):
                 if isinstance(v, foreachList):
                     for c, fargs in enumerate(v, 1):
                         f, args = fargs
@@ -314,14 +321,17 @@ else:
                 raise AssertionError(msg)
             self.test.timings.append((self.msg, delta))
 
-    class PyMOLTestCase(unittest.TestCase):
+    class PyMOLTestCase(PyMOLTestCaseMeta("Base", (unittest.TestCase,), {})):
         '''
         Common PyMOL unit tests should subclass this.
 
         Each tests starts with a clean (reinitialized) PyMOL session and
         from the directory where the file is located.
         '''
-        __metaclass__ = PyMOLTestCaseMeta
+
+        if sys.version_info.major > 2:
+            assertEquals = unittest.TestCase.assertEqual
+            assertItemsEqual = unittest.TestCase.assertCountEqual
 
         moddirs = {}
 
@@ -364,7 +374,7 @@ else:
 
             if isinstance(img1, basestring) and not \
                     os.path.exists(img1):
-                print ' Generating reference img:', img1
+                print(' Generating reference img:', img1)
                 self.png(img1)
                 return
 
@@ -532,7 +542,7 @@ else:
                 for i, (m, t) in enumerate(test.timings):
                     version = cmd.get_version()
                     buildinfo = version[3:] or [0, "", 0]
-                    print >> handle, '\t'.join([
+                    print('\t'.join([
                         '%f' % time.time(),
                         '%012x' % uuid.getnode(),
                         '%f' % t,
@@ -543,7 +553,7 @@ else:
                         '%d' % buildinfo[2],
                         platform.platform(),
                         platform.node(),
-                    ])
+                    ]), file=handle)
 
     def run_testfiles(filenames='all', verbosity=2, out=sys.stderr, **kwargs):
         '''

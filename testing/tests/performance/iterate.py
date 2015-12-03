@@ -24,8 +24,8 @@ class StressIterateAlter(testing.PyMOLTestCase):
         self.assertEqual(v_count, len(xyz))
 
         with self.timing('a', 5.0):
-            cmd.alter_state(0, 'all', '(x,y,z) = xyz_rev.next()',
-                    space={'xyz_rev': reversed(xyz)})
+            cmd.alter_state(0, 'all', '(x,y,z) = next(xyz_rev)',
+                    space={'xyz_rev': reversed(xyz), 'next': next})
 
         cmd.iterate_state(0, 'last all', 'stored.xyz = (x,y,z)')
         self.assertEqual(stored.xyz, xyz[0])

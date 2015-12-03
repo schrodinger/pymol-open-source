@@ -84,7 +84,7 @@ class TestProperties(testing.PyMOLTestCase):
         for obj in objs:
             model = cmd.get_model(obj)
             prop_list= cmd.get_property_list(obj)
-            mol_prop_list = map(lambda x: x[0], model.molecule_properties)
+            mol_prop_list = [x[0] for x in model.molecule_properties]
             self.assertEqual(set(prop_list), set(mol_prop_list))
 
     def testSimple(self):

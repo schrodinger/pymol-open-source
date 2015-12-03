@@ -9,6 +9,13 @@ from pymol import cmd, CmdException, testing, stored
 def randhex(e=2):
     return '%x' % randint(1, 10**randint(e, 10))
 
+def next_decorator(iterable):
+    iterator = iter(iterable)
+    try:
+        return iterator.next
+    except AttributeError:
+        return iterator.__next__
+
 class TestPYMOL2638(testing.PyMOLTestCase):
 
     @testing.requires_version('1.8.1.0')
@@ -27,11 +34,11 @@ class TestPYMOL2638(testing.PyMOLTestCase):
         names = [randhex(4) + str(i) for i in range(n)]
 
         identif_str = '(chain, resn, resv, name)'
-        identifiers = zip(chain, resn, resv, names)
+        identifiers = list(zip(chain, resn, resv, names))
         afterload = []
 
         cmd.alter('m1', identif_str + ' = _next()',
-                space={'_next': iter(identifiers).next})
+                space={'_next': next_decorator(identifiers)})
 
         ##
         ## Test if cif in/out preserves identifiers

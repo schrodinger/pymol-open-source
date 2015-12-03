@@ -17,7 +17,7 @@ class Test132(testing.PyMOLTestCase):
         bonds = defaultdict(int)
         for line in lines:
             if line.startswith('CONECT'):
-                indices = map(int, line[6:].split())
+                indices = list(map(int, line[6:].split()))
                 for i in indices[1:]:
                     bonds[indices[0], i] += 1
         counts = bonds.values()

@@ -1,8 +1,8 @@
-
-
 '''
 Stress testing for pdb loading
 '''
+
+from __future__ import print_function
 
 import time
 from pymol import cmd, testing, stored
@@ -16,4 +16,4 @@ class StressPDBLoading(testing.PyMOLTestCase):
             start = time.time()
             cmd.load(self.datafile(dfile))
             tm.append(time.time() - start)
-        print "min time('", dfile, "')=", min(tm)
+        print("min time('", dfile, "')=", min(tm))

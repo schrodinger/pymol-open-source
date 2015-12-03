@@ -3,6 +3,7 @@ unit tests for pymol.exporting
 '''
 
 import os
+import sys
 import tempfile
 import Image
 
@@ -20,6 +21,8 @@ class TestExporting(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testExportCoords(self):
+        if sys.version_info.major > 2:
+            self.skipTest("not Python3 compatible")
         cmd.fragment('ala')
         c = cmd.export_coords('ala', 1)
         self.assertTrue(bool(c))

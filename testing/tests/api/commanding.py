@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 import sys
 import pymol
@@ -53,7 +54,7 @@ class TestCommanding(testing.PyMOLTestCase):
             cmd.do('_ color blue')
             cmd.log('hello world')
             cmd.log_close()
-            lines = filter(None, map(str.strip, open(logfile)))
+            lines = [_f for _f in map(str.strip, open(logfile)) if _f]
             self.assertEqual(lines, ['color blue', 'hello world'])
 
     def testLogClose(self):
@@ -93,12 +94,12 @@ class TestCommanding(testing.PyMOLTestCase):
     def testResume(self):
         with testing.mktemp('.pml') as logfile:
             with open(logfile, 'w') as f:
-                print >> f, 'bg yellow'
+                print('bg yellow', file=f)
             cmd.resume(logfile)
             self.assertEqual('yellow', cmd.get('bg_rgb'))
             cmd.log('hello world')
             cmd.log_close()
-            lines = filter(None, map(str.strip, open(logfile)))
+            lines = [_f for _f in map(str.strip, open(logfile)) if _f]
             self.assertEqual(lines, ['bg yellow', 'hello world'])
 
     def testSplash(self):
@@ -120,12 +121,12 @@ class TestCommanding(testing.PyMOLTestCase):
         with testing.mktemp('.py') as filename:
             varname = '_tmp_' + namespace
             with open(filename, 'w') as handle:
-                print >> handle, 'from pymol import stored'
+                print('from pymol import stored', file=handle)
                 if mod:
-                    print >> handle, 'stored.tmp = (__name__ == "%s")' % (mod)
+                    print('stored.tmp = (__name__ == "%s")' % (mod), file=handle)
                 else:
-                    print >> handle, 'stored.tmp = True'
-                print >> handle, varname + ' = True'
+                    print('stored.tmp = True', file=handle)
+                print(varname + ' = True', file=handle)
             cmd.do('run %s, %s' % (filename, namespace), 0, 0)
             self.assertTrue(stored.tmp)
             if mod:
