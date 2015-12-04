@@ -258,10 +258,10 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
  * variable arguments.
 */
 
-#define PRINTFB(G,sysmod,mask) { FeedbackLineType _FBstr; if(Feedback(G,sysmod,mask)) {(sprintf)( _FBstr,
+#define PRINTFB(G,sysmod,mask) { FeedbackLineType _FBstr; if(Feedback(G,sysmod,mask)) {(snprintf)( _FBstr, FEEDBACK_MAX_OUTPUT,
 #define ENDFB(G) );  FeedbackAdd(G,_FBstr);}}
 
-#define PRINTF { FeedbackLineType _FBstr; (sprintf)( _FBstr,
+#define PRINTF { FeedbackLineType _FBstr; (snprintf)( _FBstr, FEEDBACK_MAX_OUTPUT,
 #define ENDF(G)  ); FeedbackAdd(G,_FBstr);}
 
 
