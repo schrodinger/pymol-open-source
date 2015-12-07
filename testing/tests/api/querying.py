@@ -225,10 +225,6 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.get_volume_histogram
         self.skipTest("TODO")
 
-    def testGetVolumeIsUpdated(self):
-        cmd.get_volume_is_updated
-        self.skipTest("TODO")
-
     def testGetVrml(self):
         cmd.get_vrml
         self.skipTest("TODO")
