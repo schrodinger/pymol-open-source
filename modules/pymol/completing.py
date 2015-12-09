@@ -1,4 +1,4 @@
-import cmd
+cmd = __import__("sys").modules["pymol.cmd"]
 
 expr_sc = cmd.Shortcut([
     'segi', 'chain', 'resn', 'resi', 'name', 'alt', 'elem', 'text_type',

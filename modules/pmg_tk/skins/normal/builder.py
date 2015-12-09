@@ -1,13 +1,19 @@
 
+from __future__ import print_function
+
 import sys
 import os
 from glob import glob
 import traceback
-import string
 import types
 
-from Tkinter import *
-import tkMessageBox
+try:
+    from Tkinter import *
+    import tkMessageBox
+except ImportError:
+    from tkinter import *
+    import tkinter.messagebox as tkMessageBox
+
 import Pmw
 
 from pymol import editor
@@ -107,10 +113,10 @@ class CleanWizard(ActionWizard):
         self.cmd.unpick()
         self.cmd.deselect()
         obj_list = self.cmd.get_object_list(active_sele)
-        if isinstance(obj_list,types.ListType) and (len(obj_list)==1):
+        if isinstance(obj_list,list) and (len(obj_list)==1):
             self.run_job()
         else:
-            print "Error: can only clean one object at a time"
+            print("Error: can only clean one object at a time")
 
     def toggle(self):
         if self.activateOrDismiss():
@@ -148,7 +154,7 @@ class SculptWizard(ActionWizard):
                 self.cmd.unpick()
                 self.cmd.refresh_wizard()
             else:
-                print "Error: cannot sculpt more than one object at a time"
+                print("Error: cannot sculpt more than one object at a time")
         
     def sculpt_deactivate(self):
         if ((self.sculpt_object != None) and
@@ -1209,7 +1215,7 @@ class EditFrame(GuiFrame):
     def sculpt(self):
         picked = collectPicked(self.cmd)
         if len(picked):
-            self.cmd.select(active_sele, string.join(picked," or "))
+            self.cmd.select(active_sele, ' or '.join(picked))
         SculptWizard(_self=self.cmd).toggle()
 
     def clean(self):
@@ -1234,7 +1240,7 @@ class EditFrame(GuiFrame):
     def rest(self):
         picked = collectPicked(self.cmd)
         if len(picked):
-            self.cmd.select(active_sele,"byobj ("+string.join(picked," or ")+")")
+            self.cmd.select(active_sele,"byobj ("+' or '.join(picked)+")")
             self.cmd.deselect()
         else:
             self.cmd.delete(active_sele)
@@ -1358,7 +1364,7 @@ class Builder(Frame):
             imgList = glob("%s/aro*.gif" % imgDir) + glob("%s/cyc*.gif" % imgDir)
             for imgFile in imgList:
                 imgName = os.path.splitext(os.path.split(imgFile)[1])[0]
-                if imgName not in imgDict.keys():
+                if imgName not in list(imgDict.keys()):
                     imgDict[imgName] = PhotoImage(file=imgFile)
 
             # construct everything
@@ -1382,7 +1388,7 @@ class Builder(Frame):
                     if self.cmd.get_wizard()!=None:
                         self.cmd.do("_ cmd.get_wizard().do_pick(0)")
                 except pymol.CmdException:
-                    print " doAutoPick-Error: exception"
+                    print(" doAutoPick-Error: exception")
             self.doZoom()
 
     def doZoom(self, *ignore):
@@ -1479,7 +1485,7 @@ def collectPicked(self_cmd):
     result = []
     sele_dict = getSeleDict(self_cmd)
     for sele in ["pk1","pk2","pk3","pk4"]:
-        if sele_dict.has_key(sele):
+        if sele in sele_dict:
             result.append(sele)
     return result
 

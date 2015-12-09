@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 tmp_sele1 = "assign_tmp1"
 tmp_sele2 = "assign_tmp2"
 
@@ -139,7 +141,7 @@ def formal_charges(selection="(all)",quiet=0,_self=cmd):
     if missed_count>0:
         if not quiet:
             # looks like we did, so alter the user
-            print " WARNING: %d atoms did not have formal charges assigned"%missed_count
+            print(" WARNING: %d atoms did not have formal charges assigned"%missed_count)
         result = 0
     # remove the temporary selection we used to select appropriate residues
     
@@ -199,7 +201,7 @@ def amber99(selection="(all)",quiet=0,_self=cmd):
     if missed_count>0:
         if not quiet:
             # looks like we did, so alter the user
-            print " WARNING: %d atoms did not have properties assigned"%missed_count
+            print(" WARNING: %d atoms did not have properties assigned"%missed_count)
         result = 0
 
     # remove the temporary selection we used to select appropriate residues

@@ -12,21 +12,21 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 if __name__=='pymol.helping':
     
-    import string
-    import thread
-    import cmd
+    cmd = __import__("sys").modules["pymol.cmd"]
     import pymol
     from pymol import CmdException
 
-    from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+    from .cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
     def show_help(cmmd,_self=cmd): # INTERNAL
-        print "PyMOL>help %s" % cmmd
+        print("PyMOL>help %s" % cmmd)
         help(cmmd)
         if _self.get_setting_int("internal_feedback") > 0:
-            print "(Hit ESC to hide)"
+            print("(Hit ESC to hide)")
 
 
     def python_help(string, _self=cmd):
@@ -76,20 +76,20 @@ USAGE
 #        if cmd.get_setting_legacy("internal_feedback")>0.1:
 #            cmd.set("text","1",quiet=1)
         cmmd = _self.help_sc.auto_err(command,'topic')   
-        if _self.keyword.has_key(cmmd):
+        if cmmd in _self.keyword:
             doc = _self.keyword[cmmd][0].__doc__
             if doc:
-                print "\n",string.strip(doc),"\n"
+                print("\n", doc.strip(), "\n")
             else:
-                print "Error: sorry no help available on that command."
-        elif _self.help_only.has_key(cmmd):
+                print("Error: sorry no help available on that command.")
+        elif cmmd in _self.help_only:
             doc = _self.help_only[cmmd][0].__doc__
             if doc:
-                print "\n",string.strip(doc),"\n"
+                print("\n", doc.strip(), "\n")
             else:
-                print "Error: sorry no help available on that command."      
+                print("Error: sorry no help available on that command.")      
         else:
-            print "Error: unrecognized command"
+            print("Error: unrecognized command")
         return r
 
     def help_setting(name, quiet=1, _self=cmd):
@@ -309,11 +309,11 @@ NOTES
         import sys
         name = _self.kwhash.auto_err(name, 'command')
         func = cmd.keyword[name][0]
-        print ' CMD:', name
-        print ' API: %s.%s' % (func.__module__, func.__name__)
+        print(' CMD:', name)
+        print(' API: %s.%s' % (func.__module__, func.__name__))
         if func == getattr(_self, func.__name__, None):
-            print ' API: cmd.' + func.__name__
-        print ' FILE:', sys.modules[func.__module__].__file__
+            print(' API: cmd.' + func.__name__)
+        print(' FILE:', sys.modules[func.__module__].__file__)
         return func
 
     def keyboard(_self=cmd):

@@ -419,7 +419,7 @@ PyObject *P_setting = NULL;     /* okay as global -- just used for names */
 
 static PyMappingMethods wrapperMappingMethods;
 static PyTypeObject Wrapper_Type = {
-  PyObject_HEAD_INIT(NULL)
+  PyVarObject_HEAD_INIT(NULL, 0)
 };
 
 static PyObject* PyObject_GenericGetAttrOrItem(PyObject *o, PyObject *key) {
@@ -1734,7 +1734,9 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
 #ifndef _PYMOL_EMBEDDED
   Py_Initialize();
   PyEval_InitThreads();
+#if PY_MAJOR_VERSION < 3
   PyUnicode_SetDefaultEncoding("utf-8");        /* is this safe & legal? */
+#endif
 #endif
 
   init_cmd();
@@ -1785,7 +1787,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
       if(os && buffer) {
         PyObject *envir = PyObject_GetAttrString(os, "environ");
         if(envir) {
-          if(!PTruthCallStr1s(envir, "has_key", "PYMOL_PATH")) {
+          if(!PTruthCallStr1s(envir, "__contains__", "PYMOL_PATH")) {
             sprintf(buffer, "os.environ['PYMOL_PATH']=r'''%s'''\n", pymol_path);
             PyRun_SimpleString(buffer);
           }
@@ -1797,7 +1799,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
   }
   /* ultimate fallback -- try using the current working directory */
   PyRun_SimpleString
-    ("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
+    ("if 'PYMOL_PATH' not in os.environ: os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
   /* END PROPRIETARY CODE SEGMENT */
 
@@ -2045,7 +2047,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
       PyDict_SetItemString(P_pymol_dict, "_COb",
                            PyCObject_FromVoidPtr((void *) &SingletonPyMOLGlobals, NULL));
 
-      pcatch = PyImport_AddModule("pcatch");
+      pcatch = PyImport_ImportModule("pcatch");
       if(!pcatch)
         ErrFatal(G, "PyMOL", "can't find module 'pcatch'");
       PyObject_SetAttrString(sys, "stdout", pcatch);
@@ -2234,11 +2236,11 @@ void PInit(PyMOLGlobals * G, int global_instance)
     PyRun_SimpleString("import os");
 
     PyRun_SimpleString
-      ("if not os.environ.has_key('PYMOL_DATA'): os.environ['PYMOL_DATA']=os.environ['PYMOL_PATH']+'/data'");
+      ("if 'PYMOL_DATA' not in os.environ: os.environ['PYMOL_DATA']=os.environ['PYMOL_PATH']+'/data'");
     PyRun_SimpleString("os.environ['TUT']=os.environ['PYMOL_DATA']+'/tut'");
 
     PyRun_SimpleString
-      ("if not os.environ.has_key('PYMOL_SCRIPTS'): os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
+      ("if 'PYMOL_SCRIPTS' not in os.environ: os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
 
     Wrapper_Type.tp_name = "wrapper.Wrapper";
     Wrapper_Type.tp_basicsize = sizeof(WrapperObject);
@@ -2754,7 +2756,17 @@ static PyMethodDef PCatch_methods[] = {
 
 void PCatchInit(void)
 {
+#if PY_MAJOR_VERSION < 3
   PyImport_AddModule("pcatch");
   Py_InitModule("pcatch", PCatch_methods);
+#else
+  static struct PyModuleDef moduledef = { PyModuleDef_HEAD_INIT,
+    "pcatch", NULL, -1, PCatch_methods };
+  PyObject * pcatch = PyModule_Create(&moduledef);
+  if (pcatch) {
+    PyDict_SetItemString(PyImport_GetModuleDict(), "pcatch", pcatch);
+    Py_DECREF(pcatch);
+  }
+#endif
 }
 #endif

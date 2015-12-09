@@ -12,13 +12,15 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 if __name__=='pymol.editing':
 
     import pymol
     import math
-    import selector
-    import cmd
-    from cmd import _cmd,lock,unlock,Shortcut,is_string, \
+    from . import selector
+    cmd = __import__("sys").modules["pymol.cmd"]
+    from .cmd import _cmd,lock,unlock,Shortcut,is_string, \
           boolean_sc,boolean_dict,safe_list_eval, is_sequence, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error              
     from chempy import cpv
@@ -1225,7 +1227,7 @@ SEE ALSO
     '''
         r = DEFAULT_ERROR      
         if not "pk1" in _self.get_names("selections"):
-            print " Error: you must first pick an atom to replace."
+            print(" Error: you must first pick an atom to replace.")
             raise pymol.CmdException
         try:
             if h_fill: # strip off existing hydrogens
@@ -1621,7 +1623,7 @@ NOTES
         if _self.is_string(vector):
             vector = safe_list_eval(vector)
         if not _self.is_list(vector):
-            print "Error: bad vector."
+            print("Error: bad vector.")
             raise pymol.CmdException
         else:
             vector = [float(vector[0]),float(vector[1]),float(vector[2])]
@@ -1658,7 +1660,7 @@ NOTES
                 finally:
                     _self.unlock(r,_self)
             else:
-                print " Error: translate: unrecognized object_mode"
+                print(" Error: translate: unrecognized object_mode")
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
@@ -1735,7 +1737,7 @@ PYMOL API
         else:
             axis = safe_list_eval(str(axis))
         if not _self.is_list(axis):
-            print "Error: bad axis."
+            print("Error: bad axis.")
             raise pymol.CmdException
         else:
             axis = [float(axis[0]),float(axis[1]),float(axis[2])]
@@ -1780,7 +1782,7 @@ PYMOL API
                 finally:
                     _self.unlock(r,_self)
                 if not is_sequence(origin):
-                    print " Error: rotate: unknown object '%s'."%object
+                    print(" Error: rotate: unknown object '%s'."%object)
                     if _self._raising(r,_self):
                         raise pymol.CmdException                                
             elif object_mode==1:
@@ -1797,7 +1799,7 @@ PYMOL API
                     _self.unlock(r,_self)
                 
             else:
-                print " Error: rotate: unrecognized object_mode"
+                print(" Error: rotate: unrecognized object_mode")
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
@@ -2587,7 +2589,7 @@ ARGUMENTS
                 properties + ' = props.get((model,segi,chain,resi), ' + properties + ')',
                 space=space)
         if not int(quiet):
-            print ' Modified %d residues' % (len(space['props']))
+            print(' Modified %d residues' % (len(space['props'])))
 
     def mse2met(selection='all', quiet=1, _self=cmd):
         '''
@@ -2599,5 +2601,5 @@ DESCRIPTION
         _self.flag('ignore', '(%s) and resn MSE' % (selection), 'clear')
         _self.alter('(%s) and resn MSE' % selection, 'resn="MET";type="ATOM"')
         if not int(quiet):
-            print ' Altered %d MSE residues to MET' % (x)
+            print(' Altered %d MSE residues to MET' % (x))
 

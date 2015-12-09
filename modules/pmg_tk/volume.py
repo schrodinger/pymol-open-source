@@ -6,7 +6,11 @@ import os
 import math
 import colorsys
 import itertools
-import Tkinter
+
+try:
+    import Tkinter
+except ImportError:
+    import tkinter as Tkinter
 
 try:
     from pymol import cmd
@@ -629,7 +633,7 @@ class VRGBACanvas(object):
             for e in self.minmax_entries:
                 e._update()
         c = self._histcoords = []
-        for i in xrange(len(hist)):
+        for i in range(len(hist)):
             c.append(float(i) * binwidth + vmin)
             c.append(hist[i] * ihistmax)
 
@@ -784,7 +788,7 @@ class VRGBACanvas(object):
         '''
         v = self.canvasToValue(x)
         a = self.canvasToAlpha(y)
-        c = self.color_cycle.next()
+        c = next(self.color_cycle)
         self.add_point(v, a, c)
 
     def canvas_add_peak(self, x, y):
@@ -797,7 +801,7 @@ class VRGBACanvas(object):
         v2 = self.canvasToValue(x)
         v3 = self.canvasToValue(x + 10)
         a = self.canvasToAlpha(y)
-        c = self.color_cycle.next()
+        c = next(self.color_cycle)
         self.add_point(v1, 0, c)
         self.add_point(v2, a, c)
         self.add_point(v3, 0, c)

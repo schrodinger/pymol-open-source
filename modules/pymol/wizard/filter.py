@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 # filter wizard
 # no-frills tool for quickly filtering docked compounds, etc.
 
@@ -107,36 +109,36 @@ class Filter(Wizard):
         # allow user to focus on only a subset of the compounds
         self.browse = browse
         if self.browse == 1:
-            print " Filter: Browsing all compounds."
+            print(" Filter: Browsing all compounds.")
             cmd.mset() # all states visible
         elif self.object==None:
-            print " Filter-Error: please choose an object first"
+            print(" Filter-Error: please choose an object first")
         else: 
             self.check_object_dict()
             if self.browse == 2:
-                print " Filter: Browsing accepted compounds."
+                print(" Filter: Browsing accepted compounds.")
                 target = accept_str
             elif self.browse == 3:
-                print " Filter: Browsing rejected compounds."            
+                print(" Filter: Browsing rejected compounds.")            
                 target = reject_str
             elif self.browse == 4:
-                print " Filter: Browsing deferred compounds."                        
+                print(" Filter: Browsing deferred compounds.")                        
                 target = defer_str
             lst = []
             sd = self.state_dict
             sdo = self.dict[self.object]
             if self.browse<5:
-                for a in sdo.keys():
+                for a in list(sdo.keys()):
                     if sdo[a]==target:
                         lst.append(sd[a])
             else:
-                print " Filter: Browsing remaining compounds"
+                print(" Filter: Browsing remaining compounds")
                 for a in sd.keys():
-                    if not sdo.has_key(a):
+                    if a not in sdo:
                         lst.append(sd[a])
             lst.sort()
             if len(lst)==0:
-                print " Filter-Error: No matching compounds."
+                print(" Filter-Error: No matching compounds.")
             cmd.mset(' '.join(map(str,lst)))
             cmd.rewind()
         cmd.refresh_wizard()
@@ -144,7 +146,7 @@ class Filter(Wizard):
     def check_object_dict(self):
         # make sure we have a valid entry for this object in our dictionary
         
-        if not self.dict.has_key(self.object):
+        if self.object not in self.dict:
             self.dict[self.object]={} # create dictionary to store results
 
     def adjust(self,decision,inc):
@@ -178,7 +180,7 @@ class Filter(Wizard):
             self.tota = cmd.count_states(self.object)
             sdo=self.dict[self.object]
             self.togo = self.tota-len(sdo)
-            for a in sdo.keys():
+            for a in list(sdo.keys()):
                 dec = sdo[a]
                 self.adjust(dec,1)
         
@@ -233,7 +235,7 @@ class Filter(Wizard):
             state = cmd.get_state()
             ident = self.get_ident(self.object,state)
             sdo=self.dict[self.object]
-            if sdo.has_key(ident):
+            if ident in sdo:
                 self.prompt.append('%s: %s'%(ident,sdo[ident]))
             else:
                 self.prompt.append('%s?'%(ident))
@@ -244,7 +246,7 @@ class Filter(Wizard):
         
         self.check_object_dict()
         sdo = self.dict[self.object]
-        if sdo.has_key(entry):
+        if entry in sdo:
             self.adjust(sdo[entry],-1)
         else:
             self.togo = self.togo - 1
@@ -254,11 +256,11 @@ class Filter(Wizard):
     def accept(self):
         # accept compound and advance
         if self.object==None:
-            print " Filter-Error: Please choose an object first"
+            print(" Filter-Error: Please choose an object first")
         else:
             state = cmd.get_state()
             ident = self.get_ident(self.object,state)
-            print " Filter: Accepting '%s'"%ident
+            print(" Filter: Accepting '%s'"%ident)
             self.count(ident,accept_str)
         cmd.forward()         
         cmd.refresh_wizard()
@@ -266,11 +268,11 @@ class Filter(Wizard):
     def reject(self):
         # reject compound and advance
         if self.object==None:
-            print " Filter-Error: Please choose an object first"
+            print(" Filter-Error: Please choose an object first")
         else:
             state = cmd.get_state()
             ident = self.get_ident(self.object,state)
-            print " Filter: Rejecting '%s'"%ident
+            print(" Filter: Rejecting '%s'"%ident)
             self.check_object_dict()
             self.count(ident,reject_str)
         cmd.forward()         
@@ -279,11 +281,11 @@ class Filter(Wizard):
     def defer(self):
         # defer compound and advance
         if self.object==None:
-            print " Filter-Error: Please choose an object first"
+            print(" Filter-Error: Please choose an object first")
         else:
             state = cmd.get_state()
             ident = self.get_ident(self.object,state)
-            print " Filter: Deferring '%s'"%ident
+            print(" Filter: Deferring '%s'"%ident)
             self.check_object_dict()
             self.count(ident,defer_str)
         cmd.forward()
@@ -301,18 +303,18 @@ class Filter(Wizard):
         
     def create_object(self, what='Accept'):
         if not self.object:
-            print " Filter-Error: Please choose an object first"
+            print(" Filter-Error: Please choose an object first")
             return
         name = self.cmd.get_unused_name(self.object + '_' + what, 0)
         sdo = self.dict[self.object]
-        lst = [self.state_dict[ident] for (ident, w) in sdo.iteritems() if w == what]
+        lst = [self.state_dict[ident] for (ident, w) in sdo.items() if w == what]
         for state in sorted(lst):
             self.cmd.create(name, self.object, state, -1)
 
     def save(self):
         # write compounds to a file
         if self.object==None:
-            print " Filter-Error: please choose an object first"
+            print(" Filter-Error: please choose an object first")
         else:
             self.check_object_dict()         
             fname = self.object+".txt"
@@ -320,8 +322,8 @@ class Filter(Wizard):
                 f=open(fname,'w')
                 f.close()
             except:
-                print " Filter-Warning: '"+fname+"' in current directory is not writable."
-                print " Filter-Warning: attempting to write in home directory."
+                print(" Filter-Warning: '"+fname+"' in current directory is not writable.")
+                print(" Filter-Warning: attempting to write in home directory.")
                 fname = cmd.exp_path(os.path.join('~', fname))
             try:
                 f=open(fname,'w')
@@ -341,15 +343,15 @@ class Filter(Wizard):
                 lst.sort()
                 # write list with decisions
                 for a in lst:
-                    if sdo.has_key(a[1]):
+                    if a[1] in sdo:
                         f.write('%d\t"%s"\t"%s"\n'%(a[0],a[1],sdo[a[1]]))
                     else:
                         f.write('%d\t"%s"\t"?"\n'%(a[0],a[1]))
                 f.close()
-                print " Filter: Wrote '%s'."%fname
+                print(" Filter: Wrote '%s'."%fname)
             except:
                 traceback.print_exc()
-                print " Filter-Error: Unable to write '%s'."%fname
+                print(" Filter-Error: Unable to write '%s'."%fname)
                 
     def cleanup(self):
         # save current state in global vars...

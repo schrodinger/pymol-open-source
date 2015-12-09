@@ -8,16 +8,16 @@ saved = {}
 class Stereodemo(Wizard):
 
     def launch(self,name,pretty_name=None):
-	demo = DemoInfo()
+        demo = DemoInfo()
         if self.last:
             if hasattr(demo,self.last):
                 getattr(demo,self.last)(cleanup=1)
         if hasattr(demo,name):
-	    cmd.delete("all")
-	    if pretty_name != None:
-		cmd.do("_ wizard message, Please wait while the %s example loads..., dismiss=0"%pretty_name)
+            cmd.delete("all")
+            if pretty_name != None:
+                cmd.do("_ wizard message, Please wait while the %s example loads..., dismiss=0"%pretty_name)
             self.message = demo.message_dict.get(name,None)
-	    cmd.refresh_wizard()
+            cmd.refresh_wizard()
             self.last = name
             demo_fn = getattr(demo,name)
             t = threading.Thread(target=demo_fn)
@@ -25,7 +25,7 @@ class Stereodemo(Wizard):
             t.start()
         else:
             self.last = None
-	saved['last']=self.last
+        saved['last']=self.last
 
     def __init__(self,*arg,**kw):
         _self=kw.get('_self',cmd)
@@ -33,10 +33,10 @@ class Stereodemo(Wizard):
         self.message = []
         self.last = None
         cmd.full_screen("off")
-        if not  ("mono" in kw.keys()):
+        if not  ("mono" in list(kw.keys())):
             cmd.stereo("on")
         cmd.set("sphere_mode","5")
-        if saved.has_key('last'):
+        if 'last' in saved:
             self.last = saved['last']
         if len(arg):
             self.launch(arg[0])
@@ -71,14 +71,13 @@ class Stereodemo(Wizard):
 	    [ 2, 'Toggle Fullscreen', 
 	      'cmd.full_screen()'],
 	    [ 2, 'Toggle Stereo 3D', 
-	      'cmd.stereo(apply(lambda x:{ "off":"on", "on":"off"}[x],(cmd.get("stereo"),)))'],
+              'cmd.stereo("off" if cmd.get_setting_int("stereo") else "on")'],
 #            [ 2, 'End Demonstration', 'cmd.get_wizard().launch("finish")' ],
 #            [ 2, 'Swap Left/Right Stereo', 'stereo swap'],
             ]
 
 from pymol.vfont import plain
 from pymol.cgo import *
-import string
 import traceback
 from pymol import util
 import threading
@@ -98,75 +97,71 @@ class DemoInfo:
 
     def get_sess(self,file):
         from chempy import io
-	try:
-	    file = cmd.exp_path(file)
-	    sess = io.pkl.fromFile(file)
-	    del sess['wizard']
-	    del sess['main']  
-	    return sess
-	except:
-	    traceback.print_exc()
-	return None
+        file = cmd.exp_path(file)
+        sess = io.pkl.fromFile(file)
+        del sess['wizard']
+        del sess['main']
+        return sess
 
     def homology(self,cleanup=0):
-	if not cleanup:
-	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/homology.pse"))
-	    cmd.do("replace_wizard toggle, Homology Modeling")
+        if not cleanup:
+            cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/homology.pse"))
+            cmd.do("replace_wizard toggle, Homology Modeling")
 
     def structure(self,cleanup=0):
-	if not cleanup:
-	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/structure.pse"))
-	    cmd.do("replace_wizard toggle, Structure Alignment")
-	    cmd.set("seq_view_label_mode",1)
-	    cmd.set("seq_view",1)
-	else:
-	    cmd.set("seq_view_label_mode",0)
-	    cmd.set("seq_view",0)
+        if not cleanup:
+            cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/structure.pse"))
+            cmd.do("replace_wizard toggle, Structure Alignment")
+            cmd.set("seq_view_label_mode",1)
+            cmd.set("seq_view",1)
+        else:
+            cmd.set("seq_view_label_mode",0)
+            cmd.set("seq_view",0)
 
     def medchem(self,cleanup=0):
-	if not cleanup:
-	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/drugdisc.pse"))
-	    cmd.do("replace_wizard toggle, Medicinal Chemistry")
-	else:
-	    cmd.set("sphere_scale",1.0)
+        if not cleanup:
+            cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/drugdisc.pse"))
+            cmd.do("replace_wizard toggle, Medicinal Chemistry")
+        else:
+            cmd.set("sphere_scale",1.0)
 
     def electomo(self,cleanup=0):
-	if not cleanup:
-	    cmd.feedback("disable","objectsurface","actions")
-	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/flagellar.pse"))
-	    cmd.set("sweep_mode",3)
-	    cmd.set("sweep_angle",3)
-	    cmd.rock()
-	    cmd.do("replace_wizard toggle, Electron Tomography")
-	else:
-	    cmd.mstop()
-	    cmd.rock(0)
+        if not cleanup:
+            cmd.feedback("disable","objectsurface","actions")
+            cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/flagellar.pse"))
+            cmd.set("sweep_mode",3)
+            cmd.set("sweep_angle",3)
+            cmd.rock()
+            cmd.do("replace_wizard toggle, Electron Tomography")
+        else:
+            cmd.mstop()
+            cmd.rock(0)
 
     def electro(self,cleanup=0):
-	if not cleanup:
-	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/electro.pse"))
-	    cmd.do("replace_wizard toggle, Computational Chemistry (Electrostatics)")
-	    cmd.rock(1)
-	else:
-	    cmd.rock(0)
+        if not cleanup:
+            cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/electro.pse"))
+            cmd.do("replace_wizard toggle, Computational Chemistry (Electrostatics)")
+            cmd.rock(1)
+        else:
+            cmd.rock(0)
 
     def animate(self,cleanup=0):
-	if not cleanup:
-	    cmd.set("security",0)
-	    cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/animate.pse"))
-	    cmd.rock(1)
-	    cmd.set("field_of_view",23)
-	    cmd.rock(1)
-	    cmd.set("sweep_mode",3)
-	    cmd.set("sweep_angle",10)
-	    cmd.set("sphere_mode",5)
-	    cmd.do("replace_wizard toggle, Molecular Animation")
-	else:
-	    cmd.set("mesh_width",1)
-	    cmd.set("field_of_view",20)
-	    cmd.rock(0)
-	    cmd.mset()
-	    cmd.mstop()
+        if not cleanup:
+            cmd.set("security",0)
+            cmd.set_session(self.get_sess("$PYMOL_DATA/big_demo/animate.pse"))
+            cmd.rock(1)
+            cmd.set("field_of_view",23)
+            cmd.rock(1)
+            cmd.set("sweep_mode",3)
+            cmd.set("sweep_angle",10)
+            cmd.set("sphere_mode",5)
+            cmd.do("replace_wizard toggle, Molecular Animation")
+        else:
+            cmd.set("mesh_width",1)
+            cmd.set("field_of_view",20)
+            cmd.rock(0)
+            cmd.mset()
+            cmd.mstop()
 
     def rep_old(self,cleanup=0):
         if not cleanup:
@@ -201,9 +196,8 @@ class DemoInfo:
                 cmd.hide("everything","rep1")
                 for a in range(2,9):
                     cmd.create("rep%d"%a,"rep1")
-                map(lambda x,y:cmd.show(x,"rep%d"%y),
-                     rep_list,
-                     range(1,9))
+                for x, y in enumerate(rep_list, 1):
+                    cmd.show(x, "rep%d" % y)
                 cmd.reset()
                 cmd.zoom("rep1",24)
                 util.cbay("rep2")
@@ -233,7 +227,7 @@ class DemoInfo:
                 for a in range(1,9):
                     cmd.origin("rep%d"%a,object="rep%d"%a)
                 cmd.mset("1")
-                st = string.join(map(lambda x,y:"rotate angle=-3,object=rep%d,axis=%s;"%(x,y),range(1,9),
+                st = ' '.join(map(lambda x,y:"rotate angle=-3,object=rep%d,axis=%s;"%(x,y),list(range(1,9)),
                                             ['x','y','x','y','x','y','x','y']))
                 cmd.mdo(1,st)
                 cmd.set("suspend_updates",0,quiet=1)
@@ -297,7 +291,7 @@ class DemoInfo:
                 cmd.disable()
                 cmd.enable("il2")
                 cmd.map_new("map","gaussian","0.75","il2")
-		cmd.feedback("disable","objectmesh","actions")
+                cmd.feedback("disable","objectmesh","actions")
                 cmd.set("ribbon_color","purple","il2")
                 cmd.set("roving_detail",1)
                 cmd.set("roving_origin",1)
@@ -394,8 +388,8 @@ class DemoInfo:
             cmd.set("suspend_updates",1,quiet=1)
             cmd.disable()
             cmd.delete("ray")
-	    cmd.set("sphere_mode",5)
-	    cmd.set("sphere_scale",1.0)
+            cmd.set("sphere_mode",5)
+            cmd.set("sphere_scale",1.0)
             cmd.load("$PYMOL_DATA/demo/il2.pdb","ray")
             cmd.remove("(ray and hydro)")
             cmd.hide("lines","ray")
@@ -403,8 +397,8 @@ class DemoInfo:
             cmd.orient("ray")
             cmd.turn("x",90)
             util.ray_shadows('heavy')
-	    cmd.mstop()
-	    cmd.rock(0)
+            cmd.mstop()
+            cmd.rock(0)
             cmd.set("suspend_updates",0,quiet=1)
             cmd.refresh()
             cmd.do("ray")
@@ -419,8 +413,8 @@ class DemoInfo:
             cmd.set("suspend_updates",1,quiet=1)
             cmd.disable()
             cmd.delete("sculpt")
-	    cmd.set("sphere_scale","1.0")
-	    cmd.set("sphere_mode",5)
+            cmd.set("sphere_scale","1.0")
+            cmd.set("sphere_mode",5)
             cmd.load("$PYMOL_DATA/demo/pept.pdb","sculpt")
             cmd.hide("lines","sculpt")
 #            cmd.show("sticks","sculpt")
@@ -431,13 +425,13 @@ class DemoInfo:
             cmd.set("auto_sculpt",1)
             cmd.set("sculpting",1)
             cmd.sculpt_activate("sculpt")
-	    cmd.set("sculpting_cycles","100")
+            cmd.set("sculpting_cycles","100")
             cmd.do("edit_mode")
             cmd.set("valence","0.05")
             cmd.set("suspend_updates",0,quiet=0)
-	    cmd.sculpt_iterate("sculpt")
-	    cmd.alter_state(1,"sculpt","x=x*1.5;y=y*0.1;z=z*1.5")
-	    cmd.zoom()
+            cmd.sculpt_iterate("sculpt")
+            cmd.alter_state(1,"sculpt","x=x*1.5;y=y*0.1;z=z*1.5")
+            cmd.zoom()
 
             cmd.unpick()
         else:

@@ -7,7 +7,7 @@ Various morphing workflows
 '''
 
 import pymol
-import cmd
+cmd = __import__("sys").modules["pymol.cmd"]
 
 def morph(name, sele1, sele2=None, state1=-1, state2=-1, refinement=3,
         steps=30, method='rigimol', match='align', quiet=1, _self=cmd):

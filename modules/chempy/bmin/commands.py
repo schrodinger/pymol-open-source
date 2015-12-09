@@ -6,7 +6,7 @@ import threading
 
 def amin(*arg,**kwarg):
     realtime.assign(arg[0])
-    apply(bmin,arg,kwarg)
+    bmin(*arg, **kwarg)
 
 def bmin(object,iter=500,grad=0.1,interval=100,
             solvation=None):

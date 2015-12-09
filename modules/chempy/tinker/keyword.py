@@ -12,11 +12,13 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import chempy
 
 def get_partial_charge(model):
     if chempy.feedback['verbose']:
-        print ' '+str(__name__)+': generating partial charge keywords...'
+        print(' '+str(__name__)+': generating partial charge keywords...')
     list = []
     c = -1
     for a in model.atom:
@@ -37,7 +39,7 @@ def get_restrain_positions(model,flag,w_width,f_cnst):
             n = n + 1
         c = c + 1
     if chempy.feedback['actions']:
-        print ' '+str(__name__)+': %d atoms restrained using flag %d ...' % (n,flag)
+        print(' '+str(__name__)+': %d atoms restrained using flag %d ...' % (n,flag))
         
     return list
 
@@ -52,6 +54,6 @@ def get_inactive(model,flag):
             n = n + 1
         c = c + 1
     if chempy.feedback['actions']:
-        print ' '+str(__name__)+': %d atoms fixed using flag %d ...' % (n,flag)
+        print(' '+str(__name__)+': %d atoms fixed using flag %d ...' % (n,flag))
     return list
 

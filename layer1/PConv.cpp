@@ -30,13 +30,19 @@ Z* -------------------------------------------------------------------
 
 #include <vector>
 
+#if PY_MAJOR_VERSION >= 3
+#define pickle_mod_name "pickle"
+#else
+#define pickle_mod_name "cPickle"
+#endif
+
 /* Return value: New reference.
  * Load a pickle from the given string
  */
 PyObject *PConvPickleLoads(PyObject * str)
 {
   PyObject *picklemod = NULL, *obj = NULL;
-  ok_assert(1, picklemod = PyImport_ImportModule("cPickle"));
+  ok_assert(1, picklemod = PyImport_ImportModule(pickle_mod_name));
   obj = PYOBJECT_CALLMETHOD(picklemod, "loads", "O", str);
 ok_except1:
   Py_XDECREF(picklemod);
@@ -49,7 +55,7 @@ ok_except1:
 PyObject *PConvPickleDumps(PyObject * obj)
 {
   PyObject *picklemod = NULL, *str = NULL;
-  ok_assert(1, picklemod = PyImport_ImportModule("cPickle"));
+  ok_assert(1, picklemod = PyImport_ImportModule(pickle_mod_name));
   str = PYOBJECT_CALLMETHOD(picklemod, "dumps", "Oi", obj, 1);
 ok_except1:
   Py_XDECREF(picklemod);

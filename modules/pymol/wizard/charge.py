@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -142,7 +144,7 @@ class Charge(Wizard):
 
     def do_pick(self,bondFlag):
         if bondFlag:
-            print " Error: please select a single atom"
+            print(" Error: please select a single atom")
             
         if self.mode == 'cpychg':
             # picking up
@@ -181,7 +183,7 @@ class Charge(Wizard):
             elif self.status==1:
                 pymol.stored.valid_atoms = []
                 if self.cmd.iterate("(byres pk1)","stored.valid_atoms.append(name)"):
-                    kees = self.charge_dict.keys()
+                    kees = list(self.charge_dict.keys())
                     valid_dict = {}
                     for a in pymol.stored.valid_atoms:
                         if a in kees:

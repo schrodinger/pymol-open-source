@@ -14,11 +14,11 @@
 
 if __name__=='pymol.selecting':
     
-    import selector
+    from . import selector
 
-    import cmd
+    cmd = __import__("sys").modules["pymol.cmd"]
 
-    from cmd import _cmd,lock,unlock,Shortcut, \
+    from .cmd import _cmd,lock,unlock,Shortcut, \
           _feedback,fb_module,fb_mask, is_tuple, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     

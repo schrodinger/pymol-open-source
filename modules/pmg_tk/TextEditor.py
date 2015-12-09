@@ -4,9 +4,15 @@ Simple Text Editor
 
 import os
 import sys
-import Tkinter
-import tkFileDialog
-import tkMessageBox
+
+try:
+    import Tkinter
+    import tkFileDialog
+    import tkMessageBox
+except ImportError:
+    import tkinter as Tkinter
+    import tkinter.filedialog as tkFileDialog
+    import tkinter.messagebox as tkMessageBox
 
 class TextEditor:
 

@@ -61,18 +61,19 @@
 
 from __future__ import absolute_import
 
+# Don't import __future__.print_function
+
 if __name__=='pymol.parsing':
 
     import re
     import sys
     import threading
-    import new
+    import types
     import traceback
     import copy
     
-    class QuietException:
-        def __init__(self,args=None):
-            self.args = args
+    class QuietException(BaseException):
+        pass
 
     # constants for keyword modes
 
@@ -138,17 +139,17 @@ if __name__=='pymol.parsing':
                     result.append(a[1])
                     c = c + 1
                     continue
-            if inp_dict.has_key(p):
+            if p in inp_dict:
                 result.append(inp_dict[p])
                 del inp_dict[p]
-            elif def_dict.has_key(p):
+            elif p in def_dict:
                 result.append(def_dict[p])
             elif c<n_req:
-                print "Error: invalid argument(s)."
+                print("Error: invalid argument(s).")
                 raise QuietException
             c = c + 1
         if len(inp_dict):
-            print "Error: invalid argument(s)."            
+            print("Error: invalid argument(s).")            
             raise QuietException
         return result
     
@@ -199,7 +200,7 @@ if __name__=='pymol.parsing':
                         mo = arg_easy_nester_re.match(st[cc:]) # no internal commas
                         if mo:
                             cnt = len(nester_char_re.findall(mo.group(0))) 
-                            if (2*(cnt/2))!=cnt: # make sure nesters are matched in count
+                            if cnt % 2 == 1: # make sure nesters are matched in count
                                 mo = None
                         if mo:
                             nest_str = nest_str + mo.group(0)
@@ -216,8 +217,8 @@ if __name__=='pymol.parsing':
                             if mo:
                                 se = trim_nester(mo.group(0))
                                 if se==None:
-                                    print "Error: "+st
-                                    print "Error: "+" "*cc+"^ syntax error (type 1)."
+                                    print("Error: "+st)
+                                    print("Error: "+" "*cc+"^ syntax error (type 1).")
                                     raise QuietException
                                 else:
                                     cc = cc + len(se)
@@ -238,8 +239,8 @@ if __name__=='pymol.parsing':
                     mo = arg_value_re.match(st[cc:])
                     if not mo:
                         if(st[cc:cc+1]!=','):
-                            print "Error: "+st
-                            print "Error: "+" "*cc+"^ syntax error (type 2)."
+                            print("Error: "+st)
+                            print("Error: "+" "*cc+"^ syntax error (type 2).")
                             raise QuietException
                         else:
                             # allow blank arguments
@@ -263,8 +264,8 @@ if __name__=='pymol.parsing':
                     if st.startswith(','):
                         st = st[1:].lstrip()
                     else:
-                        print "Error: "+st
-                        print "Error: "+" "*cc+"^ syntax error (type 3)."
+                        print("Error: "+st)
+                        print("Error: "+" "*cc+"^ syntax error (type 3).")
                         raise QuietException
         if __name__!='__main__':
             if _self._feedback(_self.fb_module.parser, _self.fb_mask.debugging):
@@ -274,7 +275,7 @@ if __name__=='pymol.parsing':
     def dump_str_list(list):
         lst = list_to_str_list(list)
         for a in lst:
-            print a
+            print(a)
 
     def list_to_str_list(list,width=77,margin=2): # format strings into a list
         result = []
@@ -284,14 +285,14 @@ if __name__=='pymol.parsing':
             for a in list:
                 if len(a)>mxln:
                     mxln = len(a)
-            n_col = width/mxln
+            n_col = width//mxln
             width = width - margin
             while (n_col * mxln + n_col*2)>width:
                 n_col = n_col - 1
             if n_col < 1:
                 n_col = 1
             ll = len(list)
-            n_row = len(list)/n_col
+            n_row = len(list)//n_col
             while (n_row*n_col)<ll:
                 n_row = n_row + 1
             rows = []
@@ -329,7 +330,7 @@ if __name__=='pymol.parsing':
             else:
                 st = st + " " + a
             ac = ac + 1
-        print st,"]"*pc
+        print(st + " " + "]"*pc)
 
     def prepare_call(fn,lst,mode=STRICT,name=None,_self=None): # returns tuple of arg,kw or excepts if error
         if name==None:
@@ -337,13 +338,13 @@ if __name__=='pymol.parsing':
         result = (None,None)
         arg = []
         kw = {}
-        co = fn.func_code
+        co = fn.__code__
         if (co.co_flags & 0xC): # disable error checking for *arg or **kw functions
             mode = NO_CHECK
         arg_nam = co.co_varnames[0:co.co_argcount]
         narg = len(arg_nam)
-        if fn.func_defaults:
-            ndef = len(fn.func_defaults)
+        if fn.__defaults__:
+            ndef = len(fn.__defaults__)
         else:
             ndef = 0
         nreq = narg-ndef
@@ -361,11 +362,11 @@ if __name__=='pymol.parsing':
                     kw[a[0]]=a[1]
             # set feedback argument (quiet), if extant, results enabled, and not overridden
             if "quiet" in arg_nam:
-                if not kw.has_key("quiet"):
+                if "quiet" not in kw:
                     if __name__!='__main__':
                         if _self._feedback(_self.fb_module.cmd, _self.fb_mask.results):
                             kw["quiet"] = 0
-            if not kw.has_key("_self"): # always send _self in the dictionary
+            if "_self" not in kw: # always send _self in the dictionary
                 kw["_self"]=_self
         else:
             # error checking enabled
@@ -381,7 +382,7 @@ if __name__=='pymol.parsing':
                 tmp_lst = []
                 for a in lst:
                     if(a[0]!=None):
-                        if not arg_dct.has_key(a[0]):
+                        if a[0] not in arg_dct:
                             tmp_lst.extend([(None,a[0]),(None,a[1])])
                         else:
                             tmp_lst.append(a)
@@ -391,14 +392,14 @@ if __name__=='pymol.parsing':
             # make sure we don't have too many arguments
             if len(lst)>narg:
                 if not narg:
-                    print "Error: too many arguments for %s; None expected."%(name)
+                    print("Error: too many arguments for %s; None expected."%(name))
                 elif narg==nreq:
-                    print "Error: too many arguments for %s; %d expected, %d found."%(
-                        name,nreq,len(lst))
+                    print("Error: too many arguments for %s; %d expected, %d found."%(
+                        name,nreq,len(lst)))
                     dump_arg(name,arg_nam,nreq)
                 else:
-                    print "Error: too many arguments for %s; %d to %d expected, %d found."%(
-                        name,nreq,narg,len(lst))
+                    print("Error: too many arguments for %s; %d to %d expected, %d found."%(
+                        name,nreq,narg,len(lst)))
                     dump_arg(name,arg_nam,nreq)            
                 raise QuietException
             # match names to unnamed arguments to create argument dictionary
@@ -407,7 +408,7 @@ if __name__=='pymol.parsing':
             for a in lst:
                 if a[0]==None:
                     if ac>=narg:
-                        print "Parsing-Error: ambiguous argument: '"+str(a[1])+"'"
+                        print("Parsing-Error: ambiguous argument: '"+str(a[1])+"'")
                         raise QuietException
                     else:
                         val_dct[arg_nam[ac]]=a[1]
@@ -417,19 +418,19 @@ if __name__=='pymol.parsing':
             # now check to make sure we don't have any missing arguments
             for a in arg_nam:
                 if arg_dct[a]:
-                    if not val_dct.has_key(a):
-                        print "Parsing-Error: missing required argument in function ", name, " :",a
+                    if a not in val_dct:
+                        print("Parsing-Error: missing required argument in function %s : %s" % (name, a))
                         raise QuietException
             # return all arguments as keyword arguments
             kw = val_dct
             # set feedback argument (quiet), if extant, results enabled, and not overridden
-            if arg_dct.has_key("quiet"):
-                if not kw.has_key("quiet"):
+            if "quiet" in arg_dct:
+                if "quiet" not in kw:
                     if _self._feedback(_self.fb_module.cmd, _self.fb_mask.results):
                         kw["quiet"] = 0
             # make sure command knows which PyMOL instance to message
             if "_self" in arg_nam:
-                if not kw.has_key("_self"):
+                if "_self" not in kw:
                     kw["_self"]=_self
         if __name__!='__main__':
             if _self._feedback(_self.fb_module.parser, _self.fb_mask.debugging):
@@ -521,13 +522,9 @@ SEE ALSO
         return run(filename, namespace, 1, _self)
 
     def execfile(filename, global_ns, local_ns):
-        if '://' in filename:
-            import pymol.internal as pi
-            co = compile(pi.file_read(filename), filename, 'exec')
-            exec(co, global_ns, local_ns)
-        else:
-            import __builtin__ as b
-            b.execfile(filename, global_ns, local_ns)
+        import pymol.internal as pi
+        co = compile(pi.file_read(filename), filename, 'exec')
+        exec(co, global_ns, local_ns)
 
     def run_file(file,global_ns,local_ns):
         pymol.__script__ = file
@@ -542,7 +539,7 @@ SEE ALSO
     
     def run_file_as_module(file,spawn=0):
         name = re.sub('[^A-Za-z0-9]','_',file)
-        mod = new.module(name)
+        mod = types.ModuleType(name)
         mod.__file__ = file
         mod.__script__ = file
         sys.modules[name]=mod
@@ -584,7 +581,7 @@ SEE ALSO
         else:
             mx=0
         pair = { '(':')','[':']','{':'}',"'":"'",'"':'"' }
-        plst = pair.keys()
+        plst = list(pair.keys())
         stack = []
         lst = []
         c = 0

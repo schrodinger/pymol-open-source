@@ -12,14 +12,13 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-if __name__=='pymol.shortcut' or __name__=='shortcut':
-    
-    import copy
-    try:
-        from pymol.checking import is_string, is_list
-    except:
-        from checking import is_string, is_list
-    
+from __future__ import print_function
+
+if __name__=='pymol.shortcut':
+    from . import parsing
+    from .checking import is_string, is_list
+
+if True:
     def mkabbr(a, m=1):
         b = a.split('_')
         b[:-1] = [c[0:m] for c in b[:-1]]
@@ -30,12 +29,12 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
         def __call__(self):
             return self
 
-        def __init__(self,list=[],filter_leading_underscore=1):
+        def __init__(self, keywords=(), filter_leading_underscore=1):
             self.filter_leading_underscore = filter_leading_underscore
             if filter_leading_underscore:
-                self.keywords=filter(lambda x:x[:1]!='_',list)
+                self.keywords = [x for x in keywords if x[:1]!='_']
             else:
-                self.keywords = copy.deepcopy(list)
+                self.keywords = list(keywords)
             self.shortcut = {}
             self.abbr_dict = {}
             self.rebuild()
@@ -60,12 +59,12 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
                             sub = abbr[0:b]
                             hash[sub] = 0 if sub in hash else a
 
-        def rebuild(self,list=None):
-            if list!=None:
+        def rebuild(self, keywords=None):
+            if keywords is not None:
                 if self.filter_leading_underscore:
-                    self.keywords=filter(lambda x:x[:1]!='_',list)
+                    self.keywords = [x for x in keywords if x[:1]!='_']
                 else:
-                    self.keywords = copy.deepcopy(list)
+                    self.keywords = list(keywords)
             # optimize symbols
             self.shortcut = {}
             hash = self.shortcut
@@ -92,7 +91,7 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
 
         def _rebuild_finalize(self):
             hash = self.shortcut
-            for a, adk in self.abbr_dict.iteritems():
+            for a, adk in self.abbr_dict.items():
                 if len(adk)==1:
                     hash[a]=adk[0]
             for a in self.keywords:
@@ -106,7 +105,7 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
             mode = 0/1: if mode=1, do prefix search even if kee has exact match
             '''
             if not len(kee): # empty string matches everything
-                return copy.deepcopy(self.keywords)
+                return list(self.keywords)
 
             try:
                 r = self.shortcut[kee]
@@ -117,7 +116,7 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
 
             # prefix search
             lst_set = set(a for a in self.keywords if a.startswith(kee))
-            for abbr, a_list in self.abbr_dict.iteritems():
+            for abbr, a_list in self.abbr_dict.items():
                 if abbr.startswith(kee):
                     lst_set.update(a_list)
 
@@ -134,7 +133,9 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
             return lst
 
         def has_key(self,kee):
-            return self.shortcut.has_key(kee)
+            return kee in self.shortcut
+
+        __contains__ = has_key
 
         def __getitem__(self,kee):
             return self.shortcut.get(kee, None)
@@ -150,46 +151,42 @@ if __name__=='pymol.shortcut' or __name__=='shortcut':
 
         def auto_err(self,kee,descrip=None):
             result = None
-            if not self.shortcut.has_key(kee):
+            if kee not in self.shortcut:
                 if descrip!=None:
-                    print "Error: unknown %s: '%s'."%(
-                        descrip,kee),
+                    print("Error: unknown %s: '%s'." % (descrip, kee), end=' ')
                     lst = self.interpret('')
                     if is_list(lst):
                         if len(lst)<100:
                             lst.sort()
-                            print "Choices:"
+                            print("Choices:")
                             lst = parsing.list_to_str_list(lst)
-                            for a in lst: print a
+                            for a in lst: print(a)
                         else:
-                            print
+                            print()
                     else:
-                        print
+                        print()
                     raise parsing.QuietException
 
             else:
                 result = self.interpret(kee)
                 if not is_string(result):
                     if descrip!=None:
-                        print "Error: ambiguous %s:"%descrip
+                        print("Error: ambiguous %s:"%descrip)
                         lst = parsing.list_to_str_list(result)
                         for a in lst:
-                            print a
+                            print(a)
                         raise parsing.QuietException
             return result
 
-    if __name__=='__main__':
-        list = [ 'warren','wasteland','electric','well' ]
-        sc = Shortcut(list)
-        tv = sc.has_key('a')
-        print tv==0,tv
-        tv = sc.has_key('w')
-        print tv==1,tv
-        tv = sc.has_key('war')
-        print tv==1,tv
-        tv = sc.ambiguous('w')
-        print tv==['warren', 'wasteland', 'well'],tv   
-        tv = sc.ambiguous('e')
-        print tv==None,tv   
-
-    import parsing
+if __name__=='__main__':
+    sc = Shortcut(['warren','wasteland','electric','well'])
+    tv = sc.has_key('a')
+    print(tv==0,tv)
+    tv = sc.has_key('w')
+    print(tv==1,tv)
+    tv = sc.has_key('war')
+    print(tv==1,tv)
+    tv = sc.interpret('w')
+    print(sorted(tv)==['warren', 'wasteland', 'well'],tv)
+    tv = sc.interpret('e')
+    print(isinstance(tv, str), tv)

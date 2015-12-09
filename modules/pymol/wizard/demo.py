@@ -15,7 +15,7 @@ class Demo(Wizard):
         Wizard.__init__(self,_self)
         self.message = []
         self.last = None
-        if saved.has_key('last'):
+        if 'last' in saved:
             self.last = saved['last']
         if name!=None:
             demo = DemoInfo(_self=_self)
@@ -57,7 +57,6 @@ class Demo(Wizard):
 
 from pymol.vfont import plain
 from pymol.cgo import *
-import string
 import traceback
 from pymol import util
 import threading
@@ -113,9 +112,8 @@ class DemoInfo:
                 self.cmd.hide("everything","rep1")
                 for a in range(2,9):
                     self.cmd.create("rep%d"%a,"rep1")
-                map(lambda x,y,s=self:s.cmd.show(x,"rep%d"%y),
-                     rep_list,
-                     range(1,9))
+                for y, x in enumerate(rep_list, 1):
+                    self.cmd.show(x, "rep%d" % y)
                 self.cmd.reset()
                 self.cmd.zoom("rep1",24)
                 util.cbay("rep2",_self=self.cmd)
@@ -145,8 +143,7 @@ class DemoInfo:
                 for a in range(1,9):
                     self.cmd.origin("rep%d"%a,object="rep%d"%a)
                 self.cmd.mset("1")
-                st = string.join(map(lambda x,y:"rotate angle=-3,object=rep%d,axis=%s;"%(x,y),range(1,9),
-                                            ['x','y','x','y','x','y','x','y']))
+                st = ' '.join("rotate angle=-3,object=rep%d,axis=%s;" % (x, 'yx'[x % 2]) for x in range(1, 9))
                 self.cmd.mdo(1,st)
                 self.cmd.set("suspend_updates",0,quiet=1)
                 self.cmd.mplay()
@@ -213,7 +210,7 @@ class DemoInfo:
             self.cmd.zoom("arg",2)
             self.cmd.show("sticks","arg")
             self.cmd.feedback('dis','sel','res')
-            for a in xrange(1,181):
+            for a in range(1,181):
                 try:
                     self.cmd.set("suspend_updates",1,quiet=1)
                     self.cmd.edit("(arg & name CD)","(arg & name CG)",quiet=1)

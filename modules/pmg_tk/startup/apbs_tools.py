@@ -135,6 +135,7 @@ Known hacks:
 """
 from __future__ import division
 from __future__ import generators
+from __future__ import print_function
 
 INCLUDEWEBAPBS = False
 
@@ -145,8 +146,14 @@ APBS_DEFAULT=True
 import tempfile
 import os,math,re
 import string
-import Tkinter
-from Tkinter import *
+
+try:
+    import Tkinter
+    from Tkinter import *
+except ImportError:
+    import tkinter as Tkinter
+    from tkinter import *
+
 import Pmw
 import distutils.spawn # used for find_executable
 import traceback
@@ -212,7 +219,7 @@ def get_default_location(name):
             # on that always.
             (retcode,prog_out) = run(f,'--version')
             if 'dyld: Library not loaded' in prog_out:
-                print "Skipping",f,"because it appears to be broken (dyld)"
+                print("Skipping",f,"because it appears to be broken (dyld)")
                 return False
         if name in 'ApbsClient.py ApbsClient'.split():
             # The python script does seem to return 0 on success.
@@ -221,12 +228,12 @@ def get_default_location(name):
             # wants to import.
             (retcode,prog_out) = run(f,'')
             if retcode != 0:
-                print 'Bad ApbsClient.py'
-                print 'Program out'
-                print prog_out
-                print "Just so you know, os.system returns"
-                print os.system(f)
-                print "."
+                print('Bad ApbsClient.py')
+                print('Program out')
+                print(prog_out)
+                print("Just so you know, os.system returns")
+                print(os.system(f))
+                print(".")
                 return False
         return True
     searchDirs = []
@@ -279,7 +286,7 @@ def get_default_location(name):
         searchDirs.append(".")
 
     if DEBUG:
-        print "get_default_location will search the following: ", searchDirs
+        print("get_default_location will search the following: ", searchDirs)
     for d in searchDirs:
         if name=="temp":
             f = d           # just search for the directory
@@ -288,16 +295,16 @@ def get_default_location(name):
         else:
             f = os.path.join( d, name )  # make path/name.py
             if DEBUG:
-                print "trying",f
+                print("trying",f)
             if os.path.exists(f) and verify(name,f):
                 return f
             elif name.endswith('.exe'):
                 f = os.path.join( d, name[:-4] )  # make path/name.exe
                 if DEBUG:
-                    print "trying",f
+                    print("trying",f)
                 if os.path.exists(f) and verify(name,f):
                     return f
-    print "Could not find default location for file: %s" % name
+    print("Could not find default location for file: %s" % name)
     return ""
 
 def __init__(self):
@@ -337,20 +344,20 @@ def run(prog,args):
     try:
         output_file = tempfile.TemporaryFile(mode="w+")  # <-- shouldn't this point to the temp dir
     except IOError:
-        print "Error opening output_file when trying to run the APBS command."
+        print("Error opening output_file when trying to run the APBS command.")
 
     if DEBUG:
-        print "Running:\n\tprog=%s\n\targs=%s" % (prog,args)
+        print("Running:\n\tprog=%s\n\targs=%s" % (prog,args))
     retcode = subprocess.call(args,stdout=output_file.fileno(),stderr=subprocess.STDOUT)
     output_file.seek(0)
     #prog_out = output_file.read()
     prog_out = ''.join(output_file.readlines())
     output_file.close() #windows doesn't do this automatically
     if DEBUG:
-        print "Results were:"
-        print "Return value:",retcode
-        print "Output:"
-        print prog_out
+        print("Results were:")
+        print("Return value:",retcode)
+        print("Output:")
+        print(prog_out)
     return (retcode,prog_out)
 
 class util:
@@ -401,7 +408,7 @@ def getApbsInputFile(pqr_filename,
                      sdens,
                      dx_filename,
                      ):
-    print "Getting APBS input"
+    print("Getting APBS input")
     #print "system_temp",system_temp,type(system_temp)
     #print "sdens",sdens,type(sdens)
     #
@@ -519,7 +526,7 @@ class APBSTools2:
     # __init__, as well as the functions defined on the various
     # Panels/Panes, will call through to self.ApbsInterface.
     def setPqrFile(self,name):
-        print " APBS Tools: set pqr file to",name
+        print(" APBS Tools: set pqr file to",name)
         self.pqr_to_use.setvalue(name)
         self.radiobuttons.setvalue('Use another PQR')
     def getPqrFilename(self):
@@ -1084,21 +1091,21 @@ Citation for PDB2PQR:
         if self.radiobuttons.getvalue() == 'Use another PQR':
             pass
         elif self.radiobuttons.getvalue() == 'Use PDB2PQR':
-            if DEBUG: print "GENERATING PQR FILE via PDB2PQR"
+            if DEBUG: print("GENERATING PQR FILE via PDB2PQR")
             good = self._generatePdb2pqrPqrFile()
             if not good:
                 if DEBUG:
-                    print "Could not generate PDB2PQR file.  _generatePdb2pqrPqrFile failed."
+                    print("Could not generate PDB2PQR file.  _generatePdb2pqrPqrFile failed.")
                 return False
-            if DEBUG: print "GENERATED"
+            if DEBUG: print("GENERATED")
         else: # it's one of the pymol-generated options
-            if DEBUG: print "GENERATING PQR FILE via PyMOL"
+            if DEBUG: print("GENERATING PQR FILE via PyMOL")
             good = self._generatePymolPqrFile()
             if not good:
                 if DEBUG:
-                    print "Could not generate the PyMOL-basd PQR file.  generatePyMOLPqrFile failed."
+                    print("Could not generate the PyMOL-basd PQR file.  generatePyMOLPqrFile failed.")
                 return False
-            if DEBUG: print "GENERATED"
+            if DEBUG: print("GENERATED")
         return True
     def execute(self, result, refocus=True):
         if result == 'Register APBS Use':
@@ -1111,7 +1118,7 @@ Citation for PDB2PQR:
             good = self.generateApbsInputFile()
             if not good:
                 if DEBUG:
-                    print "ERROR: Something went wrong trying to generate the APBS input file."
+                    print("ERROR: Something went wrong trying to generate the APBS input file.")
                 return False
             # START
             good = self.generatePqrFile()
@@ -1144,9 +1151,9 @@ Citation for PDB2PQR:
                 #
                 fname = self.pymol_generated_dx_filename.getvalue()
                 if not os.path.isfile(fname):
-                    print "Could not find",fname,"so searching for",
+                    print("Could not find",fname,"so searching for", end=' ')
                     fname = '-PE0'.join(os.path.splitext(fname))
-                    print fname
+                    print(fname)
                 pymol.cmd.load(fname)
                 self.visualization_group_1.refresh()
                 self.visualization_group_2.refresh()
@@ -1178,7 +1185,7 @@ Citation for PDB2PQR:
                 raise NoPsize
             good = self.generatePqrFile()
             if not good:
-                print "Could not generate PQR file!"
+                print("Could not generate PQR file!")
                 return False
             pqr_filename = self.getPqrFilename()
             try:
@@ -1198,7 +1205,7 @@ Citation for PDB2PQR:
                            self.selection.getvalue(), self.selection.getvalue())
             
             if pymol.cmd.count_atoms( self.selection.getvalue() + " and not alt ''")!=0:
-                print "WARNING: You have alternate locations for some of your atoms!"
+                print("WARNING: You have alternate locations for some of your atoms!")
             # pymol.cmd.save(pqr_filename,sel) # Pretty sure this was a bug. No need to write it when it's externally generated.
             f.close()
 
@@ -1211,9 +1218,9 @@ Citation for PDB2PQR:
             # could use procgrid for multiprocessors
             finegridpoints = size.getFineGridPoints() # dime
             center = size.getCenter() # cgcent and fgcent
-            print "APBS's psize.py was used to calculated grid dimensions"
+            print("APBS's psize.py was used to calculated grid dimensions")
         except (NoPsize,ImportError):
-            print "This plugin was used to calculated grid dimensions"
+            print("This plugin was used to calculated grid dimensions")
             #
             # First, we need to get the dimensions of the molecule
             #
@@ -1282,11 +1289,11 @@ Citation for PDB2PQR:
 
             finegridpoints = [mult_fac * c + 1 for c in cs]
 
-            print "cs",cs
-            print "finedim",finedim
-            print "nlev",nlev
-            print "mult_fac",mult_fac
-            print "finegridpoints",finegridpoints
+            print("cs",cs)
+            print("finedim",finedim)
+            print("nlev",nlev)
+            print("mult_fac",mult_fac)
+            print("finegridpoints",finegridpoints)
 
         except NoPDB:
             error_dialog = Pmw.MessageDialog(self.parent,
@@ -1303,15 +1310,15 @@ Citation for PDB2PQR:
             def gridofmem(mem):
                 return mem * 1024. * 1024. / 200.
             max_grid_points = gridofmem(max_mem_allowed)
-            print "Estimated memory usage",memofgrid(finegridpoints),'MB out of maximum allowed',max_mem_allowed
+            print("Estimated memory usage",memofgrid(finegridpoints),'MB out of maximum allowed',max_mem_allowed)
             if memofgrid(finegridpoints) > max_mem_allowed:
-                print "Maximum memory usage exceeded.  Old grid dimensions were",finegridpoints
+                print("Maximum memory usage exceeded.  Old grid dimensions were",finegridpoints)
                 product = float(finegridpoints[0] * finegridpoints[1] * finegridpoints[2])
                 factor = pow(max_grid_points/product,0.333333333)
                 finegridpoints[0] = (int(factor*finegridpoints[0]/2))*2+1
                 finegridpoints[1] = (int(factor*finegridpoints[1]/2))*2+1
                 finegridpoints[2] = (int(factor*finegridpoints[2]/2))*2+1
-                print "Fine grid points rounded down from",finegridpoints
+                print("Fine grid points rounded down from",finegridpoints)
                 #
                 # Now we have to make sure that this still fits the equation n = c*2^(l+1) + 1.  Here, we'll
                 # just assume nlev == 4, which means that we need to be (some constant times 32) + 1.
@@ -1342,20 +1349,20 @@ Citation for PDB2PQR:
                     for i in 0,1,2:
                         #print finegridpoints[i],divmod(finegridpoints[i] - 1,32),
                         finegridpoints[i] = divmod(finegridpoints[i] - 1,32)[0]*32 + 1
-                print "New grid dimensions are",finegridpoints
-        print " APBS Tools: coarse grid: (%5.3f,%5.3f,%5.3f)"%tuple(coarsedim)
+                print("New grid dimensions are",finegridpoints)
+        print(" APBS Tools: coarse grid: (%5.3f,%5.3f,%5.3f)"%tuple(coarsedim))
         self.grid_coarse_x.setvalue(coarsedim[0])
         self.grid_coarse_y.setvalue(coarsedim[1])
         self.grid_coarse_z.setvalue(coarsedim[2])
-        print " APBS Tools: fine grid: (%5.3f,%5.3f,%5.3f)"%tuple(finedim)
+        print(" APBS Tools: fine grid: (%5.3f,%5.3f,%5.3f)"%tuple(finedim))
         self.grid_fine_x.setvalue(finedim[0])
         self.grid_fine_y.setvalue(finedim[1])
         self.grid_fine_z.setvalue(finedim[2])
-        print " APBS Tools: center: (%5.3f,%5.3f,%5.3f)"%tuple(center)
+        print(" APBS Tools: center: (%5.3f,%5.3f,%5.3f)"%tuple(center))
         self.grid_center_x.setvalue(center[0])
         self.grid_center_y.setvalue(center[1])
         self.grid_center_z.setvalue(center[2])
-        print " APBS Tools: fine grid points (%d,%d,%d)"%tuple(finegridpoints)
+        print(" APBS Tools: fine grid points (%d,%d,%d)"%tuple(finegridpoints))
         self.grid_points_x.setvalue(finegridpoints[0])
         self.grid_points_y.setvalue(finegridpoints[1])
         self.grid_points_z.setvalue(finegridpoints[2])
@@ -1517,18 +1524,18 @@ Citation for PDB2PQR:
                                                dx_filename,
                                                )
             if DEBUG:
-                print "GOT THE APBS INPUT FILE"
+                print("GOT THE APBS INPUT FILE")
                                                 
             #
             # write out the input text
             #
             try:
-                print "Erasing contents of",self.pymol_generated_in_filename.getvalue(),"in order to write new input file"
+                print("Erasing contents of",self.pymol_generated_in_filename.getvalue(),"in order to write new input file")
                 f = open(self.pymol_generated_in_filename.getvalue(),'w')
                 f.write(apbs_input_text)
                 f.close()
             except IOError:
-                print "ERROR: Got the input file from APBS, but failed when trying to write to %s" % self.pymol_generated_in_filename.getvalue()
+                print("ERROR: Got the input file from APBS, but failed when trying to write to %s" % self.pymol_generated_in_filename.getvalue())
             return True
         else:
             #self.checkInput()
@@ -1538,7 +1545,7 @@ Citation for PDB2PQR:
         """No silent checks. Always show error.
         """
         def show_error(message):
-            print "In show error 1"
+            print("In show error 1")
             error_dialog = Pmw.MessageDialog(self.parent,
                                              title = 'Error',
                                              message_text = message,
@@ -1624,7 +1631,7 @@ Citation for PDB2PQR:
         Call this via the wrapper generatePqrFile()
         """
         def show_error(message):
-            print "In show error 2"
+            print("In show error 2")
             error_dialog = Pmw.MessageDialog(self.parent,
                                              title = 'Error',
                                              message_text = message,
@@ -1636,7 +1643,7 @@ Citation for PDB2PQR:
         #
         pdb_filename = self.pymol_generated_pdb_filename.getvalue()
         try:
-            print "Erasing contents of",pdb_filename,"in order to generate new PDB file"
+            print("Erasing contents of",pdb_filename,"in order to generate new PDB file")
             f = open(pdb_filename,'w')
             f.close()
         except:
@@ -1663,9 +1670,9 @@ Citation for PDB2PQR:
         # We have to be a little cute about args, because _options could have several options in it.
 
         if DEBUG:
-            print "TESTING"
+            print("TESTING")
             #run('/tmp/tmp.py',())
-            print "DONE TESTING"
+            print("DONE TESTING")
 
         import shlex
 
@@ -1683,10 +1690,10 @@ Citation for PDB2PQR:
                 sys.path.extend(pdb2pqr.__path__)
             import pdb2pqr
             if DEBUG:
-                print "Imported pdb2pqr"
+                print("Imported pdb2pqr")
             from pdb2pqr import main
         except ImportError:
-            print sys.exc_info()
+            print(sys.exc_info())
             show_error("Error: could not import pdb2pqr, please check 'pdb2pqr.py location'")
             return False
 
@@ -1697,14 +1704,14 @@ Citation for PDB2PQR:
                             self.pymol_generated_pqr_filename.getvalue(),
                             ]
             if DEBUG:
-                print "Imported main"
+                print("Imported main")
             try:
                 # currently pdb2pqr option parser fails without this
                 sys.argv = args
 
                 retval = main.mainCommand(args)
                 if DEBUG:
-                    print "PDB2PQR's mainCommand returned",retval
+                    print("PDB2PQR's mainCommand returned",retval)
                 if retval == 1:
                     retval = 0 # success condition is backwards in pdb2pqr
                 elif retval == 0:
@@ -1713,11 +1720,11 @@ Citation for PDB2PQR:
                     retval = 0 # When PDB2PQR does not explicitly
                                # return anything, it's a success.
             except:
-                print "Exception raised by main.mainCommand!"
-                print sys.exc_info()
+                print("Exception raised by main.mainCommand!")
+                print(sys.exc_info())
                 retval = 1
         except:
-            print "Unexpected error encountered while trying to import pdb2pqr:", sys.exc_info()
+            print("Unexpected error encountered while trying to import pdb2pqr:", sys.exc_info())
             retval = 1 # failure is nonzero here.
 
 
@@ -1730,11 +1737,11 @@ Citation for PDB2PQR:
         if unassigned_atoms:
             pymol.cmd.select('unassigned','ID %s'%unassigned_atoms)
             message_text = "Unable to assign parameters for the %s atoms in selection 'unassigned'.\nPlease either remove these unassigned atoms and re-start the calculation\nor fix their parameters in the generated PQR file and run the calculation\nusing the modified PQR file (select 'Use another PQR' in 'Main')."%len(unassigned_atoms.split('+'))
-            print "Unassigned atom IDs",unassigned_atoms
+            print("Unassigned atom IDs",unassigned_atoms)
             show_error(message_text)
             return False
         if DEBUG:
-            print "I WILL RETURN TRUE from pdb2pqr"
+            print("I WILL RETURN TRUE from pdb2pqr")
         return True
         
         
@@ -1765,7 +1772,7 @@ Citation for PDB2PQR:
         pqr_filename = self.getPqrFilename()
         try:
             if DEBUG:
-                print "Erasing previous contents of",pqr_filename
+                print("Erasing previous contents of",pqr_filename)
             f = open(pqr_filename,'w')
             f.close()
         except:
@@ -1832,7 +1839,6 @@ PMW interface.
 # Generically useful PMW extensions
 
 import os,fnmatch,time
-import Tkinter,Pmw
 #Pmw.setversion("0.8.5")
 
 #
@@ -1868,8 +1874,8 @@ def _errorpop(master,text):
 class PmwFileDialog(Pmw.Dialog):
     """File Dialog using Pmw"""
     def __init__(self, parent = None, **kw):
-	# Define the megawidget options.
-	optiondefs = (
+        # Define the megawidget options.
+        optiondefs = (
 	    ('filter',    '*',              self.newfilter),
 	    ('directory', os.getcwd(),      self.newdir),
 	    ('filename',  '',               self.newfilename),
@@ -1877,14 +1883,14 @@ class PmwFileDialog(Pmw.Dialog):
 	    ('command',   None,             None),
             ('info',      None,             None),
 	    )
-	self.defineoptions(kw, optiondefs)
+        self.defineoptions(kw, optiondefs)
         # Initialise base class (after defining options).
-	Pmw.Dialog.__init__(self, parent)
+        Pmw.Dialog.__init__(self, parent)
 
-	self.withdraw()
+        self.withdraw()
 
         # Create the components.
-	interior = self.interior()
+        interior = self.interior()
 
         if self['info'] is not None:
             rowoffset=1
@@ -1893,38 +1899,38 @@ class PmwFileDialog(Pmw.Dialog):
         else:
             rowoffset=0
 
-	dn = self.mkdn()
-	dn.grid(row=0+rowoffset,column=0,columnspan=2,padx=3,pady=3)
-	del dn
+        dn = self.mkdn()
+        dn.grid(row=0+rowoffset,column=0,columnspan=2,padx=3,pady=3)
+        del dn
 
-	# Create the directory list component.
-	dnb = self.mkdnb()
-	dnb.grid(row=1+rowoffset,column=0,sticky='news',padx=3,pady=3)
-	del dnb
+        # Create the directory list component.
+        dnb = self.mkdnb()
+        dnb.grid(row=1+rowoffset,column=0,sticky='news',padx=3,pady=3)
+        del dnb
 
-	# Create the filename list component.
-	fnb = self.mkfnb()
-	fnb.grid(row=1+rowoffset,column=1,sticky='news',padx=3,pady=3)
-	del fnb
+        # Create the filename list component.
+        fnb = self.mkfnb()
+        fnb.grid(row=1+rowoffset,column=1,sticky='news',padx=3,pady=3)
+        del fnb
 
-	# Create the filter entry
-	ft = self.mkft()
-	ft.grid(row=2+rowoffset,column=0,columnspan=2,padx=3,pady=3)
-	del ft
+        # Create the filter entry
+        ft = self.mkft()
+        ft.grid(row=2+rowoffset,column=0,columnspan=2,padx=3,pady=3)
+        del ft
 
-	# Create the filename entry
-	fn = self.mkfn()
-	fn.grid(row=3+rowoffset,column=0,columnspan=2,padx=3,pady=3)
-	fn.bind('<Return>',self.okbutton)
-	del fn
+        # Create the filename entry
+        fn = self.mkfn()
+        fn.grid(row=3+rowoffset,column=0,columnspan=2,padx=3,pady=3)
+        fn.bind('<Return>',self.okbutton)
+        del fn
 
-	# Buttonbox already exists
-	bb=self.component('buttonbox')
-	bb.add('OK',command=self.okbutton)
-	bb.add('Cancel',command=self.cancelbutton)
-	del bb
+        # Buttonbox already exists
+        bb=self.component('buttonbox')
+        bb.add('OK',command=self.okbutton)
+        bb.add('Cancel',command=self.cancelbutton)
+        del bb
 
-	Pmw.alignlabels([self.component('filename'),
+        Pmw.alignlabels([self.component('filename'),
 			 self.component('filter'),
 			 self.component('dirname')])
 
@@ -2019,158 +2025,158 @@ class PmwFileDialog(Pmw.Dialog):
             return Pmw.OK
         
     def okbutton(self):
-	"""OK action: user thinks he has input valid data and wants to
+        """OK action: user thinks he has input valid data and wants to
            proceed. This is also called by <Return> in the filename entry"""
-	fn=self.component('filename').get()
-	self.setfilename(fn)
-	if self.validate(fn):
-	    self.canceled=0
-	    self.deactivate()
+        fn=self.component('filename').get()
+        self.setfilename(fn)
+        if self.validate(fn):
+            self.canceled=0
+            self.deactivate()
 
     def cancelbutton(self):
-	"""Cancel the operation"""
-	self.canceled=1
-	self.deactivate()
+        """Cancel the operation"""
+        self.canceled=1
+        self.deactivate()
 
     def tidy(self,w,v):
-	"""Insert text v into the entry and at the top of the list of 
+        """Insert text v into the entry and at the top of the list of 
            the combobox w, remove duplicates"""
-	if not v:
-	    return
-	entry=w.component('entry')
-	entry.delete(0,'end')
-	entry.insert(0,v)
-	list=w.component('scrolledlist')
-	list.insert(0,v)
-	index=1
-	while index<list.index('end'):
-	    k=list.get(index)
-	    if k==v or index>self['historylen']:
-		list.delete(index)
-	    else:
-		index=index+1
+        if not v:
+            return
+        entry=w.component('entry')
+        entry.delete(0,'end')
+        entry.insert(0,v)
+        list=w.component('scrolledlist')
+        list.insert(0,v)
+        index=1
+        while index<list.index('end'):
+            k=list.get(index)
+            if k==v or index>self['historylen']:
+                list.delete(index)
+            else:
+                index=index+1
         w.checkentry()
 
     def setfilename(self,value):
-	if not value:
-	    return
-	value=os.path.join(self['directory'],value)
-	dir,fil=os.path.split(value)
-	self.configure(directory=dir,filename=value)
+        if not value:
+            return
+        value=os.path.join(self['directory'],value)
+        dir,fil=os.path.split(value)
+        self.configure(directory=dir,filename=value)
         
-	c=self['command']
-	if callable(c):
-	    c()
+        c=self['command']
+        if callable(c):
+            c()
 
     def newfilename(self):
-	"""Make sure a newly set filename makes it into the combobox list"""
-	self.tidy(self.component('filename'),self['filename'])
-	
+        """Make sure a newly set filename makes it into the combobox list"""
+        self.tidy(self.component('filename'),self['filename'])
+
     def setfilter(self,value):
-	self.configure(filter=value)
+        self.configure(filter=value)
 
     def newfilter(self):
-	"""Make sure a newly set filter makes it into the combobox list"""
-	self.tidy(self.component('filter'),self['filter'])
-	self.fillit()
+        """Make sure a newly set filter makes it into the combobox list"""
+        self.tidy(self.component('filter'),self['filter'])
+        self.fillit()
 
     def setdir(self,value):
-	self.configure(directory=value)
+        self.configure(directory=value)
 
     def newdir(self):
-	"""Make sure a newly set dirname makes it into the combobox list"""
-	self.tidy(self.component('dirname'),self['directory'])
-	self.fillit()
+        """Make sure a newly set dirname makes it into the combobox list"""
+        self.tidy(self.component('dirname'),self['directory'])
+        self.fillit()
 
     def singleselectfile(self):
-	"""Single click in file listbox. Move file to "filename" combobox"""
-	cs=self.component('filenamebox').curselection()
-	if cs!=():
-	    value=self.component('filenamebox').get(cs)
+        """Single click in file listbox. Move file to "filename" combobox"""
+        cs=self.component('filenamebox').curselection()
+        if cs!=():
+            value=self.component('filenamebox').get(cs)
             self.setfilename(value)
 
     def selectfile(self):
-	"""Take the selected file from the filename, normalize it, and OK"""
+        """Take the selected file from the filename, normalize it, and OK"""
         self.singleselectfile()
-	value=self.component('filename').get()
+        value=self.component('filename').get()
         self.setfilename(value)
         if value:
-	    self.okbutton()
+            self.okbutton()
 
     def selectdir(self):
-	"""Take selected directory from the dirnamebox into the dirname"""
-	cs=self.component('dirnamebox').curselection()
-	if cs!=():
-	    value=self.component('dirnamebox').get(cs)
-	    dir=self['directory']
-	    if not dir:
-		dir=os.getcwd()
-	    if value:
-		if value=='..':
-		    dir=os.path.split(dir)[0]
-		else:
-		    dir=os.path.join(dir,value)
-	    self.configure(directory=dir)
-	    self.fillit()
+        """Take selected directory from the dirnamebox into the dirname"""
+        cs=self.component('dirnamebox').curselection()
+        if cs!=():
+            value=self.component('dirnamebox').get(cs)
+            dir=self['directory']
+            if not dir:
+                dir=os.getcwd()
+            if value:
+                if value=='..':
+                    dir=os.path.split(dir)[0]
+                else:
+                    dir=os.path.join(dir,value)
+            self.configure(directory=dir)
+            self.fillit()
 
     def askfilename(self,directory=None,filter=None):
-	"""The actual client function. Activates the dialog, and
-	   returns only after a valid filename has been entered 
+        """The actual client function. Activates the dialog, and
+           returns only after a valid filename has been entered 
            (return value is that filename) or when canceled (return 
            value is None)"""
-	if directory!=None:
-	    self.configure(directory=directory)
-	if filter!=None:
-	    self.configure(filter=filter)
-	self.fillit()
+        if directory!=None:
+            self.configure(directory=directory)
+        if filter!=None:
+            self.configure(filter=filter)
+        self.fillit()
         self.canceled=1 # Needed for when user kills dialog window
-	self.activate()
-	if self.canceled:
-	    return None
-	else:
-	    return self.component('filename').get()
+        self.activate()
+        if self.canceled:
+            return None
+        else:
+            return self.component('filename').get()
 
     lastdir=""
     lastfilter=None
     lasttime=0
     def fillit(self):
-	"""Get the directory list and show it in the two listboxes"""
+        """Get the directory list and show it in the two listboxes"""
         # Do not run unnecesarily
         if self.lastdir==self['directory'] and self.lastfilter==self['filter'] and self.lasttime>os.stat(self.lastdir)[8]:
             return
         self.lastdir=self['directory']
         self.lastfilter=self['filter']
         self.lasttime=time.time()
-	dir=self['directory']
-	if not dir:
-	    dir=os.getcwd()
-	dirs=['..']
-	files=[]
+        dir=self['directory']
+        if not dir:
+            dir=os.getcwd()
+        dirs=['..']
+        files=[]
         try:
             fl=os.listdir(dir)
             fl.sort()
-        except os.error,arg:
+        except os.error as arg:
             if arg[0] in (2,20):
                 return
             raise
-	for f in fl:
-	    if os.path.isdir(os.path.join(dir,f)):
-		dirs.append(f)
-	    else:
-		filter=self['filter']
-		if not filter:
-		    filter='*'
-		if fnmatch.fnmatch(f,filter):
-		    files.append(f)
-	self.component('filenamebox').setlist(files)
-	self.component('dirnamebox').setlist(dirs)
+        for f in fl:
+            if os.path.isdir(os.path.join(dir,f)):
+                dirs.append(f)
+            else:
+                filter=self['filter']
+                if not filter:
+                    filter='*'
+                if fnmatch.fnmatch(f,filter):
+                    files.append(f)
+        self.component('filenamebox').setlist(files)
+        self.component('dirnamebox').setlist(dirs)
     
     def validate(self,filename):
-	"""Validation function. Should return 1 if the filename is valid, 
+        """Validation function. Should return 1 if the filename is valid, 
            0 if invalid. May pop up dialogs to tell user why. Especially 
            suited to subclasses: i.e. only return 1 if the file does/doesn't 
            exist"""
-	return 1
+        return 1
 
 
 class PmwExistingFileDialog(PmwFileDialog):
@@ -2202,7 +2208,7 @@ class FileDialogButtonClassFactory:
                 '''when we get a file, we call fn(filename)'''
                 self.fn = fn
                 self.__toggle = 0
-                apply(Tkinter.Button.__init__, (self, master, cnf), kw)
+                Tkinter.Button.__init__(*(self, master, cnf), **kw)
                 self.configure(command=self.set)
             def set(self):
                 fd = PmwFileDialog(self.master,filter=filter)
@@ -2419,7 +2425,7 @@ If you have a molecule and a map loaded, please click "Update"''',
         high = float(self.mol_surf_high.getvalue())
         range = [low,mid,high]
         if DEBUG:
-            print " APBS Tools: range is",range
+            print(" APBS Tools: range is",range)
         pymol.cmd.delete(ramp_name)
         pymol.cmd.ramp_new(ramp_name,map_name,range)
         pymol.cmd.set('surface_color',ramp_name,molecule_name)
@@ -2459,11 +2465,11 @@ If you have a molecule and a map loaded, please click "Update"''',
     def hideFieldLines(self):
         pymol.cmd.hide('everything',self.getGradName())
     def updateFieldLines(self):
-        print "IN update"
+        print("IN update")
         pymol.cmd.gradient(self.getGradName(),self.map.getvalue())
-        print "Made gradient"
+        print("Made gradient")
         self.updateRamp()
-        print "Updated ramp"
+        print("Updated ramp")
         pymol.cmd.color(self.getRampName(),self.getGradName())
-        print "set colors"
+        print("set colors")
         pymol.cmd.show('mesh',self.getGradName())

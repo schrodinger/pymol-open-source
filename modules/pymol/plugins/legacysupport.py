@@ -11,6 +11,8 @@ License: BSD-2-Clause
 
 '''
 
+from __future__ import print_function, absolute_import
+
 import os
 import pymol
 from pmg_tk import startup
@@ -88,7 +90,7 @@ def initializePlugins(self):
         from . import initialize
         return initialize(self)
 
-    for info in plugins.itervalues():
+    for info in plugins.values():
         if info.loaded:
             info.legacyinit(self)
 
@@ -107,7 +109,10 @@ def createlegacypmgapp():
     app.execute = lambda c: eval(c) if isinstance(c, str) else c()
 
     def starttk():
-        import Tkinter
+        try:
+            import Tkinter
+        except ImportError:
+            import tkinter as Tkinter
         app.root = Tkinter.Tk()
         app.root.withdraw()
         app.root.mainloop()
@@ -130,21 +135,27 @@ def createlegacypmgapp():
 
 class _tkMessageBox(object):
     def __getattr__(self, name):
-        import tkMessageBox as module
+        try:
+            import tkMessageBox as module
+        except ImportError:
+            import tkinter.messagebox as module
         from . import pref_get
         wrapped = getattr(module, name)
         def dialog(title, message, parent=None, **kwargs):
             if parent is None:
                 parent = get_tk_focused()
             if pref_get('verbose'):
-                print ' ' + title + ': ' + message
+                print(' ' + title + ': ' + message)
             return wrapped(title, message, parent=parent,  **kwargs)
         setattr(self, name, dialog)
         return dialog
 
 class _tkFileDialog(object):
     def __getattr__(self, name):
-        import tkFileDialog as module
+        try:
+            import tkFileDialog as module
+        except ImportError:
+            import tkinter.filedialog as module
         wrapped = getattr(module, name)
         def dialog(parent=None, *args, **kwargs):
             if parent is None:

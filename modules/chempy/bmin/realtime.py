@@ -1,4 +1,5 @@
 # pymol
+from __future__ import print_function
 
 from pymol import cmd
 from chempy import io
@@ -35,7 +36,7 @@ def assign(sele,preserve=0):
 
     typed = Typer(molObj = mobj)
     
-    print " realtime: assigning atom types"
+    print(" realtime: assigning atom types")
     typed.applyRules(ruleSet)
 
     c = 0
@@ -43,13 +44,13 @@ def assign(sele,preserve=0):
         at = model.atom[c]
         if (at.text_type == '??') or (not preserve):
             if a==-99:
-                print " warning: unable to assign atom type to atom %d"%c
+                print(" warning: unable to assign atom type to atom %d"%c)
                 result = 0
             else:
                 cmd.alter("((%s) and (index %s))" % (sele,at.index),
                              "numeric_type ='%s'" % a)
                 if feedback['tinker']:
-                    print " "+str(__name__)+': %s is a %s' % (at.name,a)
+                    print(" "+str(__name__)+': %s is a %s' % (at.name,a))
                 at.numeric_type = a
         c = c + 1
 
@@ -82,7 +83,7 @@ def check(obj='check'):
     
     if not state:
         if not model:
-            print " realtime.reload: please run setup first."
+            print(" realtime.reload: please run setup first.")
         else:
             cmd.load_model(model,obj,1)
     else:
@@ -100,10 +101,10 @@ def mini(total_steps=500,
 
     global state
     if not state:
-        print " realtime.mini: please run setup first..."
+        print(" realtime.mini: please run setup first...")
     else:
         model = state.model
-        print " realtime.mini: %d atoms total\n" % model.nAtom
+        print(" realtime.mini: %d atoms total\n" % model.nAtom)
         try:
             while total_steps>0:
                 total_steps = total_steps - interval
@@ -115,11 +116,11 @@ def mini(total_steps=500,
                 cmd.load_model(state.model,object,1)
                 cmd.refresh()
                 if finish!=None:
-                    apply(finish[0],finish[1],finish[2])
+                    finish[0](*finish[1], **finish[2])
         except:
             cmd.load_model(state.model,'ref')
             traceback.print_exc()
-        print " realtime.mini: complete."
+        print(" realtime.mini: complete.")
 
 def mini_threaded(*args,**kwargs):
     t = threading.Thread(target=mini,

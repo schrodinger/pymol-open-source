@@ -12,18 +12,20 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 if __name__=='pymol.externing':
     
     import os
     import pymol
     import string
-    import parsing
+    from . import parsing
     import threading
-    import cmd
+    cmd = __import__("sys").modules["pymol.cmd"]
     import traceback
     
     from glob import glob
-    from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
+    from .cmd import _cmd,lock,unlock,Shortcut,QuietException, \
           _feedback,fb_module,fb_mask, exp_path, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
@@ -45,7 +47,7 @@ SEE ALSO
         try:
             os.chdir(dir)  # raises on error
             if not quiet:
-                print " cd: now in %s"%os.getcwd()
+                print(" cd: now in %s"%os.getcwd())
         except:
             if complain:
                 traceback.print_exc()
@@ -65,7 +67,7 @@ SEE ALSO
 
     cd, ls, system
         '''
-        print os.getcwd()
+        print(os.getcwd())
         return DEFAULT_SUCCESS
 
     def ls(pattern=None):
@@ -102,9 +104,9 @@ SEE ALSO
             lst.sort()
             lst = parsing.list_to_str_list(lst)
             for a in lst:
-                print a
+                print(a)
         else:
-            print " ls: Nothing found.  Is that a valid path?"
+            print(" ls: Nothing found.  Is that a valid path?")
         return DEFAULT_SUCCESS
 
     def system(command,async=0,_self=cmd):

@@ -1,4 +1,11 @@
-import sys, os, cStringIO
+from __future__ import print_function
+
+try:
+    import cStringIO
+except ImportError:
+    import io as cStringIO
+
+import sys, os
 import time
 import re
 from os.path import dirname
@@ -88,24 +95,24 @@ def create_buildinfo(outputdir, pymoldir='.'):
 
     try:
         sha = Popen(['git', 'rev-parse', 'HEAD'], cwd=pymoldir,
-                stdout=PIPE).stdout.read().strip()
+                stdout=PIPE).stdout.read().strip().decode()
     except OSError:
         sha = ''
 
     rev = 0
     try:
         for line in Popen(['svn', 'info'], cwd=pymoldir, stdout=PIPE).stdout:
-            if line.startswith('Last Changed Rev'):
+            if line.startswith(b'Last Changed Rev'):
                 rev = int(line.split()[3])
     except OSError:
         pass
 
     with openw(os.path.join(outputdir, 'PyMOLBuildInfo.h')) as out:
-        print >> out, '''
+        print('''
 #define _PyMOL_BUILD_DATE %d
 #define _PYMOL_BUILD_GIT_SHA "%s"
 #define _PyMOL_BUILD_SVN_REV %d
-        ''' % (time.time(), sha, rev)
+        ''' % (time.time(), sha, rev), file=out)
 
 if __name__ == "__main__":
     create_shadertext(*sys.argv[1:6])

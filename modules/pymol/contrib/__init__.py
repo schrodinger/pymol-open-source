@@ -5,18 +5,20 @@
 # contrib.stpng(filename) generates stereo pair of images
 # also merges left and right images if Python Image library PIL is available
 
+from __future__ import print_function
+
 def stpng(filename="stereo.png"):
     import Image
     filename=str(filename)
     leftfile="%s_left.png"%filename
     rightfile="%s_right.png"%filename
 # render left image and save as 'filename_left.png'
-    print "Rendering %s"%leftfile
+    print("Rendering %s"%leftfile)
     cmd.turn("y","3")
     cmd.ray()
     cmd.png(leftfile)
 # render right image and save as 'filename_right.png'
-    print "Rendering %s"%rightfile
+    print("Rendering %s"%rightfile)
     cmd.turn("y","-6")
     cmd.ray()
     cmd.png(rightfile)
@@ -46,7 +48,7 @@ def stpng(filename="stereo.png"):
 # Save stereo image - file format is automatically derived from the
 # extension of the filename (i.e. png,jpg,tif,pdf)
     stereoim.save(filename)
-    print "Saved stereo image:%s"%filename
+    print("Saved stereo image:%s"%filename)
 ########################################################
 # Merge images using ImageMagick's montage command
 #   cmd_montage="montage +frame +label -geometry %s+0+0! -scene 0 %s

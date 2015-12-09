@@ -12,18 +12,22 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 if __name__=='pymol.wizarding':
 
     import pymol
     import imp
     import sys
-    import string
-    import cmd
-    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
+    cmd = __import__("sys").modules["pymol.cmd"]
+    from .cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     
-    import cPickle
+    try:
+        import cPickle
+    except ImportError:
+        import pickle as cPickle
     import traceback
 
     class WizardError(Exception):
@@ -31,22 +35,22 @@ if __name__=='pymol.wizarding':
     
     def _wizard(name,arg,kwd,replace,_self=cmd):
         r = DEFAULT_ERROR
-        import wizard
+        from . import wizard
         try:
             full_name = 'pymol.wizard.'+name
-            if not sys.modules.has_key(full_name):
+            if full_name not in sys.modules:
                 mod_tup = imp.find_module(name,wizard.__path__)
                 mod_obj = imp.load_module(full_name,mod_tup[0],
                                                   mod_tup[1],mod_tup[2])
             else:
                 mod_obj = sys.modules[full_name]
             if mod_obj:
-                oname = string.capitalize(name)
+                oname = name.capitalize()
                 r = DEFAULT_SUCCESS
                 if hasattr(mod_obj,oname):
                     kwd['_self']=_self
                     try:
-                        wiz = apply(getattr(mod_obj,oname),arg,kwd)
+                        wiz = getattr(mod_obj,oname)(*arg, **kwd)
                     except WizardError as e:
                         from pymol.wizard.message import Message
                         wiz = Message("Error: %s" % e.message, _self=_self)
@@ -54,11 +58,11 @@ if __name__=='pymol.wizarding':
                         _self.set_wizard(wiz,replace)
                         _self.do("_ refresh_wizard")
                 else:
-                    print "Error: Sorry, couldn't find the '"+oname+"' class."                             
+                    print("Error: Sorry, couldn't find the '"+oname+"' class.")                             
             else:
-                print "Error: Sorry, couldn't import the '"+name+"' wizard."         
+                print("Error: Sorry, couldn't import the '"+name+"' wizard.")         
         except ImportError:
-            print "Error: Sorry, couldn't import the '"+name+"' wizard."         
+            print("Error: Sorry, couldn't import the '"+name+"' wizard.")         
         return r
     
     def wizard(name=None,*arg,**kwd):
@@ -88,7 +92,7 @@ EXAMPLE
             r = DEFAULT_SUCCESS
         else:
             name = str(name)
-            if string.lower(name)=='distance': # legacy compatibility
+            if name.lower() == 'distance': # legacy compatibility
                 name = 'measurement'
             r = _wizard(name,arg,kwd,0,_self=_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -185,14 +189,14 @@ DESCRIPTION
 
     def session_restore_wizard(session,_self=cmd):
         if session!=None:
-            if session.has_key('wizard'):
+            if 'wizard' in session:
                 try:
                     wizards = cPickle.loads(session['wizard'])
                     for wiz in wizards:
                         wiz.cmd = _self
                     _self.set_wizard_stack(wizards,_self=_self)
                 except:
-                    print "Session-Warning: unable to restore wizard."
+                    print("Session-Warning: unable to restore wizard.")
         return 1
 
 

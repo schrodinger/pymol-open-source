@@ -12,16 +12,17 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 if __name__=='pymol.fitting':
 	
-	import cmd
-	from cmd import _cmd,lock,unlock
-	import selector
-	import os
-	import pymol
-	import string
+        cmd = __import__("sys").modules["pymol.cmd"]
+        from .cmd import _cmd,lock,unlock
+        from . import selector
+        import os
+        import pymol
 
-        from cmd import _cmd,lock,unlock,Shortcut, \
+        from .cmd import _cmd,lock,unlock,Shortcut, \
             DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
 
@@ -80,16 +81,16 @@ SEE ALSO
                 ids2 = [a.id for a in mod2.atom]
                 
                 if len(sel1) < 2 * window:
-                        print "CEalign-Error: Your target selection is too short."
+                        print("CEalign-Error: Your target selection is too short.")
                         raise pymol.CmdException
                 if len(sel2) < 2 * window:
-                        print "CEalign-Error: Your mobile selection is too short."
+                        print("CEalign-Error: Your mobile selection is too short.")
                         raise pymol.CmdException
                 if window < 3:
-                        print "CEalign-Error: window size must be an integer greater than 2."
+                        print("CEalign-Error: window size must be an integer greater than 2.")
                         raise pymol.CmdException
                 if int(gap_max) < 0:
-                        print "CEalign-Error: gap_max must be a positive integer."
+                        print("CEalign-Error: gap_max must be a positive integer.")
                         raise pymol.CmdException
 
                 r = DEFAULT_ERROR
@@ -103,22 +104,22 @@ SEE ALSO
                         (aliLen, RMSD, rotMat, i1, i2) = r
                         if quiet==-1:
                                 import pprint
-                                print "RMSD %f over %i residues" % (float(RMSD), int(aliLen))
-                                print "TTT Matrix:"
+                                print("RMSD %f over %i residues" % (float(RMSD), int(aliLen)))
+                                print("TTT Matrix:")
                                 pprint.pprint(rotMat)
                         elif quiet==0:
-                                print "RMSD %f over %i residues" % (float(RMSD), int(aliLen))
+                                print("RMSD %f over %i residues" % (float(RMSD), int(aliLen)))
 
-			if int(transform):
-				for model in cmd.get_object_list("(" + mobile + ")"):
-					_self.transform_object(model, rotMat, state=0)
+                        if int(transform):
+                            for model in cmd.get_object_list("(" + mobile + ")"):
+                                _self.transform_object(model, rotMat, state=0)
 
                         if object is not None:
                             obj1 = cmd.get_object_list("(" + target + ")")
                             obj2 = cmd.get_object_list("(" + mobile + ")")
                             if len(obj1) > 1 or len(obj2) > 1:
-                                print ' CEalign-Error: selection spans multiple' + \
-                                        ' objects, cannot create alignment object'
+                                print(' CEalign-Error: selection spans multiple' + \
+                                        ' objects, cannot create alignment object')
                                 raise pymol.CmdException
                             tmp1 = _self.get_unused_name('_1')
                             tmp2 = _self.get_unused_name('_2')
@@ -129,7 +130,7 @@ SEE ALSO
                             _self.delete(tmp2)
                 except SystemError:
                     # findBest might return NULL, which raises SystemError
-                    print " CEalign-Error: alignment failed"
+                    print(" CEalign-Error: alignment failed")
                 finally:
                         _self.unlock(r,_self)
                 if _self._raising(r,_self): raise pymol.CmdException             
@@ -182,11 +183,11 @@ SEE ALSO
                         target='?%s & ?%s' % (sele_name, reference), **kwargs)
                 if not quiet:
                     if _self.is_sequence(x):
-                        print '%-20s RMS = %8.3f (%d atoms)' % (model, x[0], x[1])
+                        print('%-20s RMS = %8.3f (%d atoms)' % (model, x[0], x[1]))
                     elif isinstance(x, float):
-                        print '%-20s RMS = %8.3f' % (model, x)
+                        print('%-20s RMS = %8.3f' % (model, x))
                     else:
-                        print '%-20s' % (model,)
+                        print('%-20s' % (model,))
 
             if zoom:
                 _self.zoom(sele_name)
@@ -430,16 +431,16 @@ SEE ALSO
                         r = _cmd.intrafit(_self._COb,"("+str(selection)+")",int(state)-1,2,int(quiet),int(mix))
                 finally:
                         _self.unlock(r,_self)
-                if r<0.0:
+                if not isinstance(r, list):
                         r = DEFAULT_ERROR
                 elif not quiet:
                         st = 1
                         for a in r:
                                 if a>=0.0:
                                         if mix:
-                                                print " cmd.intra_fit: %5.3f in state %d vs mixed target"%(a,st)
+                                                print(" cmd.intra_fit: %5.3f in state %d vs mixed target"%(a,st))
                                         else:
-                                                print " cmd.intra_fit: %5.3f in state %d vs state %d"%(a,st,state)
+                                                print(" cmd.intra_fit: %5.3f in state %d vs state %d"%(a,st,state))
                                 st = st + 1
                 if _self._raising(r,_self): raise pymol.CmdException             
                 return r
@@ -477,13 +478,13 @@ SEE ALSO
                         r = _cmd.intrafit(_self._COb,"("+str(selection)+")",int(state)-1,1,int(quiet),int(0))
                 finally:
                         _self.unlock(r,_self)
-                if r<0.0:
+                if not isinstance(r, list):
                         r = DEFAULT_ERROR
                 elif not quiet:
                         st = 1
                         for a in r:
                                 if a>=0.0:
-                                        print " cmd.intra_rms: %5.3f in state %d vs state %d"%(a,st,state)
+                                        print(" cmd.intra_rms: %5.3f in state %d vs state %d"%(a,st,state))
                                 st = st + 1
                 if _self._raising(r,_self): raise pymol.CmdException             
                 return r
@@ -520,20 +521,20 @@ SEE ALSO
                         r = _cmd.intrafit(_self._COb,"("+str(selection)+")",int(state)-1,0,int(quiet),int(0))
                 finally:
                         _self.unlock(r,_self)
-		if r<0.0:
-			r = DEFAULT_ERROR
-		elif not quiet:
-			st = 1
-			for a in r:
-				if a>=0.0:
-					print " cmd.intra_rms_cur: %5.3f in state %d vs state %d"%(a,st,state)
-				st = st + 1
-		if _self._raising(r,_self): raise pymol.CmdException		 
-		return r
+                if not isinstance(r, list):
+                    r = DEFAULT_ERROR
+                elif not quiet:
+                    st = 1
+                    for a in r:
+                        if a>=0.0:
+                            print(" cmd.intra_rms_cur: %5.3f in state %d vs state %d"%(a,st,state))
+                        st = st + 1
+                if _self._raising(r,_self): raise pymol.CmdException
+                return r
 
-	def fit(mobile, target, mobile_state=0, target_state=0,
+        def fit(mobile, target, mobile_state=0, target_state=0,
 		quiet=1, matchmaker=0, cutoff=2.0, cycles=0, object=None, _self=cmd):
-		'''
+            '''
 DESCRIPTION
 
     "fit" superimposes the model in the first selection on to the model
@@ -581,35 +582,35 @@ NOTES
 SEE ALSO
 
 	align, super, pair_fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
-		'''
-		r = DEFAULT_ERROR	   
-		a=str(mobile)
-		b=str(target)
-		# preprocess selections
-		a = selector.process(a)
-		b = selector.process(b)
-		#
-		if object==None: object=''
-		if int(matchmaker)==0:
-			sele1 = "((%s) in (%s))" % (str(a),str(b))
-			sele2 = "((%s) in (%s))" % (str(b),str(a))
-		else:
-			sele1 = str(a)
-			sele2 = str(b)
-		try:
-			_self.lock(_self)
-			r = _cmd.fit(_self._COb,sele1,sele2,2,
-				     int(mobile_state)-1,int(target_state)-1,
-				     int(quiet),int(matchmaker),float(cutoff),
-				     int(cycles),str(object))
-		finally:
-			_self.unlock(r,_self)
-		if _self._raising(r,_self): raise pymol.CmdException		 
-		return r
+            '''
+            r = DEFAULT_ERROR	   
+            a=str(mobile)
+            b=str(target)
+            # preprocess selections
+            a = selector.process(a)
+            b = selector.process(b)
+            #
+            if object==None: object=''
+            if int(matchmaker)==0:
+                sele1 = "((%s) in (%s))" % (str(a),str(b))
+                sele2 = "((%s) in (%s))" % (str(b),str(a))
+            else:
+                sele1 = str(a)
+                sele2 = str(b)
+            try:
+                _self.lock(_self)
+                r = _cmd.fit(_self._COb,sele1,sele2,2,
+                        int(mobile_state)-1,int(target_state)-1,
+                        int(quiet),int(matchmaker),float(cutoff),
+                        int(cycles),str(object))
+            finally:
+                _self.unlock(r,_self)
+            if _self._raising(r,_self): raise pymol.CmdException		 
+            return r
 
-	def rms(mobile, target, mobile_state=0, target_state=0, quiet=1,
+        def rms(mobile, target, mobile_state=0, target_state=0, quiet=1,
 			  matchmaker=0, cutoff=2.0, cycles=0, object=None, _self=cmd):
-		'''
+            '''
 DESCRIPTION
 
 	"rms" computes a RMS fit between two atom selections, but does not
@@ -626,37 +627,37 @@ EXAMPLES
 SEE ALSO
 
 	fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit	  
-		'''
-		r = DEFAULT_ERROR	   
-		a=str(mobile)
-		b=str(target)
-		# preprocess selections
-		a = selector.process(a)
-		b = selector.process(b)
-		#
-		if object==None: object=''		
-		if int(matchmaker)==0:
-			sele1 = "((%s) in (%s))" % (str(a),str(b))
-			sele2 = "((%s) in (%s))" % (str(b),str(a))
-		else:
-			sele1 = str(a)
-			sele2 = str(b)
-		try:
-			_self.lock(_self)	
-			r = _cmd.fit(_self._COb,sele1,sele2,1,
-				     int(mobile_state)-1,int(target_state)-1,
-				     int(quiet),int(matchmaker),float(cutoff),
-				     int(cycles),str(object))
-		finally:
-			_self.unlock(r,_self)
-		if _self._raising(r,_self): raise pymol.CmdException		 
-		return r
+            '''
+            r = DEFAULT_ERROR	   
+            a=str(mobile)
+            b=str(target)
+            # preprocess selections
+            a = selector.process(a)
+            b = selector.process(b)
+            #
+            if object==None: object=''		
+            if int(matchmaker)==0:
+                sele1 = "((%s) in (%s))" % (str(a),str(b))
+                sele2 = "((%s) in (%s))" % (str(b),str(a))
+            else:
+                sele1 = str(a)
+                sele2 = str(b)
+            try:
+                _self.lock(_self)	
+                r = _cmd.fit(_self._COb,sele1,sele2,1,
+                        int(mobile_state)-1,int(target_state)-1,
+                        int(quiet),int(matchmaker),float(cutoff),
+                        int(cycles),str(object))
+            finally:
+                _self.unlock(r,_self)
+            if _self._raising(r,_self): raise pymol.CmdException		 
+            return r
 
-	def rms_cur(mobile, target, mobile_state=0, target_state=0,
+        def rms_cur(mobile, target, mobile_state=0, target_state=0,
 				quiet=1, matchmaker=0, cutoff=2.0, cycles=0,
 				object=None, _self=cmd):
 		
-		'''
+            '''
 DESCRIPTION
 
 	"rms_cur" computes the RMS difference between two atom
@@ -669,34 +670,34 @@ USAGE
 SEE ALSO
 
 	fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit	  
-		'''
-		r = DEFAULT_ERROR	   
-		a=str(mobile)
-		b=str(target)
-		# preprocess selections
-		a = selector.process(a)
-		b = selector.process(b)
-		#
-		if object==None: object=''			  
-		if int(matchmaker)==0:
-			sele1 = "((%s) in (%s))" % (str(a),str(b))
-			sele2 = "((%s) in (%s))" % (str(b),str(a))
-		else:
-			sele1 = str(a)
-			sele2 = str(b)
-		try:
-			_self.lock(_self)
-			r = _cmd.fit(_self._COb,sele1,sele2,0,
-				     int(mobile_state)-1,int(target_state)-1,
-				     int(quiet),int(matchmaker),float(cutoff),
-				     int(cycles),str(object))
-		finally:
-			_self.unlock(r,_self)
-		if _self._raising(r,_self): raise pymol.CmdException		 
-		return r
+            '''
+            r = DEFAULT_ERROR	   
+            a=str(mobile)
+            b=str(target)
+            # preprocess selections
+            a = selector.process(a)
+            b = selector.process(b)
+            #
+            if object==None: object=''			  
+            if int(matchmaker)==0:
+                sele1 = "((%s) in (%s))" % (str(a),str(b))
+                sele2 = "((%s) in (%s))" % (str(b),str(a))
+            else:
+                sele1 = str(a)
+                sele2 = str(b)
+            try:
+                _self.lock(_self)
+                r = _cmd.fit(_self._COb,sele1,sele2,0,
+                        int(mobile_state)-1,int(target_state)-1,
+                        int(quiet),int(matchmaker),float(cutoff),
+                        int(cycles),str(object))
+            finally:
+                _self.unlock(r,_self)
+            if _self._raising(r,_self): raise pymol.CmdException		 
+            return r
 
-	def pair_fit(*arg, **kw):
-		'''
+        def pair_fit(*arg, **kw):
+            '''
 DESCRIPTION
 
 	"pair_fit" fits matched sets of atom pairs between two objects.
@@ -727,21 +728,21 @@ NOTES
 SEE ALSO
 
 	fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
-		'''
-		_self = kw.get('_self',cmd)
-		r = DEFAULT_ERROR	   
-		if len(arg) < 2:
-		    raise pymol.CmdException('need at least 2 selection')
-		if len(arg) % 2:
-		    raise pymol.CmdException('need even number of selections')
-		new_arg = map(selector.process, arg)
-		try:
-			_self.lock(_self)	
-			r = _cmd.fit_pairs(_self._COb,new_arg)
-		finally:
-			_self.unlock(r,_self)
-		if _self._raising(r,_self): raise pymol.CmdException		 
-		return r
+            '''
+            _self = kw.get('_self',cmd)
+            r = DEFAULT_ERROR	   
+            if len(arg) < 2:
+                raise pymol.CmdException('need at least 2 selection')
+            if len(arg) % 2:
+                raise pymol.CmdException('need even number of selections')
+            new_arg = list(map(selector.process, arg))
+            try:
+                _self.lock(_self)	
+                r = _cmd.fit_pairs(_self._COb,new_arg)
+            finally:
+                _self.unlock(r,_self)
+            if _self._raising(r,_self): raise pymol.CmdException		 
+            return r
 
 
 

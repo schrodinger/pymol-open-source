@@ -12,13 +12,14 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import cmd as cmd_module
-from cmd import _cmd, lock, unlock, Shortcut, \
+from __future__ import print_function, absolute_import
+
+cmd_module = __import__("sys").modules["pymol.cmd"]
+from .cmd import _cmd, lock, unlock, Shortcut, \
      _feedback, fb_module, fb_mask, \
      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
      is_list, safe_list_eval, is_string
 
-import string
 import traceback
 import threading
 import os
@@ -95,18 +96,18 @@ class CleanJob:
             from freemol import mengine
         except:
             self.ok = 0
-            print "Error: unable to import freemol.mengine module."
-            print "This PyMOL build appears not to include full modeling capabilities."
+            print("Error: unable to import freemol.mengine module.")
+            print("This PyMOL build appears not to include full modeling capabilities.")
             return
         if self.ok:
             if not mengine.validate():
                 self.ok = 0
-                print "Error: Unable to validate freemol.mengine"
+                print("Error: Unable to validate freemol.mengine")
                 return
         if self.ok:
             if self_cmd.count_atoms(sele) > 999:
                 self.ok = 0
-                print "Error: Sorry, clean is currently limited to 999 atoms"
+                print("Error: Sorry, clean is currently limited to 999 atoms")
                 return
         if not self.ok:
             pass
@@ -129,7 +130,7 @@ class CleanJob:
                     self_cmd.reference("validate",obj_name,state) # then we have reference coordinates
                 input_model = self_cmd.get_model(obj_name,state=state)
                 (fit_flag, sdf_list) = model_to_sdf_list(self_cmd,input_model)
-                input_sdf = string.join(sdf_list,'')
+                input_sdf = ''.join(sdf_list)
 #                print input_sdf
                 result = mengine.run(input_sdf)
                 if result != None:
@@ -173,25 +174,25 @@ class CleanJob:
                 # we can't call warn because this is the not the tcl-tk gui thread
                 if result != None:
                     if len(result)>1:
-                        print "\n=== mengine errors below === "
-                        print result[1].replace("\n\n","\n"),
-                        print "=== mengine errors above ===\n"
+                        print("\n=== mengine errors below === ")
+                        print(result[1].replace("\n\n","\n"), end=' ')
+                        print("=== mengine errors above ===\n")
                 failed_file = "cleanup_failed.sdf"
-                print "Clean-Error: Structure cleanup failed.  Invalid input or software malfuction?"
+                print("Clean-Error: Structure cleanup failed.  Invalid input or software malfuction?")
                 aromatic = 0
                 for bond in input_model.bond:
                     if bond.order == 4:
                         aromatic = 1
                 try:
                     open(failed_file,'wb').write(input_sdf)
-                    print "Clean-Error: Wrote SD file '%s' into the directory:"%failed_file
-                    print "Clean-Error: '%s'."%os.getcwd()
-                    print "Clean-Error: If you believe PyMOL should be able to handle this structure"
-                    print "Clean-Error: then please email that SD file to help@schrodinger.com. Thank you!"
+                    print("Clean-Error: Wrote SD file '%s' into the directory:"%failed_file)
+                    print("Clean-Error: '%s'."%os.getcwd())
+                    print("Clean-Error: If you believe PyMOL should be able to handle this structure")
+                    print("Clean-Error: then please email that SD file to help@schrodinger.com. Thank you!")
                 except IOError:
-                    print "Unabled to write '%s"%failed_file
+                    print("Unabled to write '%s"%failed_file)
                 if aromatic:
-                    print "Clean-Warning: Please eliminate aromatic bonds and then try again."                    
+                    print("Clean-Warning: Please eliminate aromatic bonds and then try again.")                    
         if message!=None:
             self_cmd.do("_ wizard")
 

@@ -12,13 +12,15 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 if __name__=='pymol.querying':
 
     import time
-    import selector
+    from . import selector
     import pymol
-    import cmd
-    from cmd import _cmd,lock,unlock,Shortcut, \
+    cmd = __import__("sys").modules["pymol.cmd"]
+    from .cmd import _cmd,lock,unlock,Shortcut, \
           _feedback,fb_module,fb_mask,is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
@@ -77,10 +79,6 @@ DESCRIPTION
             _self.unlock(r,_self)
         return r
 
-    def get_volume_is_updated(objName,_self=cmd):
-        print ' DEPRECATED: get_volume_is_updated'
-        return 1
- 
     def get_unused_name(prefix="tmp",alwaysnumber=1,_self=cmd):
         r = DEFAULT_ERROR        
         # should replace this with a C function
@@ -150,12 +148,12 @@ DESCRIPTION
             r = _cmd.get_object_ttt(_self._COb, str(object), -1, quiet)
         if not quiet:
             if r is None:
-                print 'TTT is None'
+                print('TTT is None')
             else:
                 for i in range(4):
                     if i == 3:
-                        print 'TTT ---------------------------+---------'
-                    print 'TTT %8.2f %8.2f %8.2f | %8.2f' % tuple(r[i * 4:i * 4 + 4])
+                        print('TTT ---------------------------+---------')
+                    print('TTT %8.2f %8.2f %8.2f | %8.2f' % tuple(r[i * 4:i * 4 + 4]))
         return r
 
     def get_object_list(selection="(all)", quiet=1, _self=cmd):
@@ -174,7 +172,7 @@ DESCRIPTION
             r = _cmd.get_object_list(_self._COb,str(selection))
             if not quiet:
                 if(is_list(r)):
-                    print " get_object_list: ",str(r)
+                    print(" get_object_list: ",str(r))
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -205,11 +203,11 @@ PYMOL API
             if not quiet:
                 if(is_list(r)):
                     if(len(r)):
-                        print " get_symmetry: A     = %7.3f B    = %7.3f C     = %7.3f"%tuple(r[0:3])
-                        print " get_symmetry: Alpha = %7.3f Beta = %7.3f Gamma = %7.3f"%tuple(r[3:6])
-                        print " get_symmetry: SpaceGroup = %s"%r[6]
+                        print(" get_symmetry: A     = %7.3f B    = %7.3f C     = %7.3f"%tuple(r[0:3]))
+                        print(" get_symmetry: Alpha = %7.3f Beta = %7.3f Gamma = %7.3f"%tuple(r[3:6]))
+                        print(" get_symmetry: SpaceGroup = %s"%r[6])
                     else:
-                        print " get_symmetry: No symmetry defined."
+                        print(" get_symmetry: No symmetry defined.")
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -237,7 +235,7 @@ PYMOL API
             r = _cmd.get_title(_self._COb,str(object),int(state)-1)
             if not quiet:
                 if r!=None:
-                    print " get_title: %s"%r      
+                    print(" get_title: %s"%r)      
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -277,17 +275,17 @@ SEE ALSO
         if selection1=="(pk1)":
             if "pk1" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):
-                    print "cmd-Error: The 'pk1' selection is undefined."
+                    print("cmd-Error: The 'pk1' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):         
-                    print "cmd-Error: The 'pk2' selection is undefined."
+                    print("cmd-Error: The 'pk2' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection3=="(pk3)":
             if "pk3" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):         
-                    print "cmd-Error: The 'pk3' selection is undefined."
+                    print("cmd-Error: The 'pk3' selection is undefined.")
                 r = DEFAULT_ERROR
         if is_ok(r):
             r = DEFAULT_ERROR
@@ -361,22 +359,22 @@ SEE ALSO
         if selection1=="(pk1)":
             if "pk1" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):
-                    print "cmd-Error: The 'pk1' selection is undefined."
+                    print("cmd-Error: The 'pk1' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):         
-                    print "cmd-Error: The 'pk2' selection is undefined."
+                    print("cmd-Error: The 'pk2' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection3=="(pk3)":
             if "pk3" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):         
-                    print "cmd-Error: The 'pk3' selection is undefined."
+                    print("cmd-Error: The 'pk3' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection3=="(pk4)":
             if "pk4" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):         
-                    print "cmd-Error: The 'pk4' selection is undefined."
+                    print("cmd-Error: The 'pk4' selection is undefined.")
                 r = DEFAULT_ERROR
         if is_ok(r):
             r = DEFAULT_ERROR
@@ -488,12 +486,12 @@ PYMOL API
         if selection1=="(pk1)":
             if "pk1" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):
-                    print "cmd-Error: The 'pk1' selection is undefined."
+                    print("cmd-Error: The 'pk1' selection is undefined.")
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):         
-                    print "cmd-Error: The 'pk2' selection is undefined."
+                    print("cmd-Error: The 'pk2' selection is undefined.")
                 r = DEFAULT_ERROR
         if is_ok(r):
             r = DEFAULT_ERROR
@@ -543,8 +541,7 @@ PYMOL API
         return r
 
     # LEGACY support for cmd.dist
-    def dist(*arg,**kw):
-        return apply(distance,arg,kw)
+    dist = distance
 
     def get_povray(_self=cmd):
         '''
@@ -590,7 +587,7 @@ PYMOL API
         if not quiet:
             fov = _self.get_setting_float("field_of_view")
             dist = _self.get_view()[11]
-            print " 3Daac=%3.1f, 3Droll=0, 3Dc2c=0 0 1, 3Droo=%1.2f, 3Dcoo=0 0 %1.2f" % (fov, -dist, dist)
+            print(" 3Daac=%3.1f, 3Droll=0, 3Dc2c=0 0 1, 3Droo=%1.2f, 3Dcoo=0 0 %1.2f" % (fov, -dist, dist))
 
         return r
 
@@ -618,7 +615,7 @@ PYMOL API
         return r
     
     def get_version(quiet=1,_self=cmd):
-	'''
+        '''
 DESCRIPTION
  
     "get_version" returns a tuple of length six containing text,
@@ -630,7 +627,7 @@ PYMOL API
 
     cmd.get_version(int quiet)
 
-	'''
+        '''
         # get_version doesn't need the _COb and doesn't require a lock
         r = _cmd.get_version()
         if _raising(r,_self):
@@ -640,12 +637,12 @@ PYMOL API
             if quiet < 1 and _feedback(fb_module.cmd, fb_mask.results, _self):
                 import re
                 p = pymol.get_version_message(r)
-                print re.sub(r'^', ' ', p, re.M)
+                print(re.sub(r'^', ' ', p, re.M))
                 if quiet < 0:
                     if r[3]:
-                        print ' build date:', time.strftime('%c %Z', time.localtime(r[3]))
+                        print(' build date:', time.strftime('%c %Z', time.localtime(r[3])))
                     if r[4]:
-                        print ' git sha:', r[4]
+                        print(' git sha:', r[4])
         return r
 
     def get_vrml(version=2,_self=cmd): 
@@ -717,7 +714,7 @@ SEE ALSO
             _self.unlock(r,_self)
         if is_ok(r):
             if not quiet:
-                print " cmd.count_states: %d states."%r            
+                print(" cmd.count_states: %d states."%r)            
         if _raising(r,_self): raise pymol.CmdException
         return r
     
@@ -749,7 +746,7 @@ SEE ALSO
                 if r>0:
                     r = 0
             if r>=0 and not quiet:
-                print " cmd.get_movie_length: %d frames"%r      
+                print(" cmd.get_movie_length: %d frames"%r)      
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -778,7 +775,7 @@ SEE ALSO
         try:
             _self.lock(_self)
             r = _cmd.count_frames(_self._COb)
-            if not quiet: print " cmd.count_frames: %d frames"%r      
+            if not quiet: print(" cmd.count_frames: %d frames"%r)      
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -826,7 +823,7 @@ NOTES
             r = _cmd.overlap(_self._COb,str(selection1),str(selection2),
                                   int(state1)-1,int(state2)-1,
                                   float(adjust))
-            if not quiet: print " cmd.overlap: %5.3f Angstroms."%r
+            if not quiet: print(" cmd.overlap: %5.3f Angstroms."%r)
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -861,7 +858,7 @@ NOTES
             r = _cmd.get_color(_self._COb,name,mode)
             if r==None:
                 if _feedback(fb_module.cmd,fb_mask.errors,_self):         
-                    print "cmd-Error: Unknown color '%s'."%name
+                    print("cmd-Error: Unknown color '%s'."%name)
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -904,10 +901,10 @@ DESCRIPTION
         if _raising(r,_self): raise pymol.CmdException
 
         if not int(quiet):
-            print " OpenGL graphics engine:"
-            print "  GL_VENDOR:   ", r[0]
-            print "  GL_RENDERER: ", r[1]
-            print "  GL_VERSION:  ", r[2]
+            print(" OpenGL graphics engine:")
+            print("  GL_VENDOR:   ", r[0])
+            print("  GL_RENDERER: ", r[1])
+            print("  GL_VERSION:  ", r[2])
 
         return r
 
@@ -943,7 +940,7 @@ DESCRIPTION
             if _self._raising(_self=_self): raise pymol.CmdException
         elif not quiet:
             for a in r:
-                print " cmd.get_atom_coords: [%8.3f,%8.3f,%8.3f]"%(a)
+                print(" cmd.get_atom_coords: [%8.3f,%8.3f,%8.3f]"%(a))
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1003,7 +1000,7 @@ DESCRIPTION
         if _raising(r,_self):
             raise pymol.CmdException
         elif not quiet:
-            print " cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2])
+            print(" cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2]))
         return r
 
     def get_distance(atom1="pk1",atom2="pk2",state=-1,quiet=1,_self=cmd):
@@ -1042,7 +1039,7 @@ PYMOL API
         if _raising(r,_self):
             raise pymol.CmdException
         elif not quiet:
-            print " cmd.get_distance: %5.3f Angstroms."%r
+            print(" cmd.get_distance: %5.3f Angstroms."%r)
         return r
 
     def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=-1,quiet=1,_self=cmd):
@@ -1081,7 +1078,7 @@ PYMOL API
         if _raising(r,_self):
             raise pymol.CmdException
         elif not quiet:
-            print " cmd.get_angle: %5.3f degrees."%r
+            print(" cmd.get_angle: %5.3f degrees."%r)
         return r
         
     def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=-1,quiet=1,_self=cmd):
@@ -1124,7 +1121,7 @@ PYMOL API
         if _raising(r,_self):
             raise pymol.CmdException
         elif not quiet:
-            print " cmd.get_dihedral: %5.3f degrees."%r
+            print(" cmd.get_dihedral: %5.3f degrees."%r)
         return r
 
     def get_model(selection="(all)",state=1,ref='',ref_state=0,_self=cmd):
@@ -1184,7 +1181,7 @@ SEE ALSO
         if r<0.0: # negative area signals error condition
             if _self._raising(): raise pymol.CmdException
         elif not quiet:
-            print " cmd.get_area: %5.3f Angstroms^2."%r
+            print(" cmd.get_area: %5.3f Angstroms^2."%r)
         return r
 
     def get_chains(selection="(all)",state=0,quiet=1,_self=cmd):
@@ -1217,7 +1214,7 @@ ARGUMENTS
         if _raising(r,_self):
             raise pymol.CmdException
         elif not quiet:
-            print " cmd.get_chains: ",str(r)
+            print(" cmd.get_chains: ",str(r))
         return r
 
 
@@ -1264,7 +1261,7 @@ SEE ALSO
         elif type=='group_objects':
             mode = 9
         else:
-            print "Error: unknown type: '%s'"%str(type)
+            print("Error: unknown type: '%s'"%str(type))
             if _raising(-1,_self): raise pymol.CmdException            
         try:
             _self.lock(_self)
@@ -1322,9 +1319,9 @@ SEE ALSO
             _self.unlock(r,_self)
         if is_error(r):
             if not quiet and _feedback(fb_module.cmd,fb_mask.errors,_self):      
-                print "Cmd-Error: unrecognized name."
+                print("Cmd-Error: unrecognized name.")
         elif not quiet:
-            print r
+            print(r)
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1342,23 +1339,23 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         selection = str(selection)
-        l = apply(identify,(selection,mode,1))
+        l = identify(selection, mode)
         ll = len(l)
         if not ll:
             if _feedback(fb_module.cmd,fb_mask.errors,_self):
-                print "cmd-Error: atom %s not found by id_atom." % selection
+                print("cmd-Error: atom %s not found by id_atom." % selection)
             if _self._raising(_self=_self): raise pymol.CmdException
         elif ll>1:
             if _feedback(fb_module.cmd,fb_mask.errors,_self):
-                print "cmd-Error: multiple atoms %s found by id_atom." % selection
+                print("cmd-Error: multiple atoms %s found by id_atom." % selection)
             if _self._raising(_self=_self): raise pymol.CmdException
         else:
             r = l[0]
             if not quiet:
                 if mode:
-                    print " cmd.id_atom: (%s and id %d)"%(r[0],r[1])
+                    print(" cmd.id_atom: (%s and id %d)"%(r[0],r[1]))
                 else:
-                    print " cmd.id_atom: (id %d)"%r
+                    print(" cmd.id_atom: (id %d)"%r)
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1393,10 +1390,10 @@ NOTES
                 if not quiet:
                     if mode:
                         for a in r:
-                            print " cmd.identify: (%s and id %d)"%(a[0],a[1])
+                            print(" cmd.identify: (%s and id %d)"%(a[0],a[1]))
                     else:
                         for a in r:
-                            print " cmd.identify: (id %d)"%a
+                            print(" cmd.identify: (id %d)"%a)
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1431,7 +1428,7 @@ NOTE
             if is_list(r):
                 if len(r):
                     for a in r:
-                        print " cmd.index: (%s`%d)"%(a[0],a[1])
+                        print(" cmd.index: (%s`%d)"%(a[0],a[1]))
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1505,8 +1502,8 @@ PYMOL API
         if not r:
             if _self._raising(_self=_self): raise pymol.CmdException
         elif not quiet:
-            print " cmd.extent: min: [%8.3f,%8.3f,%8.3f]"%(r[0][0],r[0][1],r[0][2])
-            print " cmd.extent: max: [%8.3f,%8.3f,%8.3f]"%(r[1][0],r[1][1],r[1][2])      
+            print(" cmd.extent: min: [%8.3f,%8.3f,%8.3f]"%(r[0][0],r[0][1],r[0][2]))
+            print(" cmd.extent: max: [%8.3f,%8.3f,%8.3f]"%(r[1][0],r[1][1],r[1][2]))      
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1522,18 +1519,18 @@ USAGE
         
         r = cmd.get_phipsi(selection)
         if r!=None:
-            kees = r.keys()
+            kees = list(r.keys())
             kees.sort()
             if not quiet:
                 _self.feedback('push')
                 _self.feedback('disable','executive','actions')
                 for a in kees:
-                    _self.iterate("(%s`%d)"%a,"print ' %-9s "+
+                    _self.iterate("(%s`%d)"%a,"print(' %-9s "+
                                 ("( %6.1f, %6.1f )"%r[a])+
-                                "'%(resn+'-'+resi+':')")
+                                "'%(resn+'-'+resi+':'))")
                 _self.feedback('pop')
         elif _feedback(fb_module.cmd,fb_mask.errors,_self):      
-            print "cmd-Error: can't compute phi_psi"
+            print("cmd-Error: can't compute phi_psi")
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1558,7 +1555,7 @@ USAGE
             _cmd.delete(_self._COb,"_count_tmp")
         finally:
             _self.unlock(r,_self)
-        if not quiet: print " count_atoms: %d atoms"%r
+        if not quiet: print(" count_atoms: %d atoms"%r)
         if _raising(r,_self): raise pymol.CmdException
         return r
 
@@ -1575,7 +1572,7 @@ USAGE
         with _self.lockcm:
             r = _cmd.count_discrete(_self._COb, str(selection))
             if not int(quiet):
-                print ' count_discrete: %d' % r
+                print(' count_discrete: %d' % r)
             return r
 
     def get_names_of_type(type,public=1,_self=cmd):
@@ -1596,8 +1593,8 @@ DESCRIPTION
     
         if obj:
             try:
-                types = map(_self.get_type,obj)
-                mix = map(None,obj,types)
+                types = list(map(_self.get_type,obj))
+                mix = list(zip(obj,types))
             except:
                 pass
         lst = []
@@ -1684,7 +1681,7 @@ SEE ALSO
         if state < 0:
             states = [get_selection_state(selection)]
         elif state == 0:
-            states = range(1, _self.count_states(selection)+1)
+            states = list(range(1, _self.count_states(selection)+1))
         else:
             states = [state]
 
@@ -1703,7 +1700,7 @@ SEE ALSO
 
         com = cpv.scale(com, 1./totmass)
         if not quiet:
-            print ' Center of Mass: [%8.3f,%8.3f,%8.3f]' % tuple(com)
+            print(' Center of Mass: [%8.3f,%8.3f,%8.3f]' % tuple(com))
         return com
 
     def cif_get_array(name, key, dtype="s", quiet=1, _self=cmd):
@@ -1725,7 +1722,7 @@ ARGUMENTS
         if r and not int(quiet):
             n = len(r)
             r_print = r if n < 10 else (r[:9] + ['... (%d more items)' % (n - 9)])
-            print " %s:" % (key), ', '.join(map(str, r_print))
+            print(" %s:" % (key), ', '.join(map(str, r_print)))
         return r
 
     def get_assembly_ids(name, quiet=1, _self=cmd):
@@ -1737,5 +1734,5 @@ DESCRIPTION
         '''
         r = cif_get_array(name, "_pdbx_struct_assembly.id", _self=_self)
         if r and not int(quiet):
-            print " Assembly IDs:", ', '.join(r)
+            print(" Assembly IDs: %s" % ', '.join(r))
         return r

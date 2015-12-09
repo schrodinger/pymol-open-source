@@ -4411,11 +4411,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
   WordType name;
   PyObject *key, *list, *col;
   PyObject *vis_list = NULL;
-#if (PY_MAJOR_VERSION>=2)&&(PY_MINOR_VERSION>=5)
   Py_ssize_t pos = 0;
-#else
-  int pos = 0;
-#endif
   SpecRec *rec, *grec, **recstack = NULL;
   int n_vis;
   int rep;

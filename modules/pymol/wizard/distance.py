@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -151,7 +153,7 @@ class Distance(Wizard):
 
         if bondFlag:
             self.error = "Error: please select an atom, not a bond."
-            print self.error
+            print(self.error)
         else:
             if self.mode == 'pairs':
                 if self.status==0:
@@ -187,7 +189,7 @@ class Distance(Wizard):
                 if cnt:
                     cmd.dist(name,"(pk1)",sele_prefix)
                 else:
-                    print " Wizard: No neighbors found."
+                    print(" Wizard: No neighbors found.")
                 cmd.delete(sele_prefix)
                 cmd.unpick()
                 cmd.enable(name)

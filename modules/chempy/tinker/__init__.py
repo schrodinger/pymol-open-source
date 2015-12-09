@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import os
 import shutil
 import glob
@@ -26,11 +28,11 @@ from chempy import feedback
 
 def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
     if feedback['tinker']:
-        print " "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix)
-        print " "+str(__name__)+': launching %s...' % command
+        print(" "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix))
+        print(" "+str(__name__)+': launching %s...' % command)
         c = 1
         for a in tokens:
-            print " "+str(__name__)+': input %d = %s' % (c,a)
+            print(" "+str(__name__)+': input %d = %s' % (c,a))
             c = c + 1
         if hasattr(sys.stdout,"flush"):
             sys.stdout.flush()
@@ -49,7 +51,7 @@ def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
     else:
         pipe = os.popen(bin_path+command,"w")
     if not pipe:
-        print "Error: can't run tinker!!!"
+        print("Error: can't run tinker!!!")
         raise RunError
     for a in tokens:
         pipe.write(a+"\n")
@@ -79,8 +81,8 @@ def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
     for a in glob.glob(in_prefix+".*"):
         os.unlink(a)
     if feedback['tinker']:
-        print " "+str(__name__)+': %s job complete. ' % command
-        print " "+str(__name__)+': creating output files "%s.*"' % (out_prefix)
+        print(" "+str(__name__)+': %s job complete. ' % command)
+        print(" "+str(__name__)+': creating output files "%s.*"' % (out_prefix))
 
 #  DEPRECATED
 
@@ -88,11 +90,11 @@ prefix = "tinker_run"
 
 def run(command,in_prefix,out_prefix,tokens,capture=None):
     if feedback['tinker']:
-        print " "+str(__name__)+': creating temporary files "%s.*"' % (prefix)
-        print " "+str(__name__)+': launching %s...' % command
+        print(" "+str(__name__)+': creating temporary files "%s.*"' % (prefix))
+        print(" "+str(__name__)+': launching %s...' % command)
         c = 1
         for a in tokens:
-            print " "+str(__name__)+': input %d = %s' % (c,a)
+            print(" "+str(__name__)+': input %d = %s' % (c,a))
             c = c + 1
         if hasattr(sys.stdout,"flush"):
             sys.stdout.flush()
@@ -109,7 +111,7 @@ def run(command,in_prefix,out_prefix,tokens,capture=None):
     else:
         pipe = os.popen(bin_path+command,"w")
     if not pipe:
-        print "Error: can't run tinker!!!"
+        print("Error: can't run tinker!!!")
         raise RunError
     for a in tokens:
         pipe.write(a+"\n")
@@ -129,14 +131,14 @@ def run(command,in_prefix,out_prefix,tokens,capture=None):
 #      os.rename(src,dst)    rename can fail over NFS (remote action)  
         shutil.copy(src,dst)
     if feedback['tinker']:
-        print " "+str(__name__)+': %s job complete. ' % command
-        print " "+str(__name__)+': creating output files "%s.*"' % (out_prefix)
+        print(" "+str(__name__)+': %s job complete. ' % command)
+        print(" "+str(__name__)+': creating output files "%s.*"' % (out_prefix))
 
-if os.environ.has_key('TINKER_PATH'):
+if 'TINKER_PATH' in os.environ:
     base = os.environ['TINKER_PATH']
     bin_path = base + '/bin/'
     params_path = base + '/params/'
-elif os.environ.has_key('FREEMOL_ETC'):
+elif 'FREEMOL_ETC' in os.environ:
     base = os.environ['FREEMOL_ETC'] + '/tinker'
     bin_path = base + '/bin/'
     params_path = base + '/params/'
@@ -145,7 +147,7 @@ else:
     bin_path = ''
     params_path = ''
 
-if os.environ.has_key('PYMOL_PATH'):
+if 'PYMOL_PATH' in os.environ:
     pymol_path = os.environ['PYMOL_PATH']
     test_path = pymol_path + '/data/chempy/tinker/'
     if os.path.exists(test_path):

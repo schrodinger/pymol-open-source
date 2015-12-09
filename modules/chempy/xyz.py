@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 from chempy import Storage,Atom,feedback
 from chempy.models import Indexed,Connected
 import string
@@ -75,7 +77,7 @@ class XYZ(Storage):
                 if not mapping:
                     mapping = generics
                     if feedback['warnings']:
-                        print ' '+str(self.__class__)+': no numeric atom types found, using defaults.'
+                        print(' '+str(self.__class__)+': no numeric atom types found, using defaults.')
             list.append("%6d\n" % conn.nAtom)
             c = 0
             for a in conn.atom:
@@ -84,8 +86,8 @@ class XYZ(Storage):
                 else:
                     n_type = a.numeric_type
                 if n_type<0:
-                    print str(self.__class__)+\
-                            '-WARNING: negative numeric type (%d) for atom %d'% (n_type,c)
+                    print(str(self.__class__)+\
+                            '-WARNING: negative numeric type (%d) for atom %d'% (n_type,c))
                 st = "%6d  %-3s%12.6f%12.6f%12.6f%6d" % (
                     c+1,a.text_type,a.coord[0],a.coord[1],a.coord[2],int(n_type))
                 for b in conn.bond[c]:

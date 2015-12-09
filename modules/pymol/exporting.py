@@ -12,21 +12,26 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function, absolute_import
+
 if __name__=='pymol.exporting':
     import os
-    import thread
-    import selector
-    import string
+    try:
+        import thread
+        import cPickle
+    except ImportError:
+        import _thread as thread
+        import pickle as cPickle
+    from . import selector
     import re
     import copy
-    import cPickle
     
     import pymol
-    import cmd
-    from cmd import _cmd,lock,unlock,Shortcut,QuietException
+    cmd = __import__("sys").modules["pymol.cmd"]
+    from .cmd import _cmd,lock,unlock,Shortcut,QuietException
     from chempy import io
     from chempy.sdf import SDF,SDFRec
-    from cmd import _feedback,fb_module,fb_mask, \
+    from .cmd import _feedback,fb_module,fb_mask, \
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
                      is_list, is_dict, is_tuple, loadable
     import traceback
@@ -107,15 +112,15 @@ PYMOL API
                 # allow double memory for an optimized cache
                 _self.set('cache_max',cache_max*2) 
             scenes = str(scenes)
-            scene_list = string.split(scenes)
+            scene_list = scenes.split()
             cache_mode = int(_self.get('cache_mode'))
             _self.set('cache_mode',2)
             if not len(scene_list):
                 scene_list = _self.get_scene_list()
             for scene in scene_list:
-                scene = string.strip(scene)
+                scene = scene.strip()
                 if not quiet:
-                    print " cache: optimizing scene '%s'."%scene
+                    print(" cache: optimizing scene '%s'."%scene)
                 cmd.scene(scene,animate=0)
                 cmd.rebuild()                
                 cmd.refresh()
@@ -127,7 +132,7 @@ PYMOL API
                     cmd.scene(scene_list[0],animate=0)
                 else:
                     if not quiet:
-                        print " cache: no scenes defined -- optimizing current display."
+                        print(" cache: no scenes defined -- optimizing current display.")
                     cmd.rebuild() 
                     cmd.refresh()
             usage = _self._cache_purge(-1,_self=_self)
@@ -137,7 +142,7 @@ PYMOL API
                 _self.set('cache_mode',2) # hmm... could use 1 here instead.
             _self.set('cache_max',cache_max) # restore previous limits
             if not quiet:            
-                print " cache: optimization complete (~%0.1f MB)."%(usage*4/1000000.0)
+                print(" cache: optimization complete (~%0.1f MB)."%(usage*4/1000000.0))
         try:
             _self.lock(_self)
         finally:
@@ -178,10 +183,10 @@ PYMOL API
         seq = dict['seq']
         result = []
         for obj in _self.get_names("objects",selection='('+selection+')'):
-            if seq.has_key(obj):
-                cur_seq = map(lambda x:_resn_to_aa.get(x,'?'),seq[obj])
+            if obj in seq:
+                cur_seq = [_resn_to_aa.get(x,'?') for x in seq[obj]]
                 result.append(">%s"%obj)
-                cur_seq = string.join(cur_seq,'')
+                cur_seq = ''.join(cur_seq)
                 while len(cur_seq):
                     if len(cur_seq)>=70:
                         result.append(cur_seq[0:70])
@@ -189,7 +194,7 @@ PYMOL API
                     else:
                         result.append(cur_seq)
                         break
-        result = string.join(result,'\n')
+        result = '\n'.join(result)
         if len(result):
             result = result + '\n'
         return result
@@ -228,15 +233,15 @@ NOTES
     def _get_dump_str(obj):
         if is_list(obj):
             list = map(_get_dump_str,obj)
-            result = "[ "+string.join(list,",\n")+" ] "
+            result = "[ " + ",\n".join(list) + " ] "
         elif is_dict(obj):
             list = []
             for key in obj.keys():
                 list.append( _get_dump_str(key)+" : "+_get_dump_str(obj[key]) )
-            result = "{ "+string.join(list,",\n")+" } "
+            result = "{ " + ",\n".join(list) + " } "
         elif is_tuple(obj):
             list = map(_get_dump_str,obj)
-            result = "( "+string.join(list,",\n")+" ) "
+            result = "( " + ",\n".join(list) + " ) "
         else:
             result = str(obj)
         return result
@@ -248,7 +253,7 @@ NOTES
         if version >= _self.get_version()[1]:
             return
 
-        print " Applying pse_export_version=%.3f compatibility" % (version)
+        print(" Applying pse_export_version=%.3f compatibility" % (version))
 
         def bitmaskToList(mask):
             if not isinstance(mask, int):
@@ -378,19 +383,19 @@ NOTES
                     traceback.print_exc()
             else:
                 try:
-                    if is_error(apply(a,(session,),{'_self':_self})):
+                    if is_error(a(*(session,), **{'_self':_self})):
                         r = DEFAULT_ERROR
                 except:
                     traceback.print_exc()
-                    print "Error: An error occurred when trying to generate session."
-                    print "Error: The resulting session file may be incomplete."
+                    print("Error: An error occurred when trying to generate session.")
+                    print("Error: The resulting session file may be incomplete.")
         if is_ok(r):
             pse_export_version = round(_self.get_setting_float('pse_export_version'), 4)
             if pse_export_version > 0.0:
                 try:
                     _session_convert_legacy(session, pse_export_version, _self)
                 except Exception as e:
-                    print ' Warning: failed to backport session:', e
+                    print(' Warning: failed to backport session:', e)
 
             if(compress<0):
                 compress = _self.get_setting_boolean('session_compression')
@@ -508,7 +513,7 @@ DESCRIPTION
     '''
         r = DEFAULT_ERROR
         filename = _self.exp_path(filename)        
-        lc_filename=string.lower(filename)
+        lc_filename = filename.lower()
         if format=='':
             # refactor following if/elif cascade 
             # with a dictionary lookup
@@ -617,7 +622,7 @@ SEE ALSO
                 format = 'pse'
             else:
                 if not quiet:
-                    print " Save-Warning: Unrecognized file type -- defaulting to PDB format."
+                    print(" Save-Warning: Unrecognized file type -- defaulting to PDB format.")
                 format='pdb'
 
         filename = _self.exp_path(filename)
@@ -669,12 +674,14 @@ SEE ALSO
             if '(' in selection: # ignore selections
                 selection = ''
             if not quiet:
-                print " Save: Please wait -- writing session file..."
+                print(" Save: Please wait -- writing session file...")
             contents = cPickle.dumps(_self.get_session(selection, partial, quiet), 1)
         elif format=='png':
             return _self.png(filename, quiet=quiet)
 
-        if isinstance(contents, basestring):
+        if cmd.is_string(contents):
+            if not isinstance(contents, bytes):
+                contents = contents.encode()
             with (gzip.open if do_gzip else open)(filename, 'wb') as handle:
                 handle.write(contents)
             r = DEFAULT_SUCCESS
@@ -683,9 +690,9 @@ SEE ALSO
 
         if not quiet:
             if r == DEFAULT_SUCCESS:
-                print ' Save: wrote "' + filename + '".'
+                print(' Save: wrote "' + filename + '".')
             else:
-                print ' Save-Error: no file written'
+                print(' Save-Error: no file written')
 
         return r
 
@@ -711,7 +718,7 @@ SEE ALSO
             if re_cifenddoublequote_search(s) is None:
                 return '"' + s + '"'
         if '\n;' in s:
-            print ' Warning: CIF data value contains <newline><semicolon>'
+            print(' Warning: CIF data value contains <newline><semicolon>')
             s = s.replace('\n;', '\n ;')
         return '\n;' + s + '\n;'
 
@@ -826,7 +833,7 @@ _atom_site.pdbx_PDB_model_num
             buf[n_atoms_i] = str(n) + '\n'
 
         if not quiet:
-            print " Save-XYZ: %d object-state(s) in selection." % (i + 1)
+            print(" Save-XYZ: %d object-state(s) in selection." % (i + 1))
 
         return ''.join(buf)
 
@@ -841,7 +848,7 @@ _atom_site.pdbx_PDB_model_num
             buf.append('$$$$\n')
 
         if not quiet:
-            print " Save-SDF: %d object-state(s) in selection." % (i + 1)
+            print(" Save-SDF: %d object-state(s) in selection." % (i + 1))
 
         return ''.join(buf)
 
@@ -856,7 +863,7 @@ _atom_site.pdbx_PDB_model_num
                 ostate, ref, ref_state), selection=osele, state=ostate))
 
         if not quiet:
-            print " Save-MOL2: %d object-state(s) in selection." % (i + 1)
+            print(" Save-MOL2: %d object-state(s) in selection." % (i + 1))
 
         return ''.join(buf)
 

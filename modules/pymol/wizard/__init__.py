@@ -81,7 +81,7 @@ class Wizard:
 
     def get_menu(self,tag):
         result = None
-        if self.menu.has_key(tag):
+        if tag in self.menu:
             result = self.menu[tag]
         return result
 

@@ -29,7 +29,7 @@ class ARC(Storage):
             hdr = hdr[0:6]
             if hdr:
                 lst = []
-                for b in xrange(int(hdr)):
+                for b in range(int(hdr)):
                     a = f.readline()
                     lst.append([float(a[11:23]),float(a[23:35]),float(a[35:47])])
                 list.append(lst)

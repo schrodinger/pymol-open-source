@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 from chempy import tinker,io,feedback
 from chempy.tinker import keyword
 import copy
@@ -21,7 +23,7 @@ class State:
 
     def __init__(self):
         if feedback['verbose']:
-            print ' '+str(self.__class__)+': created.'
+            print(' '+str(self.__class__)+': created.')
         self.prefix = 'tinker'
         self.params = tinker.params_path+'chempy.prm'
 
@@ -51,7 +53,7 @@ class State:
 
     def analyze(self,kw=None,summary=1):
         if feedback['actions']:
-            print ' '+str(self.__class__)+': starting energy run...'
+            print(' '+str(self.__class__)+': starting energy run...')
         io.xyz.toFile(self.model,self.prefix+"_inp.xyz",
                           mapping = self.mapping)
         kw_list = [ "parameters "+self.params+"\n" ]
@@ -101,7 +103,7 @@ class State:
     def minimize(self,gradient=0.1,max_iter=100,
                      kw=None,summary=1):
         if feedback['actions']:
-            print ' '+str(self.__class__)+': starting minimization run...'
+            print(' '+str(self.__class__)+': starting minimization run...')
         io.xyz.toFile(self.model,self.prefix+"_inp.xyz")
         self.counter = self.counter + max_iter
         kw_list = [ "parameters "+self.params+"\n" ]
@@ -165,7 +167,7 @@ class State:
                      temperature=None,
                      kw=None,summary=1):
         if feedback['actions']:
-            print ' '+str(self.__class__)+': starting dynamics run...'
+            print(' '+str(self.__class__)+': starting dynamics run...')
         io.xyz.toFile(self.model,self.prefix+"_inp.xyz")
         self.counter = self.counter + steps * timestep
 # if restart is available, then use it.
@@ -174,7 +176,7 @@ class State:
             f.writelines(self.restart)
             f.close()
             if feedback['actions']:
-                print ' '+str(self.__class__)+': using restart information...'
+                print(' '+str(self.__class__)+': using restart information...')
 #         
         kw_list = [ "parameters "+self.params+"\n" ]
         for a in self.keywords.keys():
@@ -249,7 +251,7 @@ class State:
         
     def load_model(self,a):
         if feedback['verbose']:
-            print ' '+str(self.__class__)+': new model loaded.'
+            print(' '+str(self.__class__)+': new model loaded.')
         self.model = a
         self.reset_fragile()
 

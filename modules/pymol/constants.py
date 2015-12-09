@@ -1,15 +1,15 @@
 
 # constant objects 
 
-import cmd
-import parsing
+cmd = __import__('sys').modules['pymol.cmd']
+
+from . import parsing
 import re
-import string
-from cmd import Shortcut
+from .cmd import Shortcut
 
 gz_ext_re = re.compile(r"(\.?gz|\.bz2)$", re.I)
 
-file_ext_re = re.compile(string.join([
+file_ext_re = re.compile(''.join([
     "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",
     r"\.pdbml$|\.pdbqt$|\.cml$|",
     r"\.mmod$|\.mmd$|\.dat$|\.out$|\.mol2$|",
@@ -39,7 +39,7 @@ file_ext_re = re.compile(string.join([
     r"\.o$|\.omap$|\.dsn6$|\.brix$|", # BRIX/O format
     r"\.grd$|", # InsightII Grid format
     r"\.acnt$", # Tripos / Sybyl ACNT format
-    ],''), re.I)
+    ]), re.I)
 
 class loadable:
     pdb = 0
@@ -205,7 +205,7 @@ boolean_dict = {
 
 boolean_sc = Shortcut(boolean_dict.keys())
 
-from constants_palette import palette_dict
+from .constants_palette import palette_dict
 
 palette_sc = Shortcut(palette_dict.keys())
 

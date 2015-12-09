@@ -12,18 +12,18 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function, absolute_import
+
 if __name__=='pymol.creating':
 
     import pymol
-    import selector
+    from . import selector
     import traceback
-    import operator
-    import cmd
-    import string
+    cmd = __import__("sys").modules["pymol.cmd"]
     import re
     import gzip
     import os
-    from cmd import _cmd, Shortcut, is_list, is_string, \
+    from .cmd import _cmd, Shortcut, is_list, is_string, \
           file_ext_re, safe_list_eval, safe_alpha_list_eval, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
           is_tuple
@@ -224,18 +224,18 @@ NOTES
         try:
             _self.lock(_self)
             if not os.path.isfile(reflection_file):
-                print " MapGenerate-Error: Could not find file '%s'.\n Please check the filename and try again." % reflection_file
+                print(" MapGenerate-Error: Could not find file '%s'.\n Please check the filename and try again." % reflection_file)
                 raise pymol.CmdException
 
             # TODO: work for CIF, MTZ, and CNS
-            import headering
+            from . import headering
             mtzFile = headering.MTZHeader(reflection_file)
                 
             # FORMAT: crystal/dataset/column
             _, datasetName, ampColName = ('//' + amplitudes).rsplit('/', 2)
 
             # if datasetName is empty, take any dataset that has ampColName
-            for dataset in mtzFile.datasets.values():
+            for dataset in list(mtzFile.datasets.values()):
                 if (not datasetName or dataset["name"] == datasetName) and \
                         ampColName in dataset["cols"]:
                     break
@@ -269,15 +269,15 @@ NOTES
                               int(quiet),int(zoom))
             if r!=None:
                 if not quiet:
-                    print "Loading map '%s'" % (name)
+                    print("Loading map '%s'" % (name))
                 r = _self.load(r, name, format="ccp4", finish=1)
             else:
-                print ' Error: Map generation failed'
+                print(' Error: Map generation failed')
 
             os.remove(tempFileName)
 
         except ImportError:
-            print " MapGenerate-Error: Cannot import headering module.  Cannot read MTZ file or make map."
+            print(" MapGenerate-Error: Cannot import headering module.  Cannot read MTZ file or make map.")
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
@@ -448,7 +448,7 @@ SEE ALSO
     
     '''
         r = DEFAULT_ERROR
-        safe_color = string.strip(str(color))
+        safe_color = str(color).strip()
         if(safe_color[0:1]=="["): # looks like a list
             color = safe_alpha_list_eval(str(safe_color))
         else: # looks like a literal
@@ -461,7 +461,7 @@ SEE ALSO
         try:
             if isinstance(range, str):
                 range = safe_list_eval(range)
-            range = map(float, range)
+            range = list(map(float, range))
         except:
             raise pymol.CmdException('invalid range')
         if is_list(color):
@@ -973,25 +973,18 @@ USAGE
             model = fragments.get(str(name))
             la = len(model.atom)
             if la:
-                mean = map(lambda x,la=la:x/la,[
-                    reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
-
-                    reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
-                    reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
                 position = _self.get_position()
                 for c in range(0,3):
-                    mean[c]=position[c]-mean[c]
-                    map(lambda a,x=mean[c],c=c:_self._adjust_coord(a,c,x),model.atom)
-                mean = map(lambda x,la=la:x/la,[
-                    reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
-                    reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
-                    reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
+                    mean_c = sum([a.coord[c] for a in model.atom]) / la
+                    mean_c = position[c] - mean_c
+                    for a in model.atom:
+                        _self._adjust_coord(a, c, mean_c)
             r = _self.load_model(model,str(object),quiet=quiet,zoom=zoom, _self=_self)
         except IOError:
-            print "Error: unable to load fragment '%s'." % name
+            print("Error: unable to load fragment '%s'." % name)
         except:
             traceback.print_exc()
-            print "Error: unable to load fragment '%s'." % name         
+            print("Error: unable to load fragment '%s'." % name)         
         if _self._raising(r,_self): raise pymol.CmdException                                    
         return r
 
@@ -1038,7 +1031,7 @@ SEE ALSO
         if target_state == -1:
             target_state = _self.count_states('?' + name) + 1
         if copy_properties:
-            print ' Warning: properties are not supported in Open-Source PyMOL'
+            print(' Warning: properties are not supported in Open-Source PyMOL')
         # preprocess selection
         selection = selector.process(selection)
         #      
@@ -1080,7 +1073,7 @@ SEE ALSO
     '''
         
         kw['extract'] = 1
-        return apply(create,arg,kw)
+        return create(*arg, **kw)
 
     pseudoatom_mode_dict = {
         "unit" : 0, # radius 0.5
@@ -1099,7 +1092,7 @@ SEE ALSO
             try:
                 return cmd.safe_eval(s)
             except SyntaxError:
-                print " Warning: unquote failed for", repr(s)
+                print(" Warning: unquote failed for", repr(s))
         return s
     
     def pseudoatom(object='', selection='', name='PS1', resn='PSD', resi='1', chain='P',
@@ -1137,7 +1130,7 @@ NOTES
         selection = selector.process(selection)
         mode = pseudoatom_mode_dict[pseudoatom_mode_sc.auto_err(str(mode),'pseudoatom mode')]
         
-        (name,resn,resi,chain,segi,elem,label) = map(unquote,(name,resn,resi,chain,segi,elem,label))
+        (name,resn,resi,chain,segi,elem,label) = list(map(unquote,(name,resn,resi,chain,segi,elem,label)))
         #      
         try:
             _self.lock(_self)

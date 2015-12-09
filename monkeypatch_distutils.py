@@ -27,24 +27,20 @@ distutils.unixccompiler.UnixCCompiler.executables.update({
     'linker_exe_cxx'    : ["c++"],
 })
 
-def monkeypatch(orig):
+def monkeypatch(parent, name):
     '''
     Decorator to replace a function or class method. Makes the
     unpatched function available as <patchedfunction>._super
     '''
     def wrapper(func):
+        orig = getattr(parent, name)
         func._super = orig
-        func.__name__ = orig.__name__
-        parent = getattr(orig, 'im_self', None)
-        if parent is None:
-            parent = getattr(orig, 'im_class', None)
-        if parent is None:
-            parent = sys.modules[orig.__module__]
-        setattr(parent, orig.__name__, func)
+        func.__name__ = name
+        setattr(parent, name, func)
         return func
     return wrapper
 
-@monkeypatch(distutils.sysconfig.customize_compiler)
+@monkeypatch(distutils.sysconfig, 'customize_compiler')
 def customize_compiler(compiler):
     customize_compiler._super(compiler)
 
@@ -69,7 +65,7 @@ def customize_compiler(compiler):
             linker_so_cxx=ldcxxshared,
             linker_exe_cxx=cxx)
 
-@monkeypatch(distutils.unixccompiler.UnixCCompiler.compile)
+@monkeypatch(distutils.unixccompiler.UnixCCompiler, 'compile')
 def compile(self, sources, output_dir=None, macros=None,
         include_dirs=None, debug=0, extra_preargs=None, extra_postargs=None,
         depends=None):
@@ -111,8 +107,10 @@ def compile(self, sources, output_dir=None, macros=None,
                 else compiler_so
         try:
             self.spawn(compiler + cc_args + [src, '-o', obj] + extra_postargs)
-        except distutils.errors.DistutilsExecError, msg:
-            raise distutils.errors.CompileError, msg
+        except distutils.errors.DistutilsExecError as msg:
+            raise distutils.errors.CompileError(msg)
 
-    pmap(_single_compile, objects)
+    for _ in pmap(_single_compile, objects):
+        pass
+
     return objects

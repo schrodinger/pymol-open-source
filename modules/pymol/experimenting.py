@@ -14,10 +14,10 @@
 
 if __name__=='pymol.experimenting':
     
-    import selector
-    from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
+    from . import selector
+    from .cmd import _cmd,lock,unlock,Shortcut,QuietException, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
-    import cmd
+    cmd = __import__("sys").modules["pymol.cmd"]
     import threading
     import pymol
     import string
@@ -49,7 +49,7 @@ USAGE
     '''
         r = DEFAULT_ERROR
         try:
-            print "Warning: 'spheroid' is experimental, incomplete, and unstable."
+            print("Warning: 'spheroid' is experimental, incomplete, and unstable.")
             _self.lock(_self)
             r = _cmd.spheroid(_self._COb,str(object),int(average))
         finally:
@@ -130,7 +130,7 @@ DESCRIPTION
         if not int(_setup) or realtime.setup(sele):
             _self.async(realtime.mini, int(iter), float(grad), int(interval), sele)
         else:
-            print " minimize: missing parameters, can't continue"
+            print(" minimize: missing parameters, can't continue")
 
 
     def dump(fnam,obj,_self=cmd):

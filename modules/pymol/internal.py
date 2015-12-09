@@ -1,18 +1,26 @@
 
+from __future__ import print_function, absolute_import
+
 import os
-import cmd
-import types
+cmd = __import__("sys").modules["pymol.cmd"]
 from pymol import _cmd
 import threading
 import traceback
-import thread
+
+try:
+    import thread
+    import urllib2
+except ImportError:
+    import _thread as thread
+    import urllib.request as urllib2
+
 import re
 import time
 import pymol
 
-from chempy import io
+import chempy.io
 
-from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, loadable, _load2str, Shortcut, \
+from .cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, loadable, _load2str, Shortcut, \
    is_string, is_ok
 
 # cache management:
@@ -63,9 +71,9 @@ def _cache_purge(max_size, _self=cmd):
             if max_size>=0: # purge to reduce size
                 now = time.time()
                 # sort by last access time
-                new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
+                new_cache = [[(now-x[5])/x[4],x] for x in _pymol._cache]
                 new_cache.sort()
-                new_cache = map(lambda x:x[1],new_cache)
+                new_cache = [x[1] for x in new_cache]
                 # remove oldest entries one by one until size requirement is met
                 while (cur_size>max_size) and (len(new_cache)>1):
                     entry = new_cache.pop() 
@@ -302,10 +310,9 @@ def file_read(finfo, _self=cmd):
     finfo may be a filename, URL or open file handle.
     '''
     try:
-        if not isinstance(finfo, basestring):
+        if not is_string(finfo):
             handle = finfo
         elif '://' in finfo:
-            import urllib2
             req = urllib2.Request(finfo,
                     headers={'User-Agent': 'PyMOL/' + _self.get_version()[0]})
             handle = urllib2.urlopen(req)
@@ -316,12 +323,12 @@ def file_read(finfo, _self=cmd):
     except IOError:
         raise pymol.CmdException('failed to open file "%s"' % finfo)
 
-    if contents[:2] == '\x1f\x8b': # gzip magic number
-        import cStringIO, gzip
-        fakestream = cStringIO.StringIO(contents)
+    if contents[:2] == b'\x1f\x8b': # gzip magic number
+        import io, gzip
+        fakestream = io.BytesIO(contents)
         return gzip.GzipFile(fileobj=fakestream).read()
 
-    if contents[:2] == 'BZ' and contents[4:10] == '1AY&SY': # bzip magic
+    if contents[:2] == b'BZ' and contents[4:10] == b'1AY&SY': # bzip magic
         import bz2
         return bz2.decompress(contents)
 
@@ -340,25 +347,25 @@ def download_chem_comp(resn, quiet=1, _self=cmd):
 
     url = "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/" + resn + ".cif"
     if not quiet:
-        print ' Downloading', url
+        print(' Downloading ' + url)
 
     try:
         contents = _self.file_read(url)
         if not contents: raise
     except:
-        print ' Error: Download failed'
+        print(' Error: Download failed')
         return ''
 
     try:
-        with open(filename, 'w') as handle:
+        with open(filename, 'wb') as handle:
             handle.write(contents)
     except IOError as e:
-        print e
-        print 'Your "fetch_path" setting might point to a read-only directory'
+        print(e)
+        print('Your "fetch_path" setting might point to a read-only directory')
         return ''
 
     if not quiet:
-        print '  ->', filename
+        print('  ->' + filename)
 
     return filename
 
@@ -374,7 +381,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
     size = 0
     if ftype not in (loadable.model,loadable.brick):
         if ftype == loadable.r3d:
-            import cgo
+            from . import cgo
             obj = cgo.from_r3d(finfo)
             if is_ok(obj):
                 r = _cmd.load_object(_self._COb,str(oname),obj,int(state)-1,loadable.cgo,
@@ -382,9 +389,9 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                                       int(zoom))
                 _self.set("two_sided_lighting", 0, str(oname))
             else:
-                print "Load-Error: Unable to open file '%s'."%finfo
+                print("Load-Error: Unable to open file '%s'."%finfo)
         elif ftype == loadable.cc1: # ChemDraw 3D
-            obj = io.cc1.fromFile(finfo)
+            obj = chempy.io.cc1.fromFile(finfo)
             if obj:
                 r = _cmd.load_object(_self._COb,str(oname),obj,int(state)-1,loadable.model,
                                       int(finish),int(discrete),
@@ -399,7 +406,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
 
                 # END PROPRIETARY CODE SEGMENT
             except ImportError:
-                print "Error: .MOE format not supported by this PyMOL build."
+                print("Error: .MOE format not supported by this PyMOL build.")
                 if _self._raising(-1,_self): raise pymol.CmdException
 
         elif ftype == loadable.mae:
@@ -416,7 +423,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
 
                 # END PROPRIETARY CODE SEGMENT
             except ValueError:
-                print "Error: .MAE format not supported by this PyMOL build."
+                print("Error: .MAE format not supported by this PyMOL build.")
                 if _self._raising(-1,_self): raise pymol.CmdException
 
         else:
@@ -431,8 +438,8 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                           int(multiplex),int(zoom), plugin, object_props)
     else:
         try:
-            x = io.pkl.fromFile(finfo)
-            if isinstance(x,types.ListType) or isinstance(x,types.TupleType):
+            x = chempy.io.pkl.fromFile(finfo)
+            if isinstance(x, (list, tuple)):
                 for a in x:
                     r = _cmd.load_object(_self._COb,str(oname),a,int(state)-1,
                                                 int(ftype),0,int(discrete),int(quiet),
@@ -447,7 +454,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                                             int(quiet),int(zoom))
         except:
 #            traceback.print_exc()
-            print "Load-Error: Unable to load file '%s'." % finfo
+            print("Load-Error: Unable to load file '%s'." % finfo)
     return r
 
 # function keys and other specials
@@ -464,9 +471,9 @@ def _special(k,x,y,m=0,_self=cmd): # INTERNAL (invoked when special key is press
                       _self.ctrl_special,
                       _self.ctsh_special,
                       _self.alt_special)[m]
-    if my_special.has_key(k):
+    if k in my_special:
         if my_special[k][1]:
-            apply(my_special[k][1],my_special[k][2],my_special[k][3])
+            my_special[k][1](*my_special[k][2], **my_special[k][3])
         else:
             key = my_special[k][0]
             if(m>0) and (m<5):
@@ -475,7 +482,7 @@ def _special(k,x,y,m=0,_self=cmd): # INTERNAL (invoked when special key is press
                 _self.scene(key)
             elif is_string(pymol._scene_dict_sc.interpret(key+"-")):
                 _self.scene(pymol._scene_dict_sc[key+"-"])
-            elif pymol._view_dict.has_key(key):
+            elif key in pymol._view_dict:
                 _self.view(key)
             elif is_string(pymol._view_dict_sc.interpret(key+"-")):
                 _self.view(pymol._view_dict_sc[key+"-"])
@@ -485,20 +492,20 @@ def _special(k,x,y,m=0,_self=cmd): # INTERNAL (invoked when special key is press
 
 def _ctrl(k,_self=cmd):
     # WARNING: internal routine, subject to change
-    if _self.ctrl.has_key(k):
+    if k in _self.ctrl:
         ck = _self.ctrl[k]
         if ck[0]!=None:
-            apply(ck[0],ck[1],ck[2])
+            ck[0](*ck[1], **ck[2])
     return None
 
 # alt keys
 
 def _alt(k,_self=cmd):
     # WARNING: internal routine, subject to change
-    if _self.alt.has_key(k):
+    if k in _self.alt:
         ak = _self.alt[k]
         if ak[0]!=None:
-            apply(ak[0],ak[1],ak[2])
+            ak[0](*ak[1], **ak[2])
     return None
 
 # command (apple) keys
@@ -506,19 +513,19 @@ def _alt(k,_self=cmd):
 def _cmmd(k,_self=cmd):
     # WARNING: internal routine, subject to change
     # command-key on macs
-    if _self.cmmd.has_key(k):
+    if k in _self.cmmd:
         ak = _self.cmmd[k]
         if ak[0]!=None:
-            apply(ak[0],ak[1],ak[2])
+            ak[0](*ak[1], **ak[2])
     return None
 
 def _ctsh(k,_self=cmd):
     # WARNING: internal routine, subject to change
     # command-key on macs
-    if _self.ctsh.has_key(k):
+    if k in _self.ctsh:
         ak = _self.ctsh[k]
         if ak[0]!=None:
-            apply(ak[0],ak[1],ak[2])
+            ak[0](*ak[1], **ak[2])
     return None
     
 
@@ -676,25 +683,25 @@ def _dump_floats(lst,format="%7.3f",cnt=9):
     # WARNING: internal routine, subject to change
     c = cnt
     for a in lst:
-        print format%a,
+        print(format%a, end=' ')
         c = c -1
         if c<=0:
-            print
+            print()
             c=cnt
     if c!=cnt:
-        print
+        print()
 
 def _dump_ufloats(lst,format="%7.3f",cnt=9):
     # WARNING: internal routine, subject to change
     c = cnt
     for a in lst:
-        print format%abs(a),
+        print(format%abs(a), end=' ')
         c = c -1
         if c<=0:
-            print
+            print()
             c=cnt
     if c!=cnt:
-        print
+        print()
 
 # HUH?
 def _adjust_coord(a,i,x):

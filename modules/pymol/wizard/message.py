@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -13,12 +15,12 @@ class Message(Wizard):
         Wizard.__init__(self,_self)        
         self.message = []
         for a in arg:
-            if not isinstance(a,types.ListType):
+            if not isinstance(a,list):
                 self.message.append(a)
             else:
                 self.message.extend(a)
         for a in self.message:
-            print " " + _nuke_color_re.sub('',a)
+            print(" " + _nuke_color_re.sub('',a))
         self.dismiss = int(kw.get("dismiss",1))
 
     def get_prompt(self):

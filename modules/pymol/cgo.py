@@ -12,12 +12,14 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import string
 from chempy import cpv
 #import popen2
 import os
 from pymol import cmd
-from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising
+from .cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising
 
 POINTS             = 0.0
 LINES              = 1.0
@@ -80,7 +82,7 @@ def molauto(*arg,**kw):
     if la>2:
         marg = arg[2]
     _self.save("molauto.pdb",sele)
-    print "molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg
+    print("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)
     os.system("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)
     f = open("molauto.r3d")
     rr = RenderReader(f)
@@ -100,7 +102,7 @@ def measure_text(font,text,
     w = 0
     x = axes[0]
     for char in text:
-        if font.has_key(char):
+        if char in font:
             w = w + font[char][0]*x[0]
     return w
 
@@ -109,7 +111,7 @@ def wire_text(cgo,font,pos,text,
     x = axes[0]
     y = axes[1]
     for char in text:
-        if font.has_key(char):
+        if char in font:
             fc = font[char]
             stroke = 0
             w = fc[0]
@@ -139,7 +141,7 @@ def cyl_text(cgo,font,pos,text,radius=0.1,color=[1.0,1.0,1.0],
     x = axes[0]
     y = axes[1]
     for char in text:
-        if font.has_key(char):
+        if char in font:
             fc = font[char]
             stroke = 0
             w = fc[0]
@@ -173,8 +175,11 @@ def from_r3d(fname):
     result = DEFAULT_ERROR
     input = None
     if string.find(fname,':')>1:
-        import urllib
-        input = urllib.urlopen(fname)
+        try:
+            from urllib import urlopen
+        except ImportError:
+            from urllib.request import urlopen
+        input = urlopen(fname)
     elif os.path.exists(fname):
         input = open(fname)
     if input:
@@ -186,7 +191,7 @@ class RenderReader:
 
     def append_last(self):
         if self.app_fn:
-            apply(self.app_fn)
+            self.app_fn()
             self.app_fn=None
         
     def append_tri(self):
@@ -344,7 +349,7 @@ class RenderReader:
     def mat_prop(self,f):
         self.append_last()
         l = f.readline()
-        print "mat_prop"+l
+        print("mat_prop"+l)
         if l:
             s = string.split(l)
             (mphong, mspec, sr, sg, sb, clrity) = map(float,s[0:6])
@@ -406,7 +411,7 @@ class RenderReader:
                 if(n<ld):
                     dd = dispatch[n]
                     if dd:
-                        apply(dd,(input,))
+                        dd(input)
                     else:
                         # skip over lines that don't match desired object type
                         input.readline()

@@ -14,14 +14,16 @@
 
 if __name__=='pymol.moving':
     
-    import thread
-    import string
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread
 
-    import selector
+    from . import selector
     import pymol
     import re
-    import cmd
-    from cmd import _cmd,Shortcut, \
+    cmd = __import__("sys").modules["pymol.cmd"]
+    from .cmd import _cmd,Shortcut, \
           toggle_dict,toggle_sc, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
@@ -683,7 +685,7 @@ SEE ALSO
             input = input.replace("-"," -");
             input = input.replace("x ","x");
             input = input.replace("- ","-");
-            input = string.split(string.strip(input))
+            input = input.strip().split()
             last = -1
             for x in input:
                 if x[0]>"9" or x[0]<"0":
@@ -709,7 +711,7 @@ SEE ALSO
                     val = int(x) - 1
                     output.append(str(val))
                     last=val
-            r = _cmd.mset(_self._COb,string.join(output," "),int(frame)-1,int(freeze))
+            r = _cmd.mset(_self._COb, ' '.join(output),int(frame)-1,int(freeze))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException

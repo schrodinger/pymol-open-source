@@ -16,9 +16,11 @@
 #
 #
 
-import bond_amber
-import protein_residues
-import protein_amber
+from __future__ import print_function
+
+from . import bond_amber
+from . import protein_residues
+from . import protein_amber
 
 from chempy.neighbor import Neighbor
 from chempy.models import Connected
@@ -63,7 +65,7 @@ assigns types: takes HIS -> HID,HIE,HIP and CYS->CYX where appropriate
 but does not add any bonds!
 '''
     if feedback['actions']:
-        print " "+str(__name__)+": assigning types..."
+        print(" "+str(__name__)+": assigning types...")
     if str(model.__class__) != 'chempy.models.Indexed':
         raise ValueError('model is not an "Indexed" model object')
     if model.nAtom:
@@ -102,7 +104,7 @@ but does not add any bonds!
                             if forcefield:
                                 ffld = forcefield.c_terminal
                             break
-                    if not tmpl.has_key(resn):
+                    if resn not in tmpl:
                         raise RuntimeError("unknown residue type '"+resn+"'")
                     else:
                         # reassign atom names and build dictionary
@@ -110,17 +112,17 @@ but does not add any bonds!
                         aliases = tmpl[resn]['aliases']
                         for b in range(a[0],a[1]):
                             at = model.atom[b]
-                            if aliases.has_key(at.name):
+                            if at.name in aliases:
                                 at.name = aliases[at.name]
                             dict[at.name] = b
                             if forcefield:
                                 k = (resn,at.name)
-                                if ffld.has_key(k):
+                                if k in ffld:
                                     at.text_type = ffld[k]['type']
                                     at.partial_charge = ffld[k]['charge']
                                 else:
                                     raise RuntimeError("no parameters for '"+str(k)+"'")
-                        if dict.has_key('SG'): # cysteine
+                        if 'SG' in dict: # cysteine
                             cur = dict['SG']
                             at = model.atom[cur]
                             lst = nbr.get_neighbors(at.coord)
@@ -138,7 +140,7 @@ but does not add any bonds!
                                                         resn = atx.resn
                                                         if (c<=b):
                                                             k = ('CYX',atx.name)
-                                                            if ffld.has_key(k):
+                                                            if k in ffld:
                                                                 atx.text_type = ffld[k]['type']
                                                                 atx.partial_charge = ffld[k]['charge']
                                                             else:
@@ -161,7 +163,7 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
 (2) adds bonds between existing atoms
     '''
     if feedback['actions']:
-        print " "+str(__name__)+": assigning types and bonds..."
+        print(" "+str(__name__)+": assigning types and bonds...")
     if str(model.__class__) != 'chempy.models.Indexed':
         raise ValueError('model is not an "Indexed" model object')
     if model.nAtom:
@@ -200,7 +202,7 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                             if forcefield:
                                 ffld = forcefield.c_terminal
                             break
-                    if not tmpl.has_key(resn):
+                    if resn not in tmpl:
                         raise RuntimeError("unknown residue type '"+resn+"'")
                     else:
                         # reassign atom names and build dictionary
@@ -208,12 +210,12 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                         aliases = tmpl[resn]['aliases']
                         for b in range(a[0],a[1]):
                             at = model.atom[b]
-                            if aliases.has_key(at.name):
+                            if at.name in aliases:
                                 at.name = aliases[at.name]
                             dict[at.name] = b
                             if forcefield:
                                 k = (resn,at.name)
-                                if ffld.has_key(k):
+                                if k in ffld:
                                     at.text_type = ffld[k]['type']
                                     at.partial_charge = ffld[k]['charge']
                                 else:
@@ -221,13 +223,13 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                         # now add bonds for atoms which are present
                         bonds = tmpl[resn]['bonds']
                         mbond = model.bond
-                        for b in bonds.keys():
-                            if dict.has_key(b[0]) and dict.has_key(b[1]):
+                        for b in list(bonds.keys()):
+                            if b[0] in dict and b[1] in dict:
                                 bnd = Bond()
                                 bnd.index = [ dict[b[0]], dict[b[1]] ]
                                 bnd.order = bonds[b]['order']
                                 mbond.append(bnd)
-                        if dict.has_key('N'):  # connect residues N-C based on distance
+                        if 'N' in dict:  # connect residues N-C based on distance
                             cur_n = dict['N']
                             at = model.atom[cur_n]
                             lst = nbr.get_neighbors(at.coord)
@@ -242,7 +244,7 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                                             bnd.order = 1
                                             mbond.append(bnd)
                                             break
-                        if dict.has_key('SG'): # cysteine
+                        if 'SG' in dict: # cysteine
                             cur = dict['SG']
                             at = model.atom[cur]
                             lst = nbr.get_neighbors(at.coord)
@@ -263,7 +265,7 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                                                         atx.resn = 'CYX'
                                                         resn = atx.resn
                                                         k = ('CYX',atx.name)
-                                                        if ffld.has_key(k):
+                                                        if k in ffld:
                                                             atx.text_type = ffld[k]['type']
                                                             atx.partial_charge = ffld[k]['charge']
                                                         else:
@@ -280,7 +282,7 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
 def add_hydrogens(model,forcefield=protein_amber,skip_sort=None):
     # assumes no bonds between non-hetatms
     if feedback['actions']:
-        print " "+str(__name__)+": adding hydrogens..."
+        print(" "+str(__name__)+": adding hydrogens...")
     if str(model.__class__) != 'chempy.models.Connected':
         raise ValueError('model is not a "Connected" model object')
     if model.nAtom:
@@ -311,7 +313,7 @@ def add_hydrogens(model,forcefield=protein_amber,skip_sort=None):
                             if forcefield:
                                 ffld = forcefield.c_terminal
                             break
-                    if not tmpl.has_key(resn):
+                    if resn not in tmpl:
                         raise RuntimeError("unknown residue type '"+resn+"'")
                     else:
                         # build dictionary
@@ -322,8 +324,8 @@ def add_hydrogens(model,forcefield=protein_amber,skip_sort=None):
                         # find missing bonds with hydrogens
                         bonds = tmpl[resn]['bonds']
                         mbond = model.bond
-                        for b in bonds.keys():
-                            if dict.has_key(b[0]) and (not dict.has_key(b[1])):
+                        for b in list(bonds.keys()):
+                            if b[0] in dict and (b[1] not in dict):
                                 at = model.atom[dict[b[0]]]
                                 if at.symbol != 'H':
                                     name = b[1]
@@ -342,7 +344,7 @@ def add_hydrogens(model,forcefield=protein_amber,skip_sort=None):
                                         bnd.order = bonds[b]['order']
                                         mbond[idx1].append(bnd)
                                         mbond[idx2].append(bnd)
-                            if (not dict.has_key(b[0])) and dict.has_key(b[1]):
+                            if (b[0] not in dict) and b[1] in dict:
                                 at = model.atom[dict[b[1]]]
                                 if at.symbol != 'H':
                                     name = b[0]

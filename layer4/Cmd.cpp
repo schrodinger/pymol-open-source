@@ -8502,13 +8502,27 @@ extern "C" {
 
 void init_cmd(void)
 {
-  /*  Py_InitModule("_cmd", Cmd_methods); */
+#if PY_MAJOR_VERSION < 3
   Py_InitModule4("pymol._cmd",
                  Cmd_methods,
                  "PyMOL _cmd internal API -- PRIVATE: DO NOT USE!",
                  PyCObject_FromVoidPtr((void *) &SingletonPyMOLGlobals, NULL),
                  PYTHON_API_VERSION);
+#endif
 }
+
+#if PY_MAJOR_VERSION >= 3
+PyObject * PyInit__cmd(void)
+{
+  static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "pymol._cmd",
+    "DO NOT USE",
+    -1,
+    Cmd_methods };
+  return PyModule_Create(&moduledef);
+}
+#endif
 
 #ifdef __cplusplus
 }

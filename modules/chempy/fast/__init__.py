@@ -58,14 +58,14 @@ class FastModel:
         model = Indexed()
         model.molecule = copy.deepcopy(self.molecule)
         
-        for c in xrange(self.nAtom):
+        for c in range(self.nAtom):
             at = chempy.Atom()
             txta = self.txta[c]
 
             for attrib in ( 'name', 'symbol', 'resn', 'resn_code', 'resi',
                                  'alt', 'chain', 'segi', 'text_type' ):
                 ll = as_[attrib]
-                setattr(at,attrib,string.strip(string.join(txta[ll[0]:ll[1]],'')))
+                setattr(at,attrib,''.join(txta[ll[0]:ll[1]]).strip())
 
             inta = self.inta[c]
             for attrib in ( 'resi_number', 'hetatm', 'formal_charge','flags',
@@ -84,7 +84,7 @@ class FastModel:
             
             model.atom.append(at)
             
-        for c in xrange(self.nBond):
+        for c in range(self.nBond):
             bnd = chempy.Bond()
             bnda = self.bnda[c]
             bnd.index = [bnda[bi_index0],bnda[bi_index1]]

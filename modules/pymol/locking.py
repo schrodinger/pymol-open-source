@@ -1,11 +1,14 @@
 
-import thread
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 import threading
 
 import pymol
-import cmd
+cmd = __import__("sys").modules["pymol.cmd"]
 
-from cmd import fb_module, fb_mask, fb_action, fb_debug
+from .cmd import fb_module, fb_mask, fb_action, fb_debug
 
 from pymol import _cmd
 

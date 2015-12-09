@@ -20,8 +20,10 @@
 # must acknowledge the author and institution, and (3) no liability is
 # assumed by the author(s) for any use or misuse of this software.
 
-import cmd
-from cmd import _cmd, is_tuple
+from __future__ import print_function
+
+cmd = __import__("sys").modules["pymol.cmd"]
+from .cmd import _cmd, is_tuple
 
 from chempy import Storage,Atom,Bond
 from chempy.models import Indexed
@@ -69,7 +71,7 @@ def readcex(file,*args):  # Author: Scott Dixon
         try:
             p = CEX.selectChildren(tree,tag)[0].value
             if p[0] == '"': p = p[1:-1]
-            list = map(string.strip,string.split(p,";"))
+            list = list(map(str.strip, p.split(";")))
             return list
         except IndexError:
             return None
@@ -102,8 +104,8 @@ def readcex(file,*args):  # Author: Scott Dixon
             parser = CEXpyParser()
             try:
                 parser.parse(smiles)
-            except CEX.CEXsmilesError, data:
-                print data
+            except CEX.CEXsmilesError as data:
+                print(data)
                 break
             parser.model.molecule.title = name
             for at in parser.model.atom:
@@ -131,7 +133,7 @@ def readcex(file,*args):  # Author: Scott Dixon
             for conf in confs:
                 if conf.value[0] == '"':
                     conf.value = conf.value[1:-1]
-                    xyz = map(lambda x:string.split(x,","),string.split(conf.value,";"))
+                    xyz = [string.split(x,",") for x in string.split(conf.value,";")]
                     for at in parser.model.atom:
                         i = at.index
                         at.coord = [ float(xyz[i][0]), float(xyz[i][1]), float(xyz[i][2]) ]
@@ -170,7 +172,7 @@ def get_context_info():  # Author: Warren DeLano
        if a[-6:]=='_hbond':  
           context = a[:-6]
        if context!=None:
-           if not context_dict.has_key(context):
+           if context not in context_dict:
                context_list.append(context)
                context_dict[context] = [a]
            else:
@@ -300,7 +302,7 @@ def setup_contexts(context_info):   # Author: Warren DeLano
         if len(zoom_list):
             if len(key_list):
                 key = key_list.pop(0)
-                zoom_str = string.join(zoom_list,' or ')
+                zoom_str = ' or '.join(zoom_list)
                 if zoom_context == 1:
                     zoom_context = zoom_str
                 elif zoom_context not in (0,1):
@@ -338,14 +340,14 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
         sf = string.find(a,"_")
         if sf>=0:
             object_name = a[0:sf]
-            if not obj_name_dict.has_key(object_name):
+            if object_name not in obj_name_dict:
                 obj_name_dict[object_name] = 1
                 col_index = cmd.get_object_color_index(object_name)
                 if col_index>=0:
                     col_tup = cmd.get_color_tuple(col_index)
                     if is_tuple(col_tup):
-                        col_int = map(lambda x:int(x*9+0.49999),col_tup)
-                        col_str = string.join(map(lambda x:chr(ord('0')+x),col_int),'')
+                        col_int = [int(x*9+0.49999) for x in col_tup]
+                        col_str = ''.join([chr(ord('0')+x) for x in col_int])
                         doc_list.append("\\"+col_str+object_name+"\\---")
                     
     key_list = [

@@ -12,14 +12,15 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 if __name__=='pymol.controlling' or __name__=='controlling':
     
-    import string
-    import selector
-    from shortcut import Shortcut
+    from . import selector
+    from .shortcut import Shortcut
     try:
-        import cmd
-        from cmd import _cmd, QuietException, is_string, \
+        cmd = __import__("sys").modules["pymol.cmd"]
+        from .cmd import _cmd, QuietException, is_string, \
              boolean_dict, boolean_sc, \
              DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
              location_code, location_sc 
@@ -192,14 +193,14 @@ SEE ALSO
     '''
         global mouse_ring
         ring=ring_dict_sc.auto_err(ring,'mouse cycle')
-        if ring_dict.has_key(ring):
+        if ring in ring_dict:
             _self.set("button_mode",0);
             mouse_ring = ring_dict[ring]
             if not quiet:
-                print " config_mouse: %s"%ring
+                print(" config_mouse: %s"%ring)
             _self.mouse(quiet=1,_self=_self)
         else:
-            print " Error: unrecognized mouse ring: '%s'"%ring
+            print(" Error: unrecognized mouse ring: '%s'"%ring)
 
     mouse_ring = ring_dict['three_button']
 
@@ -660,7 +661,7 @@ USAGE
                 bm = mouse_ring.index(mode)
                 _self.set("button_mode",bm)
                 mode_list = mode_dict[mode]
-            elif mode_dict.has_key(action):
+            elif action in mode_dict:
                 mode = action
                 _self.set("button_mode_name",mode_name_dict.get(mode,mode))
                 bm = -1 - mode_name_list.index(action)
@@ -669,9 +670,9 @@ USAGE
             if mode_list!=None:
                 kw_dict = {'_self':_self}
                 for a in mode_list:
-                    apply(button,a,kw_dict)
+                    button(*a, **kw_dict)
                 if not quiet:
-                    print " mouse: %s"%mode
+                    print(" mouse: %s"%mode)
                 if mode[-7:]!='editing': _self.unpick()
                 if mode[-7:]=='editing': _self.deselect()
             r = DEFAULT_SUCCESS
@@ -766,7 +767,7 @@ SEE ALSO
             return decorator
 
         r = DEFAULT_ERROR
-        if isinstance(fn, basestring):
+        if is_string(fn):
             if arg or kw:
                 raise ValueError('arg and kw must be empty if fn is string')
             arg = (fn,)
@@ -775,15 +776,15 @@ SEE ALSO
             pat=key[5:]
             if len(pat)>1: # ctrl-special key
                 if pat[0]!='F':
-                    pat=string.lower(pat)
-                for a in _self.ctrl_special.keys():
+                    pat=pat.lower()
+                for a in _self.ctrl_special:
                     if _self.ctrl_special[a][0]==pat:
                         _self.ctrl_special[a][1]=fn
                         _self.ctrl_special[a][2]=arg
                         _self.ctrl_special[a][3]=kw
                         r = DEFAULT_SUCCESS
             else: # std. ctrl key
-                for a in _self.ctrl.keys():
+                for a in _self.ctrl:
                     if a==pat:
                         _self.ctrl[a][0]=fn
                         _self.ctrl[a][1]=arg
@@ -793,16 +794,16 @@ SEE ALSO
             pat=key[4:]
             if len(pat)>1: # alt-special key
                 if pat[0]!='F':
-                    pat=string.lower(pat)
-                for a in _self.alt_special.keys():
+                    pat=pat.lower()
+                for a in _self.alt_special:
                     if _self.alt_special[a][0]==pat:
                         _self.alt_special[a][1]=fn
                         _self.alt_special[a][2]=arg
                         _self.alt_special[a][3]=kw
                         r = DEFAULT_SUCCESS
             else: # std. alt key
-                pat=string.lower(pat)
-                for a in _self.alt.keys():
+                pat=pat.lower()
+                for a in _self.alt:
                     if a==pat:
                         _self.alt[a][0]=fn
                         _self.alt[a][1]=arg
@@ -812,8 +813,8 @@ SEE ALSO
             pat=key[5:]
             if len(pat)>1: # shft-special key
                 if pat[0]!='F':
-                    pat=string.lower(pat)
-                for a in _self.shft_special.keys():
+                    pat=pat.lower()
+                for a in _self.shft_special:
                     if _self.shft_special[a][0]==pat:
                         _self.shft_special[a][1]=fn
                         _self.shft_special[a][2]=arg
@@ -821,17 +822,17 @@ SEE ALSO
                         r = DEFAULT_SUCCESS
         else:
             if key[0]!='F':
-                pat=string.lower(key)
+                pat=key.lower()
             else:
                 pat=key
-            for a in _self.special.keys():
+            for a in _self.special:
                 if _self.special[a][0]==pat:
                     _self.special[a][1]=fn
                     _self.special[a][2]=arg
                     _self.special[a][3]=kw
                     r = DEFAULT_SUCCESS
         if is_error(r):
-            print "Error: special '%s' key not found."%key
+            print("Error: special '%s' key not found."%key)
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
@@ -879,11 +880,11 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            button = string.lower(button)
+            button = button.lower()
             button = button_sc.auto_err(button,'button')
-            modifier = string.lower(modifier)
+            modifier = modifier.lower()
             modifier = but_mod_sc.auto_err(modifier,'modifier')
-            action = string.lower(action)
+            action = action.lower()
             action = but_act_sc.auto_err(action,'action')
             button_num = button_code[button]
             but_mod_num = but_mod_code[modifier]

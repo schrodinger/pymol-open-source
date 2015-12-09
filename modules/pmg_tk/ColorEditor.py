@@ -16,8 +16,14 @@
 # correspond to Menu-displayed settings are kept synchronized with
 # PyMOL
 
-from Tkinter import *
-import tkColorChooser
+from __future__ import print_function
+
+try:
+    from Tkinter import *
+    import tkColorChooser
+except ImportError:
+    from tkinter import *
+    import tkinter.colorchooser as tkColorChooser
 
 import Pmw
 import string
@@ -116,11 +122,11 @@ class ColorEditor:
         self.command(result='Done')
         
     def update(self,name):
-        if not self.index.has_key(name):
+        if name not in self.index:
             self.listbox.insert(0,"%s"%name)
             self.listbox.selection_clear()         
             self.listbox.selection_set(0)
-            for a in self.index.keys():
+            for a in list(self.index.keys()):
                 self.index[a]=self.index[a]+1
             self.index[name]=0
         else:

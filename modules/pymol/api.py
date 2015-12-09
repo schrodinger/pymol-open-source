@@ -1,7 +1,7 @@
 
 
 #--------------------------------------------------------------------
-from importing import \
+from .importing import \
       finish_object,      \
       load,               \
       loadall,            \
@@ -28,8 +28,8 @@ from importing import \
       space              
 
 #--------------------------------------------------------------------
-import creating
-from creating import \
+from . import creating
+from .creating import \
       copy,               \
       create,             \
       extract,            \
@@ -52,14 +52,14 @@ from creating import \
       volume
 
 #--------------------------------------------------------------------
-from colorramping import \
+from .colorramping import \
       volume_ramp_new,   \
       volume_panel,   \
       volume_color
 
 #--------------------------------------------------------------------
-import commanding
-from commanding import \
+from . import commanding
+from .commanding import \
       async,           \
       cls,                \
       delete,             \
@@ -74,8 +74,8 @@ from commanding import \
       sync
 
 #--------------------------------------------------------------------
-import controlling
-from controlling import \
+from . import controlling
+from .controlling import \
       button,             \
       config_mouse,       \
       mouse,              \
@@ -86,7 +86,7 @@ from controlling import \
       edit_mode
 
 #--------------------------------------------------------------------
-from querying import \
+from .querying import \
       angle,              \
       auto_measure,       \
       centerofmass,       \
@@ -140,7 +140,6 @@ from querying import \
       get_version,        \
       get_volume_field,   \
       get_volume_histogram, \
-      get_volume_is_updated, \
       get_vrml,           \
       id_atom,            \
       identify,           \
@@ -149,7 +148,7 @@ from querying import \
       phi_psi
 
 #--------------------------------------------------------------------
-from selecting import \
+from .selecting import \
       deselect,           \
       indicate,           \
       select,             \
@@ -157,8 +156,8 @@ from selecting import \
       pop
 
 #--------------------------------------------------------------------
-import exporting
-from exporting import \
+from . import exporting
+from .exporting import \
       copy_image,         \
       cache,              \
       export_coords,      \
@@ -171,8 +170,8 @@ from exporting import \
       save               
 
 #--------------------------------------------------------------------
-import editing
-from editing import \
+from . import editing
+from .editing import \
       alter,              \
       alter_list,         \
       alter_state,        \
@@ -240,17 +239,17 @@ from editing import \
       valence,            \
       vdw_fit 
 
-from editor import \
+from .editor import \
       fab
       
-from computing import \
+from .computing import \
       clean
 
 matrix_transfer = matrix_copy # legacy
 
 #--------------------------------------------------------------------
 
-from externing import \
+from .externing import \
       cd,                 \
       ls,                 \
       paste,              \
@@ -258,8 +257,8 @@ from externing import \
       system
 
 #--------------------------------------------------------------------
-import wizarding
-from wizarding import \
+from . import wizarding
+from .wizarding import \
       get_wizard,         \
       get_wizard_stack,   \
       refresh_wizard,     \
@@ -270,7 +269,7 @@ from wizarding import \
       wizard
 
 #--------------------------------------------------------------------
-from fitting import \
+from .fitting import \
       align,             \
       alignto,		 \
       extra_fit,	 \
@@ -286,19 +285,19 @@ from fitting import \
 
 #--------------------------------------------------------------------
 # ARE ALL OF THESE UNUSED AND/OR DEPRECATED (?)
-from preset import \
+from .preset import \
       simple,            \
       technical,         \
       pretty,         \
       publication
 
 #--------------------------------------------------------------------
-from morphing import \
+from .morphing import \
     morph
 
 #--------------------------------------------------------------------
-import moving
-from moving import \
+from . import moving
+from .moving import \
       madd,              \
       mcopy,             \
       mdelete,           \
@@ -330,8 +329,8 @@ from moving import \
       get_frame         
 
 #--------------------------------------------------------------------
-import viewing
-from viewing import \
+from . import viewing
+from .viewing import \
       show_as,            \
       bg_color,           \
       bg_colour,          \
@@ -386,8 +385,8 @@ from viewing import \
       zoom
 
 #--------------------------------------------------------------------
-import setting
-from setting import \
+from . import setting
+from .setting import \
       set,                 \
       set_bond,            \
       get_bond,            \
@@ -402,13 +401,13 @@ from setting import \
       get_setting_text
 
 #--------------------------------------------------------------------
-from parsing import \
+from .parsing import \
       run, \
       spawn
 
 #--------------------------------------------------------------------
-import helping
-from helping import \
+from . import helping
+from .helping import \
       abort,               \
       api,                 \
       show_help,           \
@@ -417,7 +416,7 @@ from helping import \
       commands
 
 #--------------------------------------------------------------------
-from experimenting import \
+from .experimenting import \
       check,              \
       dump,               \
       get_bond_print,     \
@@ -431,7 +430,7 @@ from experimenting import \
       desaturate,         \
       test
 
-from internal import      \
+from .internal import      \
       download_chem_comp, \
       file_read
 
@@ -442,9 +441,9 @@ from internal import      \
 #--------------------------------------------------------------------
 # Modules which contain programs used explicity as "module.xxx"
 
-import util
-import movie
-import gui
+from . import util
+from . import movie
+from . import gui
 
 # dang! Python 2.6 will break PyMOL's "as" method. 
 # Proposal:

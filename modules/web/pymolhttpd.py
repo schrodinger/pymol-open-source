@@ -7,6 +7,8 @@
 #
 # web server interface for controlling PyMOL
 
+from __future__ import print_function
+
 # we make extensive use of Python's build-in in web infrastructure
 
 import BaseHTTPServer, cgi, urlparse
@@ -69,7 +71,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.process_urlpath()
         except socket.error:
             traceback.print_exc()
-            print "broken pipe"
+            print("broken pipe")
             pass
         
     def parse_args(self):
@@ -263,7 +265,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if len(blocks):
             for block in blocks:
                 if self.server.pymol_logging:
-                    print 'applying: ' + str(block)
+                    print('applying: ' + str(block))
                 fn = self.session.get(block[0],None)
                 if fn is None and block[0].startswith('pymol.cmd.'):
                     fn = getattr(self.server.pymol_cmd, block[0][10:], None)

@@ -12,32 +12,33 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function, absolute_import
+
 if __name__=='pymol.importing':
     
     import re
-    import string
     import os
-    import cmd
-    from cmd import _cmd,lock,unlock,Shortcut, \
+    import sys
+    import copy
+    import traceback
+    import pymol
+    cmd = sys.modules["pymol.cmd"]
+    from . import setting
+    from . import selector
+    from .cmd import _cmd,lock,unlock,Shortcut, \
           _feedback,fb_module,fb_mask, \
           file_ext_re,gz_ext_re,safe_oname_re, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
           _load, is_list, space_sc, safe_list_eval, is_string, loadable
-    import setting
     
-    import selector
     try:
         from pymol import m4x
     except ImportError:
         m4x = None
 
-    from pymol import parser
     from chempy.sdf import SDF,SDFRec
     from chempy.cif import CIF,CIFRec
     from chempy import io,PseudoFile
-    import pymol
-    import copy
-    import traceback
     
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -80,7 +81,7 @@ if __name__=='pymol.importing':
                 finally:
                     _self.unlock(r,_self)
                 try:
-                    if session.has_key('session'):
+                    if 'session' in session:
                         if steal:
                             _pymol.session = session['session']
                             del session['session']
@@ -89,7 +90,7 @@ if __name__=='pymol.importing':
                     else:
                         _pymol.session = pymol.Session_Storage()
                     if cache:
-                        if session.has_key('cache'):
+                        if 'cache' in session:
                             cache = session['cache']
                             if len(cache):
                                 if steal:
@@ -100,7 +101,7 @@ if __name__=='pymol.importing':
                 except:
                     traceback.print_exc()
             else:
-                if not apply(a,(session,),{'_self':_self}): # don't stop on errors...try to complete anyway
+                if not a(session, _self=_self): # don't stop on errors...try to complete anyway
                     r = DEFAULT_ERROR
         if _self.get_movie_locked()>0: # if the movie contains commands...activate security
             _self.wizard("security")
@@ -144,7 +145,7 @@ PYMOL API
     '''
         lst = [loadable.brick]
         lst.extend(list(arg))
-        return apply(_self.load_object,lst,kw)
+        return _self.load_object(*lst, **kw)
 
     def load_map(*arg,**kw):
         _self = kw.get('_self',cmd)
@@ -154,7 +155,7 @@ PYMOL API
 
         lst = [loadable.map]
         lst.extend(list(arg))
-        return apply(_self.load_object,lst,kw)
+        return _self.load_object(*lst, **kw)
 
     def space(space="", gamma=1.0, quiet=0, _self=cmd):
         '''
@@ -223,9 +224,9 @@ SEE ALSO
         if space=="": 
             filename = ""
         else:         
-            filename = tables.get(string.lower(space),"")
+            filename = tables.get(space.lower(),"")
             if filename == "":
-                print "Error: unknown color space '%s'."%space
+                print("Error: unknown color space '%s'."%space)
                 filename = None
         if filename!=None:
             try:
@@ -254,7 +255,7 @@ PYMOL API
         _self = kw.get('_self',cmd)
         lst = [loadable.callback]
         lst.extend(list(arg))
-        return apply(_self.load_object,lst)
+        return _self.load_object(*lst)
 
     def load_cgo(*arg,**kw):
         '''
@@ -274,7 +275,7 @@ PYMOL API
         lst.extend(list(arg))
         if not is_list(lst[1]): 
            lst[1] = list(lst[1]) 
-        return apply(_self.load_object,lst,kw)
+        return _self.load_object(*lst, **kw)
 
     def load_model(*arg,**kw):
         '''
@@ -289,7 +290,7 @@ PYMOL API
         _self = kw.get('_self',cmd)
         lst = [loadable.model]
         lst.extend(list(arg))
-        return apply(_self.load_object,lst,kw)
+        return _self.load_object(*lst, **kw)
 
     def load_traj(filename,object='',state=0,format='',interval=1,
                       average=1,start=1,stop=-1,max=-1,selection='all',image=1,
@@ -361,7 +362,7 @@ SEE ALSO
                     ftype = loadable.trj
                     plugin = ""
                     try: # autodetect gromacs TRJ
-                        magic = map(ord,open(fname,'r').read(4))
+                        magic = list(map(ord,open(fname,'r').read(4)))
                         if (201 in magic) and (7 in magic):
                             ftype = loadable.trj2
                             plugin = "trj"
@@ -379,7 +380,7 @@ SEE ALSO
                     if hasattr(loadable,type):
                         ftype = getattr(loadable,type)
                     else:
-                        print "Error: unknown type '%s'",type
+                        print("Error: unknown type '%s'",type)
                         raise pymol.CmdException
             else:
                 ftype = int(type)
@@ -390,7 +391,7 @@ SEE ALSO
                 if not len(oname): # safety
                     oname = 'obj01'
             else:
-                oname = string.strip(object)
+                oname = object.strip()
 
             if ftype>=0 or plugin:
                 r = _cmd.load_traj(_self._COb,str(oname),fname,int(state)-1,int(ftype),
@@ -434,7 +435,7 @@ SEE ALSO
 
 
             if not rec: break
-            r = _load(oname,string.join(rec.get('MOL'),''),state,
+            r = _load(oname, ''.join(rec.get('MOL')),state,
                       loadable.molstr,0,1,quiet,_self=_self)
         del sdf
         _cmd.finish_object(_self._COb,str(oname))
@@ -454,7 +455,7 @@ SEE ALSO
                 key = line[0:16].strip()
                 if key!='':
                     legal_key = _self.get_legal_name(key)
-                    if not legal_dict.has_key(key):
+                    if key not in legal_dict:
                         seq_order.append(legal_key)
                     legal_dict[key] = legal_key
                     key = legal_key
@@ -475,7 +476,7 @@ SEE ALSO
                 if line[0:1] == '>':
                     key = line[1:].strip()
                     legal_key = _self.get_legal_name(key)
-                    if not legal_dict.has_key(key):
+                    if key not in legal_dict:
                         seq_order.append(legal_key)
                     legal_dict[key] = legal_key
                     key = legal_key
@@ -488,6 +489,12 @@ SEE ALSO
         
     def _processPWG(fname,_self=cmd):
         r = DEFAULT_ERROR
+
+        if sys.version_info[0] < 3:
+            import urllib
+        else:
+            import urllib.request as urllib
+
         try:
             from web.pymolhttpd import PymolHttpd
             browser_flag = 0
@@ -497,8 +504,7 @@ SEE ALSO
             root = None
             port = 0
             wrap_native = 0
-            if (string.find(fname,":")>1):
-                import urllib
+            if ':' in fname:
                 lines = urllib.urlopen(fname).readlines()
             else:
                 lines = open(fname).readlines()
@@ -522,9 +528,9 @@ SEE ALSO
                                 if os.path.exists(root):
                                     launch_flag = 1
                                 else:
-                                    print "Error: requested path '%s' does not exist."%root
+                                    print("Error: requested path '%s' does not exist."%root)
                             else:
-                                print "Error: missing path to root content"
+                                print("Error: missing path to root content")
                         elif keyword == 'browser':
                             # could perhaps interpret a browser name here
                             browser_flag = 1
@@ -532,14 +538,14 @@ SEE ALSO
                             if len(input)>1:
                                 mod_name = input[1]
                                 try:
-                                    __builtin__.__import__(mod_name)
+                                    __import__(mod_name)
                                     mod = sys.modules[mod_name]
                                     if hasattr(mod,'__launch__'):
                                         mod.__launch__(_self)
                                         r = DEFAULT_SUCCESS
                                 except:
                                     traceback.print_exc()
-                                    print "Error: unable to launch web application'%s'."%mode_name
+                                    print("Error: unable to launch web application'%s'."%mode_name)
                         elif keyword == 'report':
                             if len(input)>1:
                                 report_url = input[1]
@@ -551,7 +557,7 @@ SEE ALSO
                         elif keyword == 'wrap_native_return_types':
                             wrap_native = 1
                         else:
-                            print "Error: unrecognized input:  %s"%str(input)
+                            print("Error: unrecognized input:  %s"%str(input))
             if launch_flag:
                 server = PymolHttpd(port,root,logging,wrap_native)
                 if port == 0:
@@ -564,18 +570,17 @@ SEE ALSO
                 else:
                     r = DEFAULT_SUCCESS
                 if report_url != None: # report port back to server url (is this secure?)
-                    import urllib
                     try:
                         report_url = report_url + str(port)
-                        print " Reporting back pymol port via: '%s'"%report_url
+                        print(" Reporting back pymol port via: '%s'"%report_url)
                         urllib.urlretrieve(report_url)
                     except:
-                        print " Report attempt may have failed."
+                        print(" Report attempt may have failed.")
         except ImportError:
             traceback.print_exc()
 
         if is_error(r):
-            print "Error: unable to handle PWG file"
+            print("Error: unable to handle PWG file")
         return r
     
     def load(filename, object='', state=0, format='', finish=1,
@@ -646,7 +651,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         if object_props or atom_props:
-            print ' Warning: properties are not supported in Open-Source PyMOL'
+            print(' Warning: properties are not supported in Open-Source PyMOL')
         try:
             _self.lock(_self)
             type = format
@@ -737,7 +742,7 @@ SEE ALSO
                         if hasattr(loadable,type):
                             ftype = getattr(loadable,type)
                         else:
-                            print "Error: unknown type '%s'",type
+                            print("Error: unknown type '%s'",type)
                             raise pymol.CmdException
             else:
                 # user specified the type as an int
@@ -757,7 +762,7 @@ SEE ALSO
                 if not len(oname): # safety
                     oname = 'obj01'
             else:
-                oname = string.strip(object)
+                oname = object.strip()
 
             if ftype == 'idx':
                 return load_idx(filename, oname, state, quiet, zoom, _self=_self)
@@ -814,7 +819,7 @@ SEE ALSO
             # special handling for trj failes (autodetect AMBER versus GROMACS)
             if ftype == loadable.trj:
                 try: # autodetect gromacs TRJ
-                    magic = map(ord,open(fname,'r').read(4))
+                    magic = list(map(ord,open(fname,'r').read(4)))
                     if (201 in magic) and (7 in magic):
                         ftype = loadable.trj2
                 except:
@@ -826,16 +831,15 @@ SEE ALSO
                 if m4x!=None:
                     r = m4x.readcex(fname,str(oname)) # state, format, discrete?
                 else:
-                    print " Error: CEX format not currently supported"
+                    print(" Error: CEX format not currently supported")
                     raise pymol.CmdException
 
             # special handling of pse files
             if ftype == loadable.pse:
                 ftype = -1
                 try:
-                    import cPickle
                     contents = _self.file_read(fname)
-                    session = cPickle.loads(contents)
+                    session = io.pkl.fromString(contents)
                 except AttributeError as e:
                     raise pymol.CmdException('PSE contains objects which cannot be unpickled (%s)' % e.message)
                 r = _self.set_session(session, quiet=quiet,
@@ -899,10 +903,10 @@ NOTES
     '''
         r = DEFAULT_ERROR
         if object_props or atom_props:
-            print ' Warning: properties are not supported in Open-Source PyMOL'
+            print(' Warning: properties are not supported in Open-Source PyMOL')
         list = _self._parser.get_embedded(key)
         if list == None:
-            print "Error: embedded data '%s' not found."%key
+            print("Error: embedded data '%s' not found."%key)
         else:
             if name == None:
                 if key != None:
@@ -918,38 +922,38 @@ NOTES
                 if hasattr(loadable,type):
                     ftype = getattr(loadable,type)
                 else:
-                    print "Error: unknown type '%s'",type
+                    print("Error: unknown type '%s'",type)
                     raise pymol.CmdException
             if ftype==loadable.pdb:
-                r = read_pdbstr(string.join(data,''),name,state,finish,
+                r = read_pdbstr(''.join(data),name,state,finish,
                                 discrete,quiet,zoom,multiplex)
             elif ftype==loadable.mol:
-                r = read_molstr(string.join(data,''),name,state,finish,
+                r = read_molstr(''.join(data),name,state,finish,
                                 discrete,quiet,zoom)
             elif ftype==loadable.mol2:
-                r = read_mol2str(string.join(data,''),name,state,finish,
+                r = read_mol2str(''.join(data),name,state,finish,
                                  discrete,quiet,zoom,multiplex)
             elif ftype==loadable.xplor:
-                r = read_xplorstr(string.join(data,''),name,state,finish,discrete,quiet)
+                r = read_xplorstr(''.join(data),name,state,finish,discrete,quiet)
             elif ftype==loadable.mae:
                 try:
                     # BEGIN PROPRIETARY CODE SEGMENT
                     from epymol import mae
                     if discrete_default:
                         discrete = -1
-                    r = mae.read_maestr(string.join(data,''),
+                    r = mae.read_maestr(''.join(data),
                                         name,state,finish,discrete,
                                         quiet,zoom,multiplex,mimic,
                                         object_props, atom_props)
                     # END PROPRIETARY CODE SEGMENT
                 except ImportError:
-                    print "Error: .MAE format not supported by this PyMOL build."
+                    print("Error: .MAE format not supported by this PyMOL build.")
                     if raising(-1): raise pymol.CmdException
             elif ftype==loadable.sdf1: # Python-based SDF reader
                 sdf = SDF(PseudoFile(data),'pf')
                 r = _processSDF(sdf,name,state,quiet,_self)
             elif ftype==loadable.sdf2: # C-based SDF reader (much faster)
-                r = read_sdfstr(string.join(data,''),name,state,finish,
+                r = read_sdfstr(''.join(data),name,state,finish,
                                 discrete,quiet,zoom,multiplex)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
@@ -972,7 +976,7 @@ NOTES
         if hasattr(loadable,type):
             ftype = getattr(loadable,type)
         else:
-            print "Error: unknown format '%s'",format
+            print("Error: unknown format '%s'",format)
             if _self._raising(r,_self): raise pymol.CmdException            
         if ftype!=None:
             if ftype in _raw_dict:
@@ -1012,7 +1016,7 @@ NOTES
         '''
         r = DEFAULT_ERROR
         if object_props:
-            print ' Warning: properties are not supported in Open-Source PyMOL'
+            print(' Warning: properties are not supported in Open-Source PyMOL')
         try:
             _self.lock(_self)
             r = _cmd.load(_self._COb,str(name),str(sdfstr),int(state)-1,
@@ -1107,7 +1111,7 @@ NOTES
         try:
             _self.lock(_self)   
             ftype = loadable.pdbstr
-            oname = string.strip(str(name))
+            oname = str(name).strip()
             r = _cmd.load(_self._COb,str(oname),pdb,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
                               int(multiplex),int(zoom))
@@ -1146,7 +1150,7 @@ NOTES
         try:
             _self.lock(_self)   
             ftype = loadable.mol2str
-            oname = string.strip(str(name))
+            oname = str(name).strip()
             r = _cmd.load(_self._COb,str(oname),mol2,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
                               int(multiplex),int(zoom))
@@ -1178,7 +1182,7 @@ NOTES
         try:
             _self.lock(_self)   
             ftype = loadable.xplorstr
-            oname = string.strip(str(name))
+            oname = str(name).strip()
             r = _cmd.load(_self._COb,str(oname),xplor,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
                               0,int(zoom))
@@ -1288,7 +1292,7 @@ PYMOL API
         if not file or file in (1, '1', 'auto'):
             file = os.path.join(path, nameFmt.format(code=code, type=type))
 
-        if not isinstance(file, basestring):
+        if not is_string(file):
             fobj = file
             file = None
         elif os.path.exists(file):
@@ -1302,19 +1306,19 @@ PYMOL API
                 contents = _self.file_read(url)
 
                 # assume HTML content means error on server side without error HTTP code
-                if '<html' in contents[:500].lower():
+                if b'<html' in contents[:500].lower():
                     raise pymol.CmdException
 
             except pymol.CmdException:
                 if not quiet:
-                    print " Warning: failed to fetch from", url
+                    print(" Warning: failed to fetch from", url)
                 continue
 
             if file:
                 try:
                     fobj = open(file, 'wb')
                 except IOError:
-                    print ' Warning: Cannot write to "%s"' % file
+                    print(' Warning: Cannot write to "%s"' % file)
 
             if fobj:
                 fobj.write(contents)
@@ -1337,7 +1341,7 @@ PYMOL API
         if not _self.is_error(r):
             return name
 
-        print " Error-fetch: unable to load '%s'." % code
+        print(" Error-fetch: unable to load '%s'." % code)
         return DEFAULT_ERROR
 
     def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet,_self):
@@ -1581,12 +1585,12 @@ EXAMPLE
 
         for filename in filenames:
             if not quiet:
-                print ' Loading', filename
+                print(' Loading', filename)
             _self.load(filename, **kwargs)
 
         if group:
             if kwargs.get('object', '') != '':
-                print ' Warning: group and object arguments given'
+                print(' Warning: group and object arguments given')
                 members = [kwargs['object']]
             else:
                 members = map(filename_to_objectname, filenames)
@@ -1708,7 +1712,7 @@ DESCRIPTION
         # load models as objects or states
         for model_num in sorted(model_dict):
             if model_num < 1:
-                print " Error: model_num < 1 not supported"
+                print(" Error: model_num < 1 not supported")
                 continue
 
             model = model_dict[model_num]
@@ -1768,7 +1772,7 @@ DESCRIPTION
                 elif 'x2' in atom_node.attrib:
                     atom.coord = [float(atom_node.get(a)) for a in ['x2', 'y2']] + [0.0]
                 else:
-                    print ' Warning: no coordinates for atom', atom.name
+                    print(' Warning: no coordinates for atom', atom.name)
                     continue
 
                 atom.symbol = atom_node.get('elementType', '')

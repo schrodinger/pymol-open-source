@@ -17,11 +17,12 @@
 
 # by the way, most of the below is untested...
         
+from __future__ import print_function
+
 import os
 import shutil
 import glob
 import re
-import string
 import sys
 import time
 
@@ -47,8 +48,8 @@ def do(input,run_prefix=None,echo=None,
         run_prefix = 'gamess_run'
     if not skip:
         if feedback['gamess']:
-            print " "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix)
-            print " "+str(__name__)+': launching gamess...' 
+            print(" "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix))
+            print(" "+str(__name__)+': launching gamess...') 
         try:
             for a in glob.glob(run_prefix+".*"):
                 os.unlink(a)
@@ -69,7 +70,7 @@ def do(input,run_prefix=None,echo=None,
         f.close()
 #
     if feedback['gamess']:
-        print " "+str(__name__)+': job complete. '
+        print(" "+str(__name__)+': job complete. ')
     if punch:
         for src in glob.glob(run_prefix+".dat"):
             f = open(src)
@@ -82,7 +83,7 @@ def do(input,run_prefix=None,echo=None,
             f.close()
     return (output,punch)
 
-if os.environ.has_key('GAMESS'):
+if 'GAMESS' in os.environ:
     base = os.environ['GAMESS']
     bin_path = base + '/bin/'
     rungms_path = bin_path + 'rungms'
@@ -141,7 +142,7 @@ class State:
             if flag:
                 flag = 0
                 gmsList.append(a)
-            if string.strip(a)=='':
+            if not a.strip():
                 flag = 1
             c = c + 1
         return gmsList
@@ -194,14 +195,14 @@ class State:
         idx = {}
         c = 0
         for a in atom:
-            idx[string.upper(a.name)]=c  # games converts to uppercase
+            idx[a.name.upper()]=c  # games converts to uppercase
             c = c + 1
         if len(crd_list):
             a = crd_list.pop()
             cc = 0
             while a<ll:
                 l = list[a]
-                name = string.strip(l[1:11])
+                name = l[1:11].strip()
                 if name=='':
                     break
                 atom[idx[name]].coord = [float(l[16:31]),
@@ -210,27 +211,27 @@ class State:
                 cc = cc + 1
                 a = a + 1
             if cc and feedback['gamess']:
-                print " "+str(__name__)+': coordinates modified for %d atoms.' % (cc)
+                print(" "+str(__name__)+': coordinates modified for %d atoms.' % (cc))
         if len(chg_list):
             a = chg_list.pop()
             cc = 0
             while a<ll:
                 l = list[a]
-                name = string.strip(l[1:11])
+                name = l[1:11].strip()
                 if name[0]=='-':
                     break
                 atom[idx[name]].partial_charge = float(l[19:27])
                 a = a + 1
                 cc = cc + 1
             if cc and feedback['gamess']:
-                print " "+str(__name__)+': charges modified for %d atoms.' % (cc)
+                print(" "+str(__name__)+': charges modified for %d atoms.' % (cc))
         if len(nrg_list):
             a = nrg_list.pop()
             l = list[a]
             # get energy, and convert to kcal/mole
-            self.model.molecule.energy = float(string.strip(l[38:58]))*627.5095
+            self.model.molecule.energy = float(l[38:58].strip())*627.5095
             if feedback['gamess']:
-                print " "+str(__name__)+': energy updated %12.6f.' % self.model.molecule.energy
+                print(" "+str(__name__)+': energy updated %12.6f.' % self.model.molecule.energy)
             
     def read_punch_list(self,list):
         ll = len(list)
@@ -254,7 +255,7 @@ class State:
                     break
                 a = a + 1
             if feedback['gamess']:
-                print " "+str(__name__)+': read $DATA group.'
+                print(" "+str(__name__)+': read $DATA group.')
         if len(vec_list):
             a = vec_list.pop()
             self.vec = []
@@ -266,13 +267,13 @@ class State:
                     break
                 a = a + 1
             if feedback['gamess']:
-                print " "+str(__name__)+': read new $VEC group.'
+                print(" "+str(__name__)+': read new $VEC group.')
 
     def update_data_coords(self): # update coordinates of ordered atoms in $DATA
         idx = {}
         c = 0
         for a in self.model.atom:
-            idx[string.upper(a.name)]=c
+            idx[a.name.upper()]=c
             c = c + 1
         if self.data:
             flag = 1
@@ -281,14 +282,14 @@ class State:
                 if flag:
                     flag = 0
                     kee = a[0:3]
-                    if not idx.has_key(kee):
+                    if kee not in idx:
                         break
                     i = idx[kee]
                     at = self.model.atom[i]
                     self.data[c]="%-10s%5.1f%18.10f%18.10f%18.10f\n" % (
                         at.name,atNum[at.symbol],at.coord[0],
                         at.coord[1],at.coord[2])
-                if string.strip(a)=='':
+                if not a.strip():
                     flag = 1
                 c = c + 1
     
@@ -303,13 +304,13 @@ class State:
         if len(den_list):
             lst = 0
             a = den_list.pop()
-            for x in xrange(brick.dim[0]):
-                for y in xrange(brick.dim[1]):
+            for x in range(brick.dim[0]):
+                for y in range(brick.dim[1]):
                     brick.lvl[x][y][z_step] = float(list[a][36:51])
                     a = a + 1 
             if feedback['gamess']:
-                print " "+str(__name__)+': read density slice %d of %d.' %(
-                    z_step+1,brick.dim[2])
+                print(" "+str(__name__)+': read density slice %d of %d.' %(
+                    z_step+1,brick.dim[2]))
 
     def read_potential_list(self,list,brick,z_step):
         ll = len(list)
@@ -322,7 +323,7 @@ class State:
         if len(pot_list):
             lst = 0
             a = pot_list.pop()
-            for x in xrange(brick.dim[0]):
+            for x in range(brick.dim[0]):
                 aa = a
                 mat = list[aa][0:3]
                 col = []
@@ -333,12 +334,12 @@ class State:
                     else:
                         break
                 a = aa
-                vst = string.split(string.strip(string.join(col)))
-                for y in xrange(brick.dim[1]):
+                vst = ' '.join(col).split()
+                for y in range(brick.dim[1]):
                     brick.lvl[x][y][z_step] = float(vst[y])
             if feedback['gamess']:
-                print " "+str(__name__)+': read potential slice %d of %d.' %(
-                    z_step+1,brick.dim[2])
+                print(" "+str(__name__)+': read potential slice %d of %d.' %(
+                    z_step+1,brick.dim[2]))
 
     def get_basis_group(self,gbasis='N31',ngauss=6,ndfunc=1):
         gmsList = []
@@ -363,7 +364,7 @@ class State:
         # requires list of dihedrals from tinker.amber
         #
         from pymol import cmd
-        from tinker.amber import Topology      
+        from .tinker.amber import Topology      
 
         cmd.load_model(self.model,'_gamess1')
         model = self.model
@@ -387,14 +388,14 @@ class State:
 
         frozen_list = []
 
-        for a in topo.torsion.keys():
+        for a in list(topo.torsion.keys()):
             if (model.atom[a[0]].flags&
                  model.atom[a[1]].flags&
                  model.atom[a[2]].flags&
                  model.atom[a[3]].flags)&mask:
                 frozen_list.append(a)
 
-        print " freeze-torsion: %d torsions will be frozen."%len(frozen_list)
+        print(" freeze-torsion: %d torsions will be frozen."%len(frozen_list))
 
         irzmat = []
         ifzmat = []
@@ -406,7 +407,7 @@ class State:
 
                 remove = []
 
-                for a in topo.torsion.keys():
+                for a in list(topo.torsion.keys()):
                     if (((a[1]==frozen[1])and(a[2]==frozen[2])) or
                          ((a[2]==frozen[1])and(a[1]==frozen[2]))):
                         if a!=frozen:
@@ -446,16 +447,16 @@ class State:
 
                 # write out report for user edification
 
-                print " freeze-torsion: fixing freeze-torsion:"
-                print " freeze-torsion: %d-%d-%d-%d (pymol), %d-%d-%d-%d (gamess)"%(
+                print(" freeze-torsion: fixing freeze-torsion:")
+                print(" freeze-torsion: %d-%d-%d-%d (pymol), %d-%d-%d-%d (gamess)"%(
                     fixed[0],fixed[1],fixed[2],fixed[3],
-                    frozen_z[0],frozen_z[1],frozen_z[2],frozen_z[3])
-                print " freeze-torsion: at %5.3f"%dihe
-                print " freeze-torsion: removing redundant torsions:"
+                    frozen_z[0],frozen_z[1],frozen_z[2],frozen_z[3]))
+                print(" freeze-torsion: at %5.3f"%dihe)
+                print(" freeze-torsion: removing redundant torsions:")
                 for a in remove_z[1:]:
-                    print " freeze-torsion: %d-%d-%d-%d (pymol), %d-%d-%d-%d (gamess)"%(
+                    print(" freeze-torsion: %d-%d-%d-%d (pymol), %d-%d-%d-%d (gamess)"%(
                         z2m[a[0]],z2m[a[1]],z2m[a[2]],z2m[a[3]],
-                        a[0],a[1],a[2],a[3])
+                        a[0],a[1],a[2],a[3]))
 
                 # add parameters for this torsion into the list
 
@@ -612,14 +613,14 @@ class State:
         return gmsList
 
     def get_density(self,brick,morb=0,run_prefix=None):
-        for a in xrange(brick.dim[2]):
+        for a in range(brick.dim[2]):
             gmsList = self.get_density_job(brick,a,morb=morb)
             result = do(gmsList,punch=1,
                             run_prefix=run_prefix)
             self.read_density_list(result[1],brick,a)
 
     def get_potential(self,brick,run_prefix=None):
-        for a in xrange(brick.dim[2]):
+        for a in range(brick.dim[2]):
             gmsList = self.get_potential_job(brick,a)
             result = do(gmsList,punch=1,
                             run_prefix=run_prefix)
@@ -661,7 +662,7 @@ class State:
         self.read_punch_list(result[1])
 
 
-if os.environ.has_key('GAMESS'):
+if 'GAMESS' in os.environ:
     base = os.environ['GAMESS']
     rungms_path = base + '/bin/rungms'
 else:

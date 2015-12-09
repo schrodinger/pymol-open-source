@@ -1,6 +1,6 @@
 
-import parsing
-import cmd
+from . import parsing
+cmd = __import__("sys").modules["pymol.cmd"]
 
 def get_command_keywords(self_cmd=cmd):
     return {

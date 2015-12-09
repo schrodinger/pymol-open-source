@@ -12,10 +12,10 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import copy
 
-def __list_sum(the_list):
-    return reduce(lambda x,y:x+y,the_list)
 
 def combine_fragments(*arg,**kw):
     '''
@@ -31,7 +31,7 @@ def combine_fragments(*arg,**kw):
     happen to coincide).
 '''
     
-    if kw.has_key('net_charge'):
+    if 'net_charge' in kw:
         net_charge = kw['net_charge']
     else:
         net_charge = None
@@ -63,7 +63,7 @@ def combine_fragments(*arg,**kw):
         c = 0
         for a in fragment.atom:
             sig = a.name
-            if dst_dict.has_key(sig):
+            if sig in dst_dict:
                 a.chg_index = dst_dict[sig]
                 members[a.chg_index].append(fragment)
             else:
@@ -76,7 +76,7 @@ def combine_fragments(*arg,**kw):
                     elif b.index[1]==c:
                         attached = fragment.atom[b.index[0]]
                     if attached!=None:
-                        if dst_dict.has_key(attached.name):
+                        if attached.name in dst_dict:
                             attached_index = dst_dict[attached.name]
                             break
                 a.chg_index = n_tot
@@ -114,15 +114,15 @@ def combine_fragments(*arg,**kw):
             tmp_lst = []
             for a in chg:
                 tmp_lst.append(a[index])
-            avg.append(__list_sum(tmp_lst)/cnt[index])
+            avg.append(sum(tmp_lst)/cnt[index])
         else:
             avg.append(0.0)
         
     # correct total charge
 
-    chg_sum = __list_sum(avg)
+    chg_sum = sum(avg)
 
-    print "chg_sum",chg_sum
+    print("chg_sum",chg_sum)
     if net_charge != None:
         chg_diff = net_charge - chg_sum
         chg_adjust = chg_diff / n_dst_atm

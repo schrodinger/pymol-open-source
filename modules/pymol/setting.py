@@ -12,18 +12,20 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 if __name__=='pymol.setting':
     
     import traceback
     import string
     import types
-    import selector
-    from shortcut import Shortcut
-    import cmd
-    from cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
+    from . import selector
+    from .shortcut import Shortcut
+    cmd = __import__("sys").modules["pymol.cmd"]
+    from .cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
+          is_string, \
           _feedback,fb_module,fb_mask, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
-    from cmd import is_string
     import re
     
     boolean_type = 1
@@ -37,9 +39,9 @@ if __name__=='pymol.setting':
     index_dict = _cmd.get_setting_indices()
 
     # index -> name mapping
-    name_dict = dict((v,k) for (k,v) in index_dict.iteritems())
+    name_dict = dict((v,k) for (k,v) in index_dict.items())
 
-    name_list = index_dict.keys()
+    name_list = list(index_dict.keys())
     setting_sc = Shortcut(name_list)
 
     # legacy
@@ -80,7 +82,7 @@ if __name__=='pymol.setting':
 
     def get_index_list():
         # legacy, in case someone used that in a script (e.g. grepset)
-        return name_dict.keys()
+        return list(name_dict.keys())
 
     def get_name_list():
         return name_list
@@ -153,7 +155,7 @@ PYMOL API
                 _self.lock(_self)
                 type = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))[0]
                 if type==None:
-                    print "Error: unable to get setting type."
+                    print("Error: unable to get setting type.")
                     raise QuietException
                 try:
                     if type==1: # boolean (also support non-zero float for truth)
@@ -310,7 +312,7 @@ SEE ALSO
                 _self.lock(_self)
                 stuple = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))
                 if stuple is None:
-                    print "Error: unable to get setting type."
+                    print("Error: unable to get setting type.")
                     raise QuietException
                 type = stuple[0]
                 try:
@@ -433,7 +435,7 @@ SEE ALSO
                         if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                             traceback.print_exc()
                             raise QuietException
-                        print "Error: unable to unset setting value."
+                        print("Error: unable to unset setting value.")
                 finally:
                     _self.unlock(r,_self)
         return r
@@ -472,7 +474,7 @@ USAGE
                     if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                         traceback.print_exc()
                         raise QuietException
-                    print "Error: unable to unset setting value."
+                    print("Error: unable to unset setting value.")
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            
@@ -554,11 +556,11 @@ SEE ALSO
                 if len(r_str) > 200:
                     r_str = r_str[:185] + '... (truncated)'
                 if(selection==''):
-                    print " get: %s = %s"%(name,r_str)
+                    print(" get: %s = %s"%(name,r_str))
                 elif state<=0:
-                    print " get: %s = %s in object %s"%(name,r_str,selection)
+                    print(" get: %s = %s in object %s"%(name,r_str,selection))
                 else:
-                    print " get: %s = %s in object %s state %d"%(name,r_str,selection,state)
+                    print(" get: %s = %s in object %s state %d"%(name,r_str,selection,state))
         if _self._raising(r,_self): raise QuietException
         return r
     
@@ -683,7 +685,7 @@ PYMOL API
                 _self.lock(_self)
                 type = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))[0]
                 if type==None:
-                    print "Error: unable to get setting type."
+                    print("Error: unable to get setting type.")
                     raise QuietException
                 try:
                     if len(selection1):
@@ -698,7 +700,7 @@ PYMOL API
                     traceback.print_exc()
                     if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                         traceback.print_exc()
-                        print "Error: unable to get_bond info."
+                        print("Error: unable to get_bond info.")
                     raise QuietException
             finally:
                 _self.unlock(r,_self)
@@ -707,10 +709,10 @@ PYMOL API
             name = name_dict.get(index, name)
             suffix = ' state %d' % state if state > 0 else ''
             for model, vlist in r:
-                print ' %s = %s for object %s' % (name, cmd.get(name, model), model)
+                print(' %s = %s for object %s' % (name, cmd.get(name, model), model))
                 for idx1, idx2, value in vlist:
                     if value is None:
                         continue
-                    print ' %s = %s between (%s`%d)-(%s`%d%s)' % (name,
-                            value, model, idx1, model, idx2, suffix)
+                    print(' %s = %s between (%s`%d)-(%s`%d%s)' % (name,
+                            value, model, idx1, model, idx2, suffix))
         return r

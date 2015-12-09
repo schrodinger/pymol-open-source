@@ -7,8 +7,17 @@ This code is in very experimental state!
 License: BSD-2-Clause
 
 '''
-import urllib2
-from urllib2 import URLError
+
+from __future__ import print_function
+
+try:
+    import urllib.request as urllib2
+    from urllib.parse import urlparse
+    from urllib.error import URLError, HTTPError
+except ImportError:
+    import urllib2
+    from urlparse import urlparse
+    from urllib2 import URLError
 
 from .installation import supported_extensions
 
@@ -20,11 +29,10 @@ def urlopen(url):
     for unavailable urls in my tests. Also "socket.setdefaulttimeout" does
     not change that.
     '''
-    from urllib2 import urlopen
     from . import pref_get
 
     timeout = pref_get('network_timeout', 10.0)
-    return urlopen(url, timeout=timeout)
+    return urllib2.urlopen(url, timeout=timeout)
 
 class Repository():
     '''
@@ -187,14 +195,13 @@ class GithubRepository(HttpRepository):
 
 class LocalRepository(Repository):
     def __init__(self, url):
-        from urlparse import urlparse
         r = urlparse(url)
         self.url = r.path
 
     def list_scan(self):
         import os
         names = os.listdir(self.url)
-        return filter(self.is_supported, names)
+        return list(filter(self.is_supported, names))
 
     def retrieve(self, name):
         url = self.get_full_url(name)
@@ -241,7 +248,7 @@ ARGUMENTS
 
     title = string: Wiki page title or full URL
     '''
-    import urllib2, re, os
+    import re, os
     from pymol import cmd, CmdException
 
     title = title.strip()
@@ -289,10 +296,10 @@ ARGUMENTS
 
     if os.path.exists(filename):
         if not quiet:
-            print 'File "%s" exists, will not redownload'
+            print('File "%s" exists, will not redownload')
     else:
         if not quiet:
-            print 'Downloading', url
+            print('Downloading', url)
 
         # get page content
         try:
@@ -313,20 +320,20 @@ ARGUMENTS
             if len(chunks2) > 0:
                 try:
                     return fetchscript(git_master + chunks2[0], dest, run, quiet)
-                except urllib2.HTTPError:
-                    print 'Warning: Infobox filename found, but download failed'
+                except HTTPError:
+                    print('Warning: Infobox filename found, but download failed')
 
             # parse for <source ...>...</source>
             pattern = re.compile(r'<(?:source|syntaxhighlight)\b[^>]*>(.*?)</(?:source|syntaxhighlight)>', re.DOTALL)
             chunks = pattern.findall(content)
 
             # check script-chunks for cmd.extend
-            chunks = filter(lambda s: 'cmd.extend' in s, chunks)
+            chunks = [s for s in chunks if 'cmd.extend' in s]
 
             if len(chunks) == 0:
                 raise CmdException('No <source> or <syntaxhighlight> block with cmd.extend found')
             if len(chunks) > 1:
-                print 'Warning: %d chunks found, only saving first' % (len(chunks))
+                print('Warning: %d chunks found, only saving first' % (len(chunks)))
 
             content = chunks[0]
 
@@ -346,12 +353,12 @@ if __name__ == '__main__':
         pass
 
     r1 = guess('http://pldserver1.biochem.queensu.ca/~rlc/work/pymol/')
-    print r1.list()
+    print(r1.list())
 
     r1 = guess('https://github.com/Pymol-Scripts/Pymol-script-repo')
-    print r1.list()
+    print(r1.list())
 
     r1 = guess('/opt/pymol-svn/modules/pmg_tk/startup')
-    print r1.list()
+    print(r1.list())
 
 # vi:expandtab:smarttab:sw=4

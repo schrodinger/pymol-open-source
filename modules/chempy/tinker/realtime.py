@@ -12,6 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
 
 # pymol
 
@@ -57,7 +58,7 @@ def assign(sele,preserve=0):
 
     typed = Typer(molObj = mobj)
     
-    print " realtime: assigning atom types"
+    print(" realtime: assigning atom types")
     typed.applyRules(ruleSet)
 
     c = 0
@@ -65,13 +66,13 @@ def assign(sele,preserve=0):
         at = model.atom[c]
         if (at.text_type == '??') or (not preserve):
             if a=='':
-                print " warning: unable to assign atom type to atom %d"%c
+                print(" warning: unable to assign atom type to atom %d"%c)
                 result = 0
             else:
                 cmd.alter("((%s) and (index %s))" % (sele,at.index),
                              "text_type ='%s'" % a)
                 if feedback['tinker']:
-                    print " "+str(__name__)+': %s is a %s' % (at.name,a)
+                    print(" "+str(__name__)+': %s is a %s' % (at.name,a))
                 at.text_type = a
         c = c + 1
 
@@ -80,7 +81,7 @@ def assign(sele,preserve=0):
         a.resi = str(a.resi_number)
         sm = sm + a.partial_charge
 
-    print " lig: net charge on ligand  is %8.4f\n" % sm
+    print(" lig: net charge on ligand  is %8.4f\n" % sm)
 
     return result
 
@@ -102,7 +103,7 @@ def setup(sele,preserve=0):
         a.resi = str(a.resi_number)
         sm = sm + a.partial_charge
 
-    print " lig: net charge on ligand  is %8.4f\n" % sm
+    print(" lig: net charge on ligand  is %8.4f\n" % sm)
 
 #   param = Parameters(tinker.params_path+"parm99_wld.dat")
     param = Parameters(tinker.params_path+"parm99_simple.dat")
@@ -128,13 +129,13 @@ def dyna(steps,iter=1):
     global state
 
     if not state:
-        print " realtime.dyna: please run setup first."
+        print(" realtime.dyna: please run setup first.")
     else:
         state.echo = 0
 
         model = state.model
 
-        print " realtime.dyna: %d atoms total\n" % model.nAtom
+        print(" realtime.dyna: %d atoms total\n" % model.nAtom)
 
         xtra_kw = []
 
@@ -153,12 +154,12 @@ def dyna(steps,iter=1):
             if not len(state.summary):
                 break
             for a in state.summary:
-                print a
+                print(a)
             cmd.load_model(model,'dyna')
             cmd.ending()
             cmd.refresh()
         io.pkl.toFile("realtime.pkl")
-        print " realtime.dyna: terminated after %d steps." % state.counter
+        print(" realtime.dyna: terminated after %d steps." % state.counter)
 
 def check(obj='check'):
     global state
@@ -166,7 +167,7 @@ def check(obj='check'):
     
     if not state:
         if not model:
-            print " realtime.reload: please run setup first."
+            print(" realtime.reload: please run setup first.")
         else:
             cmd.load_model(model,obj,1)
     else:
@@ -179,13 +180,13 @@ def mini(total_step=100,gradient=0.001,interval=100,obj='rt'):
     global state
 
     if not state:
-        print " realtime.mini: please run setup first."
+        print(" realtime.mini: please run setup first.")
     else:
         state.echo = 0
 
         model = state.model
 
-        print " realtime.mini: %d atoms total\n" % model.nAtom
+        print(" realtime.mini: %d atoms total\n" % model.nAtom)
 
         xtra_kw = []
 
@@ -208,11 +209,11 @@ def mini(total_step=100,gradient=0.001,interval=100,obj='rt'):
             if not len(state.summary):
                 break
             for a in state.summary:
-                print a
+                print(a)
             if state.summary[-1][7]=='SmallGrad':
                 break;         
         io.pkl.toFile(model,"realtime.pkl")
-        print " realtime.mini: terminated after %d steps." % state.counter
+        print(" realtime.mini: terminated after %d steps." % state.counter)
 
 
 

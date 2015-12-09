@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 import os
 import shutil
@@ -16,7 +17,7 @@ from chempy import feedback
 
 def do(run_prefix):
     if feedback['bmin']:
-        print " "+str(__name__)+': launching %s...'%bmin_path
+        print(" "+str(__name__)+': launching %s...'%bmin_path)
         if hasattr(sys.stdout,"flush"):
             sys.stdout.flush()
     for a in [ ".m1", ".m2", ".log", ".out" ]:
@@ -27,18 +28,18 @@ def do(run_prefix):
 #   pth = re.sub(r".*\/"+getpass.getuser()+"\/",'',pth)
 #   cmd = "rsh "+socket.gethostname()+" "+bmin_path+" "+pth+"/"+run_prefix
     cmd = bmin_path+" "+pth+"/"+run_prefix
-    print cmd
+    print(cmd)
     os.system(cmd)
     while 1:
         if os.path.exists(run_prefix+".out"): break
         time.sleep(0.1)
     if feedback['bmin']:
         os.system("cat bmintmp.log")
-        print " "+str(__name__)+': bmin job complete. ' 
+        print(" "+str(__name__)+': bmin job complete. ') 
         if hasattr(sys.stdout,"flush"):
             sys.stdout.flush()
 
-if os.environ.has_key('SCHRODINGER'):
+if 'SCHRODINGER' in os.environ:
     base = os.environ['SCHRODINGER']
     bmin_path = base + '/bmin'
 #   os.environ['MMSHARE_EXEC'] = '/apps/schrodinger/mmshare-v10028/bin/Linux-x86'

@@ -135,7 +135,7 @@ length = {
     ( 'LP', 'SH' ) : 0.700,
 }
 
-for a in length.keys():
+for a in list(length.keys()):
     length[(a[1],a[0])]=length[a]
              
 nonlinear = {

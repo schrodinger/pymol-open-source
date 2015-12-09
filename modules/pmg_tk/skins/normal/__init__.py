@@ -1,14 +1,24 @@
 
-import sys, string
+from __future__ import print_function
+
+import sys
 import re
 import threading
 import os
 import time
 
-from Tkinter import *
-import tkFileDialog
-import tkMessageBox
-import tkFont
+try:
+    from Tkinter import *
+    import tkFileDialog
+    import tkMessageBox
+    import tkSimpleDialog
+    import tkFont
+except ImportError:
+    from tkinter import *
+    import tkinter.filedialog as tkFileDialog
+    import tkinter.messagebox as tkMessageBox
+    import tkinter.simpledialog as tkSimpleDialog
+    import tkinter.font as tkFont
 
 import Pmw
 
@@ -19,14 +29,14 @@ from pmg_tk.SetEditor import SetEditor
 from pmg_tk.ColorEditor import ColorEditor
 
 from pmg_tk.skins import PMGSkin
-from builder import Builder
+from .builder import Builder
 
 import traceback
 
 root = None
 
 def encode(s):
-    if isinstance(s, unicode):
+    if isinstance(s, bytes):
         try:
             s = s.encode(sys.getfilesystemencoding())
         except UnicodeEncodeError:
@@ -41,13 +51,13 @@ def askopenfilename(*args, **kwargs):
     filename = tkFileDialog.askopenfilename(*args, **kwargs)
     if isinstance(filename, (list, tuple)):
         filename = map(encode, filename)
-    elif isinstance(filename, basestring):
+    elif isinstance(filename, (str, bytes)):
         filename = encode(filename)
         if not kwargs.get('multiple', 0):
             return os.path.normpath(filename)
         filename = root.tk.splitlist(filename)
     filename = map(os.path.normpath, filename)
-    return filename
+    return list(filename)
 
 def _darwin_browser_open(url):
     os.popen("open "+url,'r').read()
@@ -234,7 +244,7 @@ class Normal(PMGSkin):
             self.app.selection_clear()
             self.app.selection_own()
             self.app.selection_handle(lambda a,b,s=self:s.last_view)
-            print " PyMOL: Viewing matrix copied to clipboard."
+            print(" PyMOL: Viewing matrix copied to clipboard.")
         except:
             traceback.print_exc()
         
@@ -411,8 +421,8 @@ class Normal(PMGSkin):
         t.start()
 
     def dump(self,event):
-        print dir(event)
-        print event.keysym, event.keycode
+        print(dir(event))
+        print(event.keysym, event.keycode)
         
     def createConsole(self):
         self.command = StringVar()      
@@ -741,7 +751,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             searchstr = filter_entry.getvalue()
 
             if searchstr:
-                lst = filter(lambda x: searchstr in x, lst)
+                lst = [x for x in lst if searchstr in x]
 
             dialog.component("scrolledlist").setlist(lst)
 
@@ -822,10 +832,10 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                         if len(sfile):
                             # maybe use PDBSTRs for saving multiple files to multiple states
                             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
-                            save_sele = string.join(map(lambda x:"("+str(x)+")",sels)," or ")
+                            save_sele = ' or '.join(["("+str(x)+")" for x in sels])
                             self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
                                          "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
-			    if state_flag == "all":
+                            if state_flag == "all":
                                 self.cmd.save(sfile,"(%s)"%save_sele,state=0,quiet=0)
                             elif state_flag == "object's current":
                                 ap = 0
@@ -833,7 +843,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                     s = int(self.cmd.get("state", str(sel)))
                                     self.cmd.multisave(sfile,str(sel),state=s, quiet=0, append=ap)
                                     ap = 1
-			    else:
+                            else:
                                 self.cmd.save(sfile,"(%s)"%save_sele,quiet=0)
                             return
             else:
@@ -880,7 +890,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                 for stateSave in range(1,int(s)+1):
                                     save_file = sfile
                                     # _state004
-                                    inter = "_state" + string.zfill(str(stateSave), len(str(s))+1)
+                                    inter = "_state" + str(stateSave).zfill(len(str(s))+1)
                                     # g either MATCHES *.pdb or not.  If so, save, name_stateXYZ.pdb
                                     g = re.search("(.*)(\..*)$", save_file)
                                     if g!=None:
@@ -908,7 +918,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.util.hide_sele()
             
     def edit_pymolrc(self):
-        import tkSimpleDialog
         from pmg_tk.TextEditor import TextEditor
 
         try:
@@ -987,7 +996,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         try:
             from freemol import mpeg_encode
             if not mpeg_encode.validate():
-                print "produce-error: Unable to validate freemol.mpeg_encode"
+                print("produce-error: Unable to validate freemol.mpeg_encode")
                 raise
         except:
             tkMessageBox.showerror("Error",
@@ -1051,9 +1060,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         for path in [ "$PYMOL_PATH/LICENSE.txt", "$PYMOL_PATH/LICENSE.TXT", "$PYMOL_PATH/LICENSE" ]:
             path = self.pymol.cmd.exp_path(path)
             if os.path.exists(path):
-                print string.strip(open(path).read())
+                print(open(path).read().strip())
                 return 
-        print " Error: no license terms found."
+        print(" Error: no license terms found.")
 
     def toggleClickThrough(self, toggle):
         if toggle:
@@ -1065,7 +1074,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             "defaults write com.apple.x11 wm_ffm -bool true")
             os.system(
             "defaults write org.x.X11 wm_ffm -bool true")
-            print "Enabled wm_click_through and wm_ffm.",
+            print("Enabled wm_click_through and wm_ffm.", end=' ')
         else:
             os.system(
             "defaults write com.apple.x11 wm_click_through -bool false")
@@ -1075,8 +1084,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             "defaults write com.apple.x11 wm_ffm -bool false")
             os.system(
             "defaults write org.x.X11 wm_ffm -bool false")
-            print "Disabled wm_click_through and wm_ffm.",
-        print "Please restart X11."
+            print("Disabled wm_click_through and wm_ffm.", end=' ')
+        print("Please restart X11.")
 
     def createMenuBar(self):
         self.menuBar = Pmw.MenuBar(self.root, balloon=self.balloon,

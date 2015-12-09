@@ -13,7 +13,13 @@
 
   Modified 2013-04-17 Thomas Holder, Schrodinger, Inc.
 """
-import SimpleXMLRPCServer
+
+from __future__ import print_function
+
+try:
+  import SimpleXMLRPCServer
+except:
+  import xmlrpc.server as SimpleXMLRPCServer
 import threading,sys,time,types,os,tempfile
 from pymol import cmd,cgo
  
@@ -59,7 +65,7 @@ def rpcResetCGO(id):
   if id=="*":
     cgoDict={}
     res = 1
-  elif cgoDict.has_key(id):
+  elif id in cgoDict:
     del(cgoDict[id])
     res = 1
   else:
@@ -382,15 +388,15 @@ def rpcHelp(what=''):
   global serv
   res = 'Command Not Found'
   if not what:
-    res = serv.funcs.keys()
+    res = list(serv.funcs.keys())
   else:
     funcs = serv.funcs
-    if funcs.has_key(what):
+    if what in funcs:
       fn = funcs[what]
       res = "Function: %s("%what
-      defs = fn.func_defaults
+      defs = fn.__defaults__
       if defs:
-        code = fn.func_code
+        code = fn.__code__
         nDefs = len(defs)
         args = []
         i = -1
@@ -401,8 +407,8 @@ def rpcHelp(what=''):
           args.append("%s=%s"%(vName,repr(defs[j])))
         res += ','.join(args)
       res += ')\n'
-      if fn.func_doc:
-        res += fn.func_doc
+      if fn.__doc__:
+        res += fn.__doc__
   return res  
  
  
@@ -432,7 +438,7 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
     else:
       break
   if serv:
-    print 'xml-rpc server running on host %s, port %d'%(hostname,port+i)
+    print('xml-rpc server running on host %s, port %d'%(hostname,port+i))
 
     # import PyMOL API
     from pymol import api
@@ -467,6 +473,6 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
     t.setDaemon(1)
     t.start()
   else:
-    print 'xml-rpc server could not be started'
+    print('xml-rpc server could not be started')
     
 # vi:expandtab:smarttab:sw=2

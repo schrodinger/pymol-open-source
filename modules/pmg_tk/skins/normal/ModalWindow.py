@@ -1,5 +1,8 @@
 
-import Tkinter as Tk
+try:
+    import Tkinter as Tk
+except ImportError:
+    import tkinter as Tk
 
 class ModalWindow(Tk.Toplevel):
     # 

@@ -1,4 +1,10 @@
-import itertools
+from __future__ import print_function
+
+try:
+    from itertools import izip_longest
+except ImportError:
+    from itertools import zip_longest as izip_longest
+
 from pymol import cmd, stored, wizard
 
 class Command(wizard.Wizard):
@@ -29,7 +35,7 @@ class Command(wizard.Wizard):
         setattr(stored, self.stored_name, self)
         self.varname = 'stored.' + self.stored_name
 
-        for arg, aa in itertools.izip_longest(spec.args, _self.auto_arg):
+        for arg, aa in izip_longest(spec.args, _self.auto_arg):
             if arg.startswith('_') or arg in self.ignored_args:
                 continue
             self.args.append(arg)
@@ -127,6 +133,6 @@ class Command(wizard.Wizard):
         elif 31 < k < 127 and not self.input_numeric or k == 46 or 47 < k < 58:
             self.input_value = self.input_value + chr(k)
         else:
-            print " Warning: invalid key"
+            print(" Warning: invalid key")
         self.cmd.refresh_wizard()
         return 1
