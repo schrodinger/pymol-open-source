@@ -12,10 +12,11 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import chempy
 import copy
-from cpv import *
-import operator
+from .cpv import *
 
 class Base:
 
@@ -30,7 +31,7 @@ class Base:
 #------------------------------------------------------------------------------
     def update_index(self):
         if chempy.feedback['verbose']:
-            print " "+str(self.__class__)+": updating indexes..."
+            print(" "+str(self.__class__)+": updating indexes...")
         c = 0
         self.index = {}
         idx = self.index
@@ -81,9 +82,9 @@ class Base:
 #------------------------------------------------------------------------------
     def list(self):
         for a in self.atom:
-            print a.symbol, a.name,  a.coord
+            print(a.symbol, a.name,  a.coord)
         for a in self.bond:
-            print a.index
+            print(a.index)
             
 #------------------------------------------------------------------------------
     def get_implicit_mass(self):
@@ -117,14 +118,14 @@ class Base:
                     del a.name
         for a in self.atom:
             if not a.has('name'):
-                if not cnt.has_key(a.symbol):
+                if a.symbol not in cnt:
                     c = 1
                 else:
                     c = cnt[a.symbol]
                 while 1:
                     nam = a.symbol+str(c)
                     c = c + 1
-                    if not dct.has_key(nam):
+                    if nam not in dct:
                         break
                 cnt[a.symbol]=c
                 a.name=nam
@@ -165,7 +166,7 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
     def merge(self,other): # steals atom objects from 'other' and resets 'other'
         if chempy.feedback['actions']:
-            print " "+str(self.__class__)+": merging models..."
+            print(" "+str(self.__class__)+": merging models...")
         nAtom=self.nAtom
         self.atom.extend(other.atom)
         for b in other.bond:
@@ -179,14 +180,14 @@ class Indexed(Base):
 #--------------------------------------------------------------------------------
     def delete_atom(self,index):
         if chempy.feedback['atoms']:
-            print " "+str(self.__class__)+": deleting atom %d." % index
+            print(" "+str(self.__class__)+": deleting atom %d." % index)
     
         nAtom=self.nAtom
 
 # update index if it exists
         if self.index:
             idx = self.index
-            for k in idx.keys():
+            for k in list(idx.keys()):
                 if idx[k] > index:
                     idx[k] = idx[k] - 1
             del idx[id(self.atom[index])]
@@ -216,7 +217,7 @@ class Indexed(Base):
     def delete_list(self,list): # delete a list of indexed atoms
 
         if chempy.feedback['atoms']:
-            print " "+str(self.__class__)+": deleting atoms %s." % str(list)
+            print(" "+str(self.__class__)+": deleting atoms %s." % str(list))
 
         nAtom=self.nAtom
 
@@ -278,8 +279,8 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
     def insert_atom(self,index,atom):
         if chempy.feedback['atoms']:
-            print " "+str(self.__class__)+': inserting atom "%s" before %d.' % (
-                atom.name,index)
+            print(" "+str(self.__class__)+': inserting atom "%s" before %d.' % (
+                atom.name,index))
 
         nAtom=self.nAtom
         self.atom.insert(index,atom)
@@ -294,7 +295,7 @@ class Indexed(Base):
 # update index if it exists
         if self.index:
             idx = self.index
-            for k in idx.keys():
+            for k in list(idx.keys()):
                 if idx[k] >= index:
                     idx[k] = idx[k] + 1
             idx[id(atom)] = index
@@ -312,7 +313,7 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
     def add_atom(self,atom):
         if chempy.feedback['atoms']:
-            print " "+str(self.__class__)+': adding atom "%s".' % atom.name
+            print(" "+str(self.__class__)+': adding atom "%s".' % atom.name)
         self.atom.append(atom)
         index = self.nAtom - 1
         if self.index:
@@ -322,14 +323,14 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
     def add_bond(self,bond):
         if chempy.feedback['bonds']:
-            print " "+str(self.__class__)+": adding bond (%d,%d)." % \
-                    (bond.index[0],bond.index[1])
+            print(" "+str(self.__class__)+": adding bond (%d,%d)." % \
+                    (bond.index[0],bond.index[1]))
         self.bond.append(bond)      
 
 #------------------------------------------------------------------------------
     def remove_bond(self,index):
         if chempy.feedback['bonds']:
-            print " "+str(self.__class__)+": removing bond %d." % index
+            print(" "+str(self.__class__)+": removing bond %d." % index)
         nBond=len(self.Bond)
         del self.bond[index]
         
@@ -337,7 +338,7 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
     def convert_to_connected(self):
         if chempy.feedback['verbose']:
-            print " "+str(self.__class__)+": converting to connected model..."
+            print(" "+str(self.__class__)+": converting to connected model...")
         model = Connected()
         model.molecule = self.molecule
         model.atom = self.atom
@@ -401,7 +402,7 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
     def sort(self):
         if chempy.feedback['verbose']:
-            print " "+__name__+": sorting..."
+            print(" "+__name__+": sorting...")
         if not self.index:
             self.update_index()
         old_index = self.index
@@ -409,7 +410,7 @@ class Indexed(Base):
         self.update_index()
         xref = {}
         new_index = self.index
-        for a in new_index.keys():
+        for a in list(new_index.keys()):
             xref[old_index[a]] = new_index[a]
         for b in self.bond:
             b.index[0] = xref[b.index[0]]
@@ -478,7 +479,7 @@ class Indexed(Base):
                 if nbr == fst:
                     nbr = b.index[1]
                 if len(cmodel.bond[nbr])>1:
-                    if not done.has_key(nbr):
+                    if nbr not in done:
                         trd = nbr
                         break
             # safety, choose any unchosen neighbor
@@ -487,7 +488,7 @@ class Indexed(Base):
                     nbr = b.index[0]
                     if nbr == fst:
                         nbr = b.index[1]
-                    if not done.has_key(nbr):
+                    if nbr not in done:
                         trd = nbr
                         break
             z_set.append((trd,fst,nxt))
@@ -535,18 +536,18 @@ class Indexed(Base):
                                     else:
                                         to = (a3,a2,a1,a0)                        
                                     tors[to] = 1
-                if len(tors.keys()):
+                if len(tors):
                     # choose remaining atoms based on existing atoms using torsion
                     while to_go:
-                        for tor in tors.keys():
+                        for tor in list(tors.keys()):
                             a0 = tor[0]
                             a1 = tor[1]
                             a2 = tor[2]
                             a3 = tor[3]
-                            dh0 = done.has_key(a0)
-                            dh1 = done.has_key(a1)
-                            dh2 = done.has_key(a2)
-                            dh3 = done.has_key(a3)
+                            dh0 = a0 in done
+                            dh1 = a1 in done
+                            dh2 = a2 in done
+                            dh3 = a3 in done
                             if ( (not dh0) and dh1 and dh2 and dh3 ):
                                 z_set.append((a0,a1,a2,a3))
                                 done[a0] = 1
@@ -562,7 +563,7 @@ class Indexed(Base):
                         nbr = b.index[0]
                         if nbr in [fst,nxt,trd]:
                             nbr = b.index[1]
-                        if not done.has_key(nbr):
+                        if nbr not in done:
                             z_set.append((nbr,trd,fst,nxt))
                             to_go = to_go - 1
                             done[nbr] = 1
@@ -586,7 +587,7 @@ class Connected(Base):
 #------------------------------------------------------------------------------
     def convert_to_indexed(self):
         if chempy.feedback['verbose']:
-            print " "+str(self.__class__)+": converting to indexed model..."
+            print(" "+str(self.__class__)+": converting to indexed model...")
         indexed = Indexed()
         indexed.atom = self.atom
         indexed.molecule = self.molecule
@@ -602,8 +603,8 @@ class Connected(Base):
 #------------------------------------------------------------------------------
     def insert_atom(self,index,atom):
         if chempy.feedback['atoms']:
-            print " "+str(self.__class__)+': inserting atom "%s" before %d.' % (
-                atom.name,index)
+            print(" "+str(self.__class__)+': inserting atom "%s" before %d.' % (
+                atom.name,index))
 
         nAtom=self.nAtom
         self.atom.insert(index,atom)
@@ -619,7 +620,7 @@ class Connected(Base):
 # update index if it exists
         if self.index:
             idx = self.index
-            for k in idx.keys():
+            for k in list(idx.keys()):
                 if idx[k] >= index:
                     idx[k] = idx[k] + 1
             idx[id(atom)] = index
@@ -627,14 +628,14 @@ class Connected(Base):
 #------------------------------------------------------------------------------
     def delete_atom(self,index):
         if chempy.feedback['atoms']:
-            print " "+str(self.__class__)+": deleting atom %d." % index
+            print(" "+str(self.__class__)+": deleting atom %d." % index)
 
         nAtom=self.nAtom
 
 # update index if it exists
         if self.index:
             idx = self.index
-            for k in idx.keys():
+            for k in list(idx.keys()):
                 if idx[k] > index:
                     idx[k] = idx[k] - 1
             del idx[id(self.atom[index])]
@@ -667,7 +668,7 @@ class Connected(Base):
 #------------------------------------------------------------------------------
     def add_atom(self,atom):
         if chempy.feedback['atoms']:
-            print " "+str(self.__class__)+': adding atom "%s".' % atom.name
+            print(" "+str(self.__class__)+': adding atom "%s".' % atom.name)
         self.atom.append(atom)
         self.bond.append([])
         index = self.nAtom - 1
@@ -678,7 +679,7 @@ class Connected(Base):
 #------------------------------------------------------------------------------
     def sort(self):
         if chempy.feedback['verbose']:
-            print " "+__name__+": sorting..."
+            print(" "+__name__+": sorting...")
         if not self.index:
             self.update_index()
         old_index = self.index

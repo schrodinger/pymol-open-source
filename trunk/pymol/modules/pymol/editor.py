@@ -1,11 +1,13 @@
+from __future__ import print_function
+
 import re
 import pymol
-import cmd
-import setting
-import parsing
+cmd = __import__("sys").modules["pymol.cmd"]
+from . import setting
+from . import parsing
 import threading
 
-from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, \
+from .cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, \
      is_list,  is_string, is_error
 
 QuietException = parsing.QuietException
@@ -36,7 +38,7 @@ ARGUMENTS
     '''
     if not selection in _self.get_names("selections"):
         if fragment in _self.get_names("objects"):
-            print " Error: an object with than name already exists"
+            print(" Error: an object with than name already exists")
             raise QuietException
         else:
             _self.fragment(fragment)
@@ -112,7 +114,7 @@ ARGUMENTS
             object = amino_acid
         # create new object 
         if amino_acid in _self.get_names("objects"):
-            print "Error: an object with than name already exists"
+            print("Error: an object with than name already exists")
             raise QuietException
         r = _self.fragment(amino_acid,object)
         if not hydro:
@@ -122,15 +124,15 @@ ARGUMENTS
         elif _self.count_atoms("((%s) and name N)"%object):
             _self.edit("((%s) and name N)"%object)
     elif _self.select(tmp_connect,"(%s) & elem N,C"%selection) != 1:
-        print "Error: invalid connection point: must be one atom, name N or C."
+        print("Error: invalid connection point: must be one atom, name N or C.")
         _self.delete(tmp_wild)
         raise QuietException
     elif amino_acid in ["nhh","nme"] and _self.select(tmp_connect,"(%s) & elem C"%selection) != 1:
-        print "Error: invalid connection point: must be C for residue '%s'"%(amino_acid)
+        print("Error: invalid connection point: must be C for residue '%s'"%(amino_acid))
         _self.delete(tmp_wild)
         raise QuietException
     elif amino_acid in ["ace"] and _self.select(tmp_connect,"(%s) & elem N"%selection) != 1:
-        print "Error: invalid connection point: must be N for residue '%s'"%(amino_acid)
+        print("Error: invalid connection point: must be N for residue '%s'"%(amino_acid))
         _self.delete(tmp_wild)
         raise QuietException
     else:
@@ -260,11 +262,11 @@ ARGUMENTS
             else:
                 _self.unpick()
         elif _self.count_atoms("((%s) and elem H)"%selection):
-            print "Error: please pick a nitrogen or carbonyl carbon to grow from."
+            print("Error: please pick a nitrogen or carbonyl carbon to grow from.")
             _self.delete(tmp_wild)
             raise QuietException            
         else:
-            print "Error: unable to attach fragment."
+            print("Error: unable to attach fragment.")
             _self.delete(tmp_wild)
             raise QuietException
     _self.delete(tmp_wild)
@@ -348,7 +350,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
 #        ch.insert_pattern_string(input)
     if mode in [ 'peptide' ]:  # polymers
         if (seq_len>99) and not quiet:
-            print " Generating a %d residue peptide from sequence..."%seq_len
+            print(" Generating a %d residue peptide from sequence..."%seq_len)
         input.reverse()
         sequence = input
         if code != None:

@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2015-12-09 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* Python 3 compatibility, tested with Python 2.6, 2.7 and 3.4
+
+	* 1.8.1.0 (unstable/experimental)
+
 2015-11-18 Thomas Holder, Blaine Bell, Gabriel Marques
 
 	* 1.8.0.0

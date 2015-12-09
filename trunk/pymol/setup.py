@@ -32,7 +32,7 @@ try:
     parser.add_argument('--no-libxml', action="store_true")
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 except ImportError:
-    print "argparse not available"
+    print("argparse not available")
 
 if options.jobs != 1:
     monkeypatch_distutils.pmap = multiprocessing.pool.ThreadPool(options.jobs or None).map
@@ -40,10 +40,10 @@ if options.jobs != 1:
 def posix_find_lib(names, lib_dirs):
     # http://stackoverflow.com/questions/1376184/determine-if-c-library-is-installed-on-unix
     from subprocess import Popen, PIPE
-    args = ["gcc", "-o", os.devnull, "-x", "c", "-"] + ["-L" + d for d in lib_dirs]
+    args = ["gcc", "-shared", "-o", os.devnull] + ["-L" + d for d in lib_dirs]
     for name in names:
-        p = Popen(args + ["-l" + name], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        p.communicate("int main(){}")
+        p = Popen(args + ["-l" + name], stdout=PIPE, stderr=PIPE)
+        p.communicate()
         if p.wait() == 0:
             return name
     raise IOError('could not find any of ' + str(names))
@@ -80,7 +80,7 @@ class install_pymol(install):
         ignore = lambda src, names: set(['.svn']).intersection(names)
         if os.path.exists(dst):
             shutil.rmtree(dst)
-        print 'copying', src, '->', dst
+        print('copying %s -> %s' % (src, dst))
         shutil.copytree(src, dst, ignore=ignore)
 
     def copy(self, src, dst):
@@ -117,7 +117,7 @@ class install_pymol(install):
                 out.write('export PYMOL_PATH="%s"' % pymol_path + os.linesep)
                 out.write('"%s" "%s" "$@"' % (python_exe, pymol_file) + os.linesep)
 
-        os.chmod(launch_script, 0755)
+        os.chmod(launch_script, 0o755)
 
 #============================================================================
 
@@ -231,7 +231,7 @@ else: # unix style (linux, mac, ...)
             ("_PYMOL_NUMPY", None),
         ]
     except ImportError:
-        print "numpy not available"
+        print("numpy not available")
 
     libs += ["png", "freetype"]
 

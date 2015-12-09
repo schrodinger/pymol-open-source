@@ -12,21 +12,26 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function, absolute_import
+
 if __name__=='pymol.viewing':
 
-    import thread
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread
+
     import threading
-    import string
     import types
     import traceback
     import pymol
-    import selector
+    from . import selector
     import copy
-    import parsing
+    from . import parsing
     import re
-    import cmd
+    cmd = __import__("sys").modules["pymol.cmd"]
     
-    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
+    from .cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
           repres,repres_sc, is_string, is_list, is_ok, is_error, \
           toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
@@ -35,8 +40,6 @@ if __name__=='pymol.viewing':
           location_code, location_sc, boolean_dict, boolean_sc, \
           DEFAULT_ERROR, DEFAULT_SUCCESS
         
-    import thread
-
     palette_colors_dict = {
         'rainbow_cycle'     : 'magenta blue cyan green yellow orange red magenta',
         'rainbow_cycle_rev' : 'magenta red orange yellow green cyan blue magenta',
@@ -577,7 +580,7 @@ SEE ALSO
             elif representation=='all':
                 if is_ok(_cmd.showhide(_self._COb,"all",repres['lines'],1)): # show lines by default
                     r = _cmd.showhide(_self._COb,"all",repres['nonbonded'], 1) # nonbonded
-            elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
+            elif (representation[0:1]=='(') or '/' in representation:
                 # preprocess selection
                 selection = selector.process(representation)
                 #                  
@@ -648,7 +651,7 @@ SEE ALSO
 
                 # user specified 'visible' -- this has always been problematic
 
-                if "visible".startswith(selection.lower()) and len(string.split(selection))==1:
+                if "visible".startswith(selection.lower()) and len(selection.split())==1:
                     vis_sel = _self.get_unused_name("_vis")
                     _self.select(vis_sel, selection)
                     selection = vis_sel
@@ -659,7 +662,7 @@ SEE ALSO
                 if is_ok(_cmd.showhide(_self._COb,str(selection),-1,0)):            
                     if if_ok(_cmd.showhide(_self._COb,"all",repres['lines'],1)): # show lines by default
                         r = _cmd.showhide(_self._COb,"all",repres['nonbonded'],1) # show nonbonded by default
-            elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
+            elif (representation[0:1]=='(') or '/' in representation:
                 # preprocess selection
                 selection = selector.process(representation)
                 if is_ok(_cmd.showhide(_self._COb,str(selection),-1,0)):
@@ -724,7 +727,7 @@ SEE ALSO
                 r = _cmd.showhide(_self._COb,str(selection),int(repn),0);
             elif (representation=='all'):
                 r = _cmd.showhide(_self._COb,"@",0,0);
-            elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
+            elif (representation[0:1]=='(') or '/' in representation:
                 selection = selector.process(representation)
                 r = _cmd.showhide(_self._COb,str(selection),-1,0);
             else: # selection == ""
@@ -803,7 +806,7 @@ SEE ALSO
             if len(r):
                 if (_self.get_setting_int("logging") != 0) and (output<3):
                     if not quiet:
-                        print " get_view: matrix written to log file."
+                        print(" get_view: matrix written to log file.")
                     _self.log("_ set_view (\\\n","cmd.set_view((\\\n")
                     _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  ,
                               "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
@@ -820,15 +823,15 @@ SEE ALSO
                     if output<2: # suppress if we have a log file open
                         output=0
                 if output and (not quiet) and (output<3):
-                    print "### cut below here and paste into script ###"
-                    print "set_view (\\"
-                    print "  %14.9f, %14.9f, %14.9f,\\"%r[0:3]
-                    print "  %14.9f, %14.9f, %14.9f,\\"%r[4:7]
-                    print "  %14.9f, %14.9f, %14.9f,\\"%r[8:11]
-                    print "  %14.9f, %14.9f, %14.9f,\\"%r[16:19]
-                    print "  %14.9f, %14.9f, %14.9f,\\"%r[19:22]
-                    print "  %14.9f, %14.9f, %14.9f )"%r[22:25]
-                    print "### cut above here and paste into script ###"
+                    print("### cut below here and paste into script ###")
+                    print("set_view (\\")
+                    print("  %14.9f, %14.9f, %14.9f,\\"%r[0:3])
+                    print("  %14.9f, %14.9f, %14.9f,\\"%r[4:7])
+                    print("  %14.9f, %14.9f, %14.9f,\\"%r[8:11])
+                    print("  %14.9f, %14.9f, %14.9f,\\"%r[16:19])
+                    print("  %14.9f, %14.9f, %14.9f,\\"%r[19:22])
+                    print("  %14.9f, %14.9f, %14.9f )"%r[22:25])
+                    print("### cut above here and paste into script ###")
             if output==3:
                 return ("set_view (\\\n"+
                   "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3] +
@@ -878,10 +881,10 @@ SEE ALSO
                 view = eval(re.sub(r"[^0-9,\-\)\(\.]","",view))
             except:
                 traceback.print_exc()
-                print "Error: bad view argument; should be a sequence of 18 floats."
+                print("Error: bad view argument; should be a sequence of 18 floats.")
                 raise QuietException
         if len(view)!=18:
-            print "Error: bad view argument; should be a sequence of 18 floats."
+            print("Error: bad view argument; should be a sequence of 18 floats.")
             raise QuietException
         else:
             try:
@@ -944,8 +947,8 @@ SEE ALSO
                 pymol._view_dict = {}
                 pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())                        
             else:
-                print " view: stored views:"
-                lst = pymol._view_dict.keys()
+                print(" view: stored views:")
+                lst = list(pymol._view_dict.keys())
                 lst.sort()
                 parsing.dump_str_list(lst)
                 
@@ -955,19 +958,19 @@ SEE ALSO
                 key = pymol._view_dict_sc.auto_err(key,'view')
                 _self.set_view(pymol._view_dict[key],animate=animate)
                 if _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
-                    print " view: \"%s\" recalled."%key
+                    print(" view: \"%s\" recalled."%key)
             elif (action=='store') or (action=='update'):
                 pymol._view_dict_sc.append(key)
                 pymol._view_dict[key]=_self.get_view(0)
                 if _feedback(fb_module.scene,fb_mask.actions,_self):
-                    print " view: view "+action+"d as \"%s\"."%key
+                    print(" view: view "+action+"d as \"%s\"."%key)
             elif action=='clear':
                 key = pymol._view_dict_sc.auto_err(key,'view')
-                if pymol._view_dict.has_key(key):
+                if key in pymol._view_dict:
                     del pymol._view_dict[key]
                     pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())            
                     if _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
-                        print " view: '%s' deleted."%key
+                        print(" view: '%s' deleted."%key)
 
 
     def get_viewport(output=1, quiet=1, _self=cmd):
@@ -1009,15 +1012,15 @@ PYMOL API
             if len(r):
                 if (_self.get_setting_int("logging") != 0) and (output<3):
                     if not quiet:
-                        print " get_viewport: data written to log file."
+                        print(" get_viewport: data written to log file.")
                     _self.log("_ viewport (\\\n","cmd.viewport((\\\n")
                     _self.log("_  %14.9f, %14.9f )\n"% r)
                     if output<2: # suppress if we have a log file open
                         output=0
                 if output and (not quiet) and (output<3):
-                    print "### cut below here and paste into script ###"
-                    print "viewport %4d, %4d"% r
-                    print "### cut above here and paste into script ###"
+                    print("### cut below here and paste into script ###")
+                    print("viewport %4d, %4d"% r)
+                    print("### cut above here and paste into script ###")
             if output==3:
                 return ("viewport ( %14.9f, %14.9f )\n"% r)
         elif _self._raising(r,_self):
@@ -1151,7 +1154,7 @@ SEE ALSO
         '''
         wiz = _self.get_wizard()
         replace_flag = (wiz is not None
-                and str(wiz.__class__) == 'pymol.wizard.message.Message'
+                and wiz.__class__.__name__ == 'Message'
                 and hasattr(wiz, 'from_scene'))
 
         if message:
@@ -1264,15 +1267,15 @@ SEE ALSO
 
     def session_restore_views(session,_self=cmd):
         pymol=_self._pymol
-        if session.has_key('view_dict'):
+        if 'view_dict' in session:
             pymol._view_dict=copy.deepcopy(session['view_dict'])
-            pymol._view_dict_sc.rebuild(pymol._view_dict.keys())
+            pymol._view_dict_sc.rebuild(list(pymol._view_dict.keys()))
         return 1
 
     def session_restore_scenes(session,_self=cmd):
         # Restore scenes from old session files (<= 1.7.4)
 
-        if session.has_key('scene_dict'):
+        if 'scene_dict' in session:
             _self.scene('*', 'clear')
 
             # save initial scene
@@ -1286,7 +1289,7 @@ SEE ALSO
                 _self.mstop()
                 frame = _self.get_frame()
 
-            for key, data in session['scene_dict'].items():
+            for key, data in list(session['scene_dict'].items()):
                 _convert_legacy_scene(key, data, _self)
 
             if frame:
@@ -1297,7 +1300,7 @@ SEE ALSO
             _self.scene(tempname, 'recall', animate=0)
             _self.scene(tempname, 'clear')
 
-        if session.has_key('scene_order'):
+        if 'scene_order' in session:
             _self.scene_order(' '.join(session['scene_order']))
 
         _self._pymol._scene_dict_sc.rebuild(_self.get_scene_list())
@@ -1376,7 +1379,7 @@ PYMOL API
                 toggle=1
             r = _cmd.stereo(_self._COb,toggle)
             if is_error(r):
-                print "Error: Selected stereo mode is not available."
+                print("Error: Selected stereo mode is not available.")
         finally:
             _self.unlock(r,_self);
         if _self._raising(r,_self): raise QuietException
@@ -1598,15 +1601,15 @@ PYMOL API
     cmd.viewport(int width, int height)
         '''
         r = None
-        if cmd.is_string(width) and height < 0:
+        if cmd.is_string(width) and height == -1:
             try:
                 width = eval(re.sub(r"[^0-9,\-\)\(\.]","",width))
             except:
                 traceback.print_exc()
-                print "Error: bad viewport argument; should be 2 floats, width and height."
+                print("Error: bad viewport argument; should be 2 floats, width and height.")
                 raise QuietException
             if len(width)!=2:
-                print "Error: bad viewport argument; should be 2 floats, width and height."
+                print("Error: bad viewport argument; should be 2 floats, width and height.")
                 raise QuietException
             height = width[1]
             width = width[0]
@@ -1885,7 +1888,7 @@ SEE ALSO
         #
         r = DEFAULT_ERROR
         if not async:
-            r = apply(_ray, arg_tup)
+            r = _ray(*arg_tup)
         else:
             render_thread = threading.Thread(target=_ray, args=arg_tup)
             render_thread.setDaemon(1)
@@ -2172,7 +2175,7 @@ DESCRIPTION
                 'resi': 'resv'}.get(expression, expression)
 
         if expression == 'count':
-            e_list = range(_self.count_atoms(selection))
+            e_list = list(range(_self.count_atoms(selection)))
         else:
             e_list = []
             _self.iterate(selection, 'e_list.append(%s)' % (expression), space=locals())
@@ -2181,8 +2184,8 @@ DESCRIPTION
             v_list = [float(v) for v in e_list if v is not None]
         except (TypeError, ValueError):
             if not quiet:
-                print ' Spectrum: Expression is non-numeric, enumerating values'
-            v_list = e_list = map(sorted(set(e_list)).index, e_list)
+                print(' Spectrum: Expression is non-numeric, enumerating values')
+            v_list = e_list = list(map(sorted(set(e_list)).index, e_list))
 
         if not v_list:
             return (0., 0.)
@@ -2191,7 +2194,7 @@ DESCRIPTION
         if maximum is None: maximum = max(v_list)
         r = minimum, maximum = float(minimum), float(maximum)
         if not quiet:
-            print ' Spectrum: range (%.5f to %.5f)' % r
+            print(' Spectrum: range (%.5f to %.5f)' % r)
 
         val_range = maximum - minimum
         if not val_range:
@@ -2200,7 +2203,7 @@ DESCRIPTION
 
         e_it = iter(e_list)
         def next_color():
-            v = e_it.next()
+            v = next(e_it)
             if v is None:
                 return False
             v = min(1.0, max(0.0, (float(v) - minimum) / val_range)) * (n_colors - 1)
@@ -2351,10 +2354,10 @@ PYMOL API
         r = DEFAULT_ERROR
         if _self.is_string(rgb):
             rgb = safe_list_eval(rgb)
-        if not (isinstance(rgb,types.ListType) or isinstance(rgb,types.TupleType)):
-            print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
+        if not (isinstance(rgb,list) or isinstance(rgb,tuple)):
+            print("Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]")
         elif len(rgb)!=3:
-            print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
+            print("Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]")
         else:
             rgb = [float(rgb[0]),float(rgb[1]),float(rgb[2])]
             if (rgb[0]>1.0) or (rgb[1]>1.0) or (rgb[2]>1.0):
@@ -2368,7 +2371,7 @@ PYMOL API
                     r = _cmd.colordef(_self._COb,str(name),rgb[0],rgb[1],rgb[2],int(mode),int(quiet))
                     _self._invalidate_color_sc(_self)
                 else:
-                    print "Error: invalid color."
+                    print("Error: invalid color.")
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
@@ -2382,5 +2385,5 @@ PYMOL API
     recolour = recolor
     
 
-    import setting
+    from . import setting
     

@@ -12,10 +12,12 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 try:
     import _champ
 except ImportError:
-    print " Error: unable to import architecture-dependent _champ module."
+    print(" Error: unable to import architecture-dependent _champ module.")
 
 # okay, this module is going to take some planning, since Champ
 # has the potential to evolve into a full-blown

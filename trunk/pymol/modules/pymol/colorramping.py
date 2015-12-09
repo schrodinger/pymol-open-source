@@ -2,8 +2,10 @@
 Volume color ramp utilities
 '''
 
+from __future__ import print_function
+
 import math
-import cmd
+cmd = __import__("sys").modules["pymol.cmd"]
 
 _volume_windows = {}
 
@@ -74,7 +76,7 @@ SEE ALSO
 
     volume, volume_color
     '''
-    if isinstance(ramp, basestring):
+    if cmd.is_string(ramp):
         ramp = ramp.split()
     namedramps[name] = ramp
 
@@ -95,17 +97,17 @@ DESCRIPTION
         if not quiet:
             import random
             rname = 'ramp%03d' % random.randint(0, 999)
-            print '### cut below here and paste into script ###'
-            print 'cmd.volume_ramp_new(%s, [\\' % repr(rname)
+            print('### cut below here and paste into script ###')
+            print('cmd.volume_ramp_new(%s, [\\' % repr(rname))
             for i in range(0, len(r), 5):
-                print '    %6.2f, %.2f, %.2f, %.2f, %.2f, \\' % tuple(r[i:i+5])
-            print '    ])'
-            print '### cut above here and paste into script ###'
+                print('    %6.2f, %.2f, %.2f, %.2f, %.2f, \\' % tuple(r[i:i+5]))
+            print('    ])')
+            print('### cut above here and paste into script ###')
         elif quiet < 0:
-            print 'volume_color %s, ' % (name),
+            print('volume_color %s, ' % (name), end=' ')
             for i in range(0, len(r), 5):
-                print '\\\n    %6.2f %.2f %.2f %.2f %.2f' % tuple(r[i:i+5]),
-            print ''
+                print('\\\n    %6.2f %.2f %.2f %.2f %.2f' % tuple(r[i:i+5]), end=' ')
+            print('')
 
     return r
 
@@ -145,7 +147,10 @@ EXAMPLE
     if _guiupdate and name in _volume_windows:
         from pymol import gui
         def func():
-            import Tkinter
+            try:
+                import Tkinter
+            except ImportError:
+                import tkinter as Tkinter
             try:
                 panel = _volume_windows[name].panel
                 panel.set_flat(ramplist)
@@ -168,7 +173,10 @@ ARGUMENTS
     '''
     from pymol import gui
     from pmg_tk import volume
-    import Tkinter
+    try:
+        import Tkinter
+    except ImportError:
+        import tkinter as Tkinter
 
     app = gui.get_pmgapp()
     def func():
@@ -208,14 +216,14 @@ def ramp_to_colors(ramp, vmin=None, vmax=None, ncolors=360):
         mixcincr = 1.0 / (upper - lower)
         mixc = 1.0 + mixcincr
 
-        for j in xrange(lower, upper):
+        for j in range(lower, upper):
             mixc -= mixcincr
             if j < 0 or j >= ncolors:
                 continue
             colors[j] = [
                     ramp[i * 5 - 1 + k + 1] * mixc + \
                     ramp[i * 5     + k + 1] * (1.0 - mixc)
-                    for k in xrange(4)]
+                    for k in range(4)]
 
     return colors
 
@@ -238,7 +246,7 @@ def ramp_expand(ramp, _self=cmd):
     ramp = []
     for s in it:
         try:
-            c = it.next()
+            c = next(it)
             try:
                 r = float(c)
                 if r > 1.0:
@@ -247,8 +255,8 @@ def ramp_expand(ramp, _self=cmd):
             except ValueError:
                 r, g, b = _self.get_color_tuple(c)
             else:
-                g, b = float(it.next()), float(it.next())
-            a = float(it.next())
+                g, b = float(next(it)), float(next(it))
+            a = float(next(it))
         except StopIteration:
             raise ValueError("malformed color ramp")
         ramp.extend([float(s), r, g, b, a])
@@ -263,8 +271,7 @@ def flatiter(x):
 
     Details: Flattens all elements with an __iter__ method. Sequences with
     __len__ and __getitem__ are also iterable, but are not flattened by this
-    function. Strings don't have an __iter__ method in Python 2, but in Python
-    3 they have! So this is not Python 3 compatible without modification.
+    function.
 
     @type x: iterable
     @rtype: generator
@@ -272,11 +279,11 @@ def flatiter(x):
     x = [iter(x)]
     while x:
         try:
-            e = x[-1].next()
+            e = next(x[-1])
         except:
             x.pop()
             continue
-        if hasattr(e, '__iter__'):
+        if hasattr(e, '__iter__') and not isinstance(e, str):
             x.append(iter(e))
             continue
         yield e
@@ -288,7 +295,7 @@ def flatlist(x):
     r = []
     def loop(x):
         for e in x:
-            if hasattr(e, '__iter__'):
+            if hasattr(e, '__iter__') and not isinstance(e, str):
                 loop(e)
             else:
                 r.append(e)

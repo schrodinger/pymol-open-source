@@ -553,7 +553,7 @@ static void MainDrawLocked(void)
 
     /* restore working directory if asked to */
     PRunStringModule(G,
-                     "if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
+                     "if 'PYMOL_WD' in os.environ: os.chdir(os.environ['PYMOL_WD'])");
 
     if(PyErr_Occurred())
       PyErr_Print();

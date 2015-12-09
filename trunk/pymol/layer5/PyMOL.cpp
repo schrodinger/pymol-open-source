@@ -1936,7 +1936,9 @@ static void init_python(int argc, char *argv[])
 {
   Py_Initialize();
   if(argv) {
+#if PY_MAJOR_VERSION < 3
     PySys_SetArgv(argc, argv);
+#endif
   }
 
 
@@ -1956,7 +1958,9 @@ static void init_python(int argc, char *argv[])
 
   PyEval_InitThreads();
 
+#if PY_MAJOR_VERSION < 3
   PyUnicode_SetDefaultEncoding("utf-8");        /* is this safe & legal? */
+#endif
   PyRun_SimpleString("import sys");
   PyRun_SimpleString("import os");
   PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')");
@@ -2554,7 +2558,7 @@ int PyMOL_Idle(CPyMOL * I)
 #ifdef _MACPYMOL_XCODE
       /* restore working directory if asked to */
       PRunStringModule(G,
-                       "if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
+                       "if 'PYMOL_WD' not in os.environ: os.chdir(os.environ['PYMOL_WD'])");
       PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->obj, "launch_gui", "O", G->P_inst->obj));
 #endif
       /* END PROPRIETARY CODE SEGMENT */

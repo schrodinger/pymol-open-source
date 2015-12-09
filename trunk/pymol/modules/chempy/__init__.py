@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import os
 import copy
 
@@ -65,12 +67,12 @@ class Atom:
         try:
             maxfree = implicit_valence[self.symbol][0]
         except KeyError:
-            print "unknown implicit_valence for", self.symbol
+            print("unknown implicit_valence for", self.symbol)
             return 0
         return max(0, maxfree - npaired + self.formal_charge)
     
     def has(self,attr):
-        return self.__dict__.has_key(attr) 
+        return attr in self.__dict__ 
 
     def in_same_residue(self,other):
         if self.resi == other.resi:
@@ -112,7 +114,7 @@ class Bond:
     stereo  = 0
 
     def has(self,attr):
-        return self.__dict__.has_key(attr) 
+        return attr in self.__dict__ 
 
 class Molecule:
 
@@ -126,26 +128,26 @@ class Molecule:
         }
 
     def __getattr__(self,attr):
-        if Molecule.defaults.has_key(attr):
+        if attr in Molecule.defaults:
             return Molecule.defaults[attr]
         else:
             raise AttributeError(attr)
         
     def has(self,attr):
-        return self.__dict__.has_key(attr) 
+        return attr in self.__dict__ 
     
 class Storage:
 
     def my_open(self,fname,mode='r'):
         if 'r' in mode and '://' in fname:
-            import urllib
+            try:
+                import urllib.request as urllib
+            except ImportError:
+                import urllib
             return urllib.urlopen(fname)
         elif fname.endswith(".gz") or fname.endswith(".pze") or fname.endswith("pzw"):
-            gzContent = open(fname,mode).read()
-            import StringIO
-            fakestream = StringIO.StringIO(gzContent)
             import gzip
-            return gzip.GzipFile(fileobj=fakestream)
+            return gzip.open(fname, mode)
         else:
             return open(fname,mode)
         
@@ -160,21 +162,21 @@ class Storage:
 
     def updateFromFile(self,indexed,fname,**params):
         fp = open(fname)
-        result = apply(self.updateFromList,(indexed,fp.readlines()),params)
+        result = self.updateFromList(indexed, fp.readlines(), **params)
         fp.close()
 
     def fromFile(self,fname,**params):
         if feedback['io']:
-            print ' chempy: reading "%s".' % fname
+            print(' chempy: reading "%s".' % fname)
         fp = self.my_open(fname)
-        result = apply(self.fromList,(fp.readlines(),),params)
+        result = self.fromList(fp.readlines(), **params)
         fp.close()
         return result
 
     def toFile(self,indexed,fname,**params):
         lines = self.toList(indexed, **params)
         if feedback['io']:
-            print ' chempy: writing "%s".' % fname
+            print(' chempy: writing "%s".' % fname)
         fp = open(fname,'w')
         result = fp.writelines(lines)
         fp.close()
@@ -208,13 +210,13 @@ feedback = { 'warnings': 1,
                  'bmin'    : 1,
                  }
 
-if os.environ.has_key('CHEMPY_DATA'):  # 
+if 'CHEMPY_DATA' in os.environ:  # 
     path = os.environ['CHEMPY_DATA'] + '/'
-elif os.environ.has_key('PYMOL_DATA'):
+elif 'PYMOL_DATA' in os.environ:
     path = os.environ['PYMOL_DATA'] + '/chempy/'
-elif os.environ.has_key('PYMOL_PATH'):
+elif 'PYMOL_PATH' in os.environ:
     path = os.environ['PYMOL_PATH'] + '/data/chempy/'   
-elif os.environ.has_key('FREEMOL_MODULES'):
+elif 'FREEMOL_MODULES' in os.environ:
     path = os.environ['FREEMOL_MODULES'] + '/chempy/'
 else:
     path = ''

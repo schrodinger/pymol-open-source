@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 from chempy.models import Indexed
 from chempy import water_amber,water_residues
 from chempy import hetatm,path,io
@@ -48,7 +50,7 @@ def fill_box(area,water=None,box=18.774349):
                     b[0] = b[0] + x + half
                     b[1] = b[1] + y + half
                     b[2] = b[2] + z + half
-                print " "+__name__+": filling box at %8.3f %8.3f %8.3f\n" % (x,y,z)
+                print(" "+__name__+": filling box at %8.3f %8.3f %8.3f\n" % (x,y,z))
                 solv_box.merge(tmp)
                 z = z + box
             y = y + box

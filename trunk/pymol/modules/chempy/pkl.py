@@ -14,8 +14,10 @@
 
 from chempy import Storage
 
-import pickle
-import cPickle
+try:
+    import cPickle
+except ImportError:
+    import pickle as cPickle
 
 class PKL(Storage):
 
@@ -28,7 +30,7 @@ class PKL(Storage):
 #---------------------------------------------------------------------------
     def toFile(self,indexed,fname,**params):
         fp = open(fname,'wb')
-        if(not params.has_key('bin')):
+        if 'bin' not in params:
             result = cPickle.dump(indexed,fp,1)
         else:
             result = cPickle.dump(indexed,fp,params['bin'])         
@@ -43,7 +45,7 @@ class PKL(Storage):
 
 #---------------------------------------------------------------------------
     def toStream(self,indexed,fp,**params):
-        if(not params.has_key('bin')):
+        if 'bin' not in params:
             result = cPickle.dump(indexed,fp,1)
         else:
             result = cPickle.dump(indexed,fp,params['bin'])         

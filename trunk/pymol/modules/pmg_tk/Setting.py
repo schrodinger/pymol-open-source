@@ -17,8 +17,12 @@
 # correspond to Menu-displayed settings are kept synchronized with
 # PyMOL
 
-import Tkinter
-from Tkinter import IntVar
+try:
+    import Tkinter
+    from Tkinter import IntVar
+except ImportError:
+    import tkinter as Tkinter
+    from tkinter import IntVar
 import time
 
 from pymol import cmd, Scratch_Storage

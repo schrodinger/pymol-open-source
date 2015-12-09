@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -67,12 +69,12 @@ class Pair_fit(Wizard):
 
     def get_sele_list(self,mode='all'):
         lst = cmd.get_names('selections')
-        lst = filter(lambda x:x[0:sele_prefix_len]==sele_prefix,lst)
+        lst = [x for x in lst if x[0:sele_prefix_len]==sele_prefix]
         lst.sort()
         if mode == 'mobile': # mobile
-            lst=filter(lambda x:x[-1:]=='b',lst) 
+            lst=[x for x in lst if x[-1:]=='b'] 
         elif mode == 'target': # target
-            lst=filter(lambda x:x[-1:]=='a',lst)
+            lst=[x for x in lst if x[-1:]=='a']
         return lst
     
     def fit(self):
@@ -91,7 +93,7 @@ class Pair_fit(Wizard):
         # do the fit
         if len(args):
             cmd.push_undo(args[0])
-            dist = apply(cmd.pair_fit,args)
+            dist = cmd.pair_fit(*args)
             self.message = "RMS over %d pairs = %5.3f"%(self.n_pair,dist)
             cmd.refresh_wizard()
         self.update_dashes()
@@ -153,13 +155,13 @@ class Pair_fit(Wizard):
     def do_pick(self,bondFlag):
         if bondFlag:
             self.message = "Error: please select an atom, not a bond."
-            print self.message
+            print(self.message)
         else:
             if self.status==0:
                 lst = self.get_sele_list(mode='mobile')
                 if not self.check_same_object(lst,"(pk1)"):
                     self.message = "Error: must select an atom in the same object as before."
-                    print self.message
+                    print(self.message)
                 else:
                     name = sele_prefix + "%02db"%self.n_pair # mobile end in 'b'
                     cmd.select(name,"(pk1)")
@@ -172,12 +174,12 @@ class Pair_fit(Wizard):
                 lst = self.get_sele_list(mode='target')
                 if not self.check_same_object(lst,"(pk1)"):
                     self.message = "Error: must select an atom in the same object as before."
-                    print self.message
+                    print(self.message)
                 else:
                     lst = self.get_sele_list(mode='mobile')
                     if not self.check_different_object(lst,"(pk1)"):
                         self.message = "Error: target atom must be in a distinct object."
-                        print self.message
+                        print(self.message)
                     else:
                         name = sele_prefix + "%02da"%self.n_pair # target end in 'a'
                         cmd.select(name,"(pk1)")

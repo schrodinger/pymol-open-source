@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import re
 
 from chempy import Atom, Bond
@@ -61,17 +63,18 @@ class ciftokeniter(object):
     sub-iterators for loop keys and data.
     '''
     def __init__(self, starstr):
-        self._next = token_re.finditer(starstr).next
+        self._iter = token_re.finditer(starstr)
         self._prev = []
     def __iter__(self):
         return self
     def next(self):
         if self._prev:
             return self._prev.pop()
-        s = self._next().group(1)
+        s = next(self._iter).group(1)
         if s[0] == '#':
-            return self.next()
+            return next(self)
         return s
+    __next__ = next
     def loopdataiter(self):
         for s in self:
             if s[0] == '_' or s[:5].lower() in ('loop_', 'data_', 'save_'):
@@ -97,7 +100,7 @@ def parse_cif(cifstr):
         s_lower = s.lower()
         if s[0] == '_':
             key = s_lower.replace('.', '_')
-            current_block.key_value[key] = token_it.next()
+            current_block.key_value[key] = next(token_it)
         elif s_lower == 'loop_':
             loop = CIFLoop()
             current_block.loops.append(loop)
@@ -415,7 +418,7 @@ class CIFRec(CIFData):
             try:
                 atom = name_dict[self.index_to_str(label,value)]
             except KeyError:
-                print " CIF _atom_site_aniso_label, invalid key:", value
+                print(" CIF _atom_site_aniso_label, invalid key:", value)
                 continue
             self.model.atom[atom].u_aniso = [
                 self.index_to_float(u11,value),
@@ -486,7 +489,7 @@ class CIFRec(CIFData):
             try:
                 index = [atom_dict[key_1], atom_dict[key_2]]
             except KeyError:
-                print " CIF _struct_conn, invalid keys:", row
+                print(" CIF _struct_conn, invalid keys:", row)
                 continue
             bond = Bond()
             bond.index = index
@@ -531,7 +534,7 @@ class CIFRec(CIFData):
                 index = [name_dict[self.index_to_str(label_1, value)],
                          name_dict[self.index_to_str(label_2, value)]]
             except KeyError:
-                print " CIF _geom_bond_atom_site_label, invalid keys:", value
+                print(" CIF _geom_bond_atom_site_label, invalid keys:", value)
                 continue
             bond = Bond()
             bond.index = index
@@ -568,7 +571,7 @@ class CIFRec(CIFData):
                 index = [name_dict[self.index_to_str(label_1, value)],
                          name_dict[self.index_to_str(label_2, value)]]
             except KeyError:
-                print " CIF _chem_comp_bond_atom_id, invalid keys:", value
+                print(" CIF _chem_comp_bond_atom_id, invalid keys:", value)
                 continue
             bond = Bond()
             bond.index = index
@@ -654,7 +657,7 @@ class CIFRec(CIFData):
             except KeyError:
                 continue
 
-            for j in xrange(i, len(atoms)):
+            for j in range(i, len(atoms)):
                 aj = atoms[j]
                 if aj.name != 'CA':
                     continue
@@ -669,7 +672,7 @@ class CIF:
     
     def __init__(self, fname, mode='r'):
         if mode not in ('r','pf'):
-            print " CIF: bad mode"
+            print(" CIF: bad mode")
             return None
         if mode=='pf': # pseudofile
             contents = fname.read()
@@ -685,13 +688,15 @@ class CIF:
         return self
 
     def next(self):
-        rec = CIFRec(self.datablocks_it.next())
+        rec = CIFRec(next(self.datablocks_it))
         if rec.model.atom:
             return rec
-        return self.next()
+        return next(self)
+
+    __next__ = next
 
     def read(self):
         try:
-            return self.next()
+            return next(self)
         except StopIteration:
             return None

@@ -15,7 +15,9 @@
 #
 #
 
-import bond_amber
+from __future__ import print_function
+
+from . import bond_amber
 
 from chempy.cpv import *
 from chempy import feedback
@@ -46,7 +48,7 @@ def find_known_secondary(model,anchor,known_list):
 #------------------------------------------------------------------------------
 def simple_unknowns(model,bondfield=bond_amber):
     if feedback['actions']:
-        print " "+str(__name__)+": placing unknowns..."
+        print(" "+str(__name__)+": placing unknowns...")
     # this can be used to build hydrogens and would robably work for
     # acyclic carbons as well
     if str(model.__class__) != 'chempy.models.Connected':
@@ -85,11 +87,11 @@ def simple_unknowns(model,bondfield=bond_amber):
                 atx2 = a[1][0]
                 at2 = model.atom[atx2]
                 know = a[2]
-                if bondfield.nonlinear.has_key(at1.text_type):
+                if at1.text_type in bondfield.nonlinear:
                     near = find_known_secondary(model,atx1,know)
                     if near:
                         at3 = model.atom[near[0]]
-                        if bondfield.planer.has_key(at3.text_type): # Phenolic hydrogens, etc.
+                        if at3.text_type in bondfield.planer: # Phenolic hydrogens, etc.
                             at4 = model.atom[near[1]]
                             d1 = sub(at1.coord,at3.coord)
                             p0 = normalize(d1)
@@ -136,7 +138,7 @@ def simple_unknowns(model,bondfield=bond_amber):
                 atx2 = a[1][0]
                 at2 = model.atom[atx2]
                 know = a[2]
-                if bondfield.planer.has_key(at1.text_type): # guanido, etc
+                if at1.text_type in bondfield.planer: # guanido, etc
                     near = find_known_secondary(model,atx1,know)
                     if near: # 1-4 present
                         at3 = model.atom[near[0]]
@@ -324,7 +326,7 @@ def test_random():
     from chempy.champ import assign
     cmd.fab('ACDEFGHIKLMNPQRSTVWY', 'm0')
     assign.amber99()
-    for i in xrange(100):
+    for i in range(100):
         m = cmd.get_model('m0').convert_to_connected()
         for a in m.atom:
             if random.random() < 0.8:

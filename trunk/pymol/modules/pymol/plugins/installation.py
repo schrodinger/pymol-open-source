@@ -6,6 +6,8 @@ License: BSD-2-Clause
 
 '''
 
+from __future__ import print_function
+
 import os
 
 # supported file types for installation. Do not support pyc and pyo binaries,
@@ -58,7 +60,7 @@ def cmp_version(v1, v2):
         from distutils.version import StrictVersion as Version
         return cmp(Version(v1), Version(v2))
     except:
-        print ' Warning: Version parsing failed for', v1, 'and/or', v2
+        print(' Warning: Version parsing failed for', v1, 'and/or', v2)
         return 0
 
 def get_name_and_ext(ofile):
@@ -122,7 +124,7 @@ def extract_zipfile(ofile, ext):
     if len(names) == 0:
         # case 2: zip/<name>-<version>/<name>/__init__.py
         names = [(pname, name)
-                for (pname, pdict) in namedict.iteritems()
+                for (pname, pdict) in namedict.items()
                 for name in pdict
                 if '__init__.py' in pdict[name]]
 

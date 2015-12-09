@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -216,7 +218,7 @@ class Density(Wizard):
             if self.cmd.count_atoms("?pk1"):
                 self.cmd.select("_dw","pk1")
         if not ('_dw' in self.cmd.get_names('selections')):
-            print " Density-Wizard: Please pick an atom first."
+            print(" Density-Wizard: Please pick an atom first.")
         else:
             obj = self.cmd.index('_dw')[0][0]
             a0 = self.cmd.get_model('_dw').atom[0]
@@ -244,7 +246,7 @@ class Density(Wizard):
                         i = len(resids) - 1
                 next_i = i + d
                 if ((next_i < 0) or (next_i >= len(resids))):
-                    print "Current residue is the end of a chain."
+                    print("Current residue is the end of a chain.")
                 else:
                     n = self.cmd.select('_dw2', ''+obj+'/'+a0.segi+'/'+a0.chain+'/'+resids[next_i]+'/'+atn)
             if (n > 0):

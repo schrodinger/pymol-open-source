@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 normal = {
 ('ACE'  , '1HH3'  ) : { 'type' : '41'   , 'charge' :  0.0000 } ,
 ('ACE'  , '2HH3'  ) : { 'type' : '41'   , 'charge' :  0.0000 } ,
@@ -1233,11 +1235,11 @@ for a in c_terminal.keys():
 def check_sum(dct):
     sm = {}
     for a in dct.keys():
-        if not sm.has_key(a[0]):
+        if a[0] not in sm:
             sm[a[0]] = dct[a]['charge']
         else:
             sm[a[0]] = sm[a[0]]+ dct[a]['charge']         
 
     for a in sm.keys():
-        print a,'%7.4f'%sm[a]
+        print(a,'%7.4f'%sm[a])
         

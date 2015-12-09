@@ -64,6 +64,7 @@
 # In rare cases, certain nonserious error or warning output should
 # also be suppressed.  Set "quiet" to 2 for this behavior.
 
+from __future__ import print_function
 
 def _deferred_init_pymol_internals(_pymol):
     # set up some global session tasks
@@ -99,16 +100,15 @@ if __name__=='pymol.cmd':
         import re
         from pymol import _cmd
         import string
-        import thread
         import threading
         import pymol
         import os
-        import parsing
+        from . import parsing
         import time
 
         _pymol = pymol
         
-        from shortcut import Shortcut
+        from .shortcut import Shortcut
 
         from chempy import io
 
@@ -116,16 +116,16 @@ if __name__=='pymol.cmd':
         # symbols for early export
         #######################################################################
 
-        from constants import *
-        from constants import _load2str
+        from .constants import *
+        from .constants import _load2str
 
         fb_debug = sys.stderr # can redirect python debugging output elsewhere if desred...
 
         #--------------------------------------------------------------------
         # convenient type and result checking
 
-        from checking import *
-        from checking import _raising
+        from .checking import *
+        from .checking import _raising
         
         #-------------------------------------------------------------------
         # path expansion, including our fixes for Win32
@@ -157,24 +157,24 @@ if __name__=='pymol.cmd':
         lock_api_data = pymol.lock_api_data
         lock_api_allow_flush = 1
         
-        from locking import *
+        from .locking import *
         lockcm = LockCM()
 
         #--------------------------------------------------------------------
         # status monitoring
         
-        from monitoring import *
+        from .monitoring import *
         
         #--------------------------------------------------------------------
         # Feedback
 
-        from feedingback import *
-        from feedingback import _feedback
+        from .feedingback import *
+        from .feedingback import _feedback
 
         #--------------------------------------------------------------------
         # internal API routines
 
-        import internal
+        from . import internal
 
         _adjust_coord = internal._adjust_coord
         _alt = internal._alt
@@ -219,7 +219,7 @@ if __name__=='pymol.cmd':
         # now import modules which depend on the above
         #######################################################################
 
-        import editor
+        from . import editor
 
         #######################################################################
         # cmd module functions...
@@ -227,11 +227,11 @@ if __name__=='pymol.cmd':
             
         # for extending the language
 
-        from commanding import extend, extendaa, alias
+        from .commanding import extend, extendaa, alias
 
         # for documentation etc
 
-        from helping import python_help
+        from .helping import python_help
                 
         def write_html_ref(file):
             '''Write the PyMOL Command Reference to an HTML file'''
@@ -332,7 +332,7 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
             f.write("</BODY></HTML>")
             f.close()
 
-            print "PyMOL Command Reference written to %s" % (os.path.abspath(file))
+            print("PyMOL Command Reference written to %s" % (os.path.abspath(file)))
 
         
         #####################################################################
@@ -341,7 +341,7 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
 
         # first we need to import a set of symbols into the local namespace
 
-        from api import *
+        from .api import *
 
         # deferred initialization
 
@@ -349,9 +349,9 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
         
         # now we create the command langauge
         
-        import keywords
+        from . import keywords
         keyword = keywords.get_command_keywords()
-        kw_list = keyword.keys()
+        kw_list = list(keyword.keys())
         
         keywords.fix_list(kw_list)
         kwhash = Shortcut(kw_list)
@@ -361,11 +361,11 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
         # PyMOL command language namespace
 
         help_only = keywords.get_help_only_keywords()
-        help_sc = Shortcut(keyword.keys()+help_only.keys())
+        help_sc = Shortcut(list(keyword.keys())+list(help_only.keys()))
 
         # keyboard configuration
         
-        import keyboard
+        from . import keyboard
         
         special = keyboard.get_special()
 
@@ -386,14 +386,14 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
         
         # Table for argument autocompletion
 
-        import completing
+        from . import completing
         
         auto_arg = completing.get_auto_arg_list()
 
         color_sc = None
 
     except:
-        print "Error: unable to initalize the pymol.cmd module"
+        print("Error: unable to initalize the pymol.cmd module")
         traceback.print_exc()
         sys.exit(0)
         

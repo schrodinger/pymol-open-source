@@ -17,7 +17,7 @@
 if __name__=='pymol.gui':
     
     import pymol
-    import cmd
+    cmd = __import__("sys").modules["pymol.cmd"]
 
 def get_pmgapp():
     '''

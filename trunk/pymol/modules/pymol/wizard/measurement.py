@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -106,7 +108,7 @@ class Measurement(Wizard):
         for neighbor selecting, populate the menu with these names
         """
         list = self.cmd.get_names("public_objects",1)[0:25] # keep this practical
-        list = filter(lambda x:self.cmd.get_type(x)=="object:molecule",list)
+        list = [x for x in list if self.cmd.get_type(x)=="object:molecule"]
         result = [[ 2, 'Object: ', '']]
         for b in list:
             result.append( [ 1, b,  'cmd.get_wizard().set_neighbor_target("%s","%s")' % (a,b)])
@@ -117,7 +119,7 @@ class Measurement(Wizard):
         get list of public selections for populating the menu
         """
         list = self.cmd.get_names("public_selections",1)[0:25] # keep this practical
-        list = filter(lambda x:self.cmd.get_type(x)=="selection",list)
+        list = [x for x in list if self.cmd.get_type(x)=="selection"]
         result = [[ 2, 'Selections: ', '']]
         for b in list:
             result.append( [ 1, b,  'cmd.get_wizard().set_neighbor_target("%s","%s")' % (a,b)])
@@ -303,7 +305,7 @@ class Measurement(Wizard):
         self.cmd.select( "(pk1)", code + "(pk1)")
         if bondFlag:
             self.error = "Error: please select an atom, not a bond."
-            print self.error
+            print(self.error)
         else:
             reset = 1
             sele_name = sele_prefix + str(self.status)
@@ -418,7 +420,7 @@ class Measurement(Wizard):
                 if cnt:
                     self.cmd.dist(obj_name,"(pk1)",sele_prefix,cutoff=cutoffType,reset=reset)
                 else:
-                    print " Wizard: No neighbors found."
+                    print(" Wizard: No neighbors found.")
                 self.clear_input()
                 self.cmd.unpick()
                 self.cmd.enable(obj_name)

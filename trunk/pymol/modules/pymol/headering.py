@@ -1,11 +1,12 @@
+from __future__ import print_function
+
 import os
 import re
 import sys
-import string
 import struct
 import pymol
 import math
-from xray import space_group_map
+from .xray import space_group_map
 
 
 if sys.byteorder == "big":
@@ -49,19 +50,19 @@ class baseHeader:
             defaultNames = pymol.cmd.get_setting_text("default_%s_names" % (prg))
 
             if len(defaultNames):
-                defaultNames = string.split(defaultNames)
+                defaultNames = defaultNames.split()
                 if len(defaultNames):
                     if mapType.lower() == "2fofc":
                         defaultF, defaultP = defaultNames[0], defaultNames[1]
                     elif mapType.lower() == "fofc":
                         defaultF, defaultP = defaultNames[2], defaultNames[3]
                 else:
-                    print "Error: Please provide the setting 'default_%s_names' a comma separated string" % (prg)
-                    print "       with the values for 2FoFc and FoFc, amplitude and phase names, respectively."
+                    print("Error: Please provide the setting 'default_%s_names' a comma separated string" % (prg))
+                    print("       with the values for 2FoFc and FoFc, amplitude and phase names, respectively.")
                     return [None]*3
             else:
-                print "Error: Please provide the setting 'default_%s_names' a comma separated string" % (prg)
-                print "       with the values for 2FoFc and FoFc, amplitude and phase names, respectively."
+                print("Error: Please provide the setting 'default_%s_names' a comma separated string" % (prg))
+                print("       with the values for 2FoFc and FoFc, amplitude and phase names, respectively.")
                 return [None]*3
                         
 
@@ -69,7 +70,7 @@ class baseHeader:
             for curFCol in fC:
                 if curFCol.endswith(defaultF):
                     # found F, now look for matching P
-                    pfx = string.rstrip(curFCol,defaultF)
+                    pfx = curFCol.rstrip(defaultF)
                     curPCol = pfx+defaultP
 
                     ## print "curFCol = %s" % curFCol
@@ -115,7 +116,7 @@ class CIFHeader(baseHeader):
                 while curLine!=None:
                     if in_loop:
                         if curLine.startswith("_refln."):
-                            self.cols.append(string.split(curLine,".",1)[1].strip())
+                            self.cols.append(curLine.split(".",1)[1].strip())
                         else:
                             in_loop=False
                     else:
@@ -127,8 +128,8 @@ class CIFHeader(baseHeader):
                         curLine = None
 
 
-            except IOError, e:
-                print "Error-CIFReader: Couldn't read '%s' for input." % (self.filename)
+            except IOError as e:
+                print("Error-CIFReader: Couldn't read '%s' for input." % (self.filename))
 
 class MTZHeader(baseHeader):
     HEADER_KEYWORDS = {
@@ -199,7 +200,7 @@ class MTZHeader(baseHeader):
             ## print "KEY = %s" % key
             # user wants all columns
             if colType==None:
-                c = self.datasets[key]["cols"].keys()
+                c = list(self.datasets[key]["cols"].keys())
             else:
                 # user wants a specfic column
                 for tmpCol in self.datasets[key]["cols"].keys():
@@ -215,8 +216,7 @@ class MTZHeader(baseHeader):
             ## print "CurCrystal is: %s." % curCryst
             datName  = [ self.datasets[key]["name"] ] * len(c)
             self.cols.extend(
-                map(lambda x: "/".join(x), 
-                    zip(curCryst,datName,c)))
+                ["/".join(x) for x in zip(curCryst,datName,c)])
 
     def getColumns(self):
         self.format_cols()
@@ -278,7 +278,7 @@ class MTZHeader(baseHeader):
             if self.wordsize!=None:
                 (header_start,) = struct.unpack(self.byteorder_int+"i", f.read(4))
             else:
-                print "Warning: Byte order of file unknown.  Guessing header location."
+                print("Warning: Byte order of file unknown.  Guessing header location.")
                 (header_start,) = struct.unpack("i", f.read(4))
 
             # bAdjust is the byte adjustment to compensate for
@@ -295,17 +295,18 @@ class MTZHeader(baseHeader):
             header_start  = (header_start-1) * (bAdjust)
 
             if file_len<header_start:
-                print "Error: File '%s' cannot be parsed because PyMOL cannot find the header.  If you think"
-                print "       PyMOL should be able to read this, plese send the file and this mesage to "
-                print "       help@schrodinger.com.  Thanks!"
+                print("Error: File '%s' cannot be parsed because PyMOL cannot find the header.  If you think")
+                print("       PyMOL should be able to read this, plese send the file and this mesage to ")
+                print("       help@schrodinger.com.  Thanks!")
 
             f.seek(header_start)
 
             curLine = struct.unpack("80s", f.read(80))[0]
+            curLine = curLine.decode()
             
             while not (curLine.startswith("END")):
                 # yank field identifier
-                (field, tokens) = string.split(curLine," ",1)
+                (field, tokens) = curLine.split(" ",1)
                 
                 H = MTZHeader.HEADER_KEYWORDS
                 try:
@@ -314,13 +315,13 @@ class MTZHeader(baseHeader):
                     elif field.startswith(H["TITLE"]):
                         self.title = tokens
                     elif field.startswith(H["NCOL"]):
-                        (self.ncols, self.nrefl, self.nbatches) = string.split(tokens)
+                        (self.ncols, self.nrefl, self.nbatches) = tokens.split()
                     elif field.startswith(H["CELL"]):
-                        tokens = string.split(tokens)
+                        tokens = tokens.split()
                         self.cell_dim    = tokens[:3]
                         self.cell_angles = tokens[3:]
                     elif field.startswith(H["SORT"]):
-                        self.sort = string.split(tokens)
+                        self.sort = tokens.split()
                     elif field.startswith(H["SYMINF"]):
                         tokens = shlex.split(tokens)
                         self.nsymmop  = tokens[0]
@@ -334,11 +335,11 @@ class MTZHeader(baseHeader):
                         self.space_group = space_group_map.get(self.space_group, self.space_group)
 
                     elif field.startswith(H["SYMM"]):
-                        tokens = string.split(tokens)
-                        tokens = map(lambda x: string.strip(string.strip(x, ",")),tokens)
+                        tokens = tokens.split()
+                        tokens = [x.strip(",").strip() for x in tokens]
                         self.symm.append(tokens)
                     elif field.startswith(H["RESO"]):
-                        self.reso_min, self.reso_max = string.split(tokens)
+                        self.reso_min, self.reso_max = tokens.split()
                         self.reso_min = math.sqrt(1./float(self.reso_min))
                         self.reso_max = math.sqrt(1./float(self.reso_max))
                     elif field.startswith(H["VALM"]):
@@ -346,7 +347,7 @@ class MTZHeader(baseHeader):
                     elif field.startswith(H["COL"]):
                         if field == "COLSRC":
                             raise pymol.cmd.QuietException
-                        (lab,typ,m,M,i) = string.split(tokens)
+                        (lab,typ,m,M,i) = tokens.split()
                         if i not in self.datasets:
                             self.datasets[i] = {}
                             self.datasets[i]["cols"]  = {}
@@ -359,24 +360,24 @@ class MTZHeader(baseHeader):
                     elif field.startswith(H["NDIF"]):
                         self.ndif = int(tokens)
                     elif field.startswith(H["PROJECT"]):
-                        (i,proj) = string.split(tokens,maxsplit=1)
+                        (i,proj) = tokens.split(None, 1)
                         if i not in self.datasets:
                             self.datasets[i] = {}
-                        self.datasets[i]["project"] = string.strip(proj)
+                        self.datasets[i]["project"] = proj.strip()
                     elif field.startswith(H["CRYSTAL"]):
                         # can have multiple crystals per dataset?
                         # if, so not supported (overwritten) here.
-                        (i,cryst) = string.split(tokens,maxsplit=1) 
+                        (i,cryst) = tokens.split(None, 1) 
                         if i not in self.datasets:
                             self.datasets[i] = {}
-                        self.datasets[i]["crystal"] = string.strip(cryst)
+                        self.datasets[i]["crystal"] = cryst.strip()
                     elif field.startswith(H["DATASET"]):
-                        (i,d) = string.split(tokens,maxsplit=1)
+                        (i,d) = tokens.split(None, 1)
                         if i not in self.datasets:
                             self.datasets[i] = {}
-                        self.datasets[i]["name"] = string.strip(d)
+                        self.datasets[i]["name"] = d.strip()
                     elif field.startswith(H["DCELL"]):
-                        (i,x,y,z,a,b,g) = string.split(tokens)
+                        (i,x,y,z,a,b,g) = tokens.split()
                         if i not in self.datasets:
                             self.datasets[i] = {}
                         self.datasets[i]['x'] = x
@@ -386,27 +387,28 @@ class MTZHeader(baseHeader):
                         self.datasets[i]['beta'] = b
                         self.datasets[i]['gamma'] = g
                     elif field.startswith(H["DWAVEL"]):
-                        (i,wl) = string.split(tokens)
+                        (i,wl) = tokens.split()
                         if i not in self.datasets:
                             self.datasets[i] = {}
                         self.datasets[i]["wavelength"] = wl
                     elif field.startswith(H["BATCH"]):
                         self.batch = tokens
                     else:
-                        print "Error Parsing MTZ Header: bad column name: '%s'" % field
+                        print("Error Parsing MTZ Header: bad column name: '%s'" % field)
                 except ValueError:
-                    print "Error: Parsing MTZ Header poorly formatted MTZ file"
-                    print "       bad field: '%s'" % field
+                    print("Error: Parsing MTZ Header poorly formatted MTZ file")
+                    print("       bad field: '%s'" % field)
                 except pymol.cmd.QuietException:
                     pass
 
                 curLine = struct.unpack("80s", f.read(80))[0]
+                curLine = curLine.decode()
 
 
 if __name__=="__main__":
 
     c = CIFHeader("test.cif")
-    print c.getColumns()
+    print(c.getColumns())
 
     m = MTZHeader("test.mtz")
-    print m.getColumns()
+    print(m.getColumns())

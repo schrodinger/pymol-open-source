@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -35,7 +37,6 @@ class Annotation(Wizard):
             ]
 
 import copy
-import string
 import re
 
 from chempy.sdf import SDF
@@ -78,7 +79,7 @@ def load_annotated_sdf(filename, object=None, state=1, discrete=1, _self=cmd):
 
         # load it into PyMOL
 
-        cmd.read_molstr(string.join(mol_list,''),object,
+        cmd.read_molstr(''.join(mol_list),object,
                              state,finish=0,discrete=discrete)
 
         # populate with tuple containing ordered list of keys
@@ -88,10 +89,10 @@ def load_annotated_sdf(filename, object=None, state=1, discrete=1, _self=cmd):
         for key in sdf_rec.kees:
             if (key!='MOL'):
                 data = sdf_rec.data[key]
-                print key,data
+                print(key,data)
                 anno_list.append("  \\595%s: \\559%s"%(
                     key,
-                    string.join(map(string.strip,sdf_rec.data[key]))))
+                    ' '.join(map(str.strip, sdf_rec.data[key]))))
         state_dict[state] = anno_list
 
         # increment the state index 

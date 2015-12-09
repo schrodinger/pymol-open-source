@@ -18,7 +18,6 @@ from chempy import Storage,Atom,Bond
 # ad-hoc maestro file parser
 
 import re
-import string
 import copy
 
 strip_re = re.compile(r'\#.*\#')
@@ -54,9 +53,9 @@ class MAEParser:
                 l = self.nxt_lin()
                 if not l:
                     return None
-                l = string.strip(strip_re.sub('',l))
+                l = strip_re.sub('',l).strip()
                 self.t = token_re.findall(l)
-                self.t = map(lambda x:string.join(x,''),self.t)
+                self.t = [''.join(x) for x in self.t]
         return None
 
     def push_tok(self,tok):
@@ -76,7 +75,7 @@ class MAEParser:
                 mode = 0
             if mode:
                 lab = stk.pop(0)
-                dct[lab] = apply(coerce[lab[0]],(tok,))
+                dct[lab] = coerce[lab[0]](*(tok,))
             else:
                 stk.append(tok)
             if tok=='}':
@@ -121,7 +120,7 @@ class MAEParser:
                         tok = self.nxt_tok()
                         if tok==None:
                             break
-                        data[c].append(apply(coer[c],(tok,)))
+                        data[c].append(coer[c](*(tok,)))
                         if tok=='}':
                             break
         return (n_rec,dct,data) # return a tuple
@@ -176,7 +175,7 @@ class MAE(Storage):
         at_dat = m_atom[2]
         
         nAtom = m_atom[0]      
-        if at_ent.has_key('i_m_mmod_type'):
+        if 'i_m_mmod_type' in at_ent:
             a1 = at_dat[at_ent['i_m_mmod_type']]
             
             for b in range(nAtom):
@@ -185,65 +184,65 @@ class MAE(Storage):
                 ma[b].symbol = MMOD_atom_data[nt][1]
                 ma[b].text_type = MMOD_atom_data[nt][0]
                 
-        if at_ent.has_key('r_m_x_coord') and \
-            at_ent.has_key('r_m_y_coord') and \
-            at_ent.has_key('r_m_z_coord'):
+        if 'r_m_x_coord' in at_ent and \
+            'r_m_y_coord' in at_ent and \
+            'r_m_z_coord' in at_ent:
             a1 = at_dat[at_ent['r_m_x_coord']]
             a2 = at_dat[at_ent['r_m_y_coord']]
             a3 = at_dat[at_ent['r_m_z_coord']]
             for b in range(nAtom):
                 ma[b].coord = [a1[b],a2[b],a3[b] ]
                 
-        if at_ent.has_key('i_m_residue_number'):
+        if 'i_m_residue_number' in at_ent:
             a1 = at_dat[at_ent['i_m_residue_number']]
             for b in range(nAtom):
                 resi = a1[b]
                 ma[b].resi = str(resi)
                 ma[b].resi_number = resi
                 
-        if at_ent.has_key('s_m_mmod_res'):
+        if 's_m_mmod_res' in at_ent:
             a1 = at_dat[at_ent['s_m_mmod_res']]
             for b in range(nAtom):         
                 ma[b].resi_code = a1[b]
                 
-        if at_ent.has_key('s_m_chain_name'):
+        if 's_m_chain_name' in at_ent:
             a1 = at_dat[at_ent['s_m_chain_name']]
             for b in range(nAtom):
                 ma[b].chain = a1[b]
                 
-        if at_ent.has_key('i_m_color'):
+        if 'i_m_color' in at_ent:
             a1 = at_dat[at_ent['i_m_color']]
             for b in range(nAtom):
                 ma[b].color_code = a1[b]
                 
-        if at_ent.has_key('r_m_charge1'):
+        if 'r_m_charge1' in at_ent:
             a1 = at_dat[at_ent['r_m_charge1']]
             for b in range(nAtom):
                 ma[b].partial_charge = a1[b]
                 
-        if at_ent.has_key('s_m_pdb_residue_name'):
+        if 's_m_pdb_residue_name' in at_ent:
             a1 = at_dat[at_ent['s_m_pdb_residue_name']]
             for b in range(nAtom):
-                resn = string.strip(a1[b])
+                resn = a1[b].strip()
                 if len(resn):
                     ma[b].resn = resn
                     
-        if at_ent.has_key('i_m_formal_charge'):
+        if 'i_m_formal_charge' in at_ent:
             a1 = at_dat[at_ent['i_m_formal_charge']]
             for b in range(nAtom):
                 ma[b].formal_charge = a1[b]
                 
-        if at_ent.has_key('s_m_atom_name'):
+        if 's_m_atom_name' in at_ent:
             a1 = at_dat[at_ent['s_m_atom_name']]
             for b in range(nAtom):
-                nam = string.strip(a1[b])
+                nam = a1[b].strip()
                 if len(nam):
                     ma[b].name = nam
                 
-        if at_ent.has_key('s_m_pdb_atom_name'):
+        if 's_m_pdb_atom_name' in at_ent:
             a1 = at_dat[at_ent['s_m_pdb_atom_name']]
             for b in range(nAtom):
-                nam = string.strip(a1[b])
+                nam = a1[b].strip()
                 if len(nam):
                     ma[b].name = nam
 
@@ -254,9 +253,9 @@ class MAE(Storage):
         nBond = m_bond[0]      
 
         if len(bd_dat[0]): # not empty right?
-            if bd_ent.has_key('i_m_from') and \
-                bd_ent.has_key('i_m_to') and \
-                bd_ent.has_key('i_m_order'):
+            if 'i_m_from' in bd_ent and \
+                'i_m_to' in bd_ent and \
+                'i_m_order' in bd_ent:
                 a1 = bd_dat[bd_ent['i_m_from']]
                 a2 = bd_dat[bd_ent['i_m_to']]
                 a3 = bd_dat[bd_ent['i_m_order']]
@@ -284,17 +283,17 @@ class MAE(Storage):
             if mp_ent[0] == 'f_m_ct':
                 f_m_ct = mp_ent[1]
                 model = Indexed()
-                if f_m_ct.has_key('s_m_title'):
-                    model.molecule.title = string.strip(f_m_ct['s_m_title'])
+                if 's_m_title' in f_m_ct:
+                    model.molecule.title = f_m_ct['s_m_title'].strip()
 
-                if f_m_ct.has_key('m_atom'):
+                if 'm_atom' in f_m_ct:
                     m_atom = f_m_ct['m_atom']
                     nAtom = m_atom[0]
                     for a in range(nAtom):
                         model.atom.append(Atom())
                     self._read_m_atom(m_atom,model)
 
-                if f_m_ct.has_key('m_bond'):
+                if 'm_bond' in f_m_ct:
                     m_bond = f_m_ct['m_bond']
                     self._read_m_bond(m_bond,model)
                 full_model = model
@@ -303,15 +302,15 @@ class MAE(Storage):
             elif mp_ent[0]=='p_m_ct' and full_model!=None:
                 model = copy.deepcopy(full_model)
                 f_m_ct = mp_ent[1]
-                if f_m_ct.has_key('s_m_title'):
-                    model.molecule.title = string.strip(f_m_ct['s_m_title'])
+                if 's_m_title' in f_m_ct:
+                    model.molecule.title = f_m_ct['s_m_title'].strip()
 
-                if f_m_ct.has_key('m_atom'):
+                if 'm_atom' in f_m_ct:
                     m_atom = f_m_ct['m_atom']
                     nAtom = m_atom[0]
                     self._read_m_atom(m_atom,model)
 
-                if f_m_ct.has_key('m_bond'):
+                if 'm_bond' in f_m_ct:
                     m_bond = f_m_ct['m_bond']
                     self._read_m_bond(m_bond,model)
                 full_model = model

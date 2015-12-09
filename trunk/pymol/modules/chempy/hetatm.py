@@ -46,7 +46,7 @@ def assign_types(model, topology = None, forcefield = None ):
             for a in res_list:
                 base = model.atom[a[0]]
                 resn = base.resn
-                if not tmpl.has_key(resn):
+                if resn not in tmpl:
                     raise RuntimeError("unknown residue type '"+resn+"'")
                 else:
                     # reassign atom names and build dictionary
@@ -54,12 +54,12 @@ def assign_types(model, topology = None, forcefield = None ):
                     aliases = tmpl[resn]['aliases']
                     for b in range(a[0],a[1]):
                         at = model.atom[b]
-                        if aliases.has_key(at.name):
+                        if at.name in aliases:
                             at.name = aliases[at.name]
                         dict[at.name] = b
                         if forcefield:
                             k = (resn,at.name)
-                            if ffld.has_key(k):
+                            if k in ffld:
                                 at.text_type = ffld[k]['type']
                                 at.partial_charge = ffld[k]['charge']
                             else:
@@ -78,7 +78,7 @@ def add_bonds(model, topology = None, forcefield = None ):
             for a in res_list:
                 base = model.atom[a[0]]
                 resn = base.resn
-                if not tmpl.has_key(resn):
+                if resn not in tmpl:
                     raise RuntimeError("unknown residue type '"+resn+"'")
                 else:
                     # reassign atom names and build dictionary
@@ -86,12 +86,12 @@ def add_bonds(model, topology = None, forcefield = None ):
                     aliases = tmpl[resn]['aliases']
                     for b in range(a[0],a[1]):
                         at = model.atom[b]
-                        if aliases.has_key(at.name):
+                        if at.name in aliases:
                             at.name = aliases[at.name]
                         dict[at.name] = b
                         if forcefield:
                             k = (resn,at.name)
-                            if ffld.has_key(k):
+                            if k in ffld:
                                 at.text_type = ffld[k]['type']
                                 at.partial_charge = ffld[k]['charge']
                             else:
@@ -99,8 +99,8 @@ def add_bonds(model, topology = None, forcefield = None ):
                     # now add bonds for atoms which are present
                     bonds = tmpl[resn]['bonds']
                     mbond = model.bond
-                    for b in bonds.keys():
-                        if dict.has_key(b[0]) and dict.has_key(b[1]):
+                    for b in list(bonds.keys()):
+                        if b[0] in dict and b[1] in dict:
                             bnd = Bond()
                             bnd.index = [ dict[b[0]], dict[b[1]] ]
                             bnd.order = bonds[b]['order']
@@ -121,7 +121,7 @@ def add_hydrogens(model,topology=None,forcefield=None):
             for a in res_list:
                 base = model.atom[a[0]]
                 resn = base.resn
-                if not tmpl.has_key(resn):
+                if resn not in tmpl:
                     raise RuntimeError("unknown residue type '"+resn+"'")
                 else:
                     # build dictionary
@@ -132,8 +132,8 @@ def add_hydrogens(model,topology=None,forcefield=None):
                     # find missing bonds with hydrogens
                     bonds = tmpl[resn]['bonds']
                     mbond = model.bond
-                    for b in bonds.keys():
-                        if dict.has_key(b[0]) and (not dict.has_key(b[1])):
+                    for b in list(bonds.keys()):
+                        if b[0] in dict and (b[1] not in dict):
                             at = model.atom[dict[b[0]]]
                             if at.symbol != 'H':
                                 name = b[1]
@@ -152,7 +152,7 @@ def add_hydrogens(model,topology=None,forcefield=None):
                                     bnd.order = bonds[b]['order']
                                     mbond[idx1].append(bnd)
                                     mbond[idx2].append(bnd)
-                        if (not dict.has_key(b[0])) and dict.has_key(b[1]):
+                        if (b[0] not in dict) and b[1] in dict:
                             at = model.atom[dict[b[1]]]
                             if at.symbol != 'H':
                                 name = b[0]

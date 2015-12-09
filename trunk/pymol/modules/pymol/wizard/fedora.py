@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -10,7 +12,7 @@ class Fedora(Wizard):
         Wizard.__init__(self,_self)
         self.message = []
         for a in arg:
-            if not isinstance(a,types.ListType):
+            if not isinstance(a,list):
                 self.message.append(a)
             else:
                 self.message.extend(a)
@@ -21,7 +23,7 @@ class Fedora(Wizard):
 
     def do_pick(self,bondFlag):
         if(bondFlag):
-            print " " # clear out misleading bond pick pk2 information...
+            print(" ") # clear out misleading bond pick pk2 information...
         cmd.unpick()
 
     def do_select(self,name):

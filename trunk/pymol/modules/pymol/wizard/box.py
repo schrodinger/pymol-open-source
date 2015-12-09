@@ -1,6 +1,8 @@
 # This wizard contributed by Ezequiel "Zac" Panepucci 011114
 # modified by Warren L. DeLano
 
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -92,63 +94,63 @@ class Box(Wizard):
 
         if self.points_name in self.cmd.get_names():
 
-	    if fract<0.5: fract = 1.0 - fract
-	    if fract>0.995: fract = 0.995 # minimum 1% distance from clipping planes
-	    
+            if fract<0.5: fract = 1.0 - fract
+            if fract>0.995: fract = 0.995 # minimum 1% distance from clipping planes
+
             fov = self.cmd.get_setting_float("field_of_view")
-	    
-	    tan_half_fov = math.tan(math.pi*fov/360.0)
-	    
+
+            tan_half_fov = math.tan(math.pi*fov/360.0)
+
             model = self.cmd.get_model(self.points_name)
 
-	    view = self.cmd.get_view()
+            view = self.cmd.get_view()
 
-	    # locate box 1/4 and 3/4 distance from clipping plane
-	    
-	    one_minus_fract = 1.0 - fract
+            # locate box 1/4 and 3/4 distance from clipping plane
 
-	    plane_z1 = - (view[11] + (one_minus_fract*view[15] + fract*view[16]))
-	    plane_z2 = - (view[11] + (fract*view[15] + one_minus_fract*view[16]))
-	    normal = [ 0.0, 0.0, 1.0 ]
+            one_minus_fract = 1.0 - fract
 
-	    # choose the size of the plane (larger than the fov, but not by much)
+            plane_z1 = - (view[11] + (one_minus_fract*view[15] + fract*view[16]))
+            plane_z2 = - (view[11] + (fract*view[15] + one_minus_fract*view[16]))
+            normal = [ 0.0, 0.0, 1.0 ]
 
-	    plane_size = size*(one_minus_fract*view[15] + fract*view[16])*tan_half_fov
+            # choose the size of the plane (larger than the fov, but not by much)
 
-	    obj = []
-	    plane = [
-		[ -plane_size, -plane_size, plane_z1 ],
-		[ -plane_size,  plane_size, plane_z1 ],
-		[  plane_size, -plane_size, plane_z1 ],
-		[ -plane_size, -plane_size, plane_z2 ],		
-		]
+            plane_size = size*(one_minus_fract*view[15] + fract*view[16])*tan_half_fov
 
-	    # then transform plane coordinates into model space 
+            obj = []
+            plane = [
+                [ -plane_size, -plane_size, plane_z1 ],
+                [ -plane_size,  plane_size, plane_z1 ],
+                [  plane_size, -plane_size, plane_z1 ],
+                [ -plane_size, -plane_size, plane_z2 ],
+                ]
 
-	    plane = map( lambda p,v=view: [
-	       v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
-	       v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
-	       v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
-	       ], plane )
+            # then transform plane coordinates into model space 
 
-	    normal = apply( lambda p,v=view:[
-	       v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
-	       v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
-	       v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
-	       ], (normal,) )
+            plane = list(map( lambda p,v=view: [
+               v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
+               v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
+               v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
+               ], plane ))
 
-	    plane = map( lambda p,v=view: [
-	       v[12] + p[0], v[13] + p[1], v[14] + p[2]
-	       ], plane )
+            normal = ( lambda p,v=view:[
+               v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
+               v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
+               v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
+               ])(*(normal,))
 
-	    model.atom[0].coord = plane[0]
-	    model.atom[1].coord = plane[1]
-	    model.atom[2].coord = plane[2]
-	    model.atom[3].coord = plane[3]
+            plane = list(map( lambda p,v=view: [
+               v[12] + p[0], v[13] + p[1], v[14] + p[2]
+               ], plane ))
 
-	    self.cmd.load_model(model, '_tmp', zoom=0)
-	    self.cmd.update(self.points_name,"_tmp")
-	    self.cmd.delete("_tmp")
+            model.atom[0].coord = plane[0]
+            model.atom[1].coord = plane[1]
+            model.atom[2].coord = plane[2]
+            model.atom[3].coord = plane[3]
+
+            self.cmd.load_model(model, '_tmp', zoom=0)
+            self.cmd.update(self.points_name,"_tmp")
+            self.cmd.delete("_tmp")
 
     def set_name(self,name):
 
@@ -165,7 +167,7 @@ class Box(Wizard):
         self.cgo_name = self.name
         if self.copying and hidden_name != None:
             self.cmd.copy(self.points_name, hidden_name, zoom=0)
-            print "copy"
+            print("copy")
         else:
             hidden_name = "_"+self.cgo_name
             if hidden_name in self.cmd.get_names("all"):
@@ -192,8 +194,8 @@ class Box(Wizard):
             self.cmd.color("red"  ,"%s`3"%self.points_name)
             self.cmd.color("blue" ,"%s`4"%self.points_name)
             self.cmd.show_as("nb_spheres",self.points_name)
-	    
-	    self.auto_position(0.75,0.5)
+
+            self.auto_position(0.75,0.5)
 
         self.cmd.enable(self.points_name)
         self.points_enabled = 1
@@ -218,22 +220,22 @@ class Box(Wizard):
             d30 = sub(self.coord[3], p)
 
             x10_20 = cross_product(d10,d20)
-	    if self.mode != 'quad':
-		if dot_product(d30,x10_20)<0.0:
-		    p = model.atom[1].coord
-		    d10 = sub(self.coord[0], p)
-		    d20 = sub(self.coord[2], p)
-		    d30 = sub(self.coord[3], p)
-	    
+            if self.mode != 'quad':
+                if dot_product(d30,x10_20)<0.0:
+                    p = model.atom[1].coord
+                    d10 = sub(self.coord[0], p)
+                    d20 = sub(self.coord[2], p)
+                    d30 = sub(self.coord[3], p)
+
             n10_20 = normalize(x10_20)
             n10 = normalize(d10)
 
             d100 = d10
-	    d010 = remove_component(d20, n10)
-	    if self.mode != 'quad':
-		d001 = project(d30, n10_20)
-	    else:
-		d001 = n10_20
+            d010 = remove_component(d20, n10)
+            if self.mode != 'quad':
+                d001 = project(d30, n10_20)
+            else:
+                d001 = n10_20
 
             n100 = normalize(d100)
             n010 = normalize(d010)
@@ -243,20 +245,20 @@ class Box(Wizard):
             f010 = reverse(n010)
             f001 = reverse(n001)
 
-	    if self.mode == 'quad':
-		p000 = p
-		p100 = add(p, remove_component(d10,n001))
-		p010 = add(p, remove_component(d20,n001))
-		p001 = add(p, remove_component(d30,n001))
-	    else:
-		p000 = p
-		p100 = add(p,d100)
-		p010 = add(p,d010)
-		p001 = add(p,d001)
-		p110 = add(p100, d010)
-		p011 = add(p010, d001)
-		p101 = add(p100, d001)
-		p111 = add(p110, d001)
+            if self.mode == 'quad':
+                p000 = p
+                p100 = add(p, remove_component(d10,n001))
+                p010 = add(p, remove_component(d20,n001))
+                p001 = add(p, remove_component(d30,n001))
+            else:
+                p000 = p
+                p100 = add(p,d100)
+                p010 = add(p,d010)
+                p001 = add(p,d001)
+                p110 = add(p100, d010)
+                p011 = add(p010, d001)
+                p101 = add(p100, d001)
+                p111 = add(p110, d001)
 
             obj = []
 
@@ -358,7 +360,7 @@ class Box(Wizard):
                 model.atom[2].coord = p010
                 model.atom[3].coord = add(add(p001, scale(d010,0.5)),scale(d100,0.5))
             elif self.mode=='quad':
-		obj.extend([ BEGIN, TRIANGLE_STRIP ])
+                obj.extend([ BEGIN, TRIANGLE_STRIP ])
                 obj.append(NORMAL); obj.extend(n001)
                 obj.append(VERTEX); obj.extend(p000)
                 obj.append(VERTEX); obj.extend(p100)

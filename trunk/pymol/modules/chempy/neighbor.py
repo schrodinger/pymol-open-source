@@ -24,7 +24,7 @@ class Neighbor:
         voxel = self.voxel
         for v in vect_list:
             k = self.address(v)
-            if not voxel.has_key(k):
+            if k not in voxel:
                 voxel[k] = [c]
             else:
                 voxel[k].append(c)
@@ -39,7 +39,7 @@ class Neighbor:
                 for b in (k[1]-1,k[1],k[1]+1):
                     for c in (k[2]-1,k[2],k[2]+1):
                         k2 = (a,b,c)
-                        if voxel.has_key(k2):
+                        if k2 in voxel:
                             lst.extend(voxel[k2])
 
     def address(self,vect):
@@ -49,7 +49,7 @@ class Neighbor:
 
     def get_voxel(self,vect):
         k = self.address(vect)
-        if self.voxel.has_key(k):
+        if k in self.voxel:
             return self.voxel[k]
         else:
             return []
@@ -57,7 +57,7 @@ class Neighbor:
     def get_neighbors(self,vect):
         if self.neighbor:
             k = self.address(vect)
-            if self.neighbor.has_key(k):
+            if k in self.neighbor:
                 return self.neighbor[k]
             else:
                 return []
@@ -69,7 +69,7 @@ class Neighbor:
                 for b in (k[1]-1,k[1],k[1]+1):
                     for c in (k[2]-1,k[2],k[2]+1):
                         k2 = (a,b,c)
-                        if voxel.has_key(k2):
+                        if k2 in voxel:
                             lst.extend(voxel[k2])
             return lst
             

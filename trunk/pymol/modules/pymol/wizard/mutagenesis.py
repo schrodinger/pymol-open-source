@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd,editor
 from chempy import io
@@ -6,7 +8,6 @@ from copy import deepcopy
 
 import pymol
 import os
-import string
 import traceback
 
 src_sele = "_mutate_sel"
@@ -73,7 +74,7 @@ class Mutagenesis(Wizard):
         self.hyd = default_hyd
         self.n_cap = default_n_cap
         self.c_cap = default_c_cap
-        residues = self.ind_library.keys()
+        residues = list(self.ind_library.keys())
         # could extent with additional fragments manually as below
         residues.extend(['GLY','ALA'])
         residues.extend(['HID','HIE','HIP'])
@@ -342,7 +343,7 @@ class Mutagenesis(Wizard):
             try:
                 new_name = cmd.get_object_list(src_sele)[0]
             except IndexError:
-                print " Mutagenesis: object not found."
+                print(" Mutagenesis: object not found.")
                 return
 
             if True:
@@ -474,7 +475,7 @@ class Mutagenesis(Wizard):
             if rot_type[0:3] in [ 'NT_', 'CT_' ]:
                 rot_type = rot_type[3:]
             rot_type = _rot_type_xref.get(rot_type, rot_type)
-            cmd.fragment(string.lower(frag_type),frag_name)
+            cmd.fragment(frag_type.lower(), frag_name)
             # trim off hydrogens
             if (self.hyd == 'none'):
                 cmd.remove("("+frag_name+" and hydro)")
@@ -588,13 +589,13 @@ class Mutagenesis(Wizard):
             try:
                 result = cmd.phi_psi("%s"%src_sele)
                 if len(result)==1:
-                    (phi,psi) = result[result.keys()[0]]
+                    (phi,psi) = list(result.values())[0]
                     (phi,psi) = (int(10*round(phi/10)),int(10*(round(psi/10))))
                     key = (rot_type,phi,psi)
-                    if not self.dep_library.has_key(key):
+                    if key not in self.dep_library:
                         (phi,psi) = (int(20*round(phi/20)),int(20*(round(psi/20))))
                         key = (rot_type,phi,psi)                    
-                        if not self.dep_library.has_key(key):
+                        if key not in self.dep_library:
                             (phi,psi) = (int(60*round(phi/60)),int(60*(round(psi/60))))
                             key = (rot_type,phi,psi)
                     lib = self.dep_library.get(key,None)
@@ -604,7 +605,7 @@ class Mutagenesis(Wizard):
             key = rot_type
             lib = self.ind_library.get(key,None)
             if (lib!= None) and self.dep == 'dep':
-                print ' Mutagenesis: no phi/psi, using backbone-independent rotamers.'
+                print(' Mutagenesis: no phi/psi, using backbone-independent rotamers.')
         if lib != None:
             state = 1
             for a in lib:
@@ -626,7 +627,7 @@ class Mutagenesis(Wizard):
                     cmd.bond("(%s & name N)"%mut_sele,"(%s & name CD)"%mut_sele)                
                 state = state + 1
             cmd.delete(frag_name)
-            print " Mutagenesis: %d rotamers loaded."%len(lib)
+            print(" Mutagenesis: %d rotamers loaded."%len(lib))
             if self.bump_check:
                 cmd.delete(bump_name)
                 cmd.create(bump_name,
@@ -666,7 +667,7 @@ class Mutagenesis(Wizard):
             cmd.delete(mut_sele)
         else:
             cmd.create(obj_name,frag_name,1,1)
-            print " Mutagenesis: no rotamers found in library."
+            print(" Mutagenesis: no rotamers found in library.")
         cmd.set("seq_view",0,obj_name,quiet=1)
         pymol.util.cbaw(obj_name)
         cmd.hide("("+obj_name+")")
@@ -690,11 +691,11 @@ class Mutagenesis(Wizard):
                 cmd.update(bump_name,obj_name)
         if self.bump_scores:
             state = cmd.get_state()
-            print ' Rotamer %d/%d, strain=%.2f' % (state,
-                    cmd.count_states(obj_name), self.bump_scores[state - 1])
+            print(' Rotamer %d/%d, strain=%.2f' % (state,
+                    cmd.count_states(obj_name), self.bump_scores[state - 1]))
                 
     def do_select(self,selection):
-        print "Selected!"
+        print("Selected!")
         cmd=self.cmd
         pymol=cmd._pymol
         if (obj_name in cmd.get_names()):
@@ -715,12 +716,12 @@ class Mutagenesis(Wizard):
         return 1
     
     def do_pick(self,bondFlag):
-        print "Picked!"
+        print("Picked!")
         cmd=self.cmd
         pymol=cmd._pymol
         if bondFlag:
             self.error = "Error: please select an atom, not a bond."
-            print self.error
+            print(self.error)
         else:
             if self.status!=0:
                 cmd.delete(obj_name)

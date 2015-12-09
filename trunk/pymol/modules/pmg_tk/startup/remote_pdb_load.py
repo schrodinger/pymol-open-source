@@ -4,7 +4,15 @@ PDB Loader Service
 (c) 2013 Schrodinger Inc.
 '''
 
-import Tkinter
+try:
+    import Tkinter
+    from Tkinter import LEFT, RIGHT
+    import tkMessageBox
+except ImportError:
+    import tkinter as Tkinter
+    from tkinter import LEFT, RIGHT
+    from tkinter import messagebox as tkMessageBox
+
 from pymol import cmd, plugins, CmdException
 
 def __init_plugin__(self=None):
@@ -14,8 +22,6 @@ def get_trunc(var):
     return var.get().split(None, 1)[0]
 
 def fetchdialog():
-    from Tkinter import LEFT, RIGHT, TOP, BOTTOM
-
     app = plugins.get_pmgapp()
     root = plugins.get_tk_root()
 
@@ -59,7 +65,6 @@ def fetchdialog():
             if result == -1:
                 raise CmdException('You entered an invalid pdb code: ' + code)
         except CmdException as e:
-            import tkMessageBox
             tkMessageBox.showerror('Error', str(e), parent=self)
             return
         cmd.log('fetch %s, type=%s, async=0\n' % (code, type))

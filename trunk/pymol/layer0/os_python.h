@@ -41,6 +41,29 @@ typedef int PyObject;
 
 #include <string.h>
 
+#if PY_MAJOR_VERSION >= 3
+# define PyInt_Check            PyLong_Check
+# define PyInt_FromLong         PyLong_FromLong
+# define PyInt_AsLong           PyLong_AsLong
+# define PyInt_AS_LONG          PyLong_AS_LONG
+
+# define PyNumber_Int           PyNumber_Long
+
+# define PyString_Check                 PyUnicode_Check
+# define PyString_Size                  PyUnicode_GetLength
+# define PyString_FromString            PyUnicode_FromString
+# define PyString_FromStringAndSize     PyUnicode_FromStringAndSize
+# define PyString_InternFromString      PyUnicode_InternFromString
+# define PyString_AsString              PyUnicode_AsUTF8
+# define PyString_AS_STRING             PyUnicode_AsUTF8
+
+# define PyCObject_AsVoidPtr(capsule)   PyCapsule_GetPointer(capsule, "name")
+# define PyCObject_FromVoidPtr(p, d)    PyCapsule_New(p, "name", (PyCapsule_Destructor) d)
+# define PyCObject_Check                PyCapsule_CheckExact
+
+# define PyEval_EvalCode(o, ...)        PyEval_EvalCode((PyObject*)o, __VA_ARGS__)
+#endif
+
 /*
  * For compatibility with the pickletools, this type represents
  * an optionally owned C string and has to be returned by value.

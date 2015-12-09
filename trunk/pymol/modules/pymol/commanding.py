@@ -12,20 +12,26 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function, absolute_import
+
 if __name__=='pymol.commanding':
 
-    import thread
-    import string
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread
+        from io import FileIO as file
+
     import re
     import os
     import time
     import threading
     import traceback
-    import parsing
-    import cmd
+    from . import parsing
+    cmd = __import__("sys").modules["pymol.cmd"]
     import pymol
     
-    from cmd import _cmd, Shortcut, QuietException, \
+    from .cmd import _cmd, Shortcut, QuietException, \
           fb_module, fb_mask, is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, is_string
 
@@ -83,7 +89,7 @@ SEE ALSO
             return s.rstrip(',') + ', async=0'
         def write(self, s):
             s = re_fetch.sub(self._append_async0, s)
-            file.write(self, s)
+            file.write(self, s.encode())
  
     def log_open(filename='log.pml', mode='w', _self=cmd):
         '''
@@ -116,9 +122,9 @@ SEE ALSO
                 pymol._log_file = LogFile(filename,mode)
                 if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
                     if mode!='a':
-                        print " Cmd: logging to '%s'."%filename
+                        print(" Cmd: logging to '%s'."%filename)
                     else:
-                        print " Cmd: appending to '%s'."%filename            
+                        print(" Cmd: appending to '%s'."%filename)
                 if mode=='a':
                     pymol._log_file.write("\n") # always start on a new line
                 if(re.search(r"\.py$|\.PY$|\.pym$|\.PYM$",filename)):
@@ -126,7 +132,7 @@ SEE ALSO
                 else:
                     _self.set("logging",1,quiet=1)
             except:
-                print"Error: unable to open log file '%s'"%filename
+                print("Error: unable to open log file '%s'"%filename)
                 pymol._log_file = None
                 _self.set("logging",0,quiet=1)
                 traceback.print_exc()
@@ -182,7 +188,7 @@ SEE ALSO
                 del pymol._log_file
                 _self.set("logging",0,quiet=1)
                 if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
-                    print " Cmd: log closed."
+                    print(" Cmd: log closed.")
 
     def cls(_self=cmd): 
         '''
@@ -242,7 +248,7 @@ USAGE
         else:
             if _self.get_setting_int("internal_feedback") > 0:
                 _self.set("text","1",quiet=1)
-            print
+            print()
             try:
                 _self.lock(_self)
                 r = _cmd.splash(_self._COb,0)
@@ -368,7 +374,7 @@ USAGE (PYTHON)
             defer = _self.get_setting_int("defer_updates")
             _self.set('defer_updates',1)
         for cmmd in cmmd_list:
-            lst = string.split(string.replace(cmmd,chr(13),chr(10)),chr(10))
+            lst = cmmd.splitlines()
             if len(lst)<2:
                 for a in lst:
                     if(len(a)):
@@ -601,10 +607,9 @@ DESCRIPTION
                 func(*args, **kwargs)
             except (pymol.CmdException, cmd.QuietException) as e:
                 if e.message:
-                    print e
+                    print(e)
             finally:
-                _self.set_wizard_stack(filter(lambda w: w != wiz,
-                    _self.get_wizard_stack()))
+                _self.set_wizard_stack([w for w in _self.get_wizard_stack() if w != wiz])
                 _self.refresh_wizard()
                 async_threads.remove(t)
 

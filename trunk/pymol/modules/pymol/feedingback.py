@@ -1,8 +1,10 @@
 
+from __future__ import print_function
+
 import sys
-import cmd
-from cmd import Shortcut, is_string, QuietException
-from cmd import fb_module, fb_mask, fb_action,_raising
+cmd = __import__("sys").modules["pymol.cmd"]
+from .cmd import Shortcut, is_string, QuietException
+from .cmd import fb_module, fb_mask, fb_action,_raising
 import copy
 
 from pymol import _cmd
@@ -33,8 +35,9 @@ fb_mask_sc = Shortcut(fb_mask.__dict__.keys())
 
 _fb_dict = {}
 
-for _a in fb_module.__dict__.keys():
-    _vl = getattr(fb_module,_a)
+for _a, _vl in fb_module.__dict__.items():
+    if _a.startswith('_'):
+        continue
     if _vl<0:
         _fb_dict[_vl] = 0x1F # default mask
 
@@ -78,19 +81,19 @@ EXAMPLES
     if not hasattr(_self,'_fb_dict'):
         _self._fb_dict = copy.deepcopy(_fb_dict)
     if action=="?":
-        print " feedback: possible actions: \nset, enable, disable"
+        print(" feedback: possible actions: \nset, enable, disable")
         act_int = 0
     else:
         act_kee = fb_action_sc.interpret(action)
         if act_kee == None:
-            print "Error: invalid feedback action '%s'."%action
+            print("Error: invalid feedback action '%s'."%action)
             if _raising(_self=_self):
                 raise QuietException
             else:
                 return None
         elif not is_string(act_kee):
-            print "Error: ambiguous feedback action '%s'."%action
-            print action_amb
+            print("Error: ambiguous feedback action '%s'."%action)
+            print(action_amb)
             if _raising(_self=_self):
                 raise QuietException
             else:
@@ -99,19 +102,19 @@ EXAMPLES
 
     if (act_int<3) and ("?" in [action,module,mask]):
         if module=="?":
-            print " feedback: Please specify module names:"
-            lst = fb_module.__dict__.keys()
+            print(" feedback: Please specify module names:")
+            lst = list(fb_module.__dict__.keys())
             lst.sort()
             for a in lst:
                 if a[0]!='_':
-                    print "   ",a
+                    print("   ",a)
         if mask=="?":
-            print " feedback: Please specify masks:"
-            lst = fb_mask.__dict__.keys()
+            print(" feedback: Please specify masks:")
+            lst = list(fb_mask.__dict__.keys())
             lst.sort()
             for a in lst:
                 if a[0]!='_':
-                    print "   ",a
+                    print("   ",a)
     else:
         if (act_int>=3):
             module='all'
@@ -120,30 +123,30 @@ EXAMPLES
         # validate and combine masks
 
         mask_int = 0
-        mask_lst = string.split(mask)
+        mask_lst = mask.split()
         for mask in mask_lst:
             mask_kee = fb_mask_sc.interpret(mask)
             if mask_kee == None:
-                print "Error: invalid feedback mask '%s'."%mask
+                print("Error: invalid feedback mask '%s'."%mask)
                 if _raising(_self=_self): raise QuietException
                 else: return None
             elif not is_string(mask_kee):
-                print "Error: ambiguous feedback mask '%s'."%mask
+                print("Error: ambiguous feedback mask '%s'."%mask)
                 if _raising(_self=_self): raise QuietException
                 else: return None
             mask_int |= int(getattr(fb_mask,mask_kee))
 
         # validate and iterate modules
 
-        mod_lst = string.split(module)
+        mod_lst = module.split()
         for module in mod_lst:
             mod_kee = fb_module_sc.interpret(module)
             if mod_kee == None:
-                print "Error: invalid feedback module '%s'."%module
+                print("Error: invalid feedback module '%s'."%module)
                 if _raising(_self=_self): raise QuietException
                 else: return None
             elif not is_string(mod_kee):
-                print "Error: ambiguous feedback module '%s'."%module
+                print("Error: ambiguous feedback module '%s'."%module)
                 if _raising(_self=_self): raise QuietException
                 else: return None
             mod_int = int(getattr(fb_module,mod_kee))
@@ -162,7 +165,7 @@ EXAMPLES
                     elif act_int==2:
                         _self._fb_dict[mod_int] = _self._fb_dict[mod_int] & ( 0xFF - mask_int )
                 else:
-                    for mod_int in _self._fb_dict.keys():
+                    for mod_int in list(_self._fb_dict.keys()):
                         if act_int==0:
                             _self._fb_dict[mod_int] = mask_int
                         elif act_int==1:

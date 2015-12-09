@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import threading
 from pymol.wizard import Wizard
 from pymol import cmd
@@ -14,7 +16,7 @@ class Benchmark(Wizard):
 
     def report(self,name,value):
         ver = self.cmd.get_version()[0]
-        print "PyMOL %s benchmark: %30s = %10.5f"%(ver,name,value)
+        print("PyMOL %s benchmark: %30s = %10.5f"%(ver,name,value))
 
     def launch(self,name):
         return None

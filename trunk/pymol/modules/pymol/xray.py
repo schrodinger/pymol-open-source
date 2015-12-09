@@ -13,6 +13,7 @@
 #Z* -------------------------------------------------------------------
 
 from __future__ import division
+from __future__ import print_function
 
 # xray.py 
 # This section contains python code for supporting
@@ -42,10 +43,10 @@ def sg_sym_to_mat_list(sgsymbol): # TODO _self
             result.append(mat)
     else:
         try:
-            from cmd import QuietException, \
+            from .cmd import QuietException, \
                  _feedback,fb_module,fb_mask 
             if(_feedback(fb_module.symmetry,fb_mask.errors)):
-                print "Symmetry-Error: Unrecognized space group symbol '"+sgsymbol+"'."
+                print("Symmetry-Error: Unrecognized space group symbol '"+sgsymbol+"'.")
         except:
             pass
     return result
@@ -8490,7 +8491,7 @@ sym_base = {
 
 sym_dict = {}
 
-for key in sym_base.keys():
+for key in list(sym_base.keys()):
     for sym in sym_base[key]:
         sym_dict[sym] = key
 

@@ -8,6 +8,8 @@
 # vanilla web server designed for testing multi-origin applications
 # by serving up content on 127.0.0.1:xxxx instead of localhost:yyyy
 
+from __future__ import print_function
+
 import BaseHTTPServer, cgi, urlparse, socket
 
 import types, os, sys, traceback, threading
@@ -67,7 +69,7 @@ class _HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             try:
                 full_path = os.path.join(*[self.server.root] +
                                          list(path_list))
-                print full_path
+                print(full_path)
                 if os.path.isdir(full_path):
                     full_path = full_path + "/index.html"
                 fp = open(full_path,"rb")
@@ -173,7 +175,7 @@ class PlainHttpd:
             self.server.handle_request()
 
     def start(self): # spawn thread
-        print " HTTPd: serving requests on http://127.0.0.1:%d" % self.port
+        print(" HTTPd: serving requests on http://127.0.0.1:%d" % self.port)
         t = threading.Thread(target=self._server_thread)
         t.setDaemon(1)
         self.stop_event.clear()

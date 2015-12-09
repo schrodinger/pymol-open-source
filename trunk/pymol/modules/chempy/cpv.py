@@ -277,7 +277,7 @@ def transform_array(rot_mtx,vec_array):
 
     '''
 
-    return map( lambda x,m=rot_mtx:transform(m,x), vec_array )
+    return [transform(rot_mtx, x) for x in vec_array]
 
 #------------------------------------------------------------------------------
 def translate_array(trans_vec,vec_array):
@@ -288,7 +288,7 @@ def translate_array(trans_vec,vec_array):
     the translated vector.
     '''
 
-    return map ( lambda x,m=trans_vec:add(m,x),vec_array )
+    return [add(trans_vec, x) for x in vec_array]
 
 #------------------------------------------------------------------------------
 def fit_apply(fit_result,vec_array):
@@ -297,8 +297,8 @@ def fit_apply(fit_result,vec_array):
     Applies a fit result to an array of vectors
     '''
 
-    return map( lambda x,t1=fit_result[0],mt2=negate(fit_result[1]),
-        m=fit_result[2]: add(t1,transform(m,add(mt2,x))),vec_array)
+    t1, mt2, m = fit_result[:3]
+    return [add(t1, transform(m, add(mt2, x))) for x in vec_array]
 
 #------------------------------------------------------------------------------
 def fit(target_array, source_array):

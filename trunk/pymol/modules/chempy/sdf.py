@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import string
 import re
 import copy
@@ -25,7 +27,7 @@ class SDFRec:
         gettag = re.compile("^>\s+<[^>]*>\s+\((.*)\)")
         ll = len(sdflist)
         if ll<4:
-            print " SDFRec: invalid SDF record format #1"
+            print(" SDFRec: invalid SDF record format #1")
             raise RuntimeError
         self.kees = ['MOL'] # separate key list to preserve order
         self.data = {}
@@ -44,14 +46,14 @@ class SDFRec:
                 break;
             l = l + 1
             if l>=ll:
-                print " SDFRec: invalid SDF record format #2"
+                print(" SDFRec: invalid SDF record format #2")
                 raise RuntimeError
         while l<ll:
             if sdflist[l][0]=='>':
                 sl = sdflist[l]
                 kee_match = getkee.match(sl)
                 if not kee_match:
-                    print " SDFRec: invalid SDF record format #3"
+                    print(" SDFRec: invalid SDF record format #3")
                     raise RuntimeError
                 kee = kee_match.group(1)
                 self.kees.append(kee)
@@ -87,13 +89,13 @@ class SDFRec:
         return r
 
     def get(self,kee):
-        if self.data.has_key(kee):
+        if kee in self.data:
             return self.data[kee]
         else:
             return None
 
     def get_single(self,kee): # automatic stripping
-        if self.data.has_key(kee):
+        if kee in self.data:
             sdk = self.data[kee]
             if len(sdk):
                 return string.strip(sdk[0])
@@ -136,13 +138,16 @@ class SDF:
         self.mode = mode
         self.at_eof = 0
         if mode not in ('w','r','wa','pf','url'):
-            print " SDF: bad mode"
+            print(" SDF: bad mode")
             return None
         if mode=='pf': # pseudofile
             self.file = fname
         elif (mode[0:1]=='r') and (string.find(fname,':')>1):
             # does this look like a URL? (but not a DOS path)
-            from urllib import urlopen
+            try:
+                from urllib import urlopen
+            except ImportError:
+                from urllib.request import urlopen
             self.file = urlopen(fname)
         else:
             self.file = open(fname,mode)

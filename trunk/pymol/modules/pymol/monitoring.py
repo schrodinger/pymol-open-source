@@ -1,5 +1,5 @@
 
-import cmd
+cmd = __import__("sys").modules["pymol.cmd"]
 from pymol import _cmd
 import sys
 

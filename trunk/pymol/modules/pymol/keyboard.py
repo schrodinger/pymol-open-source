@@ -1,83 +1,83 @@
-import editor
-import cmd
-from cmd import DEFAULT_SUCCESS, DEFAULT_ERROR
+from . import editor
+cmd = __import__("sys").modules["pymol.cmd"]
+from .cmd import DEFAULT_SUCCESS, DEFAULT_ERROR
 
 # persistent storage between copy/paste
 class _PersistentEditing:
 
-	def __init__(self,self_cmd=cmd):
+    def __init__(self,self_cmd=cmd):
 
-		# private-like
+        # private-like
 
-		self._cmd = self_cmd
+        self._cmd = self_cmd
 
-		# init == 0 : uninitialized cmd and no data
-		# init == 1 : initialized cmd and no data
-		# init == 2 : initialized cmd and data
-		self._init = 0
+        # init == 0 : uninitialized cmd and no data
+        # init == 1 : initialized cmd and no data
+        # init == 2 : initialized cmd and data
+        self._init = 0
 
-		# string name of the temporary persistent object
+        # string name of the temporary persistent object
 
-		self._obj = None
+        self._obj = None
 
-		# last active selection
+        # last active selection
 
-		self._sel = None
+        self._sel = None
 
-	def deferred_init(self):
-		# ecah of these methods will have to start with
-		# if not self.init ...
-		# because this is imported while 'cmd' is being created
-		# and we need cmd functionality; this should be resolved
-		# in pymol2
-		if self._init == 0:
-			self._obj = self._cmd.get_unused_name("_persistent_obj")
-			self._init = 1
-		
-	def set_sel(self,sel):
-		self._sel = sel
+    def deferred_init(self):
+        # ecah of these methods will have to start with
+        # if not self.init ...
+        # because this is imported while 'cmd' is being created
+        # and we need cmd functionality; this should be resolved
+        # in pymol2
+        if self._init == 0:
+            self._obj = self._cmd.get_unused_name("_persistent_obj")
+            self._init = 1
+        
+    def set_sel(self,sel):
+        self._sel = sel
 
-	def clean_obj(self):
-		self._cmd.delete(self._obj)
-		self._init = 1
+    def clean_obj(self):
+        self._cmd.delete(self._obj)
+        self._init = 1
 
-	def create_tmp(self,sel,extract):
+    def create_tmp(self,sel,extract):
 
-		if sel==None: return
+        if sel==None: return
 
-		# creates an invisible temporary persistent
-		# object for pasting; it is created via CTRL-C
-		# for copy or CTRL-X for cut, differing in the
-		# extract flag
-		self.deferred_init()
+        # creates an invisible temporary persistent
+        # object for pasting; it is created via CTRL-C
+        # for copy or CTRL-X for cut, differing in the
+        # extract flag
+        self.deferred_init()
 
-		self.set_sel(sel)
+        self.set_sel(sel)
 
-		suspend_undo = self._cmd.get("suspend_undo")
-		# in case something goes wrong, try & finally
-		try:
-			if extract:
-				self._cmd.push_undo(self._sel, just_coordinates=0, finish_undo=0)
-			self._cmd.set("suspend_undo", 1, updates=0)
+        suspend_undo = self._cmd.get("suspend_undo")
+        # in case something goes wrong, try & finally
+        try:
+            if extract:
+                self._cmd.push_undo(self._sel, just_coordinates=0, finish_undo=0)
+            self._cmd.set("suspend_undo", 1, updates=0)
 
-			if self._init == 2:
-				self.clean_obj()
+            if self._init == 2:
+                self.clean_obj()
 
-			self._cmd.set("suspend_updates", 1)
+            self._cmd.set("suspend_updates", 1)
 
-			self._cmd.create(self._obj, self._sel, extract=extract, zoom=0)
-			self._cmd.disable(self._obj)
-			self._cmd.enable(self._sel)
+            self._cmd.create(self._obj, self._sel, extract=extract, zoom=0)
+            self._cmd.disable(self._obj)
+            self._cmd.enable(self._sel)
 
-			# success, now we have data
+            # success, now we have data
 
-			self._init = 2
+            self._init = 2
 
-		finally:
-			self._cmd.set("suspend_updates", 0)
-			self._cmd.set("suspend_undo", suspend_undo, updates=0)
-			if extract:
-				self._cmd.push_undo("", just_coordinates=0, finish_undo=1)
+        finally:
+            self._cmd.set("suspend_updates", 0)
+            self._cmd.set("suspend_undo", suspend_undo, updates=0)
+            if extract:
+                self._cmd.push_undo("", just_coordinates=0, finish_undo=1)
 
 # in pymol2 this needs to be abstracted better
 # by making _persistent a member of Cmd so we can
@@ -93,42 +93,42 @@ _kCut   = 2
 
 def editing_ring(action, space=_persistent, self_cmd=cmd):
 
-	sel = get_active_selection_name(self_cmd)
+    sel = get_active_selection_name(self_cmd)
 
-	space.set_sel(sel)
+    space.set_sel(sel)
 
-	# COPY current selection into a new hidden object
-	if action==_kCopy:
-		if sel:
-			space.create_tmp(sel,extract=0)
+    # COPY current selection into a new hidden object
+    if action==_kCopy:
+        if sel:
+            space.create_tmp(sel,extract=0)
 
-	# CUT current selection into a new hidden object
- 	elif action==_kCut:
-		if sel:
-			space.create_tmp(sel,extract=1)
+    # CUT current selection into a new hidden object
+    elif action==_kCut:
+        if sel:
+            space.create_tmp(sel,extract=1)
 
-	# PASTE current hidden object into a new object
-	elif action==_kPaste:
+    # PASTE current hidden object into a new object
+    elif action==_kPaste:
 
-		if space._init < 2: return
+        if space._init < 2: return
 
-		try:
-			self_cmd.set("suspend_updates", 1)
+        try:
+            self_cmd.set("suspend_updates", 1)
 
-			# copying or pasting; enable that object
-			# and create the duplicate
-			
-			self_cmd.enable(space._obj)
+            # copying or pasting; enable that object
+            # and create the duplicate
+            
+            self_cmd.enable(space._obj)
 
-			self_cmd.copy(self_cmd.get_unused_name("obj"),space._obj,zoom=0)
+            self_cmd.copy(self_cmd.get_unused_name("obj"),space._obj,zoom=0)
 
-			# re-hide the temporary
+            # re-hide the temporary
 
-			self_cmd.disable(space._obj)
+            self_cmd.disable(space._obj)
 
-		finally:
-			self_cmd.set("suspend_updates", 0)
-			
+        finally:
+            self_cmd.set("suspend_updates", 0)
+            
 
 #
 # collapse down to one function in a switch
@@ -293,7 +293,7 @@ def get_ctrl(self_cmd=cmd):
     return {
         'A' : [ self_cmd.select                 , (), {'name':'sele','selection':'all','enable':1}],
         'B' : [ None                            , (),  {}],
-	'C' : [ editing_ring                    , (),  {'action': _kCopy, 'space':_persistent,'self_cmd':self_cmd}],
+        'C' : [ editing_ring                    , (),  {'action': _kCopy, 'space':_persistent,'self_cmd':self_cmd}],
         'D' : [ None                            , (),  {}],
         'E' : [ None                            , (),  {}],
         'F' : [ None                            , (),  {}],

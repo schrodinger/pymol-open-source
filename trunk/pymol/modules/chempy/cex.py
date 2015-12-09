@@ -24,12 +24,15 @@ assumed by the author(s) for any use or misuse of this software.
 CEX input routines.  Reads each CEX object into a test based tree.
 Provides a CEX smiles interpreter class which can be specialized to create
 appropriate molecule object """
+
+from __future__ import print_function
+
 import string
 
 class CEXstream:
     """Input stream which read from file object"""
     (START, COMMENT, QUOTE, NOTQUOTE, GOTQUOTE, TAG, VALUE, END) = range(8)
-    TAG_CHAR = string.letters + string.digits + "$_/"
+    TAG_CHAR = string.ascii_letters + string.digits + "$_/"
     def __init__(self,file):
         self.file = file
         self.dt=None
@@ -59,21 +62,21 @@ class CEXstream:
         while 1:
             try:
                 while 1:
-                    p = string.index(self.buff,">") + 1
+                    p = self.buff.index(">") + 1
                     str = str + self.buff[:p]
                     self.buff = self.buff[p:]
-                    if string.count(str,'"') %2 == 0:
+                    if str.count('"') %2 == 0:
                         break
             except (ValueError, IndexError):
                 str = str + self.buff
                 self.buff = self.file.read(1000)
                 if len(self.buff)==0:
-                    if string.find(str,"|") >= 0:
+                    if "|" in str:
                         return ("|","")
                     else:
                         return (None, None)
             else: break    
-        s = string.find(str,"<")
+        s = str.find("<")
         if s < 0:
             return (None, None)
         else:
@@ -81,7 +84,8 @@ class CEXstream:
         
 class CEXsmilesError(Exception):
     def __init__(self,smiles,p,msg):
-        self.args="Smiles error: " + msg + "\n" + smiles + "\n" + p*" " + "^"
+        self.args=("Smiles error: " + msg + "\n" + smiles + "\n" + p*" " + "^",)
+
 class CEXsmilesParser:
     """A simple CEX smiles parser adapted from Dave Weininger's C version in the
     CEX toolkit"""
@@ -127,17 +131,17 @@ class CEXsmilesParser:
     def __init__(self):
         self.atomN = 0
     def MakeAtom(self, atnum):
-        print "Atom %d, atomic number %d" % (self.atomN, atnum)
+        print("Atom %d, atomic number %d" % (self.atomN, atnum))
         self.atomN = self.atomN + 1
         return self.atomN-1
     def MakeBond(self, at1, at2, bo):
-        print "Bond between %d and %d, order %d" % (at1, at2,bo)
+        print("Bond between %d and %d, order %d" % (at1, at2,bo))
     def SetHcount(self, atom, count):
-        print "Explicit H count %d for atom %d" % (count, atom)
+        print("Explicit H count %d for atom %d" % (count, atom))
     def SetFormalCharge(self, atom, charge):
-        print "Charge for atom %d is %d" % (atom, charge)
+        print("Charge for atom %d is %d" % (atom, charge))
     def SetAtomicMass(self, atom, mass):
-        print "Mass from atom %d is %d" % (atom, mass)
+        print("Mass from atom %d is %d" % (atom, mass))
     def parse(self,smiles):
         self.smiles=smiles + 3*"\0"  # guard zone for illegal smiles
         self.__init__()
@@ -171,7 +175,7 @@ class CEXsmilesParser:
                         p = pp
                         while self.smiles[p+1] in string.digits:
                             p = p + 1
-                        mass = string.atoi(self.smiles[pp:p+1])
+                        mass = int(self.smiles[pp:p+1])
             elif ch == "]":
                 if not quoted:
                     # error, no opening ]
@@ -197,7 +201,7 @@ class CEXsmilesParser:
                     sign = 1
                     if ch == "-": sign = -1
                     while self.smiles[p+1] in string.digits:
-                        charge = 10*charge + string.atoi(self.smiles[p+1])
+                        charge = 10*charge + int(self.smiles[p+1])
                         p = p + 1
                     if charge == 0: charge = 1
                     charge = sign*charge
@@ -213,20 +217,20 @@ class CEXsmilesParser:
                 # deal with ring closures
                 if ch == "%":
                     if self.smiles[p+1] in string.digits and self.smiles[p+2] in string.digits:
-                        ir = string.atoi(self.smiles[p+1:p+3])
+                        ir = int(self.smiles[p+1:p+3])
                         p = p + 2
                     else:
                         # error expect 2 digits after %
                         raise CEXsmilesError(smiles,p,"Expect 2 digits after %")
                 elif ch == "^":
                     if self.smiles[p+1] in string.digits and self.smiles[p+2] in string.digits and self.smiles[p+3] in string.digits:
-                        ir = string.atoi(self.smiles[p+1:p+4])
+                        ir = int(self.smiles[p+1:p+4])
                         p = p + 3
                     else:
                         #error expect 3 digits after ^
                         raise CEXsmilesError(smiles,p,"Expect 3 digits after ^")
                 else:
-                    ir = string.atoi(ch)
+                    ir = int(ch)
                 if self.ringat[ir] is None:
                     self.ringat[ir] = self.fromat[lev]
                     self.ringbo[ir] = bo
@@ -243,7 +247,7 @@ class CEXsmilesParser:
             elif ch in "*ABCDEFGHIKLMNOPRSTUVWXYZ":
                 # recognize atomic symbols
                 atnum = -1
-                if self.smiles[pp] in string.lowercase:
+                if self.smiles[pp] in string.ascii_lowercase:
                     atnum = self.sym2num(self.smiles[p:p+2])
                 if atnum > -1: p = p + 1
                 else: atnum = self.sym2num(self.smiles[p])
@@ -270,7 +274,7 @@ class CEXsmilesParser:
                         j = p
                         while self.smiles[p+1] in string.digits:
                             p = p + 1
-                        if j < p: imph = string.atoi(self.smiles[j+1:p+1])
+                        if j < p: imph = int(self.smiles[j+1:p+1])
                 if imph >= 0: self.SetHcount(atom,imph)
                 # reset default attributes to undefined
                 bo = 0
@@ -355,31 +359,34 @@ def readTree(cxstream):
     return root
 
 def __follow_child(rec):
-    print "  " + rec.name, rec.value
+    print("  " + rec.name, rec.value)
     for prop in rec.properties():
-        print "    " + prop.name, prop.value
+        print("    " + prop.name, prop.value)
 
 def spew(rec):
-    print rec.name, rec.value
+    print(rec.name, rec.value)
     for prop in rec.properties():
-        print prop.name, prop.value
+        print(prop.name, prop.value)
     for child in rec.children():
         __follow_child(child)
 
 def selectChildren(rec, string):
-    return filter(lambda x, string=string: x.name==string, rec.children())
+    return list(filter(lambda x, string=string: x.name==string, rec.children()))
 
 def selectProperty(rec, string):
     for prop in rec.properties():
         if prop.name == string: return prop
 
 if __name__ == "__main__":
-    import StringIO
+    try:
+        import StringIO
+    except ImportError:
+        import io as StringIO
     def test(string):
-        print "test: ",string
+        print("test: ",string)
         s = StringIO.StringIO(string)
         c = CEXstream(s)
-        print c.readEntry()
+        print(c.readEntry())
         s.close()
     test("|")
     test("tag<value>")
@@ -391,7 +398,7 @@ if __name__ == "__main__":
     test('tag<"value>">')
     test('tag<"""value>">')
     def test2(string):
-        print "test2: ", string
+        print("test2: ", string)
         s = StringIO.StringIO(string)
         c = CEXstream(s)
         tree = readTree(c)
@@ -403,7 +410,7 @@ if __name__ == "__main__":
     test2("$root<test>/prop<value>/prop2<value2>child<valuec>|")
     test2("$root<test>/prop<value>/prop2<value2>child<valuec>/cprop<cv>|")
     def test2a(string):
-        print "test2a: ", string
+        print("test2a: ", string)
         s = StringIO.StringIO(string)
         c = CEXstream(s)
         tree = readTree(c)
@@ -412,13 +419,13 @@ if __name__ == "__main__":
         spew(tree)
     test2a("$root<test>/prop<value>/prop2<value2>child<valuec>/cprop<cv>|$root2<test2>/prop<val>child<val>|")
     def test3(string):
-        print "test3: ",string
+        print("test3: ",string)
         parser = CEXsmilesParser()
         try:
             parser.parse(string)
-            print parser.molname
-        except CEXsmilesError, data:
-            print data
+            print(parser.molname)
+        except CEXsmilesError as data:
+            print(data)
 
     test3("[C+2]")
     test3("[C++]")

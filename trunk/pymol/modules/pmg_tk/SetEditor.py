@@ -14,7 +14,10 @@
 # Master editor for all pymol settings
 # (includes filter)
 
-from Tkinter import *
+try:
+    from Tkinter import *
+except ImportError:
+    from tkinter import *
 
 # nItem defines the number of label/entry widgets displayed on screen
 # for scrolling.  Change to smaller number if performance is poor.

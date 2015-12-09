@@ -32,6 +32,7 @@ Supported ways to launch PyMOL:
 # 5: Python embedded launch from within the PyMOL API
 
 from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import sys
@@ -74,8 +75,22 @@ if __name__ == '__main__':
     # this should never be reached because PyMOL will exit the process
     raise SystemExit
 
+if sys.version_info[0] > 2:
+    # legacy string API, still used by Pmw for example
+    import string
+    for attr in ['capitalize', 'count', 'find', 'index', 'lower',
+            'replace', 'rstrip', 'split', 'strip', 'upper', 'zfill']:
+        setattr(string, attr, getattr(str, attr))
+    string.letters      = string.ascii_letters
+    string.lowercase    = string.ascii_lowercase
+    string.join = lambda words, sep=' ': sep.join(words)
+    string.atoi = int
+
+    import _thread as thread
+else:
+    import thread
+
 import copy
-import thread
 import threading
 import re
 import time
@@ -222,8 +237,8 @@ def exec_str(self, string):
     Execute string in "self" namespace (used from C)
     '''
     try:
-        exec string in self.__dict__, self.__dict__
-    except StandardError:
+        exec(string, self.__dict__, self.__dict__)
+    except Exception:
         traceback.print_exc()
     return None
 
@@ -235,7 +250,7 @@ def exec_deferred(self):
         from socket import error as socket_error
     except ImportError:
         socket_error = None
-        print 'import socket failed'
+        print('import socket failed')
 
     import pymol as _pymol
 
@@ -261,8 +276,8 @@ def exec_deferred(self):
                 else:
                     cmd.load(a, quiet=0)
     except CmdException as e:
-        print e
-        print " Error: Argument processing aborted due to exception (above)."
+        print(e)
+        print(" Error: Argument processing aborted due to exception (above).")
     except socket_error:
         # this (should) only happen if we're opening a PWG file on startup
         # and the port is busy.  For now, simply bail...
@@ -285,7 +300,7 @@ def adapt_to_hardware(self):
     if vendor.startswith('NVIDIA'):
         if 'Quadro' in renderer:
             if invocation.options.show_splash:
-                print " Adapting to Quadro hardware."
+                print(" Adapting to Quadro hardware.")
             cmd.set('stereo_double_pump_mono', 1)
 
     elif vendor.startswith('Mesa'):
@@ -295,7 +310,7 @@ def adapt_to_hardware(self):
     elif vendor.startswith('ATI'):
         if renderer[0:17] == 'FireGL2 / FireGL3':  # obsolete ?
             if invocation.options.show_splash:
-                print " Adapting to FireGL hardware."
+                print(" Adapting to FireGL hardware.")
             cmd.set('line_width', 2, quiet=1)
 
         if sys.platform.startswith('win'):
@@ -305,7 +320,7 @@ def adapt_to_hardware(self):
 
         if 'Radeon HD' in renderer:
             if invocation.options.show_splash:
-                print " Adjusting settings to improve performance for ATI cards."
+                print(" Adjusting settings to improve performance for ATI cards.")
 
             if cmd.get_setting_int("use_shaders")==0:
                 # limit frame rate to 30 fps to avoid ATI "jello"
@@ -320,14 +335,14 @@ def adapt_to_hardware(self):
     elif vendor.startswith("Intel"):
         if "Express" in renderer:
             if invocation.options.show_splash:
-                print " Disabling shaders for Intel Express graphics"
+                print(" Disabling shaders for Intel Express graphics")
             cmd.set("use_shaders", 0)
 
     elif (vendor == 'nouveau'
             or ' R300 ' in vendor # V: X.Org R300 Project, R: Gallium 0.4 on ATI RV370
             ):
         if invocation.options.show_splash:
-            print " Detected blacklisted graphics driver.  Disabling shaders."
+            print(" Detected blacklisted graphics driver.  Disabling shaders.")
         cmd.set("use_shaders", 0)
 
     # find out how many processors we have, and adjust hash
@@ -339,8 +354,8 @@ def adapt_to_hardware(self):
         if ncpu > 1:
              cmd.set("max_threads", ncpu)
              if invocation.options.show_splash:
-                  print " Detected %d CPU cores."%ncpu,
-                  print " Enabled multithreaded rendering."
+                  print(" Detected %d CPU cores."%ncpu, end=' ')
+                  print(" Enabled multithreaded rendering.")
     except:
         pass
 
@@ -513,7 +528,7 @@ _init_internals(sys.modules[__name__])
 sys.setcheckinterval(1)
 
 # get X-window support (machine_get_clipboard)
-if os.environ.has_key('DISPLAY'):
+if 'DISPLAY' in os.environ:
     from .xwin import *
 
 ########## C MODULE ############################

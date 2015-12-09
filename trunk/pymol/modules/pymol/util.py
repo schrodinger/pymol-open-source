@@ -12,7 +12,9 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import cmd
+from __future__ import print_function
+
+cmd = __import__("sys").modules["pymol.cmd"]
 import math
 import string
 import pymol
@@ -104,7 +106,7 @@ ARGUMENTS
         _self.get_area(tmpSel, load_b=1)
         _self.spectrum("b", palette, tmpSel)
         _self.iterate(tmpSel, "l_a(color)", space={'l_a': l.append})
-        _self.alter(orgSel, "color=l_n()", space={'l_n': iter(l).next})
+        _self.alter(orgSel, "color=l_n()", space={'l_n': iter(l).__next__})
 
         _self.recolor(orgSel)
     finally:
@@ -150,7 +152,7 @@ ARGUMENTS
     _self.select(selName, 'none')
     _self.delete(tmpObj)
 
-    for (k, v) in res_area.iteritems():
+    for (k, v) in res_area.items():
         if v < surface_residue_cutoff:
             continue
         _self.select(selName, 'segi %s & chain %s & resi %s' % k, merge=1)
@@ -250,7 +252,7 @@ def mass_align(target,enabled_only=0,max_gap=50,_self=cmd):
     pymol=_self._pymol
     cmd=_self
     list = cmd.get_names("public_objects",int(enabled_only))
-    filter(lambda x:cmd.get_type(x)!="object:molecule",list)
+    [x for x in list if cmd.get_type(x)!="object:molecule"]
     if enabled_only:
         aln_object = 'aln_enabled_to'+target
     else:
@@ -270,7 +272,7 @@ def sum_formal_charges(selection="(all)",quiet=1,_self=cmd):
     cmd.iterate(selection,"stored._util_sum_fc=stored._util_sum_fc+formal_charge",quiet=1)
     result = pymol.stored._util_sum_fc
     if not quiet:
-        print " util.sum_formal_charges: sum = %0.1f"%result
+        print(" util.sum_formal_charges: sum = %0.1f"%result)
     return result
 
 def sum_partial_charges(selection="(all)",quiet=1,_self=cmd):
@@ -280,7 +282,7 @@ def sum_partial_charges(selection="(all)",quiet=1,_self=cmd):
     cmd.iterate(selection,"stored._util_sum_pc=stored._util_sum_pc+partial_charge",quiet=1)
     result = pymol.stored._util_sum_pc
     if not quiet:
-        print " util.sum_partial_charges: sum = %0.4f"%result
+        print(" util.sum_partial_charges: sum = %0.4f"%result)
     return result
 
 def compute_mass(selection="(all)",state=-1,implicit=False,quiet=1,_self=cmd):
@@ -322,15 +324,15 @@ NOTES
     for obj in _self.get_object_list(selection):
         if state==-1:
             state = _self.get("state",obj)
-	m = _self.get_model(selection + " and " + obj,state)
-	if len(m.atom)==0:
-            print " Warning: No atoms in state %d for object %s" % (state,obj)
-	if implicit!=False:
-	    result += m.get_implicit_mass()
-	else:
-	    result += m.get_mass()
+        m = _self.get_model(selection + " and " + obj,state)
+        if len(m.atom)==0:
+            print(" Warning: No atoms in state %d for object %s" % (state,obj))
+        if implicit!=False:
+            result += m.get_implicit_mass()
+        else:
+            result += m.get_mass()
     if not quiet:
-        print " util.compute_mass: mass = %0.4f u"%result
+        print(" util.compute_mass: mass = %0.4f u"%result)
     return result
     
 def protein_assign_charges_and_radii(obj_name,_self=cmd):
@@ -357,22 +359,22 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
     # make sure all atoms are included...
     cmd.alter(obj_name,"q=1.0",quiet=1)
     
-    print " Util: Fixing termini and assigning formal charges..."
+    print(" Util: Fixing termini and assigning formal charges...")
     
     assign.missing_c_termini(obj_name,quiet=1,_self=_self)
 
     while not assign.formal_charges(obj_name,quiet=1,_self=_self):
-        print " WARNING: unrecognized or incomplete residues are being deleted:"
+        print(" WARNING: unrecognized or incomplete residues are being deleted:")
         cmd.iterate("(byres ("+obj_name+" and flag 23)) and flag 31",
                         'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"',quiet=1)
         cmd.remove("byres ("+obj_name+" and flag 23)") # get rid of residues that weren't assigned
         assign.missing_c_termini(obj_name,quiet=1,_self=_self)
         
-    print " Util: Assigning Amber 99 charges and radii..."
+    print(" Util: Assigning Amber 99 charges and radii...")
     
     cmd.h_add(obj_name)
     if not assign.amber99(obj_name,quiet=1,_self=_self):
-        print " WARNING: some unassigned atoms are being deleted:"
+        print(" WARNING: some unassigned atoms are being deleted:")
         cmd.iterate("byres ("+obj_name+" and flag 23)",
                         'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"+name+"? ["+elem+"]"',quiet=1)
         cmd.remove(obj_name+" and flag 23") # get rid of any atoms that weren't assigned
@@ -382,7 +384,7 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
     formal = sum_formal_charges(obj_name,quiet=0,_self=_self)
     partial = sum_partial_charges(obj_name,quiet=0,_self=_self)
     if round(formal)!=round(partial):
-        print " WARNING: formal and partial charge sums don't match -- there is a problem!"
+        print(" WARNING: formal and partial charge sums don't match -- there is a problem!")
     
 def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
     pymol=_self._pymol
@@ -390,7 +392,7 @@ def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
 
     if ((string.split(selection)!=[selection]) or
          selection not in cmd.get_names('objects')):
-        print " Error: must provide an object name"
+        print(" Error: must provide an object name")
         raise cmd.QuietException
     obj_name = selection + "_e_chg"
     map_name = selection + "_e_map"
@@ -413,7 +415,7 @@ def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
 
     sep = max_length/50.0
     if sep<1.0: sep = 1.0
-    print " Util: Calculating electrostatic potential..."
+    print(" Util: Calculating electrostatic potential...")
     if mode==0: # absolute, no cutoff
         cmd.map_new(map_name,"coulomb",sep,obj_name,border)
     elif mode==1: # neutral, no cutoff
@@ -752,7 +754,7 @@ def label_chains(sele="all",_self=cmd):
         last = a
     if len(list):
         list.append(last)
-    list = filter(None,list)
+    list = [_f for _f in list if _f]
     for a in list:
         if(a[1]==''):
             cmd.label("%s`%d"%(a[0],a[2]),'''"chain ''"''',quiet=1)         
@@ -777,7 +779,7 @@ def label_segments(sele="all",_self=cmd):
         last = a
     if len(list):
         list.append(last)
-    list = filter(None,list)
+    list = [_f for _f in list if _f]
     for a in list:
         if(a[1]==''):
             cmd.label("%s`%d"%(a[0],a[2]),'''"segi ''"''',quiet=1)         
@@ -809,28 +811,28 @@ def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
         c = first_color
         for a in cmd.get_chains(selection):
             if len(string.strip(a)):
-                if not quiet: print (" util.cbc: color %d,(chain %s)"%(c,a))
+                if not quiet: print((" util.cbc: color %d,(chain %s)"%(c,a)))
                 cmd.color("%d"%c,"(chain %s and (%s))"%(a,selection),quiet=quiet)
                 c = c + 1
             elif len(a): # note, PyMOL's selection language can't handle this right now
-                if not quiet: print (" util.cbc: color %d,(chain ' ')"%(c))
+                if not quiet: print((" util.cbc: color %d,(chain ' ')"%(c)))
                 cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
                 c = c + 1
             else:
-                if not quiet: print (" util.cbc: color %d,(chain '')"%(c))
+                if not quiet: print((" util.cbc: color %d,(chain '')"%(c)))
                 cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
                 c = c + 1
     else:
         c = 0
         for a in cmd.get_chains(selection):
             if len(string.strip(a)):
-                if not quiet: print (" util.cbc: color %d,(chain %s)"%(_color_cycle[c],a))
+                if not quiet: print((" util.cbc: color %d,(chain %s)"%(_color_cycle[c],a)))
                 cmd.color(_color_cycle[c],"(chain %s and (%s))"%(a,selection),quiet=quiet)
             elif len(a): # note, PyMOL's selection language can't handle this right now
-                if not quiet: print (" util.cbc: color %d,(chain ' ')"%(_color_cycle[c]))
+                if not quiet: print((" util.cbc: color %d,(chain ' ')"%(_color_cycle[c])))
                 cmd.color(_color_cycle[c],"(chain '' and (%s))"%selection,quiet=quiet)
             else:
-                if not quiet: print (" util.cbc: color %d,(chain '')"%(_color_cycle[c]))
+                if not quiet: print((" util.cbc: color %d,(chain '')"%(_color_cycle[c])))
                 cmd.color(_color_cycle[c],"(chain '' and (%s))"%selection,quiet=quiet)
             c = (c + 1) % _color_cycle_len
         
@@ -842,7 +844,7 @@ def color_objs(selection='(all)',quiet=1,_self=cmd):
     '''
     c = 0
     for a in cmd.get_names('public_nongroup_objects',selection=selection):
-	if (selection!='all') and (selection!='(all)'):
+        if (selection!='all') and (selection!='(all)'):
             cmd.color(_color_cycle[c],"(?%s and (%s))"%(a,selection),quiet=quiet)
         else:
             cmd.color(_color_cycle[c],"(?%s)"%(a),quiet=quiet)
@@ -874,9 +876,9 @@ def sum_charge(*arg,**kw): # NOT THREAD SAFE
         cmd.iterate("(%s)"%obj,
                         "stored._sum_charge=stored._sum_charge+partial_charge")
         result = pymol.stored._sum_charge
-        print " sum_charge: %6.4f"%result
+        print(" sum_charge: %6.4f"%result)
     except:
-        print " sum_charge: an error occurred."
+        print(" sum_charge: an error occurred.")
     return result
 
 def ray_shadows(mode,_self=cmd):
@@ -1130,8 +1132,8 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
     pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
 
-    print ' util.ss: WARNING: This is not a "correct" secondary structure'
-    print ' util.ss: assignment algorithm!  Please use only as a last resort.'
+    print(' util.ss: WARNING: This is not a "correct" secondary structure')
+    print(' util.ss: assignment algorithm!  Please use only as a last resort.')
     
     cmd.feedback("push")
     cmd.feedback("disable","executive","actions")
@@ -1139,7 +1141,7 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
     ss_pref = "_sss"
     sss1 = ss_pref+"1"
     cnt = cmd.select(sss1,"((byres ("+selection+")) and name CA and not het)")
-    print " util.ss: initiating secondary structure assignment on %d residues."%cnt
+    print(" util.ss: initiating secondary structure assignment on %d residues."%cnt)
     cas = cmd.index(sss1)
     if not len(cas):
         return
@@ -1147,7 +1149,7 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
     
     cmd.cartoon("auto",sss1)
 
-    print " util.ss: extracting sequence and relationships..."
+    print(" util.ss: extracting sequence and relationships...")
 
     # get CA list
     
@@ -1199,7 +1201,7 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
         last = a
     gap.extend([None,None,None,None])
 
-    print " util.ss: analyzing phi/psi angles (slow)..."
+    print(" util.ss: analyzing phi/psi angles (slow)...")
 
     # generate reverse-lookup for gap indices
 
@@ -1232,7 +1234,7 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
                     (psi>-80) and (psi<-25)): # helix?
                 ss[a] = 'H'
                 
-    print " util.ss: finding hydrogen bonds..."
+    print(" util.ss: finding hydrogen bonds...")
     
     # find all pairwise hydrogen bonds and make note of them in dict
 
@@ -1249,26 +1251,26 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
         hb_dict[a] = 1
         n = a[0]
         o = a[1]
-        if not n_hb_dict.has_key(n): n_hb_dict[n]=[]
-        if not o_hb_dict.has_key(o): o_hb_dict[o]=[]
+        if n not in n_hb_dict: n_hb_dict[n]=[]
+        if o not in o_hb_dict: o_hb_dict[o]=[]
         n_hb_dict[n].append(o)
         o_hb_dict[o].append(n)
 
     # check to insure that all helical residues have at least an i +/- 4
     # hydrogen bond
 
-    for c in xrange(4,len(gap)-4):
+    for c in range(4,len(gap)-4):
         a = gap[c]
         if ss[a]=='H':
             aN = n_dict[scr_dict[a]]
             aO = o_dict[scr_dict[a]]
             am4O = o_dict[scr_dict[gap[c-4]]]
             ap4N = n_dict[scr_dict[gap[c+4]]]
-            if not hb_dict.has_key((aN,am4O)):
-                if not hb_dict.has_key((ap4N,aO)):
+            if (aN,am4O) not in hb_dict:
+                if (ap4N,aO) not in hb_dict:
                     ss[a]='L'
 
-    print " util.ss: verifying beta sheets..."
+    print(" util.ss: verifying beta sheets...")
     
     # check to insure that all beta residues have proper interactions
 
@@ -1280,15 +1282,15 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
         cc = len(gap)-4
         while c<cc:
             a1 = gap[c]
-            if (ss[a1] in ['s','S']) and not rep_dict.has_key(a1):
+            if (ss[a1] in ['s','S']) and a1 not in rep_dict:
                 rep_dict[a1] = 1
                 valid = 0
                 scr_a1 = scr_dict[a1]
                 # look for antiparallel 2:2 H-bonds (NH-O=C + C=O-HN) 
                 n_a1_atom = n_dict[scr_a1]
                 o_a1_atom = o_dict[scr_a1]
-                if (n_hb_dict.has_key(n_a1_atom) and 
-                     o_hb_dict.has_key(o_a1_atom)):
+                if (n_a1_atom in n_hb_dict and 
+                     o_a1_atom in o_hb_dict):
                     for n_hb_atom in n_hb_dict[n_a1_atom]:
                         for o_hb_atom in o_hb_dict[o_a1_atom]:
                             n_hb_scr = scr_dict[n_hb_atom]
@@ -1305,8 +1307,8 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
                     scr_a3 = scr_dict[a3]
                     o_a1_atom = o_dict[scr_a1]
                     n_a3_atom = n_dict[scr_a3]
-                    if (n_hb_dict.has_key(n_a3_atom) and
-                         o_hb_dict.has_key(o_a1_atom)):               
+                    if (n_a3_atom in n_hb_dict and
+                         o_a1_atom in o_hb_dict):               
                         for n_hb_atom in n_hb_dict[n_a3_atom]:
                             for o_hb_atom in o_hb_dict[o_a1_atom]:
                                 n_hb_scr = scr_dict[n_hb_atom]
@@ -1334,8 +1336,8 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
                     scr_a3 = scr_dict[a3]
                     n_a1_atom = n_dict[scr_a1]
                     o_a3_atom = o_dict[scr_a3]
-                    if (n_hb_dict.has_key(n_a1_atom) and
-                         o_hb_dict.has_key(o_a3_atom)):               
+                    if (n_a1_atom in n_hb_dict and
+                         o_a3_atom in o_hb_dict):               
                         for n_hb_atom in n_hb_dict[n_a1_atom]:
                             for o_hb_atom in o_hb_dict[o_a3_atom]:
                                 n_hb_scr = scr_dict[n_hb_atom]
@@ -1360,8 +1362,8 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
                 # look for parallel 1:3 HB (i,j-1,j+1)
                 n_a1_atom = n_dict[scr_a1]
                 o_a1_atom = o_dict[scr_a1]
-                if (n_hb_dict.has_key(n_a1_atom) and
-                     o_hb_dict.has_key(o_a1_atom)):
+                if (n_a1_atom in n_hb_dict and
+                     o_a1_atom in o_hb_dict):
                     for n_hb_atom in n_hb_dict[n_a1_atom]:
                         for o_hb_atom in o_hb_dict[o_a1_atom]:
                             n_hb_scr = scr_dict[n_hb_atom]
@@ -1421,13 +1423,13 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
             n_a1_atom = n_dict[scr_a1]
             o_a1_atom = o_dict[scr_a1]
             certain = 0
-            if n_hb_dict.has_key(n_a1_atom):
+            if n_a1_atom in n_hb_dict:
                 for n_hb_atom in n_hb_dict[n_a1_atom]:
                     n_hb_ca_atom=ca_dict[scr_dict[n_hb_atom]]
                     if ss[n_hb_ca_atom]=='S':
                         certain = 1
                         break
-            if o_hb_dict.has_key(o_a1_atom):
+            if o_a1_atom in o_hb_dict:
                 for o_hb_atom in o_hb_dict[o_a1_atom]:
                     o_hb_ca_atom=ca_dict[scr_dict[o_hb_atom]]
                     if ss[o_hb_ca_atom]=='S':
@@ -1458,14 +1460,14 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
         cc = len(gap)-4
         while c<cc:
             a = gap[c]
-            if not rep_dict.has_key(a):
+            if a not in rep_dict:
                 if ss[gap[c+1]]=='H':
                     rep_dict[a] = 1
                     if ss[a]!='H': # N-terminal end
                         aO = o_dict[scr_dict[a]]
                         ap4N = n_dict[scr_dict[gap[c+4]]]
                         ap3N = n_dict[scr_dict[gap[c+3]]]
-                        if hb_dict.has_key((ap4N,aO)) or hb_dict.has_key((ap3N,aO)):
+                        if (ap4N,aO) in hb_dict or (ap3N,aO) in hb_dict:
                             ss[a]='H'
                             repeat = 1
                             c = c - 5
@@ -1477,7 +1479,7 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
                         aN = n_dict[scr_dict[a]]
                         am4O = o_dict[scr_dict[gap[c-4]]]
                         am3O = o_dict[scr_dict[gap[c-3]]]
-                        if hb_dict.has_key((aN,am4O)) or hb_dict.has_key((aN,am3O)):
+                        if (aN,am4O) in hb_dict or (aN,am3O) in hb_dict:
                             ss[a]='H'
                             repeat = 1
                             c = c - 5
@@ -1511,14 +1513,14 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
         a1 = gap[c]
         ss_a1 = ss[gap[c]]
         if ss_a1=='H':
-            if phipsi.has_key(a1):
+            if a1 in phipsi:
                 (phi,psi) = phipsi[a1]
                 if (phi>0) and (phi<150):
                     ss[a1] = 'L'
                 elif((psi<-120) or (psi>140)):
                     ss[a1] = 'L'
         elif ss_a1 in ['S','s']:
-            if phipsi.has_key(a1):
+            if a1 in phipsi:
                 (phi,psi) = phipsi[a1]
                 if (phi>45) and (phi<160):
                     ss[a1] = 'L'
@@ -1555,13 +1557,13 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
                 n_a1_atom = n_dict[scr_a1]
                 o_a1_atom = o_dict[scr_a1]
                 certain = 0
-                if n_hb_dict.has_key(n_a1_atom):
+                if n_a1_atom in n_hb_dict:
                     for n_hb_atom in n_hb_dict[n_a1_atom]:
                         n_hb_ca_atom=ca_dict[scr_dict[n_hb_atom]]
                         if ss[n_hb_ca_atom]=='S':
                             certain = 1
                             break
-                if o_hb_dict.has_key(o_a1_atom):
+                if o_a1_atom in o_hb_dict:
                     for o_hb_atom in o_hb_dict[o_a1_atom]:
                         o_hb_ca_atom=ca_dict[scr_dict[o_hb_atom]]
                         if ss[o_hb_ca_atom]=='S':
@@ -1604,7 +1606,7 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
     cmd.rebuild(selection,'cartoon')
     #
 #   print conn_hash.keys()
-    print " util.ss: assignment complete."
+    print(" util.ss: assignment complete.")
 
 def colors(scheme="",_self=cmd):
     pymol=_self._pymol

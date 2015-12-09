@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 from chempy.models import Indexed,Connected
 from chempy import Storage,Atom,Bond
 
@@ -123,7 +125,7 @@ class MMD(Storage):
             bondorders = [0] * neighbors_len
             for j, b in enumerate(conn.bond[c]):
                 if j >= neighbors_len:
-                    print " Warning: too many bonds"
+                    print(" Warning: too many bonds")
                     break
                 n = b.index[0]
                 if n == c:

@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 from chempy.models import Indexed
 from chempy import Storage,Atom,Bond,feedback
 
@@ -184,7 +186,7 @@ class MOL2(Storage):
 
     def strToFile(self,dat,fname,**params):
         if feedback['io']:
-            print ' chempy: writing mol2 to file "%s".' % fname
+            print(' chempy: writing mol2 to file "%s".' % fname)
         fp = open(fname,'w')
         result = fp.writelines(dat)
         fp.close()

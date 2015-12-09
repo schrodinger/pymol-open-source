@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 from chempy import bmin,feedback
 from chempy import io
@@ -10,7 +11,7 @@ class State:
 
     def __init__(self):
         if feedback['verbose']:
-            print ' '+str(self.__class__)+': created.'
+            print(' '+str(self.__class__)+': created.')
         self.default = {}
         self.echo = 0
         self.model = None
@@ -20,7 +21,7 @@ class State:
     def minimize(self,max_iter=100,fix_flag=None,rest_flag=None,
                      rest_coeff = 100.0,solvation=None):
         if feedback['actions']:
-            print ' '+str(self.__class__)+': starting minimization run...'
+            print(' '+str(self.__class__)+': starting minimization run...')
         io.mmd.toFile(self.model,self.prefix+".dat")
         
         f = open(self.prefix+".com",'w')
@@ -73,7 +74,7 @@ class State:
             self.model.molecule.title = "%1.3f"%self.model.molecule.energy
     def load_model(self,a):
         if feedback['verbose']:
-            print ' '+str(self.__class__)+': new model loaded.'
+            print(' '+str(self.__class__)+': new model loaded.')
         self.model = a
 
 

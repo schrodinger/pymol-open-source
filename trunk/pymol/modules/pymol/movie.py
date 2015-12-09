@@ -12,10 +12,11 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import cmd
+from __future__ import print_function
+
+cmd = __import__("sys").modules["pymol.cmd"]
 import glob
 import math
-import string
 import os
 import glob
 import threading
@@ -36,7 +37,7 @@ def sweep(pause=0,cycles=1,_self=cmd):
     else:
         pass_string = "1 -%d %d -1"%(n_state, n_state)
     movie_list = [ pass_string ] * cycles
-    movie_string = string.join(movie_list," ")
+    movie_string = " ".join(movie_list)
     _self.mset(movie_string)
 
 def pause(pause=15,cycles=1,_self=cmd):
@@ -48,7 +49,7 @@ def pause(pause=15,cycles=1,_self=cmd):
     else:
         pass_string = "1 -%d %d -1"%(n_state, n_state)
     movie_list = [ pass_string ] * cycles
-    movie_string = string.join(movie_list," ")
+    movie_string = " ".join(movie_list)
     _self.mset(movie_string)
                 
 def load(*args,**kw):
@@ -59,10 +60,10 @@ def load(*args,**kw):
     fils = glob.glob(args[0])
     fils.sort()
     if not len(fils):
-        print "Error: no matching files"
+        print("Error: no matching files")
     else:
         for a in fils:
-            apply(_self.load,(a,nam),kw)
+            _self.load(*(a,nam), **kw)
 #         _self.load(a,nam)
 
 def rock(first=1,last=-1,angle=30,phase=0,loop=1,axis='y',_self=cmd):
@@ -154,7 +155,7 @@ EXAMPLE
         range = int(rangel[axpos])
         if range:
             leftover = divmod(range,skip)
-            print leftover[1]
+            print(leftover[1])
             if leftover[1]:
               range = range + int(leftover[1])
             a = 0
@@ -165,8 +166,8 @@ EXAMPLE
             axpos = axpos + 1
         else:
             axpos = axpos + 1
-    print (" tdroll: defined rotations for", frpos - 1,
-             "frames, starting at frame %d"%first)
+    print((" tdroll: defined rotations for", frpos - 1,
+             "frames, starting at frame %d"%first))
 
 def zoom(first,last,step=1,loop=1,axis='z',_self=cmd):
     # Author: Peter Haebel
@@ -568,7 +569,7 @@ def _watch(filename,done_event):
             size = stat[6]
             if done_event.isSet():
                 break
-            print " produce: %d bytes written..."%size
+            print(" produce: %d bytes written..."%size)
         else:
             tries = tries - 1
             if tries < 0:
@@ -606,19 +607,19 @@ def _encode(filename,mode,first,last,preserve,
             from freemol import mpeg_encode
         except:
             ok = 0
-            print "produce-error: Unable to import module freemol.mpeg_encode."
+            print("produce-error: Unable to import module freemol.mpeg_encode.")
         if ok:
             if not mpeg_encode.validate():
                 ok = 0
-                print "produce-error: Unable to validate freemol.mpeg_encode."
+                print("produce-error: Unable to validate freemol.mpeg_encode.")
         if not ok:
-            print "produce-error: Unable to create mpeg file."            
+            print("produce-error: Unable to create mpeg file.")            
         else:
             mpeg_quality = 1+int(((100-quality)*29)/100) # 1 to 30
             input = mpeg_encode.input(filename,tmp_path,
                                       prefix,first,last,mpeg_quality);
             if not quiet:
-                print " produce: creating '%s' (in background)..."%(filename)
+                print(" produce: creating '%s' (in background)..."%(filename))
 
             done_event = None
             if not quiet:
@@ -633,10 +634,10 @@ def _encode(filename,mode,first,last,preserve,
             if not quiet:
                 if not os.path.exists(filename):
                     if result != None:
-                        print input, result[0], result[1]
-                    print " produce: compression failed"
+                        print(input, result[0], result[1])
+                    print(" produce: compression failed")
                 else:
-                    print " produce: finished."
+                    print(" produce: finished.")
     _self.unset("keep_alive")
     if preserve<1:
         if os.path.isdir(tmp_path):
@@ -665,7 +666,7 @@ DESCRIPTION
     try:
         from freemol import mpeg_encode
     except ImportError:
-        print " Error: This PyMOL build is not set up with FREEMOL (freemol.mpeg_encode import failed)"
+        print(" Error: This PyMOL build is not set up with FREEMOL (freemol.mpeg_encode import failed)")
         return _self.DEFAULT_ERROR
 
     prefix = _prefix

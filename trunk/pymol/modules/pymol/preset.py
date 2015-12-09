@@ -12,8 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import cmd
-import util
+cmd = __import__("sys").modules["pymol.cmd"]
+from . import util
 import traceback
 
 polar_contacts_suffix = "_pol_conts"

@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 from wxPython.wx       import *
 from wxPython.glcanvas import *
 import _cmd
@@ -36,7 +38,7 @@ code_dict = {
     }
 
 def pst(st):
-    print st
+    print(st)
     return 1
 
 class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):

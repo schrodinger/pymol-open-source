@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -9,12 +11,12 @@ class Toggle(Wizard):
         _self = kw.get('_self',cmd)
         self.message = []
         for a in arg:
-            if not isinstance(a,types.ListType):
+            if not isinstance(a,list):
                 self.message.append(a)
             else:
                 self.message.extend(a)
         for a in self.message:
-            print a
+            print(a)
         self.message_visible = 1
             
     def toggle(self):
@@ -33,7 +35,7 @@ class Toggle(Wizard):
             [ 2, 'Toggle Fullscreen', 
               'cmd.full_screen()'],
             [ 2, 'Toggle Stereo 3D', 
-              'cmd.stereo(apply(lambda x:{ "off":"on", "on":"off"}[x],(cmd.get("stereo"),)))'],
+              'cmd.stereo("off" if cmd.get_setting_int("stereo") else "on")'],
             [ 2, 'Toggle Message', 
               'cmd.get_wizard().toggle()'],
             [ 2, 'Dismiss', 'cmd.set_wizard()' ]

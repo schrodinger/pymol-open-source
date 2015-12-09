@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function, absolute_import
+
 # invocation.py
 #
 # This module unifies argument handling for embedded and modular PyMOL
@@ -115,7 +117,6 @@ if __name__=='pymol.invocation':
     import re
     import os
     import glob
-    import string
     import sys
     import traceback
     
@@ -195,12 +196,15 @@ if __name__=='pymol.invocation':
     def get_personal_folder():
         if sys.platform.startswith('win'):
             try:
-                import _winreg as winreg
+                try:
+                    import _winreg as winreg
+                except ImportError:
+                    import winreg
                 with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                         r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders') as key:
                     return winreg.QueryValueEx(key, "Personal")[0]
             except:
-                print ' Warning: failed to query "My Documents" from registry'
+                print(' Warning: failed to query "My Documents" from registry')
         return os.path.expanduser('~')
 
     def get_user_config():
@@ -213,7 +217,7 @@ if __name__=='pymol.invocation':
             if lst:
                 break
         # global run_on_startup script (not overridden by pymolrc files, but is disabled by "-k")
-        if os.environ.has_key("PYMOL_PATH"):
+        if "PYMOL_PATH" in os.environ:
             first = glob.glob(os.environ['PYMOL_PATH']+"/"+ros_pat)
         else:
             first = []
@@ -257,15 +261,15 @@ if __name__=='pymol.invocation':
                 if (a[1:2]=='-'):
                     if a in ('--version', '--help'):
                         import pymol
-                        print pymol.get_version_message()
+                        print(pymol.get_version_message())
                         if a == '--help':
-                            print helptext1
+                            print(helptext1)
                             if pymolrc:
                                 for filename in pymolrc:
-                                    print '  ' + filename
+                                    print('  ' + filename)
                             else:
-                                print '  (no pymolrc file found)'
-                            print helptext2
+                                print('  (no pymolrc file found)')
+                            print(helptext2)
                         sys.exit()
                     else:
                         # double hypen signals end of PyMOL arguments
@@ -283,7 +287,7 @@ if __name__=='pymol.invocation':
                     new_args = []
                     # ====== mode 1 - simple viewer window ======
                     if a[2:3] == "1": 
-                        if not once_dict.has_key('A1'):
+                        if 'A1' not in once_dict:
                             once_dict['A1'] = 1
                             new_args = ["-qxiF",
                                 "-X","68",
@@ -292,7 +296,7 @@ if __name__=='pymol.invocation':
                     # ====== mode 2 - not available -- clashes with -2 =======
                     # ====== mode 3 - internal GUI only no splash ======
                     if a[2:3] == "3": 
-                        if not once_dict.has_key('A3'):
+                        if 'A3' not in once_dict:
                             once_dict['A3'] = 1
                             new_args = ["-qx",
                                 "-X","68",
@@ -300,7 +304,7 @@ if __name__=='pymol.invocation':
                                 ]
                     # ====== mode 4 - internal GUI only with splash ======
                     if a[2:3] == "4": # used by PYMOLVIEWER
-                        if not once_dict.has_key('A4'):
+                        if 'A4' not in once_dict:
                             once_dict['A4'] = 1
                             new_args = [
                                 "-X","68",
@@ -308,7 +312,7 @@ if __name__=='pymol.invocation':
                                 ]
                     # ====== mode 5 - mode 5 helper application ======
                     if a[2:3] == "5": 
-                        if not once_dict.has_key('A5'):
+                        if 'A5' not in once_dict:
                             once_dict['A5'] = 1
                             new_args = ["-QxiICUF",
                                 "-X","68",
@@ -316,7 +320,7 @@ if __name__=='pymol.invocation':
                                 ]
                     # ====== mode 6 - mode 6 presentation (no GUI) ======
                     if a[2:3] == "6": 
-                        if not once_dict.has_key('A6'):
+                        if 'A6' not in once_dict:
                             once_dict['A6'] = 1
                             new_args = ["-qxieICUPF",
                                 ]
@@ -406,7 +410,7 @@ if __name__=='pymol.invocation':
                         options.deferred.append("_do__ stereo on")
                     if ("d" in a):
                         options.deferred.append(
-                            "_do_%s"%string.replace(av.pop(),'%',' '))
+                            "_do_" + av.pop().replace('%',' '))
                     if ("J" in a): # cd to user's home directory on startup (if possible)
                         path = get_personal_folder()
                         try:
@@ -415,7 +419,7 @@ if __name__=='pymol.invocation':
                             # clear PYMOL_WD, which may be set by MacPyMOL
                             os.environ.pop('PYMOL_WD', None)
                         except OSError:
-                            print " Error: could not chdir to", repr(path)
+                            print(" Error: could not chdir to", repr(path))
                     if ("l" in a):
                         options.deferred.append("_do_spawn %s"%av.pop())
                     if ("r" in a):
@@ -471,7 +475,7 @@ if __name__=='pymol.invocation':
                     options.internal_feedback = 0
                     options.show_splash = 1
             elif not restricted:
-                suffix = string.split(string.lower(a[-4:]),'.')[-1]
+                suffix = a[-4:].lower().split('.')[-1]
                 if suffix == "p5m":
                     # mode 5 helper application 
                     av.append("-A5")

@@ -1,4 +1,5 @@
 # pymol
+from __future__ import print_function
 
 from chempy import Bond
 import copy
@@ -16,8 +17,8 @@ def cap(object):
     cmd.load_model(model,object)
     n_list = cmd.identify("(name N &!(name C around 2.0))")
     c_list = cmd.identify("(name C &!(name N around 2.0))")
-    print n_list
-    print c_list
+    print(n_list)
+    print(c_list)
     for a in n_list:
         newat = copy.deepcopy(model.atom[a])
         newat.coord = [
@@ -32,7 +33,7 @@ def cap(object):
         bond.order = 1
         bond.stereo = 0
         bond.index = [ a, model.nAtom ]
-        print "adding",newat.name,bond.index
+        print("adding",newat.name,bond.index)
         model.add_atom(newat)
         model.add_bond(bond)
     for a in c_list:
@@ -49,7 +50,7 @@ def cap(object):
         bond.order = 1
         bond.stereo = 0
         bond.index = [ a, model.nAtom ]
-        print "adding",newat.name,bond.index
+        print("adding",newat.name,bond.index)
         model.add_atom(newat)
         model.add_bond(bond)
     # reload

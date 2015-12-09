@@ -8,7 +8,12 @@ License: BSD-2-Clause
 
 import sys
 import Pmw
-import Tkinter
+try:
+    import Tkinter
+    import tkSimpleDialog
+except ImportError:
+    import tkinter as Tkinter
+    import tkinter.simpledialog as tkSimpleDialog
 from .legacysupport import tkMessageBox, tkFileDialog
 from . import pref_get
 
@@ -76,7 +81,7 @@ def plugin_info_dialog(parent, info):
     grid.columnconfigure(1, weight=1)
 
     metadata = info.get_metadata()
-    for label, value in metadata.iteritems():
+    for label, value in metadata.items():
         add_line(label, value)
 
     if not info.is_temporary:
@@ -328,7 +333,6 @@ class PluginManager(Pmw.MegaToplevel):
             self.b_save.configure(background='red')
 
         def slb_left_add():
-            import tkSimpleDialog
             url = tkSimpleDialog.askstring('Repository URL', 'Please enter Repository URL', parent=self.interior())
             if not url:
                 return

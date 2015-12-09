@@ -12,23 +12,25 @@
 #-* based on code written by Doug Hellmann. 
 #Z* -------------------------------------------------------------------
 
+from __future__ import print_function
+
 import sys
 import os
 from glob import glob
 import re
-import string
-import threading
 import traceback
-import Queue
-import __builtin__
-import types
-
-# ensure that PyMOL seach path is used...
-
-from Tkinter import *
-from tkFileDialog import *
-import tkMessageBox
 import Pmw
+
+try:
+    import Queue
+    from Tkinter import *
+    from tkFileDialog import *
+    import tkMessageBox
+except ImportError:
+    import queue as Queue
+    from tkinter import *
+    from tkinter.filedialog import *
+    import tkinter.messagebox as tkMessageBox
 
 try:
     # monkey patch Pmw's error message box
@@ -50,7 +52,7 @@ try:
 
     del PmwBase
 except Exception as e:
-    print 'monkey patching _reporterror failed:', e
+    print('monkey patching _reporterror failed:', e)
 
 class PMGApp(Pmw.MegaWidget):
 
@@ -196,7 +198,7 @@ class PMGApp(Pmw.MegaWidget):
             try:
                 cmmd = self.fifo.get(0)
                 if isinstance(cmmd, str):
-                    exec cmmd
+                    exec(cmmd)
                 else:
                     cmmd()
             except:
@@ -261,19 +263,19 @@ class PMGApp(Pmw.MegaWidget):
             for a in raw_list:
                 key = re.sub(r"[\/\\]__init__\.py.*$","",a)
                 unique[re.sub(r".*[\/\\]","",key)] = 1
-            name_list = unique.keys()
+            name_list = list(unique.keys())
             name_list.sort()
             self.skinNameList = name_list
         if hasattr(self,'skinNameList'):
             for name in self.skinNameList:
-                caps_name = string.upper(name)[0:1]+string.lower(name)[1:]
+                caps_name = name.capitalize()
                 menuBar.addmenuitem(menuName, 'command', name,
                                     label=caps_name,
                                     command=lambda s=self,n=name:s.setSkin(n))
 
         
     def setSkin(self,skin,run=1):
-        if isinstance(skin,types.StringType):
+        if isinstance(skin,str):
             inv = sys.modules.get("pymol.invocation",None)
             if inv!=None:
                 module_path = inv.options.gui +".skins."+ skin

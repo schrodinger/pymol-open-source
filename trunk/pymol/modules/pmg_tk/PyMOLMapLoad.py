@@ -3,12 +3,11 @@
 # * make the final viewing step a function
 # *   setup_map(name,levels=,colors=,reps=)
 
+from __future__ import print_function
+
 import pymol
 from pymol import headering
 import Pmw
-import Tkinter as TK
-import os
-import string
 
 class PyMOLMapLoad:
 
@@ -215,14 +214,14 @@ class PyMOLMapLoad:
         self._name_prefix= self._name_prefix_fld.getvalue()
         
     def report_state(self):
-        print "Here is the state of the box"
-        print "Amplitudes:\t%s" % self._amplitudes
-        print "Phases    :\t%s" % self._phases
-        print "Weights   :\t%s" % self._weights
-        print "Min Res   :\t%s" % self._min_res
-        print "Max Res   :\t%s" % self._max_res
-        print "FoFc      :\t%s" % str(self._fofc)
-        print "Name Prefix :\t'%s'" % self._name_prefix
+        print("Here is the state of the box")
+        print("Amplitudes:\t%s" % self._amplitudes)
+        print("Phases    :\t%s" % self._phases)
+        print("Weights   :\t%s" % self._weights)
+        print("Min Res   :\t%s" % self._min_res)
+        print("Max Res   :\t%s" % self._max_res)
+        print("FoFc      :\t%s" % str(self._fofc))
+        print("Name Prefix :\t'%s'" % self._name_prefix)
 
     def show_help(self,msg=None,title=None):
         # TODO -- CHANGE THE HELP TEXT
@@ -248,7 +247,7 @@ class PyMOLMapLoad:
             if self._name_prefix==None or self._name_prefix=="":
                 # grep the dataset name from amplitudes
                 if '/' in self._amplitudes:
-                    pfx = string.split(self._amplitudes,'/')
+                    pfx = self._amplitudes.split('/')
                     if len(pfx)>=2:
                         pfx = pfx[1]
                 else:
@@ -285,13 +284,13 @@ select an amplitude column name from the file and try again.
                                        self._amplitudes, self._phases, self._weights,
                                        self._min_res, self._max_res, 1, 1)
             except pymol.CmdException as e:
-                print e
+                print(e)
                 return None
 
             if r==None or r=="None" or r=="":
-                print " MapLoad-Error: PyMOL could not load the MTZ file '%s' due to an unspecified error." % self._fileName
-                print " MapLoad-Error: This typically occurs with bad data or blank column names. Please try again"
-                print " MapLoad-Error: or contact 'help@schrodinger.com' for more information."
+                print(" MapLoad-Error: PyMOL could not load the MTZ file '%s' due to an unspecified error." % self._fileName)
+                print(" MapLoad-Error: This typically occurs with bad data or blank column names. Please try again")
+                print(" MapLoad-Error: or contact 'help@schrodinger.com' for more information.")
                 return None
             skin     = pymol._ext_gui.skin
             try:
@@ -350,7 +349,11 @@ select an amplitude column name from the file and try again.
 
         
 if __name__=="__main__":
-    
+    try:
+        import Tkinter as TK
+    except ImportError:
+        import tkinter as TK
+
     a = TK.Tk()
     t = PyMOLMapLoad(a,None)
     t.pack_and_show()

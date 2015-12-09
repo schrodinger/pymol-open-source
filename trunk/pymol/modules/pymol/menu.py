@@ -29,7 +29,7 @@ class menucontext(object):
     def __call__(self, cmd, sele=''):
         if self.count == 0:
             names = cmd.get_names()
-            self.ramps = filter(lambda n: cmd.get_type(n) == 'object:ramp', names)
+            self.ramps = [n for n in names if cmd.get_type(n) == 'object:ramp']
             self.props = []
         self.count += 1
         return self
@@ -785,7 +785,7 @@ def complete(self_cmd, sele):
 
 def modify_by_object(self_cmd, sele, op):
     list = self_cmd.get_names("public_objects",1)[0:25] # keep this practical
-    list = filter(lambda x:self_cmd.get_type(x)=="object:molecule",list)
+    list = [x for x in list if self_cmd.get_type(x)=="object:molecule"]
     result = [[ 2, 'Object:', '']]
     for a in list:
         if a!=sele:
@@ -941,7 +941,7 @@ def find(self_cmd, sele):
 
 def align_to_object(self_cmd, sele):
     list = self_cmd.get_names("public_objects",1)[0:25] # keep this practical
-    list = filter(lambda x:self_cmd.get_type(x)=="object:molecule",list)
+    list = [x for x in list if self_cmd.get_type(x)=="object:molecule"]
     result = [[ 2, 'Object:', '']]
     for a in list:
         if a!=sele:
@@ -964,7 +964,7 @@ def align_to_sele(self_cmd, sele):
 
 def mat_tran(self_cmd, sele, direction=0):
     list = self_cmd.get_names("public_objects",1)[0:25] # keep this practical
-    list = filter(lambda x:self_cmd.get_type(x)=="object:molecule",list)
+    list = [x for x in list if self_cmd.get_type(x)=="object:molecule"]
     result = [[ 2, 'Object:', '']]
     for a in list:
         if a!=sele:
@@ -1434,7 +1434,7 @@ def enable_disable(self_cmd, enable):
     else:
         result = [[ 2, 'Disable', '']]
         cmmd = 'cmd.disable("'
-    result = result + map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+self_cmd.get_names('objects'))
+    result = result + list(map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+self_cmd.get_names('objects')))
     if not enable:
         result.insert(2,[1, 'selections', "util.hide_sele(_self=cmd)"])
     else:

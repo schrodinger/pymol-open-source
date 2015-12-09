@@ -18,13 +18,13 @@
 
 from __future__ import absolute_import
 
+# Don't import __future__.print_function
+
 if __name__=='pymol.parser':
     
     import pymol
     import traceback
-    import string
     import re
-    import types
     import glob
     import sys
     import os
@@ -52,31 +52,31 @@ if __name__=='pymol.parser':
             traceback.print_exc()
         amb = sc.interpret(st, mode)
         if amb==None:
-            print " parser: no matching %s."%type_name
-        elif type(amb)==types.StringType:
+            print(" parser: no matching %s."%type_name)
+        elif isinstance(amb, str):
             result = amb+postfix
         else:
             amb.sort()
-            print " parser: matching %s:"%type_name
-            flist = filter(lambda x:x[0]!='_',amb)
+            print(" parser: matching %s:"%type_name)
+            flist = [x for x in amb if x[0]!='_']
             lst = parsing.list_to_str_list(flist)
             for a in lst:
-                print a
+                print(a)
             # now append up to point of ambiguity
             if not len(flist):
                 css = []
             else:
-                css = map(None,flist[0]) # common sub-string (css)
+                css = list(flist[0]) # common sub-string (css)
                 for a in flist:
-                    ac = map(None,a)
+                    ac = list(a)
                     tmp = css
                     css = []
                     for c in range(len(tmp)):
                         if tmp[c]!=ac[c]:
                             break
                         css.append(tmp[c])
-            css = filter(None,css)
-            css = string.join(css,'')
+            css = [_f for _f in css if _f]
+            css = ''.join(css)
             if len(css)>len(st):
                 result = css
         return result
@@ -143,14 +143,14 @@ if __name__=='pymol.parser':
 #                traceback.print_exc()
 #                sys.exc_clear()
             if layer.embed_sentinel!=None:
-                if string.strip(s) == layer.embed_sentinel:
+                if s.strip() == layer.embed_sentinel:
                     etn = layer.embed_type
                     if etn == 0: # embedded data
-                        print " Embed: read %d lines."%(len(layer.embed_list))
+                        print(" Embed: read %d lines."%(len(layer.embed_list)))
                         layer.embed_sentinel=None
                     elif etn == 1: # python block
-                        print "PyMOL>"+string.rstrip(s)                    
-                        py_block = string.join(layer.embed_list,'')
+                        print("PyMOL>"+s.rstrip())
+                        py_block = ''.join(layer.embed_list)
                         del layer.embed_list
                         layer.embed_sentinel=None
                         try:
@@ -158,24 +158,24 @@ if __name__=='pymol.parser':
                         except:
                             traceback.print_exc()
                     elif etn == 2: # skip block
-                        print " Skip: skipped %d lines."%(layer.embed_line)
+                        print(" Skip: skipped %d lines."%(layer.embed_line))
                         layer.embed_sentinel=None
                 else:
                     etn = layer.embed_type
                     if etn == 0: # normal embedded data
-                        layer.embed_list.append(string.rstrip(s)+"\n")
+                        layer.embed_list.append(s.rstrip()+"\n")
                     elif etn == 1: # python block
                         el = layer.embed_line + 1
-                        print "%5d:%s"%(el,string.rstrip(s))
+                        print("%5d:%s"%(el,s.rstrip()))
                         layer.embed_line = el
-                        layer.embed_list.append(string.rstrip(s)+"\n")
+                        layer.embed_list.append(s.rstrip()+"\n")
                     elif etn == 2:
                         layer.embed_line = layer.embed_line + 1
                 return 1
             p_result = 1
             layer.com0 = s
             try:
-                layer.com1 = string.rstrip(layer.com0) # strips trailing whitespace
+                layer.com1 = layer.com0.rstrip() # strips trailing whitespace
                 if len(layer.com1) > 0:
                     if str(layer.com1[-1]) == "\\":
                         # prepend leftovers
@@ -194,58 +194,58 @@ if __name__=='pymol.parser':
                         
         # layer.com2 now a full non-compound command            
                         layer.com2 = layer.next[0]
-                        layer.input = string.split(layer.com2,' ',1)
+                        layer.input = layer.com2.split(' ',1)
                         lin = len(layer.input)
                         if lin:
-                            layer.input[0] = string.strip(layer.input[0])
+                            layer.input[0] = layer.input[0].strip()
                             com = layer.input[0]
                             if (com[0:1]=='/'):
                                 # explicit literal python 
-                                layer.com2 = string.strip(layer.com2[1:])
+                                layer.com2 = layer.com2[1:].strip()
                                 if len(layer.com2)>0:
                                     if not secure:
                                         exec(layer.com2+"\n",self.pymol_names,self.pymol_names)
                                     else:
-                                        print 'Error: Python expressions disallowed in this file.'
+                                        print('Error: Python expressions disallowed in this file.')
                                         return None
-                            elif lin>1 and py_delims.has_key(string.split(layer.input[-1:][0],' ',1)[0]):
+                            elif lin>1 and layer.input[-1:][0].split(' ',1)[0] in py_delims:
                                 if not secure:
                                     exec(layer.com2+"\n",self.pymol_names,self.pymol_names)
                                 else:
-                                    print 'Error: Python expressions disallowed in this file.'
+                                    print('Error: Python expressions disallowed in this file.')
                                     return None
                             else:
                                 # try to find a keyword which matches
-                                if self.cmd.kwhash.has_key(com):
+                                if com in self.cmd.kwhash:
                                     amb = self.cmd.kwhash.interpret(com)
                                     if amb == None:
                                         com = self.cmd.kwhash[com]
-                                    elif type(amb)!=types.StringType:
-                                        print 'Error: ambiguous command: '
+                                    elif not isinstance(amb, str):
+                                        print('Error: ambiguous command: ')
                                         amb.sort()
                                         amb = parsing.list_to_str_list(amb)
                                         for a in amb:
-                                            print a
+                                            print(a)
                                         raise QuietException
                                     com = amb
-                                if self.cmd.keyword.has_key(com):
+                                if com in self.cmd.keyword:
                                     # here is the command and argument handling section
                                     layer.kw = self.cmd.keyword[com]
                                     if layer.kw[4]>=parsing.NO_CHECK:
                                         # stricter, Python-based argument parsing
                                         # remove line breaks (only important for Python expressions)
-                                        layer.com2=string.replace(layer.com2,'\n','')
+                                        layer.com2=layer.com2.replace('\n','')
 
                                         if layer.kw[4]>=parsing.LITERAL: # treat literally
                                             layer.next = []
                                             if not secure:
                                                 layer.com2=layer.com1
                                             else:
-                                                print 'Error: Python expressions disallowed in this file.  '
+                                                print('Error: Python expressions disallowed in this file.  ')
                                                 return 0
                                         if secure and (layer.kw[4]==parsing.SECURE):
                                             layer.next = []
-                                            print 'Error: Command disallowed in this file.'
+                                            print('Error: Command disallowed in this file.')
                                             return None
                                         else:
                                            (layer.args, layer.kw_args) = \
@@ -253,29 +253,29 @@ if __name__=='pymol.parser':
                                              layer.kw[0],
                                              parsing.parse_arg(layer.com2,mode=layer.kw[4],_self=self.cmd),
                                              layer.kw[4], _self=self.cmd) # will raise exception on failure
-                                        self.result=apply(layer.kw[0],layer.args,layer.kw_args)
+                                        self.result=layer.kw[0](*layer.args, **layer.kw_args)
                                     elif layer.kw[4]==parsing.PYTHON:
                                             # handle python keyword
-                                            layer.com2 = string.strip(layer.com2)
+                                            layer.com2 = layer.com2.strip()
                                             if len(layer.com2)>0:
                                                 if not secure:
                                                     exec(layer.com2+"\n",self.pymol_names,self.pymol_names)
                                                 else:
                                                     layer.next = []                                    
-                                                    print 'Error: Python expressions disallowed in this file.'
+                                                    print('Error: Python expressions disallowed in this file.')
                                                     return None
                                     else:
                                         # remove line breaks (only important for Python expressions)
-                                        layer.com2=string.replace(layer.com2,'\n','')
+                                        layer.com2=layer.com2.replace('\n','')
                                         # old parsing style, being phased out
                                         if layer.kw[4]==parsing.ABORT:
                                             return None # SCRIPT ABORT EXIT POINT
                                         if layer.kw[4]==parsing.MOVIE: # copy literal single line, no breaks
                                             layer.next = []
                                             if not secure:
-                                                layer.input = string.split(layer.com1,' ',1)
+                                                layer.input = layer.com1.split(' ',1)
                                             else:
-                                                print 'Error: Movie commands disallowed in this file. '
+                                                print('Error: Movie commands disallowed in this file. ')
                                                 return None
                                         if len(layer.input)>1:
                                             layer.args = parsing.split(layer.input[1],layer.kw[3])
@@ -283,12 +283,12 @@ if __name__=='pymol.parser':
                                                 nArg = len(layer.args) - 1
                                                 c = 0
                                                 while c < nArg:
-                                                    if (string.count(layer.args[c],'(')!=
-                                                         string.count(layer.args[c],')')):
+                                                    if ( layer.args[c].count('(')!=
+                                                         layer.args[c].count(')')):
                                                         tmp=layer.args[c+1]
                                                         layer.args.remove(tmp)
-                                                        layer.args[c]=string.strip(layer.args[c])+\
-                                                                          ','+string.strip(tmp)
+                                                        layer.args[c]=layer.args[c].strip()+\
+                                                                          ','+tmp.strip()
                                                         nArg = nArg-1
                                                         break;
                                                     c = c + 1
@@ -299,12 +299,12 @@ if __name__=='pymol.parser':
                                         else:
                                             layer.args = []
                                         if layer.kw[1]<= len(layer.args) <= layer.kw[2]:
-                                            layer.args = map(string.strip,layer.args)
+                                            layer.args = [a.strip() for a in layer.args]
                                             if layer.kw[4]<parsing.RUN:
                                                 #                           
                                                 # this is where old-style commands are invoked
                                                 #
-                                                self.result=apply(layer.kw[0],layer.args)
+                                                self.result=layer.kw[0](*layer.args)
                                                 #                           
                                             elif (layer.kw[4]==parsing.EMBED):
                                                 layer.next = []
@@ -327,7 +327,7 @@ if __name__=='pymol.parser':
                                                     layer.embed_list = list
                                                     layer.embed_type = 0 # not a python block
                                                 else:
-                                                    print 'Error: embed only legal in special files (e.g. p1m)'
+                                                    print('Error: embed only legal in special files (e.g. p1m)')
                                                     raise None
                                             elif (layer.kw[4]==parsing.SKIP):
                                                 layer.next = []
@@ -335,7 +335,7 @@ if __name__=='pymol.parser':
                                                     parsing.parse_arg(layer.com2,_self=self.cmd),
                                                     ('sentinel',),
                                                     {'sentinel':'skip end'})
-                                                print arg # ???
+                                                print(arg) # ???
                                                 if len(layer.args):
                                                     if layer.args[0]=='end': # probable 'skip end' to ignore
                                                         arg = []
@@ -359,26 +359,26 @@ if __name__=='pymol.parser':
                                                         layer.embed_type = 1 # python block
                                                     layer.embed_line = 0
                                                 else:
-                                                    print 'Error: Python blocks disallowed in this file.'
+                                                    print('Error: Python blocks disallowed in this file.')
                                                     raise None
                                             else:
-                                                print 'Error: unknown keyword mode: '+str(layer.kw[4])
+                                                print('Error: unknown keyword mode: '+str(layer.kw[4]))
                                                 raise QuietException
                                         else:
-                                            print 'Error: invalid arguments for %s command.' % com
+                                            print('Error: invalid arguments for %s command.' % com)
         #
         # non-keyword command handling
         #
                                 elif len(layer.input[0]):
                                     if layer.input[0][0]=='@':
-                                        path = exp_path(string.strip(layer.com2[1:]))
-                                        if string.lower(path[-3:])=='p1m':
+                                        path = exp_path(layer.com2[1:].strip())
+                                        if path[-3:].lower()=='p1m':
                                             nest_securely = 1
                                         else:
                                             nest_securely = secure
                                         if re.search("\.py$|\.pym$",path) != None:
                                             if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
-                                                print "Warning: use 'run' instead of '@' with Python files?"
+                                                print("Warning: use 'run' instead of '@' with Python files?")
                                         layer.script = open(path,'r')
                                         self.cmd._pymol.__script__ = path
                                         self.nest=self.nest+1
@@ -391,11 +391,11 @@ if __name__=='pymol.parser':
                                             layer.com0  = self.layer[self.nest-1].script.readline()
                                             if not layer.com0: break
                                             inp_cmd = layer.com0
-                                            tmp_cmd = string.strip(inp_cmd)
+                                            tmp_cmd = inp_cmd.strip()
                                             if len(tmp_cmd):
                                                 if tmp_cmd[0] not in ['#','_','/']: # suppress comments, internals, python
                                                     if layer.embed_sentinel==None:
-                                                        print "PyMOL>"+tmp_cmd
+                                                        print("PyMOL>"+tmp_cmd)
                                                 elif tmp_cmd[0]=='_' and \
                                                       tmp_cmd[1:2] in [' ','']: # "_ " remove echo suppression signal
                                                     inp_cmd=inp_cmd[2:]
@@ -405,7 +405,7 @@ if __name__=='pymol.parser':
                                             elif pp_result==0: # QuietException
                                                 if self.cmd.get_setting_boolean("stop_on_exceptions"):
                                                     p_result = 0 # signal an error occurred
-                                                    print"PyMOL: stopped on exception."
+                                                    print("PyMOL: stopped on exception.")
                                                     break;
                                         self.nest=self.nest-1
                                         layer=self.layer[self.nest]
@@ -413,12 +413,12 @@ if __name__=='pymol.parser':
                                         layer.script.close()
                                         self.cmd.__script__ = layer.sc_path
                                     else: # nothing found, try literal python
-                                        layer.com2 = string.strip(layer.com2)
+                                        layer.com2 = layer.com2.strip()
                                         if len(layer.com2)>0:
                                             if not secure:
                                                 exec(layer.com2+"\n",self.pymol_names,self.pymol_names)
                                             elif layer.input[0][0:1]!='#':
-                                                print 'Error: unrecognized keyword: '+layer.input[0]
+                                                print('Error: unrecognized keyword: '+layer.input[0])
                         if (len(layer.next)>1) and p_result:
                             # continue parsing if no error or break has occurred
                             self.nest=self.nest+1
@@ -433,18 +433,18 @@ if __name__=='pymol.parser':
                             layer=self.layer[self.nest]
             except QuietException:
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):
-                    print "Parser: QuietException caught"
+                    print("Parser: QuietException caught")
                 p_result = 0 # notify caller that an error was encountered
             except CmdException as e:
                 if e.message:
-                    print e
+                    print(e)
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):         
-                    print "Parser: CmdException caught."
+                    print("Parser: CmdException caught.")
                 p_result = 0
             except:
                 traceback.print_exc()
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):
-                    print "PyMOL: Caught an unknown exception."
+                    print("PyMOL: Caught an unknown exception.")
                 p_result = 0 # notify caller that an error was encountered
             if not p_result and self.cmd._pymol.invocation.options.exit_on_error:
                 self.cmd.quit(1)
@@ -464,10 +464,10 @@ if __name__=='pymol.parser':
         def stdin_reader(self): # dedicated thread for reading standard input
             import sys
             while 1:
-		try:
-                	l = sys.stdin.readline()
-		except IOError:
-			continue
+                try:
+                    l = sys.stdin.readline()
+                except IOError:
+                    continue
                 if l!="":
                     if self.nest==0:
                         # if we're reading embedded input on stdin
@@ -490,7 +490,7 @@ if __name__=='pymol.parser':
             result = None
             pre = ''
             flag = 0
-            if (string.find(st,' ')<0) and (string.find(st,'@'))<0:
+            if not (' ' in st or '@' in st):
                 try:
                     result = complete_sc(st, self.cmd.kwhash, 'commands',' ', 1)
                 except:
@@ -498,11 +498,11 @@ if __name__=='pymol.parser':
             else:
                 full = self.cmd.kwhash.interpret(re.sub(r" .*","",st))
                 st_no_lists = remove_lists_re.sub("",st)
-                count = string.count(st_no_lists,',') # which argument are we on
+                count = st_no_lists.count(',') # which argument are we on
                 if self.cmd.is_string(full):
                     try:
                         if count<len(self.cmd.auto_arg):
-                            if self.cmd.auto_arg[count].has_key(full): # autocomplete arguments
+                            if full in self.cmd.auto_arg[count]: # autocomplete arguments
                                 flag = 1
                                 pre = re.sub(r"^[^ ]* ",' ',st,count=1) # trim command
                                 if re.search(r",",pre)!=None:
@@ -515,9 +515,7 @@ if __name__=='pymol.parser':
                                 pat = re.sub(r".*[\, ]",'',st)
             #               print ":"+pre+":"+pat+":"
 #                                print tuple([pat] + self.cmd.auto_arg[count][full])
-                                result = apply(complete_sc,
-                                               tuple([pat] + self.cmd.auto_arg[count][full]),
-                                           {})
+                                result = complete_sc(*tuple([pat] + self.cmd.auto_arg[count][full]), **{})
                     except:
                         traceback.print_exc()
                 if not flag: # otherwise fallback onto filename completion
@@ -529,17 +527,17 @@ if __name__=='pymol.parser':
                     flist = glob.glob(exp_path(st3)+"*")
                     lf = len(flist)
                     if lf == 0:
-                        print " parser: no matching files."
+                        print(" parser: no matching files.")
                     elif lf==1:
                         result = flist[0]
                         if os.path.isdir(flist[0]):
                             result += '/' # do not use os.path.sep here
                     else:
                         flist.sort()
-                        print " parser: matching files:"
+                        print(" parser: matching files:")
                         lst = parsing.list_to_str_list(flist)
                         for a in lst:
-                            print a
+                            print(a)
                         # now append as much up to point of ambiguity
                         css = os.path.commonprefix(flist)
                         if len(css)>len(st3):

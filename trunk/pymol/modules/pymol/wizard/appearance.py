@@ -1,5 +1,7 @@
 # Warren L. DeLano
 
+from __future__ import print_function
+
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -154,7 +156,7 @@ class Appearance(Wizard):
         self.cmd.refresh_wizard()
 
     def undo(self):
-        print "no undo!"
+        print("no undo!")
         
     def get_prompt(self):
         self.prompt = []
