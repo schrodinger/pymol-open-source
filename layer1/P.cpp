@@ -63,6 +63,7 @@ the initialization functions for these libraries on startup.
 #include"Executive.h"
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
+#include "Lex.h"
 
 static int label_copy_text(char *dst, const char *src, int len, int max)
 {
@@ -159,10 +160,10 @@ char convertStereoToChar(int stereo){
   case PYMOL_MMSTEREO_AN_GEOM_INDEFINITE:
     return '?';
   }
-  return ' ';
+  return '\0';
 }
 
-#if 0
+#if 1
 int convertCharToStereo(char stereo){
   switch (stereo){
   case 'R':
@@ -265,11 +266,11 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
             else
               label_len = label_copy_text(label, "ATOM", label_len, label_max);
           } else if(!strcmp(tok, "name")) {
-            label_len = label_copy_text(label, at->name, label_len, label_max);
+            label_len = label_copy_text(label, LexStr(G, at->name), label_len, label_max);
           } else if(!strcmp(tok, "resn")) {
-            label_len = label_copy_text(label, at->resn, label_len, label_max);
+            label_len = label_copy_text(label, LexStr(G, at->resn), label_len, label_max);
           } else if(!strcmp(tok, "resi")) {
-            label_len = label_copy_text(label, at->resi, label_len, label_max);
+            sprintf(buffer, "%d%c", at->resv, at->inscode);
           } else if(!strcmp(tok, "resv")) {
             sprintf(buffer, "%d", at->resv);
           } else if(!strcmp(tok, "chain")) {
@@ -277,7 +278,7 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
           } else if(!strcmp(tok, "alt")) {
             label_len = label_copy_text(label, at->alt, label_len, label_max);
           } else if(!strcmp(tok, "segi")) {
-            label_len = label_copy_text(label, at->segi, label_len, label_max);
+            label_len = label_copy_text(label, LexStr(G, at->segi), label_len, label_max);
           } else if(!strcmp(tok, "ss")) {
             label_len = label_copy_text(label, at->ssType, label_len, label_max);
           } else if(!strcmp(tok, "vdw")) {
@@ -417,10 +418,155 @@ PyObject *P_chempy = NULL;      /* okay as global */
 PyObject *P_models = NULL;      /* okay as global */
 PyObject *P_setting = NULL;     /* okay as global -- just used for names */
 
-static PyMappingMethods wrapperMappingMethods;
+static PyMappingMethods wrapperMappingMethods, settingMappingMethods;
 static PyTypeObject Wrapper_Type = {
   PyVarObject_HEAD_INIT(NULL, 0)
 };
+static PyTypeObject settingWrapper_Type = {
+  PyVarObject_HEAD_INIT(NULL, 0)
+};
+
+static
+PyObject *SettingWrapperObjectSubScript(PyObject *obj, PyObject *key){
+  SettingPropertyWrapperObject *sobj = (SettingPropertyWrapperObject*)obj;
+  int setting_id;
+  PyObject *ret = NULL;
+  auto G = sobj->wobj->G;
+  if (!sobj || !sobj->wobj || !sobj->wobj->obj){
+    /* ERROR */
+    PRINTFB(sobj->wobj->G, FB_Python, FB_Errors)
+      "Error: wrappers cannot be used outside of the iterate/alter/alter_state commands\n" ENDFB(sobj->wobj->G);
+    return ret;
+  }
+  if(PyInt_Check(key)) {
+    setting_id = PyInt_AS_LONG(key);
+  } else {
+    PyObject *keyobj = PyObject_Str(key);
+    char *settingname = PyString_AS_STRING(keyobj);
+    setting_id = SettingGetIndex(sobj->wobj->G, settingname);
+    Py_DECREF(keyobj);
+  }
+  if (setting_id){
+    if (sobj->wobj->v){
+      // check atom-state level setting in CoordSet
+      // (not supported in Open-Source PyMOL, skip to atom level setting)
+    }
+    if (!ret){
+	/* return atom-level setting as PyObject */
+      ret = SettingGetIfDefinedPyObject(sobj->wobj->G, sobj->wobj->atomInfo, setting_id);
+      if (!ret) {
+	/* return global setting as PyObject */
+	CSetting * set1 = NULL, *set2 = NULL;
+	if (sobj->wobj->cs){
+	  set1 = sobj->wobj->cs->Setting;
+	}
+	if (sobj->wobj->obj){
+	  set2 = sobj->wobj->obj->Obj.Setting;
+	}
+	ret = SettingGetPyObject(sobj->wobj->G, set1, set2, setting_id);
+      }
+    }
+  }
+  return PConvAutoNone(ret);
+}
+
+/*
+ * Set an atom or atom-state level setting with alter or alter_state.
+ *
+ * s[key] = val
+ *
+ * obj: `s` object in cmd.alter/cmd.alter_state namespace
+ *
+ * Return 0 on success or -1 on failure.
+ */
+static
+int SettingWrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
+  auto& wobj = reinterpret_cast<SettingPropertyWrapperObject*>(obj)->wobj;
+  const char * scope_err_msg = " Python-Error: wrappers cannot be used "
+    "outside of the iterate/alter/alter_state commands\n";
+
+  if (!wobj) {
+    puts(scope_err_msg);
+    return -1;
+  }
+
+  int setting_id;
+  auto G = wobj->G;
+
+  if (!wobj->obj) {
+    if (Feedback(G, FB_Python, FB_Errors))
+      FeedbackAdd(G, scope_err_msg);
+    return -1;
+  }
+
+  if (wobj->read_only){
+    if (Feedback(G, FB_Python, FB_Errors)) FeedbackAdd(G,
+        " Python-Error: settings cannot be set in iterate/label function\n");
+    return -1;
+  }
+
+  if(PyInt_Check(key)) {
+    setting_id = PyInt_AS_LONG(key);
+  } else {
+    PyObject *keyobj = PyObject_Str(key);
+    const char *settingname = PyString_AS_STRING(keyobj);
+    setting_id = SettingGetIndex(G, settingname);
+    Py_DECREF(keyobj);
+  }
+
+  if (setting_id < 0 || setting_id >= cSetting_INIT) {
+    if (Feedback(G, FB_Setting, FB_Errors))
+      FeedbackAdd(G, " Setting-Error: unknown setting\n");
+    return -1;
+  }
+
+  if (wobj->v) {
+    // atom-state level
+    if (Feedback(G, FB_Setting, FB_Errors)) FeedbackAdd(G,
+        " Settings-Error: Atom-state-level settings not supported in Open-Source PyMOL\n");
+  } else {
+    // atom level
+    if(!SettingLevelCheck(G, setting_id, cSettingLevel_atom)) {
+      if (Feedback(G, FB_Python, FB_Errors)) FeedbackAdd(G,
+          " Python-Error: only atom-level settings can be set in alter function\n");
+    } else if (AtomInfoSetSettingFromPyObject(G, wobj->atomInfo, setting_id, val)) {
+      AtomInfoSettingGenerateSideEffects(G, wobj->obj, setting_id, wobj->index);
+      return 0; // success
+    }
+  }
+
+  return -1; // failure
+}
+
+/*
+ * Python iterator over atom or atom-state setting indices
+ */
+static PyObject* SettingWrapperObjectIter(PyObject *self)
+{
+  auto& wobj = reinterpret_cast<SettingPropertyWrapperObject*>(self)->wobj;
+
+  if (!wobj->obj) {
+    PRINTFB(wobj->G, FB_Python, FB_Errors)
+      " Error: context must be iterate/alter/alter_state\n"
+      ENDFB(wobj->G);
+    return NULL;
+  }
+
+  int unique_id = wobj->atomInfo->unique_id;
+
+  if (wobj->v) {
+    PRINTFB(wobj->G, FB_Setting, FB_Errors)
+      " Settings-Error: Atom-state-level settings not supported in Open-Source PyMOL\n"
+      ENDFB(wobj->G);
+    return NULL;
+  }
+
+  PyObject * items = SettingUniqueGetIndicesAsPyList(wobj->G, unique_id);
+  PyObject * iter = PyObject_GetIter(items);
+  Py_XDECREF(items);
+
+  return iter;
+}
 
 static PyObject* PyObject_GenericGetAttrOrItem(PyObject *o, PyObject *key) {
   PyObject *ret = PyObject_GenericGetAttr(o, key);
@@ -430,10 +576,12 @@ static PyObject* PyObject_GenericGetAttrOrItem(PyObject *o, PyObject *key) {
   return PyObject_GetItem(o, key);
 }
 
+static
 int PyObject_GenericSetAttrAsItem(PyObject *o, PyObject *key, PyObject *value) {
   return PyObject_SetItem(o, key, value);
 }
 
+static
 PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
 
   static PyObject * pystr_HETATM        = PyString_InternFromString("HETATM");
@@ -479,7 +627,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
     case cPType_int_as_string:
       {
         const char *st = LexStr(wobj->G,
-            *reinterpret_cast<int*>
+            *reinterpret_cast<lexidx_t*>
             (((char*)wobj->atomInfo) + ap->offset));
 	ret = PyString_FromString(st);
       }
@@ -539,9 +687,12 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       }
       break;
     case cPType_settings:
+      ret = (PyObject*)wobj->G->P_inst->settingWrapperObject;
+      borrowed = true;
+      break;
     case cPType_properties:
       PRINTFB(wobj->G, FB_Python, FB_Errors)
-        " PLabelAtom/PAlterAtom: Warning: Accessing settings and properties not supported in Open-Source PyMOL\n" ENDFB(wobj->G);
+        " PLabelAtom/PAlterAtom: Warning: Accessing properties not supported in Open-Source PyMOL\n" ENDFB(wobj->G);
       break;
     case cPType_state:
       {
@@ -551,6 +702,16 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
 	  PRINTFB(wobj->G, FB_Python, FB_Errors)
 	    " PLabelAtom/PAlterAtom: Warning: state cannot be set in alter/iterate/label function\n" ENDFB(wobj->G);
 	}
+      }
+    default:
+      switch (ap->id) {
+      case ATOM_PROP_RESI:
+        {
+          char resi[8];
+          AtomResiFromResv(resi, sizeof(resi), wobj->atomInfo);
+          ret = PyString_FromString(resi);
+        }
+        break;
       }
     }
   } else {
@@ -564,15 +725,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   return ret;
 }
 
-float PyObject_as_Number(PyObject *obj){
-  if (PyInt_Check(obj)){
-    return PyInt_AS_LONG(obj);
-  } else if (PyFloat_Check(obj)){
-    return PyFloat_AS_DOUBLE(obj);
-  } 
-  return 0.f;
-}
-
+static
 int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
   WrapperObject *wobj = (WrapperObject*)obj;
   if (!wobj || !wobj->obj){
@@ -641,7 +794,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	break;
       case cPType_int_as_string:
 	{
-          auto dest = reinterpret_cast<int*>
+          auto dest = reinterpret_cast<lexidx_t*>
             (((char*)wobj->atomInfo) + ap->offset);
           PyObject *valobj = PyObject_Str(val);
 	  char *valstr = PyString_AS_STRING(valobj);
@@ -653,10 +806,8 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	break;
       case cPType_float:
 	{
-	  float valfloat = PyObject_as_Number(val);
 	  float *dest = (float*)(((char*)wobj->atomInfo) + ap->offset);
-	  *dest = valfloat;
-	  changed = true;
+	  changed = PConvPyObjectToFloat(val, dest);
 	}
 	break;	
       case cPType_stereo:
@@ -664,7 +815,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
           PyObject *valobj = PyObject_Str(val);
 	  char *stereo = PyString_AS_STRING(valobj);
 	  if (stereo){
-	    wobj->atomInfo->mmstereo = convertStereoToChar(stereo[0]);
+	    wobj->atomInfo->mmstereo = convertCharToStereo(stereo[0]);
 	  }
           Py_DECREF(valobj);
 	}
@@ -703,8 +854,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
 	break;
       case cPType_xyz_float:
 	if (wobj->v){
-	  float valfloat = PyObject_as_Number(val);
-	  wobj->v[ap->offset] = valfloat;
+	  PConvPyObjectToFloat(val, wobj->v + ap->offset);
 	} else {
 	  PRINTFB(wobj->G, FB_Python, FB_Errors)
 	    " PAlterAtom: Warning: can only set x/y/z in alter_state\n" ENDFB(wobj->G);
@@ -714,22 +864,26 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       case cPType_properties:
 	PRINTFB(wobj->G, FB_Python, FB_Errors)
 	  " PLabelAtom/PAlterAtom/PIterateAtom: Warning: settings or properties object cannot be set\n" ENDFB(wobj->G);
+      default:
+        switch (ap->id) {
+        case ATOM_PROP_RESI:
+          if (PConvPyIntToInt(val, &wobj->atomInfo->resv)) {
+            wobj->atomInfo->inscode = '\0';
+          } else {
+            PyObject *valobj = PyObject_Str(val);
+            wobj->atomInfo->setResi(PyString_AS_STRING(valobj));
+            Py_DECREF(valobj);
+          }
+          break;
+        }
       }
       if (changed){
 	switch (ap->id){
 	case ATOM_PROP_ELEM:
 	  AtomInfoAssignParameters(wobj->G, wobj->atomInfo);
 	  break;
-	case ATOM_PROP_RESI:
-	  wobj->atomInfo->resv = AtomResvFromResi(wobj->atomInfo->resi);
-	  break;
 	case ATOM_PROP_RESV:
-	  {
-	    WordType buf;
-	    sprintf(buf, "%d", wobj->atomInfo->resv);
-	    buf[sizeof(ResIdent) - 1] = 0;
-	    strcpy(wobj->atomInfo->resi, buf);
-	  }
+	  wobj->atomInfo->inscode = '\0';
 	  break;
 	case ATOM_PROP_SS:
 	  wobj->atomInfo->ssType[0] = toupper(wobj->atomInfo->ssType[0]);
@@ -2250,16 +2404,33 @@ void PInit(PyMOLGlobals * G, int global_instance)
     wrapperMappingMethods.mp_ass_subscript = &WrapperObjectAssignSubScript;
     Wrapper_Type.tp_as_mapping = &wrapperMappingMethods;
     
-    if (PyType_Ready(&Wrapper_Type) < 0){
+    settingWrapper_Type.tp_name = "wrapper.SettingWrapper";
+    settingWrapper_Type.tp_basicsize = sizeof(SettingPropertyWrapperObject);
+    settingWrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
+    settingWrapper_Type.tp_iter = &SettingWrapperObjectIter;
+    settingMappingMethods.mp_length = NULL;
+    settingMappingMethods.mp_subscript = &SettingWrapperObjectSubScript;
+    settingMappingMethods.mp_ass_subscript = &SettingWrapperObjectAssignSubScript;
+    settingWrapper_Type.tp_as_mapping = &settingMappingMethods;
+    settingWrapper_Type.tp_getattro = PyObject_GenericGetAttrOrItem;
+    settingWrapper_Type.tp_setattro = PyObject_GenericSetAttrAsItem;
+
+    if (PyType_Ready(&Wrapper_Type) < 0
+        || PyType_Ready(&settingWrapper_Type) < 0
+        ){
       PRINTFB(G, FB_Python, FB_Errors)
 	" PInit: Wrapper_Type, settingWrapper_Type, propertyWrapper_Type not ready\n" ENDFB(G);
       return;
     }
     Py_INCREF(&Wrapper_Type);
+    Py_INCREF(&settingWrapper_Type);
     G->P_inst->wrapperObject = (WrapperObject *)PyType_GenericNew(&Wrapper_Type, Py_None, Py_None);
     G->P_inst->wrapperObject->G = G;
     G->P_inst->wrapperObject->dict = PyDict_New();
+    G->P_inst->settingWrapperObject = (SettingPropertyWrapperObject *)PyType_GenericNew(&settingWrapper_Type, Py_None, Py_None);
+    G->P_inst->settingWrapperObject->wobj = G->P_inst->wrapperObject;
     Py_INCREF(G->P_inst->wrapperObject);
+    Py_INCREF(G->P_inst->settingWrapperObject);
   }
 }
 

@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"Extrude.h"
 #include"ShaderMgr.h"
+#include "Lex.h"
 
 #include "AtomIterators.h"
 
@@ -300,13 +301,15 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
           col[i] = ColorGet(G, ai->color);
           v_i[i] = cs->Coord + 3 * a;
           have_atom = true;
-          if(WordMatchExact(G, "C4", ai->name, 1))
+          const char * ai_name = LexStr(G, ai->name);
+          if(WordMatchExact(G, "C4", ai_name, 1))
             have_C4 = a1;
-          if(WordMatchExact(G, "C4'", ai->name, 1) ||
-             WordMatchExact(G, "C4*", ai->name, 1))
+          else if(
+              WordMatchExact(G, "C4'", ai_name, 1) ||
+              WordMatchExact(G, "C4*", ai_name, 1))
             have_C4_prime = a1;
-          if(((ai->name[0] == 'C') || (ai->name[0] == 'c')) &&
-             ((ai->name[1] >= '0') && (ai->name[1] <= '9')))
+          if(((ai_name[0] == 'C') || (ai_name[0] == 'c')) &&
+              isdigit(ai_name[1]))
             have_C_number = a1;
         }
         if(!marked[a1])
@@ -350,16 +353,16 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
             nf = nuc_flag[a1];
           ai = atomInfo + a1;
           if((ai->protons == cAN_C) && (!marked[a1]) &&
-             (WordMatchExact(G, "C3*", ai->name, 1) ||
-              WordMatchExact(G, "C3'", ai->name, 1))) {
+             (WordMatchExact(G, "C3*", LexStr(G, ai->name), 1) ||
+              WordMatchExact(G, "C3'", LexStr(G, ai->name), 1))) {
             sugar_at = a1;
             mem0 = a1;
             nbr[0] = neighbor[mem0] + 1;
             while((mem1 = neighbor[nbr[0]]) >= 0) {
               if((atomInfo[mem1].protons == cAN_O) && (!marked[mem1])) {
                 ai = atomInfo + mem1;
-                if(WordMatchExact(G, "O3*", ai->name, 1) ||
-                   WordMatchExact(G, "O3'", ai->name, 1))
+                if(WordMatchExact(G, "O3*", LexStr(G, ai->name), 1) ||
+                   WordMatchExact(G, "O3'", LexStr(G, ai->name), 1))
                   o3_at = mem1;
                 nbr[1] = neighbor[mem1] + 1;
                 while((mem2 = neighbor[nbr[1]]) >= 0) {
@@ -373,8 +376,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
 
               if((atomInfo[mem1].protons == cAN_C) && (!marked[mem1])) {
                 ai2 = atomInfo + mem1;
-                if(WordMatchExact(G, NUCLEIC_NORMAL1, ai2->name, 1) ||
-                   WordMatchExact(G, NUCLEIC_NORMAL2, ai2->name, 1))
+                if(WordMatchExact(G, NUCLEIC_NORMAL1, LexStr(G, ai2->name), 1) ||
+                   WordMatchExact(G, NUCLEIC_NORMAL2, LexStr(G, ai2->name), 1))
                   sugar_at = mem1;
 
                 nbr[1] = neighbor[mem1] + 1;
@@ -382,16 +385,16 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                   if((mem2 != mem0) && (!marked[mem2]) &&
                      (atomInfo[mem2].protons == cAN_C)) {
                     ai = atomInfo + mem2;
-                    if(WordMatchExact(G, "C1*", ai->name, 1) ||
-                       WordMatchExact(G, "C1'", ai->name, 1))
+                    if(WordMatchExact(G, "C1*", LexStr(G, ai->name), 1) ||
+                       WordMatchExact(G, "C1'", LexStr(G, ai->name), 1))
                       c1_at = mem2;
                     nbr[2] = neighbor[mem2] + 1;
                     while((mem3 = neighbor[nbr[2]]) >= 0) {
                       if((mem3 != mem1) && (mem3 != mem0)) {
                         if((atomInfo[mem3].protons == cAN_O) && (!marked[mem3])) {
                           ai = atomInfo + mem3;
-                          if(WordMatchExact(G, "O5*", ai->name, 1) ||
-                             WordMatchExact(G, "O5'", ai->name, 1))
+                          if(WordMatchExact(G, "O5*", LexStr(G, ai->name), 1) ||
+                             WordMatchExact(G, "O5'", LexStr(G, ai->name), 1))
                             o5_at = mem3;
 
                           nbr[3] = neighbor[mem3] + 1;
@@ -408,8 +411,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                           if(ring_mode) {
                             ai2 = atomInfo + mem3;
                             if((!marked[mem3])
-                               && (WordMatchExact(G, "N1", ai2->name, 1)
-                                   || WordMatchExact(G, "N9", ai2->name, 1))) {
+                               && (WordMatchExact(G, "N1", LexStr(G, ai2->name), 1)
+                                   || WordMatchExact(G, "N9", LexStr(G, ai2->name), 1))) {
                               base_at = mem3;
                               if(ring_mode != 3) {
                                 ladder_radius = ring_width * 1.5;
@@ -448,7 +451,7 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                                              && (mem7 != mem2) && (mem7 != mem1)
                                              && (mem7 != mem0) && (ai2->protons == cAN_N)
                                              && (marked[mem7])) {
-                                            if(WordMatchExact(G, "N1", ai2->name, 1)) {
+                                            if(WordMatchExact(G, "N1", LexStr(G, ai2->name), 1)) {
                                               /* and set flag */
                                               base_at = mem7;
                                               purine_flag = true;
@@ -463,7 +466,7 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                                     if(!purine_flag) {
                                       ai2 = atomInfo + mem5;
                                       if(marked[mem5]
-                                         && WordMatchExact(G, "N3", ai2->name, 1)) {
+                                         && WordMatchExact(G, "N3", LexStr(G, ai2->name), 1)) {
                                         base_at = mem5;
                                       }
                                     }
@@ -497,8 +500,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
           /* base-hunting */
 
           if((ai->protons == cAN_N) && (!marked[a1]) &&
-             (WordMatchExact(G, "N1", ai->name, 1) ||
-              WordMatchExact(G, "N3", ai->name, 1))) {
+             (WordMatchExact(G, "N1", LexStr(G, ai->name), 1) ||
+              WordMatchExact(G, "N3", LexStr(G, ai->name), 1))) {
             mem0 = a1;
             nbr[0] = neighbor[mem0] + 1;
             while((mem1 = neighbor[nbr[0]]) >= 0) {
@@ -514,9 +517,9 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                         nbr[3] = neighbor[mem3] + 1;
                         while((mem4 = neighbor[nbr[3]]) >= 0) {
                           if((mem4 != mem2) && (mem4 != mem1) && (mem4 != mem0)) {
-			    if((atomInfo[mem4].protons == cAN_N) ||
-			       WordMatchExact(G, "C5", atomInfo[mem4].name, 1)) {     /* purine case */
-			      nbr[4] = neighbor[mem4] + 1;
+                            if((atomInfo[mem4].protons == cAN_N) ||
+                               WordMatchExact(G, "C5", LexStr(G, atomInfo[mem4].name), 1)) {     /* purine case */
+                              nbr[4] = neighbor[mem4] + 1;
                               while((mem5 = neighbor[nbr[4]]) >= 0) {
                                 if((mem5 != mem3) && (mem5 != mem2) && (mem5 != mem1)
                                    && (mem5 != mem0) && (marked[mem5])
@@ -537,9 +540,9 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                                            && (mem7 != mem0) && (ai2->protons == cAN_C)
                                            && (marked[mem7])) {
                                           if(WordMatchExact
-                                             (G, NUCLEIC_NORMAL1, ai2->name, 1)
+                                             (G, NUCLEIC_NORMAL1, LexStr(G, ai2->name), 1)
                                              || WordMatchExact(G, NUCLEIC_NORMAL2,
-                                                               ai2->name, 1)) {
+                                                               LexStr(G, ai2->name), 1)) {
                                             base_at = a1;
                                             sugar_at = mem7;
                                           }
@@ -563,8 +566,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                                 if((mem5 != mem3) && (mem5 != mem2) && (mem5 != mem1)
                                    && (mem5 != mem0) && (ai2->protons == cAN_C)
                                    && (marked[mem5])) {
-                                  if(WordMatchExact(G, NUCLEIC_NORMAL1, ai2->name, 1)
-                                     || WordMatchExact(G, NUCLEIC_NORMAL2, ai2->name, 1)) {
+                                  if(WordMatchExact(G, NUCLEIC_NORMAL1, LexStr(G, ai2->name), 1)
+                                     || WordMatchExact(G, NUCLEIC_NORMAL2, LexStr(G, ai2->name), 1)) {
                                     base_at = a1;
                                     sugar_at = mem5;
                                   }
@@ -611,8 +614,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                       if((mem3 != mem1) && (mem3 != mem0) && (marked[mem3])
                          && (atomInfo[mem3].protons == cAN_C)) {
                         /* cyclic C */
-                        if(WordMatchExact(G, "C5", ai->name, 1) &&
-                           WordMatchExact(G, "C6", atomInfo[mem1].name, 1)) {
+                        if(WordMatchExact(G, "C5", LexStr(G, ai->name), 1) &&
+                           WordMatchExact(G, "C6", LexStr(G, atomInfo[mem1].name), 1)) {
                           c5_linked = mem3;
                           c5 = mem0;
                         }
@@ -629,16 +632,17 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                   if((mem2 != mem0) && (marked[mem2])
                      && (atomInfo[mem2].protons == cAN_C)) {
                     /* cyclic C */
-                    if(WordMatchExact(G, "C1", ai->name, 1)) {
+                    const char * ai_name = LexStr(G, ai->name);
+                    if(WordMatchExact(G, "C1", ai_name, 1)) {
                       c1_linked = mem2;
                       c1 = mem0;
-                    } else if(WordMatchExact(G, "C2", ai->name, 1)) {
+                    } else if(WordMatchExact(G, "C2", ai_name, 1)) {
                       c2_linked = mem2;
                       c2 = mem0;
-                    } else if(WordMatchExact(G, "C3", ai->name, 1)) {
+                    } else if(WordMatchExact(G, "C3", ai_name, 1)) {
                       c3_linked = mem2;
                       c3 = mem0;
-                    } else if(WordMatchExact(G, "C4", ai->name, 1)) {
+                    } else if(WordMatchExact(G, "C4", ai_name, 1)) {
                       c4_linked = mem2;
                       c4 = mem0;
                     }
@@ -650,16 +654,16 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                       if((mem3 != mem1) && (mem3 != mem0) && (marked[mem3])
                          && (atomInfo[mem3].protons == cAN_C)) {
                         /* cyclic C */
-                        if(WordMatchExact(G, "C5", atomInfo[mem3].name, 1) &&
-                           WordMatchExact(G, "C6", atomInfo[mem2].name, 1)) {
+                        if(WordMatchExact(G, "C5", LexStr(G, atomInfo[mem3].name), 1) &&
+                           WordMatchExact(G, "C6", LexStr(G, atomInfo[mem2].name), 1)) {
                           c5 = mem0;
                           c5_linked = mem3;
                         }
                       } else if((mem3 != mem1) && (mem3 != mem0) && (!marked[mem3])
                                 && (atomInfo[mem3].protons == cAN_C)) {
                         /* exocyclic */
-                        if(WordMatchExact(G, "C1", ai->name, 1) &&
-                           WordMatchExact(G, "CA", atomInfo[mem3].name, 1)) {
+                        if(WordMatchExact(G, "C1", LexStr(G, ai->name), 1) &&
+                           WordMatchExact(G, "CA", LexStr(G, atomInfo[mem3].name), 1)) {
                           c1 = mem0;
                           c1_linked = mem3;
                         }
@@ -686,8 +690,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                           if((mem4 != mem2) && (mem3 != mem1) && (!marked[mem4])
                              && (atomInfo[mem4].protons == cAN_C)) {
                             /* exocyclic */
-                            if(WordMatchExact(G, "C1", ai->name, 1) &&
-                               WordMatchExact(G, "CA", atomInfo[mem4].name, 1)) {
+                            if(WordMatchExact(G, "C1", LexStr(G, ai->name), 1) &&
+                               WordMatchExact(G, "CA", LexStr(G, atomInfo[mem4].name), 1)) {
                               c1 = mem0;
                               c1_linked = mem4;
                             }
@@ -710,7 +714,7 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
       if(sugar_at >= 0) {       /* still need to find the phosphates... */
         int c3_index = -1;
         ai = atomInfo + sugar_at;
-        if(WordMatchExact(G, "C3*", ai->name, 1) || WordMatchExact(G, "C3'", ai->name, 1)) {
+        if(WordMatchExact(G, "C3*", LexStr(G, ai->name), 1) || WordMatchExact(G, "C3'", LexStr(G, ai->name), 1)) {
           c3_index = sugar_at;
         } else {
           mem0 = sugar_at;
@@ -718,8 +722,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
           while((mem1 = neighbor[nbr[0]]) >= 0) {
             if((atomInfo[mem1].protons == cAN_C) && (!marked[mem1])) {
               ai = atomInfo + mem1;
-              if(!(WordMatchExact(G, "C3*", ai->name, 1) ||
-                   WordMatchExact(G, "C3'", ai->name, 1))) {
+              if(!(WordMatchExact(G, "C3*", LexStr(G, ai->name), 1) ||
+                   WordMatchExact(G, "C3'", LexStr(G, ai->name), 1))) {
                 c3_index = mem1;
               }
             }
@@ -734,8 +738,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
           while((mem1 = neighbor[nbr[0]]) >= 0) {
             if((atomInfo[mem1].protons == cAN_O) && (!marked[mem1])) {
               ai = atomInfo + mem1;
-              if(WordMatchExact(G, "O3*", ai->name, 1) ||
-                 WordMatchExact(G, "O3'", ai->name, 1))
+              if(WordMatchExact(G, "O3*", LexStr(G, ai->name), 1) ||
+                 WordMatchExact(G, "O3'", LexStr(G, ai->name), 1))
                 o3_at = mem1;
               nbr[1] = neighbor[mem1] + 1;
               while((mem2 = neighbor[nbr[1]]) >= 0) {
@@ -752,8 +756,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
 
                 if((mem2 != mem0) && (!marked[mem2]) && (atomInfo[mem2].protons == cAN_C)) {
                   ai = atomInfo + mem2;
-                  if(WordMatchExact(G, "C1*", ai->name, 1) ||
-                     WordMatchExact(G, "C1'", ai->name, 1))
+                  if(WordMatchExact(G, "C1*", LexStr(G, ai->name), 1) ||
+                     WordMatchExact(G, "C1'", LexStr(G, ai->name), 1))
                     c1_at = mem2;
 
                   nbr[2] = neighbor[mem2] + 1;
@@ -761,8 +765,8 @@ static void do_ring(PyMOLGlobals * G, short is_picking, int n_atom, int *atix, O
                     if((mem3 != mem1) && (mem3 != mem0) &&
                        (atomInfo[mem3].protons == cAN_O) && (!marked[mem3])) {
                       ai = atomInfo + mem3;
-                      if(WordMatchExact(G, "O5*", ai->name, 1) ||
-                         WordMatchExact(G, "O5'", ai->name, 1))
+                      if(WordMatchExact(G, "O5*", LexStr(G, ai->name), 1) ||
+                         WordMatchExact(G, "O5'", LexStr(G, ai->name), 1))
                         o5_at = mem3;
                       nbr[3] = neighbor[mem3] + 1;
                       while((mem4 = neighbor[nbr[3]]) >= 0) {
@@ -1503,14 +1507,14 @@ static void nuc_acid(PyMOLGlobals * G, int a, int a1, AtomInfoType * ai, CoordSe
       a4 = cs->atmToIdx(a3);
       if(a4 >= 0) {
         if(na_mode == 1) {
-          if(WordMatchExact(G, NUCLEIC_NORMAL1, obj->AtomInfo[a3].name, 1) ||
-             WordMatchExact(G, NUCLEIC_NORMAL2, obj->AtomInfo[a3].name, 1)) {
+          if(WordMatchExact(G, NUCLEIC_NORMAL1, LexStr(G, obj->AtomInfo[a3].name), 1) ||
+             WordMatchExact(G, NUCLEIC_NORMAL2, LexStr(G, obj->AtomInfo[a3].name), 1)) {
             v_c = cs->Coord + 3 * a4;
           }
         } else if(a3 == a1) {
           v_c = cs->Coord + 3 * a4;
         }
-        if(WordMatchExact(G, NUCLEIC_NORMAL0, obj->AtomInfo[a3].name, 1)) {
+        if(WordMatchExact(G, NUCLEIC_NORMAL0, LexStr(G, obj->AtomInfo[a3].name), 1)) {
           v_o = cs->Coord + 3 * a4;
         }
       }
@@ -2911,16 +2915,19 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
       ai = obj->AtomInfo + a1;
       *(lv++) = GET_BIT(ai->visRep, cRepCartoon);
       if(ai->visRep & cRepCartoonBit) {
+
+        const char * ai_name = LexStr(G, ai->name);
+
         if(ring_anchor && (ai->protons != cAN_H) && ((ring_finder_eff >= 3) ||  /* all 5-7 atom rings */
                                                      ((ring_finder_eff <= 2) && /*  C4-containing rings */
                                                       (WordMatchExact
-                                                       (G, "C4", ai->name, 1)))
+                                                       (G, "C4", ai_name, 1)))
                                                      || ((ring_finder_eff == 1)
                                                          &&
                                                          ((WordMatchExact
-                                                           (G, "C4*", ai->name, 1)
+                                                           (G, "C4*", ai_name, 1)
                                                            || WordMatchExact(G, "C4'",
-                                                                             ai->name,
+                                                                             ai_name,
                                                                              1)))))) {
           VLACheck(ring_anchor, int, n_ring);
           ring_anchor[n_ring] = a1;
@@ -2934,10 +2941,10 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
           // CA or cartoon_trace_atoms
           if(trace || (((ai->protons == cAN_C) &&
-                        (WordMatch(G, "CA", ai->name, 1) < 0)) &&
+                        (WordMatch(G, "CA", ai_name, 1) < 0)) &&
                        !AtomInfoSameResidueP(G, last_ai, ai))) {
             PRINTFD(G, FB_RepCartoon)
-              " RepCartoon: found CA in %s; a2 %d\n", ai->resi, a2 ENDFD;
+              " RepCartoon: found CA in %d; a2 %d\n", ai->resv, a2 ENDFD;
 
             if(trailing_O3p_ai && ((na_mode == 2) || (na_mode == 4))) {
 
@@ -2970,7 +2977,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
             last_ai = ai;
 
             PRINTFD(G, FB_RepCartoon)
-              " RepCartoon: found CA in %s; a2 %d\n", ai->resi, a2 ENDFD;
+              " RepCartoon: found CA in %d; a2 %d\n", ai->resv, a2 ENDFD;
 
             if(a2 < 0)
               nSeg++;
@@ -3061,16 +3068,19 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
             skip_to = cs->atmToIdx(nd);
 
             for(a3 = st; a3 <= nd; a3++) {
-
               a4 = cs->atmToIdx(a3);
-              if(a4 >= 0) {
-                if(WordMatch(G, "C", obj->AtomInfo[a3].name, 1) < 0) {
-                  v_c = cs->Coord + 3 * a4;
-                } else if(WordMatch(G, "N", obj->AtomInfo[a3].name, 1) < 0) {
-                  v_n = cs->Coord + 3 * a4;
-                } else if(WordMatch(G, "O", obj->AtomInfo[a3].name, 1) < 0) {
-                  v_o = cs->Coord + 3 * a4;
-                }
+
+              if (a4 == -1)
+                continue;
+
+              const char * a3name = LexStr(G, obj->AtomInfo[a3].name);
+
+              if(WordMatch(G, "C", a3name, 1) < 0) {
+                v_c = cs->Coord + 3 * a4;
+              } else if(WordMatch(G, "N", a3name, 1) < 0) {
+                v_n = cs->Coord + 3 * a4;
+              } else if(WordMatch(G, "O", a3name, 1) < 0) {
+                v_o = cs->Coord + 3 * a4;
               }
             }
             if(!(v_c && v_n && v_o)) {
@@ -3093,10 +3103,10 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
               vo += 3;
             }
           } else if((((na_mode != 1) && (ai->protons == cAN_P) &&
-                      (WordMatch(G, "P", ai->name, 1) < 0)) ||
+                      (WordMatch(G, "P", ai_name, 1) < 0)) ||
                      ((na_mode == 1) && (ai->protons == cAN_C) &&
-                      (WordMatchExact(G, NUCLEIC_NORMAL1, ai->name, 1) ||
-                       WordMatchExact(G, NUCLEIC_NORMAL2, ai->name, 1))))
+                      (WordMatchExact(G, NUCLEIC_NORMAL1, ai_name, 1) ||
+                       WordMatchExact(G, NUCLEIC_NORMAL2, ai_name, 1))))
                     && !AtomInfoSameResidueP(G, last_ai, ai)) {
             if(a2 >= 0) {
               if(!ObjectMoleculeCheckBondSep(obj, a1, a2, 6)) { /* six bonds between phosphates */
@@ -3139,8 +3149,8 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
                     (ai->protons == cAN_O) &&
                     (last_ai->protons == cAN_P) &&
                     ((na_mode == 2) || (na_mode == 4)) &&
-                    (WordMatchExact(G, "O3'", ai->name, 1) ||
-                     WordMatchExact(G, "O3*", ai->name, 1)) &&
+                    (WordMatchExact(G, "O3'", ai_name, 1) ||
+                     WordMatchExact(G, "O3*", ai_name, 1)) &&
                     AtomInfoSameResidueP(G, last_ai, ai) &&
                     ObjectMoleculeCheckBondSep(obj, a1, a2, 5)) {
             trailing_O3p_ai = ai;
@@ -3148,8 +3158,8 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
             trailing_O3p_a1 = a1;
           } else if((ai->protons == cAN_O) &&
                     ((na_mode == 3) || (na_mode == 4)) &&
-                    (WordMatchExact(G, "O5'", ai->name, 1) ||
-                     WordMatchExact(G, "O5*", ai->name, 1))) {
+                    (WordMatchExact(G, "O5'", ai_name, 1) ||
+                     WordMatchExact(G, "O5*", ai_name, 1))) {
             leading_O5p_ai = ai;
             leading_O5p_a = a;
             leading_O5p_a1 = a1;

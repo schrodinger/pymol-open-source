@@ -25,6 +25,8 @@ Z* -------------------------------------------------------------------
 /* this gets included in virtually every PyMOL source file, so keep it
    short and sweet */
 
+typedef int lexidx_t;
+
 typedef struct _CMemoryCache CMemoryCache;
 typedef struct _CIsosurf CIsosurf;
 typedef struct _CTetsurf CTetsurf;
@@ -187,6 +189,10 @@ struct _PyMOLGlobals {
 
   // user defined scenes
   CMovieScenes * scenes;
+
+  struct { lexidx_t
+#include "lex_constants.h"
+    _; } lex_const;
 };
 
 

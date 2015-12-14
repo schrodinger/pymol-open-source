@@ -230,7 +230,7 @@ void *OSMemoryRealloc(void *ptr,unsigned int size,const char *file,
 #ifdef GDB_ENTRY
   OSMemoryDump();
   printf("hit ctrl/c to enter debugger\n");
-  while(true);
+  while(true){};
 #endif
       exit(EXIT_FAILURE);
     }
@@ -252,7 +252,7 @@ void *OSMemoryRealloc(void *ptr,unsigned int size,const char *file,
 #ifdef GDB_ENTRY
   OSMemoryDump();
   printf("hit ctrl/c to enter debugger\n");
-			 while(true);
+			 while(true){};
 #endif
 			 exit(EXIT_FAILURE);
 		  }	
@@ -265,7 +265,7 @@ void *OSMemoryRealloc(void *ptr,unsigned int size,const char *file,
 #ifdef GDB_ENTRY
               OSMemoryDump();
 				  printf("hit ctrl/c to enter debugger\n");
-				  while(true);
+				  while(true){};
 #endif
               exit(EXIT_FAILURE);
             }
@@ -277,7 +277,7 @@ void *OSMemoryRealloc(void *ptr,unsigned int size,const char *file,
 #ifdef GDB_ENTRY
               OSMemoryDump();
 				  printf("hit ctrl/c to enter debugger\n");
-				  while(true);
+				  while(true){};
 #endif
 				  exit(EXIT_FAILURE);
 				}
@@ -305,7 +305,7 @@ void OSMemoryFree(void *ptr,const char*file,int line,int type)
 #ifdef GDB_ENTRY
   OSMemoryDump();
   printf("hit ctrl/c to enter debugger\n");
-		while(true);
+		while(true){};
 #endif
       exit(EXIT_FAILURE);
     }
@@ -319,7 +319,7 @@ void OSMemoryFree(void *ptr,const char*file,int line,int type)
 #ifdef GDB_ENTRY
           OSMemoryDump();
           printf("hit ctrl/c to enter debugger\n");
-			 while(true);
+			 while(true){};
 #endif
 			 exit(EXIT_FAILURE);
 		  }
@@ -334,7 +334,7 @@ void OSMemoryFree(void *ptr,const char*file,int line,int type)
 #ifdef GDB_ENTRY
       OSMemoryDump();
       printf("hit ctrl/c to enter debugger\n");
-		while(true);
+		while(true){};
 #endif
       exit(EXIT_FAILURE);
     }

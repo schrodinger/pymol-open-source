@@ -68,6 +68,7 @@
 #include"main.h"
 #include"Parse.h"
 #include"PlugIOManager.h"
+#include "Lex.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"
@@ -14787,13 +14788,15 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                     }
                     seg[4] = 0;
                     {
+                      lexidx_t segi = LexIdx(G, seg);
                       int a;
                       AtomInfoType *ai = new_obj->AtomInfo;
                       for(a = 0; a < new_obj->NAtom; a++) {
-                        strcpy(ai->segi, seg);
+                        LexAssign(G, ai->segi, segi);
                         ai++;
                       }
 
+                      LexDec(G, segi);
                     }
                   }
                 } else {

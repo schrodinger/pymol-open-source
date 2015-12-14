@@ -1622,7 +1622,7 @@ NOTES
         object_mode = int(object_mode)
         if _self.is_string(vector):
             vector = safe_list_eval(vector)
-        if not _self.is_list(vector):
+        if not _self.is_sequence(vector):
             print("Error: bad vector.")
             raise pymol.CmdException
         else:

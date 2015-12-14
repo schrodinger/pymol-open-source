@@ -4224,8 +4224,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
                                  is_single_click, "pick_sele", name, name);
               } else {
 		/* user clicked on an atom not in a selection */
-                ObjectMoleculeGetAtomSele((ObjectMolecule *) obj, I->LastPicked.src.index,
-                                          buffer);
+                obj->fDescribeElement(obj, I->LastPicked.src.index, buffer);
                 ObjectMoleculeGetAtomSeleLog((ObjectMolecule *) obj,
                                              I->LastPicked.src.index, buf1, false);
                 MenuActivate2Arg(G, I->LastWinX, I->LastWinY + 20, I->LastWinX,

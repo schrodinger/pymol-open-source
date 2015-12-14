@@ -60,6 +60,7 @@ Z* -------------------------------------------------------------------
 #include"OVLexicon.h"
 #include"ListMacros.h"
 #include"File.h"
+#include "Lex.h"
 
 #define cMaxNegResi 100
 
@@ -1705,10 +1706,8 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
 
     b = 0;
     for(a = 0; a < nAtom; a++) {
-      p = ncopy(cc, p, 4);
-      ai = atInfo + a;
-      if(!sscanf(cc, "%s", ai->name))
-        ai->name[0] = 0;
+      p = ntrim(cc, p, 4);
+      atInfo[a].name = LexIdx(G, cc);
       if((++b) == 20) {
         b = 0;
         p = nextline(p);
@@ -1851,9 +1850,8 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
         if(last_i)
           for(aa = (last_i - 1); aa < (at_i - 1); aa++) {
             ai = atInfo + aa;
-            strcpy(ai->resn, resn[a - 1]);
+            ai->resn = LexIdx(G, resn[a - 1]);
             ai->resv = rc;
-            sprintf(ai->resi, "%d", rc);
           }
         rc++;
         last_i = at_i;
@@ -1868,9 +1866,8 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
     if(last_i)
       for(aa = (last_i - 1); aa < nAtom; aa++) {
         ai = atInfo + aa;
-        strcpy(ai->resn, resn[NRES - 1]);
+        ai->resn = LexIdx(G, resn[NRES - 1]);
         ai->resv = rc;
-        sprintf(ai->resi, "%d", rc);
       }
     rc++;
 
@@ -2990,17 +2987,18 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi, 
   float v_c[3];
   float v_cm[3];
   float v_np[3];
+  auto G = I->Obj.G;
 
   ai = I->AtomInfo;
 
-  if((ai[ca].name[0] == 'C') && (ai[ca].name[1] == 'A')) {
+  if(ai[ca].name == G->lex_const.CA) {
     ObjectMoleculeUpdateNeighbors(I);
 
     /* find C */
     n0 = I->Neighbor[ca] + 1;
     while(I->Neighbor[n0] >= 0) {
       at = I->Neighbor[n0];
-      if((ai[at].name[0] == 'C') && (ai[at].name[1] == 0)) {
+      if(ai[at].name == G->lex_const.C) {
         c = at;
         break;
       }
@@ -3011,7 +3009,7 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi, 
     n0 = I->Neighbor[ca] + 1;
     while(I->Neighbor[n0] >= 0) {
       at = I->Neighbor[n0];
-      if((ai[at].name[0] == 'N') && (ai[at].name[1] == 0)) {
+      if(ai[at].name == G->lex_const.N) {
         n = at;
         break;
       }
@@ -3023,7 +3021,7 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi, 
       n0 = I->Neighbor[c] + 1;
       while(I->Neighbor[n0] >= 0) {
         at = I->Neighbor[n0];
-        if((ai[at].name[0] == 'N') && (ai[at].name[1] == 0)) {
+        if(ai[at].name == G->lex_const.N) {
           np = at;
           break;
         }
@@ -3036,7 +3034,7 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi, 
       n0 = I->Neighbor[n] + 1;
       while(I->Neighbor[n0] >= 0) {
         at = I->Neighbor[n0];
-        if((ai[at].name[0] == 'C') && (ai[at].name[1] == 0)) {
+        if(ai[at].name == G->lex_const.C) {
           cm = at;
           break;
         }
@@ -3424,9 +3422,11 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
       valid_atom = true;
 
       p = ParseWordCopy(cc, p, sizeof(AtomName) - 1);
-      if(!sscanf(cc, "%s", ai->name))
+      UtilCleanStr(cc);
+      if(!cc[0])
         valid_atom = false;
       if(valid_atom) {
+        ai->name = LexIdx(G, cc);
 
         ai->rank = atomCount;
         ai->id = atomCount + 1;
@@ -3442,7 +3442,8 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
         if(sscanf(cc, "%f", coord + a + 2) != 1)
           valid_atom = false;
 
-        strcpy(ai->resn, "UNK");
+        ai->resn = LexIdx(G, "UNK");
+
         ai->alt[0] = 0;
         ai->chain = 0;
         ai->resv = atomCount + 1;
@@ -3450,7 +3451,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
         ai->q = 1.0;
         ai->b = 0.0;
 
-        ai->segi[0] = 0;
+        ai->segi = 0;
         ai->elem[0] = 0;        /* let atom info guess/infer atom type */
 
         ai->visRep = auto_show;
@@ -3472,16 +3473,15 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
       ai->rank = atomCount;
 
       p = nskip(p, 2);          /* to 12 */
-      p = ncopy(cc, p, 3);
-      if(!sscanf(cc, "%s", ai->name))
-        ai->name[0] = 0;
+      p = ntrim(cc, p, 3);
+      ai->name = LexIdx(G, cc);
+
+      ai->resn = LexIdx(G, "UNK");
 
       ai->alt[0] = 0;
-      strcpy(ai->resn, "UNK");
       ai->chain = 0;
 
       ai->resv = atomCount + 1;
-      sprintf(ai->resi, "%d", ai->resv);
 
       valid_atom = true;
 
@@ -3495,7 +3495,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
       ai->q = 1.0;
       ai->b = 0.0;
 
-      ai->segi[0] = 0;
+      ai->segi = 0;
       ai->elem[0] = 0;          /* let atom info guess/infer atom type */
 
       ai->visRep = auto_show;
@@ -3533,9 +3533,9 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
 
     if(valid_atom) {
       PRINTFD(G, FB_ObjectMolecule)
-        " ObjectMolecule-DEBUG: %s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
-        ai->name, ai->resn, ai->resi, LexStr(G, ai->chain),
-        *(coord + a), *(coord + a + 1), *(coord + a + 2), ai->b, ai->q, ai->segi ENDFD;
+        " ObjectMolecule-DEBUG: %s %s %d %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
+         LexStr(G, ai->name), LexStr(G, ai->resn), ai->resv, LexStr(G, ai->chain),
+         *(coord + a), *(coord + a + 1), *(coord + a + 2), ai->b, ai->q, LexStr(G, ai->segi) ENDFD;
 
       a += 3;
       atomCount++;
@@ -3712,6 +3712,7 @@ int ObjectMoleculeAreAtomsBonded(ObjectMolecule * I, int i0, int i1)
 /*========================================================================*/
 int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force)
 {
+  PyMOLGlobals * G = I->Obj.G;
   AtomInfoType *ai;
   int a;
   int result;
@@ -3719,12 +3720,13 @@ int ObjectMoleculeRenameAtoms(ObjectMolecule * I, int *flag, int force)
     ai = I->AtomInfo;
     if(!flag) {
       for(a = 0; a < I->NAtom; a++) {
-        (ai++)->name[0] = 0;
+        LexAssign(G, ai->name, 0);
+        ai++;
       }
     } else {
       for(a = 0; a < I->NAtom; a++) {
         if(flag[a])
-          ai->name[0] = 0;
+          LexAssign(G, ai->name, 0);
         ai++;
       }
     }
@@ -4912,12 +4914,11 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
     ai->geom = ai0->geom;       /* ? */
     ai->q = ai0->q;
     ai->b = ai0->b;
-    ai->chain = ai0->chain;
-    LexInc(I->Obj.G, ai->chain);
     strcpy(ai->alt, ai0->alt);
-    strcpy(ai->resi, ai0->resi);
-    strcpy(ai->segi, ai0->segi);
-    strcpy(ai->resn, ai0->resn);
+    ai->inscode = ai0->inscode;
+    LexAssign(I->Obj.G, ai->segi, ai0->segi);
+    LexAssign(I->Obj.G, ai->chain, ai0->chain);
+    LexAssign(I->Obj.G, ai->resn, ai0->resn);
     ai->visRep = ai0->visRep;
     ai->id = -1;
 #ifdef _PYMOL_IP_EXTRAS
@@ -7518,7 +7519,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
 
           ok = PConvPyObjectToStrMaxClean(tmp, tmp_word, sizeof(WordType) - 1);
           AtomInfoCleanAtomName(tmp_word);
-          UtilNCopy(ai->name, tmp_word, sizeof(AtomName));
+          ai->name = LexIdx(G, tmp_word);
         }
         if(!ok)
           ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read name");
@@ -7653,22 +7654,25 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
       }
 
       if(ok) {
+        char buf[8] = "";
         tmp = PyObject_GetAttrString(atom, "resn");
         if(tmp)
-          ok = PConvPyObjectToStrMaxClean(tmp, ai->resn, sizeof(ResName) - 1);
+          ok = PConvPyObjectToStrMaxClean(tmp, buf, sizeof(buf) - 1);
+        ai->resn = LexIdx(G, buf);
         if(!ok)
           ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read resn");
         Py_XDECREF(tmp);
       }
 
       if(ok) {
+        char resi[8];
         tmp = PyObject_GetAttrString(atom, "resi");
         if(tmp)
-          ok = PConvPyObjectToStrMaxClean(tmp, ai->resi, sizeof(ResIdent) - 1);
+          ok = PConvPyObjectToStrMaxClean(tmp, resi, sizeof(resi) - 1);
         if(!ok)
           ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read resi");
         else
-          ai->resv = AtomResvFromResi(ai->resi);
+          ai->setResi(resi);
         Py_XDECREF(tmp);
       }
 
@@ -7680,10 +7684,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
           if(!ok)
             ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read ins_code");
           else if(tmp_ins_code[0] != '?') {
-            WordType tmp_word;
-            strcpy(tmp_word, ai->resi);
-            strcat(tmp_word, tmp_ins_code);
-            UtilNCopy(ai->resi, tmp_word, sizeof(ResIdent));
+            ai->setInscode(tmp_ins_code[0]);
           }
         }
         Py_XDECREF(tmp);
@@ -7700,9 +7701,11 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
       }
 
       if(ok) {
+        OrthoLineType temp = "";
         tmp = PyObject_GetAttrString(atom, "segi");
         if(tmp)
-          ok = PConvPyObjectToStrMaxClean(tmp, ai->segi, sizeof(SegIdent) - 1);
+          PConvPyObjectToStrMaxClean(tmp, temp, sizeof(OrthoLineType) - 1);
+        ai->segi = LexIdx(G, temp);
         if(!ok)
           ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read segi");
         Py_XDECREF(tmp);
@@ -8528,9 +8531,8 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buf
       }
       if(ok) {
         p = nskip(p, 1);
-        p = ncopy(atInfo[a].name, p, 3);
-        UtilCleanStr(atInfo[a].name);
-
+        p = ntrim(cc, p, 3);
+        atInfo[a].name = LexIdx(G, cc);
         atInfo[a].visRep = auto_show;
       }
       if(ok) {
@@ -8551,13 +8553,13 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buf
       if(ok && atInfo) {
         atInfo[a].id = a + 1;
         atInfo[a].rank = a;
-        strcpy(atInfo[a].resn, resn);
+        atInfo[a].resn = LexIdx(G, resn);
         atInfo[a].hetatm = true;
         AtomInfoAssignParameters(G, atInfo + a);
         AtomInfoAssignColors(G, atInfo + a);
         atInfo[a].alt[0] = 0;
-        atInfo[a].segi[0] = 0;
-        atInfo[a].resi[0] = 0;
+        atInfo[a].segi = 0;
+        atInfo[a].inscode = 0;
       }
       p = nextline(p);
       if(!ok)
@@ -8743,7 +8745,6 @@ static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *
       int at, fcharge = 0, isProtein = 0, k, n;
       AtomInfoType *ai;
       const char *atom_type = 0;
-      char *atom_name = 0;
       char resname_temp[4];
       BondType *bt;
       at = cset->IdxToAtm[a];
@@ -8758,8 +8759,8 @@ static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *
 	  ENDFB(G);
 	return;
       }
-      atom_name = ai->name;
-      strncpy( resname_temp, ai->resn, 3);
+      const char *atom_name = LexStr(G, ai->name);
+      strncpy( resname_temp, LexStr(G, ai->resn), 3);
       if( isRegularRes( resname_temp ) ) {
 	isProtein = 1;
       }
@@ -8906,7 +8907,10 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
           if(ok) {
             p = ParseWordCopy(cc, p, MAXLINELEN);
             cc[cAtomNameLen] = 0;
-            if(sscanf(cc, "%s", ai->name) != 1)
+            UtilCleanStr(cc);
+            if(cc[0])
+              LexAssign(G, ai->name, cc);
+            else
               ok = ErrMessage(G, "ReadMOL2File", "bad atom name");
           }
           if(ok) {
@@ -8949,12 +8953,11 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
           if(ok) {
             p = ParseWordCopy(cc, p, MAXLINELEN);
             if(cc[0]) {         /* subst_id is residue identifier */
-              UtilNCopy(ai->resi, cc, cResiLen);
-              ai->resv = AtomResvFromResi(cc);
+              ai->setResi(cc);
               p = ParseWordCopy(cc, p, MAXLINELEN);
               if(cc[0]) {
 
-                UtilNCopy(ai->resn, cc, cResnLen);
+                LexAssign(G, ai->resn, cc);
 
                 p = ParseWordCopy(cc, p, MAXLINELEN);
                 if(cc[0]) {
@@ -8974,7 +8977,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
           AtomInfoAssignParameters(G, atInfo + a);
           AtomInfoAssignColors(G, atInfo + a);
           ai->alt[0] = 0;
-          ai->segi[0] = 0;
+          ai->segi = 0;
 
         }
       } else if(WordMatchExact(G, cc, "@<TRIPOS>SET", true)
@@ -9117,14 +9120,13 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
         if(ok) {
           WordType subst_name;
           SegIdent segment;     /* what MOL2 calls chain */
-          ov_word chain;
+          lexidx_t chain = 0;
           WordType subst_type;
           ResIdent resi;
           ResName resn;
           int id, dict_type, root, resv;
           int end_line, seg_flag, subst_flag, resi_flag;
-          int chain_flag, resn_flag, resv_flag;
-          OVLexicon *lex = OVLexicon_New(G->Context->heap);
+          int chain_flag, resn_flag;
           OVOneToOne *o2o = OVOneToOne_New(G->Context->heap);
 
           {
@@ -9138,14 +9140,11 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
             }
             ai = atInfo;
             for(b = 0; b < nAtom; b++) {
-              if(OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(lex, ai->resi)))) {
-                if(OVreturn_IS_OK((result = OVOneToOne_GetForward(o2o, result.word)))) {
-                  atInfo[b].temp1 = atInfo[result.word].temp1;
-                  atInfo[result.word].temp1 = b;
-                }
+              if(OVreturn_IS_OK((result = OVOneToOne_GetForward(o2o, ai->resv)))) {
+                atInfo[b].temp1 = atInfo[result.word].temp1;
+                atInfo[result.word].temp1 = b;
               } else {
-                if(OVreturn_IS_OK((result = OVLexicon_GetFromCString(lex, ai->resi))))
-                  OVOneToOne_Set(o2o, result.word, b);
+                OVOneToOne_Set(o2o, ai->resv, b);
               }
               ai++;
             }
@@ -9154,7 +9153,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
           for(a = 0; a < nSubst; a++) {
             segment[0] = 0;
             subst_name[0] = 0;
-            chain = 0;
+            LexAssign(G, chain, 0);
             resn[0] = 0;
             resi[0] = 0;
             end_line = false;
@@ -9164,7 +9163,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
             resi_flag = false;
             chain_flag = false;
             resn_flag = false;
-            resv_flag = false;
 
             if(ok) {
               const char *save_p = p;
@@ -9217,7 +9215,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
               } else {
                 seg_flag = true;
                 if(!segment[1]) {       /* if segment is single letter, then also assign to chain field */
-                  chain = LexIdx(G, segment);
+                  LexAssign(G, chain, segment);
                   chain_flag = true;
                 }
               }
@@ -9285,7 +9283,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                     char *pp = subst_name;
                     if(!((pp[0] >= '0') && (pp[0] <= '9'))) {
                       char tmp[2] = {pp[0], 0};
-                      chain = LexIdx(G, tmp);
+                      LexAssign(G, chain, tmp);
                       chain_flag = true;
                       pp++;
                     }
@@ -9293,7 +9291,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
 
                     if(resi[0]) {
                       resi_flag = true;
-                      resv_flag = true;
                     }
                   }
                 } else {
@@ -9317,7 +9314,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                     UtilNCopy(resi, pp, cResiLen);      /* now get the textual residue identifier */
                     if(resi[0]) {
                       resi_flag = true;
-                      resv_flag = true;
                     }
                   }
                 }
@@ -9328,22 +9324,21 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
               if(ok) {
                 if(resi_flag || chain_flag || resn_flag || seg_flag) {
                   OVreturn_word result;
-                  if(OVreturn_IS_OK
-                     ((result = OVLexicon_BorrowFromCString(lex, atInfo[root].resi)))) {
-                    if(OVreturn_IS_OK((result = OVOneToOne_GetForward(o2o, result.word)))) {
+                  {
+                    if(OVreturn_IS_OK((result = OVOneToOne_GetForward(o2o, atInfo[root].resv)))) {
                       /* traverse linked list for resi */
                       int b = result.word;
                       while((b >= 0) && (b < nAtom)) {
                         AtomInfoType *ai = atInfo + b;
                         if(resi_flag)
-                          UtilNCopy(ai->resi, resi, cResiLen);
+                          ai->setResi(resi);
                         if(chain_flag) {
-                          ai->chain = chain;
+                          LexAssign(G, ai->chain, chain);
                         }
                         if(resn_flag)
-                          UtilNCopy(ai->resn, resn, cResnLen);
+                          LexAssign(G, ai->resn, resn);
                         if(seg_flag)
-                          UtilNCopy(ai->segi, segment, cSegiLen);
+                          LexAssign(G, ai->segi, segment);
                         b = ai->temp1;
                       }
                     }
@@ -9355,7 +9350,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
               break;
             p = ParseNextLine(p);
           }
-          OVLexicon_DEL_AUTO_NULL(lex);
+          LexDec(G, chain);
           OVOneToOne_DEL_AUTO_NULL(o2o);
         }
       } else
@@ -10070,16 +10065,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
           if(op->i1 != 3) {
             ai->hetatm = ai0->hetatm;
             ai->flags = ai0->flags;
-            LexInc(G, ai0->chain);
-            LexDec(G, ai->chain);
-            ai->chain = ai0->chain;
+            LexAssign(G, ai->chain, ai0->chain);
             strcpy(ai->alt, ai0->alt);
-            strcpy(ai->segi, ai0->segi);
+            LexAssign(G, ai->segi, ai0->segi);
           }
           if(op->i1 == 1) {     /* mode 1, merge residue information */
-            strcpy(ai->resi, ai0->resi);
+            ai->inscode = ai0->inscode;
             ai->resv = ai0->resv;
-            strcpy(ai->resn, ai0->resn);
+            LexAssign(G, ai->resn, ai0->resn);
           }
           AtomInfoAssignColors(G, ai);
           if(op->i3) {
@@ -11571,10 +11564,16 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 /*========================================================================*/
 void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer)
 {
+  PyMOLGlobals * G = I->Obj.G;
   AtomInfoType *ai;
   ai = I->AtomInfo + index;
-  sprintf(buffer, "/%s/%s/%s/%s`%s/%s`%s", I->Obj.Name, ai->segi,
-      LexStr(I->Obj.G, ai->chain), ai->resn, ai->resi, ai->name, ai->alt);
+  char inscode_str[2] = { ai->inscode, '\0' };
+
+  snprintf(buffer, OrthoLineLength, "/%s/%s/%s/%s`%d%s/%s`%s", I->Obj.Name,
+      LexStr(G, ai->segi),
+      LexStr(G, ai->chain),
+      LexStr(G, ai->resn), ai->resv, inscode_str,
+      LexStr(G, ai->name), ai->alt);
 }
 
 
@@ -11613,9 +11612,9 @@ void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer)
   WordType segi, chain, resi, name, alt;
   ai = I->AtomInfo + index;
 
-  if(ai->segi[0]) {
+  if(ai->segi) {
     strcpy(segi, "s;");
-    strcat(segi, ai->segi);
+    strcat(segi, LexStr(I->Obj.G, ai->segi));
   } else {
     strcpy(segi, "s;''");
   }
@@ -11625,15 +11624,10 @@ void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer)
   } else {
     strcpy(chain, "c;''");
   }
-  if(ai->resi[0]) {
-    strcpy(resi, "i;");
-    strcat(resi, ai->resi);
-  } else {
-    strcpy(resi, "i;''");
-  }
-  if(ai->name[0]) {
+  sprintf(resi, "i;%d%c", ai->resv, ai->inscode);
+  if(ai->name) {
     strcpy(name, "n;");
-    strcat(name, ai->name);
+    strcat(name, LexStr(I->Obj.G, ai->name));
   } else {
     strcpy(name, "n;''");
   }
@@ -13026,8 +13020,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
       if(ok) {
         p = nskip(p, 1);
         p = ncopy(cc, p, 5);
-        ai->resv = AtomResvFromResi(cc);
-        sprintf(ai->resi, "%d", ai->resv);
+        ai->setResi(cc);
       }
       if(ok) {
         p = nskip(p, 6);
@@ -13038,26 +13031,21 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, const char *buffer,
       if(ok) {
         p = nskip(p, 10);
         p = ncopy(cc, p, 3);
-        if(sscanf(cc, "%s", ai->resn) != 1)
-          ai->resn[0] = 0;
+        UtilCleanStr(cc);
+        LexAssign(G, ai->resn, cc);
         ai->hetatm = true;
       }
 
-      ai->segi[0] = 0;
+      ai->segi = 0;
       ai->alt[0] = 0;
 
       if(ok) {
         p = nskip(p, 2);
-        p = ncopy(ai->name, p, 4);
-        UtilCleanStr(ai->name);
-        if(ai->name[0] == 0) {
-          strcpy(ai->name, ai->elem);
-          sprintf(cc, "%02d", a + 1);
-          if((strlen(cc) + strlen(ai->name)) > 4)
-            strcpy(ai->name, cc);
-          else
-            strcat(ai->name, cc);
+        p = ntrim(cc, p, 4);
+        if(!cc[0]) {
+          sprintf(cc, "%s%02d", ai->elem, a + 1);
         }
+        ai->name = LexIdx(G, cc);
 
         ai->visRep = auto_show;
       }
@@ -13127,6 +13115,13 @@ void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAto
       }
     }
   }   
+}
+
+void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, int index, int id){
+  switch(index){
+  case cSetting_label_position:
+    ObjectMoleculeInvalidate(obj, cRepLabel, cRepInvCoord, -1);
+  }
 }
 
 static int AtomInfoInOrder(PyMOLGlobals * G, AtomInfoType * atom, int atom1, int atom2)

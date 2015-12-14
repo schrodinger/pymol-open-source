@@ -566,7 +566,7 @@ enum {
   REC_i( 468, ray_trace_mode                          , global    , 0 ),
   REC_f( 469, ray_trace_gain                          , global    , 0.12F ),
   REC_b( 470, selection_visible_only                  , global    , 0 ),
-  REC_3( 471, label_position                          , astate    , 0.0F, 0.0F, 1.75F ),
+  REC_3( 471, label_position                          , ostate    , 0.0F, 0.0F, 1.75F ),
   REC_f( 472, ray_trace_depth_factor                  , global    , 0.1F ),
   REC_f( 473, ray_trace_slope_factor                  , global    , 0.6F ),
   REC_f( 474, ray_trace_disco_factor                  , global    , 0.05F ),

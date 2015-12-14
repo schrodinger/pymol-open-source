@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Word.h"
 #include"Editor.h"
+#include "Lex.h"
 
 #include"CGO.h"
 
@@ -748,52 +749,53 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
             if((n_qual_branch > 2) && (!adj_site)) {
               site[b0] = 10;
             } else if(!adj_site) {
-              switch (ai1->name[0]) {
+              const char * name = LexStr(G, ai1->name);
+              switch (name[0]) {
               case 'O':
-                if(!ai1->name[1])
-                  if(AtomInfoKnownPolymerResName(ai1->resn))
+                if(!name[1])
+                  if(AtomInfoKnownPolymerResName(LexStr(G, ai1->resn)))
                     site[b0] = 40;      /* main-chain carbonyl */
                 break;
               case 'C':
-                switch (ai1->name[1]) {
+                switch (name[1]) {
                 case 'Z':
-                  switch (ai1->name[2]) {
+                  switch (name[2]) {
                   case 0:
-                    if(strcmp(ai1->resn, "ARG") == 0)
+                    if(ai1->resn == G->lex_const.ARG)
                       site[b0] = 20;    /* ARG/CZ */
-                    else if(strcmp(ai1->resn, "TYR") == 0)
+                    else if(ai1->resn == G->lex_const.TYR)
                       site[b0] = 20;    /* TYR/CZ */
-                    else if(strcmp(ai1->resn, "PHE") == 0)
+                    else if(ai1->resn == G->lex_const.PHE)
                       site[b0] = 20;    /* PHE/CZ */
                     break;
                   }
                   break;
                 case 'E':
-                  switch (ai1->name[2]) {
+                  switch (name[2]) {
                   case 0:
-                    if(strcmp(ai1->resn, "LYS") == 0)
+                    if(ai1->resn == G->lex_const.LYS)
                       site[b0] = 20;    /* LYS/CE */
                     break;
                   }
                   break;
                 case 'D':
-                  switch (ai1->name[2]) {
+                  switch (name[2]) {
                   case 0:
-                    if(strcmp(ai1->resn, "GLU") == 0)
+                    if(ai1->resn == G->lex_const.GLU)
                       site[b0] = 20;    /* GLU/CD */
-                    else if(strcmp(ai1->resn, "GLN") == 0)
+                    else if(ai1->resn == G->lex_const.GLN)
                       site[b0] = 20;    /* GLN/CD */
                     break;
                   }
                   break;
                 case 'G':
-                  switch (ai1->name[2]) {
+                  switch (name[2]) {
                   case 0:
-                    if(strcmp(ai1->resn, "LEU") == 0)
+                    if(ai1->resn == G->lex_const.LEU)
                       site[b0] = 20;    /* LEU/CG */
-                    else if(strcmp(ai1->resn, "ASP") == 0)
+                    else if(ai1->resn == G->lex_const.ASP)
                       site[b0] = 20;    /* ASP/CG */
-                    else if(strcmp(ai1->resn, "ASN") == 0)
+                    else if(ai1->resn == G->lex_const.ASN)
                       site[b0] = 20;    /* ASN/CG */
                     break;
                   }
@@ -801,11 +803,11 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                 }
                 break;
               case 'S':
-                switch (ai1->name[1]) {
+                switch (name[1]) {
                 case 'D':
-                  switch (ai1->name[2]) {
+                  switch (name[2]) {
                   case 0:
-                    if(strcmp(ai1->resn, "MET") == 0)
+                    if(ai1->resn == G->lex_const.MET)
                       site[b0] = 20;    /* MET/SD */
                     break;
                   }
@@ -841,7 +843,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
 
                   if((i0a >= 0) && (i1a >= 0) && (i0b >= 0) && (i1b >= 0) &&
                      ((!match_by_segment)
-                      || (!strcmp(obj_atomInfo[b0].segi, obj_atomInfo[b1].segi)))) {
+                      || (obj_atomInfo[b0].segi == obj_atomInfo[b1].segi))) {
                     float *v0a = cs->Coord + 3 * i0a;
                     float *v1a = cs->Coord + 3 * i1a;
                     float *v0b = cs2->Coord + 3 * i0b;
@@ -1232,9 +1234,9 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
                         /* don't get jacked by pseudo-planar PRO */
 
                         if(((obj_atomInfo[b0].protons != cAN_N) ||
-                            (!WordMatchExact(G, obj_atomInfo[b0].resn, "PRO", true))) &&
+                            (!WordMatchExact(G, obj_atomInfo[b0].resn, G->lex_const.PRO, true))) &&
                            ((obj_atomInfo[b2].protons != cAN_N) ||
-                            (!WordMatchExact(G, obj_atomInfo[b2].resn, "PRO", true)))) {
+                            (!WordMatchExact(G, obj_atomInfo[b2].resn, G->lex_const.PRO, true)))) {
 
                           if(use_cache) {
                             if(!SculptCacheQuery(G, cSculptPlan,

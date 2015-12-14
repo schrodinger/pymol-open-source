@@ -1337,6 +1337,9 @@ PYMOL API
         elif contents and bioType in ('pdb', 'bio'):
             r = _self.read_pdbstr(contents, name, state,
                     finish, discrete, quiet, zoom, multiplex)
+        elif contents and bioType in ('cif', 'cc'):
+            r = _self.load(contents, name, state, loadable.cifstr,
+                    finish, discrete, quiet, multiplex, zoom)
 
         if not _self.is_error(r):
             return name

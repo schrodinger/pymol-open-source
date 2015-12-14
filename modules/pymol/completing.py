@@ -1,9 +1,25 @@
 cmd = __import__("sys").modules["pymol.cmd"]
 
-expr_sc = cmd.Shortcut([
+class ExprShortcut(cmd.Shortcut):
+    '''
+    Expression shortcut for iterate/alter/label with "s." prefix
+    setting autocompletion.
+    '''
+    def interpret(self, kee, mode=0):
+        if not kee.startswith('s.'):
+            return cmd.Shortcut.interpret(self, kee, mode)
+        v = cmd.setting.setting_sc.interpret(kee[2:])
+        if isinstance(v, str):
+            return 's.' + v
+        if isinstance(v, list):
+            return ['s.' + v for v in v]
+        return None
+
+expr_sc = ExprShortcut([
     'segi', 'chain', 'resn', 'resi', 'name', 'alt', 'elem', 'text_type',
     'formal_charge', 'numeric_type', 'ID',
     'q', 'b', 'partial_charge', 'vdw',
+    'p.', 's.',
 ])
 
 def vol_ramp_sc():

@@ -205,4 +205,17 @@ void RepInvalidate(struct Rep *I, struct CoordSet *cs, int level);
 
 int RepGetAutoShowMask(PyMOLGlobals * G);
 
+class RepIterator {
+  int end;
+
+public:
+  int rep;
+
+  RepIterator(PyMOLGlobals * G, int rep_);
+
+  bool next() {
+    return (++rep < end);
+  };
+};
+
 #endif

@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include "Scene.h"
 #include "Executive.h"
 #include "AtomInfo.h"
+#include "Lex.h"
 
 #ifndef _PYMOL_VMD_PLUGINS
 int PlugIOManagerInit(PyMOLGlobals * G)
@@ -562,9 +563,9 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     ai->partialCharge = a->charge;
     ai->alt[0] = a->altloc[0];
 
-    strncpy(ai->segi, a->segid, cSegiLen);
-    strncpy(ai->resn, a->resname, cResnLen);
-    strncpy(ai->name, a->name, cAtomNameLen);
+    ai->segi = LexIdx(G, a->segid);
+    ai->resn = LexIdx(G, a->resname);
+    ai->name = LexIdx(G, a->name);
     if (a->atomicnumber > 0)
       atomicnumber2elem(ai->elem, a->atomicnumber);
 
@@ -574,7 +575,7 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     ai->hetatm = 0;
 
     ai->resv = a->resid;
-    snprintf(ai->resi, cResnLen, "%d%s", a->resid, a->insertion);
+    ai->setInscode(a->insertion[0]);
 
     ai->visRep = auto_show;
 

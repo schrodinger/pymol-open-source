@@ -136,19 +136,6 @@ int ObjectMapValidXtal(ObjectMap * I, int state)
   return false;
 }
 
-/* Map::IsStateValidActive -- true if the Map's state is VALID and ACTIVE, false otherwise
- * PARAMS
- *   I, the map
- *   state, the maps' state
- */
-static int ObjectMapIsStateValidActive(ObjectMap * I, int state)
-{
-  if((state >= 0) && (state < I->NState))
-    if(I->State[state].Active)
-      return 1;
-  return 0;
-}
-
 /* Map::TransformMatrix -- transform this map's matrix by 'matrix' parameter
  * PARAMS
  *   I, the map
@@ -159,8 +146,13 @@ static int ObjectMapIsStateValidActive(ObjectMap * I, int state)
  */
 void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix)
 {
-  if(ObjectMapIsStateValidActive(I, state))
-    ObjectStateTransformMatrix(&I->State[state].State, matrix);
+  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+    ObjectMapState *ms = I->State + iter.state;
+    if(ms->Active) {
+      ObjectStateTransformMatrix(&ms->State, matrix);
+    }
+  }
+
   ObjectMapUpdateExtents(I);
 }
 
@@ -171,8 +163,13 @@ void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix)
  */   
 void ObjectMapResetMatrix(ObjectMap * I, int state)
 {
-  if(ObjectMapIsStateValidActive(I, state))
-    ObjectStateResetMatrix(&I->State[state].State);
+  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+    ObjectMapState *ms = I->State + iter.state;
+    if(ms->Active) {
+      ObjectStateResetMatrix(&ms->State);
+    }
+  }
+
   ObjectMapUpdateExtents(I);
 }
 
@@ -186,10 +183,13 @@ void ObjectMapResetMatrix(ObjectMap * I, int state)
  */
 int ObjectMapGetMatrix(ObjectMap * I, int state, double **matrix)
 {
-  if(ObjectMapIsStateValidActive(I, state)) {
-    *matrix = ObjectStateGetMatrix(&I->State[state].State);
+  ObjectMapState *ms = ObjectMapGetState(I, state);
+
+  if(ms->Active) {
+    *matrix = ObjectStateGetMatrix(&ms->State);
     return true;
   }
+
   return false;
 }
 
@@ -201,11 +201,17 @@ int ObjectMapGetMatrix(ObjectMap * I, int state, double **matrix)
  */
 int ObjectMapSetMatrix(ObjectMap * I, int state, double *matrix)
 {
-  if(ObjectMapIsStateValidActive(I, state)) {
-    ObjectStateSetMatrix(&I->State[state].State, matrix);
-    return true;
+  bool result = false;
+
+  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+    ObjectMapState *ms = I->State + iter.state;
+    if(ms->Active) {
+      ObjectStateSetMatrix(&ms->State, matrix);
+      result = true;
+    }
   }
-  return false;
+
+  return result;
 }
 
 /* MapState::GetExcludedStats -- 
@@ -434,39 +440,34 @@ int ObjectMapInterpolate(ObjectMap * I, int state, float *array, float *result, 
                          int n)
 {
   int ok = false;
-  if(state < 0)
-    state = 0;
-  if(state < I->NState)
-    if(I->State[state].Active) {
-      double *matrix = NULL;
-      int ret_ok = ObjectMapGetMatrix(I, state, &matrix);
-      if(ret_ok && matrix) {
-        /* we have to back-transform points */
-        float txf_buffer[3], *txf;
-        txf = txf_buffer;
-        if(n > 1) {
-          txf = Alloc(float, 3 * n);
-        }
-        {
-          int nn = n;
-          int *ff = flag;
-          float *src = array, *dst = txf;
-          while(nn--) {
-            if(!flag || *ff) {
-              inverse_transform44d3f(matrix, src, dst);
-            }
-            src += 3;
-            dst += 3;
-          }
-        }
-        if(txf)
-          ok = ObjectMapStateInterpolate(&I->State[state], txf, result, flag, n);
-        if(txf != txf_buffer)
-          FreeP(txf);
-      } else {
-        ok = ObjectMapStateInterpolate(&I->State[state], array, result, flag, n);
+  float txf_buffer[3];
+  float *txf = txf_buffer;
+
+  ObjectMapState *ms = ObjectMapGetState(I, state);
+
+  if(ms && ms->Active) {
+    double *matrix = ObjectStateGetInvMatrix(&ms->State);
+
+    if(matrix) {
+      /* we have to back-transform points */
+      if(n > 1) {
+        txf = Alloc(float, 3 * n);
+      }
+
+      float *src = array;
+      float *dst = array = txf;
+
+      for (int nn = n; nn--; src += 3, dst += 3) {
+        transform44d3f(matrix, src, dst);
       }
     }
+
+    ok = ObjectMapStateInterpolate(ms, array, result, flag, n);
+  }
+
+  if(txf != txf_buffer)
+    FreeP(txf);
+
   return (ok);
 }
 
@@ -475,7 +476,6 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
 {
   int div[3];
   int min[3];
-  int max[3];
   int fdim[4];
   int new_min[3], new_max[3], new_fdim[3];
   int a, b, c, d, e, f;
@@ -513,7 +513,6 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
     for(a = 0; a < 3; a++) {
       div[a] = ms->Div[a];
       min[a] = ms->Min[a];
-      max[a] = ms->Max[a];
       fdim[a] = ms->FDim[a];
     }
     fdim[3] = 3;
@@ -616,7 +615,6 @@ static int ObjectMapStateTrim(PyMOLGlobals * G, ObjectMapState * ms,
     for(a = 0; a < 3; a++) {
       min[a] = ms->Min[a];
       grid[a] = ms->Grid[a];
-      max[a] = ms->Max[a];
       fdim[a] = ms->FDim[a];
     }
     fdim[3] = 3;
@@ -1105,11 +1103,9 @@ int ObjectMapStateInterpolate(ObjectMapState * ms, float *array, float *result, 
 {
   int ok = true;
   float *inp;
-  float *out;
   int a, b, c;
   float x, y, z;
   inp = array;
-  out = result;
 
   if(ObjectMapStateValidXtal(ms)) {
     float frac[3];
@@ -1656,12 +1652,10 @@ int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** resul
 
 ObjectMapState *ObjectMapGetState(ObjectMap * I, int state)
 {
-  ObjectMapState *result = NULL;
-  if(state < 0)
-    state = 0;
-  if(state < I->NState)
-    result = &I->State[state];
-  return (result);
+  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+    return I->State + iter.state;
+  }
+  return NULL;
 }
 
 ObjectMapState *ObjectMapStatePrime(ObjectMap * I, int state)
@@ -1701,7 +1695,7 @@ void ObjectMapUpdateExtents(ObjectMap * I)
   for(a = 0; a < I->NState; a++) {
     ObjectMapState *ms = I->State + a;
     if(ms->Active) {
-      if(I->State[a].State.Matrix) {
+      if(ms->State.Matrix) {
         transform44d3f(ms->State.Matrix, ms->ExtentMin, tr_min);
         transform44d3f(ms->State.Matrix, ms->ExtentMax, tr_max);
         {
@@ -2332,7 +2326,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   int ispg; // space group number
   int sym_skip;
   int mapc, mapr, maps;
-  int cc[3], xref[3];
+  int cc[3];
   int n_pts;
   double sum, sumsq;
   float mean, stdev;
@@ -2543,14 +2537,6 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   mapc--;                       /* convert to C indexing... */
   mapr--;
   maps--;
-
-  xref[maps] = 0;
-  xref[mapr] = 1;
-  xref[maps] = 2;
-
-  xref[maps] = 0;
-  xref[mapr] = 1;
-  xref[mapc] = 2;
 
   ms->Div[0] = nx;
   ms->Div[1] = ny;

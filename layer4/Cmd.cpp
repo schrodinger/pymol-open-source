@@ -4929,7 +4929,9 @@ static PyObject *CmdFitPairs(PyObject * self, PyObject * args)
 
       a = 0;
       while(a < ln) {
-        SelectorGetTmp(G, PyString_AsString(PySequence_GetItem(list, a)), word[a]);
+        PyObject * item = PySequence_GetItem(list, a);
+        SelectorGetTmp(G, PyString_AsString(item), word[a]);
+        Py_DECREF(item);
         a++;
       }
       if((ok = APIEnterNotModal(G))) {

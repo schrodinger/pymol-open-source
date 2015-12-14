@@ -1048,9 +1048,19 @@ static PyMethodDef champ_methods[] = {
   {NULL,		                    NULL}     /* sentinel */        
 };
 
+#if PY_MAJOR_VERSION >= 3
+PyObject * PyInit__champ(void)
+{
+  static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_champ", NULL, -1, champ_methods };
+  return PyModule_Create(&moduledef);
+}
+#else
 void init_champ(void);
 void init_champ(void)
 {
   Py_InitModule("_champ", champ_methods);
 }
+#endif
 

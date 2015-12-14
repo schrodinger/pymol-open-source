@@ -49,6 +49,10 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 #include"PyMOLObject.h"
+#ifdef _PYMOL_IP_EXTRAS
+#endif
+#include "Executive.h"
+#include "Lex.h"
 
 
 /*========================================================================*/
@@ -462,25 +466,15 @@ int CoordSetTransformAtomR44f(CoordSet * I, int at, const float *matrix)
 /*========================================================================*/
 void CoordSetRecordTxfApplied(CoordSet * I, const float *matrix, int homogenous)
 {
-  if(I->State.Matrix) {
-    double temp[16];
-    if(!homogenous) {
-      convertTTTfR44d(matrix, temp);
-    } else {
-      convert44f44d(matrix, temp);
-    }
-    left_multiply44d44d(temp, I->State.Matrix);
+  double temp[16];
+
+  if(!homogenous) {
+    convertTTTfR44d(matrix, temp);
   } else {
-    I->State.Matrix = Alloc(double, 16);
-    if(I->State.Matrix) {
-      if(!homogenous)
-        convertTTTfR44d(matrix, I->State.Matrix);
-      else {
-        convert44f44d(matrix, I->State.Matrix);
-      }
-    }
+    convert44f44d(matrix, temp);
   }
-  /*  dump44d(I->State.Matrix,"history"); */
+
+  ObjectStateLeftCombineMatrixR44d(&I->State, temp);
 }
 
 
@@ -782,19 +776,17 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
 {
   char *aType;
   AtomName name;
-  ResIdent resi;
   ResName resn;
   ov_word chain;
 
   char formalCharge[4];
-  int rl;
   int literal = SettingGetGlobal_b(G, cSetting_pdb_literal_names);
   int reformat = SettingGetGlobal_i(G, cSetting_pdb_reformat_names_mode);
   int ignore_pdb_segi = SettingGetGlobal_b(G, cSetting_ignore_pdb_segi);
   WordType x, y, z;
 
   formalCharge[0] = 0;
-  sprintf(resn, "%3s", ai->resn);
+  sprintf(resn, "%3.4s", LexStr(G, ai->resn));
   if(SettingGetGlobal_b(G, cSetting_pdb_truncate_residue_name)) {
     resn[3] = 0;                /* enforce 3-letter residue name in PDB files */
   }
@@ -811,146 +803,105 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
   else
     aType = sATOM;
 
-  strcpy(resi, ai->resi);
-  rl = strlen(resi) - 1;
-  if(rl >= 0)
-    if((resi[rl] >= '0') && (resi[rl] <= '9')) {
-      resi[rl + 1] = ' ';
-      resi[rl + 2] = 0;
-    }
+  char inscode = ai->getInscode(true);
+
   VLACheck(*charVLA, char, (*c) + 1000);
 
-  if(!ai->name[0]) {
+  const char * ai_name = LexStr(G, ai->name);
+  auto ai_name_len = strlen(ai_name);
+  bool start_column_1 = false;
+
+  UtilNCopy(name, ai_name, 5);
+
+  if(!ai->name) {
     if(!ai->elem[1])
       sprintf(name, " %s", ai->elem);
     else
       sprintf(name, "%s", ai->elem);
   } else if(!literal) {
-    if(strlen(ai->name) < 4) {  /* atom name less than length 4 */
-      if(!((ai->name[0] >= '0') && (ai->name[0]) <= '9')) {     /* doesn't start with a number */
-        if((toupper(ai->elem[0]) == toupper(ai->name[0])) && ((!ai->elem[1]) || /* symbol len = 1 */
-                                                              (toupper(ai->elem[1]) == toupper(ai->name[1])))) {        /* matched len 2 */
+    if(ai_name_len < 4) {  /* atom name less than length 4 */
+      if(!isdigit(name[0])) {     /* doesn't start with a number */
+        if((toupper(ai->elem[0]) == toupper(name[0])) && ((!ai->elem[1]) || /* symbol len = 1 */
+              (toupper(ai->elem[1]) == toupper(name[1])))) {        /* matched len 2 */
           /* starts with corrent atomic symbol, so */
-          if(strlen(ai->elem) > 1) {    /* if atom symbol is length 2 */
-            strcpy(name, ai->name);     /* then start in column 0 */
-          } else {
+          if(!ai->elem[1]) { /* symbol len = 1 */
             switch (reformat) {
-            case 2:            /* amber/iupac */
-              name[0] = ' ';
-              strcpy(name + 1, ai->name);
-              break;
             case 1:            /* pdb with internal pdb */
             case 3:            /* pdb with internal iupac */
-              if((ai->elem[0] == 'H') && (!ai->elem[1]) && (ai->name[2])) {
-                AtomInfoGetPDB3LetHydroName(G, resn, ai->name, name);
-              } else {
-                name[0] = ' ';
-                strcpy(name + 1, ai->name);
+              if((ai->elem[0] == 'H') && ai_name_len > 2) {
+                AtomInfoGetPDB3LetHydroName(G, resn, ai_name, name);
+                break;
               }
-              break;
-            case 4:
             default:           /* otherwise, start in column 1 */
-              name[0] = ' ';
-              strcpy(name + 1, ai->name);
+              start_column_1 = true;
               break;
             }
           }
         } else {                /* name doesn't start with atomic symbol */
           /* then just place it in column 1 as usual */
-          name[0] = ' ';
-          strcpy(name + 1, ai->name);
+          start_column_1 = true;
         }
       } else {                  /* name starts with a number */
         switch (reformat) {
         case 2:                /* make Amber compliant */
-          if((ai->elem[0] == ai->name[1]) &&
-             ((!ai->elem[1]) || (toupper(ai->elem[1]) == toupper(ai->name[2])))) {
+          if((ai->elem[0] == name[1]) &&
+             ((!ai->elem[1]) || (toupper(ai->elem[1]) == toupper(name[2])))) {
             /* rotate the name to place atom symbol in column 0 to comply with Amber PDB format */
+            name[3] = name[0];
             name[0] = ' ';
-            name[1] = ai->name[1];
-            name[2] = ai->name[2];
-            name[3] = ai->name[0];
-            name[4] = 0;
-          } else {
-            strcpy(name, ai->name);
           }
-          break;
-        default:               /* otherwise, assume that number goes in column 0 */
-          strcpy(name, ai->name);
           break;
         }
       }                         /* just stick it in column 0 and hope for the best */
     } else {                    /* if name is length 4 */
-      if((ai->elem[0] == ai->name[0]) && ((!ai->elem[1]) ||     /* symbol len = 1 */
-                                          (toupper(ai->elem[1]) == toupper(ai->name[1])))) {    /* matched len 2 */
+      if((ai->elem[0] == name[0]) && ((!ai->elem[1]) ||     /* symbol len = 1 */
+                                          (toupper(ai->elem[1]) == toupper(name[1])))) {    /* matched len 2 */
         /* name starts with the atomic symbol */
         if((!ai->elem[1]) && (ai->elem[0])) {   /* but if element is one letter... */
           switch (reformat) {
           case 1:              /* retaining PDB compliance throughout, or */
           case 3:              /* saving as PDB compliant, but use IUPAC within PyMOL */
-            if((ai->name[3] >= '0') && (ai->name[3] <= '9')) {  /* and last character is a number */
+            if(isdigit(name[3])) {  /* and last character is a number */
               /* rotate the name to place atom symbol in column 1 to comply with PDB format */
-              name[0] = ai->name[3];
-              name[1] = ai->name[0];
-              name[2] = ai->name[1];
-              name[3] = ai->name[2];
+              name[0] = ai_name[3];
+              name[1] = ai_name[0];
+              name[2] = ai_name[1];
+              name[3] = ai_name[2];
               name[4] = 0;
-            } else {
-              strcpy(name, ai->name);
             }
             break;
-          case 4:
-          default:             /* no changes */
-            strcpy(name, ai->name);
-            break;
           }
-        } else {
-          strcpy(name, ai->name);
         }
       } else {                  /* name does not start with the symbol... */
         if(reformat == 2) {     /* AMBER compliance mode */
-          if((ai->name[0] >= '0') && (ai->name[0] <= '9')) {
-            if((ai->elem[0] == ai->name[1]) &&
-               ((!(ai->elem[1])) || (toupper(ai->elem[1]) == toupper(ai->name[2])))) {
+          if(isdigit(name[0])) {
+            if((ai->elem[0] == name[1]) &&
+               ((!(ai->elem[1])) || (toupper(ai->elem[1]) == toupper(name[2])))) {
               /* rotate the name to place atom symbol in column 0 to comply with Amber PDB format */
-              name[0] = ai->name[1];
-              name[1] = ai->name[2];
-              name[2] = ai->name[3];
-              name[3] = ai->name[0];
+              name[0] = ai_name[1];
+              name[1] = ai_name[2];
+              name[2] = ai_name[3];
+              name[3] = ai_name[0];
               name[4] = 0;
-            } else {
-              strcpy(name, ai->name);
             }
-          } else {
-            strcpy(name, ai->name);
           }
-        } else {
-          strcpy(name, ai->name);
         }
       }
     }
   } else {                      /* LITERAL mode: preserve what was in the original PDB as best PyMOL can 
                                    this should enable people to open and save amber pdb files without issues */
-    if(strlen(ai->name) == 4) {
-      strcpy(name, ai->name);   /* save literal contents of field */
-    } else {                    /* under length 4? check match with atomic symbol */
-      if((toupper(ai->elem[0]) == toupper(ai->name[0])) && ((!ai->elem[1]) ||   /* symbol len = 1 */
-                                                            (toupper(ai->elem[1]) == toupper(ai->name[1])))) {  /* matched len 2 */
-        /* starts with corrent atomic symbol, so */
-        if(strlen(ai->elem) > 1) {      /* if atom symbol is length 2 */
-          strcpy(name, ai->name);       /* then start in column 0 */
-        } else {
-          /* otherwise, start in column 1 */
-          name[0] = ' ';
-          strcpy(name + 1, ai->name);
-        }
-      } else {
-        /* otherwise, start in column 1 */
-        name[0] = ' ';
-        strcpy(name + 1, ai->name);
-      }
+    if (ai_name_len < 4 && !(ai->elem[1] && /* elem len = 2 */
+          toupper(ai->elem[0]) == toupper(name[0]) &&
+          toupper(ai->elem[1]) == toupper(name[1]))) {
+      start_column_1 = true;
     }
   }
+
+  if (start_column_1) {
+    name[0] = ' ';
+    UtilNCopy(name + 1, ai_name, 4);
+  }
+
   if(SettingGetGlobal_b(G, cSetting_pdb_retain_ids)) {
     cnt = ai->id - 1;
   }
@@ -969,10 +920,10 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
     z[8] = 0;
     linelen =
       sprintf((*charVLA) + (*c),
-              "%6s%5i %-4s%1s%-4s%1.1s%5s   %s%s%s%6.2f%6.2f      %-4s%2s%2s\n", aType,
-              cnt + 1, name, ai->alt, resn, LexStr(G, ai->chain), resi, x, y, z, ai->q, ai->b,
+              "%6s%5i %-4s%1s%-4s%1.1s%4i%c   %s%s%s%6.2f%6.2f      %-4.4s%2s%2s\n", aType,
+              cnt + 1, name, ai->alt, resn, LexStr(G, ai->chain), ai->resv % 10000, inscode, x, y, z, ai->q, ai->b,
               ignore_pdb_segi ? "" :
-              ai->segi, ai->elem, formalCharge);
+              LexStr(G, ai->segi), ai->elem, formalCharge);
     if(ai->anisou) {
       // Columns 7 - 27 and 73 - 80 are identical to the corresponding ATOM/HETATM record.
       char *atomline = (*charVLA) + (*c);
@@ -997,25 +948,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
   } else {
     Chain alt;
     if(pdb_info->is_pqr_file() && pdb_info->pqr_workarounds) {
-      int non_num = false;
-      char *p = resi;
-      while(*p) {
-        if((((*p) <= '0') || ((*p) >= '9'))
-           && (*p != ' ')) {
-          non_num = true;
-          break;
-        }
-        p++;
-      }
-      if(non_num) {
-        sprintf(resi, "%d", ai->resv);
-        rl = strlen(resi) - 1;
-        if(rl >= 0)
-          if((resi[rl] >= '0') && (resi[rl] <= '9')) {
-            resi[rl + 1] = ' ';
-            resi[rl + 2] = 0;
-          }
-      }
+      inscode = ' ';
       chain = 0;                /* no chain IDs */
       alt[0] = 0;               /* not alt conf identifiers */
     } else {
@@ -1037,9 +970,9 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
       sprintf(z, " %7.2f", v[2]);
     z[8] = 0;
 
-    (*c) += sprintf((*charVLA) + (*c), "%6s%5i %-4s%1s%-4s%1.1s%5s   %s%s%s %11.8f %7.3f\n",
+    (*c) += sprintf((*charVLA) + (*c), "%6s%5i %-4s%1s%-4s%1.1s%4i%c   %s%s%s %11.8f %7.3f\n",
                     aType, cnt + 1, name, alt, resn,
-                    LexStr(G, chain), resi, x, y, z, ai->partialCharge, ai->elec_radius);
+                    LexStr(G, chain), ai->resv, inscode, x, y, z, ai->partialCharge, ai->elec_radius);
   }
 
 }
@@ -1064,20 +997,23 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
       RotateU(matrix, tmp_array);
     }
 
+    char resi[8];
+    AtomResiFromResv(resi, sizeof(resi), ai);
+
     PConvFloat3ToPyObjAttr(atom, "coord", v);
     if(ref)
       PConvFloat3ToPyObjAttr(atom, "ref_coord", ref);
-    PConvStringToPyObjAttr(atom, "name", ai->name);
+    PConvStringToPyObjAttr(atom, "name", LexStr(G, ai->name));
     PConvStringToPyObjAttr(atom, "symbol", ai->elem);
-    PConvStringToPyObjAttr(atom, "resn", ai->resn);
-    PConvStringToPyObjAttr(atom, "resi", ai->resi);
+    PConvStringToPyObjAttr(atom, "resn", LexStr(G, ai->resn));
+    PConvStringToPyObjAttr(atom, "resi", resi);
     PConvStringToPyObjAttr(atom, "ss", ai->ssType);
     PConvIntToPyObjAttr(atom, "resi_number", ai->resv);
     PConvIntToPyObjAttr(atom, "stereo", ai->stereo);
     PConvStringToPyObjAttr(atom, "chain", LexStr(G, ai->chain));
     if(ai->alt[0])
       PConvStringToPyObjAttr(atom, "alt", ai->alt);
-    PConvStringToPyObjAttr(atom, "segi", ai->segi);
+    PConvStringToPyObjAttr(atom, "segi", LexStr(G, ai->segi));
     PConvFloatToPyObjAttr(atom, "q", ai->q);
     PConvFloatToPyObjAttr(atom, "b", ai->b);
     {
@@ -1114,22 +1050,9 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
 void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoType * ai,
                              int cnt)
 {
-  ResIdent resi;
-  ResName resn;
-  int rl;
   int retain_ids = SettingGetGlobal_b(G, cSetting_pdb_retain_ids);
   int ter_id;
 
-  strcpy(resn, ai->resn);       /* enforce 3-letter residue name in PDB files */
-  resn[3] = 0;
-
-  strcpy(resi, ai->resi);
-  rl = strlen(resi) - 1;
-  if(rl >= 0)
-    if((resi[rl] >= '0') && (resi[rl] <= '9')) {
-      resi[rl + 1] = ' ';
-      resi[rl + 2] = 0;
-    }
   VLACheck(*charVLA, char, (*c) + 1000);
 
   if(retain_ids) {
@@ -1139,7 +1062,10 @@ void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoT
   }
 
   (*c) += sprintf((*charVLA) + (*c),
-                  "%3s   %5i      %3s %1.1s%5s\n", "TER", ter_id, resn, LexStr(G, ai->chain), resi);
+                  "TER   %5i      %3.3s %1.1s%4d%c\n", ter_id, 
+                  LexStr(G, ai->resn),
+                  LexStr(G, ai->chain), ai->resv,
+                  ai->getInscode(true));
 
 }
 
@@ -1195,62 +1121,34 @@ void CoordSet::invalidateRep(int type, int level)
     }
 
   /* invalidate basd on one representation, 'type' */
-  if(type >= 0) {               /* representation specific */
-    if(type < cRepCnt) {
-      int eff_level = level;
-      a = type;
-      if(level == cRepInvPick) {
-        switch (a) {
-        case cRepSurface:
-        case cRepMesh:
-        case cRepDot:
-          /* skip the expensive to recompute, non-pickable
-             representations */
-          break;
-        default:               /* default behavior is to blow away the representation */
-          eff_level = cRepInvRep;
-          break;
-        }
+  for (RepIterator iter(I->State.G, type); iter.next(); ){
+    int eff_level = level;
+    a = iter.rep;
+    if(level == cRepInvPick) {
+      switch (a) {
+      case cRepSurface:
+      case cRepMesh:
+      case cRepDot:
+        /* skip the expensive to recompute, non-pickable
+           representations */
+        break;
+      default:               /* default behavior is to blow away the representation */
+        eff_level = cRepInvRep;
+        break;
       }
-      if(I->Rep[a]) {
-        if(I->Rep[a]->fInvalidate && (eff_level < cRepInvPurge))
-          I->Rep[a]->fInvalidate(I->Rep[a], I, eff_level);
-        else if(eff_level >= cRepInvExtColor) {
-          I->Rep[a]->fFree(I->Rep[a]);
-          I->Rep[a] = NULL;
-        }
-      }
-      if(eff_level >= cRepInvVisib)     /* make active if visibility has changed */
-        I->Active[type] = true;
     }
-  } else {                      /* all representations are affected */
-    for(a = 0; a < cRepCnt; a++) {
-      int eff_level = level;
-      if(level == cRepInvPick) {
-        switch (a) {
-        case cRepSurface:
-        case cRepMesh:
-        case cRepDot:
-          /* skip the expensive to recompute, non-pickable
-             representations */
-          break;
-        default:               /* default behavior is to blow away the representation */
-          eff_level = cRepInvRep;
-          break;
-        }
-      }
-      if(eff_level >= cRepInvVisib)     /* make active if visibility has changed */
-        I->Active[a] = true;
-      if(I->Rep[a]) {
-        if(I->Rep[a]->fInvalidate && (eff_level < cRepInvPurge))
-          I->Rep[a]->fInvalidate(I->Rep[a], I, eff_level);
-        else if(eff_level >= cRepInvExtColor) {
-          I->Rep[a]->fFree(I->Rep[a]);
-          I->Rep[a] = NULL;
-        }
+    if(eff_level >= cRepInvVisib)     /* make active if visibility has changed */
+      I->Active[a] = true;
+    if(I->Rep[a]) {
+      if(I->Rep[a]->fInvalidate && (eff_level < cRepInvPurge))
+        I->Rep[a]->fInvalidate(I->Rep[a], I, eff_level);
+      else if(eff_level >= cRepInvExtColor) {
+        I->Rep[a]->fFree(I->Rep[a]);
+        I->Rep[a] = NULL;
       }
     }
   }
+
   if(level >= cRepInvCoord) {   /* if coordinates change, then this map becomes invalid */
     MapFree(I->Coord2Idx);
     I->Coord2Idx = NULL;

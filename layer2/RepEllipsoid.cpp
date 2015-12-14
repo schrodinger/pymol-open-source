@@ -131,19 +131,17 @@ const double problevel[50] = { 0.4299, 0.5479, 0.6334, 0.7035, 0.7644,
 /*
  * Return true if backbone atom that should be hidden with side_chain_helper
  */
-static bool is_sidechainhelper_hidden(const AtomInfoType * ai) {
+static bool is_sidechainhelper_hidden(PyMOLGlobals * G, const AtomInfoType * ai) {
   if (!(ai->flags & cAtomFlag_polymer))
     return false;
 
-  auto& name = ai->name;
-
   switch (ai->protons) {
     case cAN_C:
-      return (name[0] == 'C' && !name[1]);
+      return ai->name == G->lex_const.C;
     case cAN_N:
-      return (name[0] == 'N' && !name[1] && strcmp(ai->resn, "PRO"));
+      return ai->name == G->lex_const.N && ai->resn != G->lex_const.PRO;
     case cAN_O:
-      return (name[0] == 'O' && !name[1]);
+      return ai->name == G->lex_const.O;
   }
 
   return false;
@@ -228,7 +226,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
         if (!ai->anisou || !(ai->visRep & cRepEllipsoidBit))
           continue;
 
-        if (is_sidechainhelper_hidden(ai)) {
+        if (is_sidechainhelper_hidden(G, ai)) {
 	  int sc_helper, rsc_helper;
           AtomInfoGetSetting_b(G, ai, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper, &sc_helper);
           AtomInfoGetSetting_b(G, ai, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper, &rsc_helper);

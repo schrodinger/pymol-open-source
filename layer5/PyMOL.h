@@ -358,67 +358,81 @@ int PyMOL_DelG3DStream(CPyMOL * I, int *array_ptr);
 
 /* Command API */
 
-PyMOLreturn_status PyMOL_CmdBackgroundColor(CPyMOL * I, char *value);
+PyMOLreturn_status PyMOL_CmdBackgroundColor(CPyMOL * I, const char *value);
 
-PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I, char *what, char *object_name);
+PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I,
+    const char *what,
+    const char *object_name);
 
-PyMOLreturn_status PyMOL_CmdLoad(CPyMOL * I, char *content,
-                                 char *content_type,
-                                 char *content_format,
+PyMOLreturn_status PyMOL_CmdLoad(CPyMOL * I,
+                                 const char *content,
+                                 const char *content_type,
+                                 const char *content_format,
                                  char *object_name,
                                  int state, int discrete, int finish,
                                  int quiet, int multiplex, int zoom);
 
-PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL * I, char *content,
+PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL * I,
+                                    const char *content,
                                     int content_length,
-                                    char *content_format,
+                                    const char *content_format,
                                     char *object_name, int state,
                                     int discrete, int finish,
                                     int quiet, int multiplex, int zoom);
 
-PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL * I, float *content,
+PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL * I,
+                                    const float *content,
                                     int content_length,
                                     char *object_name, int state, int quiet, int zoom);
 
-PyMOLreturn_status PyMOL_CmdCreate(CPyMOL * I, char *name,
-                                   char *selection, int source_state,
+PyMOLreturn_status PyMOL_CmdCreate(CPyMOL * I,
+                                   const char *name,
+                                   const char *selection, int source_state,
                                    int target_state, int discrete,
-                                   int zoom, int quiet, int singletons, char *extract);
+                                   int zoom, int quiet, int singletons,
+                                   const char *extract, int copy_properties);
 
-PyMOLreturn_status PyMOL_CmdZoom(CPyMOL * I, char *selection, float buffer,
+PyMOLreturn_status PyMOL_CmdZoom(CPyMOL * I, const char *selection, float buffer,
                                  int state, int complete, float animate, int quiet);
 
-PyMOLreturn_status PyMOL_CmdCenter(CPyMOL * I, char *selection, int state, int origin,
+PyMOLreturn_status PyMOL_CmdCenter(CPyMOL * I, const char *selection, int state, int origin,
                                    float animate, int quiet);
 
-PyMOLreturn_status PyMOL_CmdOrient(CPyMOL * I, char *selection, float buffer, int state,
+PyMOLreturn_status PyMOL_CmdOrient(CPyMOL * I, const char *selection, float buffer, int state,
                                    int complete, float animate, int quiet);
 
-PyMOLreturn_status PyMOL_CmdOrigin(CPyMOL * I, char *selection, int state, int quiet);
+PyMOLreturn_status PyMOL_CmdOrigin(CPyMOL * I, const char *selection, int state, int quiet);
 
 PyMOLreturn_status PyMOL_CmdOriginAt(CPyMOL * I, float x, float y, float z, int quiet);
 
-PyMOLreturn_status PyMOL_CmdClip(CPyMOL * I, char *mode, float amount, char *selection,
+PyMOLreturn_status PyMOL_CmdClip(CPyMOL * I, const char *mode, float amount,
+                                 const char *selection,
                                  int state, int quiet);
 
-PyMOLreturn_status PyMOL_CmdShow(CPyMOL * I, char *representation, char *selection,
+PyMOLreturn_status PyMOL_CmdShow(CPyMOL * I,
+                                 const char *representation,
+                                 const char *selection,
                                  int quiet);
 
-PyMOLreturn_status PyMOL_CmdHide(CPyMOL * I, char *representation, char *selection,
+PyMOLreturn_status PyMOL_CmdHide(CPyMOL * I,
+                                 const char *representation,
+                                 const char *selection,
                                  int quiet);
 
-PyMOLreturn_status PyMOL_CmdEnable(CPyMOL * I, char *name, int quiet);
+PyMOLreturn_status PyMOL_CmdEnable(CPyMOL * I, const char *name, int quiet);
 
-PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, char *name, int quiet);
+PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, const char *name, int quiet);
 
-PyMOLreturn_status PyMOL_CmdDelete(CPyMOL * I, char *name, int quiet);
+PyMOLreturn_status PyMOL_CmdDelete(CPyMOL * I, const char *name, int quiet);
 
-PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I, char *setting, char *value,
-                                char *selection,
+PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I,
+                                const char *setting,
+                                const char *value,
+                                const char *selection,
                                 int state, int quiet, int side_effects);
 
-PyMOLreturn_value PyMOL_CmdGet(CPyMOL * I, char *setting,
-			       char *selection,
+PyMOLreturn_value PyMOL_CmdGet(CPyMOL * I, const char *setting,
+			       const char *selection,
 			       int state, int quiet);
 
 PyMOLreturn_status PyMOL_CmdUnset(CPyMOL * I, char *setting, char *selection,

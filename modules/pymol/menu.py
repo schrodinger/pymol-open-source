@@ -1609,11 +1609,7 @@ def pick_option_rev(self_cmd, sele, title, object=0):
     result.reverse()
     return result
 
-def pick_menu(self_cmd, sele1, sele2):
-    if sele1[-1]=='`':
-        title = sele1[0:-1]
-    else:
-        title = sele1
+def pick_menu(self_cmd, title, sele2):
     with menucontext(self_cmd, sele2):
         return [[ 2, title     , '' ],
             [ 1, 'drag object matrix'      ,'cmd.drag("(byobj ('+sele2+'))",mode=1)'            ],

@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"ShaderMgr.h"
 #include"CGO.h"
+#include "Lex.h"
 
 typedef struct RepRibbon {
   Rep R;
@@ -498,10 +499,10 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
         AtomInfoGetSetting_i(G, ai, cSetting_ribbon_trace_atoms, trace_ostate, &trace);
 
         if(trace || ((obj->AtomInfo[a1].protons == cAN_C) &&
-                     (WordMatch(G, "CA", obj->AtomInfo[a1].name, 1) < 0) &&
+                     (WordMatch(G, "CA", LexStr(G, obj->AtomInfo[a1].name), 1) < 0) &&
                      !AtomInfoSameResidueP(G, last_ai, ai))) {
           PRINTFD(G, FB_RepRibbon)
-            " RepRibbon: found atom in %s; a1 %d a2 %d\n", obj->AtomInfo[a1].resi, a1, a2
+            " RepRibbon: found atom in %d; a1 %d a2 %d\n", obj->AtomInfo[a1].resv, a1, a2
             ENDFD;
 
           if(a2 >= 0) {
@@ -518,7 +519,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
             }
           }
           PRINTFD(G, FB_RepRibbon)
-            " RepRibbon: found atom in %s; a1 %d a2 %d\n", obj->AtomInfo[a1].resi, a1, a2
+            " RepRibbon: found atom in %d; a1 %d a2 %d\n", obj->AtomInfo[a1].resv, a1, a2
             ENDFD;
           last_ai = ai;
           if(a2 < 0)
@@ -533,10 +534,10 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 
           a2 = a1;
         } else if((((na_mode != 1) && (ai->protons == cAN_P) &&
-                    (WordMatch(G, "P", ai->name, 1) < 0)) ||
+                    (WordMatch(G, "P", LexStr(G, ai->name), 1) < 0)) ||
                    ((na_mode == 1) && (ai->protons == cAN_C) &&
-                    (WordMatchExact(G, "C4*", ai->name, 1) ||
-                     WordMatchExact(G, "C4'", ai->name, 1)))) &&
+                    (WordMatchExact(G, "C4*", LexStr(G, ai->name), 1) ||
+                     WordMatchExact(G, "C4'", LexStr(G, ai->name), 1)))) &&
                   !AtomInfoSameResidueP(G, last_ai, ai)) {
           if(a2 >= 0) {
             if(!ObjectMoleculeCheckBondSep(obj, a1, a2, 6)) {   /* six bonds between phosphates */
@@ -588,16 +589,16 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
                   (ai->protons == cAN_O) &&
                   (last_ai->protons == cAN_P) &&
                   ((na_mode == 2) || (na_mode == 4)) &&
-                  (WordMatchExact(G, "O3'", ai->name, 1) ||
-                   WordMatchExact(G, "O3*", ai->name, 1)) &&
+                  (WordMatchExact(G, "O3'", LexStr(G, ai->name), 1) ||
+                   WordMatchExact(G, "O3*", LexStr(G, ai->name), 1)) &&
                   AtomInfoSameResidueP(G, last_ai, ai) &&
                   ObjectMoleculeCheckBondSep(obj, a1, a2, 5)) {
           trailing_O3p_ai = ai;
           trailing_O3p_a = a;
         } else if((ai->protons == cAN_O) &&
                   ((na_mode == 3) || (na_mode == 4)) &&
-                  (WordMatchExact(G, "O5'", ai->name, 1) ||
-                   WordMatchExact(G, "O5*", ai->name, 1))) {
+                  (WordMatchExact(G, "O5'", LexStr(G, ai->name), 1) ||
+                   WordMatchExact(G, "O5*", LexStr(G, ai->name), 1))) {
           leading_O5p_ai = ai;
           leading_O5p_a = a;
           leading_O5p_a1 = a1;
@@ -901,7 +902,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
           AtomInfoGetSetting_i(G, ai, cSetting_ribbon_trace_atoms, trace_ostate, &trace);
 
           if(trace || ((ai->protons == cAN_C) &&
-                       (WordMatch(G, "CA", ai->name, 1) < 0) &&
+                       (WordMatch(G, "CA", LexStr(G, ai->name), 1) < 0) &&
                        !AtomInfoSameResidueP(G, last_ai, ai))) {
             if(a2 >= 0) {
               if(trace) {
@@ -927,10 +928,10 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
             last_ai = ai;
             a2 = a1;
           } else if((((na_mode != 1) && (ai->protons == cAN_P) &&
-                      (WordMatch(G, "P", ai->name, 1) < 0)) ||
+                      (WordMatch(G, "P", LexStr(G, ai->name), 1) < 0)) ||
                      ((na_mode == 1) && (ai->protons == cAN_C) &&
-                      (WordMatchExact(G, "C4*", ai->name, 1) ||
-                       WordMatchExact(G, "C4'", ai->name, 1)))) &&
+                      (WordMatchExact(G, "C4*", LexStr(G, ai->name), 1) ||
+                       WordMatchExact(G, "C4'", LexStr(G, ai->name), 1)))) &&
                     !AtomInfoSameResidueP(G, last_ai, ai)) {
             if(a2 >= 0) {
               if(!ObjectMoleculeCheckBondSep(obj, a1, a2, 6)) { /* six bonds between phosphates */

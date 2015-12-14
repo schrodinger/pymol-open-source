@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2015-12-14 Thomas Holder, Blaine Bell
+
+	* support segi, resn and name of arbitrary string length
+
+	* expose settings to iterate/alter via "s.<name>" (available
+	  in Incentive PyMOL since 1.7.0)
+
+	* Python 3 compatibility for champ module
+	  https://sf.net/p/pymol/bugs/172/
+
+	* apbs_tools: apply fixes from Pymol-script-repo
+
 2015-12-09 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* Python 3 compatibility, tested with Python 2.6, 2.7 and 3.4

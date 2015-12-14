@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Wizard.h"
 #include"Scene.h"
 #include"Menu.h"
+#include "Lex.h"
 
 #define cTempSeekerSele "_seeker"
 #define cTempCenterSele "_seeker_center"
@@ -1308,7 +1309,7 @@ void SeekerUpdate(PyMOLGlobals * G)
         l1->start = lab->len;
         if(obj->NAtom) {
           UtilConcatVLA(&lab->txt, &lab->len, "/");
-          UtilConcatVLA(&lab->txt, &lab->len, ai->segi);
+          UtilConcatVLA(&lab->txt, &lab->len, LexStr(G, ai->segi));
           UtilConcatVLA(&lab->txt, &lab->len, "/");
           UtilConcatVLA(&lab->txt, &lab->len, LexStr(G, ai->chain));
           UtilConcatVLA(&lab->txt, &lab->len, "/");
@@ -1357,7 +1358,7 @@ void SeekerUpdate(PyMOLGlobals * G)
           l1 = lab->col + nCol;
           l1->start = lab->len;
           UtilConcatVLA(&lab->txt, &lab->len, "/");
-          UtilConcatVLA(&lab->txt, &lab->len, ai->segi);
+          UtilConcatVLA(&lab->txt, &lab->len, LexStr(G, ai->segi));
           UtilConcatVLA(&lab->txt, &lab->len, "/");
           UtilConcatVLA(&lab->txt, &lab->len, LexStr(G, ai->chain));
           UtilConcatVLA(&lab->txt, &lab->len, "/");
@@ -1413,7 +1414,15 @@ void SeekerUpdate(PyMOLGlobals * G)
         }
 
         if(min_pad < 0)
-          min_pad = strlen(ai->resi) + row->len + 1;
+        {
+          min_pad = row->len + 1; // + strlen(resi)
+          for (int v = ai->resv; v; v /= 10) {
+            min_pad++;
+          }
+          if (ai->inscode) {
+            min_pad++;
+          }
+        }
 
         atom_in_state = (cs && a < cs->NAtIndex && cs->AtmToIdx[a] >= 0);
 
@@ -1431,7 +1440,7 @@ void SeekerUpdate(PyMOLGlobals * G)
 
             first_atom_in_label = true;
 
-            abbr[0] = SeekerGetAbbr(G, ai->resn, 'O', 0);
+            abbr[0] = SeekerGetAbbr(G, LexStr(G, ai->resn), 'O', 0);
 
             r1->hint_no_space = last_abbr || last_spacer;
 
@@ -1441,8 +1450,8 @@ void SeekerUpdate(PyMOLGlobals * G)
                 r1->start = row->len;
               }
 
-              if(ai->resn[0])
-                UtilConcatVLA(&row->txt, &row->len, ai->resn);
+              if(ai->resn)
+                UtilConcatVLA(&row->txt, &row->len, LexStr(G, ai->resn));
               else
                 UtilConcatVLA(&row->txt, &row->len, "''");
 
@@ -1482,8 +1491,8 @@ void SeekerUpdate(PyMOLGlobals * G)
               r1->state = ai->discrete_state;
             first_atom_in_label = true;
 
-            if(ai->resn[0])
-              UtilConcatVLA(&row->txt, &row->len, ai->resn);
+            if(ai->resn)
+              UtilConcatVLA(&row->txt, &row->len, LexStr(G, ai->resn));
             else
               UtilConcatVLA(&row->txt, &row->len, "''");
             r1->stop = row->len;
@@ -1508,8 +1517,8 @@ void SeekerUpdate(PyMOLGlobals * G)
           r1 = row->col + nCol;
           r1->start = row->len;
           first_atom_in_label = true;
-          if(ai->name[0])
-            UtilConcatVLA(&row->txt, &row->len, ai->name);
+          if(ai->name)
+            UtilConcatVLA(&row->txt, &row->len, LexStr(G, ai->name));
           else
             UtilConcatVLA(&row->txt, &row->len, "''");
           r1->stop = row->len;
@@ -2010,11 +2019,15 @@ void SeekerUpdate(PyMOLGlobals * G)
               last_ai = ai;
               l1->start = lab->len;
               if(codes == 2) {
-                UtilConcatVLA(&lab->txt, &lab->len, ai->resn);
+                UtilConcatVLA(&lab->txt, &lab->len, LexStr(G, ai->resn));
                 UtilConcatVLA(&lab->txt, &lab->len, "`");
               }
 
-              UtilConcatVLA(&lab->txt, &lab->len, ai->resi);
+              {
+                char resi[8];
+                AtomResiFromResv(resi, sizeof(resi), ai);
+                UtilConcatVLA(&lab->txt, &lab->len, resi);
+              }
               l1->stop = lab->len;
               st_len = l1->stop - l1->start + 1;
               l1->offset = r1->offset;

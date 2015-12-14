@@ -225,6 +225,11 @@ typedef struct {
 
 void WrapperObjectReset(WrapperObject *);
 
+typedef struct {
+  PyObject_HEAD
+  WrapperObject *wobj;
+} SettingPropertyWrapperObject;
+
 /* instance-specific Python object, containers, closures, and threads */
 
 #define MAX_SAVED_THREAD ((PYMOL_MAX_THREADS)+3)
@@ -262,6 +267,7 @@ struct _CP_inst {
   SavedThreadRec savedThread[MAX_SAVED_THREAD];
 
   WrapperObject *wrapperObject;
+  SettingPropertyWrapperObject *settingWrapperObject;
 };
 
 

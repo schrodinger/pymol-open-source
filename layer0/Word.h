@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #define _H_Word
 
 #include "PyMOLGlobals.h"
+#include "Lex.h"
 
 #define WordLength 256
 
@@ -136,5 +137,39 @@ __inline__ static int WordCompare(PyMOLGlobals * G, const char *p, const char *q
 int WordCompare(PyMOLGlobals * G, const char *p, const char *q, int ignCase);
 
 #endif
+
+inline int WordCompare(PyMOLGlobals * G, lexidx_t s1, lexidx_t s2, int ignCase) {
+  if (s1 == s2)
+    return 0;
+  return WordCompare(G, LexStr(G, s1), LexStr(G, s2), ignCase);
+}
+
+inline int WordMatch(PyMOLGlobals * G, lexidx_t s1, lexidx_t s2, int ignCase) {
+  if (s1 == s2)
+    return -1; // negative = perfect match
+  return WordMatch(G, LexStr(G, s1), LexStr(G, s2), ignCase);
+}
+
+inline int WordMatchNoWild(PyMOLGlobals * G, lexidx_t s1, lexidx_t s2, int ignCase) {
+  if (s1 == s2)
+    return -1; // negative = perfect match
+  return WordMatchNoWild(G, LexStr(G, s1), LexStr(G, s2), ignCase);
+}
+
+inline int WordMatchExact(PyMOLGlobals * G, lexidx_t s1, lexidx_t s2, int ignCase) {
+  if (s1 == s2)
+    return 1; // non-zero = perfect match
+  if (!ignCase)
+    return 0; // 0 = no match
+  return WordMatchExact(G, LexStr(G, s1), LexStr(G, s2), ignCase);
+}
+
+inline int WordMatchExact(PyMOLGlobals * G, char c1, char c2, int ignCase) {
+  if (c1 == c2)
+    return 1; // non-zero = perfect match
+  if (!ignCase)
+    return 0; // 0 = no match
+  return c1 && c2 && toupper(c1) == toupper(c2);
+}
 
 #endif

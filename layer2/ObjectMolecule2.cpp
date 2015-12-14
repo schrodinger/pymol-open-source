@@ -39,6 +39,7 @@
 #include"P.h"
 #include"ObjectCGO.h"
 #include"Scene.h"
+#include "Lex.h"
 
 #ifdef _PYMOL_IP_EXTRAS
 #include"AtomInfoHistory.h"
@@ -275,16 +276,15 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
   {
     /* match existing properties of the old atom */
     AtomInfoType *ai = atInfo;
-    ai->resv = AtomResvFromResi(resi);
+    ai->setResi(resi);
     ai->hetatm = hetatm;
     ai->geom = cAtomInfoNone;
     ai->q = q;
     ai->b = b;
     ai->chain = LexIdx(G, chain);
-    strcpy(ai->resi, resi);
-    strcpy(ai->segi, segi);
-    strcpy(ai->resn, resn);
-    strcpy(ai->name, name);
+    ai->segi = LexIdx(G, segi);
+    ai->resn = LexIdx(G, resn);
+    ai->name = LexIdx(G, name);
     strcpy(ai->elem, elem);
     ai->id = -1;
     ai->rank = -1;
@@ -310,8 +310,10 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
     AtomInfoUniquefyNames(I->Obj.G, I->AtomInfo, I->NAtom, ai, NULL, 1);
     if(!quiet) {
       PRINTFB(G, FB_ObjectMolecule, FB_Actions)
-        " ObjMol: created %s/%s/%s/%s`%s/%s\n",
-        I->Obj.Name, ai->segi, LexStr(G, ai->chain), ai->resn, ai->resi, ai->name ENDFB(G);
+        " ObjMol: created %s/%s/%s/%s`%d%c/%s\n",
+        I->Obj.Name, LexStr(G, ai->segi), LexStr(G, ai->chain),
+        LexStr(G, ai->resn), ai->resv, ai->getInscode(true),
+        LexStr(G, ai->name) ENDFB(G);
     }
   }
 
@@ -797,7 +799,7 @@ int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, const char *n
   if(a0 >= 0) {
     ITERNEIGHBORATOMS(obj->Neighbor, a0, a2, s) {
       ai2 = obj->AtomInfo + a2;
-      if(WordMatch(G, ai2->name, name, true) < 0 &&
+      if(WordMatch(G, LexStr(G, ai2->name), name, true) < 0 &&
           (same_res < 0 || (same_res == AtomInfoSameResidue(G, ai0, ai2))))
         return true;
     }
@@ -860,9 +862,9 @@ static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
                                      AtomInfoType * ai2, int *bond_order)
 {
   int order = *(bond_order);
-  char *name1 = ai1->name;
-  char *name2 = ai2->name;
-  char *resn1 = ai1->resn;
+  const char *name1 = LexStr(G, ai1->name);
+  const char *name2 = LexStr(G, ai2->name);
+  const char *resn1 = LexStr(G, ai1->resn);
 
   /* nasty high-speed hack to get bond valences and formal charges 
      for standard residues */
@@ -1447,7 +1449,7 @@ void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int in
         SelectorIsMember(I->Obj.G, s2, sele2)) ||
        (SelectorIsMember(I->Obj.G, s2, sele1) && SelectorIsMember(I->Obj.G, s1, sele2))) {
       order = -1;
-      if(!ai1->resn[3]) {       /* Standard disconnected PDB residue */
+      if(strlen(LexStr(I->Obj.G, ai1->resn)) < 4) {       /* Standard disconnected PDB residue */
         if(AtomInfoSameResidue(I->Obj.G, ai1, ai2)) {
           assign_pdb_known_residue(I->Obj.G, ai1, ai2, &order);
         }
@@ -1619,11 +1621,12 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
 
   if(wildcard) {
     int a;
-    char *p, ch;
+    const char *p;
+    char ch;
     AtomInfoType *ai = I->AtomInfo;
 
     for(a = 0; a < I->NAtom; a++) {
-      p = ai->name;
+      p = LexStr(G, ai->name);
       while((ch = *(p++))) {
         if(ch == wildcard) {
           found_wildcard = true;
@@ -1854,8 +1857,8 @@ ok_except1:
  * Insert a secondary structure record into the hash table.
  */
 static int sshash_register_rec(SSHash * hash,
-    unsigned char ss_chain1, char *ss_resi1,
-    unsigned char ss_chain2, char *ss_resi2,
+    unsigned char ss_chain1, int ss_resv1, char ss_inscode1,
+    unsigned char ss_chain2, int ss_resv2, char ss_inscode2,
     char SSCode) {
   /* pretty confusing how this works... the following efficient (i.e. array-based)
      secondary structure lookup even when there are multiple insertion codes
@@ -1863,14 +1866,8 @@ static int sshash_register_rec(SSHash * hash,
      insertion codes */
 
   unsigned char chain;
-  int ss_found = false, ssi = 0, a, b, index, ss_resv1, ss_resv2;
+  int ss_found = false, ssi = 0, a, b, index;
   SSEntry *sst;
-
-  // bail if resi numeric parsing fails
-  if(!sscanf(ss_resi1, "%d", &ss_resv1))
-    return false;
-  if(!sscanf(ss_resi2, "%d", &ss_resv2))
-    return false;
 
   // up to two iterations:
   // 1) assume chain1==chain2
@@ -1901,8 +1898,8 @@ static int sshash_register_rec(SSHash * hash,
         sst->chain1 = ss_chain1;
         sst->chain2 = ss_chain2;
         sst->type = SSCode;
-        strcpy(sst->resi1, ss_resi1);
-        strcpy(sst->resi2, ss_resi2);
+        sst->inscode1 = ss_inscode1;
+        sst->inscode2 = ss_inscode2;
         ss_found = true;
       }
       sst->next = hash->ss[chain][index];
@@ -1931,8 +1928,8 @@ static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain
       /* contains shared entry, or unique linked list for each residue */
       if(    ai->resv >= sst->resv1
           && ai->resv <= sst->resv2
-          && (ai->resv != sst->resv1 || WordCompare(NULL, ai->resi, sst->resi1, true) >= 0)
-          && (ai->resv != sst->resv2 || WordCompare(NULL, ai->resi, sst->resi2, true) <= 0))
+          && (ai->resv != sst->resv1 || ai->inscode >= sst->inscode1)
+          && (ai->resv != sst->resv2 || ai->inscode <= sst->inscode2))
       {
         ai->ssType[0] = sst->type;
         return;
@@ -1976,7 +1973,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int foundNextModelFlag = false;
   int ssFlag = false;
   int ss_resv1 = 0, ss_resv2 = 0;
-  ResIdent ss_resi1 = "", ss_resi2 = "";
+  char ss_inscode1 = '\0', ss_inscode2 = '\0';
   unsigned char ss_chain1 = 0, ss_chain2 = 0;
   SSHash *ss_hash = NULL;
   char cc[MAXLINELEN], tags[MAXLINELEN];
@@ -1993,6 +1990,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int bogus_name_alignment = true;
   AtomName literal_name = "";
   int ok = true;
+  lexidx_t segi_override_idx = LexIdx(G, segi_override);
 
   if(tags_in && (!quiet) && (!*restart_model)) {
     char *p = tags;
@@ -2136,25 +2134,23 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       ss_chain1 = (*p);
       p = nskip(p, 2);
       p = ncopy(cc, p, 4);
-      if(!sscanf(cc, "%s", ss_resi1))
-        ss_valid = false;
       if(!sscanf(cc, "%d", &ss_resv1))
         ss_valid = false;
+      ss_inscode1 = makeInscode(*p);
 
       p = nskip(p, 6);
       ss_chain2 = (*p);
       p = nskip(p, 2);
       p = ncopy(cc, p, 4);
 
-      if(!sscanf(cc, "%s", ss_resi2))
-        ss_valid = false;
       if(!sscanf(cc, "%d", &ss_resv2))
         ss_valid = false;
+      ss_inscode2 = makeInscode(*p);
 
       if(ss_valid) {
         PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-          " ObjectMolecule: read HELIX %c %s %c %s\n",
-          ss_chain1, ss_resi1, ss_chain2, ss_resi2 ENDFB(G);
+          " ObjectMolecule: read HELIX %c %d%.1s %c %d%.1s\n",
+          ss_chain1, ss_resv1, &ss_inscode1, ss_chain2, ss_resv2, &ss_inscode2 ENDFB(G);
         SSCode = 'H';
       }
 
@@ -2169,23 +2165,21 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       ss_chain1 = (*p);
       p = nskip(p, 1);
       p = ncopy(cc, p, 4);
-      if(!sscanf(cc, "%s", ss_resi1))
-        ss_valid = false;
       if(!sscanf(cc, "%d", &ss_resv1))
         ss_valid = false;
+      ss_inscode1 = makeInscode(*p);
       p = nskip(p, 6);
       ss_chain2 = (*p);
       p = nskip(p, 1);
       p = ncopy(cc, p, 4);
-      if(!sscanf(cc, "%s", ss_resi2))
-        ss_valid = false;
       if(!sscanf(cc, "%d", &ss_resv2))
         ss_valid = false;
+      ss_inscode2 = makeInscode(*p);
 
       if(ss_valid) {
         PRINTFB(G, FB_ObjectMolecule, FB_Blather)
-          " ObjectMolecule: read SHEET %c %s %c %s\n",
-          ss_chain1, ss_resi1, ss_chain2, ss_resi2 ENDFB(G);
+          " ObjectMolecule: read SHEET %c %d%.1s %c %d%.1s\n",
+          ss_chain1, ss_resv1, &ss_inscode1, ss_chain2, ss_resv2, &ss_inscode2 ENDFB(G);
         SSCode = 'S';
       }
 
@@ -2628,8 +2622,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
     if(ok && SSCode) {
       ss_found = sshash_register_rec(ss_hash,
-          ss_chain1, ss_resi1,
-          ss_chain2, ss_resi2, SSCode);
+          ss_chain1, ss_resv1, ss_inscode1,
+          ss_chain2, ss_resv2, ss_inscode2, SSCode);
     }
     /* Atom records */
 
@@ -2644,9 +2638,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       p = nskip(p, 1);          /* to 12 */
       p = ncopy(literal_name, p, 4);
       if(literal_names) {
-        strcpy(ai->name, literal_name);
+        LexAssign(G, ai->name, literal_name);
       } else {
-        ParseNTrim(ai->name, literal_name, 4);
+        ParseNTrim(cc, literal_name, 4);
+        LexAssign(G, ai->name, cc);
       }
 
       p = ncopy(cc, p, 1);
@@ -2657,79 +2652,60 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         ai->alt[1] = 0;
       }
 
-      p = ncopy(cc, p, 4);      /* now allowing for 4-letter residues */
-      if(!sscanf(cc, "%s", ai->resn))
-        ai->resn[0] = 0;
-      else if(truncate_resn)    /* unless specifically disabled */
-        ai->resn[3] = 0;
+      p = ntrim(cc, p, 4); /* now allowing for 4-letter residues */
+      if (truncate_resn)        /* unless specifically disabled */
+        cc[3] = 0;
 
-      if(ai->name[0]) {
-        int name_len = strlen(ai->name);
-        char name[4];
+      LexAssign(G, ai->resn, cc);
+
+      if(ai->name) {
+        const char * ai_name = LexStr(G, ai->name);
+        int name_len = strlen(ai_name);
+        char name[5];
         switch (reformat_names) {
         case 1:                /* pdb compliant: HH12 becomes 2HH1, etc. */
           if(name_len > 3) {
-            if((ai->name[0] >= 'A') && ((ai->name[0] <= 'Z')) &&
-               (ai->name[3] >= '0') && (ai->name[3] <= '9')) {
-              if(!(((ai->name[1] >= 'a') && (ai->name[1] <= 'z')) || ((ai->name[0] == 'C') && (ai->name[1] == 'L')) ||  /* try to be smart about */
-                   ((ai->name[0] == 'B') && (ai->name[1] == 'R')) ||    /* distinguishing common atoms */
-                   ((ai->name[0] == 'C') && (ai->name[1] == 'A')) ||    /* in all-caps from typical */
-                   ((ai->name[0] == 'F') && (ai->name[1] == 'E')) ||    /* nonatomic abbreviations */
-                   ((ai->name[0] == 'C') && (ai->name[1] == 'U')) ||
-                   ((ai->name[0] == 'N') && (ai->name[1] == 'A')) ||
-                   ((ai->name[0] == 'N') && (ai->name[1] == 'I')) ||
-                   ((ai->name[0] == 'M') && (ai->name[1] == 'G')) ||
-                   ((ai->name[0] == 'M') && (ai->name[1] == 'N')) ||
-                   ((ai->name[0] == 'H') && (ai->name[1] == 'G')) ||
-                   ((ai->name[0] == 'S') && (ai->name[1] == 'E')) ||
-                   ((ai->name[0] == 'S') && (ai->name[1] == 'I')) ||
-                   ((ai->name[0] == 'Z') && (ai->name[1] == 'N'))
+            if((ai_name[0] >= 'A') && ((ai_name[0] <= 'Z')) &&
+                isdigit(ai_name[3])) {
+              if(!(((ai_name[1] >= 'a') && (ai_name[1] <= 'z')) ||
+                   ((ai_name[0] == 'C') && (ai_name[1] == 'L')) ||    /* try to be smart about */
+                   ((ai_name[0] == 'B') && (ai_name[1] == 'R')) ||    /* distinguishing common atoms */
+                   ((ai_name[0] == 'C') && (ai_name[1] == 'A')) ||    /* in all-caps from typical */
+                   ((ai_name[0] == 'F') && (ai_name[1] == 'E')) ||    /* nonatomic abbreviations */
+                   ((ai_name[0] == 'C') && (ai_name[1] == 'U')) ||
+                   ((ai_name[0] == 'N') && (ai_name[1] == 'A')) ||
+                   ((ai_name[0] == 'N') && (ai_name[1] == 'I')) ||
+                   ((ai_name[0] == 'M') && (ai_name[1] == 'G')) ||
+                   ((ai_name[0] == 'M') && (ai_name[1] == 'N')) ||
+                   ((ai_name[0] == 'H') && (ai_name[1] == 'G')) ||
+                   ((ai_name[0] == 'S') && (ai_name[1] == 'E')) ||
+                   ((ai_name[0] == 'S') && (ai_name[1] == 'I')) ||
+                   ((ai_name[0] == 'Z') && (ai_name[1] == 'N'))
                  )) {
-                ctmp = ai->name[3];
-                ai->name[3] = ai->name[2];
-                ai->name[2] = ai->name[1];
-                ai->name[1] = ai->name[0];
-                ai->name[0] = ctmp;
+                strncpy(name + 1, ai_name, 3);
+                name[0] = ai_name[3];
+                name[4] = 0;
+                LexAssign(G, ai->name, name);
               }
             }
           } else if(name_len == 3) {
-            if((ai->name[0] == 'H') &&
-               (ai->name[1] >= 'A') && ((ai->name[1] <= 'Z')) &&
-               (ai->name[2] >= '0') && (ai->name[2] <= '9')) {
-              AtomInfoGetPDB3LetHydroName(G, ai->resn, ai->name, name);
-              if(name[0] == ' ')
-                strcpy(ai->name, name + 1);
-              else
-                strcpy(ai->name, name);
+            if((ai_name[0] == 'H') &&
+               (ai_name[1] >= 'A') && ((ai_name[1] <= 'Z')) &&
+               isdigit(ai_name[2])) {
+              AtomInfoGetPDB3LetHydroName(G, LexStr(G, ai->resn), ai_name, name);
+              LexAssign(G, ai->name, (name[0] == ' ') ? (name + 1) : name);
             }
           }
           break;
         case 2:                /* amber compliant: 2HH1 becomes HH12 */
         case 3:                /* pdb compliant, but use IUPAC within PyMOL */
-          if(ai->name[0]) {
-            if((ai->name[0] >= '0') && (ai->name[0] <= '9') &&
-               (!((ai->name[1] >= '0') && (ai->name[1] <= '9'))) && (ai->name[1] != 0)) {
-              switch (strlen(ai->name)) {
-              default:
-                break;
-              case 2:
-                ctmp = ai->name[0];
-                ai->name[0] = ai->name[1];
-                ai->name[1] = ctmp;
-                break;
-              case 3:
-                ctmp = ai->name[0];
-                ai->name[0] = ai->name[1];
-                ai->name[1] = ai->name[2];
-                ai->name[2] = ctmp;
-                break;
-              case 4:
-                ctmp = ai->name[0];
-                ai->name[0] = ai->name[1];
-                ai->name[1] = ai->name[2];
-                ai->name[2] = ai->name[3];
-                ai->name[3] = ctmp;
-                break;
+          if(ai_name[0]) {
+            if(isdigit(ai_name[0]) && ai_name[1] && (!isdigit(ai_name[1]))) {
+              if (1 < name_len && name_len < 5) {
+                strcpy(name, ai_name + 1);
+                name[name_len - 1] = ai_name[0];
+                name[name_len] = 0;
+                LexAssign(G, ai->name, name);
               }
               break;
         default:               /* AS IS */
@@ -2739,8 +2715,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
           break;
         case 4:                /* simply read trim and write back out with 3-letter names starting from the
                                    second column, and four-letter names starting in the first */
-          ncopy(cc, ai->name, 44);
-          ParseNTrim(ai->name, cc, 4);
+          ntrim(cc, ai_name, 4);
+          LexAssign(G, ai->name, cc);
           break;
         }
       }
@@ -2754,10 +2730,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         ai->chain = LexIdx(G, cc);
       }
 
-      p = ncopy(cc, p, 5);      /* we treat insertion records as part of the residue identifier */
-      if(!sscanf(cc, "%s", ai->resi))
-        ai->resi[0] = 0;
-      ai->resv = AtomResvFromResi(ai->resi);
+      p = ncopy(cc, p, 4);
+      if(!sscanf(cc, "%d", &ai->resv))
+        ai->resv = 0;
+      ai->setInscode(*p);
+      p = nskip(p, 1);
 
       if(ssFlag) {              /* get secondary structure information (if avail) */
         sshash_lookup(ss_hash, ai, ss_chain1);
@@ -2797,24 +2774,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         }
 
         if(!ignore_pdb_segi) {
-          if(!segi_override[0]) {
-            if(!sscanf(cc, "%s", ai->segi))
-              ai->segi[0] = 0;
-            else {
-              cc_saved = cc[3];
-              ncopy(cc, p, 4);
-              if((cc_saved == '1') &&   /* atom ID overflow? (nonstandard use...)... */
-                 (cc[0] == '0') &&
-                 (cc[1] == '0') && (cc[2] == '0') && (cc[3] == '0') && atomCount) {
-                strcpy(segi_override, (ai - 1)->segi);
-                strcpy(ai->segi, (ai - 1)->segi);
-              }
+          if(!segi_override_idx) {
+            if(cc[3] == '1' && atomCount && strncmp(p, "0000", 4) == 0) {
+              /* atom ID overflow? (nonstandard use...)... */
+              LexAssign(G, segi_override_idx, (ai - 1)->segi);
+              LexAssign(G, ai->segi,          (ai - 1)->segi);
+            } else {
+              UtilCleanStr(cc);
+              LexAssign(G, ai->segi, cc);
             }
           } else {
-            strcpy(ai->segi, segi_override);
+            LexAssign(G, ai->segi, segi_override_idx);
           }
         } else {
-          ai->segi[0] = 0;
+          LexAssign(G, ai->segi, 0);
         }
 
         p = ncopy(cc, p, 2);
@@ -2897,9 +2870,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       AtomInfoAssignColors(G, ai);
 
       PRINTFD(G, FB_ObjectMolecule)
-        "%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
-        ai->name, ai->resn, ai->resi, LexStr(G, ai->chain),
-        *(coord + a), *(coord + a + 1), *(coord + a + 2), ai->b, ai->q, ai->segi ENDFD;
+        "%s %s %d%c %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
+        LexStr(G, ai->name), LexStr(G, ai->resn), ai->resv, ai->getInscode(true), LexStr(G, ai->chain),
+        *(coord + a), *(coord + a + 1), *(coord + a + 2), ai->b, ai->q, LexStr(G, ai->segi) ENDFD;
 
       if(atomCount < nAtom) {     /* safety */
         a += 3;
@@ -3082,6 +3055,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 	(*next_pdb) = NULL;
     }
   }
+
+  LexDec(G, segi_override_idx);
   return (cset);
 }
 
@@ -3667,6 +3642,9 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
       if (ai->chain) lexIDs.insert(ai->chain);
       if (ai->label) lexIDs.insert(ai->label);
       if (ai->custom) lexIDs.insert(ai->custom);
+      if (ai->segi) lexIDs.insert(ai->segi);
+      if (ai->resn) lexIDs.insert(ai->resn);
+      if (ai->name) lexIDs.insert(ai->name);
       ++ai;
     }
     for (auto it = lexIDs.begin(); it != lexIDs.end(); ++it){ // need to calculate totalstlen so we can allocate
@@ -3687,18 +3665,31 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
       strcpy(strpl, strptr);
       strpl += strlen(strptr) + 1;
     }
-    result = PyList_New(3);
 
-    if (pse_export_version && pse_export_version < 1770){
-      PyList_SetItem(result, 0, PyInt_FromLong(176));  // currently, we only support pse_export_version saving as 1.765 version
-      void *newAtomInfo = Copy_To_AtomInfoType_Version(176, I->AtomInfo, I->NAtom);
-      PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(newAtomInfo), I->NAtom * sizeof(AtomInfoType_1_7_6)));
-      FreeP(newAtomInfo);
-    } else {
-      PyList_SetItem(result, 0, PyInt_FromLong(AtomInfoVERSION));
-      PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(I->AtomInfo), I->NAtom * sizeof(AtomInfoType)));
+    auto version = AtomInfoVERSION;
+    auto blobsize = sizeof(AtomInfoType);
+    auto blob = reinterpret_cast<void*>(I->AtomInfo);
+
+    if (pse_export_version && pse_export_version < 1810) {
+      if (pse_export_version < 1770) {
+        version = 176;
+      } else {
+        version = 177;
+      }
+
+      AtomInfoTypeConverter converter(G, I->NAtom);
+      blob = converter.allocCopy(version, I->AtomInfo);
+      blobsize = VLAGetByteSize(blob);
     }
+
+    result = PyList_New(3);
+    PyList_SetItem(result, 0, PyInt_FromLong(version));
+    PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(blob), blobsize));
     PyList_SetItem(result, 2, PyString_FromStringAndSize(reinterpret_cast<const char*>(strinfo), strinfolen));
+
+    if (version != AtomInfoVERSION) {
+      VLAFreeP(blob);
+    }
 
     FreeP(strinfo);
     return result;
@@ -3752,7 +3743,9 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     auto strval_1 = PyString_AsSomeString(strlookupobj);
     int *strval = (int*)strval_1.data();
 
-    std::map<int, int> oldIDtoLexID;
+    AtomInfoTypeConverter converter(G, I->NAtom);
+
+    auto& oldIDtoLexID = converter.lexidxmap;
     int nstrings = *(strval++);
     char *strpl = (char*)(strval + nstrings);
     int strcnt = nstrings;
@@ -3774,7 +3767,7 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + 1);
     if (AtomInfoVERSION != atomInfo_version){
       // version not the same, need to convert
-      Copy_Into_AtomInfoType_From_Version(strval_2.data(), atomInfo_version, I->AtomInfo, I->NAtom);
+      converter.copy(I->AtomInfo, strval_2.data(), atomInfo_version);
     } else {
       memcpy(I->AtomInfo, strval_2.data(), slen);
     }
@@ -3784,10 +3777,15 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     //  not saved for pse_binary_dump) 
     AtomInfoType *ai = I->AtomInfo;
     for(a = 0; a < I->NAtom; ++a, ++ai) {
-      CONVERT_TO_NEW_LEX(ai->chain);
-      CONVERT_TO_NEW_LEX(ai->textType);
-      CONVERT_TO_NEW_LEX(ai->label);
-      CONVERT_TO_NEW_LEX(ai->custom);
+      if (AtomInfoVERSION == atomInfo_version){
+        CONVERT_TO_NEW_LEX(ai->segi);
+        CONVERT_TO_NEW_LEX(ai->resn);
+        CONVERT_TO_NEW_LEX(ai->name);
+        CONVERT_TO_NEW_LEX(ai->chain);
+        CONVERT_TO_NEW_LEX(ai->textType);
+        CONVERT_TO_NEW_LEX(ai->label);
+        CONVERT_TO_NEW_LEX(ai->custom);
+      }
       ai->color = ColorConvertOldSessionIndex(G, ai->color);
       if (ai->unique_id){
         ai->unique_id = SettingUniqueConvertOldSessionID(G, ai->unique_id);
@@ -4104,9 +4102,9 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
 			*/
 
                         water_flag = false;
-                        if(AtomInfoKnownWaterResName(G, ai1->resn))
+                        if(AtomInfoKnownWaterResName(G, LexStr(G, ai1->resn)))
                           water_flag = true;
-                        else if(AtomInfoKnownWaterResName(G, ai2->resn))
+                        else if(AtomInfoKnownWaterResName(G, LexStr(G, ai2->resn)))
                           water_flag = true;
 
                         /* workaround for hydrogens and sulfurs... */
@@ -4131,8 +4129,8 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                               (connect_mode == 3))) || 
 
                             ((ai1->hetatm && ai2->hetatm) && /* both hetatms, and both recognized polymer residue? */
-                             AtomInfoKnownPolymerResName(ai1->resn) && /* (new PDB rule allows these to be HETATMs */
-                             AtomInfoKnownPolymerResName(ai2->resn))
+                             AtomInfoKnownPolymerResName(LexStr(G, ai1->resn)) && /* (new PDB rule allows these to be HETATMs */
+                             AtomInfoKnownPolymerResName(LexStr(G, ai2->resn)))
 
                             ) && /* or we're no excluding HETATM -> HETATM bonds, AND*/
                            
@@ -4217,29 +4215,18 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                               }
                             }
 			    /* selenomethionine; double-bond the carbonyl if present */
-                            if(ai1->hetatm && (!ai1->resn[3])) {        /* common HETATMs we should know about... */
-                              switch (ai1->resn[0]) {
-                              case 'M':
-                                switch (ai1->resn[1]) {
-                                case 'S':
-                                  switch (ai1->resn[2]) {
-                                  case 'E':
-				    /* if carbonyl in same residue, double bond it */
-                                    if(((!ai1->name[1]) && (!ai2->name[1])) &&
-                                       (((ai1->name[0] == 'C') && (ai2->name[0] == 'O'))
-                                        || ((ai1->name[0] == 'O')
-                                            && (ai2->name[0] == 'C')))) {
-                                      if(AtomInfoSameResidue(G, ai1, ai2)) {
-                                        order = 2;
-                                      }
-                                    }
-                                    break;
+                            const char * ai1_resn = LexStr(G, ai1->resn);
+                            if(ai1->hetatm) {        /* common HETATMs we should know about... */
+                              if (ai1->resn == G->lex_const.MSE) {
+                                if ((ai1->name == G->lex_const.C && ai2->name == G->lex_const.O) ||
+                                    (ai1->name == G->lex_const.O && ai2->name == G->lex_const.C)) {
+                                  /* if carbonyl in same residue, double bond it */
+                                  if(AtomInfoSameResidue(G, ai1, ai2)) {
+                                    order = 2;
                                   }
-                                  break;
                                 }
-                                break;
                               }
-                            } else if((!ai1->hetatm)) {
+                            } else {
                               if(AtomInfoSameResidue(I->Obj.G, ai1, ai2)) {
                                 /* hookup standard disconnected PDB residue */
                                 assign_pdb_known_residue(G, ai1, ai2, &order);
