@@ -60,6 +60,7 @@
 #include "TypeFace.h"
 #include "PlugIOManager.h"
 #include "MovieScene.h"
+#include "Lex.h"
 
 #include "PyMOL.h"
 #include "PyMOLGlobals.h"
@@ -572,13 +573,13 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_ATOM_PROP(model, 0, cPType_model, 0);
   LEX_ATOM_PROP(index, 1, cPType_index, 0);
   LEX_ATOM_PROP(type, 2, cPType_char_as_type, 0);
-  LEX_ATOM_PROP_S(name, 3, cPType_string, offsetof(AtomInfoType,name), cAtomNameLen);
-  LEX_ATOM_PROP_S(resn, 4, cPType_string, offsetof(AtomInfoType,resn), cResnLen);
-  LEX_ATOM_PROP_S(resi, 5, cPType_string, offsetof(AtomInfoType,resi), cResiLen);
+  LEX_ATOM_PROP(name, 3, cPType_int_as_string, offsetof(AtomInfoType,name));
+  LEX_ATOM_PROP(resn, 4, cPType_int_as_string, offsetof(AtomInfoType,resn));
+  LEX_ATOM_PROP(resi, 5, 0, 0);
   LEX_ATOM_PROP(resv, 6, cPType_int, offsetof(AtomInfoType,resv));
   LEX_ATOM_PROP(chain, 7, cPType_int_as_string, offsetof(AtomInfoType,chain));
   LEX_ATOM_PROP_S(alt, 8, cPType_string, offsetof(AtomInfoType,alt), 1);
-  LEX_ATOM_PROP_S(segi, 9, cPType_string, offsetof(AtomInfoType,segi), cSegiLen);
+  LEX_ATOM_PROP(segi, 9, cPType_int_as_string, offsetof(AtomInfoType,segi));
   LEX_ATOM_PROP_S(elem, 10, cPType_string, offsetof(AtomInfoType,elem), cElemNameLen);
   LEX_ATOM_PROP_S(ss, 11, cPType_string, offsetof(AtomInfoType,ssType), 1);
   LEX_ATOM_PROP(text_type, 12, cPType_int_as_string, offsetof(AtomInfoType,textType));
@@ -809,14 +810,14 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL * I, char *source, char *target,
 
 }
 
-PyMOLreturn_status PyMOL_CmdDelete(CPyMOL * I, char *name, int quiet)
+PyMOLreturn_status PyMOL_CmdDelete(CPyMOL * I, const char *name, int quiet)
 {
   PYMOL_API_LOCK ExecutiveDelete(I->G, name);
   PyMOL_NeedRedisplay(I);  /* this should really only get called if ExecutiveDelete deletes something */
   PYMOL_API_UNLOCK return return_status_ok(true);       /* TO DO: return a real result */
 }
 
-PyMOLreturn_status PyMOL_CmdZoom(CPyMOL * I, char *selection, float buffer,
+PyMOLreturn_status PyMOL_CmdZoom(CPyMOL * I, const char *selection, float buffer,
                                  int state, int complete, float animate, int quiet)
 {
   int ok = false;
@@ -826,7 +827,7 @@ PyMOLreturn_status PyMOL_CmdZoom(CPyMOL * I, char *selection, float buffer,
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdOrient(CPyMOL * I, char *selection, float buffer,
+PyMOLreturn_status PyMOL_CmdOrient(CPyMOL * I, const char *selection, float buffer,
                                    int state, int complete, float animate, int quiet)
 {
   int ok = true;
@@ -841,7 +842,7 @@ PyMOLreturn_status PyMOL_CmdOrient(CPyMOL * I, char *selection, float buffer,
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdCenter(CPyMOL * I, char *selection, int state, int origin,
+PyMOLreturn_status PyMOL_CmdCenter(CPyMOL * I, const char *selection, int state, int origin,
                                    float animate, int quiet)
 {
   int ok = false;
@@ -850,7 +851,7 @@ PyMOLreturn_status PyMOL_CmdCenter(CPyMOL * I, char *selection, int state, int o
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdOrigin(CPyMOL * I, char *selection, int state, int quiet)
+PyMOLreturn_status PyMOL_CmdOrigin(CPyMOL * I, const char *selection, int state, int quiet)
 {
   int ok = true;
   PYMOL_API_LOCK OrthoLineType s1;
@@ -872,7 +873,7 @@ PyMOLreturn_status PyMOL_CmdOriginAt(CPyMOL * I, float x, float y, float z, int 
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-static OVreturn_word get_rep_id(CPyMOL * I, char *representation)
+static OVreturn_word get_rep_id(CPyMOL * I, const char *representation)
 {
   OVreturn_word result;
 
@@ -889,7 +890,7 @@ OVreturn_word get_setting_id(CPyMOL * I, const char *setting)
   return OVOneToOne_GetForward(I->Setting, result.word);
 }
 
-static OVreturn_word get_clip_id(CPyMOL * I, char *clip)
+static OVreturn_word get_clip_id(CPyMOL * I, const char *clip)
 {
   OVreturn_word result;
   if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, clip))))
@@ -897,7 +898,7 @@ static OVreturn_word get_clip_id(CPyMOL * I, char *clip)
   return OVOneToOne_GetForward(I->Clip, result.word);
 }
 
-static OVreturn_word get_reinit_id(CPyMOL * I, char *reinit)
+static OVreturn_word get_reinit_id(CPyMOL * I, const char *reinit)
 {
   OVreturn_word result;
   if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, reinit))))
@@ -913,7 +914,9 @@ static OVreturn_word get_select_list_mode(CPyMOL * I, char *mode)
   return OVOneToOne_GetForward(I->SelectList, result.word);
 }
 
-PyMOLreturn_status PyMOL_CmdClip(CPyMOL * I, char *mode, float amount, char *selection,
+PyMOLreturn_status PyMOL_CmdClip(CPyMOL * I,
+                                 const char *mode, float amount,
+                                 const char *selection,
                                  int state, int quiet)
 {
   int ok = true;
@@ -957,7 +960,9 @@ PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL * I, char *name, char *object, int
   PYMOL_API_UNLOCK return result;
 }
 
-PyMOLreturn_status PyMOL_CmdShow(CPyMOL * I, char *representation, char *selection,
+PyMOLreturn_status PyMOL_CmdShow(CPyMOL * I,
+                                 const char *representation,
+                                 const char *selection,
                                  int quiet)
 {
   int ok = true;
@@ -978,7 +983,9 @@ PyMOLreturn_status PyMOL_CmdShow(CPyMOL * I, char *representation, char *selecti
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdHide(CPyMOL * I, char *representation, char *selection,
+PyMOLreturn_status PyMOL_CmdHide(CPyMOL * I,
+                                 const char *representation,
+                                 const char *selection,
                                  int quiet)
 {
   int ok = true;
@@ -998,7 +1005,7 @@ PyMOLreturn_status PyMOL_CmdHide(CPyMOL * I, char *representation, char *selecti
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdEnable(CPyMOL * I, char *name, int quiet)
+PyMOLreturn_status PyMOL_CmdEnable(CPyMOL * I, const char *name, int quiet)
 {
   int ok = false;
   PYMOL_API_LOCK if(name[0] == '(') {
@@ -1012,7 +1019,7 @@ PyMOLreturn_status PyMOL_CmdEnable(CPyMOL * I, char *name, int quiet)
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, char *name, int quiet)
+PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, const char *name, int quiet)
 {
   int ok = false;
   PYMOL_API_LOCK if(name[0] == '(') {
@@ -1085,8 +1092,10 @@ PyMOLreturn_status PyMOL_CmdUnsetBond(CPyMOL * I, char *setting,
       return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I, char *setting, char *value,
-                                char *selection,
+PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I,
+                                const char *setting,
+                                const char *value,
+                                const char *selection,
                                 int state, int quiet, int side_effects)
 {
   int ok = true;
@@ -1105,8 +1114,9 @@ PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I, char *setting, char *value,
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_value PyMOL_CmdGet(CPyMOL * I, char *setting,
-                                char *selection,
+PyMOLreturn_value PyMOL_CmdGet(CPyMOL * I,
+                                const char *setting,
+                                const char *selection,
                                 int state, int quiet){
   int ok = true;
   PyMOLreturn_value result = { PyMOLstatus_SUCCESS };
@@ -1158,7 +1168,7 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL * I, char *color, char *selection, int 
 }
 
 /* -- JV */
-PyMOLreturn_status PyMOL_CmdBackgroundColor(CPyMOL * I, char *value) {
+PyMOLreturn_status PyMOL_CmdBackgroundColor(CPyMOL * I, const char *value) {
   int ok = true;
   PYMOL_API_LOCK
 
@@ -1171,7 +1181,9 @@ PyMOLreturn_status PyMOL_CmdBackgroundColor(CPyMOL * I, char *value) {
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I, char *what, char *object_name)
+PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I,
+    const char *what,
+    const char *object_name)
 {
   int ok = true;
   OVreturn_word what_id;
@@ -1742,9 +1754,10 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
   return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdLoad(CPyMOL * I, char *content,
-                                 char *content_type,
-                                 char *content_format,
+PyMOLreturn_status PyMOL_CmdLoad(CPyMOL * I,
+                                 const char *content,
+                                 const char *content_type,
+                                 const char *content_format,
                                  char *object_name, int state,
                                  int discrete, int finish,
                                  int quiet, int multiplex, int zoom)
@@ -1756,9 +1769,10 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL * I, char *content,
   PYMOL_API_UNLOCK return status;
 }
 
-PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL * I, char *content,
+PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL * I,
+                                    const char *content,
                                     int content_length,
-                                    char *content_format,
+                                    const char *content_format,
                                     char *object_name, int state,
                                     int discrete, int finish,
                                     int quiet, int multiplex, int zoom)
@@ -1770,7 +1784,8 @@ PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL * I, char *content,
   PYMOL_API_UNLOCK return status;
 }
 
-PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL * I, float *content,
+PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL * I,
+                                    const float *content,
                                     int content_length,
                                     char *object_name, int state, int quiet, int zoom)
 {
@@ -1781,10 +1796,12 @@ PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL * I, float *content,
   PYMOL_API_UNLOCK return status;
 }
 
-PyMOLreturn_status PyMOL_CmdCreate(CPyMOL * I, char *name,
-                                   char *selection, int source_state,
+PyMOLreturn_status PyMOL_CmdCreate(CPyMOL * I,  
+                                   const char *name,
+                                   const char *selection, int source_state,
                                    int target_state, int discrete,
-                                   int zoom, int quiet, int singletons, char *extract)
+                                   int zoom, int quiet, int singletons,
+                                   const char *extract, int copy_properties)
 {
   int ok = true;
   PYMOL_API_LOCK
@@ -2116,6 +2133,10 @@ void PyMOL_Start(CPyMOL * I)
   if(OVreturn_IS_ERROR(PyMOL_InitAPI(I))) {
     printf("ERROR: PyMOL internal C API initialization failed.\n");
   }
+
+  // global lexicon "constants"
+#define LEX_CONSTANTS_IMPL
+#include "lex_constants.h"
 
   MemoryCacheInit(G);
   FeedbackInit(G, G->Option->quiet);
@@ -2819,16 +2840,19 @@ char *PyMOL_GetClickString(CPyMOL * I, int reset)
         ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(I->G, I->ClickedObject);
         if(obj && (I->ClickedIndex < obj->NAtom)) {
           AtomInfoType *ai = obj->AtomInfo + I->ClickedIndex;
+          char inscode_str[2] = { ai->inscode, '\0' };
           sprintf(result,
-                  "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n%s",
+                  "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%d%s\nname=%s\nalt=%s\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n%s",
                   I->ClickedObject,
                   I->ClickedIndex + 1,
                   ai->rank,
                   ai->id,
-                  ai->segi,
+                  LexStr(I->G, ai->segi),
                   LexStr(I->G, ai->chain),
-                  ai->resn,
-                  ai->resi, ai->name, ai->alt, butstr, modstr, I->ClickedX, I->ClickedY, posstr);
+                  LexStr(I->G, ai->resn),
+                  ai->resv, inscode_str,
+                  LexStr(I->G, ai->name),
+                  ai->alt, butstr, modstr, I->ClickedX, I->ClickedY, posstr);
         }
       }
     }

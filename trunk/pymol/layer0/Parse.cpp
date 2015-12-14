@@ -270,7 +270,7 @@ const char *ParseWord(char *q, const char *p, int n)
 const char *ParseNTrim(char *q, const char *p, int n)
 {                               /* n character trimmed copy */
   char *q_orig = q;
-  while(*p) {
+  while(*p && n) {
     if((*p == 0xD) || (*p == 0xA))      /* don't skip end of lines */
       break;
     if(*p <= 32) {

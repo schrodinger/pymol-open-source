@@ -55,6 +55,7 @@ typedef char ObjectNameType[WordLength];
 typedef struct CObjectState {
   PyMOLGlobals *G;
   double *Matrix;
+  double *InvMatrix;
 } CObjectState;
 
 #ifndef CObject_DEFINED
@@ -149,6 +150,7 @@ void ObjectStateCopy(CObjectState * dst, const CObjectState * src);
 void ObjectStatePurge(CObjectState * I);
 int ObjectStateSetMatrix(CObjectState * I, double *matrix);
 double *ObjectStateGetMatrix(CObjectState * I);
+double *ObjectStateGetInvMatrix(CObjectState * I);
 void ObjectStateTransformMatrix(CObjectState * I, double *matrix);
 void ObjectStateResetMatrix(CObjectState * I);
 PyObject *ObjectStateAsPyList(CObjectState * I);

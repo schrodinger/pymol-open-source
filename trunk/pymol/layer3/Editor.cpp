@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"P.h"
 #include"CGO.h"
+#include "Lex.h"
 
 struct _CEditor {
   ObjectMolecule *DihedObject;
@@ -948,7 +949,7 @@ void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
               ai->geom = geom;
               ai->valence = valence;
               if(name[0])
-                UtilNCopy(ai->name, name, sizeof(AtomName));
+                LexAssign(G, ai->name, name);
               if (ok)
 		ok &= ObjectMoleculeAttach(obj0, i0, ai);       /* will free ai */
               ai = NULL;
@@ -1116,7 +1117,7 @@ void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, co
         if(i0 >= 0) {
           UtilNCopy(ai.elem, elem, sizeof(ElemName));
           if(name[0])
-            UtilNCopy(ai.name, name, sizeof(AtomName));
+            LexAssign(G, ai.name, name);
           ai.geom = geom;
           ai.valence = valence;
           if (ok)

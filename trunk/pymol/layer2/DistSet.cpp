@@ -497,8 +497,7 @@ DistSet *DistSetNew(PyMOLGlobals * G)
 {
   int a;
   OOAlloc(G, DistSet);
-  I->State.G = G;
-  I->State.Matrix = NULL;
+  ObjectStateInit(G, &I->State);
   I->NIndex = 0;
   I->Coord = NULL;
   I->Rep = VLAlloc(Rep *, cRepCnt);

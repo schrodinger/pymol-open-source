@@ -190,3 +190,13 @@ void RepPurge(Rep * I)
 {
   FreeP(I->P);
 }
+
+RepIterator::RepIterator(PyMOLGlobals * G, int rep_) {
+  if (rep_ < 0){
+    end = cRepCnt;
+    rep = -1;
+  } else {
+    end = rep_ + 1;
+    rep = rep_ - 1;
+  }
+}

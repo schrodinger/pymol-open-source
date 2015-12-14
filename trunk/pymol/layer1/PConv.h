@@ -159,6 +159,7 @@ int PConvPyList3ToFloatVLA(PyObject * obj, float **f);
 int PConvPyListToFloatArray(PyObject * obj, float **f);
 int PConvPyListToDoubleArray(PyObject * obj, double **f);
 int PConvPyListToFloatArrayInPlace(PyObject * obj, float *ff, ov_size ll);
+int PConvPyListOrTupleToFloatArrayInPlace(PyObject * obj, float *ff, ov_size ll);
 int PConvPyListToFloatArrayInPlaceAutoZero(PyObject * obj, float *ii, ov_size ll);
 
 int PConvPyListToDoubleArrayInPlace(PyObject * obj, double *ff, ov_size ll);

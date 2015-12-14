@@ -24,11 +24,13 @@ Z* -------------------------------------------------------------------
 #if _PyMOL_VERSION_int < 1770
 #define AtomInfoVERSION  176
 #define BondInfoVERSION  176
-#else
+#elif _PyMOL_VERSION_int < 1810
 #define AtomInfoVERSION  177
 #define BondInfoVERSION  177
+#else
+#define AtomInfoVERSION  181
+#define BondInfoVERSION  177
 #endif
-
 
 /* FLAGS 0-3 have the following conventional usage for molecular modeling */
 
@@ -194,6 +196,10 @@ typedef char ElemName[cElemNameLen + 1];
 // for customType (not geom)
 #define cAtomInfoNoType -9999
 
+inline char makeInscode(char c) {
+  return (c <= ' ') ? '\0' : c;
+}
+
 typedef struct BondType {
   int index[2];
   int id;
@@ -212,6 +218,15 @@ typedef struct AtomInfoType {
     float * anisou;               // only allocate with get_anisou
     int64_t dummyanisou;
   };
+
+  lexidx_t segi;
+  lexidx_t chain;
+  lexidx_t resn;
+  lexidx_t name;
+  lexidx_t textType;
+  lexidx_t custom;
+  lexidx_t label;
+
   int resv;
   int customType;
   int priority;
@@ -225,9 +240,6 @@ typedef struct AtomInfoType {
   int discrete_state;           /* state+1 for atoms in discrete objects */
   float elec_radius;            /* radius for PB calculations */
   int rank;
-  int textType;
-  int custom;
-  int label;
   int visRep;                   /* bitmask for all reps */
 #ifdef _PYMOL_IP_EXTRAS
   int oldid;                    // for undo
@@ -252,14 +264,11 @@ typedef struct AtomInfoType {
   signed char valence;          // 0-4
   signed char protons;          /* atomic number */
 
-  int chain;
-  SegIdent segi; // 4
-  AtomName name; // 4
-  ElemName elem; // 4               // redundant with "protons" ?
-  ResIdent resi; // 5
-  SSType ssType; // 2               /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
-  Chain alt; // 2
-  ResName resn;  // 5
+  char inscode;
+
+  ElemName elem;               // redundant with "protons" ?
+  SSType ssType;               /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
+  Chain alt;
 
   // small value optimized bitfields
   unsigned char stereo : 2;     // 0-3 Only for SDF (MOL) format in/out
@@ -269,6 +278,27 @@ typedef struct AtomInfoType {
   // methods
   bool isHydrogen() {
     return protons == cAN_H;
+  }
+
+  char getInscode(bool space=false) const {
+    if (space && !inscode)
+      return ' ';
+    return inscode;
+  }
+
+  void setInscode(char c) {
+    inscode = makeInscode(c);
+  }
+
+  void setResi(const char * resi) {
+    if (sscanf(resi, "%d%c", &resv, &inscode) == 1 || inscode <= ' ')
+      inscode = '\0';
+  }
+
+  // for AtomInfoHistory
+  void setResi(int resv_, char inscode_) {
+    resv = resv_;
+    setInscode(inscode_);
   }
 
   /*
@@ -316,7 +346,11 @@ int AtomInfoIsUniqueIDActive(PyMOLGlobals * G, int unique_id);
 int AtomInfoGetNewUniqueID(PyMOLGlobals * G);
 void AtomInfoCleanAtomName(char *name);
 
+#ifndef _PYMOL_NOPY
+int AtomInfoSetSettingFromPyObject(PyMOLGlobals * G, AtomInfoType *ai, int setting_id, PyObject *val);
+#endif
 int AtomInfoCheckSetting(PyMOLGlobals * G, AtomInfoType * ai, int setting_id);
+PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, AtomInfoType * ai, int setting_id);
 int AtomInfoGetSetting_b(PyMOLGlobals * G, AtomInfoType * ai, int setting_id, int current,
                          int *effective);
 int AtomInfoGetSetting_i(PyMOLGlobals * G, AtomInfoType * ai, int setting_id, int current,
@@ -374,11 +408,14 @@ void AtomInfoBracketResidueFast(PyMOLGlobals * G, AtomInfoType * ai0, int n0, in
 int AtomInfoUniquefyNames(PyMOLGlobals * G, AtomInfoType * atInfo0, int n0,
                           AtomInfoType * atInfo1, int *flag1, int n1);
 int AtomInfoGetCarbColor(PyMOLGlobals * G);
-int AtomResvFromResi(const char *resi);
+bool AtomResiFromResv(char *resi, size_t size, int resv, char inscode);
+inline bool AtomResiFromResv(char *resi, size_t size, AtomInfoType * ai) {
+  return AtomResiFromResv(resi, size, ai->resv, ai->inscode);
+}
 
-int AtomInfoKnownWaterResName(PyMOLGlobals * G, char *resn);
-int AtomInfoKnownPolymerResName(char *resn);
-void AtomInfoGetPDB3LetHydroName(PyMOLGlobals * G, char *resn, char *iname, char *oname);
+int AtomInfoKnownWaterResName(PyMOLGlobals * G, const char *resn);
+int AtomInfoKnownPolymerResName(const char *resn);
+void AtomInfoGetPDB3LetHydroName(PyMOLGlobals * G, const char *resn, const char *iname, char *oname);
 
 #define cAIC_ct        0x0001
 #define cAIC_fc        0x0002
@@ -404,18 +441,13 @@ int AtomInfoUpdateAutoColor(PyMOLGlobals * G);
 
 typedef struct {
   int resv1, resv2;
-  ResIdent resi1, resi2;
+  char inscode1, inscode2;
   unsigned char chain1, chain2;
   unsigned char type;
   int next;
 } SSEntry;
 
 int BondTypeCompare(PyMOLGlobals * G, BondType * bt1, BondType * bt2);
-
-bool SideChainHelperFilterBond(const int *marked,
-    const AtomInfoType *ati1,
-    const AtomInfoType *ati2,
-    int b1, int b2, int na_mode, int *c1, int *c2);
 
 void atomicnumber2elem(char * dst, int protons);
 

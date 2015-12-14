@@ -265,6 +265,42 @@ int SettingUniqueGet_color(PyMOLGlobals * G, int unique_id, int setting_id, int 
   return SettingUniqueGetTypedValue(G, unique_id, setting_id, cSetting_color, value);
 }
 
+PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index)
+{
+  int type = SettingGetType(G, index);
+
+  union {
+    int val_i;
+    float val_f;
+    float val_3f[3];
+  };
+
+  const float * ptr_3f = val_3f;
+
+  if (SettingUniqueGetTypedValue(G, unique_id, index, type, val_3f)) {
+    switch (type) {
+    case cSetting_boolean:
+      return CPythonVal_New_Boolean(val_i);
+    case cSetting_int:
+      return CPythonVal_New_Integer(val_i);
+    case cSetting_float:
+      return CPythonVal_New_Float(val_f);
+    case cSetting_color:
+      ptr_3f = ColorGet(G, val_i);
+    case cSetting_float3:
+      {
+        PyObject *result = PyTuple_New(3);
+        PyTuple_SET_ITEM(result, 0, CPythonVal_New_Float(ptr_3f[0]));
+        PyTuple_SET_ITEM(result, 1, CPythonVal_New_Float(ptr_3f[1]));
+        PyTuple_SET_ITEM(result, 2, CPythonVal_New_Float(ptr_3f[2]));
+        return result;
+      }
+    }
+  }
+
+  return NULL;
+}
+
 static int SettingUniqueEntry_IsSame(SettingUniqueEntry *entry, int setting_type, const void *value){
   if (SettingInfo[entry->setting_id].type != setting_type){
     return 0;
@@ -399,6 +435,57 @@ void SettingUniqueSet_color(PyMOLGlobals * G, int unique_id, int setting_id, int
 {
   SettingUniqueSetTypedValue(G, unique_id, setting_id, cSetting_color, &value);
 }
+
+#ifndef _PYMOL_NOPY
+bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int index, PyObject *value)
+{
+  if (!value)
+    return SettingUniqueSetTypedValue(G, unique_id, index, cSetting_blank, NULL);
+
+  int type = SettingGetType(G, index);
+
+  union {
+    int val_i;
+    float val_f;
+    float val_3f[3];
+  };
+
+  switch (type) {
+  case cSetting_boolean:
+  case cSetting_int:
+    ok_assert(1, PConvPyObjectToInt(value, &val_i));
+    break;
+  case cSetting_float:
+    ok_assert(1, PConvPyObjectToFloat(value, &val_f));
+    break;
+  case cSetting_color:
+    if (!PConvPyIntToInt(value, &val_i)) {
+      OrthoLineType sval;
+      ok_assert(1, PConvPyStrToStr(value, sval, OrthoLineLength));
+      val_i = ColorGetIndex(G, sval);
+    }
+    break;
+  case cSetting_float3:
+    if (!PConvPyListOrTupleToFloatArrayInPlace(value, val_3f, 3)) {
+      OrthoLineType sval;
+      ok_assert(1, PConvPyStrToStr(value, sval, OrthoLineLength) &&
+          sscanf(sval, "%f%f%f", &val_3f[0], &val_3f[1], &val_3f[2]) == 3);
+    }
+    break;
+  default:
+    PRINTFB(G, FB_Python, FB_Errors)
+      " Python-Error: atom-state-level setting unsupported type=%d\n", type ENDFB(G);
+    return false;
+  }
+
+  return SettingUniqueSetTypedValue(G, unique_id, index, type, val_3f);
+
+ok_except1:
+  PRINTFB(G, FB_Setting, FB_Errors)
+    " Setting-Error: type mismatch\n" ENDFB(G);
+  return false;
+}
+#endif
 
 void SettingUniqueResetAll(PyMOLGlobals * G)
 {
@@ -619,6 +706,76 @@ int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id)
   return unique_id;
 }
 
+/*
+ * Return true if the given setting index should not be stored to PSE.
+ *
+ * Blacklisted are unused and system-dependent settings.
+ */
+static bool is_session_blacklisted(int index) {
+  if (index >= cSetting_INIT ||
+      SettingInfo[index].level == cSettingLevel_unused) {
+    return true;
+  }
+
+  switch (index) {
+  case cSetting_antialias_shader:
+  case cSetting_ati_bugs:
+  case cSetting_cache_max:
+  case cSetting_cgo_shader_ub_color:
+  case cSetting_cgo_shader_ub_flags:
+  case cSetting_cgo_shader_ub_normal:
+  case cSetting_cylinder_shader_ff_workaround:
+  case cSetting_defer_updates:
+  case cSetting_fast_idle:
+  case cSetting_internal_feedback:
+  case cSetting_internal_gui:
+  case cSetting_internal_prompt:
+  case cSetting_logging:
+  case cSetting_max_threads:
+  case cSetting_mouse_grid:
+  case cSetting_mouse_scale:
+  case cSetting_nb_spheres_use_shader:
+  case cSetting_no_idle:
+  case cSetting_nvidia_bugs:
+  case cSetting_precomputed_lighting:
+  case cSetting_render_as_cylinders:
+  case cSetting_security:
+  case cSetting_session_changed:
+  case cSetting_session_file:
+  case cSetting_session_migration:
+  case cSetting_session_version_check:
+  case cSetting_shaders_from_disk:
+  case cSetting_show_progress:
+  case cSetting_slow_idle:
+  case cSetting_stereo:
+  case cSetting_stereo_double_pump_mono:
+  case cSetting_stereo_mode:
+  case cSetting_suspend_deferred:
+  case cSetting_suspend_undo:
+  case cSetting_suspend_undo_atom_count:
+  case cSetting_suspend_updates:
+  case cSetting_text:
+  case cSetting_trilines:
+  case cSetting_use_geometry_shaders:
+  case cSetting_use_shaders:
+#ifdef _PYMOL_IOS
+  case cSetting_cgo_sphere_quality:
+  case cSetting_dynamic_measures:
+  case cSetting_label_outline_color:
+  case cSetting_mouse_selection_mode:
+  case cSetting_sphere_mode:
+  case cSetting_sphere_quality:
+  case cSetting_stick_ball:
+  case cSetting_virtual_trackball:
+#elif defined(_PYMOL_ACTIVEX)
+  case cSetting_async_builds:
+#endif
+    return true;
+  }
+
+  return false;
+}
+
 int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
   int ok = true;
@@ -831,16 +988,7 @@ static PyObject *get_list(CSetting * I, int index)
   PyObject *result = NULL, *value = NULL;
   int setting_type = SettingInfo[index].type;
 
-  if (SettingInfo[index].level == cSettingLevel_unused) {
-    return NULL;
-  }
-
-  switch (index) {
-  case cSetting_internal_feedback:
-  case cSetting_internal_gui:
-  case cSetting_internal_prompt:
-  case cSetting_render_as_cylinders:
-  case cSetting_shaders_from_disk:
+  if (is_session_blacklisted(index)) {
     return NULL;
   }
 
@@ -933,56 +1081,8 @@ static int set_list(CSetting * I, PyObject * list)
   ok_assert(1, CPythonVal_PConvPyIntToInt_From_List(I->G, list, 0, &index));
   ok_assert(1, CPythonVal_PConvPyIntToInt_From_List(I->G, list, 1, &setting_type));
 
-  if (index >= cSetting_INIT ||
-      SettingInfo[index].level == cSettingLevel_unused) {
-    // ignore unknown and obsolete settings
+  if (is_session_blacklisted(index))
     return true;
-  }
-
-  switch (index) {
-  /* don't restore the folllowing settings,
-     which are inherently system-dependent */
-  case cSetting_precomputed_lighting:
-  case cSetting_stereo_double_pump_mono:
-  case cSetting_max_threads:
-  case cSetting_session_migration:
-  case cSetting_use_shaders:
-  case cSetting_antialias_shader:
-  case cSetting_session_version_check:
-  case cSetting_stereo:
-  case cSetting_text:
-  case cSetting_nvidia_bugs:
-  case cSetting_ati_bugs:
-  case cSetting_stereo_mode:
-  case cSetting_show_progress:
-  case cSetting_defer_updates:
-  case cSetting_shaders_from_disk:
-  case cSetting_suspend_updates:
-  case cSetting_suspend_undo:
-  case cSetting_suspend_undo_atom_count:
-  case cSetting_suspend_deferred:
-  case cSetting_cache_max:
-  case cSetting_logging:
-  case cSetting_mouse_grid:
-  case cSetting_mouse_scale:
-  case cSetting_cylinder_shader_ff_workaround:
-  case cSetting_internal_feedback:
-  case cSetting_internal_gui:
-  case cSetting_no_idle:
-  case cSetting_fast_idle:
-  case cSetting_slow_idle:
-  case cSetting_security:
-  case cSetting_render_as_cylinders:
-  case cSetting_nb_spheres_use_shader:
-  case cSetting_use_geometry_shaders:
-  case cSetting_cgo_shader_ub_color:
-  case cSetting_cgo_shader_ub_normal:
-  case cSetting_cgo_shader_ub_flags:
-  case cSetting_trilines:
-#ifdef _PYMOL_IOS
-#endif
-    return true;
-  }
 
   switch (setting_type) {
   case cSetting_boolean:
@@ -3409,5 +3509,27 @@ PyObject * SettingGetSettingIndices() {
   }
 
   return dict;
+}
+
+/*
+ * Return a list of all setting indices for the given unique id
+ */
+PyObject * SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id)
+{
+  CSettingUnique *I = G->SettingUnique;
+  PyObject * list = PyList_New(0);
+  OVreturn_word result;
+
+  if(unique_id && OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
+    SettingUniqueEntry *entry;
+    for (int offset = result.word; offset; offset = entry->next) {
+      entry = I->entry + offset;
+      PyObject *item = PyInt_FromLong(entry->setting_id);
+      PyList_Append(list, item);
+      Py_DECREF(item);
+    }
+  }
+
+  return list;
 }
 #endif

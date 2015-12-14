@@ -482,14 +482,14 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
 static void ObjectSurfaceUpdate(ObjectSurface * I)
 {
   int a;
-  ObjectSurfaceState *ms;
-  ObjectMapState *oms = NULL;
-  ObjectMap *map = NULL;
-  MapType *voxelmap = NULL;     /* this has nothing to do with isosurfaces... */
   int ok = true;
   float carve_buffer;
   for(a = 0; a < I->NState; a++) {
-    ms = I->State + a;
+    ObjectSurfaceState *ms = I->State + a;
+    ObjectMapState *oms = NULL;
+    ObjectMap *map = NULL;
+    MapType *voxelmap = NULL;     /* this has nothing to do with isosurfaces... */
+
     if(ms->Active) {
       map = ExecutiveFindObjectMapByName(I->Obj.G, ms->MapName);
       if(!map) {
@@ -505,18 +505,18 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
           ok = false;
       }
       if(oms) {
+        if(oms->State.Matrix) {
+          ObjectStateSetMatrix(&ms->State, oms->State.Matrix);
+        } else if(ms->State.Matrix) {
+          ObjectStateResetMatrix(&ms->State);
+        }
+
         if(ms->RefreshFlag || ms->ResurfaceFlag) {
           ms->Crystal = *(oms->Symmetry->Crystal);
           if((I->Obj.visRep & cRepCellBit)) {
             if(ms->UnitCellCGO)
               CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
-          }
-
-          if(oms->State.Matrix) {
-            ObjectStateSetMatrix(&ms->State, oms->State.Matrix);
-          } else if(ms->State.Matrix) {
-            ObjectStateResetMatrix(&ms->State);
           }
           ms->RefreshFlag = false;
         }
@@ -1396,14 +1396,15 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
     ms->CarveBuffer = carve;
     ms->AtomVertex = vert_vla;
 
-    if(ms->State.Matrix) {
+    double *matrix = ObjectStateGetInvMatrix(&ms->State);
+
+    if(matrix) {
       int n = VLAGetSize(ms->AtomVertex) / 3;
       float *v = ms->AtomVertex;
-      double *matrix = ms->State.Matrix;
       while(n--) {
         /* convert back into original map coordinates 
            for surface carving operation */
-        inverse_transform44d3f(matrix, v, v);
+        transform44d3f(matrix, v, v);
         v += 3;
       }
     }

@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Ray.h"
 #include"PConv.h"
+#include"Matrix.h"
 #include"MemoryDebug.h"
 #include"Movie.h"
 #include"View.h"
@@ -1252,6 +1253,7 @@ void ObjectStateInit(PyMOLGlobals * G, CObjectState * I)
 {
   I->G = G;
   I->Matrix = NULL;
+  I->InvMatrix = NULL;
 }
 
 /* ObjectStateCopy -- deep copy the State struct from src to dst */
@@ -1267,6 +1269,7 @@ void ObjectStateCopy(CObjectState * dst, const CObjectState * src)
       copy44d(src->Matrix, dst->Matrix);
     }
   }
+  dst->InvMatrix = NULL;
 }
 
 void ObjectStatePurge(CObjectState * I)
@@ -1288,6 +1291,7 @@ int ObjectStateSetMatrix(CObjectState * I, double *matrix)
     FreeP(I->Matrix);
     I->Matrix = NULL;
   }
+  I->InvMatrix = NULL;
   return ok;
 }
 
@@ -1299,9 +1303,9 @@ void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix)
       copy44d(matrix, I->Matrix);
     } else {
       right_multiply44d44d(I->Matrix, matrix);
-      recondition44d(I->Matrix);
     }
   }
+  I->InvMatrix = NULL;
 }
 
 void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix)
@@ -1312,9 +1316,9 @@ void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix)
       copy44d(matrix, I->Matrix);
     } else {
       left_multiply44d44d(matrix, I->Matrix);
-      recondition44d(I->Matrix);
     }
   }
+  I->InvMatrix = NULL;
 }
 
 void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix)
@@ -1328,14 +1332,26 @@ void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix)
       double tmp[16];
       convertTTTfR44d(matrix, tmp);
       right_multiply44d44d(I->Matrix, tmp);
-      recondition44d(I->Matrix);
     }
   }
+  I->InvMatrix = NULL;
 }
 
 double *ObjectStateGetMatrix(CObjectState * I)
 {
   return I->Matrix;
+}
+
+/*
+ * Get the Matrix inverse
+ */
+double *ObjectStateGetInvMatrix(CObjectState * I)
+{
+  if(I->Matrix && !I->InvMatrix) {
+    I->InvMatrix = Alloc(double, 16);
+    xx_matrix_invert(I->InvMatrix, I->Matrix, 4);
+  }
+  return I->InvMatrix;
 }
 
 void ObjectStateTransformMatrix(CObjectState * I, double *matrix)
@@ -1348,6 +1364,7 @@ void ObjectStateTransformMatrix(CObjectState * I, double *matrix)
   } else {
     right_multiply44d44d(I->Matrix, matrix);
   }
+  I->InvMatrix = NULL;
 }
 
 int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)

@@ -15,7 +15,7 @@
 from __future__ import print_function
 
 try:
-    import _champ
+    from . import _champ
 except ImportError:
     print(" Error: unable to import architecture-dependent _champ module.")
 

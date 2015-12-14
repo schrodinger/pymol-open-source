@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include"OOMac.h"
 #include"RepWireBond.h"
+#include"SideChainHelper.h"
 #include"Color.h"
 #include"Scene.h"
 #include"main.h"
@@ -814,7 +815,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   int ribbon_side_chain_helper = 0;
   int line_stick_helper = 0;
   int na_mode;
-  int *marked = NULL;
+  bool *marked = NULL;
   int valence_found = false;
   int variable_width = false;
   int n_line_width = 0;
@@ -846,7 +847,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     OOFreeP(I);
     return (NULL);              /* skip if no dots are visible */
   }
-  marked = Calloc(int, obj->NAtom);
+  marked = Calloc(bool, obj->NAtom);
   CHECKOK(ok, marked);
   if (!ok){
     OOFreeP(I);
@@ -952,53 +953,9 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     CHECKOK(ok, I->V);
 
     if(ok && (cartoon_side_chain_helper || ribbon_side_chain_helper)) {
-      /* mark atoms that are bonded to atoms without a
-         visible cartoon or ribbon */
-
-      b = obj->Bond;
-      for(a = 0; a < obj->NBond; a++) {
-
-        b1 = b->index[0];
-        b2 = b->index[1];
-        ord = b->order;
-        b++;
-
-        if(obj->DiscreteFlag) {
-          if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-            a1 = obj->DiscreteAtmToIdx[b1];
-            a2 = obj->DiscreteAtmToIdx[b2];
-          } else {
-            a1 = -1;
-            a2 = -1;
-          }
-        } else {
-          a1 = cs->AtmToIdx[b1];
-          a2 = cs->AtmToIdx[b2];
-        }
-        if((a1 >= 0) && (a2 >= 0)) {
-          AtomInfoType *ati1 = obj->AtomInfo + b1;
-          AtomInfoType *ati2 = obj->AtomInfo + b2;
-
-          if((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
-            if(((cartoon_side_chain_helper
-                    && GET_BIT(ati1->visRep,cRepCartoon)
-                    && !GET_BIT(ati2->visRep,cRepCartoon))
-                  || (ribbon_side_chain_helper
-                    && GET_BIT(ati1->visRep,cRepRibbon)
-                    && !GET_BIT(ati2->visRep,cRepRibbon)))) {
-              marked[b1] = 1;
-            }
-            if(((cartoon_side_chain_helper
-                    && GET_BIT(ati2->visRep,cRepCartoon)
-                    && !GET_BIT(ati1->visRep,cRepCartoon))
-                  || (ribbon_side_chain_helper
-                    && GET_BIT(ati2->visRep,cRepRibbon)
-                    && !GET_BIT(ati1->visRep,cRepRibbon)))) {
-              marked[b2] = 1;
-            }
-          }
-        }
-      }
+      SideChainHelperMarkNonCartoonBonded(marked, obj, cs,
+          cartoon_side_chain_helper,
+          ribbon_side_chain_helper);
     }
 
     v = I->V;
@@ -1118,10 +1075,10 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
             s1 = s2 = 0;
           } else if ((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
             if (cartoon_side_chain_helper && GET_BIT(ati1->visRep,cRepCartoon) && GET_BIT(ati2->visRep,cRepCartoon)) {
-              if (SideChainHelperFilterBond(marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
+              if (SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
                 s1 = s2 = 0;
             } else if (ribbon_side_chain_helper && GET_BIT(ati1->visRep,cRepRibbon) && GET_BIT(ati2->visRep,cRepRibbon)) {
-              if (SideChainHelperFilterBond(marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
+              if (SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
                 s1 = s2 = 0;
             }
           }

@@ -814,6 +814,40 @@ int PConvPyListToFloatArrayInPlace(PyObject * obj, float *ff, ov_size ll)
   return (ok);
 }
 
+int PConvPyListOrTupleToFloatArrayInPlace(PyObject * obj, float *ff, ov_size ll)
+{
+  int ok = true, isTuple = false;
+  ov_size a, l;
+  if(!obj) {
+    ok = false;
+  } else if(!PyList_Check(obj) && !(isTuple=PyTuple_Check(obj))) {
+    ok = false;
+  } else {
+    if (isTuple)
+      l = PyTuple_Size(obj);
+    else
+      l = PyList_Size(obj);
+    if(l != ll)
+      ok = false;
+    else {
+      if(!l)
+        ok = -1;
+      else
+        ok = l;
+      if (isTuple)
+	for(a = 0; a < l; a++){
+	  *(ff++) = (float) PyFloat_AsDouble(PyTuple_GetItem(obj, a));
+	}
+      else
+	for(a = 0; a < l; a++){
+	  *(ff++) = (float) PyFloat_AsDouble(PyList_GetItem(obj, a));
+	}
+    }
+    /* NOTE ASSUMPTION! */
+  }
+  return (ok);
+}
+
 int PConvPyListToIntArrayInPlace(PyObject * obj, int *ii, ov_size ll)
 {
   int ok = true;

@@ -33,6 +33,7 @@
 #include "Scene.h"
 #include"CGO.h"
 #include"ObjectMolecule.h"
+#include "Lex.h"
 
 #include "ShaderText.h"
 
@@ -1379,32 +1380,31 @@ static int RadiusOrder(float *list, int a, int b)
   return (list[a * 8 + 7] <= list[b * 8 + 7]);
 }
 
-static int RepSphereDetermineAtomVisibility(PyMOLGlobals *G, int vis_flag_arg,
+static bool RepSphereDetermineAtomVisibility(PyMOLGlobals *G,
     AtomInfoType *ati1, int cartoon_side_chain_helper, int ribbon_side_chain_helper)
 {
-  int vis_flag = vis_flag_arg;
-  if(vis_flag &&
-     (ati1->flags & cAtomFlag_polymer) &&
-     ((cartoon_side_chain_helper && GET_BIT(ati1->visRep,cRepCartoon)) ||
-      ( ribbon_side_chain_helper && GET_BIT(ati1->visRep,cRepRibbon)))) {
-    char *name1 = ati1->name;
+  int sc_helper, rsc_helper;
+  AtomInfoGetSetting_b(G, ati1, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper, &sc_helper);
+  AtomInfoGetSetting_b(G, ati1, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper, &rsc_helper);
+  if((ati1->flags & cAtomFlag_polymer) &&
+     ((sc_helper && GET_BIT(ati1->visRep,cRepCartoon)) ||
+      (rsc_helper && GET_BIT(ati1->visRep,cRepRibbon)))) {
     int prot1 = ati1->protons;
     
     if(prot1 == cAN_N) {
-      if((!name1[1]) && (name1[0] == 'N')) {  /* N */
-	char *resn1 = ati1->resn;
-	if(!((resn1[0] == 'P') && (resn1[1] == 'R') && (resn1[2] == 'O')))
-	  vis_flag = false;
+      if(ati1->name == G->lex_const.N) {
+        if(ati1->resn != G->lex_const.PRO)
+	  return false;
       }
     } else if(prot1 == cAN_O) {
-      if((!name1[1]) && (name1[0] == 'O'))
-	vis_flag = false;
+      if(ati1->name == G->lex_const.O)
+	return false;
     } else if(prot1 == cAN_C) {
-      if((!name1[1]) && (name1[0] == 'C'))
-	vis_flag = false;
+      if(ati1->name == G->lex_const.C)
+	return false;
     }
   }
-  return vis_flag;
+  return true;
 }
 
 static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
@@ -1977,7 +1977,9 @@ Rep *RepSphereNew(CoordSet * cs, int state)
     a1 = cs->IdxToAtm[a];
     ati1 = obj->AtomInfo + a1;
     /* store temporary visibility information */
-    marked[a1] = RepSphereDetermineAtomVisibility(G, GET_BIT(ati1->visRep,cRepSphere), ati1, cartoon_side_chain_helper, ribbon_side_chain_helper);
+    marked[a1] = GET_BIT(ati1->visRep,cRepSphere) &&
+        RepSphereDetermineAtomVisibility(G, ati1, 
+                                         cartoon_side_chain_helper, ribbon_side_chain_helper);
     if(marked[a1]) {
       RepSphereAddAtomVisInfoToStoredVC(I, obj, cs, state, v, a1, ati1, a, mf, sphere_scale, sphere_color, transp, &variable_alpha, sphere_add);
       v += 8;

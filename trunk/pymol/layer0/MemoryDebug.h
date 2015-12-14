@@ -179,6 +179,11 @@ extern "C" {
 
 #endif
 
+inline unsigned int VLAGetByteSize(const void *ptr) {
+  const VLARec *vla = ((const VLARec *) ptr) - 1;
+  return vla->size * vla->unit_size;
+}
+
 /*
  * Templated version of the `VLACopy` macro
  */

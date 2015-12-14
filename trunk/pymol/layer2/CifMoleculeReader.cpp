@@ -32,6 +32,7 @@
 #include "CifBondDict.h"
 #include "Util2.h"
 #include "Vector.h"
+#include "Lex.h"
 
 // dictionary content types
 enum CifDataType {
@@ -63,14 +64,26 @@ public:
 
 // structure to collect information about a data block
 struct CifContentInfo {
+  PyMOLGlobals * G;
   CifDataType type;
   bool fractional;
   bool use_auth;
-  std::set<std::string> chains_filter;
+  std::set<lexidx_t> chains_filter;
   std::set<std::string> polypeptide_entities; // entity ids
   std::map<std::string, seqvec_t> sequences;  // entity_id -> [resn1, resn2, ...]
 
   bool is_excluded_chain(const char * chain) {
+    if (chains_filter.empty())
+      return false;
+
+    auto result = OVLexicon_BorrowFromCString(G->Lexicon, chain);
+    if (OVreturn_IS_OK(result))
+      return is_excluded_chain(result.word);
+
+    return false;
+  }
+
+  bool is_excluded_chain(lexidx_t chain) {
     return (!chains_filter.empty() &&
         chains_filter.count(chain) == 0);
   }
@@ -79,7 +92,8 @@ struct CifContentInfo {
     return polypeptide_entities.count(entity_id);
   }
 
-  CifContentInfo(bool use_auth=true) :
+  CifContentInfo(PyMOLGlobals * G, bool use_auth=true) :
+    G(G),
     type(CIF_UNKNOWN),
     fractional(false),
     use_auth(use_auth) {}
@@ -91,13 +105,16 @@ struct CifContentInfo {
  * atom site.
  */
 static std::string make_mm_atom_site_label(PyMOLGlobals * G, AtomInfoType * a) {
+  char resi[8];
+  AtomResiFromResv(resi, sizeof(resi), a);
+
   std::string key(LexStr(G, a->chain));
   key += '/';
-  key += a->resn;
+  key += LexStr(G, a->resn);
   key += '/';
-  key += a->resi;
+  key += resi;
   key += '/';
-  key += a->name;
+  key += LexStr(G, a->name);
   key += '/';
   key += a->alt;
   return key;
@@ -332,11 +349,12 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
   if (i_end - i_start < 2)
     return;
 
+  auto G = I->Obj.G;
   AtomInfoType *a1, *a2, *ai = I->AtomInfo;
   int order;
 
   // get residue bond dictionary
-  auto res_dict = bond_dict->get(I->Obj.G, ai[i_start].resn);
+  auto res_dict = bond_dict->get(G, LexStr(G, ai[i_start].resn));
   if (res_dict == NULL)
     return;
 
@@ -352,7 +370,7 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
       }
 
       // lookup if atoms are bonded
-      order = res_dict->get(a1->name, a2->name);
+      order = res_dict->get(LexStr(G, a1->name), LexStr(G, a2->name));
       if (order < 0) {
         continue;
       }
@@ -400,7 +418,7 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
     if (I->AtomInfo[i].alt[0] && I->AtomInfo[i].alt[0] != 'A')
       continue;
 
-    const char *name = I->AtomInfo[i].name;
+    const char *name = LexStr(G, I->AtomInfo[i].name);
 
     // inter-residue polymer bonds
     if (strcmp("C", name) == 0) {
@@ -545,7 +563,7 @@ static oper_collection_t parse_oper_expression(const std::string &expr) {
  */
 static bool get_assembly_chains(PyMOLGlobals * G,
     const cif_data * data,
-    std::set<std::string> &assembly_chains,
+    std::set<lexidx_t> &assembly_chains,
     const char * assembly_id) {
 
   const cif_array *arr_id, *arr_asym_id_list;
@@ -560,7 +578,9 @@ static bool get_assembly_chains(PyMOLGlobals * G,
 
     const char * asym_id_list = arr_asym_id_list->as_s(i);
     std::vector<std::string> chains = strsplit(asym_id_list, ',');
-    assembly_chains.insert(chains.begin(), chains.end());
+    for (auto it = chains.begin(); it != chains.end(); ++it) {
+      assembly_chains.insert(LexIdx(G, it->c_str()));
+    }
   }
 
   return !assembly_chains.empty();
@@ -571,7 +591,7 @@ static bool get_assembly_chains(PyMOLGlobals * G,
  */
 static CoordSet *CoordSetCopyFilterChains(const CoordSet * other,
     const AtomInfoType * atInfo,
-    const std::set<std::string> &chains_set) {
+    const std::set<lexidx_t> &chains_set) {
 
   std::vector<int> idxmap;
   idxmap.reserve(other->NIndex);
@@ -662,7 +682,13 @@ CoordSet ** read_pdbx_struct_assembly(PyMOLGlobals * G,
 
     oper_collection_t collection = parse_oper_expression(oper_expr);
     std::vector<std::string> chains = strsplit(asym_id_list, ',');
-    std::set   <std::string> chains_set(chains.begin(), chains.end());
+    std::set<lexidx_t> chains_set;
+    for (auto it = chains.begin(); it != chains.end(); ++it) {
+      auto result = OVLexicon_BorrowFromCString(G->Lexicon, it->c_str());
+      if (OVreturn_IS_OK(result)) {
+        chains_set.insert(result.word);
+      }
+    }
 
     // new coord set VLA
     int ncsets = 1;
@@ -745,7 +771,7 @@ static bool read_pdbx_coordinate_model(PyMOLGlobals * G, cif_data * data, Object
   // set on atom-level
   for (int i = 0, nrows = VLAGetSize(mol->AtomInfo); i < nrows; ++i) {
     AtomInfoType * ai = mol->AtomInfo + i;
-    if (asyms.count(ai->segi)) {
+    if (asyms.count(LexStr(G, ai->segi))) {
       SettingSet(G, cSetting_cartoon_trace_atoms, true, ai);
       SettingSet(G, cSetting_ribbon_trace_atoms,  true, ai);
     }
@@ -850,8 +876,8 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
     ai->rank = atomCount;
     ai->id = atomCount + 1;
 
-    strncpy(ai->name, arr_name->as_s(i), cAtomNameLen);
-    strncpy(ai->resn, arr_resn->as_s(i), cResnLen);
+    LexAssign(G, ai->name, arr_name->as_s(i));
+    LexAssign(G, ai->resn, arr_resn->as_s(i));
     strncpy(ai->elem, arr_symbol->as_s(i), cElemNameLen);
 
     ai->partialCharge = arr_partial_charge->as_d(i);
@@ -981,7 +1007,6 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
 
   ModelStateMapper model_to_state(!SettingGetGlobal_i(G, cSetting_pdb_honor_model_number));
   int nrows = arr_x->get_nrows();
-  const char * resi;
   AtomInfoType *ai;
   int atomCount = 0;
   int auto_show = RepGetAutoShowMask(G);
@@ -1018,10 +1043,12 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
   std::map<std::string, int> name_dict;
 
   for (int i = 0, n = nrows; i < n; i++) {
-    const char * segi = arr_segi->as_s(i);
+    lexidx_t segi = LexIdx(G, arr_segi->as_s(i));
 
-    if (info.is_excluded_chain(segi))
+    if (info.is_excluded_chain(segi)) {
+      LexDec(G, segi);
       continue;
+    }
 
     mod_num = model_to_state(arr_mod_num->as_i(i, 1));
 
@@ -1069,24 +1096,22 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
              arr_b->as_d(i);
     ai->q = arr_q->as_d(i, 1.0);
 
-    strncpy(ai->name, arr_name->as_s(i), cAtomNameLen);
-    strncpy(ai->resn, arr_resn->as_s(i), cResnLen);
     strncpy(ai->elem, arr_symbol->as_s(i), cElemNameLen);
-    strncpy(ai->segi, segi, cSegiLen);
 
     ai->chain = LexIdx(G, arr_chain->as_s(i));
+    ai->name = LexIdx(G, arr_name->as_s(i));
+    ai->resn = LexIdx(G, arr_resn->as_s(i));
+    ai->segi = segi; // steal reference
 
     if ('H' == arr_group_pdb->as_s(i)[0]) {
       ai->hetatm = 1;
       ai->flags = cAtomFlag_ignore;
     }
 
-    resi = arr_resi->as_s(i);
-    ai->resv = atoi(resi);
-    strncpy(ai->resi, resi, cResiLen);
+    ai->resv = arr_resi->as_i(i);
 
     if (arr_ins_code) {
-      UtilNConcat(ai->resi, arr_ins_code->as_s(i), sizeof(ResIdent));
+      ai->setInscode(arr_ins_code->as_s(i)[0]);
     }
 
     ai->visRep = arr_reps->as_i(i, auto_show);
@@ -1256,16 +1281,13 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
     ai->rank = atomCount;
     ai->id = -1;
 
-    strncpy(ai->name, "CA", cAtomNameLen);
-    strncpy(ai->resn, resn, cResnLen);
     ai->elem[0] = 'C';
-    strncpy(ai->segi, cai->segi, cSegiLen);
-
-    ai->chain = cai->chain;
-    LexInc(G, ai->chain);
+    LexAssign(G, ai->name, "CA");
+    LexAssign(G, ai->resn, resn);
+    LexAssign(G, ai->segi, cai->segi);
+    LexAssign(G, ai->chain, cai->chain);
 
     ai->resv = current_resv;
-    snprintf(ai->resi, cResiLen, "%d", ai->resv);
 
     AtomInfoAssignParameters(G, ai);
     AtomInfoAssignColors(G, ai);
@@ -1291,7 +1313,6 @@ static bool add_missing_ca(PyMOLGlobals * G,
   if (info.use_auth)
     return false;
 
-  const char * resi;
   int oldAtomCount = VLAGetSize(atInfo);
   int atomCount = oldAtomCount;
   int current_resv = 0;
@@ -1436,11 +1457,14 @@ static bool read_ss(PyMOLGlobals * G, cif_data * datablock,
 
   AtomInfoType *aj, *ai, *atoms_end = atInfo + VLAGetSize(atInfo);
 
+  char resi[8];
+
   for (ai = atInfo; ai < atoms_end; ai++) {
-    if (strcmp(ai->name, "CA"))
+    if (ai->name != G->lex_const.CA)
       continue;
 
-    sshashkey key(ai->chain, ai->resi);
+    AtomResiFromResv(resi, sizeof(resi), ai);
+    sshashkey key(ai->chain, resi);
     sshashmap::iterator it = ssrecords.find(key);
 
     if (it == ssrecords.end())
@@ -1449,12 +1473,13 @@ static bool read_ss(PyMOLGlobals * G, cif_data * datablock,
     sshashvalue &value = it->second;
 
     for (aj = ai; aj < atoms_end; aj++) {
-      if (strcmp(aj->name, "CA"))
+      if (aj->name != G->lex_const.CA)
         continue;
 
       aj->ssType[0] = value.ss;
 
-      if (value.end.resi == aj->resi && value.end.asym_id == aj->chain)
+      AtomResiFromResv(resi, sizeof(resi), aj);
+      if (value.end.resi == resi && value.end.asym_id == aj->chain)
         break;
     }
   }
@@ -1547,7 +1572,7 @@ static bool read_atom_site_aniso(PyMOLGlobals * G, cif_data * data,
     if (mmcif) {
       id_dict[ai->id] = ai;
     } else {
-      std::string key(ai->name);
+      std::string key(LexStr(G, ai->name));
       name_dict[key] = ai;
     }
   }
@@ -1609,7 +1634,7 @@ static BondType * read_geom_bond(PyMOLGlobals * G, cif_data * data,
 
   // build dictionary
   for (int i = 0; i < nAtom; i++) {
-    std::string key(atInfo[i].name);
+    std::string key(LexStr(G, atInfo[i].name));
     name_dict[key] = i;
   }
 
@@ -1854,7 +1879,7 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, cif_data * data,
   std::map<std::string, int> name_dict;
 
   for (int i = 0; i < nAtom; i++) {
-    std::string key(atInfo[i].name);
+    std::string key(LexStr(G, atInfo[i].name));
     name_dict[key] = i;
   }
 
@@ -1891,7 +1916,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
 {
   CoordSet ** csets = NULL;
   int ncsets;
-  CifContentInfo info(SettingGetGlobal_b(G, cSetting_cif_use_auth));
+  CifContentInfo info(G, SettingGetGlobal_b(G, cSetting_cif_use_auth));
   const char * assembly_id = SettingGetGlobal_s(G, cSetting_assembly);
 
   if (assembly_id && assembly_id[0]) {

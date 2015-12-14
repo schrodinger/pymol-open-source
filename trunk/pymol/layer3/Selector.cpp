@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"Editor.h"
 #include"Seeker.h"
+#include "Lex.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"
@@ -814,7 +815,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
             nbr0 = neighbor[mem0] + 1;
             while((mem1 = neighbor[nbr0]) >= 0) {
               if((atomInfo[mem1].protons == cAN_C) &&
-                 (strcmp(atomInfo[mem1].name, "CB") == 0)) {
+                 (atomInfo[mem1].name == G->lex_const.CB)) {
                 idx_cb1 = cs->atmToIdx(mem1);
                 break;
               }
@@ -839,7 +840,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                     while((mem3 = neighbor[nbr2]) >= 0) {
                       if((mem3 != mem1) && (mem3 != mem0)) {
                         if((atomInfo[mem3].protons == cAN_C) &&
-                           (strcmp(atomInfo[mem3].name, "CA") == 0)) {
+                           (atomInfo[mem3].name == G->lex_const.CA)) {
                           idx_ca2 = cs->atmToIdx(mem3);
                           break;
                         }
@@ -857,7 +858,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals * G, CMatch * match,
                           while((mem4 = neighbor[nbr3]) >= 0) {
                             if((mem4 != mem2) && (mem4 != mem1) && (mem4 != mem0)) {
                               if((atomInfo[mem4].protons == cAN_C) &&
-                                 (strcmp(atomInfo[mem4].name, "CB") == 0)) {
+                                 (atomInfo[mem4].name == G->lex_const.CB)) {
                                 idx_cb2 = cs->atmToIdx(mem4);
                                 break;
                               }
@@ -1226,9 +1227,9 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
       a1--;
 
       mask = 0;
-      if(AtomInfoKnownPolymerResName(ai->resn) && (!ai->hetatm))
+      if(AtomInfoKnownPolymerResName(LexStr(G, ai->resn)) && (!ai->hetatm))
         mask = cAtomFlag_polymer;
-      else if(AtomInfoKnownWaterResName(G, ai->resn))
+      else if(AtomInfoKnownWaterResName(G, LexStr(G, ai->resn)))
         mask = cAtomFlag_solvent;
       else {
 
@@ -1257,7 +1258,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
         ai0 = obj->AtomInfo + I->Table[a0].atom;
         for(aa = a0; aa <= a1; aa++) {
           if(ai0->protons == cAN_C) {
-            char *name = ai0->name;
+            const char *name = LexStr(G, ai0->name);
             found_carbon = true;
             switch (name[0]) {
             case 'C':
@@ -1302,7 +1303,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
               }
             }
           } else if(ai0->protons == cAN_N) {
-            char *name = ai0->name;
+            const char *name = LexStr(G, ai0->name);
             switch (name[0]) {
             case 'N':
               switch (name[1]) {
@@ -1314,7 +1315,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
               }
             }
           } else if(ai0->protons == cAN_O) {
-            char *name = ai0->name;
+            const char *name = LexStr(G, ai0->name);
             switch (name[0]) {
             case 'O':
               switch (name[1]) {
@@ -1349,7 +1350,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
             }
           } else if(ai0->protons == cAN_P) {
 
-            char *name = ai0->name;
+            const char *name = LexStr(G, ai0->name);
             switch (name[0]) {
             case 'P':
               switch (name[1]) {
@@ -1393,7 +1394,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
         ai0 = obj->AtomInfo + I->Table[a0].atom;
         for(aa = a0; aa <= a1; aa++) {
           if(ai0->protons == cAN_C) {
-            char *name = ai0->name;
+            const char *name = LexStr(G, ai0->name);
             switch (name[0]) {
             case 'C':
               switch (name[1]) {
@@ -1909,7 +1910,7 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
 
         if(SelectorIsMember(G, ai->selEntry, present)) {
 
-          if((ai->protons == cAN_C) && (WordMatch(G, "CA", ai->name, true) < 0)) {
+          if((ai->protons == cAN_C) && (WordMatch(G, "CA", LexStr(G, ai->name), true) < 0)) {
 
             if(last_obj != obj) {
               ObjectMoleculeUpdateNeighbors(obj);
@@ -1943,13 +1944,13 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
 
               for(aa = a0 + 1; aa < a1; aa++) {
                 ai = I->Obj[I->Table[aa].model]->AtomInfo + I->Table[aa].atom;
-                if((ai->protons == cAN_C) && (WordMatch(G, "C", ai->name, true) < 0)) {
+                if((ai->protons == cAN_C) && (WordMatch(G, "C", LexStr(G, ai->name), true) < 0)) {
                   found_C = aa;
                 }
-                if((ai->protons == cAN_N) && (WordMatch(G, "N", ai->name, true) < 0)) {
+                if((ai->protons == cAN_N) && (WordMatch(G, "N", LexStr(G, ai->name), true) < 0)) {
                   found_N = aa;
                 }
-                if((ai->protons == cAN_O) && (WordMatch(G, "O", ai->name, true) < 0)) {
+                if((ai->protons == cAN_O) && (WordMatch(G, "O", LexStr(G, ai->name), true) < 0)) {
                   found_O = aa;
                 }
               }
@@ -1969,8 +1970,8 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
               } else {
                 if(!quiet) {
                   PRINTFB(G, FB_Selector, FB_Warnings)
-                    " AssignSS-Warning: Ignoring incomplete residue %s/%s/%s/%s/...\n",
-                    obj->Obj.Name, ai->segi, LexStr(G, ai->chain), ai->resi ENDFB(G);
+                    " AssignSS-Warning: Ignoring incomplete residue /%s/%s/%s/%d%c ...\n",
+                    obj->Obj.Name, LexStr(G, ai->segi), LexStr(G, ai->chain), ai->resv, ai->getInscode(true) ENDFB(G);
                 }
               }
             }
@@ -3721,13 +3722,13 @@ int SelectorCreateAlignments(PyMOLGlobals * G,
             index2 = SelectorGetObjAtmOffset(I, obj2, at2a);
 
             PRINTFD(G, FB_Selector)
-              " S.C.A.-DEBUG: compare %s %s %d\n", ai1a->name, ai2a->name, cmp
+              " S.C.A.-DEBUG: compare %s %s %d\n", LexStr(G, ai1a->name), LexStr(G, ai2a->name), cmp
               ENDFD PRINTFD(G, FB_Selector)
               " S.C.A.-DEBUG: entry %d %d\n",
               ai1a->selEntry, ai2a->selEntry ENDFD if((index1 >= 0) && (index2 >= 0)) {
               if(SelectorIsMember(G, ai1a->selEntry, sele1) &&
                  SelectorIsMember(G, ai2a->selEntry, sele2)) {
-                if((!identical) || (strcmp(ai1a->resn, ai2a->resn) == 0)) {
+                if((!identical) || (ai1a->resn == ai2a->resn)) {
                   flag1[index1] = true;
                   flag2[index2] = true;
                   cnt++;
@@ -3901,10 +3902,14 @@ int *SelectorGetResidueVLA(PyMOLGlobals * G, int sele, int ca_only,
 
     *(r++) = I->Table[iter.a].model;
     *(r++) = I->Table[iter.a].atom;
-    *(r++) =
-      (ai2->resn[0] << (8 * 2)) |
-      (ai2->resn[1] << (8 * 1)) |
-      (ai2->resn[2] << (8 * 0));
+
+    const char * resn = LexStr(G, ai2->resn);
+    *(r)    = (resn[0] << (8 * 2));
+    if (resn[0] && resn[1]) {
+      *(r) |= (resn[1] << (8 * 1));
+      *(r) |= (resn[2] << (8 * 0));
+    }
+    r++;
 
     ai1 = ai2;
   }
@@ -8730,7 +8735,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
         }
         base[0].sele[a] = !flag;
         for(b = 0; backbone_names[b][0]; b++) {
-          if(!(strcmp(ai->name, backbone_names[b]))) {
+          if(!(strcmp(LexStr(G, ai->name), backbone_names[b]))) {
             base[0].sele[a] = flag;
             break;
           }
@@ -8921,7 +8926,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
             ai1 = i_obj[i_table[b].model]->AtomInfo + i_table[b].atom;
             if(!AtomInfoSameResidueP(G, ai1, last_ai1)) {
               if(*ch != '-') {  /* if not skipping this residue */
-                if(!((*ch == '+') || (SeekerGetAbbr(G, ai1->resn, 'O', 0) == *ch))) {   /* if a mismatch */
+                if(!((*ch == '+') || (SeekerGetAbbr(G, LexStr(G, ai1->resn), 'O', 0) == *ch))) {   /* if a mismatch */
                   break;
                 }
               }
@@ -8940,7 +8945,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
               ai1 = i_obj[i_table[b].model]->AtomInfo + i_table[b].atom;
               if(!AtomInfoSameResidueP(G, ai1, last_ai1)) {
                 if(*ch != '-') {        /* if not skipping this residue */
-                  if((*ch == '+') || (SeekerGetAbbr(G, ai1->resn, 'O', 0) == *ch)) {    /* if matched */
+                  if((*ch == '+') || (SeekerGetAbbr(G, LexStr(G, ai1->resn), 'O', 0) == *ch)) {    /* if matched */
                     int d;
                     for(d = b; d < I_NAtom; d++) {
                       ai2 = i_obj[i_table[d].model]->AtomInfo + i_table[d].atom;        /* complete residue */
@@ -9072,13 +9077,14 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
           last_obj = obj;
         }
 
+        const char * name = LexStr(G, obj->AtomInfo[table_a->atom].name);
         if(matcher)
           hit_flag =
             WordMatcherMatchAlpha(matcher,
-                                  i_obj[table_a->model]->AtomInfo[table_a->atom].name);
+                                  name);
         else
           hit_flag = (WordMatchCommaExact(G, base[1].text,
-                                          obj->AtomInfo[table_a->atom].name,
+                                          name,
                                           ignore_case) < 0);
 
         if((*base_0_sele_a = hit_flag))
@@ -9189,9 +9195,9 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
 
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
+          auto& segi = i_obj[table_a->model]->AtomInfo[table_a->atom].segi;
           if((*base_0_sele_a =
-              WordMatcherMatchAlpha(matcher,
-                                    i_obj[table_a->model]->AtomInfo[table_a->atom].segi)))
+              WordMatcherMatchAlpha(matcher, LexStr(G, segi))))
             c++;
           table_a++;
           base_0_sele_a++;
@@ -9438,7 +9444,9 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
 
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
           ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
-          if((*base_0_sele_a = WordMatcherMatchMixed(matcher, ai->resi, ai->resv)))
+          char resi[8];
+          AtomResiFromResv(resi, sizeof(resi), ai);
+          if((*base_0_sele_a = WordMatcherMatchMixed(matcher, resi, ai->resv)))
             c++;
           table_a++;
           base_0_sele_a++;
@@ -9462,9 +9470,9 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
 
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
+          auto& resn = i_obj[table_a->model]->AtomInfo[table_a->atom].resn;
           if((*base_0_sele_a =
-              WordMatcherMatchAlpha(matcher,
-                                    i_obj[table_a->model]->AtomInfo[table_a->atom].resn)))
+              WordMatcherMatchAlpha(matcher, LexStr(G, resn))))
             c++;
           table_a++;
           base_0_sele_a++;
@@ -10080,7 +10088,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                 if(at1->chain == at2->chain)
                   if(at1->resv == at2->resv)
                     if(at1->discrete_state == at2->discrete_state)
-                      if(WordMatch(G, at1->resi, at2->resi, ignore_case) < 0)
+                      if(WordMatchExact(G, at1->inscode, at2->inscode, ignore_case))
                         if(WordMatch(G, at1->resn, at2->resn, ignore_case) < 0)
                           if(WordMatch(G, at1->segi, at2->segi, ignore_case) < 0) {
                             base_0_sele[b] = tag;
@@ -10103,7 +10111,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
                 if(at1->chain == at2->chain)
                   if(at1->resv == at2->resv)
                     if(at1->discrete_state == at2->discrete_state)
-                      if(WordMatch(G, at1->resi, at2->resi, ignore_case) < 0)
+                      if(WordMatchExact(G, at1->inscode, at2->inscode, ignore_case))
                         if(WordMatch(G, at1->resn, at2->resn, ignore_case) < 0)
                           if(WordMatch(G, at1->segi, at2->segi, ignore_case) < 0) {
                             base_0_sele[b] = tag;
@@ -10131,7 +10139,7 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
 
             if(i_obj[table_a->model]->AtomInfo[table_a->atom].protons == cAN_C)
               if(WordMatchCommaExact(G, "CA",
-                                     i_obj[table_a->model]->AtomInfo[table_a->atom].name,
+                                     LexStr(G, i_obj[table_a->model]->AtomInfo[table_a->atom].name),
                                      ignore_case) < 0) {
                 base_0_sele[a] = true;
                 c++;
@@ -10583,9 +10591,9 @@ static int SelectorLogic2(PyMOLGlobals * G, EvalElem * base)
             if(*base_2_sele_b) {
               at2 = &i_obj[table_b->model]->AtomInfo[table_b->atom];
               if(at1->resv == at2->resv)
-                if(WordMatchNoWild(G, LexStr(G, at1->chain), LexStr(G, at2->chain), ignore_case) < 0)
+                if(WordMatchNoWild(G, at1->chain, at2->chain, ignore_case) < 0)
                   if(WordMatchNoWild(G, at1->name, at2->name, ignore_case) < 0)
-                    if(WordMatchNoWild(G, at1->resi, at2->resi, ignore_case) < 0)
+                    if(WordMatchExact(G, at1->inscode, at2->inscode, ignore_case))
                       if(WordMatchNoWild(G, at1->resn, at2->resn, ignore_case) < 0)
                         if(WordMatchNoWild(G, at1->segi, at2->segi, ignore_case) < 0) {
                           *base_0_sele_a = tag;
@@ -10618,7 +10626,7 @@ static int SelectorLogic2(PyMOLGlobals * G, EvalElem * base)
               at2 = &i_obj[table_b->model]->AtomInfo[table_b->atom];
               if(at1->resv == at2->resv)
                 if(WordMatchNoWild(G, at1->name, at2->name, ignore_case) < 0)
-                  if(WordMatchNoWild(G, at1->resi, at2->resi, ignore_case) < 0) {
+                  if(WordMatchExact(G, at1->inscode, at2->inscode, ignore_case)) {
                     *base_0_sele_a = tag;
                     break;
                   }

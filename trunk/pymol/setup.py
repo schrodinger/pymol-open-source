@@ -149,14 +149,8 @@ libs = []
 pyogl_libs = []
 lib_dirs = []
 ext_comp_args = [
-    # warnings as errors
-    "-Werror=implicit-function-declaration",
-    "-Werror=declaration-after-statement",
-    # suppress warnings
     # legacy stuff
-    '-Wno-write-strings',
     '-Wno-unused-function',
-    '-Wno-empty-body',
     '-Wno-char-subscripts',
 ]
 ext_link_args = []

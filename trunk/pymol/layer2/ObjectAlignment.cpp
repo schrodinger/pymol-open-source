@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"Seeker.h"
 #include"ShaderMgr.h"
+#include "Lex.h"
 
 /* 
    just so you don't forget...
@@ -208,7 +209,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                     done = false;
                     if(AtomInfoSameResidueP(G, row->last_ai, ai)) {
                       row->cCol++;
-                    } else if(!SeekerGetAbbr(G, ai->resn, 0, 0)) {      /* not a known residue type */
+                    } else if(!SeekerGetAbbr(G, LexStr(G, ai->resn), 0, 0)) {      /* not a known residue type */
                       row->cCol++;
                     } else {
                       int tag =
@@ -292,7 +293,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                     done = false;
                     if(AtomInfoSameResidueP(G, row->last_ai, ai)) {
                       row->cCol++;
-                    } else if(!SeekerGetAbbr(G, ai->resn, 0, 0)) {      /* not a known residue type */
+                    } else if(!SeekerGetAbbr(G, LexStr(G, ai->resn), 0, 0)) {      /* not a known residue type */
                       row->cCol++;
                     } else {
                       int tag =
@@ -321,7 +322,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                       if(!tag) {
                         if(!AtomInfoSameResidueP(G, row->last_ai, ai)) {
                           row->last_ai = ai;
-                          row->txt[row->len] = SeekerGetAbbr(G, ai->resn, ' ', 'X');
+                          row->txt[row->len] = SeekerGetAbbr(G, LexStr(G, ai->resn), ' ', 'X');
                         } else {
                           row->txt[row->len] = '-';
                         }
@@ -352,7 +353,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
                         char abbr;
                         if(!AtomInfoSameResidueP(G, row->last_ai, ai)) {
                           row->last_ai = ai;
-                          abbr = SeekerGetAbbr(G, ai->resn, ' ', 'X');
+                          abbr = SeekerGetAbbr(G, LexStr(G, ai->resn), ' ', 'X');
                           if(cons_abbr == ' ')
                             cons_abbr = abbr;
                           else if(cons_abbr != abbr)
