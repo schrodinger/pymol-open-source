@@ -6,6 +6,7 @@ import os
 import sys
 import tempfile
 import Image
+import unittest
 
 import pymol.exporting
 from pymol import cmd, testing, stored
@@ -105,6 +106,7 @@ class TestExporting(testing.PyMOLTestCase):
 
     @testing.requires('incentive')
     @testing.requires_version('1.7.6')
+    @unittest.skipIf(sys.version_info[0] > 2, 'pse_binary_dump not py3k ready')
     def testPSEBulkImport(self):
         cmd.load(self.datafile('1rx1_1766_bulk.pse.gz'))
         m1 = cmd.get_model()
@@ -115,6 +117,7 @@ class TestExporting(testing.PyMOLTestCase):
     @testing.foreach.product((1.7, 1.76, 1.8), (0, 1))
     @testing.requires('incentive')
     @testing.requires_version('1.7.6.5')
+    @unittest.skipIf(sys.version_info[0] > 2, 'pse_binary_dump not py3k ready')
     def testPSEBulkExportImport(self, pse_export_version, pse_binary_dump):
         with testing.mktemp('.pse') as filename:
             cmd.load(self.datafile("1oky-frag.pdb"))
