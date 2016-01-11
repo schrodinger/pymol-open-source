@@ -449,6 +449,11 @@ ARGUMENTS
 
     mode = 2: only show polar contact distances
 
+    mode = 3: like mode=0, but use distance_exclusion setting
+
+    mode = 4: distance between centroids (does not support
+              dynamic_measures; new in PyMOL 1.8.2)
+
 EXAMPLES
 
     distance mydist, 14/CA, 29/CA

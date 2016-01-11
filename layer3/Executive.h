@@ -213,7 +213,6 @@ int ExecutiveAlign(PyMOLGlobals * G, const char *s1, const char *s2, const char 
 
 void ExecutiveUpdateColorDepends(PyMOLGlobals * G, ObjectMolecule * mol);
 void ExecutiveUpdateCoordDepends(PyMOLGlobals * G, ObjectMolecule * mol);
-float ExecutiveDistance(PyMOLGlobals * G, const char *sele1, const char *sele2);
 int ExecutiveDist(PyMOLGlobals * G, float *result,
                   const char *nam, const char *s1, const char *s2, int mode,
                   float cutoff, int labels, int quiet, int reset, int state, int zoom);

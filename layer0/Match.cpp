@@ -597,7 +597,7 @@ int MatchAlign(CMatch * I, float gap_penalty, float ext_penalty,
       " MatchAlign-DEBUG: best entry %8.3f %d %d %d\n", mxv, mxa, mxb, cnt ENDFD;
     if(!quiet) {
       PRINTFB(G, FB_Match, FB_Results)
-        " MatchAlign: score %1.3f\n", mxv ENDFD;
+        " MatchAlign: score %1.3f\n", mxv ENDFB(G);
     }
     I->score = mxv;
     I->n_pair = cnt;

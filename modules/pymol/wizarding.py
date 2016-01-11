@@ -17,7 +17,6 @@ from __future__ import print_function
 if __name__=='pymol.wizarding':
 
     import pymol
-    import imp
     import sys
     cmd = __import__("sys").modules["pymol.cmd"]
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
@@ -38,12 +37,11 @@ if __name__=='pymol.wizarding':
         from . import wizard
         try:
             full_name = 'pymol.wizard.'+name
-            if full_name not in sys.modules:
-                mod_tup = imp.find_module(name,wizard.__path__)
-                mod_obj = imp.load_module(full_name,mod_tup[0],
-                                                  mod_tup[1],mod_tup[2])
-            else:
-                mod_obj = sys.modules[full_name]
+            __import__(full_name)
+        except ImportError:
+            print("Error: Sorry, couldn't import the '"+name+"' wizard.")
+        else:
+            mod_obj = sys.modules[full_name]
             if mod_obj:
                 oname = name.capitalize()
                 r = DEFAULT_SUCCESS
@@ -61,8 +59,6 @@ if __name__=='pymol.wizarding':
                     print("Error: Sorry, couldn't find the '"+oname+"' class.")                             
             else:
                 print("Error: Sorry, couldn't import the '"+name+"' wizard.")         
-        except ImportError:
-            print("Error: Sorry, couldn't import the '"+name+"' wizard.")         
         return r
     
     def wizard(name=None,*arg,**kwd):

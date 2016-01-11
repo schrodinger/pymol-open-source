@@ -274,14 +274,14 @@ int CGOEllipsoid(CGO * I, float *v1, float r, float *n1, float *n2, float *n3);
 int CGOQuadric(CGO * I, float *v1, float r, float *p); /* NOT WORKING YET */
 int CGOSausage(CGO * I, float *v1, float *v2, float r, float *c1, float *c2);
 int CGOVertex(CGO * I, float v1, float v2, float v3);
-int CGOVertexv(CGO * I, float *v);
+int CGOVertexv(CGO * I, const float *v);
 int CGOAlpha(CGO * I, float alpha);
 int CGOColor(CGO * I, float v1, float v2, float v3);
-int CGOColorv(CGO * I, float *v);
+int CGOColorv(CGO * I, const float *v);
 int CGOTexCoord2f(CGO * I, float v1, float v2);
 int CGOTexCoord2fv(CGO * I, float *v);
 int CGONormal(CGO * I, float v1, float v2, float v3);
-int CGONormalv(CGO * I, float *v);
+int CGONormalv(CGO * I, const float *v);
 int CGOResetNormal(CGO * I, int mode);
 int CGOLinewidth(CGO * I, float v);
 int CGOLinewidthSpecial(CGO * I, int v);

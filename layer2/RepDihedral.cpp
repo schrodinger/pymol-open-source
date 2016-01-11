@@ -306,6 +306,7 @@ Rep *RepDihedralNew(DistSet * ds, int state)
   I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepDihedralRender;
   I->R.fFree = (void (*)(struct Rep *)) RepDihedralFree;
   I->R.fRecolor = NULL;
+  I->R.obj = &ds->Obj->Obj;
   I->R.cs = NULL;
   if (ds && ds->Rep && ds->Rep[cRepDihedral])
     I->R.cs = ds->Rep[cRepDihedral]->cs;

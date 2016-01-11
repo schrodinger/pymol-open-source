@@ -1211,7 +1211,7 @@ int CGOVertex(CGO * I, float v1, float v2, float v3)
   return true;
 }
 
-int CGOVertexv(CGO * I, float *v)
+int CGOVertexv(CGO * I, const float *v)
 {
   float *pc = CGO_add(I, 4);
   if (!pc)
@@ -1238,7 +1238,7 @@ int CGOColor(CGO * I, float v1, float v2, float v3)
   return true;
 }
 
-int CGOColorv(CGO * I, float *v)
+int CGOColorv(CGO * I, const float *v)
 {
   return CGOColor(I, v[0], v[1], v[2]);
 }
@@ -1403,7 +1403,7 @@ int CGOWriteIndent(CGO * I, char *str, float indent)
   return true;
 }
 
-int CGONormalv(CGO * I, float *v)
+int CGONormalv(CGO * I, const float *v)
 {
   float *pc = CGO_add(I, 4);
   if (!pc)

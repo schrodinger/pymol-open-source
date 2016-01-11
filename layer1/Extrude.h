@@ -66,7 +66,7 @@ void ExtrudeBuildNormals1f(CExtrude * I);
 void ExtrudeBuildNormals2f(CExtrude * I);
 int ExtrudeComputeTangents(CExtrude * I);
 int ExtrudeCylindersToCGO(CExtrude * I, CGO *cgo, float tube_radius, short is_picking);
-int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, short use_spheres);
+int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, bool use_spheres, int dash=0);
 void ExtrudeCGOSurfaceTubeToCylinders(CExtrude * I, CGO * cgo, int cap, float *color_override);
 int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap);
 

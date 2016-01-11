@@ -200,6 +200,16 @@ inline char makeInscode(char c) {
   return (c <= ' ') ? '\0' : c;
 }
 
+struct ElementTableItemType {
+  const char * name;
+  const char * symbol;
+  float vdw;
+  float weight;
+};
+
+extern const ElementTableItemType ElementTable[];
+extern const int ElementTableSize;
+
 typedef struct BondType {
   int index[2];
   int id;

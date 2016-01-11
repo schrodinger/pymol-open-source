@@ -4068,7 +4068,7 @@ end d
   }
 
   PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
-    " ObjectMap: %s\n", cc ENDFD;
+    " ObjectMap: %s\n", cc ENDFB(I->Obj.G);
 
   if(ascii)
     p = ParseNextLine(p);

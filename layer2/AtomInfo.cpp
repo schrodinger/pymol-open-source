@@ -1948,12 +1948,7 @@ float AtomInfoGetBondLength(PyMOLGlobals * G, AtomInfoType * ai1, AtomInfoType *
  *
  * Note: Default VDW radius is 1.80
  */
-const struct {
-  const char * name;
-  const char * symbol;
-  float vdw;
-  float weight;
-} ElementTable[] = {
+const ElementTableItemType ElementTable[] = {
   {"lonepair",          "LP",   0.50,   0.000000},
   {"hydrogen",          "H",    1.20,   1.007940},
   {"helium",            "He",   1.40,   4.002602},

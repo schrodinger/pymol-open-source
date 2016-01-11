@@ -1680,6 +1680,7 @@ PYMOL API
         'arrow'       : 5,
         'dumbbell'    : 6,
         'putty'       : 7,
+        'dash'        : 8,
     }
 
     cartoon_sc = Shortcut(cartoon_dict.keys())

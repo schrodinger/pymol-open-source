@@ -15,10 +15,9 @@
 from __future__ import print_function
 
 if __name__=='pymol.controlling' or __name__=='controlling':
-    
-    from . import selector
-    from .shortcut import Shortcut
     try:
+        from . import selector
+        from .shortcut import Shortcut
         cmd = __import__("sys").modules["pymol.cmd"]
         from .cmd import _cmd, QuietException, is_string, \
              boolean_dict, boolean_sc, \
@@ -26,6 +25,7 @@ if __name__=='pymol.controlling' or __name__=='controlling':
              location_code, location_sc 
         import pymol
     except:
+        from shortcut import Shortcut
         cmd = None
     
 

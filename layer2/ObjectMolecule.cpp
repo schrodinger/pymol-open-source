@@ -10865,6 +10865,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         if(use_matrices<0) use_matrices = 0;
         ai = I->AtomInfo;
 
+#ifdef _PYMOL_IP_EXTRAS
         // use stereo or text_type ?
 	switch (op->code){
 	case OMOP_AlterState:
@@ -10883,6 +10884,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
           PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
             " NO_MMLIBS-Warning: automatic 'text_type' assignment not supported in this PyMOL build.\n" ENDFB(G);
         }
+#endif
 #endif
 
         for(a = 0; a < I->NAtom; a++) {
@@ -10966,7 +10968,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 			  cs = I->CSet[0];
 			}
 #ifndef _PYMOL_NOPY
-			if(PLabelAtom(I->Obj.G, I, cs, &I->AtomInfo[a], expr_co, I->Obj.Name, a)) {
+			if(PLabelAtom(I->Obj.G, I, cs, expr_co, a)) {
 			  if (ai->label && !OVLexicon_IsEmpty(G->Lexicon, ai->label)){
 			    op->i1++; /* only if the string has been set, report labelled */
 			  }
@@ -11015,7 +11017,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 		  }
 #ifndef _PYMOL_NOPY
                   if(PAlterAtom
-                     (I->Obj.G, I, cs, &I->AtomInfo[a], expr_co, op->i2, I->Obj.Name, a,
+                     (I->Obj.G, I, cs, expr_co, op->i2, a,
                       op->py_ob1))
                     op->i1++;
                   else
@@ -11028,21 +11030,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   if(op->i2 < I->NCSet) {
                     cs = I->CSet[op->i2];
                     if(cs) {
-                      if(I->DiscreteFlag) {
-                        if(cs == I->DiscreteCSet[a])
-                          a1 = I->DiscreteAtmToIdx[a];
-                        else
-                          a1 = -1;
-                      } else
-                        a1 = cs->AtmToIdx[a];
+                      a1 = cs->atmToIdx(a);
                       if(a1 >= 0) {
-                        if(op->i4)
-                          ai_option = I->AtomInfo + a;
-                        else
-                          ai_option = NULL;
 #ifndef _PYMOL_NOPY
-                        if(PAlterAtomState(I->Obj.G, cs->Coord + (a1 * 3), expr_co, op->i3,
-                                           I, cs, ai_option, I->Obj.Name, a, a1, op->i2, op->py_ob1)) {
+                        if(PAlterAtomState(I->Obj.G, expr_co, op->i3,
+                                           I, cs, a, a1, op->i2, op->py_ob1)) {
                           op->i1++;
                           hit_flag = true;
                         } else

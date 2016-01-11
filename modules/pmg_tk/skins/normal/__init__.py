@@ -36,11 +36,13 @@ import traceback
 root = None
 
 def encode(s):
-    if isinstance(s, bytes):
+    if not isinstance(s, bytes):
         try:
             s = s.encode(sys.getfilesystemencoding())
         except UnicodeEncodeError:
             s = s.encode('latin1')
+    if sys.version_info[0] >= 3:
+        return s.decode()
     return s
 
 def asksaveasfilename(*args, **kwargs):
@@ -49,6 +51,8 @@ def asksaveasfilename(*args, **kwargs):
 
 def askopenfilename(*args, **kwargs):
     filename = tkFileDialog.askopenfilename(*args, **kwargs)
+    if not filename:
+        return filename
     if isinstance(filename, (list, tuple)):
         filename = map(encode, filename)
     elif isinstance(filename, (str, bytes)):
@@ -638,7 +642,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         for ofile in ofile_list:
             if len(ofile):
                 if not tutorial:
-                    self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
+                    self.initialdir = os.path.dirname(ofile)
                 if ofile[-4:].lower() == '.pse' and ofile != self.save_file:
                     self.save_file = '' # remove ambiguous default
                 self.cmd.do('_ /cmd.load(%s, quiet=0)' % repr(ofile))
@@ -654,8 +658,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             ("All Files","*"),
             ])
         if len(sfile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
-            self.log_file = re.sub(r"^.*[^\/\\]","",sfile)
+            self.initialdir = os.path.dirname(sfile)
+            self.log_file = os.path.basename(sfile)
             self.cmd.log_open(sfile)
 
     def log_resume(self,append_only=0):
@@ -670,8 +674,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                            ("All Files","*"),
                                            ])
         if len(ofile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
-            self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
+            self.initialdir = os.path.dirname(ofile)
+            self.log_file = os.path.basename(ofile)
 #            os.chdir(self.initialdir)                 
             self.cmd.resume(ofile)
 
@@ -687,8 +691,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                         ("All Files","*"),
                                         ])
         if len(ofile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
-            self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
+            self.initialdir = os.path.dirname(ofile)
+            self.log_file = os.path.basename(ofile)
 #            os.chdir(self.initialdir)                 
             self.cmd.log_open(ofile,'a')
 
@@ -718,7 +722,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         if len(sfile):
             if re.search(r"\.pse$|\.PSE$|\.psw$|\.PSW$",sfile)==None:
                 sfile=sfile+".pse"
-            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.initialdir = os.path.dirname(sfile)
             self.cmd.log("save %s,format=pse\n"%(sfile),
                       "cmd.save('%s',format='pse')\n"%(sfile))
 #            self.cmd.save(sfile,"",format='pse',quiet=0)
@@ -831,7 +835,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                                   filetypes=filetypes_save)
                         if len(sfile):
                             # maybe use PDBSTRs for saving multiple files to multiple states
-                            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+                            self.initialdir = os.path.dirname(sfile)
                             save_sele = ' or '.join(["("+str(x)+")" for x in sels])
                             self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
                                          "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
@@ -881,7 +885,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
                         if len(sfile):
                             # maybe use PDBSTRs for saving multiple files to multiple states
-                            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+                            self.initialdir = os.path.dirname(sfile)
                             save_sele = str("("+curName+")")
 
                             if doSplit:
@@ -948,9 +952,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                         ("All Files","*"),
                                         ])
         if len(ofile):
-            dir = re.sub(r"[^\/\\]*$","",ofile)
             self.__script__ = ofile
-#            os.chdir(dir)        
             if re.search("\.pym*$|\.PYM*$",ofile):
                 self.cmd.do("run "+ofile);      
             else:
@@ -961,7 +963,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                   initialdir = self.initialdir,
                  filetypes=[("PNG File","*.png")])
         if len(sfile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.initialdir = os.path.dirname(sfile)
             self.cmd.log("png %s\n"%sfile,"cmd.png('%s')\n"%sfile)
             self.cmd.png(sfile,quiet=0)
 
@@ -970,7 +972,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                   initialdir = self.initialdir,
                  filetypes=[("VRML 2 WRL File","*.wrl")])
         if len(sfile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.initialdir = os.path.dirname(sfile)
             self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
             self.cmd.save(sfile,quiet=0)
             
@@ -979,7 +981,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                   initialdir = self.initialdir,
                  filetypes=[("COLLADA File","*.dae")])
         if len(sfile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.initialdir = os.path.dirname(sfile)
             self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
             self.cmd.save(sfile,quiet=0)
 
@@ -988,7 +990,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                   initialdir = self.initialdir,
                                   filetypes=[("POV File","*.pov")])
         if len(sfile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.initialdir = os.path.dirname(sfile)
             self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
             self.cmd.save(sfile,quiet=0)
 
@@ -1008,7 +1010,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                       initialdir = self.initialdir,
                                       filetypes=[("MPEG movie file","*.mpg")])
             if len(sfile):
-                self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+                self.initialdir = os.path.dirname(sfile)
                 mQual = self.cmd.get_setting_int("movie_quality")
                 self.cmd.log("movie.produce %s,quality=%d,quiet=0\n"%(sfile,mQual),
                              "cmd.movie.produce('''%s''',quality=%d,quiet=0)\n"%(sfile,mQual))
@@ -1018,7 +1020,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         sfile = asksaveasfilename(initialdir = self.initialdir,
                                   filetypes=[("Numbered PNG Files","*.png")])
         if len(sfile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.initialdir = os.path.dirname(sfile)
             self.cmd.log("mpng %s\n"%sfile,"cmd.mpng('%s')\n"%sfile)         
             self.cmd.mpng(sfile,modal=-1)
 

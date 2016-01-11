@@ -312,6 +312,7 @@ Rep *RepDistDashNew(DistSet * ds, int state)
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepDistDashRender;
   I->R.fFree = (void (*)(struct Rep *)) RepDistDashFree;
   I->R.fRecolor = NULL;
+  I->R.obj = &ds->Obj->Obj;
   I->R.context.state = state;
   dash_len = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dash_length);
   dash_gap = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dash_gap);
