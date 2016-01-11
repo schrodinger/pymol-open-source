@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2016-01-11 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* distance mode=4: distance between centroids
+
+	* byring: new selection operator
+
+	* "Distances to Rings" mode in measurement wizard
+
+	* basic atom typing for MOL2 export
+
+	* cartoon dash: new dashed loop-like cartoon type
+
 2015-12-14 Thomas Holder, Blaine Bell
 
 	* support segi, resn and name of arbitrary string length

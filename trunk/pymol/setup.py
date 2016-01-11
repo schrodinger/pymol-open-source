@@ -69,7 +69,10 @@ class install_pymol(install):
         self.make_launch_script()
 
         if self.bundled_pmw:
-            os.system("tar -C %s -zxvf modules/pmg_tk/pmw.tgz" % self.install_libbase)
+            import tarfile
+            tar = tarfile.open("modules/pmg_tk/pmw.tgz")
+            tar.extractall(self.install_libbase)
+            tar.close()
 
     def unchroot(self, name):
         if self.root is not None and name.startswith(self.root):
@@ -150,6 +153,7 @@ pyogl_libs = []
 lib_dirs = []
 ext_comp_args = [
     # legacy stuff
+    '-Wno-write-strings',
     '-Wno-unused-function',
     '-Wno-char-subscripts',
 ]

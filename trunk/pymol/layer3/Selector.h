@@ -101,7 +101,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
 int SelectorGetSeleNCSet(PyMOLGlobals * G, int sele);
 int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
                                  int target_state, int state, int discrete,
-                                 int zoom, int quiet, int singletons);
+                                 int zoom, int quiet, int singletons, int copy_properties);
 int SelectorSubdivide(PyMOLGlobals * G, const char *pref, int sele1, int sele2,
                       int sele3, int sele4,
                       const char *fragPref, const char *compName, int *bondMode);

@@ -2332,7 +2332,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
 
     if (clamped) {
       PRINTFB(G, FB_Setting, FB_Warnings)
-        " Setting-Warning: %s range = [%d,%d]; setting to %d.",
+        " Setting-Warning: %s range = [%d,%d]; setting to %d.\n",
         rec.name, rec.value.i[1], rec.value.i[2], value ENDFB(G);
       SettingSetGlobal_i(G, index, value);
     }

@@ -8766,15 +8766,18 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
 /*========================================================================*/
 int ExecutiveGetDistance(PyMOLGlobals * G, const char *s0, const char *s1, float *value, int state)
 {
+  SelectorTmp tmpsele0(G, s0);
+  SelectorTmp tmpsele1(G, s1);
+
   /* TO DO: add support for averaging over multiple states */
 
   Vector3f v0, v1;
   int sele0 = -1, sele1 = -1;
   int ok = true;
 
-  if((sele0 = SelectorIndexByName(G, s0)) < 0)
+  if((sele0 = tmpsele0.getIndex()) < 0)
     ok = ErrMessage(G, "GetDistance", "Selection 1 invalid.");
-  else if((sele1 = SelectorIndexByName(G, s1)) < 0)
+  else if((sele1 = tmpsele1.getIndex()) < 0)
     ok = ErrMessage(G, "GetDistance", "Selection 2 invalid.");
   if(ok) {
     if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
@@ -8795,6 +8798,9 @@ int ExecutiveGetDistance(PyMOLGlobals * G, const char *s0, const char *s1, float
 int ExecutiveGetAngle(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, float *value,
                       int state)
 {
+  SelectorTmp tmpsele0(G, s0);
+  SelectorTmp tmpsele1(G, s1);
+  SelectorTmp tmpsele2(G, s2);
 
   /* TO DO: add support for averaging over multiple states */
 
@@ -8802,11 +8808,11 @@ int ExecutiveGetAngle(PyMOLGlobals * G, const char *s0, const char *s1, const ch
   int sele0 = -1, sele1 = -1, sele2 = -1;
   int ok = true;
   float d1[3], d2[3];
-  if((sele0 = SelectorIndexByName(G, s0)) < 0)
+  if((sele0 = tmpsele0.getIndex()) < 0)
     ok = ErrMessage(G, "GetAngle", "Selection 1 invalid.");
-  else if((sele1 = SelectorIndexByName(G, s1)) < 0)
+  else if((sele1 = tmpsele1.getIndex()) < 0)
     ok = ErrMessage(G, "GetAngle", "Selection 2 invalid.");
-  else if((sele2 = SelectorIndexByName(G, s2)) < 0)
+  else if((sele2 = tmpsele2.getIndex()) < 0)
     ok = ErrMessage(G, "GetAngle", "Selection 3 invalid.");
   if(ok) {
     if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
@@ -8829,6 +8835,10 @@ int ExecutiveGetAngle(PyMOLGlobals * G, const char *s0, const char *s1, const ch
 int ExecutiveGetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
                      float *value, int state)
 {
+  SelectorTmp tmpsele0(G, s0);
+  SelectorTmp tmpsele1(G, s1);
+  SelectorTmp tmpsele2(G, s2);
+  SelectorTmp tmpsele3(G, s3);
 
   /* TO DO: add support for averaging over multiple states */
 
@@ -8836,13 +8846,13 @@ int ExecutiveGetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const cha
   int sele0 = -1, sele1 = -1, sele2 = -1, sele3 = -1;
   int ok = true;
 
-  if((sele0 = SelectorIndexByName(G, s0)) < 0)
+  if((sele0 = tmpsele0.getIndex()) < 0)
     ok = ErrMessage(G, "GetDihedral", "Selection 1 invalid.");
-  else if((sele1 = SelectorIndexByName(G, s1)) < 0)
+  else if((sele1 = tmpsele1.getIndex()) < 0)
     ok = ErrMessage(G, "GetDihedral", "Selection 2 invalid.");
-  else if((sele2 = SelectorIndexByName(G, s2)) < 0)
+  else if((sele2 = tmpsele2.getIndex()) < 0)
     ok = ErrMessage(G, "GetDihedral", "Selection 3 invalid.");
-  else if((sele3 = SelectorIndexByName(G, s3)) < 0)
+  else if((sele3 = tmpsele3.getIndex()) < 0)
     ok = ErrMessage(G, "GetDihedral", "Selection 4 invalid.");
   if(ok) {
     if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
@@ -8869,6 +8879,11 @@ int ExecutiveGetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const cha
 int ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
                      float value, int state, int quiet)
 {
+  SelectorTmp tmpsele0(G, s0);
+  SelectorTmp tmpsele1(G, s1);
+  SelectorTmp tmpsele2(G, s2);
+  SelectorTmp tmpsele3(G, s3);
+
   Vector3f v0, v1, v2, v3;
   int sele0 = -1, sele1 = -1, sele2 = -1, sele3 = -1;
   int ok = true;
@@ -8876,13 +8891,13 @@ int ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const cha
   float current;
   float change;
 
-  if((sele0 = SelectorIndexByName(G, s0)) < 0)
+  if((sele0 = tmpsele0.getIndex()) < 0)
     ok = ErrMessage(G, "SetDihedral", "Selection 1 invalid.");
-  else if((sele1 = SelectorIndexByName(G, s1)) < 0)
+  else if((sele1 = tmpsele1.getIndex()) < 0)
     ok = ErrMessage(G, "SetDihedral", "Selection 2 invalid.");
-  else if((sele2 = SelectorIndexByName(G, s2)) < 0)
+  else if((sele2 = tmpsele2.getIndex()) < 0)
     ok = ErrMessage(G, "SetDihedral", "Selection 3 invalid.");
-  else if((sele3 = SelectorIndexByName(G, s3)) < 0)
+  else if((sele3 = tmpsele3.getIndex()) < 0)
     ok = ErrMessage(G, "SetDihedral", "Selection 4 invalid.");
   if(ok) {
     if(!SelectorGetSingleAtomVertex(G, sele0, state, v0))
@@ -8906,7 +8921,10 @@ int ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const cha
                                          * necessary because the editor 
                                          * can only work on the current state...this
                                          * needs to be changed.*/
-    EditorSelect(G, s2, s1, NULL, NULL, false, true, true);
+    EditorSelect(G,
+        tmpsele2.getName(),
+        tmpsele1.getName(),
+        NULL, NULL, false, true, true);
     EditorTorsion(G, change);
     SceneSetFrame(G, -1, save_state);
     if(!quiet) {
@@ -9870,21 +9888,16 @@ int ExecutiveAngle(PyMOLGlobals * G, float *result, const char *nam,
                    const char *s1, const char *s2, const char *s3, int mode,
                    int labels, int reset, int zoom, int quiet, int state)
 {
-  int sele1, sele2, sele3;
+  SelectorTmp tmpsele1(G, s1);
+  SelectorTmp tmpsele2(G, s2);
+  SelectorTmp tmpsele3(G, s3);
+  int sele1 = tmpsele1.getIndex();
+  int sele2 = (WordMatch(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+  int sele3 = (WordMatch(G, s3, cKeywordSame, true)) ? sele2 : tmpsele3.getIndex();
+
   ObjectDist *obj;
   CObject *anyObj = NULL;
-  sele1 = SelectorIndexByName(G, s1);
-  *result = 0.0F;
-  if(!WordMatch(G, s2, cKeywordSame, true))
-    sele2 = SelectorIndexByName(G, s2);
-  else {
-    sele2 = sele1;
-  }
-  if(!WordMatch(G, s3, cKeywordSame, true))
-    sele3 = SelectorIndexByName(G, s3);
-  else {
-    sele3 = sele2;
-  }
+  *result = -1.0F;
 
   if((sele1 >= 0) && (sele2 >= 0) && (sele3 >= 0)) {
     anyObj = ExecutiveFindObjectByName(G, nam);
@@ -9930,26 +9943,18 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
                       const char *s2, const char *s3, const char *s4, int mode,
                       int labels, int reset, int zoom, int quiet, int state)
 {
-  int sele1, sele2, sele3, sele4;
+  SelectorTmp tmpsele1(G, s1);
+  SelectorTmp tmpsele2(G, s2);
+  SelectorTmp tmpsele3(G, s3);
+  SelectorTmp tmpsele4(G, s4);
+  int sele1 = tmpsele1.getIndex();
+  int sele2 = (WordMatch(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+  int sele3 = (WordMatch(G, s3, cKeywordSame, true)) ? sele2 : tmpsele3.getIndex();
+  int sele4 = (WordMatch(G, s4, cKeywordSame, true)) ? sele3 : tmpsele4.getIndex();
+
   ObjectDist *obj;
   CObject *anyObj = NULL;
-  sele1 = SelectorIndexByName(G, s1);
-  *result = 0.0F;
-  if(!WordMatch(G, s2, cKeywordSame, true))
-    sele2 = SelectorIndexByName(G, s2);
-  else {
-    sele2 = sele1;
-  }
-  if(!WordMatch(G, s3, cKeywordSame, true))
-    sele3 = SelectorIndexByName(G, s3);
-  else {
-    sele3 = sele2;
-  }
-  if(!WordMatch(G, s4, cKeywordSame, true))
-    sele4 = SelectorIndexByName(G, s4);
-  else {
-    sele4 = sele3;
-  }
+  *result = -1.0F;
 
   if((sele1 >= 0) && (sele2 >= 0) && (sele3 >= 0) && (sele4 >= 0)) {
     anyObj = ExecutiveFindObjectByName(G, nam);
@@ -9993,21 +9998,27 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
   return 1;
 }
 
+/*
+ * Create a distance measurement object
+ *
+ * result: output pointer for measured distance in Angstrom
+ * nam: name of measurement object to create or add to
+ * s1: selection expression
+ * s2: selection expression or "same" keyword (shortcut for s1 = s2)
+ * mode: 0 (any), 1 (bonds), 2 (hbonds), 3 (distance_exclusion), 4 (centroids)
+ */
 int ExecutiveDist(PyMOLGlobals * G, float *result, const char *nam,
                   const char *s1, const char *s2, int mode, float cutoff,
                   int labels, int quiet, int reset, int state, int zoom)
 {
-  int sele1, sele2;
+  SelectorTmp tmpsele1(G, s1);
+  SelectorTmp tmpsele2(G, s2);
+  int sele1 = tmpsele1.getIndex();
+  int sele2 = (WordMatch(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+
   ObjectDist *obj;
   CObject *anyObj = NULL;
-  *result = 0.0F;
-  /* shortcut for duplicate selections */
-  sele1 = SelectorIndexByName(G, s1);
-  if(!WordMatch(G, s2, "same", true))
-    sele2 = SelectorIndexByName(G, s2);
-  else {
-    sele2 = sele1;
-  }
+  *result = -1.0F;
   /* if the distance 'name' we provided exists, overwrite it, by deleting it by its base class */
   if((sele1 >= 0) && (sele2 >= 0)) {
     anyObj = ExecutiveFindObjectByName(G, nam);
@@ -10047,6 +10058,7 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, const char *nam,
 }
 
 
+#if 0
 /*========================================================================*/
 float ExecutiveDistance(PyMOLGlobals * G, const char *s1, const char *s2)
 {
@@ -10096,6 +10108,7 @@ float ExecutiveDistance(PyMOLGlobals * G, const char *s1, const char *s2)
   }
   return (dist);
 }
+#endif
 
 
 /*========================================================================*/
@@ -10342,7 +10355,7 @@ int ExecutiveSeleToObject(PyMOLGlobals * G, const char *name, const char *s1,
 
     if(sele1 >= 0) {
       ok = SelectorCreateObjectMolecule(G, sele1, name, target,
-                                        source, discrete, false, quiet, singletons);
+                                        source, discrete, false, quiet, singletons, copy_properties);
       if(ok) {
         int sele2 = SelectorIndexByName(G, name);
         ObjectMolecule *old_obj, *new_obj;
@@ -10779,7 +10792,7 @@ int ExecutiveIterateList(PyMOLGlobals * G, const char *name,
 	  }
           ok =
             (expr_co != NULL) &&
-            PAlterAtom(G, obj, cs, obj->AtomInfo + index - 1, expr_co, read_only, name, index - 1,
+            PAlterAtom(G, obj, cs, expr_co, read_only, index - 1,
                        space);
           Py_XDECREF(expr_co);
         }

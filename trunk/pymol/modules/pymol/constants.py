@@ -90,7 +90,7 @@ class loadable:
     g96 = 46      # g96 trajectory format (via plugin)
     dcd = 47      # dcd trajectory format (via plugin)
     cube = 48     # cube volume file (via plugin)
-    mae = 49      # Schrodinger ".mae" format (proprietary)
+    xyzstr = 49   #
     cif1 = 50     # Python-based CIF parser
     phistr = 51   # electrostatic map as a string
     pim = 52      # General-purpose programmatic import (powerful, insecure)
@@ -109,6 +109,7 @@ class loadable:
     mae = 65
     maestr = 66
     pdbqt = 67
+    mae1 = 68     # Python-based MAE parser (proprietary and obsolete)
 
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.cif : loadable.cifstr,
@@ -117,6 +118,7 @@ _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.mol2 : loadable.mol2str,
               loadable.mmod : loadable.mmodstr,
               loadable.ccp4 : loadable.ccp4str,
+              loadable.xyz  : loadable.xyzstr,
               loadable.sdf2 : loadable.sdf2str}
 
 safe_oname_re = re.compile(r"[ ()|&!,`]")  # TODO use get_legal_name

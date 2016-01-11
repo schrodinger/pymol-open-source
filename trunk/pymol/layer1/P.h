@@ -139,11 +139,12 @@ void PExit(PyMOLGlobals * G, int code);
 void PParse(PyMOLGlobals * G, const char *str);       /* only accepts one command */
 void PDo(PyMOLGlobals * G, const char *str);  /* accepts multple commands seperated by newlines */
 
-int PAlterAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co,
-               int read_only, const char *model, int index, PyObject * space);
-int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, PyCodeObject *expr_co, const char *model, int index);
-int PAlterAtomState(PyMOLGlobals * G, float *v, PyCodeObject *expr_co, int read_only,
-                    ObjectMolecule *obj, CoordSet *cs, AtomInfoType * at, const char *model, int index, int csindex, int state, PyObject * space);
+int PAlterAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject *expr_co,
+               int read_only, int atm, PyObject * space);
+int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject *expr_co, int atm);
+int PAlterAtomState(PyMOLGlobals * G, PyCodeObject *expr_co, int read_only,
+                    ObjectMolecule *obj, CoordSet *cs, int atm, int idx,
+                    int state, PyObject * space);
 
 void PLog(PyMOLGlobals * G, const char *str, int lf);
 void PLogFlush(PyMOLGlobals * G);
@@ -213,10 +214,8 @@ typedef struct {
   ObjectMolecule *obj;
   CoordSet *cs;
   AtomInfoType *atomInfo;
-  const char *model;
-  int index;
-  int csindex;
-  float *v; // for PAlterAtomState x/y/z
+  int atm;
+  int idx;
   int state;
   short read_only; // set for PLabelAtom
   PyMOLGlobals * G;

@@ -667,7 +667,59 @@ void ExtrudeCGOTraceFrame(CExtrude * I, CGO * cgo)
   }
 }
 
-int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, short use_spheres)
+/*
+ * Draw flat cap on a tube cartoon (loop, oval, etc.)
+ *
+ * I: tube instance
+ * cgo: CGO to add to
+ * index: sampling index in `I`
+ * inv_dir: inverse direction of normal if true
+ * color: RGB color or NULL to use color from `I`
+ */
+static
+void TubeCapFlat(const CExtrude * I, CGO * cgo, int index, bool inv_dir, const float * color) {
+  const float * vertex = I->p + 3 * index;
+  const float * base33 = I->n + 9 * index;
+  const float * normal = base33;
+  float tmp3f[3];
+  int b_end = -1, b_incr = -1;
+
+  if (inv_dir) {
+    copy3f(normal, tmp3f);
+    invert3f(tmp3f);
+    normal = tmp3f;
+  } else {
+    b_end = I->Ns * 2 + 1;
+    b_incr = 1;
+  }
+
+  CGOBegin(cgo, GL_TRIANGLE_FAN);
+  CGOColorv(cgo, color ? color : (I->c + 3 * index));
+  CGOPickColor(cgo, I->i[index], cPickableAtom);
+  CGONormalv(cgo, normal); // (tmp3f again free to use)
+  CGOVertexv(cgo, vertex); // center
+
+  // Indexing trickery: going in a loop, visiting first index twice to
+  // close the loop. Iterating backwards in case of `inv_dir`.
+  for (int b = I->Ns; b != b_end; b += b_incr) {
+    transform33Tf3f(base33, I->sv + (b % I->Ns) * 3, tmp3f);
+    add3f(vertex, tmp3f, tmp3f);
+    CGOVertexv(cgo, tmp3f);
+  }
+
+  CGOEnd(cgo);
+  CGOPickColor(cgo, -1, cPickableNoPick);
+}
+
+/*
+ * I: tube instance
+ * cgo: CGO to add to
+ * cap: 0: no caps, 1: flat caps, 2: round caps
+ * color_override: RGB color or NULL to use color from `I`
+ * use_spheres: do round caps with spheres instead of triangles
+ * dash: if > 0, skip every segment which is a multiple of `dash`
+ */
+int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, bool use_spheres, int dash)
 {
   int a, b, *i;
   float *v;
@@ -715,28 +767,38 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overrid
 	sn += 3;
       }
       
-      /* fill in each strip separately */
-      
-      tv = TV;
-      tn = TN;
-      
-      tv1 = TV + 3 * I->N;
-      tn1 = TN + 3 * I->N;
-      
       start = I->Ns / 4;
       stop = 3 * I->Ns / 4;
     }
-    for(b = 0; ok && b < I->Ns; b++) {
-      if (ok){
+
+    // first loop: axial, for dashes (skipping segments)
+    for (int a_start = 0, a_incr = (dash ? dash : I->N);
+        a_start < I->N - 1;
+        a_start += a_incr) {
+
+      int a_end = a_start + a_incr;
+      if (a_end > I->N)
+        a_end = I->N;
+
+      // second loop: circumferential, setting up axial triangle strips
+      for(b = 0; ok && b < I->Ns; b++) {
 	if(SettingGetGlobal_i(I->G, cSetting_cartoon_debug) < 1.5)
 	  ok &= CGOBegin(cgo, GL_TRIANGLE_STRIP);
 	else {
 	  ok &= CGOBegin(cgo, GL_LINE_STRIP);
 	}
 	if (ok){
-	  c = I->c;
-	  i = I->i;
-	  for(a = 0; ok && a < I->N; a++) {
+          c = I->c + a_start * 3;
+          i = I->i + a_start;
+
+          tv = TV + 3 * (a_start + b * I->N);
+          tn = TN + 3 * (a_start + b * I->N);
+
+          tv1 = tv + 3 * I->N;
+          tn1 = tn + 3 * I->N;
+
+          // third loop: axial, segments within one "dash"
+          for(a = a_start; ok && a < a_end; ++a) {
 	    if(color_override && (b > start) && (b < stop))
 	      ok &= CGOColorv(cgo, color_override);
 	    else
@@ -764,88 +826,15 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overrid
 	if (ok)
 	  ok &= CGOPickColor(cgo, -1, cPickableNoPick);
       }
+
+      if (cap == 1) {
+        TubeCapFlat(I, cgo, a_start, true, color_override);
+        TubeCapFlat(I, cgo, a_end - 1, false, color_override);
+      }
     }
 
     if (ok){
     switch (cap) {
-    case 1:
-      n = I->n;
-      v = I->p;
-
-      sv = I->sv;
-      tv = I->tv;
-      for(b = 0; b < I->Ns; b++) {
-        transform33Tf3f(n, sv, tv);
-        add3f(v, tv, tv);
-        sv += 3;
-        tv += 3;
-      }
-
-      if (ok){
-	ok &= CGOBegin(cgo, GL_TRIANGLE_FAN);
-	if (ok){
-	  copy3f(I->n, v0);
-	  invert3f(v0);
-	  if(color_override)
-	    ok &= CGOColorv(cgo, color_override);
-	  else
-	    ok &= CGOColorv(cgo, I->c);
-	}
-	if (ok)
-	  ok &= CGOPickColor(cgo, I->i[0], cPickableAtom);
-	if (ok)
-	  ok &= CGONormalv(cgo, v0);
-	if (ok)
-	  ok &= CGOVertexv(cgo, v);
-	/* trace shape */
-	if (ok)
-	  ok &= CGOVertexv(cgo, I->tv);
-	for(b = I->Ns - 1; ok && b >= 0; b--) {
-	  ok &= CGOVertexv(cgo, I->tv + b * 3);
-	}
-	if (ok)
-	  ok &= CGOEnd(cgo);
-	if (ok)
-	  ok &= CGOPickColor(cgo, -1, cPickableNoPick);
-      }
-      if (ok){
-	n = I->n + 9 * (I->N - 1);
-	v = I->p + 3 * (I->N - 1);
-	
-	sv = I->sv;
-	tv = I->tv;
-	for(b = 0; b < I->Ns; b++) {
-	  transform33Tf3f(n, sv, tv);
-	  add3f(v, tv, tv);
-	  sv += 3;
-	  tv += 3;
-	}
-      }
-      if (ok)
-	ok &= CGOBegin(cgo, GL_TRIANGLE_FAN);
-      if (ok){
-	if(color_override)
-	  ok &= CGOColorv(cgo, color_override);
-	else
-	  ok &= CGOColorv(cgo, I->c + 3 * (I->N - 1));
-      }
-      if (ok)
-	ok &= CGOPickColor(cgo, I->i[I->N - 1], cPickableAtom);
-      if (ok)
-	ok &= CGONormalv(cgo, n);
-      if (ok)
-	ok &= CGOVertexv(cgo, v);
-      /* trace shape */
-      for(b = 0; ok && b < I->Ns; b++) {
-        ok &= CGOVertexv(cgo, I->tv + b * 3);
-      }
-      if (ok)
-	ok &= CGOVertexv(cgo, I->tv);
-      if (ok)
-	ok &= CGOEnd(cgo);
-      if (ok)
-	ok &= CGOPickColor(cgo, -1, cPickableNoPick);
-      break;
     case 2:
       {
 	float p0[3], p1[3], p2[3], z1, z2, normal[3], vertex1[3];

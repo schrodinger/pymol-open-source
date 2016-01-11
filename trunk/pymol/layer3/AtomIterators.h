@@ -141,32 +141,6 @@ public:
   bool next();
 };
 
-/*
- * Iterator over the selector table (all atoms in universe)
- *
- * Does NOT provide coord or coordset access
- *
- * (Implementation in Selector.cpp)
- */
-class SelectorAtomIterator : public AbstractAtomIterator {
-  CSelector * selector;
-
-public:
-  int a;        // index in selector
-
-  SelectorAtomIterator(PyMOLGlobals * G) {
-    selector = G->Selector;
-
-    // no coord set
-    cs = NULL;
-    idx = -1;
-
-    reset();
-  }
-
-  void reset();
-  bool next();
-};
 
 #endif
 

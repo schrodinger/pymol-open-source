@@ -1571,6 +1571,49 @@ static int GetCartoonQuality(CoordSet * cs, int setting, int v1, int v2, int v3,
   return quality;
 }
 
+static
+void ComputeCartoonAtomColors(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet *cs, int *nuc_flag, int atom_index1, int atom_index2, int *c1a, int *c2a, int *atp, int *cc, int cur_car, int cartoon_color, int nucleic_color, int discrete_colors, int n_p, int contigFlag){
+
+  int c1, c2;
+
+  if (nucleic_color >= 0 && (nuc_flag[*atp] || nuc_flag[*(atp + 1)])) {
+    c1 = c2 = nucleic_color;
+  } else {
+    c1 = c2 = cartoon_color;
+  }
+
+  auto ai1 = obj->AtomInfo + atom_index1;
+  auto ai2 = obj->AtomInfo + atom_index2;
+
+  AtomInfoGetSetting_color(G, ai1, cSetting_cartoon_color, c1, &c1);
+  AtomInfoGetSetting_color(G, ai2, cSetting_cartoon_color, c2, &c2);
+
+  if (c1 < 0) c1 = ai1->color;
+  if (c2 < 0) c2 = ai2->color;
+
+  if(discrete_colors) {
+    auto next_car = *(cc + 1);
+    // end of loop or dash segment
+    if (cur_car != next_car) {
+      if (cur_car == cCartoon_dash) {
+        c2 = c1;
+      } else if (next_car == cCartoon_dash) {
+        c1 = c2;
+      } else if (cur_car == cCartoon_loop) {
+        c2 = c1;
+      } else if (next_car == cCartoon_loop) {
+        c1 = c2;
+      }
+    } else if (n_p == 0 && contigFlag &&
+        (cur_car == cCartoon_dash || cur_car == cCartoon_loop)) {
+      // beginning of loop or dash segment
+      c1 = c2;
+    }
+  }
+  *c1a = c1;
+  *c2a = c2;
+}
+
 CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinders_for_strands, short is_picking,
 			   float *pv, int nAt, float *tv, float *pvo,
 			   float *dl, int *car, int *seg, int *at, int *nuc_flag,
@@ -1880,28 +1923,6 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
           AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index2, cSetting_cartoon_color,
                                    c2, &c2);
 
-          if(discrete_colors) {
-            if(n_p == 0) {
-              if(contigFlag) {
-                if(cur_car != cCartoon_loop)
-                  c2 = c1;
-                else {
-                  if((*cc + 1) == cur_car)
-                    c2 = c1;
-                  else
-                    c1 = c2;
-                }
-              } else if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
-                c2 = c1;
-              }
-            } else {
-              if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
-                c2 = c1;
-              }
-            }                   /* not contig */
-
-          }
-
           if((*(cc) == *(cc + 1)) && (c1 != c2))
             uniform_color = false;
           if(last_color >= 0) {
@@ -2106,11 +2127,15 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 
       if(a < (nAt - 1)) {
         /* put a setting controlled conditional here.. */
-        if(((*(cc + 1)) != cur_car) && (cur_car != cCartoon_loop)) {    /* end of segment */
+        if(((*(cc + 1)) != cur_car)
+            && (cur_car != cCartoon_loop || *(cc + 1) == cCartoon_dash)
+            && (cur_car != cCartoon_dash)
+            ) {    /* end of segment */
+          /* if next segment has different type and current is not loop */
           if(n_p) {             /* any cartoon points? */
             extrudeFlag = true;
           } else {
-            cur_car = cCartoon_loop;    /* no: go ahead and switch cartoons */
+            cur_car = (*(cc + 1) == cCartoon_dash) ? cCartoon_dash : cCartoon_loop;
             ExtrudeTruncate(ex, 0);
             n_p = 0;
             v = ex->p;
@@ -2140,44 +2165,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
           atom_index1 = cs->IdxToAtm[*atp];
           atom_index2 = cs->IdxToAtm[*(atp + 1)];
 
-          c1 = (obj->AtomInfo + atom_index1)->color;
-          c2 = (obj->AtomInfo + atom_index2)->color;
-
-          if(cartoon_color >= 0) {
-            c1 = (c2 = cartoon_color);
-          }
-
-          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_cartoon_color,
-                                   c1, &c1);
-          AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index2, cSetting_cartoon_color,
-                                   c2, &c2);
-
-          if(nuc_flag[*atp] || nuc_flag[*(atp + 1)]) {  /* this is a nucleic acid ribbon */
-            if(nucleic_color >= 0) {
-              c1 = (c2 = nucleic_color);
-            }
-          }
-
-          if(discrete_colors) {
-            if(n_p == 0) {
-              if(contigFlag) {
-                if(cur_car != cCartoon_loop)
-                  c2 = c1;
-                else {
-                  if((*cc + 1) == cur_car)
-                    c2 = c1;
-                  else
-                    c1 = c2;
-                }
-              } else if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
-                c2 = c1;
-              }
-            } else {
-              if((cur_car == cCartoon_loop) && (*(cc + 1) != cCartoon_loop)) {
-                c2 = c1;
-              }
-            }                   /* not contig */
-          }
+          ComputeCartoonAtomColors(G, obj, cs, nuc_flag, atom_index1, atom_index2, &c1, &c2, atp, cc, cur_car, cartoon_color, nucleic_color, discrete_colors, n_p, contigFlag);
 
           dev = throw_ * (*d);
           for(b = 0; b < sampling; b++) {       /* needs optimization */
@@ -2401,11 +2389,13 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, short use_cylinder
 	      contFlag = false;
             break;
           case cCartoon_loop:
+          case cCartoon_dash:
             ok &= ExtrudeCircle(ex, loop_quality, loop_radius);
 	    if (ok)
 	      ExtrudeBuildNormals1f(ex);
             if (ok)
-	      ok &= ExtrudeCGOSurfaceTube(ex, cgo, loop_cap, NULL, use_cylinders_for_strands);
+	      ok &= ExtrudeCGOSurfaceTube(ex, cgo, loop_cap, NULL, use_cylinders_for_strands,
+                  cur_car == cCartoon_dash ? 2 : 0);
 	    if (!ok)
 	      contFlag = false;
             break;

@@ -1213,22 +1213,14 @@ PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL * I,
                                        char *selection2, int state, int quiet)
 {
   int ok = true;
-  OrthoLineType s1 = "", s2 = "";
   PyMOLreturn_float result;
-  PYMOL_API_LOCK if(ok)
-    ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection2, s2) >= 0);
-
-  if(ok) {
-    ok = ExecutiveGetDistance(I->G, s1, s2, &result.value, state);
+  PYMOL_API_LOCK {
+    ok = ExecutiveGetDistance(I->G,
+        selection1,
+        selection2,
+        &result.value, state);
     result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-    result.value = -1.0F;
   }
-  SelectorFreeTmp(I->G, s1);
-  SelectorFreeTmp(I->G, s2);
   PYMOL_API_UNLOCK return result;
 }
 
@@ -1241,23 +1233,14 @@ PyMOLreturn_float PyMOL_CmdDistance(CPyMOL * I,
                                     int label, int reset, int zoom, int state, int quiet)
 {
   int ok = true;
-  OrthoLineType s1 = "", s2 = "";
   PyMOLreturn_float result;
-  PYMOL_API_LOCK if(ok)
-    ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection2, s2) >= 0);
-
-  if(ok) {
-    ok = ExecutiveDist(I->G, &result.value, name, s1, s2,
-                       mode, cutoff, label, quiet, reset, state, zoom);
+  PYMOL_API_LOCK {
+    ok = ExecutiveDist(I->G, &result.value, name,
+        selection1,
+        selection2,
+        mode, cutoff, label, quiet, reset, state, zoom);
     result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-    result.value = -1.0F;
   }
-  SelectorFreeTmp(I->G, s1);
-  SelectorFreeTmp(I->G, s2);
   PYMOL_API_UNLOCK return result;
 }
 
@@ -1267,25 +1250,15 @@ PyMOLreturn_float PyMOL_CmdGetAngle(CPyMOL * I,
                                     char *selection3, int state, int quiet)
 {
   int ok = true;
-  OrthoLineType s1 = "", s2 = "", s3 = "";
   PyMOLreturn_float result;
-  PYMOL_API_LOCK if(ok)
-    ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection2, s2) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection3, s3) >= 0);
-
-  if(ok) {
-    ok = ExecutiveGetAngle(I->G, s1, s2, s3, &result.value, state);
+  PYMOL_API_LOCK {
+    ok = ExecutiveGetAngle(I->G,
+        selection1,
+        selection2,
+        selection3,
+        &result.value, state);
     result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-    result.value = 0.0F;
   }
-  SelectorFreeTmp(I->G, s1);
-  SelectorFreeTmp(I->G, s2);
-  SelectorFreeTmp(I->G, s3);
   PYMOL_API_UNLOCK return result;
 }
 
@@ -1298,26 +1271,15 @@ PyMOLreturn_float PyMOL_CmdAngle(CPyMOL * I,
                                  int label, int reset, int zoom, int state, int quiet)
 {
   int ok = true;
-  OrthoLineType s1 = "", s2 = "", s3 = "";
   PyMOLreturn_float result;
-  PYMOL_API_LOCK if(ok)
-    ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection2, s2) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection3, s3) >= 0);
-
-  if(ok) {
-    ok = ExecutiveAngle(I->G, &result.value, name, s1, s2, s3,
+  PYMOL_API_LOCK {
+    ok = ExecutiveAngle(I->G, &result.value, name,
+        selection1,
+        selection2,
+        selection3,
                         mode, label, reset, zoom, quiet, state);
     result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-    result.value = -1.0F;
   }
-  SelectorFreeTmp(I->G, s1);
-  SelectorFreeTmp(I->G, s2);
-  SelectorFreeTmp(I->G, s3);
   PYMOL_API_UNLOCK return result;
 }
 
@@ -1328,28 +1290,16 @@ PyMOLreturn_float PyMOL_CmdGetDihedral(CPyMOL * I,
                                        char *selection4, int state, int quiet)
 {
   int ok = true;
-  OrthoLineType s1 = "", s2 = "", s3 = "", s4 = "";
   PyMOLreturn_float result;
-  PYMOL_API_LOCK if(ok)
-    ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection2, s2) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection3, s3) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection4, s4) >= 0);
-
-  if(ok) {
-    ok = ExecutiveGetDihe(I->G, s1, s2, s3, s4, &result.value, state);
+  PYMOL_API_LOCK {
+    ok = ExecutiveGetDihe(I->G,
+        selection1,
+        selection2,
+        selection3,
+        selection4,
+        &result.value, state);
     result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-    result.value = 0.0F;
   }
-  SelectorFreeTmp(I->G, s1);
-  SelectorFreeTmp(I->G, s2);
-  SelectorFreeTmp(I->G, s3);
-  SelectorFreeTmp(I->G, s4);
   PYMOL_API_UNLOCK return result;
 }
 
@@ -1363,29 +1313,16 @@ PyMOLreturn_float PyMOL_CmdDihedral(CPyMOL * I,
                                     int label, int reset, int zoom, int state, int quiet)
 {
   int ok = true;
-  OrthoLineType s1 = "", s2 = "", s3 = "", s4 = "";
   PyMOLreturn_float result;
-  PYMOL_API_LOCK if(ok)
-    ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection2, s2) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection3, s3) >= 0);
-  if(ok)
-    ok = (SelectorGetTmp(I->G, selection4, s4) >= 0);
-
-  if(ok) {
-    ok = ExecutiveDihedral(I->G, &result.value, name, s1, s2, s3, s4,
+  PYMOL_API_LOCK {
+    ExecutiveDihedral(I->G, &result.value, name,
+        selection1,
+        selection2,
+        selection3,
+        selection4,
                            mode, label, reset, zoom, quiet, state);
     result.status = get_status_ok(ok);
-  } else {
-    result.status = PyMOLstatus_FAILURE;
-    result.value = -1.0F;
   }
-  SelectorFreeTmp(I->G, s1);
-  SelectorFreeTmp(I->G, s2);
-  SelectorFreeTmp(I->G, s3);
-  SelectorFreeTmp(I->G, s4);
   PYMOL_API_UNLOCK return result;
 }
 

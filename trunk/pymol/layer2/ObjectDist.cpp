@@ -719,13 +719,13 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
       PRINTFB(G, FB_ObjectDist, FB_Blather)
 	" ObjectDistNewFromAngleSele: obj1 is frozen = %d into state %d+1\n", frozen1, state1 
-	ENDFD;
+	ENDFB(G);
       PRINTFB(G, FB_ObjectDist, FB_Blather) 
 	" ObjectDistNewFromAngleSele: obj2 is frozen = %d into state %d+1\n", frozen2, state2 
-	ENDFD;
+	ENDFB(G);
       PRINTFB(G, FB_ObjectDist, FB_Blather) 
 	" ObjectDistNewFromAngleSele: obj3 is frozen = %d into state %d+1\n", frozen3, state3
-	ENDFD;
+	ENDFB(G);
 
       if(!frozen1)
 	state1 = (n_state1>1) ? a : 0;

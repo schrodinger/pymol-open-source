@@ -3627,9 +3627,7 @@ static PyObject *CmdDist(PyObject * self, PyObject * args)
   float cutoff, result = -1.0;
   int labels, quiet;
   int mode, reset, state, zoom;
-  OrthoLineType s1, s2;
   int ok = false;
-  int c1, c2;
   ok = PyArg_ParseTuple(args, "Osssifiiiii", &self, &name, &str1,
                         &str2, &mode, &cutoff, &labels, &quiet, &reset, &state, &zoom);
   if(ok) {
@@ -3639,32 +3637,8 @@ static PyObject *CmdDist(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    c1 = SelectorGetTmp(G, str1, s1);
-    c2 = SelectorGetTmp(G, str2, s2);
-    if((c1 < 0) || (c2 < 0))
-      ok = false;
-    else {
-      if(c1 && (c2 || WordMatch(G, cKeywordSame, s2, true)))
-        ExecutiveDist(G, &result, name, s1, s2, mode, cutoff,
-                      labels, quiet, reset, state, zoom);
-      else {
-        if((!quiet) && (!c1)) {
-          PRINTFB(G, FB_Executive, FB_Errors)
-            "Distance-Error: selection 1 contains no atoms.\n" ENDFB(G);
-          if(reset)
-            ExecutiveDelete(G, name);
-        }
-        if((!quiet) && (!c2)) {
-          PRINTFB(G, FB_Executive, FB_Errors)
-            "Distance-Error: selection 2 contains no atoms.\n" ENDFB(G);
-          if(reset)
-            ExecutiveDelete(G, name);
-        }
-        result = -1.0;
-      }
-    }
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
+    ok = ExecutiveDist(G, &result, name, str1, str2, mode, cutoff,
+        labels, quiet, reset, state, zoom);
     APIExit(G);
   }
   if(!ok)
@@ -3680,9 +3654,7 @@ static PyObject *CmdAngle(PyObject * self, PyObject * args)
   float result = -999.0;
   int labels, quiet;
   int mode;
-  OrthoLineType s1, s2, s3;
   int ok = false;
-  int c1, c2, c3;
   int reset, zoom;
   int state;
   ok = PyArg_ParseTuple(args, "Ossssiiiiii", &self,
@@ -3695,32 +3667,8 @@ static PyObject *CmdAngle(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    c1 = SelectorGetTmp(G, str1, s1);
-    c2 = SelectorGetTmp(G, str2, s2);
-    c3 = SelectorGetTmp(G, str3, s3);
-    if(c1 &&
-       (c2 || WordMatch(G, cKeywordSame, s2, true)) &&
-       (c3 || WordMatch(G, cKeywordSame, s3, true)))
-      ExecutiveAngle(G, &result, name, s1, s2, s3,
-                     mode, labels, reset, zoom, quiet, state);
-    else {
-      if((!quiet) && (!c1)) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " Distance-ERR: selection 1 contains no atoms.\n" ENDFB(G);
-      }
-      if((quiet != 2) && (!c2)) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " Distance-ERR: selection 2 contains no atoms.\n" ENDFB(G);
-      }
-      if((quiet != 2) && (!c3)) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " Distance-ERR: selection 3 contains no atoms.\n" ENDFB(G);
-      }
-      result = -1.0;
-    }
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    SelectorFreeTmp(G, s3);
+    ok = ExecutiveAngle(G, &result, name, str1, str2, str3,
+        mode, labels, reset, zoom, quiet, state);
     APIExit(G);
   }
   return (Py_BuildValue("f", result));
@@ -3733,9 +3681,7 @@ static PyObject *CmdDihedral(PyObject * self, PyObject * args)
   float result = -999.0;
   int labels, quiet;
   int mode;
-  OrthoLineType s1, s2, s3, s4;
   int ok = false;
-  int c1, c2, c3, c4;
   int reset, zoom;
   int state;
   ok = PyArg_ParseTuple(args, "Osssssiiiiii", &self,
@@ -3748,39 +3694,8 @@ static PyObject *CmdDihedral(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    c1 = SelectorGetTmp(G, str1, s1);
-    c2 = SelectorGetTmp(G, str2, s2);
-    c3 = SelectorGetTmp(G, str3, s3);
-    c4 = SelectorGetTmp(G, str4, s4);
-    if(c1 &&
-       (c2 || WordMatch(G, cKeywordSame, s2, true)) &&
-       (c3 || WordMatch(G, cKeywordSame, s3, true)) &&
-       (c4 || WordMatch(G, cKeywordSame, s4, true)))
-      ExecutiveDihedral(G, &result, name, s1, s2, s3, s4,
-                        mode, labels, reset, zoom, quiet, state);
-    else {
-      if((!quiet) && (!c1)) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " Distance-ERR: selection 1 contains no atoms.\n" ENDFB(G);
-      }
-      if((quiet != 2) && (!c2)) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " Distance-ERR: selection 2 contains no atoms.\n" ENDFB(G);
-      }
-      if((quiet != 2) && (!c3)) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " Distance-ERR: selection 3 contains no atoms.\n" ENDFB(G);
-      }
-      if((quiet != 2) && (!c4)) {
-        PRINTFB(G, FB_Executive, FB_Errors)
-          " Distance-ERR: selection 4 contains no atoms.\n" ENDFB(G);
-      }
-      result = -1.0;
-    }
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    SelectorFreeTmp(G, s3);
-    SelectorFreeTmp(G, s4);
+    ok = ExecutiveDihedral(G, &result, name, str1, str2, str3, str4,
+        mode, labels, reset, zoom, quiet, state);
     APIExit(G);
   }
   return (Py_BuildValue("f", result));
@@ -5139,7 +5054,6 @@ static PyObject *CmdGetDistance(PyObject * self, PyObject * args)
   char *str1, *str2;
   float result;
   int int1;
-  OrthoLineType s1, s2;
   int ok = false;
   ok = PyArg_ParseTuple(args, "Ossi", &self, &str1, &str2, &int1);
 
@@ -5150,11 +5064,7 @@ static PyObject *CmdGetDistance(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ((SelectorGetTmp(G, str1, s1) >= 0) && (SelectorGetTmp(G, str2, s2) >= 0));
-    if(ok)
-      ok = ExecutiveGetDistance(G, s1, s2, &result, int1);
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
+    ok = ExecutiveGetDistance(G, str1, str2, &result, int1);
     APIExit(G);
   }
 
@@ -5171,7 +5081,6 @@ static PyObject *CmdGetAngle(PyObject * self, PyObject * args)
   char *str1, *str2, *str3;
   float result;
   int int1;
-  OrthoLineType s1, s2, s3;
   int ok = false;
   ok = PyArg_ParseTuple(args, "Osssi", &self, &str1, &str2, &str3, &int1);
 
@@ -5182,13 +5091,7 @@ static PyObject *CmdGetAngle(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ((SelectorGetTmp(G, str1, s1) >= 0) &&
-          (SelectorGetTmp(G, str2, s2) >= 0) && (SelectorGetTmp(G, str3, s3) >= 0));
-    if(ok)
-      ok = ExecutiveGetAngle(G, s1, s2, s3, &result, int1);
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    SelectorFreeTmp(G, s3);
+    ok = ExecutiveGetAngle(G, str1, str2, str3, &result, int1);
     APIExit(G);
   }
 
@@ -5205,7 +5108,6 @@ static PyObject *CmdGetDihe(PyObject * self, PyObject * args)
   char *str1, *str2, *str3, *str4;
   float result;
   int int1;
-  OrthoLineType s1, s2, s3, s4;
   int ok = false;
   ok = PyArg_ParseTuple(args, "Ossssi", &self, &str1, &str2, &str3, &str4, &int1);
 
@@ -5216,14 +5118,7 @@ static PyObject *CmdGetDihe(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ((SelectorGetTmp(G, str1, s1) >= 0) &&
-          (SelectorGetTmp(G, str2, s2) >= 0) &&
-          (SelectorGetTmp(G, str3, s3) >= 0) && (SelectorGetTmp(G, str4, s4) >= 0));
-    ok = ExecutiveGetDihe(G, s1, s2, s3, s4, &result, int1);
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    SelectorFreeTmp(G, s3);
-    SelectorFreeTmp(G, s4);
+    ok = ExecutiveGetDihe(G, str1, str2, str3, str4, &result, int1);
     APIExit(G);
   }
 
@@ -5241,7 +5136,6 @@ static PyObject *CmdSetDihe(PyObject * self, PyObject * args)
   float float1;
   int int1;
   int quiet;
-  OrthoLineType s1, s2, s3, s4;
   int ok = false;
   ok =
     PyArg_ParseTuple(args, "Ossssfii", &self, &str1, &str2, &str3, &str4, &float1, &int1,
@@ -5253,14 +5147,7 @@ static PyObject *CmdSetDihe(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ((SelectorGetTmp(G, str1, s1) >= 0) &&
-          (SelectorGetTmp(G, str2, s2) >= 0) &&
-          (SelectorGetTmp(G, str3, s3) >= 0) && (SelectorGetTmp(G, str4, s4) >= 0));
-    ok = ExecutiveSetDihe(G, s1, s2, s3, s4, float1, int1, quiet);
-    SelectorFreeTmp(G, s1);
-    SelectorFreeTmp(G, s2);
-    SelectorFreeTmp(G, s3);
-    SelectorFreeTmp(G, s4);
+    ok = ExecutiveSetDihe(G, str1, str2, str3, str4, float1, int1, quiet);
     APIExit(G);
   }
   return APIResultOk(ok);

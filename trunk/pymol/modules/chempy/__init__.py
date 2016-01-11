@@ -152,13 +152,13 @@ class Storage:
             return open(fname,mode)
         
     def updateFromList(self,indexed,**params):
-        pass
+        return NotImplementedError
     
     def fromList(self,**params):
-        return chempy.indexed()
+        return NotImplementedError
     
     def toList(self,indexed,**params):
-        return []
+        return NotImplementedError
 
     def updateFromFile(self,indexed,fname,**params):
         fp = open(fname)

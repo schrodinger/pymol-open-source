@@ -15,6 +15,7 @@ obj_prefix = "measure"
 class Measurement(Wizard):
     modes = [
         'pairs',
+        'rings',
         'angle',
         'dihed',
         'polar',
@@ -30,6 +31,7 @@ class Measurement(Wizard):
         'angle':'Angles',
         'dihed':'Dihedrals',
         'hbond':'Polar Contacts',
+        'rings':'Distances to Rings',
         }
     neighbor_modes = [
         'same',
@@ -240,7 +242,7 @@ class Measurement(Wizard):
     def get_prompt(self):
         (what, code) = self.get_selection_name()
         self.prompt = None
-        if self.mode in ['pairs', 'angle', 'dihed', 'hbond' ]:
+        if self.mode in ['pairs', 'angle', 'dihed', 'hbond', 'rings' ]:
             if self.status==0:
                 self.prompt = [ 'Please click on the first %s...' % what]
             elif self.status==1:
@@ -322,6 +324,26 @@ class Measurement(Wizard):
                     if self.object_mode=='merge':
                         reset = 0
                     self.cmd.dist(obj_name,"(v. and " + sele_prefix+"0)","(v. and (pk1))",reset=reset)
+                    self.cmd.enable(obj_name)
+                    self.clear_input()
+                    self.status = 0
+                self.cmd.unpick()
+            elif self.mode == 'rings':
+                if self.status==0:
+                    self.cmd.select(sele_name,"(?pk1 | byring ?pk1)")
+                    self.cmd.select(indi_sele, sele_name)
+                    self.cmd.enable(indi_sele)
+                    self.status = 1
+                    self.error = None
+                elif self.status==1:
+                    obj_name  = self.get_name((self.object_mode=='append'),
+                                              (self.object_mode=='append'))
+                    if self.object_mode=='merge':
+                        reset = 0
+                    self.cmd.distance(obj_name,
+                            "?" + sele_prefix + "0",
+                            "(?pk1 | byring ?pk1)",
+                            mode=4, reset=reset)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0

@@ -13,6 +13,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <vector>
+
 #include"os_python.h"
 #include"os_predef.h"
 #include"os_std.h"
@@ -40,6 +43,7 @@ Z* -------------------------------------------------------------------
 #include"Editor.h"
 #include"Seeker.h"
 #include "Lex.h"
+#include "Mol2Typing.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"
@@ -214,11 +218,35 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals * G, ObjectMolecule * o
 
 /*========================================================================*/
 /*
- * SelectorAtomIterator methods, see AtomIterators.h for documentation.
+ * Iterator over the selector table (all atoms in universe)
+ *
+ * Selector table must be up-to-date!
+ * Does NOT provide coord or coordset access
+ *
+ * (Implementation in Selector.cpp)
  */
-void SelectorAtomIterator::reset() {
+class SelectorAtomIterator : public AbstractAtomIterator {
+  CSelector * selector;
+
+public:
+  int a;        // index in selector
+
+  SelectorAtomIterator(CSelector * I) {
+    selector = I;
+
+    // no coord set
+    cs = NULL;
+    idx = -1;
+
+    reset();
+  }
+
+  void reset() {
   a = cNDummyAtoms - 1;
 }
+
+  bool next();
+};
 
 bool SelectorAtomIterator::next() {
   if ((++a) >= selector->NAtom)
@@ -420,6 +448,7 @@ static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offs
 #define SELE_YVLx ( 0x5100 | STYP_SEL2 | 0x80 )
 #define SELE_ZVLx ( 0x5200 | STYP_SEL2 | 0x80 )
 #define SELE_CUST ( 0x5300 | STYP_SEL1 | 0x80 )
+#define SELE_RING ( 0x5400 | STYP_OPR1 | 0x20 )
 
 #define SEL_PREMAX 0x8
 
@@ -669,6 +698,8 @@ static WordKeyValue Keyword[] = {
   {"x", SELE_XVLx},
   {"y", SELE_YVLx},
   {"z", SELE_ZVLx},
+
+  {"byring", SELE_RING},
 
   {"", 0}
 };
@@ -6345,9 +6376,26 @@ int SelectorAssignAtomTypes(PyMOLGlobals * G, int sele, int state, int quiet, in
   }
   return 1;
 #else
-  PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
-    " NO_MMLIBS-Warning: automatic 'text_type' assignment not supported in this PyMOL build.\n" ENDFB(G);
-  return 0;
+  if (format != 1) {
+    PRINTFB(G, FB_Selector, FB_Errors)
+      " Error: assign_atom_types only supports format='mol2'\n" ENDFB(G);
+    return 0;
+  }
+
+  SelectorUpdateTable(G, state, -1);
+
+  ObjectMolecule *obj = NULL;
+
+  for (SeleAtomIterator iter(G, sele); iter.next();) {
+    if (obj != iter.obj) {
+      obj = iter.obj;
+      ObjectMoleculeVerifyChemistry(obj, state);
+    }
+
+    LexAssign(G, iter.getAtomInfo()->textType,
+        getMOL2Type(obj, iter.getAtm()));
+  }
+  return 1;
 #endif
 }
 
@@ -7084,7 +7132,7 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
 
 int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
                                  int target, int source, int discrete,
-                                 int zoom, int quiet, int singletons)
+                                 int zoom, int quiet, int singletons, int copy_properties)
 {
   CSelector *I = G->Selector;
   int ok = true;
@@ -7336,7 +7384,6 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
   }
   if (ok)
     ok &= ObjectMoleculeSort(targ);
-  ObjectMoleculeSort(targ);
   if(isNew) {
     ObjectSetName((CObject *) targ, name);
     ExecutiveManageObject(G, (CObject *) targ, zoom, quiet);
@@ -7541,12 +7588,14 @@ int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet
 
      */
 
-    int is_selection = false;
+    // make selection if "input" doesn't fit into "store"
+    int is_selection = strlen(input) >= OrthoLineLength;
+
     const char *p = input;
     OrthoLineType word;
     OVreturn_word result;
 
-    while(*p) {
+    if (!is_selection) while(*p) {
       /* copy first word/token of p into "word", remainder of string in p */
       p = ParseWord(word, p, sizeof(OrthoLineType));
       /* see a paren? then this must be a selection */
@@ -7880,8 +7929,9 @@ static int _SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele
     if (!quiet){
       PRINTFB(G, FB_Selector, FB_Errors)
 	"Selector-Error: Invalid selection name \"%s\".\n", sname ENDFB(G);
+      // moved to only !quiet B.B. 11/12 - not sure why this is in there, caused unwanted cr to print during test
+      OrthoRestorePrompt(G);
     }
-    OrthoRestorePrompt(G);
   }
   if(ok) {
     if(sele) {
@@ -9213,7 +9263,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
       if(WordMatchComma(G, base[1].text, rep_names[a].word, ignore_case) < 0)
         rep_mask |= rep_names[a].value;
     }
-    for(SelectorAtomIterator iter(G); iter.next();) {
+    for(SelectorAtomIterator iter(I); iter.next();) {
       if(iter.getAtomInfo()->visRep & rep_mask) {
         base[0].sele[iter.a] = true;
         c++;
@@ -9949,6 +9999,71 @@ static int SelectorSelect2(PyMOLGlobals * G, EvalElem * base, int state)
   return (ok);
 }
 
+/*========================================================================*/
+static int SelectorSelect3(PyMOLGlobals * G, EvalElem * base, int state)
+{
+  return false;
+}
+
+/*========================================================================*/
+
+/*
+ * Ring finder subroutine
+ */
+class SelectorRingFinder {
+  CSelector * I;
+  EvalElem * base;
+  ObjectMolecule * obj;
+  std::vector<int> indices;
+
+  void recursion(int atm, int depth) {
+    int atm_neighbor, offset, j;
+
+    indices[depth] = atm;
+
+    ITERNEIGHBORATOMS(obj->Neighbor, atm, atm_neighbor, j) {
+      // check bond order
+      if (obj->Bond[obj->Neighbor[j + 1]].order < 1)
+        continue;
+
+      // check if closing a ring of size >= 3
+      if (depth > 1 && atm_neighbor == indices[0]) {
+        // found ring, add it to the selection
+        for (int i = 0; i <= depth; ++i)
+          if ((offset = SelectorGetObjAtmOffset(I, obj, indices[i])) >= 0)
+            base->sele[offset] = 1;
+      } else if (depth < indices.size() - 1) {
+        // check for undesired ring with start != 0
+        int i = depth;
+        while ((--i) >= 0)
+          if (atm_neighbor == indices[i])
+            break; // stop recursion
+        if (i == -1) {
+          recursion(atm_neighbor, depth + 1);
+        }
+      }
+    }
+  }
+
+public:
+  SelectorRingFinder(CSelector * I, EvalElem * base, int maxringsize=7) :
+    I(I), base(base), obj(NULL), indices(maxringsize) {}
+
+  /*
+   * Does a depth-first search for all paths of length in range [3, maxringsize],
+   * which lead back to `atm` and don't visit any atom twice.
+   *
+   * Modifies base[0].sele
+   */
+  void apply(ObjectMolecule * obj_, int atm) {
+    if (obj != obj_) {
+      obj = obj_;
+      ObjectMoleculeUpdateNeighbors(obj);
+    }
+
+    recursion(atm, 0);
+  }
+};
 
 /*========================================================================*/
 static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
@@ -9983,6 +10098,19 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
         if((*base_0_sele_a = !*base_0_sele_a))
           c++;
         base_0_sele_a++;
+      }
+    }
+    break;
+  case SELE_RING:
+    {
+      std::vector<bool> selemask(base[0].sele, base[0].sele + n_atom);
+      SelectorRingFinder ringfinder(I, base);
+
+      memset(base[0].sele, 0, sizeof(int) * n_atom);
+
+      for (SelectorAtomIterator iter(I); iter.next();) {
+        if (selemask[iter.a])
+          ringfinder.apply(iter.obj, iter.getAtm());
       }
     }
     break;
@@ -11195,7 +11323,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
                    && (Stack[depth - 1].type == STYP_VALU)
                    && (Stack[depth - 2].type == STYP_VALU)) {
                   /* 2 argument logical operator */
-                  /*   ok=SelectorSelect3(G,&Stack[depth-3]);  DOESN'T YET EXIST */
+                  ok = SelectorSelect3(G, &Stack[depth-3], state);
                   opFlag = true;
                   for(a = depth + 1; a <= totDepth; a++)
                     Stack[a - 3] = Stack[a];
@@ -11278,8 +11406,9 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
       if (!quiet){
 	PRINTFB(G, FB_Selector, FB_Errors)
 	  "%s", line ENDFB(G);
+	// moved to only !quiet B.B. 11/12 - not sure why this is in there, caused unwanted cr to print during test
+	OrthoRestorePrompt(G);
       }
-      OrthoRestorePrompt(G);
     }
   }
   VLAFreeP(Stack);
@@ -11593,7 +11722,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   int dist_cnt = 0;
   int s;
   int a_keeper = false;
-  int *zero = NULL, *scratch = NULL, *coverage = NULL;
+  int *zero = NULL, *scratch = NULL;
+  std::vector<bool> coverage;
   HBondCriteria hbcRec, *hbc;
   int exclusion = 0;
   int bonds_only = 0;
@@ -11633,19 +11763,6 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
     SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
   } else {
     SelectorUpdateTable(G, state1, -1);
-  }
-
-  /* coverage determines how many times a given atom appears in sel1 or sel2 */
-  coverage = Calloc(int, I->NAtom);
-
-  for(a = cNDummyAtoms; a < I->NAtom; a++) {
-    at = I->Table[a].atom;
-    obj = I->Obj[I->Table[a].model];
-    s = obj->AtomInfo[at].selEntry;
-    if(SelectorIsMember(G, s, sele1))
-      coverage[a]++;
-    if(SelectorIsMember(G, s, sele2))
-      coverage[a]++;
   }
 
   /* find and prepare (neighbortables) in any participating Molecular objects */
@@ -11688,8 +11805,59 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   if(cutoff < 0)
     cutoff = 1000.0;
 	
-  /* this creates an interleaved list of ints for mapping ids to states within a given neighborhood */
-  c = SelectorGetInterstateVLA(G, sele1, state1, sele2, state2, cutoff, &vla);
+  if (mode == 4) {
+    // centroid distance
+    float centroid1[3], centroid2[3];
+    ObjectMoleculeOpRec op;
+
+    // get centroid 1
+    ObjectMoleculeOpRecInit(&op);
+    op.code = OMOP_CSetSumVertices;
+    op.cs1 = state1;
+    ExecutiveObjMolSeleOp(G, sele1, &op);
+
+    if (op.i1 > 0) {
+      scale3f(op.v1, 1.f / op.i1, centroid1);
+
+      // get centroid 2
+      ObjectMoleculeOpRecInit(&op);
+      op.code = OMOP_CSetSumVertices;
+      op.cs1 = state2;
+      ExecutiveObjMolSeleOp(G, sele2, &op);
+
+      if (op.i1 > 0) {
+        scale3f(op.v1, 1.f / op.i1, centroid2);
+
+        // store positions in measurement object
+        VLACheck(vv, float, (nv * 3) + 6);
+        vv0 = vv + (nv * 3);
+        nv += 2;
+        copy3f(centroid1, vv0);
+        copy3f(centroid2, vv0 + 3);
+
+        // for the return value
+        dist_cnt = 1;
+        dist_sum = diff3f(centroid1, centroid2);
+      }
+    }
+
+    // skip searching for pairwise distances
+    c = 0;
+  } else {
+    /* coverage determines if a given atom appears in sel1 and sel2 */
+    coverage.resize(I->NAtom);
+
+    for (SelectorAtomIterator iter(I); iter.next();) {
+      s = iter.getAtomInfo()->selEntry;
+      if (SelectorIsMember(G, s, sele1) &&
+          SelectorIsMember(G, s, sele2))
+        coverage[iter.a] = true;
+    }
+
+    /* this creates an interleaved list of ints for mapping ids to states within a given neighborhood */
+    c = SelectorGetInterstateVLA(G, sele1, state1, sele2, state2, cutoff, &vla);
+  }
+
   /* for each state */
   for(a = 0; a < c; a++) {
     atom1Info = NULL;
@@ -11698,7 +11866,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
     a2 = vla[a * 2 + 1];
 
     /* check their coverage to avoid duplicates */
-    if((a1 != a2) && ((!((coverage[a1] == 2) && (coverage[a2] == 2))) || (a1 < a2))) {  /* eliminate reverse duplicates */
+    if(a1 < a2 || (a1 != a2 && !(coverage[a1] && coverage[a2]))) {  /* eliminate reverse duplicates */
       /* get the object-local atom ID */
       at1 = I->Table[a1].atom;
       at2 = I->Table[a2].atom;
@@ -11834,7 +12002,6 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
   VLAFreeP(vla);
   FreeP(zero);
   FreeP(scratch);
-  FreeP(coverage);
   if(vv)
     VLASize(vv, float, (nv + 1) * 3);
   ds->NIndex = nv;
@@ -11851,7 +12018,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
   CSelector *I = G->Selector;
   float *vv = NULL;
   int nv = 0;
-  int *coverage = NULL;
+  std::vector<bool> coverage;
 
   if(!ds) {
     ds = DistSetNew(G);
@@ -11875,17 +12042,14 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
     int a, s, at;
     ObjectMolecule *obj;
 
-    coverage = Calloc(int, I->NAtom);
+    coverage.resize(I->NAtom);
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
       at = I->Table[a].atom;
       obj = I->Obj[I->Table[a].model];
       s = obj->AtomInfo[at].selEntry;
-      if(SelectorIsMember(G, s, sele1))
-        coverage[a]++;
-      if(SelectorIsMember(G, s, sele2))
-        coverage[a]++;
-      if(SelectorIsMember(G, s, sele3))
-        coverage[a]++;
+      if (SelectorIsMember(G, s, sele1) &&
+          SelectorIsMember(G, s, sele3))
+        coverage[a] = true;
     }
   }
 
@@ -11990,8 +12154,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
                           a3 = list3[i3];
 
                           if((a1 != a2) && (a2 != a3) && (a1 != a3)) {
-                            if((!((coverage[a1] == 3) && (coverage[a2] == 3)
-                                  && (coverage[a3] == 3)))
+                            if(!(coverage[a1] && coverage[a3])
                                || (a1 < a3)) {  /* eliminate alternate-order duplicates */
 
                               at3 = I->Table[a3].atom;
@@ -12081,7 +12244,6 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
     VLAFreeP(list3);
   }
 
-  FreeP(coverage);
   if(vv)
     VLASize(vv, float, (nv + 1) * 3);
   ds->NAngleIndex = nv;
@@ -12099,7 +12261,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
   CSelector *I = G->Selector;
   float *vv = NULL;
   int nv = 0;
-  int *coverage = NULL;
+  std::vector<bool> coverage14;
+  std::vector<bool> coverage23;
   ObjectMolecule *just_one_object = NULL;
   int just_one_atom[4] = { -1, -1, -1, -1 };
 
@@ -12127,8 +12290,11 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
     int a, s, at;
     ObjectMolecule *obj;
 
-    coverage = Calloc(int, I->NAtom);
+    coverage14.resize(I->NAtom);
+    coverage23.resize(I->NAtom);
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
+      bool coverage1 = false;
+      bool coverage2 = false;
       at = I->Table[a].atom;
       obj = I->Obj[I->Table[a].model];
       if(!a)
@@ -12141,7 +12307,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
           just_one_atom[0] = a;
         else
           just_one_atom[0] = -2;
-        coverage[a]++;
+        coverage1 = true;
       }
       if(SelectorIsMember(G, s, sele2)) {
         if(obj != just_one_object)
@@ -12150,7 +12316,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
           just_one_atom[1] = a;
         else
           just_one_atom[1] = -2;
-        coverage[a]++;
+        coverage2 = true;
       }
       if(SelectorIsMember(G, s, sele3)) {
         if(obj != just_one_object)
@@ -12159,7 +12325,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
           just_one_atom[2] = a;
         else
           just_one_atom[2] = -2;
-        coverage[a]++;
+        coverage23[a] = coverage2;
       }
       if(SelectorIsMember(G, s, sele4)) {
         if(obj != just_one_object)
@@ -12168,7 +12334,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
           just_one_atom[3] = a;
         else
           just_one_atom[3] = -2;
-        coverage[a]++;
+        coverage14[a] = coverage1;
       }
     }
   }
@@ -12314,9 +12480,10 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
 
                                       if((a1 != a2) && (a1 != a3) && (a1 != a4)
                                          && (a2 != a3) && (a2 != a4) && (a3 != a4)) {
-                                        if((!((coverage[a1] == 4) && (coverage[a2] == 4)
-                                              && (coverage[a3] == 4)
-                                              && (coverage[a4] == 4)))
+                                        if (!(coverage14[a1] &&
+                                              coverage14[a4] &&
+                                              coverage23[a2] &&
+                                              coverage23[a3])
                                            || (a1 < a4)) {
                                           /* eliminate alternate-order duplicates */
 
@@ -12424,7 +12591,6 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals * G, DistSet * ds,
     VLAFreeP(list4);
   }
 
-  FreeP(coverage);
   if(vv)
     VLASize(vv, float, (nv + 1) * 3);
   ds->NDihedralIndex = nv;
