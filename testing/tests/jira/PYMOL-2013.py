@@ -7,6 +7,7 @@ setting differ.
 
 from pymol import cmd, CmdException, testing, stored
 
+@testing.requires_version('1.8.1.0')
 class TestPYMOL2013(testing.PyMOLTestCase):
 
     def test(self):
