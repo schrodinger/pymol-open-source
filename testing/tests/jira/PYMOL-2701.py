@@ -6,8 +6,8 @@ from pymol import cmd, CmdException, testing, stored
 
 class TestPYMOL2701(testing.PyMOLTestCase):
 
-    @testing.requires_version('1.8.0.3') # 1.8.0.4
-    def testMol2PartialChargeExport(self):
+    @testing.requires_version('1.8.0.4')
+    def testMol2FormalChargeAssignment(self):
         cmd.fragment('lys')
         cmd.fragment('lys')
 
