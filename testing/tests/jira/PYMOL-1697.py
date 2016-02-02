@@ -1,12 +1,12 @@
 import os
 from pymol import cmd, testing, stored
 
-@testing.requires('incentive')
 @testing.requires('no_edu')
 class TestPYMOL1697(testing.PyMOLTestCase):
 
     @testing.foreach(1, 0)
     @testing.requires_version('1.7.0')
+    @testing.requires('incentive')
     def testUndoAfterRemoveAtomOnDiscrete(self, discr):
         cmd.set('suspend_undo', 0)
         cmd.load(self.datafile('ligs3d.sdf'), discrete=discr)

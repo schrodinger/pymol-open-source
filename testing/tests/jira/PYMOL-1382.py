@@ -4,7 +4,6 @@ order with groups
 
 from pymol import cmd, testing
 
-@testing.requires('incentive')
 class Test1382(testing.PyMOLTestCase):
 
     def test(self):

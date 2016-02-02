@@ -57,7 +57,6 @@ class TestSetting(testing.PyMOLTestCase):
             (2.3,),
             (1.0,),
             )
-    @testing.requires('incentive')
     def testSet(self, sele, name, value, defaultvalue):
         cmd.fragment('ala')
         cmd.set(name, value, sele)
