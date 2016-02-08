@@ -108,7 +108,13 @@ typedef struct CoordSet {
   /* temporary / optimization */
 
   int objMolOpInvalidated;
-  short int noInvalidateMMStereoAndTextType;
+#ifndef NO_MMLIBS
+  bool validMMStereo;
+  bool validTextType;
+#endif
+
+#ifdef _PYMOL_IP_EXTRAS
+#endif
 } CoordSet;
 
 typedef void (*fUpdateFn) (CoordSet *, int);

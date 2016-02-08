@@ -1531,59 +1531,6 @@ PyObject *SettingGetTuple(PyMOLGlobals * G, CSetting * set1, CSetting * set2, in
 }
 #endif
 
-/*========================================================================*/
-#ifndef _PYMOL_NOPY
-PyObject *SettingGetDefinedTuple(PyMOLGlobals * G, CSetting * set1, int index)
-{                               /* Assumes blocked Python interpreter */
-  PyObject *result = NULL;
-  int defined = true;
-  int type = SettingGetType(G, index);
-  int int1;
-  float float1, *vect1 = NULL;
-  char *str1;
-  switch (type) {
-  case cSetting_boolean:
-    defined = SettingGetIfDefined_b(G, set1, index, &int1);
-    if(defined)
-      result = Py_BuildValue("(i(i))", type, int1);
-    break;
-  case cSetting_int:
-    defined = SettingGetIfDefined_i(G, set1, index, &int1);
-    if(defined)
-      result = Py_BuildValue("(i(i))", type, int1);
-    break;
-  case cSetting_float:
-    defined = SettingGetIfDefined_f(G, set1, index, &float1);
-    if(defined)
-      result = Py_BuildValue("(i(f))", type, float1);
-    break;
-  case cSetting_float3:
-    defined = SettingGetIfDefined_3fv(G, set1, index, &vect1);
-    result = Py_BuildValue("(i(fff))", type, vect1[0], vect1[1], vect1[2]);
-    break;
-  case cSetting_color:
-    defined = SettingGetIfDefined_color(G, set1, index, &int1);
-    if(defined)
-      result = Py_BuildValue("(i(i))", type, int1);
-    break;
-  case cSetting_string:
-    defined = SettingGetIfDefined_s(G, set1, index, &str1);
-    if(defined)
-      result = Py_BuildValue("(i(s))", type, str1);
-    break;
-  default:
-    break;
-  }
-  if(!defined) {
-    result = Py_BuildValue("(i)", 0);
-  }
-  if(!result) {
-    result = PConvAutoNone(Py_None);
-  }
-  return result;
-}
-#endif
-
 
 /*========================================================================*/
 CSetting *SettingNew(PyMOLGlobals * G)
@@ -3042,6 +2989,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_cartoon_smooth_last:
   case cSetting_cartoon_smooth_cycles:
   case cSetting_cartoon_flat_cycles:
+  case cSetting_cartoon_gap_cutoff:
     ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
     SceneChanged(G);
     break;

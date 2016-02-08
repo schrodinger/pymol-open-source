@@ -234,7 +234,6 @@ int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *
 int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tuple);
 PyObject *SettingGetPyObject(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
 PyObject *SettingGetTuple(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);       /* (type,(value,)) */
-PyObject *SettingGetDefinedTuple(PyMOLGlobals * G, CSetting * set1, int index);
 PyObject *SettingGetSettingIndices();
 PyObject *SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id);
 #endif

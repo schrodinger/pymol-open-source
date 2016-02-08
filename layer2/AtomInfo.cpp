@@ -2163,7 +2163,6 @@ int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 	  at1->label != at2->label ||
 	  //	  !memcmp(at1->visRep, at2->visRep, sizeof(signed char)*cRepCnt) || // should this be in here?
 	  at1->stereo != at2->stereo ||
-	  at1->mmstereo != at2->mmstereo ||
 	  at1->cartoon != at2->cartoon ||
 	  at1->hetatm != at2->hetatm ||
 	  at1->bonded != at2->bonded ||
@@ -2286,8 +2285,8 @@ int AtomInfoSameResidue(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2
       at1->hetatm == at2->hetatm &&
       at1->discrete_state == at2->discrete_state &&
       at1->inscode == at2->inscode &&
-      WordMatch(G, at1->segi, at2->segi, false) < 0 &&
-      WordMatch(G, at1->resn, at2->resn, true) < 0);
+      at1->segi == at2->segi &&
+      WordMatchExact(G, at1->resn, at2->resn, true));
 }
 
 int AtomInfoSameResidueP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
@@ -2301,7 +2300,7 @@ int AtomInfoSameChainP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 {
   if(at1 && at2)
     if(at1->chain == at2->chain)
-      if(WordMatch(G, at1->segi, at2->segi, false) < 0)
+      if(at1->segi == at2->segi)
         return 1;
   return 0;
 }
@@ -2309,7 +2308,7 @@ int AtomInfoSameChainP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 int AtomInfoSameSegmentP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
 {
   if(at1 && at2)
-    if(WordMatch(G, at1->segi, at2->segi, false) < 0)
+    if(at1->segi == at2->segi)
       return 1;
   return 0;
 }
@@ -2319,7 +2318,7 @@ int AtomInfoSequential(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
   if(mode > 0) {
     if(at1->hetatm == at2->hetatm) {
       if(mode > 1) {
-        if(WordMatch(G, at1->segi, at2->segi, false) < 0) {
+        if(at1->segi == at2->segi) {
           if(mode > 2) {
             if(at1->chain == at2->chain) {
               if(mode > 3) {
@@ -2352,14 +2351,18 @@ int AtomInfoSequential(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
   return 0;
 }
 
-int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+/*
+ * Used in "rms" and "update" for matching two selections
+ */
+int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
+    bool ignore_case, bool ignore_case_chain)
 {
-  if(WordMatch(G, at1->chain, at2->chain, true) < 0)
-    if(WordMatch(G, at1->name, at2->name, true) < 0)
-      if(getInscodeUpper(at1) == getInscodeUpper(at2))
-        if(WordMatch(G, at1->resn, at2->resn, true) < 0)
-          if(WordMatch(G, at1->segi, at2->segi, false) < 0)
-            if((tolower(at1->alt[0])) == (tolower(at2->alt[0])))
+  if(WordMatchExact(G, at1->chain, at2->chain, ignore_case_chain))
+    if(WordMatchExact(G, at1->name, at2->name, ignore_case))
+      if(WordMatchExact(G, at1->inscode, at2->inscode, ignore_case))
+        if(WordMatchExact(G, at1->resn, at2->resn, ignore_case))
+          if(WordMatchExact(G, at1->segi, at2->segi, ignore_case_chain))
+            if(WordMatchExact(G, at1->alt[0], at2->alt[0], ignore_case))
               return 1;
   return 0;
 }
@@ -2594,8 +2597,8 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
     switch (*e) {
     case 'C':
       if(*(e + 1) == 'A') {
-        if(!(WordMatch(G, G->lex_const.CA, I->resn, true) < 0)
-           && (!(WordMatch(G, "CA+", LexStr(G, I->resn), true) < 0)))
+        if(!WordMatchExact(G, G->lex_const.CA, I->resn, true)
+           && (!WordMatchExact(G, "CA+", LexStr(G, I->resn), true)))
           *(e + 1) = 0;
       } else if(!((*(e + 1) == 'a') ||  /* CA intpreted as carbon, not calcium */
                   (*(e + 1) == 'l') || (*(e + 1) == 'L') ||

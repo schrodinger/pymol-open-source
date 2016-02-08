@@ -146,7 +146,6 @@ void SceneRotateScaled(PyMOLGlobals * G, float rx, float ry, float rz, int sdof_
 
 void SceneClip(PyMOLGlobals * G, int plane, float movement, const char *sele, int state);
 void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height);
-void SceneGetImageSizeFast(PyMOLGlobals * G, int *width, int *height);
 float SceneGetGridAspectRatio(PyMOLGlobals * G);
 void SceneScale(PyMOLGlobals * G, float scale);
 void SceneResetNormalCGO(PyMOLGlobals * G, CGO *cgo, int lines);

@@ -387,7 +387,6 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 r = _cmd.load_object(_self._COb,str(oname),obj,int(state)-1,loadable.cgo,
                                       int(finish),int(discrete),int(quiet),
                                       int(zoom))
-                _self.set("two_sided_lighting", 0, str(oname))
             else:
                 print("Load-Error: Unable to open file '%s'."%finfo)
         elif ftype == loadable.cc1: # ChemDraw 3D

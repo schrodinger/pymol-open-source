@@ -3970,7 +3970,7 @@ static PyObject *CmdRecolor(PyObject * self, PyObject * args)
       " CmdRecolor: called with %s.\n", str1 ENDFD;
 
     if((ok = APIEnterNotModal(G))) {
-      if(WordMatch(G, str1, "all", true) < 0)
+      if(WordMatchExact(G, str1, "all", true))
         ExecutiveInvalidateRep(G, str1, rep, cRepInvColor);
       else {
         ok = (SelectorGetTmp2(G, str1, s1) >= 0);
@@ -4004,7 +4004,7 @@ static PyObject *CmdRebuild(PyObject * self, PyObject * args)
       " CmdRebuild: called with %s.\n", str1 ENDFD;
 
     if((ok = APIEnterNotModal(G))) {
-      if(WordMatch(G, str1, "all", true) < 0)
+      if(WordMatchExact(G, str1, "all", true))
         ExecutiveRebuildAll(G);
       else {
         ok = (SelectorGetTmp2(G, str1, s1) >= 0);

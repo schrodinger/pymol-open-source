@@ -268,7 +268,6 @@ typedef struct AtomInfoType {
   /* be careful not to write at these as (int*) */
 
   signed char formalCharge;     // values typically in range -2..+2
-  signed char mmstereo;           /* from MMStereo */
   signed char cartoon;          /* 0 = default which is auto (use ssType) */
   signed char geom;             // cAtomInfo*
   signed char valence;          // 0-4
@@ -392,7 +391,7 @@ int AtomInfoGetExpectedValence(PyMOLGlobals * G, AtomInfoType * I);
 int AtomInfoIsFreeCation(PyMOLGlobals * G, AtomInfoType * I);
 PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * at);
 int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * at, PyObject * list);
-int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2, bool, bool);
 int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
 int AtomInfoCompare(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
 int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);

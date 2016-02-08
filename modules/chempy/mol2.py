@@ -54,7 +54,7 @@ class MOL2(Storage):
                             at.resi_number,
                             at.resn or "UNK",
                             at.resi,
-                            at.q))
+                            at.partial_charge))
 
         if no_text_type_count > 0:
             print(" Warning: %d atoms missing 'text_type', using element symbol instead."

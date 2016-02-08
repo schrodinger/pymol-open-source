@@ -704,7 +704,6 @@ PyObject *ObjectAsPyList(CObject * I)
   PyList_SetItem(result, 9, PyInt_FromLong(I->Enabled));
   PyList_SetItem(result, 10, PyInt_FromLong(I->Context));
   PyList_SetItem(result, 11, PConvFloatArrayToPyList(I->TTT, 16));
-  PyList_SetItem(result, 11, PConvFloatArrayToPyList(I->TTT, 16));
   if(I->ViewElem) {
     int nFrame = VLAGetSize(I->ViewElem);
     PyList_SetItem(result, 12, PyInt_FromLong(nFrame));

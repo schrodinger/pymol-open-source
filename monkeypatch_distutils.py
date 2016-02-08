@@ -44,6 +44,9 @@ def monkeypatch(parent, name):
 def customize_compiler(compiler):
     customize_compiler._super(compiler)
 
+    if compiler.compiler_type != "unix":
+        return
+
     (cxx, ccshared, ldcxxshared) = \
             distutils.sysconfig.get_config_vars('CXX', 'CCSHARED', 'LDCXXSHARED')
 

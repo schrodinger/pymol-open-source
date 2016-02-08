@@ -592,7 +592,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_ATOM_PROP(elec_radius, 19, cPType_float, offsetof(AtomInfoType,elec_radius));
   LEX_ATOM_PROP(partial_charge, 20, cPType_float, offsetof(AtomInfoType,partialCharge));
   LEX_ATOM_PROP(formal_charge, 21, cPType_schar, offsetof(AtomInfoType,formalCharge));
-  LEX_ATOM_PROP(stereo, 22, cPType_stereo, offsetof(AtomInfoType,mmstereo));
+  LEX_ATOM_PROP(stereo, 22, 0, 0);
   LEX_ATOM_PROP(cartoon, 23, cPType_schar, offsetof(AtomInfoType,cartoon));
   LEX_ATOM_PROP(color, 24, cPType_int, offsetof(AtomInfoType,color));
   LEX_ATOM_PROP(ID, 25, cPType_int, offsetof(AtomInfoType,id));

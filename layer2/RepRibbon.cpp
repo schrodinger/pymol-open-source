@@ -499,7 +499,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
         AtomInfoGetSetting_i(G, ai, cSetting_ribbon_trace_atoms, trace_ostate, &trace);
 
         if(trace || ((obj->AtomInfo[a1].protons == cAN_C) &&
-                     (WordMatch(G, "CA", LexStr(G, obj->AtomInfo[a1].name), 1) < 0) &&
+                     (WordMatchExact(G, G->lex_const.CA, obj->AtomInfo[a1].name, true)) &&
                      !AtomInfoSameResidueP(G, last_ai, ai))) {
           PRINTFD(G, FB_RepRibbon)
             " RepRibbon: found atom in %d; a1 %d a2 %d\n", obj->AtomInfo[a1].resv, a1, a2
@@ -534,7 +534,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 
           a2 = a1;
         } else if((((na_mode != 1) && (ai->protons == cAN_P) &&
-                    (WordMatch(G, "P", LexStr(G, ai->name), 1) < 0)) ||
+                    (WordMatchExact(G, G->lex_const.P, ai->name, true))) ||
                    ((na_mode == 1) && (ai->protons == cAN_C) &&
                     (WordMatchExact(G, "C4*", LexStr(G, ai->name), 1) ||
                      WordMatchExact(G, "C4'", LexStr(G, ai->name), 1)))) &&
@@ -902,7 +902,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
           AtomInfoGetSetting_i(G, ai, cSetting_ribbon_trace_atoms, trace_ostate, &trace);
 
           if(trace || ((ai->protons == cAN_C) &&
-                       (WordMatch(G, "CA", LexStr(G, ai->name), 1) < 0) &&
+                       (WordMatchExact(G, G->lex_const.CA, ai->name, true)) &&
                        !AtomInfoSameResidueP(G, last_ai, ai))) {
             if(a2 >= 0) {
               if(trace) {
@@ -928,7 +928,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
             last_ai = ai;
             a2 = a1;
           } else if((((na_mode != 1) && (ai->protons == cAN_P) &&
-                      (WordMatch(G, "P", LexStr(G, ai->name), 1) < 0)) ||
+                      (WordMatchExact(G, G->lex_const.P, ai->name, true))) ||
                      ((na_mode == 1) && (ai->protons == cAN_C) &&
                       (WordMatchExact(G, "C4*", LexStr(G, ai->name), 1) ||
                        WordMatchExact(G, "C4'", LexStr(G, ai->name), 1)))) &&

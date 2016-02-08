@@ -504,7 +504,7 @@ enum {
   REC_f( 411, scene_animation_duration                , global    , 2.25F ),
   REC_s( 412, wildcard                                , object    , "*" ),
   REC_s( 413, atom_name_wildcard                      , object    , "" ),
-  REC_b( 414, ignore_case                             , global    , 0 ), // new default in 1.7.7
+  REC_b( 414, ignore_case                             , global    , 1 ), // 0 in 1.8.0
   REC_b( 415, presentation_auto_quit                  , global    , 1 ),
   REC_b( 416, editor_auto_dihedral                    , global    , 1 ),
   REC_b( 417, presentation_auto_start                 , global    , 1 ),
@@ -672,7 +672,7 @@ enum {
   REC_c( 574, dash_color                              , ostate    , "-1" ),
   REC_c( 575, angle_color                             , ostate    , "-1" ),
   REC_c( 576, dihedral_color                          , ostate    , "-1" ),
-  REC_i( 577, grid_mode                               , global    , 0 ),
+  REC_i( 577, grid_mode                               , global    , 0, 0, 3 ),
   REC_i( 578, cache_max                               , global    , 25000000 ), /* default: ~100 MB cache */
   REC_i( 579, grid_slot                               , object    , -1 ),
   REC_i( 580, grid_max                                , global    , -1 ),
@@ -855,6 +855,8 @@ enum {
   REC_s( 747, assembly                                , global    , "" ),
   REC_b( 748, cif_keepinmemory                        , global    , 0 ),
   REC_b( 749, pse_binary_dump                         , unused    , 0 ), // not fully supported in Open-Source PyMOL
+  REC_i( 750, cartoon_gap_cutoff                      , global    , 0 ),
+  REC_b( 751, ignore_case_chain                       , global    , 0 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

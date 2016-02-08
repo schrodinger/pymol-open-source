@@ -2441,6 +2441,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         for lab, val in [
                 ('By Object', 1),
                 ('By State', 2),
+                ('By Object-State', 3),
                 ('Disable', 0),
             ]:
             addmenuitem('Grid', 'radiobutton', label=lab, value=val, variable=var)
@@ -2908,11 +2909,28 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.menuBar.addmenuitem('Setting', 'separator', '')
         
         
-        self.menuBar.addmenuitem('Setting', 'checkbutton',
+        addcascademenu('Setting', 'PDBLoading', label='PDB File Loading')
+        addmenuitem('PDBLoading', 'checkbutton',
                                          'Ignore PDB segi.',
                                          label='Ignore PDB Segment Identifier',
                                          variable = self.setting.ignore_pdb_segi,
                                          )
+
+        addcascademenu('Setting', 'CIFLoading', label='mmCIF File Loading')
+        addmenuitem('CIFLoading', 'checkbutton', label='Use "auth" Identifiers',
+                variable = self.setting.cif_use_auth)
+        addmenuitem('CIFLoading', 'checkbutton', label='Load Assembly (Biological Unit)',
+                variable = self.setting.assembly, onvalue="1", offvalue="")
+        addmenuitem('CIFLoading', 'checkbutton', label='Bonding by "Chemical Component Dictionary"',
+                variable = self.setting.connect_mode, onvalue=4)
+
+        addcascademenu('Setting', 'MapLoading', label='Map File Loading')
+        addmenuitem('MapLoading', 'checkbutton', label='Normalize CCP4 Maps',
+                variable = self.setting.normalize_ccp4_maps)
+        addmenuitem('MapLoading', 'checkbutton', label='Normalize O Maps',
+                variable = self.setting.normalize_o_maps)
+
+        addmenuitem('Setting', 'separator', '')
 
         self.menuBar.addmenuitem('Setting', 'checkbutton',
                                  'Auto-Zoom.',

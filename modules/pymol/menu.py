@@ -964,7 +964,7 @@ def align_to_sele(self_cmd, sele):
 
 def mat_tran(self_cmd, sele, direction=0):
     list = self_cmd.get_names("public_objects",1)[0:25] # keep this practical
-    list = [x for x in list if self_cmd.get_type(x)=="object:molecule"]
+    list = [x for x in list if self_cmd.get_type(x)!="object:ramp"]
     result = [[ 2, 'Object:', '']]
     for a in list:
         if a!=sele:
@@ -1232,6 +1232,8 @@ def map_action(self_cmd, sele):
             [ 1, 'drag' , 'cmd.drag("'+sele+'")' ],
             [ 1, 'reset'       , 'cmd.reset(object="'+sele+'")'          ],                       
             [ 0, ''             , ''                       ],
+            [ 1, 'matrix_copy'  , mat_tran(self_cmd, sele, 1) ],
+            [ 0, ''             , '' ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
             [ 0, ''             , ''                       ],
             [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
