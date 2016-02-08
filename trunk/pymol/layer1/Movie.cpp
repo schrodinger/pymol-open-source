@@ -1006,6 +1006,9 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
     I->NFrame = start_from;
   }
 
+  // fixes PYMOL-2710
+  MovieClearImages(G);
+
   VLASize(I->Image, ImageType *, I->NFrame);
   PRINTFB(G, FB_Movie, FB_Debugging)
     " MovieSequence: leaving... I->NFrame%d\n", I->NFrame ENDFB(G);

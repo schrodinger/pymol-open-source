@@ -858,6 +858,7 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
   const cif_array * arr_resn            = data->get_opt("_chem_comp_atom.comp_id");
   const cif_array * arr_partial_charge  = data->get_opt("_chem_comp_atom.partial_charge");
   const cif_array * arr_formal_charge   = data->get_opt("_chem_comp_atom.charge");
+  const cif_array * arr_stereo          = data->get_opt("_chem_comp_atom.pdbx_stereo_config");
 
   int nrows = arr_x->get_nrows();
   AtomInfoType *ai;
@@ -886,6 +887,7 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
     ai->hetatm = 1;
 
     ai->visRep = auto_show;
+    ai->stereo = convertCharToStereo(arr_stereo->as_s(i)[0]);
 
     AtomInfoAssignParameters(G, ai);
     AtomInfoAssignColors(G, ai);

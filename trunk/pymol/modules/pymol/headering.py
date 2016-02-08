@@ -302,7 +302,7 @@ class MTZHeader(baseHeader):
             f.seek(header_start)
 
             curLine = struct.unpack("80s", f.read(80))[0]
-            curLine = curLine.decode()
+            curLine = str(curLine.decode())
             
             while not (curLine.startswith("END")):
                 # yank field identifier
@@ -402,7 +402,7 @@ class MTZHeader(baseHeader):
                     pass
 
                 curLine = struct.unpack("80s", f.read(80))[0]
-                curLine = curLine.decode()
+                curLine = str(curLine.decode())
 
 
 if __name__=="__main__":

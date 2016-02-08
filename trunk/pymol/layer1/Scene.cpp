@@ -464,6 +464,7 @@ static int SceneGetGridSize(PyMOLGlobals * G, int grid_mode)
     }
     break;
   case 2:
+  case 3:
     if(I->SlotVLA) {
       VLAFreeP(I->SlotVLA);
       I->SlotVLA = NULL;
@@ -474,8 +475,12 @@ static int SceneGetGridSize(PyMOLGlobals * G, int grid_mode)
       while(ListIterate(I->Obj, rec, next)) {
         if(rec->obj->fGetNFrame) {
           slot = rec->obj->fGetNFrame(rec->obj);
-          if(max_slot < slot)
+          if(grid_mode == 3) {
+            rec->obj->grid_slot = max_slot; // slot offset for 1st state
+            max_slot += slot;
+          } else if(max_slot < slot) {
             max_slot = slot;
+          }
         }
       }
       size = max_slot;
@@ -1003,6 +1008,9 @@ static void ScenePrepareUnitContext(SceneUnitContext * context, int width, int h
    */
 }
 
+/*
+ * cmd.get_viewport()
+ */
 void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
 {
   CScene *I = G->Scene;
@@ -1010,6 +1018,10 @@ void SceneGetWidthHeight(PyMOLGlobals * G, int *width, int *height)
   *height = I->Height;
 }
 
+/*
+ * Get the actual current (sub-)viewport size, considering grid mode and
+ * side-by-side stereo
+ */
 void SceneGetWidthHeightStereo(PyMOLGlobals * G, int *width, int *height)
 {
   CScene *I = G->Scene;
@@ -1964,9 +1976,17 @@ static void SceneImageFinish(PyMOLGlobals * G, GLvoid *image)
   }
 }
 
+/*
+ * Get the size of the rendered image. This is either identical to
+ * cmd.get_viewport(), or the dimensions which were last passed to
+ * cmd.draw(), cmd.ray() or cmd.png().
+ */
 void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height)
 {
   CScene *I = G->Scene;
+  // TODO: calling ImagePrepare looks like a heavy side effect. Need to
+  // clarify if checking (CopyType && Image && Image->data) here would
+  // be sufficient.
   GLvoid *image = SceneImagePrepare(G, false);
   if(image && I->Image) {
     *width = I->Image->width;
@@ -1978,17 +1998,6 @@ void SceneGetImageSize(PyMOLGlobals * G, int *width, int *height)
   SceneImageFinish(G, image);   /* don't leak if(image != I->Image) */
 }
 
-void SceneGetImageSizeFast(PyMOLGlobals * G, int *width, int *height)
-{
-  CScene *I = G->Scene;
-  if(I->Image) {
-    *width = I->Image->width;
-    *height = I->Image->height;
-  } else {
-    *width = I->Width;
-    *height = I->Height;
-  }
-}
 float SceneGetGridAspectRatio(PyMOLGlobals * G){
   CScene *I = G->Scene;
   return (I->Width / (float)I->Height) /
@@ -6671,6 +6680,7 @@ static int SceneGetDrawFlag(GridInfo * grid, int *slot_vla, int slot)
       }
       break;
     case 2:                    /* each state in a separate slot */
+    case 3:                    /* each object-state */
       draw_flag = true;
       break;
     }
@@ -7521,6 +7531,7 @@ static void SceneStencilCheck(PyMOLGlobals *G)
 
 void SceneUpdateObjectMoleculesSingleThread(PyMOLGlobals * G)
 {
+#ifndef _DEAD_CODE_DIE
   CScene *I = G->Scene;
   ObjRec *rec = NULL;
   while(ListIterate(I->Obj, rec, next)) {
@@ -7529,6 +7540,7 @@ void SceneUpdateObjectMoleculesSingleThread(PyMOLGlobals * G)
 	rec->obj->fUpdate(rec->obj);
     }
   }
+#endif
 }
 
 /*========================================================================*/
@@ -8140,12 +8152,19 @@ void SceneRenderAllObject(PyMOLGlobals * G, CScene *I, SceneUnitContext * contex
 #else
 	  glNormal3fv(normal);
 #endif
-      if((!grid->active) || (grid->mode != 2)) {
+      if((!grid->active) || (grid->mode < 2)) {
 	info->state = ObjectGetCurrentState(rec->obj, false);
 	rec->obj->fRender(rec->obj, info);
       } else if(grid->slot) {
-	if((info->state = state + grid->slot - 1) >= 0)
-	  rec->obj->fRender(rec->obj, info);
+        auto obj = rec->obj;
+        if (grid->mode == 2) {
+          if((info->state = state + grid->slot - 1) >= 0)
+            obj->fRender(obj, info);
+        } else if (grid->mode == 3) {
+          info->state = grid->slot - obj->grid_slot - 1;
+          if (info->state >= 0 && info->state < obj->getNFrame())
+            obj->fRender(obj, info);
+        }
       }
       break;
     }

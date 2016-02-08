@@ -22,7 +22,7 @@ static bool isGuanidiniumCarbon(ObjectMolecule * obj, int atm) {
 
   ITERNEIGHBORATOMS(obj->Neighbor, atm, atm_neighbor, tmp) {
     AtomInfoType * neighbor = obj->AtomInfo + atm_neighbor;
-    if (neighbor->protons != cAN_N or neighbor->geom != 3)
+    if (neighbor->protons != cAN_N || neighbor->geom != 3)
       return false;
     ++neighbor_count;
     charge += neighbor->formalCharge;
@@ -147,7 +147,7 @@ const char * getMOL2Type(ObjectMolecule * obj, int atm) {
             return "N.am";
           if (isAromaticAtom(obj, atm))
             return "N.ar";
-          if (ai->valence == 2)
+          if (ai->valence == 2 && ai->formalCharge == 0)
             return "N.2";
           return "N.pl3";
         case cAtomInfoTetrahedral:

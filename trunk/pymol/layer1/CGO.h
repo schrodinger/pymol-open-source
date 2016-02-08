@@ -244,6 +244,7 @@ CGO *CGODrawText(CGO * I, int est, float *camera);
 
 CGO *CGOSimplify(CGO * I, int est);
 
+bool CGOCombineBeginEnd(CGO ** I, bool do_not_split_lines = false);
 CGO *CGOCombineBeginEnd(CGO * I, int est);
 
 void CGOFreeVBOs(CGO *I);
@@ -368,9 +369,10 @@ int CGOShaderCylinder2ndColor(CGO *I, float *origin, float *axis, float tube_siz
 
 int CGOCountNumberOfOperationsOfTypeDEBUG(CGO *I, int optype);
 int CGOCountNumberOfOperationsOfType(CGO *I, int op);
-short CGOHasOperationsOfType(CGO *I, int op);
+short CGOHasOperationsOfType(const CGO *I, int op);
 short CGOHasOperationsOfType2(CGO *I, int op1, int op2);
 short CGOHasCylinderOperations(CGO *I);
+bool CGOHasSphereOperations(const CGO *I);
 
 short CGOCheckWhetherToFree(PyMOLGlobals * G, CGO *I);
 

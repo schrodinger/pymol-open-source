@@ -204,7 +204,7 @@ int PIsGlutThread(void);
 PyObject *PGetFontDict(PyMOLGlobals * G, float size, int face, int style);
 
 typedef struct {
-  int id;
+  long id;
   PyThreadState *state;
 } SavedThreadRec;
 
@@ -283,8 +283,6 @@ extern PyObject *P_models;      /* used by Selector for construction of models *
 extern PyObject *P_setting;     /* used by Setting.c */
 extern PyTypeObject *P_wrapper;     /* used by P.c for lazy-loading settings/properties/attributes */
 
-extern unsigned int P_glut_thread_id;
-
 #endif
 
 #ifndef _PYMOL_NOPY
@@ -292,5 +290,6 @@ void PSetAtomPropertyInfo(PyMOLGlobals * G, int propid, short pt, int off);
 #endif
 
 char convertStereoToChar(int stereo);
+int convertCharToStereo(char stereo);
 
 #endif

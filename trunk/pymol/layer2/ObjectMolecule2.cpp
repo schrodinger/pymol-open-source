@@ -799,7 +799,7 @@ int ObjectMoleculeIsAtomBondedToName(ObjectMolecule * obj, int a0, const char *n
   if(a0 >= 0) {
     ITERNEIGHBORATOMS(obj->Neighbor, a0, a2, s) {
       ai2 = obj->AtomInfo + a2;
-      if(WordMatch(G, LexStr(G, ai2->name), name, true) < 0 &&
+      if(WordMatchExact(G, LexStr(G, ai2->name), name, true) &&
           (same_res < 0 || (same_res == AtomInfoSameResidue(G, ai0, ai2))))
         return true;
     }
@@ -858,6 +858,14 @@ int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule * I, int index, int sele)
   return result;
 }
 
+/*
+ * Based on PDB nomenclature (resn, name), do:
+ *
+ * 1) If `ai1` or `ai2` is a known charged PDB atom, assign `formalCharge`
+ *    and seth `chemFlag` to false
+ *
+ * 2) If `ai1` and `ai2` are connected by a double bond, set (*bond_order) = 2
+ */
 static void assign_pdb_known_residue(PyMOLGlobals * G, AtomInfoType * ai1,
                                      AtomInfoType * ai2, int *bond_order)
 {

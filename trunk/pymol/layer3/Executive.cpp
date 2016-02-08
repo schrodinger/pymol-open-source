@@ -1357,11 +1357,11 @@ int ExecutivePseudoatom(PyMOLGlobals * G, const char *object_name, const char *s
   float local_pos[3];
 
   if(sele && sele[0]) {
-    if(WordMatch(G, cKeywordCenter, sele, 1) < 0) {
+    if(WordMatchExact(G, cKeywordCenter, sele, true)) {
       sele = NULL;
       SceneGetCenter(G, local_pos);
       pos = local_pos;
-    } else if(WordMatch(G, cKeywordOrigin, sele, 1) < 0) {
+    } else if(WordMatchExact(G, cKeywordOrigin, sele, true)) {
       sele = NULL;
       SceneOriginGet(G, local_pos);
       pos = local_pos;
@@ -1501,8 +1501,8 @@ static void ExecutiveInvalidatePanelList(PyMOLGlobals * G)
     if(I->Panel)
       ListFree(I->Panel, next, PanelRec);
     I->ValidPanel = false;
-    ExecutiveInvalidateGridSlots(G);
   }
+  ExecutiveInvalidateGridSlots(G);
 }
 
 static PanelRec *PanelListGroup(PyMOLGlobals * G, PanelRec * panel, SpecRec * group,
@@ -4675,21 +4675,21 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
       if(n_atom) {
         value = Calloc(float, n_atom);
 
-        if(WordMatch(G, "count", expr, true)) {
+        if(WordMatchExact(G, "count", expr, true)) {
           for(a = 0; a < n_atom; a++) {
             value[a] = (float) a + 1;
           }
-        } else if(WordMatch(G, "b", expr, true)) {
+        } else if(WordMatchExact(G, "b", expr, true)) {
           op.code = OMOP_GetBFactors;
           op.i1 = 0;
           op.ff1 = value;
           ExecutiveObjMolSeleOp(G, sele1, &op);
-        } else if(WordMatch(G, "q", expr, true)) {
+        } else if(WordMatchExact(G, "q", expr, true)) {
           op.code = OMOP_GetOccupancies;
           op.i1 = 0;
           op.ff1 = value;
           ExecutiveObjMolSeleOp(G, sele1, &op);
-        } else if(WordMatch(G, "pc", expr, true)) {
+        } else if(WordMatchExact(G, "pc", expr, true)) {
           op.code = OMOP_GetPartialCharges;
           op.i1 = 0;
           op.ff1 = value;
@@ -5811,7 +5811,7 @@ static CObject **ExecutiveSeleToObjectVLA(PyMOLGlobals * G, const char *s1)
   int sele;
 
   result = VLAlloc(CObject *, 50);
-  if(WordMatch(G, s1, cKeywordAll, true)) {
+  if(WordMatchExact(G, s1, cKeywordAll, true)) {
     /* all objects */
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
@@ -5822,7 +5822,7 @@ static CObject **ExecutiveSeleToObjectVLA(PyMOLGlobals * G, const char *s1)
     }
   } else {
     sele = SelectorIndexByName(G, s1);
-    if(sele > 0) {
+    if(sele >= 0) {
       ObjectMoleculeOpRecInit(&op2);
       op2.code = OMOP_GetObjects;
       op2.obj1VLA = (ObjectMolecule **) result;
@@ -7064,7 +7064,7 @@ float ExecutiveSculptIterate(PyMOLGlobals * G, const char *name, int state, int 
   if(state < 0)
     state = SceneGetState(G);
 
-  if(WordMatch(G, name, cKeywordAll, true) < 0) {
+  if(WordMatchExact(G, name, cKeywordAll, true)) {
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
@@ -7099,7 +7099,7 @@ int ExecutiveSculptActivate(PyMOLGlobals * G, const char *name, int state, int m
   if(state < 0)
     state = SceneGetState(G);
 
-  if(WordMatch(G, name, cKeywordAll, true) < 0) {
+  if(WordMatchExact(G, name, cKeywordAll, true)) {
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
@@ -7134,7 +7134,7 @@ int ExecutiveSculptDeactivate(PyMOLGlobals * G, const char *name)
 
   int ok = true;
 
-  if(WordMatch(G, name, cKeywordAll, true) < 0) {
+  if(WordMatchExact(G, name, cKeywordAll, true)) {
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
         if(rec->obj->type == cObjectMolecule) {
@@ -8239,8 +8239,9 @@ PyObject *ExecutiveGetSettingTuple(PyMOLGlobals * G, int index, const char *obje
         " Executive: object not found.\n" ENDFB(G);
     } else {
       handle = obj->fGetSettingHandle(obj, state);
-      if(handle)
-        result = SettingGetDefinedTuple(G, *handle, index);
+      if(handle && (*handle) && index < cSetting_INIT
+          && (*handle)->info[index].defined)
+        result = SettingGetTuple(G, *handle, NULL, index);
     }
   }
   if(!ok) {
@@ -9892,8 +9893,8 @@ int ExecutiveAngle(PyMOLGlobals * G, float *result, const char *nam,
   SelectorTmp tmpsele2(G, s2);
   SelectorTmp tmpsele3(G, s3);
   int sele1 = tmpsele1.getIndex();
-  int sele2 = (WordMatch(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
-  int sele3 = (WordMatch(G, s3, cKeywordSame, true)) ? sele2 : tmpsele3.getIndex();
+  int sele2 = (WordMatchExact(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+  int sele3 = (WordMatchExact(G, s3, cKeywordSame, true)) ? sele2 : tmpsele3.getIndex();
 
   ObjectDist *obj;
   CObject *anyObj = NULL;
@@ -9948,9 +9949,9 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
   SelectorTmp tmpsele3(G, s3);
   SelectorTmp tmpsele4(G, s4);
   int sele1 = tmpsele1.getIndex();
-  int sele2 = (WordMatch(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
-  int sele3 = (WordMatch(G, s3, cKeywordSame, true)) ? sele2 : tmpsele3.getIndex();
-  int sele4 = (WordMatch(G, s4, cKeywordSame, true)) ? sele3 : tmpsele4.getIndex();
+  int sele2 = (WordMatchExact(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+  int sele3 = (WordMatchExact(G, s3, cKeywordSame, true)) ? sele2 : tmpsele3.getIndex();
+  int sele4 = (WordMatchExact(G, s4, cKeywordSame, true)) ? sele3 : tmpsele4.getIndex();
 
   ObjectDist *obj;
   CObject *anyObj = NULL;
@@ -10014,7 +10015,7 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, const char *nam,
   SelectorTmp tmpsele1(G, s1);
   SelectorTmp tmpsele2(G, s2);
   int sele1 = tmpsele1.getIndex();
-  int sele2 = (WordMatch(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
+  int sele2 = (WordMatchExact(G, s2, cKeywordSame, true)) ? sele1 : tmpsele2.getIndex();
 
   ObjectDist *obj;
   CObject *anyObj = NULL;
@@ -10950,6 +10951,9 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
   float v1[3], *v2;
   ObjectAlignment *align_to_update = NULL;
 
+  bool ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
+  bool ignore_case_chain = SettingGetGlobal_b(G, cSetting_ignore_case_chain);
+
   int matrix_mode = SettingGetGlobal_i(G, cSetting_matrix_mode);
   if(matrix_mode < 0)
     matrix_mode = 0; /* for now */
@@ -11167,7 +11171,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
             cmp = 0;
             switch (matchmaker) {
             case 1:            /* insure that AtomInfoType matches */
-              if(AtomInfoMatch(G, op1.ai1VLA[n1], op2.ai1VLA[n2]))
+              if(AtomInfoMatch(G, op1.ai1VLA[n1], op2.ai1VLA[n2], ignore_case, ignore_case_chain))
                 cmp = 0;
               else
                 cmp = AtomInfoCompare(G, op1.ai1VLA[n1], op2.ai1VLA[n2]);
@@ -13319,12 +13323,12 @@ int ExecutiveGetExtent(PyMOLGlobals * G, const char *name, float *mn, float *mx,
   float f1, f2, fmx;
   int a;
 
-  if(WordMatch(G, cKeywordCenter, name, 1) < 0) {
+  if(WordMatchExact(G, cKeywordCenter, name, true)) {
     SceneGetCenter(G, mn);
     copy3f(mn, mx);
     return 1;
   }
-  if(WordMatch(G, cKeywordOrigin, name, 1) < 0) {
+  if(WordMatchExact(G, cKeywordOrigin, name, true)) {
     SceneOriginGet(G, mn);
     copy3f(mn, mx);
     return 1;
@@ -14838,7 +14842,7 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
     /* cascade group members up to the surrounding group */
     SpecRec *rec2 = NULL;
     while(ListIterate(I->Spec, rec2, next)) {
-      if((rec2->group == rec) || WordMatch(G, rec->name, rec2->group_name, true)) {
+      if((rec2->group == rec) || WordMatchExact(G, rec->name, rec2->group_name, true)) {
         strcpy(rec2->group_name, rec->group_name);
       }
     }
@@ -14846,7 +14850,7 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
     /* and/or delete their group membership */
     SpecRec *rec2 = NULL;
     while(ListIterate(I->Spec, rec2, next)) {
-      if((rec2->group == rec) || WordMatch(G, rec->name, rec2->group_name, true)) {
+      if((rec2->group == rec) || WordMatchExact(G, rec->name, rec2->group_name, true)) {
         rec2->group_name[0] = 0;
       }
     }
@@ -15115,7 +15119,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
     if(!rec)
       ListElemCalloc(G, rec, SpecRec);
 
-    if(WordMatch(G, cKeywordAll, obj->Name, true) < 0) {
+    if(WordMatchExact(G, cKeywordAll, obj->Name, true)) {
       PRINTFB(G, FB_Executive, FB_Warnings)
         " Executive: object name \"%s\" is illegal -- renamed to 'all_'.\n", obj->Name
         ENDFB(G);
@@ -15471,6 +15475,7 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                   case cObjectSurface:
                   case cObjectCGO:
                   case cObjectMesh:
+                  case cObjectAlignment:
                     MenuActivate(G, mx, my, x, y, false, "general_color", namesele);
                     break;
                   case cObjectMeasurement:

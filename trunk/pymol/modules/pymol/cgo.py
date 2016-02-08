@@ -195,77 +195,42 @@ class RenderReader:
             self.app_fn=None
         
     def append_tri(self):
-        if self.l_vert and not self.l_norm:
+        if self.l_vert:
             d0 = cpv.sub(self.l_vert[0],self.l_vert[1])
             d1 = cpv.sub(self.l_vert[0],self.l_vert[2])
             n0 = cpv.cross_product(d0,d1)
             n0 = cpv.normalize_failsafe(n0)
-            n1 = [-n0[0],-n0[1],-n0[2]]
-            ns = cpv.scale(n0,0.002)
-            if not self.tri_flag:
-                self.obj.append(BEGIN)
-                self.obj.append(TRIANGLES)
-                self.tri_flag = 1
-            self.obj.append(COLOR)  # assuming unicolor
-            self.obj.extend(self.t_colr[0])
-            self.obj.append(NORMAL)
-            self.obj.extend(n0)
-            self.obj.append(VERTEX)
-            self.obj.extend(cpv.add(self.l_vert[0],ns))
-            self.obj.append(COLOR)  # assuming unicolor
-            self.obj.extend(self.t_colr[1])
-            self.obj.append(NORMAL)
-            self.obj.extend(n0)
-            self.obj.append(VERTEX)
-            self.obj.extend(cpv.add(self.l_vert[1],ns))
-            self.obj.append(COLOR)  # assuming unicolor
-            self.obj.extend(self.t_colr[2])
-            self.obj.append(NORMAL)
-            self.obj.extend(n0)
-            self.obj.append(VERTEX)
-            self.obj.extend(cpv.add(self.l_vert[2],ns))
-            self.obj.append(COLOR)  # assuming unicolor
-            self.obj.extend(self.t_colr[0])
-            self.obj.append(NORMAL)
-            self.obj.extend(n1)
-            self.obj.append(VERTEX)
-            self.obj.extend(cpv.sub(self.l_vert[0],ns))
-            self.obj.append(COLOR)  # assuming unicolor
-            self.obj.extend(self.t_colr[1])
-            self.obj.append(NORMAL)
-            self.obj.extend(n1)
-            self.obj.append(VERTEX)
-            self.obj.extend(cpv.sub(self.l_vert[1],ns))
-            self.obj.append(COLOR)  # assuming unicolor
-            self.obj.extend(self.t_colr[2])
-            self.obj.append(NORMAL)
-            self.obj.extend(n1)
-            self.obj.append(VERTEX)
-            self.obj.extend(cpv.sub(self.l_vert[2],ns))
 
-        elif self.l_vert and self.t_colr and self.l_norm:
             if not self.tri_flag:
                 self.obj.append(BEGIN)
                 self.obj.append(TRIANGLES)
                 self.tri_flag = 1
-            self.obj.append(COLOR) # assuming unicolor
-            self.obj.extend(self.t_colr[0])
-            self.obj.append(NORMAL)
-            self.obj.extend(self.l_norm[0])
-            self.obj.append(VERTEX)
-            self.obj.extend(self.l_vert[0])
-            self.obj.append(COLOR) # assuming unicolor
-            self.obj.extend(self.t_colr[1])
-            self.obj.append(NORMAL)
-            self.obj.extend(self.l_norm[1])
-            self.obj.append(VERTEX)
-            self.obj.extend(self.l_vert[1])
-            self.obj.append(COLOR) # assuming unicolor
-            self.obj.extend(self.t_colr[2])
-            self.obj.append(NORMAL)
-            self.obj.extend(self.l_norm[2])
-            self.obj.append(VERTEX)
-            self.obj.extend(self.l_vert[2])
+
+            indices = [0, 1, 2]
+
+            if not self.l_norm:
+                # TODO could simplify this if ray tracing would support
+                # object-level two_sided_lighting. Duplicating the
+                # face with an offset is a hack and produces visible
+                # lines on edges.
+                n1 = [-n0[0],-n0[1],-n0[2]]
+                ns = cpv.scale(n0,0.002)
+                indices = [0, 1, 2, 4, 3, 5]
+                l_vert_offsetted =     [cpv.add(v, ns) for v in self.l_vert]
+                l_vert_offsetted.extend(cpv.sub(v, ns) for v in self.l_vert)
+                self.l_vert = l_vert_offsetted
+                self.l_norm = [n0, n0, n0, n1, n1, n1]
+            elif cpv.dot_product(self.l_norm[0], n0) < 0:
+                indices = [0, 2, 1]
+
+            for i in indices:
+                self.obj.append(COLOR) # assuming unicolor
+                self.obj.extend(self.t_colr[i % 3])
+                self.obj.append(NORMAL)
+                self.obj.extend(self.l_norm[i])
+                self.obj.append(VERTEX)
+                self.obj.extend(self.l_vert[i])
+
         self.l_vert=None
         self.t_colr=None
         self.l_norm=None

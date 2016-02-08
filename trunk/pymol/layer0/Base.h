@@ -151,7 +151,7 @@ typedef struct {
 
 #define MAXLINELEN 1024
 
-#define PYMOL_MAX_THREADS 32
+#define PYMOL_MAX_THREADS 125
 
 #ifndef _PYMOL_NO_XRAY
 #define _PYMOL_XRAY

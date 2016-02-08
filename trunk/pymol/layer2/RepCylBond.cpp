@@ -1464,19 +1464,9 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     b1 = b->index[0];
     b2 = b->index[1];
     ord = b->order;
+    a1 = cs->atmToIdx(b1);
+    a2 = cs->atmToIdx(b2);
 
-    if(obj->DiscreteFlag) {
-      if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-        a1 = obj->DiscreteAtmToIdx[b1];
-        a2 = obj->DiscreteAtmToIdx[b2];
-      } else {
-        a1 = -1;
-        a2 = -1;
-      }
-    } else {
-      a1 = cs->AtmToIdx[b1];
-      a2 = cs->AtmToIdx[b2];
-    }
     if((a1 >= 0) && (a2 >= 0)) {
       int bd_valence_flag;
       if((!variable_alpha) && AtomInfoCheckBondSetting(G, b, cSetting_stick_transparency))
@@ -1639,18 +1629,9 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 	b++;
 	continue;
       }
-      if(obj->DiscreteFlag) {
-        if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-          a1 = obj->DiscreteAtmToIdx[b1];
-          a2 = obj->DiscreteAtmToIdx[b2];
-        } else {
-          a1 = -1;
-          a2 = -1;
-        }
-      } else {
-        a1 = cs->AtmToIdx[b1];
-        a2 = cs->AtmToIdx[b2];
-      }
+      a1 = cs->atmToIdx(b1);
+      a2 = cs->atmToIdx(b2);
+
       if((a1 >= 0) && (a2 >= 0)) {
         AtomInfoType *ati1 = obj->AtomInfo + b1;
         AtomInfoType *ati2 = obj->AtomInfo + b2;
@@ -1698,8 +1679,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         } else {
           c1 = (c2 = bd_stick_color);
         }
-        vv1 = cs->Coord + 3 * a1;
-        vv2 = cs->Coord + 3 * a2;
+        vv1 = cs->coordPtr(a1);
+        vv2 = cs->coordPtr(a2);
 
         s1 = GET_BIT(ati1->visRep, cRepCyl);
         s2 = GET_BIT(ati2->visRep, cRepCyl);
@@ -2628,6 +2609,7 @@ int RepCylinder(PyMOLGlobals *G, RepCylBond *I, CGO *cgo, float *v1arg, float *v
   return ok;
 }
 
+#ifndef PURE_OPENGL_ES_2
 static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
                                  int frontCapArg, int endCapArg,
                                  float overlap, float nub, float radius, float **dir)
@@ -2698,9 +2680,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
   normalize3f(p2);
 
   /* now we have a coordinate system */
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
   glBegin(GL_TRIANGLE_STRIP);
 
   for(c = nEdge; c >= 0; c--) {
@@ -2724,7 +2703,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
     glVertex3fv(vvv);
   }
   glEnd();
-#endif
 
   if(frontCap) {
     v[0] = -p0[0];
@@ -2735,9 +2713,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
     vv[1] = v1[1] - p0[1] * nub;
     vv[2] = v1[2] - p0[2] * nub;
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glBegin(GL_TRIANGLE_FAN);
 
     glNormal3fv(v);
@@ -2759,7 +2734,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
     }
 
     glEnd();
-#endif
   }
 
   if(endCap) {
@@ -2772,9 +2746,6 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
     vv[1] = v2[1] + p0[1] * nub;
     vv[2] = v2[2] + p0[2] * nub;
 
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
     glBegin(GL_TRIANGLE_FAN);
 
     glNormal3fv(v);
@@ -2794,12 +2765,13 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
       glVertex3fv(vv);
     }
     glEnd();
-#endif
   }
 }
+#endif
 
 void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
 {
+#ifndef PURE_OPENGL_ES_2
   /* performance optimized, so it does not support the following:
 
      - anything other than opengl
@@ -2835,8 +2807,6 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
       int nBond = obj->NBond;
       BondType *bd = obj->Bond;
       AtomInfoType *ai = obj->AtomInfo;
-      int *atm2idx = cs->AtmToIdx;
-      int discreteFlag = obj->DiscreteFlag;
       int last_color = -9;
       float *coord = cs->Coord;
       const float _pt5 = 0.5F;
@@ -2851,19 +2821,8 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
             ((ai2 = ai + b2)->visRep & cRepCylBit)) {
           int a1, a2;
           active = true;
-          if(discreteFlag) {
-            /* not optimized */
-            if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-              a1 = obj->DiscreteAtmToIdx[b1];
-              a2 = obj->DiscreteAtmToIdx[b2];
-            } else {
-              a1 = -1;
-              a2 = -1;
-            }
-          } else {
-            a1 = atm2idx[b1];
-            a2 = atm2idx[b2];
-          }
+          a1 = cs->atmToIdx(b1);
+          a2 = cs->atmToIdx(b2);
 
           if((a1 >= 0) && (a2 >= 0)) {
             int c1 = ai1->color;
@@ -2913,4 +2872,5 @@ void RepCylBondRenderImmediate(CoordSet * cs, RenderInfo * info)
     if(!active)
       cs->Active[cRepCyl] = false;
   }
+#endif
 }

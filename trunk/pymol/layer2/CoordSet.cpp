@@ -1458,7 +1458,6 @@ CoordSet *CoordSetNew(PyMOLGlobals * G)
 
   I->SpheroidSphereSize = I->State.G->Sphere->Sphere[1]->nDot;  /* does this make any sense? */
 
-  I->noInvalidateMMStereoAndTextType = 0;
   return (I);
 }
 

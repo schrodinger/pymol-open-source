@@ -2,6 +2,24 @@
 CHANGE LOG
 =========================================================================
 
+2016-02-08 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* restore ignore_case=on default
+	* new setting: ignore_case_chain (default off)
+	  https://sourceforge.net/p/pymol/mailman/message/34815599/
+
+	* new setting: cartoon_gap_cutoff
+
+	* increase PYMOL_MAX_THREADS
+	  https://sourceforge.net/p/pymol/mailman/message/34787473/
+
+	* amber topology loading: bond order 1 for all bonds
+	  https://sourceforge.net/p/pymol/mailman/message/34812536/
+
+	* improve MOL2 file handling
+
+	* new grid_mode=3: grid per object-state
+
 2016-01-11 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* distance mode=4: distance between centroids

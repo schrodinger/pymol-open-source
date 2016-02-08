@@ -131,6 +131,9 @@ generated_dir = os.path.join(os.environ.get("PYMOL_BLD", "build"), "generated")
 import create_shadertext
 create_shadertext.create_all(generated_dir)
 
+# can be changed with environment variable PREFIX_PATH
+prefix_path = ["/usr", "/usr/X11"]
+
 pymol_src_dirs = [
     "ov/src",
     "layer0",
@@ -211,6 +214,10 @@ else: # unix style (linux, mac, ...)
             ]
 
     if sys.platform == 'darwin':
+        for prefix in ['/sw', '/opt/local', '/usr/local']:
+            if sys.executable.startswith(prefix):
+                prefix_path.insert(0, prefix)
+
         import platform
         if int(platform.mac_ver()[0].split('.')[1]) < 9:
             # OS X <= 10.8, will still use some C++11 features
@@ -236,11 +243,14 @@ else: # unix style (linux, mac, ...)
     try:
         prefix_path = os.environ['PREFIX_PATH'].split(os.pathsep)
     except KeyError:
-        prefix_path = ["/usr", "/usr/X11", "/opt/local", "/sw"]
+        pass
 
     for prefix in prefix_path:
-        inc_dirs += filter(os.path.isdir, [prefix + s for s in ["/include", "/include/freetype2", "/include/libxml2"]])
-        lib_dirs += filter(os.path.isdir, [prefix + s for s in ["/lib64", "/lib"]])
+        for dirs, suffixes in [
+                [inc_dirs, [("include",), ("include", "freetype2"), ("include", "libxml2")]],
+                [lib_dirs, [("lib64",), ("lib",)]],
+                ]:
+            dirs.extend(filter(os.path.isdir, [os.path.join(prefix, *s) for s in suffixes]))
 
     if sys.platform == 'darwin' and options.osx_frameworks:
         ext_link_args += [

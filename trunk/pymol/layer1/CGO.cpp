@@ -1746,6 +1746,13 @@ CGO *CGODrawText(CGO * I, int est, float *camera)
   return (cgo);
 }
 
+bool CGOCombineBeginEnd(CGO ** I, bool do_not_split_lines) {
+  CGO *cgo = CGOCombineBeginEnd(*I, 0);
+  CGOFree(*I);
+  *I = cgo;
+  return (cgo != NULL);
+}
+
 CGO *CGOCombineBeginEnd(CGO * I, int est)
 {
   CGO *cgo;
@@ -4562,7 +4569,7 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexedImpl(CGO * I, int est, short no_color, 
 
 CGO *CGOOptimizeSpheresToVBONonIndexed(CGO * I, int est, bool addshaders, CGO *leftOverCGO)
 {
-  return (CGOOptimizeSpheresToVBONonIndexedImpl(I, est, NULL));
+  return (CGOOptimizeSpheresToVBONonIndexedImpl(I, est, leftOverCGO));
 }
 
 #define VERTICES_PER_SPHERE 4
@@ -8741,7 +8748,7 @@ int CGOCountNumberOfOperationsOfType(CGO *I, int optype){
   }
 }
 
-short CGOHasOperationsOfType(CGO *I, int optype){
+short CGOHasOperationsOfType(const CGO *I, int optype){
   float *pc = I->op;
   int op;
 
@@ -8822,6 +8829,10 @@ short CGOHasOperationsOfType2(CGO *I, int optype1, int optype2){
 
 short CGOHasCylinderOperations(CGO *I){
   return CGOHasOperationsOfType2(I, CGO_SHADER_CYLINDER, CGO_SHADER_CYLINDER_WITH_2ND_COLOR);
+}
+
+bool CGOHasSphereOperations(const CGO *I){
+  return CGOHasOperationsOfType(I, CGO_SPHERE);
 }
 
 short CGOCheckWhetherToFree(PyMOLGlobals * G, CGO *I){

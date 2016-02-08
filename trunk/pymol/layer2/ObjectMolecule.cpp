@@ -1997,7 +1997,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
         bd = bond + bi;
         bd->index[0] = (abs(i2) / 3);
         bd->index[1] = (abs(i1) / 3);
-        bd->order = 0;
+        bd->order = 1; // PYMOL-2707
         bd->stereo = 0;
         bd->id = bi + 1;
         bi++;
@@ -6902,7 +6902,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
           ai0->valence = 1;
           break;
         case cAN_N:
-          ai0->valence = 2;
+          ai0->valence = (ai0->formalCharge == 1) ? 3 : 2; // TODO wrong for neutral -NH-
           break;
         case cAN_C:
           ai0->valence = 3;
@@ -6921,7 +6921,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
           ai1->valence = 1;
           break;
         case cAN_N:
-          ai1->valence = 2;
+          ai1->valence = (ai1->formalCharge == 1) ? 3 : 2; // TODO wrong for neutral -NH-
           break;
         case cAN_C:
           ai1->valence = 3;
@@ -7026,7 +7026,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
     for(a = 0; a < I->NAtom; a++) {
       if(ai->chemFlag) {
         if(ai->protons == cAN_N)
-          if(ai->formalCharge == 0)
+          if(ai->formalCharge < 1)
             if(ai->geom == cAtomInfoTetrahedral) {
               /* search for uncharged tetrahedral nitrogen */
               n = I->Neighbor[a] + 1;
@@ -7039,7 +7039,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
                 if((ai0->chemFlag) && (ai0->geom == cAtomInfoPlanar) &&
                    ((ai0->protons == cAN_C) || (ai0->protons == cAN_N))) {
                   ai->geom = cAtomInfoPlanar;   /* found probable delocalization */
-                  ai->valence = 3;      /* just in case... */
+                  if(ai->formalCharge == 0)
+                    ai->valence = 3;      /* just in case... */
                   changedFlag = true;
                   break;
                 }
@@ -8680,138 +8681,118 @@ static CoordSet *ObjectMoleculeSDF2Str2CoordSet(PyMOLGlobals * G, const char *bu
   return result;
 }
 
-static int isRegularRes( const char *resname )
-{
+/*
+ * Get the sum of bond orders for every atom. For this purpose, aromatic
+ * bonds will be considered either single or double bond, based on
+ * the entire system (heuristic method, room for improvement).
+ */
+static
+std::vector<signed char> get_bond_order_sums(ObjectMolecule * obj) {
+  std::vector<signed char> valences(obj->NAtom);
+  std::vector<signed char> freevalences(obj->NAtom);
+  std::vector<signed char> orders(obj->NBond);
 
-  if( strcmp( resname, "ALA" ) == 0 )
-    return 1;
-  if( strcmp( resname, "ARG" ) == 0 )
-    return 1;
-  if( strcmp( resname, "ASN" ) == 0 )
-    return 1;
-  if( strcmp( resname, "ASP" ) == 0 )
-    return 1;
-  if( strcmp( resname, "CYS" ) == 0 )
-    return 1;
-  if( strcmp( resname, "GLU" ) == 0 )
-    return 1;
-  if( strcmp( resname, "GLN" ) == 0 )
-    return 1;
-  if( strcmp( resname, "GLY" ) == 0 )
-    return 1;
-  if( strcmp( resname, "HIS" ) == 0 )
-    return 1;
-  if( strcmp( resname, "ILE" ) == 0 )
-    return 1;
-  if( strcmp( resname, "LEU" ) == 0 )
-    return 1;
-  if( strcmp( resname, "LYS" ) == 0 )
-    return 1;
-  if( strcmp( resname, "MET" ) == 0 )
-    return 1;
-  if( strcmp( resname, "MSE" ) == 0 )
-    return 1;
-  if( strcmp( resname, "PHE" ) == 0 )
-    return 1;
-  if( strcmp( resname, "PRO" ) == 0 )
-    return 1;
-  if( strcmp( resname, "SER" ) == 0 )
-    return 1;
-  if( strcmp( resname, "THR" ) == 0 )
-    return 1;
-  if( strcmp( resname, "TRP" ) == 0 )
-    return 1;
-  if( strcmp( resname, "TYR" ) == 0 )
-    return 1;
-  if( strcmp( resname, "VAL" ) == 0 )
-    return 1;
-  return ( 0 );
+  // bond order sums as if all aromatic bonds were single bonds
+  for (int b = 0; b < obj->NBond; ++b) {
+    auto bond = obj->Bond + b;
+    auto order = bond->order;
+    orders[b] = order;
+    if (order > 3)
+      order = 1;
+    valences[bond->index[0]] += order;
+    valences[bond->index[1]] += order;
+  }
+
+  // determine free valences as if all aromatic bonds were single bonds
+  for (int atm = 0; atm < obj->NAtom; ++atm) {
+    int tmp = 0;
+    switch (obj->AtomInfo[atm].protons) {
+      case cAN_C:             tmp = 4; break;
+      case cAN_N: case cAN_P: tmp = 5; break;
+      case cAN_O: case cAN_S: tmp = 6; break;
+    }
+    if (tmp) {
+      tmp -= valences[atm];
+      if (tmp) {
+        freevalences[atm] = (tmp - 1) % 2 + 1;
+      }
+    }
+  }
+
+  // (This is a heuristic, gets most of the ZINC dataset correct)
+  // Do two passes over all aromatic bonds.
+  // 1st pass: assign double bonds between atoms with `freevalence == 1`
+  // 2nd pass: assign double bonds between atoms with `freevalence >= 1`
+  for (int secondpass = 0; secondpass < 2; ++secondpass) {
+    for (int b = 0; b < obj->NBond; ++b) {
+      if (orders[b] == 4) {
+        auto atm1 = obj->Bond[b].index[0];
+        auto atm2 = obj->Bond[b].index[1];
+        if (secondpass ?
+            (freevalences[atm1] >= 1 && freevalences[atm2] >= 1 ) :
+            (freevalences[atm1] == 1 && freevalences[atm2] == 1)) {
+          freevalences[atm1] = 0;
+          freevalences[atm2] = 0;
+          valences[atm1] += 1;
+          valences[atm2] += 1;
+          orders[b] = 2;
+        }
+      }
+    }
+  }
+
+  return valences;
 }
 
+/*
+ * For each atom, set `formalCharge` based on mol2 `textType`
+ *
+ * See also: getMOL2Type() in layer2/Mol2Typing.cpp
+ */
 static void ObjectMoleculeMOL2SetFormalCharges(PyMOLGlobals *G, ObjectMolecule *obj){
-  /* this code is from mmmol2_mol2file_get_ct() in mmmol2.c */
-  /* goes through each atom, and sets the formal charge */
-  int a, nAtom, state;
-  CoordSet *cset = NULL;
-  ObjectMoleculeUpdateNeighbors(obj);
-  for (state=0; state<obj->NCSet; state++){
-    if (obj->DiscreteFlag){
-      cset = obj->DiscreteCSet[state];
-    } else {
-      cset = obj->CSet[state];
-    }
-    nAtom = cset->NIndex;
-    for(a = 0; a < nAtom; a++) {
-      int at, fcharge = 0, isProtein = 0, k, n;
-      AtomInfoType *ai;
-      const char *atom_type = 0;
-      char resname_temp[4];
-      BondType *bt;
-      at = cset->IdxToAtm[a];
-      ai = &obj->AtomInfo[at];
-      strcpy( resname_temp, "" );
-      resname_temp[3] = 0;
-      if(ai->textType){
-	atom_type = LexStr(G, ai->textType);
-      } else {
-	PRINTFB(G, FB_Executive, FB_Warnings)
-	  "ObjectMoleculeMOL2SetFormalCharges-Warning: textType invalidated, not setting formal charges\n"
-	  ENDFB(G);
-	return;
-      }
-      const char *atom_name = LexStr(G, ai->name);
-      strncpy( resname_temp, LexStr(G, ai->resn), 3);
-      if( isRegularRes( resname_temp ) ) {
-	isProtein = 1;
-      }
 
-      if( strcmp( atom_type, "N.pl3" ) == 0 ) {
-	if(getenv("CORRECT_NATOM_TYPE")) {
-	  if (obj->Neighbor[obj->Neighbor[at]]>0){
-	    for (k=obj->Neighbor[at]+1;obj->Neighbor[k]!=-1; k+=2){
-	      n = obj->Neighbor[k];
-	      bt = &obj->Bond[obj->Neighbor[k+1]];
-	      if (bt->order == 2){
-		fcharge = 1;
-	      } else if (!isProtein && bt->order == 4){
-		fcharge = 0;
-		break;
-	      }
-	    }
-	  }
-	} else {
-	  if (obj->Neighbor[obj->Neighbor[at]]>0){
-	    for (k=obj->Neighbor[at]+1;obj->Neighbor[k]!=-1; k+=2){
-	      n = obj->Neighbor[k];
-	      bt = &obj->Bond[obj->Neighbor[k+1]];
-	      if (bt->order == 2 || 
-		  (!isProtein && bt->order == 4)){
-		fcharge = 1;
-		break;
-	      }
-	    }
-	  }
-	}
-      }
-      if( strcmp( atom_type, "N.4" ) == 0 ) {
-	fcharge = 1;
-      } // N sp3 positively charged
-      if( strcmp( atom_type, "O.co2" ) == 0 ) {
-	if( strcmp( atom_name, "OE2" ) == 0 || strcmp( atom_name, "OD2" ) == 0 )
-	  fcharge = -1;
-	else if( obj->Neighbor[obj->Neighbor[at]] == 1){
-	  if (obj->Bond[obj->Neighbor[obj->Neighbor[at]+2]].order == 1){
-	    fcharge = -1;
-	  }
-	}
-      }
-      if( strcmp( atom_name, "OXT" ) == 0 )
-	fcharge = -1;
-      if( isProtein && a == 0 && strcmp( atom_type, "N.am" ) == 0 ) {
-	fcharge = 1;
-      }
-      ai->formalCharge = fcharge;
+  // check if structure has explicit hydrogens
+  bool has_hydrogens = false;
+  for (int at = 0; at < obj->NAtom; ++at) {
+    auto ai = obj->AtomInfo + at;
+    if (ai->isHydrogen()) {
+      has_hydrogens = true;
+      break;
     }
+  }
+
+  if (!has_hydrogens) {
+    // could eventually do PDB nomenclature charge assignment here...
+    return;
+  }
+
+  // Unfortunately, atomatic bonds (type 4) can't be used to determine
+  // formal charges. The following uses a heuristic to guess bond orders
+  // for aromatic bonds.
+  auto valences = get_bond_order_sums(obj);
+
+  // (period currently incompatible with G->lex_const)
+  lexidx_t lex_N_4   = LexBorrow(G, "N.4");
+
+  for (int at = 0; at < obj->NAtom; ++at) {
+    int fcharge = 0;
+    auto ai = obj->AtomInfo + at;
+
+    if (ai->protons == cAN_N) {
+      if (ai->textType == lex_N_4) {
+        fcharge = 1;
+      } else if (valences[at] == 2) {
+        fcharge = -1;
+      } else if (valences[at] == 4) {
+        fcharge = 1;
+      }
+    } else if (ai->protons == cAN_O) {
+      if (valences[at] == 1) {
+        fcharge = -1;
+      }
+    }
+
+    ai->formalCharge = fcharge;
   }
 }
 
@@ -8951,11 +8932,20 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
             }
           }
           if(ok) {
-            p = ParseWordCopy(cc, p, MAXLINELEN);
-            if(cc[0]) {         /* subst_id is residue identifier */
-              ai->setResi(cc);
+            char cc_resi[8];
+            p = ParseWordCopy(cc_resi, p, sizeof(cc_resi) - 1);
+            if(cc_resi[0]) {         /* subst_id is residue identifier */
+              ai->setResi(cc_resi);
               p = ParseWordCopy(cc, p, MAXLINELEN);
               if(cc[0]) {
+                // if subst_name includes the subst_id (e.g. 5 ALA5) then strip the number
+                int len_resi = strlen(cc_resi);
+                int len_resn = strlen(cc);
+                if (len_resn > len_resi) {
+                  if (strcmp(cc_resi, cc + len_resn - len_resi) == 0) {
+                    cc[len_resn - len_resi] = 0;
+                  }
+                }
 
                 LexAssign(G, ai->resn, cc);
 
@@ -9429,7 +9419,6 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
     case cLoadTypeMOL2Str:
       cset = ObjectMoleculeMOL2Str2CoordSet(G, start, &atInfo, &restart);
       if (cset){
-	cset->noInvalidateMMStereoAndTextType = 1;
 	set_formal_charges = true;
       }
       break;
@@ -11839,32 +11828,9 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
       if(cset) {
         cset->invalidateRep(rep, level);
 #ifndef NO_MMLIBS
-	if (!cset->noInvalidateMMStereoAndTextType){
-	  /* update mmstereo */
-	  int ai, atm;
-	  AtomInfoType *at;
-	  if (state < 0){
-	    for (ai=0; ai < I->NAtom; ai++){
-	      at = &I->AtomInfo[ai];
-	      at->mmstereo = 0;
-	      at->textType = 0;
-	    }
-	  } else {
-	    if (cset->AtmToIdx){
-	      for (ai=0; ai < cset->NIndex; ai++){
-		atm = cset->AtmToIdx[ai];
-		if (atm>=0){
-		  at = &I->AtomInfo[ai];
-		  at->mmstereo = 0;
-		  at->textType = 0;
-		}
-	      }
-	    }
-	  }
-	} else {
-	  PRINTFD(I->Obj.G, FB_ObjectMolecule)
-	    "ObjectMoleculeInvalidate: state=%d not setting mmstereo or textType\n", a
-	    ENDFD;
+        if (level >= cRepInvProp) {
+          cset->validMMStereo = false;
+          cset->validTextType = false;
 	}
 #endif
       }

@@ -119,75 +119,29 @@ static int label_next_token(WordType dst, const char **expr)
   return (q != dst);
 }
 
-/* MMSTEREO_STALE is how this mmstereo field gets intialized, and it means
-   that mmstereo information needs to be computed */
-#define MMSTEREO_STALE 0                  // ' '
-#define MMSTEREO_NO_CHIRALITY 127         // ' '
-#define PYMOL_MMSTEREO_CHIRALITY_R 1      // 'R'
-#define PYMOL_MMSTEREO_CHIRALITY_S 2      // 'S'
-#define PYMOL_MMSTEREO_E 11               // 'E'
-#define PYMOL_MMSTEREO_Z 12               // 'Z'
-#define PYMOL_MMSTEREO_P 13               // 'P'
-#define PYMOL_MMSTEREO_M 14               // 'M'
-#define PYMOL_MMSTEREO_CHIRALITY_ANR 50   // 'r'
-#define PYMOL_MMSTEREO_CHIRALITY_ANS 51   // 's'
-#define PYMOL_MMSTEREO_UNDEF 99
-#define PYMOL_MMSTEREO_ST_INDEFINITE 100
-#define PYMOL_MMSTEREO_GEOM_INDEFINITE 101
-#define PYMOL_MMSTEREO_AN_GEOM_INDEFINITE 102
-
+/*
+ * Get R/S label for SDF stereo enumeration
+ */
 char convertStereoToChar(int stereo){
   switch (stereo){
-  case PYMOL_MMSTEREO_CHIRALITY_R:
-    return 'R';
-  case PYMOL_MMSTEREO_CHIRALITY_S:
-    return 'S';
-  case  PYMOL_MMSTEREO_E:
-    return 'E';
-  case  PYMOL_MMSTEREO_Z:
-    return 'Z';
-  case  PYMOL_MMSTEREO_P:
-    return 'P';
-  case  PYMOL_MMSTEREO_M:
-    return 'M';
-  case PYMOL_MMSTEREO_CHIRALITY_ANR:
-    return 'r';
-  case PYMOL_MMSTEREO_CHIRALITY_ANS:
-    return 's';
-  case PYMOL_MMSTEREO_UNDEF:
-  case PYMOL_MMSTEREO_ST_INDEFINITE:
-  case PYMOL_MMSTEREO_GEOM_INDEFINITE:
-  case PYMOL_MMSTEREO_AN_GEOM_INDEFINITE:
-    return '?';
+    case 1: return 'S';
+    case 2: return 'R';
+    case 3: return '?';
   }
   return '\0';
 }
 
-#if 1
+/*
+ * Get SDF stereo enumeration for R/S label
+ */
 int convertCharToStereo(char stereo){
   switch (stereo){
-  case 'R':
-    return PYMOL_MMSTEREO_CHIRALITY_R;
-  case 'S':
-    return PYMOL_MMSTEREO_CHIRALITY_S;
-  case 'r':
-    return PYMOL_MMSTEREO_CHIRALITY_ANR;
-  case 's':
-    return PYMOL_MMSTEREO_CHIRALITY_ANS;
-  case 'E':
-    return PYMOL_MMSTEREO_E;
-  case 'Z':
-    return PYMOL_MMSTEREO_Z;
-  case 'P':
-    return PYMOL_MMSTEREO_P;
-  case 'M':
-    return PYMOL_MMSTEREO_M;
-  case '?':
-    return PYMOL_MMSTEREO_GEOM_INDEFINITE;
+    case 'S': case 's': return 1;
+    case 'R': case 'r': return 2;
+    case '?': return 3;
   }
-  return MMSTEREO_NO_CHIRALITY;
+  return 0;
 }
-#endif
 
 
 int PLabelExprUsesVariable(PyMOLGlobals * G, const char *expr, const char *var)
@@ -320,7 +274,7 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
           } else if(!strcmp(tok, "formal_charge")) {
             sprintf(buffer, "%d", at->formalCharge);
           } else if(!strcmp(tok, "stereo")) {
-	    sprintf(buffer, "%c", convertStereoToChar(at->mmstereo));
+	    sprintf(buffer, "%c", convertStereoToChar(at->stereo));
           } else if(!strcmp(tok, "color")) {
             sprintf(buffer, "%d", at->color);
           } else if(!strcmp(tok, "cartoon")) {
@@ -669,15 +623,6 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
 	ret = PyFloat_FromDouble(val);
       }
       break;
-    case cPType_stereo:
-      {
-	char val = *(char*)(((char*)wobj->atomInfo) + ap->offset);	
-	char mmstereotype[2];
-	mmstereotype[0] = convertStereoToChar(val);
-	mmstereotype[1] = 0;
-	ret = PyString_FromString(mmstereotype);
-      }
-      break;
     case cPType_char_as_type:
       {
 	ret = wobj->atomInfo->hetatm ? pystr_HETATM : pystr_ATOM;
@@ -738,6 +683,12 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
           char resi[8];
           AtomResiFromResv(resi, sizeof(resi), wobj->atomInfo);
           ret = PyString_FromString(resi);
+        }
+        break;
+      case ATOM_PROP_STEREO:
+        {
+          char mmstereotype[] = {convertStereoToChar(wobj->atomInfo->stereo), '\0'};
+          ret = PyString_FromString(mmstereotype);
         }
         break;
       default:
@@ -892,6 +843,14 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
             Py_DECREF(valobj);
           }
           break;
+        case ATOM_PROP_STEREO:
+          {
+            PyObject *valobj = PyObject_Str(val);
+            const char *valstr = PyString_AS_STRING(valobj);
+            wobj->atomInfo->stereo = convertCharToStereo(valstr[0]);
+            Py_DECREF(valobj);
+          }
+          break;
         default:
           PyErr_Format(PyExc_TypeError, "'%s' is read-only", aprop);
           return -1;
@@ -970,7 +929,7 @@ static void PUnlockGLUT(PyMOLGlobals * G)
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock_glut, "O", G->P_inst->cmd));
 }
 
-unsigned int P_glut_thread_id = -1;
+static long P_glut_thread_id = -1;
 
 
 /* enables us to keep glut out if by chance it grabs the API
@@ -2391,7 +2350,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
 
     PRunStringModule(G, "glutThread = thread.get_ident()");
 
-    P_glut_thread_id = (unsigned int)PyThread_get_thread_ident();
+    P_glut_thread_id = PyThread_get_thread_ident();
 
 #ifndef WIN32
     if(G->Option->siginthand) {
@@ -2704,13 +2663,15 @@ void PBlock(PyMOLGlobals * G)
 int PAutoBlock(PyMOLGlobals * G)
 {
 #ifndef _PYMOL_EMBEDDED
-  int a, id;
+  int a;
+  long id;
   SavedThreadRec *SavedThread = G->P_inst->savedThread;
   /* synchronize python */
 
   id = PyThread_get_thread_ident();
+
   PRINTFD(G, FB_Threads)
-    " PAutoBlock-DEBUG: search 0x%x (0x%x, 0x%x, 0x%x)\n", id,
+    " PAutoBlock-DEBUG: search %ld (%ld, %ld, %ld)\n", id,
     SavedThread[MAX_SAVED_THREAD - 1].id,
     SavedThread[MAX_SAVED_THREAD - 2].id, SavedThread[MAX_SAVED_THREAD - 3].id ENDFD;
   a = MAX_SAVED_THREAD - 1;
@@ -2721,29 +2682,29 @@ int PAutoBlock(PyMOLGlobals * G)
        * or mis-assumption */
 
       PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: seeking global lock 0x%x\n", id ENDFD;
+        " PAutoBlock-DEBUG: seeking global lock %ld\n", id ENDFD;
 
 #ifdef PYMOL_NEW_THREADS
 
       PyEval_AcquireLock();
 
       PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG (NewThreads): restoring 0x%x\n", id ENDFD;
+        " PAutoBlock-DEBUG (NewThreads): restoring %ld\n", id ENDFD;
 
       PyThreadState_Swap((SavedThread + a)->state);
 
 #else
       PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: restoring 0x%x\n", id ENDFD;
+        " PAutoBlock-DEBUG: restoring %ld\n", id ENDFD;
 
       PyEval_RestoreThread((SavedThread + a)->state);
 #endif
 
       PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: restored 0x%x\n", id ENDFD;
+        " PAutoBlock-DEBUG: restored %ld\n", id ENDFD;
 
       PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: clearing 0x%x\n", id ENDFD;
+        " PAutoBlock-DEBUG: clearing %ld\n", id ENDFD;
 
       PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->lock_c, "O", G->P_inst->cmd));
       SavedThread[a].id = -1;
@@ -2751,7 +2712,7 @@ int PAutoBlock(PyMOLGlobals * G)
       PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock_c, "O", G->P_inst->cmd));
 
       PRINTFD(G, FB_Threads)
-        " PAutoBlock-DEBUG: blocked %ld (%d, %d, %d)\n",
+        " PAutoBlock-DEBUG: blocked %ld (%ld, %ld, %ld)\n",
         PyThread_get_thread_ident(), SavedThread[MAX_SAVED_THREAD - 1].id,
         SavedThread[MAX_SAVED_THREAD - 2].id, SavedThread[MAX_SAVED_THREAD - 3].id ENDFD;
 
@@ -2771,7 +2732,7 @@ int PAutoBlock(PyMOLGlobals * G)
 
 int PIsGlutThread(void)
 {
-  return (((unsigned int)PyThread_get_thread_ident()) == P_glut_thread_id);
+  return (PyThread_get_thread_ident() == P_glut_thread_id);
 }
 
 void PUnblock(PyMOLGlobals * G)
@@ -2798,7 +2759,7 @@ void PUnblock(PyMOLGlobals * G)
     a--;
   }
   PRINTFD(G, FB_Threads)
-    " PUnblock-DEBUG: 0x%x stored in slot %d\n", (SavedThread + a)->id, a ENDFD;
+    " PUnblock-DEBUG: %ld stored in slot %d\n", (SavedThread + a)->id, a ENDFD;
   PXDecRef(PYOBJECT_CALLFUNCTION(G->P_inst->unlock_c, "O", G->P_inst->cmd));
 #ifdef PYMOL_NEW_THREADS
   PyThreadState_Swap(NULL);
