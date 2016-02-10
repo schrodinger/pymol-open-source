@@ -4,6 +4,8 @@ crash with bumps and PSE
 
 from pymol import cmd, CmdException, testing, stored
 
+# Open-Source doesn't save the SculptCGO
+@testing.requires('incentive')
 class TestPYMOL2708(testing.PyMOLTestCase):
 
     # works in (1.7.4 <= version <= 1.7.6) || (version >= 1.8.0.5)
