@@ -57,6 +57,46 @@ class TestCommanding(testing.PyMOLTestCase):
             lines = [_f for _f in map(str.strip, open(logfile)) if _f]
             self.assertEqual(lines, ['color blue', 'hello world'])
 
+    @testing.requires_version('1.8.1.0')
+    def testLog2(self):
+        """
+        Tests robustness of different logging methods:
+        1) Python implementation (cmd.log) vs. C implementation (PLog, via cmd.do)
+        2) pml vs. py syntax
+        3) handling of quoted input (''' broken in 1.8.2)
+        """
+        self.ambientOnly()
+        cmd.viewport(100, 100)
+        cmd.fragment('gly')
+        cmd.orient()
+        cmd.show_as('spheres')
+
+        for ext in ['.pml', '.py']:
+            with testing.mktemp(ext) as logfile:
+                cmd.log_open(logfile)
+                cmd.do('_ color blue')
+                cmd.do('/cmd.color("yellow", "elem O")')
+                cmd.do('cmd.color("""green""",' " '''elem N''')")
+                cmd.log('bg red\n')
+                cmd.log('', 'cmd.color(\'magenta\', "hydro")\n')
+                cmd.log_close()
+
+                cmd.color('white')
+                cmd.bg_color('white')
+
+                if ext == '.pml':
+                    cmd.do('@' + logfile)
+                else:
+                    cmd.do('run ' + logfile)
+
+                img = self.get_imagearray()
+                self.assertImageHasColor('blue', img)
+                self.assertImageHasColor('yellow', img)
+                self.assertImageHasColor('green', img)
+                self.assertImageHasColor('red', img)
+                self.assertImageHasColor('magenta', img)
+                self.assertImageHasNotColor('white', img)
+
     def testLogClose(self):
         # see testLog
         pass
