@@ -144,26 +144,45 @@ DESCRIPTION
 
     "log" writes a command to the log file (if one is open).
 
+    `text` and/or `alt_text` must include the terminating line feed.
+
+ARGUMENTS
+
+    text = str: PyMOL command (optional if alt_text is given)
+    alt_text = str: Python expression (optional)
+
 SEE ALSO
 
     log_open, log_close
     
         '''
-        pymol=_self._pymol        
-        cmd=_self
-        if hasattr(pymol,"_log_file"):
-            if pymol._log_file!=None:
-                mode = _self.get_setting_int("logging")
-                if mode:
-                    if mode==1:
-                        if not text and alt_text:
-                            text = '/' + alt_text
-                        pymol._log_file.write(text)
-                    elif mode==2:
-                        if not alt_text:
-                            alt_text = "cmd.do('''%s''')\n" % text.strip()
-                        pymol._log_file.write(alt_text)
-                    pymol._log_file.flush()
+        # See also equivalent C impelemtation: PLog
+
+        log_file = getattr(_self._pymol, "_log_file", None)
+
+        if log_file is None:
+            return
+
+        mode = _self.get_setting_int("logging")
+
+        if mode == 1:
+            # .pml
+            if not text and alt_text:
+                text = '/' + alt_text
+        elif mode == 2:
+            # .py
+            if alt_text:
+                text = alt_text
+            elif text.startswith('/'):
+                text = text[1:]
+            else:
+                text = "cmd.do(" + repr(text.strip()) + ")\n"
+        else:
+            return
+
+        if text:
+            log_file.write(text)
+            log_file.flush()
 
     def log_close(_self=cmd):
         '''

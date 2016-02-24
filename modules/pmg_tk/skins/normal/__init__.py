@@ -142,6 +142,11 @@ class Normal(PMGSkin):
     def initialdir(self, value):
         self._initialdir = value
 
+    def cd_dialog(self):
+        self.cmd.cd(tkFileDialog.askdirectory(
+            title="Change Working Directory",
+            initialdir=self.initialdir) or '.', quiet=0)
+
     def complete(self,event):
         st = self.cmd._parser.complete(self.command.get())
         if st:
@@ -1363,26 +1368,31 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.menuBar.addmenuitem('File', 'separator', '')
         
-        self.menuBar.addmenuitem('File', 'command', 'Open log file.',
-                                label='Log...',
-                                command=self.log_open)
-
-        self.menuBar.addmenuitem('File', 'command', 'Resume log file.',
-                                label='Resume...',
-                                command=self.log_resume)
-
-        self.menuBar.addmenuitem('File', 'command', 'Append log file.',
-                                label='Append...',
-                                command=self.log_append)
-
-        self.menuBar.addmenuitem('File', 'command', 'Close log file.',
-                                label='Close Log',
-                                command=self.cmd.log_close)
+        addcascademenu('File', 'Logging', label='Log File')
+        addmenuitem('Logging', 'command', label='Open...', command=self.log_open)
+        addmenuitem('Logging', 'command', label='Resume...', command=self.log_resume)
+        addmenuitem('Logging', 'command', label='Append...', command=self.log_append)
+        addmenuitem('Logging', 'command', label='Close', command=self.cmd.log_close)
 
         self.menuBar.addmenuitem('File', 'command', 'Run program or script.',
-                                label='Run...',
+                                label='Run Script...',
                                 command=self.file_run)
         
+        addcascademenu('File', 'WorkDir', label='Working Directory')
+        addmenuitem('WorkDir', 'command', label='Change...',
+                command=self.cd_dialog)
+
+        if sys.platform == 'darwin':
+            file_browser = lambda: self.cmd.system('open .')
+        elif sys.platform == 'win32':
+            file_browser = lambda: self.cmd.system('explorer .')
+        else:
+            file_browser = None
+
+        if file_browser:
+            addmenuitem('WorkDir', 'command', label='File Browser',
+                    command=file_browser)
+
         self.menuBar.addmenuitem('File', 'separator', '')
 
         self.menuBar.addmenuitem('File', 'command', 'Edit pymolrc',
@@ -1395,30 +1405,16 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                 label='Quit',
                                 command=self.confirm_quit)
 
-        self.menuBar.addmenuitem('File', 'command', 'Reinitialize PyMOL',
-                                label='Reinitialize',
-                                command=self.cmd.reinitialize)
-
-        self.menuBar.addmenuitem('File', 'separator', '')
-
-        self.menuBar.addcascademenu('File', 'Skin', 'Skin',
-                                             label='Skin')
-
-        self.app.addSkinMenuItems(self.menuBar,'Skin')
-
-#      self.menuBar.addmenuitem('File', 'separator', '')
-        
-#      self.menuBar.addmenuitem('File', 'checkbutton',
-#                         'Log Conformations.',
-#                         label='Log Conformations',
-#                        variable = self.setting.log_conformations,
-#                        )
-
-#      self.menuBar.addmenuitem('File', 'checkbutton',
-#                         'Log Box Selections.',
-#                         label='Log Box Selections',
-#                        variable = self.setting.log_box_selections,
-#                        )
+        addcascademenu('File', 'Reinit', label='Reinitialize')
+        addmenuitem('Reinit', 'command', label='Everything',
+                command=self.cmd.reinitialize)
+        addmenuitem('Reinit', 'command', label='Original Settings',
+                command=lambda: self.cmd.reinitialize('original_settings'))
+        addmenuitem('Reinit', 'command', label='Stored Settings',
+                command=lambda: self.cmd.reinitialize('settings'))
+        addmenuitem('Reinit', 'separator')
+        addmenuitem('Reinit', 'command', label='Store Current Settings',
+                command=lambda: self.cmd.reinitialize('store_defaults'))
 
         self.menuBar.addmenu('Edit', 'Edit',tearoff=TRUE)
 

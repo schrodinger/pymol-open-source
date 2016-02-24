@@ -855,7 +855,7 @@ enum {
   REC_s( 747, assembly                                , global    , "" ),
   REC_b( 748, cif_keepinmemory                        , global    , 0 ),
   REC_b( 749, pse_binary_dump                         , unused    , 0 ), // not fully supported in Open-Source PyMOL
-  REC_i( 750, cartoon_gap_cutoff                      , global    , 0 ),
+  REC_i( 750, cartoon_gap_cutoff                      , ostate    , 0 ),
   REC_b( 751, ignore_case_chain                       , global    , 0 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
