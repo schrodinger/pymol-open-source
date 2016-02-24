@@ -12792,10 +12792,12 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       }
       if(ok && isNew)
         ok &= ObjectMoleculeConnect(I, &I->NBond, &I->Bond, I->AtomInfo, cset, true, -1);
-      if(ok && cset->Symmetry && (!I->Symmetry)) {
+      if(ok && cset->Symmetry) {
+        SymmetryFree(I->Symmetry);
         I->Symmetry = SymmetryCopy(cset->Symmetry);
         SymmetryUpdate(I->Symmetry);
-        if (I->Symmetry->Crystal) {
+      }
+      if (I->Symmetry && I->Symmetry->Crystal) {
           /* check scale records */
           if(pdb_info &&
              pdb_info->scale.flag[0] &&
@@ -12806,7 +12808,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
 
             CoordSetInsureOrthogonal(G, cset, sca, I->Symmetry->Crystal, quiet);
           }
-        }
       }
       SceneCountFrames(G);
       if (ok)

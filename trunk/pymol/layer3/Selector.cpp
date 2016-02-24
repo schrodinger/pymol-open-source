@@ -10238,9 +10238,9 @@ static int SelectorLogic1(PyMOLGlobals * G, EvalElem * inp_base, int state)
             base_0_sele[a] = false;
 
             if(i_obj[table_a->model]->AtomInfo[table_a->atom].protons == cAN_C)
-              if(WordMatchCommaExact(G, "CA",
-                                     LexStr(G, i_obj[table_a->model]->AtomInfo[table_a->atom].name),
-                                     ignore_case) < 0) {
+              if(WordMatchExact(G, G->lex_const.CA,
+                                     i_obj[table_a->model]->AtomInfo[table_a->atom].name,
+                                     ignore_case)) {
                 base_0_sele[a] = true;
                 c++;
               }

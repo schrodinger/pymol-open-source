@@ -451,22 +451,24 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
  */
 class sshashkey {
 public:
-  int asym_id;
-  std::string resi;
-  sshashkey() {};
-  sshashkey(int asym_id_, const char *resi_, const char *ins_code = NULL) {
-    assign(asym_id_, resi_, ins_code);
+  lexidx_t chain; // borrowed ref
+  int resv;
+  char inscode;
+
+  void assign(int asym_id_, int resv_, char ins_code_ = '\0') {
+    chain = asym_id_;
+    resv = resv_;
+    inscode = ins_code_;
   }
-  void assign(int asym_id_, const char *resi_, const char *ins_code) {
-    asym_id = asym_id_;
-    resi.assign(resi_);
-    if (ins_code)
-      resi.append(ins_code);
-  }
-  int compare(const sshashkey &other) const {
-    int test = resi.compare(other.resi);
-    if (test == 0)
-      test = (asym_id - other.asym_id);
+
+  // comparable to sshashkey and AtomInfoType
+  template <typename T> int compare(const T &other) const {
+    int test = resv - other.resv;
+    if (test == 0) {
+      test = (chain - other.chain);
+      if (test == 0)
+        test = inscode - other.inscode;
+    }
     return test;
   }
   bool operator<(const sshashkey &other) const { return compare(other) < 0; }
@@ -478,16 +480,6 @@ public:
   sshashkey end;
 };
 typedef std::map<sshashkey, sshashvalue> sshashmap;
-static void sshashmap_clear(PyMOLGlobals * G, sshashmap &ssrecords) {
-  // decrement Lexicon references (should go into ~sshashkey(), but
-  // the PyMOLGlobals is not known there)
-  for (sshashmap::iterator it = ssrecords.begin(),
-      it_end = ssrecords.end(); it != it_end; ++it) {
-    LexDec(G, it->first.asym_id);
-    LexDec(G, it->second.end.asym_id);
-  }
-  ssrecords.clear();
-}
 
 // std::array for pre-C++11
 template <typename T, size_t N>
@@ -1418,6 +1410,7 @@ static bool read_ss_(PyMOLGlobals * G, cif_data * data, char ss,
     data->get_arr("_struct_conf.conf_type_id");
 
   int nrows = arr_beg_chain->get_nrows();
+  sshashkey key;
 
   for (int i = 0; i < nrows; i++) {
     // first character of conf_type_id (one of H, S, T)
@@ -1427,17 +1420,17 @@ static bool read_ss_(PyMOLGlobals * G, cif_data * data, char ss,
     if (ss_i == 'T')
       continue;
 
-    sshashkey key(
-      LexIdx(G, arr_beg_chain->as_s(i)),
-      arr_beg_resi->as_s(i),
-      arr_beg_ins_code ? arr_beg_ins_code->as_s(i) : NULL);
+    key.assign(
+      LexBorrow(G, arr_beg_chain->as_s(i)),
+      arr_beg_resi->as_i(i),
+      arr_beg_ins_code ? arr_beg_ins_code->as_s(i)[0] : '\0');
 
     sshashvalue &value = ssrecords[key];
     value.ss = ss_i;
     value.end.assign(
-        LexIdx(G, arr_end_chain->as_s(i)),
-        arr_end_resi->as_s(i),
-        arr_end_ins_code ? arr_end_ins_code->as_s(i) : NULL);
+        LexBorrow(G, arr_end_chain->as_s(i)),
+        arr_end_resi->as_i(i),
+        arr_end_ins_code ? arr_end_ins_code->as_s(i)[0] : '\0');
   }
 
   return true;
@@ -1458,15 +1451,16 @@ static bool read_ss(PyMOLGlobals * G, cif_data * datablock,
     return false;
 
   AtomInfoType *aj, *ai, *atoms_end = atInfo + VLAGetSize(atInfo);
+  sshashkey key;
 
-  char resi[8];
+  for (ai = atInfo; ai < atoms_end;) {
+    // advance to the next residue
+    aj = ai;
+    while (++ai < atoms_end &&
+        AtomInfoSameResidue(G, aj, ai)) {}
 
-  for (ai = atInfo; ai < atoms_end; ai++) {
-    if (ai->name != G->lex_const.CA)
-      continue;
-
-    AtomResiFromResv(resi, sizeof(resi), ai);
-    sshashkey key(ai->chain, resi);
+    // check if residue is the beginning of a secondary structure element
+    key.assign(aj->chain, aj->resv, aj->inscode);
     sshashmap::iterator it = ssrecords.find(key);
 
     if (it == ssrecords.end())
@@ -1474,20 +1468,17 @@ static bool read_ss(PyMOLGlobals * G, cif_data * datablock,
 
     sshashvalue &value = it->second;
 
-    for (aj = ai; aj < atoms_end; aj++) {
-      if (aj->name != G->lex_const.CA)
-        continue;
-
-      aj->ssType[0] = value.ss;
-
-      AtomResiFromResv(resi, sizeof(resi), aj);
-      if (value.end.resi == resi && value.end.asym_id == aj->chain)
+    // assign ss type to all atoms in the segment
+    bool hit_end_residue = false;
+    for (; aj < atoms_end; aj++) {
+      if (value.end.compare(*aj) == 0) {
+        hit_end_residue = true;
+      } else if (hit_end_residue) {
         break;
+      }
+      aj->ssType[0] = value.ss;
     }
   }
-
-  // decrement Lexicon references (should go into ~sshashkey())
-  sshashmap_clear(G, ssrecords);
 
   return true;
 }

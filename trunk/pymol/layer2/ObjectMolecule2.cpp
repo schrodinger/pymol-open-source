@@ -3675,7 +3675,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     }
 
     auto version = AtomInfoVERSION;
-    auto blobsize = sizeof(AtomInfoType);
+    auto blobsize = I->NAtom * sizeof(AtomInfoType);
     auto blob = reinterpret_cast<void*>(I->AtomInfo);
 
     if (pse_export_version && pse_export_version < 1810) {

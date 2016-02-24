@@ -2472,11 +2472,18 @@ void PDo(PyMOLGlobals * G, const char *str)
   PAutoUnblock(G, blocked);
 }
 
+/*
+ * Write `str` to the log file (if one is open).
+ *
+ * str: command or expression to log
+ * format: cPLog_pml (`str` is PyMOL command)
+ *         cPLog_pym (`str` is Python expression)
+ *         cPLog_no_flush (write `str` as is)
+ *         cPLog_pml_lf (unused TODO remove?)
+ *
+ * See also equivalent Python impelemtation: cmd.log()
+ */
 void PLog(PyMOLGlobals * G, const char *str, int format)
-
-/* general log routine can write PML 
-
-   or PYM commands to appropriate log file */
 {
   int mode;
   int a = sizeof(OrthoLineType) - 15;
@@ -2512,9 +2519,20 @@ void PLog(PyMOLGlobals * G, const char *str, int format)
             a = strlen(str);
             while(a && str[a - 1] < 32) a--; /* trim CR/LF etc. */
           case cPLog_pml:
-            strcpy(buffer, "cmd.do('''");
-            strncat(buffer, str, a);
-            strcat(buffer, "''')\n");
+            if (str[0] == '/') {
+              strncat(buffer, str + 1, a - 1);
+              strcat(buffer, "\n");
+            } else {
+              strcpy(buffer, "cmd.do('''");
+              char * b = buffer + strlen(buffer);
+              for (; a && *str; --a) {
+                if (*str == '\\' || *str == '\'') {
+                  *(b++) = '\\';
+                }
+                *(b++) = *(str++);
+              }
+              strcpy(b, "''')\n");
+            }
             break;
           case cPLog_pym:
             strcpy(buffer, str);
