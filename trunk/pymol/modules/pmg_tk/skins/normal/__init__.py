@@ -2547,6 +2547,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                     variable=self.setting.label_font_id)
 
         self.menuBar.addcascademenu('Setting', 'Cartoon', 'Cartoon',
+                                             tearoff=TRUE,
                                              label='Cartoon')
 
         self.menuBar.addcascademenu('Cartoon', 'Rings', 'Rings & Bases',
@@ -2637,6 +2638,20 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                 variable = self.setting.cartoon_highlight_color,
                                 onvalue=104, offvalue=-1,
                                 )
+
+        addcascademenu('Cartoon', 'CartoonSampling', label='Sampling')
+        addmenuitem('CartoonSampling', 'radiobutton', label="Atom count dependent",
+                value=-1, variable=self.setting.cartoon_sampling)
+
+        for i in [2, 7, 14]:
+            addmenuitem('CartoonSampling', 'radiobutton', label=str(i),
+                    value=i, variable=self.setting.cartoon_sampling)
+
+        addcascademenu('Cartoon', 'CartoonGapCutoff', label='Gap Cutoff')
+
+        for i in [0, 5, 10, 20]:
+            addmenuitem('CartoonGapCutoff', 'radiobutton', label=str(i),
+                    value=i, variable=self.setting.cartoon_gap_cutoff)
 
         self.menuBar.addcascademenu('Setting', 'Ribbon', 'Ribbon',
                                              label='Ribbon')

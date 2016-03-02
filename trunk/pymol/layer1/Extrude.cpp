@@ -14,7 +14,6 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include"os_python.h"
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -413,6 +412,7 @@ void ExtrudeDumbbellEdge(CExtrude * I, int samp, int sign, float length)
 
 }
 
+#if 0
 int ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size)
 {
   int a;
@@ -470,6 +470,7 @@ int ExtrudeDumbbell2(CExtrude * I, int n, int sign, float length, float size)
     " ExtrudeDumbbell2-DEBUG: exiting...\n" ENDFD;
   return ok;
 }
+#endif
 
 CExtrude *ExtrudeNew(PyMOLGlobals * G)
 {
@@ -524,6 +525,8 @@ void ExtrudeBuildNormals2f(CExtrude * I)
 
 }
 
+#if 0
+/* Is this ever used? */
 void ExtrudeCGOTraceAxes(CExtrude * I, CGO * cgo)
 {
   int a;
@@ -554,6 +557,7 @@ void ExtrudeCGOTraceAxes(CExtrude * I, CGO * cgo)
   }
 }
 
+/* Is this ever used? */
 void ExtrudeCGOTrace(CExtrude * I, CGO * cgo)
 {
   int a;
@@ -569,6 +573,7 @@ void ExtrudeCGOTrace(CExtrude * I, CGO * cgo)
     CGOEnd(cgo);
   }
 }
+#endif
 
 int ExtrudeComputeTangents(CExtrude * I)
 {
@@ -623,6 +628,8 @@ int ExtrudeComputeTangents(CExtrude * I)
   return ok;
 }
 
+#if 0
+/* Is this ever used? */
 void ExtrudeCGOTraceFrame(CExtrude * I, CGO * cgo)
 {
   int a, b;
@@ -666,6 +673,7 @@ void ExtrudeCGOTraceFrame(CExtrude * I, CGO * cgo)
     }
   }
 }
+#endif
 
 /*
  * Draw flat cap on a tube cartoon (loop, oval, etc.)
@@ -2129,6 +2137,9 @@ int ExtrudeComputePuttyScaleFactors(CExtrude * I, ObjectMolecule * obj, int tran
   }
   return (ok);
 }
+
+#if 0
+#endif
 
 void ExtrudeTruncate(CExtrude * I, int n)
 {
