@@ -7608,6 +7608,11 @@ int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet
         break;
       }
 
+      if(strchr(word, '/')) {
+        is_selection = true;
+        break;
+      }
+
       /* encounterd a selection keyword? then this must be a selection */
 
       if(OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, word)))) {
@@ -11074,7 +11079,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
             }
 
             // macro codes (some special cases apply! see code below)
-            const int macrocodes[] = {SELE_MODs, SELE_SEGs, SELE_CHNs, SELE_RSNs, SELE_NAMs};
+            const int macrocodes[] = {SELE_SELs, SELE_SEGs, SELE_CHNs, SELE_RSNs, SELE_NAMs};
 
             // two code/value pairs to support resn`resi and name`alt
             int codes[] = {0, 0, 0}; // null-terminated

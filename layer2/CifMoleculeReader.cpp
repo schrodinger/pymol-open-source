@@ -34,6 +34,44 @@
 #include "Vector.h"
 #include "Lex.h"
 
+// canonical amino acid three letter codes
+const char * aa_three_letter[] = {
+  "ALA", // A
+  "ASX", // B  for ambiguous asparagine/aspartic-acid
+  "CYS", // C
+  "ASP", // D
+  "GLU", // E
+  "PHE", // F
+  "GLY", // G
+  "HIS", // H
+  "ILE", // I
+  NULL,  // J
+  "LYS", // K
+  "LEU", // L
+  "MET", // M
+  "ASN", // N
+  "HOH", // O  for water
+  "PRO", // P
+  "GLN", // Q
+  "ARG", // R
+  "SER", // S
+  "THR", // T
+  NULL,  // U
+  "VAL", // V
+  "TRP", // W
+  NULL,  // X  for other
+  "TYR", // Y
+  "GLX", // Z  for ambiguous glutamine/glutamic acid
+};
+
+// amino acid one-to-three letter code translation
+static const char * aa_get_three_letter(char aa) {
+  if (aa < 'A' || aa > 'Z')
+    return "UNK";
+  const char * three = aa_three_letter[aa - 'A'];
+  return (three) ? three : "UNK";
+}
+
 // dictionary content types
 enum CifDataType {
   CIF_UNKNOWN,
@@ -966,8 +1004,11 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
   if (!arr_name) arr_name = data->get_arr("_atom_site.label_atom_id");
   if (!arr_resn) arr_resn = data->get_opt("_atom_site.label_comp_id");
 
+  const cif_array *arr_label_seq_id = data->get_opt("_atom_site.label_seq_id");
+
   // PDBe provides unique seq_ids for bulk het groups
-  if (!arr_resi) arr_resi = data->get_opt("_atom_site.pdbe_label_seq_id", "_atom_site.label_seq_id");
+  if (!arr_resi) arr_resi = data->get_arr("_atom_site.pdbe_label_seq_id");
+  if (!arr_resi) arr_resi = arr_label_seq_id;
 
   if (arr_name) {
     info.type = CIF_MMCIF;
@@ -1103,6 +1144,7 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
     }
 
     ai->resv = arr_resi->as_i(i);
+    ai->temp1 = arr_label_seq_id->as_i(i); // for add_missing_ca
 
     if (arr_ins_code) {
       ai->setInscode(arr_ins_code->as_s(i)[0]);
@@ -1142,20 +1184,48 @@ static bool read_entity_poly(PyMOLGlobals * G, const cif_data * data, CifContent
       !(arr_type          = data->get_arr("_entity_poly.type")))
     return false;
 
+  const cif_array * arr_seq_one_letter = data->get_arr("_entity_poly.pdbx_seq_one_letter_code");
+
   // polypeptides
   for (int i = 0, n = arr_entity_id->get_nrows(); i < n; i++) {
-    if (!strncasecmp("polypeptide", arr_type->as_s(i), 11))
-      info.polypeptide_entities.insert(arr_entity_id->as_s(i));
+    if (!strncasecmp("polypeptide", arr_type->as_s(i), 11)) {
+      const char * entity_id = arr_entity_id->as_s(i);
+      info.polypeptide_entities.insert(entity_id);
+
+      if (arr_seq_one_letter) {
+        // sequences
+        auto& entity_sequence = info.sequences[entity_id];
+        const char * one = arr_seq_one_letter->as_s(i);
+        for (int i = 0; *one; ++one) {
+          if (strchr(" \t\r\n", *one)) // skip whitespace
+            continue;
+
+          if (*one == '(') {
+            const char * end = strchr(one, ')');
+            if (!end)
+              break;
+
+            std::string three(one + 1, end - one - 1);
+            entity_sequence.set(++i, three.c_str());
+            one = end;
+          } else {
+            entity_sequence.set(++i, aa_get_three_letter(*one));
+          }
+        }
+      }
+    }
   }
 
-  // sequences
-  if ((arr_entity_id     = data->get_arr("_entity_poly_seq.entity_id")) &&
-      (arr_num           = data->get_arr("_entity_poly_seq.num")) &&
-      (arr_mon_id        = data->get_arr("_entity_poly_seq.mon_id"))) {
-    for (int i = 0, n = arr_entity_id->get_nrows(); i < n; i++) {
-      info.sequences[arr_entity_id->as_s(i)].set(
-          arr_num->as_i(i),
-          arr_mon_id->as_s(i));
+  if (!arr_seq_one_letter) {
+    // sequences
+    if ((arr_entity_id     = data->get_arr("_entity_poly_seq.entity_id")) &&
+        (arr_num           = data->get_arr("_entity_poly_seq.num")) &&
+        (arr_mon_id        = data->get_arr("_entity_poly_seq.mon_id"))) {
+      for (int i = 0, n = arr_entity_id->get_nrows(); i < n; i++) {
+        info.sequences[arr_entity_id->as_s(i)].set(
+            arr_num->as_i(i),
+            arr_mon_id->as_s(i));
+      }
     }
   }
 
@@ -1221,19 +1291,17 @@ static bool read_pdbx_poly_seq_scheme(PyMOLGlobals * G, const cif_data * data,
     ai->rank = atomCount;
     ai->id = -1;
 
-    strncpy(ai->name, "CA", cAtomNameLen);
-    strncpy(ai->resn, arr_resn->as_s(i), cResnLen);
     ai->elem[0] = 'C';
-    strncpy(ai->segi, segi, cSegiLen);
 
+    ai->name = LexIdx(G, "CA");
+    ai->resn = LexIdx(G, arr_resn->as_s(i));
+    ai->segi = LexIdx(G, segi);
     ai->chain = LexIdx(G, arr_chain->as_s(i));
 
-    resi = arr_resi->as_s(i);
-    ai->resv = atoi(resi);
-    strncpy(ai->resi, resi, cResiLen);
+    ai->resv = arr_resi->as_i(i);
 
     if (arr_ins_code) {
-      UtilNConcat(ai->resi, arr_ins_code->as_s(i), sizeof(ResIdent));
+      ai->setInscode(arr_ins_code->as_s(i)[0]);
     }
 
     AtomInfoAssignParameters(G, ai);
@@ -1256,11 +1324,12 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
     AtomInfoType *& atInfo,
     int& current_resv,
     int& atomCount,
-    const AtomInfoType *& cai, int resv,
+    const int i_ref, int resv,
     const seqvec_t * current_seq,
     const char * entity_id)
 {
-  size_t i = cai - atInfo;
+  if (!atInfo[i_ref].temp1)
+    return;
 
   for (++current_resv; current_resv < resv; ++current_resv) {
     const char * resn = current_seq->get(current_resv);
@@ -1270,7 +1339,6 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
     VLACheck(atInfo, AtomInfoType, atomCount);
 
     AtomInfoType *ai = atInfo + atomCount;
-    cai = atInfo + i; // might have gotten reallocated
 
     ai->rank = atomCount;
     ai->id = -1;
@@ -1278,10 +1346,11 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
     ai->elem[0] = 'C';
     LexAssign(G, ai->name, "CA");
     LexAssign(G, ai->resn, resn);
-    LexAssign(G, ai->segi, cai->segi);
-    LexAssign(G, ai->chain, cai->chain);
+    LexAssign(G, ai->segi, atInfo[i_ref].segi);
+    LexAssign(G, ai->chain, atInfo[i_ref].chain);
 
-    ai->resv = current_resv;
+    ai->temp1 = current_resv;
+    ai->resv = current_resv + (atInfo[i_ref].resv - atInfo[i_ref].temp1);
 
     AtomInfoAssignParameters(G, ai);
     AtomInfoAssignColors(G, ai);
@@ -1294,8 +1363,8 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
 /*
  * Read missing residues / full sequence
  *
- * This function relies on the label_seq_id numbering and does nothing if
- * cif_use_auth=on.
+ * This function relies on the label_seq_id numbering which must be available
+ * in the `temp1` kludge field.
  *
  * Use the _entity_poly and _entity_poly_seq information to identify
  * missing residues in partially present chains. Add CA atoms for those
@@ -1304,70 +1373,55 @@ static void add_missing_ca_sub(PyMOLGlobals * G,
 static bool add_missing_ca(PyMOLGlobals * G,
     AtomInfoType *& atInfo, CifContentInfo &info) {
 
-  if (info.use_auth)
-    return false;
-
   int oldAtomCount = VLAGetSize(atInfo);
   int atomCount = oldAtomCount;
   int current_resv = 0;
   const seqvec_t * current_seq = NULL;
   const char * current_entity_id = "";
-  const AtomInfoType *cai = NULL, *cai_prev;
 
   for (int i = 0; i < oldAtomCount; ++i) {
-    cai_prev = cai;
-    cai = atInfo + i;
+    const char * entity_id = LexStr(G, atInfo[i].custom);
 
-    if (!cai->custom || info.is_excluded_chain(cai->segi)) {
-      current_seq = NULL;
-      continue;
-    }
-
-    const char * entity_id = LexStr(G, cai->custom);
-    if (!info.is_polypeptide(entity_id)) {
-      current_seq = NULL;
-      continue;
-    }
-
-    if (strcmp(entity_id, current_entity_id)) {
+    if (i == 0
+        || atInfo[i].chain != atInfo[i - 1].chain
+        || strcmp(entity_id, current_entity_id)) {
       // finish prev seq
-      if (current_seq && cai_prev) {
+      if (current_seq && i > 0) {
          add_missing_ca_sub(G,
              atInfo, current_resv, atomCount,
-             cai_prev, current_seq->size(),
-             current_seq, entity_id);
-      }
-
-      // get new sequence
-      auto it = info.sequences.find(entity_id);
-      if (it == info.sequences.end()) {
-        current_seq = NULL;
-      } else {
-        current_seq = &it->second;
+             i - 1, current_seq->size() + 1,
+             current_seq, current_entity_id);
       }
 
       current_resv = 0;
+      current_seq = NULL;
       current_entity_id = entity_id;
 
-    } else if (cai_prev && cai->chain != cai_prev->chain) {
-      current_resv = 0;
-    } else if (cai_prev && cai->resv == cai_prev->resv) {
+      if (info.is_polypeptide(entity_id) && !info.is_excluded_chain(atInfo[i].segi)) {
+        // get new sequence
+        auto it = info.sequences.find(entity_id);
+        if (it != info.sequences.end()) {
+          current_seq = &it->second;
+        }
+      }
+
+    } else if (i > 0 && atInfo[i].temp1 == atInfo[i - 1].temp1) {
       continue;
     }
 
     if (current_seq) {
       add_missing_ca_sub(G,
           atInfo, current_resv, atomCount,
-          cai, cai->resv,
+          i, atInfo[i].temp1,
           current_seq, entity_id);
     }
   }
 
   // finish last seq
-  if (current_seq && cai_prev) {
+  if (current_seq) {
     add_missing_ca_sub(G,
         atInfo, current_resv, atomCount,
-        cai_prev, current_seq->size(),
+        oldAtomCount - 1, current_seq->size() + 1,
         current_seq, current_entity_id);
   }
 
@@ -1648,7 +1702,9 @@ static BondType * read_geom_bond(PyMOLGlobals * G, cif_data * data,
       BondTypeInit2(bond++, i1, i2, 1);
 
     } else {
-      std::cout << "name lookup failed " << key1 << ' ' << key2 << std::endl;
+      PRINTFB(G, FB_Executive, FB_Details)
+        " Executive-Detail: _geom_bond name lookup failed: %s %s\n",
+        key1.c_str(), key2.c_str() ENDFB(G);
     }
   }
 
@@ -1699,7 +1755,8 @@ static BondType * read_chemical_conn_bond(PyMOLGlobals * G, cif_data * data) {
       BondTypeInit2(bond++, i1, i2,
           bondOrderLookup(arr_type->as_s(i)));
     } else {
-      std::cout << "name lookup failed" << std::endl;
+      PRINTFB(G, FB_Executive, FB_Details)
+        " Executive-Detail: _chemical_conn_bond name lookup failed\n" ENDFB(G);
     }
   }
 
@@ -1809,10 +1866,15 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
           info.is_excluded_chain(col_label_asym_id[j]->as_s(i)))
         goto next_row;
 
+      // doen't work with label_seq_id and bulk solvent
+      const char * seq_id = col_seq_id[j]->as_s(i);
+      if (!seq_id[0])
+        goto next_row;
+
       key[j] = make_mm_atom_site_label(G,
           asym_id,
           col_comp_id[j]->as_s(i),
-          col_seq_id[j]->as_s(i),
+          seq_id,
           col_ins_code[j] ? col_ins_code[j]->as_s(i) : "",
           col_atom_id[j]->as_s(i),
           col_alt_id[j]->as_s(i));
@@ -1827,7 +1889,9 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
       BondTypeInit2(bond++, i1, i2, order);
 
     } else {
-      std::cout << "name lookup failed " << key[0] << ' ' << key[1] << std::endl;
+      PRINTFB(G, FB_Executive, FB_Details)
+        " Executive-Detail: _struct_conn name lookup failed: %s %s\n",
+        key[0].c_str(), key[1].c_str() ENDFB(G);
     }
 
     // label to "continue" from inner for-loop
@@ -1889,7 +1953,9 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, cif_data * data,
       BondTypeInit2(bond++, i1, i2, order_value);
 
     } else {
-      std::cout << "name lookup failed " << key1 << ' ' << key2 << std::endl;
+      PRINTFB(G, FB_Executive, FB_Details)
+        " Executive-Detail: _chem_comp_bond name lookup failed: %s %s\n",
+        key1.c_str(), key2.c_str() ENDFB(G);
     }
   }
 
