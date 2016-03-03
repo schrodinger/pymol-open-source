@@ -2,6 +2,23 @@
 CHANGE LOG
 =========================================================================
 
+2016-03-03 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* new setting: auto_show_classified
+
+	* cartoon/ribbon: auto-detect CA-only models
+
+	* mmCIF reading of full sequence now independent of cif_use_auth
+
+	* mmCIF ss assignment to full residue, not only CA
+
+	* fix selection macros with wildcards and colon (:) residue ranges
+	  (1.8.0 regression)
+
+	* fix SCALE coordinate transformation for multi-model PDBs (e.g. 1hho)
+
+	* fix logging of expressions which contain '''
+
 2016-02-08 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* restore ignore_case=on default

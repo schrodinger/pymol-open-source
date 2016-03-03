@@ -505,6 +505,10 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
             " RepRibbon: found atom in %d; a1 %d a2 %d\n", obj->AtomInfo[a1].resv, a1, a2
             ENDFD;
 
+          // auto-detect CA-only models
+          if (!ai->bonded)
+            trace = true;
+
           if(a2 >= 0) {
             /*                                                if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
                (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||

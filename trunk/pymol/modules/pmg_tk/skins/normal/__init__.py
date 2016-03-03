@@ -2943,22 +2943,36 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         addmenuitem('Setting', 'separator', '')
 
-        self.menuBar.addmenuitem('Setting', 'checkbutton',
-                                 'Auto-Zoom.',
-                                 label='Auto-Zoom New Objects',
-                                variable = self.setting.auto_zoom,
-                                )
+        addcascademenu('Setting', 'AutoShow', label='Auto-Show ...', tearoff=TRUE)
 
-        self.menuBar.addmenuitem('Setting', 'checkbutton',
+        addmenuitem('AutoShow', 'checkbutton',
+                label='Cartoon/Sticks/Spheres by Classification',
+                variable=self.setting.auto_show_classified)
+
+        addmenuitem('AutoShow', 'separator', '')
+
+        addmenuitem('AutoShow', 'checkbutton', label='Auto-Show Lines', variable=self.setting.auto_show_lines)
+        addmenuitem('AutoShow', 'checkbutton', label='Auto-Show Spheres', variable=self.setting.auto_show_spheres)
+        addmenuitem('AutoShow', 'checkbutton', label='Auto-Show Nonbonded', variable=self.setting.auto_show_nonbonded)
+
+        addmenuitem('AutoShow', 'separator', '')
+
+        addmenuitem('AutoShow', 'checkbutton',
                                  'Auto-Show Selections.',
                                  label='Auto-Show New Selections',
                                 variable = self.setting.auto_show_selections,
                                 )
 
-        self.menuBar.addmenuitem('Setting', 'checkbutton',
+        addmenuitem('AutoShow', 'checkbutton',
                                  'Auto-Hide Selections.',
                                  label='Auto-Hide Selections',
                                 variable = self.setting.auto_hide_selections,
+                                )
+
+        self.menuBar.addmenuitem('Setting', 'checkbutton',
+                                 'Auto-Zoom.',
+                                 label='Auto-Zoom New Objects',
+                                variable = self.setting.auto_zoom,
                                 )
 
         self.menuBar.addmenuitem('Setting', 'checkbutton',
