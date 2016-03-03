@@ -298,6 +298,9 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
     } else {
       ai->visRep = RepGetAutoShowMask(G);
     }
+
+    ai->flags |= cAtomFlag_inorganic; // suppress auto_show_classified
+
     if(color < 0) {
       AtomInfoAssignColors(I->Obj.G, ai);
       if((ai->elem[0] == 'C') && (ai->elem[1] == 0))

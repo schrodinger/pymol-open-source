@@ -7920,6 +7920,10 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
 
       atInfo[a].visRep = auto_show;
 
+      if (!(ai->flags & cAtomFlag_class)) {
+        ai->flags |= cAtomFlag_inorganic; // suppress auto_show_classified
+      }
+
       if(ok && PyObject_HasAttrString(atom, "visible")) {
         unsigned int vis;
         tmp = PyObject_GetAttrString(atom, "visible");

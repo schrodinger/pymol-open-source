@@ -1211,6 +1211,18 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
   unsigned int mask;
   int n_dummies = 0;
 
+  int auto_show_classified = SettingGetGlobal_b(G, cSetting_auto_show_classified);
+  int auto_show_mask = (auto_show_classified != 2) ? 0 : cRepBitmask;
+
+  int visRep_organic = cRepCylBit | cRepNonbondedSphereBit;
+  int visRep_inorganic = cRepSphereBit;
+  int visRep_polymer = cRepCartoonBit;
+
+  if (auto_show_classified == 3) {
+    visRep_organic = visRep_inorganic = cRepLineBit | cRepNonbondedBit;
+    visRep_polymer = cRepRibbonBit;
+  }
+
   if(only_object) {
     SelectorUpdateTableSingleObject(G, only_object, cSelectorUpdateTableAllStates,
                                     true, NULL, 0, false);
@@ -1416,7 +1428,19 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
       } else {
         for(aa = a0; aa <= a1; aa++) {
           if(SelectorIsMember(G, ai0->selEntry, sele))
+          {
+            // apply styles if atom was unclassified
+            if (auto_show_classified && !(ai0->flags & cAtomFlag_class)) {
+              if (mask & cAtomFlag_organic) {
+                ai0->visRep = (ai0->visRep & auto_show_mask) | visRep_organic;
+              } else if (mask & cAtomFlag_inorganic) {
+                ai0->visRep = (ai0->visRep & auto_show_mask) | visRep_inorganic;
+              } else if (mask & cAtomFlag_polymer) {
+                ai0->visRep = (ai0->visRep & auto_show_mask) | visRep_polymer;
+              }
+            }
             ai0->flags = (ai0->flags & cAtomFlag_class_mask) | mask;
+          }
           ai0++;
         }
       }

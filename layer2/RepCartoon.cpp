@@ -2922,6 +2922,10 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
 
       bool is_gap = false;
 
+      // auto-detect CA-only models
+      if (!ai->bonded)
+        trace = true;
+
       // check for gap
       if(ndata->a2 >= 0) {
         if(!trace) {
