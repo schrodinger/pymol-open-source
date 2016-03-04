@@ -88,3 +88,30 @@ class TestAtomProperties(testing.PyMOLTestCase):
         #test to make sure the properties are exactly the same from the saved session as the loaded session
         self.assertEqual(prop_lookup, stored.prop_lookup)
 
+    @testing.requires_version('1.8.0.7')
+    def testDel(self):
+        cmd.pseudoatom('m1')
+
+        stored.keys = []
+        cmd.alter('all', 'p.foo = 123')
+        cmd.alter('all', 'p.bar = "Hello World"')
+        cmd.iterate('all', 'stored.keys = list(sorted(p.all))')
+        self.assertEqual(stored.keys, ['bar', 'foo'])
+
+        stored.keys = []
+        cmd.alter('all', "del p['foo']")
+        cmd.iterate('all', 'stored.keys = list(sorted(p.all))')
+        self.assertEqual(stored.keys, ['bar'])
+
+        stored.keys = []
+        cmd.alter('all', "p.bar = None")
+        cmd.iterate('all', 'stored.keys = list(sorted(p.all))')
+        self.assertEqual(stored.keys, [])
+
+        # object-level
+        cmd.set_property('bla', 456, 'm1')
+        stored.keys = cmd.get_property_list('m1')
+        self.assertEqual(stored.keys, ['bla'])
+        cmd.set_property('bla', None, 'm1')
+        stored.keys = cmd.get_property_list('m1')
+        self.assertEqual(stored.keys, [])
