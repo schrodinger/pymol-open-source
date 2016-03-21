@@ -382,7 +382,7 @@ USAGE (PYTHON)
     from pymol import cmd
     cmd.do("load file.pdb")
         '''
-        r = DEFAULT_ERROR
+        r = DEFAULT_SUCCESS
         log = int(log)
         if is_list(commands):
             cmmd_list = commands
@@ -402,8 +402,6 @@ USAGE (PYTHON)
                             r = _cmd.do(_self._COb,a,log,echo)
                         finally:
                             _self.unlock(r,_self)
-                    else:
-                        r = DEFAULT_SUCCESS
             else:
                 try:
                     _self.lock(_self)
@@ -415,8 +413,6 @@ USAGE (PYTHON)
                             if do_flush:
                                 _self.unlock(r,_self) # flushes
                                 _self.lock(_self)
-                        else:
-                            r = DEFAULT_SUCCESS
                 finally:
                     _self.unlock(r,_self)
         if n_cmmd>1:

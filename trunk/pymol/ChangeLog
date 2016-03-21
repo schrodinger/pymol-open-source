@@ -2,6 +2,32 @@
 CHANGE LOG
 =========================================================================
 
+2016-03-21 Thomas Holder, Gabriel Marques
+
+	* pse_export_version: save 1.7.6 compatible PSEs by default
+
+	* forward "set" to "set_bond" for bond-level settings
+
+	* fetch: use http instead of ftp with default host
+
+	* MOL2 export
+	  - chain support (write substructure record)
+
+	* MOL2 import
+	  - more reliable resn reconstruction
+	  - hetatm=0 for subst_type=RESIDUE
+	  - don't use root atom id for substructure mapping
+
+	* set_name w/ map: update dependents (mesh, surface, volume)
+
+	* skip mmCIF "CA ATOMS ONLY" detection (not needed anymore)
+
+	* fix COLLADA export crash with transparency
+
+	* fix load_traj crash w/ state-level settings
+
+	* 1.8.1.2 (beta)
+
 2016-03-03 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* new setting: auto_show_classified

@@ -510,6 +510,7 @@ static WordKeyValue Keyword[] = {
   {"l.", SELE_LIK2},
 
   {cKeywordAll, SELE_ALLz},     /* 0 parameter */
+  {"*", SELE_ALLz},             /* 0 parameter */
 
   {cKeywordNone, SELE_NONz},    /* 0 parameter */
   {"hetatm", SELE_HETz},        /* 0 parameter */
@@ -11047,10 +11048,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
         strcpy(e->text, word[c]);
         valueFlag++;
       } else {                  /* possible keyword... */
-        if((word[c][0] == '*') && (!word[c][1]))
-          code = SELE_ALLz;
-        else
-          code = WordKey(G, Keyword, word[c], 4, ignore_case, &exact);
+        code = WordKey(G, Keyword, word[c], 4, ignore_case, &exact);
         if(!code) {
           b = strlen(word[c]) - 1;
           if((b > 2) && (word[c][b] == ';')) {

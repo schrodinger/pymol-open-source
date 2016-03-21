@@ -550,7 +550,7 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if is_ok(r) and (r!=None):
-            if not quiet:
+            if not int(quiet):
                 name = name_dict.get(i, name)
                 r_str = str(r)
                 if len(r_str) > 200:

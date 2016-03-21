@@ -3931,7 +3931,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   float pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version);
 
   if(I->DiscreteFlag
-      && pse_export_version > 1e-4
+      && !SettingGetGlobal_b(I->Obj.G, cSetting_pse_binary_dump)
       && pse_export_version < 1.7699) {
     int *dcs;
     int a;

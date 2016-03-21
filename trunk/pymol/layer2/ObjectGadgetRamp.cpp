@@ -396,7 +396,8 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
   // I->Special, removed in PyMOL 1.8
   bool any = false;
   int* special = NULL;
-  if (I->Color /* && pse_export_version > 1e-4 && pse_export_version < 1.7699 */) {
+  int pse_export_version = SettingGetGlobal_f(I->Gadget.Obj.G, cSetting_pse_export_version) * 1000;
+  if (I->Color && pse_export_version < 1800) {
     int n_color = VLAGetSize(I->Color) / 3;
     special = VLAlloc(int, n_color);
     for (int a = 0; a < n_color; ++a) {

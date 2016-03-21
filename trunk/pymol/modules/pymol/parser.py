@@ -487,6 +487,10 @@ if __name__=='pymol.parser':
             self.cmd._pymol._stdin_reader_thread = None
 
         def complete(self,st):
+            with self.cmd.lockcm:
+                return self._complete(st)
+
+        def _complete(self,st):
             result = None
             pre = ''
             flag = 0

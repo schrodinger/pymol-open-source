@@ -2746,7 +2746,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
   return ok;
 }
 
-static void ExecutiveInvalidateMapDependents(PyMOLGlobals * G, const char *map_name)
+static void ExecutiveInvalidateMapDependents(PyMOLGlobals * G, const char *map_name, const char * new_name = NULL)
 {
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -2754,13 +2754,13 @@ static void ExecutiveInvalidateMapDependents(PyMOLGlobals * G, const char *map_n
     if(rec->type == cExecObject) {
       switch (rec->obj->type) {
       case cObjectMesh:
-        ObjectMeshInvalidateMapName((ObjectMesh *) rec->obj, map_name);
+        ObjectMeshInvalidateMapName((ObjectMesh *) rec->obj, map_name, new_name);
         break;
       case cObjectSurface:
-        ObjectSurfaceInvalidateMapName((ObjectSurface *) rec->obj, map_name);
+        ObjectSurfaceInvalidateMapName((ObjectSurface *) rec->obj, map_name, new_name);
         break;
       case cObjectVolume:
-        ObjectVolumeInvalidateMapName((ObjectVolume *) rec->obj, map_name);
+        ObjectVolumeInvalidateMapName((ObjectVolume *) rec->obj, map_name, new_name);
         break;
       }
     }
@@ -3472,6 +3472,9 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
               SceneChanged(G);
               SeqChanged(G);
             }
+            if (rec->obj->type == cObjectMap)
+              ExecutiveInvalidateMapDependents(G, old_name, new_name);
+
             found = true;
           }
           break;
@@ -12484,8 +12487,17 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
           }
           break;
         case cExecSelection:
-          levelmask |= SettingLevelInfo[cSettingLevel_atom].mask;
-          sele1 = SelectorIndexByName(G, rec->name);
+          if (SettingLevelCheckMask(G, index, SettingLevelInfo[cSettingLevel_bond].mask)) {
+            // handle bond-level settings (PYMOL-2726)
+            ok = ExecutiveSetBondSetting(G, index, tuple, sele, sele, state, quiet, false);
+            if (updates)
+              side_effects = true;
+            sele1 = -1;
+          } else {
+            levelmask |= SettingLevelInfo[cSettingLevel_atom].mask;
+            sele1 = SelectorIndexByName(G, rec->name);
+          }
+
           if(sele1 >= 0) {
             int have_atomic_value = false;
             int type = PyInt_AsLong(PyTuple_GetItem(tuple, 0));
@@ -12978,7 +12990,14 @@ int ExecutiveUnsetSetting(PyMOLGlobals * G, int index, const char *sele,
           }
           break;
         case cExecSelection:
-          sele1 = SelectorIndexByName(G, rec->name);
+          if (SettingLevelCheckMask(G, index, SettingLevelInfo[cSettingLevel_bond].mask)) {
+            // handle bond-level settings (PYMOL-2726)
+            ok = ExecutiveUnsetBondSetting(G, index, sele, sele, state, quiet, false);
+            sele1 = -1;
+          } else {
+            sele1 = SelectorIndexByName(G, rec->name);
+          }
+
           if(sele1 >= 0) {
             ObjectMoleculeOpRecInit(&op);
             op.code = OMOP_SetAtomicSetting;
