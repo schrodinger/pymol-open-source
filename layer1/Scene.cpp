@@ -7531,7 +7531,9 @@ static void SceneStencilCheck(PyMOLGlobals *G)
 
 void SceneUpdateObjectMoleculesSingleThread(PyMOLGlobals * G)
 {
-#ifndef _DEAD_CODE_DIE
+  // this function seems to be a relict, see PYMOL-2746
+  // TODO: remove it for good if 1.8.2 beta testing shows no issues.
+#if 0
   CScene *I = G->Scene;
   ObjRec *rec = NULL;
   while(ListIterate(I->Obj, rec, next)) {

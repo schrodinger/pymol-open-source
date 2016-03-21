@@ -351,7 +351,7 @@ static void ObjectVolumeFree(ObjectVolume * I)
   OOFreeP(I);
 }
 
-int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name)
+int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name, const char * new_name)
 {
   int a;
   ObjectVolumeState *vs;
@@ -360,6 +360,8 @@ int ObjectVolumeInvalidateMapName(ObjectVolume * I, const char *name)
     vs = I->State + a;
     if(vs->Active) {
       if(strcmp(vs->MapName, name) == 0) {
+        if (new_name)
+          strcpy(vs->MapName, new_name);
         ObjectVolumeInvalidate(I, cRepAll, cRepInvAll, a);
         result = true;
       }

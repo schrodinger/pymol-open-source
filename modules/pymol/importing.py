@@ -1216,7 +1216,7 @@ PYMOL API
         return r
 
     fetchHosts = {
-        "pdb"  : "ftp://ftp.wwpdb.org/pub/pdb",
+        "pdb"  : "http://ftp.wwpdb.org/pub/pdb",
         "pdbe" : "ftp://ftp.ebi.ac.uk/pub/databases/pdb",
         "pdbj" : "ftp://ftp.pdbj.org/pub/pdb",
     }

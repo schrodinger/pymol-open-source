@@ -8823,6 +8823,9 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
   int have_molecule = false;
   WordType nameTmp;
 
+  // Maestro writes <0> as subst_name for waters
+  const lexidx_t empty_subst_name = LexIdx(G, "<0>");
+
   p = buffer;
   nAtom = 0;
   if(atInfoPtr)
@@ -8942,12 +8945,15 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
               ai->setResi(cc_resi);
               p = ParseWordCopy(cc, p, MAXLINELEN);
               if(cc[0]) {
-                // if subst_name includes the subst_id (e.g. 5 ALA5) then strip the number
-                int len_resi = strlen(cc_resi);
-                int len_resn = strlen(cc);
-                if (len_resn > len_resi) {
-                  if (strcmp(cc_resi, cc + len_resn - len_resi) == 0) {
-                    cc[len_resn - len_resi] = 0;
+                if (nSubst == 0) {
+                  // without substructure information (e.g. OpenBabel exported MOL2):
+                  // if subst_name includes the subst_id (e.g. 5 ALA5) then strip the number
+                  int len_resi = strlen(cc_resi);
+                  int len_resn = strlen(cc);
+                  if (len_resn > len_resi) {
+                    if (strcmp(cc_resi, cc + len_resn - len_resi) == 0) {
+                      cc[len_resn - len_resi] = 0;
+                    }
                   }
                 }
 
@@ -8957,6 +8963,16 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                 if(cc[0]) {
                   if(sscanf(cc, "%f", &ai->partialCharge) != 1)
                     ok = ErrMessage(G, "ReadMOL2File", "bad atom charge");
+                }
+
+                // status_bit
+                p = ParseWordCopy(cc, p, MAXLINELEN);
+                if (cc[0]) {
+                  // for water, substitute resn "<0>" with "HOH" for
+                  // correct classification as "solvent"
+                  if (ai->resn == empty_subst_name && strstr(cc, "WATER")) {
+                    LexAssign(G, ai->resn, G->lex_const.HOH);
+                  }
                 }
               }
             }
@@ -9145,6 +9161,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
           }
 
           for(a = 0; a < nSubst; a++) {
+            bool hetatm = true;
             segment[0] = 0;
             subst_name[0] = 0;
             LexAssign(G, chain, 0);
@@ -9206,7 +9223,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
               if(sscanf(cc, "%s", segment) != 1) {
                 end_line = true;
                 segment[0] = 0;
-              } else {
+              } else if(strcmp(segment, "****")) {
                 seg_flag = true;
                 if(!segment[1]) {       /* if segment is single letter, then also assign to chain field */
                   LexAssign(G, chain, segment);
@@ -9310,6 +9327,10 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                       resi_flag = true;
                     }
                   }
+
+                  if (strcmp(subst_type, "RESIDUE") == 0) {
+                    hetatm = false;
+                  }
                 }
               }
 
@@ -9319,7 +9340,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                 if(resi_flag || chain_flag || resn_flag || seg_flag) {
                   OVreturn_word result;
                   {
-                    if(OVreturn_IS_OK((result = OVOneToOne_GetForward(o2o, atInfo[root].resv)))) {
+                    if(OVreturn_IS_OK((result = OVOneToOne_GetForward(o2o, id)))) {
                       /* traverse linked list for resi */
                       int b = result.word;
                       while((b >= 0) && (b < nAtom)) {
@@ -9333,6 +9354,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                           LexAssign(G, ai->resn, resn);
                         if(seg_flag)
                           LexAssign(G, ai->segi, segment);
+                        ai->hetatm = hetatm;
                         b = ai->temp1;
                       }
                     }
@@ -9352,6 +9374,9 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
     } else
       p = ParseNextLine(p);
   }
+
+  LexDec(G, empty_subst_name);
+
   if(ok) {
     cset = CoordSetNew(G);
     cset->NIndex = nAtom;

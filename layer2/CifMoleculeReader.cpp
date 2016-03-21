@@ -789,8 +789,9 @@ static bool read_pdbx_coordinate_model(PyMOLGlobals * G, cif_data * data, Object
   // collect CA/P-only chain identifiers
   for (int i = 0, nrows = arr_type->get_nrows(); i < nrows; ++i) {
     const char * type = arr_type->as_s(i);
-    if (strcmp(type, "CA ATOMS ONLY") == 0 ||
-        strcmp(type, "P ATOMS ONLY") == 0) {
+    // no need anymore to check "CA ATOMS ONLY", since nonbonded CA are
+    // now (v1.8.2) detected automatically in RepCartoon and RepRibbon
+    if (strcmp(type, "P ATOMS ONLY") == 0) {
       asyms.insert(arr_asym->as_s(i));
     }
   }

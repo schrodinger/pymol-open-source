@@ -332,7 +332,7 @@ static void ObjectSurfaceInvalidate(ObjectSurface * I, int rep, int level, int s
   }
 }
 
-int ObjectSurfaceInvalidateMapName(ObjectSurface * I, const char *name)
+int ObjectSurfaceInvalidateMapName(ObjectSurface * I, const char *name, const char * new_name)
 {
   int a;
   ObjectSurfaceState *ms;
@@ -341,6 +341,8 @@ int ObjectSurfaceInvalidateMapName(ObjectSurface * I, const char *name)
     ms = I->State + a;
     if(ms->Active) {
       if(strcmp(ms->MapName, name) == 0) {
+        if (new_name)
+          strcpy(ms->MapName, new_name);
         ObjectSurfaceInvalidate(I, cRepAll, cRepInvAll, a);
         result = true;
       }

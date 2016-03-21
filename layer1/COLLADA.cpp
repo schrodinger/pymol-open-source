@@ -870,7 +870,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
           cur_trans = prim->trans;
 
           /* Increase geom_trans with geom, realloc exponentially. */
-          if (geom == geom_trans_len) {
+          while (geom >= geom_trans_len) {
             geom_trans_len *= 2;
             geom_trans = (int *) realloc(geom_trans,
                 (geom_trans_len) * sizeof(int));
@@ -895,7 +895,6 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             trans_len++;
           } else {
             /* Reference existing transparency level. */
-            geom_trans = (int *) realloc(geom_trans, (geom + 1) * sizeof(int));
             geom_trans[geom] = p;
           }
 
