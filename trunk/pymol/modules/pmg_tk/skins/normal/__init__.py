@@ -36,14 +36,39 @@ import traceback
 root = None
 
 def encode(s):
-    if not isinstance(s, bytes):
-        try:
-            s = s.encode(sys.getfilesystemencoding())
-        except UnicodeEncodeError:
-            s = s.encode('latin1')
+    '''If `s` is unicode, attempt to encode it. On faiure, return the
+    unicode input.
+
+    Our C file I/O implementations can't handle unicode. For some file
+    types we support reading the file in Python (supports unicode) and
+    passing the content to the underlying C routine.
+    '''
     if sys.version_info[0] >= 3:
-        return s.decode()
+        return s
+    if not isinstance(s, bytes):
+        for enc in [sys.getfilesystemencoding(), 'latin1']:
+            try:
+                e = s.encode(enc)
+                if os.path.exists(e):
+                    return e
+            except UnicodeEncodeError:
+                pass
     return s
+
+def split_tk_file_list(pattern):
+    filenames = []
+    while True:
+        pattern = pattern.strip()
+        if not pattern:
+            break
+        sep = None
+        if pattern[0] == '{':
+            pattern = pattern[1:]
+            sep = '}'
+        a = pattern.split(sep, 1)
+        filenames.append(a[0])
+        pattern = a[1] if len(a) == 2 else ''
+    return filenames
 
 def asksaveasfilename(*args, **kwargs):
     filename = tkFileDialog.asksaveasfilename(*args, **kwargs)
@@ -53,15 +78,17 @@ def askopenfilename(*args, **kwargs):
     filename = tkFileDialog.askopenfilename(*args, **kwargs)
     if not filename:
         return filename
-    if isinstance(filename, (list, tuple)):
-        filename = map(encode, filename)
-    elif isinstance(filename, (str, bytes)):
-        filename = encode(filename)
-        if not kwargs.get('multiple', 0):
-            return os.path.normpath(filename)
-        filename = root.tk.splitlist(filename)
+    multiple = kwargs.get('multiple', 0)
+    if not multiple:
+        filename = [filename]
+    elif not isinstance(filename, (list, tuple)):
+        filename = split_tk_file_list(filename)
     filename = map(os.path.normpath, filename)
-    return list(filename)
+    filename = map(encode, filename)
+    filename = list(filename)
+    if not multiple:
+        return filename[0]
+    return filename
 
 def _darwin_browser_open(url):
     os.popen("open "+url,'r').read()
@@ -143,9 +170,9 @@ class Normal(PMGSkin):
         self._initialdir = value
 
     def cd_dialog(self):
-        self.cmd.cd(tkFileDialog.askdirectory(
+        self.cmd.cd(encode(tkFileDialog.askdirectory(
             title="Change Working Directory",
-            initialdir=self.initialdir) or '.', quiet=0)
+            initialdir=self.initialdir)) or '.', quiet=0)
 
     def complete(self,event):
         st = self.cmd._parser.complete(self.command.get())

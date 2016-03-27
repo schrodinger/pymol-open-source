@@ -701,6 +701,16 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
   int identity = (SettingGetGlobal_i(I->G, cSetting_geometry_export_mode) == 1);
 
   /*
+   * Setting: collada_background_box
+   * -------------------------------
+   * 0 = Do not include a background box. (default)
+   * 1 = Include the background box for more accurate reproduction of the scene.
+   * NB: This setting is overridden by geometry_export_mode == 1, in which case
+   * no background box will be generated.
+   */
+  int bgbox = SettingGetGlobal_i(I->G, cSetting_collada_background_box);
+
+  /*
    * Setting: collada_geometry_mode
    * ------------------------------
    * 0 = Valid COLLADA 1.4.1. (default)
@@ -915,7 +925,8 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
            */
 
           /* Generate bounding box geometry for background. */
-          if (!identity) {
+          /* Only if collada_background_box == 1 and geometry_export_mode == 0 */
+          if (!identity && bgbox) {
             /* Ensure camera is inside bounding box */
             int i;
             for (i = 0; i < 3; i++) {
@@ -1686,7 +1697,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
     free(mat);
 
     /* background geometry */
-    if (!identity) {
+    if (!identity && bgbox) {
       xmlTextWriterStartElement(w, BAD_CAST "node");
       xmlTextWriterWriteAttribute(w, BAD_CAST "id", BAD_CAST "node-geom-bg");
 
