@@ -860,6 +860,7 @@ enum {
   REC_f( 752, valence_zero_scale                      , ostate    , 0.2f ),
   REC_i( 753, valence_zero_mode                       , ostate    , 1, 0, 2 ), // 0: skip, 1: dashed, 2: solid
   REC_i( 754, auto_show_classified                    , global    , 0, 0, 3 ), // 0: off, 1: as, 2: show, 3: simple
+  REC_b( 755, collada_background_box                  , global    , 0 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

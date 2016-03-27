@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2016-03-27 Jared Sampson
+
+	* new setting: collada_background_box (default 0)
+	  https://sourceforge.net/p/pymol/mailman/message/34961984/
+
 2016-03-21 Thomas Holder, Gabriel Marques
 
 	* pse_export_version: save 1.7.6 compatible PSEs by default

@@ -2516,7 +2516,7 @@ int PyMOL_Idle(CPyMOL * I)
 #ifdef _MACPYMOL_XCODE
       /* restore working directory if asked to */
       PRunStringModule(G,
-                       "if 'PYMOL_WD' not in os.environ: os.chdir(os.environ['PYMOL_WD'])");
+                       "if 'PYMOL_WD' in os.environ: os.chdir(os.environ['PYMOL_WD'])");
       PXDecRef(PYOBJECT_CALLMETHOD(G->P_inst->obj, "launch_gui", "O", G->P_inst->obj));
 #endif
       /* END PROPRIETARY CODE SEGMENT */
