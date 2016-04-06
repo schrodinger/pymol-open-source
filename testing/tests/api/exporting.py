@@ -77,6 +77,7 @@ class TestExporting(testing.PyMOLTestCase):
     # cmp_atom : compares all fields in Atom (see chempy/__init__.py)
     #            except the id (which is unique to the instance)
     def cmp_atom(self, selfobj,other):
+        cmp = lambda a, b: a != b # py3k
         return \
                 cmp(type(selfobj), type(other)) or \
                 cmp(selfobj.segi, other.segi) or \
@@ -89,6 +90,7 @@ class TestExporting(testing.PyMOLTestCase):
 
     # cmp_bond : compares all fields in Bond (see chempy/__init__.py)
     def cmp_bond(self, selfobj,other):
+        cmp = lambda a, b: a != b # py3k
         return \
                 cmp(selfobj.order, other.order) or \
                 cmp(selfobj.stereo, other.stereo)
@@ -104,7 +106,6 @@ class TestExporting(testing.PyMOLTestCase):
             self.assertTrue(self.cmp_bond(m1bondidx, m2.bond[idx]) == 0)
             idx = idx + 1
 
-    @testing.requires('incentive')
     @testing.requires_version('1.7.6')
     @unittest.skipIf(sys.version_info[0] > 2, 'pse_binary_dump not py3k ready')
     def testPSEBulkImport(self):
@@ -115,9 +116,7 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertModelsAreSame(m1, m2)
 
     @testing.foreach.product((0, 1.7, 1.76, 1.8, 1.82, 1.9), (0, 1))
-    @testing.requires('incentive')
     @testing.requires_version('1.7.6.5')
-    @unittest.skipIf(sys.version_info[0] > 2, 'pse_binary_dump not py3k ready')
     def testPSEBulkExportImport(self, pse_export_version, pse_binary_dump):
         with testing.mktemp('.pse') as filename:
             cmd.load(self.datafile("1oky-frag.pdb"))
