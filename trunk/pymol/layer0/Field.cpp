@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 
 #include"Field.h"
 #include"Vector.h"
+#include "Setting.h"
 
 /*
  * Get a field as NumPy array. If copy is false, then return an array wrapper
@@ -86,14 +87,13 @@ ok_except1:
 #endif
 }
 
-PyObject *FieldAsPyList(CField * I)
+PyObject *FieldAsPyList(PyMOLGlobals * G, CField * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
   int n_elem;
+
+  int pse_export_version = SettingGetGlobal_f(G, cSetting_pse_export_version) * 1000;
+  bool dump_binary = (!pse_export_version || pse_export_version > 1776) && SettingGetGlobal_b(G, cSetting_pse_binary_dump);
 
   /* first, dump the atoms */
 
@@ -107,10 +107,10 @@ PyObject *FieldAsPyList(CField * I)
   n_elem = I->size / I->base_size;
   switch (I->type) {
   case cFieldInt:
-    PyList_SetItem(result, 6, PConvIntArrayToPyList((int *) I->data, n_elem));
+    PyList_SetItem(result, 6, PConvIntArrayToPyList((int *) I->data, n_elem, dump_binary));
     break;
   case cFieldFloat:
-    PyList_SetItem(result, 6, PConvFloatArrayToPyList((float *) I->data, n_elem));
+    PyList_SetItem(result, 6, PConvFloatArrayToPyList((float *) I->data, n_elem, dump_binary));
     break;
   default:
     PyList_SetItem(result, 6, PConvAutoNone(Py_None));
@@ -118,7 +118,6 @@ PyObject *FieldAsPyList(CField * I)
   }
 
   return (PConvAutoNone(result));
-#endif
 
 }
 
@@ -178,9 +177,6 @@ CField *FieldNewCopy(PyMOLGlobals * G, const CField * src)
 
 CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   int ok = true;
   unsigned int n_elem;
   int ll;
@@ -216,7 +212,6 @@ CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
      Always check ll when adding new PyList_GetItem's */
 
   if(ok) {
-    n_elem = I->size / I->base_size;
     switch (I->type) {
     case cFieldInt:
       {
@@ -242,7 +237,6 @@ CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
     I = NULL;
   }
   return (I);
-#endif
 }
 
 float FieldInterpolatef(CField * I, int a, int b, int c, float x, float y, float z)

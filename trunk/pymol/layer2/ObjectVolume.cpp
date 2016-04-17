@@ -111,7 +111,7 @@ static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
   PyList_SetItem(result, 14, PyFloat_FromDouble(0.0 /* I->AltLevel */));
   PyList_SetItem(result, 15, PyInt_FromLong(1 /* I->quiet */));
   if(I->Field) {
-    PyList_SetItem(result, 16, IsosurfAsPyList(I->Field));
+    PyList_SetItem(result, 16, IsosurfAsPyList(I->State.G, I->Field));
   } else {
     PyList_SetItem(result, 16, PConvAutoNone(NULL));
   }

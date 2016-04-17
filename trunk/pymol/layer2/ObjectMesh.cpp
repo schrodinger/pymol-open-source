@@ -48,7 +48,6 @@ static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state);
 void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms);
 void ObjectMeshRecomputeExtent(ObjectMesh * I);
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
 {
   PyObject *result = NULL;
@@ -76,15 +75,13 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState * I)
   PyList_SetItem(result, 14, PyFloat_FromDouble(I->AltLevel));
   PyList_SetItem(result, 15, PyInt_FromLong(I->quiet));
   if(I->Field) {
-    PyList_SetItem(result, 16, IsosurfAsPyList(I->Field));
+    PyList_SetItem(result, 16, IsosurfAsPyList(I->State.G, I->Field));
   } else {
     PyList_SetItem(result, 16, PConvAutoNone(NULL));
   }
   return (PConvAutoNone(result));
 }
-#endif
 
-#ifndef _PYMOL_NOPY
 static int ObjectMeshStateMapExists(ObjectMesh *I, ObjectMeshState *ms){
   return ExecutiveFindObjectMapByName(I->Obj.G, ms->MapName) ? 1 : 0;
 }
@@ -117,9 +114,7 @@ static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh * I)
   }
   return (PConvAutoNone(result));
 }
-#endif
 
-#ifndef _PYMOL_NOPY
 static int ObjectMeshStateFromPyList(PyMOLGlobals * G, ObjectMeshState * I,
                                      PyObject * list)
 {
@@ -200,9 +195,7 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals * G, ObjectMeshState * I,
   }
   return (ok);
 }
-#endif
 
-#ifndef _PYMOL_NOPY
 static int ObjectMeshAllStatesFromPyList(ObjectMesh * I, PyObject * list)
 {
 
@@ -220,13 +213,9 @@ static int ObjectMeshAllStatesFromPyList(ObjectMesh * I, PyObject * list)
   }
   return (ok);
 }
-#endif
 
 int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** result)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int ok = true;
   int ll;
   ObjectMesh *I = NULL;
@@ -259,17 +248,12 @@ int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** res
     (*result) = NULL;
   }
   return (ok);
-#endif
 }
 
 static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCGO, int stateArg);
 
 PyObject *ObjectMeshAsPyList(ObjectMesh * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   int allMapsExist = ObjectMeshAllMapsInStatesExist(I);
@@ -299,7 +283,6 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
     ObjectCGOFree(retObjectCGO);
   }
   return (PConvAutoNone(result));
-#endif
 }
 
 static void ObjectMeshStateFree(ObjectMeshState * ms)
@@ -1008,7 +991,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
               }
             }
           }
-        } else if(G->HaveGUI && G->ValidContext) {
+        } else if(G->HaveGUI && G->ValidContext || returnCGO) {
           if(!pick && !pass) {
 	      short use_shader;
 	      short mesh_as_cylinders ;

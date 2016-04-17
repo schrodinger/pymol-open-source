@@ -70,7 +70,10 @@ class install_pymol(install):
 
         if self.bundled_pmw:
             import tarfile
-            tar = tarfile.open("modules/pmg_tk/pmw.tgz")
+            pmwtgz = "modules/pmg_tk/pmw-py%d.tgz" % (sys.version_info[0])
+            if not os.path.exists(pmwtgz):
+                pmwtgz = "modules/pmg_tk/pmw.tgz"
+            tar = tarfile.open(pmwtgz)
             tar.extractall(self.install_libbase)
             tar.close()
 

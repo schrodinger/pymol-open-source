@@ -71,7 +71,7 @@ void FieldInterpolate3f(CField * I, int *locus, float *fract, float *result);
 #define FieldFreeP(ptr) {if(ptr){FieldFree(ptr);ptr=NULL;}}
 
 PyObject *FieldAsNumPyArray(CField * I, short copy);
-PyObject *FieldAsPyList(CField * I);
+PyObject *FieldAsPyList(PyMOLGlobals * G, CField * I);
 CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list);
 CField *FieldNewFromPyList_From_List(PyMOLGlobals * G, PyObject * list, int);
 CField *FieldNewCopy(PyMOLGlobals * G, const CField * src);

@@ -2312,6 +2312,7 @@ static CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals * G, const char *buf
 ok_except1:
     if(cset)
       cset->fFree();
+    cset = NULL;
     ErrMessage(G, "ObjectMoleculeTOPStr2CoordSet", "failed");
   }
   if(atInfoPtr)
@@ -2355,11 +2356,12 @@ static ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals * G, ObjectMolecule
     if (ok)
       cset = ObjectMoleculeTOPStr2CoordSet(G, TOPStr, &atInfo);
     CHECKOK(ok, cset);
-    nAtom = cset->NIndex;
   }
 
   /* include coordinate set */
   if(ok) {
+    nAtom = cset->NIndex;
+
     if(I->DiscreteFlag && atInfo) {
       unsigned int a;
       int fp1 = frame + 1;

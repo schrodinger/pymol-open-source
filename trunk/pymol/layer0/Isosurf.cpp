@@ -118,25 +118,20 @@ void IsosurfFree(PyMOLGlobals * G)
 
 
 /*===========================================================================*/
-PyObject *IsosurfAsPyList(Isofield * field)
+PyObject *IsosurfAsPyList(PyMOLGlobals * G, Isofield * field)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   result = PyList_New(4);
 
   PyList_SetItem(result, 0, PConvIntArrayToPyList(field->dimensions, 3));
   PyList_SetItem(result, 1, PyInt_FromLong(field->save_points));
-  PyList_SetItem(result, 2, FieldAsPyList(field->data));
+  PyList_SetItem(result, 2, FieldAsPyList(G, field->data));
   if(field->save_points)
-    PyList_SetItem(result, 3, FieldAsPyList(field->points));
+    PyList_SetItem(result, 3, FieldAsPyList(G, field->points));
   else
     PyList_SetItem(result, 3, PConvAutoNone(NULL));
   return (PConvAutoNone(result));
-#endif
 }
 
 
@@ -158,10 +153,6 @@ static void IsosurfInterpolate(CIsosurf * I, float *v1, float *l1, float *v2, fl
 /*===========================================================================*/
 Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   int ok = true;
   int dim4[4];
   int a;
@@ -210,7 +201,6 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
     }
   }
   return (result);
-#endif
 }
 
 Isofield *IsosurfNewCopy(PyMOLGlobals * G, const Isofield * src)

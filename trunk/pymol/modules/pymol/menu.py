@@ -409,6 +409,24 @@ def by_ss(self_cmd, sele):
     [ 1, '\\099Helix \\900Sheet \\909Loop'  , 'util.cbss("'+sele+'","cyan","red","magenta",_self=cmd)'],
               ]
 
+def by_rep(self_cmd, sele, mode=0):
+    r = [[ 2, 'By Representation:', '' ]]
+    r += [
+        [1, rep, by_rep_sub(self_cmd, rep, setting, sele)] if rep else [0, '', '']
+        for (rep, setting) in rep_setting_lists[mode]
+    ]
+    return r
+
+def by_rep_sub(self_cmd, rep, setting, sele):
+    expr = 'cmd.set("%s", "{0}", %s, quiet=0)' % (setting, repr(sele))
+    r = [[ 2, rep.capitalize(), '' ]]
+    r += all_colors_generic(self_cmd, expr)
+    r += [
+        [ 0 , '', '' ],
+        [ 1 , 'unset', 'cmd.unset("%s", %s, quiet=0)' % (setting, repr(sele)) ],
+    ]
+    return r
+
 def spectrum(self_cmd, sele):
     r = [
         [ 2, 'Spectrum:'     ,''                               ],
@@ -440,6 +458,45 @@ def by_chain(self_cmd, sele):
               [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
                  'util.chainbow("('+sele+')",_self=cmd)'],                                 
         ]
+
+rep_setting_lists = [
+    [
+        # molecule
+        ('lines', 'line_color'),
+        ('sticks', 'stick_color'),
+        ('ribbon', 'ribbon_color'),
+        ('cartoon', 'cartoon_color'),
+        ('', ''),
+        ('labels', 'label_color'),
+        ('', ''),
+        ('dots', 'dot_color'),
+        ('spheres', 'sphere_color'),
+        ('', ''),
+        ('mesh', 'mesh_color'),
+        ('surface', 'surface_color'),
+    ],
+    [
+        # measurement
+        ('dashes', 'dash_color'),
+        ('angles', 'angle_color'),
+        ('dihedrals', 'dihedral_color'),
+        ('labels', 'label_color'),
+    ],
+    [
+        # extra
+        ('', 'cartoon_highlight_color'),
+        ('', 'cartoon_ladder_color'),
+        ('', 'cartoon_nucleic_acid_color'),
+        ('', 'cartoon_ring_color'),
+        ('', 'ellipsoid_color'),
+        ('', 'label_outline_color'),
+        ('', 'mesh_negative_color'),
+        ('', 'ray_interior_color'),
+        ('', 'ray_trace_color'),
+        ('', 'stick_ball_color'),
+        ('', 'surface_negative_color'),
+    ],
+]
 
 all_colors_list = [
     ('reds', [
@@ -561,7 +618,7 @@ def all_colors_generic(self_cmd, expr):
     return r
 
 def all_colors(self_cmd, sele):
-    expr = 'cmd.color("{0}", ' + repr(sele) + ')'
+    expr = 'util.color_deep("{0}", ' + repr(sele) + ')'
     with menucontext(self_cmd, sele):
         return all_colors_generic(self_cmd, expr)
  
@@ -601,6 +658,7 @@ def mol_color(self_cmd, sele):
          [ 1, 'by element'  , by_elem(self_cmd, sele) ],
          [ 1, 'by chain' , by_chain(self_cmd, sele) ],
          [ 1, 'by ss  '  , by_ss(self_cmd, sele) ],
+         [ 1, 'by rep'  , by_rep(self_cmd, sele) ],
          [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(self_cmd, sele) ],
          [ 0, ''                                , ''                 ],
          [ 1, 'auto', color_auto(self_cmd, sele) ],
@@ -611,6 +669,8 @@ def mol_color(self_cmd, sele):
 def measurement_color(self_cmd, sele):
     r = [
         [ 2, 'Color:', '' ],
+        [ 1, 'by rep', by_rep(self_cmd, sele, 1) ],
+        [ 0, '', '' ],
     ]
     r += all_colors(self_cmd, sele)
     return r
@@ -698,6 +758,7 @@ def compute(self_cmd, sele):
               [[ 2, 'Surface Area Type:', ''],
                [ 1, 'molecular', 'util.get_area("'+sele+'", -1, 0, quiet=0,_self=cmd)' ],
                [ 1, 'solvent accessible', 'util.get_sasa("'+sele+'",quiet=0,_self=cmd)' ],
+               [ 1, 'per residue (relative sol. acc.)', 'cmd.get_sasa_relative("'+sele+'",quiet=0,_self=cmd)' ],
                ]],
             [ 1, 'molecular weight',
               [[ 2, 'Molecular Weight:', ''],

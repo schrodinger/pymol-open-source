@@ -41,11 +41,8 @@
 #include"Scene.h"
 #include "Lex.h"
 
-#ifdef _PYMOL_IP_EXTRAS
 #include"AtomInfoHistory.h"
 #include"BondTypeHistory.h"
-#endif
-
 #include <iostream>
 #include <map>
 
@@ -1988,14 +1985,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   unsigned char ss_chain1 = 0, ss_chain2 = 0;
   SSHash *ss_hash = NULL;
   char cc[MAXLINELEN], tags[MAXLINELEN];
-  char cc_saved, ctmp;
   int ignore_pdb_segi = 0;
   int ss_valid, ss_found = false;
   int only_read_one_model = false;
   int ignore_conect = SettingGetGlobal_b(G, cSetting_pdb_ignore_conect);
   int have_bond_order = false;
   int seen_model, in_model = false;
-  int seen_conect = false;
   int is_end_of_object = false;
   int literal_names = SettingGetGlobal_b(G, cSetting_pdb_literal_names);
   int bogus_name_alignment = true;
@@ -2340,7 +2335,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       }
     } else if(strstartswith(p, "CONECT") &&
               bondFlag && (!ignore_conect) && ((!*restart_model) || (!in_model))) {
-      seen_conect = true;
       p = nskip(p, 6);
       p = ncopy(cc, p, 5);
       if(sscanf(cc, "%d", &b1) == 1)
@@ -3448,7 +3442,6 @@ float ObjectMoleculeGetMaxVDW(ObjectMolecule * I)
 
 
 /*========================================================================*/
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule * I)
 {
   PyObject *result = NULL;
@@ -3463,7 +3456,6 @@ static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule * I)
   }
   return (PConvAutoNone(result));
 }
-#endif
 
 
 /*static PyObject *ObjectMoleculeDiscreteCSetAsPyList(ObjectMolecule *I)
@@ -3500,24 +3492,27 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule * I)
   BondType *bond;
   int a;
 
-#ifdef _PYMOL_IP_EXTRAS
+#ifndef PICKLETOOLS
   PyMOLGlobals *G = I->Obj.G;
   int pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version) * 1000;
 
   if (SettingGetGlobal_b(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765)){
     /* For the pse_binary_dump, save entire Bond array to a binary string array
-       write them into separate binary string
      */
+
+    // supported versions
+    auto version = (!pse_export_version || pse_export_version >= 1810) ?
+      181 : (pse_export_version >= 1770) ? 177 : 176;
+
+    auto blob = Copy_To_BondType_Version(version, I->Bond, I->NBond);
+    auto blobsize = VLAGetByteSize(blob);
+
     result = PyList_New(2);
-    if (pse_export_version && pse_export_version < 1770){
-      PyList_SetItem(result, 0, PyInt_FromLong(176));  // currently, we only support saving as 1.765 version
-      void *newBondType = Copy_To_BondType_Version(176, I->Bond, I->NBond);
-      PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(newBondType), I->NBond * sizeof(BondType_1_7_6)));
-      FreeP(newBondType);
-    } else {
-      PyList_SetItem(result, 0, PyInt_FromLong(BondInfoVERSION));
-      PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(I->Bond), I->NBond * sizeof(BondType)));
-    }
+    PyList_SetItem(result, 0, PyInt_FromLong(version));
+    PyList_SetItem(result, 1, PyBytes_FromStringAndSize(reinterpret_cast<const char*>(blob), blobsize));
+
+    VLAFreeP(blob);
+
     return result;
   }
 #endif
@@ -3559,33 +3554,24 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
     // checking if from pse_binary_dump
     // pse_binary_dump saves 2 values: bondInfo_version, BondType binary
     CPythonVal *val1 = CPythonVal_PyList_GetItem(G, list, 1);
-    pse_binary_dump = PyString_Check(val1);
+    pse_binary_dump = PyBytes_Check(val1);
     CPythonVal_Free(val1);
   }
   if (pse_binary_dump){
-#ifdef _PYMOL_IP_EXTRAS
     CPythonVal *verobj = CPythonVal_PyList_GetItem(G, list, 0);
     int bondInfo_version;
     ok = PConvPyIntToInt(verobj, &bondInfo_version);
 
     CPythonVal *strobj = CPythonVal_PyList_GetItem(G, list, 1);
-    int slen = PyString_Size(strobj);
-    auto strval = PyString_AsSomeString(strobj);
+    auto strval = PyBytes_AsSomeString(strobj);
 
     if(ok)
       ok = ((I->Bond = VLAlloc(BondType, I->NBond)) != NULL);
-    if (BondInfoVERSION != bondInfo_version){
-      // version not the same, need to convert
-      Copy_Into_BondType_From_Version(strval.data(), bondInfo_version, I->Bond, I->NBond);
-    } else {
-      memcpy(I->Bond, strval.data(), slen);
-    }
-#else
-    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-      " Error: pse_binary_dump not supported in Open-Source PyMOL\n"
-      ENDFB(G);
-    return false;
-#endif
+
+    Copy_Into_BondType_From_Version(strval.data(), bondInfo_version, I->Bond, I->NBond);
+
+    CPythonVal_Free(verobj);
+    CPythonVal_Free(strobj);
   } else {
     if(ok)
     ok = ((I->Bond = VLAlloc(BondType, I->NBond)) != NULL);
@@ -3638,7 +3624,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
   PyObject *result = NULL;
   AtomInfoType *ai;
   int a;
-#ifdef _PYMOL_IP_EXTRAS
+#ifndef PICKLETOOLS
   int pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version) * 1000;
 
   if (SettingGetGlobal_b(G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765)){
@@ -3678,30 +3664,24 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule * I)
     }
 
     auto version = AtomInfoVERSION;
-    auto blobsize = I->NAtom * sizeof(AtomInfoType);
-    auto blob = reinterpret_cast<void*>(I->AtomInfo);
-
     if (pse_export_version && pse_export_version < 1810) {
       if (pse_export_version < 1770) {
         version = 176;
       } else {
         version = 177;
       }
-
-      AtomInfoTypeConverter converter(G, I->NAtom);
-      blob = converter.allocCopy(version, I->AtomInfo);
-      blobsize = VLAGetByteSize(blob);
     }
+
+    AtomInfoTypeConverter converter(G, I->NAtom);
+    auto blob = converter.allocCopy(version, I->AtomInfo);
+    auto blobsize = VLAGetByteSize(blob);
 
     result = PyList_New(3);
     PyList_SetItem(result, 0, PyInt_FromLong(version));
-    PyList_SetItem(result, 1, PyString_FromStringAndSize(reinterpret_cast<const char*>(blob), blobsize));
-    PyList_SetItem(result, 2, PyString_FromStringAndSize(reinterpret_cast<const char*>(strinfo), strinfolen));
+    PyList_SetItem(result, 1, PyBytes_FromStringAndSize(reinterpret_cast<const char*>(blob), blobsize));
+    PyList_SetItem(result, 2, PyBytes_FromStringAndSize(reinterpret_cast<const char*>(strinfo), strinfolen));
 
-    if (version != AtomInfoVERSION) {
-      VLAFreeP(blob);
-    }
-
+    VLAFreeP(blob);
     FreeP(strinfo);
     return result;
   }
@@ -3740,18 +3720,17 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     // pse_binary_dump saves 3 values: atomInfo_version, AtomInfo binary, and strings array
     CPythonVal *val1 = CPythonVal_PyList_GetItem(G, list, 1);
     CPythonVal *val2 = CPythonVal_PyList_GetItem(G, list, 2);
-    pse_binary_dump = PyString_Check(val1) && PyString_Check(val2);
+    pse_binary_dump = PyBytes_Check(val1) && PyBytes_Check(val2);
     CPythonVal_Free(val1);
     CPythonVal_Free(val2);
   }
   if (pse_binary_dump){
-#ifdef _PYMOL_IP_EXTRAS
     CPythonVal *verobj = CPythonVal_PyList_GetItem(G, list, 0);
     int atomInfo_version;
     ok = PConvPyIntToInt(verobj, &atomInfo_version);
 
     CPythonVal *strlookupobj = CPythonVal_PyList_GetItem(G, list, 2);
-    auto strval_1 = PyString_AsSomeString(strlookupobj);
+    auto strval_1 = PyBytes_AsSomeString(strlookupobj);
     int *strval = (int*)strval_1.data();
 
     AtomInfoTypeConverter converter(G, I->NAtom);
@@ -3772,36 +3751,20 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     }
 
     CPythonVal *strobj = CPythonVal_PyList_GetItem(G, list, 1);
-    int slen = PyString_Size(strobj);
-    auto strval_2 = PyString_AsSomeString(strobj);
+    auto strval_2 = PyBytes_AsSomeString(strobj);
 
     VLACheck(I->AtomInfo, AtomInfoType, I->NAtom + 1);
-    if (AtomInfoVERSION != atomInfo_version){
-      // version not the same, need to convert
-      converter.copy(I->AtomInfo, strval_2.data(), atomInfo_version);
-    } else {
-      memcpy(I->AtomInfo, strval_2.data(), slen);
-    }
+    converter.copy(I->AtomInfo, strval_2.data(), atomInfo_version);
 
     // go through AtomInfo array, swap new strings, convert colors, convert settings
     // (everything that AtomInfoFromPyList does except set properties, which are currently 
     //  not saved for pse_binary_dump) 
     AtomInfoType *ai = I->AtomInfo;
     for(a = 0; a < I->NAtom; ++a, ++ai) {
-      if (AtomInfoVERSION == atomInfo_version){
-        CONVERT_TO_NEW_LEX(ai->segi);
-        CONVERT_TO_NEW_LEX(ai->resn);
-        CONVERT_TO_NEW_LEX(ai->name);
-        CONVERT_TO_NEW_LEX(ai->chain);
-        CONVERT_TO_NEW_LEX(ai->textType);
-        CONVERT_TO_NEW_LEX(ai->label);
-        CONVERT_TO_NEW_LEX(ai->custom);
-      }
       ai->color = ColorConvertOldSessionIndex(G, ai->color);
       if (ai->unique_id){
         ai->unique_id = SettingUniqueConvertOldSessionID(G, ai->unique_id);
       }
-      ai->selEntry = 0; // this is not set in AtomInfoFromPyList()
     }
     // need to decrement since we call LexIdx() above on each
     for (auto it = oldIDtoLexID.begin(); it != oldIDtoLexID.end(); ++it){
@@ -3810,12 +3773,6 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
     CPythonVal_Free(verobj);
     CPythonVal_Free(strobj);
     CPythonVal_Free(strlookupobj);
-#else
-    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-      " Error: pse_binary_dump not supported in Open-Source PyMOL\n"
-      ENDFB(G);
-    return false;
-#endif
   } else {
     // The old slow way of loading in AtomInfo, using python lists
     if (ok)
@@ -3905,9 +3862,6 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
 /*========================================================================*/
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   PyObject *result = NULL;
 
   /* first, dump the atoms */
@@ -3965,7 +3919,6 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   }
 
   return (PConvAutoNone(result));
-#endif
 }
 
 
@@ -4226,7 +4179,6 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                               }
                             }
 			    /* selenomethionine; double-bond the carbonyl if present */
-                            const char * ai1_resn = LexStr(G, ai1->resn);
                             if(ai1->hetatm) {        /* common HETATMs we should know about... */
                               if (ai1->resn == G->lex_const.MSE) {
                                 if ((ai1->name == G->lex_const.C && ai2->name == G->lex_const.O) ||

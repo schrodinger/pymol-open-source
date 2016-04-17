@@ -435,6 +435,9 @@ from .internal import      \
       download_chem_comp, \
       file_read
 
+from .util import \
+      get_sasa_relative
+
 #--------------------------------------------------------------------
 #from m4x import \
 #     metaphorics

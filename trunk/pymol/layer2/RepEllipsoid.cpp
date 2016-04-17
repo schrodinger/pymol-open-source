@@ -213,7 +213,6 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
     CHECKOK(ok, I->ray);
     if(I->ray) {
       int a, a1;
-      int vis_flag;
       AtomInfoType *ai;
       float last_alpha = 1.0F;
 

@@ -2165,25 +2165,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.menuBar.addcascademenu('Movie', 'Frame Rate', 'Playback Frame Rate',
                                     label='Frame Rate')
 
-        self.menuBar.addmenuitem('Frame Rate', 'command', '30 FPS',
-                                         label='30 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","30",log=1))
-
-        self.menuBar.addmenuitem('Frame Rate', 'command', '15 FPS',
-                                         label='15 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","15",log=1))
-
-        self.menuBar.addmenuitem('Frame Rate', 'command', '5 FPS',
-                                         label='5 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","5",log=1))
-
-        self.menuBar.addmenuitem('Frame Rate', 'command', '1 FPS',
-                                         label='1 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","1",log=1))
-
-        self.menuBar.addmenuitem('Frame Rate', 'command', '0.3 FPS',
-                                         label='0.3 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","0.3",log=1))
+        for val in [30, 15, 5, 1, 0.3]:
+            addmenuitem('Frame Rate', 'radiobutton', label=str(val) + ' FPS',
+                    value=val, variable=self.setting.movie_fps)
 
         self.menuBar.addmenuitem('Frame Rate', 'separator', '')
 

@@ -734,7 +734,6 @@ int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_overrid
   float *n;
   float *c;
   float *sv, *sn, *tv, *tn, *tv1, *tn1, *TV = NULL, *TN = NULL;
-  float v0[3];
   int start, stop;
   int ok = true;
   PRINTFD(I->G, FB_Extrude)

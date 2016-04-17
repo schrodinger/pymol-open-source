@@ -48,7 +48,6 @@ static void ObjectSurfaceFree(ObjectSurface * I);
 void ObjectSurfaceStateInit(PyMOLGlobals * G, ObjectSurfaceState * ms);
 void ObjectSurfaceRecomputeExtent(ObjectSurface * I);
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState * I)
 {
   PyObject *result = NULL;
@@ -180,13 +179,9 @@ static int ObjectSurfaceAllStatesFromPyList(ObjectSurface * I, PyObject * list)
   }
   return (ok);
 }
-#endif
 
 int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSurface ** result)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int ok = true;
   ObjectSurface *I = NULL;
   (*result) = NULL;
@@ -213,15 +208,10 @@ int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSurface 
     /* cleanup? */
   }
   return (ok);
-#endif
 }
 
 PyObject *ObjectSurfaceAsPyList(ObjectSurface * I)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   PyObject *result = NULL;
 
   result = PyList_New(3);
@@ -230,7 +220,6 @@ PyObject *ObjectSurfaceAsPyList(ObjectSurface * I)
   PyList_SetItem(result, 2, ObjectSurfaceAllStatesAsPyList(I));
 
   return (PConvAutoNone(result));
-#endif
 }
 
 static void ObjectSurfaceStateFree(ObjectSurfaceState * ms)
@@ -241,8 +230,7 @@ static void ObjectSurfaceStateFree(ObjectSurfaceState * ms)
   FreeP(ms->VC);
   FreeP(ms->RC);
   VLAFreeP(ms->AtomVertex);
-  if(ms->UnitCellCGO)
-    CGOFree(ms->UnitCellCGO);
+  CGOFree(ms->UnitCellCGO);
 }
 
 static void ObjectSurfaceFree(ObjectSurface * I)
@@ -310,14 +298,14 @@ static void ObjectSurfaceInvalidate(ObjectSurface * I, int rep, int level, int s
   if(level >= cRepInvExtents) {
     I->Obj.ExtentFlag = false;
   }
-  if((rep == cRepMesh) || (rep == cRepAll)) {
+  if((rep == cRepSurface) || (rep == cRepMesh) || (rep == cRepAll)) {
     for(a = 0; a < I->NState; a++) {
       if(state < 0)
         once_flag = false;
       if(!once_flag)
         state = a;
       I->State[state].RefreshFlag = true;
-      if(level >= cRepInvAll) {
+      if(level >= cRepInvRep) {
         I->State[state].ResurfaceFlag = true;
         SceneChanged(I->Obj.G);
       } else if(level >= cRepInvColor) {
@@ -484,7 +472,6 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
 static void ObjectSurfaceUpdate(ObjectSurface * I)
 {
   int a;
-  int ok = true;
   float carve_buffer;
   for(a = 0; a < I->NState; a++) {
     ObjectSurfaceState *ms = I->State + a;
@@ -495,7 +482,6 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
     if(ms->Active) {
       map = ExecutiveFindObjectMapByName(I->Obj.G, ms->MapName);
       if(!map) {
-        ok = false;
         PRINTFB(I->Obj.G, FB_ObjectSurface, FB_Errors)
           "ObjectSurfaceUpdate-Error: map '%s' has been deleted.\n", ms->MapName
           ENDFB(I->Obj.G);
@@ -503,8 +489,6 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
       }
       if(map) {
         oms = ObjectMapGetState(map, ms->MapState);
-        if(!oms)
-          ok = false;
       }
       if(oms) {
         if(oms->State.Matrix) {
@@ -516,8 +500,7 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
         if(ms->RefreshFlag || ms->ResurfaceFlag) {
           ms->Crystal = *(oms->Symmetry->Crystal);
           if((I->Obj.visRep & cRepCellBit)) {
-            if(ms->UnitCellCGO)
-              CGOFree(ms->UnitCellCGO);
+            CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
           }
           ms->RefreshFlag = false;
@@ -614,7 +597,6 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
                 VLAFreeP(N2);
                 VLAFreeP(V2);
               }
-
             }
 
             if(voxelmap)
@@ -677,10 +659,8 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
           ms->RecolorFlag = false;
         }
       }
-      if (ms->shaderCGO){
-        CGOFree(ms->shaderCGO);
-        ms->shaderCGO = NULL;
-      }
+
+      CGOFree(ms->shaderCGO);
     }
   }
   if(!I->Obj.ExtentFlag) {

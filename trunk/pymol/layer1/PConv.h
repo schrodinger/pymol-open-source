@@ -98,7 +98,8 @@ int PConvCObjectToPtr(PyObject * obj, void **ptr);
 int PConvPyListToStrVLAList(PyObject * obj, char **vla, int *n_str);
 
 int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr);
-int PConvPyListToIntVLA(PyObject * obj, int **f);
+#define PConvPyListToIntVLA(obj, f)     PConvPyListToIntArrayImpl(obj, f, true)
+
 int PConvPyStrToStr(PyObject * obj, char *ptr, int l);
 #ifndef _PYMOL_NOPY
 int PConvPyStrToStrPtr(PyObject * obj, char **ptr);
@@ -153,10 +154,11 @@ PyObject *PConvStringVLAToPyList(const char *str);
 
 void PConv44PyListTo44f(PyObject * src, float *dest);   /* note loss of precision */
 
-int PConvPyListToFloatVLA(PyObject * obj, float **f);
+#define PConvPyListToFloatVLA(obj, f)   PConvPyListToFloatArrayImpl(obj, f, true)
 int PConvPyListToFloatVLANoneOkay(PyObject * obj, float **f);
 int PConvPyList3ToFloatVLA(PyObject * obj, float **f);
-int PConvPyListToFloatArray(PyObject * obj, float **f);
+#define PConvPyListToFloatArray(obj, f) PConvPyListToFloatArrayImpl(obj, f, false)
+int PConvPyListToFloatArrayImpl(PyObject * obj, float **f, bool as_vla);
 int PConvPyListToDoubleArray(PyObject * obj, double **f);
 int PConvPyListToFloatArrayInPlace(PyObject * obj, float *ff, ov_size ll);
 int PConvPyListOrTupleToFloatArrayInPlace(PyObject * obj, float *ff, ov_size ll);
@@ -168,7 +170,8 @@ PyObject *PConvFloatArrayToPyList(const float *f, int l, bool dump_binary=false)
 PyObject *PConvFloatArrayToPyListNullOkay(const float *f, int l);
 PyObject *PConvDoubleArrayToPyList(const double *f, int l);
 
-int PConvPyListToIntArray(PyObject * obj, int **f);
+#define PConvPyListToIntArray(obj, f)   PConvPyListToIntArrayImpl(obj, f, false)
+int PConvPyListToIntArrayImpl(PyObject * obj, int **f, bool as_vla);
 int PConvPyListToIntArrayInPlace(PyObject * obj, int *ff, ov_size ll);
 int PConvPyListToIntArrayInPlaceAutoZero(PyObject * obj, int *ii, ov_size ll);
 

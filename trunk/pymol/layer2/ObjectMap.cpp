@@ -1353,7 +1353,7 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState * I)
   PyList_SetItem(result, 12, PConvIntArrayToPyList(I->Max, 3));
   PyList_SetItem(result, 13, PConvIntArrayToPyList(I->FDim, 4));
 
-  PyList_SetItem(result, 14, IsosurfAsPyList(I->Field));
+  PyList_SetItem(result, 14, IsosurfAsPyList(I->State.G, I->Field));
   PyList_SetItem(result, 15, ObjectStateAsPyList(&I->State));
   return (PConvAutoNone(result));
 }
@@ -1452,7 +1452,6 @@ static int ObjectMapStateCopy(PyMOLGlobals * G, const ObjectMapState * src, Obje
   return (ok);
 }
 
-#ifndef _PYMOL_NOPY
 static int ObjectMapStateFromPyList(PyMOLGlobals * G, ObjectMapState * I, PyObject * list)
 {
   int ok = true;
@@ -1534,8 +1533,7 @@ static int ObjectMapStateFromPyList(PyMOLGlobals * G, ObjectMapState * I, PyObje
   }
   return (ok);
 }
-#endif
-#ifndef _PYMOL_NOPY
+
 static int ObjectMapAllStatesFromPyList(ObjectMap * I, PyObject * list)
 {
   int ok = true;
@@ -1552,14 +1550,9 @@ static int ObjectMapAllStatesFromPyList(ObjectMap * I, PyObject * list)
   }
   return (ok);
 }
-#endif
 
 PyObject *ObjectMapAsPyList(ObjectMap * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   result = PyList_New(3);
@@ -1568,15 +1561,10 @@ PyObject *ObjectMapAsPyList(ObjectMap * I)
   PyList_SetItem(result, 2, ObjectMapAllStatesAsPyList(I));
 
   return (PConvAutoNone(result));
-#endif
 }
 
 int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** result)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   int ll;
   ObjectMap *I = NULL;
@@ -1608,7 +1596,6 @@ int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** resul
   }
 
   return (ok);
-#endif
 }
 
 int ObjectMapNewCopy(PyMOLGlobals * G, const ObjectMap * src, ObjectMap ** result,
@@ -2622,12 +2609,12 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   }
   if(ok) {
     d = 0;
-    for(c = 0; c < ms->FDim[2]; c += (ms->FDim[2] - 1)) {
-      v[2] = (c + ms->Min[2]) / ((float) ms->Div[2]);
-      for(b = 0; b < ms->FDim[1]; b += (ms->FDim[1] - 1)) {
-        v[1] = (b + ms->Min[1]) / ((float) ms->Div[1]);
-        for(a = 0; a < ms->FDim[0]; a += (ms->FDim[0] - 1)) {
-          v[0] = (a + ms->Min[0]) / ((float) ms->Div[0]);
+    for(c = 0; c < 2; c++) {
+      v[2] = (c * (ms->FDim[2] - 1) + ms->Min[2]) / ((float) ms->Div[2]);
+      for(b = 0; b < 2; b++) {
+        v[1] = (b * (ms->FDim[1] - 1) + ms->Min[1]) / ((float) ms->Div[1]);
+        for(a = 0; a < 2; a++) {
+          v[0] = (a * (ms->FDim[0] - 1) + ms->Min[0]) / ((float) ms->Div[0]);
           transform33f3f(ms->Symmetry->Crystal->FracToReal, v, vr);
           copy3f(vr, ms->Corner + 3 * d);
           d++;
@@ -5456,6 +5443,11 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * Map,
                                     int state, int discrete, int quiet)
 {
+#ifndef _PYMOL_NUMPY
+  ErrMessage(G, "ObjectMap", "missing numpy support, required for chempy.brick");
+  return NULL;
+#endif
+
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
@@ -5525,7 +5517,9 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals * G, ObjectMap * I, PyObject * 
       } else
         ok = ErrMessage(G, "ObjectMap", "missing brick density.");
 
-    }
+    } else
+      ok = ErrMessage(G, "ObjectMap", "missing any brick attribute.");
+
     SceneChanged(G);
     SceneCountFrames(G);
     if(ok) {
