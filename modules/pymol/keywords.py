@@ -99,6 +99,7 @@ def get_command_keywords(self_cmd=cmd):
         'get_distance'  : [ self_cmd.get_distance      , 0 , 0 , ''  , parsing.STRICT ],
         'get_extent'    : [ self_cmd.get_extent        , 0 , 0 , ''  , parsing.STRICT ],
         'get_position'  : [ self_cmd.get_position      , 0 , 0 , ''  , parsing.STRICT ],
+        'get_sasa_relative' : [ self_cmd.get_sasa_relative , 0 , 0 , ''  , parsing.STRICT ],
         'get_symmetry'  : [ self_cmd.get_symmetry      , 0 , 0 , ''  , parsing.STRICT ],
         'get_renderer'  : [ self_cmd.get_renderer      , 0 , 0 , ''  , parsing.STRICT ],
         'get_title'     : [ self_cmd.get_title         , 0 , 0 , ''  , parsing.STRICT ],   

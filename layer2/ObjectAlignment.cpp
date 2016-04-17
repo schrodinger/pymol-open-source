@@ -584,7 +584,6 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
               if(!GroupOrderKnown(G, curVLA, newVLA,
                                   cur_start, new_start, guide, &action)) {
                 int c, id;
-                OVreturn_word offset;
                 ObjectMolecule *obj, *last_obj = NULL;
                 c = cur_start;
                 while((id = curVLA[c++])) {

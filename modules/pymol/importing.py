@@ -725,7 +725,10 @@ SEE ALSO
                     return _self.do("_ @%s" % filename)
                 elif hasattr(loadable, ext):
                     ftype = getattr(loadable, ext)
+                elif ext in ['smap', 'prj']:
+                    raise pymol.CmdException('unsupported file type: ' + ext)
                 else:
+                    print(" Warning: unrecognized file extension, trying to load as PDB format")
                     ftype = loadable.pdb # default is PDB
             elif _self.is_string(type):
                 # user specified the file type

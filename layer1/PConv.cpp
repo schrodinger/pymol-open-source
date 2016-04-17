@@ -513,7 +513,7 @@ void PConvStringToPyObjAttr(PyObject * obj, const char *attr, const char *f)
   Py_DECREF(tmp);
 }
 
-int PConvPyListToFloatArray(PyObject * obj, float **f)
+int PConvPyListToFloatArrayImpl(PyObject * obj, float **f, bool as_vla)
 {
   int a, l;
   int ok = true;
@@ -521,6 +521,19 @@ int PConvPyListToFloatArray(PyObject * obj, float **f)
   if(!obj) {
     *f = NULL;
     ok = false;
+  } else if (PyBytes_Check(obj)){
+    // binary_dump
+    int slen = PyBytes_Size(obj);
+    l = slen / sizeof(float);
+
+    if (as_vla) {
+      (*f) = VLAlloc(float, l);
+    } else {
+      (*f) = Alloc(float, l);
+    }
+
+    auto strval = PyBytes_AsSomeString(obj);
+    memcpy(*f, strval.data(), slen);
   } else if(!PyList_Check(obj)) {
     *f = NULL;
     ok = false;
@@ -530,7 +543,13 @@ int PConvPyListToFloatArray(PyObject * obj, float **f)
       ok = -1;
     else
       ok = l;
-    (*f) = Alloc(float, l);
+
+    if (as_vla) {
+      (*f) = VLAlloc(float, l);
+    } else {
+      (*f) = Alloc(float, l);
+    }
+
     ff = (*f);
     for(a = 0; a < l; a++)
       *(ff++) = (float) PyFloat_AsDouble(PyList_GetItem(obj, a));
@@ -567,39 +586,6 @@ int PConvPyListToFloatVLANoneOkay(PyObject * obj, float **f)
   }
   return (ok);
 
-}
-
-int PConvPyListToFloatVLA(PyObject * obj, float **f)
-{
-  int a, l;
-  float *ff;
-  int ok = true;
-  if(!obj) {
-    *f = NULL;
-    ok = false;
-  } else if (PyString_Check(obj)){
-    // binary_dump
-    int slen = PyString_Size(obj);
-    l = slen / sizeof(float);
-    (*f) = VLAlloc(float, l);
-    auto strval = PyString_AsSomeString(obj);
-    memcpy(*f, strval.data(), slen);
-  } else if(!PyList_Check(obj)) {
-    *f = NULL;
-    ok = false;
-  } else {
-    l = PyList_Size(obj);
-    if(!l)
-      ok = -1;
-    else
-      ok = l;
-    (*f) = VLAlloc(float, l);
-    ff = (*f);
-    for(a = 0; a < l; a++)
-      *(ff++) = (float) PyFloat_AsDouble(PyList_GetItem(obj, a));
-    VLASize((*f), float, l);
-  }
-  return (ok);
 }
 
 int PConvPyList3ToFloatVLA(PyObject * obj, float **f)
@@ -640,31 +626,6 @@ int PConvPyList3ToFloatVLA(PyObject * obj, float **f)
   return (ok);
 }
 
-int PConvPyListToIntArray(PyObject * obj, int **f)
-{
-  int a, l;
-  int *ff;
-  int ok = true;
-  if(!obj) {
-    *f = NULL;
-    l = 0;
-  } else if(!PyList_Check(obj)) {
-    *f = NULL;
-    ok = false;
-  } else {
-    l = PyList_Size(obj);
-    if(!l)
-      ok = -1;
-    else
-      ok = l;
-    (*f) = Alloc(int, l);
-    ff = (*f);
-    for(a = 0; a < l; a++)
-      *(ff++) = PyInt_AsLong(PyList_GetItem(obj, a));
-  }
-  return (ok);
-}
-
 int PConvPyListToDoubleArray(PyObject * obj, double **f)
 {
   int a, l;
@@ -690,20 +651,26 @@ int PConvPyListToDoubleArray(PyObject * obj, double **f)
   return (ok);
 }
 
-int PConvPyListToIntVLA(PyObject * obj, int **f)
+int PConvPyListToIntArrayImpl(PyObject * obj, int **f, bool as_vla)
 {
   int a, l;
   int *ff;
   int ok = true;
   if(!obj) {
     *f = NULL;
-    l = 0;
-  } else if (PyString_Check(obj)){
+    ok = false;
+  } else if (PyBytes_Check(obj)){
     // binary_dump
-    int slen = PyString_Size(obj);
+    int slen = PyBytes_Size(obj);
     l = slen / sizeof(int);
-    (*f) = VLAlloc(int, l);
-    auto strval = PyString_AsSomeString(obj);
+
+    if (as_vla) {
+      (*f) = VLAlloc(int, l);
+    } else {
+      (*f) = Alloc(int, l);
+    }
+
+    auto strval = PyBytes_AsSomeString(obj);
     memcpy(*f, strval.data(), slen);
   } else if(!PyList_Check(obj)) {
     *f = NULL;
@@ -714,7 +681,13 @@ int PConvPyListToIntVLA(PyObject * obj, int **f)
       ok = -1;
     else
       ok = l;
-    (*f) = VLAlloc(int, l);
+
+    if (as_vla) {
+      (*f) = VLAlloc(int, l);
+    } else {
+      (*f) = Alloc(int, l);
+    }
+
     ff = (*f);
     for(a = 0; a < l; a++)
       *(ff++) = PyInt_AsLong(PyList_GetItem(obj, a));
@@ -972,7 +945,7 @@ PyObject *PConvFloatArrayToPyList(const float *f, int l, bool dump_binary)
 {
 #ifndef PICKLETOOLS
   if (dump_binary){
-    return PyString_FromStringAndSize(reinterpret_cast<const char*>(f), l * sizeof(float));
+    return PyBytes_FromStringAndSize(reinterpret_cast<const char*>(f), l * sizeof(float));
   } 
 #endif
   int a;
@@ -1062,7 +1035,7 @@ PyObject *PConvIntArrayToPyList(const int *f, int l, bool dump_binary)
 {
 #ifndef PICKLETOOLS
   if (dump_binary){
-    return PyString_FromStringAndSize(reinterpret_cast<const char*>(f), l * sizeof(int));
+    return PyBytes_FromStringAndSize(reinterpret_cast<const char*>(f), l * sizeof(int));
   }
 #endif
   int a;

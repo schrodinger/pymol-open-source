@@ -405,8 +405,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
 
                 # END PROPRIETARY CODE SEGMENT
             except ImportError:
-                print("Error: .MOE format not supported by this PyMOL build.")
-                if _self._raising(-1,_self): raise pymol.CmdException
+                raise pymol.IncentiveOnlyException(".MOE format not supported by this PyMOL build.")
 
         elif ftype == loadable.mae:
             try:
@@ -421,14 +420,13 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                                     _self=_self)
 
                 # END PROPRIETARY CODE SEGMENT
-            except ValueError:
-                print("Error: .MAE format not supported by this PyMOL build.")
-                if _self._raising(-1,_self): raise pymol.CmdException
+            except ImportError:
+                raise pymol.IncentiveOnlyException(".MAE format not supported by this PyMOL build.")
 
         else:
             if ftype in _load2str and ('://' in finfo
                     or cmd.gz_ext_re.search(finfo)
-                    or isinstance(finfo, unicode)
+                    or any(c > '~' for c in finfo) # ascii check
                     ):
                 # NOTE: we could safely always do this, not only for URLs and
                 # compressed files. But I don't want to change the old behavior

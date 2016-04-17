@@ -59,7 +59,7 @@ void IsosurfFree(PyMOLGlobals * G);
 /* isofield operations -- not part of Isosurf */
 
 void IsofieldComputeGradients(PyMOLGlobals * G, Isofield * field);
-PyObject *IsosurfAsPyList(Isofield * I);
+PyObject *IsosurfAsPyList(PyMOLGlobals *G, Isofield * I);
 Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list);
 Isofield *IsosurfNewCopy(PyMOLGlobals * G, const Isofield * src);
 

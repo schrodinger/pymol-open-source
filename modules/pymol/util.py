@@ -850,6 +850,43 @@ def color_objs(selection='(all)',quiet=1,_self=cmd):
             cmd.color(_color_cycle[c],"(?%s)"%(a),quiet=quiet)
         c = (c + 1) % _color_cycle_len
 
+def color_deep(color, name='all', quiet=1, _self=cmd):
+    '''
+    Unset all object and atom level (not global) color settings and
+    apply given color.
+    '''
+    from pymol.menu import rep_setting_lists
+
+    quiet = int(quiet)
+    kwargs = {'quiet': quiet, 'updates': 0, '_self': _self}
+
+    names, selection = name, None
+    if name in ['all', '*']:
+        names = '*'
+        selection = '(*)'
+    else:
+        try:
+            if _self.get_type(name, _self=_self) in (
+                    'object:group', 'object:molecule'):
+                selection = '(' + name + ')'
+        except:
+            pass
+
+    # 0 (object-level) and 1-N (object-state-level)
+    states = range(cmd.count_states(names) + 1)
+
+    for setting in [s for L in rep_setting_lists for (r, s) in L if s]:
+        try:
+            for state in states:
+                _self.unset(setting, names, state=state, **kwargs)
+            if selection:
+                _self.unset(setting, selection, **kwargs)
+        except:
+            if not quiet:
+                print(' Setting: %s unset failed' % setting)
+
+    _self.color(color, name, quiet=quiet, _self=_self)
+
 def chainbow(selection='(all)', palette="rainbow", quiet=1, _self=cmd):
     '''
     Color all chains in rainbow
@@ -1642,3 +1679,115 @@ DESCRIPTION
         _self.distance(name, s1, s2, cutoff, mode, label=label)
 
     _self.enable(name)
+
+
+def get_sasa_relative(selection='all', state=1, vis=-1, var='b', quiet=1, outfile='', _self=cmd):
+    '''
+DESCRIPTION
+
+    Calculates the relative per-residue solvent accessible surface area
+    and optionally labels and colors residues. The value is relative to
+    full exposure of the residue, calculated by removing all other
+    residues except its two next neighbors, if present.
+
+    Loads a value beteween 0.0 (fully buried) and 1.0 (fully exposed)
+    into the b-factor property, available in "iterate", "alter" and
+    "label" as "b".
+
+USAGE
+
+    get_sasa_relative [ selection [, state [, vis [, var ]]]]
+
+ARGUMENTS
+
+    selection = str: atom selection {default: all}
+
+    state = int: object state {default: 1}
+
+    vis = 0/1: show labels and do color by exposure {default: !quiet}
+
+    var = str: name of property to assign {default: b}
+
+    quiet = 0/1: print results to log window
+
+    outfile = str: filename, write to file instead of log window {default: }
+
+EXAMPLE
+
+    fetch 1ubq, async=0
+    get_sasa_relative polymer
+
+PYTHON API
+
+    cmd.get_sasa_relative(...) -> dict
+
+SEE ALSO
+
+    get_area with "load_b=1" argument.
+    '''
+    import collections
+
+    state, vis, quiet = int(state), int(vis), int(quiet)
+    if vis == -1:
+        vis = not quiet
+
+    sele = _self.get_unused_name('_sele')
+    tripepname = _self.get_unused_name('_tripep')
+
+    _self.select(sele, selection, 0)
+
+    dot_solvent = _self.get_setting_boolean('dot_solvent')
+    _self.set('dot_solvent', 1, updates=0)
+
+    try:
+        for model in _self.get_object_list(sele):
+            _self.get_area('?%s & ?%s' % (sele, model), state, load_b=1)
+
+        resarea = collections.defaultdict(float)
+        _self.iterate(sele, 'resarea[model,segi,chain,resi] += b', space=locals())
+
+        for key in resarea:
+            _self.create(tripepname, 'byres (/%s/%s/%s/`%s extend 1)' % key, state, 1, zoom=0)
+            _self.get_area(tripepname, 1, load_b=1)
+
+            resarea_exposed = [0.0]
+            _self.iterate('/' + tripepname + '/%s/%s/`%s' % key[1:],
+                    'resarea_exposed[0] += b', space=locals())
+            _self.delete(tripepname)
+
+            if resarea_exposed[0] == 0.0:
+                continue
+
+            resarea[key] /= resarea_exposed[0]
+
+        _self.alter(sele,
+                var + ' = resarea[model,segi,chain,resi]', space=locals())
+
+        handle = open(outfile, 'w') if outfile else None
+
+        def callback(key, area):
+            w = len(key[0]) + 15
+            per10 = int(10 * area)
+            s = ('/%s/%s/%s/%s`%s ' % key).ljust(w)
+            s += '%3.0f' % (area * 100) + '% '
+            s += '|' + '=' * per10 + ' ' * (10 - per10) + '|'
+            print(s, file=handle)
+
+        if not quiet or outfile:
+            _self.iterate('?%s & guide' % sele,
+                    'callback((model, segi, chain, resn, resi), ' + var + ')',
+                    space=locals())
+
+        if outfile:
+            handle.close()
+            print(" Written results to %s" % (outfile))
+
+        if vis:
+            _self.label('?%s & guide' % (sele), '"%.1f" % ' + var)
+            _self.spectrum(var, 'white blue', sele, minimum=0., maximum=1.)
+
+    finally:
+        _self.set('dot_solvent', dot_solvent, updates=0)
+        _self.delete(sele)
+
+    return resarea

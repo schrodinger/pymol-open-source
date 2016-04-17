@@ -70,16 +70,26 @@ typedef int PyObject;
  */
 class SomeString {
   const char * m_str;
+  mutable int m_length;
 public:
-  SomeString(const char * s) : m_str(s) {}
+  SomeString(const char * s, int len=-1) : m_str(s), m_length(len) {}
   inline const char * data()    const { return m_str; }
   inline const char * c_str()   const { return m_str; }
   operator const char * ()      const { return m_str; } // allows assignment to std::string
-  inline size_t length()        const { return m_str ? strlen(m_str) : 0; }
+  inline size_t length()        const {
+    if (m_length == -1) {
+      m_length = m_str ? strlen(m_str) : 0;
+    }
+    return m_length;
+  }
 };
 
 inline SomeString PyString_AsSomeString(PyObject * o) {
   return PyString_AsString(o);
+}
+
+inline SomeString PyBytes_AsSomeString(PyObject * o) {
+  return SomeString(PyBytes_AsString(o), PyBytes_Size(o));
 }
 
 #endif

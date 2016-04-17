@@ -1695,7 +1695,6 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
   int *vi;
   int last_color, uniform_color;
   int contFlag, extrudeFlag;
-  int contigFlag;
   int b, c1, c2;
   float *h_start = NULL, *h_end = NULL;
   float t0[3], t1[3], t2[3], t3[3];
@@ -1725,7 +1724,6 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
   contFlag = true;
   cur_car = cCartoon_skip;
   extrudeFlag = false;
-  contigFlag = false;
   
   while(contFlag) {
     if((*cc) != cur_car) {    /* new cartoon type */
@@ -1743,7 +1741,6 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
     }
     if(a && !extrudeFlag) {
       if((*s) != *(s - 1)) {  /* new segment */
-        contigFlag = false;
         if(n_p) {             /* any cartoon points? */
           extrudeFlag = true;
         } else {
@@ -1824,12 +1821,6 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
         extrudeFlag = true;
     }
     if(extrudeFlag) {         /* generate cylinder */
-      contigFlag = true;
-      if((a < nAt) && extrudeFlag) {
-        if(*(s - 1) != *(s))
-          contigFlag = false;
-      }
-      
       if(n_p > 1) {
         atom_index1 = cs->IdxToAtm[*(atp - 1)];
         c1 = (obj->AtomInfo + atom_index1)->color;
@@ -3488,22 +3479,21 @@ void RepCartoonRefineNormals(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
 
 static
 void RepCartoonFlattenSheets(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, nuc_acid_data *ndata,
-                             int nAt, int *seg,
+                             int nAt,
+                             const int *sptr,
                              const CCInOut * cc,
                              float *pv,
-                             float *pvo, int *sstype, float *tv, float *tmp, int *flag_tmp){
-  int *sptr, *ss, last, first, cur_car, end_flag, a, b, c, e, f;
-  float *vptr, *v0;
+                             float *pvo,
+                             const int *ss,
+                             const float *v0,
+                             float *tmp,
+                             const int *flag_tmp){
+  int last, first, cur_car, end_flag, a, b, c, e, f;
   int flat_cycles;
   float t0[3];
   flat_cycles =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_flat_cycles);
 
-  sptr = seg;
-  vptr = pv;
-  ss = sstype;
-  ndata->voptr = pvo;
-  v0 = tv;
   last = 0;
   first = -1;
   cur_car = *cc;
@@ -3565,9 +3555,7 @@ void RepCartoonFlattenSheets(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs
         cur_car = *cc;
         last = a;
       }
-      vptr += 3;
       ss++;
-      ndata->voptr += 3;
       v0 += 3;
       sptr++;
       cc++;
@@ -3608,7 +3596,6 @@ void RepCartoonFlattenSheetsRefineTips(PyMOLGlobals *G, ObjectMolecule *obj, Coo
 static
 void RepCartoonSmoothLoops(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, nuc_acid_data *ndata, int nAt, int *seg, float *pv, int *sstype, float *pvo, float *tv, float *tmp, int *flag_tmp){
   int *sptr, *ss, last, first, end_flag, a, b, c, e, f;
-  float *vptr, *v0;
   float t0[3];
   int smooth_first, smooth_last, smooth_cycles;
   smooth_first =
@@ -3619,10 +3606,7 @@ void RepCartoonSmoothLoops(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, 
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_smooth_cycles);
 
   sptr = seg;
-  vptr = pv;
   ss = sstype;
-  ndata->voptr = pvo;
-  v0 = tv;
   last = 0;
   first = -1;
   end_flag = false;
@@ -3685,10 +3669,7 @@ void RepCartoonSmoothLoops(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet * cs, 
           first = a;
         last = a;
       }
-      vptr += 3;
       ss++;
-      ndata->voptr += 3;
-      v0 += 3;
       sptr++;
     }
   }

@@ -123,9 +123,6 @@ int BondInOrder(BondType * a, int b1, int b2)
 
 int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   CoordSet *I = NULL;
   int ok = true;
   int ll = 0;
@@ -176,7 +173,6 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
     }
   }
   return (ok);
-#endif
 }
 
 /*
@@ -222,10 +218,6 @@ PyObject *CoordSetAsNumPyArray(CoordSet * cs, short copy)
 
 PyObject *CoordSetAsPyList(CoordSet * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   if(I) {
@@ -249,8 +241,6 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     /* TODO symmetry, spheroid, periodic box ... */
   }
   return (PConvAutoNone(result));
-#endif
-
 }
 
 void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom)
@@ -1183,9 +1173,6 @@ void CoordSet::update(int state)
   CoordSet * I = this;
   int a;
   PyMOLGlobals *G = I->Obj->Obj.G;
-  ObjectMolecule *obj;
-
-  obj = I->Obj;
 
   PRINTFB(G, FB_CoordSet, FB_Blather) " CoordSetUpdate-Entered: object %s state %d cset %p\n",
     I->Obj->Obj.Name, state, (void *) I
