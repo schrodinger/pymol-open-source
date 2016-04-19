@@ -210,7 +210,7 @@ int MyPNGWrite(PyMOLGlobals * G, char *file_name, unsigned char *data_ptr,
         fprintf(fil, "%d %d\n", width, height);
         fprintf(fil, "255\n");
         {
-          int a, b;
+          unsigned int a, b;
           unsigned char *q = buffer, *p;
           p = data_ptr + width * 4 * (height - 1);
           for(b = 0; b < height; b++) {

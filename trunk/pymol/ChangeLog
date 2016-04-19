@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2016-04-19 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* 1.8.2.0
+
+	* get_sasa_relative (command ported from Incentive PyMOL)
+
+	* Color menu uses util.color_deep (ported from Incentive PyMOL)
+
+	* "C > by rep" (ported from Incentive PyMOL)
+
+	* fix crash when saving mesh PSE without map
+
 2016-03-27 Jared Sampson
 
 	* new setting: collada_background_box (default 0)

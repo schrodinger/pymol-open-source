@@ -529,7 +529,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->shaderCGO = NULL;
     I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
     I->R.cs->Active[cRepMesh] = false;
   }

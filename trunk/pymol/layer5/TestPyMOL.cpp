@@ -73,14 +73,13 @@ static int TestPyMOL_00_00(PyMOLGlobals * G)
 
 static char *get_st(const char array[][STR_MAX])
 {
-  char *result = NULL, *p;
+  char *result = NULL;
   size_t c = 0, l = 0;
   while(array[c][0]) {
     l += strlen(array[c]);
     c++;
   }
   result = Alloc(char, l + 1);
-  p = result;
 
   l = 0;
   c = 0;

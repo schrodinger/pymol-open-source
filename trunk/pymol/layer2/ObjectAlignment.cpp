@@ -138,7 +138,6 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
   if((state >= 0) && (state < I->NState)) {
     ObjectAlignmentState *oas = I->State + state;
     if(oas->alignVLA) {
-
       if(state != I->SelectionState) {  /* get us a selection for the current state */
         I->ForceState = state;
         force_update = true;
@@ -148,7 +147,6 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, in
       switch (format) {
       case 0:                  /* aln */
         UtilConcatVLA(&vla, &len, "CLUSTAL\n\n");
-
         break;
       }
 
@@ -472,7 +470,7 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
           }
 
           {
-            int other_seen = false;
+            int other_seen = 0;
             int flush_seen = false;
             ObjectMolecule *obj;
 
@@ -707,7 +705,6 @@ static int *AlignmentMerge(PyMOLGlobals * G, int *curVLA, int *newVLA,
   return result;
 }
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectAlignmentStateAsPyList(ObjectAlignmentState * I)
 {
   PyObject *result = NULL;
@@ -781,15 +778,10 @@ static int ObjectAlignmentAllStatesFromPyList(ObjectAlignment * I, PyObject * li
   }
   return (ok);
 }
-#endif
 
 int ObjectAlignmentNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                  ObjectAlignment ** result, int version)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   ObjectAlignment *I = NULL;
   (*result) = NULL;
@@ -815,15 +807,10 @@ int ObjectAlignmentNewFromPyList(PyMOLGlobals * G, PyObject * list,
     /* cleanup? */
   }
   return (ok);
-#endif
 }
 
 PyObject *ObjectAlignmentAsPyList(ObjectAlignment * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   result = PyList_New(3);
@@ -832,7 +819,6 @@ PyObject *ObjectAlignmentAsPyList(ObjectAlignment * I)
   PyList_SetItem(result, 2, ObjectAlignmentAllStatesAsPyList(I));
 
   return (PConvAutoNone(result));
-#endif
 }
 
 
@@ -842,12 +828,9 @@ static void ObjectAlignmentFree(ObjectAlignment * I)
 {
   int a;
   for(a = 0; a < I->NState; a++) {
-    if(I->State[a].shaderCGO)
-      CGOFree(I->State[a].shaderCGO);
-    if(I->State[a].std)
-      CGOFree(I->State[a].std);
-    if(I->State[a].ray)
-      CGOFree(I->State[a].ray);
+    CGOFree(I->State[a].shaderCGO);
+    CGOFree(I->State[a].std);
+    CGOFree(I->State[a].ray);
     VLAFreeP(I->State[a].alignVLA);
     OVOneToAny_DEL_AUTO_NULL(I->State[a].id2tag);
   }
@@ -911,14 +894,9 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
           if(I->SelectionState == a)
             I->SelectionState = -1;
 
-          if(oas->std) {
-            CGOFree(oas->std);
-            oas->std = NULL;
-          }
-          if(oas->ray) {
-            CGOFree(oas->ray);
-            oas->ray = NULL;
-          }
+          CGOFree(oas->std);
+          CGOFree(oas->ray);
+
           if(oas->id2tag) {
             OVOneToAny_Reset(oas->id2tag);
           } else {
@@ -1099,7 +1077,6 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
   Picking **pick = info->pick;
   int pass = info->pass;
   ObjectAlignmentState *sobj = NULL;
-  int a;
   float *color;
 
   ObjectPrepareContext(&I->Obj, ray);
@@ -1109,13 +1086,8 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
   if(!pass) {
     if((I->Obj.visRep & cRepCGOBit)) {
 
-      if(state < I->NState) {
-        sobj = I->State + state;
-      }
-      if(state < 0) {
-        if(I->State) {
-          for(a = 0; a < I->NState; a++) {
-            sobj = I->State + a;
+      for(StateIterator iter(G, I->Obj.Setting, state, I->NState); iter.next();) {
+        sobj = I->State + iter.state;
             if(ray) {
 	      int try_std = false;
 	      
@@ -1179,88 +1151,6 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
               }
               glEnable(GL_LIGHTING);
             }
-          }
-        }
-      } else {
-        if(!sobj) {
-          if(I->NState && SettingGetGlobal_b(G, cSetting_static_singletons))
-            sobj = I->State;
-        }
-        if(ray) {
-	  int try_std = false;
-          if(sobj) {
-            if(sobj->ray){
-              int ok = CGORenderRay(sobj->ray, ray, color, I->Obj.Setting, NULL);
-	      if (!ok){
-		CGOFree(sobj->ray);
-		sobj->ray = NULL;
-		try_std = true;
-	      }
-	    } else {
-	      try_std = true;
-	    }
-	    if (try_std){
-              int ok = CGORenderRay(sobj->std, ray, color, I->Obj.Setting, NULL);
-	      if (!ok){
-		CGOFree(sobj->std);
-		sobj->std = NULL;
-	      }
-	    }
-          }
-        } else if(G->HaveGUI && G->ValidContext) {
-          if(pick) {
-          } else {
-            if(!info->line_lighting)
-              glDisable(GL_LIGHTING);
-            SceneResetNormal(G, true);
-            if(sobj) {
-	      if(sobj->std){
-		short use_shader = SettingGetGlobal_b(G, cSetting_alignment_as_cylinders) && 
-		  SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
-		  SettingGetGlobal_b(G, cSetting_use_shaders);
-		if (use_shader){
-		  if (!sobj->shaderCGO){
-		    ObjectAlignmentUpdate(I);
-		  }
-		  if (sobj->shaderCGO && !sobj->shaderCGO->has_draw_cylinder_buffers){
-		    CGO *convertcgo = sobj->shaderCGO;		      
-		    sobj->shaderCGO = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(convertcgo, 0);
-		    if (sobj->shaderCGO){
-		      CGOFree(convertcgo);
-		    } else {
-		      sobj->shaderCGO = convertcgo;
-		    }
-		    sobj->shaderCGO->use_shader = use_shader;
-		  }
-		  if (sobj->shaderCGO) {
-		    CShaderPrg *shaderPrg;
-		    float linewidth = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_line_width);
-		    float lineradius = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_cgo_line_radius);
-		    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-		    if (linewidth < 0.f){
-		      linewidth = 1.f;
-		    }
-		    if(pixel_scale_value < 0)
-		      pixel_scale_value = 1.0F;
-		    if (lineradius < 0.f){
-		      lineradius = linewidth * info->vertex_scale * pixel_scale_value / 2.f;
-		    }
-		    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-		    CShaderPrg_Set1f(shaderPrg, "uni_radius", lineradius);
-		    glVertexAttrib4f(CYLINDER_COLOR, color[0], color[1], color[2], 1.f);
-		    glVertexAttrib4f(CYLINDER_COLOR2, color[0], color[1], color[2], 1.f);
-		    CGORenderGL(sobj->shaderCGO, color, I->Obj.Setting, NULL, info, NULL);
-		    CShaderPrg_Disable(shaderPrg);
-		    return;
-		  }
-		} else {
-		  CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info, NULL);
-		}
-	      }
-	    }
-	    glEnable(GL_LIGHTING);
-	  }
-        }
       }
     }
   }
@@ -1269,14 +1159,9 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
 static void ObjectAlignmentInvalidate(ObjectAlignment * I, int rep, int level, int state)
 {
   if((rep == cRepAll) || (rep == cRepCGO)) {
-    if(state >= 0) {
-      if(state < I->NState)
-        I->State[state].valid = false;
-    } else {
-      int a;
-      for(a = 0; a < I->NState; a++) {
-        I->State[a].valid = false;
-      }
+    for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+      ObjectAlignmentState *sobj = I->State + iter.state;
+      sobj->valid = false;
     }
   }
 }

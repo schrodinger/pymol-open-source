@@ -87,28 +87,6 @@ enum {
 #define cRepEllipsoidBit       (1 << 19)
 #define cRepVolumeBit          (1 << 20)
 
-#define cRepCylBit             (1 << 0)
-#define cRepSphereBit          (1 << 1)
-#define cRepSurfaceBit         (1 << 2)
-#define cRepLabelBit           (1 << 3)
-#define cRepNonbondedSphereBit (1 << 4)
-#define cRepCartoonBit         (1 << 5)
-#define cRepRibbonBit          (1 << 6)
-#define cRepLineBit            (1 << 7)
-#define cRepMeshBit            (1 << 8)
-#define cRepDotBit             (1 << 9)
-#define cRepDashBit            (1 << 10)
-#define cRepNonbondedBit       (1 << 11)
-#define cRepCellBit            (1 << 12)
-#define cRepCGOBit             (1 << 13)
-#define cRepCallbackBit        (1 << 14)
-#define cRepExtentBit          (1 << 15)
-#define cRepSliceBit           (1 << 16)
-#define cRepAngleBit           (1 << 17)
-#define cRepDihedralBit        (1 << 18)
-#define cRepEllipsoidBit       (1 << 19)
-#define cRepVolumeBit          (1 << 20)
-
 /* Add other reps here.  Don't forget to
  * update modules/constants.py::repres{}
  * update modules/constants.py::fb_module, if needed

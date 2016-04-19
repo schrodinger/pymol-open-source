@@ -40,12 +40,9 @@ void RepEllipsoidFree(RepEllipsoid * I);
 
 void RepEllipsoidFree(RepEllipsoid * I)
 {
-  if(I->ray)
-    CGOFree(I->ray);
-  if(I->std)
-    CGOFree(I->std);
-  if(I->shaderCGO)
-    CGOFree(I->shaderCGO);
+  CGOFree(I->ray);
+  CGOFree(I->std);
+  CGOFree(I->shaderCGO);
   RepPurge(&I->R);
   OOFreeP(I);
 }
@@ -66,7 +63,6 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
       int rayok = CGORenderRay(I->ray, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
       if (!rayok){
 	CGOFree(I->ray);
-	I->ray = NULL;
 	try_std = true;
       }
     } else {
@@ -76,7 +72,6 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
       ok &= CGORenderRay(I->std, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
       if (!ok){
 	CGOFree(I->std);
-	I->std = NULL;
       }
     }
     CHECKOK(ok, I->std);
@@ -103,9 +98,8 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
 	    I->shaderCGO->enable_shaders = true;
 	    CGOFree(convertcgo);
 	  }
-	} else if (I->shaderCGO){
+	} else {
 	  CGOFree(I->shaderCGO);	  
-	  I->shaderCGO = NULL;
 	}
 	if (I->shaderCGO){
           CGORenderGL(I->shaderCGO, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);

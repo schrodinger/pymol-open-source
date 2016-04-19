@@ -178,7 +178,6 @@ CField *FieldNewCopy(PyMOLGlobals * G, const CField * src)
 CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
 {
   int ok = true;
-  unsigned int n_elem;
   int ll;
   int *I_dim = NULL;
   int *I_stride = NULL;

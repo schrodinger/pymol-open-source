@@ -1197,7 +1197,7 @@ static
 int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, CoordSet * cs, bool *marked){
   PyMOLGlobals *G = cs->State.G;
   BondType *b = obj->Bond;
-  int a, ord, a1, a2, stick_color, c1, c2, s1, s2, half_bonds, hide_long = false;
+  int a, a1, a2, stick_color, c1, c2, s1, s2, half_bonds, hide_long = false;
   int b1, b2;
   float *vv1, *vv2;
   int cartoon_side_chain_helper = 0;
@@ -2668,15 +2668,10 @@ static void RepCylinderImmediate(float *v1arg, float *v2arg, int nEdge,
   p0[2] = (v2[2] - v1[2]);
 
   normalize3f(p0);
-
   get_divergent3f(d, t);
-
   cross_product3f(d, t, p1);
-
   normalize3f(p1);
-
   cross_product3f(d, p1, p2);
-
   normalize3f(p2);
 
   /* now we have a coordinate system */

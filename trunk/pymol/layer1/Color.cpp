@@ -298,9 +298,6 @@ void ColorForgetExt(PyMOLGlobals * G, const char *name)
 
 PyObject *ColorExtAsPyList(PyMOLGlobals * G)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   CColor *I = G->Color;
   PyObject *result, *list;
   ExtRec *ext;
@@ -319,16 +316,12 @@ PyObject *ColorExtAsPyList(PyMOLGlobals * G)
     ext++;
   }
   return (result);
-#endif
 }
 
 
 /*========================================================================*/
 PyObject *ColorAsPyList(PyMOLGlobals * G)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   CColor *I = G->Color;
   PyObject *result, *list;
   ColorRec *color;
@@ -362,7 +355,6 @@ PyObject *ColorAsPyList(PyMOLGlobals * G)
     color++;
   }
   return (result);
-#endif
 }
 
 /*========================================================================*/
@@ -397,9 +389,6 @@ int ColorConvertOldSessionIndex(PyMOLGlobals * G, int index)
 
 int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int n_ext = 0;
   int a;
   int ok = true;
@@ -465,17 +454,12 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 
   }
   return (ok);
-#endif
 }
 
 
 /*========================================================================*/
 int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int n_custom = 0;
   int a;
   int index = 0, old_session_index = 0;
@@ -564,7 +548,6 @@ int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
     }
   }
   return (ok);
-#endif
 }
 
 /*========================================================================*/
@@ -573,7 +556,6 @@ void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int 
   CColor *I = G->Color;
   int color = -1;
   int a;
-  int best;
   int wm;
 
   {
@@ -585,7 +567,6 @@ void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int 
   }
 
   if(color < 0) {
-    best = 0;
     for(a = 0; a < I->NColor; a++) {
       int color_ext = I->Color[a].Name;
       if(color_ext) {
@@ -2949,11 +2930,11 @@ void ColorUpdateFront(PyMOLGlobals * G, const float *back)
 
 void ColorUpdateFrontFromSettings(PyMOLGlobals * G){
   int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
-  OrthoLineType bg_image_filename;
-  strcpy (bg_image_filename, SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename));
+  const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
+  short bg_image = bg_image_filename && bg_image_filename[0];
   
   if (!bg_gradient){
-    if (!bg_image_filename[0] && !OrthoBackgroundDataIsSet(G)){
+    if (!bg_image && !OrthoBackgroundDataIsSet(G)){
       float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
       ColorUpdateFront(G, v);
     } else {

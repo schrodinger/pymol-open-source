@@ -45,10 +45,7 @@ void RepNonbondedFree(RepNonbonded * I);
 
 void RepNonbondedFree(RepNonbonded * I)
 {
-  if (I->shaderCGO){
-    CGOFree(I->shaderCGO);
-    I->shaderCGO = 0;
-  }
+  CGOFree(I->shaderCGO);
   FreeP(I->VP);
   FreeP(I->V);
   RepPurge(&I->R);

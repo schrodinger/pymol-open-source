@@ -179,7 +179,6 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
         if (I->ray == I->preshader)
           I->preshader = NULL;
 	CGOFree(I->ray);
-	I->ray = NULL;
 	try_std = true;
       }
     } else {
@@ -189,7 +188,6 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       ok &= CGORenderRay(I->std, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
       if (!ok){
 	CGOFree(I->std);
-	I->std = NULL;
       }
     }
 #endif
@@ -2999,7 +2997,7 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
       *(ndata->iptr++) = a;
 
       if (trace) {
-        if (a == 0 || a + 1 == cs->NIndex ||
+        if (a1 == 0 || a1 + 1 == cs->NAtIndex ||
             (a3 = cs->atmToIdx(a1 - 1)) == -1 ||
             (a4 = cs->atmToIdx(a1 + 1)) == -1) {
           zero3f(ndata->voptr);

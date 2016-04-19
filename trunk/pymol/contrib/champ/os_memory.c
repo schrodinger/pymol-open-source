@@ -231,8 +231,9 @@ void *OSMemoryRealloc(void *ptr,unsigned int size,const char *file,
   OSMemoryDump();
   printf("hit ctrl/c to enter debugger\n");
   while(true){};
-#endif
+#else
       exit(EXIT_FAILURE);
+#endif
     }
   if(!ptr)
       return(OSMemoryMalloc(size,file,line,type));
@@ -253,8 +254,9 @@ void *OSMemoryRealloc(void *ptr,unsigned int size,const char *file,
   OSMemoryDump();
   printf("hit ctrl/c to enter debugger\n");
 			 while(true){};
-#endif
+#else
 			 exit(EXIT_FAILURE);
+#endif
 		  }	
       else
 		  {
@@ -266,8 +268,9 @@ void *OSMemoryRealloc(void *ptr,unsigned int size,const char *file,
               OSMemoryDump();
 				  printf("hit ctrl/c to enter debugger\n");
 				  while(true){};
-#endif
+#else
               exit(EXIT_FAILURE);
+#endif
             }
 			 rec=(DebugRec*)realloc(rec,size+sizeof(DebugRec));
 			 if(!rec)
@@ -278,8 +281,9 @@ void *OSMemoryRealloc(void *ptr,unsigned int size,const char *file,
               OSMemoryDump();
 				  printf("hit ctrl/c to enter debugger\n");
 				  while(true){};
-#endif
+#else
 				  exit(EXIT_FAILURE);
+#endif
 				}
 			 else
 				{
@@ -306,8 +310,9 @@ void OSMemoryFree(void *ptr,const char*file,int line,int type)
   OSMemoryDump();
   printf("hit ctrl/c to enter debugger\n");
 		while(true){};
-#endif
+#else
       exit(EXIT_FAILURE);
+#endif
     }
   rec=OSMemoryHashRemove(ptr);
   if(rec)
@@ -320,8 +325,9 @@ void OSMemoryFree(void *ptr,const char*file,int line,int type)
           OSMemoryDump();
           printf("hit ctrl/c to enter debugger\n");
 			 while(true){};
-#endif
+#else
 			 exit(EXIT_FAILURE);
+#endif
 		  }
       free(rec);
     }
@@ -335,8 +341,9 @@ void OSMemoryFree(void *ptr,const char*file,int line,int type)
       OSMemoryDump();
       printf("hit ctrl/c to enter debugger\n");
 		while(true){};
-#endif
+#else
       exit(EXIT_FAILURE);
+#endif
     }
   Count--;
 }

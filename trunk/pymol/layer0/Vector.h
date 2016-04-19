@@ -82,16 +82,16 @@ void add3d(const double *v1, const double *v0, double *v2);
 
 double distance_line2point3f(const float *base, const float *normal, const float *point,
                              float *alongNormalSq);
-double distance_halfline2point3f(float *base, float *normal, float *point,
+double distance_halfline2point3f(const float *base, const float *normal, const float *point,
                                  float *alongNormalSq);
 
-int equal3f(float *v1, float *v2);
+int equal3f(const float *v1, const float *v2);
 
 int pymol_roundf(float f);
 
-float get_angle3f(float *v1, float *v2);
-float get_dihedral3f(float *v0, float *v1, float *v2, float *v3);
-double length3d(double *v1);
+float get_angle3f(const float *v1, const float *v2);
+float get_dihedral3f(const float *v0, const float *v1, const float *v2, const float *v3);
+double length3d(const double *v1);
 
 void min3f(const float *v1, const float *v2, float *v3);
 void max3f(const float *v1, const float *v2, float *v3);

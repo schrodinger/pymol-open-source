@@ -179,10 +179,6 @@ static int SeqDrag(Block * block, int x, int y, int mod)
   int col_num;
   if(!pass) {
     if(SeqFindRowCol(G, x, y, &row_num, &col_num, I->LastRow)) {
-      CSeqRow *row;
-      CSeqCol *col;
-      row = I->Row + row_num;
-      col = row->col + col_num;
       if(I->Handler)
         if(I->Handler->fDrag)
           I->Handler->fDrag(G, I->Row, row_num, col_num, mod);
@@ -210,10 +206,6 @@ static int SeqRelease(Block * block, int button, int x, int y, int mod)
     int row_num;
     int col_num;
     if(SeqFindRowCol(G, x, y, &row_num, &col_num, I->LastRow)) {
-      CSeqRow *row;
-      CSeqCol *col;
-      row = I->Row + row_num;
-      col = row->col + col_num;
       if(I->Handler)
         if(I->Handler->fRelease)
           I->Handler->fRelease(G, I->Row, button, row_num, col_num, mod);
@@ -264,10 +256,6 @@ static int SeqClick(Block * block, int button, int x, int y, int mod)
   }
   if(!pass) {
     if(SeqFindRowCol(G, x, y, &row_num, &col_num, -1)) {
-      CSeqRow *row;
-      CSeqCol *col;
-      row = I->Row + row_num;
-      col = row->col + col_num;
       if(I->Handler)
         if(I->Handler->fClick)
           I->Handler->fClick(G, I->Row, button, row_num, col_num, mod, x, y);

@@ -29,7 +29,7 @@ Z* -------------------------------------------------------------------
 #define BondInfoVERSION  177
 #else
 #define AtomInfoVERSION  181
-#define BondInfoVERSION  177
+#define BondInfoVERSION  181
 #endif
 
 /* FLAGS 0-3 have the following conventional usage for molecular modeling */

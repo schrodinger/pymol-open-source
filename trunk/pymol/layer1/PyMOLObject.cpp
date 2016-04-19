@@ -382,7 +382,6 @@ int ObjectMotion(CObject * I, int action, int first,
     case 3:
       {
         CViewElem *first_view = NULL, *last_view = NULL;
-        int zero_flag = -1;
         int view_found = false;
 
         if(first < 0)
@@ -424,7 +423,6 @@ int ObjectMotion(CObject * I, int action, int first,
           for(a = nFrame; a <= last; a++) {
             ViewElemCopy(G, I->ViewElem + a - nFrame, I->ViewElem + a);
           }
-          zero_flag = last;
         } else if(!wrap) { 
           /* if we're not wrapping, then make sure we nuke any stray / old
              interpolated frames */
@@ -685,10 +683,6 @@ int ObjectGetCurrentState(CObject * I, int ignore_all_states)
 
 PyObject *ObjectAsPyList(CObject * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
   result = PyList_New(14);
   PyList_SetItem(result, 0, PyInt_FromLong(I->type));
@@ -713,15 +707,10 @@ PyObject *ObjectAsPyList(CObject * I)
     PyList_SetItem(result, 13, PConvAutoNone(NULL));
   }
   return (PConvAutoNone(result));
-#endif
 }
 
 int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   int ll = 0;
   I->G = G;
@@ -781,7 +770,6 @@ int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I)
      Always check ll when adding new PyList_GetItem's */
 
   return (ok);
-#endif
 }
 
 int ObjectCopyHeader(CObject * I, const CObject * src)
@@ -1274,6 +1262,7 @@ void ObjectStateCopy(CObjectState * dst, const CObjectState * src)
 void ObjectStatePurge(CObjectState * I)
 {
   FreeP(I->Matrix);
+  FreeP(I->InvMatrix);
 }
 
 int ObjectStateSetMatrix(CObjectState * I, double *matrix)
@@ -1290,7 +1279,7 @@ int ObjectStateSetMatrix(CObjectState * I, double *matrix)
     FreeP(I->Matrix);
     I->Matrix = NULL;
   }
-  I->InvMatrix = NULL;
+  FreeP(I->InvMatrix);
   return ok;
 }
 
@@ -1304,7 +1293,7 @@ void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix)
       right_multiply44d44d(I->Matrix, matrix);
     }
   }
-  I->InvMatrix = NULL;
+  FreeP(I->InvMatrix);
 }
 
 void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix)
@@ -1317,7 +1306,7 @@ void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix)
       left_multiply44d44d(matrix, I->Matrix);
     }
   }
-  I->InvMatrix = NULL;
+  FreeP(I->InvMatrix);
 }
 
 void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix)
@@ -1333,7 +1322,7 @@ void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix)
       right_multiply44d44d(I->Matrix, tmp);
     }
   }
-  I->InvMatrix = NULL;
+  FreeP(I->InvMatrix);
 }
 
 double *ObjectStateGetMatrix(CObjectState * I)
@@ -1363,7 +1352,7 @@ void ObjectStateTransformMatrix(CObjectState * I, double *matrix)
   } else {
     right_multiply44d44d(I->Matrix, matrix);
   }
-  I->InvMatrix = NULL;
+  FreeP(I->InvMatrix);
 }
 
 int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
@@ -1426,10 +1415,6 @@ void ObjectStateResetMatrix(CObjectState * I)
 
 PyObject *ObjectStateAsPyList(CObjectState * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   if(I) {
@@ -1442,14 +1427,10 @@ PyObject *ObjectStateAsPyList(CObjectState * I)
     }
   }
   return (PConvAutoNone(result));
-#endif
 }
 
 int ObjectStateFromPyList(PyMOLGlobals * G, PyObject * list, CObjectState * I)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   PyObject *tmp;
   int ok = true;
   int ll = 0;
@@ -1472,5 +1453,4 @@ int ObjectStateFromPyList(PyMOLGlobals * G, PyObject * list, CObjectState * I)
     }
   }
   return (ok);
-#endif
 }

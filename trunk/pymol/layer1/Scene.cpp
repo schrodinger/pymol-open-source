@@ -6696,7 +6696,7 @@ int SceneGetDrawFlagGrid(PyMOLGlobals * G, GridInfo * grid, int slot)
   return SceneGetDrawFlag(grid, I->SlotVLA, slot);
 }
 
-void SceneRay(PyMOLGlobals * G,
+bool SceneRay(PyMOLGlobals * G,
               int ray_width, int ray_height, int mode,
               char **headerVLA_ptr,
               char **charVLA_ptr, float angle,
@@ -7423,6 +7423,8 @@ void SceneRay(PyMOLGlobals * G,
   }
   OrthoBusyFast(G, 20, 20);
   PyMOL_SetBusy(G->PyMOL, false);
+
+  return true;
 }
 
 

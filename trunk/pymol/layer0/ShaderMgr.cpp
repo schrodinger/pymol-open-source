@@ -732,7 +732,7 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
   int major, minor;
   char buf[50];
   CShaderPrg *defaultShader = NULL, *volumeShader = NULL, *sphereShader = NULL, *defaultScreenShader = NULL,
-    *cylinderShader = NULL, *spheredirectShader = NULL, *labelShader = NULL, *labelScreenShader = NULL, *indicatorShader = NULL,
+    *cylinderShader = NULL, *labelShader = NULL, *labelScreenShader = NULL, *indicatorShader = NULL,
     *bgShader = NULL, *screenShader = NULL, *rampShader = NULL;
   int ok = 0;
   GLenum err; 

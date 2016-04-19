@@ -79,7 +79,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
   if(ray) {
-
     float radius;
 
     if(I->radius <= 0.0F) {
@@ -283,7 +282,6 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->shaderCGO = NULL;
     I->ds->Rep[cRepDash] = NULL;
     RepDistDashFree(I);
   }

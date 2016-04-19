@@ -61,7 +61,6 @@ Z* -------------------------------------------------------------------
 
 /* note: the following value must be at least one greater than the max
    number of lights */
-
 #define MAX_BASIS 12
 
 typedef float float3[3];
@@ -120,16 +119,15 @@ struct _CRayAntiThreadInfo {
 void RayRelease(CRay * I);
 
 void RaySetup(CRay * I);
-void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p);
-void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], float3 * p);
+static void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p);
+static void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], float3 * p);
 
 int RayExpandPrimitives(CRay * I);
-int RayTransformBasis(CRay * I, CBasis * B, int group_id);
 
 int PrimitiveSphereHit(CRay * I, float *v, float *n, float *minDist, int except);
 
-void RayTransformNormals33(unsigned int n, float3 * q, const float m[16], float3 * p);
-void RayTransformInverseNormals33(unsigned int n, float3 * q, const float m[16],
+static void RayTransformNormals33(unsigned int n, float3 * q, const float m[16], float3 * p);
+static void RayTransformInverseNormals33(unsigned int n, float3 * q, const float m[16],
                                   float3 * p);
 void RayProjectTriangle(CRay * I, RayInfo * r, float *light, float *v0, float *n0,
                         float scale);
@@ -140,9 +138,6 @@ void RaySetContext(CRay * I, int context)
   else
     I->Context = 0;
 }
-
-void RayApplyContextToNormal(CRay * I, float *v);
-void RayApplyContextToVertex(CRay * I, float *v);
 
 static float RayGetScreenVertexScale(CRay * I, float *v1)
 {
@@ -163,7 +158,7 @@ static float RayGetScreenVertexScale(CRay * I, float *v1)
   return ratio;
 }
 
-void RayApplyContextToVertex(CRay * I, float *v)
+static void RayApplyContextToVertex(CRay * I, float *v)
 {
   switch (I->Context) {
   case 1:
@@ -206,7 +201,7 @@ void RayApplyContextToVertex(CRay * I, float *v)
   }
 }
 
-void RayApplyContextToNormal(CRay * I, float *v)
+static void RayApplyContextToNormal(CRay * I, float *v)
 {
   switch (I->Context) {
   case 1:
@@ -276,29 +271,6 @@ static void fill(unsigned int *buffer, unsigned int value, unsigned int cnt)
 }
 #define MIN(x,y) ((x < y) ? x : y)
 #define MAX(x,y) ((x > y) ? x : y)
-#define length2f(v1, v2) (sqrt1f(((v1)*(v1)) + ((v2)*(v2))))
-void add4ucf(unsigned char *ucval, float *fval, float mulv){
-  fval[0] += ucval[0] * mulv;
-  fval[1] += ucval[1] * mulv;
-  fval[2] += ucval[2] * mulv;
-  fval[3] += ucval[3] * mulv;
-}
-
-void copy4fuc(float *fval, unsigned char *ucval){
-  ucval[0] = (0xFF & (int)pymol_roundf(fval[0]));
-  ucval[1] = (0xFF & (int)pymol_roundf(fval[1]));
-  ucval[2] = (0xFF & (int)pymol_roundf(fval[2]));
-  ucval[3] = (0xFF & (int)pymol_roundf(fval[3]));
-}
-
-float fmodpos(float a, float b){
-  float ret = fmod(a, b);
-  if (ret < 0.f){
-    ret = fmod(-ret, b);
-    ret = fmod( b - ret, b);
-  }
-  return ret;
-}
 
 static void fill_gradient(CRay * I, int opaque_back, unsigned int *buffer, float *bkrd_bottom, float *bkrd_top, int width, int height, unsigned int cnt)
 {
@@ -343,7 +315,6 @@ __inline__
 #endif
 static void RayReflectAndTexture(CRay * I, RayInfo * r, int perspective)
 {
-
   if(r->prim->wobble)
     switch (r->prim->wobble) {
     case 1:
@@ -846,7 +817,7 @@ int RayTransformFirst(CRay * I, int perspective, int identity)
 
 
 /*========================================================================*/
-int RayTransformBasis(CRay * I, CBasis * basis1, int group_id)
+static int RayTransformBasis(CRay * I, CBasis * basis1, int group_id)
 {
   CBasis *basis0;
   int a;
@@ -945,7 +916,7 @@ G3dPrimitive *RayRenderG3d(CRay * I, int width, int height,
 {
   /* generate a rendering stream for Miguel's G3d java rendering engine */
 
-  float scale_x, scale_y, scale_z;
+  float scale_x, scale_y;
   int shift_x, shift_y;
   float *d;
   CBasis *base;
@@ -978,7 +949,6 @@ G3dPrimitive *RayRenderG3d(CRay * I, int width, int height,
      I->Range[1] should be off the top */
   scale_x = width / I->Range[0];
   scale_y = height / I->Range[1];
-  scale_z = -4096.0F / (back - front);
   shift_x = width / 2;
   shift_y = height / 2;
 
@@ -2110,7 +2080,6 @@ void RayRenderIDTF(CRay * I, char **node_vla, char **rsrc_vla)
     IdtfResourceMesh *mesh_vla = VLACalloc(IdtfResourceMesh, 1);
     if(mesh_vla) {
       IdtfResourceMesh *mesh = NULL;
-      int mesh_start = 0;
       int a;
 
       for(a = 0; a < I->NPrimitive; a++) {
@@ -2137,7 +2106,6 @@ void RayRenderIDTF(CRay * I, char **node_vla, char **rsrc_vla)
                 mesh = NULL;
               }
             }
-            mesh_start = a;
           }
           break;
         default:               /* close/terminate mesh */
@@ -2420,8 +2388,6 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
                   char **charVLA_ptr, float front, float back, float fov,
                   float angle, int antialias)
 {
-  int fogFlag = false;
-  int fogRangeFlag = false;
   float fog;
   float *bkrd;
   float fog_start = 0.0F;
@@ -2473,7 +2439,6 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   if(fog != 0.0F) {
     if(fog > 1.0F)
       fog = 1.0F;
-    fogFlag = true;
     fog_start = SettingGetGlobal_f(I->G, cSetting_ray_trace_fog_start);
     if(fog_start < 0.0F)
       fog_start = SettingGetGlobal_f(I->G, cSetting_fog_start);
@@ -2481,11 +2446,6 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
       fog_start = 1.0F;
     if(fog_start < 0.0F)
       fog_start = 0.0F;
-    if(fog_start > R_SMALL4) {
-      fogRangeFlag = true;
-      if(fabs(fog_start - 1.0F) < R_SMALL4)     /* prevent div/0 */
-        fogFlag = false;
-    }
   }
 
   /* SETUP */
@@ -7483,7 +7443,7 @@ void RayPopTTT(CRay * I)
   }
 }
 
-void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p)
+static void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p)
 {
   {
     unsigned int i;
@@ -7499,7 +7459,7 @@ void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p)
   }
 }
 
-void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], float3 * p)
+static void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], float3 * p)
 {
   {
     unsigned int i;
@@ -7515,7 +7475,7 @@ void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], floa
   }
 }
 
-void RayTransformNormals33(unsigned int n, float3 * q, const float m[16], float3 * p)
+static void RayTransformNormals33(unsigned int n, float3 * q, const float m[16], float3 * p)
 {
   unsigned int i;
   float m0 = m[0], m4 = m[4], m8 = m[8];
@@ -7532,7 +7492,7 @@ void RayTransformNormals33(unsigned int n, float3 * q, const float m[16], float3
   }
 }
 
-void RayTransformInverseNormals33(unsigned int n, float3 * q, const float m[16],
+static void RayTransformInverseNormals33(unsigned int n, float3 * q, const float m[16],
                                   float3 * p)
 {
   unsigned int i;

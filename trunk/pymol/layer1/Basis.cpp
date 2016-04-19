@@ -843,7 +843,7 @@ static int ConeLineToSphereCapped(float *base, float *ray,
     float base2orig_radial[3];
     float base2orig_normal[3];
     float base2orig_radial_len, base2orig_radial_len_sq;
-    float base2orig_len, base2orig_len_sq;
+    float base2orig_len_sq;
     float base2orig_axial_len, base2orig_spread;
     float orig[3];
     float base2orig[3];
@@ -866,7 +866,6 @@ static int ConeLineToSphereCapped(float *base, float *ray,
     base2orig_axial_len = sqrt1f(base2orig_len_sq - base2orig_radial_len_sq);
 
     base2orig_radial_len = sqrt1f(base2orig_radial_len_sq);
-    base2orig_len = sqrt1f(base2orig_len_sq);
 
     base2orig_spread = base2orig_radial_len / base2orig_axial_len;
 
@@ -2357,8 +2356,6 @@ int BasisHitShadow(BasisCallRec * BC)
   float sph[3], vt[3];
   int h, *ip;
   int a, b, c;
-  int excl_trans_flag;
-  int check_interior_flag;
   int *elist, local_iflag = false;
   float minusZ[3] = { 0.0F, 0.0F, -1.0F };
   /* local copies (eliminate these extra copies later on) */
@@ -2392,8 +2389,6 @@ int BasisHitShadow(BasisCallRec * BC)
     float r_trans = _0;
     CPrimitive *r_prim = NULL;
 
-    check_interior_flag = BC->check_interior;
-
     /* assumption: always heading in the negative Z direction with our vector... */
     vt[0] = r->base[0];
     vt[1] = r->base[1];
@@ -2402,8 +2397,6 @@ int BasisHitShadow(BasisCallRec * BC)
       except1 = vert2prim[except1];
     if(except2 >= 0)
       except2 = vert2prim[except2];
-
-    excl_trans_flag = (excl_trans != _0);
 
     r_trans = _1;
     r_dist = MAXFLOAT;

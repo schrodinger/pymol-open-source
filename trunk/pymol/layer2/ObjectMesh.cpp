@@ -297,16 +297,9 @@ static void ObjectMeshStateFree(ObjectMeshState * ms)
   FreeP(ms->VC);
   FreeP(ms->RC);
   VLAFreeP(ms->AtomVertex);
-  if (ms->shaderCGO){
-    CGOFree(ms->shaderCGO);
-    ms->shaderCGO = NULL;
-    CGOFree(ms->shaderUnitCellCGO);
-    ms->shaderUnitCellCGO = NULL;
-  }
-  if(ms->UnitCellCGO) {
-    CGOFree(ms->UnitCellCGO);
-    ms->UnitCellCGO = NULL;
-  }
+  CGOFree(ms->shaderCGO);
+  CGOFree(ms->shaderUnitCellCGO);
+  CGOFree(ms->UnitCellCGO);
   ms->Active = false;
 }
 
@@ -375,48 +368,27 @@ void ObjectMeshDump(ObjectMesh * I, const char *fname, int state)
 
 static void ObjectMeshInvalidate(ObjectMesh * I, int rep, int level, int state)
 {
-  int a;
-  int once_flag = true;
   if(level >= cRepInvExtents) {
     I->Obj.ExtentFlag = false;
   }
   if((rep == cRepMesh) || (rep == cRepAll) || (rep == cRepCell)) {
-    if (state < 0){
-      for(a = 0; a < I->NState; a++) {
-	ObjectMeshState *ms = &I->State[a];
-	if (ms && ms->shaderCGO){
-	  CGOFree(ms->shaderCGO);
-	  ms->shaderCGO = NULL;
-	  CGOFree(ms->shaderUnitCellCGO);
-	  ms->shaderUnitCellCGO = NULL;
-	}
-      }
-    } else {
-      ObjectMeshState *ms = &I->State[state];
-      if (ms && ms->shaderCGO){
-	CGOFree(ms->shaderCGO);
-	ms->shaderCGO = NULL;
-	CGOFree(ms->shaderUnitCellCGO);
-	ms->shaderUnitCellCGO = NULL;
-      }
-    }
-    for(a = 0; a < I->NState; a++) {
-      if(state < 0)
-        once_flag = false;
-      if(!once_flag)
-        state = a;
-      I->State[state].RefreshFlag = true;
+
+    for(StateIterator iter(I->Obj.G, NULL, state, I->NState); iter.next();) {
+      ObjectMeshState *ms = I->State + iter.state;
+
+      CGOFree(ms->shaderCGO);
+      CGOFree(ms->shaderUnitCellCGO);
+
+      ms->RefreshFlag = true;
       if(level >= cRepInvAll) {
-        I->State[state].ResurfaceFlag = true;
+        ms->ResurfaceFlag = true;
         SceneChanged(I->Obj.G);
       } else if(level >= cRepInvColor) {
-        I->State[state].RecolorFlag = true;
+        ms->RecolorFlag = true;
         SceneChanged(I->Obj.G);
       } else {
         SceneInvalidate(I->Obj.G);
       }
-      if(once_flag)
-        break;
     }
   }
 }
@@ -442,29 +414,17 @@ int ObjectMeshGetLevel(ObjectMesh * I, int state, float *result)
 
 int ObjectMeshSetLevel(ObjectMesh * I, float level, int state, int quiet)
 {
-  int a;
   int ok = true;
-  int once_flag = true;
-  ObjectMeshState *ms;
   if(state >= I->NState) {
     ok = false;
   } else {
-    for(a = 0; a < I->NState; a++) {
-      if(state < 0) {
-        once_flag = false;
-      }
-      if(!once_flag) {
-        state = a;
-      }
-      ms = I->State + state;
+    for(StateIterator iter(I->Obj.G, NULL, state, I->NState); iter.next();) {
+      ObjectMeshState *ms = I->State + iter.state;
       if(ms->Active) {
         ms->ResurfaceFlag = true;
         ms->RefreshFlag = true;
         ms->Level = level;
         ms->quiet = quiet;
-      }
-      if(once_flag) {
-        break;
       }
     }
   }
@@ -572,7 +532,6 @@ static void ObjectMeshUpdate(ObjectMesh * I)
   int last_flag = 0;
   int h, k, l;
   int i, j;
-  int ok = true;
   int mesh_skip = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_mesh_skip);
 
   MapType *voxelmap;            /* this has nothing to do with isosurfaces... */
@@ -582,7 +541,6 @@ static void ObjectMeshUpdate(ObjectMesh * I)
 
       map = ExecutiveFindObjectMapByName(I->Obj.G, ms->MapName);
       if(!map) {
-        ok = false;
         PRINTFB(I->Obj.G, FB_ObjectMesh, FB_Errors)
           "ObjectMeshUpdate-Error: map '%s' has been deleted.\n", ms->MapName
           ENDFB(I->Obj.G);
@@ -590,8 +548,6 @@ static void ObjectMeshUpdate(ObjectMesh * I)
       }
       if(map) {
         oms = ObjectMapGetState(map, ms->MapState);
-        if(!oms)
-          ok = false;
       }
       if(oms) {
         if(ms->RefreshFlag || ms->ResurfaceFlag) {
@@ -600,8 +556,7 @@ static void ObjectMeshUpdate(ObjectMesh * I)
           }
 
           if((I->Obj.visRep & cRepCellBit)) {
-            if(ms->UnitCellCGO)
-              CGOFree(ms->UnitCellCGO);
+            CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
           }
 
@@ -801,12 +756,9 @@ static void ObjectMeshUpdate(ObjectMesh * I)
           ms->RecolorFlag = false;
         }
       }
-      if (ms->shaderCGO){
-	CGOFree(ms->shaderCGO);
-	ms->shaderCGO = NULL;
-	CGOFree(ms->shaderUnitCellCGO);
-	ms->shaderUnitCellCGO = NULL;
-      }
+
+      CGOFree(ms->shaderCGO);
+      CGOFree(ms->shaderUnitCellCGO);
     }
     SceneInvalidate(I->Obj.G);
   }
@@ -869,7 +821,6 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   int pass = 0;
   int *n = NULL;
   int c;
-  int a = 0;
   float line_width, mesh_width = SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_width);
   ObjectMeshState *ms = NULL;
   int ok = true;
@@ -886,21 +837,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   line_width = SceneGetDynamicLineWidth(info, mesh_width);
   ObjectPrepareContext(&I->Obj, ray);
 
-  for(a = 0; ok && a < I->NState; a++) {
-    if(state < 0) {             /* all_states */
-      ms = I->State + a;
-    } else if(a > 0) {
-      break;
-    } else if(0 <= state && state < I->NState) {
-      ms = I->State + state;
-    } else if(I->NState == 1 && SettingGetGlobal_b(G, cSetting_static_singletons)) {
-      ms = I->State;
-    }
-
-    if(!ms) {
-      ok = false;
-      break;
-    }
+  for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
+    ms = I->State + iter.state;
 
     if(!ms->Active || !ms->V || !ms->N)
       continue;
@@ -914,7 +852,6 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 			       I->Obj.Setting, NULL);
 	    if (!ok){
 	      CGOFree(ms->UnitCellCGO);
-	      ms->UnitCellCGO = NULL;
 	      break;
 	    }
 	  }
@@ -1001,9 +938,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 
 	      if (ms->shaderCGO && (!use_shader || (mesh_as_cylinders ^ ms->shaderCGO->has_draw_cylinder_buffers))){
 		CGOFree(ms->shaderCGO);
-		ms->shaderCGO = NULL;
 		CGOFree(ms->shaderUnitCellCGO);
-		ms->shaderUnitCellCGO = NULL;
 	      }
 
 	      if (ms->shaderCGO && !returnCGO) {
@@ -1133,9 +1068,6 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  }
 		  while(*n) {
 		    c = *(n++);
-#ifdef PURE_OPENGL_ES_2
-		    /* TODO */
-#else
 		    if(ms->MeshMode == 1)
 		      glBegin(GL_POINTS);
 		    else
@@ -1149,7 +1081,6 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		      v += 3;
 		    }
 		    glEnd();
-#endif
 		  }
 		}
 	      }
