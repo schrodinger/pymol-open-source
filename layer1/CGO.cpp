@@ -488,7 +488,7 @@ static float *CGO_size(CGO * I, int sz)
 
 /*===== Object Creation Routines =======*/
 
-int CGOFromFloatArray(CGO * I, float *src, int len)
+int CGOFromFloatArray(CGO * I, const float *src, int len)
 {
   int op, iarg;
   int c;
@@ -836,7 +836,9 @@ GLfloat *CGODrawBuffersNotIndexed(CGO *I, GLenum mode, short arrays, int nverts,
   return pc;
 }
 
-int CGOShaderCylinder(CGO *I, float *origin, float *axis, float tube_size, int cap){
+int CGOShaderCylinder(CGO *I,
+    const float *origin,
+    const float *axis, float tube_size, int cap){
   float *pc = CGO_add(I, 9);
   if (!pc)
     return false;
@@ -851,7 +853,10 @@ int CGOShaderCylinder(CGO *I, float *origin, float *axis, float tube_size, int c
   CGO_write_int(pc, cap);
   return true;
 }
-int CGOShaderCylinder2ndColor(CGO *I, float *origin, float *axis, float tube_size, int cap, float *color2){
+int CGOShaderCylinder2ndColor(CGO *I,
+    const float *origin,
+    const float *axis, float tube_size, int cap,
+    const float *color2){
   float *pc = CGO_add(I, 12);
   if (!pc)
     return false;
@@ -906,7 +911,11 @@ int CGODrawSphereBuffers(CGO *I, int num_spheres, int ub_flags, uint *bufs){
 }
 
 
-int CGOCylinderv(CGO * I, float *p1, float *p2, float r, float *c1, float *c2)
+int CGOCylinderv(CGO * I,
+    const float *p1,
+    const float *p2, float r,
+    const float *c1,
+    const float *c2)
 {
   float *pc = CGO_add(I, 14);
   if (!pc)
@@ -928,7 +937,11 @@ int CGOCylinderv(CGO * I, float *p1, float *p2, float r, float *c1, float *c2)
   return true;
 }
 
-int CGOCustomCylinderv(CGO * I, float *p1, float *p2, float r, float *c1, float *c2,
+int CGOCustomCylinderv(CGO * I,
+    const float *p1,
+    const float *p2, float r,
+    const float *c1,
+    const float *c2,
                         float cap1, float cap2)
 {
   float *pc = CGO_add(I, 16);
@@ -953,7 +966,11 @@ int CGOCustomCylinderv(CGO * I, float *p1, float *p2, float r, float *c1, float 
   return true;
 }
 
-int CGOConev(CGO * I, float *p1, float *p2, float r1, float r2, float *c1, float *c2,
+int CGOConev(CGO * I,
+    const float *p1,
+    const float *p2, float r1, float r2,
+    const float *c1,
+    const float *c2,
               float cap1, float cap2)
 {
   float *pc = CGO_add(I, 17);
@@ -1010,7 +1027,7 @@ int CGOAlpha(CGO * I, float alpha)
   return true;
 }
 
-int CGOSphere(CGO * I, float *v1, float r)
+int CGOSphere(CGO * I, const float *v1, float r)
 {
   float *pc = CGO_add(I, 5);
   if (!pc)
@@ -1023,7 +1040,10 @@ int CGOSphere(CGO * I, float *v1, float r)
   return true;
 }
 
-int CGOEllipsoid(CGO * I, float *v1, float r, float *n1, float *n2, float *n3)
+int CGOEllipsoid(CGO * I, const float *v1, float r,
+    const float *n1,
+    const float *n2,
+    const float *n3)
 {
   float *pc = CGO_add(I, 14);
   if (!pc)
@@ -1046,7 +1066,7 @@ int CGOEllipsoid(CGO * I, float *v1, float r, float *n1, float *n2, float *n3)
   return true;
 }
 
-int CGOQuadric(CGO * I, float *v, float r, float *q)
+int CGOQuadric(CGO * I, const float *v, float r, const float *q)
 {
   float *pc = CGO_add(I, 15);
   if (!pc)
@@ -1072,7 +1092,7 @@ int CGOQuadric(CGO * I, float *v, float r, float *q)
   return true;
 }
 
-int CGOSausage(CGO * I, float *v1, float *v2, float r, float *c1, float *c2)
+int CGOSausage(CGO * I, const float *v1, const float *v2, float r, const float *c1, const float *c2)
 {
   float *pc = CGO_add(I, 14);
   if (!pc)
@@ -1108,9 +1128,9 @@ const static float one_third = 1.0F / 3.0F;
 const static float _0 = 0.0F;
 
 int CGOAlphaTriangle(CGO * I,
-                      float *v1, float *v2, float *v3,
-                      float *n1, float *n2, float *n3,
-                      float *c1, float *c2, float *c3,
+                      const float *v1, const float *v2, const float *v3,
+                      const float *n1, const float *n2, const float *n3,
+                      const float *c1, const float *c2, const float *c3,
                       float a1, float a2, float a3, int reverse)
 {
   if(v1 && v2 && v3) {
@@ -1285,7 +1305,7 @@ int CGOResetNormal(CGO * I, int mode)
   return true;
 }
 
-int CGOFontVertexv(CGO * I, float *v)
+int CGOFontVertexv(CGO * I, const float *v)
 {
   float *pc = CGO_add(I, 4);
   if (!pc)
@@ -1341,7 +1361,7 @@ int CGOIndent(CGO * I, char c, float dir)
   return true;
 }
 
-int CGOWrite(CGO * I, char *str)
+int CGOWrite(CGO * I, const char *str)
 {
   float *pc;
 
@@ -1355,11 +1375,10 @@ int CGOWrite(CGO * I, char *str)
   return true;
 }
 
-int CGOWriteLeft(CGO * I, char *str)
+int CGOWriteLeft(CGO * I, const char *str)
 {
   float *pc;
-  char *s;
-  s = str;
+  const char *s = str;
   while(*s) {
     pc = CGO_add(I, 3);
     if (!pc)
@@ -1379,11 +1398,10 @@ int CGOWriteLeft(CGO * I, char *str)
   return true;
 }
 
-int CGOWriteIndent(CGO * I, char *str, float indent)
+int CGOWriteIndent(CGO * I, const char *str, float indent)
 {
   float *pc;
-  char *s;
-  s = str;
+  const char *s = str;
   while(*s) {
     pc = CGO_add(I, 3);
     if (!pc)

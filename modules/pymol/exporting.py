@@ -641,13 +641,16 @@ SEE ALSO
             'mol2': get_mol2str,
         }
 
+        def safe_getitem(tup, idx):
+            return tup[idx] if tup else None
+
         func_type3 = {
             'dae': _self.get_collada,
             'wrl': _self.get_vrml,
-            'mtl': lambda: _self.get_mtl_obj()[0],
-            'obj': lambda: _self.get_mtl_obj()[1],
-            'pov': lambda: ''.join(_self.get_povray()),
-            'idtf': lambda: ''.join(_self.get_idtf()),
+            'mtl': lambda: safe_getitem(_self.get_mtl_obj(), 0),
+            'obj': lambda: safe_getitem(_self.get_mtl_obj(), 1),
+            'pov': _self.get_povray,
+            'idtf': _self.get_idtf,
         }
 
         func_type4 = {
@@ -665,6 +668,8 @@ SEE ALSO
             contents = func_type2[format](selection, state, ref, ref_state, quiet, _self=_self)
         elif format in func_type3:
             contents = func_type3[format]()
+            if isinstance(contents, tuple):
+                contents = ''.join(contents)
         elif format in func_type4:
             func_type4[format](_self.get_model(selection, state, ref, ref_state), filename)
             r = DEFAULT_SUCCESS

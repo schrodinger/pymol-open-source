@@ -1285,7 +1285,6 @@ const char * SettingGetTextPtr(PyMOLGlobals * G, CSetting * set1, CSetting * set
     break;
   case cSetting_string:
     return SettingGet_s(G, set1, set2, index);
-    break;
   default:
     return NULL;
   }

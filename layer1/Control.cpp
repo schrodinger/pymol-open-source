@@ -47,6 +47,7 @@ Z* -------------------------------------------------------------------
 
 #define SDOF_QUEUE_MASK 0x1F
 
+
 struct _CControl {
   ::Block *Block;
   int DragFlag;
@@ -249,7 +250,6 @@ static int which_button(CControl * I, int x, int y)
 
 static int ControlDrag(Block * block, int x, int y, int mod)
 {
-  int width;
   int delta;
   int gui_width;
   PyMOLGlobals *G = block->G;
@@ -262,7 +262,6 @@ static int ControlDrag(Block * block, int x, int y, int mod)
         if(gui_width < cControlMinWidth)
           gui_width = cControlMinWidth;
         delta = SettingGetGlobal_i(G, cSetting_internal_gui_width) - gui_width;
-        width = OrthoGetWidth(G) + delta;
         I->LastPos = x;
         I->SaveWidth = 0;
         SettingSetGlobal_i(G, cSetting_internal_gui_width, gui_width);

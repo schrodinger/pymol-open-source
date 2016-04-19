@@ -141,7 +141,7 @@ typedef struct {
   int index;
   int bond[MAX_BOND+1]; 
   int pos_flag;
-  int atom;
+  unsigned int atom; // bitmask
   int charge;
   int cycle;
   int class;
@@ -155,7 +155,7 @@ typedef struct {
   char residue[RES_SIZE];
   float coord[3];
   int neg_flag;
-  int not_atom;
+  unsigned int not_atom; // bitmask
   int not_charge;
   int not_cycle;
   int not_class;

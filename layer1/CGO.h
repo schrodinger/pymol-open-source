@@ -265,22 +265,22 @@ int CGOPreloadFonts(CGO * I);
 
 int CGOCheckForText(CGO * I);
 
-int CGOFromFloatArray(CGO * I, float *src, int len);
+int CGOFromFloatArray(CGO * I, const float *src, int len);
 
 int CGOBegin(CGO * I, int mode);
 int CGOEnd(CGO * I);
 
-int CGOSphere(CGO * I, float *v1, float r);
-int CGOEllipsoid(CGO * I, float *v1, float r, float *n1, float *n2, float *n3);
-int CGOQuadric(CGO * I, float *v1, float r, float *p); /* NOT WORKING YET */
-int CGOSausage(CGO * I, float *v1, float *v2, float r, float *c1, float *c2);
+int CGOSphere(CGO * I, const float *v1, float r);
+int CGOEllipsoid(CGO * I, const float *v1, float r, const float *n1, const float *n2, const float *n3);
+int CGOQuadric(CGO * I, const float *v1, float r, const float *p); /* NOT WORKING YET */
+int CGOSausage(CGO * I, const float *v1, const float *v2, float r, const float *c1, const float *c2);
 int CGOVertex(CGO * I, float v1, float v2, float v3);
 int CGOVertexv(CGO * I, const float *v);
 int CGOAlpha(CGO * I, float alpha);
 int CGOColor(CGO * I, float v1, float v2, float v3);
 int CGOColorv(CGO * I, const float *v);
 int CGOTexCoord2f(CGO * I, float v1, float v2);
-int CGOTexCoord2fv(CGO * I, float *v);
+int CGOTexCoord2fv(CGO * I, const float *v);
 int CGONormal(CGO * I, float v1, float v2, float v3);
 int CGONormalv(CGO * I, const float *v);
 int CGOResetNormal(CGO * I, int mode);
@@ -296,12 +296,12 @@ int CGOLinewidthSpecial(CGO * I, int v);
 int CGODotwidth(CGO * I, float v);
 int CGOChar(CGO * I, char c);
 int CGOFontVertex(CGO * I, float x, float y, float z);
-int CGOFontVertexv(CGO * I, float *v);
+int CGOFontVertexv(CGO * I, const float *v);
 int CGOFontScale(CGO * I, float v1, float v2);
 int CGOIndent(CGO * I, char c, float dir);
-int CGOWrite(CGO * I, char *str);
-int CGOWriteLeft(CGO * I, char *str);
-int CGOWriteIndent(CGO * I, char *str, float indent);
+int CGOWrite(CGO * I, const char *str);
+int CGOWriteLeft(CGO * I, const char *str);
+int CGOWriteIndent(CGO * I, const char *str, float indent);
 
 GLfloat *CGODrawArrays(CGO *I, GLenum mode, short arrays, int nverts);
 
@@ -324,16 +324,16 @@ int CGODisable(CGO * I, int mode);
 
 int CGOStop(CGO * I);
 
-int CGOCylinderv(CGO * I, float *p1, float *p2, float r, float *c1, float *c2);
-int CGOCustomCylinderv(CGO * I, float *p1, float *p2, float r, float *c1, float *c2,
+int CGOCylinderv(CGO * I, const float *p1, const float *p2, float r, const float *c1, const float *c2);
+int CGOCustomCylinderv(CGO * I, const float *p1, const float *p2, float r, const float *c1, const float *c2,
                         float cap1, float cap2);
-int CGOConev(CGO * I, float *p1, float *p2, float r1, float r2, float *c1, float *c2,
+int CGOConev(CGO * I, const float *p1, const float *p2, float r1, float r2, const float *c1, const float *c2,
               float cap1, float cap2);
 
 int CGOAlphaTriangle(CGO * I,
-		     float *v1, float *v2, float *v3,
-		     float *n1, float *n2, float *n3,
-		     float *c1, float *c2, float *c3,
+		     const float *v1, const float *v2, const float *v3,
+		     const float *n1, const float *n2, const float *n3,
+		     const float *c1, const float *c2, const float *c3,
 		     float a1, float a2, float a3, int reverse);
 void CGOSetZVector(CGO * I, float z0, float z1, float z2);
 void CGORenderGLPicking(CGO * I, Picking ** pick,
@@ -364,8 +364,8 @@ CGO *CGOOptimizeGLSLCylindersToVBOIndexed(CGO * I, int est);
 CGO *CGOOptimizeGLSLCylindersToVBOIndexedWithLeftOver(CGO * I, int est, CGO *leftOverCGO);
 CGO *CGOOptimizeGLSLCylindersToVBOIndexedNoColor(CGO * I, int est);
 
-int CGOShaderCylinder(CGO *I, float *origin, float *axis, float tube_size, int cap);
-int CGOShaderCylinder2ndColor(CGO *I, float *origin, float *axis, float tube_size, int cap, float *color2);
+int CGOShaderCylinder(CGO *I, const float *origin, const float *axis, float tube_size, int cap);
+int CGOShaderCylinder2ndColor(CGO *I, const float *origin, const float *axis, float tube_size, int cap, const float *color2);
 
 int CGOCountNumberOfOperationsOfTypeDEBUG(CGO *I, int optype);
 int CGOCountNumberOfOperationsOfType(CGO *I, int op);

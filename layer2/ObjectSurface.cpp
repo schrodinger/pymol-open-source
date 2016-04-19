@@ -682,7 +682,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
   float *col;
   int *n = NULL;
   int c;
-  int a = 0;
   ObjectSurfaceState *ms = NULL;
   float alpha;
 

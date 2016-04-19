@@ -184,7 +184,7 @@ static DistSet *ObjectDistGetDistSetFromM4XBond(PyMOLGlobals * G,
       int at1, at2;
       CoordSet *cs;
 
-      float *vv0, *vv1, dist;
+      float *vv0, *vv1;
       int idx1, idx2;
 
       int i, offset1, offset2;
@@ -237,7 +237,6 @@ static DistSet *ObjectDistGetDistSetFromM4XBond(PyMOLGlobals * G,
                 }
 
                 if((idx1 >= 0) && (idx2 >= 0)) {
-                  dist = (float) diff3f(cs->Coord + 3 * idx1, cs->Coord + 3 * idx2);
                   VLACheck(vv, float, (nv * 3) + 5);
                   vv0 = vv + (nv * 3);
                   vv1 = cs->Coord + 3 * idx1;
@@ -324,7 +323,6 @@ void ObjectDistUpdateExtents(ObjectDist * I)
   }
 }
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectDistDSetAsPyList(ObjectDist * I)
 {
   PyObject *result = NULL;
@@ -339,8 +337,7 @@ static PyObject *ObjectDistDSetAsPyList(ObjectDist * I)
   }
   return (PConvAutoNone(result));
 }
-#endif
-#ifndef _PYMOL_NOPY
+
 static int ObjectDistDSetFromPyList(ObjectDist * I, PyObject * list)
 {
   int ok = true;
@@ -358,15 +355,10 @@ static int ObjectDistDSetFromPyList(ObjectDist * I, PyObject * list)
   }
   return (ok);
 }
-#endif
 
 /*========================================================================*/
 PyObject *ObjectDistAsPyList(ObjectDist * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   /* first, dump the atoms */
@@ -378,15 +370,10 @@ PyObject *ObjectDistAsPyList(ObjectDist * I)
   PyList_SetItem(result, 3, PConvAutoNone(Py_None));
 
   return (PConvAutoNone(result));
-#endif
 }
 
 int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** result)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   ObjectDist *I = NULL;
   (*result) = NULL;
@@ -414,9 +401,7 @@ int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** res
   }
 
   return (ok);
-#endif
 }
-
 
 /*========================================================================*/
 int ObjectDistGetNFrames(ObjectDist * I)

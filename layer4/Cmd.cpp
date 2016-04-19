@@ -2149,7 +2149,6 @@ static PyObject *CmdAlign(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str2, *str3, *mfile, *oname;
   OrthoLineType s2 = "", s3 = "";
-  float result = -1.0;
   int ok = false;
   int quiet, cycles, max_skip;
   float cutoff, gap, extend, seq;
@@ -2182,8 +2181,7 @@ static PyObject *CmdAlign(PyObject * self, PyObject * args)
                        cycles, quiet, oname, state1, state2,
                        &rms_info, transform, reset, seq,
                        radius, scale, base, coord, expect, window, ante);
-      } else
-        result = -1.0F;
+      }
       SelectorFreeTmp(G, s2);
       SelectorFreeTmp(G, s3);
       APIExit(G);
@@ -4092,7 +4090,7 @@ static PyObject *Cmd_New(PyObject * self, PyObject * args)
   if(options) {
     {
       int ok = true;
-      PyObject *pyoptions;
+      PyObject *pyoptions = NULL;
       ok = PyArg_ParseTuple(args, "OO", &pymol, &pyoptions);
       if(!pyoptions) {
         options->show_splash = false;
@@ -5860,9 +5858,8 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
 
     if(!prior) {
       if(ray || (!G->HaveGUI && (!SceneGetCopyType(G) || width || height))) {
-        SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
+        prior = SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
-        prior = 1;
       } else if(width || height) {
         SceneDeferImage(G, width, height, str1, -1, dpi, quiet, format);
         result = 1;

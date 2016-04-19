@@ -158,7 +158,6 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->shaderCGO = NULL;
     I->ds->Rep[cRepLabel] = NULL;
     RepDistLabelFree(I);
   }

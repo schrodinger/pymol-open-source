@@ -199,7 +199,7 @@ void get_divergent3f(const float *src, float *dst)
   }
 }
 
-int equal3f(float *v1, float *v2)
+int equal3f(const float *v1, const float *v2)
 {
   return ((fabs(v1[0] - v2[0]) < R_SMALL) &&
           (fabs(v1[1] - v2[1]) < R_SMALL) && (fabs(v1[2] - v2[2]) < R_SMALL));
@@ -1580,7 +1580,7 @@ void rotation_matrix3f(float angle, float x, float y, float z, float *m)
 
 #define get_angle USED_TO_RETURN_DEGREES
 
-float get_dihedral3f(float *v0, float *v1, float *v2, float *v3)
+float get_dihedral3f(const float *v0, const float *v1, const float *v2, const float *v3)
 {
   Vector3f d01, d21, d32, dd1, dd3, pos_d;
   float result = _0;
@@ -1605,7 +1605,7 @@ float get_dihedral3f(float *v0, float *v1, float *v2, float *v3)
   return (result);
 }
 
-float get_angle3f(float *v1, float *v2)
+float get_angle3f(const float *v1, const float *v2)
 {
   double denom;
   double result;
@@ -1673,7 +1673,7 @@ void normalize3d(double *v1)
   }
 }
 
-double length3d(double *v1)
+double length3d(const double *v1)
 {
   return (sqrt1d((v1[0] * v1[0]) + (v1[1] * v1[1]) + (v1[2] * v1[2])));
 }
@@ -1700,7 +1700,7 @@ double distance_line2point3f(const float *base, const float *normal, const float
 
 }
 
-double distance_halfline2point3f(float *base, float *normal, float *point,
+double distance_halfline2point3f(const float *base, const float *normal, const float *point,
                                  float *alongNormalSq)
 {
   float hyp[3], adj[3];

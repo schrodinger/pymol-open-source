@@ -61,8 +61,6 @@ void RayGetTTT(CRay * I, float *ttt);
 void RayPushTTT(CRay * I);
 void RayPopTTT(CRay * I);
 void RaySetContext(CRay * I, int context);
-void RayApplyContexToNormal(CRay * I, float *v);
-void RayApplyContextToVertex(CRay * I, float *v);
 void RayRenderColorTable(CRay * I, int width, int height, int *image);
 int RayTraceThread(CRayThreadInfo * T);
 int RayGetNPrimitives(CRay * I);

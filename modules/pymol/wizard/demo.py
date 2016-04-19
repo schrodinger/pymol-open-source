@@ -1,7 +1,5 @@
 from pymol.wizard import Wizard
 from pymol import cmd
-import pymol
-import types
 
 saved = {}
 
@@ -56,7 +54,7 @@ class Demo(Wizard):
             ]
 
 from pymol.vfont import plain
-from pymol.cgo import *
+from pymol.cgo import measure_text, wire_text
 import traceback
 from pymol import util
 import threading
@@ -85,6 +83,7 @@ class DemoInfo:
                 self.cmd.delete("pept")
                 self.cmd.delete("pept_dist")
                 self.cmd.load("$PYMOL_DATA/demo/pept.pdb")
+                self.cmd.hide("everything", "pept")
                 self.cmd.show("sticks","(pept and not i;5:7)")
                 self.cmd.show("surface","(pept and i;5,6)")
                 self.cmd.show("mesh","(pept and i;1,11,12,13)")
@@ -277,7 +276,10 @@ class DemoInfo:
 
     def roving(self,cleanup=0):
         if not cleanup:
+          try:
+            self.cmd.set("suspend_updates",1,quiet=1)
             self.cmd.load("$PYMOL_DATA/demo/il2.pdb")
+            self.cmd.hide("everything", "il2")
             self.cmd.remove("hydro")
             self.cmd.disable()
             self.cmd.enable("il2")
@@ -294,6 +296,9 @@ class DemoInfo:
       0.000062190,    0.000183226,  -58.861488342,\
       13.349151611,   -1.565427899,   22.383148193,\
       55.259441376,   63.259449005,    0.000000000 ))
+          finally:
+            self.cmd.set("suspend_updates", 0)
+            self.cmd.refresh()
         else:
             self.cmd.delete("il2")
             self.cmd.set("roving_detail",0)
@@ -303,8 +308,9 @@ class DemoInfo:
     def roving_density(self,cleanup=0):
         if not cleanup:
             try:
-                self.cmd.load("$PYMOL_DATA/demo/il2.pdb")
                 self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.load("$PYMOL_DATA/demo/il2.pdb")
+                self.cmd.hide("everything", "il2")
                 self.cmd.remove("hydro")
                 self.cmd.disable()
                 self.cmd.enable("il2")
@@ -407,7 +413,7 @@ class DemoInfo:
             self.cmd.delete("ray")
             self.cmd.load("$PYMOL_DATA/demo/il2.pdb","ray")
             self.cmd.remove("(ray and hydro)")
-            self.cmd.hide("lines","ray")
+            self.cmd.hide("everything","ray")
             self.cmd.show("spheres","ray")
             self.cmd.orient("ray")
             self.cmd.turn("x",90)
@@ -427,7 +433,7 @@ class DemoInfo:
             self.cmd.disable()
             self.cmd.delete("sculpt")
             self.cmd.load("$PYMOL_DATA/demo/pept.pdb","sculpt")
-            self.cmd.hide("lines","sculpt")
+            self.cmd.hide("everything","sculpt")
             self.cmd.show("sticks","sculpt")
             self.cmd.show("spheres","sculpt")
             self.cmd.set("sphere_transparency","0.75","sculpt")

@@ -88,7 +88,6 @@ ObjectMapState * ObjectVolumeGetMapState(ObjectVolume * I) {
   return NULL;
 }
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
 {
   PyObject *result = NULL;
@@ -123,9 +122,7 @@ static PyObject *ObjectVolumeStateAsPyList(ObjectVolumeState * I)
   }
   return (PConvAutoNone(result));
 }
-#endif
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectVolumeAllStatesAsPyList(ObjectVolume * I)
 {
 
@@ -141,9 +138,7 @@ static PyObject *ObjectVolumeAllStatesAsPyList(ObjectVolume * I)
   }
   return (PConvAutoNone(result));
 }
-#endif
 
-#ifndef _PYMOL_NOPY
 static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
                                      PyObject * list)
 {
@@ -241,9 +236,7 @@ static int ObjectVolumeStateFromPyList(PyMOLGlobals * G, ObjectVolumeState * I,
   }
   return (ok);
 }
-#endif
 
-#ifndef _PYMOL_NOPY
 static int ObjectVolumeAllStatesFromPyList(ObjectVolume * I, PyObject * list)
 {
 
@@ -261,13 +254,9 @@ static int ObjectVolumeAllStatesFromPyList(ObjectVolume * I, PyObject * list)
   }
   return (ok);
 }
-#endif
 
 int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume ** result)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int ok = true;
   int ll;
   ObjectVolume *I = NULL;
@@ -296,15 +285,10 @@ int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume **
     /* cleanup? */
   }
   return (ok);
-#endif
 }
 
 PyObject *ObjectVolumeAsPyList(ObjectVolume * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   result = PyList_New(3);
@@ -312,7 +296,6 @@ PyObject *ObjectVolumeAsPyList(ObjectVolume * I)
   PyList_SetItem(result, 1, PyInt_FromLong(I->NState));
   PyList_SetItem(result, 2, ObjectVolumeAllStatesAsPyList(I));
   return (PConvAutoNone(result));
-#endif
 }
 
 /*
@@ -1309,9 +1292,6 @@ void ObjectVolumeRecomputeExtent(ObjectVolume * I)
 /*==============================================================================*/
 PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   /* TODO: Allow for multi-state maps? */
   PyObject * result = NULL;
   ObjectVolumeState *ovs;
@@ -1324,7 +1304,6 @@ PyObject * ObjectVolumeGetRamp(ObjectVolume * I)
   }
   
   return (PConvAutoNone(result));
-#endif
 }
 
 /*==============================================================================*/

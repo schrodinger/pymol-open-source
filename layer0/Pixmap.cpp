@@ -125,8 +125,8 @@ void PixmapInitFromBytemap(PyMOLGlobals * G, CPixmap * I,
       outline_rgb = NULL;
     else {
       ored = outline_rgb[0];
-      oblue = outline_rgb[1];
-      ogreen = outline_rgb[2];
+      ogreen = outline_rgb[1];
+      oblue = outline_rgb[2];
     }
     PixmapInit(G, I, width, height);
     red = rgba[0];

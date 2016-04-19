@@ -3280,9 +3280,6 @@ typedef struct {
 
 PyObject *SelectorAsPyList(PyMOLGlobals * G, int sele1)
 {                               /* assumes SelectorUpdateTable has been called */
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   CSelector *I = G->Selector;
   int a, b;
   int at;
@@ -3355,15 +3352,10 @@ PyObject *SelectorAsPyList(PyMOLGlobals * G, int sele1)
   VLAFreeP(vla_list);
   VLAFreeP(obj_list);
   return (result);
-#endif
 }
 
 int SelectorFromPyList(PyMOLGlobals * G, const char *name, PyObject * list)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   CSelector *I = G->Selector;
   ov_size a, b;
@@ -3486,10 +3478,7 @@ int SelectorFromPyList(PyMOLGlobals * G, const char *name, PyObject * list)
       }
     }
   }
-
   return (ok);
-#endif
-
 }
 
 int SelectorVdwFit(PyMOLGlobals * G, int sele1, int state1, int sele2, int state2,
@@ -7516,6 +7505,7 @@ static void SelectorPurgeMembers(PyMOLGlobals * G, int sele)
     I->FreeMember = I_FreeMember;
   }
   if (changed){
+    // not sure if this is needed since its in SelectorClean()
     ExecutiveInvalidateSelectionIndicatorsCGO(G);
   }
 }
@@ -7544,8 +7534,10 @@ int SelectorPurgeObjectMembers(PyMOLGlobals * G, ObjectMolecule * obj)
     }
   }
   if (changed){
+    // not sure if this is needed since its in SelectorClean()
     ExecutiveInvalidateSelectionIndicatorsCGO(G);
   }
+
   return 1;
 }
 
@@ -9360,7 +9352,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
           if((*base_0_sele_a =
               WordMatcherMatchAlpha(matcher, LexStr(G,
-                  *reinterpret_cast<int /* decltype(AtomInfoType::chain) */ *>
+                  *reinterpret_cast<lexidx_t*>
                   (((char*)(i_obj[table_a->model]->AtomInfo + table_a->atom)) + offset)
                   ))))
             c++;

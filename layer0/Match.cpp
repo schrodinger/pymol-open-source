@@ -68,7 +68,7 @@ CMatch *MatchNew(PyMOLGlobals * G, unsigned int na, unsigned int nb, int dist_ma
        residues other than amino acids (dna, rna, as 1,2,3,4 etc.)
        these values will be overwritten by the matrix */
 
-    int i,j;
+    unsigned int i,j;
     
     for(i=0;i<dim[0];i++) {
       for(j=0;j<dim[1];j++) {

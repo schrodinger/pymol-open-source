@@ -734,7 +734,6 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
 {
   int a, b;
   int n;
-  CoordSet *cs;
   int seleFlag = false;
   int h_idx;
   float fixed[3], v0[3], v1[3], sought[3];
@@ -779,7 +778,6 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
                       seleFlag = true;
                     }
                   }
-                  cs = I->CSet[b];
                 }
               }
               n += 2;
@@ -889,7 +887,6 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                                           int average, int start, int stop, int max,
                                           const char *sele, int image, float *shift, int quiet)
 {
-  int ok = true;
   FILE *f;
   char *buffer;
   const char *p;
@@ -927,7 +924,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
 
   f = fopen(fname, "rb");
   if(!f) {
-    ok = ErrMessage(G, "ObjectMoleculeLoadTRJFile", "Unable to open file!");
+    ErrMessage(G, "ObjectMoleculeLoadTRJFile", "Unable to open file!");
   } else {
     if(I->CSTmpl) {
       cs = CoordSetCopy(I->CSTmpl);
@@ -2797,12 +2794,11 @@ ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals * G, ObjectMolecule * obj
                                           const char *fname, int frame, int discrete)
 {
   ObjectMolecule *I = NULL;
-  int ok = true;
   CRaw *raw;
 
   raw = RawOpenRead(G, fname);
   if(!raw)
-    ok = ErrMessage(G, "ObjectMoleculeLoadPMOFile", "Unable to open file!");
+    ErrMessage(G, "ObjectMoleculeLoadPMOFile", "Unable to open file!");
   else {
     PRINTFB(G, FB_ObjectMolecule, FB_Blather)
       " ObjectMoleculeLoadPMOFile: Loading from %s.\n", fname ENDFB(G);
@@ -3245,7 +3241,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
   }
 
   if(G->HaveGUI && G->ValidContext) {
-    AtomInfoType *atInfo = I->AtomInfo, *ai;
+    AtomInfoType *atInfo = I->AtomInfo;
 
     for(StateIterator iter(G, I->Obj.Setting, curState, I->NCSet);
         iter.next();) {
@@ -3276,7 +3272,6 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 		  flag = true;
 		else {
 		  visRep = atInfo[idx2atm[-1]].visRep;
-		  ai = atInfo + idx2atm[-1];
 		  flag = false;
 		  if(visRep & (cRepCylBit | cRepSphereBit | cRepSurfaceBit |
 			       cRepLabelBit | cRepNonbondedSphereBit | cRepCartoonBit |
@@ -4247,7 +4242,6 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai)
 {
   int a;
   AtomInfoType *ai;
-  int n, nn;
   float v[3], v0[3], d;
   CoordSet *cs = NULL;
   int ok = false;
@@ -4255,8 +4249,6 @@ int ObjectMoleculeAttach(ObjectMolecule * I, int index, AtomInfoType * nai)
   ok_assert(1, ObjectMoleculeUpdateNeighbors(I));
 
   ai = I->AtomInfo + index;
-  n = I->Neighbor[index];
-  nn = I->Neighbor[n++];
 
   ok_assert(1, cs = CoordSetNew(I->Obj.G));
   ok_assert(1, cs->Coord = VLAlloc(float, 3));
@@ -4456,7 +4448,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
   int a1;
   float v0[3], v1[3], n0[3] = {0.0F,0.0F,0.0F}, t[3];
   int result = false;
-  AtomInfoType *ai, *ai1;
+  AtomInfoType *ai;
   float y[3], z[3];
 
   /* default is +X */
@@ -4483,7 +4475,6 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
           if(a1 < 0)
             break;
           if(a1 != ignore_index) {
-            ai1 = I->AtomInfo + a1;
             if(ObjectMoleculeGetAtomVertex(I, state, a1, v1)) {
               last_occ = a1;
               subtract3f(v1, v0, n0);
@@ -4637,7 +4628,6 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
   float *spheroid = NULL;
   int a, b, c, a0;
   SphereRec *sp;
-  float *spl;
   float *v, *v0, *s, *f, ang, min_dist, *max_sq;
   int *i;
   float *center = NULL;
@@ -4665,8 +4655,6 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average)
   count = Alloc(int, I->NAtom);
   fsum = Alloc(float, nRow);
   max_sq = Alloc(float, I->NAtom);
-
-  spl = spheroid;
 
   spheroid_smooth = SettingGetGlobal_f(I->Obj.G, cSetting_spheroid_smooth);
   spheroid_fill = SettingGetGlobal_f(I->Obj.G, cSetting_spheroid_fill);
@@ -5864,13 +5852,12 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
               {
                 int o1_at = -1, o2_at = -1, o3_at = -1, o4_at = -1;
                 int o1_bd = 0, o2_bd = 0, o3_bd = 0, o4_bd = 0;
-                float o1_len = 0.0F, o2_len = 0.0F, o3_len = 0.0F, o4_len = 0.0F;
+                float o1_len = 0.0F, o2_len = 0.0F;
                 float n1_v[3] = { 0.0F, 0.0F, 0.0F };
                 int n1_at = -1, n2_at = -1, n3_at = -1;
                 int n1_bd = 0, n2_bd = 0, n3_bd = 0;
                 float n1_len = 0.0F, n2_len = 0.0F, n3_len = 0.0F;
-                int c1_at = -1, c2_at = -1, c1_bd = 0, c2_bd = 0;
-                float c1_len = 0.0F, c2_len = 0.0F;
+                int c1_at = -1, c2_at = -1;
                 float c1_v[3] = { 0.0F, 0.0F, 0.0F };
                 float *v0 = NULL;
 
@@ -5914,13 +5901,9 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
                         case cAN_C:
                           if(c1_at < 0) {
                             c1_at = atm[i];
-                            c1_len = bond_len;
-                            c1_bd = bnd[i];
                             copy3f(diff, c1_v);
                           } else if(c2_at < 0) {
                             c2_at = atm[i];
-                            c2_len = bond_len;
-                            c2_bd = bnd[i];
                           }
                           break;
                         case cAN_O:
@@ -5934,11 +5917,9 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
                             o2_bd = bnd[i];
                           } else if(o3_at < 0) {
                             o3_at = atm[i];
-                            o3_len = bond_len;
                             o3_bd = bnd[i];
                           } else if(o4_at < 0) {
                             o4_at = atm[i];
-                            o4_len = bond_len;
                             o4_bd = bnd[i];
                           }
                           break;
@@ -6096,7 +6077,6 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
 
                       {         /* check nitrogen planarity */
                         int atm2[5];
-                        int bnd2[5];
                         if(nn2 > 2) {
                           nn2 = 3;
                           atm2[0] = n1_at;
@@ -6104,7 +6084,6 @@ void ObjectMoleculeGuessValences(ObjectMolecule * I, int state, int *flag1, int 
                             int i2;
                             for(i2 = 1; i2 <= nn2; i2++) {
                               atm2[i2] = neighbor[n2];
-                              bnd2[i2] = neighbor[n2 + 1];
                               n2 += 2;
                             }
                           }
@@ -11791,8 +11770,7 @@ static void ObjectMoleculeUpdate(ObjectMolecule * I)
     if((I->Obj.visRep & cRepCellBit)) {
       if(I->Symmetry) {
         if(I->Symmetry->Crystal) {
-          if(I->UnitCellCGO)
-            CGOFree(I->UnitCellCGO);
+          CGOFree(I->UnitCellCGO);
           I->UnitCellCGO = CrystalGetUnitCellCGO(I->Symmetry->Crystal);
         }
       }
@@ -12245,7 +12223,6 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
 			    I->Obj.Setting, NULL);
       if (!ok){
 	CGOFree(I->UnitCellCGO);
-	I->UnitCellCGO = NULL;
       }
     } else if(G->HaveGUI && G->ValidContext) {
       if(pick) {
@@ -12574,8 +12551,7 @@ void ObjectMoleculeFree(ObjectMolecule * I)
     }
     VLAFreeP(I->Bond);
   }
-  if(I->UnitCellCGO)
-    CGOFree(I->UnitCellCGO);
+  CGOFree(I->UnitCellCGO);
   for(a = 0; a <= cUndoMask; a++)
     FreeP(I->UndoCoord[a]);
   if(I->Sculpt)

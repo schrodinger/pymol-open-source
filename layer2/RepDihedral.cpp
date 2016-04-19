@@ -80,7 +80,6 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
   if(ray) {
-
     float radius;
 
     if(I->radius == 0.0F) {
@@ -278,7 +277,6 @@ static void RepDihedralRender(RepDihedral * I, RenderInfo * info)
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->shaderCGO = NULL;
     I->ds->Rep[cRepDihedral] = NULL;
     RepDihedralFree(I);
   }
@@ -471,14 +469,11 @@ Rep *RepDihedralNew(DistSet * ds, int state)
 
       if(length > R_SMALL4) {
 
-        float mod_pos;
         float vx[3], vy[3];
         float cur_angle;
         float cons_pos1, cons_pos2;
 
         while(ok && pos < length) {
-
-          mod_pos = (float) fmod(pos + phase, dash_sum);
 
           VLACheck(I->V, float, (n * 3) + 5);
 	  CHECKOK(ok, I->V);

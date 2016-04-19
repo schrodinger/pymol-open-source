@@ -112,7 +112,7 @@ void SceneIdle(PyMOLGlobals * G);
 void SceneFree(PyMOLGlobals * G);
 
 int SceneGetDrawFlagGrid(PyMOLGlobals * G, GridInfo * grid, int slot);
-void SceneRay(PyMOLGlobals * G, int width, int height, int mode,
+bool SceneRay(PyMOLGlobals * G, int width, int height, int mode,
               char **headerVLA, char **charVLA,
               float angle, float shift, int quiet,
               G3dPrimitive ** g3d, int show_timing, int antialias);

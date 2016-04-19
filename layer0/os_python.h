@@ -51,6 +51,7 @@ typedef int PyObject;
 
 # define PyString_Check                 PyUnicode_Check
 # define PyString_Size                  PyUnicode_GetLength
+# define PyString_GET_SIZE              PyUnicode_GetLength
 # define PyString_FromString            PyUnicode_FromString
 # define PyString_FromStringAndSize     PyUnicode_FromStringAndSize
 # define PyString_InternFromString      PyUnicode_InternFromString
@@ -62,6 +63,8 @@ typedef int PyObject;
 # define PyCObject_Check                PyCapsule_CheckExact
 
 # define PyEval_EvalCode(o, ...)        PyEval_EvalCode((PyObject*)o, __VA_ARGS__)
+
+# define Py_TPFLAGS_HAVE_ITER   0
 #endif
 
 /*
