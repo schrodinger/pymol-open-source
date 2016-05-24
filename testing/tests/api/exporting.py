@@ -52,8 +52,19 @@ class TestExporting(testing.PyMOLTestCase):
         self.assertEqual(x, cmd.count_atoms())
 
     def testMultisave(self):
-        cmd.multisave
-        self.skipTest("TODO")
+        names = ['ala', 'gly', 'his', 'arg']
+
+        for name in names:
+            cmd.fragment(name)
+
+        with testing.mktemp('.pdb') as filename:
+            cmd.multisave(filename, names[0])                       # new
+            cmd.multisave(filename, names[1])                       # new (overwrite)
+            cmd.multisave(filename, ' '.join(names[2:]), append=1)  # append
+            cmd.delete('*')
+            cmd.load(filename)
+
+        self.assertEqual(cmd.get_object_list(), names[1:])
 
     @testing.foreach(
         ('0.5in', '0.25in', 200, (100, 50)),   # inch
@@ -73,6 +84,28 @@ class TestExporting(testing.PyMOLTestCase):
             cmd.save(filename)
             filesize = os.path.getsize(filename)
             self.assertTrue(filesize > 0)
+
+    def testSaveRef(self):
+        cmd.fragment('ala', 'm1')
+        cmd.copy('m2', 'm1')
+        cmd.copy('m3', 'm1')
+
+        cmd.rotate('y', 90, 'm2')
+        cmd.align('m3', 'm2')
+
+        # with ref=m3
+        with testing.mktemp('.pdb') as filename:
+            cmd.save(filename, 'm2', ref='m3')
+            cmd.load(filename, 'm4')
+            self.assertAlmostEqual(cmd.rms_cur('m4', 'm1'), 0.00, delta=1e-2)
+            self.assertAlmostEqual(cmd.rms_cur('m4', 'm2'), 1.87, delta=1e-2)
+
+        # without ref
+        with testing.mktemp('.pdb') as filename:
+            cmd.save(filename, 'm2')
+            cmd.load(filename, 'm5')
+            self.assertAlmostEqual(cmd.rms_cur('m5', 'm2'), 0.00, delta=1e-2)
+            self.assertAlmostEqual(cmd.rms_cur('m5', 'm1'), 1.87, delta=1e-2)
 
     # cmp_atom : compares all fields in Atom (see chempy/__init__.py)
     #            except the id (which is unique to the instance)
