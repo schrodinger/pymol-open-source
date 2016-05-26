@@ -40,7 +40,7 @@ if options.jobs != 1:
 def posix_find_lib(names, lib_dirs):
     # http://stackoverflow.com/questions/1376184/determine-if-c-library-is-installed-on-unix
     from subprocess import Popen, PIPE
-    args = ["gcc", "-shared", "-o", os.devnull] + ["-L" + d for d in lib_dirs]
+    args = ["cc", "-shared", "-o", os.devnull] + ["-L" + d for d in lib_dirs]
     for name in names:
         p = Popen(args + ["-l" + name], stdout=PIPE, stderr=PIPE)
         p.communicate()
@@ -117,7 +117,7 @@ class install_pymol(install):
                 out.write('"%s" "%s"' % (python_exe, pymol_file))
                 out.write(' %1 %2 %3 %4 %5 %6 %7 %8 %9' + os.linesep)
             else:
-                out.write('#!/bin/bash' + os.linesep)
+                out.write('#!/bin/sh' + os.linesep)
                 if sys.platform.startswith('darwin'):
                     out.write('[ "$DISPLAY" == "" ] && export DISPLAY=":0.0"' + os.linesep)
                 out.write('export PYMOL_PATH="%s"' % pymol_path + os.linesep)
@@ -229,6 +229,8 @@ else: # unix style (linux, mac, ...)
             def_macros += [
                 ('_PYMOL_NO_CXX11', None),
             ]
+    elif sys.platform.startswith("freebsd"):
+        prefix_path = ["/usr/local"]
 
     try:
         import numpy

@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2016-05-26 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix mutagenesis wizard "No Mutation" (update and rms commands)
+
+	* experimental FreeBSD support
+
 2016-04-19 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* 1.8.2.0

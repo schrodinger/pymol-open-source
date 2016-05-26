@@ -62,6 +62,11 @@ static bool isquote(char c) {
   return (c == '"' || c == '\'');
 }
 
+// FreeBSD name conflict
+#ifdef isspecial
+#undef isspecial
+#endif
+
 // Return true if token is a STAR keyword
 static bool isspecial(const char *token) {
   return (token[0] == '_'

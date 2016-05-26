@@ -255,6 +255,13 @@ class CScene {
   int orig_x_rotation, orig_y_rotation;
   GridInfo grid;
   int last_grid_size;
+
+  // This structure used to be calloc-ed, this replicates that
+  void *operator new(size_t size) {
+    void *mem = ::operator new(size);
+    memset(mem, 0, size);
+    return mem;
+  }
 };
 
 /* EXPERIMENTAL VOLUME RAYTRACING DATA */
@@ -6256,32 +6263,18 @@ int SceneInit(PyMOLGlobals * G)
   if(I) {
 
     /* all defaults to zero, so only initialize non-zero elements */
-
-    // pointers don't necessarily get initialized on windows (PYMOL-2561)
-    I->Image = NULL;
-    I->View = NULL;
-    I->AlphaCGO = NULL;
-    I->SlotVLA = NULL;
-    I->ReinterpolateFlag = false;
-    I->ReinterpolateObj = NULL;
-    I->MotionGrabbedObj = NULL;
-
     G->DebugCGO = CGONew(G);
 
     ListInit(I->Obj);
-
-    I->LoopFlag = false;
 
     I->TextColor[0] = 0.2F;
     I->TextColor[1] = 1.0F;
     I->TextColor[2] = 0.2F;
 
     I->LastClickTime = UtilGetSeconds(G);
-    I->LastPickVertexFlag = false;
 
     SceneSetDefaultView(G);
 
-    I->HasMovie = false;
     I->Scale = 1.0;
     I->Block = OrthoNewBlock(G, NULL);
     I->Block->fClick = SceneDeferClick;
@@ -6300,7 +6293,6 @@ int SceneInit(PyMOLGlobals * G)
 
     I->LastSweepTime = UtilGetSeconds(G);
 
-    I->LastPicked.context.object = NULL;
     I->LastStateBuilt = -1;
     I->CopyNextFlag = true;
 
@@ -6320,8 +6312,7 @@ int SceneInit(PyMOLGlobals * G)
 
     I->SceneNameVLA = VLAlloc(char, 10);
     I->SceneVLA = VLAlloc(SceneElem, 10);
-    UtilZeroMem(&I->grid, sizeof(GridInfo));
-    I->last_grid_size = 0;
+
     return 1;
   } else
     return 0;
