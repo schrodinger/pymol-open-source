@@ -229,7 +229,6 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Coord, I->NIndex * 3, dump_binary));
     PyList_SetItem(result, 3, PConvIntArrayToPyList(I->IdxToAtm, I->NIndex, dump_binary));
     if(I->AtmToIdx
-        && !dump_binary
         && pse_export_version < 1770)
       PyList_SetItem(result, 4, PConvIntArrayToPyList(I->AtmToIdx, I->NAtIndex, dump_binary));
     else

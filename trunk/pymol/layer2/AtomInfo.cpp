@@ -2357,6 +2357,7 @@ int AtomInfoSequential(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
 int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
     bool ignore_case, bool ignore_case_chain)
 {
+  if(at1->resv == at2->resv)
   if(WordMatchExact(G, at1->chain, at2->chain, ignore_case_chain))
     if(WordMatchExact(G, at1->name, at2->name, ignore_case))
       if(WordMatchExact(G, at1->inscode, at2->inscode, ignore_case))

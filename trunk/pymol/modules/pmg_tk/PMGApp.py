@@ -76,8 +76,7 @@ class PMGApp(Pmw.MegaWidget):
          self.frameXAdjust, self.frameYAdjust = osFrame.get(sys.platform, (0, 51))
          
     def initializeTk_win32(self):
-        self.root.option_add('*Font', 'Tahoma 8')
-        self.pad = ' '
+        pass
         
     def initializeTk_mac(self):
         pass
