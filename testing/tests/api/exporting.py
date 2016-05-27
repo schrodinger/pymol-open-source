@@ -73,6 +73,7 @@ class TestExporting(testing.PyMOLTestCase):
         (0, 75, -1, (100, 75)),                # px, only height
     )
     @testing.requires('no_edu') # ray
+    @testing.requires_version('1.6.0')
     def testPng(self, w, h, dpi, size):
         with testing.mktemp('.png') as filename:
             cmd.png(filename, w, h, dpi, ray=1)
@@ -106,9 +107,18 @@ class TestExporting(testing.PyMOLTestCase):
             self.assertAlmostEqual(cmd.rms_cur('m5', 'm2', matchmaker=m), 0.00, delta=1e-2)
             self.assertAlmostEqual(cmd.rms_cur('m5', 'm1', matchmaker=m), 1.87, delta=1e-2)
 
-    # not supported in older versions: mol (uses cmd.get_model(), doesn't support state=-1)
-    @testing.foreach('pdb', 'sdf', 'mol2', 'xyz')
-    def testSaveState(self, format):
+    @testing.foreach(
+            ('pdb',  1.2),
+            ('sdf',  1.7),
+            ('mol2', 1.7),
+            ('xyz',  1.8),
+            ('mol',  1.831),
+            ('mae',  1.831),
+    )
+    def testSaveState(self, format, pymol_version):
+        if pymol_version > testing.PYMOL_VERSION[1]:
+            self.skipTest("version %f" % (pymol_version))
+
         # for rms_cur (not all formats save all identifiers)
         m = -1
         cmd.set('retain_order')
@@ -139,16 +149,32 @@ class TestExporting(testing.PyMOLTestCase):
                 rms = cmd.rms_cur('m1', 'm2', state, 1, matchmaker=m)
                 self.assertAlmostEqual(rms, 0.00, delta=1e-2)
 
+            if format == 'mol':
+                # no multi support
+                return
+
             # all states
             cmd.delete('m2')
             cmd.save(filename, 'm1', state=0)
-            cmd.load(filename, 'm2', 1, discrete=0)
+            cmd.load(filename, 'm2', 1, discrete=1, multiplex=0)
             self.assertEqual(cmd.count_states('m2'), n_states)
-            rms = cmd.rms_cur('m1', 'm2', 0, 0, matchmaker=m)
-            self.assertAlmostEqual(rms, 0.00, delta=1e-2)
+            for state in range(1, n_states + 1):
+                rms = cmd.rms_cur('m1', 'm2 and state %d' % state,
+                        state, state, matchmaker=m)
+                self.assertAlmostEqual(rms, 0.00, delta=1e-2)
 
-    @testing.foreach('pdb', 'sdf', 'mol', 'mol2', 'xyz')
-    def testSaveSelection(self, format):
+    @testing.foreach(
+            ('pdb',  1.2),
+            ('sdf',  1.7),
+            ('mol2', 1.7),
+            ('xyz',  1.7),
+            ('mol',  1.7),
+            ('mae',  1.83),
+    )
+    def testSaveSelection(self, format, pymol_version):
+        if pymol_version > testing.PYMOL_VERSION[1]:
+            self.skipTest("version %f" % (pymol_version))
+
         cmd.fragment('trp', 'm1')
         cmd.fragment('glu', 'm2')
 
@@ -156,7 +182,10 @@ class TestExporting(testing.PyMOLTestCase):
         n_N = cmd.count_atoms('elem N')
 
         with testing.mktemp('.' + format) as filename:
+            cmd.set('raise_exceptions', 0) # 1.7.6 save xyz doesn't set r=DEFAULT_SUCCESS
             cmd.save(filename, 'elem O+N')
+            cmd.set('raise_exceptions', 1)
+
             cmd.delete('*')
             cmd.load(filename, 'm2', discrete=1) # avoid merging of atoms
 
