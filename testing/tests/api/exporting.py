@@ -169,7 +169,7 @@ class TestExporting(testing.PyMOLTestCase):
             ('mol2', 1.7),
             ('xyz',  1.7),
             ('mol',  1.7),
-            ('mae',  1.83),
+            ('mae',  1.831),
     )
     def testSaveSelection(self, format, pymol_version):
         if pymol_version > testing.PYMOL_VERSION[1]:
