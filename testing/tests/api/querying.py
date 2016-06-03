@@ -131,8 +131,77 @@ class TestQuerying(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testGetModel(self):
-        cmd.get_model
-        self.skipTest("TODO")
+        '''
+        Test coordinates and "reference" coordinates with various
+        transformations.
+        '''
+
+        # create two-state object
+        # displace state 1, will do tests on state 2
+        cmd.fragment('ala', 'm1')
+        cmd.create('m1', 'm1', 1, 2)
+        cmd.translate([1, 2, 3], 'm1', 1)
+
+        # prepare state 2
+        title = 'Alanin'
+        cmd.set_title('m1', 2, title)
+        cmd.reference(state=2)
+
+        # with original coordinates
+        m = cmd.get_model(state=2)
+        a = m.atom[0]
+
+        # title
+        self.assertEqual(title, m.molecule.title)
+
+        # bonds (covering count, indices and order)
+        self.assertEqual(
+                set(tuple(sorted(b.index)) + (b.order,) for b in m.bond),
+                set([(0, 1, 1), (0, 5, 1), (1, 2, 1), (1, 4, 1), (1, 6, 1),
+                    (2, 3, 2), (4, 7, 1), (4, 8, 1), (4, 9, 1)]))
+
+        # expect equal coord and ref_coord
+        coord = [-0.67689997, -1.23029995, -0.49050000]
+        self.assertArrayEqual(a.ref_coord,  coord, delta=1e-4)
+        self.assertArrayEqual(a.coord,      coord, delta=1e-4)
+
+        # modify ttt
+        cmd.set_object_ttt('m1', [
+          0, 1, 0, 0,
+         -1, 0, 0, 5,
+          0, 0, 1, 0,
+          0, 3, 0, 1,
+        ]) # no state! API flaw, TTT object are not per state
+        m = cmd.get_model('m1', state=2)
+        a = m.atom[0]
+
+        # ttt should affect both equally
+        coord = [1.769700050354004, 5.6768999099731445, -0.49050000309944153]
+        self.assertArrayEqual(a.ref_coord,  coord, delta=1e-4)
+        self.assertArrayEqual(a.coord,      coord, delta=1e-4)
+
+        # modify coords
+        cmd.translate([10, 0, 0], state=2)
+        m = cmd.get_model('m1', state=2)
+        a = m.atom[0]
+
+        # no effect of ref_coord
+        ref = coord
+        coord = [11.769700050354004, 5.6768999099731445, -0.49050000309944153]
+        self.assertArrayEqual(a.ref_coord,  ref, delta=1e-4)
+        self.assertArrayEqual(a.coord,      coord, delta=1e-4)
+
+        # modify coords by alignment
+        cmd.fragment('ala', 'm2')
+        cmd.rotate('x', 90, 'm2')
+        cmd.align('m1', 'm2', mobile_state=2)
+        m = cmd.get_model('m1', state=2)
+        a = m.atom[0]
+
+        # no effect of ref_coord
+        coord = [3.490499973297119, 5.6768999099731445, -1.230299949645996]
+        self.assertArrayEqual(a.ref_coord,  ref, delta=1e-4)
+        self.assertArrayEqual(a.coord,      coord, delta=1e-4)
 
     def testGetMovieLength(self):
         cmd.get_movie_length
