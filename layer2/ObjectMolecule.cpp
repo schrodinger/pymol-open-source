@@ -10180,7 +10180,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 
             if(!cnt) {
               VLACheck(op->vv1, float, (op->nvv1 * 3) + 2);
-              VLACheck(op->vc1, int, op->nvv1);
             }
             cnt++;
             vv2 = cs->Coord + (3 * a1);
@@ -10204,6 +10203,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
           }
 
           // number of summed up coordinates (states) for this atom
+          VLACheck(op->vc1, int, op->nvv1);
           op->vc1[op->nvv1] = cnt;
 
           // ordered_selections

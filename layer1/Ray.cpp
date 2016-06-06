@@ -95,7 +95,7 @@ struct _CRayHashThreadInfo {
   float *clipBox;
   unsigned int *image;
   unsigned int background;
-  unsigned int bytes;
+  size_t bytes;
   int perspective;
   float front;
   int phase;
@@ -252,20 +252,10 @@ static void RayGetSphereNormalPerspective(CRay * I, RayInfo * r)
   normalize3f(r->surfnormal);
 }
 
-static void fill(unsigned int *buffer, unsigned int value, unsigned int cnt)
+static void fill(unsigned int *buffer, unsigned int value, size_t cnt)
 {
-  while(cnt & 0xFFFFFF80) {
-    cnt -= 0x20; /* Not sure why this is split up from the below loop */
-    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
-    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
-    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
-    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
-    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
-    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
-    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
-    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;    *(buffer++) = value;
-  }
-  while(cnt--) {
+  // std::fill_n(buffer, cnt, value);
+  for (auto it_end = buffer + cnt; buffer != it_end;) {
     *(buffer++) = value;
   }
 }
@@ -5324,7 +5314,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   int a, x, y;
   unsigned int *image_copy = NULL;
   unsigned int back_mask, fore_mask = 0, trace_word = 0;
-  unsigned int background, buffer_size;
+  unsigned int background;
+  size_t buffer_size;
   int orig_opaque_back = 0, opaque_back = 0;
   int n_hit = 0;
   float *bkrd_ptr;
@@ -5343,8 +5334,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   float back = I->Volume[5];
   float fov = I->Fov;
   float *pos = I->Pos;
-  int width = I->Width;
-  int height = I->Height;
+  size_t width = I->Width;
+  size_t height = I->Height;
   int ray_trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
   int volume;
@@ -5409,7 +5400,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     width = (width + 2) * mag;
     height = (height + 2) * mag;
     image_copy = image;
-    buffer_size = mag * mag * width * height;
+    buffer_size = width * height;
     image = CacheAlloc(I->G, unsigned int, buffer_size, 0, cCache_ray_antialias_buffer);
     ErrChkPtr(I->G, image);
   } else {
@@ -5911,7 +5902,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   if(ok && depth && ray_trace_mode) {
     float *delta = Alloc(float, 3 * width * height);
     int x, y;
-    CHECKOK(ok, delta);
+    ErrChkPtr(I->G, delta);
     if (ok) {
       int xc, yc;
       float d, dzdx, dzdy, *p, *q, dd;
