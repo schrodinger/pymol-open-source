@@ -34,6 +34,13 @@ class TestMMPyMOLx(testing.PyMOLTestCase):
         cmd.iterate('name CA', 'labels.append(stereo)', space=locals())
         self.assertEqual(labels, ['R'])
 
+    def testStereoPYMOL2782(self):
+        # L-Cysteine has R configuration
+        cmd.fragment('cys')
+        labels = []
+        cmd.iterate('name CA', 'labels.append(stereo)', space=locals())
+        self.assertEqual(labels, ['R'])
+
     def testLoadMTZ(self):
         cmd.load_mtz(self.datafile('4rwb.mtz'), 'foo',
                 'cryst_1/data_1/FP',
