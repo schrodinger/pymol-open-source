@@ -285,6 +285,16 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.read_sdfstr(sdfstr, 'm1')
         self.assertEqual(7, cmd.count_atoms())
 
+    @testing.requires_version('1.8.3.1')
+    def testLoadSDFV3000(self):
+        cmd.load(self.datafile("v3000.sdf"))
+        self.assertEqual(12, cmd.count_atoms())
+        self.assertEqual( 1, cmd.count_atoms('formal_charge = +1'))
+        self.assertEqual( 1, cmd.count_atoms('formal_charge = -1'))
+        self.assertEqual( 6, cmd.count_atoms('elem C'))
+        self.assertEqual( 6, cmd.count_atoms('elem H'))
+        self.assertEqual( 4, cmd.count_atoms('(first elem H) extend 2'))
+
     def testReadXplorstr(self):
         cmd.read_xplorstr
         self.skipTest("TODO")
