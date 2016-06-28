@@ -90,3 +90,57 @@ class TestSetting(testing.PyMOLTestCase):
     def testUnsetBond(self):
         # see testSetBond
         pass
+
+    @testing.requires_version('1.8.3')
+    def testUnsetDeep(self):
+        cmd.fragment('ala')
+        cmd.fragment('gly')
+        cmd.fragment('his')
+
+        # global
+        sphere_scale_global = 0.8
+        cmd.set('sphere_scale', sphere_scale_global)
+        cmd.set('stick_color', 'blue')
+
+        # object-level
+        cmd.set('sphere_scale', .5, 'ala')
+        cmd.set('stick_radius', .4, 'gly')
+
+        # atom-level
+        cmd.set('sphere_scale', .3, 'index 1-3')
+        cmd.set('sphere_color', 'yellow', 'index 2-4')
+
+        # bond-level
+        cmd.set('stick_radius', .6, 'elem C')
+        cmd.set('stick_color', 'red', 'index 1-5')
+
+        cmd.unset_deep()
+        names = cmd.get_object_list()
+
+        for oname in names:
+            # object-level check
+            for sname in ['sphere_scale', 'sphere_color']:
+                self.assertEqual(cmd.get(sname), cmd.get(sname, oname))
+
+            # atom-level check (1)
+            # type float
+            sname = 'sphere_scale'
+            a_level_values = set()
+            cmd.iterate(oname, 'a_level_values.add(s.' + sname + ')', space=locals())
+            self.assertEqual(len(a_level_values), 1)
+            self.assertAlmostEqual(sphere_scale_global, list(a_level_values)[0], delta=1e-4)
+
+            # atom-level check (2)
+            # type color ('default' -> None)
+            sname = 'sphere_color'
+            a_level_values = set()
+            cmd.iterate(oname, 'a_level_values.add(s.' + sname + ')', space=locals())
+            self.assertEqual(len(a_level_values), 1)
+            self.assertEqual(None, list(a_level_values)[0])
+
+        # bond-level check (None for unset settings)
+        for sname in ['stick_radius', 'stick_color']:
+            b_level_values = cmd.get_bond(sname, '*')
+            for o_set in b_level_values:
+                for b_set in o_set[1]:
+                    self.assertEqual(None, b_set[2], msg=sname + ' ' + o_set[0] + ' ' + str(b_set))
