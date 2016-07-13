@@ -177,8 +177,9 @@ class TestImporting(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testLoadEmbedded(self):
-        cmd.load_embedded
-        self.skipTest("TODO")
+        cmd.load(self.datafile("embed.p1m"))
+        self.assertEqual(6, cmd.count_atoms())
+        self.assertEqual(2, cmd.count_atoms('elem O'))
 
     def testLoadMap(self):
         cmd.load_map
