@@ -355,3 +355,9 @@ class TestImporting(testing.PyMOLTestCase):
                 0.012, 0.012, 0.002, 0.002, 0.019, 0.21, -0.644, -0.644,
                 0.21, -0.644, -0.644]
         self.assertArrayEqual(charges, charges_expected, delta=1e-4)
+
+    @testing.requires_version('1.8.3.1')
+    def testLoadPLY(self):
+        cmd.load(self.datafile("test_PHE_pentamer.ply.gz"))
+        e = cmd.get_extent('test_PHE_pentamer')
+        self.assertArrayEqual(e, [[-314.1,-303.6,-280.9], [1592.0,1042.5, 868.0]], delta=1e-3)

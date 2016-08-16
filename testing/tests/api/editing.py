@@ -497,3 +497,26 @@ class TestEditing(testing.PyMOLTestCase):
     def test_vdw_fit(self):
         cmd.vdw_fit
         self.skipTest("TODO")
+
+    @testing.requires_version('1.8.3.1')
+    def test_set_discrete(self):
+        import pymol
+
+        cmd.fragment('ala', 'm1')
+        cmd.create('m1', 'm1', 1, 2)
+
+        self.assertEqual(0, cmd.count_discrete('*'))
+        self.assertEqual(2, cmd.count_states())
+        self.assertEqual(10, cmd.count_atoms())
+
+        pymol.editing.set_discrete('m1', 1)
+
+        self.assertEqual(1, cmd.count_discrete('*'))
+        self.assertEqual(2, cmd.count_states())
+        self.assertEqual(20, cmd.count_atoms())
+
+        pymol.editing.set_discrete('m1', 0)
+
+        self.assertEqual(0, cmd.count_discrete('*'))
+        self.assertEqual(2, cmd.count_states())
+        self.assertEqual(10, cmd.count_atoms())
