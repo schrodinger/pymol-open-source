@@ -133,11 +133,14 @@ class TestExporting(testing.PyMOLTestCase):
         n_states = cmd.count_states('m1')
 
         with testing.mktemp('.' + format) as filename:
+            if format == 'mae' and not pymol.invocation.options.incentive_product:
+                format = 'cms'
+
             # explicit
             for state in range(1, n_states + 1):
                 cmd.delete('m2')
                 cmd.save(filename, 'm1', state=state)
-                cmd.load(filename, 'm2')
+                cmd.load(filename, 'm2', format=format)
                 rms = cmd.rms_cur('m1', 'm2', state, 1, matchmaker=m)
                 self.assertAlmostEqual(rms, 0.00, delta=1e-2)
 
@@ -146,11 +149,11 @@ class TestExporting(testing.PyMOLTestCase):
                 cmd.frame(state)
                 cmd.delete('m2')
                 cmd.save(filename, 'm1')
-                cmd.load(filename, 'm2', 1)
+                cmd.load(filename, 'm2', 1, format=format)
                 rms = cmd.rms_cur('m1', 'm2', state, 1, matchmaker=m)
                 self.assertAlmostEqual(rms, 0.00, delta=1e-2)
 
-            if format == 'mol':
+            if format in ('mol', 'cms'):
                 # no multi support
                 return
 
@@ -188,8 +191,11 @@ class TestExporting(testing.PyMOLTestCase):
             cmd.save(filename, 'elem O+N')
             cmd.set('raise_exceptions', 1)
 
+            if format == 'mae' and not pymol.invocation.options.incentive_product:
+                format = 'cms'
+
             cmd.delete('*')
-            cmd.load(filename, 'm2', discrete=1) # avoid merging of atoms
+            cmd.load(filename, 'm2', discrete=1, format=format) # avoid merging of atoms
 
         self.assertEqual(n_O, cmd.count_atoms('elem O'))
         self.assertEqual(n_N, cmd.count_atoms('elem N'))
