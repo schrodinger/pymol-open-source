@@ -23,11 +23,6 @@ from .PMGApp import *
 import sys, os, threading
 import traceback
 
-if sys.platform=='win32':
-    if sys.version[0:4]=='2.1 ':
-        if 'TCL_LIBRARY' not in os.environ:
-            os.environ['TCL_LIBRARY']='c:\\python21\\tcl\\tcl8.3'
-                
 def run(pymol_instance,poll=0,skin=None):
     try:
         if not hasattr(sys,"argv"):

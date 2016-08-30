@@ -6,12 +6,14 @@ attribute float a_Accessibility; /* This is for ambient occlusion, 1.0 by defaul
 varying vec3 packed_data_0 ;
 varying vec4 packed_data_1 ;
 varying vec4 packed_data_2 ;
-varying vec4 packed_data_3 ;
 varying vec4 packed_data_4 ;
 
 //varying vec3 N;
 #define NORMAL  packed_data_0
-#define COLOR packed_data_3
+
+// using the built-in allows to use glShadeModel
+#define COLOR gl_FrontColor
+
 //#define fog packed_data_1.w
 #define E 2.718281828459045
 /* this doesn't work for setting fog_color, need to set the values independently */

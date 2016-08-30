@@ -157,7 +157,7 @@ typedef struct {
 
 typedef struct {
   int len;
-  char *name;
+  const char *name;
   int x1, y1, x2, y2, drawn;
 } SceneElem;
 
@@ -1098,7 +1098,7 @@ int SceneMultipick(PyMOLGlobals * G, Multipick * smp)
 {
   CScene *I = G->Scene;
   int click_side = 0;
-  int defer_builds_mode = SettingGetGlobal_b(G, cSetting_defer_builds_mode);
+  int defer_builds_mode = SettingGetGlobal_i(G, cSetting_defer_builds_mode);
 
   if(defer_builds_mode == 5)    /* force generation of a pickable version */
     SceneUpdate(G, true);
@@ -2394,7 +2394,8 @@ int SceneMakeMovieImage(PyMOLGlobals * G, int show_timing, int validate, int mod
   case cSceneImage_Ray:
     break;
   default:
-    if(SettingGetGlobal_b(G, cSetting_ray_trace_frames)) {
+    if(!G->HaveGUI ||
+        SettingGetGlobal_b(G, cSetting_ray_trace_frames)) {
       mode = cSceneImage_Ray;
     } else if(SettingGetGlobal_b(G, cSetting_draw_frames)) {
       mode = cSceneImage_Draw;
@@ -2711,7 +2712,7 @@ int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge)
 {
   CScene *I = G->Scene;
   ObjRec *rec = NULL;
-  int defer_builds_mode = SettingGetGlobal_b(G, cSetting_defer_builds_mode);
+  int defer_builds_mode = SettingGetGlobal_i(G, cSetting_defer_builds_mode);
 
   if(!obj) {                    /* deletes all members */
     while(ListIterate(I->Obj, rec, next)) {
@@ -2917,7 +2918,7 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
 /*
  * Update the G->Scene->SceneVLA names array which is used for scene buttons
  */
-void SceneSetNames(PyMOLGlobals * G, std::vector<std::string> &list)
+void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list)
 {
   CScene *I = G->Scene;
   I->NScene = list.size();
@@ -2942,7 +2943,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
   PyMOLGlobals *G = block->G;
   CScene *I = G->Scene;
   int x, y, xx, x2;
-  char *c = NULL;
+  const char *c = NULL;
   float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
   float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
   float disabledColor[3] = { 0.25F, 0.25F, 0.25F };
@@ -3061,7 +3062,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
             }
             {
               int len;
-              char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
+              const char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
               SceneElem *elem = I->SceneVLA + i;
               int item = I->NSkip + row;
               c = elem->name;
@@ -3687,7 +3688,7 @@ static int SceneRelease(Block * block, int button, int x, int y, int mod, double
             break;
           case 2:
             {
-              char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
+              const char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
               if(cur_name && elem->name && (strcmp(cur_name, elem->name))) {
                 OrthoLineType buffer;
                 sprintf(buffer, "cmd.scene('''%s''')", elem->name);
@@ -3975,7 +3976,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
     if(ButModeCheckPossibleSingleClick(G, button, mod) || (!mod)) {
       I->PossibleSingleClick = 1;
     } else {
-      char *but_mode_name = SettingGetGlobal_s(G, cSetting_button_mode_name);
+      const char *but_mode_name = SettingGetGlobal_s(G, cSetting_button_mode_name);
       if(but_mode_name && but_mode_name[0] == '1') {
         I->PossibleSingleClick = 1;
       } else {
@@ -4030,7 +4031,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
             I->Over = i;
             click_handled = true;
             {
-              char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
+              const char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
               int animate = -1;
               if(mod & cOrthoCTRL)
                 animate = 0;
@@ -4886,7 +4887,7 @@ void SceneRovingChanged(PyMOLGlobals * G)
 static void SceneRovingCleanup(PyMOLGlobals * G)
 {
   CScene *I = G->Scene;
-  char *s;
+  const char *s;
   char buffer[OrthoLineLength];
 
   I->RovingCleanupFlag = false;
@@ -4930,9 +4931,9 @@ void SceneRovingUpdate(PyMOLGlobals * G)
   char empty[1] = "";
   char *p1;
   char *p2;
-  char *s;
+  const char *s;
   int refresh_flag = false;
-  char *name;
+  const char *name;
   float level;
   float isosurface, isomesh;
 
@@ -5255,7 +5256,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
       case 2:
         if(I->Over >= 0) {
           if(I->Pressed != I->Over) {
-            char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
+            const char *cur_name = SettingGetGlobal_s(G, cSetting_scene_current_name);
             if(cur_name && elem->name && (strcmp(cur_name, elem->name))) {
               OrthoLineType buffer;
               int animate = -1;
@@ -5941,7 +5942,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
 	    break;
 	  }
   
-	  SettingGet_3f(G, NULL, NULL, which_light, pos);
+	  copy3f(SettingGet<const float *>(G, which_light), pos);
 	  
 	  pos[0] += (float) dx * ms;
 	  pos[1] += (float) dy * ms;
@@ -6006,7 +6007,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
 	    }
 	  }
 
-	  SettingGet_3f(G, NULL, NULL, which_light, pos);
+	  copy3f(SettingGet<const float *>(G, which_light), pos);
 	  
 	  pos[2] -= factor * ms;
 	  
@@ -6038,6 +6039,47 @@ static int SceneDeferredClick(DeferredMouse * dm)
   return 1;
 }
 
+/*
+ * Will call cmd.raw_image_callback(img) with the current RGBA image, copied
+ * to a WxHx4 numpy array. Return false if no callback is defined
+ * (cmd.raw_image_callback == None).
+ */
+static
+bool call_raw_image_callback(PyMOLGlobals * G) {
+  bool done = false;
+
+#ifndef _PYMOL_NOPY
+  auto raw_image_callback =
+    PyObject_GetAttrString(G->P_inst->cmd, "raw_image_callback");
+
+  if (raw_image_callback != Py_None) {
+#ifdef _PYMOL_NUMPY
+    int blocked = PAutoBlock(G);
+    auto& image = G->Scene->Image;
+
+    // RGBA image as uint8 numpy array
+    import_array1(0);
+    npy_intp dims[3] = {image->width, image->height, 4};
+    auto py = PyArray_SimpleNew(3, dims, NPY_UINT8);
+    memcpy(PyArray_DATA((PyArrayObject *)py), image->data, dims[0] * dims[1] * 4);
+
+    PYOBJECT_CALLFUNCTION(raw_image_callback, "O", py);
+    Py_DECREF(py);
+    PAutoUnblock(G, blocked);
+
+    done = true;
+#else
+    PRINTFB(G, FB_Scene, FB_Errors)
+      " raw_image_callback-Error: no numpy support\n" ENDFB(G);
+#endif
+  }
+
+  Py_XDECREF(raw_image_callback);
+#endif
+
+  return done;
+}
+
 static int SceneDeferredImage(DeferredImage * di)
 {
   PyMOLGlobals *G = di->G;
@@ -6045,6 +6087,7 @@ static int SceneDeferredImage(DeferredImage * di)
   if(di->filename) {
     ScenePNG(G, di->filename, di->dpi, di->quiet, false, di->format);
     FreeP(di->filename);
+  } else if(call_raw_image_callback(G)) {
   } else if(G->HaveGUI && SettingGetGlobal_b(G, cSetting_auto_copy_images)) {
 #ifdef _PYMOL_IP_EXTRAS
     if(IncentiveCopyToClipboard(G, di->quiet)) {
@@ -6581,7 +6624,7 @@ void SceneUpdateAnimation(PyMOLGlobals * G)
   CScene *I = G->Scene;
   int rockFlag = false;
   int dirty = false;
-  int movie_rock = SettingGetGlobal_b(G, cSetting_movie_rock);
+  int movie_rock = SettingGetGlobal_i(G, cSetting_movie_rock);
 
   if(movie_rock < 0)
     movie_rock = ControlRocking(G);
@@ -6713,7 +6756,7 @@ bool SceneRay(PyMOLGlobals * G,
   int last_grid_active = I->grid.active;
   int grid_size = 0;
 
-  if(SettingGetGlobal_b(G, cSetting_defer_builds_mode) == 5)
+  if(SettingGetGlobal_i(G, cSetting_defer_builds_mode) == 5)
     SceneUpdate(G, true);
 
   if(ortho < 0)
@@ -7544,7 +7587,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
   CScene *I = G->Scene;
   ObjRec *rec = NULL;
   int cur_state = SettingGetGlobal_i(G, cSetting_state) - 1;
-  int defer_builds_mode = SettingGetGlobal_b(G, cSetting_defer_builds_mode);
+  int defer_builds_mode = SettingGetGlobal_i(G, cSetting_defer_builds_mode);
 
   PRINTFD(G, FB_Scene)
     " SceneUpdate: entered.\n" ENDFD;
@@ -7908,6 +7951,15 @@ void SceneProgramLighting(PyMOLGlobals * G)
     spec_value = 0.0F;
   spec_value = SceneGetSpecularValue(G, spec_value, 8);
 
+  // for programmable color quantification
+  auto pick_shading = SettingGet<bool>(G, cSetting_pick_shading);
+  if (pick_shading) {
+    n_light = 1;
+    direct = 0.f;
+    reflect = 0.f;
+    spec_value = 0.f;
+  }
+
   /* lighting */
   vv[0] = 0.0F;
   vv[1] = 0.0F;
@@ -7975,12 +8027,11 @@ void SceneProgramLighting(PyMOLGlobals * G)
     }
   }
   /* ambient lighting */
-  white4f(vv, SettingGetGlobal_f(G, cSetting_ambient));
+  white4f(vv, pick_shading ? 1.f : SettingGetGlobal_f(G, cSetting_ambient));
 
   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, vv);
   /* LIGHT0 is our direct light (eminating from the camera -- minus Z) */
 
-  if(direct > R_SMALL4) {
     glEnable(GL_LIGHT0);
     white4f(vv, 0.f);
     glLightfv(GL_LIGHT0, GL_AMBIENT, vv);
@@ -7998,9 +8049,7 @@ void SceneProgramLighting(PyMOLGlobals * G)
       }
       glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
     }
-  } else {
-    glDisable(GL_LIGHT0);
-  }
+
   /* LIGHTS1-3 are our reflected light (specular and diffuse
      reflections from a movable directional lights) */
   {
@@ -8646,6 +8695,7 @@ int SceneSetFog(PyMOLGlobals *G, float *fog){
   fog[3] = (SettingGetGlobal_b(G, cSetting_opaque_background) ? 1.0F : 0.0F);
   
   if(SettingGetGlobal_b(G, cSetting_depth_cue) &&
+      !SettingGetGlobal_b(G, cSetting_pick_shading) &&
      (SettingGetGlobal_f(G, cSetting_fog) != 0.0F)) {
     fog_active = true;
   } else {
@@ -8694,7 +8744,7 @@ void SceneDrawStencilInBuffer(PyMOLGlobals * G, CScene *I, int stereo_mode){
   glDisable(GL_NORMALIZE);
   glDisable(GL_COLOR_MATERIAL);
   glDisable(GL_LINE_SMOOTH);
-  glShadeModel(GL_SMOOTH);
+  glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
   glDisable(0x809D);      /* GL_MULTISAMPLE_ARB */
   
   glDisable(GL_DEPTH_TEST);
@@ -9060,7 +9110,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     debug_pick = SettingGetGlobal_i(G, cSetting_debug_pick);
 
     if(SettingGetGlobal_b(G, cSetting_line_smooth)) {
-      if(!(pick || smp)) {
+      if(!(pick || smp || SettingGet<bool>(G, cSetting_pick_shading))) {
         glEnable(GL_LINE_SMOOTH);
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
       }
@@ -9149,7 +9199,8 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
       glEnable(GL_COLOR_MATERIAL);
-      glShadeModel(GL_SMOOTH);
+      glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
+
       glEnable(GL_DITHER);
 
       glAlphaFunc(GL_GREATER, 0.05F);
@@ -9278,7 +9329,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 	   bg_grad() might be called in OrthoDoDraw() before GL 
 	   settings are set in SceneRender() */
 	//      glEnable(GL_COLOR_MATERIAL);
-	glShadeModel(GL_SMOOTH);
+	glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
 
         VLAFree(pickVLA);
       } else if(smp) {
@@ -9365,7 +9416,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 	   bg_grad() might be called in OrthoDoDraw() before GL 
 	   settings are set in SceneRender() */
 	//      glEnable(GL_COLOR_MATERIAL);
-	glShadeModel(GL_SMOOTH);
+	glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
 
         VLAFree(pickVLA);
         VLAFreeP(lowBitVLA);
@@ -9751,7 +9802,9 @@ int SceneGetTwoSidedLighting(PyMOLGlobals * G){
   return SceneGetTwoSidedLightingSettings(G, NULL, NULL);
 }
 
-int SceneGetTwoSidedLightingSettings(PyMOLGlobals * G, CSetting *set1, CSetting *set2){
+int SceneGetTwoSidedLightingSettings(PyMOLGlobals * G,
+    const CSetting *set1,
+    const CSetting *set2) {
   int two_sided_lighting = SettingGet_b(G, set1, set2, cSetting_two_sided_lighting);
   if(two_sided_lighting<0) {
     if(SettingGet_i(G, set1, set2, cSetting_surface_cavity_mode))

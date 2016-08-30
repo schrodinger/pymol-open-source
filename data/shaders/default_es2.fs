@@ -2,11 +2,11 @@
 varying vec3 packed_data_0 ;
 varying vec4 packed_data_1 ;
 varying vec4 packed_data_2 ;
-varying vec4 packed_data_3 ;
 varying vec4 packed_data_4 ;
 
-//varying vec3 N;
-#define COLOR packed_data_3
+// using the built-in allows to use glShadeModel
+#define COLOR gl_Color
+
 #define NORMAL normalize(packed_data_0.xyz)
 
 uniform float fog_enabled;

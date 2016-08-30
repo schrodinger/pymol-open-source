@@ -1383,14 +1383,18 @@ static int RadiusOrder(float *list, int a, int b)
 static bool RepSphereDetermineAtomVisibility(PyMOLGlobals *G,
     AtomInfoType *ati1, int cartoon_side_chain_helper, int ribbon_side_chain_helper)
 {
-  int sc_helper, rsc_helper;
-  AtomInfoGetSetting_b(G, ati1, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper, &sc_helper);
-  AtomInfoGetSetting_b(G, ati1, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper, &rsc_helper);
-  if((ati1->flags & cAtomFlag_polymer) &&
-     ((sc_helper && GET_BIT(ati1->visRep,cRepCartoon)) ||
-      (rsc_helper && GET_BIT(ati1->visRep,cRepRibbon)))) {
+  if (!(ati1->flags & cAtomFlag_polymer))
+    return true;
+
+  bool sc_helper =
+    (GET_BIT(ati1->visRep, cRepCartoon) &&
+     AtomSettingGetWD(G, ati1, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper)) ||
+    (GET_BIT(ati1->visRep, cRepRibbon) &&
+     AtomSettingGetWD(G, ati1, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper));
+
+  if (sc_helper) {
     int prot1 = ati1->protons;
-    
+
     if(prot1 == cAN_N) {
       if(ati1->name == G->lex_const.N) {
         if(ati1->resn != G->lex_const.PRO)
@@ -1413,18 +1417,16 @@ static void RepSphereAddAtomVisInfoToStoredVC(RepSphere *I, ObjectMolecule *obj,
     int *variable_alpha, float sphere_add)
 {
   PyMOLGlobals *G = cs->State.G;
-  float at_sphere_scale;
-  int at_sphere_color;
-  float at_transp;
+  float at_transp = transp;
   int c1;
   float *v0, *vc;
   float *v = varg;
-  AtomInfoGetSetting_f(G, ati1, cSetting_sphere_scale, sphere_scale,
-		       &at_sphere_scale);
-  if(AtomInfoGetSetting_f(G, ati1, cSetting_sphere_transparency, transp, &at_transp))
+
+  float at_sphere_scale = AtomSettingGetWD(G, ati1, cSetting_sphere_scale, sphere_scale);
+  int at_sphere_color = AtomSettingGetWD(G, ati1, cSetting_sphere_color, sphere_color);
+
+  if(AtomSettingGetIfDefined(G, ati1, cSetting_sphere_transparency, &at_transp))
     *variable_alpha = true;
-  AtomInfoGetSetting_color(G, ati1, cSetting_sphere_color, sphere_color,
-			   &at_sphere_color);
   
   if(I->R.P) {
     I->NP++;
@@ -1656,11 +1658,10 @@ static int RepSphereGenerateGeometryCullForSphere(SphereRec *sp,
       while(j >= 0) {
 	a2 = cs->IdxToAtm[j];
 	if(marked[a2]) {
-	  float at2_sphere_scale;
 	  AtomInfoType *ati2 = obj->AtomInfo + a2;
-	  AtomInfoGetSetting_f(G, ati2,
-			       cSetting_sphere_scale, sphere_scale,
-			       &at2_sphere_scale);
+
+          float at2_sphere_scale = AtomSettingGetWD(G, ati2, cSetting_sphere_scale, sphere_scale);
+
 	  if(j != a)
 	    if(within3f(cs->Coord + 3 * j, v1,
 			ati2->vdw * at2_sphere_scale + sphere_add)) {
@@ -1801,20 +1802,16 @@ static int RepSphereGenerateGeometryForSphere(RepSphere *I, ObjectMolecule *obj,
 {
   PyMOLGlobals *G = cs->State.G;
   float *v = *varg;
-  float at_sphere_scale;
-  int at_sphere_color;
-  float at_transp;
+  float at_transp = transp;
   int ok = true;
   int c1;
   float *v0;
   float vdw;
 
-  AtomInfoGetSetting_f(G, ati1, cSetting_sphere_scale, sphere_scale,
-		       &at_sphere_scale);
-  AtomInfoGetSetting_color(G, ati1, cSetting_sphere_color, sphere_color,
-			   &at_sphere_color);
-  if(AtomInfoGetSetting_f
-     (G, ati1, cSetting_sphere_transparency, transp, &at_transp))
+  float at_sphere_scale = AtomSettingGetWD(G, ati1, cSetting_sphere_scale, sphere_scale);
+  int at_sphere_color = AtomSettingGetWD(G, ati1, cSetting_sphere_color, sphere_color);
+
+  if(AtomSettingGetIfDefined(G, ati1, cSetting_sphere_transparency, &at_transp))
     (*variable_alpha) = true;
   
   if(at_sphere_color == -1)
@@ -1966,7 +1963,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
       sphere_add = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_solvent_radius);       /* if so, get solvent radius */
     }
     
-    if(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
+    if(SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
       I->R.P = Alloc(Pickable, cs->NIndex + 1);
       CHECKOK(ok, I->R.P);
     }

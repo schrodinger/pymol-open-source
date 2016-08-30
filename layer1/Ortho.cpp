@@ -2678,7 +2678,9 @@ void OrthoPushMatrix(PyMOLGlobals * G)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
 
-    glShadeModel(GL_SMOOTH);
+#ifndef PURE_OPENGL_ES_2
+    glShadeModel(SettingGetGlobal_b(G, cSetting_pick_shading) ? GL_FLAT : GL_SMOOTH);
+#endif
     if(G->Option->multisample)
       glDisable(0x809D);        /* GL_MULTISAMPLE_ARB */
     I->Pushed++;

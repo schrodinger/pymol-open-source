@@ -1411,6 +1411,7 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info)
 void ObjectStateResetMatrix(CObjectState * I)
 {
   FreeP(I->Matrix);
+  FreeP(I->InvMatrix);
 }
 
 PyObject *ObjectStateAsPyList(CObjectState * I)

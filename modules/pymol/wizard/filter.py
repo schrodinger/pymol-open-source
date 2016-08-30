@@ -28,6 +28,38 @@ reject_str = "Reject"
 
 class Filter(Wizard):
 
+    def migrate_session(self, version):
+        if version >= self.cmd.get_version()[2]:
+            return
+
+        # remap old "title" state identifiers to new identifiers
+        # (changed in 1.7.0.0)
+
+        for object, sdo in self.dict.items():
+            if not sdo:
+                continue
+
+            # build title -> ident mapping
+            tota = self.cmd.count_states(object)
+            title2ident = dict(
+                    (self.cmd.get_title(object, state),
+                        self.get_ident(object, state))
+                    for state in range(1, tota + 1))
+
+            # build remapped sdo
+            try:
+                new_sdo = {}
+                for title, value in sdo.items():
+                    new_sdo[title2ident[title]] = value
+                sdo.clear()
+                sdo.update(new_sdo)
+            except KeyError:
+                # lookup by title failed, we can assume that this instance
+                # already uses new identifiers
+                return
+
+        self.load_state_dict()
+
     def __init__(self,_self=cmd):
 
         # initialize parent class

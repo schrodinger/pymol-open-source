@@ -220,7 +220,7 @@ void SceneZoom(PyMOLGlobals * G, float scale);
 void SceneUpdateObjectMoleculesSingleThread(PyMOLGlobals * G);
 
 int SceneGetTwoSidedLighting(PyMOLGlobals * G);
-int SceneGetTwoSidedLightingSettings(PyMOLGlobals * G, CSetting *set1, CSetting *set2);
+int SceneGetTwoSidedLightingSettings(PyMOLGlobals * G, const CSetting *set1, const CSetting *set2);
 
 float SceneGetLineWidthForCylinders(PyMOLGlobals * G, RenderInfo * info, float line_width);
 

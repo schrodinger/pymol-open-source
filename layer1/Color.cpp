@@ -193,7 +193,7 @@ ObjectGadgetRamp *ColorGetRamp(PyMOLGlobals * G, int index)
   return result;
 }
 
-int ColorGetRamped(PyMOLGlobals * G, int index, float *vertex, float *color, int state)
+int ColorGetRamped(PyMOLGlobals * G, int index, const float *vertex, float *color, int state)
 {
   CColor *I = G->Color;
   int ok = false;

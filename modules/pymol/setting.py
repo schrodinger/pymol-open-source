@@ -65,8 +65,6 @@ if __name__=='pymol.setting':
 
     boolean_sc = Shortcut(boolean_dict.keys())
 
-    quote_strip_re = re.compile("^\'.*\'$|^\".*\"$")
-
     def _get_index(name):
         '''Get setting index for given name. `name` may be abbreviated.
         Raises QuietException for unknown names or ambiguous abbreviations.'''
@@ -86,6 +84,37 @@ if __name__=='pymol.setting':
 
     def get_name_list():
         return name_list
+
+    def _validate_value(type, value):
+        if type==1: # boolean (also support non-zero float for truth)
+            try: # number, non-zero, then interpret as TRUE
+                return 1 if float(value) else 0
+            except:
+                pass
+            return boolean_dict[boolean_sc.auto_err(str(value), "boolean")]
+        if type < 4:
+            if is_string(value) and boolean_sc.has_key(value):
+                value = boolean_dict[boolean_sc.auto_err(str(value), "boolean")]
+            if type == 2:
+                return int(value)
+            return float(value)
+        if type==4: # float3 - some legacy handling req.
+            if not is_string(value):
+                v = value
+            elif ',' in value:
+                v = eval(value)
+            else:
+                v = value.split()
+            return (float(v[0]), float(v[1]), float(v[2]))
+        if type==5: # color
+            return str(value)
+        if type==6: # string
+            v = str(value)
+            # strip outermost quotes (cheesy approach)
+            if len(v) > 1 and v[0] == v[-1] and v[0] in ('"', "'"):
+                v = v[1:-1]
+            return v
+        raise Exception
 
     ###### API functions
 
@@ -142,9 +171,8 @@ PYMOL API
 
        '''
         r = DEFAULT_ERROR
-        selection1 = str(selection1)
-        if selection2 == None:
-            selection2 = selection1
+        selection1 = selector.process(selection1)
+        selection2 = selector.process(selection2) if selection2 else selection1
         index = _get_index(str(name))
         if log:
             name = name_dict.get(index, name)
@@ -153,63 +181,12 @@ PYMOL API
         if True:
             try:
                 _self.lock(_self)
-                type = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))[0]
-                if type==None:
+                type = _cmd.get_setting_type(index)
+                if type < 0:
                     print("Error: unable to get setting type.")
                     raise QuietException
                 try:
-                    if type==1: # boolean (also support non-zero float for truth)
-                        handled = 0
-                        if boolean_sc.interpret(str(value))==None:
-                            try: # number, non-zero, then interpret as TRUE
-                                if not (float(value)==0.0):
-                                    handled = 1
-                                    v = (1,)
-                                else:
-                                    handled = 1
-                                    v = (0,)
-                            except:
-                                pass
-                        if not handled:
-                            v = (boolean_dict[
-                                boolean_sc.auto_err(
-                                str(value),"boolean")],)
-                    elif type==2: # int (also supports boolean language for 0,1)
-                        if boolean_sc.has_key(str(value)):
-                            v = (boolean_dict[
-                                boolean_sc.auto_err(
-                                str(value),"boolean")],)
-                        else:
-                            v = (int(value),)
-                    elif type==3: # float
-                        if boolean_sc.has_key(str(value)):
-                            v = (float(boolean_dict[
-                                boolean_sc.auto_err(
-                                str(value),"boolean")]),)
-                        else:
-                            v = (float(value),)
-                    elif type==4: # float3 - some legacy handling req.
-                        if is_string(value):
-                            if not ',' in value:
-                                v = string.split(value)
-                            else:
-                                v = eval(value)
-                        else:
-                            v = value
-                        v = (float(v[0]),float(v[1]),float(v[2]))
-                    elif type==5: # color
-                        v = (str(value),)
-                    elif type==6: # string
-                        vl = str(value)
-                        # strip outermost quotes (cheesy approach)
-                        if quote_strip_re.search(vl)!=None:
-                            vl=vl[1:-1]
-                        v = (vl,)
-                    v = (type,v)
-                    if len(selection1):
-                        selection1=selector.process(selection1)
-                    if len(selection2):
-                        selection2=selector.process(selection2)                        
+                    v = (type, _validate_value(type, value))
                     r = _cmd.set_bond(_self._COb,int(index),v,
                                  "("+selection1+")","("+selection2+")",
                                  int(state)-1,int(quiet),
@@ -302,7 +279,7 @@ SEE ALSO
     
 '''
         r = DEFAULT_ERROR
-        selection = str(selection)
+        selection = selector.process(selection)
         index = _get_index(name)
         if log:
             name = name_dict.get(index, name)
@@ -310,62 +287,12 @@ SEE ALSO
         if True:
             try:
                 _self.lock(_self)
-                stuple = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))
-                if stuple is None:
+                type = _cmd.get_setting_type(index)
+                if type < 0:
                     print("Error: unable to get setting type.")
                     raise QuietException
-                type = stuple[0]
                 try:
-                    if type==1: # boolean (also support non-zero float for truth)
-                        handled = 0
-                        if boolean_sc.interpret(str(value))==None:
-                            try: # number, non-zero, then interpret as TRUE
-                                if not (float(value)==0.0):
-                                    handled = 1
-                                    v = (1,)
-                                else:
-                                    handled = 1
-                                    v = (0,)
-                            except:
-                                pass
-                        if not handled:
-                            v = (boolean_dict[
-                                boolean_sc.auto_err(
-                                str(value),"boolean")],)
-                    elif type==2: # int (also supports boolean language for 0,1)
-                        if boolean_sc.has_key(str(value)):
-                            v = (boolean_dict[
-                                boolean_sc.auto_err(
-                                str(value),"boolean")],)
-                        else:
-                            v = (int(value),)
-                    elif type==3: # float
-                        if boolean_sc.has_key(str(value)):
-                            v = (float(boolean_dict[
-                                boolean_sc.auto_err(
-                                str(value),"boolean")]),)
-                        else:
-                            v = (float(value),)
-                    elif type==4: # float3 - some legacy handling req.
-                        if is_string(value):
-                            if not ',' in value:
-                                v = string.split(value)
-                            else:
-                                v = eval(value)
-                        else:
-                            v = value
-                        v = (float(v[0]),float(v[1]),float(v[2]))
-                    elif type==5: # color
-                        v = (str(value),)
-                    elif type==6: # string
-                        vl = str(value)
-                        # strip outermost quotes (cheesy approach)
-                        if quote_strip_re.search(vl)!=None:
-                            vl=vl[1:-1]
-                        v = (vl,)
-                    v = (type,v)
-                    if len(selection):
-                        selection=selector.process(selection)
+                    v = (type, _validate_value(type, value))
                     r = _cmd.set(_self._COb,int(index),v,
                                      selection,
                                      int(state)-1,int(quiet),
@@ -418,7 +345,7 @@ SEE ALSO
     
         '''
         r = DEFAULT_ERROR
-        selection = str(selection)
+        selection = selector.process(selection)
         index = _get_index(str(name))
         if log:
             name = name_dict.get(index, name)
@@ -427,7 +354,6 @@ SEE ALSO
                 try:
                     _self.lock(_self)
                     try:
-                        selection = selector.process(selection)   
                         r = _cmd.unset(_self._COb,int(index),selection,
                                             int(state)-1,int(quiet),
                                             int(updates))
@@ -452,10 +378,8 @@ USAGE
 
         '''
         r = DEFAULT_ERROR
-        selection1 = str(selection1)
-        if selection2 == None:
-            selection2 = selection1
-        selection2 = str(selection2)
+        selection1 = selector.process(selection1)
+        selection2 = selector.process(selection2) if selection2 else selection1
         index = _get_index(str(name))
         if log:
             name = name_dict.get(index, name)
@@ -465,8 +389,6 @@ USAGE
             try:
                 _self.lock(_self)
                 try:
-                    selection1 = selector.process(selection1)
-                    selection2 = selector.process(selection2)   
                     r = _cmd.unset_bond(_self._COb,int(index),selection1,selection2,
                                    int(state)-1,int(quiet),
                                    int(updates))
@@ -564,7 +486,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException
         return r
     
-    def get_setting_tuple(name,object='',state=0,_self=cmd): # INTERNAL
+    def get_setting_tuple_new(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         i = _get_index(name)
         try:
@@ -573,6 +495,13 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
+        return r
+
+    def get_setting_tuple(name,object='',state=0,_self=cmd): # INTERNAL
+        r = get_setting_tuple_new(name, object, state, _self)
+        if r[0] != 4:
+            # legacy API
+            r = (r[0], (r[1],))
         return r
     
     def get_setting_boolean(name,object='',state=0,_self=cmd): # INTERNAL
@@ -675,23 +604,14 @@ PYMOL API
        '''
         state, quiet = int(state), int(quiet)
         r = DEFAULT_ERROR
-        selection1 = str(selection1)
-        if selection2 == None:
-            selection2 = selection1
+        selection1 = selector.process(selection1)
+        selection2 = selector.process(selection2) if selection2 else selection1
 
         index = _get_index(str(name))
         if True:
             try:
                 _self.lock(_self)
-                type = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))[0]
-                if type==None:
-                    print("Error: unable to get setting type.")
-                    raise QuietException
                 try:
-                    if len(selection1):
-                        selection1=selector.process(selection1)
-                    if len(selection2):
-                        selection2=selector.process(selection2)                        
                     r = _cmd.get_bond(_self._COb,int(index),
                                  "("+selection1+")","("+selection2+")",
                                  int(state)-1,int(quiet),
@@ -716,3 +636,58 @@ PYMOL API
                     print(' %s = %s between (%s`%d)-(%s`%d%s)' % (name,
                             value, model, idx1, model, idx2, suffix))
         return r
+
+    def unset_deep(settings='', object='*', updates=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Unset all object, object-state, atom, and bond level settings.
+
+    Note: Does currently NOT unset atom-state level settings. Check for
+    atom-state level settings with:
+    PyMOL> iterate_state 1, *, print list(s)
+    Unset e.g. atom-state level "label_screen_point" (index 728) with:
+    PyMOL> alter_state 1, *, del s[728]
+
+ARGUMENTS
+
+    settings = str: space separated list of setting names or empty string
+    for all settings {default: }
+
+    object = str: name of one object or * for all objects {default: *}
+        '''
+        quiet = int(quiet)
+        kwargs = {'quiet': quiet, 'updates': 0, '_self': _self}
+
+        if not settings:
+            settings = iter(name_dict) # index iterator
+        elif _self.is_string(settings):
+            settings = settings.split()
+
+        if object in ['all', '*']:
+            object = '*'
+            selection = '(*)'
+        else:
+            selection = None
+            try:
+                if _self.get_type(object) in (
+                        'object:group', 'object:molecule'):
+                    selection = '(' + object + ')'
+            except:
+                pass
+
+        # 0 (object-level) and 1-N (object-state-level)
+        states = range(cmd.count_states(object) + 1)
+
+        for setting in settings:
+            try:
+                for state in states:
+                    unset(setting, object, state=state, **kwargs)
+                if selection:
+                    unset(setting, selection, **kwargs)
+            except:
+                if not quiet:
+                    print(' Setting: %s unset failed' % setting)
+
+        if int(updates):
+            _self.rebuild(object)

@@ -69,7 +69,7 @@ const SettingLevelInfoType SettingLevelInfo[] = {
 #define SETTINGINFO_IMPLEMENTATION
 #include "SettingInfo.h"
 
-static char *get_s(CSetting * I, int index);
+template <> const char * SettingGet<const char *>(int index, const CSetting * I);
 
 // get level name for setting index (for feedback)
 const char * SettingLevelGetName(PyMOLGlobals * G, int index) {
@@ -175,96 +175,77 @@ static void SettingUniqueExpand(PyMOLGlobals * G)
   }
 }
 
+static
+SettingUniqueEntry *SettingFindSettingUniqueEntry(PyMOLGlobals * G, int unique_id, int setting_id)
+{
+  CSettingUnique *I = G->SettingUnique;
+  OVreturn_word result;
+  if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
+    SettingUniqueEntry *entry;
+    for (int offset = result.word; offset; offset = entry->next) {
+      entry = I->entry + offset;
+      if(entry->setting_id == setting_id) {
+        return entry;
+      }
+    }
+  }
+  return NULL;
+}
+
 int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id)
 {
-  CSettingUnique *I = G->SettingUnique;
-  OVreturn_word result;
-  if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
-    int offset = result.word;
-    SettingUniqueEntry *entry;
+  return SettingFindSettingUniqueEntry(G, unique_id, setting_id) != NULL;
+}
 
-    while(offset) {
-      entry = I->entry + offset;
-      if(entry->setting_id == setting_id) {
-        return 1;
-      }
-      offset = entry->next;
+/*
+ * Return true for convertible types and set int-compatible types to int
+ */
+inline bool type_upcast(int &type) {
+  switch (type) {
+    case cSetting_int:
+    case cSetting_color:
+    case cSetting_boolean:
+      type = cSetting_int;
+    case cSetting_float:
+      return true;
+  }
+  return false;
+}
+
+bool SettingUniqueGetTypedValuePtr(PyMOLGlobals * G, int unique_id, int setting_id,
+                                      int setting_type, void * value)
+{
+  auto entry = SettingFindSettingUniqueEntry(G, unique_id, setting_id);
+  if (!entry)
+    return false;
+
+  int type_from = SettingInfo[setting_id].type;
+
+  if (type_from != setting_type) {
+    if (!type_upcast(type_from) ||
+        !type_upcast(setting_type)) {
+      PRINTFB(G, FB_Setting, FB_Errors)
+        " Setting-Error: type mismatch\n" ENDFB(G);
+      return false;
     }
   }
-  return 0;
-}
 
-static int SettingUniqueGetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
-                                      int setting_type, void *value)
-{
-  CSettingUnique *I = G->SettingUnique;
-  OVreturn_word result;
-  if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset, unique_id))) {
-    int offset = result.word;
-    SettingUniqueEntry *entry;
-    while(offset) {
-      entry = I->entry + offset;
-      if(entry->setting_id == setting_id) {
-        if(SettingInfo[setting_id].type == setting_type) {
-	  if (setting_type == cSetting_float3){
-	    float *fv = entry->value.float3_;
-	    copy3f(fv, (float*)value);
-	  } else {
-	    *(int *) value = entry->value.int_;
-	  }
-        } else {
-          switch (setting_type) {
-          case cSetting_int:
-          case cSetting_color:
-          case cSetting_boolean:
-            switch (SettingInfo[setting_id].type) {
-            case cSetting_float:
-              *(int *) value = (int) entry->value.float_;
-              break;
-            default:
-              *(int *) value = entry->value.int_;
-              break;
-            }
-            break;
-          case cSetting_float:
-            *(float *) value = (float) entry->value.int_;
-            break;
-          case cSetting_float3:
-            {
-              float *fv = entry->value.float3_;
-              copy3f(fv, (float*)value);
-            }
-            break;
-          }
-        }
-        return 1;
-      }
-      offset = entry->next;
-    }
+  if (setting_type == cSetting_float3){
+    *(const float **) value = entry->value.float3_;
+  } else if (setting_type == type_from) {
+    *(int *) value = entry->value.int_;
+  } else if (setting_type == cSetting_int) {
+    *(int *) value = (int) entry->value.float_;
+  } else { // setting_type == cSetting_float
+    *(float *) value = (float) entry->value.int_;
   }
-  return 0;
+
+  return true;
 }
 
-int SettingUniqueGet_b(PyMOLGlobals * G, int unique_id, int setting_id, int *value)
-{
-  return SettingUniqueGetTypedValue(G, unique_id, setting_id, cSetting_boolean, value);
-}
-
-int SettingUniqueGet_i(PyMOLGlobals * G, int unique_id, int setting_id, int *value)
-{
-  return SettingUniqueGetTypedValue(G, unique_id, setting_id, cSetting_int, value);
-}
-
-int SettingUniqueGet_f(PyMOLGlobals * G, int unique_id, int setting_id, float *value)
-{
-  return SettingUniqueGetTypedValue(G, unique_id, setting_id, cSetting_float, value);
-}
-
-int SettingUniqueGet_color(PyMOLGlobals * G, int unique_id, int setting_id, int *value)
-{
-  return SettingUniqueGetTypedValue(G, unique_id, setting_id, cSetting_color, value);
-}
-
+/*
+ * Warning: Returns colors as (fff) tuple instead of color index
+ */
 PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index)
 {
   int type = SettingGetType(G, index);
@@ -272,12 +253,10 @@ PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index)
   union {
     int val_i;
     float val_f;
-    float val_3f[3];
+    const float * ptr_3f;
   };
 
-  const float * ptr_3f = val_3f;
-
-  if (SettingUniqueGetTypedValue(G, unique_id, index, type, val_3f)) {
+  if (SettingUniqueGetTypedValuePtr(G, unique_id, index, type, &ptr_3f)) {
     switch (type) {
     case cSetting_boolean:
       return CPythonVal_New_Boolean(val_i);
@@ -313,21 +292,30 @@ static int SettingUniqueEntry_IsSame(SettingUniqueEntry *entry, int setting_type
   }
 }
 
-static void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int setting_type, const void *value){
-  switch (setting_type) {
+static void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int value_type, const void *value){
+  int setting_type = SettingGetType(entry->setting_id);
+  switch (value_type) {
     case cSetting_boolean:
     case cSetting_int:
     case cSetting_color:
-      entry->value.int_ = *(int *) value;
+      if (setting_type == cSetting_float) {
+        entry->value.float_ = *(int*) value;
+      } else {
+        entry->value.int_ = *(int *) value;
+      }
       break;
     case cSetting_float:
-      entry->value.float_ = *(float *) value;
+      if (setting_type != cSetting_float) {
+        entry->value.int_ = *(float *) value;
+      } else {
+        entry->value.float_ = *(float *) value;
+      }
       break;
     case cSetting_float3:
       memcpy(entry->value.float3_, value, sizeof(float) * 3);
       break;
     default:
-      printf("SettingUniqueEntry_Set-Error: unsupported type %d\n", setting_type);
+      printf("SettingUniqueEntry_Set-Error: unsupported type %d\n", value_type);
   }
 }
 
@@ -414,26 +402,6 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
     /* unhandled error */
   }
   return isset;
-}
-
-void SettingUniqueSet_i(PyMOLGlobals * G, int unique_id, int setting_id, int value)
-{
-  SettingUniqueSetTypedValue(G, unique_id, setting_id, cSetting_int, &value);
-}
-
-void SettingUniqueSet_f(PyMOLGlobals * G, int unique_id, int setting_id, float value)
-{
-  SettingUniqueSetTypedValue(G, unique_id, setting_id, cSetting_float, &value);
-}
-
-void SettingUniqueSet_b(PyMOLGlobals * G, int unique_id, int setting_id, int value)
-{
-  SettingUniqueSetTypedValue(G, unique_id, setting_id, cSetting_boolean, &value);
-}
-
-void SettingUniqueSet_color(PyMOLGlobals * G, int unique_id, int setting_id, int value)
-{
-  SettingUniqueSetTypedValue(G, unique_id, setting_id, cSetting_color, &value);
 }
 
 #ifndef _PYMOL_NOPY
@@ -983,12 +951,12 @@ PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals * G)
   return (PConvAutoNone(result));
 }
 
-static PyObject *get_list(CSetting * I, int index)
+static PyObject *get_list(CSetting * I, int index, bool incl_blacklisted)
 {
   PyObject *result = NULL, *value = NULL;
   int setting_type = SettingInfo[index].type;
 
-  if (is_session_blacklisted(index)) {
+  if (!incl_blacklisted && is_session_blacklisted(index)) {
     return NULL;
   }
 
@@ -1006,7 +974,7 @@ static PyObject *get_list(CSetting * I, int index)
     value = PConvFloatArrayToPyList(I->info[index].float3_, 3);
     break;
   case cSetting_string:
-    value = PyString_FromString(get_s(I, index));
+    value = PyString_FromString(SettingGet<const char *>(index, I));
     break;
   }
 
@@ -1020,7 +988,7 @@ static PyObject *get_list(CSetting * I, int index)
   return result;
 }
 
-PyObject *SettingAsPyList(CSetting * I)
+PyObject *SettingAsPyList(CSetting * I, bool incl_blacklisted)
 {
   PyObject *result = NULL;
   int a;
@@ -1031,7 +999,7 @@ PyObject *SettingAsPyList(CSetting * I)
 
     for(a = 0; a < cSetting_INIT; a++) {
       if(I->info[a].defined) {
-        PyObject * item = get_list(I, a);
+        PyObject * item = get_list(I, a, incl_blacklisted);
         if (item != NULL) {
           list.push_back(item);
         }
@@ -1211,7 +1179,7 @@ void SettingCheckHandle(PyMOLGlobals * G, CSetting ** handle)
 
 
 /*========================================================================*/
-int SettingGetTextValue(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
+int SettingGetTextValue(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index,
                         char *buffer)
 {
   const char * sptr = SettingGetTextPtr(G, set1, set2, index, buffer);
@@ -1235,12 +1203,12 @@ int SettingGetTextValue(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int 
  * Returns a pointer to the internal string representation if available,
  * or it formats the value into buffer and returns a pointer to buffer.
  */
-const char * SettingGetTextPtr(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
+const char * SettingGetTextPtr(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2,
                                int index, char *buffer)
 {
   int type;
-  char *sptr = NULL;
-  float *ptr;
+  const char *sptr = NULL;
+  const float *ptr;
   type = SettingGetType(G, index);
   switch (type) {
   case cSetting_boolean:
@@ -1309,25 +1277,22 @@ int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tu
   value = PyTuple_GetItem(tuple, 1);
   switch (type) {
   case cSetting_boolean:
-    SettingSet_b(I, index, PyInt_AsLong(PyTuple_GetItem(value, 0)));
-    break;
   case cSetting_int:
-    SettingSet_i(I, index, PyInt_AsLong(PyTuple_GetItem(value, 0)));
+    SettingSet_i(I, index, PyInt_AsLong(value));
     break;
   case cSetting_float:
-    SettingSet_f(I, index, (float) PyFloat_AsDouble(PyTuple_GetItem(value, 0)));
+    SettingSet_f(I, index, (float) PyFloat_AsDouble(value));
     break;
   case cSetting_float3:
-    SettingSet_3f(I, index,
-                  (float) PyFloat_AsDouble(PyTuple_GetItem(value, 0)),
-                  (float) PyFloat_AsDouble(PyTuple_GetItem(value, 1)),
-                  (float) PyFloat_AsDouble(PyTuple_GetItem(value, 2)));
+    float tmp[3];
+    PyArg_ParseTuple(value, "fff", tmp, tmp + 1, tmp + 2);
+    SettingSet_3fv(I, index, tmp);
     break;
   case cSetting_color:
-    SettingSet_color(I, index, PyString_AsString(PyTuple_GetItem(value, 0)));
+    SettingSet_color(I, index, PyString_AsString(value));
     break;
   case cSetting_string:
-    SettingSet_s(I, index, PyString_AsString(PyTuple_GetItem(value, 0)));
+    SettingSet_s(I, index, PyString_AsString(value));
     break;
   default:
     ok = false;
@@ -1436,9 +1401,9 @@ int SettingSetFromString(PyMOLGlobals * G, CSetting * I, int index, const char *
     break;
   case cSetting_float3:
     {
-      float tmp1, tmp2, tmp3;
-      if(sscanf(st, "%f%f%f", &tmp1, &tmp2, &tmp3) == 3)
-        SettingSet_3f(I, index, tmp1, tmp2, tmp3);
+      float tmp[3];
+      if(sscanf(st, "%f%f%f", tmp, tmp + 1, tmp + 2) == 3)
+        SettingSet_3fv(I, index, tmp);
       else
         ok = false;
     }
@@ -1459,10 +1424,13 @@ int SettingSetFromString(PyMOLGlobals * G, CSetting * I, int index, const char *
 
 /*========================================================================*/
 #ifndef _PYMOL_NOPY
-PyObject *SettingGetPyObject(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index)
+/*
+ * Warning: Returns colors as (fff) tuple instead of color index
+ */
+PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index)
 {                               /* assumes blocked python interpeter */
   PyObject *result = NULL;
-  float *ptr;
+  const float *ptr;
   int type = SettingGetType(G, index);
 
   switch (type) {
@@ -1496,31 +1464,27 @@ PyObject *SettingGetPyObject(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
   return result;
 }
 
-PyObject *SettingGetTuple(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index)
+PyObject *SettingGetTuple(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index)
 {                               /* assumes blocked python interpeter */
   PyObject *result = NULL;
-  float *ptr;
+  const float *ptr;
   int type = SettingGetType(G, index);
 
   switch (type) {
   case cSetting_boolean:
-    result = Py_BuildValue("(i(i))", type, SettingGet_b(G, set1, set2, index));
-    break;
   case cSetting_int:
-    result = Py_BuildValue("(i(i))", type, SettingGet_i(G, set1, set2, index));
+  case cSetting_color:
+    result = Py_BuildValue("ii", type, SettingGet_i(G, set1, set2, index));
     break;
   case cSetting_float:
-    result = Py_BuildValue("(i(f))", type, SettingGet_f(G, set1, set2, index));
+    result = Py_BuildValue("if", type, SettingGet_f(G, set1, set2, index));
     break;
   case cSetting_float3:
     ptr = SettingGet_3fv(G, set1, set2, index);
-    result = Py_BuildValue("(i(fff))", type, ptr[0], ptr[1], ptr[2]);
-    break;
-  case cSetting_color:
-    result = Py_BuildValue("(i(i))", type, SettingGet_color(G, set1, set2, index));
+    result = Py_BuildValue("i(fff)", type, ptr[0], ptr[1], ptr[2]);
     break;
   case cSetting_string:
-    result = Py_BuildValue("(i(s))", type, SettingGet_s(G, set1, set2, index));
+    result = Py_BuildValue("is", type, SettingGet_s(G, set1, set2, index));
     break;
   default:
     result = PConvAutoNone(Py_None);
@@ -1648,7 +1612,7 @@ int SettingUnset(CSetting * I, int index)
 {
   if(I) {
     SettingRec *sr = I->info + index;
-    if (!sr->defined && sr->changed){
+    if (!sr->defined) {
       return false;
     }
     sr->defined = false;
@@ -1659,14 +1623,15 @@ int SettingUnset(CSetting * I, int index)
 
 
 /*========================================================================*/
-int SettingGetType(PyMOLGlobals * G, int index)
+int SettingGetType(int index)
 {
   return (SettingInfo[index].type);
 }
 
 
 /*========================================================================*/
-static int get_i(CSetting * I, int index)
+template <>
+int SettingGet<int>(int index, const CSetting * I)
 {
   PyMOLGlobals *G = I->G;
   int result;
@@ -1690,60 +1655,35 @@ static int get_i(CSetting * I, int index)
 
 
 /*========================================================================*/
-static int get_b(CSetting * I, int index)
+template <>
+bool SettingGet<bool>(int index, const CSetting * I)
 {
-  int result;
   PyMOLGlobals *G = I->G;
   switch (SettingInfo[index].type) {
   case cSetting_boolean:
   case cSetting_int:
-  case cSetting_color:
-    result = I->info[index].int_;
-    break;
   case cSetting_float:
-    result = (int) I->info[index].float_;
-    break;
+    return I->info[index].int_ != 0;
   default:
     PRINTFB(G, FB_Setting, FB_Errors)
       "Setting-Error: type read mismatch (boolean) %d\n", index ENDFB(G);
-    result = 0;
+    return false;
   }
-  return (result);
 }
 
 
 /*========================================================================*/
-static int get_color(CSetting * I, int index)
-{
-  int result;
-  PyMOLGlobals *G = I->G;
-  switch (SettingInfo[index].type) {
-  case cSetting_boolean:
-  case cSetting_int:
-  case cSetting_color:
-    result = I->info[index].int_;
-    break;
-  case cSetting_float:
-    result = (int) I->info[index].float_;
-    break;
-  default:
-    PRINTFB(G, FB_Setting, FB_Errors)
-      "Setting-Error: type read mismatch (color) %d\n", index ENDFB(G);
-    result = 0;
-  }
-  return (result);
-}
-
-
-/*========================================================================*/
-static float get_f(CSetting * I, int index)
+template <>
+float SettingGet<float>(int index, const CSetting * I)
 {
   float result;
   PyMOLGlobals *G = I->G;
   switch (SettingInfo[index].type) {
+  case cSetting_color:
+    PRINTFB(G, FB_Setting, FB_Warnings)
+      " Setting-Warning: type read mismatch (float/color) %d\n", index ENDFB(G);
   case cSetting_boolean:
   case cSetting_int:
-  case cSetting_color:
     result = (float) I->info[index].int_;
     break;
   case cSetting_float:
@@ -1759,8 +1699,8 @@ static float get_f(CSetting * I, int index)
 
 
 /*========================================================================*/
-// should be `const char *`
-static char *get_s(CSetting * I, int index)
+template <>
+const char * SettingGet<const char *>(int index, const CSetting * I)
 {
   const char *result;
   PyMOLGlobals *G = I->G;
@@ -1778,6 +1718,20 @@ static char *get_s(CSetting * I, int index)
     result = NULL;
   }
   return (char*) result;
+}
+
+
+/*========================================================================*/
+template <>
+const float * SettingGet<const float *>(int index, const CSetting * I)
+{
+  if (SettingInfo[index].type != cSetting_float3) {
+    PyMOLGlobals *G = I->G;
+    PRINTFB(G, FB_Setting, FB_Errors)
+      " Setting-Error: type read mismatch (float3) %d\n", index ENDFB(G);
+    return NULL;
+  }
+  return I->info[index].float3_;
 }
 
 
@@ -1913,30 +1867,6 @@ int SettingSet_s(CSetting * I, int index, const char *value)
 
 
 /*========================================================================*/
-int SettingSet_3f(CSetting * I, int index, float value1, float value2, float value3)
-{
-  int ok = false;
-  if(I) {
-    PyMOLGlobals *G = I->G;
-    {
-      switch (SettingInfo[index].type) {
-      case cSetting_float3:
-        I->info[index].set_3f(value1, value2, value3);
-	break;
-      default:
-	PRINTFB(G, FB_Setting, FB_Errors)
-	  "Setting-Error: type set mismatch (float3) %d\n", index ENDFB(G);
-	ok = false;
-      }
-    }
-  } else {
-    ok = false;
-  }
-  return (ok);
-}
-
-
-/*========================================================================*/
 int SettingSet_3fv(CSetting * I, int index, const float *vector)
 {
   switch (SettingInfo[index].type) {
@@ -1953,276 +1883,6 @@ int SettingSet_3fv(CSetting * I, int index, const float *vector)
   }
 }
 
-
-/*========================================================================*/
-int SettingGetGlobal_b(PyMOLGlobals * G, int index)
-{
-  CSetting *I = G->Setting;
-  return (get_b(I, index));
-}
-
-
-/*========================================================================*/
-int SettingGetGlobal_i(PyMOLGlobals * G, int index)
-{
-  CSetting *I = G->Setting;
-  return (get_i(I, index));
-}
-
-
-/*========================================================================*/
-float SettingGetGlobal_f(PyMOLGlobals * G, int index)
-{
-  CSetting *I = G->Setting;
-  return (get_f(I, index));
-}
-
-
-/*========================================================================*/
-// should be `const char *`
-char *SettingGetGlobal_s(PyMOLGlobals * G, int index)
-{
-  CSetting *I = G->Setting;
-  return (get_s(I, index));
-}
-
-int SettingGetGlobal_color(PyMOLGlobals * G, int index)
-{
-  CSetting *I = G->Setting;
-  return (get_color(I, index));
-}
-
-
-/*========================================================================*/
-void SettingGetGlobal_3f(PyMOLGlobals * G, int index, float *value)
-{
-  CSetting *I = G->Setting;
-  float *ptr;
-  ptr = I->info[index].float3_;
-  copy3f(ptr, value);
-}
-
-
-/*========================================================================*/
-float *SettingGetGlobal_3fv(PyMOLGlobals * G, int index)
-{
-  CSetting *I = G->Setting;
-  return I->info[index].float3_;
-}
-
-
-/*========================================================================*/
-int SettingGet_b(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index)
-{
-  if(set1) {
-    if(set1->info[index].defined) {
-      return (get_b(set1, index));
-    }
-  }
-  if(set2) {
-    if(set2->info[index].defined) {
-      return (get_b(set2, index));
-    }
-  }
-  return (SettingGetGlobal_b(G, index));
-}
-
-
-/*========================================================================*/
-int SettingGetIfDefined_b(PyMOLGlobals * G, CSetting * set1, int index, int *value)
-{
-  int result = false;
-  if(set1) {
-    if(set1->info[index].defined) {
-      *value = get_b(set1, index);
-      result = true;
-    }
-  }
-  return (result);
-}
-
-
-/*========================================================================*/
-int SettingGetIfDefined_i(PyMOLGlobals * G, CSetting * set1, int index, int *value)
-{
-  int result = false;
-  if(set1) {
-    if(set1->info[index].defined) {
-      *value = get_i(set1, index);
-      result = true;
-    }
-  }
-  return (result);
-}
-
-
-/*========================================================================*/
-int SettingGetIfDefined_color(PyMOLGlobals * G, CSetting * set1, int index, int *value)
-{
-  int result = false;
-  if(set1) {
-    if(set1->info[index].defined) {
-      *value = get_color(set1, index);
-      result = true;
-    }
-  }
-  return (result);
-}
-
-
-/*========================================================================*/
-int SettingGetIfDefined_f(PyMOLGlobals * G, CSetting * set1, int index, float *value)
-{
-  int result = false;
-  if(set1) {
-    if(set1->info[index].defined) {
-      *value = get_f(set1, index);
-      result = true;
-    }
-  }
-  return (result);
-}
-
-
-/*========================================================================*/
-int SettingGetIfDefined_3fv(PyMOLGlobals * G, CSetting * set1, int index, float **value)
-{
-  int result = false;
-  if(set1) {
-    if(set1->info[index].defined) {
-      (*value) = set1->info[index].float3_;
-      result = true;
-    }
-  }
-  return (result);
-}
-
-
-/*========================================================================*/
-// `value` should be `const char **`
-int SettingGetIfDefined_s(PyMOLGlobals * G, CSetting * set1, int index, char **value)
-{
-  int result = false;
-  if(set1) {
-    if(set1->info[index].defined) {
-      *value = get_s(set1, index);
-      result = true;
-    }
-  }
-  return (result);
-}
-
-
-/*========================================================================*/
-int SettingGet_i(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index)
-{
-  if(set1) {
-    if(set1->info[index].defined) {
-      return (get_i(set1, index));
-    }
-  }
-  if(set2) {
-    if(set2->info[index].defined) {
-      return (get_i(set2, index));
-    }
-  }
-  return (SettingGetGlobal_i(G, index));
-}
-
-
-/*========================================================================*/
-int SettingGet_color(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index)
-{
-  if(set1) {
-    if(set1->info[index].defined) {
-      return (get_color(set1, index));
-    }
-  }
-  if(set2) {
-    if(set2->info[index].defined) {
-      return (get_color(set2, index));
-    }
-  }
-  return (SettingGetGlobal_color(G, index));
-}
-
-
-/*========================================================================*/
-float SettingGet_f(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index)
-{
-  if(set1) {
-    if(set1->info[index].defined) {
-      return (get_f(set1, index));
-    }
-  }
-  if(set2) {
-    if(set2->info[index].defined) {
-      return (get_f(set2, index));
-    }
-  }
-  return (SettingGetGlobal_f(G, index));
-}
-
-
-/*========================================================================*/
-// should be `const char *`
-char *SettingGet_s(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index)
-{
-  if(set1) {
-    if(set1->info[index].defined) {
-      return (get_s(set1, index));
-    }
-  }
-  if(set2) {
-    if(set2->info[index].defined) {
-      return (get_s(set2, index));
-    }
-  }
-  return (SettingGetGlobal_s(G, index));
-}
-
-
-/*========================================================================*/
-void SettingGet_3f(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
-                   float *value)
-{
-  float *ptr;
-  if(set1) {
-    if(set1->info[index].defined) {
-      ptr = set1->info[index].float3_;
-      copy3f(ptr, value);
-      return;
-    }
-  }
-  if(set2) {
-    if(set2->info[index].defined) {
-      ptr = set2->info[index].float3_;
-      copy3f(ptr, value);
-      return;
-    }
-  }
-  SettingGetGlobal_3f(G, index, value);
-}
-
-
-/*========================================================================*/
-float *SettingGet_3fv(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index)
-{
-  if(set1) {
-    if(set1->info[index].defined) {
-      return set1->info[index].float3_;
-    }
-  }
-  if(set2) {
-    if(set2->info[index].defined) {
-      return set2->info[index].float3_;
-    }
-  }
-  return (SettingGetGlobal_3fv(G, index));
-}
-
-
-/*========================================================================*/
 
 /*========================================================================*/
 int SettingGetIndex(PyMOLGlobals * G, const char *name)
@@ -2350,6 +2010,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     break;
   case cSetting_light_count:
   case cSetting_spec_count:
+  case cSetting_pick_shading:
     CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_FOR_LIGHTING);
   case cSetting_light:
   case cSetting_light2:
@@ -2993,6 +2654,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_cartoon_smooth_cycles:
   case cSetting_cartoon_flat_cycles:
   case cSetting_cartoon_gap_cutoff:
+  case cSetting_cartoon_all_alt:
     ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
     SceneChanged(G);
     break;
@@ -3226,40 +2888,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
 
 
 /*========================================================================*/
-int SettingSetGlobal_b(PyMOLGlobals * G, int index, int value)
-{
-  return (SettingSet_b(G->Setting, index, value));
-}
-
-
-/*========================================================================*/
-int SettingSetGlobal_i(PyMOLGlobals * G, int index, int value)
-{
-  return (SettingSet_i(G->Setting, index, value));
-}
-
-/*========================================================================*/
-int SettingSetGlobal_s(PyMOLGlobals * G, int index, const char *value)
-{
-  return (SettingSet_s(G->Setting, index, value));
-}
-
-/*========================================================================*/
-int SettingSetGlobal_f(PyMOLGlobals * G, int index, float value)
-{
-  return (SettingSet_f(G->Setting, index, value));
-}
-
-
-/*========================================================================*/
-int SettingSetGlobal_3f(PyMOLGlobals * G, int index, float value1, float value2,
-                        float value3)
-{
-  return (SettingSet_3f(G->Setting, index, value1, value2, value3));
-}
-
-
-/*========================================================================*/
 void SettingFreeGlobal(PyMOLGlobals * G)
 {
   CSetting *I = G->Setting;
@@ -3484,3 +3112,18 @@ PyObject * SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id)
   return list;
 }
 #endif
+
+/*
+ * Getters for templatted programming
+ */
+
+const CSetting * _SettingGetFirstDefined(int index,
+    PyMOLGlobals * G,
+    const CSetting * set1,
+    const CSetting * set2) {
+  if (set1 && set1->info[index].defined)
+    return set1;
+  if (set2 && set2->info[index].defined)
+    return set2;
+  return G->Setting;
+}

@@ -265,7 +265,10 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
     PyList_SetItem(result, 2, ObjectMeshAllStatesAsPyList(I));
   } else {
     /* save ObjectMesh as ObjectCGO */
-    ObjectCGO *retObjectCGO = NULL;
+    ObjectCGO *retObjectCGO = ObjectCGONew(I->Obj.G);
+    ObjectCopyHeader(&retObjectCGO->Obj, &I->Obj);
+    retObjectCGO->Obj.type = cObjectCGO;
+
     int a;
     PRINTFB(I->Obj.G, FB_ObjectMesh, FB_Errors)
       "ObjectMesh-Warning: map has been deleted, saving as CGO.\n"
@@ -275,10 +278,8 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
       retObjectCGO = ObjectCGOFromCGO(I->Obj.G, retObjectCGO, cgo, a);
       
     }
-    ObjectCopyHeader(&retObjectCGO->Obj, &I->Obj);
     ObjectSetRepVis(&retObjectCGO->Obj, cRepMesh, 0);
     ObjectSetRepVis(&retObjectCGO->Obj, cRepCGO, 1);
-    retObjectCGO->Obj.type = cObjectCGO;
     result = ObjectCGOAsPyList(retObjectCGO);
     ObjectCGOFree(retObjectCGO);
   }
@@ -928,7 +929,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
               }
             }
           }
-        } else if(G->HaveGUI && G->ValidContext || returnCGO) {
+        } else if((G->HaveGUI && G->ValidContext) || returnCGO) {
           if(!pick && !pass) {
 	      short use_shader;
 	      short mesh_as_cylinders ;

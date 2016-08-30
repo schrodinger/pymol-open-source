@@ -366,17 +366,8 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
         # keyboard configuration
         
         from . import keyboard
-        
-        special = keyboard.get_special()
 
-        shft_special = keyboard.get_shft_special()        
-        alt_special = keyboard.get_alt_special()        
-        ctrl_special = keyboard.get_ctrl_special()
-        ctsh_special = keyboard.get_ctsh_special()
-
-        ctrl = keyboard.get_ctrl()        
-        alt = keyboard.get_alt()
-        ctsh = keyboard.get_ctsh()
+        key_mappings = keyboard.get_default_keys()
 
         selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
         object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))
@@ -391,6 +382,8 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
         auto_arg = completing.get_auto_arg_list()
 
         color_sc = None
+
+        raw_image_callback = None
 
     except:
         print("Error: unable to initalize the pymol.cmd module")

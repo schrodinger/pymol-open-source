@@ -80,27 +80,14 @@ DESCRIPTION
         return r
 
     def get_unused_name(prefix="tmp",alwaysnumber=1,_self=cmd):
-        r = DEFAULT_ERROR        
-        # should replace this with a C function
+        r = DEFAULT_ERROR
         try:
-            # remove non-safe chars
-            prefix = _self.get_legal_name(prefix)
-
-            _self.lock(_self)  
-            avoid_set = set(_self.get_names('all'))
-            if alwaysnumber or prefix in avoid_set:
-                counter = 1
-                while 1:
-                    r = prefix + "%02d"%counter
-                    if r not in avoid_set:
-                        break
-                    counter = counter + 1
-            else:
-                r=prefix
+            _self.lock(_self)
+            r = _cmd.get_unused_name(_self._COb, prefix, alwaysnumber)
         finally:
             _self.unlock(r,_self)
         return r
-    
+
     def get_modal_draw(_self=cmd,quiet=1):
         r = DEFAULT_ERROR
         try:

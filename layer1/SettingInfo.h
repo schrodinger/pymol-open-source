@@ -629,9 +629,9 @@ enum {
   REC_i( 531, label_angle_digits                      , ostate    , -1 ),
   REC_i( 532, label_dihedral_digits                   , ostate    , -1 ),
   REC_b( 533, surface_negative_visible                , object    , 0 ),
-  REC_c( 534, surface_negative_color                  , object    , "grey50" ),
+  REC_c( 534, surface_negative_color                  , object    , "red" ),
   REC_b( 535, mesh_negative_visible                   , object    , 0 ),
-  REC_c( 536, mesh_negative_color                     , object    , "grey30" ),
+  REC_c( 536, mesh_negative_color                     , object    , "red" ),
   REC_i( 537, group_auto_mode                         , global    , 1 ),
   REC_i( 538, group_full_member_names                 , global    , 0 ),
   REC_f( 539, gradient_max_length                     , ostate    , 100.0F ),
@@ -700,7 +700,7 @@ enum {
   REC_i( 602, max_ups                                 , global    , 0 ),
   REC_i( 603, auto_overlay                            , global    , 0 ),
   REC_c( 604, stick_ball_color                        , ostate    , "-1" ),
-  REC_f( 605, stick_h_scale                           , ostate    , 0.4F ),
+  REC_f( 605, stick_h_scale                           , ostate    , 1.0F ),
   REC_f( 606, sculpt_pyra_inv_weight                  , ostate    , 10.0F ),
   REC_b( 607, keep_alive                              , global    , 0 ),
   REC_i( 608, fit_kabsch                              , global    , 0 ),
@@ -862,6 +862,9 @@ enum {
   REC_i( 754, auto_show_classified                    , global    , 0, 0, 3 ), // 0: off, 1: as, 2: show, 3: simple
   REC_b( 755, collada_background_box                  , global    , 0 ),
   REC_b( 756, pick32bit                               , unused    , 1 ),
+  REC_b( 757, cartoon_all_alt                         , ostate    , 0 ),
+  REC_i( 758, display_scale_factor                    , unused    , 1 ),
+  REC_b( 759, pick_shading                            , global    , 0 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

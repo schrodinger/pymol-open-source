@@ -14,6 +14,11 @@ class Wizard:
     event_mask_view    = 256 # view (matrix) changed
     event_mask_position = 512 # center of the view changed
     
+    def migrate_session(self, version):
+        '''A derived class might convert the pickled state from
+        an older version here.'''
+        pass
+
     def __init__(self,_self=cmd):
         self.menu = {}
         self.prompt = None

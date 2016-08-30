@@ -56,7 +56,6 @@ def camera_store_with_scene(self_cmd,frame):
 
 
 def store_with_state(self_cmd,obj='',frame=0):
-    list = self_cmd.get_scene_list()[0:40] # keep this practical
     n_state = self_cmd.count_states()
     result = [[ 2, 'State:', ''],
               [ 1, 'current','cmd.mview("store",object="'+obj+'",state=-1,first=%s)'%(frame)],
@@ -490,11 +489,9 @@ rep_setting_lists = [
         ('', 'cartoon_ring_color'),
         ('', 'ellipsoid_color'),
         ('', 'label_outline_color'),
-        ('', 'mesh_negative_color'),
         ('', 'ray_interior_color'),
         ('', 'ray_trace_color'),
         ('', 'stick_ball_color'),
-        ('', 'surface_negative_color'),
     ],
 ]
 
@@ -618,7 +615,7 @@ def all_colors_generic(self_cmd, expr):
     return r
 
 def all_colors(self_cmd, sele):
-    expr = 'util.color_deep("{0}", ' + repr(sele) + ')'
+    expr = 'util.color_deep("{0}", ' + repr(sele) + ', 0)'
     with menucontext(self_cmd, sele):
         return all_colors_generic(self_cmd, expr)
  
@@ -674,6 +671,21 @@ def measurement_color(self_cmd, sele):
     ]
     r += all_colors(self_cmd, sele)
     return r
+
+def mesh_color(self_cmd, name, rep='mesh'):
+    expr = ('cmd.set("%s_negative_visible",1,"%s",quiet=0);'
+            'cmd.set("%s_negative_color","{0}","%s",quiet=0)' % (rep, name, rep, name))
+    with menucontext(self_cmd, name):
+        negative = all_colors_generic(self_cmd, expr)
+        return [
+            [ 2, 'Color:', '' ],
+            [ 1, 'negative'  , [
+                [ 2, 'Negative Color:', '' ],
+                [ 1, 'off', 'cmd.set("%s_negative_visible",0,"%s",quiet=0);' % (rep, name) ],
+                [ 0, '', '' ],
+            ] + negative ],
+            [ 0, '', '' ],
+        ] + all_colors(self_cmd, name)
 
 def general_color(self_cmd, sele):
     return [[ 2, 'Color:'     ,''                        ]] + all_colors(self_cmd, sele)
@@ -1226,6 +1238,12 @@ def simple_action(self_cmd, sele):
             [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
+def iso_with_negative(mapname, suffix, rep, level=1, color='blue'):
+    name = mapname + suffix
+    return ('cmd.iso%s("%s","%s", %s);\n'
+            'cmd.set("%s_negative_visible",1,"%s",quiet=0);\n'
+            'cmd.color("%s","%s")' % (rep, name, mapname, level, rep, name, color, name))
+
 def map_mesh(self_cmd, sele):
     return [[ 2, 'Mesh:',  '' ],
             [ 1, '@ level 1.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",1.0)'      ],
@@ -1233,6 +1251,9 @@ def map_mesh(self_cmd, sele):
             [ 1, '@ level 2.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",2.0)'      ],
             [ 1, '@ level 3.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",3.0)'      ],            
             [ 0, ''             , ''                       ],            
+            [ 1, '@ level +/-1.0'      , iso_with_negative(sele, '_mesh', 'mesh')],
+            [ 1, '@ level +/-3.0'      , iso_with_negative(sele, '_mesh', 'mesh', 3, 'green')],
+            [ 0, ''             , ''                       ],
             [ 1, '@ level 0.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",0.0)'      ],
             [ 1, '@ level -1.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",-1.0)'      ],
             [ 1, '@ level -2.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",-2.0)'      ],
@@ -1255,6 +1276,9 @@ def map_surface(self_cmd, sele):
             [ 0, ''             , ''                       ],            
             [ 1, '@ level 2.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",2.0)'      ],
             [ 1, '@ level 3.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",3.0)'      ],            
+            [ 0, ''             , ''                       ],
+            [ 1, '@ level +/-1.0'      , iso_with_negative(sele, '_surf', 'surface')],
+            [ 1, '@ level +/-3.0'      , iso_with_negative(sele, '_surf', 'surface', 3, 'green')],
             [ 0, ''             , ''                       ],
             [ 1, '@ level 0.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",0.0)'      ],            
             [ 1, '@ level -1.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",-1.0)'      ],
@@ -1413,7 +1437,7 @@ def label_props(self_cmd, sele):
     return [[ 2, 'Other Properties:'       ,''                        ],     
                              
               [ 1, 'formal charge' , 
-  'cmd.label("'+sele+'","\'%d\'%formal_charge")'                      ],
+  'cmd.label("'+sele+'","(\'%+d\'%formal_charge) if formal_charge else \'\'")' ],
               [ 0, ''               , ''                                  ],
               [ 1, 'partial charge (0.00)' ,            
   'cmd.label("'+sele+'","\'%.2f\'%partial_charge")'                      ],
@@ -1491,18 +1515,21 @@ def all_option(self_cmd, sele):
         ]
     
 def enable_disable(self_cmd, enable):
+    names_enabled = self_cmd.get_names('objects', enabled_only=1)
     if enable:
         result = [[ 2, 'Enable', '' ]]
-        cmmd = 'cmd.enable("'
+        cmmd = 'enable '
+        names = [ob for ob in self_cmd.get_names('objects')
+                 if ob not in names_enabled]
     else:
         result = [[ 2, 'Disable', '']]
-        cmmd = 'cmd.disable("'
-    result = result + list(map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+self_cmd.get_names('objects')))
+        cmmd = 'disable '
+        names = names_enabled
+    names = ['all'] + names
+    result += [[1, ob, cmmd + ob] for ob in names]
+    result.insert(2, [0, '', ''])
     if not enable:
-        result.insert(2,[1, 'selections', "util.hide_sele(_self=cmd)"])
-    else:
-        result2 = [[ 2, 'Selections', '']]
-        
+        result.insert(2, [1, 'selections', 'deselect'])
     return result
 
 def scene_buttons(self_cmd):
@@ -1689,22 +1716,6 @@ def pick_menu(self_cmd, title, sele2):
             [ 1, 'fragment', pick_option(self_cmd, "(byfrag ("+sele2+"))", "Fragment") ],
             [ 1, 'fragment+joint(s)', pick_option(self_cmd, "((byfrag ("+sele2+")) extend 1)", "Fragment") ],
             ]
-        
-def seq_menu(sele2,sele3): # obsolete/unused?
-    
-    return [[ 2, 'Sequence'    , '' ],
-              [ 1, 'selection', pick_option(self_cmd, sele3, '('+sele3+')') ],
-              [ 0, ''             , ''                      ],
-              [ 1, 'residue' , pick_option(self_cmd, "(byres ("+sele2+"))", "Residue",) ],
-              [ 1, 'chain'   , pick_option(self_cmd, "(bychain ("+sele2+"))", "Chain",) ],
-              [ 1, 'segment' , pick_option(self_cmd, "(byseg ("+sele2+"))", "Segment",) ],
-              [ 1, 'object'  , pick_option(self_cmd, "(byobject ("+sele2+"))", "Object",1) ],
-              [ 0, ''             , ''                      ],
-              [ 1, 'molecule', pick_option(self_cmd, "(bymol ("+sele2+"))", "Molecule") ],
-              [ 0, ''             , ''                      ],
-              [ 1, 'C-alpha'    , pick_option(self_cmd, "(bycalpha ("+sele2+"))", "C-alpha") ],
-              ]
-        
 
 def seq_option(self_cmd, sele, title, object=0):
     c=len(title)-1

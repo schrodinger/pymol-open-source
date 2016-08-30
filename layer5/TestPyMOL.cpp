@@ -327,7 +327,8 @@ int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
         /* try to match G3D */
 
         SettingSetGlobal_b(G, cSetting_ortho, 1);
-        SettingSet_3f(G->Setting, cSetting_light, 1.0F, -1.0F, -2.5F);;
+        const float light[3] = { 1.0F, -1.0F, -2.5F };
+        SettingSet_3fv(G->Setting, cSetting_light, light);
       }
       break;
     }

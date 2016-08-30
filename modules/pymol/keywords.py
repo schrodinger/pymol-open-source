@@ -268,6 +268,7 @@ def get_command_keywords(self_cmd=cmd):
         'unmask'        : [ self_cmd.unmask            , 0 , 0 , ''  , parsing.STRICT ],
         'unset'         : [ self_cmd.unset             , 0 , 0 , ''  , parsing.STRICT ],
         'unset_bond'    : [ self_cmd.unset_bond        , 0 , 0 , ''  , parsing.STRICT ],               
+        'unset_deep'    : [ self_cmd.unset_deep        , 0 , 0 , ''  , parsing.STRICT ],
         'update'        : [ self_cmd.update            , 0 , 0 , ''  , parsing.STRICT ],
         'valence'       : [ self_cmd.valence           , 0 , 0 , ''  , parsing.STRICT ],           
         'vdw_fit'       : [ self_cmd.vdw_fit           , 0 , 0 , ''  , parsing.STRICT ],   

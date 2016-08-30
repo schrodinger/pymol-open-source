@@ -150,9 +150,6 @@ typedef struct _CPyMOL {
   /* dynamically mapped string constants */
 
   OVLexicon *Lex;
-  ov_word lex_pdb, lex_mol2, lex_mol, lex_sdf, lex_xplor, lex_ccp4, lex_phi, lex_macromodel;
-  ov_word lex_string, lex_filename, lex_raw, lex_cif;
-
   OVOneToOne *Rep;
   ov_word lex_everything, lex_sticks, lex_spheres, lex_surface;
   ov_word lex_labels, lex_nb_spheres, lex_cartoon, lex_ribbon;
@@ -279,20 +276,6 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
     return_OVstatus_FAILURE \
     else \
       I -> lex_ ## ARG = result.word;
-
-  LEX(pdb);
-  LEX(cif);
-  LEX(sdf);
-  LEX(mol);
-  LEX(mol2);
-  LEX(xplor);
-  LEX(ccp4);
-  LEX(phi);
-  LEX(macromodel);
-
-  LEX(string);
-  LEX(filename);
-  LEX(raw);
 
   /* string constants that are accepted on input */
 
@@ -1540,42 +1523,75 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, char *name, char *map, float *ra
   PYMOL_API_UNLOCK return result;
 }
 
+/*
+ * Supported file formats and they internal codes
+ */
+struct {
+  const char * name;
+  int code_buffer;
+  int code_filename;
+} const ContentTypeTable[] = {
+  // molecules
+  {"pdb",           cLoadTypePDBStr,    cLoadTypePDB},
+  {"cif",           cLoadTypeCIFStr,    cLoadTypeCIF},
+  {"mae",           cLoadTypeMAEStr,    cLoadTypeMAE},
+  {"sdf",           cLoadTypeSDF2Str,   cLoadTypeSDF2},
+  {"mol",           cLoadTypeMOLStr,    cLoadTypeMOL},
+  {"mol2",          cLoadTypeMOL2Str,   cLoadTypeMOL2},
+  {"xyz",           cLoadTypeXYZStr,    cLoadTypeXYZ},
+  {"pqr",           -1,                 cLoadTypePQR},
+  {"macromodel",    cLoadTypeMMDStr,    cLoadTypeMMD},
+  // maps
+  {"ccp4",          cLoadTypeCCP4Str,   -1},
+  {"xplor",         cLoadTypeXPLORStr,  cLoadTypeXPLORMap},
+  {"phi",           cLoadTypePHIStr,    cLoadTypePHIMap},
+  {"dx",            -1,                 cLoadTypeDXMap},
+  // special
+  {"cgo",           cLoadTypeCGO,       -1},
+  {NULL,            -1,                 -1}
+};
+
+/*
+ * Proxy for "ExecutiveLoad" with string "content_format" (and "content_type")
+ * argument.
+ *
+ * content:     Either file name or file contents, depending on "content_type"
+ * content_type:        "filename", "string", "raw", or "cgo"
+ * content_length:      Length of "content", if it's not a file name or a
+ *                      null-terminated string (pass -1).
+ * content_format:      The file format, e.g. "pdb", "sdf", "mol2", ...
+ * object_name:         New object name. Can be empty if "content_type" is
+ *                      "filename".
+ */
 static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *content_type,
                                  int content_length, const char *content_format,
                                  char *object_name, int state,
                                  int discrete, int finish,
                                  int quiet, int multiplex, int zoom)
 {
-  OVreturn_word result;
-  int type_code = 0;
-  int format_code = 0;
+  PyMOLGlobals * G = I->G;
+  bool content_is_filename = false;
   int ok = true;
   WordType obj_name;
 
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, content_type))))
+  // `content` can be a file name, or the file contents
+  if (strcmp(content_type, "filename") == 0) {
+    content_is_filename = true;
+  } else if (strcmp(content_type, "string") == 0) {
+    if (content_length < 0)
+      content_length = strlen(content);
+  } else if (
+      strcmp(content_type, "raw") != 0 &&
+      strcmp(content_type, "cgo") != 0) {
+    PRINTFB(G, FB_Executive, FB_Errors)
+      " Error: Unknown content type '%s'\n", content_type ENDFB(G);
     ok = false;
-  else
-    type_code = result.word;
-
-  if(ok) {
-    if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->Lex, content_format))))
-      ok = false;
-    else
-      format_code = result.word;
   }
 
-  if(ok) {
-    if((type_code != I->lex_filename) &&
-       (type_code != I->lex_string) &&
-       (type_code != I->lex_raw) && (type_code != I->lex_cgo)) {
-
-      ok = false;
-    }
-  }
   if(ok) {
     {                           /* if object_name is blank and content is a filename, then 
                                    compute the object_name from the file prefix */
-      if((!object_name[0]) && (type_code == I->lex_filename)) {
+      if((!object_name[0]) && content_is_filename) {
         const char *start, *stop;
         stop = start = content + strlen(content) - 1;
         while(start > content) {        /* known path separators */
@@ -1607,76 +1623,22 @@ static PyMOLreturn_status Loader(CPyMOL * I, const char *content, const char *co
     {
       int pymol_content_type = cLoadTypeUnknown;
 
-      /* convert text format strings into integral load types */
-
-      if(format_code == I->lex_pdb) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypePDBStr;
-        else if(type_code == I->lex_filename)
-          pymol_content_type = cLoadTypePDB;
-
-      } else if(format_code == I->lex_cif) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypeCIFStr;
-        else if(type_code == I->lex_filename)
-          pymol_content_type = cLoadTypeCIF;
-
-      } else if(format_code == I->lex_mol2) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypeMOL2Str;
-        else if(type_code == I->lex_filename)
-          pymol_content_type = cLoadTypeMOL2;
-
-      } else if(format_code == I->lex_mol) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypeMOLStr;
-        else if(type_code == I->lex_filename)
-          pymol_content_type = cLoadTypeMOL;
-
-      } else if(format_code == I->lex_sdf) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypeSDF2Str;
-        else if(type_code == I->lex_filename)
-          pymol_content_type = cLoadTypeSDF2;
-
-      } else if(format_code == I->lex_ccp4) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypeCCP4Str;
-
-      } else if(format_code == I->lex_xplor) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypeXPLORStr;
-        else if(type_code == I->lex_filename)
-          pymol_content_type = cLoadTypeXPLORMap;
-
-      } else if(format_code == I->lex_phi) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypePHIStr;
-        else if(type_code == I->lex_filename)
-          pymol_content_type = cLoadTypePHIMap;
-
-      } else if(format_code == I->lex_macromodel) {
-        if((type_code == I->lex_raw) || (type_code == I->lex_string))
-          pymol_content_type = cLoadTypeMMDStr;
-        else if(type_code == I->lex_filename)
-          pymol_content_type = cLoadTypeMMD;
-
-      } else if(format_code == I->lex_cgo) {
-        if(type_code == I->lex_cgo) {
-          pymol_content_type = cLoadTypeCGO;
+      for (auto it = ContentTypeTable; it->name; ++it) {
+        if (strcmp(it->name, content_format) == 0) {
+          pymol_content_type = content_is_filename ?
+            it->code_filename : it->code_buffer;
+          break;
         }
-      } else {
+      }
+
+      if (pymol_content_type == cLoadTypeUnknown) {
+        PRINTFB(G, FB_Executive, FB_Errors)
+          " Error: Unknown content format '%s' with type '%s'\n",
+          content_format, content_type ENDFB(G);
         ok = false;
       }
 
       if(ok) {
-
-      /* measure the length if it wasn't provided */
-
-      if(content_length < 0) {
-        if(type_code == I->lex_string)
-          content_length = strlen(content);
-      }
 
         ok = ExecutiveLoad(I->G,
                            content, content_length,

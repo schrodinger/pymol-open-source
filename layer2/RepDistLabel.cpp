@@ -170,8 +170,8 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   int n = 0;
   float *v, *v1, *v2, *v3, d[3], di;
   char buffer[255];
-  float *lab_pos =
-    SettingGet_3fv(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_label_position);
+  const float *lab_pos =
+    SettingGet_3fv(G, NULL, ds->Obj->Obj.Setting, cSetting_label_position);
   int default_digits =
     SettingGet_i(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_label_digits);
   Pickable *rp = NULL;
@@ -228,7 +228,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
       CHECKOK(ok, ds->LabPos);
     }
 
-    if(ok && SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_pickable)) {
+    if(ok && SettingGet_b(G, NULL, ds->Obj->Obj.Setting, cSetting_pickable)) {
       I->R.P = Alloc(Pickable, ds->NLabel + 1);
       CHECKOK(ok, I->R.P);
       if (ok)

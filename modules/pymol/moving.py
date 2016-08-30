@@ -176,10 +176,24 @@ USAGE
        [, linear [, object [, wrap [, hand [, window [, cycles [,scene
        [, cut [, quiet ]]]]]]]]]]]]]]]
 
-NOTES
+ARGUMENTS
 
-    This command is not yet fully supported in PyMOL 1.x.
-    
+    action = str: one of store, clear, reset, purge, interpolate,
+    uninterpolate, reinterpolate, toggle, toggle_interp, smooth
+    {default: store}
+
+    first = int: frame number or 0 for current frame {default: 0}
+
+    power = float: slow down animation at keyframe (0.0) or not (1.0)
+    {default: 0.0}
+
+    object = str: name of object for object keyframes, or empty for
+    global (camera) keyframes {default: }
+
+    scene = str: name of scene to store scene with key frame {default: }
+
+    state = int: if > 0, then store object state {default: 0}
+
 SEE ALSO
 
     mplay, mset, mdo, mclear, mmatrix
@@ -474,9 +488,17 @@ DESCRIPTION
 
     "mmove" moves key frames and movie commands
 
+ARGUMENTS
+
+    target = int: frame to move to
+
+    source = int: frame to move from, 0 for current frame {default: 0}
+
+    count = int: number of frames to move
+
 SEE ALSO
 
-    mdelete, minsert
+    mcopy, mdelete, minsert
 
     '''
         r = DEFAULT_ERROR
@@ -516,11 +538,13 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "mmove" copies key frames and movie commands
+    "mcopy" copies key frames and movie commands
+
+    Usage like "mmove".
 
 SEE ALSO
 
-    mdelete, minsert
+    mmove, mdelete, minsert
 
     '''
         r = DEFAULT_ERROR
@@ -562,6 +586,18 @@ DESCRIPTION
 
     "mdelete" removes frames from camera view and object motions.
 
+ARGUMENTS
+
+    count = int: number of frames to delete, or -1 to delete all the way
+    to the end {default: -1}
+
+    frame = int: first frame to delete, or 0 for current frame {default: 0}
+
+EXAMPLE
+
+    # delete frames 81 to 90
+    mdelete 10, 81
+
 SEE ALSO
 
     minsert, mmove
@@ -599,9 +635,16 @@ DESCRIPTION
 
     "minsert" adds frames into camera view and object motions.
 
+ARGUMENTS
+
+    count = int: number of frames to insert
+
+    frame = int: insert before "frame" if frame > 0, otherwise insert before
+    the current frame {default: 0}
+
 SEE ALSO
 
-    mdelete, mmove
+    mdelete, mmove, madd
 
     '''
         r = DEFAULT_ERROR
@@ -672,7 +715,7 @@ EXAMPLES
 
 SEE ALSO
 
-    mdo, mplay, mclear
+    madd, mdo, mplay, mclear
         '''
         r = DEFAULT_ERROR
         cur_state = _self.get_state()-1 # use the current state

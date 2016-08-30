@@ -55,7 +55,7 @@ static VFontRec *VFontRecNew(PyMOLGlobals * G)
 //#endif
 
 int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
-                    char *text, float *pos, float *scale, float *matrix)
+                    const char *text, float *pos, float *scale, float *matrix)
 {
   CVFont *I = G->VFont;
   VFontRec *fr = NULL;
@@ -135,7 +135,7 @@ int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
   return (ok);
 }
 
-int VFontIndent(PyMOLGlobals * G, int font_id, char *text, float *pos, float *scale,
+int VFontIndent(PyMOLGlobals * G, int font_id, const char *text, float *pos, float *scale,
                 float *matrix, float dir)
 {
   CVFont *I = G->VFont;

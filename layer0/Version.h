@@ -1,14 +1,14 @@
 #ifndef _PyMOL_VERSION
-#define _PyMOL_VERSION "1.8.2.1"
+#define _PyMOL_VERSION "1.8.3.2"
 #endif
 
 #ifndef _PyMOL_VERSION_double
-#define _PyMOL_VERSION_double 1.821
+#define _PyMOL_VERSION_double 1.832
 #endif
 
 
 /* for session file compatibility */
 
 #ifndef _PyMOL_VERSION_int
-#define _PyMOL_VERSION_int 1821
+#define _PyMOL_VERSION_int 1832
 #endif

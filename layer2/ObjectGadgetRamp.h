@@ -93,7 +93,7 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals * G,
                                                   int mol_state, int calc_mode);
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float *color);
-int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, float *pos, float *color,
+int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *color,
                                 int state);
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I);

@@ -382,9 +382,10 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
 
   for(a = 0; ok && a < cs->NIndex; a++) {
     if(active[a]) {
-      float at_transp;
+      float at_transp = transp;
       ai = obj->AtomInfo + cs->IdxToAtm[a];
-      if(AtomInfoGetSetting_f(G, ai, cSetting_nonbonded_transparency, transp, &at_transp))
+
+      if(AtomSettingGetIfDefined(G, ai, cSetting_nonbonded_transparency, &at_transp))
 	variable_alpha = true;
       
       I->NC++;
@@ -428,12 +429,13 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
 
   for(a = 0; ok && a < cs->NIndex; a++) {
     if(active[a]) {
-      float at_transp;
+      float at_transp = transp;
       ai = obj->AtomInfo + cs->IdxToAtm[a];
       c1 = ai->color;
       v0 = cs->Coord + 3 * a;
       vc = ColorGet(G, c1);
-      if(AtomInfoGetSetting_f(G, ai, cSetting_nonbonded_transparency, transp, &at_transp))
+
+      if(AtomSettingGetIfDefined(G, ai, cSetting_nonbonded_transparency, &at_transp))
 	variable_alpha = true;
       
       if(ColorCheckRamped(G, c1)) {

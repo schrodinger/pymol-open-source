@@ -395,17 +395,13 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
       if((ai1->visRep & cRepDotBit) || mode == cRepDotAreaType)
         if((inclH || (!ai1->isHydrogen())) &&
            ((!cullByFlag) || (!(ai1->flags & cAtomFlag_exfoliate)))) {
-          int at_dot_color;
-
-          AtomInfoGetSetting_color(G, ai1, cSetting_dot_color, dot_color, &at_dot_color);
+          c1 = AtomSettingGetWD(G, ai1, cSetting_dot_color, dot_color);
 
           /* If we are culling, flag 24 controls which atoms 
              will have dot surfaces generated for them.
            */
-          if(at_dot_color == -1) {
+          if(c1 == -1) {
             c1 = ai1->color;
-          } else {
-            c1 = at_dot_color;
           }
           v0 = cs->Coord + 3 * a;
           vdw = ai1->vdw + solv_rad;

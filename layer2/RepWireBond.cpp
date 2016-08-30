@@ -854,10 +854,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     return (NULL);
   }
   
-  valence = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_valence);
-  valence_flag = (valence != 0.0F);
-  if((valence == 1.0F) || (valence == 0.0F))    /* backwards compatibility... */
-    valence = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_valence_size);
+  valence_flag = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_valence);
+  valence = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_valence_size);
   cartoon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
 					   cSetting_cartoon_side_chain_helper);
   ribbon_side_chain_helper = SettingGet_b(G, cs->Setting, obj->Obj.Setting,
@@ -881,8 +879,6 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   b = obj->Bond;
   
   for(a = 0; a < obj->NBond; a++) {
-    int bd_valence_flag;
-
     b1 = b->index[0];
     b2 = b->index[1];
 
@@ -901,7 +897,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
     if((a1 >= 0) && (a2 >= 0)) {
       if((!variable_width) && AtomInfoCheckBondSetting(G, b, cSetting_line_width))
         variable_width = true;
-      AtomInfoGetBondSetting_b(G, b, cSetting_valence, valence_flag, &bd_valence_flag);
+      auto bd_valence_flag = BondSettingGetWD(G, b, cSetting_valence, valence_flag);
       if(bd_valence_flag) {
 
         valence_found = true;
@@ -1016,14 +1012,11 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
         if(s1 || s2) {
           float bd_line_width = line_width;
-          int bd_valence_flag;
-          int bd_line_color;
+          float rgb1[3], rgb2[3];
           int terminal = false;
 
-          AtomInfoGetBondSetting_b(G, b, cSetting_valence, valence_flag,
-                                   &bd_valence_flag);
-          AtomInfoGetBondSetting_color(G, b, cSetting_line_color, line_color,
-                                       &bd_line_color);
+          auto bd_valence_flag = BondSettingGetWD(G, b, cSetting_valence, valence_flag);
+          auto bd_line_color = BondSettingGetWD(G, b, cSetting_line_color, line_color);
 
           if(fancy && bd_valence_flag && (b->order > 1)) {
             int *neighbor = obj->Neighbor;
@@ -1051,8 +1044,7 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           }
 
           if(variable_width) {
-            AtomInfoGetBondSetting_f(G, b, cSetting_line_width, line_width,
-                                     &bd_line_width);
+            bd_line_width = BondSettingGetWD(G, b, cSetting_line_width, line_width);
           }
 
           if(bd_line_color < 0) {
@@ -1074,11 +1066,28 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           if (line_stick_helper && (ati1->visRep & ati2->visRep & cRepCylBit)) {
             s1 = s2 = 0;
           } else if ((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
-            if (cartoon_side_chain_helper && GET_BIT(ati1->visRep,cRepCartoon) && GET_BIT(ati2->visRep,cRepCartoon)) {
-              if (SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
+            // side chain helpers
+            if ((cRepCartoonBit & ati1->visRep & ati2->visRep)) {
+              bool sc_helper = AtomSettingGetWD(G, ati1,
+                  cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper);
+
+              if (!sc_helper)
+                AtomSettingGetIfDefined(G, ati2, cSetting_cartoon_side_chain_helper, &sc_helper);
+
+              if (sc_helper &&
+                  SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
                 s1 = s2 = 0;
-            } else if (ribbon_side_chain_helper && GET_BIT(ati1->visRep,cRepRibbon) && GET_BIT(ati2->visRep,cRepRibbon)) {
-              if (SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
+            }
+
+            if ((s1 || s2) && (cRepRibbonBit & ati1->visRep & ati2->visRep)) {
+              bool sc_helper = AtomSettingGetWD(G, ati1,
+                  cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper);
+
+              if (!sc_helper)
+                AtomSettingGetIfDefined(G, ati2, cSetting_ribbon_side_chain_helper, &sc_helper);
+
+              if (sc_helper &&
+                  SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
                 s1 = s2 = 0;
             }
           }

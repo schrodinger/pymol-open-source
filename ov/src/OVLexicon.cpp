@@ -345,7 +345,6 @@ OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, const ov_char8 * str)
   ov_word hash = _GetCStringHash((ov_uchar8 *) str);
   OVreturn_word search = OVOneToOne_GetForward(uk->up, hash);
   ov_word index = 0;
-  ov_word cur_index = 0;
   ov_char8 *c;
 
   /* error is something like OVstatus_NULL_PTR, OVstatus_NOT_FOUND; see ov/src/OVreturns.h */
@@ -356,7 +355,7 @@ OVreturn_word OVLexicon_BorrowFromCString(OVLexicon * uk, const ov_char8 * str)
      * looking for a match... */
     ov_char8 *data = uk->data;
     lex_entry *entry = uk->entry, *entry_ptr;
-    cur_index = (index = search.word);
+    index = search.word;
     while(index) {              /* found */
       c = data + (entry_ptr = (entry + index))->offset;
       if(strcmp(c, str) != 0) { /* verify match */

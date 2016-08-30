@@ -1236,9 +1236,9 @@ int RepCylBondPopulateAdjacentAtoms(int **adjacent_atoms, ObjectMolecule *obj, C
     if((a1 >= 0) && (a2 >= 0)) {
       AtomInfoType *ati1 = obj->AtomInfo + b1;
       AtomInfoType *ati2 = obj->AtomInfo + b2;
-      int bd_stick_color;
-      AtomInfoGetBondSetting_color(G, b, cSetting_stick_color, stick_color,
-				   &bd_stick_color);
+
+      auto bd_stick_color = BondSettingGetWD(G, b, cSetting_stick_color, stick_color);
+
       if(bd_stick_color < 0) {
 	if(bd_stick_color == cColorObject) {
 	  c1 = (c2 = obj->Obj.Color);
@@ -1468,10 +1468,17 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     a2 = cs->atmToIdx(b2);
 
     if((a1 >= 0) && (a2 >= 0)) {
-      int bd_valence_flag;
+      AtomInfoType *ati1 = obj->AtomInfo + b1;
+      AtomInfoType *ati2 = obj->AtomInfo + b2;
+      s1 = GET_BIT(ati1->visRep, cRepCyl);
+      s2 = GET_BIT(ati2->visRep, cRepCyl);
+
+      if (s1 && s2){
+
       if((!variable_alpha) && AtomInfoCheckBondSetting(G, b, cSetting_stick_transparency))
         variable_alpha = true;
-      AtomInfoGetBondSetting_b(G, b, cSetting_valence, valence_flag, &bd_valence_flag);
+
+      auto bd_valence_flag = BondSettingGetWD(G, b, cSetting_valence, valence_flag);
 
       if(bd_valence_flag) {
         valence_found = true;
@@ -1491,13 +1498,14 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         }
       } else
         maxCyl += 2;
+      }
     }
     b++;
     ok &= !G->Interrupt;
   }
   nEdge = (int) SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_quality);
   radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_radius);
-  half_bonds = (int) SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_half_bonds);
+  half_bonds = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_half_bonds);
   na_mode =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_nucleic_acid_mode);
   int na_mode_ribbon =
@@ -1587,7 +1595,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       stick_ball_ratio =
         SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_ball_ratio);
       stick_ball_color =
-        SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_stick_ball_color);
+        SettingGet_color(G, cs->Setting, obj->Obj.Setting, cSetting_stick_ball_color);
     } else if(draw_quality) {
       stick_ball = true;
     }
@@ -1635,11 +1643,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       if((a1 >= 0) && (a2 >= 0)) {
         AtomInfoType *ati1 = obj->AtomInfo + b1;
         AtomInfoType *ati2 = obj->AtomInfo + b2;
-        int bd_stick_color;
-        float bd_radius, bd_radius_full;
         float overlap_r, nub_r;
         float bd_transp;
-	float bd_alpha;
 	int capdraw1 = 0, capdraw2 = 0;
 	int adj1 = 0, adj2 = 0;
 	if (adjacent_atoms){
@@ -1650,22 +1655,33 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 	    adj2 = adjacent_atoms[a2][0];
 	  }
 	}
-        AtomInfoGetBondSetting_color(G, b, cSetting_stick_color, stick_color,
-                                     &bd_stick_color);
-        AtomInfoGetBondSetting_f(G, b, cSetting_stick_radius, radius, &bd_radius);
+        float bd_radius_full;
+	float bd_alpha;
+
+        auto bd_stick_color = BondSettingGetWD(G, b, cSetting_stick_color, stick_color);
+        auto bd_radius = BondSettingGetWD(G, b, cSetting_stick_radius, radius);
+
         if(variable_alpha){
-          AtomInfoGetBondSetting_f(G, b, cSetting_stick_transparency, transp, &bd_transp);
+          auto bd_transp = BondSettingGetWD(G, b, cSetting_stick_transparency, transp);
 	  bd_alpha = (1.0F - bd_transp);
 	}
-        bd_radius_full = fabs(bd_radius);
+
+        // version <=1.8.2 used negative stick_radius to turn on
+        // stick_h_scale, which had a default of 0.4 (now: 1.0)
         if(bd_radius < 0.0F) {
           bd_radius = -bd_radius;
-          if((ati1->protons == cAN_H) || (ati2->protons == cAN_H))
-            bd_radius = bd_radius * h_scale;    /* scaling for bonds involving hydrogen */
 
+          // legacy behavior
+          if (h_scale == 1.0F)
+            h_scale = 0.4F;
         }
-        overlap_r = overlap * bd_radius;
-        nub_r = nub * bd_radius;
+
+        // before H scaling
+        bd_radius_full = bd_radius;
+
+        // scaling for bonds involving hydrogen
+        if (ati1->isHydrogen() || ati2->isHydrogen())
+          bd_radius *= h_scale;
 
         if(bd_stick_color < 0) {
           if(bd_stick_color == cColorObject) {
@@ -1698,12 +1714,28 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           if(!within3f(vv1, vv2, cutoff))       /* atoms separated by more than 90% of the sum of their vdw radii */
             s1 = s2 = 0;
         }
-        if ((ati1->flags & ati2->flags & cAtomFlag_polymer)) {
-          if (cartoon_side_chain_helper && (ati1->visRep & cRepCartoonBit) && (ati2->visRep & cRepCartoonBit)) {
-            if (SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
+
+        // side chain helpers
+        if ((s1 || s2) && (ati1->flags & ati2->flags & cAtomFlag_polymer)) {
+          if ((cRepCartoonBit & ati1->visRep & ati2->visRep)) {
+            bool sc_helper =
+              AtomSettingGetWD(G, ati1,
+                  cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper) ||
+              AtomSettingGetWD(G, ati2,
+                  cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper);
+            if (sc_helper &&
+                SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode, &c1, &c2))
               s1 = s2 = 0;
-          } else if (ribbon_side_chain_helper && (ati1->visRep & cRepRibbonBit) && (ati2->visRep & cRepRibbonBit)) {
-            if (SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
+          }
+
+          if ((s1 || s2) && (cRepRibbonBit & ati1->visRep & ati2->visRep)) {
+            bool sc_helper =
+              AtomSettingGetWD(G, ati1,
+                  cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper) ||
+              AtomSettingGetWD(G, ati2,
+                  cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper);
+            if (sc_helper &&
+                SideChainHelperFilterBond(G, marked, ati1, ati2, b1, b2, na_mode_ribbon, &c1, &c2))
               s1 = s2 = 0;
           }
         }
@@ -1821,12 +1853,11 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
         }
 
         if((s1 || s2)) {
-          int bd_valence_flag;
 	  short c1t = ((c1 & cColor_TRGB_Mask) == cColor_TRGB_Bits),
 	    c2t = ((c2 & cColor_TRGB_Mask) == cColor_TRGB_Bits);
 	  n_bonds++;
-          AtomInfoGetBondSetting_b(G, b, cSetting_valence, valence_flag,
-                                   &bd_valence_flag);
+          bool bd_valence_flag = (ord > 1) && (ord < 5) &&
+            BondSettingGetWD(G, b, cSetting_valence, valence_flag);
 
           if((bd_valence_flag) && (ord > 1) && (ord < 5)) {
             if(!c1t && !c2t && (c1 == c2) && s1 && s2 && (!ColorCheckRamped(G, c1))) {
@@ -1934,6 +1965,10 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 		  }
 		}
 	      }
+
+	      overlap_r = overlap * bd_radius;
+	      nub_r = nub * bd_radius;
+
 	      if (ok)
 		ok &= RepCylinder(G, I, Vcgo, v1, v2, nEdge, capdraw1, capdraw2, bd_radius, overlap_r,
 				  nub_r, NULL, shader_mode, cv2);
@@ -2050,10 +2085,9 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           }
 
           if(s1 || s2) {
-            float bd_radius;
             float overlap_r, nub_r;
 
-            AtomInfoGetBondSetting_f(G, b, cSetting_stick_radius, radius, &bd_radius);
+            auto bd_radius = BondSettingGetWD(G, b, cSetting_stick_radius, radius);
 
             overlap_r = overlap * bd_radius;
             nub_r = nub * bd_radius;

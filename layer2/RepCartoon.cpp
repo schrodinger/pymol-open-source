@@ -248,7 +248,32 @@ typedef struct nuc_acid_data {
   int *ring_anchor;
   int ring_mode, ring_finder, ring_finder_eff;
   int n_ring;
+  char alt;
+  char next_alt;
 } nuc_acid_data;
+
+/*
+ * Return true if a connector between the two atoms should be drawn.
+ *
+ * TODO: should RepSphere and side_chain_helper check really be part of this?
+ * TODO: should line|cyl|sphere also be checked for at2?
+ */
+static
+bool ring_connector_visible(PyMOLGlobals * G,
+    const AtomInfoType * ai1,
+    const AtomInfoType * ai2,
+    bool sc_helper)
+{
+  if (!(ai1->visRep & ai2->visRep & cRepCartoonBit))
+    return false;
+
+  if (!(ai1->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit)))
+    return true;
+
+  return !(
+      AtomSettingGetWD(G, ai1, cSetting_cartoon_side_chain_helper, sc_helper) ||
+      AtomSettingGetWD(G, ai2, cSetting_cartoon_side_chain_helper, sc_helper));
+}
 
 /* atix must contain n_atom + 1 elements, with the first atom repeated at the end */
 
@@ -290,45 +315,15 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
         if(ai->visRep & cRepCartoonBit) {
           ai_i[i] = ai;
 
-          {
-            int atom_ring_mode = ring_mode;
-            int atom_ring_color = ladder_color;
-            float atom_ring_radius = ring_radius;
-            float atom_ring_width = ring_width;
-            int atom_ladder_mode = ladder_mode;
-            int atom_ladder_color = ladder_color;
-            float atom_ladder_radius = ladder_radius;
-
-            if(AtomInfoGetSetting_i
-               (G, ai, cSetting_cartoon_ring_mode, ndata->ring_mode, &atom_ring_mode)) {
-              ring_mode = atom_ring_mode;
-            }
-            if(AtomInfoGetSetting_color
-               (G, ai, cSetting_cartoon_ring_color, ring_color, &atom_ring_color)) {
-              ring_color = atom_ring_color;
-            }
-            if(AtomInfoGetSetting_f
-               (G, ai, cSetting_cartoon_ring_radius, ring_radius, &atom_ring_radius)) {
-              ring_radius = atom_ring_radius;
-            }
-            if(AtomInfoGetSetting_f
-               (G, ai, cSetting_cartoon_ring_width, ring_width, &atom_ring_width)) {
-              ring_width = atom_ring_width;
-            }
-            if(AtomInfoGetSetting_i
-               (G, ai, cSetting_cartoon_ladder_mode, ladder_mode, &atom_ladder_mode)) {
-              ladder_mode = atom_ladder_mode;
-            }
-            if(AtomInfoGetSetting_color
-               (G, ai, cSetting_cartoon_ladder_color, ladder_color, &atom_ladder_color)) {
-              ladder_color = atom_ladder_color;
-            }
-            if(AtomInfoGetSetting_f
-               (G, ai, cSetting_cartoon_ladder_radius, ladder_radius,
-                &atom_ladder_radius)) {
-              ladder_radius = atom_ladder_radius;
-            }
-          }
+          // take atom level settings from any ring atom (effectifly from the
+          // last one with settings)
+          AtomSettingGetIfDefined(G, ai, cSetting_cartoon_ring_mode, &ring_mode);
+          AtomSettingGetIfDefined(G, ai, cSetting_cartoon_ring_color, &ring_color);
+          AtomSettingGetIfDefined(G, ai, cSetting_cartoon_ring_radius, &ring_radius);
+          AtomSettingGetIfDefined(G, ai, cSetting_cartoon_ring_width, &ring_width);
+          AtomSettingGetIfDefined(G, ai, cSetting_cartoon_ladder_mode, &ladder_mode);
+          AtomSettingGetIfDefined(G, ai, cSetting_cartoon_ladder_color, &ladder_color);
+          AtomSettingGetIfDefined(G, ai, cSetting_cartoon_ladder_radius, &ladder_radius);
 
           col[i] = ColorGet(G, ai->color);
           v_i[i] = cs->Coord + 3 * a;
@@ -869,12 +864,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
               if((g1 >= 0) && (g2 >= 0)) {
                 AtomInfoType *g1_ai = atomInfo + g1;
                 AtomInfoType *g2_ai = atomInfo + g2;
-                int sc_helper1, sc_helper2;
-                AtomInfoGetSetting_b(G, g1_ai, cSetting_cartoon_side_chain_helper, sc_helper, &sc_helper1);
-                AtomInfoGetSetting_b(G, g2_ai, cSetting_cartoon_side_chain_helper, sc_helper, &sc_helper2);
-                if((g1_ai->visRep & g2_ai->visRep & cRepCartoonBit) &&
-                    (!(sc_helper1 || sc_helper2) ||
-                     !(g1_ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit)))) {
+
+                if (ring_connector_visible(G, g1_ai, g2_ai, sc_helper)) {
 
                   float *g1p, *g2p;
                   float avg[3];
@@ -998,12 +989,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
               {
                 AtomInfoType *sug_ai = atomInfo + sugar_at;
                 AtomInfoType *bas_ai = atomInfo + base_at;
-                int sc_helper1, sc_helper2;
-                AtomInfoGetSetting_b(G, sug_ai, cSetting_cartoon_side_chain_helper, sc_helper, &sc_helper1);
-                AtomInfoGetSetting_b(G, bas_ai, cSetting_cartoon_side_chain_helper, sc_helper, &sc_helper2);
-                if((sug_ai->visRep & bas_ai->visRep & cRepCartoonBit) &&
-                    (!(sc_helper1 || sc_helper2) ||
-                     !(bas_ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit)))) {
+
+                if (ring_connector_visible(G, bas_ai, sug_ai, sc_helper)) {
 
                   int sug, bas;
                   if(obj->DiscreteFlag) {
@@ -1058,12 +1045,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
           if((base_at >= 0) && (sugar_at >= 0)) {
             AtomInfoType *sug_ai = atomInfo + sugar_at;
             AtomInfoType *bas_ai = atomInfo + base_at;
-            int sc_helper1, sc_helper2;
-            AtomInfoGetSetting_b(G, sug_ai, cSetting_cartoon_side_chain_helper, sc_helper, &sc_helper1);
-            AtomInfoGetSetting_b(G, bas_ai, cSetting_cartoon_side_chain_helper, sc_helper, &sc_helper2);
-            if((sug_ai->visRep & bas_ai->visRep & cRepCartoonBit) &&
-                (!(sc_helper1 || sc_helper2) ||
-                 !(bas_ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit)))) {
+
+            if (ring_connector_visible(G, bas_ai, sug_ai, sc_helper)) {
 
               int sug, bas;
               float *v_outer, tmp[3], outer[3];
@@ -1759,17 +1742,12 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
         ai1 = obj->AtomInfo + atom_index1;
         ai2 = obj->AtomInfo + atom_index2;
 
-        c1 = ai1->color;
-        c2 = ai2->color;
-        
-        if(cartoon_color >= 0) {
-          c1 = (c2 = cartoon_color);
-        }
-        AtomInfoGetSetting_color(G, ai1, cSetting_cartoon_color,
-                                 c1, &c1);
-        AtomInfoGetSetting_color(G, ai2, cSetting_cartoon_color,
-                                 c2, &c2);
-        
+        c1 = AtomSettingGetWD(G, ai1, cSetting_cartoon_color, cartoon_color);
+        c2 = AtomSettingGetWD(G, ai2, cSetting_cartoon_color, cartoon_color);
+
+        if (c1 < 0) c1 = ai1->color;
+        if (c2 < 0) c2 = ai2->color;
+
         if((*(cc) == *(cc + 1)) && (c1 != c2))
           uniform_color = false;
         if(last_color >= 0) {
@@ -1821,12 +1799,12 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
     if(extrudeFlag) {         /* generate cylinder */
       if(n_p > 1) {
         atom_index1 = cs->IdxToAtm[*(atp - 1)];
-        c1 = (obj->AtomInfo + atom_index1)->color;
-        if(cartoon_color >= 0) {
-          c1 = cartoon_color;
-        }
-        AtomInfoGetSetting_color(G, obj->AtomInfo + atom_index1, cSetting_cartoon_color,
-                                 c1, &c1);
+
+        c1 = AtomSettingGetWD(G, obj->AtomInfo + atom_index1,
+            cSetting_cartoon_color, cartoon_color);
+
+        if (c1 < 0) c1 = (obj->AtomInfo + atom_index1)->color;
+
         if(n_p < 5) {
           copy3f(ex->p, t3);
           copy3f(v - 3, t4);
@@ -2125,8 +2103,8 @@ void ComputeCartoonAtomColors(PyMOLGlobals *G, ObjectMolecule *obj, CoordSet *cs
   auto ai1 = obj->AtomInfo + atom_index1;
   auto ai2 = obj->AtomInfo + atom_index2;
 
-  AtomInfoGetSetting_color(G, ai1, cSetting_cartoon_color, c1, &c1);
-  AtomInfoGetSetting_color(G, ai2, cSetting_cartoon_color, c2, &c2);
+  AtomSettingGetIfDefined(G, ai1, cSetting_cartoon_color, &c1);
+  AtomSettingGetIfDefined(G, ai2, cSetting_cartoon_color, &c2);
 
   if (c1 < 0) c1 = ai1->color;
   if (c2 < 0) c2 = ai2->color;
@@ -2841,7 +2819,6 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
   int fancy_sheets;
   int parity = 1;
   float *v_c, *v_n, *v_o;
-  int sc_helper;
   int cur_car;
   nuc_acid_cap leading_O5p(G, ndata, cs, 3);
   nuc_acid_cap trailing_O3p(G, ndata, cs, 2);
@@ -2890,12 +2867,20 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
       ndata->n_ring++;
     }
 
-    // ignore alternative conformations
-    if(ai->alt[0] && ai->alt[0] != 'A')
-      continue;
+    // handle alternative conformations
+    if (ai->alt[0]) {
+      if (!ndata->alt) {
+        ndata->alt = ai->alt[0];
+      } else if (ai->alt[0] != ndata->alt) {
+        if (ai->alt[0] > ndata->alt &&
+            (!ndata->next_alt || ai->alt[0] < ndata->next_alt))
+          ndata->next_alt = ai->alt[0];
+        continue;
+      }
+    }
 
     // atom level setting
-    AtomInfoGetSetting_i(G, ai, cSetting_cartoon_trace_atoms, trace_ostate, &trace);
+    trace = AtomSettingGetWD(G, ai, cSetting_cartoon_trace_atoms, trace_ostate);
 
     // CA or cartoon_trace_atoms
     if(trace || (ai->protons == cAN_C
@@ -2947,9 +2932,9 @@ void RepCartoonGeneratePASS1(PyMOLGlobals *G, RepCartoon *I, ObjectMolecule *obj
       (*ndata->fp) = ai->flags;    /* store atom flags */
 
       // side_chain_helper
-      AtomInfoGetSetting_b(G, ai, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper, &sc_helper);
-      if(sc_helper) {
-        if(ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit))
+      if ((ai->visRep & (cRepLineBit | cRepCylBit | cRepSphereBit)) &&
+          AtomSettingGetWD(G, ai, cSetting_cartoon_side_chain_helper,
+            cartoon_side_chain_helper)) {
           (*ndata->fp) |= cAtomFlag_no_smooth;
       }
 
@@ -3757,6 +3742,19 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
   I->LastVisib = Calloc(char, cs->NAtIndex);
   
+  auto cartoon_all_alt =
+    SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_all_alt);
+
+  ndata.next_alt = 0;
+
+  do {
+    ndata.alt = ndata.next_alt;
+    ndata.next_alt = 0;
+    memset(car,      0, sizeof(*car)      * cs->NAtIndex);
+    memset(sstype,   0, sizeof(*sstype)   * cs->NAtIndex);
+    memset(flag_tmp, 0, sizeof(*flag_tmp) * cs->NAtIndex);
+    memset(nuc_flag, 0, sizeof(*nuc_flag) * cs->NAtIndex);
+
   i = at;
   sptr = seg;
   cc = car;
@@ -3820,7 +3818,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
     {
       int smooth_loops = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_smooth_loops);
-      int cartoon_flat_sheets = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_flat_sheets);
+      bool cartoon_flat_sheets = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_cartoon_flat_sheets);
       if(smooth_loops || cartoon_flat_sheets) {
         if(cartoon_flat_sheets) {
           RepCartoonFlattenSheets(G, obj, cs, &ndata, nAt, seg, car, pv, pvo, sstype, tv, tmp, flag_tmp);
@@ -3846,7 +3844,15 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     CGOCombineBeginEnd(&I->ray);
   }
 
-  I->preshader = I->ray;
+    if (I->preshader) {
+      CGOAppend(I->preshader, I->ray);
+      CGOFree(I->ray);
+    } else {
+      I->preshader = I->ray;
+    }
+  } while (ndata.next_alt && cartoon_all_alt);
+
+  I->ray = I->preshader;
 
   CHECKOK(ok, I->ray);
 

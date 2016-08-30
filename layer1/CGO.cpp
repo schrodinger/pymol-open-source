@@ -55,7 +55,7 @@ struct _CCGORenderer {
   PyMOLGlobals *G;
   RenderInfo *info;
   Rep *rep;
-  float *color;
+  const float *color;
   float alpha;
   short isPicking;
   short use_shader;
@@ -5892,7 +5892,7 @@ static int CGORenderQuadricRay(CRay * ray, float *v, float r, float *q)
 
 /* ======== Raytrace Renderer ======== */
 
-int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * set2)
+int CGORenderRay(CGO * I, CRay * ray, const float *color, CSetting * set1, CSetting * set2)
 {
   float *pc;
   int op;
@@ -5903,7 +5903,7 @@ int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * 
   float white[] = { 1.0, 1.0, 1.0 };
   float zee[] = { 0.0, 0.0, 1.0 };
   int ok = true;
-  float *n0 = NULL, *n1 = NULL, *n2 = NULL, *v0 = NULL, *v1 = NULL, *v2 = NULL, *c0 =
+  const float *n0 = NULL, *n1 = NULL, *n2 = NULL, *v0 = NULL, *v1 = NULL, *v2 = NULL, *c0 =
     NULL, *c1 = NULL, *c2 = NULL;
   int mode = -1;
   /* workaround; multi-state ray-trace bug */
@@ -7550,7 +7550,7 @@ void CGORenderGLPicking(CGO * I, Picking ** pick, PickContext * context, CSettin
    by CGORenderGL().  This is only to be used in debugging */
 //#define DEBUG_PRINT_OPS
 
-void CGORenderGL(CGO * I, float *color, CSetting * set1, CSetting * set2,
+void CGORenderGL(CGO * I, const float *color, CSetting * set1, CSetting * set2,
                  RenderInfo * info, Rep *rep)
 
 /* this should be as fast as you can make it...

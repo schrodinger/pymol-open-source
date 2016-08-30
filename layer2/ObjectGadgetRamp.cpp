@@ -305,15 +305,12 @@ static int _ObjectGadgetRampBlend(ObjectGadgetRamp * I, float *color,
 
 #define MAX_COLORS 64
 
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
 static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp * I,
                                                   float level,
                                                   float *color,
-                                                  float *atomic,
-                                                  float *object,
-                                                  float *vertex, int state, int blend_all)
+                                                  const float *atomic,
+                                                  const float *object,
+                                                  const float *vertex, int state, int blend_all)
 {
   /* now thread-safe...via stack copy of colors */
 
@@ -495,7 +492,7 @@ int ObjectGadgetRampNewFromPyList(PyMOLGlobals * G, PyObject * list,
 #endif
 }
 
-int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, float *pos, float *color, int state)
+int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *color, int state)
 {
   float level;
   int ok = true;
@@ -851,6 +848,12 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp * I)
   gs->Coord[3] = gs->Coord[4] = gs->Coord[5] = 0.f;
   gs->NNormal = 0;
   gs->Normal = NULL;
+
+  // was a memory leak in < 1.8.3.1
+  for (int i = 0; i < og->NGSet; ++i) {
+    og->GSet[i]->fFree();
+    og->GSet[i] = NULL;
+  }
 
   og->GSet[0] = gs;
   og->NGSet = 1;

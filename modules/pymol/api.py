@@ -161,6 +161,7 @@ from .exporting import \
       copy_image,         \
       cache,              \
       export_coords,      \
+      get_str,            \
       get_pdbstr,         \
       get_cifstr,         \
       get_session,        \
@@ -393,6 +394,7 @@ from .setting import \
       get,                 \
       unset,               \
       unset_bond,          \
+      unset_deep,          \
       get_setting_boolean, \
       get_setting_int,     \
       get_setting_float,   \

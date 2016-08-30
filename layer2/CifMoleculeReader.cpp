@@ -6,11 +6,8 @@
 
 #include <algorithm>
 #include <string>
-#include <iostream>
 #include <map>
 #include <set>
-#include <sstream>
-#include <stdexcept>
 #include <vector>
 #include <memory>
 
@@ -405,6 +402,14 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
       // don't connect different alt codes
       if (a1->alt[0] && a2->alt[0] && strcmp(a1->alt, a2->alt) != 0) {
         continue;
+      }
+
+      // restart if we hit the next residue in bulk solvent (atoms must
+      // not be sorted for this)
+      // TODO artoms are sorted at this point
+      if (a1->name == a2->name) {
+        i_start = i1;
+        break;
       }
 
       // lookup if atoms are bonded
@@ -1835,6 +1840,8 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
   col_symm[0]     = data->get_opt("_struct_conn.ptnr1_symmetry");
   col_symm[1]     = data->get_opt("_struct_conn.ptnr2_symmetry");
 
+  const cif_array *col_order = data->get_opt("_struct_conn.pdbx_value_order");
+
   int nrows = col_type_id->get_nrows();
   int nAtom = VLAGetSize(atInfo);
   int nBond = 0;
@@ -1891,6 +1898,10 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
     if (find2(name_dict, i1, key[0], i2, key[1])) {
       // zero-order bond for metal coordination
       int order = strcasecmp(type_id, "metalc") ? 1 : 0;
+
+      if (order) {
+        order = bondOrderLookup(col_order->as_s(i));
+      }
 
       nBond++;
       BondTypeInit2(bond++, i1, i2, order);
@@ -2168,6 +2179,11 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
   ObjectMoleculeUpdateIDNumbers(I);
   ObjectMoleculeUpdateNonbonded(I);
   ObjectMoleculeAutoDisableAtomNameWildcard(I);
+
+  // hetatm classification if `group_PDB` record missing
+  if (info.type == CIF_MMCIF && !datablock->get_arr("_atom_site.group_pdb")) {
+    I->need_hetatm_classification = true;
+  }
 
   return I;
 }

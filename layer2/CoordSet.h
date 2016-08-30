@@ -131,8 +131,11 @@ PyObject *CoordSetAsPyList(CoordSet * I);
 int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs);
 
 CoordSet *CoordSetNew(PyMOLGlobals * G);
-void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoType * ai,
-                             float *v, int cnt, PDBInfoRec * pdb_info, double *matrix);
+void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
+                             const AtomInfoType * ai,
+                             const float *v, int cnt,
+                             const PDBInfoRec * pdb_info,
+                             const double *matrix);
 void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoType * ai,
                              int cnt);
 CoordSet *CoordSetCopy(const CoordSet * cs);

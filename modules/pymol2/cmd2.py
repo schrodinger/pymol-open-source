@@ -90,15 +90,7 @@ class Cmd:
                 
         from pymol import keyboard
         
-        self.special = keyboard.get_special(self)
-
-        self.shft_special = keyboard.get_shft_special(self)        
-        self.alt_special = keyboard.get_alt_special(self)        
-        self.ctrl_special = keyboard.get_ctrl_special(self)
-        self.ctsh_special = keyboard.get_ctsh_special(self)
-
-        self.ctrl = keyboard.get_ctrl(self)        
-        self.alt = keyboard.get_alt(self)
+        self.key_mappings = keyboard.get_default_keys(self)
         
 # PUBLIC API METHODS which expect "self" as the first argument
 

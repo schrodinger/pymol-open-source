@@ -560,7 +560,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule * I, CoordSet * c
   return result;
 }
 
-int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, float *point,
+int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
                                          float cutoff, int state, float *dist,
                                          float *color, int sub_vdw)
 {
@@ -666,7 +666,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, float *point,
   return result;
 }
 
-int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, float *point, float cutoff,
+int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, const float *point, float cutoff,
                                       int state, float *dist)
 {
   int result = -1;
@@ -1613,7 +1613,7 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I)
   int found_wildcard = false;
 
   {
-    char *tmp = SettingGet_s(G, NULL, I->Obj.Setting, cSetting_atom_name_wildcard);
+    const char *tmp = SettingGet_s(G, NULL, I->Obj.Setting, cSetting_atom_name_wildcard);
     if(tmp && tmp[0]) {
       wildcard = *tmp;
     } else {
@@ -1976,7 +1976,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   int auto_show = RepGetAutoShowMask(G);
   int reformat_names = SettingGetGlobal_i(G, cSetting_pdb_reformat_names_mode);
   int truncate_resn = SettingGetGlobal_b(G, cSetting_pdb_truncate_residue_name);
-  char *tags_in = SettingGetGlobal_s(G, cSetting_pdb_echo_tags), *tag_start[PDB_MAX_TAGS];
+  const char *tags_in = SettingGetGlobal_s(G, cSetting_pdb_echo_tags), *tag_start[PDB_MAX_TAGS];
   int n_tags = 0;
   int foundNextModelFlag = false;
   int ssFlag = false;

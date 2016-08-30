@@ -643,10 +643,7 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
         }
 
         if(i0 >= 0) {
-          int at_mesh_color;
-
-          AtomInfoGetSetting_color(G, ai0, cSetting_mesh_color,
-                                   mesh_color, &at_mesh_color);
+          int at_mesh_color = AtomSettingGetWD(G, ai0, cSetting_mesh_color, mesh_color);
 
           if(at_mesh_color != -1) {
             c1 = at_mesh_color;
@@ -804,7 +801,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     int carve_flag = false;
     float carve_cutoff =
       SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_mesh_carve_cutoff);
-    char *carve_selection = NULL;
+    const char *carve_selection = NULL;
     float *carve_vla = NULL;
     MapType *carve_map = NULL;
 
@@ -812,7 +809,7 @@ Rep *RepMeshNew(CoordSet * cs, int state)
     int clear_flag = false;
     float clear_cutoff =
       SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_mesh_clear_cutoff);
-    char *clear_selection = NULL;
+    const char *clear_selection = NULL;
     float *clear_vla = NULL;
     MapType *clear_map = NULL;
 

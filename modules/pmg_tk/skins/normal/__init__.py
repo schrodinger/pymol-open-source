@@ -301,7 +301,7 @@ class Normal(PMGSkin):
             Frame,self.commandFrame,bd=0)
         row2.pack(side=TOP,fill=BOTH,expand=YES)
         btn_unpick = self.buttonAdd(row2,'Unpick',lambda s=self: s.cmd.do("_ unpick"))
-        btn_hidesele = self.buttonAdd(row2,'Deselect',self.hide_sele)
+        btn_hidesele = self.buttonAdd(row2,'Deselect', lambda: self.cmd.do("_ deselect"))
         btn_reset = self.buttonAdd(row2,'Rock',lambda s=self: s.cmd.do("_ rock"))
         btn_getview = self.buttonAdd(row2,'Get View',lambda s=self: s.get_view()) # doesn't get logged
 
@@ -855,6 +855,10 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             ("MMD File","*.mmd"),
             ("PKL File","*.pkl"),
             ("SDF File","*.sdf"),
+            ("PDBx/mmCIF","*.cif"),
+            ("PQR","*.pqr"),
+            ("Maestro","*.mae"),
+            ("XYZ","*.xyz"),
         ]
         if True:
             # save N>1 objects to ONE file
@@ -949,15 +953,35 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                 self.cmd.save(save_file,"(%s)"%save_sele,state=stateSave,quiet=0)
 
 
-    def hide_sele(self):
-        self.cmd.log("util.hide_sele()\n","util.hide_sele()\n")
-        self.util.hide_sele()
-            
     def edit_pymolrc(self):
+        if not self.pymol.invocation.options.pymolrc:
+            self._edit_pymolrc()
+            return
+
+        def callback(button):
+            s = dialog.getcurselection() if button == 'OK' else ()
+            dialog.withdraw()
+            self._edit_pymolrc(s)
+
+        dialog = Pmw.SelectionDialog(self.root,
+                title='Select pymolrc file',
+                buttons=('OK', 'Cancel'), defaultbutton='OK',
+                scrolledlist_labelpos='nw',
+                label_text='Active pymolrc files:',
+                scrolledlist_items=tuple(self.pymol.invocation.options.pymolrc),
+                command=callback)
+
+        # set focus on the first item
+        dialog.component('scrolledlist').selection_set(0)
+
+        dialog.geometry('700x200')
+        self.my_show(dialog)
+
+    def _edit_pymolrc(self, _list=()):
         from pmg_tk.TextEditor import TextEditor
 
         try:
-            pymolrc = self.pymol.invocation.options.pymolrc[0]
+            pymolrc = _list[0]
         except (TypeError, IndexError):
             if sys.platform.startswith('win'):
                 pymolrc = os.path.expandvars(r'$HOMEDRIVE$HOMEPATH\pymolrc.pml')
@@ -3074,18 +3098,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         for x in range(1,13):
             self.menuBar.addmenuitem('Store', 'checkbutton', 'F%d'%x,
                                              label='F%d'%x,
-                                             variable = self.setting.F[x],
+                                             variable = self.scene_F_keys[x - 1],
                                              command = lambda x=x,s=self: s.cmd.do("scene F%d,store"%x))
-
-            self.menuBar.addmenuitem('Recall', 'checkbutton', 'Recall F%d'%x,
-                                             label='F%d'%x,
-                                             variable = self.setting.F[x],
-                                             command = lambda x=x,s=self: s.cmd.do("scene F%d"%x))
-
-            self.menuBar.addmenuitem('Clear', 'checkbutton', 'F%d'%x,
-                                     label='F%d'%x,
-                                     variable = self.setting.F[x],
-                                     command = lambda x=x,s=self: s.cmd.do("scene F%d,clear"%x))
             
 #         self.menuBar.addmenuitem('ClearSHFT', 'checkbutton', 'SHFT-F%d'%x,
 #                                  label='SHFT-F%d'%x,
@@ -3352,6 +3366,22 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.menuBar.addmenu('Plugin', 'Plugin',tearoff=TRUE)      
 
+        # hook up scene menu updates
+        index = self.pymol.setting.index_dict.get('scenes_changed')
+        self.setting.active_dict[index] = self.update_scene_menu
+
+    def update_scene_menu(self):
+        scene_list = self.cmd.get_scene_list()
+        for action in ['recall', 'clear']:
+            parent = action.capitalize()
+            self.menuBar.deletemenuitems(parent, 0, 999)
+            for k in scene_list:
+                self.menuBar.addmenuitem(parent, 'command', k, label=k,
+                        command=lambda k=k, a=action: self.cmd.scene(k, a))
+        for i in range(12):
+            k = 'F' + str(i + 1)
+            self.scene_F_keys[i].set(1 if k in scene_list else 0)
+
     def show_about(self):
         Pmw.aboutversion(self.appversion)
         Pmw.aboutcopyright(self.copyright)
@@ -3427,6 +3457,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.valence = None
         self._initialdir = ''
         self.fixedfont = tkFont.nametofont('TkFixedFont')
+        self.scene_F_keys = [IntVar(root) for _ in range(12)]
 
 def __init__(app):
     return Normal(app)

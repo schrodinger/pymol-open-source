@@ -387,3 +387,240 @@ class RenderReader:
         if self.tri_flag:
             self.obj.append(END)
         input.close()
+
+
+def torus(center=(0., 0., 0.), normal=(0., 0., 1.), radius=1., color='',
+        cradius=.25, samples=20, csamples=20):
+    '''
+    Generate and return a torus CGO with given center, normal
+    and ring radius.
+    '''
+    from math import cos, sin, pi
+
+    if color and isinstance(color, str):
+        color = list(cmd.get_color_tuple(color))
+    obj = []
+
+    axis = cpv.cross_product(normal, (0., 0., 1.))
+    angle = -cpv.get_angle(normal, (0., 0., 1.))
+    matrix = cpv.rotation_matrix(angle, cpv.normalize(axis))
+
+    obj_vertex = lambda x, y, z: obj.extend([VERTEX] + cpv.add(center,
+        cpv.transform(matrix, [x, y, z])))
+    obj_normal = lambda x, y, z: obj.extend([NORMAL] +
+        cpv.transform(matrix, [x, y, z]))
+
+    r = radius
+    cr = cradius
+    rr = 1.5 * cr
+    dv = 2 * pi / csamples
+    dw = 2 * pi / samples
+    v = 0.0
+    w = 0.0
+
+    while w < 2 * pi:
+        v = 0.0
+        c_w = cos(w)
+        s_w = sin(w)
+        c_wdw = cos(w + dw)
+        s_wdw = sin(w + dw)
+
+        obj.append(BEGIN)
+        obj.append(TRIANGLE_STRIP)
+
+        if color:
+            obj.append(COLOR)
+            obj.extend(color)
+
+        while v < 2 * pi + dv:
+            c_v = cos(v)
+            s_v = sin(v)
+            c_vdv = cos(v + dv)
+            s_vdv = sin(v + dv)
+            obj_normal(
+                (r + rr * c_v) * c_w - (r + cr * c_v) * c_w,
+                (r + rr * c_v) * s_w - (r + cr * c_v) * s_w,
+                (rr * s_v - cr * s_v))
+            obj_vertex(
+                (r + cr * c_v) * c_w,
+                (r + cr * c_v) * s_w,
+                cr * s_v)
+            obj_normal(
+                (r + rr * c_vdv) * c_wdw - (r + cr * c_vdv) * c_wdw,
+                (r + rr * c_vdv) * s_wdw - (r + cr * c_vdv) * s_wdw,
+                rr * s_vdv - cr * s_vdv)
+            obj_vertex(
+                (r + cr * c_vdv) * c_wdw,
+                (r + cr * c_vdv) * s_wdw,
+                cr * s_vdv)
+            v += dv
+
+        obj.append(END)
+        w += dw
+
+    return obj
+
+def from_plystr(contents, surfacenormals=True, alphaunit=1.):
+    '''
+    PLY - Polygon File Format
+    '''
+    lines_iter = iter(contents.splitlines())
+
+    if next(lines_iter) != 'ply':
+        raise ValueError('not a ply file')
+
+    types = {'char': int, 'uchar': int, 'short': int, 'ushort': int,
+            'int': int, 'uint': int, 'float': float, 'double': float,
+            'int8': int, 'uint8': int, 'int16': int, 'uint16': int,
+            'int32': int, 'uint32': int, 'float32': float, 'float64': float}
+
+    elements = []
+
+    for line in lines_iter:
+        a = line.split()
+
+        if not a:
+            continue
+
+        command = a[0]
+
+        if command == 'end_header':
+            break
+
+        if command == 'format' or command == 'comment':
+            continue
+
+        if command == 'element':
+            element = {'type': a[1], 'count': int(a[2]), 'properties': []}
+            elements.append(element)
+            continue
+
+        if command == 'property':
+            element['properties'].append(a[1:])
+            continue
+
+        if command == 'obj_info':
+            # ignore
+            continue
+
+        print('unknown instruction: ' + command)
+
+    table = {}
+
+    for element in elements:
+        table[element['type']] = records = []
+        properties = element['properties']
+        for i in range(element['count']):
+            line = next(lines_iter)
+            a_iter = iter(line.split())
+            rec = {}
+            for prop in properties:
+                if prop[0] == 'list':
+                    rec[prop[-1]] = [types[prop[2]](next(a_iter))
+                        for j in range(types[prop[2]](next(a_iter)))]
+                else:
+                    rec[prop[-1]] = types[prop[0]](next(a_iter))
+                    # auto-detect alpha divider
+                    if alphaunit == 1. and prop[-1] == 'alpha' and rec['alpha'] > 1:
+                        alphaunit = 255.
+                    # detect if normals need to be calculated
+                    if surfacenormals and prop[-1] == 'nx':
+                        surfacenormals = False
+            records.append(rec)
+
+    vertices = table['vertex']
+
+    obj = []
+
+    enum_quad = [0, 1, 2, 2, 3, 0]
+
+    def colorfromelem(elem):
+        if 'red' in elem:
+            obj.append(COLOR)
+            obj.append(elem['red'] / 255.0)
+            obj.append(elem['green'] / 255.0)
+            obj.append(elem['blue'] / 255.0)
+        if 'alpha' in elem:
+            obj.append(ALPHA)
+            obj.append(elem['alpha'] / alphaunit)
+
+    def compute_surface_normals():
+        '''
+        Compute average normals from all adjacent triangles
+        on each vertex
+        '''
+        from functools import reduce
+
+        # don't use cpv.normalize which has an RSMALL4 limit
+        normalize = lambda v: cpv.scale(v, 1. / cpv.length(v))
+
+        for face in table['face']:
+            if 'vertex_index' in face:
+                indices = face['vertex_index']
+            elif 'vertex_indices' in face:
+                indices = face['vertex_indices']
+            else:
+                return
+
+            f_vert = [vertices[i] for i in indices]
+            f_xyz = [(v['x'], v['y'], v['z']) for v in f_vert]
+
+            try:
+                normal = normalize(cpv.cross_product(
+                    cpv.sub(f_xyz[1], f_xyz[0]),
+                    cpv.sub(f_xyz[2], f_xyz[1])))
+            except ZeroDivisionError:
+                continue
+
+            for v in f_vert:
+                v.setdefault('normals', []).append(normal)
+
+        for v in vertices:
+            try:
+                v['nx'], v['ny'], v['nz'] = normalize(
+                        reduce(cpv.add, v.pop('normals')))
+            except (KeyError, ZeroDivisionError):
+                continue
+
+    if surfacenormals and 'face' in table:
+        compute_surface_normals()
+
+    for ptype, op in [
+            ('face', TRIANGLES),
+            ('edge', LINES),
+            ('range_grid', POINTS),
+            ]:
+        if ptype in table:
+            obj.append(BEGIN)
+            obj.append(op)
+
+            for face in table[ptype]:
+                colorfromelem(face)
+
+                if 'vertex_index' in face:
+                    indices = face['vertex_index']
+                elif 'vertex_indices' in face:
+                    indices = face['vertex_indices']
+                else:
+                    indices = [face['vertex1'], face['vertex2']]
+
+                N = len(indices)
+
+                for i in (enum_quad if N == 4 else range(N)):
+                    vertex = vertices[indices[i]]
+                    colorfromelem(vertex)
+
+                    if 'nx' in vertex:
+                        obj.append(NORMAL)
+                        obj.append(vertex['nx'])
+                        obj.append(vertex['ny'])
+                        obj.append(vertex['nz'])
+
+                    obj.append(VERTEX)
+                    obj.append(vertex['x'] * 100)
+                    obj.append(vertex['y'] * 100)
+                    obj.append(vertex['z'] * 100)
+            obj.append(END)
+
+    obj.append(STOP)
+    return obj
