@@ -121,7 +121,7 @@ void MapCacheFree(MapCache * M, int group_id, int block_base)
 
 #define MapSafety 0.01F
 
-int MapInside(MapType * I, float *v, int *a, int *b, int *c)
+int MapInside(MapType * I, const float *v, int *a, int *b, int *c)
 {                               /* special version for ray-tracing */
   int atmp, btmp, ctmp;
   float iDiv = I->recipDiv;
@@ -183,7 +183,7 @@ int MapInside(MapType * I, float *v, int *a, int *b, int *c)
   return (1);
 }
 
-int MapInsideXY(MapType * I, float *v, int *a, int *b, int *c)
+int MapInsideXY(MapType * I, const float *v, int *a, int *b, int *c)
 {                               /* special version for ray-tracing */
   int atmp, btmp, ctmp;
   const float iDiv = I->recipDiv;
@@ -671,7 +671,7 @@ int MapSetupExpress(MapType * I)
   return ok;
 }
 
-void MapLocus(MapType * I, float *v, int *a, int *b, int *c)
+void MapLocus(MapType * I, const float *v, int *a, int *b, int *c)
 {
   int at, bt, ct;
   float invDiv = I->recipDiv;
@@ -701,7 +701,7 @@ void MapLocus(MapType * I, float *v, int *a, int *b, int *c)
   *c = ct;
 }
 
-int *MapLocusEStart(MapType * I, float *v)
+int *MapLocusEStart(MapType * I, const float *v)
 {
   int a, b, c;
   float invDiv = I->recipDiv;
@@ -723,7 +723,7 @@ int *MapLocusEStart(MapType * I, float *v)
   return (I->EHead + ((a) * I->D1D2) + ((b) * I->Dim[2]) + (c));
 }
 
-int MapExclLocus(MapType * I, float *v, int *a, int *b, int *c)
+int MapExclLocus(MapType * I, const float *v, int *a, int *b, int *c)
 {
   float invDiv = I->recipDiv;
 
@@ -745,7 +745,7 @@ int MapExclLocus(MapType * I, float *v, int *a, int *b, int *c)
   return (1);
 }
 
-float MapGetSeparation(PyMOLGlobals * G, float range, float *mx, float *mn,
+float MapGetSeparation(PyMOLGlobals * G, float range, const float *mx, const float *mn,
                        float *diagonal)
 {
   float maxSize;

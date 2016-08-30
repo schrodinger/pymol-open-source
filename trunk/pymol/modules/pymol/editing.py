@@ -288,6 +288,15 @@ EXAMPLE
         with _self.lockcm:
             return _cmd.set_state_order(_self._COb, name, [i - 1 for i in order])
 
+    def set_discrete(name, discrete=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Convert discrete to non-discrete object or vice versa.
+        '''
+        with _self.lockcm:
+            return _cmd.set_discrete(_self._COb, name, int(discrete))
+
     def set_symmetry(selection, a, b, c, alpha, beta, gamma, spacegroup="P1", state=-1, _self=cmd):
 
         '''

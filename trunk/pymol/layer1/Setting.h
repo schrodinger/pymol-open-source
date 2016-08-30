@@ -129,10 +129,6 @@ void SettingUniqueDetachChain(PyMOLGlobals * G, int index);
  * in contrast, set commands expand the current list 
  */
 
-void SettingUniqueSet_b(PyMOLGlobals * G, int unique_id, int setting_id, int value);
-void SettingUniqueSet_i(PyMOLGlobals * G, int unique_id, int setting_id, int value);
-void SettingUniqueSet_f(PyMOLGlobals * G, int unique_id, int setting_id, float value);
-void SettingUniqueSet_color(PyMOLGlobals * G, int unique_id, int setting_id, int value);
 int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 			       int setting_type, const void *value);
 #ifndef _PYMOL_NOPY
@@ -140,10 +136,6 @@ bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int setting_id, P
 #endif
 
 int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id);
-int SettingUniqueGet_b(PyMOLGlobals * G, int unique_id, int setting_id, int *value);
-int SettingUniqueGet_i(PyMOLGlobals * G, int unique_id, int setting_id, int *value);
-int SettingUniqueGet_f(PyMOLGlobals * G, int unique_id, int setting_id, float *value);
-int SettingUniqueGet_color(PyMOLGlobals * G, int unique_id, int setting_id, int *value);
 PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index);
 
 void SettingUniqueResetAll(PyMOLGlobals * G);
@@ -166,15 +158,13 @@ void SettingCheckHandle(PyMOLGlobals * G, CSetting ** handle);
 
 #define SettingSet_b SettingSet_i
 int SettingSet_i(CSetting * I, int index, int value);
-int SettingSet_color_from_3f(CSetting * I, int index, float *vals);
 int SettingSet_f(CSetting * I, int index, float value);
 int SettingSet_s(CSetting * I, int index, const char *value);
-int SettingSet_3f(CSetting * I, int index, float value1, float value2, float value3);
 int SettingSet_3fv(CSetting * I, int index, const float *value);
 
-int SettingGetTextValue(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
+int SettingGetTextValue(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index,
                         char *buffer);
-const char * SettingGetTextPtr(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
+const char * SettingGetTextPtr(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2,
                                int index, char *buffer);
 
 int SettingUnset(CSetting * I, int index);
@@ -183,48 +173,29 @@ void SettingRestoreDefault(CSetting * I, int index, const CSetting * src=NULL);
 
 bool SettingIsDefaultZero(int index);
 
-int SettingGetType(PyMOLGlobals * G, int index);        /* based on global types, always succeeds */
+int SettingGetType(int index);
+inline int SettingGetType(PyMOLGlobals *, int index) {
+  return SettingGetType(index);
+}
 
-int SettingGetGlobal_b(PyMOLGlobals * G, int index);    /* always succeed */
-int SettingGetGlobal_i(PyMOLGlobals * G, int index);    /* always succeed */
-float SettingGetGlobal_f(PyMOLGlobals * G, int index);  /* always succeed */
-char *SettingGetGlobal_s(PyMOLGlobals * G, int index);  /* always succeeds */
-int SettingGetGlobal_color(PyMOLGlobals * G, int index);        /* always succeed */
+template <typename V> inline int SettingGetType();
+template <> inline int SettingGetType<bool>()           { return cSetting_boolean; }
+template <> inline int SettingGetType<int>()            { return cSetting_int; }
+template <> inline int SettingGetType<float>()          { return cSetting_float; }
+template <> inline int SettingGetType<const float*>()   { return cSetting_float3; }
+template <> inline int SettingGetType<float*>()         { return cSetting_float3; }
+template <> inline int SettingGetType<const char*>()    { return cSetting_string; }
+template <> inline int SettingGetType<char*>()          { return cSetting_string; }
 
-void SettingGetGlobal_3f(PyMOLGlobals * G, int index, float *value);    /* always succeeds */
-float *SettingGetGlobal_3fv(PyMOLGlobals * G, int index);       /* always succeed */
+#define SettingSetGlobal_b SettingSet<bool>
+#define SettingSetGlobal_i SettingSet<int>
+#define SettingSetGlobal_s SettingSet<const char *>
+#define SettingSetGlobal_f SettingSet<float>
 
-int SettingSetGlobal_b(PyMOLGlobals * G, int index, int value);
-int SettingSetGlobal_i(PyMOLGlobals * G, int index, int value);
-int SettingSetGlobal_s(PyMOLGlobals * G, int index, const char *value);
-int SettingSetGlobal_f(PyMOLGlobals * G, int index, float value);
-int SettingSetGlobal_3f(PyMOLGlobals * G, int index, float value1, float value2,
-                        float value3);
 int SettingSetSmart_i(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
                       int value);
 
-/* more to come */
-
-int SettingGetIfDefined_i(PyMOLGlobals * G, CSetting * set1, int index, int *value);
-int SettingGetIfDefined_b(PyMOLGlobals * G, CSetting * set1, int index, int *value);
-int SettingGetIfDefined_f(PyMOLGlobals * G, CSetting * set1, int index, float *value);
-int SettingGetIfDefined_s(PyMOLGlobals * G, CSetting * set1, int index, char **value);
-int SettingGetIfDefined_3fv(PyMOLGlobals * G, CSetting * set1, int index, float **value);
-int SettingGetIfDefined_color(PyMOLGlobals * G, CSetting * set1, int index, int *value);
-
-
-/* more to come */
-
 int SettingSet_color(CSetting * I, int index, const char *value);
-
-int SettingGet_b(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
-int SettingGet_i(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
-float SettingGet_f(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
-char *SettingGet_s(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
-void SettingGet_3f(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
-                   float *value);
-float *SettingGet_3fv(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
-int SettingGet_color(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
 
 int SettingSetFromString(PyMOLGlobals * G, CSetting * I, int index, const char *st);
 int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *type,
@@ -232,8 +203,8 @@ int SettingStringToTypedValue(PyMOLGlobals * G, int index, const char *st, int *
 
 #ifndef _PYMOL_NOPY
 int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tuple);
-PyObject *SettingGetPyObject(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
-PyObject *SettingGetTuple(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);       /* (type,(value,)) */
+PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index);
+PyObject *SettingGetTuple(PyMOLGlobals * G, const CSetting * set1, const CSetting * set2, int index);       /* (type,(value,)) */
 PyObject *SettingGetSettingIndices();
 PyObject *SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id);
 #endif
@@ -242,14 +213,11 @@ std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char *, int);
 
 void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, int state, int quiet);
 
-
-/* Legacy API below */
-
 int SettingGetIndex(PyMOLGlobals * G, const char *name);
 int SettingGetName(PyMOLGlobals * G, int index, SettingName name);
 const char * SettingGetName(int index);
 
-PyObject *SettingAsPyList(CSetting * I);
+PyObject *SettingAsPyList(CSetting * I, bool incl_blacklisted=false);
 int SettingFromPyList(CSetting * I, PyObject * list);
 
 int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list);
@@ -340,9 +308,10 @@ inline void SettingSet(CSetting * s, int i, float v)        { SettingSet_f(s, i,
 inline void SettingSet(CSetting * s, int i, const char *v)  { SettingSet_s(s, i, v); }
 inline void SettingSet(CSetting * s, int i, const float *v) { SettingSet_3fv(s, i, v); }
 
-inline void SettingUniqueSet(PyMOLGlobals * G, int uid, int i, bool v)          { SettingUniqueSet_b(G, uid, i, v); }
-inline void SettingUniqueSet(PyMOLGlobals * G, int uid, int i, int v)           { SettingUniqueSet_i(G, uid, i, v); }
-inline void SettingUniqueSet(PyMOLGlobals * G, int uid, int i, float v)         { SettingUniqueSet_f(G, uid, i, v); }
+template <typename V>
+void SettingUniqueSet(PyMOLGlobals * G, int uid, int index, V value) {
+  SettingUniqueSetTypedValue(G, uid, index, SettingGetType<V>(), &value);
+}
 
 template <typename V> void SettingSet(PyMOLGlobals * G, CSetting ** handle, int index, V value) {
   SettingCheckHandle(G, handle);
@@ -350,8 +319,78 @@ template <typename V> void SettingSet(PyMOLGlobals * G, CSetting ** handle, int 
 }
 
 // global setting
-template <typename V> void SettingSet(PyMOLGlobals * G, int index, V value) {
+template <typename V> bool SettingSet(PyMOLGlobals * G, int index, V value) {
   SettingSet(G->Setting, index, value);
+  return true;
+}
+
+// light setting array
+extern int light_setting_indices[];
+
+/*
+ * Getters for templatted programming
+ */
+
+const CSetting * _SettingGetFirstDefined(int index,
+    PyMOLGlobals * G,
+    const CSetting * set1,
+    const CSetting * set2);
+
+template <typename V> V SettingGet(int index, const CSetting *);
+template <typename V> V SettingGet(PyMOLGlobals * G,
+    const CSetting * set1,
+    const CSetting * set2, int index) {
+  return SettingGet<V>(index, _SettingGetFirstDefined(index, G, set1, set2));
+}
+template <typename V> V SettingGet(PyMOLGlobals * G, int index) {
+  return SettingGet<V>(index, G->Setting);
+}
+
+/*
+ * Get setting value if it's defined in the given set, and assign value to
+ * `out` variable and return true. Otherwise return false and leave `out`
+ * untouched.
+ */
+template <typename V>
+bool SettingGetIfDefined(const CSetting * s, int index, V * out) {
+  if (s && s->info[index].defined) {
+    *out = SettingGet<V>(index, s);
+    return true;
+  }
+  return false;
+}
+
+#define SettingGet_b            SettingGet<bool>
+#define SettingGet_i            SettingGet<int>
+#define SettingGet_color        SettingGet<int>
+#define SettingGet_f            SettingGet<float>
+#define SettingGet_s            SettingGet<const char *>
+#define SettingGet_3fv          SettingGet<const float *>
+
+#define SettingGetGlobal_b      SettingGet<bool>
+#define SettingGetGlobal_i      SettingGet<int>
+#define SettingGetGlobal_color  SettingGet<int>
+#define SettingGetGlobal_f      SettingGet<float>
+#define SettingGetGlobal_s      SettingGet<const char *>
+#define SettingGetGlobal_3fv    SettingGet<const float *>
+
+#define SettingGetIfDefined_b(G, s, i, o) SettingGetIfDefined(s, i, o)
+#define SettingGetIfDefined_i(G, s, i, o) SettingGetIfDefined(s, i, o)
+
+/*
+ * templatted unique settings
+ */
+
+bool SettingUniqueGetTypedValuePtr(PyMOLGlobals * G, int unique_id, int index,
+    int setting_type, void * out);
+
+/*
+ * `SettingGetIfDefined` equivalent for unique settings.
+ */
+template <typename V>
+bool SettingUniqueGetIfDefined(PyMOLGlobals * G, int unique_id, int index, V * out) {
+  return SettingUniqueGetTypedValuePtr(G, unique_id, index,
+      SettingGetType<V>(), out);
 }
 
 #endif

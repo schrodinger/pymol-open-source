@@ -459,54 +459,113 @@ def _load(oname,finfo,state,ftype,finish,discrete,
 
 # function keys and other specials
 
+modifier_keys = [
+    '',
+    'SHFT',
+    'CTRL',
+    'CTSH',
+    'ALT',
+]
+
+special_key_codes = {
+    # GLUT special key codes (see glutSpecialFunc)
+
+    1        :  'F1',
+    2        :  'F2',
+    3        :  'F3',
+    4        :  'F4',
+    5        :  'F5',
+    6        :  'F6',
+    7        :  'F7',
+    8        :  'F8',
+    9        :  'F9',
+    10       :  'F10',
+    11       :  'F11',
+    12       :  'F12',
+
+    100      :  'left',
+    101      :  'up',
+    102      :  'right',
+    103      :  'down',
+    104      :  'pgup',
+    105      :  'pgdn',
+    106      :  'home',
+    107      :  'end',
+    108      :  'insert',
+}
+
+special_key_names = set(special_key_codes.values())
+
+def _invoke_key(key, quiet=0, _self=cmd):
+    '''Invoke a function that was mapped with cmd.set_key()'''
+    try:
+        mapping = _self.key_mappings[key]
+    except KeyError:
+        mapping = None
+
+    if not mapping:
+        if not quiet:
+            print(" No key mapping for '%s'" % (key))
+        return False
+
+    if is_string(mapping):
+        _self.do(mapping)
+    else:
+        fn, args, kwargs = mapping
+        fn(*args, **kwargs)
+
+    return True
+
 def _special(k,x,y,m=0,_self=cmd): # INTERNAL (invoked when special key is pressed)
     pymol=_self._pymol
     # WARNING: internal routine, subject to change
     k=int(k)
     m=int(m)
-    my_special = _self.special
-    if(m>0) and (m<5):
-        my_special = (_self.special,
-                      _self.shft_special,
-                      _self.ctrl_special,
-                      _self.ctsh_special,
-                      _self.alt_special)[m]
-    if k in my_special:
-        if my_special[k][1]:
-            my_special[k][1](*my_special[k][2], **my_special[k][3])
-        else:
-            key = my_special[k][0]
-            if(m>0) and (m<5):
-                key = ('','SHFT-','CTRL-','CTSH-','ALT-')[m] + key
-            if key in _self.get_scene_list():
-                _self.scene(key)
-            elif is_string(pymol._scene_dict_sc.interpret(key+"-")):
-                _self.scene(pymol._scene_dict_sc[key+"-"])
-            elif key in pymol._view_dict:
-                _self.view(key)
-            elif is_string(pymol._view_dict_sc.interpret(key+"-")):
-                _self.view(pymol._view_dict_sc[key+"-"])
-    return None
+
+    # convert numeric codes to string key
+
+    try:
+        key = special_key_codes[k]
+
+        if m:
+            key = modifier_keys[m] + '-' + key
+    except KeyError:
+        return False
+
+    # check for explicit mapping
+
+    if _invoke_key(key, 1, _self):
+        return True
+
+    # check for scenes and views
+
+    for (fn, sc) in [
+            (_self.scene, pymol._scene_dict_sc),
+            (_self.view,  pymol._view_dict_sc),
+            ]:
+        if key in sc.keywords:
+            fn(key)
+            return True
+
+        autocomp = sc.interpret(key + '-')
+        if is_string(autocomp):
+            fn(autocomp)
+            return True
+
+    print(" No key mapping and no scene or view for '%s'" % (key))
+    return False
 
 # control keys
 
 def _ctrl(k,_self=cmd):
     # WARNING: internal routine, subject to change
-    if k in _self.ctrl:
-        ck = _self.ctrl[k]
-        if ck[0]!=None:
-            ck[0](*ck[1], **ck[2])
-    return None
+    _invoke_key('CTRL-' + k, 0, _self)
 
 # alt keys
 
 def _alt(k,_self=cmd):
     # WARNING: internal routine, subject to change
-    if k in _self.alt:
-        ak = _self.alt[k]
-        if ak[0]!=None:
-            ak[0](*ak[1], **ak[2])
-    return None
+    _invoke_key('ALT-' + k, 0, _self)
 
 # command (apple) keys
 
@@ -521,12 +580,7 @@ def _cmmd(k,_self=cmd):
 
 def _ctsh(k,_self=cmd):
     # WARNING: internal routine, subject to change
-    # command-key on macs
-    if k in _self.ctsh:
-        ak = _self.ctsh[k]
-        if ak[0]!=None:
-            ak[0](*ak[1], **ak[2])
-    return None
+    _invoke_key('CTSH-' + k, 0, _self)
     
 
 # writing PNG files (thread-unsafe)

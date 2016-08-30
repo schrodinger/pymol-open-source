@@ -5,11 +5,11 @@ Simple Text Editor
 import os
 import sys
 
-try:
+if sys.version_info[0] == 2:
     import Tkinter
     import tkFileDialog
     import tkMessageBox
-except ImportError:
+else:
     import tkinter as Tkinter
     import tkinter.filedialog as tkFileDialog
     import tkinter.messagebox as tkMessageBox

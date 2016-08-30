@@ -15,11 +15,8 @@
 from __future__ import print_function
 
 cmd = __import__("sys").modules["pymol.cmd"]
-import math
 import string
 import pymol
-import os
-import traceback
 from pymol import movie
 # legacy mappings, remove in PyMOL 2.0
 
@@ -130,7 +127,6 @@ ARGUMENTS
 
     name = str: name of selection to create {default: exposed??}
     """
-    from pymol import stored
     from collections import defaultdict
 
     tmpObj = _self.get_unused_name("__tmp")
@@ -249,7 +245,6 @@ SEE ALSO
 
 
 def mass_align(target,enabled_only=0,max_gap=50,_self=cmd):
-    pymol=_self._pymol
     cmd=_self
     list = cmd.get_names("public_objects",int(enabled_only))
     [x for x in list if cmd.get_type(x)!="object:molecule"]
@@ -266,22 +261,18 @@ def mass_align(target,enabled_only=0,max_gap=50,_self=cmd):
                           object=aln_object)
     
 def sum_formal_charges(selection="(all)",quiet=1,_self=cmd):
-    pymol=_self._pymol
-    cmd=_self
-    pymol.stored._util_sum_fc = 0.0
-    cmd.iterate(selection,"stored._util_sum_fc=stored._util_sum_fc+formal_charge",quiet=1)
-    result = pymol.stored._util_sum_fc
-    if not quiet:
-        print(" util.sum_formal_charges: sum = %0.1f"%result)
+    _util_sum_fc = [0]
+    _self.iterate(selection, "_util_sum_fc[0] += formal_charge", space=locals())
+    result = _util_sum_fc[0]
+    if not int(quiet):
+        print(" util.sum_formal_charges: %d" % result)
     return result
 
 def sum_partial_charges(selection="(all)",quiet=1,_self=cmd):
-    pymol=_self._pymol
-    cmd=_self
-    pymol.stored._util_sum_pc = 0.0
-    cmd.iterate(selection,"stored._util_sum_pc=stored._util_sum_pc+partial_charge",quiet=1)
-    result = pymol.stored._util_sum_pc
-    if not quiet:
+    _util_sum_pc = [0.0]
+    _self.iterate(selection, "_util_sum_pc[0] += partial_charge", space=locals())
+    result = _util_sum_pc[0]
+    if not int(quiet):
         print(" util.sum_partial_charges: sum = %0.4f"%result)
     return result
 
@@ -336,7 +327,6 @@ NOTES
     return result
     
 def protein_assign_charges_and_radii(obj_name,_self=cmd):
-    pymol=_self._pymol
     cmd=_self
 
     from chempy.champ import assign
@@ -387,7 +377,6 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
         print(" WARNING: formal and partial charge sums don't match -- there is a problem!")
     
 def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
-    pymol=_self._pymol
     cmd=_self
 
     if ((string.split(selection)!=[selection]) or
@@ -430,13 +419,11 @@ def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
     cmd.set("surface_ramp_above_mode",1,obj_name)
     
 def color_carbon(color,selection="(all)",_self=cmd):
-    pymol=_self._pymol
     cmd=_self
     selection = str(selection)
     cmd.color(color,"(%s) and elem C"%selection)
     
 def cbss(selection="(all)",helix_color="red",sheet_color="yellow",loop_color="green",quiet=1,_self=cmd):
-    pymol=_self._pymol
     cmd=_self
     sel = str(selection)
     h = str(helix_color)
@@ -448,7 +435,6 @@ def cbss(selection="(all)",helix_color="red",sheet_color="yellow",loop_color="gr
 
 def cbag(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -456,7 +442,6 @@ def cbag(selection="(all)",quiet=1,_self=cmd):
     
 def cbac(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -464,7 +449,6 @@ def cbac(selection="(all)",quiet=1,_self=cmd):
     
 def cbam(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)   
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -472,7 +456,6 @@ def cbam(selection="(all)",quiet=1,_self=cmd):
 
 def cbay(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)   
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -480,7 +463,6 @@ def cbay(selection="(all)",quiet=1,_self=cmd):
 
 def cbas(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)   
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -488,7 +470,6 @@ def cbas(selection="(all)",quiet=1,_self=cmd):
 
 def cbaw(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)   
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -496,7 +477,6 @@ def cbaw(selection="(all)",quiet=1,_self=cmd):
 
 def cbab(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)   
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -504,7 +484,6 @@ def cbab(selection="(all)",quiet=1,_self=cmd):
 
 def cbao(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)   
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -512,7 +491,6 @@ def cbao(selection="(all)",quiet=1,_self=cmd):
 
 def cbap(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)   
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -520,7 +498,6 @@ def cbap(selection="(all)",quiet=1,_self=cmd):
 
 def cbak(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)   
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -528,14 +505,12 @@ def cbak(selection="(all)",quiet=1,_self=cmd):
 
 def cnc(selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
 
 def cba(color,selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -544,7 +519,6 @@ def cba(color,selection="(all)",quiet=1,_self=cmd):
 
 def cbh(color,selection="(all)",quiet=1,_self=cmd):
     '''Wrapper around "color atomic"'''
-    pymol=_self._pymol
     cmd=_self
     s = str(selection)
     cmd.color("atomic","(("+s+") and not elem H)",quiet=quiet)
@@ -789,12 +763,8 @@ def label_segments(sele="all",_self=cmd):
             cmd.label("%s`%d"%(a[0],a[2]),"'segi '+segi",quiet=1)
 
     
-def hide_sele(_self=cmd):
-    pymol=_self._pymol
-    cmd=_self
-    arg = cmd.get_names("selections")
-    for a in arg:
-        cmd.disable(a)
+# legacy
+from pymol.selecting import deselect as hide_sele # noqa
 
 # FUBAR
 #def hbond(a,b,cutoff=3.3,name='hbond'):
@@ -837,7 +807,6 @@ def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
             c = (c + 1) % _color_cycle_len
         
 def color_objs(selection='(all)',quiet=1,_self=cmd):
-    pymol=_self._pymol
     cmd=_self 
     '''
     Color all chains a different color
@@ -856,35 +825,8 @@ def color_deep(color, name='all', quiet=1, _self=cmd):
     apply given color.
     '''
     from pymol.menu import rep_setting_lists
-
-    quiet = int(quiet)
-    kwargs = {'quiet': quiet, 'updates': 0, '_self': _self}
-
-    names, selection = name, None
-    if name in ['all', '*']:
-        names = '*'
-        selection = '(*)'
-    else:
-        try:
-            if _self.get_type(name, _self=_self) in (
-                    'object:group', 'object:molecule'):
-                selection = '(' + name + ')'
-        except:
-            pass
-
-    # 0 (object-level) and 1-N (object-state-level)
-    states = range(cmd.count_states(names) + 1)
-
-    for setting in [s for L in rep_setting_lists for (r, s) in L if s]:
-        try:
-            for state in states:
-                _self.unset(setting, names, state=state, **kwargs)
-            if selection:
-                _self.unset(setting, selection, **kwargs)
-        except:
-            if not quiet:
-                print(' Setting: %s unset failed' % setting)
-
+    _self.unset_deep([s for L in rep_setting_lists for (r, s) in L if s],
+            name, updates=0, quiet=quiet)
     _self.color(color, name, quiet=quiet, _self=_self)
 
 def chainbow(selection='(all)', palette="rainbow", quiet=1, _self=cmd):
@@ -899,33 +841,12 @@ def chainbow(selection='(all)', palette="rainbow", quiet=1, _self=cmd):
             
 color_chains = cbc
 
-def sum_charge(*arg,**kw): # NOT THREAD SAFE
-    _self = kw.get('_self',cmd)
-    pymol=_self._pymol
-    cmd=_self 
-    result = None
-    try:
-        obj = "all"
-        if len(arg):
-            obj = arg
-
-        pymol.stored._sum_charge = 0.0
-        cmd.iterate("(%s)"%obj,
-                        "stored._sum_charge=stored._sum_charge+partial_charge")
-        result = pymol.stored._sum_charge
-        print(" sum_charge: %6.4f"%result)
-    except:
-        print(" sum_charge: an error occurred.")
-    return result
+# legacy
+sum_charge = sum_partial_charges
 
 def ray_shadows(mode,_self=cmd):
-    pymol=_self._pymol
     cmd=_self
     # adjustment factors for new lighting model in 0.99
-    reflect_scale = 0.5
-    direct_scale = 1.8
-    gamma_scale = 1/1.3
-    ambient_scale = 1.16
     if mode=='none':
         cmd.set('ray_shadow',0)
     else:
@@ -1060,20 +981,12 @@ def ff_copy(src,dst,_self=cmd):
     cmd.alter("(%s)"%dst,"text_type=_rcopy.tt[name]")
     del pymol._rcopy
     
-def b2vdw(*arg,**kw):
-    _self = kw.get('_self',cmd)
-    pymol=_self._pymol
-    cmd=_self 
-    if not len(arg):
-        sele = 'all'
-    else:
-        sele = arg[0]
+def b2vdw(selection='all', _self=cmd):
     # use B values to create RMS VDW spheres
     # rms = sqrt(b/(8*(PI^2)))
-    cmd.alter("(%s)"%sele,"vdw=math.sqrt(b/78.9568352087)")
+    _self.alter(selection, "vdw=(b/78.9568352087)**0.5")
     
 def phipsi(selection="(pk1)",_self=cmd):
-    pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
     n_sele =   "((byres (%s)) & name N)"%selection
     c_sele =   "((byres (%s)) & name C)"%selection
@@ -1109,7 +1022,6 @@ def rainbow(selection="(name CA and alt ''+A)",reverse=0,_self=cmd):
 
     Use instead: spectrum
     '''
-    pymol=_self._pymol
     cmd=_self # NOT THREAD SAFE
 
     cmd.feedback("push")
@@ -1646,7 +1558,6 @@ def ss(selection="(name CA and alt '',A)",state=1,_self=cmd):
     print(" util.ss: assignment complete.")
 
 def colors(scheme="",_self=cmd):
-    pymol=_self._pymol
     cmd=_self
     if scheme=="jmol":
         cmd.set("auto_color",0)

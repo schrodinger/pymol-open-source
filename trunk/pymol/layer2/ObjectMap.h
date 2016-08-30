@@ -131,7 +131,7 @@ int ObjectMapSetBorder(ObjectMap * I, float level, int state);
 int ObjectMapStateSetBorder(ObjectMapState * I, float level);
 void ObjectMapStateInit(PyMOLGlobals * G, ObjectMapState * I);
 void ObjectMapStatePurge(PyMOLGlobals * G, ObjectMapState * I);
-int ObjectMapStateInterpolate(ObjectMapState * ms, float *array, float *result, int *flag,
+int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *result, int *flag,
                               int n);
 int ObjectMapStateContainsPoint(ObjectMapState * ms, float *point);
 ObjectMapState *ObjectMapStatePrime(ObjectMap * I, int state);
@@ -143,7 +143,7 @@ ObjectMapState *ObjectMapGetState(ObjectMap * I, int state);
 PyObject *ObjectMapAsPyList(ObjectMap * I);
 int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** result);
 
-int ObjectMapInterpolate(ObjectMap * I, int state, float *array, float *result, int *flag,
+int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *result, int *flag,
                          int n);
 
 void ObjectMapTransformMatrix(ObjectMap * I, int state, double *matrix);
@@ -158,5 +158,26 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
                                int n_points, float limit, float *histogram,
                                float min_arg, float max_arg);
 
+/*========================================================================*/
+inline
+ObjectMapState * getObjectMapState(PyMOLGlobals * G, ObjectMap * I, int state) {
+  return ObjectMapStateGetActive(I, state < 0 ? 0 : state);
+}
+
+inline
+ObjectMapState * getObjectMapState(PyMOLGlobals * G, CObject * obj, int state) {
+  return (obj && obj->type == cObjectMap) ?
+    getObjectMapState(G, (ObjectMap *) obj, state) : NULL;
+}
+
+ObjectMapState * getObjectMapState(PyMOLGlobals * G, const char * name, int state);
+
+/*========================================================================*/
+std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet);
+
+template <typename T>
+std::vector<char> ObjectMapGetCCP4Str(PyMOLGlobals * G, const T * ptr, int state, int quiet) {
+  return ObjectMapStateToCCP4Str(getObjectMapState(G, ptr, state), quiet);
+}
 
 #endif

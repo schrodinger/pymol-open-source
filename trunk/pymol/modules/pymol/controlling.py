@@ -16,7 +16,7 @@ from __future__ import print_function
 
 if __name__=='pymol.controlling' or __name__=='controlling':
     try:
-        from . import selector
+        from . import selector, internal
         from .shortcut import Shortcut
         cmd = __import__("sys").modules["pymol.cmd"]
         from .cmd import _cmd, QuietException, is_string, \
@@ -766,75 +766,32 @@ SEE ALSO
                 return func
             return decorator
 
-        r = DEFAULT_ERROR
         if is_string(fn):
             if arg or kw:
                 raise ValueError('arg and kw must be empty if fn is string')
-            arg = (fn,)
-            fn = cmd.do
-        if key[0:5]=='CTRL-':
-            pat=key[5:]
-            if len(pat)>1: # ctrl-special key
-                if pat[0]!='F':
-                    pat=pat.lower()
-                for a in _self.ctrl_special:
-                    if _self.ctrl_special[a][0]==pat:
-                        _self.ctrl_special[a][1]=fn
-                        _self.ctrl_special[a][2]=arg
-                        _self.ctrl_special[a][3]=kw
-                        r = DEFAULT_SUCCESS
-            else: # std. ctrl key
-                for a in _self.ctrl:
-                    if a==pat:
-                        _self.ctrl[a][0]=fn
-                        _self.ctrl[a][1]=arg
-                        _self.ctrl[a][2]=kw
-                        r = DEFAULT_SUCCESS
-        elif key[0:4]=='ALT-':
-            pat=key[4:]
-            if len(pat)>1: # alt-special key
-                if pat[0]!='F':
-                    pat=pat.lower()
-                for a in _self.alt_special:
-                    if _self.alt_special[a][0]==pat:
-                        _self.alt_special[a][1]=fn
-                        _self.alt_special[a][2]=arg
-                        _self.alt_special[a][3]=kw
-                        r = DEFAULT_SUCCESS
-            else: # std. alt key
-                pat=pat.lower()
-                for a in _self.alt:
-                    if a==pat:
-                        _self.alt[a][0]=fn
-                        _self.alt[a][1]=arg
-                        _self.alt[a][2]=kw
-                        r = DEFAULT_SUCCESS
-        elif key[0:5]=='SHFT-':
-            pat=key[5:]
-            if len(pat)>1: # shft-special key
-                if pat[0]!='F':
-                    pat=pat.lower()
-                for a in _self.shft_special:
-                    if _self.shft_special[a][0]==pat:
-                        _self.shft_special[a][1]=fn
-                        _self.shft_special[a][2]=arg
-                        _self.shft_special[a][3]=kw
-                        r = DEFAULT_SUCCESS
         else:
-            if key[0]!='F':
-                pat=key.lower()
-            else:
-                pat=key
-            for a in _self.special:
-                if _self.special[a][0]==pat:
-                    _self.special[a][1]=fn
-                    _self.special[a][2]=arg
-                    _self.special[a][3]=kw
-                    r = DEFAULT_SUCCESS
-        if is_error(r):
-            print("Error: special '%s' key not found."%key)
-        if _self._raising(r,_self): raise pymol.CmdException         
-        return r
+            fn = (fn, arg, kw)
+
+        mod, _, pat = key.rpartition('-')
+
+        if mod not in internal.modifier_keys:
+            raise pymol.CmdException("not a valid modifier key: '%s'." % mod)
+
+        if len(pat) > 1:
+            if pat[0] != 'F':
+                pat = pat.lower()
+                key = pat if not mod else (mod + '-' + pat)
+
+            if pat not in internal.special_key_names:
+                raise pymol.CmdException("special '%s' key not found." % pat)
+        elif not mod:
+            raise pymol.CmdException("Can't map regular letters.")
+        elif mod == 'SHFT':
+            raise pymol.CmdException("Can't map regular letters with SHFT.")
+
+        _self.key_mappings[key] = fn
+
+        return DEFAULT_SUCCESS
 
     def button(button, modifier, action, _self=cmd):
         '''

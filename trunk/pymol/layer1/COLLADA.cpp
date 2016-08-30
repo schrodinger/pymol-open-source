@@ -1803,7 +1803,8 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
         xmlTextWriterEndElement(w);  // node
 
-        float *light_pos_ptr, light_pos[3];
+        const float *light_pos_ptr;
+        float light_pos[3];
         for(i = 1; i < lc; i++){
           switch(i){
             case 1:

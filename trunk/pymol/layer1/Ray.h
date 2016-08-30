@@ -91,27 +91,27 @@ G3dPrimitive *RayRenderG3d(CRay * I, int width, int height, float front,
 struct _CRay {
 
   // methods
-  int sphere3fv(float *v, float r);
-  int cylinder3fv(float *v1, float *v2, float r, float *c1, float *c2);
-  int customCylinder3fv(float *v1, float *v2, float r, float *c1,
-			     float *c2, int cap1, int cap2);
-  int cone3fv(float *v1, float *v2, float r1, float r2, float *c1,
-		   float *c2, int cap1, int cap2);
-  int sausage3fv(float *v1, float *v2, float r, float *c1, float *c2);
-  void color3fv(float *c);
+  int sphere3fv(const float *v, float r);
+  int cylinder3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2);
+  int customCylinder3fv(const float *v1, const float *v2, float r, const float *c1,
+			     const float *c2, int cap1, int cap2);
+  int cone3fv(const float *v1, const float *v2, float r1, float r2, const float *c1,
+		   const float *c2, int cap1, int cap2);
+  int sausage3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2);
+  void color3fv(const float *c);
   int triangle3fv(
-		       float *v1, float *v2, float *v3,
-		       float *n1, float *n2, float *n3, float *c1, float *c2, float *c3);
+		       const float *v1, const float *v2, const float *v3,
+		       const float *n1, const float *n2, const float *n3, const float *c1, const float *c2, const float *c3);
   int triangleTrans3fv(
-			    float *v1, float *v2, float *v3,
-			    float *n1, float *n2, float *n3,
-			    float *c1, float *c2, float *c3,
+			    const float *v1, const float *v2, const float *v3,
+			    const float *n1, const float *n2, const float *n3,
+			    const float *c1, const float *c2, const float *c3,
 			    float t1, float t2, float t3);
-  void wobble(int mode, float *par);
+  void wobble(int mode, const float *par);
   void transparentf(float t);
   int character(int char_id);
-  void interiorColor3fv(float *v, int passive);
-  int ellipsoid3fv(float *v, float r, float *n1, float *n2, float *n3);
+  void interiorColor3fv(const float *v, int passive);
+  int ellipsoid3fv(const float *v, float r, const float *n1, const float *n2, const float *n3);
   int setLastToNoLighting(char no_lighting);
 
   /* everything below should be private */

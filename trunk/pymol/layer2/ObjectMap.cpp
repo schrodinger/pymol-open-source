@@ -44,6 +44,7 @@ Z* -------------------------------------------------------------------
 #include"ShaderMgr.h"
 #include"CGO.h"
 #include"File.h"
+#include"Executive.h"
 
 #define n_space_group_numbers 231
 static const char * space_group_numbers[] = {
@@ -436,7 +437,7 @@ int ObjectMapStateGetHistogram(PyMOLGlobals * G, ObjectMapState * ms,
   return cnt;
 }
 
-int ObjectMapInterpolate(ObjectMap * I, int state, float *array, float *result, int *flag,
+int ObjectMapInterpolate(ObjectMap * I, int state, const float *array, float *result, int *flag,
                          int n)
 {
   int ok = false;
@@ -454,8 +455,9 @@ int ObjectMapInterpolate(ObjectMap * I, int state, float *array, float *result, 
         txf = Alloc(float, 3 * n);
       }
 
-      float *src = array;
-      float *dst = array = txf;
+      const float *src = array;
+      float *dst = txf;
+      array = txf;
 
       for (int nn = n; nn--; src += 3, dst += 3) {
         transform44d3f(matrix, src, dst);
@@ -1098,11 +1100,11 @@ int ObjectMapStateContainsPoint(ObjectMapState * ms, float *point)
   return (result);
 }
 
-int ObjectMapStateInterpolate(ObjectMapState * ms, float *array, float *result, int *flag,
+int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *result, int *flag,
                               int n)
 {
   int ok = true;
-  float *inp;
+  const float *inp;
   int a, b, c;
   float x, y, z;
   inp = array;
@@ -2117,7 +2119,6 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
   if(I) {
     ms->Origin = Alloc(float, 3);
     ms->Range = Alloc(float, 3);
-    ms->Dim = Alloc(int, 3);
     ms->Grid = Alloc(float, 3);
     ms->MapSource = cMapSourceDesc;
   }
@@ -2164,7 +2165,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals * G, ObjectMap * I,
     for(a = 0; a < 3; a++) {
       ms->Min[a] = 0;
       ms->Max[a] = md->Dim[a] - 1;
-      ms->Div[a] = ms->Dim[a] - 1;
+      ms->Div[a] = md->Dim[a] - 1;
     }
 
     /* define corners */
@@ -2442,10 +2443,24 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
     int skew = *(i++);
 
     if(skew) {
-      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Errors)
-        "ObjectMapCCP4-ERR: PyMOL doesn't know how to handle skewed maps. Sorry!\n"
+      double matrix[16];
+      auto i_float = (const float *) i;
+
+      // SKWMAT          Skew matrix S (in order S11, S12, S13, S21 etc)
+      copy33f44d(i_float, matrix);
+      xx_matrix_invert(matrix, matrix, 4);
+
+      // SKWTRN          Skew translation t
+      matrix[3] = i_float[9];
+      matrix[7] = i_float[10];
+      matrix[11] = i_float[11];
+
+      // Xo(map) = S * (Xo(atoms) - t)
+      ObjectStateSetMatrix(&ms->State, matrix);
+
+      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
+        " ObjectMapCCP4: Applied skew transformation\n"
         ENDFB(I->Obj.G);
-      return (0);
     }
   }
 
@@ -2678,6 +2693,144 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
   }
 
   return (ok);
+}
+
+
+/*========================================================================*/
+ObjectMapState * getObjectMapState(PyMOLGlobals * G, const char * name, int state) {
+  return getObjectMapState(G, ExecutiveFindObjectByName(G, name), state);
+}
+
+
+/*========================================================================*/
+std::vector<char> ObjectMapStateToCCP4Str(const ObjectMapState * ms, int quiet)
+{
+  std::vector<char> buffer;
+
+  if (!ms || !ms->Active)
+    return buffer; // empty
+
+  auto G = ms->State.G;
+  auto field = ms->Field->data;
+
+  if (field->type != cFieldFloat ||
+      field->base_size != 4) {
+    PRINTFB(G, FB_ObjectMap, FB_Errors)
+      " MapStateToCCP4-Error: Unsupported field type\n" ENDFB(G);
+    return buffer; // empty
+  }
+
+  buffer.resize(1024 + field->size, 0);
+  auto buffer_s = reinterpret_cast<char*>(&buffer.front());
+  auto buffer_i = reinterpret_cast<int32_t*>(&buffer.front());
+  auto buffer_f = reinterpret_cast<float*>(&buffer.front());
+
+  buffer_i[0] = ms->FDim[2]; // NC / NX
+  buffer_i[1] = ms->FDim[1]; // NR / NY
+  buffer_i[2] = ms->FDim[0]; // NS / NZ
+  buffer_i[3] = 2;           // MODE (2 = 32-bit reals)
+  buffer_i[4] = ms->Min[2];  // NCSTART / NXSTART
+  buffer_i[5] = ms->Min[1];  // NRSTART / NYSTART
+  buffer_i[6] = ms->Min[0];  // NSSTART / NZSTART
+  buffer_i[7] = ms->Div[0];  // NX / MX
+  buffer_i[8] = ms->Div[1];  // NY / MY
+  buffer_i[9] = ms->Div[2];  // NZ / MZ
+
+  if (ms->Div[0] == 0) {
+    // fallback
+    buffer_i[7] = ms->FDim[0] - 1;  // NX / MX
+    buffer_i[8] = ms->FDim[1] - 1;  // NY / MY
+    buffer_i[9] = ms->FDim[2] - 1;  // NZ / MZ
+  }
+
+  bool cell_fallback = true;
+
+  // Cell
+  if (ms->Symmetry && ms->Symmetry->Crystal) {
+    auto crystal = ms->Symmetry->Crystal;
+    buffer_f[10] = crystal->Dim[0];     // X length / CELL A
+    buffer_f[11] = crystal->Dim[1];     // Y length
+    buffer_f[12] = crystal->Dim[2];     // Z length
+    buffer_f[13] = crystal->Angle[0];   // Alpha    / CELL B
+    buffer_f[14] = crystal->Angle[1];   // Beta
+    buffer_f[15] = crystal->Angle[2];   // Gamma
+
+    // check for 1x1x1 dummy cell
+    cell_fallback = fabs(lengthsq3f(crystal->Dim) - 3.f) < R_SMALL4;
+  }
+
+  if (cell_fallback) {
+    // fallback: orthogonal extents box
+    subtract3f(ms->ExtentMax, ms->ExtentMin, buffer_f + 10);    // CELL A
+    set3f(buffer_f + 13, 90.f, 90.f, 90.f);                     // CELL B
+  }
+
+  buffer_i[16] = 3; // MAPC
+  buffer_i[17] = 2; // MAPR
+  buffer_i[18] = 1; // MAPS
+
+  // dummy values
+  buffer_f[19] = -5.f; // AMIN
+  buffer_f[20] =  5.f; // AMAX
+  buffer_f[21] =  0.f; // AMEAN
+
+  // Space group number
+  if (ms->Symmetry) {
+    for (int ispg = 0; ispg < n_space_group_numbers; ++ispg) {
+      if (strcmp(ms->Symmetry->SpaceGroup, space_group_numbers[ispg]) == 0) {
+        buffer_i[22] = ispg; // ISPG
+        break;
+      }
+    }
+  }
+
+  buffer_i[23] = 0; // NSYMBT
+
+  // skew transformation
+  if (ms->State.Matrix) {
+    double m[16];
+    copy44d(ms->State.Matrix, m);
+
+    // Skew translation t
+    set3f(buffer_f + 34, m[3], m[7], m[11]);    // SKWTRN
+
+    // Skew matrix S (in order S11, S12, S13, S21 etc)
+    m[3] = m[7] = m[11] = 0.;
+    xx_matrix_invert(m, m, 4);
+    copy44d33f(m, buffer_f + 25);               // SKWMAT
+
+    buffer_i[24] = 1;                           // LSKFLG
+  }
+
+  // origin (stored with skew transformation)
+  if (ms->Origin && lengthsq3f(ms->Origin) > R_SMALL4) {
+    auto skwtrn = buffer_f + 34;
+    add3f(ms->Origin, skwtrn, skwtrn);          // add to SKWTRN
+
+    if (!buffer_i[24]) {
+      identity33f(buffer_f + 25);               // SKWMAT (identity)
+      buffer_i[24] = 1;                         // LSKFLG
+    }
+  }
+
+  // Character string 'MAP ' to identify file type
+  memcpy(buffer_s + 52 * 4, "MAP ", 4); // MAP
+
+  // Machine stamp indicating the machine type which wrote file
+  if (1 == *(int32_t*)"\1\0\0\0") {
+    buffer_i[53] = 0x00004144;  // MACHST (little endian)
+  } else {
+    buffer_i[53] = 0x11110000;  // MACHST (big endian)
+  }
+
+  buffer_f[54] = 1.f;   // ARMS
+  buffer_i[55] = 1;     // NLABL
+  strcpy(buffer_s + 56 * 4, "PyMOL"); // 57-256  LABEL(20,10)
+
+  // Map data array follows
+  memcpy(buffer_s + 1024, field->data, field->size);
+
+  return buffer;
 }
 
 

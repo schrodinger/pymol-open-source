@@ -496,7 +496,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     if(a >= 0) {
       ai = obj->AtomInfo + a1;
       if(GET_BIT(obj->AtomInfo[a1].visRep,cRepRibbon)) {
-        AtomInfoGetSetting_i(G, ai, cSetting_ribbon_trace_atoms, trace_ostate, &trace);
+        trace = AtomSettingGetWD(G, ai, cSetting_ribbon_trace_atoms, trace_ostate);
 
         if(trace || ((obj->AtomInfo[a1].protons == cAN_C) &&
                      (WordMatchExact(G, G->lex_const.CA, obj->AtomInfo[a1].name, true)) &&
@@ -741,17 +741,11 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
         AtomInfoType *ai1 = obj->AtomInfo + cs->IdxToAtm[*atp];
         AtomInfoType *ai2 = obj->AtomInfo + cs->IdxToAtm[*(atp + 1)];
 
-        c1 = ai1->color;
-        c2 = ai2->color;
+        c1 = AtomSettingGetWD(G, ai1, cSetting_ribbon_color, ribbon_color);
+        c2 = AtomSettingGetWD(G, ai2, cSetting_ribbon_color, ribbon_color);
 
-        if(ribbon_color >= 0) {
-          c1 = (c2 = ribbon_color);
-        }
-
-        AtomInfoGetSetting_color(G, ai1, cSetting_ribbon_color,
-                                 c1, &c1);
-        AtomInfoGetSetting_color(G, ai2, cSetting_ribbon_color,
-                                 c2, &c2);
+        if (c1 < 0) c1 = ai1->color;
+        if (c2 < 0) c2 = ai2->color;
 
         dev = throw_ * (*d);
 
@@ -903,7 +897,7 @@ void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info)
       if(a >= 0) {
         ai = obj_AtomInfo + a1;
         if(GET_BIT(ai->visRep,cRepRibbon)) {
-          AtomInfoGetSetting_i(G, ai, cSetting_ribbon_trace_atoms, trace_ostate, &trace);
+          trace = AtomSettingGetWD(G, ai, cSetting_ribbon_trace_atoms, trace_ostate);
 
           if(trace || ((ai->protons == cAN_C) &&
                        (WordMatchExact(G, G->lex_const.CA, ai->name, true)) &&

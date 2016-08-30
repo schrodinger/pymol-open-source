@@ -11,6 +11,7 @@ gz_ext_re = re.compile(r"(\.?gz|\.bz2)$", re.I)
 
 file_ext_re = re.compile(''.join([
     "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",
+    r"\.mmtf$|"
     r"\.pdbml$|\.pdbqt$|\.cml$|",
     r"\.mmod$|\.mmd$|\.dat$|\.out$|\.mol2$|",
     r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 

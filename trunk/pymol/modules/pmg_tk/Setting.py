@@ -113,41 +113,7 @@ class Setting:
         while not self.cmd.ready(): # make sure PyMOL is ready for action...
             time.sleep(0.1)
 
-        g_i = self.pymol.setting.index_dict.get
-        self.active_dict = {
-            g_i('scenes_changed'): self.update_scenes,
-        }
-
-        self.F=[ None,
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    ]
-        self.SHFTF=[ None,
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    IntVar(),
-                    ]
+        self.active_dict = {}
 
     def set(self, name, value):
         self.cmd.set(name, value, self.sele, self.state, log=1, quiet=0)
@@ -178,19 +144,6 @@ class Setting:
         self.active_dict[index] = var.update
         return var
 
-    def update_scenes(self):
-        names = set(self.cmd.get_scene_list())
-        if names:
-            for x in range(1,13):
-                if ('F%d'%x) in names:
-                    self.F[x].set(1)
-                else:
-                    self.F[x].set(0)
-                if ('SHFT-F%d'%x) in names:
-                    self.SHFTF[x].set(1)
-                else:
-                    self.SHFTF[x].set(0)
-                
     def refresh(self): # get any settings changes from PyMOL and update menus
         for a in self.cmd.get_setting_updates(self.sele, self.state) or ():
             try:

@@ -1752,7 +1752,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
     avd_wt = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sculpt_avd_weight);
     avd_gp = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sculpt_avd_gap);
     avd_rg = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sculpt_avd_range);
-    avd_ex = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_sculpt_avd_excl);
+    avd_ex = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_sculpt_avd_excl);
     if(avd_gp < 0.0F)
       avd_gp = 1.5F * solvent_radius;
     if(avd_rg < 0.0F)

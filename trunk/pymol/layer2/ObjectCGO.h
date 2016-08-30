@@ -45,8 +45,8 @@ void ObjectCGORecomputeExtent(ObjectCGO * I);
 
 PyObject *ObjectCGOAsPyList(ObjectCGO * I);
 int ObjectCGONewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCGO ** result,
-                           int version);
-ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals * G, char *text, float *pos);
+			       int version);
+ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals * G, const char *text, float *pos);
 
 void ObjectCGOFree(ObjectCGO * I);
 

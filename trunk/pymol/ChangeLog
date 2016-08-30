@@ -2,6 +2,54 @@
 CHANGE LOG
 =========================================================================
 
+2016-08-29 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* experimental MMTF load support
+
+	* map export in CCP4 format
+
+	* SDF V3000 import/export support
+
+	* refactor molecular file formats export: Unified handling of PDB,
+	  PQR, mmCIF, MOL2, SDF, XYZ, MAE
+
+	* PLY geometry import (as CGO)
+
+	* new command: unset_deep
+
+	* new setting: cartoon_all_alt: Create cartoon for every alt code
+
+	* stick_h_scale: default=1.0 (was: 0.4) but remove dependency on
+	  negative stick_radius
+
+	* auto_show_classified: Visualize small (< 50 atoms) polymer
+	  classified molecules like organic
+
+	* bymol selection operator: ignore zero-order bonds
+
+	* menu: isomesh/surface negative color
+
+	* improve alignment of residues with unknown resn (e.g. ligands):
+	  give a match score of 5 to perfect matches of unknown residue codes.
+	  Previously, those got match score -1.
+
+	* remove broken and obsolete "PMO" file support
+
+	* use "label_digits" setting with "label" command
+
+	* do not resize window when loading a session file
+
+	* fix ignored SCALE w/ identity rotation (e.g. 1WAP)
+
+	* fix "scene auto, clear" (Scene > Delete)
+
+	* new setting: pick_shading: do flat shading for programmable image
+	  color analysis
+
+	* experimental cmd.raw_image_callback: post cmd.draw() callback
+
+	* 1.8.3.2 (unstable/experimental)
+
 2016-05-26 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix mutagenesis wizard "No Mutation" (update and rms commands)

@@ -13,11 +13,6 @@ save tmp/small01.mmod
 save tmp/small01.mmd
 save tmp/small01.pdb
 
-multisave tmp/small01.pmo,small01
-
-dele all
-load tmp/small01.pmo
-
 dele all
 load tmp/small01.pdb
 count_atoms

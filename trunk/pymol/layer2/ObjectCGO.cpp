@@ -547,7 +547,7 @@ ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals * G, ObjectCGO * obj, CGO * cgo, int st
 
 /*========================================================================*/
 
-ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals * G, char *text, float *pos)
+ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals * G, const char *text, float *pos)
 {
 
   ObjectCGO *I = NULL;

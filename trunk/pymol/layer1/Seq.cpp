@@ -339,7 +339,8 @@ static void SeqDraw(Block * block ORTHOCGOARG)
       int vis_size = I->VisSize;
       int first_allowed;
       int max_title_width = 0;
-      char fill_char, *fill_str = SettingGetGlobal_s(G, cSetting_seq_view_fill_char);
+      char fill_char;
+      const char *fill_str = SettingGetGlobal_s(G, cSetting_seq_view_fill_char);
       int unaligned_color_index =
         SettingGetGlobal_color(G, cSetting_seq_view_unaligned_color);
       int fill_color_index = SettingGetGlobal_color(G, cSetting_seq_view_fill_color);

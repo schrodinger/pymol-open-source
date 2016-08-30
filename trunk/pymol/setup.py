@@ -269,7 +269,12 @@ else: # unix style (linux, mac, ...)
     libs += ["GLEW"]
     libs += pyogl_libs
 
-    ext_comp_args += ["-ffast-math", "-funroll-loops", "-O3", "-fcommon"]
+    ext_comp_args += ["-ffast-math", "-funroll-loops", "-fcommon"]
+
+    # optimization currently causes a clang segfault on OS X 10.9 when
+    # compiling layer2/RepCylBond.cpp
+    if sys.platform != 'darwin':
+        ext_comp_args += ["-O3"]
 
 def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open('layer0/Version.h').read())[0]

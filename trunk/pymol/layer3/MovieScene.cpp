@@ -36,7 +36,7 @@ enum {
   STORE_FRAME  = (1 << 4)
 };
 
-void SceneSetNames(PyMOLGlobals * G, std::vector<std::string> &list);
+void SceneSetNames(PyMOLGlobals * G, const std::vector<std::string> &list);
 
 /*
  * Struct to hold scene stored atom properties
@@ -212,7 +212,7 @@ bool MovieSceneOrder(PyMOLGlobals * G, const char * names, bool sort,
  * Store a scene
  *
  * name:            name (key) of the scene to store or update
- *                  ("auto" = scene_current_name, "new"/empty = unique key)
+ *                  ("new"/empty = unique key)
  * message:         wizard message to display with this scene
  * store_view:      store the camera view
  * store_color:     store colors
@@ -229,10 +229,6 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     bool store_frame)
 {
   std::string key(name);
-
-  // get scene_current_name
-  if (key == "auto")
-    key = SettingGetGlobal_s(G, cSetting_scene_current_name);
 
   // new key?
   if (key.empty() || key == "new") {
@@ -671,6 +667,8 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
 
     key = G->scenes->order[0].c_str();
     action = "recall";
+  } else if (strcmp(key, "auto") == 0) {
+    key = SettingGetGlobal_s(G, cSetting_scene_current_name);
   }
 
   if (strcmp(action, "recall") == 0) {

@@ -220,15 +220,7 @@ NOTES
     if state is 0, then all states are saved.
     
     '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)   
-            r = _cmd.get_pdb(_self._COb,str(selection),int(state)-1,0,
-                             str(ref),int(ref_state),int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException         
-        return r
+        return get_str('pdb', selection, state, ref, ref_state, -1, quiet, _self)
 
     def _get_dump_str(obj):
         if is_list(obj):
@@ -511,30 +503,23 @@ DESCRIPTION
     "multisave" is an unsupported command.
     
     '''
-        r = DEFAULT_ERROR
-        filename = _self.exp_path(filename)        
-        lc_filename = filename.lower()
-        if format=='':
-            # refactor following if/elif cascade 
-            # with a dictionary lookup
-            if re.search("\.pdb$|\.ent$",lc_filename):
-                format = 'pdb'
-            elif re.search("\.pmo$",lc_filename):
-                format = 'pmo'
-        if format == 'pdb':
-            ftype = loadable.pdb
-        elif format == 'pmo':
-            ftype = loadable.pmo
-        else:
-            ftype = loadable.pdb # default
-        try:
-            _self.lock(_self)
-            r = _cmd.multisave(_self._COb, str(filename), str(pattern),
-                               int(state)-1, int(append), int(ftype),int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
+        if not format:
+            if filename.lower().endswith('.pmo'):
+                raise pymol.CmdException('pmo format not supported anymore')
+            format = 'pdb'
+
+        s = get_str(format, pattern, state, '', -1, 1, quiet, _self)
+
+        if s is None:
+            if _self._raising(): raise QuietException
+            return DEFAULT_ERROR
+
+        filename = _self.exp_path(filename)
+
+        with open(filename, 'a' if int(append) else 'w') as handle:
+            handle.write(s)
+
+        return DEFAULT_SUCCESS
 
     def assign_atom_types( selection, format = "mol2", state=1, quiet=1, _self=cmd):
         r = DEFAULT_ERROR
@@ -545,6 +530,19 @@ DESCRIPTION
         finally:
             _self.unlock(r,_self)
         return r
+
+    def get_str(format, selection='(all)', state=-1, ref='',
+             ref_state=-1, multi=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    API-only function which exports the selection to a molecular file
+    format and returns it as a string.
+        '''
+        with _self.lockcm:
+            return _cmd.get_str(_self._COb, str(format), str(selection),
+                    int(state) - 1, str(ref), int(ref_state),
+                    int(multi), int(quiet))
 
     def save(filename, selection='(all)', state=-1, format='', ref='',
              ref_state=-1, quiet=1, partial=0,_self=cmd):
@@ -609,6 +607,8 @@ SEE ALSO
 
             if ext in ['cif', 'pqr', 'mol', 'sdf', 'pkl', 'xyz', 'pov',
                     'png', 'aln', 'fasta', 'obj', 'mtl', 'wrl', 'dae', 'idtf',
+                    'mae',
+                    'ccp4',
                     'mol2']:
                 format = ext
             elif ext in ["pdb", "ent"]:
@@ -632,6 +632,7 @@ SEE ALSO
             'xyz': get_xyzstr,
             'fasta': get_fastastr,
             'aln': get_alnstr,
+            'ccp4': get_ccp4str,
         }
 
         func_type2 = {
@@ -639,6 +640,8 @@ SEE ALSO
             'pqr': get_pqrstr,
             'sdf': get_sdfstr,
             'mol2': get_mol2str,
+            'mae': get_maestr,
+            'mol': lambda *a, **kw: get_str('mol', *a, **kw),
         }
 
         def safe_getitem(tup, idx):
@@ -657,15 +660,14 @@ SEE ALSO
             'mmod': io.mmd.toFile,
             'pkl': io.pkl.toFile, # binary pickle
             'pkla': lambda model, filename: io.pkl.toFile(model, filename, bin=0), # ascii pickle
-            'mol': io.mol.toFile,
         }
 
         contents = None
 
         if format in func_type1:
-            contents = func_type1[format](selection, state, quiet, _self=_self)
+            contents = func_type1[format](selection, state, quiet=quiet, _self=_self)
         elif format in func_type2:
-            contents = func_type2[format](selection, state, ref, ref_state, quiet, _self=_self)
+            contents = func_type2[format](selection, state, ref, ref_state, quiet=quiet, _self=_self)
         elif format in func_type3:
             contents = func_type3[format]()
             if isinstance(contents, tuple):
@@ -701,32 +703,6 @@ SEE ALSO
 
         return r
 
-    # mmCIF export
-
-    re_cifsimpledatavalue_match = re.compile(r'[^_#\$\'"\[\];]\S*$').match
-    re_cifendsinglequote_search = re.compile(r"'\s").search
-    re_cifenddoublequote_search = re.compile(r'"\s').search
-
-    def cifisreserved(s):
-        '''return true if s is a reserved cif keyword'''
-        return s in ('loop_', 'stop_', 'global_') or s[:5] in ('data_', 'save_')
-
-    def cifrepr(s):
-        '''returns s, if s is a simple data value, or some quoted version of s'''
-        if not s:
-            return '.'
-        if not cifisreserved(s) and re_cifsimpledatavalue_match(s) is not None:
-            return s
-        if '\n' not in s:
-            if re_cifendsinglequote_search(s) is None:
-                return "'" + s + "'"
-            if re_cifenddoublequote_search(s) is None:
-                return '"' + s + '"'
-        if '\n;' in s:
-            print(' Warning: CIF data value contains <newline><semicolon>')
-            s = s.replace('\n;', '\n ;')
-        return '\n;' + s + '\n;'
-
     def get_cifstr(selection="all", state=-1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
@@ -737,140 +713,16 @@ SEE ALSO
 
     get_pdbstr
         '''
-        tmp = _self.get_unused_name('_sele')
-        _self.select(tmp, selection, 0)
-
-        buf = ['# generated by PyMOL %s' % (_self.get_version()[0],)]
-
-        def callback(type_, ID, elem, name, alt, resn, segi, chain, resi,
-                x, y, z, q, b, formal_charge, state, entity_id):
-            resv, ins = (resi[:-1], resi[-1]) if resi[-1].isalpha() else (resi, '')
-            buf.append('%-6s %-3d %s %-3s '
-                    '%s %-3s %s %s '
-                    '%-2s %s %6.3f %6.3f %6.3f '
-                    '%4.2f %6.2f %d %s %d\n' % (
-                type_, ID, cifrepr(elem), cifrepr(name),
-                cifrepr(alt), cifrepr(resn), cifrepr(segi),
-                cifrepr(entity_id),
-                resv, cifrepr(ins), x, y, z,
-                q, b, formal_charge, cifrepr(chain), state,
-            ))
-
-        for model in _self.get_object_list('?' + tmp):
-            buf.append('''
-data_%s
-_entry.id %s
-''' % (model, cifrepr(model)))
-
-            symmetry = _self.get_symmetry(model)
-            if symmetry:
-                buf.append('''#
-_cell.entry_id %s
-_cell.length_a %f
-_cell.length_b %f
-_cell.length_c %f
-_cell.angle_alpha %f
-_cell.angle_beta %f
-_cell.angle_gamma %f
-_symmetry.entry_id %s
-_symmetry.space_group_name_H-M %s
-''' % (
-                    cifrepr(model),
-                    symmetry[0],
-                    symmetry[1],
-                    symmetry[2],
-                    symmetry[3],
-                    symmetry[4],
-                    symmetry[5],
-                    cifrepr(model),
-                    cifrepr(symmetry[6]),
-                ))
-
-            buf.append('''#
-loop_
-_atom_site.group_PDB
-_atom_site.id
-_atom_site.type_symbol
-_atom_site.label_atom_id
-_atom_site.label_alt_id
-_atom_site.label_comp_id
-_atom_site.label_asym_id
-_atom_site.label_entity_id
-_atom_site.label_seq_id
-_atom_site.pdbx_PDB_ins_code
-_atom_site.Cartn_x
-_atom_site.Cartn_y
-_atom_site.Cartn_z
-_atom_site.occupancy
-_atom_site.B_iso_or_equiv
-_atom_site.pdbx_formal_charge
-_atom_site.auth_asym_id
-_atom_site.pdbx_PDB_model_num
-''')
-
-            loop_i = len(buf) - 1
-
-            _self.iterate_state(state, '?%s & ?%s' % (model, tmp),
-                'callback(type, ID, elem, name, alt, resn, segi, chain, resi, '
-                'x, y, z, q, b, formal_charge, state, "")',
-                space={'callback': callback})
-
-            # no loop header for zero rows
-            if loop_i == len(buf) - 1:
-                buf[loop_i] = '#'
-
-        _self.delete(tmp)
-
-        return ''.join(buf)
+        return get_str('cif', selection, state, '', -1, -1, quiet, _self)
 
     def get_xyzstr(selection, state=-1, quiet=1, _self=cmd):
-        state = int(state)
-        buf = []
-
-        for i, (osele, ostate) in enumerate(
-                pymol.selecting.objsele_state_iter(selection, state)):
-            n_atoms_i = len(buf)
-            buf.append('') # natoms (deferred)
-            buf.append('\n') # comment
-            n = _self.iterate_state(ostate, osele,
-                    r'_buf.append("%s %f %f %f\n" % (elem, x, y, z))',
-                    space={'_buf': buf})
-            buf[n_atoms_i] = str(n) + '\n'
-
-        if not quiet:
-            print(" Save-XYZ: %d object-state(s) in selection." % (i + 1))
-
-        return ''.join(buf)
+        return get_str('xyz', selection, state, '', -1, -1, quiet, _self)
 
     def get_sdfstr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
-        state = int(state)
-        buf = []
-
-        for i, (osele, ostate) in enumerate(
-                pymol.selecting.objsele_state_iter(selection, state)):
-            rec = SDFRec(io.mol.toList(_self.get_model(osele, ostate, ref, ref_state)))
-            buf.extend(rec.toList())
-            buf.append('$$$$\n')
-
-        if not quiet:
-            print(" Save-SDF: %d object-state(s) in selection." % (i + 1))
-
-        return ''.join(buf)
+        return get_str('sdf', selection, state, ref, ref_state, -1, quiet, _self)
 
     def get_mol2str(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
-        state = int(state)
-        buf = []
-
-        for i, (osele, ostate) in enumerate(
-                pymol.selecting.objsele_state_iter(selection, state)):
-            assign_atom_types(osele, "mol2", ostate, 1, _self)
-            buf.extend(io.mol2.toList(_self.get_model(osele,
-                ostate, ref, ref_state), selection=osele, state=ostate))
-
-        if not quiet:
-            print(" Save-MOL2: %d object-state(s) in selection." % (i + 1))
-
-        return ''.join(buf)
+        return get_str('mol2', selection, state, ref, ref_state, -1, quiet, _self)
 
     def get_alnstr(selection, state=-1, quiet=1, _self=cmd):
         with _self.lockcm:
@@ -878,6 +730,12 @@ _atom_site.pdbx_PDB_model_num
                     int(state)-1, 0, int(quiet))
 
     def get_pqrstr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
+        return get_str('pqr', selection, state, ref, ref_state, -1, quiet, _self)
+
+    def get_maestr(selection, state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
+        return get_str('mae', selection, state, ref, ref_state, -1, quiet, _self)
+
+    def get_ccp4str(name, state=1, quiet=1, _self=cmd):
         with _self.lockcm:
-            return _cmd.get_pdb(_self._COb, str(selection), int(state)-1, 1,
-                    str(ref), int(ref_state)-1, int(quiet))
+            return _cmd.get_ccp4str(_self._COb, str(name),
+                    int(state) - 1, int(quiet))

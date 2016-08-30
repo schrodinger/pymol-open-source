@@ -2469,14 +2469,14 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   float carve_cutoff;
   float carve_normal_cutoff;
   int carve_normal_flag;
-  char *carve_selection = NULL;
+  const char *carve_selection = NULL;
   float *carve_vla = NULL;
   MapType *carve_map = NULL;
 
   int clear_state = 0;
   int clear_flag = false;
   float clear_cutoff;
-  char *clear_selection = NULL;
+  const char *clear_selection = NULL;
   float *clear_vla = NULL;
   int state = I->R.context.state;
   float transp;
@@ -2956,13 +2956,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
           distDiff = fabs(minDist2-minDist);
         }
         if(i0 >= 0) {
-          int at_surface_color;
-          transp = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_transparency);
-
-          AtomInfoGetSetting_f(G, ai0, cSetting_transparency, transp, &at_transp);
-
-          AtomInfoGetSetting_color(G, ai0, cSetting_surface_color,
-                                   surface_color, &at_surface_color);
+          int at_surface_color = AtomSettingGetWD(G, ai0, cSetting_surface_color, surface_color);
+          at_transp = AtomSettingGetWD(G, ai0, cSetting_transparency, transp);
 
           if(at_surface_color != -1) {
             c1 = at_surface_color;
@@ -4152,7 +4147,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       int carve_state = 0;
       int carve_flag = false;
       float carve_cutoff;
-      char *carve_selection = NULL;
+      const char *carve_selection = NULL;
       float *carve_vla = NULL;
       MapType *carve_map = NULL;
 

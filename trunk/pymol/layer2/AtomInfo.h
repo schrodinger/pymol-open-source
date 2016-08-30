@@ -285,7 +285,7 @@ typedef struct AtomInfoType {
   unsigned char protekted : 2;  // 0,1,2
 
   // methods
-  bool isHydrogen() {
+  bool isHydrogen() const {
     return protons == cAN_H;
   }
 
@@ -314,7 +314,7 @@ typedef struct AtomInfoType {
    * Return true if any representation, which is displayable by this
    * atom, is shown
    */
-  bool isVisible() {
+  bool isVisible() const {
     if(visRep & (
           // point reps
           cRepSphereBit | cRepEllipsoidBit | cRepLabelBit |
@@ -358,67 +358,50 @@ void AtomInfoCleanAtomName(char *name);
 #ifndef _PYMOL_NOPY
 int AtomInfoSetSettingFromPyObject(PyMOLGlobals * G, AtomInfoType *ai, int setting_id, PyObject *val);
 #endif
-int AtomInfoCheckSetting(PyMOLGlobals * G, AtomInfoType * ai, int setting_id);
 PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, AtomInfoType * ai, int setting_id);
-int AtomInfoGetSetting_b(PyMOLGlobals * G, AtomInfoType * ai, int setting_id, int current,
-                         int *effective);
-int AtomInfoGetSetting_i(PyMOLGlobals * G, AtomInfoType * ai, int setting_id, int current,
-                         int *effective);
-int AtomInfoGetSetting_f(PyMOLGlobals * G, AtomInfoType * ai, int setting_id,
-                         float current, float *effective);
-int AtomInfoGetSetting_color(PyMOLGlobals * G, AtomInfoType * ai, int setting_id,
-                             int current, int *effective);
 
 void AtomInfoBondCopy(PyMOLGlobals * G, const BondType * src, BondType * dst);
-
-int AtomInfoCheckBondSetting(PyMOLGlobals * G, BondType * bi, int setting_id);
-int AtomInfoGetBondSetting_b(PyMOLGlobals * G, BondType * ai, int setting_id, int current,
-                             int *effective);
-int AtomInfoGetBondSetting_i(PyMOLGlobals * G, BondType * ai, int setting_id, int current,
-                             int *effective);
-int AtomInfoGetBondSetting_f(PyMOLGlobals * G, BondType * ai, int setting_id,
-                             float current, float *effective);
-int AtomInfoGetBondSetting_color(PyMOLGlobals * G, BondType * ai, int setting_id,
-                                 int current, int *effective);
 
 int AtomInfoCheckUniqueID(PyMOLGlobals * G, AtomInfoType * ai);
 void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I);
 void AtomInfoFreeSortedIndexes(PyMOLGlobals * G, int **index, int **outdex);
 void AtomInfoPrimeColors(PyMOLGlobals * G);
 void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1);
-int AtomInfoGetColor(PyMOLGlobals * G, AtomInfoType * at1);
-int AtomInfoGetExpectedValence(PyMOLGlobals * G, AtomInfoType * I);
-int AtomInfoIsFreeCation(PyMOLGlobals * G, AtomInfoType * I);
-PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * at);
+int AtomInfoGetColor(PyMOLGlobals * G, const AtomInfoType * at1);
+int AtomInfoGetExpectedValence(PyMOLGlobals * G, const AtomInfoType * I);
+int AtomInfoIsFreeCation(PyMOLGlobals * G, const AtomInfoType * I);
+PyObject *AtomInfoAsPyList(PyMOLGlobals * G, const AtomInfoType * at);
 int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * at, PyObject * list);
-int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2, bool, bool);
-int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
-int AtomInfoCompare(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
-int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
-int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
-int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, AtomInfoType * at1,
-                                 AtomInfoType * at2);
-float AtomInfoGetBondLength(PyMOLGlobals * G, AtomInfoType * ai1, AtomInfoType * ai2);
-int AtomInfoSameResidue(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
-int AtomInfoSameResidueP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
-int AtomInfoSameChainP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
-int AtomInfoSameSegmentP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
-int AtomInfoSequential(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
+
+int AtomInfoMatch(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2, bool, bool);
+int AtomInfoCompareAll(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
+int AtomInfoCompare(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
+int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
+int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
+int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, const AtomInfoType * at1,
+                                 const AtomInfoType * at2);
+float AtomInfoGetBondLength(PyMOLGlobals * G, const AtomInfoType * ai1, const AtomInfoType * ai2);
+int AtomInfoSameResidue(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
+int AtomInfoSameResidueP(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
+int AtomInfoSameChainP(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
+int AtomInfoSameSegmentP(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
+int AtomInfoSequential(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2,
                        int mode);
 
+#define AtomInfoCheckUniqueBondID AtomInfoCheckUniqueID
 int AtomInfoCheckUniqueBondID(PyMOLGlobals * G, BondType * bi);
 void AtomInfoPurgeBond(PyMOLGlobals * G, BondType * bi);
 
-void AtomInfoBracketResidue(PyMOLGlobals * G, AtomInfoType * ai0, int n0,
-                            AtomInfoType * ai, int *st, int *nd);
-void AtomInfoBracketResidueFast(PyMOLGlobals * G, AtomInfoType * ai0, int n0, int cur,
+void AtomInfoBracketResidue(PyMOLGlobals * G, const AtomInfoType * ai0, int n0,
+                            const AtomInfoType * ai, int *st, int *nd);
+void AtomInfoBracketResidueFast(PyMOLGlobals * G, const AtomInfoType * ai0, int n0, int cur,
                                 int *st, int *nd);
 
-int AtomInfoUniquefyNames(PyMOLGlobals * G, AtomInfoType * atInfo0, int n0,
+int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0,
                           AtomInfoType * atInfo1, int *flag1, int n1);
 int AtomInfoGetCarbColor(PyMOLGlobals * G);
 bool AtomResiFromResv(char *resi, size_t size, int resv, char inscode);
-inline bool AtomResiFromResv(char *resi, size_t size, AtomInfoType * ai) {
+inline bool AtomResiFromResv(char *resi, size_t size, const AtomInfoType * ai) {
   return AtomResiFromResv(resi, size, ai->resv, ai->inscode);
 }
 
@@ -445,7 +428,7 @@ void AtomInfoGetPDB3LetHydroName(PyMOLGlobals * G, const char *resn, const char 
 #define cAIC_AllMask 0xFFFF
 
 void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, int mask);
-int AtomInfoNameOrder(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoNameOrder(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2);
 int AtomInfoUpdateAutoColor(PyMOLGlobals * G);
 
 typedef struct {
@@ -456,22 +439,53 @@ typedef struct {
   int next;
 } SSEntry;
 
-int BondTypeCompare(PyMOLGlobals * G, BondType * bt1, BondType * bt2);
+int BondTypeCompare(PyMOLGlobals * G, const BondType * bt1, const BondType * bt2);
 
 void atomicnumber2elem(char * dst, int protons);
 
-// atom-level setting
-template <typename V> void SettingSet(PyMOLGlobals * G, int index, V value, AtomInfoType * ai) {
+/*
+ * atom-level and bond-level settings
+ */
+
+template <typename T>
+int AtomInfoCheckSetting(PyMOLGlobals * G, T * item, int index) {
+  return (item->has_setting && SettingUniqueCheck(G, item->unique_id, index));
+}
+
+#define AtomInfoCheckBondSetting AtomInfoCheckSetting
+
+template <typename V, typename T> void SettingSet(PyMOLGlobals * G, int index, V value, T * ai) {
   AtomInfoCheckUniqueID(G, ai);
   ai->has_setting = true;
   SettingUniqueSet(G, ai->unique_id, index, value);
 }
 
-// bond-level setting
-template <typename V> void SettingSet(PyMOLGlobals * G, int index, V value, BondType * b) {
-  AtomInfoCheckUniqueBondID(G, b);
-  b->has_setting = true;
-  SettingUniqueSet(G, b->unique_id, index, value);
+/*
+ * Return true if `item` has the requested setting defined and the
+ * value could be assigned to `out`.
+ */
+template <typename V, typename T>
+bool AtomSettingGetIfDefined(PyMOLGlobals * G, T * item, int index, V * out) {
+  return item->has_setting &&
+    SettingUniqueGetIfDefined<V>(G, item->unique_id, index, out);
 }
+
+/*
+ * Return the `item`-level setting value or `default_`, if `index` is not
+ * defined for `item`.
+ */
+template <typename V, typename T>
+V AtomSettingGetWD(PyMOLGlobals * G, T * item, int index, V default_) {
+  V out;
+  if (AtomSettingGetIfDefined<V, T>(G, item, index, &out))
+    return out;
+  return default_;
+}
+
+#define BondSettingGetWD AtomSettingGetWD
+
+// stereochemistry
+const char * AtomInfoGetStereoAsStr(const AtomInfoType * ai);
+void AtomInfoSetStereo(AtomInfoType * ai, const char * stereo);
 
 #endif

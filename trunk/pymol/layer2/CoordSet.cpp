@@ -503,7 +503,7 @@ int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, int mode)
       result = 1;
       lp = I->LabPos + a1;
       if(!lp->mode) {
-        float *lab_pos =
+        const float *lab_pos =
           SettingGet_3fv(obj->Obj.G, I->Setting, obj->Obj.Setting,
                          cSetting_label_position);
         copy3f(lab_pos, lp->pos);
@@ -676,7 +676,8 @@ bool CoordSetInsureOrthogonal(PyMOLGlobals * G,
   const float * r2f = cryst->RealToFrac;
 
   // are the matrices sufficiently close to be the same?
-  if (is_allclosef(3, r2f, 3, sca, 4, R_SMALL4)) {
+  if (!sca[3] && !sca[7] && !sca[11] &&
+      is_allclosef(3, r2f, 3, sca, 4, R_SMALL4)) {
     return false;
   }
 
@@ -756,7 +757,10 @@ static char RotateU(const double *matrix, float *anisou)
 
 /*========================================================================*/
 void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
-                             AtomInfoType * ai, float *v, int cnt, PDBInfoRec * pdb_info, double *matrix)
+                             const AtomInfoType * ai,
+                             const float *v, int cnt,
+                             const PDBInfoRec * pdb_info,
+                             const double *matrix)
 /*
  * v: 3x1 vertex in final output space
  * matrix: 4x4 homogenous transformation matrix from model space to output

@@ -1073,7 +1073,7 @@ int MovieSeekScene(PyMOLGlobals * G, int loop)
   CMovie *I = G->Movie;
   int result = -1;
   OVreturn_word ret;
-  char *scene_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
+  const char *scene_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
   if(OVreturn_IS_OK
      ((ret = OVLexicon_BorrowFromCString
        (G->Lexicon, scene_name)))) {

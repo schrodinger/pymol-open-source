@@ -194,8 +194,9 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj;
   int a, a1, c1;
-  float *v, *v0, *vc;
-  float *lab_pos;
+  float *v;
+  const float *v0, *vc;
+  const float *lab_pos;
   int *l;
   int label_color;
   LabPosType *lp = NULL;
@@ -233,7 +234,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
 
   lab_pos = SettingGet_3fv(G, cs->Setting, obj->Obj.Setting, cSetting_label_position);
 
-  if(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
+  if(SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
     I->R.P = Alloc(Pickable, cs->NIndex + 1);
     ErrChkPtr(G, I->R.P);
     rp = I->R.P + 1;            /* skip first record! */
@@ -250,8 +251,7 @@ Rep *RepLabelNew(CoordSet * cs, int state)
       lp = cs->LabPos + a;
     }
     if((ai->visRep & cRepLabelBit) && (ai->label)) {
-      int at_label_color;
-      AtomInfoGetSetting_color(G, ai, cSetting_label_color, label_color, &at_label_color);
+      int at_label_color = AtomSettingGetWD(G, ai, cSetting_label_color, label_color);
 
       /*
          float at_label_pos = lab_pos;

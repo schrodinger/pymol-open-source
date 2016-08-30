@@ -89,6 +89,8 @@ Z* -------------------------------------------------------------------
 #include "MovieScene.h"
 #include "CifFile.h"
 
+#include "MoleculeExporter.h"
+
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
 #define tmpSele2 "_tmp2"
@@ -664,6 +666,28 @@ static PyObject *CmdGetOrigin(PyObject * self, PyObject * args)
   } else {
     return APIFailure();
   }
+}
+
+static PyObject * CmdGetCCP4Str(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals * G = NULL;
+  const char * name = NULL;
+  int state = 0;
+  int quiet = 1;
+  if (!PyArg_ParseTuple(args, "Osii", &self, &name, &state, &quiet)) {
+    API_HANDLE_ERROR;
+  } else {
+    API_SETUP_PYMOL_GLOBALS;
+    if (G && APIEnterNotModal(G)) {
+      auto v = ObjectMapGetCCP4Str(G, name, state, quiet);
+      PyObject * result = v.empty() ? NULL :
+        PyBytes_FromStringAndSize(&v.front(), v.size());
+
+      APIExit(G);
+      return APIAutoNone(result);
+    }
+  }
+  return APIAutoNone(NULL);
 }
 
 static PyObject * CmdGetVolumeField(PyObject * self, PyObject * args)
@@ -1538,28 +1562,6 @@ static PyObject *CmdGetChains(PyObject * self, PyObject * args)
   } else {
     return APIFailure();
   }
-}
-
-static PyObject *CmdMultiSave(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  char *name, *object;
-  int append, state, format, quiet;
-  int ok = false;
-  ok =
-    PyArg_ParseTuple(args, "Ossiiii", &self, &name, &object, &state, &append, &format,
-                     &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok = APIEnterNotModal(G))) {
-    ok = ExecutiveMultiSave(G, name, object, state, append, format, quiet);
-    APIExit(G);
-  }
-  return APIResultOk(ok);
 }
 
 static PyObject *CmdRampNew(PyObject * self, PyObject * args)
@@ -2590,6 +2592,28 @@ static PyObject *CmdGetType(PyObject * self, PyObject * args)
     return (Py_BuildValue("s", type));
   else
     return APIResultOk(ok);
+}
+
+static PyObject *CmdGetUnusedName(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char * prefix = NULL;
+  int alwaysnumber = false;
+  int ok = false;
+  ok = PyArg_ParseTuple(args, "Osi", &self, &prefix, &alwaysnumber);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if (ok && (ok = APIEnterNotModal(G))) {
+    auto result = PConvToPyObject(ExecutiveGetUnusedName(G, prefix, alwaysnumber));
+    APIExit(G);
+    return result;
+  } else {
+    return APIResultOk(ok);
+  }
 }
 
 static PyObject *CmdGetDragObjectName(PyObject * self, PyObject * args)
@@ -3817,7 +3841,6 @@ static PyObject *CmdAlter(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str1, *str2;
   int i1, quiet;
-  OrthoLineType s1;
   int result = 0;
   int ok = false;
   PyObject *space;
@@ -3829,9 +3852,7 @@ static PyObject *CmdAlter(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    result = ExecutiveIterate(G, s1, str2, i1, quiet, space);   /* TODO STATUS */
-    SelectorFreeTmp(G, s1);
+    result = ExecutiveIterate(G, str1, str2, i1, quiet, space);   /* TODO STATUS */
     APIExit(G);
   }
   return Py_BuildValue("i", result);
@@ -3909,7 +3930,6 @@ static PyObject *CmdAlterState(PyObject * self, PyObject * args)
   char *str1, *str2;
   int i1, i2, i3, quiet;
   int result = -1;
-  OrthoLineType s1;
   PyObject *obj;
   int ok = false;
   ok =
@@ -3921,9 +3941,7 @@ static PyObject *CmdAlterState(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    result = ExecutiveIterateState(G, i1, s1, str2, i2, i3, quiet, obj);
-    SelectorFreeTmp(G, s1);
+    result = ExecutiveIterateState(G, i1, str1, str2, i2, i3, quiet, obj);
     APIExit(G);
   }
   return PyInt_FromLong(result);
@@ -4689,6 +4707,38 @@ static PyObject *CmdGetSeqAlignStr(PyObject * self, PyObject * args)
   return (APIAutoNone(result));
 }
 
+static PyObject *CmdGetStr(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  unique_vla_ptr<char> vla;
+  char *format;
+  char *sele;
+  int state;
+  char *ref;
+  int ref_state;
+  int quiet;
+  int multi;
+
+  ok_assert(1, PyArg_ParseTuple(args, "Ossisiii", &self,
+        &format, &sele, &state, &ref, &ref_state, &multi, &quiet));
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(1, G && APIEnterNotModal(G));
+
+  vla = MoleculeExporterGetStr(G, format, sele, state,
+      ref, ref_state, multi, quiet);
+
+  ok_assert(2, vla);
+  result = PyString_FromString(vla);
+
+ok_except2:
+  APIExit(G);
+  return APIAutoNone(result);
+ok_except1:
+  API_HANDLE_ERROR;
+  return APIAutoNone(NULL);
+}
+
 static PyObject *CmdGetPDB(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -5358,6 +5408,15 @@ static PyObject *CmdGetMoment(PyObject * self, PyObject * args)
                          moment[6], moment[7], moment[8]);
 
   return result;
+}
+
+static PyObject *CmdGetSettingType(PyObject *, PyObject * args)
+{
+  int index, type = -1;
+  if (PyArg_ParseTuple(args, "i", &index)) {
+    type = SettingGetType(index);
+  }
+  return PyInt_FromLong(type);
 }
 
 static PyObject *CmdGetSettingTuple(PyObject * self, PyObject * args)
@@ -7384,18 +7443,7 @@ static PyObject *CmdHAdd(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    ExecutiveAddHydrogens(G, s1, quiet);        /* TODO STATUS */
-    SelectorFreeTmp(G, s1);
-      ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    ExecutiveAddHydrogens(G, s1, quiet);        /* TODO STATUS */
-    SelectorFreeTmp(G, s1);
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    ExecutiveAddHydrogens(G, s1, quiet);        /* TODO STATUS */
-    SelectorFreeTmp(G, s1);
-    ok = (SelectorGetTmp(G, str1, s1) >= 0);
-    ExecutiveAddHydrogens(G, s1, quiet);        /* TODO STATUS */
-      SelectorFreeTmp(G, s1);
+    ExecutiveAddHydrogens(G, str1, quiet);
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -8020,6 +8068,35 @@ static PyObject *CmdAssignAtomTypes(PyObject *self, PyObject *args)
   return (APIAutoNone(result));
 }
 
+static PyObject *CmdSetDiscrete(PyObject * self, PyObject * args)
+{
+  const char *name;
+  int discrete;
+  bool status = false;
+
+  if (!PyArg_ParseTuple(args, "Osi", &self, &name, &discrete)) {
+    API_HANDLE_ERROR;
+  } else {
+    PyMOLGlobals *G = NULL;
+    API_SETUP_PYMOL_GLOBALS;
+
+    if (G && APIEnterBlockedNotModal(G)) {
+      ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G, name);
+
+      if (!obj) {
+        PRINTFB(G, FB_Executive, FB_Errors)
+          " Executive-Error: object '%s' not found.\n", name ENDFB(G);
+      } else {
+        status = ObjectMoleculeSetDiscrete(G, obj, discrete);
+      }
+
+      APIExitBlocked(G);
+    }
+  }
+
+  return APIResultOk(status);
+}
+
 static PyObject *CmdCountDiscrete(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -8212,6 +8289,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_seq_align_str", CmdGetSeqAlignStr, METH_VARARGS},
   {"get_session", CmdGetSession, METH_VARARGS},
   {"get_setting_of_type", CmdGetSettingOfType, METH_VARARGS},
+  {"get_setting_type", CmdGetSettingType, METH_VARARGS},
   {"get_setting_tuple", CmdGetSettingTuple, METH_VARARGS},
   {"get_setting_text", CmdGetSettingText, METH_VARARGS},
   {"get_setting_updates", CmdGetSettingUpdates, METH_VARARGS},
@@ -8219,12 +8297,15 @@ static PyMethodDef Cmd_methods[] = {
   {"get_object_list", CmdGetObjectList, METH_VARARGS},
   {"get_symmetry", CmdGetSymmetry, METH_VARARGS},
   {"get_state", CmdGetState, METH_VARARGS},
+  {"get_str", CmdGetStr, METH_VARARGS},
   {"get_title", CmdGetTitle, METH_VARARGS},
   {"get_type", CmdGetType, METH_VARARGS},
+  {"get_unused_name", CmdGetUnusedName, METH_VARARGS},
   {"get_version", CmdGetVersion, METH_VARARGS},
   {"get_view", CmdGetView, METH_VARARGS},
   {"get_viewport", CmdGetViewPort, METH_VARARGS},
   {"get_vis", CmdGetVis, METH_VARARGS},
+  {"get_ccp4str", CmdGetCCP4Str, METH_VARARGS},
   {"get_volume_field", CmdGetVolumeField, METH_VARARGS},
   {"get_volume_histogram", CmdGetVolumeHistogram, METH_VARARGS},
   {"get_volume_ramp", CmdGetVolumeRamp, METH_VARARGS},
@@ -8274,7 +8355,6 @@ static PyMethodDef Cmd_methods[] = {
   {"mplay", CmdMPlay, METH_VARARGS},
   {"mpng_", CmdMPNG, METH_VARARGS},
   {"mmatrix", CmdMMatrix, METH_VARARGS},
-  {"multisave", CmdMultiSave, METH_VARARGS},
   {"mview", CmdMView, METH_VARARGS},
   {"object_update_thread", CmdObjectUpdateThread, METH_VARARGS},
   {"origin", CmdOrigin, METH_VARARGS},
@@ -8333,6 +8413,7 @@ static PyMethodDef Cmd_methods[] = {
   {"set_colorection", CmdSetColorection, METH_VARARGS},
   {"set_colorection_name", CmdSetColorectionName, METH_VARARGS},
   {"set_dihe", CmdSetDihe, METH_VARARGS},
+  {"set_discrete", CmdSetDiscrete, METH_VARARGS},
   {"set_feedback", CmdSetFeedbackMask, METH_VARARGS},
   {"set_frame", CmdSetFrame, METH_VARARGS},
   {"set_name", CmdSetName, METH_VARARGS},

@@ -682,6 +682,8 @@ SEE ALSO
                     return load_pdbml(fname, object, discrete, multiplex, zoom=zoom, quiet=quiet, _self=_self)
                 elif re.search(r"\.cml$", fname_no_gz, re.I):
                     return load_cml(fname, object, discrete, multiplex, zoom=zoom, quiet=quiet, _self=_self)
+                elif re.search(r"\.mmtf$", fname_no_gz, re.I):
+                    return load_mmtf(fname, object, discrete, multiplex, zoom=zoom, quiet=quiet, _self=_self)
                 elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",fname_no_gz,re.I):
                     ftype = loadable.mmod
                 elif re.search("\.(ccp4|mrc|map)$",fname_no_gz,re.I):
@@ -723,6 +725,14 @@ SEE ALSO
                     return _self.do("_ run %s" % filename)
                 elif re.search(r"\.pml$", fname_no_gz, re.I):
                     return _self.do("_ @%s" % filename)
+                elif re.search(r'\.ply$', fname_no_gz, re.I):
+                    from . import cgo
+                    obj = cgo.from_plystr(_self.file_read(filename))
+                    if not object:
+                        object = filename_to_objectname(filename)
+                    r = _self.load_cgo(obj, object, state)
+                    _self.set('cgo_lighting', 1, object)
+                    return r
                 elif hasattr(loadable, ext):
                     ftype = getattr(loadable, ext)
                 elif ext in ['smap', 'prj']:
@@ -1806,3 +1816,61 @@ DESCRIPTION
                 oname = object
 
             _self.load_model(model, oname, state=model_num, zoom=zoom, discrete=discrete)
+
+    def load_mmtf(filename, object='', discrete=0, multiplex=0, zoom=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Load an MMTF file or URL.
+        '''
+        from chempy.mmtf import MmtfReader
+
+        if not object:
+            object = filename_to_objectname(filename)
+
+        data = MmtfReader.from_url(filename)
+        models = data.to_chempy(_self.get_setting_int('cif_use_auth'))
+
+        if len(models) == 1:
+            _self.load_model(models[0], object, discrete=discrete, zoom=zoom, quiet=quiet)
+
+            assembly = _self.get('assembly').encode()
+            if not assembly:
+                return
+
+            try:
+                transformList = next((a[b'transformList']
+                    for a in data.get(b'bioAssemblyList', ())
+                    if a[b'name'] == assembly))
+            except StopIteration:
+                raise pymol.CmdException('No such assembly: "%s"' % (assembly))
+
+            chainIdList = data.get(b'chainIdList')
+
+            tmp = _self.get_unused_name('_asu')
+            _self.set_name(object, tmp)
+
+            for state, trans in enumerate(transformList, 1):
+                chains = [chainIdList[i] for i in trans[b'chainIndexList']]
+                _self.create(object,
+                        'model %s and segi %s' % (tmp, '+'.join(chains)),
+                        1, state, zoom=0, discrete=discrete)
+                _self.transform_object(object, trans[b'matrix'], state=state)
+
+            _self.delete(tmp)
+            _self.set('all_states', 1, object)
+
+            if int(zoom):
+                _self.zoom(object)
+
+            return
+
+        tmp = _self.get_unused_name('_model')
+
+        for i, model in enumerate(models):
+            _self.load_model(model, tmp, 1, zoom=0)
+            if multiplex > 0:
+                _self.set_name(tmp, '%s_%04d' % object)
+            else:
+                _self.create(object, tmp, 1, -1, discrete=discrete, zoom=zoom)
+                _self.delete(tmp)

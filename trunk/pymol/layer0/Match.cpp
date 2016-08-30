@@ -80,6 +80,9 @@ CMatch *MatchNew(PyMOLGlobals * G, unsigned int na, unsigned int nb, int dist_ma
       I->smat[i][i] = 10.0F; /* these values will be overwritten by BLOSUM, etc. */
     }
 
+    // water (was mapped to 'X' in previous versions)
+    I->smat['O']['O'] = -1.0F;
+
   }
 
   if(!(I->mat && I->smat && ((!dist_mats) || (I->da && I->db)))) {
@@ -91,17 +94,13 @@ CMatch *MatchNew(PyMOLGlobals * G, unsigned int na, unsigned int nb, int dist_ma
 
 int MatchResidueToCode(CMatch * I, int *vla, int n)
 {
-
-#define cNRES 39
-  PyMOLGlobals *G = I->G;
   int ok = true;
   int a, b, c;
   int found;
-  int rcode[cNRES], rname[cNRES];
   int *trg;
   char res[][4] = {
 
-    /* IF YOU ADD HERE, BE SURE TO UPDATE cNRES above!!! */
+    "HOH", "O",                 /* water */
 
     /* using numbers to prevent nucleic acids from getting confounded with
        protein scores */
@@ -159,6 +158,9 @@ int MatchResidueToCode(CMatch * I, int *vla, int n)
     "TYS", "Y"                  /* sulfotyrosine */
   };
 
+  const int cNRES = (sizeof res) / 8;
+  int rcode[cNRES], rname[cNRES];
+
   /* get integral values for the residue names */
 
   for(a = 0; a < cNRES; a++) {
@@ -180,16 +182,8 @@ int MatchResidueToCode(CMatch * I, int *vla, int n)
         break;
       }
     if(!found) {
-      if(*trg != 0x484f48) {    /* HOH */
-        char st[4];
-        st[0] = 0xFF & (*trg >> 16);
-        st[1] = 0xFF & (*trg >> 8);
-        st[2] = 0xFF & *trg;
-        st[3] = 0;
-        PRINTFB(G, FB_Match, FB_Warnings)
-          " Match-Warning: unknown residue type '%s' (using X).\n", st ENDFB(G);
-      }
-      *trg = 'X';
+      // codes for unknown residues are three byte (mask 0xFFFFFF80)
+      *trg = *trg << 8;
     }
   }
   return (ok);
@@ -206,9 +200,23 @@ int MatchPreScore(CMatch * I, int *vla1, int n1, int *vla2, int n2, int quiet)
 
   for(a = 0; a < n1; a++) {
     for(b = 0; b < n2; b++) {
-      I->mat[a][b] = I->smat[0x7F & vla1[a * 3 + 2]][0x7F & vla2[b * 3 + 2]];
-      /*      printf("%d %d %c %c %8.1f\n",a,b,0x7F & vla1[a * 3 + 2], 0x7F & vla2[b * 3 + 2], 
-              I->smat[0x7F & vla1[a * 3 + 2]][0x7F & vla2[b * 3 + 2]]);*/
+      // codes for known   residues are one   byte (mask 0x0000007F)
+      // codes for unknown residues are three byte (mask 0xFFFFFF80)
+      // This allows for exact match of unknown three-letter codes.
+      // Fallback for unknown residues with no exact match is 'X'
+      int code1 = vla1[a * 3 + 2];
+      int code2 = vla2[b * 3 + 2];
+      if (code1 & 0xFFFFFF80) {
+        if (code1 == code2) {
+          I->mat[a][b] = 5.F; // (was -1 in previous versions)
+          continue;
+        }
+        code1 = 'X';
+      }
+      if (code2 & 0xFFFFFF80) {
+        code2 = 'X';
+      }
+      I->mat[a][b] = I->smat[code1][code2];
     }
   }
   return 1;

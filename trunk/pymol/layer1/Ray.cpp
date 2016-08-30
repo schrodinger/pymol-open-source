@@ -1157,7 +1157,7 @@ void RayRenderVRML2(CRay * I, int width, int height,
   }
   if(!identity) {
     float light[3];
-    float *lightv = SettingGetfv(I->G, cSetting_light);
+    auto lightv = SettingGet<const float*>(I->G, cSetting_light);
     copy3f(lightv, light);
     normalize3f(light);
     sprintf(buffer,
@@ -2394,7 +2394,8 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   int mesh_obj = false;
   char *charVLA, *headerVLA;
   char transmit[64];
-  float light[3], *lightv;
+  float light[3];
+  const float *lightv;
   float spec_power = SettingGetGlobal_f(I->G, cSetting_spec_power);
   int identity = (SettingGetGlobal_i(I->G, cSetting_geometry_export_mode) == 1);
 
@@ -5579,7 +5580,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       }
       for(bc = 2; ok && bc < I->NBasis; bc++) {
         {                       /* setup light & rotate if necessary  */
-          float light[3], *lightv;
+          float light[3];
+          const float *lightv;
           switch (bc) {
           default:
           case 2:
@@ -6365,7 +6367,7 @@ void RayRenderColorTable(CRay * I, int width, int height, int *image)
 
 
 /*========================================================================*/
-void CRay::wobble(int mode, float *v)
+void CRay::wobble(int mode, const float *v)
 {
   CRay * I = this;
   I->Wobble = mode;
@@ -6385,7 +6387,7 @@ void CRay::transparentf(float v)
   I->Trans = v;
 }
 
-void CRay::interiorColor3fv(float *v, int passive)
+void CRay::interiorColor3fv(const float *v, int passive)
 {
   CRay * I = this;
   I->IntColor[0] = (*v++);
@@ -6397,7 +6399,7 @@ void CRay::interiorColor3fv(float *v, int passive)
 
 
 /*========================================================================*/
-void CRay::color3fv(float *v)
+void CRay::color3fv(const float *v)
 {
   CRay * I = this;
   I->CurColor[0] = (*v++);
@@ -6407,7 +6409,7 @@ void CRay::color3fv(float *v)
 
 
 /*========================================================================*/
-int CRay::sphere3fv(float *v, float r)
+int CRay::sphere3fv(const float *v, float r)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -6626,7 +6628,7 @@ int CRay::character(int char_id)
 
 
 /*========================================================================*/
-int CRay::cylinder3fv(float *v1, float *v2, float r, float *c1, float *c2)
+int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -6695,8 +6697,8 @@ int CRay::cylinder3fv(float *v1, float *v2, float r, float *c1, float *c2)
 
 
 /*========================================================================*/
-int CRay::customCylinder3fv(float *v1, float *v2, float r,
-			 float *c1, float *c2, int cap1, int cap2)
+int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
+			 const float *c1, const float *c2, int cap1, int cap2)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -6763,8 +6765,8 @@ int CRay::customCylinder3fv(float *v1, float *v2, float r,
   return true;
 }
 
-int CRay::cone3fv(float *v1, float *v2, float r1, float r2,
-	       float *c1, float *c2, int cap1, int cap2)
+int CRay::cone3fv(const float *v1, const float *v2, float r1, float r2,
+	       const float *c1, const float *c2, int cap1, int cap2)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -6773,7 +6775,8 @@ int CRay::cone3fv(float *v1, float *v2, float r1, float r2,
   int ok = true;
 
   if(r2 > r1) {                 /* make sure r1 is always larger */
-    float t, *tp;
+    float t;
+    const float *tp;
     int ti;
     t = r2;
     r2 = r1;
@@ -6858,7 +6861,7 @@ int CRay::cone3fv(float *v1, float *v2, float r1, float r2,
 
 
 /*========================================================================*/
-int CRay::sausage3fv(float *v1, float *v2, float r, float *c1, float *c2)
+int CRay::sausage3fv(const float *v1, const float *v2, float r, const float *c1, const float *c2)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -6923,7 +6926,7 @@ int CRay::sausage3fv(float *v1, float *v2, float r, float *c1, float *c2)
   return true;
 }
 
-int CRay::ellipsoid3fv(float *v, float r, float *n1, float *n2, float *n3)
+int CRay::ellipsoid3fv(const float *v, float r, const float *n1, const float *n2, const float *n3)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -7043,8 +7046,8 @@ int CRay::setLastToNoLighting(char no_lighting)
 
 /*========================================================================*/
 int CRay::triangle3fv(
-		   float *v1, float *v2, float *v3,
-		   float *n1, float *n2, float *n3, float *c1, float *c2, float *c3)
+		   const float *v1, const float *v2, const float *v3,
+		   const float *n1, const float *n2, const float *n3, const float *c1, const float *c2, const float *c3)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -7213,9 +7216,9 @@ int CRay::triangle3fv(
 }
 
 int CRay::triangleTrans3fv(
-			float *v1, float *v2, float *v3,
-			float *n1, float *n2, float *n3,
-			float *c1, float *c2, float *c3, float t1, float t2, float t3)
+			const float *v1, const float *v2, const float *v3,
+			const float *n1, const float *n2, const float *n3,
+			const float *c1, const float *c2, const float *c3, float t1, float t2, float t3)
 {
   CRay * I = this;
   CPrimitive *p;
@@ -7273,7 +7276,7 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
 
   I->Wobble = SettingGet_i(I->G, NULL, NULL, cSetting_ray_texture);
   {
-    float *v = SettingGet_3fv(I->G, NULL, NULL, cSetting_ray_texture_settings);
+    auto v = SettingGet<const float*>(I->G, cSetting_ray_texture_settings);
     int color = SettingGetGlobal_color(I->G, cSetting_ray_interior_color);
     copy3f(v, I->WobbleParam);
     v = ColorGet(I->G, color);

@@ -21,12 +21,12 @@ import re
 import traceback
 import Pmw
 
-try:
+if sys.version_info[0] == 2:
     import Queue
     from Tkinter import *
     from tkFileDialog import *
     import tkMessageBox
-except ImportError:
+else:
     import queue as Queue
     from tkinter import *
     from tkinter.filedialog import *

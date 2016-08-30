@@ -1124,9 +1124,6 @@ NOTES
             color = _self.get_color_index(str(color))
         else:
             color = -1 # default
-        object = str(object)
-        if not len(object):
-            object = _self.get_unused_name(prefix="pseudo")
         selection = selector.process(selection)
         mode = pseudoatom_mode_dict[pseudoatom_mode_sc.auto_err(str(mode),'pseudoatom mode')]
         

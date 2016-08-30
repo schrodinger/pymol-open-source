@@ -54,7 +54,7 @@ typedef struct _CVFont CVFont;
 typedef struct _CEditor CEditor;
 typedef struct _CExecutive CExecutive;
 typedef struct _CSeeker CSeeker;
-typedef struct _CSelector CSelector;
+struct CSelector;
 typedef struct _CTexture CTexture;
 typedef struct _CType CType;
 typedef struct _CMain CMain;

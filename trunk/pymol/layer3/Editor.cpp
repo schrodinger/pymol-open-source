@@ -162,7 +162,7 @@ static void EditorConfigMouse(PyMOLGlobals * G)
 {
 
   int scheme = EditorGetScheme(G);
-  char *mouse_mode = SettingGetGlobal_s(G, cSetting_button_mode_name);
+  const char *mouse_mode = SettingGetGlobal_s(G, cSetting_button_mode_name);
 
   if(mouse_mode && (!strcmp(mouse_mode, "3-Button Editing") ||
                     !strcmp(mouse_mode, "3-Button Motions"))) {
@@ -1026,7 +1026,6 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
 {
   int sele0, sele1;
   int i0;
-  int cnt;
   OrthoLineType buffer, s1;
   ObjectMolecule *obj0 = NULL, *obj1 = NULL;
 
@@ -1048,14 +1047,12 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
 	SelectorFreeTmp(G, s1);
 	i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);
 	obj0->AtomInfo[i0].chemFlag = false;
-	for (cnt=0; cnt<4; cnt++)
 	  ExecutiveAddHydrogens(G, cEditorSele1, quiet);
 
 	if(sele1 >= 0) {
 	  obj1 = SelectorGetFastSingleObjectMolecule(G, sele1);
 	  i0 = ObjectMoleculeGetAtomIndex(obj1, sele1);
 	  obj1->AtomInfo[i0].chemFlag = false;
-	  for (cnt=0; cnt<4; cnt++)
 	    ExecutiveAddHydrogens(G, cEditorSele2, quiet);
 	}
 	}

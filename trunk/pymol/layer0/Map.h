@@ -66,10 +66,10 @@ void MapFree(MapType * I);
 #define MapEStart(m,a,b,c) (m->EHead + ((a) * m->D1D2) + ((b)*m->Dim[2]) + (c))
 
 #define MapNext(m,a) (*(m->Link+(a)))
-void MapLocus(MapType * map, float *v, int *a, int *b, int *c);
-int *MapLocusEStart(MapType * map, float *v);
+void MapLocus(MapType * map, const float *v, int *a, int *b, int *c);
+int *MapLocusEStart(MapType * map, const float *v);
 
-int MapExclLocus(MapType * map, float *v, int *a, int *b, int *c);
+int MapExclLocus(MapType * map, const float *v, int *a, int *b, int *c);
 
 #define MapCache(m,a) {(m)->Cache[a]=1;(m)->CacheLink[a]=(m)->CacheStart;(m)->CacheStart=a;}
 #define MapCached(m,a) ((m)->Cache[a])
@@ -78,16 +78,16 @@ int MapCacheInit(MapCache * M, MapType * I, int group_id, int block_base);
 void MapCacheReset(MapCache * M);
 void MapCacheFree(MapCache * M, int group_id, int block_base);
 
-float MapGetSeparation(PyMOLGlobals * G, float range, float *mx, float *mn,
+float MapGetSeparation(PyMOLGlobals * G, float range, const float *mx, const float *mn,
                        float *diagonal);
 float MapGetDiv(MapType * I);
 
 
 /* special routines for raytracing */
 
-int MapInside(MapType * I, float *v, int *a, int *b, int *c);
+int MapInside(MapType * I, const float *v, int *a, int *b, int *c);
 
-int MapInsideXY(MapType * I, float *v, int *a, int *b, int *c);
+int MapInsideXY(MapType * I, const float *v, int *a, int *b, int *c);
 int MapSetupExpressXY(MapType * I, int n_vert, int negative_start);
 
 int MapSetupExpressXYVert(MapType * I, float *vert, int n_vert, int negative_start);

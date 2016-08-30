@@ -338,10 +338,10 @@ int CGOAlphaTriangle(CGO * I,
 void CGOSetZVector(CGO * I, float z0, float z1, float z2);
 void CGORenderGLPicking(CGO * I, Picking ** pick,
                         PickContext * context, CSetting * set1, CSetting * set2);
-void CGORenderGL(CGO * I, float *color, CSetting * set1, CSetting * set2,
+void CGORenderGL(CGO * I, const float *color, CSetting * set1, CSetting * set2,
                  RenderInfo * info, Rep *rep);
 void CGORenderGLAlpha(CGO * I, RenderInfo * info);
-int CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * set2);
+int CGORenderRay(CGO * I, CRay * ray, const float *color, CSetting * set1, CSetting * set2);
 void CGOReset(CGO * I);
 
 void CGOSetUseShader(CGO *I, int use_shader);

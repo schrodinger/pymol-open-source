@@ -24,12 +24,14 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Color.h"
 #include"Symmetry.h"
-#include"Raw.h"
 #include"DistSet.h"
 #include "Executive_pre.h"
 #include "CifFile.h"
 
 #include <memory>
+
+#ifdef _WEBGL
+#endif
 
 #define cKeywordAll "all"
 #define cKeywordNone "none"
@@ -91,6 +93,9 @@ typedef struct ObjectMolecule {
 #endif
   const cif_data * m_cifdata;
 
+  // hetatm and ignore-flag by non-polymer classification
+  bool need_hetatm_classification;
+
   // methods
   int getState();
   bool setNDiscrete(int natom);
@@ -111,6 +116,8 @@ typedef struct ObjectMoleculeOpRec {
   ObjectMolecule **obj1VLA, *obj3;
   AtomInfoType *ai, **ai1VLA;
   PyObject *py_ob1;
+#ifdef _WEBGL
+#endif
   float ttt[16], *mat1;
   int nvv1, nvv2;
   int include_static_singletons;
@@ -144,7 +151,7 @@ typedef struct {
   int multi_object_status;      /* 0 = unknown, 1 = is multi_object, -1 is not multi_object */
   int multiplex;
 
-  inline bool is_pqr_file() {
+  inline bool is_pqr_file() const {
     return variant == PDB_VARIANT_PQR;
   }
 } PDBInfoRec;
@@ -201,9 +208,11 @@ typedef struct {
 #define OMOP_CSetCameraMinMax 45
 #define OMOP_GetChains 46
 #define OMOP_Spectrum 47
+#if 0
 #define OMOP_GetBFactors 48
 #define OMOP_GetOccupancies 49
 #define OMOP_GetPartialCharges 50
+#endif
 #define OMOP_StateVRT 51
 #define OMOP_CheckVis 52
 #define OMOP_OnOff 53
@@ -296,9 +305,9 @@ int ObjectMoleculeSetMatrix(ObjectMolecule * I, int state, double *matrix);
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals * G,
                                  ObjectMolecule * I, int start, int excluded);
 
-int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, float *point, float cutoff,
+int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule * I, const float *point, float cutoff,
                                       int state, float *dist);
-int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, float *point, float cutoff,
+int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point, float cutoff,
                                          int state, float *dist, float *color,
                                          int sub_vdw);
 
@@ -336,13 +345,6 @@ int ObjectMoleculeSort(ObjectMolecule * I);
 ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj);
 void ObjectMoleculeFixChemistry(ObjectMolecule * I, int sele1, int sele2, int invalidate);
 
-ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          const char *fname, int frame, int discrete);
-ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          const char *fname, int frame, int discrete);
-ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals * G, ObjectMolecule * obj,
-                                          const char *fname, int frame, const char *sepPrefix,
-                                          int discrete);
 ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals * G, ObjectMolecule * obj,
                                           const char *fname, int frame, int discrete);
 ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G, ObjectMolecule * I,
@@ -363,9 +365,6 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
 ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, const char * name,
                                          const float * coords, int coords_len, int frame=-1);
 
-ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals * G, ObjectMolecule * obj, CRaw * pmo,
-                                      int frame, int discrete);
-
 ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
                                       const char **next_entry,
                                       int content_format, int frame,
@@ -378,9 +377,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * obj,
                                          M4XAnnoType * m4x, char *pdb_name,
                                          const char **next_pdb, PDBInfoRec * pdb_info,
                                          int quiet, int *model_number);
-
-ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
-                                         const char *MMDStr, int frame, int discrete);
 
 int ObjectMoleculeExtendIndices(ObjectMolecule * I, int state);
 
@@ -453,8 +449,6 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule * I, int ca, float *phi, float *psi,
 void ObjectMoleculeGetAtomSele(ObjectMolecule * I, int index, char *buffer);
 void ObjectMoleculeGetAtomSeleFast(ObjectMolecule * I, int index, char *buffer);
 void ObjectMoleculeGetAtomSeleLog(ObjectMolecule * I, int index, char *buffer, int quote);
-int ObjectMoleculeMultiSave(ObjectMolecule * I, const char *fname, FILE * f, int state,
-                            int append, int format, int quiet);
 
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule * I);
 

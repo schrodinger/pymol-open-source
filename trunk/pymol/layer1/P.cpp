@@ -1302,6 +1302,21 @@ int PAlterAtom(PyMOLGlobals * G,
   return result;
 }
 
+/*
+ * String conversion which takes "label_digits" setting into account.
+ */
+static
+int PLabelPyObjectToStrMaxLen(PyMOLGlobals * G, PyObject * obj, char *buffer, int maxlen)
+{
+  if (obj && PyFloat_Check(obj)) {
+    snprintf(buffer, maxlen + 1, "%.*f",
+        SettingGetGlobal_i(G, cSetting_label_digits),
+        PyFloat_AsDouble(obj));
+    return true;
+  }
+  return PConvPyObjectToStrMaxLen(obj, buffer, maxlen);
+}
+
 int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject *expr_co, int atm)
 {
   int result = true;
@@ -1331,7 +1346,7 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject
     result = false;
   } else {
     result = true;
-    if(!PConvPyObjectToStrMaxLen(resultPyObject,
+    if(!PLabelPyObjectToStrMaxLen(G, resultPyObject,
                                  label, sizeof(OrthoLineType) - 1))
       result = false;
     if(PyErr_Occurred()) {
@@ -1929,35 +1944,6 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
   /* ultimate fallback -- try using the current working directory */
   PyRun_SimpleString
     ("if 'PYMOL_PATH' not in os.environ: os.environ['PYMOL_PATH']=os.getcwd()\n");
-#endif
-  /* END PROPRIETARY CODE SEGMENT */
-
-#ifdef _PYMOL_SETUP_TCLTK83
-  /* used by semistatic pymol */
-  PyRun_SimpleString
-    ("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'\n");
-  PyRun_SimpleString
-    ("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.3'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.3'\n");
-#endif
-
-#ifdef _PYMOL_SETUP_TCLTK84
-  /* used by semistatic pymol */
-  PyRun_SimpleString
-    ("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.4'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.4'\n");
-  PyRun_SimpleString
-    ("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'\n");
-#endif
-
-#ifdef _PYMOL_SETUP_TCLTK85
-  /* used by semistatic pymol */
-  PyRun_SimpleString
-    ("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.5'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.5'\n");
-  PyRun_SimpleString
-    ("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.5'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.5'\n");
-#endif
-
-  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef WIN32
   PyRun_SimpleString
     ("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");
 #endif
@@ -2911,10 +2897,16 @@ static PyObject *PCatchFlush(PyObject * self, PyObject * args)
   return PConvAutoNone(Py_None);
 }
 
+static PyObject *PCatchIsAtty(PyObject * self, PyObject * args)
+{
+  Py_RETURN_FALSE;
+}
+
 static PyMethodDef PCatch_methods[] = {
   {"writelines", PCatchWritelines, METH_VARARGS},
   {"write", PCatchWrite, METH_VARARGS},
   {"flush", PCatchFlush, METH_VARARGS},
+  {"isatty", PCatchIsAtty, METH_VARARGS}, // called by pip.main(["install", "..."])
   {NULL, NULL}                  /* sentinel */
 };
 

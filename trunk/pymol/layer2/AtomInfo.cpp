@@ -84,165 +84,12 @@ int AtomInfoSetSettingFromPyObject(PyMOLGlobals * G, AtomInfoType *ai, int setti
   return SettingUniqueSetPyObject(G, ai->unique_id, setting_id, val);
 }
 #endif
-int AtomInfoCheckSetting(PyMOLGlobals * G, AtomInfoType * ai, int setting_id)
-{
-  if(!ai->has_setting) {
-    return 0;
-  } else {
-    if(!SettingUniqueCheck(G, ai->unique_id, setting_id)) {
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
 
 PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, AtomInfoType * ai, int setting_id) {
   if(ai->has_setting) {
     return SettingUniqueGetPyObject(G, ai->unique_id, setting_id);
   }
   return NULL;
-}
-
-int AtomInfoGetSetting_b(PyMOLGlobals * G, AtomInfoType * ai, int setting_id, int current,
-                         int *effective)
-{
-  if(!ai->has_setting) {
-    *effective = current;
-    return 0;
-  } else {
-    if(!SettingUniqueGet_b(G, ai->unique_id, setting_id, effective)) {
-      *effective = current;
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
-
-int AtomInfoGetSetting_i(PyMOLGlobals * G, AtomInfoType * ai, int setting_id, int current,
-                         int *effective)
-{
-  if(!ai->has_setting) {
-    *effective = current;
-    return 0;
-  } else {
-    if(!SettingUniqueGet_i(G, ai->unique_id, setting_id, effective)) {
-      *effective = current;
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
-
-int AtomInfoGetSetting_f(PyMOLGlobals * G, AtomInfoType * ai, int setting_id,
-                         float current, float *effective)
-{
-  if(!ai->has_setting) {
-    *effective = current;
-    return 0;
-  } else {
-    if(!SettingUniqueGet_f(G, ai->unique_id, setting_id, effective)) {
-      *effective = current;
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
-
-int AtomInfoGetSetting_color(PyMOLGlobals * G, AtomInfoType * ai, int setting_id,
-                             int current, int *effective)
-{
-  if(!ai->has_setting) {
-    *effective = current;
-    return 0;
-  } else {
-    if(!SettingUniqueGet_color(G, ai->unique_id, setting_id, effective)) {
-      *effective = current;
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
-
-int AtomInfoCheckBondSetting(PyMOLGlobals * G, BondType * bi, int setting_id)
-{
-  if(!bi->has_setting) {
-    return 0;
-  } else {
-    if(!SettingUniqueCheck(G, bi->unique_id, setting_id)) {
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
-
-int AtomInfoGetBondSetting_b(PyMOLGlobals * G, BondType * bi, int setting_id, int current,
-                             int *effective)
-{
-  if(!bi->has_setting) {
-    *effective = current;
-    return 0;
-  } else {
-    if(!SettingUniqueGet_b(G, bi->unique_id, setting_id, effective)) {
-      *effective = current;
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
-
-int AtomInfoGetBondSetting_i(PyMOLGlobals * G, BondType * bi, int setting_id, int current,
-                             int *effective)
-{
-  if(!bi->has_setting) {
-    *effective = current;
-    return 0;
-  } else {
-    if(!SettingUniqueGet_i(G, bi->unique_id, setting_id, effective)) {
-      *effective = current;
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
-
-int AtomInfoGetBondSetting_f(PyMOLGlobals * G, BondType * bi, int setting_id,
-                             float current, float *effective)
-{
-  if(!bi->has_setting) {
-    *effective = current;
-    return 0;
-  } else {
-    if(!SettingUniqueGet_f(G, bi->unique_id, setting_id, effective)) {
-      *effective = current;
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-}
-
-int AtomInfoGetBondSetting_color(PyMOLGlobals * G, BondType * bi, int setting_id,
-                                 int current, int *effective)
-{
-  if(!bi->has_setting) {
-    *effective = current;
-    return 0;
-  } else {
-    if(!SettingUniqueGet_color(G, bi->unique_id, setting_id, effective)) {
-      *effective = current;
-      return 0;
-    } else {
-      return 1;
-    }
-  }
 }
 
 static int AtomInfoPrimeUniqueIDs(PyMOLGlobals * G)
@@ -1003,7 +850,7 @@ bool AtomResiFromResv(char *resi, size_t size, int resv, char inscode) {
 }
 
 /*========================================================================*/
-PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * I)
+PyObject *AtomInfoAsPyList(PyMOLGlobals * G, const AtomInfoType * I)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -1233,6 +1080,9 @@ void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst
   LexInc(G, dst->textType);
   LexInc(G, dst->custom);
   LexInc(G, dst->chain);
+  LexInc(G, dst->segi);
+  LexInc(G, dst->resn);
+  LexInc(G, dst->name);
 #ifdef _PYMOL_IP_EXTRAS
 #endif
   if (src->anisou) {
@@ -1340,7 +1190,7 @@ void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, i
 
 
 /*========================================================================*/
-int AtomInfoUniquefyNames(PyMOLGlobals * G, AtomInfoType * atInfo0, int n0,
+int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0,
                           AtomInfoType * atInfo1, int *flag1, int n1)
 {
   /* makes sure all names in atInfo1 are unique WRT 0 and 1 */
@@ -1348,7 +1198,8 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, AtomInfoType * atInfo0, int n0,
   /* tricky optimizations to avoid n^2 dependence in this operation */
   int result = 0;
   int a, b, c;
-  AtomInfoType *ai0, *ai1, *lai1, *lai0;
+  const AtomInfoType *ai0, *lai1, *lai0;
+  AtomInfoType *ai1;
   int st1, nd1, st0, nd0;       /* starts and ends */
   int matchFlag;
   int bracketFlag;
@@ -1452,13 +1303,13 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, AtomInfoType * atInfo0, int n0,
 
 
 /*========================================================================*/
-void AtomInfoBracketResidue(PyMOLGlobals * G, AtomInfoType * ai0, int n0,
-                            AtomInfoType * ai, int *st, int *nd)
+void AtomInfoBracketResidue(PyMOLGlobals * G, const AtomInfoType * ai0, int n0,
+                            const AtomInfoType * ai, int *st, int *nd)
 {
   /* inefficient but reliable way to find where residue atoms are located in an object 
    * for purpose of residue-based operations */
   int a;
-  AtomInfoType *ai1;
+  const AtomInfoType *ai1;
 
   *st = 0;
   *nd = n0 - 1;
@@ -1480,7 +1331,7 @@ void AtomInfoBracketResidue(PyMOLGlobals * G, AtomInfoType * ai0, int n0,
 
 
 /*========================================================================*/
-void AtomInfoBracketResidueFast(PyMOLGlobals * G, AtomInfoType * ai0, int n0, int cur,
+void AtomInfoBracketResidueFast(PyMOLGlobals * G, const AtomInfoType * ai0, int n0, int cur,
                                 int *st, int *nd)
 {
   /* efficient but unreliable way to find where residue atoms are located in an object 
@@ -1489,7 +1340,7 @@ void AtomInfoBracketResidueFast(PyMOLGlobals * G, AtomInfoType * ai0, int n0, in
    * belong to the same residue. It starts the search from the "cur" offset, and returns
    * the beginning offset (st) and the ending offset (nd).*/
   int a;
-  AtomInfoType *ai1;
+  const AtomInfoType *ai1;
 
   *st = cur;
   *nd = cur;
@@ -1557,10 +1408,10 @@ void AtomInfoPrimeColors(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-float AtomInfoGetBondLength(PyMOLGlobals * G, AtomInfoType * ai1, AtomInfoType * ai2)
+float AtomInfoGetBondLength(PyMOLGlobals * G, const AtomInfoType * ai1, const AtomInfoType * ai2)
 {
   float result = 1.6F;
-  AtomInfoType *a1, *a2;
+  const AtomInfoType *a1, *a2;
 
   /* very simple for now ... 
      flush this out with pattern-based parameters later on */
@@ -2078,7 +1929,7 @@ void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1)
 /*
  * Get atomic color, based on protons and elem
  */
-int AtomInfoGetColor(PyMOLGlobals * G, AtomInfoType * at1)
+int AtomInfoGetColor(PyMOLGlobals * G, const AtomInfoType * at1)
 {
   // fast lookup for most common elements
   switch (at1->protons) {
@@ -2139,7 +1990,7 @@ static int AtomInfoNameCompare(PyMOLGlobals * G, lexidx_t name1, lexidx_t name2)
   return AtomInfoNameCompare(G, LexStr(G, name1), LexStr(G, name2));
 }
 
-int AtomInfoCompareAll(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoCompareAll(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   return (at1->resv != at2->resv ||
 	  at1->customType != at2->customType ||
@@ -2223,6 +2074,12 @@ static int AtomInfoCompare(PyMOLGlobals *G, const AtomInfoType *at1, const AtomI
 
   if ((wc = WordCompare(G, at1->resn, at2->resn, true))) return wc;
   if (at1->discrete_state != at2->discrete_state) return (at1->discrete_state < at2->discrete_state) ? -1 : 1;
+
+  // if this looks like a "bulk" het group with no residue number, then don't
+  // compare by name/alt/priority (affects mmCIF with cif_use_auth=0)
+  if (!ignore_rank && !at1->resv && at1->hetatm)
+    goto rank_compare;
+
   if (at1->priority != at2->priority) return (at1->priority < at2->priority) ? -1 : 1;
 
   // empty alt code goes last: 'A' < 'B' < ''
@@ -2233,32 +2090,34 @@ static int AtomInfoCompare(PyMOLGlobals *G, const AtomInfoType *at1, const AtomI
   }
 
   if ((wc = AtomInfoNameCompare(G, at1->name, at2->name))) return wc;
+
+rank_compare:
   if (!ignore_rank && at1->rank != at2->rank) return (at1->rank < at2->rank) ? -1 : 1;
 
   return 0;
 }
 
-int AtomInfoCompare(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoCompare(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   return AtomInfoCompare(G, at1, at2, false, false);
 }
 
-int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   return AtomInfoCompare(G, at1, at2, true, true);
 }
 
-int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   return AtomInfoCompare(G, at1, at2, false, true);
 }
 
-int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   return AtomInfoCompare(G, at1, at2, true, false);
 }
 
-int AtomInfoNameOrder(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoNameOrder(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   int result;
   if(at1->alt[0] == at2->alt[0]) {
@@ -2277,7 +2136,7 @@ int AtomInfoNameOrder(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
   return (result);
 }
 
-int AtomInfoSameResidue(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoSameResidue(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   return (
       at1->resv == at2->resv &&
@@ -2289,14 +2148,14 @@ int AtomInfoSameResidue(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2
       WordMatchExact(G, at1->resn, at2->resn, true));
 }
 
-int AtomInfoSameResidueP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoSameResidueP(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   if(at1 && at2)
     return AtomInfoSameResidue(G, at1, at2);
   return 0;
 }
 
-int AtomInfoSameChainP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoSameChainP(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   if(at1 && at2)
     if(at1->chain == at2->chain)
@@ -2305,7 +2164,7 @@ int AtomInfoSameChainP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
   return 0;
 }
 
-int AtomInfoSameSegmentP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2)
+int AtomInfoSameSegmentP(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   if(at1 && at2)
     if(at1->segi == at2->segi)
@@ -2313,7 +2172,7 @@ int AtomInfoSameSegmentP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at
   return 0;
 }
 
-int AtomInfoSequential(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2, int mode)
+int AtomInfoSequential(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2, int mode)
 {
   if(mode > 0) {
     if(at1->hetatm == at2->hetatm) {
@@ -2354,7 +2213,7 @@ int AtomInfoSequential(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
 /*
  * Used in "rms" and "update" for matching two selections
  */
-int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
+int AtomInfoMatch(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2,
     bool ignore_case, bool ignore_case_chain)
 {
   if(at1->resv == at2->resv)
@@ -2368,7 +2227,7 @@ int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
   return 0;
 }
 
-int AtomInfoIsFreeCation(PyMOLGlobals * G, AtomInfoType * I)
+int AtomInfoIsFreeCation(PyMOLGlobals * G, const AtomInfoType * I)
 {
   switch (I->protons) {
   case cAN_Na:
@@ -2382,7 +2241,7 @@ int AtomInfoIsFreeCation(PyMOLGlobals * G, AtomInfoType * I)
   return false;
 }
 
-int AtomInfoGetExpectedValence(PyMOLGlobals * G, AtomInfoType * I)
+int AtomInfoGetExpectedValence(PyMOLGlobals * G, const AtomInfoType * I)
 {
   int result = -1;              /* negative indicates minimum expected valence (abs)
                                    but it could be higher  */
@@ -2962,7 +2821,7 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
   }
 }
 
-int BondTypeCompare(PyMOLGlobals * G, BondType * bt1, BondType * bt2){
+int BondTypeCompare(PyMOLGlobals * G, const BondType * bt1, const BondType * bt2){
   return (bt1->index[0] != bt2->index[0] ||
 	  bt1->index[1] != bt2->index[1] ||
 	  bt1->order != bt2->order ||

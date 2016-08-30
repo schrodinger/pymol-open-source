@@ -20,6 +20,7 @@ expr_sc = ExprShortcut([
     'formal_charge', 'numeric_type', 'ID',
     'q', 'b', 'partial_charge', 'vdw',
     'p.', 's.',
+    'elec_radius',
 ])
 
 def vol_ramp_sc():
@@ -118,6 +119,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'pseudoatom'     : aa_obj_c,
         'ramp_new'       : aa_ramp_c,
         'ramp_update'    : aa_ramp_c,
+        'rebuild'        : aa_sel_e,
         'reference'      : [ self_cmd.editing.ref_action_sc  , 'action'          , ', ' ],
         'remove'         : aa_sel_e,
         'reinitialize'   : [ self_cmd.commanding.reinit_sc   , 'option'          , ''   ],
@@ -139,6 +141,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'unmask'         : aa_sel_e,
         'unset'          : aa_set_c,
         'unset_bond'     : aa_set_c,
+        'unset_deep'     : aa_set_c,
         'update'         : aa_sel_e,
         'valence'        : [ self_cmd.editing.order_sc       , 'order'           , ', ' ],
         'volume_color'   : aa_vol_c,
@@ -161,6 +164,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'cache'          : [ self_cmd._pymol._scene_dict_sc  , 'scene'           , ''   ],
         'cealign'        : aa_sel_e,
         'color'          : aa_sel_e,
+        'copy'           : aa_obj_e,
         'create'         : aa_sel_c,
         'distance'       : aa_sel_e,
         'extra_fit'      : aa_obj_e,
@@ -191,6 +195,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'matrix_copy'    : aa_obj_c,
         'order'          : [ self_cmd.boolean_sc             , 'sort'            , ', ' ],
         'pair_fit'       : aa_sel_c,
+        'rebuild'        : aa_rep_c,
         'reference'      : aa_sel_c,
         'scene'          : [ self_cmd.viewing.scene_action_sc, 'scene action'    , ', ' ],
         'set_name'       : [ self_cmd.selection_sc     ,       'name'            , ''   ],
@@ -204,6 +209,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'view'           : [ self_cmd.viewing.view_sc        , 'view action'     , ''   ],
         'unset'          : aa_sel_c,
         'unset_bond'     : aa_sel_c,
+        'unset_deep'     : aa_obj_e,
         'update'         : aa_sel_e,
         'ramp_new'       : aa_map_c,
         'valence'        : aa_sel_c,

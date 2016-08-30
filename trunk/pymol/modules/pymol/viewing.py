@@ -2287,7 +2287,7 @@ PYMOL API
         if palette_hit:
             palette = palette_hit
 
-        if expression not in ('count', 'b', 'q', 'pc') or not palette_hit:
+        if not expression.replace('_', '').isalpha() or not palette_hit:
             return spectrumany(expression, palette, selection,
                     minimum, maximum, quiet, _self)
         

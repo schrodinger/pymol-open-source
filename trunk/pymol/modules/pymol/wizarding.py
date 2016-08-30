@@ -185,13 +185,16 @@ DESCRIPTION
 
     def session_restore_wizard(session,_self=cmd):
         if session!=None:
+            version = session.get('version', 0)
             if 'wizard' in session:
                 try:
                     wizards = cPickle.loads(session['wizard'])
                     for wiz in wizards:
                         wiz.cmd = _self
+                        wiz.migrate_session(version)
                     _self.set_wizard_stack(wizards,_self=_self)
-                except:
+                except Exception as e:
+                    print(e)
                     print("Session-Warning: unable to restore wizard.")
         return 1
 

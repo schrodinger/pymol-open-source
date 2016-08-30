@@ -221,8 +221,11 @@ int ExecutiveRevalence(PyMOLGlobals * G, const char *s1, const char *s2, const c
                        int target_state, int source_state, int reset, int quiet);
 int ExecutiveVdwFit(PyMOLGlobals * G, const char *s1, int state1, const char *s2, int state2,
                     float buffer, int quiet);
-int ExecutiveIterate(PyMOLGlobals * G, const char *s1, const char *expr, int read_only, int quiet,
+#ifdef _WEBGL
+#else
+int ExecutiveIterate(PyMOLGlobals * G, const char *str1, const char *expr, int read_only, int quiet,
                      PyObject * space);
+#endif
 int ExecutiveIterateList(PyMOLGlobals * G, const char *s1, PyObject * list, int read_only,
                          int quiet, PyObject * space);
 int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1, int *list,
@@ -235,8 +238,11 @@ int ExecutiveSelectList(PyMOLGlobals * G, const char *sele_name, const char *s1,
 int ExecutiveLabel(PyMOLGlobals * G, const char *s1, const char *expr, int quiet, int eval_mode);
 
 int ExecutiveCountMotions(PyMOLGlobals * G);
-int ExecutiveIterateState(PyMOLGlobals * G, int i1, const char *s1, const char *expr, int read_only,
+#ifdef _WEBGL
+#else
+int ExecutiveIterateState(PyMOLGlobals * G, int state, const char *str1, const char *expr, int read_only,
                            int atomic_props, int quiet, PyObject * space);
+#endif
 int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int flags, int quiet);
 int ExecutiveInit(PyMOLGlobals * G);
 void ExecutiveFree(PyMOLGlobals * G);
@@ -384,6 +390,8 @@ int ExecutivePhiPsi(PyMOLGlobals * G, const char *s1, ObjectMolecule *** objVLA,
 float *ExecutiveGetVertexVLA(PyMOLGlobals * G, const char *s1, int state);
 int ExecutiveValidName(PyMOLGlobals * G, const char *name);
 int ExecutiveValidNamePattern(PyMOLGlobals * G, const char *name);
+void ExecutiveMakeUnusedName(PyMOLGlobals * G, char * prefix, int length, bool alwaysnumber=true, int start=1, const char * pattern="%02d");
+std::string ExecutiveGetUnusedName(PyMOLGlobals * G, const char * prefix="tmp", bool alwaysnumber=true);
 int ExecutiveProcessObjectName(PyMOLGlobals * G, const char *proposed, char *actual);
 
 int ExecutiveIsolevel(PyMOLGlobals * G, const char *name, float level, int state, int query,
@@ -401,8 +409,6 @@ int ExecutiveMapTrim(PyMOLGlobals * G, const char *name, const char *sele,
 int ExecutiveMapDouble(PyMOLGlobals * G, const char *name, int state);
 int ExecutiveMapHalve(PyMOLGlobals * G, const char *name, int state, int smooth);
 
-int ExecutiveMultiSave(PyMOLGlobals * G, const char *fname, const char *name, int state,
-                       int append, int format, int quiet);
 int ExecutiveIdentifyObjects(PyMOLGlobals * G, const char *s1, int mode, int **indexVLA,
                              ObjectMolecule *** objVLA);
 int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, const char *name, float *trans, int store, int quiet);

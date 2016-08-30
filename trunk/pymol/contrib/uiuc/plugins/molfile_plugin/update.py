@@ -47,7 +47,7 @@ else:
         'maeffplugin', #
         'mapplugin',
         'mdfplugin',
-        'mmcif', #
+#        'mmcif', #
         'mol2plugin',
         'moldenplugin',
 #        'mrcplugin', # gone?

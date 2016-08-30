@@ -220,11 +220,12 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
           continue;
 
         if (is_sidechainhelper_hidden(G, ai)) {
-	  int sc_helper, rsc_helper;
-          AtomInfoGetSetting_b(G, ai, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper, &sc_helper);
-          AtomInfoGetSetting_b(G, ai, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper, &rsc_helper);
-          if ((sc_helper  && (ai->visRep & cRepCartoonBit)) ||
-              (rsc_helper && (ai->visRep & cRepRibbonBit)))
+          if ((ai->visRep & cRepCartoonBit) && AtomSettingGetWD(G, ai,
+                cSetting_cartoon_side_chain_helper, /* d= */ cartoon_side_chain_helper))
+            continue;
+
+          if ((ai->visRep & cRepRibbonBit) && AtomSettingGetWD(G, ai,
+                cSetting_ribbon_side_chain_helper, /* d= */ ribbon_side_chain_helper))
             continue;
         }
 
@@ -254,9 +255,6 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
 
             if(xx_matrix_jacobi_solve(e_vec, e_val, &n_rot, matrix, 4)) {
 
-              float at_ellipsoid_scale;
-              int at_ellipsoid_color;
-              float at_transp;
               float *v = cs->Coord + 3 * a;
 
               float mag[3];
@@ -264,19 +262,13 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
 
               float mx;
               float r_el, n0[3], n1[3], n2[3];
-              int c1;
 
-              AtomInfoGetSetting_f(G, ai, cSetting_ellipsoid_scale, ellipsoid_scale,
-                                   &at_ellipsoid_scale);
-              AtomInfoGetSetting_f(G, ai, cSetting_ellipsoid_transparency, transp,
-                                   &at_transp);
-              AtomInfoGetSetting_color(G, ai, cSetting_ellipsoid_color, ellipsoid_color,
-                                       &at_ellipsoid_color);
+              float at_ellipsoid_scale  = AtomSettingGetWD(G, ai, cSetting_ellipsoid_scale, ellipsoid_scale);
+              float at_transp           = AtomSettingGetWD(G, ai, cSetting_ellipsoid_transparency, transp);
+              int c1                    = AtomSettingGetWD(G, ai, cSetting_ellipsoid_color, ellipsoid_color);
 
-              if(at_ellipsoid_color == -1)
+              if(c1 == -1)
                 c1 = ai->color;
-              else
-                c1 = at_ellipsoid_color;
 
               if(csmatrix)
                 left_multiply44d44d(csmatrix, e_vec);
@@ -312,7 +304,7 @@ Rep *RepEllipsoidNew(CoordSet * cs, int state)
               scale3f(n1, scale[1], n1);
               scale3f(n2, scale[2], n2);
 
-              r_el = mx * pradius * ellipsoid_scale;
+              r_el = mx * pradius * at_ellipsoid_scale;
 
               {
                 float vc[3];

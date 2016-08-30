@@ -21,7 +21,7 @@ void SideChainHelperMarkNonCartoonBonded(bool * marked,
     bool ribbon_side_chain_helper)
 {
   auto G = obj->Obj.G;
-  int a1, a2, csc_helper, rsc_helper;
+  int a1, a2;
 
   auto b = obj->Bond;
   auto b_end = b + obj->NBond;
@@ -53,21 +53,19 @@ void SideChainHelperMarkNonCartoonBonded(bool * marked,
       continue;
 
     if (!marked[b1]) {
-      AtomInfoGetSetting_b(G, ati1, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper, &csc_helper);
-      AtomInfoGetSetting_b(G, ati1, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper, &rsc_helper);
-      if( (csc_helper && (ati1->visRep & cRepCartoonBit) && !(ati2->visRep & cRepCartoonBit)) ||
-          (rsc_helper && (ati1->visRep & cRepRibbonBit)  && !(ati2->visRep & cRepRibbonBit))) {
-        marked[b1] = true;
-      }
+      marked[b1] =
+        ((ati1->visRep & cRepCartoonBit) && !(ati2->visRep & cRepCartoonBit) &&
+         AtomSettingGetWD(G, ati1, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper)) ||
+        ((ati1->visRep & cRepRibbonBit) && !(ati2->visRep & cRepRibbonBit) &&
+         AtomSettingGetWD(G, ati1, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper));
     }
 
     if (!marked[b2]) {
-      AtomInfoGetSetting_b(G, ati2, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper, &csc_helper);
-      AtomInfoGetSetting_b(G, ati2, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper, &rsc_helper);
-      if( (csc_helper && (ati2->visRep & cRepCartoonBit) && !(ati1->visRep & cRepCartoonBit)) ||
-          (rsc_helper && (ati2->visRep & cRepRibbonBit)  && !(ati1->visRep & cRepRibbonBit))) {
-        marked[b2] = true;
-      }
+      marked[b2] =
+        ((ati2->visRep & cRepCartoonBit) && !(ati1->visRep & cRepCartoonBit) &&
+         AtomSettingGetWD(G, ati2, cSetting_cartoon_side_chain_helper, cartoon_side_chain_helper)) ||
+        ((ati2->visRep & cRepRibbonBit) && !(ati1->visRep & cRepRibbonBit) &&
+         AtomSettingGetWD(G, ati2, cSetting_ribbon_side_chain_helper, ribbon_side_chain_helper));
     }
   }
 }
