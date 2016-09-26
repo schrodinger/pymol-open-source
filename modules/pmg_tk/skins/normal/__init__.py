@@ -179,8 +179,7 @@ class Normal(PMGSkin):
         if st:
             self.command.set(st)
             self.entry.icursor(len(st))
-        self.focus_entry = 1
-        return 1
+        return 'break'
 
     def createDataArea(self):
         # Create data area where data entry widgets are placed.
@@ -529,8 +528,6 @@ Get autocompletion for many arguments by hitting <TAB>
 PyMOL> color ye<TAB>    (will autocomplete "yellow")
 ''')
         
-        self.focus_entry=0
-        self.refocus_entry=0
         if self.app.allow_after:
             self.output.after(100,self.update_feedback)
             self.output.after(100,self.update_menus)
@@ -571,11 +568,9 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         self.entry.bind('<End>',lambda e,s=self: s.cmd.do("cmd._special(107,0,0)"))
 
     def update_feedback(self):
-        if self.focus_entry:
-            self.focus_entry=0
-            self.entry.focus_set()
         feedback = self.cmd._get_feedback(self.cmd)
         if feedback!=None:
+            self.text.configure(state='normal')
             for a in feedback:
                 self.output.insert(END,"\n")
                 self.output.insert(END,a)
@@ -584,8 +579,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                 if self.lineCount > 10000:
                     self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
                     self.lineCount=5000
-#            self.entry.focus_set()
-        self.updating = 1
+            self.text.configure(state='disabled')
         progress = self.cmd.get_progress()
         if progress>=0.0:
 #            self.abortButton.config(state=NORMAL)

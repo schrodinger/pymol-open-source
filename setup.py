@@ -232,6 +232,9 @@ else: # unix style (linux, mac, ...)
     elif sys.platform.startswith("freebsd"):
         prefix_path = ["/usr/local"]
 
+    if 'anaconda' in sys.executable.lower():
+        prefix_path.insert(0, sys.executable.split('/bin/')[0])
+
     try:
         import numpy
         inc_dirs += [

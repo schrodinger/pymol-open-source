@@ -3455,6 +3455,8 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
   SpecRec *rec = NULL;
   CExecutive *I = G->Executive;
   int found = false;
+  auto ignore_case = SettingGet<bool>(G, cSetting_ignore_case);
+
   ObjectNameType name;
   UtilNCopy(name, new_name, sizeof(ObjectNameType));
   ObjectMakeValidName(name);
@@ -3463,7 +3465,7 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
     PRINTFB(G, FB_Executive, FB_Errors)
       "SetName-Error: blank names not allowed.\n" ENDFB(G);
     ok = false;
-  } else if(WordMatchExact(G, name, cKeywordSame, true) || SelectorNameIsKeyword(G, name)) {
+  } else if(WordMatchExact(G, name, cKeywordSame, ignore_case) || SelectorNameIsKeyword(G, name)) {
     PRINTFB(G, FB_Executive, FB_Errors)
       "SetName-Error: name '%s' is a selection keyword.\n", name ENDFB(G);
     ok = false;
@@ -3471,14 +3473,14 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
   if(ok) {
     if(!name[0])
       ok = false;
-    else if(!WordMatchExact(G, name, old_name, true)) {
+    else if(!WordMatchExact(G, name, old_name, ignore_case)) {
 
       while(ListIterate(I->Spec, rec, next)) {
         if(found)
           break;
         switch (rec->type) {
         case cExecObject:
-          if(WordMatchExact(G, rec->obj->Name, old_name, true)) {
+          if(WordMatchExact(G, rec->obj->Name, old_name, ignore_case)) {
             ExecutiveDelKey(I, rec);
             ExecutiveDelete(G, name);
             ObjectSetName(rec->obj, name);
@@ -3494,13 +3496,13 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
               SeqChanged(G);
             }
             if (rec->obj->type == cObjectMap)
-              ExecutiveInvalidateMapDependents(G, old_name, new_name);
+              ExecutiveInvalidateMapDependents(G, old_name, name);
 
             found = true;
           }
           break;
         case cExecSelection:
-          if(WordMatchExact(G, rec->name, old_name, true)) {
+          if(WordMatchExact(G, rec->name, old_name, ignore_case)) {
             if(SelectorSetName(G, name, old_name)) {
               ExecutiveDelete(G, name); /* just in case */
               ExecutiveDelKey(I, rec);
@@ -3522,7 +3524,7 @@ int ExecutiveSetName(PyMOLGlobals * G, const char *old_name, const char *new_nam
         ObjectNameType childname;
         UtilNCopy(childname, name, sizeof(ObjectNameType));
         while(ListIterate(I->Spec, rec, next)) {
-          if(WordMatchExact(G, rec->group_name, old_name, true)) {
+          if(WordMatchExact(G, rec->group_name, old_name, ignore_case)) {
             UtilNCopy(rec->group_name, name, WordLength);
             // rename group members for group_auto_mode
             if (strncmp(rec->name, old_name, old_name_len) == 0 && rec->name[old_name_len] == '.') {
@@ -4351,6 +4353,8 @@ int ExecutiveAssignSS(PyMOLGlobals * G, const char *target, int state, const cha
   return (ok);
 }
 
+static int * getRepArrayFromBitmask(int visRep);
+
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G)
 {
   PyObject *result = NULL, *list;
@@ -4362,13 +4366,16 @@ PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G)
       list = PyList_New(4);
       PyList_SetItem(list, 0, PyInt_FromLong(rec->visible));
 
-      PyList_SetItem(list, 1, PConvAutoNone(Py_None));
+      PyList_SetItem(list, 1, PyList_New(0));
 
       if(rec->type != cExecObject) {
         PyList_SetItem(list, 2, PConvAutoNone(Py_None));
         PyList_SetItem(list, 3, PConvAutoNone(Py_None));
       } else {
-        PyList_SetItem(list, 2, PyInt_FromLong(rec->obj->visRep));
+        auto vla = getRepArrayFromBitmask(rec->obj->visRep);
+        PyList_SetItem(list, 2, PConvIntVLAToPyList(vla));
+        VLAFreeP(vla);
+
         PyList_SetItem(list, 3, PyInt_FromLong(rec->obj->Color));
       }
 
@@ -4379,7 +4386,6 @@ PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals * G)
   return (result);
 }
 
-#ifdef _PYMOL_LIB
 static int * getRepArrayFromBitmask(int visRep) {
   int n_vis = 0;
   int *RepVis = VLACalloc(int, cRepCnt);
@@ -4392,6 +4398,7 @@ static int * getRepArrayFromBitmask(int visRep) {
   return RepVis;
 }
 
+#ifdef _PYMOL_LIB
 /*
  * Returns a list (VLA) of enabled atom representations (AtomInfoType.visRep)
  * in selection (e.g. {cRepLine, cRepNonbonded})
@@ -10822,7 +10829,6 @@ int ExecutiveIterateState(PyMOLGlobals * G, int state, const char *str1, const c
 {
 #ifdef _WEBGL
 #endif
-  OrthoLineType s1;
   SelectorTmp tmpsele1(G, str1);
   int sele1 = tmpsele1.getIndex();
   if(sele1 >= 0) {
