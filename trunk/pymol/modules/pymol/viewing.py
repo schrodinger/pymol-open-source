@@ -1260,6 +1260,66 @@ SEE ALSO
 
         return r
                         
+    def _legacy_scene(key='auto', action='recall', message=None, view=1,
+              color=1, active=1, rep=1, frame=1, animate=-1,
+              new_key=None, hand=1, quiet=1, _self=cmd):
+        ''' FOR INTERNAL USE ONLY. Stores and deletes <=1.7.4 compatible scenes. '''
+        pymol=_self._pymol
+        r = DEFAULT_SUCCESS
+        view = int(view)
+        rep = int(rep)
+        color = int(color)
+        active = int(active)
+        frame = int(frame)
+        quiet = int(quiet)
+        animate = 0
+
+        try:
+            _self.lock(_self) # manipulating global data, so need lock
+            if key=='*':
+                if action=='clear':
+                    for key in pymol._scene_dict:
+                        # free selections
+                        scene_list = pymol._scene_dict[key]
+                        if len(scene_list)>3:
+                            colorection = scene_list[3]
+                            if colorection!=None:
+                                _self.del_colorection(colorection,key)
+                        name = "_scene_"+key+"_*"
+                        _self.delete(name)
+                else:
+                    raise ValueError('action=' + action)
+            else:
+                if action == 'store':
+                    if key in ('new', 'auto'):
+                        raise ValueError('key=' + key)
+                    if key in pymol._scene_dict:
+                        raise RuntimeError('update not supported')
+                    if rep:
+                        for rep_name in rep_list:
+                            name = "_scene_"+key+"_"+rep_name
+                            _self.select(name,"rep "+rep_name)
+                    if is_string(message):
+                        if message:
+                            if (message[0:1] in [ '"',"'"] and
+                                 message[-1:] in [ '"',"'"]):
+                                message=message[1:-1]
+                            else:
+                                message = message.splitlines()
+                    pymol._scene_dict[key] = [
+                        _self.get_view(0) if view else None,
+                        _self.get_vis() if active else None,
+                        _self.get_frame() if frame else None,
+                        _self.get_colorection(key) if color else None,
+                        1 if rep else None,
+                        message,
+                    ]
+                else:
+                    raise ValueError('action=' + action)
+        finally:
+            _self.unlock(r,_self)
+        return r
+
     def session_save_views(session,_self=cmd):
         pymol=_self._pymol        
         session['view_dict']=copy.deepcopy(pymol._view_dict)

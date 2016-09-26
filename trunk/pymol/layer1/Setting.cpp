@@ -312,7 +312,7 @@ static void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int value_type, co
       }
       break;
     case cSetting_float3:
-      memcpy(entry->value.float3_, value, sizeof(float) * 3);
+      memcpy(entry->value.float3_, *(const float **) value, sizeof(float) * 3);
       break;
     default:
       printf("SettingUniqueEntry_Set-Error: unsupported type %d\n", value_type);
@@ -412,10 +412,11 @@ bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int index, PyObje
 
   int type = SettingGetType(G, index);
 
+  float val_3f[3];
   union {
     int val_i;
     float val_f;
-    float val_3f[3];
+    float * ptr_3f;
   };
 
   switch (type) {
@@ -439,6 +440,7 @@ bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int index, PyObje
       ok_assert(1, PConvPyStrToStr(value, sval, OrthoLineLength) &&
           sscanf(sval, "%f%f%f", &val_3f[0], &val_3f[1], &val_3f[2]) == 3);
     }
+    ptr_3f = val_3f;
     break;
   default:
     PRINTFB(G, FB_Python, FB_Errors)
@@ -446,7 +448,7 @@ bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int index, PyObje
     return false;
   }
 
-  return SettingUniqueSetTypedValue(G, unique_id, index, type, val_3f);
+  return SettingUniqueSetTypedValue(G, unique_id, index, type, &val_i);
 
 ok_except1:
   PRINTFB(G, FB_Setting, FB_Errors)
@@ -523,99 +525,28 @@ int SettingUniqueCopyAll(PyMOLGlobals * G, int src_unique_id, int dst_unique_id)
   OVreturn_word dst_result;
 
   if(OVreturn_IS_OK((dst_result = OVOneToOne_GetForward(I->id2offset, dst_unique_id)))) {       /* setting list exists for atom */
-
-    /* note, this code path not yet tested...doesn't occur */
-
-    OVreturn_word src_result;
-    if(OVreturn_IS_OK(src_result = OVOneToOne_GetForward(I->id2offset, src_unique_id))) {
-      int src_offset = src_result.word;
-      SettingUniqueEntry *src_entry;
-      while(src_offset) {
-        src_entry = I->entry + src_offset;
-
-        {
-          int setting_id = src_entry->setting_id;
-          int setting_type = SettingInfo[setting_id].type;
-          void *setting_value = &src_entry->value;
-          int dst_offset = dst_result.word;
-          int prev = 0;
-          int found = false;
-          while(dst_offset) {
-            SettingUniqueEntry *dst_entry = I->entry + dst_offset;
-            if(dst_entry->setting_id == setting_id) {
-              found = true;     /* this setting is already defined */
-	      SettingUniqueEntry_Set(dst_entry, setting_type, setting_value);
-              break;
-            }
-            prev = dst_offset;
-            dst_offset = dst_entry->next;
-          }
-          if(!found) {          /* setting not found in existing list, so append new value */
-            if(!I->next_free)
-              SettingUniqueExpand(G);
-            if(I->next_free) {
-              dst_offset = I->next_free;
-              {
-                SettingUniqueEntry *dst_entry = I->entry + dst_offset;
-                I->next_free = dst_entry->next;
-                dst_entry->next = 0;
-                if(prev) {      /* append onto existing list */
-                  I->entry[prev].next = dst_offset;
-                  dst_entry->setting_id = setting_id;
-                  SettingUniqueEntry_Set(dst_entry, setting_type, setting_value);
-                } else
-                  if(OVreturn_IS_OK
-                     (OVOneToOne_Set(I->id2offset, dst_unique_id, dst_offset))) {
-                  /* create new list */
-                  dst_entry->setting_id = setting_id;
-                  SettingUniqueEntry_Set(dst_entry, setting_type, setting_value);
-                }
-              }
-            }
-          }
-        }
-        src_offset = I->entry[src_offset].next; /* src_entry invalid, since I->entry may have changed */
-      }
-    }
+    PRINTFB(G, FB_Setting, FB_Errors)
+      " SettingUniqueCopyAll-Bug: merging settings not implemented\n"
+      ENDFB(G);
+    ok = false;
   } else if(dst_result.status == OVstatus_NOT_FOUND) {  /* new setting list for atom */
     OVreturn_word src_result;
     if(OVreturn_IS_OK(src_result = OVOneToOne_GetForward(I->id2offset, src_unique_id))) {
-      int src_offset = src_result.word;
-      int prev = 0;
-      SettingUniqueEntry *src_entry;
-      while(ok && src_offset) {
-        if(!I->next_free)
-          SettingUniqueExpand(G);
-        {
-          src_entry = I->entry + src_offset;
-          {
-            int setting_id = src_entry->setting_id;
-            int setting_type = SettingInfo[setting_id].type;
-            void *setting_value = &src_entry->value;
-            if(I->next_free) {
-              int dst_offset = I->next_free;
-              SettingUniqueEntry *dst_entry = I->entry + dst_offset;
-              I->next_free = dst_entry->next;
+      int dst_offset = 0;
+      for (int src_offset = src_result.word; src_offset;
+          src_offset = I->entry[src_offset].next) {
+        SettingUniqueExpand(G); // this may reallocate I->entry
 
-              if(!prev) {
-                if(!OVreturn_IS_OK
-                   (OVOneToOne_Set(I->id2offset, dst_unique_id, dst_offset))) {
-                  ok = false;
-                }
-              } else {
-                I->entry[prev].next = dst_offset;
-              }
-
-              if(ok) {
-                dst_entry->setting_id = setting_id;
-                dst_entry->next = 0;
-                SettingUniqueEntry_Set(dst_entry, setting_type, setting_value);
-              }
-              prev = dst_offset;
-            }
-          }
+        if (!dst_offset) {
+          OVOneToOne_Set(I->id2offset, dst_unique_id, I->next_free);
+        } else {
+          I->entry[dst_offset].next = I->next_free;
         }
-        src_offset = I->entry[src_offset].next; /* src_entry invalid, since I->entry may have changed */
+
+        dst_offset = I->next_free;
+        I->next_free = I->entry[dst_offset].next;
+        I->entry[dst_offset] = I->entry[src_offset];
+        I->entry[dst_offset].next = 0;
       }
     }
   } else {

@@ -367,7 +367,7 @@ PyObject *ObjectDistAsPyList(ObjectDist * I)
   PyList_SetItem(result, 0, ObjectAsPyList(&I->Obj));
   PyList_SetItem(result, 1, PyInt_FromLong(I->NDSet));
   PyList_SetItem(result, 2, ObjectDistDSetAsPyList(I));
-  PyList_SetItem(result, 3, PConvAutoNone(Py_None));
+  PyList_SetItem(result, 3, PyInt_FromLong(0));
 
   return (PConvAutoNone(result));
 }

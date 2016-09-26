@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2016-09-26 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* pse_export_version: legacy scenes support
+
+	* use ignore_case setting with set_name command
+
+	* setup.py: detect anaconda prefix
+
+	* 1.8.3.3 (unstable/experimental)
+
 2016-08-29 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* experimental MMTF load support

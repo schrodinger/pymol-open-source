@@ -150,6 +150,13 @@ class StringsBuffer:
 
 ########## STRATEGIES #############
 
+def _PackedIntBufStrategy(nbytes=1, dectype='i4'):
+    m = 1 << (nbytes * 8 - 1)
+    return [
+        NumbersBuffer('i' + str(nbytes), dectype),
+        RecursiveIndex(m - 1, -m),
+    ]
+
 strategies = {
     1: [NumbersBuffer('f4')],
     2: [NumbersBuffer('i1')],
@@ -160,14 +167,12 @@ strategies = {
     7: [NumbersBuffer('i4'), RunLength],
     8: [NumbersBuffer('i4'), RunLength, Delta],
     9: lambda factor: [NumbersBuffer('i4'), RunLength, IntegerFloats(factor)],
-   10: lambda factor: [NumbersBuffer('i2', 'i4'),
-       RecursiveIndex(2**15 - 1, -2**15),
-       Delta, IntegerFloats(factor)],
+   10: lambda factor: _PackedIntBufStrategy(2) + [Delta, IntegerFloats(factor)],
    11: lambda factor: [NumbersBuffer('i2'), IntegerFloats(factor)],
-   12: lambda factor: [NumbersBuffer('i2', 'i4'), IntegerFloats(factor)],
-   13: lambda factor: [NumbersBuffer('i1', 'i4'), IntegerFloats(factor)],
-   14: [NumbersBuffer('i2', 'i4')],
-   15: [NumbersBuffer('i1', 'i4')],
+   12: lambda factor: _PackedIntBufStrategy(2) + [IntegerFloats(factor)],
+   13: lambda factor: _PackedIntBufStrategy(1) + [IntegerFloats(factor)],
+   14: _PackedIntBufStrategy(2),
+   15: _PackedIntBufStrategy(1),
 }
 
 # optional parameters format (defaults to 'i' -> one int32 argument)
@@ -225,7 +230,8 @@ class MmtfReader:
 
     @classmethod
     def from_url(cls, url):
-        return cls(urlopen(url).read())
+        handle = open(url, 'rb') if os.path.isfile(url) else urlopen(url)
+        return cls(handle.read())
 
     def get(self, key, default=None):
         key = as_msgpack_key(key)
