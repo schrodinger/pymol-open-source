@@ -154,7 +154,7 @@ def _PackedIntBufStrategy(nbytes=1, dectype='i4'):
     m = 1 << (nbytes * 8 - 1)
     return [
         NumbersBuffer('i' + str(nbytes), dectype),
-        RecursiveIndex(m - 1, -m),
+        RecursiveIndex(-m, m - 1),
     ]
 
 strategies = {

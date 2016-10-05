@@ -51,9 +51,12 @@ def posix_find_lib(names, lib_dirs):
 class install_pymol(install):
     pymol_path = None
     bundled_pmw = False
+    no_launcher = False
+
     user_options = install.user_options + [
         ('pymol-path=', None, 'PYMOL_PATH'),
         ('bundled-pmw', None, 'install bundled Pmw module'),
+        ('no-launcher', None, 'skip installation of the pymol launcher'),
         ]
 
     def finalize_options(self):
@@ -66,7 +69,9 @@ class install_pymol(install):
     def run(self):
         install.run(self)
         self.install_pymol_path()
-        self.make_launch_script()
+
+        if not self.no_launcher:
+            self.make_launch_script()
 
         if self.bundled_pmw:
             import tarfile
