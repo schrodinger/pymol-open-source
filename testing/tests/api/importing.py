@@ -361,3 +361,13 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.load(self.datafile("test_PHE_pentamer.ply.gz"))
         e = cmd.get_extent('test_PHE_pentamer')
         self.assertArrayEqual(e, [[-314.1,-303.6,-280.9], [1592.0,1042.5, 868.0]], delta=1e-3)
+
+    @testing.requires_version('1.8.4')
+    def testLoadMMTF(self):
+        cmd.load(self.datafile("3njw.mmtf.gz"))
+        self.assertEqual(169, cmd.count_atoms())
+        self.assertEqual(36, cmd.count_atoms('ss S'))
+        self.assertEqual(25, cmd.count_atoms('solvent'))
+        symmetry = cmd.get_symmetry()
+        self.assertArrayEqual(symmetry[:6], [19.465, 21.432, 29.523, 90.0, 90.0, 90.0], delta=1e-4)
+        self.assertEqual(symmetry[6], 'P 21 21 21')
