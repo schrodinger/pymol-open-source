@@ -113,19 +113,19 @@ struct AtomRef {
  * Abstract base class for exporting molecular selections
  */
 struct MoleculeExporter {
-  char* m_buffer = NULL; // out
-  int m_offset = 0;
+  char* m_buffer; // out
+  int m_offset;
 
 protected:
-  CoordSet        * m_last_cs  = NULL;
-  ObjectMolecule  * m_last_obj = NULL;
-  int m_last_state = -1;
+  CoordSet        * m_last_cs;
+  ObjectMolecule  * m_last_obj;
+  int m_last_state;
 
-  PyMOLGlobals * G = NULL;
+  PyMOLGlobals * G;
   SeleCoordIterator m_iter;
 
-  bool m_retain_ids = false;
-  int m_id = 0;
+  bool m_retain_ids;
+  int m_id;
 
   struct matrix_t {
     double storage[16];
@@ -153,6 +153,13 @@ public:
 
     m_buffer = VLAlloc(char, 1280);
     m_buffer[0] = '\0';
+
+    m_offset = 0;
+    m_last_cs  = NULL;
+    m_last_obj = NULL;
+    m_last_state = -1;
+    m_retain_ids = false;
+    m_id = 0;
 
     setMulti(getMultiDefault());
   }
@@ -403,9 +410,9 @@ void MoleculeExporter::populateBondRefs() {
 // ---------------------------------------------------------------------------------- //
 
 struct MoleculeExporterPDB : public MoleculeExporter {
-  bool m_conect_all = false;
-  bool m_conect_nodup = false;
-  bool m_mdl_written = false;
+  bool m_conect_all;
+  bool m_conect_nodup;
+  bool m_mdl_written;
   PDBInfoRec m_pdb_info;
 
   // quasi constructor
@@ -414,6 +421,8 @@ struct MoleculeExporterPDB : public MoleculeExporter {
 
     UtilZeroMem((void *) &m_pdb_info, sizeof(PDBInfoRec));
 
+    m_conect_all    = false;
+    m_mdl_written   = false;
     m_conect_nodup  = SettingGetGlobal_b(G, cSetting_pdb_conect_nodup);
     m_retain_ids    = SettingGetGlobal_b(G, cSetting_pdb_retain_ids);
   }
@@ -447,7 +456,8 @@ struct MoleculeExporterPDB : public MoleculeExporter {
 
     std::map<int, std::vector<int>> conect;
 
-    for (auto& bond : m_bonds) {
+    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
+      auto& bond = *bond_it;
       int order = m_conect_nodup ? 1 : bond.ref->order;
       for (int i = 0; i < 2; ++i) {
         for (int d = 0; d < order; ++d) {
@@ -459,7 +469,8 @@ struct MoleculeExporterPDB : public MoleculeExporter {
 
     m_bonds.clear();
 
-    for (auto& rec : conect) {
+    for (auto rec_it = conect.begin(); rec_it != conect.end(); ++rec_it) {
+      const auto& rec = *rec_it;
       for (int i = 0, i_end = rec.second.size(); i != i_end;) {
         m_offset += VLAprintf(m_buffer, m_offset, "CONECT%5d", rec.first);
         // up to 4 bonds per record
@@ -709,7 +720,8 @@ struct MoleculeExporterMOL : public MoleculeExporter {
         m_atoms.size(), m_bonds.size(), m_chiral_flag);
 
     // write atoms
-    for (auto& atom : m_atoms) {
+    for (auto atom_it = m_atoms.begin(); atom_it != m_atoms.end(); ++atom_it) {
+      const auto& atom = *atom_it;
       auto ai = atom.ref;
 
       m_offset += VLAprintf(m_buffer, m_offset, "M  V30 %d %s %.4f %.4f %.4f 0",
@@ -732,7 +744,8 @@ struct MoleculeExporterMOL : public MoleculeExporter {
 
     // write bonds
     int n_bonds = 0;
-    for (auto& bond : m_bonds) {
+    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
+      const auto& bond = *bond_it;
       m_offset += VLAprintf(m_buffer, m_offset, "M  V30 %d %d %d %d\n",
           ++n_bonds, bond.ref->order, bond.id1, bond.id2);
     }
@@ -753,7 +766,8 @@ struct MoleculeExporterMOL : public MoleculeExporter {
         (int) m_atoms.size(), (int) m_bonds.size(), m_chiral_flag);
 
     // write atoms
-    for (auto& atom : m_atoms) {
+    for (auto atom_it = m_atoms.begin(); atom_it != m_atoms.end(); ++atom_it) {
+      const auto& atom = *atom_it;
       auto ai = atom.ref;
       int chg = ai->formalCharge;
       m_offset += VLAprintf(m_buffer, m_offset,
@@ -765,7 +779,8 @@ struct MoleculeExporterMOL : public MoleculeExporter {
     m_atoms.clear();
 
     // write bonds
-    for (auto& bond : m_bonds) {
+    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
+      const auto& bond = *bond_it;
       m_offset += VLAprintf(m_buffer, m_offset, "%3d%3d%3d%3d  0  0  0\n",
           bond.id1, bond.id2, bond.ref->order, (int) bond.ref->stereo);
     }
@@ -907,7 +922,8 @@ struct MoleculeExporterMOL2 : public MoleculeExporter {
     m_offset += VLAprintf(m_buffer, m_offset, "@<TRIPOS>BOND\n");
 
     int bond_id = 0;
-    for (auto& bond : m_bonds) {
+    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
+      const auto& bond = *bond_it;
       m_offset += VLAprintf(m_buffer, m_offset, "%d %d %d %s\n",
           ++bond_id,
           bond.id1,
@@ -924,7 +940,8 @@ struct MoleculeExporterMOL2 : public MoleculeExporter {
     m_offset += VLAprintf(m_buffer, m_offset, "@<TRIPOS>SUBSTRUCTURE\n");
 
     int subst_id = 0;
-    for (auto& subst : m_substs) {
+    for (auto subst_it = m_substs.begin(); subst_it != m_substs.end(); ++subst_it) {
+      const auto& subst = *subst_it;
       const auto& ai = subst.ai;
       m_offset += VLAprintf(m_buffer, m_offset, "%d\t%s%d%.1s\t%d\t%s\t1 %s\t%s\n",
           ++subst_id,
@@ -945,7 +962,14 @@ struct MoleculeExporterMOL2 : public MoleculeExporter {
 struct MoleculeExporterMAE : public MoleculeExporter {
   int m_n_atoms;
   int m_n_atoms_offset;
-  int m_n_arom_bonds = 0;
+  int m_n_arom_bonds;
+
+  // quasi constructor
+  void init(PyMOLGlobals * G_) {
+    MoleculeExporter::init(G_);
+
+    m_n_arom_bonds = 0;
+  }
 
   int getMultiDefault() const {
     // multi-entry format
@@ -1049,7 +1073,8 @@ struct MoleculeExporterMAE : public MoleculeExporter {
           ":::\n", (int) m_bonds.size());
 
       int b = 0;
-      for (auto& bond : m_bonds) {
+      for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
+        const auto& bond = *bond_it;
         int order = bond.ref->order;
         if (order > 3) {
           ++m_n_arom_bonds;
@@ -1215,13 +1240,24 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
  *
  */
 struct MoleculeExporterChemPy : public MoleculeExporter {
-  PyObject *m_model = NULL; // out
+  PyObject *m_model; // out
 
 protected:
-  int m_n_cs = 0; // number of coordinate sets
+  int m_n_cs; // number of coordinate sets
   float m_ref_tmp[3];
-  PyObject *m_atom_list = NULL;
+  PyObject *m_atom_list;
 
+public:
+  // quasi constructor
+  void init(PyMOLGlobals * G_) {
+    MoleculeExporter::init(G_);
+
+    m_model = NULL;
+    m_n_cs = 0;
+    m_atom_list = NULL;
+  }
+
+protected:
   int getMultiDefault() const {
     // single-entry format
     return cMolExportGlobal;
