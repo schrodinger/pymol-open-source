@@ -230,6 +230,14 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(3, cmd.count_states())
         cmd.delete('*')
 
+    @testing.requires_version('1.8.5')
+    def testLoadCharmmCor(self):
+        # http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/corplugin.html
+        for fmt in ['', 'cor']:
+            cmd.load(self.datafile("charmm.crd"), format=fmt)
+            self.assertEqual(81, cmd.count_atoms(), 'fmt: ' + fmt)
+            cmd.delete('*')
+
     def testLoadTOP(self):
         '''
         Data files from:
