@@ -273,6 +273,14 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(2, cmd.count_atoms())
         self.assertEqual(1, cmd.count_states())
 
+    @testing.requires_version('1.8.5.0')
+    def testLoadMSMSSurface(self):
+        cmd.load(self.datafile('surface.face'))
+        e = cmd.get_extent('surface')
+        self.assertArrayEqual(e, [
+            [28.003,  25.573,  12.883],
+            [34.238,  31.434,  17.835]], delta=1e-3)
+
     def testReadMmodstr(self):
         cmd.read_mmodstr(mmodstr, 'm1')
         self.assertEqual(7, cmd.count_atoms())
