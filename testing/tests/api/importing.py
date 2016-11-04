@@ -197,8 +197,8 @@ class TestImporting(testing.PyMOLTestCase):
         self.skipTest("TODO")
 
     def testLoadRaw(self):
-        cmd.load_raw
-        self.skipTest("TODO")
+        cmd.load_raw(open(self.datafile("sampletrajectory.pdb")).read(), "pdb")
+        self.assertEqual(115, cmd.count_atoms())
 
     @testing.foreach(
             ['.pdb', '.dcd'],
