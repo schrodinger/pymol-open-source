@@ -387,3 +387,21 @@ class TestImporting(testing.PyMOLTestCase):
         symmetry = cmd.get_symmetry()
         self.assertArrayEqual(symmetry[:6], [19.465, 21.432, 29.523, 90.0, 90.0, 90.0], delta=1e-4)
         self.assertEqual(symmetry[6], 'P 21 21 21')
+
+    @testing.foreach(
+            ['', '*',                   True],
+            ['', 'pdb_header',          True],
+            ['', 'x pdb_header y',      True],
+            ['', 'other',               False],
+            ['',                None,   False],
+            ['other',           None,   False],
+            ['pdb_header',      None,   True],
+            ['x pdb_header y',  None,   True],
+            ['*',               None,   True],
+            )
+    @testing.requires_version('1.8.4')
+    @testing.requires('incentive')
+    def testPdbHeader(self, load_object_props_default, object_props, truth):
+        cmd.set('load_object_props_default', load_object_props_default)
+        cmd.load(self.datafile('1rx1.pdb'), 'm1', object_props=object_props)
+        self.assertEqual(truth, 'pdb_header' in (cmd.get_property_list('m1') or ()))
