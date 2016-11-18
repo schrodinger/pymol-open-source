@@ -33,7 +33,10 @@ def compareListFunction(x, y):
 def import_from_file(filename, name=None):
     import imp
     if name is None:
-        name = os.path.relpath(filename).replace('.', '_')
+        try:
+             name = os.path.relpath(filename).replace('.', '_')
+        except ValueError:
+             name = os.path.basename(filename).replace('.', '_')
     for suffix in imp.get_suffixes():
         if filename.endswith(suffix[0]):
             break
@@ -441,7 +444,7 @@ else:
             if img.shape[-1] == 4:
                 self.assertTrue((img[:,:,3] == 255).all())
 
-        def assertArrayEqual(self, a1, a2, delta=0, msg='arrays not equal'):
+        def assertArrayEqual(self, a1, a2, delta=0, msg='arrays not equal', _not=False):
             '''
             Test if two (multi-)dimensional numeric arrays are (almost) equal.
             '''
@@ -451,7 +454,10 @@ else:
             a2 = numpy.asarray(a2)
 
             self.assertEqual(a1.shape, a2.shape, msg + ' (shape)')
-            self.assertTrue(numpy.allclose(a1, a2, 0, delta), msg)
+            self.assertEqual(not _not, numpy.allclose(a1, a2, 0, delta), msg)
+
+        def assertArrayNotEqual(self, a1, a2, delta=0, msg='arrays equal'):
+            return self.assertArrayEqual(a1, a2, delta, msg, True)
 
         def timing(self, *args, **kwargs):
             '''

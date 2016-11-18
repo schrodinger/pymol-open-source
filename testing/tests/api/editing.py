@@ -486,8 +486,44 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertTrue('pk1' not in cmd.get_names('selections'))
 
     def test_update(self):
-        cmd.update
-        self.skipTest("TODO")
+        # 3 states
+        cmd.fragment('gly', 'm1')
+        cmd.create('m1', 'm1', 1, 2)
+        cmd.create('m1', 'm1', 1, 3)
+
+        # second object, 90 degree rotates
+        cmd.copy('m2', 'm1')
+        cmd.rotate('x', 90, '(m2)', state=0)
+
+        # reference coordsets
+        cs = cmd.get_coordset
+        cs1 = cs('m1', 1)
+        cs2 = cs('m2', 1)
+
+        # m2/3 will change (pre-check)
+        self.assertArrayEqual(cs2, cs('m2', 3))
+        self.assertArrayNotEqual(cs1, cs('m2', 3))
+
+        # update explicit state
+        cmd.update('m2', 'm1', 3, 2)
+
+        # m2/3 has changed
+        self.assertArrayEqual(cs1, cs('m2', 3))
+        self.assertArrayNotEqual(cs2, cs('m2', 3))
+
+        # these haven't changed
+        self.assertArrayEqual(cs2, cs('m2', 1))
+        self.assertArrayEqual(cs2, cs('m2', 2))
+
+        # reset m2/3
+        cmd.load_coordset(cs2, 'm2', 3)
+        self.assertArrayEqual(cs2, cs('m2', 3))
+
+        # update all states
+        cmd.update('m2', 'm1', 0, 0)
+        self.assertArrayEqual(cs1, cs('m2', 1))
+        self.assertArrayEqual(cs1, cs('m2', 2))
+        self.assertArrayEqual(cs1, cs('m2', 3))
 
     def test_valence(self):
         cmd.fragment('gly')
