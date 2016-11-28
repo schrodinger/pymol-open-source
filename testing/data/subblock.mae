@@ -1,0 +1,72 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_m_ct_format
+ :::
+ 27511682 
+  1 
+  wtf.1 
+  2
+ m_atom[5] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  r_m_charge1
+  r_m_charge2
+  i_m_atomic_number
+  i_m_representation
+  s_m_color_rgb
+  s_m_atom_name
+  r_wsviz_coulat
+  r_wsviz_evdw
+  r_wsviz_lipo
+  i_wsviz_ipcat
+  :::
+  1 3 11.292253 12.455858 14.534621 900 118 0.07310 0.07310 6 3 00CC00  "C11"  -0.176747537463116 -0.0865415879476963 -0.221191903208114 0
+  2 41 10.620537 11.636609 14.744451 900 21 0.00000 0.00000 1 3 FFFFFF  ""  <> <> <> <>
+  3 41 10.736891 13.250007 14.035622 900 21 0.00000 0.00000 1 3 FFFFFF  ""  <> <> <> <>
+  4 41 11.525017 12.970398 15.466914 900 21 0.00000 0.00000 1 3 FFFFFF  ""  <> <> <> <>
+  5 41 12.181451 12.147515 13.984757 900 21 0.00000 0.00000 1 3 FFFFFF  ""  <> <> <> <>
+  :::
+ } 
+ m_bond[4] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  i_m_from_rep
+  i_m_to_rep
+  :::
+  1 1 2 1 3 3
+  2 1 3 1 3 3
+  3 1 4 1 3 3
+  4 1 5 1 3 3
+  :::
+
+  # the following blocks break loading into PyMOL 1.8.0 #
+  x_some_random_subblock {
+    s_x_key1
+    i_x_key2
+    :::
+    "foo bar"
+    123
+  }
+  x_some_random_subtable[3] {
+    s_x_col1
+    :::
+    1 A 2 B 3 C
+    :::
+  }
+ } 
+} 
