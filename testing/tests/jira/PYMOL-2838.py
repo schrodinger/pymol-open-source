@@ -1,7 +1,7 @@
 from pymol import cmd, testing
 
-# fixed in released version 1.8.4.2
-@testing.requires_version('1.8.4.1')
+# fixed in 1.8.2.4 and 1.8.4.2
+@testing.requires_version('1.8.2.3')
 @testing.requires('incentive')
 class TestLoadMaeTableSubBlocks(testing.PyMOLTestCase):
 
