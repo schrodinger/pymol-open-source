@@ -531,6 +531,10 @@ else:
             cmd.set('light_count', 1)
             cmd.set('depth_cue', 0)
 
+            # needed for open-source
+            cmd.set('reflect', 0)
+            cmd.set('direct', 0)
+
     class PyMOLTestResult(unittest.runner.TextTestResult):
         def addSuccess(self, test):
             if not (self.showAll and test.timings):
