@@ -495,8 +495,10 @@ ObjectDist *ObjectDistNew(PyMOLGlobals * G)
   I->Obj.fUpdate = (void (*)(CObject *)) ObjectDistUpdate;
   I->Obj.fInvalidate = (void (*)(CObject *, int, int, int)) ObjectDistInvalidate;
   I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectDistGetNFrames;
+#if 0
   I->Obj.fGetSettingHandle = (CSetting ** (*)(CObject *, int state))
     ObjectDistGetSettingHandle;
+#endif
   I->Obj.fDescribeElement = NULL;
   I->Obj.Color = ColorGetIndex(G, "dash");
   return (I);

@@ -649,7 +649,7 @@ enum {
   REC_f( 551, ray_transparency_oblique                , global    , 0.0F ),
   REC_f( 552, ray_trace_trans_cutoff                  , global    , 0.05F ),
   REC_f( 553, ray_trace_persist_cutoff                , global    , 0.10F ),
-  REC_f( 554, ray_transparency_oblique_power          , global    , 1.0F ),
+  REC_f( 554, ray_transparency_oblique_power          , global    , 4.0F ),
   REC_f( 555, ray_scatter                             , global    , 0.0F ),
   REC_b( 556, h_bond_from_proton                      , global    , 1 ),
   REC_b( 557, auto_copy_images                        , global    , 0 ),
@@ -865,6 +865,8 @@ enum {
   REC_b( 757, cartoon_all_alt                         , ostate    , 0 ),
   REC_i( 758, display_scale_factor                    , unused    , 1 ),
   REC_b( 759, pick_shading                            , global    , 0 ),
+  REC_s( 760, fetch_type_default                      , global    , "cif" ),
+  REC_b( 761, editor_auto_measure                     , global    , 1 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

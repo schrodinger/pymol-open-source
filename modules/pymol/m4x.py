@@ -60,7 +60,7 @@ class CEXpyParser(CEX.CEXsmilesParser): # Author: Scott Dixon
 
    
 #---------------------------------------------------------------------------------
-def readcex(file,*args):  # Author: Scott Dixon
+def readcex(filename, object=''):  # Author: Scott Dixon
     import os.path
 
       
@@ -76,10 +76,10 @@ def readcex(file,*args):  # Author: Scott Dixon
         except IndexError:
             return None
         
-    f = open(file,"r")
+    f = open(filename,"r")
     cs = CEX.CEXstream(f)
-    modelname = os.path.splitext(os.path.basename(file))[0] #get the base filename
-    if len(args) > 0: modelname = args[0]
+    modelname = object if object else \
+            os.path.splitext(os.path.basename(file))[0] #get the base filename
     while 1:
         tree = CEX.readTree(cs)
         if not tree: break

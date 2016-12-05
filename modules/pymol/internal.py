@@ -2,15 +2,16 @@
 from __future__ import print_function, absolute_import
 
 import os
-cmd = __import__("sys").modules["pymol.cmd"]
+import sys
+cmd = sys.modules["pymol.cmd"]
 from pymol import _cmd
 import threading
 import traceback
 
-try:
+if sys.version_info[0] == 2:
     import thread
     import urllib2
-except ImportError:
+else:
     import _thread as thread
     import urllib.request as urllib2
 
@@ -266,7 +267,6 @@ def _do(cmmd,log=0,echo=1,_self=cmd):
 
 def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0,
           format=-1, mode=-1, quiet=1, _self=cmd): # INTERNAL
-    import sys
     format = int(format)
     # WARNING: internal routine, subject to change
     try:
@@ -346,6 +346,7 @@ def download_chem_comp(resn, quiet=1, _self=cmd):
         return filename
 
     url = "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/" + resn + ".cif"
+    url = "http://files.rcsb.org/ligands/download/" + resn + ".cif"
     if not quiet:
         print(' Downloading ' + url)
 
@@ -380,62 +381,14 @@ def _load(oname,finfo,state,ftype,finish,discrete,
     r = DEFAULT_ERROR
     size = 0
     if ftype not in (loadable.model,loadable.brick):
-        if ftype == loadable.r3d:
-            from . import cgo
-            obj = cgo.from_r3d(finfo)
-            if is_ok(obj):
-                r = _cmd.load_object(_self._COb,str(oname),obj,int(state)-1,loadable.cgo,
-                                      int(finish),int(discrete),int(quiet),
-                                      int(zoom))
-            else:
-                print("Load-Error: Unable to open file '%s'."%finfo)
-        elif ftype == loadable.cc1: # ChemDraw 3D
-            obj = chempy.io.cc1.fromFile(finfo)
-            if obj:
-                r = _cmd.load_object(_self._COb,str(oname),obj,int(state)-1,loadable.model,
-                                      int(finish),int(discrete),
-                                      int(quiet),int(zoom))
-        elif ftype == loadable.moe:
-            try:
-                # BEGIN PROPRIETARY CODE SEGMENT
-                from epymol import moe
-                moe_str = _self.file_read(finfo)
-                r = moe.read_moestr(moe_str,str(oname),int(state),
-                                int(finish),int(discrete),int(quiet),int(zoom),_self=_self)
-
-                # END PROPRIETARY CODE SEGMENT
-            except ImportError:
-                raise pymol.IncentiveOnlyException(".MOE format not supported by this PyMOL build.")
-
-        elif ftype == loadable.mae:
-            try:
-                # BEGIN PROPRIETARY CODE SEGMENT
-                from epymol import mae
-                mae_str = _self.file_read(finfo)
-                r = mae.read_maestr(mae_str,str(oname),
-                                    int(state),
-                                    int(finish),int(discrete),
-                                    int(quiet),int(zoom),int(multiplex),
-                                    int(mimic),
-                                    _self=_self)
-
-                # END PROPRIETARY CODE SEGMENT
-            except ImportError:
-                raise pymol.IncentiveOnlyException(".MAE format not supported by this PyMOL build.")
-
-        else:
-            if ftype in _load2str and ('://' in finfo
-                    or cmd.gz_ext_re.search(finfo)
-                    or any(c > '~' for c in finfo) # ascii check
-                    ):
-                # NOTE: we could safely always do this, not only for URLs and
-                # compressed files. But I don't want to change the old behavior
-                # that regular files are read from the C function.
+        if True:
+            if ftype in _load2str:
                 finfo = _self.file_read(finfo)
                 ftype = _load2str[ftype]
             r = _cmd.load(_self._COb,str(oname),finfo,int(state)-1,int(ftype),
                           int(finish),int(discrete),int(quiet),
-                          int(multiplex),int(zoom), plugin, object_props)
+                          int(multiplex),int(zoom), plugin,
+                          object_props, atom_props, int(mimic))
     else:
         try:
             x = chempy.io.pkl.fromFile(finfo)
@@ -657,7 +610,6 @@ def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
 # stereo (platform dependent )
 
 def _sgi_stereo(flag): # SGI-SPECIFIC - bad bad bad
-    import sys
     # WARNING: internal routine, subject to change
     if sys.platform[0:4]=='irix':
         if os.path.exists("/usr/gfx/setmon"):

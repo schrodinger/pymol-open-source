@@ -2242,7 +2242,7 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
 
     // multiplexing
     ObjectSetName((CObject*) obj, it->first);
-    ExecutiveDelete(G, it->first);
+    ExecutiveDelete(G, obj->Obj.Name);
     ExecutiveManageObject(G, (CObject*) obj, zoom, true);
   }
 

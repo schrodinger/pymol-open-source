@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #define cEditorDihe1    "_pkdihe1"
 #define cEditorDihe2    "_pkdihe2"
 #define cEditorDrag    "_drag"
+#define cEditorMeasure "_auto_measure"
 
 #define EDITOR_SCHEME_OBJ 1
 #define EDITOR_SCHEME_FRAG 2

@@ -12115,6 +12115,11 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       }
       if(ok && isNew) {
         I->Obj.Color = AtomInfoUpdateAutoColor(G);
+
+        if (pdb_info->variant == PDB_VARIANT_VDB) {
+          // vdb files have same chain identifiers in all symmetry copies
+          SettingSet(cSetting_retain_order, 1, (CObject *) I);
+        }
       }
       if (ok)
 	cset = ObjectMoleculePDBStr2CoordSet(G, start, &atInfo, &restart,

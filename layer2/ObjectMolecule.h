@@ -141,6 +141,7 @@ enum {
   PDB_VARIANT_DEFAULT = 0,
   PDB_VARIANT_PQR,
   PDB_VARIANT_PDBQT,
+  PDB_VARIANT_VDB,      /* VIPERdb */
 };
 
 typedef struct {

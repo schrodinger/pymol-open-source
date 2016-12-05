@@ -1,12 +1,13 @@
 
-try:
+import sys
+if sys.version_info[0] == 2:
     import thread
-except ImportError:
+else:
     import _thread as thread
 import threading
 
 import pymol
-cmd = __import__("sys").modules["pymol.cmd"]
+cmd = sys.modules["pymol.cmd"]
 
 from .cmd import fb_module, fb_mask, fb_action, fb_debug
 

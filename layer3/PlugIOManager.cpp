@@ -26,6 +26,8 @@ Z* -------------------------------------------------------------------
 #include "Executive.h"
 #include "AtomInfo.h"
 #include "Lex.h"
+#include "CGO.h"
+#include "ObjectCGO.h"
 
 #ifndef _PYMOL_VMD_PLUGINS
 int PlugIOManagerInit(PyMOLGlobals * G)
@@ -605,6 +607,18 @@ ObjectMolecule *PlugIOManagerLoadMol(PyMOLGlobals * G, ObjectMolecule *origObj,
     I->CSet[I->NCSet++] = cs;
   }
 
+  // topology-only (with template coord set)
+  if (!I->NCSet) {
+    ok_assert(1, cs = CoordSetNew(G));
+    ok_assert(1, cs->Coord = VLAlloc(float, 3 * natoms));
+
+    cs->Obj = I;
+    cs->NIndex = natoms;
+    cs->enumIndices();
+
+    I->CSTmpl = cs;
+  }
+
   // read bonds
   if (plugin->read_bonds &&
       plugin->read_bonds(file_handle, &nbonds, &from, &to, &order,
@@ -648,6 +662,140 @@ ok_except1:
 
   if(atoms)
     mfree(atoms);
+
+  return I;
+}
+
+static void cgo_check_beginend(int type, int & currenttype, CGO *& cgo) {
+  if (currenttype != type) {
+    if (currenttype)
+      CGOEnd(cgo);
+    if (type)
+      CGOBegin(cgo, type);
+    currenttype = type;
+  }
+}
+
+static
+ObjectCGO *PlugIOManagerLoadGraphics(PyMOLGlobals * G, ObjectCGO *origObj,
+    const char *fname, int state, int quiet, const char *plugin_type)
+{
+  CPlugIOManager *manager = G->PlugIOManager;
+  void *file_handle = NULL;
+  molfile_plugin_t * plugin = NULL;
+  const molfile_graphics_t * graphics = NULL;
+  int nelem = 0;
+  int beginend = 0;
+  CGO *cgo = NULL;
+  ObjectCGO *I = NULL;
+
+  ok_assert(1, manager);
+  plugin = find_plugin(manager, plugin_type);
+
+  if (!plugin) {
+    PRINTFB(G, FB_ObjectCGO, FB_Errors)
+      " ObjectCGO: unable to locate plugin '%s'\n", plugin_type ENDFB(G);
+    ok_raise(1);
+  }
+
+  // open file
+  file_handle = plugin->open_file_read(fname, plugin_type, &nelem /* dummy */);
+
+  if(!file_handle) {
+    PRINTFB(G, FB_ObjectCGO, FB_Errors)
+      " ObjectCGO: plugin '%s' cannot open '%s'.\n", plugin_type, fname ENDFB(G);
+    ok_raise(1);
+  }
+
+  // read geometry
+  if (plugin->read_rawgraphics(file_handle, &nelem, &graphics) != MOLFILE_SUCCESS) {
+    PRINTFB(G, FB_ObjectCGO, FB_Errors)
+      " ObjectCGO: plugin '%s' failed to read graphics.\n", plugin_type ENDFB(G);
+    ok_raise(1);
+  }
+
+  cgo = CGONew(G);
+
+#define CHECK_BEGINEND(type) cgo_check_beginend(type, beginend, cgo)
+
+  // translate to CGO
+  for (auto g = graphics, g_end = graphics + nelem; g != g_end; ++g) {
+    auto g_current = g;
+    const float * tnormals = NULL;
+    const float * tcolors = NULL;
+
+    switch (g->type) {
+      case MOLFILE_POINT:
+        break;
+      case MOLFILE_TRINORM:
+        // followed by normals
+      case MOLFILE_TRICOLOR:
+        // followed by normals and color
+        if (g + 1 != g_end && g[1].type == MOLFILE_NORMS) {
+          tnormals = (++g)->data;
+        }
+        if (g_current->type == MOLFILE_TRICOLOR &&
+            g + 1 != g_end && g[1].type == MOLFILE_COLOR) {
+          tcolors = (++g)->data;
+        }
+      case MOLFILE_TRIANGLE:
+        CHECK_BEGINEND(GL_TRIANGLES);
+        for (int i = 0; i < 9; i += 3) {
+          if (tnormals)
+            CGONormalv(cgo, tnormals + i);
+          if (tcolors)
+            CGOColorv(cgo, tcolors + i);
+          CGOVertexv(cgo, g_current->data + i);
+        }
+        break;
+      case MOLFILE_NORMS:
+        CGONormalv(cgo, g->data);
+        break;
+      case MOLFILE_LINE:
+        CHECK_BEGINEND(GL_LINES);
+        CGOVertexv(cgo, g->data + 0);
+        CGOVertexv(cgo, g->data + 3);
+        break;
+      case MOLFILE_CYLINDER:
+        CHECK_BEGINEND(0);
+        {
+          float axis[3];
+          subtract3f(g->data + 3, g->data, axis);
+          CGOShaderCylinder(cgo, g->data, axis, g->size, 0);
+        }
+        break;
+      case MOLFILE_CAPCYL:
+        break;
+      case MOLFILE_CONE:
+        break;
+      case MOLFILE_SPHERE:
+        CHECK_BEGINEND(0);
+        CGOSphere(cgo, g->data, g->size);
+        break;
+      case MOLFILE_TEXT:
+        break;
+      case MOLFILE_COLOR:
+        CGOColorv(cgo, g->data);
+        break;
+    }
+  }
+
+  CHECK_BEGINEND(0);
+  CGOStop(cgo);
+
+  // Create ObjectCGO
+  ok_assert(1, I = ObjectCGOFromCGO(G, NULL, cgo, state));
+
+  // default is cgo_lighting=0 when loading CGOs without normals
+  SettingSet(cSetting_cgo_lighting, 1, (CObject *)I);
+
+ok_except1:
+  // close
+  if (plugin && file_handle)
+    plugin->close_file_read(file_handle);
+
+  if (!I)
+    CGOFree(cgo);
 
   return I;
 }
@@ -716,6 +864,17 @@ CObject * PlugIOManagerLoad(PyMOLGlobals * G, CObject ** obj_ptr,
         fname, state, 1, 1, 1, -1, -1, "all", 1, shift, quiet, plugin_type);
     return NULL;
 
+  } else if (plugin->read_rawgraphics != NULL) {
+    // geometry (CGO)
+
+    if (obj) {
+      // no merge support
+      ExecutiveDelete(G, obj->Name);
+      obj = *obj_ptr = NULL;
+    }
+
+    return (CObject *) PlugIOManagerLoadGraphics(G, (ObjectCGO *) obj,
+        fname, state, quiet, plugin_type);
   }
 
   PRINTFB(G, FB_ObjectMolecule, FB_Errors)
@@ -730,3 +889,33 @@ ok_except1:
 #endif
 
 #endif
+
+/*
+ * Find a plugin by filename extension
+ *
+ * ext: File extension
+ * mask: plugin needs to read any content (0), structure (1), trajectory (2) or map (4)
+ */
+const char * PlugIOManagerFindPluginByExt(PyMOLGlobals * G, const char * ext, int mask) {
+#ifdef _PYMOL_VMD_PLUGINS
+  CPlugIOManager *I = G->PlugIOManager;
+
+  if (!mask)
+    mask = 0xF;
+
+  for (auto it = I->PluginVLA, it_end = it + I->NPlugin; it != it_end; ++it) {
+    const molfile_plugin_t * p = *it;
+
+    if (WordMatchCommaExact(G, p->filename_extension, ext, true) >= 0)
+      continue;
+
+    if (((mask & 0x1) && p->read_structure) ||
+        ((mask & 0x2) && p->read_next_timestep) ||
+        ((mask & 0x4) && p->read_volumetric_data) ||
+        ((mask & 0x8) && p->read_rawgraphics))
+      return p->name;
+  }
+#endif
+
+  return NULL;
+}

@@ -7,13 +7,13 @@ import threading
 import os
 import time
 
-try:
+if sys.version_info[0] == 2:
     from Tkinter import *
     import tkFileDialog
     import tkMessageBox
     import tkSimpleDialog
     import tkFont
-except ImportError:
+else:
     from tkinter import *
     import tkinter.filedialog as tkFileDialog
     import tkinter.messagebox as tkMessageBox
@@ -2814,6 +2814,11 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                 value=val, variable=self.setting.transparency_mode,
                 command = lambda c=command: self.cmd.do(c))
                 
+        addmenuitem('Transparency', 'separator', '')
+        addmenuitem('Transparency', 'checkbutton', label='Angle-dependent',
+                variable = self.setting.ray_transparency_oblique,
+                onvalue=1.0, offvalue=0.0)
+
         self.menuBar.addcascademenu('Setting', 'Rendering', 'Rendering',
                                              label='Rendering')
 

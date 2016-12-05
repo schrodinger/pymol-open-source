@@ -17,13 +17,13 @@ from __future__ import print_function
 import threading
 import socket
 import socket # For gethostbyaddr()
-try:
+import sys
+if sys.version_info[0] == 2:
     import cPickle
     import SocketServer
-except ImportError:
+else:
     import pickle as cPickle
     import socketserver as SocketServer
-import sys
 import traceback
 import copy
 import os

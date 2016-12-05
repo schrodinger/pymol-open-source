@@ -859,6 +859,8 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       if (changed){
 	switch (ap->id){
 	case ATOM_PROP_ELEM:
+	  wobj->atomInfo->protons = 0;
+	  wobj->atomInfo->vdw = 0;
 	  AtomInfoAssignParameters(wobj->G, wobj->atomInfo);
 	  break;
 	case ATOM_PROP_RESV:

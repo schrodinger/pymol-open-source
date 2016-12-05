@@ -14,15 +14,16 @@
 
 if __name__=='pymol.moving':
     
-    try:
+    import sys
+    if sys.version_info[0] == 2:
         import thread
-    except ImportError:
+    else:
         import _thread as thread
 
     from . import selector
     import pymol
     import re
-    cmd = __import__("sys").modules["pymol.cmd"]
+    cmd = sys.modules["pymol.cmd"]
     from .cmd import _cmd,Shortcut, \
           toggle_dict,toggle_sc, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        

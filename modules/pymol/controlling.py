@@ -679,6 +679,7 @@ USAGE
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                     
+        _self.refresh_wizard() # refresh mouse config in GUI
         return r
             
 

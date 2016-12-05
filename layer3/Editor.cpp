@@ -1700,9 +1700,44 @@ void EditorInactivate(PyMOLGlobals * G)
   ExecutiveDelete(G, cEditorDihedral);
   ExecutiveDelete(G, cEditorDihe1);
   ExecutiveDelete(G, cEditorDihe2);
+  ExecutiveDelete(G, cEditorMeasure);
   EditorMouseInvalid(G);
   EditorInvalidateShaderCGO(G);
   SceneInvalidate(G);
+}
+
+
+/*========================================================================*/
+/*
+ * Create a transient distance, angle, or dihedral measurement between
+ * the pk1 - pk4 atoms.
+ *
+ * Assumes that the cEditorMeasure object does not exist yet.
+ */
+static
+void EditorAutoMeasure(PyMOLGlobals * G,
+    int sele1, int sele2, int sele3, int sele4, int state)
+{
+  if (sele1 < 0 || sele2 < 0)
+    return;
+
+  float _measure_value;
+
+  if (sele3 < 0) {
+    ExecutiveDist(G, &_measure_value, cEditorMeasure,
+        cEditorSele1, cEditorSele2,
+        0, -1.f, true, true, false /* reset */, state, false);
+  } else if (sele4 < 0) {
+    ExecutiveAngle(G, &_measure_value, cEditorMeasure,
+        cEditorSele1, cEditorSele2, cEditorSele3,
+        0, true, false /* reset */, false, true, state);
+  } else {
+    ExecutiveDihedral(G, &_measure_value, cEditorMeasure,
+        cEditorSele1, cEditorSele2, cEditorSele3, cEditorSele4,
+        0, true, false /* reset */, false, true, state);
+  }
+
+  ExecutiveColor(G, cEditorMeasure, "gray", 0x1, true);
 }
 
 
@@ -1729,6 +1764,7 @@ void EditorActivate(PyMOLGlobals * G, int state, int enable_bond)
     ExecutiveDelete(G, cEditorDihedral);
     ExecutiveDelete(G, cEditorDihe1);
     ExecutiveDelete(G, cEditorDihe2);
+    ExecutiveDelete(G, cEditorMeasure);
 
     I->BondMode = enable_bond;
     I->NFrag = SelectorSubdivide(G, cEditorFragPref,
@@ -1750,6 +1786,9 @@ void EditorActivate(PyMOLGlobals * G, int state, int enable_bond)
 
     if(I->BondMode && SettingGetGlobal_b(G, cSetting_editor_auto_dihedral))
       EditorDihedralInvalid(G, NULL);
+
+    if (!I->BondMode && SettingGetGlobal_b(G, cSetting_editor_auto_measure))
+      EditorAutoMeasure(G, sele1, sele2, sele3, sele4, state);
   } else {
     EditorInactivate(G);
   }

@@ -13,6 +13,7 @@ License: BSD-2-Clause
 
 from __future__ import print_function, absolute_import
 
+import sys
 import os
 import pymol
 from pmg_tk import startup
@@ -109,9 +110,9 @@ def createlegacypmgapp():
     app.execute = lambda c: eval(c) if isinstance(c, str) else c()
 
     def starttk():
-        try:
+        if sys.version_info[0] == 2:
             import Tkinter
-        except ImportError:
+        else:
             import tkinter as Tkinter
         app.root = Tkinter.Tk()
         app.root.withdraw()
@@ -135,9 +136,9 @@ def createlegacypmgapp():
 
 class _tkMessageBox(object):
     def __getattr__(self, name):
-        try:
+        if sys.version_info[0] == 2:
             import tkMessageBox as module
-        except ImportError:
+        else:
             import tkinter.messagebox as module
         from . import pref_get
         wrapped = getattr(module, name)
@@ -152,9 +153,9 @@ class _tkMessageBox(object):
 
 class _tkFileDialog(object):
     def __getattr__(self, name):
-        try:
+        if sys.version_info[0] == 2:
             import tkFileDialog as module
-        except ImportError:
+        else:
             import tkinter.filedialog as module
         wrapped = getattr(module, name)
         def dialog(parent=None, *args, **kwargs):

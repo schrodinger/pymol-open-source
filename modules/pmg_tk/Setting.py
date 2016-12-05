@@ -17,10 +17,11 @@
 # correspond to Menu-displayed settings are kept synchronized with
 # PyMOL
 
-try:
+import sys
+if sys.version_info[0] == 2:
     import Tkinter
     from Tkinter import IntVar
-except ImportError:
+else:
     import tkinter as Tkinter
     from tkinter import IntVar
 import time

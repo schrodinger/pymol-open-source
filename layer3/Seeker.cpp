@@ -14,6 +14,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <algorithm>
+
 #include"os_python.h"
 #include"os_predef.h"
 #include"os_std.h"
@@ -1203,7 +1206,7 @@ void SeekerUpdate(PyMOLGlobals * G)
       int est_char = obj->NAtom * 4;
       int first_atom_in_label;
       int missing_color = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_fill_color);
-      CoordSet *cs = obj->DiscreteFlag ? NULL : ObjectMoleculeGetCoordSet(obj, obj->getState());
+      CoordSet *cs = obj->DiscreteFlag ? NULL : ObjectMoleculeGetCoordSet(obj, std::max(0, obj->getState()));
       bool atom_in_state;
 
       int min_pad = -1;

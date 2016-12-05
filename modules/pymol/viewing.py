@@ -16,9 +16,10 @@ from __future__ import print_function, absolute_import
 
 if __name__=='pymol.viewing':
 
-    try:
+    import sys
+    if sys.version_info[0] == 2:
         import thread
-    except ImportError:
+    else:
         import _thread as thread
 
     import threading
@@ -29,7 +30,7 @@ if __name__=='pymol.viewing':
     import copy
     from . import parsing
     import re
-    cmd = __import__("sys").modules["pymol.cmd"]
+    cmd = sys.modules["pymol.cmd"]
     
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \

@@ -2067,7 +2067,7 @@ int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int 
 
   ObjectNameType valid_name;
   UtilNCopy(valid_name, name, sizeof(ObjectNameType));
-  ObjectMakeValidName(valid_name);
+  ObjectMakeValidName(G, valid_name);
 
   CObject *obj = ExecutiveFindObjectByName(G, valid_name);
 
@@ -3430,7 +3430,7 @@ std::string ExecutiveGetUnusedName(PyMOLGlobals * G, const char * prefix,
   OrthoLineType unused_name;
   strcpy(unused_name, prefix);
 
-  ObjectMakeValidName(unused_name);
+  ObjectMakeValidName(G, unused_name);
 
   ExecutiveMakeUnusedName(G, unused_name, OrthoLineLength, alwaysnumber);
 
@@ -3442,7 +3442,7 @@ int ExecutiveProcessObjectName(PyMOLGlobals * G, const char *proposed, char *act
   int result = true;
   UtilNCopy(actual, proposed, sizeof(ObjectNameType));
   if(SettingGetGlobal_b(G, cSetting_validate_object_names))
-    ObjectMakeValidName(actual);
+    ObjectMakeValidName(G, actual);
   if(SettingGetGlobal_b(G, cSetting_auto_rename_duplicate_objects) || !proposed[0]) {
     ExecutiveMakeUnusedName(G, actual, sizeof(ObjectNameType), false, 2, "_%d");
   }
@@ -3588,16 +3588,10 @@ int ExecutiveLoad(PyMOLGlobals * G,
     multiplex = SettingGetGlobal_i(G, cSetting_multiplex);
   }
 
-  if (multiplex != 1) {
-    origObj = ExecutiveGetExistingCompatible(G, object_name, content_format);
-  }
-
-#ifndef PYMOL_EDU
-#endif
-
   switch (content_format) {
   // string loading functions
   case cLoadTypePDBStr:
+  case cLoadTypeVDBStr:
   case cLoadTypeCIFStr:
   case cLoadTypeXPLORStr:
   case cLoadTypeCCP4Str:
@@ -3672,6 +3666,17 @@ int ExecutiveLoad(PyMOLGlobals * G,
     break;
   }
 
+  if (plugin[0]) {
+    content_format = cLoadTypePlugin;
+  }
+
+  if (multiplex != 1) {
+    origObj = ExecutiveGetExistingCompatible(G, object_name, content_format);
+  }
+
+#ifndef PYMOL_EDU
+#endif
+
   // file type dependent multiplex and discrete default
   if(discrete < 0) {
     if(multiplex == 1) {
@@ -3698,6 +3703,9 @@ int ExecutiveLoad(PyMOLGlobals * G,
   case cLoadTypePDBQT:
     if (content_format == cLoadTypePDBQT)
       pdb_variant = PDB_VARIANT_PDBQT;
+  case cLoadTypeVDBStr:
+    if (ok && content_format == cLoadTypeVDBStr)
+      pdb_variant = PDB_VARIANT_VDB;
   case cLoadTypePDB:
   case cLoadTypePDBStr:
     ok = ExecutiveProcessPDBFile(G, origObj, fname, content, object_name,
@@ -3821,7 +3829,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
         if(new_name[0]) {
           // multiplexing
           ObjectSetName(obj, new_name);
-          ExecutiveDelete(G, new_name);       // just in case there is a collision
+          ExecutiveDelete(G, obj->Name);       // just in case there is a collision
           ExecutiveManageObject(G, obj, zoom, true);
           new_name[0] = 0;
           obj = NULL;
@@ -3836,7 +3844,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
       obj = PlugIOManagerLoad(G, origObj ? &origObj : NULL, fname, state, quiet, plugin);
     } else {
       PRINTFB(G, FB_Executive, FB_Errors)
-        "ExecutiveLoad-Error: unable to read that file type from C\n" ENDFB(G);
+        "ExecutiveLoad-Error: unable to read that file type from C (%d, '%s')\n",
+        content_format, plugin ENDFB(G);
       return false;
     }
   }
@@ -3853,7 +3862,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
     ExecutiveManageObject(G, obj, zoom, true);
 
     if(fname)
-      sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, object_name);
+      sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, obj->Name);
   }
 
   mfree(buffer);
@@ -3891,9 +3900,13 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int
   if(origObj) {
     int new_type = -1;
     switch (type) {
+    case cLoadTypePlugin:
+      // let PlugIOManager delete incompatible objects
+      return origObj;
     case cLoadTypeChemPyModel:
     case cLoadTypePDB:
     case cLoadTypePDBStr:
+    case cLoadTypeVDBStr:
     case cLoadTypeCIF:
     case cLoadTypeCIFStr:
     case cLoadTypeXYZ:
@@ -4085,7 +4098,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
             }
           }
           ObjectSetName(obj, pdb_name);
-          ExecutiveDelete(G, pdb_name); /* just in case */
+          ExecutiveDelete(G, obj->Name); /* just in case */
         } else {
           if(is_repeat_pass) {
             if(pdb_name[0] == 0) {
@@ -4107,7 +4120,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj,
               }
             }
             ObjectSetName(obj, pdb_name);       /* from PDB */
-            ExecutiveDelete(G, pdb_name);       /* just in case */
+            ExecutiveDelete(G, obj->Name);       /* just in case */
           } else {
             ObjectSetName(obj, oname);  /* from filename/parameter */
           }
@@ -4973,7 +4986,7 @@ int ExecutiveRampNew(PyMOLGlobals * G, const char *name, const char *src_name,
   if (obj != origRamp) {
     ExecutiveDelete(G, name);
     ObjectSetName((CObject *) obj, name);
-    ColorRegisterExt(G, name, (void *) obj, cColorGadgetRamp);
+    ColorRegisterExt(G, ((CObject *) obj)->Name, (void *) obj, cColorGadgetRamp);
     ExecutiveManageObject(G, (CObject *) obj, false, quiet);
   }
 
@@ -10331,7 +10344,7 @@ int ExecutiveSeleToObject(PyMOLGlobals * G, const char *name, const char *s1,
 
   UtilNCopy(valid_name, name, sizeof(valid_name));
   if(SettingGetGlobal_b(G, cSetting_validate_object_names)) {
-    ObjectMakeValidName(valid_name);
+    ObjectMakeValidName(G, valid_name);
     name = valid_name;
   }
   {
@@ -14736,7 +14749,7 @@ void ExecutiveSymExp(PyMOLGlobals * G, const char *name,
                     new_name, name, (int)a, x, y, z ENDFB(G);
 
                   ObjectSetName((CObject *) new_obj, new_name);
-                  ExecutiveDelete(G, new_name);
+                  ExecutiveDelete(G, new_obj->Obj.Name);
                   ExecutiveManageObject(G, (CObject *) new_obj, -1, quiet);
                   SceneChanged(G);
 									
@@ -15040,7 +15053,7 @@ static void ExecutiveDoAutoGroup(PyMOLGlobals * G, SpecRec * rec)
           CObject *obj = (CObject *) ObjectGroupNew(G);
           if(obj) {
             ObjectSetName(obj, seek_group_name);
-            strcpy(rec->group_name, seek_group_name);
+            strcpy(rec->group_name, obj->Name);
             ExecutiveManageObject(G, obj, false, true);
             ExecutiveInvalidateGroups(G, false);
             break;

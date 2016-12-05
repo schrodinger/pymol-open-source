@@ -16,11 +16,12 @@
 
 from __future__ import print_function
 
-try:
+import sys
+if sys.version_info[0] == 2:
   import SimpleXMLRPCServer
-except:
+else:
   import xmlrpc.server as SimpleXMLRPCServer
-import threading,sys,time,types,os,tempfile
+import threading,os,tempfile
 from pymol import cmd,cgo
  
 # initial port to try for the server

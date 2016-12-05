@@ -119,6 +119,7 @@ int ObjectCopyHeader(CObject * I, const CObject * src);
 void ObjectPurge(CObject * I);
 void ObjectSetName(CObject * I, const char *name);
 void ObjectMakeValidName(char *name);
+void ObjectMakeValidName(PyMOLGlobals * G, char *name);
 void ObjectPurgeSettings(CObject * I);
 void ObjectFree(CObject * I);
 void ObjectUseColor(CObject * I);
