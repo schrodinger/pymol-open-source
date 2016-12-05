@@ -2,6 +2,37 @@
 CHANGE LOG
 =========================================================================
 
+2016-12-05 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* avoid selection keyword name conflicts, append underscore
+
+	* load: allow format=plugin (by extension) and format=plugin:PLUGIN
+	  (with PLUGIN being a molfile plugin identifier)
+
+	* load format "vdb": VIPERdb PDB variant with retain_order=1
+
+	* load/load_traj: guess trajectory object
+
+	* fetch
+	  * new setting "fetch_type_default"
+	  * type=mmtf: fetch MMTF format
+	  * type=2fofc/fofc: get spacegroup from PDBe API
+	  * update download URLs
+
+	* new setting: editor_auto_measure
+
+	* new default: ray_transparency_oblique_power=4.0
+
+	* "update" command: support "current state" (-1)
+
+	* alter elem -> update protons and vdw
+
+	* don't allow "import cmd" (corrupts PyMOL namespace)
+
+	* support "python -m pymol" to launch PyMOL
+
+	* 1.8.5.0 (unstable/experimental)
+
 2016-10-05 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* 1.8.4.0

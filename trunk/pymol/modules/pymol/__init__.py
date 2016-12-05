@@ -545,6 +545,24 @@ try:
 except ImportError:
     pass
 
+########## WORKAROUND TO PREVENT "import cmd" ##############################
+# Previous versions of PyMOL did relative imports and thus allowd
+# "import cmd" in pymol scripts to import the pymol.cmd module. To be more
+# strict and for compatibility with python3 we use absolute imports now,
+# which unfortunately will import an unrelated "cmd" module from the default
+# python library, and even worse will corrupt the pymol namespace with it.
+# The following causes an import error for "import cmd":
+
+class _NoCmdFinder:
+    def find_spec(self, fullname, path=None, target=None):
+        if path is None and fullname == 'cmd':
+            msg = 'use "from pymol import cmd" instead of "import cmd"'
+            raise CmdException(msg)
+        return None
+    find_module = find_spec
+
+sys.meta_path.insert(0, _NoCmdFinder())
+
 ########## LAUNCH PYMOL ########################
 
 if pymol_launch == 4:

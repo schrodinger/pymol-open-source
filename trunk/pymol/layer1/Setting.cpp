@@ -2954,9 +2954,10 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 StateIterator::StateIterator(PyMOLGlobals * G, CSetting * set, int state_, int nstate) {
   if(state_ == -2) {
     // current state
-    state = SettingGet_i(G, set, NULL, cSetting_state) - 1;
-    end = state + 1;
-  } else if(state_ == -1) {
+    state_ = SettingGet_i(G, set, NULL, cSetting_state) - 1;
+  }
+
+  if(state_ == -1) {
     // all states
     state = 0;
     end = nstate;

@@ -37,7 +37,7 @@ typedef struct CoordSet {
   void appendIndices(int offset);
   int extendIndices(int nAtom);
   void invalidateRep(int type, int level);
-  int atmToIdx(int atm);
+  int atmToIdx(int atm) const;
 
   // read/write pointer to coordinate
   float * coordPtr(int idx) {

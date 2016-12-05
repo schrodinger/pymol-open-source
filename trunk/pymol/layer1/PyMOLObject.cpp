@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 
 #include"Executive.h"
 #include"CGO.h"
+#include"Selector.h"
 
 int ObjectGetNFrames(CObject * I);
 
@@ -661,6 +662,19 @@ void ObjectMakeValidName(char *name)
   }
 }
 
+/*
+ * Strip invalid characters from `name`, and if `name` equals a reserved
+ * selection keyword, then also append an underscore.
+ */
+void ObjectMakeValidName(PyMOLGlobals * G, char *name)
+{
+  ObjectMakeValidName(name);
+
+  if (SelectorNameIsKeyword(G, name)) {
+    strcat(name, "_");
+  }
+}
+
 int ObjectGetCurrentState(CObject * I, int ignore_all_states)
 {
   // the previous implementation (up to PyMOL 1.7.6) ignored
@@ -1102,7 +1116,7 @@ void ObjectSetName(CObject * I, const char *name)
 {
   UtilNCopy(I->Name, name, WordLength);
   if(SettingGetGlobal_b(I->G, cSetting_validate_object_names))
-    ObjectMakeValidName(I->Name);
+    ObjectMakeValidName(I->G, I->Name);
 }
 
 

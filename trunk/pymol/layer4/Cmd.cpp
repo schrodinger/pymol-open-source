@@ -668,6 +668,25 @@ static PyObject *CmdGetOrigin(PyObject * self, PyObject * args)
   }
 }
 
+static PyObject * CmdFindMolfilePlugin(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals * G = NULL;
+  const char * ext = NULL;
+  int mask = 0;
+  if (!PyArg_ParseTuple(args, "Os|i", &self, &ext, &mask)) {
+    API_HANDLE_ERROR;
+  } else {
+    API_SETUP_PYMOL_GLOBALS;
+    if (G && APIEnterNotModal(G)) {
+      const char * plugin = PlugIOManagerFindPluginByExt(G, ext, mask);
+      PyObject * result = PyString_FromString(plugin ? plugin : "");
+      APIExit(G);
+      return APIAutoNone(result);
+    }
+  }
+  return APIAutoNone(NULL);
+}
+
 static PyObject * CmdGetCCP4Str(PyObject * self, PyObject * args)
 {
   PyMOLGlobals * G = NULL;
@@ -7096,10 +7115,11 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
   int multiplex;
   int zoom;
   int bytes;
-  ok = PyArg_ParseTuple(args, "Oss#iiiiiii|zzz", &self,
+  int mimic;
+  ok = PyArg_ParseTuple(args, "Oss#iiiiiii|zzzi", &self,
                         &oname, &fname, &bytes, &frame, &type,
                         &finish, &discrete, &quiet, &multiplex, &zoom,
-                        &plugin, &object_props, &atom_props);
+                        &plugin, &object_props, &atom_props, &mimic);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -8235,6 +8255,7 @@ static PyMethodDef Cmd_methods[] = {
   {"export_coords", CmdExportCoords, METH_VARARGS},
   {"feedback", CmdFeedback, METH_VARARGS},
   {"find_pairs", CmdFindPairs, METH_VARARGS},
+  {"find_molfile_plugin", CmdFindMolfilePlugin, METH_VARARGS},
   {"finish_object", CmdFinishObject, METH_VARARGS},
   {"fit", CmdFit, METH_VARARGS},
   {"fit_pairs", CmdFitPairs, METH_VARARGS},

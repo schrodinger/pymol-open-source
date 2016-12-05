@@ -6597,14 +6597,13 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
   int at0 = 0, at1;
   int *vla0 = NULL;
   int *vla1 = NULL;
-  int c0, c1;
+  int c0 = 0, c1 = 0;
   int i0 = 0, i1;
-  int cc1;
   ObjectMolecule *obj0 = NULL, *obj1;
-  CoordSet *cs0, *cs1;
+  CoordSet *cs0;
+  const CoordSet *cs1;
   int matched_flag;
   int b_start;
-  int ci0;
   int ccc = 0;
 
   bool ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
@@ -6612,6 +6611,15 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
 
   PRINTFD(G, FB_Selector)
     " SelectorUpdateCmd-Debug: entered sta0 %d sta1 %d", sta0, sta1 ENDFD;
+
+  // either both or none must be "all states"
+  if (sta0 != sta1) {
+    if (sta0 == cSelectorUpdateTableAllStates) {
+      sta0 = sta1;
+    } else if (sta1 == cSelectorUpdateTableAllStates) {
+      sta1 = sta0;
+    }
+  }
 
   if((sta0 < 0) || (sta1 < 0) || (sta0 != sta1)) {
     SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
@@ -6622,11 +6630,14 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
   vla0 = SelectorGetIndexVLA(G, sele0);
   vla1 = SelectorGetIndexVLA(G, sele1);
 
-  if(!(vla0 && vla1))
-    ErrMessage(G, "Update", "no coordinates updated.");
-  else {
+  if (vla0 && vla1) {
     c0 = VLAGetSize(vla0);
     c1 = VLAGetSize(vla1);
+  }
+
+  if (c0 < 1 || c1 < 1)
+    ErrMessage(G, "Update", "no coordinates updated.");
+  else {
 
     b = 0;
     for(a = 0; a < c1; a++) {   /* iterate over source atoms */
@@ -6754,27 +6765,18 @@ void SelectorUpdateCmd(PyMOLGlobals * G, int sele0, int sele1, int sta0, int sta
 
       if(matched_flag) {        /* atom matched, so copy coordinates */
         ccc++;
-        for(cc1 = 0; cc1 < obj1->NCSet; cc1++) {        /* iterate over all source states */
-          if((cc1 == sta1) || (sta1 < 0)) {
-            cs1 = obj1->CSet[cc1];
-            if(cs1 && (((sta0 < 0) && (cc1 < obj0->NCSet)) ||   /* multiple states */
-                       (cc1 == sta0) || /* single state */
-                       ((sta0 >= 0) && (sta1 >= 0)))) { /* explicit state */
 
-              if((sta0 < 0) || (sta0 >= obj0->NCSet)) {
-                cs0 = obj0->CSet[cc1];
-              } else if(sta0 < obj0->NCSet) {
-                cs0 = obj0->CSet[sta0];
-              } else {
-                cs0 = NULL;
-              }
+        StateIterator iter0(G, obj0->Obj.Setting, sta0, obj0->NCSet);
+        StateIterator iter1(G, obj1->Obj.Setting, sta1, obj1->NCSet);
 
-              if(cs0) {
-                ci0 = cs0->atmToIdx(at0);
-
-                if(ci0 >= 0)
-                  CoordSetGetAtomVertex(cs1, at1, cs0->Coord + 3 * ci0);
-              }
+        while (iter0.next() && iter1.next()) {
+          cs0 = obj0->CSet[iter0.state];
+          cs1 = obj1->CSet[iter1.state];
+          if (cs1 && cs0) {
+            int idx0 = cs0->atmToIdx(at0);
+            int idx1 = cs1->atmToIdx(at1);
+            if (idx0 >= 0 && idx1 >= 0) {
+              copy3f(cs1->coordPtr(idx1), cs0->coordPtr(idx0));
             }
           }
         }

@@ -16,9 +16,10 @@ from __future__ import print_function, absolute_import
 
 if __name__=='pymol.commanding':
 
-    try:
+    import sys
+    if sys.version_info[0] == 2:
         import thread
-    except ImportError:
+    else:
         import _thread as thread
         from io import FileIO as file
 
@@ -28,7 +29,7 @@ if __name__=='pymol.commanding':
     import threading
     import traceback
     from . import parsing
-    cmd = __import__("sys").modules["pymol.cmd"]
+    cmd = sys.modules["pymol.cmd"]
     import pymol
     
     from .cmd import _cmd, Shortcut, QuietException, \

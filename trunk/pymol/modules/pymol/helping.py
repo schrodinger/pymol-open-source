@@ -78,18 +78,15 @@ USAGE
         cmmd = _self.help_sc.auto_err(command,'topic')   
         if cmmd in _self.keyword:
             doc = _self.keyword[cmmd][0].__doc__
-            if doc:
-                print("\n", doc.strip(), "\n")
-            else:
-                print("Error: sorry no help available on that command.")
         elif cmmd in _self.help_only:
             doc = _self.help_only[cmmd][0].__doc__
-            if doc:
-                print("\n", doc.strip(), "\n")
-            else:
-                print("Error: sorry no help available on that command.")      
         else:
             print("Error: unrecognized command")
+            return r
+        if doc:
+            print("\n" + doc.strip() + "\n")
+        else:
+            print("Error: sorry no help available on that command.")
         return r
 
     def help_setting(name, quiet=1, _self=cmd):

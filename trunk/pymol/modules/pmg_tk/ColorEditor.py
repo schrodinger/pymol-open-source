@@ -18,10 +18,11 @@
 
 from __future__ import print_function
 
-try:
+import sys
+if sys.version_info[0] == 2:
     from Tkinter import *
     import tkColorChooser
-except ImportError:
+else:
     from tkinter import *
     import tkinter.colorchooser as tkColorChooser
 

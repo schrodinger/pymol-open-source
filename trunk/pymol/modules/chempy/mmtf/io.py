@@ -11,7 +11,11 @@ import sys
 import itertools
 import numpy
 import struct
-import msgpack
+
+try:
+    import msgpack
+except ImportError:
+    import umsgpack as msgpack
 
 if sys.version_info[0] < 3:
     from urllib import urlopen

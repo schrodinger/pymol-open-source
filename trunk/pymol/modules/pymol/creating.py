@@ -24,7 +24,7 @@ if __name__=='pymol.creating':
     import gzip
     import os
     from .cmd import _cmd, Shortcut, is_list, is_string, \
-          file_ext_re, safe_list_eval, safe_alpha_list_eval, \
+          safe_list_eval, safe_alpha_list_eval, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
           is_tuple
     import tempfile

@@ -73,7 +73,7 @@ def _to_chempy(data, use_auth=True):
 
     symmetry = (
         data.get('unitCell', None),
-        data.get('spaceGroup', None),
+        as_str(data.get('spaceGroup', '')),
     )
 
     model_output = []

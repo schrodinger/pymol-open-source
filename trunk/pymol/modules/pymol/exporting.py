@@ -16,10 +16,11 @@ from __future__ import print_function, absolute_import
 
 if __name__=='pymol.exporting':
     import os
-    try:
+    import sys
+    if sys.version_info[0] == 2:
         import thread
         import cPickle
-    except ImportError:
+    else:
         import _thread as thread
         import pickle as cPickle
     from . import selector
@@ -27,7 +28,7 @@ if __name__=='pymol.exporting':
     import copy
     
     import pymol
-    cmd = __import__("sys").modules["pymol.cmd"]
+    cmd = sys.modules["pymol.cmd"]
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException
     from chempy import io
     from chempy.sdf import SDF,SDFRec
@@ -490,6 +491,10 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         prior = int(prior)
+
+        if format == 'png':
+            format = 0
+
         if prior: 
             # fetch the prior image, without doing any work (fast-path / non-GLUT thread-safe)
             r = _self._png(str(filename),0,0,float(dpi),0,int(quiet),1,
@@ -616,74 +621,31 @@ SEE ALSO
 
     load, get_model
         '''
-        import gzip
-
         quiet = int(quiet)
-        do_gzip = False
 
         # preprocess selection
         selection = selector.process(selection)
         #   
         r = DEFAULT_ERROR
 
-        if format=='':
-            ext_list = filename.lower().rsplit('.', 2)
-            if ext_list[-1] == 'gz':
-                do_gzip = True
-                ext = ext_list[-2]
-            else:
-                ext = ext_list[-1]
-
-            if ext in ['cif', 'pqr', 'mol', 'sdf', 'pkl', 'xyz', 'pov',
-                    'png', 'aln', 'fasta', 'obj', 'mtl', 'wrl', 'dae', 'idtf',
-                    'mae',
-                    'ccp4',
-                    'mol2']:
-                format = ext
-            elif ext in ["pdb", "ent"]:
-                format = 'pdb'
-            elif ext in ["mmod", "mmd", "out", "dat"]:
-                format = 'mmod'
-            elif ext in ["pse", "psw"]:
-                format = 'pse'
-            elif ext in ["pze", "pzw"]:
-                do_gzip = True
-                format = 'pse'
-            else:
-                if not quiet:
-                    print(" Save-Warning: Unrecognized file type -- defaulting to PDB format.")
-                format='pdb'
-
+        # analyze filename
+        from pymol.importing import filename_to_format
+        _, _, format_guessed, zipped = filename_to_format(filename)
         filename = _self.exp_path(filename)
 
-        func_type1 = {
-            'cif': get_cifstr, # mmCIF
-            'xyz': get_xyzstr,
-            'fasta': get_fastastr,
-            'aln': get_alnstr,
-            'ccp4': get_ccp4str,
-        }
+        # file format
+        if not format:
+            if not format_guessed:
+                raise pymol.CmdException('Unrecognized file format')
+            format = format_guessed
 
-        func_type2 = {
-            'pdb': get_pdbstr,
-            'pqr': get_pqrstr,
-            'sdf': get_sdfstr,
-            'mol2': get_mol2str,
-            'mae': get_maestr,
-            'mol': lambda *a, **kw: get_str('mol', *a, **kw),
-        }
-
-        def safe_getitem(tup, idx):
-            return tup[idx] if tup else None
-
-        func_type3 = {
-            'dae': _self.get_collada,
-            'wrl': _self.get_vrml,
-            'mtl': lambda: safe_getitem(_self.get_mtl_obj(), 0),
-            'obj': lambda: safe_getitem(_self.get_mtl_obj(), 1),
-            'pov': _self.get_povray,
-            'idtf': _self.get_idtf,
-        }
+        # PyMOL session
+        if format in ('pse', 'psw',):
+            _self.set("session_file",
+                    # always use unix-like path separators
+                    filename.replace("\\", "/"), quiet=1)
+            if not quiet:
+                print(" Save: Please wait -- writing session file...")
 
         func_type4 = {
             'mmod': io.mmd.toFile,
@@ -693,32 +655,61 @@ SEE ALSO
 
         contents = None
 
-        if format in func_type1:
-            contents = func_type1[format](selection, state, quiet=quiet, _self=_self)
-        elif format in func_type2:
-            contents = func_type2[format](selection, state, ref, ref_state, quiet=quiet, _self=_self)
-        elif format in func_type3:
-            contents = func_type3[format]()
-            if isinstance(contents, tuple):
-                contents = ''.join(contents)
+        if format in savefunctions:
+            # generic forwarding to format specific save functions
+            func = savefunctions[format]
+            kw = {
+                'filename': filename,
+                'selection': selection,
+                'name': selection,      # alt (get_ccp4str)
+                'state': state,
+                'format': format,
+                'ref': ref,
+                'ref_state': ref_state,
+                'quiet': quiet,
+                'partial': partial,
+                '_self': _self,
+            }
+
+            import inspect
+            spec = inspect.getargspec(func)
+
+            if spec.varargs:
+                print('FIXME: savefunctions[%s]: *args' % (format))
+
+            if not spec.keywords:
+                kw = dict((n, kw[n]) for n in spec.args if n in kw)
+
+            contents = func(**kw)
+
+            if 'filename' in spec.args:
+                # assume function wrote directly to file and returned a status
+                return contents
+
         elif format in func_type4:
             func_type4[format](_self.get_model(selection, state, ref, ref_state), filename)
             r = DEFAULT_SUCCESS
-        elif format=='pse': # PyMOL session
-            filename = filename.replace("\\","/") # always use unix-like path separators	
-            _self.set("session_file",filename,quiet=1)
-            if '(' in selection: # ignore selections
-                selection = ''
-            if not quiet:
-                print(" Save: Please wait -- writing session file...")
-            contents = cPickle.dumps(_self.get_session(selection, partial, quiet), 1)
-        elif format=='png':
-            return _self.png(filename, quiet=quiet)
+        else:
+            raise pymol.CmdException('File format not supported for export')
+
+        # function returned sequence of strings or bytes
+        if isinstance(contents, (tuple, list)) and contents:
+            contents = contents[0][:0].join(contents)
 
         if cmd.is_string(contents):
             if not isinstance(contents, bytes):
                 contents = contents.encode()
-            with (gzip.open if do_gzip else open)(filename, 'wb') as handle:
+
+            if zipped == 'gz':
+                import gzip
+                fopen = gzip.open
+            else:
+                fopen = open
+                if zipped == 'bz2':
+                    import bz2
+                    contents = bz2.compress(contents)
+
+            with fopen(filename, 'wb') as handle:
                 handle.write(contents)
             r = DEFAULT_SUCCESS
             
@@ -768,3 +759,43 @@ SEE ALSO
         with _self.lockcm:
             return _cmd.get_ccp4str(_self._COb, str(name),
                     int(state) - 1, int(quiet))
+
+    def get_psestr(selection, partial, quiet, _self):
+        if '(' in selection: # ignore selections
+            selection = ''
+        return cPickle.dumps(_self.get_session(selection, partial, quiet), 1)
+
+    def _get_mtl_obj(format, _self):
+        # TODO mtl not implemented, always returns empty string
+        i = {'mtl': 0, 'obj': 1}.get(format)
+        return _self.get_mtl_obj()[i]
+
+    from . import querying
+
+    savefunctions = {
+        'cif': get_str, # mmCIF
+        'xyz': get_str,
+        'pdb': get_str,
+        'pqr': get_str,
+        'sdf': get_str,
+        'mol2': get_str,
+        'mae': get_str,
+        'mol': get_str,
+
+        'pse': get_psestr,
+        'psw': get_psestr,
+
+        'fasta': get_fastastr,
+        'aln': get_alnstr,
+        'ccp4': get_ccp4str,
+
+        'png': png,
+
+        # no arguments (some have a "version" argument)
+        'dae': querying.get_collada,
+        'wrl': querying.get_vrml,
+        'pov': querying.get_povray,
+        'idtf': querying.get_idtf,
+        'mtl': _get_mtl_obj, # TODO not implemented
+        'obj': _get_mtl_obj,
+    }

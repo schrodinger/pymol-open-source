@@ -27,36 +27,105 @@ if __name__=='pymol.importing':
     from . import selector
     from .cmd import _cmd,lock,unlock,Shortcut, \
           _feedback,fb_module,fb_mask, \
-          file_ext_re,gz_ext_re,safe_oname_re, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
           _load, is_list, space_sc, safe_list_eval, is_string, loadable
+    from .constants import _loadable
     
-    try:
-        from pymol import m4x
-    except ImportError:
-        m4x = None
+    def incentive_format_not_available_func(format=''):
+        raise pymol.IncentiveOnlyException(
+                "'%s' format not supported by this PyMOL build" % format)
 
-    from chempy.sdf import SDF,SDFRec
-    from chempy.cif import CIF,CIFRec
+    try:
+        from pymol.m4x import readcex
+    except ImportError:
+        def readcex():
+            raise pymol.CmdException("CEX format not currently supported")
+
     from chempy import io,PseudoFile
     
+    # TODO remove (keep for now for eventual legacy uses in scripts)
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
-    molfile_plugin_types = set([
-        'cube',     # CUBE map
-        'psf',      # protein structure file
-        'CHGCAR',   # VASP map
-        'OUTCAR',   # VASP molecule
-        'POSCAR',   # VASP molecule
-        'XDATCAR',  # VASP molecule
-    ])
+    def filename_to_objectname(fname, _self=cmd):
+        oname, _, _, _ = filename_to_format(fname)
+        return _self.get_legal_name(oname)
 
-    def filename_to_objectname(fname):
-        oname = os.path.basename(fname)
-        oname = gz_ext_re.sub("", oname)        # strip gz
-        oname = file_ext_re.sub("", oname)      # strip extension
-        oname = safe_oname_re.sub("_", oname)   # invalid characters
-        return oname
+    def filename_to_format(filename):
+        filename = os.path.basename(filename)
+        pre, delim, ext = filename.rpartition('.')
+
+        if ext in ('gz', 'bz2',):
+            zipped = ext
+            pre, delim, ext = pre.rpartition('.')
+        else:
+            zipped = ''
+
+        if not pre:
+            pre = ext
+
+        ext = ext.lower()
+
+        if ext in ('brick', 'callback', 'cgo', 'map', 'model', 'plugin'):
+            # names of special loadables, not accepted as file extensions
+            format = ''
+        elif ext in ('ent', 'p5m'):
+            format = 'pdb'
+        elif ext in ('pze',):
+            zipped = 'gz'
+            format = 'pse'
+        elif ext in ('pzw',):
+            zipped = 'gz'
+            format = 'psw'
+        elif ext in ('mmd', 'out', 'dat',):
+            format = 'mmod'
+        elif ext in ('map', 'mrc',):
+            format = 'ccp4'
+        elif ext in ('cc2',):
+            format = 'cc1'
+        elif ext in ('sd',):
+            format = 'sdf'
+        elif ext in ('rst7',):
+            format = 'rst'
+        elif ext in ('o', 'dsn6', 'omap',):
+            format = 'brix'
+        elif ext in ('maegz',):
+            zipped = 'gz'
+            format = 'mae'
+        elif ext in ('ph4',):
+            format = 'moe'
+        elif ext in ('spi',):
+            format = 'spider'
+        elif ext in ('pym', 'pyc',):
+            format = 'py'
+        elif ext in ('p1m', 'pim',):
+            format = 'pml'
+        elif ext in ('xml',):
+            format = 'pdbml'
+        elif re.match(r'pdb\d+$', ext):
+            format = 'pdb'
+        elif re.match(r'xyz_\d+$', ext):
+            format = 'xyz'
+        else:
+            format = ext
+
+        return pre, ext, format, zipped
+
+    def check_gromacs_trj_magic(filename):
+        try:
+            magic = open(filename, 'rb').read(4)
+            if b'\xc9' in magic and b'\x07' in magic:
+                return True
+        except IOError as e:
+            print('trj magic test failed: ' + str(e))
+        return False
+
+    def _guess_trajectory_object(candidate, _self):
+        # if candidate does not exist as a molecular object, return last
+        # structure (presumably most recently added)
+        onames = _self.get_object_list()
+        if onames and candidate not in onames:
+            return onames[-1]
+        return candidate
 
     def auto_zoom(zoom, selection, state=0, _self=cmd):
         if zoom > 0 or zoom < 0 and _self.get_setting_int("auto_zoom"):
@@ -298,10 +367,10 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "load_traj" reads trajectory files (currently just AMBER files).
-    The file extension is used to determine the format.
+    "load_traj" reads trajectory files.
 
-    AMBER files must end in ".trj" 
+    Most of the trajectory formats listed here are supported:
+    http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/
 
 USAGE
 
@@ -333,7 +402,6 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            type = format
             ftype = -1
             state = int(state)
             interval = int(interval)
@@ -352,46 +420,33 @@ SEE ALSO
             selection = selector.process(selection)
             #   
 
+            noext, ext, format_guessed, zipped = filename_to_format(filename)
             fname = _self.exp_path(filename)
 
-            if plugin:
-                type = -1
-            elif not type:
-                # determine file type if possible
-                if re.search("\.trj$",filename,re.I):
-                    ftype = loadable.trj
-                    plugin = ""
-                    try: # autodetect gromacs TRJ
-                        magic = list(map(ord,open(fname,'r').read(4)))
-                        if (201 in magic) and (7 in magic):
-                            ftype = loadable.trj2
-                            plugin = "trj"
-                    except:
-                        traceback.print_exc()
-                else:
-                    # take file extension as plugin identifier
-                    plugin = filename.rsplit('.', 1)[-1]
-                    type = -1
-            elif _self.is_string(type):
-                try:
-                    ftype = int(type)
-                except:
-                    type = loadable_sc.auto_err(type,'file type')
-                    if hasattr(loadable,type):
-                        ftype = getattr(loadable,type)
+            if zipped:
+                raise pymol.CmdException('zipped (%s) trajectories not supported' % (zipped))
+
+            if not format:
+                format = format_guessed
+
+            if not plugin:
+                if format == 'trj':
+                    if check_gromacs_trj_magic(fname):
+                        plugin = "trj"
                     else:
-                        print("Error: unknown type '%s'",type)
-                        raise pymol.CmdException
-            else:
-                ftype = int(type)
+                        ftype = loadable.trj
+                else:
+                    try:
+                        ftype = int(format)
+                    except:
+                        plugin = _cmd.find_molfile_plugin(_self._COb, format, 0x2)
 
     # get object name
-            if len(str(object))==0:
-                oname = filename_to_objectname(filename)
+            oname = object.strip()
+            if not oname:
+                oname = _guess_trajectory_object(noext, _self)
                 if not len(oname): # safety
                     oname = 'obj01'
-            else:
-                oname = object.strip()
 
             if ftype>=0 or plugin:
                 r = _cmd.load_traj(_self._COb,str(oname),fname,int(state)-1,int(ftype),
@@ -400,48 +455,13 @@ SEE ALSO
                                          int(image),
                                          float(shift[0]),float(shift[1]),
                                          float(shift[2]),str(plugin))
+            else:
+                raise pymol.CmdException("unknown format '%s'" % format)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
     
-    def _processCIF(cif,oname,state,quiet,discrete,_self=cmd):
-        '''
-        Load all molecules (data records) from a CIF file. If more than one
-        molecule is loaded, use the data record name as object name instead
-        of "oname".
-        '''
-        for i, rec in enumerate(cif):
-            if i == 1:
-                _self.set_name(oname, title)
-            title = rec.model.molecule.title
-            if i > 0:
-                oname = title
-            r = _self.load_model(rec.model,oname,state,quiet=quiet,
-                    discrete=discrete)
-            if len(rec.extra_coords):
-                import numpy
-                extra_coords = numpy.asfarray(rec.extra_coords)
-                for coords in extra_coords.reshape(
-                        (-1, len(rec.model.atom), 3)):
-                    _self.load_coordset(coords, oname)
-#        _cmd.finish_object(_self._COb,str(oname))
-#        if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
-#            _self._do("zoom (%s)"%oname)
-
-    def _processSDF(sdf,oname,state,quiet,_self=cmd):
-        while 1:
-            rec = sdf.read()
-
-
-            if not rec: break
-            r = _load(oname, ''.join(rec.get('MOL')),state,
-                      loadable.molstr,0,1,quiet,_self=_self)
-        del sdf
-        _cmd.finish_object(_self._COb,str(oname))
-        if _self.get_setting_int("auto_zoom") == 1:
-            _self._do("zoom (%s)"%oname)
-
     def _processALN(fname,quiet=1,_self=cmd):
         legal_dict = {}
         seq_dict = {}
@@ -583,6 +603,28 @@ SEE ALSO
             print("Error: unable to handle PWG file")
         return r
     
+    def _magic_check_cor_charmm(filename):
+        # http://www.ks.uiuc.edu/Research/vmd/plugins/molfile/corplugin.html
+        # assume at least 2 title/comment lines, starting with *
+        with open(filename) as handle:
+            if (handle.readline().startswith('*') and
+                handle.readline().startswith('*')):
+                return True
+        return False
+
+    def _epymol_get_load_func(format):
+        func = None
+        try:
+            if format == 'vis':
+                from epymol.vis import load_vis as func
+            elif format == 'moe':
+                from epymol.moe import read_moestr as func
+            elif format == 'phypo':
+                from epymol.ph4 import load_phypo as func
+        except ImportError:
+            func = incentive_format_not_available_func
+        return func
+
     def load(filename, object='', state=0, format='', finish=1,
              discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0,
              mimic=1, object_props=None, atom_props=None, _self=cmd):
@@ -654,233 +696,136 @@ SEE ALSO
             print(' Warning: properties are not supported in Open-Source PyMOL')
         try:
             _self.lock(_self)
-            type = format
-            ftype = 0
             plugin = ''
             state = int(state)
             finish = int(finish)
             zoom = int(zoom)
-            if discrete == -1:
-                discrete_default = 1
-                discrete = 0
-            else:
-                discrete_default = 0
-                discrete = int(discrete)
+            discrete = int(discrete)
             if multiplex==None:
                 multiplex=-2
-            fname = _self.exp_path(filename)
-            go_to_first_scene = 0
-            if not len(str(type)):
-                # guess the file type from the extension
-                fname_no_gz = gz_ext_re.sub("",filename) # strip gz
-                ext = fname_no_gz.rsplit('.', 1)[-1]
-                if re.search("\.pdb$|\.pdb\d+$|\.ent$|\.p5m",fname_no_gz,re.I):
-                    ftype = loadable.pdb
-                elif re.search(r"\.pdbqt$", fname_no_gz, re.I):
-                    ftype = loadable.pdbqt
-                elif re.search(r"\.(pdbml|xml)$", fname_no_gz, re.I):
-                    return load_pdbml(fname, object, discrete, multiplex, zoom=zoom, quiet=quiet, _self=_self)
-                elif re.search(r"\.cml$", fname_no_gz, re.I):
-                    return load_cml(fname, object, discrete, multiplex, zoom=zoom, quiet=quiet, _self=_self)
-                elif re.search(r"\.mmtf$", fname_no_gz, re.I):
-                    return load_mmtf(fname, object, discrete, multiplex, zoom=zoom, quiet=quiet, _self=_self)
-                elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",fname_no_gz,re.I):
-                    ftype = loadable.mmod
-                elif re.search("\.(ccp4|mrc|map)$",fname_no_gz,re.I):
-                    ftype = loadable.ccp4
-                elif re.search("\.pkl$",fname_no_gz,re.I):
-                    ftype = loadable.model
-                elif re.search("\.cc1$|\.cc2$",fname_no_gz,re.I):
-                    ftype = loadable.cc1
-                elif re.search("\.xyz_[0-9]*$",fname_no_gz,re.I):
-                    ftype = loadable.xyz
-                elif re.search("\.sdf$|\.sd$",fname_no_gz,re.I): 
-                    ftype = loadable.sdf2 # now using the C-based SDF reader by default...
-                elif re.search("\.rst7?$",fname_no_gz,re.I):
-                    ftype = loadable.rst
-                elif re.search("\.pse$|\.pze|\.pzw$",fname_no_gz,re.I):
-                    ftype = loadable.pse
-                elif re.search("\.psw$",fname_no_gz,re.I):
-                    ftype = loadable.psw
-                elif re.search("\.o$|\.dsn6$|\.brix$|\.omap$",fname_no_gz,re.I):
-                    ftype = loadable.brix
-                elif re.search(r"\.(mae|maegz)$", fname_no_gz, re.I):
-                    ftype = loadable.mae
-                elif re.search("\.idx$",fname_no_gz,re.I):
-                    ftype = "idx" # should be numeric
-                elif ext in molfile_plugin_types:
-                    ftype = loadable.plugin
-                    plugin = ext
-                elif re.search("\.spi(der)?$",fname_no_gz,re.I):
-                    ftype = loadable.spider
-                elif re.search("\.mtz$",fname_no_gz,re.I):
-                    return load_mtz(fname, object, quiet=quiet, _self=_self)
-                elif re.search("\.vis$",fname_no_gz,re.I):
-                    try:
-                        from epymol.vis import load_vis
-                    except ImportError:
-                        raise pymol.CmdException('vis file only available in incentive PyMOL')
-                    return load_vis(filename, object, mimic, quiet=quiet, _self=_self)
-                elif re.search(r"\.py$|\.pym|\.pyc$", fname_no_gz, re.I):
-                    return _self.do("_ run %s" % filename)
-                elif re.search(r"\.pml$", fname_no_gz, re.I):
-                    return _self.do("_ @%s" % filename)
-                elif re.search(r'\.ply$', fname_no_gz, re.I):
-                    from . import cgo
-                    obj = cgo.from_plystr(_self.file_read(filename))
-                    if not object:
-                        object = filename_to_objectname(filename)
-                    r = _self.load_cgo(obj, object, state)
-                    _self.set('cgo_lighting', 1, object)
-                    return r
-                elif hasattr(loadable, ext):
-                    ftype = getattr(loadable, ext)
-                elif ext in ['smap', 'prj']:
-                    raise pymol.CmdException('unsupported file type: ' + ext)
-                else:
-                    print(" Warning: unrecognized file extension, trying to load as PDB format")
-                    ftype = loadable.pdb # default is PDB
-            elif _self.is_string(type):
-                # user specified the file type
-                if hasattr(loadable,type):
-                    ftype = getattr(loadable,type)
-                elif type in molfile_plugin_types:
-                    ftype = loadable.plugin
-                    plugin = type
-                else:
-                    try:
-                        ftype = int(type) # for some reason, these exceptions aren't always caught...
-                    except:
-                        type = loadable_sc.auto_err(type,'file type')
-                        if hasattr(loadable,type):
-                            ftype = getattr(loadable,type)
-                        else:
-                            print("Error: unknown type '%s'",type)
-                            raise pymol.CmdException
-            else:
+
+            # analyze filename
+            noext, ext, format_guessed, zipped = filename_to_format(filename)
+            filename = _self.exp_path(filename)
+
+            # file format
+            try:
                 # user specified the type as an int
-                ftype = int(type)
-
-            # special handling for PSW files 
-            if ftype == loadable.psw:
-                go_to_first_scene = 1                
-                ftype = loadable.pse
-            elif ftype == loadable.pse:
-                if _self.get_setting_boolean("presentation"):
-                    go_to_first_scene = 1
-                    
-            # get object name
-            if len(str(object))==0:
-                oname = filename_to_objectname(filename)
-                if not len(oname): # safety
-                    oname = 'obj01'
-            else:
-                oname = object.strip()
-
-            if ftype == 'idx':
-                return load_idx(filename, oname, state, quiet, zoom, _self=_self)
-
-            # loadable.sdf1 is for the old Python-based SDF file reader
-            if ftype == loadable.sdf1:
-                sdf = SDF(fname)
-                _processSDF(sdf,oname,state,quiet,_self)
-                r = DEFAULT_SUCCESS
-                ftype = -1
-
-            # loadable.sdf1 is the Python-based CIF file reader
-            if ftype == loadable.cif1:
-                try:
-                    cif = CIF(fname)
-                    _processCIF(cif,oname,state,quiet,discrete,_self)
-                except:
-                    traceback.print_exc()
-                r = DEFAULT_SUCCESS
-                ftype = -1
-
-            # png images 
-            if ftype == loadable.png:
-                r = _self.load_png(str(fname),quiet=quiet)
-                ftype = -1
-
-            # p1m embedded data script files (more secure)
-            if ftype == loadable.p1m:
-                _self._do("_ @"+fname)
-                ftype = -1
-                r = DEFAULT_SUCCESS
-
-            # pim import files (unrestricted scripting -- insecure)
-            if ftype == loadable.pim:
-                _self._do("_ @"+fname)
-                ftype = -1
-                r = DEFAULT_SUCCESS
-
-            # pwg launch (PyMOL Web GUI / http server launch)
-            if ftype == loadable.pwg:
-                ftype = -1
-                r = _processPWG(fname)
-
-            # aln CLUSTAL
-            if ftype == loadable.aln:
-                ftype = -1
-                r = _processALN(fname,quiet=quiet)
-
-            # fasta
-            if ftype == loadable.fasta:
-                ftype = -1
-                r = _processFASTA(fname,quiet=quiet)
-
-            # special handling for trj failes (autodetect AMBER versus GROMACS)
-            if ftype == loadable.trj:
-                try: # autodetect gromacs TRJ
-                    magic = list(map(ord,open(fname,'r').read(4)))
-                    if (201 in magic) and (7 in magic):
-                        ftype = loadable.trj2
-                except:
-                    traceback.print_exc()
-
-            # special handling of cex files
-            if ftype == loadable.cex:
-                ftype = -1
-                if m4x!=None:
-                    r = m4x.readcex(fname,str(oname)) # state, format, discrete?
+                ftype = int(format)
+                format = loadable._reverse_lookup(format)
+            except ValueError:
+                format = str(format)
+                if not format:
+                    format = format_guessed
+                elif format.startswith('plugin'):
+                    format, _, plugin = format.partition(':')
                 else:
-                    print(" Error: CEX format not currently supported")
-                    raise pymol.CmdException
+                    ext = format
+                if format == 'pkl':
+                    format = 'model' # legacy
+                ftype = getattr(_loadable, format, -1)
 
-            # special handling of pse files
-            if ftype == loadable.pse:
-                ftype = -1
-                try:
-                    contents = _self.file_read(fname)
-                    session = io.pkl.fromString(contents)
-                except AttributeError as e:
-                    raise pymol.CmdException('PSE contains objects which cannot be unpickled (%s)' % e.message)
-                r = _self.set_session(session, quiet=quiet,
-                                      partial=partial,steal=1)
-                if not partial:
-                    fname = fname.replace("\\","/") # always use unix-like path separators	
-                    _self.set("session_file",fname,quiet=1)
-                
-            # special handling for multi-model files 
-            if ftype in ( loadable.mol2, loadable.sdf1, loadable.sdf2, loadable.mae ):
-                if discrete_default: # make such files discrete by default
-                    discrete = -1
+            # object name
+            object = str(object).strip()
+            if not object:
+                object = noext if noext else _self.get_unused_name('obj')
+                if format in ['dcd', 'dtr']:
+                    # for trajectories, use most recently added structure
+                    object = _guess_trajectory_object(object, _self)
 
-            # standard file handling
-            if ftype>=0:
-                r = _load(oname,fname,state,ftype,finish,
-                          discrete,quiet,multiplex,zoom,mimic,
-                          plugin,
-                          object_props,
-                          atom_props,_self=_self)
+            # deferred (circular imports)
+            if format not in loadfunctions:
+                func = _epymol_get_load_func(format)
+                if func is not None:
+                    loadfunctions[format] = func
+
+            # molfile plugins
+            if (ftype < 0 and format not in loadfunctions or
+                    format == 'plugin' and not plugin):
+                plugin = _cmd.find_molfile_plugin(_self._COb, ext)
+                if not plugin:
+                    raise pymol.CmdException('unsupported file type: ' + ext)
+                ftype = loadable.plugin
+
+            # special handling for trj files (autodetect AMBER versus GROMACS)
+            if ftype == loadable.trj and check_gromacs_trj_magic(filename):
+                ftype = loadable.trj2
+
+            # special handling for cdr files (autodetect AMBER versus CHARMM)
+            if ftype == loadable.crd and _magic_check_cor_charmm(filename):
+                ftype = loadable.plugin
+                plugin = 'cor'
+
+            # generic forwarding to format specific load functions
+            func = loadfunctions.get(format, _load)
+            kw = {
+                'filename': filename,
+                'fname': filename, # alt
+                'object': object,
+                'prefix': object, # alt
+                'state': state,
+                'format': format,
+                'finish': finish,
+                'discrete': discrete,
+                'quiet': quiet,
+                'multiplex': multiplex,
+                'zoom': zoom,
+                'partial': partial,
+                'mimic': mimic,
+                'object_props': object_props,
+                'atom_props': atom_props,
+                '_self': _self,
+
+                # for _load
+                'ftype': ftype,
+                'plugin': plugin,
+                'finfo': filename, # alt
+                'oname': object, # alt
+            }
+
+            import inspect
+            spec = inspect.getargspec(func)
+
+            if spec.varargs:
+                print('FIXME: loadfunctions[%s]: *args' % (format))
+
+            if not spec.keywords:
+                kw = dict((n, kw[n]) for n in spec.args if n in kw)
+
+            if 'contents' in spec.args:
+                kw['contents'] = _self.file_read(filename)
+
+            return func(**kw)
         finally:
             _self.unlock(r,_self)
-        if go_to_first_scene:
-            if _self.get_setting_boolean("presentation_auto_start"):
-                if(_self.get_movie_length()): # rewind movie
-                    _self.rewind()
-                _self.scene("auto","start",animate=0) # go to first scene
         if _self._raising(r,_self): raise pymol.CmdException
+        return r
+
+    def load_pse(filename, partial=0, quiet=1, format='pse', _self=cmd):
+        try:
+            contents = _self.file_read(filename)
+            session = io.pkl.fromString(contents)
+        except AttributeError as e:
+            raise pymol.CmdException('PSE contains objects which cannot be unpickled (%s)' % e.message)
+
+        r = _self.set_session(session, quiet=quiet, partial=partial, steal=1)
+
+        if not partial:
+            _self.set("session_file",
+                    # always use unix-like path separators
+                    filename.replace("\\", "/"), quiet=1)
+
+        if ((format == 'psw' or
+            _self.get_setting_boolean("presentation")) and
+            _self.get_setting_boolean("presentation_auto_start")):
+
+            # set movie to first frame
+            if _self.get_movie_length():
+                _self.rewind()
+
+            # go to first scene
+            _self.scene("auto", "start", animate=0)
+
         return r
 
     def load_embedded(key=None, name=None, state=0, finish=1, discrete=1,
@@ -914,84 +859,27 @@ NOTES
     This approach only works with text data files.
     
     '''
-        r = DEFAULT_ERROR
         if object_props or atom_props:
             print(' Warning: properties are not supported in Open-Source PyMOL')
         list = _self._parser.get_embedded(key)
         if list == None:
             print("Error: embedded data '%s' not found."%key)
-        else:
-            if name == None:
-                if key != None:
-                    name = key
-                else:
-                    name = _self.cmd._parser.get_default_key()
-            type = list[0]
-            data = list[1]
-            try:
-                ftype = int(type)
-            except:
-                type = loadable_sc.auto_err(type,'file type')
-                if hasattr(loadable,type):
-                    ftype = getattr(loadable,type)
-                else:
-                    print("Error: unknown type '%s'",type)
-                    raise pymol.CmdException
-            if ftype==loadable.pdb:
-                r = read_pdbstr(''.join(data),name,state,finish,
-                                discrete,quiet,zoom,multiplex)
-            elif ftype==loadable.mol:
-                r = read_molstr(''.join(data),name,state,finish,
-                                discrete,quiet,zoom)
-            elif ftype==loadable.mol2:
-                r = read_mol2str(''.join(data),name,state,finish,
-                                 discrete,quiet,zoom,multiplex)
-            elif ftype==loadable.xplor:
-                r = read_xplorstr(''.join(data),name,state,finish,discrete,quiet)
-            elif ftype==loadable.mae:
-                try:
-                    # BEGIN PROPRIETARY CODE SEGMENT
-                    from epymol import mae
-                    if discrete_default:
-                        discrete = -1
-                    r = mae.read_maestr(''.join(data),
-                                        name,state,finish,discrete,
-                                        quiet,zoom,multiplex,mimic,
-                                        object_props, atom_props)
-                    # END PROPRIETARY CODE SEGMENT
-                except ImportError:
-                    print("Error: .MAE format not supported by this PyMOL build.")
-                    if raising(-1): raise pymol.CmdException
-            elif ftype==loadable.sdf1: # Python-based SDF reader
-                sdf = SDF(PseudoFile(data),'pf')
-                r = _processSDF(sdf,name,state,quiet,_self)
-            elif ftype==loadable.sdf2: # C-based SDF reader (much faster)
-                r = read_sdfstr(''.join(data),name,state,finish,
-                                discrete,quiet,zoom,multiplex)
-        if _self._raising(r,_self): raise pymol.CmdException
-        return r
+            return DEFAULT_ERROR
 
-    _raw_dict = {
-        loadable.pdb  : loadable.pdbstr,
-        loadable.mol  : loadable.molstr,
-        loadable.sdf  : loadable.sdf2str,
-        loadable.ccp4 : loadable.ccp4str,
-        loadable.xplor: loadable.xplorstr
-        }
+        if not name:
+            name = key if key else _self.cmd._parser.get_default_key()
+
+        return _self.load_raw(''.join(list[1]), list[0], name, state,
+                finish, discrete, quiet, multiplex, zoom)
 
     def load_raw(content,  format='', object='', state=0, finish=1,
                  discrete=-1, quiet=1, multiplex=None, zoom=-1,_self=cmd):
         r = DEFAULT_ERROR
         if multiplex==None:
             multiplex=-2
-        ftype = None
-        type = loadable_sc.auto_err(format,'data format')
-        if hasattr(loadable,type):
-            ftype = getattr(loadable,type)
-        else:
-            print("Error: unknown format '%s'",format)
-            if _self._raising(r,_self): raise pymol.CmdException            
-        if ftype!=None:
+        ftype = getattr(loadable, format, None)
+        if True:
+            _raw_dict = cmd._load2str
             if ftype in _raw_dict:
                 try:
                     _self.lock(_self)
@@ -1000,6 +888,8 @@ NOTES
                                   int(quiet),int(multiplex),int(zoom))
                 finally:
                     _self.unlock(r,_self)
+            else:
+                raise pymol.CmdException("unknown raw format '%s'", format)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
         
@@ -1094,8 +984,8 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def read_pdbstr(pdb,name,state=0,finish=1,discrete=0,quiet=1,
-                         zoom=-1,multiplex=-2,_self=cmd):
+    def read_pdbstr(contents, oname, state=0, finish=1, discrete=0, quiet=1,
+            zoom=-1, multiplex=-2, object_props=None, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1124,7 +1014,7 @@ NOTES
         try:
             _self.lock(_self)   
             ftype = loadable.pdbstr
-            oname = str(name).strip()
+            pdb = contents
             r = _cmd.load(_self._COb,str(oname),pdb,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
                               int(multiplex),int(zoom))
@@ -1235,9 +1125,19 @@ PYMOL API
     }
 
     hostPaths = {
-        "bio"  : "/data/biounit/coordinates/divided/{mid}/{code}.{type}.gz",
-        "pdb"  : "/data/structures/divided/pdb/{mid}/pdb{code}.ent.gz",
-        "cif"  : "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
+        "mmtf" : "http://mmtf.rcsb.org/v1.0/full/{code}.mmtf.gz",
+        "bio"  : [
+            "http://files.rcsb.org/download/{code}.{type}.gz",
+            "/data/biounit/coordinates/divided/{mid}/{code}.{type}.gz",
+        ],
+        "pdb"  : [
+            "http://files.rcsb.org/download/{code}.{type}.gz",
+            "/data/structures/divided/pdb/{mid}/pdb{code}.ent.gz",
+        ],
+        "cif"  : [
+            "http://files.rcsb.org/download/{code}.{type}.gz",
+            "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
+        ],
         "2fofc" : "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}.omap",
         "fofc": "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}_diff.omap",
         "pubchem": [
@@ -1245,8 +1145,43 @@ PYMOL API
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
         ],
         "emd": "ftp://ftp.wwpdb.org/pub/emdb/structures/EMD-{code}/map/emd_{code}.map.gz",
-        "cc": "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/{code}.cif",
+        "cc": [
+            "http://files.rcsb.org/ligands/download/{code}.cif",
+            "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/{code}.cif",
+        ],
     }
+
+    _symmetrycache = {}
+
+    def _get_symmetry(code, quiet, _self=cmd):
+        if code in _symmetrycache:
+            return _symmetrycache[code]
+
+        try:
+            url = 'http://www.ebi.ac.uk/pdbe/api/pdb/entry/experiment/' + code
+            contents = _self.file_read(url).decode(errors='ignore')
+            import json
+            data = json.loads(contents)
+        except Exception as e:
+            print(" Warning: failed to query cell symmetry for " + code)
+            return None
+
+        try:
+            data = data[code][0]
+            c = data['cell']
+            symmetry = [
+                c['a'], c['b'], c['c'],
+                c['alpha'], c['beta'], c['gamma'],
+                data['spacegroup']
+            ]
+        except LookupError:
+            return None
+
+        if not quiet:
+            print(" Info: Using symmetry from PDBe web API")
+
+        _symmetrycache[code] = symmetry
+        return symmetry
 
     def _fetch(code, name, state, finish, discrete, multiplex, zoom, type, path,
             file, quiet, _self=cmd):
@@ -1282,6 +1217,8 @@ PYMOL API
             bioType = 'pubchem'
             nameFmt = '{type}_{code}.sdf'
         elif type == 'cif':
+            pass
+        elif type == 'mmtf':
             pass
         elif type == 'cc':
             nameFmt = '{code}.cif'
@@ -1355,6 +1292,13 @@ PYMOL API
                     finish, discrete, quiet, multiplex, zoom)
 
         if not _self.is_error(r):
+            if bioType in ('2fofc', 'fofc'):
+                symmetry = _get_symmetry(code, quiet, _self)
+                if symmetry:
+                    _self.set_symmetry(name, *symmetry)
+            elif bioType in ('pdb', 'cif'):
+                _symmetrycache[code] = _self.get_symmetry(name)
+
             return name
 
         print(" Error-fetch: unable to load '%s'." % code)
@@ -1388,7 +1332,7 @@ PYMOL API
                     obj_name = 'emd_' + obj_code
 
             chain = None
-            if len(obj_code) in (5,6) and type in ('pdb', 'cif'):
+            if len(obj_code) in (5,6) and type in ('pdb', 'cif', 'mmtf'):
                 obj_code, chain = obj_code[:4], obj_code[-1]
 
             obj_name = _self.get_legal_name(obj_name)
@@ -1405,7 +1349,7 @@ PYMOL API
         return r
     
     def fetch(code, name='', state=0, finish=1, discrete=-1,
-              multiplex=-2, zoom=-1, type='cif', async=-1, path='',
+              multiplex=-2, zoom=-1, type='', async=-1, path='',
               file=None, quiet=1, _self=cmd):
         
         '''
@@ -1452,6 +1396,12 @@ NOTES
         state, finish, discrete = int(state), int(finish), int(discrete)
         multiplex, zoom = int(multiplex), int(zoom)
         async, quiet = int(async), int(quiet)
+
+        if not type:
+            if len(code) == 3:
+                type = 'cc'
+            else:
+                type = _self.get('fetch_type_default')
 
         r = DEFAULT_SUCCESS
         if not path:
@@ -1522,7 +1472,7 @@ ARGUMENTS
             r = _cmd.load_coords(_self._COb, selection, coords, int(state)-1)
         return r
 
-    def load_idx(filename, oname, state=0, quiet=1, zoom=-1, _self=cmd):
+    def load_idx(filename, object, state=0, quiet=1, zoom=-1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1537,6 +1487,7 @@ DESCRIPTION
                 k, v = line.split('=', 1)
                 data[k.strip()] = v.strip()
 
+        oname = object
         _self.delete(oname)
         r = _self.load(
                 os.path.join(dirname, data['structure']), oname, state, quiet=quiet, zoom=0)
@@ -1874,3 +1825,43 @@ DESCRIPTION
             else:
                 _self.create(object, tmp, 1, -1, discrete=discrete, zoom=zoom)
                 _self.delete(tmp)
+
+    def load_ply(filename, object, state=0, zoom=-1, _self=cmd):
+        from . import cgo
+        obj = cgo.from_plystr(_self.file_read(filename))
+        r = _self.load_cgo(obj, object, state, zoom=zoom)
+        _self.set('cgo_lighting', 1, object)
+        return r
+
+    def load_r3d(filename, object, state=0, zoom=-1, _self=cmd):
+        from . import cgo
+        obj = cgo.from_r3d(filename)
+        return _self.load_cgo(obj, object, state, zoom=zoom)
+
+    def load_cc1(filename, object, state=0, _self=cmd):
+        obj = io.cc1.fromFile(filename)
+        return _self.load_model(obj, object, state)
+
+    from pymol.viewing import load_png
+
+    loadfunctions = {
+        'mae': incentive_format_not_available_func,
+        'pdbml': load_pdbml,
+        'cml': load_cml,
+        'mtz': load_mtz,
+        'py': lambda filename, _self: _self.do("_ run %s" % filename),
+        'pml': lambda filename, _self: _self.do("_ @%s" % filename),
+        'pwg': _processPWG,
+        'aln': _processALN,
+        'fasta': _processFASTA,
+        'png': load_png,
+        'idx': load_idx,
+        'pse': load_pse,
+        'psw': load_pse,
+        'cex': readcex,
+        'mmtf': load_mmtf,
+        'ply': load_ply,
+        'r3d': load_r3d,
+        'cc1': load_cc1,
+        'pdb': read_pdbstr,
+    }

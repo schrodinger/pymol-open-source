@@ -10,11 +10,12 @@ License: BSD-2-Clause
 
 from __future__ import print_function
 
-try:
+import sys
+if sys.version_info[0] > 2:
     import urllib.request as urllib2
     from urllib.parse import urlparse
     from urllib.error import URLError, HTTPError
-except ImportError:
+else:
     import urllib2
     from urlparse import urlparse
     from urllib2 import URLError

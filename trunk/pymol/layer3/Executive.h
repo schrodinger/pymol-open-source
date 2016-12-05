@@ -100,6 +100,8 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeMAE 65
 #define cLoadTypeMAEStr 66
 #define cLoadTypePDBQT 67
+/* 68 is Python-based MAE  */
+#define cLoadTypeVDBStr 69
 
 /* NOTE: if you add new content/object type above, then be sure to add
    corresponding code in:

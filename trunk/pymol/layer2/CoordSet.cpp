@@ -59,7 +59,7 @@ Z* -------------------------------------------------------------------
 /*
  * Get coordinate index for given atom index
  */
-int CoordSet::atmToIdx(int atm) {
+int CoordSet::atmToIdx(int atm) const {
   if (Obj->DiscreteFlag) {
     if (this == Obj->DiscreteCSet[atm])
       return Obj->DiscreteAtmToIdx[atm];

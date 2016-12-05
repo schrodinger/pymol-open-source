@@ -6049,12 +6049,12 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
   bool done = false;
 
 #ifndef _PYMOL_NOPY
+  int blocked = PAutoBlock(G);
   auto raw_image_callback =
     PyObject_GetAttrString(G->P_inst->cmd, "raw_image_callback");
 
   if (raw_image_callback != Py_None) {
 #ifdef _PYMOL_NUMPY
-    int blocked = PAutoBlock(G);
     auto& image = G->Scene->Image;
 
     // RGBA image as uint8 numpy array
@@ -6065,7 +6065,6 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
 
     PYOBJECT_CALLFUNCTION(raw_image_callback, "O", py);
     Py_DECREF(py);
-    PAutoUnblock(G, blocked);
 
     done = true;
 #else
@@ -6075,6 +6074,7 @@ bool call_raw_image_callback(PyMOLGlobals * G) {
   }
 
   Py_XDECREF(raw_image_callback);
+  PAutoUnblock(G, blocked);
 #endif
 
   return done;

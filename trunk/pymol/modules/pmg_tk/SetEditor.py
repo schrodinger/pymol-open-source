@@ -14,9 +14,10 @@
 # Master editor for all pymol settings
 # (includes filter)
 
-try:
+import sys
+if sys.version_info[0] == 2:
     from Tkinter import *
-except ImportError:
+else:
     from tkinter import *
 
 # nItem defines the number of label/entry widgets displayed on screen

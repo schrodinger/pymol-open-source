@@ -1533,6 +1533,7 @@ struct {
 } const ContentTypeTable[] = {
   // molecules
   {"pdb",           cLoadTypePDBStr,    cLoadTypePDB},
+  {"vdb",           cLoadTypeVDBStr,    -1},
   {"cif",           cLoadTypeCIFStr,    cLoadTypeCIF},
   {"mae",           cLoadTypeMAEStr,    cLoadTypeMAE},
   {"sdf",           cLoadTypeSDF2Str,   cLoadTypeSDF2},

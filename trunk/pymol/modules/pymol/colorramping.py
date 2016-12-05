@@ -4,8 +4,8 @@ Volume color ramp utilities
 
 from __future__ import print_function
 
-import math
-cmd = __import__("sys").modules["pymol.cmd"]
+import sys
+cmd = sys.modules["pymol.cmd"]
 
 _volume_windows = {}
 
@@ -147,9 +147,9 @@ EXAMPLE
     if _guiupdate and name in _volume_windows:
         from pymol import gui
         def func():
-            try:
+            if sys.version_info[0] == 2:
                 import Tkinter
-            except ImportError:
+            else:
                 import tkinter as Tkinter
             try:
                 panel = _volume_windows[name].panel
@@ -173,9 +173,9 @@ ARGUMENTS
     '''
     from pymol import gui
     from pmg_tk import volume
-    try:
+    if sys.version_info[0] == 2:
         import Tkinter
-    except ImportError:
+    else:
         import tkinter as Tkinter
 
     app = gui.get_pmgapp()

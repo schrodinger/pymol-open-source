@@ -3152,7 +3152,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule * I, M4XAnnoType * m4x, const char
           else
             ocgo->Obj.Color = ColorGetIndex(I->Obj.G, "yellow");
           ObjectSetName((CObject *) ocgo, name);
-          ExecutiveDelete(I->Obj.G, name);
+          ExecutiveDelete(I->Obj.G, ocgo->Obj.Name);
 
           ExecutiveManageObject(I->Obj.G, (CObject *) ocgo, false, true);
 

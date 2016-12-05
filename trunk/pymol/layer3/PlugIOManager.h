@@ -22,6 +22,8 @@ Z* -------------------------------------------------------------------
 #include "ObjectMolecule.h"
 #include "ObjectMap.h"
 
+const char * PlugIOManagerFindPluginByExt(PyMOLGlobals * G, const char * ext, int mask=0);
+
 #ifdef __cplusplus
 extern "C" {
 #endif

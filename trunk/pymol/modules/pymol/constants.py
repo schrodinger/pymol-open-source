@@ -7,11 +7,14 @@ from . import parsing
 import re
 from .cmd import Shortcut
 
+# TODO remove (keep for now for eventual legacy uses in scripts)
 gz_ext_re = re.compile(r"(\.?gz|\.bz2)$", re.I)
 
+# TODO remove (keep for now for eventual legacy uses in scripts)
 file_ext_re = re.compile(''.join([
     "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",
     r"\.mmtf$|"
+    r"\.vdb$|"
     r"\.pdbml$|\.pdbqt$|\.cml$|",
     r"\.mmod$|\.mmd$|\.dat$|\.out$|\.mol2$|",
     r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 
@@ -42,7 +45,35 @@ file_ext_re = re.compile(''.join([
     r"\.acnt$", # Tripos / Sybyl ACNT format
     ]), re.I)
 
-class loadable:
+# TODO remove (keep for now for eventual legacy uses in scripts)
+class _loadable_legacy:
+    r3d = 14      # r3d, only used within cmd.py
+    sdf1 = 16     # sdf, only used within cmd.py
+    cc1 = 17      # cc1 and cc2, only used within cmd.py
+    cex = 20      # cex format
+    pse = 25      # PyMOL session
+    png = 39      # png image
+    psw = 40      #
+    moe = 41      # Chemical Computing Group ".moe" format (proprietary)
+    xtc = 42      # xtc trajectory format (via plugin)
+    trr = 43      # trr trajectory format (via plugin)
+    gro = 44      # gro trajectory format (via plugin)
+    g96 = 46      # g96 trajectory format (via plugin)
+    dcd = 47      # dcd trajectory format (via plugin)
+    cube = 48     # cube volume file (via plugin)
+    cif1 = 50     # Python-based CIF parser
+    pim = 52      # General-purpose programmatic import (powerful, insecure)
+    pwg = 53      # PyMOL web gui launch script
+    aln = 54      # CLUSTALW alignment file
+    fasta = 55    # FASTA sequence file
+    dtr = 57      # DESRES / Desmond
+    pze = 58
+    pzw = 59
+    spider = 62   # spider map
+    cms = 63      # desmond topology ("mae" plugin)
+    mae1 = 68     # Python-based MAE parser (proprietary and obsolete)
+
+class _loadable:
     pdb = 0
     mol = 1
     molstr = 3
@@ -55,18 +86,13 @@ class loadable:
     map = 11      # chempy.map object
     callback = 12 # pymol callback obejct
     cgo = 13      # compiled graphic object
-    r3d = 14      # r3d, only used within cmd.py
     xyz = 15      # xyz, tinker format
-    sdf1 = 16     # sdf, only used within cmd.py
-    cc1 = 17      # cc1 and cc2, only used within cmd.py
     ccp4 = 18     # CCP4 map, under development
     pmo = 19      # pmo, experimental molecular object format
-    cex = 20      # cex format
     top = 21      # AMBER topology
     trj = 22      # AMBER trajectory
     crd = 23      # AMBER coordinate
     rst = 24      # AMBER restart
-    pse = 25      # PyMOL session
     xplorstr = 26 # XPLOR map as string
     phi = 27      # Delphi/Grasp
     fld = 28      # AVS field format (not yet general -- only uniform allowed)
@@ -81,38 +107,29 @@ class loadable:
     sdf = 37      # new default...
     sdf2 = 37     # SDF using C-based SDF parser (instead of Python)
     sdf2str = 38  # SDF ditto
-    png = 39      # png image
-    psw = 40      #
-    moe = 41      # Chemical Computing Group ".moe" format (proprietary)
-    xtc = 42      # xtc trajectory format (via plugin)
-    trr = 43      # trr trajectory format (via plugin)
-    gro = 44      # gro trajectory format (via plugin)
     trj2 = 45     # trj trajectroy format (via plugin)
-    g96 = 46      # g96 trajectory format (via plugin)
-    dcd = 47      # dcd trajectory format (via plugin)
-    cube = 48     # cube volume file (via plugin)
     xyzstr = 49   #
-    cif1 = 50     # Python-based CIF parser
     phistr = 51   # electrostatic map as a string
-    pim = 52      # General-purpose programmatic import (powerful, insecure)
-    pwg = 53      # PyMOL web gui launch script
-    aln = 54      # CLUSTALW alignment file
-    fasta = 55    # FASTA sequence file
     acnt = 56     # Tripos/Sybyl acnt grid file (proposed)
-    dtr = 57      # DESRES / Desmond
-    pze = 58
-    pzw = 59
     cif = 60      # C++ based CIF parser
     cifstr = 61
-    spider = 62   # spider map
-    cms = 63
     plugin = 64
     mae = 65
     maestr = 66
     pdbqt = 67
-    mae1 = 68     # Python-based MAE parser (proprietary and obsolete)
+    vdbstr = 69
+    vdb = 70
+
+class loadable(_loadable, _loadable_legacy):
+    @classmethod
+    def _reverse_lookup(cls, number):
+        for name in dir(cls):
+            if getattr(cls, name) == number:
+                return name
+        return ''
 
 _load2str = { loadable.pdb : loadable.pdbstr,
+              loadable.vdb: loadable.vdbstr,
               loadable.cif : loadable.cifstr,
               loadable.mol : loadable.molstr,
               loadable.xplor : loadable.xplorstr,
@@ -122,8 +139,10 @@ _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.xyz  : loadable.xyzstr,
               loadable.sdf2 : loadable.sdf2str}
 
+# TODO remove (keep for now for eventual legacy uses in scripts)
 safe_oname_re = re.compile(r"[ ()|&!,`]")  # TODO use get_legal_name
 sanitize_list_re = re.compile(r"[^0-9\.\-\[\]\,]+")
+
 sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9_\'\"\.\-\[\]\,]+")
 nt_hidden_path_re = re.compile(r"\$[\/\\]")
 quote_alpha_list_re = re.compile(

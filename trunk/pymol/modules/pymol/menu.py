@@ -17,6 +17,10 @@
 # shared main chain/side chain atoms
 sele_ms_shared = '(n. CA|n. N&r. PRO)'
 
+# text colors for delete and remove items
+del_col = r'\933'
+rem_col = r'\933'
+
 class menucontext(object):
     '''
     Singleton context manager class to store expensive metadata
@@ -1084,7 +1088,7 @@ def modify_sele(self_cmd, sele):
               
 def sele_action(self_cmd, sele):
     return [[ 2, 'Action:'       ,''                        ],     
-              [ 1, 'delete selection', 'cmd.delete("'+sele+'")'          ],
+              [ 1, del_col + 'delete selection', 'cmd.delete("'+sele+'")'          ],
               [ 1, 'rename selection', 'cmd.wizard("renaming","'+sele+'")'          ],
               [ 0, ''               ,''                             ],
               [ 1, 'zoom'           ,'cmd.zoom("'+sele+'",animate=-1)'            ],
@@ -1100,7 +1104,7 @@ def sele_action(self_cmd, sele):
               [ 1, 'find', find(self_cmd, sele) ],
               [ 1, 'align', sele_align(self_cmd, sele) ],
               [ 0, ''               ,''                             ],
-              [ 1, 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
+              [ 1, rem_col + 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
               [ 1, 'hydrogens' , hydrogens(self_cmd, sele) ],
               [ 0, ''          ,''                                              ],
               [ 1, 'duplicate'      ,'cmd.select(None,"'+sele+'")'          ], # broken...
@@ -1115,13 +1119,13 @@ def sele_action(self_cmd, sele):
 
 def sele_action2(self_cmd, sele):
     return [[ 2, 'Action:'       ,''                        ],     
-              [ 1, 'delete selection', 'cmd.delete("'+sele+'")'          ],
+              [ 1, del_col + 'delete selection', 'cmd.delete("'+sele+'")'          ],
               [ 1, 'rename selection', 'cmd.wizard("renaming","'+sele+'")'          ],
               [ 0, ''               ,''                             ],
               [ 1, 'preset'         ,presets(self_cmd, sele)         ],
               [ 1, 'find', find(self_cmd, sele) ],
               [ 0, ''               ,''                             ],
-              [ 1, 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
+              [ 1, rem_col + 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
               [ 0, ''               ,''                             ],
               [ 1, 'around'         , around(self_cmd, sele)         ],           
               [ 1, 'expand'         , expand(self_cmd, sele)         ],
@@ -1157,10 +1161,10 @@ def group_action(self_cmd, sele):
             [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
             [ 0, ''             , ''                       ],
             [ 1, 'rename group', 'cmd.wizard("renaming","'+sele+'")'          ],
-            [ 1, 'delete group'       , 'cmd.delete("'+sele+'")'    ],
+            [ 1, del_col + 'delete group', 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
-            [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],
+            [ 1, rem_col + 'remove waters', 'cmd.remove("(solvent and ('+sele+'))")'     ],
             [ 0, ''          ,''                                              ],
             [ 1, 'state'          , state(self_cmd, sele)         ],                      
             [ 1, 'masking'        , masking(self_cmd, sele)         ],
@@ -1191,10 +1195,10 @@ def mol_action(self_cmd, sele):
             [ 0, ''             , ''                       ],
             [ 1, 'rename object', 'cmd.wizard("renaming","'+sele+'")'          ],
             [ 1, 'duplicate object'    ,'cmd.create(None,"'+sele+'")'     ],           
-            [ 1, 'delete object'       , 'cmd.delete("'+sele+'")'    ],
+            [ 1, del_col + 'delete object', 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
-            [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],
+            [ 1, rem_col + 'remove waters', 'cmd.remove("(solvent and ('+sele+'))")'     ],
             [ 0, ''          ,''                                              ],
               [ 1, 'state'          , state(self_cmd, sele)         ],                      
               [ 1, 'masking'        , masking(self_cmd, sele)         ],
@@ -1220,7 +1224,7 @@ def slice_action(self_cmd, sele):
               [ 0, ''             , ''                       ],
               [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
               [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+              [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
               ]
 
 def simple_action(self_cmd, sele):
@@ -1235,7 +1239,7 @@ def simple_action(self_cmd, sele):
             [ 0, ''             , ''                       ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
             [ 0, ''             , ''                       ],
-            [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+            [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
               ]
 
 def iso_with_negative(mapname, suffix, rep, level=1, color='blue'):
@@ -1321,7 +1325,7 @@ def map_action(self_cmd, sele):
             [ 0, ''             , '' ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
             [ 0, ''             , ''                       ],
-            [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+            [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
             ]
 
 def level(self_cmd, sele):
@@ -1356,7 +1360,7 @@ def surface_action(self_cmd, sele):
             [ 0, ''             , ''                       ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
             [ 0, ''             , ''                       ],
-            [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+            [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
             ]
 
 def mesh_action(self_cmd, sele):
@@ -1372,12 +1376,12 @@ def mesh_action(self_cmd, sele):
             [ 0, ''             , ''                       ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
             [ 0, ''             , ''                       ],
-            [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+            [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
             ]
 
 def ramp_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+              [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
               [ 0, '', '' ],
               [ 1, 'levels', [
                   [ 1, 'Range +/- %.1f' % (L),
@@ -1422,11 +1426,11 @@ def all_action(self_cmd, sele):
               [ 1, 'hydrogens' ,hydrogens(self_cmd, sele)     ],
 #              [ 1, 'add hydrogens' ,'cmd.h_add("'+sele+'")'     ],           
 #              [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+sele+'))")'     ],
-              [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],                      
+              [ 1, rem_col + 'remove waters', 'cmd.remove("(solvent and ('+sele+'))")'     ],
               [ 0, ''             , ''                      ],
-              [ 1, 'delete selections'  , 'map(cmd.delete,cmd.get_names("selections"))'     ],           
+              [ 1, del_col + 'delete selections', 'map(cmd.delete,cmd.get_names("selections"))'     ],
               [ 0, ''          ,''                                              ],
-              [ 1, 'delete everything'  , 'cmd.delete("all")'     ],           
+              [ 1, del_col + 'delete everything', 'cmd.delete("all")'     ],
               [ 0, ''          ,''                                              ],
               [ 1, 'masking'      , masking(self_cmd, sele)         ],                      
               [ 1, 'movement'       , movement(self_cmd, sele)         ],
@@ -1604,9 +1608,9 @@ def main_menu(self_cmd,pos):
         [ 0, ''             , ''                      ],
         [ 1, 'ray'           ,'cmd.ray()' ],
         [ 0, ''             , ''                      ],
-        [ 1, 'delete all'           ,'cmd.delete("all")' ],
-        [ 1, 'reinitialize'           ,'cmd.reinitialize()' ],
-        [ 1, 'quit'           ,'cmd.quit()' ],
+        [ 1, del_col + 'delete all', 'cmd.delete("all")' ],
+        [ 1, del_col + 'reinitialize', 'cmd.reinitialize()' ],
+        [ 1, del_col + 'quit', 'cmd.quit()' ],
         ]
 
 def pick_sele_sub(self_cmd, sele):
@@ -1614,10 +1618,10 @@ def pick_sele_sub(self_cmd, sele):
         [ 2, 'Actions'  , '' ],      
         [ 1, 'rename', 'cmd.wizard("renaming","'+sele+'")'          ],
         [ 1, 'clear'    , 'cmd.select("'+sele+'","none")' ],
-        [ 1, 'delete selection', 'cmd.delete("'+sele+'")' ],
+        [ 1, del_col + 'delete selection', 'cmd.delete("'+sele+'")' ],
         [ 1, 'copy to object','cmd.create(None,"'+sele+'",zoom=0)'            ],
         [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
-        [ 1, 'remove atoms'  , 'cmd.remove("'+sele+'")' ],     
+        [ 1, rem_col + 'remove atoms', 'cmd.remove("'+sele+'")' ],
         ]
     return result
 
@@ -1642,7 +1646,7 @@ def pick_sele(self_cmd, sele, title):
         [ 1, 'drag'             ,'cmd.drag("'+sele+'")'            ],
         [ 1, 'clean'             ,'cmd.clean("'+sele+'")'            ],        
         [ 0, ''               ,''                             ],        
-        [ 1, 'remove'             ,'cmd.remove("'+sele+'")'            ],
+        [ 1, rem_col + 'remove', 'cmd.remove("'+sele+'")'            ],
         ]
     return result
     
@@ -1681,13 +1685,13 @@ def pick_option(self_cmd, sele, title, object=0):
   
     if object:
         result.extend([
-            [ 1, 'delete'        ,'cmd.delete("'+sele+'")'            ],
+            [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'            ],
             [ 0, ''             , ''                      ],         
             [ 1, 'disable'        ,'cmd.disable("'+sele+'")'            ],
             ])
     else:
         result.extend([
-            [ 1, 'remove atoms' , 'cmd.remove("'+sele+'")' ],     
+            [ 1, rem_col + 'remove atoms', 'cmd.remove("'+sele+'")' ],
             [ 0, ''             , ''                      ],      
             [ 1, 'copy to object','cmd.create(None,"'+sele+'",zoom=0)'            ],
             [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
@@ -1746,7 +1750,7 @@ def seq_option(self_cmd, sele, title, object=0):
             [ 0, ''             , ''                      ],         
             [ 1, 'disable'        ,'cmd.disable("'+sele+'")'            ],
             [ 0, ''             , ''                      ],
-            [ 1, 'delete'        ,'cmd.delete("'+sele+'")'            ]         
+            [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'            ]
             ])
     else:
         result.extend([
@@ -1754,7 +1758,7 @@ def seq_option(self_cmd, sele, title, object=0):
             [ 1, 'create object','cmd.create(None,"'+sele+'",zoom=0)'            ],
             [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
             [ 0, ''             , ''                      ],
-            [ 1, 'remove atoms' , 'cmd.remove("'+sele+'")' ],     
+            [ 1, rem_col + 'remove atoms', 'cmd.remove("'+sele+'")' ],
             ])
     return result
     
@@ -1765,6 +1769,6 @@ def scene_menu(self_cmd, name):
             [ 0, ''             , ''                      ],
             [ 1, 'update', 'cmd.scene("'+safe_name+'","update")'],
             [ 0, ''             , ''                      ],
-            [ 1, 'delete', 'cmd.scene("'+safe_name+'","delete")'],
+            [ 1, del_col + 'delete', 'cmd.scene("'+safe_name+'","delete")'],
             ]
    

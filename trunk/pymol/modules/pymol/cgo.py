@@ -464,6 +464,10 @@ def from_plystr(contents, surfacenormals=True, alphaunit=1.):
     '''
     PLY - Polygon File Format
     '''
+    import sys
+    if sys.version_info[0] == 3 and isinstance(contents, bytes):
+        contents = contents.decode(errors='ignore')
+
     lines_iter = iter(contents.splitlines())
 
     if next(lines_iter) != 'ply':

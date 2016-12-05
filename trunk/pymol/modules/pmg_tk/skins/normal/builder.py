@@ -7,10 +7,10 @@ from glob import glob
 import traceback
 import types
 
-try:
+if sys.version_info[0] == 2:
     from Tkinter import *
     import tkMessageBox
-except ImportError:
+else:
     from tkinter import *
     import tkinter.messagebox as tkMessageBox
 
