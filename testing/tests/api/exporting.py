@@ -244,6 +244,7 @@ class TestExporting(testing.PyMOLTestCase):
 
     @testing.foreach.product((0, 1.7, 1.76, 1.8, 1.82, 1.9), (0, 1))
     @testing.requires_version('1.7.6.5')
+    @unittest.skipIf(sys.version_info[0] > 2, 'pse_binary_dump not py3k ready')
     def testPSEBulkExportImport(self, pse_export_version, pse_binary_dump):
         with testing.mktemp('.pse') as filename:
             cmd.load(self.datafile("1oky-frag.pdb"))
