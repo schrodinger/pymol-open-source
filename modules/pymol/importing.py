@@ -65,7 +65,7 @@ if __name__=='pymol.importing':
 
         ext = ext.lower()
 
-        if ext in ('brick', 'callback', 'cgo', 'map', 'model', 'plugin'):
+        if ext in ('brick', 'callback', 'cgo', 'model', 'plugin'):
             # names of special loadables, not accepted as file extensions
             format = ''
         elif ext in ('ent', 'p5m'):
@@ -1138,8 +1138,8 @@ PYMOL API
             "http://files.rcsb.org/download/{code}.{type}.gz",
             "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
         ],
-        "2fofc" : "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}.omap",
-        "fofc": "http://eds.bmc.uu.se/eds/dfs/{mid}/{code}/{code}_diff.omap",
+        "2fofc" : "http://www.ebi.ac.uk/pdbe/coordinates/files/{code}.ccp4",
+        "fofc" : "http://www.ebi.ac.uk/pdbe/coordinates/files/{code}_diff.ccp4",
         "pubchem": [
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=3DSaveSDF",
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
@@ -1150,38 +1150,6 @@ PYMOL API
             "ftp://ftp.ebi.ac.uk/pub/databases/msd/pdbechem/files/mmcif/{code}.cif",
         ],
     }
-
-    _symmetrycache = {}
-
-    def _get_symmetry(code, quiet, _self=cmd):
-        if code in _symmetrycache:
-            return _symmetrycache[code]
-
-        try:
-            url = 'http://www.ebi.ac.uk/pdbe/api/pdb/entry/experiment/' + code
-            contents = _self.file_read(url).decode(errors='ignore')
-            import json
-            data = json.loads(contents)
-        except Exception as e:
-            print(" Warning: failed to query cell symmetry for " + code)
-            return None
-
-        try:
-            data = data[code][0]
-            c = data['cell']
-            symmetry = [
-                c['a'], c['b'], c['c'],
-                c['alpha'], c['beta'], c['gamma'],
-                data['spacegroup']
-            ]
-        except LookupError:
-            return None
-
-        if not quiet:
-            print(" Info: Using symmetry from PDBe web API")
-
-        _symmetrycache[code] = symmetry
-        return symmetry
 
     def _fetch(code, name, state, finish, discrete, multiplex, zoom, type, path,
             file, quiet, _self=cmd):
@@ -1210,7 +1178,7 @@ PYMOL API
         if type == 'pdb':
             pass
         elif type in ('fofc', '2fofc'):
-            nameFmt = '{code}_{type}.omap'
+            nameFmt = '{code}_{type}.ccp4'
         elif type == 'emd':
             nameFmt = '{type}_{code}.ccp4'
         elif type in ('cid', 'sid'):
@@ -1292,13 +1260,6 @@ PYMOL API
                     finish, discrete, quiet, multiplex, zoom)
 
         if not _self.is_error(r):
-            if bioType in ('2fofc', 'fofc'):
-                symmetry = _get_symmetry(code, quiet, _self)
-                if symmetry:
-                    _self.set_symmetry(name, *symmetry)
-            elif bioType in ('pdb', 'cif'):
-                _symmetrycache[code] = _self.get_symmetry(name)
-
             return name
 
         print(" Error-fetch: unable to load '%s'." % code)

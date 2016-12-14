@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: gamessplugin.c,v $
- *      $Author: johanstr $       $Locker:  $             $State: Exp $
- *      $Revision: 1.207 $       $Date: 2012/01/24 00:59:06 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.211 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -189,6 +189,12 @@ keep large amountss of data in memory.
 #define FOUND    1
 #define STOPPED  2
 
+
+#define GAMESSUNKNOWN      0
+#define GAMESSPRE20050627  1
+#define GAMESSPOST20050627 2
+#define FIREFLY8PRE6695    3
+#define FIREFLY8POST6695   4
 
 /* Data specific to parsing GAMESS files */
 typedef struct 
@@ -387,7 +393,7 @@ static void *open_gamess_read(const char *filename,
   }
 
   /* allocate and initialize main data structure */
-  data = init_qmdata(data);
+  data = init_qmdata();
 
   /* make sure memory was allocated properly */
   if (data == NULL) {
@@ -413,12 +419,11 @@ static void *open_gamess_read(const char *filename,
   if (have_gamess(data, gms)==TRUE) {
     if (gms->have_pcgamess) {
       printf("gamessplugin) Warning: PC GAMESS/FIREFLY is not yet fully supported!\n");
-    
-
+    //  return NULL;
     }
     /* if we're dealing with an unsupported GAMESS
      * version, we better quit */
-    if (gms->version==0) {
+    if (gms->version==GAMESSUNKNOWN) {
       printf("gamessplugin) GAMESS version %s not supported. \n",
              data->version_string);
       return NULL;
@@ -1105,7 +1110,7 @@ static int have_gamess(qmdata_t *data, gmsdata *gms)
   char month[BUFSIZ], rev[BUFSIZ];
   int i = 0;
   int program;
-
+  int ver,build;
   buffer[0] = '\0';
   for (i=0; i<3; i++) word[i][0] = '\0';
 
@@ -1124,10 +1129,10 @@ static int have_gamess(qmdata_t *data, gmsdata *gms)
     strcpy(data->version_string, "GAMESS ");
   } else if (program==3) {
     gms->have_pcgamess = 1;
-    gms->version = 1;
+    gms->version = FIREFLY8PRE6695;
     strcpy(data->version_string, "Firefly ");
   } else {
-    printf("gamessplugin) This is no GAMESS/PCGAMESS logfile!\n");
+    printf("gamessplugin) This is no GAMESS/PCGAMESS/Firefly logfile!\n");
     return FALSE;
   }
 
@@ -1137,6 +1142,14 @@ static int have_gamess(qmdata_t *data, gmsdata *gms)
     if (strstr(buffer,"version") != NULL) {
       strncpy(versionstr, strstr(buffer,"version")+8, 16);
       *strchr(versionstr, ' ') = '\0';
+      sscanf(buffer, "%*s %*s %*s %*s %*s %*s %d", &build);
+      sscanf(versionstr, "%1d%*s", &ver);
+      printf("gamessplugin) Firefly build = %d %d\n", 
+         ver,build);
+      if (ver >= 8 && build >= 6695)
+        gms->version = FIREFLY8POST6695;
+      else
+        gms->version = FIREFLY8PRE6695;
     }
   } else {
     /* extract the version number if possible; otherwise
@@ -1155,9 +1168,9 @@ static int have_gamess(qmdata_t *data, gmsdata *gms)
          ( year == 2005 && !strcmp(month,"NOV") ) ||
          ( year == 2005 && !strcmp(month,"DEC") ) )
       {
-        gms->version = 2;
+        gms->version = GAMESSPOST20050627;
       } else { 
-        gms->version = 1;
+        gms->version = GAMESSPRE20050627;
       }
   }
 
@@ -1713,8 +1726,7 @@ static int get_contrl_firefly(qmdata_t *data) {
   word[2][0] = '\0';
   buffer[0] = '\0';
 
-  
-
+  //printf("gamessplugin) Getting CONTRL group data for Firefly \n");
 
   /* start scanning; currently we support
    * RUNTYP = ENERGY, OPTIMIZE, SADPOINT, HESSIAN, SURFACE */
@@ -1797,8 +1809,7 @@ static int get_contrl_firefly(qmdata_t *data) {
 
   /* scan for MULT, ICHARG and MAXIT; */
   GET_LINE(buffer, data->file);
-  
-
+  //sscanf(buffer,"%*s %*s %*s %*s %s %s",&word[0][0],&word[1][0]);
 
   /* find the coordinate type in next line */
   while ( (temp=strstr(buffer,"COORD =")) == NULL ) {
@@ -1991,10 +2002,8 @@ static int get_symmetry(qmdata_t *data) {
   char buffer[BUFSIZ];
   char *sep, tmp[BUFSIZ];
 
-  
-
-  
-
+  //will need to go back somewhat in future to
+  //check for XMCQDPT calculation
   long filepos = ftell(data->file);
 
   if (goto_keyline(data->file, "THE POINT GROUP IS",
@@ -2039,8 +2048,7 @@ static int get_mcscf(qmdata_t *data) {
   if (gms->have_pcgamess){
       if (pass_keyline(data->file,"XMCQDPT INPUT PARAMETERS",
                         "DONE SETTING UP THE RUN") != FOUND) {
-         
-
+         //STANDARD MCSCF in GAMESS
          if(pass_keyline(data->file, "MCSCF CALCULATION",
                        "ITER     TOTAL ENERGY") != FOUND)
                 return FALSE;
@@ -2065,8 +2073,7 @@ static int get_mcscf(qmdata_t *data) {
              data->mcscf_num_core);
       }
       else{
-          
-
+          //XMCQDPT
           while ( (temp=strstr(buffer,"# OF FROZEN CORE ORBITALS")) == NULL ) {
             GET_LINE(buffer, data->file);
           }
@@ -2078,8 +2085,7 @@ static int get_mcscf(qmdata_t *data) {
           printf("gamessplugin) Number of MCSCF core orbitals = %d\n",
              data->mcscf_num_core);
           printf("gamessplugin) XMCQDPT2 not supported.\n");
-          
-
+          //set scftype to none since XMCQDPT2 not supported
           data->scftype = MOLFILE_SCFTYPE_NONE;
 
       } 
@@ -2157,7 +2163,7 @@ static int get_final_properties(qmdata_t *data) {
 
   if (get_esp_charges(data)) {
     printf("gamessplugin) ESP charges found\n");
-  }
+  } 
 
   if (data->runtype == MOLFILE_RUNTYPE_GRADIENT ||
       data->runtype == MOLFILE_RUNTYPE_HESSIAN) {
@@ -3253,10 +3259,16 @@ static int analyze_traj(qmdata_t *data, gmsdata *gms) {
      * pre="27 JUN 2005 (R2)" and "27 JUN 2005 (R2)"
      * versions since the output format for geometry
      * optimizations has changed */
-    if (gms->version==1) {
+    if (gms->version==FIREFLY8POST6695){
+      strcpy(nserch, "NSERCH=");
+    }
+    else if (gms->version==FIREFLY8PRE6695) {
       strcpy(nserch, "1NSERCH=");
     }
-    else if (gms->version==2) {
+    else if (gms->version==GAMESSPRE20050627) {
+      strcpy(nserch, "1NSERCH=");
+    }
+    else if (gms->version==GAMESSPOST20050627) {
       strcpy(nserch, "BEGINNING GEOMETRY SEARCH POINT NSERCH=");
     }
 
@@ -3672,8 +3684,7 @@ static int get_wavefunction(qmdata_t *data, qm_timestep_t *ts,
       wf->type = MOLFILE_WAVE_CINATUR;
       strncpy(wf->info, "CIS natural orbitals", MOLFILE_BUFSIZ);
     }
-    
-
+    // FOR PCGAMESS/FIREFLY
     else if (!strcmp(line, "-MCHF- NATURAL ORBITALS")) {
       wf->type = MOLFILE_WAVE_MCSCFNAT;
       strncpy(wf->info, "MCSCF natural orbitals", MOLFILE_BUFSIZ);
@@ -3683,8 +3694,7 @@ static int get_wavefunction(qmdata_t *data, qm_timestep_t *ts,
       strncpy(wf->info, "MCSCF optimized orbitals", MOLFILE_BUFSIZ);
     }
     else if (!strcmp(line, "ZERO-ORDER QDPT NATURAL ORBITALS")){
-      
-
+      //Not yet implemented
     }
 
   } while(wf->type==MOLFILE_WAVE_UNKNOWN &&
@@ -3708,6 +3718,7 @@ static int get_wavefunction(qmdata_t *data, qm_timestep_t *ts,
    * for now and realloc later if, we have less orbitals. */
   wave_coeff = (float *)calloc(data->wavef_size*data->wavef_size,
                                   sizeof(float)); 
+  //printf("gamessplugin) wave_coeff() allocated\n");
 
   if (wave_coeff == NULL) {
     PRINTERR;	    
@@ -3716,6 +3727,7 @@ static int get_wavefunction(qmdata_t *data, qm_timestep_t *ts,
 
   /* orbital energies/occupancies */  
   orb_enocc = (float *)calloc(data->wavef_size, sizeof(float));
+  //printf("gamessplugin) orb_enocc() allocated\n");
 
   if (orb_enocc == NULL) {
     free(orb_enocc);
@@ -4849,7 +4861,7 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
   plugin.prettyname = "GAMESS";
   plugin.author = "Jan Saam, Markus Dittrich, Johan Strumpfer";
   plugin.majorv = 1;
-  plugin.minorv = 0;
+  plugin.minorv = 2;
   plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
   plugin.filename_extension = "log";
   plugin.open_file_read = open_gamess_read;

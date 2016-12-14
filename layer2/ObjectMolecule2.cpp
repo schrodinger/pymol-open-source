@@ -241,7 +241,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
 {
   PyMOLGlobals *G = I->Obj.G;
   int start_state = 0, stop_state = 0;
-  int nAtom = 1;
   int extant_only = false;
   int ai_merged = false;
   float pos_array[3] = { 0.0F, 0.0F, 0.0F };
@@ -317,9 +316,14 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
     }
   }
 
+  CoordSet *cset = CoordSetNew(G);
+  cset->NIndex = 1;
+  cset->Coord = VLAlloc(float, 3);
+  cset->Obj = I;
+  cset->enumIndices();
+
   for(state = start_state; state < stop_state; state++) {
 
-    CoordSet *cset = NULL;
 
     if((extant_only && (state < I->NCSet) && I->CSet[state]) || !extant_only) {
 
@@ -372,18 +376,10 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
 
       if(pos) {                 /* only add coordinate to state if we have position for it */
 
-        float *coord = VLAlloc(float, 3 * nAtom);
+        float *coord = cset->Coord;
 
         copy3f(pos, coord);
 
-        cset = CoordSetNew(I->Obj.G);
-        cset->NIndex = nAtom;
-        cset->Coord = coord;
-        cset->TmpBond = NULL;
-        cset->NTmpBond = 0;
-
-        cset->Obj = I;
-        cset->enumIndices();
         if(!ai_merged) {
 	  if (ok)
 	    ok &= ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_AllMask, true);      /* NOTE: will release atInfo */
@@ -399,18 +395,18 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule * I, int sele_index, const char *
         }
         if(!I->CSet[state]) {
           /* new coordinate set */
-          I->CSet[state] = cset;
-          cset = NULL;
+          I->CSet[state] = CoordSetCopy(cset);
         } else {
           /* merge coordinate set */
 	  if (ok)
 	    ok &= CoordSetMerge(I, I->CSet[state], cset);
-          cset->fFree();
-          cset = NULL;
         }
       }
     }
   }
+
+  cset->fFree();
+
   if(ai_merged) {
     if (ok)
       ok &= ObjectMoleculeSort(I);

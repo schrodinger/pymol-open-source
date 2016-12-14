@@ -226,7 +226,8 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     bool store_color,
     bool store_active,
     bool store_rep,
-    bool store_frame)
+    bool store_frame,
+    const char * sele)
 {
   std::string key(name);
 
@@ -266,7 +267,7 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
   if (store_color || store_rep) {
 
     // fill atomdata dict
-    for (SeleAtomIterator iter(G, "all"); iter.next();) {
+    for (SeleAtomIterator iter(G, sele); iter.next();) {
 
       // don't store atom data for disabled objects
       if (!((CObject*)iter.obj)->Enabled)
@@ -356,7 +357,8 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
     bool recall_color,
     bool recall_active,
     bool recall_rep,
-    bool recall_frame)
+    bool recall_frame,
+    const char * sele)
 {
   auto it = G->scenes->dict.find(name);
 
@@ -388,7 +390,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
   if (recall_color || recall_rep) {
 
     // fill atomdata dict
-    for (SeleAtomIterator iter(G, "all"); iter.next();) {
+    for (SeleAtomIterator iter(G, sele); iter.next();) {
       AtomInfoType * ai = iter.getAtomInfo();
       auto it = scene.atomdata.find(ai->unique_id);
       if (it == scene.atomdata.end())
@@ -635,7 +637,8 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
     bool store_frame,
     float animate,
     const char * new_key,
-    bool hand)
+    bool hand,
+    const char * sele)
 {
   std::string prev_name;
   short beforeafter = 0;
@@ -682,12 +685,12 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
       MovieSceneRecallMessage(G, "");
     } else {
       status = MovieSceneRecall(G, key, animate, store_view, store_color,
-          store_active, store_rep, store_frame);
+          store_active, store_rep, store_frame, sele);
     }
 
   } else if (strcmp(action, "store") == 0) {
     status = MovieSceneStore(G, key, message, store_view, store_color,
-        store_active, store_rep, store_frame);
+        store_active, store_rep, store_frame, sele);
 
     // insert_before, insert_after
     if (status && beforeafter)

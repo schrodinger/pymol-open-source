@@ -1,0 +1,239 @@
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/jsplugin.c b/contrib/uiuc/plugins/molfile_plugin/src/jsplugin.c
+index e4285af..468411e 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/jsplugin.c
++++ b/contrib/uiuc/plugins/molfile_plugin/src/jsplugin.c
+@@ -218,7 +218,7 @@ typedef struct {
+ /* Use block-based I/O by default when writing structures larger */
+ /* than JSBLOCKIO_THRESH atoms, or when directed by the user and */
+ /* not otherwise prohibited...                                   */
+-static int js_blockio_check_and_set(jshandle *js) {
++static void js_blockio_check_and_set(jshandle *js) {
+   if ((getenv("VMDJSNOBLOCKIO") == NULL) && 
+       ((js->natoms > JSBLOCKIO_THRESH) || getenv("VMDJSBLOCKIO"))) {
+     js->optflags |= JSOPT_TS_BLOCKIO;
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/moldenplugin.c b/contrib/uiuc/plugins/molfile_plugin/src/moldenplugin.c
+index 5cca862..5f1e9f0 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/moldenplugin.c
++++ b/contrib/uiuc/plugins/molfile_plugin/src/moldenplugin.c
+@@ -1280,7 +1280,7 @@ static int read_wave_coeffs(FILE *file, qm_wavefunction_t *wave) {
+       
+       // DEBUG
+       //printf("moldenplugin) %d,%d: %d %f\n", i, AOid-1, AOid, wave_coeffs[i*wave->num_coeffs+AOid-1]);
+-      nr2 = sscanf(buffer, "%s", &keystring);
++      nr2 = sscanf(buffer, "%s", keystring);
+       if(!strcmp(keystring,"Ene=")||nr2==-1) 
+         break;
+ 
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/ply.h b/contrib/uiuc/plugins/molfile_plugin/src/ply.h
+index 127844c..784378f 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/ply.h
++++ b/contrib/uiuc/plugins/molfile_plugin/src/ply.h
+@@ -66,7 +66,7 @@ extern "C" {
+ 
+ typedef struct PlyProperty {    /* description of a property */
+ 
+-  char *name;                   /* property name */
++  const char *name;             /* property name */
+   int external_type;            /* file's data type */
+   int internal_type;            /* program's data type */
+   int offset;                   /* offset bytes of prop in a struct */
+@@ -222,7 +222,6 @@ void set_prop_rules_ply (PlyFile *, PlyRuleList *);
+ PlyRuleList *append_prop_rule (PlyRuleList *, char *, char *);
+ int matches_rule_name (char *);
+ 
+-int equal_strings(char *, char *);
+ char *recreate_command_line (int, char *argv[]);
+ 
+ 
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/ply_c.h b/contrib/uiuc/plugins/molfile_plugin/src/ply_c.h
+index 272d31a..31a7d5f 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/ply_c.h
++++ b/contrib/uiuc/plugins/molfile_plugin/src/ply_c.h
+@@ -37,12 +37,12 @@ WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ #include <string.h>
+ #include <ply.h>
+ 
+-char *type_names[] = {  /* names of scalar types */
++const char *type_names[] = {  /* names of scalar types */
+ "invalid",
+ "int8", "int16", "int32", "uint8", "uint16", "uint32", "float32", "float64",
+ };
+ 
+-char *old_type_names[] = {  /* old names of types for backward compatability */
++const char *old_type_names[] = {  /* old names of types for backward compatability */
+ "invalid",
+ "char", "short", "int", "uchar", "ushort", "uint", "float", "double",
+ };
+@@ -60,13 +60,14 @@ int ply_type_size[] = {
+ #define NAMED_PROP       1
+ 
+ /* returns 1 if strings are equal, 0 if not */
+-int equal_strings(char *, char *);
++static
++int equal_strings(const char *, const char *);
+ 
+ /* find an element in a plyfile's list */
+-PlyElement *find_element(PlyFile *, char *);
++PlyElement *find_element(PlyFile *, const char *);
+ 
+ /* find a property in an element's list */
+-PlyProperty *find_property(PlyElement *, char *, int *);
++PlyProperty *find_property(PlyElement *, const char *, int *);
+ 
+ /* write to a file the word describing a PLY file data type */
+ void write_scalar_type (FILE *, int);
+@@ -105,7 +106,7 @@ void ascii_get_element(PlyFile *, char *);
+ void binary_get_element(PlyFile *, char *);
+ 
+ /* memory allocation */
+-static char *my_alloc(int, int, char *);
++static char *my_alloc(int, int, const char *);
+ 
+ 
+ /*************/
+@@ -188,9 +189,7 @@ PlyFile *open_for_writing_ply(
+   int file_type
+ )
+ {
+-  int i;
+   PlyFile *plyfile;
+-  PlyElement *elem;
+   char *name;
+   FILE *fp;
+ 
+@@ -333,9 +332,7 @@ void element_count_ply(
+   int nelems
+ )
+ {
+-  int i;
+   PlyElement *elem;
+-  PlyProperty *prop;
+ 
+   /* look for appropriate element */
+   elem = find_element (plyfile, elem_name);
+@@ -613,7 +610,6 @@ PlyFile *ply_read(FILE *fp, int *nelems, char ***elem_names)
+   PlyFile *plyfile;
+   int nwords;
+   char **words;
+-  int found_format = 0;
+   char **elist;
+   PlyElement *elem;
+   char *orig_line;
+@@ -656,7 +652,6 @@ PlyFile *ply_read(FILE *fp, int *nelems, char ***elem_names)
+       else
+         return (NULL);
+       plyfile->version = atof (words[2]);
+-      found_format = 1;
+     }
+     else if (equal_strings (words[0], "element"))
+       add_element (plyfile, words, nwords);
+@@ -1302,10 +1297,9 @@ void get_info_ply(PlyFile *ply, float *version, int *file_type)
+ Compare two strings.  Returns 1 if they are the same, 0 if not.
+ ******************************************************************************/
+ 
+-int equal_strings(char *s1, char *s2)
++static
++int equal_strings(const char *s1, const char *s2)
+ {
+-  int i;
+-
+   while (*s1 && *s2)
+     if (*s1++ != *s2++)
+       return (0);
+@@ -1361,7 +1355,7 @@ Exit:
+   returns the element, or NULL if not found
+ ******************************************************************************/
+ 
+-PlyElement *find_element(PlyFile *plyfile, char *element)
++PlyElement *find_element(PlyFile *plyfile, const char *element)
+ {
+   int i;
+ 
+@@ -1385,7 +1379,7 @@ Exit:
+   returns a pointer to the property, or NULL if not found
+ ******************************************************************************/
+ 
+-PlyProperty *find_property(PlyElement *elem, char *prop_name, int *index)
++PlyProperty *find_property(PlyElement *elem, const char *prop_name, int *index)
+ {
+   int i;
+ 
+@@ -1416,7 +1410,6 @@ void ascii_get_element(PlyFile *plyfile, char *elem_ptr)
+   char **words;
+   int nwords;
+   int which_word;
+-  FILE *fp = plyfile->fp;
+   char *elem_data,*item;
+   char *item_ptr;
+   int item_size;
+@@ -1697,7 +1690,6 @@ Exit:
+ char **get_words(FILE *fp, int *nwords, char **orig_line)
+ {
+ #define BIG_STRING 4096
+-  int i,j;
+   static char str[BIG_STRING];
+   static char str_copy[BIG_STRING];
+   char **words;
+@@ -2310,8 +2302,6 @@ Entry:
+ 
+ void add_property (PlyFile *plyfile, char **words, int nwords)
+ {
+-  int prop_type;
+-  int count_type;
+   PlyProperty *prop;
+   PlyElement *elem;
+ 
+@@ -2421,7 +2411,7 @@ Entry:
+   fname - file name from which memory was requested
+ ******************************************************************************/
+ 
+-static char *my_alloc(int size, int lnum, char *fname)
++static char *my_alloc(int size, int lnum, const char *fname)
+ {
+   char *ptr;
+ 
+@@ -2759,9 +2749,7 @@ void describe_element_ply(
+   int nelems
+ )
+ {
+-  int i;
+   PlyElement *elem;
+-  PlyProperty *prop;
+ 
+   /* look for appropriate element */
+   elem = find_element (plyfile, elem_name);
+@@ -2916,7 +2904,7 @@ void describe_other_elements_ply (
+ 
+ typedef struct RuleName {
+   int code;
+-  char *name;
++  const char *name;
+ } RuleName;
+ 
+ RuleName rule_name_list[] = {
+@@ -3043,10 +3031,6 @@ Entry:
+ 
+ void start_props_ply (PlyFile *ply, PlyPropRules *rules)
+ {
+-  int i;
+-  int count;
+-  PlyElement *elem = rules->elem;
+-
+   /* save pointer to the rules in the PLY object */
+   ply->current_rules = rules;
+ 
+diff --git a/contrib/uiuc/plugins/molfile_plugin/src/plyplugin.cpp b/contrib/uiuc/plugins/molfile_plugin/src/plyplugin.cpp
+index a0f6c8e..e79fb98 100644
+--- a/contrib/uiuc/plugins/molfile_plugin/src/plyplugin.cpp
++++ b/contrib/uiuc/plugins/molfile_plugin/src/plyplugin.cpp
+@@ -44,10 +44,6 @@ typedef struct Face {
+   void *other_props;       /* other properties */
+ } Face;
+ 
+-char *elem_names[] = { /* list of the elements in the object */
+-  "vertex", "face"
+-};
+-
+ PlyProperty vert_props[] = { /* list of property information for a vertex */
+   {"x", Float32, Float32, offsetof(Vertex,x), 0, 0, 0, 0},
+   {"y", Float32, Float32, offsetof(Vertex,y), 0, 0, 0, 0},

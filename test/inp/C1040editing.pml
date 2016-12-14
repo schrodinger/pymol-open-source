@@ -157,7 +157,7 @@ load dat/il2.pdb
 stored.sum = 0
 iterate_state 1,(il2),stored.sum=stored.sum+x
 print "%8.3f"%stored.sum
-push_undo (il2)
+cmd.push_undo("(il2)")
 alter_state 1,(il2),x=0.0
 rebuild
 stored.sum = 0

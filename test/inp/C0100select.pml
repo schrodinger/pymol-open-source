@@ -12,7 +12,7 @@ print cmd.get_names()
 select tst = (all)
 select tst = (none)
 select tst = (name c)
-dele tst
+delete tst
 select tst = (segi e)
 select tst = (all)
 
@@ -21,8 +21,8 @@ select (name ca,c,n,o)
 select (n;ca,c)
 select (resn pro)
 select (r;pro)
-select (chain c,e)
-select (c;c,e)
+select (chain C,E)
+select (c;C,E)
 select (resi 100)
 select (i;100)
 select (id 50)
@@ -65,7 +65,7 @@ select tst, pept w. 1 of pept
 
 print cmd.select("(none)")
 
-dele all
+delete all
 load dat/pept.pdb,mult
 load dat/il2.pdb,mult
 
@@ -82,7 +82,7 @@ frame 1
 select tst,present and vis
 
 
-dele all
+delete all
 load dat/pept.pdb
 indicate name ca
 count_atoms indicate
@@ -106,7 +106,7 @@ count_atoms indicate
 indicate index -3+5+10-23+7+40-
 count_atoms indicate
 
-dele all
+delete all
 load dat/1tii.pdb
 indicate A:C+F/10+90+100-/ca+c+n*
 
@@ -120,13 +120,13 @@ count_atoms HOH`307/ expand 5
 
 # implicit OR
 
-count_atoms a// c//
-count_atoms a// c// d//
-count_atoms (a// c//) d//
-count_atoms a// c//&none
-count_atoms c//&none a//
-count_atoms c//&none (a//&none a//)
-count_atoms (c//&none) a// (a//&none)
-count_atoms (a// (d// c//)) & (e// (b// a//))
+count_atoms A// C//
+count_atoms A// C// D//
+count_atoms (A// C//) D//
+count_atoms A// C//&none
+count_atoms C//&none A//
+count_atoms C//&none (A//&none A//)
+count_atoms (A//&none) A// (A//&none)
+count_atoms (A// (D// C//)) & (E// (B// A//))
 
 /print "END-LOG"

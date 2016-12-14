@@ -35,10 +35,10 @@ if len(argv):
 
 # ---
 
-pymol = "pymol"
-cmd = "../pymol"
-if not os.path.exists(cmd):
-   cmd = "../../build/Deployment/MacPyMOL.app/Contents/MacOS/MacPyMOL"
+cmd = os.getenv("PYMOL", "../pymol") + ' -k'
+
+diff_cmd = "diff -b"
+
 cmp = "cmp"
 ref = "ref"
 inp = "inp"
@@ -88,13 +88,17 @@ for test in tests:
          postfx = re.sub(r".*/","",ref_fil)
          cmp_fil = cmp+"/"+postfx
          if os.path.exists(cmp_fil):
-            if os.system("diff  "+ref_fil+" "+cmp_fil+" >/dev/null"):
+            if os.system(diff_cmd+" "+ref_fil+" "+cmp_fil+" >/dev/null"):
                sys.stdout.flush()
-               df = os.popen("diff "+ref_fil+" "+cmp_fil)
+               df = os.popen(diff_cmd+" "+ref_fil+" "+cmp_fil)
                diffs = df.readlines()
                df.close()
                print " run_tests: "+ \
                   postfx+" DIFFERS over about %d lines." % int(len(diffs)/2)
+               if os.path.isdir('diffs'):
+                  f = open('diffs/' + postfx + '.diff', 'w')
+                  f.writelines(diffs)
+                  f.close()
          else:
             print " run_tests: "+postfx+" is missing."
             
@@ -106,5 +110,4 @@ for test in tests:
          if not os.path.exists(ref_fil):
             print " run_tests: no reference version for "+cmp+"/"+postfx+"."
 
-
-
+# vi:sw=3:expandtab

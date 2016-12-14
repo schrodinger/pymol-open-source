@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2016-12-14 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* update molfile plugins to VMD version 1.9.3
+
+	* fetch 2fofc/fofc: update URLs, EDS will retire in 2017
+
+	* fix sf#102 pseudoatom multi-state problem
+
+	* editor.attach_amino_acid: fix PRO/N geometry
+
 2016-12-05 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* avoid selection keyword name conflicts, append underscore

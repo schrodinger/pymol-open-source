@@ -1,6 +1,6 @@
 //
 // Version info for VMD plugin tree:
-//   $Id: dtrplugin.hxx,v 1.3 2011/12/23 21:52:50 johns Exp $
+//   $Id: dtrplugin.hxx,v 1.5 2016/11/06 19:16:52 johns Exp $
 //
 // Version info for last sync with D. E. Shaw Research:
 //  //depot/desrad/main/sw/libs/molfile/plugins/dtrplugin.hxx#13
@@ -69,8 +69,10 @@ typedef unsigned __int64 uint64_t;    // This also works with MVSC6
 typedef unsigned long long uint64_t;
 #endif
 typedef unsigned short uint16_t;
+#if !defined(__MINGW32__)
 typedef unsigned int ssize_t;
 typedef int mode_t;
+#endif
 #define mkdir(a,b) _mkdir(a)
 #define rmdir(a)   _rmdir(a)
 #define ftello(a)  ftell(a)

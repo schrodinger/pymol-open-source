@@ -8,7 +8,7 @@
  *
  *      $RCSfile: vaspxmlplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.7 $       $Date: 2009/06/22 19:50:39 $
+ *      $Revision: 1.9 $       $Date: 2016/11/06 17:43:13 $
  *
  ***************************************************************************/
 
@@ -17,8 +17,7 @@
  *  Sung Sakong, Dept. of Phys., Univsity Duisburg-Essen
  *  
  *  VASP manual   
- *  http:
-
+ *  http://cms.mpi.univie.ac.at/vasp/
  * 
  *  LINUX
  *  g++ -O2 -Wall -I. -I$VMDBASEDIR/plugins/include -c vaspxmlplugin.c
@@ -234,41 +233,28 @@ static void close_vaspxml_read(void *mydata)
 
 
 /* registration stuff */
-static molfile_plugin_t vaspxmlplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,     /* type */
-  "xml",                   /* name */
-  "VASP_xml",              /* pretty name */
-  "Sung Sakong",           /* author */
-  0,                       /* major version */
-  6,                       /* minor version */
-  VMDPLUGIN_THREADSAFE,    /* is reentrant */
-
-  "xml",                   /* filename_extension */
-  open_vaspxml_read,       /* open_file_read */
-  read_vaspxml_structure,  /* read_structure */
-  0,                       /* read_bonds */
-  read_vaspxml_timestep,   /* read_next_timestep */
-  close_vaspxml_read,      /* close_file_read */
-  0,                       /* open_file_write */
-  0,                       /* write_structure */
-  0,                       /* write_timestep */
-  0,                       /* close_file_write */
-  0,                       /* read_volumetric_metadata */
-  0,                       /* read_volumetric_data */
-  0,                         
-  0,                         
-  0                          /* read_rawgraphics */
-                             /* read_molecule_metadata */
-                             /* write_bonds */
-};
+static molfile_plugin_t plugin;
 
 int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "xml";
+  plugin.prettyname = "VASP_xml";
+  plugin.author = "Sung Sakong";
+  plugin.majorv = 0;
+  plugin.minorv = 7;
+  plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+  plugin.filename_extension = "xml";
+  plugin.open_file_read = open_vaspxml_read;
+  plugin.read_structure = read_vaspxml_structure;
+  plugin.read_next_timestep = read_vaspxml_timestep;
+  plugin.close_file_read = close_vaspxml_read;
   return VMDPLUGIN_SUCCESS;
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspxmlplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: mol2plugin.C,v $
- *      $Author: johanstr $       $Locker:  $             $State: Exp $
- *      $Revision: 1.36 $       $Date: 2011/12/07 23:50:21 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.38 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
   
@@ -212,7 +212,7 @@ static int read_mol2_bonds_aux(void *v, int *nbonds, int **fromptr, int **toptr,
       return MOLFILE_ERROR;
     }
 
-    //Move on if the next line is a header
+    // Move on if the next line is a header
     if (strncmp(line, "@", 1) == 0) {
       //Then the bonds are over
       break;
@@ -343,23 +343,31 @@ static int write_mol2_structure(void *mydata, int optflags,
 
 /*
 void getmol2ff(char* outputtype, const char* psftype) {
-//fprintf(stdout,"Doing ff typing on %s\n",psftype);
+  //fprintf(stdout,"Doing ff typing on %s\n",psftype);
   if (strncmp(psftype,"H",1)==0) {
     //It's a hydrogen
     strncpy(outputtype, "H   ",4);
     return;
   } else if (strncmp(psftype,"C",1)==0) {
     //It's a carbon... probably
-    if (strncmp(psftype,"C ",2)==0 || strncmp(psftype,"CA ",3)==0 || strncmp(psftype,"CPH",3)==0 || strncmp(psftype,"CPT",3)==0 || strncmp(psftype,"CC ",3)==0 || strncmp(psftype,"CD ",3)==0 || strncmp(psftype,"CN1",3)==0 || strncmp(psftype,"CN2",3)==0 || strncmp(psftype,"CN3",3)==0 || strncmp(psftype,"CN4",3)==0 || strncmp(psftype,"CN5",3)==0 || strncmp(psftype,"CNA",3)==0) {
-	  strncpy(outputtype, "C.2 ",4);
-	  return;
+    if (strncmp(psftype,"C ",2)==0  || strncmp(psftype,"CA ",3)==0 || 
+        strncmp(psftype,"CPH",3)==0 || strncmp(psftype,"CPT",3)==0 || 
+        strncmp(psftype,"CC ",3)==0 || strncmp(psftype,"CD ",3)==0 || 
+        strncmp(psftype,"CN1",3)==0 || strncmp(psftype,"CN2",3)==0 || 
+        strncmp(psftype,"CN3",3)==0 || strncmp(psftype,"CN4",3)==0 || 
+        strncmp(psftype,"CN5",3)==0 || strncmp(psftype,"CNA",3)==0) {
+      strncpy(outputtype, "C.2 ",4);
+      return;
     } else {
-	  strncpy(outputtype, "C.3 ",4);
-	  return;
+      strncpy(outputtype, "C.3 ",4);
+      return;
     }  
   } else if (strncmp(psftype,"N",1)==0) {
      //It"s probably nitrogen
-     if (strncmp(psftype,"NR",2)==0 || strncmp(psftype,"NH1",3)==0 || strncmp(psftype,"NH2",3)==0 || strncmp(psftype,"NC2",3)==0 || strncmp(psftype,"NY",2)==0 || (strncmp(psftype,"NN",2)==0 && strncmp(psftype,"NN6",3)!=0)) {
+     if (strncmp(psftype,"NR",2)==0 || strncmp(psftype,"NH1",3)==0 || 
+         strncmp(psftype,"NH2",3)==0 || strncmp(psftype,"NC2",3)==0 || 
+         strncmp(psftype,"NY",2)==0 || 
+         (strncmp(psftype,"NN",2)==0 && strncmp(psftype,"NN6",3)!=0)) {
        strncpy(outputtype, "N.am",4);
        return;
        } else {
@@ -368,12 +376,14 @@ void getmol2ff(char* outputtype, const char* psftype) {
        }
   } else if (strncmp(psftype,"O",1)==0) {
      //Probably an oxygen
-     if (strncmp(psftype,"OH1",3)==0 || strncmp(psftype,"OS",2)==0 || strncmp(psftype,"OT ",3)==0 || strncmp(psftype,"ON4",3)==0 || strncmp(psftype,"ON5",3)==0 || strncmp(psftype,"ON6",3)==0) {
-        strncpy(outputtype, "O.3 ",4);
-	return;
+     if (strncmp(psftype,"OH1",3)==0 || strncmp(psftype,"OS",2)==0 || 
+         strncmp(psftype,"OT ",3)==0 || strncmp(psftype,"ON4",3)==0 || 
+         strncmp(psftype,"ON5",3)==0 || strncmp(psftype,"ON6",3)==0) {
+       strncpy(outputtype, "O.3 ",4);
+       return;
      } else {
-        strncpy(outputtype, "O.2 ",4);
-	return;
+       strncpy(outputtype, "O.2 ",4);
+       return;
      } 
   } else if (strncmp(psftype,"S",1)==0) {
      strncpy(outputtype, "S.3 ",4);
@@ -429,9 +439,12 @@ static int write_mol2_timestep(void *mydata, const molfile_timestep_t *ts) {
   //char mol2fftype[5];
   //mol2fftype[4] = '\0';
   for (i = 0; i < data->natoms; i++) {
-    //getmol2ff(mol2fftype, atom->type);
-//    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        %8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], mol2fftype, atom->resid, atom->resname, atom->charge);
-    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        % 8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], atom->type, atom->resid, atom->resname, atom->charge);
+#if 0
+    getmol2ff(mol2fftype, atom->type);
+    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        %8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], mol2fftype, atom->resid, atom->resname, atom->charge);
+#else
+    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        %8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], atom->type, atom->resid, atom->resname, atom->charge);
+#endif
     ++atom; 
     pos += 3;
   }
@@ -566,7 +579,7 @@ static int read_mol2_bonds(void *v, int *nbonds, int **fromptr, int **toptr,
 
 static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init() {
+VMDPLUGIN_API int VMDPLUGIN_init() {
   memset(&plugin, 0, sizeof(molfile_plugin_t));
   plugin.abiversion = vmdplugin_ABIVERSION;
   plugin.type = MOLFILE_PLUGIN_TYPE;
@@ -574,7 +587,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init() {
   plugin.prettyname = "MDL mol2";
   plugin.author = "Peter Freddolino, Eamon Caddigan";
   plugin.majorv = 0;
-  plugin.minorv = 16;
+  plugin.minorv = 17;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "mol2";
   plugin.open_file_read = open_mol2_read;
@@ -590,12 +603,12 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init() {
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini() {
+VMDPLUGIN_API int VMDPLUGIN_fini() {
   return VMDPLUGIN_SUCCESS;
 }
 

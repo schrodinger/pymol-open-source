@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -10,7 +10,7 @@
  *
  *      $RCSfile: fastio.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.25 $       $Date: 2011/10/14 03:52:46 $
+ *      $Revision: 1.34 $       $Date: 2016/11/28 05:01:53 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -27,7 +27,7 @@
 #define FIO_DIRECT  0x04 /* emulate Unix O_DIRECT flag */
  
 /* Compiling on windows */
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 
 #if 1 
 /* use native Windows I/O calls */
@@ -331,6 +331,7 @@ static fio_size_t fio_ftell(fio_fd fd) {
 #endif
 #endif
 #include <unistd.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -339,7 +340,19 @@ static fio_size_t fio_ftell(fio_fd fd) {
 typedef int fio_fd;
 typedef off_t fio_size_t;      /* off_t is 64-bits with LFS builds */
 
-/* enable use of kernel readv() if available */
+/*
+ * Enable use of kernel readv() if available and reliable
+ *
+ * Note: Some Linux implementations incorporate readv() code in libc 
+ * that does userspace copying of I/O vectors to internal temporary
+ * buffers in order to meet the atomicity requirements of the POSIX standard.
+ * Such copies make the use of vectorized I/O APIs much less useful for
+ * large trajectory files because the internal buffer allocations can fail
+ * badly when performing large aggregate I/O operations.  It may be that
+ * other implementations of vector I/O have similar problems, and in these
+ * cases it is probably best not to use it at all, and to fall back to 
+ * non-vectorized I/O APIs to avoid such extra copies.
+ */
 #if defined(__sun) || defined(__APPLE_CC__) || defined(__linux)
 #define USE_KERNEL_READV 1
 #endif
@@ -347,6 +360,7 @@ typedef off_t fio_size_t;      /* off_t is 64-bits with LFS builds */
 typedef void * fio_caddr_t;
 
 #if defined(USE_KERNEL_READV)
+#include <errno.h>
 #include <sys/uio.h>
 typedef struct iovec fio_iovec;
 #else
@@ -395,52 +409,175 @@ static int fio_fclose(fio_fd fd) {
 
 static fio_size_t fio_fread(void *ptr, fio_size_t size, 
                             fio_size_t nitems, fio_fd fd) {
-  int i;
+  fio_size_t i;
   fio_size_t len = 0; 
-  int cnt = 0;
+  fio_size_t cnt = 0;
 
+#if 1
+  /*
+   * On Linux individual calls to read() can end up doing short reads when
+   * reading more than 2GB in a single read call, even on 64-bit machines.  
+   * For large structures, e.g. 240M-atoms or larger, we have to use a loop
+   * to continue reading into the memory buffer until completion.
+   */ 
   for (i=0; i<nitems; i++) {
-    fio_size_t rc = read(fd, (void*) (((char *) ptr) + (cnt * size)), size);
-    if (rc != size)
-      break;
+    fio_size_t szleft = size;
+    fio_size_t rc = 0;
+    for (szleft=size; szleft > 0; szleft -= rc) {
+      rc = read(fd, ((char*) ptr) + (cnt*size) + (size-szleft), szleft);
+       if (rc == 0) {
+          return cnt;  /* end of file scenario */
+       }
+//      if (rc != szleft) {
+//        printf("fio_fread(): rc %ld  sz: %ld\n", rc, szleft);
+//      }
+      if (rc < 0) {
+        printf("fio_fread(): rc %ld  sz: %ld\n", rc, size);
+        perror("  perror fio_fread(): ");
+        break;
+      }
+    }
     len += rc;
     cnt++;
   }
+#else
+  for (i=0; i<nitems; i++) {
+    fio_size_t rc = read(fd, (void*) (((char *) ptr) + (cnt * size)), size);
+    if (rc != size) {
+//      printf("fio_fread(): rc %ld  sz: %ld\n", rc, size);
+//      perror("  perror fio_fread(): ");
+      break;
+    }
+    len += rc;
+    cnt++;
+  }
+#endif
 
   return cnt;
 }
 
 static fio_size_t fio_readv(fio_fd fd, const fio_iovec * iov, int iovcnt) {
-#if defined(USE_KERNEL_READV)
-  return readv(fd, iov, iovcnt);
-#else
+  fio_size_t len;
   int i;
-  fio_size_t len = 0; 
 
-  for (i=0; i<iovcnt; i++) {
-    fio_size_t rc = read(fd, iov[i].iov_base, iov[i].iov_len);
-    if (rc != iov[i].iov_len)
-      break;
-    len += iov[i].iov_len;
+#if 0
+  fio_size_t tlen;
+  for (tlen=0,i=0; i<iovcnt; i++) {
+    tlen += iov[i].iov_len;
   }
 
-  return len;
+#if defined(USE_KERNEL_READV)
+  len = readv(fd, iov, iovcnt);
+  if (len != tlen) {
+    printf("fio_readv(): readv() rc: %ld  sz: %ld\n", len, tlen);
+    printf("fio_readv(): readv() errno %d\n", errno);
+  }
+
+  if ((len < 0 && errno == ENOSYS) ||
+      (len != tlen && errno == EINVAL)) 
 #endif
+  {
+    /* XXX this loop doesn't meet the atomicity requirements of
+     *     real POSIX readv(), since we don't need that feature 
+     */
+    len = 0; 
+    for (i=0; i<iovcnt; i++) {
+      void *ptr = iov[i].iov_base;
+      fio_size_t sz = iov[i].iov_len;
+      fio_size_t szleft = sz;
+      fio_size_t rc=0;
+
+      for (szleft=sz; szleft > 0; szleft -= rc) {
+        rc = read(fd, ((char*) ptr)+(sz-szleft), szleft);
+        if (rc == 0) {
+          return len;  /* end of file scenario */
+        }
+        if (rc != szleft) {
+          printf("fio_readv(): read() rc %ld  sz: %ld\n", rc, szleft);
+        }
+        if (rc < 0) {
+          printf("fio_readv(): read() rc %ld  sz: %ld\n", rc, szleft);
+          perror("  perror fio_readv(): ");
+          break;
+        }
+      }
+      len += iov[i].iov_len;
+    }
+  }
+#else
+#if defined(USE_KERNEL_READV)
+  len = readv(fd, iov, iovcnt);
+  if (len < 0 && errno == ENOSYS)
+#endif
+  {
+    /* XXX this loop doesn't meet the atomicity requirements of
+     *     real POSIX readv(), since we don't need that feature 
+     */
+    len = 0; 
+    for (i=0; i<iovcnt; i++) {
+      fio_size_t rc = read(fd, iov[i].iov_base, iov[i].iov_len);
+      if (rc != iov[i].iov_len)
+        break;
+      len += iov[i].iov_len;
+    }
+  }
+#endif
+
+  return len;
 }
 
 static fio_size_t fio_fwrite(void *ptr, fio_size_t size, 
                              fio_size_t nitems, fio_fd fd) {
-  int i;
+  fio_size_t i;
   fio_size_t len = 0; 
-  int cnt = 0;
+  fio_size_t cnt = 0;
 
+#if 1
+  /*
+   * On Linux individual calls to write() can end up doing short writes when
+   * writing more than 2GB in a single write call, even on 64-bit machines.  
+   * For large structures, e.g. 240M-atoms or larger, we have to use a loop
+   * to continue writing the memory buffer until completion.
+   */ 
+  int writecalls=0;
   for (i=0; i<nitems; i++) {
-    fio_size_t rc = write(fd, ptr, size);
-    if (rc != size)
-      break;
+    fio_size_t szleft = size;
+    fio_size_t rc = 0;
+    for (szleft=size; szleft > 0; szleft -= rc) {
+      fio_size_t writesz = szleft;
+
+#if 0
+      /* On some kernel versions write calls beyond 2GB may not do */
+      /* a partial write and may just return an error immediately. */
+      /* Clamp maximum write size to 1GB per write call.           */
+      if (writesz > (1024L * 1024L * 1024L))
+        writesz = (1024L * 1024L * 1024L);
+#endif
+
+      writecalls++;
+      rc = write(fd, ((char*) ptr)+(size-szleft), writesz);
+      if (rc < 0) {
+        printf("fio_fwrite(): rc %ld  sz: %ld  szleft: %ld  calls: %d\n", 
+               rc, size, szleft, writecalls);
+        perror("  perror fio_fwrite(): ");
+        return cnt;
+      }
+    }
     len += rc;
     cnt++;
   }
+#else
+  for (i=0; i<nitems; i++) {
+    fio_size_t rc = write(fd, ptr, size);
+    if (rc != size) {
+      printf("fio_fwrite(): rc %ld  sz: %ld\n", rc, size);
+      perror("  perror fio_fwrite(): ");
+      break;
+    }
+    len += rc;
+    cnt++;
+  }
+#endif
 
   return cnt;
 }

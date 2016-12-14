@@ -3,7 +3,7 @@
  *
  *      $RCSfile: ReadPARM.h,v $
  *      $Author: johns $        $Locker:  $                $State: Exp $
- *      $Revision: 1.13 $      $Date: 2006/07/26 22:03:05 $
+ *      $Revision: 1.15 $      $Date: 2016/11/06 17:54:57 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -176,7 +176,7 @@ FILE *ReadPARM::open_parm_file(const char *name) {
 	/*
 	 *  open the file
 	 */
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
         if (compressed) {
           /* NO "zcat" on Win32 */
           printf("Cannot load compressed PARM files on Windows.\n");
@@ -184,10 +184,10 @@ FILE *ReadPARM::open_parm_file(const char *name) {
         }
 #else
 	if (compressed) {
-		char pcmd[120];
+		char pcmd[sizeof(cbuf) + 7];
 		popn = 1;
 
-		sprintf(pcmd, "zcat %s", cbuf);
+		sprintf(pcmd, "zcat '%s'", cbuf);
 		if ((fp = popen(pcmd, "r")) == NULL) {
 			perror(pcmd);
                         return NULL;
@@ -211,7 +211,7 @@ FILE *ReadPARM::open_parm_file(const char *name) {
  *  close_parm_file() - close fopened or popened file
  */
 void ReadPARM::close_parm_file(FILE *fileptr) {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
   if (popn) {
     printf("pclose() no such function on win32!\n");
   } else {

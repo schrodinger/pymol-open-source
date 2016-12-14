@@ -793,6 +793,33 @@ static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
   }
 }
 
+static
+bool IsBondTerminal(ObjectMolecule *obj, int b1, int b2){
+  int *neighbor = obj->Neighbor;
+  if(neighbor) {
+    int mem, nbr;
+    int heavy1 = 0, heavy2 = 0;
+    AtomInfoType *atomInfo = obj->AtomInfo;
+    nbr = neighbor[b1] + 1;
+    while(((mem = neighbor[nbr]) >= 0)) {
+      if(atomInfo[mem].protons > 1) {
+        heavy1++;
+      }
+      nbr += 2;
+    }
+    nbr = neighbor[b2] + 1;
+    while(((mem = neighbor[nbr]) >= 0)) {
+      if(atomInfo[mem].protons > 1) {
+        heavy2++;
+      }
+      nbr += 2;
+    }
+    if((heavy1 < 2) || (heavy2 < 2))
+      return true;
+  }
+  return false;
+}
+
 Rep *RepWireBondNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->State.G;
@@ -1012,35 +1039,13 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
         if(s1 || s2) {
           float bd_line_width = line_width;
-          float rgb1[3], rgb2[3];
           int terminal = false;
 
           auto bd_valence_flag = BondSettingGetWD(G, b, cSetting_valence, valence_flag);
           auto bd_line_color = BondSettingGetWD(G, b, cSetting_line_color, line_color);
 
           if(fancy && bd_valence_flag && (b->order > 1)) {
-            int *neighbor = obj->Neighbor;
-            if(neighbor) {
-              int mem, nbr;
-              int heavy1 = 0, heavy2 = 0;
-              AtomInfoType *atomInfo = obj->AtomInfo;
-              nbr = neighbor[b1] + 1;
-              while(((mem = neighbor[nbr]) >= 0)) {
-                if(atomInfo[mem].protons > 1) {
-                  heavy1++;
-                }
-                nbr += 2;
-              }
-              nbr = neighbor[b2] + 1;
-              while(((mem = neighbor[nbr]) >= 0)) {
-                if(atomInfo[mem].protons > 1) {
-                  heavy2++;
-                }
-                nbr += 2;
-              }
-              if((heavy1 < 2) || (heavy2 < 2))
-                terminal = true;
-            }
+            terminal = IsBondTerminal(obj, b1, b2);
           }
 
           if(variable_width) {

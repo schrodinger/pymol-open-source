@@ -1171,7 +1171,7 @@ SEE ALSO
 
     def scene(key='auto', action='recall', message=None, view=1,
               color=1, active=1, rep=1, frame=1, animate=-1,
-              new_key=None, hand=1, quiet=1, _self=cmd):
+              new_key=None, hand=1, quiet=1, sele="all", _self=cmd):
         '''
 DESCRIPTION
 
@@ -1250,7 +1250,7 @@ SEE ALSO
         with _self.lockcm:
             r = _cmd.scene(_self._COb, key, action, message, int(view),
                     int(color), int(active), int(rep), int(frame),
-                    float(animate), new_key, int(hand))
+                    float(animate), new_key, int(hand), sele)
 
         # autocomplete
         if action in ('store', 'delete') or action.startswith('insert_'):
@@ -1663,17 +1663,9 @@ PYMOL API
         '''
         r = None
         if cmd.is_string(width) and height == -1:
-            try:
-                width = eval(re.sub(r"[^0-9,\-\)\(\.]","",width))
-            except:
-                traceback.print_exc()
-                print("Error: bad viewport argument; should be 2 floats, width and height.")
-                raise QuietException
-            if len(width)!=2:
-                print("Error: bad viewport argument; should be 2 floats, width and height.")
-                raise QuietException
-            height = width[1]
-            width = width[0]
+            width = _self.safe_eval(width)
+            if _self.is_sequence(width):
+                width, height = width
 
         if not cmd.is_glut_thread():
             _self.do("viewport %d,%d"%(int(width),int(height)),0)

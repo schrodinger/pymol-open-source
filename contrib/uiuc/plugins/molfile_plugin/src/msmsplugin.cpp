@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: msmsplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.12 $       $Date: 2011/12/30 04:36:29 $
+ *      $Revision: 1.13 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -229,7 +229,7 @@ static void close_file_read(void *v) {
  */
 static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+VMDPLUGIN_API int VMDPLUGIN_init(void) { 
   memset(&plugin, 0, sizeof(molfile_plugin_t));
   plugin.abiversion = vmdplugin_ABIVERSION;
   plugin.type = MOLFILE_PLUGIN_TYPE;
@@ -246,11 +246,11 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   return VMDPLUGIN_SUCCESS; 
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+VMDPLUGIN_API int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 
 

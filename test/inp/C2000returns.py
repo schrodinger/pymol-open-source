@@ -3,7 +3,7 @@
 print "BEGIN-LOG"
 
 import pymol
-import cmd
+from pymol import cmd
 
 # need to do this for all supported file types because the load routines diverge...
 

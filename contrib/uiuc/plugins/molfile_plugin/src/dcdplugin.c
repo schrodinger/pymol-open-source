@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr                                                                       
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the           
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the           
  *cr                        University of Illinois                       
  *cr                         All Rights Reserved                        
  *cr                                                                   
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: dcdplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.76 $       $Date: 2011/05/18 17:29:19 $
+ *      $Revision: 1.79 $       $Date: 2016/11/28 05:01:53 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -578,10 +578,34 @@ static int read_dcdstep(fio_fd fd, int N, float *X, float *Y, float *Z,
     iov[6].iov_base = (fio_caddr_t) &tmpbuf[5*rec_scale]; /* read format integer    */
     iov[6].iov_len  = rec_scale*sizeof(int);
 
-    readlen = fio_readv(fd, &iov[0], 7);
+#if 1
+    /* Use fall-back code instead of readv():                            */
+    /*  Some platforms implement readv() as user level code in libc,     */
+    /*  and due to POSIX atomicity requirements for readv()/writev(),    */
+    /*  they may copy data to internal temp buffers, which can kill      */
+    /*  performance, and in cases when doing single I/O ops on large,    */
+    /*  buffers, e.g. > 2GB, can fail with shorts reads or writes...     */
+    /*  On such platforms it is best to avoid using readv()/writev()...  */
+    {
+      int readcnt = 0;
+      readlen = 0;
+      readcnt =  fio_fread(iov[0].iov_base, iov[0].iov_len, 1, fd);
+      readcnt += fio_fread(iov[1].iov_base, iov[1].iov_len, 1, fd);
+      readcnt += fio_fread(iov[2].iov_base, iov[2].iov_len, 1, fd);
+      readcnt += fio_fread(iov[3].iov_base, iov[3].iov_len, 1, fd);
+      readcnt += fio_fread(iov[4].iov_base, iov[4].iov_len, 1, fd);
+      readcnt += fio_fread(iov[5].iov_base, iov[5].iov_len, 1, fd);
+      readcnt += fio_fread(iov[6].iov_base, iov[6].iov_len, 1, fd);
 
+      /* if both records read correctly, then the reads are okay */
+      if (readcnt != 7)
+        return DCD_BADREAD;
+    }
+#else
+    readlen = fio_readv(fd, &iov[0], 7);
     if (readlen != (rec_scale*6*sizeof(int) + 3*N*sizeof(float)))
       return DCD_BADREAD;
+#endif
 
     /* convert endianism if necessary */
     if (reverseEndian) {
@@ -1134,7 +1158,7 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   plugin.prettyname = "CHARMM,NAMD,XPLOR DCD Trajectory";
   plugin.author = "Axel Kohlmeyer, Justin Gullingsrud, John Stone";
   plugin.majorv = 1;
-  plugin.minorv = 11;
+  plugin.minorv = 12;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "dcd";
   plugin.open_file_read = open_dcd_read;

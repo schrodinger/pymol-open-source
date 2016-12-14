@@ -8,7 +8,7 @@
  *
  *      $RCSfile: vaspxdatcarplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.9 $       $Date: 2009/06/22 21:37:42 $
+ *      $Revision: 1.10 $       $Date: 2014/10/10 14:41:02 $
  *
  ***************************************************************************/
 
@@ -17,8 +17,7 @@
  *  Sung Sakong, Dept. of Phys., Univsity Duisburg-Essen
  *  
  *  VASP manual   
- *  http:
-
+ *  http://cms.mpi.univie.ac.at/vasp/
  * 
  *  LINUX
  *  gcc -O2 -Wall -I. -I$VMDBASEDIR/plugins/include -c vaspxdatcarplugin.c
@@ -297,44 +296,33 @@ static void close_vaspxdatcar_read(void *mydata)
 
 
 /* registration stuff */
-static molfile_plugin_t vaspxdatcarplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,         /* type */
-  "XDATCAR",                   /* name */
-  "VASP_XDATCAR",              /* pretty name */
-  "Sung Sakong",               /* author */
-  0,                           /* major version */
-  6,                           /* minor version */
-  VMDPLUGIN_THREADUNSAFE,      /* is reentrant */
-
-  "XDATCAR",                   /* filename_extension */
-  open_vaspxdatcar_read,       /* open_file_read */
-  read_vaspxdatcar_structure,  /* read_structure */
-  0,                           /* read_bonds */
-  read_vaspxdatcar_timestep,   /* read_next_timestep */
-  close_vaspxdatcar_read,      /* close_file_read */
-  0,                           /* open_file_write */
-  0,                           /* write_structure */
-  0,                           /* write_timestep */
-  0,                           /* close_file_write */
-  0,                           /* read_volumetric_metadata */
-  0,                           /* read_volumetric_data */
-  0,                         
-  0,                         
-  0                          /* read_rawgraphics */
-                             /* read_molecule_metadata */
-                             /* write_bonds */
-};
+static molfile_plugin_t plugin;
 
 int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "XDATCAR";
+  plugin.prettyname = "VASP_XDATCAR";
+  plugin.author = "Sung Sakong";
+  plugin.majorv = 0;
+  plugin.minorv = 7;
+  plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+  plugin.filename_extension = "XDATCAR";
+  plugin.open_file_read = open_vaspxdatcar_read;
+  plugin.read_structure = read_vaspxdatcar_structure;
+  plugin.read_next_timestep = read_vaspxdatcar_timestep;
+  plugin.close_file_read = close_vaspxdatcar_read;
   return VMDPLUGIN_SUCCESS;
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspxdatcarplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
 int VMDPLUGIN_fini() {
   return VMDPLUGIN_SUCCESS;
 }
+
+

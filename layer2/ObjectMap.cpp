@@ -19,8 +19,7 @@ Z* -------------------------------------------------------------------
 #include <algorithm>
 
 #include"os_python.h"
-
-#include"os_predef.h"
+#include"os_numpy.h"
 #include"os_std.h"
 #include"os_gl.h"
 

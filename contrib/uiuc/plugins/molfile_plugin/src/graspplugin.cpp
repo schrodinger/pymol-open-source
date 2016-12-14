@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: graspplugin.C,v $
  *      $Author: johns $       $:  $             $State: Exp $
- *      $Revision: 1.21 $       $Date: 2009/04/29 15:45:30 $
+ *      $Revision: 1.23 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -497,7 +497,7 @@ static void close_file_read(void *v) {
  */
 static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+VMDPLUGIN_API int VMDPLUGIN_init(void) {
   memset(&plugin, 0, sizeof(molfile_plugin_t));
   plugin.abiversion = vmdplugin_ABIVERSION;
   plugin.type = MOLFILE_PLUGIN_TYPE;
@@ -505,7 +505,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   plugin.prettyname = "GRASP";
   plugin.author = "Justin Gullingsrud, John Stone";
   plugin.majorv = 0;
-  plugin.minorv = 7;
+  plugin.minorv = 8;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "srf,SRF,grasp";
   plugin.open_file_read = open_file_read;
@@ -514,12 +514,12 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+VMDPLUGIN_API int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 
 
 

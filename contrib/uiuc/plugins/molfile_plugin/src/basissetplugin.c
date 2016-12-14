@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: basissetplugin.c,v $
- *      $Author: saam $       $Locker:  $             $State: Exp $
- *      $Revision: 1.13 $       $Date: 2009/11/13 20:37:59 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.14 $       $Date: 2016/11/28 05:01:53 $
  *
  ***************************************************************************/
 
@@ -28,8 +28,7 @@
  * calculations. The basis set must be in the GAMESS format.
  * Such files can be downloaded for virtually any basis set
  * from the EMSL basis set exchange website:
- * https:
-
+ * https://bse.pnl.gov/bse/portal
  *
  * ********************************************************/
 

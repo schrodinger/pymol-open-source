@@ -1,124 +1,74 @@
-if 0:
-    print "DANGER DO NOT RUN UNTIL changes to the following files have been backported..."
-    print "dcdplugin.c, gridplugin.c, endianswap.h, fastio.h, vmddir.h "
-    print "dtrplugin.cpp, fs4plugin.cpp, maeffplugin.cpp"
-else:
+'''
+Update PyMOL's copy of the molfile plugins
+'''
 
-    import re
-    import string
-    import os
-    from glob import glob
+import os
 
-    molfile_src_path = "/tmp/plugins/molfile_plugin/src"
+molfile_src_path = "/tmp/plugins/molfile_plugin/src"
 
-    src_list=[
-        'avsplugin',
-#        'babelplugin', # requires openbabel
-        'basissetplugin', #
-        'basissetplugin', #
-        'bgfplugin',
-        'binposplugin',
-        'biomoccaplugin',
-        'brixplugin',
-        'carplugin',
-        'ccp4plugin',
-#        'cdfplugin', # requires netcdf
-        'corplugin',
-#        'cpmdlogplugin', #
-#        'cpmdplugin',
-        'crdplugin',
-        'cubeplugin',
-        'dcdplugin',
-        'dlpolyplugin',
-        'dsn6plugin',
-        'dtrplugin', #
-        'dxplugin',
-        'edmplugin',
-        'fs4plugin',
-        'gamessplugin',
-#        'gaussianplugin', #
-        'graspplugin',
-        'grdplugin',
-        'gridplugin',
-        'gromacsplugin',
-#        'hoomdplugin', # requires expat
-        'jsplugin', #
-#        'lammpsplugin', # requires gz
-        'maeffplugin', #
-        'mapplugin',
-        'mdfplugin',
-#        'mmcif', #
-        'mol2plugin',
-        'moldenplugin',
-#        'mrcplugin', # gone?
-        'msmsplugin',
-        'namdbinplugin',
-#        'netcdfplugin', # requires netcdf
-        'parm7plugin',
-        'parmplugin',
-        'pbeqplugin', #
-        'pdbplugin',
-        'phiplugin',
-        'pltplugin',
-        'pqrplugin',
-        'psfplugin',
-        'raster3dplugin',
-        'rst7plugin',
-        'situsplugin',
-        'spiderplugin',
-        'stlplugin',
-        'tinkerplugin',
-        'uhbdplugin',
-        'vaspchgcarplugin', #
-        'vaspoutcarplugin', #
-        'vaspparchgplugin', #
-        'vaspposcarplugin', #
-        'vaspxdatcarplugin', #
-        'vaspxmlplugin', #
-        'vtfplugin', #
-#        'webpdbplugin', # tcl dependent
-        'xbgfplugin',
-        'xsfplugin',
-        'xyzplugin']
+if not os.path.isdir(molfile_src_path):
+    raise SystemExit('noch such dir: ' + molfile_src_path)
 
-    plugins = [ ]
+# remove existing generated files
+os.system("/bin/rm src/*")
 
-    clean_re = re.compile("\/\/.*$")
-    api_re = re.compile("VMDPLUGIN_API")
+src_list = []
 
-    for pref in src_list:
-        print pref
-        in_file = glob(molfile_src_path+"/"+pref+".[cC]*")[0]
-        input = open(in_file).readlines()
+blacklist = [
+    'babelplugin',      # requires openbabel
+    'cpmdlogplugin',    #
+    'cpmdplugin',       #
+    'gaussianplugin',   #
+    'hoomdplugin',      # requires expat
+    'lammpsplugin',     # requires gz
+    'netcdfplugin',     # requires netcdf
+    'webpdbplugin',     # tcl dependent
+    'tngplugin',        # requires Gromacs TNG library
+    'dmsplugin',        # requires sqlite3
+]
 
-        out_file = "src/"+pref+".c"
-        plugins.append(pref+".o")
-        if (in_file[-1:]=='C') or (in_file[-3:]=='cxx'):
-            out_file = out_file + "pp"
-            # fix the extern
-            input = map(lambda x,c=api_re:c.sub("VMDPLUGIN_EXTERN",x),input)
-        else:
-            # get rid of non-ansi C comments
-            input = map(lambda x,c=clean_re:c.sub("\n",x),input)
-            
-        g=open(out_file,'w')
-        g.write("/* MACHINE GENERATED FILE, DO NOT EDIT! */\n\n")
-        g.write("#define VMDPLUGIN molfile_%s\n"%pref)
-        g.write("#define STATIC_PLUGIN 1\n\n")    
-        output = string.join(input,'')
-        output.replace('(vmdplugin_t *)','(vmdplugin_t *)(void*)')
-        g.write(output)
-        g.close()
-        g = open("src/objects.make",'w')
-        g.write("OBJS="+string.join(plugins,' ')+"\n")
-        g.close()
+for in_file in sorted(os.listdir(molfile_src_path)):
+    pref, ext = os.path.splitext(in_file)
 
+    if not pref.endswith('plugin'):
+        continue
 
-    g=open("src/PlugIOManagerInit.c",'w');
+    if pref in blacklist:
+        continue
+
+    if ext in ['.C', '.cxx']:
+        ext = '.cpp'
+    elif ext not in ['.c']:
+        continue
+
+    print("processing: " + pref)
+
+    in_file = os.path.join(molfile_src_path, in_file)
+    out_file = os.path.join('src', pref + ext)
+
+    input = open(in_file, 'rb').readlines()
+
+    src_list.append(pref)
+
+    with open(out_file,'wb') as g:
+        g.write(b"/* MACHINE GENERATED FILE, DO NOT EDIT! */\n\n")
+        g.write(b"#define VMDPLUGIN molfile_%s\n" % pref.encode())
+        g.write(b"#define STATIC_PLUGIN 1\n\n")
+        for i, line in enumerate(input, 1):
+            # no including of hash.c, inthash.c like header files
+            if line.startswith(b'#define VMDPLUGIN_STATIC'):
+                continue
+
+            # included, don't compile separatly
+            line = line.replace(b'"ply.c"', b'"ply_c.h"')
+
+            g.write(line)
+
+with open("src/PlugIOManagerInit.c", 'w') as g:
     g.write("/* MACHINE GENERATED FILE, DO NOT EDIT! */\n\n")
     g.write('#include "vmdplugin.h"\n\n')
     g.write('typedef struct _PyMOLGlobals PyMOLGlobals;\n');
-    g.write('/* prototypes */')
+    g.write('/* prototypes */\n')
     for pref in src_list:
         g.write("int molfile_%s_init(void);\n"%pref)
         g.write("int molfile_%s_register(void *,vmdplugin_register_cb);\n"%pref)
@@ -132,12 +82,12 @@ else:
     int PlugIOManagerInitAll(PyMOLGlobals *G)
     {
        int ok=1;
-    ''')
+''')
     for pref in src_list:
         g.write("if(ok) ok = ok && (molfile_%s_init() == VMDPLUGIN_SUCCESS);\n"%pref)
     g.write('''
        if(ok) {
-    ''')
+''')
     for pref in src_list:
         g.write("if(ok) ok = ok && (molfile_%s_register(G,(vmdplugin_register_cb)PlugIOManagerRegister) == VMDPLUGIN_SUCCESS);\n"%pref)
     g.write('''
@@ -147,13 +97,11 @@ else:
     ''')
     g.write('''
 
-    int PlugIOManagerRegister(PyMOLGlobals *G, vmdplugin_t *);
-
     int PlugIOManagerFreeAll(void);
     int PlugIOManagerFreeAll(void)
     {
        int ok=1;
-    ''')
+''')
     for pref in src_list:
         g.write("if(ok) ok = ok && (molfile_%s_fini() == VMDPLUGIN_SUCCESS);\n"%pref)
 
@@ -162,7 +110,14 @@ else:
     }\n''')
 
 
+if True:
     os.system("/bin/cp %s/*.h* src/"%molfile_src_path)
     os.system("/bin/cp %s/hash.c src/"%molfile_src_path)
+    os.system("/bin/cp %s/inthash.c src/" % molfile_src_path)
+    os.system("/bin/cp %s/ply.c src/ply_c.h" % molfile_src_path) # included
+    os.system("/bin/cp %s/../../include/*.h ../include/" % molfile_src_path)
+    os.system("/bin/cp %s/../LICENSE ./" % molfile_src_path)
+
+    os.system("patch -p5 -i post.patch")
 
     os.system("/bin/chmod -x src/*")

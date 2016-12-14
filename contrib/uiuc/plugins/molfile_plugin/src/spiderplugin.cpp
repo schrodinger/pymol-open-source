@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: spiderplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.15 $       $Date: 2009/04/29 15:45:34 $
+ *      $Revision: 1.17 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -274,7 +274,7 @@ static int read_spider_data(void *v, int set, float *datablock,
                          float *colorblock) {
   spider_t *vol = (spider_t *)v;
   FILE *fd = vol->fd;
-  int x, y, z, xsize, ysize, zsize, xysize, total;
+  int xsize, ysize, zsize, xysize, total;
 
   xsize = vol->vol[0].xsize;
   ysize = vol->vol[0].ysize;
@@ -306,7 +306,7 @@ static void close_spider_read(void *v) {
  */
 static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+VMDPLUGIN_API int VMDPLUGIN_init(void) {
   memset(&plugin, 0, sizeof(molfile_plugin_t));
   plugin.abiversion = vmdplugin_ABIVERSION;
   plugin.type = MOLFILE_PLUGIN_TYPE;
@@ -314,7 +314,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   plugin.prettyname = "SPIDER Density Map";
   plugin.author = "John Stone";
   plugin.majorv = 0;
-  plugin.minorv = 6;
+  plugin.minorv = 7;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "spi,spider";
   plugin.open_file_read = open_spider_read;
@@ -324,10 +324,10 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+VMDPLUGIN_API int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

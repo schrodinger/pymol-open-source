@@ -81,6 +81,7 @@ PyMOL>ray renderer=2
  ObjectSurface: updating "s1".
  RayRenderTest: obtained 18753 graphics primitives.
 PyMOL>save tmp/C1200.pse
+ Save: Please wait -- writing session file...
  Save: wrote "tmp/C1200.pse".
 PyMOL>reinit
 PyMOL>load tmp/C1200.pse

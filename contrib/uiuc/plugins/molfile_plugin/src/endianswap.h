@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -10,7 +10,7 @@
  *
  *      $RCSfile: endianswap.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.6 $       $Date: 2009/04/29 15:45:29 $
+ *      $Revision: 1.7 $       $Date: 2016/11/28 05:01:53 $
  *
  ***************************************************************************
  * DESCRIPTION:
