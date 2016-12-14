@@ -92,7 +92,7 @@ PyMOL>cycle_valence
  Remove: eliminated 1 atoms in model "small01".
  Remove: eliminated 1 atoms in model "small01".
 PyMOL>count_atoms
- count_atoms: 32 atoms
+ count_atoms: 34 atoms
 PyMOL>remove_picked
 PyMOL>bond id 6,id 10,2
  Bond: 1 bonds added to model "small01".
@@ -224,7 +224,7 @@ PyMOL>iterate_state 1,(il2),stored.sum=stored.sum+x
  IterateState: iterated over 2084 atom coordinate states.
 PyMOL>print "%8.3f"%stored.sum
 20809.421
-PyMOL>push_undo (il2)
+PyMOL>cmd.push_undo("(il2)")
 PyMOL>alter_state 1,(il2),x=0.0
  AlterState: modified 2084 atom coordinate states.
 PyMOL>rebuild

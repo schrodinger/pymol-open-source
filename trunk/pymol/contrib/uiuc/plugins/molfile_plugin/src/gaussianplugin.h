@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -10,8 +10,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: gaussianplugin.h,v $
- *      $Author: akohlmey $       $Locker:  $             $State: Exp $
- *      $Revision: 1.9 $       $Date: 2009/06/21 23:39:31 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.10 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 /*******************************************************************

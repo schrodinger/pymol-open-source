@@ -5,7 +5,7 @@
 
 //
 // Version info for VMD plugin tree:
-//   $Id: dtrplugin.cxx,v 1.22 2011/12/23 22:40:52 johns Exp $
+//   $Id: dtrplugin.cxx,v 1.26 2016/11/06 19:25:35 johns Exp $
 //
 // Version info for last sync with D. E. Shaw Research:
 //  //depot/desrad/main/sw/libs/molfile/plugins/dtrplugin.cxx#30
@@ -84,7 +84,7 @@ static const char s_sep = '/';
 #include <sys/mman.h>
 
 #include <netinet/in.h> /* for htonl */
-#if defined(_AIX)
+#if defined(_AIX) || defined(ANDROID)
 #include <fcntl.h>
 #else
 #include <sys/fcntl.h>
@@ -111,7 +111,11 @@ static const char s_sep = '/';
 #endif
 
 #ifndef PRIu64
+#if _MSC_VER < 1400
+#define PRIu64 "ld"
+#else 
 #define PRIu64 "I64u"
+#endif
 #endif
 
 static const char s_sep = '\\';
@@ -2060,13 +2064,13 @@ int DtrWriter::next(const molfile_timestep_t *ts) {
       return MOLFILE_ERROR;
     }
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
     _commit(frame_fd);
 #else
     fsync(frame_fd);
 #endif
     fflush(timekeys_file);
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
     _commit(fileno(timekeys_file));
 #else
     fsync(fileno(timekeys_file));
@@ -2268,7 +2272,7 @@ static void close_file_write( void * v ) {
 
 static molfile_plugin_t desmond;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
+VMDPLUGIN_API int VMDPLUGIN_init (void) {
   /* Plugin for desmond trajectory files */
   ::memset(&desmond,0,sizeof(desmond));
   desmond.abiversion = vmdplugin_ABIVERSION;
@@ -2277,7 +2281,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
   desmond.prettyname = "DESRES Trajectory";
   desmond.author = "D.E. Shaw Research";
   desmond.majorv = 4;
-  desmond.minorv = 0;
+  desmond.minorv = 1;
   desmond.is_reentrant = VMDPLUGIN_THREADUNSAFE;
 
   desmond.filename_extension = "dtr,dtr/,stk,atr,atr/";
@@ -2297,12 +2301,12 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   cb(v,reinterpret_cast<vmdplugin_t*>(&desmond));
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) {
+VMDPLUGIN_API int VMDPLUGIN_fini(void) {
   return VMDPLUGIN_SUCCESS;
 }
 

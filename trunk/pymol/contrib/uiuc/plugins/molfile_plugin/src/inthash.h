@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -10,8 +10,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: inthash.h,v $
- *      $Author: akohlmey $        $Locker:  $             $State: Exp $
- *      $Revision: 1.1 $      $Date: 2009/04/29 22:28:28 $
+ *      $Author: johns $        $Locker:  $             $State: Exp $
+ *      $Revision: 1.4 $      $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -50,19 +50,22 @@ extern "C" {
 void inthash_init(inthash_t *, int);
 
 /** lookup a string key in the hash table returning its integer key */
-int inthash_lookup (const inthash_t *, int);
+int inthash_lookup(const inthash_t *, int);
 
 /** insert a string into the hash table, along with an integer key */
-int inthash_insert (inthash_t *, int, int);
+int inthash_insert(inthash_t *, int, int);
 
 /** delete an string from the hash table, given its string name */
-int inthash_delete (inthash_t *, int);
+int inthash_delete(inthash_t *, int);
+
+/** return the number of entries in the hash table */
+int inthash_entries(inthash_t *);
 
 /** destroy the hash table completely, deallocate memory */
 void inthash_destroy(inthash_t *);
 
 /** print hash table vital stats */
-char *inthash_stats (inthash_t *);
+char *inthash_stats(inthash_t *);
 
 #ifdef __cplusplus
 }

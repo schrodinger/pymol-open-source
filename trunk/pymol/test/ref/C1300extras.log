@@ -35,24 +35,24 @@ C01 -> 'methane'
 H01 -> 'methane'
 PyMOL>cmd.label2("all","resv")
 PyMOL>cmd.iterate("all",r"print name +' -> ' + '\'' + label + '\''")
-C01 -> '9'
-H01 -> '9'
+C01 -> '1'
+H01 -> '1'
 PyMOL>cmd.label2("all","model+' index:'+index+ ' type:' +type")
 PyMOL>cmd.iterate("all",r"print name +' -> ' + '\'' + label + '\''")
-C01 -> 'methane index:1 type:ATOM'
-H01 -> 'methane index:2 type:ATOM'
+C01 -> 'methane index:1 type:HETATM'
+H01 -> 'methane index:2 type:HETATM'
 PyMOL>cmd.label2("all","segi+' '+chain+' '+resi+'`'+resn+' '+str(resv)+name+'`'+alt")
 PyMOL>cmd.iterate("all",r"print name +' -> ' + '\'' + label + '\''")
-C01 -> 'METH E 9`LEU 9C01`'
-H01 -> 'METH E 9`LEU 9H01`A'
+C01 -> 'METH  1`UNK 1C01`'
+H01 -> 'METH  1`UNK 1H01`A'
 PyMOL>cmd.label2("all","str(index)+' '+str(rank)+' '+str(ID)")
 PyMOL>cmd.iterate("all",r"print name +' -> ' + '\'' + label + '\''")
 C01 -> '1 0 0'
 H01 -> '2 1 1'
 PyMOL>cmd.label2("all","flags")
 PyMOL>cmd.iterate("all",r"print name +' -> ' + '\'' + label + '\''")
-C01 -> '8000000'
-H01 -> '8000000'
+C01 -> '20000000'
+H01 -> '20000000'
 PyMOL>cmd.label2("all","str(numeric_type)+text_type")
 PyMOL>cmd.iterate("all",r"print name +' -> ' + '\'' + label + '\''")
 C01 -> '0'

@@ -16,22 +16,24 @@
 
 bool MovieSceneFunc(PyMOLGlobals * G, const char * name,
     const char * action,
-    const char * message = NULL,
+    const char * message = "",
     bool store_view = true,
     bool store_color = true,
     bool store_active = true,
     bool store_rep = true,
     bool store_frame = true,
     float animate = -1.0,
-    const char * new_key = NULL,
-    bool hand = true);
+    const char * new_key = "",
+    bool hand = true,
+    const char * sele = "all");
 
 bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate = -1.0,
     bool recall_view = true,
     bool recall_color = true,
     bool recall_active = true,
     bool recall_rep = true,
-    bool recall_frame = true);
+    bool recall_frame = true,
+    const char * sele = "all");
 
 bool MovieSceneOrder(PyMOLGlobals * G, const char * names,
     bool sort = false,

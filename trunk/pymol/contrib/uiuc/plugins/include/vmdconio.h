@@ -10,8 +10,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: vmdconio.h,v $
- *      $Author: akohlmey $       $Locker:  $             $State: Exp $
- *      $Revision: 1.3 $       $Date: 2010/10/27 01:34:47 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.4 $       $Date: 2015/10/11 22:36:27 $
  *
  ***************************************************************************/
 
@@ -81,15 +81,11 @@ static int vmdcon_printf(int lvl, const char *fmt, ...) {
    * write to registered console output function.
    * fall back to stdout, if vmdcon not available. 
    */
-#if vmdplugin_ABIVERSION > 13
   if (THISPLUGIN.cons_fputs) {
     (*THISPLUGIN.cons_fputs)(lvl, buf);
   } else {
     fputs(buf, stdout);
   }
-#else
-  fputs(buf, stdout);
-#endif
   free(buf);
   return 0;    
 }

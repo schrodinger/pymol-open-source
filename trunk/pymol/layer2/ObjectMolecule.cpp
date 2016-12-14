@@ -7996,7 +7996,6 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buf
   int ok = true;
   int auto_show = RepGetAutoShowMask(G);
   WordType nameTmp;
-  OVreturn_word ovresult;
 
   p = buffer;
   nAtom = 0;
@@ -9497,7 +9496,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
   int priority;
   int use_matrices = false;
   CoordSet *cs;
-  AtomInfoType *ai, *ai0, *ai_option;
+  AtomInfoType *ai, *ai0;
   PyMOLGlobals *G = I->Obj.G;
 #ifndef _PYMOL_NOPY
   PyCodeObject *expr_co = NULL;
@@ -11289,16 +11288,6 @@ static void ObjectMoleculeUpdate(ObjectMolecule * I)
 
   PRINTFD(G, FB_ObjectMolecule)
     " ObjectMolecule: updates complete for object %s.\n", I->Obj.Name ENDFD;
-}
-
-static AtomInfoType *get_atom_info_type(ObjectMolecule *obj, int state, int idx){
-  int atm;
-  if (state>=0 && state < obj->NCSet && obj->CSet[state] && obj->CSet[state]->NIndex > idx){   
-    atm = obj->CSet[state]->IdxToAtm[idx];
-    return &obj->AtomInfo[atm];
-  } else {
-    return 0;
-  }
 }
 
 /*========================================================================*/

@@ -5,7 +5,7 @@
 
 //
 // Version info for VMD plugin tree:
-//   $Id: maeffplugin.cxx,v 1.24 2011/12/23 21:56:19 johns Exp $
+//   $Id: maeffplugin.cxx,v 1.28 2016/11/06 17:49:24 johns Exp $
 //
 // Version info for last sync with D. E. Shaw Research:
 //  //depot/desrad/main/sw/libs/molfile/plugins/maeffplugin.cxx#3
@@ -799,7 +799,7 @@ namespace {
 
   class AtomArray : public Array {
     int i_name, i_resname, i_resid, i_x, i_y, i_z, i_vx, i_vy, i_vz, 
-        i_anum, i_chain, i_segid;
+        i_anum, i_chain, i_segid, i_charge;
     std::vector<molfile_atom_t> &atoms;
     std::vector<pos_t> &pos;
     std::vector<vel_t> &vel;
@@ -812,11 +812,13 @@ namespace {
       i_x(-1), i_y(-1), i_z(-1), 
       i_vx(-1), i_vy(-1), i_vz(-1),
       i_anum(-1), i_chain(-1), i_segid(-1),
+      i_charge(0),
       atoms( h->ctmap[m_ct].particles ),
       pos( h->ctmap[m_ct].position),
       vel( h->ctmap[m_ct].velocity),
       natoms( h->ctmap[m_ct].natoms )
     {
+      h->optflags = MOLFILE_NOOPTIONS; // ensure initialization
 #if defined(DESRES_CTNUMBER)
       h->optflags = MOLFILE_CTNUMBER;
 #endif
@@ -837,6 +839,7 @@ namespace {
         else if (attr=="m_atomic_number")  { i_anum=i; h->optflags |= MOLFILE_ATOMICNUMBER; }
         else if (attr=="m_chain_name")       i_chain=i;
         else if (attr=="m_pdb_segment_name") i_segid=i;
+        else if (attr=="m_formal_charge")  { i_charge=i; h->optflags |= MOLFILE_CHARGE; }
       }
     }
 
@@ -1424,7 +1427,7 @@ namespace {
              << quotify(a.name) << ' '
              << blank << ' '                // m_grow_name
              << anum << ' '
-             << 0   << ' '                  // formal charge
+             << a.charge   << ' '           // formal charge
              << 1 << ' '       // m_visibility
              << quotify(a.segid) << ' '
              ;
@@ -2004,7 +2007,7 @@ namespace {
 
 static molfile_plugin_t maeff;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
+VMDPLUGIN_API int VMDPLUGIN_init (void) {
   /* Plugin for maeff trajectory files */
   ::memset(&maeff,0,sizeof(maeff));
   maeff.abiversion = vmdplugin_ABIVERSION;
@@ -2013,7 +2016,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
   maeff.prettyname = "Maestro File";
   maeff.author = "D. E. Shaw Research";
   maeff.majorv = 3;
-  maeff.minorv = 5;
+  maeff.minorv = 8;
   maeff.is_reentrant = VMDPLUGIN_THREADUNSAFE;
 
   maeff.filename_extension = "mae,maeff,cms";
@@ -2036,12 +2039,12 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   cb(v,reinterpret_cast<vmdplugin_t*>(&maeff));
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) {
+VMDPLUGIN_API int VMDPLUGIN_fini(void) {
   return VMDPLUGIN_SUCCESS;
 }
 

@@ -375,9 +375,13 @@ PyObject *P_setting = NULL;     /* okay as global -- just used for names */
 static PyMappingMethods wrapperMappingMethods, settingMappingMethods;
 static PyTypeObject Wrapper_Type = {
   PyVarObject_HEAD_INIT(NULL, 0)
+  "wrapper.Wrapper",            /* tp_name */
+  0,                            /* tp_basicsize */
 };
 static PyTypeObject settingWrapper_Type = {
   PyVarObject_HEAD_INIT(NULL, 0)
+  "wrapper.SettingWrapper",     /* tp_name */
+  0,                            /* tp_basicsize */
 };
 
 /*
@@ -2357,7 +2361,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     PyRun_SimpleString
       ("if 'PYMOL_SCRIPTS' not in os.environ: os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
 
-    Wrapper_Type.tp_name = "wrapper.Wrapper";
+  if (!Wrapper_Type.tp_basicsize) {
     Wrapper_Type.tp_basicsize = sizeof(WrapperObject);
     Wrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
     wrapperMappingMethods.mp_length = NULL;
@@ -2365,7 +2369,6 @@ void PInit(PyMOLGlobals * G, int global_instance)
     wrapperMappingMethods.mp_ass_subscript = &WrapperObjectAssignSubScript;
     Wrapper_Type.tp_as_mapping = &wrapperMappingMethods;
     
-    settingWrapper_Type.tp_name = "wrapper.SettingWrapper";
     settingWrapper_Type.tp_basicsize = sizeof(SettingPropertyWrapperObject);
     settingWrapper_Type.tp_flags = Py_TPFLAGS_DEFAULT;
     settingWrapper_Type.tp_iter = &SettingWrapperObjectIter;
@@ -2385,6 +2388,8 @@ void PInit(PyMOLGlobals * G, int global_instance)
     }
     Py_INCREF(&Wrapper_Type);
     Py_INCREF(&settingWrapper_Type);
+  }
+
     G->P_inst->wrapperObject = (WrapperObject *)PyType_GenericNew(&Wrapper_Type, Py_None, Py_None);
     G->P_inst->wrapperObject->G = G;
     G->P_inst->wrapperObject->dict = PyDict_New();

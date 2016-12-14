@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: parm7plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.30 $       $Date: 2009/04/29 15:45:32 $
+ *      $Revision: 1.34 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -70,10 +70,13 @@ static int read_parm7_structure(void *mydata, int *optflags, molfile_atom_t *ato
     // find the next line starting with %FLAG, indicating a new section
     if (strncmp(buf, "%FLAG ", 6)) 
       continue;
-
-    // parse field and format indicators
     sscanf(buf+6, "%s\n", field); // type of record
-    fscanf(file, "%s\n", buf);    // format
+
+    // skip any number of lines until we get to "FORMAT". This handles
+    // the %COMMENT lines that may or may not be present
+    while (strncmp(buf, "%FORMAT", 7)) {
+        fgets(buf, 85, file);
+    }
 
     if (!strcmp(field, "ATOM_NAME")) {
       if (!parse_parm7_atoms(buf, prm->Natom, atoms, file)) break;
@@ -148,7 +151,7 @@ static void close_parm7_read(void *mydata) {
 
 static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(){
+VMDPLUGIN_API int VMDPLUGIN_init(){
   memset(&plugin, 0, sizeof(molfile_plugin_t));
   plugin.abiversion = vmdplugin_ABIVERSION;
   plugin.type = MOLFILE_PLUGIN_TYPE;
@@ -156,7 +159,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(){
   plugin.prettyname = "AMBER7 Parm";
   plugin.author = "Brian Bennion, Justin Gullingsrud, John Stone";
   plugin.majorv = 0;
-  plugin.minorv = 13;
+  plugin.minorv = 15;
   plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
   plugin.filename_extension = "prmtop,parm7";
   plugin.open_file_read = open_parm7_read;
@@ -166,11 +169,11 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(){
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v,(vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(){
+VMDPLUGIN_API int VMDPLUGIN_fini(){
   return VMDPLUGIN_SUCCESS;
 }

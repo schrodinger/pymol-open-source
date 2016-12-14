@@ -10,7 +10,7 @@ PyMOL>select tst = (none)
  Selector: selection "tst" defined with 0 atoms.
 PyMOL>select tst = (name c)
  Selector: selection "tst" defined with 129 atoms.
-PyMOL>dele tst
+PyMOL>delete tst
 PyMOL>select tst = (segi e)
  Selector: selection "tst" defined with 9 atoms.
 PyMOL>select tst = (all)
@@ -25,9 +25,9 @@ PyMOL>select (resn pro)
  Selector: selection "sel04" defined with 56 atoms.
 PyMOL>select (r;pro)
  Selector: selection "sel05" defined with 56 atoms.
-PyMOL>select (chain c,e)
+PyMOL>select (chain C,E)
  Selector: selection "sel06" defined with 36 atoms.
-PyMOL>select (c;c,e)
+PyMOL>select (c;C,E)
  Selector: selection "sel07" defined with 36 atoms.
 PyMOL>select (resi 100)
  Selector: selection "sel08" defined with 15 atoms.
@@ -87,7 +87,7 @@ PyMOL>select tst, pept w. 1 of pept
  Selector: selection "tst" defined with 107 atoms.
 PyMOL>print cmd.select("(none)")
 0
-PyMOL>dele all
+PyMOL>delete all
 PyMOL>load dat/pept.pdb,mult
  CmdLoad: "dat/pept.pdb" loaded as "mult".
 PyMOL>load dat/il2.pdb,mult
@@ -109,7 +109,7 @@ PyMOL>select tst,present and vis
 PyMOL>frame 1
 PyMOL>select tst,present and vis
  Selector: selection "tst" defined with 13 atoms.
-PyMOL>dele all
+PyMOL>delete all
 PyMOL>load dat/pept.pdb
  CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>indicate name ca
@@ -139,7 +139,7 @@ PyMOL>count_atoms indicate
 PyMOL>indicate index -3+5+10-23+7+40-
 PyMOL>count_atoms indicate
  count_atoms: 87 atoms
-PyMOL>dele all
+PyMOL>delete all
 PyMOL>load dat/1tii.pdb
 HEADER    ENTEROTOXIN                             20-MAR-96   1TII
 TITLE     ESCHERICHIA COLI HEAT LABILE ENTEROTOXIN TYPE IIB
@@ -162,19 +162,19 @@ PyMOL>count_atoms 1tii
  count_atoms: 5684 atoms
 PyMOL>count_atoms HOH`307/ expand 5
  count_atoms: 12 atoms
-PyMOL>count_atoms a// c//
+PyMOL>count_atoms A// C//
  count_atoms: 1769 atoms
-PyMOL>count_atoms a// c// d//
+PyMOL>count_atoms A// C// D//
  count_atoms: 2509 atoms
-PyMOL>count_atoms (a// c//) d//
+PyMOL>count_atoms (A// C//) D//
  count_atoms: 2509 atoms
-PyMOL>count_atoms a// c//&none
+PyMOL>count_atoms A// C//&none
  count_atoms: 1479 atoms
-PyMOL>count_atoms c//&none a//
+PyMOL>count_atoms C//&none A//
  count_atoms: 1479 atoms
-PyMOL>count_atoms c//&none (a//&none a//)
+PyMOL>count_atoms C//&none (A//&none A//)
  count_atoms: 1479 atoms
-PyMOL>count_atoms (c//&none) a// (a//&none)
+PyMOL>count_atoms (A//&none) A// (A//&none)
  count_atoms: 1479 atoms
-PyMOL>count_atoms (a// (d// c//)) & (e// (b// a//))
+PyMOL>count_atoms (A// (D// C//)) & (E// (B// A//))
  count_atoms: 1479 atoms

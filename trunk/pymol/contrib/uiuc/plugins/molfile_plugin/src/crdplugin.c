@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: crdplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.38 $       $Date: 2011/03/14 16:07:42 $
+ *      $Revision: 1.40 $       $Date: 2016/11/28 05:01:53 $
  *
  ***************************************************************************/
 
@@ -154,8 +154,10 @@ static void *open_crd_write(const char *path, const char *filetype,
   
 static int write_crd_timestep(void *v, const molfile_timestep_t *ts) {
   crddata *crd = (crddata *)v;
-  int i, lfdone;
+  int i;
+  int lfdone=0;
   const int ndata = crd->numatoms * 3;
+
   for (i=0; i<ndata; i++) {
     lfdone = 0;
     fprintf(crd->file, "%8.3f", ts->coords[i]);
@@ -193,7 +195,7 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
   plugin.prettyname = "AMBER Coordinates";
   plugin.author = "Justin Gullingsrud, John Stone";
   plugin.majorv = 0;
-  plugin.minorv = 8;
+  plugin.minorv = 9;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "mdcrd,crd";
   plugin.open_file_read = open_crd_read;

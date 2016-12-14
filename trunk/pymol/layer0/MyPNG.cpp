@@ -55,7 +55,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include "Setting.h"
 
-int MyPNGWrite(PyMOLGlobals * G, char *file_name, unsigned char *data_ptr,
+int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *data_ptr,
                unsigned int width, unsigned int height, float dpi, int format, int quiet)
 {
   switch (format) {
@@ -211,7 +211,8 @@ int MyPNGWrite(PyMOLGlobals * G, char *file_name, unsigned char *data_ptr,
         fprintf(fil, "255\n");
         {
           unsigned int a, b;
-          unsigned char *q = buffer, *p;
+          unsigned char *q = buffer;
+          const unsigned char *p;
           p = data_ptr + width * 4 * (height - 1);
           for(b = 0; b < height; b++) {
             for(a = 0; a < width; a++) {

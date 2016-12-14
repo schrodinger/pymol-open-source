@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: rst7plugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.18 $       $Date: 2009/04/29 15:45:33 $
+ *      $Revision: 1.20 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -24,13 +24,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "molfile_plugin.h"
+#include "vmdconio.h"
 
 typedef struct {
   FILE *file;
   int has_box;
+  int has_vels;
   int numatoms;
   int count;
   int rstfile;
+#if vmdplugin_ABIVERSION > 10
+  molfile_timestep_metadata_t ts_meta;
+#endif
 } rstdata;
 
 static void *open_rst_read(const char *filename, const char *filetype,int *natoms) {
@@ -54,55 +59,62 @@ static void *open_rst_read(const char *filename, const char *filetype,int *natom
 
   data = (rstdata *)malloc(sizeof(rstdata));
   memset(data, 0, sizeof(rstdata));
+#if vmdplugin_ABIVERSION > 10
+  data->ts_meta.count = -1;
+  data->ts_meta.has_velocities = 0;
+#endif
+
   fgets(title, 82, fd);
-  printf("Title: %s\n",title);
+  vmdcon_printf(VMDCON_INFO, "rst7plugin) Title: %s\n",title);
 
   fgets(line, 82, fd);
   while (kkk==1) {
     /* try to read first field */
-    field = strtok(line, "  ");
+    field = strtok(line, " \t");
     if (field==NULL) {                
       continue; /* no fields at all on this line */
     }
     numats = atoi(field);
 
     /* try to read second field will be null if not there */
-    field = strtok(line, "  ");
+    field = strtok(NULL, " \t");
     if (field==NULL) {
       kkk=0;
-      printf("This file has no velocity info.\n");
+      vmdcon_printf(VMDCON_INFO, "rst7plugin) This file has no velocity info.\n");
+      data->has_vels=0;
     } else {
       timesteprst = strtod(field, NULL);
-      printf("This file contains velocity info.\n");
+      vmdcon_printf(VMDCON_INFO, "rst7plugin) This file contains velocity info.\n");
+      data->has_vels=1;
+#if vmdplugin_ABIVERSION > 10
+      data->ts_meta.has_velocities = 1;
+#endif
       kkk=0;
     }
   }
 
   point2=ftell(fd);
   data->file = fd;
-  printf("The Restartcrd has %d atoms.\n",numats);
+  vmdcon_printf(VMDCON_INFO, "rst7plugin) The Restartcrd has %d atoms.\n",numats);
+
+  /* skip over coordinate data */
   for (i=0; i<numats; i++) {
-    j = fscanf(fd, "%f %f %f", &x, &y, &z);
+    j = fscanf(fd, "%f%f%f", &x, &y, &z);
   }
 
-  j = fscanf(fd, "%f %f %f %f %f %f", &x, &y, &z,&a,&b,&c);
-  if (j != EOF) {
-    printf("This restartcrd file has box info.\n");
-    data->has_box=1;
-    if((int)a==90) {
-      printf("Box Dimensions are %f  %f  %f  %f  %f  %f\n",x,y,z,a,b,c);
-    } else {
-      for (i=0; i<numats-2; i++) {
-        j = fscanf(fd, "%f %f %f", &x, &y, &z);
-      }
-      j = fscanf(fd, "%f %f %f %f %f %f", &x, &y, &z,&a,&b,&c);
-      if (j != EOF) {
-        if((int)a==90) {
-          printf("Box Dimensions are %f  %f  %f  %f  %f  %f\n",x,y,z,a,b,c);
-        }
-      }
+  /* skip over velocity data, if present */
+  if (data->has_vels) {
+    for (i=0; i<numats; i++) {
+      j = fscanf(fd, "%f%f%f", &x, &y, &z);
     }
-  } 
+  }
+  
+  j = fscanf(fd, "%f%f%f%f%f%f", &x, &y, &z,&a,&b,&c);
+  if (j != EOF) {
+    vmdcon_printf(VMDCON_INFO, "rst7plugin) This restartcrd file has box info.\n");
+    data->has_box=1;
+    vmdcon_printf(VMDCON_INFO, "rst7plugin) Box Dimensions are %f %f %f %f %f %f\n",x,y,z,a,b,c);
+  }
 
   *natoms=numats;
   data->numatoms=numats;
@@ -112,22 +124,40 @@ static void *open_rst_read(const char *filename, const char *filetype,int *natom
   return data;
 }
 
+#if vmdplugin_ABIVERSION > 10
+static int read_timestep_metadata(void *mydata,
+                                  molfile_timestep_metadata_t *meta) {
+  rstdata *data = (rstdata *)mydata;
+  
+  meta->count = -1;
+  meta->has_velocities = data->ts_meta.has_velocities;
+  if (meta->has_velocities) {
+    vmdcon_printf(VMDCON_INFO,
+                  "rst7plugin) Importing velocities from restart file.\n");
+  }
+  return MOLFILE_SUCCESS;
+}
+#endif
+
 static int read_rst_timestep(void *mydata, int natoms, molfile_timestep_t *ts) {
   rstdata *rst= (rstdata *)mydata;
   int i, j;
-  float x, y, z;
-
+  float x, y, z, a, b, c;
+  
   /* check for rst and first read through already taken place */
   if(rst->count==1 && rst->rstfile==1) 
     return MOLFILE_ERROR; 
 
+  ts->A = ts->B = ts->C = 0.0f;
+  ts->alpha = ts->beta = ts->gamma = 90.0f;
+  
   for (i=0; i<rst->numatoms; i++)  {
     /* changed to i=1 BB */
-    j = fscanf(rst->file, "%f %f %f", &x, &y, &z);
+    j = fscanf(rst->file, "%f%f%f", &x, &y, &z);
     if (j == EOF) {
       return MOLFILE_ERROR;
     } else if (j <= 0) {
-      fprintf(stderr, "Problem reading CRD file\n");
+      vmdcon_printf(VMDCON_ERROR, "rst7plugin) Problem reading CRD file\n");
       return MOLFILE_ERROR;
     }
     ts->coords[3*i] = x;
@@ -135,10 +165,39 @@ static int read_rst_timestep(void *mydata, int natoms, molfile_timestep_t *ts) {
     ts->coords[3*i+2] = z;
   }
 
-  /* Read in optional velocity data.  Units are Angstroms per 1/20.455ps. */
-  /* XXX Not currently implemented.  This should be added sometime soon.  */
+  if (rst->has_vels) {
+    /* Read in optional velocity data.  Units are Angstroms per 1/20.455ps. */
+    for (i=0; i<rst->numatoms; i++)  {
+      j = fscanf(rst->file, "%f%f%f", &x, &y, &z);
+      if (j == EOF) {
+        return MOLFILE_ERROR;
+      } else if (j <= 0) {
+        vmdcon_printf(VMDCON_ERROR, "rst7plugin) Problem reading velocities\n");
+        return MOLFILE_ERROR;
+      }
+#if vmdplugin_ABIVERSION > 10
+      if (ts->velocities != NULL) {
+        ts->velocities[3*i] = x;
+        ts->velocities[3*i+1] = y;
+        ts->velocities[3*i+2] = z;
+      }
+#endif
+    }
+  }
  
-  /* Don't Read box info.  No use for it yet.. */
+  if (rst->has_box) {
+    j = fscanf(rst->file, "%f%f%f%f%f%f", &x, &y, &z, &a, &b, &c);
+    if (j == EOF) {
+      vmdcon_printf(VMDCON_ERROR, "rst7plugin) Problem reading box data\n");
+      return MOLFILE_ERROR;
+    }
+    ts->A = x;
+    ts->B = y;
+    ts->C = z;
+    ts->alpha = a;
+    ts->beta = b;
+    ts->gamma = c;
+  }
   rst->count++;
   /* printf("rst->count: %d\n",rst->count); */
 
@@ -152,35 +211,61 @@ static void close_rst_read(void *mydata) {
 }
 
 static void *open_rst_write(const char *path, const char *filetype, int natoms) {
-  /* Not fixed for writing proper rsts yet....BB */
+  char title[82];
   rstdata *rst;
   FILE *fd;
+  int len;
 
   fd = fopen(path, "wb");
   if (!fd) {
-    fprintf(stderr, "Could not open file %s for writing\n", path);
+    vmdcon_printf(VMDCON_ERROR, "rst7plugin) Could not open file %s for writing\n", path);
     return NULL;
   }
-  fprintf(fd, "TITLE : Created by VMD with %d atoms\n",natoms);
-  
+  /* write out fixed length fortran style string */
+  sprintf(title, "TITLE : Created by VMD with %d atoms",natoms);
+  len = strlen(title);
+  memset(title+len,(int)' ',82-len);
+  title[80] = '\n';
+  title[81] = '\0';
+  fputs(title,fd);
+
   rst = (rstdata *)malloc(sizeof(rstdata));
   rst->file = fd;
   rst->numatoms = natoms;
-  rst->has_box = strcmp(filetype, "rst"); 
+  rst->has_box = 1;
   return rst;
-}    
+}
   
 static int write_rst_timestep(void *v, const molfile_timestep_t *ts) {
   rstdata *rst = (rstdata *)v;
   int i;
   const int ndata = rst->numatoms * 3;
+
+#if vmdplugin_ABIVERSION > 10
+  if (ts->velocities != NULL) {
+    fprintf(rst->file, "%10d %13.7g\n", rst->numatoms, ts->physical_time);
+  } else
+#endif
+    fprintf(rst->file, "%10d\n", rst->numatoms);
+
   for (i=0; i<ndata; i++) {
-    fprintf(rst->file, "%8.3f", ts->coords[i]);
-    if (i % 10 == 0) fprintf(rst->file, "\n"); 
+    fprintf(rst->file, "%12.7f", ts->coords[i]);
+    if ((i+1) % 6 == 0) fprintf(rst->file, "\n"); 
   }
-  if (rst->has_box) {
-    fprintf (rst->file, "\n0.000 0.000 0.000\n");
+  if (ndata % 6 != 0) fprintf(rst->file,"\n");
+
+#if vmdplugin_ABIVERSION > 10
+  if (ts->velocities != NULL) {
+    for (i=0; i<ndata; i++) {
+      fprintf(rst->file, "%12.7f", ts->velocities[i]);
+      if ((i+1) % 6 == 0) fprintf(rst->file, "\n"); 
+    }
+    if (ndata % 6 != 0) fprintf(rst->file,"\n");
   }
+#endif
+
+  fprintf (rst->file, "%12.7f%12.7f%12.7f%12.7f%12.7f%12.7f\n",
+           ts->A, ts->B, ts->C, ts->alpha, ts->beta, ts->gamma);
 
   return MOLFILE_SUCCESS;
 }
@@ -200,13 +285,16 @@ VMDPLUGIN_API int VMDPLUGIN_init(){
   plugin.type = MOLFILE_PLUGIN_TYPE;
   plugin.name = "rst7";
   plugin.prettyname = "AMBER7 Restart";
-  plugin.author = "Brian Bennion";
+  plugin.author = "Brian Bennion, Axel Kohlmeyer";
   plugin.majorv = 0;
-  plugin.minorv = 3;
+  plugin.minorv = 4;
   plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
   plugin.filename_extension = "rst7";
   plugin.open_file_read = open_rst_read;
   plugin.read_next_timestep = read_rst_timestep;
+#if vmdplugin_ABIVERSION > 10
+  plugin.read_timestep_metadata = read_timestep_metadata;
+#endif
   plugin.close_file_read = close_rst_read;
   plugin.open_file_write = open_rst_write;
   plugin.write_timestep = write_rst_timestep;

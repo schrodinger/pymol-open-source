@@ -2375,7 +2375,6 @@ int BasisHitShadow(BasisCallRec * BC)
     const int *vert2prim = BC->vert2prim;
     const int trans_shadows = BC->trans_shadows;
     const int nearest_shadow = BC->nearest_shadow;
-    const float excl_trans = BC->excl_trans;
     const float BasisFudge0 = BC->fudge0;
     const float BasisFudge1 = BC->fudge1;
     const int label_shadow_mode = BC->label_shadow_mode;

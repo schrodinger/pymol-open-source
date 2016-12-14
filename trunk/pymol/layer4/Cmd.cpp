@@ -1248,10 +1248,11 @@ static PyObject *CmdScene(PyObject * self, PyObject * args)
                 store_frame = true,
                 hand = true;
   float animate = -1.0;
+  const char * sele = "all";
 
-  if(!PyArg_ParseTuple(args, "Oss|zbbbbbfzb", &self, &key, &action, &message,
+  if(!PyArg_ParseTuple(args, "Oss|zbbbbbfzbs", &self, &key, &action, &message,
         &store_view, &store_color, &store_active, &store_rep, &store_frame,
-        &animate, &new_key, &hand)) {
+        &animate, &new_key, &hand, &sele)) {
     API_HANDLE_ERROR;
     ok_raise(2);
   }
@@ -1261,7 +1262,7 @@ static PyObject *CmdScene(PyObject * self, PyObject * args)
 
   ok = MovieSceneFunc(G, key, action, message,
       store_view, store_color, store_active, store_rep, store_frame,
-      animate, new_key, hand);
+      animate, new_key, hand, sele);
 
   APIExitBlocked(G);
 ok_except2:
@@ -7452,7 +7453,6 @@ static PyObject *CmdHAdd(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *str1;
-  OrthoLineType s1;
   int quiet;
   int ok = false;
   ok = PyArg_ParseTuple(args, "Osi", &self, &str1, &quiet);

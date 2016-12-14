@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -11,7 +11,7 @@
  *
  *      $RCSfile: qmplugin.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.18 $       $Date: 2011/06/21 05:44:25 $
+ *      $Revision: 1.23 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 /*******************************************************************
@@ -50,6 +50,7 @@
 #define F_SHELL 3
 #define G_SHELL 4
 #define H_SHELL 5
+#define I_SHELL 6
 
 #define SPIN_ALPHA  0
 #define SPIN_BETA   1
@@ -257,6 +258,9 @@ typedef struct
    * E.g. S={0 0 0}, Px={1 0 0}, Dxy={1 1 0}, or Fyyz={0 2 1}. */
   int *angular_momentum;
 
+  /* Highest shell occuring in basis set */
+  int max_shell;
+
 
   /******************************************************
    * normal modes
@@ -430,10 +434,11 @@ static void whereami(FILE *file);
  * Allocates and initiates qmdata_t structure.
  *
  *********************************************************/
-static qmdata_t* init_qmdata(qmdata_t *data) {
+static qmdata_t* init_qmdata() {
   /* allocate memory for main data structure */
-  data = (qmdata_t *)calloc(1,sizeof(qmdata_t));
-  if (data == NULL) return NULL;
+  qmdata_t *data = (qmdata_t *) calloc(1, sizeof(qmdata_t));
+  if (data == NULL)
+    return NULL;
 
   data->runtype = NONE;
   data->scftype = NONE;
@@ -674,7 +679,7 @@ static void multpoint3d(const float *mat, const float opoint[3], float npoint[3]
 
 /* subtract 3rd vector from 2nd and put into 1st
  * in other words, a = b - c  */
-static void vec_sub(float *a, const float *b, const float *c) {
+static void qm_vec_sub(float *a, const float *b, const float *c) {
   a[0]=b[0]-c[0];
   a[1]=b[1]-c[1];
   a[2]=b[2]-c[2];
@@ -683,7 +688,7 @@ static void vec_sub(float *a, const float *b, const float *c) {
 
 /* length of vector */
 static float norm(const float *vect) {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
   return sqrt(vect[0]*vect[0] + vect[1]*vect[1] + vect[2]*vect[2]);
 #else
   return sqrtf(vect[0]*vect[0] + vect[1]*vect[1] + vect[2]*vect[2]);
@@ -764,7 +769,7 @@ static int symmetry_expand(qm_atom_t **atoms, int numunique, int natoms,
     int found = 0;
     for (j=0; j<numunique; j++) {
       float d[3];
-      vec_sub(d, &image[3*i], &unique[3*j]);
+      qm_vec_sub(d, &image[3*i], &unique[3*j]);
       /* printf("%d,%d norm(d)=%f\n", i, j, norm(d)); */
       if (norm(d)<0.001) {
         found = 1;

@@ -8,7 +8,7 @@
  *
  *      $RCSfile: vaspposcarplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.8 $       $Date: 2009/06/22 19:50:38 $
+ *      $Revision: 1.9 $       $Date: 2014/10/10 14:41:01 $
  *
  ***************************************************************************/
 
@@ -17,8 +17,7 @@
  *  Sung Sakong, Dept. of Phys., Univsity Duisburg-Essen
  *  
  *  VASP manual   
- *  http:
-
+ *  http://cms.mpi.univie.ac.at/vasp/
  * 
  *  LINUX
  *  g++ -O2 -Wall -I. -I$VMDBASEDIR/plugins/include -c vaspposcarplugin.c
@@ -387,41 +386,32 @@ static void close_vaspposcar_write(void *mydata)
 
 
 /* registration stuff */
-static molfile_plugin_t vaspposcarplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,         /* type */
-  "POSCAR",                    /* name */
-  "VASP_POSCAR",               /* pretty name */
-  "Sung Sakong",               /* author */
-  0,                           /* major version */
-  6,                           /* minor version */
-  VMDPLUGIN_THREADUNSAFE,      /* is reentrant */
-
-  "POSCAR",                    /* filename_extension */
-  open_vaspposcar_read,        /* open_file_read */
-  read_vaspposcar_structure,   /* read_structure */
-  0,                           /* read_bonds */
-  read_vaspposcar_timestep,    /* read_next_timestep */
-  close_vaspposcar_read,       /* close_file_read */
-  open_vaspposcar_write,       /* open_file_write */
-  write_vaspposcar_structure,  /* write_structure */
-  write_vaspposcar_timestep,   /* write_timestep */
-  close_vaspposcar_write,      /* close_file_write */
-  0,                           /* read_volumetric_metadata */
-  0,                           /* read_volumetric_data */
-  0,                         
-  0,                         
-  0                          /* read_rawgraphics */
-                             /* read_molecule_metadata */
-                             /* write_bonds */
-};
+static molfile_plugin_t plugin;
 
 int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "POSCAR";
+  plugin.prettyname = "VASP_POSCAR";
+  plugin.author = "Sung Sakong";
+  plugin.majorv = 0;
+  plugin.minorv = 7;
+  plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+  plugin.filename_extension = "POSCAR";
+  plugin.open_file_read = open_vaspposcar_read;
+  plugin.read_structure = read_vaspposcar_structure;
+  plugin.read_next_timestep = read_vaspposcar_timestep;
+  plugin.close_file_read = close_vaspposcar_read;
+  plugin.open_file_write = open_vaspposcar_write;
+  plugin.write_structure = write_vaspposcar_structure;
+  plugin.write_timestep = write_vaspposcar_timestep;
+  plugin.close_file_write = close_vaspposcar_write;
   return VMDPLUGIN_SUCCESS;
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspposcarplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

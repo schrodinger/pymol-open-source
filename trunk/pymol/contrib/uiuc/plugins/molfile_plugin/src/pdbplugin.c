@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,14 +16,13 @@
  *
  *      $RCSfile: pdbplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.72 $       $Date: 2009/04/29 15:45:32 $
+ *      $Revision: 1.73 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
 /*
  * PDB file format specifications:
- *   http:
-
+ *   http://www.rcsb.org/pdb/static.do?p=file_formats/pdb/index.html
  */
 
 #include "largefiles.h"   /* platform dependent 64-bit file I/O defines */
@@ -379,8 +378,7 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 the last.
 
 source:
-http:
-
+http://www.rcsb.org/pdb/file_formats/pdb/pdbguide2.2/part_35.html
 */
 
 /*

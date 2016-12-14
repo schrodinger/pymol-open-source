@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: mdfplugin.C,v $
- *      $Author: akohlmey $       $Locker:  $             $State: Exp $
- *      $Revision: 1.19 $       $Date: 2010/10/27 01:40:04 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.21 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -41,7 +41,6 @@
 #define THISPLUGIN plugin
 #include "vmdconio.h"
 
-#define VMDPLUGIN_STATIC
 #include "hash.h"
 
 #include <stdlib.h>
@@ -132,7 +131,6 @@ static int count_mdf_bonds(const char *line) {
   char bond_records[LINESIZE];
   int bonds = 0;
   char *tmp;
-  int retval;
   
   // no bonds or parse error
   if ( get_mdf_bonds(bond_records, line) < 1) {
@@ -396,7 +394,7 @@ static void close_mdf_read(void *v) {
 
 // Plugin Initialization
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+VMDPLUGIN_API int VMDPLUGIN_init(void) { 
   memset(&plugin, 0, sizeof(molfile_plugin_t));
   plugin.abiversion = vmdplugin_ABIVERSION;
   plugin.type = MOLFILE_PLUGIN_TYPE;
@@ -404,7 +402,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   plugin.prettyname = "InsightII MDF";
   plugin.author = "Eamon Caddigan, Axel Kohlmeyer";
   plugin.majorv = 0;
-  plugin.minorv = 5;
+  plugin.minorv = 6;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "mdf";
   plugin.open_file_read = open_mdf_read;
@@ -414,10 +412,10 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+VMDPLUGIN_API int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

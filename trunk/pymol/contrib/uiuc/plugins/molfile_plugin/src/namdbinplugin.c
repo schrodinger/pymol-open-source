@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: namdbinplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.21 $       $Date: 2009/04/29 15:45:32 $
+ *      $Revision: 1.23 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -35,11 +35,13 @@
   typedef long namdbin_int32;
 #endif
 
+#define BLOCK 500
+
 typedef struct {
+  double xyz[3*BLOCK];
   FILE *fd;
   int numatoms;
   int wrongendian;
-  double *xyz;
 } namdbinhandle;
 
 static void *open_namdbin_read(const char *path, const char *filetype, 
@@ -51,13 +53,19 @@ static void *open_namdbin_read(const char *path, const char *filetype,
   char lenbuf[4];
   char tmpc;
 
+  namdbin = (namdbinhandle *)malloc(sizeof(namdbinhandle));
+  if (!namdbin) {
+    fprintf(stderr, "Unable to allocate space for read buffer.\n");
+    return NULL;
+  }
+  memset(namdbin, 0, sizeof(namdbinhandle));
+
   fd = fopen(path, "rb");
   if (!fd) {
     fprintf(stderr, "Could not open file '%s' for reading.\n", path);
+    free(namdbin);
     return NULL;
   }
-  namdbin = (namdbinhandle *)malloc(sizeof(namdbinhandle));
-  memset(namdbin, 0, sizeof(namdbinhandle));
   fseek(fd,0,SEEK_END);
   numatoms = (ftell(fd)-4)/24;
   if (numatoms < 1) {
@@ -86,13 +94,6 @@ static void *open_namdbin_read(const char *path, const char *filetype,
   }
   namdbin->fd = fd;
   namdbin->numatoms = numatoms;
-  namdbin->xyz = (double *)malloc(3 * namdbin->numatoms * sizeof(double));
-  if (!namdbin->xyz) {
-    fprintf(stderr, "Unable to allocate space for %d atoms.\n", namdbin->numatoms);
-    fclose(fd);
-    free(namdbin);
-    return NULL;
-  }
   *natoms = namdbin->numatoms;
   return namdbin;
 }
@@ -101,7 +102,6 @@ static int read_next_timestep(void *v, int natoms, molfile_timestep_t *ts) {
   namdbinhandle *namdbin;
   int i, numatoms;
   char *cdata;
-  char tmp0, tmp1, tmp2, tmp3;
 
   namdbin = (namdbinhandle *)v;
   if (!namdbin->fd) 
@@ -109,31 +109,38 @@ static int read_next_timestep(void *v, int natoms, molfile_timestep_t *ts) {
 
   numatoms = namdbin->numatoms;
 
-  if (fread(namdbin->xyz, sizeof(double), 3 * numatoms, namdbin->fd)
-	                         != (size_t)(3 * numatoms)) {
-    fprintf(stderr, "Failure reading data from NAMD binary file.\n");
-    return MOLFILE_ERROR;
-  }
+  for (i=0; i<namdbin->numatoms; i+=BLOCK) {
+    int j, n;
+    n = namdbin->numatoms - i;
+    if ( n > BLOCK ) n = BLOCK;
 
-  if (namdbin->wrongendian) {
-    fprintf(stderr, "Converting other-endian data from NAMD binary file.\n");
-    cdata = (char *) namdbin->xyz;
-    for ( i=0; i<3*numatoms; ++i, cdata+=8 ) {
-      tmp0 = cdata[0]; tmp1 = cdata[1];
-      tmp2 = cdata[2]; tmp3 = cdata[3];
-      cdata[0] = cdata[7]; cdata[1] = cdata[6];
-      cdata[2] = cdata[5]; cdata[3] = cdata[4];
-      cdata[7] = tmp0; cdata[6] = tmp1;
-      cdata[5] = tmp2; cdata[4] = tmp3;
+    if (fread(namdbin->xyz, sizeof(double), 3*n, namdbin->fd) != (size_t)(3*n)) {
+      fprintf(stderr, "Failure reading data from NAMD binary file.\n");
+      return MOLFILE_ERROR;
     }
-  }
 
-  if (ts) {
-    for ( i=0; i<numatoms; ++i) {
-      ts->coords[3*i] = namdbin->xyz[3*i];
-      ts->coords[3*i+1] = namdbin->xyz[3*i+1];
-      ts->coords[3*i+2] = namdbin->xyz[3*i+2];
+    if (namdbin->wrongendian) {
+      if ( ! i ) fprintf(stderr, "Converting other-endian data from NAMD binary file.\n");
+      cdata = (char *) namdbin->xyz;
+      for ( j=0; j<3*n; ++j, cdata+=8 ) {
+        char tmp0, tmp1, tmp2, tmp3;
+        tmp0 = cdata[0]; tmp1 = cdata[1];
+        tmp2 = cdata[2]; tmp3 = cdata[3];
+        cdata[0] = cdata[7]; cdata[1] = cdata[6];
+        cdata[2] = cdata[5]; cdata[3] = cdata[4];
+        cdata[7] = tmp0; cdata[6] = tmp1;
+        cdata[5] = tmp2; cdata[4] = tmp3;
+      }
     }
+
+    if (ts) {
+      for (j=0; j<n; ++j) {
+        ts->coords[3L*(i+j)  ] = namdbin->xyz[3*j  ];
+        ts->coords[3L*(i+j)+1] = namdbin->xyz[3*j+1];
+        ts->coords[3L*(i+j)+2] = namdbin->xyz[3*j+2];
+      }
+    }
+
   }
   /*
    * Close the file handle and set to NULL so we know we're done reading 
@@ -148,7 +155,6 @@ static void close_file_read(void *v) {
   namdbinhandle *namdbin = (namdbinhandle *)v;
   if (namdbin->fd)
     fclose(namdbin->fd);
-  free(namdbin->xyz);
   free(namdbin);
 }
 
@@ -157,13 +163,19 @@ static void *open_namdbin_write(const char *path, const char *filetype,
   namdbinhandle *namdbin;
   FILE *fd;
 
-  fd = fopen(path, "wb");
-  if (!fd) {
-    fprintf(stderr, "Could not open file %s for writing\n", path);
+  namdbin = (namdbinhandle *)malloc(sizeof(namdbinhandle));
+  if (!namdbin) {
+    fprintf(stderr, "Unable to allocate space for write buffer.\n");
     return NULL;
   }
 
-  namdbin = (namdbinhandle *)malloc(sizeof(namdbinhandle));
+  fd = fopen(path, "wb");
+  if (!fd) {
+    fprintf(stderr, "Could not open file %s for writing\n", path);
+    free(namdbin);
+    return NULL;
+  }
+
   namdbin->fd = fd;
   namdbin->numatoms = natoms;
   return namdbin;
@@ -181,9 +193,17 @@ static int write_timestep(void *v, const molfile_timestep_t *ts) {
   myint = (namdbin_int32)namdbin->numatoms;
   fwrite(&myint, 4, 1, namdbin->fd);
 
-  for (i=0; i<3*namdbin->numatoms; i++) {
-    double tmp = ts->coords[i];
-    if (fwrite(&tmp, sizeof(double), 1, namdbin->fd) != 1) {
+  for (i=0; i<namdbin->numatoms; i+=BLOCK) {
+    double *tmp = namdbin->xyz;
+    int j, n;
+    n = namdbin->numatoms - i;
+    if ( n > BLOCK ) n = BLOCK;
+    for (j=0; j<n; ++j) {
+      tmp[3*j  ] = ts->coords[3L*(i+j)  ];
+      tmp[3*j+1] = ts->coords[3L*(i+j)+1];
+      tmp[3*j+2] = ts->coords[3L*(i+j)+2];
+    }
+    if (fwrite(tmp, sizeof(double), 3*n, namdbin->fd) != 3*n) {
       fprintf(stderr, "Error writing namd binary file\n");
       return MOLFILE_ERROR;
     }

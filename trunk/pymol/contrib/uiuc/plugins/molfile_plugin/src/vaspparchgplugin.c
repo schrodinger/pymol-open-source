@@ -8,7 +8,7 @@
  *
  *      $RCSfile: vaspparchgplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.1 $       $Date: 2009/06/23 20:01:57 $
+ *      $Revision: 1.2 $       $Date: 2014/10/10 14:41:01 $
  *
  ***************************************************************************/
 
@@ -18,8 +18,7 @@
  *  Sung Sakong, Dept. of Phys., Univsity Duisburg-Essen
  *  
  *  VASP manual   
- *  http:
-
+ *  http://cms.mpi.univie.ac.at/vasp/
  * 
  *  LINUX
  *  g++ -O2 -Wall -I. -I$VMDBASEDIR/plugins/include -c vaspparchgplugin.c
@@ -293,36 +292,29 @@ static void close_vaspparchg_read(void *mydata)
 }
 
 
-static molfile_plugin_t vaspparchgplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,       /* type */ 	
-  "PARCHG",                  /* name */
-  "VASP_PARCHG",             /* pretty name */
-  "Sung Sakong",             /* author */
-  0,                         /* major version */
-  6,                         /* minor version */
-  VMDPLUGIN_THREADUNSAFE,    /* is reentrant */
-
-  "PARCHG",                  /* filename_extension */
-  open_vaspparchg_read,      /* open_file_read */          
-  0,                         /* read_structure */
-  0,                         /* read_bonds */
-  0,                         /* read_next_timestep */
-  close_vaspparchg_read,     /* close_file_read */
-  0,                         /* open_file_write */
-  0,                         /* write_structure */
-  0,                         /* write_timestep */
-  0,                         /* close_file_write */
-  read_vaspparchg_metadata,  /* read_volumetric_metadata */
-  read_vaspparchg_data,      /* read_volumetric_data */
-  0,                         
-  0,                         
-  0                          /* read_rawgraphics */
-                             /* read_molecule_metadata */
-                             /* write_bonds */
-};
+/* registration stuff */
+static molfile_plugin_t plugin;
 
 int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "PARCHG";
+  plugin.prettyname = "VASP_PARCHG";
+  plugin.author = "Sung Sakong";
+  plugin.majorv = 0;
+  plugin.minorv = 7;
+  plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+  plugin.filename_extension = "PARCHG";
+  plugin.open_file_read = open_vaspparchg_read;
+  plugin.close_file_read = close_vaspparchg_read;
+  plugin.read_volumetric_metadata = read_vaspparchg_metadata;
+  plugin.read_volumetric_data = read_vaspparchg_data;
+  return VMDPLUGIN_SUCCESS;
+}
+
+int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
@@ -330,7 +322,3 @@ int VMDPLUGIN_fini(void) {
   return VMDPLUGIN_SUCCESS;
 }
 
-int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspparchgplugin);
-  return VMDPLUGIN_SUCCESS;
-}

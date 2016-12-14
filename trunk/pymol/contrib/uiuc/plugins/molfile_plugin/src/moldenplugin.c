@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: moldenplugin.c,v $
- *      $Author: saam $       $Locker:  $             $State: Exp $
- *      $Revision: 1.32 $       $Date: 2011/06/20 20:54:58 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.40 $       $Date: 2016/11/28 05:01:54 $
  *
  ***************************************************************************/
 
@@ -30,8 +30,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
+
+#include <string.h>
+
+#if defined(_AIX)
+#include <strings.h>
+#endif
+
+#if defined(WIN32) || defined(WIN64)
+#define strcasecmp stricmp
+#endif
+
 #include "molfile_plugin.h"
 #include "unit_conversion.h"
 #include "periodic_table.h"
@@ -108,7 +119,7 @@ static void *open_molden_read(const char *filename,
   if (!fd) return NULL;
   
   /* allocate memory for main QM data structure */
-  data = init_qmdata(data);
+  data = init_qmdata();
   if (!data) return NULL;
 
   data->file = fd;
@@ -198,7 +209,7 @@ static void *open_molden_read(const char *filename,
         /* The first line of the XYZ type [GEOMETRIES] input
          * contains the number of atoms. */
         if (fscanf(data->file, "%d", natoms) != 1) {
-          printf("moldenplugin) No # atoms found in [GEOMTERIES] section!\n");
+          printf("moldenplugin) No # atoms found in [GEOMETRIES] section!\n");
           return NULL;
         }
         data->numatoms = *natoms;
@@ -359,7 +370,7 @@ static int read_molden_structure(void *mydata, int *optflags,
 
 /***********************************************************
  *
- * Read atoms for one frame from [GEOMETRIES} section.
+ * Read atoms for one frame from [GEOMETRIES] section.
  *
  ***********************************************************/
 static int read_geom_block(qmdata_t *data) {
@@ -793,7 +804,7 @@ static int get_basis(qmdata_t *data) {
 
 
       /* Add new shell(s). */
-      if (!strcmp(shelltype, "sp")) {
+      if (!strcasecmp(shelltype, "sp")) {
         /* Two new shells for SP */
         data->basis_set[i].shell =
           (shell_t*)realloc(data->basis_set[i].shell,
@@ -813,7 +824,7 @@ static int get_basis(qmdata_t *data) {
 
       /* If this is an SP-shell we have to add as separate 
        * S-shell and P-shell. */
-      if (!strcmp(shelltype, "sp")) {
+      if (!strcasecmp(shelltype, "sp")) {
         shell->type      = SP_S_SHELL;
         shell2 = &(data->basis_set[i].shell[numshells+1]);
         shell2->numprims = numprims;
@@ -825,8 +836,7 @@ static int get_basis(qmdata_t *data) {
       for (j=0; j<numprims; j++) {
         int nr;
         double expon=0.f, coeff1, coeff2=0.f;
-	char s_expon[128], s_coeff1[128], s_coeff2[128];
-	if (!fgets(buffer,1024,data->file)) return FALSE;
+        if (!fgets(buffer,1024,data->file)) return FALSE;
 
 	/* MOLDEN writes the basis set coefficients using Fortran style notation 
 	 * where the exponential character is 'D' instead of 'E'. Other packages 
@@ -844,7 +854,7 @@ static int get_basis(qmdata_t *data) {
         shell->prim[j].contraction_coeff = coeff1;
 
         /* P-shell component of SP-shell */
-        if (!strcmp(shelltype, "sp")) {
+        if (!strcasecmp(shelltype, "sp")) {
           if (nr!=3) {
             printf("moldenplugin) Bad SP-shell format in [GTO] section\n");
             return FALSE;
@@ -860,7 +870,7 @@ static int get_basis(qmdata_t *data) {
       numshells++;
 
       /* Account for SP-shells */
-      if (!strcmp(shelltype, "sp")) {
+      if (!strcasecmp(shelltype, "sp")) {
         numshells++;
         data->num_basis_funcs += numprims;
       }
@@ -906,7 +916,6 @@ static int get_basis(qmdata_t *data) {
     }
   }
 
-
   /* If we have MOs in the file we must provide the 
    * angular momentum exponents.
    * The order of P, D, F en G functions is as follows:
@@ -923,8 +932,16 @@ static int get_basis(qmdata_t *data) {
    */
   ALLOCATE(data->angular_momentum, int, 3*data->wavef_size);
 
+  j=0;
   for (i=0; i<data->num_shells; i++) {
     switch (data->shell_types[i]) {
+    case S_SHELL:
+    case SP_S_SHELL:
+      data->angular_momentum[j  ]=0;
+      data->angular_momentum[j+1]=0;
+      data->angular_momentum[j+2]=0;
+      j += 3;
+      break;
     case P_SHELL:
     case SP_P_SHELL:
       angular_momentum_expon(&data->angular_momentum[j  ], "x");
@@ -1062,12 +1079,12 @@ static int fill_basis_arrays(qmdata_t *data) {
  ************************************************ */
 static int shelltype_int(char *type) {
   int shelltype;
-  if      (!strcmp(type, "sp")) shelltype = SP_SHELL;
-  else if (!strcmp(type, "s"))  shelltype = S_SHELL;
-  else if (!strcmp(type, "p"))  shelltype = P_SHELL;
-  else if (!strcmp(type, "d"))  shelltype = D_SHELL;
-  else if (!strcmp(type, "f"))  shelltype = F_SHELL;
-  else if (!strcmp(type, "g"))  shelltype = G_SHELL;
+  if      (!strcasecmp(type, "sp")) shelltype = SP_SHELL;
+  else if (!strcasecmp(type, "s"))  shelltype = S_SHELL;
+  else if (!strcasecmp(type, "p"))  shelltype = P_SHELL;
+  else if (!strcasecmp(type, "d"))  shelltype = D_SHELL;
+  else if (!strcasecmp(type, "f"))  shelltype = F_SHELL;
+  else if (!strcasecmp(type, "g"))  shelltype = G_SHELL;
   else shelltype = UNK_SHELL;
   
   return shelltype;
@@ -1097,7 +1114,8 @@ static int count_orbitals(qmdata_t *data) {
   char spin[1024];
   qm_wavefunction_t *wave;
   moldendata_t *moldendata = (moldendata_t *)data->format_specific_data;
-
+  int dummy1;
+  float dummy2;
 
   /* Place file pointer after [MO] keyword in line containing "Spin". */
   fseek(data->file, moldendata->filepos_mo, SEEK_SET);
@@ -1113,23 +1131,20 @@ static int count_orbitals(qmdata_t *data) {
   strtoupper(spin);
   if (strcmp(spin, "ALPHA")) return FALSE;
 
-  /* Count wavefunction coefficients */
-  while (1) {
-    int nr, atomid;
-    char buffer[1024];
-    if (!fgets(buffer,1024,data->file)) return FALSE;
-    nr = sscanf(buffer,"%d %*f", &atomid);
-    if (nr==0) break;
-    num_wave_coeff++;
-  }
+  /* Removed redundant count of num_wave_coeff as this is equivalent to wavef_size */
+  num_wave_coeff = data->wavef_size;
 
-
+  /* For pruned AOs, with only non-zero coeffs, this is redundant */
+  /*
   if (data->wavef_size && 
       data->wavef_size != num_wave_coeff) {
-    printf("moldenplugin) No match between # wavefunction coefficients\n");
-    printf("moldenplugin) and # cart. basis functions in basis set!\n");
+    printf("moldenplugin) Mismatch between # wavefunction coefficients (%d)\n",
+           num_wave_coeff);
+    printf("moldenplugin) and # cart. basis functions (%d)in basis set!\n", 
+           data->wavef_size);
     return FALSE;
   }
+  */
 
   /* Allocate memory for the qm_timestep frame */
   data->qm_timestep = (qm_timestep_t *)calloc(1, sizeof(qm_timestep_t));
@@ -1146,16 +1161,29 @@ static int count_orbitals(qmdata_t *data) {
   /* Place file pointer on line after the [MO] keyword. */
   fseek(data->file, moldendata->filepos_mo, SEEK_SET);
 
-  /* Count orbitals */
+  /* Count MOs */
+  fscanf(data->file, " Ene= %f\n", &orbenergy);
+  fscanf(data->file, " Spin= %s\n", spin);
+  fscanf(data->file, " Occup= %f\n", &occu);
+
   while (1) {
+    int check_reads = 2;
+    wave->num_orbitals++;
+
+    /* skip over MO coeffs */
+    while(check_reads == 2)
+    {
+      check_reads = fscanf(data->file, "%d %f", &dummy1, &dummy2);
+    }
+
     nr  = fscanf(data->file, " Ene= %f\n", &orbenergy);
     nr += fscanf(data->file, " Spin= %s\n", spin);
     nr += fscanf(data->file, " Occup= %f\n", &occu);
 
-    eatline(data->file, num_wave_coeff);
-    if (nr!=3 || toupper(spin[0])!='A') break;
-    wave->num_orbitals++;
+    if (nr!=3 || toupper(spin[0])!='A') 
+      break;
   }
+  //printf("found %d MOs!\n",wave->num_orbitals);
 
 
   /* Add wavefunction for spin beta */
@@ -1169,14 +1197,21 @@ static int count_orbitals(qmdata_t *data) {
     wave->num_orbitals = 1;
 
     while (1) {
+      int check_reads = 2;
+      wave->num_orbitals++;
+
+      /* skip over MO coeffs */
+      while(check_reads == 2)
+      {
+        check_reads = fscanf(data->file, "%d %f", &dummy1, &dummy2);
+      }
+
       nr  = fscanf(data->file, " Ene= %f\n", &orbenergy);
       nr += fscanf(data->file, " Spin= %s\n", spin);
       nr += fscanf(data->file, " Occup= %f\n", &occu);
 
-      eatline(data->file, num_wave_coeff);
       if (nr!=3 || toupper(spin[0])!='B' ||
           wave->num_orbitals>=num_wave_coeff) break;
-      wave->num_orbitals++;
     }
   }
 
@@ -1195,10 +1230,13 @@ static int read_molecular_orbitals(qmdata_t *data) {
 
   wave = &data->qm_timestep->wave[0];
   ALLOCATE(wave->wave_coeffs, float, wave->num_coeffs*wave->num_orbitals);
-  /* printf("num_coeffs   = %d\n", wave->num_coeffs);
-  printf("num_orbitals = %d\n", wave->num_orbitals);
-  printf("num_wave     = %d\n", data->qm_timestep->numwave);
+  // DEBUG
+  /*
+  printf("moldenplugin) num_coeffs   = %d\n", wave->num_coeffs);
+  printf("moldenplugin) num_orbitals = %d\n", wave->num_orbitals);
+  printf("moldenplugin) num_wave     = %d\n", data->qm_timestep->numwave);
   */
+  
 
   /* Read wavefunction coefficients for spin alpha */
   if (!read_wave_coeffs(data->file, wave)) return FALSE;
@@ -1217,22 +1255,42 @@ static int read_molecular_orbitals(qmdata_t *data) {
 static int read_wave_coeffs(FILE *file, qm_wavefunction_t *wave) {
   int i, j, nr;
   char buffer[1024];
+  int AOid;
+  float wf_coeff;
+  char keystring[10];
   float *wave_coeffs = wave->wave_coeffs;
 
+  /* This works for pruned and unpruned (all zero coeffs are preserved) MO representaitions.
+   * Clearly this data redundancy should be avoided on systems with a few hundred atoms. */
+
+  /* set all coeffs to zero */
+  for (i=0; i<wave->num_orbitals; i++)
+    for (j=0; j<wave->num_coeffs; j++)
+        wave_coeffs[i*wave->num_coeffs + j] = 0.0;
+
+  /* each molecular orbital must have at least 1 non-zero coeff in its represenation */
+  /* eat Ene= Spin= Occup=  lines */
+  eatline(file, 3);
   for (i=0; i<wave->num_orbitals; i++) {
-    eatline(file, 3);
-    for (j=0; j<wave->num_coeffs; j++) {
-      int atomid;
+    while(1) {
+      int nr2;
       if (!fgets(buffer,1024,file)) return FALSE;
-      nr = sscanf(buffer,"%d %f", &atomid, &wave_coeffs[i*wave->num_coeffs+j]);
-      /*printf("%d,%d: %d %f\n", i, j, atomid, wave_coeffs[i*wave->num_coeffs+j]);*/
+      nr = sscanf(buffer,"%d %f", &AOid, &wf_coeff);
+      wave_coeffs[i*wave->num_coeffs+AOid-1] = wf_coeff;
+      
+      // DEBUG
+      //printf("moldenplugin) %d,%d: %d %f\n", i, AOid-1, AOid, wave_coeffs[i*wave->num_coeffs+AOid-1]);
+      nr2 = sscanf(buffer, "%s", keystring);
+      if(!strcmp(keystring,"Ene=")||nr2==-1) 
+        break;
+
       if (nr==0) {
         printf("moldenplugin) Error reading wavefunction coefficients!\n");
         return FALSE;
       }
     }
+    eatline(file, 2);
   }
-
   return TRUE;
 }
 
@@ -1249,9 +1307,9 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   plugin.type = MOLFILE_PLUGIN_TYPE;
   plugin.name = "molden";
   plugin.prettyname = "Molden";
-  plugin.author = "Markus Dittrich, Jan Saam";
+  plugin.author = "Markus Dittrich, Jan Saam, Alexey Titov";
   plugin.majorv = 0;
-  plugin.minorv = 5;
+  plugin.minorv = 10;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "molden";
   plugin.open_file_read = open_molden_read;

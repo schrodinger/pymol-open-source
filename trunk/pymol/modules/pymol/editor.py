@@ -157,6 +157,7 @@ ARGUMENTS
             _self.iterate(tmp_connect,"tmp[0]=resv", space={ 'tmp' : tmp })
             tmp[0] = str(tmp[0]-1) # counting down
             _self.alter(tmp_editor,"resi=tmp[0]",space={ 'tmp' : tmp})
+            _self.set_geometry(tmp_connect, 3, 3) # make nitrogen planar
             _self.fuse("(%s and name C)"%(tmp_editor),tmp_connect,2)
             _self.select(tmp_domain, "byresi (pk1 | pk2)")
 
@@ -169,8 +170,6 @@ ARGUMENTS
                 if ((_self.select(tmp3,"(name CA,CH3 & nbr. ?pk1)",domain=tmp_domain)==1) and
                     (_self.select(tmp4,"(name CA,CH3 & nbr. ?pk2)",domain=tmp_domain)==1)):
                     _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
-
-                _self.set_geometry(tmp2,3,3) # make nitrogen planer
 
                 if hydro:
                     _self.h_fix(tmp2) # fix hydrogen position
@@ -210,6 +209,7 @@ ARGUMENTS
             _self.iterate(tmp_connect,"tmp[0]=resv", space={ 'tmp' : tmp })
             tmp[0] = str(tmp[0]+1) # counting up
             _self.alter(tmp_editor,"resi=tmp[0]",space={ 'tmp' : tmp})
+            _self.set_geometry(tmp_editor + " & name N", 3, 3) # make nitrogen planar
             _self.fuse("(%s and name N)"%tmp_editor,tmp_connect,2)
             _self.select(tmp_domain, "byresi (pk1 | pk2)")
 
@@ -223,7 +223,6 @@ ARGUMENTS
                 if ((_self.select(tmp3,"(name CA,CH3 & nbr. ?pk1)",domain=tmp_domain)==1) and
                     (_self.select(tmp4,"(name CA,CH3 & nbr. ?pk2)",domain=tmp_domain)==1)):
                     _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
-                _self.set_geometry("pk1",3,3) # make nitrogen planer
                 if hydro:
                     _self.h_fix("pk1") # fix hydrogen position
                 if ss:

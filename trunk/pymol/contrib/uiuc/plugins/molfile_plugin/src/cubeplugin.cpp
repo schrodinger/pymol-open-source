@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -15,16 +15,16 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: cubeplugin.C,v $
- *      $Author: akohlmey $       $Locker:  $             $State: Exp $
- *      $Revision: 1.29 $       $Date: 2009/05/19 20:33:46 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.32 $       $Date: 2016/11/28 05:01:53 $
  *
  ***************************************************************************/
 
 //
 // Plugin reader for Gaussian "cube" files
 //
-// Gaussian "cube" file format described here:
-//   http://www.gaussian.com/00000430.htm
+// Gaussian "cube" file format described here (as of 2013-09-24):
+// http://www.gaussian.com/g_tech/g_ur/u_cubegen.htm
 //
 
 #include <stdio.h>
@@ -135,12 +135,6 @@ static void cube_buildrotmat(cube_t *cube, float *o, float *a, float *b)
   }
 }
 
-
-static void eatline(FILE * fd) {
-  char readbuf[1025];
-  fgets(readbuf, 1024, fd);    // go on to next line
-}  
-
 // prototype.
 static void close_cube_read(void *v);
 
@@ -151,6 +145,7 @@ static void *open_cube_read(const char *filepath, const char *filetype,
   int xsize, ysize, zsize;
   float a[3], b[3], c[3];
   int i;
+  char readbuf[1024];
  
   fd = fopen(filepath, "rb");
   if (!fd) 
@@ -177,17 +172,24 @@ static void *open_cube_read(const char *filepath, const char *filetype,
   molfile_volumetric_t voltmpl; // base information for all data sets.
 
   // read in cube file header information
-  char readbuf[256]; 
-  fgets(readbuf, 256, cube->fd);    // go on to next line
+  fgets(readbuf, 1023, cube->fd);    // go on to next line
 
   // identify this file, and read title string into dataset info
   strcpy(voltmpl.dataname, "Gaussian Cube: ");
   strncat(voltmpl.dataname, readbuf, 240);      // 240 is max space left after
                                                 //   "Gaussian Cube: "
-  eatline(cube->fd);          // skip second header line 
+  fgets(readbuf, 1023, cube->fd); // skip second header line 
 
-  // read in number of atoms
-  if (fscanf(cube->fd, "%d", &cube->numatoms) != 1) {
+  // read number of atoms and cube origin
+  // XXX: As of Gaussian09 revD01 this line contains an
+  // additional, yet undocumented (integer) number
+  // we read the entire and parse only the known numbers
+  if ((fgets(readbuf, 255, cube->fd) == NULL) ||
+      (sscanf(readbuf, "%d%f%f%f",
+              &cube->numatoms,
+              &voltmpl.origin[0],
+              &voltmpl.origin[1],
+              &voltmpl.origin[2]) != 4 )) {
     close_cube_read(cube);
     return NULL;
   }
@@ -201,30 +203,20 @@ static void *open_cube_read(const char *filepath, const char *filetype,
   }
   *natoms = cube->numatoms;
 
-  // read in cube origin
-  if ( fscanf(cube->fd, "%f %f %f", 
-         &voltmpl.origin[0], 
-         &voltmpl.origin[1], 
-         &voltmpl.origin[2]) != 3 ) {
-    close_cube_read(cube);
-    return NULL;
-  }
 
   // read in cube axes and sizes
-  if ((fscanf(cube->fd, "%d", &xsize) != 1) ||
-      (fscanf(cube->fd, "%f %f %f", &a[0], &a[1], &a[2]) != 3)) {
+  if ((fgets(readbuf, 255, cube->fd) == NULL) ||
+      (sscanf(readbuf, "%d%f%f%f",&xsize, &a[0], &a[1], &a[2]) != 4)) {
     close_cube_read(cube);
     return NULL;
   }
-
-  if ((fscanf(cube->fd, "%d", &ysize) != 1) ||
-      (fscanf(cube->fd, "%f %f %f", &b[0], &b[1], &b[2]) != 3)) {
+  if ((fgets(readbuf, 255, cube->fd) == NULL) ||
+      (sscanf(readbuf, "%d%f%f%f",&ysize, &b[0], &b[1], &b[2]) != 4)) {
     close_cube_read(cube);
     return NULL;
   }
-
-  if ((fscanf(cube->fd, "%d", &zsize) != 1) ||
-      (fscanf(cube->fd, "%f %f %f", &c[0], &c[1], &c[2]) != 3)) {
+  if ((fgets(readbuf, 255, cube->fd) == NULL) ||
+      (sscanf(readbuf, "%d%f%f%f",&zsize, &c[0], &c[1], &c[2]) != 4)) {
     close_cube_read(cube);
     return NULL;
   }
@@ -234,8 +226,6 @@ static void *open_cube_read(const char *filepath, const char *filetype,
   voltmpl.ysize = ysize;
   voltmpl.zsize = zsize;
   voltmpl.has_color = 0;
-
-  eatline(cube->fd);     // skip remaining end of line characters
 
   // to make the periodic display work, we need to rotate
   // the cellvectors (and the coordinates) in such a way,
@@ -282,7 +272,6 @@ static void *open_cube_read(const char *filepath, const char *filetype,
   voltmpl.zaxis[1] *= bohr * zsize; 
   voltmpl.zaxis[2] *= bohr * zsize; 
 
-#if 1
   /*   As of VMD version 1.8.3, volumetric data points are 
    *   expected to represent the center of a grid box. cube format 
    *   volumetric data represents the value at the edges of the 
@@ -292,15 +281,14 @@ static void *open_cube_read(const char *filepath, const char *filetype,
    *   is updated to explicitly allow point/face-centered data sets.
    */
   voltmpl.origin[0] -= 0.5 * ( voltmpl.xaxis[0] / (double) xsize
-			+ voltmpl.yaxis[0] / (double) ysize
-			+ voltmpl.zaxis[0] / (double) zsize);
+                    + voltmpl.yaxis[0] / (double) ysize
+                    + voltmpl.zaxis[0] / (double) zsize);
   voltmpl.origin[1] -= 0.5 * ( voltmpl.xaxis[1] / (double) xsize
-			+ voltmpl.yaxis[1] / (double) ysize
-			+ voltmpl.zaxis[1] / (double) zsize);
+                    + voltmpl.yaxis[1] / (double) ysize
+                    + voltmpl.zaxis[1] / (double) zsize);
   voltmpl.origin[2] -= 0.5 * ( voltmpl.xaxis[2] / (double) xsize
-			+ voltmpl.yaxis[2] / (double) ysize
-			+ voltmpl.zaxis[2] / (double) zsize);
-#endif
+                    + voltmpl.yaxis[2] / (double) ysize
+                    + voltmpl.zaxis[2] / (double) zsize);
 
 #if defined(TEST_PLUGIN)
   printf("cell before rotation:\n");
@@ -316,8 +304,8 @@ static void *open_cube_read(const char *filepath, const char *filetype,
 
   // store the unit cell information for later perusal.
   if (cube_readbox(&(cube->box), voltmpl.xaxis, voltmpl.yaxis, voltmpl.zaxis)) {
-	  vmdcon_printf(VMDCON_WARN, "cubeplugin) Calculation of unit cell "
-                                     "size failed. Continuing anyways...\n");
+    vmdcon_printf(VMDCON_WARN, "cubeplugin) Calculation of unit cell "
+                  "size failed. Continuing anyways...\n");
   }
 
   cube->crdpos = ftell(cube->fd); // and record beginning of coordinates
@@ -332,9 +320,8 @@ static void *open_cube_read(const char *filepath, const char *filetype,
     memcpy(cube->vol, &voltmpl, sizeof(voltmpl));
 
     // skip over coordinates to find the start of volumetric data
-    for (i=0; i < cube->numatoms; i++) {
-      eatline(cube->fd);
-    }
+    for (i=0; i < cube->numatoms; i++)
+      fgets(readbuf, 1023, cube->fd);
 
     cube->datapos = ftell(cube->fd); // and record beginning of data
     // XXX fseek()/ftell() are incompatible with 64-bit LFS I/O, 
@@ -344,9 +331,8 @@ static void *open_cube_read(const char *filepath, const char *filetype,
 
     // orbital cube file. we now have to read the orbitals section
     // skip over coordinates
-    for (i=0; i < cube->numatoms; i++) {
-      eatline(cube->fd);
-    }
+    for (i=0; i < cube->numatoms; i++)
+      fgets(readbuf, 1023, cube->fd);
       
     fscanf(cube->fd, "%d", &cube->nsets);
     vmdcon_printf(VMDCON_INFO, "cubeplugin) found %d orbitals\n", cube->nsets);
@@ -358,7 +344,7 @@ static void *open_cube_read(const char *filepath, const char *filetype,
       sprintf(cube->vol[i].dataname, "Gaussian Cube: Orbital %d", orb);
     }
       
-    eatline(cube->fd);        // gobble up rest of line
+    fgets(readbuf, 1023, cube->fd);  // gobble up rest of line
     cube->datapos = ftell(cube->fd); // and record beginning of data
     // XXX fseek()/ftell() are incompatible with 64-bit LFS I/O, 
     // hope we don't read any files >= 2GB...
@@ -599,7 +585,7 @@ int VMDPLUGIN_init(void) {
   plugin.prettyname = "Gaussian Cube";
   plugin.author = "Axel Kohlmeyer, John Stone";
   plugin.majorv = 1;
-  plugin.minorv = 1;
+  plugin.minorv = 2;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "cub,cube";
   plugin.open_file_read = open_cube_read;

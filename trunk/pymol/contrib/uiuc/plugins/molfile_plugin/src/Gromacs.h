@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2016 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -9,7 +9,7 @@
  * RCS INFORMATION:
  *      $RCSfile: Gromacs.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.27 $       $Date: 2009/04/29 15:45:27 $
+ *      $Revision: 1.34 $       $Date: 2016/11/28 05:01:53 $
  ***************************************************************************/
 
 /*
@@ -981,56 +981,56 @@ static int g96_timestep(md_file *mf, md_ts *ts) {
 //     <num atoms>
 static int gro_header(md_file *mf, char *title, int titlelen, float *timeval,
                int *natoms, int rewind) {
-	char buf[MAX_GRO_LINE + 1];
-	long fpos;
-	char *p;
+  char buf[MAX_GRO_LINE + 1];
+  long fpos;
+  char *p;
 
-	// Check parameters
-	if (!mf) return mdio_seterror(MDIO_BADPARAMS);
+  // Check parameters
+  if (!mf)
+    return mdio_seterror(MDIO_BADPARAMS);
 
-	// Get the current file position for rewinding later
-	fpos = ftell(mf->f);
+  // Get the current file position for rewinding later
+  fpos = ftell(mf->f);
 
-	// The header consists of 2 lines - get the first line
-	if (mdio_readline(mf, buf, MAX_GRO_LINE + 1) < 0) return -1;
+  // The header consists of 2 lines - get the first line
+  if (mdio_readline(mf, buf, MAX_GRO_LINE + 1) < 0) return -1;
 
-	// The timevalue can be included in the title string
-	// after a "t=" prefix.
-	if ((p = (char *) strstr(buf, "t="))) {
-		char *q = p;
-		*(q--) = 0;
+  // The timevalue can be included in the title string
+  // after a "t=" prefix.
+  if ((p = (char *) strstr(buf, "t="))) {
+    char *q = p;
+    *(q--) = 0;
 
-		// Skip the `t=' and strip whitespace from
-		// the resulting strings
-		p += 2;
-		strip_white(p);
-		strip_white(buf);
+    // Skip the `t=' and strip whitespace from
+    // the resulting strings
+    p += 2;
+    strip_white(p);
+    strip_white(buf);
 
-		// Grab the timevalue from the title string
-		if (timeval) *timeval = (float) atof(p);
-	}
-	else {
-		// No timevalue - just copy the string
-		if (timeval) *timeval = 0;
-	}
+    // Grab the timevalue from the title string
+    if (timeval) *timeval = (float) atof(p);
+  } else {
+    // No timevalue - just copy the string
+    if (timeval) *timeval = 0;
+  }
 
-	// Copy the title string
-	if (title && titlelen) strncpy(title, buf, titlelen);
+  // Copy the title string
+  if (title && titlelen) strncpy(title, buf, titlelen);
 
-	// Get the second line and grab the number of atoms
-	if (mdio_readline(mf, buf, MAX_GRO_LINE + 1) < 0) return -1;
+  // Get the second line and grab the number of atoms
+  if (mdio_readline(mf, buf, MAX_GRO_LINE + 1) < 0) return -1;
 
-	// Store the number of atoms
-	if (natoms) if (!(*natoms = atoi(buf)))
-		return mdio_seterror(MDIO_BADFORMAT);
+  // Store the number of atoms
+  if (natoms && (!(*natoms = atoi(buf))))
+    return mdio_seterror(MDIO_BADFORMAT);
 
-	// Now we rewind the file so that subsequent calls to
-	// gro_timestep() will succeed. gro_timestep() requires
-	// the header to be at the current file pointer.
-	if (rewind) fseek(mf->f, fpos, SEEK_SET);
+  // Now we rewind the file so that subsequent calls to
+  // gro_timestep() will succeed. gro_timestep() requires
+  // the header to be at the current file pointer.
+  if (rewind)
+    fseek(mf->f, fpos, SEEK_SET);
 
-	// Done!
-	return 0;
+  return 0; // Done!
 }
 
 
@@ -1046,43 +1046,57 @@ static int gro_header(md_file *mf, char *title, int titlelen, float *timeval,
 //    A = atom number
 //
 static int gro_rec(md_file *mf, md_atom *ma) {
-	char	buf[MAX_GRO_LINE + 1];
-	char	atomnum[6];
-	int	n;
+  char buf[MAX_GRO_LINE + 1];
+  char atomnum[6];
+  char xposc[12], yposc[12], zposc[12];
+  int n;
 
-	if (!mf) return mdio_seterror(MDIO_BADPARAMS);
+  if (!mf)
+    return mdio_seterror(MDIO_BADPARAMS);
 
-	do {
-		if (mdio_readline(mf, buf, MAX_GRO_LINE + 1, 0) < 0) return -1;
-	} while (buf[0] == '#' || !strlen(buf));
+  do {
+    if (mdio_readline(mf, buf, MAX_GRO_LINE + 1, 0) < 0)
+      return -1;
+  } while (buf[0] == '#' || !strlen(buf));
 
-	// Read in the fields
-	n = sscanf(buf, "%5c%5c%5c%5c%f %f %f", ma->resid,
-		ma->resname, ma->atomname, atomnum, ma->pos,
-		&ma->pos[1], &ma->pos[2]);
-	if (n != 7) return mdio_seterror(MDIO_BADFORMAT);
+  // Read in the fields
+  n = sscanf(buf, "%5c%5c%5c%5c%8c%8c%8c", 
+             ma->resid, ma->resname, ma->atomname, atomnum, 
+             xposc, yposc, zposc);
 
-	// Null terminate the strings
-	ma->resname[5] = 0;
-	ma->atomname[5] = 0;
-	ma->resid[5] = 0;
-	atomnum[5] = 0;
+  if (n != 7)
+    return mdio_seterror(MDIO_BADFORMAT);
 
-	// Convert strings to numbers
-	strip_white(atomnum);
-	ma->atomnum = atoi(atomnum);
+  // Null terminate the strings
+  ma->resname[5] = 0;
+  ma->atomname[5] = 0;
+  ma->resid[5] = 0;
+  atomnum[5] = 0;
+  xposc[8] = 0;
+  yposc[8] = 0;
+  zposc[8] = 0;
+ 
+  if ((sscanf(xposc, "%f", &ma->pos[0]) != 1) ||
+      (sscanf(yposc, "%f", &ma->pos[1]) != 1) ||
+      (sscanf(zposc, "%f", &ma->pos[2]) != 1)) {
+    return mdio_seterror(MDIO_BADFORMAT);
+  }
 
-	// Convert nanometers to angstroms
-	ma->pos[0] *= ANGS_PER_NM;
-	ma->pos[1] *= ANGS_PER_NM;
-	ma->pos[2] *= ANGS_PER_NM;
+  // Convert strings to numbers
+  strip_white(atomnum);
+  ma->atomnum = atoi(atomnum);
 
-	// Strip leading and trailing whitespace
-	strip_white(ma->atomname);
-	strip_white(ma->resname);
-	strip_white(ma->resid);
+  // Convert nanometers to angstroms
+  ma->pos[0] *= ANGS_PER_NM;
+  ma->pos[1] *= ANGS_PER_NM;
+  ma->pos[2] *= ANGS_PER_NM;
 
-	return 0;
+  // Strip leading and trailing whitespace
+  strip_white(ma->atomname);
+  strip_white(ma->resname);
+  strip_white(ma->resid);
+
+  return 0;
 }
 
 
@@ -1096,49 +1110,58 @@ static int gro_timestep(md_file *mf, md_ts *ts) {
 	long coord;
 	int i, n, boxItems;
   float x[3], y[3], z[3];
+  char xposc[12], yposc[12], zposc[12];
 
-	if (!mf || !ts) return mdio_seterror(MDIO_BADPARAMS);
+  if (!mf || !ts) 
+    return mdio_seterror(MDIO_BADPARAMS);
 
-	if (gro_header(mf, NULL, 0, &ts->time, &ts->natoms, 0) < 0)
-		return -1;
-	ts->pos = (float *) malloc(3 * sizeof(float) * ts->natoms);
-	if (!ts->pos)
-		return mdio_seterror(MDIO_BADMALLOC);
+  if (gro_header(mf, NULL, 0, &ts->time, &ts->natoms, 0) < 0)
+    return -1;
 
-	coord = 0;
-	for (i = 0; i < ts->natoms; i++) {
-		if (mdio_readline(mf, buf, MAX_GRO_LINE + 1, 0) < 0) {
-			free(ts->pos);
-			return -1;
-		}
+  ts->pos = (float *) malloc(3 * sizeof(float) * ts->natoms);
+  if (!ts->pos)
+    return mdio_seterror(MDIO_BADMALLOC);
+
+  coord = 0;
+  for (i = 0; i < ts->natoms; i++) {
+    if (mdio_readline(mf, buf, MAX_GRO_LINE + 1, 0) < 0) {
+      free(ts->pos);
+      return -1;
+    }
 	
-		n = sscanf(buf, "%*5c%*5c%*5c%*5c%f %f %f",
-			&ts->pos[coord], &ts->pos[coord + 1],
-			&ts->pos[coord + 2]);
+    n = sscanf(buf, "%*5c%*5c%*5c%*5c%8c%8c%8c", xposc, yposc, zposc);
+    if (n != 3) 
+      return mdio_seterror(MDIO_BADFORMAT);
 
-		ts->pos[coord] *= ANGS_PER_NM;
-		ts->pos[coord + 1] *= ANGS_PER_NM;
-		ts->pos[coord + 2] *= ANGS_PER_NM;
+    if ((sscanf(xposc, "%f", &ts->pos[coord    ]) != 1) ||
+        (sscanf(yposc, "%f", &ts->pos[coord + 1]) != 1) ||
+        (sscanf(zposc, "%f", &ts->pos[coord + 2]) != 1)) {
+      return mdio_seterror(MDIO_BADFORMAT);
+    }
 
-		if (n != 3) return mdio_seterror(MDIO_BADFORMAT);
-		coord += 3;
-	}
+    ts->pos[coord    ] *= ANGS_PER_NM;
+    ts->pos[coord + 1] *= ANGS_PER_NM;
+    ts->pos[coord + 2] *= ANGS_PER_NM;
 
-	// Read the box, stored as three vectors representing its edges
-	if (mdio_readline(mf, buf, MAX_GRO_LINE + 1, 0) < 0) {
-		free(ts->pos);
-		return -1;
-	}
+    coord += 3;
+  }
+
+  // Read the box, stored as three vectors representing its edges
+  if (mdio_readline(mf, buf, MAX_GRO_LINE + 1, 0) < 0) {
+    free(ts->pos);
+    return -1;
+  }
+
   boxItems = sscanf(buf, " %f %f %f %f %f %f %f %f %f", 
              &x[0], &y[1], &z[2], &x[1], &x[2], &y[0], &y[2], &z[0], &z[1]);
+
   // File may only include three scalars for the box information -- if
   // that's the case, the box is orthoganal.
   if (boxItems == 3) {
     x[1] = x[2] = 0;
     y[0] = y[2] = 0;
     z[0] = z[1] = 0;
-  }
-  else if (boxItems != 9) {
+  } else if (boxItems != 9) {
     free(ts->pos);
     return -1;
   }
@@ -1152,7 +1175,7 @@ static int gro_timestep(md_file *mf, md_ts *ts) {
     return -1;
   }
 
-	return 0;
+  return 0;
 }
 
 
@@ -1726,6 +1749,7 @@ static int xtc_receivebits(int *buf, int nbits) {
 }
 
 // decompresses small integers from the buffer
+// sizes parameter has to be non-zero to prevent divide-by-zero
 static void xtc_receiveints(int *buf, const int nints, int nbits,
 			unsigned int *sizes, int *nums) {
 	int bytes[32];
@@ -1771,6 +1795,10 @@ static int xtc_3dfcoord(md_file *mf, float *fp, int *size, float *precision) {
 	unsigned int bitsize;
 	float inv_precision;
 
+        /* avoid uninitialized data compiler warnings */
+        bitsizeint[0] = 0;
+        bitsizeint[1] = 0;
+        bitsizeint[2] = 0;
 
 	if (xtc_int(mf, &lsize) < 0) return -1;
 
@@ -1829,10 +1857,16 @@ static int xtc_3dfcoord(md_file *mf, float *fp, int *size, float *precision) {
 	xtc_int(mf, &smallidx);
 	smaller = xtc_magicints[FIRSTIDX > smallidx - 1 ? FIRSTIDX : smallidx - 1] / 2;
 	small = xtc_magicints[smallidx] / 2;
-	sizesmall[0] = sizesmall[1] = sizesmall[2] = xtc_magicints[smallidx] ;
+	sizesmall[0] = sizesmall[1] = sizesmall[2] = xtc_magicints[smallidx];
+
+	/* check for zero values that would yield corrupted data */
+	if ( !sizesmall[0] || !sizesmall[1] || !sizesmall[2] ) {
+		printf("XTC corrupted, sizesmall==0 (case 1)\n");
+		return -1;
+	}
+
 
 	/* buf[0] holds the length in bytes */
-
 	if (xtc_int(mf, &(buf[0])) < 0) return -1;
 
 	if (xtc_data(mf, (char *) &buf[3], (int) buf[0]) < 0) return -1;
@@ -1894,6 +1928,12 @@ static int xtc_3dfcoord(md_file *mf, float *fp, int *size, float *precision) {
 					*lfp++ = prevcoord[0] * inv_precision;
 					*lfp++ = prevcoord[1] * inv_precision;
 					*lfp++ = prevcoord[2] * inv_precision;
+
+					if ( !sizesmall[0] || !sizesmall[1] || !sizesmall[2] ) {
+						printf("XTC corrupted, sizesmall==0 (case 2)\n");
+						return -1;
+					}
+
 				} else {
 					prevcoord[0] = thiscoord[0];
 					prevcoord[1] = thiscoord[1];
