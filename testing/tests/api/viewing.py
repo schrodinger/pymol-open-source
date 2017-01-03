@@ -168,6 +168,9 @@ class TestViewing(testing.PyMOLTestCase):
         pass
 
     def testToggle(self):
+        if testing.PYMOL_VERSION[1] > 1.84:
+            cmd.set('auto_show_classified', 0)
+
         cmd.fragment('gly')
         cmd.show('sticks')
         cmd.show('spheres')
@@ -187,6 +190,9 @@ class TestViewing(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms('rep spheres'), 0)
 
     def testShow(self):
+        if testing.PYMOL_VERSION[1] > 1.84:
+            cmd.set('auto_show_classified', 0)
+
         cmd.fragment('ala')
         self.assertEqual(cmd.count_atoms('rep sticks'), 0)
         cmd.show('sticks')

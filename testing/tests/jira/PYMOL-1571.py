@@ -22,5 +22,6 @@ class Test1571(testing.PyMOLTestCase):
             cmd.load(session_filename)
         x = cmd.get('bg_image_filename')
         self.assertTrue(x.startswith('data:'))
-        self.assertImageHasColor('red', delta=4)
+        self.assertImageHasColor('red', delta=4,
+                msg='bg_image_filename=data: not rendered')
 

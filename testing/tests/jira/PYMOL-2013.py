@@ -11,6 +11,8 @@ from pymol import cmd, CmdException, testing, stored
 class TestPYMOL2013(testing.PyMOLTestCase):
 
     def test(self):
+        cmd.set('cartoon_gap_cutoff', 0) # default varies by version
+
         self.ambientOnly()
 
         cmd.viewport(150, 150)

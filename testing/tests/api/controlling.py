@@ -49,6 +49,9 @@ class TestControlling(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_names(), ['m0', 'm1', 'm2'])
 
     def testSetKey(self):
+        if testing.PYMOL_VERSION[1] > 1.84:
+            cmd.set('auto_show_classified', 0)
+
         cmd.fragment('gly')
         N = cmd.count_atoms()
         self.assertEqual(0, cmd.count_atoms('rep sticks | rep spheres'))

@@ -405,9 +405,8 @@ else:
                 color = list(color)
             dim = img.shape[-1]
             if dim == len(color) + 1:
-                color.append(255)
-            if isinstance(delta, list) and dim == len(delta) + 1:
-                delta.append(0)
+                dim -= 1
+                img = img[...,:dim]
             diff = abs(img.reshape((-1, dim)) - color)
             return (diff - delta <= 0).prod(1).sum()
 
