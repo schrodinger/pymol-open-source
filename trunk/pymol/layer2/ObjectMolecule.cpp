@@ -447,6 +447,8 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char * ch, int len)
   if (!ch || len==0)
     return NULL;
 
+  ch[0] = 0;
+
   /* if the state is valid, setup the label */
   if(state >= 0) {
     if (state < I->NCSet) {
@@ -471,8 +473,6 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char * ch, int len)
 	  n = snprintf(ch, len, "%s", cs->Name);
 	}
       } else { /* no coord set, can be an N-state object missing a CSet */
-	if (len && ch)
-	  ch[0] = 0;
       } 
     } else { /* state > NCSet, out of range due to other object or global setting */
       if(show_state) {
@@ -483,18 +483,17 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char * ch, int len)
 	}
       }
     }
-
-    if(n>len)
-      return NULL;
-    else {
-      return ch;
-    }
+  } else if (state == -1) {
+    // all states
+    n = snprintf(ch, len, "%s*/%d", frozen_str, I->NCSet);
   } else {
     /* blank out the title if outside the valid # of states */
-    if (len && ch)
-      ch[0] = 0;
   }
-  return NULL;
+
+  if (n > len)
+    return NULL;
+
+  return ch;
 }
 
 

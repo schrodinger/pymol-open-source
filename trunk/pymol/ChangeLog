@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2017-01-19 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* width/height arguments for movie export (mpng, movie.produce)
+
+	* fetch: support "fetch EMD-3489"
+
+	* auto_show_classified -1 => 3 for 500k+ atoms
+
+	* pick_shading => surface_color_smoothing off
+
+	* cleanup: eliminate pymol.pymol_launch variable
+
 2016-12-14 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* update molfile plugins to VMD version 1.9.3

@@ -11,13 +11,11 @@ if sys.version_info[0] == 2:
     from Tkinter import *
     import tkFileDialog
     import tkMessageBox
-    import tkSimpleDialog
     import tkFont
 else:
     from tkinter import *
     import tkinter.filedialog as tkFileDialog
     import tkinter.messagebox as tkMessageBox
-    import tkinter.simpledialog as tkSimpleDialog
     import tkinter.font as tkFont
 
 import Pmw
@@ -211,13 +209,6 @@ class Normal(PMGSkin):
     def createMessageBar(self):
         self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 25,
              entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
-
-
-        self.abortButton=Button(self.commandFrame,
-                      text='Abort',highlightthickness=0,
-#                                state=DISABLED,
-                      command=lambda s=self:self.abort(),padx=0,pady=0)
-        self.abortButton.pack(side=RIGHT,fill=BOTH,expand=YES)
 
         self.abortButton=Button(self.commandFrame,
                                 text='Rebuild',highlightthickness=0,
@@ -948,45 +939,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
 
     def edit_pymolrc(self):
-        if not self.pymol.invocation.options.pymolrc:
-            self._edit_pymolrc()
-            return
-
-        def callback(button):
-            s = dialog.getcurselection() if button == 'OK' else ()
-            dialog.withdraw()
-            self._edit_pymolrc(s)
-
-        dialog = Pmw.SelectionDialog(self.root,
-                title='Select pymolrc file',
-                buttons=('OK', 'Cancel'), defaultbutton='OK',
-                scrolledlist_labelpos='nw',
-                label_text='Active pymolrc files:',
-                scrolledlist_items=tuple(self.pymol.invocation.options.pymolrc),
-                command=callback)
-
-        # set focus on the first item
-        dialog.component('scrolledlist').selection_set(0)
-
-        dialog.geometry('700x200')
-        self.my_show(dialog)
-
-    def _edit_pymolrc(self, _list=()):
-        from pmg_tk.TextEditor import TextEditor
-
-        try:
-            pymolrc = _list[0]
-        except (TypeError, IndexError):
-            if sys.platform.startswith('win'):
-                pymolrc = os.path.expandvars(r'$HOMEDRIVE$HOMEPATH\pymolrc.pml')
-            else:
-                pymolrc = os.path.expandvars(r'$HOME/.pymolrc')
-            pymolrc = tkSimpleDialog.askstring('Create new pymolrc?',
-                    'Filename of new pymolrc',
-                    initialvalue=pymolrc)
-
-        if pymolrc:
-            TextEditor(self.root, pymolrc, 'pymolrc (%s)' % pymolrc)
+        from pmg_tk import TextEditor
+        TextEditor.edit_pymolrc(self)
 
     def file_run(self):
         ofile = askopenfilename(initialdir = os.getcwd(),

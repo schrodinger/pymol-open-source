@@ -55,6 +55,9 @@ typedef struct {
   int save, start, stop, missing_only;
   int modal, mode;
 
+  int width;
+  int height;
+
   /* job / local parameters */
   int frame;
   int image;
@@ -780,7 +783,8 @@ static void MovieModalPNG(PyMOLGlobals * G, CMovie * I, CMovieModal * M)
        (M->frame <= M->stop) && (M->file_missing)) {    /* ...that don't already exist */
       if(!I->Image[M->image]) {
         SceneUpdate(G, false);
-        if(SceneMakeMovieImage(G, false, M->modal, M->mode) || (!M->modal)) {
+        if(SceneMakeMovieImage(G, false, M->modal, M->mode, M->width, M->height)
+            || !M->modal) {
           M->stage = 3;
         } else {
           /* didn't get an image... */
@@ -889,7 +893,8 @@ static void MovieModalDraw(PyMOLGlobals * G)
 }
 
 int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start,
-             int stop, int missing_only, int modal, int format, int mode, int quiet)
+             int stop, int missing_only, int modal, int format, int mode, int quiet,
+             int width, int height)
 {
   /* assumes locked api, blocked threads, and master thread on entry */
   CMovie *I = G->Movie;
@@ -910,6 +915,8 @@ int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start,
   M->format = format;
   M->mode = mode;
   M->quiet = quiet;
+  M->width = width;
+  M->height = height;
 
   if(SettingGetGlobal_b(G, cSetting_seq_view)) {
     PRINTFB(G, FB_Movie, FB_Warnings)

@@ -2378,7 +2378,12 @@ Block *SceneGetBlock(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-int SceneMakeMovieImage(PyMOLGlobals * G, int show_timing, int validate, int mode)
+int SceneMakeMovieImage(PyMOLGlobals * G,
+    int show_timing,
+    int validate,
+    int mode,
+    int width,
+    int height)
 {
   CScene *I = G->Scene;
   //  float *v;
@@ -2395,7 +2400,7 @@ int SceneMakeMovieImage(PyMOLGlobals * G, int show_timing, int validate, int mod
     if(!G->HaveGUI ||
         SettingGetGlobal_b(G, cSetting_ray_trace_frames)) {
       mode = cSceneImage_Ray;
-    } else if(SettingGetGlobal_b(G, cSetting_draw_frames)) {
+    } else if(SettingGetGlobal_b(G, cSetting_draw_frames) || width || height) {
       mode = cSceneImage_Draw;
     } else {
       mode = cSceneImage_Normal;
@@ -2406,11 +2411,11 @@ int SceneMakeMovieImage(PyMOLGlobals * G, int show_timing, int validate, int mod
   I->DirtyFlag = false;
   switch (mode) {
   case cSceneImage_Ray:
-    SceneRay(G, 0, 0, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
+    SceneRay(G, width, height, SettingGetGlobal_i(G, cSetting_ray_default_renderer),
              NULL, NULL, 0.0F, 0.0F, false, NULL, show_timing, -1);
     break;
   case cSceneImage_Draw:
-    SceneMakeSizedImage(G, 0, 0, SettingGetGlobal_i(G, cSetting_antialias));
+    SceneMakeSizedImage(G, width, height, SettingGetGlobal_i(G, cSetting_antialias));
     break;
   case cSceneImage_Normal:
     {

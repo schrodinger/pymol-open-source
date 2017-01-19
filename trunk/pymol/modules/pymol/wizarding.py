@@ -187,8 +187,9 @@ DESCRIPTION
         if session!=None:
             version = session.get('version', 0)
             if 'wizard' in session:
+                from chempy.io import pkl
                 try:
-                    wizards = cPickle.loads(session['wizard'])
+                    wizards = pkl.fromString(session['wizard'])
                     for wiz in wizards:
                         wiz.cmd = _self
                         wiz.migrate_session(version)

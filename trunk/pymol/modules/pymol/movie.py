@@ -655,7 +655,8 @@ produce_mode_sc = cmd.Shortcut(produce_mode_dict.keys())
 
 
 def produce(filename, mode='', first=0, last=0, preserve=0,
-            encoder='mpeg_encode', quality=60, quiet=1, _self=cmd):
+            encoder='mpeg_encode', quality=-1, quiet=1,
+            width=0, height=0, _self=cmd):
     '''
 DESCRIPTION
 
@@ -689,7 +690,7 @@ DESCRIPTION
     preserve = int(preserve)
     quality = int(quality)
     if quality<0:
-        quality = 0
+        quality = _self.get_setting_int('movie_quality')
     if quality>100:
         quality = 100
     ok = 1
@@ -717,7 +718,8 @@ DESCRIPTION
             last = 1
         _self.set("keep_alive")
         _self.mpng(os.path.join(tmp_path,prefix+".ppm"),first,last,
-                   preserve,mode=mode,modal=1,quiet=quiet) 
+                   preserve,mode=mode,modal=1,quiet=quiet,
+                   width=width, height=height)
         # this may run asynchronously
     else:
         ok = 0

@@ -429,20 +429,26 @@ NOTES
             raise QuietException                  
         return r
         
-    def _unit2px(value, dpi):
+    def _unit2px(value, dpi, unit=''):
         '''API only. Returns pixel units given a string representation in other units'''
-        if isinstance(value, str):
+        if cmd.is_string(value):
             m = re.search(r'[a-z].*', value, re.I)
             if m:
-                if dpi <= 0:
-                    raise pymol.CmdException('need dpi if units are given')
                 value, unit = value[:m.start()], m.group(0).lower()
-                upi = {'in': 1.0, 'mm': 25.4, 'cm': 2.54}
-                if unit not in upi:
-                    raise pymol.CmdException('unknown unit, supported units are: ' +
-                            ', '.join(upi))
-                value = float(value) * dpi / upi[unit] + 0.5
-        return int(value)
+
+        if not unit or unit == 'px':
+            return int(value)
+
+        upi = {'in': 1.0, 'mm': 25.4, 'cm': 2.54}
+        if unit not in upi:
+            raise pymol.CmdException('unknown unit, supported units are: ' +
+                    ', '.join(upi))
+
+        if dpi < 1:
+            raise pymol.CmdException('dpi > 0 required with unit "%s" '
+                    '(hint: set the "image_dots_per_inch" setting)' % unit)
+
+        return float(value) * dpi / upi[unit] + 0.5
 
     def png(filename, width=0, height=0, dpi=-1.0, ray=0,
             quiet=1, prior=0, format=0, _self=cmd):

@@ -947,8 +947,8 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
         }
       }
       break;
-    case 8:                    /* backspace */
 #endif
+    case 8:                    /* backspace */
       if(I->CurChar > I->PromptChar) {
         curLine = I->CurLine & OrthoSaveLines;
         if(I->CursorChar >= 0) {

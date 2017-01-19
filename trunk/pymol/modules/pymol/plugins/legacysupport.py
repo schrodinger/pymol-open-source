@@ -67,6 +67,14 @@ def installPlugin(self):
     if len(ofile):
         installPluginFromFile(ofile)
 
+def addPluginManagerMenuItem():
+    def plugin_manager():
+        from . import managergui
+        managergui.manager_dialog()
+
+    pymol.plugins.addmenuitem('Plugin Manager', plugin_manager)
+    pymol.plugins.addmenuitem('-', None)
+
 def initializePlugins(self):
     '''
     Overloaded version of pmg_tk.PMGApp.initializePlugins
@@ -80,12 +88,7 @@ def initializePlugins(self):
         return
 
     # Load plugin manager independent of other plugins
-    def plugin_manager():
-        from . import managergui
-        managergui.manager_dialog()
-
-    addmenuitem('Plugin Manager', plugin_manager, 'Plugin')
-    addmenuitem('-', None, 'Plugin')
+    addPluginManagerMenuItem()
 
     if options.plugins == 2:
         from . import initialize

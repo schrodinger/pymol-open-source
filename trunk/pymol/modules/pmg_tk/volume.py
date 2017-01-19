@@ -142,7 +142,7 @@ class ColorChooser(Tkinter.Toplevel):
         self.deiconify()
         self.grab_set()
         self.focus_set()
-        parent.wait_window(self)
+        self._img = img # keep a reference!
 
     def update_upstream(self):
         '''

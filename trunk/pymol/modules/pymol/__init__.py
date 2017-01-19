@@ -23,14 +23,6 @@ Supported ways to launch PyMOL:
 
 '''
 
-# Global variable "__main__.pymol_launch" tracks how we're launching PyMOL:
-#
-# 1: new way, consume main thread: (e.g. from "python pymol/__init__.py")
-# 2: new way, spawn own thread: (e.g."import pymol; pymol.finish_launching()")
-# 3: dry run -- just get PyMOL environment information
-# 4: monolithic (embedded) PyMOL.  Prime, but don't start.
-# 5: Python embedded launch from within the PyMOL API
-
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -134,7 +126,7 @@ def _init_internals(_pymol):
     # [ [size, (hash1, hash2, ... ), (inp1, inp2, ...), output],
     #   [size, (hash1, hash2, ... ), (inp1, inp2, ...), output],
     #   ... ]
-    
+
     _pymol._cache = []
 
     # standard input reading thread
@@ -142,7 +134,7 @@ def _init_internals(_pymol):
     _pymol._stdin_reader_thread = None
 
     # stored views
-    
+
     _pymol._view_dict = {}
     _pymol._view_dict_sc = None
 
@@ -161,7 +153,7 @@ def _init_internals(_pymol):
 
     # these locks are to be shared by all PyMOL instances within a
     # single Python interpeter
-        
+
     _pymol.lock_api = threading.RLock() # mutex for API calls from the outside
     _pymol.lock_api_c = threading.RLock() # mutex for C management of python threads
     _pymol.lock_api_status = threading.RLock() # mutex for PyMOL status info
@@ -208,6 +200,13 @@ def setup_environ():
     # guess PYMOL_PATH if unset
     if 'PYMOL_PATH' not in os.environ:
         os.environ['PYMOL_PATH'] = guess_pymol_path()
+
+    # other PyMOL variables
+    if 'PYMOL_DATA' not in os.environ:
+        os.environ['PYMOL_DATA'] = os.path.join(os.environ['PYMOL_PATH'], 'data')
+    if 'PYMOL_SCRIPTS' not in os.environ:
+        os.environ['PYMOL_SCRIPTS'] = os.path.join(os.environ['PYMOL_PATH'], 'scripts')
+    os.environ['TUT'] = os.path.join(os.environ['PYMOL_DATA'], 'tut')
 
     # auto-detect bundled FREEMOL (if present)
     if 'FREEMOL' not in os.environ:
@@ -430,10 +429,18 @@ def finish_launching(args=None):
     '''
     global glutThreadObject
 
-    if args is None:
-        args = pymol_argv
+    if cmd._COb is not None:
+        return
 
-    if pymol_launch == 2:
+    import pymol
+
+    # legacy
+    if args is None:
+        args = getattr(pymol, 'pymol_argv', None)
+    if args is None:
+        args = getattr(__main__, 'pymol_argv', sys.argv)
+
+    if True:
         # run PyMOL in thread
         invocation.options.keep_thread_alive = 1
         cmd.reaper = threading.currentThread()
@@ -441,13 +448,10 @@ def finish_launching(args=None):
                 args=(list(args), 1))
         glutThreadObject.start()
 
-    # wait for import to complete
-    import pymol
-
     e = threading.Event()
 
     # wait for the C library to initialize
-    while not _cmd.ready(_COb):
+    while cmd._COb is None:
         e.wait(0.01)
 
     # make sure symmetry module has time to start...
@@ -511,12 +515,6 @@ class Session_Storage:
 
 glutThread = 0
 
-# can be overwritten from the main thread
-pymol_launch = getattr(__main__, 'pymol_launch', 2)
-pymol_argv = getattr(__main__, 'pymol_argv',
-        ["pymol", "-q"] if pymol_launch in (-1, 2) else
-        ["pymol"])
-
 ######### ENVIRONMENT ##########################
 
 setup_environ()
@@ -538,7 +536,7 @@ _cmd = sys.modules['pymol._cmd']
 
 from . import cmd
 
-cmd._COb = _COb = _cmd._get_global_C_object()
+cmd._COb = None
 
 try:
     import epymol
@@ -562,10 +560,3 @@ class _NoCmdFinder:
     find_module = find_spec
 
 sys.meta_path.insert(0, _NoCmdFinder())
-
-########## LAUNCH PYMOL ########################
-
-if pymol_launch == 4:
-    # monolithic (embedded) launch
-    invocation.parse_args(pymol_argv)
-    prime_pymol()

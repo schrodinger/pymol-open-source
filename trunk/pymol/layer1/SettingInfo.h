@@ -859,7 +859,7 @@ enum {
   REC_b( 751, ignore_case_chain                       , global    , 0 ),
   REC_f( 752, valence_zero_scale                      , ostate    , 0.2f ),
   REC_i( 753, valence_zero_mode                       , ostate    , 1, 0, 2 ), // 0: skip, 1: dashed, 2: solid
-  REC_i( 754, auto_show_classified                    , global    , 0, 0, 3 ), // 0: off, 1: as, 2: show, 3: simple
+  REC_i( 754, auto_show_classified                    , global    , 0, -1, 3 ), // -1: auto, 0: off, 1: as, 2: show, 3: simple
   REC_b( 755, collada_background_box                  , global    , 0 ),
   REC_b( 756, pick32bit                               , unused    , 1 ),
   REC_b( 757, cartoon_all_alt                         , ostate    , 0 ),

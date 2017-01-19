@@ -1941,7 +1941,12 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     break;
   case cSetting_light_count:
   case cSetting_spec_count:
+    CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_FOR_LIGHTING);
+    break;
   case cSetting_pick_shading:
+    if (SettingGetGlobal_i(G, cSetting_surface_color_smoothing)) {
+      ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvColor);
+    }
     CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_FOR_LIGHTING);
   case cSetting_light:
   case cSetting_light2:

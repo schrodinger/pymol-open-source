@@ -1279,7 +1279,9 @@ PYMOL API
             obj_name = name
             type = all_type
 
-            if obj_code[:4].upper() in ('CID_', 'SID_', 'EMD_'):
+            # allow fetching codes like EMD-3489 or emd_3489
+            if obj_code[3:4] in ('_', '-') and \
+                    obj_code[:3].upper() in ('CID', 'SID', 'EMD'):
                 if not obj_name:
                     obj_name = obj_code
                 type = obj_code[:3].lower()

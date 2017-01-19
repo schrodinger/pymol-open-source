@@ -12,32 +12,74 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-import __main__
-__main__.pymol_launch = 5 
+from __future__ import absolute_import
 
 import pymol
-from pymol import _cmd
-__main__.pymol = pymol
 
-from pymol import selector
-import pymol.menu
-import pymol.povray
-from copy import deepcopy
+from pymol import _cmd
 
 import threading
-import traceback
 import sys
 
 pymol2_lock = threading.RLock() 
 
-from cmd2 import Cmd
+##
+## FIXME: The PyMOL and SingletonPyMOL classes are partly redundant with the
+## instance tracking of the "cmd" module (and the pymol2.cmd2.Cmd class),
+## which also holds the _COb pointer.
+##
 
-class PyMOL:
+class SingletonPyMOL:
+    '''
+    Start an exclusive PyMOL instance, only one instance allowed
+    '''
+    def idle(self):
+        return _cmd._idle(self._COb)
+
+    def getRedisplay(self, reset=True):
+        return _cmd._getRedisplay(self._COb, reset)
+
+    def reshape(self, width, height, force=0):
+        _cmd._reshape(self._COb, width, height, force)
+
+    def draw(self):
+        _cmd._draw(self._COb)
+
+    def button(self, button, state, x, y, modifiers):
+        _cmd._button(self._COb, button, state, x, y, modifiers)
+
+    def drag(self, x, y, modifiers):
+        _cmd._drag(self._COb, x, y, modifiers)
+
+    def start(self):
+        pymol.prime_pymol()
+
+        cmd = pymol.cmd
+        if cmd._COb is not None:
+            raise RuntimeError('can only start SingletonPyMOL once')
+
+        with pymol2_lock:
+            cmd._COb = _cmd._new(pymol, pymol.invocation.options)
+            _cmd._start(cmd._COb, cmd)
+
+        # this instance tracking is redundant with the "cmd" module itself
+        self._COb = cmd._COb
+        self.cmd = cmd
+
+
+class PyMOL(SingletonPyMOL):
+    '''
+    Start a non-exclusive PyMOL instance, multiple instances are possible
+    '''
+
+    def __getattr__(self, key):
+        # Make this a proxy to the "pymol" module.
+        return getattr(pymol, key)
 
     def __init__(self,scheme=None): # initialize a PyMOL instance
-        pymol2_lock.acquire(1)
-        try:
+        from .cmd2 import Cmd
 
+        with pymol2_lock:
             pymol._init_internals(self)
 
             self.invocation = self._invocation
@@ -70,44 +112,14 @@ class PyMOL:
             
             # begin assembling the instance member by member
 
-            # key instance methods
+            self.glutThread = None
 
-            self.exec_str = pymol.exec_str
-            self.adapt_to_hardware = pymol.adapt_to_hardware
-            self.exec_deferred = pymol.exec_deferred
-
-            # Python components
-
-            self.util = pymol.util
-            self.menu = pymol.menu
-            self.setting = pymol.setting
-            self.povray = pymol.povray
-            self.preset = pymol.preset
-            
-        except:
-            traceback.print_exc()
-            pymol2_lock.release()
-        
     def __del__(self):
         _cmd._del(self._COb)
         
     def start(self):
-        pymol2_lock.acquire()
-        try:
-
-            # fire off the C code
-            
+        with pymol2_lock:
             _cmd._start(self._COb, self.cmd)
-
-            # add in some additional Python modules
-            
-            self.chempy = pymol.chempy
-            self.bonds = pymol.bonds
-            self.models = pymol.models
-                
-        except:
-            traceback.print_exc()            
-            pymol2_lock.release()
         
     def startWithTclTk(self, gui = None, skin=None):
         self.start()
@@ -121,24 +133,3 @@ class PyMOL:
         
     def stop(self):
         _cmd._stop(self._COb)
-
-    def idle(self):
-        return _cmd._idle(self._COb)
-
-    def reshape(self, width, height, force=0):
-        _cmd._reshape(self._COb,width,height,force)
-
-    def getRedisplay(self,reset):
-        return _cmd._getRedisplay(self._COb,reset)
-
-    def draw(self):
-        _cmd._draw(self._COb)
-    
-    def button(self,button,state,x,y,modifiers):
-        _cmd._button(self._COb,button,state,x,y,modifiers)
-
-    def drag(self,x,y,modifiers):
-        _cmd._drag(self._COb,x,y,modifiers)
-
-        
-    

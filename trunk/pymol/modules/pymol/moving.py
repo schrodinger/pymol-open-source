@@ -358,7 +358,9 @@ SEE ALSO
         return r
 
     def mpng(prefix,first=0,last=0,preserve=0,modal=0,
-             mode=-1,quiet=1,_self=cmd):
+             mode=-1, quiet=1,
+             width=0, height=0,
+             _self=cmd):
         '''
 DESCRIPTION
 
@@ -404,19 +406,14 @@ SEE ALSO
     
         '''
         r = DEFAULT_ERROR
+        args = (prefix, int(first) - 1, int(last) - 1,
+                int(preserve), int(modal), -1, int(mode), int(quiet),
+                int(width), int(height))
+
         if thread.get_ident() ==pymol.glutThread:
-            r = _self._mpng(prefix,int(first)-1,int(last)-1,
-                            int(preserve),int(modal),-1,int(mode),int(quiet))
+            r = _self._mpng(*args)
         else:
-            r = _self.do('cmd._mpng("""'+prefix+'""","'+
-                         str(int(first)-1)+'","'+
-                         str(int(last)-1)+'","'+
-                         str(int(preserve))+'","'+
-                         str(int(modal))+'","'+
-                         str(int(-1))+'","'+
-                         str(int(mode))+'","'+
-                         str(int(quiet))+
-                         '",_self=cmd)',0)
+            r = _self.do('cmd._mpng(*%s, _self=cmd)' % repr(args), 0)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 

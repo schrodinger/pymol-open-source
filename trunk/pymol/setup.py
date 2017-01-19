@@ -10,7 +10,7 @@ from distutils.core import setup, Extension
 from distutils.util import change_root
 from distutils.errors import *
 from distutils.command.install import install
-from distutils.command.build import build
+from distutils.command.build_py import build_py
 from glob import glob
 import shutil
 import sys, os, re
@@ -47,6 +47,10 @@ def posix_find_lib(names, lib_dirs):
         if p.wait() == 0:
             return name
     raise IOError('could not find any of ' + str(names))
+
+class build_py_pymol(build_py):
+    def run(self):
+        build_py.run(self)
 
 class install_pymol(install):
     pymol_path = None
@@ -323,7 +327,10 @@ ext_modules += [
 ]
 
 distribution = setup ( # Distribution meta-data
-    cmdclass  = {'install': install_pymol},
+    cmdclass  = {
+        'build_py': build_py_pymol,
+        'install': install_pymol,
+    },
     name      = "pymol",
     version   = get_pymol_version(),
     author    = "Schrodinger",

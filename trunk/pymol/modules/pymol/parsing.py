@@ -70,7 +70,7 @@ if __name__=='pymol.parsing':
     import threading
     import types
     import traceback
-    import copy
+    import inspect
     
     class QuietException(BaseException):
         pass
@@ -341,7 +341,8 @@ if __name__=='pymol.parsing':
         co = fn.__code__
         if (co.co_flags & 0xC): # disable error checking for *arg or **kw functions
             mode = NO_CHECK
-        arg_nam = co.co_varnames[0:co.co_argcount]
+        offset = 1 if inspect.ismethod(fn) else 0
+        arg_nam = co.co_varnames[offset:co.co_argcount]
         narg = len(arg_nam)
         if fn.__defaults__:
             ndef = len(fn.__defaults__)

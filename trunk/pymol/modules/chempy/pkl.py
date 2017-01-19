@@ -17,7 +17,16 @@ from chempy import Storage
 try:
     import cPickle
 except ImportError:
-    import pickle as cPickle
+    import pickle
+    class cPickle:
+        dumps = pickle.dumps
+        dump = pickle.dump
+        def load(f):
+            return pickle.load(f, errors='ignore')
+        def loads(s):
+            if not isinstance(s, bytes):
+                s = s.encode(errors='ignore')
+            return pickle.loads(s, errors='ignore')
 
 class PKL(Storage):
 
