@@ -9,10 +9,12 @@ if sys.version_info[0] == 2:
     import Tkinter
     import tkFileDialog
     import tkMessageBox
+    import tkSimpleDialog
 else:
     import tkinter as Tkinter
     import tkinter.filedialog as tkFileDialog
     import tkinter.messagebox as tkMessageBox
+    import tkinter.simpledialog as tkSimpleDialog
 
 class TextEditor:
 
@@ -91,6 +93,47 @@ class TextEditor:
         self.text.bind("<Control-o>", self.doOpen)
         self.text.bind("<Control-s>", self.doSave)
         self.text.bind("<Control-S>", self.doSaveAs)
+
+def edit_pymolrc(app):
+    import Pmw
+
+    if not app.pymol.invocation.options.pymolrc:
+        _edit_pymolrc(app)
+        return
+
+    def callback(button):
+        s = dialog.getcurselection() if button == 'OK' else ()
+        dialog.withdraw()
+        _edit_pymolrc(app, s)
+
+    dialog = Pmw.SelectionDialog(app.root,
+            title='Select pymolrc file',
+            buttons=('OK', 'Cancel'), defaultbutton='OK',
+            scrolledlist_labelpos='nw',
+            label_text='Active pymolrc files:',
+            scrolledlist_items=tuple(app.pymol.invocation.options.pymolrc),
+            command=callback)
+
+    # set focus on the first item
+    dialog.component('scrolledlist').selection_set(0)
+
+    dialog.geometry('700x200')
+    app.my_show(dialog)
+
+def _edit_pymolrc(app, _list=()):
+    try:
+        pymolrc = _list[0]
+    except (TypeError, IndexError):
+        if sys.platform.startswith('win'):
+            pymolrc = os.path.expandvars(r'$HOMEDRIVE$HOMEPATH\pymolrc.pml')
+        else:
+            pymolrc = os.path.expandvars(r'$HOME/.pymolrc')
+        pymolrc = tkSimpleDialog.askstring('Create new pymolrc?',
+                'Filename of new pymolrc',
+                initialvalue=pymolrc)
+
+    if pymolrc:
+        TextEditor(app.root, pymolrc, 'pymolrc (%s)' % pymolrc)
 
 if __name__ == '__main__':
     try:

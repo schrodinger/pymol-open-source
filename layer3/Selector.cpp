@@ -1177,6 +1177,14 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
   int visRep_inorganic = cRepSphereBit;
   int visRep_polymer = cRepCartoonBit;
 
+  // detect large systems
+  if (auto_show_classified == -1 &&
+      only_object &&
+      only_object->NAtom * (only_object->DiscreteFlag ?
+        1 : only_object->NCSet) > 5e5) {
+    auto_show_classified = 3;
+  }
+
   if (auto_show_classified == 3) {
     visRep_organic = visRep_inorganic = cRepLineBit | cRepNonbondedBit;
     visRep_polymer = cRepRibbonBit;

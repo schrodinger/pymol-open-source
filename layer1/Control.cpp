@@ -361,8 +361,12 @@ static int ControlRelease(Block * block, int button, int x, int y, int mod)
       OrthoDirty(G);
       break;
     case 8:
-      PLog(G, "cmd.fullscreen()", cPLog_pym);
+      PLog(G, "cmd.full_screen()", cPLog_pym);
+#ifdef _PYMOL_NOPY
       ExecutiveFullScreen(G, -1);
+#else
+      PParse(G, "full_screen");
+#endif
       break;
     }
     OrthoDirty(G);

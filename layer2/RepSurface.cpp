@@ -2888,7 +2888,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
     /* now, assign colors to each point */
     map = MapNewFlagged(G, cutoff, cs->Coord, cs->NIndex, NULL, present);
     if(map) {
-      short color_smoothing = SettingGetGlobal_i(G, cSetting_surface_color_smoothing);
+      short color_smoothing = SettingGetGlobal_b(G, cSetting_pick_shading) ?
+        0 : SettingGetGlobal_i(G, cSetting_surface_color_smoothing);
       float color_smoothing_threshold = SettingGetGlobal_f(G, cSetting_surface_color_smoothing_threshold);
       int atm, ok = true;
       MapSetupExpress(map);

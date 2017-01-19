@@ -15,7 +15,6 @@
 from __future__ import print_function
 
 cmd = __import__("sys").modules["pymol.cmd"]
-import string
 import pymol
 from pymol import movie
 # legacy mappings, remove in PyMOL 2.0
@@ -69,6 +68,14 @@ _color_cycle = [
     ]
 
 _color_cycle_len = len(_color_cycle)
+
+class _verbose_cmd_proxy:
+    def __init__(self, cmd):
+        self.cmd = cmd
+    def __getattr__(self, name):
+        return getattr(self.cmd, name)
+    def set(self, name, value=1):
+        return self.cmd.set(name, value, quiet=0)
 
 def color_by_area(sele, mode="molecular", state=0, palette='rainbow', _self=cmd):
     """
@@ -379,7 +386,7 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
 def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
     cmd=_self
 
-    if ((string.split(selection)!=[selection]) or
+    if (selection.split() != [selection] or
          selection not in cmd.get_names('objects')):
         print(" Error: must provide an object name")
         raise cmd.QuietException
@@ -550,7 +557,7 @@ def modernize_rendering(mode,_self=cmd):
     updates settings to improve rendering speed
     and quality.
     """
-    cmd=_self
+    cmd = _verbose_cmd_proxy(_self)
     
     cmd.set("max_ups",0)
 
@@ -563,7 +570,7 @@ def modernize_rendering(mode,_self=cmd):
     cmd.do("_ rebuild")
 
 def performance(mode,_self=cmd):
-    cmd=_self
+    cmd = _verbose_cmd_proxy(_self)
     mode = int(mode)
     if mode==0: # maximum quality
         cmd.set('line_smooth',1)
@@ -776,35 +783,17 @@ def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
     '''
     Color all chains a different color
     '''
-    cmd=_self
-    if int(legacy):
-        c = first_color
-        for a in cmd.get_chains(selection):
-            if len(string.strip(a)):
-                if not quiet: print((" util.cbc: color %d,(chain %s)"%(c,a)))
-                cmd.color("%d"%c,"(chain %s and (%s))"%(a,selection),quiet=quiet)
-                c = c + 1
-            elif len(a): # note, PyMOL's selection language can't handle this right now
-                if not quiet: print((" util.cbc: color %d,(chain ' ')"%(c)))
-                cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
-                c = c + 1
-            else:
-                if not quiet: print((" util.cbc: color %d,(chain '')"%(c)))
-                cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
-                c = c + 1
-    else:
-        c = 0
-        for a in cmd.get_chains(selection):
-            if len(string.strip(a)):
-                if not quiet: print((" util.cbc: color %d,(chain %s)"%(_color_cycle[c],a)))
-                cmd.color(_color_cycle[c],"(chain %s and (%s))"%(a,selection),quiet=quiet)
-            elif len(a): # note, PyMOL's selection language can't handle this right now
-                if not quiet: print((" util.cbc: color %d,(chain ' ')"%(_color_cycle[c])))
-                cmd.color(_color_cycle[c],"(chain '' and (%s))"%selection,quiet=quiet)
-            else:
-                if not quiet: print((" util.cbc: color %d,(chain '')"%(_color_cycle[c])))
-                cmd.color(_color_cycle[c],"(chain '' and (%s))"%selection,quiet=quiet)
-            c = (c + 1) % _color_cycle_len
+    legacy = int(legacy)
+    for c, a in enumerate(_self.get_chains(selection)):
+        if len(a.split()) != 1:
+            a = '"' + a + '"'
+        if legacy:
+            color = c + int(first_color)
+        else:
+            color = _color_cycle[c % _color_cycle_len]
+        if not quiet:
+            print(" util.cbc: color %s, (chain %s)" % (color, a))
+        _self.color(color, "(chain %s and (%s))" % (a, selection), quiet=quiet)
         
 def color_objs(selection='(all)',quiet=1,_self=cmd):
     cmd=_self 
@@ -845,7 +834,7 @@ color_chains = cbc
 sum_charge = sum_partial_charges
 
 def ray_shadows(mode,_self=cmd):
-    cmd=_self
+    cmd = _verbose_cmd_proxy(_self)
     # adjustment factors for new lighting model in 0.99
     if mode=='none':
         cmd.set('ray_shadow',0)

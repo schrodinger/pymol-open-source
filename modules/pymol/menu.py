@@ -740,6 +740,8 @@ def state(self_cmd, sele):
               [ 1, 'thaw'  ,
                   'cmd.unset("all_states","'+sele+'");'
                   'cmd.unset("state","'+sele+'")'        ],
+              [ 0, '', '' ],
+              [ 1, 'split'   ,'cmd.split_states("'+sele+'")' ],
               ]
     
 def movement(self_cmd, sele):

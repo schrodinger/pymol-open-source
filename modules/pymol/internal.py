@@ -266,7 +266,9 @@ def _do(cmmd,log=0,echo=1,_self=cmd):
 # movie rendering
 
 def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0,
-          format=-1, mode=-1, quiet=1, _self=cmd): # INTERNAL
+          format=-1, mode=-1, quiet=1,
+          width=0, height=0,
+          _self=cmd): # INTERNAL
     format = int(format)
     # WARNING: internal routine, subject to change
     try:
@@ -283,7 +285,8 @@ def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0,
         fname = cmd.exp_path(fname)
         r = _cmd.mpng_(_self._COb,str(fname),int(first),
                        int(last),int(preserve),int(modal),
-                       format,int(mode),int(quiet))
+                       format,int(mode),int(quiet),
+                       int(width), int(height))
     finally:
         _self.unlock(-1,_self)
     return r

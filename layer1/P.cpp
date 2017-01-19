@@ -38,14 +38,10 @@ the initialization functions for these libraries on startup.
 
 /* END PROPRIETARY CODE SEGMENT */
 
-#ifndef _PYMOL_NOPY
 #ifdef _PYMOL_MINGW
 #define putenv _putenv
 #endif
-#include"os_python.h"
-#endif
 
-#include"os_std.h"
 #include"os_time.h"
 #include"os_unix.h"
 
@@ -363,6 +359,27 @@ static PyObject *P_parser = NULL;
 static PyObject *P_main = NULL;
 static PyObject *P_vfont = NULL;
 
+/* module import helper */
+
+static
+PyObject * PImportModuleOrFatal(const char * name) {
+  PyObject * mod = PyImport_ImportModule(name);
+  if(!mod) {
+    fprintf(stderr, "PyMOL-Error: can't find '%s'\n", name);
+    exit(EXIT_FAILURE);
+  }
+  return mod;
+}
+
+static
+PyObject * PGetAttrOrFatal(PyObject * o, const char * name) {
+  PyObject * attr = PyObject_GetAttrString(o, name);
+  if(!attr) {
+    fprintf(stderr, "PyMOL-Error: can't find '%s'\n", name);
+    exit(EXIT_FAILURE);
+  }
+  return attr;
+}
 
 /* used elsewhere */
 
@@ -960,9 +977,7 @@ PyObject *PGetFontDict(PyMOLGlobals * G, float size, int face, int style)
   PyObject *result = NULL;
 
   if(!P_vfont) {
-    PRunStringModule(G, "import pymol.vfont\n");
-    P_vfont = PyDict_GetItemString(P_pymol_dict, "vfont");
-    Py_XINCREF(P_vfont);
+    P_vfont = PyImport_ImportModule("pymol.vfont");
   }
   if(!P_vfont) {
     PRINTFB(G, FB_Python, FB_Errors)
@@ -1950,17 +1965,12 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
   /* ultimate fallback -- try using the current working directory */
   PyRun_SimpleString
     ("if 'PYMOL_PATH' not in os.environ: os.environ['PYMOL_PATH']=os.getcwd()\n");
-  PyRun_SimpleString
-    ("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");
 #endif
   /* END PROPRIETARY CODE SEGMENT */
 
   P_main = PyImport_AddModule("__main__");
   if(!P_main)
     ErrFatal(G, "PyMOL", "can't find '__main__'");
-
-  /* inform PyMOL's other half that we're launching embedded-style */
-  PyObject_SetAttrString(P_main, "pymol_launch", PyInt_FromLong(4));
 
   args = PConvStringListToPyList(argc, argv);   /* prepare our argument list */
   if(!args)
@@ -1972,13 +1982,6 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
     ("import __main__\nif not hasattr(sys,'argv'): sys.argv=__main__.pymol_argv");
 
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");     /* needed for semistatic pymol */
-
-  PyRun_SimpleString("import pymol");   /* create the global PyMOL namespace */
-
-  pymol = PyImport_AddModule("pymol");  /* get it */
-  if(!pymol)
-    ErrFatal(G, "PyMOL", "can't find module 'pymol'");
-
 }
 
 void PConvertOptions(CPyMOLOptions * rec, PyObject * options)
@@ -2041,27 +2044,14 @@ void PGetOptions(CPyMOLOptions * rec)
 {
   PyObject *pymol, *invocation, *options;
 
-  pymol = PyImport_AddModule("pymol");  /* borrowed reference!!! */
-  if(!pymol) {
-    fprintf(stderr, "PyMOL-ERROR: can't find module 'pymol'");
-    exit(EXIT_FAILURE);
-  }
-
-  invocation = PyObject_GetAttrString(pymol, "invocation");     /* get a handle to the invocation module */
-  if(!invocation) {
-    fprintf(stderr, "PyMOL-ERROR: can't find module 'invocation'");
-    exit(EXIT_FAILURE);
-  }
-
-  options = PyObject_GetAttrString(invocation, "options");
-  if(!options) {
-    fprintf(stderr, "PyMOL-ERROR: can't get 'invocation.options'.");
-    exit(EXIT_FAILURE);
-  }
+  pymol = PImportModuleOrFatal("pymol");
+  invocation = PGetAttrOrFatal(pymol, "invocation");     /* get a handle to the invocation module */
+  options = PGetAttrOrFatal(invocation, "options");
 
   PConvertOptions(rec, options);
   Py_XDECREF(invocation);
   Py_XDECREF(options);
+  Py_XDECREF(pymol);
 }
 
 void PRunStringModule(PyMOLGlobals * G, const char *str)
@@ -2083,8 +2073,6 @@ void WrapperObjectReset(WrapperObject *wo){
 
 void PInit(PyMOLGlobals * G, int global_instance)
 {
-  PyObject *sys, *pcatch;
-
 #ifdef PYMOL_NEW_THREADS
   PyEval_InitThreads();
 #endif
@@ -2126,11 +2114,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     PCatchInit();               /* setup standard-output catch routine */
   }
 
-  /* assumes that pymol module has been loaded via Python or PyRun_SimpleString */
-
-  P_pymol = PyImport_AddModule("pymol");        /* get it */
-  if(!P_pymol)
-    ErrFatal(G, "PyMOL", "can't find module 'pymol'");
+  P_pymol = PImportModuleOrFatal("pymol");
   P_pymol_dict = PyModule_GetDict(P_pymol);
   Py_XINCREF(P_pymol_dict);
   if(!P_pymol_dict)
@@ -2150,40 +2134,16 @@ void PInit(PyMOLGlobals * G, int global_instance)
   }
 
   {
-    G->P_inst->exec = PyDict_GetItemString(P_pymol_dict, "exec_str");
-    Py_XINCREF(G->P_inst->exec);
-    if(!G->P_inst->exec)
-      ErrFatal(G, "PyMOL", "can't find 'pymol.exec_str()'");
-
-    sys = PyDict_GetItemString(P_pymol_dict, "sys");
-    Py_XINCREF(sys);
-    if(!sys)
-      ErrFatal(G, "PyMOL", "can't find 'pymol.sys'");
+    G->P_inst->exec = PGetAttrOrFatal(P_pymol, "exec_str");
 
     if(global_instance) {
-
-      /* implies global singleton pymol, so set up the global handle */
-      PyDict_SetItemString(P_pymol_dict, "_COb",
-                           PyCObject_FromVoidPtr((void *) &SingletonPyMOLGlobals, NULL));
-
-      pcatch = PyImport_ImportModule("pcatch");
-      if(!pcatch)
-        ErrFatal(G, "PyMOL", "can't find module 'pcatch'");
-      PyObject_SetAttrString(sys, "stdout", pcatch);
-      PyObject_SetAttrString(sys, "stderr", pcatch);
+      PyRun_SimpleString(
+          "import sys, pcatch;"
+          "sys.stderr = sys.stdout = pcatch");
     }
 
-    PRunStringModule(G, "import traceback\n");
-    P_traceback = PyDict_GetItemString(P_pymol_dict, "traceback");
-    Py_XINCREF(P_traceback);
-    if(!P_traceback)
-      ErrFatal(G, "PyMOL", "can't find 'traceback'");
-
-    PRunStringModule(G, "import pymol.cmd\n");
-    P_cmd = PyDict_GetItemString(P_pymol_dict, "cmd");
-    Py_XINCREF(P_cmd);
-    if(!P_cmd)
-      ErrFatal(G, "PyMOL", "can't find 'cmd'");
+    P_traceback = PImportModuleOrFatal("traceback");
+    P_cmd = PImportModuleOrFatal("pymol.cmd");
 
     if(global_instance) {
       /* implies global singleton pymol, so set up the global handle */
@@ -2200,104 +2160,43 @@ void PInit(PyMOLGlobals * G, int global_instance)
     /* right now, all locks are global -- eventually some of these may
        become instance-specific in order to improve concurrency */
 
-    G->P_inst->lock = PyObject_GetAttrString(G->P_inst->cmd, "lock");
-    if(!G->P_inst->lock)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.lock()'");
-
-    G->P_inst->lock_attempt = PyObject_GetAttrString(G->P_inst->cmd, "lock_attempt");
-    if(!G->P_inst->lock_attempt)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.lock_attempt()'");
-
-    G->P_inst->unlock = PyObject_GetAttrString(G->P_inst->cmd, "unlock");
-    if(!G->P_inst->unlock)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.unlock()'");
-
-    G->P_inst->lock_c = PyObject_GetAttrString(G->P_inst->cmd, "lock_c");
-    if(!G->P_inst->lock_c)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.lock_c()'");
-
-    G->P_inst->unlock_c = PyObject_GetAttrString(G->P_inst->cmd, "unlock_c");
-    if(!G->P_inst->unlock_c)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.unlock_c()'");
-
-    G->P_inst->lock_status = PyObject_GetAttrString(G->P_inst->cmd, "lock_status");
-    if(!G->P_inst->lock_status)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.lock_status()'");
-
+    G->P_inst->lock = PGetAttrOrFatal(G->P_inst->cmd, "lock");
+    G->P_inst->lock_attempt = PGetAttrOrFatal(G->P_inst->cmd, "lock_attempt");
+    G->P_inst->unlock = PGetAttrOrFatal(G->P_inst->cmd, "unlock");
+    G->P_inst->lock_c = PGetAttrOrFatal(G->P_inst->cmd, "lock_c");
+    G->P_inst->unlock_c = PGetAttrOrFatal(G->P_inst->cmd, "unlock_c");
+    G->P_inst->lock_status = PGetAttrOrFatal(G->P_inst->cmd, "lock_status");
     G->P_inst->lock_status_attempt =
-      PyObject_GetAttrString(G->P_inst->cmd, "lock_status_attempt");
-    if(!G->P_inst->lock_status_attempt)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.lock_status_attempt()'");
-
-    G->P_inst->unlock_status = PyObject_GetAttrString(G->P_inst->cmd, "unlock_status");
-    if(!G->P_inst->unlock_status)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.unlock_status()'");
-
-    G->P_inst->lock_glut = PyObject_GetAttrString(G->P_inst->cmd, "lock_glut");
-    if(!G->P_inst->lock_glut)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.lock_glut()'");
-
-    G->P_inst->unlock_glut = PyObject_GetAttrString(G->P_inst->cmd, "unlock_glut");
-    if(!G->P_inst->unlock_glut)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.unlock_glut()'");
+      PGetAttrOrFatal(G->P_inst->cmd, "lock_status_attempt");
+    G->P_inst->unlock_status = PGetAttrOrFatal(G->P_inst->cmd, "unlock_status");
+    G->P_inst->lock_glut = PGetAttrOrFatal(G->P_inst->cmd, "lock_glut");
+    G->P_inst->unlock_glut = PGetAttrOrFatal(G->P_inst->cmd, "unlock_glut");
 
     /* 'do' command */
 
-    G->P_inst->cmd_do = PyObject_GetAttrString(G->P_inst->cmd, "do");
-    if(!G->P_inst->cmd_do)
-      ErrFatal(G, "PyMOL", "can't find 'cmd.do()'");
+    G->P_inst->cmd_do = PGetAttrOrFatal(G->P_inst->cmd, "do");
 
     /* cache */
     G->P_inst->cache = PyObject_GetAttrString(G->P_inst->obj, "_cache");
 
     /* invariant stuff */
 
-    PRunStringModule(G, "import pymol.menu\n");
-    P_menu = PyDict_GetItemString(P_pymol_dict, "menu");
-    Py_XINCREF(P_menu);
-    if(!P_menu)
-      ErrFatal(G, "PyMOL", "can't find module 'menu'");
-
-    PRunStringModule(G, "import pymol.setting\n");
-    P_setting = PyDict_GetItemString(P_pymol_dict, "setting");
-    Py_XINCREF(P_setting);
-    if(!P_setting)
-      ErrFatal(G, "PyMOL", "can't find module 'setting'");
-
-    PRunStringModule(G, "import pymol.povray\n");
-    P_povray = PyDict_GetItemString(P_pymol_dict, "povray");
-    Py_XINCREF(P_povray);
-    if(!P_povray)
-      ErrFatal(G, "PyMOL", "can't find module 'povray'");
+    P_menu = PImportModuleOrFatal("pymol.menu");
+    P_setting = PImportModuleOrFatal("pymol.setting");
+    P_povray = PImportModuleOrFatal("pymol.povray");
 
 #ifdef _PYMOL_XRAY
-    PRunStringModule(G, "import pymol.xray\n");
-    P_xray = PyDict_GetItemString(P_pymol_dict, "xray");
-    Py_XINCREF(P_xray);
-    if(!P_xray)
-      ErrFatal(G, "PyMOL", "can't find module 'xray'");
+    P_xray = PImportModuleOrFatal("pymol.xray");
 #endif
 
     /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-    PRunStringModule(G, "import time\n");
-    P_time = PyDict_GetItemString(P_pymol_dict, "time");
-    Py_XINCREF(P_time);
-    if(!P_time)
-      ErrFatal(G, "PyMOL", "can't find module 'time'");
-
-    P_sleep = PyObject_GetAttrString(P_time, "sleep");
-    Py_XINCREF(P_sleep);
-    if(!P_sleep)
-      ErrFatal(G, "PyMOL", "can't find 'time.sleep()'");
+    P_time = PImportModuleOrFatal("time");
+    P_sleep = PGetAttrOrFatal(P_time, "sleep");
 #endif
     /* END PROPRIETARY CODE SEGMENT */
 
-    PRunStringModule(G, "import pymol.parser\n");
-    P_parser = PyDict_GetItemString(P_pymol_dict, "parser");
-    Py_XINCREF(P_parser);
-    if(!P_parser)
-      ErrFatal(G, "PyMOL", "can't find module 'parser'");
+    P_parser = PImportModuleOrFatal("pymol.parser");
 
     {
       PyObject *fn_closure = PyObject_GetAttrString(P_parser, "new_parse_closure");
@@ -2315,30 +2214,10 @@ void PInit(PyMOLGlobals * G, int global_instance)
         ErrFatal(G, "PyMOL", "can't create 'complete' function closure");
     }
 
-    PRunStringModule(G, "import chempy");
-    P_chempy = PyDict_GetItemString(P_pymol_dict, "chempy");
-    Py_XINCREF(P_chempy);
-    if(!P_chempy)
-      ErrFatal(G, "PyMOL", "can't find 'chempy'");
-
-    PRunStringModule(G, "from chempy.bonds import bonds");      /* load bond dictionary */
-
-    PRunStringModule(G, "from chempy import models");
-    P_models = PyDict_GetItemString(P_pymol_dict, "models");
-    Py_XINCREF(P_models);
-    if(!P_models)
-      ErrFatal(G, "PyMOL", "can't find 'chempy.models'");
-
-    PRunStringModule(G, "import pymol.util\n");
-    PRunStringModule(G, "import pymol.preset\n");
-    PRunStringModule(G, "import pymol.contrib\n");
-
-    PRunStringModule(G, "import string\n");
+    P_chempy = PImportModuleOrFatal("chempy");
+    P_models = PImportModuleOrFatal("chempy.models");
 
     /* backwards compatibility */
-
-    PRunStringModule(G, "pm = cmd\n");
-    PRunStringModule(G, "pmu = util\n");
 
     PRunStringModule(G, "glutThread = thread.get_ident()");
 
@@ -2349,17 +2228,6 @@ void PInit(PyMOLGlobals * G, int global_instance)
       signal(SIGINT, my_interrupt);
     }
 #endif
-
-    /* required environment variables */
-
-    PyRun_SimpleString("import os");
-
-    PyRun_SimpleString
-      ("if 'PYMOL_DATA' not in os.environ: os.environ['PYMOL_DATA']=os.environ['PYMOL_PATH']+'/data'");
-    PyRun_SimpleString("os.environ['TUT']=os.environ['PYMOL_DATA']+'/tut'");
-
-    PyRun_SimpleString
-      ("if 'PYMOL_SCRIPTS' not in os.environ: os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
 
   if (!Wrapper_Type.tp_basicsize) {
     Wrapper_Type.tp_basicsize = sizeof(WrapperObject);

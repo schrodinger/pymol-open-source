@@ -5964,8 +5964,10 @@ static PyObject *CmdMPNG(PyObject * self, PyObject * args)
   char *str1;
   int int1, int2, int3, int4, format, mode, quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Osiiiiiii", &self, &str1, &int1, &int2,
-                        &int3, &int4, &format, &mode, &quiet);
+  int width = 0, height = 0;
+  ok = PyArg_ParseTuple(args, "Osiiiiiiiii", &self, &str1, &int1, &int2,
+                        &int3, &int4, &format, &mode, &quiet,
+                        &width, &height);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -5974,7 +5976,8 @@ static PyObject *CmdMPNG(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = MoviePNG(G, str1, SettingGetGlobal_b(G, cSetting_cache_frames),
-                  int1, int2, int3, int4, format, mode, quiet);
+                  int1, int2, int3, int4, format, mode, quiet,
+                  width, height);
     /* TODO STATUS */
     APIExit(G);
   }

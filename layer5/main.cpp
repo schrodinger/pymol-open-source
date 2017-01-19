@@ -239,9 +239,6 @@ static void MainDrag(int x, int y);
 
 static CPyMOL *PyMOLInstance = NULL;    /* eliminate */
 
-static char **myArgv, *myArgvv[2], myArgvvv[1024];
-static int myArgc;
-
 struct _CMain {
   int IdleMode;
   double IdleTime;
@@ -1487,6 +1484,8 @@ static void launch(CPyMOLOptions * options, int own_the_options)
     sharp3d_prepare_context();
 #endif
 
+    int myArgc = 0;
+    char *myArgv[8] = {"pymol"};
     p_glutInit(&myArgc, myArgv);
 
     {
@@ -1679,36 +1678,26 @@ static void launch(CPyMOLOptions * options, int own_the_options)
 
 /*========================================================================*/
 
-static int is_shared = 1;
 static int main_common(void);
 static int decoy_input_hook(void) { return 0; }
 
 int main_exec(int argc, char **argv)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
-  is_shared = 0;
-  myArgc = argc;
-  myArgv = argv;
 
   fflush(stdout);
   PSetupEmbedded(G, argc, argv);
 
-  return main_common();
+  return PyRun_SimpleString(
+      "import pymol\n"
+      "pymol.launch()\n");
 }
 
 int main_shared(int block_input_hook)
 {
-  if(!is_shared)
-    return 0;
-
   if(block_input_hook)
     PyOS_InputHook = decoy_input_hook;
 
-  myArgc = 1;
-  strcpy(myArgvvv, "pymol");
-  myArgvv[0] = myArgvvv;
-  myArgvv[1] = NULL;
-  myArgv = myArgvv;
 #ifdef _DRI_WORKAROUND
   dlopen("libGL.so.1", RTLD_LAZY | RTLD_GLOBAL);
 #endif

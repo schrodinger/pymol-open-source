@@ -38,7 +38,8 @@ void MovieDump(PyMOLGlobals * G);
 void MovieAppendSequence(PyMOLGlobals * G, char *seq, int start_from,int freeze);
 int MovieSeekScene(PyMOLGlobals * G, int loop);
 int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start, int stop,
-             int missing_only, int modal, int format, int mode, int quiet);
+             int missing_only, int modal, int format, int mode, int quiet,
+             int width=0, int height=0);
 void MovieSetScrollBarFrame(PyMOLGlobals * G, int frame);
 void MovieSetCommand(PyMOLGlobals * G, int frame, char *command);
 void MovieAppendCommand(PyMOLGlobals * G, int frame, char *command);
