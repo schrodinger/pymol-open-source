@@ -388,6 +388,22 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertArrayEqual(symmetry[:6], [19.465, 21.432, 29.523, 90.0, 90.0, 90.0], delta=1e-4)
         self.assertEqual(symmetry[6], 'P 21 21 21')
 
+    @testing.requires_version('1.8.4')
+    def testLoadMMTFEmpty(self):
+        cmd.load(self.datafile("mmtf/empty-all0.mmtf"))
+        self.assertEqual(cmd.count_states(), 0)
+        cmd.delete('*')
+
+        cmd.load(self.datafile("mmtf/empty-numModels1.mmtf.gz"))
+        self.assertEqual(cmd.count_atoms(), 0)
+        self.assertEqual(cmd.get_names(), ["empty-numModels1"])
+        cmd.delete('*')
+
+        cmd.load(self.datafile("mmtf/empty-numChains1.mmtf.gz"))
+        self.assertEqual(cmd.count_atoms(), 0)
+        self.assertEqual(cmd.get_names(), ["empty-numChains1"])
+        cmd.delete('*')
+
     @testing.foreach(
             ['', '*',                   True],
             ['', 'pdb_header',          True],
