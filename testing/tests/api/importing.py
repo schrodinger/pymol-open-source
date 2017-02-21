@@ -404,6 +404,10 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(cmd.get_names(), ["empty-numChains1"])
         cmd.delete('*')
 
+        cmd.load(self.datafile("mmtf/empty-mmtfVersion99999999.mmtf"))
+        self.assertEqual(cmd.get_names(), [])
+        cmd.delete('*')
+
     @testing.foreach(
             ['', '*',                   True],
             ['', 'pdb_header',          True],
