@@ -189,6 +189,7 @@ def get_default_keys(_self=cmd):
         'CTRL-F'        : 'wizard find',
         'CTRL-H'        : 'help edit_keys',
         'CTRL-I'        : ( invert_active_selection     , (),  emptydict ),
+        'CTRL-L'        : 'util.ligand_zoom()',
         'CTRL-T'        : 'bond;unpick',
         'CTRL-V'        : ( editing_ring                , (),  {'action': _kPaste, 'space':_persistent,'self_cmd':_self}),
         'CTRL-X'        : ( editing_ring                , (),  {'action': _kCut, 'space':_persistent,'self_cmd':_self}),

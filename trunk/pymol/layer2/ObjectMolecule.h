@@ -517,6 +517,8 @@ void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, i
 int *AtomInfoGetSortedIndex(PyMOLGlobals * G, ObjectMolecule * obj, AtomInfoType * rec, int n,
                             int **outdex);
 
+ObjectMolecule *ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
+    const char *st, int st_len, int frame, int discrete, int quiet, int multiplex, int zoom);
 ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
     const char *st, int frame, int discrete, int quiet, int multiplex, int zoom);
 

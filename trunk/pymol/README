@@ -7,16 +7,6 @@ Please see the LICENSE file for additional information.
 ----------------------------------------------------------------------
 See INSTALL for installation instructions
 ----------------------------------------------------------------------
-PyMOL has the following external dependencies:
-  1. OpenGL
-  2. GLUT library for OpenGL (or freeglut)
-  3. Python (v 2.1 or better) compiled with threads support
-  4. libpng (can compiled without it, but image saves won't work)
-  5. Tcl/Tk (for the external GUI)
-  6. Numerical Python (technically optional - now using numpy instead)
-  7. Python megawidgets (Pmw -- only required for the "external" GUI)
-  8. FreeType2 (if you want nice fonts)
-----------------------------------------------------------------------
 The PyMOL Team:
 
 NOTE: this list has not been updated since Fall 2003.  Since then, the
@@ -31,6 +21,8 @@ industries.  Though Schrodinger, LLC specifically supports and
 maintains the PyMOL code base, the project can only continue to
 succeed through the sponsorship and participation of the broader
 community.
+
+   See the AUTHORS file for additional authors.
 
    Founder and Principal Author:
 

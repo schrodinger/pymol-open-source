@@ -17,6 +17,7 @@
 #include "MemoryDebug.h"
 #include "Err.h"
 
+#include "AssemblyHelpers.h"
 #include "AtomInfo.h"
 #include "Base.h"
 #include "Executive.h"
@@ -375,6 +376,21 @@ static bond_dict_t * get_global_components_bond_dict(PyMOLGlobals * G) {
 }
 
 /*
+ * True for N-H1 and N-H3, those are not in the chemical components dictionary.
+ */
+static bool is_N_H1_or_H3(PyMOLGlobals * G,
+    const AtomInfoType * a1,
+    const AtomInfoType * a2) {
+  if (a2->name == G->lex_const.N) {
+    a2 = a1;
+  } else if (a1->name != G->lex_const.N) {
+    return false;
+  }
+
+  return (a2->name == G->lex_const.H1 || a2->name == G->lex_const.H3);
+}
+
+/*
  * Add bonds for one residue, with atoms spanning from i_start to i_end-1,
  * based on components.cif
  */
@@ -415,7 +431,10 @@ static void ConnectComponent(ObjectMolecule * I, int i_start, int i_end,
       // lookup if atoms are bonded
       order = res_dict->get(LexStr(G, a1->name), LexStr(G, a2->name));
       if (order < 0) {
-        continue;
+        if (!is_N_H1_or_H3(G, a1, a2) || GetDistance(I, i1, i2) > 1.2)
+          continue;
+
+        order = 1;
       }
 
       // make bond
@@ -619,35 +638,6 @@ static bool get_assembly_chains(PyMOLGlobals * G,
   }
 
   return !assembly_chains.empty();
-}
-
-/*
- * Create a coordset for a chain (actually segi = label_asym_id) selection
- */
-static CoordSet *CoordSetCopyFilterChains(const CoordSet * other,
-    const AtomInfoType * atInfo,
-    const std::set<lexidx_t> &chains_set) {
-
-  std::vector<int> idxmap;
-  idxmap.reserve(other->NIndex);
-
-  for (int idx = 0; idx < other->NIndex; ++idx)
-    if (chains_set.count(atInfo[other->IdxToAtm[idx]].segi) > 0)
-      idxmap.push_back(idx);
-
-  CoordSet * cset = CoordSetNew(other->State.G);
-
-  cset->NIndex = idxmap.size();
-  cset->Coord = VLAlloc(float, cset->NIndex * 3);
-  cset->IdxToAtm = VLAlloc(int, cset->NIndex);
-  cset->Obj = other->Obj;
-
-  for (int idx = 0; idx < cset->NIndex; ++idx) {
-    cset->IdxToAtm[idx] = other->IdxToAtm[idxmap[idx]];
-    copy3f(other->coordPtr(idxmap[idx]), cset->coordPtr(idx));
-  }
-
-  return cset;
 }
 
 /*
@@ -2154,23 +2144,7 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * da
     CoordSet **assembly_csets = read_pdbx_struct_assembly(G, datablock,
         I->AtomInfo, cset, assembly_id);
 
-    if (assembly_csets) {
-      // remove asymetric unit coordinate sets
-      for (int i = 0; i < I->NCSet; ++i)
-        if (I->CSet[i])
-          I->CSet[i]->fFree();
-      VLAFreeP(I->CSet);
-
-      // get assembly coordinate sets into ObjectMolecule
-      I->CSet = assembly_csets;
-      I->NCSet = VLAGetSize(assembly_csets);
-      I->updateAtmToIdx();
-
-      // all_states for multi-model assembly
-      if (I->NCSet > 1) {
-        SettingSet(cSetting_all_states, true, &I->Obj);
-      }
-    }
+    ObjectMoleculeSetAssemblyCSets(I, assembly_csets);
   }
 
   // computationally intense update tasks

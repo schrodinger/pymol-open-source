@@ -1258,6 +1258,9 @@ PYMOL API
         elif contents and bioType in ('cif', 'cc'):
             r = _self.load(contents, name, state, loadable.cifstr,
                     finish, discrete, quiet, multiplex, zoom)
+        elif contents and bioType in ('mmtf',):
+            r = _self.load(contents, name, state, loadable.mmtfstr,
+                    finish, discrete, quiet, multiplex, zoom)
 
         if not _self.is_error(r):
             return name
@@ -1822,7 +1825,6 @@ DESCRIPTION
         'pse': load_pse,
         'psw': load_pse,
         'cex': readcex,
-        'mmtf': load_mmtf,
         'ply': load_ply,
         'r3d': load_r3d,
         'cc1': load_cc1,

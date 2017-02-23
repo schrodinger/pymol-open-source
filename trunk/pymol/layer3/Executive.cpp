@@ -3593,6 +3593,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
   case cLoadTypePDBStr:
   case cLoadTypeVDBStr:
   case cLoadTypeCIFStr:
+  case cLoadTypeMMTFStr:
+  case cLoadTypeMAEStr:
   case cLoadTypeXPLORStr:
   case cLoadTypeCCP4Str:
   case cLoadTypePHIStr:
@@ -3607,6 +3609,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
   case cLoadTypePDBQT:
   case cLoadTypePDB:
   case cLoadTypeCIF:
+  case cLoadTypeMMTF:
+  case cLoadTypeMAE:
   case cLoadTypeXPLORMap:
   case cLoadTypeCCP4Map:
   case cLoadTypePHIMap:
@@ -3716,6 +3720,18 @@ int ExecutiveLoad(PyMOLGlobals * G,
   case cLoadTypeCIFStr:
     obj = (CObject *) ObjectMoleculeReadCifStr(G, (ObjectMolecule *) origObj,
         content, state, discrete, quiet, multiplex, zoom);
+    break;
+  case cLoadTypeMMTF:
+  case cLoadTypeMMTFStr:
+    obj = (CObject *) ObjectMoleculeReadMmtfStr(G, (ObjectMolecule *) origObj,
+        content, size, state, discrete, quiet, multiplex, zoom);
+    break;
+  case cLoadTypeMAE:
+  case cLoadTypeMAEStr:
+    PRINTFB(G, FB_CCmd, FB_Errors)
+      " Incentive-Only-Error: 'mae' format not supported by this PyMOL build\n"
+      ENDFB(G);
+    ok = false;
     break;
   case cLoadTypeTOP:
     if(origObj) {
@@ -3863,6 +3879,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
 
     if(fname)
       sprintf(buf, " CmdLoad: \"%s\" loaded as \"%s\".\n", fname, obj->Name);
+    else
+      sprintf(buf, " CmdLoad: loaded as \"%s\".\n", obj->Name);
   }
 
   mfree(buffer);
@@ -3909,6 +3927,8 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int
     case cLoadTypeVDBStr:
     case cLoadTypeCIF:
     case cLoadTypeCIFStr:
+    case cLoadTypeMMTF:
+    case cLoadTypeMMTFStr:
     case cLoadTypeXYZ:
     case cLoadTypeXYZStr:
     case cLoadTypeMOL:

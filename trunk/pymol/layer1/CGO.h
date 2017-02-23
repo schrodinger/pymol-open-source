@@ -245,7 +245,7 @@ CGO *CGODrawText(CGO * I, int est, float *camera);
 CGO *CGOSimplify(CGO * I, int est);
 
 bool CGOCombineBeginEnd(CGO ** I, bool do_not_split_lines = false);
-CGO *CGOCombineBeginEnd(CGO * I, int est);
+CGO *CGOCombineBeginEnd(const CGO * I, int est);
 
 void CGOFreeVBOs(CGO *I);
 CGO *CGOOptimizeToVBOIndexedWithColor(CGO * I, int est, float *color);

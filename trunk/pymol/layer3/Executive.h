@@ -103,6 +103,9 @@ Z* -------------------------------------------------------------------
 /* 68 is Python-based MAE  */
 #define cLoadTypeVDBStr 69
 
+#define cLoadTypeMMTF 71
+#define cLoadTypeMMTFStr 72
+
 /* NOTE: if you add new content/object type above, then be sure to add
    corresponding code in:
    ExecutiveGetExistingCompatible

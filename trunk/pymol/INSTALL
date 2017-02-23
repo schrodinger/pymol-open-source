@@ -14,16 +14,41 @@ and installing PyMOL from the open-source code:
 
     See also: http://pymolwiki.org/index.php/Linux_Install
 
-Note that you must have OpenGL, glut, libpng, tcl/tk, python,
-freetype2, and Pmw already installed on your system for this to work.
-Nowadays, you can typically use the package manager to automatically
-download and install the required components ("apt-get install
-python-pmw" or "yum install freetype-devel", etc.)
+REQUIREMENTS
 
-    python setup.py build install --home=~
-    ~/bin/pymol
+    - C++11 compiler (e.g. gcc 4.4+)
+    - Python 2.6+
+    - Tcl/Tk (via tkinter)
+    - Pmw (Python Megawidgets)
+    - OpenGL
+    - GLEW
+    - GLUT (freeglut)
+    - libpng
+    - freetype
+    - libxml2 (optional, for COLLADA export, disable with --no-libxml)
+    - msgpack-c 1.0+ (optional, for fast MMTF loading, disable with
+        --use-msgpackc=no)
+
+SETUP OPTIONS
+
+    python setup.py --help
+    python setup.py --help-distutils
+    python setup.py --help-distutils install
+
+    Special install options:
+      --pymol-path=       installation directory for PyMOL data ($PYMOL_PATH)
+      --bundled-pmw       install bundled Pmw module
+      --no-launcher       skip installation of the pymol launcher
+
+INSTALLATION
+
+    python setup.py install --prefix=~/someplace
 
     Note: under Fink, "python" above must be Fink's python.
+
+RUNNING PyMOL
+
+    ~/someplace/bin/pymol
 
 Good luck!
 

@@ -2139,6 +2139,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     if(global_instance) {
       PyRun_SimpleString(
           "import sys, pcatch;"
+          "pcatch.closed = False;"
           "sys.stderr = sys.stdout = pcatch");
     }
 
@@ -2266,6 +2267,14 @@ void PInit(PyMOLGlobals * G, int global_instance)
     Py_INCREF(G->P_inst->wrapperObject);
     Py_INCREF(G->P_inst->settingWrapperObject);
   }
+
+#ifdef _PYMOL_NO_MSGPACKC
+  // fallback MMTF support
+  PyRun_SimpleString(
+      "import pymol.importing;"
+      "pymol.importing.loadfunctions.setdefault('mmtf',"
+      "pymol.importing.load_mmtf)");
+#endif
 }
 
 int PPovrayRender(PyMOLGlobals * G, const char *header, const char *inp, const char *file, int width,
