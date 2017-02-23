@@ -1110,10 +1110,10 @@ Citation for PDB2PQR:
     def execute(self, result, refocus=True):
         if result == 'Register APBS Use':
             import webbrowser
-            webbrowser.open("http://www.poissonboltzmann.org/apbs/downloads")
+            webbrowser.open("http://www.poissonboltzmann.org/docs/apbs-registration/")
         elif result == 'Register PDB2PQR Use':
             import webbrowser
-            webbrowser.open("http://www.poissonboltzmann.org/pdb2pqr/d/downloads")
+            webbrowser.open("http://www.poissonboltzmann.org/docs/apbs-registration/")
         elif result == 'Run APBS':
             good = self.generateApbsInputFile()
             if not good:

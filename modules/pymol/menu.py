@@ -449,6 +449,7 @@ def spectrum(self_cmd, sele):
     return r
 
 def by_chain(self_cmd, sele):
+    by_segi = r'\900b\950y \090s\099e\059g\705i\888 '
     return [
         [ 2, 'By Chain:'     ,''                               ],
               [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(elem C)',
@@ -460,6 +461,9 @@ def by_chain(self_cmd, sele):
                       [ 0, ''                                , ''                 ],
               [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
                  'util.chainbow("('+sele+')",_self=cmd)'],                                 
+              [ 0, '', '' ],
+              [ 1, by_segi + '(elem C)', 'cmd.spectrum("segi","rainbow","('+sele+') & elem C")'],
+              [ 1, by_segi, 'cmd.spectrum("segi","rainbow","' + sele + '")' ],
         ]
 
 rep_setting_lists = [
@@ -710,6 +714,8 @@ def preset_ligand_sites(self_cmd, sele):
 
 def presets(self_cmd, sele):
     return [[ 2, 'Preset:'       ,''                        ],     
+              [ 1, 'classified', 'preset.classified("'+sele+'",_self=cmd)' ],
+              [ 0, '', '' ],
               [ 1, 'simple'   ,'preset.simple("'+sele+'",_self=cmd)'          ],
               [ 1, 'simple (no solvent)'   ,'preset.simple_no_solv("'+sele+'",_self=cmd)'          ],           
               [ 1, 'ball and stick' , 'preset.ball_and_stick("'+sele+'",_self=cmd)' ],
@@ -722,6 +728,8 @@ def presets(self_cmd, sele):
               [ 1, 'publication '   , 'preset.publication("'+sele+'",_self=cmd)'          ],
               [ 1, 'publication (with solvent)'   , 'preset.pub_solv("'+sele+'",_self=cmd)'          ],
               [ 0, ''               ,''                             ],                      
+              [ 1, 'protein interface', 'preset.interface("'+sele+'",_self=cmd)' ],
+              [ 0, '', '' ],
               [ 1, 'default'   ,'preset.default("'+sele+'",_self=cmd)'          ],           
               ]
 
@@ -1400,7 +1408,7 @@ def ramp_color(self_cmd, sele):
                     for name in [
                         '[red, white, blue]',
                         ] + list(ramp_spectrum_dict)
-              ]
+            ]
 
 def test1(self_cmd, sele):
         return [[ 2, 'Test1:'     , ''                      ],     

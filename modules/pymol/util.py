@@ -1691,3 +1691,32 @@ SEE ALSO
         _self.delete(sele)
 
     return resarea
+
+
+def ligand_zoom(_self=cmd):
+    '''
+DESCRIPTION
+
+    Zoom to the next organic molecule (by residue identifier)
+
+    Bound to CTRL-L key.
+    '''
+    global _current_ligand
+
+    s = {'ligand_set': set()}
+    if _self.iterate('organic', 'ligand_set.add((model,segi,chain,resi))',
+            space=s) < 1:
+        return
+
+    ligands = sorted(s["ligand_set"])
+
+    try:
+        i = ligands.index(_current_ligand)
+    except (ValueError, NameError):
+        i = -1
+
+    i = (i + 1) % len(ligands)
+    _current_ligand = ligands[i]
+
+    # use "do" for feedback
+    _self.do('zoom /%s/%s/%s & resi %s, animate=1, buffer=2' % ligands[i])

@@ -1771,11 +1771,10 @@ bool CGOCombineBeginEnd(CGO ** I, bool do_not_split_lines) {
   return (cgo != NULL);
 }
 
-CGO *CGOCombineBeginEnd(CGO * I, int est)
+CGO *CGOCombineBeginEnd(const CGO * I, int est)
 {
   CGO *cgo;
 
-  float *pc;
   float *nc;
   int op;
   float *save_pc;
@@ -1783,7 +1782,7 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
   int ok = true;
   if (!I)
       return NULL;
-  pc = I->op;
+  auto pc = I->op;
   cgo = CGONewSized(I->G, 0);
   ok &= cgo ? true : false;
 
@@ -1807,22 +1806,30 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
       }
       break;
     case CGO_END:
-      PRINTFB(I->G, FB_CGO, FB_Warnings) " CGOCombineBeginEnd: CGO_END encountered without CGO_BEGIN but skipped for OpenGLES\n" ENDFB(I->G);      
-      break;
     case CGO_VERTEX:
-      PRINTFB(I->G, FB_CGO, FB_Warnings) " CGOCombineBeginEnd: CGO_VERTEX encountered without CGO_BEGIN but skipped for OpenGLES\n" ENDFB(I->G);      
+      PRINTFB(I->G, FB_CGO, FB_Warnings)
+        " CGOCombineBeginEnd: op=0x%02x encountered without CGO_BEGIN\n", op
+        ENDFB(I->G);
       break;
     case CGO_BEGIN:
       {
-	float *origpc = pc, firstColor[3], firstAlpha;
+	float *origpc = pc;
+	float firstColor[3], firstAlpha;
 	char hasFirstColor = 0, hasFirstAlpha = 0;
-	int nverts = 0, damode = CGO_VERTEX_ARRAY, err = 0, end = 0;
+	int nverts = 0, damode = CGO_VERTEX_ARRAY, err = 0;
+	int end = 0;
+
+	// read int argument of the BEGIN operation
 	int mode = CGO_read_int(pc);
 
+	// first iteration over BEGIN/END block (consumes 'it')
 	while(ok && !err && !end && (op = (CGO_MASK & CGO_read_int(pc)))) {
 	  switch (op) {
 	  case CGO_DRAW_ARRAYS:
-	    PRINTFB(I->G, FB_CGO, FB_Warnings) " CGOCombineBeginEnd: CGO_DRAW_ARRAYS encountered inside CGO_BEGIN/CGO_END\n" ENDFB(I->G);
+	  case CGO_STOP:
+	    PRINTFB(I->G, FB_CGO, FB_Errors)
+	      " CGO-Error: CGOCombineBeginEnd: invalid op=0x%02x inside BEGIN/END\n",
+	      op ENDFB(I->G);
 	    err = true;
 	    continue;
 	  case CGO_NORMAL:
@@ -1831,12 +1838,12 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	  case CGO_COLOR:
 	    if (!nverts){
 	      hasFirstColor = 1;
-	      firstColor[0] = pc[0]; firstColor[1] = pc[1]; firstColor[2] = pc[2];
+	      copy3f(pc, firstColor);
 	    } else {
 	      hasFirstColor = 0;
+	      damode |= CGO_COLOR_ARRAY;
 	    } 
-	    I->color[0] = *pc; I->color[1] = *(pc + 1); I->color[2] = *(pc + 2);
-	    damode |= CGO_COLOR_ARRAY;
+	    copy3f(pc, cgo->color);
 	    break;
 	  case CGO_PICK_COLOR:
 	    damode |= CGO_PICK_COLOR_ARRAY;
@@ -1851,14 +1858,14 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	    end = 1;
 	    break;
 	  case CGO_ALPHA:
-	    I->alpha = *pc;
+	    cgo->alpha = *pc;
 	    if (!nverts){
 	      hasFirstAlpha = 1;
-	      firstAlpha = I->alpha;
+	      firstAlpha = cgo->alpha;
 	    } else {
 	      hasFirstAlpha = 0;
+	      damode |= CGO_COLOR_ARRAY;
 	    }
-	    damode |= CGO_COLOR_ARRAY;
 	  default:
 	    break;
 	  }
@@ -1867,7 +1874,8 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	}
 	if (nverts>0 && !err){
 	  int pl = 0, plc = 0, pla = 0;
-	  float *vertexVals, *tmp_ptr;
+	  float *vertexVals;
+	  float *tmp_ptr;
 	  float *normalVals, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0, *accessibilityVals = 0;
 	  uchar *pickColorValsUC;
 	  short notHaveValue = 0, nxtn = 3;
@@ -1878,7 +1886,6 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	    if (hasFirstColor){
 	      CGOColorv(cgo, firstColor);
 	    }
-	    damode ^= CGO_COLOR_ARRAY;
 	  }
 	  nxtVals = vertexVals = CGODrawArrays(cgo, mode, damode, nverts);
 	  ok &= vertexVals ? true : false;
@@ -1906,16 +1913,19 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	  pc = origpc + 1;
 	  notHaveValue = damode;
 	  end = 0;
+
+	  // second iteration (with copy of iterator, doesn't consume 'it')
 	  while(ok && !err && !end && (op = (CGO_MASK & CGO_read_int(pc)))) {
 	    switch (op) {
 	    case CGO_NORMAL:
-	      normalVals[pl] = pc[0]; normalVals[pl+1] = pc[1]; normalVals[pl+2] = pc[2];
-	      notHaveValue = notHaveValue ^ CGO_NORMAL_ARRAY;
+	      copy3f(pc, &normalVals[pl]);
+	      notHaveValue &= ~CGO_NORMAL_ARRAY;
 	      break;
 	    case CGO_COLOR:
 	      if (colorVals){
-		colorVals[plc] = pc[0]; colorVals[plc+1] = pc[1]; colorVals[plc+2] = pc[2]; colorVals[plc+3] = I->alpha;
-		notHaveValue = notHaveValue ^ CGO_COLOR_ARRAY;
+		copy3f(pc, &colorVals[plc]);
+		colorVals[plc+3] = cgo->alpha;
+		notHaveValue &= ~CGO_COLOR_ARRAY;
 	      }
 	      break;
 	    case CGO_PICK_COLOR:
@@ -1924,7 +1934,7 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	      CGO_put_int(&pickColorVals[pla * 2 + 1], CGO_get_int(pc+1));
 	      cgo->current_pick_color_index = CGO_get_int(pc);
 	      cgo->current_pick_color_bond = CGO_get_int(pc + 1);
-	      notHaveValue = notHaveValue ^ CGO_PICK_COLOR_ARRAY;
+	      notHaveValue &= ~CGO_PICK_COLOR_ARRAY;
 	      break;
 	    case CGO_ACCESSIBILITY:
 	      cgo->current_accessibility = pc[0];
@@ -1955,7 +1965,7 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
 	      end = 1;
 	      break;
 	    case CGO_ALPHA:
-	      I->alpha = *pc;
+	      cgo->alpha = *pc;
 	    default:
 	      break;
 	    }
@@ -1968,7 +1978,7 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
       }
       break;
     case CGO_ALPHA:
-      I->alpha = *pc;
+      cgo->alpha = *pc;
     default:
       sz = CGO_sz[op];
       nc = CGO_add(cgo, sz + 1);
@@ -1994,7 +2004,6 @@ CGO *CGOCombineBeginEnd(CGO * I, int est)
   }
   if (!ok){
     CGOFree(cgo);
-    cgo = NULL;
   }
   return (cgo);
 }
@@ -5063,17 +5072,17 @@ CGO *CGOSimplify(CGO * I, int est)
 	    switch (op) {
 	    case CGO_NORMAL:
 	      normalVals[pl] = pc[0]; normalVals[pl+1] = pc[1]; normalVals[pl+2] = pc[2];
-	      notHaveValue = notHaveValue ^ CGO_NORMAL_ARRAY;
+	      notHaveValue &= ~CGO_NORMAL_ARRAY;
 	      break;
 	    case CGO_COLOR:
 	      colorVals[plc] = pc[0]; colorVals[plc+1] = pc[1]; 
 	      colorVals[plc+2] = pc[2]; colorVals[plc+3] = I->alpha;
-	      notHaveValue = notHaveValue ^ CGO_COLOR_ARRAY;
+              notHaveValue &= ~CGO_COLOR_ARRAY;
 	      break;
 	    case CGO_PICK_COLOR:
 	      cgo->current_pick_color_index = CGO_get_int(pc);
 	      cgo->current_pick_color_bond = CGO_get_int(pc + 1);
-	      notHaveValue = notHaveValue ^ CGO_PICK_COLOR_ARRAY;
+	      notHaveValue &= ~CGO_PICK_COLOR_ARRAY;
 	      break;
 	    case CGO_VERTEX:
 	      if (notHaveValue & CGO_NORMAL_ARRAY){

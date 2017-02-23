@@ -2,6 +2,28 @@
 CHANGE LOG
 =========================================================================
 
+2017-02-22 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fast MMTF load support in C++
+
+	* extra_fit: report RMS for method=cealign
+	  Thanks to Hongbo Zhu
+
+	* CTRL-L ligand zoom
+
+	* preset > classified (auto_show_classified equivalent)
+	  preset > interface (ported from Incentive PyMOL 1.8.0)
+
+	* set_key auto-completion
+
+	* command completion for selection language
+
+	* fix connect_mode=4 for N-H1 and N-H3
+
+	* fix CGO ALPHA and dup COLOR issue
+
+	* 1.8.5.1 (beta)
+
 2017-01-19 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* width/height arguments for movie export (mpng, movie.produce)

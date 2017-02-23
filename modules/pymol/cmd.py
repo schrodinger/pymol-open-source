@@ -369,7 +369,29 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
 
         key_mappings = keyboard.get_default_keys()
 
-        selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
+        selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+[
+            'not ', 'and ', 'or ', 'first ', 'last ', 'in ', 'like ',
+
+            'byobject ', 'bysegi ', 'bychain ', 'byres ', 'bycalpha ',
+            'bymolecule ',
+
+            'bound_to ', 'neighbor ', 'extend ', 'within ', 'around ',
+            'expand ', 'gap ', 'near_to ', 'beyond ',
+
+            'model ', 'chain ', 'segi ', 'resn ', 'resi ', 'name ', 'alt ', 'index ',
+            'id ', 'rank ',
+
+            'partial_charge ', 'formal_charge ', 'b ', 'q ', 'ss ', 'elem ',
+            'rep ', 'color ', 'pepseq ',
+
+            'all', 'enabled', 'visible', 'bonded', 'protected', 'masked',
+            'organic', 'inorganic', 'solvent', 'polymer', 'guide', 'hetatm',
+            'hydrogens', 'backbone', 'sidechain', 'metals', 'donors',
+            'acceptors',
+
+            'center', 'origin',
+        ])
+
         object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))
         map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
         contour_sc =  lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:mesh')+gnot('object:surface'))

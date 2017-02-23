@@ -355,3 +355,47 @@ def default(selection="(all)",_self=cmd):
         cmd.color(str(color),"("+s+") and elem C")
     cmd.delete(s)
         
+
+def interface(selection='*', _self=cmd):
+    '''
+    Protein-Protein interface preset, mimics the BioLuminate preset
+    '''
+    s = _prepare(selection, _self=_self)[0]
+
+    # temporary selection names
+    s_interface = _self.get_unused_name('_iface')
+
+    # interface atoms
+    _self.select(s_interface, '?%s & (%s)' % (s, ' '.join(
+        '((chain %s) around 4.5) ' % (chain)
+        for chain in _self.get_chains(s))), 0)
+
+    # Color by chain, non-carbon by element
+    util.cbc(s, _self=_self)
+    _self.color('atomic', '?%s & !(elem C)' % (s))
+
+    # Change everything to cartoons
+    _self.show_as('cartoon', s)
+
+    # interface residues as sticks
+    _self.show('sticks', 'byres ?' + s_interface)
+    _self.show('nb_spheres', '?' + s_interface)
+
+    # delete temporary selections
+    _self.delete(s_interface)
+    _self.delete(s)
+
+
+def classified(selection='*', _self=cmd):
+    '''
+    Equivalent of "auto_show_classified" setting. Sets representations
+    according to atom classification ("auto_classify_atoms"). Does not
+    change any colors or settings.
+    '''
+    s = _prepare(selection, _self=_self)[0]
+
+    _self.show_as('cartoon', 'polymer & %' + s)
+    _self.show_as('sticks', 'organic & %' + s)
+    _self.show_as('spheres', 'inorganic & %' + s)
+
+    _self.delete(s)

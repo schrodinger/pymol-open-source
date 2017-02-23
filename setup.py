@@ -23,16 +23,31 @@ class options:
     osx_frameworks = False
     jobs = int(os.getenv('JOBS', 0))
     no_libxml = False
+    use_msgpackc = 'c++11'
+    help_distutils = False
 
 try:
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--osx-frameworks', action="store_true")
-    parser.add_argument('--jobs', '-j', type=int)
-    parser.add_argument('--no-libxml', action="store_true")
+    parser.add_argument('--osx-frameworks', action="store_true",
+            help="on MacOS use OpenGL and GLUT frameworks instead of shared "
+            "libraries from XQuartz. Note that the GLUT framework has no "
+            "mouse wheel support, so this option is generally not desired.")
+    parser.add_argument('--jobs', '-j', type=int, help="for parallel builds "
+            "(defaults to number of processors)")
+    parser.add_argument('--no-libxml', action="store_true",
+            help="skip libxml2 dependency, disables COLLADA export")
+    parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'no'),
+            help="c++11: use msgpack-c header-only library; c: link against "
+            "shared library; no: disable fast MMTF load support")
+    parser.add_argument('--help-distutils', action="store_true",
+            help="show help for distutils options and exit")
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
 except ImportError:
     print("argparse not available")
+
+if options.help_distutils:
+    sys.argv.append("--help")
 
 if options.jobs != 1:
     monkeypatch_distutils.pmap = multiprocessing.pool.ThreadPool(options.jobs or None).map
@@ -192,6 +207,16 @@ if not options.no_libxml:
         ("_HAVE_LIBXML", None)
     ]
     libs += ["xml2"]
+
+if options.use_msgpackc == 'no':
+    def_macros += [("_PYMOL_NO_MSGPACKC", None)]
+else:
+    if options.use_msgpackc == 'c++11':
+        def_macros += [("MMTF_MSGPACK_USE_CPP11", None)]
+    else:
+        libs += ['msgpackc']
+
+    pymol_src_dirs += ["contrib/mmtf-c"]
 
 inc_dirs = list(pymol_src_dirs)
 

@@ -1535,6 +1535,7 @@ struct {
   {"pdb",           cLoadTypePDBStr,    cLoadTypePDB},
   {"vdb",           cLoadTypeVDBStr,    -1},
   {"cif",           cLoadTypeCIFStr,    cLoadTypeCIF},
+  {"mmtf",          cLoadTypeMMTFStr,   cLoadTypeMMTF},
   {"mae",           cLoadTypeMAEStr,    cLoadTypeMAE},
   {"sdf",           cLoadTypeSDF2Str,   cLoadTypeSDF2},
   {"mol",           cLoadTypeMOLStr,    cLoadTypeMOL},

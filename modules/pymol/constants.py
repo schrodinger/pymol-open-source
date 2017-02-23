@@ -119,6 +119,8 @@ class _loadable:
     pdbqt = 67
     vdbstr = 69
     vdb = 70
+    mmtf = 71
+    mmtfstr = 72
 
 class loadable(_loadable, _loadable_legacy):
     @classmethod
@@ -131,6 +133,8 @@ class loadable(_loadable, _loadable_legacy):
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.vdb: loadable.vdbstr,
               loadable.cif : loadable.cifstr,
+              loadable.mmtf : loadable.mmtfstr,
+              loadable.mae : loadable.maestr,
               loadable.mol : loadable.molstr,
               loadable.xplor : loadable.xplorstr,
               loadable.mol2 : loadable.mol2str,
