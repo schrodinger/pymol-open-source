@@ -6,7 +6,7 @@ INSTALLATION VIA COMPILATION
 There is currently only one officially-supported approach for building
 and installing PyMOL from the open-source code:
 
-    UsingPython Disutils under an open-source environment, such as:
+    Using Python Disutils under an open-source environment, such as:
 
         Linux
         FreeBSD
@@ -39,6 +39,16 @@ SETUP OPTIONS
       --pymol-path=       installation directory for PyMOL data ($PYMOL_PATH)
       --bundled-pmw       install bundled Pmw module
       --no-launcher       skip installation of the pymol launcher
+
+    Environment variables:
+      PREFIX_PATH   Colon-delimited list of paths to search for headers and
+                    libraries, e.g. /opt/local:/opt/X11
+      CXX           C++ compiler command
+      CC            C compiler command
+      CXXFLAGS      C++ compiler flags
+      CFLAGS        C compiler and linker flags
+      CPPFLAGS      C/C++ preprocessor flags, e.g. -I/tmp/msgpack-c/include
+      LDFLAGS       linker flags
 
 INSTALLATION
 

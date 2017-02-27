@@ -1600,7 +1600,7 @@ static int IsSecurityRequired()
 void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
 {
   /* This routine is called if we are running with an embedded Python interpreter */
-  PyObject *args, *pymol;
+  PyObject *args;
 
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
@@ -2318,13 +2318,16 @@ void PExit(PyMOLGlobals * G, int code)
   }
 #endif
 
+#if 1
   /* we're having trouble with threading errors after calling Py_Exit,
      so for the time being, let's just take the process down at this
      point, instead of allowing PyExit to be called. */
 
   exit(code);
+#else
 
   Py_Exit(code);
+#endif
 }
 
 void PParse(PyMOLGlobals * G, const char *str)

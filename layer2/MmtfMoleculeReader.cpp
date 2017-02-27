@@ -201,6 +201,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
 
         LexAssign(G, tai.resn, group->groupName);
         tai.hetatm = group->singleLetterCode == '?';
+        tai.flags = tai.hetatm ? cAtomFlag_ignore : 0;
 
         if (use_auth) {
           tai.resv = container->groupIdList[groupIndex];

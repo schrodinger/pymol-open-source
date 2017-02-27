@@ -14,6 +14,7 @@ from distutils.command.build_py import build_py
 from glob import glob
 import shutil
 import sys, os, re
+import platform
 
 import multiprocessing.pool
 import monkeypatch_distutils
@@ -25,6 +26,12 @@ class options:
     no_libxml = False
     use_msgpackc = 'c++11'
     help_distutils = False
+    no_cxx11 = False
+
+# OS X <= 10.8
+if sys.platform == 'darwin' and tuple(
+        map(int, platform.mac_ver()[0].split('.'))) < (10, 9):
+    options.no_cxx11 = True
 
 try:
     import argparse
@@ -40,6 +47,9 @@ try:
     parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'no'),
             help="c++11: use msgpack-c header-only library; c: link against "
             "shared library; no: disable fast MMTF load support")
+    parser.add_argument('--no-cxx11', action="store_true", help="Disable "
+            "C++11 std library features. Will still require C++11 'auto' "
+            "keyword support.")
     parser.add_argument('--help-distutils', action="store_true",
             help="show help for distutils options and exit")
     options, sys.argv[1:] = parser.parse_known_args(namespace=options)
@@ -191,6 +201,13 @@ ext_link_args = []
 data_files = []
 ext_modules = []
 
+if options.no_cxx11:
+    def_macros += [
+        ('_PYMOL_NO_CXX11', None),
+    ]
+    if options.use_msgpackc == 'c++11':
+        options.use_msgpackc = 'no'
+
 if True:
     # VMD plugin support
     pymol_src_dirs += [
@@ -254,15 +271,6 @@ else: # unix style (linux, mac, ...)
         for prefix in ['/sw', '/opt/local', '/usr/local']:
             if sys.executable.startswith(prefix):
                 prefix_path.insert(0, prefix)
-
-        import platform
-        if int(platform.mac_ver()[0].split('.')[1]) < 9:
-            # OS X <= 10.8, will still use some C++11 features
-            # like the "auto" keyword, but excludes features which
-            # depend on the C++11 std library.
-            def_macros += [
-                ('_PYMOL_NO_CXX11', None),
-            ]
     elif sys.platform.startswith("freebsd"):
         prefix_path = ["/usr/local"]
 

@@ -10354,7 +10354,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
     default:
       {
         int inv_flag;
+#ifdef _PYMOL_IP_EXTRAS
 	int use_stereo = 0, use_text_type = 0;
+#endif
 
         switch (op->code) {
         case OMOP_INVA:
