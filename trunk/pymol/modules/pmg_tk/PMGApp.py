@@ -131,6 +131,7 @@ class PMGApp(Pmw.MegaWidget):
                 ("All Readable","*.xml.gz"),
                 ("All Readable","*.pdbqt"),
                 ("All Readable","*.cml"),
+                ("All Readable","*.mmtf"),
                 ("PDB File","*.pdb"),
                 ("PDB1 File","*.pdb1"),                
                 ("All Files","*.*"),
@@ -175,6 +176,8 @@ class PMGApp(Pmw.MegaWidget):
                 ("PDBML","*.xml.gz"),
                 ("PDBQT","*.pdbqt"),
                 ("Chemical Markup Language","*.cml"),
+                ("MMTF","*.mmtf"),
+                ("MMTF","*.mmtf.gz"),
                 ]
 
     def initializeTk_colors_common(self):

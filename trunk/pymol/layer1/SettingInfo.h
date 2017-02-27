@@ -867,6 +867,7 @@ enum {
   REC_b( 759, pick_shading                            , global    , 0 ),
   REC_s( 760, fetch_type_default                      , global    , "cif" ),
   REC_b( 761, editor_auto_measure                     , global    , 1 ),
+  REC_b( 762, surface_smooth_edges                    , ostate    , 0 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

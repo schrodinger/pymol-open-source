@@ -2813,6 +2813,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_suspend_undo:
   case cSetting_use_geometry_shaders:
   case cSetting_volume_mode:
+  case cSetting_surface_smooth_edges:
     PRINTFB(G, FB_Setting, FB_Warnings)
       " Setting-Warning: %s is not supported in Open-Source version of PyMOL\n",
       SettingInfo[index].name

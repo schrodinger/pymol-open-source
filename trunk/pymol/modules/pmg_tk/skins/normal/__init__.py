@@ -2724,6 +2724,14 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                  variable = self.setting.surface_solvent,
                                  )
 
+        addmenuitem('Surface', 'separator', '')
+
+        addmenuitem('Surface', 'checkbutton', label='Smooth Edges (Incentive-Only)',
+                state='disabled',
+                variable=self.setting.surface_smooth_edges)
+        addmenuitem('Surface', 'checkbutton', label='Edge Proximity',
+                variable=self.setting.surface_proximity)
+
         self.menuBar.addmenuitem('Surface', 'separator', '')
         
         for label, val in [
@@ -2737,7 +2745,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 
         self.menuBar.addcascademenu('Setting', 'Volume', label='Volume')
 
-        self.menuBar.addmenuitem('Volume', 'checkbutton', label='Pre-integrated Rendering',
+        self.menuBar.addmenuitem('Volume', 'checkbutton', label='Pre-integrated Rendering (Incentive-Only)',
                                 state='disabled',
                                 variable = self.setting.volume_mode)
 
