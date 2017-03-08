@@ -87,3 +87,26 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms('100/CA|110/CB'), ref)
         self.assertEqual(cmd.count_atoms('100/CA or 110/CB'), ref)
         self.assertEqual(cmd.count_atoms('100/CA 110/CB'), ref)
+
+    @testing.requires_version('1.8.7')
+    def test_not_enabled(self):
+        cmd.fragment('ala')
+        cmd.fragment('arg')
+        cmd.fragment('asp')
+
+        cmd.fragment('gly')
+        cmd.fragment('glu')
+
+        cmd.delete('not a*')  # use "not " prefix
+
+        self.assertEqual(cmd.get_names(), ['ala', 'arg', 'asp'])
+
+        cmd.disable('arg')
+        cmd.delete('!enabled') # use "!" prefix
+
+        self.assertEqual(cmd.get_names(), ['ala', 'asp'])
+
+        cmd.disable('asp')
+        cmd.delete('enabled')
+
+        self.assertEqual(cmd.get_names(), ['asp'])
