@@ -804,6 +804,7 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if is_ok(r):
+            output = int(output)
             if len(r):
                 if (_self.get_setting_int("logging") != 0) and (output<3):
                     if not quiet:

@@ -612,7 +612,11 @@ DESCRIPTION
         _self = kwargs.pop('_self', cmd)
 
         wiz = Message(['please wait ...'], dismiss=0, _self=_self)
-        _self.set_wizard(wiz)
+
+        try:
+            _self.set_wizard(wiz)
+        except:
+            wiz = None
 
         if isinstance(func, str):
             func = _self.keyword[func][0]
@@ -625,8 +629,15 @@ DESCRIPTION
                 if e.message:
                     print(e)
             finally:
-                _self.set_wizard_stack([w for w in _self.get_wizard_stack() if w != wiz])
-                _self.refresh_wizard()
+                if wiz is not None:
+                    try:
+                        _self.set_wizard_stack([w
+                            for w in _self.get_wizard_stack() if w != wiz])
+                    except:
+                        _self.do('_ wizard')
+                    else:
+                        _self.refresh_wizard()
+
                 async_threads.remove(t)
 
         t = threading.Thread(target=wrapper)

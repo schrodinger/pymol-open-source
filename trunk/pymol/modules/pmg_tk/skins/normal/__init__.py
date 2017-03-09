@@ -261,7 +261,7 @@ class Normal(PMGSkin):
         return newBtn
 
     def get_view(self):
-        self.cmd.get_view(quiet=0)
+        self.cmd.get_view(2, quiet=0)
         try:
             str = self.cmd.get_view(3,quiet=1)
             self.root.clipboard_clear()

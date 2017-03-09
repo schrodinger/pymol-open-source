@@ -559,4 +559,19 @@ class _NoCmdFinder:
         return None
     find_module = find_spec
 
-sys.meta_path.insert(0, _NoCmdFinder())
+########## LEGACY PRINT STATEMENT FOR PYMOL COMMAND LINE ###################
+
+if sys.version_info[0] > 2:
+    def _print_statement(*args, **_):
+        '''Legacy Python-2-like print statement for the PyMOL command line'''
+        kw = {}
+        if args and args[0].startswith('>>'):
+            kw['file'] = eval(args[0][2:])
+            args = args[1:]
+        if args and not args[-1]:
+            kw['end'] = ' '
+            args = args[:-1]
+        args = [eval(a) for a in args]
+        print(*args, **kw)
+
+    cmd.extend('print', _print_statement)

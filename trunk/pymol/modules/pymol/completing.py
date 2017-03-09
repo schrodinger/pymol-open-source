@@ -27,6 +27,11 @@ def vol_ramp_sc():
     from . import colorramping
     return cmd.Shortcut(colorramping.namedramps)
 
+names_sc = lambda: cmd.Shortcut(cmd.get_names('public'))
+
+aa_nam_e = [ names_sc                   , 'name'            , ''   ]
+aa_nam_s = [ names_sc                   , 'name'            , ' '  ]
+aa_nam_c = [ names_sc                   , 'name'            , ', ' ]
 aa_exp_e = [ expr_sc                    , 'expression'      , ''   ]
 aa_sel_e = [ cmd.selection_sc           , 'selection'       , ''   ]
 aa_sel_c = [ cmd.selection_sc           , 'selection'       , ', ' ]
@@ -76,7 +81,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'clip'           : [ self_cmd.viewing.clip_action_sc , 'clipping action' , ', ' ],
         'count_atoms'    : aa_sel_e,
         'count_discrete' : aa_sel_e,
-        'delete'         : aa_sel_e,
+        'delete'         : aa_nam_s,
         'deprotect'      : aa_sel_e,
         'disable'        : aa_obj_s,
         'distance'       : aa_obj_e,
@@ -112,7 +117,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'matrix_copy'    : aa_obj_c,
         'matrix_reset'   : aa_obj_c,
         'mse2met'        : aa_sel_e,
-        'order'          : aa_obj_s,
+        'order'          : aa_nam_s,
         'origin'         : aa_sel_e,
         'pair_fit'       : aa_sel_c,
         'protect'        : aa_sel_e,
@@ -128,7 +133,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'set'            : aa_set_c,
         'set_bond'       : aa_set_c,
         'set_key'        : [ lambda: cmd.Shortcut(cmd.key_mappings), 'key'       , ', ' ],
-        'set_name'       : aa_obj_c,
+        'set_name'       : aa_nam_c,
         'show'           : aa_rep_c,
         'smooth'         : aa_sel_e,
         'space'          : [ self_cmd.space_sc               , 'space'           , ''   ],      
@@ -176,7 +181,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'get_bond'       : aa_sel_c,
         'get_property'   : aa_obj_c,
         'gradient'       : aa_map_c,
-        'group'          : aa_obj_c,
+        'group'          : aa_nam_s,
         'hide'           : aa_sel_e,
         'isomesh'        : aa_map_c,
         'isosurface'     : aa_map_c,
@@ -188,7 +193,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'save'           : aa_sel_c,
         'label'          : aa_exp_e,
         'load'           : aa_sel_c,
-        'load_traj'      : aa_sel_c,
+        'load_traj'      : aa_obj_c,
         'map_set'        : [ self_cmd.editing.map_op_sc      , 'operator'        , ', ' ],
         'map_new'        : [ self_cmd.creating.map_type_sc   , 'map type'        , ', ' ],
         'map_trim'       : aa_sel_c,
@@ -199,7 +204,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'rebuild'        : aa_rep_c,
         'reference'      : aa_sel_c,
         'scene'          : [ self_cmd.viewing.scene_action_sc, 'scene action'    , ', ' ],
-        'set_name'       : aa_obj_e,
+        'set_name'       : aa_nam_e,
         'show'           : aa_sel_e,
         'slice_new'      : aa_map_c,
         'spectrum'       : [ self_cmd.palette_sc             , 'palette'         , ''   ],      
@@ -235,7 +240,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'set'            : aa_sel_c,
         'set_bond'       : aa_sel_c,
         'set_property'   : aa_obj_c,
-        'set_atom_property'   : aa_obj_c,
+        'set_atom_property' : aa_sel_e,
         'spectrum'       : aa_sel_e,
         'symexp'         : aa_sel_c,
         'unset_bond'     : aa_sel_c,

@@ -521,7 +521,7 @@ def _ctrl(k,_self=cmd):
 
 def _alt(k,_self=cmd):
     # WARNING: internal routine, subject to change
-    _invoke_key('ALT-' + k, 0, _self)
+    _invoke_key('ALT-' + k.upper(), 0, _self)
 
 # command (apple) keys
 
