@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2017-03-09 Thomas Holder, Piotr Rotkiewicz
+
+	* 1.8.6.0
+
 2017-02-22 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fast MMTF load support in C++
