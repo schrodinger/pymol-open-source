@@ -25,6 +25,7 @@
 // *************************************************************************
 
 #define WIN32_LEAN_AND_MEAN
+#define __STDC_LIMIT_MACROS
 
 #include "mmtf_parser.h"
 #include "mmtf_parser_private.h"
@@ -45,6 +46,10 @@
 #else
 #include <arpa/inet.h>
 #endif
+
+// Accept msgpack bin type for strings (emits warnings).
+// Both types seem to have the same memory layout.
+#define MMTF_ACCEPT_MSGPACK_BIN_AS_STR
 
 // clang-format off
 // typed array memory allocation
@@ -111,7 +116,9 @@ enum {
         for (; current_key_value != last_key_value; ++current_key_value) { \
             const msgpack_object* key = &(current_key_value->key); \
             const msgpack_object* value = &(current_key_value->val); \
-            if (key->type != MMTF_MSGPACK_TYPE(STR)) { \
+            if (key->type == MMTF_MSGPACK_TYPE(BIN)) { \
+                fprintf(stderr, "Warning: map key of type BIN ('%.*s')\n", key->via.bin.size, key->via.bin.ptr); \
+            } else if (key->type != MMTF_MSGPACK_TYPE(STR)) { \
                 fprintf(stderr, "Warning: map key not of type str (type %d).\n", key->type); \
                 continue; \
             }
@@ -728,7 +735,15 @@ void MMTF_parser_put_string(const msgpack_object* object, char** out) {
 
 //*** Unpacking from MsgPack and applying strategy
 char* MMTF_parser_fetch_string(const msgpack_object* object) {
-    if (object->type != MMTF_MSGPACK_TYPE(STR)) {
+    switch (object->type) {
+#ifdef MMTF_ACCEPT_MSGPACK_BIN_AS_STR
+    case MMTF_MSGPACK_TYPE(BIN):
+        fprintf(stderr, "Warning in %s: type BIN, expected STR ('%.*s')\n", __FUNCTION__,
+                object->via.bin.size, object->via.bin.ptr);
+#endif
+    case MMTF_MSGPACK_TYPE(STR):
+        break;
+    default:
         fprintf(stderr, "Error in %s: the entry encoded in the MMTF is not a string.\n", __FUNCTION__);
         return NULL;
     }
@@ -739,7 +754,15 @@ char* MMTF_parser_fetch_string(const msgpack_object* object) {
 }
 
 char MMTF_parser_fetch_char(const msgpack_object* object) {
-    if (object->type != MMTF_MSGPACK_TYPE(STR)) {
+    switch (object->type) {
+#ifdef MMTF_ACCEPT_MSGPACK_BIN_AS_STR
+    case MMTF_MSGPACK_TYPE(BIN):
+        fprintf(stderr, "Warning in %s: type BIN, expected STR ('%.*s')\n", __FUNCTION__,
+                object->via.bin.size, object->via.bin.ptr);
+#endif
+    case MMTF_MSGPACK_TYPE(STR):
+        break;
+    default:
         fprintf(stderr, "Error in %s: the entry encoded in the MMTF is not a string.\n", __FUNCTION__);
         return '\0';
     }
@@ -765,8 +788,10 @@ int64_t MMTF_parser_fetch_int(const msgpack_object* object) {
 float MMTF_parser_fetch_float(const msgpack_object* object) {
     switch (object->type) {
     case /* FLOAT64 */ MMTF_MSGPACK_TYPE(FLOAT):
+#if MSGPACK_VERSION_MAJOR >= 2
     case /* FLOAT32 */ 0x0a: // msgpack-c >= 2.1
         return (float)object->via.f64;
+#endif
     default:
         fprintf(stderr, "Error in %s: the entry encoded in the MMTF is not a float.\n", __FUNCTION__);
         return NAN;

@@ -540,13 +540,43 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "multisave" is an unsupported command.
-    
+    "multisave" will save a multi-entry PDB file.
+
+    Every object in the given selection (pattern) will have a HEADER and a
+    CRYST (if symmetry is defined) record, and is terminated with END.
+    Loading such a multi-entry PDB file into PyMOL will load each entry
+    as a separate object.
+
+    This behavior is different to the "save" command, where a multi-object
+    selection is written "flat" to a PDB file, without HEADER or CRYST
+    records.
+
+ARGUMENTS
+
+    filename = string: file path to be written
+
+    pattern = str: atom selection (before 1.8.4: object name pattern)
+
+    state = int: object state (-1=current, 0=all) {default: -1}
+
+    append = 0/1: append to existing file {default: 0}
+
+    format = str: file format {default: guess from extension, or 'pdb'}
     '''
+        from pymol.importing import filename_to_format
+        _, _, format_guessed, zipped = filename_to_format(filename)
+
+        if zipped:
+            raise pymol.CmdException(zipped + ' not supported with multisave')
+
         if not format:
-            if filename.lower().endswith('.pmo'):
-                raise pymol.CmdException('pmo format not supported anymore')
-            format = 'pdb'
+            format = format_guessed or 'pdb'
+
+        if format == 'pmo':
+            raise pymol.CmdException('pmo format not supported anymore')
+
+        if format not in ('pdb', 'cif'):
+            raise pymol.CmdException(format + ' format not supported with multisave')
 
         s = get_str(format, pattern, state, '', -1, 1, quiet, _self)
 
@@ -578,6 +608,21 @@ DESCRIPTION
 
     API-only function which exports the selection to a molecular file
     format and returns it as a string.
+
+ARGUMENTS
+
+    format = str: pdb|cif|sdf|mol|mol2|mae|pqr|xyz
+
+    selection = str: atom selection {default: all}
+
+    state = int: object state (-1=current, 0=all) {default: -1}
+
+    ref = str: object name which defines reference frame {default: }
+
+    ref_state = int: state of ref object {default: -1}
+
+    multi = int: for multi-entry file formats, 0 = single entry,
+    1 = by object, 2 = by object-state, -1 = format default {default: -1}
         '''
         with _self.lockcm:
             return _cmd.get_str(_self._COb, str(format), str(selection),

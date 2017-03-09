@@ -212,11 +212,11 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
         }
 
         // bonds
-        for (int l = 0, offset = atomIndex; l < group->bondOrderListCount; ++l) {
+        for (int l = 0, offset = atomIndex; l < group->bondAtomListCount / 2; ++l) {
           BondTypeInit2(I->Bond + (I->NBond++),
               offset + group->bondAtomList[l * 2],
               offset + group->bondAtomList[l * 2 + 1],
-              group->bondOrderList[l]);
+              group->bondOrderListCount ? group->bondOrderList[l] : 1);
         }
 
         int groupAtomCount = group->atomNameListCount;
@@ -268,11 +268,11 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
 
   AtomInfoPurge(G, &tai);
 
-  for (int l = 0; l < container->bondOrderListCount; ++l) {
+  for (int l = 0; l < container->bondAtomListCount / 2; ++l) {
     BondTypeInit2(I->Bond + (I->NBond++),
         container->bondAtomList[l * 2],
         container->bondAtomList[l * 2 + 1],
-        container->bondOrderList[l]);
+        container->bondOrderListCount ? container->bondOrderList[l] : 1);
   }
 
   if (container->numBonds != I->NBond) {

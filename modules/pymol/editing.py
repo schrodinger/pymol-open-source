@@ -1843,8 +1843,31 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "set_object_ttt" is an unsupported feature.
+    "set_object_ttt" is an API-only function which sets the TTT matrix
+    (view transformation) for an object.
 
+    When a movie is defined and the object has key frames for object
+    motions, then the key frames take priority and update the TTT matrix
+    while the movie is playing.
+
+    Unlike a homogenous matrix where the last row is always [0,0,0,1],
+    a TTT matrix may have a pre-translation vector in the last row.
+
+ARGUMENTS
+
+    object = str: object name
+
+    ttt = list of 16 floats: TTT matrix
+
+    state = int: UNUSED, TTT matrices are not state specific
+
+    homogenous = 0/1: NAME IS MISLEADING AND IMPLEMENTATION
+    POSSIBLY WRONG! If 1, then transpose the input matrix and
+    set the last column (post-translation) to [0,0,0,1].
+
+SEE ALSO
+
+    cmd.transform_object, cmd.matrix_reset
         '''
         r = None
         if _self.is_string(ttt):
@@ -1945,8 +1968,35 @@ NOTES
         '''
 DESCRIPTION
 
-    "transform_object" is currently an unsupported feature.
+    "transform_object" in an API-only function which applies a
+    transformation matrix to an object.
 
+    If setting "matrix_mode" > 0 and selection is empty, then this
+    function operates on the TTT (movie) matrix.
+
+ARGUMENTS
+
+    name = str: object name
+
+    matrix = list of 16 floats: transformation matrix
+
+    state = int: object state {default: -1}
+
+    log = 0/1: write action to log file (only applies if object is a
+    molecular object) {default: 0}
+
+    selection = str: atom selection (only applies to molecular objects,
+    if empty then the whole object state is transformed).
+
+    homogenous = 0/1: if 0, then matrix[12:15] may contain a pre-translation,
+    otherwise those values must be zeros (see also cmd.transform_selection)
+    {default: 0}
+
+    transpose = 0/1: matrix is 0=row-major, 1=column-major {default: 0}
+
+SEE ALSO
+
+    cmd.transform_selection, cmd.set_object_ttt, cmd.matrix_reset
         '''
         r = DEFAULT_ERROR
         if int(transpose):
@@ -2045,8 +2095,18 @@ DESCRIPTION
 
 USAGE
 
-    matrix_reset name
+    matrix_reset name [, state [, mode ]]
 
+ARGUMENTS
+
+    name = str: object name
+
+    state = int: object state {default: 1}
+
+    mode = int: {defualt: -1 = matrix_mode or 0}
+      0: transformation was applied to coordinates
+      1: reset TTT matrix (movie transformation)
+      2: reset state matrix
 
 SEE ALSO
 

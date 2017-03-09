@@ -804,7 +804,7 @@ enum {
   REC_b( 705, smooth_half_bonds                       , global    , 1 ),
   REC_i( 706, anaglyph_mode                           , global    , 4, 0, 4 ),  /* 0 = true; 1 = gray; 2 = color; 3 = half color; 4 = optimized */
   REC_i( 707, edit_light                              , global    , 1 ),
-  REC_b( 708, suspend_undo                            , global    , 0 ),
+  REC_b( 708, suspend_undo                            , object    , 0 ),
   REC_i( 709, suspend_undo_atom_count                 , global    , 1000 ),
   REC_b( 710, suspend_deferred                        , global    , 0 ),
   REC_b( 711, pick_surface                            , ostate    , 0 ),
