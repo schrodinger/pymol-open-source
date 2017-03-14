@@ -2,6 +2,8 @@
 Python installation tests
 '''
 
+from __future__ import absolute_import
+
 import sys
 from pymol import testing
 
@@ -31,3 +33,9 @@ class TestSystem(testing.PyMOLTestCase):
             except ImportError:
                 failed.append(name)
         self.assertEqual(failed, [])
+
+    @testing.requires_version('1.8.4')
+    def testNoCmd(self):
+        import pymol
+        with self.assertRaises(pymol.CmdException):
+            import cmd
