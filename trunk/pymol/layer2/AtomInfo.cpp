@@ -2836,3 +2836,135 @@ void atomicnumber2elem(char * dst, int protons) {
     strncpy(dst, ElementTable[protons].symbol, cElemNameLen);
 }
 
+#ifdef _PYMOL_IP_EXTRAS
+#endif
+
+/*
+ * Get column aligned (left space padded) PDB residue name
+ *
+ * resn: output buffer
+ */
+void AtomInfoGetAlignedPDBResidueName(PyMOLGlobals * G,
+    const AtomInfoType * ai,
+    ResName & resn)
+{
+  sprintf(resn, "%3.4s", LexStr(G, ai->resn));
+  if(SettingGetGlobal_b(G, cSetting_pdb_truncate_residue_name)) {
+    resn[3] = 0;                /* enforce 3-letter residue name in PDB files */
+  }
+}
+
+
+/*
+ * Get column aligned (left space padded) PDB atom name
+ *
+ * resn: space padded residue name
+ * name: output buffer
+ */
+void AtomInfoGetAlignedPDBAtomName(PyMOLGlobals * G,
+    const AtomInfoType * ai,
+    const ResName & resn,
+    AtomName & name)
+{
+  int literal = SettingGetGlobal_b(G, cSetting_pdb_literal_names);
+  int reformat = SettingGetGlobal_i(G, cSetting_pdb_reformat_names_mode);
+
+  // default is "literal=0" and "reformat=0" (no reformatting)
+
+  const char * ai_name = LexStr(G, ai->name);
+  auto ai_name_len = strlen(ai_name);
+  bool start_column_1 = false;
+
+  UtilNCopy(name, ai_name, 5);
+
+  if(!ai->name) {
+    if(!ai->elem[1])
+      sprintf(name, " %s", ai->elem);
+    else
+      sprintf(name, "%s", ai->elem);
+  } else if(!literal) {
+    if(ai_name_len < 4) {  /* atom name less than length 4 */
+      if(!isdigit(name[0])) {     /* doesn't start with a number */
+        if((toupper(ai->elem[0]) == toupper(name[0])) && ((!ai->elem[1]) || /* symbol len = 1 */
+              (toupper(ai->elem[1]) == toupper(name[1])))) {        /* matched len 2 */
+          /* starts with corrent atomic symbol, so */
+          if(!ai->elem[1]) { /* symbol len = 1 */
+            switch (reformat) {
+            case 1:            /* pdb with internal pdb */
+            case 3:            /* pdb with internal iupac */
+              if((ai->elem[0] == 'H') && ai_name_len > 2) {
+                AtomInfoGetPDB3LetHydroName(G, resn, ai_name, name);
+                break;
+              }
+            default:           /* otherwise, start in column 1 */
+              start_column_1 = true;
+              break;
+            }
+          }
+        } else {                /* name doesn't start with atomic symbol */
+          /* then just place it in column 1 as usual */
+          start_column_1 = true;
+        }
+      } else {                  /* name starts with a number */
+        switch (reformat) {
+        case 2:                /* make Amber compliant */
+          if((ai->elem[0] == name[1]) &&
+             ((!ai->elem[1]) || (toupper(ai->elem[1]) == toupper(name[2])))) {
+            /* rotate the name to place atom symbol in column 0 to comply with Amber PDB format */
+            name[3] = name[0];
+            name[0] = ' ';
+          }
+          break;
+        }
+      }                         /* just stick it in column 0 and hope for the best */
+    } else {                    /* if name is length 4 */
+      if((ai->elem[0] == name[0]) && ((!ai->elem[1]) ||     /* symbol len = 1 */
+                                          (toupper(ai->elem[1]) == toupper(name[1])))) {    /* matched len 2 */
+        /* name starts with the atomic symbol */
+        if((!ai->elem[1]) && (ai->elem[0])) {   /* but if element is one letter... */
+          switch (reformat) {
+          case 1:              /* retaining PDB compliance throughout, or */
+          case 3:              /* saving as PDB compliant, but use IUPAC within PyMOL */
+            if(isdigit(name[3])) {  /* and last character is a number */
+              /* rotate the name to place atom symbol in column 1 to comply with PDB format */
+              name[0] = ai_name[3];
+              name[1] = ai_name[0];
+              name[2] = ai_name[1];
+              name[3] = ai_name[2];
+              name[4] = 0;
+            }
+            break;
+          }
+        }
+      } else {                  /* name does not start with the symbol... */
+        if(reformat == 2) {     /* AMBER compliance mode */
+          if(isdigit(name[0])) {
+            if((ai->elem[0] == name[1]) &&
+               ((!(ai->elem[1])) || (toupper(ai->elem[1]) == toupper(name[2])))) {
+              /* rotate the name to place atom symbol in column 0 to comply with Amber PDB format */
+              name[0] = ai_name[1];
+              name[1] = ai_name[2];
+              name[2] = ai_name[3];
+              name[3] = ai_name[0];
+              name[4] = 0;
+            }
+          }
+        }
+      }
+    }
+  } else {                      /* LITERAL mode: preserve what was in the original PDB as best PyMOL can
+                                   this should enable people to open and save amber pdb files without issues */
+    if (ai_name_len < 4 && !(ai->elem[1] && /* elem len = 2 */
+          toupper(ai->elem[0]) == toupper(name[0]) &&
+          toupper(ai->elem[1]) == toupper(name[1]))) {
+      start_column_1 = true;
+    }
+  }
+
+  if (start_column_1) {
+    name[0] = ' ';
+    UtilNCopy(name + 1, ai_name, 4);
+  }
+
+  name[4] = 0;
+}

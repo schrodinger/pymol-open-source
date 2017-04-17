@@ -1032,16 +1032,23 @@ struct MoleculeExporterMAE : public MoleculeExporter {
       strcpy(inscode, "<>");
     }
 
+    ResName resn = "";
+    AtomName name = "X";
+    if (ai->resn)
+      AtomInfoGetAlignedPDBResidueName(G, ai, resn);
+    if (ai->name)
+      AtomInfoGetAlignedPDBAtomName(G, ai, resn, name);
+
     m_offset += VLAprintf(m_buffer, m_offset,
-        "%d %d %.3f %.3f %.3f %d %s %s %s %s %d %d %02X%02X%02X %d %.2f %d\n", // %d %d\n",
+        "%d %d %.3f %.3f %.3f %d %s %s \"%-4s\" \"%-4s\" %d %d %02X%02X%02X %d %.2f %d\n",
         getTmpID(),
         getMacroModelAtomType(ai),
         m_coord[0], m_coord[1], m_coord[2],
         ai->resv,
         inscode,
         ai->chain ? LexStr(G, ai->chain) : "\" \"",
-        ai->resn  ? LexStr(G, ai->resn)  : "\"\"",
-        ai->name  ? LexStr(G, ai->name)  : "X",
+        resn,
+        name,
         ai->protons,
         ai->formalCharge,
         int(rgb[0] * 255),

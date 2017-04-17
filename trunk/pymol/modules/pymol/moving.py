@@ -193,7 +193,15 @@ ARGUMENTS
 
     scene = str: name of scene to store scene with key frame {default: }
 
+    cut = float 0.0-1.0: scene switch moment (0.0: beginning of transition,
+    1.0: end of transition) {default: 0.5}
+
+    auto = -1/0/1: if freeze=0, then auto reinterpolate after store, clear,
+    or toggle {default: -1 = use movie_auto_interpolate}
+
     state = int: if > 0, then store object state {default: 0}
+
+    freeze = 0/1: never auto reinterpolate {default: 0}
 
 SEE ALSO
 
@@ -368,7 +376,8 @@ DESCRIPTION
 
 USAGE
 
-    mpng prefix [, first [, last ]]
+    mpng prefix [, first [, last [, preserve [, modal [, mode [, quiet
+        [, width [, height ]]]]]]]]
 
 ARGUMENTS
 
@@ -379,7 +388,16 @@ ARGUMENTS
 
     last = integer: last frame {default: 0 (last frame)}
 
+    preserve = 0/1: Only write non-existing files {default: 0}
+
     modal = integer: will frames be rendered with a modal draw loop
+
+    mode = int: 2=ray, 1=draw, 0=normal {default: -1, check
+    ray_trace_frames or draw_frames}
+
+    width = int: width in pixels {default: current viewport}
+
+    height = int: height in pixels {default: current viewport}
     
 NOTES
 

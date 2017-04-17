@@ -790,8 +790,8 @@ float MMTF_parser_fetch_float(const msgpack_object* object) {
     case /* FLOAT64 */ MMTF_MSGPACK_TYPE(FLOAT):
 #if MSGPACK_VERSION_MAJOR >= 2
     case /* FLOAT32 */ 0x0a: // msgpack-c >= 2.1
-        return (float)object->via.f64;
 #endif
+        return (float)object->via.f64;
     default:
         fprintf(stderr, "Error in %s: the entry encoded in the MMTF is not a float.\n", __FUNCTION__);
         return NAN;

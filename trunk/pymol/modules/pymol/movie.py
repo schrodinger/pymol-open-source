@@ -271,6 +271,21 @@ def timed_roll(period=12.0,cycles=1,axis='y',_self=cmd):
 # blank frames to be specified by the user
 
 def add_blank(duration=12.0,start=0,_self=cmd):
+    '''
+DESCRIPTION
+
+    Add "blank" time to the movie (without any key frames)
+
+ARGUMENTS
+
+    duration = float: time to add to movie in seconds {default: 12}
+
+    start = int: start frame (1 = first frame; 0 = end of movie) {default: 0}
+
+SEE ALSO
+
+    mset
+    '''
     cmd = _self
     if not start:
         start = cmd.get_movie_length()+1
@@ -284,6 +299,21 @@ def add_blank(duration=12.0,start=0,_self=cmd):
 # new matrix-based camera interpolation routines
 
 def add_roll(duration=12.0,loop=1,axis='y',start=0,_self=cmd):
+    '''
+DESCRIPTION
+
+    Append a 360 degree camera rotation to the movie, using key frames.
+
+ARGUMENTS
+
+    duration = float: time to add to movie in seconds {default: 12}
+
+    loop = 0/1: ???
+
+    axis = x, y or z: rotation axis in camera space {default: y}
+
+    start = int: start frame (1 = first frame; 0 = end of movie) {default: 0}
+    '''
     cmd = _self
     if not start:
         start = cmd.get_movie_length()+1
@@ -316,6 +346,23 @@ def add_roll(duration=12.0,loop=1,axis='y',start=0,_self=cmd):
         cmd.frame(start)
         
 def add_rock(duration=8.0,angle=30.0,loop=1,axis='y',start=0,_self=cmd):
+    '''
+DESCRIPTION
+
+    Append a rocking camera motion to the movie, using key frames.
+
+ARGUMENTS
+
+    duration = float: time to add to movie in seconds {default: 8}
+
+    angle = float: degrees {default: 30}
+
+    loop = 0/1: ???
+
+    axis = x, y or z: rotation axis in camera space {default: y}
+
+    start = int: start frame (1 = first frame; 0 = end of movie) {default: 0}
+    '''
     cmd = _self
     if not start:
         start = cmd.get_movie_length()+1
@@ -382,6 +429,30 @@ def add_state_loop(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd)
 def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1, 
                offset=0, phase=0, shift=math.pi/2.0, start=0,
                _self=cmd):
+    '''
+DESCRIPTION
+
+    Append a nutating camera motion to the movie, using key frames.
+
+ARGUMENTS
+
+    duration = float: time to add to movie in seconds {default: 8}
+
+    angle = float: degrees {default: 30}
+
+    spiral = -1/0/1: If zero, do a circular motion, otherwise do a spiral
+    motion starting at the center (clockwise if 1, ccw if -1) {default: 0}
+
+    loop: (unused)
+
+    offset: (unused)
+
+    phase = float: phase offset in degrees {default: 0}
+
+    shift = float: x to y offset in radians {default: pi/2}
+
+    start = int: start frame (1 = first frame; 0 = end of movie) {default: 0}
+    '''
     cmd = _self
     if not start:
         start = cmd.get_movie_length()+1
@@ -484,6 +555,34 @@ def _nutate(mode,first,last,period,pause,_self=cmd):
 def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,
                rock=-1, period=8.0, animate=-1, start=0,
                _self=cmd):
+    '''
+DESCRIPTION
+
+    Append a sequence of scenes to the movie, with camera animation
+    (rock/nutate) at each scene.
+
+ARGUMENTS
+
+    names = str: list of scenes names {default: all scenes}
+
+    pause = float: display time per scene in seconds {default: 8}
+
+    cut = float 0.0-1.0: scene switch moment (0.0: beginning of transition,
+    1.0: end of transition) {default: 0.0}
+
+    loop = 0/1: end of movie interpolates back to first frame {default: 1}
+
+    rock = int: (sweep_mode + 1): 2=x-axis-rock, 3=y-axis-rock, 4=nutate
+    {default: -1, use sweep_mode setting}
+
+    period = float: rock/nutate time (e.g. "period=2, pause=6" will rock 3
+    times per scene) {default: 8}
+
+    animate = float: scene transition time in seconds
+    {default: -1, use scene_animation_duration setting}
+
+    start = int: start frame (1 = first frame; 0 = end of movie) {default: 0}
+    '''
     cmd = _self
     if not start:
         start = cmd.get_movie_length()+1

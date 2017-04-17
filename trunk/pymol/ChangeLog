@@ -2,6 +2,19 @@
 CHANGE LOG
 =========================================================================
 
+2017-04-17 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* Python 3: fix builder bond order buttons
+	  (Red Hat Bug 1442127)
+
+	* fix MAE export PDB residue/atom names
+
+	* restored "scene_animation" setting (1.7.6 regression)
+
+	* restored "import cmd" prevention (1.8.6.0 regression)
+
+	* 1.8.6.1
+
 2017-03-09 Thomas Holder, Piotr Rotkiewicz
 
 	* 1.8.6.0

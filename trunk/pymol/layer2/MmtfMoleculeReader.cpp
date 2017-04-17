@@ -142,6 +142,8 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
   AtomInfoType tai;
   memset(&tai, 0, sizeof(AtomInfoType));
   tai.visRep = RepGetAutoShowMask(G);
+  tai.id = -1;
+  tai.q = 1.0f;
 
   I = ObjectMoleculeNew(G, /* discrete */ 1);
   I->Obj.Color = AtomInfoUpdateAutoColor(G);

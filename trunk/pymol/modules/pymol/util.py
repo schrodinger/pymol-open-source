@@ -1693,7 +1693,7 @@ SEE ALSO
     return resarea
 
 
-def ligand_zoom(_self=cmd):
+def ligand_zoom(step=1, _self=cmd):
     '''
 DESCRIPTION
 
@@ -1715,7 +1715,7 @@ DESCRIPTION
     except (ValueError, NameError):
         i = -1
 
-    i = (i + 1) % len(ligands)
+    i = (i + int(step)) % len(ligands)
     _current_ligand = ligands[i]
 
     # use "do" for feedback

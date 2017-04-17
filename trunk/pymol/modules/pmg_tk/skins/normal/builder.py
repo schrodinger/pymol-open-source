@@ -447,7 +447,7 @@ class ValenceWizard(RepeatableActionWizard):
     def do_pick(self, bondFlag):
         self.cmd.select(active_sele, "bymol pk1")
         if bondFlag:
-            if self.order>=0:
+            if int(self.order)>=0:
                 self.cmd.valence(self.order, "pk1", "pk2")
                 self.cmd.h_fill()
             else:
