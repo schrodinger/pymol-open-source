@@ -343,6 +343,20 @@ static void MovieSceneRecallFrame(PyMOLGlobals * G, int frame)
 }
 
 /*
+ * Scene animation duration from settings
+ */
+static float get_scene_animation_duration(PyMOLGlobals * G) {
+  auto enabled = SettingGetGlobal_i(G, cSetting_scene_animation);
+  if (enabled < 0)
+    enabled = SettingGetGlobal_b(G, cSetting_animation);
+
+  if (!enabled)
+    return 0.f;
+
+  return SettingGetGlobal_f(G, cSetting_scene_animation_duration);
+}
+
+/*
  * Recall a scene
  *
  * name:            name (key) of the scene to recall
@@ -462,7 +476,7 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
   // camera view
   if (recall_view) {
     if (animate < -0.5) // == -1
-      animate = SettingGetGlobal_f(G, cSetting_scene_animation_duration);
+      animate = get_scene_animation_duration(G);
 
     SceneSetView(G, scene.view, true, animate, 1);
   }

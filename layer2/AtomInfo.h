@@ -488,4 +488,13 @@ V AtomSettingGetWD(PyMOLGlobals * G, T * item, int index, V default_) {
 const char * AtomInfoGetStereoAsStr(const AtomInfoType * ai);
 void AtomInfoSetStereo(AtomInfoType * ai, const char * stereo);
 
+
+void AtomInfoGetAlignedPDBResidueName(PyMOLGlobals * G,
+    const AtomInfoType * ai,
+    ResName & resn);
+void AtomInfoGetAlignedPDBAtomName(PyMOLGlobals * G,
+    const AtomInfoType * ai,
+    const ResName & resn,
+    AtomName & name);
+
 #endif

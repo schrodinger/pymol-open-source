@@ -559,6 +559,8 @@ class _NoCmdFinder:
         return None
     find_module = find_spec
 
+sys.meta_path.insert(0, _NoCmdFinder())
+
 ########## LEGACY PRINT STATEMENT FOR PYMOL COMMAND LINE ###################
 
 if sys.version_info[0] > 2:
