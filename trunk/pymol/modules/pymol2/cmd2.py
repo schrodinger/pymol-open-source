@@ -1,6 +1,7 @@
 from pymol import cmd as global_cmd
 import pymol
 import inspect
+import itertools
 
 #most recently created Cmd (for now)
 cmd = None
@@ -63,14 +64,15 @@ class Cmd:
         from pymol import keywords
 
         self.keyword = keywords.get_command_keywords()
-        self.kw_list = self.keyword.keys()
+        self.kw_list = list(self.keyword)
 
         keywords.fix_list(self.kw_list)
         self.kwhash = self.Shortcut(self.kw_list)
         keywords.fix_dict(self.keyword)
 
         self.help_only = keywords.get_help_only_keywords()
-        self.help_sc = self.Shortcut(self.keyword.keys()+self.help_only.keys())
+        self.help_sc = self.Shortcut(
+            itertools.chain(self.keyword, self.help_only))
 
         
         self.selection_sc = lambda sc=self.Shortcut,gn=self.get_names:sc(gn('public')+['all'])

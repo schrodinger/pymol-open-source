@@ -14,6 +14,7 @@
 
 from __future__ import print_function, absolute_import
 
+import sys
 cmd_module = __import__("sys").modules["pymol.cmd"]
 from .cmd import _cmd, lock, unlock, Shortcut, \
      _feedback, fb_module, fb_mask, \
@@ -132,10 +133,18 @@ class CleanJob:
                 (fit_flag, sdf_list) = model_to_sdf_list(self_cmd,input_model)
                 input_sdf = ''.join(sdf_list)
 #                print input_sdf
+
+                if sys.version_info[0] > 2:
+                    input_sdf = input_sdf.encode()
+
                 result = mengine.run(input_sdf)
                 if result != None:
                     if len(result):
                         clean_sdf = result[0]
+
+                        if sys.version_info[0] > 2:
+                            clean_sdf = clean_sdf.decode()
+
                         clean_rec = clean_sdf.split("$$$$")[0]
                         clean_name = ""
                         self.energy = get_energy_from_rec(clean_rec)

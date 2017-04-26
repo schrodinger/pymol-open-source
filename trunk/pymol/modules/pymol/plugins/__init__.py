@@ -213,10 +213,13 @@ class PluginInfo(object):
             return self.module.__doc__
 
         try:
-            c = compile(''.join(open(self.filename)), 'x', 'single')
+            c = compile(''.join(open(self.filename)), 'x', 'exec', dont_inherit=True)
             s = c.co_consts[0]
             if cmd.is_string(s):
                 return s
+        except SyntaxError as e:
+            if sys.version_info[0] > 2:
+                return 'WARNING: Plugin not Python 3.x compatible: ' + str(e)
         except:
             pass
 
