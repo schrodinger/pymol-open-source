@@ -35,6 +35,21 @@ def urlopen(url):
     timeout = pref_get('network_timeout', 10.0)
     return urllib2.urlopen(url, timeout=timeout)
 
+
+def urlreadstr(url, encoding='iso-8859-1'):
+    '''
+    Download helper to obtain 'str' content with Python 3.
+    '''
+    handle = urlopen(url)
+    content = handle.read()
+
+    if sys.version_info[0] > 2:
+        charset = handle.headers.get_content_charset() or encoding
+        content = content.decode(charset, errors='ignore')
+
+    return content
+
+
 class Repository():
     '''
     Abstract repository class
@@ -54,13 +69,13 @@ class Repository():
             return self.list_scan()
 
     def list_indexfile(self):
-        s = self.retrieve('pluginindex.txt')
+        s = self.retrieve('pluginindex.txt', binary=False)
         return s.splitlines()
 
     def list_scan(self):
         raise NotImplementedError
 
-    def retrieve(self, name):
+    def retrieve(self, name, binary=True):
         '''
         Return file content as string
         '''
@@ -103,8 +118,7 @@ class HttpRepository(Repository):
         import re
 
         # fetch as string
-        handle = urlopen(self.url)
-        content = handle.read()
+        content = urlreadstr(self.url)
 
         # clear comments
         re_comment = re.compile(r'<!\s*--.*?--\s*>', re.DOTALL)
@@ -129,11 +143,15 @@ class HttpRepository(Repository):
 
         return names
 
-    def retrieve(self, name):
+    def retrieve(self, name, binary=True):
         url = self.get_full_url(name)
-        handle = urlopen(url)
-        content = handle.read()
-        handle.close()
+
+        if binary:
+            handle = urlopen(url)
+            content = handle.read()
+            handle.close()
+        else:
+            content = urlreadstr(url)
 
         return content
 
@@ -191,8 +209,8 @@ class GithubRepository(HttpRepository):
 
     def fetchjson(self, url):
         import json
-        handle = urlopen('https://api.github.com' + url)
-        return json.loads(handle.read())
+        content = urlreadstr('https://api.github.com' + url)
+        return json.loads(content)
 
 class LocalRepository(Repository):
     def __init__(self, url):
@@ -204,9 +222,9 @@ class LocalRepository(Repository):
         names = os.listdir(self.url)
         return list(filter(self.is_supported, names))
 
-    def retrieve(self, name):
+    def retrieve(self, name, binary=True):
         url = self.get_full_url(name)
-        handle = open(url, "rb")
+        handle = open(url, "rb" if binary else "rU")
         content = handle.read()
         handle.close()
         return content
@@ -304,8 +322,7 @@ ARGUMENTS
 
         # get page content
         try:
-            handle = urlopen(url)
-            content = handle.read()
+            content = urlreadstr(url)
         except IOError as e:
             raise CmdException(e, "Plugin-Error")
 

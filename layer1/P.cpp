@@ -719,7 +719,11 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   } else {
     /* if not an atom property, check if local variable in dict */
     ret = PyDict_GetItem(wobj->dict, key);
-    borrowed = true;
+    if (ret) {
+      borrowed = true;
+    } else {
+      PyErr_SetNone(PyExc_KeyError);
+    }
   }
 
   if (borrowed)

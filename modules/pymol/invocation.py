@@ -102,8 +102,6 @@ File Extensions
   psw             implies -A6 (PyMOL Show File)
   pwg             PyMOL web GUI
 
-  Any unrecognized file extension will be treated as PDB format.
-
 Active "pymolrc" Files
 '''
 

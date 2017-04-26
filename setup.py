@@ -106,6 +106,8 @@ class install_pymol(install):
             import tarfile
             pmwtgz = "modules/pmg_tk/pmw-py%d.tgz" % (sys.version_info[0])
             if not os.path.exists(pmwtgz):
+                if sys.version_info[0] > 2:
+                    raise UserWarning('bundled pmw.tgz not compatible with Python 3')
                 pmwtgz = "modules/pmg_tk/pmw.tgz"
             tar = tarfile.open(pmwtgz)
             tar.extractall(self.install_libbase)
