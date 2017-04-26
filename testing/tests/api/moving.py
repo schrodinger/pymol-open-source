@@ -196,9 +196,28 @@ class TestMoving(testing.PyMOLTestCase):
         self.assertEquals(cmd.get_movie_playing(),1)
         cmd.mstop()
 
+    @testing.requires_version('1.8.6')
     def testMpng(self):
-        cmd.mpng
-        self.skipTest("TODO")
+        import glob, os
+
+        shape2 = (100, 100)
+        cmd.mset("1x4")
+        cmd.mdo(1, 'bg_color red')
+        cmd.mdo(3, 'bg_color blue')
+
+        with testing.mkdtemp() as dirname:
+            cmd.mpng(os.path.join(dirname, 'image'), width=shape2[0], height=shape2[1])
+            filenames = glob.glob(os.path.join(dirname, 'image*.png'))
+
+            self.assertEqual(4, len(filenames))
+
+            img = self.get_imagearray(filenames[0])
+            self.assertEqual(img.shape[:2], shape2)
+            self.assertImageHasColor('red', img)
+
+            img = self.get_imagearray(filenames[-1])
+            self.assertEqual(img.shape[:2], shape2)
+            self.assertImageHasColor('blue', img)
 
     def testMset(self):
         # basic tet
