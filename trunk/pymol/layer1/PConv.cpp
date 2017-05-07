@@ -34,6 +34,8 @@ Z* -------------------------------------------------------------------
 #define pickle_mod_name "pickle"
 #else
 #define pickle_mod_name "cPickle"
+// support loading Python 3 pickles with Python 2
+#define PyString_Check(o) (PyBytes_CheckExact(o) || PyUnicode_Check(o))
 #endif
 
 /* Return value: New reference.

@@ -806,7 +806,7 @@ SEE ALSO
             contents = _self.file_read(filename)
             session = io.pkl.fromString(contents)
         except AttributeError as e:
-            raise pymol.CmdException('PSE contains objects which cannot be unpickled (%s)' % e.message)
+            raise pymol.CmdException('PSE contains objects which cannot be unpickled (%s)' % str(e))
 
         r = _self.set_session(session, quiet=quiet, partial=partial, steal=1)
 

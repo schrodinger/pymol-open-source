@@ -249,6 +249,10 @@ class PluginInfo(object):
 
             # do not use self.loaded here
             if force and self.module is not None:
+                if sys.version_info[0] > 2:
+                    from importlib import reload
+                else:
+                    from __builtin__ import reload
                 reload(self.module)
             else:
                 __import__(self.mod_name, level=0)

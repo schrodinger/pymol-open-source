@@ -51,7 +51,7 @@ if __name__=='pymol.wizarding':
                         wiz = getattr(mod_obj,oname)(*arg, **kwd)
                     except WizardError as e:
                         from pymol.wizard.message import Message
-                        wiz = Message("Error: %s" % e.message, _self=_self)
+                        wiz = Message("Error: %s" % str(e), _self=_self)
                     if wiz:
                         _self.set_wizard(wiz,replace)
                         _self.do("_ refresh_wizard")

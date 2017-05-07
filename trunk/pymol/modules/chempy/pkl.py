@@ -18,15 +18,29 @@ try:
     import cPickle
 except ImportError:
     import pickle
+
+    # Python 3: Unpickle printable ASCII strings in [TAB, DEL) to unicode,
+    # and everything else to bytes.
+    # This uses the Python implementation of pickle, not the fast cpython
+    # version, which unfortunately is much slower.
+
+    def _decode_string(self, value):
+        if all(8 < b < 127 for b in value):
+            return value.decode('ascii')
+        return value
+
+    pickle._Unpickler._decode_string = _decode_string
+
     class cPickle:
         dumps = pickle.dumps
         dump = pickle.dump
-        def load(f):
-            return pickle.load(f, errors='ignore')
+        load = pickle._load
+
         def loads(s):
             if not isinstance(s, bytes):
                 s = s.encode(errors='ignore')
-            return pickle.loads(s, errors='ignore')
+            return pickle._loads(s)
+
 
 class PKL(Storage):
 

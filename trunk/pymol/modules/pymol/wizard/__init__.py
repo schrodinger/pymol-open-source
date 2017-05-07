@@ -31,6 +31,10 @@ class Wizard:
         d.pop('cmd', None)
         return d
 
+    def __reduce__(self):
+        # for loading Python 3 (new-style class) pickle with Python 2
+        return (self.__class__, (), self.__getstate__())
+
     def _validate_instance(self):
         _pymol = self.cmd._pymol
         if not hasattr(_pymol.session, 'wizard_storage'):
