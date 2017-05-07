@@ -146,11 +146,12 @@ APBS_DEFAULT=True
 import tempfile
 import os,math,re
 import string
+import sys
 
-try:
+if sys.version_info[0] < 3:
     import Tkinter
     from Tkinter import *
-except ImportError:
+else:
     import tkinter as Tkinter
     from tkinter import *
 

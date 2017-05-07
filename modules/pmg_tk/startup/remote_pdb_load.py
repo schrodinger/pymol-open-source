@@ -4,11 +4,12 @@ PDB Loader Service
 (c) 2013 Schrodinger Inc.
 '''
 
-try:
+import sys
+if sys.version_info[0] < 3:
     import Tkinter
     from Tkinter import LEFT, RIGHT
     import tkMessageBox
-except ImportError:
+else:
     import tkinter as Tkinter
     from tkinter import LEFT, RIGHT
     from tkinter import messagebox as tkMessageBox
