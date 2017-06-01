@@ -18,6 +18,8 @@
 #include "os_std.h"
 #include "os_gl.h"
 
+#include <clocale>
+
 #include "MemoryDebug.h"
 
 #include "Base.h"
@@ -2027,6 +2029,10 @@ CPyMOL *PyMOL_NewWithOptions(CPyMOLOptions * option)
 void PyMOL_Start(CPyMOL * I)
 {
   PyMOLGlobals *G = I->G;
+
+  // It's possible to change this from Python, functions which rely on
+  // C locale should reset it before doing printf, atof, etc.
+  std::setlocale(LC_NUMERIC, "C");
 
   G->Context = OVContext_New();
   G->Lexicon = OVLexicon_New(G->Context->heap);

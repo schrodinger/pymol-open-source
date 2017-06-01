@@ -281,7 +281,7 @@ SEE ALSO
     '''
         r = DEFAULT_ERROR
         
-        tables = { 'cmyk' : "$PYMOL_PATH/data/pymol/cmyk.png",
+        tables = { 'cmyk' : "$PYMOL_DATA/pymol/cmyk.png",
                    'pymol' : 'pymol',
                    'rgb' : 'rgb',
                    'greyscale': 'greyscale' }

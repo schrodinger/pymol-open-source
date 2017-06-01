@@ -2,6 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2017-06-01 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* new "label" selection operator
+
+	* alter_state: remove restriction on x/y/z/flags
+
+	* iterate/label: expose "state" for discrete atoms
+
+	* CTRL+L drag/click -> move/center in 3-Button-Viewing mode
+
+	* auto-detect $PREFIX/share/pymol as $PYMOL_PATH
+
+	* locale LC_NUMERIC=C float parsing/formatting
+
+	* Python 3: fix wrong PyCapsule_New destructor
+
 2017-04-17 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* Python 3: fix builder bond order buttons

@@ -8,6 +8,7 @@
 #include <map>
 #include <algorithm>
 #include <cstdarg>
+#include <clocale>
 
 #include "os_std.h"
 
@@ -1222,6 +1223,10 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
       " Error: unknown format: '%s'\n", format ENDFB(G);
     return NULL;
   }
+
+  // Ensure "." decimal point in printf. It's possible to change this from
+  // Python, so don't rely on a persistent global value.
+  std::setlocale(LC_NUMERIC, "C");
 
   exporter->init(G);
   exporter->setMulti(multi);

@@ -407,6 +407,7 @@ static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offs
 #define SELE_ZVLx ( 0x5200 | STYP_SEL2 | 0x80 )
 #define SELE_CUST ( 0x5300 | STYP_SEL1 | 0x80 )
 #define SELE_RING ( 0x5400 | STYP_OPR1 | 0x20 )
+#define SELE_LABs ( 0x5500 | STYP_SEL1 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -659,6 +660,7 @@ static WordKeyValue Keyword[] = {
   {"z", SELE_ZVLx},
 
   {"byring", SELE_RING},
+  {"label", SELE_LABs},
 
   {"", 0}
 };
@@ -8967,6 +8969,7 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
   case SELE_CHNs:
   case SELE_SEGs:
   case SELE_CUST:
+  case SELE_LABs:
     {
       CWordMatchOptions options;
 
@@ -8985,6 +8988,9 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
           break;
         case SELE_CUST:
           offset = offsetof(AtomInfoType, custom);
+          break;
+        case SELE_LABs:
+          offset = offsetof(AtomInfoType, label);
           break;
         default:
           printf("coding error: missing case\n");

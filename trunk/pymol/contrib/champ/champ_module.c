@@ -55,9 +55,20 @@ static PyObject *RetInt(int ok,int result) /* status/integer return */
 
 typedef void(*CObjectDestruct)(void*) ;
 
+#if PY_MAJOR_VERSION >= 3
+static void ChampCapsuleFree(PyObject * capsule) {
+  ChampFree(PyCapsule_GetPointer(capsule, NULL));
+}
+#endif
+
 static PyObject *_new(PyObject *self,      PyObject *args)
 {
+#if PY_MAJOR_VERSION >= 3
+  void * I = ChampNew();
+  return PyCapsule_New(I, NULL, ChampCapsuleFree);
+#else
   return(PyCObject_FromVoidPtr((void*)ChampNew(),(CObjectDestruct)ChampFree));
+#endif
 }
 
 static PyObject *_memory_dump(PyObject *self,      PyObject *args)

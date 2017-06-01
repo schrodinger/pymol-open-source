@@ -20,9 +20,16 @@
 #endif
 
 #include<GL/glew.h>
+
+#ifndef _PYMOL_OSX
 #include<GL/gl.h>
 #include<GL/glu.h>
 #include<GL/glext.h>
+#else
+#import <OpenGL/gl.h>
+#import <OpenGL/glu.h>
+#import <OpenGL/glext.h>
+#endif
 
 #define GLDOUBLEMULTMATRIX glMultMatrixd
 #define GLDOUBLETRANSLATE glTranslated

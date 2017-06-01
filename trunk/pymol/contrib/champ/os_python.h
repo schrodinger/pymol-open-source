@@ -34,8 +34,8 @@ Z* -------------------------------------------------------------------
 # define PyString_AsString              PyUnicode_AsUTF8
 # define PyString_AS_STRING             PyUnicode_AsUTF8
 
-# define PyCObject_AsVoidPtr(capsule)   PyCapsule_GetPointer(capsule, "name")
-# define PyCObject_FromVoidPtr(p, d)    PyCapsule_New(p, "name", (PyCapsule_Destructor) d)
+# define PyCObject_AsVoidPtr(capsule)   PyCapsule_GetPointer(capsule, NULL)
+# define PyCObject_FromVoidPtr(p, d)    Error_Function_not_available_PyCapsule_New_destructor_differs()
 # define PyCObject_Check                PyCapsule_CheckExact
 
 # define PyEval_EvalCode(o, ...)        PyEval_EvalCode((PyObject*)o, __VA_ARGS__)

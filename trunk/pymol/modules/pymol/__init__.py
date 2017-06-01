@@ -188,6 +188,9 @@ def guess_pymol_path():
 
         # $PYMOL_PATH/modules/pymol/__init__.py
         re.sub(r"[\/\\]modules[\/\\]pymol[\/\\]__init__\.py[c]*$", "", init_file),
+
+        # /usr/share/pymol
+        os.path.join(sys.prefix, 'share', 'pymol'),
     ]
 
     for pymol_path in pymol_path_candidates:
