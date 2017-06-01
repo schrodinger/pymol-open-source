@@ -102,6 +102,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'group'          : [ self_cmd.group_sc               , 'group object'    , ', ' ],
         'help'           : [ self_cmd.help_sc                , 'selection'       , ''   ],
         'help_setting'   : [ self_cmd.setting.setting_sc     , 'setting'         , ''   ],
+        'h_add'          : aa_sel_e,
         'hide'           : aa_rep_c,
         'isolevel'       : [ self_cmd.contour_sc             , 'contour'         , ', ' ],
         'iterate'        : aa_sel_e,

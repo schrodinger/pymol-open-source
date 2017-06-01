@@ -258,11 +258,11 @@ USAGE
                 _self.unlock(0,_self)
             r = DEFAULT_SUCCESS
             if show_splash==1: # generic / open-source
-                png_path = _self.exp_path("$PYMOL_PATH/data/pymol/splash.png")
+                png_path = _self.exp_path("$PYMOL_DATA/pymol/splash.png")
             elif show_splash==2: # evaluation builds
-                png_path = _self.exp_path("$PYMOL_PATH/data/pymol/epymol.png")
+                png_path = _self.exp_path("$PYMOL_DATA/pymol/epymol.png")
             else: # incentive builds
-                png_path = _self.exp_path("$PYMOL_PATH/data/pymol/ipymol.png")
+                png_path = _self.exp_path("$PYMOL_DATA/pymol/ipymol.png")
             if os.path.exists(png_path):
                 _self.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
         else:

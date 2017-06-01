@@ -66,7 +66,7 @@ void *_champVLAMalloc(const char *file,int line,unsigned int initSize,unsigned i
   VLARec *vla;
 #ifndef _os_memory_debug_on
   if(autoZero)
-    vla=(void*)os_calloc((initSize*recSize)+sizeof(VLARec));
+    vla=(void*)os_calloc(1,(initSize*recSize)+sizeof(VLARec));
   else
     vla=(void*)os_malloc((initSize*recSize)+sizeof(VLARec));
 #else

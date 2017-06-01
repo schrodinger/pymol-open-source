@@ -636,6 +636,7 @@ static bool is_session_blacklisted(int index) {
   case cSetting_nb_spheres_use_shader:
   case cSetting_no_idle:
   case cSetting_nvidia_bugs:
+  case cSetting_presentation:
   case cSetting_precomputed_lighting:
   case cSetting_render_as_cylinders:
   case cSetting_security:
@@ -863,9 +864,6 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
 
   /* restore the following settings  */
 
-  if(G->Option->presentation) {
-    SettingSet_b(I, cSetting_presentation, 1);
-  }
   if(G->Option->no_quit) {
     SettingSet_b(I, cSetting_presentation_auto_quit, 0);
   }

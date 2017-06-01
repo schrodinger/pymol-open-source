@@ -325,7 +325,7 @@ SEE ALSO
           ('l','shft','+Box'),
           ('m','shft','-Box'),
           ('r','shft','clip'),                 
-          ('l','ctrl','+/-'),
+          ('l','ctrl','move'),
           ('m','ctrl','pkat'),
           ('r','ctrl','pk1'),                 
           ('l','ctsh','Sele'),
@@ -345,6 +345,7 @@ SEE ALSO
           ('single_middle','none','cent'),
           ('single_right','none', 'menu'),
           ('single_left','alt', 'cent'),
+          ('single_left','ctrl', 'cent'),
           ],
         'three_button_editing':
         [ ('l','none','rota'),
@@ -373,6 +374,7 @@ SEE ALSO
           ('single_middle','none','cent'),
           ('single_right','none', 'menu'),
           ('single_left','alt', 'cent'),
+          ('single_left','ctrl', 'cent'),
           ],
         'three_button_motions':
         [ ('l','none','rota'),
@@ -402,6 +404,7 @@ SEE ALSO
           ('single_middle','none','cent'),
           ('single_right','none', 'menu'),
           ('single_left','alt', 'cent'),
+          ('single_left','ctrl', 'cent'),
           ],
         'two_button_viewing' :
         [ ('l','none','rota'),

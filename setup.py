@@ -276,7 +276,7 @@ else: # unix style (linux, mac, ...)
     elif sys.platform.startswith("freebsd"):
         prefix_path = ["/usr/local"]
 
-    if 'anaconda' in sys.executable.lower():
+    if 'conda' in sys.executable.lower():
         prefix_path.insert(0, sys.executable.split('/bin/')[0])
 
     try:
@@ -308,6 +308,9 @@ else: # unix style (linux, mac, ...)
         ext_link_args += [
             "-framework", "OpenGL",
             "-framework", "GLUT",
+        ]
+        def_macros += [
+            ("_PYMOL_OSX", None),
         ]
     else:
         glut = posix_find_lib(['glut', 'freeglut'], lib_dirs)

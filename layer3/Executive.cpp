@@ -21,6 +21,7 @@
 #include <set>
 #include <algorithm>
 #include <map>
+#include <clocale>
 
 #include"Version.h"
 #include"main.h"
@@ -3580,6 +3581,13 @@ int ExecutiveLoad(PyMOLGlobals * G,
   // validate proposed object name
   ObjectNameType object_name = "";
   ExecutiveProcessObjectName(G, object_name_proposed, object_name);
+
+  // Ensure correct float parsing with scanf. It's possible to change this from
+  // Python, so don't rely on a persistent global value.
+  std::setlocale(LC_NUMERIC, "C");
+
+  if (!object_props) object_props = SettingGetGlobal_s(G, cSetting_load_object_props_default);
+  if (!atom_props)   atom_props   = SettingGetGlobal_s(G, cSetting_load_atom_props_default);
 
   // multiplex -2 -> "multiplex" setting
   // multiplex -1 -> file type dependant default

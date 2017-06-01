@@ -54,6 +54,8 @@ DebugRec *OSMemoryRemove(void *ptr);
 
 void OSMemoryInit(void);
 
+#endif
+
 void OSMemoryZero(char *p,char *q)
 {
   register unsigned long count;
@@ -100,6 +102,7 @@ void OSMemoryZero(char *p,char *q)
 }
 
 
+#ifdef _os_memory_debug_on
 
 void OSMemoryInit(void)
 {

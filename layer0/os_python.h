@@ -54,7 +54,10 @@ typedef int PyObject;
 # define PyString_AS_STRING             PyUnicode_AsUTF8
 
 # define PyCObject_AsVoidPtr(capsule)   PyCapsule_GetPointer(capsule, "name")
-# define PyCObject_FromVoidPtr(p, d)    PyCapsule_New(p, "name", (PyCapsule_Destructor) d)
+// Warning: PyCObject_FromVoidPtr destructor takes `void* p` argument,
+// but PyCapsule_New destructor takes `PyObject* capsule` argument!
+// The "capsulethunk.h" documentation is wrong about using the same destructor.
+# define PyCObject_FromVoidPtr(p, d)    PyCapsule_New(p, "name", NULL)
 # define PyCObject_Check                PyCapsule_CheckExact
 
 # define PyEval_EvalCode(o, ...)        PyEval_EvalCode((PyObject*)o, __VA_ARGS__)

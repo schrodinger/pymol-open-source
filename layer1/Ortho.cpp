@@ -919,8 +919,14 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
         curLine = add_normal_char(I, k);
       }
       break;
-    case 127:                  /* delete */
 #if !defined(_PYMOL_OSX) || defined(_PYMOL_LIB)
+#define _PYMOL_ASCII_BACKSPACE 8
+#define _PYMOL_ASCII_DELETE 127
+#else
+#define _PYMOL_ASCII_BACKSPACE 127
+#define _PYMOL_ASCII_DELETE 8
+#endif
+    case _PYMOL_ASCII_DELETE:  /* delete */
       /* this defined(_PYMOL_LIB) should really be for JyMOL, not all _PYMOL_LIB, AX? */
       if((!I->CurChar) || (I->CurChar == I->PromptChar) || !OrthoTextVisible(G)) {
         OrthoKeyControl(G, 4 + 64);
@@ -947,8 +953,7 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
         }
       }
       break;
-#endif
-    case 8:                    /* backspace */
+    case _PYMOL_ASCII_BACKSPACE: /* backspace */
       if(I->CurChar > I->PromptChar) {
         curLine = I->CurLine & OrthoSaveLines;
         if(I->CursorChar >= 0) {

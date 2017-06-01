@@ -529,6 +529,12 @@ if __name__=='pymol.parser':
                     pre = st[:loc]
                     st3 = st[loc:].lstrip()
                     flist = glob.glob(exp_path(st3)+"*")
+
+                    # environment variable completion
+                    if not flist and st3.startswith('$'):
+                        flist = ['$' + var for var in os.environ
+                                if var.startswith(st3[1:])]
+
                     lf = len(flist)
                     if lf == 0:
                         print(" parser: no matching files.")

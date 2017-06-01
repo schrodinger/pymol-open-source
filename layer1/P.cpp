@@ -688,14 +688,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
           "'properties/p' not supported in Open-Source PyMOL");
       break;
     case cPType_state:
-      {
-	if (wobj->idx >= 0){
-	  ret = PyInt_FromLong((long)wobj->state);
-	} else {
-          PyErr_SetString(PyExc_NameError,
-              "'state' only available in iterate_state and alter_state");
-	}
-      }
+      ret = PyInt_FromLong((long)wobj->state);
       break;
     default:
       switch (ap->id) {
@@ -766,12 +759,6 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
           PConvPyObjectToFloat(val, v);
           return 0;
         }
-
-        if (ap->id != ATOM_PROP_FLAGS) {
-          PyErr_SetString(PyExc_TypeError,
-              "only x/y/z/flags can be modified in alter_state");
-	  return -1;
-	}
       }
 
       switch (ap->Ptype){
@@ -1315,7 +1302,12 @@ int PAlterAtom(PyMOLGlobals * G,
   G->P_inst->wrapperObject->atm = atm;
   G->P_inst->wrapperObject->idx = -1;
   G->P_inst->wrapperObject->read_only = read_only;
-  G->P_inst->wrapperObject->state = -1;
+
+  if (obj->DiscreteFlag) {
+    G->P_inst->wrapperObject->state = obj->AtomInfo[atm].discrete_state;
+  } else {
+    G->P_inst->wrapperObject->state = 0;
+  }
 
   PXDecRef(PyEval_EvalCode(expr_co, space, (PyObject*)G->P_inst->wrapperObject));
   WrapperObjectReset(G->P_inst->wrapperObject);
@@ -1356,7 +1348,12 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject
   G->P_inst->wrapperObject->atm = atm;
   G->P_inst->wrapperObject->idx = -1;
   G->P_inst->wrapperObject->read_only = true;
-  G->P_inst->wrapperObject->state = -1;
+
+  if (obj->DiscreteFlag) {
+    G->P_inst->wrapperObject->state = obj->AtomInfo[atm].discrete_state;
+  } else {
+    G->P_inst->wrapperObject->state = 0;
+  }
 
   if (!expr_co){
     // unsetting label
