@@ -410,6 +410,15 @@ else:
             diff = abs(img.reshape((-1, dim)) - color)
             return (diff - delta <= 0).prod(1).sum()
 
+        def save_imagearray(self, img, filename=None):
+            if not filename:
+                filename = tempfile.mktemp('.png')
+
+            img = Image.fromarray(img)
+            img.save(filename)
+
+            return filename
+
         def _assertImageHasColor(self, test, color, img, delta, msg):
             import numpy
 
@@ -417,11 +426,7 @@ else:
             has_color = self._imageHasColor(color, img, delta)
 
             if bool(has_color) != test:
-                filename = tempfile.mktemp('diff.png')
-
-                diffimg = Image.fromarray(img)
-                diffimg.save(filename)
-
+                filename = self.save_imagearray(img)
                 self.assertTrue(False, msg + ', ' + filename)
 
         def assertImageHasColor(self, color, img=None, delta=0, msg=''):
