@@ -208,6 +208,7 @@ class TestMoving(testing.PyMOLTestCase):
         with testing.mkdtemp() as dirname:
             cmd.mpng(os.path.join(dirname, 'image'), width=shape2[0], height=shape2[1])
             filenames = glob.glob(os.path.join(dirname, 'image*.png'))
+            filenames.sort()
 
             self.assertEqual(4, len(filenames))
 
