@@ -858,6 +858,14 @@ static void MainKey(unsigned char k, int x, int y)
 
   glMod = p_glutGetModifiers();
 
+#if defined(_PYMOL_OSX) && !defined(_PYMOL_LIB)
+  // MacOS GLUT.framework: swap delete and backspace
+  switch (k) {
+    case 0x08: k = 0x7f; break;
+    case 0x7f: k = 0x08; break;
+  }
+#endif
+
   PRINTFB(G, FB_Main, FB_Blather)
     " MainKey: code:%d modifiers:0x%02x x:%d y:%d\n", k, glMod, x, y ENDFB(G);
   if(PLockAPIAsGlut(G, false)) {

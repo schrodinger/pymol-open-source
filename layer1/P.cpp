@@ -2111,7 +2111,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
   /* initialize PyOpenGL */
 #endif
 
-  if(global_instance) {
+  if(true /* global_instance */) {
     PCatchInit();               /* setup standard-output catch routine */
   }
 

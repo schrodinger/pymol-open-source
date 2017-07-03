@@ -516,7 +516,7 @@ SEE ALSO
             import urllib.request as urllib
 
         try:
-            from web.pymolhttpd import PymolHttpd
+            from .pymolhttpd import PymolHttpd
             browser_flag = 0
             launch_flag = 0
             report_url = None

@@ -2921,9 +2921,28 @@ void PyMOL_Drag(CPyMOL * I, int x, int y, int modifiers)
   I->DraggedFlag = true;
 PYMOL_API_UNLOCK}
 
+/*
+ * Mouse button and keyboard press handler
+ *
+ * button: mouse button or key code
+ * state:
+ *   -2 = key press with GLUT_KEY_* special code
+ *   -1 = key press with ascii code
+ *    0 = mouse down
+ *    1 = mouse up
+ * x, y: mouse pointer position
+ * modifiers: SHIFT/CTRL/ALT bitmask
+ */
 void PyMOL_Button(CPyMOL * I, int button, int state, int x, int y, int modifiers)
 {
-  PYMOL_API_LOCK OrthoButton(I->G, button, state, x, y, modifiers);
+  PYMOL_API_LOCK
+    if (state == -1) {
+      PyMOL_Key(I, (unsigned char)button, x, y, modifiers);
+    } else if (state == -2) {
+      PyMOL_Special(I, button, x, y, modifiers);
+    } else {
+      OrthoButton(I->G, button, state, x, y, modifiers);
+    }
 PYMOL_API_UNLOCK}
 
 void PyMOL_SetSwapBuffersFn(CPyMOL * I, PyMOLSwapBuffersFn * fn)

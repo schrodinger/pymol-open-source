@@ -104,7 +104,7 @@ def unlock(result=None,_self=cmd): # INTERNAL
         _self.lock_api.release()
     #         print "lock: released by 0x%x (glut)"%thread.get_ident()
         if _self.lock_api_allow_flush:
-            if result==None: # don't flush if we have an incipient error (negative input)
+            if result is None: # don't flush if we have an incipient error (negative input)
                 _cmd.flush_now(_self._COb)
             elif _self.is_ok(result):
                 

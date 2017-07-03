@@ -8,6 +8,7 @@
 # web server interface for controlling PyMOL
 
 from __future__ import print_function
+from __future__ import absolute_import
 
 # we make extensive use of Python's build-in in web infrastructure
 
