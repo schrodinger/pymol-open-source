@@ -6370,7 +6370,6 @@ void SceneReshape(Block * block, int width, int height)
 {
   PyMOLGlobals *G = block->G;
   CScene *I = G->Scene;
-  int y = height;
 
   if(I->Block->margin.right) {
     width -= I->Block->margin.right;
@@ -6380,21 +6379,7 @@ void SceneReshape(Block * block, int width, int height)
 
   if(I->Block->margin.top) {
     height -= I->Block->margin.top;
-    y = height;
   }
-
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _PYMOL_OSX
-#ifndef _MACPYMOL_XCODE
-  /* workaround for broken pixel handling under OSX 
-     (Who's fault: Me? Apple? NVidia?) */
-  width = 8 * (width / 8);
-  /* it's 2007, four years later, do we still need this? */
-#endif
-#endif
-
-/* END PROPRIETARY CODE SEGMENT */
 
   I->Width = width;
 

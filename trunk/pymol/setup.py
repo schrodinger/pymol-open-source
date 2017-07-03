@@ -16,8 +16,6 @@ import shutil
 import sys, os, re
 import platform
 
-import multiprocessing.pool
-import monkeypatch_distutils
 
 # handle extra arguments
 class options:
@@ -59,8 +57,47 @@ except ImportError:
 if options.help_distutils:
     sys.argv.append("--help")
 
-if options.jobs != 1:
-    monkeypatch_distutils.pmap = multiprocessing.pool.ThreadPool(options.jobs or None).map
+if True:
+    import monkeypatch_distutils
+    monkeypatch_distutils.set_parallel_jobs(options.jobs)
+
+
+def get_prefix_path():
+    '''
+    Return a list of paths which will be searched for "include",
+    "include/freetype2", "lib", "lib64" etc.
+    '''
+    try:
+        return os.environ['PREFIX_PATH'].split(os.pathsep)
+    except KeyError:
+        pass
+
+    if sys.platform.startswith("freebsd"):
+        return ["/usr/local"]
+
+    X11 = ['/usr/X11'] * (not options.osx_frameworks)
+
+    if sys.platform == 'darwin':
+        for prefix in ['/sw', '/opt/local', '/usr/local']:
+            if sys.executable.startswith(prefix):
+                return [prefix] + X11
+
+    if is_conda_env():
+        if sys.platform.startswith('win'):
+            return [os.path.join(sys.prefix, 'Library')]
+
+        return [sys.prefix] + X11
+
+    return ['/usr'] + X11
+
+
+def is_conda_env():
+    return (
+        'conda' in sys.prefix or
+        'conda' in sys.version or
+        'Continuum' in sys.version or
+        sys.prefix == os.getenv('CONDA_PREFIX'))
+
 
 def posix_find_lib(names, lib_dirs):
     # http://stackoverflow.com/questions/1376184/determine-if-c-library-is-installed-on-unix
@@ -149,6 +186,16 @@ class install_pymol(install):
 
         with open(launch_script, 'w') as out:
             if sys.platform.startswith('win'):
+                # paths relative to launcher, if possible
+                try:
+                    python_exe = '%~dp0\\' + os.path.relpath(python_exe, self.install_scripts)
+                except ValueError:
+                    pass
+                try:
+                    pymol_file = '%~dp0\\' + os.path.relpath(pymol_file, self.install_scripts)
+                except ValueError:
+                    pymol_file = os.path.abspath(pymol_file)
+
                 out.write('set PYMOL_PATH=' + pymol_path + os.linesep)
                 out.write('"%s" "%s"' % (python_exe, pymol_file))
                 out.write(' %1 %2 %3 %4 %5 %6 %7 %8 %9' + os.linesep)
@@ -171,7 +218,7 @@ import create_shadertext
 create_shadertext.create_all(generated_dir)
 
 # can be changed with environment variable PREFIX_PATH
-prefix_path = ["/usr", "/usr/X11"]
+prefix_path = get_prefix_path()
 
 pymol_src_dirs = [
     "ov/src",
@@ -269,16 +316,6 @@ else: # unix style (linux, mac, ...)
             ("NO_MMLIBS",None),
             ]
 
-    if sys.platform == 'darwin':
-        for prefix in ['/sw', '/opt/local', '/usr/local']:
-            if sys.executable.startswith(prefix):
-                prefix_path.insert(0, prefix)
-    elif sys.platform.startswith("freebsd"):
-        prefix_path = ["/usr/local"]
-
-    if 'conda' in sys.executable.lower():
-        prefix_path.insert(0, sys.executable.split('/bin/')[0])
-
     try:
         import numpy
         inc_dirs += [
@@ -291,11 +328,6 @@ else: # unix style (linux, mac, ...)
         print("numpy not available")
 
     libs += ["png", "freetype"]
-
-    try:
-        prefix_path = os.environ['PREFIX_PATH'].split(os.pathsep)
-    except KeyError:
-        pass
 
     for prefix in prefix_path:
         for dirs, suffixes in [
@@ -330,7 +362,7 @@ def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open('layer0/Version.h').read())[0]
 
 def get_sources(subdirs, suffixes=('.c', '.cpp')):
-    return [f for d in subdirs for s in suffixes for f in glob(d + '/*' + s)]
+    return sorted([f for d in subdirs for s in suffixes for f in glob(d + '/*' + s)])
 
 def get_packages(base, parent='', r=None):
     from os.path import join, exists

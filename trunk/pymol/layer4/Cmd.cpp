@@ -4119,6 +4119,23 @@ static PyObject *Cmd_GetGlobalCObject(PyObject * self, PyObject * args)
   return PyCObject_FromVoidPtr((void *) &SingletonPyMOLGlobals, NULL);
 }
 
+/*
+ * Simple `glViewport` wrapper to call from Python without depending on
+ * the heavy PyOpenGL module.
+ */
+static PyObject *Cmd_glViewport(PyObject * self, PyObject * args)
+{
+  int x, y, width, height;
+
+  if(!PyArg_ParseTuple(args, "iiii", &x, &y, &width, &height)) {
+    API_HANDLE_ERROR;
+  } else {
+    glViewport(x, y, width, height);
+  }
+
+  return APIIncRef(Py_None);
+}
+
 static PyObject *Cmd_New(PyObject * self, PyObject * args)
 {
   PyObject *result = NULL;
@@ -6103,23 +6120,19 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
           w = -1;
           h = -1;
         }
+      } else {
+        w = 0;
+        h = 0;
+      }
 
 #ifndef _PYMOL_NO_MAIN
         if(G->Main) {
           MainDoReshape(w, h);    /* should be moved into Executive */
         }
-#else
+      else
+#endif
+      {
         PyMOL_NeedReshape(G->PyMOL, 2, 0, 0, w, h);
-#endif
-
-      } else {
-#ifndef _PYMOL_NO_MAIN
-        if(G->Main) {
-          MainDoReshape(0, 0);    /* should be moved into Executive */
-        }
-#else
-        PyMOL_NeedReshape(G->PyMOL, 2, 0, 0, 0, 0);
-#endif
       }
       APIExit(G);
     }
@@ -8199,6 +8212,7 @@ static PyMethodDef Cmd_methods[] = {
   {"_get_c_threading_api", CmdGetCThreadingAPI, METH_VARARGS},
   {"_del", Cmd_Del, METH_VARARGS},
   {"_get_global_C_object", Cmd_GetGlobalCObject, METH_VARARGS},
+  {"glViewport", Cmd_glViewport, METH_VARARGS},
   {"_new", Cmd_New, METH_VARARGS},
   {"_start", Cmd_Start, METH_VARARGS},
   {"_stop", Cmd_Stop, METH_VARARGS},

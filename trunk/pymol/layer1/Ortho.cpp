@@ -919,41 +919,19 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
         curLine = add_normal_char(I, k);
       }
       break;
-#if !defined(_PYMOL_OSX) || defined(_PYMOL_LIB)
-#define _PYMOL_ASCII_BACKSPACE 8
-#define _PYMOL_ASCII_DELETE 127
-#else
-#define _PYMOL_ASCII_BACKSPACE 127
-#define _PYMOL_ASCII_DELETE 8
-#endif
-    case _PYMOL_ASCII_DELETE:  /* delete */
-      /* this defined(_PYMOL_LIB) should really be for JyMOL, not all _PYMOL_LIB, AX? */
+    case 127:                  /* delete */
       if((!I->CurChar) || (I->CurChar == I->PromptChar) || !OrthoTextVisible(G)) {
         OrthoKeyControl(G, 4 + 64);
       } else {
-        if(I->CursorChar >= 0) {
-          if(I->CursorChar < I->CurChar)
-            I->CursorChar++;
-          if(I->CursorChar == I->CurChar)
-            I->CursorChar = -1;
-        }
-        if(I->CurChar > I->PromptChar) {
+        if(I->CursorChar > -1 && I->CursorChar < I->CurChar) {
           curLine = I->CurLine & OrthoSaveLines;
-          if(I->CursorChar >= 0) {
-            if(I->CursorChar > I->PromptChar) {
-              strcpy(buffer, I->Line[curLine] + I->CursorChar);
-              I->CursorChar--;
-              I->CurChar--;
-              strcpy(I->Line[curLine] + I->CursorChar, buffer);
-            }
-          } else {
-            I->CurChar--;
-            I->Line[curLine][I->CurChar] = 0;
-          }
+          strcpy(buffer, I->Line[curLine] + I->CursorChar + 1);
+          I->CurChar--;
+          strcpy(I->Line[curLine] + I->CursorChar, buffer);
         }
       }
       break;
-    case _PYMOL_ASCII_BACKSPACE: /* backspace */
+    case 8:                    /* backspace */
       if(I->CurChar > I->PromptChar) {
         curLine = I->CurLine & OrthoSaveLines;
         if(I->CursorChar >= 0) {
@@ -1012,6 +990,7 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
             curLine = I->CurLine & OrthoSaveLines;
             strcpy(I->Line[curLine], buffer);
             I->CurChar = strlen(I->Line[curLine]);
+            I->CursorChar = -1;
           }
         }
       }

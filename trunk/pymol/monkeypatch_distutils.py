@@ -27,6 +27,22 @@ distutils.unixccompiler.UnixCCompiler.executables.update({
     'linker_exe_cxx'    : ["c++"],
 })
 
+
+def set_parallel_jobs(N):
+    '''
+    Set the number of parallel build jobs.
+    N=1 : single threaded
+    N=0 : use number of CPUs
+    '''
+    global pmap
+
+    if N == 1:
+        pmap = map
+    else:
+        from multiprocessing import pool
+        pmap = pool.ThreadPool(N or None).map
+
+
 def monkeypatch(parent, name):
     '''
     Decorator to replace a function or class method. Makes the
