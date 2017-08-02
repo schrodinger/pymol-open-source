@@ -55,7 +55,8 @@ void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int
   PBlock(G);
 
   list =
-    PYOBJECT_CALLMETHOD(P_menu, name, "O(fff)", G->P_inst->cmd, xyz[0], xyz[1], xyz[2]);
+    PYOBJECT_CALLMETHOD(P_menu, name, "O(fff)(ii)", G->P_inst->cmd,
+        xyz[0], xyz[1], xyz[2], x, y);
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {

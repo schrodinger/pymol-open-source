@@ -243,6 +243,7 @@ struct _CP_inst {
   PyObject *parse;              /* parse closure */
   PyObject *complete;           /* complete partial command / TAB action */
   PyObject *cmd_do;
+  PyObject *colortype;          /* backwards compatible iterate/alter color type */
 
   PyObject *cache;
 

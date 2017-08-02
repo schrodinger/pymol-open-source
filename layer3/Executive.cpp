@@ -2016,19 +2016,49 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
 
   if (!name)
     return -1;
+
+  // sanity check: name patterns are not object selections, bail if
+  // parenthesis or operators in pattern
+  if (strchr(name, '(') || strchr(name, ')') || strchr(name, '|')) {
+    PRINTFB(G, FB_Executive, FB_Errors)
+      " Names-Pattern-Error: Pattern looks like an atom selection"
+      " (has parenthesis or operators), this is not supported for"
+      " object name patterns.\n" ENDFB(G);
+    return -1;
+  }
+
+  // special case: allow "not ..."
+  bool match_not = false;
+  if (WordMatchNoWild(G, "not ", name, false)) {
+    match_not = true;
+    name += 4;
+  } else if (name[0] == '!') {
+    match_not = true;
+    name += 1;
+  }
+
+  // skip whitespace
+  while (name[0] == ' ') {
+    ++name;
+  }
+
+  bool match_enabled = WordMatchExact(G, "enabled", name, false);
+
   // ignore % and ? prefixes
   while(name[0] && (name[0] == '%' || name[0] == '?'))
     name++;
 
   WordMatchOptionsConfigNameList(&options,
                                  *wildcard, SettingGetGlobal_b(G, cSetting_ignore_case));
-  matcher = WordMatcherNew(G, name, &options, false);
-  if(matcher) {
+  matcher = WordMatcherNew(G, name, &options, /* force= */ match_not);
+  if(matcher || match_enabled) {
     if(iter_id) {
       while((cand_id = TrackerIterNextCandInList(I_Tracker, iter_id,
                                                  (TrackerRef **) (void *) &rec))) {
         if(rec && !(rec->type == cExecAll)) {
-          if(WordMatcherMatchAlpha(matcher, rec->name)) {
+          bool test = match_enabled ? rec->visible :
+            WordMatcherMatchAlpha(matcher, rec->name);
+          if(test ^ match_not) {
             if((rec->type == cExecObject) && (rec->obj->type == cObjectGroup))
               group_found = true;
             if(!result)

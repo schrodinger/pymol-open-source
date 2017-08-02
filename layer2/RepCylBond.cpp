@@ -1396,6 +1396,10 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
     stick_ball_filter_single_atoms = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_valence) &&
                                      SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_stick_ball)
                                  && !SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_use_shaders);
+
+  // breaks ray tracing with valence + stick_ball
+  stick_ball_filter_single_atoms = 0;
+
   visFlag = false;
   b = obj->Bond;
   ai1 = obj->AtomInfo;

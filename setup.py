@@ -110,6 +110,26 @@ def posix_find_lib(names, lib_dirs):
             return name
     raise IOError('could not find any of ' + str(names))
 
+
+def guess_msgpackc():
+    for prefix in prefix_path:
+        f = os.path.join(prefix, 'include', 'msgpack', 'version_master.h')
+
+        try:
+            m = re.search(r'MSGPACK_VERSION_MAJOR\s+(\d+)', open(f).read())
+        except OSError:
+            continue
+
+        if m is not None:
+            major = int(m.group(1))
+            if major > 1 and not options.no_cxx11:
+                return 'c++11'
+            if major > 0:
+                return 'c'
+
+    return 'no'
+
+
 class build_py_pymol(build_py):
     def run(self):
         build_py.run(self)
@@ -273,6 +293,9 @@ if not options.no_libxml:
         ("_HAVE_LIBXML", None)
     ]
     libs += ["xml2"]
+
+if options.use_msgpackc == 'guess':
+    options.use_msgpackc = guess_msgpackc()
 
 if options.use_msgpackc == 'no':
     def_macros += [("_PYMOL_NO_MSGPACKC", None)]

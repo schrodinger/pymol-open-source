@@ -706,7 +706,6 @@ SEE ALSO
 
             # analyze filename
             noext, ext, format_guessed, zipped = filename_to_format(filename)
-            filename = _self.exp_path(filename)
 
             # file format
             try:
@@ -724,6 +723,9 @@ SEE ALSO
                 if format == 'pkl':
                     format = 'model' # legacy
                 ftype = getattr(_loadable, format, -1)
+
+            if ftype not in _self._load2str.values():
+                filename = _self.exp_path(filename)
 
             # object name
             object = str(object).strip()

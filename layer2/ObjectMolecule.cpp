@@ -2858,8 +2858,8 @@ const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state)
 {
   char *result = NULL;
   if(state < 0)
-    state = I->NCSet - 1;
-  if(state >= I->NCSet) {
+    state = I->getState();
+  if(state < 0 || state >= I->NCSet) {
     PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Errors)
       "Error: invalid state %d\n", state + 1 ENDFB(I->Obj.G);
   } else if(!I->CSet[state]) {
