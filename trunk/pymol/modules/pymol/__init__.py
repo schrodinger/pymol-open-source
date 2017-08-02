@@ -516,6 +516,19 @@ class Session_Storage:
         # for loading Python 3 (new-style class) pickle with Python 2
         return (self.__class__, (), self.__dict__)
 
+
+def _colortype(cmd):
+    # backwards compatible color index type for iterate, which used
+    # to expose colors as RGB tuples
+    class Color(int):
+        def __getitem__(self, i):
+            return cmd.get_color_tuple(self)[i]
+        def __len__(self):
+            return 3
+
+    return Color
+
+
 ######### VARIABLES ############################
 
 glutThread = 0

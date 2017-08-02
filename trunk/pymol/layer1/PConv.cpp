@@ -394,9 +394,14 @@ int PConvPyObjectToStrMaxLen(PyObject * object, char *value, int ln)
 {
   PyObject *tmp;
   int result = true;
-  if(!object)
+  if(!object) {
     result = false;
-  else if(PyString_Check(object)) {
+#if PY_MAJOR_VERSION >= 3
+  } else if(PyBytes_Check(object)) {
+    auto strval = PyBytes_AsSomeString(object);
+    strncpy(value, strval.c_str(), ln);
+#endif
+  } else if(PyString_Check(object)) {
     auto strval = PyString_AsSomeString(object);
     strncpy(value, strval.c_str(), ln);
   } else {

@@ -1505,6 +1505,8 @@ static void launch(CPyMOLOptions * options, int own_the_options)
       case -1:                 /* force mono */
         G->StereoCapable = 0;
         break;
+      case 1:                  /* force quad buffer stereo (if possible) */
+        G->Option->stereo_mode = cStereo_quadbuffer;
       case 0:                  /* default/autodetect */
 #ifdef _PYMOL_SHARP3D
         G->Option->stereo_mode = cStereo_stencil_custom;
@@ -1564,22 +1566,6 @@ static void launch(CPyMOLOptions * options, int own_the_options)
           break;
         default:               /* fall through */
           break;
-        }
-        break;
-      case 1:                  /* force quad buffer stereo (if possible) */
-        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask |
-                              P_GLUT_DOUBLE | P_GLUT_STEREO);
-        display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
-        if(multisample_mask && (!display_mode_possible)) {
-          G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_MultisampleFailed;
-          p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE |
-                                P_GLUT_STEREO);
-          display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
-        }
-        if(display_mode_possible) {
-          G->StereoCapable = 1;
-        } else {
-          G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_StereoFailed;
         }
         break;
       }

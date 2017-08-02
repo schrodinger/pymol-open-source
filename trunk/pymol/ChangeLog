@@ -2,6 +2,24 @@
 CHANGE LOG
 =========================================================================
 
+2017-08-02 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* support "not ..." and "enabled" in name patterns.
+	  (e.g.: delete not enabled)
+
+	* improve/fix unicode+utf-8 handling for labels
+
+	* iterate color settings: type int
+	  (e.g.: iterate all, print(s.sphere_color))
+
+	* fix cmd.load with contents
+	  https://sf.net/p/pymol/mailman/message/35966326/
+
+	* fix ray tracing of stick_ball + valence
+	  https://sf.net/p/pymol/mailman/message/35928857/
+
+	* 1.8.7.0 (unstable/experimental)
+
 2017-07-03 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* web.pymolhttpd -> pymol.pymolhttpd

@@ -2111,6 +2111,13 @@ void PInit(PyMOLGlobals * G, int global_instance)
   /* initialize PyOpenGL */
 #endif
 
+#if PY_MAJOR_VERSION < 3
+  // Support implicit utf-8 encoding (important for labeling!)
+  //   str(u"...unicode...") -> b"...utf-8..."
+  //   PyString_AsString(unicodeobj) -> "...utf-8..."
+  PyUnicode_SetDefaultEncoding("utf-8");
+#endif
+
   if(true /* global_instance */) {
     PCatchInit();               /* setup standard-output catch routine */
   }
@@ -2214,6 +2221,12 @@ void PInit(PyMOLGlobals * G, int global_instance)
       PXDecRef(fn_closure);
       if(!G->P_inst->complete)
         ErrFatal(G, "PyMOL", "can't create 'complete' function closure");
+    }
+
+    {
+      PyObject *fn_closure = PGetAttrOrFatal(P_pymol, "_colortype");
+      G->P_inst->colortype = PYOBJECT_CALLFUNCTION(fn_closure, "O", G->P_inst->cmd);
+      PXDecRef(fn_closure);
     }
 
     P_chempy = PImportModuleOrFatal("chempy");
