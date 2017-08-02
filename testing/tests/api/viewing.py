@@ -1,3 +1,4 @@
+import sys
 import random
 from pymol import cmd, testing, stored
 
@@ -338,6 +339,30 @@ class TestViewing(testing.PyMOLTestCase):
             self.assertEqualIterate('label', expr)
         func()
         self.assertTrueIterate('label == ""')
+
+    @testing.requires_version('1.8.7')
+    def testLabelUnicode(self):
+        if sys.version_info[0] < 3:
+            uchr = unichr
+        else:
+            uchr = chr
+
+        stored.L_unicode = u''.join(uchr(i) for i in range(32, 0x1FF))
+        stored.L_utf8 = stored.L_unicode.encode('utf-8')
+
+        self.assertTrue(not isinstance(stored.L_unicode, bytes))
+        self.assertTrue(isinstance(stored.L_utf8, bytes))
+
+        cmd.pseudoatom('pseudo_unicode', label=stored.L_unicode)
+        cmd.pseudoatom('pseudo_utf8', label=stored.L_utf8)
+        cmd.pseudoatom('label_unicode')
+        cmd.pseudoatom('label_utf8')
+        cmd.label('label_unicode', 'stored.L_unicode')
+        cmd.label('label_utf8', 'stored.L_utf8')
+
+        stored.check_unicode = []
+        cmd.iterate('all', 'stored.check_unicode.append(label == stored.L_unicode)')
+        self.assertTrue(all(stored.check_unicode))
 
     def testWindow(self):
         cmd.window
