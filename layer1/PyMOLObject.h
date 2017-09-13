@@ -124,7 +124,7 @@ void ObjectPurgeSettings(CObject * I);
 void ObjectFree(CObject * I);
 void ObjectUseColor(CObject * I);
 void ObjectUseColorCGO(CGO *cgo, CObject * I);
-void ObjectSetRepVis(CObject * I, int rep, int state);
+void ObjectSetRepVisMask(CObject * I, int repmask, int value);
 void ObjectToggleRepVis(CObject * I, int rep);
 void ObjectPrepareContext(CObject * I, CRay * ray);
 void ObjectSetTTT(CObject * I, const float *ttt, int state,int store);

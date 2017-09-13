@@ -60,6 +60,7 @@ the initialization functions for these libraries on startup.
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
 #include "Lex.h"
+#include "Seeker.h"
 
 static int label_copy_text(char *dst, const char *src, int len, int max)
 {
@@ -602,6 +603,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   if (!check_wrapper_scope(wobj))
     return NULL;
 
+  PyMOLGlobals * G = wobj->G;
   char *aprop;
   AtomPropertyInfo *ap;
   PyObject *ret = NULL;
@@ -703,6 +705,13 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
         {
           char mmstereotype[] = {convertStereoToChar(wobj->atomInfo->stereo), '\0'};
           ret = PyString_FromString(mmstereotype);
+        }
+        break;
+      case ATOM_PROP_ONELETTER:
+        {
+          const char * st = LexStr(G, wobj->atomInfo->resn);
+          char abbr[2] = {SeekerGetAbbr(G, st, 'O', 'X'), 0};
+          ret = PyString_FromString(abbr);
         }
         break;
       default:

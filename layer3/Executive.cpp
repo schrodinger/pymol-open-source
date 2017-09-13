@@ -197,7 +197,7 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
                                             int allow_partial, int expand_groups);
 
 static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, int log);
-static void ExecutiveSetAllRepVisib(PyMOLGlobals * G, int rep, int state);
+static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state);
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals * G, const char *name);
 static int ExecutiveDrag(Block * block, int x, int y, int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
@@ -4891,7 +4891,7 @@ int ExecutiveSpectrum(PyMOLGlobals * G, const char *s1, const char *expr, float 
         ExecutiveObjMolSeleOp(G, sele1, &op);
 
         op.code = OMOP_INVA;
-        op.i1 = cRepAll;
+        op.i1 = cRepBitmask;
         op.i2 = cRepInvColor;
         ExecutiveObjMolSeleOp(G, sele1, &op);
 
@@ -8130,7 +8130,7 @@ int ExecutiveCartoon(PyMOLGlobals * G, int type, const char *s1)
     ExecutiveObjMolSeleOp(G, sele1, &op1);
     if (op1.i3>0){
         op1.code = OMOP_INVA;
-        op1.i1 = cRepCartoon;
+        op1.i1 = cRepCartoonBit;
         op1.i2 = cRepInvRep;
         ExecutiveObjMolSeleOp(G, sele1, &op1);
     }
@@ -9511,7 +9511,7 @@ void ExecutiveSort(PyMOLGlobals * G, const char *name)
 		if(sele >= 0) {
 		  ObjectMoleculeOpRecInit(&op);
 		  op.code = OMOP_INVA;
-		  op.i1 = cRepAll;
+		  op.i1 = cRepCartoonBit | cRepRibbonBit;
 		  op.i2 = cRepInvRep;
 		  ExecutiveObjMolSeleOp(G, sele, &op);
 		}
@@ -9526,7 +9526,7 @@ void ExecutiveSort(PyMOLGlobals * G, const char *name)
             ExecutiveObjMolSeleOp(G, sele, &op);
             ObjectMoleculeOpRecInit(&op);
             op.code = OMOP_INVA;
-            op.i1 = cRepAll;
+            op.i1 = cRepCartoonBit | cRepRibbonBit;
             op.i2 = cRepInvRep;
             ExecutiveObjMolSeleOp(G, sele, &op);
             ObjectMoleculeOpRecInit(&op);
@@ -9542,7 +9542,7 @@ void ExecutiveSort(PyMOLGlobals * G, const char *name)
             if(sele >= 0) {
               ObjectMoleculeOpRecInit(&op);
               op.code = OMOP_INVA;
-              op.i1 = cRepAll;
+              op.i1 = cRepCartoonBit | cRepRibbonBit;
               op.i2 = cRepInvRep;
               ExecutiveObjMolSeleOp(G, sele, &op);
             }
@@ -9769,7 +9769,7 @@ void ExecutiveMask(PyMOLGlobals * G, const char *s1, int mode, int quiet)
       }
     }
     op.code = OMOP_INVA;        /* need to invalidate all pickable representations */
-    op.i1 = cRepAll;
+    op.i1 = cRepsAtomMask;
     op.i2 = cRepInvPick;
     ExecutiveObjMolSeleOp(G, sele1, &op);
   }
@@ -10591,11 +10591,10 @@ int ExecutiveLabel(PyMOLGlobals * G, const char *s1, const char *expr, int quiet
     ExecutiveObjMolSeleOp(G, sele1, &op1);
     cnt = op1.i1;
     op1.code = OMOP_VISI;
-    op1.i1 = cRepLabel;
-    op1.i2 = 1;
+    op1.i1 = cRepLabelBit;
+    op1.i2 = cVis_SHOW;
     ExecutiveObjMolSeleOp(G, sele1, &op1);
     op1.code = OMOP_INVA;
-    op1.i1 = cRepLabel;
     op1.i2 = cRepInvVisib;
     ExecutiveObjMolSeleOp(G, sele1, &op1);
 
@@ -13131,7 +13130,7 @@ int ExecutiveColor(PyMOLGlobals * G, const char *name, const char *color, int fl
                 ExecutiveObjMolSeleOp(G, sele, &op);
                 n_atm = op.i2;
                 op.code = OMOP_INVA;
-                op.i1 = cRepAll;
+                op.i1 = cRepBitmask;
                 op.i2 = cRepInvColor;
                 ExecutiveObjMolSeleOp(G, sele, &op);
               }
@@ -14155,49 +14154,14 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
 
 
 /*========================================================================*/
-void ExecutiveSetAllVisib(PyMOLGlobals * G, int state)
-{
-  ObjectMoleculeOpRec op;
-  ObjectMolecule *obj;
-  int rep;
-  int sele;
-  CExecutive *I = G->Executive;
-  SpecRec *rec = NULL;
-
-  PRINTFD(G, FB_Executive)
-    " ExecutiveSetAllVisib: entered.\n" ENDFD;
-
-  while(ListIterate(I->Spec, rec, next)) {
-    if(rec->type == cExecObject) {
-      switch (rec->obj->type) {
-      case cObjectMolecule:
-        obj = (ObjectMolecule *) rec->obj;
-        sele = SelectorIndexByName(G, obj->Obj.Name);
-        ObjectMoleculeOpRecInit(&op);
-
-        op.code = OMOP_VISI;
-        op.i1 = -1;
-        op.i2 = state;
-        ObjectMoleculeSeleOp(obj, sele, &op);
-        op.code = OMOP_INVA;
-        op.i1 = -1;
-        op.i2 = cRepInvVisib;
-        ObjectMoleculeSeleOp(obj, sele, &op);
-        break;
-      default:
-        for(rep = 0; rep < cRepCnt; rep++) {
-          ObjectSetRepVis(rec->obj, rep, state);
-          if(rec->obj->fInvalidate)
-            rec->obj->fInvalidate(rec->obj, rep, cRepInvVisib, state);
-        }
-        SceneInvalidate(G);
-        break;
-      }
+static
+void fInvalidateRepMask(CObject * obj, int repmask, int state=-1) {
+  if(obj->fInvalidate) {
+    for(int a = 0; a < cRepCnt; a++) {
+      if ((1 << a) & repmask)
+        obj->fInvalidate(obj, a, cRepInvVisib, state);
     }
   }
-  PRINTFD(G, FB_Executive)
-    " ExecutiveSetAllVisib: leaving...\n" ENDFD;
-
 }
 
 
@@ -14226,9 +14190,8 @@ int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
   } else if(tRec && tRec->type == cExecObject &&
       tRec->obj->type != cObjectMolecule) {
     // non-atom object
-    ObjectToggleRepVis(tRec->obj, rep);
-    if(tRec->obj->fInvalidate)
-      tRec->obj->fInvalidate(tRec->obj, rep, cRepInvVisib, 0);
+    tRec->obj->visRep ^= rep;
+    fInvalidateRepMask(tRec->obj, rep, 0);
     SceneChanged(G);
   } else if(SelectorGetTmp(G, name, tmpname) >= 0) {
     // atom selection
@@ -14241,9 +14204,6 @@ int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
           op.i2 = false;
           ExecutiveObjMolSeleOp(G, sele, &op);
           op.i2 = !op.i2;
-
-          if(tRec && tRec->type == cExecObject)
-            ObjectSetRepVis(tRec->obj, rep, op.i2);
 
           op.code = OMOP_VISI;
           op.i1 = rep;
@@ -14263,6 +14223,11 @@ int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
 
 /*========================================================================*/
 void ExecutiveSetRepVisib(PyMOLGlobals * G, const char *name, int rep, int state)
+{
+  ExecutiveSetRepVisMask(G, name, 1 << rep, state);
+}
+
+void ExecutiveSetRepVisMask(PyMOLGlobals * G, const char *name, int repmask, int state)
 {
   PRINTFD(G, FB_Executive)
     " ExecutiveSetRepVisib: entered.\n" ENDFD;
@@ -14286,10 +14251,12 @@ void ExecutiveSetRepVisib(PyMOLGlobals * G, const char *name, int rep, int state
               ObjectMoleculeOpRec op;
               ObjectMoleculeOpRecInit(&op);
               op.code = OMOP_VISI;
-              op.i1 = rep;
+              op.i1 = repmask;
               op.i2 = state;
               ExecutiveObjMolSeleOp(G, sele, &op);
               op.code = OMOP_INVA;
+              if (state == cVis_AS)
+                op.i1 = cRepBitmask;
               op.i2 = cRepInvVisib;
               ExecutiveObjMolSeleOp(G, sele, &op);
             }
@@ -14301,22 +14268,12 @@ void ExecutiveSetRepVisib(PyMOLGlobals * G, const char *name, int rep, int state
 
         switch (rec->type) {
         case cExecObject:
-          if(rep >= 0) {
-            ObjectSetRepVis(rec->obj, rep, state);
-            if(rec->obj->fInvalidate)
-              rec->obj->fInvalidate(rec->obj, rep, cRepInvVisib, 0);
-          } else {
-            int a;
-            for(a = 0; a < cRepCnt; a++) {
-              ObjectSetRepVis(rec->obj, a, state);
-              if(rec->obj->fInvalidate)
-                rec->obj->fInvalidate(rec->obj, a, cRepInvVisib, 0);
-            }
-          }
+          ObjectSetRepVisMask(rec->obj, repmask, state);
+          fInvalidateRepMask(rec->obj, repmask, 0);
           SceneChanged(G);
           break;
         case cExecAll:
-          ExecutiveSetAllRepVisib(G, rep, state);
+          ExecutiveSetAllRepVisMask(G, repmask, state);
           break;
         }
       }
@@ -14356,12 +14313,15 @@ int ExecutiveSetOnOffBySele(PyMOLGlobals * G, const char *name, int onoff)
 
 
 /*========================================================================*/
-static void ExecutiveSetAllRepVisib(PyMOLGlobals * G, int rep, int state)
+/*
+ * repmask: rep bit mask
+ * state: 0 (hide), 1 (show), 2 (as)
+ */
+static void ExecutiveSetAllRepVisMask(PyMOLGlobals * G, int repmask, int state)
 {
   ObjectMoleculeOpRec op;
   ObjectMolecule *obj;
   int sele;
-  int a;
 
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -14377,25 +14337,18 @@ static void ExecutiveSetAllRepVisib(PyMOLGlobals * G, int rep, int state)
           ObjectMoleculeOpRecInit(&op);
 
           op.code = OMOP_VISI;
-          op.i1 = rep;
+          op.i1 = repmask;
           op.i2 = state;
           ObjectMoleculeSeleOp(obj, sele, &op);
           op.code = OMOP_INVA;
+          if (state == cVis_AS)
+            op.i1 = cRepBitmask;
           op.i2 = cRepInvVisib;
           ObjectMoleculeSeleOp(obj, sele, &op);
           break;
         default:
-          if(rep >= 0) {
-            ObjectSetRepVis(rec->obj, rep, state);
-            if(rec->obj->fInvalidate)
-              rec->obj->fInvalidate(rec->obj, rep, cRepInvVisib, state);
-          } else {
-            for(a = 0; a < cRepCnt; a++) {
-              ObjectSetRepVis(rec->obj, a, state);
-              if(rec->obj->fInvalidate)
-                rec->obj->fInvalidate(rec->obj, rep, cRepInvVisib, state);
-            }
-          }
+          ObjectSetRepVisMask(rec->obj, repmask, state);
+          fInvalidateRepMask(rec->obj, repmask, -1);
           SceneInvalidate(G);
           break;
         }
@@ -14431,7 +14384,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int lev
             if(sele >= 0) {
               ObjectMoleculeOpRecInit(&op);
               op.code = OMOP_INVA;
-              op.i1 = rep;
+              op.i1 = 1 << rep;
               op.i2 = level;
               ExecutiveObjMolSeleOp(G, sele, &op);
             } else if(rec->obj->fInvalidate) {

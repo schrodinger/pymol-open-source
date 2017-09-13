@@ -6595,7 +6595,7 @@ static PyObject *CmdCartoon(PyObject * self, PyObject * args)
 static PyObject *CmdShowHide(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  char *sname;
+  const char *sname;
   int rep;
   int state;
   OrthoLineType s1;
@@ -6609,10 +6609,13 @@ static PyObject *CmdShowHide(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {        /* TODO STATUS */
     if(sname[0] == '@') {
-      ExecutiveSetAllVisib(G, state);
-    } else {
+      // DEPRECATED
+      sname = cKeywordAll;
+      rep = cRepBitmask;
+    }
+    {
       ok = (SelectorGetTmp2(G, sname, s1) >= 0);
-      ExecutiveSetRepVisib(G, s1, rep, state);
+      ExecutiveSetRepVisMask(G, s1, rep, state);
       SelectorFreeTmp(G, s1);
     }
     APIExit(G);

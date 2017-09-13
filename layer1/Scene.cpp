@@ -2466,12 +2466,15 @@ static void SceneUpdateCameraRock(PyMOLGlobals * G, int dirty)
   int sweep_mode = SettingGetGlobal_i(G, cSetting_sweep_mode);
   float shift = (float) (PI / 2.0F);
 
+  I->SweepTime += I->RenderTime;
+  I->LastSweepTime = UtilGetSeconds(G);
+
   switch (sweep_mode) {
   case 0:
   case 1:
   case 2:
     if(sweep_angle <= 0.0F) {
-      diff = (float) ((PI / 180.0F) * I->RenderTime * 10);
+      diff = (float) ((PI / 180.0F) * I->RenderTime * 10 * sweep_speed / 0.75F);
     } else {
       ang_cur = (float) (I->SweepTime * sweep_speed) + sweep_phase;
       disp = (float) (sweep_angle * (PI / 180.0F) * sin(ang_cur) / 2);
@@ -2562,8 +2565,7 @@ void SceneIdle(PyMOLGlobals * G)
       renderTime = -I->LastSweepTime + UtilGetSeconds(G);
       minTime = SettingGetGlobal_f(G, cSetting_rock_delay) / 1000.0;
       if(renderTime >= minTime) {
-        I->LastSweepTime = UtilGetSeconds(G);
-        I->SweepTime += I->RenderTime;
+        I->RenderTime = renderTime;
         SceneUpdateCameraRock(G, true);
       }
     }
@@ -3295,6 +3297,9 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
       float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
       unsigned int tmp_height = height + 2;
       unsigned int tmp_width = width + 2;
+      unsigned int border = 1;
+      unsigned int upscale = 1;
+
       unsigned int n_word = tmp_height * tmp_width;
       unsigned int *tmp_buffer = Alloc(unsigned int, n_word);
       ColorGetBkrdContColor(G, rgba, false);
@@ -3304,11 +3309,20 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
 	unsigned int a, b;
 	unsigned int *p = (unsigned int *) data;
 	unsigned int *q = tmp_buffer;
-	for(b = 0; b < tmp_width; b++)
-	  *(q++) = color_word;
-	for(a = 1; a < tmp_height-1; a++) {
-	  *(q++) = color_word;
-	  for(b = 1; b < tmp_width-1; b++) {
+
+	// top border
+	for(a = 0; a < border; ++a) {
+	  for(b = 0; b < tmp_width; b++)
+	    *(q++) = color_word;
+	}
+
+	for(a = border; a < tmp_height - border; a++) {
+	  // left border
+	  for(b = 0; b < border; ++b) {
+	    *(q++) = color_word;
+	  }
+
+	  for(b = border; b < tmp_width - border; b++) {
 	    unsigned char *qq = (unsigned char *) q;
 	    unsigned char *pp = (unsigned char *) p;
 	    unsigned char bg;
@@ -3334,12 +3348,28 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
 	      *(qq++) = 0xFF;
 	    }
 	    q++;
-	    p++;
+
+	    if ((b + 1 - border) % upscale == 0) {
+	      p++;
+	    }
 	  }
-	  *(q++) = color_word;
+
+	  if ((a + 1 - border) % upscale != 0) {
+	    // read row again
+	    p -= width;
+	  }
+
+	  // right border
+	  for(b = 0; b < border; ++b) {
+	    *(q++) = color_word;
+	  }
 	}
-	for(b = 0; b < tmp_width; b++)
-	  *(q++) = color_word;
+
+	// bottom border
+        for(a = 0; a < border; ++a) {
+	  for(b = 0; b < tmp_width; b++)
+	    *(q++) = color_word;
+	}
 
 	glRasterPos3i((int) ((I->Width - tmp_width) / 2 + I->Block->rect.left),
 		      (int) ((I->Height - tmp_height) / 2 + I->Block->rect.bottom),
@@ -3403,9 +3433,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
       drawn = true;
     }
 
-    I->RenderTime = -I->LastRender;
     I->LastRender = UtilGetSeconds(G);
-    I->RenderTime += I->LastRender;
   }
   return drawn;
 }
@@ -6620,7 +6648,7 @@ void SceneUpdateAnimation(PyMOLGlobals * G)
   if(MoviePlaying(G) && movie_rock) {
 
     if(MovieGetRealtime(G) && !SettingGetGlobal_b(G, cSetting_movie_animate_by_frame)) {
-      I->SweepTime += I->RenderTime;
+      I->RenderTime = UtilGetSeconds(G) - I->LastSweepTime;
       rockFlag = true;
       dirty = true;             /* force a subsequent update */
     } else {
@@ -6630,10 +6658,10 @@ void SceneUpdateAnimation(PyMOLGlobals * G)
         if(rock_frame != I->RockFrame) {
           I->RockFrame = rock_frame;
           rockFlag = true;
-          I->SweepTime += 1.0 / fps;
+          I->RenderTime = 1.0 / fps;
         }
       } else {
-        I->SweepTime += I->RenderTime;
+        I->RenderTime = UtilGetSeconds(G) - I->LastSweepTime;
         rockFlag = true;
       }
     }
@@ -6682,7 +6710,7 @@ void SceneUpdateAnimation(PyMOLGlobals * G)
     SceneFromViewElem(G, I->ani_elem + cur, dirty);
     OrthoDirty(G);
   }
-  if(rockFlag && (I->SweepTime != 0.0)) {
+  if(rockFlag && (I->RenderTime != 0.0)) {
     SceneUpdateCameraRock(G, dirty);
   }
 }
@@ -9606,9 +9634,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     " SceneRender: rendering complete.\n" ENDFD;
 
   if(!(pick || smp)) {          /* update frames per second field */
-    I->RenderTime = -I->LastRender;
     I->LastRender = UtilGetSeconds(G);
-    I->RenderTime += I->LastRender;
     I->ApproxRenderTime = I->LastRender - start_time;
 
     if(I->CopyNextFlag) {
@@ -9655,6 +9681,7 @@ void SceneRestartSweepTimer(PyMOLGlobals * G)
   I->LastSweepX = 0.0F;
   I->LastSweepY = 0.0F;
   I->SweepTime = 0.0;
+  I->LastSweepTime = UtilGetSeconds(G);
   SceneRestartPerfTimer(G);
 
 }

@@ -35,6 +35,7 @@ if __name__=='pymol.viewing':
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
           repres,repres_sc, is_string, is_list, is_ok, is_error, \
+          repmasks,repmasks_sc, \
           toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
           palette_dict, palette_sc, window_dict, window_sc, \
           safe_list_eval, safe_alpha_list_eval, \
@@ -482,6 +483,13 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException            
         return r
 
+    def _rep_to_repmask(rep):
+        repn = 0
+        for rep in rep.split():
+            rep = repmasks_sc.auto_err(rep, 'representation')
+            repn |= repmasks[rep]
+        return repn
+
     def toggle(representation="lines", selection="all", _self=cmd):
         '''
 DESCRIPTION
@@ -518,9 +526,7 @@ SEE ALSO
             if representation == 'object':
                 repn = -2
             else:
-                rep = representation
-                rep = repres_sc.auto_err(rep,'representation')
-                repn = repres[rep];
+                repn = _rep_to_repmask(representation)
                 # preprocess selection 
                 selection = selector.process(selection)
             r = _cmd.toggle(_self._COb,str(selection),int(repn));
@@ -529,7 +535,23 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def show(representation="", selection="", _self=cmd):
+    def _showhide(rep, selection, value, _self):
+        if not selection and (rep in ("", "all") or '(' in rep or '/' in rep):
+            # rep looks like a selection
+            selection = rep
+            rep = "wire" if value else "everything"
+
+        selection = selector.process(selection) or "all"
+        repn = _rep_to_repmask(rep)
+        r = DEFAULT_ERROR
+
+        with _self.lockcm:
+            r = _cmd.showhide(_self._COb, str(selection), int(repn), value)
+
+        if _self._raising(r,_self): raise QuietException
+        return r
+
+    def show(representation="wire", selection="", _self=cmd):
         '''
 DESCRIPTION
 
@@ -564,40 +586,9 @@ SEE ALSO
     hide, enable, disable
 
 '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            if (representation=="") and (selection==""):
-                if is_ok(_cmd.showhide(_self._COb,"(all)",repres['lines'],1)): # show lines by default
-                    r = _cmd.showhide(_self._COb,"(all)",repres['nonbonded'],2)
-            elif (representation!="") and (selection!=""):
-                rep = representation
-                rep = repres_sc.auto_err(rep,'representation')
-                repn = repres[rep];
-                # preprocess selection 
-                selection = selector.process(selection)
-                #   
-                r = _cmd.showhide(_self._COb,str(selection),int(repn),1);
-            elif representation=='all':
-                if is_ok(_cmd.showhide(_self._COb,"all",repres['lines'],1)): # show lines by default
-                    r = _cmd.showhide(_self._COb,"all",repres['nonbonded'], 1) # nonbonded
-            elif (representation[0:1]=='(') or '/' in representation:
-                # preprocess selection
-                selection = selector.process(representation)
-                #                  
-                if is_ok(_cmd.showhide(_self._COb,str(selection),repres['lines'],1)):
-                    r = _cmd.showhide(_self._COb,str(selection),repres['nonbonded'],2);
-            else: # selection==""
-                rep = representation
-                rep = repres_sc.auto_err(rep,'representation')
-                repn = repres[rep]
-                r = _cmd.showhide(_self._COb,"all",int(repn),1);
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException         
-        return r
+        return _showhide(representation, selection, 1, _self)
 
-    def show_as(representation="", selection="", _self=cmd):
+    def show_as(representation="wire", selection="", _self=cmd):
         '''
 DESCRIPTION
 
@@ -635,53 +626,9 @@ SEE ALSO
 
     show, hide, enable, disable
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            vis_sel = None
-            if (representation=="") and (selection==""):
-                if is_ok(_cmd.showhide(_self._COb,str(selection),-1,0)):
-                    if is_ok(_cmd.showhide(_self._COb,"(all)",repres['lines'],1)):
-                        r = _cmd.showhide(_self._COb,"(all)",repres['nonbonded'],1)
-            elif (representation!="") and (selection!=""):
-                rep = representation
-                rep = repres_sc.auto_err(rep,'representation')
-                repn = repres[rep]
-                # preprocess selection 
-                selection = selector.process(selection)
+        return _showhide(representation, selection, 2, _self)
 
-                # user specified 'visible' -- this has always been problematic
-
-                if "visible".startswith(selection.lower()) and len(selection.split())==1:
-                    vis_sel = _self.get_unused_name("_vis")
-                    _self.select(vis_sel, selection)
-                    selection = vis_sel
-
-                if is_ok(_cmd.showhide(_self._COb,str(selection),-1,0)):
-                    r = _cmd.showhide(_self._COb,str(selection),int(repn),1)
-            elif representation=='all':
-                if is_ok(_cmd.showhide(_self._COb,str(selection),-1,0)):            
-                    if if_ok(_cmd.showhide(_self._COb,"all",repres['lines'],1)): # show lines by default
-                        r = _cmd.showhide(_self._COb,"all",repres['nonbonded'],1) # show nonbonded by default
-            elif (representation[0:1]=='(') or '/' in representation:
-                # preprocess selection
-                selection = selector.process(representation)
-                if is_ok(_cmd.showhide(_self._COb,str(selection),-1,0)):
-                    r = _cmd.showhide(_self._COb,str(selection),repres['lines'],1)
-            else: # selection==""
-                rep = representation
-                rep = repres_sc.auto_err(rep,'representation')
-                repn = repres[rep];
-                if is_ok(_cmd.showhide(_self._COb,"all",-1,0)):
-                    r = _cmd.showhide(_self._COb,"all",int(repn),1);
-        finally:
-            if vis_sel is not None:
-                _self.delete(vis_sel)
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException
-        return r
-
-    def hide(representation="", selection="",_self=cmd):
+    def hide(representation="everything", selection="",_self=cmd):
         '''
 DESCRIPTION
 
@@ -715,31 +662,7 @@ SEE ALSO
     show, enable, disable
 
         '''
-        r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            if (representation=="") and (selection==""):
-                r = _cmd.showhide(_self._COb,"@",0,0);      
-            elif (representation!="") and (selection!=""):
-                rep = representation
-                rep = repres_sc.auto_err(rep,'representation')
-                repn = repres[rep];
-                selection = selector.process(selection)
-                r = _cmd.showhide(_self._COb,str(selection),int(repn),0);
-            elif (representation=='all'):
-                r = _cmd.showhide(_self._COb,"@",0,0);
-            elif (representation[0:1]=='(') or '/' in representation:
-                selection = selector.process(representation)
-                r = _cmd.showhide(_self._COb,str(selection),-1,0);
-            else: # selection == ""
-                rep = representation
-                rep = repres_sc.auto_err(rep,'representation')
-                repn = repres[rep];
-                r = _cmd.showhide(_self._COb,"all",int(repn),0);
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise QuietException         
-        return r
+        return _showhide(representation, selection, 0, _self)
 
 
     def get_view(output=1, quiet=1, _self=cmd):

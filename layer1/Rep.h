@@ -35,6 +35,13 @@ Z* -------------------------------------------------------------------
 #define cRepAll       -1
 #define cRepNone      -2
 
+// show/hide/... codes
+enum {
+  cVis_HIDE,            // 0
+  cVis_SHOW,            // 1
+  cVis_AS,              // 2
+  cVis_TOGGLE,          // 3
+};
 
 /* WARNING: don't change these -- you'll break sessions!
    (you can add to them however, I think) */

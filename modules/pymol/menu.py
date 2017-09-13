@@ -145,18 +145,22 @@ def obj_motion(self_cmd, obj, frame="0"):
 
 def rep_action(self_cmd, sele, action) :
     return [
-        [ 1, 'lines'      , 'cmd.'+action+'("lines"     ,"'+sele+'")' ],
-        [ 1, 'sticks'     , 'cmd.'+action+'("sticks"    ,"'+sele+'")' ],
+        [ 1, 'wire'       , 'cmd.'+action+'("wire"      ,"'+sele+'")' ],
+        [ 1, '  lines'    , 'cmd.'+action+'("lines"     ,"'+sele+'")' ],
+        [ 1, '  nonbonded', 'cmd.'+action+'("nonbonded" ,"'+sele+'")' ],
+        [ 0, ''           , ''                               ],
+        [ 1, 'licorice'   , 'cmd.'+action+'("licorice"  ,"'+sele+'")' ],
+        [ 1, '  sticks'   , 'cmd.'+action+'("sticks"    ,"'+sele+'")' ],
+        [ 1, '  nb_spheres','cmd.'+action+'("nb_spheres","'+sele+'")' ],
+        [ 0, ''           , ''                               ],
         [ 1, 'ribbon'     , 'cmd.'+action+'("ribbon"    ,"'+sele+'")' ],
         [ 1, 'cartoon'    , 'cmd.'+action+'("cartoon"   ,"'+sele+'")' ],
         [ 0, ''           , ''                               ],
         [ 1, 'label'      , 'cmd.'+action+'("labels"    ,"'+sele+'")' ],
         [ 1, 'cell'       , 'cmd.'+action+'("cell"      ,"'+sele+'")' ],
         [ 0, ''           , ''                               ],
-        [ 1, 'nonbonded'  , 'cmd.'+action+'("nonbonded" ,"'+sele+'")' ],
         [ 1, 'dots'       , 'cmd.'+action+'("dots"      ,"'+sele+'")' ],
         [ 1, 'spheres'    , 'cmd.'+action+'("spheres"   ,"'+sele+'")' ],
-        [ 1, 'nb_spheres' , 'cmd.'+action+'("nb_spheres","'+sele+'")' ],
         [ 0, ''           , ''                               ],
         [ 1, 'mesh'       , 'cmd.'+action+'("mesh"      ,"'+sele+'")' ],
         [ 1, 'surface'    , 'cmd.'+action+'("surface"   ,"'+sele+'")' ],
@@ -1095,6 +1099,19 @@ def modify_sele(self_cmd, sele):
               [ 1, 'include'        , include(self_cmd, sele)       ],
               [ 1, 'exclude'        , exclude(self_cmd, sele)       ]]
 
+
+def copy_to(self_cmd, sele):
+    onames = self_cmd.get_object_list('enabled')[:25]  # keep this practical
+    selected = self_cmd.get_object_list(sele)
+    return [[ 2, 'Copy To:', '' ],
+              [ 1, 'new', 'cmd.create(None,"' + sele + '",zoom=0)' ],
+              [ 0, '', '' ],
+              ] + [
+                  [ 1, oname, 'cmd.copy_to("' + oname + '","' + sele + '",zoom=0,quiet=0)' ]
+                  for oname in onames
+                  if oname not in selected
+              ]
+
               
 def sele_action(self_cmd, sele):
     return [[ 2, 'Action:'       ,''                        ],     
@@ -1118,7 +1135,7 @@ def sele_action(self_cmd, sele):
               [ 1, 'hydrogens' , hydrogens(self_cmd, sele) ],
               [ 0, ''          ,''                                              ],
               [ 1, 'duplicate'      ,'cmd.select(None,"'+sele+'")'          ], # broken...
-              [ 1, 'copy to object' ,'cmd.create(None,"'+sele+'",zoom=0)'     ],
+              [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
               [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
               [ 0, ''          ,''                                  ],
               [ 1, 'masking'        , masking(self_cmd, sele)         ],
@@ -1144,7 +1161,7 @@ def sele_action2(self_cmd, sele):
               [ 1, 'complete'       , complete(self_cmd, sele)         ],
               [ 0, ''          ,''                                              ],
               [ 1, 'duplicate selection'      ,'cmd.select(None,"'+sele+'")'          ],
-              [ 1, 'copy to object'  ,'cmd.create(None,"'+sele+'",zoom=0)'     ],           
+              [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
               [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
             [ 0, ''          ,''                                  ],
               [ 1, 'masking'      , masking(self_cmd, sele)         ],
@@ -1204,7 +1221,7 @@ def mol_action(self_cmd, sele):
             [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
             [ 0, ''             , ''                       ],
             [ 1, 'rename object', 'cmd.wizard("renaming","'+sele+'")'          ],
-            [ 1, 'duplicate object'    ,'cmd.create(None,"'+sele+'")'     ],           
+            [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
             [ 1, del_col + 'delete object', 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
@@ -1485,6 +1502,7 @@ def mol_labels(self_cmd, sele):
               [ 1, 'atom name'      , 'cmd.label("'+sele+'","name")'         ],
               [ 1, 'element symbol' , 'cmd.label("'+sele+'","elem")'         ],           
               [ 1, 'residue name'  , 'cmd.label("'+sele+'","resn")'         ],
+              [ 1, 'one letter code', 'cmd.label("'+sele+'","oneletter")' ],
               [ 1, 'residue identifier'    , 'cmd.label("'+sele+'","resi")'         ],
               [ 1, 'chain identifier' , 'cmd.label("'+sele+'","chain")'         ],
               [ 1, 'segment identifier'       , 'cmd.label("'+sele+'","segi")'         ],           
@@ -1623,17 +1641,6 @@ def main_menu(self_cmd,pos, screenpos):
         [ 1, del_col + 'quit', 'cmd.quit()' ],
         ]
 
-def pick_sele_sub(self_cmd, sele):
-    result = [
-        [ 2, 'Actions'  , '' ],      
-        [ 1, 'rename', 'cmd.wizard("renaming","'+sele+'")'          ],
-        [ 1, 'clear'    , 'cmd.select("'+sele+'","none")' ],
-        [ 1, del_col + 'delete selection', 'cmd.delete("'+sele+'")' ],
-        [ 1, 'copy to object','cmd.create(None,"'+sele+'",zoom=0)'            ],
-        [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
-        [ 1, rem_col + 'remove atoms', 'cmd.remove("'+sele+'")' ],
-        ]
-    return result
 
 def pick_sele(self_cmd, sele, title):
     result = [
@@ -1703,15 +1710,11 @@ def pick_option(self_cmd, sele, title, object=0):
         result.extend([
             [ 1, rem_col + 'remove atoms', 'cmd.remove("'+sele+'")' ],
             [ 0, ''             , ''                      ],      
-            [ 1, 'copy to object','cmd.create(None,"'+sele+'",zoom=0)'            ],
+            [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
             [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
             ])
     return result
 
-def pick_option_rev(self_cmd, sele, title, object=0):
-    result = pick_option(self_cmd, sele, title, object)[1:]
-    result.reverse()
-    return result
 
 def pick_menu(self_cmd, title, sele2):
     with menucontext(self_cmd, sele2):

@@ -2672,3 +2672,122 @@ DESCRIPTION
         if not int(quiet):
             print(' Altered %d MSE residues to MET' % (x))
 
+
+    def _base(i, numerals, _emptyzero=False):
+        if i == 0:
+            return '' if _emptyzero else numerals[0]
+
+        b = len(numerals)
+        return _base(i // b, numerals, True) + numerals[i % b]
+
+
+    def uniquify(identifier, selection, reference='', quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Make `identifier` unique with respect to reference selection.
+
+ARGUMENTS
+
+    identifier = str: atom identifier (chain, segi, etc.)
+
+    selection = str: atom selection to modify
+
+    reference = str: atom selection whose identifiers must not be
+    present in the first selection {default: !selection}
+
+EXAMPLE
+
+    fetch 1a00 1hbb, async=0
+    uniquify chain, 1hbb
+    # 1hbb now has chains E,F,G,H
+        '''
+        import itertools
+        import string
+
+        if not reference:
+            reference = '!(' + selection + ')'
+
+        p = identifier
+
+        set_ref = set()
+        set_sel = set()
+        mapping = {}
+        space = {'set_ref': set_ref, 'set_sel': set_sel, 'mapping': mapping}
+
+        _self.iterate(reference, 'set_ref.add(' + p + ')', space=space)
+        _self.iterate(selection, 'set_sel.add(' + p + ')', space=space)
+
+        set_union = set_ref | set_sel
+        set_inter = set_ref & set_sel
+
+        if not set_inter:
+            return
+
+        baseargs = ()
+        i_iter = itertools.count(1)
+
+        if isinstance(next(iter(set_inter)), int):
+            basefunc = int
+        elif p in ('resi',):
+            basefunc = str
+        else:
+            basefunc = _base
+            baseargs = (string.ascii_uppercase + '123456789',)
+            i_iter = itertools.count(0)
+
+        for name in set_inter:
+            for i in i_iter:
+                newname = basefunc(i, *baseargs)
+                if newname not in set_union:
+                    mapping[name] = newname
+                    set_union.add(newname)
+                    break
+
+        _self.alter(selection, '%s = mapping.get(%s, %s)' % (p, p, p),
+                space=space)
+
+        if not int(quiet):
+            print(' Uniquify: renamed %d %s identifier(s)' % (len(mapping), p))
+
+
+    def copy_to(name, selection, rename='chain segi ID', zoom=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Copies selection to object `name` (all states) and by default
+    renames chain, segi and ID identifiers to avoid naming conflicts.
+
+ARGUMENTS
+
+    name = str: object name to modify
+
+    selection = str: atom selection (will be copied to `name`)
+
+    rename = str: space separated list of identifiers to rename
+    {default: chain segi ID}
+
+SEE ALSO
+
+    create, fuse
+        '''
+        temp = _self.get_unused_name('_tmp')
+
+        try:
+            _self.create(temp, selection, zoom=0)
+            _self.disable(' '.join(_self.get_object_list(selection)))
+
+            for prop in rename.split():
+                if prop.upper() == 'ID':
+                    _self.alter(temp, 'ID = -1')
+                else:
+                    uniquify(prop, temp, '?' + name, quiet=quiet)
+
+            _self.create(name, '?' + name + ' ' + temp, zoom=zoom)
+            _self.unpick()
+
+            if not int(quiet):
+                n = _self.count_atoms(temp)
+                print(' Copied %d atoms to object %s' % (n, name))
+        finally:
+            _self.delete(temp)
