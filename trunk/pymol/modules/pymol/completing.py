@@ -21,6 +21,7 @@ expr_sc = ExprShortcut([
     'q', 'b', 'partial_charge', 'vdw',
     'p.', 's.',
     'elec_radius',
+    'oneletter',
 ])
 
 def vol_ramp_sc():
@@ -41,6 +42,7 @@ aa_obj_c = [ cmd.object_sc              , 'object'          , ', ' ]
 aa_set_c = [ cmd.setting.setting_sc     , 'setting'         , ', ' ]
 aa_map_c = [ cmd.map_sc                 , 'map object'      , ', ' ]
 aa_rep_c = [ cmd.repres_sc              , 'representation'  , ', ' ]
+aa_rem_c = [ cmd.repmasks_sc            , 'representation'  , ', ' ]
 aa_v_r_c = [ vol_ramp_sc                , 'volume ramp'     , ', ' ]
 aa_ali_e = [ cmd.Shortcut(['align', 'super', 'cealign']), 'alignment method', '']
 
@@ -67,7 +69,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'alphatoall'     : aa_sel_c,
         'api'            : [ self_cmd.kwhash, 'command', '' ],
         'bond'           : aa_sel_e,
-        'as'             : aa_rep_c,
+        'as'             : aa_rem_c,
         'bg_color'       : [ lambda c=self_cmd:c._get_color_sc(c), 'color'       , ''   ],      
         'button'         : [ self_cmd.controlling.button_sc  , 'button'          , ', ' ],
         'cartoon'        : [ self_cmd.viewing.cartoon_sc     , 'cartoon'         , ', ' ],
@@ -79,8 +81,11 @@ def get_auto_arg_list(self_cmd=cmd):
         'config_mouse'   : [ self_cmd.controlling.ring_dict_sc, 'mouse cycle'    , ''   ],
         'clean'          : aa_sel_c,
         'clip'           : [ self_cmd.viewing.clip_action_sc , 'clipping action' , ', ' ],
+        'copy'           : aa_obj_c,
+        'copy_to'        : aa_obj_c,
         'count_atoms'    : aa_sel_e,
         'count_discrete' : aa_sel_e,
+        'create'         : aa_obj_c,
         'delete'         : aa_nam_s,
         'deprotect'      : aa_sel_e,
         'disable'        : aa_obj_s,
@@ -93,6 +98,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'fit'            : aa_sel_e,
         'flag'           : [ self_cmd.editing.flag_sc        , 'flag'            , ', ' ],
         'full_screen'    : [ self_cmd.toggle_sc              , 'option'          , ''   ],
+        'fuse'           : aa_sel_e,
         'get'            : aa_set_c,
         'get_area'       : aa_sel_e,
         'get_bond'       : aa_set_c,
@@ -103,7 +109,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'help'           : [ self_cmd.help_sc                , 'selection'       , ''   ],
         'help_setting'   : [ self_cmd.setting.setting_sc     , 'setting'         , ''   ],
         'h_add'          : aa_sel_e,
-        'hide'           : aa_rep_c,
+        'hide'           : aa_rem_c,
         'isolevel'       : [ self_cmd.contour_sc             , 'contour'         , ', ' ],
         'iterate'        : aa_sel_e,
         'indicate'       : aa_sel_e,
@@ -135,7 +141,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'set_bond'       : aa_set_c,
         'set_key'        : [ lambda: cmd.Shortcut(cmd.key_mappings), 'key'       , ', ' ],
         'set_name'       : aa_nam_c,
-        'show'           : aa_rep_c,
+        'show'           : aa_rem_c,
         'smooth'         : aa_sel_e,
         'space'          : [ self_cmd.space_sc               , 'space'           , ''   ],      
         'spectrum'       : aa_exp_e,
@@ -144,7 +150,8 @@ def get_auto_arg_list(self_cmd=cmd):
         'super'          : aa_sel_c,
         'stereo'         : [ self_cmd.stereo_sc              , 'option'          , ''   ],      
         'symmetry_copy'  : aa_obj_c,
-        'toggle'         : aa_rep_c,
+        'toggle'         : aa_rem_c,
+        'uniquify'       : [ expr_sc                         , 'identifier'      , ', ' ],
         'unmask'         : aa_sel_e,
         'unset'          : aa_set_c,
         'unset_bond'     : aa_set_c,
@@ -172,12 +179,14 @@ def get_auto_arg_list(self_cmd=cmd):
         'cealign'        : aa_sel_e,
         'color'          : aa_sel_e,
         'copy'           : aa_obj_e,
+        'copy_to'        : aa_sel_e,
         'create'         : aa_sel_c,
         'distance'       : aa_sel_e,
         'extra_fit'      : aa_obj_e,
         'extract'        : aa_sel_e,
         'feedback'       : [ self_cmd.fb_module_sc           , 'module'          , ', ' ],
         'flag'           : aa_sel_c,
+        'fuse'           : aa_sel_e,
         'get'            : aa_obj_c,
         'get_bond'       : aa_sel_c,
         'get_property'   : aa_obj_c,
@@ -214,6 +223,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'symmetry_copy'  : aa_obj_c,
         'toggle'         : aa_sel_e,
         'view'           : [ self_cmd.viewing.view_sc        , 'view action'     , ''   ],
+        'uniquify'       : aa_sel_e,
         'unset'          : aa_sel_c,
         'unset_bond'     : aa_sel_c,
         'unset_deep'     : aa_obj_e,
@@ -244,6 +254,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'set_atom_property' : aa_sel_e,
         'spectrum'       : aa_sel_e,
         'symexp'         : aa_sel_c,
+        'uniquify'       : aa_sel_e,
         'unset_bond'     : aa_sel_c,
         'valence'        : aa_sel_c,
         'volume'         : aa_v_r_c,

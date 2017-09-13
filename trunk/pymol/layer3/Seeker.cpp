@@ -850,6 +850,12 @@ char SeekerGetAbbr(PyMOLGlobals * G, const char *abbr, char water, char unknown)
         return 'M';
         break;
       }
+    break;
+    case 'S':
+      switch (abbr[2]) {
+      case 'E': // MSE (SELENOMETHIONINE)
+        return 'M';
+      }
     }
     break;
   case 'P':
@@ -876,6 +882,9 @@ char SeekerGetAbbr(PyMOLGlobals * G, const char *abbr, char water, char unknown)
       switch (abbr[2]) {
       case 'R':
         return 'S';
+        break;
+      case 'C': // SEC (SELENOCYSTEINE)
+        return 'U';
         break;
       }
       break;

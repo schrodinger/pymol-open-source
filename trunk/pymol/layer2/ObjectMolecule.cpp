@@ -10425,18 +10425,23 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                 op->i3++;
                 break;
               case OMOP_VISI:
-                if(op->i1 < 0){
-                  // show or hide all reps
-                  ai->visRep = (op->i2) ? cRepBitmask : 0;
-                } else {
-                  SET_BIT_TO(ai->visRep, op->i1, op->i2);
-                  if(op->i1 == cRepCell)
-                    SET_BIT_TO(I->Obj.visRep, cRepCell, op->i2);
+                switch (op->i2) {
+                case cVis_HIDE:
+                  ai->visRep &= ~(op->i1);
+                  I->Obj.visRep &= ~(op->i1); // cell
+                  break;
+                case cVis_SHOW:
+                  ai->visRep |= op->i1;
+                  I->Obj.visRep |= op->i1; // cell
+                  break;
+                case cVis_AS:
+                  ai->visRep = op->i1;
+                  I->Obj.visRep = op->i1; // cell
+                  break;
                 }
                 break;
-                break;
               case OMOP_CheckVis:
-                if(GET_BIT(ai->visRep, op->i1)) {
+                if((ai->visRep & op->i1)) {
                   op->i2 = true;
                 }
                 break;
@@ -10956,14 +10961,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   /* shouldn't this be calling the object invalidation routine instead? */
                   if(inv_flag) {
                     cs->objMolOpInvalidated = true;
-                    if(op->i1 < 0) {
-                      /* invalidate all representations */
-                      for(d = 0; d < cRepCnt; d++) {
+                    for(d = 0; d < cRepCnt; d++) {
+                      if ((1 << d) & op->i1) {
                         cs->invalidateRep(d, op->i2);
                       }
-                    } else
-                      /* invalidate only that particular representation */
-                      cs->invalidateRep(op->i1, op->i2);
+                    }
                   }
                   break;
                 }

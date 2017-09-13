@@ -30,6 +30,7 @@ if __name__=='pymol.importing':
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
           _load, is_list, space_sc, safe_list_eval, is_string, loadable
     from .constants import _loadable
+    from pymol.creating import unquote
     
     def incentive_format_not_available_func(format=''):
         raise pymol.IncentiveOnlyException(
@@ -420,6 +421,8 @@ SEE ALSO
             selection = selector.process(selection)
             #   
 
+            filename = unquote(filename)
+
             noext, ext, format_guessed, zipped = filename_to_format(filename)
             fname = _self.exp_path(filename)
 
@@ -703,6 +706,8 @@ SEE ALSO
             discrete = int(discrete)
             if multiplex==None:
                 multiplex=-2
+
+            filename = unquote(filename)
 
             # analyze filename
             noext, ext, format_guessed, zipped = filename_to_format(filename)

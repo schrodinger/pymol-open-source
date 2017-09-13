@@ -179,6 +179,7 @@ from .editing import \
       alphatoall,         \
       attach,             \
       bond,               \
+      copy_to,            \
       cycle_valence,      \
       deprotect,          \
       drag,               \
@@ -235,6 +236,7 @@ from .editing import \
       translate_atom,     \
       unbond,             \
       undo,               \
+      uniquify,           \
       unpick,             \
       update,             \
       valence,            \

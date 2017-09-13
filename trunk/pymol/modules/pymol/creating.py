@@ -1034,23 +1034,35 @@ SEE ALSO
             print(' Warning: properties are not supported in Open-Source PyMOL')
         # preprocess selection
         selection = selector.process(selection)
-        #      
+
+        # TODO is this too much convenience? 'extract' should be a simple boolean
+        if extract in (None, 0, '0', ''):
+            extract = ''
+        elif extract in (1, '1'):
+            extract = selection
+        else:
+            print(' Warning: non-boolean extract values are deprecated!')
+            extract = selector.process(extract)
+
+        if extract:
+            extract_sele = _self.get_unused_name('_extract')
+            _self.select(extract_sele, extract, 0)
+
         try:
             _self.lock(_self)
-            if name==None:
+            if not name:
                 name = _self.get_unused_name("obj")
             r = _cmd.create(_self._COb,str(name),"("+str(selection)+")",
                             int(source_state)-1,int(target_state)-1,
                             int(discrete),int(zoom),int(quiet),int(singletons))
         finally:
             _self.unlock(r,_self)
-        if not is_error(r): # temporary inefficient implementation
-            if extract not in (None, 0, '0'):
-                if extract not in (1, '1'):
-                    extract = selector.process(extract)
-                else:
-                    extract = selection
-                _self.remove("(("+extract+") in (%s)) and not (%s)"%(name,name))
+
+        if extract:
+            if not is_error(r):
+                _self.remove(extract_sele)
+            _self.delete(extract_sele)
+
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 

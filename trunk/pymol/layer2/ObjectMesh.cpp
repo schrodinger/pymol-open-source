@@ -278,8 +278,7 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
       retObjectCGO = ObjectCGOFromCGO(I->Obj.G, retObjectCGO, cgo, a);
       
     }
-    ObjectSetRepVis(&retObjectCGO->Obj, cRepMesh, 0);
-    ObjectSetRepVis(&retObjectCGO->Obj, cRepCGO, 1);
+    ObjectSetRepVisMask(&retObjectCGO->Obj, cRepCGOBit, cVis_AS);
     result = ObjectCGOAsPyList(retObjectCGO);
     ObjectCGOFree(retObjectCGO);
   }
@@ -1133,8 +1132,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   if (!ok){
     I->Obj.fInvalidate(&I->Obj, cRepMesh, cRepInvPurge, -1);
     I->Obj.fInvalidate(&I->Obj, cRepCGO, cRepInvPurge, -1);
-    ObjectSetRepVis(&I->Obj, cRepMesh, 0);
-    ObjectSetRepVis(&I->Obj, cRepCGO, 0);
+    ObjectSetRepVisMask(&I->Obj, 0, cVis_AS);
   }
 
   return NULL;

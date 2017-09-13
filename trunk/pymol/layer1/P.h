@@ -47,7 +47,7 @@ Z* -------------------------------------------------------------------
 #define cPType_state          13
 #define cPType_schar          14
 
-#define NUM_ATOM_PROPERTIES    40
+#define NUM_ATOM_PROPERTIES    41
 
 #define cPRunType_alter          1
 #define cPRunType_alter_state    2

@@ -1104,10 +1104,24 @@ void ObjectToggleRepVis(CObject * I, int rep)
 
 
 /*========================================================================*/
-void ObjectSetRepVis(CObject * I, int rep, int state)
+void ObjectSetRepVisMask(CObject * I, int repmask, int value)
 {
-  if((rep >= 0) && (rep < cRepCnt))
-    SET_BIT_TO(I->visRep, rep, state);
+  switch (value) {
+    case cVis_HIDE:
+      I->visRep &= ~repmask;
+      break;
+    case cVis_SHOW:
+      I->visRep |= repmask;
+      break;
+    case cVis_AS:
+      I->visRep = repmask;
+      break;
+    case cVis_TOGGLE:
+      I->visRep ^= repmask;
+      break;
+    default:
+      printf("error: invalid value: %d\n", value);
+  }
 }
 
 

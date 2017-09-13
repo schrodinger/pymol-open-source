@@ -313,8 +313,8 @@ void ExecutiveDrawNow(PyMOLGlobals * G);
 int ExecutiveDrawCmd(PyMOLGlobals * G, int width, int height, int antialias,
                      int entire_window, int quiet);
 int ExecutiveCartoon(PyMOLGlobals * G, int type, const char *sele);
-void ExecutiveSetAllVisib(PyMOLGlobals * G, int state);
 void ExecutiveSetRepVisib(PyMOLGlobals * G, const char *name, int rep, int state);
+void ExecutiveSetRepVisMask(PyMOLGlobals * G, const char *name, int repmask, int state);
 int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep);
 
 int ExecutiveSetObjVisib(PyMOLGlobals * G, const char *name, int onoff, int parents);
