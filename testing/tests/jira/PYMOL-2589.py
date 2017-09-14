@@ -13,6 +13,7 @@ class Test2589(testing.PyMOLTestCase):
             self.skipTest('no ray or shaders')
 
         self.ambientOnly()
+        cmd.set('valence', 0)
 
         cmd.viewport(350, 200)
         cmd.fragment('ile')

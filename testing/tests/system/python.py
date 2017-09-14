@@ -20,7 +20,7 @@ if (not sys.executable.startswith('/System/Library/Frameworks/Python.framework/V
         ):
     required_modules += [
 #        'OpenGL', # we don't have it on Windows for PyMOL > 1.7.6
-        'matplotlib',
+#        'matplotlib',
     ]
 
 class TestSystem(testing.PyMOLTestCase):
