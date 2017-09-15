@@ -622,8 +622,8 @@ USAGE
             os.unlink(deferred_unlink.pop())
 
         while deferred_rmtree:
-            import shutil
-            shutil.rmtree(deferred_rmtree.pop())
+            import subprocess
+            subprocess.call(['rd', '/s', '/q', deferred_rmtree.pop()], shell=True)
 
         return len(testresult.errors) + len(testresult.failures)
 
