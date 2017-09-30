@@ -81,7 +81,10 @@ else:
     parser.add_argument('--out', default=sys.stdout)
     parser.add_argument('--offline', action='store_true')
     parser.add_argument('--verbosity', type=int, default=2)
-    cliargs = parser.parse_known_args()[0]
+
+    have_dash_dash = __file__.startswith(sys.argv[0])
+    cliargs = parser.parse_known_args(None if have_dash_dash else [])[0]
+
     run_all = False
     max_threads = int(cmd.get('max_threads'))
 
