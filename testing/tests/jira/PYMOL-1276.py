@@ -10,6 +10,9 @@ from pymol import cmd, testing, stored
 class Test1276(testing.PyMOLTestCase):
 
     def test(self):
+        if cmd.get_setting_int('suspend_undo'):
+            self.skipTest("need suspend_undo=0")
+
         cmd.fragment('gly', 'm1')
         cmd.create('m2', 'm1')
         cmd.edit('m1 & name N')

@@ -11,6 +11,9 @@ from pymol import cmd, testing, stored
 class TestPYMOL1567(testing.PyMOLTestCase):
 
     def testAtomStateLevelSettingsOnRemove(self):
+        if cmd.get_setting_int('suspend_undo'):
+            self.skipTest("need suspend_undo=0")
+
         cmd.load(self.datafile("1molecule.mae"))
         cmd.load(self.datafile("1molecule.mae"))
         cmd.label("index 10", "'Test Label'")
@@ -24,6 +27,9 @@ class TestPYMOL1567(testing.PyMOLTestCase):
 
     
     def testAtomLevelSettingsOnRemove(self):
+        if cmd.get_setting_int('suspend_undo'):
+            self.skipTest("need suspend_undo=0")
+
         cmd.load(self.datafile("1molecule.mae"))
         cmd.load(self.datafile("1molecule.mae"))
         cmd.label("index 10", "'Test Label'")
@@ -36,6 +42,9 @@ class TestPYMOL1567(testing.PyMOLTestCase):
         self.assertEqual(stored.offset, plv)
 
     def testAtomLevelSettingsOnRemove2(self):
+        if cmd.get_setting_int('suspend_undo'):
+            self.skipTest("need suspend_undo=0")
+
         cmd.load(self.datafile("1molecule.mae"))
         cmd.load(self.datafile("1molecule.mae"))
         cmd.label("index 10", "'Test Label'")
