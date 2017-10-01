@@ -1,5 +1,6 @@
 python
 import sys, os
-sys.argv = ['pymol', '--run', 'all', '--offline']
-cmd.do('run ' + os.path.join(os.path.dirname(__script__), 'testing.py'))
+_testing_py = os.path.join(os.path.dirname(__script__), 'testing.py')
+sys.argv = [_testing_py, '--run', 'all', '--offline']
+cmd.do('run ' + _testing_py)
 python end
