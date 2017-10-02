@@ -1,4 +1,5 @@
 import os
+import sys
 from pymol import cmd, testing, stored
 
 pdbstr = '''ATOM      1  N   GLY    22      -1.195   0.201  -0.206  1.00  0.00           N  
@@ -425,3 +426,42 @@ class TestImporting(testing.PyMOLTestCase):
         cmd.set('load_object_props_default', load_object_props_default)
         cmd.load(self.datafile('1rx1.pdb'), 'm1', object_props=object_props)
         self.assertEqual(truth, 'pdb_header' in (cmd.get_property_list('m1') or ()))
+
+    @testing.requires_version('1.7.4')
+    def testLoadPWG(self):
+        if sys.version_info[0] < 3:
+            import urllib2
+        else:
+            import urllib.request as urllib2
+
+        content_index = b'Hello World\n'
+        port = 8084
+        baseurl = 'http://localhost:%d' % port
+
+        def urlread(url):
+            handle = urllib2.urlopen(url, timeout=3.0)
+            try:
+                return handle.read()
+            finally:
+                handle.close()
+
+        with testing.mkdtemp() as rootdir:
+            filename = os.path.join(rootdir, 'index.html')
+            with open(filename, 'wb') as handle:
+                handle.write(content_index)
+
+            filename = os.path.join(rootdir, 'start.pwg')
+            with open(filename, 'w') as handle:
+                handle.write('root %s\n' % rootdir)
+                handle.write('port %d\n' % port)
+            cmd.load(filename)
+
+            content = urlread(baseurl)
+            self.assertEqual(content, content_index)
+
+            # Warning: can't call locking functions here, will dead-lock
+            # get_version is non-locking since 1.7.4
+
+            content = urlread(baseurl + '/apply/pymol.cmd.get_version')
+            content = content.decode('ascii', errors='ignore')
+            self.assertTrue(content, cmd.get_version()[0] in content)
