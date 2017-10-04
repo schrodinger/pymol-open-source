@@ -196,8 +196,9 @@ class TestMoving(testing.PyMOLTestCase):
         self.assertEquals(cmd.get_movie_playing(),1)
         cmd.mstop()
 
+    @testing.foreach(0, 1)
     @testing.requires_version('1.8.6')
-    def testMpng(self):
+    def testMpng(self, modal):
         import glob, os
 
         shape2 = (100, 100)
