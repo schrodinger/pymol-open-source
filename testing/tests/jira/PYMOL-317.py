@@ -7,6 +7,7 @@ import os
 from pymol import cmd, testing, stored
 import unittest
 
+@testing.requires('mmlibs')
 @testing.requires('incentive')
 @testing.requires('no_edu')
 class TestPYMOL317(testing.PyMOLTestCase):

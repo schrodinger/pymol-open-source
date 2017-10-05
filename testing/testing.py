@@ -80,6 +80,7 @@ else:
     parser.add_argument('filenames', nargs='*', default=[])
     parser.add_argument('--out', default=sys.stdout)
     parser.add_argument('--offline', action='store_true')
+    parser.add_argument('--no-mmlibs', action='store_true')
     parser.add_argument('--verbosity', type=int, default=2)
 
     have_dash_dash = __file__.startswith(sys.argv[0]) or '--run' in sys.argv
@@ -163,6 +164,9 @@ else:
 
             if hasflag('network') and cliargs.offline:
                 return unittest.skip('no network')(func)
+
+            if hasflag('mmlibs') and cliargs.no_mmlibs:
+                return unittest.skip('no mmlibs')(func)
 
             if hasflag('no_run_all') and run_all:
                 return unittest.skip('skip with all')(func)
@@ -345,6 +349,7 @@ else:
             self.oldcwd = os.getcwd()
             cmd.reinitialize()
             cmd.viewport(640, 480)
+            cmd.set('suspend_undo')
 
             cwd = self.moddirs[type(self).__module__]
             os.chdir(cwd)

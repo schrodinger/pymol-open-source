@@ -32,6 +32,7 @@ class TestColorramping(testing.PyMOLTestCase):
 
     @testing.requires('gui')
     def testVolumePanel(self):
+        self.skipTest("no tk")
         self._sample_data()
         cmd.volume('vol', 'map')
         cmd.volume_panel('vol')

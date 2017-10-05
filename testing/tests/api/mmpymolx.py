@@ -11,6 +11,7 @@ import unittest
 @testing.requires('no_edu')
 class TestMMPyMOLx(testing.PyMOLTestCase):
 
+    @testing.requires('mmlibs')
     def testStereo(self):
         cmd.fragment('ala')
         cmd.remove('hydro')
@@ -34,6 +35,7 @@ class TestMMPyMOLx(testing.PyMOLTestCase):
         cmd.iterate('name CA', 'labels.append(stereo)', space=locals())
         self.assertEqual(labels, ['R'])
 
+    @testing.requires('mmlibs')
     def testStereoPYMOL2782(self):
         # L-Cysteine has R configuration
         cmd.fragment('cys')
