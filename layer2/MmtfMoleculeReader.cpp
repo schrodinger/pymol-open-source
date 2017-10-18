@@ -290,7 +290,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
   }
 
   // assemblies
-  if (!I->DiscreteFlag) {
+  if (!I->DiscreteFlag && I->NCSet > 0) {
     CoordSet ** assembly_csets = get_assembly_csets(G, container,
         I->AtomInfo, I->CSet[0]);
 

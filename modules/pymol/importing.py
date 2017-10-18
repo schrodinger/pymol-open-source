@@ -527,7 +527,7 @@ SEE ALSO
             root = None
             port = 0
             wrap_native = 0
-            if ':' in fname:
+            if '://' in fname:
                 lines = urllib.urlopen(fname).readlines()
             else:
                 lines = open(fname).readlines()
@@ -1144,9 +1144,10 @@ PYMOL API
         "cif"  : [
             "http://files.rcsb.org/download/{code}.{type}.gz",
             "/data/structures/divided/mmCIF/{mid}/{code}.cif.gz",
+            "http://ftp-versioned.wwpdb.org/pdb_versioned/views/latest/coordinates/mmcif/{mid}/pdb_{code:0>8}/pdb_{code:0>8}_xyz.cif.gz",
         ],
-        "2fofc" : "http://www.ebi.ac.uk/pdbe/coordinates/files/{code}.ccp4",
-        "fofc" : "http://www.ebi.ac.uk/pdbe/coordinates/files/{code}_diff.ccp4",
+        "2fofc" : "https://www.ebi.ac.uk/pdbe/coordinates/files/{code}.ccp4",
+        "fofc" : "https://www.ebi.ac.uk/pdbe/coordinates/files/{code}_diff.ccp4",
         "pubchem": [
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=3DSaveSDF",
             "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?{type}={code}&disopt=SaveSDF",
@@ -1225,7 +1226,7 @@ PYMOL API
             url_list = []
 
         for url in url_list:
-            url = url.format(mid=code[1:3], code=code, type=type)
+            url = url.format(mid=code[-3:-1], code=code, type=type)
 
             try:
                 contents = _self.file_read(url)

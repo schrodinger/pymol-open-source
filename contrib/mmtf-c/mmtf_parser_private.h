@@ -71,7 +71,7 @@ float MMTF_parser_fetch_float(const msgpack_object*);
 
 MMTF_Entity* MMTF_parser_fetch_entityList(const msgpack_object*, size_t*);
 
-MMTF_GroupType* MMTF_parser_fetch_groupTypeList(const msgpack_object*, size_t*);
+MMTF_GroupType* MMTF_parser_fetch_groupList(const msgpack_object*, size_t*);
 
 MMTF_BioAssembly* MMTF_parser_fetch_bioAssemblyList(const msgpack_object*, size_t*);
 MMTF_Transform* MMTF_parser_fetch_transformList(const msgpack_object*, size_t*);

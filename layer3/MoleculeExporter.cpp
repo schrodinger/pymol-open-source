@@ -806,8 +806,8 @@ struct MoleculeExporterMOL : public MoleculeExporter {
     MoleculeExporter::beginMolecule();
 
     m_offset += VLAprintf(m_buffer, m_offset,
-        "%s\n  PyMOL%03d          3D                             0\n\n",
-        getTitleOrName(), (_PyMOL_VERSION_int / 10) % 1000);
+        "%s\n  PyMOL%3.3s          3D                             0\n\n",
+        getTitleOrName(), _PyMOL_VERSION);
 
     m_chiral_flag = 0;
   }

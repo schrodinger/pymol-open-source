@@ -12,8 +12,23 @@ from __future__ import absolute_import
 
 # we make extensive use of Python's build-in in web infrastructure
 
-import BaseHTTPServer, cgi, urlparse
-import StringIO, socket
+import sys
+
+_PY3 = sys.version_info[0] > 2
+
+if _PY3:
+    import http.server as BaseHTTPServer
+    import io as StringIO
+    import urllib.parse as urlparse
+    from urllib.request import urlopen
+else:
+    import BaseHTTPServer
+    import StringIO
+    import urlparse
+    from urllib import urlopen
+
+import cgi
+import socket
 
 # we also rely upon Python's json infrastructure 
 
@@ -43,6 +58,11 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     # our actual HTTP server class is private for the time being
     # if we need to, then we'll change this
+
+    def wfile_write(self, s):
+        if _PY3 and not isinstance(s, bytes):
+            s = s.encode('utf-8')
+        self.wfile.write(s)
 
     def do_GET(self):
         self.process_request()
@@ -133,24 +153,24 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         allowed attributes - those stored in the session dictionary
         """
         key = '/getattr/' + attr;
-        if self.session.has_key(key):
+        if key in self.session:
             try:   
                 result = repr(self.session[key])
                 self.send_json_result(result)
             except:
                 self.send_error(500,"Unable to get attribute.")
-                self.wfile.write(" %s\n" % attr)
+                self.wfile_write(" %s\n" % attr)
                 traceback.print_exc(file=self.wfile)
         else:
             self.send_error(404,"Not a recognized attribute")
-            self.wfile.write(" %s is not a recognized attribute\n" % attr)
+            self.wfile_write(" %s is not a recognized attribute\n" % attr)
 
     def wrap_return(self, result, status="OK", indent=None):
         r = { 'status' : status, 'result' : result }
         if self.server.wrap_natives==1:
-            return json.dumps(r,indent)
+            return json.dumps(r, indent=indent)
         else:
-            return json.dumps(result,indent)
+            return json.dumps(result, indent=indent)
         
     def send_json_result(self, result):
         """
@@ -161,34 +181,34 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         """
         if self.callback != None:
             self.send_resp_header(200,'text/javascript')
-            self.wfile.write("%s(%s)"%(self.callback,self.wrap_return(result)))
+            self.wfile_write("%s(%s)"%(self.callback,self.wrap_return(result)))
 
         else:
-            accept_mime = self.headers.getheader('Accept')
+            accept_mime = self.headers.get('Accept')
             if accept_mime in _json_mime_types:
                 self.send_resp_header(200,accept_mime)
-                self.wfile.write(self.wrap_return(result))
+                self.wfile_write(self.wrap_return(result))
                 
             else:
                 self.send_resp_header(200,'text/html')
-                self.wfile.write("PyMOL's JSON response: <pre>")
-                self.wfile.write(self.wrap_return(result,indent=4))
-                self.wfile.write("</pre>")
+                self.wfile_write("PyMOL's JSON response: <pre>")
+                self.wfile_write(self.wrap_return(result,indent=4))
+                self.wfile_write("</pre>")
             
     def send_json_error(self, code, message):
         if self.callback != None:
             self.send_resp_header(code,'text/javascript')
-            self.wfile.write("%s(%s)"%(self.callback,self.wrap_return(message,"ERROR")))
+            self.wfile_write("%s(%s)"%(self.callback,self.wrap_return(message,"ERROR")))
         else:
-            accept_mime = self.headers.getheader('Accept')            
+            accept_mime = self.headers.get('Accept')
             if accept_mime in _json_mime_types:
                 self.send_resp_header(code,accept_mime)
-                self.wfile.write(self.wrap_return(message,"ERROR"))
+                self.wfile_write(self.wrap_return(message,"ERROR"))
             else:
                 self.send_resp_header(code,'text/html')
-                self.wfile.write("PyMOL's JSON response: <pre>")
-                self.wfile.write(self.wrap_return(message,"ERROR",indent=4))
-                self.wfile.write("</pre>")
+                self.wfile_write("PyMOL's JSON response: <pre>")
+                self.wfile_write(self.wrap_return(message,"ERROR",indent=4))
+                self.wfile_write("</pre>")
 
     def send_exception_json(self, code, message):
         fp = StringIO.StringIO()
@@ -198,17 +218,17 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         response = json.dumps(message)
         if self.callback != None:
             self.send_resp_header(code, 'text/javascript')
-            self.wfile.write("%s(%s)"%(self.callback,response))
+            self.wfile_write("%s(%s)"%(self.callback,response))
         else:
-            accept_mime = self.headers.getheader('Accept')
+            accept_mime = self.headers.get('Accept')
             if accept_mime in _json_mime_types:
                 self.send_resp_header(code,accept_mime)
-                self.wfile.write(response)
+                self.wfile_write(response)
             else:
                 self.send_resp_header(code,'text/html')
-                self.wfile.write("PyMOL's JSON response: <pre>")
-                self.wfile.write(json.dumps(json.loads(response),indent=4))
-                self.wfile.write("</pre>")
+                self.wfile_write("PyMOL's JSON response: <pre>")
+                self.wfile_write(json.dumps(json.loads(response),indent=4))
+                self.wfile_write("</pre>")
 
     def pymol_apply(self,method):
         """
@@ -242,7 +262,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 query_kwds[k] = self.fs.getfirst(k)
                 
         blocks = []            
-        if isinstance(method,types.StringType):
+        if isinstance(method, str):
             # method is merely a string 
             if kwds == None:
                 kwds = query_kwds
@@ -250,9 +270,9 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 args = ()
             if len(method):
                 blocks = [ [ method, args, kwds ] ]
-        elif isinstance(method,types.ListType) and len(method):
+        elif isinstance(method, list) and len(method):
             # method is a list
-            if not isinstance(method[0],types.ListType):
+            if not isinstance(method[0], list):
                 blocks = [ method ] # contains just [name, args, kwds]
             else:
                 blocks = method
@@ -296,23 +316,23 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
                 if block[0] == '_quit': # special quit behavior
                     self.send_resp_header()
-                    self.wfile.write("<html>")
+                    self.wfile_write("<html>")
                     href = None
-                    if kwds.has_key("href"):
+                    if "href" in kwds:
                         href = str(kwds['href'])
                     elif len(args):
                         href = str(args[1])
                     if href == None:
-                        self.wfile.write("<body>")
+                        self.wfile_write("<body>")
                     elif not len(href): # simply 
-                        self.wfile.write("<body onload=\"window.close()\">")
+                        self.wfile_write("<body onload=\"window.close()\">")
                     else:
-                        self.wfile.write(
+                        self.wfile_write(
                             "<body onload=\"document.location.replace('"+
                                          kwds['href']+"')\">")
-                    self.wfile.write("<p>PyMOL-HTTPd: Shutting down...</p>")
-                    self.wfile.write("<p><i>Please close this window.</i></p>")
-                    self.wfile.write("</body></html>")
+                    self.wfile_write("<p>PyMOL-HTTPd: Shutting down...</p>")
+                    self.wfile_write("<p><i>Please close this window.</i></p>")
+                    self.wfile_write("</body></html>")
                     self.wfile.flush()
                     self.server.pymol_cmd.quit()
                     return
@@ -332,7 +352,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         path_list = self.path.split('/')[1:]
         if '..' in path_list: # prevent access to parent directories
             self.send_error(404,"Illegal path.")
-            self.wfile.write(": %s" % self.path)
+            self.wfile_write(": %s" % self.path)
         elif self.server.pymol_root == None:
             self.send_error(404,"No content root specified.")
         else:
@@ -343,12 +363,12 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     full_path = full_path + "/index.html"
                 fp = open(full_path,"rb")
                 self.send_resp_header(200,self.guess_mime(full_path))
-                self.wfile.write(fp.read())
+                self.wfile_write(fp.read())
                 fp.close()
             except:
                 self.send_error(404,"Unable to locate document.")
-                self.wfile.write(": %s" % self.path)
-                self.wfile.write(str(sys.exc_info()))
+                self.wfile_write(": %s" % self.path)
+                self.wfile_write(str(sys.exc_info()))
                 # exc_info() is thread safe
                 # self.wfile.write(sys.exc_value) # exc_value not thread safe
 
@@ -382,7 +402,7 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header('Cache-Control','no-cache, must-revalidate')
         self.send_header('Expires','Sat, 10 Jan 2008 01:00:00 GMT')
         self.end_headers()
-        self.wfile.write("PyMOL-HTTPd-Error: "+errmsg+"\n")
+        self.wfile_write("PyMOL-HTTPd-Error: "+errmsg+"\n")
         
     def send_resp_header(self, code=200, mime='text/html'):
         self.send_response(code)
@@ -396,32 +416,32 @@ class _PymolHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         """
         for debugging requests
         """
-        self.wfile.write("%s\n" % self.command)
+        self.wfile_write("%s\n" % self.command)
         if (self.fs):
             for k in self.fs.keys():
-                self.wfile.write("%s = " % k)
+                self.wfile_write("%s = " % k)
                 # key can have multiple values, as with checkboxes,
                 # but also arbitrarily
-                if (isinstance(self.fs[k], types.ListType)):
-                    self.wfile.write("%s\n" % self.fs.getlist(k))
+                if (isinstance(self.fs[k], list)):
+                    self.wfile_write("%s\n" % self.fs.getlist(k))
                 else:
                     # key can be uploaded file
                     if (self.fs[k].filename):
-                        self.wfile.write("%s\n" % self.fs[k].filename)
+                        self.wfile_write("%s\n" % self.fs[k].filename)
                         fp = self.fs[k].file
                         #self.wfile.write("FILE %s" % cgi.escape(repr(fp)))
                         #self.wfile.write("%s\n" % fp.name)
                         # fails for StringIO instances
-                        self.wfile.write("%s\n" % repr(fp))
+                        self.wfile_write("%s\n" % repr(fp))
                         # two ways to get file contents
                         #file_contents = self.fs.getvalue(k)
                         #file_contents = fp.read()
                         #self.wfile.write("%s" % file_contents)
                     else:
                         #plain-old key/value
-                        self.wfile.write("%s\n" % self.fs.getvalue(k))
+                        self.wfile_write("%s\n" % self.fs.getvalue(k))
         else:
-            self.wfile.write("No args\n")
+            self.wfile_write("No args\n")
 
 # this is the public class we're exposing to PyMOL consortium members
 
@@ -485,8 +505,7 @@ class PymolHttpd:
         if not self.stop_event.isSet():
             self.stop_event.set()
             try: # create a request in order to release the handler
-                import urllib
-                urllib.urlopen("http://localhost:%d" % self.port)
+                urlopen("http://localhost:%d" % self.port)
             except:
                 pass
             self.server.socket.close()

@@ -109,6 +109,8 @@ static void *open_file_read(const char *filepath, const char *filetype,
   msms->vfd = vfd;
   msms->graphics = NULL;
   *natoms = 0;
+  free(facefilepath);
+  free(vertfilepath);
   return msms;
 }
 

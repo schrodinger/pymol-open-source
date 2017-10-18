@@ -22,7 +22,7 @@ class options:
     osx_frameworks = False
     jobs = int(os.getenv('JOBS', 0))
     no_libxml = False
-    use_msgpackc = 'c++11'
+    use_msgpackc = 'guess'
     help_distutils = False
     no_cxx11 = False
 
@@ -42,7 +42,7 @@ try:
             "(defaults to number of processors)")
     parser.add_argument('--no-libxml', action="store_true",
             help="skip libxml2 dependency, disables COLLADA export")
-    parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'no'),
+    parser.add_argument('--use-msgpackc', choices=('c++11', 'c', 'guess', 'no'),
             help="c++11: use msgpack-c header-only library; c: link against "
             "shared library; no: disable fast MMTF load support")
     parser.add_argument('--no-cxx11', action="store_true", help="Disable "

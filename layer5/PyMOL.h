@@ -223,7 +223,7 @@ typedef void PyMOLModalDrawFn(void *G);
 /* creation */
 
 CPyMOL *PyMOL_New(void);
-CPyMOL *PyMOL_NewWithOptions(CPyMOLOptions * option);
+CPyMOL *PyMOL_NewWithOptions(const CPyMOLOptions * option);
 
 
 /* destruction */

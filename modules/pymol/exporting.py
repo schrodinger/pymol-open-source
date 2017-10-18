@@ -246,6 +246,9 @@ NOTES
         if version >= _self.get_version()[1]:
             return
 
+        if version < 1.9 and sys.version_info[0] > 2:
+            raise NotImplementedError('pse_export_version not supported with Python 3')
+
         print(" Applying pse_export_version=%.3f compatibility" % (version))
 
         def bitmaskToList(mask):

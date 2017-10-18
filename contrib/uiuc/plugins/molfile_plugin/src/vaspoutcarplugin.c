@@ -139,7 +139,7 @@ static int read_vaspoutcar_structure(void *mydata, int *optflags, molfile_atom_t
    * that contains the name of the element (H, He, C etc.).
    * Otherwise try to find similar mass in periodic table.
    */
-  if (strstr(potcarfile, "OUTCAR")) {
+  if (strstr(data->filename, "OUTCAR")) {
     strcpy(potcarfile, data->filename);
     strcpy(strstr(potcarfile, "OUTCAR"), "POTCAR");
     potcar = fopen(potcarfile, "r");

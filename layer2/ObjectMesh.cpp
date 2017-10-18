@@ -285,22 +285,27 @@ PyObject *ObjectMeshAsPyList(ObjectMesh * I)
   return (PConvAutoNone(result));
 }
 
-static void ObjectMeshStateFree(ObjectMeshState * ms)
+static void ObjectMeshStatePurge(ObjectMeshState * ms)
 {
   ObjectStatePurge(&ms->State);
   if(ms->Field) {
     IsosurfFieldFree(ms->State.G, ms->Field);
     ms->Field = NULL;
   }
-  VLAFreeP(ms->N);
-  VLAFreeP(ms->V);
-  FreeP(ms->VC);
-  FreeP(ms->RC);
   VLAFreeP(ms->AtomVertex);
   CGOFree(ms->shaderCGO);
   CGOFree(ms->shaderUnitCellCGO);
   CGOFree(ms->UnitCellCGO);
   ms->Active = false;
+}
+
+static void ObjectMeshStateFree(ObjectMeshState * ms)
+{
+  ObjectMeshStatePurge(ms);
+  VLAFreeP(ms->N);
+  VLAFreeP(ms->V);
+  FreeP(ms->VC);
+  FreeP(ms->RC);
 }
 
 static void ObjectMeshFree(ObjectMesh * I)
@@ -1183,20 +1188,13 @@ ObjectMesh *ObjectMeshNew(PyMOLGlobals * G)
 void ObjectMeshStateInit(PyMOLGlobals * G, ObjectMeshState * ms)
 {
   if(ms->Active)
-    ObjectStatePurge(&ms->State);
-  if(ms->Field) {
-    IsosurfFieldFree(ms->State.G, ms->Field);
-    ms->Field = NULL;
-  }
+    ObjectMeshStatePurge(ms);
   ObjectStateInit(G, &ms->State);
   if(!ms->V) {
     ms->V = VLAlloc(float, 10000);
   }
   if(!ms->N) {
     ms->N = VLAlloc(int, 10000);
-  }
-  if(ms->AtomVertex) {
-    VLAFreeP(ms->AtomVertex);
   }
   ms->N[0] = 0;
   ms->Active = true;

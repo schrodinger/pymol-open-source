@@ -469,7 +469,10 @@ int32_t* MMTF_parser_delta_decode(const int32_t* input, uint32_t input_length, u
     int32_t* output = MALLOC_ARRAY(int32_t, (*output_length)); // The output needs to be freed by the calling process
     IF_NULL_ALLOCERROR_RETURN_NULL(output);
 
-    output[0] = input[0];
+    if (input_length > 0) {
+        output[0] = input[0];
+    }
+
     uint32_t i;
     for (i = 1; i < input_length; ++i) {
         output[i] = output[i - 1] + input[i];
@@ -493,7 +496,10 @@ int32_t* MMTF_parser_recursive_indexing_decode_from_16(const int16_t* input, uin
     IF_NULL_ALLOCERROR_RETURN_NULL(output);
 
     size_t j = 0;
-    output[j] = 0;
+
+    if (input_length > 0) {
+        output[0] = 0;
+    }
 
     for (i = 0; i < input_length; ++i) {
         output[j] += input[i];
@@ -753,6 +759,7 @@ char* MMTF_parser_fetch_string(const msgpack_object* object) {
     return result;
 }
 
+static
 char MMTF_parser_fetch_char(const msgpack_object* object) {
     switch (object->type) {
 #ifdef MMTF_ACCEPT_MSGPACK_BIN_AS_STR

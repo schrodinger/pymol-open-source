@@ -28,6 +28,7 @@
 #include"Base.h"
 #include"OOMac.h"
 #include"Executive.h"
+#include"SpecRec.h"
 #include"ObjectMesh.h"
 #include"ObjectDist.h"
 #include"ObjectSurface.h"
@@ -99,33 +100,6 @@
 #define cTempRectSele "_rect"
 #define cLeftButSele "lb"
 #define cIndicateSele "indicate"
-
-/*
- * Specification record (a row in the object menu panel)
- */
-class SpecRec {
-public:
-  /* NOTE: must zero-init with CALLOC */
-  int type;
-  WordType name;                /*only used for selections */
-  CObject *obj;
-  SpecRec *next;
-  int visible;            /* This is actually when object is "Enabled", not visible */
-
-  ObjectNameType group_name;
-
-  /* not pickled */
-  int sele_color;
-  int hilight;                  /* 0 = none, 1 = name, 2 = group control (if any) */
-  int previous;
-  int cand_id;
-  SpecRec *group;
-  int group_member_list_id;
-  int in_scene, is_hidden;
-  int in_panel;
-  int grid_slot;
-  CGO *gridSlotSelIndicatorsCGO;  
-};
 
 typedef struct PanelRec {
   SpecRec *spec;
@@ -5650,11 +5624,12 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
 	version_full = version;
 	while (version_full < 210)  /* any version less than 2.1 (account for next major version 2) should be 4 digits, otherwise 3 */
 	  version_full *= 10;
+        float version_float = version_full / (version >= 1000000 ? 1000000.f : 1000.f);
         if(version > _PyMOL_VERSION_int) {
           if(!quiet) {
             PRINTFB(G, FB_Executive, FB_Errors)
-              "Warning: This session was created with a newer version of PyMOL (%1.3f).\n",
-              version_full / 1000. ENDFB(G);
+              "Warning: This session was created with a newer version of PyMOL (%1.6f).\n",
+              version_float ENDFB(G);
             if(SettingGetGlobal_i(G, cSetting_session_version_check)) {
               PRINTFB(G, FB_Executive, FB_Errors)
                 "Error: Please update first -- see http://www.pymol.org\n" ENDFB(G);
@@ -5667,7 +5642,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
         } else {
           if(!quiet) {
             PRINTFB(G, FB_Executive, FB_Details)
-              " Executive: Loading version %1.3f session...\n", version_full / 1000.0 ENDFB(G);
+              " Executive: Loading version %1.6f session...\n", version_float ENDFB(G);
           }
         }
       }

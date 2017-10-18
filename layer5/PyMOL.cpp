@@ -2015,7 +2015,7 @@ CPyMOL *PyMOL_New(void)
   return result;
 }
 
-CPyMOL *PyMOL_NewWithOptions(CPyMOLOptions * option)
+CPyMOL *PyMOL_NewWithOptions(const CPyMOLOptions * option)
 {
   CPyMOL *result = _PyMOL_New();
   if(result && result->G) {
