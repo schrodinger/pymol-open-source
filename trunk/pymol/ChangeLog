@@ -2,6 +2,20 @@
 CHANGE LOG
 =========================================================================
 
+2017-10-18 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* 1.9.0.0
+
+	* use PyMOL 2.0 setting defaults
+
+	* L > residues (oneletter)
+
+	* fix py3 crash in "A > copy to object"
+
+	* fix scene object visibility with hidden groups
+
+	* fix "ending" after loading movie session
+
 2017-09-13 Thomas Holder, Piotr Rotkiewicz
 
 	* expose "oneletter" to label/iterate

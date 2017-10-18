@@ -265,7 +265,11 @@ PyObject *SettingUniqueGetPyObject(PyMOLGlobals * G, int unique_id, int index)
     case cSetting_float:
       return CPythonVal_New_Float(val_f);
     case cSetting_color:
+#ifdef _PYMOL_NOPY
+      return CPythonVal_New_Integer(val_i);
+#else
       return PYOBJECT_CALLFUNCTION(G->P_inst->colortype, "i", val_i);
+#endif
     case cSetting_float3:
       {
         PyObject *result = PyTuple_New(3);

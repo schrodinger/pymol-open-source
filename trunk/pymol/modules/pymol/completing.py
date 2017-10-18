@@ -141,6 +141,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'set_bond'       : aa_set_c,
         'set_key'        : [ lambda: cmd.Shortcut(cmd.key_mappings), 'key'       , ', ' ],
         'set_name'       : aa_nam_c,
+        'set_title'      : aa_obj_c,
         'show'           : aa_rem_c,
         'smooth'         : aa_sel_e,
         'space'          : [ self_cmd.space_sc               , 'space'           , ''   ],      

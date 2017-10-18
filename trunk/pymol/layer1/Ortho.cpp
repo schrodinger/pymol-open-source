@@ -497,7 +497,7 @@ void OrthoClear(PyMOLGlobals * G)
 void OrthoFeedbackIn(PyMOLGlobals * G, const char *buffer)
 {
   COrtho *I = G->Ortho;
-  if(G->HaveGUI) {
+  if(G->Option->pmgui) {
     if(I->feedback)
       QueueStrIn(I->feedback, buffer);
   }

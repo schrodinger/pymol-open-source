@@ -53,7 +53,6 @@ SEE ALSO
     log, log_close
 
     '''
-        pymol=_self._pymol        
         r = DEFAULT_ERROR
         if os.path.exists(filename):
             if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",filename)):
@@ -230,7 +229,6 @@ USAGE
         return r
 
     def splash(mode=0, _self=cmd):
-        pymol=_self._pymol        
         cmd=_self
         '''
 DESCRIPTION

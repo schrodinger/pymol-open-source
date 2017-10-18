@@ -538,6 +538,7 @@ int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
     MovieReset(G);
   } else if(MovieDefined(G)) {
     OrthoReshape(G,-1,-1,true);
+    SceneCountFrames(G);
   }
   return (ok);
 #endif

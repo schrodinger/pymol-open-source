@@ -75,13 +75,14 @@ static void *open_vaspposcar_read(const char *filename, const char *filetype, in
   /* Read the number of atoms per atom type */
   data->numatoms = 0;
   for (i = 0; i < MAXATOMTYPES; ++i) {
-    char const *tmplineptr = strdup(lineptr);
+    char const *tmplineptr = lineptr;
     char const *token = (i == 0 ? strtok(lineptr, " ") : strtok(NULL, " "));
     int const n = (token ? atoi(token) : -1);
 
     /* if fails to read number of atoms, then assume VASP5 */
     if (i == 0 && n <= 0) {
       data->version = 5;
+      free(data->titleline);
       data->titleline =  strdup(tmplineptr);
       fgets(lineptr, LINESIZE, data->file);
       break;

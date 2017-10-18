@@ -46,6 +46,16 @@ int FeedbackInit(PyMOLGlobals * G, int quiet)
     G->Feedback->Mask[FB_Main] &= ~(FB_Errors); /* suppress opengl errors in main */
 
   }
+
+  const char *fb_env = getenv("PYMOL_FEEDBACK");
+  if(fb_env) {
+    int n, sysmod, mask;
+    while(sscanf(fb_env, "%i:%i%n", &sysmod, &mask, &n) > 1) {
+      FeedbackSetMask(G, sysmod, mask);
+      fb_env += n;
+    }
+  }
+
   return 1;
 }
 

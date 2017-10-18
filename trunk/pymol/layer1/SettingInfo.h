@@ -143,7 +143,7 @@ enum {
   REC_i(  61, overlay                                 , global    , 0 ),
   REC_b(  62, text                                    , global    , 0 ),
   REC_i(  63, button_mode                             , global    , 0 ),
-  REC_b(  64, valence                                 , bond      , 0 ),
+  REC_b(  64, valence                                 , bond      , 1 ),
   REC_f(  65, nonbonded_size                          , ostate    , 0.25F ),
   REC_c(  66, label_color                             , atom      , "-6" ),
   REC_f(  67, ray_trace_fog                           , global    , -1.0F ),
@@ -525,7 +525,7 @@ enum {
   REC_i( 432, cartoon_loop_cap                        , ostate    , 1 ),
   REC_i( 433, nvidia_bugs                             , global    , 0 ),
   REC_f( 434, image_dots_per_inch                     , global    , 0.0F ),
-  REC_b( 435, opaque_background                       , global    , 1 ),
+  REC_b( 435, opaque_background                       , global    , 0 ),
   REC_b( 436, draw_frames                             , global    , 0 ),
   REC_b( 437, show_alpha_checker                      , global    , 1 ),
   /* -1: automatic behavior based on implied intent
@@ -700,7 +700,7 @@ enum {
   REC_i( 602, max_ups                                 , global    , 0 ),
   REC_i( 603, auto_overlay                            , global    , 0 ),
   REC_c( 604, stick_ball_color                        , ostate    , "-1" ),
-  REC_f( 605, stick_h_scale                           , ostate    , 1.0F ),
+  REC_f( 605, stick_h_scale                           , ostate    , 0.4F ),
   REC_f( 606, sculpt_pyra_inv_weight                  , ostate    , 10.0F ),
   REC_b( 607, keep_alive                              , global    , 0 ),
   REC_i( 608, fit_kabsch                              , global    , 0 ),
@@ -849,17 +849,17 @@ enum {
   REC_i( 741, collada_export_lighting                 , global    , 0 ),
   REC_i( 742, collada_geometry_mode                   , global    , 0 ),
   REC_b( 743, precomputed_lighting                    , global    , 0 ),
-  REC_b( 744, chromadepth                             , global    , 0 ),
+  REC_i( 744, chromadepth                             , global    , 0 ),
   REC_f( 745, pse_export_version                      , global    , 0.f ),
   REC_b( 746, cif_use_auth                            , global    , 1 ),
   REC_s( 747, assembly                                , global    , "" ),
   REC_b( 748, cif_keepinmemory                        , global    , 0 ),
   REC_b( 749, pse_binary_dump                         , global    , 0 ),
-  REC_i( 750, cartoon_gap_cutoff                      , ostate    , 0 ),
+  REC_i( 750, cartoon_gap_cutoff                      , ostate    , 10 ),
   REC_b( 751, ignore_case_chain                       , global    , 0 ),
   REC_f( 752, valence_zero_scale                      , ostate    , 0.2f ),
   REC_i( 753, valence_zero_mode                       , ostate    , 1, 0, 2 ), // 0: skip, 1: dashed, 2: solid
-  REC_i( 754, auto_show_classified                    , global    , 0, -1, 3 ), // -1: auto, 0: off, 1: as, 2: show, 3: simple
+  REC_i( 754, auto_show_classified                    , global    , -1, -1, 3 ), // -1: auto, 0: off, 1: as, 2: show, 3: simple
   REC_b( 755, collada_background_box                  , global    , 0 ),
   REC_b( 756, pick32bit                               , unused    , 1 ),
   REC_b( 757, cartoon_all_alt                         , ostate    , 0 ),
@@ -867,7 +867,7 @@ enum {
   REC_b( 759, pick_shading                            , global    , 0 ),
   REC_s( 760, fetch_type_default                      , global    , "cif" ),
   REC_b( 761, editor_auto_measure                     , global    , 1 ),
-  REC_b( 762, surface_smooth_edges                    , ostate    , 0 ),
+  REC_b( 762, surface_smooth_edges                    , ostate    , 1 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

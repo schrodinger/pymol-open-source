@@ -4177,6 +4177,7 @@ static PyObject *Cmd_New(PyObject * self, PyObject * args)
         }
       }
     }
+    PyMOLOptions_Free(options);
   }
   return APIAutoNone(result);
 }

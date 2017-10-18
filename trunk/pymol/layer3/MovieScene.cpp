@@ -18,6 +18,7 @@
 #include "Selector.h"
 #include "Executive.h"
 #include "Err.h"
+#include "SpecRec.h"
 
 #include <algorithm>
 #include <map>
@@ -284,6 +285,7 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
 
   // objectdata
   for (ObjectIterator iter(G); iter.next();) {
+    const SpecRec * rec = iter.getSpecRec();
     CObject * obj = iter.getObject();
     MovieSceneObject &sceneobj = scene.objectdata[obj->Name];
 
@@ -291,7 +293,7 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     sceneobj.visRep = obj->visRep;
 
     // store the "enabled" state in the first bit of visRep
-    SET_BIT_TO(sceneobj.visRep, 0, obj->Enabled);
+    SET_BIT_TO(sceneobj.visRep, 0, rec->visible);
   }
 
   PRINTFB(G, FB_Scene, FB_Details)

@@ -88,19 +88,18 @@ static PyObject * SubGetItem(PyMOLGlobals * G, PyObject ** Sub, const int a) {
   if(!PyList_Check(elem)) {
     PBlock(G);
     elem = PyObject_CallObject(elem, NULL);
-    PUnblock(G);
 
-    ok_assert(2, elem);
+    if(PyErr_Occurred())
+      PyErr_Print();
 
     Py_DECREF(Sub[a]);
-    Py_INCREF(Sub[a] = elem);
+    Sub[a] = elem;
+
+    PUnblock(G);
   }
 
   return elem;
 
-ok_except2:
-  if(PyErr_Occurred())
-    PyErr_Print();
 ok_except1:
 #endif
   return NULL;

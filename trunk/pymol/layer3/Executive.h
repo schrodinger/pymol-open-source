@@ -134,6 +134,7 @@ public:
   void reset();
   bool next();
   CObject * getObject();
+  SpecRec * getSpecRec() { return rec; }
 };
 
 

@@ -1496,6 +1496,7 @@ def mol_labels(self_cmd, sele):
               [ 1, 'clear'          , 'cmd.label("'+sele+'","\'\'")'         ],
               [ 0, ''               , ''                                  ],
               [ 1, 'residues'       , """cmd.label('''(name """+self_cmd.get("label_anchor")+"""+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
+              [ 1, 'residues (oneletter)', "cmd.label('''byca(" + sele + ")''', 'oneletter+resi')"],
               [ 1, 'chains'       ,   'util.label_chains("'+sele+'",_self=cmd)'  ],
               [ 1, 'segments'       ,   'util.label_segments("'+sele+'",_self=cmd)'  ],           
               [ 0, ''               , ''                                  ],           
@@ -1669,10 +1670,7 @@ def pick_sele(self_cmd, sele, title):
     
 def pick_option(self_cmd, sele, title, object=0):
     if object:
-        save_sele = sele
-        sele = "(byobj ("+sele+"))"
-    else:
-        save_sele = sele
+        sele = self_cmd.identify(sele, 1)[0][0]
     result = [
         [ 2, title, '' ],
         [ 1, 'color'      , lambda: mol_color(self_cmd, sele) ],
@@ -1690,7 +1688,7 @@ def pick_option(self_cmd, sele, title, object=0):
 
     if object:
         result.append([ 1, 'drag'             ,   [[ 1, 'coordinates', 'cmd.drag("'+sele+'")'],
-                                     [ 1, 'matrix', 'cmd.drag("'+save_sele+'",mode=1)']]])
+                                     [ 1, 'matrix', 'cmd.drag("'+sele+'",mode=1)']]])
     else:
         result.append([ 1, 'drag'   ,  'cmd.drag("'+sele+'")'])
         

@@ -1042,7 +1042,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
       state = SettingGet_i(I->Obj.G, NULL, I->Obj.Setting, cSetting_state) - 1;
     if(state < 0)
       state = SceneGetState(G);
-    if(state > I->NState)
+    if(state >= I->NState)
       state = I->NState - 1;
     if(state < 0)
       state = 0;
