@@ -496,6 +496,10 @@ class Scratch_Storage:
     '''
     Generic namespace
     '''
+    def __reduce__(self):
+        # for loading Python 3 (new-style class) pickle with Python 2
+        return (self.__class__, (), self.__dict__)
+
     def get_unused_name(self, prefix='tmp'):
         '''
         Get an unused name from this namespace
