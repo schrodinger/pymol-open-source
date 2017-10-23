@@ -31,6 +31,26 @@ except ImportError:
 
     pickle._Unpickler._decode_string = _decode_string
 
+    # string pickling backported from Python 2
+
+    def save_str(self, obj):
+        from struct import pack
+
+        if self.bin:
+            if not isinstance(obj, bytes):
+                obj = obj.encode('utf-8', 'ignore')
+            n = len(obj)
+            if n < 256:
+                self.write(pickle.SHORT_BINSTRING + pack("<B", n) + obj)
+            else:
+                self.write(pickle.BINSTRING + pack("<i", n) + obj)
+        else:
+            obj_repr = repr(obj).encode('utf-8', 'ignore').lstrip(b'b')
+            self.write(pickle.STRING + obj_repr + b'\n')
+
+    pickle._Pickler.dispatch[str] = save_str
+    pickle._Pickler.dispatch[bytes] = save_str
+
     class cPickle:
         dumps = pickle.dumps
         dump = pickle.dump
@@ -40,6 +60,15 @@ except ImportError:
             if not isinstance(s, bytes):
                 s = s.encode(errors='ignore')
             return pickle._loads(s)
+
+        @classmethod
+        def configure_legacy_dump(cls, py2=False):
+            if py2:
+                cls.dumps = pickle._dumps
+                cls.dump = pickle._dump
+            else:
+                cls.dumps = pickle.dumps
+                cls.dump = pickle.dump
 
 
 class PKL(Storage):

@@ -19,10 +19,8 @@ if __name__=='pymol.exporting':
     import sys
     if sys.version_info[0] == 2:
         import thread
-        import cPickle
     else:
         import _thread as thread
-        import pickle as cPickle
     from . import selector
     import re
     import copy
@@ -31,6 +29,7 @@ if __name__=='pymol.exporting':
     cmd = sys.modules["pymol.cmd"]
     from .cmd import _cmd,lock,unlock,Shortcut,QuietException
     from chempy import io
+    from chempy.pkl import cPickle
     from chempy.sdf import SDF,SDFRec
     from .cmd import _feedback,fb_module,fb_mask, \
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
@@ -246,9 +245,6 @@ NOTES
         if version >= _self.get_version()[1]:
             return
 
-        if version < 1.9 and sys.version_info[0] > 2:
-            raise NotImplementedError('pse_export_version not supported with Python 3')
-
         print(" Applying pse_export_version=%.3f compatibility" % (version))
 
         def bitmaskToList(mask):
@@ -361,6 +357,12 @@ NOTES
 
         pse_export_version = round(_self.get_setting_float('pse_export_version'), 4)
         legacyscenes = (0 < pse_export_version < 1.76) and _self.get_scene_list()
+
+        if sys.version_info[0] > 2:
+            legacypickle = (0 < pse_export_version < 1.9)
+            if legacypickle:
+                print(' Warning: pse_export_version with Python 3 is experimental')
+            cPickle.configure_legacy_dump(legacypickle)
 
         if legacyscenes:
             _self.pymol._scene_dict = {}
@@ -817,7 +819,8 @@ SEE ALSO
     def get_psestr(selection, partial, quiet, _self):
         if '(' in selection: # ignore selections
             selection = ''
-        return cPickle.dumps(_self.get_session(selection, partial, quiet), 1)
+        session = _self.get_session(selection, partial, quiet)
+        return cPickle.dumps(session, 1)
 
     def _get_mtl_obj(format, _self):
         # TODO mtl not implemented, always returns empty string

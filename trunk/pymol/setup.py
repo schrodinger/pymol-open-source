@@ -117,7 +117,7 @@ def guess_msgpackc():
 
         try:
             m = re.search(r'MSGPACK_VERSION_MAJOR\s+(\d+)', open(f).read())
-        except OSError:
+        except EnvironmentError:
             continue
 
         if m is not None:
