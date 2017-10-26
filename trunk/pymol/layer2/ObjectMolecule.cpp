@@ -3086,7 +3086,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
     if(!tinker_xyz) {
       valid_atom = true;
 
-      p = ParseWordCopy(cc, p, sizeof(AtomName) - 1);
+      p = ParseWordCopy(cc, p, MAXLINELEN - 1);
       UtilCleanStr(cc);
       if(!cc[0])
         valid_atom = false;

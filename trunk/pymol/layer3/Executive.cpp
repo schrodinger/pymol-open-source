@@ -14199,7 +14199,8 @@ int ExecutiveToggleRepVisib(PyMOLGlobals * G, const char *name, int rep)
 /*========================================================================*/
 void ExecutiveSetRepVisib(PyMOLGlobals * G, const char *name, int rep, int state)
 {
-  ExecutiveSetRepVisMask(G, name, 1 << rep, state);
+  int repmask = (rep == cRepAll) ? cRepBitmask : (1 << rep);
+  ExecutiveSetRepVisMask(G, name, repmask, state);
 }
 
 void ExecutiveSetRepVisMask(PyMOLGlobals * G, const char *name, int repmask, int state)
@@ -14359,7 +14360,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int lev
             if(sele >= 0) {
               ObjectMoleculeOpRecInit(&op);
               op.code = OMOP_INVA;
-              op.i1 = 1 << rep;
+              op.i1 = (rep == cRepAll) ? cRepBitmask : (1 << rep);
               op.i2 = level;
               ExecutiveObjMolSeleOp(G, sele, &op);
             } else if(rec->obj->fInvalidate) {

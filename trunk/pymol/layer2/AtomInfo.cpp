@@ -1913,6 +1913,12 @@ const ElementTableItemType ElementTable[] = {
   {"darmstadtium",      "Ds",   1.80, 281.000000},
   {"roentgenium",       "Rg",   1.80, 281.000000},
   {"copernicium",       "Cn",   1.80, 285.000000},
+  {"nihonium",          "Nh",   1.80, 286.000000},
+  {"flerovium",         "Fl",   1.80, 289.000000},
+  {"moscovium",         "Mc",   1.80, 290.000000},
+  {"livermorium",       "Lv",   1.80, 293.000000},
+  {"tennessine",        "Ts",   1.80, 294.000000},
+  {"oganesson",         "Og",   1.80, 294.000000},
   {NULL,                NULL,   0.00,   0.000000}
 };
 
@@ -2381,7 +2387,7 @@ static int get_protons(const char * symbol)
   }
 
   // check second letter for lower case
-  if (isupper(symbol[1])) {
+  if (isupper(symbol[1]) && strcmp(symbol, "LP") != 0) {
     UtilNCopy(titleized, symbol, 4);
     titleized[1] = tolower(symbol[1]);
     symbol = titleized;
@@ -2449,61 +2455,34 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
     n = LexStr(G, I->name);
     while(((*n) >= '0') && ((*n) <= '9') && (*(n + 1)))
       n++;
-    while((((*n) >= 'A') && ((*n) <= 'Z')) || (((*n) >= 'a') && ((*n) <= 'z'))) {
-      *(e++) = *(n++);
-    }
-    *e = 0;
-    e = I->elem;
+    strncpy(e, n, cElemNameLen);
     switch (*e) {
+    case '\0':
+      break;
     case 'C':
       if(*(e + 1) == 'A') {
         if(!WordMatchExact(G, G->lex_const.CA, I->resn, true)
            && (!WordMatchExact(G, "CA+", LexStr(G, I->resn), true)))
+          /* CA intpreted as carbon, not calcium */
           *(e + 1) = 0;
-      } else if(!((*(e + 1) == 'a') ||  /* CA intpreted as carbon, not calcium */
-                  (*(e + 1) == 'l') || (*(e + 1) == 'L') ||
-                  (*(e + 1) == 'u') || (*(e + 1) == 'U') ||
-                  (*(e + 1) == 'o') || (*(e + 1) == 'O') ||
-                  (*(e + 1) == 's') || (*(e + 1) == 'S') ||
-                  (*(e + 1) == 'r') || (*(e + 1) == 'R')
-                ))
-        *(e + 1) = 0;
-      break;
-    case 'H':
-      if(!((*(e + 1) == 'e')
-         ))
-        *(e + 1) = 0;
-      break;
-    case 'D':                  /* take deuterium to hydrogen */
-      *(e + 1) = 0;
-      break;
-    case 'N':
-      if(!((*(e + 1) == 'i') || (*(e + 1) == 'I') ||
-           (*(e + 1) == 'a') || (*(e + 1) == 'A') ||
-           (*(e + 1) == 'b') || (*(e + 1) == 'B')
-         ))
-        *(e + 1) = 0;
-      break;
-    case 'S':
-      if(!((*(e + 1) == 'e') || (*(e + 1) == 'E') ||
-           (*(e + 1) == 'r') || (*(e + 1) == 'R') ||
-           (*(e + 1) == 'c') || (*(e + 1) == 'C') ||
-           (*(e + 1) == 'b') || (*(e + 1) == 'B')
-         ))
-        *(e + 1) = 0;
-
-      break;
-    case 'O':
-      if(!((*(e + 1) == 's')))
-        *(e + 1) = 0;
-      break;
-    case 'Q':
-      *(e + 1) = 0;
-      break;
+        break;
+      }
     default:
-      break;
+      e[2] = 0;
+
+      if (get_protons(e) != -1) {
+        break;
+      } else if (e[1]) {
+        e[1] = 0;
+        if (get_protons(e) != -1) {
+          break;
+        }
+      }
+
+      // validation failed
+      e[0] = 0;
     }
-    if(*(e + 1))
+    if(*(e + 1) && (e[1] != 'P' || e[0] != 'L'))
       *(e + 1) = tolower(*(e + 1));
   }
 
