@@ -349,7 +349,6 @@ else:
             self.oldcwd = os.getcwd()
             cmd.reinitialize()
             cmd.viewport(640, 480)
-            cmd.set('suspend_undo')
 
             cwd = self.moddirs[type(self).__module__]
             os.chdir(cwd)
