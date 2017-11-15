@@ -863,7 +863,7 @@ enum {
   REC_b( 755, collada_background_box                  , global    , 0 ),
   REC_b( 756, pick32bit                               , unused    , 1 ),
   REC_b( 757, cartoon_all_alt                         , ostate    , 0 ),
-  REC_i( 758, display_scale_factor                    , unused    , 1 ),
+  REC_i( 758, display_scale_factor                    , global    , 1 ),
   REC_b( 759, pick_shading                            , global    , 0 ),
   REC_s( 760, fetch_type_default                      , global    , "cif" ),
   REC_b( 761, editor_auto_measure                     , global    , 1 ),

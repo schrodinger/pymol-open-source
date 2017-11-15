@@ -824,6 +824,8 @@ SEE ALSO
 
     def _get_mtl_obj(format, _self):
         # TODO mtl not implemented, always returns empty string
+        if format == 'mtl':
+            raise pymol.CmdException('.MTL export not implemented')
         i = {'mtl': 0, 'obj': 1}.get(format)
         return _self.get_mtl_obj()[i]
 

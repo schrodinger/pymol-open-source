@@ -2465,22 +2465,46 @@ void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I)
            && (!WordMatchExact(G, "CA+", LexStr(G, I->resn), true)))
           /* CA intpreted as carbon, not calcium */
           *(e + 1) = 0;
-        break;
-      }
-    default:
-      e[2] = 0;
+      } else if(!((*(e + 1) == 'a') ||  /* CA intpreted as carbon, not calcium */
+                  (*(e + 1) == 'l') || (*(e + 1) == 'L') ||
+                  (*(e + 1) == 'u') || (*(e + 1) == 'U') ||
+                  (*(e + 1) == 'o') || (*(e + 1) == 'O') ||
+                  (*(e + 1) == 's') || (*(e + 1) == 'S') ||
+                  (*(e + 1) == 'r') || (*(e + 1) == 'R')
+                ))
+        *(e + 1) = 0;
+      break;
+    case 'H':
+      if(!((*(e + 1) == 'e')
+         ))
+        *(e + 1) = 0;
+      break;
+    case 'D':                  /* take deuterium to hydrogen */
+      *(e + 1) = 0;
+      break;
+    case 'N':
+      if(!((*(e + 1) == 'i') || (*(e + 1) == 'I') ||
+           (*(e + 1) == 'a') || (*(e + 1) == 'A') ||
+           (*(e + 1) == 'b') || (*(e + 1) == 'B')
+         ))
+        *(e + 1) = 0;
+      break;
+    case 'S':
+      if(!((*(e + 1) == 'e') || (*(e + 1) == 'E') ||
+           (*(e + 1) == 'r') || (*(e + 1) == 'R') ||
+           (*(e + 1) == 'c') || (*(e + 1) == 'C') ||
+           (*(e + 1) == 'b') || (*(e + 1) == 'B')
+         ))
+        *(e + 1) = 0;
 
-      if (get_protons(e) != -1) {
-        break;
-      } else if (e[1]) {
-        e[1] = 0;
-        if (get_protons(e) != -1) {
-          break;
-        }
-      }
-
-      // validation failed
-      e[0] = 0;
+      break;
+    case 'O':
+      if(!((*(e + 1) == 's')))
+        *(e + 1) = 0;
+      break;
+    case 'Q':
+      *(e + 1) = 0;
+      break;
     }
     if(*(e + 1) && (e[1] != 'P' || e[0] != 'L'))
       *(e + 1) = tolower(*(e + 1));

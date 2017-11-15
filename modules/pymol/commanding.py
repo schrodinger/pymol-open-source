@@ -19,8 +19,10 @@ if __name__=='pymol.commanding':
     import sys
     if sys.version_info[0] == 2:
         import thread
+        import urllib2
     else:
         import _thread as thread
+        import urllib.request as urllib2
         from io import FileIO as file
 
     import re
@@ -228,6 +230,43 @@ USAGE
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
+    def _load_splash_image(filename, url, _self=cmd):
+        import tempfile
+        import struct
+
+        tmp_filename = ""
+        contents = None
+
+        if url:
+            try:
+                handle = urllib2.urlopen(url)
+                contents = handle.read()
+                handle.close()
+
+                # png magic number
+                if contents[:4] != b'\x89\x50\x4e\x47':
+                    raise IOError
+
+                shape = struct.unpack('>II', contents[16:24])
+
+                tmp_filename = tempfile.mktemp('.png')
+                with open(tmp_filename, 'wb') as handle:
+                    handle.write(contents)
+
+                filename = tmp_filename
+            except IOError:
+                pass
+
+        if os.path.exists(filename) and not _self.get_names():
+            # load image
+            _self.load_png(filename, 0, quiet=1)
+
+            # hide text splash
+            print()
+
+        if tmp_filename:
+            os.unlink(tmp_filename)
+
     def splash(mode=0, _self=cmd):
         cmd=_self
         '''
@@ -255,14 +294,20 @@ USAGE
             finally:
                 _self.unlock(0,_self)
             r = DEFAULT_SUCCESS
+            png_url = ""
             if show_splash==1: # generic / open-source
                 png_path = _self.exp_path("$PYMOL_DATA/pymol/splash.png")
             elif show_splash==2: # evaluation builds
                 png_path = _self.exp_path("$PYMOL_DATA/pymol/epymol.png")
+            elif show_splash==3: # edu builds
+                png_path = _self.exp_path("$PYMOL_DATA/pymol/splash_edu.png")
+                png_url = "http://pymol.org/splash/splash_edu_2.png"
             else: # incentive builds
                 png_path = _self.exp_path("$PYMOL_DATA/pymol/ipymol.png")
-            if os.path.exists(png_path):
-                _self.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
+
+            t = threading.Thread(target=_load_splash_image, args=(png_path, png_url, _self))
+            t.setDaemon(1)
+            t.start()
         else:
             if _self.get_setting_int("internal_feedback") > 0:
                 _self.set("text","1",quiet=1)

@@ -12,11 +12,13 @@ if sys.version_info[0] == 2:
     import tkFileDialog
     import tkMessageBox
     import tkFont
+    _next_method_name = 'next'
 else:
     from tkinter import *
     import tkinter.filedialog as tkFileDialog
     import tkinter.messagebox as tkMessageBox
     import tkinter.font as tkFont
+    _next_method_name = '__next__'
 
 import Pmw
 
@@ -144,12 +146,12 @@ class Normal(PMGSkin):
         dialog = Toplevel(self.root)
         grid = dialog
         kw = {'row': 0, 'sticky': 'w', 'padx': 5, 'pady': 5}
-        col = iter(range(5)).next
+        col = getattr(iter(range(5)), _next_method_name)
         Button(grid, text=' - ', command=lambda: self.inc_fontsize(-1)).grid(column=col(), **kw)
         Button(grid, text=' + ', command=lambda: self.inc_fontsize( 1)).grid(column=col(), **kw)
         Label(grid, text='All GUI Font Sizes').grid(column=col(), **kw)
         kw['row'] = 1
-        col = iter(range(5)).next
+        col = getattr(iter(range(5)), _next_method_name)
         Button(grid, text=' - ', command=lambda: self._inc_fontsize(-1, self.fixedfont)).grid(column=col(), **kw)
         Button(grid, text=' + ', command=lambda: self._inc_fontsize( 1, self.fixedfont)).grid(column=col(), **kw)
         Label(grid, text='Output Font Size').grid(column=col(), **kw)
