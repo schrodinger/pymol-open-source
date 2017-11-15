@@ -3091,6 +3091,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
       if(!cc[0])
         valid_atom = false;
       if(valid_atom) {
+        strncpy(ai->elem, cc, cElemNameLen);
         ai->name = LexIdx(G, cc);
 
         ai->rank = atomCount;
@@ -3117,7 +3118,6 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals * G, const char *buf
         ai->b = 0.0;
 
         ai->segi = 0;
-        ai->elem[0] = 0;        /* let atom info guess/infer atom type */
 
         ai->visRep = auto_show;
 
@@ -8052,6 +8052,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals * G, const char *buf
       if(ok) {
         p = nskip(p, 1);
         p = ntrim(cc, p, 3);
+        strncpy(atInfo[a].elem, cc, cElemNameLen);
         atInfo[a].name = LexIdx(G, cc);
         atInfo[a].visRep = auto_show;
       }

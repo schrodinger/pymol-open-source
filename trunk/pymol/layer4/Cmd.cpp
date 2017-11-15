@@ -7866,7 +7866,7 @@ static PyObject *CmdWindow(PyObject * self, PyObject * args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok = APIEnterNotModal(G))) {
+  if(G->HaveGUI && ok && (ok = APIEnterNotModal(G))) {
     switch (int1) {
 #ifndef _PYMOL_NO_MAIN
     case 0:
