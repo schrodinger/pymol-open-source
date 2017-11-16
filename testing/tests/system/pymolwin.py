@@ -48,6 +48,7 @@ class TestPyMOLWin(testing.PyMOLTestCase):
 
             with open(bat_filename, 'wb') as handle:
                 handle.write(b'chcp 65001\r\n')  # UTF-8 code page
+                handle.write(b'set PYTHONIOENCODING=UTF-8\r\n')  # avoid LookupError
                 handle.write(command.encode('utf-8') + b'\r\n')
                 handle.write(b'chcp 437\r\n')
 
@@ -57,7 +58,7 @@ class TestPyMOLWin(testing.PyMOLTestCase):
             time.sleep(0.5)
 
             cmd.load(out_filename)
-            self.assertTrue(7, cmd.count_atoms())
+            self.assertEqual(7, cmd.count_atoms())
 
     def test_unc(self):
         '''
@@ -88,4 +89,4 @@ class TestPyMOLWin(testing.PyMOLTestCase):
             time.sleep(0.5)
 
             cmd.load(out_filename)
-            self.assertTrue(7, cmd.count_atoms())
+            self.assertEqual(7, cmd.count_atoms())
