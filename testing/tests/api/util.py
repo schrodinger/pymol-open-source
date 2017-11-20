@@ -84,45 +84,44 @@ class TestUtil(testing.PyMOLTestCase):
         cmd.iterate('*', 'stored.colors.add((ss or "L", color))')
         self.assertEqual(stored.colors, set(zip('HSL', c)))
 
+    def _test_cba(self, fun, expected_color):
+        cmd.fragment('gly')
+        cmd.color('white')
+        fun('*')
+        stored.colors = set()
+        cmd.iterate('elem C', 'stored.colors.add(color)')
+        colors = [get_color_tuple(c, 3) for c in stored.colors]
+        self.assertEqual(colors, [expected_color])
+
     def test_cbag(self):
-        pymol.util.cbag
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbag, (0.2, 1.0, 0.2))
 
     def test_cbac(self):
-        pymol.util.cbac
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbac, (0.0, 1.0, 1.0))
 
     def test_cbam(self):
-        pymol.util.cbam
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbam, (1.0, 0.2, 0.8))
 
     def test_cbay(self):
-        pymol.util.cbay
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbay, (1.0, 1.0, 0.0))
 
     def test_cbas(self):
-        pymol.util.cbas
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbas, (1.0, 0.6, 0.6))
 
     def test_cbaw(self):
-        pymol.util.cbaw
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbaw, (0.9, 0.9, 0.9))
 
     def test_cbab(self):
-        pymol.util.cbab
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbab, (0.5, 0.5, 1.0))
 
     def test_cbao(self):
-        pymol.util.cbao
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbao, (1.0, 0.7, 0.2))
 
     def test_cbap(self):
-        pymol.util.cbap
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbap, (0.75, 0.0, 0.75))
 
     def test_cbak(self):
-        pymol.util.cbak
-        self.skipTest("TODO")
+        self._test_cba(pymol.util.cbak, (1.0, 0.65, 0.85))
 
     def test_cnc(self):
         pymol.util.cnc
