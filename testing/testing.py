@@ -16,6 +16,7 @@ import sys
 import pymol
 import collections
 import platform
+import inspect
 
 try:
     WindowsError
@@ -48,8 +49,7 @@ if __name__ != 'pymol.testing':
     # pymol foo.py    -> __name__ == 'pymol'
     # pymol -r foo.py -> __name__ == '__main__'
 
-    _cli = __name__ in ('pymol', '__main__', 'pymol.__main__')
-    _file = pymol.__script__ if _cli else __file__
+    _file = inspect.currentframe().f_code.co_filename
     pymol.testing = import_from_file(_file, 'pymol.testing')
     pymol.testing.cli()
 
