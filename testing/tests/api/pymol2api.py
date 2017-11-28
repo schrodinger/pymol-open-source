@@ -37,6 +37,10 @@ class TestPyMOL2(testing.PyMOLTestCase):
         p1 = pymol2.PyMOL()
         p1.start()
         p1.cmd.fragment('ala')
+
+        # involve pymol._colortype (holds a bound method)
+        self._test_colortype(p1.cmd)
+
         p1.stop()
 
         weak_p = weakref.ref(p1)
@@ -46,3 +50,12 @@ class TestPyMOL2(testing.PyMOLTestCase):
 
         self.assertEqual(None, weak_p())
         self.assertEqual(None, weak_c())
+
+    def _test_colortype(self, _self):
+        colorset = set()
+        _self.set('sphere_color', 'blue', '(*)')
+        _self.iterate('*', 'colorset.add(('
+                'tuple(s.sphere_color),'
+                'int(s.sphere_color)))',
+                space={'colorset': colorset, 'tuple': tuple, 'int': int})
+        self.assertEqual(list(colorset), [((0., 0., 1.), 2)])
