@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pymol import testing
+from pymol import testing, invocation
 
 class TestPyMOL2(testing.PyMOLTestCase):
 
@@ -26,3 +26,23 @@ class TestPyMOL2(testing.PyMOLTestCase):
 
         p1.stop()
         p2.stop()
+
+    @testing.requires_version(
+            '2.1' if invocation.options.incentive_product else
+            '1.9')
+    def testDel(self):
+        import pymol2
+        import weakref
+
+        p1 = pymol2.PyMOL()
+        p1.start()
+        p1.cmd.fragment('ala')
+        p1.stop()
+
+        weak_p = weakref.ref(p1)
+        weak_c = weakref.ref(p1.cmd)
+
+        del p1
+
+        self.assertEqual(None, weak_p())
+        self.assertEqual(None, weak_c())
