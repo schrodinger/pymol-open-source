@@ -36,12 +36,6 @@ if __name__=='pymol.importing':
         raise pymol.IncentiveOnlyException(
                 "'%s' format not supported by this PyMOL build" % format)
 
-    try:
-        from pymol.m4x import readcex
-    except ImportError:
-        def readcex():
-            raise pymol.CmdException("CEX format not currently supported")
-
     from chempy import io,PseudoFile
     
     # TODO remove (keep for now for eventual legacy uses in scripts)
@@ -615,18 +609,22 @@ SEE ALSO
                 return True
         return False
 
-    def _epymol_get_load_func(format):
-        func = None
+
+    def _eval_func(func):
+        '''
+        Evaluate a "module:callable" signature, e.g. "os.path:dirname".
+        '''
+        if not isinstance(func, str):
+            return func
+
         try:
-            if format == 'vis':
-                from epymol.vis import load_vis as func
-            elif format == 'moe':
-                from epymol.moe import read_moestr as func
-            elif format == 'phypo':
-                from epymol.ph4 import load_phypo as func
-        except ImportError:
-            func = incentive_format_not_available_func
-        return func
+            m = __import__(func.split(':')[0])
+        except ImportError as e:
+            print(' Warning: ' + str(e))
+            return incentive_format_not_available_func
+
+        return eval(func.replace(':', '.'), {m.__name__: m}, {})
+
 
     def load(filename, object='', state=0, format='', finish=1,
              discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0,
@@ -740,12 +738,6 @@ SEE ALSO
                     # for trajectories, use most recently added structure
                     object = _guess_trajectory_object(object, _self)
 
-            # deferred (circular imports)
-            if format not in loadfunctions:
-                func = _epymol_get_load_func(format)
-                if func is not None:
-                    loadfunctions[format] = func
-
             # molfile plugins
             if (ftype < 0 and format not in loadfunctions or
                     format == 'plugin' and not plugin):
@@ -765,6 +757,7 @@ SEE ALSO
 
             # generic forwarding to format specific load functions
             func = loadfunctions.get(format, _load)
+            func = _eval_func(func)
             kw = {
                 'filename': filename,
                 'fname': filename, # alt
@@ -1537,210 +1530,6 @@ EXAMPLE
                 members = map(filename_to_objectname, filenames)
             _self.group(group, ' '.join(members))
 
-    def _import_etree():
-        try:
-            from lxml import etree
-        except ImportError:
-            import xml.etree.ElementTree as etree
-        return etree
-
-    def load_pdbml(filename, object='', discrete=0, multiplex=1, zoom=-1, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
-
-    Load a PDBML formatted structure file
-        '''
-        etree = _import_etree()
-        from chempy import Atom, models
-        from collections import defaultdict
-
-        multiplex, discrete = int(multiplex), int(discrete)
-        PDBxNS = '{http://pdbml.pdb.org/schema/pdbx-v40.xsd}'
-
-        try:
-            root = etree.fromstring(_self.file_read(filename))
-            atom_site_list = root.findall('.'
-                    '/' + PDBxNS + 'atom_siteCategory'
-                    '/' + PDBxNS + 'atom_site')
-        except etree.XMLSyntaxError:
-            raise pymol.CmdException("File doesn't look like XML")
-        except etree.XPathEvalError:
-            raise pymol.CmdException("XML file doesn't look like a PDBML file")
-
-        if not atom_site_list:
-            raise pymol.CmdException("no PDBx:atom_site nodes found in XML file")
-
-        # state -> model dictionary
-        model_dict = defaultdict(models.Indexed)
-
-        # atoms
-        for atom_site in atom_site_list:
-            atom = Atom()
-            atom.coord = [None, None, None]
-
-            model_num = 1
-
-            for child in atom_site:
-                tag = child.tag
-
-                if tag == PDBxNS + 'Cartn_x':
-                    atom.coord[0] = float(child.text)
-                elif tag == PDBxNS + 'Cartn_y':
-                    atom.coord[1] = float(child.text)
-                elif tag == PDBxNS + 'Cartn_z':
-                    atom.coord[2] = float(child.text)
-                elif tag == PDBxNS + 'B_iso_or_equiv':
-                    atom.b = float(child.text)
-                elif tag == PDBxNS + 'auth_asym_id':
-                    atom.chain = child.text or ''
-                elif tag == PDBxNS + 'auth_atom_id':
-                    atom.name = child.text or ''
-                elif tag == PDBxNS + 'auth_comp_id':
-                    atom.resn = child.text or ''
-                elif tag == PDBxNS + 'auth_seq_id':
-                    atom.resi = child.text or ''
-                elif tag == PDBxNS + 'label_alt_id':
-                    atom.resi = child.text or ''
-                elif tag == PDBxNS + 'label_asym_id':
-                    atom.segi = child.text or ''
-                elif tag == PDBxNS + 'label_atom_id':
-                    if not atom.name:
-                        atom.name = child.text or ''
-                elif tag == PDBxNS + 'label_comp_id':
-                    if not atom.resn:
-                        atom.resn = child.text or ''
-                elif tag == PDBxNS + 'label_seq_id':
-                    if not atom.resi:
-                        atom.resi = child.text or ''
-                elif tag == PDBxNS + 'label_entity_id':
-                    atom.custom = child.text or ''
-                elif tag == PDBxNS + 'occupancy':
-                    atom.q = float(child.text)
-                elif tag == PDBxNS + 'pdbx_PDB_model_num':
-                    model_num = int(child.text)
-                elif tag == PDBxNS + 'type_symbol':
-                    atom.symbol = child.text or ''
-                elif tag == PDBxNS + 'group_PDB':
-                    atom.hetatm = (child.text == 'HETATM')
-
-            if None not in atom.coord:
-                model_dict[model_num].add_atom(atom)
-
-        # symmetry and cell
-        try:
-            node = root.findall('.'
-                    '/' + PDBxNS + 'cellCategory'
-                    '/' + PDBxNS + 'cell')[0]
-            cell = [float(node.findall('./' + PDBxNS + a)[0].text)
-                    for a in ['length_a', 'length_b', 'length_c',
-                        'angle_alpha', 'angle_beta', 'angle_gamma']]
-
-            spacegroup = root.findall('.'
-                    '/' + PDBxNS + 'symmetryCategory'
-                    '/' + PDBxNS + 'symmetry'
-                    '/' + PDBxNS + 'space_group_name_H-M')[0].text
-        except IndexError:
-            cell = None
-            spacegroup = ''
-
-        # object name
-        if not object:
-            object = os.path.basename(filename).split('.', 1)[0]
-
-        # only multiplex if more than one model/state
-        multiplex = multiplex and len(model_dict) > 1
-
-        # load models as objects or states
-        for model_num in sorted(model_dict):
-            if model_num < 1:
-                print(" Error: model_num < 1 not supported")
-                continue
-
-            model = model_dict[model_num]
-            model.connect_mode = 3
-
-            if cell:
-                model.cell = cell
-                model.spacegroup = spacegroup
-
-            if multiplex:
-                oname = '%s_%04d' % (object , model_num)
-                model_num = 1
-            else:
-                oname = object
-
-            _self.load_model(model, oname,
-                    state=model_num, zoom=zoom,
-                    discrete=discrete)
-
-    def load_cml(filename, object='', discrete=0, multiplex=1, zoom=-1, quiet=1, _self=cmd):
-        '''
-DESCRIPTION
-
-    Load a CML formatted structure file
-        '''
-        etree = _import_etree()
-        from chempy import Atom, Bond, models
-
-        multiplex, discrete = int(multiplex), int(discrete)
-
-        try:
-            root = etree.fromstring(_self.file_read(filename))
-        except etree.XMLSyntaxError:
-            raise pymol.CmdException("File doesn't look like XML")
-
-        if root.tag != 'cml':
-            raise pymol.CmdException('not a CML file')
-
-        molecule_list = root.findall('./molecule')
-
-        if len(molecule_list) < 2:
-            multiplex = 0
-        elif not multiplex:
-            discrete = 1
-
-        for model_num, molecule_node in enumerate(molecule_list, 1):
-            model = models.Indexed()
-
-            atom_idx = {}
-
-            for atom_node in molecule_node.findall('./atomArray/atom'):
-                atom = Atom()
-                atom.name = atom_node.get('id', '')
-
-                if 'x3' in atom_node.attrib:
-                    atom.coord = [float(atom_node.get(a)) for a in ['x3', 'y3', 'z3']]
-                elif 'x2' in atom_node.attrib:
-                    atom.coord = [float(atom_node.get(a)) for a in ['x2', 'y2']] + [0.0]
-                else:
-                    print(' Warning: no coordinates for atom', atom.name)
-                    continue
-
-                atom.symbol = atom_node.get('elementType', '')
-                atom.formal_charge = int(atom_node.get('formalCharge', 0))
-                atom_idx[atom.name] = len(model.atom)
-                model.add_atom(atom)
-
-            for bond_node in molecule_node.findall('./bondArray/bond'):
-                refs = bond_node.get('atomsRefs2', '').split()
-                if len(refs) == 2:
-                    bnd = Bond()
-                    bnd.index = [int(atom_idx[ref]) for ref in refs]
-                    bnd.order = int(bond_node.get('order', 1))
-                    model.add_bond(bnd)
-
-            # object name
-            if not object:
-                object = os.path.basename(filename).split('.', 1)[0]
-
-            # load models as objects or states
-            if multiplex:
-                oname = molecule_node.get('id') or _self.get_unused_name('unnamed')
-                model_num = 1
-            else:
-                oname = object
-
-            _self.load_model(model, oname, state=model_num, zoom=zoom, discrete=discrete)
 
     def load_mmtf(filename, object='', discrete=0, multiplex=0, zoom=-1, quiet=1, _self=cmd):
         '''
@@ -1816,25 +1605,28 @@ DESCRIPTION
         obj = io.cc1.fromFile(filename)
         return _self.load_model(obj, object, state)
 
-    from pymol.viewing import load_png
-
     loadfunctions = {
         'mae': incentive_format_not_available_func,
-        'pdbml': load_pdbml,
-        'cml': load_cml,
+        'pdbml': 'pymol.lazyio:load_pdbml',
+        'cml': 'pymol.lazyio:load_cml',
         'mtz': load_mtz,
         'py': lambda filename, _self: _self.do("_ run %s" % filename),
         'pml': lambda filename, _self: _self.do("_ @%s" % filename),
         'pwg': _processPWG,
         'aln': _processALN,
         'fasta': _processFASTA,
-        'png': load_png,
+        'png': 'pymol.viewing:load_png',
         'idx': load_idx,
         'pse': load_pse,
         'psw': load_pse,
-        'cex': readcex,
+        'cex': 'pymol.m4x:readcex',
         'ply': load_ply,
         'r3d': load_r3d,
         'cc1': load_cc1,
         'pdb': read_pdbstr,
+
+        # Incentive
+        'vis': incentive_format_not_available_func,
+        'moe': incentive_format_not_available_func,
+        'phypo': incentive_format_not_available_func,
     }

@@ -2,6 +2,8 @@
 
 # NOTE: obsolete -- PyMOL now uses Dunbrack rotamers by default
 
+from __future__ import print_function
+
 from chempy import io
 from glob import glob
 from copy import deepcopy
@@ -22,10 +24,10 @@ for resn in sc_raw.keys():
    # find the most commonly encountered set of torsions
    # (it is most likely to be correct)
    for set in resn_list:
-      lst = deepcopy(set.keys())
+      lst = deepcopy(list(set.keys()))
       lst.sort()
       tup = tuple(lst)
-      if resn_key_dict.has_key(tup):
+      if tup in resn_key_dict:
          resn_key_dict[tup] = resn_key_dict[tup] + 1
       else:
          resn_key_dict[tup] = 1
@@ -35,9 +37,9 @@ for resn in sc_raw.keys():
    key_lst.sort()
    resn_key = list(key_lst[-1][1])
    resn_key.sort()
-   print resn,resn_key
+   print(resn,resn_key)
    n_dihe = len(resn_key)
-   print resn,len(sc_raw[resn])#,resn_key
+   print(resn,len(sc_raw[resn]))#,resn_key
    if n_dihe: # not glycine or alanine
       # list of dictionaries
       # [ {(...)=avg1, (...)=avg2, ... }, {(..)=avg1, ... }, ... ]
@@ -55,7 +57,7 @@ for resn in sc_raw.keys():
             continue
          flag=1
          for k in resn_key:
-            if not cur.has_key(k):
+            if k not in cur:
                flag=0
          if not flag:
             continue
@@ -121,7 +123,7 @@ for resn in sc_raw.keys():
       # at this point, we have a list of clustered, averaged torsions 
       # which can be used by the sidechain placement algorithm
       sc_clus[resn] = avg_ang
-      print " reduced to:",len(sc_clus[resn])
+      print(" reduced to:",len(sc_clus[resn]))
       
 io.pkl.toFile(sc_clus,"sc_library.pkl")
 

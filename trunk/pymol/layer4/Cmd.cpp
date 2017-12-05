@@ -111,12 +111,44 @@ static int run_only_once = true;
 #endif
 
 #define API_SETUP_PYMOL_GLOBALS \
+  G = _api_get_pymol_globals(self)
+
+/*
+ * Start a headless singleton instance in the current thread.
+ *
+ * Unlike when calling `pymol.finish_launching()`, there is no event loop,
+ * so animations, continuous sculpting and modal draw are not supported.
+ *
+ * After calling this, SingletonPyMOLGlobals will be available.
+ */
+static void launch_library_singleton() {
+  PyRun_SimpleString(
+      "print(' PyMOL not running, entering library mode (experimental)')\n"
+      "import pymol.invocation, pymol2\n"
+      "pymol.invocation.parse_args(['pymol', '-cqk'])\n"
+      "pymol2.SingletonPyMOL().start()");
+}
+
+/*
+ * Get the PyMOLGlobals pointer from the `self` object (_self._COb in Python).
+ *
+ * If _COb is None, launch a headless singleton ("library mode").
+ */
+static PyMOLGlobals * _api_get_pymol_globals(PyObject * self) {
+  if(self == Py_None) {
+    launch_library_singleton();
+    return SingletonPyMOLGlobals;
+  }
+
   if(self && PyCObject_Check(self)) { \
     PyMOLGlobals **G_handle = (PyMOLGlobals**)PyCObject_AsVoidPtr(self); \
     if(G_handle) { \
-      G = *G_handle; \
+      return *G_handle;
     } \
   }
+
+  return NULL;
+}
 
 #define API_HANDLE_ERROR \
    fprintf(stderr,"API-Error: in %s line %d.\n",__FILE__,__LINE__);
@@ -4160,6 +4192,7 @@ static PyObject *Cmd_New(PyObject * self, PyObject * args)
           G->P_inst = Calloc(CP_inst, 1);
           G->P_inst->obj = pymol;
           G->P_inst->dict = PyObject_GetAttrString(pymol, "__dict__");
+          Py_DECREF(G->P_inst->dict); // borrow reference
           {
             /* store the PyMOL struct as a CObject */
             PyObject *tmp = PyCObject_FromVoidPtr(I, NULL);
@@ -6022,6 +6055,8 @@ static PyObject *CmdMSet(PyObject * self, PyObject * args)
   }
 
   // fix for PYMOL-1465
+  // force GUI update for movie panel
+  if(G->HaveGUI)
   OrthoReshape(G, -1, -1, false);
 
   return APIResultOk(ok);

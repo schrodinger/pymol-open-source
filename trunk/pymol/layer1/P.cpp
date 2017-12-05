@@ -1257,6 +1257,7 @@ void PSleep(PyMOLGlobals * G, int usec)
 }
 
 static PyObject *PCatchWrite(PyObject * self, PyObject * args);
+static PyObject *PCatch_install(PyObject * self, PyObject * args);
 
 void my_interrupt(int a)
 {
@@ -2154,10 +2155,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
     G->P_inst->exec = PGetAttrOrFatal(P_pymol, "exec_str");
 
     if(global_instance) {
-      PyRun_SimpleString(
-          "import sys, pcatch;"
-          "pcatch.closed = False;"
-          "sys.stderr = sys.stdout = pcatch");
+      PCatch_install(NULL, NULL);
     }
 
     P_traceback = PImportModuleOrFatal("traceback");
@@ -2172,8 +2170,6 @@ void PInit(PyMOLGlobals * G, int global_instance)
       /* cmd module is itself the api for the global PyMOL instance */
       G->P_inst->cmd = P_cmd;
     }
-
-    PyObject_SetAttrString(G->P_inst->cmd, "_pymol", G->P_inst->obj);
 
     /* right now, all locks are global -- eventually some of these may
        become instance-specific in order to improve concurrency */
@@ -2327,19 +2323,29 @@ void PSGIStereo(PyMOLGlobals * G, int flag)
     PUnblock(G);
 }
 
-void PFree(void)
+void PFree(PyMOLGlobals * G)
 {
+  PXDecRef(G->P_inst->parse);
+  PXDecRef(G->P_inst->complete);
+  PXDecRef(G->P_inst->colortype);
 }
 
 void PExit(PyMOLGlobals * G, int code)
 {
   ExecutiveDelete(G, "all");
   PBlock(G);
+
+  PyMOL_PushValidContext(G->PyMOL);
+  PyMOL_Stop(G->PyMOL);
+  PyMOL_PopValidContext(G->PyMOL);
+
 #ifndef _PYMOL_NO_MAIN
   if(G->Main) {
     MainFree();
   }
 #endif
+
+  PyMOL_Free(G->PyMOL);
 
 #if 1
   /* we're having trouble with threading errors after calling Py_Exit,
@@ -2812,11 +2818,23 @@ static PyObject *PCatchIsAtty(PyObject * self, PyObject * args)
   Py_RETURN_FALSE;
 }
 
+static PyObject *PCatch_install(PyObject * self, PyObject * args)
+{
+  PyRun_SimpleString(
+      "import sys, pcatch\n"
+      "if sys.stdout is not pcatch:"
+      "pcatch.closed = False;"
+      "pcatch.encoding = 'UTF-8';"
+      "sys.stderr = sys.stdout = pcatch");
+  return PConvAutoNone(Py_None);
+}
+
 static PyMethodDef PCatch_methods[] = {
   {"writelines", PCatchWritelines, METH_VARARGS},
   {"write", PCatchWrite, METH_VARARGS},
   {"flush", PCatchFlush, METH_VARARGS},
   {"isatty", PCatchIsAtty, METH_VARARGS}, // called by pip.main(["install", "..."])
+  {"_install", PCatch_install, METH_VARARGS},
   {NULL, NULL}                  /* sentinel */
 };
 

@@ -128,6 +128,7 @@ int SceneDeferRay(PyMOLGlobals * G,
 int SceneMakeMovieImage(PyMOLGlobals * G,
     int show_timing, int validate, int mode,
     int width=0, int height=0);
+int SceneValidateImageMode(PyMOLGlobals * G, int mode, bool defaultdraw);
 
 int ScenePNG(PyMOLGlobals * G, char *png, float dpi, int quiet,
              int prior_only, int format);

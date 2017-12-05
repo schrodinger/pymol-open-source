@@ -117,7 +117,7 @@ for resn in output:
     list = output[resn]
     list.sort()
     list.reverse()
-    output[resn] = map(lambda x:x[1],list)
+    output[resn] = [x[1] for x in list]
 
 # common aliases
 

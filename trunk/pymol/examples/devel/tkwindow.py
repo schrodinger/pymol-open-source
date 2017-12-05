@@ -4,8 +4,13 @@
 #
 # pymol will then run the script on startup
 
-from Tkinter import *
-from tkFileDialog import *
+try:
+    from Tkinter import *
+    from tkFileDialog import *
+except ImportError:
+    from tkinter import *
+    from tkinter.filedialog import *
+
 from pymol import cmd
 
 class myTkWindow:

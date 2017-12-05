@@ -421,8 +421,8 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char * ch, int len)
   if(frozen) { /* frozen color */
     frozen_str = "\\789";
   } else {
-    if(state+1>I->NCSet) { /* beyond this object's number of states */
-      frozen_str = "--";
+    if (I->DiscreteFlag) { /* discrete states */
+      frozen_str = "\\993";
     } else { /* normal case */
       frozen_str = "";
     }
@@ -477,9 +477,9 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule * I, char * ch, int len)
     } else { /* state > NCSet, out of range due to other object or global setting */
       if(show_state) {
 	if(show_as_fraction) {
-	  n = snprintf(ch, len, "%s/%d", frozen_str, I->NCSet);
+	  n = snprintf(ch, len, "%s--/%d", frozen_str, I->NCSet);
 	} else { /* no fraction */
-	  n = snprintf(ch, len, "%s", frozen_str);
+	  n = snprintf(ch, len, "%s--", frozen_str);
 	}
       }
     }

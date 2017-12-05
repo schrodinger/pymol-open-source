@@ -2176,7 +2176,7 @@ void PyMOL_Stop(CPyMOL * I)
   TextureFree(G);
   SphereFree(G);
   PlugIOManagerFree(G);
-  PFree();
+  PFree(G);
   CGORendererFree(G);
   ColorFree(G);
   UtilFree(G);
@@ -2188,21 +2188,18 @@ void PyMOL_Stop(CPyMOL * I)
   /*    printf("%d \n", OVLexicon_GetNActive(G->Lexicon)); */
   OVLexicon_Del(G->Lexicon);
   OVContext_Del(G->Context);
-#ifndef _PYMOL_NOPY
-  FreeP(G->P_inst);
-#endif
-
 }
 
 void PyMOL_Free(CPyMOL * I)
 {
-#ifndef _PYMOL_ACTIVEX
+#if !defined(_PYMOL_ACTIVEX) && !defined(_MACPYMOL_XCODE)
   PYMOL_API_LOCK
 #endif
     /* take PyMOL down gracefully */
     PyMOLOptions_Free(I->G->Option);
 
 #ifndef _PYMOL_NOPY
+  FreeP(I->G->P_inst);
   if(I->G == SingletonPyMOLGlobals)
     SingletonPyMOLGlobals = NULL;
 #endif
@@ -2210,7 +2207,7 @@ void PyMOL_Free(CPyMOL * I)
   FreeP(I->G);
   FreeP(I);
   return;
-#ifndef _PYMOL_ACTIVEX
+#if !defined(_PYMOL_ACTIVEX) && !defined(_MACPYMOL_XCODE)
   PYMOL_API_UNLOCK;
 #endif
 }
@@ -2576,6 +2573,9 @@ void PyMOL_NeedReshape(CPyMOL * I, int mode, int x, int y, int width, int height
 { 
   PyMOLGlobals *G = I->G;
   if(width < 0) {
+    if (!G->HaveGUI)
+      return;
+
     int h;
     BlockGetSize(SceneGetBlock(G), &width, &h);
     if(SettingGetGlobal_b(G, cSetting_internal_gui))

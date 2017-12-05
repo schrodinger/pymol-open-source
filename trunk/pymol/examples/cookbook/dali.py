@@ -6,12 +6,15 @@ pdb_dir = "dali_pdb"
 max_pairs = 10
 
 def fetch_pdb(pdbCode,outFile):
-    import urllib
+    try:
+        import urllib.request as urllib
+    except ImportError:
+        import urllib
+
     import gzip
     import os
-    import string
 
-    remoteCode = string.upper(pdbCode)
+    remoteCode = pdbCode.upper()
     if not os.path.exists(pdb_dir):
         os.mkdir(pdb_dir)
     if not os.path.exists(outFile):
@@ -21,23 +24,23 @@ def fetch_pdb(pdbCode,outFile):
                 remoteCode + '.pdb.gz?format=PDB&pdbId=' +
                 remoteCode + '&compression=gz')[0]
         except:
-            print "warning: %s not found.\n"%pdbCode
+            print("warning: %s not found.\n"%pdbCode)
         else:
             if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
                 try:
                     abort = 0
                     open(outFile, 'w').write(gzip.open(filename).read())
-                    print "fetched: %s"%(pdbCode)
+                    print("fetched: %s"%(pdbCode))
                 except IOError:
                     abort = 1
                 if abort:
                     os.remove(outFile)
             else:
-                print "warning: %s not valid.\n"%pdbCode
+                print("warning: %s not valid.\n"%pdbCode)
             os.remove(filename)
 
 from pymol import cmd
-from string import strip
+strip = lambda s: s.strip()
 import os
 
 seen = {}
@@ -61,12 +64,12 @@ while 1:
             src = strip(line[13:19])
             trg_code = trg[0:4]
             src_code = src[0:4]
-            if not seen.has_key(trg_code):
+            if trg_code not in seen:
                 trg_file = pdb_dir+os.sep+trg_code+".pdb"
                 fetch_pdb(trg_code,trg_file)
                 cmd.load(trg_file)
                 seen[trg_code]=1
-            if not seen.has_key(src_code):
+            if src_code not in seen:
                 src_file = pdb_dir+os.sep+src_code+".pdb"
                 fetch_pdb(src_code,src_file)
                 cmd.load(src_file)

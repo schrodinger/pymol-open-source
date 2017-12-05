@@ -84,7 +84,7 @@ def measure_all_torsions(sele,prot_dict):
       if len(lst):
          cmd.iterate("(%s and n;ca)"%res_sele,"stored.resn=resn")
          resn = pymol.stored.resn
-         print resn
+         print(resn)
          name_list = []
          for a in lst:
             pymol.stored.names = []
@@ -98,7 +98,7 @@ def measure_all_torsions(sele,prot_dict):
                                     "(%s and name %s)"%(res_sele,a[2]),
                                     "(%s and name %s)"%(res_sele,a[3]))
             res_dict[a]=dihe
-         if not prot_dict.has_key(resn):
+         if resn not in prot_dict:
             prot_dict[resn]=[]
          prot_dict[resn].append(res_dict)
 

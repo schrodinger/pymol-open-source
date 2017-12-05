@@ -347,7 +347,7 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, CSeqRow * rowVLA, int button, int 
         char name[WordLength];
         if(ExecutiveGetActiveSeleName(G, name, false, false)) {
           SelectorCreate(G, name, "none", NULL, true, NULL);
-          if(SettingGetGlobal_i(G, cSetting_logging)) {
+          if(logging) {
             sprintf(buf2, "cmd.select('%s','none', enable=1)", name);
             PLog(G, buf2, cPLog_no_flush);
           }
@@ -439,36 +439,44 @@ static CSeqRow *SeekerClick(PyMOLGlobals * G, CSeqRow * rowVLA, int button, int 
         if(mod & cOrthoCTRL) {
           center = 2;
         }
-        if(!continuation) {
-          I->drag_start_col = col_num;
-          I->drag_last_col = col_num;
-          I->drag_row = row_num;
-          I->drag_dir = 0;
-          I->drag_start_toggle = true;
-        } else {
-          int tmp;
-          if(((col_num < I->drag_start_col) && (I->drag_last_col > I->drag_start_col)) ||
-             ((col_num > I->drag_start_col) && (I->drag_last_col < I->drag_start_col))) {
-            tmp = I->drag_last_col;
-            I->drag_last_col = I->drag_start_col;
-            I->drag_start_col = tmp;
-            I->drag_dir = -I->drag_dir;
-          }
-        }
-        I->dragging = true;
-
-        I->handler.box_active = true;
-        if(continuation) {
-          SeekerDrag(G, rowVLA, row_num, col_num, mod);
-        } else {
-          if(col->inverse && !start_over) {
-            SeekerSelectionToggle(G, rowVLA, row_num, col_num, false, false);
-            I->drag_setting = false;
+        int codes = SettingGet_i(G, row->obj->Obj.Setting, NULL, cSetting_seq_view_format);
+        if(row->obj->DiscreteFlag && SettingGet_b(G,
+                                           row->obj->Obj.Setting,
+                                           NULL, cSetting_seq_view_discrete_by_state))
+          codes = 4;
+        if (codes != 4 || row->obj->DiscreteFlag) { // keep only non-discrete states selectable
+          if(!continuation) {
+            I->drag_start_col = col_num;
+            I->drag_last_col = col_num;
+            I->drag_row = row_num;
+            I->drag_dir = 0;
+            I->drag_start_toggle = true;
           } else {
-            SeekerSelectionToggle(G, rowVLA, row_num, col_num, true, start_over);
-            I->drag_setting = true;
+            int tmp;
+            if(((col_num < I->drag_start_col) && (I->drag_last_col > I->drag_start_col)) ||
+               ((col_num > I->drag_start_col) && (I->drag_last_col < I->drag_start_col))) {
+              tmp = I->drag_last_col;
+              I->drag_last_col = I->drag_start_col;
+              I->drag_start_col = tmp;
+              I->drag_dir = -I->drag_dir;
+            }
+          }
+          I->dragging = true;
+
+          I->handler.box_active = true;
+          if(continuation) {
+            SeekerDrag(G, rowVLA, row_num, col_num, mod);
+          } else {
+            if(col->inverse && !start_over) {
+              SeekerSelectionToggle(G, rowVLA, row_num, col_num, false, false);
+              I->drag_setting = false;
+            } else {
+              SeekerSelectionToggle(G, rowVLA, row_num, col_num, true, start_over);
+              I->drag_setting = true;
+            }
           }
         }
+
         if(center)
           SeekerSelectionCenter(G, 2);
 
@@ -1452,7 +1460,12 @@ void SeekerUpdate(PyMOLGlobals * G)
 
             first_atom_in_label = true;
 
-            abbr[0] = SeekerGetAbbr(G, LexStr(G, ai->resn), 'O', 0);
+            // single letter codes for polymer/solvent
+            if (!(ai->flags & (cAtomFlag_organic | cAtomFlag_inorganic))) {
+              abbr[0] = SeekerGetAbbr(G, LexStr(G, ai->resn), 'O', 0);
+            } else {
+              abbr[0] = 0;
+            }
 
             r1->hint_no_space = last_abbr || last_spacer;
 
@@ -1579,6 +1592,7 @@ void SeekerUpdate(PyMOLGlobals * G)
         case 4:                /* state names */
           if(obj->DiscreteFlag) {
             CoordSet *cs;
+            WordType buf1;
             if((cs = obj->DiscreteCSet[a]) != last_disc) {
               last_disc = cs;
               if(cs) {
@@ -1589,11 +1603,12 @@ void SeekerUpdate(PyMOLGlobals * G)
                 r1->start = row->len;
                 r1->color = default_color;
                 first_atom_in_label = true;
-
                 if(cs->Name[0])
                   UtilConcatVLA(&row->txt, &row->len, cs->Name);
-                else
-                  UtilConcatVLA(&row->txt, &row->len, "''");
+                else {
+                  sprintf(buf1, "%d", ai->discrete_state);
+                  UtilConcatVLA(&row->txt, &row->len, buf1);
+                }
                 r1->stop = row->len;
                 r1->state = ai->discrete_state;
                 UtilConcatVLA(&row->txt, &row->len, " ");

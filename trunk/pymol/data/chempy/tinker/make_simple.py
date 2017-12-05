@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import string
 import os
 import sys
@@ -55,7 +57,7 @@ def load(self,fname):
       if not len(l): break
       a2 = string.strip(l[0:2])
       self.type.append(a2)
-      if not self.mw.has_key(a2):
+      if a2 not in self.mw:
          self.mw[a2] = []
       self.mw[a2].append([l[3:]])
    # skip 1
@@ -68,7 +70,7 @@ def load(self,fname):
       a5 = l[0:5]
       if a5[0:2]>a5[3:5]:
          a5 = a5[3:5]+'-'+a5[0:2]
-      if not self.bond.has_key(a5):
+      if a5 not in self.bond:
          self.bond[a5] = []
       self.bond[a5].append([l[5:]])
    # read angles
@@ -79,7 +81,7 @@ def load(self,fname):
       a5 = l[0:8]
       if a5[0:2]>a5[6:8]:
          a5 = a5[6:8]+'-'+a5[3:5]+'-'+a5[0:2]
-      if not self.angle.has_key(a5):
+      if a5 not in self.angle:
          self.angle[a5] = []
       self.angle[a5].append([l[8:]])
    # read torsion 
@@ -88,7 +90,7 @@ def load(self,fname):
       l = string.strip(f.readline())
       if not len(l): break
       a5 = l[0:11]
-      if not self.torsion.has_key(a5):
+      if a5 not in self.torsion:
          self.torsion[a5] = []
       self.torsion[a5].append([l[11:]])         
 
@@ -98,7 +100,7 @@ def load(self,fname):
       l = string.strip(f.readline())
       if not len(l): break
       a5 = l[0:11]
-      if not self.improper.has_key(a5):
+      if a5 not in self.improper:
          self.improper[a5] = []
       self.improper[a5].append([l[11:]])
    # skip
@@ -165,18 +167,18 @@ os.system("sed 's/-F /-R1/g;s/F -/R1-/g;s/-I /-R4/g;s/I -/R4-/g;"+
 tmp = BlankObject()
 
 
-print "CSFF: Chemical Python Simplified Force Field by Warren L. DeLano"
+print("CSFF: Chemical Python Simplified Force Field by Warren L. DeLano")
 
 load(tmp,'tmp6.dat')
 
-kees = tmp.mw.keys()
+kees = list(tmp.mw.keys())
 kees.sort()
 for a in kees:
    c = ''
    lst = ''
    for b in tmp.mw[a]:
       if lst!=b[0][0:8]:
-         print "%s%-2s %s" %(c,a,b[0])
+         print("%s%-2s %s" %(c,a,b[0]))
          c = ' '
          lst = b[0][0:8]
 l = [
@@ -184,15 +186,15 @@ l = [
 'T1 32.06         2.900               Thiocarbonyl',
 ]   
 for a in l:
-   print a 
-print
-print "A   J1  J2  J3  J4  JN Q1  Q2  QN"
+   print(a)
+print()
+print("A   J1  J2  J3  J4  JN Q1  Q2  QN")
 
-kees = tmp.bond.keys()
+kees = list(tmp.bond.keys())
 kees.sort()
 for a in kees:
    if len(tmp.bond[a])==1:
-      print "%-1s%s" %(a,tmp.bond[a][0][0])
+      print("%-1s%s" %(a,tmp.bond[a][0][0]))
    else:
       f1 = 0.0
       f2 = 0.0
@@ -203,7 +205,7 @@ for a in kees:
          c = c + 1
       f1 = f1 / c
       f2 = f2 / c
-      print "%-1s%7.1f%9.3f       combination of %d"%(a,f1,f2,c)
+      print("%-1s%7.1f%9.3f       combination of %d"%(a,f1,f2,c))
 
 # missing bond terms
 l = [
@@ -289,15 +291,15 @@ l = [
 ]
 
 for a in l:
-   if tmp.bond.has_key(a[0:5]):
+   if a[0:5] in tmp.bond:
       sys.stderr.write("Duplicate bond: %s\n"%a)
-   print a 
-print
-kees = tmp.angle.keys()
+   print(a)
+print()
+kees = list(tmp.angle.keys())
 kees.sort()
 for a in kees:
    if len(tmp.angle[a])==1:
-      print "%-1s%s" %(a,tmp.angle[a][0][0])
+      print("%-1s%s" %(a,tmp.angle[a][0][0]))
    else:
       f1 = 0.0
       f2 = 0.0
@@ -308,7 +310,7 @@ for a in kees:
          c = c + 1
       f1 = f1 / c
       f2 = f2 / c
-      print "%-1s%8.1f%12.2f    combination of %d"%(a,f1,f2,c)
+      print("%-1s%8.1f%12.2f    combination of %d"%(a,f1,f2,c))
 # missing angle terms
 l = [
 'A -QN-J3    50.0      109.50    INCORRECT HYDROGEN', 
@@ -990,10 +992,10 @@ l = [
 ]
 
 for a in l:
-   if tmp.angle.has_key(a[0:8]):
+   if a[0:8] in tmp.angle:
       sys.stderr.write("Duplicate angle: %s\n"%a)
-   print a 
-print
+   print(a)
+print()
 # missing generalized torsions (divisors/forces need to be checked...)
 l = [
 'X -D2-DJ-X    2    0.00          0.0             2.         WLD null',
@@ -1044,15 +1046,15 @@ l = [
 
 ]
 for a in l:
-   if tmp.torsion.has_key(a[0:11]):
+   if a[0:11] in tmp.torsion:
       sys.stderr.write("Duplicate torsion: %s\n"%a)
-   print a 
-kees = tmp.torsion.keys()
+   print(a)
+kees = list(tmp.torsion.keys())
 kees.sort()
 kees.reverse()
 for a in kees:
    if len(tmp.torsion[a])==1:
-      print "%-1s%s" %(a,tmp.torsion[a][0][0])
+      print("%-1s%s" %(a,tmp.torsion[a][0][0]))
    else:
 
       b = tmp.torsion[a][0]
@@ -1072,43 +1074,43 @@ for a in kees:
          c = c + 1
       if not flag:
          f2 = f2 / c
-         print "%-1s%4d%8.2f%13.1f%14d.         combination of %d"%(a,f1,f2,f3,f4,c)
+         print("%-1s%4d%8.2f%13.1f%14d.         combination of %d"%(a,f1,f2,f3,f4,c))
       else:
          flag = 0
          ck = {}
          for b in tmp.torsion[a]:
             f4 = float(b[0][27:42])
-            if ck.has_key(f4):
+            if f4 in ck:
                flag=1
                break
             ck[f4] = 1
          if not flag:
             for b in tmp.torsion[a]:
-               print "%-1s%s" %(a,b[0])            
+               print("%-1s%s" %(a,b[0]))
          else: # known special cases 
             if a == 'X -D4-J4-X ':
-                print "%-1s%s" %(a,tmp.torsion[a][1][0])
+                print("%-1s%s" %(a,tmp.torsion[a][1][0]))
             elif a == 'X -D4-J3-X ':
-                print "%-1s%s" %(a,tmp.torsion[a][1][0])
+                print("%-1s%s" %(a,tmp.torsion[a][1][0]))
             elif a == 'Q2-D4-D4-Q2':
-                print "%-1s%s" %(a,tmp.torsion[a][1][0])
-                print "%-1s%s" %(a,tmp.torsion[a][2][0])
+                print("%-1s%s" %(a,tmp.torsion[a][1][0]))
+                print("%-1s%s" %(a,tmp.torsion[a][2][0]))
             elif a == 'A -D4-DJ-Q1':
-                print "%-1s%s" %(a,tmp.torsion[a][1][0])
-                print "%-1s%s" %(a,tmp.torsion[a][2][0])
+                print("%-1s%s" %(a,tmp.torsion[a][1][0]))
+                print("%-1s%s" %(a,tmp.torsion[a][2][0]))
             else:
                for b in tmp.torsion[a]:
-                  print " %-1s%s" %(a,b[0])
+                  print(" %-1s%s" %(a,b[0]))
 # missing specific torsions
 l = [
 'A -T2-T2-D4   1    3.50          0.0            -2.         WLD from D4-T2-T2-D4',
 'A -T2-T2-D4   1    0.60          0.0             3.         WLD from D4-T2-T2-D4',
 ]
 for a in l:
-   if tmp.torsion.has_key(a[0:11]):
+   if a[0:11] in tmp.torsion:
       sys.stderr.write("Duplicate torsion: %s\n"%a)
-   print a 
-print
+   print(a)
+print()
 
 # missing general impropers
 l = [
@@ -1116,18 +1118,18 @@ l = [
 'X -X -DJ-QN         10.5         180.          2.           WLD from X -X -DJ-Q1',
 ]
 for a in l:
-   if tmp.improper.has_key(a[0:11]):
+   if a[0:11] in tmp.improper:
       sys.stderr.write("Duplicate improper: %s\n"%a)
-   print a 
-print
-kees = tmp.improper.keys()
+   print(a)
+print()
+kees = list(tmp.improper.keys())
 kees.sort()
 kees.reverse()
 for a in kees: # no major redundancy, just print the first record
-   print "%-1s%s" %(a,tmp.improper[a][0][0])
+   print("%-1s%s" %(a,tmp.improper[a][0][0]))
 
 
-print '''
+print('''
   A   Q2  0000.     0000.                                4.  flag for fast water
 
 J1  J1  J2  J3  J4
@@ -1194,7 +1196,7 @@ TINKER    T4    16    4
 TINKER    TA    16    2
 TINKER    T2    16    2
 TINKER    T1    16    1
-'''
+''')
   
 os.unlink('tmp1.dat')
 os.unlink('tmp2.dat')

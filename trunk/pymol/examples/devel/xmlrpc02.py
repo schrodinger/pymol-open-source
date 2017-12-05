@@ -9,7 +9,10 @@
               module (1.0 or greater should be fine)
   RD Version: $Rev$            
 """
-import xmlrpclib
+try:
+    import xmlrpclib
+except ImportError:
+    import xmlrpc.client as xmlrpclib
 
 def startServer(host='localhost',startPort=9123,nToTry=5):
   done = 0
@@ -19,7 +22,7 @@ def startServer(host='localhost',startPort=9123,nToTry=5):
     try:
       c.ping()
     except:
-      print 'Failed on port %d, trying another'%(startPort+offset)
+      print('Failed on port %d, trying another'%(startPort+offset))
       offset = offset + 1
     else:
       done = 1
@@ -96,9 +99,9 @@ if __name__=='__main__':
   import sys
   serv,port = startServer()
   if serv is not None:
-    print 'connected to PyMol rpc-server on port %d'%port
+    print('connected to PyMol rpc-server on port %d'%port)
   else:
-    print 'unable to connect to PyMol'
+    print('unable to connect to PyMol')
     sys.exit(-1)
   serv.loadMolBlock(molBlock,'sample-mol')
   serv.set('sphere_scale',0.25,'sample-mol')

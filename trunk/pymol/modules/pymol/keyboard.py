@@ -160,6 +160,8 @@ def get_active_selection_name(self_cmd=cmd):
     return None
 
 def get_default_keys(_self=cmd):
+    _self = _self._weakrefproxy
+
     emptydict = {}
     keys = {
         'left'          : ( _self.backward              , (), emptydict ),

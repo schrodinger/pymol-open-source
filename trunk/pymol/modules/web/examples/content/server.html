@@ -45,7 +45,7 @@ another application).</p>
 The PyMOL web server module can be imported into and launched using code like this.
 <pre>
 from pymol import pymolhttpd
-httpd = pymolhttpd.PymolHttpd("htdocs", 8080)
+httpd = pymolhttpd.PymolHttpd(8080, "htdocs")
 httpd.start()
 </pre>
 This will cause PyMOL to respond to HTTP requests on port 8080.

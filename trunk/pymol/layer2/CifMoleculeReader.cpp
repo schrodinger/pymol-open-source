@@ -1979,12 +1979,21 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, cif_data * data,
 /*
  * Create a new (multi-state) object-molecule from datablock
  */
-static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G, cif_data * datablock, int discrete)
+static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
+    cif_data * datablock, int discrete, bool quiet)
 {
   CoordSet ** csets = NULL;
   int ncsets;
   CifContentInfo info(G, SettingGetGlobal_b(G, cSetting_cif_use_auth));
   const char * assembly_id = SettingGetGlobal_s(G, cSetting_assembly);
+
+  // title "echo tag"
+  const char * title = datablock->get_opt("_struct.title")->as_s();
+  if (!quiet && title[0] &&
+      strstr(SettingGetGlobal_s(G, cSetting_pdb_echo_tags), "TITLE")) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Details)
+      "TITLE     %s\n", title ENDFB(G);
+  }
 
   if (assembly_id && assembly_id[0]) {
     if (!get_assembly_chains(G, datablock, info.chains_filter, assembly_id))
@@ -2195,7 +2204,7 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
 #endif
 
   for (auto it = cif->datablocks.begin(); it != cif->datablocks.end(); ++it) {
-    ObjectMolecule * obj = ObjectMoleculeReadCifData(G, it->second, discrete);
+    ObjectMolecule * obj = ObjectMoleculeReadCifData(G, it->second, discrete, quiet);
 
     if (!obj) {
       PRINTFB(G, FB_ObjectMolecule, FB_Errors)

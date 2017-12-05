@@ -24,8 +24,8 @@ sm = 0
 for a in model.atom:
    sm = sm + a.partial_charge
 
-print " prot: net partial charge on protein is %8.3f" % sm
-print " prot: (this should be integral)!"
+print(" prot: net partial charge on protein is %8.3f" % sm)
+print(" prot: (this should be integral)!")
 
 io.pkl.toFile(model,"generate_mmff.pkl")
 

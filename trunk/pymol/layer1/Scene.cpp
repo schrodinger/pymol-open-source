@@ -1042,6 +1042,9 @@ void SceneSetCardInfo(PyMOLGlobals * G,
     const char *version)
 {
   CScene *I = G->Scene;
+  if (!vendor) vendor = "(null)";
+  if (!renderer) renderer = "(null)";
+  if (!version) version = "(null)";
   UtilNCopy(I->vendor, vendor, sizeof(OrthoLineType) - 1);
   UtilNCopy(I->renderer, renderer, sizeof(OrthoLineType) - 1);
   UtilNCopy(I->version, version, sizeof(OrthoLineType) - 1);
@@ -2378,6 +2381,32 @@ Block *SceneGetBlock(PyMOLGlobals * G)
 
 
 /*========================================================================*/
+int SceneValidateImageMode(PyMOLGlobals * G, int mode, bool defaultdraw) {
+  switch (mode) {
+    case cSceneImage_Normal:
+    case cSceneImage_Draw:
+    case cSceneImage_Ray:
+      return mode;
+  }
+
+  if (mode != cSceneImage_Default) {
+    PRINTFB(G, FB_Scene, FB_Warnings)
+      " %s-Warning: invalid mode %d\n", __FUNCTION__, mode ENDFB(G);
+  }
+
+  if(!G->HaveGUI || SettingGetGlobal_b(G, cSetting_ray_trace_frames)) {
+    return cSceneImage_Ray;
+  }
+
+  if(defaultdraw || SettingGetGlobal_b(G, cSetting_draw_frames)) {
+    return cSceneImage_Draw;
+  }
+
+  return cSceneImage_Normal;
+}
+
+
+/*========================================================================*/
 int SceneMakeMovieImage(PyMOLGlobals * G,
     int show_timing,
     int validate,
@@ -2391,22 +2420,7 @@ int SceneMakeMovieImage(PyMOLGlobals * G,
   PRINTFB(G, FB_Scene, FB_Blather)
     " Scene: Making movie image.\n" ENDFB(G);
 
-  switch (mode) {
-  case cSceneImage_Normal:
-  case cSceneImage_Draw:
-  case cSceneImage_Ray:
-    break;
-  default:
-    if(!G->HaveGUI ||
-        SettingGetGlobal_b(G, cSetting_ray_trace_frames)) {
-      mode = cSceneImage_Ray;
-    } else if(SettingGetGlobal_b(G, cSetting_draw_frames) || width || height) {
-      mode = cSceneImage_Draw;
-    } else {
-      mode = cSceneImage_Normal;
-    }
-    break;
-  }
+  mode = SceneValidateImageMode(G, mode, width || height);
 
   I->DirtyFlag = false;
   switch (mode) {

@@ -129,10 +129,19 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
     return NULL;
   }
 
-  PRINTFB(G, FB_ObjectMolecule, FB_Details)
-    " MMTF structureId: '%s', mmtfVersion: '%s'\n",
-    (container->structureId ? container->structureId : ""),
-    (container->mmtfVersion ? container->mmtfVersion : "") ENDFB(G);
+  if (!quiet) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Details)
+      " MMTF structureId: '%s', mmtfVersion: '%s'\n",
+      (container->structureId ? container->structureId : ""),
+      (container->mmtfVersion ? container->mmtfVersion : "") ENDFB(G);
+
+    // title "echo tag"
+    if (container->title && container->title[0] &&
+        strstr(SettingGetGlobal_s(G, cSetting_pdb_echo_tags), "TITLE")) {
+      PRINTFB(G, FB_ObjectMolecule, FB_Details)
+        "TITLE     %s\n", container->title ENDFB(G);
+    }
+  }
 
   int chainIndex = 0;
   int groupIndex = 0;

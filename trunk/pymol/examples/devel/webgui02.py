@@ -1,8 +1,10 @@
 # Another simple example of how PyMOL can be controlled using a web browser
 # using Python's built-in web server capabilities
 
-import SocketServer
-import BaseHTTPServer
+try:
+    import BaseHTTPServer
+except ImportError:
+    import http.server as BaseHTTPServer
 
 import time
 import cgi
@@ -137,7 +139,7 @@ function load(molid)
             self.send_header('Cache-control', 'no-cache')
             self.send_header('Pragma', 'no-cache')
             self.end_headers()
-            if not session.has_key('table'):
+            if 'table' not in session:
                 self.wfile.write("<p>No table defined.</p>\n")
             else:
                 write_table(self.wfile, session['table'])
@@ -211,7 +213,7 @@ function load(molid)
             
             self.end_headers()
             upfilecontent = query.get('upfile')
-            print "filecontent", upfilecontent[0]
+            print("filecontent", upfilecontent[0])
             self.wfile.write('<HTML>POST OK.<BR><BR>');
             self.wfile.write(upfilecontent[0]);
             
@@ -222,7 +224,7 @@ def table_from_data(data):
 
     # pull MOLID to the far left
     
-    col_id_list = ['MOLID'] + filter(lambda x:x!='MOLID',data['col_id_list'])
+    col_id_list = ['MOLID'] + [x for x in data['col_id_list'] if x!='MOLID']
     content = data['content']
 
     # create the header fields
@@ -284,7 +286,7 @@ def data_from_sdf(sdf_file_path):
         # add column (if new)
         for key in rec.kees:
             if key != 'MOL':
-                if not col_id_dict.has_key(key):
+                if key not in col_id_dict:
                     col_id_list.append(key)
                     col_id_dict[key] = None
         
@@ -321,14 +323,14 @@ def main():
     try:
         global _server
         _server = BaseHTTPServer.HTTPServer(('', 8080), PymolHandler)
-        print 'started httpserver...'
+        print('started httpserver...')
         _server.serve_forever()
     except KeyboardInterrupt:
-        print '^C received, shutting down server'
+        print('^C received, shutting down server')
         _server.socket.close()
 
 if __name__ == '__main__':
-    print "this script must be run from within PyMOL"
+    print("this script must be run from within PyMOL")
     
 if __name__ == 'pymol':
 

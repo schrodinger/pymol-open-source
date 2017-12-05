@@ -95,6 +95,10 @@ if __name__=='pymol.cmd':
     import traceback
     import sys
 
+    # pymol2.cmd2 exposes a weak reference, this is not possible (and not
+    # necessary) on the module level, so we simply make a self reference.
+    _weakrefproxy = sys.modules[__name__]
+
     try:
         
         import re

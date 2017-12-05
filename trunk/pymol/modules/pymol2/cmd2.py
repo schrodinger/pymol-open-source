@@ -2,6 +2,7 @@ from pymol import cmd as global_cmd
 import pymol
 import inspect
 import itertools
+import weakref
 
 #most recently created Cmd (for now)
 cmd = None
@@ -13,10 +14,13 @@ class Cmd:
 
     def __init__(self, _pymol, _COb):
         global cmd
-        cmd = self
+        cmd = weakref.proxy(self)
+        self._weakref = weakref.ref(self)
+        self._weakrefproxy = weakref.proxy(self)
+
         # store parent
         
-        self._pymol = _pymol
+        self._pymol = weakref.proxy(_pymol)
 
         # store C object for easy access
     
@@ -26,10 +30,6 @@ class Cmd:
     
         self.color_sc = None
         self.reaper = None
-        
-        # CONSTANTS (pymol/constants.py)
-
-        self.fb_debug = global_cmd.fb_debug # this cannot be right...
         
         # deferred initiailization
         
@@ -103,9 +103,12 @@ class Cmd:
         except:
             setattr(self, key, v)
             return v
+        # don't bind a circular reference into the wrapper
+        # namespace, use a weak reference instead
+        cmdref = self._weakref
         def wrapper(*a, **k):
             if len(a) <= i:
-                k['_self'] = self
+                k['_self'] = cmdref()
             return v(*a, **k)
         wrapper.__name__ = key
         setattr(self, key, wrapper)

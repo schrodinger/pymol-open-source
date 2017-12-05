@@ -108,7 +108,7 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
 #define PSleepWhileBusy(G,a)
 #define PSleepUnlocked(G,a)
 
-#define PFree()
+#define PFree(G)
 #define PInit(G,a)
 #define PSetupEmbedded(G,a,b)
 #define PConvertOptions(a,b)
@@ -134,7 +134,7 @@ struct PyMOLOptionRec;
 void PConvertOptions(CPyMOLOptions * rec, PyObject * options);
 void PGetOptions(CPyMOLOptions * rec);
 
-void PFree(void);
+void PFree(PyMOLGlobals * G);
 void PExit(PyMOLGlobals * G, int code);
 void PParse(PyMOLGlobals * G, const char *str);       /* only accepts one command */
 void PDo(PyMOLGlobals * G, const char *str);  /* accepts multple commands seperated by newlines */
