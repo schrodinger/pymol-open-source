@@ -14,6 +14,12 @@
 
 from __future__ import print_function
 
+import sys
+if sys.version_info[0] == 2:
+    _next_method_name = 'next'
+else:
+    _next_method_name = '__next__'
+
 cmd = __import__("sys").modules["pymol.cmd"]
 import pymol
 from pymol import movie
@@ -110,7 +116,7 @@ ARGUMENTS
         _self.get_area(tmpSel, load_b=1)
         _self.spectrum("b", palette, tmpSel)
         _self.iterate(tmpSel, "l_a(color)", space={'l_a': l.append})
-        _self.alter(orgSel, "color=l_n()", space={'l_n': iter(l).__next__})
+        _self.alter(orgSel, "color=l_n()", space={'l_n': getattr(iter(l), _next_method_name)})
 
         _self.recolor(orgSel)
     finally:

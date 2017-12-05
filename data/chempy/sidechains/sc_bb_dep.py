@@ -97,7 +97,7 @@ for line in lines:
             if (((psi==(60*(psi/60))) and (phi==(60*(phi/60)))) or 
                 ((psi==(20*(psi/20))) and (phi==(20*(phi/20))) and (int(field[3])>0)) or
                 ((psi==(10*(psi/10))) and (phi==(10*(phi/10))) and (int(field[3])>=250))):
-                if not dd.has_key((phi,psi)):
+                if (phi,psi) not in dd:
 #                    print phi,psi
                     dd[(phi,psi)]=1
                 key = (resn, phi, psi)
@@ -110,7 +110,7 @@ for line in lines:
                     freq = 0.0
                 if freq>0.01:
                     dict['FREQ'] = freq
-                    len_chi = len(chi[resn].keys())
+                    len_chi = len(chi[resn])
                     if len_chi>0:
                         chi1 = float(field[9])
                         dict[chi[resn]['1']] = chi1
@@ -128,11 +128,11 @@ for line in lines:
 
 # sort by priority
 
-for key in output.keys():
+for key in list(output.keys()):
     list = output[key]
     list.sort()
     list.reverse()
-    output[key] = map(lambda x:x[1],list)
+    output[key] = [x[1] for x in list]
 
 #for key in output.keys():
 #    

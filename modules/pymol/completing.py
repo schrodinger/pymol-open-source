@@ -24,6 +24,16 @@ expr_sc = ExprShortcut([
     'oneletter',
 ])
 
+
+def fragments_sc():
+    import os
+    import chempy
+    return cmd.Shortcut([
+        f[:-4] for f in os.listdir(chempy.path + 'fragments')
+        if f.endswith('.pkl')
+    ])
+
+
 def vol_ramp_sc():
     from . import colorramping
     return cmd.Shortcut(colorramping.namedramps)
@@ -53,6 +63,8 @@ def wizard_sc():
     return cmd.Shortcut(names_glob)
 
 def get_auto_arg_list(self_cmd=cmd):
+    self_cmd = self_cmd._weakrefproxy
+
     aa_vol_c = [ lambda:
             cmd.Shortcut(self_cmd.get_names_of_type('object:volume')),
             'volume', '' ]
@@ -97,6 +109,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'feedback'       : [ self_cmd.fb_action_sc           , 'action'          , ', ' ],
         'fit'            : aa_sel_e,
         'flag'           : [ self_cmd.editing.flag_sc        , 'flag'            , ', ' ],
+        'fragment'       : [ fragments_sc                    , 'fragment name'   , ''   ],
         'full_screen'    : [ self_cmd.toggle_sc              , 'option'          , ''   ],
         'fuse'           : aa_sel_e,
         'get'            : aa_set_c,
@@ -209,6 +222,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'map_new'        : [ self_cmd.creating.map_type_sc   , 'map type'        , ', ' ],
         'map_trim'       : aa_sel_c,
         'morph'          : aa_sel_e,
+        'movie.produce'  : [ self_cmd.movie.produce_mode_sc  , 'render mode'     , ', ' ],
         'matrix_copy'    : aa_obj_c,
         'order'          : [ self_cmd.boolean_sc             , 'sort'            , ', ' ],
         'pair_fit'       : aa_sel_c,

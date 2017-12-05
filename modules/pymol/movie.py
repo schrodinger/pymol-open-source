@@ -14,8 +14,8 @@
 
 from __future__ import print_function
 
-cmd = __import__("sys").modules["pymol.cmd"]
-import glob
+import sys
+cmd = sys.modules["pymol.cmd"]
 import math
 import os
 import glob
@@ -344,6 +344,9 @@ ARGUMENTS
             cmd.mview("store",start+n_frame-1,power=1,freeze=1)
             cmd.mview("interpolate")
         cmd.frame(start)
+        # PYMOL-2881
+        if cmd.get_setting_int('movie_auto_interpolate'):
+            cmd.mview("reinterpolate")
         
 def add_rock(duration=8.0,angle=30.0,loop=1,axis='y',start=0,_self=cmd):
     '''
@@ -404,6 +407,9 @@ def add_state_sweep(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd
         else:
             cmd.mview("interpolate")
         cmd.frame(start)
+        # PYMOL-2881
+        if cmd.get_setting_int('movie_auto_interpolate'):
+            cmd.mview("reinterpolate")
 
 def add_state_loop(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd):
     cmd = _self
@@ -425,6 +431,9 @@ def add_state_loop(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd)
         else:
             cmd.mview("interpolate")
         cmd.frame(start)
+        # PYMOL-2881
+        if cmd.get_setting_int('movie_auto_interpolate'):
+            cmd.mview("reinterpolate")
 
 def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1, 
                offset=0, phase=0, shift=math.pi/2.0, start=0,
@@ -479,6 +488,9 @@ ARGUMENTS
             cmd.mview('store',start+index,freeze=1)
             cmd.turn('y',-y_rot)
             cmd.turn('x',-x_rot)
+    # PYMOL-2881
+    if cmd.get_setting_int('movie_auto_interpolate'):
+        cmd.mview("reinterpolate")
     
 def _rock(mode,axis,first,last,period,pause,_self=cmd):
     cmd = _self
@@ -677,15 +689,15 @@ def _watch(filename,done_event):
         if done_event.isSet():
             break
             
-def _encode(filename,mode,first,last,preserve,
-            encoder,tmp_path,prefix,quality,quiet,_self=cmd):
+def _encode(filename,first,last,preserve,
+            encoder,tmp_path,prefix,img_ext,quality,quiet,_self=cmd):
     import os
     tries = 10
     while 1: # loop until all of the files have been created...
         done = 1
         # check for the required output files
         for index in range(first,last+1):
-            path = os.path.join(tmp_path,prefix+"%04d.ppm"%index)
+            path = os.path.join(tmp_path, "%s%04d%s" % (prefix, index, img_ext))
             if not os.path.exists(path):
                 done = 0
                 break;
@@ -701,6 +713,13 @@ def _encode(filename,mode,first,last,preserve,
         time.sleep(0.25)
     _self.sync()
     ok = 1
+    result = None
+
+    # reduce chance of passing non-ascii file paths to sub processes
+    # by changing directory
+    fn_rel = os.path.relpath(filename, tmp_path)
+    old_cwd = os.getcwd()
+
     if done and ok and (encoder == 'mpeg_encode'):
         try:
             from freemol import mpeg_encode
@@ -715,22 +734,25 @@ def _encode(filename,mode,first,last,preserve,
             print("produce-error: Unable to create mpeg file.")            
         else:
             mpeg_quality = 1+int(((100-quality)*29)/100) # 1 to 30
-            input = mpeg_encode.input(filename,tmp_path,
+            input = mpeg_encode.input(fn_rel, '.',
                                       prefix,first,last,mpeg_quality);
             if not quiet:
                 print(" produce: creating '%s' (in background)..."%(filename))
 
+            os.chdir(tmp_path)
+
             done_event = None
             if not quiet:
                 done_event = threading.Event()
-                _self.async(_watch, filename, done_event, _self=_self)
+                _self.async(_watch, fn_rel, done_event, _self=_self)
 
             try:
                 result = mpeg_encode.run(input)
             finally:
+                os.chdir(old_cwd)
                 if done_event != None:
                     done_event.set()
-            if not quiet:
+    if not quiet:
                 if not os.path.exists(filename):
                     if result != None:
                         print(input, result[0], result[1])
@@ -771,14 +793,9 @@ DESCRIPTION
 
     prefix = _prefix
 
-    if _self.is_string(mode):
-        if mode == '':
-            if cmd.get_setting_boolean('ray_trace_frames'):
-                mode = 'ray'
-            elif cmd._pymol.invocation.options.no_gui:
-                mode = 'ray'
-            else:
-                mode = 'draw'
+    if mode == '':
+        mode = -1
+    elif _self.is_string(mode):
         mode = produce_mode_sc.auto_err(mode,"mode")
         mode = produce_mode_dict[mode]
     else:
@@ -798,6 +815,21 @@ DESCRIPTION
     if splitext[1]=='':
         splitext=(splitext[0],'.mpg')
     filename = splitext[0]+splitext[1]
+    width, height = int(width), int(height)
+    img_ext = '.png'
+
+    # check encoder
+    if encoder == 'mpeg_encode':
+        img_ext = '.ppm'
+        try:
+            from freemol import mpeg_encode
+        except ImportError:
+            print(" Error: This PyMOL build is not set up with FREEMOL (freemol.mpeg_encode import failed)")
+            return _self.DEFAULT_ERROR
+    else:
+        raise CmdException('encoder "%s" not available' % (encoder))
+
+    # clean up old files if necessary
     if os.path.exists(filename):
         os.unlink(filename)
     if not os.path.exists(tmp_path):
@@ -816,18 +848,22 @@ DESCRIPTION
         if last <= 1:
             last = 1
         _self.set("keep_alive")
-        _self.mpng(os.path.join(tmp_path,prefix+".ppm"),first,last,
-                   preserve,mode=mode,modal=1,quiet=quiet,
+        _self.mpng(os.path.join(tmp_path,prefix + img_ext),first,last,
+                   preserve,mode=mode,modal=-1,quiet=quiet,
                    width=width, height=height)
         # this may run asynchronously
     else:
         ok = 0
     if ok:
-        t = threading.Thread(target=_encode,
-                             args=(filename,mode,first,last,preserve,
-                                   encoder,tmp_path,prefix,quality,quiet,_self))
-        t.setDaemon(1)
-        t.start()
+        args = ((filename, first, last, preserve,
+                                   encoder,tmp_path,prefix,img_ext,
+                                   quality,quiet,_self))
+        if _self.get_modal_draw():
+            t = threading.Thread(target=_encode, args=args)
+            t.setDaemon(1)
+            t.start()
+        else:
+            _encode(*args)
     if ok:
         return _self.DEFAULT_SUCCESS
     else:

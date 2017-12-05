@@ -206,12 +206,13 @@ static PyObject *MeasureInfoListAsPyList(CMeasureInfo * I)
     }
 
     ok_assert(1, item = PyList_New(3));
-    PyList_Append(result, item);
 
     PyList_SetItem(item, 0, PyInt_FromLong(I->offset));
     PyList_SetItem(item, 1, PConvIntArrayToPyList(I->id, N));
     PyList_SetItem(item, 2, PConvIntArrayToPyList(I->state, N));
 
+    PyList_Append(result, item);
+    Py_DECREF(item);
     I = I->next;
   }
 
@@ -288,7 +289,7 @@ PyObject *DistSetAsPyList(DistSet * I)
   PyObject *result = NULL;
 
   if(I) {
-    result = PyList_New(9);
+    result = PyList_New(10);
 
     PyList_SetItem(result, 0, PyInt_FromLong(I->NIndex));
     PyList_SetItem(result, 1, PConvFloatArrayToPyListNullOkay(I->Coord, I->NIndex * 3));
@@ -306,7 +307,7 @@ PyObject *DistSetAsPyList(DistSet * I)
     } else {
       PyList_SetItem(result, 8, PConvAutoNone(NULL));
     }
-    PyList_Append(result, MeasureInfoListAsPyList(I->MeasureInfo));
+    PyList_SetItem(result, 9, MeasureInfoListAsPyList(I->MeasureInfo));
     /* TODO setting ... */
   }
   return (PConvAutoNone(result));

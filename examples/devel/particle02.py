@@ -24,9 +24,9 @@ half_box = box_size / 2
 particle = [] 
 for resi in range(0,particle_count):
     particle.append([resi] + 
-                     map(lambda x:(random()-0.5)*box_size/2,[0]*3) + # x,y,z
+                     [(random()-0.5)*box_size/2 for x in [0]*3] + # x,y,z
                     [random()+0.5] + # r
-                    map(lambda x:(random()-0.5),[0]*3) # vx,vy,vz
+                    [(random()-0.5) for x in [0]*3] # vx,vy,vz
                     )
         
 # create cloud object
@@ -39,7 +39,11 @@ for part in particle:
 
 # draw spheres efficiently
 cmd.show_as("spheres")
-cmd.unset("cull_spheres") 
+
+try:
+    cmd.unset("cull_spheres")
+except:
+    pass
 
 # defer geometry generation until needed
 

@@ -2,6 +2,28 @@
 CHANGE LOG
 =========================================================================
 
+2017-12-05 Thomas Holder, Piotr Rotkiewicz
+
+	* Python API: New "auto library mode". Automatically start a
+	  non-GUI PyMOL instance if the pymol.cmd API is used without
+	  running pymol.launch() first
+
+	* pdb_echo_tags for mmCIF and MMTF
+
+	* command parser: improve exception handling
+
+	* fix some PSE export memory leaks
+
+	* pymol2.cmd2: eliminate (non-weak) circular references
+
+	* movie making: reinterpolate after add_nutate/add_roll etc.
+
+	* support "module:callable" in loadfunctions/safefunctions
+
+	* yellow state indicator for discrete objects
+
+	* mpng modal draw improvements
+
 2017-10-23 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* pse_export_version support with Python 3 (experimental)

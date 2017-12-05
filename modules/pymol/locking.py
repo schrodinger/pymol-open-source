@@ -53,7 +53,7 @@ class LockCM(object):
     API lock context manager
     '''
     def __init__(self, _self=cmd):
-        self.cmd = _self
+        self.cmd = _self._weakrefproxy
     def __enter__(self):
         lock(self.cmd)
     def __exit__(self, type, value, traceback):

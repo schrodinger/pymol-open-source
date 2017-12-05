@@ -1077,12 +1077,7 @@ void MainFree(void)
 
 /* END PROPRIETARY CODE SEGMENT */
 
-  PyMOL_PushValidContext(PyMOLInstance);
-  PyMOL_Stop(PyMOLInstance);
-  PyMOL_PopValidContext(PyMOLInstance);
-
   FreeP(G->Main);
-  PyMOL_Free(PyMOLInstance);
 
   if(owned_options)
     PyMOLOptions_Free(owned_options);   /* clean up launch options if we're supposed to */

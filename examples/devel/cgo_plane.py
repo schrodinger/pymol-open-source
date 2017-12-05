@@ -57,12 +57,13 @@ plane = map( lambda p,v=view: [
    v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
    v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
    ], plane )
+plane = list(plane)
 
-normal = apply( lambda p,v=view:[
+normal = ( lambda p,v=view:[
    v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
    v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
    v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
-   ], (normal,) )
+   ])(*(normal,))
 
 # and position relative to the camera 
 
@@ -71,6 +72,7 @@ plane = map( lambda p,v=view: [
    p[1] + v[10] + v[13],
    p[2] +       + v[14],
    ], plane )
+plane = list(plane)
 
 # set color
 obj.extend( [ COLOR, 0.8, 0.8, 0.8 ] ) # greyish

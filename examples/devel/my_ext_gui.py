@@ -21,7 +21,7 @@
 import threading
 
 def run(pymol):
-   print "\nNow start my custom gui here..."
+   print("\nNow start my custom gui here...")
 
    # next step might be to import wxPython, set the pymol property,
    # open windows, etc.

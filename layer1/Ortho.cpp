@@ -2158,6 +2158,9 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
 {
   COrtho *I = G->Ortho;
 
+  if(!G->HaveGUI && width < 0)
+    return;
+
   Block *block = NULL;
   int sceneBottom, sceneRight = 0;
   int textBottom = 0;

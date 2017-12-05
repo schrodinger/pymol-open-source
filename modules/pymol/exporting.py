@@ -685,7 +685,7 @@ SEE ALSO
         r = DEFAULT_ERROR
 
         # analyze filename
-        from pymol.importing import filename_to_format
+        from pymol.importing import filename_to_format, _eval_func
         _, _, format_guessed, zipped = filename_to_format(filename)
         filename = _self.exp_path(filename)
 
@@ -714,6 +714,7 @@ SEE ALSO
         if format in savefunctions:
             # generic forwarding to format specific save functions
             func = savefunctions[format]
+            func = _eval_func(func)
             kw = {
                 'filename': filename,
                 'selection': selection,
@@ -829,8 +830,6 @@ SEE ALSO
         i = {'mtl': 0, 'obj': 1}.get(format)
         return _self.get_mtl_obj()[i]
 
-    from . import querying
-
     savefunctions = {
         'cif': get_str, # mmCIF
         'xyz': get_str,
@@ -851,10 +850,10 @@ SEE ALSO
         'png': png,
 
         # no arguments (some have a "version" argument)
-        'dae': querying.get_collada,
-        'wrl': querying.get_vrml,
-        'pov': querying.get_povray,
-        'idtf': querying.get_idtf,
+        'dae': 'pymol.querying:get_collada',
+        'wrl': 'pymol.querying:get_vrml',
+        'pov': 'pymol.querying:get_povray',
+        'idtf': 'pymol.querying:get_idtf',
         'mtl': _get_mtl_obj, # TODO not implemented
         'obj': _get_mtl_obj,
     }

@@ -48,31 +48,31 @@ if 1:
 if 1:
    time.sleep(5)
    pymol.cmd.window("hide")
-   print "Peek-a-boo!"
+   print("Peek-a-boo!")
    time.sleep(1)
    pymol.cmd.window("show")
    time.sleep(5)
    pymol.cmd.window("hide")
-   print "Peek-a-boo!"
+   print("Peek-a-boo!")
    time.sleep(1)
    pymol.cmd.window("show")
    time.sleep(5)
    pymol.cmd.window("hide")
-   print "Peek-a-boo!"
+   print("Peek-a-boo!")
    time.sleep(1)
    pymol.cmd.window("show")
 
 # now quit 
 
-   print "Quitting..."
+   print("Quitting...")
    time.sleep(1)
-   print "3..."
+   print("3...")
    time.sleep(1)
-   print "2..."
+   print("2...")
    time.sleep(1)
-   print "1..."
+   print("1...")
    time.sleep(1)
-   print "Die!"
+   print("Die!")
 
 # note, we cannot let the main thread terminate without first calling
 # pymol.cmd.quit() which will take-down PyMOL

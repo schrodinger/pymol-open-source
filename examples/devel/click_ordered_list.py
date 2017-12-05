@@ -79,9 +79,9 @@ class Clicker(Wizard):
         
     def print_list(self):
         cnt = 1
-        print "Atoms Clicked (in order):"
+        print("Atoms Clicked (in order):")
         for entry in self.click_list:
-            print "Atom %d: %s"%(cnt,entry)
+            print("Atom %d: %s"%(cnt,entry))
             cnt = cnt + 1
 
     def cleanup(self):

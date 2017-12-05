@@ -26,7 +26,11 @@
 pymol_argv = [ "pymol", "-q" ]
 #
 # === Launch the PyMOL thread(s)
-import os,threading,__main__,__builtin__
+try:
+    import __builtin__
+except ImportError:
+    import builtins as __builtin__
+import os,threading,__main__
 threading.Thread(target=__builtin__.execfile,
      args=(os.environ['PYMOL_PATH']+"/modules/launch_pymol.py",
            __main__.__dict__,__main__.__dict__)).start()
@@ -44,6 +48,6 @@ while not pymol._cmd.ready():
 from pymol import cmd
 
 cmd.load("$PYMOL_PATH/test/dat/pept.pdb")
-print " The surface area is: %8.3f"%cmd.get_area()
+print(" The surface area is: %8.3f"%cmd.get_area())
 
 

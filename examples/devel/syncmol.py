@@ -21,15 +21,21 @@
 
 import threading
 import socket
-import cPickle
 import socket # For gethostbyaddr()
-import SocketServer
 import sys
 import traceback
 import copy
 import os
 import time
-import Queue
+
+try:
+    import cPickle
+    import SocketServer
+    import Queue
+except ImportError:
+    import pickle as cPickle
+    import socketserver as SocketServer
+    import queue as Queue
 
     
 class PyMOLWriter: # this class transmits
@@ -44,7 +50,7 @@ class PyMOLWriter: # this class transmits
         self.fifo = Queue.Queue(0)
         cmd = self.cmd
 
-        print " syncmol: writing to %s:%d"%(host,port)
+        print(" syncmol: writing to %s:%d"%(host,port))
         pymol.cmd.log_open(self.fifo)
         
         last_view = None
@@ -92,7 +98,7 @@ class PyMOLWriter: # this class transmits
                 self.recv = self.sock.makefile('r')
             except:
                 self.sock=None
-                print "retrying..."
+                print("retrying...")
                 time.sleep(1)
         cPickle.dump(meth,self.send,1) # binary by default
         cPickle.dump(args,self.send,1)
@@ -124,7 +130,7 @@ class PyMOLReader: # this class receives
         pymol.cmd.remote_set_view = remote_set_view
         ddbs.cmd = pymol.cmd
 
-        print " syncmol: reading from port %d"%(port)
+        print(" syncmol: reading from port %d"%(port))
         # now serve requests forever
         ddbs.keep_alive = 1
         while ddbs.keep_alive:
@@ -158,7 +164,7 @@ class _PyMOLRequestHandler(SocketServer.StreamRequestHandler):
 
              try:
                  method = cPickle.load(self.rfile)
-             except EOFError,socket.error:
+             except (EOFError, socket.error):
                  break
 
              if method == 'shutdown':
@@ -172,7 +178,7 @@ class _PyMOLRequestHandler(SocketServer.StreamRequestHandler):
              meth_obj = getattr(self.server.cmd,method)
 
              # call method and return result
-             cPickle.dump(apply(meth_obj,args,kw),self.wfile,1) # binary by default
+             cPickle.dump(meth_obj(*args, **kw),self.wfile,1) # binary by default
              self.wfile.flush()
              
 if __name__=='pymol':

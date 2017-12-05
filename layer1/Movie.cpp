@@ -907,6 +907,13 @@ int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start,
 
   UtilZeroMem(M, sizeof(CMovieModal));
 
+  mode = SceneValidateImageMode(G, mode, width || height);
+
+  /* default behavior is to go modal unless we're ray tracing */
+  if(modal < 0 && mode == cSceneImage_Ray) {
+    modal = 0;
+  }
+
   UtilNCopy(M->prefix, prefix, sizeof(OrthoLineType));
   M->save = save;
   M->start = start;
@@ -928,12 +935,6 @@ int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start,
     OrthoDoDraw(G, 0);
   }
 
-  if(modal < 0) {
-    /* default behavior is to go modal unless we're ray tracing */
-    if((mode < cSceneImage_Ray) || (!SettingGetGlobal_b(G, cSetting_ray_trace_frames))) {
-      modal = 1;
-    }
-  }
   M->modal = modal;
 
   if(modal) {

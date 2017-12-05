@@ -24,7 +24,7 @@ axes = [
 
 
 c=0
-for a in xrange(0,63):
+for a in range(0,63):
    balls = [
       COLOR,  0.2, 1.0, 0.2,
       SPHERE, 1.0+math.cos(a/10.0), 1.0+math.sin(a/20.0), 1.0+math.cos(a/10.0), 0.2+math.cos(a/5.0)/10.0,

@@ -254,9 +254,8 @@ def exec_deferred(self):
         socket_error = None
         print('import socket failed')
 
-    import pymol as _pymol
-
     cmd = self.cmd
+    _pymol = cmd._pymol
 
     # read from stdin (-p)
     if self.invocation.options.read_stdin and not _pymol._stdin_reader_thread:
@@ -524,9 +523,10 @@ class Session_Storage:
 def _colortype(cmd):
     # backwards compatible color index type for iterate, which used
     # to expose colors as RGB tuples
+    get_color_tuple = cmd.get_color_tuple
     class Color(int):
         def __getitem__(self, i):
-            return cmd.get_color_tuple(self)[i]
+            return get_color_tuple(self)[i]
         def __len__(self):
             return 3
 

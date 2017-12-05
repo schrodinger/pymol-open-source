@@ -52,8 +52,6 @@ class SingletonPyMOL:
         _cmd._drag(self._COb, x, y, modifiers)
 
     def start(self):
-        pymol.prime_pymol()
-
         cmd = pymol.cmd
         if cmd._COb is not None:
             raise RuntimeError('can only start SingletonPyMOL once')
@@ -65,6 +63,13 @@ class SingletonPyMOL:
         # this instance tracking is redundant with the "cmd" module itself
         self._COb = cmd._COb
         self.cmd = cmd
+
+    def stop(self):
+        with pymol2_lock:
+            _cmd._stop(self._COb)
+            _cmd._del(self._COb)
+
+        pymol.cmd._COb = None
 
 
 class PyMOL(SingletonPyMOL):
@@ -116,6 +121,7 @@ class PyMOL(SingletonPyMOL):
 
     def __del__(self):
         _cmd._del(self._COb)
+        self.cmd.__dict__.clear()
         
     def start(self):
         with pymol2_lock:

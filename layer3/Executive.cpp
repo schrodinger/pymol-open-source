@@ -12190,6 +12190,7 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
 		PyList_SetItem(pyObjList, 0, PyString_FromString(obj->Obj.Name));
 		PyList_SetItem(pyObjList, 1, pyBondList);
 		PyList_Append(result, pyObjList);
+		Py_DECREF(pyObjList);
 	      }
 	      PyList_SetItem(pyBondInfo, 0, PyInt_FromLong((long)bi->index[0]+1));
 	      PyList_SetItem(pyBondInfo, 1, PyInt_FromLong((long)bi->index[1]+1));
@@ -12199,6 +12200,7 @@ PyObject *ExecutiveGetBondSetting(PyMOLGlobals * G, int index,
 	      }
 	      PyList_SetItem(pyBondInfo, 2, PConvAutoNone(bond_setting_value));
 	      PyList_Append(pyBondList, pyBondInfo);
+	      Py_DECREF(pyBondInfo);
 	      nSet++;
 	    }
 	    bi++;
@@ -16596,23 +16598,18 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
                 TextSetPos2i(G, x + 2 + 8 * (max_char - nChar), y2 + text_lift);
                 if((nChar--) > 0)
                   TextDrawChar(G, ' ' ORTHOCGOARGVAR);
-                while(*c)
-                  if((nChar--) > 0) {
+                while(*c && nChar > 0) {
 		    /* allow color encoding for names */
-		    if((*c == '\\') && (*(c + 1)) && (*(c + 2)) && (*(c + 3))) {
+                  if((*c == '\\') && (*(c + 1)) && (*(c + 2)) && (*(c + 3))) {
 		      TextSetColor3f(G, (*(c + 1) - '0') / 9.0F, (*(c + 2) - '0') / 9.0F,
 				     (*(c + 3) - '0') / 9.0F);
 		      c += 4;
-		    }
+                  } else {
                     TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
+                    --nChar;
 		  }
-                  else
-                    break;
+                }
               }
-	      /* I added this to fix a string clearing problem,
-	       * but it then caused an issue with groups. Interestingly,
-	       * removing this fixes the bug and no longer makes the other bug */
-	      /* c[0] = 0; */
             }
           }
 

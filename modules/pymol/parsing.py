@@ -528,7 +528,7 @@ SEE ALSO
         exec(co, global_ns, local_ns)
 
     def run_file(file,global_ns,local_ns):
-        pymol.__script__ = file
+        global_ns['__script__'] = file
         try:
             execfile(file,global_ns,local_ns)
         except pymol.CmdException:

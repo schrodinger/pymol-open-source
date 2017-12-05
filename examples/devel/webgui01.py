@@ -1,5 +1,7 @@
-import SocketServer
-import BaseHTTPServer
+try:
+    import BaseHTTPServer
+except ImportError:
+    import http.server as BaseHTTPServer
 
 import time
 import cgi
@@ -159,7 +161,7 @@ function monitorOnLoad(event)
             
             self.end_headers()
             upfilecontent = query.get('upfile')
-            print "filecontent", upfilecontent[0]
+            print("filecontent", upfilecontent[0])
             self.wfile.write('<HTML>POST OK.<BR><BR>');
             self.wfile.write(upfilecontent[0]);
             
@@ -170,10 +172,10 @@ def main():
     try:
         global _server
         _server = BaseHTTPServer.HTTPServer(('', 8080), PymolHandler)
-        print 'started httpserver...'
+        print('started httpserver...')
         _server.serve_forever()
     except KeyboardInterrupt:
-        print '^C received, shutting down server'
+        print('^C received, shutting down server')
         _server.socket.close()
 
 def open_browser():
