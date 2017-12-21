@@ -12,7 +12,7 @@ class Command(wizard.Wizard):
     Generic wizard for any PyMOL command.
     '''
 
-    async = 1
+    async_ = 1
     ignored_args = ('quiet',)
 
     def __init__(self, command, _self=cmd):
@@ -74,8 +74,8 @@ class Command(wizard.Wizard):
         self.cmd.refresh_wizard()
 
     def run(self):
-        if self.async:
-            self.cmd.async(self.func, **self.current)
+        if self.async_:
+            self.cmd.async_(self.func, **self.current)
         else:
             self.func(**self.current)
 

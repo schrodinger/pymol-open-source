@@ -128,6 +128,18 @@ double cif_array::as_d(int row, double d) const {
   return s ? scifloat(s) : d;
 }
 
+// true if all values in ['.', '?']
+bool cif_array::is_missing_all() const {
+  int n = get_nrows();
+
+  for (int i = 0; i < n; ++i) {
+    if (!is_missing(i))
+      return false;
+  }
+
+  return true;
+}
+
 // templated getters
 template <> const char* cif_array::as<const char* >(int row) const { return as_s(row); }
 template <> std::string cif_array::as<std::string >(int row) const { return as_s(row); }

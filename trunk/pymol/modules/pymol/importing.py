@@ -1283,6 +1283,12 @@ PYMOL API
             obj_name = name
             type = all_type
 
+            if not type:
+                if 1 < len(obj_code) < 4:
+                    type = 'cc'
+                else:
+                    type = _self.get('fetch_type_default')
+
             # allow fetching codes like EMD-3489 or emd_3489
             if obj_code[3:4] in ('_', '-') and \
                     obj_code[:3].upper() in ('CID', 'SID', 'EMD'):
@@ -1316,8 +1322,8 @@ PYMOL API
         return r
     
     def fetch(code, name='', state=0, finish=1, discrete=-1,
-              multiplex=-2, zoom=-1, type='', async=-1, path='',
-              file=None, quiet=1, _self=cmd):
+              multiplex=-2, zoom=-1, type='', async_=-1, path='',
+              file=None, quiet=1, _self=cmd, **kwargs):
         
         '''
 DESCRIPTION
@@ -1362,24 +1368,18 @@ NOTES
         '''
         state, finish, discrete = int(state), int(finish), int(discrete)
         multiplex, zoom = int(multiplex), int(zoom)
-        async, quiet = int(async), int(quiet)
-
-        if not type:
-            if len(code) == 3:
-                type = 'cc'
-            else:
-                type = _self.get('fetch_type_default')
+        async_, quiet = int(kwargs.pop('async', async_)), int(quiet)
 
         r = DEFAULT_SUCCESS
         if not path:
             # blank paths need to be reset to '.'
             path = setting.get('fetch_path',_self=_self) or '.'
-        if async<0: # by default, run asynch when interactive, sync when not
-            async = not quiet
+        if async_ < 0: # by default, run asynch when interactive, sync when not
+            async_ = not quiet
         args = (code, name, state, finish, discrete, multiplex, zoom, type, path, file, quiet, _self)
         kwargs = { '_self' : _self }
-        if async:
-            _self.async(_multifetch, *args, **kwargs)
+        if async_:
+            _self.async_(_multifetch, *args, **kwargs)
         else:
             try:
                 _self.block_flush(_self)

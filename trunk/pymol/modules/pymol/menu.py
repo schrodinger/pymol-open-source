@@ -839,6 +839,7 @@ def selection(self_cmd, sele):
               [ 1, 'donors', 'cmd.select("'+sele+'_donors","('+sele+') and hbd")'],
               [ 1, 'acceptors', 'cmd.select("'+sele+'_acceptors","('+sele+') and hba")'],           
               [ 1, 'surface atoms', 'util.find_surface_atoms(sele="'+sele+'", _self=cmd)' ],
+              [ 1, 'C-alphas', 'cmd.select("'+sele+'_calpha","bycalpha ('+sele+')")'],
               ]
 
 def mol_generate(self_cmd, sele):

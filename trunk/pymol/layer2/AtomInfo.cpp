@@ -585,12 +585,36 @@ int AtomInfoKnownWaterResName(PyMOLGlobals * G, const char *resn)
 
 int AtomInfoKnownPolymerResName(const char *resn)
 {
+  return AtomInfoKnownProteinResName(resn) ||
+         AtomInfoKnownNucleicResName(resn);
+}
+
+int AtomInfoKnownNucleicResName(const char *resn)
+{
+  if (resn[0] == 'D') {
+    // Deoxy ribonucleotide
+    ++resn;
+  }
+
+  switch (resn[0]) {
+    case 'A':
+    case 'C':
+    case 'G':
+    case 'I':
+    case 'T':
+    case 'U':
+      if (!resn[1])
+        return true;
+  }
+
+  return false;
+}
+
+int AtomInfoKnownProteinResName(const char *resn)
+{
   switch (resn[0]) {
   case 'A':
     switch (resn[1]) {
-    case 0: /*  A*/
-      return true;
-      break;
     case 'L':
       switch (resn[2]) {
       case 'A': /* ALA */
@@ -619,8 +643,6 @@ int AtomInfoKnownPolymerResName(const char *resn)
     break;
   case 'C':
     switch (resn[1]) {
-    case 0: /* C */
-      return true;
     case 'Y':
       switch (resn[2]) {
       case 'S': /* CYS */
@@ -631,51 +653,8 @@ int AtomInfoKnownPolymerResName(const char *resn)
       break;
     }
     break;
-  case 'D':
-    switch (resn[1]) {
-    case 'G': /* DG */
-      switch (resn[2]) {
-      case 0:
-        return true;
-        break;
-      }
-    case 'C': /* DC */
-      switch (resn[2]) {
-      case 0:
-        return true;
-        break;
-      }
-    case 'T': /* DT */
-      switch (resn[2]) {
-      case 0:
-        return true;
-        break;
-      }
-    case 'A': /* DA */
-      switch (resn[2]) {
-      case 0:
-        return true;
-        break;
-      }
-    case 'U': /* DU */
-      switch (resn[2]) {
-      case 0:
-        return true;
-        break;
-      }
-    case 'I': /* DI */
-      switch (resn[2]) {
-      case 0:
-        return true;
-        break;
-      }
-    }
-    break;
   case 'G':
     switch (resn[1]) {
-    case 0: /* G */
-      return true;
-      break;
     case 'L':
       switch (resn[2]) {
       case 'N': /* GLN */
@@ -703,6 +682,7 @@ int AtomInfoKnownPolymerResName(const char *resn)
       }
       break;
     }
+    break;
   case 'I':
     switch (resn[1]) {
     case 'L':
@@ -785,8 +765,6 @@ int AtomInfoKnownPolymerResName(const char *resn)
     break;
   case 'T':
     switch (resn[1]) {
-    case 0: /* T */
-      return true;
     case 'H':
       switch (resn[2]) {
       case 'R': /* THR */
@@ -807,13 +785,6 @@ int AtomInfoKnownPolymerResName(const char *resn)
         return true;
         break;
       }
-      break;
-    }
-    break;
-  case 'U':
-    switch (resn[1]) {
-    case 0: /* U */
-      return true;
       break;
     }
     break;
@@ -2088,14 +2059,13 @@ static int AtomInfoCompare(PyMOLGlobals *G, const AtomInfoType *at1, const AtomI
 
   if (at1->priority != at2->priority) return (at1->priority < at2->priority) ? -1 : 1;
 
-  // empty alt code goes last: 'A' < 'B' < ''
+  // Changed (PyMOL 2.1): name before alt
+  if ((wc = AtomInfoNameCompare(G, at1->name, at2->name))) return wc;
+
+  // Changed (PyMOL 2.1): empty alt goes first: '' < 'A' < 'B'
   if (at1->alt[0] != at2->alt[0]) {
-    if (!at2->alt[0]) return -1;
-    if (!at1->alt[0]) return 1;
     return (at1->alt[0] < at2->alt[0]) ? -1 : 1;
   }
-
-  if ((wc = AtomInfoNameCompare(G, at1->name, at2->name))) return wc;
 
 rank_compare:
   if (!ignore_rank && at1->rank != at2->rank) return (at1->rank < at2->rank) ? -1 : 1;
@@ -2123,10 +2093,18 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, const AtomInfoType * at1, const A
   return AtomInfoCompare(G, at1, at2, true, false);
 }
 
+/*
+ * Function only used for matching atoms of two aligned residues.
+ *
+ * Changed (PyMOL 2.1):
+ * Consider alt codes to be equal if at least one is empty.
+ * Otherwise, alt-code (C-alpha) atoms can't be aligned to non-alt atoms
+ * (also affects morphing).
+ */
 int AtomInfoNameOrder(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfoType * at2)
 {
   int result;
-  if(at1->alt[0] == at2->alt[0]) {
+  if(at1->alt[0] == at2->alt[0] || !at1->alt[0] || !at2->alt[0]) {
     if(at1->priority == at2->priority) {
       result = AtomInfoNameCompare(G, at1->name, at2->name);
     } else if(at1->priority < at2->priority) {
@@ -2134,7 +2112,7 @@ int AtomInfoNameOrder(PyMOLGlobals * G, const AtomInfoType * at1, const AtomInfo
     } else {
       result = 1;
     }
-  } else if((!at2->alt[0]) || (at1->alt[0] && ((at1->alt[0] < at2->alt[0])))) {
+  } else if(at1->alt[0] < at2->alt[0]) {
     result = -1;
   } else {
     result = 1;

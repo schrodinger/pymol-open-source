@@ -644,7 +644,7 @@ SEE ALSO
 
     async_threads = []
 
-    def async(func, *args, **kwargs):
+    def async_(func, *args, **kwargs):
         '''
 DESCRIPTION
 

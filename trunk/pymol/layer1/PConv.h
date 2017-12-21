@@ -102,7 +102,7 @@ int PConvPyListToStringVLA(PyObject * obj, char **vla_ptr);
 
 int PConvPyStrToStr(PyObject * obj, char *ptr, int l);
 #ifndef _PYMOL_NOPY
-int PConvPyStrToStrPtr(PyObject * obj, char **ptr);
+int PConvPyStrToStrPtr(PyObject * obj, const char **ptr);
 #endif
 int PConvPyStrToLexRef(PyObject * obj, OVLexicon * lex, int *lex_ref);
 int PConvPyFloatToFloat(PyObject * obj, float *ptr);

@@ -488,7 +488,7 @@ int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
     if(ok)
       ok = PConvPyIntToInt(PyList_GetItem(list, 13), &view->scene_flag);
     if(ok && view->scene_flag) {
-      char *ptr = NULL;
+      const char *ptr = NULL;
       view->scene_flag = false;
       if(PConvPyStrToStrPtr(PyList_GetItem(list, 14), &ptr)) {
         OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon, ptr);

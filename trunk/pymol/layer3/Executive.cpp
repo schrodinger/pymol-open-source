@@ -209,6 +209,14 @@ CObject * ObjectIterator::getObject() {
   return rec->obj;
 }
 
+/*
+ * True if `rec` and all its parent groups are enabled
+ */
+static bool SpecRecIsEnabled(const SpecRec * rec) {
+  while (rec->visible && (rec = rec->group)) {}
+  return !rec;
+}
+
 /* ======================================================= */
 
 static void ReportEnabledChange(PyMOLGlobals * G, SpecRec *rec){
@@ -2030,7 +2038,7 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, const char *name,
       while((cand_id = TrackerIterNextCandInList(I_Tracker, iter_id,
                                                  (TrackerRef **) (void *) &rec))) {
         if(rec && !(rec->type == cExecAll)) {
-          bool test = match_enabled ? rec->visible :
+          bool test = match_enabled ? SpecRecIsEnabled(rec) :
             WordMatcherMatchAlpha(matcher, rec->name);
           if(test ^ match_not) {
             if((rec->type == cExecObject) && (rec->obj->type == cObjectGroup))
@@ -5654,7 +5662,7 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
     if(tmp) {
       ok = PyString_Check(tmp);
       if(ok) {
-        char *st = PyString_AsString(tmp);
+        const char *st = PyString_AsString(tmp);
         if(st) {
           if(Feedback(G, FB_Nag, FB_Warnings)) {
             OrthoAddOutput(G, st);
@@ -10800,7 +10808,7 @@ int ExecutiveIterateList(PyMOLGlobals * G, const char *name,
     int list_len = 0;
     int a;
     int index = 0;
-    char *expr = NULL;
+    const char *expr = NULL;
     if(ok)
       ok = PyList_Check(list);
     if(ok) {
@@ -11438,7 +11446,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
                 }
                 if(!quiet && (n_next != n_pair)) {
                   PRINTFB(G, FB_Executive, FB_Actions)
-                    " ExecutiveRMS: %d atoms rejected during cycle %d (RMS=%0.2f).\n",
+                    " ExecutiveRMS: %d atoms rejected during cycle %d (RMSD=%0.2f).\n",
                     n_pair - n_next, b, rms ENDFB(G);
                 }
                 n_pair = n_next;
@@ -11472,7 +11480,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *s1, const char *s2, int mode, flo
       if(ok) {
         if(!quiet) {
           PRINTFB(G, FB_Executive, FB_Results)
-            " Executive: RMS = %8.3f (%d to %d atoms)\n", rms, n_pair, n_pair ENDFB(G);
+            " Executive: RMSD = %8.3f (%d to %d atoms)\n", rms, n_pair, n_pair ENDFB(G);
         }
         if(oname && oname[0]) {
             int align_state = state2;
@@ -11784,7 +11792,7 @@ float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode)
       else
         rms = MatrixGetRMS(G, op1.nvv1, op1.vv1, op2.vv1, NULL);
       PRINTFB(G, FB_Executive, FB_Results)
-        " ExecutiveRMS: RMS = %8.3f (%d to %d atoms)\n", rms, op1.nvv1, op2.nvv1 ENDFB(G);
+        " ExecutiveRMS: RMSD = %8.3f (%d to %d atoms)\n", rms, op1.nvv1, op2.nvv1 ENDFB(G);
 
       op2.code = OMOP_TTTF;
       SelectorGetTmp(G, combi, s1);

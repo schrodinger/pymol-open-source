@@ -245,7 +245,7 @@ int PConvPyStrToLexRef(PyObject * obj, OVLexicon * lex, int *lex_ref)
 }
 
 #ifndef _PYMOL_NOPY
-int PConvPyStrToStrPtr(PyObject * obj, char **ptr)
+int PConvPyStrToStrPtr(PyObject * obj, const char **ptr)
 {
   int ok = true;
   if(!obj) {

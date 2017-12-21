@@ -2,6 +2,25 @@
 CHANGE LOG
 =========================================================================
 
+2017-12-21 Thomas Holder, Piotr Rotkiewicz
+
+	* Python 3.7 support (https://sf.net/p/pymol/bugs/197/)
+
+	* enable align with alt-codes
+	  - allow matching of non-alt-code to alt-code atoms in alignments
+	  - swap sorting priority of 'name' and 'alt' identifiers
+	  - sort empty 'alt' before non-empty 'alt'
+
+	* flags 6 and 7 for protein and nucleic acid
+
+	* mmCIF: read _atom_site.pdbx_formal_charge
+
+	* improve coordinate loading from mmcif chem_comp files
+	  - ignore columns with all ? (missing) values
+	  - select columns with "chem_comp_cartn_use" setting
+
+	* fix h_add: skip missing coordinates
+
 2017-12-05 Thomas Holder, Piotr Rotkiewicz
 
 	* Python API: New "auto library mode". Automatically start a

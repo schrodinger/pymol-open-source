@@ -1239,8 +1239,10 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
       a1--;
 
       mask = 0;
-      if(AtomInfoKnownPolymerResName(LexStr(G, ai->resn)) && (!ai->hetatm))
-        mask = cAtomFlag_polymer;
+      if(!ai->hetatm && AtomInfoKnownProteinResName(LexStr(G, ai->resn)))
+        mask = cAtomFlag_polymer | cAtomFlag_protein;
+      else if(!ai->hetatm && AtomInfoKnownNucleicResName(LexStr(G, ai->resn)))
+        mask = cAtomFlag_polymer | cAtomFlag_nucleic;
       else if(AtomInfoKnownWaterResName(G, LexStr(G, ai->resn)))
         mask = cAtomFlag_solvent;
       else {
@@ -1377,10 +1379,11 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
           ai0++;
         }
 
-        if((found_ca && found_n && found_c && found_o && (found_cn_bond || found_nc_bond))
-           || (found_o3star && found_c3star && found_c4star && found_c5star
-               && found_o5star && (found_o3_bond || found_p_bond))) {
-          mask = cAtomFlag_polymer;
+        if(found_ca && found_n && found_c && found_o && (found_cn_bond || found_nc_bond)) {
+          mask = cAtomFlag_polymer | cAtomFlag_protein;
+        } else if (found_o3star && found_c3star && found_c4star && found_c5star
+               && found_o5star && (found_o3_bond || found_p_bond)) {
+          mask = cAtomFlag_polymer | cAtomFlag_nucleic;
         } else if(found_carbon)
           mask = cAtomFlag_organic;
         else if((found_o || found_oh2) && (a1 == a0))
@@ -1420,9 +1423,9 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
         }
       }
 
-      if((!guide_atom) && (mask == cAtomFlag_polymer)) {
+      if((mask & cAtomFlag_polymer)) {
         ai0 = obj->AtomInfo + I->Table[a0].atom;
-        for(aa = a0; aa <= a1; aa++) {
+        for(aa = a0; !guide_atom && aa <= a1; aa++) {
           if(ai0->protons == cAN_C) {
             const char *name = LexStr(G, ai0->name);
             switch (name[0]) {
@@ -1434,6 +1437,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
                   guide_atom = ai0;
                   break;
                 }
+                break;
               case '4':
                 switch (name[2]) {      /* use C4* as guide atom for nucleic acids */
                 case '*':
@@ -1916,6 +1920,15 @@ int SelectorAssignSS(PyMOLGlobals * G, int target, int present,
       first_last_only = true;
     state_start = 0;
     state_stop = SelectorGetSeleNCSet(G, target);
+
+    if (state_value == -2) {
+      /* api: state=-1: current global state */
+      StateIterator iter(G, NULL, state_value, state_stop);
+      if (iter.next()) {
+        state_start = iter.state;
+        state_stop = iter.state + 1;
+      }
+    }
   } else {
     state_start = state_value;
     state_stop = state_value + 1;
@@ -3340,7 +3353,7 @@ int SelectorFromPyList(PyMOLGlobals * G, const char *name, PyObject * list)
   PyObject *idx_list = NULL, *tag_list;
   ov_size n_obj = 0, n_idx = 0;
   int idx, tag;
-  char *oname;
+  const char *oname;
   ObjectMolecule *obj;
   int singleAtomFlag = true;
   int singleObjectFlag = true;
@@ -8451,14 +8464,7 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     break;
   case SELE_METz:
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
-      b = i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].protons;
-      base[0].sele[a] = (
-          (b >  2 && b <  5) ||
-          (b > 10 && b < 14) ||
-          (b > 18 && b < 32) ||
-          (b > 36 && b < 51) ||
-          (b > 54 && b < 85) ||
-          b > 86);
+      base[0].sele[a] = i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].isMetal();
     }
     break;
   case SELE_BB_z:

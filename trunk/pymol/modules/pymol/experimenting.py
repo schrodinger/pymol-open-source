@@ -128,7 +128,7 @@ DESCRIPTION
         sele = '(' + sele + ')'
 
         if not int(_setup) or realtime.setup(sele):
-            _self.async(realtime.mini, int(iter), float(grad), int(interval), sele)
+            _self.async_(realtime.mini, int(iter), float(grad), int(interval), sele)
         else:
             print(" minimize: missing parameters, can't continue")
 

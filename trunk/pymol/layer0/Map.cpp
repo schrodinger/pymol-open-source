@@ -946,6 +946,21 @@ static MapType *_MapNew(PyMOLGlobals * G, float range, float *vert, int nVert,
       I->Max[a] = I->Min[a];
       I->Min[a] = tmp_f;
     }
+
+    // empirical limit to avoid crash in PYMOL-3002
+    const float SANITY_LIMIT = 1e10;
+    if(I->Min[a] < -SANITY_LIMIT) {
+      PRINTFB(G, FB_Map, FB_Warnings)
+        " %s-Warning: clamping Min %e -> %e\n", __FUNCTION__,
+        I->Min[a], -SANITY_LIMIT ENDFB(G);
+      I->Min[a] = -SANITY_LIMIT;
+    }
+    if(I->Max[a] > SANITY_LIMIT) {
+      PRINTFB(G, FB_Map, FB_Warnings)
+        " %s-Warning: clamping Max %e -> %e\n", __FUNCTION__,
+        I->Max[a], SANITY_LIMIT ENDFB(G);
+      I->Max[a] = SANITY_LIMIT;
+    }
   }
 
   if(Feedback(G, FB_Map, FB_Debugging)) {

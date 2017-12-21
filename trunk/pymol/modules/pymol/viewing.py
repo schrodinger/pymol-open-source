@@ -1791,7 +1791,7 @@ SEE ALSO
         return r
 
     def ray(width=0, height=0, antialias=-1, angle=0.0, shift=0.0,
-            renderer=-1, quiet=1, async=0, _self=cmd):
+            renderer=-1, quiet=1, async_=0, _self=cmd, **kwargs):
         '''
 DESCRIPTION
 
@@ -1865,7 +1865,7 @@ SEE ALSO
             _self.rock(0)
         #
         r = DEFAULT_ERROR
-        if not async:
+        if not int(kwargs.pop('async', async_)):
             r = _ray(*arg_tup)
         else:
             render_thread = threading.Thread(target=_ray, args=arg_tup)

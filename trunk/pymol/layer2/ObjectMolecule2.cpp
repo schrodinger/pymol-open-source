@@ -3917,6 +3917,86 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   return (PConvAutoNone(result));
 }
 
+/*========================================================================*/
+
+static
+float connect_cutoff_adjustment(
+    const AtomInfoType * ai1,
+    const AtomInfoType * ai2)
+{
+  if (ai1->isHydrogen() || ai2->isHydrogen())
+    return -0.2f;
+
+  if (ai1->protons == cAN_S || ai2->protons == cAN_S)
+    return 0.2f;
+
+  return 0.f;
+}
+
+/*
+ * True if two atoms should be bonded
+ */
+static
+bool is_distance_bonded(
+    PyMOLGlobals * G,
+    const CoordSet * cs,
+    const AtomInfoType * ai1,
+    const AtomInfoType * ai2,
+    const float * v1,
+    const float * v2,
+    float cutoff,
+    int connect_mode,
+    int discrete_chains,
+    bool connect_bonded,
+    bool unbond_cations)
+{
+  auto dst = (float) diff3f(v1, v2);
+  dst -= (ai1->vdw + ai2->vdw) / 2;
+
+  cutoff += connect_cutoff_adjustment(ai1, ai2);
+
+  if (dst > cutoff)
+    return false;
+
+  if (ai1->isHydrogen() && ai2->isHydrogen())
+    return false;
+
+  if (discrete_chains > 0 && ai1->chain != ai2->chain)
+    return false;
+
+  if (!connect_bonded && ai1->bonded && ai2->bonded)
+    return false;
+
+  bool water_flag = (
+      AtomInfoKnownWaterResName(G, LexStr(G, ai1->resn)) ||
+      AtomInfoKnownWaterResName(G, LexStr(G, ai2->resn)));
+
+  if (connect_mode != 3 &&
+      cs->TmpBond && /* connectivity information present in file */
+      ai1->hetatm &&
+      ai2->hetatm &&
+      !water_flag &&
+      !(AtomInfoKnownPolymerResName(LexStr(G, ai1->resn)) &&
+        AtomInfoKnownPolymerResName(LexStr(G, ai2->resn))))
+    return false;
+
+  // don't connect water atoms in different residues
+  if (water_flag && !AtomInfoSameResidue(G, ai1, ai2))
+    return false;
+
+  // don't connect atoms with different, non-NULL alternate conformations
+  if (ai1->alt[0] != ai2->alt[0] && ai1->alt[0] && ai2->alt[0])
+    return false;
+
+  // if either is a cation, unbond is user wants
+  if (unbond_cations &&
+      (AtomInfoIsFreeCation(G, ai1) ||
+       AtomInfoIsFreeCation(G, ai2)))
+    return false;
+
+  return true;
+}
+
 
 /*========================================================================*/
 int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, AtomInfoType * ai,
@@ -3937,12 +4017,8 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   AtomInfoType *ai1, *ai2;
   /* Sulfur cutoff */
   float cutoff_s;
-  /* Hydrogen cutoff */
-  float cutoff_h;
   float cutoff_v;
-  float cutoff;
   float max_cutoff;
-  int water_flag;
   int repeat = true;
   int discrete_chains = SettingGetGlobal_i(G, cSetting_pdb_discrete_chains);
   int connect_bonded = SettingGetGlobal_b(G, cSetting_connect_bonded);
@@ -3951,7 +4027,6 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   int ok = true;
   cutoff_v = SettingGetGlobal_f(G, cSetting_connect_cutoff);
   cutoff_s = cutoff_v + 0.2F;
-  cutoff_h = cutoff_v - 0.2F;
   max_cutoff = cutoff_s;
 
   if(connectModeOverride >= 0)
@@ -4042,106 +4117,17 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                   for(f = c - 1; ok && f <= c + 1; f++) {
                     j = *(j_ptr2++);    /*  *MapFirst(map,d,e,f)); */
                     while(ok && j >= 0) {
-
                       if(i < j) {
 			/* position in space for atom 2 */
                         v2 = cs->Coord + (3 * j);
-                        dst = (float) diff3f(v1, v2);
-
                         a2 = cs->IdxToAtm[j];
                         ai2 = ai + a2;
 
-                        dst -= ((ai1->vdw + ai2->vdw) / 2);
+                        flag = is_distance_bonded(G, cs, ai1, ai2, v1, v2,
+                            cutoff_v, connect_mode, discrete_chains,
+                            connect_bonded, unbond_cations);
 
-                        /* quick hack for water detection.  
-                           they don't usually don't have CONECT records 
-                           and may not be HETATMs though they are supposed to be... 
-
-			   This checks whether either atom in the bond
-			   is a known wter.
-			*/
-
-                        water_flag = false;
-                        if(AtomInfoKnownWaterResName(G, LexStr(G, ai1->resn)))
-                          water_flag = true;
-                        else if(AtomInfoKnownWaterResName(G, LexStr(G, ai2->resn)))
-                          water_flag = true;
-
-                        /* workaround for hydrogens and sulfurs... */
-
-                        if(ai1->isHydrogen() || ai2->isHydrogen())
-                          cutoff = cutoff_h;
-                        else if(((ai1->elem[0] == 'S') && (!ai1->elem[1])) ||
-                                ((ai2->elem[0] == 'S') && (!ai2->elem[1])))
-                          cutoff = cutoff_s;
-                        else
-                          cutoff = cutoff_v;
-
-			/* here's our complex atomic connectivity allow / disallow */
-
-                        if((dst <= cutoff) && /* too close to be non-covalent, AND*/ 
-			  
-                           (!(ai1->isHydrogen() && ai2->isHydrogen())) && /* not both hydrogen (what about H2?), AND */
-
-                           (water_flag ||  /* known to be a water */
-                            (!cs->TmpBond) || /* or no connectivity information present in file */
-                            ((!(ai1->hetatm && ai2->hetatm) || /* or not both PDB HETATMS */
-                              (connect_mode == 3))) || 
-
-                            ((ai1->hetatm && ai2->hetatm) && /* both hetatms, and both recognized polymer residue? */
-                             AtomInfoKnownPolymerResName(LexStr(G, ai1->resn)) && /* (new PDB rule allows these to be HETATMs */
-                             AtomInfoKnownPolymerResName(LexStr(G, ai2->resn)))
-
-                            ) && /* or we're no excluding HETATM -> HETATM bonds, AND*/
-                           
-                           
-                           ((discrete_chains < 1) || /* we allow intra-chain bonds */
-                            (ai1->chain == ai2->chain)) && /* or atoms are in the same chain, AND */
-                           
-                           (connect_bonded || /* we're allowing explicitly bonded atoms to be auto-connected */
-                            (!(ai1->bonded && ai2->bonded))) /* or neither atom was previously bonded */
-                           
-                           ) {
-                          
-			  /* WE THINK WE HAVE A BOND */
-                          flag = true;
-
-			  /* unbond edge cases */
-
-			  /* atoms in same water molecule or different? */
-                          if(water_flag)
-                            if(!AtomInfoSameResidue(G, ai1, ai2)) /* don't connect water atoms in different residues */
-                              flag = false;
-
-			  /* atoms have same alt. conformations? from same molecule? */
-                          if(flag) {
-                            if(ai1->alt[0] != ai2->alt[0]) {    /* handle alternate conformers */
-                              if(ai1->alt[0] && ai2->alt[0])
-                                flag = false;   /* don't connect atoms with different, non-NULL
-                                                   alternate conformations */
-                            } else if(ai1->alt[0] && ai2->alt[0])
-                              if(!AtomInfoSameResidue(G, ai1, ai2))
-                                if(ai1->alt[0] != ai2->alt[0])
-                                  flag = false; /* don't connect different, non-NULL 
-                                                   alt conformations in 
-                                                   different residues */
-                          }
-			  
-			  /* do not bond different water molecules, even if their alt. confs. match */
-                          if(flag) {
-                            if(ai1->alt[0] || ai2->alt[0])
-                              if(water_flag)    /* hack to clean up water bonds */
-                                if(!AtomInfoSameResidue(G, ai1, ai2))
-                                  flag = false;
-                          }
-
-			  /* if either is a cation, unbond is user wants */
-                          if(flag && unbond_cations) {
-                            if(AtomInfoIsFreeCation(G, ai1))
-                              flag = false;
-                            else if(AtomInfoIsFreeCation(G, ai2))
-                              flag = false;
-                          }
+                        {
 
 			  /* we have a bond, now process it */
                           if(flag) {
@@ -4174,18 +4160,8 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
                                 goto do_it_again;
                               }
                             }
-			    /* selenomethionine; double-bond the carbonyl if present */
-                            if(ai1->hetatm) {        /* common HETATMs we should know about... */
-                              if (ai1->resn == G->lex_const.MSE) {
-                                if ((ai1->name == G->lex_const.C && ai2->name == G->lex_const.O) ||
-                                    (ai1->name == G->lex_const.O && ai2->name == G->lex_const.C)) {
-                                  /* if carbonyl in same residue, double bond it */
-                                  if(AtomInfoSameResidue(G, ai1, ai2)) {
-                                    order = 2;
-                                  }
-                                }
-                              }
-                            } else {
+
+                            if(!ai1->hetatm || ai1->resn == G->lex_const.MSE) {
                               if(AtomInfoSameResidue(I->Obj.G, ai1, ai2)) {
                                 /* hookup standard disconnected PDB residue */
                                 assign_pdb_known_residue(G, ai1, ai2, &order);

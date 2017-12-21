@@ -109,7 +109,7 @@ SEE ALSO
             print(" ls: Nothing found.  Is that a valid path?")
         return DEFAULT_SUCCESS
 
-    def system(command,async=0,_self=cmd):
+    def system(command, async_=0, _self=cmd, **kwargs):
         '''
 DESCRIPTION
 
@@ -137,7 +137,7 @@ SEE ALSO
     ls, cd, pwd
         '''
         r = None
-        if async:
+        if int(kwargs.pop('async', async_)):
             r = threading.Thread(target=_cmd.system,args=(str(command),1))
             r.start()
         else:

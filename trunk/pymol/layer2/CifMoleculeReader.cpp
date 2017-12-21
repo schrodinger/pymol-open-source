@@ -861,15 +861,31 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
 
   const cif_array *arr_x, *arr_y = NULL, *arr_z = NULL;
 
-  if ((arr_x = data->get_arr("_chem_comp_atom.pdbx_model_cartn_x_ideal"))) {
+  // setting to exclude one or more coordinate columns
+  unsigned mask = SettingGetGlobal_i(G, cSetting_chem_comp_cartn_use);
+  const char * feedback = "";
+
+  if (!mask) {
+    mask = 0xFF;
+  }
+
+  if ((mask & 0x01)
+      && (arr_x = data->get_arr("_chem_comp_atom.pdbx_model_cartn_x_ideal"))
+      && !arr_x->is_missing_all()) {
     arr_y = data->get_arr("_chem_comp_atom.pdbx_model_cartn_y_ideal");
     arr_z = data->get_arr("_chem_comp_atom.pdbx_model_cartn_z_ideal");
-  } else if ((arr_x = data->get_arr("_chem_comp_atom.x"))) {
-    arr_y = data->get_arr("_chem_comp_atom.y");
-    arr_z = data->get_arr("_chem_comp_atom.z");
-  } else if ((arr_x = data->get_arr("_chem_comp_atom.model_cartn_x"))) {
+    feedback = ".pdbx_model_Cartn_{x,y,z}_ideal";
+  } else if ((mask & 0x02)
+      && (arr_x = data->get_arr("_chem_comp_atom.model_cartn_x"))) {
     arr_y = data->get_arr("_chem_comp_atom.model_cartn_y");
     arr_z = data->get_arr("_chem_comp_atom.model_cartn_z");
+    feedback = ".model_Cartn_{x,y,z}";
+  } else if ((mask & 0x04)
+      && (arr_x = data->get_arr("_chem_comp_atom.x"))
+      && !arr_x->is_missing_all()) {
+    arr_y = data->get_arr("_chem_comp_atom.y");
+    arr_z = data->get_arr("_chem_comp_atom.z");
+    feedback = ".{x,y,z}";
   }
 
   if (!arr_x || !arr_y || !arr_z) {
@@ -877,7 +893,8 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
   }
 
   PRINTFB(G, FB_Executive, FB_Details)
-    " ExecutiveLoad-Detail: Detected chem_comp CIF\n" ENDFB(G);
+    " ExecutiveLoad-Detail: Detected chem_comp CIF (%s)\n", feedback
+    ENDFB(G);
 
   const cif_array * arr_name            = data->get_opt("_chem_comp_atom.atom_id");
   const cif_array * arr_symbol          = data->get_opt("_chem_comp_atom.type_symbol");
@@ -1032,6 +1049,7 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
   const cif_array * arr_color = data->get_arr("_atom_site.pymol_color");
   const cif_array * arr_reps  = data->get_arr("_atom_site.pymol_reps");
   const cif_array * arr_ss    = data->get_opt("_atom_site.pymol_ss");
+  const cif_array * arr_formal_charge = data->get_opt("_atom_site.pdbx_formal_charge");
 
   if (!arr_chain)
     arr_chain = arr_segi;
@@ -1154,6 +1172,7 @@ static CoordSet ** read_atom_site(PyMOLGlobals * G, cif_data * data,
     }
 
     ai->ssType[0] = arr_ss->as_s(i)[0];
+    ai->formalCharge = arr_formal_charge->as_i(i);
 
     AtomInfoAssignParameters(G, ai);
 
