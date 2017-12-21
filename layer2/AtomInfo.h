@@ -59,7 +59,9 @@ Z* -------------------------------------------------------------------
 #define cAtomFlag_study         0x00000020
 
 
-/* FLAGS 4-7 are reserved for additional molecular modeling tasks */
+/* FLAGS 6-7 are for polymer sub-classification */
+#define cAtomFlag_protein       0x00000040
+#define cAtomFlag_nucleic       0x00000080
 
 
 /* FLAGS 8-15 are free for end users to manipulate */
@@ -289,6 +291,16 @@ typedef struct AtomInfoType {
     return protons == cAN_H;
   }
 
+  bool isMetal() const {
+    return (
+        (protons >  2 && protons <  5) ||
+        (protons > 10 && protons < 14) ||
+        (protons > 18 && protons < 32) ||
+        (protons > 36 && protons < 51) ||
+        (protons > 54 && protons < 85) ||
+        protons > 86);
+  }
+
   char getInscode(bool space=false) const {
     if (space && !inscode)
       return ' ';
@@ -407,6 +419,8 @@ inline bool AtomResiFromResv(char *resi, size_t size, const AtomInfoType * ai) {
 
 int AtomInfoKnownWaterResName(PyMOLGlobals * G, const char *resn);
 int AtomInfoKnownPolymerResName(const char *resn);
+int AtomInfoKnownProteinResName(const char *resn);
+int AtomInfoKnownNucleicResName(const char *resn);
 void AtomInfoGetPDB3LetHydroName(PyMOLGlobals * G, const char *resn, const char *iname, char *oname);
 
 #define cAIC_ct        0x0001

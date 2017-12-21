@@ -129,6 +129,9 @@ public:
     return !get_value(row);
   }
 
+  // true if all values in ['.', '?']
+  bool is_missing_all() const;
+
   // templated getter
   template <typename T> T as(int row = 0) const;
 

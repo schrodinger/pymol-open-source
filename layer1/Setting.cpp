@@ -972,7 +972,7 @@ static int set_list(CSetting * I, PyObject * list)
     int val_i;
     float val_f;
     float val_3f[3];
-    char * val_s;
+    const char * val_s;
   };
 
   if (list == NULL || CPythonVal_IsNone(list))

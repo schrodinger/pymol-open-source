@@ -293,7 +293,7 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
       ok = false;
   }
 
-  if(setjmp(png_jmpbuf(png_ptr)))
+  if(ok && setjmp(png_jmpbuf(png_ptr)))
     ok = false;
 
   if(ok) {

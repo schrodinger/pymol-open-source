@@ -60,7 +60,7 @@ from .colorramping import \
 #--------------------------------------------------------------------
 from . import commanding
 from .commanding import \
-      async,           \
+      async_,             \
       cls,                \
       delete,             \
       do,                 \

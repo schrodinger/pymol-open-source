@@ -183,13 +183,13 @@ SEE ALSO
                         target='?%s & ?%s' % (sele_name, reference), **kwargs)
                 if not quiet:
                     if _self.is_sequence(x):
-                        print('%-20s RMS = %8.3f (%d atoms)' % (model, x[0], x[1]))
+                        print('%-20s RMSD = %8.3f (%d atoms)' % (model, x[0], x[1]))
                     elif isinstance(x, float):
-                        print('%-20s RMS = %8.3f' % (model, x))
+                        print('%-20s RMSD = %8.3f' % (model, x))
                     elif isinstance(x, dict) and 'RMSD' in x:
                         natoms = x.get('alignment_length', 0)
                         suffix = (' (%s atoms)' % natoms) if natoms else ''
-                        print('%-20s RMS = %8.3f' % (model, x['RMSD']) + suffix)
+                        print('%-20s RMSD = %8.3f' % (model, x['RMSD']) + suffix)
                     else:
                         print('%-20s' % (model,))
 

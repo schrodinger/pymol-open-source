@@ -2539,25 +2539,29 @@ NOTES
 
     SPECIAL FLAGS
 
-    * Flags 0-7 are reserved for molecular modeling 
+    * Flags 0-5 are reserved for molecular modeling
 
         focus      0 = Atoms of Interest (i.e. a ligand in an active site) \\
         free       1 = Free Atoms (free to move subject to a force-field) \\
         restrain   2 = Restrained Atoms (typically harmonically contrained) \\
         fix        3 = Fixed Atoms (no movement allowed) \\
         exclude    4 = Atoms which should not be part of any simulation
+        study      5
+
+    * Flags 6-7 are for protein and nucleic acid classification
 
     * Flags 8-15 are free for end users to manipulate
 
-    * Flags 16-23 are reserved for external GUIs and linked applications
+    * Flags 16-21 are reserved for external GUIs and linked applications
 
-    * Flags 24-30 are reserved for PyMOL internal usage
+    * Flags 22-23 are for temporary use only (flag 23 used for coverage
+      tracking when assigning parameters in chempy.champ.assign)
+
+    * Flags 24-31 are reserved for PyMOL internal usage
 
         exfoliate 24 = Remove surface from atoms when surfacing \\
         ignore    25 = Ignore atoms altogether when surfacing \\
         no_smooth 26 = Do not smooth atom position
-
-    * Flag 31 is reserved for coverage tracking when assigning parameters, etc.
 
 PYMOL API
 

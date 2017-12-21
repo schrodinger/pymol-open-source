@@ -206,7 +206,7 @@ class CleanJob:
             self_cmd.do("_ wizard")
 
 def _clean(selection, present='', state=-1, fix='', restrain='',
-          method='mmff', async=0, save_undo=1, message=None,
+          method='mmff', save_undo=1, message=None,
           _self=cmd_module):
 
     self_cmd = _self
@@ -260,15 +260,16 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
         return None
 
 def clean(selection, present='', state=-1, fix='', restrain='',
-          method='mmff', async=0, save_undo=1, message=None,
-          _self=cmd_module):
-    if not int(async):
-        return _clean(selection,present,state,fix,restrain,method,async,save_undo,message,_self)
+          method='mmff', async_=0, save_undo=1, message=None,
+          _self=cmd_module, **kwargs):
+    args = (selection, present, state, fix, restrain, method, save_undo, message, _self)
+
+    if not int(kwargs.pop('async', async_)):
+        return _clean(*args)
     else:
         try:
             t = threading.Thread(target=_clean,
-                             args=(selection,present,state,fix,restrain,
-                                   method,async,save_undo,message,_self))
+                             args=args)
             t.setDaemon(1)
             t.start()
         except:

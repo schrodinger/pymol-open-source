@@ -604,7 +604,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
     return NULL;
 
   PyMOLGlobals * G = wobj->G;
-  char *aprop;
+  const char *aprop;
   AtomPropertyInfo *ap;
   PyObject *ret = NULL;
   bool borrowed = false;
@@ -774,7 +774,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       case cPType_string:
 	{
           PyObject *valobj = PyObject_Str(val);
-	  char *valstr = PyString_AS_STRING(valobj);
+	  const char *valstr = PyString_AS_STRING(valobj);
 	  char *dest = (char*)(((char*)wobj->atomInfo) + ap->offset);
 	  if (strlen(valstr) > ap->maxlen){
 	    strncpy(dest, valstr, ap->maxlen);
@@ -812,7 +812,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
           auto dest = reinterpret_cast<lexidx_t*>
             (((char*)wobj->atomInfo) + ap->offset);
           PyObject *valobj = PyObject_Str(val);
-	  char *valstr = PyString_AS_STRING(valobj);
+	  const char *valstr = PyString_AS_STRING(valobj);
 	  LexDec(wobj->G, *dest);
 	  *dest = LexIdx(wobj->G, valstr);
           Py_DECREF(valobj);
@@ -828,7 +828,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       case cPType_char_as_type:
 	{
           PyObject *valobj = PyObject_Str(val);
-          char *valstr = PyString_AS_STRING(valobj);
+          const char *valstr = PyString_AS_STRING(valobj);
           wobj->atomInfo->hetatm = ((valstr[0] == 'h') || (valstr[0] == 'H'));
           Py_DECREF(valobj);
 	  changed = true;
@@ -837,7 +837,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       case cPType_int_custom_type:
 	{
           PyObject *valobj = PyObject_Str(val);
-	  char *valstr = PyString_AS_STRING(valobj);
+	  const char *valstr = PyString_AS_STRING(valobj);
 	  int *dest = (int*)(((char*)wobj->atomInfo) + ap->offset);
 	  if (valstr[0] == '?'){
 	    *dest = cAtomInfoNoType;
@@ -992,7 +992,7 @@ int PComplete(PyMOLGlobals * G, char *str, int buf_size)
 {
   int ret = false;
   PyObject *result;
-  char *st2;
+  const char *st2;
   PBlockAndUnlockAPI(G);
   if(G->P_inst->complete) {
     result = PYOBJECT_CALLFUNCTION(G->P_inst->complete, "s", str);
@@ -1304,29 +1304,8 @@ int PAlterAtom(PyMOLGlobals * G,
                ObjectMolecule *obj, CoordSet *cs, PyCodeObject *expr_co, int read_only,
                int atm, PyObject * space)
 {
-  int result = true;
-
-  G->P_inst->wrapperObject->obj = obj;
-  G->P_inst->wrapperObject->cs = cs;
-  G->P_inst->wrapperObject->atomInfo = obj->AtomInfo + atm;
-  G->P_inst->wrapperObject->atm = atm;
-  G->P_inst->wrapperObject->idx = -1;
-  G->P_inst->wrapperObject->read_only = read_only;
-
-  if (obj->DiscreteFlag) {
-    G->P_inst->wrapperObject->state = obj->AtomInfo[atm].discrete_state;
-  } else {
-    G->P_inst->wrapperObject->state = 0;
-  }
-
-  PXDecRef(PyEval_EvalCode(expr_co, space, (PyObject*)G->P_inst->wrapperObject));
-  WrapperObjectReset(G->P_inst->wrapperObject);
-
-  if(PyErr_Occurred()) {
-    PyErr_Print();
-    result = false;
-  }
-  return result;
+  int state = (obj->DiscreteFlag ? obj->AtomInfo[atm].discrete_state : 0) - 1;
+  return PAlterAtomState(G, expr_co, read_only, obj, cs, atm, /* idx */ -1, state, space);
 }
 
 /*
@@ -1997,7 +1976,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
 
 void PConvertOptions(CPyMOLOptions * rec, PyObject * options)
 {
-  char *load_str;
+  const char *load_str;
 
   rec->pmgui = !PyInt_AsLong(PyObject_GetAttrString(options, "no_gui"));
   rec->internal_gui = PyInt_AsLong(PyObject_GetAttrString(options, "internal_gui"));
@@ -2792,7 +2771,7 @@ static PyObject *PCatchWritelines(PyObject * self, PyObject * args)
       for(i = 0; i < len; i++) {
         PyObject *obj = PySequence_GetItem(seq, i);
         if(obj && PyString_Check(obj)) {
-          char *str = PyString_AsString(obj);
+          const char *str = PyString_AsString(obj);
           if(SingletonPyMOLGlobals) {
             if(Feedback(SingletonPyMOLGlobals, FB_Python, FB_Output)) {
               OrthoAddOutput(SingletonPyMOLGlobals, str);

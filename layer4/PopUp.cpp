@@ -134,7 +134,7 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
   int mx, a, l, cl, cmx;
   int dim[2];
   PyObject *elem;
-  char *str, *c;
+  const char *str, *c;
   int blocked = PAutoBlock(G);
   int ui_light_bg = SettingGetGlobal_b(G, cSetting_internal_gui_mode);
   OOAlloc(G, CPopUp);

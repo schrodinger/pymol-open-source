@@ -744,7 +744,7 @@ def _encode(filename,first,last,preserve,
             done_event = None
             if not quiet:
                 done_event = threading.Event()
-                _self.async(_watch, fn_rel, done_event, _self=_self)
+                _self.async_(_watch, fn_rel, done_event, _self=_self)
 
             try:
                 result = mpeg_encode.run(input)

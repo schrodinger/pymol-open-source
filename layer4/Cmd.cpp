@@ -3054,7 +3054,7 @@ static PyObject *CmdPaste(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *list, *str;
-  char *st;
+  const char *st;
   int l, a;
   int ok = false;
   ok = PyArg_ParseTuple(args, "OO", &self, &list);

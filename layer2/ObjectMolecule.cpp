@@ -3396,16 +3396,25 @@ int ObjectMoleculeAddSeleHydrogens(ObjectMolecule * I, int sele, int state)
           if (ok)
 	    ok &= ObjectMoleculeUpdateNeighbors(I);
 
+          // copy of the idx -> atm mapping
+          std::vector<int> mergedIdxToAtm(cs->IdxToAtm, cs->IdxToAtm + cs->NIndex);
+
           for(b = 0; ok && b < I->NCSet; b++) {       /* add coordinate into the coordinate set */
             tcs = I->CSet[b];
             if(tcs) {
+              int idx = 0;
               for(a = 0; ok && a < nH; a++) {
-                ObjectMoleculeGetAtomVertex(I, b, index[a], v0);
+                if(!ObjectMoleculeGetAtomVertex(I, b, index[a], v0)) {
+                  continue;
+                }
                 ObjectMoleculeFindOpenValenceVector(I, b, index[a], v, NULL, -1);
                 d = AtomInfoGetBondLength(I->Obj.G, I->AtomInfo + index[a], &fakeH);
                 scale3f(v, d, v);
-                add3f(v0, v, cs->Coord + 3 * a);
+                add3f(v0, v, cs->Coord + 3 * idx);
+                cs->IdxToAtm[idx] = mergedIdxToAtm[a];
+                ++idx;
               }
+              cs->NIndex = idx;
               if (ok)
 		ok &= CoordSetMerge(I, tcs, cs);
             }
@@ -7684,7 +7693,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
         if(symmetry) {
           tmp = PyObject_GetAttrString(model, "spacegroup");
           if(tmp) {
-            char *tmp_str = NULL;
+            const char *tmp_str = NULL;
             if(PConvPyStrToStrPtr(tmp, &tmp_str)) {
               UtilNCopy(symmetry->SpaceGroup, tmp_str, sizeof(WordType));
             }
@@ -7728,6 +7737,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
   }
   /* include coordinate set */
   if(ok) {
+    if(frame < 0)
+      frame = I->NCSet;
 
     if(I->DiscreteFlag && atInfo) {
       unsigned int a;
@@ -7748,8 +7759,6 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals * G,
     }
     if(isNew)
       I->NAtom = nAtom;
-    if(frame < 0)
-      frame = I->NCSet;
     VLACheck(I->CSet, CoordSet *, frame);
     if(I->NCSet <= frame)
       I->NCSet = frame + 1;
