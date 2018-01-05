@@ -465,3 +465,24 @@ class TestImporting(testing.PyMOLTestCase):
             content = urlread(baseurl + '/apply/pymol.cmd.get_version')
             content = content.decode('ascii', errors='ignore')
             self.assertTrue(content, cmd.get_version()[0] in content)
+
+    @testing.requires_version('1.9')
+    def testChemCompCartnUse(self):
+        xyz_model = (1., 2., 3.)
+        xyz_ideal = (4., 5., 6.)
+        xyz_short = (7., 8., 9.)
+
+        for (value, xyz) in [
+                (0x00, xyz_ideal),
+                (0x01, xyz_ideal),
+                (0x02, xyz_model),
+                (0x03, xyz_ideal),
+                (0x04, xyz_short),
+                (0x05, xyz_ideal),
+                (0x06, xyz_model),
+                (0x07, xyz_ideal),
+            ]:
+            cmd.set('chem_comp_cartn_use', value)
+            cmd.load(self.datafile('chem_comp-fe.cif'), 'm1')
+            self.assertArrayEqual(xyz, cmd.get_coords('m1').reshape(-1))
+            cmd.delete('*')
