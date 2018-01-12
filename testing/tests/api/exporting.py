@@ -66,6 +66,38 @@ class TestExporting(testing.PyMOLTestCase):
 
         self.assertEqual(cmd.get_object_list(), names[1:])
 
+    @testing.requires_version('2.1')
+    def testMultifilesave(self):
+        import glob
+
+        for name in ['ala', 'gly', 'his', 'arg']:
+            cmd.fragment(name)
+
+        # multistate
+        for i in range(2, 11):
+            cmd.create('ala', 'ala', 1, i)
+
+        for fmt in ['{}-{:02}.cif', '{}-{state}.cif']:
+            with testing.mkdtemp() as dirname:
+                cmd.multifilesave(os.path.join(dirname, fmt), 'ala', 0)
+                filenames = [os.path.basename(p) for p in glob.glob(os.path.join(dirname, '*.cif'))]
+                self.assertEqual(len(filenames), 10)
+                self.assertTrue('ala-03.cif' in filenames)
+
+        with testing.mkdtemp() as dirname:
+            cmd.multifilesave(os.path.join(dirname, '{}.pdb'), 'a* g*')
+            filenames_full = sorted(glob.glob(os.path.join(dirname, '*.pdb')))
+            filenames = [os.path.basename(p) for p in filenames_full]
+            self.assertEqual(filenames, ['ala.pdb', 'arg.pdb', 'gly.pdb'])
+
+            cmd.delete('*')
+            cmd.load(filenames_full[0])
+            self.assertEqual(cmd.count_atoms(), 10)
+
+            cmd.delete('*')
+            cmd.load(filenames_full[1])
+            self.assertEqual(cmd.count_atoms(), 24)
+
     @testing.foreach(
         ('0.5in', '0.25in', 200, (100, 50)),   # inch
         ('2.54cm', '1.27cm', 100, (100, 50)),  # centimeter
