@@ -466,7 +466,7 @@ class TestImporting(testing.PyMOLTestCase):
             content = content.decode('ascii', errors='ignore')
             self.assertTrue(content, cmd.get_version()[0] in content)
 
-    @testing.requires_version('1.9')
+    @testing.requires_version('2.1')
     def testChemCompCartnUse(self):
         xyz_model = (1., 2., 3.)
         xyz_ideal = (4., 5., 6.)
@@ -486,3 +486,31 @@ class TestImporting(testing.PyMOLTestCase):
             cmd.load(self.datafile('chem_comp-fe.cif'), 'm1')
             self.assertArrayEqual(xyz, cmd.get_coords('m1').reshape(-1))
             cmd.delete('*')
+
+    @testing.requires_version('2.1')
+    def testCifMissing(self):
+        N = 7
+        cmd.fragment('gly', 'm1')
+        cmd.alter('all', '(chain, segi, resv, alt) = ("?", ".", 5, "")')
+
+        s = cmd.get_str('cif')
+        self.assertTrue("'?'" in s or '"?"' in s) # chain
+        self.assertTrue("'.'" in s or '"."' in s) # segi
+        self.assertTrue(' ? ' in s) # e.g. pdbx_PDB_ins_code
+        self.assertTrue(' . ' in s) # e.g. label_alt_id
+
+        cmd.delete('*')
+        cmd.set('cif_keepinmemory')
+        cmd.load(s, 'm2', format='cifstr')
+        self.assertEqual(['?'], cmd.get_chains())
+        self.assertEqual(cmd.count_atoms('segi .'), N)
+        self.assertEqual(cmd.count_atoms('alt ""'), N)  # no alt
+        self.assertEqual(cmd.count_atoms('resi 5'), N)  # no ins_code
+
+        from pymol.querying import cif_get_array
+        self.assertEqual(cif_get_array("m2", "_atom_site.type_symbol"), list('NCCOHHH'))
+        self.assertEqual(cif_get_array("m2", "_atom_site.id", "i"),     list(range(1, N + 1)))
+        self.assertEqual(cif_get_array("m2", "_atom_site.auth_asym_id"),        ['?'] * N)
+        self.assertEqual(cif_get_array("m2", "_atom_site.label_asym_id"),       ['.'] * N)
+        self.assertEqual(cif_get_array("m2", "_atom_site.pdbx_pdb_ins_code"),   [None] * N)
+        self.assertEqual(cif_get_array("m2", "_atom_site.label_alt_id"),        [None] * N)

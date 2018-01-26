@@ -124,9 +124,9 @@ class TestCreating(testing.PyMOLTestCase):
         self.assertEquals(cmd.count_states(), 2)
         
     def create_many_states(self, fragment, obj, count):
-        cmd.fragment(fragment)
-        for x in range(count):
-            cmd.create(obj, fragment, 1, count)
+        cmd.fragment(fragment, obj)
+        for x in range(2, count + 1):
+            cmd.create(obj, obj, 1, x)
 
     def testCreateMany(self):
 
@@ -149,6 +149,62 @@ class TestCreating(testing.PyMOLTestCase):
 
         self.assertEquals(cmd.count_states(), 1000)
         
+    @testing.requires_version('1.6')
+    def testCreateTargetState(self):
+        self.create_many_states("gly", "m1", 4)
+        cmd.frame(3)
+
+        cmd.create('m2', 'm1', 0, 0)
+        self.assertEqual(cmd.count_states('m2'), 4)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', 1, 0)
+        self.assertEqual(cmd.count_states('m2'), 1)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', 2, 0)
+        self.assertEqual(cmd.count_states('m2'), 2)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', 0, 2)
+        self.assertEqual(cmd.count_states('m2'), 5)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', 1, 2)
+        self.assertEqual(cmd.count_states('m2'), 2)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', 2, 2)
+        self.assertEqual(cmd.count_states('m2'), 2)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', 0, -1)
+        self.assertEqual(cmd.count_states('m2'), 4)
+        cmd.create('m2', 'm1', 0, -1)
+        self.assertEqual(cmd.count_states('m2'), 8)
+        cmd.create('m2', 'm1', 2, -1)
+        self.assertEqual(cmd.count_states('m2'), 9)
+
+    @testing.requires_version('2.1')
+    def testCreateCurrentSourceState(self):
+        self.create_many_states("gly", "m1", 4)
+        cmd.frame(3)
+
+        cmd.create('m2', 'm1', -1, -1)
+        self.assertEqual(cmd.count_states('m2'), 1)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', -1, 0)
+        self.assertEqual(cmd.count_states('m2'), 3)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', -1, 1)
+        self.assertEqual(cmd.count_states('m2'), 1)
+        cmd.delete('m2')
+
+        cmd.create('m2', 'm1', -1, 2)
+        self.assertEqual(cmd.count_states('m2'), 2)
+        cmd.delete('m2')
 
     def testCreateLarge(self):
         pass
@@ -198,3 +254,9 @@ class TestCreating(testing.PyMOLTestCase):
                 ref[i] = round(ref[i], 1)
             self.assertEqual(ref, values)
 
+    def testPseudoatomName(self):
+        cmd.pseudoatom('m1')
+        cmd.pseudoatom('m1')
+        self.assertEqual(2, cmd.count_atoms())
+        self.assertEqual(1, cmd.count_atoms('name PS1'))
+        self.assertEqual(1, cmd.count_atoms('name PS2'))

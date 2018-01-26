@@ -7,6 +7,9 @@ from pymol import cmd, testing, stored
 def get_coord_list(selection, state=1):
     return cmd.get_model(selection, state).get_coord_list()
 
+def get_atom_names(selection='all'):
+    return [a.name for a in cmd.get_model(selection).atom]
+
 class TestEditing(testing.PyMOLTestCase):
 
     alter_names_atomic = {
@@ -117,6 +120,9 @@ class TestEditing(testing.PyMOLTestCase):
         cmd.edit('first all')
         cmd.attach('C', 1, 1)
         self.assertEqual(2, cmd.count_atoms())
+        cmd.attach('C', 1, 1)
+        self.assertEqual(3, cmd.count_atoms())
+        self.assertEqual(['C01', 'C02', 'PS1'], sorted(get_atom_names()))
 
     def test_bond(self):
         cmd.pseudoatom('m1', pos=(0,0,0))
@@ -187,6 +193,43 @@ class TestEditing(testing.PyMOLTestCase):
         cmd.fragment('gly')
         cmd.h_add()
         self.assertEqual(5, cmd.count_atoms('hydro'))
+
+    @testing.requires_version('2.1')
+    def test_h_add_state(self):
+        nheavy = 4
+        nhydro = 5
+        nfull = nheavy + nhydro
+
+        cmd.fragment('gly', 'm1')
+        cmd.remove('hydro')
+        self.assertEqual(nheavy, cmd.count_atoms())
+        cmd.h_add()
+        self.assertEqual(nfull, cmd.count_atoms())
+
+        # multi-state
+        cmd.remove('hydro')
+        cmd.create('m1', 'm1', 1, 2)
+        cmd.create('m1', 'm1', 1, 3)
+        cmd.h_add(state=2)
+        self.assertEqual(nfull, cmd.count_atoms())
+        self.assertEqual(nheavy, cmd.count_atoms('state 1'))
+        self.assertEqual(nfull, cmd.count_atoms('state 2'))
+        self.assertEqual(nheavy, cmd.count_atoms('state 3'))
+
+        # discrete multi-state
+        cmd.remove('hydro')
+        cmd.create('m2', 'm1', 1, 1, discrete=1)
+        cmd.create('m2', 'm2', 1, 2, discrete=1)
+        cmd.create('m2', 'm2', 1, 3, discrete=1)
+        self.assertEqual(nheavy * 3, cmd.count_atoms('m2'))
+        cmd.h_add('m2 & state 2') # TODO , state=2)
+        self.assertEqual(nfull + nheavy * 2, cmd.count_atoms('m2'))
+        self.assertEqual(nheavy, cmd.count_atoms('m2 & state 1'))
+        self.assertEqual(nfull, cmd.count_atoms('m2 & state 2'))
+        self.assertEqual(nheavy, cmd.count_atoms('m2 & state 3'))
+        cmd.h_add('m2')
+        self.assertEqual(nfull * 3, cmd.count_atoms('m2'))
+
 
     def test_h_fill(self):
         cmd.fragment('gly')
@@ -288,15 +331,22 @@ class TestEditing(testing.PyMOLTestCase):
         self.assertEqual(count, cmd.count_atoms())
 
     def test_rename(self):
-        count_names = lambda: len(set([a.name for a in cmd.get_model().atom]))
         cmd.fragment('ala')
+        n_atoms = cmd.count_atoms()
         v = cmd.alter('elem C', 'name="C"')
         self.assertEqual(v, 3)
-        v1 = count_names()
+        self.assertEqual(['C', 'C', 'C'], get_atom_names('elem C'))
         cmd.rename('ala')
-        v2 = count_names()
-        self.assertEqual(v2 - v1, 2)
-        self.assertEqual(v2, cmd.count_atoms())
+        self.assertEqual(['C', 'C01', 'C02'], sorted(get_atom_names('elem C')))
+        cmd.alter('index 1-3', 'name="X"')
+        cmd.alter('index 4', 'name="Y"')
+        self.assertEqual(3, cmd.count_atoms('name X'))
+        self.assertEqual(1, cmd.count_atoms('name Y'))
+        cmd.rename('ala', force=1)
+        atom_names = get_atom_names()
+        self.assertTrue('X' not in atom_names)
+        self.assertTrue('Y' not in atom_names)
+        self.assertEqual(n_atoms, len(set(atom_names)))
 
     def test_replace(self):
         # NOTES:
@@ -308,6 +358,12 @@ class TestEditing(testing.PyMOLTestCase):
         cmd.replace('S', 0, 0, 0)
         self.assertEqual(0, cmd.count_atoms('elem O'))
         self.assertEqual(1, cmd.count_atoms('elem S'))
+        self.assertEqual(1, cmd.count_atoms('name S01'))
+        self.assertEqual(0, cmd.count_atoms('name S02'))
+        cmd.edit('elem N')
+        cmd.replace('S', 0, 0, 0)
+        self.assertEqual(2, cmd.count_atoms('elem S'))
+        self.assertEqual(1, cmd.count_atoms('name S02'))
 
     def test_rotate(self):
         from chempy import cpv
