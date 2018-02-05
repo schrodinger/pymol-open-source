@@ -287,3 +287,31 @@ class TestExporting(testing.PyMOLTestCase):
             cmd.load(filename)
             m2 = cmd.get_model()
             self.assertModelsAreSame(m1, m2)
+
+    @testing.requires_version('2.1')
+    def testMMTF(self):
+        '''Styled MMTF export/import'''
+        S = 0b10            # 1 << 1 spheres
+        D = 0b1000000000    # 1 << 9 dots
+        B = 2 # blue
+        R = 4 # red
+
+        cmd.fragment('gly')
+        cmd.color(B)
+        cmd.color(R, 'elem C')
+        cmd.show_as('spheres')
+        cmd.show_as('dots', 'elem C')
+
+        with testing.mktemp('.mmtf') as filename:
+            cmd.save(filename)
+            cmd.delete('*')
+            cmd.load(filename)
+
+        color_list = []
+        reps_list = []
+
+        cmd.iterate('*', 'color_list.append(color)', space=locals())
+        cmd.iterate('*', 'reps_list.append(reps)', space=locals())
+
+        self.assertEqual(color_list, [B, R, R, B, B, B, B])
+        self.assertEqual(reps_list, [S, D, D, S, S, S, S])

@@ -331,3 +331,20 @@ class TestQuerying(testing.PyMOLTestCase):
         cmd.phi_psi
         self.skipTest("TODO")
 
+    @testing.requires_version('2.1')
+    def testGetBonds(self):
+        self.assertEqual([], cmd.get_bonds())
+        cmd.fragment('gly')
+        self.assertEqual([], cmd.get_bonds('none'))
+        self.assertEqual([
+            (0, 1, 1), # C-C
+            (1, 2, 2), # C=O
+        ], cmd.get_bonds('elem C+O'))
+        self.assertEqual([
+            (0, 1, 1),
+            (0, 4, 1),
+            (1, 2, 1),
+            (1, 5, 1),
+            (1, 6, 1),
+            (2, 3, 2),
+        ], cmd.get_bonds())
