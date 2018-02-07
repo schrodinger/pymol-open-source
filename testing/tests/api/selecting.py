@@ -110,3 +110,13 @@ class TestSelecting(testing.PyMOLTestCase):
         cmd.delete('enabled')
 
         self.assertEqual(cmd.get_names(), ['asp'])
+
+    @testing.requires_version('2.1')
+    def test_protein_nucleic(self):
+        npro = 340
+        nnuc = 112
+        cmd.load(self.datafile("1oky-frag.pdb"), "1p")
+        cmd.load(self.datafile('1ehz-5.pdb'), "1n")
+        self.assertEqual(cmd.count_atoms('polymer'), npro + nnuc)
+        self.assertEqual(cmd.count_atoms('polymer.protein'), npro)
+        self.assertEqual(cmd.count_atoms('polymer.nucleic'), nnuc)
