@@ -9,14 +9,8 @@
 
 #include <vector>
 #include <map>
-#include <stdexcept>
 
 #include <string.h>
-
-#ifdef WIN32
-  #define strcasecmp(s1, s2) _stricmp(s1, s2)
-  #define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
-#endif
 
 /*
  * C string comparison class
@@ -60,23 +54,11 @@ private:
 };
 
 /*
- * Class to store CIF loops. Only for parsing, do not use in any higher level
- * reading functions.
- */
-class cif_loop {
-public:
-  int ncols;
-  int nrows;
-  const char **values;
-
-  // methods
-  const char * get_value_raw(int row, int col) const;
-};
-
-/*
  * High-level access to CIF arrays
  */
 class cif_array {
+  friend class cif_file;
+
 private:
   // column index, -1 if not in loop
   short col;
@@ -88,10 +70,8 @@ private:
   } pointer;
 
   // methods
-  const char * get_value_raw(int row = 0) const;
   const char * get_value(int row = 0) const;
 
-public:
   // point this array to a loop (only for parsing)
   void set_loop(const cif_loop * loop, short col_) {
     col = col_;
@@ -104,6 +84,7 @@ public:
     pointer.value = value;
   };
 
+public:
   // constructor
   cif_array() {
   };
@@ -114,9 +95,7 @@ public:
   };
 
   // get the number of elements in this array
-  int get_nrows() const {
-    return (col < 0) ? 1 : pointer.loop->nrows;
-  };
+  int get_nrows() const;
 
   // get element as string, integer or double. If index is out of bounds,
   // then return a default value.

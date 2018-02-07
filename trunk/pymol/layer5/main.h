@@ -19,22 +19,13 @@ Z* -------------------------------------------------------------------
 
 int MainSavingUnderWhileIdle(void);
 
-#ifdef _PYMOL_NO_MAIN
-
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _MACPYMOL_XCODE
 #include"os_python.h"
 #include"PyMOLGlobals.h"
+
 PyObject *MainAsPyList(void);
-#endif
+int MainFromPyList(PyObject * list);
 
-/* END PROPRIETARY CODE SEGMENT */
-
-#else
-
-#include"os_python.h"
-#include"PyMOLGlobals.h"
+#ifndef _PYMOL_NO_MAIN
 
 void MainFree(void);
 void MainDoReshape(int width, int height);
@@ -42,9 +33,6 @@ void MainRefreshNow(void);
 void MainFlush(void);
 void MainFlushAsync(void);
 int MainSavingUnderWhileIdle(void);
-
-int MainFromPyList(PyObject * list);
-PyObject *MainAsPyList(void);
 
 void MainSetWindowVisibility(int mode);
 void MainMaximizeWindow(PyMOLGlobals * G);

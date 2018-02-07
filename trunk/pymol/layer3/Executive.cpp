@@ -5484,11 +5484,9 @@ int ExecutiveGetSession(PyMOLGlobals * G, PyObject * dict, const char *names, in
     PyDict_SetItemString(dict, "editor", tmp);
     Py_XDECREF(tmp);
 
-#ifndef _PYMOL_NO_MAIN
     tmp = MainAsPyList();
     PyDict_SetItemString(dict, "main", tmp);
     Py_XDECREF(tmp);
-#endif
 
 #ifdef PYMOL_EVAL
     ExecutiveEvalMessage(G, dict);
@@ -5886,7 +5884,6 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
     if(!G->Option->presentation && !SettingGetGlobal_b(G, cSetting_suspend_updates))
       PParse(G, "viewport");    /* refresh window/internal_gui status */
   }
-#ifndef _PYMOL_NO_MAIN
   // Do not load viewport size when we have a GUI
   if(ok && !G->HaveGUI) {
     tmp = PyDict_GetItemString(session, "main");
@@ -5908,7 +5905,6 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
       }
     }
   }
-#endif
 
   if(ok && migrate_sessions) {  /* migrate sessions */
     tmp = PyDict_GetItemString(session, "version");
@@ -9583,16 +9579,19 @@ void ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet)
 
 
 /*========================================================================*/
-void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1, int quiet)
+void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1, int quiet, int state, bool legacy)
 {
   ObjectMoleculeOpRec op;
 
   /* Needs 4 passes */
-  for (int cnt = 0; cnt < 4; ++cnt) {
+  int passes = legacy ? 4 : 1;
+  for (int cnt = 0; cnt < passes; ++cnt) {
     SelectorTmp tmpsele1(G, s1);
     int sele1 = tmpsele1.getIndex();
     ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_AddHydrogens;        /* 4 passes completes the job */
+    op.i1 = state;
+    op.i2 = legacy;
     ExecutiveObjMolSeleOp(G, sele1, &op);
   }
 }
@@ -9775,7 +9774,7 @@ int ExecutiveStereo(PyMOLGlobals * G, int flag)
       switch (stereo_mode) {
       case 0:                  /* off */
         break;
-      case 1:                  /* hardware stereo-in-a-window */
+      case cStereo_quadbuffer:                  /* hardware stereo-in-a-window */
         SceneSetStereo(G, flag);
 #ifndef _PYMOL_NOPY
         PSGIStereo(G, flag);    /* does this have any effect anymore? */

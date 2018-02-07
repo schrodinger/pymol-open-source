@@ -2,6 +2,30 @@
 CHANGE LOG
 =========================================================================
 
+2018-02-07 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* new selection keywords: polymer.protein polymer.nucleic
+
+	* new command: multifilesave
+
+	* MMTF export (requires simplemmtf python module)
+
+	* select: present, state -1 -> current object state
+
+	* create: source_state = -1 -> current
+	  (was: source_state = -1/0 -> all)
+
+	* cif: support quoted '?' and '.' as values
+	  cif_get_array -> None instead of empty string for ? and .
+
+	* fix copy discrete object w/o coords
+
+	* fix loading pdbqr AutoDock 4 atom types
+
+	* fix get_model('none') and get_str('mol', 'none')
+
+	* h_add refactored: 5x faster, support discrete objects
+
 2017-12-21 Thomas Holder, Piotr Rotkiewicz
 
 	* Python 3.7 support (https://sf.net/p/pymol/bugs/197/)

@@ -174,12 +174,12 @@ TEMPORARY_FILE_DIR = tempfile.gettempdir() # corresponding environment variable:
 
 apbs_plea = ("IMPORTANT REQUEST: If you have not already done so, please register\n"
              "your use of the open-source Adaptive Poisson-Boltzmann Solver (APBS) at\n"
-             "-> http://www.poissonboltzmann.org/apbs/downloads\n"
+             "-> http://www.poissonboltzmann.org/\n"
              "Such proof of usage is vital in securing funding for APBS development!\n")
 
 pdb2pqr_plea = ("IMPORTANT REQUEST: If you have not already done so, please register\n"
              "your use of the open-source PDB2PQR at\n"
-             "-> http://www.poissonboltzmann.org/pdb2pqr/d\n"
+             "-> http://www.poissonboltzmann.org/\n"
              "Such proof of usage is vital in securing funding for PDB2PQR development!\n")
 global apbs_message, pdb2pqr_message
 apbs_message = """You must have APBS installed on your system."""
@@ -1111,10 +1111,10 @@ Citation for PDB2PQR:
     def execute(self, result, refocus=True):
         if result == 'Register APBS Use':
             import webbrowser
-            webbrowser.open("http://www.poissonboltzmann.org/docs/apbs-registration/")
+            webbrowser.open("http://www.poissonboltzmann.org/")
         elif result == 'Register PDB2PQR Use':
             import webbrowser
-            webbrowser.open("http://www.poissonboltzmann.org/docs/apbs-registration/")
+            webbrowser.open("http://www.poissonboltzmann.org/")
         elif result == 'Run APBS':
             good = self.generateApbsInputFile()
             if not good:

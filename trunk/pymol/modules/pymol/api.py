@@ -102,6 +102,7 @@ from .querying import \
       get_angle,          \
       get_area,           \
       get_assembly_ids,   \
+      get_bonds,          \
       get_chains,         \
       get_collada,        \
       get_color_index,    \
@@ -166,6 +167,8 @@ from .exporting import \
       get_cifstr,         \
       get_session,        \
       get_fastastr,       \
+      multifilesave,      \
+      multifilenamegen,   \
       multisave,          \
       png,                \
       save               

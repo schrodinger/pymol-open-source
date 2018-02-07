@@ -254,6 +254,15 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
           AtomInfoAssignParameters(G, ai);
           AtomInfoAssignColors(G, ai);
 
+          if (container->pymolRepsList) {
+            ai->visRep = container->pymolRepsList[atomIndex];
+            ai->flags |= cAtomFlag_inorganic; // suppress auto_show_classified
+          }
+
+          if (container->pymolColorList) {
+            ai->color = container->pymolColorList[atomIndex];
+          }
+
           VLACheck(cset->IdxToAtm, int, cset->NIndex);
           VLACheck(cset->Coord, float, 3 * cset->NIndex + 2);
           cset->IdxToAtm[cset->NIndex] = atomIndex;

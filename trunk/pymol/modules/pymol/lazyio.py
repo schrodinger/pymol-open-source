@@ -221,3 +221,60 @@ DESCRIPTION
 
         _self.load_model(model, oname,
                 state=model_num, zoom=zoom, discrete=discrete)
+
+
+def get_mmtfstr(selection='all', state=1, _self=cmd):
+    '''
+DESCRIPTION
+
+    Export an atom selection to MMTF format.
+    '''
+    import simplemmtf
+
+    try:
+        # register PyMOL-specific spec extensions
+        simplemmtf.levels[u'atom'][u'pymolReps'] = 0
+        simplemmtf.levels[u'atom'][u'pymolColor'] = 0
+        simplemmtf.encodingrules[u'pymolRepsList'] = (7, 0)
+    except Exception as e:
+        print(e)
+
+    mmtfstr = simplemmtf.mmtfstr
+
+    ss_map = {
+        'H': 2,  # alpha helix
+        'S': 3,  # extended
+    }
+
+    def callback(state, segi, chain, resv, resi, resn, name, elem,
+            x, y, z, reps, color, alt, formal_charge, b, q, ss):
+        atoms.append({
+            u'modelIndex': state,
+            u'chainId': mmtfstr(segi),
+            u'chainName': mmtfstr(chain),
+            u'groupId': resv,
+            u'groupName': mmtfstr(resn),
+            u'atomName': mmtfstr(name),
+            u'element': mmtfstr(elem),
+            u'coords': (x, y, z),
+            u'altLoc': mmtfstr(alt),
+            u'formalCharge': formal_charge,
+            u'bFactor': b,
+            u'occupancy': q,
+            u'secStruct': ss_map.get(ss, -1),
+            u'insCode': mmtfstr(resi.lstrip('0123456789')),
+            u'pymolReps': reps,
+            u'pymolColor': color,
+        })
+
+    atoms = []
+    _self.iterate_state(state, selection,
+            'callback(state, segi, chain, resv, resi, resn, name, elem, '
+            'x, y, z, reps, color, alt, formal_charge, b, q, ss)',
+            space={'callback': callback})
+
+    bonds = _self.get_bonds(selection, state)
+
+    d_out = simplemmtf.from_atoms(atoms, bonds)
+
+    return d_out.encode()

@@ -1260,7 +1260,6 @@ int AtomInfoUniquefyNames(PyMOLGlobals * G, const AtomInfoType * atInfo0, int n0
       } else {
         sprintf(name, "%1d%1s%02d", c / 100, ai1->elem, c % 100);
       }
-      name[4] = 0;              /* just is case we go over */
       LexAssign(G, ai1->name, name);
       result++;
       c = c + 1;

@@ -12,11 +12,11 @@
 
 #include <vector>
 #include <iostream>
-#include <stdexcept>
 
 #include "CifFile.h"
 #include "File.h"
 #include "MemoryDebug.h"
+#include "strcasecmp.h"
 
 // basic IO and string handling
 
@@ -90,6 +90,20 @@ static void tolowerinplace(char *p) {
 static const char * EMPTY_STRING = "";
 static cif_array EMPTY_ARRAY(NULL);
 
+/*
+ * Class to store CIF loops. Only for parsing, do not use in any higher level
+ * reading functions.
+ */
+class cif_loop {
+public:
+  int ncols;
+  int nrows;
+  const char **values;
+
+  // methods
+  const char * get_value_raw(int row, int col) const;
+};
+
 // get table value, return NULL if indices out of bounds
 const char * cif_loop::get_value_raw(int row, int col) const {
   if (row >= nrows)
@@ -97,17 +111,17 @@ const char * cif_loop::get_value_raw(int row, int col) const {
   return values[row * ncols + col];
 }
 
+// get the number of elements in this array
+int cif_array::get_nrows() const {
+  return (col < 0) ? 1 : pointer.loop->nrows;
+}
+
 // get array value, return NULL if row-index out of bounds
-const char * cif_array::get_value_raw(int row) const {
+// or value in ['.', '?']
+const char * cif_array::get_value(int row) const {
   if (col < 0)
     return (row > 0) ? NULL : pointer.value;
   return pointer.loop->get_value_raw(row, col);
-};
-
-// get array value, return NULL if value in ['.', '?']
-const char * cif_array::get_value(int row) const {
-  const char * s = get_value_raw(row);
-  return (s && (s[0] == '?' || s[0] == '.') && !s[1]) ? NULL : s;
 }
 
 // get array value, return an empty string if missing
@@ -141,7 +155,7 @@ bool cif_array::is_missing_all() const {
 }
 
 // templated getters
-template <> const char* cif_array::as<const char* >(int row) const { return as_s(row); }
+template <> const char* cif_array::as<const char* >(int row) const { return get_value(row); }
 template <> std::string cif_array::as<std::string >(int row) const { return as_s(row); }
 template <> int         cif_array::as<int         >(int row) const { return as_i(row); }
 template <> double      cif_array::as<double      >(int row) const { return as_d(row); }
@@ -228,7 +242,7 @@ bool cif_file::parse() {
   char quote;
   char prev = '\0';
 
-  std::vector<char> codes;
+  std::vector<bool> keypossible;
 
   // tokenize
   while (true) {
@@ -243,14 +257,14 @@ bool cif_file::parse() {
       prev = *p;
     } else if (isquote(*p)) { // will NULL the closing quote
       quote = *p;
-      codes.push_back('Q');
+      keypossible.push_back(false);
       tokens.push_back(p + 1);
       while (*++p && !(*p == quote && iswhitespace0(p[1])));
       if (*p)
         *(p++) = 0;
       prev = *p;
     } else if (*p == ';' && islinefeed(prev)) { // will NULL the line feed before the closing semicolon
-      codes.push_back('Q');
+      keypossible.push_back(false);
       tokens.push_back(p + 1);
       while (*++p && !(islinefeed(*p) && p[1] == ';'));
       if (*p) {
@@ -259,12 +273,19 @@ bool cif_file::parse() {
       }
       prev = ';';
     } else { // will null the whitespace
-      codes.push_back('R');
-      tokens.push_back(p);
+      char * q = p++;
       while (!iswhitespace0(*p)) ++p;
       prev = *p;
-      if (*p)
-        *(p++) = 0;
+      if (p - q == 1 && (*q == '?' || *q == '.')) {
+        // store values '.' (inapplicable) and '?' (unknown) as null-pointers
+        q = NULL;
+        keypossible.push_back(false);
+      } else {
+        if (*p)
+          *(p++) = 0;
+        keypossible.push_back(true);
+      }
+      tokens.push_back(q);
     }
   }
 
@@ -272,10 +293,15 @@ bool cif_file::parse() {
 
   // parse into dictionary
   for (unsigned int i = 0, n = tokens.size(); i < n; i++) {
-    if (codes[i] == 'Q') {
+    if (!keypossible[i]) {
       std::cout << "ERROR" << std::endl;
       break;
     } else if (tokens[i][0] == '_') {
+      if (i + 1 == n) {
+        std::cout << "ERROR truncated" << std::endl;
+        break;
+      }
+
       if (current_frame) {
         tolowerinplace(tokens[i]);
         current_frame->dict[tokens[i]].set_value(tokens[i + 1]);
@@ -296,7 +322,7 @@ bool cif_file::parse() {
       }
 
       // columns
-      while (++i < n && codes[i] != 'Q' && tokens[i][0] == '_') {
+      while (++i < n && keypossible[i] && tokens[i][0] == '_') {
         tolowerinplace(tokens[i]);
 
         if (current_frame) {
@@ -313,8 +339,14 @@ bool cif_file::parse() {
       }
 
       // rows
-      while (i < n && (codes[i] == 'Q' || !isspecial(tokens[i]))) {
+      while (i < n && !(keypossible[i] && isspecial(tokens[i]))) {
         i += ncols;
+
+        if (i > n) {
+          std::cout << "ERROR truncated loop" << std::endl;
+          break;
+        }
+
         nrows++;
       }
 
@@ -334,7 +366,7 @@ bool cif_file::parse() {
       global_block = current_data = current_frame = new cif_data;
 
     } else if (strncasecmp("save_", tokens[i], 5) == 0) {
-      if (tokens[i][5]) {
+      if (tokens[i][5] && current_data) {
         // begin
         const char * key(tokens[i] + 5);
         current_data->saveframes[key] = current_frame = new cif_data;

@@ -155,6 +155,7 @@ public:
     m_buffer = VLAlloc(char, 1280);
     m_buffer[0] = '\0';
 
+    m_mat_ref.ptr = NULL;
     m_offset = 0;
     m_last_cs  = NULL;
     m_last_obj = NULL;
@@ -213,6 +214,8 @@ protected:
    * Get the current state title if not empty, or the object name otherwise.
    */
   const char * getTitleOrName() {
+    if (!m_iter.cs)
+      return "untitled";
     return m_iter.cs->Name[0] ? m_iter.cs->Name : m_iter.obj->Obj.Name;
   }
 
@@ -342,6 +345,9 @@ void MoleculeExporter::execute(int sele, int state) {
     endCoordSet();
   if (m_last_obj)
     endObject();
+  else if (m_multi == cMolExportGlobal)
+    // empty selection
+    beginMolecule();
 
   if (m_multi == cMolExportGlobal) {
     writeBonds();
@@ -682,12 +688,69 @@ struct MoleculeExporterCIF : public MoleculeExporter {
 
   void writeBonds() {
     // TODO
+    // Bond categories:
+    // 1) within residue -> _chem_comp_bond
+    // 2) polymer links -> implicit
+    // 3) others -> _struct_conn
     m_bonds.clear();
   }
 
   bool isExcludedBond(int atm1, int atm2) {
     // TODO
+    // polymer links
     return true;
+  }
+};
+
+// ---------------------------------------------------------------------------------- //
+
+/*
+ * Experimental PyMOL style annotated mmCIF. Exports colors, representation,
+ * and secondary structure.
+ */
+struct MoleculeExporterPMCIF : public MoleculeExporterCIF {
+  void beginMolecule() {
+    MoleculeExporterCIF::beginMolecule();
+
+    m_offset += VLAprintf(m_buffer, m_offset, "#\n"
+        "_atom_site.pymol_color\n"
+        "_atom_site.pymol_reps\n"
+        "_atom_site.pymol_ss\n");
+  }
+
+  void writeAtom() {
+    MoleculeExporterCIF::writeAtom();
+
+    const AtomInfoType * ai = m_iter.getAtomInfo();
+
+    m_offset += VLAprintf(m_buffer, m_offset,
+        "%d %d %s\n",
+        ai->color,
+        ai->visRep,
+        cifrepr(ai->ssType));
+  }
+
+  void writeBonds() {
+    if (m_bonds.empty())
+      return;
+
+    m_offset += VLAprintf(m_buffer, m_offset, "#\n"
+        "loop_\n"
+        "_pymol_bond.atom_site_id_1\n"
+        "_pymol_bond.atom_site_id_2\n"
+        "_pymol_bond.order\n");
+
+    for (auto bond_it = m_bonds.begin(); bond_it != m_bonds.end(); ++bond_it) {
+      const auto& bond = *bond_it;
+      m_offset += VLAprintf(m_buffer, m_offset, "%d %d %d\n",
+          bond.id1, bond.id2, bond.ref->order);
+    }
+
+    m_bonds.clear();
+  }
+
+  bool isExcludedBond(int atm1, int atm2) {
+    return false;
   }
 };
 
@@ -1204,6 +1267,8 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
 
   if (strcmp(format, "pdb") == 0) {
     exporter = new MoleculeExporterPDB;
+  } else if (strcmp(format, "pmcif") == 0) {
+    exporter = new MoleculeExporterPMCIF;
   } else if (strcmp(format, "cif") == 0) {
     exporter = new MoleculeExporterCIF;
   } else if (strcmp(format, "sdf") == 0) {
@@ -1244,6 +1309,68 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
 /*========================================================================*/
 
 #ifndef _PYMOL_NOPY
+/*
+ * See MoleculeExporterGetPyBonds
+ */
+struct MoleculeExporterPyBonds : public MoleculeExporter {
+  PyObject *m_bond_list; // out
+
+protected:
+  int getMultiDefault() const {
+    // single-entry format
+    return cMolExportGlobal;
+  }
+
+  void writeAtom() {}
+
+  void writeBonds() {
+    size_t nBond = m_bonds.size();
+    m_bond_list = PyList_New(nBond);
+
+    for (size_t b = 0; b < nBond; ++b) {
+      const auto& bond = m_bonds[b];
+      PyList_SetItem(m_bond_list, b, Py_BuildValue("iii",
+            bond.id1 - 1, bond.id2 - 1, bond.ref->order));
+    }
+
+    m_bonds.clear();
+  }
+};
+
+/*========================================================================*/
+
+/*
+ * Get all bonds within the given selection.
+ *
+ * Returns a list of (atm1, atm2, order) tuples, where atm1 and atm2 are
+ * the 0-based atom indices within the selection.
+ *
+ * Return value: New reference
+ */
+PyObject *MoleculeExporterGetPyBonds(PyMOLGlobals * G,
+    const char *selection, int state)
+{
+  SelectorTmp tmpsele1(G, selection);
+  int sele = tmpsele1.getIndex();
+  if (sele < 0)
+    return NULL;
+
+  int unblock = PAutoBlock(G);
+
+  MoleculeExporterPyBonds exporter;
+  exporter.init(G);
+  exporter.execute(sele, state);
+
+  if (PyErr_Occurred())
+    PyErr_Print();
+
+  PAutoUnblock(G, unblock);
+
+  return exporter.m_bond_list;
+}
+
+/*========================================================================*/
+
 /*
  * Creates a `chempy.models.Indexed` instance from a selection.
  *

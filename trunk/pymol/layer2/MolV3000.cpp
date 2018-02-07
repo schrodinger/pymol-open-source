@@ -20,11 +20,7 @@
 #include "Vector.h"
 #include "Rep.h"
 #include "Lex.h"
-
-#ifdef WIN32
-  #define strcasecmp(s1, s2) _stricmp(s1, s2)
-  #define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
-#endif
+#include "strcasecmp.h"
 
 /*
  * Read a MOL/SDF V3000 line into the `out` buffer, stripping the leading

@@ -369,7 +369,7 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
     while not assign.formal_charges(obj_name,quiet=1,_self=_self):
         print(" WARNING: unrecognized or incomplete residues are being deleted:")
         cmd.iterate("(byres ("+obj_name+" and flag 23)) and flag 31",
-                        'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"',quiet=1)
+                        'print("  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/")',quiet=1)
         cmd.remove("byres ("+obj_name+" and flag 23)") # get rid of residues that weren't assigned
         assign.missing_c_termini(obj_name,quiet=1,_self=_self)
         
@@ -379,7 +379,7 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
     if not assign.amber99(obj_name,quiet=1,_self=_self):
         print(" WARNING: some unassigned atoms are being deleted:")
         cmd.iterate("byres ("+obj_name+" and flag 23)",
-                        'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"+name+"? ["+elem+"]"',quiet=1)
+                        'print("  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"+name+"? ["+elem+"]")',quiet=1)
         cmd.remove(obj_name+" and flag 23") # get rid of any atoms that weren't assigned
         
     # show the user what the net charges are...

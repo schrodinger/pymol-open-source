@@ -2089,7 +2089,7 @@ void PyMOL_Start(CPyMOL * I)
 #ifdef _MACPYMOL_XCODE
   SettingSetGlobal_b(G, cSetting_stereo_double_pump_mono, true);
   if(G->Option->stereo_capable) {
-    SettingSetGlobal_i(G, cSetting_stereo_mode, 1);
+    SettingSetGlobal_i(G, cSetting_stereo_mode, cStereo_quadbuffer);
   }
   /*       SettingSetGlobal_i(G,cSetting_show_progress, 0);  */
 #endif
@@ -2985,9 +2985,9 @@ void PyMOL_SetStereoCapable(CPyMOL * I, int stereoCapable){
   if (SettingGetGlobal_b(I->G, cSetting_stereo_mode)==0){
     /* if users haven't set stereo_mode, then set it to default */
     if (G->StereoCapable){
-      SettingSetGlobal_i(I->G, cSetting_stereo_mode, 1);      /* quadbuffer if we can */
+      SettingSetGlobal_i(I->G, cSetting_stereo_mode, cStereo_quadbuffer);      /* quadbuffer if we can */
     } else {
-      SettingSetGlobal_i(I->G, cSetting_stereo_mode, 2);      /* otherwise crosseye by default */
+      SettingSetGlobal_i(I->G, cSetting_stereo_mode, cStereo_crosseye);      /* otherwise crosseye by default */
     }
   } else if (G->StereoCapable && SettingGetGlobal_b(G, cSetting_stereo)){
     SettingSetGlobal_i(I->G, cSetting_stereo_mode, SettingGetGlobal_b(I->G, cSetting_stereo_mode));

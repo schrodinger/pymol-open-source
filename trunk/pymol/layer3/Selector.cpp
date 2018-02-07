@@ -408,6 +408,8 @@ static int SelectorGetObjAtmOffset(CSelector * I, ObjectMolecule * obj, int offs
 #define SELE_CUST ( 0x5300 | STYP_SEL1 | 0x80 )
 #define SELE_RING ( 0x5400 | STYP_OPR1 | 0x20 )
 #define SELE_LABs ( 0x5500 | STYP_SEL1 | 0x80 )
+#define SELE_PROz ( 0x5600 | STYP_SEL0 | 0x90 )
+#define SELE_NUCz ( 0x5700 | STYP_SEL0 | 0x90 )
 
 #define SEL_PREMAX 0x8
 
@@ -540,7 +542,6 @@ static WordKeyValue Keyword[] = {
   {"msk.", SELE_MSKz},
 
   {"protected", SELE_PTDz},
-  {"pr.", SELE_PTDz},
 
   {"formal_charge", SELE_FCHx},
   {"fc;", SELE_FCHx},           /* deprecated */
@@ -619,6 +620,20 @@ static WordKeyValue Keyword[] = {
 
   {"polymer", SELE_POLz},
   {"pol.", SELE_POLz},
+
+  {"polymer.protein", SELE_PROz},
+  {"polymer.nucleic", SELE_NUCz},
+
+#if 0
+  // User survey winners. Not activated (yet) but ObjectMakeValidName
+  // prints a deprecation warning if these names are used to name
+  // objects or selections.
+  {"protein", SELE_PROz},
+  {"nucleic", SELE_NUCz},
+
+  {"pro.", SELE_PROz},
+  {"nuc.", SELE_NUCz},
+#endif
 
   {"organic", SELE_ORGz},
   {"org.", SELE_ORGz},
@@ -712,8 +727,13 @@ int SelectorRenameObjectAtoms(PyMOLGlobals * G, ObjectMolecule * obj, int sele, 
       for(a = 0; a < obj_nAtom; a++) {
         if(SelectorIsMember(G, ai->selEntry, sele)) {
           flag[a] = true;
+          result = true;
         }
         ai++;
+      }
+      if (!result && !force) {
+        // nothing selected, no need to continue
+        return 0;
       }
       result = ObjectMoleculeRenameAtoms(obj, flag, force);
     }
@@ -6858,11 +6878,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
       targ = (ObjectMolecule *) ob;
 
   c = 0;
-  if(source < 0) {
-    SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
-  } else {
     SelectorUpdateTable(G, source, -1);
-  }
 
   if(!targ) {
     isNew = true;
@@ -6970,11 +6986,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
 
   if(!isNew) {                  /* recreate selection table */
 
-    if(source < 0) {
-      SelectorUpdateTable(G, cSelectorUpdateTableAllStates, -1);
-    } else {
       SelectorUpdateTable(G, source, -1);
-    }
 
   }
 
@@ -7005,8 +7017,9 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
     ErrFatal(G, "SelectorCreate", "inconsistent selection.");
   /* cs->IdxToAtm now has the relevant indexes for the coordinate transfer */
 
-  for(d = 0; d < nCSet; d++) {  /* iterate through states */
-    if((source < 0) || (source == d)) {
+  for(StateIterator iter(G, NULL, source, nCSet); iter.next();) {
+    d = iter.state;
+    {
       cs2 = CoordSetNew(G);
       c = 0;
       cs2->Coord = VLAlloc(float, 3 * nAtom);
@@ -7041,7 +7054,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals * G, int sele, const char *name,
       VLASize(cs2->Coord, float, c * 3);
       cs2->NIndex = c;
       if(target >= 0) {
-        if(source < 0)
+        if(source == -1)
           ts = target + d;
         else
           ts = target;
@@ -7747,7 +7760,7 @@ int SelectorCreateWithStateDomain(PyMOLGlobals * G, const char *sname, const cha
 
   UtilNCopy(valid_name, sname, sizeof(valid_name));
   if(SettingGetGlobal_b(G, cSetting_validate_object_names)) {
-    ObjectMakeValidName(valid_name);
+    ObjectMakeValidName(G, valid_name);
     sname = valid_name;
   }
 
@@ -8406,7 +8419,6 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
   EvalElem *base = passed_base;
   int c = 0;
   int state;
-  int static_singletons;
   ObjectMolecule *obj, *cur_obj = NULL;
   CoordSet *cs;
 
@@ -8503,6 +8515,16 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
       base[0].sele[a] =
         i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_polymer;
     break;
+  case SELE_PROz:
+    for(a = cNDummyAtoms; a < I->NAtom; a++)
+      base[0].sele[a] =
+        i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_protein;
+    break;
+  case SELE_NUCz:
+    for(a = cNDummyAtoms; a < I->NAtom; a++)
+      base[0].sele[a] =
+        i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_nucleic;
+    break;
   case SELE_SOLz:
     for(a = cNDummyAtoms; a < I->NAtom; a++)
       base[0].sele[a] =
@@ -8533,15 +8555,16 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
     break;
 
   case SELE_PREz:
-    state = SceneGetState(G);
-    static_singletons = SettingGetGlobal_b(G, cSetting_static_singletons);
     flag = false;
     cs = NULL;
     for(a = cNDummyAtoms; a < I->NAtom; a++) {
       base[0].sele[a] = false;
       obj = i_obj[i_table[a].model];
       if(obj != cur_obj) {      /* different object */
+        state = obj->getState();
         if(state >= obj->NCSet)
+          flag = false;
+        else if(state < 0)
           flag = false;
         else if(!obj->CSet[state])
           flag = false;
@@ -8549,12 +8572,6 @@ static int SelectorSelect0(PyMOLGlobals * G, EvalElem * passed_base)
           cs = obj->CSet[state];
           flag = true;          /* valid state */
         }
-        if(!flag)
-          if(I->NCSet == 1)
-            if(static_singletons) {
-              cs = obj->CSet[0];
-              flag = true;
-            }
         cur_obj = obj;
       }
       if(flag && cs) {
@@ -9052,15 +9069,17 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     state = state - 1;
     obj = NULL;
 
-    if(state < 0) {
-      for(a = cNDummyAtoms; a < I_NAtom; a++)
-        base[0].sele[a] = false;
-    } else {
+    {
+      auto state_arg = state;
       for(a = cNDummyAtoms; a < I_NAtom; a++) {
         base[0].sele[a] = false;
         obj = i_obj[i_table[a].model];
         if(obj != cur_obj) {    /* different object */
+          if (state_arg == cSelectorUpdateTableCurrentState)
+            state = obj->getState();
           if(state >= obj->NCSet)
+            flag = false;
+          else if(state < 0)
             flag = false;
           else if(!obj->CSet[state])
             flag = false;

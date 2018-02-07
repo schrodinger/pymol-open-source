@@ -178,6 +178,7 @@ def get_command_keywords(self_cmd=cmd):
         'mouse'         : [ self_cmd.mouse             , 0 , 0 , ''  , parsing.STRICT ],
         'morph'         : [ self_cmd.morph             , 0 , 0 , ''  , parsing.STRICT ],
         'multisave'     : [ self_cmd.multisave         , 0 , 0 , ''  , parsing.STRICT ],
+        'multifilesave' : [ self_cmd.multifilesave     , 0 , 0 , ''  , parsing.STRICT ],
         'mview'         : [ self_cmd.mview             , 0 , 0 , ''  , parsing.STRICT ],
         'order'         : [ self_cmd.order             , 0 , 0 , ''  , parsing.STRICT ],
         'origin'        : [ self_cmd.origin            , 0 , 0 , ''  , parsing.STRICT ],

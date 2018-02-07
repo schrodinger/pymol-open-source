@@ -6,11 +6,7 @@
 
 #include "os_std.h"
 #include "CifDataValueFormatter.h"
-
-#ifdef WIN32
-  #define strcasecmp(s1, s2) _stricmp(s1, s2)
-  #define strncasecmp(s1, s2, n) _strnicmp(s1, s2, n)
-#endif
+#include "strcasecmp.h"
 
 /*
  * Simplified whitespace test. Returns true if string `s` contains any character
@@ -47,6 +43,8 @@ bool cif_is_simpledatavalue(const char * s) {
       !strchr("_#$'\"[];", s[0]) &&
       // whitespace
       !has_whitespace(s) &&
+      // special values '.' (inapplicable) and '?' (unknown)
+      !((s[0] == '.' || s[0] == '?') && !s[1]) &&
       // prefix is special
       strncasecmp("data_", s, 5) &&
       strncasecmp("save_", s, 5) &&

@@ -392,6 +392,7 @@ with a slash (/) forces the interpreter to pass it to Python. See also the
             'organic', 'inorganic', 'solvent', 'polymer', 'guide', 'hetatm',
             'hydrogens', 'backbone', 'sidechain', 'metals', 'donors',
             'acceptors',
+            'polymer.protein', 'polymer.nucleic',
 
             'center', 'origin',
         ])

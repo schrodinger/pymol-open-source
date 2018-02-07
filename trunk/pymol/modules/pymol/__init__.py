@@ -67,7 +67,13 @@ if __name__ == '__main__':
     # this should never be reached because PyMOL will exit the process
     raise SystemExit
 
-if sys.version_info[0] > 2:
+IS_PY2 = sys.version_info[0] == 2
+IS_PY3 = sys.version_info[0] == 3
+IS_WINDOWS = sys.platform.startswith('win')
+IS_MACOS = sys.platform.startswith('darwin')
+IS_LINUX = sys.platform.startswith('linux')
+
+if IS_PY3:
     # legacy string API, still used by Pmw for example
     import string
     for attr in ['capitalize', 'count', 'find', 'index', 'lower',
@@ -314,7 +320,7 @@ def adapt_to_hardware(self):
                 print(" Adapting to FireGL hardware.")
             cmd.set('line_width', 2, quiet=1)
 
-        if sys.platform.startswith('win'):
+        if IS_WINDOWS:
             if sys.getwindowsversion()[0] > 5:
                 # prevent color corruption by calling glFlush etc.
                 cmd.set('ati_bugs', 1)
@@ -367,12 +373,11 @@ def launch_gui(self):
     '''
     Launch if requested:
     - external GUI
-    - RPC server
     '''
     pymol_path = os.getenv('PYMOL_PATH', '')
 
     try:
-        poll = (sys.platform == 'darwin')
+        poll = IS_MACOS
 
         if self.invocation.options.external_gui == 3:
             if 'DISPLAY' not in os.environ:
@@ -386,11 +391,6 @@ def launch_gui(self):
             # import plugin system
             import pymol.plugins
 
-    # -- Greg Landrum's RPC stuff
-        if self.invocation.options.rpcServer:
-            from pymol import rpc
-            rpc.launch_XMLRPC()
-    # --
     except:
         traceback.print_exc()
 
@@ -406,7 +406,7 @@ def prime_pymol():
         glutThread = thread.get_ident()
 
     # legacy X11 launching on OSX
-    if sys.platform == 'darwin' and invocation.options.external_gui == 1:
+    if IS_MACOS and invocation.options.external_gui == 1:
         xdpyinfo = "/opt/X11/bin/xdpyinfo"
         if not os.path.exists(xdpyinfo) or \
                 os.system(xdpyinfo + " >/dev/null 2>&1"):
@@ -585,7 +585,7 @@ sys.meta_path.insert(0, _NoCmdFinder())
 
 ########## LEGACY PRINT STATEMENT FOR PYMOL COMMAND LINE ###################
 
-if sys.version_info[0] > 2:
+if IS_PY3:
     def _print_statement(*args, **_):
         '''Legacy Python-2-like print statement for the PyMOL command line'''
         kw = {}

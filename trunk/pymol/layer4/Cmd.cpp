@@ -2714,7 +2714,7 @@ static PyObject *CmdGetLegalName(PyObject * self, PyObject * args)
   if(ok) {
     APIEnter(G);
     UtilNCopy(name, str0, sizeof(WordType));
-    ObjectMakeValidName(name);
+    ObjectMakeValidName(G, name);
     APIExit(G);
     result = PyString_FromString(name);
   }
@@ -4879,6 +4879,28 @@ static PyObject *CmdGetModel(PyObject * self, PyObject * args)
     }
   }
   return (APIAutoNone(result));
+}
+
+static PyObject *CmdGetBonds(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  char *sele;
+  int state;
+
+  ok_assert(1, PyArg_ParseTuple(args, "Osi", &self, &sele, &state));
+  API_SETUP_PYMOL_GLOBALS;
+
+  ok_assert(1, G && APIEnterNotModal(G));
+  result = MoleculeExporterGetPyBonds(G, sele, state);
+  APIExit(G);
+
+  if (0) {
+ok_except1:
+    API_HANDLE_ERROR;
+  }
+
+  return APIAutoNone(result);
 }
 
 static PyObject *CmdCreate(PyObject * self, PyObject * args)
@@ -7510,7 +7532,9 @@ static PyObject *CmdHAdd(PyObject * self, PyObject * args)
   char *str1;
   int quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Osi", &self, &str1, &quiet);
+  int state;
+  int legacy;
+  ok = PyArg_ParseTuple(args, "Osiii", &self, &str1, &quiet, &state, &legacy);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -7518,7 +7542,11 @@ static PyObject *CmdHAdd(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveAddHydrogens(G, str1, quiet);
+#ifndef _PYMOL_NO_UNDO
+#endif
+    ExecutiveAddHydrogens(G, str1, quiet, state, legacy);
+#ifndef _PYMOL_NO_UNDO
+#endif
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -8346,6 +8374,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_min_max", CmdGetMinMax, METH_VARARGS},
   {"get_mtl_obj", CmdGetMtlObj, METH_VARARGS},
   {"get_model", CmdGetModel, METH_VARARGS},
+  {"get_bonds", CmdGetBonds, METH_VARARGS},
   {"get_modal_draw", CmdGetModalDraw, METH_VARARGS},
   {"get_moment", CmdGetMoment, METH_VARARGS},
   {"get_movie_length", CmdGetMovieLength, METH_VARARGS},
