@@ -1136,30 +1136,27 @@ DESCRIPTION
         return r
 
 
-    def h_add(selection="(all)",quiet=1,_self=cmd):
+    def h_add(selection="(all)", quiet=1, state=0, legacy=0, _self=cmd):
         '''
 DESCRIPTION
 
-    "h_add" uses a rudimentary algorithm to add hydrogens onto a
-    molecule based on current valences.
+    "h_add" adds hydrogens onto a molecule based on current valences.
 
 USAGE
 
-    h_add selection
+    h_add [ selection [, state ]]
 
 ARGUMENTS
 
     selection = string {default: (all)}
+
+    state = int {default: 0 (all states)}
 
 NOTES
 
     Because PDB files do not normally contain bond valences for
     ligands and other nonstandard components, it may be necessary to
     manually correct ligand conformations before adding hydrogens.
-
-PYMOL API
-
-    cmd.h_add( string selection="(all)" )
 
 SEE ALSO
 
@@ -1171,7 +1168,8 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.h_add(_self._COb,selection,int(quiet))
+            r = _cmd.h_add(_self._COb,selection,int(quiet),
+                    int(state) - 1, int(legacy))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            

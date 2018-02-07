@@ -495,6 +495,8 @@ if __name__=='pymol.invocation':
             options.deferred = [('_do__ @' + a) if script_re.search(a) else a
                     for a in pymolrc] + options.deferred
             options.pymolrc = pymolrc
+        if options.rpcServer:
+            options.deferred.append('_do__ /import pymol.rpc;pymol.rpc.launch_XMLRPC()')
         if options.plugins == 1:
             # Load plugins independent of PMGApp (will not add menu items)
             options.deferred.append('_do__ /import pymol.plugins;pymol.plugins.initialize(-1)')

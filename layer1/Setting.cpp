@@ -2891,7 +2891,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     if(G->Option->stereo_mode) {
       set_i(I, cSetting_stereo_mode, G->Option->stereo_mode);
     } else if(G->StereoCapable || G->Option->blue_line) {
-      set_i(I, cSetting_stereo_mode, 1);      /* quadbuffer if we can */
+      set_i(I, cSetting_stereo_mode, cStereo_quadbuffer);      /* quadbuffer if we can */
     }
 
     /* In order to get electrostatic potentials in kT from the Coulomb equation... 

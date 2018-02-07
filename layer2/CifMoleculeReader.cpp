@@ -31,6 +31,7 @@
 #include "Util2.h"
 #include "Vector.h"
 #include "Lex.h"
+#include "strcasecmp.h"
 
 // canonical amino acid three letter codes
 const char * aa_three_letter[] = {
@@ -1996,6 +1997,52 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, cif_data * data,
 }
 
 /*
+ * Read bonds from _pymol_bond (non-standard extension)
+ *
+ * return: BondType VLA
+ */
+static BondType * read_pymol_bond(PyMOLGlobals * G, cif_data * data,
+    AtomInfoType * atInfo) {
+
+  const cif_array *col_ID_1, *col_ID_2, *col_order;
+
+  if ((col_ID_1    = data->get_arr("_pymol_bond.atom_site_id_1")) == NULL ||
+      (col_ID_2    = data->get_arr("_pymol_bond.atom_site_id_2")) == NULL ||
+      (col_order   = data->get_arr("_pymol_bond.order")) == NULL)
+    return NULL;
+
+  int nrows = col_ID_1->get_nrows();
+  int nAtom = VLAGetSize(atInfo);
+
+  BondType *bondvla, *bond;
+  bondvla = bond = VLACalloc(BondType, nrows);
+
+  // ID -> atom index
+  std::map<int, int> id_dict;
+
+  for (int atm = 0; atm < nAtom; ++atm) {
+    id_dict[atInfo[atm].id] = atm;
+  }
+
+  for (int i = 0; i < nrows; i++) {
+    auto key1 = col_ID_1->as_i(i);
+    auto key2 = col_ID_2->as_i(i);
+    auto order_value = col_order->as_i(i);
+
+    int i1, i2;
+    if (find2(id_dict, i1, key1, i2, key2)) {
+      BondTypeInit2(bond++, i1, i2, order_value);
+    } else {
+      PRINTFB(G, FB_Executive, FB_Details)
+        " Executive-Detail: _pymol_bond name lookup failed: %d %d\n",
+        key1, key2 ENDFB(G);
+    }
+  }
+
+  return bondvla;
+}
+
+/*
  * Create a new (multi-state) object-molecule from datablock
  */
 static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
@@ -2114,7 +2161,9 @@ static ObjectMolecule *ObjectMoleculeReadCifData(PyMOLGlobals * G,
 
       break;
     case CIF_MMCIF:
-      if (cset) {
+      I->Bond = read_pymol_bond(G, datablock, I->AtomInfo);
+
+      if (cset && !I->Bond) {
         // sort atoms internally
         ObjectMoleculeSort(I);
 
@@ -2226,8 +2275,8 @@ ObjectMolecule *ObjectMoleculeReadCifStr(PyMOLGlobals * G, ObjectMolecule * I,
     ObjectMolecule * obj = ObjectMoleculeReadCifData(G, it->second, discrete, quiet);
 
     if (!obj) {
-      PRINTFB(G, FB_ObjectMolecule, FB_Errors)
-        " mmCIF-Error: no coordinates found in data_%s\n", it->first ENDFB(G);
+      PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
+        " mmCIF-Warning: no coordinates found in data_%s\n", it->first ENDFB(G);
       continue;
     }
 

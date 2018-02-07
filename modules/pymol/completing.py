@@ -224,6 +224,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'morph'          : aa_sel_e,
         'movie.produce'  : [ self_cmd.movie.produce_mode_sc  , 'render mode'     , ', ' ],
         'matrix_copy'    : aa_obj_c,
+        'multifilesave'  : aa_sel_c,
         'order'          : [ self_cmd.boolean_sc             , 'sort'            , ', ' ],
         'pair_fit'       : aa_sel_c,
         'rebuild'        : aa_rep_c,

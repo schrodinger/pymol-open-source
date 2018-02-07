@@ -137,6 +137,10 @@ typedef struct {
     char** WITHCOUNT(chainNameList);
     int32_t* groupsPerChain;
     int32_t* chainsPerModel;
+
+    // PyMOL
+    int32_t* pymolRepsList;
+    int32_t* pymolColorList;
 } MMTF_container;
 
 /*

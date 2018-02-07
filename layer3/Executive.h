@@ -361,7 +361,7 @@ void ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet);
 void ExecutiveMask(PyMOLGlobals * G, const char *s1, int mode, int quiet);
 void ExecutiveRebuildAll(PyMOLGlobals * G);
 void ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average);
-void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1, int quiet);
+void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1="(all)", int quiet=1, int state=-1, bool legacy=false);
 void ExecutiveFixHydrogens(PyMOLGlobals * G, const char *s1, int quiet);
 void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode, int recolor,
                    int move_flag);

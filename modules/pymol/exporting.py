@@ -634,6 +634,83 @@ ARGUMENTS
                     int(state) - 1, str(ref), int(ref_state),
                     int(multi), int(quiet))
 
+
+    def multifilesave(filename, selection='*', state=-1, format='', ref='',
+             ref_state=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    For a selection that spans multiple molecular objects and/or states,
+    save each object and/or state to a separate file. Takes a filename
+    argument with placeholders:
+
+    {name}  : object name
+    {state} : state number
+    {title} : state title
+    {num}   : file number
+    {}      : object name (first) or state (second)
+
+EXAMPLES
+
+    multifilesave /tmp/{name}.pdb
+    multifilesave /tmp/{name}-{state}.cif, state=0
+    multifilesave /tmp/{}-{}.cif, state=0
+    multifilesave /tmp/{}-{title}.sdf, state=0
+        '''
+        for (fname, osele, ostate) in multifilenamegen(
+                filename, selection, int(state), _self):
+            r = _self.save(fname, osele, ostate, format, ref, ref_state, quiet)
+        return r
+
+
+    def multifilenamegen(filename, selection, state, _self=cmd):
+        '''Given a filename pattern, atom selection and state argument,
+        Generate object-state specific filenames and selections.
+        '''
+        import string
+
+        filename = _self.exp_path(filename)
+
+        fmt_keys = [v[1]
+                for v in string.Formatter().parse(filename)
+                if v[1] is not None]
+
+        nindexed = fmt_keys.count('')
+        multiobject = nindexed > 0 or 'name' in fmt_keys or 'num' in fmt_keys
+        multistate = nindexed > 1 or 'state' in fmt_keys or 'title' in fmt_keys
+
+        if not (multiobject or multistate):
+            raise ValueError('need one or more of {name}, {num}, {state}, {title}')
+
+        odata = []
+        for oname in _self.get_object_list(selection):
+            osele = '(%s) & ?%s' % (selection, oname)
+            first = last = state
+
+            if multistate:
+                if state < 0:
+                    first = last = _self.get_object_state(oname)
+
+                if first == 0:
+                    first = 1
+                    last = _self.count_states('%' + oname)
+
+            for ostate in range(first, last + 1):
+                odata.append((oname, osele, ostate))
+
+        # pad {state} and {num} with zeros
+        swidth = len(str(max(v[2] for v in odata)))
+        nwidth = len(str(len(odata)))
+        filename = filename.replace('{state}', '{state:0%d}' % swidth)
+        filename = filename.replace('{num}', '{num:0%d}' % nwidth)
+
+        for num, (oname, osele, ostate) in enumerate(odata, 1):
+            fname = filename.format(oname, ostate,
+                    name=oname, state=ostate, num=num,
+                    title=_self.get_title(oname, ostate))
+            yield fname, osele, ostate
+
+
     def save(filename, selection='(all)', state=-1, format='', ref='',
              ref_state=-1, quiet=1, partial=0,_self=cmd):
         '''
@@ -839,6 +916,7 @@ SEE ALSO
         'mol2': get_str,
         'mae': get_str,
         'mol': get_str,
+        'mmtf': 'pymol.lazyio:get_mmtfstr',
 
         'pse': get_psestr,
         'psw': get_psestr,

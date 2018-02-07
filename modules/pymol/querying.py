@@ -1141,6 +1141,20 @@ PYMOL API
         if _raising(r,_self): raise pymol.CmdException
         return r
 
+    def get_bonds(selection="(all)", state=-1, _self=cmd):
+        '''
+DESCRIPTION
+
+    Get a list of (atm1, atm2, order) tuples.
+
+SEE ALSO
+
+    cmd.get_model().bond
+        '''
+        with _self.lockcm:
+            r = _cmd.get_bonds(_self._COb, selection, int(state))
+        return r
+
     def get_area(selection="(all)",state=1,load_b=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION

@@ -96,6 +96,7 @@ void SeleCoordIterator::reset() {
   a = cNDummyAtoms - 1;
   state = statearg;
   prev_obj = NULL;
+  cs = NULL;
 
   if (isMultistate()) {
     state = 0;

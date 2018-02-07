@@ -304,6 +304,10 @@ void MMTF_container_destroy(MMTF_container* thing) {
     free(thing->sequenceIndexList);
     free(thing->groupsPerChain);
     free(thing->chainsPerModel);
+
+    // PyMOL
+    free(thing->pymolRepsList);
+    free(thing->pymolColorList);
 }
 void MMTF_BioAssembly_destroy(MMTF_BioAssembly* bio_assembly) {
     IF_NULL_PTRERROR_RETURN(bio_assembly, );
@@ -962,6 +966,11 @@ bool MMTF_unpack_from_msgpack_object(const msgpack_object* object, MMTF_containe
     FETCH_AND_ASSIGN_DUMMYCOUNT(thing, int32_array, groupsPerChain);
     FETCH_AND_ASSIGN_WITHCOUNT(thing, string_array, experimentalMethods);
     FETCH_AND_ASSIGN_ARRAY(thing, float, unitCell);
+
+    // PyMOL
+    FETCH_AND_ASSIGN_DUMMYCOUNT(thing, int32_array, pymolRepsList);
+    FETCH_AND_ASSIGN_DUMMYCOUNT(thing, int32_array, pymolColorList);
+
     MAP_ITERATE_END();
 
     return true;

@@ -2800,6 +2800,15 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                     ((ai->elem[1] >= 'a') && (ai->elem[1] <= 'z')) ||
                     ((ai->elem[1] >= 'A') && (ai->elem[1] <= 'Z'))))))
           ai->elem[0] = 0;
+        else if (info->variant == PDB_VARIANT_PDBQT) {
+          if (strcmp(ai->elem, "A") == 0) {
+            // aromatic carbon
+            ai->elem[0] = 'C';
+          } else if (isupper(ai->elem[1])) {
+            // h-bond donor or acceptor
+            ai->elem[1] = 0;
+          }
+        }
 
         if(!ai->elem[0]) {
           if(((literal_name[0] == ' ') || ((literal_name[0] >= '0') && (literal_name[0] <= '9'))) && (literal_name[1] >= 'A') && (literal_name[1] <= 'Z')) {    /* infer element from name column */
@@ -3881,7 +3890,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule * I)
   float pse_export_version = SettingGetGlobal_f(I->Obj.G, cSetting_pse_export_version);
 
   if(I->DiscreteFlag
-      && !SettingGetGlobal_b(I->Obj.G, cSetting_pse_binary_dump)
+      && (pse_export_version || !SettingGetGlobal_b(I->Obj.G, cSetting_pse_binary_dump))
       && pse_export_version < 1.7699) {
     int *dcs;
     int a;

@@ -213,6 +213,11 @@ inline PyObject * PConvToPyObject(const std::string &v) {
 }
 
 inline PyObject * PConvToPyObject(const char * v) {
+#ifndef _PYMOL_NOPY
+  if (!v) {
+    Py_RETURN_NONE;
+  }
+#endif
   return PyString_FromString(v);
 }
 

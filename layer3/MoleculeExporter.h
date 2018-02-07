@@ -4,6 +4,7 @@
  * (c) 2016 Schrodinger, Inc.
  */
 
+#include "os_python.h"
 #include "os_std.h"
 #include "unique_vla_ptr.h"
 
@@ -17,3 +18,6 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
     int ref_state=-1,
     int multi=-1,
     bool quiet=true);
+
+PyObject *MoleculeExporterGetPyBonds(PyMOLGlobals * G,
+    const char *selection, int state);

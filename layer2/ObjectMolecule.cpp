@@ -58,6 +58,7 @@ Z* -------------------------------------------------------------------
 #include"File.h"
 #include "Lex.h"
 #include "MolV3000.h"
+#include "HydrogenAdder.h"
 
 #ifdef _WEBGL
 #endif
@@ -852,10 +853,7 @@ void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, float *matri
 static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int state)
 {
   int a, b;
-  int n;
   int seleFlag = false;
-  int h_idx;
-  float fixed[3], v0[3], v1[3], sought[3];
   AtomInfoType *ai0, *ai1;
   int ok = true;
 
@@ -878,28 +876,16 @@ static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int stat
       for(a = 0; a < I->NAtom; a++) {
         if(!ai0->isHydrogen()) {    /* only do heavies */
           if(SelectorIsMember(I->Obj.G, ai0->selEntry, sele)) {
-            n = I->Neighbor[a] + 1;
-            while((h_idx = I->Neighbor[n]) >= 0) {
-              ai1 = I->AtomInfo + h_idx;
-              if(ai1->isHydrogen()) {
-                for(b = 0; b < I->NCSet; b++) { /* iterate through each coordinate set */
-                  if(ObjectMoleculeGetAtomVertex(I, b, a, v0) &&
-                     ObjectMoleculeGetAtomVertex(I, b, h_idx, v1)) {
-                    /* current direction */
-                    float l;
-                    subtract3f(v1, v0, sought);
-                    l = length3f(sought);       /* use the current length */
+            for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NCSet);
+                iter.next();) {
+              auto cs = I->CSet[iter.state];
+              if (!cs)
+                continue;
 
-                    if(ObjectMoleculeFindOpenValenceVector(I, b, a, fixed, sought, h_idx)) {
-                      scale3f(fixed, l, fixed);
-                      add3f(fixed, v0, fixed);
-                      ObjectMoleculeSetAtomVertex(I, b, h_idx, fixed);
-                      seleFlag = true;
-                    }
-                  }
-                }
-              }
-              n += 2;
+#ifndef _PYMOL_NO_UNDO
+#endif
+
+              seleFlag |= ObjectMoleculeSetMissingNeighborCoords(I, cs, a, true);
             }
           }
         }
@@ -2877,7 +2863,7 @@ const char *ObjectMoleculeGetStateTitle(ObjectMolecule * I, int state)
  * Get the effective state (0-indexed) of an object, based on the "state" and
  * "static_singletons" settings.
  */
-int ObjectMolecule::getState() {
+int ObjectMolecule::getState() const {
   if (NCSet == 1
       && SettingGet_b(Obj.G, Obj.Setting, NULL, cSetting_static_singletons))
     return 0;
@@ -4453,7 +4439,8 @@ void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
 
 
 /*========================================================================*/
-int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
+int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai,
+    bool uniquefy)
 {
   /* match existing properties of the old atom */
   AtomInfoType *ai0;
@@ -4464,7 +4451,11 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
     ai->resv = ai0->resv;
     ai->hetatm = ai0->hetatm;
     ai->flags = ai0->flags;
-    ai->geom = ai0->geom;       /* ? */
+
+    if (!ai->geom)
+      ai->geom = ai0->geom;
+
+    ai->discrete_state = ai0->discrete_state;
     ai->q = ai0->q;
     ai->b = ai0->b;
     strcpy(ai->alt, ai0->alt);
@@ -4478,8 +4469,12 @@ int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai)
     ai->oldid = -1;
 #endif
     ai->rank = -1;
-    AtomInfoUniquefyNames(I->Obj.G, I->AtomInfo, I->NAtom, ai, NULL, 1);
+
     AtomInfoAssignParameters(I->Obj.G, ai);
+
+    if (uniquefy) {
+      AtomInfoUniquefyNames(I->Obj.G, I->AtomInfo, I->NAtom, ai, NULL, 1);
+    }
 
     if((ai->elem[0] == ai0->elem[0]) && (ai->elem[1] == ai0->elem[1]))
       ai->color = ai0->color;
@@ -9612,6 +9607,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       break;
     case OMOP_AddHydrogens:
       if (ok)
+        if (!op->i2)
+          ok &= ObjectMoleculeAddSeleHydrogensRefactored(I, sele, op->i1);
+        else
 	ok &= ObjectMoleculeAddSeleHydrogens(I, sele, -1);      /* state? */
       break;
     case OMOP_FixHydrogens:
@@ -11954,25 +11952,16 @@ ObjectMolecule *ObjectMoleculeCopy(const ObjectMolecule * obj)
     if (I->CSet[a])
       I->CSet[a]->Obj = I;
   }
-  if (obj->DiscreteFlag){
-    int sz = VLAGetSize(obj->DiscreteAtmToIdx);
-    CoordSet *cs;
-    I->DiscreteAtmToIdx = VLACopy2(obj->DiscreteAtmToIdx);
-    I->DiscreteCSet = VLACalloc(CoordSet*, sz);
-    for(a = 0; a < obj->NCSet; a++) {
-      cs = const_cast<CoordSet*>(obj->CSet[a]);
-      if(cs) {
-	cs->tmp_index = a;
-      }
-    }
-    for(a = 0; a < obj->NAtom; a++) {
-      I->DiscreteCSet[a] = I->CSet[obj->DiscreteCSet[a]->tmp_index];
-    }
-  }
+
   if(obj->CSTmpl)
     I->CSTmpl = CoordSetCopy(obj->CSTmpl);
-  else
-    I->CSTmpl = NULL;
+
+  if (obj->DiscreteFlag){
+    int sz = VLAGetSize(obj->DiscreteAtmToIdx);
+    I->DiscreteAtmToIdx = VLACopy2(obj->DiscreteAtmToIdx);
+    I->DiscreteCSet = VLACalloc(CoordSet*, sz);
+    I->updateAtmToIdx();
+  }
   I->Bond = VLACalloc(BondType, I->NBond);
   i0 = I->Bond;
   i1 = obj->Bond;

@@ -60,7 +60,7 @@ def camera_store_with_scene(self_cmd,frame):
 
 
 def store_with_state(self_cmd,obj='',frame=0):
-    n_state = self_cmd.count_states()
+    n_state = self_cmd.count_states('%' + obj if obj else '')
     result = [[ 2, 'State:', ''],
               [ 1, 'current','cmd.mview("store",object="'+obj+'",state=-1,first=%s)'%(frame)],
               [ 0, ''               ,''                   ],
@@ -70,12 +70,11 @@ def store_with_state(self_cmd,obj='',frame=0):
         result.extend([
               [ 1, str(n_state),'cmd.mview("store",object="'+obj+'",state=%d,first=%s)'%(n_state,frame)],
               [ 0, ''               ,''                   ],
-              [ 1, str(1+n_state/4), 'cmd.mview("store",object="'+obj+'",state=%d,first=%s)'%(1+n_state/4,frame) ],
-              [ 1, str(1+n_state/3), 'cmd.mview("store",object="'+obj+'",state=%d,first=%s)'%(1+n_state/3,frame) ],
-              [ 1, str(n_state/2), 'cmd.mview("store",object="'+obj+'",state=%d,first=%s)'%(n_state/2,frame) ],
-              [ 1, str(1+n_state/2), 'cmd.mview("store",object="'+obj+'",state=%d,first=%s)'%(1+n_state/2,frame) ],
-              [ 1, str((2*n_state)/3), 'cmd.mview("store",object="'+obj+'",state=%d,first=%s)'%((2*n_state)/3,frame) ],
-              [ 1, str((3*n_state)/4), 'cmd.mview("store",object="'+obj+'",state=%d,first=%s)'%((3*n_state)/4,frame) ],
+              ])
+        n_show = min(8, n_state)
+        result.extend([
+              [ 1, str(state), 'cmd.mview("store",object="'+obj+'",state=%d,first=%s)'%(state,frame) ]
+              for state in [(n_state * i) // n_show for i in range(2, n_show)]
               ])
 
     return result

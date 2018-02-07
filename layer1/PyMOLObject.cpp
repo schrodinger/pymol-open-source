@@ -671,7 +671,16 @@ void ObjectMakeValidName(PyMOLGlobals * G, char *name)
   ObjectMakeValidName(name);
 
   if (SelectorNameIsKeyword(G, name)) {
+    PRINTFB(G, FB_Executive, FB_Warnings)
+      " Warning: '%s' is a reserved keyword, appending underscore\n", name
+      ENDFB(G);
     strcat(name, "_");
+  } else if (strcmp(name, "protein") == 0 || strcmp(name, "nucleic") == 0) {
+    // Warn the user if "protein" or "nucleic" are used as names, but
+    // don't modify the name (yet).
+    PRINTFB(G, FB_Executive, FB_Warnings)
+      " Warning: '%s' may become a reserved selection keyword in the future\n", name
+      ENDFB(G);
   }
 }
 

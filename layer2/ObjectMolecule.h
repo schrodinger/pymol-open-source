@@ -97,7 +97,7 @@ typedef struct ObjectMolecule {
   bool need_hetatm_classification;
 
   // methods
-  int getState();
+  int getState() const;
   bool setNDiscrete(int natom);
   bool updateAtmToIdx();
 } ObjectMolecule;
@@ -423,7 +423,7 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule * I);
 
 void ObjectMoleculeSaveUndo(ObjectMolecule * I, int state, int log);
 void ObjectMoleculeUndo(ObjectMolecule * I, int dir);
-int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
+int ObjectMoleculePrepareAtom(ObjectMolecule * I, int index, AtomInfoType * ai, bool uniquefy=true);
 void ObjectMoleculeReplaceAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
 int ObjectMoleculePreposReplAtom(ObjectMolecule * I, int index, AtomInfoType * ai);
 void ObjectMoleculeCreateSpheroid(ObjectMolecule * I, int average);
