@@ -1,0 +1,11 @@
+# dx file with non-zero origin and skewed delta matrix
+object 1 class gridpositions counts 2 2 2
+
+origin 1  2  3 
+delta  4  0  0 
+delta  0  5  0 
+delta  0  2  4
+# random comment
+object 3 class array type float rank 0 items 8 data follows
+1   3.4 3.4 5.1
+1   2.3 6   9.1

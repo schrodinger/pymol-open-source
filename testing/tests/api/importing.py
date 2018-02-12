@@ -165,6 +165,19 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertEqual(field.shape, (40, 40, 40))
         self.assertAlmostEqual(field.mean(), 0.06915, delta=1e-4)
 
+    def _testLoad_dx(self, filename):
+        cmd.load(self.datafile(filename), 'map1')
+        extent = cmd.get_extent('map1')
+        self.assertArrayEqual(extent, [[1.0, 2.0, 3.0], [5.0, 7.0, 9.0]], delta=1e-2)
+
+    def testLoad_dx(self):
+        self._testLoad_dx('mapaligned.dx')
+        self._testLoad_dx('mapnumeric.dx')
+
+    @testing.requires_version('2.1')
+    def testLoad_dx_skewed(self):
+        self._testLoad_dx('mapskewed.dx')
+
     def testLoadBrick(self):
         cmd.load_brick
         self.skipTest("TODO")
