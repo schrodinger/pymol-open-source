@@ -44,7 +44,8 @@ class TestQuerying(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_states(), 2)
 
     def testDihedral(self):
-        self._testMeasure(cmd.dihedral, cmd.get_dihedral, 4, 0.01318)
+        # result was 0.01318 due to numeric precision in get_angle3f
+        self._testMeasure(cmd.dihedral, cmd.get_dihedral, 4, 0.0)
 
     def testDistance(self):
         self._testMeasure(cmd.distance, cmd.get_distance, 2, 1.46011)
