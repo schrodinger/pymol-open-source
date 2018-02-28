@@ -852,9 +852,9 @@ void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, float *matri
 /*========================================================================*/
 static int ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int state)
 {
-  int a, b;
+  int a;
   int seleFlag = false;
-  AtomInfoType *ai0, *ai1;
+  AtomInfoType *ai0;
   int ok = true;
 
   ai0 = I->AtomInfo;
@@ -1027,7 +1027,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
 #define BUFSIZE 4194304
 #define GETTING_LOW 10000
 
-  f = fopen(fname, "rb");
+  f = pymol_fopen(fname, "rb");
   if(!f) {
     ErrMessage(G, "ObjectMoleculeLoadTRJFile", "Unable to open file!");
   } else {
@@ -2803,6 +2803,9 @@ static CObjectState *ObjectMoleculeGetObjectState(ObjectMolecule * I, int state)
 /*========================================================================*/
 static CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule * I, int state)
 {
+  if (state < -1) {
+    state = I->getState();
+  }
 
   if(state < 0) {
     return (&I->Obj.Setting);
@@ -11363,10 +11366,9 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
 
 void ObjectMoleculeInvalidateAtomType(ObjectMolecule *I, int state){
   CoordSet *cset = 0;
-  int ai, atm, a;
+  int ai, atm;
   AtomInfoType *at;
   cset = I->CSet[state];
-  a = state;
   if (state < 0){
     for (ai=0; ai < I->NAtom; ai++){
       at = &I->AtomInfo[ai];

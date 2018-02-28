@@ -155,19 +155,19 @@ static CMeasureInfo * MeasureInfoListFromPyList(PyMOLGlobals * G, PyObject * lis
   CMeasureInfo *item = NULL, *I= NULL;
   CPythonVal *val, *tmp;
 
-  ok_assert(1, list && CPythonVal_PyList_Check(list));
-  ll = CPythonVal_PyList_Size(list);
+  ok_assert(1, list && PyList_Check(list));
+  ll = PyList_Size(list);
 
   for (i = 0; i < ll; i++) {
     ok_assert(1, item = Alloc(CMeasureInfo, 1));
     ListPrepend(I, item, next);
 
     val = CPythonVal_PyList_GetItem(G, list, i);
-    if(val && CPythonVal_PyList_Check(val) &&
-              CPythonVal_PyList_Size(val) > 2) {
+    if(val && PyList_Check(val) &&
+              PyList_Size(val) > 2) {
 
       tmp = CPythonVal_PyList_GetItem(G, val, 1);
-      N = CPythonVal_PyList_Size(tmp);
+      N = PyList_Size(tmp);
       ok_assert(1, N < 5);
 
       item->measureType = (N == 2) ? cRepDash :
@@ -191,9 +191,6 @@ ok_except1:
 
 static PyObject *MeasureInfoListAsPyList(CMeasureInfo * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   int N;
   PyObject *item, *result = PyList_New(0);
   ok_assert(1, result);
@@ -218,7 +215,6 @@ static PyObject *MeasureInfoListAsPyList(CMeasureInfo * I)
 
 ok_except1:
   return PConvAutoNone(result);
-#endif
 }
 
 int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
@@ -237,7 +233,7 @@ int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
     return true;
   }
 
-  ok_assert(1, list && CPythonVal_PyList_Check(list));
+  ok_assert(1, list && PyList_Check(list));
   ok_assert(1, I = DistSetNew(G));
 
   ll = PyList_Size(list);
@@ -257,9 +253,10 @@ int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs)
 
   ok_assert(2, ll > 7);
 
-  val = CPythonVal_PyList_GetItem(G, list, 7);
-  I->Setting = SettingNewFromPyList(G, val);    /* state settings */
-  CPythonVal_Free(val);
+  // DistSet->Setting never gets set (removed BB 11/14), was state settings?
+  /*  val = CPythonVal_PyList_GetItem(G, list, 7);
+      I->Setting = SettingNewFromPyList(G, val);
+      CPythonVal_Free(val); */
 
   ok_assert(2, ll > 8);
 
@@ -283,9 +280,6 @@ ok_except1:
 
 PyObject *DistSetAsPyList(DistSet * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   PyObject *result = NULL;
 
   if(I) {
@@ -301,7 +295,8 @@ PyObject *DistSetAsPyList(DistSet * I)
     PyList_SetItem(result, 6,
                    PConvFloatArrayToPyListNullOkay(I->DihedralCoord,
                                                    I->NDihedralIndex * 3));
-    PyList_SetItem(result, 7, SettingAsPyList(I->Setting));
+    // DistSet->Setting never gets set (removed BB 11/14), was state settings?
+    PyList_SetItem(result, 7, PConvAutoNone(NULL) /* SettingAsPyList(I->Setting) */);
     if(I->LabPos) {
       PyList_SetItem(result, 8, PConvLabPosVLAToPyList(I->LabPos, VLAGetSize(I->LabPos)));
     } else {
@@ -311,7 +306,6 @@ PyObject *DistSetAsPyList(DistSet * I)
     /* TODO setting ... */
   }
   return (PConvAutoNone(result));
-#endif
 }
 
 
@@ -439,7 +433,7 @@ void DistSet::render(RenderInfo * info)
   int pass = info->pass;
   Picking **pick = info->pick;
   int float_labels = SettingGet_i(I->State.G,
-                                  I->Setting,
+                                  NULL,
                                   I->Obj->Obj.Setting,
                                   cSetting_float_labels);
   int a;
@@ -503,7 +497,6 @@ DistSet *DistSetNew(PyMOLGlobals * G)
   I->Coord = NULL;
   I->Rep = VLAlloc(Rep *, cRepCnt);
   I->NRep = cRepCnt;
-  I->Setting = NULL;
   I->LabPos = NULL;
   I->LabCoord = NULL;
   I->AngleCoord = NULL;
@@ -553,7 +546,6 @@ void DistSet::fFree()
     }
 
       /* need to find and decrement the number of dist sets on the objects */
-    SettingFreeP(I->Setting);
     OOFreeP(I);
   }
 }

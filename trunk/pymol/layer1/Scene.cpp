@@ -2839,16 +2839,16 @@ int SceneLoadPNG(PyMOLGlobals * G, const char *fname, int movie_flag, int stereo
 }
 */
 
-#define SceneClickMargin 2
+#define SceneClickMargin DIP2PIXEL(2)
 #define SceneTopMargin 0
-#define SceneToggleMargin 2
+#define SceneToggleMargin DIP2PIXEL(2)
 #define SceneRightMargin 0
-#define SceneToggleWidth 17
-#define SceneToggleSize 16
-#define SceneToggleTextShift 4
-#define SceneTextLeftMargin 1
-#define SceneScrollBarMargin 1
-#define SceneScrollBarWidth 13
+#define SceneToggleWidth DIP2PIXEL(17)
+#define SceneToggleSize DIP2PIXEL(16)
+#define SceneToggleTextShift DIP2PIXEL(4)
+#define SceneTextLeftMargin DIP2PIXEL(1)
+#define SceneScrollBarMargin DIP2PIXEL(1)
+#define SceneScrollBarWidth DIP2PIXEL(13)
 #ifndef _PYMOL_NOPY
 static void draw_button(int x2, int y2, int z, int w, int h, float *light, float *dark,
                         float *inside ORTHOCGOARG)
@@ -2968,13 +2968,13 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
   float disabledColor[3] = { 0.25F, 0.25F, 0.25F };
   float lightEdge[3] = { 0.6F, 0.6F, 0.6F };
   float darkEdge[3] = { 0.35F, 0.35F, 0.35F };
-  int charWidth = 8;
+  int charWidth = DIP2PIXEL(8);
   int n_ent;
   int n_disp;
   int skip = 0;
   int row = -1;
-  int lineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
-  int text_lift = (lineHeight / 2) - 5;
+  int lineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
+  int text_lift = (lineHeight / 2) - DIP2PIXEL(5);
   int op_cnt = 1;
 
   if(((G->HaveGUI && G->ValidContext) || (!draw_for_real)) &&
@@ -3077,7 +3077,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
               glColor3fv(toggleColor);
 
               TextSetColor(G, I->Block->TextColor);
-              TextSetPos2i(G, x + 2, y + text_lift);
+              TextSetPos2i(G, x + DIP2PIXEL(2), y + text_lift);
             }
             {
               int len;
@@ -3090,7 +3090,7 @@ static void SceneDrawButtons(Block * block, int draw_for_real ORTHOCGOARG)
               x2 = xx;
               if(len > max_char)
                 len = max_char;
-              x2 = x + len * charWidth + 6;
+              x2 = x + len * charWidth + DIP2PIXEL(6);
 
               /* store rectangles for finding clicks */
 
@@ -3314,6 +3314,14 @@ int SceneDrawImageOverlay(PyMOLGlobals * G  ORTHOCGOARG){
       unsigned int border = 1;
       unsigned int upscale = 1;
 
+      // Upscale for Retina/4K
+      if (DIP2PIXEL(height) == I->Height && DIP2PIXEL(width) == I->Width) {
+        upscale = DIP2PIXEL(1);
+        tmp_height = DIP2PIXEL(height);
+        tmp_width = DIP2PIXEL(width);
+        border = 0;
+      }
+
       unsigned int n_word = tmp_height * tmp_width;
       unsigned int *tmp_buffer = Alloc(unsigned int, n_word);
       ColorGetBkrdContColor(G, rgba, false);
@@ -3504,7 +3512,9 @@ unsigned int SceneFindTriplet(PyMOLGlobals * G, int x, int y, GLenum gl_buffer)
      char *safe_place;
    */
   int a, b, d, flag;
-  int cRangeVal = cRange;
+  float contentScaleFactor = DIP2PIXEL(1);
+  int cRangeVal = contentScaleFactor < 1.5 ? 7 : 21;
+
   int h = (cRangeVal * 2 + 1), w = (cRangeVal * 2 + 1);
 
   int debug = false;

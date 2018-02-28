@@ -21,9 +21,9 @@ Z* -------------------------------------------------------------------
 #define cOrthoCTRL 2
 #define cOrthoALT 4
 
-#define cOrthoRightSceneMargin 220
-#define cOrthoBottomSceneMargin 18
-#define cOrthoLineHeight 12
+#define cOrthoRightSceneMargin DIP2PIXEL(220)
+#define cOrthoBottomSceneMargin DIP2PIXEL(18)
+#define cOrthoLineHeight DIP2PIXEL(12)
 
 #include"os_gl.h"
 #include"Block.h"

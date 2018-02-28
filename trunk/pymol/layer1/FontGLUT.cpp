@@ -54,6 +54,60 @@ static void FontGLUTRestore(CFontGLUT * I)
   glPixelStorei(GL_UNPACK_ALIGNMENT, I->alignment);
 }
 
+/*
+ * check if masked `c` equals `value`
+ */
+static inline bool masked_byte_equals(char c, char mask, char value) {
+  return (c & mask) == value;
+}
+
+static inline bool byte_check_10xxxxxx(char c) {
+  return masked_byte_equals(c,
+      0xc0 /* mask  0b11000000 */,
+      0x80 /* value 0b10000000 */);
+}
+
+/*
+ * Read the next unicode point from a UTF-8 string and advance the string
+ * pointer. If decoding fails, set `error` to true. If `error` is already
+ * true, don't attempt to decode and return the next byte value as-is.
+ *
+ * Keep it simple and assume narrow build (up to 3 bytes).
+ */
+static unsigned int next_utf8_character(const char * &st, bool &error) {
+  unsigned int c = st[0];
+
+  if (!error) {
+    // Byte 1:
+    // 0b0xxxxxxx -> 1 byte
+    // 0b110xxxxx -> 2 byte
+    // 0b1110xxxx -> 3 byte (max unicode value 0xFFFF)
+    // 0b11110xxx -> 4 byte (would need wide build)
+
+    if (masked_byte_equals(c, 0xe0 /* 0b11100000 */, 0xc0 /* 0b11000000 */)) {
+      if (byte_check_10xxxxxx(st[1])) {
+        c &= 0x1f /* 0b00011111 */;
+        c = (c << 6) | (st[1] & 0x3f) /* 0b00111111 */;
+        st += 1;
+      } else {
+        error = true;
+      }
+    } else if (masked_byte_equals(c, 0xf0 /* 0b11110000 */, 0xe0 /* 0b11100000 */)) {
+      if (byte_check_10xxxxxx(st[1]) && byte_check_10xxxxxx(st[2])) {
+        c &= 0x0f /* 0b00001111 */;
+        c = (c << 6) | (st[1] & 0x3f) /* 0b00111111 */;
+        c = (c << 6) | (st[2] & 0x3f) /* 0b00111111 */;
+        st += 2;
+      } else {
+        error = true;
+      }
+    }
+  }
+
+  st += 1;
+  return c;
+}
+
 static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const char *st, float size,
                                   float *rpos SHADERCGOARG)
 {
@@ -72,6 +126,8 @@ static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const 
     if(info)
       sampling = info->sampling;
 
+    sampling = DIP2PIXEL(sampling);
+
     if(st && (*st)) {
 
       float v_scale = SceneGetScreenVertexScale(G, NULL);
@@ -87,8 +143,12 @@ static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const 
             factor = _m1;
           if(factor > _0)
             factor = _0;
-          while((c = *(sst++))) {
-            if((c >= first) && (c < last)) {
+          bool utf8_error = false;
+          while((c = next_utf8_character(sst, utf8_error))) {
+            if(c < first || c >= last) {
+              c = '?';
+            }
+            {
               ch = font_info->ch[c - first];
               if(ch) {
                 x_indent -= factor * ch->advance;
@@ -187,8 +247,13 @@ static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const 
 
       if(textured)
         CharacterRenderOpenGLPrime(G, info);
-      while((c = *(st++))) {
-        if((c >= first) && (c < last)) {
+
+      bool utf8_error = false;
+      while((c = next_utf8_character(st, utf8_error))) {
+        if(c < first || c >= last) {
+          c = '?';
+        }
+        {
           ch = font_info->ch[c - first];
           if(ch) {
             if(!textured) {

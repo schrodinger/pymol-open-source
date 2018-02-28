@@ -35,12 +35,12 @@ Z* -------------------------------------------------------------------
 #include "PyMOL.h"
 #include "CGO.h"
 
-#define cPopUpLineHeight 17
-#define cPopUpTitleHeight 19
-#define cPopUpBarHeight 4
-#define cPopUpCharWidth 8
-#define cPopUpCharMargin 2
-#define cPopUpCharLift 2
+#define cPopUpLineHeight DIP2PIXEL(17)
+#define cPopUpTitleHeight DIP2PIXEL(19)
+#define cPopUpBarHeight DIP2PIXEL(4)
+#define cPopUpCharWidth DIP2PIXEL(8)
+#define cPopUpCharMargin DIP2PIXEL(2)
+#define cPopUpCharLift DIP2PIXEL(2)
 
 #define cChildDelay 0.25
 #define cPassiveDelay 0.45
@@ -868,7 +868,7 @@ void PopUpDraw(Block * block ORTHOCGOARG)
 
           TextSetPos2i(G, xx, y + cPopUpCharLift);
           TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
-          xx = xx + 8;
+          xx = xx + DIP2PIXEL(8);
         }
 
         if(I->Sub[a]) {

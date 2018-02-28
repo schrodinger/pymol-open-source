@@ -822,7 +822,7 @@ def color_deep(color, name='all', quiet=1, _self=cmd):
     from pymol.menu import rep_setting_lists
     _self.unset_deep([s for L in rep_setting_lists for (r, s) in L if s],
             name, updates=0, quiet=quiet)
-    _self.color(color, name, quiet=quiet, _self=_self)
+    _self.color(color, name, quiet=quiet)
 
 def chainbow(selection='(all)', palette="rainbow", quiet=1, _self=cmd):
     '''

@@ -116,8 +116,7 @@ void MovieViewReinterpolate(PyMOLGlobals *G)
 
 int MovieXtoFrame(PyMOLGlobals *G, BlockRect *rect, int frames, int x, int nearest)
 {
-  CMovie *I = G->Movie;
-  return ViewElemXtoFrame(G,I->ViewElem,rect,frames,x,nearest);
+  return ViewElemXtoFrame(rect,frames,x,nearest);
 }
 
 void MovieViewTrim(PyMOLGlobals *G,int n_frame)
@@ -460,9 +459,6 @@ void MovieDump(PyMOLGlobals * G)
   }
 }
 
-
-/*========================================================================*/
-#ifndef _PYMOL_NOPY
 static int MovieCmdFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
 {
 
@@ -486,15 +482,10 @@ static int MovieCmdFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
   return (ok);
 
 }
-#endif
 
 /*========================================================================*/
 int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   CMovie *I = G->Movie;
   int ll = 0;
@@ -541,12 +532,10 @@ int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
     SceneCountFrames(G);
   }
   return (ok);
-#endif
 }
 
 
 /*========================================================================*/
-#ifndef _PYMOL_NOPY
 static PyObject *MovieCmdAsPyList(PyMOLGlobals * G)
 {
 
@@ -562,15 +551,10 @@ static PyObject *MovieCmdAsPyList(PyMOLGlobals * G)
   return (PConvAutoNone(result));
 
 }
-#endif
 
 /*========================================================================*/
 PyObject *MovieAsPyList(PyMOLGlobals * G)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   CMovie *I = G->Movie;
   PyObject *result = NULL;
 
@@ -606,7 +590,6 @@ PyObject *MovieAsPyList(PyMOLGlobals * G)
        int Playing;
   */
   return (PConvAutoNone(result));
-#endif
 }
 
 
@@ -1582,10 +1565,10 @@ void MoviePrepareDrag(PyMOLGlobals *G, BlockRect * rect,
     I->DragRect.top = I->Block->rect.top - 1;
     I->DragRect.bottom = I->Block->rect.bottom + 1;
   }
-  I->DragStartFrame = ViewElemXtoFrame(G,I->ViewElem,rect,MovieGetLength(G),x,nearest);
+  I->DragStartFrame = ViewElemXtoFrame(rect,MovieGetLength(G),x,nearest);
   if(I->DragStartFrame > MovieGetLength(G))
     I->DragStartFrame = MovieGetLength(G);
-  I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,rect,MovieGetLength(G),x,nearest);
+  I->DragCurFrame = ViewElemXtoFrame(rect,MovieGetLength(G),x,nearest);
   I->DragNearest = nearest;
 }
 
@@ -1688,7 +1671,7 @@ static int MovieDrag(Block * block, int x, int y, int mod)
     case cMovieDragModeCopyKey:
       {
         int n_frame = MovieGetLength(G);
-        I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,&I->DragRect,n_frame,x,false);
+        I->DragCurFrame = ViewElemXtoFrame(&I->DragRect,n_frame,x,false);
         if(I->DragStartFrame<n_frame) {
           if((abs(x-I->DragX)>3) ||
              (abs(y-I->DragY)>5)) {
@@ -1699,11 +1682,11 @@ static int MovieDrag(Block * block, int x, int y, int mod)
       }
       break;
     case cMovieDragModeOblate:
-      I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,&I->DragRect,MovieGetLength(G),x,false);
+      I->DragCurFrame = ViewElemXtoFrame(&I->DragRect,MovieGetLength(G),x,false);
       OrthoDirty(G);
       break;
     case cMovieDragModeInsDel:
-      I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,&I->DragRect,MovieGetLength(G),x,true);
+      I->DragCurFrame = ViewElemXtoFrame(&I->DragRect,MovieGetLength(G),x,true);
       OrthoDirty(G);
       break;
     }
@@ -1816,7 +1799,7 @@ int MovieGetPanelHeight(PyMOLGlobals * G)
   }
   
   if(movie_panel) {
-    int row_height = SettingGetGlobal_i(G,cSetting_movie_panel_row_height);
+    int row_height = DIP2PIXEL(SettingGetGlobal_i(G,cSetting_movie_panel_row_height));
     I->PanelActive = true;
     if(SettingGetGlobal_b(G, cSetting_presentation)) { 
       /* show camera line only when in presentation mode */
@@ -1975,7 +1958,7 @@ static void MovieReshape(Block * block, int width, int height)
   if(SettingGetGlobal_b(G, cSetting_presentation)) { 
     I->LabelIndent = 0;
   } else {
-    I->LabelIndent = 8 * 8;
+    I->LabelIndent = DIP2PIXEL(8 * 8);
   }
 }
 

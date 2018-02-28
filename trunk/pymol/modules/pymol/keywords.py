@@ -3,6 +3,7 @@ from . import parsing
 cmd = __import__("sys").modules["pymol.cmd"]
 
 def get_command_keywords(self_cmd=cmd):
+    import pymol.diagnosing
     return {
         # keyword : [ command, # min_arg, max_arg, separator, mode ]
 
@@ -60,6 +61,7 @@ def get_command_keywords(self_cmd=cmd):
         'deprotect'     : [ self_cmd.deprotect         , 0 , 0 , ''  , parsing.STRICT ],
         'desaturate'    : [ self_cmd.desaturate        , 0 , 0 , ''  , parsing.STRICT ],
         'deselect'      : [ self_cmd.deselect          , 0 , 0 , ''  , parsing.STRICT ],
+        'diagnostics'   : [ pymol.diagnosing.diagnostics,0 , 0 , ''  , parsing.STRICT ],
         'dihedral'      : [ self_cmd.dihedral          , 0 , 0 , ''  , parsing.STRICT ],
         'dir'           : [ self_cmd.ls                , 0 , 0 , ''  , parsing.STRICT ],
         'disable'       : [ self_cmd.disable           , 0 , 0 , ''  , parsing.STRICT ],

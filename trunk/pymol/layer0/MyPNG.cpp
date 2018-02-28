@@ -54,9 +54,102 @@ Z* -------------------------------------------------------------------
 #include "MyPNG.h"
 #include"MemoryDebug.h"
 #include "Setting.h"
+#include "Err.h"
+#include "File.h"
+
+/*
+ * base64 decoding
+ * http://stackoverflow.com/questions/342409/how-do-i-base64-encode-decode-in-c
+ */
+
+static unsigned char base64_decoding_table[] = {
+  62,   0,   0,   0,  63,  52,  53,  54,
+  55,  56,  57,  58,  59,  60,  61,   0,
+   0,   0,   0,   0,   0,   0,   0,   1,
+   2,   3,   4,   5,   6,   7,   8,   9,
+  10,  11,  12,  13,  14,  15,  16,  17,
+  18,  19,  20,  21,  22,  23,  24,  25,
+   0,   0,   0,   0,   0,   0,  26,  27,
+  28,  29,  30,  31,  32,  33,  34,  35,
+  36,  37,  38,  39,  40,  41,  42,  43,
+  44,  45,  46,  47,  48,  49,  50,  51};
+
+static unsigned char *base64_decode(const char *data,
+				    size_t input_length=0) {
+  unsigned char *decoded_data = NULL;
+  unsigned int triple;
+  unsigned int i = 0, j = 0, k;
+  char c;
+
+  if (input_length < 1)
+    input_length = strlen(data);
+
+  ok_assert(1, decoded_data = (unsigned char*) mmalloc(input_length / 4 * 3));
+
+  while (i < input_length) {
+    triple = 0;
+
+    for (k = 4; k && i < input_length;) {
+      c = data[i++];
+      if (c < 43 || c > 122)
+        continue;
+      triple += base64_decoding_table[c - 43] << (--k) * 6;
+    }
+
+    ok_assert(1, k == 0);
+
+    for (k = 3; k;)
+      decoded_data[j++] = (triple >> (--k) * 8) & 0xFF;
+  }
+
+  return decoded_data;
+
+ok_except1:
+  mfree(decoded_data);
+  return NULL;
+}
+
+typedef struct {
+  unsigned char *c; // moving pointer
+  unsigned char *h; // for freeing
+} uchar2p;
+
+/*
+ * Use with png_set_read_fn, for reading a PNG file from memory.
+ * This simply copies from the memory pointer to outBytes while
+ * incrementing the memory pointer.
+ */
+#ifdef _PYMOL_LIBPNG
+void read_data_from_buffer(png_structp png_ptr,
+                           png_bytep outBytes,
+                           png_size_t byteCountToRead) {
+  uchar2p *io_ptr = (uchar2p*) png_get_io_ptr(png_ptr);
+
+  if(!io_ptr)
+    return;
+
+  while(byteCountToRead--) {
+    *(outBytes++) = *(io_ptr->c++);
+  }
+}
+
+/*
+ * Use with png_set_write_fn, for writing a PNG file to memory.
+ */
+static void write_data_to_buffer(png_structp png_ptr,
+                                 png_bytep data,
+                                 png_size_t length) {
+#if 0
+  auto io_ptr = (std::vector<unsigned char>*) png_get_io_ptr(png_ptr);
+  io_ptr->insert(io_ptr->end(), data, data + length);
+#endif
+}
+
+#endif
 
 int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *data_ptr,
-               unsigned int width, unsigned int height, float dpi, int format, int quiet)
+               unsigned int width, unsigned int height, float dpi, int format, int quiet,
+               void * io_ptr)
 {
   switch (format) {
   case cMyPNG_FormatPNG:
@@ -77,19 +170,21 @@ int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *dat
 
       /* open the file, allowing use of an encoded file descriptor, with
          approach adapted from TJO: chr(1) followed by ascii-format integer */
-      if(file_name[0] == 1) {
-        if(sscanf(file_name + 1, "%d", &fd) == 1) {
-          fp = fdopen(fd, "wb");
+      if (!io_ptr) {
+        if(file_name[0] == 1) {
+          if(sscanf(file_name + 1, "%d", &fd) == 1) {
+            fp = fdopen(fd, "wb");
+          }
+        } else {
+          fp = pymol_fopen(file_name, "wb");
         }
-      } else {
-        fp = fopen(file_name, "wb");
-      }
-      if(fp == NULL) {
-        ok = false;
-        goto cleanup;
-      } else if(feof(fp)) {
-        ok = false;
-        goto cleanup;
+        if(fp == NULL) {
+          ok = false;
+          goto cleanup;
+        } else if(feof(fp)) {
+          ok = false;
+          goto cleanup;
+        }
       }
       /* Create and initialize the png_struct with the desired error handler
        * functions.  If you want to use the default stderr and longjump method,
@@ -122,8 +217,12 @@ int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *dat
         goto cleanup;
       }
 
-      /* set up the output control if you are using standard C streams */
-      png_init_io(png_ptr, fp);
+      if (io_ptr) {
+        png_set_write_fn(png_ptr, (void*) io_ptr, write_data_to_buffer, NULL);
+      } else {
+        /* set up the output control if you are using standard C streams */
+        png_init_io(png_ptr, fp);
+      }
 
       /* Set the image information here.  Width and height are up to 2^31,
        * bit_depth is one of 1, 2, 4, 8, or 16, but valid values also depend on
@@ -202,7 +301,7 @@ int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *dat
     break;
   case cMyPNG_FormatPPM:
     {
-      FILE *fil = fopen(file_name, "wb");
+      FILE *fil = pymol_fopen(file_name, "wb");
       unsigned char *buffer = Alloc(unsigned char, 3 * width * height);
 
       if(fil && buffer) {
@@ -262,18 +361,27 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
   int ok = true;
   unsigned char *p = NULL;
   double file_gamma;
+  uchar2p data = {NULL, NULL};
 
   if(!file_name)
     return 0;
 
-  png_file = fopen(file_name, "rb");
-  if(png_file == NULL)
-    return 0;
+  if(!strncmp(file_name, "data:image/png;base64,", 22)) {
+    const char *base64str = file_name + 22;
+    data.h = data.c = base64_decode(base64str);
+    memcpy(buf, data.c, 8);
+    data.c += 8;
 
-  /* read and check signature in PNG file */
-  ret = fread(buf, 1, 8, png_file);
-  if(ret != 8)
-    ok = false;
+  } else {
+    png_file = pymol_fopen(file_name, "rb");
+    if(png_file == NULL)
+      return 0;
+
+    /* read and check signature in PNG file */
+    ret = fread(buf, 1, 8, png_file);
+    if(ret != 8)
+      ok = false;
+  }
 
   if(ok) {
     ret = png_check_sig(buf, 8);
@@ -298,7 +406,13 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
 
   if(ok) {
     /* set up the input control for C streams */
-    png_init_io(png_ptr, png_file);
+
+    if(data.h) {
+      png_set_read_fn(png_ptr, (void*) &data, read_data_from_buffer);
+    } else {
+      png_init_io(png_ptr, png_file);
+    }
+
     png_set_sig_bytes(png_ptr, 8);      /* we already read the 8 signature bytes */
 
     /* read the file information */
@@ -371,7 +485,6 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
     *(p_ptr) = p;
     *(width_ptr) = width;
     *(height_ptr) = height;
-
     for(row = 0; row < (signed) height; row++) {
       pix_ptr = row_pointers[(height - 1) - row];
       for(col = 0; col < (signed) width; col++) {
@@ -394,6 +507,8 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
   }
   if(png_file)
     fclose(png_file);
+  if(data.h)
+    mfree(data.h);
 
   return (ok);
 #else

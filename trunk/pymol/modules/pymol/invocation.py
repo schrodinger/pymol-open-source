@@ -183,7 +183,7 @@ if __name__=='pymol.invocation':
     py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
 
     def get_pwg_options(filename):
-        for line in open(filename):
+        for line in open(filename, 'rU'):
             a = line.split()
             if not a or a[0].startswith('#'):
                 continue
@@ -398,6 +398,8 @@ if __name__=='pymol.invocation':
                         options.win_y = 768
                     if "S" in a: # Force stereo context on stereo-capable hardware
                         options.force_stereo = 1
+                        if options.stereo_mode == 0:
+                            options.stereo_mode = 1  # quadbuffer
                         if sys.platform=='darwin': 
                             options.deferred.append(
                               "_do__ set stereo_double_pump_mono,1,quiet=1")
@@ -472,6 +474,8 @@ if __name__=='pymol.invocation':
                     options.external_gui = 0
                     options.internal_feedback = 0
                     options.show_splash = 1
+            elif a in ('+1', '+2', '+3', '+4'):
+                print('ignoring PyMOLWin.exe argument', a)
             elif not restricted:
                 suffix = a[-4:].lower().split('.')[-1]
                 if suffix == "p5m":

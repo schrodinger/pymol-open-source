@@ -186,6 +186,10 @@ Z* -------------------------------------------------------------------
 
 #define cAN_U  92
 
+#define SDF_CHIRALITY_ODD    1          // odd  / clockwise
+#define SDF_CHIRALITY_EVEN   2          // even / counterclockwise
+#define SDF_CHIRALITY_EITHER 3          // either or unmarked
+
 typedef char Chain[2];
 typedef char SSType[2];
 typedef char SegIdent[cSegiLen + 1];
@@ -285,6 +289,7 @@ typedef struct AtomInfoType {
   unsigned char stereo : 2;     // 0-3 Only for SDF (MOL) format in/out
   unsigned char chemFlag : 2;   // 0,1,2
   unsigned char protekted : 2;  // 0,1,2
+  unsigned char mmstereo : 2;   // 0/R/S/?
 
   // methods
   bool isHydrogen() const {

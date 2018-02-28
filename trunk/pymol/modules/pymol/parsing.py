@@ -71,6 +71,7 @@ if __name__=='pymol.parsing':
     import types
     import traceback
     import inspect
+    from . import colorprinting
     
     class QuietException(BaseException):
         pass
@@ -145,12 +146,10 @@ if __name__=='pymol.parsing':
             elif p in def_dict:
                 result.append(def_dict[p])
             elif c<n_req:
-                print("Error: invalid argument(s).")
-                raise QuietException
+                raise QuietException("Error: invalid argument(s).")
             c = c + 1
         if len(inp_dict):
-            print("Error: invalid argument(s).")            
-            raise QuietException
+            raise QuietException("Error: invalid argument(s).")
         return result
     
     def parse_arg(st,mode=STRICT,_self=None):
@@ -217,8 +216,8 @@ if __name__=='pymol.parsing':
                             if mo:
                                 se = trim_nester(mo.group(0))
                                 if se==None:
-                                    print("Error: "+st)
-                                    print("Error: "+" "*cc+"^ syntax error (type 1).")
+                                    colorprinting.error("Error: "+st)
+                                    colorprinting.error("Error: "+" "*cc+"^ syntax error (type 1).")
                                     raise QuietException
                                 else:
                                     cc = cc + len(se)
@@ -239,8 +238,8 @@ if __name__=='pymol.parsing':
                     mo = arg_value_re.match(st[cc:])
                     if not mo:
                         if(st[cc:cc+1]!=','):
-                            print("Error: "+st)
-                            print("Error: "+" "*cc+"^ syntax error (type 2).")
+                            colorprinting.error("Error: "+st)
+                            colorprinting.error("Error: "+" "*cc+"^ syntax error (type 2).")
                             raise QuietException
                         else:
                             # allow blank arguments
@@ -264,8 +263,8 @@ if __name__=='pymol.parsing':
                     if st.startswith(','):
                         st = st[1:].lstrip()
                     else:
-                        print("Error: "+st)
-                        print("Error: "+" "*cc+"^ syntax error (type 3).")
+                        colorprinting.error("Error: "+st)
+                        colorprinting.error("Error: "+" "*cc+"^ syntax error (type 3).")
                         raise QuietException
         if __name__!='__main__':
             if _self._feedback(_self.fb_module.parser, _self.fb_mask.debugging):
@@ -393,13 +392,13 @@ if __name__=='pymol.parsing':
             # make sure we don't have too many arguments
             if len(lst)>narg:
                 if not narg:
-                    print("Error: too many arguments for %s; None expected."%(name))
+                    colorprinting.error("Error: too many arguments for %s; None expected."%(name))
                 elif narg==nreq:
-                    print("Error: too many arguments for %s; %d expected, %d found."%(
+                    colorprinting.error("Error: too many arguments for %s; %d expected, %d found."%(
                         name,nreq,len(lst)))
                     dump_arg(name,arg_nam,nreq)
                 else:
-                    print("Error: too many arguments for %s; %d to %d expected, %d found."%(
+                    colorprinting.error("Error: too many arguments for %s; %d to %d expected, %d found."%(
                         name,nreq,narg,len(lst)))
                     dump_arg(name,arg_nam,nreq)            
                 raise QuietException
@@ -409,8 +408,7 @@ if __name__=='pymol.parsing':
             for a in lst:
                 if a[0]==None:
                     if ac>=narg:
-                        print("Parsing-Error: ambiguous argument: '"+str(a[1])+"'")
-                        raise QuietException
+                        raise QuietException("Parsing-Error: ambiguous argument: '"+str(a[1])+"'")
                     else:
                         val_dct[arg_nam[ac]]=a[1]
                 else:
@@ -420,8 +418,7 @@ if __name__=='pymol.parsing':
             for a in arg_nam:
                 if arg_dct[a]:
                     if a not in val_dct:
-                        print("Parsing-Error: missing required argument in function %s : %s" % (name, a))
-                        raise QuietException
+                        raise QuietException("Parsing-Error: missing required argument in function %s : %s" % (name, a))
             # return all arguments as keyword arguments
             kw = val_dct
             # set feedback argument (quiet), if extant, results enabled, and not overridden
@@ -522,6 +519,9 @@ SEE ALSO
         '''
         return run(filename, namespace, 1, _self)
 
+    def _print_exc():
+        colorprinting.print_exc([__file__])
+
     def execfile(filename, global_ns, local_ns):
         import pymol.internal as pi
         co = compile(pi.file_read(filename), filename, 'exec')
@@ -535,7 +535,7 @@ SEE ALSO
             # so the idea here is to print the traceback here and then
             # cascade all the way back up to the interactive level
             # without any further output
-            traceback.print_exc()
+            _print_exc()
             raise QuietException
     
     def run_file_as_module(file,spawn=0):
@@ -553,7 +553,7 @@ SEE ALSO
             try:
                 execfile(file,mod.__dict__,mod.__dict__)
             except pymol.CmdException:
-                traceback.print_exc()
+                _print_exc()
                 raise QuietException
             del sys.modules[name]
             del mod

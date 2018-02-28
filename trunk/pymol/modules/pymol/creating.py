@@ -505,7 +505,7 @@ SEE ALSO
 
     ramp_new
         '''
-        return ramp_new(name, '', range, color, quiet=quiet, _self=cmd)
+        return _self.ramp_new(name, '', range, color, quiet=quiet)
 
     def isomesh(name, map, level=1.0, selection='', buffer=0.0,
                 state=1, carve=None, source_state=0, quiet=1, _self=cmd):
@@ -972,19 +972,16 @@ USAGE
                 object=name
             model = fragments.get(str(name))
             la = len(model.atom)
-            if la:
+            if la and int(origin):
                 position = _self.get_position()
                 for c in range(0,3):
                     mean_c = sum([a.coord[c] for a in model.atom]) / la
                     mean_c = position[c] - mean_c
                     for a in model.atom:
-                        _self._adjust_coord(a, c, mean_c)
+                        a.coord[c] += mean_c
             r = _self.load_model(model,str(object),quiet=quiet,zoom=zoom, _self=_self)
         except IOError:
-            print("Error: unable to load fragment '%s'." % name)
-        except:
-            traceback.print_exc()
-            print("Error: unable to load fragment '%s'." % name)         
+            raise pymol.CmdException("unable to load fragment '%s'." % name)
         if _self._raising(r,_self): raise pymol.CmdException                                    
         return r
 

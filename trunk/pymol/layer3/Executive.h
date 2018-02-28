@@ -185,7 +185,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
                   const char *object_name,
                   int state, int zoom,
                   int discrete, int finish, int multiplex, int quiet, const char *plugin,
-                  const char * object_props=NULL, const char * atom_props=NULL);
+                  const char * object_props=NULL, const char * atom_props=NULL,
+                  bool mimic=true);
 
 int ExecutiveDebug(PyMOLGlobals * G, const char *name);
 
@@ -294,7 +295,7 @@ int ExecutiveGetAngle(PyMOLGlobals * G, const char *s0, const char *s1, const ch
 int ExecutiveGetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
                      float *value, int state);
 int ExecutiveSetDihe(PyMOLGlobals * G, const char *s0, const char *s1, const char *s2, const char *s3,
-                     float value, int state, int quiet);
+                     float value, int state=0, int quiet=1);
 int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mode, float refine,
                  int max_cyc, int quiet, const char *oname, int state1, int state2,
                  int ordered_selections, int matchmaker, ExecutiveRMSInfo * rms_info);
@@ -358,13 +359,13 @@ void ExecutiveInvalidateRep(PyMOLGlobals * G, const char *name, int rep, int lev
 void ExecutiveFlag(PyMOLGlobals * G, int flag, const char *s1, int action, int quiet);
 void ExecutiveRemoveAtoms(PyMOLGlobals * G, const char *s1, int quiet);
 void ExecutiveProtect(PyMOLGlobals * G, const char *s1, int mode, int quiet);
-void ExecutiveMask(PyMOLGlobals * G, const char *s1, int mode, int quiet);
+void ExecutiveMask(PyMOLGlobals * G, const char *s1, int mode=1, int quiet=1);
 void ExecutiveRebuildAll(PyMOLGlobals * G);
 void ExecutiveSpheroid(PyMOLGlobals * G, const char *name, int average);
 void ExecutiveAddHydrogens(PyMOLGlobals * G, const char *s1="(all)", int quiet=1, int state=-1, bool legacy=false);
 void ExecutiveFixHydrogens(PyMOLGlobals * G, const char *s1, int quiet);
-void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode, int recolor,
-                   int move_flag);
+void ExecutiveFuse(PyMOLGlobals * G, const char *s0="(pk1)", const char *s1="(pk2)", int mode=0, int recolor=1,
+                   int move_flag=1);
 void ExecutiveRenameObjectAtoms(PyMOLGlobals * G, const char *name, int force, int quiet);
 int ExecutiveInvert(PyMOLGlobals * G, int quiet);
 
@@ -432,9 +433,9 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G);
 int ExecutiveSmooth(PyMOLGlobals * G, const char *name, int cycles, int window,
                     int first, int last, int ends, int quiet);
 int ExecutiveSculptDeactivate(PyMOLGlobals * G, const char *name);
-int ExecutiveSculptActivate(PyMOLGlobals * G, const char *name, int state, int match_state,
-                            int match_by_segment);
-float ExecutiveSculptIterate(PyMOLGlobals * G, const char *name, int state, int n_cycle);
+int ExecutiveSculptActivate(PyMOLGlobals * G, const char *name, int state=-1, int match_state=-2,
+                            int match_by_segment=0);
+float ExecutiveSculptIterate(PyMOLGlobals * G, const char *name, int state=-1, int n_cycle=10);
 int ExecutiveMapNew(PyMOLGlobals * G, const char *name, int type, float *grid, const char *sele,
                     float buffer, float *minCorner, float *maxCorner,
                     int state, int have_corners, int quiet, int zoom, int normalize,

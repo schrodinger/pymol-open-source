@@ -461,12 +461,6 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 {
   if(state < 0) {
     return (&I->Obj.Setting);
-  } else if(state < I->NDSet) {
-    if(I->DSet[state]) {
-      return (&I->DSet[state]->Setting);
-    } else {
-      return (NULL);
-    }
   } else {
     return (NULL);
   }

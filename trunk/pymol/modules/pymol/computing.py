@@ -24,6 +24,7 @@ from .cmd import _cmd, lock, unlock, Shortcut, \
 import traceback
 import threading
 import os
+import pymol
 
 def model_to_sdf_list(self_cmd,model):
     from chempy import io
@@ -262,9 +263,17 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
 def clean(selection, present='', state=-1, fix='', restrain='',
           method='mmff', async_=0, save_undo=1, message=None,
           _self=cmd_module, **kwargs):
+    if int(state) == 0:
+        raise pymol.CmdException('cleaning all states not supported')
+
+    async_ = int(kwargs.pop('async', async_))
+
+    if kwargs:
+        raise pymol.CmdException('unknown argument: ' + ', '.join(kwargs))
+
     args = (selection, present, state, fix, restrain, method, save_undo, message, _self)
 
-    if not int(kwargs.pop('async', async_)):
+    if not async_:
         return _clean(*args)
     else:
         try:

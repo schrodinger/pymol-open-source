@@ -62,14 +62,14 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
 
 void EditorActivate(PyMOLGlobals * G, int state, int enable_bond);
 CObject *EditorDragObject(PyMOLGlobals * G);
-void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, const char *name,
-                   int quiet);
+void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, const char *name="",
+                   int quiet=1);
 void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence, const char *name,
                   int quiet);
 void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet);
-void EditorHFill(PyMOLGlobals * G, int quiet);
+void EditorHFill(PyMOLGlobals * G, int quiet=1);
 void EditorHFix(PyMOLGlobals * G, const char *sele, int quiet);
-void EditorCycleValence(PyMOLGlobals * G, int quiet);
+void EditorCycleValence(PyMOLGlobals * G, int quiet=1);
 void EditorInactivate(PyMOLGlobals * G);
 void EditorUpdateState(PyMOLGlobals * G);
 

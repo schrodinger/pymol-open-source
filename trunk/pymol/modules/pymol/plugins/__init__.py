@@ -173,7 +173,7 @@ class PluginInfo(object):
         Parse plugin file for metadata (hash-commented block at beginning of file).
         '''
         metadata = dict()
-        f = open(self.filename)
+        f = open(self.filename, 'rU')
         for line in f:
             if line.strip() == '':
                 continue

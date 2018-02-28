@@ -56,7 +56,6 @@ __inline__
 #endif
 static void ObjectGadgetRampCalculate(ObjectGadgetRamp * I, float v, float *result)
 {
-  int i;
   const float _1 = 1.0F;
   const float _0 = 0.0F;
   /* from Filipe Maia */
@@ -114,13 +113,7 @@ static void ObjectGadgetRampCalculate(ObjectGadgetRamp * I, float v, float *resu
     result[2] = 1.0F;
     break;
   }
-  for(i = 0; i < 3; i++) {
-    if(result[i] > 1.0F) {
-      result[i] = 1.0F;
-    } else if(result[i] < 0.0F) {
-      result[i] = 0.0F;
-    }
-  }
+  clamp3f(result);
 }
 
 /*
@@ -364,10 +357,6 @@ int ObjectGadgetRampInterpolate(ObjectGadgetRamp * I, float level, float *color)
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   result = PyList_New(11);
@@ -406,16 +395,11 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp * I)
 
   PyList_SetItem(result, 10, PConvAutoNone(NULL) /* I->Extreme, removed in PyMOL 1.8 */);
   return (PConvAutoNone(result));
-#endif
 }
 
 int ObjectGadgetRampNewFromPyList(PyMOLGlobals * G, PyObject * list,
                                   ObjectGadgetRamp ** result, int version)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   ObjectGadgetRamp *I = NULL;
   int ok = true;
   int ll = 0;
@@ -489,7 +473,6 @@ int ObjectGadgetRampNewFromPyList(PyMOLGlobals * G, PyObject * list,
   if(ok)
     (*result) = I;
   return (ok);
-#endif
 }
 
 int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *color, int state)

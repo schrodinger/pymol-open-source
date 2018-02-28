@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 #include"PyMOLObject.h"
-#include"CGO.h"
 
 #include"GadgetSet.h"
 #include"ObjectMap.h"
@@ -63,7 +62,6 @@ typedef struct ObjectGadgetRamp {
   float text_scale_h;
   float text_scale_v;
   float x, y;
-
 } ObjectGadgetRamp;
 
 #define cRAMP_TRADITIONAL 1

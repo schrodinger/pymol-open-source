@@ -143,6 +143,16 @@ DESCRIPTION
                     print('TTT %8.2f %8.2f %8.2f | %8.2f' % tuple(r[i * 4:i * 4 + 4]))
         return r
 
+    def get_object_settings(object, state=0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_object_settings" is an unsupported command
+        '''
+        with _self.lockcm:
+            r = _cmd.get_object_settings(_self._COb, str(object), int(state) - 1)
+        return r
+
     def get_object_list(selection="(all)", quiet=1, _self=cmd):
         '''
         

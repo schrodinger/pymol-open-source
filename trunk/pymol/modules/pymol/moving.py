@@ -431,7 +431,7 @@ SEE ALSO
         if thread.get_ident() ==pymol.glutThread:
             r = _self._mpng(*args)
         else:
-            r = _self.do('cmd._mpng(*%s, _self=cmd)' % repr(args), 0)
+            r = _self.do('cmd._mpng(*%s)' % repr(args), 0)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 

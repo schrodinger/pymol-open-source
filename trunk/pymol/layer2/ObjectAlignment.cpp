@@ -786,7 +786,7 @@ int ObjectAlignmentNewFromPyList(PyMOLGlobals * G, PyObject * list,
   ObjectAlignment *I = NULL;
   (*result) = NULL;
   if(ok)
-    ok = (list != Py_None);
+    ok = (list != NULL);
   if(ok)
     ok = PyList_Check(list);
 
@@ -915,6 +915,8 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
               int tag = SELECTOR_BASE_TAG + 1;
               OVOneToAny *id2tag = oas->id2tag;
 
+              CGOBegin(cgo, GL_LINES);
+
               while(b < n_id) {
 
                 int gvert_valid;
@@ -949,7 +951,6 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                   scale3f(mean, scale, mean);
 
                   c = b;
-                  CGOBegin(cgo, GL_LINES);
                   while((id = vla[c++])) {
                     auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
                     if (eoo) {
@@ -967,12 +968,10 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                       }
                     }
                   }
-                  CGOEnd(cgo);
                 } else if(n_coord) {    /* if 2 points, then simply draw a line */
                   float first[3];
                   int first_flag = true;
                   c = b;
-                  CGOBegin(cgo, GL_LINES);
                   while((id = vla[c++])) {
                     auto eoo = ExecutiveUniqueIDAtomDictGet(G, id);
                     if (eoo) {
@@ -988,7 +987,6 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                       }
                     }
                   }
-                  CGOEnd(cgo);
                 }
                 /* update the it2tag dictionary */
 
@@ -999,6 +997,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                   b++;
                 }
               }
+              CGOEnd(cgo);
             }
 
             CGOStop(cgo);

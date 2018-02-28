@@ -25,7 +25,7 @@ void VFontFree(PyMOLGlobals * G);
 
 int VFontLoad(PyMOLGlobals * G, float size, int face, int style, int can_load_new);
 int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo, const char *text,
-                    float *pos, float *scale, float *matrix);
+                    float *pos, float *scale, float *matrix, float *color=NULL);
 
 int VFontIndent(PyMOLGlobals * G, int font_id, const char *text,
                 float *pos, float *scale, float *matrix, float dir);

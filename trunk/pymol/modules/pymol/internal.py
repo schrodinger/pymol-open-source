@@ -711,10 +711,3 @@ def _dump_ufloats(lst,format="%7.3f",cnt=9):
             c=cnt
     if c!=cnt:
         print()
-
-# HUH?
-def _adjust_coord(a,i,x):
-    a.coord[i]=a.coord[i]+x
-    return None
-
-

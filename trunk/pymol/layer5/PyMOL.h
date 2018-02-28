@@ -369,7 +369,7 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL * I,
                                  const char *content,
                                  const char *content_type,
                                  const char *content_format,
-                                 char *object_name,
+                                 const char *object_name,
                                  int state, int discrete, int finish,
                                  int quiet, int multiplex, int zoom);
 
@@ -377,14 +377,14 @@ PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL * I,
                                     const char *content,
                                     int content_length,
                                     const char *content_format,
-                                    char *object_name, int state,
+                                    const char *object_name, int state,
                                     int discrete, int finish,
                                     int quiet, int multiplex, int zoom);
 
 PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL * I,
                                     const float *content,
                                     int content_length,
-                                    char *object_name, int state, int quiet, int zoom);
+                                    const char *object_name, int state, int quiet, int zoom);
 
 PyMOLreturn_status PyMOL_CmdCreate(CPyMOL * I,
                                    const char *name,
@@ -436,72 +436,72 @@ PyMOLreturn_value PyMOL_CmdGet(CPyMOL * I, const char *setting,
 			       const char *selection,
 			       int state, int quiet);
 
-PyMOLreturn_status PyMOL_CmdUnset(CPyMOL * I, char *setting, char *selection,
+PyMOLreturn_status PyMOL_CmdUnset(CPyMOL * I, const char *setting, const char *selection,
                                   int state, int quiet, int side_effects);
 
-PyMOLreturn_status PyMOL_CmdSetBond(CPyMOL * I, char *setting, char *value,
-                                    char *selection1, char *selection2,
+PyMOLreturn_status PyMOL_CmdSetBond(CPyMOL * I, const char *setting, const char *value,
+                                    const char *selection1, const char *selection2,
                                     int state, int quiet, int side_effects);
 
-PyMOLreturn_status PyMOL_CmdUnsetBond(CPyMOL * I, char *setting,
-                                      char *selection1, char *selection2,
+PyMOLreturn_status PyMOL_CmdUnsetBond(CPyMOL * I, const char *setting,
+                                      const char *selection1, const char *selection2,
                                       int state, int quiet, int side_effects);
 
-PyMOLreturn_status PyMOL_CmdColor(CPyMOL * I, char *color, char *selection, int flags,
+PyMOLreturn_status PyMOL_CmdColor(CPyMOL * I, const char *color, const char *selection, int flags,
                                   int quiet);
 
-PyMOLreturn_status PyMOL_CmdLabel(CPyMOL * I, char *selection, char *text, int quiet);
+PyMOLreturn_status PyMOL_CmdLabel(CPyMOL * I, const char *selection, const char *text, int quiet);
 
-PyMOLreturn_status PyMOL_CmdSelect(CPyMOL * I, char *name, char *selection, int quiet);
+PyMOLreturn_status PyMOL_CmdSelect(CPyMOL * I, const char *name, const char *selection, int quiet);
 
-PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL * I, char *name, char *object, int *list,
-                                       int list_len, int state, char *mode, int quiet);
+PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL * I, const char *name, const char *object, int *list,
+                                       int list_len, int state, const char *mode, int quiet);
 
 PyMOLreturn_int PyMOL_CmdGetMovieLength(CPyMOL * I,int quiet);
 
 PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL * I,
-                                       char *selection1,
-                                       char *selection2, int state, int quiet);
+                                       const char *selection1,
+                                       const char *selection2, int state, int quiet);
 
 PyMOLreturn_float PyMOL_CmdDistance(CPyMOL * I,
-                                    char *name,
-                                    char *selection1,
-                                    char *selection2,
+                                    const char *name,
+                                    const char *selection1,
+                                    const char *selection2,
                                     int mode,
                                     float cutoff,
                                     int label, int reset, int zoom, int state, int quiet);
 
 PyMOLreturn_float PyMOL_CmdGetAngle(CPyMOL * I,
-                                    char *selection1,
-                                    char *selection2,
-                                    char *selection3, int state, int quiet);
+                                    const char *selection1,
+                                    const char *selection2,
+                                    const char *selection3, int state, int quiet);
 
 PyMOLreturn_float PyMOL_CmdAngle(CPyMOL * I,
-                                 char *name,
-                                 char *selection1,
-                                 char *selection2,
-                                 char *selection3,
+                                 const char *name,
+                                 const char *selection1,
+                                 const char *selection2,
+                                 const char *selection3,
                                  int mode,
                                  int label, int reset, int zoom, int state, int quiet);
 
 PyMOLreturn_float PyMOL_CmdGetDihedral(CPyMOL * I,
-                                       char *selection1,
-                                       char *selection2,
-                                       char *selection3,
-                                       char *selection4, int state, int quiet);
+                                       const char *selection1,
+                                       const char *selection2,
+                                       const char *selection3,
+                                       const char *selection4, int state, int quiet);
 
 PyMOLreturn_float PyMOL_CmdDihedral(CPyMOL * I,
-                                    char *name,
-                                    char *selection1,
-                                    char *selection2,
-                                    char *selection3,
-                                    char *selection4,
+                                    const char *name,
+                                    const char *selection1,
+                                    const char *selection2,
+                                    const char *selection3,
+                                    const char *selection4,
                                     int mode,
                                     int label, int reset, int zoom, int state, int quiet);
 
-PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL * I, char *source, char *target,
+PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL * I, const char *source, const char *target,
                                        float cutoff, int cycles, float gap, float extend,
-                                       int max_gap, char *object, char *matrix,
+                                       int max_gap, const char *object, const char *matrix,
                                        int source_state, int target_state, int quiet,
                                        int max_skip, int transform, int reset);
 
@@ -518,36 +518,36 @@ PyMOLreturn_status PyMOL_CmdRay(CPyMOL * I, int width, int height, int antialias
                                 float angle, float shift, int renderer, int defer,
                                 int quiet);
 
-PyMOLreturn_status PyMOL_CmdIsodot(CPyMOL * I, char *name, char *map_name, float level,
-                                   char *selection, float buffer, int state, float carve,
+PyMOLreturn_status PyMOL_CmdIsodot(CPyMOL * I, const char *name, const char *map_name, float level,
+                                   const char *selection, float buffer, int state, float carve,
                                    int source_state, int quiet);
 
-PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL * I, char *name, char *map_name, float level,
-                                    char *selection, float buffer, int state, float carve,
+PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL * I, const char *name, const char *map_name, float level,
+                                    const char *selection, float buffer, int state, float carve,
                                     int source_state, int quiet);
 
-PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL * I, char *name, char *map_name,
-                                       float level, char *selection, float buffer,
+PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL * I, const char *name, const char *map_name,
+                                       float level, const char *selection, float buffer,
                                        int state, float carve, int source_state, int side,
                                        int mode, int quiet);
 
-PyMOLreturn_status PyMOL_CmdGradient(CPyMOL * I, char *name, char *map_name,
-                                     float minimum, float maximum, char *selection,
+PyMOLreturn_status PyMOL_CmdGradient(CPyMOL * I, const char *name, const char *map_name,
+                                     float minimum, float maximum, const char *selection,
                                      float buffer, int state, float carve,
                                      int source_state, int quiet);
 
-PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL * I, char *name, float level, int state,
+PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL * I, const char *name, float level, int state,
                                     int query, int quiet);
 
-PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, char *name, char *map, float *range,
-                                    int n_range, char *color, int state, char *selection,
+PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, const char *name, const char *map, float *range,
+                                    int n_range, const char *color, int state, const char *selection,
                                     float beyond, float within, float sigma,
                                     int zero, int calc_mode, int quiet);
 
-PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, char *object_name, char *sele,
-				       char *name, char *resn, char *resi, char *chain,
-				       char *segi, char *elem, float vdw, int hetatm,
-				       float b, float q, char *color, char *label, 
+PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, const char *object_name, const char *sele,
+				       const char *name, const char *resn, const char *resi, const char *chain,
+				       const char *segi, const char *elem, float vdw, int hetatm,
+				       float b, float q, const char *color, const char *label, 
 				       int set_xyz, float x, float y, float z,
 				       int state, int mode, int quiet);
 
@@ -563,19 +563,21 @@ int PyMOL_FreeResultArray(CPyMOL * I, void *array);
 
 PyMOLreturn_status PyMOL_CmdRock(CPyMOL * I, int mode);
 
-PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, char *s0, int enabled_only);
+PyMOLreturn_string_array PyMOL_CmdGetNames(CPyMOL * I, int mode, const char *s0, int enabled_only);
 
-PyMOLreturn_status PyMOL_CmdMapNew(CPyMOL * I, char *name, int type, float grid_spacing, 
-				   char *selection, int state, int normalize,
+PyMOLreturn_status PyMOL_CmdMapNew(CPyMOL * I, const char *name, int type, float grid_spacing, 
+				   const char *selection, int state, int normalize,
 				   int zoom, int quiet);
 
 #ifdef _PYMOL_LIB
+PyMOLreturn_string_array PyMOL_GetObjectList(CPyMOL * I, const char *s0);
 PyMOLreturn_status PyMOL_SetIsEnabledCallback(CPyMOL * I, void *CallbackObject, void (*enabledCallback)(void *, const char *, int ));
 PyMOLreturn_int_array PyMOL_GetRepsInSceneForObject(CPyMOL * I, const char *name);
 PyMOLreturn_int_array PyMOL_GetRepsForObject(CPyMOL * I, const char *name);
-PyMOLreturn_status PyMOL_SetButton(CPyMOL * I, char *button, char *modifier, char *action);
-PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, char *modename);
-PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, char *expression, char *palette, char *selection, float minimum, float maximum, int byres, int quiet);
+PyMOLreturn_status PyMOL_SetButton(CPyMOL * I, const char *button, const char *modifier, const char *action);
+PyMOLreturn_status PyMOL_SetMouseButtonMode(CPyMOL * I, const char *modename);
+PyMOLreturn_float_array PyMOL_Spectrum(CPyMOL * I, const char *expression, const char *palette, const char *selection, float minimum, float maximum, int byres, int quiet);
+
 #endif
 
 PyMOLreturn_status PyMOL_ZoomScene(CPyMOL * I, float scale);
@@ -590,9 +592,7 @@ typedef struct _P_AtomProperty {
   int maxlen;
 } AtomPropertyInfo;
 
-#ifndef _PYMOL_NOPY
 AtomPropertyInfo *PyMOL_GetAtomPropertyInfo(CPyMOL * I, const char *atompropname);
-#endif
 
 #ifdef __cplusplus
 }

@@ -39,6 +39,7 @@ if __name__=='pymol.parser':
     import __main__
 
     from . import parsing
+    from . import colorprinting
     from .cmd import _feedback,fb_module,fb_mask,exp_path
 
     QuietException = parsing.QuietException
@@ -60,16 +61,16 @@ if __name__=='pymol.parser':
             traceback.print_exc()
         amb = sc.interpret(st, mode)
         if amb==None:
-            print(" parser: no matching %s."%type_name)
+            colorprinting.warning(" parser: no matching %s."%type_name)
         elif isinstance(amb, str):
             result = amb+postfix
         else:
             amb.sort()
-            print(" parser: matching %s:"%type_name)
+            colorprinting.suggest(" parser: matching %s:"%type_name)
             flist = [x for x in amb if x[0]!='_']
             lst = parsing.list_to_str_list(flist)
             for a in lst:
-                print(a)
+                colorprinting.suggest(a)
             # now append up to point of ambiguity
             if not len(flist):
                 css = []
@@ -171,16 +172,16 @@ if __name__=='pymol.parser':
                 if s.strip() == layer.embed_sentinel:
                     etn = layer.embed_type
                     if etn == 0: # embedded data
-                        print(" Embed: read %d lines."%(len(layer.embed_list)))
+                        colorprinting.parrot(" Embed: read %d lines."%(len(layer.embed_list)))
                         layer.embed_sentinel=None
                     elif etn == 1: # python block
-                        print("PyMOL>"+s.rstrip())
+                        colorprinting.parrot("PyMOL>"+s.rstrip())
                         py_block = ''.join(layer.embed_list)
                         del layer.embed_list
                         layer.embed_sentinel=None
                         self.exec_python(py_block)
                     elif etn == 2: # skip block
-                        print(" Skip: skipped %d lines."%(layer.embed_line))
+                        colorprinting.parrot(" Skip: skipped %d lines."%(layer.embed_line))
                         layer.embed_sentinel=None
                 else:
                     etn = layer.embed_type
@@ -188,7 +189,7 @@ if __name__=='pymol.parser':
                         layer.embed_list.append(s.rstrip()+"\n")
                     elif etn == 1: # python block
                         el = layer.embed_line + 1
-                        print("%5d:%s"%(el,s.rstrip()))
+                        colorprinting.parrot("%5d:%s"%(el,s.rstrip()))
                         layer.embed_line = el
                         layer.embed_list.append(s.rstrip()+"\n")
                     elif etn == 2:
@@ -239,11 +240,11 @@ if __name__=='pymol.parser':
                                     if amb == None:
                                         com = self.cmd.kwhash[com]
                                     elif not isinstance(amb, str):
-                                        print('Error: ambiguous command: ')
+                                        colorprinting.warning('Error: ambiguous command: ')
                                         amb.sort()
                                         amb = parsing.list_to_str_list(amb)
                                         for a in amb:
-                                            print(a)
+                                            colorprinting.warning(a)
                                         raise QuietException
                                     com = amb
                                 if com in self.cmd.keyword:
@@ -389,7 +390,7 @@ if __name__=='pymol.parser':
                                         if re.search("\.py$|\.pym$",path) != None:
                                             if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
                                                 print("Warning: use 'run' instead of '@' with Python files?")
-                                        layer.script = open(path,'r')
+                                        layer.script = open(path,'rU')
                                         self.cmd._pymol.__script__ = path
                                         self.nest=self.nest+1
                                         self.layer[self.nest] = NestLayer()
@@ -406,7 +407,7 @@ if __name__=='pymol.parser':
                                             if len(tmp_cmd):
                                                 if tmp_cmd[0] not in ['#','_','/']: # suppress comments, internals, python
                                                     if layer.embed_sentinel==None:
-                                                        print("PyMOL>"+tmp_cmd)
+                                                        colorprinting.parrot("PyMOL>"+tmp_cmd)
                                                 elif tmp_cmd[0]=='_' and \
                                                       tmp_cmd[1:2] in [' ','']: # "_ " remove echo suppression signal
                                                     inp_cmd=inp_cmd[2:]
@@ -416,7 +417,7 @@ if __name__=='pymol.parser':
                                             elif pp_result==0: # QuietException
                                                 if self.cmd.get_setting_boolean("stop_on_exceptions"):
                                                     p_result = 0 # signal an error occurred
-                                                    print("PyMOL: stopped on exception.")
+                                                    colorprinting.error("PyMOL: stopped on exception.")
                                                     break;
                                         self.nest=self.nest-1
                                         layer=self.layer[self.nest]
@@ -429,7 +430,7 @@ if __name__=='pymol.parser':
                                             if not secure:
                                                 self.exec_python(layer.com2, fallback=True)
                                             elif layer.input[0][0:1]!='#':
-                                                print('Error: unrecognized keyword: '+layer.input[0])
+                                                colorprinting.error('Error: unrecognized keyword: '+layer.input[0])
                         if (len(layer.next)>1) and p_result:
                             # continue parsing if no error or break has occurred
                             self.nest=self.nest+1
@@ -442,31 +443,18 @@ if __name__=='pymol.parser':
                             p_result = self.parse(layer.com0,secure) # RECURSION
                             self.nest=self.nest-1
                             layer=self.layer[self.nest]
-            except QuietException:
-                if self.cmd._feedback(fb_module.parser,fb_mask.blather):
-                    print("Parser: QuietException caught")
-                p_result = 0 # notify caller that an error was encountered
-            except CmdException as e:
-                if e.message:
-                    print(e)
+            except (QuietException, CmdException) as e:
+                if e.args:
+                    colorprinting.error(e)
                 if self.cmd._feedback(fb_module.parser,fb_mask.blather):         
-                    print("Parser: CmdException caught.")
+                    print("Parser: caught " + type(e).__name__)
                 p_result = 0
             except SecurityException as e:
-                print('Error: %s' % (e,))
+                colorprinting.error('Error: %s' % (e,))
                 p_result = None
             except:
-                exc_type, exc_value, tb = sys.exc_info()
-
-                # strip this module from the stack
-                while tb and __file__.startswith(tb.tb_frame.f_code.co_filename):
-                    tb = tb.tb_next
-
-                # strip the toplevel PyMOL command frame from the stack
-                if tb and SCRIPT_TOPLEVEL == tb.tb_frame.f_code.co_filename:
-                    tb = tb.tb_next
-
-                traceback.print_exception(exc_type, exc_value, tb)
+                exc_type, exc_value, tb = colorprinting.print_exc(
+                        [__file__, SCRIPT_TOPLEVEL])
 
                 p_result = 0 # notify caller that an error was encountered
             if not p_result and self.cmd._pymol.invocation.options.exit_on_error:

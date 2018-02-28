@@ -8107,6 +8107,64 @@ static int CGOSimpleEllipsoid(CGO * I, float *v, float vdw, float *n0, float *n1
   return ok;
 }
 
+/*
+ * Triangulated round cap (half-globe)
+ */
+void CGORoundNub(CGO * I,
+    const float *v1,    // cap center
+    const float *p0,    // normal along axis
+    const float *p1,    // x coord in cap space
+    const float *p2,    // y coord in cap space
+    int direction,      // 1 or -1
+    int nEdge,          // "quality"
+    float size)
+{
+  const int cmax = (nEdge + 3) / 2;
+  const float PI_over_cmax = PI / ((cmax - 1) * 2);
+  const float PI_over_nEdge = (PI * 2) / nEdge;
+  float z2 = 1.f;
+
+  // z coord in cap space
+  float p3[3];
+  scale3f(p0, direction, p3);
+
+  CGOBegin(I, GL_TRIANGLE_STRIP);
+
+  // from equator to pole (latitudinal)
+  for (int c = 1; c < cmax; c += 1){
+    float z1 = z2;
+    z2 = cos(c * PI_over_cmax);
+
+    // around cylinder axis (longitudinal)
+    for (int d = (nEdge + 1) * (-direction); d; d += direction){
+      float z3 = z1;
+
+      // 2 vertices
+      for (int e = -1; e < 1; ++e) {
+        float x = cos(d * PI_over_nEdge) * sin((c + e) * PI_over_cmax);
+        float y = sin(d * PI_over_nEdge) * sin((c + e) * PI_over_cmax);
+        float normal[3], vertex[3];
+
+        normal[0] = p1[0] * x + p2[0] * y + p3[0] * z3;
+        normal[1] = p1[1] * x + p2[1] * y + p3[1] * z3;
+        normal[2] = p1[2] * x + p2[2] * y + p3[2] * z3;
+
+        vertex[0] = v1[0] + normal[0] * size;
+        vertex[1] = v1[1] + normal[1] * size;
+        vertex[2] = v1[2] + normal[2] * size;
+
+        normalize3f(normal);
+        CGONormalv(I, normal);
+        CGOVertexv(I, vertex);
+
+        z3 = z2;
+      }
+    }
+  }
+
+  CGOEnd(I);
+}
+
 static int CGOSimpleCylinder(CGO * I, float *v1, float *v2, float tube_size, float *c1,
 			     float *c2, int cap1, int cap2)
 {

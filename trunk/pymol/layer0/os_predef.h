@@ -115,7 +115,7 @@ typedef float aliased_float;
 
 #if defined(_WIN32) || defined(_WIN64)
 #pragma warning (disable:4996)
-#ifndef snprintf
+#if !defined(snprintf) && (_MSC_VER < 1900)
 #define snprintf sprintf_s
 #endif
 #endif

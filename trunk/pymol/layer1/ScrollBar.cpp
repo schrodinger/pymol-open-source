@@ -70,7 +70,7 @@ static void ScrollBarUpdate(struct CScrollBar *I)
   I->ExactBarSize = (range * I->DisplaySize) / (float) I->ListSize;
   I->BarSize = (int) (0.499F + I->ExactBarSize);
   if(I->BarSize < 4)
-    I->BarSize = 4;
+    I->BarSize = DIP2PIXEL(4);
   I->BarRange = range - I->BarSize;
   if(I->BarRange < 2)
     I->BarRange = 2;

@@ -201,6 +201,23 @@ void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 	 }
 }
 
+/*
+ * Remove ANSI Escape sequences in-place
+ */
+void UtilStripANSIEscapes(char *s)
+{
+  for (const char *p = s;; ++p, ++s) {
+    while (p[0] == '\033' && p[1] == '[') {
+      while (' ' <= p[2] && p[2] < '@') ++p;
+      p += 3;
+    }
+    if (p != s)
+      *s = *p;
+    if (!p[0])
+      break;
+  }
+}
+
 void UtilZeroMem(void *ptr,ov_size howMuch)
 {
   char *p,*q;

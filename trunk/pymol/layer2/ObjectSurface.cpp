@@ -514,6 +514,9 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
             PRINTFB(I->Obj.G, FB_ObjectSurface, FB_Details)
               " ObjectSurface: updating \"%s\".\n", I->Obj.Name ENDFB(I->Obj.G);
           }
+
+          CGOFree(ms->shaderCGO);
+
           if(oms->Field) {
 
             {
@@ -659,8 +662,6 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
           ms->RecolorFlag = false;
         }
       }
-
-      CGOFree(ms->shaderCGO);
     }
   }
   if(!I->Obj.ExtentFlag) {
@@ -1041,7 +1042,6 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
                           c -= 2;
 
                           while(c > 0) {
-
                             if(vc) {
                               CGOAlphaTriangle(info->alpha_cgo,
                                                v + (3 - 6), v + (3 - 12), v + 3,

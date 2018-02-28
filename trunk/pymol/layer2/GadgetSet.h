@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 #include"Setting.h"
-#include"CGOStruct.h"
+#include"Base.h"
 
 typedef struct GadgetSet {
   // methods (not fully refactored yet)

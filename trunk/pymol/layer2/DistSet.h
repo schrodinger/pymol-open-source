@@ -1,4 +1,3 @@
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -49,7 +48,6 @@ typedef struct DistSet {
   int NIndex;
   ::Rep **Rep;                    /* an array of pointers to representations */
   int NRep;
-  CSetting *Setting;
   /* extended for mobile distance labels */
   float *LabCoord;
   LabPosType *LabPos;

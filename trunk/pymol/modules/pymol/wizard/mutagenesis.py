@@ -464,7 +464,7 @@ class Mutagenesis(Wizard):
             if rot_type[0:3] in [ 'NT_', 'CT_' ]:
                 rot_type = rot_type[3:]
             rot_type = _rot_type_xref.get(rot_type, rot_type)
-            cmd.fragment(frag_type.lower(), frag_name)
+            cmd.fragment(frag_type.lower(), frag_name, origin=0)
             # trim off hydrogens
             if (self.hyd == 'none'):
                 cmd.remove("("+frag_name+" and hydro)")

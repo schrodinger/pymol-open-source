@@ -229,6 +229,7 @@ void FeedbackPop(PyMOLGlobals * G);
 void FeedbackAutoAdd(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask,
                      const char *str);
 void FeedbackAdd(PyMOLGlobals * G, const char *str);
+void FeedbackAddColored(PyMOLGlobals * G, const char *str, unsigned char mask);
 
 void FeedbackSetMask(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
 void FeedbackDisable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);

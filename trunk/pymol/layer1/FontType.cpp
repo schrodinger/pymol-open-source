@@ -61,6 +61,10 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
       v_scale = SceneGetScreenVertexScale(G, NULL);
       if(size < _0) {
         size = (int) (0.5F - size / v_scale);
+        if (size <= 0)
+          size = 1;
+      } else {
+        size = DIP2PIXEL(size);
       }
 
       if(rpos) {
@@ -291,6 +295,8 @@ static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, 
     if(size < _0) {
 
       size = (int) (0.5F - size / v_scale);
+    } else {
+      size = DIP2PIXEL(size);
     }
 
     if(rpos) {

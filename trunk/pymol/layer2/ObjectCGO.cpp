@@ -33,7 +33,6 @@ Z* -------------------------------------------------------------------
 #include"VFont.h"
 #include"ShaderMgr.h"
 
-#ifndef _PYMOL_NOPY
 static PyObject *ObjectCGOStateAsPyList(ObjectCGOState * I)
 {
 
@@ -52,7 +51,6 @@ static PyObject *ObjectCGOStateAsPyList(ObjectCGOState * I)
 
 static PyObject *ObjectCGOAllStatesAsPyList(ObjectCGO * I)
 {
-
   PyObject *result = NULL;
   int a;
   result = PyList_New(I->NState);
@@ -117,20 +115,15 @@ static int ObjectCGOAllStatesFromPyList(ObjectCGO * I, PyObject * list, int vers
   return (ok);
 
 }
-#endif
 
 int ObjectCGONewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCGO ** result,
                            int version)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   ObjectCGO *I = NULL;
   (*result) = NULL;
   if(ok)
-    ok = (list != Py_None);
+    ok = (list != NULL);
   if(ok)
     ok = PyList_Check(list);
 
@@ -151,15 +144,10 @@ int ObjectCGONewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCGO ** resul
     /* cleanup? */
   }
   return (ok);
-#endif
 }
 
 PyObject *ObjectCGOAsPyList(ObjectCGO * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   result = PyList_New(3);
@@ -168,7 +156,6 @@ PyObject *ObjectCGOAsPyList(ObjectCGO * I)
   PyList_SetItem(result, 2, ObjectCGOAllStatesAsPyList(I));
 
   return (PConvAutoNone(result));
-#endif
 }
 
 
@@ -231,6 +218,7 @@ void ObjectCGORecomputeExtent(ObjectCGO * I)
 static void ObjectCGOInvalidate(ObjectCGO * I, int rep, int level, int state)
 {
   ObjectCGOState *sobj = NULL;
+
   if(state < 0) {
     int a;
     for(a = 0; a < I->NState; a++) {
@@ -438,7 +426,6 @@ ObjectCGO *ObjectCGONew(PyMOLGlobals * G)
   return (I);
 }
 
-#ifndef _PYMOL_NOPY
 
 /*========================================================================*/
 static CGO *ObjectCGOPyListFloatToCGO(PyMOLGlobals * G, PyObject * list)
@@ -468,7 +455,6 @@ static CGO *ObjectCGOPyListFloatToCGO(PyMOLGlobals * G, PyObject * list)
   }
   return (cgo);
 }
-#endif
 
 
 /*========================================================================*/
@@ -567,9 +553,6 @@ ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals * G, const char *text, float *pos)
 /*========================================================================*/
 ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo, int state)
 {                               /* assumes blocked interpreter */
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   ObjectCGO *I = NULL;
 
   CGO *cgo, *font_cgo;
@@ -627,7 +610,6 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals * G, ObjectCGO * obj, PyObject * pycgo, 
   SceneChanged(G);
   SceneCountFrames(G);
   return (I);
-#endif
 }
 
 ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals * G, ObjectCGO * obj,

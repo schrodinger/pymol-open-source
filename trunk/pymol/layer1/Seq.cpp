@@ -64,19 +64,19 @@ static int SeqFindRowCol(PyMOLGlobals * G, int x, int y, int *row_num_ptr,
   int col_num = 0;
 
   if(I->ScrollBarActive) {
-    y -= I->ScrollBarWidth;
+    y -= DIP2PIXEL(I->ScrollBarWidth);
   }
   if(fixed_row >= 0) {
     row_num = fixed_row;
   } else {
-    row_num = (y - I->Block->rect.bottom) / I->LineHeight;
+    row_num = (y - I->Block->rect.bottom) / DIP2PIXEL(I->LineHeight);
     row_num = (I->NRow - 1) - row_num;
   }
   if((row_num >= 0) && (row_num < I->NRow)) {
     int char_num;
     CSeqRow *row;
     row = I->Row + row_num;
-    char_num = (x - I->Block->rect.left - I->CharMargin) / I->CharWidth;
+    char_num = (x - I->Block->rect.left - DIP2PIXEL(I->CharMargin)) / DIP2PIXEL(I->CharWidth);
     if(row->nCol && !row->label_flag)
       if(char_num < I->VisSize) {
         char_num += I->NSkip;
@@ -141,7 +141,7 @@ static void SeqReshape(Block * block, int width, int height)
 
   {
     int extra;
-    I->VisSize = (I->Block->rect.right - I->Block->rect.left - 1) / I->CharWidth;
+    I->VisSize = (I->Block->rect.right - I->Block->rect.left - 1) / DIP2PIXEL(I->CharWidth);
     /*    printf("%d %d %d %d %d\n",cw,I->Block->rect.right,I->Block->rect.left,I->VisSize,I->Size); */
 
     if(I->VisSize < 1)
@@ -228,9 +228,9 @@ int SeqGetHeight(PyMOLGlobals * G)
   int height = 0;
 
   if(I->NRow) {
-    height = 13 * I->NRow + 4;
+    height = DIP2PIXEL(I->LineHeight * I->NRow + 4);
     if(I->ScrollBarActive)
-      height += I->ScrollBarWidth;
+      height += DIP2PIXEL(I->ScrollBarWidth);
   }
   return (height);
 }
@@ -249,7 +249,7 @@ static int SeqClick(Block * block, int button, int x, int y, int mod)
   int row_num;
   int col_num;
   if(I->ScrollBarActive) {
-    if((y - I->Block->rect.bottom) < I->ScrollBarWidth) {
+    if((y - I->Block->rect.bottom) < DIP2PIXEL(I->ScrollBarWidth)) {
       pass = 1;
       ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
     }
@@ -268,7 +268,7 @@ static int SeqClick(Block * block, int button, int x, int y, int mod)
         {
           ObjectNameType name;
           if(ExecutiveGetActiveSeleName(G, name, false, false)) {
-            MenuActivate2Arg(G, x, y + 20, x, y, false, "pick_sele", name, name);
+            MenuActivate2Arg(G, x, y + DIP2PIXEL(20), x, y, false, "pick_sele", name, name);
           }
         }
         break;
@@ -291,7 +291,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
   if(G->HaveGUI && G->ValidContext) {
 
     int x = I->Block->rect.left;
-    int y = I->Block->rect.bottom + I->ScrollBarMargin + 1;
+    int y = I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + 1;
     float bg_color[3] = { 0.f, 0.f, 0.f }, overlay_color[3] = { 1.0F, 1.0F, 1.0F };
     int label_color_index = SettingGetGlobal_color(G, cSetting_seq_view_label_color);
     float *label_color = ColorGet(G, label_color_index);
@@ -315,12 +315,12 @@ static void SeqDraw(Block * block ORTHOCGOARG)
       BlockFill(I->Block ORTHOCGOARGVAR);
     }
     if(I->ScrollBarActive) {
-      ScrollBarSetBox(I->ScrollBar, I->Block->rect.bottom + I->ScrollBarWidth,
-                      I->Block->rect.left + I->ScrollBarMargin,
-                      I->Block->rect.bottom + 2,
-                      I->Block->rect.right - I->ScrollBarMargin);
+      ScrollBarSetBox(I->ScrollBar, I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarWidth),
+                      I->Block->rect.left + DIP2PIXEL(I->ScrollBarMargin),
+                      I->Block->rect.bottom + DIP2PIXEL(2),
+                      I->Block->rect.right - DIP2PIXEL(I->ScrollBarMargin));
       ScrollBarDoDraw(I->ScrollBar ORTHOCGOARGVAR);
-      y += I->ScrollBarWidth;
+      y += DIP2PIXEL(I->ScrollBarWidth);
       I->NSkip = (int) ScrollBarGetValue(I->ScrollBar);
     } else {
       I->NSkip = 0;
@@ -394,16 +394,16 @@ static void SeqDraw(Block * block ORTHOCGOARG)
         if((row->label_flag || row->column_label_flag) && row->nCol) {
           row->title_width = col->offset + (col->stop - col->start);
           xx =
-            x + I->CharMargin + I->CharWidth * (col->offset +
+            x + DIP2PIXEL(I->CharMargin) + DIP2PIXEL(I->CharWidth) * (col->offset +
                                                 (max_title_width - row->title_width));
           ch_wid = (col->stop - col->start);
-          pix_wid = I->CharWidth * ch_wid;
+          pix_wid = DIP2PIXEL(I->CharWidth * ch_wid);
           tot_len = col->offset + ch_wid - I->NSkip;
           if(tot_len <= vis_size) {
             TextDrawSubStrFast(G, row->txt, xx, y1, col->start, ch_wid ORTHOCGOARGVAR);
           }
         }
-        y1 += I->LineHeight;
+        y1 += DIP2PIXEL(I->LineHeight);
       }
 
       y1 = y;
@@ -435,9 +435,9 @@ static void SeqDraw(Block * block ORTHOCGOARG)
 
           col = row->col + b;
           if(col->offset >= first_allowed) {
-            xx = x + I->CharMargin + I->CharWidth * (col->offset - I->NSkip);
+            xx = x + DIP2PIXEL(I->CharMargin) + DIP2PIXEL(I->CharWidth) * (col->offset - I->NSkip);
             ch_wid = (col->stop - col->start);
-            pix_wid = I->CharWidth * ch_wid;
+            pix_wid = DIP2PIXEL(I->CharWidth * ch_wid);
             tot_len = col->offset + ch_wid - I->NSkip;
             if(tot_len <= vis_size) {
               if(row->label_flag) {
@@ -493,15 +493,15 @@ static void SeqDraw(Block * block ORTHOCGOARG)
 		if (orthoCGO){
 		  CGOBegin(orthoCGO, GL_TRIANGLE_STRIP);
 		  CGOVertex(orthoCGO, xx, yy, 0.f);
-		  CGOVertex(orthoCGO, xx, yy + I->LineHeight - 1, 0.f);
+		  CGOVertex(orthoCGO, xx, yy + DIP2PIXEL(I->LineHeight) - 1, 0.f);
 		  CGOVertex(orthoCGO, xx + pix_wid, yy, 0.f);
-		  CGOVertex(orthoCGO, xx + pix_wid, yy + I->LineHeight - 1, 0.f);
+		  CGOVertex(orthoCGO, xx + pix_wid, yy + DIP2PIXEL(I->LineHeight) - 1, 0.f);
 		  CGOEnd(orthoCGO);
 		} else {
 		  glBegin(GL_POLYGON);
 		  glVertex2i(xx, yy);
-		  glVertex2i(xx, yy + I->LineHeight - 1);
-		  glVertex2i(xx + pix_wid, yy + I->LineHeight - 1);
+		  glVertex2i(xx, yy + DIP2PIXEL(I->LineHeight) - 1);
+		  glVertex2i(xx + pix_wid, yy + DIP2PIXEL(I->LineHeight) - 1);
 		  glVertex2i(xx + pix_wid, yy);
 		  glEnd();
 		}
@@ -520,9 +520,9 @@ static void SeqDraw(Block * block ORTHOCGOARG)
 
             col = row->fill + b;
             if(col->offset >= first_allowed) {
-              xx = x + I->CharMargin + I->CharWidth * (col->offset - I->NSkip);
+              xx = x + DIP2PIXEL(I->CharMargin) + DIP2PIXEL(I->CharWidth) * (col->offset - I->NSkip);
               ch_wid = (col->stop - col->start);
-              pix_wid = I->CharWidth * ch_wid;
+              pix_wid = DIP2PIXEL(I->CharWidth * ch_wid);
               tot_len = col->offset + ch_wid - I->NSkip;
               if(tot_len <= vis_size) {
                 TextDrawCharRepeat(G, fill_char, xx, y1, col->start, ch_wid ORTHOCGOARGVAR);
@@ -531,7 +531,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
           }
         }
 
-        y1 += I->LineHeight;
+        y1 += DIP2PIXEL(I->LineHeight);
       }
 
       if(I->Handler->box_active) {
@@ -562,14 +562,14 @@ static void SeqDraw(Block * block ORTHOCGOARG)
               col2 = row->col + stop_col;
             }
 
-            yy = y + ((I->NRow - 1) - box_row) * I->LineHeight - 2;
-            xx = x + I->CharMargin + I->CharWidth * (col->offset - I->NSkip);
+            yy = y + ((I->NRow - 1) - box_row) * DIP2PIXEL(I->LineHeight) - 2;
+            xx = x + DIP2PIXEL(I->CharMargin) + DIP2PIXEL(I->CharWidth) * (col->offset - I->NSkip);
             xx2 =
-              x + I->CharMargin + I->CharWidth * (col2->offset +
+              x + DIP2PIXEL(I->CharMargin) + DIP2PIXEL(I->CharWidth) * (col2->offset +
                                                   (col2->stop - col2->start) - I->NSkip);
 	    if (orthoCGO){
 	      CGOColorv(orthoCGO, overlay_color);
-	      CGOLineAsTriangleStrips(orthoCGO, xx, yy, xx2, yy + I->LineHeight - 2);
+	      CGOLineAsTriangleStrips(orthoCGO, xx, yy, xx2, yy + DIP2PIXEL(I->LineHeight) - 2);
 	      /* TODO: need to convert to triangles
 	      CGOBegin(orthoCGO, GL_LINE_LOOP);
 	      CGOVertex(orthoCGO, xx, yy);
@@ -580,8 +580,8 @@ static void SeqDraw(Block * block ORTHOCGOARG)
 	    } else {
 	      glBegin(GL_LINE_LOOP);
 	      glVertex2i(xx, yy);
-	      glVertex2i(xx, yy + I->LineHeight - 2);
-	      glVertex2i(xx2, yy + I->LineHeight - 2);
+	      glVertex2i(xx, yy + DIP2PIXEL(I->LineHeight) - 2);
+	      glVertex2i(xx2, yy + DIP2PIXEL(I->LineHeight) - 2);
 	      glVertex2i(xx2, yy);
 	      glEnd();
 	    }
@@ -595,17 +595,17 @@ static void SeqDraw(Block * block ORTHOCGOARG)
         float start = 0, stop;
         int right = 0;
         float bot, top, cent;
-        float height = (float) (I->ScrollBarWidth - I->ScrollBarMargin);
+        float height = (float) DIP2PIXEL(I->ScrollBarWidth - I->ScrollBarMargin);
         int last_color = -1;
         cur_color = blue;
         for(a = 0; a < I->NRow; a++) {
           row = I->Row + a;
           if(!row->label_flag) {
             top =
-              I->Block->rect.bottom + I->ScrollBarMargin + (height * real_count) / n_real;
+              I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + (height * real_count) / n_real;
             real_count--;
             bot =
-              I->Block->rect.bottom + I->ScrollBarMargin + (height * real_count) / n_real;
+              I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + (height * real_count) / n_real;
             mode = 0;
             for(b = 0; b < row->nCol; b++) {
               col = row->col + b;

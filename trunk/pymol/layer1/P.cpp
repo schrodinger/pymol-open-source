@@ -116,31 +116,6 @@ static int label_next_token(WordType dst, const char **expr)
   return (q != dst);
 }
 
-/*
- * Get R/S label for SDF stereo enumeration
- */
-char convertStereoToChar(int stereo){
-  switch (stereo){
-    case 1: return 'S';
-    case 2: return 'R';
-    case 3: return '?';
-  }
-  return '\0';
-}
-
-/*
- * Get SDF stereo enumeration for R/S label
- */
-int convertCharToStereo(char stereo){
-  switch (stereo){
-    case 'S': case 's': return 1;
-    case 'R': case 'r': return 2;
-    case '?': return 3;
-  }
-  return 0;
-}
-
-
 int PLabelExprUsesVariable(PyMOLGlobals * G, const char *expr, const char *var)
 {
   char ch, quote = 0;
@@ -271,7 +246,7 @@ int PLabelAtomAlt(PyMOLGlobals * G, AtomInfoType * at, const char *model, const 
           } else if(!strcmp(tok, "formal_charge")) {
             sprintf(buffer, "%d", at->formalCharge);
           } else if(!strcmp(tok, "stereo")) {
-	    sprintf(buffer, "%c", convertStereoToChar(at->stereo));
+            strcpy(buffer, AtomInfoGetStereoAsStr(at));
           } else if(!strcmp(tok, "color")) {
             sprintf(buffer, "%d", at->color);
           } else if(!strcmp(tok, "cartoon")) {
@@ -703,7 +678,7 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
         break;
       case ATOM_PROP_STEREO:
         {
-          char mmstereotype[] = {convertStereoToChar(wobj->atomInfo->stereo), '\0'};
+          auto mmstereotype = AtomInfoGetStereoAsStr(wobj->atomInfo);
           ret = PyString_FromString(mmstereotype);
         }
         break;
@@ -868,7 +843,7 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
           {
             PyObject *valobj = PyObject_Str(val);
             const char *valstr = PyString_AS_STRING(valobj);
-            wobj->atomInfo->stereo = convertCharToStereo(valstr[0]);
+            AtomInfoSetStereo(wobj->atomInfo, valstr);
             Py_DECREF(valobj);
           }
           break;

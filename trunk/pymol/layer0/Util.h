@@ -34,6 +34,7 @@ void UtilFillVLA(char **vla, ov_size * cc, char what, ov_size len);
 void UtilNCopy(char *dst, const char *src, ov_size n);        /* up to N-1 chars */
 void UtilNCopyToLower(char *dst, const char *src, ov_size n); /* up to N-1 chars */
 void UtilCleanStr(char *s);
+void UtilStripANSIEscapes(char *s);
 int UtilCountStringVLA(char *vla);
 
 double UtilGetSeconds(PyMOLGlobals * G);

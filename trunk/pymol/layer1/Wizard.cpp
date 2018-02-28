@@ -73,9 +73,9 @@ struct _CWizard {
   SceneViewType LastUpdatedView;
 };
 
-#define cWizardLeftMargin 2
+#define cWizardLeftMargin DIP2PIXEL(3)
 #define cWizardTopMargin 0
-#define cWizardClickOffset 2
+#define cWizardClickOffset DIP2PIXEL(2)
 
 void WizardDirty(PyMOLGlobals * G)
 {
@@ -244,7 +244,7 @@ void WizardRefresh(PyMOLGlobals * G)
       }
     }
   if(I->NLine) {
-    int LineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
+    int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
     OrthoReshapeWizard(G, LineHeight * I->NLine + 4);
   } else {
     OrthoReshapeWizard(G, 0);
@@ -608,7 +608,7 @@ static int WizardClick(Block * block, int button, int x, int y, int mod)
   CWizard *I = G->Wizard;
   int a;
   PyObject *menuList = NULL;
-  int LineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
+  int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
 
   a = ((I->Block->rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
   if((a >= 0) && ((ov_size) a < I->NLine)) {
@@ -657,7 +657,7 @@ static int WizardDrag(Block * block, int x, int y, int mod)
   PyMOLGlobals *G = block->G;
 
   CWizard *I = G->Wizard;
-  int LineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
+  int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
 
   int a;
   a = ((I->Block->rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
@@ -691,7 +691,7 @@ static int WizardRelease(Block * block, int button, int x, int y, int mod)
   PyMOLGlobals *G = block->G;
 
   CWizard *I = G->Wizard;
-  int LineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
+  int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
 
   int a;
   a = ((I->Block->rect.top - (y + cWizardClickOffset)) - cWizardTopMargin) / LineHeight;
@@ -822,7 +822,7 @@ static void draw_text(PyMOLGlobals * G, char *c, int xx, int yy, float *color OR
           }
     TextSetPos2i(G, xx, yy);
     TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
-    xx = xx + 8;
+    xx = xx + DIP2PIXEL(8);
   }
 }
 
@@ -850,8 +850,8 @@ static void WizardDraw(Block * block ORTHOCGOARG)
 
   float black_color[3] = { 0.0F, 0.0F, 0.0F };
   float menuColor[3] = { 0.0, 0.0, 0.0 };
-  int LineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
-  int text_lift = (LineHeight / 2) - 5;
+  int LineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
+  int text_lift = (LineHeight / 2) - DIP2PIXEL(5);
   float *text_color, *text_color2 = I->Block->TextColor;
 
   text_color = menuColor;
@@ -914,7 +914,7 @@ static void WizardDraw(Block * block ORTHOCGOARG)
           break;
         }
       }
-      draw_text(G, I->Line[a].text, x + 1, y + text_lift, text_color ORTHOCGOARGVAR);
+      draw_text(G, I->Line[a].text, x, y + text_lift, text_color ORTHOCGOARGVAR);
       /*GrapDrawStr(I->Line[a].text,x+1,y+text_lift); */
       y -= LineHeight;
     }

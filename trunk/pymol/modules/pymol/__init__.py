@@ -397,21 +397,12 @@ def launch_gui(self):
 def prime_pymol():
     '''
     Set the current thread as the glutThread
-
-    Launch X11 on OSX (legacy)
     '''
     global glutThread
 
     if not glutThread:
         glutThread = thread.get_ident()
 
-    # legacy X11 launching on OSX
-    if IS_MACOS and invocation.options.external_gui == 1:
-        xdpyinfo = "/opt/X11/bin/xdpyinfo"
-        if not os.path.exists(xdpyinfo) or \
-                os.system(xdpyinfo + " >/dev/null 2>&1"):
-            # launch X11 (if needed)
-            os.system("/usr/bin/open -a X11")
 
 def launch(args=None, block_input_hook=0):
     '''
@@ -479,17 +470,17 @@ class IncentiveOnlyException(CmdException):
     Exception type for features that are not available in Open-Source PyMOL
     '''
     label = "Incentive-Only-Error"
-    def __init__(self, *args, **kwargs):
-        super(IncentiveOnlyException, self).__init__(*args, **kwargs)
-        if not self.message:
+    def __init__(self, message=''):
+        if not message:
             try:
                 funcname = sys._getframe(1).f_code.co_name
-                self.message = '"%s" is not available in Open-Source PyMOL' % (funcname,)
+                message = '"%s" is not available in Open-Source PyMOL' % (funcname,)
             except:
-                self.message = 'Not available in Open-Source PyMOL'
-        self.message += '\n\n' \
+                message = 'Not available in Open-Source PyMOL'
+        message += '\n\n' \
                     '    Please visit http://pymol.org if you are interested in the\n' \
                     '    full featured "Incentive PyMOL" version.\n'
+        super(IncentiveOnlyException, self).__init__(message)
 
 class Scratch_Storage:
     '''

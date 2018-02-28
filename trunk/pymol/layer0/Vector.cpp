@@ -386,6 +386,23 @@ bool is_allclosef(int nrow,
 }
 
 /*
+ * Check a nxm matrix is a diagonal matrix (non-diagonal elements are zero)
+ */
+bool is_diagonalf(int nrow,
+    const float *m, int ncol, float threshold)
+{
+  if (!ncol)
+    ncol = nrow;
+  for (int i = 0; i < nrow; ++i) {
+    for (int j = 0; j < ncol; ++j) {
+      if (i != j && fabsf(m[i * ncol + j]) > threshold)
+        return false;
+    }
+  }
+  return true;
+}
+
+/*
  * Determinant of the upper left 3x3 submatrix.
  */
 double determinant33f(const float *m, int ncol)
@@ -1610,12 +1627,12 @@ float get_angle3f(const float *v1, const float *v2)
   double denom;
   double result;
   double arg1, arg2;
-  arg1 = ((v1[0] * v1[0]) + (v1[1] * v1[1]) + (v1[2] * v1[2]));
-  arg2 = ((v2[0] * v2[0]) + (v2[1] * v2[1]) + (v2[2] * v2[2]));
+  arg1 = ((v1[0] * (double)v1[0]) + (v1[1] * (double)v1[1]) + (v1[2] * (double)v1[2]));
+  arg2 = ((v2[0] * (double)v2[0]) + (v2[1] * (double)v2[1]) + (v2[2] * (double)v2[2]));
   denom = sqrt1d(arg1) * sqrt1d(arg2);
 
   if(denom > R_SMALL){
-    arg1 = (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]);
+    arg1 = (v1[0] * (double)v2[0] + v1[1] * (double)v2[1] + v1[2] * (double)v2[2]);
     result = arg1 / denom;
   } else
     result = _0;
@@ -1623,8 +1640,8 @@ float get_angle3f(const float *v1, const float *v2)
     result = -_1;
   else if(result > _1)
     result = _1;
-  result = acos(result);
-  return ((float) result);
+
+  return acosf(result);
 }
 
 void normalize23f(const float *v1, float *v2)

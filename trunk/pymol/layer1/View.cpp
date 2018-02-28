@@ -67,7 +67,6 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
             }
           }
         }
-
       }
       break;
     case cViewElemModifyCopy:
@@ -96,13 +95,12 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
   return ok;
 }
 
-int ViewElemXtoFrame(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames, int x, int nearest)
+int ViewElemXtoFrame(BlockRect *rect, int frames, int x, int nearest)
 {
-  int nDrawn = frames;
   int offset = 0;
   float width = (float) (rect->right - rect->left);
   float extra = (nearest ? 0.4999F : 0.0F);
-  int frame = (int)(extra + (nDrawn * (x - rect->left )) / width + offset);
+  int frame = (int)(extra + (frames * (x - rect->left )) / width + offset);
   return frame;
 }
 
@@ -164,10 +162,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
     int size = VLAGetSize(view_elem);
     float width = (float) (rect->right - rect->left);
     float start = 0.0F, stop;
-    int offset = 0;
-    int first = 0;
-    int last = size;
-    int nDrawn = frames;
+    const int last = size;
     float top = rect->top - 2;
     float bot = rect->bottom + 2;
     float mid_top = (int)((0.499F + 3 * top + 2 * bot) / 5);
@@ -178,17 +173,14 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
     float bot_color[3] = { 0.2, 0.2, 0.4 };
     int cur_level = -1, last_level = -1;
     int cur;
-    for(cur = first; cur <= last; cur++) {
+    for(cur = 0; cur <= last; cur++) {
       if(cur < last) {
-        if(cur>=size)
-          cur_level = -1;
-        else
           cur_level = view_elem->specification_level;
       } else {
         cur_level = -1;
       }
       if(cur_level != last_level) {
-        stop = (int)(rect->left + (width * (cur - offset)) / nDrawn);
+        stop = (int)(rect->left + (width * cur) / frames);
         switch (last_level) {
         case 0:
           break;
@@ -300,10 +292,9 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
 	    glVertex2f(start,top);
 	    glEnd();
 	  }
-
           break;
         }
-        start = (int)(rect->left + (width * (cur - offset)) / nDrawn);
+        start = stop;
       }
       last_level = cur_level;
       view_elem++;
@@ -430,10 +421,6 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view)
 
 int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   ov_size ll = 0;
 
@@ -524,20 +511,13 @@ int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
     }
   }
   return ok;
-#endif
 }
 
 int ViewElemVLAFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem ** vla_ptr,
                           int nFrame)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
-
   CViewElem *vla = NULL;
-
   if(ok)
     ok = (list != NULL);
   if(ok)
@@ -560,7 +540,6 @@ int ViewElemVLAFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem ** vla_pt
   } else
     *vla_ptr = vla;
   return ok;
-#endif
 }
 
 PyObject *ViewElemVLAAsPyList(PyMOLGlobals * G, CViewElem * vla, int nFrame)

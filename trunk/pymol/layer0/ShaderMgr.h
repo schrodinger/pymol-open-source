@@ -52,7 +52,8 @@ typedef struct _CShaderPrg {
   int uniform_set ;
 } CShaderPrg;
 
-struct _CShaderMgr { 
+class CShaderMgr {
+public:
   PyMOLGlobals * G;
   CShaderPrg * programs;
   int ShadersPresent;

@@ -7382,7 +7382,8 @@ int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet)
   ok_assert(1, input[0]);
 
   // if object molecule or named selection, then don't create a temp selection
-  if (ExecutiveIsMoleculeOrSelection(G, input)) {
+  if (ExecutiveIsMoleculeOrSelection(G, input)
+      && strncmp(input, cSelectorTmpPrefix, cSelectorTmpPrefixLen) != 0) {
     strcpy(store, input);
     return 0;
   }
@@ -7639,12 +7640,8 @@ static int _SelectorCreate(PyMOLGlobals * G, const char *sname, const char *sele
   UtilCleanStr(name);
   /* name was invalid, output error msg to user */
   if(!name[0]) {
-    if (!quiet){
       PRINTFB(G, FB_Selector, FB_Errors)
 	"Selector-Error: Invalid selection name \"%s\".\n", sname ENDFB(G);
-      // moved to only !quiet B.B. 11/12 - not sure why this is in there, caused unwanted cr to print during test
-      OrthoRestorePrompt(G);
-    }
   }
   if(ok) {
     if(sele) {
@@ -8918,8 +8915,6 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
     {
       CWordMatchOptions options;
       int prevmodel;
-      char mmstereotype[2];
-      mmstereotype[1] = 0;
       WordMatchOptionsConfigAlphaList(&options, wildcard[0], ignore_case);
 
       table_a = i_table + cNDummyAtoms;
@@ -8933,7 +8928,8 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
 #ifndef NO_MMLIBS
 #endif
-	  mmstereotype[0] = convertStereoToChar(i_obj[table_a->model]->AtomInfo[table_a->atom].stereo);
+          const char * mmstereotype =
+            AtomInfoGetStereoAsStr(i_obj[table_a->model]->AtomInfo + table_a->atom);
           if((*base_0_sele_a =
               WordMatcherMatchAlpha(matcher,mmstereotype)))
             c++;
@@ -9320,10 +9316,8 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
             for(a = cNDummyAtoms; a < I_NAtom; a++)
               base[0].sele[a] = false;
           } else {
-	    if (!quiet){
 	      PRINTFB(G, FB_Selector, FB_Errors)
 		"Selector-Error: Invalid selection name \"%s\".\n", word ENDFB(G);
-	    }
             ok = false;
           }
         }
@@ -10848,10 +10842,7 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
       c++;                      /* go onto next word */
   }
   if(level > 0){
-    if (!quiet)
       ok = ErrMessage(G, "Selector", "Malformed selection.");
-    else
-      ok = 0;
   }
   if(ok) {                      /* this is the main operation loop */
     totDepth = depth;
@@ -11034,15 +11025,9 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
   }
   if(ok) {
     if(depth != 1) {
-      if (!quiet)
 	ok = ErrMessage(G, "Selector", "Malformed selection.");
-      else 
-	ok = 0;
     } else if(Stack[depth].type != STYP_LIST)
-      if (!quiet)
 	ok = ErrMessage(G, "Selector", "Invalid selection.");
-      else 
-	ok = 0;
     else
       result = Stack[totDepth].sele;    /* return the selection list */
   }
@@ -11061,19 +11046,13 @@ int *SelectorEvaluate(PyMOLGlobals * G, SelectorWordType * word, int state, int 
         if(a && word[a][0])
           q = UtilConcat(q, " ");
         q = UtilConcat(q, word[a]);
-	if (!quiet){
 	  PRINTFB(G, FB_Selector, FB_Errors)
 	    "%s", line ENDFB(G);
-	}
       }
       q = line;
       q = UtilConcat(q, "<--");
-      if (!quiet){
 	PRINTFB(G, FB_Selector, FB_Errors)
-	  "%s", line ENDFB(G);
-	// moved to only !quiet B.B. 11/12 - not sure why this is in there, caused unwanted cr to print during test
-	OrthoRestorePrompt(G);
-      }
+	  "%s\n", line ENDFB(G);
     }
   }
   VLAFreeP(Stack);

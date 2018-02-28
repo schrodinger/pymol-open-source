@@ -2411,11 +2411,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         if(est) {
           cs->SculptCGO = CGOSimplify(cgo, est);
           CGOFree(cgo);
-
-          if (cs->SculptShaderCGO){
-            CGOFree(cs->SculptShaderCGO);
-            cs->SculptShaderCGO = NULL;
-          }
+          CGOFree(cs->SculptShaderCGO);
         }
       }
     }

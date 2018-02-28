@@ -26,6 +26,7 @@
 #include "MemoryDebug.h"
 #include "Sphere.h"
 #include "Scene.h"
+#include "CGO.h"
 
 
 #define XML_VERSION "1.0"
@@ -541,14 +542,19 @@ static void ColladaWritePrimitiveElement(xmlTextWriterPtr w, char *p_str)
 
 /* Writes a <triangles> element with the current primitive (<p>) string. */
 static void ColladaWriteTrianglesElement(xmlTextWriterPtr w, int geom, int tri,
-    char *p_str)
+    char *p_str, int mode=0)
 {
-  xmlTextWriterStartElement(w, BAD_CAST "triangles");
+  xmlTextWriterStartElement(w, BAD_CAST (mode == 1 ? "polylist" : "triangles"));
   xmlTextWriterWriteFormatAttribute(w, BAD_CAST "count", "%i", tri);
   xmlTextWriterWriteFormatAttribute(w, BAD_CAST "material",
       "geom%i-material", geom);
 
   ColladaWriteVNCInputs(w, geom);
+
+  if (mode == 1) {
+    ColladaWriteTrianglesVCountElement(w, tri);
+  }
+
   ColladaWritePrimitiveElement(w, p_str);
 
   xmlTextWriterEndElement(w);  // triangles
@@ -559,16 +565,7 @@ static void ColladaWriteTrianglesElement(xmlTextWriterPtr w, int geom, int tri,
 static void ColladaWriteTrianglesPolylistElement(xmlTextWriterPtr w, int geom, int tri,
     char *p_str)
 {
-  xmlTextWriterStartElement(w, BAD_CAST "polylist");
-  xmlTextWriterWriteFormatAttribute(w, BAD_CAST "count", "%i", tri);
-  xmlTextWriterWriteFormatAttribute(w, BAD_CAST "material",
-      "geom%i-material", geom);
-
-  ColladaWriteVNCInputs(w, geom);
-  ColladaWriteTrianglesVCountElement(w, tri);
-  ColladaWritePrimitiveElement(w, p_str);
-
-  xmlTextWriterEndElement(w);  // triangles
+  ColladaWriteTrianglesElement(w, geom, tri, p_str, 1);
 }
 
 
@@ -659,11 +656,7 @@ static void ColladaWriteMeshGeometry(xmlTextWriterPtr w, int geom,
       (char *)"RGB");
   ColladaWriteVertices(w, geom);
 
-  if (mode == 1) {
-    ColladaWriteTrianglesPolylistElement(w, geom, tri, p_str);
-  } else {
-    ColladaWriteTrianglesElement(w, geom, tri, p_str);
-  }
+  ColladaWriteTrianglesElement(w, geom, tri, p_str, mode);
 
   ColladaEndGeometryMesh(w);
 }
@@ -828,9 +821,9 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
       /* Handle transitions between/after triangle meshes. */
       if (mesh_obj) {
-        if (prim->type != cPrimTriangle ||
-            TRANS_PRECISION <= fabsf(prim->trans - cur_trans) ||
-            a == I->NPrimitive)
+        if (a == I->NPrimitive ||
+            prim->type != cPrimTriangle ||
+            TRANS_PRECISION <= fabsf(prim->trans - cur_trans))
         {
 
           /*
@@ -848,25 +841,15 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
           geom += 1;
           mesh_obj = false;
-
-          VLAFree(positions_str);
-          VLAFree(normals_str);
-          VLAFree(colors_str);
-          VLAFree(p_str);
-
         }
       }
       if(!mesh_obj) {
         /* First triangle primitive or any other primititve. */
 
         /* Allocate data strings */
-        positions_str = VLACalloc(char, 1000);
         pos_str_cc = 0;
-        normals_str = VLACalloc(char, 1000);
         norm_str_cc = 0;
-        colors_str = VLACalloc(char, 1000);
         col_str_cc = 0;
-        p_str = VLACalloc(char, 1000);
         p_str_cc = 0;
 
 
@@ -939,13 +922,9 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             largest_dim *= 100;
 
             /* Allocate data strings */
-            positions_str = VLACalloc(char, 1000);
             pos_str_cc = 0;
-            normals_str = VLACalloc(char, 1000);
             norm_str_cc = 0;
-            colors_str = VLACalloc(char, 1000);
             col_str_cc = 0;
-            p_str = VLACalloc(char, 1000);
             p_str_cc = 0;
 
             int cube_coords[24] = {
@@ -1216,6 +1195,8 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
               ColladaEndTristripsElement(w);
             }
 
+            free(next);
+
             ColladaEndGeometryMesh(w);
             geom += 1;
             break;
@@ -1248,19 +1229,29 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             char *next = (char *) malloc(200 * sizeof(char));
 
             char *cap1_p_str = VLACalloc(char, 1000);
-            char *cap2_p_str = VLACalloc(char, 1000);
             ov_size cap1_cc = 0;
-            ov_size cap2_cc = 0;
+
+            bool stick_round_nub = SettingGetGlobal_i(I->G, cSetting_stick_round_nub);
+            const int j_arr[] = {2, 3, 2};
+            int nCapTri = 0;
+            int captype[2] = {prim->cap1, prim->cap2};
+            CGO *cgocap[2] = {NULL, NULL};
+
+            if(prim->type == cPrimSausage) {
+              captype[0] = captype[1] = cCylCapRound;
+            }
 
             v = v_buf;
             nEdge = SettingGetGlobal_i(I->G, cSetting_stick_quality);
             overlap = prim->r1 * SettingGetGlobal_f(I->G, cSetting_stick_overlap);
             nub = prim->r1 * SettingGetGlobal_f(I->G, cSetting_stick_nub);
             if(prim->type == cPrimCone) {
+              r2 = prim->r2;
               overlap2 = prim->r2 * SettingGetGlobal_f(I->G, cSetting_stick_overlap);
               nub2 = prim->r2 * SettingGetGlobal_f(I->G, cSetting_stick_nub);
             }
             else {
+              r2 = prim->r1;
               overlap2 = overlap;
               nub2 = nub;
             }
@@ -1280,27 +1271,11 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
             /* cap1 */
             copy3f(prim->v1, vv1);
-            if(prim->type == cPrimSausage ||
-                (prim->type == cPrimCylinder && prim->cap1 == cCylCapRound)) {
-              for(i = 0; i < 3; i++) {
-                vv1[i] -= p0[i] * overlap;
-                vvv1[i] = vv1[i] - p0[i] * nub;
-              }
-            } else {
-              copy3f(vv1, vvv1);
-            }
+            copy3f(vv1, vvv1);
 
             /* cap2 */
             copy3f(prim->v2, vv2);
-            if(prim->type == cPrimSausage ||
-                (prim->type == cPrimCylinder && prim->cap2 == cCylCapRound)) {
-              for(i = 0; i < 3; i++) {
-                vv2[i] += p0[i] * overlap2;
-                vvv2[i] = vv2[i] + p0[i] * nub2;
-              }
-            } else {
-              copy3f(vv2, vvv2);
-            }
+            copy3f(vv2, vvv2);
 
             d[0] = (vv2[0] - vv1[0]);
             d[1] = (vv2[1] - vv1[1]);
@@ -1317,6 +1292,38 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
             /* now we have a coordinate system */
 
+            /* cap1 */
+            if(captype[0] == cCylCapRound) {
+              if (stick_round_nub) {
+                cgocap[0] = CGONew(I->G);
+                CGORoundNub(cgocap[0], prim->v1, p0, p1, p2, -1, nEdge, prim->r1);
+              } else {
+                for(i = 0; i < 3; i++) {
+                  vv1[i] -= p0[i] * overlap;
+                  vvv1[i] = vv1[i] - p0[i] * nub;
+                }
+              }
+            }
+
+            /* cap2 */
+            if(captype[1] == cCylCapRound) {
+              if (stick_round_nub) {
+                cgocap[1] = CGONew(I->G);
+                CGORoundNub(cgocap[1], prim->v2, p0, p1, p2, 1, nEdge, prim->r1);
+              } else {
+                for(i = 0; i < 3; i++) {
+                  vv2[i] += p0[i] * overlap2;
+                  vvv2[i] = vv2[i] + p0[i] * nub2;
+                }
+              }
+            }
+
+            /* colors */
+            sprintf(next, "%6.4f %6.4f %6.4f %6.4f %6.4f %6.4f ",
+                prim->c1[0], prim->c1[1], prim->c1[2],
+                prim->c2[0], prim->c2[1], prim->c2[2]);
+            UtilConcatVLA(&colors_str, &col_str_cc, next);
+
             /* Generate the data strings */
             char *vcount_str = VLACalloc(char, 100);
             ov_size vc_cc = 0;
@@ -1330,12 +1337,6 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
                 v[0] = p1[0] * x[c] + p2[0] * y[c];
                 v[1] = p1[1] * x[c] + p2[1] * y[c];
                 v[2] = p1[2] * x[c] + p2[2] * y[c];
-
-                if(prim->type == cPrimCone){
-                  r2 = prim->r2;
-                } else {
-                  r2 = prim->r1;
-                }
 
                 /* vertices */
                 v[3] = vv1[0] + v[0] * prim->r1;
@@ -1356,12 +1357,6 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
                     v[0], v[1], v[2]);
                 UtilConcatVLA(&normals_str, &norm_str_cc, next);
 
-                /* colors */
-                sprintf(next, "%6.4f %6.4f %6.4f %6.4f %6.4f %6.4f ",
-                    prim->c1[0], prim->c1[1], prim->c1[2],
-                    prim->c2[0], prim->c2[1], prim->c2[2]);
-                UtilConcatVLA(&colors_str, &col_str_cc, next);
-
                 if (c > 0) {
                   /* vcount */
                   sprintf(next, "4 ");
@@ -1371,13 +1366,12 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
                   sprintf(next, "%i %i %i %i %i %i %i %i %i %i %i %i ",
                       pos, norm, col,
                       pos + 1, norm, col + 1,
-                      pos + 3, norm + 1, col + 3,
-                      pos + 2, norm + 1, col + 2);
+                      pos + 3, norm + 1, col,
+                      pos + 2, norm + 1, col + 1);
                   UtilConcatVLA(&p_str, &p_str_cc, next);
                 }
                 pos += 2;
                 norm += 1;
-                col += 2;
 
               }
 
@@ -1388,67 +1382,57 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
 #define CONE_MIN_RADIUS 10e-6f
 
-                /* positions */
-                if(prim->r1 > CONE_MIN_RADIUS){
+                if(prim->r1 > CONE_MIN_RADIUS && !cgocap[0] && captype[0] != cCylCapNone){
+                  /* positions */
                   sprintf(next, "%6.4f %6.4f %6.4f ",
                       vvv1[0], vvv1[1], vvv1[2]);
                   UtilConcatVLA(&positions_str, &pos_str_cc, next);
-                }
-                if(r2 > CONE_MIN_RADIUS){
-                  sprintf(next, "%6.4f %6.4f %6.4f ",
-                      vvv2[0], vvv2[1], vvv2[2]);
-                  UtilConcatVLA(&positions_str, &pos_str_cc, next);
-                }
 
-                /* normals */
-                if(prim->r1 > CONE_MIN_RADIUS){
+                  /* normals */
                   sprintf(next, "%6.4f %6.4f %6.4f ",
                       -p0[0], -p0[1], -p0[2]);
                   UtilConcatVLA(&normals_str, &norm_str_cc, next);
+
+                  /* p */
+                  for(i = 0; i < nEdge; i++) {
+                    sprintf(next, "%i %i %i %i %i %i %i %i %i ",
+                        pos, norm, col,
+                        2*i, i, col,
+                        2*i+2, i+1, col);
+                    UtilConcatVLA(&cap1_p_str, &cap1_cc, next);
+                    ++nCapTri;
+                  }
+
+                  ++pos;
+                  ++norm;
                 }
-                if(r2 > CONE_MIN_RADIUS){
+
+                if(r2 > CONE_MIN_RADIUS && !cgocap[1] && captype[1] != cCylCapNone){
+                  /* positions */
+                  sprintf(next, "%6.4f %6.4f %6.4f ",
+                      vvv2[0], vvv2[1], vvv2[2]);
+                  UtilConcatVLA(&positions_str, &pos_str_cc, next);
+
+                  /* normals */
                   sprintf(next, "%6.4f %6.4f %6.4f ",
                       p0[0], p0[1], p0[2]);
                   UtilConcatVLA(&normals_str, &norm_str_cc, next);
-                }
 
-                /* colors */
-                if(prim->r1 > CONE_MIN_RADIUS){
-                  sprintf(next, "%6.4f %6.4f %6.4f ",
-                      prim->c1[0], prim->c1[1], prim->c1[2]);
-                  UtilConcatVLA(&colors_str, &col_str_cc, next);
-                }
-                if(r2 > CONE_MIN_RADIUS){
-                  sprintf(next, "%6.4f %6.4f %6.4f ",
-                      prim->c2[0], prim->c2[1], prim->c2[2]);
-                  UtilConcatVLA(&colors_str, &col_str_cc, next);
-                }
-
-                /* p */
-                for(i = 0; i < nEdge; i++) {
-                  if(prim->r1 > CONE_MIN_RADIUS){
+                  /* p */
+                  for(i = 0; i < nEdge; i++) {
+                    /* reverse order for other end */
                     sprintf(next, "%i %i %i %i %i %i %i %i %i ",
-                        pos, norm, col,
-                        2*i, i, 2*i,
-                        2*i+2, i+1, 2*i+2);
+                        pos, norm, col + 1,
+                        2*i+3, i+1, col + 1,
+                        2*i+1, i, col + 1);
                     UtilConcatVLA(&cap1_p_str, &cap1_cc, next);
+                    ++nCapTri;
                   }
-                  /* reverse order for other end */
-                  if(r2 > CONE_MIN_RADIUS){
-                    sprintf(next, "%i %i %i %i %i %i %i %i %i ",
-                        pos+1, norm+1, col+1,
-                        2*i+3, i+1, 2*i+3,
-                        2*i+1, i, 2*i+1);
-                    UtilConcatVLA(&cap2_p_str, &cap2_cc, next);
-                  }
+
+                  ++pos;
+                  ++norm;
                 }
-
-                pos += 2;
-                norm += 2;
-                col += 2;
               }
-
-              free(next);
 
 #if COLLADA_DEBUG > 1
               printf("positions: %s\n", positions_str);
@@ -1457,7 +1441,51 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
               printf("p:         %s\n", p_str);
 #endif
 
+              for (i = 0; i < 2; ++i) {
+                if (!cgocap[i])
+                  continue;
+
+                int pos0 = -1;
+
+                for (auto it = cgocap[i]->begin(); !it.is_stop(); ++it) {
+                  auto pc = it.data();
+                  int op = it.op_code();
+                  switch (op){
+                    case CGO_BEGIN:
+                      pos0 = pos;
+                      break;
+                    case CGO_NORMAL:
+                      /* normals */
+                      sprintf(next, "%6.4f %6.4f %6.4f ", pc[0], pc[1], pc[2]);
+                      UtilConcatVLA(&normals_str, &norm_str_cc, next);
+                      ++norm;
+                      break;
+                    case CGO_VERTEX:
+                      /* positions */
+                      sprintf(next, "%6.4f %6.4f %6.4f ", pc[0], pc[1], pc[2]);
+                      UtilConcatVLA(&positions_str, &pos_str_cc, next);
+                      ++pos;
+
+                      /* unroll the triangle strip */
+                      if (pos > pos0 + 2) {
+                        const int * j = j_arr + ((pos - pos0) % 2);
+                        sprintf(next, "%i %i %i %i %i %i %i %i %i ",
+                            pos - j[0], norm - j[0], col + i,
+                            pos - j[1], norm - j[1], col + i,
+                            pos - 1,    norm - 1,    col + i);
+                        UtilConcatVLA(&cap1_p_str, &cap1_cc, next);
+                        ++nCapTri;
+                      }
+
+                      break;
+                  }
+                }
+
+                CGOFree(cgocap[i]);
+              }
             }
+
+            col += 2;
 
             ColladaBeginGeometryMesh(w, geom);
             ColladaWrite3DSource(w, geom, (char *)"positions", pos,
@@ -1474,37 +1502,18 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             ColladaWritePrimitiveElement(w, p_str);
             ColladaEndPolylistElement(w);
 
-            switch (geom_mode) {
-              case 1:
-                /* triangles for caps (trifans would be better) */
-                if(prim->r1 > CONE_MIN_RADIUS){
-                  ColladaWriteTrianglesPolylistElement(w, geom, nEdge, cap1_p_str);
-                }
-                if(r2 > CONE_MIN_RADIUS){
-                  ColladaWriteTrianglesPolylistElement(w, geom, nEdge, cap2_p_str);
-                }
-                break;
-
-              case 0:
-              default:
-
-                /* triangles for caps (trifans would be better) */
-                if(prim->r1 > CONE_MIN_RADIUS){
-                  ColladaWriteTrianglesElement(w, geom, nEdge, cap1_p_str);
-                }
-                if(r2 > CONE_MIN_RADIUS){
-                  ColladaWriteTrianglesElement(w, geom, nEdge, cap2_p_str);
-                }
-                break;
-
+            if (nCapTri) {
+              ColladaWriteTrianglesElement(w, geom, nCapTri, cap1_p_str, geom_mode);
             }
+
             ColladaEndGeometryMesh(w);
             geom += 1;
 
 
             VLAFree(vcount_str);
             VLAFree(cap1_p_str);
-            VLAFree(cap2_p_str);
+
+            free(next);
 
             break;
           }  // cPrimCylinder
@@ -1577,12 +1586,6 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
               geom += 1;
               mesh_obj = false;
-
-              VLAFree(positions_str);
-              VLAFree(normals_str);
-              VLAFree(colors_str);
-              VLAFree(p_str);
-
             }
 
             break;
@@ -1610,6 +1613,10 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
 
     xmlTextWriterEndElement(w);  // library_geometries
 
+    VLAFree(positions_str);
+    VLAFree(normals_str);
+    VLAFree(colors_str);
+    VLAFree(p_str);
   }
 
   /* Effects */
