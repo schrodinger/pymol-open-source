@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 #include"PyMOLObject.h"
-#include"CGOStruct.h"
+#include"Base.h"
 
 #include"GadgetSet.h"
 

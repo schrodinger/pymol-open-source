@@ -29,9 +29,6 @@ Z* -------------------------------------------------------------------
 int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGroup ** result,
                              int version)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int ok = true, ll = 0;
   ObjectGroup *I = NULL;
   (*result) = NULL;
@@ -56,16 +53,10 @@ int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGroup ** r
     /* to do: cleanup */
   }
   return (ok);
-
-#endif
 }
 
 PyObject *ObjectGroupAsPyList(ObjectGroup * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
   PyObject *result = NULL;
 
   result = PyList_New(3);
@@ -73,7 +64,6 @@ PyObject *ObjectGroupAsPyList(ObjectGroup * I)
   PyList_SetItem(result, 1, PyInt_FromLong(I->OpenOrClosed));
   PyList_SetItem(result, 2, ObjectStateAsPyList(&I->State));
   return (PConvAutoNone(result));
-#endif
 }
 
 

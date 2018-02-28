@@ -75,14 +75,14 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
   DistLabel *l = I->L;
   int n = 0;
   int color;
-  int font_id = SettingGet_i(G, I->ds->Setting, I->Obj->Setting, cSetting_label_font_id);
-  float font_size = SettingGet_f(G, I->ds->Setting, I->Obj->Setting, cSetting_label_size);
+  int font_id = SettingGet_i(G, NULL, I->Obj->Setting, cSetting_label_font_id);
+  float font_size = SettingGet_f(G, NULL, I->Obj->Setting, cSetting_label_size);
   int ok = true;
 
   if(ray) {
 
     TextSetOutlineColor(G, I->OutlineColor);
-    color = SettingGet_color(G, I->ds->Setting, I->Obj->Setting, cSetting_label_color);
+    color = SettingGet_color(G, NULL, I->Obj->Setting, cSetting_label_color);
 
     if((color >= 0) || (color == cColorFront) || (color == cColorBack))
       TextSetColor(G, ColorGet(G, color));
@@ -103,7 +103,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
       }
     } else {
 	Pickable *p = I->R.P;
-      int float_text = SettingGet_i(G, I->ds->Setting,
+      int float_text = SettingGet_i(G, NULL,
                                     I->Obj->Setting,
                                     cSetting_float_labels);
       if(float_text)
@@ -122,7 +122,7 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 	}
 
       TextSetOutlineColor(G, I->OutlineColor);
-      color = SettingGet_color(G, I->ds->Setting, I->Obj->Setting, cSetting_label_color);
+      color = SettingGet_color(G, NULL, I->Obj->Setting, cSetting_label_color);
 
       if((color >= 0) || (color == cColorFront) || (color == cColorBack))
         TextSetColor(G, ColorGet(G, color));
@@ -173,7 +173,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   const float *lab_pos =
     SettingGet_3fv(G, NULL, ds->Obj->Obj.Setting, cSetting_label_position);
   int default_digits =
-    SettingGet_i(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_label_digits);
+    SettingGet_i(G, NULL, ds->Obj->Obj.Setting, cSetting_label_digits);
   Pickable *rp = NULL;
   int ok = true;
 
@@ -210,7 +210,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   I->shaderCGO = NULL;
 
   I->OutlineColor =
-    SettingGet_i(G, ds->Setting, I->Obj->Setting, cSetting_label_outline_color);
+    SettingGet_i(G, NULL, I->Obj->Setting, cSetting_label_outline_color);
 
   if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
     float *lc;
@@ -246,7 +246,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
     lc = ds->LabCoord;
 
     if(ds->NIndex) {
-      int digits = SettingGet_i(G, ds->Setting, ds->Obj->Obj.Setting,
+      int digits = SettingGet_i(G, NULL, ds->Obj->Obj.Setting,
                                 cSetting_label_distance_digits);
       WordType format;
       if(digits < 0)
@@ -307,7 +307,7 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
 
       float l1, l2;
       float radius;
-      int digits = SettingGet_i(G, ds->Setting, ds->Obj->Obj.Setting,
+      int digits = SettingGet_i(G, NULL, ds->Obj->Obj.Setting,
                                 cSetting_label_angle_digits);
       WordType format;
       if(digits < 0)
@@ -336,8 +336,8 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         else
           radius = l1;
         radius *=
-          SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting,
-                       cSetting_angle_size) * SettingGet_f(G, ds->Setting,
+          SettingGet_f(G, NULL, ds->Obj->Obj.Setting,
+                       cSetting_angle_size) * SettingGet_f(G, NULL,
                                                            ds->Obj->Obj.Setting,
                                                            cSetting_angle_label_position);
 
@@ -396,13 +396,13 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
       float l1, l2;
       float radius;
       float dihedral_size =
-        SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dihedral_size);
-      float dihedral_label_position = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting,
+        SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_dihedral_size);
+      float dihedral_label_position = SettingGet_f(G, NULL, ds->Obj->Obj.Setting,
                                                    cSetting_dihedral_label_position);
 
-      float *v4, *v5, *v6;
+      float *v4;
       float avg[3];
-      int digits = SettingGet_i(G, ds->Setting, ds->Obj->Obj.Setting,
+      int digits = SettingGet_i(G, NULL, ds->Obj->Obj.Setting,
                                 cSetting_label_dihedral_digits);
       WordType format;
       if(digits < 0)
@@ -416,8 +416,6 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
         v2 = v1 + 3;
         v3 = v1 + 6;
         v4 = v1 + 9;
-        v5 = v1 + 12;
-        v6 = v1 + 15;
 
         subtract3f(v1, v2, d12);
         subtract3f(v3, v2, d32);

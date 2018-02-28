@@ -136,8 +136,13 @@ SEE ALSO
 
     ls, cd, pwd
         '''
+        async_ = int(kwargs.pop('async', async_))
+
+        if kwargs:
+            raise pymol.CmdException('unknown argument: ' + ', '.join(kwargs))
+
         r = None
-        if int(kwargs.pop('async', async_)):
+        if async_:
             r = threading.Thread(target=_cmd.system,args=(str(command),1))
             r.start()
         else:

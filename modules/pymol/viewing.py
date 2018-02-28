@@ -1853,6 +1853,11 @@ SEE ALSO
 
     draw, png, save
         '''
+        async_ = int(kwargs.pop('async', async_))
+
+        if kwargs:
+            raise pymol.CmdException('unknown argument: ' + ', '.join(kwargs))
+
         arg_tup = (int(width),int(height),
                    int(antialias),float(angle),
                    float(shift),int(renderer),int(quiet),_self)
@@ -1865,7 +1870,7 @@ SEE ALSO
             _self.rock(0)
         #
         r = DEFAULT_ERROR
-        if not int(kwargs.pop('async', async_)):
+        if not async_:
             r = _ray(*arg_tup)
         else:
             render_thread = threading.Thread(target=_ray, args=arg_tup)
@@ -1904,7 +1909,7 @@ SEE ALSO
         else:
             try:
                 _self.lock(_self)
-                r = _self._do("_ cmd._refresh(_self=cmd)",_self=_self)
+                r = _self._do("_ cmd._refresh()")
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException

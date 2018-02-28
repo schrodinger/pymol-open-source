@@ -52,6 +52,8 @@
 #include "Movie.h"
 #include "Executive.h"
 
+int _gScaleFactor = 1;
+
 #ifdef _PYMOL_NO_MAIN
 
 int MainSavingUnderWhileIdle(void)
@@ -578,21 +580,6 @@ static void MainDrawLocked(void)
     if(PyErr_Occurred())
       PyErr_Print();
 
-    if(G->StereoCapable) {
-      OrthoAddOutput(G,
-                     " OpenGL quad-buffer stereo 3D detected and enabled.\n");;
-      } else {
-        if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_StereoFailed) {
-          OrthoAddOutput(G,
-                         "Error: The requested stereo 3D visualization mode is not available.\n");
-        }
-      }
-    
-    if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_MultisampleFailed) {
-      OrthoAddOutput(G,
-                     "Error: The requested multisampling mode is not available.\n");
-    }
-
     if(G->Option->incentive_product) {  /* perform incentive product initialization (if any) */
       PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
       if(PyErr_Occurred())
@@ -940,7 +927,7 @@ void MainReshape(int width, int height)
             ((SceneGetStereo(G) == 1) ||
              SettingGetGlobal_b(G, cSetting_stereo_double_pump_mono));
 
-          glClearColor(0.0, 0.0, 0.0, 1.0);
+          SceneGLClearColor(0.0, 0.0, 0.0, 1.0);
           if(draw_both) {
             OrthoDrawBuffer(G, GL_FRONT_LEFT);
             glClear(GL_COLOR_BUFFER_BIT);
@@ -1041,7 +1028,9 @@ static void MainInit(PyMOLGlobals * G)
   I->DeferReshapeDeferral = 1;
 
   PyMOL_Start(PyMOLInstance);
-  PyMOL_ConfigureShadersGL(PyMOLInstance);
+
+  // moved to PyMOL_DrawWithoutLock
+  // PyMOL_ConfigureShadersGL(PyMOLInstance);
 
   PyMOL_SetSwapBuffersFn(PyMOLInstance, (PyMOLSwapBuffersFn *) p_glutSwapBuffers);
   I->ReshapeTime = (I->IdleTime = UtilGetSeconds(G));
@@ -1567,6 +1556,7 @@ static void launch(CPyMOLOptions * options, int own_the_options)
       /* fallback behavior */
 
       if(!display_mode_possible) {
+        G->LaunchStatus &= ~cPyMOLGlobals_LaunchStatus_MultisampleFailed;
         p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask |
                               P_GLUT_DOUBLE);
         display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);

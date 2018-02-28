@@ -669,7 +669,7 @@ DESCRIPTION
             try:
                 func(*args, **kwargs)
             except (pymol.CmdException, cmd.QuietException) as e:
-                if e.message:
+                if e.args:
                     print(e)
             finally:
                 if wiz is not None:

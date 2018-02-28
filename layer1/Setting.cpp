@@ -627,6 +627,7 @@ static bool is_session_blacklisted(int index) {
   case cSetting_cgo_shader_ub_color:
   case cSetting_cgo_shader_ub_flags:
   case cSetting_cgo_shader_ub_normal:
+  case cSetting_colored_feedback:
   case cSetting_cylinder_shader_ff_workaround:
   case cSetting_defer_updates:
   case cSetting_fast_idle:
@@ -662,6 +663,8 @@ static bool is_session_blacklisted(int index) {
   case cSetting_trilines:
   case cSetting_use_geometry_shaders:
   case cSetting_use_shaders:
+  case cSetting_pick32bit:
+  case cSetting_display_scale_factor:
 #ifdef _PYMOL_IOS
   case cSetting_cgo_sphere_quality:
   case cSetting_dynamic_measures:
@@ -2789,6 +2792,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_bg_image_linear:
   case cSetting_bg_image_tilesize:
   case cSetting_chromadepth:
+  case cSetting_colored_feedback:
   case cSetting_dash_transparency:
   case cSetting_label_bg_color:
   case cSetting_label_bg_outline:
@@ -2816,11 +2820,25 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_use_geometry_shaders:
   case cSetting_volume_mode:
   case cSetting_surface_smooth_edges:
-  case cSetting_display_scale_factor:
     PRINTFB(G, FB_Setting, FB_Warnings)
       " Setting-Warning: %s is not supported in Open-Source version of PyMOL\n",
       SettingInfo[index].name
       ENDFB(G);
+    break;
+  case cSetting_display_scale_factor:
+  {
+    int scaleFactor = SettingGetGlobal_i(G, cSetting_display_scale_factor);
+    if (scaleFactor > 0) {
+      _gScaleFactor = scaleFactor;
+      ExecutiveInvalidateRep(G, NULL, cRepLabel, cRepInvRep);
+      OrthoCommandIn(G, "viewport");
+    } else {
+      SettingSetGlobal_i(G, cSetting_display_scale_factor, 1);
+      PRINTFB(G, FB_Setting, FB_Warnings)
+        "Setting-Error: Cannot set a display scale factor of 0\n"
+        ENDFB(G);
+    }
+  }
   default:
     break;
   }

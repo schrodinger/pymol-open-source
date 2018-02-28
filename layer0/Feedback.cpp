@@ -144,10 +144,15 @@ void FeedbackEnable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask)
 void FeedbackAutoAdd(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask, const char *str)
 {
   if(Feedback(G, sysmod, mask))
-    OrthoAddOutput(G, str);
+    FeedbackAddColored(G, str, mask);
 }
 
 void FeedbackAdd(PyMOLGlobals * G, const char *str)
 {
   OrthoAddOutput(G, str);
+}
+
+void FeedbackAddColored(PyMOLGlobals * G, const char *str, unsigned char mask)
+{
+  FeedbackAdd(G, str);
 }

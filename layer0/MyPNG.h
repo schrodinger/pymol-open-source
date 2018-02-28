@@ -24,7 +24,8 @@ Z* -------------------------------------------------------------------
 #define cMyPNG_FormatPPM 1
 
 int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *p,
-               unsigned int width, unsigned int height, float dpi, int format, int quiet);
+               unsigned int width, unsigned int height, float dpi, int format, int quiet,
+               void * io_ptr = NULL);
 int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_ptr,
               unsigned int *height_ptr);
 

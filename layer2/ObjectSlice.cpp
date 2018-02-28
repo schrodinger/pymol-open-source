@@ -41,6 +41,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"ButMode.h"
 #include"ObjectGadgetRamp.h"
+#include"CGO.h"
 
 #define START_STRIP -1
 #define STOP_STRIP -2
@@ -805,44 +806,6 @@ int ObjectSliceGetVertex(ObjectSlice * I, int index, int base, float *v)
   }
   return (result);
 }
-
-/*
-int ObjectSliceGetOrigin(ObjectSlice * I, int state, float *origin)
-{
-  int ok = false;
-
-  int cur_state = 0;
-  ObjectSliceState *oss = NULL;
-
-  if(state >= 0)
-    if(state < I->NState)
-      if(I->State[state].Active)
-        oss = I->State + state;
-
-  while(1) {
-    if(state < 0) {             // all_states
-      oss = I->State + cur_state;
-    } else {
-      if(!oss) {
-        if(I->NState &&
-           ((SettingGetGlobal_b(I->Obj.G, cSetting_static_singletons) && (I->NState == 1))))
-          oss = I->State;
-      }
-    }
-    if(oss) {
-      if(oss->Active) {
-        copy3f(oss->origin, origin);
-        ok = true;
-      }
-    }
-    if(state >= 0)
-      break;
-    cur_state = cur_state + 1;
-    if(cur_state >= I->NState)
-      break;
-  }
-  return ok;
-}*/
 
 static int ObjectSliceAddSlicePoint(float *pt0, float *pt1, float *zaxis, float d,
 			     float *coords, float *origin)

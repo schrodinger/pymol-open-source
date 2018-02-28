@@ -42,8 +42,9 @@ int GadgetSetGetVertex(GadgetSet * I, int index, int base, float *v)
     v0 = I->Coord + 3 * index;
     if(base < 0) {
       copy3f(v0, v);
-      if(index)
+      if(index){
         add3f(I->Coord, v, v);
+      }
     } else if(base < I->NCoord) {
       v1 = I->Coord + 3 * base;
       add3f(v1, v0, v);
@@ -65,8 +66,9 @@ int GadgetSetSetVertex(GadgetSet * I, int index, int base, float *v)
     v0 = I->Coord + 3 * index;
     if(base < 0) {
       copy3f(v, v0);
-      if(index)
+      if(index){
         subtract3f(v0, I->Coord, v0);
+      }
     } else if(base < I->NCoord) {
       v1 = I->Coord + 3 * base;
       subtract3f(v, v1, v0);
@@ -82,10 +84,6 @@ int GadgetSetSetVertex(GadgetSet * I, int index, int base, float *v)
 
 int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int version)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   int ll;
   GadgetSet *I = NULL;
@@ -152,14 +150,10 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
   }
 
   return (ok);
-#endif
 }
 
 PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   PyObject *result = NULL;
 
   if(I) {
@@ -203,7 +197,6 @@ PyObject *GadgetSetAsPyList(GadgetSet * I, bool incl_cgos)
 
   }
   return (PConvAutoNone(result));
-#endif
 }
 
 

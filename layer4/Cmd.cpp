@@ -2646,6 +2646,46 @@ static PyObject *CmdGetType(PyObject * self, PyObject * args)
     return APIResultOk(ok);
 }
 
+static PyObject *CmdGetObjectSettings(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  CObject *obj = NULL;
+  PyObject *result = NULL;
+  const char *oname;
+  int state = -1;
+
+  if (!PyArg_ParseTuple(args, "Os|i", &self, &oname, &state)) {
+    API_HANDLE_ERROR;
+    ok_raise(1);
+  }
+
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(1, G && APIEnterNotModal(G));
+
+  obj = ExecutiveFindObjectByName(G, oname);
+
+  if(!obj) {
+    ErrMessage(G, "GetObjectSettings", "named object not found.");
+  } else if (obj->fGetSettingHandle) {
+    auto handle = obj->fGetSettingHandle(obj, -1);
+
+    if (state != -1) {
+      auto handle_state = obj->fGetSettingHandle(obj, state);
+
+      // only accept handle if different from object-level settings
+      handle = (handle_state == handle) ? NULL : handle_state;
+    }
+
+    if (handle) {
+      result = SettingAsPyList(*handle, true);
+    }
+  }
+
+  APIExit(G);
+ok_except1:
+  return APIAutoNone(result);
+}
+
 static PyObject *CmdGetUnusedName(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6165,7 +6205,7 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
             h = 10;
 
           if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
-            w += SettingGetGlobal_i(G, cSetting_internal_gui_width);
+            w += DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
           }
 
           if(SettingGetGlobal_i(G, cSetting_internal_feedback)) {
@@ -6920,11 +6960,9 @@ static PyObject *CmdLoadObject(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     ObjectNameType valid_name = "";
-    int isTmp;
   
     buf[0] = 0;
     ExecutiveProcessObjectName(G, oname, valid_name);
-    isTmp = valid_name[0] == '_';
 
     origObj = ExecutiveFindObjectByName(G, valid_name);
 
@@ -7556,7 +7594,6 @@ static PyObject *CmdSetObjectColor(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   char *name, *color;
-  int result = -1;
   int quiet;
   int ok = false;
   ok = PyArg_ParseTuple(args, "Ossi", &self, &name, &color, &quiet);
@@ -7567,7 +7604,7 @@ static PyObject *CmdSetObjectColor(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    result = ExecutiveSetObjectColor(G, name, color, quiet);
+    ok = ExecutiveSetObjectColor(G, name, color, quiet);
     APIExit(G);
   }
   return (APIResultOk(ok));
@@ -8384,6 +8421,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_object_color_index", CmdGetObjectColorIndex, METH_VARARGS},
   {"get_object_matrix", CmdGetObjectMatrix, METH_VARARGS},
   {"get_object_ttt", CmdGetObjectTTT, METH_VARARGS},
+  {"get_object_settings", CmdGetObjectSettings, METH_VARARGS},
   {"get_origin", CmdGetOrigin, METH_VARARGS},
   {"get_position", CmdGetPosition, METH_VARARGS},
   {"get_povray", CmdGetPovRay, METH_VARARGS},

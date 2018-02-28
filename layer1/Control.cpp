@@ -33,13 +33,13 @@ Z* -------------------------------------------------------------------
 #include "Ortho.h"
 #include "CGO.h"
 
-#define cControlBoxSize 17
-#define cControlLeftMargin 8
-#define cControlTopMargin 2
-#define cControlSpacing 2
-#define cControlInnerMargin 4
-#define cControlSpread 6
-#define cControlSize 160
+#define cControlBoxSize DIP2PIXEL(17)
+#define cControlLeftMargin DIP2PIXEL(8)
+#define cControlTopMargin DIP2PIXEL(2)
+#define cControlSpacing DIP2PIXEL(2)
+#define cControlInnerMargin  DIP2PIXEL(4)
+#define cControlSpread DIP2PIXEL(6)
+#define cControlSize DIP2PIXEL(160)
 
 #define cControlButtons 7
 
@@ -105,8 +105,12 @@ int ControlSdofUpdate(PyMOLGlobals * G, float tx, float ty, float tz, float rx, 
 
   CControl *I = G->Control;
   if(I) {
-    if(((I->sdofWroteTo - I->sdofReadFrom) & SDOF_QUEUE_MASK) < SDOF_QUEUE_MASK) {
-      /* a free slot exists */
+    float tol = 0.0001;
+    bool active =
+      fabs(tx) >= tol || fabs(ty) >= tol || fabs(tz) >= tol ||
+      fabs(rx) >= tol || fabs(ry) >= tol || fabs(rz) >= tol;
+
+    if(active) {
       int slot = (I->sdofWroteTo + 1) & SDOF_QUEUE_MASK;
       float *buffer = I->sdofBuffer + (6 * slot);
 
@@ -120,18 +124,13 @@ int ControlSdofUpdate(PyMOLGlobals * G, float tx, float ty, float tz, float rx, 
       I->sdofWroteTo = slot;
 
       {
-        float tol = 0.0001;
-        int active = (fabs(buffer[0]) >= tol) || (fabs(buffer[1]) >= tol)
-          || (fabs(buffer[2]) >= tol)
-          || (fabs(buffer[3]) >= tol) || (fabs(buffer[4]) >= tol)
-          || (fabs(buffer[5]) >= tol);
-        if(active && !I->sdofActive) {
+        if(!I->sdofActive) {
           I->sdofLastIterTime = UtilGetSeconds(G);
         }
-        I->sdofActive = active;
       }
       /*printf("wrote %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %d %d %d\n",tx,ty,tz,rx,ry,rz,I->sdofReadFrom,I->sdofWroteTo,slot); */
     }
+    I->sdofActive = active;
   }
   return 1;
 }
@@ -139,7 +138,8 @@ int ControlSdofUpdate(PyMOLGlobals * G, float tx, float ty, float tz, float rx, 
 int ControlSdofIterate(PyMOLGlobals * G)
 {
   CControl *I = G->Control;
-  if(I->sdofWroteTo != I->sdofReadFrom) {
+  if(I->sdofWroteTo != I->sdofReadFrom && I->sdofActive) {
+
     int slot = I->sdofWroteTo;
 
     /* new data available */
@@ -154,9 +154,7 @@ int ControlSdofIterate(PyMOLGlobals * G)
     I->sdofRot[2] = buffer[5];
 
     I->sdofReadFrom = slot;
-  }
 
-  if(I->sdofActive) {
     double now = UtilGetSeconds(G);
     double delta = now - I->sdofLastIterTime;
     I->sdofLastIterTime = now;
@@ -256,6 +254,7 @@ static int ControlDrag(Block * block, int x, int y, int mod)
   CControl *I = G->Control;
   if(!I->SkipRelease) {
     delta = x - I->LastPos;
+    delta /= DIP2PIXEL(1);
     if(I->DragFlag) {
       if(delta) {
         gui_width = SettingGetGlobal_i(G, cSetting_internal_gui_width) - delta;
@@ -569,7 +568,7 @@ static void ControlDraw(Block * block ORTHOCGOARG)
       left = I->Block->rect.left + 1;
       bottom = I->Block->rect.bottom + 1;
       top = I->Block->rect.top - (cControlTopMargin - 1);
-      right = left + 5;
+      right = left + DIP2PIXEL(5);
 
       /* This draws the separator on the left side of the movie control buttons */
       if (orthoCGO){

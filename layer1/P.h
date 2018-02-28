@@ -290,7 +290,4 @@ extern PyTypeObject *P_wrapper;     /* used by P.c for lazy-loading settings/pro
 void PSetAtomPropertyInfo(PyMOLGlobals * G, int propid, short pt, int off);
 #endif
 
-char convertStereoToChar(int stereo);
-int convertCharToStereo(char stereo);
-
 #endif

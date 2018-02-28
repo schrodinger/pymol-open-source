@@ -869,6 +869,7 @@ enum {
   REC_b( 761, editor_auto_measure                     , global    , 1 ),
   REC_b( 762, surface_smooth_edges                    , ostate    , 1 ),
   REC_i( 763, chem_comp_cartn_use                     , global    , 0 ),
+  REC_b( 764, colored_feedback                        , global    , 0 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

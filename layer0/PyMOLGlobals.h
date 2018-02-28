@@ -18,6 +18,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_PyMOLGlobals
 #define _H_PyMOLGlobals
 
+/* retina scale factor for ortho gui */
+extern int _gScaleFactor;
+inline int DIP2PIXEL(int v) { return v * _gScaleFactor; }
+inline float DIP2PIXEL(float v) { return v * _gScaleFactor; }
 
 /* all of the private singleton classes associated with a PyMOL instance */
 
@@ -59,8 +63,8 @@ typedef struct _CTexture CTexture;
 typedef struct _CType CType;
 typedef struct _CMain CMain;
 typedef struct _CPlugIOManager CPlugIOManager;
-typedef struct _CShaderMgr CShaderMgr;
 
+class CShaderMgr;
 class CMovieScenes;
 
 #ifndef _PYMOL_NOPY
@@ -99,7 +103,7 @@ typedef struct _CPyMOL CPyMOL;
 #endif
 
 #ifndef CGO_DEFINED
-typedef struct _CGO CGO;
+class CGO;
 #define CGO_DEFINED
 #endif
 

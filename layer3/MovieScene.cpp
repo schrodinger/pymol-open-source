@@ -230,22 +230,23 @@ static bool MovieSceneStore(PyMOLGlobals * G, const char * name,
     bool store_frame,
     const char * sele)
 {
+  auto scenes = G->scenes;
   std::string key(name);
 
   // new key?
   if (key.empty() || key == "new") {
-    key = G->scenes->getUniqueKey();
-    G->scenes->order.push_back(key);
-  } else if (G->scenes->dict.find(key) == G->scenes->dict.end()) {
-    G->scenes->order.push_back(key);
+    key = scenes->getUniqueKey();
+    scenes->order.push_back(key);
+  } else if (scenes->dict.find(key) == scenes->dict.end()) {
+    scenes->order.push_back(key);
   }
 
-  SceneSetNames(G, G->scenes->order);
+  SceneSetNames(G, scenes->order);
 
   // set scene_current_name
   SettingSetGlobal_s(G, cSetting_scene_current_name, key.c_str());
 
-  MovieScene &scene = G->scenes->dict[key];
+  MovieScene &scene = scenes->dict[key];
 
   // storemask
   scene.storemask = (
@@ -376,9 +377,10 @@ bool MovieSceneRecall(PyMOLGlobals * G, const char * name, float animate,
     bool recall_frame,
     const char * sele)
 {
-  auto it = G->scenes->dict.find(name);
+  auto scenes = G->scenes;
+  auto it = scenes->dict.find(name);
 
-  if (it == G->scenes->dict.end()) {
+  if (it == scenes->dict.end()) {
     PRINTFB(G, FB_Scene, FB_Errors)
       " Error: scene '%s' is not defined.\n", name
       ENDFB(G);
@@ -656,6 +658,7 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
     bool hand,
     const char * sele)
 {
+  auto scenes = G->scenes;
   std::string prev_name;
   short beforeafter = 0;
   bool status = false;
@@ -677,14 +680,14 @@ bool MovieSceneFunc(PyMOLGlobals * G, const char * key,
 
   if (strcmp(action, "next") == 0 ||
       strcmp(action, "previous") == 0) {
-    ok_assert(NOSCENES, G->scenes->order.size());
+    ok_assert(NOSCENES, scenes->order.size());
 
     key = MovieSceneGetNextKey(G, action[0] == 'n');
     action = "recall";
   } else if (strcmp(action, "start") == 0) {
-    ok_assert(NOSCENES, G->scenes->order.size());
+    ok_assert(NOSCENES, scenes->order.size());
 
-    key = G->scenes->order[0].c_str();
+    key = scenes->order[0].c_str();
     action = "recall";
   } else if (strcmp(key, "auto") == 0) {
     key = SettingGetGlobal_s(G, cSetting_scene_current_name);

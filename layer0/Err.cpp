@@ -31,15 +31,11 @@ void ErrFatal(const PyMOLGlobals *, const char *where, const char *what)
 
 int ErrMessage(PyMOLGlobals * G, const char *where, const char *what)
 {
-  char buffer[1024];
-  if(Feedback(G, FB_Executive, FB_Errors)) {
-
     /* unclassified errors are assigned to the Executive catch-all */
 
-    sprintf(buffer, "%s-Error: %s\n", where, what);
-    OrthoAddOutput(G, buffer);
-    OrthoRestorePrompt(G);
-  }
+  PRINTFB(G, FB_Executive, FB_Errors)
+    "%s-Error: %s\n", where, what
+    ENDFB(G);
   return (0);
 }
 

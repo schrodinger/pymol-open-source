@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2018-02-28 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* stick_round_nub for COLLADA export
+
+	* UTF-8 in feedback
+
+	* display_scale_factor (ported from Incentive PyMOL)
+
+	* dx map import: support "type float" and skewed delta
+
 2018-02-07 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* new selection keywords: polymer.protein polymer.nucleic

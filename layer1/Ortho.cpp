@@ -60,9 +60,9 @@ Z* -------------------------------------------------------------------
 #define OrthoSaveLines 0xFF
 #define OrthoHistoryLines 0xFF
 
-#define cOrthoCharWidth 8
-#define cOrthoLeftMargin 3
-#define cOrthoBottomMargin 5
+#define cOrthoCharWidth DIP2PIXEL(8)
+#define cOrthoLeftMargin DIP2PIXEL(3)
+#define cOrthoBottomMargin DIP2PIXEL(5)
 
 #define CMD_QUEUE_MASK 0x3
 
@@ -508,10 +508,16 @@ void OrthoFeedbackIn(PyMOLGlobals * G, const char *buffer)
 int OrthoFeedbackOut(PyMOLGlobals * G, char *buffer)
 {
   COrtho *I = G->Ortho;
-  if(I->feedback)
-    return (QueueStrOut(I->feedback, buffer));
-  else
-    return (0);
+  if(!I->feedback)
+    return 0;
+
+  int status = QueueStrOut(I->feedback, buffer);
+
+  if (status && !SettingGetGlobal_b(G, cSetting_colored_feedback)) {
+    UtilStripANSIEscapes(buffer);
+  }
+
+  return status;
 }
 
 
@@ -1117,7 +1123,7 @@ void OrthoAddOutput(PyMOLGlobals * G, const char *str)
   q = I->Line[curLine] + I->CurChar;
   cc = I->CurChar;
   while(*p) {
-    if(*p >= 32) {
+    if(*p != '\r' && *p != '\n') {
       cc++;
       wrap = SettingGetGlobal_b(G, cSetting_wrap_output);
 
@@ -1140,7 +1146,7 @@ void OrthoAddOutput(PyMOLGlobals * G, const char *str)
         curLine = I->CurLine & OrthoSaveLines;
       }
       *q++ = *p++;
-    } else if((*p == 13) || (*p == 10)) {
+    } else {
       *q = 0;
       I->CurChar = cc;
       OrthoNewLine(G, NULL, true);
@@ -1148,8 +1154,7 @@ void OrthoAddOutput(PyMOLGlobals * G, const char *str)
       curLine = I->CurLine & OrthoSaveLines;
       p++;
       cc = 0;
-    } else
-      p++;
+    }
   }
   *q = 0;
   I->CurChar = strlen(I->Line[curLine]);
@@ -1176,11 +1181,17 @@ void OrthoNewLine(PyMOLGlobals * G, const char *prompt, int crlf)
     OrthoFeedbackIn(G, I->Line[I->CurLine & OrthoSaveLines]);
   else
     OrthoFeedbackIn(G, " ");
-  if(Feedback(G, FB_Python, FB_Output)) {
-    if(crlf) {
-      printf("%s\n", I->Line[I->CurLine & OrthoSaveLines]);
-    } else {
+
+  bool do_print = Feedback(G, FB_Python, FB_Output);
+  bool do_print_with_escapes = false;
+
+  if (do_print) {
+    if (!do_print_with_escapes) {
       printf("%s", I->Line[I->CurLine & OrthoSaveLines]);
+    }
+
+    if(crlf) {
+      putchar('\n');
     }
     fflush(stdout);
   }
@@ -1518,7 +1529,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
       switch (SettingGetGlobal_i(G, cSetting_internal_gui_mode)) {
       case 0:
-        rightSceneMargin = SettingGetGlobal_i(G, cSetting_internal_gui_width);
+        rightSceneMargin = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
         break;
       default:
         rightSceneMargin = 0;
@@ -1696,7 +1707,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         " OrthoDoDraw: drawing blocks...\n" ENDFD;
 
       if(SettingGetGlobal_b(G, cSetting_internal_gui)) {
-        int internal_gui_width = SettingGetGlobal_i(G, cSetting_internal_gui_width);
+        int internal_gui_width = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
         if(internal_gui_mode != 2) {
 	  if (generate_shader_cgo){
 	    CGOColor(orthoCGO, 0.3f, 0.3f, 0.3f);
@@ -2088,7 +2099,7 @@ static void OrthoLayoutPanel(PyMOLGlobals * G,
   COrtho *I = G->Ortho;
   Block *block = NULL;
 
-  int controlHeight = 20;
+  int controlHeight = DIP2PIXEL(20);
   int butModeHeight = ButModeGetHeight(G);
   int wizardHeight = I->WizardHeight;
 
@@ -2206,7 +2217,7 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
     else
       sceneBottom = textBottom;
 
-    internal_gui_width = SettingGetGlobal_i(G, cSetting_internal_gui_width);
+    internal_gui_width = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
     if(!SettingGetGlobal_b(G, cSetting_internal_gui)) {
       internal_gui_width = 0;
       sceneRight = 0;
@@ -2286,7 +2297,8 @@ void OrthoReshapeWizard(PyMOLGlobals * G, ov_size wizHeight)
 
   if(SettingGetGlobal_b(G, cSetting_internal_gui) > 0.0) {
     Block *block;
-    int internal_gui_width = SettingGetGlobal_i(G, cSetting_internal_gui_width);
+    int internal_gui_width = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_width));
+
     OrthoLayoutPanel(G, 0, I->Width - internal_gui_width, I->TextBottom, 0);
 
     block = ExecutiveGetBlock(G);

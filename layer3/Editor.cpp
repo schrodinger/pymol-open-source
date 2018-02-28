@@ -398,9 +398,6 @@ int EditorIsBondMode(PyMOLGlobals * G)
 
 PyObject *EditorAsPyList(PyMOLGlobals * G)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   PyObject *result = NULL;
   CEditor *I = G->Editor;
 
@@ -413,15 +410,10 @@ PyObject *EditorAsPyList(PyMOLGlobals * G)
     PyList_SetItem(result, 2, PyInt_FromLong(I->BondMode));
   }
   return (PConvAutoNone(result));
-#endif
 }
 
 int EditorFromPyList(PyMOLGlobals * G, PyObject * list)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
   int ok = true;
   int active_flag = false;
   int active_state;
@@ -459,7 +451,6 @@ int EditorFromPyList(PyMOLGlobals * G, PyObject * list)
     EditorInactivate(G);
   }
   return (ok);
-#endif
 }
 
 int EditorActive(PyMOLGlobals * G)
@@ -916,7 +907,6 @@ void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
 {
   int i0;
   int sele0, sele1;
-  int state;
   AtomInfoType *ai;
   ObjectMolecule *obj0 = NULL, *obj1 = NULL;
   int ok = true;
@@ -935,7 +925,6 @@ void EditorAttach(PyMOLGlobals * G, const char *elem, int geom, int valence,
           ErrMessage(G, "Remove", "Can't attach atoms onto discrete objects.");
         } else {
           ObjectMoleculeVerifyChemistry(obj0, -1);      /* remember chemistry for later */
-          state = SceneGetState(G);
           if(obj1) {
             if(obj0 == obj1) {
               /* bond mode - behave like replace */
@@ -1094,7 +1083,6 @@ void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, co
 {
   int i0;
   int sele0;
-  int state;
   AtomInfoType ai;
   ObjectMolecule *obj0 = NULL;
   int ok = true;
@@ -1106,9 +1094,6 @@ void EditorReplace(PyMOLGlobals * G, const char *elem, int geom, int valence, co
       ErrMessage(G, "Remove", "Can't attach atoms onto discrete objects.");
     } else {
       ObjectMoleculeVerifyChemistry(obj0, -1);  /* remember chemistry for later */
-
-      state = SceneGetState(G);
-
       if(sele0 >= 0) {
         i0 = ObjectMoleculeGetAtomIndex(obj0, sele0);   /* slow */
         if(i0 >= 0) {
@@ -1570,9 +1555,8 @@ void EditorRender(PyMOLGlobals * G, int state)
 	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, NULL, NULL);
 	return;
       }
-    } else if (I->shaderCGO) {
+    } else {
       CGOFree(I->shaderCGO);
-      I->shaderCGO = NULL;
     }
 
     PRINTFD(G, FB_Editor)
@@ -2397,8 +2381,5 @@ void EditorFree(PyMOLGlobals * G)
 
 void EditorInvalidateShaderCGO(PyMOLGlobals * G){
   CEditor *I = G->Editor;
-  if (I->shaderCGO){
-    CGOFree(I->shaderCGO);
-    I->shaderCGO = NULL;
-  }
+  CGOFree(I->shaderCGO);
 }

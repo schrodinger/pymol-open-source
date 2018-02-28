@@ -198,7 +198,7 @@ SEE ALSO
             mouse_ring = ring_dict[ring]
             if not quiet:
                 print(" config_mouse: %s"%ring)
-            _self.mouse(quiet=1,_self=_self)
+            _self.mouse(quiet=1)
         else:
             print(" Error: unrecognized mouse ring: '%s'"%ring)
 

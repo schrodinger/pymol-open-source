@@ -25,6 +25,7 @@ if __name__=='pymol.importing':
     cmd = sys.modules["pymol.cmd"]
     from . import setting
     from . import selector
+    from . import colorprinting
     from .cmd import _cmd,lock,unlock,Shortcut, \
           _feedback,fb_module,fb_mask, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
@@ -1169,7 +1170,7 @@ PYMOL API
         r = DEFAULT_ERROR
 
         fetch_host_list = [x if '://' in x else fetchHosts[x]
-                for x in _self.get("fetch_host", _self=_self).split()]
+                for x in _self.get("fetch_host").split()]
 
         # file types can be: fofc, 2fofc, pdb, pdb1, pdb2, pdb3, etc...
         # bioType is the string representation of the type
@@ -1230,14 +1231,14 @@ PYMOL API
 
             except pymol.CmdException:
                 if not quiet:
-                    print(" Warning: failed to fetch from", url)
+                    colorprinting.warning(" Warning: failed to fetch from %s" % (url,))
                 continue
 
             if file:
                 try:
                     fobj = open(file, 'wb')
                 except IOError:
-                    print(' Warning: Cannot write to "%s"' % file)
+                    colorprinting.warning(' Warning: Cannot write to "%s"' % file)
 
             if fobj:
                 fobj.write(contents)
@@ -1266,7 +1267,7 @@ PYMOL API
         if not _self.is_error(r):
             return name
 
-        print(" Error-fetch: unable to load '%s'." % code)
+        colorprinting.error(" Error-fetch: unable to load '%s'." % code)
         return DEFAULT_ERROR
 
     def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet,_self):
@@ -1370,10 +1371,13 @@ NOTES
         multiplex, zoom = int(multiplex), int(zoom)
         async_, quiet = int(kwargs.pop('async', async_)), int(quiet)
 
+        if kwargs:
+            raise pymol.CmdException('unknown argument: ' + ', '.join(kwargs))
+
         r = DEFAULT_SUCCESS
         if not path:
             # blank paths need to be reset to '.'
-            path = setting.get('fetch_path',_self=_self) or '.'
+            path = _self.get('fetch_path') or '.'
         if async_ < 0: # by default, run asynch when interactive, sync when not
             async_ = not quiet
         args = (code, name, state, finish, discrete, multiplex, zoom, type, path, file, quiet, _self)

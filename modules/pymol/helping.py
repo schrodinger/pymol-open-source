@@ -59,7 +59,7 @@ SEE ALSO
 
     extend, run, @
             '''
-            return python(string, _self=cmd)
+            return python(string, _self=_self)
 
 
     def help(command = "commands",_self=cmd):

@@ -1125,9 +1125,9 @@ int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *re
 
       /* now separate the integral and fractional parts for interpolation */
 
-      a = (int) floor(x);
-      b = (int) floor(y);
-      c = (int) floor(z);
+      a = (int) floor(x + R_SMALL8);
+      b = (int) floor(y + R_SMALL8);
+      c = (int) floor(z + R_SMALL8);
       x -= a;
       y -= b;
       z -= c;
@@ -1206,9 +1206,9 @@ int ObjectMapStateInterpolate(ObjectMapState * ms, const float *array, float *re
       z = (inp[2] - ms->Origin[2]) / ms->Grid[2];
       inp += 3;
 
-      a = (int) floor(x);
-      b = (int) floor(y);
-      c = (int) floor(z);
+      a = (int) floor(x + R_SMALL8);
+      b = (int) floor(y + R_SMALL8);
+      c = (int) floor(z + R_SMALL8);
       x -= a;
       y -= b;
       z -= c;
@@ -2460,6 +2460,18 @@ static int ObjectMapCCP4StrToMap(ObjectMap * I, char *CCP4Str, int bytes, int st
       PRINTFB(I->Obj.G, FB_ObjectMap, FB_Details)
         " ObjectMapCCP4: Applied skew transformation\n"
         ENDFB(I->Obj.G);
+    }
+  }
+
+  // XORIGIN, YORIGIN, ZORIGIN (50 - 52)
+  // TODO See "Origin Conventions" in http://situs.biomachina.org/fmap.pdf
+  float * mrc2000origin = (float *)(i + 49 - 25);
+  if (lengthsq3f(mrc2000origin) > R_SMALL4) {
+    if (!quiet) {
+      PRINTFB(I->Obj.G, FB_ObjectMap, FB_Warnings)
+        " ObjectMapCCP4: MRC 2000 ORIGIN %.2f %.2f %.2f (unused)\n",
+        mrc2000origin[0], mrc2000origin[1], mrc2000origin[2]
+          ENDFB(I->Obj.G);
     }
   }
 
@@ -4866,43 +4878,51 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
       ENDFB(I->Obj.G);
   }
 
+  float delta[9];
+  int delta_i = 0;
+
   while(ok && (*p) && (stage == 2)) {
     pp = p;
     p = ParseNCopy(cc, p, 5);
-    if(strcmp(cc, "delta") == 0) {
-      p = ParseWordCopy(cc, p, 20);
-      if(sscanf(cc, "%f", &ms->Grid[0]) == 1) {
+
+    if(strcmp(cc, "delta") != 0) {
+      if(is_number(cc)) {
+        p = pp;
+      } else {
         p = ParseNextLine(p);
-        p = ParseWordCopy(cc, p, 20);
-        p = ParseWordCopy(cc, p, 20);
-        p = ParseWordCopy(cc, p, 20);
-        if(sscanf(cc, "%f", &ms->Grid[1]) == 1) {
-          p = ParseNextLine(p);
-          p = ParseWordCopy(cc, p, 20);
-          p = ParseWordCopy(cc, p, 20);
-          p = ParseWordCopy(cc, p, 20);
-          p = ParseWordCopy(cc, p, 20);
-          if(sscanf(cc, "%f", &ms->Grid[2]) == 1) {
-            stage = 3;
-          }
-        }
+        continue;
       }
-    } else if(is_number(cc)) {
-      p = pp;
-      p = ParseWordCopy(cc, p, 20);
-      if(sscanf(cc, "%f", &ms->Grid[0]) == 1) {
-        p = ParseNextLine(p);
-        p = ParseWordCopy(cc, p, 20);
-        p = ParseWordCopy(cc, p, 20);
-        if(sscanf(cc, "%f", &ms->Grid[1]) == 1) {
-          p = ParseNextLine(p);
-          p = ParseWordCopy(cc, p, 20);
-          p = ParseWordCopy(cc, p, 20);
-          p = ParseWordCopy(cc, p, 20);
-          if(sscanf(cc, "%f", &ms->Grid[2]) == 1) {
-            stage = 3;
-          }
-        }
+    }
+
+    if(3 != sscanf(p, " %f %f %f",
+          delta + delta_i,
+          delta + delta_i + 1,
+          delta + delta_i + 2)) {
+      // error
+      break;
+    }
+
+    p = ParseNextLine(p);
+    delta_i += 3;
+
+    if (delta_i == 9) {
+      stage = 3;
+
+      if (is_diagonalf(3, delta)) {
+        ms->Grid[0] = delta[0];
+        ms->Grid[1] = delta[4];
+        ms->Grid[2] = delta[8];
+      } else {
+        if(!ms->State.Matrix)
+          ms->State.Matrix = Alloc(double, 16);
+
+        copy33f44d(delta, ms->State.Matrix);
+        ms->State.Matrix[3] = ms->Origin[0];
+        ms->State.Matrix[7] = ms->Origin[1];
+        ms->State.Matrix[11] = ms->Origin[2];
+
+        ones3f(ms->Grid);
+        zero3f(ms->Origin);
       }
     }
   }
@@ -4917,11 +4937,7 @@ static int ObjectMapDXStrToMap(ObjectMap * I, char *DXStr, int bytes, int state,
     p = ParseNCopy(cc, p, 6);
     if(strcmp(cc, "object") == 0) {
       p = ParseWordCopy(cc, p, 20);
-      p = ParseNTrim(cc, p, 29);
-      if(strcmp(cc, "class array type double rank") == 0) {
-        p = ParseWordCopy(cc, p, 20);
-        p = ParseWordCopy(cc, p, 20);
-        p = ParseWordCopy(cc, p, 20);
+      if (1 == sscanf(p, " class array type %*s rank %*s items %s", cc)) {
         if(sscanf(cc, "%d", &n_items) == 1) {
           if(n_items == ms->FDim[0] * ms->FDim[1] * ms->FDim[2])
             stage = 4;

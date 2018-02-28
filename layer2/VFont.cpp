@@ -55,7 +55,7 @@ static VFontRec *VFontRecNew(PyMOLGlobals * G)
 //#endif
 
 int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
-                    const char *text, float *pos, float *scale, float *matrix)
+                    const char *text, float *pos, float *scale, float *matrix, float *color)
 {
   CVFont *I = G->VFont;
   VFontRec *fr = NULL;
@@ -95,6 +95,8 @@ int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo,
                 CGOEnd(cgo);
               }
               CGOBegin(cgo, GL_LINE_STRIP);
+	      if (color)
+		CGOColorv(cgo, color);
               CGOVertexv(cgo, pen);
               stroke = true;
               break;
@@ -141,8 +143,7 @@ int VFontIndent(PyMOLGlobals * G, int font_id, const char *text, float *pos, flo
   CVFont *I = G->VFont;
   VFontRec *fr = NULL;
   int ok = true;
-  float base[3], pen[3];
-  float *pc;
+  float pen[3];
   unsigned char c;
   ov_diff offset;
 
@@ -155,8 +156,6 @@ int VFontIndent(PyMOLGlobals * G, int font_id, const char *text, float *pos, flo
           break;
         offset = fr->offset[c];
         if(offset >= 0) {
-          pc = fr->pen + offset;
-          copy3f(pos, base);
           pen[0] = fr->advance[c] * scale[0] * dir;
           pen[1] = 0.0;
           pen[2] = 0.0;

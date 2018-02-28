@@ -69,13 +69,13 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   float line_width;
   int ok = true;
   int color =
-    SettingGet_color(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_angle_color);
+    SettingGet_color(G, NULL, I->ds->Obj->Obj.Setting, cSetting_angle_color);
   I->linewidth = line_width = 
-    SettingGet_f(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_dash_width);
+    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_width);
   I->radius =
-    SettingGet_f(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_dash_radius);
+    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_radius);
   round_ends =
-    SettingGet_b(G, I->ds->Setting, I->ds->Obj->Obj.Setting, cSetting_dash_round_ends);
+    SettingGet_b(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_round_ends);
   line_width = SceneGetDynamicLineWidth(info, line_width);
 
   if(ray) {
@@ -308,8 +308,8 @@ Rep *RepAngleNew(DistSet * ds, int state)
   I->R.fRecolor = NULL;
   I->R.obj = &ds->Obj->Obj;
 
-  dash_len = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dash_length);
-  dash_gap = SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_dash_gap);
+  dash_len = SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_dash_length);
+  dash_gap = SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_dash_gap);
   dash_sum = dash_len + dash_gap;
   if(dash_sum < R_SMALL4)
     dash_sum = 0.1F;
@@ -340,7 +340,7 @@ Rep *RepAngleNew(DistSet * ds, int state)
         radius = l2;
       else
         radius = l1;
-      radius *= SettingGet_f(G, ds->Setting, ds->Obj->Obj.Setting, cSetting_angle_size);
+      radius *= SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_angle_size);
 
       angle = get_angle3f(d1, d2);
 

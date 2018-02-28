@@ -21,14 +21,6 @@ Z* -------------------------------------------------------------------
 #include"os_limits.h"
 #include"os_types.h"
 
-#ifndef true
-#define true 1
-#endif
-
-#ifndef false
-#define false 0
-#endif
-
 #ifndef NULL
 #define NULL ((void*)0)
 #endif
@@ -37,13 +29,9 @@ Z* -------------------------------------------------------------------
 #define PI 3.14159265358979323846
 #endif
 
-#ifndef uchar
-#define uchar unsigned char
-#endif
+typedef unsigned char uchar;
 
-#ifndef uint
-#define uint unsigned int
-#endif
+typedef unsigned int uint;
 
 #define MAX_VDW 2.5F            /* this has to go */
 
@@ -60,7 +48,7 @@ Z* -------------------------------------------------------------------
 #endif
 
 typedef struct {
-  int index;                    /* atom index.
+  unsigned int index;           /* atom index.
                                    NOTE: that first record contains the list count...not pick info */
   int bond;                     /* bond index, 
                                    >=0 for bond
@@ -125,7 +113,7 @@ typedef struct _CRay CRay;
 /* likewise */
 
 #ifndef CGO_DEFINED
-typedef struct _CGO CGO;
+class CGO;
 #define CGO_DEFINED
 #endif
 

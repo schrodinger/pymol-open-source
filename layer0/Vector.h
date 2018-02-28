@@ -118,13 +118,11 @@ bool is_identityf(int n, const float *m, float threshold=1.0E-6F);
 bool is_allclosef(int nrow,
     const float *m1, int ncol1,
     const float *m2, int ncol2, float threshold=1.0E-6F);
+bool is_diagonalf(int nrow,
+    const float *m, int ncol=0, float threshold=1.0E-6F);
 double determinant33f(const float *m, int ncol=3);
 
-#ifdef PURE_OPENGL_ES_2
-#else
 #define GLORTHO(l,r,b,t,n,f) glOrtho(l,r,b,t,n,f)
-#define GLFRUSTUM(l,r,b,t,n,f) glFrustumf(l,r,b,t,n,f)
-#endif
 void copy44f44f(const float *src, float *dst);
 void copy44d44f(const double *src, float *dst);
 void copy44f44d(const float *src, double *dst);

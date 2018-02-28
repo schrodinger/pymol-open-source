@@ -45,7 +45,7 @@ ARGUMENTS
             if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and %s)"%fragment)
     else:
-        _self.fragment(fragment,tmp_editor)
+        _self.fragment(fragment,tmp_editor, origin=0)
         if _self.count_atoms("((%s) and elem H)"%selection,quiet=1):
             _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",1)
             if _self.get_setting_boolean("auto_remove_hydrogens"):
@@ -151,7 +151,7 @@ ARGUMENTS
             else:
                 phi=180.0
                 psi=180.0
-        _self.fragment(amino_acid,tmp_editor)
+        _self.fragment(amino_acid,tmp_editor, origin=0)
         if _self.count_atoms("elem N",domain=tmp_connect):
             tmp = [ None ]
             _self.iterate(tmp_connect,"tmp[0]=resv", space={ 'tmp' : tmp })
@@ -422,7 +422,12 @@ EXAMPLE
     fab ACDEFGH
     fab ACDEFGH, helix, ss=1
     '''
-    if int(kwargs.pop('async', async_)) < 1:
+    async_ = int(kwargs.pop('async', async_))
+
+    if kwargs:
+        raise pymol.CmdException('unknown argument: ' + ', '.join(kwargs))
+
+    if async_ < 1:
         r = _fab(input,name,mode,resi,chain,segi,
                  state,dir,hydro,ss,quiet,_self)
     else:

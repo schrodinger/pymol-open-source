@@ -931,7 +931,7 @@ static CoordSet ** read_chem_comp_atom_model(PyMOLGlobals * G, cif_data * data,
     ai->hetatm = 1;
 
     ai->visRep = auto_show;
-    ai->stereo = convertCharToStereo(arr_stereo->as_s(i)[0]);
+    AtomInfoSetStereo(ai, arr_stereo->as_s(i));
 
     AtomInfoAssignParameters(G, ai);
     AtomInfoAssignColors(G, ai);

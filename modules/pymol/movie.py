@@ -561,7 +561,7 @@ def _nutate(mode,first,last,period,pause,_self=cmd):
     direction = 0
     spiral = 1
     for frame in frame_list:
-        _nutate_sub(frame[0], frame[1], angle, spiral, _self=cmd)
+        _nutate_sub(frame[0], frame[1], angle, spiral, _self=_self)
         spiral = 0
         
 def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,

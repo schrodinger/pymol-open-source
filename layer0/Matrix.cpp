@@ -1176,7 +1176,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, const float *v1, const float *v2
 
       /* Primary iteration scheme to determine rotation matrix for molecule 2 */
       double sg, bb, cc;
-      int iters, ix, iy, iz, unchanged = 0;
+      int iters, iy, iz, unchanged = 0;
       double sig, gam;
       double tmp;
       double save[3][3];
@@ -1196,7 +1196,6 @@ float MatrixFitRMSTTTf(PyMOLGlobals * G, int n, const float *v1, const float *v2
         /* IX, IY, and IZ rotate 1-2-3, 2-3-1, 3-1-2, etc. */
         iz = (iters + 1) % 3;
         iy = (iz + 1) % 3;
-        ix = (iy + 1) % 3;
         sig = aa[iz][iy] - aa[iy][iz];
         gam = aa[iy][iy] + aa[iz][iz];
 

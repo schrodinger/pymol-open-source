@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Symmetry.h"
 #include"Isosurf.h"
-#include"CGOStruct.h"
 
 #define cMapSourceUndefined 0
 

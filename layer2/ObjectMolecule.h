@@ -507,9 +507,15 @@ struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                                                PDBInfoRec * pdb_info,
                                                int quiet, int *model_number);
 
+#ifndef NO_MMLIBS
 int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize, int format);
+#endif
+
+#ifndef _PYMOL_NO_UNDO
 void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * obj);
 void ObjectMoleculeSetAtomBondInfoTypeOldIdToNegOne(PyMOLGlobals * G, ObjectMolecule * obj);
+#endif
+
 void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAtom);
 
 void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, int index, int id);

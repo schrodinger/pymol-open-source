@@ -3173,14 +3173,14 @@ ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals * G, const char *sel
 
 
 /* #define ExecLineHeight 18 */
-#define ExecClickMargin 2
+#define ExecClickMargin DIP2PIXEL(2)
 #define ExecTopMargin 0
-#define ExecToggleMargin 2
-#define ExecLeftMargin 1
+#define ExecToggleMargin DIP2PIXEL(2)
+#define ExecLeftMargin DIP2PIXEL(1)
 #define ExecRightMargin 0
-#define ExecToggleWidth 17
-#define ExecToggleSize 16
-#define ExecToggleTextShift 4
+#define ExecToggleWidth DIP2PIXEL(17)
+#define ExecToggleSize DIP2PIXEL(16)
+#define ExecToggleTextShift DIP2PIXEL(4)
 
 typedef struct {
   M4XAnnoType m4x;
@@ -3578,7 +3578,8 @@ int ExecutiveLoad(PyMOLGlobals * G,
                   int discrete, int finish, int multiplex, int quiet,
                   const char * plugin_arg,
                   const char * object_props,
-                  const char * atom_props)
+                  const char * atom_props,
+                  bool mimic)
 {
   int ok = true;
   const char * fname = content;
@@ -3698,7 +3699,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
     origObj = ExecutiveGetExistingCompatible(G, object_name, content_format);
   }
 
-#ifndef PYMOL_EDU
+#ifndef _PYMOL_NO_UNDO
 #endif
 
   // file type dependent multiplex and discrete default
@@ -3910,7 +3911,7 @@ int ExecutiveLoad(PyMOLGlobals * G,
       "%s", buf ENDFB(G);
   }
 
-#ifndef PYMOL_EDU
+#ifndef _PYMOL_NO_UNDO
 #endif
 
   return (ok);
@@ -5934,8 +5935,8 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
 }
 
 
-#define ExecScrollBarMargin 1
-#define ExecScrollBarWidth 13
+#define ExecScrollBarMargin DIP2PIXEL(1)
+#define ExecScrollBarWidth DIP2PIXEL(13)
 
 void ExecutiveObjMolSeleOp(PyMOLGlobals * G, int sele, ObjectMoleculeOpRec * op);
 
@@ -8531,7 +8532,7 @@ static void ExecutiveRenderIndicatorCGO(PyMOLGlobals * G, CGO *selIndicatorsCGO)
   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
   CShaderPrg_SetLightingEnabled(shaderPrg, 0);
   CShaderPrg_SetAttrib4fLocation(shaderPrg, "a_Color", 1.f, 1.f, 1.f, 1.f);
-  CShaderPrg_Set1f(shaderPrg, "g_pointSize", I->selectorTextureSize);
+  CShaderPrg_Set1f(shaderPrg, "g_pointSize", DIP2PIXEL(I->selectorTextureSize));
   CShaderPrg_Set2f(shaderPrg, "textureLookup", I->selectorTexturePosX/text_texture_dim, I->selectorTexturePosY/text_texture_dim);
   textureScale = I->selectorTextureSize/text_texture_dim ;
   CShaderPrg_Set2f(shaderPrg, "textureScale", textureScale, textureScale);
@@ -9290,7 +9291,7 @@ void ExecutiveFuse(PyMOLGlobals * G, const char *s0, const char *s1, int mode,
   if(sele0 < 0 || sele1 < 0) {
     ErrMessage(G, "Fuse", "Need two selections");
   } else {
-#ifndef PYMOL_EDU
+#ifndef _PYMOL_NO_UNDO
 #endif
     {
       EditorInactivate(G);
@@ -12428,6 +12429,7 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
   int nObj = 0;
   int unblock;
   int ok = true;
+
   PRINTFD(G, FB_Executive)
     " ExecutiveSetSetting: entered. sele \"%s\" updates=%d index=%d\n", sele, updates, index ENDFD;
 
@@ -13994,9 +13996,10 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, const char *name, int onoff, int pare
 		      ReportEnabledChange(G, rec);
                     }
                   }
-                } else if((tRec->type != cExecSelection) || (!onoff))   /* hide all selections, but show all */
+                } else if((tRec->type != cExecSelection) || (!onoff)) {  /* hide all selections, but show all */
                   tRec->visible = !tRec->visible;
-		ReportEnabledChange(G, rec);
+                  ReportEnabledChange(G, rec);
+                }
               }
             }
           }
@@ -14816,10 +14819,8 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
 {
   CExecutive *I = G->Executive;
 
-  if (rec->gridSlotSelIndicatorsCGO){
     CGOFree(rec->gridSlotSelIndicatorsCGO);
-    rec->gridSlotSelIndicatorsCGO = NULL;
-  }
+
   if(rec->group_name[0]) {
     /* cascade group members up to the surrounding group */
     SpecRec *rec2 = NULL;
@@ -14913,6 +14914,9 @@ void ExecutiveDelete(PyMOLGlobals * G, const char *name)
   }
   TrackerDelList(I_Tracker, list_id);
   TrackerDelIter(I_Tracker, iter_id);
+
+  // fix for PYMOL-757 - Note: This should probably go somewhere else, but we
+  // couldn't figure out the correct place so far
   ExecutiveUpdateGroups(G, false);
 }
 
@@ -15213,7 +15217,7 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
   int t, xx;
   int pass = false;
   int skip;
-  int ExecLineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
+  int ExecLineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
   int op_cnt = get_op_cnt(G);
 
@@ -15477,8 +15481,8 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
               }
             } else {            /* clicked in variable area */
 
-              if(((panel->is_group) && (((xx) - 1) / 8) > (panel->nest_level + 1)) ||
-                 ((!panel->is_group) && (((xx) - 1) / 8) > panel->nest_level)) {
+              if(((panel->is_group) && (((xx) - 1) / DIP2PIXEL(8)) > (panel->nest_level + 1)) ||
+                 ((!panel->is_group) && (((xx) - 1) / DIP2PIXEL(8)) > panel->nest_level)) {
                 /* clicked on name */
 
                 rec->hilight = 1;
@@ -15756,8 +15760,8 @@ static int ExecutiveRelease(Block * block, int button, int x, int y, int mod)
             skip--;
           } else {
             if((I->PressedWhat == 1) &&
-               (((panel->is_group) && ((xx - 1) / 8) > (panel->nest_level + 1)) ||
-                ((!panel->is_group) && ((xx - 1) / 8) > panel->nest_level))) {
+               (((panel->is_group) && ((xx - 1) / DIP2PIXEL(8)) > (panel->nest_level + 1)) ||
+                ((!panel->is_group) && ((xx - 1) / DIP2PIXEL(8)) > panel->nest_level))) {
               /* over name */
               if(rec->hilight == 1) {
                 if(rec->type == cExecSelection) {
@@ -15814,7 +15818,7 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
   PyMOLGlobals *G = block->G;
   CExecutive *I = G->Executive;
   int xx, t;
-  int ExecLineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
+  int ExecLineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
   int op_cnt = get_op_cnt(G);
 
@@ -15862,7 +15866,7 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
             } else {
               if(rec == I->RecoverPressed) {
                 I->Pressed = row;
-                I->RecoverPressed = false;
+                I->RecoverPressed = NULL;
               }
               row++;
             }
@@ -15895,8 +15899,8 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
                    (((row >= I->Over) && (row <= I->Pressed)) ||
                     ((row >= I->Pressed) && (row <= I->Over)))) {
 
-                  if(((panel->is_group) && ((xx - 1) / 8) > (panel->nest_level + 1)) ||
-                     ((!panel->is_group) && ((xx - 1) / 8) > panel->nest_level)) {
+                  if(((panel->is_group) && ((xx - 1) / DIP2PIXEL(8)) > (panel->nest_level + 1)) ||
+                     ((!panel->is_group) && ((xx - 1) / DIP2PIXEL(8)) > panel->nest_level)) {
                     /* dragged over name */
 
                     I->OverWhat = 1;
@@ -15931,7 +15935,7 @@ static int ExecutiveDrag(Block * block, int x, int y, int mod)
                     }
                   }
                 } else if((row == I->Pressed) && (I->PressedWhat == 2)) {
-                  if(!((panel->is_group) && ((xx - 1) / 8) > (panel->nest_level + 1))) {
+                  if(!((panel->is_group) && ((xx - 1) / DIP2PIXEL(8)) > (panel->nest_level + 1))) {
 
                     /* on group control */
 
@@ -16257,8 +16261,8 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
   int n_disp;
   int skip = 0;
   int row = -1;
-  int ExecLineHeight = SettingGetGlobal_i(G, cSetting_internal_gui_control_size);
-  int text_lift = (ExecLineHeight / 2) - 5;
+  int ExecLineHeight = DIP2PIXEL(SettingGetGlobal_i(G, cSetting_internal_gui_control_size));
+  int text_lift = (ExecLineHeight / 2) - DIP2PIXEL(5);
   int hide_underscore = SettingGetGlobal_b(G, cSetting_hide_underscore_names);
   int op_cnt = get_op_cnt(G);
   int full_names = SettingGetGlobal_b(G, cSetting_group_full_member_names);
@@ -16317,7 +16321,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
     if(I->ScrollBarActive) {
       max_char -= (ExecScrollBarMargin + ExecScrollBarWidth);
     }
-    max_char /= 8;
+    max_char /= DIP2PIXEL(8);
 
     /* fill and outline the entire block */
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 0) {
@@ -16459,55 +16463,47 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
             int hidden_prefix = false;
 
             TextSetColor(G, I->Block->TextColor);
-            TextSetPos2i(G, x3 + 2, y2 + text_lift);
+            TextSetPos2i(G, x3 + DIP2PIXEL(2), y2 + text_lift);
 
             if((rec->type == cExecObject) ||
                (rec->type == cExecAll) || (rec->type == cExecSelection)) {
 
               y2 = y;
               x2 = xx;
-              if((x - ExecToggleMargin) - (xx - ExecToggleMargin) > -10) {
-                x2 = x + 10;
+              if((x - ExecToggleMargin) - (xx - ExecToggleMargin) > DIP2PIXEL(-10)) {
+                x2 = x + DIP2PIXEL(10);
               }
-              x3 += panel->nest_level * 8;
-              TextSetPos2i(G, x3 + 2, y2 + text_lift);
+              x3 += panel->nest_level * DIP2PIXEL(8);
+              TextSetPos2i(G, x3 + DIP2PIXEL(2), y2 + text_lift);
               nChar -= panel->nest_level;
               {
                 int but_width = (x2 - x3) - 1;
 
 		/* drawing a group +/- NAME */
                 if(panel->is_group) {
+                  const int button_width = DIP2PIXEL(15);
                   if((rec->hilight == 2) && (I->Over == I->Pressed)) {
-                    draw_button(x3, y2, 15, (ExecLineHeight - 1), lightEdge, darkEdge,
+                    draw_button(x3, y2, button_width, (ExecLineHeight - 1), lightEdge, darkEdge,
                                 pressedColor ORTHOCGOARGVAR);
                   } else if(panel->is_open) {
-                    draw_button(x3, y2, 15, (ExecLineHeight - 1), lightEdge, darkEdge,
+                    draw_button(x3, y2, button_width, (ExecLineHeight - 1), lightEdge, darkEdge,
                                 disabledColor ORTHOCGOARGVAR);
                   } else {
-                    draw_button(x3, y2, 15, (ExecLineHeight - 1), lightEdge, darkEdge,
+                    draw_button(x3, y2, button_width, (ExecLineHeight - 1), lightEdge, darkEdge,
                                 disabledColor ORTHOCGOARGVAR);
                   }
-
-#define cControlBoxSize 17
-#define cControlLeftMargin 8
-#define cControlTopMargin 2
-#define cControlSpacing 2
-#define cControlInnerMargin 4
-#define cControlSpread 6
-#define cControlSize 160
-
-                  TextSetPos2i(G, x3 + 4, y2 + text_lift);
+                  TextSetPos2i(G, x3 + DIP2PIXEL(4), y2 + text_lift);
                   if(panel->is_open) {
                     TextDrawChar(G, '-' ORTHOCGOARGVAR);
                   } else {
                     TextDrawChar(G, '+' ORTHOCGOARGVAR);
                   }
 
-                  but_width -= 16;
-                  x3 += 16;
+                  but_width -= DIP2PIXEL(16);
+                  x3 += DIP2PIXEL(16);
                   nChar -= 2;
 
-                  TextSetPos2i(G, x3 + 2, y2 + text_lift);
+                  TextSetPos2i(G, x3 + DIP2PIXEL(2), y2 + text_lift);
                 }
 
                 if((rec->hilight == 1) || ((row == I->Over) && (I->OverWhat == 1))) {
@@ -16569,7 +16565,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
 		/* ^.name */
                 if(arrows && ((nChar--) > 0)) {
                   TextDrawChar(G, '^' ORTHOCGOARGVAR);
-                  TextSetPos2i(G, x3 + 2, y2 + text_lift);
+                  TextSetPos2i(G, x3 + DIP2PIXEL(2), y2 + text_lift);
                   TextDrawChar(G, '|' ORTHOCGOARGVAR);
                 }
               }
@@ -16602,7 +16598,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
 	      /* now print the caption */
               if(c && c[0] && nChar > 1 && strcmp(c, rec->obj->Name) != 0) {
                 TextSetColor(G, captionColor);
-                TextSetPos2i(G, x + 2 + 8 * (max_char - nChar), y2 + text_lift);
+                TextSetPos2i(G, x + DIP2PIXEL(2) + DIP2PIXEL(8) * (max_char - nChar), y2 + text_lift);
                 if((nChar--) > 0)
                   TextDrawChar(G, ' ' ORTHOCGOARGVAR);
                 while(*c && nChar > 0) {
@@ -16851,9 +16847,7 @@ void ExecutiveFree(PyMOLGlobals * G)
 {
   CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
-  if (I->selIndicatorsCGO)
     CGOFree(I->selIndicatorsCGO);
-  I->selIndicatorsCGO = NULL;
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->type == cExecObject)
       rec->obj->fFree(rec->obj);

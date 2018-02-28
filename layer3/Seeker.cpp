@@ -514,7 +514,6 @@ static void SeekerRefresh(PyMOLGlobals * G, CSeqRow * rowVLA)
         AtomInfoType *atInfo = obj->AtomInfo;
         int at;
         int selected;
-        int not_selected;
 
         if(sele < 0) {
           for(a = 0; a < row->nCol; a++) {
@@ -528,14 +527,11 @@ static void SeekerRefresh(PyMOLGlobals * G, CSeqRow * rowVLA)
             if(!col->spacer) {
               selected = false;
               atom_list = row->atom_lists + col->atom_at;
-              not_selected = true;
 
               while((at = (*atom_list)) >= 0) {
                 atom_list++;
                 if(SelectorIsMember(G, atInfo[at].selEntry, sele)) {
                   selected = true;
-                } else {
-                  not_selected = true;
                 }
               }
 

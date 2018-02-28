@@ -179,7 +179,7 @@ DESCRIPTION
 
     def session_save_wizard(session,_self=cmd):
         # double-pickle so that session file is class-independent
-        stack = cmd.get_wizard_stack(_self=_self)
+        stack = _self.get_wizard_stack()
         session['wizard']=cPickle.dumps(stack,1)
         return 1
 
@@ -193,7 +193,7 @@ DESCRIPTION
                     for wiz in wizards:
                         wiz.cmd = _self
                         wiz.migrate_session(version)
-                    _self.set_wizard_stack(wizards,_self=_self)
+                    _self.set_wizard_stack(wizards)
                 except Exception as e:
                     print(e)
                     print("Session-Warning: unable to restore wizard.")

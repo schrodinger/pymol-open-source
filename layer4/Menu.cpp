@@ -86,23 +86,24 @@ void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, in
 #endif
 }
 
-void MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
-                      const char *name, const char *arg1)
+Block *MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
+			const char *name, const char *arg1)
 {
+  Block *block = NULL;
 #ifndef _PYMOL_NOPY
   PyObject *list;
-
   PBlock(G);
 
   list = PYOBJECT_CALLMETHOD(P_menu, name, "Os", G->P_inst->cmd, arg1);
   if(PyErr_Occurred())
     PyErr_Print();
   if(list) {
-    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
+    block = PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
     Py_DECREF(list);
   }
   PUnblock(G);
 #endif
+  return block;
 }
 
 void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,

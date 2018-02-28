@@ -19,12 +19,13 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 #include"PyMOLGlobals.h"
+#include"Block.h"
 
 void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                   int passive, const char *name, const char *sele);
 void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                       int passive, const char *name);
-void MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
+Block *MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                       int passive, const char *name, const char *arg1);
 void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                       int passive, const char *name, const char *sele1, const char *sele2);

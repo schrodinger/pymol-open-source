@@ -2,7 +2,7 @@
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+C* copyright by Schrodinger, LLC
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
 F* -------------------------------------------------------------------
@@ -33,7 +33,7 @@ Z* -------------------------------------------------------------------
 
 #define CGO_read_int(p) (*((int*)((p)++)))
 #define CGO_get_int(p) (*((int*)(p)))
-#define CGO_get_uint(p) (uint)(*((int*)(p)))
+#define CGO_get_uint(p) (uint)(*((uint*)(p)))
 #define CGO_write_int(p,i) ((*((int*)(p++)))=(i))
 #define CGO_put_int(p,i) ((*((int*)(p)))=(i))
 
@@ -54,8 +54,6 @@ Z* -------------------------------------------------------------------
  * linewidth
  * primwidth * ray-tracing 
  */
-
-#include "CGOStruct.h"
 
 /* instructions and data segment sizes */
 
@@ -83,6 +81,7 @@ Z* -------------------------------------------------------------------
 #define CGO_LINEWIDTH_SZ         1
 #define CGO_WIDTHSCALE           0x0B
 #define CGO_WIDTHSCALE_SZ        1
+
 #define CGO_ENABLE               0x0C
 #define CGO_ENABLE_SZ            1
 #define CGO_DISABLE              0x0D
@@ -91,8 +90,10 @@ Z* -------------------------------------------------------------------
 #define CGO_SAUSAGE_SZ           13
 #define CGO_CUSTOM_CYLINDER      0x0F
 #define CGO_CUSTOM_CYLINDER_SZ   15
+
 #define CGO_DOTWIDTH             0x10
 #define CGO_DOTWIDTH_SZ          1
+
 #define CGO_ALPHA_TRIANGLE       0x11
 #define CGO_ALPHA_TRIANGLE_SZ    35
 #define CGO_ELLIPSOID            0x12
@@ -105,6 +106,7 @@ Z* -------------------------------------------------------------------
 #define CGO_FONT_VERTEX_SZ       3      /*  principle axes (zeros -> use camera x y z */
 #define CGO_FONT_AXES            0x16
 #define CGO_FONT_AXES_SZ         9      /*  principle axes (zeros -> use camera x y z */
+
 #define CGO_CHAR                 0x17
 #define CGO_CHAR_SZ              1
 #define CGO_INDENT               0x18
@@ -119,6 +121,8 @@ Z* -------------------------------------------------------------------
 #define CGO_RESET_NORMAL_SZ      1
 #define CGO_PICK_COLOR           0x1F
 #define CGO_PICK_COLOR_SZ        2
+
+
 /* CGO_DRAW_ARRAYS : operation that calls glDrawArrays with all arrays in memory 
    (i.e., stored in the CGO array). There can be up to 4 arrays (vertex, normal, color, 
    and pick color array, where each are stored using GL_FLOAT array (except for the pick  
@@ -230,6 +234,79 @@ Z* -------------------------------------------------------------------
 #define CGO_ACCESSIBILITY_ARRAY  0x10
 #define CGO_TEX_COORD_ARRAY      0x20
 
+extern int CGO_sz[];
+
+class CGO {
+public:
+  PyMOLGlobals *G;
+  float *op;
+  int c;
+  int z_flag;
+  float z_min, z_max;
+  float z_vector[3];
+  float alpha;
+  int *i_start, i_size;
+  short has_begin_end;
+  int current_pick_color_index, current_pick_color_bond;
+  float current_accessibility;
+  short has_draw_buffers, has_draw_cylinder_buffers, has_draw_sphere_buffers;
+  float normal[3], color[3], texture[2];
+  uchar pickColor[4];
+  short use_shader, cgo_shader_ub_color, cgo_shader_ub_normal;
+  short debug;
+  short enable_shaders;
+  short no_pick;
+
+  /***********************************************************************
+   * CGO iterator
+   *
+   * for (auto it = cgo->begin(); !it.is_stop(); ++it) {
+   *   auto pc = it.data();
+   *   int op = it.op_code();
+   *   ...
+   * }
+   ***********************************************************************/
+
+  class const_iterator {
+    protected:
+      const float * m_pc;
+      const float * m_stop;
+    public:
+      int op_code() const {
+        return CGO_MASK & *reinterpret_cast<const int*>(m_pc);
+      }
+      operator int() const { return op_code(); }
+
+      const float * data() const { return m_pc + 1; }
+
+      template <typename T>
+      const T * cast() const { return reinterpret_cast<const T *>(m_pc + 1); }
+
+      const_iterator(const CGO * cgo) {
+        m_pc = cgo->op;
+        m_stop = cgo->op + cgo->c;
+      }
+
+      const_iterator& operator++() {
+        m_pc += CGO_sz[op_code()] + 1;
+        return *this;
+      }
+
+      bool is_stop() const {
+        return m_pc == m_stop || op_code() == CGO_STOP;
+      }
+  };
+
+  class iterator : public const_iterator {
+    public:
+      iterator(CGO * cgo) : const_iterator(cgo) {}
+      float * data() { return const_cast<float*>(m_pc + 1); }
+  };
+
+  const_iterator begin() const { return this; }
+  iterator begin() { return this; }
+};
+
 int CGORendererInit(PyMOLGlobals * G);
 void CGORendererFree(PyMOLGlobals * G);
 CGO *CGONew(PyMOLGlobals * G);
@@ -318,6 +395,15 @@ CGO *CGOExpandDrawTextures(CGO * I, int est);
 
 /*void CGOFontScale(CGO *I,float v);
   void CGOFont(CGO *I,float size,int face,int style);*/
+
+void CGORoundNub(CGO * I,
+    const float *v1,    // cap center
+    const float *p0,    // normal along axis
+    const float *p1,    // x coord in cap space
+    const float *p2,    // y coord in cap space
+    int direction,      // 1 or -1
+    int nEdge,          // "quality"
+    float size);
 
 int CGOEnable(CGO * I, int mode);
 int CGODisable(CGO * I, int mode);

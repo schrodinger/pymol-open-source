@@ -823,9 +823,6 @@ bool AtomResiFromResv(char *resi, size_t size, int resv, char inscode) {
 /*========================================================================*/
 PyObject *AtomInfoAsPyList(PyMOLGlobals * G, const AtomInfoType * I)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
   PyObject *result = NULL;
 
   result = PyList_New(48);
@@ -892,14 +889,10 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals * G, const AtomInfoType * I)
   PyList_SetItem(result, 47, PyString_FromString(LexStr(G, I->custom)));
 
   return (PConvAutoNone(result));
-#endif
 }
 
 int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
 {
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
   int ok = true;
   int tmp_int;
   ov_size ll = 0;
@@ -1030,7 +1023,6 @@ int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * I, PyObject * list)
     PCONVPYSTRTOLEXIDX(47, I->custom);
   }
   return (ok);
-#endif
 }
 
 void AtomInfoCopy(PyMOLGlobals * G, const AtomInfoType * src, AtomInfoType * dst, int copy_properties)
@@ -2816,8 +2808,42 @@ void atomicnumber2elem(char * dst, int protons) {
     strncpy(dst, ElementTable[protons].symbol, cElemNameLen);
 }
 
-#ifdef _PYMOL_IP_EXTRAS
-#endif
+/*
+ * Get a string representation of the stereo configuration. Either
+ * R/S chirality, if set, or the SDF odd/even parity, if set.
+ */
+const char * AtomInfoGetStereoAsStr(const AtomInfoType * ai) {
+  switch (ai->mmstereo) {
+    case 1 /* MMSTEREO_CHIRALITY_R */: return "R";
+    case 2 /* MMSTEREO_CHIRALITY_S */: return "S";
+  }
+
+  switch (ai->stereo) {
+    case SDF_CHIRALITY_ODD:  return "odd";
+    case SDF_CHIRALITY_EVEN: return "even";
+  }
+
+  if (ai->mmstereo || ai->stereo) {
+    return "?";
+  }
+
+  return "";
+}
+
+/*
+ * Set stereochemistry. Valid are: R, S, N[one], E[ven], O[dd]
+ */
+void AtomInfoSetStereo(AtomInfoType * ai, const char * stereo) {
+  switch (toupper(stereo[0])) {
+    case 'R':  ai->mmstereo = 1; ai->stereo = 0; break; // MMSTEREO_CHIRALITY_R
+    case 'S':  ai->mmstereo = 2; ai->stereo = 0; break; // MMSTEREO_CHIRALITY_S
+    case 'E':  ai->mmstereo = 0; ai->stereo = SDF_CHIRALITY_EVEN;       break;
+    case 'O':  ai->mmstereo = 0; ai->stereo = SDF_CHIRALITY_ODD;        break;
+    case 'N': case 0: ai->mmstereo = ai->stereo = 0;    break;
+    default:   ai->mmstereo = ai->stereo = 3;           break;
+  }
+}
+
 
 /*
  * Get column aligned (left space padded) PDB residue name

@@ -180,7 +180,6 @@ if __name__=='pymol.cmd':
 
         from . import internal
 
-        _adjust_coord = internal._adjust_coord
         _alt = internal._alt
         _coordset_update_spawn = internal._coordset_update_spawn
         _coordset_update_thread = internal._coordset_update_thread
