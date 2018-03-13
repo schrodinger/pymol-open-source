@@ -16,7 +16,9 @@ class TestVersion(testing.PyMOLTestCase):
 
     def test_version(self):
         v = cmd.get_version()[:3]
-        # check that all elements of v are the same, need to strip number off beginning,
-        # remove "." and strip trailing 0's
-        s = set([self._get_num(str(s)).replace('.', '').replace('0', '') for s in v])
-        self.assertEqual(len(s), 1)
+        # check types
+        self.assertTrue(isinstance(v[0], str))
+        self.assertTrue(isinstance(v[1], float))
+        self.assertTrue(isinstance(v[2], int))
+        # check that major of str and float match
+        self.assertEqual(int(v[0].split('.')[0]), int(v[1]))
