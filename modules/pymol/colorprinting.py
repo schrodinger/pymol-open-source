@@ -8,6 +8,27 @@ from __future__ import division as _
 
 import re
 
+
+def htmlspecialchars(s):
+    '''Convert special characters to HTML entities
+    '''
+    return (s
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+    )
+
+def text2html(s, whitespace=True):
+    '''Convert plain text to HTML
+    '''
+    s = htmlspecialchars(s)
+
+    if whitespace:
+        s = s.replace(' ', '&nbsp;').replace('\n', '<br>')
+
+    return s
+
+
 error = print
 warning = print
 suggest = print

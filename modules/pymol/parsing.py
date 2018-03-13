@@ -540,6 +540,9 @@ SEE ALSO
     
     def run_file_as_module(file,spawn=0):
         name = re.sub('[^A-Za-z0-9]','_',file)
+        if not isinstance(name, str):
+            # Python 2 only
+            name = name.encode('ascii', errors='ignore')
         mod = types.ModuleType(name)
         mod.__file__ = file
         mod.__script__ = file

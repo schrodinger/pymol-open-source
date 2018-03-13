@@ -1523,6 +1523,14 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
     " OrthoDoDraw: entered.\n" ENDFD;
   if(G->HaveGUI && G->ValidContext) {
 
+#ifdef GL_FRAMEBUFFER_UNDEFINED
+    // prevents GL_INVALID_FRAMEBUFFER_OPERATION (0x0506) on macOS
+    // with external Monitor
+    if (glCheckFramebufferStatus &&
+        glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_UNDEFINED)
+      return;
+#endif
+
     if(Feedback(G, FB_OpenGL, FB_Debugging))
       PyMOLCheckOpenGLErr("OrthoDoDraw checkpoint 0");
 

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>277</width>
+    <height>194</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string notr="true">Save PNG image</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>250</width>
+         <height>100</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: #0c0; padding: 20px</string>
+       </property>
+       <property name="text">
+        <string notr="true">New in PyMOL 2.0: To render a sized antialiased image, use the Draw/Ray panel in the upper right.</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::PlainText</enum>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="input_rendering">
+       <item>
+        <property name="text">
+         <string notr="true">capture current display</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">draw antialiased OpenGL image</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">ray trace with opaque background</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">ray trace with transparent background</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCommandLinkButton" name="button_ok">
+       <property name="text">
+        <string notr="true">Save PNG image as ...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>input_rendering</tabstop>
+  <tabstop>button_ok</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

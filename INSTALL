@@ -28,6 +28,8 @@ REQUIREMENTS
     - libxml2 (optional, for COLLADA export, disable with --no-libxml)
     - msgpack-c 1.0+ (optional, for fast MMTF loading, disable with
         --use-msgpackc=no)
+    - PyQt5, PyQt4, or PySide (optional, will fall back to Tk interface)
+    - simplemmtf (optional, for MMTF export)
 
 SETUP OPTIONS
 

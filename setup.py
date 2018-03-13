@@ -22,6 +22,8 @@ class options:
     osx_frameworks = False
     jobs = int(os.getenv('JOBS', 0))
     no_libxml = False
+    pyqt = 'PyQt5,PyQt4,PySide'
+    no_glut = False
     use_msgpackc = 'guess'
     help_distutils = False
     no_cxx11 = False
@@ -34,6 +36,8 @@ if sys.platform == 'darwin' and tuple(
 try:
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('--pyqt')
+    parser.add_argument('--no-glut', action="store_true")
     parser.add_argument('--osx-frameworks', action="store_true",
             help="on MacOS use OpenGL and GLUT frameworks instead of shared "
             "libraries from XQuartz. Note that the GLUT framework has no "
@@ -61,6 +65,11 @@ if True:
     import monkeypatch_distutils
     monkeypatch_distutils.set_parallel_jobs(options.jobs)
 
+
+def forms_uic(build_lib='modules'):
+    '''
+    Convert Qt UI files in "modules/pmg_qt/forms" to Python files in place
+    '''
 
 def get_prefix_path():
     '''
@@ -133,6 +142,7 @@ def guess_msgpackc():
 class build_py_pymol(build_py):
     def run(self):
         build_py.run(self)
+        forms_uic(self.build_lib)
 
 class install_pymol(install):
     pymol_path = None
@@ -216,11 +226,11 @@ class install_pymol(install):
                 except ValueError:
                     pymol_file = os.path.abspath(pymol_file)
 
-                out.write('set PYMOL_PATH=' + pymol_path + os.linesep)
+                # out.write('set PYMOL_PATH=' + pymol_path + os.linesep)
                 out.write('"%s" "%s"' % (python_exe, pymol_file))
-                out.write(' %1 %2 %3 %4 %5 %6 %7 %8 %9' + os.linesep)
+                out.write(' %*' + os.linesep)
             else:
-                out.write('#!/bin/sh' + os.linesep)
+                out.write('#!/bin/bash' + os.linesep)
                 if sys.platform.startswith('darwin'):
                     out.write('[ "$DISPLAY" == "" ] && export DISPLAY=":0.0"' + os.linesep)
                 out.write('export PYMOL_PATH="%s"' % pymol_path + os.linesep)
@@ -267,6 +277,7 @@ ext_comp_args = [
     '-Wno-char-subscripts',
 ]
 ext_link_args = []
+ext_objects = []
 data_files = []
 ext_modules = []
 
@@ -306,6 +317,11 @@ else:
         libs += ['msgpackc']
 
     pymol_src_dirs += ["contrib/mmtf-c"]
+
+if options.no_glut:
+    def_macros += [
+        ("_PYMOL_NO_MAIN", None),
+    ]
 
 inc_dirs = list(pymol_src_dirs)
 
@@ -368,8 +384,10 @@ else: # unix style (linux, mac, ...)
             ("_PYMOL_OSX", None),
         ]
     else:
-        glut = posix_find_lib(['glut', 'freeglut'], lib_dirs)
-        pyogl_libs += ["GL", "GLU", glut]
+        pyogl_libs += ["GL"]
+        if not options.no_glut:
+            glut = posix_find_lib(['glut', 'freeglut'], lib_dirs)
+            pyogl_libs += [glut]
 
     libs += ["GLEW"]
     libs += pyogl_libs
@@ -411,6 +429,7 @@ ext_modules += [
               define_macros = def_macros,
               extra_link_args = ext_link_args,
               extra_compile_args = ext_comp_args,
+              extra_objects = ext_objects,
     ),
 
     Extension("chempy.champ._champ",
@@ -436,6 +455,7 @@ distribution = setup ( # Distribution meta-data
 
     package_dir = package_dir,
     packages = list(package_dir),
+    package_data = {'pmg_qt': ['forms/*.ui']},
 
     ext_modules = ext_modules,
     data_files  = data_files,

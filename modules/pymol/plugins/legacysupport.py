@@ -29,9 +29,8 @@ def get_pmgapp():
     '''
     Returns the PMGApp instance.
     '''
-    if pymol._ext_gui is None:
-        pymol._ext_gui = createlegacypmgapp()
-    return pymol._ext_gui
+    import pymol.gui
+    return pymol.gui.get_pmgapp()
 
 def get_tk_root():
     '''
@@ -43,6 +42,9 @@ def get_tk_focused():
     '''
     Return the Tk widget which has currently the focus.
     '''
+    if 'pmg_qt.mimic_tk' in sys.modules:
+        return None
+
     root = get_tk_root()
     focused = root.focus_get()
     if focused is None:
@@ -67,10 +69,22 @@ def installPlugin(self):
     if len(ofile):
         installPluginFromFile(ofile)
 
+plugin_manager_panel = None
+
 def addPluginManagerMenuItem():
+
     def plugin_manager():
-        from . import managergui
-        managergui.manager_dialog()
+        global plugin_manager_panel
+        from pymol.gui import get_qtwindow as getPyMOLWindow
+        window = getPyMOLWindow()
+        if window:
+            if not plugin_manager_panel:
+                from .managergui_qt import PluginManager
+                plugin_manager_panel = PluginManager(None)
+            plugin_manager_panel.show()
+        else:
+            from . import managergui
+            managergui.manager_dialog()
 
     pymol.plugins.addmenuitem('Plugin Manager', plugin_manager)
     pymol.plugins.addmenuitem('-', None)

@@ -1550,10 +1550,6 @@ USAGE
 
     window [ action [, x [, y [, width [, height ]]]]]
 
-NOTES
-    
-    This command is not fully implemented in MacPyMOL.
-
 PYMOL API
 
     cmd.window(string action, int x, int y, int width, int height)
@@ -1565,7 +1561,13 @@ PYMOL API
         r = DEFAULT_ERROR      
         try:
             _self.lock(_self)
-            r = _cmd.window(_self._COb,action,int(x),int(y),int(width),int(height))
+            from pymol.gui import get_qtwindow as getPyMOLWindow
+            qt_window = getPyMOLWindow()
+            if qt_window:
+                r = DEFAULT_SUCCESS
+                qt_window.window_cmd(action, int(x),int(y),int(width),int(height))
+            else:
+                r = _cmd.window(_self._COb,action,int(x),int(y),int(width),int(height))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException

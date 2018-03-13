@@ -135,14 +135,15 @@ if __name__=='pymol.invocation':
     options.internal_gui = 1
     options.internal_feedback = 1
     options.external_gui = 1
-    options.force_stereo = 0
+    options.force_stereo = -1 if sys.platform == 'darwin' else 0
     options.game_mode = 0
-    options.gui = 'pmg_tk'
+    options.gui = 'pmg_qt'
     options.skin = 'normal'
     options.show_splash = 1
     options.read_stdin = 0
     options.win_x = 640
     options.win_y = 480
+    options.win_xy_set = False
     options.win_px = 4 
     options.sigint_handler = 1 # terminate on Ctrl-C?
     options.reuse_helper = 0
@@ -345,8 +346,10 @@ if __name__=='pymol.invocation':
                     options.presentation = 1 
                 if "W" in a:
                     options.win_x = int(av.pop())
+                    options.win_xy_set = True
                 if "H" in a:
                     options.win_y = int(av.pop())
+                    options.win_xy_set = True
                 if "X" in a:
                     options.win_px = int(av.pop())
                 if "y" in a:

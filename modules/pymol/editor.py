@@ -24,6 +24,19 @@ tmp4 = _prefix + "4"
 
 # routines to assist in molecular editing
 
+class undocontext:
+    def __init__(self, cmd, sele):
+        # not implemented in open-source
+        pass
+
+    def __enter__(self):
+        # not implemented in open-source
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # not implemented in open-source
+        pass
+
 def attach_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
     '''
 ARGUMENTS
@@ -55,20 +68,19 @@ ARGUMENTS
             _self.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",1)
             if _self.get_setting_boolean("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
+            elif _self.count_atoms('hydro and (neighbor pk2)'):
+                _self.h_fill()
         _self.delete(tmp_editor)
 
 def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
-    if selection in _self.get_names("selections"):
+    with undocontext(_self, selection):
         _self.fragment(fragment,tmp_editor)
-        if _self.count_atoms("((%s) and elem H)"%selection,quiet=1):
-            _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",3)
+        try:
             if _self.get_setting_boolean("auto_remove_hydrogens"):
-                _self.remove("(hydro and pkmol)")            
-        else:
-            _self.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",3)
-            if _self.get_setting_boolean("auto_remove_hydrogens"):
-                _self.remove("(hydro and pkmol)")            
-        _self.delete(tmp_editor)
+                _self.remove("(hydro and ?%s)" % tmp_editor)
+            _self.fuse("?%s" % tmp_editor, "(%s)" % selection, 3)
+        finally:
+            _self.delete(tmp_editor)
 
 #from time import time as ___time
 #___total = 0.0

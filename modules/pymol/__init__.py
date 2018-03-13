@@ -404,6 +404,25 @@ def prime_pymol():
         glutThread = thread.get_ident()
 
 
+def _launch_no_gui():
+    import pymol2
+
+    p = pymol2.SingletonPyMOL()
+    p.start()
+
+    # TODO sufficient?
+    while (p.idle() or p.getRedisplay() or
+            invocation.options.keep_thread_alive or
+            cmd.get_modal_draw() or
+            cmd.get_setting_int('keep_alive') or
+            cmd._pymol._stdin_reader_thread is not None):
+        p.draw()
+
+    # TODO needed?
+    cmd.sync()
+    p.stop()
+
+
 def launch(args=None, block_input_hook=0):
     '''
     Run PyMOL with args
@@ -413,6 +432,18 @@ def launch(args=None, block_input_hook=0):
     if args is None:
         args = sys.argv
     invocation.parse_args(args)
+
+    if invocation.options.gui == 'pmg_qt':
+        if invocation.options.no_gui:
+            return _launch_no_gui()
+
+        try:
+            from pmg_qt import pymol_qt_gui
+            sys.exit(pymol_qt_gui.execapp())
+        except ImportError:
+            print('Qt not available, using GLUT/Tk interface')
+            invocation.options.gui = 'pmg_tk'
+
     prime_pymol()
     _cmd.runpymol(_cmd._get_global_C_object(), block_input_hook)
 

@@ -19,12 +19,12 @@
 # **This is the only module which should be/need be imported by 
 # **PyMol Programs
 
-from .PMGApp import *
 import sys, os, threading
 import traceback
 
 def run(pymol_instance,poll=0,skin=None):
     try:
+        from .PMGApp import PMGApp
         if not hasattr(sys,"argv"):
             sys.argv=["pymol"]
         PMGApp(pymol_instance,skin).run(poll)

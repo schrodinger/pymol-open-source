@@ -19,15 +19,17 @@
 #define GL_GLEXT_PROTOTYPES
 #endif
 
+#ifndef GLEW_NO_GLU
+#define GLEW_NO_GLU
+#endif
+
 #include<GL/glew.h>
 
 #ifndef _PYMOL_OSX
 #include<GL/gl.h>
-#include<GL/glu.h>
 #include<GL/glext.h>
 #else
 #import <OpenGL/gl.h>
-#import <OpenGL/glu.h>
 #import <OpenGL/glext.h>
 #endif
 

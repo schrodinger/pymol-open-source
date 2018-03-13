@@ -1836,6 +1836,7 @@ static const CPyMOLOptions Defaults = {
   0,                            /* stereo capable */
   0,                            /* stereo mode */
   -1,                           /* zoom mode */
+  0,                            /* launch_status */
   0,                            /* no quit */
 };
 
@@ -2297,6 +2298,8 @@ void PyMOL_Draw(CPyMOL * I){
 
 static void PyMOL_LaunchStatus_Feedback(PyMOLGlobals * G)
 {
+  G->LaunchStatus |= G->Option->launch_status;
+
   if(G->StereoCapable) {
     OrthoAddOutput(G,
         " OpenGL quad-buffer stereo 3D detected and enabled.\n");;

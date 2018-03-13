@@ -151,6 +151,14 @@ def get_plugdir(parent=None):
     if len(plugdirs) == 1:
         return plugdirs[0]
 
+    import sys
+    if 'pmg_qt.mimic_tk' in sys.modules:
+        from pymol.Qt import QtWidgets
+        value, result = QtWidgets.QInputDialog.getItem(None,
+            'Select plugin directory',
+            'In which directory should the plugin be installed?', plugdirs)
+        return value if result else ''
+
     dialog_selection = []
     def plugdir_callback(result):
         if result == 'OK':
