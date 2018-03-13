@@ -752,6 +752,33 @@ def _encode(filename,first,last,preserve,
                 os.chdir(old_cwd)
                 if done_event != None:
                     done_event.set()
+    elif encoder == 'ffmpeg':
+        fps = get_movie_fps(_self)
+        import subprocess
+        os.chdir(tmp_path)
+        try:
+            args = ['ffmpeg',
+                '-f', 'image2',
+                '-framerate', '%d' % fps, # framerate
+                '-i', prefix + '%04d' + img_ext,
+            ]
+            if not fn_rel.endswith('.gif'):
+                args += [
+                '-crf', '10' if quality > 90 else '15' if quality > 80 else '20',
+                '-pix_fmt', 'yuv420p', # needed for Mac support
+                ]
+            subprocess.check_call(args + [fn_rel])
+        finally:
+            os.chdir(old_cwd)
+    elif encoder == 'convert':
+        import subprocess
+        exe = find_exe(encoder)
+        try:
+            subprocess.check_call([exe,
+                os.path.join(tmp_path, prefix) + '*' + img_ext,
+                filename])
+        finally:
+            pass
     if not quiet:
                 if not os.path.exists(filename):
                     if result != None:
@@ -775,8 +802,31 @@ produce_mode_dict = {
 produce_mode_sc = cmd.Shortcut(produce_mode_dict.keys())
 
 
+def find_exe(exe):
+    '''Return full path to executable or None.
+    Excludes C:\Windows\System32\convert.exe
+    Tests .exe extension on Unix (e.g. for legacy "mpeg_encode.exe" name).
+    '''
+    from distutils.spawn import find_executable
+
+    path = os.getenv('PATH', '')
+
+    if exe.startswith('convert') and sys.platform == 'win32':
+        # filter out C:\Windows\System32
+        path = os.pathsep.join(p
+                for p in path.split(os.pathsep)
+                if not r'\windows\system32' in p.lower())
+
+    e = find_executable(exe, path)
+
+    if not e and sys.platform != 'win32':
+        e = find_executable(exe + '.exe', path)
+
+    return e
+
+
 def produce(filename, mode='', first=0, last=0, preserve=0,
-            encoder='mpeg_encode', quality=-1, quiet=1,
+            encoder='', quality=-1, quiet=1,
             width=0, height=0, _self=cmd):
     '''
 DESCRIPTION
@@ -784,12 +834,25 @@ DESCRIPTION
     Export a movie to an MPEG file.
 
     Requires FREEMOL.
+
+ARGUMENTS
+
+    filename = str: filename of MPEG file to produce
+
+    mode = draw or ray: {default: check "ray_trace_frames" setting}
+
+    first = int: first frame to export {default: 1}
+
+    last = int: last frame to export {default: last frame of movie}
+
+    preserve = 0 or 1: don't delete temporary files {default: 0}
+
+    quality = 0-100: encoding quality {default: 90 (movie_quality setting)}
     '''
-    try:
-        from freemol import mpeg_encode
-    except ImportError:
-        print(" Error: This PyMOL build is not set up with FREEMOL (freemol.mpeg_encode import failed)")
-        return _self.DEFAULT_ERROR
+    from pymol import CmdException
+
+    def has_exe(exe):
+        return bool(find_exe(exe))
 
     prefix = _prefix
 
@@ -818,6 +881,19 @@ DESCRIPTION
     width, height = int(width), int(height)
     img_ext = '.png'
 
+    # guess encoder
+    if not encoder:
+        if splitext[1] in ('.mpeg', '.mpg'):
+            encoder = 'mpeg_encode'
+        elif has_exe('ffmpeg'):
+            encoder = 'ffmpeg'
+        elif has_exe('convert'):
+            encoder = 'convert'
+        else:
+            raise CmdException('neither "ffmpeg" nor "convert" available for '
+                    'video encoding')
+        print('using encoder "%s"' % encoder)
+
     # check encoder
     if encoder == 'mpeg_encode':
         img_ext = '.ppm'
@@ -826,8 +902,28 @@ DESCRIPTION
         except ImportError:
             print(" Error: This PyMOL build is not set up with FREEMOL (freemol.mpeg_encode import failed)")
             return _self.DEFAULT_ERROR
-    else:
+    elif encoder not in ('ffmpeg', 'convert'):
+        raise CmdException('unknown encoder "%s"' % encoder)
+    elif not has_exe(encoder):
         raise CmdException('encoder "%s" not available' % (encoder))
+
+    if img_ext == '.png':
+        _self.set('opaque_background', quiet=quiet)
+
+    # MP4 needs dimensions divisible by 2
+    if splitext[1] in ('.mp4', '.mov'):
+        if width < 1 or height < 1:
+            w, h = _self.get_viewport()
+            if width > 0:
+                height = width * h / w
+            elif height > 0:
+                width = height * w / h
+            else:
+                width, height = w, h
+        if width % 2:
+            width -= 1
+        if height % 2:
+            height -= 1
 
     # clean up old files if necessary
     if os.path.exists(filename):

@@ -9181,8 +9181,9 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
       curState = SettingGetGlobal_i(G, cSetting_state) - 1;
     }
     if(!SettingGetGlobal_b(G, cSetting_ortho)) {
-      float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
-      gluPerspective(fov, aspRat, I->FrontSafe, I->BackSafe);
+      height = I->FrontSafe * GetFovWidth(G) / 2.f;
+      width = height * aspRat;
+      glFrustum(-width, width, -height, height, I->FrontSafe, I->BackSafe);
     } else {
       height = std::max(R_SMALL4, -I->Pos[2]) * GetFovWidth(G) / 2.f;
       width = height * aspRat;

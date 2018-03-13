@@ -96,7 +96,7 @@ int PyMOLCheckOpenGLErr(const char *pos)
   int flag = 0;
   GLenum glerr = glGetError();
   while(glerr != GL_NO_ERROR) {
-    printf("OpenGL-Error: Where? %s: %s\n", pos, (char *) gluErrorString(glerr));
+    printf("OpenGL-Error: Where? %s: glerr=%d\n", pos, glerr);
     glerr = glGetError();
     flag = 1;
   }

@@ -12,6 +12,7 @@ import os
 import sys
 import pymol
 from pymol import cmd
+from pymol import colorprinting
 from .legacysupport import *
 
 # variables
@@ -27,6 +28,18 @@ autoload = {}
 
 plugins = {}
 
+HAVE_QT = False
+
+# exception types
+
+class QtNotAvailableError(Exception):
+    pass
+
+# plugins from PYMOL_DATA
+
+startup.__path__.append(cmd.exp_path('$PYMOL_DATA/startup'))
+N_NON_USER_PATHS = len(startup.__path__)
+
 # API functions
 
 def is_verbose(debug=0):
@@ -38,12 +51,12 @@ def is_verbose(debug=0):
 def get_startup_path(useronly=False):
     if useronly:
         # assume last item is always from installation directory
-        return startup.__path__[:-1]
+        return startup.__path__[:-N_NON_USER_PATHS]
     return startup.__path__
 
 def set_startup_path(p, autosave=True):
     if isinstance(p, list):
-        startup.__path__[:-1] = p
+        startup.__path__[:-N_NON_USER_PATHS] = p
         if autosave:
             set_pref_changed()
     else:
@@ -84,6 +97,18 @@ def set_pref_changed():
     if pref_get('instantsave', True):
         verbose = pref_get('verbose', False)
         pref_save(quiet=not verbose)
+
+
+def addmenuitemqt(label, command=None, menuName='PluginQt'):
+    '''
+    Adds plugin menu item to main 'Plugin' menu.
+    Intended for plugins which open a PyQt window.
+    '''
+    if not HAVE_QT:
+        raise QtNotAvailableError()
+
+    addmenuitem(label, command, menuName)
+
 
 def addmenuitem(label, command=None, menuName='Plugin'):
     '''
@@ -265,13 +290,17 @@ class PluginInfo(object):
             self.loadtime = time.time() - starttime
             if verbose and pymol.invocation.options.show_splash:
                 print(' Plugin "%s" loaded in %.2f seconds' % (self.name, self.loadtime))
+        except QtNotAvailableError:
+            colorprinting.warning("Plugin '%s' only available with PyQt GUI." % (self.name,))
         except:
+            e = sys.exc_info()[1]
             if verbose:
-                import traceback
-                traceback.print_exc()
+                colorprinting.print_exc([__file__])
+            elif 'libX11' in str(e) and sys.platform == 'darwin':
+                colorprinting.error('Please install XQuartz (https://www.xquartz.org/)')
             else:
-                print(sys.exc_info()[1])
-            print("Unable to initialize plugin '%s' (%s)." % (self.name, self.mod_name))
+                colorprinting.error(e)
+            colorprinting.warning("Unable to initialize plugin '%s' (%s)." % (self.name, self.mod_name))
             return False
 
         return True

@@ -5886,10 +5886,23 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
       PParse(G, "viewport");    /* refresh window/internal_gui status */
   }
   // Do not load viewport size when we have a GUI
-  if(ok && !G->HaveGUI) {
+  if(ok) {
     tmp = PyDict_GetItemString(session, "main");
     if(tmp) {
-      ok = MainFromPyList(tmp); /* main just stores the viewport size */
+      if (!G->HaveGUI &&
+          /* PYMOL-775 added suspend_updates check, but does it make sense? */
+          !SettingGetGlobal_b(G, cSetting_suspend_updates) &&
+          !partial_restore) {
+        ok = MainFromPyList(tmp);
+#ifndef _PYMOL_NOPY
+      } else if (!quiet) {
+        int viewport[2];
+        PConvPyListToIntArrayInPlace(tmp, viewport, 2);
+        PRINTFB(G, FB_Executive, FB_Actions)
+          " Session was saved with: viewport %d, %d\n",
+          viewport[0], viewport[1] ENDFB(G);
+#endif
+      }
     }
     if(tmp || (!(partial_restore | partial_session))) { /* ignore missing if partial restore */
       if(PyErr_Occurred()) {

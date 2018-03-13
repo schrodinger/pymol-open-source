@@ -1,6 +1,8 @@
 
 from __future__ import print_function
 
+DEBUG = False
+
 import sys
 import re
 import threading
@@ -30,6 +32,8 @@ from pmg_tk.ColorEditor import ColorEditor
 
 from pmg_tk.skins import PMGSkin
 from .builder import Builder
+
+import pymol._gui
 
 import traceback
 
@@ -108,17 +112,7 @@ def _def_ext(ext): # platform-specific default extension handling
         ext = None # default extensions don't work right under X11/Tcl/Tk
     return ext
 
-
-## class askfileopenfilter(askopenfilename):
-##     """
-##     Subclasses open file dialog to include filename filtering
-##     """
-##     def __init__(self, initialdir = initdir, filetypes=ftypes, multiple=1):
-##         super(askfileopen, self).__init__( initialdir, filetypes, multiple=multiple)
-        
-
-
-class Normal(PMGSkin):
+class Normal(PMGSkin, pymol._gui.PyMOLDesktopGUI):
 
     pad = ' ' # extra space in menus
     
@@ -173,13 +167,6 @@ class Normal(PMGSkin):
         self.cmd.cd(encode(tkFileDialog.askdirectory(
             title="Change Working Directory",
             initialdir=self.initialdir)) or '.', quiet=0)
-
-    def complete(self,event):
-        st = self.cmd._parser.complete(self.command.get())
-        if st:
-            self.command.set(st)
-            self.entry.icursor(len(st))
-        return 'break'
 
     def createDataArea(self):
         # Create data area where data entry widgets are placed.
@@ -355,23 +342,7 @@ class Normal(PMGSkin):
         self.buttonArea.destroy()
 
     def my_show(self,win,center=1):
-        if sys.platform!='linux2':
-            win.show()
-        else: # autocenter, deiconify, and run mainloop
-            # this is a workaround for a bug in the
-            # interaction between Tcl/Tk and common Linux
-            # window managers (namely KDE/Gnome) which causes
-            # an annoying 1-2 second delay in opening windows!
-            if center:
-                tw = win.winfo_reqwidth()+100
-                th = win.winfo_reqheight()+100
-                vw = win.winfo_vrootwidth()
-                vh = win.winfo_vrootheight()
-                x = max(0,(vw-tw)/2)
-                y = max(0,(vh-th)/2)
-                win.geometry(newGeometry="+%d+%d"%(x,y))
-            win.deiconify()
-#         win.show()
+        win.show()
             
     def my_withdraw(self,win):
         if sys.platform!='linux2':
@@ -406,47 +377,19 @@ class Normal(PMGSkin):
         else: # autocenter, deiconify, and run mainloop
             win.destroy()
 
-    def back_search(self, set0=False):
-        if not self.history_cur or set0:
-            self.history[0] = self.command.get()
-        for i in range(self.history_cur + 1, len(self.history)):
-            if self.history[i].startswith(self.history[0]):
-                self.history_cur = i
-                self.command.set(self.history[self.history_cur])
-                l = len(self.history[self.history_cur])
-                self.entry.icursor(l)
-                break
-
-    def back(self):
-        if not self.history_cur:
-            self.history[0] = self.command.get()
-        self.history_cur = (self.history_cur + 1) & self.history_mask
-        self.command.set(self.history[self.history_cur])
-        l = len(self.history[self.history_cur])
-        self.entry.icursor(l)
-    
-    def forward(self):
-        if not self.history_cur:
-            self.history[0] = self.command.get()
-        self.history_cur = max(0, self.history_cur - 1) & self.history_mask
-        self.command.set(self.history[self.history_cur])
-        l = len(self.history[self.history_cur])
-        self.entry.icursor(l)
-
     def doAsync(self,cmmd):
         t = threading.Thread(target=_doAsync,args=(self.cmd,cmmd))
         t.setDaemon(1)
         t.start()
         
-    def doTypedCommand(self,cmmd):
-        if self.history[1] != cmmd:
-            self.history[0]=cmmd
-            self.history.insert(0,'') # always leave blank at 0
-            self.history.pop(self.history_mask+1)
-        self.history_cur = 0
-        t = threading.Thread(target=_doAsync,args=(self.cmd,cmmd,1))
-        t.setDaemon(1)
-        t.start()
+    def command_get(self):
+        return self.command.get()
+
+    def command_set(self, v):
+        return self.command.set(v)
+
+    def command_set_cursor(self, i):
+        self.entry.icursor(i)
 
     def dump(self,event):
         print(dir(event))
@@ -455,9 +398,7 @@ class Normal(PMGSkin):
     def createConsole(self):
         self.command = StringVar()      
         self.lineCount = 0
-        self.history_mask = 0xFF
-        self.history = [''] * (self.history_mask+1)
-        self.history_cur = 0
+        self._setup_history()
 
         self.cmdFrame = Frame(self.dataArea)
         self.buildFrame = Builder(self.app, self.dataArea)
@@ -642,7 +583,7 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             self.output.after(500,self.update_menus) # twice a second
 
     def file_open(self,tutorial=0):
-        
+
         if not tutorial:
             initdir = self.initialdir
             ftypes = self.app.getLoadableFileTypes()
@@ -662,9 +603,12 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             if len(ofile):
                 if not tutorial:
                     self.initialdir = os.path.dirname(ofile)
-                if ofile[-4:].lower() == '.pse' and ofile != self.save_file:
-                    self.save_file = '' # remove ambiguous default
-                self.cmd.do('_ /cmd.load(%s, quiet=0)' % repr(ofile))
+                try:
+                    if ofile[-4:].lower() == '.pse' and ofile != self.save_file:
+                        self.save_file = '' # remove ambiguous default
+                    self.cmd.do('_ /cmd.load(%s, quiet=0)' % repr(ofile))
+                except self.pymol.CmdException:
+                    print("Error: unable to open file '%s'"%ofile)
 
     def log_open(self):
         sfile = asksaveasfilename(initialfile = self.log_file,
@@ -1011,7 +955,15 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                 "MPEG encoder missing.\nThe FreeMOL add-ons may not be installed.")
             return
 
-        else:
+        def command(value):
+            mQual = int(w_quality.get())
+            mode = 'ray' if w_ray.get() else 'draw'
+            viewport = int(w_viewport[0].get()), int(w_viewport[1].get())
+            dialog.destroy()
+
+            if value != 'OK':
+                return
+
             sfile = asksaveasfilename(defaultextension = _def_ext(".mpg"),
                                       initialdir = self.initialdir,
                                       filetypes=[("MPEG movie file","*.mpg")])
@@ -1020,8 +972,33 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                 mQual = self.cmd.get_setting_int("movie_quality")
                 self.cmd.log("movie.produce %s,quality=%d,quiet=0\n"%(sfile,mQual),
                              "cmd.movie.produce('''%s''',quality=%d,quiet=0)\n"%(sfile,mQual))
-                self.cmd.movie.produce(sfile,quality=mQual, quiet=0)  #quality=quality
-        
+                self.cmd.movie.produce(sfile, mode, quality=mQual, quiet=0,
+                        width=viewport[0], height=viewport[1])
+
+        dialog = Pmw.Dialog(title='Movie Settings', buttons=('OK', 'Cancel'),
+                defaultbutton='OK', command=command)
+        parent = dialog.interior()
+        gridkw = {'padx': 5, 'pady': 5, 'sticky': W, 'row': 0}
+
+        Label(parent, text='Encoding Quality (0-100)',).grid(column=0, **gridkw)
+        w_quality = Pmw.Counter(parent,
+                entryfield_value=self.cmd.get_setting_int("movie_quality"),
+                entryfield_validate={'validator': 'integer', 'min': 0, 'max': 100})
+        w_quality.grid(column=1, **gridkw)
+
+        gridkw['row'] += 1
+        Label(parent, text='Ray Trace Frames').grid(column=0, **gridkw)
+        w_ray = BooleanVar(parent, self.cmd.get_setting_boolean('ray_trace_frames'))
+        Checkbutton(parent, variable=w_ray).grid(column=1, **gridkw)
+
+        w_viewport = []
+        for text, value in zip(('Width', 'Height'), self.cmd.get_viewport()):
+            gridkw['row'] += 1
+            Label(parent, text=text + ' (pixels)').grid(column=0, **gridkw)
+            w = Pmw.Counter(parent, entryfield_value=value, entryfield_validate={'validator': 'integer', 'min': 0})
+            w.grid(column=1, **gridkw)
+            w_viewport.append(w)
+
     def file_save_mpng(self):
         sfile = asksaveasfilename(initialdir = self.initialdir,
                                   filetypes=[("Numbered PNG Files","*.png")])
@@ -1029,40 +1006,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
             self.initialdir = os.path.dirname(sfile)
             self.cmd.log("mpng %s\n"%sfile,"cmd.mpng('%s')\n"%sfile)         
             self.cmd.mpng(sfile,modal=-1)
-
-    def mvprg(self, command=None):
-        if command != None:
-            if command == -1:
-                self.cmd.do("_ mdelete -1,%d"%self.movie_start)
-                command = None
-            else:
-                command = str(command)
-                self.movie_start = (self.cmd.get_movie_length()+1)
-                command = command % self.movie_start
-                self.movie_command = command
-                self.cmd.do("_ ending")
-        else:
-            command = self.movie_command
-        if command != None:
-            self.cmd.do(command)
-
-    def mvprg_scene_loop(self, pause, rock, angle):
-        def func():
-            cmd = self.cmd
-            start = cmd.get_movie_length() + 1
-            cmd.ending()
-            cmd.set('sweep_angle', angle)
-            cmd.movie.add_scenes(None, pause, rock=rock, start=start)
-        return func
-
-    def transparency_menu(self,name,label,setting_name):
-        
-        self.menuBar.addcascademenu('Transparency', name, label, label=label)
-        
-        var = getattr(self.setting, setting_name)
-        for lab, val in [ ('Off', 0.0), ('20%', 0.2), ('40%', 0.4), 
-                                ('50%', 0.5), ('60%', 0.6), ('80%', 0.8) ]:
-            self.menuBar.addmenuitem(name, 'radiobutton', label=lab, value=val, variable=var)
 
     def cat_terms(self):
         for path in [ "$PYMOL_PATH/LICENSE.txt", "$PYMOL_PATH/LICENSE.TXT", "$PYMOL_PATH/LICENSE" ]:
@@ -1103,143 +1046,47 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
         addmenuitem = self.menuBar.addmenuitem
         addcascademenu = self.menuBar.addcascademenu
 
-#        self.menuBar.addmenu('Tutorial', 'Tutorial', side='right')      
+        self.setting = Setting(self.app)
 
-#        self.menuBar.addmenuitem('Tutorial', 'command', 'Open tutorial data file.',
-#                                label='Open File...',
-#                                command=lambda s=self: s.file_open(tutorial=1))
+        def _addmenu(data, parent):
+            for item in data:
+                if item[0] == 'separator':
+                    addmenuitem(parent, 'separator', '')
+                elif item[0] == 'menu':
+                    label = item[1]
+                    menulabel = parent + '/' + label
+                    self.menuBar.addcascademenu(parent, menulabel,
+                        label, label=label, tearoff=FALSE)
+                    _addmenu(item[2], menulabel)
+                elif item[0] == 'command':
+                    label = item[1]
+                    command = item[2]
+                    if command is None:
+                        if DEBUG:
+                            print('warning: skipping', label, parent)
+                    else:
+                        if isinstance(command, str):
+                            command = lambda c=command: self.cmd.do(c)
+                        addmenuitem(parent, 'command', label, label=label, command=command)
+                elif item[0] == 'check':
+                    label = item[1]
+                    var = getattr(self.setting, item[2])
+                    if len(item) > 4:
+                        addmenuitem(parent, 'checkbutton', label, label=label, variable=var, onvalue=item[3], offvalue=item[4])
+                    else:
+                        addmenuitem(parent, 'checkbutton', label, label=label, variable=var)
+                elif item[0] == 'radio':
+                    label = item[1]
+                    var = getattr(self.setting, item[2])
+                    value = item[3]
+                    addmenuitem(parent, 'radiobutton', label=label, value=value, variable=var)
+                elif DEBUG:
+                    print('error:', item)
 
-# to come
-#        self.menuBar.addmenuitem('Tutorial', 'separator', '')
-#
-#        self.menuBar.addmenuitem('Tutorial', 'command', 'Beginners',
-#                                         label='Beginners',
-#                                         command = lambda s=self: None)
-
-        self.menuBar.addmenu('Help', 'About %s' % self.appname, side='right')      
-
-        try:
-            import webbrowser
-            browser_open = webbrowser.open
-            
-            # workaround for problematic webbrowser module under Mac OS X 
-            try:
-                if sys.platform == 'darwin':
-                    browser_open = darwin_browser_open
-            except:
-                pass
-
-            self.menuBar.addmenuitem('Help', 'command', label='PyMOL Command Reference',
-                    command=lambda: browser_open('http://pymol.org/pymol-command-ref.html'))
-
-            self.menuBar.addmenuitem('Help', 'separator', '')
-            
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Access the Official PyMOL Documentation online',
-                                     label='Online Documentation',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc"))
-
-
-            self.menuBar.addcascademenu('Help', 'Topics', 'Topics',
-                                             label='Topics',tearoff=FALSE)
-
-            self.menuBar.addmenuitem('Topics', 'command',
-                                     'Introductory Screencasts',
-                                     label='Introductory Screencasts',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc/id/media:intro"))
-
-            self.menuBar.addmenuitem('Topics', 'command',
-                                     'Core Commands',
-                                     label='Core Commands',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc/id/command:core_set"))
-
-            self.menuBar.addmenuitem('Topics', 'separator', '')
-
-            self.menuBar.addmenuitem('Topics', 'command',
-                                     'Settings',
-                                     label='Settings',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc/id/setting"))
-
-            self.menuBar.addmenuitem('Topics', 'command',
-                                     'Atom Selections',
-                                     label='Atom Selections',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc/id/selection"))
-                                    
-            self.menuBar.addmenuitem('Topics', 'command',
-                                     'Commands',
-                                     label='Commands',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc/id/command"))
-            
-            self.menuBar.addmenuitem('Topics', 'command',
-                                     'Launching',
-                                     label='Launching',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc/id/launch"))
-            
-            self.menuBar.addmenuitem('Topics', 'separator', '')
-            
-            self.menuBar.addmenuitem('Topics', 'command',
-                                     'Concepts',
-                                     label='Concepts',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc/id/concept"))
-
-            self.menuBar.addmenuitem('Topics', 'separator', '')
-            
-            self.menuBar.addmenuitem('Topics', 'command',
-                                     'A.P.I. Methods',
-                                     label='A.P.I. Methods',
-                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc/id/api"))
-
-            self.menuBar.addmenuitem('Help', 'separator', '')
-            
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Access the community-maintained PyMOL Wiki',
-                                     label='PyMOL Community Wiki',
-                                     command = lambda bo=browser_open:bo("http://www.pymolwiki.org"))
-
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Join or browse the pymol-users mailing list',
-                                     label='PyMOL Mailing List',
-                                     command = lambda bo=browser_open:bo("https://lists.sourceforge.net/lists/listinfo/pymol-users"))
-
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Access the PyMOL Home Page',
-                                     label='PyMOL Home Page',
-                                     command = lambda bo=browser_open:bo("http://www.pymol.org"))
-            
-            self.menuBar.addmenuitem('Help', 'separator', '')
-            
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Email PyMOL Help',
-                                     label='Email PyMOL Help',
-                                     command = lambda bo=browser_open:bo("mailto:help@schrodinger.com?subject=PyMOL%20Question"))
-
-            self.menuBar.addmenuitem('Help', 'separator', '')        
-
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Get information on application', 
-                                     label='About PyMOL', command = lambda s=self:s.show_about())
-
-            if self.pymol.cmd.splash(2):
-                self.menuBar.addmenuitem('Help', 'command',
-                                         'Sponsor PyMOL by becoming a Subscriber',
-                                         label='Sponsorship Information',
-                                         command = lambda bo=browser_open:bo("http://pymol.org/funding.html"))
-
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Learn How to Cite PyMOL', 
-                                     label='How to Cite PyMOL', command = lambda bo=browser_open:bo("http://pymol.org/citing"))
-            
-            #self.menuBar.addmenuitem('Help', 'separator', '')
-
-            #self.menuBar.addmenuitem('Help', 'command',
-            #                         'Output License Terms',
-            #                         label='Output License Terms',
-            #                         command = lambda s=self:s.cat_terms())
-
-
-        except ImportError:
-            pass
-        
+        for _, label, data in self.get_menudata():
+            assert _ == 'menu'
+            self.menuBar.addmenu(label, label, tearoff=TRUE)
+            _addmenu(data, label)
 
 #      self.menuBar.addmenuitem('Help', 'command', 'Release Notes',
 #                               label='Release Notes',
@@ -1299,9 +1146,8 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 #                               label='API',
 #                               command = lambda s=self: s.cmd.do("_ cmd.show_help('api')"))      
 
-        self.toggleBalloonVar = IntVar()
-        self.toggleBalloonVar.set(0)
-        self.setting = Setting(self.app)
+#        self.toggleBalloonVar = IntVar()
+#        self.toggleBalloonVar.set(0)
 
 #      self.menuBar.addmenuitem('Help', 'separator', '')
         
@@ -1311,134 +1157,22 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
 #                        variable = self.toggleBalloonVar,
 #                        command=self.toggleBalloon)
 
-        self.menuBar.addmenu('File', 'File Input',tearoff=TRUE)
+        if sys.platform == 'win32' and self.app.pymol.invocation.options.incentive_product:
+                self.menuBar.addmenuitem('Edit', 'separator', '')
 
-        self.menuBar.addmenuitem('File', 'command', 'Open structure file.',
-                                label='Open...',
-                                command=self.file_open)
-
-        self.menuBar.addmenuitem('File', 'command', 'Save session.',
-                                label='Save Session',
-                                command=self.session_save)
-
-        self.menuBar.addmenuitem('File', 'command', 'Save session.',
-                                label='Save Session As...',
-                                command=self.session_save_as)
-
-        self.menuBar.addmenuitem('File', 'command', 'Save structure file.',
-                                label='Save Molecule...',
-                                command=self.file_save)
-
-#      self.menuBar.addmenuitem('File', 'command', 'Open sequential files.',
-#                        label='Open Sequence...',
-#                        command=self.file_open)
-
-        self.menuBar.addcascademenu('File', 'SaveImageAs', 'Save Image As',
-                                             label='Save Image As',tearoff=FALSE)
-
-        self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as PNG Image.',
-                                label='PNG...',
-                                command=self.file_save_png)
-
-        self.menuBar.addmenuitem('SaveImageAs', 'separator', '')
-        
-        self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as VRML.',
-                                label='VRML 2...',
-                                command=self.file_save_wrl)
-        
-        self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as COLLADA.',
-                                label='COLLADA...',
-                                command=self.file_save_dae)
-
-        self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as PovRay input.',
-                                label='POV-Ray...',
-                                command=self.file_save_pov)
-
-        self.menuBar.addcascademenu('File', 'SaveMovieAs', 'Save Movie As',
-                                    label='Save Movie As',tearoff=FALSE)
-
-        self.menuBar.addmenuitem('SaveMovieAs', 'command', 'Save all frames as an MPEG movie.',
-                                label='MPEG...',
-                                command=self.file_save_mpeg)
-
-        self.menuBar.addmenuitem('SaveMovieAs', 'separator', '')
-        
-        self.menuBar.addmenuitem('SaveMovieAs', 'command', 'Save all frames as images.',
-                                label='PNG Images...',
-                                command=self.file_save_mpng)
-
-        self.menuBar.addmenuitem('File', 'separator', '')
-        
-        addcascademenu('File', 'Logging', label='Log File')
-        addmenuitem('Logging', 'command', label='Open...', command=self.log_open)
-        addmenuitem('Logging', 'command', label='Resume...', command=self.log_resume)
-        addmenuitem('Logging', 'command', label='Append...', command=self.log_append)
-        addmenuitem('Logging', 'command', label='Close', command=self.cmd.log_close)
-
-        self.menuBar.addmenuitem('File', 'command', 'Run program or script.',
-                                label='Run Script...',
-                                command=self.file_run)
-        
-        addcascademenu('File', 'WorkDir', label='Working Directory')
-        addmenuitem('WorkDir', 'command', label='Change...',
-                command=self.cd_dialog)
-
-        if sys.platform == 'darwin':
-            file_browser = lambda: self.cmd.system('open .')
-        elif sys.platform == 'win32':
-            file_browser = lambda: self.cmd.system('explorer .')
-        else:
-            file_browser = None
-
-        if file_browser:
-            addmenuitem('WorkDir', 'command', label='File Browser',
-                    command=file_browser)
-
-        self.menuBar.addmenuitem('File', 'separator', '')
-
-        self.menuBar.addmenuitem('File', 'command', 'Edit pymolrc',
-                                label='Edit pymolrc',
-                                command=self.edit_pymolrc)
-
-        self.menuBar.addmenuitem('File', 'separator', '')
-
-        self.menuBar.addmenuitem('File', 'command', 'Quit PyMOL',
-                                label='Quit',
-                                command=self.confirm_quit)
-
-        addcascademenu('File', 'Reinit', label='Reinitialize')
-        addmenuitem('Reinit', 'command', label='Everything',
-                command=self.cmd.reinitialize)
-        addmenuitem('Reinit', 'command', label='Original Settings',
-                command=lambda: self.cmd.reinitialize('original_settings'))
-        addmenuitem('Reinit', 'command', label='Stored Settings',
-                command=lambda: self.cmd.reinitialize('settings'))
-        addmenuitem('Reinit', 'separator')
-        addmenuitem('Reinit', 'command', label='Store Current Settings',
-                command=lambda: self.cmd.reinitialize('store_defaults'))
-
-        self.menuBar.addmenu('Edit', 'Edit',tearoff=TRUE)
-
-        if sys.platform == 'win32':
-            if self.app.pymol.invocation.options.incentive_product:
                 self.menuBar.addmenuitem('Edit', 'command',
                                      'Copy Image',
                                      label='Copy Image to Clipboard',
                                      command = lambda s=self:s.cmd.copy_image(quiet=0))
 
-                self.menuBar.addmenuitem('Edit', 'separator', '')
-        
-
-        self.menuBar.addmenuitem('Edit', 'command', 'Undo',
-                                         label='Undo [Ctrl-Z]',
-                                         command = lambda s=self: s.cmd.do("_ undo"))
-
-        self.menuBar.addmenuitem('Edit', 'command', 'Redo',
-                                         label='Redo [Ctrl-Y]',
-                                         command = lambda s=self: s.cmd.do("_ redo"))
+                self.menuBar.addmenuitem('Edit', 'checkbutton',
+                                 'Auto-Copy Images',
+                                 label='Auto-Copy Images',
+                                 variable = self.setting.auto_copy_images,
+                                 )
 
         self.menuBar.addmenuitem('Edit', 'separator', '')
-        
+
         self.menuBar.addmenuitem('Edit', 'command',
                                  'To Copy Text: Use Ctrl-C in TclTk GUI',
                                  label='To copy text use Ctrl-C in the TclTk GUI',
@@ -1450,1745 +1184,6 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                  label='To paste text use Ctrl-V in the TckTk GUI',
                                          state='disabled',                               
                                 command =  None)
-
-        if sys.platform == 'win32':
-            if self.app.pymol.invocation.options.incentive_product:
-                self.menuBar.addmenuitem('Edit', 'separator', '')
-        
-                self.menuBar.addmenuitem('Edit', 'checkbutton',
-                                 'Auto-Copy Images',
-                                 label='Auto-Copy Images',
-                                 variable = self.setting.auto_copy_images,
-                                 )
-
-        self.menuBar.addmenu('Build', 'Build',tearoff=TRUE)
-
-        self.menuBar.addcascademenu('Build', 'Fragment', 'Fragment',
-                                             label='Fragment',tearoff=TRUE)
-        
-#      self.menuBar.addmenu('Fragment', 'Fragment')
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Acetylene',
-                                         label='Acetylene [Alt-J]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','acetylene',2,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Amide N->C',
-                                         label='Amide N->C [Alt-1]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','formamide',3,1)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Amide C->N',
-                                         label='Amide C->N [Alt-2]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','formamide',5,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Bromine',
-                                         label='Bromine [Ctrl-Shift-B]',
-                                         command = lambda s=self: s.cmd.do("_ replace Br,1,1"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Carbon',
-                                         label='Carbon [Ctrl-Shift-C]',
-                                         command = lambda s=self: s.cmd.do("_ replace C,4,4"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Carbonyl',
-                                         label='Carbonyl [Alt-0]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','formaldehyde',2,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Chlorine',
-                                         label='Chlorine [Ctrl-Shift-L]',
-                                         command = lambda s=self: s.cmd.do("_ replace Cl,1,1"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Cyclobutyl',
-                                         label='Cyclobutyl [Alt-4]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','cyclobutane',4,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Cyclopentyl',
-                                         label='Cyclopentyl [Alt-5]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','cyclopentane',5,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Cyclopentadiene',
-                                         label='Cyclopentadiene [Alt-8]',
-                                         command = lambda s=self: s.cmd.do(
-              "_ editor.attach_fragment('pk1','cyclopentadiene',5,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Cyclohexyl',
-                                         label='Cyclohexyl [Alt-6]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','cyclohexane',7,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Cycloheptyl',
-                                         label='Cycloheptyl [Alt-7]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','cycloheptane',8,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Fluorine',
-                                         label='Fluorine [Ctrl-Shift-F]',
-                                         command = lambda s=self: s.cmd.do("_ replace F,1,1"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Iodine',
-                                         label='Iodine [Ctrl-Shift-I]',
-                                         command = lambda s=self: s.cmd.do("_ replace I,1,1"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Methane',
-                                         label='Methane [Ctrl-Shift-M]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','methane',1,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Nitrogen',
-                                         label='Nitrogen [Ctrl-Shift-N]',
-                                         command = lambda s=self: s.cmd.do("_ replace N,4,3"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Oxygen',
-                                         label='Oxygen [Ctrl-Shift-O]',
-                                         command = lambda s=self: s.cmd.do("_ replace O,4,2"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Phenyl',
-                                         label='Phenyl [Alt-9]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','benzene',6,0)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Sulfer',
-                                         label='Sulfer [Ctrl-Shift-S]',
-                                         command = lambda s=self: s.cmd.do("_ replace S,2,2"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Sulfonyl',
-                                         label='Sulfonyl [Alt-3]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_fragment('pk1','sulfone',3,1)"))
-
-        self.menuBar.addmenuitem('Fragment', 'command', 'Phosphorus',
-                                         label='Phosphorus [Ctrl-Shift-P]',
-                                         command = lambda s=self: s.cmd.do("_ replace P,4,3"))
-
-#      self.menuBar.addmenu('Residue', 'Residue')
-
-        self.menuBar.addcascademenu('Build', 'Residue', 'Residue',
-                                             label='Residue',tearoff=TRUE)
-
- 
-        self.menuBar.addmenuitem('Residue', 'command', 'Acetyl',
-                                         label='Acetyl [Alt-B]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','ace')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Alanine',
-                                         label='Alanine [Alt-A]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','ala')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Amine',
-                                         label='Amine',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','nhh')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Aspartate',
-                                         label='Aspartate [Alt-D]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','asp')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Asparagine',
-                                         label='Asparagine [Alt-N]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','asn')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Arginine',
-                                         label='Arginine [Alt-R]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','arg')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Cysteine',
-                                         label='Cysteine [Alt-C]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','cys')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Glutamate',
-                                         label='Glutamate [Alt-E]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','glu')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Glutamine',
-                                         label='Glutamine [Alt-Q]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','gln')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Glycine',
-                                         label='Glycine [Alt-G]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','gly')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Histidine',
-                                         label='Histidine [Alt-H]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','his')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Isoleucine',
-                                         label='Isoleucine [Alt-I]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','ile')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Leucine',
-                                         label='Leucine [Alt-L]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','leu')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Lysine',
-                                         label='Lysine [Alt-K]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','lys')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Methionine',
-                                         label='Methionine [Alt-M]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','met')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'N-Methyl',
-                                         label='N-Methyl [Alt-Z]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','nme')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Phenylalanine',
-                                         label='Phenylalanine [Alt-F]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','phe')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Proline',
-                                         label='Proline [Alt-P]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','pro')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Serine',
-                                         label='Serine [Alt-S]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','ser')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Threonine',
-                                         label='Threonine [Alt-T]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','thr')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Tryptophan',
-                                         label='Tryptophan [Alt-W]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','trp')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Tyrosine',
-                                         label='Tyrosine [Alt-Y]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','tyr')"))
-
-        self.menuBar.addmenuitem('Residue', 'command', 'Valine',
-                                         label='Valine [Alt-V]',
-                                         command = lambda s=self: s.cmd.do(
-            "_ editor.attach_amino_acid('pk1','val')"))
-
-
-        self.menuBar.addmenuitem('Residue', 'separator', '')
-
-        var = self.setting.secondary_structure
-        for lab, val in [
-                ('Helix', 1),
-                ('Antiparallel Beta Sheet', 2),
-                ('Parallel Beta Sheet', 3),
-            ]:
-            addmenuitem('Residue', 'radiobutton', label=lab, value=val, variable=var)
-
-        self.menuBar.addmenuitem('Build', 'separator', '')
-
-        self.menuBar.addcascademenu('Build', 'Sculpting', 'Sculpting',
-                                             label='Sculpting',tearoff=TRUE)
-
-        self.menuBar.addmenuitem('Sculpting', 'checkbutton',
-                                 'Auto-Sculpt.',
-                                 label='Auto-Sculpting',
-                                variable = self.setting.auto_sculpt,
-                                )
-
-        self.menuBar.addmenuitem('Sculpting', 'checkbutton',
-                                 'Sculpting.',
-                                 label='Sculpting',
-                                variable = self.setting.sculpting,
-                                )
-
-        self.menuBar.addmenuitem('Sculpting', 'separator', '')
-        
-
-        self.menuBar.addmenuitem('Sculpting', 'command', 'Activate',
-                                         label='Activate',
-                                         command = lambda s=self: s.cmd.do("_ sculpt_activate all"))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', 'Deactivate',
-                                         label='Deactivate',
-                                         command = lambda s=self: s.cmd.do("_ sculpt_deactivate all"))
-
-        self.menuBar.addmenuitem('Sculpting', 'command', 'Clear Memory',
-                                         label='Clear Memory',
-                                         command = lambda s=self: s.cmd.do("_ sculpt_purge"))
-
-        self.menuBar.addmenuitem('Sculpting', 'separator', '')
-
-        addmenuitem('Sculpting', 'radiobutton', label='1 Cycle per Update', value=1,
-                variable=self.setting.sculpting_cycles)
-
-        for val in [3, 10, 33, 100, 333, 1000]:
-            addmenuitem('Sculpting', 'radiobutton', label='%d Cycles per Update' % val, value=val,
-                    variable=self.setting.sculpting_cycles)
-
-        self.menuBar.addmenuitem('Sculpting', 'separator', '')
-
-#define cSculptBond  0x01
-#define cSculptAngl  0x02
-#define cSculptPyra  0x04
-#define cSculptPlan  0x08
-#define cSculptLine  0x10
-#define cSculptVDW   0x20
-#define cSculptVDW14 0x40
-#define cSculptTors  0x80
-
-        var = self.setting.sculpt_field_mask
-        for lab, val in [
-                ('Bonds Only', 0x01),
-                ('Bonds & Angles Only', 0x01+0x02),
-                ('Local Geometry Only', 0x01+0x02+0x04+0x08+0x10),
-                ('All Except VDW', 0x01+0x02+0x04+0x08+0x10+0x80),
-                ('All Except 1-4 VDW & Torsions', 0x01+0x02+0x04+0x08+0x10+0x20),
-                ('All Terms', 0xFF),
-            ]:
-            addmenuitem('Sculpting', 'radiobutton', label=lab, value=val, variable=var)
-
-
-        self.menuBar.addmenuitem('Build', 'separator', '')
-        
-        self.menuBar.addmenuitem('Build', 'command', 'Cycle Bond Valence',
-                                         label='Cycle Bond Valence [Ctrl-Shift-W]',
-                                         command = lambda s=self: s.cmd.do("_ cycle_valence"))
-
-        self.menuBar.addmenuitem('Build', 'command', 'Fill Hydrogens',
-                                         label='Fill Hydrogens on (pk1) [Ctrl-Shift-R]',
-                                         command = lambda s=self: s.cmd.do("_ h_fill"))
-
-        self.menuBar.addmenuitem('Build', 'command', 'Invert',
-                                         label='Invert (pk2)-(pk1)-(pk3) [Ctrl-Shift-E]',
-                                         command = lambda s=self: s.cmd.do("_ invert"))
-
-        self.menuBar.addmenuitem('Build', 'command', 'Form Bond',
-                                         label='Create Bond (pk1)-(pk2) [Ctrl-Shift-T]',
-                                         command = lambda s=self: s.cmd.do("_ bond"))
-
-
-        self.menuBar.addmenuitem('Build', 'separator', '')
-
-        
-        self.menuBar.addmenuitem('Build', 'command', 'Remove (pk1)',
-                                         label='Remove (pk1) [Ctrl-Shift-D]',
-                                         command = lambda s=self: s.cmd.do("_ remove pk1"))
-
-        self.menuBar.addmenuitem('Build', 'separator', '')
-        
-        self.menuBar.addmenuitem('Build', 'command', 'Make Positive',
-                                 label='Make (pk1) Positive [Ctrl-Shift-K]',
-                                 command = lambda s=self: s.cmd.do("_ alter pk1,formal_charge=1.0"))
-        
-        self.menuBar.addmenuitem('Build', 'command', 'Make Negative',
-                                 label='Make (pk1) Negative [Ctrl-Shift-J]',
-                                 command = lambda s=self: s.cmd.do("_ alter pk1,formal_charge=-1.0"))
-        
-        self.menuBar.addmenuitem('Build', 'command', 'Make Neutral',
-                                 label='Make (pk1) Neutral [Ctrl-Shift-U]',
-                                 command = lambda s=self: s.cmd.do("_ alter pk1,formal_charge=-0.0"))
-
-        self.menuBar.addmenu('Movie', 'Movie Control',tearoff=TRUE)
-        
-        self.menuBar.addcascademenu('Movie', 'Append', 'Append',
-                                    label='Append')
-
-        self.menuBar.addmenuitem('Append', 'command', '0.25 second',label='0.25 second',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(0.25)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '0.5 second',label='0.5 second',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(0.5)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '1 second',label='1 second',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(1.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '2 seconds',label='2 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(2.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '3 seconds',label='3 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(3.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '4 seconds',label='4 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(4.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '6 seconds',label='6 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(6.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '8 seconds',label='8 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(8.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '12 seconds',label='12 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(12.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '18 seconds',label='18 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(18.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '24 seconds',label='24 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(24.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '30 seconds',label='30 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(30.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '48 seconds',label='48 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(48.0)"))
-
-        self.menuBar.addmenuitem('Append', 'command', '60 seconds',label='60 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(60.0)"))
-
-        self.menuBar.addcascademenu('Movie', 'Program', 'Program',
-                                    label='Program')
-
-        self.menuBar.addmenuitem('Movie', 'command', 'Update Last Program',label='Update Last Program',
-                                 command = lambda s=self: s.mvprg())
-
-        self.menuBar.addmenuitem('Movie', 'command', 'Remove Last Program',label='Remove Last Program',
-                                 command = lambda s=self: s.mvprg(-1))
-
-        self.menuBar.addcascademenu('Program', 'Camera', 'Camera Loop',
-                                    label='Camera Loop')
-
-        self.menuBar.addcascademenu('Camera', 'Nutate', 'Nutate',
-                                    label='Nutate')
-
-        self.menuBar.addmenuitem('Camera', 'separator', '')
-
-        self.menuBar.addmenuitem('Nutate', 'command', '15 deg. over 4 sec.',label='15 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(4,15,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'command', '15 deg. over 8 sec.',label='15 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(8,15,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'command', '15 deg. over 12 sec.',label='15 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(12,15,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'separator', '')
-
-        self.menuBar.addmenuitem('Nutate', 'command', '30 deg. over 4 sec.',label='30 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(4,30,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'command', '30 deg. over 8 sec.',label='30 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(8,30,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'command', '30 deg. over 12 sec.',label='30 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(12,30,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'command', '30 deg. over 16 sec.',label='30 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(16,30,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'separator', '')
-
-        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 8 sec.',label='60 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(8,60,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 16 sec.',label='60 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(16,60,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 24 sec.',label='60 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(24,60,start=%d)"))
-
-        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 32 sec.',label='60 deg. over 32 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(32,60,start=%d)"))
-
-        self.menuBar.addcascademenu('Camera', 'X-Rock', 'X-Rock',
-                                    label='X-Rock')
-        
-        self.menuBar.addmenuitem('X-Rock', 'command', '30 deg. over 2 sec.',label='30 deg. over 2 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(2,30,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '30 deg. over 4 sec.',label='30 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(4,30,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '30 deg. over 8 sec.',label='30 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,30,axis='x',start=%d)"))
-        
-        self.menuBar.addmenuitem('X-Rock', 'separator', '')
-        
-        self.menuBar.addmenuitem('X-Rock', 'command', '60 deg. over 4 sec.',label='60 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(4,60,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '60 deg. over 8 sec.',label='60 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,60,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '60 deg. over 16 sec.',label='60 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(16,60,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'separator', '')
-        
-        self.menuBar.addmenuitem('X-Rock', 'command', '90 deg. over 6 sec.',label='90 deg. over 6 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(6,90,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '90 deg. over 12 sec.',label='90 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(12,90,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '90 deg. over 24 sec.',label='90 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(24,90,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'separator', '')
-        
-        self.menuBar.addmenuitem('X-Rock', 'command', '120 deg. over 8 sec.',label='120 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,120,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '120 deg. over 16 sec.',label='120 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(16,120,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '120 deg. over 32 sec.',label='120 deg. over 32 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(32,120,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'separator', '')
-        
-        self.menuBar.addmenuitem('X-Rock', 'command', '180 deg. over 12 sec.',label='180 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(12,179.99,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '180 deg. over 24 sec.',label='180 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(24,179.99,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Rock', 'command', '180 deg. over 48 sec.',label='180 deg. over 48 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(48,179.99,axis='x',start=%d)"))
-
-        self.menuBar.addcascademenu('Camera', 'X-Roll', 'X-Roll',
-                                    label='X-Roll')
-
-        self.menuBar.addmenuitem('X-Roll', 'command', '4 seconds',label='4 seconds',
-                                 command = lambda s=self: s.mvprg("_ movie.add_roll(4.0,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('X-Roll', 'command', '8 seconds',label='8 seconds',
-                                 command = lambda s=self: s.mvprg("_ movie.add_roll(8.0,axis='x',start=%d)"))
-        
-        self.menuBar.addmenuitem('X-Roll', 'command', '16 seconds',label='16 seconds',
-                                 command = lambda s=self: s.mvprg("_ movie.add_roll(16.0,axis='x',start=%d)"))
-        
-        self.menuBar.addmenuitem('X-Roll', 'command', '32 seconds',label='32 seconds',
-                                 command = lambda s=self: s.mvprg("_ movie.add_roll(32.0,axis='x',start=%d)"))
-
-        self.menuBar.addmenuitem('Camera', 'separator', '')
-
-        self.menuBar.addcascademenu('Camera', 'Y-Rock', 'Y-Rock',
-                                    label='Y-Rock')
-        
-        self.menuBar.addmenuitem('Y-Rock', 'command', '30 deg. over 2 sec.',label='30 deg. over 2 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(2,30,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '30 deg. over 4 sec.',label='30 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(4,30,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '30 deg. over 8 sec.',label='30 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,30,axis='y',start=%d)"))
-        
-        self.menuBar.addmenuitem('Y-Rock', 'separator', '')
-        
-        self.menuBar.addmenuitem('Y-Rock', 'command', '60 deg. over 4 sec.',label='60 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(4,60,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '60 deg. over 8 sec.',label='60 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,60,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '60 deg. over 16 sec.',label='60 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(16,60,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'separator', '')
-        
-        self.menuBar.addmenuitem('Y-Rock', 'command', '90 deg. over 6 sec.',label='90 deg. over 6 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(6,90,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '90 deg. over 12 sec.',label='90 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(12,90,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '90 deg. over 24 sec.',label='90 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(24,90,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'separator', '')
-        
-        self.menuBar.addmenuitem('Y-Rock', 'command', '120 deg. over 8 sec.',label='120 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,120,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '120 deg. over 16 sec.',label='120 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(16,120,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '120 deg. over 32 sec.',label='120 deg. over 32 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(32,120,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'separator', '')
-        
-        self.menuBar.addmenuitem('Y-Rock', 'command', '180 deg. over 12 sec.',label='180 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(12,179.99,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '180 deg. over 24 sec.',label='180 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(24,179.99,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Rock', 'command', '180 deg. over 48 sec.',label='180 deg. over 48 sec.',
-                                 command = lambda s=self: s.mvprg("_ movie.add_rock(48,179.99,axis='y',start=%d)"))
-
-        self.menuBar.addcascademenu('Camera', 'Y-Roll', 'Y-Roll',
-                                    label='Y-Roll')
-
-        self.menuBar.addmenuitem('Y-Roll', 'command', '4 seconds',label='4 seconds',
-                                 command = lambda s=self: s.mvprg("_ movie.add_roll(4.0,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Y-Roll', 'command', '8 seconds',label='8 seconds',
-                                 command = lambda s=self: s.mvprg("_ movie.add_roll(8.0,axis='y',start=%d)"))
-        
-        self.menuBar.addmenuitem('Y-Roll', 'command', '16 seconds',label='16 seconds',
-                                 command = lambda s=self: s.mvprg("_ movie.add_roll(16.0,axis='y',start=%d)"))
-        
-        self.menuBar.addmenuitem('Y-Roll', 'command', '32 seconds',label='32 seconds',
-                                 command = lambda s=self: s.mvprg("_ movie.add_roll(32.0,axis='y',start=%d)"))
-
-        self.menuBar.addmenuitem('Program', 'separator', '')
-        
-        self.menuBar.addcascademenu('Program', 'Scene Loop', 'Scene Loop',
-                                    label='Scene Loop')
-
-        for label, rock in [('Nutate', 4), ('X-Rock', 2), ('Y-Rock', 1)]:
-            mlabel = 'SL-' + label
-            self.menuBar.addcascademenu('Scene Loop', mlabel, label, label=label)
-
-            for angle, seconds in ((30, (2,4,8)), (60, (4,8,16)), (90, (6,12,24)), (120, (8,16,32))):
-                if angle != 30:
-                    self.menuBar.addmenuitem(mlabel, 'separator', '')
-                for sec in seconds:
-                    label = '%d deg. over %d sec.' % (angle, sec)
-                    self.menuBar.addmenuitem(mlabel, 'command', label, label=label,
-                            command=self.mvprg_scene_loop(sec, rock, angle))
-
-        self.menuBar.addcascademenu('Scene Loop', 'No-Motion', 'Steady',
-                                    label='Steady')
-
-        self.menuBar.addmenuitem('No-Motion', 'command', '1 second each',label='1 second each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,1.0,rock=0,start=%d)"))
-
-        self.menuBar.addmenuitem('No-Motion', 'command', '2 seconds each',label='2 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=0,start=%d)"))
-
-        self.menuBar.addmenuitem('No-Motion', 'command', '4 seconds each',label='4 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=0,start=%d)"))
-
-        self.menuBar.addmenuitem('No-Motion', 'command', '8 seconds each',label='8 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=0,start=%d)"))
-
-        self.menuBar.addmenuitem('No-Motion', 'command', '12 seconds each',label='12 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,12.0,rock=0,start=%d)"))
-
-        self.menuBar.addmenuitem('No-Motion', 'command', '16 seconds each',label='16 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,16.0,rock=0,start=%d)"))
-
-        self.menuBar.addmenuitem('No-Motion', 'command', '24 seconds each',label='24 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=0,start=%d)"))
-
-        self.menuBar.addmenuitem('Program', 'separator', '')
-
-        self.menuBar.addcascademenu('Program', 'StateLoop', 'State Loop',
-                                    label='State Loop')
-
-        self.menuBar.addcascademenu('Program', 'StateSweep', 'State Sweep',
-                                    label='State Sweep')
-
-        speed_list = [ 1, 2, 3, 4, 8, 16 ]
-        pause_list = [ 0, 1, 2, 4 ]
-        
-        for speed in speed_list:
-            submenu1_id = 'StateLoop' + '%d'%speed
-            submenu2_id = 'StateSweep' + '%d'%speed
-
-            if speed==1:
-                submenu_title = "Full Speed"
-            else:
-                submenu_title = "1/%d Speed"%speed
-
-            self.menuBar.addcascademenu('StateLoop', submenu1_id, label=submenu_title)
-            self.menuBar.addcascademenu('StateSweep', submenu2_id, label=submenu_title)
-              
-            for pause in pause_list:
-                if not pause:
-                    item_name = "no pause"
-                else:
-                    item_name = "%d second pause"%pause
-                
-                self.menuBar.addmenuitem(submenu1_id, 'command', item_name,
-                                         label=item_name,
-                                         command = lambda
-                                         s=self, st="_ movie.%s(%d,%d"%
-                                          ("add_state_loop", speed, pause): 
-                                         s.mvprg(st+",start=%d)"))
-
-                self.menuBar.addmenuitem(submenu2_id, 'command', item_name,
-                                         label=item_name,
-                                         command = lambda
-                                         s=self, st="_ movie.%s(%d,%d"%
-                                          ("add_state_sweep", speed, pause): 
-                                         s.mvprg(st+",start=%d)"))
-
-        self.menuBar.addmenuitem('Movie', 'separator', '')
-
-        self.menuBar.addmenuitem('Movie', 'command', 'Reset',label='Reset',
-                                 command = lambda s=self: s.cmd.do("_ mset;rewind;"))
-
-        self.menuBar.addmenuitem('Movie', 'separator', '')
-
-        self.menuBar.addcascademenu('Movie', 'Frame Rate', 'Playback Frame Rate',
-                                    label='Frame Rate')
-
-        for val in [30, 15, 5, 1, 0.3]:
-            addmenuitem('Frame Rate', 'radiobutton', label=str(val) + ' FPS',
-                    value=val, variable=self.setting.movie_fps)
-
-        self.menuBar.addmenuitem('Frame Rate', 'separator', '')
-
-        self.menuBar.addmenuitem('Frame Rate', 'checkbutton',
-                                 'Show Frame Frame.',
-                                 label='Show Frame Rate',
-                                 variable = self.setting.show_frame_rate,
-                                 )
-        
-        self.menuBar.addmenuitem('Frame Rate', 'command', 'Reset Meter',
-                                         label='Reset Meter',
-                                         command = lambda s=self: s.cmd.do("_ meter_reset"))
-
-        self.menuBar.addmenuitem('Movie', 'separator', '')
-
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Auto Interpolate',
-                                 label='Auto Interpolate',
-                                 variable = self.setting.movie_auto_interpolate,
-                                 )
-
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Show Panel',
-                                 label='Show Panel',
-                                 variable = self.setting.movie_panel,
-                                 )
-
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Loop Frames',
-                                 label='Loop Frames',
-                                 variable = self.setting.movie_loop,
-                                 )
-
-
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Photorealistic images.',
-                                 label='Draw Frames',
-                                 variable = self.setting.draw_frames,
-                                 )
-
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Photorealistic images.',
-                                 label='Ray Trace Frames',
-                                 variable = self.setting.ray_trace_frames,
-                                 )
-
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Save images in memory.',
-                                 label='Cache Frame Images',
-                                variable = self.setting.cache_frames,
-                                )
-
-        self.menuBar.addmenuitem('Movie', 'command', 'Clear Image Cache',
-                                         label='Clear Image Cache',
-                                         command = lambda s=self: s.cmd.mclear())
-
-        self.menuBar.addmenuitem('Movie', 'separator', '')
-
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Static Singletons Objects',
-                                 label='Static Singletons',
-                                variable = self.setting.static_singletons,
-                                )
-
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Superimpose all molecular states.',
-                                 label='Show All States',
-                                variable = self.setting.all_states,
-                                )
-
-        self.menuBar.addmenu('Display', 'Display Control',tearoff=TRUE)
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Sequence',
-                                 label='Sequence',
-                                variable = self.setting.seq_view,
-                                )
-
-        self.menuBar.addcascademenu('Display', 'Sequence', 'Sequence Mode',
-                                         label='Sequence Mode')
-
-
-
-        var = self.setting.seq_view_format
-        for lab, val in [
-                ('Residue Codes', 0),
-                ('Residue Names', 1),
-                ('Chain Identifiers', 3),
-                ('Atom Names', 2),
-                ('States', 4),
-            ]:
-            addmenuitem('Sequence', 'radiobutton', label=lab, value=val, variable=var)
-
-        self.menuBar.addmenuitem('Sequence', 'separator', '')
-
-        var = self.setting.seq_view_label_mode
-        for lab, val in [
-                ('All Residue Numbers', 2),
-                ('Top Sequence Only', 1),
-                ('Object Names Only', 0),
-                ('No Labels', 3),
-            ]:
-            addmenuitem('Sequence', 'radiobutton', label=lab, value=val, variable=var)
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Stereo',
-                                 label='Stereo',
-                                variable = self.setting.stereo,
-                                )
-        
-#      self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
-#                               label='Stereo On',
-#                              command = lambda s=self: s.cmd.do("_ stereo on"))
-
-#      self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
-#                               label='Stereo Off',
-#                               command = lambda s=self: s.cmd.do("_ stereo off"))
-
-        self.menuBar.addcascademenu('Display', 'Stereo', 'Stereo Mode',
-                                         label='Stereo Mode')
-
-        self.menuBar.addmenuitem('Stereo', 'command', 'Anaglyph Stereo',
-                                         label='Anaglyph Stereo',
-                                         command = lambda s=self: s.cmd.do("_ stereo anaglyph"))
-
-        self.menuBar.addmenuitem('Stereo', 'command', 'Cross-Eye Stereo',
-                                         label='Cross-Eye Stereo',
-                                         command = lambda s=self: s.cmd.do("_ stereo crosseye"))
-
-        self.menuBar.addmenuitem('Stereo', 'command', 'Wall-Eye Stereo',
-                                         label='Wall-Eye Stereo',
-                                         command = lambda s=self: s.cmd.do("_ stereo walleye"))
-
-        self.menuBar.addmenuitem('Stereo', 'command', 'Quad-Buffered Stereo',
-                                         label='Quad-Buffered Stereo',
-                                         command = lambda s=self: s.cmd.do("_ stereo quadbuffer"))
-
-        self.menuBar.addmenuitem('Stereo', 'command', 'Zalman Stereo',
-                                         label='Zalman Stereo',
-                                         command = lambda s=self: s.cmd.do("_ stereo byrow"))
-
-        self.menuBar.addmenuitem('Stereo', 'separator', '')
-
-
-        self.menuBar.addmenuitem('Stereo', 'command', 'Swap Sides',
-                                         label='Swap Sides',
-                                         command = lambda s=self: s.cmd.do("_ stereo swap"))
-
-        self.menuBar.addmenuitem('Display', 'separator', '')
-        
-        self.menuBar.addcascademenu('Display', 'Zoom', 'Zoom',
-                                             label='Zoom')
-
-        self.menuBar.addmenuitem('Zoom', 'command', '4 Angstrom Sphere',
-                                         label='4 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,4,animate=-1"))
-
-        self.menuBar.addmenuitem('Zoom', 'command', '6 Angstrom Sphere',
-                                         label='6 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,6,animate=-1"))
-
-        self.menuBar.addmenuitem('Zoom', 'command', '8 Angstrom Sphere',
-                                         label='8 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,8,animate=-1"))
-
-        self.menuBar.addmenuitem('Zoom', 'command', '12 Angstrom Sphere',
-                                         label='12 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,12,animate=-1"))
-
-        self.menuBar.addmenuitem('Zoom', 'command', '20 Angstrom Sphere',
-                                         label='20 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,20,animate=-1"))
-
-        self.menuBar.addmenuitem('Zoom', 'command', 'All',
-                                         label='All',
-                                         command = lambda s=self: s.cmd.do("_ zoom all,animate=-1"))
-
-        self.menuBar.addmenuitem('Zoom', 'command', 'Complete',
-                                         label='Complete',
-                                         command = lambda s=self: s.cmd.do("_ zoom all,complete=1,animate=-1"))
-
-        self.menuBar.addcascademenu('Display', 'Clip', 'Clip',
-                                             label='Clip')
-
-        self.menuBar.addmenuitem('Clip', 'command', 'Nothing',
-                                         label='Nothing',
-                                         command = lambda s=self: s.cmd.do("_ clip atoms,5,all"))
-
-        self.menuBar.addmenuitem('Clip', 'command', '8 Angstrom Slab',
-                                         label='8 Angstrom Slab',
-                                         command = lambda s=self: s.cmd.do("_ clip slab,8"))
-
-        self.menuBar.addmenuitem('Clip', 'command', '12 Angstrom Slab',
-                                         label='12 Angstrom Slab',
-                                         command = lambda s=self: s.cmd.do("_ clip slab,10"))
-
-        self.menuBar.addmenuitem('Clip', 'command', '16 Angstrom Slab',
-                                         label='16 Angstrom Slab',
-                                         command = lambda s=self: s.cmd.do("_ clip slab,15"))
-
-        self.menuBar.addmenuitem('Clip', 'command', '20 Angstrom Slab',
-                                         label='20 Angstrom Slab',
-                                         command = lambda s=self: s.cmd.do("_ clip slab,20"))
-
-        self.menuBar.addmenuitem('Clip', 'command', '30 Angstrom Slab',
-                                         label='30 Angstrom Slab',
-                                         command = lambda s=self: s.cmd.do("_ clip slab,30"))
-
-
-        self.menuBar.addmenuitem('Display', 'separator', '')
-
-        self.menuBar.addcascademenu('Display', 'Background', 'Background',
-                                             label='Background')
-
-        self.menuBar.addmenuitem('Background', 'checkbutton',
-                                 'Opaque Background Color',
-                                 label='Opaque',
-                                variable = self.setting.opaque_background,
-                                )
-
-        self.menuBar.addmenuitem('Background', 'checkbutton',
-                                 'Show Alpha Checker',
-                                 label='Show Alpha Checker',
-                                variable = self.setting.show_alpha_checker,
-                                )
-
-        self.menuBar.addmenuitem('Background', 'separator', '')
-        
-        var = self.setting.bg_rgb
-        for lab, val in [
-                ('White', 0), # white
-                ('Light Grey', 134), # grey80
-                ('Grey', 104), # grey50
-                ('Black', 1), # black
-            ]:
-            addmenuitem('Background', 'radiobutton', label=lab, value=val, variable=var)
-
-
-        self.menuBar.addcascademenu('Display', 'Color Space', 'Color Space',
-                                             label='Color Space')
-
-        self.menuBar.addmenuitem('Color Space', 'command', 'CMYK (for publications)',
-                                         label='CMYK (for publications)',
-                                         command = lambda s=self: s.cmd.do("_ cmd.space('cmyk')"))
-
-        self.menuBar.addmenuitem('Color Space', 'command', 'PyMOL (for video & web)',
-                                         label='PyMOL (for video & web)',
-                                         command = lambda s=self: s.cmd.do("_ cmd.space('pymol')"))
-
-        self.menuBar.addmenuitem('Color Space', 'command', 'RGB (default)',
-                                         label='RGB (default)',
-                                         command = lambda s=self: s.cmd.do("_ cmd.space('rgb')"))
-
-        self.menuBar.addcascademenu('Display', 'Performance', 'Quality',
-                                             label='Quality')
-
-        self.menuBar.addmenuitem('Performance', 'command', 'Maximum Performance',
-                                         label='Maximum Performance',
-                                         command = lambda s=self: s.cmd.do("_ util.performance(100)"))
-
-        self.menuBar.addmenuitem('Performance', 'command', 'Reasonable Performance',
-                                         label='Reasonable Performance',
-                                         command = lambda s=self: s.cmd.do("_ util.performance(66)"))
-        
-        self.menuBar.addmenuitem('Performance', 'command', 'Reasonable Quality',
-                                         label='Reasonable Quality',
-                                         command = lambda s=self: s.cmd.do("_ util.performance(33)"))
-
-        self.menuBar.addmenuitem('Performance', 'command', 'Maximum Quality',
-                                         label='Maximum Quality',
-                                         command = lambda s=self: s.cmd.do("_ util.performance(0)"))
-
-
-        self.menuBar.addcascademenu('Display', 'Grid', 'Grid',
-                                             label='Grid')
-
-        var = self.setting.grid_mode
-        for lab, val in [
-                ('By Object', 1),
-                ('By State', 2),
-                ('By Object-State', 3),
-                ('Disable', 0),
-            ]:
-            addmenuitem('Grid', 'radiobutton', label=lab, value=val, variable=var)
-        
-        self.menuBar.addmenuitem('Display', 'separator', '')
-        
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Disable perspective.',
-                                 label='Orthoscopic View',
-                                variable = self.setting.orthoscopic)
-
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Show Valences.',
-                                 label='Show Valences',
-                                variable = self.setting.valence,
-                                )
-
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Smooth Lines.',
-                                 label='Smooth Lines',
-                                variable = self.setting.line_smooth,
-                                )
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Depth Cue (Fogging).',
-                                 label='Depth Cue',
-                                variable = self.setting.depth_cue,
-                                )
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Two Sided Lighting.',
-                                 label='Two Sided Lighting',
-                                variable = self.setting.two_sided_lighting,
-                                )
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Specular Reflections.',
-                                 label='Specular Reflections',
-                                variable = self.setting.specular,
-                                onvalue=1.0, offvalue=0.0,
-                                )
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Animation',
-                                 label='Animation',
-                                variable = self.setting.animation,
-                                )
-
-        self.menuBar.addmenuitem('Display', 'checkbutton',
-                                 'Roving Detail',
-                                 label='Roving Detail',
-                                variable = self.setting.roving_detail,
-                                )
-
-        self.menuBar.addmenu('Setting', 'Settings and Configuration',tearoff=TRUE)
-
-        self.menuBar.addmenuitem('Setting', 'command',
-                                 'Edit PyMOL Settings',
-                                 label='Edit All...',
-                                         command = lambda s=self: SetEditor(s))
-
-        self.menuBar.addmenuitem('Setting', 'command',
-                                 'Edit PyMOL Colors',
-                                 label='Colors...',
-                                         command = lambda s=self: ColorEditor(s))
-
-        addmenuitem('Setting', 'separator', '')
-
-        self.menuBar.addcascademenu('Setting', 'Label', 'Label',
-                                             label='Label')
-
-        self.menuBar.addcascademenu('Label', 'LabelSize', 'Size',
-                                             label='Size',tearoff=TRUE)
-
-        for i in [10., 14., 18., 24., 36., 48., 72.]:
-            addmenuitem('LabelSize', 'radiobutton', label='%.0f Point' % i,
-                    value=i, variable=self.setting.label_size)
-
-        self.menuBar.addmenuitem('LabelSize', 'separator', '')
-
-        for i in [-.3, -.5, -1., -2., -4.]:
-            addmenuitem('LabelSize', 'radiobutton', label='%.1f Angstrom' % (-i),
-                    value=i, variable=self.setting.label_size)
-
-        self.menuBar.addcascademenu('Label', 'LabelFont', 'Font',
-                                    label='Font', tearoff=TRUE)
-        
-        for label, val in [
-                ('Sans', 5),
-                ('Sans Oblique', 6),
-                ('Sans Bold', 7),
-                ('Sans Bold Oblique', 8),
-                ('Serif', 9),
-                ('Serif Oblique',17),
-                ('Serif Bold', 10),
-                ('Serif Bold Oblique', 18),
-                ('Mono', 11),
-                ('Mono Oblique', 12),
-                ('Mono Bold', 13),
-                ('Mono Bold Oblique', 14),
-                ('Gentium Roman', 15),
-                ('Gentium Italic', 16),
-                ]:
-            addmenuitem('LabelFont', 'radiobutton', label=label, value=val,
-                    variable=self.setting.label_font_id)
-
-        self.menuBar.addcascademenu('Setting', 'Cartoon', 'Cartoon',
-                                             tearoff=TRUE,
-                                             label='Cartoon')
-
-        self.menuBar.addcascademenu('Cartoon', 'Rings', 'Rings & Bases',
-                                             label='Rings & Bases')
-
-        for label, val in [
-                ('Filled Rings (Round Edges)', 1),
-                ('Filled Rings (Flat Edges)', 2),
-                ('Filled Rings (with Border)', 3),
-                ('Spheres', 4),
-                ('Base Ladders', 0),
-                ]:
-            addmenuitem('Rings', 'radiobutton', label=label, value=val,
-                    variable=self.setting.cartoon_ring_mode)
-
-        self.menuBar.addmenuitem('Rings', 'separator', '')
-
-        for label, val in [
-                ('Bases & Sugars', 1),
-                ('Bases Only', 2),
-                ('Non-protein Rings', 3),
-                ('All Rings', 4),
-                ]:
-            addmenuitem('Rings', 'radiobutton', label=label, value=val,
-                    variable=self.setting.cartoon_ring_finder)
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Side Chain Helper',
-                                 label='Side Chain Helper',
-                                variable = self.setting.cartoon_side_chain_helper,
-                                )
-
-        self.menuBar.addmenuitem('Rings', 'separator', '')
-
-        for label, val in [
-                ('Transparent Rings', .5),
-                ('Default', -1.),
-                ]:
-            addmenuitem('Rings', 'radiobutton', label=label, value=val,
-                    variable=self.setting.cartoon_ring_transparency)
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Round Helices',
-                                 label='Round Helices',
-                                variable = self.setting.cartoon_round_helices,
-                                )
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Fancy Helices',
-                                 label='Fancy Helices',
-                                variable = self.setting.cartoon_fancy_helices,
-                                )
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Cylindrical Helices',
-                                 label='Cylindrical Helices',
-                                variable = self.setting.cartoon_cylindrical_helices,
-                                )
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Flat Sheets',
-                                 label='Flat Sheets',
-                                variable = self.setting.cartoon_flat_sheets,
-                                )
-
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Fancy Sheets',
-                                 label='Fancy Sheets',
-                                variable = self.setting.cartoon_fancy_sheets,
-                                )
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Smooth Loops',
-                                 label='Smooth Loops',
-                                variable = self.setting.cartoon_smooth_loops,
-                                )
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Discrete Colors',
-                                 label='Discrete Colors',
-                                variable = self.setting.cartoon_discrete_colors,
-                                )
-
-        self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                                 'Highlight Color',
-                                 label='Highlight Color',
-                                variable = self.setting.cartoon_highlight_color,
-                                onvalue=104, offvalue=-1,
-                                )
-
-        addcascademenu('Cartoon', 'CartoonSampling', label='Sampling')
-        addmenuitem('CartoonSampling', 'radiobutton', label="Atom count dependent",
-                value=-1, variable=self.setting.cartoon_sampling)
-
-        for i in [2, 7, 14]:
-            addmenuitem('CartoonSampling', 'radiobutton', label=str(i),
-                    value=i, variable=self.setting.cartoon_sampling)
-
-        addcascademenu('Cartoon', 'CartoonGapCutoff', label='Gap Cutoff')
-
-        for i in [0, 5, 10, 20]:
-            addmenuitem('CartoonGapCutoff', 'radiobutton', label=str(i),
-                    value=i, variable=self.setting.cartoon_gap_cutoff)
-
-        self.menuBar.addcascademenu('Setting', 'Ribbon', 'Ribbon',
-                                             label='Ribbon')
-
-        self.menuBar.addmenuitem('Ribbon', 'checkbutton',
-                                 'Side Chain Helper',
-                                 label='Side Chain Helper',
-                                variable = self.setting.ribbon_side_chain_helper,
-                                )
-        
-        self.menuBar.addmenuitem('Ribbon', 'checkbutton',
-                                 'Trace Atoms',
-                                 label='Trace Atoms',
-                                variable = self.setting.ribbon_trace_atoms,
-                                )
-
-        addmenuitem('Ribbon', 'separator')
-        addmenuitem('Ribbon', 'radiobutton', label='As Lines', value=0,
-                variable=self.setting.ribbon_as_cylinders)
-        addmenuitem('Ribbon', 'radiobutton', label='As Cylinders', value=1,
-                variable=self.setting.ribbon_as_cylinders)
-        addcascademenu('Ribbon', 'RibbonRadius', label='Cylinder Radius')
-        addmenuitem('RibbonRadius', 'radiobutton', label='Match Line Width',
-                value=0., variable=self.setting.ribbon_radius)
-        for val in [.2, .5, 1.]:
-            addmenuitem('RibbonRadius', 'radiobutton', label='%.1f Angstrom' % val,
-                    value=val, variable=self.setting.ribbon_radius)
-
-        self.menuBar.addcascademenu('Setting', 'Surface', 'Surface',
-                                             label='Surface')
-
-        self.menuBar.addcascademenu('Surface', 'Surface Color', 'Color',
-                                    label='Color')
-
-        for label, val in [
-                ('White', 0),           # white
-                ('Light Grey', 134),    # grey80
-                ('Grey', 24),           # grey
-                ('Default (Atomic)', -1),
-                ]:
-            addmenuitem('Surface Color', 'radiobutton', label=label, value=val,
-                    variable=self.setting.surface_color)
-
-        addmenuitem('Surface', 'separator', '')
-
-        for label, val in [
-                ('Dot', 1),
-                ('Wireframe', 2),
-                ('Solid', 0),
-                ]:
-            addmenuitem('Surface', 'radiobutton', label=label, value=val,
-                    variable=self.setting.surface_type)
-
-        self.menuBar.addmenuitem('Surface', 'separator', '')
-        
-        for label, val in [
-                ('Exterior (Normal)', 0),
-                ('Cavities & Pockets Only', 1),
-                ('Cavities & Pockets (Culled)', 2),
-                ]:
-            addmenuitem('Surface', 'radiobutton', label=label, value=val,
-                    variable=self.setting.surface_cavity_mode)
-
-        self.menuBar.addcascademenu('Surface', 'Detection', 'Cavity Detection Radius',
-                                    label='Cavity Detection Radius')
-
-        for val in [7]:
-            addmenuitem('Detection', 'radiobutton', label='%d Angstrom' % val, value=float(val),
-                    variable=self.setting.surface_cavity_radius)
-
-        for val in [3, 4, 5, 6, 8, 10, 20]:
-            addmenuitem('Detection', 'radiobutton', label='%d Solvent Radii' % val, value=val * -1.0,
-                    variable=self.setting.surface_cavity_radius)
-
-        self.menuBar.addcascademenu('Surface', 'Cutoff', 'Cavity Detection Cutoff',
-                                    label='Cavity Detection Cutoff')
-
-        for val in [1, 2, 3, 4, 5]:
-            addmenuitem('Cutoff', 'radiobutton', label='%d Solvent Radii' % val, value=val * -1.0,
-                    variable=self.setting.surface_cavity_cutoff)
-
-        self.menuBar.addmenuitem('Surface', 'separator', '')
-
-        self.menuBar.addmenuitem('Surface', 'checkbutton',
-                                 'Solvent Accessible',
-                                 label='Solvent Accessible',
-                                 variable = self.setting.surface_solvent,
-                                 )
-
-        addmenuitem('Surface', 'separator', '')
-
-        addmenuitem('Surface', 'checkbutton', label='Smooth Edges (Incentive-Only)',
-                state='disabled',
-                variable=self.setting.surface_smooth_edges)
-        addmenuitem('Surface', 'checkbutton', label='Edge Proximity',
-                variable=self.setting.surface_proximity)
-
-        self.menuBar.addmenuitem('Surface', 'separator', '')
-        
-        for label, val in [
-                ('Ignore None', 1),
-                ('Ignore HETATMs', 0),
-                ('Ignore Hydrogens', 2),
-                ('Ignore Unsurfaced', 3),
-                ]:
-            addmenuitem('Surface', 'radiobutton', label=label, value=val,
-                    variable=self.setting.surface_mode)
-
-        self.menuBar.addcascademenu('Setting', 'Volume', label='Volume')
-
-        self.menuBar.addmenuitem('Volume', 'checkbutton', label='Pre-integrated Rendering (Incentive-Only)',
-                                state='disabled',
-                                variable = self.setting.volume_mode)
-
-        self.menuBar.addcascademenu('Volume', 'VolumeLayers', label='Number of Layers')
-
-        for i in (100., 256., 500., 1000.):
-            self.menuBar.addmenuitem('VolumeLayers', 'radiobutton', label='%.0f' % i,
-                    value=i, variable=self.setting.volume_layers)
-
-        self.menuBar.addcascademenu('Setting', 'Transparency', 'Transparency',
-                                             label='Transparency')
-
-        self.transparency_menu('CartoonTransparency','Cartoon','cartoon_transparency')
-        self.transparency_menu('SurfaceTransparency','Surface','transparency')
-        self.transparency_menu('StickTransparency','Stick','stick_transparency')
-        self.transparency_menu('SphereTransparency','Sphere','sphere_transparency')      
-
-        self.menuBar.addmenuitem('Transparency', 'separator', '')
-
-        for label, val, command in [
-                ('Uni-Layer',       2, '_ set backface_cull, 1; set two_sided_lighting, 0'),
-                ('Multi-Layer',     1, '_ set backface_cull, 0; set two_sided_lighting, 1'),
-                ('Multi-Layer (Real-time OIT)', 3, ''),
-                ('Fast and Ugly',   0, '_ set backface_cull, 1; set two_sided_lighting, 0'),
-                ]:
-            addmenuitem('Transparency', 'radiobutton', label=label,
-                state='disabled' if val == 3 else 'normal', # not available in Open-Source PyMOL
-                value=val, variable=self.setting.transparency_mode,
-                command = lambda c=command: self.cmd.do(c))
-                
-        addmenuitem('Transparency', 'separator', '')
-        addmenuitem('Transparency', 'checkbutton', label='Angle-dependent',
-                variable = self.setting.ray_transparency_oblique,
-                onvalue=1.0, offvalue=0.0)
-
-        self.menuBar.addcascademenu('Setting', 'Rendering', 'Rendering',
-                                             label='Rendering')
-
-        addmenuitem('Rendering', 'checkbutton', label='OpenGL 2.0 Shaders',
-                                variable = self.setting.use_shaders)
-
-        addmenuitem('Rendering', 'separator', '')
-
-        self.menuBar.addmenuitem('Rendering', 'checkbutton',
-                                 'Smooth raytracing.',
-                                 label='Antialias (Ray Tracing)',
-                                variable = self.setting.antialias,
-                                )
-
-        self.menuBar.addmenuitem('Rendering', 'command', 'Modernize',
-                                 label='Modernize',
-                                 command = lambda s=self: s.util.modernize_rendering(1,s.cmd))
-
-        self.menuBar.addmenuitem('Rendering', 'separator', '')
-        
-        self.menuBar.addcascademenu('Rendering', 'Shadows', 'Shadows',
-                                         label='Shadows')
-
-        self.menuBar.addmenuitem('Shadows', 'command', 'None',
-                                         label='None',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('none')"))
-
-        self.menuBar.addmenuitem('Shadows', 'command', 'Light',
-                                         label='Light',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('light')"))
-
-        self.menuBar.addmenuitem('Shadows', 'command', 'Medium',
-                                         label='Medium',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('medium')"))
-
-        self.menuBar.addmenuitem('Shadows', 'command', 'Heavy',
-                                         label='Heavy',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('heavy')"))
-
-        self.menuBar.addmenuitem('Shadows', 'command', 'Black',
-                                         label='Black',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('black')"))
-
-        self.menuBar.addmenuitem('Shadows', 'separator', '')
-        
-        self.menuBar.addmenuitem('Shadows', 'command', 'Matte',
-                                         label='Matte',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('matte')"))
-        self.menuBar.addmenuitem('Shadows', 'command', 'Soft',
-                                         label='Soft',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('soft')"))
-
-        self.menuBar.addmenuitem('Shadows', 'command', 'Occlusion',
-                                        label='Occlusion',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('occlusion')"))
-
-        self.menuBar.addmenuitem('Shadows', 'command', 'Occlusion 2',
-                                        label='Occlusion 2',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('occlusion2')"))
-
-
-        self.menuBar.addcascademenu('Rendering', 'Texture', 'Texture',
-                                         label='Texture')
-
-        for label, val in [
-                ('None', 0),
-                ('Matte 1', 1),
-                ('Matte 2', 4),
-                ('Swirl 1', 2),
-                ('Swirl 2', 3),
-                ('Fiber', 5),
-                ]:
-            addmenuitem('Texture', 'radiobutton', label=label, value=val,
-                    variable=self.setting.ray_texture)
-
-        self.menuBar.addcascademenu('Rendering', 'Interior Texture', 'Interior Texture',
-                                         label='Interior Texture')
-
-        for label, val in [
-                ('Default', -1),
-                ('None', 0),
-                ('Matte 1', 1),
-                ('Matte 2', 4),
-                ('Swirl 1', 2),
-                ('Swirl 2', 3),
-                ('Fiber', 5),
-                ]:
-            addmenuitem('Interior Texture', 'radiobutton', label=label, value=val,
-                    variable=self.setting.ray_interior_texture)
-
-        self.menuBar.addcascademenu('Rendering', 'Memory', 'Memory',
-                                         label='Memory')
-
-
-        for label, val in [
-                ('Use Less (slower)', 70),
-                ('Use Standard Amount', 100),
-                ('Use More (faster)', 170),
-                ('Use Even More', 230),
-                ('Use Most', 300),
-                ]:
-            addmenuitem('Memory', 'radiobutton', label=label, value=val,
-                    variable=self.setting.hash_max)
-
-        self.menuBar.addmenuitem('Rendering', 'separator', '')
-
-        self.menuBar.addmenuitem('Rendering', 'checkbutton',
-                                 'Cull Backfaces when Rendering',
-                                 label='Cull Backfaces',
-                                variable = self.setting.backface_cull,
-                                )
-
-
-        self.menuBar.addmenuitem('Rendering', 'checkbutton',
-                                 'Opaque Interior Colors',
-                                 label='Opaque Interiors',
-                                variable = self.setting.ray_interior_color,
-                                onvalue=74, offvalue=-1,
-                                )
-
-        self.menuBar.addmenuitem('Setting', 'separator', '')
-
-        self.menuBar.addmenuitem('Setting', 'command', label='GUI Font Size (Dialog)',
-                command=self.inc_fontsize_dialog)
-
-        self.menuBar.addcascademenu('Setting', 'Control', 'Control Size',
-                                             label='Control Size')
-
-        for val in [12, 14, 16, 18, 20, 24, 30]:
-            addmenuitem('Control', 'radiobutton', label=str(val), value=val,
-                    variable=self.setting.internal_gui_control_size)
-
-        self.menuBar.addmenuitem('Setting', 'separator', '')
-        
-        
-        addcascademenu('Setting', 'PDBLoading', label='PDB File Loading')
-        addmenuitem('PDBLoading', 'checkbutton',
-                                         'Ignore PDB segi.',
-                                         label='Ignore PDB Segment Identifier',
-                                         variable = self.setting.ignore_pdb_segi,
-                                         )
-
-        addcascademenu('Setting', 'CIFLoading', label='mmCIF File Loading')
-        addmenuitem('CIFLoading', 'checkbutton', label='Use "auth" Identifiers',
-                variable = self.setting.cif_use_auth)
-        addmenuitem('CIFLoading', 'checkbutton', label='Load Assembly (Biological Unit)',
-                variable = self.setting.assembly, onvalue="1", offvalue="")
-        addmenuitem('CIFLoading', 'checkbutton', label='Bonding by "Chemical Component Dictionary"',
-                variable = self.setting.connect_mode, onvalue=4)
-
-        addcascademenu('Setting', 'MapLoading', label='Map File Loading')
-        addmenuitem('MapLoading', 'checkbutton', label='Normalize CCP4 Maps',
-                variable = self.setting.normalize_ccp4_maps)
-        addmenuitem('MapLoading', 'checkbutton', label='Normalize O Maps',
-                variable = self.setting.normalize_o_maps)
-
-        addmenuitem('Setting', 'separator', '')
-
-        addcascademenu('Setting', 'AutoShow', label='Auto-Show ...', tearoff=TRUE)
-
-        addmenuitem('AutoShow', 'checkbutton',
-                label='Cartoon/Sticks/Spheres by Classification',
-                variable=self.setting.auto_show_classified)
-
-        addmenuitem('AutoShow', 'separator', '')
-
-        addmenuitem('AutoShow', 'checkbutton', label='Auto-Show Lines', variable=self.setting.auto_show_lines)
-        addmenuitem('AutoShow', 'checkbutton', label='Auto-Show Spheres', variable=self.setting.auto_show_spheres)
-        addmenuitem('AutoShow', 'checkbutton', label='Auto-Show Nonbonded', variable=self.setting.auto_show_nonbonded)
-
-        addmenuitem('AutoShow', 'separator', '')
-
-        addmenuitem('AutoShow', 'checkbutton',
-                                 'Auto-Show Selections.',
-                                 label='Auto-Show New Selections',
-                                variable = self.setting.auto_show_selections,
-                                )
-
-        addmenuitem('AutoShow', 'checkbutton',
-                                 'Auto-Hide Selections.',
-                                 label='Auto-Hide Selections',
-                                variable = self.setting.auto_hide_selections,
-                                )
-
-        self.menuBar.addmenuitem('Setting', 'checkbutton',
-                                 'Auto-Zoom.',
-                                 label='Auto-Zoom New Objects',
-                                variable = self.setting.auto_zoom,
-                                )
-
-        self.menuBar.addmenuitem('Setting', 'checkbutton',
-                                 'Auto-Remove Hydrogens.',
-                                 label='Auto-Remove Hydrogens',
-                                variable = self.setting.auto_remove_hydrogens,
-                                )
-
-        self.menuBar.addmenuitem('Setting', 'separator', '')
-
-        addmenuitem('Setting', 'checkbutton', label='Show Text / Hide Graphics [Esc]',
-                                variable = self.setting.text)
-
-        self.menuBar.addmenuitem('Setting', 'checkbutton',
-                                 'Overlay Text Output on Graphics',
-                                 label='Overlay Text',
-                                variable = self.setting.overlay,
-                                )
-
-        self.menuBar.addmenu('Scene', 'Scene Storage',tearoff=TRUE)
-
-        self.menuBar.addmenuitem('Scene', 'command', 'Next',
-                                         label='Next [PgDn]',
-                                         command = lambda s=self: s.cmd.scene('auto','next'))
-
-        self.menuBar.addmenuitem('Scene', 'command', 'Previous',
-                                         label='Previous [PgUp]',
-                                         command = lambda s=self: s.cmd.scene('auto','previous'))
-
-        self.menuBar.addmenuitem('Scene', 'separator', '')
-        
-        self.menuBar.addmenuitem('Scene', 'command', 'Append',
-                                         label='Append',
-                                         command = lambda s=self: s.cmd.scene('new','store'))
-
-        self.menuBar.addcascademenu('Scene', 'SceneAppend', label='Append...')
-        addmenuitem('SceneAppend', 'command', label='Camera',
-            command = lambda: self.cmd.scene('new', 'store', view=1, color=0, rep=0))
-        addmenuitem('SceneAppend', 'command', label='Color',
-            command = lambda: self.cmd.scene('new', 'store', view=0, color=1, rep=0))
-        addmenuitem('SceneAppend', 'command', label='Color & Camera',
-            command = lambda: self.cmd.scene('new', 'store', view=1, color=1, rep=0))
-        addmenuitem('SceneAppend', 'command', label='Reps',
-            command = lambda: self.cmd.scene('new', 'store', view=0, color=0, rep=1))
-        addmenuitem('SceneAppend', 'command', label='Reps & Color',
-            command = lambda: self.cmd.scene('new', 'store', view=0, color=1, rep=1))
-
-        self.menuBar.addmenuitem('Scene', 'command', 'Insert Before',
-                                         label='Insert (before)',
-                                         command = lambda s=self: s.cmd.scene('','insert_before'))
-
-        self.menuBar.addmenuitem('Scene', 'command', 'Insert After',
-                                         label='Insert (after)',
-                                         command = lambda s=self: s.cmd.scene('','insert_after'))
-
-        self.menuBar.addmenuitem('Scene', 'command', 'Update',
-                                         label='Update',
-                                         command = lambda s=self: s.cmd.scene('auto','update'))
-
-#      self.menuBar.addmenuitem('Scene', 'command', 'Annotate',
-#                               label='Append',
-#                               command = lambda s=self: s.cmd.scene('new','store'))
-
-
-        self.menuBar.addmenuitem('Scene', 'separator', '')
-
-        self.menuBar.addmenuitem('Scene', 'command', 'Delete',
-                                         label='Delete',
-                                         command = lambda s=self: s.cmd.scene('auto','clear'))
-
-        self.menuBar.addmenuitem('Scene', 'separator', '')
-
-        self.menuBar.addcascademenu('Scene', 'Recall', 'Recall',
-                                             label='Recall')
-
-        self.menuBar.addcascademenu('Scene', 'Store', 'Store',
-                                             label='Store')
-
-#      self.menuBar.addcascademenu('Store', 'StoreSHFT', 'StoreSHFT',
-#                                  label='Shift')
-
-        self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
-                                             label='Clear')
-
-#      self.menuBar.addcascademenu('Scene', 'SceneSHFT', 'SceneSHFT',
-#                                  label='Shift')
-
-        for x in range(1,13):
-            self.menuBar.addmenuitem('Store', 'checkbutton', 'F%d'%x,
-                                             label='F%d'%x,
-                                             variable = self.scene_F_keys[x - 1],
-                                             command = lambda x=x,s=self: s.cmd.do("scene F%d,store"%x))
-            
-#         self.menuBar.addmenuitem('ClearSHFT', 'checkbutton', 'SHFT-F%d'%x,
-#                                  label='SHFT-F%d'%x,
-#                                  variable = self.setting.SHFTF[x],
-#                                  command = lambda x=x,s=self: s.cmd.do("scene SHFT-F%d,clear"%x))
-
-        self.menuBar.addmenuitem('Scene', 'separator', '')
-        
-        self.menuBar.addmenuitem('Scene', 'checkbutton', 'Buttons',
-                                 label='Buttons',
-                                 variable = self.setting.scene_buttons,
-                                 )
-
-        self.menuBar.addcascademenu('Scene', 'Cache', 'Cache',
-                                    label='Cache')
-        
-        self.menuBar.addmenuitem('Cache', 'command', 'Enable',
-                                 label='Enable',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cache enable"))
-
-        self.menuBar.addmenuitem('Cache', 'command', 'Optimize',
-                                 label='Optimize',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cache optimize"))
-
-        self.menuBar.addmenuitem('Cache', 'command', 'Read Only',
-                                 label='Read Only',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cache read_only"))
-
-        self.menuBar.addmenuitem('Cache', 'command', 'Disable',
-                                 label='Disable',
-                                 command = lambda s=self:
-                                 s.cmd.do("_ cache disable"))
-
-        self.menuBar.addmenu('Mouse', 'Mouse Configuration',tearoff=TRUE)
-
-        self.menuBar.addcascademenu('Mouse', 'SelectionMode', 'Selection Mode',
-                                             label='Selection Mode')
-
-        var = self.setting.mouse_selection_mode
-        for lab, val in [
-                ('Atoms', 0),
-                ('Residues', 1),
-                ('Chains', 2),
-                ('Segments', 3),
-                ('Objects', 4),
-                ('', -1),
-                ('Molecules', 5),
-                ('', -1),
-                ('C-alphas', 6),
-            ]:
-            if not lab:
-                addmenuitem('SelectionMode', 'separator', '')
-            else:
-                addmenuitem('SelectionMode', 'radiobutton', label=lab, value=val, variable=var)
-
-        self.menuBar.addmenuitem('Mouse', 'separator', '')
-
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Motions',
-                                         label='3 Button Motions',
-                                         command = lambda s=self: s.cmd.config_mouse('three_button_motions'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing',
-                                         label='3 Button Editing',
-                                         command = lambda s=self: s.cmd.config_mouse('three_button_editing'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Viewing',
-                                         label='3 Button Viewing',
-                                         command = lambda s=self: s.cmd.mouse('three_button_viewing'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Lights',
-                                         label='3 Button Lights',
-                                         command = lambda s=self: s.cmd.mouse('three_button_lights'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button All Modes',
-                                         label='3 Button All Modes',
-                                         command = lambda s=self: s.cmd.config_mouse('three_button_all_modes'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing',
-                                         label='2 Button Editing',
-                                         command = lambda s=self: s.cmd.config_mouse('two_button_editing'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing',
-                                         label='2 Button Viewing',
-                                         command = lambda s=self: s.cmd.config_mouse('two_button'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '1 Button Viewing Mode',
-                                         label='1 Button Viewing Mode',
-                                         command = lambda s=self: s.cmd.mouse('one_button_viewing'))
-
-        self.menuBar.addmenuitem('Mouse', 'separator', '')
-
-        self.menuBar.addcascademenu('Mouse', 'Emulate', 'Emulate',
-                                             label='Emulate')
-
-        self.menuBar.addmenuitem('Emulate', 'command', 'Maestro',
-                                         label='Maestro',
-                                         command = lambda s=self: s.cmd.mouse('three_button_maestro'))
-
-        self.menuBar.addmenuitem('Mouse', 'separator', '')
-
-        self.menuBar.addmenuitem('Mouse', 'checkbutton',
-                                 'Virtual Trackball.',
-                                 label='Virtual Trackball',
-                                variable = self.setting.virtual_trackball,
-                                )
-
-        self.menuBar.addmenuitem('Mouse', 'checkbutton',
-                                 'Show Mouse Grid.',
-                                 label='Show Mouse Grid',
-                                variable = self.setting.mouse_grid,
-                                )
-
-        self.menuBar.addmenuitem('Mouse', 'checkbutton',
-                                 'Roving Origin.',
-                                 label='Roving Origin',
-                                variable = self.setting.roving_origin,
-                                )
-
-#        self.menuBar.addmenuitem('Mouse', 'checkbutton',
-#                                 'Roving Detail.',
-#                                 label='Roving Detail',
-#                                variable = self.setting.roving_detail,
-#                                )
 
         if sys.platform == 'darwin':
             self.menuBar.addmenuitem('Mouse', 'separator', '')
@@ -3207,143 +1202,32 @@ PyMOL> color ye<TAB>    (will autocomplete "yellow")
                                      command = lambda s=self: 
                                      s.toggleClickThrough(0))
 
-        self.menuBar.addmenu('Wizard', 'Task Wizards',tearoff=TRUE)
-
-        self.menuBar.addmenuitem('Wizard', 'command', 'Appearance',
-                                         label='Appearance',
-                                         command = lambda s=self: s.cmd.do("_ wizard appearance"))
-
-        self.menuBar.addmenuitem('Wizard', 'command', 'Measurement',
-                                         label='Measurement',
-                                         command = lambda s=self: s.cmd.do("_ wizard measurement"))
-
-        self.menuBar.addmenuitem('Wizard', 'command', 'Mutagenesis',
-                                         label='Mutagenesis',
-                                         command = lambda s=self: s.cmd.do("_ wizard mutagenesis"))
-
-        self.menuBar.addmenuitem('Wizard', 'command', 'Pair Fitting',
-                                         label='Pair Fitting',
-                                         command = lambda s=self: s.cmd.do("_ wizard pair_fit"))
-
-        self.menuBar.addmenuitem('Wizard', 'separator', '')
-            
-        self.menuBar.addmenuitem('Wizard', 'command', 'Density Map Wizard',
-                                         label='Density',
-                                         command = lambda s=self: s.cmd.do("_ wizard density"))
-
-        self.menuBar.addmenuitem('Wizard', 'command', 'Filter',
-                                         label='Filter',
-                                         command = lambda s=self: s.cmd.do("_ wizard filter"))
-
-
-        self.menuBar.addmenuitem('Wizard', 'command', 'Sculpting',
-                                         label='Sculpting',
-                                         command = lambda s=self: s.cmd.do("_ wizard sculpting"))
-
-        if cleanup.auto_configure()>0:
-            self.menuBar.addmenuitem('Wizard', 'separator', '')
-        
-            self.menuBar.addmenuitem('Wizard', 'command', 'Cleanup',
-                                             label='Cleanup',
-                                             command = lambda s=self: s.cmd.do("_ wizard cleanup"))
-
-        self.menuBar.addmenuitem('Wizard', 'separator', '')
-        
-        self.menuBar.addmenuitem('Wizard', 'command', 'Label',
-                                         label='Label',
-                                         command = lambda s=self: s.cmd.do("_ wizard label"))
-
-        self.menuBar.addmenuitem('Wizard', 'command', 'Charge',
-                                         label='Charge',
-                                         command = lambda s=self: s.cmd.do("_ wizard charge"))
-
-        self.menuBar.addmenuitem('Wizard', 'separator', '')
-        
-        self.menuBar.addcascademenu('Wizard', 'Demo', 'Demo',
-                                             label='Demo',tearoff=TRUE)
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Representations',
-                                         label='Representations',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,reps"))
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Cartoon Ribbons',
-                                         label='Cartoon Ribbons',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,cartoon"))
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Roving Detail',
-                                         label='Roving Detail',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,roving"))
-        
-        self.menuBar.addmenuitem('Demo', 'command', 'Roving Density',
-                                         label='Roving Density',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,roving_density"))
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Transparency',
-                                         label='Transparency',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,trans"))
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Ray Tracing',
-                                         label='Ray Tracing',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,ray"))
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Sculpting',
-                                         label='Sculpting',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,sculpt"))
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Scripted Animation',
-                                         label='Scripted Animation',
-                                         command = lambda s=self: s.cmd.do(
-
-            "_ replace_wizard demo,anime"))
-
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Electrostatics',
-                                         label='Electrostatics',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,elec"))
-
-
-        self.menuBar.addmenuitem('Demo', 'command', 'Compiled Graphics Objects',
-                                         label='Compiled Graphics Objects',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,cgo"))
-
-        self.menuBar.addmenuitem('Demo', 'command', 'MolScript/Raster3D Input',
-                                         label='Molscript/Raster3D Input',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,raster3d"))
-
-        self.menuBar.addmenuitem('Demo', 'separator', '')
-        
-        self.menuBar.addmenuitem('Demo', 'command', 'End Demonstration',
-                                         label='End Demonstration',
-                                         command = lambda s=self: s.cmd.do(
-            '_ replace_wizard demo,finish'))
-
-        self.menuBar.addmenu('Plugin', 'Plugin',tearoff=TRUE)      
-
         # hook up scene menu updates
         index = self.pymol.setting.index_dict.get('scenes_changed')
         self.setting.active_dict[index] = self.update_scene_menu
 
+    def settings_edit_all_dialog(self):
+        SetEditor(self)
+
+    def edit_colors_dialog(self):
+        ColorEditor(self)
+
     def update_scene_menu(self):
         scene_list = self.cmd.get_scene_list()
         for action in ['recall', 'clear']:
-            parent = action.capitalize()
+            parent = 'Scene/' + action.capitalize()
             self.menuBar.deletemenuitems(parent, 0, 999)
             for k in scene_list:
                 self.menuBar.addmenuitem(parent, 'command', k, label=k,
                         command=lambda k=k, a=action: self.cmd.scene(k, a))
+        parent = 'Scene/Store'
+        self.menuBar.deletemenuitems(parent, 0, 11)
         for i in range(12):
             k = 'F' + str(i + 1)
             self.scene_F_keys[i].set(1 if k in scene_list else 0)
+            self.menuBar.addmenuitem(parent, 'checkbutton', k, label=k,
+                    variable=self.scene_F_keys[i],
+                    command=lambda k=k: self.cmd.scene(k, 'store'))
 
     def show_about(self):
         Pmw.aboutversion(self.appversion)

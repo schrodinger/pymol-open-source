@@ -534,6 +534,7 @@ if __name__=='pymol.parser':
                     except:
                         traceback.print_exc()
                 if not flag: # otherwise fallback onto filename completion
+                    st = self.cmd.as_pathstr(st)
                     loc = 1 + max(map(st.rfind, ',@'))
                     if not loc:
                         loc = 1 + st.find(' ')

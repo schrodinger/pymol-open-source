@@ -21,10 +21,25 @@ if __name__=='pymol.gui':
 
 def get_pmgapp():
     '''
-    TODO move to this module
+    Returns the PMGApp instance.
     '''
-    from pymol import plugins
-    return plugins.get_pmgapp()
+    if pymol._ext_gui is None:
+        pymol._ext_gui = createlegacypmgapp()
+    return pymol._ext_gui
+
+def get_qtwindow():
+    '''
+    Returns the PyMOLQtGUI/QMainWindow instance, or None if not available.
+    '''
+    try:
+        from pmg_qt.pymol_qt_gui import window
+        return window
+    except ImportError:
+        return None
+
+def createlegacypmgapp():
+    import pymol.plugins.legacysupport as m
+    return m.createlegacypmgapp()
 
 # external gui control 
 

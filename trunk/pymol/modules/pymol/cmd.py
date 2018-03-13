@@ -144,8 +144,20 @@ if __name__=='pymol.cmd':
             _expandvars = os.path.expandvars
         
         def exp_path(path):
+            path = as_pathstr(path)
             return _expandvars(os.path.expanduser(path))
         
+        def as_pathstr(path):
+            # On Windows, always work with unicode file names. On Unix,
+            # UTF-8 byte strings seem to be fine, so keep them for now.
+            if isinstance(path, bytes) and sys.platform == 'win32':
+                for encoding in ('utf-8', 'mbcs'):
+                    try:
+                        return path.decode(encoding)
+                    except UnicodeError:
+                        pass
+            return path
+
         #--------------------------------------------------------------------
         # locks and threading
 

@@ -258,11 +258,21 @@ USAGE
                 pass
 
         if os.path.exists(filename) and not _self.get_names():
-            # load image
-            _self.load_png(filename, 0, quiet=1)
-
             # hide text splash
             print()
+
+            # fit window to image
+            try:
+                if not contents:
+                    contents = open(filename, 'rb').read(24)
+                shape = struct.unpack('>II', contents[16:24])
+                scale = _self.get_setting_int('display_scale_factor')
+                _self.viewport(shape[0] * scale, shape[1] * scale)
+            except Exception as e:
+                print(e)
+
+            # load image
+            _self.load_png(filename, 0, quiet=1)
 
         if tmp_filename:
             os.unlink(tmp_filename)

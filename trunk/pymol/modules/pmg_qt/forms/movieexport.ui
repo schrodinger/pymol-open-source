@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>218</width>
+    <height>488</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string notr="true">Movie Export</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="2" column="1">
+    <widget class="QSpinBox" name="input_width">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string notr="true">video width in pixels</string>
+     </property>
+     <property name="maximum">
+      <number>9999</number>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QSpinBox" name="input_height">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string notr="true">video height in pixels</string>
+     </property>
+     <property name="maximum">
+      <number>9999</number>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QLabel" name="label_7">
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string notr="true">Common Video Resolutions</string>
+       </property>
+       <property name="text">
+        <string notr="true">Common:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_720p">
+       <property name="styleSheet">
+        <string notr="true">padding: 2px</string>
+       </property>
+       <property name="text">
+        <string notr="true">720p</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_480p">
+       <property name="styleSheet">
+        <string notr="true">padding: 2px</string>
+       </property>
+       <property name="text">
+        <string notr="true">480p</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_360p">
+       <property name="styleSheet">
+        <string notr="true">padding: 2px</string>
+       </property>
+       <property name="text">
+        <string notr="true">360p</string>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item row="10" column="0" colspan="2">
+    <widget class="QCommandLinkButton" name="button_ok">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string notr="true">Save Movie as ...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QGroupBox" name="group_format">
+     <property name="title">
+      <string notr="true">Movie Format</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string notr="true">E&amp;ncoder</string>
+          </property>
+          <property name="buddy">
+           <cstring>input_encoder</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="input_encoder">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <item>
+           <property name="text">
+            <string notr="true"/>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string notr="true">ffmpeg</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string notr="true">mpeg_encode</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>convert</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_quality">
+          <property name="text">
+           <string notr="true">&amp;Quality</string>
+          </property>
+          <property name="buddy">
+           <cstring>input_quality</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QSpinBox" name="input_quality">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string notr="true">&quot;movie_quality&quot; setting, the lower the lossier</string>
+          </property>
+          <property name="suffix">
+           <string notr="true">%</string>
+          </property>
+          <property name="minimum">
+           <number>60</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>90</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="format_mp4">
+        <property name="text">
+         <string notr="true">MPEG &amp;4</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">input_format</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="format_mpg">
+        <property name="text">
+         <string notr="true">MPEG &amp;1</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">input_format</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="format_mov">
+        <property name="text">
+         <string notr="true">MOV (Quic&amp;kTime)</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">input_format</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="format_gif">
+        <property name="toolTip">
+         <string notr="true">Animated GIF</string>
+        </property>
+        <property name="text">
+         <string notr="true">G&amp;IF</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">input_format</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="format_png">
+        <property name="toolTip">
+         <string notr="true">Export a series of numbered PNG files</string>
+        </property>
+        <property name="text">
+         <string notr="true">PNG &amp;Images</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">input_format</string>
+        </attribute>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string notr="true">Hei&amp;ght</string>
+     </property>
+     <property name="buddy">
+      <cstring>input_height</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string notr="true">Wid&amp;th</string>
+     </property>
+     <property name="buddy">
+      <cstring>input_width</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QGroupBox" name="group_mode">
+     <property name="title">
+      <string notr="true">Rendering</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QRadioButton" name="input_draw">
+        <property name="toolTip">
+         <string notr="true">antialiased on-screen rendering</string>
+        </property>
+        <property name="text">
+         <string notr="true">&amp;Draw (fast)</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">input_mode</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="input_ray">
+        <property name="toolTip">
+         <string notr="true">Render each movie frame with ray tracing.
+May take a long time, but produces the
+best quality.</string>
+        </property>
+        <property name="text">
+         <string notr="true">Ra&amp;y (slow)</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">input_mode</string>
+        </attribute>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>input_width</tabstop>
+  <tabstop>input_height</tabstop>
+  <tabstop>button_ok</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+ <buttongroups>
+  <buttongroup name="input_format"/>
+  <buttongroup name="input_mode"/>
+ </buttongroups>
+</ui>

@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>354</width>
+    <height>329</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string notr="true">Save Molecule</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="1">
+      <widget class="QComboBox" name="input_selection">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="editable">
+        <bool>true</bool>
+       </property>
+       <item>
+        <property name="text">
+         <string notr="true">enabled</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">all</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="input_state">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
+       <item>
+        <property name="text">
+         <string notr="true">-1 (current)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">0 (all states)</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string notr="true">Se&amp;lection</string>
+       </property>
+       <property name="buddy">
+        <cstring>input_selection</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string notr="true">S&amp;tate</string>
+       </property>
+       <property name="buddy">
+        <cstring>input_state</cstring>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tab_3">
+      <attribute name="title">
+       <string notr="true">Generic Options</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+       <item>
+        <widget class="QCheckBox" name="input_retain_order">
+         <property name="toolTip">
+          <string notr="true">retain_order</string>
+         </property>
+         <property name="text">
+          <string notr="true">Original atom order (according to &quot;rank&quot;)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_4">
+      <attribute name="title">
+       <string notr="true">PDB Options</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+       <item>
+        <widget class="QCheckBox" name="input_no_pdb_conect_nodup">
+         <property name="toolTip">
+          <string notr="true">pdb_conect_nodup</string>
+         </property>
+         <property name="text">
+          <string notr="true">Write multiple bonds as duplicate CONECT records</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="input_pdb_conect_all">
+         <property name="toolTip">
+          <string notr="true">pdb_conect_all</string>
+         </property>
+         <property name="text">
+          <string notr="true">Write CONECT records for all bonds</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="input_no_ignore_pdb_segi">
+         <property name="toolTip">
+          <string notr="true">ignore_pdb_segi</string>
+         </property>
+         <property name="text">
+          <string notr="true">Write segment identifier (segi) column</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="input_pdb_retain_ids">
+         <property name="toolTip">
+          <string notr="true">pdb_retain_ids</string>
+         </property>
+         <property name="text">
+          <string notr="true">Retain atom ids</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="input_multisave">
+         <property name="toolTip">
+          <string notr="true">use &quot;multisave&quot; command</string>
+         </property>
+         <property name="text">
+          <string notr="true">Write HEADER for every object</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string notr="true">Multi-File</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string notr="true">Write objects or states to ...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QRadioButton" name="input_multi_off">
+         <property name="text">
+          <string notr="true">one single f&amp;ile</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QRadioButton" name="input_multi_object">
+         <property name="text">
+          <string notr="true">one file per ob&amp;ject</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="input_multi_object_fmt">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string notr="true">Placeholders:
+{name} - object name
+{state} - state number
+{title} - state title
+{num} - running number</string>
+         </property>
+         <property name="text">
+          <string notr="true">{name}</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QRadioButton" name="input_multi_state">
+         <property name="text">
+          <string notr="true">o&amp;ne file per object-state</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="input_multi_state_fmt">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string notr="true">{name}_{state}</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>10</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="input_multi_prompt">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string notr="true">Prompt for every file</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="button_ok">
+     <property name="text">
+      <string notr="true">Save...</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>input_multi_off</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>input_multi_prompt</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>93</x>
+     <y>155</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>190</x>
+     <y>272</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>input_multi_object</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>input_multi_object_fmt</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>117</x>
+     <y>185</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>224</x>
+     <y>189</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>input_multi_state</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>input_multi_state_fmt</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>146</x>
+     <y>224</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>217</x>
+     <y>225</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

@@ -8,6 +8,8 @@ import sys
 cmd = sys.modules["pymol.cmd"]
 
 _volume_windows = {}
+_volume_windows_qt = {}
+
 
 def peak(v, c, a=0.2, d=0.2):
     return [v - d, c, 0., v, c, a, v + d, c, 0.]
@@ -76,7 +78,8 @@ SEE ALSO
 
     volume, volume_color
     '''
-    if cmd.is_string(ramp):
+    from .checking import is_string
+    if is_string(ramp):
         ramp = ramp.split()
     namedramps[name] = ramp
 
@@ -159,9 +162,20 @@ EXAMPLE
         app = gui.get_pmgapp()
         app.execute(func)
 
+    if _guiupdate and name in _volume_windows_qt:
+        from pymol import gui
+        app = gui.get_pmgapp()
+        @app.execute
+        def _():
+            try:
+                panel = _volume_windows_qt[name]
+                panel.widget().editor.setColors(ramplist)
+            except LookupError:
+                pass
+
     return r
 
-def volume_panel(name, quiet=1, _self=cmd):
+def volume_panel(name, quiet=1, _self=cmd, _noqt=0):
     '''
 DESCRIPTION
 
@@ -172,13 +186,32 @@ ARGUMENTS
     name = str: name of volume object
     '''
     from pymol import gui
+
+    qt_window = not int(_noqt) and gui.get_qtwindow()
+    app = gui.get_pmgapp()
+
+    if qt_window:
+        from pmg_qt import volume as volume_qt
+
+        @app.execute
+        def _():
+            try:
+                panel = _volume_windows_qt[name]
+            except LookupError:
+                panel = volume_qt.VolumePanel(qt_window, name, _self=_self)
+                _volume_windows_qt[name] = panel
+            panel.show()
+            panel.raise_()
+
+        return
+
+    # Tk fallback
     from pmg_tk import volume
     if sys.version_info[0] == 2:
         import Tkinter
     else:
         import tkinter as Tkinter
 
-    app = gui.get_pmgapp()
     def func():
         try:
             window = _volume_windows[name]
@@ -186,7 +219,7 @@ ARGUMENTS
         except (LookupError, Tkinter.TclError):
             window = Tkinter.Toplevel(app.root)
             window.title('Volume Panel for "%s"' % name)
-            window.panel = volume.VolumePanel(window, name, _self=cmd)
+            window.panel = volume.VolumePanel(window, name, _self=_self)
             window.panel.pack()
             _volume_windows[name] = window
     app.execute(func)

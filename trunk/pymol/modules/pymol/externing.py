@@ -29,6 +29,11 @@ if __name__=='pymol.externing':
           _feedback,fb_module,fb_mask, exp_path, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
+    try:
+        from os import getcwdu
+    except ImportError:
+        from os import getcwd as getcwdu
+
     def cd(dir="~",complain=1,quiet=1):
         '''
 DESCRIPTION
@@ -47,7 +52,7 @@ SEE ALSO
         try:
             os.chdir(dir)  # raises on error
             if not quiet:
-                print(" cd: now in %s"%os.getcwd())
+                print(" cd: now in %s" % getcwdu())
         except:
             if complain:
                 traceback.print_exc()
@@ -67,7 +72,7 @@ SEE ALSO
 
     cd, ls, system
         '''
-        print(os.getcwd())
+        print(getcwdu())
         return DEFAULT_SUCCESS
 
     def ls(pattern=None):
@@ -91,7 +96,7 @@ SEE ALSO
     cd, pwd, system   
         '''
         if pattern==None:
-            pattern = "*"
+            pattern = u"*"
         else:
             pattern = exp_path(pattern)
         if '*' not in pattern:
