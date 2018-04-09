@@ -33,3 +33,10 @@ class TestLoadMAE(testing.PyMOLTestCase):
 
         v = cmd.get_object_list()
         self.assertEqual(v, ['foo'])
+
+    @testing.requires_version('2.1.1')
+    def testLoadCryst1(self):
+        cmd.load(self.datafile('cryst1.mae'), 'm1')
+        s = cmd.get_symmetry('m1')
+        self.assertArrayEqual(s[:6], [50.84, 42.77, 28.95, 90., 90., 90.], delta=0.01)
+        self.assertEqual(s[6], 'P 21 21 21')
