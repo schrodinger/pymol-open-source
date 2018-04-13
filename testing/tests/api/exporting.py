@@ -34,7 +34,12 @@ class TestExporting(testing.PyMOLTestCase):
         seq, name = 'ACD', 'm1'
         cmd.fab(seq, name)
         s = cmd.get_fastastr()
-        self.assertEqual(s.split(), ['>' + name, seq])
+        lines = s.split()
+        self.assertTrue(lines[0] in (
+            '>' + name,
+            '>' + name + '_',
+        ))
+        self.assertEqual(lines[1:], [seq])
 
     def testGetPdbstr(self):
         cmd.pseudoatom()
