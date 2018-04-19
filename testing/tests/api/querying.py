@@ -50,6 +50,28 @@ class TestQuerying(testing.PyMOLTestCase):
     def testDistance(self):
         self._testMeasure(cmd.distance, cmd.get_distance, 2, 1.46011)
 
+    @testing.requires_version('2.2')
+    def testMeasureBetweenStates(self):
+        cmd.load(self.datafile('1v5a-3models.cif'), 'm1')
+
+        # distance
+        d = cmd.distance('d1', '24/CZ', 'same', state1=2, state2=3)
+        self.assertAlmostEqual(d, 3.0, delta=1e-1)
+
+        # angle
+        a = cmd.angle('a1', '24/CZ', 'same', 'same', state1=2, state2=3, state3=1)
+        self.assertAlmostEqual(a, 73.5, delta=1e-1)
+
+        # visual test
+        cmd.viewport(100, 100)
+        cmd.set('dash_radius', 1.0)
+        self.ambientOnly()
+        for name in ['d1', 'a1']:
+            cmd.disable('*')
+            cmd.enable(name)
+            cmd.zoom(name)
+            self.assertImageHasColor('yellow')
+
     def testFindPairs(self):
         # mode 0
         cmd.fragment("gly")
