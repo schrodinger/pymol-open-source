@@ -70,5 +70,11 @@ if PYQT_NAME == 'PyQt4':
 if PYQT_NAME[:4] == 'PyQt':
     QtCore.Signal = QtCore.pyqtSignal
     QtCore.Slot = QtCore.pyqtSlot
+else:
+    QtCore.QT_VERSION_STR = QtCore.__version__
+    QtCore.QT_VERSION = (
+            0x10000 * QtCore.__version_info__[0] +
+            0x00100 * QtCore.__version_info__[1] +
+            0x00001 * QtCore.__version_info__[2])
 
 del os

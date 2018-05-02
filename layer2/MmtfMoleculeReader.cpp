@@ -224,6 +224,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
 
         // bonds
         for (int l = 0, offset = atomIndex; l < group->bondAtomListCount / 2; ++l) {
+          VLACheck(I->Bond, BondType, I->NBond); // PYMOL-3026
           BondTypeInit2(I->Bond + (I->NBond++),
               offset + group->bondAtomList[l * 2],
               offset + group->bondAtomList[l * 2 + 1],
@@ -289,6 +290,7 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
   AtomInfoPurge(G, &tai);
 
   for (int l = 0; l < container->bondAtomListCount / 2; ++l) {
+    VLACheck(I->Bond, BondType, I->NBond); // PYMOL-3026
     BondTypeInit2(I->Bond + (I->NBond++),
         container->bondAtomList[l * 2],
         container->bondAtomList[l * 2 + 1],

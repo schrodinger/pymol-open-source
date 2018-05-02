@@ -6854,6 +6854,14 @@ int ObjectMoleculeGetTotalAtomValence(ObjectMolecule * I, int atom)
 }
 
 
+/*
+ * Generate I->Neighbor from I->Bond, but only if I->Neighbor is not NULL.
+ *
+ * Changed in PyMOL 2.1.1: Ignore zero-order bonds (PYMOL-3025)
+ *
+ * To force the update, call ObjectMoleculeInvalidate(level=cRepInvBonds) first.
+ *
+ */
 /*========================================================================*/
 int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I)
 {
@@ -6925,8 +6933,10 @@ int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I)
     /* count neighbors for each atom */
     bnd = I->Bond;
     for(b = 0; b < I->NBond; b++) {
-      I->Neighbor[bnd->index[0]]++;
-      I->Neighbor[bnd->index[1]]++;
+      if (bnd->order) {
+        I->Neighbor[bnd->index[0]]++;
+        I->Neighbor[bnd->index[1]]++;
+      }
       bnd++;
     }
 
@@ -6942,10 +6952,12 @@ int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I)
 
     /* now load neighbors in a sequential list for each atom (reverse order) */
     bnd = I->Bond;
-    for(b = 0; b < I->NBond; b++) {
+    for(b = 0; b < I->NBond; b++, ++bnd) {
       l0 = bnd->index[0];
       l1 = bnd->index[1];
-      bnd++;
+
+      if (!bnd->order)
+        continue;
 
       I->Neighbor[l0]--;
       I->Neighbor[I->Neighbor[l0]] = b; /* store bond indices (for I->Bond) */

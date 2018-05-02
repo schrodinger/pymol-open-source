@@ -7509,6 +7509,10 @@ void SceneCopy(PyMOLGlobals * G, GLenum buffer, int force, int entire_window)
   CScene *I = G->Scene;
   unsigned int buffer_size;
 
+  if (buffer == GL_BACK) {
+    buffer = G->DRAW_BUFFER0;
+  }
+
   if(force || (!(I->StereoMode ||
                  SettingGetGlobal_b(G, cSetting_stereo_double_pump_mono) || I->ButtonsShown))) {
     /* no copies while in stereo mode */
@@ -7595,7 +7599,13 @@ static void SceneStencilCheck(PyMOLGlobals *G)
 {
   CScene *I = G->Scene;
   if( I->StereoMode == cStereo_stencil_by_row ) {
-    int bottom = p_glutGet(P_GLUT_WINDOW_Y) + p_glutGet(P_GLUT_WINDOW_HEIGHT);
+    int bottom = 0;
+
+#ifndef _PYMOL_PRETEND_GLUT
+    if(G->Main)
+#endif
+      bottom = p_glutGet(P_GLUT_WINDOW_Y) + p_glutGet(P_GLUT_WINDOW_HEIGHT);
+
     int parity = bottom & 0x1;
     if(parity != I->StencilParity) {
       I->StencilValid = false;
@@ -8561,9 +8571,6 @@ void SetDrawBufferForStereo(PyMOLGlobals * G, CScene *I, int stereo_mode, int ti
     break;
   case cStereo_anaglyph:
     glColorMask(true, true, true, true);
-    /*              glAccum(GL_ACCUM, 0.5);
-		    glAccum(GL_RETURN, 1.0); */
-    OrthoDrawBuffer(G, GL_BACK_LEFT);
     break;
   case cStereo_clone_dynamic:
     glAccum(GL_ACCUM, 0.5);
@@ -9009,6 +9016,12 @@ void SceneSetupGLPicking(PyMOLGlobals * G){
       glShadeModel(GL_FLAT);
 }
 
+static void glBlendFunc_default() {
+  glBlendFuncSeparate(
+      GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA,
+      GL_ONE,         GL_ONE_MINUS_SRC_ALPHA);
+}
+
 /*========================================================================*/
 void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
                  Multipick * smp, int oversize_width, int oversize_height,
@@ -9069,7 +9082,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
   if(SceneMustDrawBoth(G)) {
     render_buffer = GL_BACK_LEFT;
   } else {
-    render_buffer = GL_BACK;
+    render_buffer = G->DRAW_BUFFER0; // GL_BACK
   }
 
   switch (stereo_mode) {
@@ -9119,27 +9132,24 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
         I->StencilValid = true;
       }
     }
+
+    render_buffer = G->DRAW_BUFFER0; // GL_BACK
+
     if(must_render_stereo) {
       if(mono_as_quad_stereo) { /* double-pumped mono */
-        OrthoDrawBuffer(G, GL_BACK_LEFT);
         render_buffer = GL_BACK_LEFT;
       } else {
         switch (stereo_mode) {
         case cStereo_quadbuffer:       /* hardware stereo */
         case cStereo_clone_dynamic:
-          OrthoDrawBuffer(G, GL_BACK_LEFT);
           render_buffer = GL_BACK_LEFT;
-          break;
-        default:               /* some kind of software stereo */
-          OrthoDrawBuffer(G, GL_BACK);
-          render_buffer = GL_BACK;
           break;
         }
       }
-    } else {                    /* normal mono rendering */
-      OrthoDrawBuffer(G, GL_BACK);
-      render_buffer = GL_BACK;
     }
+ 
+    OrthoDrawBuffer(G, render_buffer);
+
     if(Feedback(G, FB_OpenGL, FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 1");
     glGetIntegerv(GL_VIEWPORT, (GLint *) (void *) view_save);
@@ -9235,7 +9245,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 
     if(!(pick || smp)) {
       glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glBlendFunc_default();
 
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 

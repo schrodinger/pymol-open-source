@@ -229,7 +229,6 @@ void ScrollBarDrawHandle(struct CScrollBar *I, float alpha ORTHOCGOARG)
   if(G->HaveGUI && G->ValidContext) {
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     if (orthoCGO){
       CGOAlpha(orthoCGO, alpha);
       CGOColor(orthoCGO, 0.8F, 0.8F, 0.8F);

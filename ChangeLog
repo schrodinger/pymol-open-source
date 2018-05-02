@@ -2,6 +2,23 @@
 CHANGE LOG
 =========================================================================
 
+2018-04-10 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* sf.net/p/pymol/bugs/199 bash -> sh
+
+	* ignore zero-order bonds in neighbor lookup, this could cause
+	  wrong bond order guessing in distance based bonding
+
+	* fix crash loading reduced 5ijo.mmtf
+
+	* volume panel: fix zoom (CTRL+R-Drag) and value input (R-Click)
+
+	* QOpenGLWidget support (not active by default)
+
+	* --gldebug -> backtrace on GL error
+
+	* 2.2.0a0 (unstable/experimental)
+
 2018-03-13 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* 2.1.0

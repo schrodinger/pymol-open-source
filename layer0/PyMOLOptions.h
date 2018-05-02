@@ -49,6 +49,7 @@ struct _CPyMOLOptions {
       no_quit;        // prevent any action from quitting or killing PyMOL
 
   bool retina;        // enables 4K Retina support, if available
+  bool gldebug;       // enables GL debugging
 
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above ...initialization struct in PyMOL.c */

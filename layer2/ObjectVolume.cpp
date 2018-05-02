@@ -950,10 +950,6 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       if (depth_writemask)
         glDepthMask(GL_FALSE);
 
-      // This is setting used for PyMOL, but just to be on a safe side
-      // we set glBlendFunct explicitely here
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
       // Cheap hack, should be replaced with non-immediate calls
       glFlush();
       glFinish();

@@ -1780,7 +1780,8 @@ SEE ALSO
         if _self.get_setting_boolean("sculpting"):
             _self.set("sculpting","off",quiet=1)
         # make sure that there aren't any pending display events
-        _self.refresh()
+        # TODO breaks QOpenGLWidget
+        # _self.refresh()
         #
         r = DEFAULT_ERROR
         try:

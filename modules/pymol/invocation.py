@@ -27,7 +27,8 @@ Options
 
   --help    display this help and exit
   --version display PyMOL version and exit
-  --retina  use retina resolution (Experimental, MacPyMOL only)
+  --retina  use retina resolution (MacPyMOL) and set display_scale_factor=2
+  --gldebug use glDebugMessageCallback for GL debugging
 
   -1        config_mouse one_button
   -2        config_mouse two_button
@@ -64,7 +65,7 @@ Options
   -m        INTERNAL - do not use (mac external GUI)
   -M        force mono
   -n        INTERNAL - do not use (incentive_product=1)
-  -N name   UNSUPPORTED - external gui type (default: pmg_tk) (same as -w)
+  -N name   UNSUPPORTED - external gui type (pmg_qt or pmg_tk) (same as -w)
   -o        disable security protections
   -O N      sphere_mode=N
   -p        read commands from STDIN
@@ -81,7 +82,7 @@ Options
   -U        UNSUPPORTED reuse the helper application
   -v        UNUSED
   -V N      external GUI window height in pixels
-  -w name   UNSUPPORTED - external gui type (default: pmg_tk) (same as -N)
+  -w name   UNSUPPORTED - external gui type (pmg_qt or pmg_tk) (same as -N)
   -W N      window width in pixels
   -x        no external gui
   -X N      window x position on screen
@@ -165,6 +166,10 @@ if __name__=='pymol.invocation':
     options.plugins = 2
     options.exit_on_error = 0
     options.pymolrc = None
+    options.retina = 0
+    options.no_spacenav = 0
+    options.launch_status = 0
+    options.gldebug = 0
 
     options.win_py = { 'irix':240,
                        'darwin': 214, # hmm...need to set to 192 for Leopard?...
@@ -270,6 +275,12 @@ if __name__=='pymol.invocation':
                                 print('  (no pymolrc file found)')
                             print(helptext2)
                         sys.exit()
+                    elif a == "--retina":
+                        options.retina = 1
+                    elif a == "--nospnav":
+                        print(' Warning: --nospnav not available in Open-Source PyMOL')
+                    elif a == "--gldebug":
+                        options.gldebug = 1
                     else:
                         # double hypen signals end of PyMOL arguments
                         if python_script == None:

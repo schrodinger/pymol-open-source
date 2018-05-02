@@ -230,7 +230,7 @@ class install_pymol(install):
                 out.write('"%s" "%s"' % (python_exe, pymol_file))
                 out.write(' %*' + os.linesep)
             else:
-                out.write('#!/bin/bash' + os.linesep)
+                out.write('#!/bin/sh' + os.linesep)
                 if sys.platform.startswith('darwin'):
                     out.write('[ "$DISPLAY" == "" ] && export DISPLAY=":0.0"' + os.linesep)
                 out.write('export PYMOL_PATH="%s"' % pymol_path + os.linesep)

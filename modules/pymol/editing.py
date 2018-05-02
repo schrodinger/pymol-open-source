@@ -359,11 +359,6 @@ PYMOL API
 
         r = DEFAULT_ERROR
 
-        suspend_undo = _self.get("suspend_undo")
-        fin = 1
-        push_undo(target_name, just_coordinates=0, finish_undo=0, _self=_self)
-        _self.set("suspend_undo", 1, updates=0)
-
         if source_name == None:
             source_name = ''
 
@@ -389,14 +384,7 @@ PYMOL API
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self):
-            _self.set("suspend_undo", suspend_undo, updates=0)
-            fin = -1
-            push_undo("", just_coordinates=0, finish_undo=fin, _self=_self)
             raise pymol.CmdException            
-
-            _self.set("suspend_undo", suspend_undo, updates=0)
-            push_undo("", just_coordinates=0, finish_undo=fin, _self=_self)
-
         return r
 
 

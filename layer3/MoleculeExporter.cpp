@@ -27,6 +27,7 @@
 #include "P.h"
 #include "PConv.h"
 #include "CifDataValueFormatter.h"
+#include "MaeExportHelpers.h"
 
 #ifdef _PYMOL_IP_EXTRAS
 #include "Property.h"
@@ -1027,6 +1028,7 @@ struct MoleculeExporterMAE : public MoleculeExporter {
   int m_n_atoms;
   int m_n_atoms_offset;
   int m_n_arom_bonds;
+  std::map<int, const AtomInfoType *> m_atoms;
 
   // quasi constructor
   void init(PyMOLGlobals * G_) {
@@ -1077,6 +1079,14 @@ struct MoleculeExporterMAE : public MoleculeExporter {
         "i_m_secondary_structure\n"
         "r_m_pdb_occupancy\n"
         "i_pdb_PDB_serial\n"
+        "i_m_visibility\n"
+        "i_m_representation\n"
+        "i_m_ribbon_style\n"
+        "i_m_ribbon_color\n"
+        "s_m_ribbon_color_rgb\n"
+        "s_m_label_format\n"
+        "i_m_label_color\n"
+        "s_m_label_user_text\n"
         ":::\n");
 
     m_n_atoms = 0;
@@ -1122,6 +1132,22 @@ struct MoleculeExporterMAE : public MoleculeExporter {
         ai->q,
         ai->id);
 
+    char ribbon_color_rgb[7] = "<>";
+    MaeExportGetRibbonColor(G, m_iter, ribbon_color_rgb);
+    std::string label_user_text = MaeExportGetLabelUserText(G, ai);
+
+    m_offset += VLAprintf(m_buffer, m_offset,
+        "%d %d %d %d %s \"%s\" 2 \"%s\"\n",
+        (ai->visRep & ~(cRepCartoonBit | cRepRibbonBit)) ? 1 : 0,
+        MaeExportGetAtomStyle(G, m_iter),
+        MaeExportGetRibbonStyle(ai),
+        ribbon_color_rgb[0] == '<' ? 3 /* calphaatom */ : 0 /* constant */,
+        ribbon_color_rgb,
+        label_user_text.empty() ? "" : "%UT",
+        label_user_text.c_str());
+
+    m_atoms[getTmpID()] = ai;
+
     ++m_n_atoms;
   }
 
@@ -1141,6 +1167,8 @@ struct MoleculeExporterMAE : public MoleculeExporter {
           "i_m_from\n"
           "i_m_to\n"
           "i_m_order\n"
+          "i_m_from_rep\n"
+          "i_m_to_rep\n"
           ":::\n", (int) m_bonds.size());
 
       int b = 0;
@@ -1156,6 +1184,9 @@ struct MoleculeExporterMAE : public MoleculeExporter {
             bond.id1,
             bond.id2,
             order);
+
+        int style = MaeExportGetBondStyle(m_atoms[bond.id1], m_atoms[bond.id2]);
+        m_offset += VLAprintf(m_buffer, m_offset, "%d %d\n", style, style);
       }
 
       m_bonds.clear();

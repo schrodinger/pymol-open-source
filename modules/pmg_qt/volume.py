@@ -42,6 +42,8 @@ Canvas Mouse Actions (no Point under Cursor)
   L-Click            Add point
   CTRL+L-Click       Add 3 points (isosurface)
 
+  CTRL+R-Drag        Zoom in
+
 --------------------------------------------------
 Mouse Actions with Point under Cursor
 
@@ -58,8 +60,6 @@ Mouse Actions with Point under Cursor
   L-Drag             Move point
   CTRL+L-Drag        Move 3 points (horizontal only)
   R-Drag             Move point along one axis only
-
-  CTRL+R-Drag        Zoom in
 
 --------------------------------------------------
 L = Left mouse button
@@ -274,9 +274,9 @@ class VolumeEditorWidget(QtWidgets.QWidget):
         self.paintAxes(painter, self.paint_rect)
         painter.setClipRect(self.paint_rect)
         self.paintHistogram(painter, self.paint_rect)
-        self.paintZoomArea(painter, self.paint_rect)
         painter.setClipping(False)
         self.paintColorDots(painter, self.paint_rect)
+        self.paintZoomArea(painter, self.paint_rect)
         painter.end()
 
     def enterValue(self, title, value, min_value, max_value):
@@ -317,9 +317,18 @@ class VolumeEditorWidget(QtWidgets.QWidget):
             self.init_pos = event.pos()
             self.zoom_pos = None
             self.constraint = None
-            if self.point > 0 and event.button() == Qt.RightButton:
+            if self.point < 0 and event.button() == Qt.LeftButton:
+                self.addPoint(
+                    event.pos(), event.modifiers() == Qt.ControlModifier)
+                # suppress color picker
+                self.dragged = True
+
+    def mouseReleaseEvent(self, event):
+        if not self.dragged and self.point >= 0:
+            if event.button() == Qt.RightButton:
                 x, y, r, g, b = self.points[self.point]
-                if event.modifiers() == Qt.ControlModifier:
+                # in 2.0: help says NoModifier, implemented is ControlModifier
+                if event.modifiers() in (Qt.ControlModifier, Qt.NoModifier):
                     value = self.points[self.point][0]
                     prev_x = self.points[self.point-1][0] if self.point > 0 else self.vmin
                     next_x = self.points[self.point+1][0] if self.point < len(self.points)-1 else self.vmax
@@ -335,32 +344,22 @@ class VolumeEditorWidget(QtWidgets.QWidget):
                     self.updateVolumeColors()
             if (event.button() == Qt.MidButton or
                 (event.button() == Qt.LeftButton and
-                 event.modifiers() == Qt.ShiftModifier)):
+                 event.modifiers() & Qt.ShiftModifier)):
                 self.removePoints(
-                    event.modifiers() == Qt.ControlModifier)
-            elif (event.button() == Qt.LeftButton and self.point < 0):
-                self.addPoint(
-                    event.pos(), event.modifiers() == Qt.ControlModifier)
-                self.dragged = True
+                    event.modifiers() & Qt.ControlModifier)
+            elif event.button() == Qt.LeftButton:
+                self.setPointColor(self.point,
+                        event.modifiers() == Qt.ControlModifier)
 
-    def mouseReleaseEvent(self, event):
         self.point = -1
         self.hover_point = -1
-        if event.button() == Qt.LeftButton and not self.dragged:
-            point = self.findPoint(event.pos())
-            if point >= 0:
-                self.setPointColor(
-                    point, event.modifiers() == Qt.ControlModifier)
 
         if self.init_pos and self.zoom_pos:
             if self.init_pos.x() != self.zoom_pos.x():
                 # zoom in
-                self.vmin = self.xToData(
-                    (self.init_pos.x() - self.left_margin) /
-                    float(self.rect().width() - self.left_margin))
-                self.vmax = self.xToData(
-                    (self.zoom_pos.x() - self.left_margin) /
-                    float(self.rect().width() - self.left_margin))
+                self.vmin, self.vmax = sorted([
+                    self.xToData(self.convertX(self.init_pos.x())),
+                    self.xToData(self.convertX(self.zoom_pos.x()))])
 
         self.zoom_pos = None
         self.repaint()

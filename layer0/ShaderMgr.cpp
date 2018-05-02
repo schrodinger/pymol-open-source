@@ -755,11 +755,17 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
     return;
   }
   if (GLEW_OK==err) {
+    GLint gl_major = 0, gl_minor = 0;
+    getGLVersion(G, &gl_major, &gl_minor);
+
+    PRINTFB(G, FB_ShaderMgr, FB_Details)
+      " Detected OpenGL version %d.%d.", gl_major, gl_minor ENDFB(G);
+
     if (GLEW_VERSION_2_0) {
-      FeedbackAdd(G, " Detected OpenGL version 2.0 or greater. Shaders available.\n");
+      FeedbackAdd(G, " Shaders available.\n");
     }
     else { 
-      FeedbackAdd(G, " Detected OpenGL version prior to 2.0. Shaders and volumes unavailable.\n");
+      FeedbackAdd(G, " Shaders and volumes unavailable.\n");
       disableShaders(G);
       return;
     }
