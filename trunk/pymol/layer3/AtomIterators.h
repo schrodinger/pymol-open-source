@@ -39,18 +39,23 @@ public:
     return obj->AtomInfo + atm;
   };
 
+  // get current atom
+  const AtomInfoType * getAtomInfo() const {
+    return obj->AtomInfo + atm;
+  };
+
   // get current atom's coordinates
   float * getCoord() {
     return cs->Coord + (3 * idx);
   };
 
   // get current atom index in object molecule
-  int getAtm() {
+  int getAtm() const {
     return atm;
   }
 
   // get current coordinate index (atom index in coordset)
-  int getIdx() {
+  int getIdx() const {
     return idx;
   }
 };

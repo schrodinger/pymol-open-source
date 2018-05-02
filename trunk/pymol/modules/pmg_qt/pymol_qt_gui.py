@@ -68,7 +68,8 @@ class PyMOLQtGUI(QtWidgets.QMainWindow, pymol._gui.PyMOLDesktopGUI):
         # maintain aspect ratio
         if h < 1:
             if w < 1:
-                pw.resizeGL(int(scale * pw.width()), int(scale * pw.height()))
+                pw.pymol.reshape(int(scale * pw.width()),
+                                 int(scale * pw.height()), True)
                 return
             h = (w * ch) / cw
         if w < 1:

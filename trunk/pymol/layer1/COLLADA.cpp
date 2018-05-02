@@ -56,7 +56,7 @@ static char *GetTimestamp(){
 
   time(&now);
   local = localtime(&now);
-  strftime(buffer, 20, "%Y-%m-%dT%T", local);
+  strftime(buffer, 20, "%Y-%m-%dT%H:%M:%S", local);
   return strdup(buffer);
 }
 

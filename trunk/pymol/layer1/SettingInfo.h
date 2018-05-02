@@ -751,7 +751,7 @@ enum {
   REC_i( 653, auto_defer_atom_count                   , global    , 0 ),
   REC_s( 654, default_refmac_names                    , global    , "FWT PHWT DELFWT PHDELWT" ),
   REC_s( 655, default_phenix_names                    , global    , "2FOFCWT PH2FOFCWT FOFCWT PHFOFCWT" ),
-  REC_s( 656, default_phenix_no_fill_names            , global    , "2FOFCWT_no_fil PH2FOFCWT_no_fill None None" ),
+  REC_s( 656, default_phenix_no_fill_names            , global    , "2FOFCWT_no_fill PH2FOFCWT_no_fill None None" ),
   REC_s( 657, default_buster_names                    , global    , "2FOFCWT PH2FOFCWT FOFCWT PHFOFCWT" ),
   REC_s( 658, default_fofc_map_rep                    , global    , "volume" ),
   REC_s( 659, default_2fofc_map_rep                   , global    , "volume" ),

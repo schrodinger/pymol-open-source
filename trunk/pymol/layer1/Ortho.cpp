@@ -200,6 +200,11 @@ static int get_wrap_x(int x, int *last_x, int width, int *click_side)
 void OrthoDrawBuffer(PyMOLGlobals * G, GLenum mode)
 {
   COrtho *I = G->Ortho;
+
+  if (mode == GL_BACK) {
+    mode = G->DRAW_BUFFER0;
+  }
+
   if((mode != I->ActiveGLBuffer) && G->HaveGUI && G->ValidContext) {
 #ifndef PURE_OPENGL_ES_2
     if(glGetError()) {
@@ -643,7 +648,10 @@ void OrthoBusyDraw(PyMOLGlobals * G, int force)
       MacPyMOL_SetProgress(busyValue);
       /* END PROPRIETARY CODE SEGMENT */
 #else
-      if(G->HaveGUI && G->ValidContext) {
+      if(G->HaveGUI && G->ValidContext
+          // only draw into GL_FRONT if default draw buffer is GL_BACK
+          // (not the case for QOpenGLWidget)
+          && G->DRAW_BUFFER0 == GL_BACK) {
         char *c;
         int x, y;
         float white[3] = { 1, 1, 1 };

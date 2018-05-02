@@ -44,6 +44,11 @@ def createlegacypmgapp():
 # external gui control 
 
 def ext_hide(_self=cmd):
+    qtwindow = get_qtwindow()
+    if qtwindow is not None:
+        print('ignoring gui.ext_hide')
+        return
+
     pymol = _self._pymol
     if pymol._ext_gui != None:
         pymol._ext_gui.fifo.put('self.root.withdraw()')
@@ -51,6 +56,11 @@ def ext_hide(_self=cmd):
         pass
     
 def ext_show(_self=cmd):
+    qtwindow = get_qtwindow()
+    if qtwindow is not None:
+        print('ignoring gui.ext_show')
+        return
+
     pymol = _self._pymol
     if pymol._ext_gui != None:
         pymol._ext_gui.fifo.put('self.root.deiconify()')
@@ -60,6 +70,11 @@ def ext_show(_self=cmd):
 # common actions
 
 def save_as(_self=cmd):
+    qtwindow = get_qtwindow()
+    if qtwindow is not None:
+        qtwindow.session_save_as()
+        return
+
     pymol = _self._pymol
     if pymol._ext_gui != None:
         pymol._ext_gui.fifo.put('self.skin.session_save_as()')
@@ -67,6 +82,11 @@ def save_as(_self=cmd):
         pass
 
 def save_image(_self=cmd):
+    qtwindow = get_qtwindow()
+    if qtwindow is not None:
+        qtwindow.file_save_png()
+        return
+
     pymol = _self._pymol
     if pymol._ext_gui != None:
         pymol._ext_gui.fifo.put('self.skin.file_save_png()')

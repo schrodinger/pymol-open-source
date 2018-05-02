@@ -2503,6 +2503,20 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
   } else
     src_rec = ExecutiveFindSpec(G, source_name);
 
+  if (source_mode != 3 && !src_rec) {
+    PRINTFB(G, FB_Executive, FB_Warnings)
+      " %s-Warning: Can't find source object '%s'.\n", __FUNCTION__, source_name
+      ENDFB(G);
+  }
+
+  int list_id = ExecutiveGetNamesListFromPattern(G, target_name, true, cExecExpandKeepGroups);
+
+  if (!list_id) {
+    PRINTFB(G, FB_Executive, FB_Warnings)
+      " %s-Warning: No match for target '%s'.\n", __FUNCTION__, target_name
+      ENDFB(G);
+  }
+
   switch (source_mode) {
   case 0:                      /* txf history is the source matrix */
     {
@@ -2510,8 +2524,6 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
       int found = ExecutiveGetObjectMatrix(G, source_name, source_state, &history, false);
       if(found) {
 
-        int list_id = ExecutiveGetNamesListFromPattern(G, target_name,
-                                                       true, cExecExpandKeepGroups);
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
         SpecRec *rec;
 
@@ -2578,7 +2590,6 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
             }
           }
         }
-        TrackerDelList(I_Tracker, list_id);
         TrackerDelIter(I_Tracker, iter_id);
       }
     }
@@ -2593,8 +2604,6 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
       int found = ExecutiveGetObjectTTT(G, source_name, &tttf, -1, quiet);
       if(found) {
 
-        int list_id = ExecutiveGetNamesListFromPattern(G, target_name, true,
-                                                       cExecExpandKeepGroups);
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
         SpecRec *rec;
 
@@ -2626,7 +2635,6 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
           }
         }
 
-        TrackerDelList(I_Tracker, list_id);
         TrackerDelIter(I_Tracker, iter_id);
       }
     }
@@ -2637,8 +2645,6 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
       int found = ExecutiveGetObjectMatrix(G, source_name, source_state, &homo, false);
       if(found) {
 
-        int list_id =
-          ExecutiveGetNamesListFromPattern(G, target_name, true, cExecExpandKeepGroups);
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
         SpecRec *rec;
 
@@ -2675,7 +2681,6 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
             }
           }
         }
-        TrackerDelList(I_Tracker, list_id);
         TrackerDelIter(I_Tracker, iter_id);
       }
     }
@@ -2684,8 +2689,6 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
     {
       SceneViewType view;
       double homo[16], *history;
-      int list_id = ExecutiveGetNamesListFromPattern(G, target_name,
-                                                     true, cExecExpandKeepGroups);
       int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
       SpecRec *rec;
       SceneGetView(G, view);
@@ -2760,12 +2763,14 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
             break;
           }
         }
-        TrackerDelList(I_Tracker, list_id);
         TrackerDelIter(I_Tracker, iter_id);
       }
     }
     break;
   }
+
+  TrackerDelList(I_Tracker, list_id);
+
   SceneInvalidate(G);
   return ok;
 }

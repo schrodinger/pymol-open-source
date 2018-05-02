@@ -45,7 +45,7 @@ def load_dialog(parent, fname, **kwargs):
             parent.cmd.cd(parent.initialdir, quiet=0)
 
         try:
-            parent.cmd.load(fname, **kwargs)
+            parent.cmd.load(fname, quiet=0, **kwargs)
         except BaseException as e:
             QtWidgets.QMessageBox.critical(parent, "Error", str(e))
             return

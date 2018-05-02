@@ -1,5 +1,5 @@
 #ifndef _PyMOL_VERSION
-#define _PyMOL_VERSION "2.1.0"
+#define _PyMOL_VERSION "2.2.0a0"
 #endif
 
 /* for session file compatibility */

@@ -3,7 +3,10 @@ from __future__ import absolute_import
 import sys
 from pymol2 import SingletonPyMOL as PyMOL
 
-from pymol.Qt import QtCore, QtOpenGL
+import pymol
+
+from pymol.Qt import QtCore
+from pymol.Qt import QtGui
 from pymol.Qt import QtWidgets
 Gesture = QtCore.QEvent.Gesture
 Qt = QtCore.Qt
@@ -13,8 +16,22 @@ from .keymapping import get_modifiers
 # don't import the heavy OpenGL (PyOpenGL) module
 from pymol._cmd import glViewport
 
+# QOpenGLWidget is supposed to supersede QGLWidget, but has issues (e.g.
+# no stereo support)
+USE_QOPENGLWIDGET = False
 
-class PyMOLGLWidget(QtOpenGL.QGLWidget):
+if USE_QOPENGLWIDGET:
+    BaseGLWidget = QtWidgets.QOpenGLWidget
+    AUTO_DETECT_STEREO = False
+else:
+    from pymol.Qt import QtOpenGL
+    BaseGLWidget = QtOpenGL.QGLWidget
+    # only attempt stereo detection in Qt <= 5.6 (with 5.9+ on Linux I
+    # get GL_DOUBLEBUFFER=0 with flickering when requesting stereo)
+    AUTO_DETECT_STEREO = QtCore.QT_VERSION < 0x50700
+
+
+class PyMOLGLWidget(BaseGLWidget):
     '''
     PyMOL OpenGL Widget
     '''
@@ -30,57 +47,33 @@ class PyMOLGLWidget(QtOpenGL.QGLWidget):
         self.gui = parent
 
         # OpenGL context setup
-        f = QtOpenGL.QGLFormat()
-        f.setRgba(True)
-        f.setDepth(True)
-        f.setDoubleBuffer(True)
+        if USE_QOPENGLWIDGET:
+            f = QtGui.QSurfaceFormat()
+        else:
+            f = QtOpenGL.QGLFormat()
 
         from pymol.invocation import options
 
         # logic equivalent to layer5/main.cpp:launch
 
         if options.multisample:
-            f.setSampleBuffers(True)
+            f.setSamples(4)
 
         if options.force_stereo != -1:
             # See layer1/Setting.h for stereo modes
 
-            if options.stereo_mode in (0, 1, 12):
-                # this effectively disables stereo detection
-                # on Linux that is faulty in QGLWidget / PyQt5
-                if not (options.stereo_mode == 0 and
-                        sys.platform.startswith("linux")):
-                    f.setStereo(True)
+            if options.stereo_mode in (1, 12) or (
+                    options.stereo_mode == 0 and AUTO_DETECT_STEREO):
+                f.setStereo(True)
 
-            if options.stereo_mode in (11, 12):
+            if options.stereo_mode in (11, 12) and not USE_QOPENGLWIDGET:
                 f.setAccum(True)
 
-            if options.stereo_mode in (0, 6, 7, 8, 9):
-                f.setStencil(True)
-
-        QtOpenGL.QGLWidget.__init__(self, f, parent=parent)
-
-        if not self.isValid():
-            raise RuntimeError('OpenGL initialization failed')
-
-        f_actual = self.format()
-
-        # report if quad buffer available
-        options.stereo_capable = int(f_actual.stereo() or
-                                     (options.force_stereo == 1))
-
-        # feedback if stereo request failed
-        if options.stereo_mode and (
-                # QTBUG-59636 f.stereo() and not f_actual.stereo() or
-                f.accum() and not f_actual.accum() or
-                f.stencil() and not f_actual.stencil()):
-            # cPyMOLGlobals_LaunchStatus_StereoFailed
-            options.launch_status |= 0x1
-
-        # feedback if multisample request failed
-        if options.multisample and not f_actual.sampleBuffers():
-            # cPyMOLGlobals_LaunchStatus_MultisampleFailed
-            options.launch_status |= 0x2
+        if USE_QOPENGLWIDGET:
+            super(PyMOLGLWidget, self).__init__(parent=parent)
+            self.setFormat(f)
+        else:
+            super(PyMOLGLWidget, self).__init__(f, parent=parent)
 
         # pymol instance
         self.pymol = PyMOL()
@@ -197,12 +190,17 @@ class PyMOLGLWidget(QtOpenGL.QGLWidget):
     ##########################
 
     def paintGL(self):
-        glViewport(0, 0, int(self.fb_scale * self.width()),
+        if not USE_QOPENGLWIDGET:
+            glViewport(0, 0, int(self.fb_scale * self.width()),
                          int(self.fb_scale * self.height()))
         self.pymol.draw()
         self._timer.start(0)
 
     def resizeGL(self, w, h):
+        if USE_QOPENGLWIDGET:
+            w = int(w * self.fb_scale)
+            h = int(h * self.fb_scale)
+
         self.pymol.reshape(w, h, True)
 
     def updateFbScale(self, context):
@@ -220,6 +218,11 @@ class PyMOLGLWidget(QtOpenGL.QGLWidget):
         # Scale framebuffer for Retina displays
         try:
             window = self.windowHandle()
+
+            # QOpenGLWidget workaround
+            if window is None:
+                window = self.parent().windowHandle()
+
             self.updateFbScale(window)
             window.screenChanged.connect(self.updateFbScale)
         except AttributeError:

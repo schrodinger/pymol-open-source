@@ -68,6 +68,7 @@
 #include "PyMOLGlobals.h"
 #include "PyMOLOptions.h"
 #include "Feedback.h"
+#include "GraphicsUtil.h"
 
 #include "ShaderMgr.h"
 #include "Version.h"
@@ -1838,6 +1839,7 @@ static const CPyMOLOptions Defaults = {
   -1,                           /* zoom mode */
   0,                            /* launch_status */
   0,                            /* no quit */
+  0,                            /* gldebug */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)
@@ -2321,16 +2323,22 @@ static void PyMOL_LaunchStatus_Feedback(PyMOLGlobals * G)
 #ifndef PURE_OPENGL_ES_2
 static void check_gl_stereo_capable(PyMOLGlobals * G)
 {
+  // quad buffer stereo available?
   GLboolean state;
   glGetBooleanv(GL_STEREO, &state);
-  G->StereoCapable = state;
+  G->StereoCapable = state || G->Option->force_stereo > 0;
+  if (!state && G->Option->force_stereo > 0) {
+    printf("Warning: forcing stereo despite GL_STEREO=0\n");
+  }
 
+  // stereo request feedback
   if (state && G->Option->stereo_mode == cStereo_default) {
     SettingSetGlobal_i(G, cSetting_stereo_mode, cStereo_quadbuffer);
   } else if (!state && G->Option->stereo_mode == cStereo_quadbuffer) {
     G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_StereoFailed;
   }
 
+  // multisample request feedback
   if (G->Option->multisample) {
     GLint samplebuffers = 0;
     glGetIntegerv(GL_SAMPLE_BUFFERS, &samplebuffers);
@@ -2338,6 +2346,22 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
       G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_MultisampleFailed;
     }
   }
+
+  // double buffer check
+  glGetBooleanv(GL_DOUBLEBUFFER, &state);
+  if (!state) {
+    printf("Warning: GL_DOUBLEBUFFER=0\n");
+  }
+
+  // GL_BACK if GL_DOUBLEBUFFER else GL_FRONT
+  // With QOpenGLWidget -> framebuffer object
+  GLint buf;
+  glGetIntegerv(GL_DRAW_BUFFER0, &buf);
+  if (!buf) {
+    printf("Warning: GL_DRAW_BUFFER0=0 -> using GL_BACK\n");
+    buf = GL_BACK;
+  }
+  G->DRAW_BUFFER0 = buf;
 }
 #endif
 
@@ -2351,7 +2375,8 @@ void PyMOL_DrawWithoutLock(CPyMOL * I)
 #ifndef PURE_OPENGL_ES_2
     // stereo test with PyQt5 on Linux is broken (QTBUG-59636), so we
     // test for stereo here
-    if (I->G->HaveGUI && !I->G->StereoCapable) {
+    if (I->G->HaveGUI)
+    {
       check_gl_stereo_capable(I->G);
     }
 #endif
@@ -2359,6 +2384,16 @@ void PyMOL_DrawWithoutLock(CPyMOL * I)
     PyMOL_LaunchStatus_Feedback(I->G);
 
     PyMOL_ConfigureShadersGL_WithoutLock(I);
+
+    // OpenGL debugging (glewInit must be called first)
+    if (I->G->Option->gldebug) {
+      if (!glDebugMessageCallback) {
+        printf("glDebugMessageCallback not available\n");
+      } else {
+        glDebugMessageCallback(gl_debug_proc, NULL);
+        glEnable(GL_DEBUG_OUTPUT);
+      }
+    }
   }
 
   PyMOLGlobals * G = I->G;
