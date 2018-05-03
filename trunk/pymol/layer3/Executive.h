@@ -222,7 +222,8 @@ void ExecutiveUpdateColorDepends(PyMOLGlobals * G, ObjectMolecule * mol);
 void ExecutiveUpdateCoordDepends(PyMOLGlobals * G, ObjectMolecule * mol);
 int ExecutiveDist(PyMOLGlobals * G, float *result,
                   const char *nam, const char *s1, const char *s2, int mode,
-                  float cutoff, int labels, int quiet, int reset, int state, int zoom);
+                  float cutoff, int labels, int quiet, int reset, int state, int zoom,
+                  int state1=-4, int state2=-4);
 int ExecutiveBond(PyMOLGlobals * G, const char *s1, const char *s2, int order, int mode, int quiet);
 int ExecutiveRevalence(PyMOLGlobals * G, const char *s1, const char *s2, const char *src,
                        int target_state, int source_state, int reset, int quiet);
@@ -501,7 +502,8 @@ int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G);
 CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, const char *oname, int type);
 int ExecutiveAngle(PyMOLGlobals * G, float *result,
                    const char *nam, const char *s1, const char *s2, const char *s3, int mode,
-                   int labels, int reset, int zoom, int quiet, int state);
+                   int labels, int reset, int zoom, int quiet, int state,
+                   int state1=-4, int state2=-4, int state3=-4);
 
 int ExecutiveDihedral(PyMOLGlobals * G, float *result,
                       const char *nam, const char *s1, const char *s2, const char *s3, const char *s4, int mode,

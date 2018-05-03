@@ -135,6 +135,7 @@ from .querying import \
       get_povray,         \
       get_raw_alignment,  \
       get_renderer,       \
+      get_selection_state,\
       get_symmetry,       \
       get_title,          \
       get_type,           \

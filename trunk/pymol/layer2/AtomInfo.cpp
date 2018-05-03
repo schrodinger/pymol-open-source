@@ -2356,7 +2356,7 @@ static int get_protons(const char * symbol)
   }
 
   // check second letter for lower case
-  if (isupper(symbol[1]) && strcmp(symbol, "LP") != 0) {
+  if (symbol[0] && isupper(symbol[1]) && strcmp(symbol, "LP") != 0) {
     UtilNCopy(titleized, symbol, 4);
     titleized[1] = tolower(symbol[1]);
     symbol = titleized;

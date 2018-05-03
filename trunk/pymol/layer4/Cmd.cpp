@@ -3741,9 +3741,11 @@ static PyObject *CmdDist(PyObject * self, PyObject * args)
   float cutoff, result = -1.0;
   int labels, quiet;
   int mode, reset, state, zoom;
+  int state1, state2;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Osssifiiiii", &self, &name, &str1,
-                        &str2, &mode, &cutoff, &labels, &quiet, &reset, &state, &zoom);
+  ok = PyArg_ParseTuple(args, "Osssifiiiiiii", &self, &name, &str1,
+                        &str2, &mode, &cutoff, &labels, &quiet, &reset, &state, &zoom,
+                        &state1, &state2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -3752,7 +3754,7 @@ static PyObject *CmdDist(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = ExecutiveDist(G, &result, name, str1, str2, mode, cutoff,
-        labels, quiet, reset, state, zoom);
+        labels, quiet, reset, state, zoom, state1, state2);
     APIExit(G);
   }
   if(!ok)
@@ -3771,9 +3773,11 @@ static PyObject *CmdAngle(PyObject * self, PyObject * args)
   int ok = false;
   int reset, zoom;
   int state;
-  ok = PyArg_ParseTuple(args, "Ossssiiiiii", &self,
+  int state1, state2, state3;
+  ok = PyArg_ParseTuple(args, "Ossssiiiiiiiii", &self,
                         &name, &str1, &str2, &str3,
-                        &mode, &labels, &reset, &zoom, &quiet, &state);
+                        &mode, &labels, &reset, &zoom, &quiet, &state,
+                        &state1, &state2, &state3);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -3782,7 +3786,8 @@ static PyObject *CmdAngle(PyObject * self, PyObject * args)
   }
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = ExecutiveAngle(G, &result, name, str1, str2, str3,
-        mode, labels, reset, zoom, quiet, state);
+        mode, labels, reset, zoom, quiet, state,
+        state1, state2, state3);
     APIExit(G);
   }
   return (Py_BuildValue("f", result));

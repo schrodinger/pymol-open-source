@@ -2,6 +2,24 @@
 CHANGE LOG
 =========================================================================
 
+2018-05-03 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix anaglyph stereo in batch (headless) mode
+
+	* fix possible memory corruption with boolean settings
+
+	* measurement wizard: distances between states (all_states=on)
+
+	* get_fastastr: nucleic acid, by chain
+
+	* menu: A (Action) > group
+
+	* sequence viewer menu: ss (Secondary Structure)
+
+	* MAE export of groups (s_m_subgroupid)
+
+	* macOS: -O3 -fno-strict-aliasing (bugs/205)
+
 2018-04-10 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* sf.net/p/pymol/bugs/199 bash -> sh

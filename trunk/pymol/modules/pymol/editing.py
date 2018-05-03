@@ -2033,8 +2033,8 @@ SEE ALSO
         target_name = str(target_name).strip()
         source_name = str(source_name).strip()
         if (target_name == '' and source_name != ''): # tentative -- create a new command instead?
-            mat = cmd.get_object_matrix(source_name,source_state)
-            view = cmd.get_view()
+            mat = _self.get_object_matrix(source_name,source_state)
+            view = _self.get_view()
             new_view = (
                 mat[ 0]*view[ 0] + mat[ 4]*view[ 3] + mat[ 8]*view[ 6],
                 mat[ 0]*view[ 1] + mat[ 4]*view[ 4] + mat[ 8]*view[ 7],  
@@ -2053,7 +2053,7 @@ SEE ALSO
                 mat[ 8]*view[12] + mat[ 9]*view[13] + mat[10]*view[14] -
                 mat[ 2]* mat[ 3] - mat[ 6]* mat[ 7] - mat[10]* mat[11],
                 view[15] ,         view[16] ,         view[17] )
-            r = cmd.set_view(new_view)
+            r = _self.set_view(new_view)
         else:
             try:
                 _self.lock(_self)
@@ -2624,7 +2624,7 @@ SEE ALSO
             _self.disable(model)
 
         if group:
-            cmd.group(group, ' '.join(names_list), 'add')
+            _self.group(group, ' '.join(names_list), 'add')
 
     def alphatoall(selection='polymer', properties='b', operator='byca',
             quiet=1, _self=cmd):

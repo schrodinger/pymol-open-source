@@ -119,6 +119,12 @@ class Filter(Wizard):
         self.do_select('pk1')
         self.cmd.unpick()
 
+    def do_state(self, state):
+        cmd.refresh_wizard()
+
+    def get_event_mask(self):
+        return Wizard.event_mask_pick + Wizard.event_mask_select + Wizard.event_mask_state
+
     def update_object_menu(self):
 
         # find objects with > 1 state
@@ -264,7 +270,7 @@ class Filter(Wizard):
         else:
             self.prompt = [ '%s: %d accepted, %d rejected, %d deferred, %d remaining'%(
                 self.object,self.acce,self.reje,self.defe,self.togo) ]
-            state = cmd.get_state()
+            state = cmd.get_object_state(self.object)
             ident = self.get_ident(self.object,state)
             sdo=self.dict[self.object]
             if ident in sdo:
@@ -290,7 +296,7 @@ class Filter(Wizard):
         if self.object==None:
             print(" Filter-Error: Please choose an object first")
         else:
-            state = cmd.get_state()
+            state = cmd.get_object_state(self.object)
             ident = self.get_ident(self.object,state)
             print(" Filter: Accepting '%s'"%ident)
             self.count(ident,accept_str)
@@ -302,7 +308,7 @@ class Filter(Wizard):
         if self.object==None:
             print(" Filter-Error: Please choose an object first")
         else:
-            state = cmd.get_state()
+            state = cmd.get_object_state(self.object)
             ident = self.get_ident(self.object,state)
             print(" Filter: Rejecting '%s'"%ident)
             self.check_object_dict()
@@ -315,7 +321,7 @@ class Filter(Wizard):
         if self.object==None:
             print(" Filter-Error: Please choose an object first")
         else:
-            state = cmd.get_state()
+            state = cmd.get_object_state(self.object)
             ident = self.get_ident(self.object,state)
             print(" Filter: Deferring '%s'"%ident)
             self.check_object_dict()

@@ -111,12 +111,12 @@ SEE ALSO
                                 print("RMSD %f over %i residues" % (float(RMSD), int(aliLen)))
 
                         if int(transform):
-                            for model in cmd.get_object_list("(" + mobile + ")"):
+                            for model in _self.get_object_list("(" + mobile + ")"):
                                 _self.transform_object(model, rotMat, state=0)
 
                         if object is not None:
-                            obj1 = cmd.get_object_list("(" + target + ")")
-                            obj2 = cmd.get_object_list("(" + mobile + ")")
+                            obj1 = _self.get_object_list("(" + target + ")")
+                            obj2 = _self.get_object_list("(" + mobile + ")")
                             if len(obj1) > 1 or len(obj2) > 1:
                                 print(' CEalign-Error: selection spans multiple' + \
                                         ' objects, cannot create alignment object')
@@ -227,7 +227,7 @@ SEE ALSO
         extra_fit, align, super, cealign, fit, rms, rms_cur, intra_fit
                 """
                 if not selection:
-                    names = cmd.get_names("public_objects", 1)
+                    names = _self.get_names("public_objects", 1)
                     if not names:
                         raise pymol.CmdException('no public objects')
                     selection = '%' + ' %'.join(names)

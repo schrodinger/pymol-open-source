@@ -121,20 +121,20 @@ PYMOL API
                 scene = scene.strip()
                 if not quiet:
                     print(" cache: optimizing scene '%s'."%scene)
-                cmd.scene(scene,animate=0)
-                cmd.rebuild()                
-                cmd.refresh()
+                _self.scene(scene,animate=0)
+                _self.rebuild()
+                _self.refresh()
             if len(cur_scene):
-                cmd.scene(cur_scene,animate=0)
+                _self.scene(cur_scene,animate=0)
             else:
                 scene_list = _self.get_scene_list()
                 if len(scene_list):
-                    cmd.scene(scene_list[0],animate=0)
+                    _self.scene(scene_list[0],animate=0)
                 else:
                     if not quiet:
                         print(" cache: no scenes defined -- optimizing current display.")
-                    cmd.rebuild() 
-                    cmd.refresh()
+                    _self.rebuild()
+                    _self.refresh()
             usage = _self._cache_purge(-1,_self=_self)
             if cache_mode:
                 _self.set('cache_mode',cache_mode)
@@ -171,33 +171,69 @@ PYMOL API
             'VAL' : 'V',
             'TRP' : 'W',
             'TYR' : 'Y',
+            # RNA
+            'A'   : 'A',
+            'U'   : 'U',
+            'G'   : 'G',
+            'C'   : 'C',
+            # DNA
+            'DA'  : 'A',
+            'DT'  : 'T',
+            'DG'  : 'G',
+            'DC'  : 'C',
             }
     
-    def get_fastastr(selection="all", state=-1, quiet=1, _self=cmd):
-        dict = { 'seq' : {} }
-        # we use (alt '' or alt 'A') because 'guide' picks up 
-        # non-canonical structures: eg, 1ejg has residue 22 as a SER and 
-        # PRO, which guide will report twice
-        _self.iterate("("+selection+") and polymer and name CA and alt +A",
-                    "seq[model]=seq.get(model,[]);seq[model].append(resn)",space=dict)
-        seq = dict['seq']
-        result = []
-        for obj in _self.get_names("objects",selection='('+selection+')'):
-            if obj in seq:
-                cur_seq = [_resn_to_aa.get(x,'?') for x in seq[obj]]
-                result.append(">%s"%obj)
-                cur_seq = ''.join(cur_seq)
-                while len(cur_seq):
-                    if len(cur_seq)>=70:
-                        result.append(cur_seq[0:70])
-                        cur_seq=cur_seq[70:]
-                    else:
-                        result.append(cur_seq)
-                        break
-        result = '\n'.join(result)
-        if len(result):
-            result = result + '\n'
-        return result
+    def get_fastastr(selection="all", state=-1, quiet=1, key='', _self=cmd):
+        '''
+DESCRIPTION
+
+    API only. Get protein and nucleic acid sequences in fasta format.
+
+    Used for saving:
+    PyMOL> save foo.fasta
+
+    New in PyMOL 2.2:
+    - chain specific keys (key argument)
+    - nucleic acid support
+
+ARGUMENTS
+
+    selection = str: atom selection (reduced to "guide & alt +A") {default: all}
+
+    state = int: (only used if state > 0)
+
+    quiet = 0/1: UNUSED
+
+    key = str: python expression {default: model + "_" + chain}
+    Use key=model to get the old (non-chain specific) behavior
+        '''
+        import textwrap
+        import collections
+
+        seq = collections.OrderedDict()
+        lines = []
+
+        selection = "(" + selection + ") & guide & alt +A"
+        if int(state) > 0:
+            selection += ' & state {}'.format(state)
+
+        if not key:
+            key = 'model + "_" + chain'
+            # for discrete objects: state specific keys
+            key += ' + (":{}".format(state) if state else "")'
+
+        _self.iterate(selection,
+            "seq.setdefault((" + key + "),[]).append(resn)",
+            space={'seq': seq, 'str': str})
+
+        for key, resn_list in seq.items():
+            cur_seq = ''.join(_resn_to_aa.get(x, '?') for x in resn_list)
+            lines.append(">{}".format(key))
+            lines.extend(textwrap.wrap(cur_seq, 70))
+
+        if lines:
+            lines.append('')  # final newline
+        return '\n'.join(lines)
 
     def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
         '''
@@ -516,7 +552,7 @@ PYMOL API
         if not prior:
             dpi = float(dpi)
             if dpi < 0:
-                dpi = cmd.get_setting_float('image_dots_per_inch')
+                dpi = _self.get_setting_float('image_dots_per_inch')
             width = _unit2px(width, dpi)
             height = _unit2px(height, dpi)
 

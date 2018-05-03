@@ -323,6 +323,37 @@ static void SettingUniqueEntry_Set(SettingUniqueEntry *entry, int value_type, co
   }
 }
 
+/*
+ * Return false if setting was not set (nothing changed)
+ */
+bool SettingUniqueUnset(PyMOLGlobals * G, int unique_id, int setting_id)
+{
+  auto I = G->SettingUnique;
+  auto result = OVOneToOne_GetForward(I->id2offset, unique_id);
+
+  if (OVreturn_IS_OK(result)) {
+    for (int prev = 0, offset = result.word; offset;
+        prev = offset, offset = I->entry[offset].next) {
+      if (I->entry[offset].setting_id != setting_id)
+        continue;
+
+      if(!prev) {           /* if first entry in list */
+        OVOneToOne_DelForward(I->id2offset, unique_id);
+        if(I->entry[offset].next) {   /* set new list start */
+          OVOneToOne_Set(I->id2offset, unique_id, I->entry[offset].next);
+        }
+      } else {              /* otherwise excise from middle or end */
+        I->entry[prev].next = I->entry[offset].next;
+      }
+      I->entry[offset].next = I->next_free;
+      I->next_free = offset;
+
+      return true;
+    }
+  }
+  return false;
+}
+
 int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 			       int setting_type, const void *value)
 
@@ -332,6 +363,10 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
   OVreturn_word result;
   int isset = false;
 
+  if (!value) {
+    return SettingUniqueUnset(G, unique_id, setting_id);
+  }
+
   if(OVreturn_IS_OK((result = OVOneToOne_GetForward(I->id2offset, unique_id)))) {       /* setting list exists for atom */
     int offset = result.word;
     int prev = 0;
@@ -340,24 +375,10 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
       SettingUniqueEntry *entry = I->entry + offset;
       if(entry->setting_id == setting_id) {
         found = true;           /* this setting is already defined */
-        if(value) {             /* if redefining value */
 	  if (!SettingUniqueEntry_IsSame(entry, setting_type, value)){
 	    SettingUniqueEntry_Set(entry, setting_type, value);
 	    isset = true;
 	  }
-        } else {                /* or NULL value means delete this setting */
-          if(!prev) {           /* if first entry in list */
-            OVOneToOne_DelForward(I->id2offset, unique_id);
-            if(entry->next) {   /* set new list start */
-              OVOneToOne_Set(I->id2offset, unique_id, entry->next);
-            }
-          } else {              /* otherwise excise from middle or end */
-            I->entry[prev].next = entry->next;
-          }
-          entry->next = I->next_free;
-          I->next_free = offset;
-	  isset = true;
-        }
         break;
       }
       prev = offset;
@@ -412,7 +433,7 @@ int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int index, PyObject *value)
 {
   if (!value)
-    return SettingUniqueSetTypedValue(G, unique_id, index, cSetting_blank, NULL);
+    return SettingUniqueUnset(G, unique_id, index);
 
   int type = SettingGetType(G, index);
 

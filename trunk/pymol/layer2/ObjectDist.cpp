@@ -514,14 +514,33 @@ static void ObjectDistReset(PyMOLGlobals * G, ObjectDist * I)
 
 
 /*========================================================================*/
+static bool checkFrozenState(PyMOLGlobals * G, int sele, int &state) {
+  if (state >= 0)
+    return true;
+
+  if (sele < 0)
+    return false;
+
+  auto obj = (const CObject*) SelectorGetSingleObjectMolecule(G, sele);
+  if(!obj ||
+      !SettingGetIfDefined_i(G, obj->Setting, cSetting_state, &state))
+    return false;
+
+  --state;
+  return true;
+}
+
+
+/*========================================================================*/
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
                                   int sele1, int sele2, int mode, float cutoff,
-                                  int labels, int reset, float *result, int state)
+                                  int labels, int reset, float *result, int state,
+                                  int state1, int state2)
 {
   int a, mn;
   float dist_sum = 0.0, dist;
   int dist_cnt = 0;
-  int n_state1, n_state2, state1 = 0, state2 = 0;
+  int n_state1, n_state2;
   int frozen1 = -1, frozen2 = -1;
   ObjectDist *I;
   
@@ -552,24 +571,9 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
   /* updated state handling */
   /* determine the selected object */
-  if(sele1 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele1);
-  if(query_obj) {
-    frozen1 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state1);
-    if(frozen1) {
-      state1--;
-    }
-  }
+  frozen1 = checkFrozenState(G, sele1, state1);
+  frozen2 = checkFrozenState(G, sele2, state2);
 
-  if(sele2 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele2);
-  if(query_obj) {
-    frozen2 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state2);
-    if(frozen2) {
-      state2--;
-    }
-  }
-  
   /* FIX for incorrectly handling state=-1 for multi-molecule selections */
   if(state1<0) state1=0;
   if(state2<0) state2=0;
@@ -629,12 +633,13 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
 ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
                                        int sele1, int sele2, int sele3, int mode,
-                                       int labels, float *result, int reset, int state)
+                                       int labels, float *result, int reset, int state,
+                                       int state1, int state2, int state3)
 {
   int a, mn;
   float angle_sum = 0.0;
   int angle_cnt = 0;
-  int n_state1, n_state2, n_state3, state1, state2, state3;
+  int n_state1, n_state2, n_state3;
   ObjectDist *I;
 
   int frozen1=-1, frozen2=-1, frozen3=-1;
@@ -666,28 +671,9 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
 
   /* updated state handling */
   /* determine the selected object */
-  if(sele1 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele1);
-  if(query_obj) {
-    frozen1 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state1);
-    state1--;
-  }
-  /* updated state handling */
-  /* determine the selected object */
-  if(sele2 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele2);
-  if(query_obj) {
-    frozen2 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state2);
-    state2--;
-  }
-  /* updated state handling */
-  /* determine the selected object */
-  if(sele3 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele3);
-  if(query_obj) {
-    frozen3 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state3);
-    state3--;
-  }
+  frozen1 = checkFrozenState(G, sele1, state1);
+  frozen2 = checkFrozenState(G, sele2, state2);
+  frozen3 = checkFrozenState(G, sele3, state3);
 
   if(mn) {
     for(a = 0; a < mn; a++) {

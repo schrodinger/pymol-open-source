@@ -35,11 +35,13 @@ typedef struct ObjectDist {
 
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
                                   int sele1, int sele2, int mode, float cutoff,
-                                  int labels, int reset, float *result, int state);
+                                  int labels, int reset, float *result, int state,
+                                  int state1, int state2);
 
 ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
                                        int sele1, int sele2, int sele3, int mode,
-                                       int labels, float *result, int reset, int state);
+                                       int labels, float *result, int reset, int state,
+                                       int state1, int state2, int state3);
 
 ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
                                           int sele1, int sele2, int sele3, int sele4,

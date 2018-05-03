@@ -3679,6 +3679,10 @@ char *ChampPatToSmiVLA(CChamp *I,int index,char *vla,int mode)
             if(bd1->atom[0]!=cur_atom) {/* opposite direction -> explicit cycle */
               if(!I->Atom[bd1->atom[0]].mark_tmpl)
                 {
+                  if (next_mark >= MAX_RING) {
+                    printf("DEBUG: %s next_mark %d\n", __FUNCTION__, next_mark);
+                    break;
+                  }
                   if(mark[next_mark]) {
                     for(index=0;index<9;index++) {
                       if(!mark[index]) break;
@@ -3853,6 +3857,11 @@ static void ChampReassignLexPri(CChamp *I,int index)
             if(bd1->atom[0]!=cur_atom) {/* opposite direction -> explicit cycle */
               if(!I->Atom[bd1->atom[0]].mark_tmpl)
                 {
+                  if (next_mark >= MAX_RING) {
+                    // observed with "2xwu > A > generate > vacuum electrostatics"
+                    printf("DEBUG: %s next_mark %d\n", __FUNCTION__, next_mark);
+                    break;
+                  }
                   if(mark[next_mark]) {
                     for(index=0;index<9;index++) {
                       if(!mark[index]) break;

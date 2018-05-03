@@ -390,7 +390,7 @@ class RenderReader:
 
 
 def torus(center=(0., 0., 0.), normal=(0., 0., 1.), radius=1., color='',
-        cradius=.25, samples=20, csamples=20):
+        cradius=.25, samples=20, csamples=20, _self=cmd):
     '''
     Generate and return a torus CGO with given center, normal
     and ring radius.
@@ -398,7 +398,7 @@ def torus(center=(0., 0., 0.), normal=(0., 0., 1.), radius=1., color='',
     from math import cos, sin, pi
 
     if color and isinstance(color, str):
-        color = list(cmd.get_color_tuple(color))
+        color = list(_self.get_color_tuple(color))
     obj = []
 
     axis = cpv.cross_product(normal, (0., 0., 1.))

@@ -225,8 +225,7 @@ SEE ALSO
     _self.select(tmpSel, sele, 0)
 
     if state < 1:
-        from pymol import querying
-        state = querying.get_selection_state(tmpSel)
+        state = _self.get_selection_state(tmpSel)
 
     tmpObj = _self.get_unused_name("_tmp")
     _self.create(tmpObj, "(byobj ?%s) & ! solvent" % (tmpSel), state, zoom=0)

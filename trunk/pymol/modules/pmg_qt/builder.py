@@ -1308,6 +1308,7 @@ class _BuilderPanel(QtWidgets.QWidget):
             "Really delete everything?", QMB.Yes | QMB.No)
         if check == QMB.Yes:
             self.cmd.delete("all")
+            self.cmd.refresh_wizard()
 
     def sculpt(self):
         picked = collectPicked(self.cmd)

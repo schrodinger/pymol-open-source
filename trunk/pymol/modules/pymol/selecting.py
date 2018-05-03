@@ -229,11 +229,11 @@ DESCRIPTION
             osele = '(%s) & ?%s' % (selection, oname)
             if state < 0:
                 first = last = _self.get_object_state(oname)
-            elif state == 0:
-                first = 1
-                last = _self.count_states('%' + oname)
             else:
                 first = last = state
+            if first == 0:
+                first = 1
+                last = _self.count_states('%' + oname)
             for ostate in range(first, last + 1):
                 yield osele, ostate
 
