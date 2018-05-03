@@ -1112,6 +1112,17 @@ def copy_to(self_cmd, sele):
                   if oname not in selected
               ]
 
+def move_to_group(self_cmd, sele):
+    gnames = self_cmd.get_names_of_type('object:group')
+    return [
+        [ 2, 'Move to Group:', '' ],
+        [ 1, 'new', 'cmd.group(cmd.get_unused_name("group"),"' + sele + '")' ],
+        [ 1, 'ungroup', 'cmd.ungroup("' + sele + '")' ],
+        [ 0, '', '' ],
+    ] + [
+        [ 1, gname, 'cmd.group("' + gname + '","' + sele + '",quiet=0)' ]
+        for gname in gnames if gname != sele
+    ]
               
 def sele_action(self_cmd, sele):
     return [[ 2, 'Action:'       ,''                        ],     
@@ -1188,6 +1199,7 @@ def group_action(self_cmd, sele):
             [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
             [ 0, ''             , ''                       ],
             [ 1, 'rename group', 'cmd.wizard("renaming","'+sele+'")'          ],
+            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
             [ 1, del_col + 'delete group', 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
@@ -1222,6 +1234,7 @@ def mol_action(self_cmd, sele):
             [ 0, ''             , ''                       ],
             [ 1, 'rename object', 'cmd.wizard("renaming","'+sele+'")'          ],
             [ 1, 'copy to object' , lambda: copy_to(self_cmd, sele) ],
+            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
             [ 1, del_col + 'delete object', 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
@@ -1250,6 +1263,7 @@ def slice_action(self_cmd, sele):
               [ 1, 'dynamic grid off', 'cmd.set("slice_dynamic_grid",0,"'+sele+'")'    ],                    
               [ 0, ''             , ''                       ],
               [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+              [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
               [ 0, ''             , ''                       ],
               [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
               ]
@@ -1265,6 +1279,7 @@ def simple_action(self_cmd, sele):
             [ 1, 'reset'       , 'cmd.reset(object="'+sele+'")'          ],           
             [ 0, ''             , ''                       ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
             [ 0, ''             , ''                       ],
             [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
               ]
@@ -1351,6 +1366,7 @@ def map_action(self_cmd, sele):
             [ 1, 'matrix_copy'  , mat_tran(self_cmd, sele, 1) ],
             [ 0, ''             , '' ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
             [ 0, ''             , ''                       ],
             [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
             ]
@@ -1386,6 +1402,7 @@ def surface_action(self_cmd, sele):
             [ 1, 'reset'       , 'cmd.reset(object="'+sele+'")'          ],                       
             [ 0, ''             , ''                       ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
             [ 0, ''             , ''                       ],
             [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
             ]
@@ -1402,6 +1419,7 @@ def mesh_action(self_cmd, sele):
             [ 1, 'reset'       , 'cmd.reset(object="'+sele+'")'          ],                       
             [ 0, ''             , ''                       ],
             [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+            [ 1, 'group' , lambda: move_to_group(self_cmd, sele) ],
             [ 0, ''             , ''                       ],
             [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'    ],
             ]
@@ -1517,6 +1535,16 @@ def mol_labels(self_cmd, sele):
               [ 1, 'atom identifiers' , label_ids(self_cmd, sele) ],
               ]
 
+def mol_ss(self_cmd, sele):
+    fmt = '''cmd.alter("{}","ss='{}'",quiet=0);cmd.rebuild()'''
+    return [
+        [2, 'Secondary Structure:', '' ],
+        [1, 'H (helix)', fmt.format(sele, 'H')],
+        [1, 'S (sheet)', fmt.format(sele, 'S')],
+        [1, 'L (loop)' , fmt.format(sele, 'L')],
+        [0, '', ''],
+        [1, 'dss' , 'cmd.dss("{0}", context="byobject ({0})")'.format(sele) ],
+    ]
 
 def mol_view(self_cmd, sele):
     return [
@@ -1655,6 +1683,7 @@ def pick_sele(self_cmd, sele, title):
         [ 1, 'hide'      , mol_hide(self_cmd, sele) ],
         [ 1, 'preset'  , presets(self_cmd, sele)       ],      
         [ 1, 'label'       , mol_labels(self_cmd, sele) ],
+        [ 1, 'ss'        , mol_ss(self_cmd, sele) ],
         [ 0, ''             , ''                      ],
         [ 1, 'zoom'           ,'cmd.zoom("'+sele+'",animate=-1)'            ],
         [ 1, 'orient'           ,'cmd.orient("'+sele+'",animate=-1)'            ],
@@ -1745,6 +1774,7 @@ def seq_option(self_cmd, sele, title, object=0):
         [ 1, 'hide'      , mol_hide(self_cmd, sele) ],
         [ 1, 'preset'    , presets(self_cmd, sele)       ],      
         [ 1, 'label'     , mol_labels(self_cmd, sele) ],
+        [ 1, 'ss'        , mol_ss(self_cmd, sele) ],
         [ 0, ''          , ''                      ],
         [ 1, 'zoom'      ,'cmd.zoom("'+sele+'",animate=-1)'            ],
         [ 1, 'orient'    ,'cmd.orient("'+sele+'",animate=-1)'            ],

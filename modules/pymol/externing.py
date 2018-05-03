@@ -53,9 +53,9 @@ SEE ALSO
             os.chdir(dir)  # raises on error
             if not quiet:
                 print(" cd: now in %s" % getcwdu())
-        except:
+        except BaseException as e:
             if complain:
-                traceback.print_exc()
+                raise pymol.CmdException(str(e))
         return DEFAULT_SUCCESS
 
     def pwd():

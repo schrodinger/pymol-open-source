@@ -22,7 +22,9 @@
 #include "MemoryDebug.h"
 #include "Rep.h"
 
-const int ss_map[] = {
+const char ss_map[] = {
+    // indices shifted by +1 w.r.t. spec
+    0,   // undefined
     'H', // pi helix
     'L', // bend
     'H', // alpha helix
@@ -207,8 +209,10 @@ ObjectMolecule * ObjectMoleculeReadMmtfStr(PyMOLGlobals * G, ObjectMolecule * I,
           container->groupList +
           container->groupTypeList[groupIndex];
 
-        if (container->secStructList)
-          tai.ssType[0] = ss_map[container->secStructList[groupIndex]];
+        if (container->secStructList) {
+          size_t i = container->secStructList[groupIndex] + 1;
+          tai.ssType[0] = ss_map[std::min(i, sizeof(ss_map) - 1)];
+        }
 
         LexAssign(G, tai.resn, group->groupName);
         tai.hetatm = group->singleLetterCode == '?';

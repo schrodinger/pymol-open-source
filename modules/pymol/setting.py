@@ -629,7 +629,7 @@ PYMOL API
             name = name_dict.get(index, name)
             suffix = ' state %d' % state if state > 0 else ''
             for model, vlist in r:
-                print(' %s = %s for object %s' % (name, cmd.get(name, model), model))
+                print(' %s = %s for object %s' % (name, _self.get(name, model), model))
                 for idx1, idx2, value in vlist:
                     if value is None:
                         continue
@@ -677,7 +677,7 @@ ARGUMENTS
                 pass
 
         # 0 (object-level) and 1-N (object-state-level)
-        states = range(cmd.count_states(object) + 1)
+        states = range(_self.count_states(object) + 1)
 
         for setting in settings:
             try:

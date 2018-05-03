@@ -131,7 +131,7 @@ void WizardPurgeStack(PyMOLGlobals * G)
 #endif
 }
 
-int WizardDoSelect(PyMOLGlobals * G, char *name)
+int WizardDoSelect(PyMOLGlobals * G, char *name, int state)
 {
 /**
  * Run when user selects something with the mouse, in a wizard
@@ -153,6 +153,11 @@ int WizardDoSelect(PyMOLGlobals * G, char *name)
         PLog(G, buf, cPLog_pym);
 	/* block and call (in Python) the wizard's do_select */
         PBlock(G);
+        if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick_state")) {
+          result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick_state", state + 1);
+          if(PyErr_Occurred())
+            PyErr_Print();
+        }
         if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_select")) {
           result = PTruthCallStr(I->Wiz[I->Stack], "do_select", name);
           if(PyErr_Occurred())
@@ -321,7 +326,7 @@ Block *WizardGetBlock(PyMOLGlobals * G)
 
 
 /*========================================================================*/
-int WizardDoPick(PyMOLGlobals * G, int bondFlag)
+int WizardDoPick(PyMOLGlobals * G, int bondFlag, int state)
 {
   /**
    * Run when user picks something
@@ -344,6 +349,11 @@ int WizardDoPick(PyMOLGlobals * G, int bondFlag)
         PBlock(G);
         if(I->Stack >= 0)
           if(I->Wiz[I->Stack]) {
+            if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick_state")) {
+              result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick_state", state + 1);
+              if(PyErr_Occurred())
+                PyErr_Print();
+            }
             if(PyObject_HasAttrString(I->Wiz[I->Stack], "do_pick")) {
               result = PTruthCallStr1i(I->Wiz[I->Stack], "do_pick", bondFlag);
               if(PyErr_Occurred())

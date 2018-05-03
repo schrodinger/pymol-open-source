@@ -58,10 +58,12 @@ void gl_debug_proc(
     const GLchar *msg,
     const void *)
 {
+#ifdef GL_DEBUG_TYPE_ERROR
   if (type == GL_DEBUG_TYPE_ERROR) {
     printf("glDebug: %s\n", msg);
     print_trace();
   }
+#endif
 }
 
 // Returns the size in bytes of the opengl type

@@ -16,6 +16,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include <set>
+
 #include"os_predef.h"
 #include"os_std.h"
 #include"os_gl.h"
@@ -274,6 +276,44 @@ bool ring_connector_visible(PyMOLGlobals * G,
       AtomSettingGetWD(G, ai1, cSetting_cartoon_side_chain_helper, sc_helper) ||
       AtomSettingGetWD(G, ai2, cSetting_cartoon_side_chain_helper, sc_helper));
 }
+
+/*
+ * depth-first neighbor search for nucleic acid atom
+ *
+ * nuc_flag:    NAtom-length boolean nucleic acid flags array
+ * neighbor:    Neighbor data structure
+ * atm:         atom index
+ * max_depth:   maximum search depth
+ * seen:        set of visited atom indices (read/write)
+ *
+ * Return: true if any nucleic acid atom found within max_depth radius
+ */
+static
+bool has_nuc_neighbor(
+    const int * nuc_flag,
+    const int * neighbor,
+    const int atm,
+    const int max_depth,
+    std::set<int> &seen)
+{
+  int atm_neighbor, tmp;
+  ITERNEIGHBORATOMS(neighbor, atm, atm_neighbor, tmp) {
+    if (nuc_flag[atm_neighbor])
+      return true;
+
+    if (seen.count(atm_neighbor))
+      continue;
+
+    seen.insert(atm_neighbor);
+
+    if (max_depth > 1 &&
+        has_nuc_neighbor(nuc_flag, neighbor, atm_neighbor, max_depth - 1, seen))
+      return true;
+  }
+
+  return false;
+}
+
 
 /* atix must contain n_atom + 1 elements, with the first atom repeated at the end */
 
@@ -940,45 +980,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
       /* see if any of the neighbors are confirmed nucleic acids... */
       if(sugar_at >= 0) {
         if(!nf) {
-          mem0 = sugar_at;
-          nbr[0] = neighbor[mem0] + 1;
-          while((!nf) && (mem1 = neighbor[nbr[0]]) >= 0) {
-            if(!nf)
-              nf = nuc_flag[mem1];
-            nbr[1] = neighbor[mem1] + 1;
-            while((!nf) && (mem2 = neighbor[nbr[1]]) >= 0) {
-              if(mem2 != mem0) {
-                if(!nf)
-                  nf = nuc_flag[mem2];
-                nbr[2] = neighbor[mem2] + 1;
-                while((!nf) && (mem3 = neighbor[nbr[2]]) >= 0) {
-                  if((mem3 != mem1) && (mem3 != mem0)) {
-                    if(!nf)
-                      nf = nuc_flag[mem3];
-                    nbr[3] = neighbor[mem3] + 1;
-                    while((mem4 = neighbor[nbr[3]]) >= 0) {
-                      if(mem4 != mem2) {
-                        if(!nf)
-                          nf = nuc_flag[mem4];
-                        nbr[4] = neighbor[mem4] + 1;
-                        while((mem5 = neighbor[nbr[4]]) >= 0) {
-                          if(mem5 != mem3) {
-                            if(!nf)
-                              nf = nuc_flag[mem5];
-                          }
-                          nbr[4] += 2;
-                        }
-                      }
-                      nbr[3] += 2;
-                    }
-                  }
-                  nbr[2] += 2;
-                }
-              }
-              nbr[1] += 2;
-            }
-            nbr[0] += 2;
-          }
+          auto seen = std::set<int>();
+          nf = has_nuc_neighbor(nuc_flag, obj->Neighbor, sugar_at, 5, seen);
         }
 
         if(nf) {
@@ -1140,9 +1143,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
       }
     }
     if((!nf) && ((have_C4_prime >= 0) || (have_C4 >= 0))) {
-      int nbr[9];
-      int *neighbor = obj->Neighbor;
-      int mem0, mem1, mem2, mem3, mem4, mem5, mem6, mem7, mem8, mem9;
+      int mem0;
       /* see if any of the neighbors are confirmed nucleic acids... */
       if(have_C4_prime >= 0)
         mem0 = have_C4_prime;
@@ -1151,76 +1152,8 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
       else
         mem0 = -1;
       if(mem0 >= 1) {
-        nbr[0] = neighbor[mem0] + 1;
-        while((!nf) && (mem1 = neighbor[nbr[0]]) >= 0) {
-          if(!nf)
-            nf = nuc_flag[mem1];
-          nbr[1] = neighbor[mem1] + 1;
-          while((!nf) && (mem2 = neighbor[nbr[1]]) >= 0) {
-            if(mem2 != mem0) {
-              if(!nf)
-                nf = nuc_flag[mem2];
-              nbr[2] = neighbor[mem2] + 1;
-              while((!nf) && (mem3 = neighbor[nbr[2]]) >= 0) {
-                if((mem3 != mem1) && (mem3 != mem0)) {
-                  if(!nf)
-                    nf = nuc_flag[mem3];
-                  nbr[3] = neighbor[mem3] + 1;
-                  while((mem4 = neighbor[nbr[3]]) >= 0) {
-                    if(mem4 != mem2) {
-                      if(!nf)
-                        nf = nuc_flag[mem4];
-                      nbr[4] = neighbor[mem4] + 1;
-                      while((mem5 = neighbor[nbr[4]]) >= 0) {
-                        if(mem5 != mem3) {
-                          if(!nf)
-                            nf = nuc_flag[mem5];
-                          nbr[5] = neighbor[mem5] + 1;
-                          while((mem6 = neighbor[nbr[5]]) >= 0) {
-                            if(mem6 != mem4) {
-                              if(!nf)
-                                nf = nuc_flag[mem6];
-                              nbr[6] = neighbor[mem6] + 1;
-                              while((mem7 = neighbor[nbr[6]]) >= 0) {
-                                if(mem7 != mem5) {
-                                  if(!nf)
-                                    nf = nuc_flag[mem7];
-                                  nbr[7] = neighbor[mem7] + 1;
-                                  while((mem8 = neighbor[nbr[7]]) >= 0) {
-                                    if(mem8 != mem6) {
-                                      if(!nf)
-                                        nf = nuc_flag[mem8];
-                                      nbr[8] = neighbor[mem8] + 1;
-                                      while((mem9 = neighbor[nbr[8]]) >= 0) {
-                                        if(mem9 != mem7) {
-                                          if(!nf)
-                                            nf = nuc_flag[mem9];
-                                        }
-                                        nbr[8] += 2;
-                                      }
-                                    }
-                                    nbr[7] += 2;
-                                  }
-                                }
-                                nbr[6] += 2;
-                              }
-                            }
-                            nbr[5] += 2;
-                          }
-                        }
-                        nbr[4] += 2;
-                      }
-                    }
-                    nbr[3] += 2;
-                  }
-                }
-                nbr[2] += 2;
-              }
-            }
-            nbr[1] += 2;
-          }
-          nbr[0] += 2;
-        }
+        auto seen = std::set<int>();
+        nf = has_nuc_neighbor(nuc_flag, obj->Neighbor, mem0, 9, seen);
       }
     }
     if(n_atom) {                /* store center of ring */

@@ -275,6 +275,11 @@ ext_comp_args = [
     '-Wno-write-strings',
     '-Wno-unused-function',
     '-Wno-char-subscripts',
+    # optimizations
+    "-ffast-math",
+    "-funroll-loops",
+    "-O3",
+    "-fcommon",
 ]
 ext_link_args = []
 ext_objects = []
@@ -392,12 +397,13 @@ else: # unix style (linux, mac, ...)
     libs += ["GLEW"]
     libs += pyogl_libs
 
-    ext_comp_args += ["-ffast-math", "-funroll-loops", "-fcommon"]
+    if sys.platform.startswith("freebsd"):
+        libs += ["execinfo"]
 
     # optimization currently causes a clang segfault on OS X 10.9 when
     # compiling layer2/RepCylBond.cpp
-    if sys.platform != 'darwin':
-        ext_comp_args += ["-O3"]
+    if sys.platform == 'darwin':
+        ext_comp_args += ["-fno-strict-aliasing"]
 
 def get_pymol_version():
     return re.findall(r'_PyMOL_VERSION "(.*)"', open('layer0/Version.h').read())[0]

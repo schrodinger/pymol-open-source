@@ -1051,11 +1051,16 @@ struct MoleculeExporterMAE : public MoleculeExporter {
   void beginMolecule() {
     MoleculeExporter::beginMolecule();
 
+    std::string groupid = MaeExportGetSubGroupId(G, reinterpret_cast<CObject*>(m_iter.obj));
+
     m_offset += VLAprintf(m_buffer, m_offset,
         "\nf_m_ct {\n"
+        "s_m_subgroupid\n"
         "s_m_title\n"
         ":::\n"
+        "\"%s\"\n"
         "\"%s\"\n",
+        groupid.c_str(),
         getTitleOrName());
 
     // defer until number of atoms known

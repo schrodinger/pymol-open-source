@@ -131,6 +131,19 @@ void SettingUniqueDetachChain(PyMOLGlobals * G, int index);
 
 int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
 			       int setting_type, const void *value);
+
+/*
+ * bool overload
+ */
+inline
+int SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
+			       int setting_type, const bool *value) {
+  int i = *value;
+  return SettingUniqueSetTypedValue(G, unique_id, setting_id, setting_type, &i);
+}
+
+bool SettingUniqueUnset(PyMOLGlobals * G, int unique_id, int setting_id);
+
 #ifndef _PYMOL_NOPY
 bool SettingUniqueSetPyObject(PyMOLGlobals * G, int unique_id, int setting_id, PyObject *value);
 #endif
@@ -383,6 +396,18 @@ bool SettingGetIfDefined(const CSetting * s, int index, V * out) {
 
 bool SettingUniqueGetTypedValuePtr(PyMOLGlobals * G, int unique_id, int index,
     int setting_type, void * out);
+
+/*
+ * bool overload
+ */
+inline
+bool SettingUniqueGetTypedValuePtr(PyMOLGlobals * G, int unique_id, int index,
+    int setting_type, bool * out) {
+  int i = *out;
+  bool r = SettingUniqueGetTypedValuePtr(G, unique_id, index, setting_type, &i);
+  *out = i;
+  return r;
+}
 
 /*
  * `SettingGetIfDefined` equivalent for unique settings.

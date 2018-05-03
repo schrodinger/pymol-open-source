@@ -9788,7 +9788,7 @@ int ExecutiveStereo(PyMOLGlobals * G, int flag)
     SettingSetGlobal_f(G, cSetting_stereo_shift, -SettingGetGlobal_f(G, cSetting_stereo_shift));
     break;
   default:                     /* -2 */
-    if(G->HaveGUI) {
+    {
       stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
       switch (stereo_mode) {
       case 0:                  /* off */
@@ -9985,7 +9985,8 @@ ok_except1:
 /*========================================================================*/
 int ExecutiveAngle(PyMOLGlobals * G, float *result, const char *nam,
                    const char *s1, const char *s2, const char *s3, int mode,
-                   int labels, int reset, int zoom, int quiet, int state)
+                   int labels, int reset, int zoom, int quiet, int state,
+                   int state1, int state2, int state3)
 {
   SelectorTmp tmpsele1(G, s1);
   SelectorTmp tmpsele2(G, s2);
@@ -10009,7 +10010,8 @@ int ExecutiveAngle(PyMOLGlobals * G, float *result, const char *nam,
 
     obj = ObjectDistNewFromAngleSele(G, (ObjectDist *) anyObj,
                                      sele1, sele2, sele3,
-                                     mode, labels, result, reset, state);
+                                     mode, labels, result, reset, state,
+                                     state1, state2, state3);
     if(!obj) {
       if(!quiet)
         ErrMessage(G, "ExecutiveAngle", "No angles found.");
@@ -10108,7 +10110,8 @@ int ExecutiveDihedral(PyMOLGlobals * G, float *result, const char *nam, const ch
  */
 int ExecutiveDist(PyMOLGlobals * G, float *result, const char *nam,
                   const char *s1, const char *s2, int mode, float cutoff,
-                  int labels, int quiet, int reset, int state, int zoom)
+                  int labels, int quiet, int reset, int state, int zoom,
+                  int state1, int state2)
 {
   SelectorTmp tmpsele1(G, s1);
   SelectorTmp tmpsele2(G, s2);
@@ -10128,7 +10131,8 @@ int ExecutiveDist(PyMOLGlobals * G, float *result, const char *nam,
       }
     /* create a new distance from the two selections */
     obj = ObjectDistNewFromSele(G, (ObjectDist *) anyObj,
-                                sele1, sele2, mode, cutoff, labels, reset, result, state);
+                                sele1, sele2, mode, cutoff, labels, reset, result, state,
+                                state1, state2);
     /* could insert obj into sele1's mol's object's DistList and sele2's mol's object's DistList */
     /* if the distance was created, add it to the object list and manage it
      * otherwise, complain and do nothing */
@@ -12402,7 +12406,7 @@ int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, const char *s1, const
                (SelectorIsMember(G, ai2->selEntry, sele1) &&
                 SelectorIsMember(G, ai1->selEntry, sele2))) {
               int uid = AtomInfoCheckUniqueBondID(G, bi);
-              if(!SettingUniqueSetTypedValue(G, uid, index, cSetting_blank, NULL))
+              if(!SettingUniqueUnset(G, uid, index))
                 continue;
               if(updates)
                 side_effects = true;

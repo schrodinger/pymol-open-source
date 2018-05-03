@@ -11510,7 +11510,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals * G, DistSet * ds,
     a2 = vla[a * 2 + 1];
 
     /* check their coverage to avoid duplicates */
-    if(a1 < a2 || (a1 != a2 && !(coverage[a1] && coverage[a2]))) {  /* eliminate reverse duplicates */
+    if(a1 < a2 || (a1 != a2 && !(coverage[a1] && coverage[a2]))
+        || (state1 != state2)) {  /* eliminate reverse duplicates */
       /* get the object-local atom ID */
       at1 = I->Table[a1].atom;
       at2 = I->Table[a2].atom;
@@ -11797,9 +11798,12 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals * G, DistSet * ds,
 			  atom1Info = NULL;
                           a3 = list3[i3];
 
-                          if((a1 != a2) && (a2 != a3) && (a1 != a3)) {
+                          if( (a1 != a2 || state1 != state2) &&
+                              (a2 != a3 || state2 != state3) &&
+                              (a1 != a3 || state1 != state3)) {
                             if(!(coverage[a1] && coverage[a3])
-                               || (a1 < a3)) {  /* eliminate alternate-order duplicates */
+                               || (a1 < a3)
+                               || (state1 != state3)) {  /* eliminate alternate-order duplicates */
 
                               at3 = I->Table[a3].atom;
                               obj3 = I->Obj[I->Table[a3].model];

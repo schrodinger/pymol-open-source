@@ -4326,7 +4326,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
               if(EditorActive(G)) {
                 EditorDefineExtraPks(G);
               }
-              WizardDoPick(G, 0);
+              WizardDoPick(G, 0, I->LastPicked.context.state);
             }
             break;
           case cButModePickAtom:
@@ -4369,7 +4369,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
                   EditorDefineExtraPks(G);
                 }
                 EditorLogState(G, false);
-                WizardDoPick(G, 0);
+                WizardDoPick(G, 0, I->LastPicked.context.state);
               }
             }
             break;
@@ -4470,9 +4470,9 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
                 break;
               }
             }
-            WizardDoPick(G, 1);
+            WizardDoPick(G, 1, I->LastPicked.context.state);
           } else {
-            WizardDoPick(G, 0);
+            WizardDoPick(G, 0, I->LastPicked.context.state);
           }
           if(SettingGetGlobal_b(G, cSetting_auto_hide_selections))
             ExecutiveHideSelections(G);
@@ -4740,7 +4740,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
                 PLog(G, buffer, cPLog_pym);
               }
             }
-            WizardDoSelect(G, selName);
+            WizardDoSelect(G, selName, I->LastPicked.context.state);
             break;
           case cButModeAddToLB:
           case cButModeAddToMB:
@@ -4782,7 +4782,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
               ExecutiveHideSelections(G);
             if(SettingGetGlobal_b(G, cSetting_auto_show_selections))
               ExecutiveSetObjVisib(G, selName, 1, false);
-            WizardDoSelect(G, selName);
+            WizardDoSelect(G, selName, I->LastPicked.context.state);
             break;
           }
         case cObjectGadget:

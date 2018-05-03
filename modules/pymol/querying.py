@@ -241,7 +241,8 @@ PYMOL API
 
     def angle(name=None, selection1="(pk1)", selection2="(pk2)", 
 	      selection3="(pk3)", mode=None, label=1, reset=0, 
-	      zoom=0, state=0, quiet=1, _self=cmd):
+	      zoom=0, state=0, quiet=1, _self=cmd,
+              state1=-3, state2=-3, state3=-3):
 
         '''
 DESCRIPTION
@@ -318,7 +319,8 @@ SEE ALSO
                                str(selection2),
                                str(selection3),
                                int(mode),int(label),int(reset),
-                               int(zoom),int(quiet),int(state)-1)
+                               int(zoom),int(quiet),int(state)-1,
+                               int(state1)-1, int(state2)-1, int(state3)-1)
             finally:
                 _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException
@@ -419,7 +421,8 @@ SEE ALSO
         
     def distance(name=None, selection1="(pk1)", selection2="(pk2)", 
 		 cutoff=None, mode=None, zoom=0, width=None, length=None,
-                 gap=None, label=1, quiet=1, reset=0, state=0, _self=cmd):
+                 gap=None, label=1, quiet=1, reset=0, state=0,
+                 state1=-3, state2=-3, _self=cmd):
 	
         '''
 DESCRIPTION
@@ -450,6 +453,12 @@ ARGUMENTS
 
     mode = 4: distance between centroids (does not support
               dynamic_measures; new in PyMOL 1.8.2)
+
+    state = int: object state to create the measurement object in
+    and to get coordinates from {default: 0 (all states)}
+
+    state1, state2 = int: overrule 'state' argument to measure distances
+    between different states {default: use state}
 
 EXAMPLES
 
@@ -527,7 +536,8 @@ PYMOL API
                 r = _cmd.dist(_self._COb,str(nam),"("+str(selection1)+")",
                               str(selection2),int(mode),float(cutoff),
                               int(label),int(quiet),int(reset),
-                              int(state)-1,int(zoom))
+                              int(state)-1,int(zoom),
+                              int(state1)-1, int(state2)-1)
                 if width!=None:
                     _self.set("dash_width",width,nam)
                 if length!=None:
@@ -1649,6 +1659,8 @@ DESCRIPTION
         states = _self.count_states('%' + name)
         if states < 2 and _self.get_setting_boolean('static_singletons'):
             return 1
+        if _self.get_setting_int('all_states', name):
+            return 0
         state = _self.get_setting_int('state', name)
         if state > states:
             raise pymol.CmdException('Invalid state %d for object %s' % (state, name))
@@ -1695,8 +1707,8 @@ SEE ALSO
         state, quiet = int(state), int(quiet)
 
         if state < 0:
-            states = [get_selection_state(selection)]
-        elif state == 0:
+            state = _self.get_selection_state(selection)
+        if state == 0:
             states = list(range(1, _self.count_states(selection)+1))
         else:
             states = [state]

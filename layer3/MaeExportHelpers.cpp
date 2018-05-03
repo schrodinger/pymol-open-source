@@ -12,6 +12,8 @@
 #include "Color.h"
 #include "Lex.h"
 #include "Setting.h"
+#include "Executive.h"
+#include "SpecRec.h"
 
 /*
  * Setting getter
@@ -166,4 +168,32 @@ std::string MaeExportGetLabelUserText(PyMOLGlobals * G,
   }
 
   return label_user_text;
+}
+
+/*
+ * Get the MAE group title/id
+ */
+std::string MaeExportGetSubGroupId(PyMOLGlobals * G,
+    const CObject * obj)
+{
+  std::string subgroupid;
+  const SpecRec * rec = NULL;
+
+  // obj -> spec rec
+  for (ObjectIterator iter(G); iter.next();) {
+    if (iter.getObject() == obj) {
+      rec = iter.getSpecRec();
+      break;
+    }
+  }
+
+  // "->".join(grouphierarchy)
+  for (; rec && rec->group_name[0]; rec = rec->group) {
+    if (!subgroupid.empty()) {
+      subgroupid.insert(0, "->");
+    }
+    subgroupid.insert(0, rec->group_name);
+  }
+
+  return subgroupid;
 }

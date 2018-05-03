@@ -424,6 +424,15 @@ int PopUpRelease(Block * block, int button, int x, int y, int mod)
   CPopUp *I = (CPopUp *) block->reference;
   int gone_passive = false;
 
+  int scroll_dy = 10;
+  switch (button) {
+    case PYMOL_BUTTON_SCROLL_FORWARD:
+      scroll_dy *= -1;
+    case PYMOL_BUTTON_SCROLL_REVERSE:
+      BlockTranslate(block, 0, scroll_dy);
+      return 1;
+  }
+
   if(I->NeverDragged) {
     if(I->PassiveDelay > UtilGetSeconds(G)) {
       gone_passive = true;

@@ -380,7 +380,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
                     first = sequence.pop()
                     _self.fragment(code[first], tmp_obj)
                     if not hydro:
-                        cmd.remove(tmp_obj + ' and hydro')
+                        _self.remove(tmp_obj + ' and hydro')
                     _self.alter(tmp_obj,'resi="""%s""";chain="""%s""";segi="""%s"""'%(resi,chain,segi))
                     _self.create(name,tmp_obj+" or ?"+name,1,1,zoom=0)
                     tmp_sel = _self.get_unused_name()

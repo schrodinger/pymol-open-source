@@ -2387,12 +2387,16 @@ void PyMOL_DrawWithoutLock(CPyMOL * I)
 
     // OpenGL debugging (glewInit must be called first)
     if (I->G->Option->gldebug) {
+#ifdef GL_DEBUG_OUTPUT
       if (!glDebugMessageCallback) {
         printf("glDebugMessageCallback not available\n");
       } else {
         glDebugMessageCallback(gl_debug_proc, NULL);
         glEnable(GL_DEBUG_OUTPUT);
       }
+#else
+      printf("GL_DEBUG_OUTPUT not available\n");
+#endif
     }
   }
 

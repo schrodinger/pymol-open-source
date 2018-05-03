@@ -55,6 +55,8 @@ class Measurement(Wizard):
     def __init__(self,_self=cmd):
         Wizard.__init__(self,_self)
 
+        self.pick_state = [0, 0, 0, 0]
+
         self.cmd.unpick()
 
         self.cutoff = self.cmd.get_setting_float("neighbor_cutoff")
@@ -289,6 +291,9 @@ class Measurement(Wizard):
         self.clear_input()
         self.cmd.refresh_wizard()
 
+    def do_pick_state(self, state):
+        self.pick_state[self.status] = state
+
     def do_select(self,name): # map selects into picks
         self.cmd.unpick()
         try:
@@ -311,6 +316,8 @@ class Measurement(Wizard):
         else:
             reset = 1
             sele_name = sele_prefix + str(self.status)
+            state1, state2, state3, state4 = self.pick_state
+
             if self.mode == 'pairs':
                 if self.status==0:
                     self.cmd.select(sele_name,"(pk1)")
@@ -323,7 +330,13 @@ class Measurement(Wizard):
                                               (self.object_mode=='append'))
                     if self.object_mode=='merge':
                         reset = 0
-                    self.cmd.dist(obj_name,"(v. and " + sele_prefix+"0)","(v. and (pk1))",reset=reset)
+
+                    if state1 == state2 and self.cmd.get_selection_state('?pk1') != 0:
+                        state1 = state2 = -3
+
+                    self.cmd.dist(obj_name,"(v. and " + sele_prefix+"0)","(v. and (pk1))",reset=reset,
+                            state1=state1, state2=state2)
+
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
@@ -340,10 +353,15 @@ class Measurement(Wizard):
                                               (self.object_mode=='append'))
                     if self.object_mode=='merge':
                         reset = 0
+
+                    if state1 == state2 and self.cmd.get_selection_state('?pk1') != 0:
+                        state1 = state2 = -3
+
                     self.cmd.distance(obj_name,
                             "?" + sele_prefix + "0",
                             "(?pk1 | byring ?pk1)",
-                            mode=4, reset=reset)
+                            mode=4, reset=reset,
+                            state1=state1, state2=state2)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
@@ -361,8 +379,13 @@ class Measurement(Wizard):
                                              (self.object_mode=='append'))
                     if self.object_mode=='merge':
                         reset = 0
+
+                    if state1 == state2 == state3 and self.cmd.get_selection_state('?pk1') != 0:
+                        state1 = state2 = state3 = -3
+
                     self.cmd.angle(obj_name, "(v. and " + sele_prefix+"0)", "(v. and " + sele_prefix+"1)",
-                                   "(v. and (pk1))", reset=reset)
+                                   "(v. and (pk1))", reset=reset,
+                                   state1=state1, state2=state2, state3=state3)
                     self.cmd.enable(obj_name)
                     self.clear_input()
                     self.status = 0
