@@ -76,7 +76,7 @@ class TestAtomProperties(testing.PyMOLTestCase):
         stored.prop_lookup = {}
         for obj in objs:
             stored.prop_lookup[obj] = {}
-            cmd.iterate(obj, "stored.prop_lookup['%s'][index-1] = properties" % obj)
+            cmd.iterate(obj, "stored.prop_lookup['%s'][index-1] = properties.all" % obj)
         prop_lookup = stored.prop_lookup
         with testing.mktemp('.pse') as psefilename:
             cmd.save(psefilename)
@@ -84,7 +84,7 @@ class TestAtomProperties(testing.PyMOLTestCase):
         stored.prop_lookup = {}
         for obj in objs:
             stored.prop_lookup[obj] = {}
-            cmd.iterate(obj, "stored.prop_lookup['%s'][index-1] = properties" % obj)
+            cmd.iterate(obj, "stored.prop_lookup['%s'][index-1] = properties.all" % obj)
         #test to make sure the properties are exactly the same from the saved session as the loaded session
         self.assertEqual(prop_lookup, stored.prop_lookup)
 
