@@ -108,6 +108,25 @@ class TestImporting(testing.PyMOLTestCase):
         self.assertTrue(any(x != 0.0 for x in charges))
         self.assertTrue(any(x != 0.0 for x in radii))
 
+    @testing.requires_version('2.2')
+    def testLoad_pqr_various(self):
+        import glob
+        pqrdir = self.datafile('pqr')
+        extent_expect = {
+            19: [[1999.32, 2998.77, -901.70], [2008.4, 3006.35, -898.02]],
+            36: [[1998.629, 2998.033, -902.509], [2008.765, 3006.347, -898.022]],
+        }
+        for filename in glob.glob(os.path.join(pqrdir, '*.pqr')):
+            cmd.load(filename)
+            n_atom = cmd.count_atoms()
+            extent = cmd.get_extent()
+            self.assertArrayEqual(extent, extent_expect[n_atom], delta=1e-2, msg=filename)
+            if 'chain' in os.path.basename(filename):
+                self.assertEqual(cmd.get_chains(), ['A'])
+            else:
+                self.assertEqual(cmd.get_chains(), [''])
+            cmd.delete('*')
+
     @testing.foreach.product(
             ['sdf', 'mol2', 'xyz', 'pdb', 'mmd'],
             [0, 1],
