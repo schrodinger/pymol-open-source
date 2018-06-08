@@ -36,6 +36,8 @@ class TestSelecting(testing.PyMOLTestCase):
     def testMacros(self):
         '''
         Test selection macros: /model/segi/chain/resn`resi/name`alt
+
+        See also tests/jira/PYMOL-2720.py
         '''
         cmd.load(self.datafile("1oky.pdb.gz"), "m1")
         cmd.alter('*', 'segi="X"')
@@ -120,3 +122,95 @@ class TestSelecting(testing.PyMOLTestCase):
         self.assertEqual(cmd.count_atoms('polymer'), npro + nnuc)
         self.assertEqual(cmd.count_atoms('polymer.protein'), npro)
         self.assertEqual(cmd.count_atoms('polymer.nucleic'), nnuc)
+
+    @testing.requires_version('2.2')
+    def test_wildcards(self):
+        cmd.pseudoatom('foo')
+        cmd.pseudoatom('foobar')
+        cmd.pseudoatom('foo_bar')
+        cmd.pseudoatom('foo_bar_bla')
+        cmd.pseudoatom('bar')
+        cmd.pseudoatom('_bar')
+        self.assertEqual(1, cmd.count_atoms('foo'))
+        self.assertEqual(1, cmd.count_atoms('*foo'))
+        self.assertEqual(4, cmd.count_atoms('*foo*'))
+        self.assertEqual(1, cmd.count_atoms('bar'))
+        self.assertEqual(4, cmd.count_atoms('*bar'))
+        self.assertEqual(5, cmd.count_atoms('*bar*'))
+        self.assertEqual(2, cmd.count_atoms('foo*bar'))
+        self.assertEqual(3, cmd.count_atoms('*foo*bar*'))
+        self.assertEqual(1, cmd.count_atoms('_*'))
+        self.assertEqual(6, cmd.count_atoms('*'))
+        self.assertEqual(6, cmd.count_atoms('*'))
+        cmd.alter('*', 'name = "ABCD"')
+        cmd.alter('foo', 'name = "ABED"')
+        cmd.alter('bar', 'name = "ABEC"')
+        self.assertEqual(6, cmd.count_atoms('name A*'))
+        self.assertEqual(2, cmd.count_atoms('name ABE*'))
+        self.assertEqual(1, cmd.count_atoms('name ABED*'))
+        self.assertEqual(1, cmd.count_atoms('name AB*C'))
+        self.assertEqual(5, cmd.count_atoms('name AB*C*'))
+        self.assertEqual(5, cmd.count_atoms('name AB*D'))
+        self.assertEqual(5, cmd.count_atoms('name AB*D*'))
+
+    @testing.requires_version('2.2')
+    def test_wildcard_sets_ranges(self):
+        for i in range(10): cmd.pseudoatom('m%d' % i, chain=chr(65 + i))
+        cmd.alter('m5', 'chain = "AB"')
+        cmd.alter('m6', 'chain = "BA"')
+        cmd.alter('m7', 'chain = "CC"')
+        cmd.alter('m8', 'chain = "ZA"')
+        cmd.alter('m9', 'chain = "ABA"')
+        # A patterns
+        self.assertEqual(1, cmd.count_atoms('chain A'))
+        self.assertEqual(3, cmd.count_atoms('chain A*'))
+        self.assertEqual(4, cmd.count_atoms('chain *A'))
+        self.assertEqual(5, cmd.count_atoms('chain *A*'))
+        self.assertEqual(1, cmd.count_atoms('chain A*A'))
+        # B patterns
+        self.assertEqual(2, cmd.count_atoms('chain B*'))
+        self.assertEqual(2, cmd.count_atoms('chain *B'))
+        self.assertEqual(4, cmd.count_atoms('chain *B*'))
+        # X patterns (no matches)
+        self.assertEqual(0, cmd.count_atoms('chain X*'))
+        self.assertEqual(0, cmd.count_atoms('chain *X'))
+        self.assertEqual(0, cmd.count_atoms('chain *X*'))
+        # list with wildcards
+        self.assertEqual(5, cmd.count_atoms('chain B*+A*'))
+        self.assertEqual(3, cmd.count_atoms('chain B*+A*A'))
+        self.assertEqual(3, cmd.count_atoms('chain B*+A*A+*X'))
+
+        # lexicographical alpha ranges, A:C, will match AB (A <= AB <= C) but not CC (C < CC)
+        # no wildcards in alpha ranges possible
+        self.assertEqual(6, cmd.count_atoms('chain A:C'))
+        self.assertEqual(6, cmd.count_atoms('chain A:CA'))
+        self.assertEqual(7, cmd.count_atoms('chain A:CX')) # include CC
+        self.assertEqual(6, cmd.count_atoms('chain A:C+Z'))
+        self.assertEqual(7, cmd.count_atoms('chain A:C+Z*'))
+
+    def test_sets_ranges(self):
+        cmd.fab('ACDEFGHIKL')
+        cmd.alter('resi 9', 'resi="9A"') # insertion code
+        self.assertEqual(3, cmd.count_atoms('guide & resi 2-4'))
+        self.assertEqual(3, cmd.count_atoms('guide & resi 2:4'))
+        self.assertEqual(2, cmd.count_atoms('guide & resi 2+4'))
+        self.assertEqual(4, cmd.count_atoms('guide & resi 2-4+6'))
+        self.assertEqual(6, cmd.count_atoms('guide & resi 2-4+6-8'))
+        self.assertEqual(0, cmd.count_atoms('guide & resi 9'))
+        self.assertEqual(1, cmd.count_atoms('guide & resi 9A'))
+        self.assertEqual(1, cmd.count_atoms('guide & resi 10'))
+        self.assertEqual(0, cmd.count_atoms('guide & resi 10A'))
+        self.assertEqual(2, cmd.count_atoms('guide & resi 9-10'))
+        self.assertEqual(2, cmd.count_atoms('guide & resi 9A-10A'))
+        self.assertEqual(10 + 9, cmd.count_atoms('name CA+CB'))
+        self.assertEqual(10 + 9, cmd.count_atoms('name CA+CB+XYZ'))
+        self.assertEqual(10, cmd.count_atoms('name C'))
+        self.assertEqual(50, cmd.count_atoms('name C*'))
+        self.assertEqual(10, cmd.count_atoms('name H'))
+        self.assertEqual(24, cmd.count_atoms('name H*'))
+        self.assertEqual(10, cmd.count_atoms('name *H'))
+        self.assertEqual(74, cmd.count_atoms('name *H*'))
+        self.assertEqual(20, cmd.count_atoms('name C+N'))
+        self.assertEqual(23, cmd.count_atoms('name C+N*'))
+        self.assertEqual(60, cmd.count_atoms('name C*+N'))
+        self.assertEqual(63, cmd.count_atoms('name C*+N*'))
