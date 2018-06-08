@@ -32,6 +32,7 @@
 #include"ObjectMolecule.h"
 #include"Feedback.h"
 #include"Util.h"
+#include"Util2.h"
 #include"AtomInfo.h"
 #include"Selector.h"
 #include"ObjectDist.h"
@@ -61,12 +62,7 @@
 
 #define cMaxOther 6
 
-static int strstartswith(const char * s, const char * prefix) {
-  while(*prefix)
-    if(*s++ != *prefix++)
-      return false;
-  return true;
-}
+#define strstartswith p_strstartswith
 
 static int strstartswithword(const char * s, const char * word) {
   while(*word)
@@ -1660,7 +1656,7 @@ static void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
   *restart_model = NULL;
   while(*ok && *p) {
     AddOrthoOutputIfMatchesTags(G, n_tags, *nAtom, tag_start, p, cc, quiet);
-    if((strstartswith(p, "ATOM  ") ||
+    if((strstartswith(p, "ATOM ") ||
           strstartswith(p, "HETATM")) && (!*restart_model)) {
       if(!seen_end_of_atoms)
         (*nAtom)++;
@@ -1943,6 +1939,98 @@ static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain
   }
 }
 
+/*
+ * PQR atom line parsing
+ *
+ * Try to parse columns white space delimited (10 columns with optional
+ * chain, 9 without). Return DELIM for successful parsing, FIXED if
+ * columns have fixed positions, and MIXED otherwise.
+ *
+ * Where PQR files come from:
+ *
+ * pdb2pqr -> writes PDB-like fixed colums. APBS will fail to read those files
+ * if columns are too wide.
+ *
+ * pdb2pqr --whitespace -> puts extra whitespace, starting at column 2, but
+ * not between chain and resi! PyMOL <= 2.1 fails to read those files.
+ *
+ * APBS Tools Plugin by Michael Lerner adds extra whitespace before negative
+ * coordinates (assuming -100.0 is the most likely source of error).
+ */
+enum {
+  PQR_COLUMNS_DELIM, // white space delimited
+  PQR_COLUMNS_FIXED, // PDB-like fixed columns
+  PQR_COLUMNS_MIXED, // neither properly delimited nor fixed
+};
+static int parse_pqr_atom_line(PyMOLGlobals * G,
+    const char * &p,
+    AtomInfoType * ai,
+    float * coord)
+{
+  char cc[MAXLINELEN];
+  auto p_eol = ncopy(cc, p, MAXLINELEN);
+  float tmp_f[6];
+  char tmp_s[4][16];
+  char spaces[] = "....";
+  int offset = 0;
+
+  // use "%f%c%f" instead of "%f %f", otherwise it would happily parse
+  // 1234.5671234.567 into 1234.5671234 and 0.567 instead of rejecting
+  // the input
+
+  auto n_items = sscanf(cc, "%d%c%15s %15s %15s %15s %f%c%f%c%f%c%f %f",
+      &ai->id, spaces + 0,
+      tmp_s[0], tmp_s[1], tmp_s[2], tmp_s[3],
+      tmp_f + 1, spaces + 1,
+      tmp_f + 2, spaces + 2,
+      tmp_f + 3, spaces + 3,
+      tmp_f + 4,
+      tmp_f + 5);
+
+  // space check
+  if (!(isspace(spaces[0]) && isspace(spaces[1]) &&
+        isspace(spaces[2]) && isspace(spaces[3]))) {
+    n_items = 0;
+  }
+
+  if (n_items == 14) {
+    // chain column present
+    LexAssign(G, ai->chain, tmp_s[2]);
+    offset = 1;
+  } else if (n_items == 13) {
+    // X-coordinate
+    sscanf(tmp_s[3], "%f", tmp_f);
+
+    // check for concatenated chain + resi
+    if (strlen(tmp_s[2]) > 4 && !isdigit(tmp_s[2][0])) {
+      tmp_s[3][0] = tmp_s[2][0];
+      tmp_s[3][1] = 0;
+      tmp_s[2][0] = ' ';
+      LexAssign(G, ai->chain, tmp_s[3]);
+    }
+  } else if (strlen(cc) > 50
+      && cc[28] == '.'
+      && cc[36] == '.'
+      && cc[44] == '.') {
+    // coordinate columns in the right places, assume this was written with
+    // PDB-like layout
+    return PQR_COLUMNS_FIXED;
+  } else {
+    // fall back to PyMOL's legacy mixed mode
+    return PQR_COLUMNS_MIXED;
+  }
+
+  LexAssign(G, ai->name, tmp_s[0]);
+  LexAssign(G, ai->resn, tmp_s[1]);
+  ai->setResi(tmp_s[offset + 2]);
+  ai->partialCharge = tmp_f[offset + 3];
+  ai->elec_radius = tmp_f[offset + 4];
+  copy3(tmp_f + offset, coord);
+  p = p_eol;
+
+  return PQR_COLUMNS_DELIM;
+}
+
 CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
                                         const char *buffer,
                                         AtomInfoType ** atInfoPtr,
@@ -2094,7 +2182,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     /*      printf("%c%c%c%c%c%c\n",p[0],p[1],p[2],p[3],p[4],p[5]); */
     AFlag = false;
     SSCode = 0;
-    if(strstartswith(p, "ATOM"))
+    if(strstartswith(p, "ATOM "))
       AFlag = 1;
     else if(strstartswith(p, "HETATM"))
       AFlag = 2;
@@ -2631,10 +2719,22 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
     if(ok && AFlag && (!*restart_model)) {
       ai = atInfo + atomCount;
       p = nskip(p, 6);
+
+      ai->rank = atomCount;
+
+      bool pqr_legacy_mixed_mode = false;
+      if(info && info->is_pqr_file()) {
+        switch (parse_pqr_atom_line(G, p, ai, coord + a)) {
+          case PQR_COLUMNS_DELIM:
+            goto pqr_done;
+          case PQR_COLUMNS_MIXED:
+            pqr_legacy_mixed_mode = true;
+        }
+      }
+
       p = ncopy(cc, p, 5);
       if(!sscanf(cc, "%d", &ai->id))
         ai->id = 0;
-      ai->rank = atomCount;
 
       p = nskip(p, 1);          /* to 12 */
       p = ncopy(literal_name, p, 4);
@@ -2742,8 +2842,18 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       } else {
         ai->cartoon = cCartoon_tube;
       }
-      if((!info) || (!info->is_pqr_file())) {     /* standard PDB file */
 
+      if (pqr_legacy_mixed_mode) {
+        // Note: not sure if this branch is ever reached (if such files exist)
+        // or if it's fully obsolete with the new space delimited parsing in
+        // parse_pqr_atom_line.
+        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
+        sscanf(cc, "%f", coord + a);
+        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
+        sscanf(cc, "%f", coord + (a + 1));
+        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
+        sscanf(cc, "%f", coord + (a + 2));
+      } else {
         p = nskip(p, 3);
         p = ncopy(cc, p, 8);
         sscanf(cc, "%f", coord + a);
@@ -2751,7 +2861,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         sscanf(cc, "%f", coord + (a + 1));
         p = ncopy(cc, p, 8);
         sscanf(cc, "%f", coord + (a + 2));
+      }
 
+      if((!info) || (!info->is_pqr_file())) {     /* standard PDB file */
         p = ncopy(cc, p, 6);
         if(!sscanf(cc, "%f", &ai->q))
           ai->q = 1.0;
@@ -2845,19 +2957,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
         /* end normal PDB */
       } else if(info && info->is_pqr_file()) {
-        /* PQR file format...not well defined, but basically PDB
-           with charge and radius instead of B and Q.  Right now,
-           we insist on PDB column format through the chain ID,
-           and then switch over to whitespace delimited parsing 
-           for the coordinates, charge, and radius */
-
-        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
-        sscanf(cc, "%f", coord + a);
-        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
-        sscanf(cc, "%f", coord + (a + 1));
-        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
-        sscanf(cc, "%f", coord + (a + 2));
-
         p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
         if(!sscanf(cc, "%f", &ai->partialCharge))
           ai->partialCharge = 0.0F;
@@ -2866,6 +2965,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         if(sscanf(cc, "%f", &ai->elec_radius) != 1)
           ai->elec_radius = 0.0F;
       }
+
+pqr_done:
 
       ai->visRep = auto_show;
 

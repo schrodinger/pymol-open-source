@@ -2839,6 +2839,7 @@ void AtomInfoSetStereo(AtomInfoType * ai, const char * stereo) {
     case 'S':  ai->mmstereo = 2; ai->stereo = 0; break; // MMSTEREO_CHIRALITY_S
     case 'E':  ai->mmstereo = 0; ai->stereo = SDF_CHIRALITY_EVEN;       break;
     case 'O':  ai->mmstereo = 0; ai->stereo = SDF_CHIRALITY_ODD;        break;
+    case 'A': // ANS (s), ANR (r) pseudochirality
     case 'N': case 0: ai->mmstereo = ai->stereo = 0;    break;
     default:   ai->mmstereo = ai->stereo = 3;           break;
   }

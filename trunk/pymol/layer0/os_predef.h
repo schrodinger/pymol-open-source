@@ -49,7 +49,7 @@ typedef float aliased_float;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 
-#ifdef WIN32
+#if defined(_MSC_VER)
 #define __inline__ __inline
 #endif
 
@@ -113,7 +113,7 @@ typedef float aliased_float;
 #include <stddef.h>
 #endif
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
 #pragma warning (disable:4996)
 #if !defined(snprintf) && (_MSC_VER < 1900)
 #define snprintf sprintf_s

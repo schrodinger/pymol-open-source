@@ -2,6 +2,22 @@
 CHANGE LOG
 =========================================================================
 
+2018-06-08 Thomas Holder <thomas.holder@schrodinger.com>
+
+	* fix selection wildcard (sf.net/p/pymol/bugs/209)
+
+	* fix PDB atom id > 99999 crash
+
+	* more robust PQR parsing
+
+	* pymol2.PyMOL() context manager
+
+	* new setting: cif_metalc_as_zero_order_bonds
+
+	* new setting: sdf_write_zero_order_bonds
+
+	* cif: accept _chem_comp_bond.type alias for _chem_comp_bond.value_order
+
 2018-05-03 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix anaglyph stereo in batch (headless) mode

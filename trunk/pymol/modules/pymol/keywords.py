@@ -24,6 +24,7 @@ def get_command_keywords(self_cmd=cmd):
         'api'           : [ self_cmd.helping.api       , 0 , 0 , ''  , parsing.STRICT ],
         'as'            : [ self_cmd.show_as           , 0 , 0 , ''  , parsing.STRICT ],          
         'assert'        : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
+        'assign_stereo' : [ self_cmd.assign_stereo     , 0 , 0 , ''  , parsing.STRICT ],
         'attach'        : [ self_cmd.attach            , 0 , 0 , ''  , parsing.STRICT ],
         'backward'      : [ self_cmd.backward          , 0 , 0 , ''  , parsing.STRICT ],
         'bg_color'      : [ self_cmd.bg_color          , 0 , 0 , ''  , parsing.STRICT ],

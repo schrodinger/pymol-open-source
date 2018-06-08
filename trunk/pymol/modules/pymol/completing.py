@@ -80,6 +80,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'alter'          : aa_sel_e,
         'alphatoall'     : aa_sel_c,
         'api'            : [ self_cmd.kwhash, 'command', '' ],
+        'assign_stereo'  : aa_sel_e,
         'bond'           : aa_sel_e,
         'as'             : aa_rem_c,
         'bg_color'       : [ lambda c=self_cmd:c._get_color_sc(c), 'color'       , ''   ],      

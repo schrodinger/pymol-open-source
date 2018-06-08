@@ -870,6 +870,8 @@ enum {
   REC_b( 762, surface_smooth_edges                    , ostate    , 1 ),
   REC_i( 763, chem_comp_cartn_use                     , global    , 0 ),
   REC_b( 764, colored_feedback                        , global    , 0 ),
+  REC_b( 765, sdf_write_zero_order_bonds              , global    , 0 ),
+  REC_b( 766, cif_metalc_as_zero_order_bonds          , global    , 1 ),
 
 #ifdef SETTINGINFO_IMPLEMENTATION
 #undef SETTINGINFO_IMPLEMENTATION

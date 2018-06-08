@@ -76,7 +76,10 @@ class PyMOLDesktopGUI(object):
 
         return [
             ('menu', 'File', [
-                ('command', 'New PyMOL Window',             self.new_window),
+                ('menu', 'New PyMOL Window',  [
+                    ('command', 'Default',                  self.new_window),
+                    ('command', 'Ignore .pymolrc and plugins (-k)', lambda: self.new_window(('-k',))),
+                ]),
                 ('separator',),
                 ('command', 'Open...',                      self.file_open),
                 ('open_recent_menu',),
@@ -626,7 +629,7 @@ class PyMOLDesktopGUI(object):
                     ]),
                     ('radio', 'Dot', 'surface_type', 1),
                     ('radio', 'Wireframe', 'surface_type', 2),
-                    ('radio', 'Solid', 'surface_type', 1),
+                    ('radio', 'Solid', 'surface_type', 0),
                     ('separator',),
                     ('radio', 'Cavities and Pockets Only', 'surface_cavity_mode', 1),
                     ('radio', 'Cavities and Pockets (Culled)', 'surface_cavity_mode', 2),

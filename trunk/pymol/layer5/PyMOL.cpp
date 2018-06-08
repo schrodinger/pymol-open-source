@@ -1880,9 +1880,6 @@ static void init_python(int argc, char *argv[])
 
   PyEval_InitThreads();
 
-#if PY_MAJOR_VERSION < 3
-  PyUnicode_SetDefaultEncoding("utf-8");        /* is this safe & legal? */
-#endif
   PyRun_SimpleString("import sys");
   PyRun_SimpleString("import os");
   PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')");
@@ -2347,12 +2344,6 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
     }
   }
 
-  // double buffer check
-  glGetBooleanv(GL_DOUBLEBUFFER, &state);
-  if (!state) {
-    printf("Warning: GL_DOUBLEBUFFER=0\n");
-  }
-
   // GL_BACK if GL_DOUBLEBUFFER else GL_FRONT
   // With QOpenGLWidget -> framebuffer object
   GLint buf;
@@ -2362,6 +2353,12 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
     buf = GL_BACK;
   }
   G->DRAW_BUFFER0 = buf;
+
+  // double buffer check
+  glGetBooleanv(GL_DOUBLEBUFFER, &state);
+  if (!state && buf <= GL_BACK) {
+    printf("Warning: GL_DOUBLEBUFFER=0\n");
+  }
 }
 #endif
 

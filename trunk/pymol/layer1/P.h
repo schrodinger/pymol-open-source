@@ -220,6 +220,10 @@ typedef struct {
   short read_only; // set for PLabelAtom
   PyMOLGlobals * G;
   PyObject *dict;
+  PyObject *settingWrapperObject;
+#ifdef _PYMOL_IP_EXTRAS
+  PyObject *propertyWrapperObject;
+#endif
 } WrapperObject;
 
 void WrapperObjectReset(WrapperObject *);
@@ -265,9 +269,6 @@ struct _CP_inst {
 
   int glut_thread_keep_out;
   SavedThreadRec savedThread[MAX_SAVED_THREAD];
-
-  WrapperObject *wrapperObject;
-  SettingPropertyWrapperObject *settingWrapperObject;
 };
 
 

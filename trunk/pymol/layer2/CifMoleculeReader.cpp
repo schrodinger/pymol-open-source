@@ -296,19 +296,14 @@ static float GetDistance(ObjectMolecule * I, int i1, int i2) {
  * Bond order string to int
  */
 static int bondOrderLookup(const char * order) {
-  switch (order[0]) {
-    case 'a': case 'A': // arom
-      return 4;
-    case 't': case 'T': // triple
-      return 3;
-    case 'd': case 'D':
-      switch (order[1]) {
-        case 'e': case 'E': // deloc
-          return 4;
-      }
-      // double
-      return 2;
-  }
+  if (p_strcasestartswith(order, "doub"))
+    return 2;
+  if (p_strcasestartswith(order, "trip"))
+    return 3;
+  if (p_strcasestartswith(order, "arom"))
+    return 4;
+  if (p_strcasestartswith(order, "delo"))
+    return 4;
   // single
   return 1;
 }
@@ -1867,12 +1862,14 @@ static bool read_struct_conn_(PyMOLGlobals * G, cif_data * data,
       name_dict[make_mm_atom_site_label(G, atInfo + i)] = idx;
   }
 
+  bool metalc_as_zero = SettingGetGlobal_b(G, cSetting_cif_metalc_as_zero_order_bonds);
+
   for (int i = 0; i < nrows; i++) {
     const char * type_id = col_type_id->as_s(i);
     if (strncasecmp(type_id, "covale", 6) &&
         strcasecmp(type_id, "modres") &&
 #ifdef _PYMOL_IP_EXTRAS
-        strcasecmp(type_id, "metalc") &&
+        !(metalc_as_zero && strcasecmp(type_id, "metalc") == 0) &&
 #endif
         strcasecmp(type_id, "disulf"))
       // ignore non-covalent bonds (saltbr, hydrog)
@@ -1951,7 +1948,13 @@ static BondType * read_chem_comp_bond(PyMOLGlobals * G, cif_data * data,
       (col_comp_id = data->get_arr("_chem_comp_bond.comp_id")) == NULL)
     return NULL;
 
-  const cif_array *col_order = data->get_opt("_chem_comp_bond.value_order");
+  // "_chem_comp_bond.type" seems to be non-standard here. It's found in the
+  // wild with values like "double" and "aromatic". mmcif_nmr-star.dic defines
+  // it, but with different vocabulary (e.g. "amide", "ether", etc.).
+
+  const cif_array *col_order = data->get_opt(
+      "_chem_comp_bond.value_order",
+      "_chem_comp_bond.type");
 
   int nrows = col_ID_1->get_nrows();
   int nAtom = VLAGetSize(atInfo);

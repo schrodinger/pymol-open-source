@@ -5,6 +5,6 @@
 // Generic Error Handing
 bool glCheckOkay();
 
-void gl_debug_proc(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
+void GLAPIENTRY gl_debug_proc(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
 
 size_t gl_sizeof(GLenum type);

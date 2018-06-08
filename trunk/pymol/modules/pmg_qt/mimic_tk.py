@@ -101,6 +101,8 @@ class _qtFileDialog:
         r = self.askopenfilename(**options)
         if options.get('multiple'):
             return [open(f, mode) for f in r]
+        if not r:
+            return None
         return open(r, mode)
 
     def askopenfiles(self, **options):
@@ -115,6 +117,8 @@ class _qtFileDialog:
 
     def asksaveasfile(self, mode='w', **options):
         r = self.asksaveasfilename(**options)
+        if not r:
+            return None
         return open(r, mode)
 
     def askdirectory(self, **options):

@@ -75,8 +75,8 @@ double UtilGetSeconds(PyMOLGlobals *G)
   return((tv.tv_sec+(tv.tv_usec/((double)1000000.0)))-G->Util->StartSec);
   /* END PROPRIETARY CODE SEGMENT */
 #else
-   struct _timeb timebuffer;
-   _ftime( &timebuffer );
+   struct __timeb64 timebuffer;
+   _ftime64( &timebuffer );
    return((timebuffer.time+(timebuffer.millitm/((double)1000.0)))-G->Util->StartSec);
 #endif
 }

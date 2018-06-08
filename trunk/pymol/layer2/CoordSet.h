@@ -26,6 +26,12 @@ Z* -------------------------------------------------------------------
 
 #define COORD_SET_HAS_ANISOU 0x01
 
+enum mmpymolx_prop_state_t {
+  MMPYMOLX_PROP_STATE_NULL = 0, // invalidated
+  MMPYMOLX_PROP_STATE_AUTO,     // auto-assigned (libmmpymolx)
+  MMPYMOLX_PROP_STATE_USER,     // user-assigned (cmd.alter)
+};
+
 typedef struct CoordSet {
   // methods (not fully refactored yet)
   void fFree();
@@ -108,9 +114,9 @@ typedef struct CoordSet {
   /* temporary / optimization */
 
   int objMolOpInvalidated;
-#ifndef NO_MMLIBS
-  bool validMMStereo;
-  bool validTextType;
+#ifdef _PYMOL_IP_EXTRAS
+  mmpymolx_prop_state_t validMMStereo;
+  mmpymolx_prop_state_t validTextType;
 #endif
 
 #ifdef _PYMOL_IP_EXTRAS

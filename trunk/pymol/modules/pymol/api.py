@@ -446,6 +446,9 @@ from .internal import      \
 from .util import \
       get_sasa_relative
 
+from .stereochemistry import \
+      assign_stereo
+
 #--------------------------------------------------------------------
 #from m4x import \
 #     metaphorics
