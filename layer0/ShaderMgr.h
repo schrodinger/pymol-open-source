@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #include "Rep.h"
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef WIN32
+#if 0
 PFNGLTEXIMAGE3DPROC getTexImage3D();
 static PFNGLTEXIMAGE3DPROC glTexImage3D;
 static PFNGLGENPROGRAMSARBPROC glGenProgramsARB;

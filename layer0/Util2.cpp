@@ -78,4 +78,22 @@ bool strlessnat(const std::string& a, const std::string& b) {
   return cstrlessnat(a.c_str(), b.c_str());
 }
 
+/*
+ * Return true if s starts with the specified prefix, false otherwise.
+ */
+bool p_strstartswith(const char * s, const char * prefix) {
+  while (*prefix)
+    if (*s++ != *prefix++)
+      return false;
+  return true;
+}
 
+/*
+ * case-insensitive version of p_strstartswith
+ */
+bool p_strcasestartswith(const char * s, const char * prefix) {
+  for (; *prefix; ++s, ++prefix)
+    if (*s != *prefix && tolower(*s) != tolower(*prefix))
+      return false;
+  return true;
+}

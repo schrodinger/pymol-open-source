@@ -36,8 +36,10 @@ namespace {
 bool glCheckOkay() {
   int err = 0;
   if ((err = glGetError()) != 0) {
-    printf("GL_ERROR : %d\n", err);
+    printf("GL_ERROR : 0x%04x\n", err);
+#if 0
     print_trace();
+#endif
     return false;
   }
   return true;
@@ -49,7 +51,7 @@ bool glCheckOkay() {
  * glDebugMessageCallback(gl_debug_proc, NULL);
  * glEnable(GL_DEBUG_OUTPUT);
  */
-void gl_debug_proc(
+void GLAPIENTRY gl_debug_proc(
     GLenum source,
     GLenum type,
     GLuint id,

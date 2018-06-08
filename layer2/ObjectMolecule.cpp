@@ -75,8 +75,6 @@ Z* -------------------------------------------------------------------
 #include "mmpymolx.h"
 #endif
 
-int ObjectMoleculeUpdateMMStereoInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize);
-
 void ObjectMoleculeCylinders(ObjectMolecule * I);
 
 static
@@ -10397,10 +10395,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
 
 #ifdef _PYMOL_IP_EXTRAS
         // use stereo or text_type ?
-	switch (op->code){
-	case OMOP_AlterState:
-	case OMOP_LABL:
-	case OMOP_ALTR:
+        // only do this for "label2" command (better logic in WrapperObjectSubScript)
+	if (op->code == OMOP_LABL && op->i2 == cExecutiveLabelEvalAlt) {
 	  use_stereo = PLabelExprUsesVariable(G, op->s1, "stereo");
 	  use_text_type = PLabelExprUsesVariable(G, op->s1, "text_type");
 	}
@@ -11361,12 +11357,6 @@ void ObjectMoleculeInvalidate(ObjectMolecule * I, int rep, int level, int state)
       cset = I->CSet[a];
       if(cset) {
         cset->invalidateRep(rep, level);
-#ifndef NO_MMLIBS
-        if (level >= cRepInvProp) {
-          cset->validMMStereo = false;
-          cset->validTextType = false;
-	}
-#endif
       }
     }
   }

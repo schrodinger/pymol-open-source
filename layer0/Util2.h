@@ -22,3 +22,6 @@ struct cstrless_t {
     return strcmp(a, b) < 0;
   }
 };
+
+bool p_strstartswith(const char * s, const char * prefix);
+bool p_strcasestartswith(const char * s, const char * prefix);

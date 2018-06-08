@@ -151,6 +151,7 @@ static PyMOLGlobals * _api_get_pymol_globals(PyObject * self) {
 }
 
 #define API_HANDLE_ERROR \
+   if (PyErr_Occurred()) PyErr_Print(); \
    fprintf(stderr,"API-Error: in %s line %d.\n",__FILE__,__LINE__);
 
 
@@ -7154,7 +7155,6 @@ static PyObject *CmdLoadCoords(PyObject * self, PyObject * args)
   PyObject *coords = NULL;
 
   if(!PyArg_ParseTuple(args, "OsO|i", &self, &str1, &coords, &state)) {
-  PyErr_Print();
     API_HANDLE_ERROR;
     ok_raise(2);
   }
@@ -8619,6 +8619,7 @@ extern "C" {
 void init_cmd(void)
 {
 #if PY_MAJOR_VERSION < 3
+  PyUnicode_SetDefaultEncoding("utf-8");
   Py_InitModule4("pymol._cmd",
                  Cmd_methods,
                  "PyMOL _cmd internal API -- PRIVATE: DO NOT USE!",

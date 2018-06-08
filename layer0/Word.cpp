@@ -428,13 +428,13 @@ static int recursive_match(CWordMatcher * I, MatchNode * cur_node, const char *t
         p++;
         q++;
       }
-      if((!(*q)) && (!(*p)))
-        return true;
 
-      if((*p) && (!*q) && cur_node->continued)
-        return recursive_match(I, cur_node + 1, p, value_ptr);
-      if((*p) != (*q))
-        return false;
+      if(!*q) {
+        if(cur_node->continued)
+          return recursive_match(I, cur_node + 1, p, value_ptr);
+        if(!*p)
+          return true;
+      }
     }
     break;
   case cMatchWildcard:

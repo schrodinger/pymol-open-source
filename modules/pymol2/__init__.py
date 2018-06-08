@@ -71,6 +71,13 @@ class SingletonPyMOL:
 
         pymol.cmd._COb = None
 
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.stop()
+
 
 class PyMOL(SingletonPyMOL):
     '''

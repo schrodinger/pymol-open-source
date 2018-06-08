@@ -242,6 +242,7 @@ protected:
   // functions to be implemented by derived classes
   virtual int getMultiDefault() const = 0;
   virtual bool isExcludedBond(int atm1, int atm2);
+  virtual bool isExcludedBond(const BondType * bond);
   virtual void writeAtom() = 0;
   virtual void writeBonds() = 0;
   virtual void beginObject();
@@ -257,6 +258,9 @@ protected:
  */
 bool MoleculeExporter::isExcludedBond(int atm1, int atm2) {
   return false;
+}
+bool MoleculeExporter::isExcludedBond(const BondType * bond) {
+  return isExcludedBond(bond->index[0], bond->index[1]);
 }
 
 void MoleculeExporter::beginObject() {
@@ -404,7 +408,7 @@ void MoleculeExporter::populateBondRefs() {
         !(id2 = getTmpID(atm2)))
       continue;
 
-    if (isExcludedBond(atm1, atm2))
+    if (isExcludedBond(bond))
       continue;
 
     if (id1 > id2)
@@ -874,6 +878,17 @@ struct MoleculeExporterMOL : public MoleculeExporter {
         getTitleOrName(), _PyMOL_VERSION);
 
     m_chiral_flag = 0;
+  }
+
+  bool isExcludedBond(const BondType * bond) {
+    // MOL format doesn't know zero order bonds. Writing them as order "0"
+    // will produce a nonstandard file which may be rejected by other
+    // applications (e.g. RDKit).
+    if (bond->order == 0) {
+      return !SettingGetGlobal_b(G, cSetting_sdf_write_zero_order_bonds);
+    }
+
+    return false;
   }
 };
 

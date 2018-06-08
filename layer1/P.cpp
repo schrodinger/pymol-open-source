@@ -588,6 +588,34 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
   ap = PyMOL_GetAtomPropertyInfo(wobj->G->PyMOL, aprop);
   Py_DECREF(keyobj);
   if (ap){
+#ifdef _PYMOL_IP_EXTRAS
+#ifdef NO_MMLIBS
+    // static -> only show these warnings once
+    static bool warning_shown_text_type = false;
+#endif
+
+    switch (ap->id) {
+    case ATOM_PROP_STEREO:
+      if (ObjectMoleculeUpdateMMStereoInfoForState(G, wobj->obj, wobj->state - 1) < 0) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "please install rdkit or set SCHRODINGER variable");
+        return NULL;
+      }
+      break;
+    case ATOM_PROP_TEXT_TYPE:
+#ifndef NO_MMLIBS
+      ObjectMoleculeUpdateAtomTypeInfoForState(G, wobj->obj, wobj->state - 1, 1, 0);
+#else
+      if (!warning_shown_text_type && !(wobj->cs && wobj->cs->validTextType)) {
+        warning_shown_text_type = true;
+        PRINTFB(G, FB_ObjectMolecule, FB_Warnings)
+          " Notice: Automatic 'text_type' assignment feature removed in PyMOL 2.0.\n" ENDFB(G);
+      }
+#endif
+      break;
+    }
+#endif
+
     switch (ap->Ptype){
     case cPType_string:
       {
@@ -657,7 +685,11 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
       }
       break;
     case cPType_settings:
-      ret = (PyObject*)wobj->G->P_inst->settingWrapperObject;
+      if (!wobj->settingWrapperObject) {
+        wobj->settingWrapperObject = PyType_GenericNew(&settingWrapper_Type, Py_None, Py_None);
+        reinterpret_cast<SettingPropertyWrapperObject *>(wobj->settingWrapperObject)->wobj = wobj;
+      }
+      ret = wobj->settingWrapperObject;
       borrowed = true;
       break;
     case cPType_properties:
@@ -695,7 +727,9 @@ PyObject * WrapperObjectSubScript(PyObject *obj, PyObject *key){
     }
   } else {
     /* if not an atom property, check if local variable in dict */
-    ret = PyDict_GetItem(wobj->dict, key);
+    if (wobj->dict) {
+      ret = PyDict_GetItem(wobj->dict, key);
+    }
     if (ret) {
       borrowed = true;
     } else {
@@ -729,6 +763,19 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
     AtomPropertyInfo *ap = PyMOL_GetAtomPropertyInfo(wobj->G->PyMOL, aprop);
 
     if (ap){
+#ifdef _PYMOL_IP_EXTRAS
+      if (wobj->cs) {
+        switch (ap->id) {
+        case ATOM_PROP_STEREO:
+          wobj->cs->validMMStereo = MMPYMOLX_PROP_STATE_USER;
+          break;
+        case ATOM_PROP_TEXT_TYPE:
+          wobj->cs->validTextType = MMPYMOLX_PROP_STATE_USER;
+          break;
+        }
+      }
+#endif
+
       short changed = false;
       if (wobj->read_only){
         PyErr_SetString(PyExc_TypeError,
@@ -872,6 +919,9 @@ int WrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *val){
       }
     } else {
       /* if not an atom property, then its a local variable, store it */
+      if (!wobj->dict) {
+        wobj->dict = PyDict_New();
+      }
       PyDict_SetItem(wobj->dict, key, val);
     }
   }
@@ -1249,6 +1299,17 @@ void PDumpException()
   PYOBJECT_CALLMETHOD(P_traceback, "print_exc", "");
 }
 
+static
+WrapperObject * WrapperObjectNew() {
+  auto wobj = (WrapperObject *)PyType_GenericNew(&Wrapper_Type, Py_None, Py_None);
+  wobj->dict = NULL;
+  wobj->settingWrapperObject = NULL;
+#ifdef _PYMOL_IP_EXTRAS
+  wobj->propertyWrapperObject = NULL;
+#endif
+  return wobj;
+}
+
 int PAlterAtomState(PyMOLGlobals * G, PyCodeObject *expr_co, int read_only,
                     ObjectMolecule *obj, CoordSet *cs, int atm, int idx,
                     int state, PyObject * space)
@@ -1257,16 +1318,18 @@ int PAlterAtomState(PyMOLGlobals * G, PyCodeObject *expr_co, int read_only,
 {
   int result = true;
 
-  G->P_inst->wrapperObject->obj = obj;
-  G->P_inst->wrapperObject->cs = cs;
-  G->P_inst->wrapperObject->atomInfo = obj->AtomInfo + atm;
-  G->P_inst->wrapperObject->atm = atm;
-  G->P_inst->wrapperObject->idx = idx;
-  G->P_inst->wrapperObject->read_only = read_only;
-  G->P_inst->wrapperObject->state = state + 1;
+  auto wobj = WrapperObjectNew();
+  wobj->G = G;
+  wobj->obj = obj;
+  wobj->cs = cs;
+  wobj->atomInfo = obj->AtomInfo + atm;
+  wobj->atm = atm;
+  wobj->idx = idx;
+  wobj->read_only = read_only;
+  wobj->state = state + 1;
 
-  PXDecRef(PyEval_EvalCode(expr_co, space, (PyObject*)G->P_inst->wrapperObject));
-  WrapperObjectReset(G->P_inst->wrapperObject);
+  PXDecRef(PyEval_EvalCode(expr_co, space, (PyObject*)wobj));
+  WrapperObjectReset(wobj);
 
   if(PyErr_Occurred()) {
     PyErr_Print();
@@ -1306,26 +1369,29 @@ int PLabelAtom(PyMOLGlobals * G, ObjectMolecule *obj, CoordSet *cs, PyCodeObject
   OrthoLineType label;
   AtomInfoType * ai = obj->AtomInfo + atm;
 
-  G->P_inst->wrapperObject->obj = obj;
-  G->P_inst->wrapperObject->cs = cs;
-  G->P_inst->wrapperObject->atomInfo = ai;
-  G->P_inst->wrapperObject->atm = atm;
-  G->P_inst->wrapperObject->idx = -1;
-  G->P_inst->wrapperObject->read_only = true;
-
-  if (obj->DiscreteFlag) {
-    G->P_inst->wrapperObject->state = obj->AtomInfo[atm].discrete_state;
-  } else {
-    G->P_inst->wrapperObject->state = 0;
-  }
-
   if (!expr_co){
     // unsetting label
     LexAssign(G, ai->label, 0);
     return true;
   }
-  resultPyObject = PyEval_EvalCode(expr_co, P_inst_dict, (PyObject*)G->P_inst->wrapperObject);
-  WrapperObjectReset(G->P_inst->wrapperObject);
+
+  auto wobj = WrapperObjectNew();
+  wobj->G = G;
+  wobj->obj = obj;
+  wobj->cs = cs;
+  wobj->atomInfo = ai;
+  wobj->atm = atm;
+  wobj->idx = -1;
+  wobj->read_only = true;
+
+  if (obj->DiscreteFlag) {
+    wobj->state = obj->AtomInfo[atm].discrete_state;
+  } else {
+    wobj->state = 0;
+  }
+
+  resultPyObject = PyEval_EvalCode(expr_co, P_inst_dict, (PyObject*)wobj);
+  WrapperObjectReset(wobj);
 
   if(PyErr_Occurred()) {
     PyErr_Print();
@@ -1864,9 +1930,6 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
 #ifndef _PYMOL_EMBEDDED
   Py_Initialize();
   PyEval_InitThreads();
-#if PY_MAJOR_VERSION < 3
-  PyUnicode_SetDefaultEncoding("utf-8");        /* is this safe & legal? */
-#endif
 #endif
 
   init_cmd();
@@ -2033,10 +2096,18 @@ void PRunStringInstance(PyMOLGlobals * G, const char *str)
 }
 
 void WrapperObjectReset(WrapperObject *wo){
-  wo->obj = NULL;
-  wo->cs = NULL;
-  wo->atomInfo = NULL;
-  PyDict_Clear(wo->dict);
+  if (wo->settingWrapperObject) {
+    reinterpret_cast<SettingPropertyWrapperObject *>(wo->settingWrapperObject)->wobj = NULL;
+    Py_DECREF(wo->settingWrapperObject);
+  }
+#ifdef _PYMOL_IP_EXTRAS
+  if (wo->propertyWrapperObject) {
+    reinterpret_cast<SettingPropertyWrapperObject *>(wo->propertyWrapperObject)->wobj = NULL;
+    Py_DECREF(wo->propertyWrapperObject);
+  }
+#endif
+  Py_XDECREF(wo->dict);
+  Py_DECREF(wo);
 }
 
 void PInit(PyMOLGlobals * G, int global_instance)
@@ -2234,14 +2305,6 @@ void PInit(PyMOLGlobals * G, int global_instance)
     Py_INCREF(&Wrapper_Type);
     Py_INCREF(&settingWrapper_Type);
   }
-
-    G->P_inst->wrapperObject = (WrapperObject *)PyType_GenericNew(&Wrapper_Type, Py_None, Py_None);
-    G->P_inst->wrapperObject->G = G;
-    G->P_inst->wrapperObject->dict = PyDict_New();
-    G->P_inst->settingWrapperObject = (SettingPropertyWrapperObject *)PyType_GenericNew(&settingWrapper_Type, Py_None, Py_None);
-    G->P_inst->settingWrapperObject->wobj = G->P_inst->wrapperObject;
-    Py_INCREF(G->P_inst->wrapperObject);
-    Py_INCREF(G->P_inst->settingWrapperObject);
   }
 
 #ifdef _PYMOL_NO_MSGPACKC

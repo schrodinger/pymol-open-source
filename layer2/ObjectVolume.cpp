@@ -823,7 +823,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       volume_bit_depth = (volume_bit_depth < 17) ? GL_R16F : GL_R32F;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef WIN32
+#if 0
       glTexImage3D = getTexImage3D(); 
       if (! glTexImage3D) {
         PRINTFB(G, FB_ObjectVolume, FB_Errors)

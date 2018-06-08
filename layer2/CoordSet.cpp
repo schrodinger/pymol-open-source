@@ -1047,6 +1047,16 @@ void CoordSet::invalidateRep(int type, int level)
     I->Coord2Idx = NULL;
     /* invalidate distances */
   }
+
+#ifndef NO_MMLIBS
+  if (level >= cRepInvProp) {
+    if (validMMStereo == MMPYMOLX_PROP_STATE_AUTO)
+      validMMStereo = MMPYMOLX_PROP_STATE_NULL;
+    if (validTextType == MMPYMOLX_PROP_STATE_AUTO)
+      validTextType = MMPYMOLX_PROP_STATE_NULL;
+  }
+#endif
+
   SceneChanged(I->State.G);
 }
 
