@@ -1943,8 +1943,7 @@ static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain
  * PQR atom line parsing
  *
  * Try to parse columns white space delimited (10 columns with optional
- * chain, 9 without). Return DELIM for successful parsing, FIXED if
- * columns have fixed positions, and MIXED otherwise.
+ * chain, 9 without).
  *
  * Where PQR files come from:
  *
@@ -1956,79 +1955,60 @@ static void sshash_lookup(SSHash *hash, AtomInfoType *ai, unsigned char ss_chain
  *
  * APBS Tools Plugin by Michael Lerner adds extra whitespace before negative
  * coordinates (assuming -100.0 is the most likely source of error).
+ *
+ * @param[in,out] p     Pointer to parse from, points after the ATOM field.
+ *                      Will move the pointer to the end of the line if
+ *                      parsing was successful.
+ * @param[out]    ai    Atom to populate with data
+ * @param[out]    coord Coordinates to populate
+ * @return true on success, false otherwise.
  */
-enum {
-  PQR_COLUMNS_DELIM, // white space delimited
-  PQR_COLUMNS_FIXED, // PDB-like fixed columns
-  PQR_COLUMNS_MIXED, // neither properly delimited nor fixed
-};
-static int parse_pqr_atom_line(PyMOLGlobals * G,
+static bool parse_pqr_atom_line(PyMOLGlobals * G,
     const char * &p,
     AtomInfoType * ai,
     float * coord)
 {
-  char cc[MAXLINELEN];
-  auto p_eol = ncopy(cc, p, MAXLINELEN);
-  float tmp_f[6];
-  char tmp_s[4][16];
-  char spaces[] = "....";
-  int offset = 0;
+  auto p_eol = nskip(p, 999);   // end of line pointer
+  std::string cc(p, p_eol);     // line (starting after ATOM field)
 
-  // use "%f%c%f" instead of "%f %f", otherwise it would happily parse
-  // 1234.5671234.567 into 1234.5671234 and 0.567 instead of rejecting
-  // the input
+  // whitespace splitting
+  auto columns = strsplit(cc);
 
-  auto n_items = sscanf(cc, "%d%c%15s %15s %15s %15s %f%c%f%c%f%c%f %f",
-      &ai->id, spaces + 0,
-      tmp_s[0], tmp_s[1], tmp_s[2], tmp_s[3],
-      tmp_f + 1, spaces + 1,
-      tmp_f + 2, spaces + 2,
-      tmp_f + 3, spaces + 3,
-      tmp_f + 4,
-      tmp_f + 5);
-
-  // space check
-  if (!(isspace(spaces[0]) && isspace(spaces[1]) &&
-        isspace(spaces[2]) && isspace(spaces[3]))) {
-    n_items = 0;
-  }
-
-  if (n_items == 14) {
-    // chain column present
-    LexAssign(G, ai->chain, tmp_s[2]);
-    offset = 1;
-  } else if (n_items == 13) {
-    // X-coordinate
-    sscanf(tmp_s[3], "%f", tmp_f);
+  // insert chain column if missing
+  if (columns.size() == 9) {
+    columns.insert(columns.begin() + 3, "");
 
     // check for concatenated chain + resi
-    if (strlen(tmp_s[2]) > 4 && !isdigit(tmp_s[2][0])) {
-      tmp_s[3][0] = tmp_s[2][0];
-      tmp_s[3][1] = 0;
-      tmp_s[2][0] = ' ';
-      LexAssign(G, ai->chain, tmp_s[3]);
+    if (columns[4].size() > 4 && !isdigit(columns[4][0])) {
+      columns[3] = columns[4].substr(0, 1);
+      columns[4] = columns[4].substr(1);
     }
-  } else if (strlen(cc) > 50
-      && cc[28] == '.'
-      && cc[36] == '.'
-      && cc[44] == '.') {
-    // coordinate columns in the right places, assume this was written with
-    // PDB-like layout
-    return PQR_COLUMNS_FIXED;
-  } else {
-    // fall back to PyMOL's legacy mixed mode
-    return PQR_COLUMNS_MIXED;
   }
 
-  LexAssign(G, ai->name, tmp_s[0]);
-  LexAssign(G, ai->resn, tmp_s[1]);
-  ai->setResi(tmp_s[offset + 2]);
-  ai->partialCharge = tmp_f[offset + 3];
-  ai->elec_radius = tmp_f[offset + 4];
-  copy3(tmp_f + offset, coord);
-  p = p_eol;
+  // for validation: if number parsing consumes the entire string, then dummy
+  // will never be populated (sscanf(...) == 1, not 2)
+  char dummy[2];
 
-  return PQR_COLUMNS_DELIM;
+  // validate numeric fields and populate atom info and coordinates
+  if (columns.size() == 10 &&
+      sscanf(columns[0].c_str(), "%d%1s", &ai->id, dummy) == 1 &&
+      sscanf(columns[5].c_str(), "%f%1s", coord + 0, dummy) == 1 &&
+      sscanf(columns[6].c_str(), "%f%1s", coord + 1, dummy) == 1 &&
+      sscanf(columns[7].c_str(), "%f%1s", coord + 2, dummy) == 1 &&
+      sscanf(columns[8].c_str(), "%f%1s", &ai->partialCharge, dummy) == 1 &&
+      sscanf(columns[9].c_str(), "%f%1s", &ai->elec_radius, dummy) == 1) {
+    LexAssign(G, ai->name, columns[1].c_str());
+    LexAssign(G, ai->resn, columns[2].c_str());
+    LexAssign(G, ai->chain, columns[3].c_str());
+    ai->setResi(columns[4].c_str());
+
+    // move parser to next line
+    p = p_eol;
+
+    return true;
+  }
+
+  return false;
 }
 
 CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
@@ -2722,13 +2702,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 
       ai->rank = atomCount;
 
-      bool pqr_legacy_mixed_mode = false;
       if(info && info->is_pqr_file()) {
-        switch (parse_pqr_atom_line(G, p, ai, coord + a)) {
-          case PQR_COLUMNS_DELIM:
-            goto pqr_done;
-          case PQR_COLUMNS_MIXED:
-            pqr_legacy_mixed_mode = true;
+        if (parse_pqr_atom_line(G, p, ai, coord + a)) {
+          goto pqr_done;
         }
       }
 
@@ -2843,17 +2819,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         ai->cartoon = cCartoon_tube;
       }
 
-      if (pqr_legacy_mixed_mode) {
-        // Note: not sure if this branch is ever reached (if such files exist)
-        // or if it's fully obsolete with the new space delimited parsing in
-        // parse_pqr_atom_line.
-        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
-        sscanf(cc, "%f", coord + a);
-        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
-        sscanf(cc, "%f", coord + (a + 1));
-        p = ParseWordNumberCopy(cc, p, MAXLINELEN - 1);
-        sscanf(cc, "%f", coord + (a + 2));
-      } else {
+      {
         p = nskip(p, 3);
         p = ncopy(cc, p, 8);
         sscanf(cc, "%f", coord + a);
