@@ -75,7 +75,9 @@ def props_dialog(parent):  #noqa
                              'resn', 'name', 'alt', 'ID', 'rank']
     keys_atom_builtins = ['elem', 'q', 'b', 'type', 'formal_charge',
                           'partial_charge', 'numeric_type', 'text_type',
-                          'stereo', 'vdw', 'ss', 'color', 'reps',
+                          # avoid stereo auto-assignment errors
+                          # 'stereo',
+                          'vdw', 'ss', 'color', 'reps',
                           'protons', 'geom', 'valence', 'elec_radius']
     keys_astate_builtins = ['state', 'x', 'y', 'z']
 
@@ -191,7 +193,10 @@ def props_dialog(parent):  #noqa
 
     def update_atom_fields(ns):
         for key in keys_atom_identifiers + keys_atom_builtins:
-            value = ns[key]
+            try:
+                value = ns[key]
+            except Exception as e:
+                value = 'ERROR: ' + str(e)
             items[key].setText(1, str(value))
         update_atom_settings(ns['s'], item_atom_settings)
 
