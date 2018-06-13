@@ -1,7 +1,7 @@
 import os
 
 from pymol.Qt import QtGui, QtCore, QtWidgets
-from pymol.Qt.utils import UpdateLock
+from pymol.Qt.utils import UpdateLock, PopupOnException
 import pymol
 
 class UneditableDelegate(QtWidgets.QStyledItemDelegate):
@@ -23,6 +23,12 @@ def suspendable(func):
     func.suspended = False
     wrapper.suspend = FunctionSuspender(func)
     return wrapper
+
+def get_object_names(_self):
+    # was _self.get_names('public_objects') in PyMOL 2.1
+    # but that throws exceptions for groups/isosurfaces/etc.
+    names = _self.get_object_list()
+    return names
 
 def props_dialog(parent):  #noqa
     from pymol.setting import name_dict
@@ -119,13 +125,16 @@ def props_dialog(parent):  #noqa
         elif item == item_ostate_matrix:
             cmd.matrix_reset(model, state)
             try:
+                new_value = cmd.safe_eval(new_value)
                 result = cmd.transform_object(model, new_value, state)
             except: # CmdTransformObject-DEBUG: bad matrix
                 result = False
         elif parent == item_object_settings:
-            cmd.set(key, new_value, model, quiet=0)
+            with PopupOnException():
+                cmd.set(key, new_value, model, quiet=0)
         elif parent == item_ostate_settings:
-            cmd.set(key, new_value, model, state, quiet=0)
+            with PopupOnException():
+                cmd.set(key, new_value, model, state, quiet=0)
         elif parent == item_ostate_properties:
             cmd.set_property(key, new_value, model, state, quiet=0)
         else:
@@ -168,11 +177,7 @@ def props_dialog(parent):  #noqa
 
     def update_object_settings(parent, model, state):
         parent.takeChildren()
-        for sitem in (
-            pymol.querying.get_object_settings(
-                model,
-                state,
-                _self=cmd) or []):
+        for sitem in (cmd.get_object_settings(model, state) or []):
             key = name_dict.get(sitem[0], sitem[0])
             item = make_entry(parent, key)
             item.setText(1, str(sitem[2]))
@@ -298,13 +303,13 @@ def props_dialog(parent):  #noqa
 
         with update_treewidget_model.suspend:
             form.input_model.clear()
-            form.input_model.addItems(cmd.get_names('public_objects'))
+            form.input_model.addItems(get_object_names(cmd))
             update_from_pk1()
 
         update_treewidget_model()
 
     # init input fields
-    form.input_model.addItems(cmd.get_names('public_objects'))
+    form.input_model.addItems(get_object_names(cmd))
     form.input_state.setValue(cmd.get_state())
 
     # select pk1 atom if available
