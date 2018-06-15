@@ -1732,6 +1732,7 @@ def pick_option(self_cmd, sele, title, object=0):
             [ 1, del_col + 'delete', 'cmd.delete("'+sele+'")'            ],
             [ 0, ''             , ''                      ],         
             [ 1, 'disable'        ,'cmd.disable("'+sele+'")'            ],
+            [ 1, 'disable others' ,'cmd.disable("*");cmd.enable("'+sele+'", 1)' ],
             ])
     else:
         result.extend([
