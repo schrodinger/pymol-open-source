@@ -111,4 +111,10 @@ void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG);
 void TextDrawSubStrFast(PyMOLGlobals * G, const char *c, int x, int y, int start, int n ORTHOCGOARG);
 void TextDrawCharRepeat(PyMOLGlobals * G, char c, int x, int y, int start, int n ORTHOCGOARG);
 
+#ifdef _PYMOL_IP_EXTRAS
+#endif
+
+bool TextStartsWithColorCode(const char *);
+bool TextSetColorFromCode(PyMOLGlobals *, const char *, const float *);
+
 #endif

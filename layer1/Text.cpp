@@ -608,3 +608,55 @@ void TextFree(PyMOLGlobals * G)
   VLAFreeP(I->Active);
   FreeP(G->Text);
 }
+#ifdef _PYMOL_IP_EXTRAS
+#endif
+
+/*
+ * GUI elements like internal menus or the wizard prompt can handle text
+ * color markup in the form "\\RGB" where RGB are three digits (0-9) or
+ * "---" to reset the color.
+ *
+ * Return true if `p` starts with "\\RGB" or "\\---".
+ */
+bool TextStartsWithColorCode(const char *p)
+{
+  if (p[0] != '\\') {
+    return false;
+  }
+
+  if (p[1] == '-') {
+    return p[2] == '-' && p[3] == '-';
+  }
+
+  return (
+      ('0' <= p[1] && p[1] <= '9') &&
+      ('0' <= p[2] && p[2] <= '9') &&
+      ('0' <= p[3] && p[3] <= '9'));
+}
+
+/*
+ * Set text color from "\\RGB" code.
+ *
+ * "\\---" -> defaultcolor
+ *
+ * Return false if `p` does not start with a color code.
+ */
+bool TextSetColorFromCode(PyMOLGlobals * G,
+    const char *p,
+    const float *defaultcolor)
+{
+  if (!TextStartsWithColorCode(p)) {
+    return false;
+  }
+
+  if (p[1] == '-') {
+    TextSetColor(G, defaultcolor);
+  } else {
+    TextSetColor3f(G,
+        (p[1] - '0') / 9.0F,
+        (p[2] - '0') / 9.0F,
+        (p[3] - '0') / 9.0F);
+  }
+
+  return true;
+}

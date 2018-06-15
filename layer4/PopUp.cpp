@@ -186,8 +186,8 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
     cl = l;
     c = str;
     while(*c) {
-      if(*c == '\\') {          /* discount the markup */
-        if((((c != str) && (c[-1]) != '\\')) || ((c == str) && (c[1]) && (c[1] != '\\')))
+      if(TextStartsWithColorCode(c)) {  /* discount the markup */
+          c += 3;
           cl -= 4;
       }
       c++;
@@ -847,33 +847,16 @@ void PopUpDraw(Block * block ORTHOCGOARG)
     y = (I->Block->rect.top - cPopUpLineHeight) - cPopUpCharMargin + 2;
 
     for(a = 0; a < I->NLine; a++) {
-      if(a == I->Selected)
-        TextSetColor(G, I->Block->BackColor);
-      else
-        TextSetColor(G, I->Block->TextColor);
+      auto text_color = (a == I->Selected) ? I->Block->BackColor : I->Block->TextColor;
+      TextSetColor(G, text_color);
       if(I->Code[a]) {
         c = I->Text[a];
         xx = x;
         while(*c) {
-          if(*c == '\\')
-            if(*(c + 1))
-              if(*(c + 2))
-                if(*(c + 3)) {
-                  if(*(c + 1) == '-') {
-                    if(a == I->Selected)
-                      TextSetColor(G, I->Block->BackColor);
-                    else
-                      TextSetColor(G, I->Block->TextColor);
-                    c += 4;
-                  } else if(*(c + 1) == '+') {
-                    c += 4;
-                    TextSetColor(G, ColorGetNamed(G, c));
-                  } else {
-                    TextSetColor3f(G, (*(c + 1) - '0') / 9.0F, (*(c + 2) - '0') / 9.0F,
-                                   (*(c + 3) - '0') / 9.0F);
-                    c += 4;
-                  }
-                }
+          // note: previously also supported "\\+++red", but was never used
+          if(TextSetColorFromCode(G, c, text_color)) {
+            c += 4;
+          }
 
           TextSetPos2i(G, xx, y + cPopUpCharLift);
           TextDrawChar(G, *(c++) ORTHOCGOARGVAR);

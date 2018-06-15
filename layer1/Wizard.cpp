@@ -817,19 +817,9 @@ static void draw_text(PyMOLGlobals * G, char *c, int xx, int yy, float *color OR
 {
   TextSetColor(G, color);
   while(*c) {
-    if(*c == '\\')
-      if(*(c + 1))
-        if(*(c + 2))
-          if(*(c + 3)) {
-            if(*(c + 1) == '-') {
-              TextSetColor(G, color);
-              c += 4;
-            } else {
-              TextSetColor3f(G, (*(c + 1) - '0') / 9.0F, (*(c + 2) - '0') / 9.0F,
-                             (*(c + 3) - '0') / 9.0F);
-              c += 4;
-            }
-          }
+    if(TextSetColorFromCode(G, c, color)) {
+      c += 4;
+    }
     TextSetPos2i(G, xx, yy);
     TextDrawChar(G, *(c++) ORTHOCGOARGVAR);
     xx = xx + DIP2PIXEL(8);

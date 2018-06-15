@@ -16625,9 +16625,7 @@ static void ExecutiveDraw(Block * block ORTHOCGOARG)
                   TextDrawChar(G, ' ' ORTHOCGOARGVAR);
                 while(*c && nChar > 0) {
 		    /* allow color encoding for names */
-                  if((*c == '\\') && (*(c + 1)) && (*(c + 2)) && (*(c + 3))) {
-		      TextSetColor3f(G, (*(c + 1) - '0') / 9.0F, (*(c + 2) - '0') / 9.0F,
-				     (*(c + 3) - '0') / 9.0F);
+                  if(TextSetColorFromCode(G, c, captionColor)) {
 		      c += 4;
                   } else {
                     TextDrawChar(G, *(c++) ORTHOCGOARGVAR);

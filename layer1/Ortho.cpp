@@ -2000,8 +2000,7 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG)
           ll = 0;
           p++;
           c--;
-        } else if(((*p) == '\\') &&     /* color encoded */
-                  (p[1] >= '0') && (p[1] <= '9') && (p[2] >= '0') && (p[2] <= '9') && (p[3] >= '0') && (p[3] <= '9')) { /* relying upon short-circuit logic to avoid overrun */
+        } else if(TextStartsWithColorCode(p)) {
           p += 4;
           c -= 4;
         } else {
@@ -2078,20 +2077,9 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG)
       c = nChar;
       /* set the char color, position the characters and draw the text */
       while(c > 0) {
-        if(*p) {
-          if((*p == '\\') && (*(p + 1)) && (*(p + 2)) && (*(p + 3))) {
-            if(*(p + 1) == '-') {
-              TextSetColor(G, text_color);
-              p += 4;
-              c -= 4;
-            } else {
-              TextSetColor3f(G, (*(p + 1) - '0') / 9.0F, (*(p + 2) - '0') / 9.0F,
-                             (*(p + 3) - '0') / 9.0F);
-              p += 4;
-              c -= 4;
-            }
-            TextSetPos2i(G, xx, y);
-          }
+        if(TextSetColorFromCode(G, p, text_color)) {
+          p += 4;
+          c -= 4;
         }
         if(c--) {
           if(*p) {
