@@ -405,7 +405,6 @@ void ObjectGadgetPurge(ObjectGadget * I)
 {
   int a;
 
-  SceneObjectDel(I->Obj.G, (CObject *) I, false);
   for(a = 0; a < I->NGSet; a++)
     if(I->GSet[a]) {
       I->GSet[a]->fFree();

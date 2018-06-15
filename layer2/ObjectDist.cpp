@@ -858,7 +858,6 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
 void ObjectDistFree(ObjectDist * I)
 {
   int a;
-  SceneObjectDel(I->Obj.G, (CObject *) I, false);
   for(a = 0; a < I->NDSet; a++)
     if(I->DSet[a]) {
       I->DSet[a]->fFree();

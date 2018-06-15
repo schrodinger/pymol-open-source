@@ -1158,6 +1158,7 @@ void ObjectUpdate(CObject * I)
 void ObjectPurge(CObject * I)
 {
   if(I) {
+    SceneObjectDel(I->G, I, false);
     SettingFreeP(I->Setting);
     VLAFreeP(I->ViewElem);
   }
