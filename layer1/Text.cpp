@@ -66,7 +66,7 @@ static void TextUpdateUColor(CText * I)
   I->UColor[3] = (unsigned char) (_255 * I->Color[3] + _499);
 }
 
-void TextSetPosNColor(PyMOLGlobals * G, float *pos, float *color)
+void TextSetPosNColor(PyMOLGlobals * G, const float *pos, const float *color)
 {
   CText *I = G->Text;
   copy3f(pos, I->Pos);
@@ -82,7 +82,7 @@ void TextAdvance(PyMOLGlobals * G, float advance)
   G->Text->Pos[0] += advance;
 }
 
-void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, const char *text)
+void TextSetLabPos(PyMOLGlobals * G, const float *pos, const LabPosType * labpos, const char *text)
 {
   if((!labpos) || (!labpos->mode))
     TextSetPos(G, pos);
@@ -104,14 +104,14 @@ void TextIndent(PyMOLGlobals * G, float x, float y)
   I->Pos[1] -= y;
 }
 
-void TextSetPos(PyMOLGlobals * G, float *pos)
+void TextSetPos(PyMOLGlobals * G, const float *pos)
 {
   CText *I = G->Text;
   copy3f(pos, I->Pos);
   I->Pos[3] = 1.0F;
 }
 
-void TextSetWorldPos(PyMOLGlobals * G, float *pos)
+void TextSetWorldPos(PyMOLGlobals * G, const float *pos)
 {
   CText *I = G->Text;
   copy3f(pos, I->WorldPos);
@@ -121,7 +121,7 @@ float *TextGetWorldPos(PyMOLGlobals * G){
   CText *I = G->Text;
   return I->WorldPos;
 }
-void TextSetScreenWorldOffset(PyMOLGlobals * G, float *pos)
+void TextSetScreenWorldOffset(PyMOLGlobals * G, const float *pos)
 {
   CText *I = G->Text;
   I->ScreenWorldOffset[0] = -pos[0];
@@ -174,7 +174,7 @@ static void TextSetPos3f(PyMOLGlobals * G, float x, float y, float z)
   I->Pos[3] = 1.0F;
 }
 
-void TextSetColor(PyMOLGlobals * G, float *color)
+void TextSetColor(PyMOLGlobals * G, const float *color)
 {
   CText *I = G->Text;
   copy3f(color, I->Color);

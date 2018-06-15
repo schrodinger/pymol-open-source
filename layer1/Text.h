@@ -76,22 +76,22 @@ int TextGetFontID(PyMOLGlobals * G, int src, int code, const char *name, int siz
 
 void TextFree(PyMOLGlobals * G);
 
-void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, const char *text);
+void TextSetLabPos(PyMOLGlobals * G, const float *pos, const LabPosType * labpos, const char *text);
 void TextSetPickColor(PyMOLGlobals * G, int index, int pass);
 
-void TextSetWorldPos(PyMOLGlobals * G, float *pos);
+void TextSetWorldPos(PyMOLGlobals * G, const float *pos);
 float *TextGetWorldPos(PyMOLGlobals * G);
-void TextSetScreenWorldOffset(PyMOLGlobals * G, float *pos);
+void TextSetScreenWorldOffset(PyMOLGlobals * G, const float *pos);
 float *TextGetScreenWorldOffset(PyMOLGlobals * G);
-void TextSetPos(PyMOLGlobals * G, float *pos);
+void TextSetPos(PyMOLGlobals * G, const float *pos);
 
-void TextSetColor(PyMOLGlobals * G, float *color);
+void TextSetColor(PyMOLGlobals * G, const float *color);
 void TextSetColor3f(PyMOLGlobals * G, float red, float green, float blue);
 void TextGetOutlineColor(PyMOLGlobals * G,
                          unsigned char *red,
                          unsigned char *green, unsigned char *blue, unsigned char *alpha);
 void TextSetOutlineColor(PyMOLGlobals * G, int color);
-void TextSetPosNColor(PyMOLGlobals * G, float *pos, float *color);
+void TextSetPosNColor(PyMOLGlobals * G, const float *pos, const float *color);
 float *TextGetColor(PyMOLGlobals * G);
 float *TextGetPos(PyMOLGlobals * G);
 void TextGetColorUChar(PyMOLGlobals * G, unsigned char *red,
