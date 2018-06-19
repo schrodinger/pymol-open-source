@@ -18,7 +18,7 @@ from pymol._cmd import glViewport
 
 # QOpenGLWidget is supposed to supersede QGLWidget, but has issues (e.g.
 # no stereo support)
-USE_QOPENGLWIDGET = False
+USE_QOPENGLWIDGET = pymol.IS_MACOS
 
 if USE_QOPENGLWIDGET:
     BaseGLWidget = QtWidgets.QOpenGLWidget
@@ -28,7 +28,7 @@ else:
     BaseGLWidget = QtOpenGL.QGLWidget
     # only attempt stereo detection in Qt <= 5.6 (with 5.9+ on Linux I
     # get GL_DOUBLEBUFFER=0 with flickering when requesting stereo)
-    AUTO_DETECT_STEREO = QtCore.QT_VERSION < 0x50700
+    AUTO_DETECT_STEREO = pymol.IS_WINDOWS or QtCore.QT_VERSION < 0x50700
 
 
 class PyMOLGLWidget(BaseGLWidget):
