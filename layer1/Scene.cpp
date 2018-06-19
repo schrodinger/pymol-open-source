@@ -9017,9 +9017,14 @@ void SceneSetupGLPicking(PyMOLGlobals * G){
 }
 
 static void glBlendFunc_default() {
-  glBlendFuncSeparate(
+  if (glBlendFuncSeparate) {
+    glBlendFuncSeparate(
       GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA,
       GL_ONE,         GL_ONE_MINUS_SRC_ALPHA);
+  } else {
+    // OpenGL 1.x (e.g. remote desktop on Windows)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
 }
 
 /*========================================================================*/
