@@ -462,15 +462,12 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
     VLACheck(I->Bond, BondType, I->NAtom * 4);
   }
 
-  for (int i = 0;; ++i) {
+  for (int i = 0; i < I->NAtom; ++i) {
     // intra-residue
     if(!AtomInfoSameResidue(G, I->AtomInfo + i_start, I->AtomInfo + i)) {
       ConnectComponent(I, i_start, i, bond_dict);
       i_start = i;
     }
-
-    if (i == I->NAtom)
-      break;
 
     // ignore alt coords for inter-residue bonding
     if (I->AtomInfo[i].alt[0] && I->AtomInfo[i].alt[0] != 'A')
@@ -497,6 +494,9 @@ static int ObjectMoleculeConnectComponents(ObjectMolecule * I,
       }
     }
   }
+
+  // final residue
+  ConnectComponent(I, i_start, I->NAtom, bond_dict);
 
   // clean up
   VLASize(I->Bond, BondType, I->NBond);
