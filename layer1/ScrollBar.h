@@ -29,6 +29,8 @@ void ScrollBarDoDrawNoFill(struct CScrollBar *I ORTHOCGOARG);
 void ScrollBarFill(struct CScrollBar *I ORTHOCGOARG);
 void ScrollBarSetLimits(struct CScrollBar *I, int list_size, int display_size);
 void ScrollBarSetValue(struct CScrollBar *I, float value);
+void ScrollBarSetValueNoCheck(struct CScrollBar *I, float value);
+void ScrollBarMoveBy(struct CScrollBar *I, float value);
 void ScrollBarDoRelease(struct CScrollBar *I, int button, int x, int y, int mod);
 void ScrollBarDoClick(struct CScrollBar *I, int button, int x, int y, int mod);
 void ScrollBarDoDrag(struct CScrollBar *I, int x, int y, int mod);

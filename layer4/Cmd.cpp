@@ -7959,6 +7959,30 @@ static PyObject *CmdOrder(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdScrollTo(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char *name;
+  int i = 0, r = -1;
+
+  if(!PyArg_ParseTuple(args, "Os|i", &self, &name, &i)) {
+    API_HANDLE_ERROR;
+    ok_raise(1);
+  }
+
+  ok_assert(1, name && name[0]);
+
+  API_SETUP_PYMOL_GLOBALS;
+  ok_assert(2, G && APIEnterBlockedNotModal(G));
+
+  r = ExecutiveScrollTo(G, name, i);
+
+ok_except2:
+  APIExitBlocked(G);
+ok_except1:
+  return Py_BuildValue("i", r);
+}
+
 static PyObject *CmdWindow(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -8511,6 +8535,7 @@ static PyMethodDef Cmd_methods[] = {
   {"onoff", CmdOnOff, METH_VARARGS},
   {"onoff_by_sele", CmdOnOffBySele, METH_VARARGS},
   {"order", CmdOrder, METH_VARARGS},
+  {"scrollto", CmdScrollTo, METH_VARARGS},
   {"overlap", CmdOverlap, METH_VARARGS},
   {"p_glut_event", CmdPGlutEvent, METH_VARARGS},
   {"p_glut_get_redisplay", CmdPGlutGetRedisplay, METH_VARARGS},

@@ -161,6 +161,7 @@ int ExecutiveCheckGroupMembership(PyMOLGlobals * G, int list_id, CObject * obj);
 #define cExecutiveGroupExcise 10
 
 int ExecutiveGroup(PyMOLGlobals * G, const char *name, const char *members, int action, int quiet);
+int ExecutiveScrollTo(PyMOLGlobals * G, const char * name, int);
 
 void ExecutiveInvalidateGroups(PyMOLGlobals * G, int force);
 void ExecutiveUpdateGroups(PyMOLGlobals * G, int force);

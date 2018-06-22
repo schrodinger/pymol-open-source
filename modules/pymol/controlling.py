@@ -554,7 +554,8 @@ DESCRIPTION
 
     Find an item in the object menu panel and scroll it to the top.
         '''
-        raise pymol.IncentiveOnlyException()
+        with _self.lockcm:
+            return _cmd.scrollto(_self._COb, str(name), int(i))
 
     def order(names,sort=0,location='current',_self=cmd):
         '''

@@ -1848,6 +1848,76 @@ static SpecRec *ExecutiveAnyCaseNameMatch(PyMOLGlobals * G, const char *name)
   return (result);
 }
 
+/*
+ * Scroll the i'th match in the object menu panel to the top.
+ * Scroll to last match if i < 0 and to first match if i > #-1.
+ * Open groups if hit is inside.
+ * Highlight the hit (same as mouse click highlight).
+ *
+ * Returns the number of hits
+ */
+int ExecutiveScrollTo(PyMOLGlobals * G, const char * name, int i) {
+  CExecutive *I = G->Executive;
+  PanelRec *panel = NULL;
+  int pos = 0, numhits = 0;
+  ObjectGroup *group;
+  SpecRec *tmp, *spec = NULL, *first = NULL;
+  int ignore_case = SettingGetGlobal_b(G, cSetting_ignore_case);
+  int j, lendiff, plen = strlen(name);
+
+  ok_assert(1, I->Spec);
+
+  // i'th substring match, skip the "all" item
+  for(tmp = I->Spec->next; tmp; tmp = tmp->next) {
+    lendiff = strlen(tmp->name) - plen;
+    for(j = 0; j <= lendiff; j++)
+      if(WordMatchNoWild(G, name, tmp->name + j, ignore_case)) {
+        if(numhits++ == i || i < 0)
+          spec = tmp;
+        if(!first)
+          first = tmp;
+        break;
+      }
+    tmp->hilight = 0;
+  }
+
+  // if i was out of range
+  if(!spec)
+    spec = first;
+
+  ok_assert(1, spec);
+
+  // flash button until panel is clicked for the next time
+  spec->hilight = 1;
+
+  // open parent groups
+  for(tmp = spec->group; tmp; tmp = tmp->group) {
+    if(!(tmp->type == cExecObject &&
+         tmp->obj->type == cObjectGroup))
+      break;
+    group = (ObjectGroup *) tmp->obj;
+    if(!group->OpenOrClosed) {
+      group->OpenOrClosed = 1;
+      ExecutiveInvalidatePanelList(G);
+    }
+  }
+
+  // in case any parent got opened
+  ExecutiveUpdatePanelList(G);
+
+  // scroll that record to the top
+  while(ListIterate(I->Panel, panel, next)) {
+    if(panel->spec == spec) {
+      ScrollBarSetValueNoCheck(I->ScrollBar, pos);
+      return numhits;
+    }
+    pos++;
+  }
+
+ok_except1:
+  return numhits;
+}
+
 void ExecutiveUpdateColorDepends(PyMOLGlobals * G, ObjectMolecule * mol)
 {
   CExecutive *I = G->Executive;

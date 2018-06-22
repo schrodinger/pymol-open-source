@@ -79,6 +79,8 @@ static void ScrollBarUpdate(struct CScrollBar *I)
     I->ValueMax = 1;
   if(I->Value > I->ValueMax)
     I->Value = (float) I->ValueMax;
+  else if(I->Value < 0.0)
+    I->Value = 0.0F;
 }
 
 void ScrollBarFill(struct CScrollBar *I ORTHOCGOARG)
@@ -312,10 +314,19 @@ void ScrollBarDrawHandle(struct CScrollBar *I, float alpha ORTHOCGOARG)
   }
 }
 
-void ScrollBarSetValue(struct CScrollBar *I, float value)
+void ScrollBarSetValueNoCheck(struct CScrollBar *I, float value)
 {
   I->Value = value;
-  ScrollBarUpdate(I);
+}
+
+void ScrollBarSetValue(struct CScrollBar *I, float value)
+{
+  I->Value = value > I->ValueMax ? I->ValueMax :
+             value < 0.0 ? 0.0 : value;
+}
+
+void ScrollBarMoveBy(struct CScrollBar *I, float value) {
+  ScrollBarSetValue(I, I->Value + value);
 }
 
 float ScrollBarGetValue(struct CScrollBar *I)
@@ -441,17 +452,7 @@ static int ScrollBarDrag(Block * block, int x, int y, int mod)
     displ = I->StartPos - x;
   else
     displ = y - I->StartPos;
-  I->Value = I->StartValue - (I->ValueMax * displ) / I->BarRange;
-  /*  if(displ>0.0)
-     I->Value-=0.5;
-     else
-     I->Value+=0.5;
-   */
-
-  if(I->Value < 0.0)
-    I->Value = 0.0;
-  if(I->Value > I->ValueMax)
-    I->Value = I->ValueMax;
+  ScrollBarSetValue(I, I->StartValue - (I->ValueMax * displ) / I->BarRange);
   OrthoDirty(G);
   return true;
 }
