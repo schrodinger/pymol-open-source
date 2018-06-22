@@ -336,9 +336,6 @@ const char **ExecutiveGetChains(PyMOLGlobals * G, const char *sele, int state);
 
 void ExecutiveOrient(PyMOLGlobals * G, const char *sele, double *mi,
                      int state, float animate, int complete, float buffer, int quiet);
-char *ExecutiveSeleToPDBStr(PyMOLGlobals * G, const char *s1, int state, int conectFlag,
-                            int mode, const char *ref_object, int ref_state,
-                            ObjectMolecule * single_object, int quiet);
 char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals * G, const char *name, int state, int format,
                                     int quiet);
 

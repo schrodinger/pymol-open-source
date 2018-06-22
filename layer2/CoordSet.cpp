@@ -940,30 +940,6 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
 
 
 /*========================================================================*/
-void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoType * ai,
-                             int cnt)
-{
-  int retain_ids = SettingGetGlobal_b(G, cSetting_pdb_retain_ids);
-  int ter_id;
-
-  VLACheck(*charVLA, char, (*c) + 1000);
-
-  if(retain_ids) {
-    ter_id = ai->id + 1;
-  } else {
-    ter_id = cnt + 1;
-  }
-
-  (*c) += sprintf((*charVLA) + (*c),
-                  "TER   %5i      %3.3s %1.1s%4d%c\n", ter_id, 
-                  LexStr(G, ai->resn),
-                  LexStr(G, ai->chain), ai->resv,
-                  ai->getInscode(true));
-
-}
-
-
-/*========================================================================*/
 void CoordSet::invalidateRep(int type, int level)
 {
   CoordSet * I = this;

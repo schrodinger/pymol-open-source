@@ -4856,46 +4856,6 @@ ok_except1:
   return APIAutoNone(NULL);
 }
 
-static PyObject *CmdGetPDB(PyObject * self, PyObject * args)
-{
-  PyMOLGlobals *G = NULL;
-  char *str1;
-  char *pdb = NULL;
-  int state;
-  int quiet;
-  char *ref_object = NULL;
-  int ref_state;
-  int mode;
-  OrthoLineType s1 = "";
-  PyObject *result = NULL;
-  int ok = false;
-  ok =
-    PyArg_ParseTuple(args, "Osiisii", &self, &str1, &state, &mode, &ref_object,
-                     &ref_state, &quiet);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G != NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok) {
-    if(!ref_object[0])
-      ref_object = NULL;
-    if((ok = APIEnterNotModal(G))) {
-      ok = (SelectorGetTmp(G, str1, s1) >= 0);
-      pdb =
-        ExecutiveSeleToPDBStr(G, s1, state, true, mode, ref_object, ref_state, NULL,
-                              quiet);
-      SelectorFreeTmp(G, s1);
-      APIExit(G);
-    }
-    if(pdb)
-      result = Py_BuildValue("s", pdb);
-    FreeP(pdb);
-  }
-  return (APIAutoNone(result));
-}
-
 static PyObject *CmdGetModel(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -8455,7 +8415,6 @@ static PyMethodDef Cmd_methods[] = {
   {"get_position", CmdGetPosition, METH_VARARGS},
   {"get_povray", CmdGetPovRay, METH_VARARGS},
   {"get_progress", CmdGetProgress, METH_VARARGS},
-  {"get_pdb", CmdGetPDB, METH_VARARGS},
   {"get_phipsi", CmdGetPhiPsi, METH_VARARGS},
   {"get_renderer", CmdGetRenderer, METH_VARARGS},
   {"get_raw_alignment", CmdGetRawAlignment, METH_VARARGS},

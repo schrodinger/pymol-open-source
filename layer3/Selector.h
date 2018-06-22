@@ -73,9 +73,6 @@ void SelectorFreeTmp(PyMOLGlobals * G, const char *name);
 int SelectorGetTmp2(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
 int SelectorGetTmp(PyMOLGlobals * G, const char *input, char *store, bool quiet=false);
 int SelectorCheckTmp(PyMOLGlobals * G, const char *name);
-int SelectorGetPDB(PyMOLGlobals * G, char **charVLA, int cLen, int sele, int state,
-                   int conectFlag, PDBInfoRec * pdb_info, int *counter, double *ref,
-                   ObjectMolecule * single_object);
 int SelectorLoadCoords(PyMOLGlobals * G, PyObject * coords, int sele, int state);
 PyObject *SelectorGetCoordsAsNumPy(PyMOLGlobals * G, int sele, int state);
 float SelectorSumVDWOverlap(PyMOLGlobals * G, int sele1, int state1,

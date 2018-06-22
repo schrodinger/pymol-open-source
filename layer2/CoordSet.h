@@ -142,8 +142,6 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals * G, char **charVLA, int *c,
                              const float *v, int cnt,
                              const PDBInfoRec * pdb_info,
                              const double *matrix);
-void CoordSetAtomToTERStrVLA(PyMOLGlobals * G, char **charVLA, int *c, AtomInfoType * ai,
-                             int cnt);
 CoordSet *CoordSetCopy(const CoordSet * cs);
 
 void CoordSetTransform44f(CoordSet * I, const float *mat);
