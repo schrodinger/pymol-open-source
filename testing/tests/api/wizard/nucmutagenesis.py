@@ -33,21 +33,41 @@ class TestNucMutagenesis(testing.PyMOLTestCase):
                                         "/1rna/A/A/14 & name C4'")
         cmd.wizard("nucmutagenesis")
         cmd.select("/1rna/A/A/14")
-        cmd.get_wizard().mode = "GTP"
+        cmd.get_wizard().mode = "(d)G"
         cmd.get_wizard().do_select("sele")
         cmd.get_wizard().apply()
         des_dihedral = cmd.get_dihedral("/1rna/A/A/14 & name O4'",
                                         "/1rna/A/A/14 & name C1'",
                                         "/1rna/A/A/14 & name N9",
                                         "/1rna/A/A/14 & name C4'")
-        self.assertAlmostEqual(src_dihedral, des_dihedral, delta=2.0)
+        self.assertAlmostEqual(src_dihedral, des_dihedral, delta = 2.0)
 
-    def test_canGetNewSequence(self):
+    def test_CanGetNewRNASequence(self):
         cmd.load(self.datafile("1rna.cif"))
         cmd.wizard("nucmutagenesis")
         cmd.select("/1rna/A/A/14")
-        cmd.get_wizard().mode = "GTP"
+        cmd.get_wizard().mode = "(d)G"
         cmd.get_wizard().do_select("sele")
         cmd.get_wizard().apply()
         seq = cmd.get_fastastr("/1rna/A/A").splitlines()[1]
         self.assertEqual(seq, "UUAUAUAUAUAUAG")
+
+    def test_CanGetNewDNASequence(self):
+        cmd.load(self.datafile("1bna.cif"))
+        cmd.wizard("nucmutagenesis")
+        cmd.select("/1bna/A/A/1")
+        cmd.get_wizard().mode = "(d)A"
+        cmd.get_wizard().do_select("sele")
+        cmd.get_wizard().apply()
+        seq = cmd.get_fastastr("/1bna/A/A").splitlines()[1]
+        self.assertEqual(seq, "AGCGAATTCGCG")
+
+    def test_CanMutateNonCanonicalNucleo(self):
+        cmd.load(self.datafile("1k5e.cif"))
+        cmd.wizard("nucmutagenesis")
+        cmd.select("/1k5e/A/A/6")
+        cmd.get_wizard().mode = "(d)A"
+        cmd.get_wizard().do_select("sele")
+        cmd.get_wizard().apply()
+        seq = cmd.get_fastastr("/1k5e/A/A").splitlines()[1]
+        self.assertEqual(seq, "CGGACAAGAAG")
