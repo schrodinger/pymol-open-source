@@ -9,6 +9,7 @@ import unittest
 
 from pymol import cmd, testing
 
+@testing.requires_version('2.2')
 class TestNucMutagenesis(testing.PyMOLTestCase):
 
     def test_CanGetSourceSequence(self):
