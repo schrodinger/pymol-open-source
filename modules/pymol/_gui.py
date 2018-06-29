@@ -824,7 +824,10 @@ class PyMOLDesktopGUI(object):
             ('menu', 'Wizard', [
                 ('command', 'Appearance', 'wizard appearance'),
                 ('command', 'Measurement', 'wizard measurement'),
-                ('command', 'Mutagenesis', 'wizard mutagenesis'),
+                ('menu', 'Mutagenesis', [
+                    ('command', 'Protein', 'wizard mutagenesis'),
+                    ('command', 'Nucleic Acids', 'wizard nucmutagenesis'), 
+                ]),
                 ('command', 'Pair Fitting', 'wizard pair_fit'),
                 ('separator',),
                 ('command', 'Density', 'wizard density'),
