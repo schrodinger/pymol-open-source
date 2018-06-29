@@ -66,6 +66,12 @@ class TestImporting(testing.PyMOLTestCase):
             import urllib.parse as urlparse
         except ImportError:
             import urlparse
+
+        # PyMOL 1.8.6 adds full URLs, remove them
+        import pymol
+        pdbpaths = pymol.importing.hostPaths['pdb']
+        pdbpaths[:] = [p for p in pdbpaths if '://' not in p]
+
         with testing.mkdtemp() as fetch_path:
             names = []
             cmd.set('fetch_path', fetch_path)
