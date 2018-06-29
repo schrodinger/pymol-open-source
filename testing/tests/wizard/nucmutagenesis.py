@@ -34,7 +34,7 @@ class TestNucMutagenesis(testing.PyMOLTestCase):
                                         "/1rna/A/A/14 & name C4'")
         cmd.wizard("nucmutagenesis")
         cmd.select("/1rna/A/A/14")
-        cmd.get_wizard().mode = "(d)G"
+        cmd.get_wizard().mode = "Guanine"
         cmd.get_wizard().do_select("sele")
         cmd.get_wizard().apply()
         des_dihedral = cmd.get_dihedral("/1rna/A/A/14 & name O4'",
@@ -47,7 +47,7 @@ class TestNucMutagenesis(testing.PyMOLTestCase):
         cmd.load(self.datafile("1rna.cif"))
         cmd.wizard("nucmutagenesis")
         cmd.select("/1rna/A/A/14")
-        cmd.get_wizard().mode = "(d)G"
+        cmd.get_wizard().mode = "Guanine"
         cmd.get_wizard().do_select("sele")
         cmd.get_wizard().apply()
         seq = cmd.get_fastastr("/1rna/A/A").splitlines()[1]
@@ -57,7 +57,7 @@ class TestNucMutagenesis(testing.PyMOLTestCase):
         cmd.load(self.datafile("1bna.cif"))
         cmd.wizard("nucmutagenesis")
         cmd.select("/1bna/A/A/1")
-        cmd.get_wizard().mode = "(d)A"
+        cmd.get_wizard().mode = "Adenine"
         cmd.get_wizard().do_select("sele")
         cmd.get_wizard().apply()
         seq = cmd.get_fastastr("/1bna/A/A").splitlines()[1]
@@ -67,7 +67,7 @@ class TestNucMutagenesis(testing.PyMOLTestCase):
         cmd.load(self.datafile("1k5e.cif"))
         cmd.wizard("nucmutagenesis")
         cmd.select("/1k5e/A/A/6")
-        cmd.get_wizard().mode = "(d)A"
+        cmd.get_wizard().mode = "Adenine"
         cmd.get_wizard().do_select("sele")
         cmd.get_wizard().apply()
         seq = cmd.get_fastastr("/1k5e/A/A").splitlines()[1]
