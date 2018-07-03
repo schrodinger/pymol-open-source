@@ -70,7 +70,7 @@ struct _CColor {
   OVLexicon *Lex;
   OVOneToOne *Idx;
   float RGBColor[3];            /* save global float for returning (float*) */
-  char RGBName[10];
+  char RGBName[11]; // "0xTTRRGGBB"
   /* not stored */
   int HaveOldSessionColors;
   int HaveOldSessionExtColors;
