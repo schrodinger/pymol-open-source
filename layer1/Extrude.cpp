@@ -727,7 +727,7 @@ void TubeCapFlat(const CExtrude * I, CGO * cgo, int index, bool inv_dir, const f
  * use_spheres: do round caps with spheres instead of triangles
  * dash: if > 0, skip every segment which is a multiple of `dash`
  */
-int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, bool use_spheres, int dash)
+int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, const float *color_override, bool use_spheres, int dash)
 {
   int a, b;
   unsigned int *i;
@@ -1056,7 +1056,7 @@ int ExtrudeCylindersToCGO(CExtrude * I, CGO * cgo, float tube_radius){
   v1 = I->p + 3;
   c1 = I->c + 3;
   i = I->i + 1;
-
+  
   int cap = (cCylShaderBothCapsRound | cCylShaderInterpColor);
   for(a = 1; a < I->N; a++) {
     average3f(c1-3, c1, midc);
@@ -1343,7 +1343,7 @@ int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap)
   return ok;
 }
 
-int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_override)
+int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, const float *color_override)
 {
   int a, b;
   unsigned int *i;
@@ -1527,7 +1527,7 @@ int ExtrudeCGOSurfacePolygon(CExtrude * I, CGO * cgo, int cap, float *color_over
 }
 
 int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
-				  float *color_override)
+				  const float *color_override)
 {
   int a, b;
   unsigned int *i;
@@ -1663,7 +1663,7 @@ int ExtrudeCGOSurfacePolygonTaper(CExtrude * I, CGO * cgo, int sampling,
   return ok;
 }
 
-int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, float *color_override)
+int ExtrudeCGOSurfaceStrand(CExtrude * I, CGO * cgo, int sampling, const float *color_override)
 {
   int a, b;
   unsigned int *i;

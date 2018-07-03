@@ -532,7 +532,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
             ObjectMoleculeGetNearestBlendedColor(I->Mol, pos, cutoff, state, &dist,
                                                  atomic, sub_vdw);
           if(index >= 0) {
-            float *object = ColorGetRaw(I->Gadget.Obj.G, I->Mol->Obj.Color);
+            const float *object = ColorGetRaw(I->Gadget.Obj.G, I->Mol->Obj.Color);
 
             if(!ObjectGadgetRampInterpolateWithSpecial(I, dist, color, atomic,
                                                        object, pos, state, false)) {
@@ -549,8 +549,8 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
           int index =
             ObjectMoleculeGetNearestAtomIndex(I->Mol, pos, cutoff, state, &dist);
           if(index >= 0) {
-            float *atomic = ColorGetRaw(I->Gadget.Obj.G, I->Mol->AtomInfo[index].color);
-            float *object = ColorGetRaw(I->Gadget.Obj.G, I->Mol->Obj.Color);
+            const float *atomic = ColorGetRaw(I->Gadget.Obj.G, I->Mol->AtomInfo[index].color);
+            const float *object = ColorGetRaw(I->Gadget.Obj.G, I->Mol->Obj.Color);
 
             if(sub_vdw) {
               dist -= I->Mol->AtomInfo[index].vdw;

@@ -294,7 +294,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
     int y = I->Block->rect.bottom + DIP2PIXEL(I->ScrollBarMargin) + 1;
     float bg_color[3] = { 0.f, 0.f, 0.f }, overlay_color[3] = { 1.0F, 1.0F, 1.0F };
     int label_color_index = SettingGetGlobal_color(G, cSetting_seq_view_label_color);
-    float *label_color = ColorGet(G, label_color_index);
+    const float *label_color = ColorGet(G, label_color_index);
     copy3f(label_color, overlay_color);
 
     if (SettingGetGlobal_b(G, cSetting_bg_gradient)){
@@ -329,7 +329,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
       int a, b;
       float black[3] = { 0, 0, 0 };
       float blue[3] = { 0.5, 0.5, 1.0 };
-      float *cur_color;
+      const float *cur_color;
       CSeqRow *row;
       CSeqCol *col;
       int xx, yy, ch_wid, pix_wid, tot_len;
@@ -345,8 +345,8 @@ static void SeqDraw(Block * block ORTHOCGOARG)
         SettingGetGlobal_color(G, cSetting_seq_view_unaligned_color);
       int fill_color_index = SettingGetGlobal_color(G, cSetting_seq_view_fill_color);
       int unaligned_mode = SettingGetGlobal_i(G, cSetting_seq_view_unaligned_mode);
-      float *unaligned_color;
-      float *fill_color;
+      const float *unaligned_color;
+      const float *fill_color;
 
       if(unaligned_color_index == -1) {
         switch (unaligned_mode) {
@@ -449,7 +449,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
 		}
               } else if(col->unaligned && unaligned_color) {
                 float tmp_color[3];
-                float *v = ColorGet(G, col->color);
+                const float *v = ColorGet(G, col->color);
                 switch (unaligned_mode) {
                 case 1:
                 case 4:
@@ -481,7 +481,7 @@ static void SeqDraw(Block * block ORTHOCGOARG)
                   break;
                 }
               } else {
-                float *v = ColorGet(G, col->color);
+                const float *v = ColorGet(G, col->color);
                 TextSetColor(G, v);
 		if (orthoCGO){
 		  CGOColorv(orthoCGO, v);

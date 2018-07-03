@@ -1490,7 +1490,7 @@ static PyObject *CmdGetColor(PyObject * self, PyObject * args)
   int mode;
   int ok = false;
   int a, nc, nvc;
-  float *rgb;
+  const float *rgb;
   int index;
   PyObject *result = NULL;
   PyObject *tup;
@@ -1528,7 +1528,7 @@ static PyObject *CmdGetColor(PyObject * self, PyObject * args)
           WordType buffer;
           tup = PyTuple_New(2);
           {
-            char *color_name = ColorGetName(G, a);
+            const char *color_name = ColorGetName(G, a);
             if(color_name) {
               strcpy(buffer, color_name);
             } else {
@@ -1555,7 +1555,7 @@ static PyObject *CmdGetColor(PyObject * self, PyObject * args)
           WordType buffer;
           tup = PyTuple_New(2);
           {
-            char *color_name = ColorGetName(G, a);
+            const char *color_name = ColorGetName(G, a);
             if(color_name) {
               strcpy(buffer, color_name);
             } else {

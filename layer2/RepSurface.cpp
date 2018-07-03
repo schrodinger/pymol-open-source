@@ -1663,7 +1663,7 @@ static void RepSurfaceRender(RepSurface * I, RenderInfo * info)
         }
 
         if (ok && I->shaderCGO) {
-          float *color = ColorGet(G, I->R.obj->Color);
+          const float *color = ColorGet(G, I->R.obj->Color);
           CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
           return;
         }
@@ -2191,7 +2191,8 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
   PyMOLGlobals *G = cs->State.G;
   MapType *map = NULL, *ambient_occlusion_map = NULL;
   int a, i0, i, j, c1;
-  float *v0, *vc, *c0, *va;
+  float *v0, *vc, *va;
+  const float *c0;
   float *n0;
   int *vi, *lc;
   char *lv;
@@ -2799,7 +2800,7 @@ void RepSurfaceColor(RepSurface * I, CoordSet * cs)
           rc++;
         } else {
           if (color_smoothing && distDiff < color_smoothing_threshold){
-            float *c2;
+            const float *c2;
             float weight, weight2;
             if (color_smoothing==1){
               weight = 1.f + sin(.5f * PI * (distDiff / color_smoothing_threshold));

@@ -318,7 +318,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
   float *vc = I->VC;
   int *n = I->N;
   int c;
-  float *col = NULL;
+  const float *col = NULL;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
   short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
   int ok = true;
@@ -528,7 +528,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
       if (use_shader) {
 	if (ok){
 	  {
-	    float *color;
+	    const float *color;
 	    color = ColorGet(G, I->R.obj->Color);
 	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	  }
@@ -574,7 +574,8 @@ void RepMeshColor(RepMesh * I, CoordSet * cs)
   PyMOLGlobals *G = cs->State.G;
   MapType *map;
   int a, i0, i, j, h, k, l, c1;
-  float *v0, *vc, *c0;
+  float *v0, *vc;
+  const float *c0;
   int *lv, *lc;
   int first_color;
   ObjectMolecule *obj;

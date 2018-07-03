@@ -356,7 +356,8 @@ static void fill_background_image(CRay * I, unsigned int *buffer, int width, int
   unsigned char *bkgrd_data = I->bkgrd_data;
   int bg_image_mode = SettingGetGlobal_i(I->G, cSetting_bg_image_mode);
   int bg_image_linear = SettingGetGlobal_b(I->G, cSetting_bg_image_linear);
-  float bg_rgb[3], *tmpf;
+  float bg_rgb[3];
+  const float *tmpf;
   int w, h;
   unsigned int value;
   float wr = bkgrd_width/(float)width, hr = bkgrd_height/(float)height;
@@ -2545,7 +2546,7 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
                   float angle, int antialias)
 {
   float fog;
-  float *bkrd;
+  const float *bkrd;
   float fog_start = 0.0F;
   float gamma;
   float *d;
@@ -3287,7 +3288,8 @@ int RayTraceThread(CRayThreadInfo * T)
     hpixely = floor(T->height/2.f) - floor(T->bgHeight / 2.f);
   float hl;
   float wr = T->bgWidth/(float)T->width, hr = T->bgHeight/(float)T->height;
-  float bg_rgb[3], *tmpf;
+  float bg_rgb[3];
+  const float *tmpf;
   int chromadepth;
 
   tmpf = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
@@ -5544,7 +5546,7 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   size_t buffer_size;
   int orig_opaque_back = 0, opaque_back = 0;
   int n_hit = 0;
-  float *bkrd_ptr;
+  const float *bkrd_ptr;
   float bkrd_top[3], bkrd_bottom[3];
   short bkrd_is_gradient; /* if not gradient, use bkrd_top as bkrd */
   double now;
@@ -5717,7 +5719,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       float inp;
       float sig;
       int trace_color = SettingGetGlobal_color(I->G, cSetting_ray_trace_color);
-      float trgb[3], *trgb_v = ColorGet(I->G, trace_color);
+      float trgb[3];
+      const float *trgb_v = ColorGet(I->G, trace_color);
 
       copy3f(trgb_v, trgb);
       inp = (trgb[0] + trgb[1] + trgb[2]) / 3.0F;

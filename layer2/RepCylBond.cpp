@@ -219,7 +219,7 @@ static void RepCylBondRender(RepCylBond * I, RenderInfo * info)
         }
         ok &= RepCylBondCGOGenerate(I, info);
       }
-      float *color = ColorGet(G, I->R.obj->Color);
+      const float *color = ColorGet(G, I->R.obj->Color);
       I->renderCGO->debug = SettingGetGlobal_i(G, cSetting_stick_debug);
       CGORenderGL(I->renderCGO, color, NULL, NULL, info, &I->R);
     }
@@ -638,8 +638,8 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       s2 = GET_BIT(ati2->visRep, cRepCyl);
 
       if (s1 && s2){
-      if((!variable_alpha) && AtomInfoCheckBondSetting(G, b, cSetting_stick_transparency))
-        variable_alpha = true;
+        if((!variable_alpha) && AtomInfoCheckBondSetting(G, b, cSetting_stick_transparency))
+          variable_alpha = true;
 
         if (!valence_found)
           valence_found = BondSettingGetWD(G, b, cSetting_valence, valence_flag);
@@ -711,7 +711,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
       ord = b->order;
 
       if (ord == 0 && valence_zero_mode == 0)
-	continue;
+        continue;
 
       a1 = cs->atmToIdx(b1);
       a2 = cs->atmToIdx(b2);
@@ -804,7 +804,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
           }
         }
 
-            /* This means that if stick_ball gets changed, the RepCylBond needs to be completely invalidated */
+          /* This means that if stick_ball gets changed, the RepCylBond needs to be completely invalidated */
 
         auto stick_ball_impl = [&](AtomInfoType * ati1, int b1, int c1, float * vv1) {
           int stick_ball_1 = AtomSettingGetWD(G, ati1, cSetting_stick_ball, stick_ball);

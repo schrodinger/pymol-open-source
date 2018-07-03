@@ -79,11 +79,11 @@ static int AutoColor[] = {
 };
 
 static int nAutoColor = 40;
-static void lookup_color(CColor * I, float *in, float *out, int big_endian);
+static void lookup_color(CColor * I, const float *in, float *out, int big_endian);
 
 void ColorGetBkrdContColor(PyMOLGlobals * G, float *rgb, int invert_flag)
 {
-  float *bkrd = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+  const float *bkrd = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
 
   if(!invert_flag) {
     if((bkrd[0] + bkrd[1] + bkrd[2]) > 0.5F) {
@@ -112,7 +112,7 @@ void ColorGetBkrdContColor(PyMOLGlobals * G, float *rgb, int invert_flag)
   }
 }
 
-unsigned int ColorGet32BitWord(PyMOLGlobals * G, float *rgba)
+unsigned int ColorGet32BitWord(PyMOLGlobals * G, const float *rgba)
 {
   CColor *I = G->Color;
   unsigned int rc, gc, bc, ac;
@@ -758,14 +758,14 @@ int ColorGetIndex(PyMOLGlobals * G, const char *name)
 
 
 /*========================================================================*/
-float *ColorGetNamed(PyMOLGlobals * G, const char *name)
+const float *ColorGetNamed(PyMOLGlobals * G, const char *name)
 {
   return (ColorGet(G, ColorGetIndex(G, name)));
 }
 
 
 /*========================================================================*/
-char *ColorGetName(PyMOLGlobals * G, int index)
+const char *ColorGetName(PyMOLGlobals * G, int index)
 {
   CColor *I = G->Color;
   if((index >= 0) && (index < I->NColor)) {
@@ -2498,7 +2498,7 @@ void ColorReset(PyMOLGlobals * G)
   I->NExt = 0;
 }
 
-int ColorTableLoad(PyMOLGlobals * G, char *fname, float gamma, int quiet)
+int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet)
 {
   CColor *I = G->Color;
   int ok = true;
@@ -2729,7 +2729,7 @@ int ColorTableLoad(PyMOLGlobals * G, char *fname, float gamma, int quiet)
   return (ok);
 }
 
-static void lookup_color(CColor * I, float *in, float *out, int big_endian)
+static void lookup_color(CColor * I, const float *in, float *out, int big_endian)
 {
   const float _1 = 1.0F;
   unsigned int *table = I->ColorTable;
@@ -2963,15 +2963,16 @@ void ColorUpdateFrontFromSettings(PyMOLGlobals * G){
   
   if (!bg_gradient){
     if (!bg_image && !OrthoBackgroundDataIsSet(G)){
-      float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+      const float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
       ColorUpdateFront(G, v);
     } else {
       float v[] = { 0.f, 0.f, 0.f };
       ColorUpdateFront(G, v);
     }
   } else {
-    float vv[3], *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom));
-    float *vb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top));
+    float vv[3];
+    const float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom));
+    const float *vb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top));
     average3f(v, vb, vv);
     ColorUpdateFront(G, vv);    
   }
@@ -2979,7 +2980,7 @@ void ColorUpdateFrontFromSettings(PyMOLGlobals * G){
 
 
 /*========================================================================*/
-float *ColorGetSpecial(PyMOLGlobals * G, int index)
+const float *ColorGetSpecial(PyMOLGlobals * G, int index)
 {
   if(index >= 0)
     return ColorGet(G, index);
@@ -2992,10 +2993,10 @@ float *ColorGetSpecial(PyMOLGlobals * G, int index)
   }
 }
 
-float *ColorGet(PyMOLGlobals * G, int index)
+const float *ColorGet(PyMOLGlobals * G, int index)
 {
   CColor *I = G->Color;
-  float *ptr;
+  const float *ptr;
   if((index >= 0) && (index < I->NColor)) {
     if(I->Color[index].LutColorFlag && SettingGetGlobal_b(G, cSetting_clamp_colors))
       ptr = I->Color[index].LutColor;
@@ -3019,10 +3020,10 @@ float *ColorGet(PyMOLGlobals * G, int index)
   }
 }
 
-float *ColorGetRaw(PyMOLGlobals * G, int index)
+const float *ColorGetRaw(PyMOLGlobals * G, int index)
 {
   CColor *I = G->Color;
-  float *ptr;
+  const float *ptr;
   if((index >= 0) && (index < I->NColor)) {
     ptr = I->Color[index].Color;
     return (ptr);
@@ -3073,7 +3074,7 @@ int ColorGetEncoded(PyMOLGlobals * G, int index, float *color)
   return 1;
 }
 
-int Color3fToInt(PyMOLGlobals * G, float *rgb){
+int Color3fToInt(PyMOLGlobals * G, const float *rgb){
   unsigned int rc, gc, bc;
   rc = pymol_roundf(rgb[0] * 255.);
   gc = pymol_roundf(rgb[1] * 255.);

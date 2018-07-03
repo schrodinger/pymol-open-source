@@ -277,7 +277,7 @@ void TextSetOutlineColor(PyMOLGlobals * G, int color)
 {
   CText *I = G->Text;
   if(color >= 0) {
-    float *fcolor = ColorGet(G, color);
+    const float *fcolor = ColorGet(G, color);
     I->OutlineColor[0] = (unsigned char) (_255 * fcolor[0]);
     I->OutlineColor[1] = (unsigned char) (_255 * fcolor[1]);
     I->OutlineColor[2] = (unsigned char) (_255 * fcolor[2]);

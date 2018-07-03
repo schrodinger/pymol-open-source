@@ -120,8 +120,8 @@ public:
   int Set1f(const char * name, float f);
   int Set2f(const char * name, float f1, float f2);
   int Set3f(const char * name, float f1, float f2, float f3);
-  int Set4fv(const char * name, float *f);
-  int Set3fv(const char * name, float *f);
+  int Set4fv(const char * name, const float *f);
+  int Set3fv(const char * name, const float *f);
   int Set4f(const char * name, float f1, float f2, float f3, float f4);
   int SetMat3fc(const char * name, const GLfloat * m);
   int SetMat4fc(const char * name, const GLfloat * m);

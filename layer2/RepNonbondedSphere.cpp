@@ -107,9 +107,9 @@ static void RepNonbondedSphereRender(RepNonbondedSphere * I, RenderInfo * info)
   }
   return;
 ok_except1:
-    CGOFree(I->shaderCGO);
-    I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-    I->R.cs->Active[cRepNonbondedSphere] = false;
+  CGOFree(I->shaderCGO);
+  I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
+  I->R.cs->Active[cRepNonbondedSphere] = false;
 }
 
 Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
@@ -166,15 +166,15 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
       int a1 = cs->IdxToAtm[a];
       AtomInfoType *ai = obj->AtomInfo + a1;
       NP++;
-      float *v1 = cs->Coord + 3 * a;
+      const float *v1 = cs->Coord + 3 * a;
       int c1 = ai->color;
-      float *vc;
+      const float *vc;
       if(ColorCheckRamped(G, c1)) {
         float tmpColor[3];
         ColorGetRamped(G, c1, v1, tmpColor, state);
-	vc = tmpColor;
+        vc = tmpColor;
       } else {
-	vc = ColorGet(G, c1);
+        vc = ColorGet(G, c1);
       }
       CGOPickColor(I->primitiveCGO, a1, (ai->masked ? cPickableNoPick : cPickableAtom));
       if(AtomSettingGetIfDefined(G, ai, cSetting_nonbonded_transparency, &at_transp)){
@@ -193,10 +193,10 @@ Rep *RepNonbondedSphereNew(CoordSet * cs, int state)
   }
   CGOStop(I->primitiveCGO);
   I->primitiveCGO->sphere_quality = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_nb_spheres_quality);
-    if (ok){
-      I->R.context.object = (void *) obj;
-      I->R.context.state = state;
-    }
+  if (ok){
+    I->R.context.object = (void *) obj;
+    I->R.context.state = state;
+  }
   FreeP(active);
   if (!ok){
     RepNonbondedSphereFree(I);

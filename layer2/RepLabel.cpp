@@ -1222,7 +1222,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
           int screenwidth, screenheight;
           if(float_text)
             glDisable(GL_DEPTH_TEST);
-
+          
           if (!I->shaderCGO){
             SceneGetWidthHeight(G, &screenwidth, &screenheight);
           }
@@ -1265,19 +1265,19 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 
               TextSetColorFromUColor(G);
 
-            st = OVLexicon_FetchCString(G->Lexicon, *l);
+              st = OVLexicon_FetchCString(G->Lexicon, *l);
               if (!TextRenderOpenGL(G, info, font_id, st, font_size, v + 12, false, (short)*(v + 15), 1, SHADERCGO)){
                 TextSetIsPicking(G, false);
                 return ;
               }
-          }
-          l++;
+            }
+            l++;
             v += 28;
+          }
+          if(float_text)
+            glEnable(GL_DEPTH_TEST);
+          (*pick)[0].src.index = i;       /* pass the count */
         }
-        if(float_text)
-          glEnable(GL_DEPTH_TEST);
-        (*pick)[0].src.index = i;       /* pass the count */
-      }
         TextSetIsPicking(G, false);
       }
     } else {  // not pick or ray, render
@@ -1302,7 +1302,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 	if (use_shader){
 	  if (!I->shaderCGO){
 	    I->shaderCGO = CGONew(G);
-	      I->shaderCGO->use_shader = true;
+            I->shaderCGO->use_shader = true;
 	  } else {
 	    info->texture_font_size = I->texture_font_size;
 	    if(float_text)
@@ -1313,7 +1313,7 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 	    return;
 	  }
 	} else {
-	  CGOFree(I->shaderCGO);
+          CGOFree(I->shaderCGO);
 
 #ifndef PURE_OPENGL_ES_2
 	  if(!info->line_lighting)
@@ -1361,9 +1361,9 @@ static void RepLabelRender(RepLabel * I, RenderInfo * info)
 	    }
 
             if (p) {
-	    p++;
-	    if (I->shaderCGO)
-	      CGOPickColor(I->shaderCGO, p->index, p->bond);
+              p++;
+              if (I->shaderCGO)
+                CGOPickColor(I->shaderCGO, p->index, p->bond);
             }
 
             TextSetPosNColor(G, tCenterPt, v);
@@ -1507,7 +1507,8 @@ Rep *RepLabelNew(CoordSet * cs, int state)
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj;
   int a, a1, c1;
-  float *v, *v0, *vc;
+  float *v, *v0;
+  const float *vc;
   int *l;
   int label_color;
   Pickable *rp = NULL;
@@ -1578,7 +1579,8 @@ Rep *RepLabelNew(CoordSet * cs, int state)
       *(v++) = *(v0++);
       {
 	const float *at_label_pos, *at_label_padding;
-	float *con_color, label_connector_width, label_connector_ext_length;
+	const float *con_color;
+	float label_connector_width, label_connector_ext_length;
 	int label_connector = 0, label_bg = 0, label_bg_outline = 0, at_con_color = 0, at_label_relative_mode = 0, at_label_z_target,
 	  label_connector_mode = 0, label_connector_mode_1 = 0, label_connector_mode_2 = 0, label_connector_mode_3 = 0, label_connector_mode_4 = 0, ray_label_connector_flat = 0; 
 	float at_label_spacing, at_label_justification, at_label_bkgrd_transp;

@@ -87,14 +87,14 @@ int ColorConvertOldSessionIndex(PyMOLGlobals * G, int index);
 void ColorUpdateFront(PyMOLGlobals * G, const float *back);
 void ColorUpdateFrontFromSettings(PyMOLGlobals * G);
 
-float *ColorGet(PyMOLGlobals * G, int index);   /* pointer maybe invalid after creating a new color */
-float *ColorGetRaw(PyMOLGlobals * G, int index);        /* pointer maybe invalid after creating a new color */
+const float *ColorGet(PyMOLGlobals * G, int index);   /* pointer maybe invalid after creating a new color */
+const float *ColorGetRaw(PyMOLGlobals * G, int index);        /* pointer maybe invalid after creating a new color */
 
-float *ColorGetSpecial(PyMOLGlobals * G, int index);
-float *ColorGetNamed(PyMOLGlobals * G, const char *name);
+const float *ColorGetSpecial(PyMOLGlobals * G, int index);
+const float *ColorGetNamed(PyMOLGlobals * G, const char *name);
 void ColorDef(PyMOLGlobals * G, const char *name, const float *v, int mode, int quiet);
 int ColorGetNColor(PyMOLGlobals * G);
-char *ColorGetName(PyMOLGlobals * G, int index);
+const char *ColorGetName(PyMOLGlobals * G, int index);
 int ColorGetStatus(PyMOLGlobals * G, int index);
 void ColorReset(PyMOLGlobals * G);
 
@@ -112,12 +112,12 @@ int ColorFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore);
 
 int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore);
 PyObject *ColorExtAsPyList(PyMOLGlobals * G);
-int ColorTableLoad(PyMOLGlobals * G, char *fname, float gamma, int quiet);
+int ColorTableLoad(PyMOLGlobals * G, const char *fname, float gamma, int quiet);
 void ColorUpdateFromLut(PyMOLGlobals * G, int index);
 int ColorLookupColor(PyMOLGlobals * G, float *color);
 void ColorGetBkrdContColor(PyMOLGlobals * G, float *rgb, int invert_flag);
-unsigned int ColorGet32BitWord(PyMOLGlobals * G, float *rgba);
+unsigned int ColorGet32BitWord(PyMOLGlobals * G, const float *rgba);
 int ColorGetEncoded(PyMOLGlobals * G, int index, float *color);
-int Color3fToInt(PyMOLGlobals * G, float *rgb);
+int Color3fToInt(PyMOLGlobals * G, const float *rgb);
 
 #endif

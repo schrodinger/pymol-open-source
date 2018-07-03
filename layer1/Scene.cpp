@@ -2927,7 +2927,7 @@ int SceneDrawImageOverlay(PyMOLGlobals * G, int override ORTHOCGOARG){
   if(((!text) || overlay) && (override || I->CopyType == true) && I->Image && I->Image->data) {
     /* show transparent bg as checkboard? */
     int show_alpha = SettingGetGlobal_b(G, cSetting_show_alpha_checker);
-    float *bg_color = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+    const float *bg_color = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
     unsigned int bg_rr, bg_r = (unsigned int) (255 * bg_color[0]);
     unsigned int bg_gg, bg_g = (unsigned int) (255 * bg_color[1]);
     unsigned int bg_bb, bg_b = (unsigned int) (255 * bg_color[2]);

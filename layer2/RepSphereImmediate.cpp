@@ -26,9 +26,11 @@ extern CShaderPrg *sphereARBShaderPrg;
 
 #ifdef _PYMOL_ARB_SHADERS
 static void RepSphereRenderOneSphere_ARB(PyMOLGlobals *G, RenderInfo *info,
-                                         float *color, float *last_radius,
-                                         float *cur_radius, float *fog_info,
-                                         float *v) {
+                                         const float *color,
+                                         float *last_radius,
+                                         float *cur_radius,
+                                         const float *fog_info,
+                                         const float *v) {
   static const float _00[2] = {0.0F, 0.0F};
   static const float _01[2] = {0.0F, 1.0F};
   static const float _11[2] = {1.0F, 1.0F};

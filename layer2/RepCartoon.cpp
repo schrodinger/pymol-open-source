@@ -121,7 +121,8 @@ static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
     CGO *convertcgo = NULL, *tmpCGO = NULL, *tmp2CGO = NULL;
     if ((alpha < 1.f) && (SettingGetGlobal_i(G, cSetting_transparency_mode) != 3)){
       // some transparency
-      float *color, colorWithA[4];
+      const float *color;
+      float colorWithA[4];
       CGO *convertcgo2;
       convertcgo2 = CGOSimplify(I->preshader, 0) ;
       convertcgo = CGOCombineBeginEnd(convertcgo2, 0);
@@ -391,7 +392,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                     float ring_radius)
 {
   float *v_i[MAX_RING_ATOM];
-  float *col[MAX_RING_ATOM];
+  const float *col[MAX_RING_ATOM];
   float n_up[MAX_RING_ATOM][3];
   float n_dn[MAX_RING_ATOM][3];
   AtomInfoType *ai_i[MAX_RING_ATOM];
@@ -1011,7 +1012,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                   }
 
 		  {
-		    float *color1, *color2;
+                    const float *color1, *color2;
 		    if (ladder_color >= 0) {
 		      color1 = color2 = ColorGet(G, ladder_color);
 		    } else {
@@ -1067,7 +1068,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
 
                   if((sug >= 0) && (bas >= 0)) {
 		    {
-		      float *color1, *color2;
+                      const float *color1, *color2;
 		      if (ladder_color >= 0) {
 			color1 = color2 = ColorGet(G, ladder_color);
 		      } else {
@@ -1145,7 +1146,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                   }
                 }
 		{
-		  float *color1, *color2;
+                  const float *color1, *color2;
 		  if (ladder_color >= 0) {
 		    color1 = color2 = ColorGet(G, ladder_color);
 		  } else {
@@ -1195,7 +1196,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
       int i;
       float up[3], upi[3];
       float vc0[3], vc1[3];
-      float *color = NULL;
+      const float *color = NULL;
       /* compute average coordinate and mark atoms so that ring is only drawn once */
       zero3f(avg);
       zero3f(avg_col);
@@ -1383,7 +1384,7 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
               for(i = 0; i < n_atom; i++) {
                 ii = i + 1;
 		{
-		  float *color1, *color2;
+                  const float *color1, *color2;
 		  if (ring_color < 0) {
 		    color1 = col[i];
 		    color2 = col[ii];
@@ -1627,7 +1628,8 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
     int *at, float *dl, int cartoon_color, int discrete_colors, float loop_radius){
   int ok = true;
   int n_p, n_pm1, n_pm2;
-  float *v, *v0, *v1, *v2, *vo, *d;
+  const float *v0;
+  float *v, *v1, *v2, *vo, *d;
   float *vc = NULL;
   int atom_index1, atom_index2, *s,
       *atp, a, cur_car;
@@ -2097,7 +2099,7 @@ void CartoonGenerateSample(PyMOLGlobals *G, int sampling, int *n_p, float dev, f
                            float **v_p, float **vn_p){
   int b, i0;
   float f0, f1, f2, f3, f4;
-  float *v0;
+  const float *v0;
   unsigned int *vi = *vi_p;
   float *vc = *vc_p, *v = *v_p, *vn = *vn_p;
   for(b = 0; b < sampling; b++) {       /* needs optimization */

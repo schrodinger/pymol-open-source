@@ -1505,7 +1505,7 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, const char *name, const char *ma
         for(a = 0; a < n_color; a++) {
           color = next_word(color, colorName, sizeof(colorName));
           {
-            float *src = ColorGetNamed(I->G, colorName);
+            const float *src = ColorGetNamed(I->G, colorName);
             float *dst = color_vla + 3 * a;
             copy3f(src, dst);
           }

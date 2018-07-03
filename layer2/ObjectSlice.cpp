@@ -701,7 +701,7 @@ static void ObjectSliceUpdate(ObjectSlice * I)
             if(ogr)
               ObjectSliceStateAssignColors(oss, ogr);
             else {              /* solid color */
-              float *solid = ColorGet(I->Obj.G, I->Obj.Color);
+              const float *solid = ColorGet(I->Obj.G, I->Obj.Color);
               float *color = oss->colors;
               for(a = 0; a < oss->n_points; a++) {
                 *(color++) = solid[0];

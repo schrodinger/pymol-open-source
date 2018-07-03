@@ -1355,7 +1355,7 @@ void bg_grad(PyMOLGlobals * G) {
   copy3f(ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom)), bottom);
 
   if (!bg_gradient && !bg_image && !I->bgData){
-    float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+    const float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
     SceneGLClearColor(bg_rgb[0], bg_rgb[1], bg_rgb[2], 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       return;
@@ -1363,7 +1363,7 @@ void bg_grad(PyMOLGlobals * G) {
 
   if (!G->ShaderMgr->ShadersPresent()){
     float zero[3] = { 0.f, 0.f, 0.f } ;
-    float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+    const float *bg_rgb = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
     bg_is_solid = !equal3f(bg_rgb, zero);
       SceneGLClearColor(bg_rgb[0], bg_rgb[1], bg_rgb[2], 1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1540,7 +1540,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
   int internal_feedback;
   int times = 1, origtimes = 0;
   int double_pump = false;
-  float *bg_color;
+  const float *bg_color;
   int skip_prompt = 0;
   int render = false;
   int internal_gui_mode = SettingGetGlobal_i(G, cSetting_internal_gui_mode);
@@ -1859,7 +1859,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         " OrthoDoDraw: blocks drawn.\n" ENDFD;
 
       if(I->LoopFlag) {
-        float *vc = ColorGet(G, cColorFront);
+        const float *vc = ColorGet(G, cColorFront);
 	if (generate_shader_cgo){
 	  CGOColor(orthoCGO, vc[0], vc[1], vc[2]);
 

@@ -255,7 +255,7 @@ static int ObjectCGOGetNState(ObjectCGO * I)
   return (I->NState);
 }
 
-static void ObjectCGORenderState(PyMOLGlobals * G, int pass, CRay *ray, Picking **pick, ObjectCGO * I, RenderInfo * info, ObjectCGOState *sobj, float *color, ObjectGadgetRamp *ramp, int use_shader, bool cgo_lighting){
+static void ObjectCGORenderState(PyMOLGlobals * G, int pass, CRay *ray, Picking **pick, ObjectCGO * I, RenderInfo * info, ObjectCGOState *sobj, const float *color, ObjectGadgetRamp *ramp, int use_shader, bool cgo_lighting){
   if(ray) {
     if(sobj) {
       if(sobj->origCGO){
@@ -335,7 +335,7 @@ static void ObjectCGORenderState(PyMOLGlobals * G, int pass, CRay *ray, Picking 
   }
 }
 
-static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState *sobj, bool use_shader, bool cgo_lighting, float *color, ObjectGadgetRamp *ramp, int state)
+static void ObjectCGOGenerateCGO(PyMOLGlobals * G, ObjectCGO * I, ObjectCGOState *sobj, bool use_shader, bool cgo_lighting, const float *color, ObjectGadgetRamp *ramp, int state)
 {
   if (sobj->renderCGO && 
       ((use_shader ^ sobj->renderWithShaders) ||
@@ -494,7 +494,7 @@ static void ObjectCGORender(ObjectCGO * I, RenderInfo * info)
   Picking **pick = info->pick;
   int pass = info->pass;
   ObjectCGOState *sobj = NULL;
-  float *color = NULL;
+  const float *color = NULL;
   bool use_shader = false, cgo_lighting = false;
   ObjectGadgetRamp *ramp = NULL;
   

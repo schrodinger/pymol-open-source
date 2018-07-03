@@ -960,7 +960,7 @@ void RayRenderCOLLADA(CRay * I, int width, int height,
             }
 
             /* color */
-            float *bg_color;
+            const float *bg_color;
             bg_color = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
 
             sprintf(next, "%6.4f %6.4f %6.4f", bg_color[0], bg_color[1], bg_color[2]);

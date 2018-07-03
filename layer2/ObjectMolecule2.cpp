@@ -599,7 +599,7 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
                 }
                 if(test < cutoff2) {
                   float weight = cutoff - sqrt1f(test);
-                  float *at_col = ColorGet(I->Obj.G, I->AtomInfo[cs->IdxToAtm[j]].color);
+                  const float *at_col = ColorGet(I->Obj.G, I->AtomInfo[cs->IdxToAtm[j]].color);
                   color[0] += at_col[0] * weight;
                   color[1] += at_col[1] * weight;
                   color[2] += at_col[2] * weight;
@@ -626,10 +626,10 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule * I, const float *point,
           }
           if(test < cutoff2) {
             float weight = cutoff - sqrt1f(test);
-            float *color = ColorGet(I->Obj.G, I->AtomInfo[cs->IdxToAtm[j]].color);
-            color[0] += color[0] * weight;
-            color[1] += color[1] * weight;
-            color[2] += color[2] * weight;
+            const float *at_col = ColorGet(I->Obj.G, I->AtomInfo[cs->IdxToAtm[j]].color);
+            color[0] += at_col[0] * weight;
+            color[1] += at_col[1] * weight;
+            color[2] += at_col[2] * weight;
             tot_weight += weight;
           }
           if(test <= nearest) {

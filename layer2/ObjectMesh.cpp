@@ -495,7 +495,7 @@ static void ObjectMeshStateUpdateColors(ObjectMesh * I, ObjectMeshState * ms)
           *rc = cur_color;
           ramped_flag = true;
         } else {
-          float *col = ColorGet(I->Obj.G, cur_color);
+          const float *col = ColorGet(I->Obj.G, cur_color);
           copy3f(col, vc);
         }
         rc++;
@@ -955,7 +955,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      }
 
 	      if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)) {
-		float *color = ColorGet(I->Obj.G, I->Obj.Color);
+		const float *color = ColorGet(I->Obj.G, I->Obj.Color);
 		if (!use_shader) {
 		  CGORenderGL(ms->UnitCellCGO, color, I->Obj.Setting, NULL, info, NULL);
 		} else if(!ms->shaderUnitCellCGO) {

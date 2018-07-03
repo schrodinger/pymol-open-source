@@ -410,7 +410,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
               *rc = cur_color;
               ramped_flag = true;
             } else {
-              float *col = ColorGet(I->Obj.G, cur_color);
+              const float *col = ColorGet(I->Obj.G, cur_color);
               copy3f(col, vc);
             }
             rc++;
@@ -457,7 +457,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface * I, ObjectSurfaceState
               *rc = cur_color;
               ramped_flag = true;
             } else {
-              float *col = ColorGet(I->Obj.G, cur_color);
+              const float *col = ColorGet(I->Obj.G, cur_color);
               copy3f(col, vc);
             }
             rc++;
@@ -684,7 +684,7 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
 }
 
 static void ObjectSurfaceRenderGlobalTransparency(PyMOLGlobals * G,
-    RenderInfo * info, ObjectSurfaceState *ms, float *col, float alpha)
+    RenderInfo * info, ObjectSurfaceState *ms, const float *col, float alpha)
 {
   float *v = NULL;
   float *vc = NULL;
@@ -927,7 +927,7 @@ static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
 static void ObjectSurfaceRenderCell(PyMOLGlobals *G, ObjectSurface * I,
     RenderInfo * info, ObjectSurfaceState *ms, short use_shader)
 {
-  float *color = ColorGet(G, I->Obj.Color);
+  const float *color = ColorGet(G, I->Obj.Color);
   if (use_shader != ms->UnitCellCGO->has_draw_buffers){
     if (use_shader){
       CGO *convertcgo = CGOOptimizeToVBONotIndexed(ms->UnitCellCGO, 0);
@@ -950,7 +950,7 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   int pass = info->pass;
-  float *col;
+  const float *col;
   ObjectSurfaceState *ms = NULL;
   float alpha;
   ObjectPrepareContext(&I->Obj, info);

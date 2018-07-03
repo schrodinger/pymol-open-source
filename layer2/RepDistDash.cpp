@@ -121,7 +121,7 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
   PyMOLGlobals *G = I->R.G;
   float *v = I->V;
   int c = I->N;
-  float *vc;
+  const float *vc;
   int round_ends;
   int ok = true;
   int color =
@@ -225,7 +225,7 @@ static void RepDistDashRender(RepDistDash * I, RenderInfo * info)
       {
 	if(color >= 0){
 	  if (dash_transparency_enabled){
-	    float *col = ColorGet(G, color);
+	    const float *col = ColorGet(G, color);
 	    glColor4f(col[0], col[1], col[2], 1.f-dash_transparency);
 	  } else {
 	    glColor3fv(ColorGet(G, color));

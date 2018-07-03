@@ -274,10 +274,10 @@ int CShaderPrg::SetMat4fc(const char * name, const GLfloat * m){
   return 1;
 }
 
-int CShaderPrg::Set4fv(const char * name, float *f){
+int CShaderPrg::Set4fv(const char * name, const float *f){
   return (Set4f(name, f[0], f[1], f[2], f[3]));
 }
-int CShaderPrg::Set3fv(const char * name, float *f){
+int CShaderPrg::Set3fv(const char * name, const float *f){
   return (Set3f(name, f[0], f[1], f[2]));
 }
 

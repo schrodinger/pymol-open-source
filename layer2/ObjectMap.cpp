@@ -1933,7 +1933,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
 
       if((I->Obj.visRep & cRepExtentBit)) {
         if(ray) {
-          float *vc;
+          const float *vc;
           float radius = ray->PixelRadius / 1.4142F;
           vc = ColorGet(G, I->Obj.Color);
           ray->color3fv(vc);
@@ -2074,7 +2074,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
               int ramped = ColorCheckRamped(G, I->Obj.Color);
 
               {
-                float *tmp = ColorGet(G, I->Obj.Color);
+                const float *tmp = ColorGet(G, I->Obj.Color);
                 copy3f(tmp, vc);
               }
 

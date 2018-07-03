@@ -1048,7 +1048,7 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
   Picking **pick = info->pick;
   int pass = info->pass;
   ObjectAlignmentState *sobj = NULL;
-  float *color;
+  const float *color;
 
   ObjectPrepareContext(&I->Obj, info);
 

@@ -1409,7 +1409,7 @@ PyObject *SettingGetPyObject(PyMOLGlobals * G, const CSetting * set1, const CSet
     {
       int retcol = SettingGet_color(G, set1, set2, index);
       if (retcol > 0){
-	float *col;
+	const float *col;
 	col = ColorGet(G, retcol);
 	result = Py_BuildValue("(fff)", col[0], col[1], col[2]);
       }
@@ -2757,7 +2757,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_bg_rgb:
     {
       /* clamp this value */
-      float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
+      const float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
       {
         const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
         if(!(bg_image_filename && bg_image_filename[0]) && !OrthoBackgroundDataIsSet(G)) {

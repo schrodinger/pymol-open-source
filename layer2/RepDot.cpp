@@ -209,7 +209,7 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
 	  generate_shader_cgo = 1;
 	  ok &= RepDotCGOGenerate(I, info);
 	} else {
-	  float *color;
+	  const float *color;
 	  color = ColorGet(G, I->R.obj->Color);
 	  CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	  return; /* should not do any other rendering after shaderCGO has
@@ -275,7 +275,8 @@ Rep *RepDotDoNew(CoordSet * cs, int mode, int state)
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj;
   int a, b, flag, h, k, l, i, j, c1;
-  float *v, *v0, *vc, vdw, *vn;
+  float *v, *v0, vdw, *vn;
+  const float *vc;
   float *aa = NULL;
   int *tp = NULL;
   int *tf = NULL;
