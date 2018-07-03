@@ -6027,8 +6027,10 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
     }
 
     if(!result) {
+      PyMOL_PushValidContext(G->PyMOL); // PyQt hack?
       if(ScenePNG(G, str1, dpi, quiet, prior, format))
         result = 1;             /* signal success by returning 1 instead of 0, or -1 for error  */
+      PyMOL_PopValidContext(G->PyMOL);
     }
     APIExit(G);
   }
@@ -6054,9 +6056,11 @@ static PyObject *CmdMPNG(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
+    PyMOL_PushValidContext(G->PyMOL); // PyQt hack?
     ok = MoviePNG(G, str1, SettingGetGlobal_b(G, cSetting_cache_frames),
                   int1, int2, int3, int4, format, mode, quiet,
                   width, height);
+    PyMOL_PopValidContext(G->PyMOL);
     /* TODO STATUS */
     APIExit(G);
   }
