@@ -57,6 +57,150 @@ void RepAngleFree(RepAngle * I)
   OOFreeP(I);
 }
 
+static int RepAngleCGOGenerate(RepAngle * I, RenderInfo * info)
+{
+  PyMOLGlobals *G = I->R.G;
+  float *v = I->V;
+  int c = I->N;
+  float line_width;
+  int ok = true;
+  CGO *convertcgo = NULL;
+  int dash_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_dash_as_cylinders);
+  int color =
+    SettingGet_color(G, NULL, I->ds->Obj->Obj.Setting, cSetting_angle_color);
+  I->linewidth = line_width = 
+    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_width);
+  I->radius =
+    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_radius);
+  line_width = SceneGetDynamicLineWidth(info, line_width);
+  ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
+  if (ok)
+    ok &= CGOResetNormal(I->shaderCGO, true);
+  if (ok){
+    if(color >= 0){
+      ok &= CGOColorv(I->shaderCGO, ColorGet(G, color));
+    } else if (I->Obj && I->Obj->Color >= 0){
+      ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
+    }
+  }
+  v = I->V;
+  c = I->N;
+  if (dash_as_cylinders){
+    float *origin = NULL, axis[3];
+    while(ok && c > 0) {
+      origin = v;
+      v += 3;
+      axis[0] = v[0] - origin[0];
+      axis[1] = v[1] - origin[1];
+      axis[2] = v[2] - origin[2];
+      v += 3;
+      ok &= (bool)I->shaderCGO->add<cgo::draw::shadercylinder>(origin, axis, 1.f, 15);
+      c -= 2;
+    }
+  } else if (ok) {
+    ok &= CGOBegin(I->shaderCGO, GL_LINES);
+    while(ok && c > 0) {
+      ok &= CGOVertexv(I->shaderCGO, v);
+      v += 3;
+      if (ok)
+	ok &= CGOVertexv(I->shaderCGO, v);
+      v += 3;
+      c -= 2;
+    }
+    if (ok)
+      ok &= CGOEnd(I->shaderCGO);
+  }
+  if (ok)
+    ok &= CGOStop(I->shaderCGO);
+  if (ok)
+    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+  CHECKOK(ok, convertcgo);
+  CGOFree(I->shaderCGO);    
+  I->shaderCGO = convertcgo;
+  convertcgo = NULL;
+  if (ok){
+    if (dash_as_cylinders){
+      CGO *tmpCGO = CGONew(G);
+      if (ok) ok &= CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
+      if (ok) ok &= CGOSpecial(tmpCGO, CYLINDER_WIDTH_FOR_DISTANCES);
+      convertcgo = CGOConvertShaderCylindersToCylinderShader(I->shaderCGO, tmpCGO);
+      if (ok) ok &= CGOEnable(tmpCGO, GL_DASH_TRANSPARENCY_DEPTH_TEST);
+      if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+      if (ok) ok &= CGODisable(tmpCGO, GL_DASH_TRANSPARENCY_DEPTH_TEST);
+      if (ok) ok &= CGODisable(tmpCGO, GL_CYLINDER_SHADER);
+      if (ok) ok &= CGOStop(tmpCGO);
+      CGOFreeWithoutVBOs(convertcgo);
+      convertcgo = tmpCGO;
+    } else {
+      CGO *tmpCGO = CGONew(G);
+      if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
+      if (ok) ok &= CGODisable(tmpCGO, CGO_GL_LIGHTING);
+      convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO, 0);
+      if (ok) ok &= CGOEnable(tmpCGO, GL_DASH_TRANSPARENCY_DEPTH_TEST);
+      if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+      if (ok) ok &= CGODisable(tmpCGO, GL_DASH_TRANSPARENCY_DEPTH_TEST);
+      if (ok) ok &= CGODisable(tmpCGO, GL_DEFAULT_SHADER);
+      if (ok) ok &= CGOStop(tmpCGO);
+      CGOFreeWithoutVBOs(convertcgo);
+      convertcgo = tmpCGO;
+    }
+    convertcgo->use_shader = true;
+  }
+  CHECKOK(ok, convertcgo);
+  if (convertcgo){
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = convertcgo;
+    convertcgo = NULL;
+  }
+  return ok;
+}
+
+static void RepAngleRenderImmediate(RepAngle * I, RenderInfo * info, int color, 
+                                    short dash_transparency_enabled, float dash_transparency)
+{
+#ifndef PURE_OPENGL_ES_2
+  PyMOLGlobals *G = I->R.G;
+  float *v = I->V;
+  int c = I->N;
+  float line_width;
+  bool t_mode_3 =
+    SettingGet_i(G, NULL, I->ds->Obj->Obj.Setting, cSetting_transparency_mode) == 3;
+  line_width = 
+    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_width);
+  line_width = SceneGetDynamicLineWidth(info, line_width);
+
+  if(info->width_scale_flag) {
+    glLineWidth(line_width * info->width_scale);
+  } else {
+    glLineWidth(line_width);
+  }
+  SceneResetNormal(G, true);
+  
+  if (dash_transparency_enabled){
+    float *col = ColorGet(G, color);
+    glColor4f(col[0], col[1], col[2], 1.f-dash_transparency);
+  } else {
+    glColor3fv(ColorGet(G, color));
+  }
+  if (dash_transparency_enabled && !t_mode_3)
+    glDisable(GL_DEPTH_TEST);	
+  if(!info->line_lighting)
+    glDisable(GL_LIGHTING);
+  glBegin(GL_LINES);
+  while(c > 0) {
+    glVertex3fv(v);
+    v += 3;
+    glVertex3fv(v);
+    v += 3;
+    c -= 2;
+  }
+  glEnd();
+  glEnable(GL_LIGHTING);
+  if (dash_transparency_enabled && !t_mode_3)
+    glEnable(GL_DEPTH_TEST);	
+#endif
+}
+
 static void RepAngleRender(RepAngle * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
@@ -68,8 +212,12 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   int round_ends;
   float line_width;
   int ok = true;
+  float dash_transparency;
+  short dash_transparency_enabled;
   int color =
     SettingGet_color(G, NULL, I->ds->Obj->Obj.Setting, cSetting_angle_color);
+  if(color < 0)
+    color = I->Obj->Color;
   I->linewidth = line_width = 
     SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_width);
   I->radius =
@@ -77,10 +225,20 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   round_ends =
     SettingGet_b(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_round_ends);
   line_width = SceneGetDynamicLineWidth(info, line_width);
+  dash_transparency =
+    SettingGet_f(G, NULL, I->ds->Obj->Obj.Setting, cSetting_dash_transparency);
+  dash_transparency = (dash_transparency < 0.f ? 0.f : (dash_transparency > 1.f ? 1.f : dash_transparency));
+  dash_transparency_enabled = (dash_transparency > 0.f);
+
+  if (!(ray || pick) && (!info->pass || (info->pass > 0) == dash_transparency_enabled))
+    return;
 
   if(ray) {
 
     float radius;
+    if (dash_transparency_enabled){
+      ray->transparentf(dash_transparency);      
+    }
 
     if(I->radius == 0.0F) {
       radius = ray->PixelRadius * line_width / 2.0F;
@@ -88,8 +246,6 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
       radius = I->radius;
     }
 
-    if(color < 0)
-      color = I->Obj->Color;
     vc = ColorGet(G, color);
     v = I->V;
     c = I->N;
@@ -108,11 +264,10 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else {
-      short use_shader, generate_shader_cgo = 0, dash_as_cylinders = 0;
+      short use_shader, generate_shader_cgo = 0;
 
       use_shader = SettingGetGlobal_b(G, cSetting_dash_use_shader) & 
 	           SettingGetGlobal_b(G, cSetting_use_shaders);
-      dash_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_dash_as_cylinders);
 
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
@@ -125,152 +280,20 @@ static void RepAngleRender(RepAngle * I, RenderInfo * info)
 	  if (ok)
 	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
-	} else {
-	  CShaderPrg *shaderPrg;
-	  if (dash_as_cylinders){
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	    if(I->radius == 0.0F) {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
-	    } else {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
-	    }
-	    if (!round_ends){
-	      CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 0.f);
-	    }
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	  }
-	  if (!shaderPrg) return;
+	  if (dash_transparency_enabled){
+	    CGOAlpha(I->shaderCGO, 1.f-dash_transparency);
+          }
+	  ok &= RepAngleCGOGenerate(I, info);
+   	} else {
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-
-	  CShaderPrg_Disable(shaderPrg);
 	  return;
 	}
       }
 
-      if (generate_shader_cgo){
-	if (ok)
-	  ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_DASH);
-	if (ok)
-	  ok &= CGOResetNormal(I->shaderCGO, true);
+      if (!generate_shader_cgo) {
+	RepAngleRenderImmediate(I, info, color, dash_transparency_enabled, dash_transparency);
       } else {
-	if(info->width_scale_flag) {
-	  glLineWidth(line_width * info->width_scale);
-	} else {
-	  glLineWidth(line_width);
-	}
-        SceneResetNormal(G, true);
-      }
-
-      if (generate_shader_cgo){
-	if (ok){
-	  if(color >= 0){
-	    ok &= CGOColorv(I->shaderCGO, ColorGet(G, color));
-	  } else if (I->Obj && I->Obj->Color >= 0){
-	    ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->Obj->Color));
-	  }
-	}
-	v = I->V;
-	c = I->N;
-	if (dash_as_cylinders){
-	  float *origin = NULL, axis[3];
-	  while(ok && c > 0) {
-	    origin = v;
-	    v += 3;
-	    axis[0] = v[0] - origin[0];
-	    axis[1] = v[1] - origin[1];
-	    axis[2] = v[2] - origin[2];
-	    v += 3;
-	    ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
-	    c -= 2;
-	  }
-	} else if (ok) {
-	  ok &= CGOBegin(I->shaderCGO, GL_LINES);
-	  while(ok && c > 0) {
-	    ok &= CGOVertexv(I->shaderCGO, v);
-	    v += 3;
-	    if (ok)
-	      ok &= CGOVertexv(I->shaderCGO, v);
-	    v += 3;
-	    c -= 2;
-	  }
-	  if (ok)
-	    ok &= CGOEnd(I->shaderCGO);
-	}
-      } else {
-	if(color >= 0){
-	  glColor3fv(ColorGet(G, color));
-	}
-        v = I->V;
-        c = I->N;
-
-        if(!info->line_lighting)
-          glDisable(GL_LIGHTING);
-        glBegin(GL_LINES);
-        while(c > 0) {
-          glVertex3fv(v);
-          v += 3;
-          glVertex3fv(v);
-          v += 3;
-          c -= 2;
-        }
-        glEnd();
-        glEnable(GL_LIGHTING);
-      }
-      if (use_shader) {
-	if (generate_shader_cgo){
-	  CGO *convertcgo = NULL;
-	  if (ok)
-	    ok &= CGOStop(I->shaderCGO);
-	  if (ok)
-	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
-	  CHECKOK(ok, convertcgo);
-	  CGOFree(I->shaderCGO);    
-	  I->shaderCGO = convertcgo;
-	  convertcgo = NULL;
-	  if (ok){
-	    if (dash_as_cylinders){
-	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	    } else {
-	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
-	    }
-	  }
-	  CHECKOK(ok, convertcgo);
-	  if (convertcgo){
-	    CGOFree(I->shaderCGO);
-	    I->shaderCGO = convertcgo;
-	    convertcgo = NULL;
-	  }
-	}
-	
-	if (ok) {
-	  CShaderPrg *shaderPrg;
-	  if (dash_as_cylinders){
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	    if(I->radius == 0.0F) {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
-	    } else {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
-	    }
-	    if (!round_ends){
-	      CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 0.f);
-	    }
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	  }	 
-
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-	  
-	  CShaderPrg_Disable(shaderPrg);
-	}
+	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
       }
     }
   }
@@ -290,6 +313,10 @@ Rep *RepAngleNew(DistSet * ds, int state)
   float length, radius, angle, pos, phase;
   float dash_len, dash_gap, dash_sum;
   int ok = true;
+  float dash_transparency;
+  dash_transparency =
+    SettingGet_f(G, NULL, ds->Obj->Obj.Setting, cSetting_dash_transparency);
+  dash_transparency = (dash_transparency < 0.f ? 0.f : (dash_transparency > 1.f ? 1.f : dash_transparency));
 
   OOAlloc(G, RepAngle);
   CHECKOK(ok, I);

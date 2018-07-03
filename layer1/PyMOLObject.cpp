@@ -994,8 +994,10 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
 
 
 /*========================================================================*/
-void ObjectPrepareContext(CObject * I, CRay * ray)
+void ObjectPrepareContext(CObject * I, RenderInfo * info)
 {
+  CRay * ray = info ? info->ray : NULL;
+
   if(I->ViewElem) {
     int frame = SceneGetFrame(I->G);
     if(frame >= 0) {
@@ -1048,10 +1050,15 @@ void ObjectPrepareContext(CObject * I, CRay * ray)
         gl[11] = 0.0;
         gl[15] = 1.0;
 
-        glMultMatrixf(gl);
+        auto mvm = SceneGetModelViewMatrix(G);
+        MatrixMultiplyC44f(gl, mvm);
+        MatrixTranslateC44f(mvm, ttt[12], ttt[13], ttt[14]);
 
-        /* include the pre-translation */
-        glTranslatef(ttt[12], ttt[13], ttt[14]);
+#ifndef PURE_OPENGL_ES_2
+        if (ALWAYS_IMMEDIATE_OR(!info->use_shaders)) {
+          glLoadMatrixf(mvm);
+        }
+#endif
       }
     }
   }
@@ -1410,8 +1417,6 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       RaySetTTT(info->ray, true, matrix);
       result = true;
     } else if(G->HaveGUI && G->ValidContext) {
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
       matrix[0] = i_matrix[0];
       matrix[1] = i_matrix[4];
       matrix[2] = i_matrix[8];
@@ -1428,7 +1433,17 @@ int ObjectStatePushAndApplyMatrix(CObjectState * I, RenderInfo * info)
       matrix[13] = i_matrix[7];
       matrix[14] = i_matrix[11];
       matrix[15] = i_matrix[15];
-      glMultMatrixf(matrix);
+
+      ScenePushModelViewMatrix(G);
+      auto mvm = SceneGetModelViewMatrix(G);
+      MatrixMultiplyC44f(matrix, mvm);
+
+#ifndef PURE_OPENGL_ES_2
+      if (ALWAYS_IMMEDIATE_OR(!info->use_shaders)) {
+        glLoadMatrixf(mvm);
+      }
+#endif
+
       result = true;
     }
   }
@@ -1441,8 +1456,7 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info)
   if(info->ray) {
     RayPopTTT(info->ray);
   } else if(G->HaveGUI && G->ValidContext) {
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    ScenePopModelViewMatrix(G, !info->use_shaders);
   }
 }
 

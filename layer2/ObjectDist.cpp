@@ -444,9 +444,21 @@ static void ObjectDistRender(ObjectDist * I, RenderInfo * info)
   int state = info->state;
   int pass = info->pass;
   CRay *ray = info->ray;
+  Picking **pick = info->pick;
+  bool shouldRender = false;
 
-  if((pass == 0) || (pass == -1)) {
-    ObjectPrepareContext(&I->Obj, ray);
+  if(ray || pick) {
+    shouldRender = true;
+  } else {
+    shouldRender = pass != 0;  // distance measurements should render 
+                               // both in opaque and transparency loop,
+                               // the rep decides based on transparency
+                               // whether it renders in that loop.
+  }
+  if (!shouldRender)
+    return;
+
+  ObjectPrepareContext(&I->Obj, info);
 
     for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NDSet);
         iter.next();) {
@@ -454,7 +466,6 @@ static void ObjectDistRender(ObjectDist * I, RenderInfo * info)
       if(ds)
         ds->render(info);
     }
-  }
 }
 
 static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)

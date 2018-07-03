@@ -70,7 +70,6 @@ typedef struct CPopUp {
 
 int PopUpRelease(Block * block, int button, int x, int y, int mod);
 void PopUpDraw(Block * block ORTHOCGOARG);
-int PopUpDrag(Block * block, int x, int y, int mod);
 int PopUpConvertY(CPopUp * I, int value, int mode);
 
 /*========================================================================

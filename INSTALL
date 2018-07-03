@@ -30,6 +30,7 @@ REQUIREMENTS
         --use-msgpackc=no)
     - PyQt5, PyQt4, or PySide (optional, will fall back to Tk interface)
     - simplemmtf (optional, for MMTF export)
+    - glm
 
 SETUP OPTIONS
 

@@ -118,9 +118,12 @@ void OrthoDrawWizardPrompt(PyMOLGlobals * G ORTHOCGOARG);
 
 void bg_grad(PyMOLGlobals * G);
 GLuint OrthoGetBackgroundTextureID(PyMOLGlobals * G);
+void OrthoInvalidateBackgroundTexture(PyMOLGlobals * G);
 void OrthoBackgroundTextureNeedsUpdate(PyMOLGlobals * G);
 
 void OrthoGetBackgroundSize(PyMOLGlobals * G, int *width, int *height);
+
+void OrthoSetBackgroundImage(PyMOLGlobals * G, const char *image_data, int width, int height);
 
 int OrthoBackgroundDataIsSet(PyMOLGlobals *G);
 void *OrthoBackgroundDataGet(PyMOLGlobals *G, int *width, int *height);

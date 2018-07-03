@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Scene.h"
 #include"ButMode.h"
+#include"CGO.h"
 #include"Executive.h"
 #include"Editor.h"
 #include"P.h"
@@ -769,7 +770,7 @@ int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_resto
                   }
                 if(ok) {
                   SettingUniqueSetTypedValue(G, unique_id, setting_id,
-                                             setting_type, &value_store.int_);
+                                             setting_type, &value_store);
                 }
               }
             }
@@ -973,7 +974,7 @@ static int SettingCheckUseShaders(CSetting * I, int quiet)
 {
   PyMOLGlobals * G = I->G;
     if (SettingGetGlobal_i(G, cSetting_use_shaders)){
-      if (!CShaderMgr_ShadersPresent(G->ShaderMgr)){
+      if (G->ShaderMgr->IsConfigured() && !G->ShaderMgr->ShadersPresent()){
 	SettingSet_b(I, cSetting_use_shaders, 0);
 	if (!quiet){
 	  PRINTFB(G, FB_Setting, FB_Warnings)
@@ -1908,7 +1909,13 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   switch (index) {
   case cSetting_stereo:
     SceneUpdateStereo(G);
-    CShaderMgr_Set_Reload_Bits(G, RELOAD_ALL_SHADERS);
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
+    break;
+  case cSetting_pick_surface:
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
+      SceneInvalidatePicking(G); // right now, when pick_surface is off, wipes each CGO's pickColor array
+    }
+    ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvColor);
     break;
   case cSetting_pickable:
     ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvAll);
@@ -1916,7 +1923,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     break;
   case cSetting_grid_mode:
     if (!SettingGetGlobal_i(G, cSetting_grid_mode))
-      ShaderMgrResetUniformSet(G);
+      G->ShaderMgr->ResetUniformSet();
   case cSetting_grid_slot:
     ExecutiveInvalidateGroups(G, false);
     SceneChanged(G);
@@ -1960,34 +1967,23 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     break;
   case cSetting_stereo_mode:
   case cSetting_anaglyph_mode:
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
     SceneUpdateStereoMode(G);
     OrthoInvalidateDoDraw(G);
     OrthoDirty(G);
     PyMOL_NeedRedisplay(G->PyMOL);
     break;
+  case cSetting_precomputed_lighting:
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
   case cSetting_light_count:
   case cSetting_spec_count:
-    CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_FOR_LIGHTING);
-    break;
-  case cSetting_pick_shading:
-    if (SettingGetGlobal_i(G, cSetting_surface_color_smoothing)) {
-      ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvColor);
-    }
-    CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_FOR_LIGHTING);
-  case cSetting_light:
-  case cSetting_light2:
-  case cSetting_light3:
-  case cSetting_light4:
-  case cSetting_light5:
-  case cSetting_light6:
-  case cSetting_light7:
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_CALLCOMPUTELIGHTING);
   case cSetting_dot_lighting:
   case cSetting_mesh_lighting:
-  case cSetting_fog:
+  case cSetting_cgo_lighting:
   case cSetting_field_of_view:
   case cSetting_fog_start:
   case cSetting_two_sided_lighting:
-  case cSetting_transparency_mode:
   case cSetting_transparency_global_sort:
   case cSetting_dot_normals:
   case cSetting_mesh_normals:
@@ -2001,15 +1997,27 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     }
     SceneInvalidate(G);
     break;
+  case cSetting_light:
+  case cSetting_light2:
+  case cSetting_light3:
+  case cSetting_light4:
+  case cSetting_light5:
+  case cSetting_light6:
+  case cSetting_light7:
+  case cSetting_reflect:
+  case cSetting_direct:
+  case cSetting_ambient:
+  case cSetting_specular:
+  case cSetting_specular_intensity:
   case cSetting_shininess:
   case cSetting_spec_reflect:
   case cSetting_spec_direct:
   case cSetting_spec_direct_power:
-#ifdef PURE_OPENGL_ES_2
-#endif
-    if (SettingGetGlobal_b(G, cSetting_use_shaders)) {
+  case cSetting_power:
+  case cSetting_reflect_power:
+    if (SettingGetGlobal_b(G, cSetting_precomputed_lighting))
+      G->ShaderMgr->Set_Reload_Bits(RELOAD_CALLCOMPUTELIGHTING);
       SceneInvalidate(G);
-    }
     break;
   case cSetting_use_display_lists:
   case cSetting_simplify_display_lists:
@@ -2019,6 +2027,33 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
 	"Setting-Details: display lists were depreciated in PyMOL 1.7.x.  The settings use_display_lists, simplify_display_lists, and excl_display_lists_shaders no longer work.\n"
 	ENDFB(G);
     }
+  case cSetting_use_geometry_shaders:
+    if (SettingGetGlobal_i(G, cSetting_use_geometry_shaders) &&
+        G->ShaderMgr->IsConfigured() && !G->ShaderMgr->GeometryShadersPresent()) {
+      SettingSet_b(G->Setting, cSetting_use_geometry_shaders, 0);
+      if (!quiet){
+        PRINTFB(G, FB_Setting, FB_Warnings)
+          "Setting-Error: geometry shaders not available\n" ENDFB(G);
+      }
+      return;
+    }
+
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
+    ExecutiveInvalidateRep(G, inv_sele, cRepLabel, cRepInvRep);
+    {
+      // check if lines need to be invalidated
+      bool line_as_cylinders = SettingGetGlobal_b(G, cSetting_use_shaders) &&
+                               SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
+                               SettingGetGlobal_b(G, cSetting_line_as_cylinders);
+      if (!line_as_cylinders && !SettingGetGlobal_b(G, cSetting_trilines)){
+        ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
+      }
+    }
+    break;
+  case cSetting_shaders_from_disk:
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_ALL_SHADERS);
+    SceneInvalidate(G);
+    break;
   case cSetting_use_shaders:
     {
       short changed = 0;
@@ -2076,7 +2111,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
       }
       if (changed){
 	SceneChanged(G);
-	SceneUpdateObjectMoleculesSingleThread(G);
       }
     }
     break;
@@ -2150,6 +2184,8 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_valence:
   case cSetting_valence_mode:
   case cSetting_valence_size:
+  case cSetting_valence_zero_mode:
+  case cSetting_valence_zero_scale:
   case cSetting_half_bonds:
   case cSetting_line_stick_helper:
   case cSetting_hide_long_bonds:
@@ -2169,9 +2205,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
       SceneChanged(G);
-      if (SettingGetGlobal_b(G, cSetting_line_use_shader)){
-	SceneUpdateObjectMoleculesSingleThread(G);
-      }
     }
     break;
   case cSetting_ribbon_use_shader:
@@ -2214,12 +2247,13 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     if (index == cSetting_dash_as_cylinders) {
       ExecutiveInvalidateRep(G, inv_sele, cRepAngle, cRepInvRep);
       ExecutiveInvalidateRep(G, inv_sele, cRepDihedral, cRepInvRep);
+      ExecutiveInvalidateRep(G, inv_sele, cRepDash, cRepInvRep);
     }
   case cSetting_nonbonded_as_cylinders:
   case cSetting_alignment_as_cylinders:
   case cSetting_cartoon_nucleic_acid_as_cylinders:
     if (SettingGetGlobal_b(G, cSetting_render_as_cylinders)){
-      if (!CShaderMgr_ShaderPrgExists(G->ShaderMgr, "cylinder")){
+      if (G->ShaderMgr->shaders_present && !G->ShaderMgr->ShaderPrgExists("cylinder")){
 	SettingSet_b(G->Setting, cSetting_render_as_cylinders, 0);
 	if (!quiet){
 	  PRINTFB(G, FB_Setting, FB_Warnings)
@@ -2242,9 +2276,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_mesh_use_shader:
     if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       SceneChanged(G);
-      if (SettingGetGlobal_b(G, cSetting_mesh_use_shader)){
-	SceneUpdateObjectMoleculesSingleThread(G);
-      }
     }
     break;
   case cSetting_slice_height_scale:
@@ -2290,6 +2321,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_roving_detail:
     SceneRovingDirty(G);
     break;
+  case cSetting_dash_transparency:
   case cSetting_dash_length:
   case cSetting_dash_gap:
   case cSetting_dash_radius:
@@ -2339,11 +2371,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_stick_use_shader:
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
     SceneChanged(G);
-    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
-      if (SettingGetGlobal_b(G, cSetting_stick_use_shader)){
-	SceneUpdateObjectMoleculesSingleThread(G);
-      }
-    }
     break;
   case cSetting_clamp_colors:
   case cSetting_ramp_blend_nearby_colors:
@@ -2367,6 +2394,23 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     break;
   case cSetting_cgo_line_width:
   case cSetting_line_width:    
+    {
+      GLfloat *range = G->ShaderMgr->GetLineWidthRange();
+      float line_width = SettingGetGlobal_f(G, index);
+      {
+	if (line_width <= 0.f){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    " Setting-Warning: %s is set incorrectly (%f), setting to 1\n",
+            rec.name, line_width ENDFB(G);
+	  SettingSetGlobal_f(G, index, 1.f);
+	} else if (G->HaveGUI && range[1] > 0.f && line_width > range[1]) {
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+            " Setting-Warning: %s is out of range of the graphics card's "
+            "capability (range: %f-%f), lines might not be rendered correctly\n",
+            rec.name, range[0], range[1] ENDFB(G);
+	}
+      }
+    }
   case cSetting_line_color:
   case cSetting_line_radius:
     ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
@@ -2417,12 +2461,14 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
     SceneChanged(G);
     break;
-
+  case cSetting_sphere_mode:
+    ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
+    SceneInvalidate(G);
+    break;
   case cSetting_cull_spheres:
   case cSetting_sphere_scale:
   case cSetting_sphere_transparency:
   case cSetting_sphere_solvent:
-  case cSetting_sphere_mode:
   case cSetting_sphere_point_max_size:
   case cSetting_sphere_point_size:
   case cSetting_sphere_use_shader:
@@ -2503,6 +2549,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_surface_cavity_radius:
   case cSetting_surface_cavity_cutoff:   
   case cSetting_cavity_cull:
+  case cSetting_surface_smooth_edges:
     ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvRep);
     SceneChanged(G);
     break;
@@ -2550,6 +2597,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
+    ExecutiveInvalidateRep(G, inv_sele, cRepEllipsoid, cRepInvRep);
     SceneChanged(G);
     break;
   case cSetting_ribbon_side_chain_helper:
@@ -2558,8 +2606,11 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
     ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
+    ExecutiveInvalidateRep(G, inv_sele, cRepEllipsoid, cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_ray_trace_mode:        /* affects loop quality */
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
   case cSetting_cartoon_transparency:
   case cSetting_cartoon_ring_transparency:
   case cSetting_cartoon_trace_atoms:
@@ -2574,7 +2625,6 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_cartoon_ladder_color:
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
-  case cSetting_ray_trace_mode:        /* affects loop quality */
   case cSetting_cartoon_loop_radius:
   case cSetting_cartoon_loop_cap:
   case cSetting_cartoon_tube_quality:
@@ -2624,25 +2674,18 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
       SceneChanged(G);
-      if (SettingGetGlobal_b(G, cSetting_cartoon_use_shader)){
-	SceneUpdateObjectMoleculesSingleThread(G);
-      }
     }
     break;
   case cSetting_cgo_use_shader:
     if (SettingGetGlobal_b(G, cSetting_use_shaders)){
       ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvRep);
       SceneChanged(G);
-      if (SettingGetGlobal_b(G, cSetting_cgo_use_shader)){
-	SceneUpdateObjectMoleculesSingleThread(G);
-      }
     }
     break;
   case cSetting_cgo_shader_ub_flags:
     if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_cgo_use_shader)){
       ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
       SceneChanged(G);
-      SceneUpdateObjectMoleculesSingleThread(G);
     }
     break;
   case cSetting_cgo_shader_ub_color:
@@ -2651,17 +2694,28 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
       ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
       ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep);
       SceneChanged(G);
-      SceneUpdateObjectMoleculesSingleThread(G);
     }
     break;
   case cSetting_cgo_shader_ub_normal:
     if (SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_cgo_use_shader)){
       ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvRep);
       ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
+      // if spheres rendered with geometry, then normals are used
+      // this should really only invalidate spheres that use normals (sphere_mode=0, not sure about other modes)
+      // but invalidating all spheres for now
+      ExecutiveInvalidateRep(G, inv_sele, cRepSphere, cRepInvRep); 
       SceneChanged(G);
-      SceneUpdateObjectMoleculesSingleThread(G);
     }
     break;
+  case cSetting_trilines:
+     ExecutiveInvalidateRep(G, inv_sele, cRepLine, cRepInvRep);
+     ExecutiveInvalidateRep(G, inv_sele, cRepCyl, cRepInvRep);
+     ExecutiveInvalidateRep(G, inv_sele, cRepRibbon, cRepInvRep);
+     ExecutiveInvalidateRep(G, inv_sele, cRepCartoon, cRepInvRep);
+     ExecutiveInvalidateRep(G, inv_sele, cRepDash, cRepInvRep);
+     ExecutiveInvalidateRep(G, inv_sele, cRepNonbonded, cRepInvRep);
+     SceneChanged(G);
+     break;
   case cSetting_dot_width:
   case cSetting_dot_radius:
   case cSetting_dot_density:
@@ -2673,18 +2727,25 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     SceneChanged(G);
     break;
   case cSetting_bg_gradient:
-    if (SettingGetGlobal_b(G, cSetting_bg_gradient)){
       ColorUpdateFrontFromSettings(G);
       ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
-    }
-    CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_UPDATE_FOR_BACKGROUND);
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
+    SceneChanged(G);
+    break;
+  case cSetting_bg_image_mode:
+  case cSetting_bg_image_filename:
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
+  case cSetting_bg_image_linear:
+  case cSetting_bg_image_tilesize:
+    OrthoBackgroundTextureNeedsUpdate(G);
     SceneChanged(G);
     break;
   case cSetting_bg_rgb_top:
   case cSetting_bg_rgb_bottom:
     {
       /* clamp this value */
-      if(
+      const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
+      if(!(bg_image_filename && bg_image_filename[0]) &&
           SettingGetGlobal_b(G, cSetting_bg_gradient) && !OrthoBackgroundDataIsSet(G)) {
         ColorUpdateFrontFromSettings(G);
 	ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
@@ -2698,7 +2759,8 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
       /* clamp this value */
       float *v = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
       {
-	if(!OrthoBackgroundDataIsSet(G)) {
+        const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
+        if(!(bg_image_filename && bg_image_filename[0]) && !OrthoBackgroundDataIsSet(G)) {
 	  ColorUpdateFront(G, v);
 	  ExecutiveInvalidateRep(G, inv_sele, cRepAll, cRepInvColor);
 	}
@@ -2709,18 +2771,21 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_selection_width:
   case cSetting_selection_width_scale:
   case cSetting_selection_width_max:
+  case cSetting_selection_round_points:
     ExecutiveInvalidateSelectionIndicatorsCGO(G);
   case cSetting_line_smooth:
   case cSetting_ortho:
-    CShaderMgr_Set_Reload_Bits(G, RELOAD_ALL_SHADERS);
-  case cSetting_reflect:
-  case cSetting_direct:
-  case cSetting_ambient:
-  case cSetting_specular:
-  case cSetting_specular_intensity:
-    SceneInvalidate(G);
-    break;
+  case cSetting_chromadepth:
+  case cSetting_transparency_mode:
+  if (index == cSetting_transparency_mode)
+#ifdef _WEBGL
+#endif
+    ExecutiveInvalidateRep(G, inv_sele, cRepCGO, cRepInvAll);
   case cSetting_depth_cue:
+  case cSetting_fog:
+  case cSetting_ray_transparency_oblique:
+    G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
+  case cSetting_ray_transparency_oblique_power:
     SceneInvalidate(G);
     break;
   case cSetting_sculpting:
@@ -2758,6 +2823,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_state:
   case cSetting_frame:
     ExecutiveInvalidateSelectionIndicatorsCGO(G);
+    SceneInvalidatePicking(G);
     SceneChanged(G);
     break;
   case cSetting_dynamic_width:
@@ -2795,6 +2861,35 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
     SceneInvalidate(G);
     SceneChanged(G);
     break;
+  case cSetting_label_connector_mode:
+    {
+      int lc_mode = SettingGetGlobal_i(G, cSetting_label_connector_mode);
+      if(lc_mode < 0 || lc_mode > 4){
+	if (!quiet){
+	  PRINTFB(G, FB_Setting, FB_Warnings)
+	    "Setting-Warning: label_connector_mode range = [0,4]"
+	    ENDFB(G);
+	}
+      }	
+    }
+  case cSetting_float_labels:
+  case cSetting_label_z_target:
+  case cSetting_label_connector:
+  case cSetting_label_connector_color:
+  case cSetting_label_connector_width:
+  case cSetting_label_connector_ext_length:
+  case cSetting_label_bg_color:
+  case cSetting_label_placement_offset:
+  case cSetting_label_relative_mode:
+  case cSetting_label_screen_point:
+  case cSetting_label_multiline_spacing:
+  case cSetting_label_multiline_justification:
+  case cSetting_label_padding:
+  case cSetting_label_bg_transparency:
+  case cSetting_label_bg_outline:
+  case cSetting_ray_label_connector_flat:
+    ExecutiveInvalidateRep(G, inv_sele, cRepLabel, cRepInvAll );
+    break;
   case cSetting_surface_color_smoothing:
   case cSetting_surface_color_smoothing_threshold:
     ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvColor);    
@@ -2803,48 +2898,27 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_smooth_half_bonds:
     SceneChanged(G);
     break;    
-  case cSetting_selection_round_points:
-    ExecutiveInvalidateSelectionIndicatorsCGO(G);
-    break;
   case cSetting_antialias_shader:
   case cSetting_atom_type_format:
-  case cSetting_bg_image_mode:
-  case cSetting_bg_image_filename:
-  case cSetting_bg_image_linear:
-  case cSetting_bg_image_tilesize:
-  case cSetting_chromadepth:
   case cSetting_colored_feedback:
-  case cSetting_dash_transparency:
-  case cSetting_label_bg_color:
-  case cSetting_label_bg_outline:
-  case cSetting_label_bg_transparency:
-  case cSetting_label_connector:
-  case cSetting_label_connector_color:
-  case cSetting_label_connector_ext_length:
-  case cSetting_label_connector_mode:
-  case cSetting_label_connector_width:
-  case cSetting_label_multiline_justification:
-  case cSetting_label_multiline_spacing:
-  case cSetting_label_padding:
-  case cSetting_label_placement_offset:
-  case cSetting_label_relative_mode:
-  case cSetting_label_screen_point:
-  case cSetting_label_z_target:
   case cSetting_load_atom_props_default:
   case cSetting_load_object_props_default:
-  case cSetting_pick_labels:
-  case cSetting_precomputed_lighting:
-  case cSetting_ray_label_connector_flat:
-  case cSetting_session_embeds_data:
-  case cSetting_shaders_from_disk:
   case cSetting_suspend_undo:
-  case cSetting_use_geometry_shaders:
   case cSetting_volume_mode:
-  case cSetting_surface_smooth_edges:
     PRINTFB(G, FB_Setting, FB_Warnings)
       " Setting-Warning: %s is not supported in Open-Source version of PyMOL\n",
       SettingInfo[index].name
       ENDFB(G);
+    break;
+    break;
+  case cSetting_surface_debug:
+    if (SettingGetGlobal_b(G, cSetting_use_shaders)){
+      ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvColor);
+    }
+    break;
+  case cSetting_pick32bit:
+    ExecutiveInvalidateRep(G, NULL, cRepAll, cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_display_scale_factor:
   {
@@ -2933,6 +3007,11 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
       set_i(I, cSetting_stereo_mode, cStereo_quadbuffer);      /* quadbuffer if we can */
     }
 
+    if(G->Option->retina) {
+      _gScaleFactor = 2;
+      set_i(I, cSetting_display_scale_factor, _gScaleFactor);
+    }
+
     /* In order to get electrostatic potentials in kT from the Coulomb equation... 
 
        PyMOL charges: Q, in e
@@ -2993,7 +3072,23 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 #ifdef _PYMOL_IOS
 #endif
   }
-  CShaderMgr_Set_Reload_Bits(G, RELOAD_ALL_SHADERS);
+  G->ShaderMgr->Set_Reload_Bits(RELOAD_ALL_SHADERS);
+}
+
+int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int font_id){
+  int ret = font_id;
+  if (font_id < 5){  // we are no longer supporting GLUT labels since they are not resizeable
+    PRINTFB(G, FB_Setting, FB_Warnings)
+      "RepLabel-Warning: GLUT labels (label_font_id 0-4) are no longer available for labelling\n    the scene since they are not resizeable label_font_id=%d setting back to 5 (default) \n",
+      font_id  ENDFB(G);
+    if (SettingGet_i(G, set1, NULL, cSetting_label_font_id) == font_id && SettingSet_i(set1, cSetting_label_font_id, 5)){
+    } else if (SettingGet_i(G, set2, NULL, cSetting_label_font_id) == font_id && SettingSet_i(set2, cSetting_label_font_id, 5)){
+    } else if (SettingGetGlobal_i(G, cSetting_label_font_id) == font_id){
+      SettingSetGlobal_i(G, cSetting_label_font_id, 5);
+    };
+    ret = 5;
+  }
+  return ret;
 }
 
 /*

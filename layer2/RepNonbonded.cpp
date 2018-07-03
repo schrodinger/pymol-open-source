@@ -31,12 +31,9 @@ Z* -------------------------------------------------------------------
 
 typedef struct RepNonbonded {
   Rep R;
-  float *V, *VP;
-  Pickable *P;
-  int N, NP;
-  float Width;
-  float Radius;
+  CGO *primitiveCGO;
   CGO *shaderCGO;
+  bool shaderCGO_has_cylinders;
 } RepNonbonded;
 
 #include"ObjectMolecule.h"
@@ -45,9 +42,8 @@ void RepNonbondedFree(RepNonbonded * I);
 
 void RepNonbondedFree(RepNonbonded * I)
 {
+  CGOFree(I->primitiveCGO);
   CGOFree(I->shaderCGO);
-  FreeP(I->VP);
-  FreeP(I->V);
   RepPurge(&I->R);
   OOFreeP(I);
 }
@@ -111,8 +107,85 @@ void RepNonbondedRenderImmediate(CoordSet * cs, RenderInfo * info)
     glEnd();
     glEnable(GL_LIGHTING);
     if(!active)
-      cs->Active[cRepNonbonded] = true;
+      cs->Active[cRepNonbonded] = false;
   }
+}
+
+static int RepNonbondedCGOGenerate(RepNonbonded * I, RenderInfo * info)
+{
+  PyMOLGlobals *G = I->R.G;
+  float alpha;
+  int ok = true;
+  CGO *convertcgo = NULL;
+  short nonbonded_as_cylinders ;
+  short use_shader;
+  float nonbonded_size =
+    SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_size);
+
+  nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
+  use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) & 
+    SettingGetGlobal_b(G, cSetting_use_shaders);
+
+  alpha =
+    SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_transparency);
+  alpha = 1.0F - alpha;
+  if(fabs(alpha - 1.0) < R_SMALL4)
+    alpha = 1.0F;
+  
+  if (use_shader){
+    if (ok && I->shaderCGO){
+      CGOFree(I->shaderCGO);
+    }
+    if (ok){
+      if (nonbonded_as_cylinders){
+        CGO *tmpCGO = CGONew(G);
+        if (ok) ok &= CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
+        if (ok) ok &= CGOSpecial(tmpCGO, CYLINDER_WIDTH_FOR_REPWIRE);
+        convertcgo = CGOConvertCrossesToCylinderShader(I->primitiveCGO, tmpCGO, nonbonded_size);
+        if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+        if (ok) ok &= CGODisable(tmpCGO, GL_CYLINDER_SHADER);
+        if (ok) ok &= CGOStop(tmpCGO);
+        CGOFreeWithoutVBOs(convertcgo);
+        I->shaderCGO_has_cylinders = true;
+        convertcgo = tmpCGO;
+      } else {
+        bool trilines = SettingGetGlobal_b(G, cSetting_trilines);
+        CGO *tmpCGO = CGONew(G), *tmp2CGO;
+        int shader = trilines ? GL_TRILINES_SHADER : GL_LINE_SHADER;
+
+        if (ok) ok &= CGOEnable(tmpCGO, shader);
+        if (ok) ok &= CGODisable(tmpCGO, CGO_GL_LIGHTING);
+        if (trilines) {
+          if (ok) ok &= CGOSpecial(tmpCGO, LINEWIDTH_DYNAMIC_WITH_SCALE);
+          tmp2CGO = CGOConvertCrossesToTrilinesShader(I->primitiveCGO, tmpCGO, nonbonded_size);
+        } else {
+          tmp2CGO = CGOConvertCrossesToLinesShader(I->primitiveCGO, tmpCGO, nonbonded_size);
+        }
+        if (ok) ok &= CGOAppendNoStop(tmpCGO, tmp2CGO);
+        if (ok) ok &= CGODisable(tmpCGO, shader);
+        if (ok) ok &= CGOStop(tmpCGO);
+        CGOFreeWithoutVBOs(tmp2CGO);
+        convertcgo = tmpCGO;
+        I->shaderCGO_has_cylinders = false;
+      }
+      convertcgo->use_shader = true;
+    }
+    CHECKOK(ok, convertcgo);
+    if (!ok || convertcgo){
+      CGOFree(I->shaderCGO);
+      I->shaderCGO = convertcgo;
+      I->shaderCGO->use_shader = use_shader;
+      convertcgo = NULL;
+    }
+  } else {
+    // no shaders
+    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = convertcgo;
+    I->shaderCGO->use_shader = use_shader;
+    convertcgo = NULL;
+  }
+  return ok;
 }
 
 static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
@@ -120,319 +193,47 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   PyMOLGlobals *G = I->R.G;
-  float *v = I->V;
-  int c = I->N;
-  unsigned int i, j;
-  Pickable *p;
-  float alpha;
   int ok = true;
-
-  alpha =
+  float alpha =
     SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_nonbonded_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
     alpha = 1.0F;
   if(ray) {
-    float radius;
-    ray->transparentf(1.0F - alpha);
-
-    if(I->Radius == 0.0F) {
-      radius = ray->PixelRadius * I->Width / 2.0F;
-    } else {
-      radius = I->Radius;
-    }
-
-    v = I->V;
-    c = I->N;
-
-    while(ok && c--) {
-      /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]); */
-      ok &= ray->sausage3fv(v + 3, v + 6, radius, v, v);
-      if (ok)
-	ok &= ray->sausage3fv(v + 9, v + 12, radius, v, v);
-      if (ok)
-	ok &= ray->sausage3fv(v + 15, v + 18, radius, v, v);
-      v += 21;
-    }
+#ifndef _PYMOL_NO_RAY
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.cs->Obj->Obj.Setting);
     ray->transparentf(0.0);
+#endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-
-      i = (*pick)->src.index;
-
-      v = I->VP;
-      c = I->NP;
-      p = I->R.P;
-#ifdef PURE_OPENGL_ES_2
-#else
-      SceneSetupGLPicking(G);
-      glBegin(GL_LINES);
-      while(c--) {
-        i++;
-        if(!(*pick)[0].src.bond) {
-          /* pass 1 - low order bits */
-          glColor3ub((uchar) ((i & 0xF) << 4), (uchar) ((i & 0xF0) | 0x8),
-                     (uchar) ((i & 0xF00) >> 4));
-          VLACheck((*pick), Picking, i);
-          p++;
-          (*pick)[i].src = *p;  /* copy object and atom info */
-          (*pick)[i].context = I->R.context;
-        } else {
-          /* pass 2 - high order bits */
-          j = i >> 12;
-          glColor3ub((uchar) ((j & 0xF) << 4), (uchar) ((j & 0xF0) | 0x8),
-                     (uchar) ((j & 0xF00) >> 4));
-        }
-
-        glVertex3fv(v);
-        v += 3;
-        glVertex3fv(v);
-        v += 3;
-        glVertex3fv(v);
-        v += 3;
-        glVertex3fv(v);
-        v += 3;
-        glVertex3fv(v);
-        v += 3;
-        glVertex3fv(v);
-        v += 3;
-      }
-      glEnd();
-#endif
-      (*pick)[0].src.index = i;
+      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting);
     } else {
       /* not pick, but render */
-      short use_shader, generate_shader_cgo = 0;
-      short nonbonded_as_cylinders ;
-      int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
-      use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) & 
-                   SettingGetGlobal_b(G, cSetting_use_shaders);
-      nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
-      if (!use_shader && I->shaderCGO){
-	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
+      bool use_shader = SettingGetGlobal_b(G, cSetting_nonbonded_use_shader) && SettingGetGlobal_b(G, cSetting_use_shaders);
+      if (!use_shader){
+        CGORenderGL(I->primitiveCGO, NULL, NULL, NULL, info, &I->R);
+        return;
+      }
+      bool nonbonded_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_nonbonded_as_cylinders);
+      if (I->shaderCGO && use_shader != I->shaderCGO->use_shader){
+        CGOFree(I->shaderCGO);
+        I->shaderCGO = 0;
       }
 
-      if (I->shaderCGO && (nonbonded_as_cylinders ^ I->shaderCGO->has_draw_cylinder_buffers)){
-	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
+      if (I->shaderCGO && (nonbonded_as_cylinders ^ I->shaderCGO_has_cylinders)){
+        CGOFree(I->shaderCGO);
+        I->shaderCGO = 0;
       }
 
-      if (use_shader){
-	if (!I->shaderCGO){
-	  I->shaderCGO = CGONew(G);
-	  CHECKOK(ok, I->shaderCGO);
-	  if (ok){
-	    I->shaderCGO->use_shader = true;
-	    generate_shader_cgo = 1;
-	  }
-	} else {
-	  CShaderPrg *shaderPrg;
-	  if (nonbonded_as_cylinders){
-	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-        if (!shaderPrg) return;
-	    CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * I->Width/ 2.f);
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-        if (!shaderPrg) return;
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	  }
-
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-
-	  CShaderPrg_Disable(shaderPrg);
-	  return;
-	}
-      }
-
-      v = I->V;
-      c = I->N;
-      if (ok && generate_shader_cgo){
-	ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_WITH_SCALE);
-	if(ok && !info->line_lighting)
-	  ok &= CGODisable(I->shaderCGO, GL_LIGHTING);
-	if (nonbonded_as_cylinders){
-	  if(ok && c) {
-	    float *origin, axis[3];
-	    ok &= CGOResetNormal(I->shaderCGO, true);
-	    while(ok && c--) {
-	      if(alpha == 1.0) {
-		ok &= CGOColorv(I->shaderCGO, v);
-	      } else {
-		ok &= CGOAlpha(I->shaderCGO, alpha);
-		if (ok)
-		  ok &= CGOColorv(I->shaderCGO, v);
-	      }
-	      if (ok){
-		v += 3;
-		origin = v;
-		v += 3;
-		axis[0] = v[0] - origin[0];
-		axis[1] = v[1] - origin[1];
-		axis[2] = v[2] - origin[2];
-		ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
-	      }
-	      if (ok){
-		v += 3;
-		origin = v;
-		v += 3;
-		axis[0] = v[0] - origin[0];
-		axis[1] = v[1] - origin[1];
-		axis[2] = v[2] - origin[2];
-		ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
-	      }
-	      if (ok){
-		v += 3;
-		origin = v;
-		v += 3;
-		axis[0] = v[0] - origin[0];
-		axis[1] = v[1] - origin[1];
-		axis[2] = v[2] - origin[2];
-		ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
-		v += 3;
-	      }
-	    }
-	  }
-	} else {
-	  if(ok && c) {
-	    ok &= CGOBegin(I->shaderCGO, GL_LINES);
-	    if (ok)
-	      ok &= CGOResetNormal(I->shaderCGO, true);
-	    while(ok && c--) {
-	      if(alpha == 1.0) {
-		ok &= CGOColorv(I->shaderCGO, v);
-	      } else {
-		ok &= CGOAlpha(I->shaderCGO, alpha);
-		if (ok)
-		  ok &= CGOColorv(I->shaderCGO, v);
-	      }
-	      v += 3;
-	      if (ok){
-		ok &= CGOVertexv(I->shaderCGO, v);
-		v += 3;
-	      }
-	      if (ok){
-		ok &= CGOVertexv(I->shaderCGO, v);
-		v += 3;
-	      }
-	      if (ok){
-		ok &= CGOVertexv(I->shaderCGO, v);
-		v += 3;
-	      }
-	      if (ok){
-		ok &= CGOVertexv(I->shaderCGO, v);
-		v += 3;
-	      }
-	      if (ok){
-		ok &= CGOVertexv(I->shaderCGO, v);
-		v += 3;
-	      }
-	      if (ok){
-		ok &= CGOVertexv(I->shaderCGO, v);
-		v += 3;
-	      }
-	    }
-	    if (ok)
-	      ok &= CGOEnd(I->shaderCGO);
-	  }
-	}
-	if(ok && !info->line_lighting)
-	  ok &= CGOEnable(I->shaderCGO, GL_LIGHTING);
-      } else {
-	if(info->width_scale_flag)
-	  glLineWidth(I->Width * info->width_scale);
-	else
-	  glLineWidth(I->Width);
-	
-        if(SettingGetGlobal_i(G, cSetting_ati_bugs)) {
-          glFlush();            /* eliminate ATI artifacts under VISTA */
+      if (!I->shaderCGO){
+        I->shaderCGO = CGONew(G);
+        CHECKOK(ok, I->shaderCGO);
+        if (ok){
+          I->shaderCGO->use_shader = use_shader;
         }
-        if(c) {
-          if(!info->line_lighting)
-            glDisable(GL_LIGHTING);
-          glBegin(GL_LINES);
-          SceneResetNormal(G, true);
-          while(c--) {
-            if(alpha == 1.0) {
-              glColor3fv(v);
-            } else {
-              glColor4f(v[0], v[1], v[2], alpha);
-            }
-            v += 3;
-            if(nvidia_bugs) {
-              glFlush();
-            }
-            glVertex3fv(v);
-            v += 3;
-            glVertex3fv(v);
-            v += 3;
-            glVertex3fv(v);
-            v += 3;
-            glVertex3fv(v);
-            v += 3;
-            glVertex3fv(v);
-            v += 3;
-            glVertex3fv(v);
-            v += 3;
-          }
-          glEnd();
-          glEnable(GL_LIGHTING);
-        }
+        ok &= RepNonbondedCGOGenerate(I, info);
       }
-
-      if (use_shader) {
-	if (generate_shader_cgo){
-	  CGO *convertcgo = NULL;
-	  if (ok)
-	    ok &= CGOStop(I->shaderCGO);
-	  if (ok && I->shaderCGO){
-	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);
-	    CGOFree(I->shaderCGO);
-	    I->shaderCGO = convertcgo;
-	    convertcgo = NULL;
-	  }  
-	  if (ok){
-	    if (nonbonded_as_cylinders){
-	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	    } else {
-	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
-	    }
-	    CHECKOK(ok, convertcgo);
-	  }
-	  if (!ok || convertcgo){
-	    CGOFree(I->shaderCGO);
-	    I->shaderCGO = convertcgo;
-	    convertcgo = NULL;
-	  }
-	}
-	
-	if (ok){
-	  CShaderPrg *shaderPrg;
-	  if (nonbonded_as_cylinders){
-	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	    if (!shaderPrg) return;
-	    CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * I->Width/ 2.f);
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    if (!shaderPrg) return;
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	  }	 
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-	  CShaderPrg_Disable(shaderPrg);
-	} else {
-	  /* not OK, then destroy RepNonbonded object */
-	  I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
-	  I->R.cs->Active[cRepNonbonded] = false;
-	}
-      }
+      CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
     }
   }
 }
@@ -440,152 +241,63 @@ static void RepNonbondedRender(RepNonbonded * I, RenderInfo * info)
 Rep *RepNonbondedNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->State.G;
-  ObjectMolecule *obj;
-  int a, a1, c1;
-  float nonbonded_size;
-  float *v, *v0, *v1;
-  int *active;
-  AtomInfoType *ai;
-  int nAtom = 0;
-  float tmpColor[3];
+  bool hasNonbondedAtoms = false;
   OOAlloc(G, RepNonbonded);
-  obj = cs->Obj;
 
-  active = Alloc(int, cs->NIndex);
-  if((obj->RepVisCache & cRepNonbondedBit))
-    for(a = 0; a < cs->NIndex; a++) {
-      ai = obj->AtomInfo + cs->IdxToAtm[a];
-      active[a] = (!ai->bonded && (ai->visRep & cRepNonbondedBit));
-      if(active[a]) {
-        active[a] = (ai->masked) ? -1 : 1;
-        nAtom++;
+  ObjectMolecule *obj = cs->Obj;
+
+  if((obj->RepVisCache & cRepNonbondedBit)){
+    for(int a = 0; a < cs->NIndex; a++) {
+      AtomInfoType *ai = obj->AtomInfo + cs->IdxToAtm[a];
+      if (!ai->bonded && (ai->visRep & cRepNonbondedBit)){
+        hasNonbondedAtoms = true;
+        break;
       }
     }
-  if(!nAtom) {
+  }
+  if(!hasNonbondedAtoms) {
     OOFreeP(I);
-    FreeP(active);
     return (NULL);              /* skip if no dots are visible */
   }
 
-  nonbonded_size =
-    SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_nonbonded_size);
   RepInit(G, &I->R);
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepNonbondedRender;
   I->R.fFree = (void (*)(struct Rep *)) RepNonbondedFree;
-
-  I->shaderCGO = NULL;
-  I->N = 0;
-  I->NP = 0;
-  I->V = NULL;
-  I->VP = NULL;
-  I->R.P = NULL;
   I->R.fRecolor = NULL;
+  I->shaderCGO = NULL;
+
+  I->R.P = NULL;
   I->R.obj = (CObject *) (cs->Obj);
   I->R.cs = cs;
 
-  I->Width = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_line_width);
-  I->Radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_line_radius);
-  I->V = (float *) mmalloc(sizeof(float) * nAtom * 21);
-  ErrChkPtr(G, I->V);
-  v = I->V;
-  for(a = 0; a < cs->NIndex; a++)
-    if(active[a]) {
-      c1 = (obj->AtomInfo + cs->IdxToAtm[a])->color;
+  I->primitiveCGO = CGONew(G);
 
+  CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 0.f);
+  CGOSpecial(I->primitiveCGO, LINEWIDTH_FOR_LINES);
+  CGOBegin(I->primitiveCGO, GL_LINES); // for immediate mode
+  bool first = true;
+  float *v1;
+  int a1, c1;
+  float tmpColor[3];
+  for(int a = 0; a < cs->NIndex; a++){
+    a1 = cs->IdxToAtm[a];
+    AtomInfoType *ai = obj->AtomInfo + a1;
+    if(!ai->bonded && (ai->visRep & cRepNonbondedBit)) {
+      c1 = ai->color;
       v1 = cs->Coord + 3 * a;
-
-      if(ColorCheckRamped(G, c1)) {
-        ColorGetRamped(G, c1, v1, tmpColor, state);
-        v0 = tmpColor;
-      } else {
-        v0 = ColorGet(G, c1);
+      ColorGetCheckRamped(G, c1, v1, tmpColor, state);
+      if (first || !equal3f(I->primitiveCGO->color, tmpColor)){
+        CGOColorv(I->primitiveCGO, tmpColor);
       }
-
-      *(v++) = *(v0++);
-      *(v++) = *(v0++);
-      *(v++) = *(v0++);
-
-      *(v++) = v1[0] - nonbonded_size;
-      *(v++) = v1[1];
-      *(v++) = v1[2];
-
-      *(v++) = v1[0] + nonbonded_size;
-      *(v++) = v1[1];
-      *(v++) = v1[2];
-
-      *(v++) = v1[0];
-      *(v++) = v1[1] - nonbonded_size;
-      *(v++) = v1[2];
-
-      *(v++) = v1[0];
-      *(v++) = v1[1] + nonbonded_size;
-      *(v++) = v1[2];
-
-      *(v++) = v1[0];
-      *(v++) = v1[1];
-      *(v++) = v1[2] - nonbonded_size;
-
-      *(v++) = v1[0];
-      *(v++) = v1[1];
-      *(v++) = v1[2] + nonbonded_size;
-      I->N++;
+      CGOPickColor(I->primitiveCGO, a1, (ai->masked) ? cPickableNoPick : cPickableAtom);
+      CGOVertexCrossv(I->primitiveCGO, v1);
+      first = false;
     }
-  I->V = ReallocForSure(I->V, float, (v - I->V));
-
-  /* now create pickable verson */
-
-  if(SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
-    I->VP = (float *) mmalloc(sizeof(float) * nAtom * 21);
-    ErrChkPtr(G, I->VP);
-
-    I->R.P = Alloc(Pickable, cs->NIndex + 1);
-    ErrChkPtr(G, I->R.P);
-
-    v = I->VP;
-
-    for(a = 0; a < cs->NIndex; a++)
-      if(active[a] > 0) {
-
-        a1 = cs->IdxToAtm[a];
-
-        if(!obj->AtomInfo[a1].masked) {
-          I->NP++;
-          I->R.P[I->NP].index = a1;
-          I->R.P[I->NP].bond = -1;
-          v1 = cs->Coord + 3 * a;
-
-          *(v++) = v1[0] - nonbonded_size;
-          *(v++) = v1[1];
-          *(v++) = v1[2];
-
-          *(v++) = v1[0] + nonbonded_size;
-          *(v++) = v1[1];
-          *(v++) = v1[2];
-
-          *(v++) = v1[0];
-          *(v++) = v1[1] - nonbonded_size;
-          *(v++) = v1[2];
-
-          *(v++) = v1[0];
-          *(v++) = v1[1] + nonbonded_size;
-          *(v++) = v1[2];
-
-          *(v++) = v1[0];
-          *(v++) = v1[1];
-          *(v++) = v1[2] - nonbonded_size;
-
-          *(v++) = v1[0];
-          *(v++) = v1[1];
-          *(v++) = v1[2] + nonbonded_size;
-        }
-      }
-    I->R.P = Realloc(I->R.P, Pickable, I->NP + 1);
+  }
+  CGOEnd(I->primitiveCGO); // for immediate mode
+  CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 1.f);
     I->R.context.object = (void *) obj;
     I->R.context.state = state;
-    I->R.P[0].index = I->NP;
-    I->VP = ReallocForSure(I->VP, float, (v - I->VP));
-  }
-  FreeP(active);
   return (Rep *) I;
 }

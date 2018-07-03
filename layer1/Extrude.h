@@ -29,7 +29,7 @@ typedef struct {
   float *p;                     /* points */
   float *n;                     /* normals (3x3f) at each point */
   float *c;                     /* colors */
-  int *i;                       /* atom indices */
+  unsigned int *i;              /* atom indices */
 
   float r;
   float *sf;                    /* scale factors for variable-width extrusions (single point) */
@@ -65,7 +65,7 @@ int ExtrudeComputePuttyScaleFactors(CExtrude * I, ObjectMolecule * obj,
 void ExtrudeBuildNormals1f(CExtrude * I);
 void ExtrudeBuildNormals2f(CExtrude * I);
 int ExtrudeComputeTangents(CExtrude * I);
-int ExtrudeCylindersToCGO(CExtrude * I, CGO *cgo, float tube_radius, short is_picking);
+int ExtrudeCylindersToCGO(CExtrude * I, CGO *cgo, float tube_radius);
 int ExtrudeCGOSurfaceTube(CExtrude * I, CGO * cgo, int cap, float *color_override, bool use_spheres, int dash=0);
 void ExtrudeCGOSurfaceTubeToCylinders(CExtrude * I, CGO * cgo, int cap, float *color_override);
 int ExtrudeCGOSurfaceVariableTube(CExtrude * I, CGO * cgo, int cap);

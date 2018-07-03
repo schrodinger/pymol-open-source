@@ -100,6 +100,7 @@ void ColorReset(PyMOLGlobals * G);
 
 int ColorGetRamped(PyMOLGlobals * G, int index, const float *vertex, float *color, int state);
 int ColorCheckRamped(PyMOLGlobals * G, int index);
+bool ColorGetCheckRamped(PyMOLGlobals * G, int index, const float *vertex, float *color, int state);
 
 struct ObjectGadgetRamp *ColorGetRamp(PyMOLGlobals * G, int index);
 

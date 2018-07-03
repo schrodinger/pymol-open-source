@@ -1,0 +1,180 @@
+#include webgl_header.vs
+
+
+/* computeConnectorOffset : this function takes the drawVector and returns the offset of the
+ * endpoint for the connector in the label's bbx coordinates
+ */
+//computeFinalCornerOrCenterOffset
+vec2 computeConnectorOffset_0(vec2 drawVector){
+//  this puts the endpoint at either the corners of the label, or in the center, based on the target relative to the label.
+
+  // if target is closer than half label size, set to midpoint (in both directions)
+  float hmid = step(abs(drawVector.x), .5); 
+  float vmid = step(abs(drawVector.y), .5);
+
+  // if not midpoint (hmid=0., vmid=0.), 
+  //    set these variables to which side to draw based on the draw vector (in both directions)
+  float right = (1.-hmid) * step(0., drawVector.x) + hmid * .5;
+  float top = (1.-vmid) * step(0., drawVector.y) + vmid * .5;
+
+  // normalize the offsets (either -1 or 1)
+  float xoff = 2. * (right - .5), yoff = 2. * (top - .5);
+  return vec2(xoff, yoff);
+}
+
+//computeFinalBBXOffset
+vec2 computeConnectorOffset_1(vec2 drawVector){
+
+  vec2 drawVectorN = normalize(drawVector);
+
+  //   \ notabsyx /
+  //     \      /
+  //       \  /
+  // absyx   \   absyx
+  //      /     \
+  //    / notabsyx \
+  // absyx/notabsyx - specifies which area above in label coordinates
+  float absyx = step(abs(drawVectorN.y), abs(drawVectorN.x));
+  float notabsyx = 1. - absyx;
+
+  // hdir/vdir : specifies which direction (in both axes), (-.5 or .5)
+  float hdir = 2. * (step(0., drawVectorN.x) - .5);
+  float vdir = 2. * (step(0., drawVectorN.y) - .5);
+
+  float dvxy = drawVector.x / drawVector.y;
+  float dvyx = drawVector.y / drawVector.x;
+  // depending on which quadrant, the connector point is calculated
+  return vec2(((absyx * hdir) + (notabsyx * vdir * dvxy)),
+  	      ((notabsyx * vdir) + (absyx * hdir * dvyx)));
+}
+
+vec2 computeConnectorOffset_2(vec2 drawVector, out vec2 eoff, vec2 textSize, float extLength){
+//  this puts the endpoint at either the corners of the label, or in the center, based on the target relative to the label.
+  //    set these variables to which side to draw based on the draw vector (in both directions)
+  float rightorig = step(0., drawVector.x);
+  float ratio = abs(textSize.y/textSize.x);
+  float right = rightorig + (rightorig - .5) * clamp(abs(drawVector.x)-1., 0., 2. * min(1., extLength * ratio));
+  float top = step(0., drawVector.y);
+
+  // normalize the offsets (either -1 or 1)
+  float xofforig = 2. * (rightorig - .5), xoff = 2. * (right - .5), yoff = 2. * (top - .5);
+  eoff = vec2(xoff, yoff);
+  return vec2(xofforig, yoff);
+}
+
+vec2 computeConnectorOffset_3(vec2 drawVector){
+//  this puts the endpoint at either the corners of the label, or in the center, based on the target relative to the label.
+
+  // if target is inside label size, then set to drawVector value
+  float hmid = step(abs(drawVector.x), 1.); 
+  float vmid = step(abs(drawVector.y), 1.);
+
+  // if not midpoint (hmid=0., vmid=0.), 
+  //    set these variables to which side to draw based on the draw vector (in both directions)
+  float right = (1.-hmid) * step(0., drawVector.x) + hmid * ((1. + drawVector.x) / 2.);
+  float top = (1.-vmid) * step(0., drawVector.y) + vmid * ((1. + drawVector.y) / 2.);
+
+  // normalize the offsets (either -1 or 1)
+  float xoff = 2. * (right - .5), yoff = 2. * (top - .5);
+  return vec2(xoff, yoff);
+}
+
+vec2 computeConnectorOffset_4(vec2 drawVector, out vec2 eoff, vec2 textSize, float extLength){
+//  this puts the endpoint at either the corners of the label, or in the center, based on the target relative to the label.
+  //    set these variables to which side to draw based on the draw vector (in both directions)
+  float hmid = step(abs(drawVector.x), 1.); 
+  float vmid = step(abs(drawVector.y), 1.);
+  float rightorig = (1.-hmid) * step(0., drawVector.x) + hmid * ((1. + drawVector.x) / 2.);
+  float ratio = abs(textSize.y/textSize.x);
+  float right = rightorig + (1.-hmid) * (rightorig - .5) * clamp(abs(drawVector.x)-1., 0., 2. * min(1., extLength * ratio));
+  float top = (1.-vmid) * step(0., drawVector.y) +
+                vmid * ((1. + drawVector.y) / 2.);
+
+  // normalize the offsets (either -1 or 1)
+  float xofforig = 2. * (rightorig - .5), xoff = 2. * (right - .5), yoff = 2. * (top - .5);
+  eoff = vec2(xoff, yoff);
+  return vec2(xofforig, yoff);
+}
+
+vec2 computeCenterOffsetFromProjectedPoint(vec2 indentFactor, vec2 textSizeInScreen, vec2 screenWorldOffset){
+     return (indentFactor * textSizeInScreen + screenWorldOffset/(screenSize*screenOriginVertexScale));
+}
+
+vec4 normalizeVec4(vec4 point){
+   vec4 retPt = vec4(point.xyz/point.w, 1.);
+   retPt.xy = ( floor(retPt.xy * screenSize + .5 ) + .5 ) / screenSize; // to match label rounding to middle of pixel
+   return retPt;
+}
+
+float convertNormalZToScreenZ(float normalz){
+   float a_centerN = (normalz + 1.) / 2.;
+   float ptInPreProjectionZ = -(front + clipRange * a_centerN);
+   vec4 ptInPreProjection = vec4(0., 0., ptInPreProjectionZ, 1.);
+   vec4 projVect = g_ProjectionMatrix * ptInPreProjection;
+   return projVect.z / projVect.w;
+}
+
+void calculatePreConnectorInfo(vec4 a_center, vec4 a_target, vec2 textSize, vec2 indentFactor, vec3 screenWorldOffset, out vec4 tCenter, out vec4 tTarget, out vec2 tsScreen, out vec2 offset, out vec2 dVector, out float doNotDraw, float a_relative_mode, out float isProjected, out float zValue, in float lineWidth, out float zTarget){
+   vec3 viewVector = vec3(vec4(0., 0., -1., 0.) * g_ModelViewMatrix);
+   tCenter = normalizeVec4(g_ProjectionMatrix * g_ModelViewMatrix * a_center);
+   tTarget = normalizeVec4(g_ProjectionMatrix * g_ModelViewMatrix * a_target);
+   vec4 a_centerp = (a_center + screenWorldOffset.z * vec4(viewVector, 0.));
+   vec4 transformedPositionZ = normalizeVec4(g_ProjectionMatrix * g_ModelViewMatrix * a_centerp);  // use projected center point for z
+
+   float isScreenCoord = step(2., mod(a_relative_mode, 4.));
+   float isPixelCoord = step(4., mod(a_relative_mode, 8.));
+   isProjected = step(isPixelCoord + isScreenCoord, 0.5);
+   zTarget = step(8., mod(a_relative_mode, 16.));
+
+   zValue = (1.-zTarget) * ((isProjected * transformedPositionZ.z) + (1.-isProjected) * convertNormalZToScreenZ(a_center.z) ) + zTarget * tTarget.z;
+
+   // workaround for label and label_bg being at same z
+   zValue += 1e-4;
+
+   vec2 pixOffset = ((2. * a_center.xy / screenSize) - 1.);
+   tCenter = isProjected * tCenter + isScreenCoord * a_center + isPixelCoord * vec4(pixOffset.x, pixOffset.y, -0.5, 0.); // only xy are used from tCenter
+   tCenter.w = 1.;
+
+   tsScreen = textSize / screenSize;
+   offset = computeCenterOffsetFromProjectedPoint(indentFactor, tsScreen, screenWorldOffset.xy);
+   dVector = (tTarget.xy - tCenter.xy - offset) / tsScreen;
+   vec2 limit = 1.0 + .5 * lineWidth/textSize;
+   doNotDraw = (1.-step(limit.x, abs(dVector.x)))  * (1.-step(limit.y, abs(dVector.y)));
+}
+
+void getDrawFlags(float drawFlags, out float connector_mode_0, out float connector_mode_1, out float connector_mode_2, out float connector_mode_3, out float connector_mode_4, out float drawBackgroundOutline, out float drawBackground, out float drawConnector){
+	connector_mode_4 = step(64., mod(drawFlags, 128.));
+	connector_mode_3 = step(32., mod(drawFlags, 64.));
+	connector_mode_2 = step(16., mod(drawFlags, 32.));
+	connector_mode_1 = step(8., mod(drawFlags, 16.));
+	drawBackgroundOutline = step(4., mod(drawFlags, 8.));
+	drawBackground = step(2., mod(drawFlags, 4.));
+	drawConnector = step(1., mod(drawFlags, 2.));
+	connector_mode_0 = 1. - step(0.5, connector_mode_1 + connector_mode_2 + connector_mode_3 + connector_mode_4);
+}
+
+
+void calculateConnectorInfo(vec4 a_center, vec2 tsScreen, vec2 textSize, vec2 dVector, vec2 offset, out float fog, in vec4 tCenter, in vec4 tTarget, out vec4 endpointOnBBX, out vec4 endpointExtendedOffBBX, float connector_mode_0, float connector_mode_1, float connector_mode_2, float connector_mode_3, float connector_mode_4, float extLength, float isProjected, float zValue){
+  vec3 eye_pos = vec3(isProjected * (g_ModelViewMatrix * a_center) + ((1.-isProjected) * a_center));
+  fog = (g_Fog_end - abs(eye_pos.z)) * g_Fog_scale;
+  vec2 eoff;
+  vec2 conOff;
+  if (connector_mode_0 > 0.)
+     conOff = computeConnectorOffset_0(dVector);
+  else if (connector_mode_1 > 0.)
+     conOff = computeConnectorOffset_1(dVector);
+  else if (connector_mode_2 > 0.)
+     conOff = computeConnectorOffset_2(dVector, eoff, textSize, extLength);
+  else if (connector_mode_3 > 0.)
+     conOff = computeConnectorOffset_3(dVector);
+  else if (connector_mode_4 > 0.)
+     conOff = computeConnectorOffset_4(dVector, eoff, textSize, extLength);
+
+  vec2 addXY = offset + tsScreen * conOff;
+  endpointOnBBX = tCenter;
+  endpointOnBBX.xy = endpointOnBBX.xy + addXY;
+  endpointOnBBX.z = zValue;
+  endpointExtendedOffBBX = tCenter;
+  endpointExtendedOffBBX.xy = endpointExtendedOffBBX.xy + offset + tsScreen * eoff;
+  endpointExtendedOffBBX.z = zValue;
+}

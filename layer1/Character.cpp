@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Text.h"
 #include"Texture.h"
 #include"CGO.h"
+#include <glm/gtc/type_ptr.hpp>
 
 #define HASH_MASK 0x2FFF
 
@@ -203,9 +204,7 @@ float CharacterGetAdvance(PyMOLGlobals * G, int sampling, int id)
 void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
-    short use_shader;
-    use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
-    if (!use_shader){
+    if ((info && !info->use_shaders) || (!info && !SettingGetGlobal_b(G, cSetting_use_shaders))){
       glEnable(GL_TEXTURE_2D);
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     }
@@ -217,22 +216,20 @@ void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info)
 void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info)
 {
   if(G->HaveGUI && G->ValidContext) {
-    short use_shader;
-    use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
-    if (!use_shader){
+    if ((info && !info->use_shaders) || (!info && !SettingGetGlobal_b(G, cSetting_use_shaders))){
       glDisable(GL_TEXTURE_2D);
     }
     /*    glDisable(GL_BLEND); */
   }
 }
 
-void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short isworldlabel SHADERCGOARG)
+short CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short isworldlabel, short relativeMode SHADERCGOARG)
 
 /* need orientation matrix */
 {
   CCharacter *I = G->Character;
   CharRec *rec = I->Char + id;
-
+  short success = 1;
   int texture_id = TextureGetFromChar(G, id, rec->extent);
   float sampling = 1.0F;
 
@@ -244,7 +241,7 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
       float *v, v0[3];
       float v1[3];
       if (!shaderCGO){
-	glBindTexture(GL_TEXTURE_2D, texture_id);
+        glBindTexture(GL_TEXTURE_2D, TextGetIsPicking(G) ? 0 : texture_id);
       }
       v = TextGetPos(G);
       copy3f(v, v0);
@@ -257,14 +254,30 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
       if (shaderCGO){
           float *worldPos = TextGetWorldPos(G);
 	  if (isworldlabel){
+	    float *targetPos = TextGetTargetPos(G);
 	    float *screenWorldOffset = TextGetScreenWorldOffset(G);
-	    CGODrawLabel(shaderCGO, texture_id, worldPos, screenWorldOffset, v0, v1, rec->extent);
+            shaderCGO->add<cgo::draw::label>(glm::make_vec3(worldPos),
+                                             glm::make_vec3(screenWorldOffset),
+                                             glm::make_vec3(v0),
+                                             glm::make_vec3(v1),
+                                             glm::make_vec4(rec->extent),
+                                             relativeMode,
+                                             glm::make_vec3(targetPos));
 	  } else {
 	    CGODrawTexture(shaderCGO, texture_id, worldPos, v0, v1, rec->extent);
 	  }
       } else {
 #ifndef PURE_OPENGL_ES_2
 	  glBegin(GL_QUADS);
+        if (TextGetIsPicking(G)){
+          unsigned char *cptr = TextGetColorUChar4uv(G);
+          glColor4ubv(cptr);
+          glVertex3f(v0[0], v0[1], v0[2]);
+          glVertex3f(v0[0], v1[1], v0[2]);
+          glVertex3f(v1[0], v1[1], v0[2]);
+          glVertex3f(v1[0], v0[1], v0[2]);
+          glEnd();
+        } else {
 	  glTexCoord2f(rec->extent[0], rec->extent[1]);
 	  glVertex3f(v0[0], v0[1], v0[2]);
 	  glTexCoord2f(rec->extent[0], rec->extent[3]);
@@ -274,11 +287,16 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short is
 	  glTexCoord2f(rec->extent[2], rec->extent[1]);
 	  glVertex3f(v1[0], v0[1], v0[2]);
 	  glEnd();
+        }
 #endif
       }
     }
      TextAdvance(G, rec->Advance / sampling);
+  } else {
+    if (!texture_id)
+      success = 0;
   }
+  return success;
 }
 
 int CharacterGetWidth(PyMOLGlobals * G, int id)
@@ -292,36 +310,66 @@ int CharacterGetWidth(PyMOLGlobals * G, int id)
 
 const float _inv255 = 1.0F / 255.0F;
 
+const unsigned char zerouc[4] = { 0, 0, 0, 0 };
+
+
+/* CharacterInterpolate: This function implements bilinear interpolation
+   on looking up the pixel value in the texture.
+*/
 float CharacterInterpolate(PyMOLGlobals * G, int id, float *v)
 {
   CCharacter *I = G->Character;
   int x = (int) v[0];
   int y = (int) v[1];
-  unsigned char *src;
 
   if((id > 0) && (id <= I->MaxAlloc)) {
     CPixmap *pm = &I->Char[id].Pixmap;
     if(pm) {
+      unsigned char *srcx0, *srcx1, *srcy0, *srcy1;
+      int x1 = x + 1, y1 = y + 1;
+      float xdiff = v[0] - x, ydiff = v[1] - y;
+      float xdiff1 = (1.f-xdiff), ydiff1 = (1.f-ydiff);
+      float interp0[4], interp1[4]; // interpolated in x for y0 and y1
 
-      if(x < 0)
-        x = 0;
-      else if(x >= pm->width)
-        x = pm->width - 1;      /* clamp */
-      if(y < 0)
-        y = 0;
-      else if(y >= pm->height)
-        y = pm->height - 1;
+      if (x < 0 || x > (pm->width - 1))
+	srcx0 = (unsigned char *)zerouc;
+      else
+	srcx0 = pm->buffer + ((pm->width << 2) * y) + (x << 2);
+      if (x1 < 0 || x1 > (pm->width - 1))
+	srcx1 = (unsigned char *)zerouc;
+      else
+	srcx1 = pm->buffer + ((pm->width << 2) * y) + (x1 << 2);
 
-      src = pm->buffer + ((pm->width << 2) * y) + (x << 2);
-      v[0] = *(src++) * _inv255;
-      v[1] = *(src++) * _inv255;
-      v[2] = *(src++) * _inv255;
-      return (255 - *(src++)) * _inv255;
+      if (y1 < 0 || y1 > (pm->height - 1))
+	srcy0 = (unsigned char *)zerouc;
+      else
+	srcy0 = pm->buffer + ((pm->width << 2) * y1) + (x << 2);
+
+      if (x1 < 0 || x1 > (pm->width - 1) || y1 < 0 || y1 > (pm->height - 1))
+	srcy1 = (unsigned char *)zerouc;
+      else
+	srcy1 = pm->buffer + ((pm->width << 2) * y1) + (x1 << 2);
+
+      interp0[0] = (xdiff1 * (*(srcx0++)) + (xdiff * (*(srcx1++))));
+      interp0[1] = (xdiff1 * (*(srcx0++)) + (xdiff * (*(srcx1++))));
+      interp0[2] = (xdiff1 * (*(srcx0++)) + (xdiff * (*(srcx1++))));
+      interp0[3] = (xdiff1 * (*(srcx0++)) + (xdiff * (*(srcx1++))));
+
+      interp1[0] = (xdiff1 * (*(srcy0++)) + (xdiff * (*(srcy1++))));
+      interp1[1] = (xdiff1 * (*(srcy0++)) + (xdiff * (*(srcy1++))));
+      interp1[2] = (xdiff1 * (*(srcy0++)) + (xdiff * (*(srcy1++))));
+      interp1[3] = (xdiff1 * (*(srcy0++)) + (xdiff * (*(srcy1++))));
+
+      v[0] = ((ydiff1 * interp0[0]) + (ydiff * interp1[0])) * _inv255;
+      v[1] = ((ydiff1 * interp0[1]) + (ydiff * interp1[1])) * _inv255;
+      v[2] = ((ydiff1 * interp0[2]) + (ydiff * interp1[2])) * _inv255;
+      return (255 - ((ydiff1 * interp0[3]) + (ydiff * interp1[3]))) * _inv255;
     } else {
       zero3f(v);
       return 1.0F;
     }
   }
+  zero3f(v);
   return 1.0F;
 }
 

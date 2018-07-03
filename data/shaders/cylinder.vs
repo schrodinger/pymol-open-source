@@ -1,79 +1,63 @@
+#include webgl_header.vs
 
 // cylinder imposter vertex shader
 
-attribute vec4 attr_origin;
-attribute vec4 attr_axis;
-attribute vec4 attr_colors;
-attribute vec4 attr_colors2;
+attribute vec3 attr_vertex1;
+attribute vec3 attr_vertex2;
+attribute vec4 a_Color;
+attribute vec4 a_Color2;
+attribute float attr_radius;
+attribute float a_cap;
 
-uniform float uni_radius;
-
-//varying vec3 point; // surface point
-//varying vec3 axis; // cylinder axis
-//varying vec3 base; // cylinder base
-//varying vec3 end; // cylinder end
-//varying vec3 U; // cylinder base plane coordinates
-//varying vec3 V;
-//varying float radius; // radius
-//varying float cap; // should we draw the endcap
-//varying float inv_sqr_height;
-
-varying vec4 packed_data_0 ;
-varying vec4 packed_data_1 ;
-varying vec4 packed_data_2 ;
-varying vec4 packed_data_3 ;
-varying vec4 packed_data_4 ;
-varying vec4 packed_data_5 ;
-
-#define point ( packed_data_0.xyz )
-#define axis ( packed_data_1.xyz )
-#define base ( packed_data_2.xyz )
-#define end ( packed_data_3.xyz )
-#define U ( packed_data_4.xyz )
-#define V ( packed_data_5.xyz )
-#define radius (packed_data_3.w)
-#define cap (packed_data_4.w)
-#define inv_sqr_height (packed_data_5.w)
-
+attribute float attr_flags;
+varying vec3 surface_point ;
+varying vec3 axis ;
+varying vec3 base ;
+varying vec3 end_cyl ;
+varying vec3 U ;
+varying vec3 V ;
+varying float radius;
+varying float cap;
+varying float inv_sqr_height;
 varying vec4 color1;
 varying vec4 color2;
 varying vec2 bgTextureLookup;
-uniform vec2 pixelSize;
+
+uniform float uni_radius;
+
+// get_bit_and_shift: returns 0 or 1
+float get_bit_and_shift(inout float bits) {
+  float bit = mod(bits, 2.0);
+  bits = (bits - bit) / 2.0;
+  return step(.5, bit);
+}
 
 void main(void)
 {
+    float uniformglscale = length(g_NormalMatrix[0]);
+
     if (uni_radius!=0.0){
-        radius = uni_radius * attr_origin.w;
+        radius = uni_radius * attr_radius;
     } else {
-        radius = attr_origin.w;
+        radius = attr_radius;
     }
-    color1 = attr_colors;
-    color2 = attr_colors2;
 
-    float packed_flags = attr_axis.w;
+    color1 = a_Color;
+    color2 = a_Color2;
 
-    vec4 flags = mod(vec4(packed_flags/262144.0, packed_flags/4096.0, 
-                          packed_flags/64.0, packed_flags), 64.0);
+    vec3 attr_axis = attr_vertex2 - attr_vertex1;
 
-    cap = flags.x;
-
-    float right_v = flags.y;
-
-    float up_v = flags.z;
-
-    float out_v = flags.w;
+    cap = a_cap;
 
     // calculate reciprocal of squared height
-    inv_sqr_height = length(attr_axis.xyz);
+    inv_sqr_height = length(attr_axis) / uniformglscale;
     inv_sqr_height *= inv_sqr_height;
     inv_sqr_height = 1.0 / inv_sqr_height;
 
     // h is a normalized cylinder axis
-    vec3 h = normalize(attr_axis.xyz);
-
+    vec3 h = normalize(attr_axis);
     // axis is the cylinder axis in modelview coordinates
-    axis =  normalize(gl_NormalMatrix * h);
-
+    axis = normalize(g_NormalMatrix * h);
     // u, v, h is local system of coordinates
     vec3 u = cross(h, vec3(1.0, 0.0, 0.0));
     if (dot(u,u) < 0.001) 
@@ -82,27 +66,32 @@ void main(void)
     vec3 v = normalize(cross(u, h));
 
     // transform to modelview coordinates
-    U = normalize(gl_NormalMatrix * u);
-    V = normalize(gl_NormalMatrix * v);
-    
-    // compute bounding box vertex position
-    vec4 vertex = vec4(attr_origin.xyz, 1.0); 
+    U = normalize(g_NormalMatrix * u);
+    V = normalize(g_NormalMatrix * v);
 
-    vertex.xyz += up_v * attr_axis.xyz;
+    vec4 base4 = g_ModelViewMatrix * vec4(attr_vertex1, 1.0);
+    base = base4.xyz;
+    vec4 end4 = g_ModelViewMatrix * vec4(attr_vertex2, 1.0);
+    end_cyl = end4.xyz;
+
+    // compute bounding box vertex position
+    vec4 vertex = vec4(attr_vertex1, 1.0); 
+    float packed_flags = attr_flags;
+    float out_v = get_bit_and_shift(packed_flags);
+    float up_v = get_bit_and_shift(packed_flags);
+    float right_v = get_bit_and_shift(packed_flags);
+    vertex.xyz += up_v * attr_axis;
     vertex.xyz += (2.0 * right_v - 1.0) * radius * u;
     vertex.xyz += (2.0 * out_v - 1.0) * radius * v;
     vertex.xyz += (2.0 * up_v - 1.0) * radius * h;
 
-    vec4 base4 = gl_ModelViewMatrix * vec4(attr_origin.xyz, 1.0);
-    base = base4.xyz / base4.w;
+    vec4 tvertex = g_ModelViewMatrix * vertex;
+    surface_point = tvertex.xyz;
 
-    vec4 end4 = gl_ModelViewMatrix * vec4(attr_origin.xyz + 1.0 * attr_axis.xyz, 1.0);
-    end = end4.xyz / end4.w;
+    gl_Position = g_ProjectionMatrix * g_ModelViewMatrix * vertex;
 
-    vec4 tvertex = gl_ModelViewMatrix * vertex;
-    point = tvertex.xyz / tvertex.w;
-
-    gl_Position = gl_ModelViewProjectionMatrix * vertex;
+    // support uniform scaling
+    radius /= uniformglscale;
 
     // clamp z on front clipping plane if impostor box would be clipped.
     // (we ultimatly want to clip on the calculated depth in the fragment
@@ -112,16 +101,16 @@ void main(void)
         float diff = abs(base4.z - end4.z) + radius * 3.5;
 
         // z-`diff`-offsetted vertex
-        vec4 inset = gl_ModelViewMatrix * vertex;
+        vec4 inset = g_ModelViewMatrix * vertex;
         inset.z -= diff;
-        inset = gl_ProjectionMatrix * inset;
+        inset = g_ProjectionMatrix * inset;
 
         // if offsetted vertex is within front clipping plane, then clamp
         if (inset.z / inset.w > -1.0) {
             gl_Position.z = -gl_Position.w;
         }
     }
-
     bgTextureLookup = (gl_Position.xy/gl_Position.w) / 2.0 + 0.5;
+
 }
 

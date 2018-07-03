@@ -414,8 +414,39 @@ double determinant33f(const float *m, int ncol)
     m[2] * (m[a + 0] * (double) m[b + 1] - m[a + 1] * (double) m[b + 0]);
 }
 
-#ifdef PURE_OPENGL_ES_2
-#endif
+void glOrtho44f(float *m1, 
+		GLfloat left, GLfloat right, 
+		GLfloat bottom, GLfloat top,
+		GLfloat nearVal, GLfloat farVal){
+  int a;
+  /* this is set in column major order */
+  for(a = 0; a < 16; a++)
+    m1[a] = _0;
+  m1[0] = 2.f / (right-left);
+  m1[5] = 2.f / (top-bottom);
+  m1[10] = -2.f/(farVal-nearVal);
+  m1[12] = - (right+left) / (right-left);
+  m1[13] = - (top+bottom) / (top-bottom);
+  m1[14] = - (farVal+nearVal) / (farVal-nearVal);
+  m1[15] = _1;
+}
+
+void glFrustum44f(float *m1,
+		  GLfloat left, GLfloat right, 
+		  GLfloat bottom, GLfloat top,
+		  GLfloat nearVal, GLfloat farVal){
+  int a;
+  /* this is set in column major order */
+  for(a = 0; a < 16; a++)
+    m1[a] = _0;
+  m1[0] = 2.f * nearVal / (right-left);
+  m1[5] = 2.f * nearVal / (top-bottom);
+  m1[8] = (right+left) / (right-left);
+  m1[9] = (top+bottom) / (top-bottom);
+  m1[10] = -(farVal+nearVal) / (farVal-nearVal);
+  m1[11] = -1.f;
+  m1[14] = -2.f * (farVal * nearVal) / (farVal - nearVal);
+}
 
 void copy44f(const float *src, float *dst)
 {
@@ -1688,6 +1719,27 @@ void normalize3d(double *v1)
     v1[1] = _0;
     v1[2] = _0;
   }
+}
+
+void normalize2f(float *v1)
+{
+  double vlen;
+  vlen = length2f(v1);
+  if(vlen > R_SMALL) {
+    v1[0] /= vlen;
+    v1[1] /= vlen;
+  } else {
+    v1[0] = _0;
+    v1[1] = _0;
+  }
+}
+
+void normalize4f(float *v1)
+{
+  v1[0] /= v1[3];
+  v1[1] /= v1[3];
+  v1[2] /= v1[3];
+  v1[3] = 1.f;
 }
 
 double length3d(const double *v1)

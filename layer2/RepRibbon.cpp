@@ -35,13 +35,11 @@ Z* -------------------------------------------------------------------
 
 typedef struct RepRibbon {
   Rep R;
-  float *V;
   float ribbon_width;
   float radius;
-  int N;
-  int NS;
-  int NP;
   CGO *shaderCGO;
+  CGO *primitiveCGO;
+  bool shaderCGO_has_cylinders;
 } RepRibbon;
 
 #include"ObjectMolecule.h"
@@ -54,11 +52,14 @@ void RepRibbonInit(void)
 
 void RepRibbonFree(RepRibbon * I)
 {
+  if (I->primitiveCGO){
+    CGOFree(I->primitiveCGO);
+    I->primitiveCGO = 0;
+  }
   if (I->shaderCGO){
     CGOFree(I->shaderCGO);
     I->shaderCGO = 0;
   }
-  FreeP(I->V);
   RepPurge(&I->R);
   OOFreeP(I);
 }
@@ -68,343 +69,75 @@ static void RepRibbonRender(RepRibbon * I, RenderInfo * info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   PyMOLGlobals *G = I->R.G;
-  float *v = I->V;
-  int c = I->N;
-  Pickable *p;
-  int i, j, ip;
-  int last;
-  float line_width = SceneGetDynamicLineWidth(info, I->ribbon_width);
   int ok = true;
-
-  /* 
-
-     v[0] = index1
-     v[1-3] = color1
-     v[4-6] = vertex1
-     v[7] = index2
-     v[8-10] = color2
-     v[11-13] = vertex2
-     v[14] = radius
-
-   */
+  short use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) &&
+                     SettingGetGlobal_b(G, cSetting_use_shaders);
+  bool ribbon_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
+                             SettingGetGlobal_b(G, cSetting_ribbon_as_cylinders);
 
   if(ray) {
-
-    float radius;
-    /*    float alpha = SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_ribbon_transparency); */
-    float alpha = SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
-    alpha = 1.0F - alpha;
-    if(fabs(alpha-1.0) < R_SMALL4)
-      alpha = 1.0F;
-
-    if(I->radius == 0.0F) {
-      radius = ray->PixelRadius * line_width / 2.0F;
-    } else {
-      radius = I->radius;
-    }
-
-    PRINTFD(G, FB_RepRibbon)
-      " RepRibbonRender: rendering raytracable...\n" ENDFD;
-
-    if(c > 0) {
-      while(ok && c--) {
-	ray->transparentf(1.0F - alpha);
-        ok &= ray->sausage3fv(v + 4, v + 11, radius, v + 1, v + 8);
-        v += 18;
-      }
-    }
+#ifndef _PYMOL_NO_RAY
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
+#endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
-
-      PRINTFD(G, FB_RepRibbon)
-        " RepRibbonRender: rendering pickable...\n" ENDFD;
-
-      if(c) {
-        i = (*pick)->src.index;
-        p = I->R.P;
-        last = -1;
-#ifdef PURE_OPENGL_ES_2
-#else
-	SceneSetupGLPicking(G);
-        glBegin(GL_LINES);
-        while(c--) {
-          ip = (int) *(v);
-          if(ip != last) {
-            i++;
-            last = ip;
-            if(!(*pick)[0].src.bond) {
-              /* pass 1 - low order bits */
-
-              glColor3ub((uchar) ((i & 0xF) << 4), (uchar) ((i & 0xF0) | 0x8), (uchar) ((i & 0xF00) >> 4));     /* we're encoding the index into the color */
-              VLACheck((*pick), Picking, i);
-              (*pick)[i].src = p[ip];   /* copy object and atom info */
-              (*pick)[i].context = I->R.context;
-            } else {
-              /* pass 2 - high order bits */
-              j = i >> 12;
-              glColor3ub((uchar) ((j & 0xF) << 4), (uchar) ((j & 0xF0) | 0x8),
-                         (uchar) ((j & 0xF00) >> 4));
-            }
-          }
-          glVertex3fv(v + 4);
-          ip = (int) *(v + 7);
-          if(ip != last) {
-            glVertex3fv(v + 15);        /* switch colors at midpoint */
-            glVertex3fv(v + 15);
-            i++;
-            last = ip;
-            if(!(*pick)[0].src.bond) {
-              /* pass 1 - low order bits */
-
-              glColor3ub((uchar) ((i & 0xF) << 4), (uchar) ((i & 0xF0) | 0x8), (uchar) ((i & 0xF00) >> 4));     /* we're encoding the index into the color */
-              VLACheck((*pick), Picking, i);
-              (*pick)[i].src = p[ip];   /* copy object and atom info */
-              (*pick)[i].context = I->R.context;
-            } else {
-              /* pass 2 - high order bits */
-              j = i >> 12;
-              glColor3ub((uchar) ((j & 0xF) << 4), (uchar) ((j & 0xF0) | 0x8),
-                         (uchar) ((j & 0xF00) >> 4));
-            }
-          }
-          glVertex3fv(v + 11);
-          v += 18;
-        }
-        glEnd();
-#endif
-        (*pick)[0].src.index = i;       /* pass the count */
-      }
+      CGORenderGLPicking(I->shaderCGO ? I->shaderCGO : I->primitiveCGO, info, &I->R.context, I->R.cs->Setting, I->R.obj->Setting, &I->R);
     } else {
-      short use_shader, generate_shader_cgo = 0;
-      int ribbon_smooth;
-      short ribbon_as_cylinders ;
-      float alpha = SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
-
-      use_shader = SettingGetGlobal_b(G, cSetting_ribbon_use_shader) & 
-                   SettingGetGlobal_b(G, cSetting_use_shaders);
-      ribbon_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_ribbon_as_cylinders);
       if (!use_shader && I->shaderCGO){
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = 0;
       }
-      if (I->shaderCGO && (ribbon_as_cylinders ^ I->shaderCGO->has_draw_cylinder_buffers)){
+      if (I->shaderCGO && (ribbon_as_cylinders ^ I->shaderCGO_has_cylinders)){
 	CGOFree(I->shaderCGO);
 	I->shaderCGO = 0;
       }
 
       if (use_shader){
 	if (!I->shaderCGO){
+          CGO *convertcgo = NULL;
 	  I->shaderCGO = CGONew(G);
 	  CHECKOK(ok, I->shaderCGO);
 	  if (ok)
 	    I->shaderCGO->use_shader = true;
-	  generate_shader_cgo = 1;
-	} else if (ok) {
-	  CShaderPrg *shaderPrg;
-	  if (ribbon_as_cylinders){
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	    if(I->radius == 0.0F) {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
-	    } else {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
-	    }
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	  }
-	  if (!shaderPrg) return;
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-	  
-	  CShaderPrg_Disable(shaderPrg);
-	  return;
-	}
-      }
 
-      alpha = 1.0F - alpha;
-      if(fabs(alpha-1.0) < R_SMALL4)
-	alpha = 1.0F;
-
-      ribbon_smooth = SettingGet_i(G, NULL, I->R.obj->Setting, cSetting_ribbon_smooth);
-      if(!ribbon_smooth)
-        glDisable(GL_LINE_SMOOTH);
-
-      if (generate_shader_cgo){
-	ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
-	if (ok)
-	  ok &= CGOResetNormal(I->shaderCGO, true);
+          if (ok)
+            ok &= CGOResetNormal(I->shaderCGO, true);
+          if (ribbon_as_cylinders){
+            if (ok) ok &= CGOEnable(I->shaderCGO, GL_CYLINDER_SHADER);
+            if (ok) ok &= CGOSpecial(I->shaderCGO, CYLINDER_WIDTH_FOR_RIBBONS);
+            convertcgo = CGOConvertLinesToCylinderShader(I->primitiveCGO, I->shaderCGO);
+            if (ok) ok &= CGOAppendNoStop(I->shaderCGO, convertcgo);
+            if (ok) ok &= CGODisable(I->shaderCGO, GL_CYLINDER_SHADER);
+            if (ok) ok &= CGOStop(I->shaderCGO);
+          } else {
+            int trilines = SettingGetGlobal_b(G, cSetting_trilines);
+            int shader = trilines ? GL_TRILINES_SHADER : GL_LINE_SHADER;
+            if (ok) ok &= CGOEnable(I->shaderCGO, shader);
+            if (ok) ok &= CGODisable(I->shaderCGO, CGO_GL_LIGHTING);
+            if (trilines) {
+              if (ok) ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
+              convertcgo = CGOConvertToTrilinesShader(I->primitiveCGO, I->shaderCGO);
+            } else {
+              convertcgo = CGOConvertToLinesShader(I->primitiveCGO, I->shaderCGO);
+            }
+            if (ok) ok &= CGOAppendNoStop(I->shaderCGO, convertcgo);
+            if (ok) ok &= CGODisable(I->shaderCGO, shader);
+            if (ok) ok &= CGOStop(I->shaderCGO);
+          }
+          I->shaderCGO_has_cylinders = ribbon_as_cylinders;
+          CGOFreeWithoutVBOs(convertcgo);
+          I->shaderCGO->use_shader = true;
+        }
+        CGORenderGL(I->shaderCGO, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+        return;
       } else {
-	if(info->width_scale_flag)
-	  glLineWidth(line_width * info->width_scale);
-	else
-	  glLineWidth(line_width);
-	SceneResetNormal(G, true);
-      }
-      PRINTFD(G, FB_RepRibbon)
-	" RepRibbonRender: rendering GL...\n" ENDFD;
-      
-      if(ok && c) {
-	int first = true;
-	if (generate_shader_cgo){
-	  if (ribbon_as_cylinders){
-	    float *origin = NULL, *vertex = NULL, *color = NULL, *color2 = NULL, axis[3];
-	    while(ok && c--) {
-	      if(first) {
-		/* glColor3fv(v + 1); */
-		ok &= CGOAlpha(I->shaderCGO, alpha);
-		if (ok)
-		  ok &= CGOColorv(I->shaderCGO, v+1);
-		color2 = (v + 1);
-		vertex = (v + 4);
-		first = false;
-	      } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
-		ok &= CGOAlpha(I->shaderCGO, alpha);
-		if (ok)
-		  ok &= CGOColorv(I->shaderCGO, v+1);
-		origin = color = NULL;
-		color2 = (v+1);
-		vertex = (v+4);
-	      }
-	      /* glColor3fv(v + 8); */
-	      origin = vertex;
-	      color = color2;
-	      color2 = (v+8);
-	      vertex = (v+11);
-	      axis[0] = vertex[0] - origin[0];
-	      axis[1] = vertex[1] - origin[1];
-	      axis[2] = vertex[2] - origin[2];
-	      if (ok){
-		if (*(color) != *(color2) || *(color+1) != *(color2+1) || *(color+2) != *(color2+2)){
-		  ok &= CGOShaderCylinder2ndColor(I->shaderCGO, origin, axis, 1.f, 15, color2);
-		} else {
-		  ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
-		}
-	      }
-	      if (ok)
-		ok &= CGOAlpha(I->shaderCGO, alpha);
-	      if (ok)
-		ok &= CGOColorv(I->shaderCGO, v+8);
-	      v += 18;
-	    }
-	  } else if (ok) {
-	    ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
-	    while(ok && c--) {
-	      if(first) {
-		/* glColor3fv(v + 1); */
-		ok &= CGOAlpha(I->shaderCGO, alpha);
-		if (ok)
-		  ok &= CGOColorv(I->shaderCGO, v+1);
-		if (ok)
-		  ok &= CGOVertexv(I->shaderCGO, v + 4);
-		first = false;
-	      } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
-		ok &= CGOEnd(I->shaderCGO);
-		if (ok)
-		  ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
-		/* glColor3fv(v + 1); */
-		if (ok)
-		  ok &= CGOAlpha(I->shaderCGO, alpha);
-		if (ok)
-		  ok &= CGOColorv(I->shaderCGO, v+1);
-		if (ok)
-		  ok &= CGOVertexv(I->shaderCGO, v + 4);
-	      }
-	      /* glColor3fv(v + 8); */
-	      if (ok)
-		ok &= CGOAlpha(I->shaderCGO, alpha);
-	      if (ok)
-		ok &= CGOColorv(I->shaderCGO, v+8);
-	      if (ok)
-		ok &= CGOVertexv(I->shaderCGO, v + 11);
-	      v += 18;
-	    }
-	    if (ok)
-	      ok &= CGOEnd(I->shaderCGO);
-	  }
-	} else {
-	  if(!info->line_lighting)
-	    glDisable(GL_LIGHTING);
-	  glBegin(GL_LINE_STRIP);
-	  while(c--) {
-	    if(first) {
-	      /* glColor3fv(v + 1); */
-	      glColor4f( (v+1)[0], (v+1)[1], (v+1)[2], alpha);
-	      glVertex3fv(v + 4);
-	      first = false;
-	    } else if((v[4] != v[-7]) || (v[5] != v[-6]) || (v[6] != v[-5])) {
-	      glEnd();
-	      glBegin(GL_LINE_STRIP);
-	      /* glColor3fv(v + 1); */
-	      glColor4f( (v+1)[0], (v+1)[1], (v+1)[2], alpha);
-	      glVertex3fv(v + 4);
-	    }
-	    /* glColor3fv(v + 8); */
-	    glColor4f( (v+8)[0], (v+8)[1], (v+8)[2], alpha);
-	    glVertex3fv(v + 11);
-	    v += 18;
-	  }
-	  glEnd();
-	  glEnable(GL_LIGHTING);
-	}
-      }
-      if(SettingGetGlobal_b(G, cSetting_line_smooth))
-        glEnable(GL_LINE_SMOOTH);
-
-      if (use_shader) {
-	if (ok && generate_shader_cgo){
-	  CGO *convertcgo = NULL;
-	  ok &= CGOStop(I->shaderCGO);
-	  if (ok)
-	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
-	  CHECKOK(ok, convertcgo);
-	  CGOFree(I->shaderCGO);    
-	  I->shaderCGO = convertcgo;
-	  convertcgo = NULL;
-	  if (ok){
-	    if (ribbon_as_cylinders){
-	      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	    } else {
-	      convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
-	    }
-	    CHECKOK(ok, convertcgo);
-	  }
-	  if (convertcgo){
-	    CGOFree(I->shaderCGO);
-	    I->shaderCGO = convertcgo;
-	    convertcgo = NULL;
-	  }
-	}
-	
-	if (ok){
-	  CShaderPrg *shaderPrg;
-	  if (ribbon_as_cylinders){
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	    if(I->radius == 0.0F) {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
-	    } else {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", I->radius);
-	    }
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	  }
-	  if (!shaderPrg) return;
-
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-	  
-	  CShaderPrg_Disable(shaderPrg);
-	}
+        CGORenderGL(I->primitiveCGO, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
+        return;
       }
     }
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->shaderCGO = NULL;
     I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
     I->R.cs->Active[cRepRibbon] = false;
   }
@@ -415,7 +148,7 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj;
   int a, b, a1, a2, c1, c2, *i, *s, *at, *seg, nAt, *atp;
-  float *v, *v0, *v1, *v2, *v3;
+  float *v, *v1, *v2, *v3;
   float *pv = NULL;
   float *dv = NULL;
   float *nv = NULL;
@@ -441,7 +174,6 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   if(!cs->hasRep(cRepRibbonBit))
     return NULL;
 
-  Pickable *rp = NULL;
   OOAlloc(G, RepRibbon);
 
   obj = cs->Obj;
@@ -462,7 +194,6 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
   if(sampling < 1)
     sampling = 1;
   I->radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_radius);
-
   I->R.fRender = (void (*)(struct Rep *, RenderInfo *)) RepRibbonRender;
   I->R.fFree = (void (*)(struct Rep *)) RepRibbonFree;
   I->R.fRecolor = NULL;
@@ -510,9 +241,6 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
             trace = true;
 
           if(a2 >= 0) {
-            /*                                                if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-               (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-               (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1))) */
             if(trace) {
               if(!AtomInfoSequential
                  (G, obj->AtomInfo + a2, obj->AtomInfo + a1, trace_mode))
@@ -697,20 +425,9 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
 
   /* okay, we now have enough info to generate smooth interpolations */
 
-  if(nAt) {
-    I->R.P = Alloc(Pickable, 2 * nAt + 2);
-    ErrChkPtr(G, I->R.P);
-    I->R.P[0].index = nAt;
-    rp = I->R.P + 1;            /* skip first record! */
-  }
-
-  I->V = (float *) mmalloc(sizeof(float) * 2 * cs->NIndex * 18 * sampling);
-  ErrChkPtr(G, I->V);
-
   I->shaderCGO = 0;
-  I->N = 0;
-  I->NP = 0;
-  v = I->V;
+  I->primitiveCGO = 0;
+
   if(nAt) {
     v1 = pv;                    /* points */
     v2 = tv;                    /* tangents */
@@ -718,28 +435,36 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
     d = dl;
     s = seg;
     atp = at;
-    rp->index = cs->IdxToAtm[*atp];
-    if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
-      rp->index = -1;
-    rp->bond = -1;
-    I->NP++;
-    rp++;
-    for(a = 0; a < (nAt - 1); a++) {
 
-      rp->index = cs->IdxToAtm[*(atp + 1)];     /* store pickable for n+2 */
-      if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
-        rp->index = -1;
-      rp->bond = -1;
-      rp++;
-      I->NP++;
+    I->primitiveCGO = CGONew(G);
+    CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 0.f);
+
+    float alpha = 1.f - SettingGet_f(G, NULL, I->R.obj->Setting, cSetting_ribbon_transparency);
+    if(fabs(alpha-1.0) < R_SMALL4)
+      alpha = 1.0F;
+    CGOAlpha(I->primitiveCGO, alpha);  // would be good to set these at render time instead
+    CGOSpecial(I->primitiveCGO, LINEWIDTH_DYNAMIC_WITH_SCALE_RIBBON);
+
+    // This is required for immediate mode rendering
+    CGOBegin(I->primitiveCGO, GL_LINES);
+
+    bool first = true;
+    int atm1, atm2;
+    float origV1[14], origV2[14], *origV = origV2;
+    bool origVis1 = false;
+    for(a = 0; a < (nAt - 1); a++) {
+      atm1 = *atp;
+      atm2 = *(atp + 1);
+      int at1 = cs->IdxToAtm[atm1];
+      int at2 = cs->IdxToAtm[atm2];
 
       PRINTFD(G, FB_RepRibbon)
         " RepRibbon: seg %d *s %d , *(s+1) %d\n", a, *s, *(s + 1)
         ENDFD;
 
       if(*s == *(s + 1)) {
-        AtomInfoType *ai1 = obj->AtomInfo + cs->IdxToAtm[*atp];
-        AtomInfoType *ai2 = obj->AtomInfo + cs->IdxToAtm[*(atp + 1)];
+        AtomInfoType *ai1 = obj->AtomInfo + at1;
+        AtomInfoType *ai2 = obj->AtomInfo + at2;
 
         c1 = AtomSettingGetWD(G, ai1, cSetting_ribbon_color, ribbon_color);
         c2 = AtomSettingGetWD(G, ai2, cSetting_ribbon_color, ribbon_color);
@@ -748,63 +473,45 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
         if (c2 < 0) c2 = ai2->color;
 
         dev = throw_ * (*d);
-
         for(b = 0; b < sampling; b++) { /* needs optimization */
+          origVis1 = !origVis1;
+          if (origVis1){
+            origV = origV1;
+          } else {
+            origV = origV2;
+          }
+
+          /* 
+             14 floats per v:
+             v[0] = index1
+             v[1-3] = color1
+             v[4-6] = vertex1
+             v[7] = index2
+             v[8-10] = color2
+             v[11-13] = vertex2
+          */
+
 
           f0 = ((float) b) / sampling;  /* fraction of completion */
           f0 = smooth(f0, power_a);     /* bias sampling towards the center of the curve */
 
-          if(f0 < 0.5) {
-            v0 = ColorGet(G, c1);
-          } else {
-            v0 = ColorGet(G, c2);
-          }
-
-          /* store index */
-          if(f0 < 0.5F)
-            *(v++) = (float) I->NP - 1;
-          else
-            *(v++) = (float) I->NP;
-
-          /* store colors */
-
-          *(v++) = *(v0++);
-          *(v++) = *(v0++);
-          *(v++) = *(v0);
-
-          /* start of line/cylinder */
+          // start of line/cylinder 
 
           f1 = 1.0F - f0;
           f2 = smooth(f0, power_b);
           f3 = smooth(f1, power_b);
           f4 = dev * f2 * f3;   /* displacement magnitude */
 
-          *(v++) = f1 * v1[0] + f0 * v1[3] + f4 * (f3 * v2[0] - f2 * v2[3]);
+          /* store vertex1 v[4-6] */
+          origV[4] = f1 * v1[0] + f0 * v1[3] + f4 * (f3 * v2[0] - f2 * v2[3]);
+          origV[5] = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
+          origV[6] = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
 
-          *(v++) = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
-
-          *(v++) = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
+          bool isRamped = false;
+          isRamped = ColorGetCheckRamped(G, c1, origV + 4, origV + 1, state);
 
           f0 = ((float) b + 1) / sampling;
           f0 = smooth(f0, power_a);
-
-          if(f0 < 0.5) {
-            v0 = ColorGet(G, c1);
-          } else {
-            v0 = ColorGet(G, c2);
-          }
-
-          /* store index */
-          if(f0 < 0.5)
-            *(v++) = (float) I->NP - 1;
-          else
-            *(v++) = (float) I->NP;
-
-          /* store colors */
-
-          *(v++) = *(v0++);
-          *(v++) = *(v0++);
-          *(v++) = *(v0);
 
           /* end of line/cylinder */
 
@@ -813,21 +520,21 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
           f3 = smooth(f1, power_b);
           f4 = dev * f2 * f3;   /* displacement magnitude */
 
-          *(v++) = f1 * v1[0] + f0 * v1[3] + f4 * (f3 * v2[0] - f2 * v2[3]);
+          /* store vertex2 v[11-13] */
+          origV[11] = f1 * v1[0] + f0 * v1[3] + f4 * (f3 * v2[0] - f2 * v2[3]);
+          origV[12] = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
+          origV[13] = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
 
-          *(v++) = f1 * v1[1] + f0 * v1[4] + f4 * (f3 * v2[1] - f2 * v2[4]);
+          isRamped = ColorGetCheckRamped(G, c2, origV + 11, origV + 8, state) || isRamped;
 
-          *(v++) = f1 * v1[2] + f0 * v1[5] + f4 * (f3 * v2[2] - f2 * v2[5]);
-
-          v++;                  /* radius no longer stored here... */
-
-          average3f(v - 4, v - 11, v);
-
-          v += 3;
-
-          I->N++;
+          if (first || I->primitiveCGO->interpolated!=isRamped)
+            CGOInterpolated(I->primitiveCGO, isRamped );
+          int atm1pk = ai1->masked ? cPickableNoPick : cPickableAtom;
+          int atm2pk = ai2->masked ? cPickableNoPick : cPickableAtom;
+          CGOPickColor(I->primitiveCGO, at1, atm1pk);
+          CGOColorv(I->primitiveCGO, origV + 1);
+          I->primitiveCGO->add<cgo::draw::splitline>(origV + 4, origV + 11, origV + 8, at2, atm2pk, false, false, false);
         }
-
       }
       v1 += 3;
       v2 += 3;
@@ -836,21 +543,22 @@ Rep *RepRibbonNew(CoordSet * cs, int state)
       atp += 1;
       s++;
     }
+    CGOEnd(I->primitiveCGO);
+    CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 1.f);
+    CGOStop(I->primitiveCGO);
 
     FreeP(dv);
     FreeP(dl);
     FreeP(tv);
     FreeP(nv);
+  } else {
+    RepRibbonFree(I);
+    I = NULL;
   }
 
   FreeP(at);
   FreeP(seg);
   FreeP(pv);
-
-  if(I->N)
-    I->V = ReallocForSure(I->V, float, (v - I->V));
-  else
-    I->V = ReallocForSure(I->V, float, 1);
 
   return (Rep *) I;
 }

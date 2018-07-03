@@ -79,6 +79,236 @@ void RepMeshFree(RepMesh * I)
 int RepMeshGetSolventDots(RepMesh * I, CoordSet * cs, float *min, float *max,
                           float probe_radius);
 
+static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
+{
+  PyMOLGlobals *G = I->R.G;
+  float *v = I->V;
+  float *vc = I->VC;
+  int *n = I->N;
+  int ok = true;
+  short use_shader;
+  short mesh_as_cylinders;
+  int c;
+  short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
+  use_shader = SettingGetGlobal_b(G, cSetting_mesh_use_shader) & 
+    SettingGetGlobal_b(G, cSetting_use_shaders);
+  mesh_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_mesh_as_cylinders) && I->mesh_type!=1;
+
+  ok &= CGOResetNormal(I->shaderCGO, true);
+
+#ifndef PURE_OPENGL_ES_2
+  int lighting =
+    SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
+  if(!lighting) {
+    if(!use_shader && !info->line_lighting){
+      CGODisable(I->shaderCGO, GL_LIGHTING);
+    }
+  }
+#endif
+  if (ok){
+    switch (I->mesh_type) {
+    case 0:
+      ok &= CGOSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
+      break;
+    case 1:
+      ok &= CGOSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
+      break;
+    }
+  }
+
+  ok &= CGOResetNormal(I->shaderCGO, false);
+  
+  switch (I->mesh_type) {
+  case 0:
+    if(n) {
+      if (ok){
+	if(I->oneColorFlag) {
+	  while(ok && *n) {
+	    ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
+	    if (ok){
+	      c = *(n++);
+	      if (mesh_as_cylinders){
+		float *origin, axis[3];
+		if (c--){
+		  origin = v;
+		  v += 3;
+		}
+		while(ok && c--) {
+		  axis[0] = v[0] - origin[0];
+		  axis[1] = v[1] - origin[1];
+		  axis[2] = v[2] - origin[2];
+		  ok &= (bool)I->shaderCGO->add<cgo::draw::shadercylinder>(origin, axis, 1.f, 15);
+		  origin = v;
+		  v += 3;
+		}
+	      } else {
+		ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+		ok &= CGONormal(I->shaderCGO, 0.f,0.f,1.f);
+		while(ok && c--) {
+		  ok &= CGOVertexv(I->shaderCGO, v);
+		  v += 3;
+		}
+		if (ok)
+		  ok &= CGOEnd(I->shaderCGO);
+	      }
+	    }
+	  }
+	} else {
+	  while(ok && *n) {
+	    c = *(n++);
+	    if (mesh_as_cylinders){
+	      float *origin, axis[3], *color;
+	      if (c--){
+		ok &= CGOColorv(I->shaderCGO, vc);
+		color = vc;
+		origin = v;
+		vc += 3;
+		v += 3;
+	      }
+	      while(ok && c--) {
+		axis[0] = v[0] - origin[0];
+		axis[1] = v[1] - origin[1];
+		axis[2] = v[2] - origin[2];
+		if (*(color) != *(vc) || *(color+1) != *(vc+1) || *(color+2) != *(vc+2)){
+                  ok &= (bool)I->shaderCGO->add<cgo::draw::shadercylinder2ndcolor>(I->shaderCGO, origin, axis, 1.f, 15, vc);
+		} else {
+                  ok &= (bool)I->shaderCGO->add<cgo::draw::shadercylinder>(origin, axis, 1.f, 15);
+		}
+		origin = v;
+		v += 3;
+		if (c){
+		  ok &= CGOColorv(I->shaderCGO, vc);
+		  color = vc;
+		}
+		vc += 3;
+	      }
+	    } else {
+	      ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
+	      ok &= CGONormal(I->shaderCGO, 0.f,0.f,1.f);
+	      while(ok && c--) {
+		ok &= CGOColorv(I->shaderCGO, vc);
+		vc += 3;
+		if (ok){
+		  ok &= CGOVertexv(I->shaderCGO, v);
+		  v += 3;
+		}
+	      }
+	      if (ok)
+		ok &= CGOEnd(I->shaderCGO);
+	    }
+	  }
+	}
+      }
+    }
+    break;
+  case 1:
+#ifdef PURE_OPENGL_ES_2
+    /* TODO */
+#else
+    glPointSize(SettingGet_f
+		(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
+#endif
+    if(ok && n) {
+      if(I->oneColorFlag) {
+	while(ok && *n) {
+	  ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
+	  c = *(n++);
+	  if (ok && !dot_as_spheres)
+	    ok &= CGOBegin(I->shaderCGO, GL_POINTS);
+	  while(ok && c--) {
+	    if (dot_as_spheres)
+	      ok &= CGOSphere(I->shaderCGO, v, 1.f);
+	    else
+	      ok &= CGOVertexv(I->shaderCGO, v);
+	    v += 3;
+	  }
+	  if (ok && !dot_as_spheres)
+	    ok &= CGOEnd(I->shaderCGO);
+	}
+      } else {
+	while(ok && *n) {
+	  c = *(n++);
+	  if (!dot_as_spheres)
+	    ok &= CGOBegin(I->shaderCGO, GL_POINTS);
+	  while(ok && c--) {
+	    ok &= CGOColorv(I->shaderCGO, vc);
+	    vc += 3;
+	    if (ok){
+	      if (dot_as_spheres)
+		ok &= CGOSphere(I->shaderCGO, v, 1.f);
+	      else
+		ok &= CGOVertexv(I->shaderCGO, v);
+	    }
+	    v += 3;
+	  }
+	  if (!dot_as_spheres)
+	    ok &= CGOEnd(I->shaderCGO);
+	}
+      }
+    }
+    break;
+  }
+
+  if (use_shader) {
+    if (ok){
+      CGO *convertcgo = NULL;
+      ok &= CGOStop(I->shaderCGO);
+      if (ok)
+	convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
+      CHECKOK(ok, convertcgo);
+      CGOFree(I->shaderCGO);    
+      I->shaderCGO = convertcgo;
+      convertcgo = NULL;
+      if (ok){
+	if (dot_as_spheres){
+	  CGO *tmpCGO = CGONew(G);
+	  if (ok) ok &= CGOEnable(tmpCGO, GL_SPHERE_SHADER);
+	  if (ok) ok &= CGOSpecial(tmpCGO, DOTSIZE_WITH_SPHERESCALE);
+	  convertcgo = CGOOptimizeSpheresToVBONonIndexedNoShader(I->shaderCGO,
+              CGO_BOUNDING_BOX_SZ + fsizeof<cgo::draw::sphere_buffers>() + 2);
+	  if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+	  if (ok) ok &= CGODisable(tmpCGO, GL_SPHERE_SHADER);
+	  if (ok) ok &= CGOStop(tmpCGO);
+	  CGOFreeWithoutVBOs(convertcgo);
+	  convertcgo = tmpCGO;
+	  convertcgo->use_shader = true;
+	} else {
+	  if (mesh_as_cylinders){
+	    CGO *tmpCGO = CGONew(G);
+            ok &= CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
+	    if (ok) ok &= CGOSpecial(tmpCGO, MESH_WIDTH_FOR_SURFACES);
+            convertcgo = CGOConvertShaderCylindersToCylinderShader(I->shaderCGO,  tmpCGO);
+	    if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+	    if (ok) ok &= CGODisable(tmpCGO, GL_CYLINDER_SHADER);
+	    if (ok) ok &= CGOStop(tmpCGO);
+	    CGOFreeWithoutVBOs(convertcgo);
+	    convertcgo = tmpCGO;
+	    convertcgo->use_shader = convertcgo->has_draw_cylinder_buffers = true;
+	  } else {
+	    CGO *tmpCGO = CGONew(G);
+	    if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
+	    convertcgo = CGOOptimizeToVBONotIndexedNoShader(I->shaderCGO, 0);
+	    if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+	    if (ok) ok &= CGODisable(tmpCGO, GL_DEFAULT_SHADER);
+	    if (ok) ok &= CGOStop(tmpCGO);
+	    CGOFreeWithoutVBOs(convertcgo);
+	    convertcgo = tmpCGO;
+	  }
+	}
+	CHECKOK(ok, convertcgo);
+      }
+      if (convertcgo){
+	convertcgo->use_shader = true;
+	CGOFree(I->shaderCGO);
+	I->shaderCGO = convertcgo;
+	convertcgo = NULL;
+      }
+    }
+  }
+  return ok;
+}
+
+
 static void RepMeshRender(RepMesh * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
@@ -90,7 +320,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
   int c;
   float *col = NULL;
   float line_width = SceneGetDynamicLineWidth(info, I->Width);
-  float mesh_width = SettingGet_f(G, I->R.obj->Setting, NULL, cSetting_mesh_width);
   short dot_as_spheres = I->mesh_type==1 && SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
   int ok = true;
 
@@ -184,36 +413,14 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	    I->shaderCGO->use_shader = true;
 	  generate_shader_cgo = 1;
 	} else if (ok) {
-	  CShaderPrg *shaderPrg;
-	  if (dot_as_spheres){
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    float radius;
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;    
-	    radius = info->vertex_scale * pixel_scale_value * line_width/ 2.f;
-	    shaderPrg = CShaderPrg_Enable_DefaultSphereShader(G);
-	    CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", radius);
-	  } else {
-	    if (mesh_as_cylinders){
-	      shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", SceneGetLineWidthForCylinders(G, info, mesh_width));
-	    } else {
-	      shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	      CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	    }
-	  }
-	  if (!shaderPrg) return;
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-	  CShaderPrg_Disable(shaderPrg);
 	  return;
 	}
       }
 
       if (ok){
 	if (generate_shader_cgo){
-	  ok &= CGOResetNormal(I->shaderCGO, true);
-	} else {
-	  SceneResetNormal(G, true);
+	  ok &= RepMeshCGOGenerate(I, info);
 	}
       }
 
@@ -221,25 +428,12 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
         SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_mesh_lighting);
       if(!lighting) {
         if(!info->line_lighting){
-	  if (generate_shader_cgo){
-	    CGODisable(I->shaderCGO, GL_LIGHTING);
-	  } else {
+	  if (!use_shader && !generate_shader_cgo){
 	    glDisable(GL_LIGHTING);
 	  }
 	}
       }
-      if (generate_shader_cgo){
-	if (ok){
-	  switch (I->mesh_type) {
-	  case 0:
-	    ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
-	    break;
-	  case 1:
-	    ok &= CGOLinewidthSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
-	    break;
-	  }
-	}
-      } else {
+      if (!generate_shader_cgo){
 	switch (I->mesh_type) {
 	case 0:
 	  if(info->width_scale_flag)
@@ -260,9 +454,7 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
       }
 
       if (ok){
-	if (generate_shader_cgo){
-	  ok &= CGOResetNormal(I->shaderCGO, false);
-	} else {
+	if (!generate_shader_cgo){
 	  SceneResetNormal(G, false);
 	}
       }
@@ -270,105 +462,21 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
       switch (I->mesh_type) {
       case 0:
 	if(n) {
-	  if (generate_shader_cgo){
-	    if (ok){
-	      if(I->oneColorFlag) {
-		while(ok && *n) {
-		  ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
-		  if (ok){
-		    c = *(n++);
-		    if (mesh_as_cylinders){
-		      float *origin, axis[3];
-		      if (c--){
-			origin = v;
-			v += 3;
-		      }
-		      while(ok && c--) {
-			axis[0] = v[0] - origin[0];
-			axis[1] = v[1] - origin[1];
-			axis[2] = v[2] - origin[2];
-			ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
-			origin = v;
-			v += 3;
-		      }
-		    } else {
-		      ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
-		      while(ok && c--) {
-			ok &= CGOVertexv(I->shaderCGO, v);
-			v += 3;
-		      }
-		      if (ok)
-			ok &= CGOEnd(I->shaderCGO);
-		    }
-		  }
-		}
-	      } else {
-		while(ok && *n) {
-		  c = *(n++);
-		  if (mesh_as_cylinders){
-		    float *origin, axis[3], *color;
-		    if (c--){
-		      ok &= CGOColorv(I->shaderCGO, vc);
-		      color = vc;
-		      origin = v;
-		      vc += 3;
-		      v += 3;
-		    }
-		    while(ok && c--) {
-		      axis[0] = v[0] - origin[0];
-		      axis[1] = v[1] - origin[1];
-		      axis[2] = v[2] - origin[2];
-		      if (*(color) != *(vc) || *(color+1) != *(vc+1) || *(color+2) != *(vc+2)){
-			ok &= CGOShaderCylinder2ndColor(I->shaderCGO, origin, axis, 1.f, 15, vc);
-		      } else {
-			ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, 1.f, 15);
-		      }
-		      origin = v;
-		      v += 3;
-		      if (c){
-			ok &= CGOColorv(I->shaderCGO, vc);
-			color = vc;
-		      }
-		      vc += 3;
-		    }
-		  } else {
-		    ok &= CGOBegin(I->shaderCGO, GL_LINE_STRIP);
-		    while(ok && c--) {
-		      ok &= CGOColorv(I->shaderCGO, vc);
-		      vc += 3;
-		      if (ok){
-			ok &= CGOVertexv(I->shaderCGO, v);
-			v += 3;
-		      }
-		    }
-		    if (ok)
-		      ok &= CGOEnd(I->shaderCGO);
-		  }
-		}
-	      }
-	    }
-	  } else {
+	  if (!generate_shader_cgo){
 	    if(I->oneColorFlag) {
 	      while(*n) {
 		glColor3fv(ColorGet(G, I->oneColor));
 		c = *(n++);
-#ifdef PURE_OPENGL_ES_2
-		/* TODO */
-#else
 		glBegin(GL_LINE_STRIP);
 		while(c--) {
 		  glVertex3fv(v);
 		  v += 3;
 		}
 		glEnd();
-#endif
 	      }
 	    } else {
 	      while(*n) {
 		c = *(n++);
-#ifdef PURE_OPENGL_ES_2
-		/* TODO */
-#else
 		glBegin(GL_LINE_STRIP);
 		while(c--) {
 		  glColor3fv(vc);
@@ -377,7 +485,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 		  v += 3;
 		}
 		glEnd();
-#endif
 	      }
 	    }
 	  }
@@ -387,65 +494,21 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 	glPointSize(SettingGet_f
 		    (G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_width));
 	if(ok && n) {
-	  if (generate_shader_cgo){
-	    if(I->oneColorFlag) {
-	      while(ok && *n) {
-		ok &= CGOColorv(I->shaderCGO, ColorGet(G, I->oneColor));
-		c = *(n++);
-		if (ok && !dot_as_spheres)
-		  ok &= CGOBegin(I->shaderCGO, GL_POINTS);
-		while(ok && c--) {
-		  if (dot_as_spheres)
-		    ok &= CGOSphere(I->shaderCGO, v, 1.f);
-		  else
-		    ok &= CGOVertexv(I->shaderCGO, v);
-		  v += 3;
-		}
-		if (ok && !dot_as_spheres)
-		  ok &= CGOEnd(I->shaderCGO);
-	      }
-	    } else {
-	      while(ok && *n) {
-		c = *(n++);
-		if (!dot_as_spheres)
-		  ok &= CGOBegin(I->shaderCGO, GL_POINTS);
-		while(ok && c--) {
-		  ok &= CGOColorv(I->shaderCGO, vc);
-		  vc += 3;
-		  if (ok){
-		    if (dot_as_spheres)
-		      ok &= CGOSphere(I->shaderCGO, v, 1.f);
-		    else
-		      ok &= CGOVertexv(I->shaderCGO, v);
-		  }
-		  v += 3;
-		}
-		if (!dot_as_spheres)
-		  ok &= CGOEnd(I->shaderCGO);
-	      }
-	    }
-	  } else {
+	  if (!generate_shader_cgo){
 	    if(I->oneColorFlag) {
 	      while(*n) {
 		glColor3fv(ColorGet(G, I->oneColor));
 		c = *(n++);
-#ifdef PURE_OPENGL_ES_2
-		/* TODO */
-#else
 		glBegin(GL_POINTS);
 		while(c--) {
 		  glVertex3fv(v);
 		  v += 3;
 		}
 		glEnd();
-#endif
 	      }
 	    } else {
 	      while(*n) {
 		c = *(n++);
-#ifdef PURE_OPENGL_ES_2
-		/* TODO */
-#else
 		glBegin(GL_POINTS);
 		while(c--) {
 		  glColor3fv(vc);
@@ -454,7 +517,6 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
 		  v += 3;
 		}
 		glEnd();
-#endif
 	      }
 	    }
 	  }
@@ -464,67 +526,19 @@ static void RepMeshRender(RepMesh * I, RenderInfo * info)
       
       /* end of rendering, if using shaders, then render CGO */
       if (use_shader) {
-	if (ok && generate_shader_cgo){
-	  CGO *convertcgo = NULL;
-	  ok &= CGOStop(I->shaderCGO);
-	  if (ok)
-	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
-	  CHECKOK(ok, convertcgo);
-	  CGOFree(I->shaderCGO);    
-	  I->shaderCGO = convertcgo;
-	  convertcgo = NULL;
-	  if (ok){
-	    if (dot_as_spheres){
-	      convertcgo = CGOOptimizeSpheresToVBONonIndexed(I->shaderCGO, CGO_BOUNDING_BOX_SZ + CGO_DRAW_SPHERE_BUFFERS_SZ);	    
-	    } else {
-	      if (mesh_as_cylinders){
-		convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	      } else {
-		convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
-	      }
-	    }
-	    CHECKOK(ok, convertcgo);
-	  }
-	  if (convertcgo){
-	    convertcgo->use_shader = true;
-	    CGOFree(I->shaderCGO);
-	    I->shaderCGO = convertcgo;
-	    convertcgo = NULL;
-	  }
-	}
-	
 	if (ok){
-	  CShaderPrg *shaderPrg;
-	  if (dot_as_spheres){
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    float radius;
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;    
-	    radius = info->vertex_scale * pixel_scale_value * line_width/ 2.f;
-	    shaderPrg = CShaderPrg_Enable_DefaultSphereShader(G);
-	    CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", radius);
-	  } else {
-	    if (mesh_as_cylinders){
-	      shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", SceneGetLineWidthForCylinders(G, info, mesh_width));
-	    } else {
-	      shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	      CShaderPrg_SetLightingEnabled(shaderPrg, 1);
-	      CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
-	    }
-	  }
-	  if (!shaderPrg) return;
 	  {
 	    float *color;
 	    color = ColorGet(G, I->R.obj->Color);
 	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	  }
-	  CShaderPrg_Disable(shaderPrg);
 	}
       }
       
-      if(!lighting)
+#ifndef PURE_OPENGL_ES_2
+      if(!use_shader && !lighting)
         glEnable(GL_LIGHTING);
+#endif
     }
   }
   if (!ok){

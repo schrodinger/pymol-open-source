@@ -42,6 +42,8 @@
 #include"MyPNG.h"
 #include"Ortho.h"
 #include"Scene.h"
+#include"ScenePicking.h"
+#include"SceneRay.h"
 #include"Selector.h"
 #include"Vector.h"
 #include"Color.h"
@@ -52,6 +54,7 @@
 #include"Match.h"
 #include"ObjectCGO.h"
 #include"Util.h"
+#include"Util2.h"
 #include"Wizard.h"
 #include"ScrollBar.h"
 #include"Movie.h"
@@ -6015,9 +6018,10 @@ int ExecutiveSetSession(PyMOLGlobals * G, PyObject * session,
     PRINTFB(G, FB_Executive, FB_Warnings)
       "ExectiveSetSession-Warning: restore may be incomplete.\n" ENDFB(G);
   }
-  CShaderMgr_Set_Reload_Bits(G, RELOAD_SHADERS_UPDATE_FOR_BACKGROUND);
+  G->ShaderMgr->Set_Reload_Bits(RELOAD_ALL_SHADERS);
   OrthoBackgroundTextureNeedsUpdate(G);
   ExecutiveInvalidateSelectionIndicatorsCGO(G);
+  OrthoInvalidateDoDraw(G);
   SceneChanged(G);
   return (ok);
 }
@@ -7278,6 +7282,9 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
       ExecutiveCenter(G, NULL, -1, true, false, center, true);
     }
   }
+  if (active){
+    EditorInvalidateShaderCGO(G);
+  }
   return (active);
 }
 
@@ -8187,10 +8194,6 @@ int ExecutiveCartoon(PyMOLGlobals * G, int type, const char *s1)
   ObjectMoleculeOpRecInit(&op1);
   op1.i2 = 0;
   if(sele1 >= 0) {
-    op1.code = OMOP_INVA;
-    op1.i1 = cRepCartoon;
-    op1.i2 = cRepInvRep;
-    ExecutiveObjMolSeleOp(G, sele1, &op1);
     op1.code = OMOP_Cartoon;
     op1.i1 = type;
     op1.i2 = 0;
@@ -8517,10 +8520,7 @@ void ExecutiveInvalidateSelectionIndicatorsCGO(PyMOLGlobals *G){
     }
     while(ListIterate(I->Spec, rec, next)) {
       if(rec->type == cExecObject) {
-	if (rec->gridSlotSelIndicatorsCGO){
 	  CGOFree(rec->gridSlotSelIndicatorsCGO);	  
-	  rec->gridSlotSelIndicatorsCGO = NULL;
-	}	
       }
     }
   }
@@ -8614,16 +8614,19 @@ static void ExecutiveRenderIndicatorCGO(PyMOLGlobals * G, CGO *selIndicatorsCGO)
   float text_texture_dim = TextureGetTextTextureSize(G);
   float textureScale;
   int no_depth = (int) SettingGetGlobal_f(G, cSetting_selection_overlay);
-  shaderPrg = CShaderPrg_Enable_IndicatorShader(G);
+  shaderPrg = G->ShaderMgr->Enable_IndicatorShader();
   if (!shaderPrg)return;
   glEnable(GL_POINT_SPRITE);
   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-  CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-  CShaderPrg_SetAttrib4fLocation(shaderPrg, "a_Color", 1.f, 1.f, 1.f, 1.f);
-  CShaderPrg_Set1f(shaderPrg, "g_pointSize", DIP2PIXEL(I->selectorTextureSize));
-  CShaderPrg_Set2f(shaderPrg, "textureLookup", I->selectorTexturePosX/text_texture_dim, I->selectorTexturePosY/text_texture_dim);
+  shaderPrg->SetLightingEnabled(0);
+  shaderPrg->SetAttrib4fLocation("a_Color", 1.f, 1.f, 1.f, 1.f);
+  shaderPrg->Set1f("g_pointSize", DIP2PIXEL(I->selectorTextureSize));
+  shaderPrg->Set2f("textureLookup", I->selectorTexturePosX/text_texture_dim, I->selectorTexturePosY/text_texture_dim);
   textureScale = I->selectorTextureSize/text_texture_dim ;
-  CShaderPrg_Set2f(shaderPrg, "textureScale", textureScale, textureScale);
+  shaderPrg->Set2f("textureScale", textureScale, textureScale);
+  int v[4];
+  glGetIntegerv(GL_VIEWPORT, v);
+  shaderPrg->Set4f("viewport", v[0], v[1], v[2], v[3]);
   if(no_depth)
     glDisable(GL_DEPTH_TEST);
   CGORenderGL(selIndicatorsCGO, NULL, NULL, NULL, NULL, NULL);
@@ -8631,7 +8634,7 @@ static void ExecutiveRenderIndicatorCGO(PyMOLGlobals * G, CGO *selIndicatorsCGO)
     glEnable(GL_DEPTH_TEST);
   glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
   glDisable(GL_POINT_SPRITE);
-  CShaderPrg_Disable(shaderPrg);
+  shaderPrg->Disable();
 }
 
 static void ExecutiveSetupIndicatorPassGLImmediate(PyMOLGlobals * G, SpecRec *rec, int pass, float gl_width, int width){
@@ -8741,18 +8744,12 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
     inv_indicators = true;
   }
   if (inv_indicators){
-    if (I->selIndicatorsCGO){
       CGOFree(I->selIndicatorsCGO);
-      I->selIndicatorsCGO = NULL;
-    }
     if (slot){
       while(ListIterate(I->Spec, rec, next)) {
 	if(rec->type == cExecObject) {
 	  if (SceneGetDrawFlagGrid(G, grid, rec->obj->grid_slot)){
-	    if (rec->gridSlotSelIndicatorsCGO){
 	      CGOFree(rec->gridSlotSelIndicatorsCGO);
-	      rec->gridSlotSelIndicatorsCGO = NULL;
-	    }
 	  }
 	}
       }
@@ -8881,15 +8878,14 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
 			    CGOStop(rec1->gridSlotSelIndicatorsCGO);
 			    drawArrayCGO = CGOCombineBeginEnd(rec1->gridSlotSelIndicatorsCGO, 0);
 			    CGOFree(rec1->gridSlotSelIndicatorsCGO);
-			    rec1->gridSlotSelIndicatorsCGO = CGOOptimizeToVBONotIndexed(drawArrayCGO, 0);
+			    rec1->gridSlotSelIndicatorsCGO = CGOOptimizeToVBONotIndexedNoShader(drawArrayCGO, 0);
 			    CGOFree(drawArrayCGO);
 			    rec1->gridSlotSelIndicatorsCGO->use_shader = true;
 			    ExecutiveRenderIndicatorCGO(G, rec1->gridSlotSelIndicatorsCGO);
 			  }
 			}
-		      } else if (rec1->gridSlotSelIndicatorsCGO){
+		      } else {
 			CGOFree(rec1->gridSlotSelIndicatorsCGO);
-			rec1->gridSlotSelIndicatorsCGO = NULL;
 		      }
 		    }
 		  }
@@ -8901,7 +8897,7 @@ void ExecutiveRenderSelections(PyMOLGlobals * G, int curState, int slot, GridInf
 		    CGOStop(I->selIndicatorsCGO);
 		    drawArrayCGO = CGOCombineBeginEnd(I->selIndicatorsCGO, 0);
 		    CGOFree(I->selIndicatorsCGO);
-		    I->selIndicatorsCGO = CGOOptimizeToVBONotIndexed(drawArrayCGO, 0);
+		    I->selIndicatorsCGO = CGOOptimizeToVBONotIndexedNoShader(drawArrayCGO, 0);
 		    CGOFree(drawArrayCGO);
 		    if (I->selIndicatorsCGO){
 		      I->selIndicatorsCGO->use_shader = true;
@@ -9854,10 +9850,15 @@ int ExecutiveStereo(PyMOLGlobals * G, int flag)
   int stereo_mode;
 
   switch (flag) {
+  case -3:
+    SettingSet(G, cSetting_chromadepth, 1);
+    SceneSetStereo(G, 0);
+    break;
   case -1:
     SettingSetGlobal_f(G, cSetting_stereo_shift, -SettingGetGlobal_f(G, cSetting_stereo_shift));
     break;
   default:                     /* -2 */
+    SettingSet(G, cSetting_chromadepth, 0);
     {
       stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
       switch (stereo_mode) {
@@ -9875,6 +9876,10 @@ int ExecutiveStereo(PyMOLGlobals * G, int flag)
       }
     }
   }
+
+  // for chromadepth
+  G->ShaderMgr->Set_Reload_Bits(RELOAD_VARIABLES);
+
   SceneDirty(G);
   return (ok);
 }
@@ -10866,6 +10871,12 @@ int ExecutiveIterateState(PyMOLGlobals * G, int state, const char *str1, const c
       op1.i3 = read_only;
       op1.i4 = atomic_props;
       ExecutiveObjMolSeleOp(G, sele1, &op1);
+    }
+    if(!read_only) {
+#ifndef _PYMOL_NO_UNDO
+#endif
+      // for dynamic_measures
+      ExecutiveUpdateCoordDepends(G, NULL);
     }
     if(!quiet) {
       if(!read_only) {
@@ -11955,7 +11966,7 @@ int ExecutiveRay(PyMOLGlobals * G, int width, int height, int mode,
   if(defer && (mode == 0)) {
     SceneDeferRay(G, width, height, mode, angle, shift, quiet, true, antialias);
   } else {
-    SceneDoRay(G, width, height, mode, NULL, NULL, angle, shift, quiet, NULL, true,
+    SceneRay(G, width, height, mode, NULL, NULL, angle, shift, quiet, NULL, true,
                antialias);
   }
   return 1;
@@ -12482,6 +12493,15 @@ int ExecutiveSetSetting(PyMOLGlobals * G, int index, PyObject * tuple, const cha
                 *(float *) op.ii1 = (float) PyFloat_AsDouble(value);
                 op.i2 = cSetting_float;
                 have_atomic_value = true;
+                break;
+              case cSetting_float3:
+		{
+		  PConvPyListOrTupleToFloatArrayInPlace(value, op.ttt, 3);
+		  op.mat1 = op.ttt; // for passing (float**)
+		  op.ii1 = (int*) &op.mat1;
+		  op.i2 = cSetting_float3;
+		  have_atomic_value = true;
+		}
                 break;
               case cSetting_color:
                 {
@@ -15176,6 +15196,16 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
     if(SettingGetGlobal_b(G, cSetting_internal_gui_mode) == 1)
       return SceneDeferClick(SceneGetBlock(G), button, x, y, mod);
   }
+
+  switch(button) {
+    case P_GLUT_BUTTON_SCROLL_FORWARD:
+      ScrollBarMoveBy(I->ScrollBar, -1);
+      return 1;
+    case P_GLUT_BUTTON_SCROLL_BACKWARD:
+      ScrollBarMoveBy(I->ScrollBar, 1);
+      return 1;
+  }
+
   n = ((I->Block->rect.top - y) - (ExecTopMargin + ExecClickMargin)) / ExecLineHeight;
   a = n;
   xx = (x - I->Block->rect.left);
@@ -16643,6 +16673,7 @@ int ExecutiveReinitialize(PyMOLGlobals * G, int what, const char *pattern)
       ExecutiveDelete(G, cKeywordAll);
       ColorReset(G);
       SettingInitGlobal(G, false, false, true);
+      ColorUpdateFrontFromSettings(G);
       MovieReset(G);
       EditorInactivate(G);
       ControlRock(G, 0);

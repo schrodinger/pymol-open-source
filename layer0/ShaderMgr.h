@@ -21,6 +21,31 @@ Z* -------------------------------------------------------------------
 #include "Executive_pre.h"
 #include "OVContext.h"
 #include "Rep.h"
+#include "GenericBuffer.h"
+#include "SceneDef.h"
+#include <map>
+#include <set>
+#include <string>
+#include <unordered_map>
+
+#ifdef _WEBGL
+#define GET_FRAGDEPTH_SUPPORT() webpymol_get_fragdepth_support()
+#elif defined(_PYMOL_IOS)
+#define GET_FRAGDEPTH_SUPPORT() 0
+#else
+#define GET_FRAGDEPTH_SUPPORT() 1
+#endif
+
+#if !defined(_WEBGL)
+#include <mutex>
+#define LOCK_GUARD_MUTEX(name, var) std::lock_guard<std::mutex> name(var)
+#else
+#define LOCK_GUARD_MUTEX(name, var)
+#endif
+
+#ifndef GL_FRAGMENT_PROGRAM_ARB
+#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
+#endif
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #if 0
@@ -35,200 +60,312 @@ static PFNGLGETPROGRAMIVARBPROC glGetProgramivARB;
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
-typedef struct _CShaderPrg {
-  PyMOLGlobals * G;
-  /* for retrieving from the ShaderMgr */
-  char * name;
-  /* openGL assigned id */
-  int id;
-  /* openGL fragment and vertex shader ids */
-  GLuint vid;
-  GLuint fid;
-  /* fragment and vertex source */
-  char * f;
-  char * v;
-  struct _CShaderPrg * prev;
-  struct _CShaderPrg * next;
-  int uniform_set ;
-} CShaderPrg;
+class CShaderPrg {
+public:
+  const std::string name, geomfile, vertfile, fragfile;
 
-class CShaderMgr {
+  std::map<int, std::string> uniformLocations;
+
+  GLenum gsInput, gsOutput;
+  int ngsVertsOut;
+
+  std::string derivative;
+  bool is_valid;
+  bool is_linked;
+
+  CShaderPrg(PyMOLGlobals * G_,
+             const std::string &name,
+             const std::string &vertfile,
+             const std::string &fragfile,
+             const std::string &geomfile = "",
+             GLenum gsInput = 0,
+             GLenum gsOutput = 0,
+             int ngsVertsOut = 0) :
+    name(name),
+    geomfile(geomfile), vertfile(vertfile), fragfile(fragfile),
+    gsInput(gsInput), gsOutput(gsOutput), ngsVertsOut(ngsVertsOut),
+    is_valid(false), is_linked(false), G(G_),
+    id(0), gid(0), vid(0), fid(0), uniform_set(0) {}
+
+  ~CShaderPrg() {}
+
+  bool reload();
+
+  /*
+   * Create a derivative copy. This will reload with ShaderMgr::Reload_Derivatives.
+   */
+  CShaderPrg * DerivativeCopy(const std::string &name, const std::string &variable) {
+    CShaderPrg * copy = new CShaderPrg(G, name, vertfile, fragfile, geomfile, gsInput, gsOutput, ngsVertsOut);
+    copy->derivative = variable;
+    return copy;
+  }
+
+#ifdef _PYMOL_ARB_SHADERS
+  static CShaderPrg *NewARB(PyMOLGlobals * G, const char * name, const std::string& vert, const std::string& frag);
+  int DisableARB();
+#endif
+
+/* Enable */
+  int Enable();
+
+/* Disable */
+  int Disable();
+
+/* Link and IsLinked */
+  int Link();
+  int IsLinked();
+
+/* accessors/mutators/uniform setters */
+  int Set1i(const char * name, int i);
+  int Set1f(const char * name, float f);
+  int Set2f(const char * name, float f1, float f2);
+  int Set3f(const char * name, float f1, float f2, float f3);
+  int Set4fv(const char * name, float *f);
+  int Set3fv(const char * name, float *f);
+  int Set4f(const char * name, float f1, float f2, float f3, float f4);
+  int SetMat3fc(const char * name, const GLfloat * m);
+  int SetMat4fc(const char * name, const GLfloat * m);
+
+  int GetUniformLocation(const char * name);
+  int GetAttribLocation(const char * name);
+  void SetAttrib4fLocation(const char * name, float f1, float f2, float f3, float f4);
+  void SetAttrib1fLocation(const char * name, float f1);
+
+  int SetLightingEnabled(int);
+  void SetBgUniforms();
+  void Set_Stereo_And_AnaglyphMode();
+  void Set_AnaglyphMode(int mode);
+  void Set_Matrices();
+  void Set_Specular_Values();
+
+  void Invalidate();
+  void ErrorMsgWithShaderInfoLog(const GLuint sid, const char * msg);
+
 public:
   PyMOLGlobals * G;
-  CShaderPrg * programs;
-  int ShadersPresent;
-  GLuint *vbos_to_free;
-  int number_of_vbos_to_free;
-  CShaderPrg *current_shader;
-  int stereo_flag; /* -1 left; 0 = off; 1 = right */
-  int is_picking;
 
-  /* These lookups and arrays are used to dynamically change the shaders
-     based on preprocessor-like statements within the shaders.  These need
-     string lookups. */
-  OVLexicon *ShaderLex;
-  OVOneToOne *ShaderLexLookup;
-  char **shader_replacement_strings;
-  int *shader_include_values;
-  char **shader_update_when_include_filename;
-  char **shader_update_when_include;
-  char **shader_update_replace_with;
-  short print_warnings;
-  int reload_bits;
+  /* openGL assigned id */
+  int id;
+
+  /* openGL fragment and vertex shader ids */
+  GLuint gid;
+  GLuint vid;
+  GLuint fid;
+
+  std::map<std::string, int> uniforms;
+  std::map<std::string, int> attributes;
+
+  int uniform_set ; // bitmask
 };
-
-#include "OVreturns.h"
-
-/* ShaderMgrInit -- Called from PyMOL.c, allocates and attaches to G->ShaderMgr
- */
-OVstatus ShaderMgrInit(PyMOLGlobals * G);
-
-/* ShaderMgrConfig -- Called from PyMOL.c, configures the global ShaderMgr;
- */
-void ShaderMgrConfig(PyMOLGlobals * G);
 
 /* ============================================================================
  * CShaderMgr class -- simple ShaderMgr for PyMOL
  * ============================================================================*/
+class CShaderMgr {
+public:
+  CShaderMgr(PyMOLGlobals * G);
+  ~CShaderMgr();
 
-/* New */
-CShaderMgr * CShaderMgr_New(PyMOLGlobals * G);
+  void Config();
+  void Set_Reload_Bits(int bits);
+  void Check_Reload();
+  GLfloat *GetLineWidthRange();
 
-#ifdef _PYMOL_ARB_SHADERS
-CShaderPrg * CShaderPrg_NewARB(PyMOLGlobals * G, const char * name, const char * v, const char * f);
-int CShaderPrg_DisableARB(CShaderPrg *I);
+  template <typename T, typename... TArgs>
+  T * newGPUBuffer(TArgs&&... args) {
+    std::hash<gpuBuffer_t *> hash_fn;
+    T * buffer = new T(std::forward<TArgs>(args)...);
+    auto bufptr = dynamic_cast<gpuBuffer_t *>(buffer);
+    const size_t hashid = hash_fn(bufptr);
+    buffer->set_hash_id(hashid);
+    _gpu_object_map[hashid] = buffer;
+    return buffer;
+  }
+
+  template <typename T>
+  T * getGPUBuffer(size_t hashid) {
+    auto search = _gpu_object_map.find(hashid);
+    if (search != _gpu_object_map.end())
+      return dynamic_cast<T*>(search->second);
+    else
+      return nullptr;
+  }
+
+  void bindGPUBuffer(size_t hashid);
+  void freeGPUBuffer(size_t handle);
+  void freeGPUBuffers(std::vector<size_t> && handles);
+  void freeGPUBuffers(size_t * arr, size_t len);
+
+#ifndef _PYMOL_NO_AA_SHADERS
+  bool Reload_SMAA_Shaders();
+  int SMAAShadersPresent();
+  CShaderPrg *Enable_FXAAShader();
+  CShaderPrg *Enable_SMAA1Shader();
+  CShaderPrg *Enable_SMAA2Shader();
+  CShaderPrg *Enable_SMAA3Shader();
+  CShaderPrg *Enable_SMAAShader(const char *shaderName);
 #endif
-
-/* Delete */
-void CShaderMgr_Delete(CShaderMgr * I);
-void CShaderMgrFree(PyMOLGlobals *G);
+  void Reload_Shader_Variables();
 
 /* AddShader -- Adds to the global shader library */ 
-int CShaderMgr_AddShaderPrg(CShaderMgr * I, CShaderPrg * s);
+  int AddShaderPrg(CShaderPrg * s);
 
 /* RemoveShader -- Removes shader program by name */
-int CShaderMgr_RemoveShaderPrg(CShaderMgr * I, const char * name);
+  int RemoveShaderPrg(const std::string& name);
 
 /* GetShaderPrg -- gets a ptr to the installed shader */
-CShaderPrg * CShaderMgr_GetShaderPrg(CShaderMgr * I, const char * name);
-CShaderPrg * CShaderMgr_GetShaderPrg_NoSet(CShaderMgr * I, const char * name);
-int CShaderMgr_ShaderPrgExists(CShaderMgr * I, const char * name);
+  CShaderPrg * GetShaderPrg(std::string name, short set_current_shader = 1, short pass = 0);
+
+  int ShaderPrgExists(const char * name);
 
 /* runtime check for shaders */
-int CShaderMgr_ShadersPresent(CShaderMgr * I);
+  int ShadersPresent();
+  int GeometryShadersPresent();
 
-/* ============================================================================
- * CShaderPrg class -- a simple facade that wraps a shader and shader program
- * into a simple API
- * ============================================================================*/
+  void AddVBOsToFree(GLuint *vboid, int nvbos);
+  void AddVBOToFree(GLuint vboid);
+  void FreeAllVBOs();
 
-/* New -- from shader source strings */
-CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v, const char * f);
-
-/* New -- from files on disk */
-CShaderPrg * CShaderPrg_NewFromFile(PyMOLGlobals * G, const char * name, const char * vFile, const char * fFile);
-
-/* Delete */
-void CShaderPrg_Delete(CShaderPrg * I);
-
-/* Enable */
-int CShaderPrg_Enable(CShaderPrg * I);
-
-/* Disable */
-int CShaderPrg_Disable(CShaderPrg * I);
-
-/* Link and IsLinked */
-int CShaderPrg_Link(CShaderPrg * I);
-int CShaderPrg_IsLinked(CShaderPrg * I);
-
-/* accessors/mutators/uniform setters */
-int CShaderPrg_Set1i(CShaderPrg * I, const char * name, int i);
-int CShaderPrg_Set1f(CShaderPrg * I, const char * name, float f);
-int CShaderPrg_Set2f(CShaderPrg * I, const char * name, float f1, float f2);
-int CShaderPrg_Set3f(CShaderPrg * I, const char * name, float f1, float f2, float f3);
-int CShaderPrg_Set4fv(CShaderPrg * p, const char * name, float *f);
-int CShaderPrg_Set3fv(CShaderPrg * p, const char * name, float *f);
-int CShaderPrg_Set4f(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4);
-int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, const GLfloat * m);
-int CShaderPrg_SetMat4f(CShaderPrg * p, const char * name, GLfloat * m);
-//int CShaderPrg_SetTexture2D(CShaderPrg * p, const char * name, GLuint );
-
-int CShaderPrg_SetMat3fc(CShaderPrg * p, const char * name, GLfloat * m);
-int CShaderPrg_SetMat4fc(CShaderPrg * p, const char * name, GLfloat * m);
-
-int CShaderPrg_GetAttribLocation(CShaderPrg * p, const char * name);
-void CShaderPrg_SetAttrib4fLocation(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4);
-void CShaderPrg_SetAttrib1fLocation(CShaderPrg * p, const char * name, float f1);
-
-int CShaderPrg_SetLightingEnabled(CShaderPrg * p, int);
-
-void CShaderMgr_AddVBOsToFree(CShaderMgr * I, GLuint *vboid, int nvbos);
-void CShaderMgr_AddVBOToFree(CShaderMgr * I, GLuint vboid);
-void CShaderMgr_FreeAllVBOs(CShaderMgr * I);
-
-void CShaderPrg_Set_Stereo_And_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shaderPrg);
-
-CShaderPrg *CShaderPrg_Enable_DefaultShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Enable_DefaultShaderWithSettings(PyMOLGlobals * G,
-    const CSetting * set1,
-    const CSetting * set2);
-CShaderPrg *CShaderPrg_Enable_DefaultScreenShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Enable_DefaultSphereShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Enable_SphereShader(PyMOLGlobals * G, char *name);
+  CShaderPrg *Enable_DefaultShader(int pass);
+  CShaderPrg *Enable_LineShader(int pass);
+  CShaderPrg *Enable_SurfaceShader(int pass);
+  CShaderPrg *Enable_DefaultShaderWithSettings(const CSetting * set1, const CSetting * set2, int pass);
+  CShaderPrg *Enable_CylinderShader(const char *, int pass);
+  CShaderPrg *Enable_CylinderShader(int pass);
+  CShaderPrg *Enable_DefaultSphereShader(int pass);
 #ifdef _PYMOL_ARB_SHADERS
-CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G);
+  CShaderPrg *Enable_SphereShaderARB();
 #endif
-CShaderPrg *CShaderPrg_Enable_RampShader(PyMOLGlobals * G);
+  CShaderPrg *Enable_RampShader();
+  CShaderPrg *Enable_ConnectorShader(int pass);
+  CShaderPrg *Enable_TriLinesShader();
+  CShaderPrg *Enable_ScreenShader();
+  CShaderPrg *Enable_LabelShader(int pass);
+  CShaderPrg *Enable_OITShader();
+  CShaderPrg *Enable_OITCopyShader();
+  CShaderPrg *Enable_IndicatorShader();
+  CShaderPrg *Enable_BackgroundShader();
 
-CShaderPrg *CShaderPrg_Get_ScreenShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_DefaultShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_DefaultScreenShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_CylinderShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_CylinderShader_NoSet(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_DefaultSphereShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_RampShader(PyMOLGlobals * G);
+  CShaderPrg *Get_ScreenShader();
+  CShaderPrg *Get_ConnectorShader(int pass);
+  CShaderPrg *Get_DefaultShader(int pass);
+  CShaderPrg *Get_LineShader(int pass);
+  CShaderPrg *Get_SurfaceShader(int pass);
+  CShaderPrg *Get_CylinderShader(int pass, short set_current_shader=1);
+  CShaderPrg *Get_CylinderNewShader(int pass, short set_current_shader=1);
+  CShaderPrg *Get_DefaultSphereShader(int pass);
+  CShaderPrg *Get_RampShader();
+  CShaderPrg *Get_Current_Shader();
+  CShaderPrg *Get_IndicatorShader();
+  CShaderPrg *Get_BackgroundShader();
+  CShaderPrg *Get_LabelShader(int pass);
 
-CShaderPrg *CShaderPrg_Get_Current_Shader(PyMOLGlobals * G);
+  void Reload_CallComputeColorForLight();
+  void Reload_All_Shaders();
 
-CShaderPrg *CShaderPrg_Get_IndicatorShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Enable_IndicatorShader(PyMOLGlobals * G);
+  void Invalidate_All_Shaders();
 
-CShaderPrg *CShaderPrg_Enable_BackgroundShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_BackgroundShader(PyMOLGlobals * G);
+  void ResetUniformSet();
 
-CShaderPrg *CShaderPrg_Enable_ScreenShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Enable_LabelScreenShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Enable_LabelShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_LabelShader(PyMOLGlobals * G);
-CShaderPrg *CShaderPrg_Get_LabelScreenShader(PyMOLGlobals * G);
+  void CShaderPrg_SetIsPicking(int is_picking);
 
-void ShaderMgrResetUniformSet(PyMOLGlobals * G);
+  void Generate_LightingTexture();
 
-void CShaderPrg_SetIsPicking(PyMOLGlobals * G, int is_picking);
-void CShaderPrg_SetFogUniforms(PyMOLGlobals * G, CShaderPrg * shaderPrg);
-void CShaderPrg_Update_Shaders_For_Background(PyMOLGlobals *G);
-int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f);
-void CShaderMgr_Reload_Default_Shader(PyMOLGlobals *G);
-void CShaderMgr_Reload_Cylinder_Shader(PyMOLGlobals *G);
-void CShaderMgr_Reload_Sphere_Shader(PyMOLGlobals *G);
-void CShaderMgr_Reload_Indicator_Shader(PyMOLGlobals *G);
-void CShaderMgr_Reload_Shader_Variables(PyMOLGlobals * G);
-void CShaderPrg_Reload_CallComputeColorForLight(PyMOLGlobals * G, char *name);
-void CShaderPrg_Reload_All_Shaders_For_CallComputeColorForLight(PyMOLGlobals * G);
-void CShaderPrg_Reload_All_Shaders(PyMOLGlobals * G);
-void CShaderMgr_Set_Reload_Bits(PyMOLGlobals *G, int bits);
-void CShaderMgr_Check_Reload(PyMOLGlobals *G);
+  std::string GetShaderSource(const std::string &filename);
+
+  CShaderPrg *Setup_LabelShader(CShaderPrg *shaderPrg);
+  CShaderPrg *Setup_DefaultShader(CShaderPrg *shaderPrg, const CSetting *set1, const CSetting *set2);
+
+  void SetIsPicking(int is_picking);
+  int GetIsPicking();
+
+  void SetPreprocVar(const std::string &key, bool value, bool invshaders = true);
+
+private:
+  void freeAllGPUBuffers();
+  void RegisterDependantFileNames(CShaderPrg * shader);
+  void CollectDependantFileNames(const std::string &filename, std::vector<std::string> &filenames);
+  void MakeDerivatives(const std::string &suffix, const std::string &variable);
+  void Reload_Derivatives(const std::string &variable, bool value = true);
+  void ShaderSourceInvalidate(const char * filename, bool invshaders = true);
+  void SetShaderSource(const char * filename, const std::string &contents);
+
+public:
+  PyMOLGlobals * G;
+  int shaders_present;
+
+#ifndef _WEBGL
+  // for deleting buffers in the correct thread
+  std::vector<GLuint> vbos_to_free;
+  std::mutex vbos_to_free_mutex;
+  std::mutex gpu_objects_to_free_mutex;
+#endif
+
+  CShaderPrg *current_shader;
+  int is_picking;
+  GLuint lightingTexture;
+
+  /* These lookups and arrays are used to dynamically change the shaders
+     based on preprocessor-like statements within the shaders.  These need
+     string lookups. */
+
+private:
+  // filename -> processed shader source, for #include preprocessor
+  std::map<std::string, std::string> shader_cache_processed;
+
+  // variable -> boolean value for #ifdef preprocessor
+  std::map<std::string, bool> preproc_vars;
+
+  std::unordered_map<size_t, gpuBuffer_t*> _gpu_object_map;
+  std::vector<size_t> _gpu_objects_to_free_vector;
+public:
+  std::map<std::string, CShaderPrg*> programs;
+
+  std::map<int, std::string> attribute_uids;
+  std::map<const std::string, int> attribute_uids_by_name;
+  int GetAttributeUID(const char * name);
+  const char *GetAttributeName(int);
+
+  short print_warnings;
+  int reload_bits;
+  GLfloat line_width_range[2];
+  short stereo_flag; /* -1 left; 0 = off; 1 = right */
+  short stereo_blend;  /* 0 - no blend, 1 - blend  : for right eye stereo in full-screen e.g., anaglyph */
+  bool stereo_draw_buffer_pass;
+  GLint default_framebuffer_id { 0 };
+private:
+  bool is_configured { false };
+public:
+  bool IsConfigured(){ return is_configured; }
+  // filename -> used by shader
+  std::map<std::string, std::vector<std::string> > shader_deps;
+
+  // Post process render targets
+  size_t offscreen_rt[3];
+  ivec2 offscreen_size;
+
+  size_t oit_rt[2];
+  ivec2 oit_size;
+
+  size_t areatex { 0 };
+  size_t searchtex { 0 };
+
+  void bindOffscreen(int width, int height, GridInfo * grid);
+  void bindOffscreenOIT(int width, int height, int drawbuf = 0);
+  void bindOffscreenFBO(int index);
+  void bindOffscreenOITFBO(int index);
+  void bindOffscreenTexture(int index);
+  void bindOffscreenOITTexture(int index);
+};
+
+bool ShaderMgrInit(PyMOLGlobals * G);
 
 /* for reload_bits */
-//RELOAD_ALL_SHADERS calls CShaderPrg_Reload_All_Shaders
-#define RELOAD_ALL_SHADERS 1
-//RELOAD_SHADERS_FOR_LIGHTING calls CShaderPrg_Reload_All_Shaders_For_CallComputeColorForLight
-#define RELOAD_SHADERS_FOR_LIGHTING 2
-//RELOAD_SHADERS_UPDATE_FOR_BACKGROUND calls CShaderPrg_Update_Shaders_For_Background
-#define RELOAD_SHADERS_UPDATE_FOR_BACKGROUND 4
-//RELOAD_SHADERS_CYLINDER calls CShaderMgr_Reload_Cylinder_Shader
-#define RELOAD_SHADERS_CYLINDER 8
+enum {
+  RELOAD_VARIABLES              = 0x01,
+  RELOAD_CALLCOMPUTELIGHTING    = 0x02,
+  RELOAD_ALL_SHADERS            = 0xff,
+};
 
 #define VERTEX_POS_SIZE    3
 #define VERTEX_COLOR_SIZE  4
@@ -237,9 +374,15 @@ void CShaderMgr_Check_Reload(PyMOLGlobals *G);
 #define VERTEX_NORMAL 1
 #define VERTEX_COLOR  2
 
-#define CYLINDER_ORIGIN 0
-#define CYLINDER_AXIS   1
-#define CYLINDER_COLOR  2
-#define CYLINDER_COLOR2 3
+#define CYLINDER_VERTEX1 0
+#define CYLINDER_VERTEX2 1
+#define CYLINDER_COLOR   2
+#define CYLINDER_COLOR2  3
+#define CYLINDER_RADIUS  4
+#define CYLINDER_CAP     5
+
+#define RAMP_OFFSETPT 0
+
 #endif
 
+// vi:sw=2:expandtab

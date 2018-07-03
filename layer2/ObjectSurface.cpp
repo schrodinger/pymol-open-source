@@ -231,6 +231,9 @@ static void ObjectSurfaceStateFree(ObjectSurfaceState * ms)
   FreeP(ms->RC);
   VLAFreeP(ms->AtomVertex);
   CGOFree(ms->UnitCellCGO);
+
+  FreeP(ms->t_buf);
+  FreeP(ms->c_buf);
 }
 
 static void ObjectSurfaceFree(ObjectSurface * I)
@@ -307,9 +310,17 @@ static void ObjectSurfaceInvalidate(ObjectSurface * I, int rep, int level, int s
       I->State[state].RefreshFlag = true;
       if(level >= cRepInvRep) {
         I->State[state].ResurfaceFlag = true;
+	if(I->State[state].shaderCGO){
+	  CGOFree(I->State[state].shaderCGO);
+	  I->State[state].shaderCGO = 0;
+	}
         SceneChanged(I->Obj.G);
       } else if(level >= cRepInvColor) {
         I->State[state].RecolorFlag = true;
+	if(I->State[state].shaderCGO){
+	  CGOFree(I->State[state].shaderCGO);
+	  I->State[state].shaderCGO = 0;
+	}
         SceneChanged(I->Obj.G);
       } else {
         SceneInvalidate(I->Obj.G);
@@ -497,11 +508,13 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
           ObjectStateResetMatrix(&ms->State);
         }
 
-        if(ms->RefreshFlag || ms->ResurfaceFlag) {
+        if(I->Obj.visRep & cRepCellBit){
+          if (!ms->UnitCellCGO || ms->RefreshFlag || ms->ResurfaceFlag) {
           ms->Crystal = *(oms->Symmetry->Crystal);
           if((I->Obj.visRep & cRepCellBit)) {
             CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
+          }
           }
           ms->RefreshFlag = false;
         }
@@ -670,6 +683,266 @@ static void ObjectSurfaceUpdate(ObjectSurface * I)
   SceneInvalidate(I->Obj.G);
 }
 
+static void ObjectSurfaceRenderGlobalTransparency(PyMOLGlobals * G,
+    RenderInfo * info, ObjectSurfaceState *ms, float *col, float alpha)
+{
+  float *v = NULL;
+  float *vc = NULL;
+  int c, *n;
+
+  v = ms->V;
+  vc = ms->VC;
+  n = ms->N;
+  
+  while(*n) {
+    int parity = 1;
+    c = *(n++);
+
+    v += 6;
+    if(vc)
+      vc += 3;
+    c -= 2;
+
+    v += 6;
+    if(vc)
+      vc += 3;
+    c -= 2;
+
+    while(c > 0) {
+      if(vc) {
+        CGOAlphaTriangle(info->alpha_cgo,
+                         v + (3 - 6), v + (3 - 12), v + 3,
+                         v - 6, v - 12, v,
+                         vc - 3, vc - 6, vc,
+                         alpha, alpha, alpha, parity);
+      } else {
+        CGOAlphaTriangle(info->alpha_cgo,
+                         v + (3 - 6), v + (3 - 12), v + 3,
+                         v - 6, v - 12, v,
+                         col, col, col,
+                         alpha, alpha, alpha, parity);
+      }
+      v += 6;
+      if(vc)
+        vc += 3;
+      c -= 2;
+      parity = !parity;
+    }
+  }
+}
+
+static void ObjectSurfaceRenderUnOptimizedTransparency(ObjectSurfaceState *ms, float alpha){
+  float *v = NULL;
+  float *vc = NULL;
+  int c, *n;
+
+  v = ms->V;
+  vc = ms->VC;
+  n = ms->N;
+
+  while(*n) {
+    c = *(n++);
+    CGOBegin(ms->shaderCGO, GL_TRIANGLE_STRIP);
+    while(c > 0) {
+      CGONormalv(ms->shaderCGO, v);
+      v += 3;
+      if(vc) {
+        CGOColorv(ms->shaderCGO, vc);
+        vc += 3;
+      }
+      CGOVertexv(ms->shaderCGO, v);
+      v += 3;
+      c -= 2;
+    }
+    CGOEnd(ms->shaderCGO);
+  }
+}
+
+static void ObjectSurfaceRenderOpaque(PyMOLGlobals * G, ObjectSurface * I, ObjectSurfaceState *ms){
+  float *v = NULL;
+  float *vc = NULL;
+  int c, *n;
+  v = ms->V;
+  n = ms->N;
+  CGOSpecial(ms->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
+  vc = ms->VC;
+
+  while(*n) {
+    c = *(n++);
+    switch (ms->Mode) {
+    case 3:
+    case 2:
+      CGOBegin(ms->shaderCGO, GL_TRIANGLE_STRIP);
+      while(c > 0) {
+        CGONormalv(ms->shaderCGO, v);
+        v += 3;
+        if(vc) {
+          CGOColorv(ms->shaderCGO, vc);
+          vc += 3;
+        }
+        CGOVertexv(ms->shaderCGO, v);
+        v += 3;
+        c -= 2;
+      }
+      CGOEnd(ms->shaderCGO);
+      break;
+    case 1:
+      CGOBegin(ms->shaderCGO, GL_LINES);
+      while(c > 0) {
+        if(vc) {
+          CGOColorv(ms->shaderCGO, vc);
+          vc += 3;
+        }
+        CGOVertexv(ms->shaderCGO, v);
+        v += 3;
+        c--;
+      }
+      CGOEnd(ms->shaderCGO);
+      break;
+    case 0:
+    default:
+      CGOBegin(ms->shaderCGO, GL_POINTS);
+      while(c > 0) {
+        if(vc) {
+          CGOColorv(ms->shaderCGO, vc);
+          vc += 3;
+        }
+        CGOVertexv(ms->shaderCGO, v);
+        v += 3;
+        c--;
+      }
+      CGOEnd(ms->shaderCGO);
+    }
+  }
+}
+
+static void ObjectSurfaceRenderRay(PyMOLGlobals * G, ObjectSurface *I,
+    RenderInfo * info, ObjectSurfaceState *ms)
+{
+  float *v = ms->V;
+  float *vc = ms->VC;
+  int *rc;
+  int c, *n = ms->N;
+  float alpha = 1.0F - SettingGet_f(G, NULL, I->Obj.Setting, cSetting_transparency);
+  if(fabs(alpha - 1.0) < R_SMALL4)
+    alpha = 1.0F;
+
+
+  CRay *ray = info->ray;
+  if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)){
+    int rayok = CGORenderRay(ms->UnitCellCGO, ray, info, ColorGet(G, I->Obj.Color),
+                             NULL, I->Obj.Setting, NULL);
+    if (!rayok){
+      CGOFree(ms->UnitCellCGO);
+    }
+  }
+  
+  ray->transparentf(1.0F - alpha);
+  ms->Radius = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_mesh_radius);
+  if(ms->Radius == 0.0F) {
+    ms->Radius = ray->PixelRadius *
+      SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_width) / 2.0F;
+  }
+  
+  if(n && v && (I->Obj.visRep & cRepSurfaceBit)) {
+    float cc[3];
+    float colA[3], colB[3], colC[3];
+    ColorGetEncoded(G, ms->OneColor, cc);
+    vc = ms->VC;
+    
+    rc = ms->RC;
+    while(*n) {
+      c = *(n++);
+      switch (ms->Mode) {
+      case 3:
+      case 2:
+        v += 12;
+        if(vc)
+          vc += 6;
+        c -= 4;
+        while(c > 0) {
+          if(vc) {
+            float *cA = vc - 6, *cB = vc - 3, *cC = vc;
+            if(rc) {
+              if(rc[0] < -1)
+                ColorGetEncoded(G, rc[0], (cA = colA));
+              if(rc[1] < -1)
+                ColorGetEncoded(G, rc[1], (cB = colB));
+              if(rc[2] < -1)
+                ColorGetEncoded(G, rc[2], (cC = colC));
+              rc++;
+            }
+            ray->triangle3fv(v - 9, v - 3, v + 3,
+                             v - 12, v - 6, v, cA, cB, cC);
+            vc += 3;
+          } else {
+            ray->triangle3fv(v - 9, v - 3, v + 3,
+                             v - 12, v - 6, v, cc, cc, cc);
+          }
+          v += 6;
+          c -= 2;
+        }
+        break;
+      case 1:
+        c--;
+        v += 3;
+        if(vc)
+          vc += 3;
+        while(c > 0) {
+          if(vc) {
+            float *cA = vc - 3, *cB = vc;
+            if(rc) {
+              if(rc[0] < -1)
+                ColorGetEncoded(G, rc[0], (cA = colA));
+              if(rc[1] < -1)
+                ColorGetEncoded(G, rc[1], (cB = colB));
+              rc++;
+            }
+            ray->sausage3fv(v - 3, v, ms->Radius, cA, cB);
+            vc += 3;
+          } else
+            ray->sausage3fv(v - 3, v, ms->Radius, cc, cc);
+          v += 3;
+          c--;
+        }
+        break;
+      case 0:
+      default:
+        while(c > 0) {
+          if(vc) {
+            ray->color3fv(vc);
+            vc += 3;
+          }
+          ray->sphere3fv(v, ms->Radius);
+          v += 3;
+          c--;
+        }
+        break;
+      }
+    }
+  }
+  ray->transparentf(0.0);
+}
+
+static void ObjectSurfaceRenderCell(PyMOLGlobals *G, ObjectSurface * I,
+    RenderInfo * info, ObjectSurfaceState *ms, short use_shader)
+{
+  float *color = ColorGet(G, I->Obj.Color);
+  if (use_shader != ms->UnitCellCGO->has_draw_buffers){
+    if (use_shader){
+      CGO *convertcgo = CGOOptimizeToVBONotIndexed(ms->UnitCellCGO, 0);
+      CGOFree(ms->UnitCellCGO);
+      ms->UnitCellCGO = convertcgo;
+      ms->UnitCellCGO->use_shader = true;
+    } else {
+      CGOFree(ms->UnitCellCGO);
+      ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
+    }
+  }
+  CGORenderGL(ms->UnitCellCGO, color,
+              I->Obj.Setting, NULL, info, NULL);
+}
+
 static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -677,16 +950,10 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   int pass = info->pass;
-  float *v = NULL;
-  float *vc = NULL;
-  int *rc = NULL;
   float *col;
-  int *n = NULL;
-  int c;
   ObjectSurfaceState *ms = NULL;
   float alpha;
-
-  ObjectPrepareContext(&I->Obj, ray);
+  ObjectPrepareContext(&I->Obj, info);
 
   alpha = 1.0F - SettingGet_f(G, NULL, I->Obj.Setting, cSetting_transparency);
   if(fabs(alpha - 1.0) < R_SMALL4)
@@ -696,552 +963,89 @@ static void ObjectSurfaceRender(ObjectSurface * I, RenderInfo * info)
   while(iter.next()) {
     ms = I->State + iter.state;
     if(ms && ms->Active && ms->V && ms->N) {
-        v = ms->V;
-        n = ms->N;
-        if(ray) {
-          if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)){
-            CGORenderRay(ms->UnitCellCGO, ray, ColorGet(G, I->Obj.Color),
-                         I->Obj.Setting, NULL);
+      if(ray) {
+        ObjectSurfaceRenderRay(G, I, info, ms);
+      } else if(G->HaveGUI && G->ValidContext) {
+        if(!pick) {  // no picking for ObjectSurfaces
+          int render_now = false;
+          short use_shader;
+          use_shader = SettingGetGlobal_b(G, cSetting_surface_use_shader) & 
+            SettingGetGlobal_b(G, cSetting_use_shaders);
+
+          if(info && info->alpha_cgo) {
+            render_now = (pass == 1);
+            use_shader = false;
+          } else if(alpha < 1.0F) {
+            render_now = (pass == -1);
+          } else {
+            render_now = (pass == 1);
           }
 
-          ray->transparentf(1.0F - alpha);
-          ms->Radius = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_mesh_radius);
-          if(ms->Radius == 0.0F) {
-            ms->Radius = ray->PixelRadius *
-              SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_width) / 2.0F;
+          if((I->Obj.visRep & cRepCellBit) && ms->UnitCellCGO && (pass == 1)){
+            ObjectSurfaceRenderCell(G, I, info, ms, use_shader);
           }
 
-          if(n && v && (I->Obj.visRep & cRepSurfaceBit)) {
-            float cc[3];
-            float colA[3], colB[3], colC[3];
-            ColorGetEncoded(G, ms->OneColor, cc);
-            vc = ms->VC;
-
-            rc = ms->RC;
-            while(*n) {
-              c = *(n++);
-              switch (ms->Mode) {
-              case 3:
-              case 2:
-                v += 12;
-                if(vc)
-                  vc += 6;
-                c -= 4;
-                while(c > 0) {
-                  if(vc) {
-                    float *cA = vc - 6, *cB = vc - 3, *cC = vc;
-                    if(rc) {
-                      if(rc[0] < -1)
-                        ColorGetEncoded(G, rc[0], (cA = colA));
-                      if(rc[1] < -1)
-                        ColorGetEncoded(G, rc[1], (cB = colB));
-                      if(rc[2] < -1)
-                        ColorGetEncoded(G, rc[2], (cC = colC));
-                      rc++;
-                    }
-                    ray->triangle3fv(v - 9, v - 3, v + 3,
-                                      v - 12, v - 6, v, cA, cB, cC);
-                    vc += 3;
-                  } else {
-                    ray->triangle3fv(v - 9, v - 3, v + 3,
-                                      v - 12, v - 6, v, cc, cc, cc);
-                  }
-                  v += 6;
-                  c -= 2;
-                }
-                break;
-              case 1:
-                c--;
-                v += 3;
-                if(vc)
-                  vc += 3;
-                while(c > 0) {
-                  if(vc) {
-                    float *cA = vc - 3, *cB = vc;
-                    if(rc) {
-                      if(rc[0] < -1)
-                        ColorGetEncoded(G, rc[0], (cA = colA));
-                      if(rc[1] < -1)
-                        ColorGetEncoded(G, rc[1], (cB = colB));
-                      rc++;
-                    }
-                    ray->sausage3fv(v - 3, v, ms->Radius, cA, cB);
-                    vc += 3;
-                  } else
-                    ray->sausage3fv(v - 3, v, ms->Radius, cc, cc);
-                  v += 3;
-                  c--;
-                }
-                break;
-              case 0:
-              default:
-                while(c > 0) {
-                  if(vc) {
-                    ray->color3fv(vc);
-                    vc += 3;
-                  }
-                  ray->sphere3fv(v, ms->Radius);
-                  v += 3;
-                  c--;
-                }
-                break;
-              }
+          if(render_now) {
+            if (ms->shaderCGO && use_shader != ms->shaderCGO->has_draw_buffers){
+              CGOFree(ms->shaderCGO);
             }
 
-          }
-          ray->transparentf(0.0);
-        } else if(G->HaveGUI && G->ValidContext) {
-          if(pick) {
-          } else {
-            int render_now = false;
-            int t_mode;
-	    short use_shader, generate_shader_cgo = 0;
-	    use_shader = SettingGetGlobal_b(G, cSetting_surface_use_shader) & 
-	                 SettingGetGlobal_b(G, cSetting_use_shaders);
+            if (ms->shaderCGO){
+              CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
+              continue;
+            }
+            
+            // Generating CGO
+            ms->shaderCGO = CGONew(G);
+            ms->shaderCGO->use_shader = true;
 
-            t_mode = SettingGet_i(G, NULL, I->Obj.Setting, cSetting_transparency_mode);
+            CGOResetNormal(ms->shaderCGO, false);
 
-            if(info && info->alpha_cgo) {
-              render_now = (pass == 1);
-              t_mode = 0;
-	      use_shader = false;
-            } else if(alpha < 1.0F) {
-              render_now = (pass == -1);
-	      use_shader = false;
+            col = ColorGet(G, ms->OneColor);
+            if((alpha != 1.0)) {
+              CGOAlpha(ms->shaderCGO, alpha);
+            }
+            CGOColorv(ms->shaderCGO, col);
+            
+            if(I->Obj.visRep & cRepSurfaceBit) {
+              if((ms->Mode > 1) && (alpha != 1.0)) {        /* transparent */
+                if(info->alpha_cgo) {     /* global transparency */
+                  ObjectSurfaceRenderGlobalTransparency(G, info, ms, col, alpha);
+                } else {  /* cgo transparency with sorting if needed */
+                  ObjectSurfaceRenderUnOptimizedTransparency(ms, alpha);
+                }
+              } else {      /* opaque, triangles */
+                ObjectSurfaceRenderOpaque(G, I, ms);
+              }
+            }
+            CGOStop(ms->shaderCGO);
+
+            if (use_shader){
+              CGO *convertcgo = NULL;
+              convertcgo = CGOCombineBeginEnd(ms->shaderCGO, 0);    
+              CGOFree(ms->shaderCGO);    
+              ms->shaderCGO = convertcgo;
+              convertcgo = CGOOptimizeToVBOIndexed(ms->shaderCGO, 0, NULL, true, (alpha != 1.0) /* embedTransparency */);
+              if (convertcgo){
+                CGOFree(ms->shaderCGO);
+                ms->shaderCGO = convertcgo;
+              }
+              ms->shaderCGO->use_shader = true;              
+              CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
             } else {
-              render_now = (pass == 1);
-	    }
-
-	    if (!use_shader && ms->shaderCGO){
-	      CGOFree(ms->shaderCGO);
-	      ms->shaderCGO = 0;
-	    }
-            if(render_now) {
-	      if (use_shader){
-		if (!ms->shaderCGO){
-		  ms->shaderCGO = CGONew(G);
-		  ms->shaderCGO->use_shader = true;
-		  generate_shader_cgo = 1;
-		} else {
-		  CShaderPrg * shaderPrg = 0;
-		  shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-		  CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1);
-		  
-		  ms->shaderCGO->enable_shaders = shaderPrg ? 0 : 1;
-		  CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
-		  if (shaderPrg)
-		    CShaderPrg_Disable(shaderPrg);
-		  continue;
-		}
-	      }
-
-              if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)){
-		if (generate_shader_cgo){
-		  CGOAppendNoStop(ms->shaderCGO, ms->UnitCellCGO);
-		  CGOFree(ms->UnitCellCGO);
-		  ms->UnitCellCGO = 0;
-		} else {
-		  CGORenderGL(ms->UnitCellCGO, ColorGet(G, I->Obj.Color),
-			      I->Obj.Setting, NULL, info, NULL);
-		}
-	      }
-	      if (generate_shader_cgo){
-		CGOResetNormal(ms->shaderCGO, false);
-	      } else {
-		SceneResetNormal(G, false);
-	      }
-              col = ColorGet(G, ms->OneColor);
-	      if (generate_shader_cgo){
-		if((alpha != 1.0)) {
-		  CGOAlpha(ms->shaderCGO, alpha);
-		}
-		CGOColorv(ms->shaderCGO, col);
-	      } else {
-		glColor4f(col[0], col[1], col[2], alpha);
-	      }
-
-                if(n && v && (I->Obj.visRep & cRepSurfaceBit)) {
-                  if((ms->Mode > 1) && (alpha != 1.0)) {        /* transparent */
-
-                    if(t_mode) {        /* high quality (sorted) transparency? */
-
-                      float **t_buf = NULL, **tb;
-                      float **c_buf = NULL, **tc;
-                      float *z_value = NULL, *zv;
-                      int *ix = NULL;
-                      int n_tri = 0;
-                      float sum[3];
-                      float matrix[16];
-                      int parity;
-                      glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-                      t_buf = Alloc(float *, ms->nT * 9);
-                      vc = ms->VC;
-
-                      if(vc) {
-                        c_buf = Alloc(float *, ms->nT * 9);
-                      }
-
-                      z_value = Alloc(float, ms->nT);
-                      ix = Alloc(int, ms->nT);
-
-                      zv = z_value;
-                      tb = t_buf;
-                      tc = c_buf;
-
-                      while(*n) {
-                        parity = true;
-                        c = *(n++);
-                        v += 12;
-                        if(vc)
-                          vc += 6;
-                        c -= 4;
-                        while(c > 0) {
-
-                          if(parity) {
-                            *(tb++) = v - 12;
-                            *(tb++) = v - 9;
-                            *(tb++) = v - 6;
-                            *(tb++) = v - 3;
-                            *(tb++) = v;
-                            *(tb++) = v + 3;
-                            if(vc) {
-                              *(tc++) = vc - 6;
-                              *(tc++) = vc - 3;
-                              *(tc++) = vc;
-                            }
-                          } else {
-                            *(tb++) = v - 12;
-                            *(tb++) = v - 9;
-                            *(tb++) = v;
-                            *(tb++) = v + 3;
-                            *(tb++) = v - 6;
-                            *(tb++) = v - 3;
-                            if(vc) {
-                              *(tc++) = vc - 6;
-                              *(tc++) = vc;
-                              *(tc++) = vc - 3;
-                            }
-                          }
-
-                          parity = !parity;
-
-                          add3f(tb[-1], tb[-3], sum);
-                          add3f(sum, tb[-5], sum);
-
-                          *(zv++) =
-                            matrix[2] * sum[0] + matrix[6] * sum[1] + matrix[10] * sum[2];
-                          n_tri++;
-
-                          if(vc)
-                            vc += 3;
-                          v += 6;
-                          c -= 2;
-                        }
-                      }
-
-                      switch (t_mode) {
-                      case 1:
-                        UtilSemiSortFloatIndex(n_tri, z_value, ix, true);
-                        /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn); */
-                        break;
-                      default:
-                        UtilSemiSortFloatIndex(n_tri, z_value, ix, false);
-                        /*UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn); */
-                        break;
-                      }
-
-                      c = n_tri;
-
-                      col = ColorGet(G, ms->OneColor);
-
-		      if (generate_shader_cgo){
-			if((alpha != 1.0)) {
-			  CGOAlpha(ms->shaderCGO, alpha);
-			}
-			CGOColorv(ms->shaderCGO, col);
-		      } else {
-			glColor4f(col[0], col[1], col[2], alpha);
-		      }
-
-		      if (generate_shader_cgo){
-  			CGOBegin(ms->shaderCGO, GL_TRIANGLES);
-			if (vc)
-			  CGOAlpha(ms->shaderCGO, alpha);
-			for(c = 0; c < n_tri; c++) {
-			  tb = t_buf + 6 * ix[c];
-			  if(vc)
-			    tc = c_buf + 3 * ix[c];
-			  if(vc) {
-			    CGOColorv(ms->shaderCGO, tc[0]);
-			    tc++;
-			  }
-			  CGONormalv(ms->shaderCGO, *(tb++));
-			  CGOVertexv(ms->shaderCGO, *(tb++));
-			  if(vc) {
-			    CGOColorv(ms->shaderCGO, tc[0]);
-			    tc++;
-			  }
-			  CGONormalv(ms->shaderCGO, *(tb++));
-			  CGOVertexv(ms->shaderCGO, *(tb++));
-			  if(vc) {
-			    CGOColorv(ms->shaderCGO, tc[0]);
-			    tc++;
-			  }
-			  CGONormalv(ms->shaderCGO, *(tb++));
-			  CGOVertexv(ms->shaderCGO, *(tb++));
-			}
-			CGOEnd(ms->shaderCGO);
-		      } else {
-			glBegin(GL_TRIANGLES);
-			for(c = 0; c < n_tri; c++) {
-			  tb = t_buf + 6 * ix[c];
-			  if(vc)
-			    tc = c_buf + 3 * ix[c];
-			  if(vc) {
-			    glColor4f(tc[0][0], tc[0][1], tc[0][2], alpha);
-			    tc++;
-			  }
-			  glNormal3fv(*(tb++));
-			  glVertex3fv(*(tb++));
-			  if(vc) {
-			    glColor4f(tc[0][0], tc[0][1], tc[0][2], alpha);
-			    tc++;
-			  }
-			  glNormal3fv(*(tb++));
-			  glVertex3fv(*(tb++));
-			  if(vc) {
-			    glColor4f(tc[0][0], tc[0][1], tc[0][2], alpha);
-			    tc++;
-			  }
-			  glNormal3fv(*(tb++));
-			  glVertex3fv(*(tb++));
-			}
-			glEnd();
-		      }
-
-                      FreeP(ix);
-                      FreeP(z_value);
-                      FreeP(t_buf);
-                      FreeP(c_buf);
-                    } else {    /* t_mode is zero */
-
-                      if(info->alpha_cgo) {     /* global transparency */
-                        vc = ms->VC;
-                        while(*n) {
-                          int parity = 1;
-                          c = *(n++);
-
-                          v += 6;
-                          if(vc)
-                            vc += 3;
-                          c -= 2;
-
-                          v += 6;
-                          if(vc)
-                            vc += 3;
-                          c -= 2;
-
-                          while(c > 0) {
-                            if(vc) {
-                              CGOAlphaTriangle(info->alpha_cgo,
-                                               v + (3 - 6), v + (3 - 12), v + 3,
-                                               v - 6, v - 12, v,
-                                               vc - 3, vc - 6, vc,
-                                               alpha, alpha, alpha, parity);
-                            } else {
-                              CGOAlphaTriangle(info->alpha_cgo,
-                                               v + (3 - 6), v + (3 - 12), v + 3,
-                                               v - 6, v - 12, v,
-                                               col, col, col,
-                                               alpha, alpha, alpha, parity);
-                            }
-                            v += 6;
-                            if(vc)
-                              vc += 3;
-                            c -= 2;
-                            parity = !parity;
-                          }
-                        }
-                      } else {  /* fast, but unoptimized transparency */
-                        vc = ms->VC;
-
-			if (generate_shader_cgo){
-			  while(*n) {
-			    c = *(n++);
-			    CGOBegin(ms->shaderCGO, GL_TRIANGLE_STRIP);
-			    while(c > 0) {
-			      CGONormalv(ms->shaderCGO, v);
-			      v += 3;
-			      if(vc) {
-				CGOColorv(ms->shaderCGO, vc);
-				vc += 3;
-			      }
-			      CGOVertexv(ms->shaderCGO, v);
-			      v += 3;
-			      c -= 2;
-			    }
-			    CGOEnd(ms->shaderCGO);
-			  }
-			} else {
-			  while(*n) {
-			    c = *(n++);
-#ifndef PURE_OPENGL_ES_2
-			    glBegin(GL_TRIANGLE_STRIP);
-			    while(c > 0) {
-			      glNormal3fv(v);
-			      v += 3;
-			      if(vc) {
-				glColor3fv(vc);
-				vc += 3;
-			      }
-			      glVertex3fv(v);
-			      v += 3;
-			      c -= 2;
-			    }
-			    glEnd();
-#endif
-			  }
-                        }
-                      }
-                    }
-                  } else {      /* opaque, triangles */
-		    if (generate_shader_cgo){
-		      CGOLinewidthSpecial(ms->shaderCGO, LINEWIDTH_DYNAMIC_MESH);
-		    } else {
-		      glLineWidth(SettingGet_f
-				  (G, I->Obj.Setting, NULL, cSetting_mesh_width));
-		    }
-                    vc = ms->VC;
-		    if (generate_shader_cgo){
-		      while(*n) {
-			c = *(n++);
-			switch (ms->Mode) {
-			case 3:
-			case 2:
-			  CGOBegin(ms->shaderCGO, GL_TRIANGLE_STRIP);
-			  while(c > 0) {
-			    CGONormalv(ms->shaderCGO, v);
-			    v += 3;
-			    if(vc) {
-			      CGOColorv(ms->shaderCGO, vc);
-			      vc += 3;
-			    }
-			    CGOVertexv(ms->shaderCGO, v);
-			    v += 3;
-			    c -= 2;
-			  }
-			  CGOEnd(ms->shaderCGO);
-			  break;
-			case 1:
-			  CGOBegin(ms->shaderCGO, GL_LINES);
-			  while(c > 0) {
-			    if(vc) {
-			      CGOColorv(ms->shaderCGO, vc);
-			      vc += 3;
-			    }
-			    CGOVertexv(ms->shaderCGO, v);
-			    v += 3;
-			    c--;
-			  }
-			  CGOEnd(ms->shaderCGO);
-			  break;
-			case 0:
-			default:
-			  CGOBegin(ms->shaderCGO, GL_POINTS);
-			  while(c > 0) {
-			    if(vc) {
-			      CGOColorv(ms->shaderCGO, vc);
-			      vc += 3;
-			    }
-			    CGOVertexv(ms->shaderCGO, v);
-			    v += 3;
-			    c--;
-			  }
-			  CGOEnd(ms->shaderCGO);
-			}
-		      }
-		    } else {
-		      while(*n) {
-			c = *(n++);
-			switch (ms->Mode) {
-			case 3:
-			case 2:
-#ifndef PURE_OPENGL_ES_2
-			  glBegin(GL_TRIANGLE_STRIP);
-			  while(c > 0) {
-			    glNormal3fv(v);
-			    v += 3;
-			    if(vc) {
-			      glColor3fv(vc);
-			      vc += 3;
-			    }
-			    glVertex3fv(v);
-			    v += 3;
-			    c -= 2;
-			  }
-			  glEnd();
-#endif
-			  break;
-			case 1:
-#ifndef PURE_OPENGL_ES_2
-			  glBegin(GL_LINES);
-			  while(c > 0) {
-			    if(vc) {
-			      glColor3fv(vc);
-			      vc += 3;
-			    }
-			    glVertex3fv(v);
-			    v += 3;
-			    c--;
-			  }
-			  glEnd();
-#endif
-			  break;
-			case 0:
-			default:
-#ifndef PURE_OPENGL_ES_2
-			  glBegin(GL_POINTS);
-			  while(c > 0) {
-			    if(vc) {
-			      glColor3fv(vc);
-			      vc += 3;
-			    }
-			    glVertex3fv(v);
-			    v += 3;
-			    c--;
-			  }
-			  glEnd();
-#endif
-			  break;
-			}
-		      }
-		    }
-		  }
-		}
-		if (use_shader && generate_shader_cgo){
-		  CGO *convertcgo = NULL;
-		  CGOStop(ms->shaderCGO);
-		  convertcgo = CGOCombineBeginEnd(ms->shaderCGO, 0);    
-		  CGOFree(ms->shaderCGO);    
-		  ms->shaderCGO = convertcgo;
-		  convertcgo = CGOOptimizeToVBOIndexed(ms->shaderCGO, 0);
-		  if (convertcgo){
-		    CGOFree(ms->shaderCGO);
-		    ms->shaderCGO = convertcgo;
-		  }
-		  {
-		    CShaderPrg * shaderPrg = 0;
-		    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-		    CShaderPrg_Set1i(shaderPrg, "lighting_enabled", 1);
-		    ms->shaderCGO->enable_shaders = shaderPrg ? 0 : 1;
-		    CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
-		    if (shaderPrg)
-		      CShaderPrg_Disable(shaderPrg);
-		  }
-		}
-	    }
-	  }
-	}
+              if (alpha != 1.0){
+                // use_shader = 0
+                CGO *convertcgo = CGOConvertTrianglesToAlpha(ms->shaderCGO);
+                CGOFree(ms->shaderCGO);
+                ms->shaderCGO = convertcgo;
+                ms->shaderCGO->render_alpha = 1;
+              }
+              ms->shaderCGO->use_shader = false;
+              CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
+            }
+          }
+        }
+      }
     }
   }
 }

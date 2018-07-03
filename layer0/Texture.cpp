@@ -17,8 +17,7 @@ Z* -------------------------------------------------------------------
 */
 #include"os_python.h"
 #include"os_gl.h"
-#include"ShaderMgr.h"
-#include"Executive.h"
+
 #include "Base.h"
 #include "PyMOLGlobals.h"
 #include "Texture.h"
@@ -69,21 +68,41 @@ int TextureInit(PyMOLGlobals * G)
   G->Texture = I;
 
   I->ch2tex = OVOneToOne_New(G->Context->heap);
+  I->text_texture_dim = INIT_TEXTURE_SIZE;
   I->text_texture_id = 0;
-  I->text_texture_dim = I->ypos = I->maxypos = I->num_chars = 0;
+  I->ypos = I->maxypos = I->num_chars = 0;
   I->xpos = POS_START;
   return (I ? 1 : 0);
 }
+void TextureInitTextTextureImpl(PyMOLGlobals *G, int textureSize);
 
 void TextureInitTextTexture(PyMOLGlobals *G){
+  TextureInitTextTextureImpl(G, INIT_TEXTURE_SIZE);
+}
+void TextureInvalidateTextTexture(PyMOLGlobals * G){
+  CTexture *I = G->Texture;
+  if (I->text_texture_id){
+    OVOneToOne_Reset(I->ch2tex);
+    I->num_chars = 0;
+    glDeleteTextures(1, &I->text_texture_id);
+    I->text_texture_id = 0;
+    I->text_texture_dim = INIT_TEXTURE_SIZE;
+    I->xpos = POS_START; I->ypos = 0; I->maxypos = POS_START;
+  }
+}
+
+void TextureInitTextTextureImpl(PyMOLGlobals *G, int textureSizeArg){
   short is_new = 0;
   CTexture *I = G->Texture;
+  int textureSize = textureSizeArg;
+  if (!textureSize)
+    textureSize = INIT_TEXTURE_SIZE;
   if (!I->text_texture_id){
     glGenTextures(1, &I->text_texture_id);
     is_new = 1;
   }
   if(I->text_texture_id){
-    if (CShaderMgr_ShadersPresent(G->ShaderMgr)){
+    if (G->ShaderMgr->ShadersPresent()){
       glActiveTexture(GL_TEXTURE3);
     }
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -93,25 +112,26 @@ void TextureInitTextTexture(PyMOLGlobals *G){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     if (is_new){
-      int tex_dim = INIT_TEXTURE_SIZE;
+      int tex_dim = textureSize;
       int buff_total = tex_dim * tex_dim;
       unsigned char *temp_buffer = Alloc(unsigned char, buff_total * 4);
       UtilZeroMem(temp_buffer, buff_total * 4);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)temp_buffer);
-      I->text_texture_dim = INIT_TEXTURE_SIZE;
+      I->text_texture_dim = textureSize;
       FreeP(temp_buffer);
       I->xpos = POS_START; I->ypos = 0; I->maxypos = POS_START;
     }
   }
 }
 
+#include "Rep.h"
 int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 {
   OVreturn_word result;
   CTexture *I = G->Texture;
   int is_new = false;
-  int tex_dim = INIT_TEXTURE_SIZE;
+  int tex_dim = I->text_texture_dim;
   short use_shader = (short) SettingGetGlobal_b(G, cSetting_use_shaders);
 
   if(G->HaveGUI && G->ValidContext) {
@@ -158,17 +178,35 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 	    I->xpos = 0;
 	    I->ypos = I->maxypos;
 	  }
-	  if ((I->xpos + w) >= INIT_TEXTURE_SIZE && (I->ypos + h) >= INIT_TEXTURE_SIZE){
+	  if ((I->ypos + h) >= I->text_texture_dim){ // only need to check y since x gets reset above
+	    int nrefreshes;
 	    I->xpos = POS_START; I->ypos = 0; I->maxypos = POS_START;
 	    OVOneToOne_Reset(I->ch2tex);
+	    I->num_chars = 0;
 	    /* Also need to reload the selection markers into the texture, since
 	       we are wiping everything out from the texture and starting from the origin */
+	    if ((nrefreshes=SceneIncrementTextureRefreshes(G)) > 1){
+	      /* Texture was refreshed more than once for this frame, increase size of texture */
+	      int newDim = I->text_texture_dim * 2;
+	      glDeleteTextures(1, &I->text_texture_id);
+	      I->text_texture_id = 0;
+	      TextureInitTextTextureImpl(G, newDim);
+	      PRINTFB(G, FB_OpenGL, FB_Output)
+		" Texture OpenGL: nrefreshes=%d newDim=%d\n", nrefreshes, newDim ENDFB(G);
+
+	      //	      printf("nrefreshes=%d newDim=%d\n", nrefreshes, newDim);
+	      I->xpos = POS_START; I->ypos = 0; I->maxypos = POS_START;
+	      SceneResetTextureRefreshes(G);
+	    }
+	    ExecutiveInvalidateRep(G, "all", cRepLabel, cRepInvRep);
 	    ExecutiveInvalidateSelectionIndicators(G);
+	    OrthoInvalidateDoDraw(G);
+	    return 0;
 	  }
-          extent[0] = (I->xpos / (float) tex_dim);// + .0002f;
-          extent[1] = (I->ypos / (float) tex_dim);// + .0002f;
-          extent[2] = ((I->xpos + w) / (float) tex_dim);// - .0002f;
-          extent[3] = ((I->ypos + h) / (float) tex_dim);// - .0002f;
+          extent[0] = (I->xpos / (float) tex_dim);
+          extent[1] = (I->ypos / (float) tex_dim);
+          extent[2] = ((I->xpos + w) / (float) tex_dim);
+          extent[3] = ((I->ypos + h) / (float) tex_dim);
         }
 
 	if (!I->text_texture_id){
@@ -176,7 +214,8 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 	}
 	texture_id = I->text_texture_id;
 	if(I->text_texture_id && OVreturn_IS_OK(OVOneToOne_Set(I->ch2tex, char_id, I->num_chars++))) {
-	  if (use_shader && CShaderMgr_ShadersPresent(G->ShaderMgr)){
+
+	  if (use_shader && G->ShaderMgr->ShadersPresent()){
 	    glActiveTexture(GL_TEXTURE3);
 	  }
           glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -216,7 +255,7 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 
 void TextureGetPlacementForNewSubtexture(PyMOLGlobals * G, int new_texture_width, int new_texture_height, int *new_texture_posx, int *new_texture_posy){
   CTexture *I = G->Texture;
-  if (I->xpos + new_texture_width > INIT_TEXTURE_SIZE){
+  if (I->xpos + new_texture_width > I->text_texture_dim){
     I->xpos = 0;
     I->ypos = I->maxypos;
   }

@@ -222,7 +222,7 @@ PyObject *SettingGetSettingIndices();
 PyObject *SettingUniqueGetIndicesAsPyList(PyMOLGlobals * G, int unique_id);
 #endif
 
-std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char *, int);
+std::vector<int> SettingGetUpdateList(PyMOLGlobals * G, const char * name="", int state=0);
 
 void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, int state, int quiet);
 
@@ -239,6 +239,7 @@ PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals * G);
 
 CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
+int SettingCheckFontID(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int font_id);
 
 // The following defines the enum with all cSetting_<settingname> indices
 #include "SettingInfo.h"

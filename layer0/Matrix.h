@@ -112,6 +112,8 @@ int MatrixTransformExtentsR44d3f(const double *matrix,
                                  const float *old_min, const float *old_max,
                                  float *new_min, float *new_max);
 
+int MatrixInvertC44f(const float *m, float *out);
+
 typedef long int integer;
 typedef double doublereal;
 

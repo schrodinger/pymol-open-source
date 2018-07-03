@@ -96,7 +96,7 @@ static void ObjectCallbackRender(ObjectCallback * I, RenderInfo * info)
   if(!I->State || I->NState == 0)
     return;
 
-  ObjectPrepareContext(&I->Obj, ray);
+  ObjectPrepareContext(&I->Obj, info);
 
   if((I->Obj.visRep & cRepCallbackBit)) {
     int blocked = PAutoBlock(G);

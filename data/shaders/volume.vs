@@ -1,15 +1,21 @@
+#include webgl_header.vs
+
+uniform vec3 slabTexOffset;
+
+varying vec3 vertexM;
+
 varying float fog;
-uniform float g_Fog_end;
-uniform float g_Fog_scale;
 varying vec2 bgTextureLookup;
 
 void main()
 {
-  vec4 vertex = gl_ModelViewMatrix * gl_Vertex;
+  vec4 vertex = g_ModelViewMatrix * gl_Vertex;
   gl_TexCoord[0] = gl_MultiTexCoord0;
-  gl_ClipVertex = vertex;
+
+#ifdef volume_mode
+#endif // volume_mode
+
   gl_Position = ftransform();
-  gl_FogFragCoord = -vertex.z;
-  fog = (g_Fog_end - gl_FogFragCoord) * g_Fog_scale;
+  fog = (g_Fog_end + vertex.z) * g_Fog_scale;
   bgTextureLookup = (gl_Position.xy/gl_Position.w) / 2.0 + 0.5;
 }

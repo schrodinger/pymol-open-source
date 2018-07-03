@@ -54,7 +54,12 @@ typedef struct {
                                    >=0 for bond
                                    -1 for atom
                                    -2 for label
-                                   -3 for gadget */
+                                   -3 for gadget
+                                   bond - first index in pickVLA defines what pick
+                                   0 - first pass
+                                   1 - second pass
+                                   2 - first pass, reload VBOs with pick colors
+                                   3 - second pass, reload VBOs with pick colors */
 } Pickable;
 
 #define cPickableAtom -1
@@ -129,12 +134,16 @@ typedef struct {
   float view_normal[3];
   float width_scale;
   float vertex_scale;           /* how large is a screen pixel in model space at the origin */
-  float *pmv_matrix;
   int sampling;                 /* are we supersampling? */
   int ortho;                    /* orthoscopic projection? */
   int line_lighting;            /* line lighting */
   int dynamic_width;
   float dynamic_width_factor, dynamic_width_min, dynamic_width_max;
+  int texture_font_size;
+  int use_shaders;
+  bool picking_32bit;
+  void (*setUCColorFromIndex)(uchar *color, unsigned int idx);
+  void (*setUCColorToZero)(uchar *color);
 } RenderInfo;
 
 #define MAXLINELEN 1024

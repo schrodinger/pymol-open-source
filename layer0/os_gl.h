@@ -4,16 +4,48 @@
 #include"os_predef.h"
 #include"os_proprietary.h"
 
-#define _PYMOL_ARB_SHADERS
+// hardcode either true, or (x)
+#define ALWAYS_IMMEDIATE_OR(x) true
 
-#define GL_LABEL_SCREEN_SHADER  0xfff0
+  #define _PYMOL_NO_AA_SHADERS
+
+#ifndef PURE_OPENGL_ES_2
+#define _PYMOL_ARB_SHADERS
+#endif
+
+#define GL_DEFAULT_SHADER_WITH_SETTINGS  0xffe0
+#define GL_SPHERE_SHADER  0xffe1
+#define GL_CYLINDER_SHADER  0xffe2
+#define GL_TWO_SIDED_LIGHTING 0xffe3
+#define GL_MESH_LIGHTING 0xffe4
+#define GL_DOT_LIGHTING 0xffe5
+#define GL_LABEL_FLOAT_TEXT 0xffe6
+#define GL_DASH_TRANSPARENCY_DEPTH_TEST 0xffe7
+#define GL_BACK_FACE_CULLING 0xffe8
+#define GL_DEPTH_TEST_IF_FLOATING 0xffe9
+
+// unused: 0xfff0, 0xfffc
 #define GL_LABEL_SHADER  0xfffa
 #define GL_BACKGROUND_SHADER  0xfffb
-#define GL_DEFAULT_SHADER_SCREEN  0xfffc
 #define GL_DEFAULT_SHADER  0xfffd
 #define GL_SHADER_LIGHTING 0xfffe
 #define GL_SCREEN_SHADER  0xfff1
 #define GL_RAMP_SHADER  0xfff2
+#define GL_CONNECTOR_SHADER  0xfff3
+#define GL_FXAA_SHADER  0xfff4
+#define GL_SMAA1_SHADER  0xfff5
+#define GL_SMAA2_SHADER  0xfff6
+#define GL_SMAA3_SHADER  0xfff7
+#define GL_TRILINES_SHADER 0xfff8
+#define GL_OIT_SHADER  0xfff9
+#define GL_OIT_COPY_SHADER  0xffea
+#define GL_SURFACE_SHADER  0xffeb
+#define GL_LINE_SHADER  0xffec
+
+#define CGO_GL_LIGHTING 0xffef
+
+#ifndef _PYMOL_OSX
+
 
 #ifndef WIN32
 #define GL_GLEXT_PROTOTYPES
@@ -24,17 +56,24 @@
 #endif
 
 #include<GL/glew.h>
-
-#ifndef _PYMOL_OSX
 #include<GL/gl.h>
 #include<GL/glext.h>
-#else
-#import <OpenGL/gl.h>
-#import <OpenGL/glext.h>
-#endif
 
 #define GLDOUBLEMULTMATRIX glMultMatrixd
 #define GLDOUBLETRANSLATE glTranslated
+
+#else
+
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#include<GL/glew.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
+#define GLDOUBLEMULTMATRIX glMultMatrixd
+#define GLDOUBLETRANSLATE glTranslated
+
+/* END PROPRIETARY CODE SEGMENT */
+#endif
 
 #ifdef PURE_OPENGL_ES_2
 #define GLLIGHTMODELI(arg1, arg2)  /* nothing */
@@ -98,6 +137,8 @@ int PyMOLCheckOpenGLErr(const char *pos);
 
 /* ============ REAL GLUT BEING USED ============= */
 
+#include <stdlib.h>
+
 #ifndef _PYMOL_OSX
 #include<GL/glut.h>
 #else
@@ -126,6 +167,7 @@ int PyMOLCheckOpenGLErr(const char *pos);
 #define P_GLUT_LEFT_BUTTON              GLUT_LEFT_BUTTON
 #define P_GLUT_MIDDLE_BUTTON            GLUT_MIDDLE_BUTTON
 #define P_GLUT_RGBA                     GLUT_RGBA
+#define P_GLUT_ALPHA                    GLUT_ALPHA
 #define P_GLUT_RIGHT_BUTTON             GLUT_RIGHT_BUTTON
 #define P_GLUT_STEREO                   GLUT_STEREO
 #define P_GLUT_UP                       GLUT_UP
@@ -315,5 +357,7 @@ void p_glutMainLoop(void);
 #ifndef GL_FRAGMENT_PROGRAM_ARB
 #define GL_FRAGMENT_PROGRAM_ARB                         0x8804
 #endif
+
+#define hasFrameBufferBinding() false
 
 #endif

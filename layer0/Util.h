@@ -45,6 +45,8 @@ typedef int UtilOrderFn(void *array, int l, int r);
 void UtilSortIndex(int n, void *array, int *x, UtilOrderFn * fOrdered);
 
 int UtilSemiSortFloatIndex(int n, float *array, int *x, int forward);
+int UtilSemiSortFloatIndexWithNBins(int n, int nbins, float *array,int *x, int forward);
+int UtilSemiSortFloatIndexWithNBinsImpl(int *start1, int n, int nbins, float *array, int *destx, int forward);
 
 void UtilApplySortedIndices(int n, int *x, int rec_size, void *src, void *dst);
 

@@ -22,4 +22,6 @@ Z* -------------------------------------------------------------------
 
 Rep *RepLabelNew(CoordSet * cset, int state);
 
+short InvalidateShaderCGOIfTextureNeedsUpdate(PyMOLGlobals *G, float font_size, int texture_font_size, int *sizeArg);
+
 #endif

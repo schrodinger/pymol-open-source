@@ -23,10 +23,9 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 typedef struct ObjectCGOState {
-  CGO *std;
-  CGO *ray;
-  CGO *shaderCGO;
-  int valid;
+  CGO *origCGO;
+  CGO *renderCGO;
+  bool renderWithShaders, hasTransparency, cgo_lighting, hasOpaque;
 } ObjectCGOState;
 
 typedef struct ObjectCGO {

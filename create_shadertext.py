@@ -8,6 +8,8 @@ except ImportError:
 import sys, os
 import time
 import re
+import glob
+from collections import defaultdict
 from os.path import dirname
 from subprocess import Popen, PIPE
 from distutils import dir_util
@@ -19,9 +21,8 @@ def create_all(generated_dir, pymoldir="."):
     create_shadertext(
             os.path.join(pymoldir, "data", "shaders"),
             generated_dir,
-            "shadertext.txt",
             os.path.join(generated_dir, "ShaderText.h"),
-            os.path.join(generated_dir, "ShaderText.c"))
+            os.path.join(generated_dir, "ShaderText.cpp"))
     create_buildinfo(generated_dir, pymoldir)
 
 class openw(object):
@@ -56,37 +57,65 @@ class openw(object):
     def __del__(self):
         self.close()
 
-def create_shadertext(shaderdir, shaderdir2, inputfile, outputheader, outputfile):
+def create_shadertext(shaderdir, shaderdir2, outputheader, outputfile):
 
     outputheader = openw(outputheader)
     outputfile = openw(outputfile)
 
-    with open(os.path.join(shaderdir, inputfile)) as f:
-        for l in f:
-            lspl = l.split()
-            if len(lspl)==0:
-                continue
-            if lspl[0] == "read":
-                if len(lspl)!=3:
-                    outputfile.write("/* WARNING: read doesn't have variable name and file name argument lspl=%s */\n" % lspl)
-                else:
-                    varname = lspl[1]
-                    filename = lspl[2]
-                    outputheader.write("extern const char* %s;\n" % varname)
-                    outputfile.write("const char* %s =\n" % varname)
-                    sd = shaderdir
-                    if not os.path.exists(os.path.join(shaderdir, filename)):
-                        sd = shaderdir2
-                    with open(os.path.join(sd, filename)) as f2:
-                        for l2 in f2:
-                            st = l2.strip("\n")
-                            if len(st)>0:
-                                #if st[0] != '#':
-                                outputfile.write("\"%s\\n\"\n" % st.replace('"', r'\"'))
-                        outputfile.write(";\n") # end of variable definition
-            else:
-                outputheader.write("%s\n" % l.strip())
-                outputfile.write("%s\n" % l.strip())
+    include_deps = defaultdict(set)
+    ifdef_deps = defaultdict(set)
+
+    # get all *.gs *.vs *.fs *.shared from the two input directories
+    shaderfiles = set()
+    for sdir in [shaderdir, shaderdir2]:
+        for ext in ['gs', 'vs', 'fs', 'shared']:
+            shaderfiles.update(map(os.path.basename,
+                glob.glob(os.path.join(sdir, '*.' + ext))))
+
+    varname = '_shader_cache_raw'
+    outputheader.write('extern const char * %s[];\n' % varname)
+    outputfile.write('const char * %s[] = {\n' % varname)
+
+    for filename in shaderfiles:
+        shaderfile = os.path.join(shaderdir, filename)
+        if not os.path.exists(shaderfile):
+            shaderfile = os.path.join(shaderdir2, filename)
+
+        with open(shaderfile, 'rU') as handle:
+            contents = handle.read()
+
+        if True:
+            outputfile.write('"%s", ""\n' % (filename))
+
+            for line in contents.splitlines():
+                line = line.strip()
+
+                # skip blank lines and obvious comments
+                if not line or line.startswith('//') and not '*/' in line:
+                    continue
+
+                # write line, quoted, escaped and with a line feed
+                outputfile.write("\"%s\\n\"\n" % line.replace('\\', '\\\\').replace('"', r'\"'))
+
+                # include and ifdef dependencies
+                if line.startswith('#include'):
+                    include_deps[line.split()[1]].add(filename)
+                elif line.startswith('#ifdef') or line.startswith('#ifndef'):
+                    ifdef_deps[line.split()[1]].add(filename)
+
+            outputfile.write(',\n')
+
+    outputfile.write('0};\n')
+
+    # include and ifdef dependencies
+    for varname, deps in [
+            ('_include_deps', include_deps),
+            ('_ifdef_deps', ifdef_deps)]:
+        outputheader.write('extern const char * %s[];\n' % varname)
+        outputfile.write('const char * %s[] = {\n' % varname)
+        for name, itemdeps in deps.items():
+            outputfile.write('"%s", "%s", 0,\n' % (name, '", "'.join(sorted(itemdeps))))
+        outputfile.write('0};\n')
 
     outputheader.close()
     outputfile.close()

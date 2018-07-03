@@ -14,6 +14,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include <algorithm>
+
 #include"os_python.h"
 
 #include "MemoryDebug.h"
@@ -27,6 +30,45 @@ Z* -------------------------------------------------------------------
 #include "Util.h"
 #include "TypeFace.h"
 
+#define max2 std::max
+
+static void CheckUnicode(unsigned int *c, int *unicnt, int *unicode){
+  if(*unicnt) {
+    if(!(*c & 0x80))   /* corrupt UTF8 */
+      *unicnt = 0;
+    else {
+      *unicode = ((*unicode) << 6) | (0x3F & *c);
+      (*unicnt)--;
+      *c = *unicode;
+    }
+  } else if(*c & 0x80) {
+    while(*c & 0x80) {
+      *c = (*c << 1) & 0xFF;
+      (*unicnt)++;
+    }
+    *unicode = (*c >> ((*unicnt)--));
+  }
+}
+
+static void GenerateCharFngrprnt(PyMOLGlobals *G, CharFngrprnt *fprnt, unsigned int c, int TextID, float size, int sampling, short no_flat, int flat){
+  unsigned char *rgba;
+  UtilZeroMem(fprnt, sizeof(CharFngrprnt));
+  fprnt->u.i.text_id = TextID;
+  fprnt->u.i.size = (int) (size * 64 * sampling);
+  rgba = fprnt->u.i.color;
+  if (!TextGetIsPicking(G)){
+    TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
+    rgba = fprnt->u.i.outline_color;
+    if (no_flat || !flat){
+      TextGetOutlineColor(G, rgba, rgba + 1, rgba + 2, rgba + 3);
+    } else if(flat) {
+      TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
+    }
+  }
+  fprnt->u.i.ch = c;
+  fprnt->u.i.flat = flat;
+}
+
 typedef struct {
   CFont Font;                   /* must be first */
   PyMOLGlobals *G;
@@ -38,7 +80,7 @@ __inline__
 #endif
 static const char *_FontTypeRenderOpenGL(RenderInfo * info,
                                    CFontType * I, const char *st,
-                                   float size, int flat, float *rpos SHADERCGOARG)
+                                   float size, int flat, float *rpos, short needSize, short relativeMode, short shouldRender SHADERCGOARG)
 {
   PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
@@ -49,16 +91,26 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
     int sampling = 1;
     const float _0 = 0.0F, _1 = 1.0F, _m1 = -1.0F;
     float x_indent = 0.0F, y_indent = 0.0F, z_indent = 0.0F;
-    float text_width = 0.f;
+    float text_width = 0.f, line_width = 0.f, tot_text_width;
+    float text_just = 1.f - TextGetJustification(G);
+    float text_spacing = TextGetSpacing(G);
+    float text_buffer[2];
     int unicode = 0;
     int unicnt = 0;
-
+    int nlines = countchrs(st, '\n') + 1;
+    int linenum = 0;
+    short cont = 0;
+    float descender = TypeFaceGetDescender(I->TypeFace) / 2.f;
+    float v_scale = SceneGetScreenVertexScale(G, NULL);
+    copy2f(TextGetLabelBuffer(G), text_buffer);
     sampling = info->sampling;
     if(st && (*st)) {
-      float v_scale;
+      float *line_widths = NULL;
       float screenWorldOffset[3] = { 0.0F, 0.0F, 0.0F };
-      
-      v_scale = SceneGetScreenVertexScale(G, NULL);
+      float tot_height;
+      if (nlines>1){
+	line_widths = Calloc(float, nlines);
+      }
       if(size < _0) {
         size = (int) (0.5F - size / v_scale);
         if (size <= 0)
@@ -67,41 +119,28 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
         size = DIP2PIXEL(size);
       }
 
+      text_buffer[0] *= size;
+      text_buffer[1] *= size;
+
       if(rpos) {
-        if(rpos[0] < _1) {      /* we need to measure the string width before starting to draw */
+	TextSetIndentFactorX(G, rpos[0] < _m1 ? _m1 : rpos[0] > 1.f ? 1.f : rpos[0]);
+	TextSetIndentFactorY(G, rpos[1] < _m1 ? _m1 : rpos[1] > 1.f ? 1.f : rpos[1]);
+
+        if(needSize || rpos[0] < _1) {      /* we need to measure the string width before starting to draw */
           const char *sst = st;
           while((c = *(sst++))) {
-            if(unicnt) {
-              if(!(c & 0x80))   /* corrupt UTF8 */
-                unicnt = 0;
-              else {
-                unicode = (unicode << 6) | (0x3F & c);
-                unicnt--;
-                c = unicode;
-              }
-            } else if(c & 0x80) {
-              while(c & 0x80) {
-                c = (c << 1) & 0xFF;
-                unicnt++;
-              }
-              unicode = (c >> (unicnt--));
-            }
+	    if (c == '\n'){
+	      line_widths[linenum] = line_width;
+	      text_width = max2(text_width, line_width);
+	      line_width = 0.f;
+	      linenum++;
+	      continue;
+	    }
+	    CheckUnicode(&c, &unicnt, &unicode);
+
             if(!unicnt) {
               CharFngrprnt fprnt;
-              unsigned char *rgba;
-              UtilZeroMem(&fprnt, sizeof(fprnt));
-              fprnt.u.i.text_id = I->Font.TextID;
-              fprnt.u.i.size = (int) (size * 64 * sampling);
-              rgba = fprnt.u.i.color;
-              TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-              rgba = fprnt.u.i.outline_color;
-              if(!flat) {
-                TextGetOutlineColor(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-              } else {
-                TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-              }
-              fprnt.u.i.ch = c;
-              fprnt.u.i.flat = flat;
+	      GenerateCharFngrprnt(G, &fprnt, c, I->Font.TextID, size, sampling, 0, flat);
               {
                 int id = CharacterFind(G, &fprnt);
                 if(!id) {
@@ -109,25 +148,31 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
                 }
                 if(id) {
                   if(kern_flag) {
-                    text_width += (TypeFaceGetKerning(I->TypeFace,
+                    line_width += (TypeFaceGetKerning(I->TypeFace,
 							       last_c, c, size) / sampling);
                   }
-                  text_width += CharacterGetAdvance(G, sampling, id);
+                  line_width += CharacterGetAdvance(G, sampling, id);
                 }
               }
               kern_flag = true;
               last_c = c;
             }
           }
+	  if (line_widths)
+	    line_widths[linenum] = line_width;
+	  text_width = max2(text_width, line_width) ;
+	  tot_text_width = text_width + 2.f * text_buffer[0];
+	  TextSetWidth(G, tot_text_width);
+	  tot_height = pymol_roundf(size * (nlines + (nlines-1) * (text_spacing-1.f)) + 2.f * text_buffer[1]);
+	  TextSetHeight(G, tot_height);
 	  {
 	    float factor = rpos[0] / 2.0F - 0.5F;
 	    /* if -1. < rpos[0] < 1. , then we need to determine the label's width
 	       so that we can justify it appropriately */
-	    if(factor < _m1) // if rpos[0] < -1., right justified
-	      factor = -_1;
-	    if(factor > _0)  // if rpos[0] > 1., left justified, label width not needed
-	      factor = _0;
-	    x_indent -= factor * text_width;
+	    // if rpos[0] < -1., right justified
+	    // if rpos[0] > 1., left justified, label width not needed
+	    factor = (factor < _m1) ? _m1 : (factor > _0) ? _0 : factor;
+	    x_indent -= factor * tot_text_width;
 	  }
         }
 	/* if label_position x is -1 to 1, the label is placed in x such that
@@ -136,17 +181,19 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
 	    1 - left justified on projected point
 	*/
 	if(rpos[0] < _m1) {
-	  screenWorldOffset[0] -= (rpos[0] + _1);// / v_scale;
+	  screenWorldOffset[0] -= (rpos[0] + _1);
 	} else if(rpos[0] > _1) {
-	  screenWorldOffset[0] -= (rpos[0] - _1);// / v_scale;
+	  screenWorldOffset[0] -= (rpos[0] - _1);
 	}
         if(rpos[1] < _1) {
           float factor = -rpos[1] / 2.0F + 0.5F;
-          if(factor > _1)
-            factor = _1;
-          if(factor < _0)
-            factor = _0;
-          y_indent = 0.75 * size * factor;
+	  factor = (factor > _1) ? _1 : (factor < _0) ? _0 : factor;
+	  y_indent = pymol_roundf((size * factor) * (1.f + text_spacing * max2(0.f, nlines-1.f)));
+	}
+	{
+          float factor = rpos[1];
+	  factor = (factor > _1) ? _1 : (factor < _m1) ? _m1 : factor;
+	  y_indent -= pymol_roundf(factor * text_buffer[1]);
         }
         if(rpos[1] < _m1) {
           screenWorldOffset[1] -= (rpos[1] + _1);
@@ -155,10 +202,9 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
         }
 	/* leave room for fonts of finite depth */
 	z_indent = (rpos[2] < _m1) ? (rpos[2]+1.f) : (rpos[2] > 1.f) ? (rpos[2]-1.f) : 0.f;
-
 	if (!shaderCGO){
 	  x_indent += screenWorldOffset[0] / v_scale;
-	  y_indent += screenWorldOffset[1] / v_scale;
+	  y_indent += pymol_roundf(screenWorldOffset[1] / v_scale);
 	}
 	screenWorldOffset[2] += z_indent; // need to take into account weird -1 to 1, and sub 1 from abs val 
       }
@@ -168,6 +214,7 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
         float zero[3] = { 0.0F, 0.0F, 0.0F };
 	TextSetScreenWorldOffset(G, screenWorldOffset);
         TextSetWorldPos(G, v);
+
         if(rpos) {
           if(info->ortho) {
             float orig[3];
@@ -180,43 +227,58 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
           add3f(v, loc, loc);
           v = loc;
         }
+	if (!shaderCGO){
+	  unsigned char posIsSet = TextGetLabelPosIsSet(G);
+	  switch (posIsSet){
+	  case 1:
+	    SceneAdjustZtoScreenZ(G, v, TextGetLabelPos(G)[0]);
+	    break;
+	  case 2:
+	    SceneSetPointToWorldScreenRelative(G, v, TextGetLabelPos(G));
+	    break;
+	  }
+	}
+	TextSetLabelPushPos(G, v);
+	if (!shouldRender)
+	  return st;
         ScenePushRasterMatrix(G, v);
         TextSetPos(G, zero);
+#ifndef PURE_OPENGL_ES_2
+      } else {
+#endif
+	if (!shouldRender)
+	  return st;
       }
       if(rpos) {
-	//	float ax = x_indent * v_scale, ay = y_indent * v_scale;
-	//	printf("x_indent=%f y_indent=%f ax=%f ay=%f v_scale=%f rpos=%f %f %f\n", x_indent, y_indent, ax, ay, v_scale, rpos[0], rpos[1], rpos[2]);
         TextIndent(G, x_indent, y_indent);
       }
       CharacterRenderOpenGLPrime(G, info);
-      while((c = *(st++))) {
-        if(unicnt) {
-          if(!(c & 0x80))       /* corrupt UTF8 */
-            unicnt = 0;
-          else {
-            unicode = (unicode << 6) | (0x3F & c);
-            unicnt--;
-            c = unicode;
-          }
-        } else if(c & 0x80) {
-          while(c & 0x80) {
-            c = (c << 1) & 0xFF;
-            unicnt++;
-          }
-          unicode = (c >> (unicnt--));
-        }
+      kern_flag = false;
+      TextGetPos(G)[1] += (int)pymol_roundf(size * (text_spacing * (nlines-1) + descender));
+      if (line_widths){
+	TextGetPos(G)[0] += text_just * (text_width - line_widths[0])/2.f;
+      }
+      TextGetPos(G)[0] += text_buffer[0];
+      linenum = 0;
+      cont = 1;
+      while(cont && (c = *(st++))) {
+	if (c == '\n'){
+	  float zero[3] = { 0.0F, 0.0F, 0.0F };
+	  TextSetPos(G, zero);
+	  if (rpos){
+	    TextIndent(G, x_indent, y_indent);
+	  }
+	  linenum++;
+	  TextGetPos(G)[1] += (int)pymol_roundf(size * (text_spacing * (nlines - 1 - linenum) + descender));
+	  if (line_widths)
+	    TextGetPos(G)[0] += text_just * (text_width - line_widths[linenum])/2.f + text_buffer[0];
+	  kern_flag = false;
+	  continue;
+	}
+	CheckUnicode(&c, &unicnt, &unicode);
         if(!unicnt) {
           CharFngrprnt fprnt;
-          unsigned char *rgba;
-          UtilZeroMem(&fprnt, sizeof(fprnt));
-          fprnt.u.i.text_id = I->Font.TextID;
-          fprnt.u.i.size = (int) (size * 64 * sampling);
-          rgba = fprnt.u.i.color;
-          TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-          rgba = fprnt.u.i.outline_color;
-          TextGetOutlineColor(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-          fprnt.u.i.ch = c;
-          fprnt.u.i.flat = flat;
+	  GenerateCharFngrprnt(G, &fprnt, c, I->Font.TextID, size, sampling, 1, flat);
           {
             int id = CharacterFind(G, &fprnt);
             if(!id) {
@@ -227,7 +289,7 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
                 TextAdvance(G, TypeFaceGetKerning(I->TypeFace,
                                                   last_c, c, size) / sampling);
               }
-              CharacterRenderOpenGL(G, info, id, true SHADERCGOARGVAR);       /* handles advance */
+              cont &= CharacterRenderOpenGL(G, info, id, true, relativeMode SHADERCGOARGVAR);       /* handles advance */
             }
           }
           kern_flag = true;
@@ -238,25 +300,28 @@ static const char *_FontTypeRenderOpenGL(RenderInfo * info,
       if(!pushed) {
         ScenePopRasterMatrix(G);
       }
+      FreeP(line_widths);
     }
+    if (!cont)
+      return st;
   }
   return st;
 }
 
 static const char *FontTypeRenderOpenGL(RenderInfo * info, CFontType * I, const char *st, float size,
-                                  float *rpos SHADERCGOARG)
+                                  float *rpos, short needSize, short relativeMode, short shouldRender SHADERCGOARG)
 {
-  return _FontTypeRenderOpenGL(info, I, st, size, false, rpos SHADERCGOARGVAR);
+  return _FontTypeRenderOpenGL(info, I, st, size, false, rpos, needSize, relativeMode, shouldRender SHADERCGOARGVAR);
 }
 
 static const char *FontTypeRenderOpenGLFlat(RenderInfo * info, CFontType * I, const char *st,
-                                      float size, float *rpos SHADERCGOARG)
+                                      float size, float *rpos, short needSize, short relativeMode, short shouldRender SHADERCGOARG)
 {
-  return _FontTypeRenderOpenGL(info, I, st, size, true, rpos SHADERCGOARGVAR);
+  return _FontTypeRenderOpenGL(info, I, st, size, true, rpos, needSize, relativeMode, shouldRender SHADERCGOARGVAR);
 }
 
 static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, float size,
-                               float *rpos)
+                               float *rpos, short needSize, short relativeMode)
 {
   PyMOLGlobals *G = I->Font.G;
   unsigned int c;
@@ -265,19 +330,39 @@ static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, 
   int sampling = ray->Sampling;
   const float _0 = 0.0F, _1 = 1.0F, _m1 = -1.0F;
   float x_indent = 0.0F, y_indent = 0.0F, z_indent = 0.0F;
+  float text_width = 0.f, line_width = 0.f, tot_text_width;
+  float text_just = 1.f - TextGetJustification(G);
+  float text_spacing = TextGetSpacing(G);
+  float text_buffer[2];
   float xn[3], yn[3], x_adj[3], y_adj[3], pos[3], *v;
   int unicode = 0;
   int unicnt = 0;
-
+  int nlines = countchrs(st, '\n') + 1;
+  int linenum = 0;
+  float descender = TypeFaceGetDescender(I->TypeFace);
+  float v_scale = SceneGetScreenVertexScale(G, NULL);
+  copy2f(TextGetLabelBuffer(G), text_buffer);
   if(st && (*st)) {
-    float v_scale = SceneGetScreenVertexScale(G, NULL);
+    float origpos[3];
+    float *line_widths = NULL;
+    float tot_height;
+    if (nlines>1){
+      line_widths = Calloc(float, nlines);
+    }
+    if(size < _0) {
+      size = (int) (0.5F - size / v_scale);
+    } else {
+      size = DIP2PIXEL(size);
+    }
+
+    text_buffer[0] *= size;
+    text_buffer[1] *= size;
 
     if(rpos) {
       float loc[3];
       /* leave room for fonts of finite depth */
       z_indent = (rpos[2] < _m1) ? (rpos[2]+1.f) : (rpos[2] > 1.f) ? (rpos[2]-1.f) : 0.f;
       v = TextGetPos(I->G);
-
       if(ray->Ortho) {
         float orig[3];
         SceneOriginGet(G, orig);
@@ -287,70 +372,79 @@ static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, 
       }
       scale3f(loc, z_indent, loc);
       add3f(v, loc, loc);
+
+      {
+	unsigned char posIsSet = TextGetLabelPosIsSet(G);
+	switch (posIsSet){
+	case 1:
+	  RayAdjustZtoScreenZ(ray, loc, TextGetLabelPos(G)[0]);
+	  break;
+	case 2:
+	  RaySetPointToWorldScreenRelative(ray, loc, TextGetLabelPos(G));
+	  break;
+	}
+      }
+      TextSetLabelPushPos(G, loc);
       TextSetPos(I->G, loc);
     }
 
     RayGetScaledAxes(ray, xn, yn);
 
-    if(size < _0) {
-
-      size = (int) (0.5F - size / v_scale);
-    } else {
-      size = DIP2PIXEL(size);
-    }
-
     if(rpos) {
-
-      if(rpos[0] < _1) {        /* we need to measure the string width before starting to draw */
+      if(needSize || rpos[0] < _1) {        /* we need to measure the string width before starting to draw */
         float factor = rpos[0] / 2.0F - 0.5F;
         const char *sst = st;
+	float max_x_indent = 0.f;
+	// factor -1 to 0 based on justification (i.e., rpos[0])
 	factor = (factor < _m1) ? _m1 : (factor > _0) ? _0 : factor;
         while((c = *(sst++))) {
-          if(unicnt) {
-            if(!(c & 0x80))     /* corrupt UTF8 */
-              unicnt = 0;
-            else {
-              unicode = (unicode << 6) | (0x3F & c);
-              unicnt--;
-              c = unicode;
-            }
-          } else if(c & 0x80) {
-            while(c & 0x80) {
-              c = (c << 1) & 0xFF;
-              unicnt++;
-            }
-            unicode = (c >> (unicnt--));
-          }
+	  if (c == '\n'){
+	    text_width = max2(text_width, line_width);
+	    line_widths[linenum] = line_width;
+	    line_width = 0.f;
+	    kern_flag = false;
+	    linenum++;
+	    max_x_indent = max2(x_indent, max_x_indent);
+	    x_indent = 0.f;
+	    continue;
+	  }
+	  CheckUnicode(&c, &unicnt, &unicode);
           if(!unicnt) {
             CharFngrprnt fprnt;
-            unsigned char *rgba;
-            UtilZeroMem(&fprnt, sizeof(fprnt));
-            fprnt.u.i.text_id = I->Font.TextID;
-            fprnt.u.i.size = (int) (size * 64 * sampling);
-            rgba = fprnt.u.i.color;
-            TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-            rgba = fprnt.u.i.outline_color;
-            TextGetOutlineColor(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-            fprnt.u.i.ch = c;
+	    GenerateCharFngrprnt(G, &fprnt, c, I->Font.TextID, size, sampling, 1, 0 /* flat is not set */);
             {
               int id = CharacterFind(G, &fprnt);
               if(!id) {
                 id = TypeFaceCharacterNew(I->TypeFace, &fprnt, size * sampling);
               }
               if(id) {
+		float adv;
                 if(kern_flag) {
-                  x_indent -= factor * TypeFaceGetKerning(I->TypeFace,
-                                                          last_c,
-                                                          c, size * sampling) / sampling;
+		  float kern = TypeFaceGetKerning(I->TypeFace,
+						  last_c,
+						  c, size * sampling) ;
+		  line_width += kern;
+                  x_indent -= factor * kern;
                 }
-                x_indent -= factor * CharacterGetAdvance(G, 1, id);
+		adv = CharacterGetAdvance(G, 1, id);
+		line_width += adv;
+                x_indent -= factor * adv;
                 kern_flag = true;
                 last_c = c;
               }
             }
           }
         }
+	max_x_indent = max2(x_indent, max_x_indent);
+	x_indent = max_x_indent;
       }
+      text_width = max2(text_width, line_width);
+      tot_text_width = text_width + 2.f * text_buffer[0] * sampling;
+      if (line_widths)
+	line_widths[linenum] = line_width;
+      TextSetWidth(G, tot_text_width/(float)sampling);
+      tot_height = size * (nlines + (nlines-1) * (text_spacing-1.f)) + 2.f * text_buffer[1];
+      TextSetHeight(G, tot_height);
       if(rpos[0] < _m1) {
         x_indent -= 2 * (rpos[0] + _1) / v_scale;
       } else if(rpos[0] > _1) {
@@ -358,11 +452,13 @@ static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, 
       }
       if(rpos[1] < _1) {
         float factor = -rpos[1] / 2.0F + 0.5F;
-        if(factor > _1)
-          factor = _1;
-        if(factor < _0)
-          factor = _0;
-        y_indent = 0.75F * sampling * size * factor;
+        factor = (factor > _1) ? _1 : (factor < _0) ? _0 : factor;
+	y_indent = (sampling * size * factor) * (1.f + text_spacing * max2(0.f, nlines-1.f));
+      }
+      {
+	float factor = rpos[1];
+	factor = (factor > _1) ? _1 : (factor < _m1) ? _m1 : factor;
+	y_indent -= factor * sampling * text_buffer[1];
       }
       if(rpos[1] < _m1) {
         y_indent -= 2 * (rpos[1] + _1) / v_scale;
@@ -370,41 +466,41 @@ static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, 
         y_indent -= 2 * (rpos[1] - _1) / v_scale;
       }
       v = TextGetPos(I->G);
+      if (line_widths){
+	x_indent -= text_just * (text_width - line_widths[0])/2.f;
+      }
+      {
+	float factor = rpos[0];
+	factor = (factor > _1) ? _1 : (factor < _m1) ? _m1 : factor;
+	x_indent -= factor * sampling * text_buffer[0];
+      }
       scale3f(xn, x_indent, x_adj);
-      scale3f(yn, y_indent, y_adj);
+      scale3f(yn, y_indent - size * (sampling * text_spacing * (nlines-1) + descender), y_adj);
       subtract3f(v, x_adj, pos);
       subtract3f(pos, y_adj, pos);
       TextSetPos(I->G, pos);
     }
     kern_flag = false;
-
+    copy3f(TextGetPos(I->G), origpos);
+    linenum = 0;
     while((c = *(st++))) {
-      if(unicnt) {
-        if(!(c & 0x80))         /* corrupt UTF8 */
-          unicnt = 0;
-        else {
-          unicode = (unicode << 6) | (0x3F & c);
-          unicnt--;
-          c = unicode;
-        }
-      } else if(c & 0x80) {
-        while(c & 0x80) {
-          c = (c << 1) & 0xFF;
-          unicnt++;
-        }
-        unicode = (c >> (unicnt--));
+      if (c == '\n'){
+	copy3f(origpos, TextGetPos(I->G));
+	kern_flag = false;
+	linenum++;
+	scale3f(yn, pymol_roundf(text_spacing * size * linenum * sampling), y_adj); // need to round to pixel in y
+	subtract3f(TextGetPos(G), y_adj, TextGetPos(G));
+	if (line_widths){
+	  scale3f(xn, text_just * (line_widths[0] - line_widths[linenum])/2.f, x_adj);
+	  add3f(TextGetPos(G), x_adj, TextGetPos(G));
+	}
+	kern_flag = false;
+	continue;
       }
+      CheckUnicode(&c, &unicnt, &unicode);
       if(!unicnt) {
         CharFngrprnt fprnt;
-        unsigned char *rgba;
-        UtilZeroMem(&fprnt, sizeof(fprnt));
-        fprnt.u.i.text_id = I->Font.TextID;
-        fprnt.u.i.size = (int) (size * 64 * sampling);
-        rgba = fprnt.u.i.color;
-        TextGetColorUChar(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-        rgba = fprnt.u.i.outline_color;
-        TextGetOutlineColor(G, rgba, rgba + 1, rgba + 2, rgba + 3);
-        fprnt.u.i.ch = c;
+	GenerateCharFngrprnt(G, &fprnt, c, I->Font.TextID, size, sampling, 0, 0);
         {
           int id = CharacterFind(G, &fprnt);
           if(!id) {
@@ -415,7 +511,7 @@ static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, 
               float kern = TypeFaceGetKerning(I->TypeFace,
                                               last_c,
                                               c,
-                                              size * sampling) / sampling;
+                                              size * sampling);
               v = TextGetPos(I->G);
               scale3f(xn, kern, x_adj);
               add3f(v, x_adj, pos);
@@ -429,6 +525,7 @@ static const char *FontTypeRenderRay(CRay * ray, CFontType * I, const char *st, 
         }
       }
     }
+    FreeP(line_widths);
   }
   return st;
 }

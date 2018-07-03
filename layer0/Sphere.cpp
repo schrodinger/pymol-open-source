@@ -664,3 +664,26 @@ static SphereRec *MakeDotSphere(PyMOLGlobals * G, int level)
 }
 
 #endif
+
+void SphereRender(PyMOLGlobals * G, int level, const float *centroid, const float *color, float alpha, float radius){
+#ifndef PURE_OPENGL_ES_2
+  SphereRec *sp = G->Sphere->Sphere[level];
+  int a, cc;
+  int *q = sp->Sequence;
+  float pt[3];
+  if (color)
+    glColor4f(color[0], color[1], color[2], alpha);
+  for(a = 0; a < sp->NStrip; a++) {
+    glBegin(GL_TRIANGLE_STRIP);
+    cc = sp->StripLen[a];
+    while(cc--) {
+      glNormal3fv(sp->dot[*q]);
+      mult3f(sp->dot[*q], radius, pt);
+      add3f(centroid, pt, pt);
+      glVertex3fv(pt);
+      q++;
+    }
+    glEnd();
+  }
+#endif
+}

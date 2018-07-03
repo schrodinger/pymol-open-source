@@ -271,8 +271,8 @@ libs = []
 pyogl_libs = []
 lib_dirs = []
 ext_comp_args = [
+    "-Wno-narrowing",
     # legacy stuff
-    '-Wno-write-strings',
     '-Wno-unused-function',
     '-Wno-char-subscripts',
     # optimizations

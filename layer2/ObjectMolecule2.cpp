@@ -2799,6 +2799,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
       }
 
       p = ncopy(cc, p, 1);
+      if (ai->chain){
+        LexDec(G, ai->chain);
+      }
       if(*cc == ' ') {
         ss_chain1 = 0;
         ai->chain = 0;

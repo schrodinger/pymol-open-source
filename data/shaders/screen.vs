@@ -1,3 +1,7 @@
+#ifdef PURE_OPENGL_ES_2
+precision highp float;
+#endif
+
 attribute vec3 attr_screenoffset;
 attribute vec2 attr_texcoords;
 attribute vec4 attr_backgroundcolor;
@@ -5,7 +9,6 @@ attribute vec4 attr_backgroundcolor;
 varying vec2 textureLookup ;
 varying vec4 backgroundColor;
 uniform vec2 t2PixelSize;
-
 
 void main()
 {

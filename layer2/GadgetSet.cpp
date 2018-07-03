@@ -68,6 +68,11 @@ int GadgetSetSetVertex(GadgetSet * I, int index, int base, float *v)
       copy3f(v, v0);
       if(index){
         subtract3f(v0, I->Coord, v0);
+      } else {
+	if (I->offsetPtOP)
+	  copy3f(v0, &I->StdCGO->op[I->offsetPtOP]);
+	if (I->offsetPtOPick)
+	  copy3f(v0, &I->PickCGO->op[I->offsetPtOPick]);
       }
     } else if(base < I->NCoord) {
       v1 = I->Coord + 3 * base;
@@ -262,10 +267,12 @@ void GadgetSet::update()
   GadgetSet * I = this;
   if(I->StdCGO) {
     CGOFree(I->StdCGO);
+    I->offsetPtOP = 0;
     I->StdCGO = NULL;
   }
   if(I->PickCGO) {
     CGOFree(I->PickCGO);
+    I->offsetPtOPick = 0;
     I->PickCGO = NULL;
   }
 }
@@ -280,20 +287,17 @@ void GadgetSet::render(RenderInfo * info)
   Picking **pick = info->pick;
   float *color;
   PickContext context;
-  short use_shader;
-  use_shader = (short) SettingGetGlobal_b(I->G, cSetting_use_shaders);
 
   context.object = I->Obj;
   context.state = I->State;
 
   color = ColorGet(I->G, I->Obj->Obj.Color);
 
-  if(!pass) {
+  if(pass < 0 || ray || pick) {
     PyMOLGlobals *G = I->G;
 
     if(ray) {
       if(I->ShapeCGO){
-        int ok = true;
 	float mat[16] = { 1.f, 0.f, 0.f, I->Coord[0], 
                           0.f, 1.f, 0.f, I->Coord[1], 
                           0.f, 0.f, 1.f, I->Coord[2],
@@ -301,12 +305,11 @@ void GadgetSet::render(RenderInfo * info)
 	RayPushTTT(ray);
 	RaySetTTT(ray, true, mat);  /* Used to set the ray-tracing matrix,
 				       this works, but is there another way to do this? */
-	ok = CGORenderRay(I->ShapeCGO, ray, color, I->Obj->Obj.Setting, NULL);
+	CGORenderRay(I->ShapeCGO, ray, info, color, NULL, I->Obj->Obj.Setting, NULL);
 	RayPopTTT(ray);
       }
     } else if(G->HaveGUI && G->ValidContext) {
-      short use_shader = (short) SettingGetGlobal_b(I->G, cSetting_use_shaders) &&
-	CShaderPrg_Get_RampShader(I->G);
+      short use_shader = (short) SettingGetGlobal_b(I->G, cSetting_use_shaders);
       if(pick) {
 	if (!I->PickCGO && I->PickShapeCGO){
 	  CGO *convertcgo;
@@ -315,7 +318,17 @@ void GadgetSet::render(RenderInfo * info)
 	  CHECKOK(ok, convertcgo);
 	  if (ok){
 	    if (use_shader){
-	      I->PickCGO = CGOOptimizeToVBOIndexedNoShader(convertcgo, 0);
+	      CGO *tmpCGO;
+	      tmpCGO = CGOOptimizeToVBOIndexedNoShader(convertcgo, 0);
+	      I->PickCGO = CGONew(G);
+	      CGODisable(I->PickCGO, GL_DEPTH_TEST);
+	      CGOEnable(I->PickCGO, GL_RAMP_SHADER);
+	      I->offsetPtOPick = CGOUniform3f(I->PickCGO, RAMP_OFFSETPT, (const float*)I->Coord);
+	      CGOAppendNoStop(I->PickCGO, tmpCGO);
+	      CGOFreeWithoutVBOs(tmpCGO);
+	      CGODisable(I->PickCGO, GL_RAMP_SHADER);
+	      CGOEnable(I->PickCGO, GL_DEPTH_TEST);
+	      CGOStop(I->PickCGO);
 	      I->PickCGO->use_shader = true;
 	      CGOFree(convertcgo);
 	    } else {
@@ -327,14 +340,15 @@ void GadgetSet::render(RenderInfo * info)
 	}
         if(I->PickCGO) {
 	  if (use_shader){
-	    CShaderPrg *shader = CShaderPrg_Enable_RampShader(G);
-	    CShaderPrg_Set3f(shader, "offsetPt", I->Coord[0], I->Coord[1], I->Coord[2]);
-	    CGORenderGLPicking(I->PickCGO, pick, &context, I->Obj->Obj.Setting, NULL);
-	    CShaderPrg_Disable(shader);
+	    CGORenderGLPicking(I->PickCGO, info, &context, I->Obj->Obj.Setting, NULL);
+#ifndef PURE_OPENGL_ES_2
 	  } else {
+	    glDisable(GL_DEPTH_TEST);
 	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
-	    CGORenderGLPicking(I->PickShapeCGO, pick, &context, I->Obj->Obj.Setting, NULL);
+	    CGORenderGLPicking(I->PickShapeCGO, info, &context, I->Obj->Obj.Setting, NULL);
 	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
+	    glEnable(GL_DEPTH_TEST);
+#endif
 	  }
         }
       } else {
@@ -345,7 +359,17 @@ void GadgetSet::render(RenderInfo * info)
 	  CHECKOK(ok, convertcgo);
 	  if (ok){
 	    if (use_shader){
-	      I->StdCGO = CGOOptimizeToVBOIndexedNoShader(convertcgo, 0);
+	      CGO *tmpCGO;
+	      tmpCGO = CGOOptimizeToVBONotIndexedNoShader(convertcgo, 0);
+	      I->StdCGO = CGONew(G);
+	      CGODisable(I->StdCGO, GL_DEPTH_TEST);
+	      CGOEnable(I->StdCGO, GL_RAMP_SHADER);
+	      I->offsetPtOP = CGOUniform3f(I->StdCGO, RAMP_OFFSETPT,  (const float*)I->Coord);
+	      CGOAppendNoStop(I->StdCGO, tmpCGO);
+	      CGOFreeWithoutVBOs(tmpCGO);
+	      CGODisable(I->StdCGO, GL_RAMP_SHADER);
+	      CGOEnable(I->StdCGO, GL_DEPTH_TEST);
+	      CGOStop(I->StdCGO);
 	      I->StdCGO->use_shader = true;
 	      CGOFree(convertcgo);
 	    } else {
@@ -356,16 +380,17 @@ void GadgetSet::render(RenderInfo * info)
 	  }
 	}
         if(I->StdCGO) {
-          /*CGORenderGL(I->PickCGO,color,I->Obj->Obj.Setting,NULL); */
 	  if (use_shader){
-	    CShaderPrg *shader = CShaderPrg_Enable_RampShader(G);
-	    CShaderPrg_Set3f(shader, "offsetPt", I->Coord[0], I->Coord[1], I->Coord[2]);
-	    CGORenderGL(I->StdCGO, color, I->Obj->Obj.Setting, NULL, info, NULL);
-	    CShaderPrg_Disable(shader);
+	    if (color)
+              CGORenderGL(I->StdCGO, NULL, I->Obj->Obj.Setting, NULL, info, NULL);
+#ifndef PURE_OPENGL_ES_2
 	  } else {
+	    glDisable(GL_DEPTH_TEST);
 	    glTranslatef(I->Coord[0],I->Coord[1],I->Coord[2]);
-	    CGORenderGL(I->ShapeCGO, color, I->Obj->Obj.Setting, NULL, info, NULL);
+	    CGORenderGL(I->ShapeCGO, NULL, I->Obj->Obj.Setting, NULL, info, NULL);
 	    glTranslatef(-I->Coord[0],-I->Coord[1],-I->Coord[2]);
+	    glEnable(GL_DEPTH_TEST);
+#endif
 	  }
         }
       }
@@ -390,6 +415,8 @@ GadgetSet *GadgetSetNew(PyMOLGlobals * G)
   I->StdCGO = NULL;
   I->ShapeCGO = NULL;
   I->PickShapeCGO = NULL;
+  I->offsetPtOP = 0;
+  I->offsetPtOPick = 0;
 
   return (I);
 }
@@ -410,6 +437,8 @@ void GadgetSet::fFree()
     CGOFree(I->PickShapeCGO);
     CGOFree(I->StdCGO);
     CGOFree(I->ShapeCGO);
+    I->offsetPtOP = 0;
+    I->offsetPtOPick = 0;
     VLAFreeP(I->Coord);
     VLAFreeP(I->Normal);
     VLAFreeP(I->Color);

@@ -11423,8 +11423,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, float *v, i
 
 
 /*========================================================================*/
-int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v,
-                                int mode, int log)
+int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v, int log, float *diff)
 {
   int result = 0;
   CoordSet *cs;
@@ -11439,7 +11438,7 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float 
       state = 0;
     cs = I->CSet[state];
     if(cs) {
-      result = CoordSetMoveAtomLabel(I->CSet[state], index, v, mode);
+      result = CoordSetMoveAtomLabel(I->CSet[state], index, v, diff);
       cs->invalidateRep(cRepLabel, cRepInvCoord);
     }
   }
@@ -11728,13 +11727,13 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
   PRINTFD(I->Obj.G, FB_ObjectMolecule)
     " ObjectMolecule: rendering %s pass %d...\n", I->Obj.Name, pass ENDFD;
 
-  ObjectPrepareContext(&I->Obj, ray);
+  ObjectPrepareContext(&I->Obj, info);
 
   if(I->UnitCellCGO && (I->Obj.visRep & cRepCellBit)) {
     if(ray) {
       /* need to apply object state matrix here */
-      int ok = CGORenderRay(I->UnitCellCGO, ray, ColorGet(I->Obj.G, I->Obj.Color),
-			    I->Obj.Setting, NULL);
+      int ok = CGORenderRay(I->UnitCellCGO, ray, info, ColorGet(I->Obj.G, I->Obj.Color),
+			    NULL, I->Obj.Setting, NULL);
       if (!ok){
 	CGOFree(I->UnitCellCGO);
       }
@@ -12471,6 +12470,9 @@ void ObjectMoleculeAdjustDiscreteAtmIdx(ObjectMolecule *I, int *lookup, int nAto
 void AtomInfoSettingGenerateSideEffects(PyMOLGlobals * G, ObjectMolecule *obj, int index, int id){
   switch(index){
   case cSetting_label_position:
+  case cSetting_label_placement_offset:
+  case cSetting_label_screen_point:
+  case cSetting_label_relative_mode:
     ObjectMoleculeInvalidate(obj, cRepLabel, cRepInvCoord, -1);
   }
 }

@@ -1,31 +1,21 @@
 uniform sampler3D volumeTex;
-uniform sampler1D colorTex;
+uniform sampler2D colorTex2D;
+uniform sampler1D colorTex1D;
 uniform float volumeScale;
 uniform float volumeBias;
+uniform float sliceDist;
+uniform mat4 TexMatrix;
+uniform vec3 eyeposM;
+uniform vec3 vDirM;
 uniform sampler3D carvemask;
 uniform bool carvemaskFlag;
 
-uniform float fog_enabled;
-uniform sampler2D bgTextureMap;
-uniform vec3 fogSolidColor;
-uniform float fogIsSolidColor;
+varying vec3 vertexM;
 varying float fog;
-
-uniform float g_Fog_end;
-uniform float g_Fog_scale;
 varying vec2 bgTextureLookup;
 
-uniform float isStretched;
-uniform float isCentered;
-uniform float isCenteredOrRepeated;
-uniform float isTiled;
-uniform vec2 tileSize;
-uniform vec2 tiledSize;
-uniform vec2 viewImageSize;
-uniform vec2 pixelSize;
-uniform vec2 halfPixel;
-
-#include ComputeFogColor
+#include anaglyph_header.fs
+#include compute_fog_color.fs
 
 bool iscarvemasked(vec3 t) {
   return carvemaskFlag && texture3D(carvemask, t).r > 0.5;
@@ -33,17 +23,25 @@ bool iscarvemasked(vec3 t) {
 
 void main()
 {
+#ifdef volume_mode
+#else // volume_mode
+
   if (iscarvemasked(gl_TexCoord[0].xyz))
     discard;
 
   float v = texture3D(volumeTex, gl_TexCoord[0].xyz).r;
   v = v * volumeScale + volumeBias;
   if (v < 0. || v > 1.) discard;
-  vec4 color = texture1D(colorTex, v);
+  vec4 color = texture1D(colorTex1D, v);
+#endif // volume_mode
 
-  if (color.a == 0.0) discard;
-  float cfog = mix(1.0, clamp(fog, 0.0, 1.0), fog_enabled);
-  vec4 fogColor = ComputeFogColor();
-  gl_FragColor = vec4(vec3(mix(fogColor.rgb, color.rgb, cfog)), color.a);
+  if (color.a == 0.0)
+    discard;
+
+  color = ApplyColorEffects(color, gl_FragCoord.z);
+
+  gl_FragColor = ApplyFog(color, fog);
+
+  PostLightingEffects();
 }
 

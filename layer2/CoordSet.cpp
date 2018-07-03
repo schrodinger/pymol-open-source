@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"RepDot.h"
 #include"RepMesh.h"
 #include"RepSphere.h"
+#include"RepSphereImmediate.h"
 #include"RepRibbon.h"
 #include"RepCartoon.h"
 #include"RepSurface.h"
@@ -49,10 +50,12 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 #include"PyMOLObject.h"
-#ifdef _PYMOL_IP_EXTRAS
-#endif
 #include "Executive.h"
 #include "Lex.h"
+
+#ifdef _PYMOL_IP_PROPERTIES
+#include "Property.h"
+#endif
 
 
 /*========================================================================*/
@@ -164,6 +167,55 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
       I->Setting = SettingNewFromPyList(G, PyList_GetItem(list, 7));
     if(ok && (ll > 8))
       ok = PConvPyListToLabPosVLA(PyList_GetItem(list, 8), &I->LabPos);
+
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+
+    if(ok && (ll > 10)){
+      CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 10);
+      if (!CPythonVal_IsNone(val))
+	I->SculptCGO = CGONewFromPyList(G, val, 0, 1);
+      else {
+	I->SculptShaderCGO = I->SculptCGO = NULL;
+      }
+      CPythonVal_Free(val);
+    }
+    if(ok){
+      if(ll > 11){
+	// load in atom-state settings
+	CPythonVal *val = CPythonVal_PyList_GetItem(G, list, 11);
+	if (!CPythonVal_IsNone(val)){
+	  int a;
+	  I->atom_state_setting_id = VLACalloc(int, I->NIndex);
+	  I->has_atom_state_settings = VLACalloc(char, I->NIndex);
+	  for (a=0; a<I->NIndex; a++){
+	    CPythonVal *val2 = CPythonVal_PyList_GetItem(G, val, a);
+	    if (!CPythonVal_IsNone(val2)){
+	      CPythonVal_PConvPyIntToInt(val2, &I->atom_state_setting_id[a]);
+	      I->has_atom_state_settings[a] = (I->atom_state_setting_id[a]) ? 1 : 0;
+	      if (I->atom_state_setting_id[a]) {
+	        I->atom_state_setting_id[a] = SettingUniqueConvertOldSessionID(G, I->atom_state_setting_id[a]);
+	      }
+	    }
+	    CPythonVal_Free(val2);
+	  }
+	} else {
+	  I->atom_state_setting_id = NULL;
+	  I->has_atom_state_settings = NULL;
+	}
+	CPythonVal_Free(val);
+      } else {
+	// check I->LabPos.offset to see if its set
+	if (I->LabPos){
+	  int a;
+	  for (a=0; a<I->NIndex; a++){
+	    if(length3f(I->LabPos[a].offset) > R_SMALL4) {
+	      SettingSet(cSetting_label_placement_offset, I->LabPos[a].offset, I, a);
+	    }
+	  }
+	}
+      }
+    }
     if(!ok) {
       if(I)
         I->fFree();
@@ -223,7 +275,7 @@ PyObject *CoordSetAsPyList(CoordSet * I)
   if(I) {
     int pse_export_version = SettingGetGlobal_f(I->State.G, cSetting_pse_export_version) * 1000;
     bool dump_binary = SettingGetGlobal_b(I->State.G, cSetting_pse_binary_dump) && (!pse_export_version || pse_export_version >= 1765);
-    result = PyList_New(9);
+    result = PyList_New(12);
     PyList_SetItem(result, 0, PyInt_FromLong(I->NIndex));
     PyList_SetItem(result, 1, PyInt_FromLong(I->NAtIndex));
     PyList_SetItem(result, 2, PConvFloatArrayToPyList(I->Coord, I->NIndex * 3, dump_binary));
@@ -237,6 +289,32 @@ PyObject *CoordSetAsPyList(CoordSet * I)
     PyList_SetItem(result, 6, ObjectStateAsPyList(&I->State));
     PyList_SetItem(result, 7, SettingAsPyList(I->Setting));
     PyList_SetItem(result, 8, PConvLabPosVLAToPyList(I->LabPos, I->NIndex));
+
+    PyList_SetItem(result, 9,
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+        PConvAutoNone(Py_None));
+
+    if(I->SculptCGO) {
+      PyList_SetItem(result, 10, CGOAsPyList(I->SculptCGO));
+    } else {
+      PyList_SetItem(result, 10, PConvAutoNone(NULL));
+    }
+    if (I->has_atom_state_settings){
+      int a;
+      PyObject *settings_list = NULL;
+      settings_list = PyList_New(I->NIndex);
+      for (a=0; a<I->NIndex; a++){
+	if (I->has_atom_state_settings[a]){
+	  PyList_SetItem(settings_list, a, PyInt_FromLong(I->atom_state_setting_id[a]));
+	} else {
+	  PyList_SetItem(settings_list, a, PConvAutoNone(NULL));
+	}
+      }
+      PyList_SetItem(result, 11, settings_list);
+    } else {
+      PyList_SetItem(result, 11, PConvAutoNone(NULL));
+    }
     /* TODO symmetry, spheroid, periodic box ... */
   }
   return (PConvAutoNone(result));
@@ -247,12 +325,35 @@ void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom)
 /* performs second half of removal */
 {
   /* NOTE: only works in a compressive mode, where lookup[a]<=a  */
-  int a;
-  int a0;
-
+  int a, a0, atm;
+  char *new_has_atom_state_settings_by_atom = NULL;
+  int *new_atom_state_setting_id_by_atom = NULL;
+  int nIndex = I->NIndex;
   PRINTFD(I->State.G, FB_CoordSet)
     " CoordSetAdjustAtmIdx-Debug: entered NAtIndex: %d NIndex %d\n I->AtmToIdx %p\n",
     I->NAtIndex, I->NIndex, (void *) I->AtmToIdx ENDFD;
+
+  if (I->has_atom_state_settings){
+    new_has_atom_state_settings_by_atom = VLACalloc(char, nIndex);
+    new_atom_state_setting_id_by_atom = VLACalloc(int, nIndex);
+  }
+
+  for(a = 0; a < nIndex; a++) {
+    atm = I->IdxToAtm[a];
+    a0 = lookup[atm];
+    if (a0 < 0){
+      if (I->has_atom_state_settings){
+	if (I->has_atom_state_settings[a]){
+	  SettingUniqueDetachChain(I->State.G, I->atom_state_setting_id[a]);
+	  I->has_atom_state_settings[a] = 0;
+	  I->atom_state_setting_id[a] = 0;
+	}
+      }
+    } else if (new_has_atom_state_settings_by_atom){
+      new_has_atom_state_settings_by_atom[a0] = I->has_atom_state_settings[a];
+      new_atom_state_setting_id_by_atom[a0] = I->atom_state_setting_id[a];
+    }
+  }
 
   if (I->AtmToIdx){
     for(a = 0; a < I->NAtIndex; a++) {
@@ -267,7 +368,15 @@ void CoordSetAdjustAtmIdx(CoordSet * I, int *lookup, int nAtom)
     VLASize(I->AtmToIdx, int, nAtom);
   }
   for(a = 0; a < I->NIndex; a++) {
-    I->IdxToAtm[a] = lookup[I->IdxToAtm[a]];
+    atm = I->IdxToAtm[a] = lookup[I->IdxToAtm[a]];
+    if (new_has_atom_state_settings_by_atom){
+      I->has_atom_state_settings[a] = new_has_atom_state_settings_by_atom[atm];
+      I->atom_state_setting_id[a] = new_atom_state_setting_id_by_atom[atm];
+    }
+  }
+  if (new_has_atom_state_settings_by_atom){
+    VLAFreeP(new_has_atom_state_settings_by_atom);
+    VLAFreeP(new_atom_state_setting_id_by_atom);
   }
   PRINTFD(I->State.G, FB_CoordSet)
     " CoordSetAdjustAtmIdx-Debug: leaving... NAtIndex: %d NIndex %d\n",
@@ -348,6 +457,8 @@ void CoordSetPurge(CoordSet * I)
   float *c0, *c1;
   LabPosType *l0, *l1;
   RefPosType *r0, *r1;
+  int *atom_state0, *atom_state1;
+  char *has_atom_state0, *has_atom_state1;
   obj = I->Obj;
 
   PRINTFD(I->State.G, FB_CoordSet)
@@ -356,6 +467,8 @@ void CoordSetPurge(CoordSet * I)
   c0 = c1 = I->Coord;
   r0 = r1 = I->RefPos;
   l0 = l1 = I->LabPos;
+  atom_state0 = atom_state1 = I->atom_state_setting_id;
+  has_atom_state0 = has_atom_state1 = I->has_atom_state_settings;
 
   /* This loop slides down the atoms that are not deleted (deleteFlag)
      it moves the Coord, RefPos, and LabPos */
@@ -369,6 +482,10 @@ void CoordSetPurge(CoordSet * I)
         l0++;
       if(r0)
         r0++;
+      if (has_atom_state0){
+	atom_state0++;
+	has_atom_state0++;
+      }
     } else if(offset) {
       ao = a + offset;
       *(c1++) = *(c0++);
@@ -379,6 +496,10 @@ void CoordSetPurge(CoordSet * I)
       }
       if(l0) {
         *(l1++) = *(l0++);
+      }
+      if (has_atom_state0){
+	*(atom_state1++) = *(atom_state0++);
+	*(has_atom_state1++) = *(has_atom_state0++);
       }
       if (I->AtmToIdx)
 	I->AtmToIdx[a1] = ao;
@@ -398,6 +519,10 @@ void CoordSetPurge(CoordSet * I)
         l0++;
         l1++;
       }
+      if (has_atom_state0){
+	atom_state0++; atom_state1++;
+	has_atom_state0++; has_atom_state1++;
+      }
     }
   }
   if(offset) {
@@ -410,6 +535,10 @@ void CoordSetPurge(CoordSet * I)
     }
     if(I->RefPos) {
       VLASize(I->RefPos, RefPosType, I->NIndex);
+    }
+    if(I->has_atom_state_settings) {
+      VLASize(I->has_atom_state_settings, char, I->NIndex);
+      VLASize(I->atom_state_setting_id, int, I->NIndex);
     }
     VLASize(I->IdxToAtm, int, I->NIndex);
     PRINTFD(I->State.G, FB_CoordSet)
@@ -487,33 +616,46 @@ int CoordSetMoveAtom(CoordSet * I, int at, const float *v, int mode)
 
 
 /*========================================================================*/
-int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, int mode)
+int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, const float *diff)
 {
   ObjectMolecule *obj = I->Obj;
   int a1 = I->atmToIdx(at);
   int result = 0;
-  LabPosType *lp;
 
   /* if label is valid, get the label offset
    * and set the new position relative to that */
   if(a1 >= 0) {
-    if(!I->LabPos)
-      I->LabPos = VLACalloc(LabPosType, I->NIndex);
-    if(I->LabPos) {
-      result = 1;
-      lp = I->LabPos + a1;
-      if(!lp->mode) {
-        const float *lab_pos =
-          SettingGet_3fv(obj->Obj.G, I->Setting, obj->Obj.Setting,
-                         cSetting_label_position);
-        copy3f(lab_pos, lp->pos);
+    float at_offset[3];
+    const float * at_offset_ptr;
+    int at_label_relative_mode = 0;
+    AtomInfoType *ai = obj->AtomInfo + at;
+
+    AtomStateGetSetting_i(I->State.G, obj, I, a1, ai, cSetting_label_relative_mode, &at_label_relative_mode);
+    switch (at_label_relative_mode){
+    case 0:
+      AtomStateGetSetting(I->State.G, obj, I, a1, ai, cSetting_label_placement_offset, &at_offset_ptr);
+      add3f(v, at_offset_ptr, at_offset);
+      SettingSet(cSetting_label_placement_offset, at_offset, I, a1);
+      break;
+    case 1: // screen relative
+    case 2: // screen pixel space
+      {
+	float voff[3];
+	int width, height;
+	SceneGetWidthHeight(I->State.G, &width, &height);
+	if (at_label_relative_mode==1){
+	  voff[0] = 2.f * diff[0] / width;
+	  voff[1] = 2.f * diff[1] / height;
+	} else {
+	  voff[0] = diff[0];
+	  voff[1] = diff[1];
+	}
+	voff[2] = 0.f;
+	AtomStateGetSetting(I->State.G, obj, I, a1, ai, cSetting_label_screen_point, &at_offset_ptr);
+	add3f(voff, at_offset_ptr, at_offset);
+	SettingSet(cSetting_label_screen_point, at_offset, I, a1);
       }
-      lp->mode = 1;
-      if(mode) {
-        add3f(v, lp->offset, lp->offset);
-      } else {
-        copy3f(v, lp->offset);
-      }
+      break;
     }
   }
 
@@ -1021,6 +1163,8 @@ void CoordSet::invalidateRep(int type, int level)
   if(level >= cRepInvCoord) {   /* if coordinates change, then this map becomes invalid */
     MapFree(I->Coord2Idx);
     I->Coord2Idx = NULL;
+    ExecutiveInvalidateSelectionIndicatorsCGO(I->State.G);
+    SceneInvalidatePicking(I->State.G);
     /* invalidate distances */
   }
 
@@ -1045,6 +1189,7 @@ void CoordSet::invalidateRep(int type, int level)
       I->Rep[rep]=new_fn(I,state);\
       if(I->Rep[rep]){ \
          I->Rep[rep]->fNew=(struct Rep *(*)(struct CoordSet *,int state))new_fn;\
+         SceneInvalidatePicking(G);\
       } else {  \
 	I->Active[rep] = false;			\
       }         \
@@ -1117,6 +1262,28 @@ void CoordSetUpdateCoord2IdxMap(CoordSet * I, float cutoff)
   }
 }
 
+/*
+ * RepToTransparencySetting: maps rep to transparency setting 
+ */
+static int RepToTransparencySetting(const int rep_id){
+  switch(rep_id){
+    // based on the rep, 
+    // transparency is set with different settings
+  case cRepCyl:
+    return cSetting_stick_transparency;
+  case cRepSurface:
+    return cSetting_transparency;
+  case cRepSphere:
+    return cSetting_sphere_transparency;
+  case cRepEllipsoid:
+    return cSetting_ellipsoid_transparency;
+  case cRepCartoon:
+    return cSetting_cartoon_transparency;
+  case cRepRibbon:
+    return cSetting_ribbon_transparency;
+  }
+  return 0;
+}
 
 /*========================================================================*/
 void CoordSet::render(RenderInfo * info)
@@ -1146,23 +1313,19 @@ void CoordSet::render(RenderInfo * info)
     int pass = info->pass;
     CRay *ray = info->ray;
     Picking **pick = info->pick;
-    int a, aa;
+    int a, aa, abit, aastart = 0, aaend = cRepCnt;
     ::Rep *r;
-    int float_labels = SettingGet_i(G, I->Setting,
-                                    I->Obj->Obj.Setting,
-                                    cSetting_float_labels);
     int sculpt_vdw_vis_mode = SettingGet_i(G, I->Setting,
 					   I->Obj->Obj.Setting,
 					   cSetting_sculpt_vdw_vis_mode);
     if((!pass) && sculpt_vdw_vis_mode && 
        I->SculptCGO && (I->Obj->Obj.visRep & cRepCGOBit)) {
       if(ray) {
-        int ok = CGORenderRay(I->SculptCGO, ray,
-			      ColorGet(G, I->Obj->Obj.Color), I->Setting, I->Obj->Obj.Setting);
+        int ok = CGORenderRay(I->SculptCGO, ray, info,
+			      ColorGet(G, I->Obj->Obj.Color), NULL, I->Setting, I->Obj->Obj.Setting);
 	if (!ok){
 	  CGOFree(I->SculptCGO);
 	  CGOFree(I->SculptShaderCGO);
-	  I->SculptShaderCGO = I->SculptCGO = NULL;
 	}
       } else if(G->HaveGUI && G->ValidContext) {
         if(!pick) {
@@ -1173,26 +1336,34 @@ void CoordSet::render(RenderInfo * info)
 	      convertcgo = CGOCombineBeginEnd(I->SculptCGO, 0);
 	      if (convertcgo){
 		I->SculptShaderCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
-		I->SculptShaderCGO->use_shader = I->SculptShaderCGO->enable_shaders = true;
+		I->SculptShaderCGO->use_shader = true;
 		CGOFree(convertcgo);
 	      }
 	    }
-	  } else if (I->SculptShaderCGO){
+	  } else {
 	    CGOFree(I->SculptShaderCGO);
-	    I->SculptShaderCGO = NULL;
 	  }
 	  if (I->SculptShaderCGO){
-	    CGORenderGL(I->SculptShaderCGO, ColorGet(G, I->Obj->Obj.Color),
+	    CGORenderGL(I->SculptShaderCGO, NULL,
 			I->Setting, I->Obj->Obj.Setting, info, NULL);
 	  } else {
-	    CGORenderGL(I->SculptCGO, ColorGet(G, I->Obj->Obj.Color),
+	    CGORenderGL(I->SculptCGO, NULL,
 			I->Setting, I->Obj->Obj.Setting, info, NULL);
 	  }
         }
       }
     }
 
-    for(aa = 0; aa < cRepCnt; aa++) {
+    if (pick){
+      int pick_labels = SettingGet_i(G, I->Setting,
+				     I->Obj->Obj.Setting,
+				     cSetting_pick_labels);
+      if (pick_labels == 2){ // only pick labels
+	aastart = cRepLabel;
+	aaend = aastart + 1;
+      }
+    }
+    for(aa = aastart; aa < aaend; aa++) {
       if(aa == cRepSurface) {   /* reorder */
         a = cRepCell;
       } else if(aa == cRepCell) {
@@ -1200,6 +1371,8 @@ void CoordSet::render(RenderInfo * info)
       } else {
         a = aa;
       }
+
+      abit = (1 << a);
 
       if(I->Active[a] && I->Rep[a]) {
         r = I->Rep[a];
@@ -1230,18 +1403,26 @@ void CoordSet::render(RenderInfo * info)
 
             r->fRender(r, info);
           } else {
-
+            bool t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
+            bool render_both = t_mode_3;  // render both opaque (1) and transparent (-1) pass if t_mode_3
             /* here we need to iterate through and apply coordinate set matrices */
 
             switch (a) {
-            case cRepLabel:
-              if(float_labels && (pass == -1))
-                r->fRender(r, info);
-              else if(pass == 1)
-                r->fRender(r, info);
+            case cRepVolume:
+              {
+                int t_mode = SettingGetGlobal_i(G, cSetting_transparency_mode);
+                if (t_mode == 3 && pass == -1){
+                  r->fRender(r, info);
+                }
+              }
               break;
-            case cRepNonbondedSphere:
-            case cRepRibbon:
+            case cRepLabel:
+              {
+                int t_mode_3 = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
+                if (pass == -1 || (t_mode_3 && pass == 1))
+                  r->fRender(r, info);
+              }
+              break;
             case cRepDot:
             case cRepCGO:
             case cRepCallback:
@@ -1251,64 +1432,49 @@ void CoordSet::render(RenderInfo * info)
             case cRepLine:
             case cRepMesh:
             case cRepDash:
-            case cRepNonbonded:
             case cRepCell:
             case cRepExtent:
               if(!pass)
                 r->fRender(r, info);
               break;
-            case cRepCyl:      /* render sticks differently depending on transparency */
-              if(SettingGet_f(G, r->cs->Setting,
-                              r->obj->Setting, cSetting_stick_transparency) > 0.0001) {
-                if(pass == -1)
-                  r->fRender(r, info);
-              } else if(pass == 1){
-                r->fRender(r, info);
-              }
-              break;
-
-            case cRepSurface:
-              if(info->alpha_cgo) {
-                if(pass == 1)
-                  r->fRender(r, info);
-              } else {
-                if(SettingGet_f(G, r->cs->Setting,
-                                r->obj->Setting, cSetting_transparency) > 0.0001) {
-
-                  if(pass == -1)
-                    r->fRender(r, info);
-                } else if(pass == 1)
-                  r->fRender(r, info);
-              }
-              break;
-            case cRepSphere:   /* render spheres differently depending on transparency */
-              if(SettingGet_f(G, r->cs->Setting,
-                              r->obj->Setting, cSetting_sphere_transparency) > 0.0001) {
-                if(pass == -1)
-                  r->fRender(r, info);
-              } else if(pass == 1)
-                r->fRender(r, info);
-              break;
-            case cRepEllipsoid:        /* render spheres differently depending on transparency */
-              if(SettingGet_f(G, r->cs->Setting,
-                              r->obj->Setting, cSetting_ellipsoid_transparency) > 0.0001) {
-                if(pass == -1)
-                  r->fRender(r, info);
-              } else if(pass == 1)
-                r->fRender(r, info);
-              break;
             case cRepCartoon:
-              if(info->alpha_cgo) {
-                if(pass == 1)
-                  r->fRender(r, info);
-              } else {
-                if(SettingGet_f(G, r->cs->Setting,
-                                r->obj->Setting,
-                                cSetting_cartoon_transparency) > 0.0001) {
-                  if(pass == -1)
+            case cRepNonbonded:
+            case cRepRibbon:
+              render_both = false; // cartoon and nonbonded do not have atom-level transparency
+            case cRepNonbondedSphere:
+            case cRepSurface:
+            case cRepEllipsoid:
+            case cRepCyl:
+            case cRepSphere:
+              {
+                if (render_both){
+                  // for transparency_mode 3, render both opaque and transparent pass
+                  if (pass != 0){
                     r->fRender(r, info);
-                } else if(pass == 1)
-                  r->fRender(r, info);
+                  }
+                } else {
+                  bool checkAlphaCGO = abit & (cRepSurfaceBit | cRepCartoonBit);
+                  int check_setting = RepToTransparencySetting(a);
+                  bool cont = true;
+                  if (checkAlphaCGO){
+                    if(info->alpha_cgo) {
+                      if(pass == 1){
+                        r->fRender(r, info);
+                      }
+                      cont = false;
+                    }
+                  }
+                  if (cont){
+                    if(check_setting && SettingGet_f(G, r->cs->Setting,
+                                                     r->obj->Setting, check_setting) > 0.0001) {
+                      /* if object has transparency, only render in -1 pass */
+                      if(pass == -1)
+                        r->fRender(r, info);
+                    } else if(pass == 1){
+                      r->fRender(r, info);
+                    }
+                  }
+                }
               }
               break;
             }
@@ -1367,7 +1533,12 @@ CoordSet *CoordSetCopy(const CoordSet * cs)
 
   UtilZeroMem(I->Rep, sizeof(::Rep *) * cRepCnt);
 
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+
   I->Setting = NULL;
+  I->atom_state_setting_id = NULL;
+  I->has_atom_state_settings = NULL;
   I->SculptCGO = NULL;
   I->SculptShaderCGO = NULL;
   I->TmpLinkBond = NULL;
@@ -1486,6 +1657,18 @@ void CoordSet::fFree()
   int a;
   ObjectMolecule *obj;
   if(I) {
+#ifdef _PYMOL_IP_PROPERTIES
+#endif
+
+    if (I->has_atom_state_settings){
+      for(a = 0; a < I->NIndex; a++){
+	if (I->has_atom_state_settings[a]){
+	  SettingUniqueDetachChain(I->State.G, I->atom_state_setting_id[a]);
+	}
+      }
+      VLAFreeP(I->has_atom_state_settings);
+      VLAFreeP(I->atom_state_setting_id);
+    }
     for(a = 0; a < cRepCnt; a++)
       if(I->Rep[a])
         I->Rep[a]->fFree(I->Rep[a]);
@@ -1525,3 +1708,70 @@ void RefPosTypeCopy(const RefPosType * src, RefPosType * dst){
   copy3f(src->coord, dst->coord);
   dst->specified = src->specified;
 }
+
+#ifndef _PYMOL_NOPY
+int CoordSetSetSettingFromPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id, PyObject *val){
+  if (val == Py_None)
+    val = NULL;
+
+  if (!val) {
+    if (!cs->has_atom_state_settings ||
+        !cs->has_atom_state_settings[at])
+      return true;
+  }
+
+  CoordSetCheckUniqueID(G, cs, at);
+  cs->has_atom_state_settings[at] = true;
+
+  return SettingUniqueSetPyObject(G, cs->atom_state_setting_id[at], setting_id, val);
+}
+#endif
+
+int CoordSetCheckSetting(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id){
+  if(!cs->has_atom_state_settings || !cs->has_atom_state_settings[at]) {
+    return 0;
+  } else {
+    if(!SettingUniqueCheck(G, cs->atom_state_setting_id[at], setting_id)) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+
+PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id){
+  if(cs->has_atom_state_settings && cs->has_atom_state_settings[at]){
+    return SettingUniqueGetPyObject(G, cs->atom_state_setting_id[at], setting_id);
+  }
+  return NULL;
+}
+
+int CoordSetCheckUniqueID(PyMOLGlobals * G, CoordSet *I, int at){
+  if (!I->atom_state_setting_id){
+    I->atom_state_setting_id = VLACalloc(int, I->NIndex);
+  }
+  if (!I->has_atom_state_settings){
+    I->has_atom_state_settings = VLACalloc(char, I->NIndex);
+  }
+  if (!I->atom_state_setting_id[at]){
+    I->atom_state_setting_id[at] = AtomInfoGetNewUniqueID(G);
+  }
+  return I->atom_state_setting_id[at];
+}
+
+template <typename V>
+void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, V * out) {
+  if (cs->has_atom_state_settings &&
+      cs->has_atom_state_settings[idx] &&
+      SettingUniqueGetIfDefined(G, cs->atom_state_setting_id[idx], setting_id, out))
+    return;
+
+  if (AtomSettingGetIfDefined(G, ai, setting_id, out))
+    return;
+
+  *out = SettingGet<V>(G, cs->Setting, obj->Obj.Setting, setting_id);
+}
+
+template void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, int * out);
+template void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, float * out);
+template void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, const float ** out);

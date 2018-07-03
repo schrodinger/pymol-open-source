@@ -41,8 +41,8 @@ typedef struct _CFont CFont;
 #define SHADERCGOARGV shaderCGO
 
 typedef char *FontRenderOpenGLFn(RenderInfo * info, CFont *, const char *text, float size,
-                                 float *rpos SHADERCGOARG);
-typedef char *FontRenderRayFn(CRay * ray, CFont *, const char *text, float size, float *rpos);
+                                 float *rpos, short needSize, short relativeMode, short shouldRender SHADERCGOARG);
+typedef char *FontRenderRayFn(CRay * ray, CFont *, const char *text, float size, float *rpos, short needSize, short relativeMode);
 
 struct _CFont {
   PyMOLGlobals *G;

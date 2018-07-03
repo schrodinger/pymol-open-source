@@ -430,12 +430,7 @@ void DistSet::render(RenderInfo * info)
 {
   DistSet * I = this;
   CRay *ray = info->ray;
-  int pass = info->pass;
   Picking **pick = info->pick;
-  int float_labels = SettingGet_i(I->State.G,
-                                  NULL,
-                                  I->Obj->Obj.Setting,
-                                  cSetting_float_labels);
   int a;
   ::Rep *r;
   for(a = 0; a < I->NRep; a++)
@@ -467,20 +462,8 @@ void DistSet::render(RenderInfo * info)
           r->fRender(r, info);
         } else {
           ObjectUseColor((CObject *) I->Obj);
-          switch (a) {
-          case cRepLabel:
-            if(float_labels) {
-              if(pass == -1)
-                r->fRender(r, info);
-            } else if(pass == 0)
+          // now all filtering for passes happen in ObjectDistRender
               r->fRender(r, info);
-            break;
-          default:
-            if(pass == 0) {
-              r->fRender(r, info);
-            }
-            break;
-          }
         }
       }
   }

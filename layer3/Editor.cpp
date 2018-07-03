@@ -62,8 +62,6 @@ struct _CEditor {
   CGO *shaderCGO;
 };
 
-void EditorInvalidateShaderCGO(PyMOLGlobals * G);
-
 int EditorGetScheme(PyMOLGlobals * G)
 {
   CEditor *I = G->Editor;
@@ -111,14 +109,11 @@ static void EditorDrawDihedral(PyMOLGlobals * G)
         at3 = ObjectMoleculeGetTopNeighbor(G, obj1, at2, at1);
 
         if((at0 >= 0) && (at3 >= 0)) {
-          int sele0, sele3;
           float result;
 
           /* find the highest priority atom attached to index1 */
           SelectorCreateOrderedFromObjectIndices(G, cEditorDihe1, obj1, &at0, 1);
           SelectorCreateOrderedFromObjectIndices(G, cEditorDihe2, obj2, &at3, 1);
-          sele0 = SelectorIndexByName(G, cEditorDihe1);
-          sele3 = SelectorIndexByName(G, cEditorDihe2);
 
           ExecutiveDihedral(G, &result, cEditorDihedral, cEditorDihe1,
                             cEditorSele1, cEditorSele2, cEditorDihe2,
@@ -1015,7 +1010,7 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
 {
   int sele0, sele1;
   int i0;
-  OrthoLineType buffer, s1;
+  OrthoLineType buffer, s1, s2;
   ObjectMolecule *obj0 = NULL, *obj1 = NULL;
 
   if(EditorActive(G)) {
@@ -1026,11 +1021,15 @@ void EditorHFill(PyMOLGlobals * G, int quiet)
       
       sele1 = SelectorIndexByName(G, cEditorSele2);
       if(sele0 >= 0) {
-        if(sele1 >= 0)
-	  sprintf(buffer, "((neighbor (%s)) and hydro and not (%s))",
+	if(sele1 >= 0){
+	  sprintf(s2, "(%s) or (%s)",
 		  cEditorSele1, cEditorSele2);
-        else
+	  sprintf(buffer, "((neighbor (%s)) and hydro and not (%s))",
+                  s2, s2);
+	} else {
+	  sprintf(s2, "(%s)", cEditorSele1);
 	  sprintf(buffer, "((neighbor %s) & hydro)", cEditorSele1);
+	}
 	SelectorGetTmp(G, buffer, s1);
 	ExecutiveRemoveAtoms(G, s1, quiet);
 	SelectorFreeTmp(G, s1);
@@ -1289,8 +1288,11 @@ static void draw_globe(PyMOLGlobals * G, float *v2, int number, CGO *shaderCGO)
   n0[2] = 0.0;
   get_system1f3f(n0, n1, n2);
 
+#ifndef PURE_OPENGL_ES_2
   glColor3fv(ColorGet(G, 0));
-
+#endif
+  if (shaderCGO)
+    CGOColorv(shaderCGO, ColorGet(G, 0));
   cycle_counter = number;
   while(cycle_counter) {
 
@@ -1640,13 +1642,20 @@ void EditorRender(PyMOLGlobals * G, int state)
       convertcgo = CGOCombineBeginEnd(shaderCGO, 0);
       CHECKOK(ok, convertcgo);
       CGOFree(shaderCGO);
-      if (ok)
-	I->shaderCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
-      CHECKOK(ok, I->shaderCGO);
+      if (ok){
+	CGO *tmpCGO = CGONew(G), *convertcgo2 = NULL;
+	if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
+	if (ok) ok &= CGODisable(tmpCGO, GL_TWO_SIDED_LIGHTING);
+	convertcgo2 = CGOOptimizeToVBONotIndexedNoShader(convertcgo, 0);
+	if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo2);
+	if (ok) ok &= CGODisable(tmpCGO, GL_DEFAULT_SHADER);
+	if (ok) ok &= CGOStop(tmpCGO);
+	CGOFreeWithoutVBOs(convertcgo2);
+	I->shaderCGO = tmpCGO;
+	I->shaderCGO->use_shader = true;
+      }
       CGOFree(convertcgo);
       if (ok){
-	I->shaderCGO->use_shader = true;
-	I->shaderCGO->enable_shaders = true;
 	CGORenderGL(I->shaderCGO, NULL, NULL, NULL, NULL, NULL);
       }
     }

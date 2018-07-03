@@ -42,6 +42,19 @@ Z* -------------------------------------------------------------------
 #define cCylCapFlat 1
 #define cCylCapRound 2
 
+#define cCylShaderCap1Flat 0x01
+#define cCylShaderCap2Flat 0x02
+#define cCylShaderCap1RoundBit 0x04
+#define cCylShaderCap2RoundBit 0x08
+#define cCylShaderCap1Round (cCylShaderCap1Flat | cCylShaderCap1RoundBit)
+#define cCylShaderCap2Round (cCylShaderCap2Flat | cCylShaderCap2RoundBit)
+
+#define cCylShaderInterpColor 0x10
+#define cCylShaderBothCapsRound (cCylShaderCap1Round | cCylShaderCap2Round)
+#define cCylShaderBothCapsFlat (cCylShaderCap1Flat | cCylShaderCap2Flat)
+
+#define cCylShaderMask 0x1F
+
 typedef struct {
   int vert;
   float v1[3], v2[3], v3[3];
@@ -51,7 +64,7 @@ typedef struct {
   float trans;
   int char_id;
   char type, cap1, cap2, cull;
-  char wobble, ramped;
+  char wobble, ramped, no_lighting;
   /* float wobble_param[3] eliminated to save space */
 } CPrimitive;                   /* currently 172 bytes -> appoximately 6.5 million primitives per gigabyte */
 

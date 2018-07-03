@@ -66,6 +66,7 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include"main.h"
 #include"Scene.h"
+#include"SceneRay.h"
 #include"Setting.h"
 #include"Movie.h"
 #include"Export.h"

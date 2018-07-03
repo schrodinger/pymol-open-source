@@ -60,7 +60,7 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
       " RepEllipsoidRender: rendering ray...\n" ENDFD;
 
     if(I->ray){
-      int rayok = CGORenderRay(I->ray, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
+      int rayok = CGORenderRay(I->ray, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
       if (!rayok){
 	CGOFree(I->ray);
 	try_std = true;
@@ -69,7 +69,7 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
       try_std = true;
     }
     if(try_std && I->std){
-      ok &= CGORenderRay(I->std, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
+      ok &= CGORenderRay(I->std, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
       if (!ok){
 	CGOFree(I->std);
       }
@@ -78,8 +78,11 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
 
     if(pick) {
-      if(I->std) {
-        CGORenderGLPicking(I->std, pick, &I->R.context,
+      if(I->shaderCGO) {
+        CGORenderGLPicking(I->shaderCGO, info, &I->R.context,
+                           I->R.cs->Setting, I->R.obj->Setting);
+      } else if(I->std) {
+        CGORenderGLPicking(I->std, info, &I->R.context,
                            I->R.cs->Setting, I->R.obj->Setting);
       }
     } else {
@@ -95,7 +98,6 @@ static void RepEllipsoidRender(RepEllipsoid * I, RenderInfo * info)
 	    convertcgo = CGOCombineBeginEnd(I->std, 0);	    
 	    I->shaderCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
 	    I->shaderCGO->use_shader = true;
-	    I->shaderCGO->enable_shaders = true;
 	    CGOFree(convertcgo);
 	  }
 	} else {

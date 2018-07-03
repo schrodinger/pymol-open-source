@@ -522,6 +522,8 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp * I, const float *pos, float *c
       if(ok)
         ok = (I->Mol != NULL);
       if(ok) {
+	if (I->Mol->NCSet==1) // if only one state, then set state to 0
+	  state = 0;
         if(SettingGet_b
            (I->Gadget.Obj.G, I->Gadget.Obj.Setting, NULL,
             cSetting_ramp_blend_nearby_colors)) {
@@ -614,6 +616,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
 
 
   CGOColor(cgo, 1.0F, 1.0F, 1.0F);
+  CGONormal(cgo, 0.f, 0.f, 1.f); // text/characters need z-normal to include normals in vbo
   if(I->Level && I->NLevel) {
     float exindent = (n_color > 0) ? I->bar_height : 0.f;
     float pos[] = { I->border + I->text_border + exindent,
@@ -623,9 +626,10 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
     float axes[] = { 1.0F, 0.0F, 0.0F,
 		     0.0F, 1.0F, 0.0F,
 		     0.0F, 0.0F, 1.0F };
+    float color[] = { 1.f, 1.f, 1.f };
     /* left text for ramp */
     sprintf(buffer, "%0.3f", I->Level[0]);
-    VFontWriteToCGO(I->Gadget.Obj.G, font_id, cgo, buffer, pos, scale, axes);
+    VFontWriteToCGO(I->Gadget.Obj.G, font_id, cgo, buffer, pos, scale, axes, color);
 
     /* right text, right justified for ramp */
     pos[0] = I->width + I->border - exindent;
@@ -634,7 +638,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp * I, GadgetSet * gs)
     sprintf(buffer, "%0.3f", I->Level[I->NLevel - 1]);
     /* indent for right justification */
     VFontIndent(I->Gadget.Obj.G, font_id, buffer, pos, scale, axes, -1.f);
-    VFontWriteToCGO(I->Gadget.Obj.G, font_id, cgo, buffer, pos, scale, axes);
+    VFontWriteToCGO(I->Gadget.Obj.G, font_id, cgo, buffer, pos, scale, axes, color);
   }
 
   /* center */

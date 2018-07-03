@@ -19,7 +19,6 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 #include"Setting.h"
-#include"Base.h"
 
 typedef struct GadgetSet {
   // methods (not fully refactored yet)
@@ -46,6 +45,7 @@ typedef struct GadgetSet {
   CGO *StdCGO;
   CGO *ShapeCGO;
   CSetting *Setting;
+  int offsetPtOP, offsetPtOPick;
 } GadgetSet;
 
 #include"ObjectGadget.h"

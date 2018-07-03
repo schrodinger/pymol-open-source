@@ -2403,3 +2403,10 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
   }
   return (result);
 }
+
+void CalculateTriangleNormal(float *p1, float *p2, float *p3, float *n){
+  float v1[3], v2[3];
+  subtract3f(p2, p1, v1);
+  subtract3f(p3, p1, v2);
+  cross_product3f(v1, v2, n);
+}

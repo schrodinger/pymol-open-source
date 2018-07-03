@@ -43,5 +43,6 @@ struct _CSphere {
 
 void SphereInit(PyMOLGlobals * G);
 void SphereFree(PyMOLGlobals * G);
+void SphereRender(PyMOLGlobals * G, int level, const float *centroid, const float *color, float alpha, float radius);
 
 #endif

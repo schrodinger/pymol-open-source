@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 void RepDotFree(RepDot * I);
+static void RepDotRender(RepDot * I, RenderInfo * info);
 
 void RepDotInit(void)
 {
@@ -55,6 +56,105 @@ void RepDotFree(RepDot * I)
   OOFreeP(I);
 }
 
+static int RepDotCGOGenerate(RepDot * I, RenderInfo * info)
+{
+  PyMOLGlobals *G = I->R.G;
+  float *v = I->V;
+  int c = I->N;
+  int cc = 0;
+  int ok = true;
+  CGO *cgo = NULL;
+
+  int normals =
+    SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_normals);
+  short dot_as_spheres = SettingGet_i(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_dot_as_spheres);
+
+  cgo = CGONew(G);
+  CHECKOK(ok, cgo);
+  if (dot_as_spheres){
+    while(ok && c--) {
+      if(!cc) {             /* load up the current vertex color */
+	cc = (int) (*(v++));
+	ok &= CGOColorv(cgo, v);
+	v += 3;
+      }
+      if(ok && normals)
+	ok &= CGONormalv(cgo, v);
+      v += 3;
+      if (ok)
+	ok &= CGOSphere(cgo, v, 1.f);
+      v += 3;
+      cc--;
+    }
+  } else {
+    if (ok)
+      ok &= CGOBegin(cgo, GL_POINTS);
+    while(ok && c--) {
+      if(!cc) {             /* load up the current vertex color */
+	cc = (int) (*(v++));
+	ok &= CGOColorv(cgo, v);
+	v += 3;
+      }
+      if(normals)
+	CGONormalv(cgo, v);
+      v += 3;
+      if (ok)
+	ok &= CGOVertexv(cgo, v);
+      v += 3;
+      cc--;
+    }
+    if (ok)
+      ok &= CGOEnd(cgo);
+  }
+  if (ok)
+    ok &= CGOStop(cgo);
+  if (ok) {
+    if (dot_as_spheres){
+      CGO *tmpCGO = CGONew(G), *tmp2CGO = NULL;
+      if (ok) ok &= CGOEnable(tmpCGO, GL_SPHERE_SHADER);
+      if (ok) ok &= CGOEnable(tmpCGO, GL_DOT_LIGHTING);
+      if (ok) ok &= CGOSpecial(tmpCGO, DOT_WIDTH_FOR_DOT_SPHERES);
+      tmp2CGO = CGOOptimizeSpheresToVBONonIndexedNoShader(cgo,
+          CGO_BOUNDING_BOX_SZ + fsizeof<cgo::draw::sphere_buffers>() + 2);
+      if (ok)
+	ok &= CGOAppendNoStop(tmpCGO, tmp2CGO);
+      CGOFreeWithoutVBOs(tmp2CGO);
+      if (ok) ok &= CGODisable(tmpCGO, GL_SPHERE_SHADER);
+      if (ok) ok &= CGOStop(tmpCGO);
+      I->shaderCGO = tmpCGO;
+    } else {
+      CGO *convertcgo = CGOCombineBeginEnd(cgo, 0), *tmp2CGO = NULL;
+      CGO *tmpCGO = CGONew(G);
+      if (ok) ok &= CGOEnable(tmpCGO, GL_DEFAULT_SHADER);
+      if (ok) ok &= CGOEnable(tmpCGO, GL_DOT_LIGHTING);
+      if (ok) ok &= CGOSpecial(tmpCGO, DOT_WIDTH_FOR_DOTS);
+      CHECKOK(ok, convertcgo);
+      if (ok)
+	tmp2CGO = CGOOptimizeToVBONotIndexedNoShader(convertcgo, CGO_BOUNDING_BOX_SZ + I->N * 3 + 7);
+      CHECKOK(ok, tmp2CGO);
+      if (ok)
+	ok &= CGOAppendNoStop(tmpCGO, tmp2CGO);
+      CGOFreeWithoutVBOs(tmp2CGO);
+      CGOFree(convertcgo);
+      if (ok) ok &= CGODisable(tmpCGO, GL_DEFAULT_SHADER);
+      if (ok) ok &= CGOStop(tmpCGO);
+      I->shaderCGO = tmpCGO;
+    }
+  }
+  if (ok){
+    I->shaderCGO->use_shader = true;
+    I->shaderCGO_as_spheres = dot_as_spheres;
+  }
+  CGOFree(cgo);
+
+  /* now that the shaderCGO is created, we can just call RepDotRender to render it */
+  if (ok)
+    RepDotRender(I, info);
+      
+  return ok;
+
+}
+
 static void RepDotRender(RepDot * I, RenderInfo * info)
 {
   CRay *ray = info->ray;
@@ -66,6 +166,7 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
   int ok = true;
 
   if(ray) {
+#ifndef _PYMOL_NO_RAY
     float radius;
 
     if(I->dotSize <= 0.0F) {
@@ -85,6 +186,7 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
       v += 3;
       cc--;
     }
+#endif
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else { /* else not pick, i.e., when rendering */
@@ -105,116 +207,17 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
       if (use_shader){
 	if (!I->shaderCGO){
 	  generate_shader_cgo = 1;
+	  ok &= RepDotCGOGenerate(I, info);
 	} else {
-	  CShaderPrg *shaderPrg;
 	  float *color;
 	  color = ColorGet(G, I->R.obj->Color);
-
-	  I->shaderCGO->enable_shaders = false;
-	  if (dot_as_spheres){
-	    float radius;
-	    if(I->dotSize <= 0.0F) {
-	      if(info->width_scale_flag)
-		radius = I->Width * info->width_scale * info->vertex_scale / 1.4142F;
-	      else
-		radius = I->Width * info->vertex_scale;
-	    } else {
-	      radius = I->dotSize;
-	    }
-	    shaderPrg = CShaderPrg_Enable_DefaultSphereShader(G);
-	    CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", fabs(radius));
-	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
-	    CShaderPrg_Disable(shaderPrg);
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    if (!shaderPrg) return;
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	    SceneResetNormalUseShaderAttribute(G, 0, true, CShaderPrg_GetAttribLocation(shaderPrg, "a_Normal"));
-	    CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
-	    CShaderPrg_Disable(shaderPrg);
-	  }
+	  CGORenderGL(I->shaderCGO, color, NULL, NULL, info, &I->R);
 	  return; /* should not do any other rendering after shaderCGO has
 		    been rendered */
 	}
       }
 
-      if (generate_shader_cgo){
-	CGO *cgo = CGONew(G);
-	CHECKOK(ok, cgo);
-	if (ok)
-	  I->shaderCGO = CGONew(G);
-	CHECKOK(ok, I->shaderCGO);
-	if (ok)
-	  CGOSetUseShader(I->shaderCGO, true);
-	if(ok && !normals)
-	  CGOResetNormal(I->shaderCGO, true);
-	if (dot_as_spheres){
-	  while(ok && c--) {
-	    if(!cc) {             /* load up the current vertex color */
-	      cc = (int) (*(v++));
-	      ok &= CGOColorv(cgo, v);
-	      v += 3;
-	    }
-	    if(ok && normals)
-	      ok &= CGONormalv(cgo, v);
-	    v += 3;
-	    if (ok)
-	      ok &= CGOSphere(cgo, v, 1.f);
-	    v += 3;
-	    cc--;
-	  }
-	} else {
-	  if (ok)
-	    ok &= CGOLinewidthSpecial(I->shaderCGO, POINTSIZE_DYNAMIC_DOT_WIDTH);
-	  if (ok)
-	    ok &= CGOBegin(cgo, GL_POINTS);
-	  while(ok && c--) {
-	    if(!cc) {             /* load up the current vertex color */
-	      cc = (int) (*(v++));
-	      ok &= CGOColorv(cgo, v);
-	      v += 3;
-	    }
-           /*      if(normals)  // NORMALS do not get set for points 
-                   CGONormalv(cgo, v);*/
-	    v += 3;
-	    if (ok)
-	      ok &= CGOVertexv(cgo, v);
-	    v += 3;
-	    cc--;
-	  }
-	  if (ok)
-	    ok &= CGOEnd(cgo);
-	}
-	if (ok)
-	  ok &= CGOStop(cgo);
-	if (ok) {
-	  if (dot_as_spheres){
-	    I->shaderCGO = CGOOptimizeSpheresToVBONonIndexed(cgo, CGO_BOUNDING_BOX_SZ + CGO_DRAW_SPHERE_BUFFERS_SZ);
-	    CHECKOK(ok, I->shaderCGO);
-	  } else {
-	    CGO *convertcgo = CGOCombineBeginEnd(cgo, 0), *tmpCGO = NULL;
-	    CHECKOK(ok, convertcgo);
-	    if (ok)
-	      tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, CGO_BOUNDING_BOX_SZ + I->N * 3 + 7);
-	    CHECKOK(ok, tmpCGO);
-	    if (ok)
-	      ok &= CGOAppend(I->shaderCGO, tmpCGO);
-	    CGOFreeWithoutVBOs(tmpCGO);
-	    CGOFree(convertcgo);
-	  }
-	  if (ok)
-	    ok &= CGOStop(I->shaderCGO);
-	}
-	if (ok){
-	  I->shaderCGO->use_shader = true;
-	  I->shaderCGO_as_spheres = dot_as_spheres;
-	}
-	CGOFree(cgo);
-
-	/* now that the shaderCGO is created, we can just call RepDotRender to render it */
-	if (ok)
-	  RepDotRender(I, info);
-      } else {
+      if (!generate_shader_cgo) {
 	if(!normals)
 	  SceneResetNormal(G, true);
         int lighting =
@@ -252,7 +255,6 @@ static void RepDotRender(RepDot * I, RenderInfo * info)
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->shaderCGO = NULL;
     I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
     I->R.cs->Active[cRepDot] = false;
   }

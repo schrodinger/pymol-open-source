@@ -39,7 +39,7 @@ typedef struct {
   WordType caption;
   float Corner[24];
   /* not stored */
-  int textures[3];
+  size_t textures[3];
   CField *carvemask;
   unsigned int dim[3];
   Isofield *Field;

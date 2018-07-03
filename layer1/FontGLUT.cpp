@@ -109,7 +109,7 @@ static unsigned int next_utf8_character(const char * &st, bool &error) {
 }
 
 static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const char *st, float size,
-                                  float *rpos SHADERCGOARG)
+                                  float *rpos, short needSize, short relativeMode, short shouldRender SHADERCGOARG)
 {
   PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
@@ -283,7 +283,7 @@ static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const 
                                               (float) ch->advance, &fprnt, sampling);
                 }
                 if(id) {
-                  CharacterRenderOpenGL(G, info, id, false SHADERCGOARGVAR);   /* handles advance */
+                  CharacterRenderOpenGL(G, info, id, false, relativeMode SHADERCGOARGVAR);   /* handles advance */
                 }
               }
             }
@@ -306,7 +306,7 @@ static const char *FontGLUTRenderOpenGL(RenderInfo * info, CFontGLUT * I, const 
 }
 
 static const char *FontGLUTRenderRay(CRay * ray, CFontGLUT * I, const char *st, float size,
-                               float *rpos)
+                               float *rpos, short needSize, short relativeMode)
 {
   PyMOLGlobals *G = I->Font.G;
   int c;

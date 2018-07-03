@@ -2,6 +2,17 @@
 CHANGE LOG
 =========================================================================
 
+2018-07-03 Thomas Holder, Blaine Bell, Gabriel Marques
+
+	* Graphics refactoring, ported from Incentive PyMOL
+
+	  Ported features:
+	  - label improvements (multiline, connectors, background color)
+	  - transparency_mode 3: Order-independent transparency
+	  - bg_image_filename: Background image support
+
+	* new dependency (header-only): glm
+
 2018-06-08 Thomas Holder <thomas.holder@schrodinger.com>
 
 	* fix selection wildcard (sf.net/p/pymol/bugs/209)

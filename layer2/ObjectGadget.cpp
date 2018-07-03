@@ -456,11 +456,10 @@ static int ObjectGadgetGetNState(ObjectGadget * I)
 static void ObjectGadgetRender(ObjectGadget * I, RenderInfo * info)
 {
   int state = info->state;
-  CRay *ray = info->ray;
   int pass = info->pass;
-  if(!pass) {
+  if(pass < 0 || info->ray || info->pick) {
 
-    ObjectPrepareContext(&I->Obj, ray);
+    ObjectPrepareContext(&I->Obj, info);
     for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NGSet);
         iter.next();) {
       GadgetSet * gs = I->GSet[iter.state];

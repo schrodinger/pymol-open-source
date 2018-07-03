@@ -65,6 +65,7 @@ typedef struct {
 typedef struct ObjectSlice {
   CObject Obj;
   ObjectSliceState *State;
+  PickContext context;
   int NState;
 } ObjectSlice;
 

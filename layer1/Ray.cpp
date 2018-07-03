@@ -85,6 +85,9 @@ struct _CRayThreadInfo {
   int perspective;
   float fov, pos[3];
   float *depth;
+  
+  int bgWidth, bgHeight;
+  void *bkrd_data; /* used for image-based background */
 };
 
 struct _CRayHashThreadInfo {
@@ -118,7 +121,6 @@ struct _CRayAntiThreadInfo {
 
 void RayRelease(CRay * I);
 
-void RaySetup(CRay * I);
 static void RayApplyMatrix33(unsigned int n, float3 * q, const float m[16], float3 * p);
 static void RayApplyMatrixInverse33(unsigned int n, float3 * q, const float m[16], float3 * p);
 
@@ -139,7 +141,7 @@ void RaySetContext(CRay * I, int context)
     I->Context = 0;
 }
 
-static float RayGetScreenVertexScale(CRay * I, float *v1)
+float RayGetScreenVertexScale(CRay * I, float *v1)
 {
   /* what size should a screen pixel be at the coordinate provided? */
 
@@ -153,7 +155,7 @@ static float RayGetScreenVertexScale(CRay * I, float *v1)
   } else {
     float front_size =
       2 * I->Volume[4] * ((float) tan((I->Fov / 2.0F) * PI / 180.0F)) / (I->Height);
-    ratio = front_size * (-vt[2] / I->Volume[4]);
+    ratio = fabs(front_size * (-vt[2] / I->Volume[4]));
   }
   return ratio;
 }
@@ -261,6 +263,168 @@ static void fill(unsigned int *buffer, unsigned int value, size_t cnt)
 }
 #define MIN(x,y) ((x < y) ? x : y)
 #define MAX(x,y) ((x > y) ? x : y)
+
+static void add4ucf(unsigned char *ucval, float *fval, float mulv){
+  fval[0] += ucval[0] * mulv;
+  fval[1] += ucval[1] * mulv;
+  fval[2] += ucval[2] * mulv;
+  fval[3] += ucval[3] * mulv;
+}
+
+static void copy4fuc(float *fval, unsigned char *ucval){
+  ucval[0] = (0xFF & (int)pymol_roundf(fval[0]));
+  ucval[1] = (0xFF & (int)pymol_roundf(fval[1]));
+  ucval[2] = (0xFF & (int)pymol_roundf(fval[2]));
+  ucval[3] = (0xFF & (int)pymol_roundf(fval[3]));
+}
+
+static float fmodpos(float a, float b){
+  float ret = fmod(a, b);
+  if (ret < 0.f){
+    ret = fmod(-ret, b);
+    ret = fmod( b - ret, b);
+  }
+  return ret;
+}
+
+static void compute_background_for_pixel(unsigned char *bkrd, short isOutsideInY,
+    int bg_image_mode, const float *bg_image_tilesize, const float *bg_rgb, int bg_image_linear,
+    unsigned char *bkgrd_data, int bkgrd_width, int bkgrd_height, float w, float wr,
+    float hl, float hpixelx, short blend_bg)
+{
+  short isBackground = isOutsideInY;
+  float wl;
+  switch (bg_image_mode){
+  case 1: // isCentered
+    {
+      float tmpx = floor(w - hpixelx);
+      isBackground |= (tmpx < 0.f || tmpx > (float)bkgrd_width);
+      wl = fmodpos(tmpx, (float)bkgrd_width);
+    }
+    break;
+  case 2: // isTiled
+    wl = bkgrd_width * (fmodpos((float)w, bg_image_tilesize[0])/bg_image_tilesize[0]);
+    break;
+  case 3: // isCenteredRepeated
+    wl = fmodpos(floor(w - hpixelx), (float)bkgrd_width) ;
+    break;
+  default:
+    wl = w * wr;
+  }
+  if (isBackground){
+    copy3f(bg_rgb, bkrd);
+    bkrd[3] = 1.f;
+  } else if (bg_image_linear){
+    int wlf = floor(wl), hlf = floor(hl);
+    float xp = (wl - wlf) - .5f, yp = (hl - hlf) - .5f;
+    float xpa = fabs(xp), ypa = fabs(yp);
+    float xpam = 1.f - xpa, ypam = 1.f - ypa;
+    float valx[4] = { 0.f, 0.f, 0.f, 0.f }, valy[4] = { 0.f, 0.f, 0.f, 0.f }, val[4] = { 0.f, 0.f, 0.f, 0.f };
+    int xd = (xp > 0.f) ? 1 : -1, yd = (yp > 0.f) ? 1 : -1;
+    int wlfn = (wlf + xd + bkgrd_width) % bkgrd_width, hlfn = (hlf + yd + bkgrd_height) % bkgrd_height;
+    
+    add4ucf(&bkgrd_data[(bkgrd_width*hlf + wlf)*4], valx, xpam);
+    add4ucf(&bkgrd_data[(bkgrd_width*hlf + wlfn)*4], valx, xpa);
+    
+    add4ucf(&bkgrd_data[(bkgrd_width*hlfn + wlf)*4], valy, xpam);
+    add4ucf(&bkgrd_data[(bkgrd_width*hlfn + wlfn)*4], valy, xpa);
+    
+    mult4f(valx, ypam, val);
+    mult4f(valy, ypa, valy);
+    add4f(valy, val, val);
+    copy4fuc(val, bkrd);
+  } else {
+    copy4f(&bkgrd_data[(bkgrd_width*(int)floor(hl) + (int)floor(wl))*4], bkrd);
+  }
+  // alpha blending with bg_rgb if needed
+  if (blend_bg && bkrd[3] < 255){
+    float alpha = (255.f - bkrd[3]) / 255.f;
+    float tmpadd1[3], tmpadd2[3];
+    tmpadd1[0] = bkrd[0]; tmpadd1[1] = bkrd[1]; tmpadd1[2] = bkrd[2];
+    mult3f(tmpadd1, 1.f - alpha, tmpadd1);	
+    mult3f(bg_rgb, alpha, tmpadd2);
+    add3f(tmpadd1, tmpadd2, tmpadd2);
+    bkrd[0] = 0xFF & (int)pymol_roundf(tmpadd2[0]);
+    bkrd[1] = 0xFF & (int)pymol_roundf(tmpadd2[1]);
+    bkrd[2] = 0xFF & (int)pymol_roundf(tmpadd2[2]);
+    bkrd[3] = 255;
+  }
+}
+
+static void fill_background_image(CRay * I, unsigned int *buffer, int width, int height, unsigned int cnt){
+  int bkgrd_width = I->bkgrd_width, bkgrd_height = I->bkgrd_height;
+  unsigned char *bkgrd_data = I->bkgrd_data;
+  int bg_image_mode = SettingGetGlobal_i(I->G, cSetting_bg_image_mode);
+  int bg_image_linear = SettingGetGlobal_b(I->G, cSetting_bg_image_linear);
+  float bg_rgb[3], *tmpf;
+  int w, h;
+  unsigned int value;
+  float wr = bkgrd_width/(float)width, hr = bkgrd_height/(float)height;
+  float hl;
+  unsigned int back_mask;
+  unsigned char bkrd[4];
+  float hpixelx = floor(width/2.f)  - floor(bkgrd_width / 2.f),
+    hpixely = floor(height/2.f) - floor(bkgrd_height / 2.f);
+  auto bg_image_tilesize = SettingGet<const float*>(I->G, cSetting_bg_image_tilesize);
+  short isOutsideInY = 0;
+  int opaque_back ;
+  opaque_back = SettingGetGlobal_i(I->G, cSetting_ray_opaque_background);
+  if(opaque_back < 0)
+    opaque_back = SettingGetGlobal_i(I->G, cSetting_opaque_background);
+
+  tmpf = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
+  mult3f(tmpf, 255.f, bg_rgb);
+
+  if(opaque_back) {
+    if(I->BigEndian)
+      back_mask = 0x000000FF;
+    else
+      back_mask = 0xFF000000;
+  } else {
+    back_mask = 0x00000000;
+  }
+  // tiled or stretched
+  for (h=0; h<height; h++){
+    switch (bg_image_mode){
+    case 1: // isCentered
+      {
+	float tmpy = floor(h - hpixely);
+	isOutsideInY = (tmpy < 0.f || tmpy > (float)bkgrd_height);
+	hl = fmodpos(tmpy, (float)bkgrd_height);
+      }
+      break;
+    case 2: // isTiled
+      hl = bkgrd_height * (fmodpos((float)h, bg_image_tilesize[1])/bg_image_tilesize[1]);
+      break;
+    case 3: // isCenteredRepeated
+      hl = fmodpos(floor(h - hpixely), (float)bkgrd_height);
+      break;
+    default:
+      hl = h * hr;
+      break;
+    }
+    for (w=0; w<width; w++){
+      compute_background_for_pixel(bkrd, isOutsideInY, bg_image_mode, bg_image_tilesize, bg_rgb, bg_image_linear, bkgrd_data, bkgrd_width, bkgrd_height, w, wr, hl, hpixelx, opaque_back );
+      if(I->BigEndian){
+	value = 
+	  ((0xFF & bkrd[0]) << 24) |
+	  ((0xFF & bkrd[1]) << 16) |
+	  ((0xFF & bkrd[2]) << 8) |
+	  (0xFF & bkrd[3]);
+      } else {
+	value = 
+	  ((0xFF & bkrd[3]) << 24) |
+	  ((0xFF & bkrd[2]) << 16) |
+	  ((0xFF & bkrd[1]) << 8) |
+	  (0xFF & bkrd[0]);
+      }
+      if(opaque_back) {
+	value = back_mask | value;
+      }
+      *(buffer++) = value;
+    }
+  }
+}
 
 static void fill_gradient(CRay * I, int opaque_back, unsigned int *buffer, float *bkrd_bottom, float *bkrd_top, int width, int height, unsigned int cnt)
 {
@@ -663,12 +827,14 @@ void RayComputeBox(CRay * I)
       }                         /* end of switch */
     }
   }
-  I->min_box[0] = xmin;
-  I->min_box[1] = ymin;
-  I->min_box[2] = zmin;
-  I->max_box[0] = xmax;
-  I->max_box[1] = ymax;
-  I->max_box[2] = zmax;
+  // without the R_SMALL4 padding, this caused ray tracing failure
+  // on OS X (X11) with a flat ObjectCGO (zmin == zmax).
+  I->min_box[0] = xmin - R_SMALL4;
+  I->min_box[1] = ymin - R_SMALL4;
+  I->min_box[2] = zmin - R_SMALL4;
+  I->max_box[0] = xmax + R_SMALL4;
+  I->max_box[1] = ymax + R_SMALL4;
+  I->max_box[2] = zmax + R_SMALL4;
 }
 
 int RayTransformFirst(CRay * I, int perspective, int identity)
@@ -2556,6 +2722,8 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
   }
 
   for(a = 0; a < I->NPrimitive; a++) {
+    char cap1 = cCylCapRound;
+    char cap2 = cCylCapRound;
     prim = I->Primitive + a;
     vert = base->Vertex + 3 * (prim->vert);
     if(prim->type == cPrimTriangle) {
@@ -2580,6 +2748,9 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
       UtilConcatVLA(&charVLA, &cc, buffer);
       break;
     case cPrimCylinder:
+      cap1 = prim->cap1;
+      cap2 = prim->cap2;
+    case cPrimSausage:
       d = base->Normal + 3 * base->Vert2Normal[prim->vert];
       scale3f(d, prim->l1, vert2);
       add3f(vert, vert2, vert2);
@@ -2587,37 +2758,33 @@ void RayRenderPOV(CRay * I, int width, int height, char **headerVLA_ptr,
               "cylinder{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n %12.10f\n",
               vert[0], vert[1], vert[2], vert2[0], vert2[1], vert2[2], prim->r1);
       UtilConcatVLA(&charVLA, &cc, buffer);
-      sprintf(buffer, "pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
-              (prim->c1[0] + prim->c2[0]) / 2,
-              (prim->c1[1] + prim->c2[1]) / 2, (prim->c1[2] + prim->c2[2]) / 2);
-      UtilConcatVLA(&charVLA, &cc, buffer);
-      break;
-    case cPrimSausage:
-      d = base->Normal + 3 * base->Vert2Normal[prim->vert];
-      scale3f(d, prim->l1, vert2);
-      add3f(vert, vert2, vert2);
-      sprintf(buffer,
-              "cylinder{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n %12.10f\nopen\n",
-              vert[0], vert[1], vert[2], vert2[0], vert2[1], vert2[2], prim->r1);
-      UtilConcatVLA(&charVLA, &cc, buffer);
+
+      if (cap1 != cCylCapFlat && cap2 != cCylCapFlat) {
+        UtilConcatVLA(&charVLA, &cc, "open\n");
+      }
+
       sprintf(buffer, "pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
               (prim->c1[0] + prim->c2[0]) / 2,
               (prim->c1[1] + prim->c2[1]) / 2, (prim->c1[2] + prim->c2[2]) / 2);
       UtilConcatVLA(&charVLA, &cc, buffer);
 
+      if (cap1 == cCylCapRound) {
       sprintf(buffer, "sphere{<%12.10f,%12.10f,%12.10f>, %12.10f\n",
               vert[0], vert[1], vert[2], prim->r1);
       UtilConcatVLA(&charVLA, &cc, buffer);
       sprintf(buffer, "pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
               prim->c1[0], prim->c1[1], prim->c1[2]);
       UtilConcatVLA(&charVLA, &cc, buffer);
+      }
 
+      if (cap2 == cCylCapRound) {
       sprintf(buffer, "sphere{<%12.10f,%12.10f,%12.10f>, %12.10f\n",
               vert2[0], vert2[1], vert2[2], prim->r1);
       UtilConcatVLA(&charVLA, &cc, buffer);
       sprintf(buffer, "pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
               prim->c2[0], prim->c2[1], prim->c2[2]);
       UtilConcatVLA(&charVLA, &cc, buffer);
+      }
 
       break;
     case cPrimTriangle:
@@ -2789,7 +2956,9 @@ int RayHashThread(CRayHashThreadInfo * T)
 
   /* utilize a little extra wasted CPU time in thread 0 which computes the smaller map... */
   if(!T->phase) {
-    if (T->bkrd_is_gradient){
+    if (T->ray->bkgrd_data){
+      fill_background_image(T->ray, T->image,  T->width, T->height, T->width * (unsigned int) T->height);
+    } else if (T->bkrd_is_gradient){
       fill_gradient(T->ray, T->opaque_back, T->image, T->bkrd_top, T->bkrd_bottom, T->width, T->height, T->width * (unsigned int) T->height);      
     } else {
       fill(T->image, T->background, T->bytes);
@@ -3111,7 +3280,16 @@ int RayTraceThread(CRayThreadInfo * T)
   float legacy_1m = _1 - legacy;
   int n_basis = I->NBasis;
   unsigned int back_mask;
+  int bg_image_mode = SettingGetGlobal_i(I->G, cSetting_bg_image_mode);
+  int bg_image_linear = SettingGetGlobal_b(I->G, cSetting_bg_image_linear);
+  auto bg_image_tilesize = SettingGet<const float*>(I->G, cSetting_bg_image_tilesize);
+  float hpixelx = floor(T->width/2.f)  - floor(T->bgWidth / 2.f),
+    hpixely = floor(T->height/2.f) - floor(T->bgHeight / 2.f);
+  float hl;
+  float wr = T->bgWidth/(float)T->width, hr = T->bgHeight/(float)T->height;
   float bg_rgb[3], *tmpf;
+  int chromadepth;
+
   tmpf = ColorGet(I->G, SettingGet_color(I->G, NULL, NULL, cSetting_bg_rgb));
   mult3f(tmpf, 255.f, bg_rgb);
 
@@ -3150,6 +3328,10 @@ int RayTraceThread(CRayThreadInfo * T)
     opaque_back = SettingGetGlobal_i(I->G, cSetting_opaque_background);
   orig_opaque_back = opaque_back;
 
+  if (T->bkrd_data){
+    opaque_back = 1;
+  }
+
   two_sided_lighting = SettingGetGlobal_i(I->G, cSetting_two_sided_lighting);
   if(two_sided_lighting<0) {
     if(SettingGetGlobal_i(I->G, cSetting_surface_cavity_mode))
@@ -3166,6 +3348,7 @@ int RayTraceThread(CRayThreadInfo * T)
   oblique_power = SettingGetGlobal_f(I->G, cSetting_ray_transparency_oblique_power);
   trans_cutoff = SettingGetGlobal_f(I->G, cSetting_ray_trace_trans_cutoff);
   persist_cutoff = SettingGetGlobal_f(I->G, cSetting_ray_trace_persist_cutoff);
+  chromadepth = SettingGetGlobal_i(I->G, cSetting_chromadepth);
 
   if(trans_mode == 1)
     two_sided_lighting = true;
@@ -3208,31 +3391,12 @@ int RayTraceThread(CRayThreadInfo * T)
   /* COOP */
   settingPower = SettingGetGlobal_f(I->G, cSetting_power);
   settingReflectPower = SettingGetGlobal_f(I->G, cSetting_reflect_power);
-  settingSpecPower = SettingGetGlobal_f(I->G, cSetting_spec_power);
-  if(settingSpecPower < 0.0F) {
-    settingSpecPower = SettingGetGlobal_f(I->G, cSetting_shininess);
-  }
 
-  {
-    float spec_value = SettingGetGlobal_f(I->G, cSetting_specular);
-    if(spec_value == 1.0F)
-      spec_value = SettingGetGlobal_f(I->G, cSetting_specular_intensity);
-    settingSpecReflect = SettingGetGlobal_f(I->G, cSetting_spec_reflect);
-    if(settingSpecReflect < 0.0F)
-      settingSpecReflect = spec_value;
-    settingSpecReflect = SceneGetSpecularValue(I->G, settingSpecReflect, 10);
-    settingSpecDirect = SettingGetGlobal_f(I->G, cSetting_spec_direct);
-    if(settingSpecDirect < 0.0F)
-      settingSpecDirect = spec_value;
-    settingSpecDirectPower = SettingGetGlobal_f(I->G, cSetting_spec_direct_power);
-    if(settingSpecDirectPower < 0.0F)
-      settingSpecDirectPower = settingSpecPower;
-  }
-  if(settingSpecReflect > 1.0F)
-    settingSpecReflect = 1.0F;
-  if(SettingGetGlobal_f(I->G, cSetting_specular) < R_SMALL4) {
-    settingSpecReflect = 0.0F;
-  }
+  SceneGetAdjustedLightValues(I->G,
+      &settingSpecReflect,
+      &settingSpecPower,
+      &settingSpecDirect,
+      &settingSpecDirectPower, 10);
 
   if((interior_color != -1) || (two_sided_lighting) || (trans_mode == 1)
      || I->CheckInterior)
@@ -3385,12 +3549,32 @@ int RayTraceThread(CRayThreadInfo * T)
   for(yy = T->y_start; (yy < T->y_stop); yy++) {
     float perc, bkrd[4];
     unsigned int bkrd_value;
+    short isOutsideInY = 0;
 
     if(I->G->Interrupt)
       break;
 
     y = T->y_start + ((yy - T->y_start) + offset) % (render_height);    /* make sure threads write to different pages */
-    if (T->bkrd_is_gradient){
+    if (T->bkrd_data){
+      switch (bg_image_mode){
+      case 1: // isCentered
+	{
+	  float tmpy = floor(y - hpixely);
+	  isOutsideInY = (tmpy < 0.f || tmpy > (float)T->bgHeight);
+	  hl = fmodpos(tmpy, (float)T->bgHeight);
+	}
+	break;
+      case 2: // isTiled
+	hl = (float)T->bgHeight * (fmodpos((float)y, bg_image_tilesize[1])/bg_image_tilesize[1]);
+	break;
+      case 3: // isCenteredRepeated
+	hl = fmodpos(floor(y - hpixely), (float)T->bgHeight);
+	break;
+      default:
+	hl = y * hr;
+	break;
+      }
+    } else if (T->bkrd_is_gradient){
       /* for RayTraceThread, y is from bottom to top */
       perc = y/(float)T->height;
       bkrd[0] = T->bkrd_bottom[0] + perc * (T->bkrd_top[0] - T->bkrd_bottom[0]);
@@ -3436,6 +3620,30 @@ int RayTraceThread(CRayThreadInfo * T)
       pixel_base[1] = ((y + 0.5F + border_offset) * invHgtRange) + vol2;
 
       for(x = T->x_start; (x < T->x_stop); x++) {
+	if (T->bkrd_data){
+	  // Need to compute background for every pixel if image-based
+	  unsigned char bkrd_uc[4];
+	  compute_background_for_pixel(bkrd_uc, isOutsideInY,
+              bg_image_mode, bg_image_tilesize, bg_rgb, bg_image_linear,
+              (unsigned char*) T->bkrd_data, T->bgWidth, T->bgHeight,
+              x, wr, hl, hpixelx, orig_opaque_back );
+	  bkrd[0] = bkrd_uc[0] / 255.f;
+	  bkrd[1] = bkrd_uc[1] / 255.f;
+	  bkrd[2] = bkrd_uc[2] / 255.f;
+	  bkrd[3] = bkrd_uc[3] / 255.f;
+	  if(T->ray->BigEndian){
+	    bkrd_value = back_mask | 
+	      ((0xFF & ((unsigned int) (bkrd_uc[0] * 255 + _p499))) << 24) |
+	      ((0xFF & ((unsigned int) (bkrd_uc[1] * 255 + _p499))) << 16) |
+	      ((0xFF & ((unsigned int) (bkrd_uc[2] * 255 + _p499))) << 8);
+	  } else {
+	    bkrd_value = back_mask | 
+	      ((0xFF & ((unsigned int) (bkrd_uc[2] * 255 + _p499))) << 16) |
+	      ((0xFF & ((unsigned int) (bkrd_uc[1] * 255 + _p499))) << 8) |
+	      ((0xFF & ((unsigned int) (bkrd_uc[0] * 255 + _p499))));
+	  }
+	}
+
         pixel_base[0] = (((x + 0.5F + border_offset)) * invWdthRange) + vol0;
 
         while(1) {
@@ -3565,8 +3773,8 @@ int RayTraceThread(CRayThreadInfo * T)
             }
 
           }
-
           while((persist > _persistLimit) && (pass <= max_pass)) {
+            char fogFlagTmp = fogFlag;
             pixel_flag = false;
             BasisCall[0].except1 = exclude1;
             BasisCall[0].except2 = exclude2;
@@ -3585,10 +3793,10 @@ int RayTraceThread(CRayThreadInfo * T)
             } else {
               i = BasisHitOrthoscopic(&BasisCall[0]);
             }
-
             interior_flag = BasisCall[0].interior_flag && (!pass);
 
             if(((i >= 0) || interior_flag) && (pass < max_pass)) {
+	      int n_basis_tmp = r1.prim->no_lighting ? 0 : n_basis;
               pixel_flag = true;
               n_hit++;
               if(((r1.trans = r1.prim->trans) != _0) && trans_cont_flag) {
@@ -3652,7 +3860,7 @@ int RayTraceThread(CRayThreadInfo * T)
                   BasisGetTriangleNormal(bp1, &r1, i, fc, perspective);
 
                   r1.trans = CharacterInterpolate(I->G, r1.prim->char_id, fc);
-
+		  fogFlagTmp = false;
                   RayReflectAndTexture(I, &r1, perspective);
                   BasisGetTriangleFlatDotgle(bp1, &r1, i);
                   break;
@@ -3758,12 +3966,10 @@ int RayTraceThread(CRayThreadInfo * T)
                   }
                 }
 
-                if((dotgle < _0) && (!interior_flag)) {
+                if((r1.flat_dotgle < _0) && (!interior_flag)) {
                   if(two_sided_lighting) {
                     dotgle = -dotgle;
                     invert3f(r1.surfnormal);
-                  } else {
-                    dotgle = _0;
                   }
                 }
               }
@@ -3797,7 +4003,7 @@ int RayTraceThread(CRayThreadInfo * T)
               }
 
               lit = _1;
-              if(n_basis < 3) {
+              if(n_basis_tmp < 3) {
                 reflect_cmp = direct_cmp;
               } else {
                 int bc;
@@ -3886,6 +4092,26 @@ int RayTraceThread(CRayThreadInfo * T)
                     }
                   }
                 }
+                if (chromadepth > 0) {
+                  float d = -(r1.impact[2] + T->front) / (T->back - T->front);
+                  const float margin = 1. / 4.;
+                  float h = d * (1. + 2. * margin) - margin;
+                  if (h < 0.0) h = 0.0;
+                  if (h > 1.0) h = 1.0;
+                  float hue6 = 6. * 240. / 360. * h;
+                  float rgb[3];
+                  rgb[0] = fabs(hue6 - 3.) - 1.;
+                  rgb[1] = 2. - fabs(hue6 - 2.);
+                  rgb[2] = 2. - fabs(hue6 - 4.);
+                  clamp3f(rgb);
+                  if (chromadepth == 2) {
+                      float lum = 0.30 * fc[0] + 0.59 * fc[1] + 0.11 * fc[2];
+                      rgb[0] *= lum;
+                      rgb[1] *= lum;
+                      rgb[2] *= lum;
+                  }
+                  copy3(rgb, fc);
+                }
               }
 
               if(fc[0] <= ((float) cColorExtCutoff)) {  /* ramped color */
@@ -3907,7 +4133,7 @@ int RayTraceThread(CRayThreadInfo * T)
               fc[1] = (bright * fc[1] + excess);
               fc[2] = (bright * fc[2] + excess);
 
-              if(fogFlag) {
+              if(n_basis_tmp && fogFlagTmp) {
                 if(perspective) {
                   ffact = (T->front + r1.impact[2]) * invFrontMinusBack;
                 } else {
@@ -4031,11 +4257,10 @@ int RayTraceThread(CRayThreadInfo * T)
                   *pixel = (cc3 << 24) | (cc2 << 16) | (cc1 << 8) | cc0;
               }
             }
-
-            if(pass) {          /* average all four channels */
+            if(pass && persist < 1.f) {          /* average all four channels */
               float mix_in;
               if(i >= 0) {
-                if(fogFlag) {
+                if(fogFlagTmp) {
                   if(trans_cont_flag && (ffact > _p5)) {
                     mix_in =
                       2 * (persist * (_1 - ffact) +
@@ -4160,7 +4385,7 @@ int RayTraceThread(CRayThreadInfo * T)
               if((!backface_cull) && (trans_mode != 2))
                 persist = persist * r1.trans;
               else {
-                if((persist < 0.9999F) && (r1.trans > 0.05F)) {
+                if(!r1.prim->no_lighting && (persist < 0.9999F) && (r1.trans > 0.05F)) {
                   /* don't combine transparent surfaces */
                   *pixel = last_pixel;
                 } else {
@@ -4250,7 +4475,7 @@ int RayTraceThread(CRayThreadInfo * T)
 	      float pixa = (pixel_c[3]/255.f);
 	      float pixam1 = _1 - pixa;
 	      float pixam1255 = pixam1 * 255.f;
-	      if (T->bkrd_is_gradient){
+	      if (T->bkrd_data || T->bkrd_is_gradient){
 		pixel_c[0] = (unsigned char)pymol_roundf(pixel_c[0] * pixa + bkrd[0] * pixam1255);
 		pixel_c[1] = (unsigned char)pymol_roundf(pixel_c[1] * pixa + bkrd[1] * pixam1255);
 		pixel_c[2] = (unsigned char)pymol_roundf(pixel_c[2] * pixa + bkrd[2] * pixam1255);
@@ -5306,7 +5531,7 @@ extern int n_skipped;
 #endif
 
 float *rayDepthPixels = NULL;
-int rayVolume = 0;
+int rayVolume = 0, rayWidth = 0, rayHeight = 0;
 
 /*========================================================================*/
 void RayRender(CRay * I, unsigned int *image, double timing,
@@ -5340,6 +5565,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   int ray_trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
   int volume;
+  short bkgrd_data_allocated = 0;
+  const char * bg_image_filename;
+  unsigned char *old_bkgrd_data = NULL;
   int ok = true;
 
   if(n_light > 10)
@@ -5415,6 +5643,23 @@ void RayRender(CRay * I, unsigned int *image, double timing,
   ambient = SettingGetGlobal_f(I->G, cSetting_ambient);
 
   bkrd_is_gradient = SettingGetGlobal_b(I->G, cSetting_bg_gradient);
+  bg_image_filename = SettingGet_s(I->G, NULL, NULL, cSetting_bg_image_filename);
+  old_bkgrd_data = I->bkgrd_data;
+  I->bkgrd_data = (unsigned char*) OrthoBackgroundDataGet(I->G, &I->bkgrd_width, &I->bkgrd_height);
+  if (!I->bkgrd_data && bg_image_filename && bg_image_filename[0] && I->bkgrd_width > 0 && I->bkgrd_height > 0){
+    if (old_bkgrd_data){
+      free(old_bkgrd_data);
+    }
+    if(MyPNGRead(bg_image_filename,
+		 (unsigned char **) &I->bkgrd_data,
+		 (unsigned int *) &I->bkgrd_width, (unsigned int *) &I->bkgrd_height)) {
+      bkgrd_data_allocated = 1;
+      bkrd_is_gradient = 0;
+    }
+  }
+  if (I->bkgrd_data){
+    opaque_back = 1;
+  }
 
   if (!opaque_back){
     bkrd_is_gradient = 0;
@@ -5540,7 +5785,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     *return_bg = background;
 
   if(!I->NPrimitive) {          /* nothing to render! */
-    if (bkrd_is_gradient) {
+    if (I->bkgrd_data){
+      fill_background_image(I, image, width, height, width * (unsigned int) height);
+    } else if (bkrd_is_gradient) {
       fill_gradient(I, opaque_back, image, bkrd_top, bkrd_bottom, width, height, width * (unsigned int) height);
     } else {
       fill(image, background, width * (unsigned int) height);
@@ -5665,7 +5912,10 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       thread_info[0].bkrd_is_gradient = bkrd_is_gradient;
       thread_info[0].width = width;
       thread_info[0].height = height;
-      if (bkrd_is_gradient){
+      if (I->bkgrd_data){
+	thread_info[0].background = background;
+	thread_info[0].opaque_back = opaque_back;
+      } else if (bkrd_is_gradient){
 	thread_info[0].bkrd_top = bkrd_top;
 	thread_info[0].bkrd_bottom = bkrd_bottom;
 	thread_info[0].opaque_back = opaque_back;
@@ -5719,7 +5969,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       /* serial tasks which RayHashThread does in parallel mode using the first thread */
 
       if (ok){
-	if (bkrd_is_gradient) {
+	if (I->bkgrd_data){
+	  fill_background_image(I, image,  width, height, width * (unsigned int) height);
+	} else if (bkrd_is_gradient) {
 	  fill_gradient(I, opaque_back, image, bkrd_top, bkrd_bottom, width, height, width * (unsigned int) height);
 	} else {
 	  fill(image, background, width * (unsigned int) height);
@@ -5868,6 +6120,9 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         rt[a].fov = fov;
         rt[a].pos[2] = pos[2];
         rt[a].depth = depth;
+        rt[a].bgWidth = I->bkgrd_width;
+        rt[a].bgHeight = I->bkgrd_height;
+        rt[a].bkrd_data = I->bkgrd_data;
       }
 
 #ifndef _PYMOL_NOPY
@@ -6044,7 +6299,6 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         {
           unsigned int *q = image;
           float *p = delta;
-          int dc = 0;
           int width3 = width * 3;
 
           float slope_f = SettingGetGlobal_f(I->G, cSetting_ray_trace_slope_factor);
@@ -6092,7 +6346,6 @@ void RayRender(CRay * I, unsigned int *image, double timing,
 	      }
 	    }
             for(x = 0; x < width; x++) {
-              dc = 0;
               max_slope = 0.0F;
               max_depth = 0.0F;
               min_dot = 1.0F;
@@ -6319,10 +6572,16 @@ void RayRender(CRay * I, unsigned int *image, double timing,
       if (rayDepthPixels)
 	FreeP(rayDepthPixels);
       rayDepthPixels = depth;
+      rayWidth = width;
+      rayHeight = height;
       rayVolume = 3;
     } else 
       FreeP(depth);
+    if (bkgrd_data_allocated && I->bkgrd_data){
+      free(I->bkgrd_data);
+    }
   }
+  I->bkgrd_data = NULL;
 }
 
 
@@ -6427,6 +6686,7 @@ int CRay::sphere3fv(const float *v, float r)
   p->trans = I->Trans;
   p->wobble = I->Wobble;
   p->ramped = (I->CurColor[0] < 0.0F);
+  p->no_lighting = 0;
 
   I->PrimSize += 2 * r;
   I->PrimSizeCnt++;
@@ -6451,6 +6711,7 @@ int CRay::sphere3fv(const float *v, float r)
   (*vv++) = (*v++);
 
   if(I->TTTFlag) {
+    p->r1 *= length3f(I->TTT);
     transformTTT44f3f(I->TTT, p->v1, p->v1);
   }
 
@@ -6513,6 +6774,7 @@ int CRay::character(int char_id)
   p->char_id = char_id;
   p->wobble = I->Wobble;
   p->ramped = 0;
+  p->no_lighting = 0;
   /*
      copy3f(I->WobbleParam,p->wobble_param); */
 
@@ -6648,6 +6910,7 @@ int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1
   p->cap2 = cCylCapFlat;
   p->wobble = I->Wobble;
   p->ramped = ((c1[0] < 0.0F) || (c2[0] < 0.0F));
+  p->no_lighting = 0;
   /* 
      copy3f(I->WobbleParam,p->wobble_param); */
 
@@ -6664,6 +6927,7 @@ int CRay::cylinder3fv(const float *v1, const float *v2, float r, const float *c1
   I->PrimSizeCnt++;
 
   if(I->TTTFlag) {
+    p->r1 *= length3f(I->TTT);
     transformTTT44f3f(I->TTT, p->v1, p->v1);
     transformTTT44f3f(I->TTT, p->v2, p->v2);
   }
@@ -6718,6 +6982,7 @@ int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
   p->cap2 = cap2;
   p->wobble = I->Wobble;
   p->ramped = ((c1[0] < 0.0F) || (c2[0] < 0.0F));
+  p->no_lighting = 0;
   /*
      copy3f(I->WobbleParam,p->wobble_param); */
 
@@ -6734,6 +6999,7 @@ int CRay::customCylinder3fv(const float *v1, const float *v2, float r,
   I->PrimSizeCnt++;
 
   if(I->TTTFlag) {
+    p->r1 *= length3f(I->TTT);
     transformTTT44f3f(I->TTT, p->v1, p->v1);
     transformTTT44f3f(I->TTT, p->v2, p->v2);
   }
@@ -6812,6 +7078,7 @@ int CRay::cone3fv(const float *v1, const float *v2, float r1, float r2,
   p->cap2 = cap2;
   p->wobble = I->Wobble;
   p->ramped = ((c1[0] < 0.0F) || (c2[0] < 0.0F));
+  p->no_lighting = 0;
   /*
      copy3f(I->WobbleParam,p->wobble_param); */
 
@@ -6879,6 +7146,7 @@ int CRay::sausage3fv(const float *v1, const float *v2, float r, const float *c1,
   p->trans = I->Trans;
   p->wobble = I->Wobble;
   p->ramped = ((c1[0] < 0.0F) || (c2[0] < 0.0F));
+  p->no_lighting = 0;
   /*  
      copy3f(I->WobbleParam,p->wobble_param); */
 
@@ -6895,6 +7163,7 @@ int CRay::sausage3fv(const float *v1, const float *v2, float r, const float *c1,
   I->PrimSizeCnt++;
 
   if(I->TTTFlag) {
+    p->r1 *= length3f(I->TTT);
     transformTTT44f3f(I->TTT, p->v1, p->v1);
     transformTTT44f3f(I->TTT, p->v2, p->v2);
   }
@@ -6944,6 +7213,7 @@ int CRay::ellipsoid3fv(const float *v, float r, const float *n1, const float *n2
   p->trans = I->Trans;
   p->wobble = I->Wobble;
   p->ramped = (I->CurColor[0] < 0.0F);
+  p->no_lighting = 0;
 
   I->PrimSize += 2 * r;
   I->PrimSizeCnt++;
@@ -7013,6 +7283,7 @@ int CRay::ellipsoid3fv(const float *v, float r, const float *n1, const float *n2
   (*vv++) = (*v++);
 
   if(I->TTTFlag) {
+    p->r1 *= length3f(I->TTT);
     transformTTT44f3f(I->TTT, p->v1, p->v1);
     transform_normalTTT44f3f(I->TTT, p->n1, p->n1);
     transform_normalTTT44f3f(I->TTT, p->n2, p->n2);
@@ -7032,14 +7303,12 @@ int CRay::ellipsoid3fv(const float *v, float r, const float *n1, const float *n2
 
 int CRay::setLastToNoLighting(char no_lighting)
 {
-#if 0
   CRay * I = this;
   CPrimitive *p;
   if (!I->NPrimitive)
     return false;
   p = I->Primitive + I->NPrimitive - 1;
   p->no_lighting = no_lighting;
-#endif
   return true;
 }
 
@@ -7079,6 +7348,7 @@ int CRay::triangle3fv(
   p->tr[2] = I->Trans;
   p->wobble = I->Wobble;
   p->ramped = ((c1[0] < 0.0F) || (c2[0] < 0.0F) || (c3[0] < 0.0F));
+  p->no_lighting = 0;
   /*
      copy3f(I->WobbleParam,p->wobble_param); */
 
@@ -7282,6 +7552,8 @@ CRay *RayNew(PyMOLGlobals * G, int antialias)
     v = ColorGet(I->G, color);
     copy3f(v, I->IntColor);
   }
+  I->bkgrd_data = NULL;
+  I->bkgrd_width = I->bkgrd_height = 0;
   return (I);
 }
 
@@ -7327,10 +7599,23 @@ void RayPrepare(CRay * I, float v0, float v1, float v2,
     for(a = 0; a < 16; a++)
       I->ModelView[a] = mat[a];
   else {
-    for(a = 0; a < 16; a++)
-      I->ModelView[a] = 0.0F;
-    for(a = 0; a < 3; a++)
-      I->ModelView[a * 5] = 1.0F;
+    identity44f(I->ModelView);
+  }
+  identity44f(I->ProMatrix);
+  if (ortho){
+    I->ProMatrix[0] = 2.f/I->Range[0];
+    I->ProMatrix[5] = 2.f/I->Range[1];
+    I->ProMatrix[10] = -2.f/I->Range[2];
+    I->ProMatrix[12] = -(I->Volume[0] + I->Volume[1])/I->Range[0];
+    I->ProMatrix[13] = -(I->Volume[2] + I->Volume[3])/I->Range[1];
+    I->ProMatrix[14] = -(I->Volume[4] + I->Volume[5])/I->Range[2];
+  } else {
+    I->ProMatrix[0] = I->Volume[4]/(front_back_ratio*I->Volume[1]);
+    I->ProMatrix[5] = I->Volume[4]/(front_back_ratio*I->Volume[3]);
+    I->ProMatrix[10] = -(I->Volume[5] + I->Volume[4])/I->Range[2];
+    I->ProMatrix[11] = -1.f;
+    I->ProMatrix[14] = (-2.f * I->Volume[5] * I->Volume[4])/I->Range[2];
+    I->ProMatrix[15] = 0.f;
   }
   if(rotMat)
     for(a = 0; a < 16; a++)
@@ -7502,4 +7787,94 @@ static void RayTransformInverseNormals33(unsigned int n, float3 * q, const float
   for(i = 0; i < n; i++) {      /* renormalize - can we do this to the matrix instead? */
     normalize3f(q[i]);
   }
+}
+void RayGetScreenVertex(CRay * I, float *v, float *res){
+  MatrixTransformC44f4f(I->ModelView, v, res);
+  normalize4f(res);
+}
+
+void RayAdjustZtoScreenZ(CRay * ray, float *pos, float zarg){
+  PyMOLGlobals *G = ray->G;
+  float BackSafe = ray->Volume[5], FrontSafe = ray->Volume[4];
+  float clipRange = (BackSafe-FrontSafe);
+  float z = (zarg + 1.f) / 2.f;
+  float zInPreProj = -(z * clipRange + FrontSafe);
+  float pos4[4], tpos[4], npos[4];
+  float InvModMatrix[16];
+  copy3f(pos, pos4);
+  pos4[3] = 1.f;
+  MatrixTransformC44f4f(ray->ModelView, pos4, tpos);
+  normalize4f(tpos);
+  /* NEED TO ACCOUNT FOR ORTHO */
+  if (SettingGetGlobal_b(G, cSetting_ortho)){
+    npos[0] = tpos[0];
+    npos[1] = tpos[1];
+  } else {
+    npos[0] = zInPreProj * tpos[0] / tpos[2];
+    npos[1] = zInPreProj * tpos[1] / tpos[2];
+  }
+  npos[2] = zInPreProj;
+  npos[3] = 1.f;
+  MatrixInvertC44f(ray->ModelView, InvModMatrix);
+  MatrixTransformC44f4f(InvModMatrix, npos, npos);
+  normalize4f(npos);
+  copy3f(npos, pos);
+}
+
+static float RayGetRawDepth(CRay * ray, float *pos)
+{
+  float pos4[4], tpos[4];
+  copy3f(pos, pos4);
+  pos4[3] = 1.f;
+  MatrixTransformC44f4f(ray->ModelView, pos4, tpos);
+  normalize4f(tpos);
+  return -tpos[2];
+}
+
+void RayAdjustZtoScreenZofPoint(CRay * ray, float *pos, float *zpoint){
+  float BackSafe = ray->Volume[5], FrontSafe = ray->Volume[4];
+  float clipRange = (BackSafe-FrontSafe);
+  float zInClipping = RayGetRawDepth(ray, zpoint);
+  float z = ((2.f * (zInClipping - FrontSafe)/ clipRange) - 1.f);
+  RayAdjustZtoScreenZ(ray, pos, z);
+}
+
+void RaySetPointToWorldScreenRelative(CRay * ray, float *pos, float *screenPt)
+{
+  float npos[4];
+  float PmvMatrix[16], InvPmvMatrix[16];
+  int width = ray->Width, height = ray->Height;
+  multiply44f44f44f(ray->ModelView, RayGetProMatrix(ray), PmvMatrix);
+
+  npos[0] = (floor(screenPt[0]*width)) /width ;
+  npos[1] = (floor(screenPt[1]*height)) /height ;
+  npos[2] = 0.f;
+  npos[3] = 1.f;
+  MatrixInvertC44f(PmvMatrix, InvPmvMatrix);
+  MatrixTransformC44f4f(InvPmvMatrix, npos, npos);
+  normalize4f(npos);
+  RayAdjustZtoScreenZ(ray, npos, screenPt[2]);
+  copy3f(npos, pos);
+}
+
+float RayGetScaledAllAxesAtPoint(CRay * I, float *pt, float *xn, float *yn, float *zn)
+{
+  float xn0[3] = { 1.0F, 0.0F, 0.0F };
+  float yn0[3] = { 0.0F, 1.0F, 0.0F };
+  float zn0[3] = { 0.0F, 0.0F, 1.0F };
+  float v_scale;
+
+  v_scale = RayGetScreenVertexScale(I, pt) / I->Sampling;
+
+  RayApplyMatrixInverse33(1, (float3 *) xn0, I->Rotation, (float3 *) xn0);
+  RayApplyMatrixInverse33(1, (float3 *) yn0, I->Rotation, (float3 *) yn0);
+  RayApplyMatrixInverse33(1, (float3 *) zn0, I->Rotation, (float3 *) zn0);
+
+  scale3f(xn0, v_scale, xn);
+  scale3f(yn0, v_scale, yn);
+  scale3f(zn0, v_scale, zn);
+  return v_scale;
+}
+float* RayGetProMatrix(CRay * I){
+  return I->ProMatrix;
 }

@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #include "os_gl.h"
 #include "os_python.h"
 #include <string.h>
+#include <iostream>
 #include "ShaderMgr.h"
 #include "OOMac.h"
 #include "ListMacros.h"
@@ -28,70 +29,210 @@ Z* -------------------------------------------------------------------
 #include "Color.h"
 #include "Vector.h"
 #include "Util.h"
+#include "Util2.h"
 #include "Texture.h"
 #include "File.h"
+#include "Matrix.h"
+#include "Parse.h"
 
+#ifndef _PYMOL_NO_AA_SHADERS
+#endif
+
+#include "CGO.h"
+#ifdef _WEBGL
+#include "Matrix.h"
+#include "WebPyMOLLibrary.h"
+#endif
 #define MAX_LOG_LEN 1024
+
+#include <algorithm>
+#include <sstream>
+#include <stack>
+#include <vector>
+#include <functional>
+/*  Texture Usage:
+
+    0 - for not-PURE_OPENGL_ES_2: ObjectVolume: volumeTex
+        for WEBGL: SCHRODINGER logo
+    1 - for not-PURE_OPENGL_ES_2: Volume: either colorTex1D or colorTex2D
+        for _PYMOL_PRECOMPUTED_LIGHTING: Lighting Texture (ShaderMgr->lightingTexture)
+    2 - FXAA - color_texture
+        SMAA1 - colorTex
+        SMAA3 - colorTex
+    3 - SMAA3 - blendTex
+        Label/Indicator Shader : textureMap (both PURE_OPENGL_ES_2 and non-PURE_OPENGL_ES_2
+    4 - Background Texture: bgTextureMap
+    5 - OIT - 2nd pass : accumTex
+        Volumes - carvemask
+    6 - OIT - 2nd pass : revealageTex
+        SMAA2 - edgesTex
+    7 - SMAA2 - areaTex
+        OIT Copy - colorTex
+    8 - SMAA2 - searchTex
+
+ */
+
+using namespace std;
+
+#ifndef _DEAD_CODE_DIE
+#define SUPPRESS_GEOMETRY_SHADER_ERRORS
+#endif
+
+#define CONNECTOR_GS_NUM_VERTICES  31
 
 #define SCENEGETIMAGESIZE SceneGetWidthHeight
 
 #include "ShaderText.h"
 
-#define DEFAULT_VS_FILENAME "default_es2.vs"
-#define DEFAULT_FS_FILENAME "default_es2.fs"
-
-#define DEFAULTSCREEN_VS_FILENAME "defaultscreen.vs"
-#define DEFAULTSCREEN_FS_FILENAME "defaultscreen.fs"
-
-#define CYLINDER_VS_FILENAME "cylinder.vs"
-#define CYLINDER_FS_FILENAME "cylinder.fs"
-#define SPHERE_VS_FILENAME "sphere.vs"
-#define SPHERE_FS_FILENAME "sphere.fs"
-
-#define INDICATOR_VS_FILENAME "indicator.vs"
-#define INDICATOR_FS_FILENAME "indicator.fs"
-
-#define WARNING_IF_GLERROR(msg) { \
+#define WARNING_IF_GLERROR(msg) {		\
   GLenum err; \
   if ((err = glGetError())){ \
-    PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR 0x%04x: " msg "\n", err ENDFB(G); \
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings) "GLERROR 0x%04x: %s\n", err, msg ENDFB(G); \
   } \
 }
 
-static const float mat3identity[] = { 1., 0., 0., 0., 1., 0., 0., 0., 1. };
+static void glShaderSource1String(GLuint shad, const string &strobj){
+  const GLchar *str = (const GLchar *)strobj.c_str();
+  glShaderSource(shad, 1, (const GLchar **)&str, NULL);
+}
+
+bool CShaderPrg::reload(){
+  // skip programs with empty file names, assume their code is managed
+  // outside of the reload logic (like ARB shaders).
+  if (is_valid || vertfile.empty())
+    return true;
+
+  string gs, vs, fs;
+  CShaderMgr *I = G->ShaderMgr;
+  GLint status;
+
+  if (!geomfile.empty())
+    gs = I->GetShaderSource(geomfile);
+
+  vs = I->GetShaderSource(vertfile);
+  fs = I->GetShaderSource(fragfile);
+
+  WARNING_IF_GLERROR("CShaderPrg::reload begin");
+
+  PRINTFB(G, FB_ShaderMgr, FB_Blather)
+    "Loading shader named: %s\n", name.c_str()
+    ENDFB(G);
+
+  if (!id) {
+    id = glCreateProgram();
+  }
+
+#ifndef PURE_OPENGL_ES_2
+  if (!gs.empty() && SettingGetGlobal_b(G, cSetting_use_geometry_shaders)) {
+    if (!gid) {
+      gid = glCreateShader(GL_GEOMETRY_SHADER);
+
+      GLenum err;
+      if ((err=glGetError()) || !gid) {
+        PRINTFB(G, FB_ShaderMgr, FB_Errors)
+          " Error: geometry shader creation failed. name=%s err=0x%x\n", name.c_str(), err ENDFB(G);
+        return false;
+      }
+
+      glAttachShader(id, gid);
+    }
+
+    glShaderSource1String(gid, gs);
+    glCompileShader((GLuint) gid);
+    glGetShaderiv(gid, GL_COMPILE_STATUS, &status);
+
+    if (!status) {
+#ifndef SUPPRESS_GEOMETRY_SHADER_ERRORS
+      ErrorMsgWithShaderInfoLog(gid, "geometry shader compilation failed.");
+#endif
+      glDetachShader(id, gid);
+      glDeleteShader(gid);
+      gid = 0;
+      return false;
+    }
+
+    glProgramParameteriEXT(id, GL_GEOMETRY_INPUT_TYPE_EXT, gsInput);
+    glProgramParameteriEXT(id, GL_GEOMETRY_OUTPUT_TYPE_EXT, gsOutput);
+    glProgramParameteriEXT(id, GL_GEOMETRY_VERTICES_OUT_EXT, ngsVertsOut);
+
+    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
+      " ShaderPrg-Debug: geometry shader compiled.\n" ENDFB(G);
+  } else if (gid) {
+    // for manually switching off geometry shaders (set use_geometry_shaders, off)
+    glDetachShader(id, gid);
+    glDeleteShader(gid);
+    gid = 0;
+  }
+
+  WARNING_IF_GLERROR("CShaderPrg::reload after geometry shader");
+#endif
+
+  // vertex shader
+  {
+    if (!vid) {
+      vid = glCreateShader(GL_VERTEX_SHADER);
+      glAttachShader(id, vid);
+    }
+
+    glShaderSource1String(vid, vs);
+    glCompileShader((GLuint) vid);
+    glGetShaderiv(vid, GL_COMPILE_STATUS, &status);
+
+    if (!status) {
+      ErrorMsgWithShaderInfoLog(vid, "vertex shader compilation failed.");
+      return false;
+    }
+  }
+
+  // fragment shader
+  {
+    if (!fid) {
+      fid = glCreateShader(GL_FRAGMENT_SHADER);
+      glAttachShader(id, fid);
+    }
+
+    glShaderSource1String(fid, fs);
+    glCompileShader((GLuint) fid);
+    glGetShaderiv(fid, GL_COMPILE_STATUS, &status);
+
+    if (!status) {
+      ErrorMsgWithShaderInfoLog(fid, "fragment shader compilation failed.");
+      return false;
+    }
+  }
+
+  uniforms.clear();
+  uniform_set = 0;
+
+  // it is valid to bind unused names, and to bind multiple names to the same index
+  if (!name.compare(0, 8, "cylinder")){
+    glBindAttribLocation(id, CYLINDER_VERTEX1, "attr_vertex1");
+    glBindAttribLocation(id, CYLINDER_VERTEX2, "attr_vertex2");
+    glBindAttribLocation(id, CYLINDER_COLOR, "a_Color");
+    glBindAttribLocation(id, CYLINDER_COLOR2, "a_Color2");
+    glBindAttribLocation(id, CYLINDER_RADIUS, "attr_radius");
+    glBindAttribLocation(id, CYLINDER_CAP, "a_cap");
+  } else {
+    glBindAttribLocation(id, VERTEX_POS, "a_Vertex");
+    glBindAttribLocation(id, VERTEX_COLOR, "a_Color");
+    glBindAttribLocation(id, VERTEX_NORMAL, "a_Normal");
+    glBindAttribLocation(id, 0, "attr_worldpos");
+  }
+  WARNING_IF_GLERROR("after glBindAttribLocation");
+
+  is_linked = false;
+  is_valid = true;
+
+  return true;
+}
+
+#define MASK_SHADERS_PRESENT_GEOMETRY 0x2;
+#define MASK_SHADERS_PRESENT_SMAA 0x4;
 
 void getGLVersion(PyMOLGlobals * G, int *major, int* minor);
 void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor);
 
 static void disableShaders(PyMOLGlobals * G);
-
-static
-bool get_fog_enabled(PyMOLGlobals * G) {
-  return SettingGet<bool>(G, cSetting_depth_cue) &&
-    !SettingGet<bool>(G, cSetting_pick_shading);
-}
-
-void CShaderPrg_SetFogUniforms(PyMOLGlobals * G, CShaderPrg * shaderPrg){
-  int bg_width, bg_height;
-  int scene_width, scene_height;
-  int ortho_width, ortho_height;
-
-  CShaderPrg_Set3fv(shaderPrg, "fogSolidColor", ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb)));
-
-  SceneGetWidthHeight(G, &scene_width, &scene_height);
-
-  OrthoGetBackgroundSize(G, &bg_width, &bg_height);
-  OrthoGetSize(G, &ortho_width, &ortho_height);
-  CShaderPrg_Set2f(shaderPrg, "viewImageSize", bg_width/(float)scene_width, bg_height/(float)scene_height);
-  CShaderPrg_Set2f(shaderPrg, "pixelSize", 2.f/(float)scene_width, 2.f/(float)scene_height);
-  CShaderPrg_Set2f(shaderPrg, "tPixelSize", 1.f/(float)ortho_width, 1.f/(float)ortho_height);
-  CShaderPrg_Set2f(shaderPrg, "t2PixelSize", 2.f/(float)ortho_width, 2.f/(float)ortho_height);
-  {
-    float hpixelx = floor(scene_width / 2.f)/(float)scene_width, 
-      hpixely = floor(scene_height / 2.f)/(float)scene_height;
-    CShaderPrg_Set2f(shaderPrg, "halfPixel", hpixelx, hpixely);
-  }
-}
 
 #ifdef WIN32
 /* REMOVE US */
@@ -111,626 +252,426 @@ void disableShaders(PyMOLGlobals * G) {
     SettingSetGlobal_b(G, cSetting_use_shaders, 0);
 }
 
-int SHADERLEX_LOOKUP(PyMOLGlobals * G, char *strarg){
-  CShaderMgr *I = G->ShaderMgr;
-  OVreturn_word result, result2;
-  if(!OVreturn_IS_OK((result = OVLexicon_BorrowFromCString(I->ShaderLex, strarg))))
-    return -1;
-  result2 = OVOneToOne_GetForward(I->ShaderLexLookup, result.word);
-  return result2.word;
+static void disableGeometryShaders(PyMOLGlobals * G) {
+  SettingSetGlobal_b(G, cSetting_use_geometry_shaders, 0);
+  if(G->ShaderMgr)
+    G->ShaderMgr->SetPreprocVar("use_geometry_shaders", 0);
+
+  if (G->Option && !G->Option->quiet)
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+      " Geometry shaders not available\n" ENDFB(G);
 }
 
-void CShaderMgr_Free_Shader_Arrays(CShaderMgr *I){
-  int i, sz = VLAGetSize(I->shader_replacement_strings);
-  for (i=0; i<sz;i++){
-    if (I->shader_replacement_strings[i]){
-      VLAFreeP(I->shader_replacement_strings[i]);
-      I->shader_replacement_strings[i] = 0;
-    }
-    I->shader_include_values[i] = 0;
-  }
-}
-
-#define MIN_CHAR(x,y) (!x ? y : !y ? x : ((x < y) ? x : y))
-
-char *CShaderPrg_ReadFromFile_Or_Use_String(PyMOLGlobals * G, char *name, char *fileName, char *fallback_str);
-
-char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, char *name, char *fileName, char *fallback_str, char **replaceStrings);
-
-char *CShaderPrg_ReadFromFile_Or_Use_String(PyMOLGlobals * G, char *name, char *fileName, char *fallback_str){
-  return CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(G, name, fileName, fallback_str, NULL);
-}
-
-void CShaderPrg_ReplaceStringsInPlace(PyMOLGlobals *G, char *dest_line, char **replaceStrings){
-  int i;
-  OrthoLineType tmp_line;
-  int slen, rlen;
-  char *rstr;
-  if (replaceStrings){
-    i = 0;
-    while (replaceStrings[i]){
-      slen = strlen(replaceStrings[i]);
-      rlen = strlen(replaceStrings[i+1]);
-      while((rstr=strstr(dest_line, replaceStrings[i]))){
-	strcpy(tmp_line, rstr + slen);
-	strcpy(rstr, replaceStrings[i+1]);
-	strcpy(rstr+rlen, tmp_line);
-      }
-      i+=2;
+/*
+ * Replace strings from a list of pairs.
+ *
+ * src: string to modify
+ * replaceStrings: map of strings to replace (as consecutive elements in an
+ *                 array like {from1, to1, from2, to2, ..., ""}
+ * returns: new string
+ */
+static string stringReplaceAll(const string &src, const string * replaceStrings) {
+  string dest = src;
+  for (int i = 0; !replaceStrings[i].empty(); i += 2) {
+    int slen1 = replaceStrings[i].length();
+    int slen2 = replaceStrings[i + 1].length();
+    for (size_t pl = 0;
+        (pl = dest.find(replaceStrings[i], pl)) != string::npos;
+        pl += slen2) {
+      dest.replace(pl, slen1, replaceStrings[i + 1]);
     }
   }
+  return dest;
 }
 
-void CShaderPrg_Reload_CallComputeColorForLight(PyMOLGlobals * G, char *name){
-  CShaderMgr *I = G->ShaderMgr;
+/*
+ * Reload "CallComputeColorForLight" shader replacement string
+ */
+void CShaderMgr::Reload_CallComputeColorForLight(){
+  if ((reload_bits & RELOAD_CALLCOMPUTELIGHTING)) {
+    reload_bits &= ~RELOAD_CALLCOMPUTELIGHTING;
+  } else {
+    return;
+  }
+
+  if (SettingGetGlobal_b(G, cSetting_precomputed_lighting)) {
+    Generate_LightingTexture();
+    return;
+  }
+
   int light_count = SettingGetGlobal_i(G, cSetting_light_count);
   int spec_count = SettingGetGlobal_i(G, cSetting_spec_count);
-  char **reparr = Alloc(char*, 5);
-  char *accstr, *tmpstr ;
-  int tmpstrlen, accstrlen, i, idx;
-  reparr[0] = "`light`";
-  reparr[1] = "0";
-  reparr[2] = "`postfix`";
-  reparr[3] = "_0";
-  reparr[4] = 0 ;
-  accstr = CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(G, name, "call_compute_color_for_light.fs", (char*)call_compute_color_for_light_fs, reparr);
+  ostringstream accstr;
 
-  reparr[3] = "";
-  reparr[1] = Alloc(char, 5);
+  string rawtemplate = GetShaderSource("call_compute_color_for_light.fs");
 
-  auto pick_shading = SettingGet<bool>(G, cSetting_pick_shading);
-  if (pick_shading) {
-    light_count = 1;
-  }
+  string lightstrings[] = {
+    "`light`", "0",
+    "`postfix`", "_0",
+    ""
+  };
+
+  accstr << stringReplaceAll(rawtemplate, lightstrings);
 
   if (light_count > 8){
-    PRINTFB(G, FB_Setting, FB_Warnings)
-      "CShaderPrg-Error: light_count cannot be higher than 8, setting light_count to 8\n"
+    PRINTFB(G, FB_ShaderMgr, FB_Details)
+      " ShaderMgr-Detail: using 8 lights (use precomputed_lighting for light_count > 8)\n"
       ENDFB(G);
-    SettingSet_i(G->Setting, cSetting_light_count, 8);
     light_count = 8;
   }
-  for (i=1; i<light_count; i++){
-    sprintf(reparr[1], "%d", i);
+
+  // no postfix for 1..light_count
+  lightstrings[3] = "";
+
+  for (int i=1; i<light_count; i++){
+    ostringstream lstr;
+    lstr << i;
+    lightstrings[1] = lstr.str(); // std::to_string(i)
 
     if (i == spec_count + 1) {
-      reparr[3] = " * 0.0";
+      // no specular for [spec_count + 1 .. light_count]
+      lightstrings[3] = " * 0.0";
     }
 
-    tmpstr = CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(G, name, "call_compute_color_for_light.fs", (char*)call_compute_color_for_light_fs, reparr);
-    tmpstrlen = strlen(tmpstr);
-    accstrlen = strlen(accstr);
-    VLASize(accstr, char, tmpstrlen + accstrlen);
-    strcpy(accstr + accstrlen-1, tmpstr);
-    VLAFreeP(tmpstr);    
-  }
-  FreeP(reparr[1]);
-  FreeP(reparr);
-  idx = SHADERLEX_LOOKUP(G, "CallComputeColorForLight");
-  if (I->shader_replacement_strings[idx]){
-    VLAFreeP(I->shader_replacement_strings[idx]);
-  }
-  I->shader_replacement_strings[idx] = accstr;
-}
-void CShaderPrg_Reload_All_Shaders_For_CallComputeColorForLight(PyMOLGlobals * G){
-  CShaderMgr_Reload_Shader_Variables(G);
-  CShaderMgr_Reload_Default_Shader(G);
-  CShaderMgr_Reload_Cylinder_Shader(G);
-  CShaderMgr_Reload_Sphere_Shader(G);
-}
-
-void CShaderPrg_Reload_All_Shaders(PyMOLGlobals * G){
-  CShaderMgr_Reload_Shader_Variables(G);
-  CShaderMgr_Reload_Default_Shader(G);
-  CShaderMgr_Reload_Cylinder_Shader(G);
-  CShaderMgr_Reload_Sphere_Shader(G);
-  CShaderMgr_Reload_Indicator_Shader(G);
-}
-
-char *CShaderPrg_ReadFromFile_Or_Use_String_Replace_Strings(PyMOLGlobals * G, char *name, char *fileName, char *fallback_str, char **replaceStrings){
-  CShaderMgr *I = G->ShaderMgr;
-  char* buffer = NULL, *pymol_path, *shader_path, *fullFile = NULL, *pl, *newpl, *tpl, *chrsp, *chrnl;
-  long res;
-  char *newbuffer;
-  int newbuffersize;
-  short allocated = 0;
-  int i, len, tlen;
-  OrthoLineType tmp_line, tmp_str;
-  short *ifdefstack = VLAlloc(short, 10), current_include = 1;
-  int ifdefstacksize = 1;
-  ifdefstack[0] = 1;
-
-  pymol_path = getenv("PYMOL_DATA");
-  if(pymol_path && pymol_path[0]) {
-    shader_path = "/shaders/";
-  } else {
-    pymol_path = getenv("PYMOL_PATH");
-    shader_path = "/data/shaders/";
+    accstr << stringReplaceAll(rawtemplate, lightstrings);
   }
 
-  if (!pymol_path){
-    if (I->print_warnings){
+  SetShaderSource("CallComputeColorForLight", accstr.str());
+}
+
+void CShaderMgr::Invalidate_All_Shaders(){
+  for (map<string, CShaderPrg*>::iterator
+      it = programs.begin(); it != programs.end(); ++it) {
+    it->second->Invalidate();
+  }
+}
+
+void CShaderMgr::Reload_All_Shaders(){
+  Reload_Shader_Variables();
+  Reload_CallComputeColorForLight();
+
+  if (SettingGetGlobal_i(G, cSetting_transparency_mode) == 3) {
+    Reload_Derivatives("NO_ORDER_TRANSP");
+  }
+
+  for (auto it = programs.begin(); it != programs.end(); ++it) {
+    if (it->second->derivative.empty())
+      it->second->reload();
+  }
+}
+
+// bitmasks for preprocessor parsing
+#define IFDEF    1   // #ifdef or #ifndef
+#define IFNDEF   2   // #ifndef
+#define ELSE     4   // #else
+#define ENDIF    8   // #endif
+#define INCLUDE 16   // #include
+#define LOOKUP  32   // #ifdef or #ifndef or #include
+
+// preprocessor directive (like '#ifdef') -> bitmask
+static map<string, short> preprocmap;
+
+// filename -> contents (static filesystem)
+static map<string, const char *> shader_cache_raw;
+
+// preproc variable -> NULL terminated list of filenames ("used by")
+std::map<std::string, const char **> ifdef_deps;
+
+// filename -> NULL terminated list of filenames ("included by")
+std::map<std::string, const char **> include_deps;
+
+/*
+ * Return a pointer to the next whitespace character or to the end of the string
+ */
+static const char * nextwhitespace(const char * p) {
+  for (;; p++) {
+    switch (*p) {
+      case ' ': case '\0': case '\n': case '\r': case '\t':
+        return p;
+    }
+  }
+}
+
+/*
+ * Return a pointer to the next line beginning or to the end of the string.
+ * Skips blank lines.
+ */
+static const char * nextline(const char * p) {
+  for (;; p++) {
+    switch (*p) {
+      case '\0': case '\n': case '\r':
+        goto switch2;
+    }
+  }
+  for (;; p++) {
+switch2:
+    switch (*p) {
+      case ' ': case '\n': case '\r': case '\t':
+        break;
+      default:
+        return p;
+    }
+  }
+}
+
+/*
+ * Get the processed shader file contents with all #ifdef and #include
+ * preprocessors processed.
+ *
+ * Note: There must be a single whitespace character between preprocessor
+ * directive and argument.
+ *
+ * Valid:
+ * #ifdef foo
+ *
+ * Invalid:
+ * # ifdef foo
+ * #ifdef  foo
+ *
+ * Function arguments:
+ * filename: file name of the shader file inside $PYMOL_DATA/shaders
+ */
+string CShaderMgr::GetShaderSource(const string &filename)
+{
+  // processed cache
+  auto it = shader_cache_processed.find(filename);
+  if (it != shader_cache_processed.end()) {
+    return it->second;
+  }
+
+  char* buffer = NULL;
+  const char *pl = NULL, *newpl, *tpl;
+  std::ostringstream newbuffer;
+
+  /* "if_depth" counts the level of nesting, and "true_depth" how far the
+   * if conditions were actually true. So if the current block is true, then
+   * if_depth == true_depth, otherwise if_depth > true_depth.
+   */
+  int if_depth = 0, true_depth = 0;
+
+#ifndef _PYMOL_IOS
+  /* read the file from disk */
+  if (SettingGetGlobal_b(G, cSetting_shaders_from_disk)) {
+    const char * pymol_data = getenv("PYMOL_DATA");
+
+    if (pymol_data && pymol_data[0]) {
+      string path(pymol_data);
+      path.append(PATH_SEP).append("shaders").append(PATH_SEP).append(filename);
+
+      pl = buffer = FileGetContents(path.c_str(), NULL);
+
+      if (!buffer) {
+        PRINTFB(G, FB_ShaderMgr, FB_Warnings)
+          " Warning: shaders_from_dist=on, but unable to open file '%s'\n",
+          path.c_str() ENDFB(G);
+      }
+    } else {
       PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-	" CShaderPrg_ReadFromFile_Or_Use_String: PYMOL_PATH not set, cannot read shader config files from disk\n" ENDFB(G);
+        " Warning: shaders_from_dist=on, but PYMOL_DATA not set\n" ENDFB(G);
     }
-  } else {
-    fullFile = Alloc(char, strlen(pymol_path) + strlen(shader_path) + strlen(fileName) + 1);
-    fullFile = strcpy(fullFile, pymol_path);
-    fullFile = strcat(fullFile, shader_path);
-    fullFile = strcat(fullFile, fileName);
-    /* read the file from disk */
-    buffer = FileGetContents(fullFile, &res);
   }
-  if (!buffer) {
-    if (I->print_warnings){
-      PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	" CShaderPrg_ReadFromFile_Or_Use_String-Error: Unable to open file '%s' loading from memory\n", fullFile ENDFB(G);
-    }
-    buffer = fallback_str;
-    res = strlen(buffer) -1;
-  } else {
-    allocated = 1;
-  }
-  newbuffer = VLAlloc(char, 1000);
-  newbuffer[0] = 0;
-  newbuffersize = 1;
-  /* Now we need to read through the shader and do processing if necessary */
-  pl = buffer;
-  i = 1;
+#endif
 
-  while (((size_t)(pl - buffer)) < res){
-    short pass_line = 0;
-    newpl = strchr(pl, '\n');
-    len = newpl - pl + 1;
-    strncpy(tmp_line, pl, len);
-    tmp_line[len] = 0;
-    chrsp = strchr(pl, ' ');
-    chrnl = strchr(pl, '\n');
-    tpl = (char*)MIN_CHAR(chrsp, chrnl);
-    if (tpl <= newpl){ // && tlen < len){
-      short ifl = 0, ifdefl = 0, ifdefnot = 0, elsel = 0, endifl = 0, includel = 0, lookup = 0;
-      tlen = tpl - pl;
-      strncpy(tmp_str, pl, tlen);
-      tmp_str[tlen] = 0;
-      if (!strcmp(tmp_str, "#if")){
-	lookup = ifl = 1;	
-      } else if (!strcmp(tmp_str, "#ifdef")){
-	lookup = ifdefl = 1;
-      } else if (!strcmp(tmp_str, "#ifndef")){
-	lookup = ifdefl = ifdefnot = 1;
-      } else if (!strcmp(tmp_str, "#else")){
-	pass_line = elsel = 1;
-      } else if (!strcmp(tmp_str, "#endif")){
-	pass_line = endifl = 1;
-      } else if (!strcmp(tmp_str, "#include")){
-	lookup = includel = 1;
-      }
-      if (lookup){
-	int off;
-	char *tpl2 = (char*)MIN_CHAR(strchr(tpl + 1, '\n'), strchr(tpl + 1, ' '));
-	int t2len = tpl2 - tpl - 1, is_name;
-	pass_line = 1;
-	strncpy(tmp_str, tpl + 1, t2len);
-	tmp_str[t2len] = 0;
-	off = SHADERLEX_LOOKUP(G, tmp_str);
-	if (ifl){
-	  /*	  char *op = (char*)MIN_CHAR(strchr(tpl2 + 1, '\n'), strchr(tpl2 + 1, ' '));
-		  char *compval = (char*)MIN_CHAR(strchr(op + 1, '\n'), strchr(op + 1, ' '));
-		  printf("op='%s' compval='%s'\n", op, compval); */
-	} else {
-	  is_name = !strcmp(tmp_str, name);
-	  if (off >= 0 || is_name){
-	    if (ifdefl){
-	      int ifr;
-	      if (is_name){
-		ifr = 1;
-	      } else {
-		ifr = I->shader_include_values[off];
-	      }
-	      if (ifdefnot) ifr = !ifr;
-	      VLACheck(ifdefstack, short, ifdefstacksize+1);
-	      ifdefstack[ifdefstacksize++] = ifr;
-	      current_include = ifr;
-	    } else if (includel){
-	      if (I->shader_update_when_include[off]){
-		I->shader_replacement_strings[off] = CShaderPrg_ReadFromFile_Or_Use_String(G, name, I->shader_update_when_include_filename[off], (char*)I->shader_update_when_include[off]);
-	      }
-	      {
-		int slen = strlen(I->shader_replacement_strings[off]);	    
-		VLACheck(newbuffer, char, newbuffersize + slen);
-		strcpy(&newbuffer[newbuffersize-1], I->shader_replacement_strings[off]);
-		newbuffer[newbuffersize + slen-1] = 0;
-        newbuffersize += slen;
-	      }
-	    }
-	  } else {
-	    /* Lookup doesn't exist, fails check */
-	    VLACheck(ifdefstack, short, ifdefstacksize+1);
-	    ifdefstack[ifdefstacksize++] = 0;
-	    current_include = 0;
-	  }
-	}
-      }
-      if (endifl){
-	int pl;
-	ifdefstacksize--;
-	pl = ifdefstacksize - 1;
-	current_include = (pl >= 0) ? ifdefstack[pl] : 1;
-	pass_line = 1;
-      } else if (elsel){
-	current_include = !current_include;
-	pass_line = 1;
-      }
-    } 
-    if (!pass_line && current_include){
-      if (replaceStrings){
-	CShaderPrg_ReplaceStringsInPlace(G, tmp_line, replaceStrings);
-	len = strlen(tmp_line);
-      }
-      VLACheck(newbuffer, char, newbuffersize + len);
-      strcpy(&newbuffer[newbuffersize-1], tmp_line);
-      newbuffer[newbuffersize + len -1] = 0;
-      newbuffersize += len;
+  if (!pl) {
+    pl = shader_cache_raw[filename];
+    if (!pl) {
+      PRINTFB(G, FB_ShaderMgr, FB_Errors)
+        " GetShaderSource-Error: No such file: '%s'\n", filename.c_str() ENDFB(G);
+      return "";
     }
-    pl = newpl + 1;
-    i++;
   }
-  if (allocated){
-    FreeP(buffer);
+
+  /* Now we need to read through the shader and do processing if necessary */
+  for (; *pl; pl = newpl) {
+    int preproc = 0;
+
+    // only do preprocessor lookup if line starts with a hash
+    if (pl[0] == '#') {
+      // next white space
+      tpl = nextwhitespace(pl);
+
+      // copy of first word
+      string tmp_str(pl, tpl - pl);
+
+      // lookup word in preprocmap
+      map<string, short>::const_iterator
+        preprocit = preprocmap.find(tmp_str);
+      if (preprocit != preprocmap.end()) {
+        preproc = preprocit->second;
+
+        if (preproc & LOOKUP) { // #ifdef or #ifndef or #include
+          if (if_depth == true_depth) {
+            // copy of second word
+            tpl++;
+            tmp_str = string(tpl, nextwhitespace(tpl) - tpl);
+
+            if (preproc & IFDEF) { // #ifdef or #ifndef
+              bool if_value = false;
+
+              // lookup for boolean shader preprocessor values
+              auto item = preproc_vars.find(tmp_str);
+              if (item != preproc_vars.end())
+                if_value = item->second;
+
+              if (preproc & IFNDEF)
+                if_value = !if_value; // #ifndef
+
+              if (if_value)
+                true_depth++;
+
+            } else if (preproc & INCLUDE) { //#include
+              tmp_str = string(tpl, nextwhitespace(tpl) - tpl);
+              newbuffer << GetShaderSource(tmp_str);
+            }
+          }
+
+          if (preproc & IFDEF)
+            if_depth++;
+
+        } else if (preproc & ENDIF){ // #endif
+          if (if_depth-- == true_depth)
+            true_depth--;
+        } else if (preproc & ELSE){ // #else
+          if (if_depth == true_depth)
+            true_depth--;
+          else if (if_depth == true_depth + 1)
+            true_depth++;
+        }
+      }
+    }
+
+    newpl = nextline(pl);
+
+    // add to the output buffer if this is a regular active line
+    if (!preproc && if_depth == true_depth) {
+      newbuffer.write(pl, newpl - pl);
+    }
   }
-  VLAFreeP(ifdefstack);
-  if (fullFile)
-    free(fullFile);
-  return newbuffer;
+
+  FreeP(buffer);
+
+  string result = newbuffer.str();
+  shader_cache_processed[filename] = result;
+  return result;
 }
 
 #define FREE_AND_REPLACE_WITH(var, with) if (var) free(var);  var = with;
 
-void CShaderMgr_Reload_Shader_Variables(PyMOLGlobals * G){
-  CShaderMgr *I = G->ShaderMgr;
+void CShaderMgr::Reload_Shader_Variables() {
+  if ((reload_bits & RELOAD_VARIABLES)) {
+    reload_bits &= ~RELOAD_VARIABLES;
+  } else {
+    return;
+  }
+
+  int bg_image_mode = SettingGetGlobal_i(G, cSetting_bg_image_mode);  
   int bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);  
   int bg_image_mode_solid;
   int stereo, stereo_mode;
-  bg_image_mode_solid = !bg_gradient;
-  CShaderMgr_Free_Shader_Arrays(I);
+  const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
+  short bg_image = bg_image_filename && bg_image_filename[0];
+  bg_image_mode_solid = !(bg_gradient || bg_image || OrthoBackgroundDataIsSet(G));
 
-  I->shader_include_values[SHADERLEX_LOOKUP(G, "bg_image_mode_solid")] = !bg_gradient;
-  I->shader_include_values[SHADERLEX_LOOKUP(G, "bg_image_mode_stretched")] = bg_gradient;
+  SetPreprocVar("bg_image_mode_solid", bg_image_mode_solid);
+  if (!bg_image_mode_solid) {
+    SetPreprocVar("bg_image_mode_1_or_3", (bg_image_mode == 1 || bg_image_mode == 3));
+    SetPreprocVar("bg_image_mode_2_or_3", (bg_image_mode == 2 || bg_image_mode == 3));
+  }
+
+#ifndef PYMOL_EDU
+  SetPreprocVar("volume_mode", SettingGetGlobal_i(G, cSetting_volume_mode));
+#endif
+
+  SetPreprocVar("ortho", SettingGetGlobal_i(G, cSetting_ortho));
+  SetPreprocVar("depth_cue", SettingGetGlobal_b(G, cSetting_depth_cue)
+      && SettingGetGlobal_b(G, cSetting_fog) != 0.0F);
+
+#ifndef PURE_OPENGL_ES_2
+  SetPreprocVar("use_geometry_shaders", SettingGetGlobal_b(G, cSetting_use_geometry_shaders));
+#endif
+
+  SetPreprocVar("line_smooth", SettingGetGlobal_b(G, cSetting_line_smooth));
 
   stereo = SettingGetGlobal_i(G, cSetting_stereo);
   stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
 
-  I->shader_include_values[SHADERLEX_LOOKUP(G, "ANAGLYPH")] = (stereo && stereo_mode==cStereo_anaglyph) ? 1 : 0;
+  SetPreprocVar("ANAGLYPH", (stereo && stereo_mode==cStereo_anaglyph) ? 1 : 0);
+  SetPreprocVar("ray_trace_mode_3", SettingGetGlobal_i(G, cSetting_ray_trace_mode) == 3);
+  SetPreprocVar("transparency_mode_3", SettingGetGlobal_i(G, cSetting_transparency_mode)==3);
 
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "ComputeFogColor")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "ComputeFogColor", "compute_fog_color.fs", (char*)compute_fog_color_fs);
+#ifndef _PYMOL_NO_AA_SHADERS
+#endif
 
-  {
-    int ComputeColorForLightOffset = SHADERLEX_LOOKUP(G, "ComputeColorForLight");
-    FREE_AND_REPLACE_WITH(I->shader_update_when_include_filename[ComputeColorForLightOffset], strdup("compute_color_for_light.fs"));
-    I->shader_update_when_include[ComputeColorForLightOffset] = (char*)compute_color_for_light_fs;
-  }
+  SetPreprocVar("precomputed_lighting", SettingGetGlobal_b(G, cSetting_precomputed_lighting));
+  SetPreprocVar("ray_transparency_oblique", SettingGetGlobal_f(G, cSetting_ray_transparency_oblique) > R_SMALL4);
 
-  {
-    int anaglyphHeaderOffset = SHADERLEX_LOOKUP(G, "ANAGLYPH_HEADER");
-    FREE_AND_REPLACE_WITH(I->shader_update_when_include_filename[anaglyphHeaderOffset], strdup("anaglyph_header.fs"));
-    I->shader_update_when_include[anaglyphHeaderOffset] = (char*)anaglyph_header_fs;
-  }
-  {
-    int anaglyphOffset = SHADERLEX_LOOKUP(G, "ANAGLYPH_BODY");
-    FREE_AND_REPLACE_WITH(I->shader_update_when_include_filename[anaglyphOffset], strdup("anaglyph.fs"));
-    I->shader_update_when_include[anaglyphOffset] = (char*)anaglyph_fs;
-  }
-
+  int chromadepth = SettingGetGlobal_i(G, cSetting_chromadepth);
+  SetPreprocVar("chromadepth", chromadepth != 0);
+  SetPreprocVar("chromadepth_postlighting", chromadepth == 2);
 }
 
 /* ============================================================================
  * ShaderMgrInit is called from PyMOL.c during start up; it just allocates
  * the global ShaderMgr
  */
-OVstatus ShaderMgrInit(PyMOLGlobals * G) {
-  OVreturn_word result;
-  CShaderMgr *I = G->ShaderMgr = CShaderMgr_New(G);
-  OVContext *C = G->Context;
+bool ShaderMgrInit(PyMOLGlobals * G) {
+  // initialize some globals (do this only once)
+  if (preprocmap.empty()) {
+    preprocmap["#ifdef"] = LOOKUP | IFDEF;
+    preprocmap["#ifndef"] = LOOKUP | IFDEF | IFNDEF;
+    preprocmap["#else"] = ELSE;
+    preprocmap["#endif"] = ENDIF;
+    preprocmap["#include"] = LOOKUP | INCLUDE;
 
-  if(!I)
-    return_OVstatus_FAILURE;						\
+    // make #include dependency map from flat array
+    for (const char ** ptr = _include_deps; *ptr; ++ptr) {
+      include_deps[ptr[0]] = ptr + 1;
+      while (*(++ptr)) {}
+    }
 
-  I->reload_bits = 0;
-  G->ShaderMgr->is_picking = 0;
+    // make #ifdef dependency map from flat array
+    for (const char ** ptr = _ifdef_deps; *ptr; ++ptr) {
+      ifdef_deps[ptr[0]] = ptr + 1;
+      while (*(++ptr)) {}
+    }
 
-  I->ShaderLex = OVLexicon_New(C->heap);
-  I->ShaderLexLookup = OVOneToOne_New(C->heap);
-  
-#define SHADERLEX(ARG, OFFSET)							\
-  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->ShaderLex,#ARG))))  \
-    return_OVstatus_FAILURE;						\
-  if(!OVreturn_IS_OK( OVOneToOne_Set(I->ShaderLexLookup, result.word, OFFSET)))  \
-    return_OVstatus_FAILURE;
-
-  SHADERLEX(ComputeFogColor, 0);
-  /* 1-3 reserved for incentive */
-  SHADERLEX(bg_image_mode_stretched, 4);
-  SHADERLEX(bg_image_mode_solid, 5);
-  SHADERLEX(default_vs, 6);
-  SHADERLEX(default_fs, 7);
-  SHADERLEX(bg_vs, 8);
-  SHADERLEX(bg_fs, 9);
-  SHADERLEX(cylinder_vs, 10);
-  SHADERLEX(cylinder_fs, 11);
-  SHADERLEX(label_vs, 13);
-  SHADERLEX(label_fs, 14);
-  SHADERLEX(sphere_vs, 15);
-  SHADERLEX(sphere_fs, 16);
-  SHADERLEX(volume_vs, 17);
-  SHADERLEX(volume_fs, 18);
-  SHADERLEX(ComputeColorForLight, 19);
-  SHADERLEX(CallComputeColorForLight, 20);
-  /* 21 reserved for incentive */
-  SHADERLEX(ANAGLYPH, 22);
-  SHADERLEX(ANAGLYPH_HEADER, 23);
-  SHADERLEX(ANAGLYPH_BODY, 24);
-  SHADERLEX(indicator_vs, 25);
-  SHADERLEX(indicator_fs, 26);
-  SHADERLEX(labelscreen_vs, 27);
-  SHADERLEX(labelscreen_fs, 28);
-  SHADERLEX(defaultscreen_vs, 29);
-  SHADERLEX(defaultscreen_fs, 30);
-  SHADERLEX(screen_vs, 31);
-  SHADERLEX(screen_fs, 32);
-  SHADERLEX(ramp_vs, 33);
-  SHADERLEX(ramp_fs, 34);
-  {
-    int nlexvals = 35;
-    I->shader_replacement_strings = VLACalloc(char*, nlexvals);
-    I->shader_include_values = VLACalloc(int, nlexvals);
-    I->shader_update_when_include_filename = VLACalloc(char*, nlexvals);
-    I->shader_update_when_include = VLACalloc(char*, nlexvals);
+    // make shader file cache from flat array
+    for (const char ** ptr = _shader_cache_raw; *ptr; ptr += 2) {
+      shader_cache_raw[ptr[0]] = *(ptr + 1);
+    }
   }
-  return_OVstatus_SUCCESS;
+
+  G->ShaderMgr = new CShaderMgr(G);
+
+  for (int i = 0; i < 3; ++i)
+    G->ShaderMgr->offscreen_rt[i] = 0;
+
+  for (int i = 0; i < 2; ++i)
+    G->ShaderMgr->oit_rt[i] = 0;
+
+  if(!G->ShaderMgr)
+    return false;
+
+  return true;
 }
 
-void CShaderPrg_BindAttribLocations(PyMOLGlobals * G, char *name){
-  CShaderPrg *I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, name);
-  if (I){
-    glBindAttribLocation(I->id, VERTEX_POS, "a_Vertex");
-    WARNING_IF_GLERROR("a_Vertex");
-    glBindAttribLocation(I->id, VERTEX_NORMAL, "a_Normal");
-    WARNING_IF_GLERROR("a_Normal");
-    glBindAttribLocation(I->id, VERTEX_COLOR, "a_Color");
-    WARNING_IF_GLERROR("a_Color");
-    CShaderPrg_Link(I);
-  }
-}
-
-void CShaderPrg_BindLabelAttribLocations(PyMOLGlobals * G){
-  CShaderPrg *I;
-  WARNING_IF_GLERROR("BindLabelAttribLocations begin");
-  I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, "label");
-  if (I){
-    glBindAttribLocation(I->id, 0, "attr_worldpos");
-    WARNING_IF_GLERROR("attr_worldpos");
-  }
-}
-
-void CShaderPrg_BindCylinderAttribLocations(PyMOLGlobals * G){
-  CShaderPrg *I;
-  WARNING_IF_GLERROR("BindCylinderAttribLocations begin");
-  I = CShaderPrg_Get_CylinderShader_NoSet(G);
-  if (I){
-    glBindAttribLocation(I->id, CYLINDER_ORIGIN, "attr_origin");
-    WARNING_IF_GLERROR("attr_origin");
-    glBindAttribLocation(I->id, CYLINDER_AXIS, "attr_axis");
-    WARNING_IF_GLERROR("attr_axis");
-    glBindAttribLocation(I->id, CYLINDER_COLOR, "attr_color");
-    WARNING_IF_GLERROR("attr_color");
-    glBindAttribLocation(I->id, CYLINDER_COLOR2, "attr_color2");
-    WARNING_IF_GLERROR("attr_color2");
-    CShaderPrg_Link(I);	  
-  }
-}
-void CShaderMgr_Reload_Sphere_Shader(PyMOLGlobals *G){
-  CShaderMgr *I = G->ShaderMgr;
-  char *vs, *fs;
-  int vs_pl, fs_pl;
-  CShaderPrg_Reload_CallComputeColorForLight(G, "sphere");
-  vs_pl = SHADERLEX_LOOKUP(G, "sphere_vs");
-  fs_pl = SHADERLEX_LOOKUP(G, "sphere_fs");
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "sphere", SPHERE_VS_FILENAME, (char*)sphere_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "sphere", SPHERE_FS_FILENAME, (char*)sphere_fs);
-  if (I->shader_replacement_strings[vs_pl])
-    VLAFreeP(I->shader_replacement_strings[vs_pl]);    
-  if (I->shader_replacement_strings[fs_pl])
-    VLAFreeP(I->shader_replacement_strings[fs_pl]);    
-  I->shader_replacement_strings[vs_pl] = vs;
-  I->shader_replacement_strings[fs_pl] = fs;
-  CShaderPrg_Reload(G, "sphere", vs, fs);  
-}
-
-void CShaderMgr_Reload_Indicator_Shader(PyMOLGlobals *G){
-  CShaderMgr *I = G->ShaderMgr;
-  char *vs, *fs;
-  int vs_pl, fs_pl;
-  CShaderPrg_Reload_CallComputeColorForLight(G, "indicator");
-  vs_pl = SHADERLEX_LOOKUP(G, "indicator_vs");
-  fs_pl = SHADERLEX_LOOKUP(G, "indicator_fs");
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "indicator", INDICATOR_VS_FILENAME, (char*)indicator_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "indicator", INDICATOR_FS_FILENAME, (char*)indicator_fs);
-  if (I->shader_replacement_strings[vs_pl])
-    VLAFreeP(I->shader_replacement_strings[vs_pl]);    
-  if (I->shader_replacement_strings[fs_pl])
-    VLAFreeP(I->shader_replacement_strings[fs_pl]);    
-  I->shader_replacement_strings[vs_pl] = vs;
-  I->shader_replacement_strings[fs_pl] = fs;
-  CShaderPrg_Reload(G, "indicator", vs, fs);  
-}
-
-void CShaderMgr_Reload_Default_Shader(PyMOLGlobals *G){
-  CShaderMgr *I = G->ShaderMgr;
-  char *vs, *fs;
-  int vs_pl, fs_pl;
-  CShaderPrg_Reload_CallComputeColorForLight(G, "default");
-  vs_pl = SHADERLEX_LOOKUP(G, "default_vs");
-  fs_pl = SHADERLEX_LOOKUP(G, "default_fs");
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "default", DEFAULT_VS_FILENAME, (char*)default_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "default", DEFAULT_FS_FILENAME, (char*)default_fs);
-  if (I->shader_replacement_strings[vs_pl])
-    VLAFreeP(I->shader_replacement_strings[vs_pl]);    
-  if (I->shader_replacement_strings[fs_pl])
-    VLAFreeP(I->shader_replacement_strings[fs_pl]);    
-  I->shader_replacement_strings[vs_pl] = vs;
-  I->shader_replacement_strings[fs_pl] = fs;
-  if (CShaderPrg_Reload(G, "default", vs, fs))
-      CShaderPrg_BindAttribLocations(G, "default");
-
-  CShaderPrg_Reload_CallComputeColorForLight(G, "defaultscreen");
-  vs_pl = SHADERLEX_LOOKUP(G, "defaultscreen_vs");
-  fs_pl = SHADERLEX_LOOKUP(G, "defaultscreen_fs");
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "defaultscreen", "defaultscreen.vs", (char*)defaultscreen_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "defaultscreen", "defaultscreen.fs", (char*)defaultscreen_fs);
-  if (I->shader_replacement_strings[vs_pl])
-    VLAFreeP(I->shader_replacement_strings[vs_pl]);    
-  if (I->shader_replacement_strings[fs_pl])
-    VLAFreeP(I->shader_replacement_strings[fs_pl]);    
-  I->shader_replacement_strings[vs_pl] = vs;
-  I->shader_replacement_strings[fs_pl] = fs;
-  if (CShaderPrg_Reload(G, "defaultscreen", vs, fs))
-      CShaderPrg_BindAttribLocations(G, "defaultscreen");
-}
-
-void CShaderMgr_Reload_Cylinder_Shader(PyMOLGlobals *G){
-  char *vs, *fs;
-  int vs_pl, fs_pl;
-  CShaderMgr *I = G->ShaderMgr;
-  CShaderPrg_Reload_CallComputeColorForLight(G, "cylinder");
-  vs_pl = SHADERLEX_LOOKUP(G, "cylinder_vs");
-  fs_pl = SHADERLEX_LOOKUP(G, "cylinder_fs");
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "cylinder", "cylinder.vs", (char*)cylinder_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "cylinder", "cylinder.fs", (char*)cylinder_fs);
-  if (I->shader_replacement_strings[vs_pl])
-    VLAFreeP(I->shader_replacement_strings[vs_pl]);    
-  if (I->shader_replacement_strings[fs_pl])
-    VLAFreeP(I->shader_replacement_strings[fs_pl]);    
-  I->shader_replacement_strings[vs_pl] = vs;
-  I->shader_replacement_strings[fs_pl] = fs;
-  CShaderPrg_Reload(G, "cylinder", vs, fs);
-  CShaderPrg_BindCylinderAttribLocations(G);
-}
-
-void CShaderPrg_Update_Shaders_For_Background(PyMOLGlobals * G) {
-  char *vs, *fs;
-  CShaderMgr *I = G->ShaderMgr;
-  CShaderMgr_Reload_Shader_Variables(G);
-  if (!I)
+/*
+ * Print the given message as ShaderMgr-Error, followed by the shader info log.
+ */
+void CShaderPrg::ErrorMsgWithShaderInfoLog(const GLuint sid, const char * msg) {
+  if (!G->Option || G->Option->quiet)
     return;
-  CShaderMgr_Reload_Default_Shader(G);
 
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "bg", "bg.vs", (char*)bg_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "bg", "bg.fs", (char*)bg_fs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "bg_vs")] = vs;
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "bg_fs")] = fs;
-  CShaderPrg_Reload(G, "bg", vs, fs);  
+  GLint infoLogLength = 0;
+  glGetShaderiv(sid, GL_INFO_LOG_LENGTH, &infoLogLength);
+  vector<GLchar> infoLog(infoLogLength);
+  glGetShaderInfoLog(sid, infoLogLength, NULL, infoLog.data());
 
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "label", "label.vs", (char*)label_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "label", "label.fs", (char*)label_fs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_vs")] = vs;
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_fs")] = fs;
-  CShaderPrg_Reload(G, "label", vs, fs);  
-  CShaderPrg_BindLabelAttribLocations(G);  
+  PRINTFB(G, FB_ShaderPrg, FB_Errors) " ShaderPrg-Error: %s; name='%s'\n",
+    msg, name.c_str() ENDFB(G);
 
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "labelscreen", "labelscreen.vs", (char*)labelscreen_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "labelscreen", "labelscreen.fs", (char*)labelscreen_fs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "labelscreen_vs")] = vs;
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "labelscreen_fs")] = fs;
-  CShaderPrg_Reload(G, "labelscreen", vs, fs);
-
-  CShaderMgr_Reload_Sphere_Shader(G);
-  CShaderMgr_Reload_Cylinder_Shader(G);
-
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "volume", "volume.vs", (char*)volume_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "volume", "volume.fs", (char*)volume_fs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "volume_vs")] = vs;
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "volume_fs")] = fs;
-  CShaderPrg_Reload(G, "volume", vs, fs);  
-
-  vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "indicator", "indicator.vs", (char*)indicator_vs);
-  fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "indicator", "indicator.fs", (char*)indicator_fs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "indicator_vs")] = vs;
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "indicator_fs")] = fs;
-  CShaderPrg_Reload(G, "indicator", vs, fs);  
-}
-
-int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f){
-  int status, howLong;
-  CShaderPrg * I = CShaderMgr_GetShaderPrg_NoSet(G->ShaderMgr, name);
-  if (!I){
-    CShaderMgr *SM = G->ShaderMgr;
-    if (SM && SM->ShadersPresent){
-      PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-	" CShaderPrg_Reload: cannot find shader '%s'\n", name ENDFB(G);
-    }
-    return 0;
-  }
-  if(v) {
-    if (I->v)
-      free(I->v);
-    I->v = strdup(v);
-    glShaderSource(I->vid, 1, (const GLchar**) &I->v, NULL);
-    glCompileShader((GLuint) I->vid);
-    glGetShaderiv(I->vid, GL_COMPILE_STATUS, &status);
-    if (!status) {
-      if (G && G->Option && !G->Option->quiet) {
-        char *infoLog;
-        int infoLogLength = 0;
-        glGetShaderiv(I->vid, GL_INFO_LOG_LENGTH, &infoLogLength);
-        PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_Reload-Error: vertex shader compilation failed name='%s'; log follows.\n", I->name ENDFB(G);
-        if (!glGetError() && infoLogLength>0){
-          infoLog = Alloc(char, infoLogLength);
-          glGetShaderInfoLog(I->vid, infoLogLength, &howLong, infoLog);
-          PRINTFB(G, FB_ShaderMgr, FB_Errors)
-            "infoLog=%s\n", infoLog ENDFB(G);
-          FreeP(infoLog);
-        }
-      }
-      return 0;
-    }
-    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-      "CShaderPrg_Reload-Message: vertex shader compiled.\n" ENDFB(G);
-  }
-  if (f){
-    if (I->f)
-      free(I->f);
-    I->f = strdup(f);
-    glShaderSource(I->fid, 1, (const GLchar**) &I->f, NULL);
-    glCompileShader((GLuint) I->fid);
-    glGetShaderiv(I->fid, GL_COMPILE_STATUS, &status);
-    if (!status) {
-      if (G && G->Option && !G->Option->quiet) {
-        char *infoLog;
-        int infoLogLength = 0;
-        glGetShaderiv(I->fid, GL_INFO_LOG_LENGTH, &infoLogLength);
-        PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_Reload-Error: fragment shader compilation failed name='%s'; log follows.\n", I->name ENDFB(G);
-        if (!glGetError() && infoLogLength>0){
-          infoLog = Alloc(char, infoLogLength);
-          glGetShaderInfoLog(I->fid, infoLogLength, &howLong, infoLog);
-          PRINTFB(G, FB_ShaderMgr, FB_Errors)
-            "infoLog=%s\n", infoLog ENDFB(G);
-          FreeP(infoLog);
-        }
-      }
-      return 0;
-    }
-    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-      "CShaderPrg_Reload-Message: vertex shader compiled.\n" ENDFB(G);
-  }
-  if (v && f){
-    // Link the new program 
-    if (!CShaderPrg_Link(I)){
-//        CShaderPrg_Delete(I);
-        return 0;
-    }
-  }
-  I->uniform_set = 0;
-  return 1;
+  PRINTFB(G, FB_ShaderPrg, FB_Errors) " ShaderPrg-Error-InfoLog:\n%s\n",
+    infoLog.data() ENDFB(G);
 }
 
 /* ShaderMgrConfig -- Called from PyMOL.c, configures the global ShaderMgr
@@ -738,22 +679,15 @@ int CShaderPrg_Reload(PyMOLGlobals * G, char *name, char *v, char *f){
  * called from MainInit() for PyMol, and from PyMOL_ConfigureShadersGL() for
  * other programs (i.e., JyMOL, AxPyMOL, etc.).
  */
-void ShaderMgrConfig(PyMOLGlobals * G) {
-  int major, minor;
-  char buf[50];
-  CShaderPrg *defaultShader = NULL, *volumeShader = NULL, *sphereShader = NULL, *defaultScreenShader = NULL,
-    *cylinderShader = NULL, *labelShader = NULL, *labelScreenShader = NULL, *indicatorShader = NULL,
-    *bgShader = NULL, *screenShader = NULL, *rampShader = NULL;
-  int ok = 0;
-  GLenum err; 
-  CShaderMgr *I = G->ShaderMgr;
-  ok = (G && G->HaveGUI); /* && G->ValidContext); */
-
-  if (ok) {
-    err = glewInit();
-  } else {
+void CShaderMgr::Config() {
+  if (!G || !G->HaveGUI) /* && G->ValidContext); */
     return;
-  }
+
+  glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, line_width_range);
+
+#ifndef PURE_OPENGL_ES_2
+  GLenum err = glewInit();
+
   if (GLEW_OK==err) {
     GLint gl_major = 0, gl_minor = 0;
     getGLVersion(G, &gl_major, &gl_minor);
@@ -777,166 +711,116 @@ void ShaderMgrConfig(PyMOLGlobals * G) {
     fprintf(stderr, " GLEW-Error: %s\n", glewGetErrorString(err));
     return;
   }
+#endif
 
-  CShaderMgr_Reload_Shader_Variables(G);
-  /* First try to load configuration from files in $PYMOL_PATH, if they don't exist 
-     load from const char * */
-  //  FeedbackEnable(G, FB_ShaderMgr, FB_Everything);
+  // static preprocessor values
+  preproc_vars["GLEW_VERSION_3_0"] = GLEW_VERSION_3_0 ? 1 : 0;
+  if (TM3_IS_ONEBUF){
+    preproc_vars["ONE_DRAW_BUFFER"] = 1;
+  }
+#ifdef PURE_OPENGL_ES_2
+  preproc_vars["PURE_OPENGL_ES_2"] = 1;
+  preproc_vars["PYMOL_WEBGL"] = 1;
+  preproc_vars["PYMOL_WEBGL_IOS"] = 1;
+#else
+  preproc_vars["gl_VertexID_enabled"] = GLEW_EXT_gpu_shader4;
+#endif
 
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in %s and %s\n", DEFAULT_VS_FILENAME, DEFAULT_FS_FILENAME ENDFB(G);
-  CShaderPrg_Reload_CallComputeColorForLight(G, "default");
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "default_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "default", DEFAULT_VS_FILENAME, (char*)default_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "default_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "default", DEFAULT_FS_FILENAME, (char*)default_fs);
-  defaultShader = CShaderPrg_New(G, "default",
-                                 I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "default_vs")],
-                                 I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "default_fs")]);
-  if (!defaultShader){
-    PRINTFB(G, FB_ShaderMgr, FB_Results)
-      " PyMOLShader_NewFromFile-Warning: default shader files not found, loading from memory.\n" ENDFB(G);
-    defaultShader = CShaderPrg_New(G, "default", default_vs, default_fs);
+  // shaders
+#define make_program(name, ...) programs[name] = new CShaderPrg(G, name, __VA_ARGS__)
+
+  make_program("bg", "bg.vs", "bg.fs");
+  make_program("indicator", "indicator.vs", "indicator.fs");
+  make_program("label", "label.vs", "label.fs");
+
+#ifndef PURE_OPENGL_ES_2
+  make_program("volume", "volume.vs", "volume.fs");
+#endif
+
+  make_program("default", "default.vs", "default.fs");
+  make_program("surface", "surface.vs", "surface.fs");
+
+  make_program("line", "line.vs", "line.fs");
+
+  make_program("screen", "screen.vs", "screen.fs");
+
+  if (GLEW_EXT_geometry_shader4 && GLEW_EXT_gpu_shader4){
+    make_program("connector", "connector.vs", "connector.fs",
+		 "connector.gs", GL_POINTS, GL_TRIANGLE_STRIP, CONNECTOR_GS_NUM_VERTICES);
+  } else {
+    make_program("connector", "connector.vs", "connector.fs");
   }
 
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in %s and %s\n", DEFAULTSCREEN_VS_FILENAME, DEFAULTSCREEN_FS_FILENAME ENDFB(G);
-  CShaderPrg_Reload_CallComputeColorForLight(G, "defaultscreen");
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "defaultscreen_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "defaultscreen", DEFAULTSCREEN_VS_FILENAME, (char*)defaultscreen_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "defaultscreen_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "defaultscreen", DEFAULTSCREEN_FS_FILENAME, (char*)defaultscreen_fs);
-  defaultScreenShader = CShaderPrg_New(G, "defaultscreen", I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "defaultscreen_vs")],
-				       I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "defaultscreen_fs")]);
-  if (!defaultScreenShader){
-    PRINTFB(G, FB_ShaderMgr, FB_Results)
-      " PyMOLShader_NewFromFile-Warning: defaultscreen shader files not found, loading from memory.\n" ENDFB(G);
-    defaultScreenShader = CShaderPrg_New(G, "defaultscreen", defaultscreen_vs, defaultscreen_fs);
+  if (GET_FRAGDEPTH_SUPPORT()) {
+    make_program("cylinder", "cylinder.vs", "cylinder.fs");
+    make_program("sphere", "sphere.vs", "sphere.fs");
+  }  
+
+  make_program("ramp", "ramp.vs", "ramp.fs");
+  programs["ramp"]->uniformLocations[RAMP_OFFSETPT] = "offsetPt";
+
+  make_program("oit", "oit.vs", "oit.fs");
+  make_program("copy", "copy.vs", "copy.fs");
+  make_program("trilines", "trilines.vs", "trilines.fs");
+
+  Reload_Shader_Variables();
+  Reload_CallComputeColorForLight();
+
+  // shaders availability test
+  ok_assert(1, programs["default"]->reload());
+
+#ifndef PURE_OPENGL_ES_2
+  // geometry shaders availability test
+  if (programs["connector"]->reload() && programs["connector"]->gid) {
+    shaders_present |= MASK_SHADERS_PRESENT_GEOMETRY;
+  } else {
+    disableGeometryShaders(G);
+  }
+#else
+  SettingSetGlobal_b(G, cSetting_use_geometry_shaders, 0);
+#endif
+
+#define check_program(name, setting, value) {   \
+    if (!programs[name]->reload()) {            \
+      SettingSetGlobal_i(G, setting, value);    \
+      programs.erase(name);                     \
+    }}                                          \
+  // other shader compilation tests
+  if (GET_FRAGDEPTH_SUPPORT()) {
+  check_program("cylinder", cSetting_render_as_cylinders, 0);
+  check_program("sphere", cSetting_sphere_mode, 0);
   }
 
+#ifndef _PYMOL_NO_AA_SHADERS
+#endif
 
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in label.vs and label.fs\n" ENDFB(G);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "label", "label.vs", (char*)label_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "label", "label.fs", (char*)label_fs);
-  labelShader = CShaderPrg_New(G, "label",
-			       I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_vs")],
-			       I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "label_fs")]);
-  if (labelShader){
-      CShaderPrg_Link(labelShader);
-      CShaderMgr_AddShaderPrg(G->ShaderMgr, labelShader);
-      CShaderPrg_BindLabelAttribLocations(G);
+  // get filename -> shader program dependencies
+  for (auto it = programs.begin(); it != programs.end(); ++it) {
+    RegisterDependantFileNames(it->second);
   }
 
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in labelscreen.vs and labelscreen.fs\n" ENDFB(G);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "labelscreen_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "labelscreen", "labelscreen.vs", (char*)labelscreen_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "labelscreen_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "labelscreen", "labelscreen.fs", (char*)labelscreen_fs);
-  labelScreenShader = CShaderPrg_New(G, "labelscreen",
-				     I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "labelscreen_vs")],
-				     I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "labelscreen_fs")]);
-  if (labelScreenShader){
-      CShaderPrg_Link(labelScreenShader);
-      CShaderMgr_AddShaderPrg(G->ShaderMgr, labelScreenShader);
-  }
+  // make transparency_mode_3 shader derivatives
+  MakeDerivatives("_t", "NO_ORDER_TRANSP");
 
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in screen.vs and screen.fs\n" ENDFB(G);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "screen_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "screen", "screen.vs", (char*)screen_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "screen_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "screen", "screen.fs", (char*)screen_fs);
-  screenShader = CShaderPrg_New(G, "screen",
-				I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "screen_vs")],
-				I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "screen_fs")]);
-  if (screenShader){
-      CShaderPrg_Link(screenShader);
-      CShaderMgr_AddShaderPrg(G->ShaderMgr, screenShader);
-  }
-
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in ramp.vs and ramp.fs\n" ENDFB(G);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "ramp_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "ramp", "ramp.vs", (char*)ramp_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "ramp_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "ramp", "ramp.fs", (char*)ramp_fs);
-  rampShader = CShaderPrg_New(G, "ramp",
-                              I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "ramp_vs")],
-                              I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "ramp_fs")]);
-  if (rampShader){
-      CShaderPrg_Link(rampShader);
-      CShaderMgr_AddShaderPrg(G->ShaderMgr, rampShader);
-  }
-
-
-  {
-    char *vs, *fs;
-    vs = CShaderPrg_ReadFromFile_Or_Use_String(G, "indicator", "indicator.vs", (char*)indicator_vs);
-    fs = CShaderPrg_ReadFromFile_Or_Use_String(G, "indicator", "indicator.fs", (char*)indicator_fs);
-    indicatorShader = CShaderPrg_New(G, "indicator", vs, fs);
-  }
-  if (indicatorShader && defaultShader){
-    CShaderPrg_Link(indicatorShader);
-    CShaderMgr_AddShaderPrg(G->ShaderMgr, indicatorShader);
-    if (indicatorShader){
-      glBindAttribLocation(indicatorShader->id, VERTEX_POS, "a_Vertex");
-      WARNING_IF_GLERROR("a_Vertex");
-      glBindAttribLocation(indicatorShader->id, VERTEX_COLOR, "a_Color");
-      WARNING_IF_GLERROR("a_Color");
-      CShaderPrg_Link(indicatorShader);	
-      CShaderMgr_AddShaderPrg(G->ShaderMgr, indicatorShader);
-    }
-  }
-
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in bg.vs and bg.fs\n" ENDFB(G);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "bg_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "bg", "bg.vs", (char*)bg_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "bg_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "bg", "bg.fs", (char*)bg_fs);
-  bgShader = CShaderPrg_New(G, "bg",
-                            I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "bg_vs")],
-                            I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "bg_fs")]);
-  if (bgShader){
-    CShaderPrg_Link(bgShader);
-    CShaderMgr_AddShaderPrg(G->ShaderMgr, bgShader);
-  }
-
-  CShaderPrg_BindAttribLocations(G, "default");
-  CShaderPrg_BindAttribLocations(G, "defaultscreen");
-
-  ok_assert(1, defaultShader);
-
-  CShaderMgr_AddShaderPrg(G->ShaderMgr, defaultShader);
-  CShaderMgr_AddShaderPrg(G->ShaderMgr, defaultScreenShader);
-
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging) "reading in volume.vs and volume.fs\n" ENDFB(G);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "volume_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "volume", "volume.vs", (char*)volume_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "volume_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "volume", "volume.fs", (char*)volume_fs);
-  volumeShader = CShaderPrg_New(G, "volume",
-                                I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "volume_vs")],
-                                I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "volume_fs")]);
-  ok_assert(1, volumeShader);
-  CShaderMgr_AddShaderPrg(G->ShaderMgr, volumeShader);
-
-  CShaderPrg_Reload_CallComputeColorForLight(G, "sphere");
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "sphere_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "sphere", SPHERE_VS_FILENAME, (char*)sphere_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "sphere_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "sphere", SPHERE_FS_FILENAME, (char*)sphere_fs);
-  sphereShader = CShaderPrg_New(G, "sphere",
-                                I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "sphere_vs")],
-                                I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "sphere_fs")]);
-  ok_assert(1, sphereShader);
-  CShaderMgr_AddShaderPrg(G->ShaderMgr, sphereShader);
-
-  CShaderPrg_Reload_CallComputeColorForLight(G, "cylinder");
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "cylinder_vs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "cylinder", CYLINDER_VS_FILENAME, (char*)cylinder_vs);
-  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "cylinder_fs")] = CShaderPrg_ReadFromFile_Or_Use_String(G, "cylinder", CYLINDER_FS_FILENAME, (char*)cylinder_fs);
-  cylinderShader = CShaderPrg_New(G, "cylinder",
-                                  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "cylinder_vs")],
-                                  I->shader_replacement_strings[SHADERLEX_LOOKUP(G, "cylinder_fs")]);
-  CShaderMgr_AddShaderPrg(G->ShaderMgr, cylinderShader);
-
+#ifndef PURE_OPENGL_ES_2
   /* report GLSL version */
   if (G && G->Option && !G->Option->quiet) {
+    char buf[50];
+    int major, minor;
     getGLSLVersion(G, &major, &minor);
     sprintf(buf, " Detected GLSL version %d.%d.\n", major, minor);
     FeedbackAdd(G, buf);
   }
-
-  G->ShaderMgr->ShadersPresent |= 0x1;
-
-  CShaderPrg_Reload_All_Shaders(G);
-
+#endif
+  shaders_present |= 0x1;
   SettingSetGlobal_b(G, cSetting_use_shaders, 1);
-  I->print_warnings = 0;
 
+  is_configured = true;
   return;
 ok_except1:
   disableShaders(G);
-  G->ShaderMgr->ShadersPresent = 0;
+  G->ShaderMgr->shaders_present = 0;
+  is_configured = true;
 }
 
 /* getGLVersion -- determine user's GL version
@@ -965,6 +849,7 @@ void getGLVersion(PyMOLGlobals * G, int *major, int* minor) {
  * major, rval for major
  * minor, rval for minor
  */
+#ifndef PURE_OPENGL_ES_2
 void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
   int gl_major, gl_minor;
   *major = *minor = 0;
@@ -995,959 +880,297 @@ void getGLSLVersion(PyMOLGlobals * G, int* major, int* minor) {
     }
   }
 }
+#endif
+
+
 
 /* ============================================================================
  * CShaderMgr -- Simple Shader Manager class
  */
-CShaderMgr * CShaderMgr_New(PyMOLGlobals * G)
+CShaderMgr::CShaderMgr(PyMOLGlobals * G_)
 {
-  /* init/alloc the new ShaderMgr, now called 'I' */
-  OOAlloc(G, CShaderMgr);
-
-  if (!G) { /* error out */
-    return NULL;
-  }
-   
-  if (!I) {
-    /* error out */
-    if (G && G->Option && !G->Option->quiet) {
-    PRINTFB(G, FB_ShaderMgr, FB_Errors)
-      " CShaderMgr_New-Error: Failed to create the shader manager.  Shader disabled.\n" ENDFB(G)
-    }
-    return NULL;
-  }
-
-  I->G = G;
-  I->current_shader = 0;
-  DListInit(I->programs, prev, next, CShaderPrg);
-  I->ShadersPresent = 0;
-  I->vbos_to_free = 0;
-  I->number_of_vbos_to_free = 0;
-  I->stereo_flag = 0;
-  I->print_warnings = 1;
-  return I;
-}
-
-void CShaderMgrFree(PyMOLGlobals *G){
-  CShaderMgr_Delete(G->ShaderMgr);
-}
-
-void CShaderMgr_Delete(CShaderMgr * I)
-{
-  CShaderPrg * ptr, *target;
-  if (!I) { /* error out */
-    return;
-  }
-
-  if (I->programs) {
-    ptr = I->programs;
-    while (ptr != I->programs) {
-      target = ptr;
-      ptr = ptr->next;
-      DListRemove(target, prev, next);
-      DListElemFree(target);
-      target=NULL;
-    }
-  }
-  OVLexicon_DEL_AUTO_NULL(I->ShaderLex);
-  OVOneToOne_Del(I->ShaderLexLookup);
-
-  CShaderMgr_Free_Shader_Arrays(I);
-  VLAFreeP(I->shader_replacement_strings);
-  VLAFreeP(I->shader_include_values);
-
-  {
-    int i, sz = VLAGetSize(I->shader_update_when_include_filename);
-    for (i=0; i<sz;i++){
-      if (I->shader_update_when_include_filename[i]){
-	free(I->shader_update_when_include_filename[i]);
-	I->shader_update_when_include_filename[i] = 0;
-	I->shader_update_when_include[i] = 0;
-      }
-    }
-  }
-
-  VLAFreeP(I->shader_update_when_include_filename);
-  VLAFreeP(I->shader_update_when_include);
-  OOFreeP(I);
-}
-
-int CShaderMgr_AddShaderPrg(CShaderMgr * I, CShaderPrg * s)
-{
-  if (!I || !s)
-    return 0;
-
-  DListInsert(I->programs, s, prev, next);
-  return 1;
-}
-
-int CShaderMgr_RemoveShaderPrg(CShaderMgr * I, const char * name)
-{
-  CShaderPrg * p = NULL;
-  DListIterate(I->programs, p, next) 
-    {
-      if (p && strcmp(p->name,name)==0) break;
-    }
-  DListRemove(p, prev, next);
-  return 1;
-}
-
-CShaderPrg * CShaderMgr_GetShaderPrgImpl(CShaderMgr * I, const char * name, short set_current_shader);
-
-CShaderPrg * CShaderMgr_GetShaderPrg_NoSet(CShaderMgr * I, const char * name){
-  return CShaderMgr_GetShaderPrgImpl(I, name, 0);
-}
-
-CShaderPrg * CShaderMgr_GetShaderPrg(CShaderMgr * I, const char * name){
-  return CShaderMgr_GetShaderPrgImpl(I, name, 1);
-}
-
-CShaderPrg * CShaderMgr_GetShaderPrgImpl(CShaderMgr * I, const char * name, short set_current_shader)
-{
-  CShaderPrg * p = NULL, *ret = NULL;
-  DListIterate(I->programs, p, next) 
-    {
-      if (p && strcmp(p->name,name)==0){
-	ret = p;
-	break;
-      }
-    }
-  if (set_current_shader){
-    I->current_shader = ret;
-  }
-  return ret;
-}
-
-int CShaderMgr_ShaderPrgExists(CShaderMgr * I, const char * name){
-  CShaderPrg * p = NULL, *ret = NULL;
-  DListIterate(I->programs, p, next) 
-    {
-      if (p && strcmp(p->name,name)==0){
-	ret = p;
-	break;
-      }
-    }
-  return ret!=NULL;
-}
-
-int CShaderMgr_ShadersPresent(CShaderMgr * I)
-{
-  return I->ShadersPresent;
-}
-
-char * CShaderMgr_ReadShaderFromDisk(PyMOLGlobals * G, const char * fileName) {
-  char* buffer = NULL, *pymol_path, *shader_path, *fullFile;
-
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-    "CShaderMgr_ReadShaderFromDisk: fileName='%s'\n", fileName
-    ENDFB(G);
-  /* check the input */
-  if (!strlen(fileName)) {
-    PRINTFB(G, FB_ShaderMgr, FB_Errors)
-      " PyMOLShader_NewFromFile-Error: empty filename, cannot create shader. " ENDFB(G);
-    return NULL;
-  }
-  
-  pymol_path = getenv("PYMOL_PATH");
-  if (!pymol_path){
-    PRINTFB(G, FB_ShaderMgr, FB_Warnings)
-      " PyMOLShader_NewFromFile-Warning: PYMOL_PATH not set, cannot read shader config files from disk\n" ENDFB(G);
-    return NULL;
-  }
-  /* make this a setting */
-  shader_path = "/data/shaders/";
-  fullFile = Alloc(char, strlen(pymol_path) + strlen(shader_path) + strlen(fileName) + 1);
-  fullFile = strcpy(fullFile, pymol_path);
-  fullFile = strcat(fullFile, shader_path);
-  fullFile = strcat(fullFile, fileName);
-
-  buffer = FileGetContents(fullFile, NULL);
-
-  if (!buffer) {
-    PRINTFB(G, FB_ShaderMgr, FB_Errors)
-      " PyMOLShader_NewFromFile-Error: Unable to open file '%s' PYMOL_PATH='%s'\n", fullFile, pymol_path ENDFB(G);
-    return NULL;
-  } else {
-    PRINTFB(G, FB_ShaderMgr, FB_Blather)
-      " PyMOLShader_NewFromFile: Loading shader from '%s'.\n", fullFile ENDFB(G);
-  }
-  
-  free(fullFile);
-  return buffer;
-}
-
-
-#ifdef _PYMOL_ARB_SHADERS
-static GLboolean ProgramStringIsNative(PyMOLGlobals * G,
-                                       GLenum target, GLenum format,
-                                       GLsizei len, const GLvoid * string)
-{
-  GLint errorPos, isNative;
-  glProgramStringARB(target, format, len, string);
-  glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
-  glGetProgramivARB(target, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
-  if((errorPos == -1) && (isNative == 1))
-    return GL_TRUE;
-  else if(errorPos >= 0) {
-    if(Feedback(G, FB_OpenGL, FB_Errors)) {
-      printf("OpenGL-Error: ARB shader error at char %d\n---->%s\n", errorPos,
-             ((char *) string) + errorPos);
-    }
-  }
-  return GL_FALSE;
-}
-
-CShaderPrg * CShaderPrg_NewARB(PyMOLGlobals * G, const char * name, const char * v, const char * f)
-{
-  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef WIN32
-  if(!(glGenProgramsARB && glBindProgramARB &&
-       glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB)) {
-    glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
-    glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
-    glDeleteProgramsARB =
-      (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
-    glProgramStringARB =
-      (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
-    glProgramEnvParameter4fARB =
-      (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
-    glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
-  }
-
-  if(glGenProgramsARB && glBindProgramARB &&
-     glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB)
-#endif
-  {
-    /* END PROPRIETARY CODE SEGMENT */
-
-    int ok = true;
-    GLuint programs[2];
-    glGenProgramsARB(2, programs);
-    
-    /* load the vertex program */
-    glBindProgramARB(GL_VERTEX_PROGRAM_ARB, programs[0]);
-    
-    ok = ok && (ProgramStringIsNative(G, GL_VERTEX_PROGRAM_ARB,
-				      GL_PROGRAM_FORMAT_ASCII_ARB, strlen(v), v));
-    
-    if(Feedback(G, FB_OpenGL, FB_Debugging))
-      PyMOLCheckOpenGLErr("loading vertex program");
-    
-    /* load the fragment program */
-    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, programs[1]);
-    
-    ok = ok && (ProgramStringIsNative(G, GL_FRAGMENT_PROGRAM_ARB,
-				      GL_PROGRAM_FORMAT_ASCII_ARB, strlen(f), f));
-    
-    if(Feedback(G, FB_OpenGL, FB_Debugging))
-      PyMOLCheckOpenGLErr("loading fragment program");
-    if(ok) {
-      CShaderPrg * I = NULL;
-      
-      DListElemAlloc(G, I, CShaderPrg);
-      DListElemInit(I, prev, next);
-
-      I->G = G;
-      I->name = strdup(name);
-
-      I->vid = programs[0];
-      I->fid = programs[1];
-
-      CShaderMgr_AddShaderPrg(G->ShaderMgr, I);
-
-      return I;
-    } else {
-      glDeleteProgramsARB(2, programs);
-    }
-  }
-  return NULL;
-}
-
-int CShaderPrg_DisableARB(CShaderPrg * p) {
-  if (p)
-    p->G->ShaderMgr->current_shader = 0;
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
-  glDisable(GL_VERTEX_PROGRAM_ARB);
-  return 1;
-}
+  G = G_;
+  current_shader = 0;
+  shaders_present = 0;
+  stereo_flag = 0;
+  stereo_blend = 0;
+#ifdef _PYMOL_LIB
+  print_warnings = 0;
+#else
+  print_warnings = 1;
 #endif
 
-/* ============================================================================
- * CShaderPrg -- Simple Shader class
- */
-CShaderPrg * CShaderPrg_New(PyMOLGlobals * G, const char * name, const char * v, const char * f)
-{
-  int status, howLong;
-  char infoLog[MAX_LOG_LEN];
-  /* if v == f == NULL, read 'name.vs' and 'name.fs' from disk */
-  CShaderPrg * I = NULL;
-  DListElemCalloc(G, I, CShaderPrg);
-  DListElemInit(I, prev, next);
+  lightingTexture = 0;
+  is_picking = 0;
+  reload_bits = RELOAD_ALL_SHADERS;
 
-  I->G = G;
-  I->name = strdup(name);
-
-  I->id = glCreateProgram();
-  PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-    "Created program with id: %d\n", I->id ENDFB(G);
-  ok_assert(1, I->id);
-
-  if (v){
-    /* VERTEX shader setup */
-    I->v = strdup(v);
-    I->vid = glCreateShader(GL_VERTEX_SHADER);
-    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-      "Created vertex shader with id: %d\n", I->vid ENDFB(G);
-    glShaderSource(I->vid, 1, (const GLchar**) &I->v, NULL);
-    glCompileShader((GLuint) I->vid);
-    /* verify compilation */
-    glGetShaderiv(I->vid, GL_COMPILE_STATUS, &status);
-    if (!status) {
-      if (G && G->Option && !G->Option->quiet) {
-	PRINTFB(G, FB_ShaderMgr, FB_Errors) " CShaderPrg_New-Error: vertex shader compilation failed name='%s'; log follows.\n", I->name ENDFB(G);
-	glGetShaderInfoLog(I->vid, MAX_LOG_LEN-1, &howLong, infoLog);
-	PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	  "infoLog=%s\n", infoLog ENDFB(G);
-	PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	  "shader: %s\n", I->v ENDFB(G);
-      }
-      ok_raise(1);
-    }
-    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-      "CShaderPrg_New-Message: vertex shader compiled.\n" ENDFB(G);
-    glAttachShader(I->id, I->vid);
-  }
-
-  if (f){
-    /* FRAGMENT source setup */
-    /* CShaderPrg_InitShader(I, GL_FRAGMENT_SHADER); */
-    I->f = strdup(f);
-    I->fid = glCreateShader(GL_FRAGMENT_SHADER);
-    PRINTFB(G, FB_ShaderMgr, FB_Debugging)
-      "Created fragment shader with id: %d\n", I->fid 
-      ENDFB(G);
-    
-    glShaderSource(I->fid, 1, (const GLchar **) &I->f, NULL);
-    glCompileShader((GLuint) I->fid);
-    /* verify compilation */
-    glGetShaderiv(I->fid, GL_COMPILE_STATUS, &status);
-    if (!status) {
-      if (G && G->Option && !G->Option->quiet) {
-	PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	  " CShaderPrg-Error: fragment shader compilation failed name='%s'; log follows.\n", I->name
-	  ENDFB(G);
-	glGetShaderInfoLog(I->fid, MAX_LOG_LEN-1, &howLong, infoLog);
-	PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	  "infoLog=%s\n", infoLog ENDFB(G);
-      }
-      ok_raise(1);
-    }    
-    glAttachShader(I->id, I->fid);
-  }
-
-  if (v && f){
-    /* Link the new program */
-    ok_assert(1, CShaderPrg_Link(I));
-  }
-  I->uniform_set = 0;
-
-  return I;
-ok_except1:
-  CShaderPrg_Delete(I);
-  return NULL;
+#ifndef _WEBGL
+  vbos_to_free.reserve(256);
+#endif
 }
 
+CShaderMgr::~CShaderMgr() {
+  for (auto it = programs.begin(); it != programs.end(); ++it) {
+    delete it->second;
+  }
+  programs.clear();
 
-CShaderPrg * CShaderPrg_NewFromFile(PyMOLGlobals * G, const char * name, const char * vFile, const char * fFile)
-{
-  char *vFileStr = NULL, *fFileStr = NULL;
-  if (vFile){
-    vFileStr = CShaderMgr_ReadShaderFromDisk(G, vFile);
-    if (!vFileStr){
-      return (NULL);
-    }
-  }
-  if (fFile){
-    fFileStr = CShaderMgr_ReadShaderFromDisk(G, fFile);
-    if (!fFileStr){
-      return (NULL);
-    }
-  }
-  return CShaderPrg_New(G, name, 
-			vFileStr, 
-			fFileStr);
+  shader_cache_processed.clear();
+
+  for (int i = 0; i < 3; ++i)
+    freeGPUBuffer(offscreen_rt[i]);
+
+  for (int i = 0; i < 2; ++i)
+    freeGPUBuffer(oit_rt[i]);
+
+  freeGPUBuffer(areatex);
+  freeGPUBuffer(searchtex);
+
+  FreeAllVBOs();
 }
 
-void CShaderPrg_Delete(CShaderPrg * I)
-{
-  if (I->vid)
-    glDeleteShader(I->vid);
-  if (I->fid)
-    glDeleteShader(I->fid);
-  if (I->id)
-    glDeleteProgram(I->id);
-  OOFreeP(I->v);
-  OOFreeP(I->f);
-  OOFreeP(I->name);
-  I->next = I->prev = NULL;
-  DListElemFree(I);
-}
-
-
-int CShaderPrg_Enable(CShaderPrg * I)
-{
-  int howLong, ok;
-  PyMOLGlobals * G = I->G;
-
-  if (!I) return 0;
-
-  /* linked? */
-  ok = CShaderPrg_IsLinked(I);
-  /* no, so give it a shot */
-  if (!ok) {
-    ok = CShaderPrg_Link(I);    
-  }
-  /* did that work? */
-  if (!ok) {
-    if (G && G->Option && !G->Option->quiet) {
-      int infoLogLength = 0;
-      glGetProgramiv(I->id, GL_INFO_LOG_LENGTH, &infoLogLength);
-      PRINTFB(G, FB_ShaderMgr, FB_Errors)
-	"CShaderPrg_Enable-Error: Cannot enable the shader program; linking failed.  Shaders disabled.  Log follows.\n"
-	ENDFB(G);
-      if (!glGetError() && infoLogLength>0){
-        char *infoLog = Alloc(char, infoLogLength);
-        glGetProgramInfoLog(I->id, infoLogLength, &howLong, infoLog);
-        PRINTFB(G, FB_ShaderMgr, FB_Errors)
-          "%s\n", infoLog
-          ENDFB(G);
-        FreeP(infoLog);
-      }
-    }
+int CShaderMgr::AddShaderPrg(CShaderPrg * s) {
+  if (!s)
     return 0;
+  const string& name = s->name;
+  if (programs.find(name)!=programs.end()){
+    delete programs[name];
   }
-  /* if so, use the program */
-  glUseProgram(I->id);
+  programs[name] = s;
   return 1;
 }
 
-int CShaderPrg_Disable(CShaderPrg * p)
-{
-  glUseProgram(0);
-  if (p)
-    p->G->ShaderMgr->current_shader = 0;
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glActiveTexture(GL_TEXTURE0);
-  return 1;
-}
-
- int CShaderPrg_IsLinked(CShaderPrg * I )
- {
-   int status;
-   glGetProgramiv(I->id, GL_LINK_STATUS, &status);
-   return status==GL_TRUE;
- }
-
-int CShaderPrg_Link(CShaderPrg * I)
-{
-  PyMOLGlobals * G = I->G;
-  int howLong;
-
-  glLinkProgram(I->id);
-  
-  if (!CShaderPrg_IsLinked(I)) {
-    if (G && G->Option && !G->Option->quiet) {
-      GLint maxVarFloats;
-      int infoLogLength = 0;
-
-      glGetIntegerv(GL_MAX_VARYING_FLOATS, &maxVarFloats);
-      PRINTFB(G, FB_ShaderMgr, FB_Errors)
-        " CShaderPrg_Link-Error: Shader program failed to link name='%s'; GL_MAX_VARYING_FLOATS=%d log follows.\n", I->name, maxVarFloats
-        ENDFB(G);
-      glGetProgramiv(I->id, GL_INFO_LOG_LENGTH, &infoLogLength);
-      if (!glGetError() && infoLogLength>0){
-        char *infoLog = Alloc(char, infoLogLength);
-        glGetProgramInfoLog(I->id, infoLogLength, &howLong, infoLog);
-        PRINTFB(G, FB_ShaderMgr, FB_Errors)
-          "%s\n", infoLog
-          ENDFB(G);
-        FreeP(infoLog);
-      }
-    }
-    return 0;
-  }
-  return 1;      
-}
-
-
-/* accessors/mutators/uniform setters */
-int CShaderPrg_Set1i(CShaderPrg * p, const char * name, int i)
-{
-  if (p && p->id) {
-    GLint loc = glGetUniformLocation(p->id, name);
-    if (loc < 0)
-      return 0;
-    glUniform1i(loc, i);
+int CShaderMgr::RemoveShaderPrg(const string& name) {
+  if (programs.find(name) != programs.end()){
+    delete programs[name];
   }
   return 1;
-}
-
-int CShaderPrg_Set3f(CShaderPrg * p, const char * name, float f1, float f2, float f3)
-{
-  if (p && p->id) {
-    GLint loc = glGetUniformLocation(p->id, name);
-    if (loc < 0)
-      return 0;
-    glUniform3f(loc, f1, f2, f3);
-  }
-  return 1;
-}
-
-int CShaderPrg_Set2f(CShaderPrg * p, const char * name, float f1, float f2)
-{
-  if (p && p->id) {
-    GLint loc = glGetUniformLocation(p->id, name);
-    if (loc < 0)
-      return 0;
-    glUniform2f(loc, f1, f2);
-  }
-  return 1;
-}
-
-int CShaderPrg_SetMat3f_Impl(CShaderPrg * p, const char * name, const GLfloat* m, GLboolean transpose) {
-  if (p && p->id) {
-    GLint loc = glGetUniformLocation(p->id, name);
-    if (loc < 0)
-      return 0;
-      glUniformMatrix3fv(loc, 1, transpose, m);
-  }
-  return 1;
-}
-
-int CShaderPrg_SetMat4f_Impl(CShaderPrg * p, const char * name, GLfloat* m, GLboolean transpose) {
-  if (p && p->id) {
-    GLint loc = glGetUniformLocation(p->id, name);
-    if (loc < 0)
-      return 0;
-    glUniformMatrix4fv(loc, 1, transpose, m);
-  }
-  return 1;
-}
-
-int CShaderPrg_SetMat3f(CShaderPrg * p, const char * name, const GLfloat * m){
-  return (CShaderPrg_SetMat3f_Impl(p, name, m, GL_TRUE));
-}
-
-int CShaderPrg_SetMat4f(CShaderPrg * p, const char * name, GLfloat * m){
-  return (CShaderPrg_SetMat4f_Impl(p, name, m, GL_TRUE));
 }
 
 /*
-int CShaderPrg_SetTexture2D(CShaderPrg * p, const char * name, GLuint i){
-  if (p && p->id) {
-    GLint loc = glGetUniformLocation(p->id, name);
-    if (loc < 0)
-      return 0;
-    glUniform1i(loc, 1, i);
+ * Lookup a shader program by name and set it as the `current_shader` of the
+ * shader manager. If `pass` is provided and is less than zero, and we are
+ * in transparency_mode 3, then look up the NO_ORDER_TRANSP derivative.h
+ */
+CShaderPrg * CShaderMgr::GetShaderPrg(std::string name, short set_current_shader, short pass) {
+  if (pass < 0 && SettingGetGlobal_i(G, cSetting_transparency_mode) == 3) {
+    name += "_t";
   }
-  return 1;
-}
-*/
-int CShaderPrg_SetMat3fc(CShaderPrg * p, const char * name, GLfloat * m){
-  return (CShaderPrg_SetMat3f_Impl(p, name, m, GL_FALSE));
-}
 
-int CShaderPrg_SetMat4fc(CShaderPrg * p, const char * name, GLfloat * m){
-  return (CShaderPrg_SetMat4f_Impl(p, name, m, GL_FALSE));
-}
+  auto it = programs.find(name);
+  if (it == programs.end())
+    return NULL;
 
-int CShaderPrg_Set4fv(CShaderPrg * p, const char * name, float *f){
-  return (CShaderPrg_Set4f(p, name, f[0], f[1], f[2], f[3]));
-}
-int CShaderPrg_Set3fv(CShaderPrg * p, const char * name, float *f){
-  return (CShaderPrg_Set3f(p, name, f[0], f[1], f[2]));
+  if (set_current_shader)
+    current_shader = it->second;
+
+  return it->second;
 }
 
-int CShaderPrg_Set4f(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4)
-{
-  if (p && p->id) {
-    GLint loc = glGetUniformLocation(p->id, name);
-    if (loc < 0)
-      return 0;
-    glUniform4f(loc, f1, f2, f3, f4);
-  }
-  return 1;
+int CShaderMgr::ShaderPrgExists(const char * name){
+  return (programs.find(name) != programs.end());
 }
 
-int CShaderPrg_Set1f(CShaderPrg * p, const char * name, float f)
-{
-  if (p && p->id) {
-    GLint loc = glGetUniformLocation(p->id, name);
-    if (loc < 0)
-      return 0;
-    glUniform1f(loc, f);
-  }
-  return 1;
+int CShaderMgr::ShadersPresent() {
+  return shaders_present;
 }
 
-int CShaderPrg_GetAttribLocation(CShaderPrg * p, const char * name)
-{
-  GLint loc = -1;
-
-  if (p && p->id) {
-    loc = glGetAttribLocation(p->id, name);
-    if (loc < 0)
-      return -1;
-  }
-  return loc;
+int CShaderMgr::GeometryShadersPresent() {
+  return shaders_present & MASK_SHADERS_PRESENT_GEOMETRY;
 }
 
-void CShaderPrg_SetAttrib4fLocation(CShaderPrg * p, const char * name, float f1, float f2, float f3, float f4){
-  if (p){
-    int attr = CShaderPrg_GetAttribLocation(p, name);
-    if (attr>=0){
-      glVertexAttrib4f(attr, f1, f2, f3, f4);
-    }
-  }
+/*
+ * glDeleteBuffers for vbos_to_free
+ */
+void CShaderMgr::FreeAllVBOs() {
+#ifndef _WEBGL
+  freeAllGPUBuffers();
+
+  LOCK_GUARD_MUTEX(lock, vbos_to_free_mutex);
+
+  if (vbos_to_free.empty())
+    return;
+
+  glDeleteBuffers(vbos_to_free.size(), &vbos_to_free[0]);
+
+  vbos_to_free.clear();
+#endif
 }
 
-void CShaderPrg_SetAttrib1fLocation(CShaderPrg * p, const char * name, float f1){
-  if (p){
-    int attr = CShaderPrg_GetAttribLocation(p, name);
-    if (attr>=0){
-      glVertexAttrib1f(attr, f1);
-    }
-  }
-}
-
-void CShaderMgr_FreeAllVBOs(CShaderMgr * I){
-  GLuint *vboids = I->vbos_to_free, nvbos = I->number_of_vbos_to_free;
-  I->vbos_to_free = 0;
-  I->number_of_vbos_to_free = 0;
-  if (I && vboids){
-    GLuint i, nvbo=0 ;
-    for (i=0; i<nvbos; i++){
-      if (glIsBuffer(vboids[i])){
-	vboids[nvbo++] = vboids[i];
-      } else {
-	PRINTFB(I->G, FB_ShaderMgr, FB_Warnings) "WARNING: CShaderMgr_FreeAllVBOs() buffer is not a VBO i=%d vboids[i]=%d\n", i, vboids[i] ENDFB(I->G);
-      }
-    }
-    if (nvbo){
-      glDeleteBuffers(nvbo, vboids);
-    }
-    VLAFree(vboids);
-  }
-}
-
-#define STEP_FOR_BUF 100
-
-void CShaderMgr_AddVBOsToFree(CShaderMgr * I, GLuint *vboid, int nvbos){
+void CShaderMgr::AddVBOsToFree(GLuint *vboid, int nvbos){
   int i;
   for (i=0; i<nvbos; i++){
     if (vboid[i]>0)
-        CShaderMgr_AddVBOToFree(I, vboid[i]);
+        AddVBOToFree(vboid[i]);
   }
 }
 
-void CShaderMgr_AddVBOToFree(CShaderMgr * I, GLuint vboid){
-  if (I && I->vbos_to_free){
-    int nvbostofree = I->number_of_vbos_to_free++;
-    int exp = STEP_FOR_BUF*(1+((nvbostofree+1)/STEP_FOR_BUF));
-    VLACheck(I->vbos_to_free, GLuint, exp);
-    I->vbos_to_free[nvbostofree] = vboid;
+/*
+ * thread-safe deferred glDeleteBuffers(1, &vboid)
+ */
+void CShaderMgr::AddVBOToFree(GLuint vboid){
+#ifdef _WEBGL // No threads, immediately delete
+  if (glIsBuffer(vboid)) {
+    glDeleteBuffers(1, &vboid);
   } else {
-    I->vbos_to_free = VLAlloc(GLuint, STEP_FOR_BUF);
-    I->vbos_to_free[0] = vboid;
-    I->number_of_vbos_to_free = 1;
+    PRINTFB(G, FB_ShaderMgr, FB_Warnings) "WARNING: CShaderMgr_AddVBOToFree() buffer is not a VBO %d", vboid ENDFB(G);
   }
+#else
+  LOCK_GUARD_MUTEX(lock, vbos_to_free_mutex);
+  vbos_to_free.push_back(vboid);
+#endif
 }
 
-void CShaderPrg_Set_Specular_Values(PyMOLGlobals * G, CShaderPrg * shaderPrg){
-  float spec_value = SettingGetGlobal_f(G, cSetting_specular);
-  float settingSpecReflect, settingSpecDirect, settingSpecDirectPower, settingSpecPower;
-
-  settingSpecPower = SettingGetGlobal_f(G, cSetting_spec_power);
-
-  if(settingSpecPower < 0.0F) {
-    settingSpecPower = SettingGetGlobal_f(G, cSetting_shininess);
-  }
-
-  CShaderPrg_Set1f(shaderPrg, "shininess", settingSpecPower);
-
-  if(spec_value == 1.0F)
-    spec_value = SettingGetGlobal_f(G, cSetting_specular_intensity);
-
-  settingSpecReflect = SettingGetGlobal_f(G, cSetting_spec_reflect);
-  settingSpecReflect = SceneGetSpecularValue(G, settingSpecReflect, 10);
-  settingSpecDirect = SettingGetGlobal_f(G, cSetting_spec_direct);
-  settingSpecDirectPower = SettingGetGlobal_f(G, cSetting_spec_direct_power);
-
-  if(settingSpecReflect < 0.0F)
-    settingSpecReflect = spec_value;
-  if(settingSpecDirect < 0.0F)
-    settingSpecDirect = spec_value;
-  if(settingSpecDirectPower < 0.0F)
-    settingSpecDirectPower = settingSpecPower;
-
-
-  if(settingSpecReflect > 1.0F)
-    settingSpecReflect = 1.0F;
-  if(SettingGetGlobal_f(G, cSetting_specular) < R_SMALL4) {
-    settingSpecReflect = 0.0F;
-  }
-  CShaderPrg_Set1f(shaderPrg, "spec_value_0", settingSpecDirect);
-  CShaderPrg_Set1f(shaderPrg, "shininess_0", settingSpecDirectPower);
-  CShaderPrg_Set1f(shaderPrg, "spec_value", settingSpecReflect);
-}
-
-void CShaderPrg_Set_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shaderPrg, int mode) {
-  extern float anaglyphR_constants[6][9];
-  extern float anaglyphL_constants[6][9];
-  /** Coefficients from: http://3dtv.at/Knowhow/AnaglyphComparison_en.aspx */
-  /** anaglyph[R|L]_constants are found in Scene.c b/c of ray tracing */
-  CShaderPrg_SetMat3f
-      (shaderPrg, "matL", G->ShaderMgr->stereo_flag < 0 ?
-                          anaglyphL_constants[mode] :
-                          anaglyphR_constants[mode]);
-  CShaderPrg_Set1f(shaderPrg, "gamma", SettingGetGlobal_f(G, cSetting_gamma));
-}
-
-void CShaderPrg_Set_Stereo_And_AnaglyphMode(PyMOLGlobals * G, CShaderPrg * shaderPrg) {
-  int stereo, stereo_mode;
-
-  stereo = SettingGetGlobal_i(G, cSetting_stereo);
-  stereo_mode = SettingGetGlobal_i(G, cSetting_stereo_mode);
-
-  if (stereo && stereo_mode==cStereo_anaglyph){
-    CShaderPrg_Set_AnaglyphMode(G, shaderPrg, SettingGetGlobal_i(G, cSetting_anaglyph_mode));
-  } else {
-    CShaderPrg_SetMat3f(shaderPrg, "matL", (GLfloat*)mat3identity);
-    CShaderPrg_Set1f(shaderPrg, "gamma", 1.0);
-  }
-}
-
-int CShaderPrg_SetLightingEnabled(CShaderPrg *shaderPrg, int lighting_enabled){
-  return CShaderPrg_Set1i(shaderPrg, "lighting_enabled", lighting_enabled); 
-}
-
-static
-CShaderPrg *CShaderPrg_Enable_DefaultShaderImpl(PyMOLGlobals * G, CShaderPrg * shaderPrg,
+CShaderPrg *CShaderMgr::Enable_DefaultShaderWithSettings(
     const CSetting *set1,
-    const CSetting *set2);
-
-CShaderPrg *CShaderPrg_Enable_DefaultScreenShader(PyMOLGlobals * G){
-  CShaderPrg * shaderPrg = CShaderPrg_Get_DefaultScreenShader(G);
-  return CShaderPrg_Enable_DefaultShaderImpl(G, shaderPrg, NULL, NULL);
+    const CSetting *set2, int pass) {
+  CShaderPrg * shaderPrg = Get_DefaultShader(pass);
+  return Setup_DefaultShader(shaderPrg, set1, set2);
 }
 
-CShaderPrg *CShaderPrg_Enable_DefaultShaderWithSettings(PyMOLGlobals * G,
-    const CSetting *set1,
-    const CSetting *set2){
-  CShaderPrg * shaderPrg = CShaderPrg_Get_DefaultShader(G);
-  return CShaderPrg_Enable_DefaultShaderImpl(G, shaderPrg, set1, set2);
+CShaderPrg *CShaderMgr::Enable_DefaultShader(int pass){
+  CShaderPrg * shaderPrg = Get_DefaultShader(pass);
+  return Setup_DefaultShader(shaderPrg, NULL, NULL);
 }
 
-CShaderPrg *CShaderPrg_Enable_DefaultShader(PyMOLGlobals * G){
-  CShaderPrg * shaderPrg = CShaderPrg_Get_DefaultShader(G);
-  return CShaderPrg_Enable_DefaultShaderImpl(G, shaderPrg, NULL, NULL);
+CShaderPrg *CShaderMgr::Enable_LineShader(int pass){
+  CShaderPrg * shaderPrg = Get_LineShader(pass);
+  return Setup_DefaultShader(shaderPrg, NULL, NULL);
 }
 
-static
-CShaderPrg *CShaderPrg_Enable_DefaultShaderImpl(PyMOLGlobals * G, CShaderPrg * shaderPrg,
-    const CSetting *set1,
-    const CSetting *set2){
-  float fog_enabled, *fog_color_top, *fog_color_bottom;
-  int bg_gradient;
-  if (!shaderPrg){
-    G->ShaderMgr->current_shader = NULL; 
-    return shaderPrg;
-  }
-  CShaderPrg_Enable(shaderPrg);
-  fog_enabled = get_fog_enabled(G) ? 1.0 : 0.0;
-  bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);
-  if (bg_gradient){
-    fog_color_top = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top));
-    fog_color_bottom = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom));
-  } else {
-    fog_color_top = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
-    fog_color_bottom = fog_color_top;
-  }
-
-  CShaderPrg_SetFogUniforms(G, shaderPrg);
-
-
-  glActiveTexture(GL_TEXTURE4);
-  glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
-  if (!(shaderPrg->uniform_set & 8)){
-    CShaderPrg_Set1i(shaderPrg, "bgTextureMap", 4);
-    shaderPrg->uniform_set |= 8;
-  }
-
-  CShaderPrg_Set_Stereo_And_AnaglyphMode(G, shaderPrg);
-
-  CShaderPrg_Set1i(shaderPrg, "bg_gradient", bg_gradient);
-  CShaderPrg_Set3f(shaderPrg, "fog_color_top", fog_color_top[0], fog_color_top[1], fog_color_top[2]);
-  CShaderPrg_Set3f(shaderPrg, "fog_color_bottom", fog_color_bottom[0], fog_color_bottom[1], fog_color_bottom[2]);
-  CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
-  
-  CShaderPrg_SetLightingEnabled(shaderPrg, 1); // lighting on by default
-  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLightingSettings(G, set1, set2));
-  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGetGlobal_i(G, cSetting_light_count));
-  CShaderPrg_Set1f(shaderPrg, "ambient_occlusion_scale", 0.f);
-  CShaderPrg_Set1i(shaderPrg, "accessibility_mode", SettingGetGlobal_i(G, cSetting_ambient_occlusion_mode) / 4);
-  CShaderPrg_Set1f(shaderPrg, "accessibility_mode_on", SettingGetGlobal_i(G, cSetting_ambient_occlusion_mode) ? 1.f : 0.f);
-  {
-    int interior_color = SettingGet_i(G, set1, set2, cSetting_ray_interior_color);
-    float *color, inter[] = { 0.f, 0.f, 0.f }, threshold = 0.f;
-    if (interior_color < 0){
-      threshold = .22f;  // this is hardcoded for now, need to figure out exactly what Ray.c does
-                         // to cull the backfacing polygons
-    }
-    CShaderPrg_Set1f(shaderPrg, "interior_color_threshold", threshold);
-    if (interior_color < 0){
-      color = inter;
-    } else {
-      ColorGetEncoded(G, interior_color, inter);
-      color = inter;
-    }
-    CShaderPrg_Set4f(shaderPrg, "interior_color", color[0], color[1], color[2], 1.f);
-  }
-  CShaderPrg_Set1i(shaderPrg, "use_interior_color_threshold", 0);
-
-  CShaderPrg_Set_Specular_Values(G, shaderPrg);
-  return (shaderPrg);
+CShaderPrg *CShaderMgr::Enable_SurfaceShader(int pass){
+  CShaderPrg * shaderPrg = Get_SurfaceShader(pass);
+  return Setup_DefaultShader(shaderPrg, NULL, NULL);
 }
-CShaderPrg *CShaderPrg_Enable_CylinderShader(PyMOLGlobals * G){
-  int fog_enabled, bg_gradient;
-  float *fog_color_top, *fog_color_bottom;
-  int ortho;
-  int width, height;
-  CShaderPrg *shaderPrg;
-  float *m;
 
-  SceneGetWidthHeight(G, &width, &height);
-  m = SceneGetMatrix(G);
-  shaderPrg = CShaderPrg_Get_CylinderShader(G);
+CShaderPrg *CShaderMgr::Enable_ConnectorShader(int pass){
+  CShaderPrg * shaderPrg = Get_ConnectorShader(pass);
   if (!shaderPrg)
-      return NULL;
-  CShaderPrg_Enable(shaderPrg);
-  CShaderPrg_Set1f(shaderPrg, "uni_radius", 0.f);
-  fog_enabled = get_fog_enabled(G) ? 1.0 : 0.0;
-  bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);
-  if (bg_gradient){
-    fog_color_top = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_top));
-    fog_color_bottom = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb_bottom));
-  } else {
-    fog_color_top = ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb));
-    fog_color_bottom = fog_color_top;
-  }
-
-  CShaderPrg_Set_Stereo_And_AnaglyphMode(G, shaderPrg);
-
-  CShaderPrg_Set1i(shaderPrg, "bg_gradient", bg_gradient);
-  CShaderPrg_Set3f(shaderPrg, "fog_color_top", fog_color_top[0], fog_color_top[1], fog_color_top[2]);
-  CShaderPrg_Set3f(shaderPrg, "fog_color_bottom", fog_color_bottom[0], fog_color_bottom[1], fog_color_bottom[2]);
-  CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
-  CShaderPrg_Set1f(shaderPrg, "inv_height", 1.0/height);
-  ortho = SettingGetGlobal_b(G, cSetting_ortho);
-  CShaderPrg_Set1f(shaderPrg, "ortho", ortho ? 1.0 : 0.0);
-  CShaderPrg_Set1f(shaderPrg, "no_flat_caps", 1.0);
-  CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled", SceneGetTwoSidedLighting(G));
-  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGetGlobal_i(G, cSetting_light_count));
+    return 0;
+  shaderPrg = Setup_DefaultShader(shaderPrg, NULL, NULL);
+  shaderPrg->SetLightingEnabled(0);
   {
-    float smooth_half_bonds = (SettingGetGlobal_i(G, cSetting_smooth_half_bonds)) ? .2f : 0.f;
-    CShaderPrg_Set1f(shaderPrg, "half_bond", smooth_half_bonds);
+    float front, back;
+    front = SceneGetCurrentFrontSafe(G);
+    back = SceneGetCurrentBackSafe(G);
+    shaderPrg->Set1f("front", front);
+    shaderPrg->Set1f("clipRange", back - front);
   }
-  CShaderPrg_Set_Specular_Values(G, shaderPrg);
 
-  CShaderPrg_SetFogUniforms(G, shaderPrg);
+  int width, height;
+  SceneGetWidthHeightStereo(G, &width, &height);
+  shaderPrg->Set2f("screenSize", width, height);
 
-  CShaderPrg_Set1f(shaderPrg, "fog_enabled", get_fog_enabled(G) ? 1.f : 0.f);
-  glActiveTexture(GL_TEXTURE4);
-  glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
-
-  if (!(shaderPrg->uniform_set & 4)){
-    CShaderPrg_Set1i(shaderPrg, "bgTextureMap", 4);
-    shaderPrg->uniform_set |= 4;
-  }
   {
-    float fog[4];
-    SceneSetFog(G, fog);
+    float v_scale = SceneGetScreenVertexScale(G, NULL);
+    shaderPrg->Set1f("screenOriginVertexScale", v_scale/2.f);
   }
 
   return shaderPrg;
 }
 
-CShaderPrg *CShaderPrg_Enable_DefaultSphereShader(PyMOLGlobals * G){
-  return CShaderPrg_Enable_SphereShader(G, "sphere");
-}
+CShaderPrg *CShaderMgr::Setup_DefaultShader(CShaderPrg * shaderPrg,
+    const CSetting *set1,
+    const CSetting *set2) {
+  if (!shaderPrg){
+    current_shader = NULL; 
+    return shaderPrg;
+  }
+  shaderPrg->Enable();
+  shaderPrg->SetBgUniforms();
+  shaderPrg->Set_Stereo_And_AnaglyphMode();
 
-CShaderPrg *CShaderPrg_Get_DefaultSphereShader(PyMOLGlobals * G){
-  return CShaderMgr_GetShaderPrg(G->ShaderMgr, "sphere");
-}
+  bool two_sided_lighting_enabled = SceneGetTwoSidedLightingSettings(G, set1, set2);
 
+  shaderPrg->SetLightingEnabled(1); // lighting on by default
+  shaderPrg->Set1i("two_sided_lighting_enabled", two_sided_lighting_enabled);
+  shaderPrg->Set1f("ambient_occlusion_scale", 0.f);
+  shaderPrg->Set1i("accessibility_mode", SettingGetGlobal_i(G, cSetting_ambient_occlusion_mode) / 4);
+  shaderPrg->Set1f("accessibility_mode_on", SettingGetGlobal_i(G, cSetting_ambient_occlusion_mode) ? 1.f : 0.f);
 
-CShaderPrg *CShaderPrg_Enable_SphereShader(PyMOLGlobals * G, char *name){
-  int fog_enabled, bg_gradient;
-  int ortho;
-  CShaderPrg *shaderPrg;
-  int width, height;
-  SceneGetWidthHeight(G, &width, &height);
-  shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, name);
-  if (!shaderPrg) return NULL;
-  CShaderPrg_Enable(shaderPrg);
-  CShaderPrg_SetLightingEnabled(shaderPrg, 1);
-  CShaderPrg_Set1f(shaderPrg, "sphere_size_scale", 1.f);
-  fog_enabled = get_fog_enabled(G) ? 1.0 : 0.0;
-  bg_gradient = SettingGetGlobal_b(G, cSetting_bg_gradient);
-
-  CShaderPrg_Set_Stereo_And_AnaglyphMode(G, shaderPrg);
-
-  CShaderPrg_Set1i(shaderPrg, "bg_gradient", bg_gradient);
-  CShaderPrg_Set1f(shaderPrg, "inv_height", 1.0/height);
-  ortho = SettingGetGlobal_b(G, cSetting_ortho);
-  CShaderPrg_Set1f(shaderPrg, "ortho", ortho ? 1.0 : 0.0);
-  CShaderPrg_Set1i(shaderPrg, "light_count", SettingGetGlobal_i(G, cSetting_light_count));
-
+  // interior_color
   {
-    float adj;
-    float fov = SettingGetGlobal_f(G, cSetting_field_of_view);
-    /* Polynomial fitting for adjustment values relative to the field of view */
-    if (fov <= 90.f){
-      adj = 1.0027+0.000111*fov+0.000098*fov*fov;
+    int interior_color = SettingGet_i(G, set1, set2, cSetting_ray_interior_color);
+    if (interior_color == cColorDefault || two_sided_lighting_enabled) {
+      shaderPrg->Set1i("use_interior_color", 0);
     } else {
-      adj = 2.02082 - 0.033935*fov + 0.00037854*fov*fov;
+      float inter[] = { 0.f, 0.f, 0.f };
+      ColorGetEncoded(G, interior_color, inter);
+      shaderPrg->Set1i("use_interior_color", 1);
+      shaderPrg->Set4f("interior_color", inter[0], inter[1], inter[2], 1.f);
     }
-    CShaderPrg_Set1f(shaderPrg, "horizontal_adjustment", adj);
-    CShaderPrg_Set1f(shaderPrg, "vertical_adjustment", adj);
   }
-  CShaderPrg_Set_Specular_Values(G, shaderPrg);
-  CShaderPrg_Set1f(shaderPrg, "fog_enabled", fog_enabled);
 
-  CShaderPrg_SetFogUniforms(G, shaderPrg);
+  shaderPrg->Set_Specular_Values();
+  shaderPrg->Set_Matrices();
+  return (shaderPrg);
+}
+CShaderPrg *CShaderMgr::Enable_CylinderShader(int pass){
+  return Enable_CylinderShader("cylinder", pass);
+}
 
-  glActiveTexture(GL_TEXTURE4);
-  glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
-  if (!(shaderPrg->uniform_set & 4)){
-    CShaderPrg_Set1i(shaderPrg, "bgTextureMap", 4);
-    shaderPrg->uniform_set |= 4;
-  }
+CShaderPrg *CShaderMgr::Enable_CylinderShader(const char *shader_name, int pass){
+  int width, height;
+  CShaderPrg *shaderPrg;
+
+  SceneGetWidthHeightStereo(G, &width, &height);
+  shaderPrg = GetShaderPrg(shader_name, 1, pass);
+  if (!shaderPrg)
+      return NULL;
+  shaderPrg->Enable();
+
+  shaderPrg->SetLightingEnabled(1); // lighting on by default
+
+  shaderPrg->Set1f("uni_radius", 0.f);
+
+  shaderPrg->Set_Stereo_And_AnaglyphMode();
+
+  shaderPrg->Set1f("inv_height", 1.0/height);
+  shaderPrg->Set1i("no_flat_caps", 1);
   {
-    float fog[4];
-    SceneSetFog(G, fog);
+    float smooth_half_bonds = (SettingGetGlobal_i(G, cSetting_smooth_half_bonds)) ? .2f : 0.f;
+    shaderPrg->Set1f("half_bond", smooth_half_bonds);
   }
+  shaderPrg->Set_Specular_Values();
+  shaderPrg->Set_Matrices();
 
+  shaderPrg->SetBgUniforms();
+
+  // always enable backface culling for cylinders
+  glCullFace(GL_BACK);
+  glEnable(GL_CULL_FACE);
+  return shaderPrg;
+}
+
+CShaderPrg *CShaderMgr::Get_DefaultSphereShader(int pass){
+  return GetShaderPrg("sphere", 1, pass);
+}
+
+
+CShaderPrg *CShaderMgr::Enable_DefaultSphereShader(int pass) {
+  CShaderPrg *shaderPrg = Get_DefaultSphereShader(pass);
+  if (!shaderPrg) return NULL;
+  shaderPrg->Enable();
+  shaderPrg->SetLightingEnabled(1);
+  shaderPrg->Set1f("sphere_size_scale", 1.f);
+
+  shaderPrg->Set_Stereo_And_AnaglyphMode();
+
+  shaderPrg->Set_Specular_Values();
+  shaderPrg->Set_Matrices();
+
+  shaderPrg->SetBgUniforms();
 
   return (shaderPrg);
 }
 
 #ifdef _PYMOL_ARB_SHADERS
-CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G){
+CShaderPrg *CShaderMgr::Enable_SphereShaderARB(){
   CShaderPrg *shaderPrg = NULL;
   /* load the vertex program */
-  CShaderPrg_Disable(G->ShaderMgr->current_shader);
-  shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "sphere_arb");
+  if (current_shader)
+    current_shader->Disable();
+  shaderPrg = GetShaderPrg("sphere_arb");
   glBindProgramARB(GL_VERTEX_PROGRAM_ARB, shaderPrg->vid);
   
   /* load the fragment program */
@@ -1964,224 +1187,738 @@ CShaderPrg *CShaderPrg_Enable_SphereShaderARB(PyMOLGlobals * G){
 }
 #endif
 
-CShaderPrg *CShaderPrg_Get_DefaultShader(PyMOLGlobals * G){
-  return CShaderMgr_GetShaderPrg(G->ShaderMgr, "default");
+CShaderPrg *CShaderMgr::Get_ConnectorShader(int pass){
+  return GetShaderPrg("connector", 1, pass);
 }
 
-CShaderPrg *CShaderPrg_Get_DefaultScreenShader(PyMOLGlobals * G){
-  if (G->ShaderMgr->is_picking)
-    return NULL;
-  return CShaderMgr_GetShaderPrg(G->ShaderMgr, "defaultscreen");
+CShaderPrg *CShaderMgr::Get_DefaultShader(int pass){
+  return GetShaderPrg("default", 1, pass);
 }
 
-CShaderPrg *CShaderPrg_Get_CylinderShaderImpl(PyMOLGlobals * G, short set_current_shader){
-  CShaderPrg *shaderPrg;
-  shaderPrg = CShaderMgr_GetShaderPrgImpl(G->ShaderMgr, "cylinder", set_current_shader);
-  return shaderPrg;
+CShaderPrg *CShaderMgr::Get_LineShader(int pass){
+  return GetShaderPrg("line", 1, pass);
 }
 
-CShaderPrg *CShaderPrg_Get_CylinderShader(PyMOLGlobals * G){
-  return CShaderPrg_Get_CylinderShaderImpl(G, 1);
+CShaderPrg *CShaderMgr::Get_SurfaceShader(int pass){
+  return GetShaderPrg("surface", 1, pass);
 }
 
-CShaderPrg *CShaderPrg_Get_CylinderShader_NoSet(PyMOLGlobals * G){
-  return CShaderPrg_Get_CylinderShaderImpl(G, 0);
+CShaderPrg *CShaderMgr::Get_CylinderShader(int pass, short set_current_shader) {
+  return GetShaderPrg("cylinder", set_current_shader, pass);
 }
 
-CShaderPrg *CShaderPrg_Get_Current_Shader(PyMOLGlobals * G){
-  return G->ShaderMgr->current_shader;
+CShaderPrg *CShaderMgr::Get_CylinderNewShader(int pass, short set_current_shader) {
+  return GetShaderPrg("cylinder_new", set_current_shader, pass);
 }
 
-CShaderPrg *CShaderPrg_Get_BackgroundShader(PyMOLGlobals * G){
-  {
-    return CShaderMgr_GetShaderPrg(G->ShaderMgr, "bg");
-  }
+CShaderPrg *CShaderMgr::Get_Current_Shader(){
+  return current_shader;
 }
 
-CShaderPrg *CShaderPrg_Enable_BackgroundShader(PyMOLGlobals * G){
-  CShaderPrg * shaderPrg = CShaderPrg_Get_BackgroundShader(G);
+CShaderPrg *CShaderMgr::Get_BackgroundShader(){
+  return GetShaderPrg("bg");
+}
+
+CShaderPrg *CShaderMgr::Enable_BackgroundShader(){
+  CShaderPrg * shaderPrg = Get_BackgroundShader();
   if (!shaderPrg) return shaderPrg;
-  CShaderPrg_Enable(shaderPrg);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glActiveTexture(GL_TEXTURE4);
-  glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
+  shaderPrg->Enable();
 
   glDisable(GL_DEPTH_TEST);
-  CShaderPrg_SetFogUniforms(G, shaderPrg);
+  shaderPrg->SetBgUniforms();
 
-  if (!(shaderPrg->uniform_set & 8)){
-    CShaderPrg_Set1i(shaderPrg, "bgTextureMap", 4);
-    shaderPrg->uniform_set |= 8;
+  return shaderPrg;
+}
+
+CShaderPrg *CShaderMgr::Enable_TriLinesShader() {
+  CShaderPrg * shaderPrg = GetShaderPrg("trilines");
+  if (!shaderPrg) return shaderPrg;
+  shaderPrg->Enable();
+  shaderPrg->SetBgUniforms();
+  shaderPrg->Set_Stereo_And_AnaglyphMode();
+  shaderPrg->Set_Matrices();
+  {
+    int width, height;
+    SceneGetWidthHeightStereo(G, &width, &height);
+
+      shaderPrg->Set2f("inv_dimensions", 1.f/width, 1.f/height);
   }
   return shaderPrg;
 }
 
-CShaderPrg *CShaderPrg_Enable_LabelShaderImpl(PyMOLGlobals * G, CShaderPrg *shaderPrg);
+#ifndef _PYMOL_NO_AA_SHADERS
+#endif
 
-CShaderPrg *CShaderPrg_Enable_LabelScreenShader(PyMOLGlobals * G){
-  CShaderPrg *shaderPrg;
-  shaderPrg = CShaderPrg_Get_LabelScreenShader(G);  
-  if (!shaderPrg)
-      return NULL;
-  CShaderPrg_Enable(shaderPrg);
-  return CShaderPrg_Enable_LabelShaderImpl(G, shaderPrg);
+CShaderPrg *CShaderMgr::Enable_OITShader() {
+  CShaderPrg * shaderPrg = GetShaderPrg("oit");
+  if (!shaderPrg) return shaderPrg;
+  shaderPrg->Enable();
+  glActiveTexture(GL_TEXTURE5);
+  bindOffscreenOITTexture(0);
+  glActiveTexture(GL_TEXTURE6);
+  bindOffscreenOITTexture(1);
+  shaderPrg->Set1i("accumTex", 5);
+  shaderPrg->Set1i("revealageTex", 6);
+  shaderPrg->Set1f("isRight", stereo_flag > 0 ? 1. : 0);
+  glEnable(GL_BLEND);
+  glBlendFuncSeparate(
+      GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA,
+      GL_ONE,         GL_ONE_MINUS_SRC_ALPHA);
+
+  glDisable(GL_DEPTH_TEST);
+#ifndef PURE_OPENGL_ES_2
+  glDisable(GL_ALPHA_TEST);
+#endif
+  return shaderPrg;
 }
 
-CShaderPrg *CShaderPrg_Enable_LabelShader(PyMOLGlobals * G){
-  CShaderPrg *shaderPrg;
-  shaderPrg = CShaderPrg_Get_LabelShader(G);  
-  if (!shaderPrg)
-      return NULL;
-  CShaderPrg_Enable(shaderPrg);
-  return CShaderPrg_Enable_LabelShaderImpl(G, shaderPrg);
+CShaderPrg *CShaderMgr::Enable_OITCopyShader() {
+  CShaderPrg * shaderPrg = GetShaderPrg("copy");
+  if (!shaderPrg) return shaderPrg;
+  shaderPrg->Enable();
+  glActiveTexture(GL_TEXTURE7);
+  bindOffscreenTexture(0);
+  shaderPrg->Set1i("colorTex", 7);
+  if (G->ShaderMgr->stereo_blend){
+    // for full-screen stereo
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+  } else {
+    glDisable(GL_BLEND);
+  }
+  glDisable(GL_DEPTH_TEST);
+#ifndef PURE_OPENGL_ES_2
+  glDisable(GL_ALPHA_TEST);
+#endif
+  return shaderPrg;
 }
 
-CShaderPrg *CShaderPrg_Enable_ScreenShader(PyMOLGlobals * G){
+CShaderPrg *CShaderMgr::Enable_LabelShader(int pass){
   CShaderPrg *shaderPrg;
-  shaderPrg = CShaderPrg_Get_ScreenShader(G);  
+  shaderPrg = Get_LabelShader(pass);  
   if (!shaderPrg)
       return NULL;
-  CShaderPrg_Enable(shaderPrg);
-  return CShaderPrg_Enable_LabelShaderImpl(G, shaderPrg);
+  shaderPrg->Enable();
+  return Setup_LabelShader(shaderPrg);
 }
 
-CShaderPrg *CShaderPrg_Enable_RampShader(PyMOLGlobals * G){
+CShaderPrg *CShaderMgr::Enable_ScreenShader(){
   CShaderPrg *shaderPrg;
-  shaderPrg = CShaderPrg_Get_RampShader(G);  
+  shaderPrg = Get_ScreenShader();  
   if (!shaderPrg)
       return NULL;
-  CShaderPrg_Enable(shaderPrg);
-  return CShaderPrg_Enable_LabelShaderImpl(G, shaderPrg);
+  shaderPrg->Enable();
+
+  int ortho_width, ortho_height;
+  OrthoGetSize(G, &ortho_width, &ortho_height);
+  shaderPrg->Set2f("t2PixelSize", 2.f / ortho_width, 2.f / ortho_height);
+
+  return Setup_LabelShader(shaderPrg);
 }
 
-CShaderPrg *CShaderPrg_Enable_LabelShaderImpl(PyMOLGlobals * G, CShaderPrg *shaderPrg){
+CShaderPrg *CShaderMgr::Enable_RampShader(){
+  CShaderPrg *shaderPrg;
+  shaderPrg = Get_RampShader();  
+  if (!shaderPrg)
+      return NULL;
+  shaderPrg->Enable();
+  return Setup_LabelShader(shaderPrg);
+}
+
+CShaderPrg *CShaderMgr::Setup_LabelShader(CShaderPrg *shaderPrg) {
+  int width = 0, height = 0;
+
+  shaderPrg->Set_Matrices();
+
   glActiveTexture(GL_TEXTURE3);
   glBindTexture(GL_TEXTURE_2D, TextureGetTextTextureID(G));
-  CShaderPrg_Set1i(shaderPrg, "textureMap", 3);
   if (!(shaderPrg->uniform_set & 8)){
-    int width, height;
-    SCENEGETIMAGESIZE(G, &width, &height);
-    CShaderPrg_Set2f(shaderPrg, "screenSize", width, height);
-    CShaderPrg_Set2f(shaderPrg, "pixelSize", 2.f/(float)width, 2.f/(float)height);
-    CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", 1.f);
     shaderPrg->uniform_set |= 8;
+    shaderPrg->Set1i("textureMap", 3);
   }
-  if (SceneIsGridModeActive(G)){
-    int width, height;
-    SceneGetGridModeSize(G, &width, &height);
-    CShaderPrg_Set2f(shaderPrg, "screenSize", width, height);
-    CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", 1.f);
-  } else if (StereoIsAdjacent(G)){
-    CShaderPrg_Set1f(shaderPrg, "aspectRatioAdjustment", 2.f);
-  }
-  CShaderPrg_Set1f(shaderPrg, "isPicking", G->ShaderMgr->is_picking ? 1.f : 0.f );
 
-  CShaderPrg_SetFogUniforms(G, shaderPrg);
+  SceneGetWidthHeightStereo(G, &width, &height);
 
-  CShaderPrg_Set1f(shaderPrg, "fog_enabled", get_fog_enabled(G) ? 1.f : 0.f);
-  glActiveTexture(GL_TEXTURE4);
-  glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
-  if (!(shaderPrg->uniform_set & 4)){
-    CShaderPrg_Set1i(shaderPrg, "bgTextureMap", 4);
-    shaderPrg->uniform_set |= 4;
-  }
-  {
-    float fog[4];
-    SceneSetFog(G, fog);
-  }
+  if (width)
+    shaderPrg->Set2f("screenSize", width, height);
+
+  shaderPrg->SetBgUniforms();
+
   {
     float v_scale = SceneGetScreenVertexScale(G, NULL);
-    CShaderPrg_Set1f(shaderPrg, "screenOriginVertexScale", v_scale/2.f);
+    shaderPrg->Set1f("screenOriginVertexScale", v_scale/2.f);
   }
+  {
+    float front, back;
+    front = SceneGetCurrentFrontSafe(G);
+    back = SceneGetCurrentBackSafe(G);
+    shaderPrg->Set1f("front", front);
+    shaderPrg->Set1f("clipRange", back - front);
+  }
+
   return shaderPrg;
 }
 
-CShaderPrg *CShaderPrg_Get_LabelShader(PyMOLGlobals * G){
-  return CShaderMgr_GetShaderPrg(G->ShaderMgr, "label");
+CShaderPrg *CShaderMgr::Get_LabelShader(int pass){
+  return GetShaderPrg("label", 1, pass);
 }
 
-CShaderPrg *CShaderPrg_Get_LabelScreenShader(PyMOLGlobals * G){
-  if (G->ShaderMgr->is_picking)
+CShaderPrg *CShaderMgr::Get_ScreenShader() {
+  if (is_picking)
     return NULL;
-  return CShaderMgr_GetShaderPrg(G->ShaderMgr, "labelscreen");
+  return GetShaderPrg("screen");
 }
 
-CShaderPrg *CShaderPrg_Get_ScreenShader(PyMOLGlobals * G){
-  if (G->ShaderMgr->is_picking)
-    return NULL;
-  return CShaderMgr_GetShaderPrg(G->ShaderMgr, "screen");
+CShaderPrg *CShaderMgr::Get_RampShader() {
+  return GetShaderPrg("ramp");
 }
 
-CShaderPrg *CShaderPrg_Get_RampShader(PyMOLGlobals * G){
-  return CShaderMgr_GetShaderPrg(G->ShaderMgr, "ramp");
+CShaderPrg *CShaderMgr::Get_IndicatorShader() {
+  return GetShaderPrg("indicator");
 }
 
-CShaderPrg *CShaderPrg_Get_IndicatorShader(PyMOLGlobals * G){
-  return CShaderMgr_GetShaderPrg(G->ShaderMgr, "indicator");
-}
-
-CShaderPrg *CShaderPrg_Enable_IndicatorShader(PyMOLGlobals * G){
-  CShaderPrg * shaderPrg = CShaderPrg_Get_IndicatorShader(G);
+CShaderPrg *CShaderMgr::Enable_IndicatorShader() {
+  CShaderPrg * shaderPrg = Get_IndicatorShader();
   if (!shaderPrg) return shaderPrg;
-  CShaderPrg_Enable(shaderPrg);
+  shaderPrg->Enable();
 
-  CShaderPrg_Set_Stereo_And_AnaglyphMode(G, shaderPrg);
+  shaderPrg->Set_Stereo_And_AnaglyphMode();
+  shaderPrg->Set_Matrices();
 
   glActiveTexture(GL_TEXTURE3);
   glBindTexture(GL_TEXTURE_2D, TextureGetTextTextureID(G));
   if (!(shaderPrg->uniform_set & 8)){
-    CShaderPrg_Set1i(shaderPrg, "textureMap", 3);
+    shaderPrg->Set1i("textureMap", 3);
     shaderPrg->uniform_set |= 8;
   }
+#ifdef PURE_OPENGL_ES_2
+  shaderPrg->SetMat4fc("g_ModelViewMatrix", SceneGetModelViewMatrix(G));
+  shaderPrg->SetMat4fc("g_ProjectionMatrix", SceneGetProjectionMatrix(G));
+#endif
+
   return (shaderPrg);
 }
 
 
-void ShaderMgrResetUniformSet(PyMOLGlobals * G){
-  CShaderPrg * p = NULL;
-  DListIterate(G->ShaderMgr->programs, p, next) 
-    {
-      p->uniform_set = 0;
+void CShaderMgr::ResetUniformSet() {
+  for (map<string, CShaderPrg*>::iterator
+      it = programs.begin(),
+      end = programs.end(); it != end; ++it) {
+    it->second->uniform_set = 0;
+  }
+}
+
+void CShaderMgr::SetIsPicking(int is_picking) {
+  this->is_picking = is_picking;
+}
+int CShaderMgr::GetIsPicking() {
+  return is_picking;
+}
+
+#define LIGHTINGTEXTUREWIDTH 64
+
+/*
+ * Lighting setting indices are not contiguous, so we need a mapping array
+ */
+int light_setting_indices[] = {
+  cSetting_light, cSetting_light2, cSetting_light3, cSetting_light4,
+  cSetting_light5, cSetting_light6, cSetting_light7, cSetting_light8,
+  cSetting_light9
+};
+
+/*
+ * Generate and upload a precomputed vec2(ambient, specular) lighting texture.
+ *
+ * Must be equivalent to "ComputeLighting" in "compute_color_for_light.fs"
+ */
+void CShaderMgr::Generate_LightingTexture() {
+  const int light_max = 10;
+  int light_count = SettingGetGlobal_i(G, cSetting_light_count);
+  int spec_count = SettingGetGlobal_i(G, cSetting_spec_count);
+  float ambient = SettingGetGlobal_f(G, cSetting_ambient);
+  float direct = SettingGetGlobal_f(G, cSetting_direct);
+  float reflect = SettingGetGlobal_f(G, cSetting_reflect) * SceneGetReflectScaleValue(G, light_max);
+  float shininess, spec_value;
+  float shininess_0, spec_value_0;
+  float diffuse, spec, shine;
+  float power, power_0 = SettingGetGlobal_f(G, cSetting_power);
+  float reflect_power = SettingGetGlobal_f(G, cSetting_reflect_power);
+
+  float light_positions[light_max][3] = {{0.F, 0.F, 1.F}};
+
+  // (ambient, specular) 2D texture
+  unsigned char texture_AS[LIGHTINGTEXTUREWIDTH][LIGHTINGTEXTUREWIDTH][2];
+
+  SceneGetAdjustedLightValues(G,
+      &spec_value,
+      &shininess,
+      &spec_value_0,
+      &shininess_0,
+      light_max);
+
+  if (light_count < 2) {
+    light_count = 1;
+    direct += reflect;
+  } else if (light_count > light_max) {
+    light_count = light_max;
+  }
+
+  if(spec_count < 0) {
+    spec_count = light_count - 1;
+  }
+
+  for (int i = 1; i < light_count; ++i) {
+    const float * setting = SettingGetGlobal_3fv(G, light_setting_indices[i - 1]);
+    copy3f(setting, light_positions[i]);
+    normalize3f(light_positions[i]);
+    invert3f(light_positions[i]);
+  }
+
+  glGenTextures(1, &lightingTexture);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, lightingTexture);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+#ifndef PURE_OPENGL_ES_2
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+#else
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#endif
+
+  float normal[3];
+  const float vz = LIGHTINGTEXTUREWIDTH / 2;
+
+  for (int face = 0; face < 6; ++face) {
+    for (int y = 0; y < LIGHTINGTEXTUREWIDTH; ++y) {
+      for (int x = 0; x < LIGHTINGTEXTUREWIDTH; ++x) {
+
+        float vx =   x + .5f - vz;
+        float vy = -(y + .5f - vz);
+
+        switch (face) {
+          case 0: set3f(normal,  vz,  vy, -vx); break;
+          case 1: set3f(normal, -vz,  vy,  vx); break;
+          case 2: set3f(normal,  vx,  vz, -vy); break;
+          case 3: set3f(normal,  vx, -vz,  vy); break;
+          case 4: set3f(normal,  vx,  vy,  vz); break;
+          case 5: set3f(normal, -vx,  vy, -vz); break;
+        }
+
+        normalize3f(normal);
+
+        float ambient_sum = ambient;
+        float specular_sum = 0.F;
+
+        for (int i = 0; i < light_count; ++i) {
+          if (i == 0) {
+            diffuse = direct;
+            spec = spec_value_0;
+            shine = shininess_0;
+            power = power_0;
+          } else {
+            diffuse = reflect;
+            spec = spec_value;
+            shine = shininess;
+            power = reflect_power;
+          }
+
+          // light direction (normalized)
+          const float * L = light_positions[i];
+
+          // cosine of angle between normal and light
+          float NdotL = dot_product3f(normal, L);
+
+          // normal points away from light
+          if (NdotL <= 0.0)
+            continue;
+
+          // power/reflect_power, was ray trace only until 1.7.7
+          NdotL = pow(NdotL, power);
+
+          // diffuse
+          ambient_sum += NdotL * diffuse;
+
+          // specular
+          if (i <= spec_count) {
+            // H = normalize(L + vec3(0., 0., 1.));
+            float H[] = {0., 0., 1.};
+            add3f(L, H, H);
+            normalize3f(H);
+
+            float NdotH = std::max(dot_product3f(normal, H), 0.f);
+            specular_sum += spec * pow(NdotH, shine);
+          }
+        }
+
+        texture_AS[y][x][0] = pymol_roundf(255.F * std::min(1.F, ambient_sum));
+        texture_AS[y][x][1] = pymol_roundf(255.F * std::min(1.F, specular_sum));
+      }
     }
+
+    glTexImage2D(
+        GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+        /* level */ 0,
+        /* internalformat */ GL_LUMINANCE_ALPHA,
+        /* width  */ LIGHTINGTEXTUREWIDTH,
+        /* height */ LIGHTINGTEXTUREWIDTH,
+        /* border */ 0,
+        /* format */ GL_LUMINANCE_ALPHA,
+        /* type */ GL_UNSIGNED_BYTE,
+        /* data */ (void*) texture_AS);
+  }
 }
 
-void CShaderPrg_SetIsPicking(PyMOLGlobals * G, int is_picking){
-  G->ShaderMgr->is_picking = is_picking;
-}
-int CShaderPrg_GetIsPicking(PyMOLGlobals * G){
-  return G->ShaderMgr->is_picking;
+void CShaderMgr::Set_Reload_Bits(int bits){
+  reload_bits |= bits;
 }
 
-void CShaderMgr_Set_Reload_Bits(PyMOLGlobals *G, int bits){
-  CShaderMgr *I = G->ShaderMgr;
-  if (I)
-    I->reload_bits |= bits;
-}
-
-void CShaderMgr_Check_Reload(PyMOLGlobals *G){
-  CShaderMgr *I = G->ShaderMgr;
-
+void CShaderMgr::Check_Reload() {
   if(!SettingGetGlobal_b(G, cSetting_use_shaders)) {
     return;
   }
 
-  if (I->reload_bits){
-    if (I->reload_bits & RELOAD_ALL_SHADERS){
-      CShaderPrg_Reload_All_Shaders(G);
-    } else {
-      if (I->reload_bits & RELOAD_SHADERS_FOR_LIGHTING){
-	CShaderPrg_Reload_All_Shaders_For_CallComputeColorForLight(G);
-      }
-      if (I->reload_bits & RELOAD_SHADERS_UPDATE_FOR_BACKGROUND){
-	CShaderPrg_Update_Shaders_For_Background(G);
-      }
-      if (I->reload_bits & RELOAD_SHADERS_CYLINDER){
-	CShaderMgr_Reload_Shader_Variables(G);
-	CShaderMgr_Reload_Cylinder_Shader(G);
-      }
+  if (reload_bits){
+    if (reload_bits == RELOAD_ALL_SHADERS) {
+      for (auto it = programs.begin(); it != programs.end(); ++it)
+        it->second->is_valid = false;
+      shader_cache_processed.clear();
     }
-    I->reload_bits = 0;
+
+    Reload_All_Shaders();
+    reload_bits = 0;
   }
 }
 
+GLfloat *CShaderMgr::GetLineWidthRange() {
+  return line_width_range;
+}
+
+#ifndef _PYMOL_NO_AA_SHADERS
+#endif
+
+/*
+ * Register filename -> shader dependencies for `shader`
+ */
+void CShaderMgr::RegisterDependantFileNames(CShaderPrg * shader) {
+  shader_deps[shader->vertfile].push_back(shader->name);
+  shader_deps[shader->fragfile].push_back(shader->name);
+  if (!shader->geomfile.empty())
+    shader_deps[shader->geomfile].push_back(shader->name);
+}
+
+/*
+ * Recursive function to insert `filename` and all the files where
+ * `filename` is included into the given output vector.
+ */
+void CShaderMgr::CollectDependantFileNames(const std::string &filename,
+    std::vector<std::string> &filenames) {
+  auto it = include_deps.find(filename);
+  if (it != include_deps.end()) {
+    for (const char ** filenameptr = it->second;
+        *filenameptr; ++filenameptr) {
+      CollectDependantFileNames(*filenameptr, filenames);
+    }
+  }
+  filenames.push_back(filename);
+}
+
+/*
+ * Make derived shaders for all shaders that depend on `variable`
+ */
+void CShaderMgr::MakeDerivatives(const std::string &suffix, const std::string &variable) {
+  std::set<std::string> shadernames;
+  std::vector<std::string> filenames;
+
+  // variable -> files
+  for (const char ** filenameptr = ifdef_deps[variable];
+      *filenameptr; ++filenameptr) {
+    CollectDependantFileNames(*filenameptr, filenames);
+  }
+
+  // files -> shaders
+  for (auto f_it = filenames.begin(); f_it != filenames.end(); ++f_it) {
+    auto &vec = shader_deps[*f_it];
+    for (auto n_it = vec.begin(); n_it != vec.end(); ++n_it) {
+      shadernames.insert(*n_it);
+    }
+  }
+
+  // create shader derivatives
+  for (auto s_it = shadernames.begin(); s_it != shadernames.end(); ++s_it) {
+    CShaderPrg * shader = programs[*s_it]->DerivativeCopy(*s_it + suffix, variable);
+    programs[shader->name] = shader;
+
+    // register dependency
+    RegisterDependantFileNames(shader);
+  }
+}
+
+/*
+ * Reload the derivative shaders for `variable`
+ */
+void CShaderMgr::Reload_Derivatives(const std::string &variable, bool value) {
+  SetPreprocVar(variable, value, false);
+
+  for (auto it = programs.begin(); it != programs.end(); ++it) {
+    if (it->second->derivative == variable)
+      it->second->reload();
+  }
+
+  SetPreprocVar(variable, !value, false);
+}
+
+/*
+ * Removes `filename` and all it's parents from the shader source cache,
+ * and if `invshaders` is true, also clear the `is_valid` flag for all
+ * shader infos that depend on `filename`.
+ */
+void CShaderMgr::ShaderSourceInvalidate(const char * filename, bool invshaders) {
+  // recursion for includes
+  auto it = include_deps.find(filename);
+  if (it != include_deps.end()) {
+    for (const char ** filenameptr = it->second;
+        *filenameptr; ++filenameptr) {
+      ShaderSourceInvalidate(*filenameptr, invshaders);
+    }
+  }
+
+  // invalidate shaders
+  if (invshaders) {
+    auto &vec = shader_deps[filename];
+    for (auto it = vec.begin(); it != vec.end(); ++it) {
+      programs[*it]->is_valid = false;
+    }
+  }
+
+  // invalidate source file
+  auto repl_it = shader_cache_processed.find(filename);
+  if (repl_it != shader_cache_processed.end()) {
+    shader_cache_processed.erase(repl_it);
+  }
+}
+
+/*
+ * Set the value for the #ifdef variable `key` and if the value has changed,
+ * then invalidate all its dependant shader source files.
+ */
+void CShaderMgr::SetPreprocVar(const std::string &key, bool value, bool invshaders) {
+  auto &ref = preproc_vars[key];
+  if (ref != value) {
+    for (const char ** filenameptr = ifdef_deps[key];
+        *filenameptr; ++filenameptr) {
+      ShaderSourceInvalidate(*filenameptr, invshaders);
+    }
+    ref = value;
+  }
+}
+
+/*
+ * Insert `filename` -> `contents` (processed source) into the shader source
+ * cache and invalidate its parents
+ */
+void CShaderMgr::SetShaderSource(const char * filename, const std::string &contents) {
+  ShaderSourceInvalidate(filename);
+  shader_cache_processed[filename] = contents;
+}
+
+void CShaderMgr::bindGPUBuffer(size_t hashid) {
+  auto search = _gpu_object_map.find(hashid);
+  if (search != _gpu_object_map.end())
+    search->second->bind();
+}
+
+void CShaderMgr::freeGPUBuffer(size_t hashid) {
+  if (!hashid)
+    return;
+  LOCK_GUARD_MUTEX(lock, gpu_objects_to_free_mutex);
+  _gpu_objects_to_free_vector.push_back(hashid);
+
+#ifdef _WEBGL
+  freeAllGPUBuffers(); // immediate free on web
+#endif
+}
+
+void CShaderMgr::freeGPUBuffers(std::vector<size_t> &&hashids) {
+  LOCK_GUARD_MUTEX(lock, gpu_objects_to_free_mutex);
+  _gpu_objects_to_free_vector.insert(_gpu_objects_to_free_vector.end(),
+                                     hashids.begin(), hashids.end());
+#ifdef _WEBGL
+  freeAllGPUBuffers(); // immediate free on web
+#endif
+}
+
+void CShaderMgr::freeGPUBuffers(size_t * arr, size_t len) {
+  for (unsigned int i = 0; i < len; ++i)
+    freeGPUBuffer(arr[i]);
+}
+
+void CShaderMgr::freeAllGPUBuffers() {
+  LOCK_GUARD_MUTEX(lock, gpu_objects_to_free_mutex);
+  for (auto hashid : _gpu_objects_to_free_vector) {
+    auto search = _gpu_object_map.find(hashid);
+    if (search != _gpu_object_map.end()) {
+      if (search->second)
+        delete search->second;
+      _gpu_object_map.erase(search);
+    }
+  }
+  _gpu_objects_to_free_vector.clear();
+}
+
+int CShaderMgr::GetAttributeUID(const char * name)
+{
+  auto uloc = attribute_uids_by_name.find(name);
+  if (uloc != attribute_uids_by_name.end())
+    return uloc->second;
+
+  int uid = attribute_uids_by_name.size() + 1;
+  attribute_uids_by_name[name] = uid;
+  attribute_uids[uid] = name;
+  return uid;
+}
+const char *CShaderMgr::GetAttributeName(int uid)
+{
+  auto uloc = attribute_uids.find(uid);
+  if (uloc == attribute_uids.end())
+    return NULL;
+  return attribute_uids[uid].c_str();
+}
+
+// SceneRenderBindToOffscreen
+void CShaderMgr::bindOffscreen(int width, int height, GridInfo *grid) {
+  using namespace tex;
+  ivec2 req_size(width, height);
+
+#ifndef _PYMOL_NO_AA_SHADERS
+#endif
+
+  // Doesn't exist, create
+  if (!offscreen_rt[0]) {
+    CGOFree(G->Scene->offscreenCGO);
+    offscreen_size = req_size;
+    auto rt0 = newGPUBuffer<renderTarget_t>(req_size);
+    rt0->layout({ { 4, rt_layout_t::UBYTE } });
+    offscreen_rt[0] = rt0->get_hash_id();
+
+    auto rt1 = newGPUBuffer<renderTarget_t>(req_size);
+    rt1->layout({ { 4, rt_layout_t::UBYTE } });
+    offscreen_rt[1] = rt1->get_hash_id();
+
+    auto rt2 = newGPUBuffer<renderTarget_t>(req_size);
+    rt2->layout({ { 4, rt_layout_t::UBYTE } });
+    offscreen_rt[2] = rt2->get_hash_id();
+  } else {
+    // resize
+    if (req_size != offscreen_size) {
+      for (int i = 0; i < 3; ++i)
+        getGPUBuffer<renderTarget_t>(offscreen_rt[i])->resize(req_size);
+      offscreen_size = req_size;
+    }
+  }
+
+  auto rt = getGPUBuffer<renderTarget_t>(offscreen_rt[0]);
+  if (rt)
+    rt->bind(!stereo_blend);
+  glEnable(GL_BLEND);
+
+  SceneInitializeViewport(G, 1);
+  if (grid->active) {
+    grid->cur_view[0] = grid->cur_view[1] = 0;
+    grid->cur_view[2] = offscreen_size.x;
+    grid->cur_view[3] = offscreen_size.y;
+  }
+}
+
+// SceneRenderBindToOffscreenOIT
+void CShaderMgr::bindOffscreenOIT(int width, int height, int drawbuf) {
+  using namespace tex;
+
+  ivec2 req_size(width, height);
+
+  if (!oit_rt[0] || (req_size != oit_size)) {
+    if (oit_rt[0]) {
+      freeGPUBuffers({ oit_rt[0], oit_rt[1] });
+    }
+    if (TM3_IS_ONEBUF){
+      auto rt0 = newGPUBuffer<renderTarget_t>(req_size);
+      rt0->layout({ { 4, rt_layout_t::FLOAT } }, getGPUBuffer<renderTarget_t>(offscreen_rt[0])->_rbo);
+      oit_rt[0] = rt0->get_hash_id();
+
+      auto rt1 = newGPUBuffer<renderTarget_t>(req_size);
+      rt1->layout({ { 1, rt_layout_t::FLOAT } }, rt0->_rbo);
+      oit_rt[1] = rt1->get_hash_id();
+    } else {
+      std::vector<rt_layout_t> layout;
+      layout.emplace_back(4, rt_layout_t::FLOAT);
+      if (GLEW_VERSION_3_0)
+        layout.emplace_back(1, rt_layout_t::FLOAT);
+      else
+        layout.emplace_back(2, rt_layout_t::FLOAT);
+
+      auto rt0 = newGPUBuffer<renderTarget_t>(req_size);
+      rt0->layout(std::move(layout), getGPUBuffer<renderTarget_t>(offscreen_rt[0])->_rbo);
+      oit_rt[0] = rt0->get_hash_id();
+    }
+    oit_size = req_size;
+  } else {
+    if (!TM3_IS_ONEBUF){
+      drawbuf = 1;
+    }
+    getGPUBuffer<renderTarget_t>(oit_rt[drawbuf - 1])->_fbo->bind();
+    getGPUBuffer<renderTarget_t>(oit_rt[drawbuf - 1])->_rbo->bind();
+  }
+}
+
+void CShaderMgr::bindOffscreenFBO(int index) {
+  bool clear = true;
+  if (index == 0)
+    clear = !stereo_blend;
+  auto t = getGPUBuffer<renderTarget_t>(offscreen_rt[index]);
+  if (t)
+    t->bind(clear);
+}
+
+void CShaderMgr::bindOffscreenOITFBO(int index) {
+#if !defined(PURE_OPENGL_ES_2) || defined(_WEBGL)
+  if (TM3_IS_ONEBUF){
+    auto rt = getGPUBuffer<renderTarget_t>(oit_rt[index - 1]);
+    if (rt)
+      rt->_fbo->bind();
+  } else {
+    const GLenum bufs[] = { GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT };
+    auto rt = getGPUBuffer<renderTarget_t>(oit_rt[0]);
+    if (rt)
+      rt->_fbo->bind();
+    glDrawBuffers(2, bufs);
+  }
+  glClearColor(0.f, 0.f, 0.f, 0.f);
+  glClear(GL_COLOR_BUFFER_BIT);
+  glDepthMask(GL_FALSE);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFuncSeparate(
+      GL_ONE, GL_ONE,
+      GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+#endif
+}
+
+void CShaderMgr::bindOffscreenTexture(int index) {
+  auto t = getGPUBuffer<renderTarget_t>(offscreen_rt[index]);
+  if (t->_textures[0])
+    t->_textures[0]->bind();
+}
+
+void CShaderMgr::bindOffscreenOITTexture(int index) {
+  if (TM3_IS_ONEBUF){
+    auto t = getGPUBuffer<renderTarget_t>(oit_rt[index]);
+    if (t->_textures[0])
+      t->_textures[0]->bind();
+  } else {
+    auto t = getGPUBuffer<renderTarget_t>(oit_rt[0]);
+    if (t)
+      t->_textures[index]->bind();
+  }
+}

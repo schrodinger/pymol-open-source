@@ -786,28 +786,22 @@ static short ObjectMeshStateRenderShader(ObjectMeshState *ms, ObjectMesh *I,
   PyMOLGlobals *G = I->Obj.G;
   CShaderPrg *shaderPrg;
 
-  if (mesh_as_cylinders) {
-    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-    CShaderPrg_Set1f(shaderPrg, "uni_radius",
-        SceneGetLineWidthForCylinders(G, info, mesh_width));
-  } else {
-    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-    CShaderPrg_SetLightingEnabled(shaderPrg, 1);
-    CShaderPrg_Set1i(shaderPrg, "two_sided_lighting_enabled",
+  if (!mesh_as_cylinders) {
+    shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
+    shaderPrg->SetLightingEnabled(0);
+    shaderPrg->Set1i("two_sided_lighting_enabled",
 		     SceneGetTwoSidedLighting(G));
-  }
-
   if (!shaderPrg)
     return false;
+  }
 
   CGORenderGL(ms->shaderCGO, NULL, NULL, NULL, info, NULL);
-  CShaderPrg_Disable(shaderPrg);
 
   if (ms->shaderUnitCellCGO){
-    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
+    shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
+    shaderPrg->SetLightingEnabled(0);
     CGORenderGL(ms->shaderUnitCellCGO, NULL, NULL, NULL, info, NULL);
-    CShaderPrg_Disable(shaderPrg);
+    shaderPrg->Disable();
   }
 
   return true;
@@ -840,7 +834,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
   }
 
   line_width = SceneGetDynamicLineWidth(info, mesh_width);
-  ObjectPrepareContext(&I->Obj, ray);
+  ObjectPrepareContext(&I->Obj, info);
 
   for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
     ms = I->State + iter.state;
@@ -853,8 +847,8 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
         n = ms->N;
         if(ok && ray) {
           if(ms->UnitCellCGO && (I->Obj.visRep & cRepCellBit)){
-            ok &= CGORenderRay(ms->UnitCellCGO, ray, ColorGet(I->Obj.G, I->Obj.Color),
-			       I->Obj.Setting, NULL);
+            ok &= CGORenderRay(ms->UnitCellCGO, ray, info, ColorGet(I->Obj.G, I->Obj.Color),
+			       NULL, I->Obj.Setting, NULL);
 	    if (!ok){
 	      CGOFree(ms->UnitCellCGO);
 	      break;
@@ -968,10 +962,9 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  CGO *newUnitCellCGO = CGONewSized(G, 0);
 		  CGOColorv(newUnitCellCGO, color);
 		  CGOAppend(newUnitCellCGO, ms->UnitCellCGO);
-		  ms->shaderUnitCellCGO = CGOOptimizeToVBONotIndexed(newUnitCellCGO, 0);
+		  ms->shaderUnitCellCGO = CGOOptimizeToVBONotIndexedNoShader(newUnitCellCGO, 0);
 		  CGOFree(newUnitCellCGO);
 		  ms->shaderUnitCellCGO->use_shader = true;
-		  ms->shaderUnitCellCGO->enable_shaders = false;
 		}
 	      }
 
@@ -985,7 +978,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 	      if(!ok) break;
 
 	      if (use_shader){
-		ok &= CGOResetNormal(shaderCGO, false);
+		ok &= CGOResetNormal(shaderCGO, true);
 	      } else {
 		SceneResetNormal(I->Obj.G, false);
 	      }
@@ -1001,7 +994,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		      ok &= CGODotwidth(shaderCGO, SettingGet_f
 				  (I->Obj.G, I->Obj.Setting, NULL, cSetting_dot_width));
 		    } else {
-		      ok &= CGOLinewidthSpecial(shaderCGO, LINEWIDTH_DYNAMIC_MESH); 
+		      ok &= CGOSpecial(shaderCGO, LINEWIDTH_DYNAMIC_MESH); 
 		    }
 		  } 
 
@@ -1009,7 +1002,7 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 
 		  if (mesh_as_cylinders){
 		    if(returnCGO) {
-		      ok &= CGOLinewidthSpecial(shaderCGO, CYLINDERWIDTH_DYNAMIC_MESH);
+		      ok &= CGOSpecial(shaderCGO, CYLINDERWIDTH_DYNAMIC_MESH);
 		    }
                     for(; ok && (c = *(n++)); v += 3, vc && (vc += 3)) {
                       for(; ok && (--c); v += 3) {
@@ -1023,9 +1016,9 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 			  vc += 3;
 			}
                         if(vc && memcmp(vc - 3, vc, sizeof(float) * 3)) {
-                          ok &= CGOShaderCylinder2ndColor(shaderCGO, v, axis, 1.f, 15, vc);
+                          ok &= (bool)shaderCGO->add<cgo::draw::shadercylinder2ndcolor>(shaderCGO, v, axis, 1.f, 15, vc);
                         } else {
-                          ok &= CGOShaderCylinder(shaderCGO, v, axis, 1.f, 15);
+                          ok &= (bool)shaderCGO->add<cgo::draw::shadercylinder>(v, axis, 1.f, 15);
                         }
                       }
 		    }
@@ -1064,7 +1057,6 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 
 		  if(!vc)
 		    glColor3fv(ColorGet(I->Obj.G, ms->OneColor));
-
 		  if(ms->MeshMode == 1){
 		    glPointSize(SettingGet_f
 				(I->Obj.G, I->Obj.Setting, NULL, cSetting_dot_width));
@@ -1114,9 +1106,18 @@ static CGO *ObjectMeshRenderImpl(ObjectMesh * I, RenderInfo * info, int returnCG
 		  }
 		  if (ok){
 		    if (mesh_as_cylinders){
-		      convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(ms->shaderCGO, 0);
+                      CGO *tmpCGO = CGONew(G);
+                      ok &= CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
+                      if (ok) ok &= CGOSpecial(tmpCGO, MESH_WIDTH_FOR_SURFACES);
+                      convertcgo = CGOConvertShaderCylindersToCylinderShader(ms->shaderCGO,  tmpCGO);
+                      if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+                      if (ok) ok &= CGODisable(tmpCGO, GL_CYLINDER_SHADER);
+                      if (ok) ok &= CGOStop(tmpCGO);
+                      CGOFreeWithoutVBOs(convertcgo);
+                      convertcgo = tmpCGO;
+                      convertcgo->use_shader = convertcgo->has_draw_cylinder_buffers = true;
 		    } else {
-		      convertcgo = CGOOptimizeToVBONotIndexed(ms->shaderCGO, 0);
+		      convertcgo = CGOOptimizeToVBONotIndexedWithReturnedData(ms->shaderCGO, 0, false, NULL);
 		    }
 		    CHECKOK(ok, convertcgo);
 		  }

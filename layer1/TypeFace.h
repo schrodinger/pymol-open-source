@@ -33,4 +33,6 @@ int TypeFaceCharacterNew(CTypeFace * I, CharFngrprnt * fprnt, float size);
 float TypeFaceGetKerning(CTypeFace * I,
                          unsigned int last, unsigned int current, float size);
 
+float TypeFaceGetDescender(CTypeFace * I);
+
 #endif

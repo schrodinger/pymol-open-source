@@ -21,6 +21,14 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_gl.h"
 #include<math.h>
+
+// include GLM library
+#include <glm/glm.hpp>
+
+using glm::vec3;
+using glm::vec4;
+using glm::ivec2;
+
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
 
@@ -43,6 +51,7 @@ short countBits(unsigned long bits);
 short countBitsInt(int bits);
 
 typedef float Vector3f[3];      /* for local vars only - use float* for parameters */
+typedef float Vector4f[4];
 typedef int Vector3i[3];
 
 typedef float Matrix33f[3][3];
@@ -59,6 +68,8 @@ float rad_to_deg(float angle);
 
 void normalize23f(const float *v1, float *v2);
 void normalize3d(double *v1);
+void normalize2f(float *v1);
+void normalize4f(float *v1);
 
 void clamp3f(float *v1);
 void get_divergent3f(const float *src, float *dst);
@@ -122,7 +133,15 @@ bool is_diagonalf(int nrow,
     const float *m, int ncol=0, float threshold=1.0E-6F);
 double determinant33f(const float *m, int ncol=3);
 
-#define GLORTHO(l,r,b,t,n,f) glOrtho(l,r,b,t,n,f)
+void glOrtho44f(float *m1, 
+		GLfloat left, GLfloat right, 
+		GLfloat bottom, GLfloat top,
+		GLfloat nearVal, GLfloat farVal);
+void glFrustum44f(float *m1,
+		  GLfloat left, GLfloat right, 
+		  GLfloat bottom, GLfloat top,
+		  GLfloat nearVal, GLfloat farVal);
+
 void copy44f44f(const float *src, float *dst);
 void copy44d44f(const double *src, float *dst);
 void copy44f44d(const float *src, double *dst);
@@ -243,7 +262,6 @@ void transform5f3f(const oMatrix5f m, const float *v1, float *v2);
 void mult4f(const float *vsrc, float val, float *vdest);
 void mult3f(const float *vsrc, float val, float *vdest);
 float max3(float val1, float val2, float val3);
-float max2(float val1, float val2);
 float ave3(float val1, float val2, float val3);
 float ave2(float val1, float val2);
 void white4f(float *rgba, float value);

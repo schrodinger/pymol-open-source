@@ -31,9 +31,10 @@ typedef struct ObjectAlignmentState {
   /* not stored */
   int valid;
   OVOneToAny *id2tag;
-  CGO *std;
-  CGO *ray;
-  CGO *shaderCGO;
+  CGO *primitiveCGO;
+  CGO *renderCGO;
+  bool renderCGO_has_cylinders;
+  bool renderCGO_has_trilines;
 } ObjectAlignmentState;
 
 typedef struct ObjectAlignment {

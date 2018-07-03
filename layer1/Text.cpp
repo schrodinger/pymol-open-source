@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"FontType.h"
 #include"Color.h"
 #include"Vector.h"
+#include"Executive.h"
 
 #ifdef _PYMOL_FREETYPE
 #include "FontTTF.h"
@@ -45,17 +46,30 @@ typedef struct {
   CFont *Font;
 } ActiveRec;
 
+#define NFONTS 20
+
 struct _CText {
   int NActive;
   ActiveRec *Active;
   float Pos[4];
   float WorldPos[4];
   float ScreenWorldOffset[3];
+  float TargetPos[3];
+  float LabelPushPos[3];
+  float LabelPos[3];
+  unsigned char LabelPosIsSet; // 1 for just z, 2 for 3f
+  float TextIndentFactor[2];
   float Color[4];
   unsigned char UColor[4];
   unsigned char OutlineColor[4];
   int Default_ID;
-  int Flat;
+  float Height, Width;
+  float Spacing, Just;
+  float LabelBuf[2];
+
+  int XHRFetched[NFONTS];
+  int XHRFailed[NFONTS];
+  bool Flat, IsPicking;
 };
 
 static void TextUpdateUColor(CText * I)
@@ -64,6 +78,30 @@ static void TextUpdateUColor(CText * I)
   I->UColor[1] = (unsigned char) (_255 * I->Color[1] + _499);
   I->UColor[2] = (unsigned char) (_255 * I->Color[2] + _499);
   I->UColor[3] = (unsigned char) (_255 * I->Color[3] + _499);
+}
+
+void TextSetLabelBkgrdInfo(PyMOLGlobals * G, float label_spacing, float label_just, const float *buff){
+  CText *I = G->Text;
+  I->Spacing = label_spacing;
+  I->Just = label_just;
+  if (buff){
+    I->LabelBuf[0] = buff[0];
+    I->LabelBuf[1] = buff[1];
+  } else {
+    I->LabelBuf[0] = I->LabelBuf[1] = .2f;
+  }
+}
+
+void TextSetIsPicking(PyMOLGlobals * G, bool IsPicking)
+{
+  CText *I = G->Text;
+  I->IsPicking = IsPicking;
+}
+
+bool TextGetIsPicking(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  return I->IsPicking;
 }
 
 void TextSetPosNColor(PyMOLGlobals * G, const float *pos, const float *color)
@@ -121,6 +159,39 @@ float *TextGetWorldPos(PyMOLGlobals * G){
   CText *I = G->Text;
   return I->WorldPos;
 }
+void TextSetLabelPos(PyMOLGlobals * G, const float *pos)
+{
+  CText *I = G->Text;
+  copy3f(pos, I->LabelPos);
+}
+
+float *TextGetLabelPos(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  return (I->LabelPos);
+}
+
+void TextSetLabelPosIsSet(PyMOLGlobals * G, unsigned char isSet)
+{
+  CText *I = G->Text;
+  I->LabelPosIsSet = isSet;
+}
+
+unsigned char TextGetLabelPosIsSet(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  return I->LabelPosIsSet;
+}
+
+void TextSetLabelPushPos(PyMOLGlobals * G, const float *pos)
+{
+  CText *I = G->Text;
+  copy3f(pos, I->LabelPushPos);
+}
+float *TextGetLabelPushPos(PyMOLGlobals * G){
+  CText *I = G->Text;
+  return I->LabelPushPos;
+}
 void TextSetScreenWorldOffset(PyMOLGlobals * G, const float *pos)
 {
   CText *I = G->Text;
@@ -131,6 +202,14 @@ void TextSetScreenWorldOffset(PyMOLGlobals * G, const float *pos)
 float *TextGetScreenWorldOffset(PyMOLGlobals * G){
   CText *I = G->Text;
   return I->ScreenWorldOffset;
+}
+void TextSetTargetPos(PyMOLGlobals * G, const float *pos){
+  CText *I = G->Text;
+  copy3f(pos, I->TargetPos);
+}
+float *TextGetTargetPos(PyMOLGlobals * G){
+  CText *I = G->Text;
+  return I->TargetPos;
 }
 
 void TextDrawSubStrFast(PyMOLGlobals * G, const char *c, int x, int y, int start, int n ORTHOCGOARG)
@@ -228,16 +307,68 @@ void TextSetPickColor(PyMOLGlobals * G, int first_pass, int index)
   I->Color[3] = 1.0F;
 }
 
+void TextSetColorFromUColor(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  I->Color[0] = I->UColor[0] * _inv255;
+  I->Color[1] = I->UColor[1] * _inv255;
+  I->Color[2] = I->UColor[2] * _inv255;
+  I->Color[3] = 1.0F;
+}
+
 float *TextGetPos(PyMOLGlobals * G)
 {
   CText *I = G->Text;
   return I->Pos;
 }
 
+float TextGetWidth(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  return I->Width;
+}
+
+float TextGetHeight(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  return I->Height;
+}
+
+void TextSetIndentFactorX(PyMOLGlobals * G, float factor){
+  CText *I = G->Text;
+  I->TextIndentFactor[0] = factor;
+}
+
+void TextSetIndentFactorY(PyMOLGlobals * G, float factor){
+  CText *I = G->Text;
+  I->TextIndentFactor[1] = factor;
+}
+float *TextGetIndentFactor(PyMOLGlobals * G){
+  CText *I = G->Text;
+  return I->TextIndentFactor;
+}
+
+void TextSetWidth(PyMOLGlobals * G, float text_width)
+{
+  CText *I = G->Text;
+  I->Width = text_width;
+}
+
+void TextSetHeight(PyMOLGlobals * G, float text_height)
+{
+  CText *I = G->Text;
+  I->Height = text_height;
+}
+
 float *TextGetColor(PyMOLGlobals * G)
 {
   CText *I = G->Text;
   return I->Color;
+}
+
+unsigned char *TextGetColorUChar4uv(PyMOLGlobals * G){
+  CText *I = G->Text;
+  return I->UColor;
 }
 
 void TextGetColorUChar(PyMOLGlobals * G, unsigned char *red,
@@ -262,7 +393,9 @@ void TextGetOutlineColor(PyMOLGlobals * G,
 }
 
 const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
-                       const char *st, float size, float *rpos, CGO *shaderCGO)
+    const char *st, float size, float *rpos,
+    short needSize, short relativeMode, short shouldRender,
+    CGO *shaderCGO)
 {
   CText *I = G->Text;
   CFont *font;
@@ -272,13 +405,15 @@ const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id,
 
   if(st && (*st)) {
     if((text_id >= 0) && (text_id < I->NActive)) {
+      if (I->Active[text_id].Font) {
       font = I->Active[text_id].Font;
       if(I->Flat)
         fn = font->fRenderOpenGLFlat;
       else
         fn = font->fRenderOpenGL;
       if(fn)
-        return fn(info, font, st, size, rpos SHADERCGOARGVAR);
+	  return fn(info, font, st, size, rpos, needSize, relativeMode, shouldRender SHADERCGOARGVAR);
+      }
     }
     /* make sure we got to end of string */
     if(*st)
@@ -291,13 +426,13 @@ void TextDrawStrAt(PyMOLGlobals * G, const char *st, int x, int y ORTHOCGOARG)
 {
   CText *I = G->Text;
   TextSetPos3f(G, (float) x, (float) y, 0.0F);
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
+  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL, false, 0, 1 ORTHOCGOARGVAR);
 }
 
 void TextDrawStr(PyMOLGlobals * G, const char *st ORTHOCGOARG)
 {
   CText *I = G->Text;
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
+  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL, false, 0, 1 ORTHOCGOARGVAR);
 }
 
 void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG)
@@ -305,11 +440,11 @@ void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG)
   char st[2] = { 0, 0 };
   CText *I = G->Text;
   st[0] = ch;
-  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL ORTHOCGOARGVAR);
+  TextRenderOpenGL(G, NULL, I->Default_ID, st, TEXT_DEFAULT_SIZE, NULL, false, 0, 1 ORTHOCGOARGVAR);
 }
 
 const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
-    const char *st, float size, float *rpos)
+    const char *st, float size, float *rpos, short needSize, short relativeMode)
 {
   CText *I = G->Text;
   CFont *font;
@@ -326,7 +461,7 @@ const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id,
 
       fn = font->fRenderRay;
       if(fn)
-        return fn(ray, font, st, size, rpos);
+        return fn(ray, font, st, size, rpos, needSize, relativeMode);
     }
     /* make sure we got to end of string */
     if(*st)
@@ -339,6 +474,11 @@ int TextInit(PyMOLGlobals * G)
 {
   CText *I = NULL;
   if((I = (G->Text = Calloc(CText, 1)))) {
+    int i = 0;
+    for (; i < NFONTS; i++) {
+      I->XHRFetched[i] = 0;
+      I->XHRFailed[i] = 0;
+    }
 
     I->NActive = 0;
     I->Active = VLACalloc(ActiveRec, 10);
@@ -608,8 +748,21 @@ void TextFree(PyMOLGlobals * G)
   VLAFreeP(I->Active);
   FreeP(G->Text);
 }
-#ifdef _PYMOL_IP_EXTRAS
-#endif
+float TextGetSpacing(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  return I->Spacing;
+}
+float TextGetJustification(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  return I->Just;
+}
+float *TextGetLabelBuffer(PyMOLGlobals * G)
+{
+  CText *I = G->Text;
+  return I->LabelBuf;
+}
 
 /*
  * GUI elements like internal menus or the wizard prompt can handle text

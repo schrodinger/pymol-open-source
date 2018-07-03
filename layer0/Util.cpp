@@ -395,6 +395,19 @@ void UtilSortIndexGlobals(PyMOLGlobals *G,int n,void *array,int *x,UtilOrderFnGl
 
 int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
 {
+  return UtilSemiSortFloatIndexWithNBins(n, n, array, x, forward);
+}
+
+int UtilSemiSortFloatIndexWithNBins(int n, int nbins, float *array, int *destx, int forward)
+{
+  int *start1 = Calloc(int,n + nbins);
+  int ret = UtilSemiSortFloatIndexWithNBinsImpl(start1, n, nbins, array, destx, forward);
+  mfree(start1);
+  return ret;
+}
+
+int UtilSemiSortFloatIndexWithNBinsImpl(int *start1, int n, int nbins, float *array, int *destx, int forward)
+{
   /* approximate sort, for quick handling of transparency values */
   /* this sort uses 2 arrays start1 and next1 to keep track of */
   /* the indexes.  The values in start1 are set to the index */
@@ -404,29 +417,31 @@ int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
   /* This makes it easy to go through the 2 arrays and write into the */
   /* x array the approximate order of the floating point values in array */
   /* by indexes. */
-  /* Since there are two arrays of n length, this guarentees that there */
+  /* Since there are two arrays, this guarentees that there */
   /* will be enough memory to hold all indexes.  If there are many collisions, */
   /* the next1 array will hold a link to most of the indexes, which are traversed */
   /* when the first index is found in start1.  If there are few collisions, then */
   /* the majority of the start1 array is used. The total number of items used in */
   /* both arrays will always be the number of values, i.e., n. */
+  /* 9/9/14: BB - added start1 and nbins argument
+     start1 - pre-allocated memory
+     nbins - allows the first array to be controled as the number of bins, 
+             to match how CGORenderGLAlpha() sorts its triangles.
+  */
   int ok = true;
   if(n>0) {
     float min,max,*f,v;
     float range, scale;
     int a;
-    int *start1;
     int *next1;
     int idx1;
-    int n_minus_one;
 
-    start1 = Calloc(int,n*2);
     CHECKOK(ok, start1);
     if (!ok){
       return false;
     }
 
-    next1 = start1 + n;
+    next1 = start1 + nbins;
     max = (min = array[0]);
     f = array + 1;
     for(a=1;a<n;a++) {
@@ -434,12 +449,12 @@ int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
       if(max<v) max=v;
       if(min>v) min=v;
     }
-    range = (max-min)*1.0001F; /* for boundary conditions */
+    range = (max-min)/.9999F; /* for boundary conditions */
     if(range<R_SMALL8) { 
       for(a=0;a<n;a++)
-        x[a] = a;
+        destx[a] = a;
     } else {
-      scale = n/range;
+      scale = nbins/range;
       f = array;
       /* hash by value (actually binning) */
       if(forward) {
@@ -449,9 +464,8 @@ int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
           start1[idx1] = a+1;
         }
       } else {
-        n_minus_one = n-1;
         for(a=0;a<n;a++) {
-          idx1 = n_minus_one-(int)((*(f++)-min)*scale);
+          idx1 = (nbins-1) - (int)((*(f++)-min)*scale);
           next1[a] = start1[idx1];
           start1[idx1] = a+1;
         }
@@ -461,11 +475,11 @@ int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
         int c=0;
         int cur1;        
         a=0;
-        while(a<n) {
+        while(a<nbins) {
           if( (cur1 = start1[a]) ) {
             idx1 = cur1 - 1;
             while(1) {
-              x[c++] = idx1;
+              destx[c++] = idx1;
               if(! (cur1 = next1[idx1]))
                 break;
               idx1 = cur1 - 1;
@@ -475,7 +489,6 @@ int UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
         }
       }
     }
-    mfree(start1);
   }
   return true;
 }

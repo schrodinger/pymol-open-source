@@ -143,6 +143,10 @@ void TypeFree(PyMOLGlobals * G)
   FreeP(G->Type);
 }
 
+float TypeFaceGetDescender(CTypeFace * I){
+  return fabs(I->Face->descender/(float)I->Face->height);
+}
+
 #else
 
 int TypeFaceCharacterNew(CTypeFace * I, CharFngrprnt * fprnt, float size)
@@ -174,4 +178,9 @@ void TypeFree(PyMOLGlobals * G)
 {
 }
 
+float TypeFaceGetDescender(CTypeFace * I){
+  return 0.f;
+}
+
 #endif
+

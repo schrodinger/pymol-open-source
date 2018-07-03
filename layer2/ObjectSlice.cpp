@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"ObjectGadgetRamp.h"
 #include"CGO.h"
+#include"ShaderMgr.h"
 
 #define START_STRIP -1
 #define STOP_STRIP -2
@@ -955,6 +956,10 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
   int dynamic_grid = SettingGet_b(G, NULL, I->Obj.Setting, cSetting_slice_dynamic_grid);
   ObjectSliceState *oss = NULL;
   int use_shaders = !track_camera && SettingGet_b(G, NULL, I->Obj.Setting, cSetting_use_shaders);
+  if (G->ShaderMgr->Get_Current_Shader()){
+    // just in case, since slice uses immediate mode, but this should never happen
+    G->ShaderMgr->Get_Current_Shader()->Disable();
+  }
   
   if(track_camera || dynamic_grid) {
     int update_flag = false;
@@ -1009,7 +1014,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
     ObjectSliceUpdate(I);
   }
 
-  ObjectPrepareContext(&I->Obj, ray);
+  ObjectPrepareContext(&I->Obj, info);
   alpha = SettingGet_f(G, NULL, I->Obj.Setting, cSetting_transparency);
   alpha = 1.0F - alpha;
   if(fabs(alpha - 1.0) < R_SMALL4)
@@ -1104,9 +1109,11 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
           ray->transparentf(0.0);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
+            if (oss->shaderCGO && (I->Obj.visRep & cRepSliceBit)){
+              CGORenderGLPicking(oss->shaderCGO, info, &I->context, I->Obj.Setting, NULL);
+            } else {
 #ifndef PURE_OPENGL_ES_2
-            int i = (*pick)->src.index;
-            int j;
+            unsigned int i = (*pick)->src.index;
             Picking p;
 	    SceneSetupGLPicking(G);
             p.context.object = (void *) I;
@@ -1145,22 +1152,9 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
                     offset0 = offset;
 
                     if(tri_count >= 3) {
-
-                      i++;
-                      if(!(*pick)[0].src.bond) {
-                        /* pass 1 - low order bits */
-                        glColor3ub((uchar) ((i & 0xF) << 4), (uchar) ((i & 0xF0) | 0x8),
-                                   (uchar) ((i & 0xF00) >> 4));
-                        VLACheck((*pick), Picking, i);
-                        (*pick)[i] = p; /* copy object and atom info */
-                      } else {
-                        /* pass 2 - high order bits */
-
-                        j = i >> 12;
-                        glColor3ub((uchar) ((j & 0xF) << 4), (uchar) ((j & 0xF0) | 0x8),
-                                   (uchar) ((j & 0xF00) >> 4));
-                      }
-                      p.src.bond = offset0 + 1;
+                      unsigned char color[4];
+                      AssignNewPickColor(NULL, i, pick, &I->context, color, p.src.index, p.src.bond);
+                      glColor4ubv(color);
 
                       if(tri_count & 0x1) {     /* get the handedness right ... */
                         glVertex3fv(point + 3 * offset0);
@@ -1171,6 +1165,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
                         glVertex3fv(point + 3 * offset0);
                         glVertex3fv(point + 3 * offset2);
                       }
+                      p.src.bond = offset0 + 1;
                     }
                   }
                   break;
@@ -1182,6 +1177,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
             }
             (*pick)[0].src.index = i;   /* pass the count */
 #endif
+            }
           } else {  // !pick
             int render_now = false;
             if(alpha > 0.0001) {
@@ -1191,33 +1187,17 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 
             if(render_now) {
 	      int already_rendered = false;
-	      int generate_shader_cgo = false;
-	      if (use_shaders){
+
 		if (oss->shaderCGO){
 		  CGORenderGL(oss->shaderCGO, NULL, NULL, I->Obj.Setting, info, NULL);
 		  already_rendered = true;
 		} else {
 		  oss->shaderCGO = CGONew(G);
-		  generate_shader_cgo = true;
-		}
 	      }
 
 	      if (!already_rendered){
-		if (generate_shader_cgo){
 		  SceneResetNormalCGO(G, oss->shaderCGO, false);
-		  /*
-		  CGOColor(oss->shaderCGO, 1.f, 1.f, 1.f);
-		  GenerateOutlineOfSlice(G, oss, oss->shaderCGO);
-		  */
 		  ObjectUseColorCGO(oss->shaderCGO, &I->Obj);
-		} else {
-		  SceneResetNormal(G, false);
-		  /*
-		  glColor3f(1.f, 1.f, 1.f);
-		  GenerateOutlineOfSlice(G, oss, NULL);
-		  */
-		  ObjectUseColor(&I->Obj);
-		}
 		
 		  if((I->Obj.visRep & cRepSliceBit)) {
 		    int *strip = oss->strips;
@@ -1235,20 +1215,16 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 		      normal[1] = oss->system[5];
 		      normal[2] = oss->system[8];
 		      
-		      if (generate_shader_cgo){
 			CGONormalv(oss->shaderCGO, normal);
-		      } else {
-			glNormal3fv(normal);
-		      }
 		    }
 		    
-		    if (generate_shader_cgo){
 		      for(a = 0; a < n; a++) {
 			offset = *(strip++);
 			switch (offset) {
 			case START_STRIP:
-			  if(!strip_active)
+                      if(!strip_active){
 			    CGOBegin(oss->shaderCGO, GL_TRIANGLE_STRIP);
+                      }
 			  strip_active = true;
 			  break;
 			case STOP_STRIP:
@@ -1264,6 +1240,7 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 			      CGONormalv(oss->shaderCGO, vnormal + 3 * offset);
 			    CGOAlpha(oss->shaderCGO, alpha);
 			    CGOColor(oss->shaderCGO, col[0], col[1], col[2]);
+                        CGOPickColor(oss->shaderCGO, state + 1, offset + 1);
 			    CGOVertexv(oss->shaderCGO, point + 3 * offset);
 			  }
 			  break;
@@ -1271,50 +1248,20 @@ static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)
 		      }
 		      if(strip_active)      /* just in case */
 			CGOEnd(oss->shaderCGO);
-		    } else {
-#ifndef PURE_OPENGL_ES_2
-		      for(a = 0; a < n; a++) {
-			offset = *(strip++);
-			switch (offset) {
-			case START_STRIP:
-			  if(!strip_active)
-			    glBegin(GL_TRIANGLE_STRIP);
-			  strip_active = true;
-			  break;
-			case STOP_STRIP:
-			  if(strip_active)
-			    glEnd();
-			  strip_active = false;
-			  break;
-			default:
-			  if(strip_active) {
-			    float *col;
-			    col = color + 3 * offset;
-			    if(vnormal)
-			      glNormal3fv(vnormal + 3 * offset);
-			    glColor4f(col[0], col[1], col[2], alpha);
-			    glVertex3fv(point + 3 * offset);
-			  }
-			  break;
-			}
-		      }
-		      if(strip_active)      /* just in case */
-			glEnd();
-#endif
-		    }
-		  }
 		}
 		
-		if (generate_shader_cgo){
+                CGOStop(oss->shaderCGO);
+                if (use_shaders){
 		  CGO *convertcgo = oss->shaderCGO;	    
-		  CGOStop(oss->shaderCGO);
 		  convertcgo = CGOCombineBeginEnd(oss->shaderCGO, 0);	    
 		  CGOFree(oss->shaderCGO);
 		  oss->shaderCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
 		  oss->shaderCGO->use_shader = true;
-		  oss->shaderCGO->enable_shaders = true;
 		  CGOFree(convertcgo);
+                }
 		  CGORenderGL(oss->shaderCGO, NULL, NULL, I->Obj.Setting, info, NULL);
+                SceneInvalidatePicking(G);  // any time cgo is re-generated, needs to invalidate so
+                // pick colors can be re-assigned
 		}
 	    }
 	  }
@@ -1369,6 +1316,9 @@ ObjectSlice *ObjectSliceNew(PyMOLGlobals * G)
   I->Obj.fRender = (void (*)(CObject *, RenderInfo *)) ObjectSliceRender;
   I->Obj.fInvalidate = (void (*)(CObject *, int, int, int)) ObjectSliceInvalidate;
   I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectSliceGetNStates;
+
+  I->context.object = (void *) I;
+  I->context.state = 0;
   return (I);
 }
 

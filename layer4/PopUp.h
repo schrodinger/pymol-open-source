@@ -23,5 +23,6 @@ Z* -------------------------------------------------------------------
 
 Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                 int passive, PyObject * list, Block * parent);
+int PopUpDrag(Block * block, int x, int y, int mod);
 
 #endif

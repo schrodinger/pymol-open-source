@@ -101,7 +101,7 @@ void CharacterSetRetention(PyMOLGlobals * G, int retail_all);
 unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals * G, int id);
 
 void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info);
-void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short isworldlabel SHADERCGOARG);
+short CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id, short isworldlabel, short relativeMode SHADERCGOARG);
 void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info);
 
 #endif

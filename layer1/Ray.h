@@ -123,6 +123,7 @@ struct _CRay {
   int *Vert2Prim;
   float CurColor[3], IntColor[3];
   float ModelView[16];
+  float ProMatrix[16];
   float Rotation[16];
   float Volume[6];
   float Range[3];
@@ -153,5 +154,13 @@ struct _CRay {
   unsigned char *bkgrd_data;
   int bkgrd_width, bkgrd_height;
 };
+
+void RayGetScreenVertex(CRay * I, float *v, float *dest);
+float RayGetScreenVertexScale(CRay * I, float *v1);
+void RayAdjustZtoScreenZ(CRay * ray, float *pos, float z);
+void RayAdjustZtoScreenZofPoint(CRay * ray, float *pos, float *zpoint);
+void RaySetPointToWorldScreenRelative(CRay * ray, float *pos, float *screenPt);
+float RayGetScaledAllAxesAtPoint(CRay * I, float *pt, float *xn, float *yn, float *zn);
+float* RayGetProMatrix(CRay * I);
 
 #endif

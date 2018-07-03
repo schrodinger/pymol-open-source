@@ -78,13 +78,28 @@ void TextFree(PyMOLGlobals * G);
 
 void TextSetLabPos(PyMOLGlobals * G, const float *pos, const LabPosType * labpos, const char *text);
 void TextSetPickColor(PyMOLGlobals * G, int index, int pass);
+void TextSetColorFromUColor(PyMOLGlobals * G);
 
 void TextSetWorldPos(PyMOLGlobals * G, const float *pos);
 float *TextGetWorldPos(PyMOLGlobals * G);
+void TextSetLabelPushPos(PyMOLGlobals * G, const float *pos);
+float *TextGetLabelPushPos(PyMOLGlobals * G);
+void TextSetLabelPos(PyMOLGlobals * G, const float *pos);
+float *TextGetLabelPos(PyMOLGlobals * G);
+void TextSetLabelPosIsSet(PyMOLGlobals * G, unsigned char isSet);
+unsigned char TextGetLabelPosIsSet(PyMOLGlobals * G);
 void TextSetScreenWorldOffset(PyMOLGlobals * G, const float *pos);
 float *TextGetScreenWorldOffset(PyMOLGlobals * G);
+void TextSetTargetPos(PyMOLGlobals * G, const float *pos);
+float *TextGetTargetPos(PyMOLGlobals * G);
+float TextGetWidth(PyMOLGlobals * G);
+float TextGetHeight(PyMOLGlobals * G);
+void TextSetWidth(PyMOLGlobals * G, float text_width);
+void TextSetHeight(PyMOLGlobals * G, float text_height);
+void TextSetIndentFactorX(PyMOLGlobals * G, float factor);
+void TextSetIndentFactorY(PyMOLGlobals * G, float factor);
+float *TextGetIndentFactor(PyMOLGlobals * G);
 void TextSetPos(PyMOLGlobals * G, const float *pos);
-
 void TextSetColor(PyMOLGlobals * G, const float *color);
 void TextSetColor3f(PyMOLGlobals * G, float red, float green, float blue);
 void TextGetOutlineColor(PyMOLGlobals * G,
@@ -96,11 +111,11 @@ float *TextGetColor(PyMOLGlobals * G);
 float *TextGetPos(PyMOLGlobals * G);
 void TextGetColorUChar(PyMOLGlobals * G, unsigned char *red,
                        unsigned char *green, unsigned char *blue, unsigned char *alpha);
-
+unsigned char *TextGetColorUChar4uv(PyMOLGlobals * G);
 const char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id, const char *st,
-                       float size, float *rpos, CGO *shaderCGO);
+                       float size, float *rpos, short needSize, short relativeMode, short shouldRender, CGO *shaderCGO);
 const char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id, const char *st, float size,
-                    float *rpos);
+                    float *rpos, short needSize, short relativeMode);
 
 void TextDrawStrAt(PyMOLGlobals * G, const char *st, int x, int y ORTHOCGOARG);
 void TextDrawStr(PyMOLGlobals * G, const char *st ORTHOCGOARG);
@@ -111,8 +126,14 @@ void TextDrawChar(PyMOLGlobals * G, char ch ORTHOCGOARG);
 void TextDrawSubStrFast(PyMOLGlobals * G, const char *c, int x, int y, int start, int n ORTHOCGOARG);
 void TextDrawCharRepeat(PyMOLGlobals * G, char c, int x, int y, int start, int n ORTHOCGOARG);
 
-#ifdef _PYMOL_IP_EXTRAS
-#endif
+void TextSetLabelBkgrdInfo(PyMOLGlobals * G, float label_spacing, float label_just, const float *buff);
+
+float TextGetSpacing(PyMOLGlobals * G);
+float TextGetJustification(PyMOLGlobals * G);
+float *TextGetLabelBuffer(PyMOLGlobals * G);
+
+void TextSetIsPicking(PyMOLGlobals * G, bool IsPicking);
+bool TextGetIsPicking(PyMOLGlobals * G);
 
 bool TextStartsWithColorCode(const char *);
 bool TextSetColorFromCode(PyMOLGlobals *, const char *, const float *);

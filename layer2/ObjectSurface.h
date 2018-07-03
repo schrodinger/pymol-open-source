@@ -48,6 +48,10 @@ typedef struct {
   CGO *UnitCellCGO;
   int Side;
   CGO *shaderCGO;
+
+  /* for immediate mode, holds vertices and colors, used temporarily to generate CGOs */
+  float **t_buf; // vertices
+  float **c_buf; // colors
 } ObjectSurfaceState;
 
 typedef struct ObjectSurface {

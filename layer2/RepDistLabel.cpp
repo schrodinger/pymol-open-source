@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 
 #include"OOMac.h"
 #include"RepDistLabel.h"
+#include"RepLabel.h"
 #include"Color.h"
 #include"Scene.h"
 #include"main.h"
@@ -46,6 +47,7 @@ typedef struct RepDistLabel {
   DistSet *ds;
   int OutlineColor;
   CGO *shaderCGO;
+  int texture_font_size;
 } RepDistLabel;
 
 #define SHADERCGO I->shaderCGO
@@ -77,10 +79,22 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
   int color;
   int font_id = SettingGet_i(G, NULL, I->Obj->Setting, cSetting_label_font_id);
   float font_size = SettingGet_f(G, NULL, I->Obj->Setting, cSetting_label_size);
+  int float_text = SettingGet_i(G, NULL, I->Obj->Setting, cSetting_float_labels);
   int ok = true;
+  short use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
+  if (I->R.MaxInvalid >= cRepInvRep)
+    return;
+  font_id = SettingCheckFontID(G, NULL, I->Obj->Setting, font_id);
+
+  if (I->shaderCGO && font_size < 0.f){
+    int size;
+    if (InvalidateShaderCGOIfTextureNeedsUpdate(G, font_size, I->texture_font_size, &size)){
+      CGOFree(I->shaderCGO);
+      I->texture_font_size = size;
+    }
+  }
 
   if(ray) {
-
     TextSetOutlineColor(G, I->OutlineColor);
     color = SettingGet_color(G, NULL, I->Obj->Setting, cSetting_label_color);
 
@@ -91,34 +105,70 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 
     while(c--) {
       TextSetPos(G, v);
-      TextRenderRay(G, ray, font_id, l[n], font_size, v + 3);
+      TextRenderRay(G, ray, font_id, l[n], font_size, v + 3, false, 0);
       v += 6;
       n++;
     }
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       if (I->shaderCGO){
-	CGORenderGLPicking(I->shaderCGO, pick, &I->R.context, NULL, NULL);
+        if(float_text)
+          glDisable(GL_DEPTH_TEST);
+	CGORenderGLPicking(I->shaderCGO, info, &I->R.context, NULL, NULL);
+        if(float_text)
+          glEnable(GL_DEPTH_TEST);
 	return;
-      }
     } else {
 	Pickable *p = I->R.P;
-      int float_text = SettingGet_i(G, NULL,
-                                    I->Obj->Setting,
-                                    cSetting_float_labels);
+	unsigned int i;
+        TextSetIsPicking(G, true);
+	SceneSetupGLPicking(G);
+	if(c) {
       if(float_text)
         glDisable(GL_DEPTH_TEST);
 
+	  i = (*pick)->src.index;
+	  while(c--) {
+	    if(*l) {
+	      TextSetPos(G, v);
+              p++;
+              AssignNewPickColor(NULL, i, pick, &I->R.context, TextGetColorUChar4uv(G), p->index, p->bond);
+              TextSetColorFromUColor(G);
+	      TextSetLabelBkgrdInfo(G, 1.f, 1.2f, NULL);
+	      TextSetLabelPosIsSet(G, 0);
+	      if (!TextRenderOpenGL(G, info, font_id, l[n], font_size, v + 3, false, 0, 1, 0)){
+                TextSetIsPicking(G, false);
+		return;
+              }
+	      n++;
+	    }
+	    v += 6;
+	  }
+	  if(float_text)
+	    glEnable(GL_DEPTH_TEST);
+	  (*pick)[0].src.index = i;       /* pass the count */
+	}
+        TextSetIsPicking(G, false);
+      }
+    } else {
+	Pickable *p = I->R.P;
+	
+        if (use_shader){
 	if (!I->shaderCGO){
 	  I->shaderCGO = CGONew(G);
 	  CHECKOK(ok, I->shaderCGO);
 	  if (ok){
 	    I->shaderCGO->use_shader = true;
-	    I->shaderCGO->enable_shaders = true;
 	  }
 	} else {
+	    info->texture_font_size = I->texture_font_size;
 	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 	  return;
+	}
+	} else if (I->shaderCGO){
+	  CGOFree(I->shaderCGO);
+	  if(float_text)
+	    glDisable(GL_DEPTH_TEST);
 	}
 
       TextSetOutlineColor(G, I->OutlineColor);
@@ -130,17 +180,35 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
         TextSetColor(G, ColorGet(G, I->Obj->Color));
       while(c--) {
 	p++;
-	if (ok)
+	if (ok && I->shaderCGO)
 	  ok &= CGOPickColor(I->shaderCGO, p->index, p->bond);
         TextSetPos(G, v);
-        TextRenderOpenGL(G, info, font_id, l[n], font_size, v + 3, SHADERCGO);
+	TextSetLabelBkgrdInfo(G, 1.f, 1.2f, NULL);
+	TextSetLabelPosIsSet(G, 0);
+	if (!TextRenderOpenGL(G, info, font_id, l[n], font_size, v + 3, false, 0, 1, SHADERCGO))
+	  return;
         v += 6;
         n++;
       }
       if (ok && I->shaderCGO){
 	ok &= CGOStop(I->shaderCGO);
 	if (ok){
-	  CGO *convertcgo = CGOOptimizeLabels(I->shaderCGO, 0);
+	  CGO *tmpCGO = CGONew(G);
+          CGOEnable(tmpCGO, GL_LABEL_SHADER);
+	  CGODisable(tmpCGO, GL_DEPTH_TEST_IF_FLOATING);
+          CGOSpecial(tmpCGO, SET_LABEL_SCALE_UNIFORMS);
+	  CGO *convertcgo = CGOConvertToLabelShader(I->shaderCGO, tmpCGO);
+	  if (!convertcgo) {
+	    CGOFree(tmpCGO);
+	    CGOFree(I->shaderCGO);
+	    return;
+	  }
+	  CGOAppendNoStop(tmpCGO, convertcgo);
+	  CGOFreeWithoutVBOs(convertcgo);
+	  CGOEnable(tmpCGO, GL_DEPTH_TEST_IF_FLOATING);
+	  CGODisable(tmpCGO, GL_LABEL_SHADER);
+          CGOStop(tmpCGO);
+	  convertcgo = tmpCGO;
 	  CHECKOK(ok, convertcgo);
 	  CGOFree(I->shaderCGO);
 	  I->shaderCGO = convertcgo;
@@ -148,8 +216,8 @@ static void RepDistLabelRender(RepDistLabel * I, RenderInfo * info)
 	}
 	if (ok && I->shaderCGO){
 	  I->shaderCGO->use_shader = true;
-	  I->shaderCGO->enable_shaders = true;
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
+	  RepDistLabelRender(I, info);
+	  return;
 	}
       }
       if(float_text)
@@ -203,11 +271,13 @@ Rep *RepDistLabelNew(DistSet * ds, int state)
   I->V = NULL;
   I->R.P = NULL;
   I->Obj = (CObject *) ds->Obj;
+  I->R.obj = I->Obj;
   I->ds = ds;
   I->R.context.object = (void *) ds->Obj;
   I->R.context.state = state;
 
   I->shaderCGO = NULL;
+  I->texture_font_size = 0;
 
   I->OutlineColor =
     SettingGet_i(G, NULL, I->Obj->Setting, cSetting_label_outline_color);

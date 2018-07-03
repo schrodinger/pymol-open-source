@@ -222,6 +222,34 @@ int ColorGetRamped(PyMOLGlobals * G, int index, const float *vertex, float *colo
   return (ok);
 }
 
+/* Color::ColorGetCheckRamped -- This function gets a color as 3 floats from an index and writes it into
+ * the color argument.  If the index is a ramp, then it uses the vertex and state arguments to lookup the
+ * color value in the ramp.
+ * NOTES: does not support index values cColorObject(-5) or cColorAtomic(-4) color since the object
+ *        or atom color is not passed in.
+ *
+ * PARAMS
+ *
+ * index - color index value
+ * vertex - x/y/z used for ramp lookup (if color index is a ramp)
+ * color - output color array of 3 floats
+ * state - state lookup if ramp
+ *
+ * RETURN VALUE: returns whether the color index is dependent on a ramp.
+ *
+ */
+bool ColorGetCheckRamped(PyMOLGlobals * G, int index, const float *vertex, float *color, int state)
+{
+  bool isRamped = false;
+  if(ColorCheckRamped(G, index)) {
+    ColorGetRamped(G, index, vertex, color, state);
+    isRamped = true;
+  } else {
+    copy3f(ColorGet(G, index), color);
+  }
+  return isRamped;
+}
+
 static int ColorFindExtByName(PyMOLGlobals * G, const char *name, int null_okay, int *best)
 {
   CColor *I = G->Color;

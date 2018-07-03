@@ -2105,7 +2105,8 @@ void PyMOL_Start(CPyMOL * I)
    which is called before the PYMOL_API is instantiated, thus
    it is not necessary (and you can't) lock the API */
 void PyMOL_ConfigureShadersGL_WithoutLock(CPyMOL * I){
-    ShaderMgrConfig(I->G);
+    I->done_ConfigureShaders = false;
+    // ShaderMgr->Config() moved to PyMOL_DrawWithoutLock
 }
 
 /* This function is called from CMol and needs to lock 
@@ -2167,7 +2168,7 @@ void PyMOL_Stop(CPyMOL * I)
   SceneFree(G);
   MovieScenesFree(G);
   OrthoFree(G);
-  CShaderMgrFree(G);
+  DeleteP(G->ShaderMgr);
   SettingFreeGlobal(G);
   CharacterFree(G);
   TextFree(G);
@@ -2359,6 +2360,10 @@ static void check_gl_stereo_capable(PyMOLGlobals * G)
   if (!state && buf <= GL_BACK) {
     printf("Warning: GL_DOUBLEBUFFER=0\n");
   }
+
+  // default framebuffer
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &buf);
+  G->ShaderMgr->default_framebuffer_id = buf;
 }
 #endif
 
@@ -2380,7 +2385,7 @@ void PyMOL_DrawWithoutLock(CPyMOL * I)
 
     PyMOL_LaunchStatus_Feedback(I->G);
 
-    PyMOL_ConfigureShadersGL_WithoutLock(I);
+    I->G->ShaderMgr->Config();
 
     // OpenGL debugging (glewInit must be called first)
     if (I->G->Option->gldebug) {

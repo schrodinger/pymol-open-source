@@ -75,9 +75,9 @@ def customize_compiler(compiler):
 
     cxx_cmd = cxx + ' ' + cxxflags
 
-    # C++11 by default (c++0x works for now and supports more compiler versions)
+    # C++11 by default
     if '-std=' not in cxx_cmd:
-        cxx_cmd += ' -std=c++0x'
+        cxx_cmd += ' -std=c++11'
 
     compiler.set_executables(
             compiler_cxx=cxx_cmd,

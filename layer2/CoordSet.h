@@ -119,8 +119,12 @@ typedef struct CoordSet {
   mmpymolx_prop_state_t validTextType;
 #endif
 
-#ifdef _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_PROPERTIES
 #endif
+
+  /* Atom-state Settings */
+  int *atom_state_setting_id;
+  char *has_atom_state_settings;
 } CoordSet;
 
 typedef void (*fUpdateFn) (CoordSet *, int);
@@ -162,7 +166,7 @@ int CoordSetGetAtomVertex(CoordSet * I, int at, float *v);
 int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v);
 int CoordSetSetAtomVertex(CoordSet * I, int at, const float *v);
 int CoordSetMoveAtom(CoordSet * I, int at, const float *v, int mode);
-int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, int mode);
+int CoordSetMoveAtomLabel(CoordSet * I, int at, const float *v, const float *diff);
 
 int CoordSetTransformAtomTTTf(CoordSet * I, int at, const float *TTT);
 int CoordSetTransformAtomR44f(CoordSet * I, int at, const float *matrix);
@@ -181,6 +185,36 @@ void CoordSetUpdateThread(CCoordSetUpdateThreadInfo * T);
 
 void LabPosTypeCopy(const LabPosType * src, LabPosType * dst);
 void RefPosTypeCopy(const RefPosType * src, RefPosType * dst);
+
+
+#ifndef _PYMOL_NOPY
+int CoordSetSetSettingFromPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id, PyObject *val);
+#endif
+int CoordSetCheckSetting(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id);
+PyObject *SettingGetIfDefinedPyObject(PyMOLGlobals * G, CoordSet *cs, int at, int setting_id);
+int CoordSetCheckUniqueID(PyMOLGlobals * G, CoordSet *cs, int at);
+
+#define AtomStateGetSetting_b     AtomStateGetSetting
+#define AtomStateGetSetting_i     AtomStateGetSetting
+#define AtomStateGetSetting_f     AtomStateGetSetting
+#define AtomStateGetSetting_s     AtomStateGetSetting
+#define AtomStateGetSetting_color AtomStateGetSetting
+
+#define ATOMSTATEGETSETTINGARGS PyMOLGlobals * G, \
+  const ObjectMolecule * obj, \
+  const CoordSet * cs, int idx, \
+  const AtomInfoType * ai, \
+  int setting_id
+
+template <typename V> void AtomStateGetSetting(ATOMSTATEGETSETTINGARGS, V * out);
+
+// atom-state level setting
+template <typename V> void SettingSet(int index, V value, CoordSet *cs, int idx) {
+  auto& G = cs->State.G;
+  CoordSetCheckUniqueID(G, cs, idx);
+  cs->has_atom_state_settings[idx] = true;
+  SettingUniqueSet(G, cs->atom_state_setting_id[idx], index, value);
+}
 
 // object-state level setting
 template <typename V> void SettingSet(int index, V value, CoordSet *cs) {

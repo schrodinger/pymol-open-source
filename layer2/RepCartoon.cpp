@@ -55,7 +55,7 @@ public:
 
 typedef struct RepCartoon {
   Rep R;                        /* must be first! */
-  CGO *ray, *std, *preshader, *pickingCGO;
+  CGO *ray, *std, *preshader;
   char *LastVisib;
   unsigned char renderWithShaders, hasTransparency;
 } RepCartoon;
@@ -71,12 +71,160 @@ void RepCartoonFree(RepCartoon * I)
   if (I->ray != I->preshader)
     CGOFree(I->preshader);
   CGOFree(I->ray);
-  if(I->pickingCGO && (I->pickingCGO != I->std))
-    CGOFree(I->pickingCGO);
   CGOFree(I->std);
   FreeP(I->LastVisib);
   RepPurge(&I->R);
   OOFreeP(I);
+}
+
+/*
+ * CGOAddTwoSidedBackfaceSpecialOps: this function takes in a CGO,
+ * and outputs a CGO with that CGO wrapped with the two operations:
+ * enabling and disabling back faces if two_sided_lighting is not set
+ * (i.e., the CGOSpecial operations, see below)
+ *
+ */
+static
+CGO *CGOAddTwoSidedBackfaceSpecialOps(PyMOLGlobals *G, CGO *cgo){
+  CGO *tmpCGO = CGONew(G);
+  CGOSpecial(tmpCGO, ENABLE_BACK_FACES_IF_NOT_TWO_SIDED);
+  CGOAppendNoStop(tmpCGO, cgo);
+  CGOSpecial(tmpCGO, DISABLE_BACK_FACES_IF_NOT_TWO_SIDED);
+  CGOStop(tmpCGO);
+  tmpCGO->render_alpha = cgo->render_alpha;
+  CGOFreeWithoutVBOs(cgo);
+  return tmpCGO;
+}
+
+static int RepCartoonCGOGenerate(RepCartoon * I, RenderInfo * info)
+{
+  PyMOLGlobals *G = I->R.G;
+  int ok = true;
+
+  int use_shaders, has_cylinders_to_optimize;
+  float alpha = 1.0F - SettingGet_f(G, I->R.cs->Setting, I->R.obj->Setting, cSetting_cartoon_transparency);
+
+  use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_cartoon_use_shader);
+  has_cylinders_to_optimize = G->ShaderMgr->Get_CylinderShader(info->pass, 0) && 
+                              SettingGetGlobal_i(G, cSetting_cartoon_nucleic_acid_as_cylinders) && 
+                              SettingGetGlobal_b(G, cSetting_render_as_cylinders) && 
+                              CGOHasCylinderOperations(I->preshader);
+
+ if (I->std && 
+      (use_shaders ^ I->renderWithShaders)){
+    // if renderWithShaders doesn't match use_shader, clear CGO and re-generate
+    CGOFree(I->std);
+    I->std = 0;
+  }
+ I->hasTransparency = 0;
+  if (use_shaders){
+    CGO *convertcgo = NULL, *tmpCGO = NULL, *tmp2CGO = NULL;
+    if ((alpha < 1.f) && (SettingGetGlobal_i(G, cSetting_transparency_mode) != 3)){
+      // some transparency
+      float *color, colorWithA[4];
+      CGO *convertcgo2;
+      convertcgo2 = CGOSimplify(I->preshader, 0) ;
+      convertcgo = CGOCombineBeginEnd(convertcgo2, 0);
+      CGOFree(convertcgo2);
+      CHECKOK(ok, convertcgo);
+      color = ColorGet(G, I->R.obj->Color);
+      copy3f(color, colorWithA);
+      colorWithA[3] = alpha;
+      tmpCGO = CGOOptimizeToVBOIndexedWithColorEmbedTransparentInfo(convertcgo, 0, NULL, true);
+      CGOStop(tmpCGO);
+      CGOFree(convertcgo);
+
+      tmp2CGO = CGONew(G);
+      CGOEnable(tmp2CGO, GL_BACK_FACE_CULLING);
+      CGOAppendNoStop(tmp2CGO, tmpCGO);
+      CGODisable(tmp2CGO, GL_BACK_FACE_CULLING);
+      CGOStop(tmp2CGO);
+      CGOFreeWithoutVBOs(tmpCGO);
+
+      I->std = tmp2CGO;
+      I->hasTransparency = 1;
+    } else {
+      CGO *leftOverCGO = NULL;
+      if (has_cylinders_to_optimize && G->ShaderMgr->Get_CylinderShader(info->pass, 0)){
+        /* Optimize Cylinders into Shader operation */
+        CGO *tmpCGO = CGONew(G);
+        leftOverCGO = CGONew(G);
+        CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
+        CGOFilterOutCylinderOperationsInto(I->preshader, leftOverCGO);
+        convertcgo = CGOConvertShaderCylindersToCylinderShader(I->preshader, tmpCGO);
+        CGOAppendNoStop(tmpCGO, convertcgo);
+        CGODisable(tmpCGO, GL_CYLINDER_SHADER);
+        CGOStop(tmpCGO);
+        CGOFreeWithoutVBOs(convertcgo);
+        convertcgo = tmpCGO;
+        convertcgo->use_shader = true;
+      }
+      if (!leftOverCGO){
+        leftOverCGO = I->preshader;
+        convertcgo = CGONew(G);
+      }
+
+      bool has_spheres_to_optimize = CGOHasSphereOperations(leftOverCGO);
+      if (has_spheres_to_optimize){
+        /* Optimize spheres and putting them into convertcgo as a shader CGO operation */
+        CGO *sphereVBOs = NULL, *leftOverAfterSpheresCGO = NULL;
+        leftOverAfterSpheresCGO = CGONew(G);
+        sphereVBOs = CGOOptimizeSpheresToVBONonIndexed(leftOverCGO, 0, true, leftOverAfterSpheresCGO);
+        if (sphereVBOs){
+          ok &= CGOAppendNoStop(convertcgo, sphereVBOs);
+          CGOFreeWithoutVBOs(sphereVBOs);
+        } else {
+          CGOFree(leftOverAfterSpheresCGO);
+        }
+        if (leftOverCGO!=I->ray && leftOverCGO!=I->preshader){
+          CGOFree(leftOverCGO);
+        }
+        if (leftOverAfterSpheresCGO)
+          leftOverCGO = leftOverAfterSpheresCGO;
+      }
+
+      /* For the rest of the primitives that exist, simplify them into Geometry
+       * (should probably be no more, but do this anyway) */
+      CGO *leftOverCGOSimplified = NULL, *leftOverCGOCombined;
+      leftOverCGOSimplified = CGOSimplify(leftOverCGO, 0);
+      CHECKOK(ok, leftOverCGOSimplified);
+      leftOverCGOCombined = CGOCombineBeginEnd(leftOverCGOSimplified, 0);
+      CGOFree(leftOverCGOSimplified);
+      if (leftOverCGO!=I->ray && leftOverCGO!=I->preshader){
+        CGOFree(leftOverCGO);
+      }
+      // Convert all DrawArrays and Geometry to VBOs 
+      if (ok)
+        tmpCGO = CGOOptimizeToVBONotIndexed(leftOverCGOCombined, 0);
+      CHECKOK(ok, tmpCGO);
+      CGOFree(leftOverCGOCombined);
+      if (ok)
+        ok &= CGOAppend(convertcgo, tmpCGO);
+      CGOFreeWithoutVBOs(tmpCGO);
+      tmpCGO = NULL;
+      I->std = CGOAddTwoSidedBackfaceSpecialOps(G, convertcgo);
+    }
+  } else {
+    if (ok){
+      if (alpha < 1.f){
+        CGO *tmpCGO = NULL;
+        tmpCGO = CGOConvertTrianglesToAlpha(I->preshader);
+        I->std = tmpCGO;
+        I->std->render_alpha = 1; // CGORenderGL should call CGOSetZVector/CGORenderGLAlpha only
+      } else {
+        I->std = CGOSimplify(I->preshader, 0);
+        CHECKOK(ok, I->std);
+      }
+      I->std = CGOAddTwoSidedBackfaceSpecialOps(G, I->std);
+    }
+  }
+  if(I->preshader && (I->ray!=I->preshader)){
+    CGOFree(I->preshader);
+  }
+  I->preshader = NULL;
+  I->renderWithShaders = use_shaders;
+
+  return ok;
 }
 
 static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
@@ -86,87 +234,8 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
   PyMOLGlobals *G = I->R.G;
   int ok = true;
 
-  if (!ray && I->preshader){
-    int use_shaders, cartoon_use_shader, has_cylinders_to_optimize;
-    use_shaders = SettingGetGlobal_b(G, cSetting_use_shaders);
-    cartoon_use_shader = SettingGetGlobal_b(G, cSetting_cartoon_use_shader);
-    has_cylinders_to_optimize = CShaderPrg_Get_CylinderShader_NoSet(G) && SettingGetGlobal_i(G, cSetting_cartoon_nucleic_acid_as_cylinders) && SettingGetGlobal_b(G, cSetting_render_as_cylinders) ;
-    if (use_shaders && cartoon_use_shader){
-      CGO *convertcgo = NULL, *tmpCGO = NULL;
-      if (has_cylinders_to_optimize){
-	CGO *leftOverCGO = CGONew(G), *leftOverCGOSimplified = NULL, *sphereVBOs = NULL, *leftOverAfterSpheresCGO = NULL;
-	CHECKOK(ok, leftOverCGO);
-	/* Optimize Cylinders into Shader operation */
-	if (CShaderPrg_Get_CylinderShader_NoSet(G)){
-	  convertcgo = CGOOptimizeGLSLCylindersToVBOIndexedWithLeftOver(I->preshader, 0, leftOverCGO);
-	}
-	if (!convertcgo){
-	  convertcgo = CGONew(G);
-	  CHECKOK(ok, convertcgo);
-	  leftOverCGO = I->preshader;
-	  I->preshader = NULL;
-	} else if (ok) {
-	  ok &= CGOStop(leftOverCGO); 
-	}
-	/* Optimize spheres and putting them into convertcgo as a shader CGO operation */
-	if (ok)
-	  leftOverAfterSpheresCGO = CGONew(G);
-	CHECKOK(ok, leftOverAfterSpheresCGO);
-	if (ok)
-	  sphereVBOs = CGOOptimizeSpheresToVBONonIndexedImpl(leftOverCGO, 0, leftOverAfterSpheresCGO);
-	if (ok && sphereVBOs){
-	  ok &= CGOStop(leftOverAfterSpheresCGO);
-	  if (leftOverCGO!=I->ray){
-	    CGOFree(leftOverCGO);
-	    leftOverCGO = NULL;
-	  }
-	  if (ok && sphereVBOs)
-	    ok &= CGOAppend(convertcgo, sphereVBOs);
-	  CGOFreeWithoutVBOs(sphereVBOs);
-	  sphereVBOs = NULL;
-	} else {
-	  if (leftOverAfterSpheresCGO)
-	    CGOFree(leftOverAfterSpheresCGO);
-	  leftOverAfterSpheresCGO = leftOverCGO;
-	}
-	/* For the rest of the primitives that exist, simplify them into Geometry
-	 * (should probably be no more, but do this anyway) */
-	if (ok)
-	  leftOverCGOSimplified = CGOSimplify(leftOverAfterSpheresCGO, 0);
-	CHECKOK(ok, leftOverCGOSimplified);
-	if (leftOverAfterSpheresCGO!=I->ray){
-	  CGOFree(leftOverAfterSpheresCGO);
-	  leftOverAfterSpheresCGO = NULL;
-	}
-	/* Convert all DrawArrays and Geometry to VBOs */
-	if (ok)
-	  tmpCGO = CGOOptimizeToVBONotIndexed(leftOverCGOSimplified, 0);
-	CHECKOK(ok, tmpCGO);
-	CGOFree(leftOverCGOSimplified);
-	leftOverCGOSimplified = NULL;
-	if (ok)
-	  ok &= CGOAppend(convertcgo, tmpCGO);
-	CGOFreeWithoutVBOs(tmpCGO);
-	tmpCGO = NULL;
-	I->std = convertcgo;
-      } else if (ok){
-	convertcgo = CGOSimplify(I->preshader, 0);
-	CHECKOK(ok, convertcgo);
-	if (ok)
-	  tmpCGO = CGOOptimizeToVBONotIndexed(convertcgo, 0);
-	CHECKOK(ok, tmpCGO);
-	CGOFree(convertcgo);
-	convertcgo = NULL;
-	I->std = tmpCGO;
-      }
-    } else if (ok){
-      I->std = CGOSimplify(I->preshader, 0);
-      CHECKOK(ok, I->std);
-    }
-    if(I->preshader && (I->ray!=I->preshader)){
-      CGOFree(I->preshader);
-    }
-    I->preshader = NULL;
+  if (!ray && I->preshader) {
+    ok &= RepCartoonCGOGenerate(I, info);
   }
 
   if(ray) {
@@ -176,7 +245,7 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       " RepCartoonRender: rendering raytracable...\n" ENDFD;
 
     if(I->ray){
-      int rok = CGORenderRay(I->ray, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
+      int rok = CGORenderRay(I->ray, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
       if (!rok){
         if (I->ray == I->preshader)
           I->preshader = NULL;
@@ -187,7 +256,7 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
       try_std = true;
     }
     if(try_std && I->std){
-      ok &= CGORenderRay(I->std, ray, NULL, I->R.cs->Setting, I->R.obj->Setting);
+      ok &= CGORenderRay(I->std, ray, info, NULL, NULL, I->R.cs->Setting, I->R.obj->Setting);
       if (!ok){
 	CGOFree(I->std);
       }
@@ -196,13 +265,11 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
   } else if(G->HaveGUI && G->ValidContext) {
     int use_shader;
     use_shader = SettingGetGlobal_b(G, cSetting_cartoon_use_shader) &&
-		  SettingGetGlobal_b(G, cSetting_use_shaders)
-      && !pick;  /* should not use shaders for picking (for now) */
-    
+                 SettingGetGlobal_b(G, cSetting_use_shaders);
     if(pick) {
-      if(I->pickingCGO) {
-	I->pickingCGO->use_shader = use_shader;
-        CGORenderGLPicking(I->pickingCGO, pick, &I->R.context,
+      if(I->std) {
+        I->std->use_shader = use_shader;
+        CGORenderGLPicking(I->std, info, &I->R.context,
                            I->R.cs->Setting, I->R.obj->Setting);
       }
     } else {
@@ -211,13 +278,11 @@ static void RepCartoonRender(RepCartoon * I, RenderInfo * info)
 
         if(ok && I->std){
 	  I->std->use_shader = use_shader;
-
-	  I->std->enable_shaders = true;
           CGORenderGL(I->std, NULL, I->R.cs->Setting, I->R.obj->Setting, info, &I->R);
 	}
     }
   }
-  if (!ok || !CGOHasOperationsOfType(I->ray, 0)){
+  if (!ok || !I->ray || !CGOHasOperations(I->ray)){
     if (I->ray == I->preshader)
       I->preshader = NULL;
     CGOFree(I->ray);
@@ -317,7 +382,7 @@ bool has_nuc_neighbor(
 
 /* atix must contain n_atom + 1 elements, with the first atom repeated at the end */
 
-static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int n_atom,
+static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, int n_atom,
                     int *atix, ObjectMolecule * obj,
                     CoordSet * cs, float ring_width, CGO * cgo, int ring_color,
                     float ladder_radius, int ladder_color, int ladder_mode,
@@ -953,22 +1018,12 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
 		      color1 = ColorGet(G, g1_ai->color);
 		      color2 = ColorGet(G, g2_ai->color);
 		    }
-		    if (is_picking){ /* If picking, need to split cylinder in two to pick atoms */
-		      float midv[3], midc[3];
-		      average3f(g1p, g2p, midv);
-		      average3f(color1, color2, midc);
-		      if(!g1_ai->masked)
-			CGOPickColor(cgo, g1, cPickableAtom);
-		      CGOCustomCylinderv(cgo, g1p, midv, glyco_radius, 
-					 color1, midc, 2.0F, 0.0F);
-		      if(!g2_ai->masked)
-			CGOPickColor(cgo, g2, cPickableAtom);
-		      CGOCustomCylinderv(cgo, midv, g2p, glyco_radius, 
-					 midc, color2, 0.0F, 2.0F);
-		    } else {
-		      CGOCustomCylinderv(cgo, g1p, g2p, glyco_radius, 
-					 color1, color2, 2.0F, 2.0F);
-		    }
+                    CGOPickColor(cgo, g1, g1_ai->masked ? cPickableNoPick : cPickableAtom);
+                    Pickable pickcolor2 = { g2, g2_ai->masked ? cPickableNoPick : cPickableAtom };
+                    float axis[3];
+                    subtract3f(g2p, g1p, axis);
+                    CGOColorv(cgo, color1);
+                    cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, g1p, axis, glyco_radius, 0x1f, color2, &pickcolor2);
 		  }
                 }
               }
@@ -1019,24 +1074,12 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
 			color1 = ColorGet(G, sug_ai->color);
 			color2 = ColorGet(G, bas_ai->color);
 		      }
-		      if (is_picking){
-			float midv[3], midc[3];
-			average3f(cs->Coord + 3 * sug, cs->Coord + 3 * bas, midv);
-			average3f(color1, color2, midc);
-			if(!sug_ai->masked)
-			  CGOPickColor(cgo, sugar_at, cPickableAtom);
-			CGOCustomCylinderv(cgo, cs->Coord + 3 * sug, midv, ladder_radius, 
-					   color1, midc, 2.0F, 0.0F);
-			if(!bas_ai->masked)
-			  CGOPickColor(cgo, base_at, cPickableAtom);
-			CGOCustomCylinderv(cgo, midv, cs->Coord + 3 * bas, ladder_radius, 
-					   midc, color2, 0.0F, 2.0F);
-		      } else {
-			CGOCustomCylinderv(cgo, cs->Coord + 3 * sug,
-					   cs->Coord + 3 * bas,
-					   ladder_radius,
-					   color1, color2, 2.0F, 2.0F);
-		      }
+                      CGOPickColor(cgo, sugar_at, sug_ai->masked ? cPickableNoPick : cPickableAtom);
+                      Pickable pickcolor2 = { base_at, bas_ai->masked ? cPickableNoPick : cPickableAtom };
+                      float axis[3];
+                      subtract3f(cs->Coord + 3 * bas, cs->Coord + 3 * sug, axis);
+                      CGOColorv(cgo, color1);
+                      cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, cs->Coord + 3 * sug, axis, ladder_radius, 0x1f, color2, &pickcolor2);
 		    }
                   }
                 }
@@ -1109,24 +1152,13 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
 		    color1 = ColorGet(G, sug_ai->color);
 		    color2 = ColorGet(G, bas_ai->color);
 		  }
-		  if (is_picking){
-		    float midv[3], midc[3];
-		    average3f(v_outer, cs->Coord + 3 * bas, midv);
-		    average3f(color1, color2, midc);
-		    if(!sug_ai->masked)
-		      CGOPickColor(cgo, sugar_at, cPickableAtom);
-		    CGOCustomCylinderv(cgo, v_outer, midv, ladder_radius, 
-				       color1, midc, 2.0F, 0.0F);
-		    if(!bas_ai->masked)
-		      CGOPickColor(cgo, base_at, cPickableAtom);
-		    CGOCustomCylinderv(cgo, midv, cs->Coord + 3 * bas, ladder_radius, 
-				       midc, color2, 0.0F, 2.0F);
-		  } else {
-		    CGOCustomCylinderv(cgo, v_outer,
-				       cs->Coord + 3 * bas,
-				       ladder_radius,
-				       color1, color2, 2.0F, 2.0F);
-		  }
+                  
+                  CGOPickColor(cgo, sugar_at, sug_ai->masked ? cPickableNoPick : cPickableAtom);
+                  Pickable pickcolor2 = { base_at, bas_ai->masked ? cPickableNoPick : cPickableAtom };
+                  float axis[3];
+                  subtract3f(cs->Coord + 3 * bas, v_outer, axis);
+                  CGOColorv(cgo, color1);
+                  cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, v_outer, axis, ladder_radius, 0x1f, color2, &pickcolor2);
 		}
               }
             }
@@ -1358,19 +1390,12 @@ static void do_ring(PyMOLGlobals * G, nuc_acid_data *ndata, bool is_picking, int
 		  } else {
 		    color1 = color2 = color;
 		  }
-		  if (is_picking){
-		    float midv[3], midc[3];
-		    average3f(v_i[i], v_i[ii], midv);
-		    average3f(color1, color2, midc);
-		    CGOPickColor(cgo, atix[i], cPickableAtom);		    
-		    CGOCustomCylinderv(cgo, v_i[i], midv, ring_width_for_mode, 
-				       color1, midc, 2.0F, 0.0F);
-		    CGOPickColor(cgo, atix[ii], cPickableAtom);		    
-		    CGOCustomCylinderv(cgo, midv, v_i[ii], ring_width_for_mode, 
-				       midc, color2, 0.0F, 2.0F);
-		  } else {
-		    CGOSausage(cgo, v_i[i], v_i[ii], ring_width_for_mode, color1, color2);
-		  }
+                  CGOPickColor(cgo, atix[i], ai_i[i]->masked ? cPickableNoPick : cPickableAtom);
+                  Pickable pickcolor2 = { atix[ii], ai_i[ii]->masked ? cPickableNoPick : cPickableAtom };
+                  float axis[3];
+                  subtract3f(v_i[ii], v_i[i], axis);
+                  CGOColorv(cgo, color1);
+                  cgo->add<cgo::draw::shadercylinder2ndcolor>(cgo, v_i[i], axis, ring_width_for_mode, 0x1f, color2, &pickcolor2);
 		}
               }
             }
@@ -1606,7 +1631,7 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
   float *vc = NULL;
   int atom_index1, atom_index2, *s,
       *atp, a, cur_car;
-  int *vi;
+  unsigned *vi;
   int last_color, uniform_color;
   int contFlag, extrudeFlag;
   int b, c1, c2;
@@ -1830,7 +1855,6 @@ int GenerateRepCartoonProcessCylindricalHelices(PyMOLGlobals * G, ObjectMolecule
 
 static
 int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMolecule * obj,
-                                bool is_picking,
                                 CoordSet * cs, CGO *cgo, 
                                 float ring_width, int cartoon_color, float alpha){
   int ring_i;
@@ -1908,7 +1932,7 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
                               obj->AtomInfo[mem[2]].name,mem[2],
                               obj->AtomInfo[mem[3]].name,mem[3],
                               obj->AtomInfo[mem[4]].name,mem[4]); */
-                        do_ring(G, ndata, is_picking, 5, mem, obj, cs, ring_width, cgo, ring_color,
+                        do_ring(G, ndata, 5, mem, obj, cs, ring_width, cgo, ring_color,
                                 ladder_radius, ladder_color, ladder_mode,
                                 cartoon_side_chain_helper,
                                 ring_alpha, alpha, marked, moved, ring_radius);
@@ -1927,7 +1951,7 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
                                obj->AtomInfo[mem[4]].name,
                                obj->AtomInfo[mem[5]].name
                                ); */
-                            do_ring(G, ndata, is_picking, 6, mem, obj, cs, ring_width, cgo, ring_color,
+                            do_ring(G, ndata, 6, mem, obj, cs, ring_width, cgo, ring_color,
                                     ladder_radius, ladder_color, ladder_mode,
                                     cartoon_side_chain_helper,
                                     ring_alpha, alpha, marked, moved,
@@ -1940,7 +1964,7 @@ int GenerateRepCartoonDrawRings(PyMOLGlobals * G, nuc_acid_data *ndata, ObjectMo
                                && (mem[7] != mem[3]) && (mem[7] != mem[2])
                                && (mem[7] != mem[1])) {
                               if(mem[7] == mem[0]) {
-                                do_ring(G, ndata, is_picking, 7, mem, obj, cs, ring_width, cgo,
+                                do_ring(G, ndata, 7, mem, obj, cs, ring_width, cgo,
                                         ring_color, ladder_radius,
                                         ladder_color, ladder_mode,
                                         cartoon_side_chain_helper,
@@ -2069,13 +2093,12 @@ static
 void CartoonGenerateSample(PyMOLGlobals *G, int sampling, int *n_p, float dev, float *vo,
                            float *v1,
                            float *v2, int c1, int c2, int atom_index1, int atom_index2,
-                           float power_a, float power_b, float **vc_p,
-                           int **vi_p,
+                           float power_a, float power_b, float **vc_p, unsigned int **vi_p,
                            float **v_p, float **vn_p){
   int b, i0;
   float f0, f1, f2, f3, f4;
   float *v0;
-  int *vi = *vi_p;
+  unsigned int *vi = *vi_p;
   float *vc = *vc_p, *v = *v_p, *vn = *vn_p;
   for(b = 0; b < sampling; b++) {       /* needs optimization */
     if(*n_p == 0) {
@@ -2190,11 +2213,10 @@ void CartoonGenerateRefine(int refine, int sampling, float *v, float *vn, float 
 }
 
 static
-int CartoonExtrudeTube(short use_cylinders_for_strands, CExtrude *ex, CGO *cgo,
-    float tube_radius, int tube_quality, int tube_cap, int is_picking){
+int CartoonExtrudeTube(short use_cylinders_for_strands, CExtrude *ex, CGO *cgo, float tube_radius, int tube_quality, int tube_cap){
   int ok = true;
   if (use_cylinders_for_strands){
-    ok &= ExtrudeCylindersToCGO(ex, cgo, tube_radius, is_picking);
+    ok &= ExtrudeCylindersToCGO(ex, cgo, tube_radius);
   } else {
     ok &= ExtrudeCircle(ex, tube_quality, tube_radius);
     if (ok)
@@ -2383,7 +2405,6 @@ static int GetCartoonQuality(CoordSet * cs, int setting, int v1, int v2, int v3,
 
 static
 CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *ndata, short use_cylinders_for_strands,
-                           bool is_picking,
                            float *pv, int nAt, float *tv, float *pvo,
                            float *dl,
                            const CCInOut *car,
@@ -2395,7 +2416,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   int contigFlag, contFlag, extrudeFlag, n_p;
   CExtrude *ex = NULL;
   float dev;
-  int *vi;
+  unsigned int *vi;
   int atom_index1, atom_index2;
   float *v, *v1, *v2, *vo;
   float *d, *vc = NULL, *vn;
@@ -2588,7 +2609,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
           /* set up shape */
           switch (cur_car) {
           case cCartoon_tube:
-            ok = CartoonExtrudeTube(use_cylinders_for_strands, ex, cgo, tube_radius, tube_quality, tube_cap, is_picking);
+            ok = CartoonExtrudeTube(use_cylinders_for_strands, ex, cgo, tube_radius, tube_quality, tube_cap);
             break;
           case cCartoon_putty:
             ok = CartoonExtrudePutty(G, obj, cs, cgo, ex, putty_quality, putty_radius, putty_vals, sampling);
@@ -2643,7 +2664,7 @@ CGO *GenerateRepCartoonCGO(CoordSet *cs, ObjectMolecule *obj, nuc_acid_data *nda
   }
   /* draw the rings */
   if(ok && ndata->ring_anchor && ndata->n_ring) {
-    ok = GenerateRepCartoonDrawRings(G, ndata, obj, is_picking, cs, cgo, ring_width, cartoon_color, alpha);
+    ok = GenerateRepCartoonDrawRings(G, ndata, obj, cs, cgo, ring_width, cartoon_color, alpha);
   }
   if (ok)
     CGOStop(cgo);
@@ -3656,7 +3677,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   I->ray = NULL;
   I->std = NULL;
   I->preshader = NULL;
-  I->pickingCGO = NULL;
   I->R.context.object = (void *) obj;
   I->R.context.state = state;
 
@@ -3770,7 +3790,7 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
     }
   }
 
-  I->ray = GenerateRepCartoonCGO(cs, obj, &ndata, na_strands_as_cylinders, false, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
+  I->ray = GenerateRepCartoonCGO(cs, obj, &ndata, na_strands_as_cylinders, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
                                  putty_vals, alpha);
 
   if (I->ray && I->ray->has_begin_end){
@@ -3788,31 +3808,6 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
   I->ray = I->preshader;
 
   CHECKOK(ok, I->ray);
-
-  if (ok){
-    int has_picking_cgo = 0;
-    CGO *convertcgo = GenerateRepCartoonCGO(cs, obj, &ndata, false, true, pv, nAt, tv, pvo, dl, car, seg, at, nuc_flag,
-                                            putty_vals, alpha);
-    if (convertcgo){
-      I->pickingCGO = CGOSimplify(convertcgo, 0);
-      if (I->pickingCGO){
-	CGOFree(convertcgo);
-	convertcgo = CGOCombineBeginEnd(I->pickingCGO, 0);
-	if (convertcgo){
-	  CGOFree(I->pickingCGO);
-	  I->pickingCGO = convertcgo;
-	  has_picking_cgo = true;
-	} else {
-	  CGOFree(I->pickingCGO);
-	  I->pickingCGO = NULL;
-	}
-      } else {
-	CGOFree(convertcgo);
-	convertcgo = NULL;
-      }
-    }
-    ok &= has_picking_cgo;  /* If picking object can't load, remove object */
-  }
 
   ok &= !G->Interrupt;
   if (!ok){

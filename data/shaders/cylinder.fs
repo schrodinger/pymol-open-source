@@ -1,106 +1,69 @@
+#ifdef PYMOL_WEBGL_IOS
+#extension GL_EXT_frag_depth : require
+#endif
+
+#include webgl_header.fs
 
 // cylinder imposter fragment shader
 
-uniform bool lighting_enabled;
-
-uniform float fog_enabled;
-
-uniform sampler2D bgTextureMap;
-uniform vec3 fogSolidColor;
-uniform float fogIsSolidColor;
-
-uniform bool bg_gradient;
 uniform float inv_height;
-uniform float ortho;
-uniform float no_flat_caps;
-uniform bool two_sided_lighting_enabled;
-uniform int light_count;
-uniform float shininess;
-uniform float shininess_0;
-uniform int spec_count;
-uniform float spec_value;
-uniform float spec_value_0;
+uniform bool no_flat_caps;
 uniform float half_bond;
 
-#include ANAGLYPH_HEADER
+#include anaglyph_header.fs
 
-//varying vec3 point; // surface point
-//varying vec3 axis; // cylinder axis
-//varying vec3 base; // cylinder base
-//varying vec3 end; // cylinder end
-//varying vec3 U; // cylinder base plane coordinates
-//varying vec3 V;
-//varying float radius; // radius
-//varying float cap; // should we draw the endcap
-//varying float inv_sqr_height;
-
-varying vec4 packed_data_0 ;
-varying vec4 packed_data_1 ;
-varying vec4 packed_data_2 ;
-varying vec4 packed_data_3 ;
-varying vec4 packed_data_4 ;
-varying vec4 packed_data_5 ;
-
-// point -> surface_point b/c preprocessor replaces _point
-#define surface_point ( packed_data_0.xyz )
-#define axis ( packed_data_1.xyz )
-#define base ( packed_data_2.xyz )
-// end -> end_cyl
-#define end_cyl packed_data_3.xyz
-#define U ( packed_data_4.xyz )
-#define V ( packed_data_5.xyz )
-#define radius ( packed_data_3.w )
-#define cap ( packed_data_4.w )
-#define inv_sqr_height ( packed_data_5.w )
-
+varying vec3 surface_point ;
+varying vec3 axis ;
+varying vec3 base ;
+varying vec3 end_cyl ;
+varying vec3 U ;
+varying vec3 V ;
+varying float radius;
+varying float cap;
+varying float inv_sqr_height;
 varying vec4 color1;
 varying vec4 color2;
-
-uniform float g_Fog_end;
-uniform float g_Fog_scale;
 varying vec2 bgTextureLookup;
 
-uniform float isStretched;
-uniform float isCentered;
-uniform float isCenteredOrRepeated;
-uniform float isTiled;
-uniform vec2 tileSize;
-uniform vec2 tiledSize;
-uniform vec2 viewImageSize;
-uniform vec2 pixelSize;
-uniform vec2 halfPixel;
+uniform bool lighting_enabled;
 
-#include ComputeFogColor
+#include compute_fog_color.fs
 
-#include ComputeColorForLight
+#include compute_color_for_light.fs
+
+/*
+ * Get the lowest bit from 'bits' and shift 'bits' to the right.
+ * Equivalent to (if 'bits' would be int):
+ * bit = bits & 0x1; bits >>= 1; return bit;
+ */
+bool get_bit_and_shift(inout float bits) {
+  float bit = mod(bits, 2.0);
+  bits = (bits - bit) / 2.0;
+  return bit > 0.5;
+}
 
 void main(void)
 {
-    // cull back face - otherwise we are drawing all pixels twice
-    // this change gives roughly 2x speedup
-    // WARNING: !gl_FrontFacing does not work on Intel (bug)
-    if (gl_FrontFacing ? false : true) 
-      discard; 
-
     vec3 ray_target = surface_point;
-    vec3 ray_origin = vec3(0.0);
-    vec3 ray_direction = mix(normalize(ray_origin - ray_target), vec3(0.0, 0.0, 1.0), ortho);
+
+#ifdef ortho
+    vec3 ray_origin = surface_point;
+    vec3 ray_direction = vec3(0., 0., 1.);
+#else
+    vec3 ray_origin = vec3(0.);
+    vec3 ray_direction = normalize(-ray_target);
+#endif
 
     // basis is local system of coordinates for the cylinder
     mat3 basis = mat3(U, V, axis);
 
-    vec3 diff = ray_target - 0.5 * (base + end_cyl);
-    vec3 P = diff * basis;
-
-    // angle (cos) between cylinder cylinder_axis and ray direction
-    float dz = dot(axis, ray_direction);
+    // vectors in cylinder xy-plane
+    vec2 P = ((ray_target - base) * basis).xy;
+    vec2 D = (ray_direction * basis).xy;
 
     float radius2 = radius*radius;
 
     // calculate distance to the cylinder from ray origin
-    vec3 D = vec3(dot(U, ray_direction),
-                  dot(V, ray_direction),
-                  dz);
     float a0 = P.x*P.x + P.y*P.y - radius2;
     float a1 = P.x*D.x + P.y*D.y;
     float a2 = D.x*D.x + D.y*D.y;
@@ -118,136 +81,103 @@ void main(void)
     vec3 tmp_point = new_point - base;
     vec3 normal = normalize(tmp_point - axis * dot(tmp_point, axis));
 
-    float ratio = dot(new_point-base, vec3(end_cyl-base)) * inv_sqr_height;
-
-    ray_origin = mix(ray_origin, surface_point, ortho);
-
     /* cap :  4 bits : 1st - frontcap
                        2nd - endcap
                        3rd - frontcapround
                        4th - endcapround
+                       5th - interp
      */
-    float fcap = cap;
-    float frontcap = 0.0, frontcapround = 0.0;
-    float endcap = 0.0, endcapround = 0.0;
+    float fcap = cap + .001;  // to account for odd rounding issues when setting
+                              // varying cap from attribute a_cap, which is a non-normalized
+                              // GL_UNSIGNED_BYTE
+    bool frontcap      = get_bit_and_shift(fcap);
+    bool endcap        = get_bit_and_shift(fcap);
+    bool frontcapround = get_bit_and_shift(fcap) && no_flat_caps;
+    bool endcapround   = get_bit_and_shift(fcap) && no_flat_caps;
+    bool nocolorinterp = !get_bit_and_shift(fcap);
 
-    frontcap = mod(fcap, 2.0);
-    fcap = ( fcap - frontcap ) / 2.0;
-    endcap = mod(fcap, 2.0);
-    fcap = ( fcap - endcap ) / 2.0;
-    frontcapround = floor((mod(fcap, 2.0) + no_flat_caps) / 2.0);
-    fcap = ( fcap - frontcapround ) / 2.0;
-    endcapround = floor((mod(fcap, 2.0) + no_flat_caps) / 2.0);
-    fcap = ( fcap - endcapround ) / 2.0;
-    
     vec4 color;
+    float ratio = dot(new_point-base, vec3(end_cyl-base)) * inv_sqr_height;
 
-    float dp = clamp(-half_bond*new_point.z*inv_height, 0., .5);
-    color = mix(color1, color2, smoothstep(.5 - dp, .5 + dp, ratio));
+    if (isPicking || !lighting_enabled){ // for picking
+       ratio = step(.5, ratio);
+    } else if (nocolorinterp){
+       // determine color of half-bond, possible antialiasing 
+       // based on half_bond, depth, and height
+       float dp = clamp(-half_bond*new_point.z*inv_height, 0., .5);
+       ratio = smoothstep(.5 - dp, .5 + dp, ratio);
+    } else {
+       ratio = clamp(ratio, 0., 1.);
+    }
+    color = mix(color1, color2, ratio);
 
-    // test front cap
-    float cap_test = dot((new_point - base), axis);
+    bool cap_test_base = 0.0 > dot((new_point - base), axis);
+    bool cap_test_end  = 0.0 < dot((new_point - end_cyl), axis);
 
-    // to calculate caps, simply check the angle between
-    // the point of intersection - cylinder end vector
-    // and a cap plane normal (which is the cylinder cylinder_axis)
-    // if the angle < 0, the point is outside of cylinder
-    // test front cap
+    if (cap_test_base || cap_test_end) {
+      vec3 thisaxis = -axis;
+      vec3 thisbase = base;
 
-    // flat
-    if (frontcapround < 0.5 && cap_test < 0.0) {
-      // ray-plane intersection
-      color = color1;
-      float dNV = dot(-axis, ray_direction);
-      if (dNV < 0.0) discard;
-      float near = dot(-axis, (base)) / dNV;
-      new_point = ray_direction * near + ray_origin;
-      // within the cap radius?
-      if (dot(new_point - base, new_point-base) > radius2) discard;
-      normal = -axis;
+      if (cap_test_end) {
+        thisaxis = axis;
+        thisbase = end_cyl;
+        frontcap = endcap;
+        frontcapround = endcapround;
+      }
+
+      if (!frontcap)
+        discard;
+
+      if (frontcapround) {
+        vec3 sphere_direction = thisbase - ray_origin;
+        float b = dot(sphere_direction, ray_direction);
+        float pos = b*b + radius2 -dot(sphere_direction, sphere_direction);
+        if (pos < 0.0)
+          discard;
+
+        float near = sqrt(pos) + b;
+        new_point = near * ray_direction + ray_origin;
+        normal = normalize(new_point - thisbase);
+      } else {
+        // ray-plane intersection
+        float dNV = dot(thisaxis, ray_direction);
+        if (dNV < 0.0)
+          discard;
+
+        float near = dot(thisaxis, thisbase - ray_origin) / dNV;
+        new_point = ray_direction * near + ray_origin;
+        // within the cap radius?
+        if (dot(new_point - thisbase, new_point - thisbase) > radius2)
+          discard;
+
+        normal = thisaxis;
+      }
     }
 
-    // round
-    if (frontcapround > 0.5 && cap_test < 0.0) {
-      if ( frontcap < 0.5)
-        discard;
-      color = color1;
-      vec3 sphere_direction = mix(base, ray_origin - base, ortho);
-      float b = dot(sphere_direction, ray_direction);
-      float pos = b*b + radius2 -dot(sphere_direction, sphere_direction);
-      if ( pos < 0.0)
-        discard;
-      float near = mix(b + sqrt(pos), sqrt(pos) - b, ortho);
-      new_point = near * ray_direction + ray_origin;     
-      normal = normalize( new_point - base ); 
-    }
-    // test end cap
-
-    cap_test = dot((new_point - end_cyl), axis);
-
-    // flat
-    if (endcapround < 0.5 && cap_test > 0.0) {
-      // ray-plane intersection
-      color = color2;
-      float dNV = dot(axis, ray_direction);
-      if (dNV < 0.0) discard;
-      float near = dot(axis, end_cyl) / dNV;
-      new_point = ray_direction * near + ray_origin;
-      // within the cap radius?
-      if (dot(new_point - end_cyl, new_point-base) > radius2) discard;
-      normal = axis;
-    }
-
-    // round
-
-    if (endcapround > 0.5 && cap_test > 0.0) {
-      if ( endcap < 0.5)
-        discard;
-      color = color2;
-      vec3 sphere_direction = mix(end_cyl, ray_origin - end_cyl, ortho);
-      float b = dot(sphere_direction, ray_direction);
-      float pos = b*b + radius2 -dot(sphere_direction, sphere_direction);
-      if ( pos < 0.0)
-        discard;
-      float near = mix(b + sqrt(pos), sqrt(pos) - b, ortho);
-      new_point = near * ray_direction + ray_origin;
-      normal = normalize( new_point - end_cyl );
-    }
-
-    vec2 clipZW = new_point.z * gl_ProjectionMatrix[2].zw +
-        gl_ProjectionMatrix[3].zw;
+    vec2 clipZW = new_point.z * g_ProjectionMatrix[2].zw +
+        g_ProjectionMatrix[3].zw;
 
     float depth = 0.5 + 0.5 * clipZW.x / clipZW.y;
 
-    // this is a workaround necessary for Mac
-    // otherwise the modified fragment won't clip properly
-
+    // front clipping
     if (depth <= 0.0)
-      discard;
-
-    if (depth >= 1.0)
       discard;
 
     gl_FragDepth = depth;
 
-  vec4 final_color;
-  int i;
-  float NdotL, NdotH;
+  if (!isPicking && lighting_enabled){
+    color = ApplyColorEffects(color, depth);
+    color = ApplyLighting(color, normal);
+  }
 
-  final_color = (gl_LightModel.ambient) * color;
+  if (isPicking){
+    gl_FragColor = color;
+  } else {
+    float fog = (g_Fog_end + new_point.z) * g_Fog_scale;
+    gl_FragColor = ApplyFog(color, fog);
 
-#include CallComputeColorForLight
-
-  float cfog = clamp((g_Fog_end + new_point.z) * g_Fog_scale, 0.0, 1.0);
-
-  cfog = mix(1.0, clamp(cfog, 0.0, 1.0), fog_enabled);
-
-  vec4 fogColor = ComputeFogColor();
-
-  final_color.rgb = mix(fogColor.xyz, final_color.rgb, cfog);
-
-  vec4 fColor = vec4(final_color.rgb, color.a);
-
-#include ANAGLYPH_BODY
+    PostLightingEffects(depth);
+  }
 }
 
+// vi:expandtab:sw=2

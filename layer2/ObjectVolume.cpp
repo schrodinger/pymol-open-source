@@ -309,7 +309,7 @@ static void ObjectVolumeStateFree(ObjectVolumeState * vs)
     return;
   ObjectStatePurge(&vs->State);
   if(vs->State.G->HaveGUI) {
-    glDeleteTextures(3, (const GLuint *) vs->textures);
+    vs->State.G->ShaderMgr->freeGPUBuffers(vs->textures, 3);
   }
   if(vs->Field) {
     IsosurfFieldFree(vs->State.G, vs->Field);
@@ -501,18 +501,6 @@ static void ObjectVolumeUpdate(ObjectVolume * I)
       }
 
       if(field) {
-        float *min_ext, *max_ext;
-        float tmp_min[3], tmp_max[3];
-        if(MatrixInvTransformExtentsR44d3f(vs->State.Matrix,
-              vs->ExtentMin, vs->ExtentMax,
-              tmp_min, tmp_max)) {
-          min_ext = tmp_min;
-          max_ext = tmp_max;
-        } else {
-          min_ext = vs->ExtentMin;
-          max_ext = vs->ExtentMax;
-        }
-
         // get bounds and dimension data from field
         copy3(field->data->dim, vs->dim);
         IsofieldGetCorners(G, field, vs->Corner);
@@ -681,53 +669,92 @@ static void ExtentRender(float * corner) {
 #endif
 }
 
-static GLuint createColorTexture(const float *colors, const int count)
+static size_t createColorTexture(PyMOLGlobals * G, const float *colors, const int count)
 {
-  GLuint texname = 0;
+  size_t texname = 0;
 #ifndef PURE_OPENGL_ES_2
-
-  glGenTextures(1, &texname);
-  glBindTexture(GL_TEXTURE_1D, texname);
-  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, count, 0, GL_RGBA, GL_FLOAT, colors);
-
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S,     GL_CLAMP );
-
+  auto tex = G->ShaderMgr->newGPUBuffer<textureBuffer_t>(
+    tex::format::RGBA,
+    tex::data_type::FLOAT,
+    tex::filter::LINEAR,
+    tex::filter::LINEAR,
+    tex::wrap::CLAMP
+    );
+  tex->texture_data_1D(count, colors);
+  texname = tex->get_hash_id();
 #endif
   return texname;
 }
 
-#ifndef PURE_OPENGL_ES_2
-/*
- * Generate, bind and set parameters for a 3D volume texture
- */
-static GLuint tex3dGenBind()
+static size_t createPreintegrationTexture(PyMOLGlobals * G, const float *Table, const int count)
 {
-  GLuint texname = 0;
+  float factor, tmp1[4];
+  Vector4f *sat = Alloc(Vector4f, count + 1);
+  int i, sb, sf, lookupindex = 0;
+  GLfloat *lookupImg = Alloc(GLfloat, count * count * 4);
 
-  glGenTextures(1, &texname);
-  glBindTexture(GL_TEXTURE_3D, texname);
+  memset(sat[0], 0, sizeof(sat[0]));
 
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-  return texname;
+  // summed area table
+  for (i = 0; i < count; i++) {
+    tmp1[3] = Table[i * 4 + 3];
+    scale3f(Table + i * 4, tmp1[3], tmp1);
+    add4f(tmp1, sat[i], sat[i + 1]);
 }
-#endif
+
+  // make quadratic lookup table
+  for (sb = 0; sb < count; sb++) {
+    for (sf = 0; sf < count; sf++) {
+      GLfloat col[4];
+      int smin, smax;
+
+      if (sb < sf) { smin=sb; smax=sf; } else { smin=sf; smax=sb; }
+
+      if (sat[smax + 1][3] != sat[smin][3]) {
+        factor = 1.f / (sat[smax + 1][3] - sat[smin][3]);
+
+        for (i = 0; i < 3; i++)
+          col[i] = (sat[smax + 1][i] - sat[smin][i]) * factor;
+
+        col[3] = 1. / (factor * (smax + 1 - smin));
+
+      } else {
+        for (i = 0; i < 4; i++)
+          col[i] = 0.f;
+      }
+      for (i = 0; i < 4; i++)
+        lookupImg[lookupindex++] = clamp(col[i], 0., 1.);
+    }
+  }
+
+  // upload texture
+  auto tex = G->ShaderMgr->newGPUBuffer<textureBuffer_t>(
+    tex::format::RGBA,
+    tex::data_type::FLOAT,
+    tex::filter::NEAREST,
+    tex::filter::NEAREST,
+    tex::wrap::CLAMP_TO_EDGE,
+    tex::wrap::CLAMP_TO_EDGE
+    );
+  tex->texture_data_2D(count, count, lookupImg);
+
+  mfree(sat);
+  mfree(lookupImg);
+
+  return tex->get_hash_id();
+}
 
 static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 {
 #ifndef PURE_OPENGL_ES_2
   PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
-  CRay *ray = info->ray;
   int pass = info->pass;
   int a = 0;
   ObjectVolumeState *vs = NULL;
   float volume_layers =  SettingGet_f(I->Obj.G, I->Obj.Setting, NULL, cSetting_volume_layers);
+  short volume_mode = SettingGetGlobal_i(G, cSetting_volume_mode);
+  short ortho = SettingGetGlobal_i(G, cSetting_ortho);
   /* make this a setting? */
   GLint alpha_func;
   GLfloat alpha_ref;
@@ -740,6 +767,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
   float d, sliceRange, sliceDelta;
   float origin[3];
   CShaderPrg *shaderPrg;
+  bool volume_t = 0;
 
   if(info->pick || pass != -1)
     return;
@@ -748,11 +776,15 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
     return;
 
   /* bail if no shaders */
-  if (G && !(CShaderMgr_ShadersPresent(G->ShaderMgr)))
+  if (G && !(G->ShaderMgr->ShadersPresent()))
       return;
 
+  if (info->pass < 0){
+    volume_t = SettingGetGlobal_i(G, cSetting_transparency_mode) == 3;
+  }
+
   // ViewElem/TTT Matrix
-  ObjectPrepareContext(&I->Obj, ray);
+  ObjectPrepareContext(&I->Obj, info);
 
   for(a = 0; a < I->NState; ++a) {
 
@@ -796,13 +828,15 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       ColorsAdjustAlpha(colors, volume_nColors, 256. / volume_layers);
 
       if (vs->textures[1]) {
-        glDeleteTextures(1, (const GLuint *) &vs->textures[1]);
+        G->ShaderMgr->freeGPUBuffer(vs->textures[1]);
       }
 
-      {
-        vs->textures[1] = createColorTexture(colors, volume_nColors);
-      }
-      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      vs->textures[1] =
+#ifdef _PYMOL_IP_EXTRAS
+#endif
+        createColorTexture(G, colors, volume_nColors);
+
+      tex::env(tex::env_name::ENV_MODE, tex::env_param::REPLACE);
 
       mfree(colors);
       vs->RecolorFlag = false;
@@ -810,7 +844,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 
     // upload map data texture
     if (!vs->textures[0] || vs->RefreshFlag) {
-      int volume_bit_depth;
+      tex::data_type volume_bit_depth;
       CField * field = ObjectVolumeStateGetField(vs);
 
       if(!field) {
@@ -819,8 +853,8 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
         return;
       }
 
-      volume_bit_depth = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_volume_bit_depth);
-      volume_bit_depth = (volume_bit_depth < 17) ? GL_R16F : GL_R32F;
+      int volume_bit_val = SettingGet_i(G, I->Obj.Setting, NULL, cSetting_volume_bit_depth);
+      volume_bit_depth = (volume_bit_val < 17) ? tex::data_type::HALF_FLOAT : tex::data_type::FLOAT;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #if 0
@@ -835,26 +869,42 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
 /* END PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 
       if (vs->textures[0]) {
-        glDeleteTextures(1, (const GLuint *) &vs->textures[0]);
+        G->ShaderMgr->freeGPUBuffer(vs->textures[0]);
         vs->textures[0] = 0;
       }
       if (vs->textures[2]) {
-        glDeleteTextures(1, (const GLuint *) &vs->textures[2]);
+        G->ShaderMgr->freeGPUBuffer(vs->textures[2]);
         vs->textures[2] = 0;
       }
 
+      auto tex3dGenBind = [](PyMOLGlobals * G, tex::data_type dtype) -> size_t {
+        auto texture = G->ShaderMgr->newGPUBuffer<textureBuffer_t>(
+          tex::format::R,
+          dtype,
+          tex::filter::LINEAR,
+          tex::filter::LINEAR,
+          tex::wrap::CLAMP,
+          tex::wrap::CLAMP,
+          tex::wrap::CLAMP
+          );
+        tex::env(tex::env_name::ENV_MODE, tex::env_param::REPLACE);
+        return texture->get_hash_id();
+      };
       // Create a 3D texture
-      vs->textures[0] = tex3dGenBind();
-      glTexImage3D(GL_TEXTURE_3D, 0, volume_bit_depth,
-          field->dim[2], field->dim[1], field->dim[0], 0,
-          GL_RED, GL_FLOAT, field->data);
+      vs->textures[0] = tex3dGenBind(G, volume_bit_depth);
+      auto t0 = G->ShaderMgr->getGPUBuffer<textureBuffer_t>(vs->textures[0]);
+      t0->texture_data_3D(field->dim[2], field->dim[1], field->dim[0], field->data);
 
       // Create 3D carve mask texture
       if(vs->carvemask) {
-        vs->textures[2] = tex3dGenBind();
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_R8,
-            vs->carvemask->dim[2], vs->carvemask->dim[1], vs->carvemask->dim[0], 0,
-            GL_RED, GL_UNSIGNED_BYTE, vs->carvemask->data);
+        vs->textures[2] = tex3dGenBind(G, tex::data_type::UBYTE);
+        auto t2 = G->ShaderMgr->getGPUBuffer<textureBuffer_t>(vs->textures[2]);
+        t2->texture_data_3D(
+          vs->carvemask->dim[2],
+          vs->carvemask->dim[1],
+          vs->carvemask->dim[0],
+          vs->carvemask->data
+          );
 
         // not needed anymore, data now in texture memory
         FieldFreeP(vs->carvemask);
@@ -897,45 +947,38 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
       sliceDelta = (sliceRange / volume_layers);
 
       // load shader
-      shaderPrg = CShaderMgr_GetShaderPrg(G->ShaderMgr, "volume");
-      CShaderPrg_Enable(shaderPrg);
-      CShaderPrg_Set1i(shaderPrg, "volumeTex", 0);
-      CShaderPrg_Set1i(shaderPrg, "colorTex", 1);
-      CShaderPrg_Set1i(shaderPrg, "carvemask", 5);
-      CShaderPrg_Set1i(shaderPrg, "carvemaskFlag", vs->textures[2] != 0);
-      CShaderPrg_Set1f(shaderPrg, "volumeScale", 1.0 / vs->ramp_range);
-      CShaderPrg_Set1f(shaderPrg, "volumeBias", (-vs->ramp_min) / vs->ramp_range);
+      shaderPrg = G->ShaderMgr->GetShaderPrg(volume_t ? "volume_t" : "volume");
+      if (!shaderPrg)
+	return;
+      shaderPrg->Enable();
+      shaderPrg->Set_Stereo_And_AnaglyphMode();
+      shaderPrg->Set1i("volumeTex", 0);
+      shaderPrg->Set1i("colorTex1D", 1);
+      shaderPrg->Set1i("colorTex2D", 1);
+      shaderPrg->Set1i("carvemask", 5);
+      shaderPrg->Set1i("carvemaskFlag", vs->textures[2] != 0);
+      shaderPrg->Set1f("volumeScale", 1.0 / vs->ramp_range);
+      shaderPrg->Set1f("volumeBias", (-vs->ramp_min) / vs->ramp_range);
+
+      // for pre-integrated rendering
+#ifdef _PYMOL_IP_EXTRAS
+#endif
 
       // background and fog stuff
       {
-        float fog[4];
-        int bg_gradient = SettingGet_b(G, NULL, NULL, cSetting_bg_gradient);
-        const char * bg_image_filename = SettingGet_s(G, NULL, NULL, cSetting_bg_image_filename);
-
-        CShaderPrg_Set1f(shaderPrg, "fogIsSolidColor", bg_gradient || (bg_image_filename && bg_image_filename[0]) ? 0.f : 1.f);
-        CShaderPrg_Set3fv(shaderPrg, "fogSolidColor", ColorGet(G, SettingGet_color(G, NULL, NULL, cSetting_bg_rgb)));
-        CShaderPrg_SetFogUniforms(G, shaderPrg);
-        CShaderPrg_Set1f(shaderPrg, "fog_enabled", SettingGetGlobal_b(G, cSetting_depth_cue) ? 1.f : 0.f);
-
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, OrthoGetBackgroundTextureID(G));
-        if (!(shaderPrg->uniform_set & 4)){
-          CShaderPrg_Set1i(shaderPrg, "bgTextureMap", 4);
-          shaderPrg->uniform_set |= 4;
-        }
-
-        SceneSetFog(G, fog);
+        shaderPrg->SetBgUniforms();
       }
 
       // bind color ramp and map data textures
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_1D, vs->textures[1]);
+      G->ShaderMgr->bindGPUBuffer(vs->textures[1]);
+
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_3D, vs->textures[0]);
+      G->ShaderMgr->bindGPUBuffer(vs->textures[0]);
 
       if (vs->textures[2]) {
         glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_3D, vs->textures[2]);
+        G->ShaderMgr->bindGPUBuffer(vs->textures[2]);
       }
 
       // alpha: everything passes
@@ -974,7 +1017,7 @@ static void ObjectVolumeRender(ObjectVolume * I, RenderInfo * info)
         }
       }
 
-      CShaderPrg_Disable(shaderPrg);
+      shaderPrg->Disable();
 
       // restore
       if (depth_writemask)

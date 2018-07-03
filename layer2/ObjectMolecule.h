@@ -397,8 +397,7 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule * I);
 int ObjectMoleculeUpdateNeighbors(ObjectMolecule * I);
 int ObjectMoleculeMoveAtom(ObjectMolecule * I, int state, int index, float *v, int mode,
                            int log);
-int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v,
-                                int mode, int log);
+int ObjectMoleculeMoveAtomLabel(ObjectMolecule * I, int state, int index, float *v, int log, float *diff);
 int ObjectMoleculeGetAtomVertex(ObjectMolecule * I, int state, int index, float *v);
 int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule * I, int state, int index, float *v);
 int ObjectMoleculeGetAtomIndex(ObjectMolecule * I, int sele);

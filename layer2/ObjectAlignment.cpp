@@ -828,9 +828,8 @@ static void ObjectAlignmentFree(ObjectAlignment * I)
 {
   int a;
   for(a = 0; a < I->NState; a++) {
-    CGOFree(I->State[a].shaderCGO);
-    CGOFree(I->State[a].std);
-    CGOFree(I->State[a].ray);
+    CGOFree(I->State[a].renderCGO);
+    CGOFree(I->State[a].primitiveCGO);
     VLAFreeP(I->State[a].alignVLA);
     OVOneToAny_DEL_AUTO_NULL(I->State[a].id2tag);
   }
@@ -848,8 +847,8 @@ void ObjectAlignmentRecomputeExtent(ObjectAlignment * I)
   int extent_flag = false;
   int a;
   for(a = 0; a < I->NState; a++)
-    if(I->State[a].std) {
-      if(CGOGetExtent(I->State[a].std, mn, mx)) {
+    if(I->State[a].primitiveCGO) {
+      if(CGOGetExtent(I->State[a].primitiveCGO, mn, mx)) {
         if(!extent_flag) {
           extent_flag = true;
           copy3f(mx, I->Obj.ExtentMax);
@@ -869,14 +868,11 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
 {
   PyMOLGlobals *G = I->Obj.G;
   int update_needed = false;
-  short use_shader = SettingGetGlobal_b(G, cSetting_alignment_as_cylinders) && 
-    SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
-    SettingGetGlobal_b(G, cSetting_use_shaders);
   {
     int a;
     for(a = 0; a < I->NState; a++) {
       ObjectAlignmentState *oas = I->State + a;
-      if(!oas->valid || (use_shader && !oas->shaderCGO)){
+      if(!oas->valid){
         update_needed = true;
       }
     }
@@ -886,7 +882,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
       int a;
       for(a = 0; a < I->NState; a++) {
         ObjectAlignmentState *oas = I->State + a;
-	if(!oas->valid || (use_shader && !oas->shaderCGO)){
+	if(!oas->valid){
           ObjectMolecule *guide_obj = NULL;
           if(oas->guide[0]) {
             guide_obj = ExecutiveFindObjectMoleculeByName(G, oas->guide);
@@ -894,8 +890,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
           if(I->SelectionState == a)
             I->SelectionState = -1;
 
-          CGOFree(oas->std);
-          CGOFree(oas->ray);
+          CGOFree(oas->primitiveCGO);
 
           if(oas->id2tag) {
             OVOneToAny_Reset(oas->id2tag);
@@ -958,12 +953,10 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                                                      eoo->atm, vert)) {
                         if(gvert_valid) {
                           if(eoo->obj != guide_obj) {
-                            CGOVertexv(cgo, gvert);
-                            CGOVertexv(cgo, vert);
+                            cgo->add<cgo::draw::line>(gvert, vert);
                           }
                         } else {
-                          CGOVertexv(cgo, mean);
-                          CGOVertexv(cgo, vert);
+                          cgo->add<cgo::draw::line>(mean, vert);
                         }
                       }
                     }
@@ -981,8 +974,7 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
                           copy3f(vert, first);
                           first_flag = false;
                         } else {
-                          CGOVertexv(cgo, first);
-                          CGOVertexv(cgo, vert);
+                          cgo->add<cgo::draw::line>(first, vert);
                         }
                       }
                     }
@@ -1001,29 +993,9 @@ void ObjectAlignmentUpdate(ObjectAlignment * I)
             }
 
             CGOStop(cgo);
-
-            /* simplify if necessary */
-
-            {
-              int est = CGOCheckComplex(cgo); 
-	      {
-		CGO *convertcgo = NULL;
-		if(cgo){
-		  if(oas->shaderCGO) {
-		    CGOFree(oas->shaderCGO);
-		    oas->shaderCGO = NULL;
-		  }
-		  oas->shaderCGO = CGOConvertLinesToShaderCylinders(cgo, 0);
-		  convertcgo = CGOCombineBeginEnd(cgo, 0);
-		  CGOFree(cgo);
-		  cgo = convertcgo;
-		}
-	      }
-              if(est) {
-                oas->ray = cgo;
-                oas->std = CGOSimplify(cgo, est);
-              } else
-                oas->std = cgo;
+            oas->primitiveCGO = cgo;
+            if (!CGOHasOperationsOfType(oas->primitiveCGO, cgo::draw::line::op_code)){
+              CGOFree(oas->primitiveCGO);
             }
           }
           oas->valid = true;
@@ -1078,78 +1050,86 @@ static void ObjectAlignmentRender(ObjectAlignment * I, RenderInfo * info)
   ObjectAlignmentState *sobj = NULL;
   float *color;
 
-  ObjectPrepareContext(&I->Obj, ray);
+  ObjectPrepareContext(&I->Obj, info);
 
   color = ColorGet(G, I->Obj.Color);
 
-  if(!pass) {
+  if (pick)
+    return;
+
+  if(pass>0 || ray) {
     if((I->Obj.visRep & cRepCGOBit)) {
 
       for(StateIterator iter(G, I->Obj.Setting, state, I->NState); iter.next();) {
         sobj = I->State + iter.state;
-            if(ray) {
-	      int try_std = false;
-	      
-              if(sobj->ray){
-                int ok = CGORenderRay(sobj->ray, ray, color, I->Obj.Setting, NULL);
-		if (!ok){
-		  CGOFree(sobj->ray);
-		  sobj->ray = NULL;
-		  try_std = true;
-		}
-	      } else {
-		try_std = true;
-	      }
-              if (try_std){
-                int ok = CGORenderRay(sobj->std, ray, color, I->Obj.Setting, NULL);
-		if (!ok){
-		  CGOFree(sobj->std);
-		  sobj->std = NULL;
-		}
-	      }
-            } else if(G->HaveGUI && G->ValidContext) {
-              if(!info->line_lighting)
-                glDisable(GL_LIGHTING);
-              SceneResetNormal(G, true);
-              if(pick) {
-              } else {
-		if(sobj->std){
-		  short use_shader = SettingGetGlobal_b(G, cSetting_alignment_as_cylinders) && 
-		    SettingGetGlobal_b(G, cSetting_render_as_cylinders) &&
-		    SettingGetGlobal_b(G, cSetting_use_shaders);
-		  if (use_shader){
-		    if (!sobj->shaderCGO){
-		      ObjectAlignmentUpdate(I);
-		    }
-		    if (!sobj->shaderCGO->has_draw_cylinder_buffers){
-		      CGO *convertcgo = sobj->shaderCGO;		      
-		      sobj->shaderCGO = CGOOptimizeGLSLCylindersToVBOIndexedNoColor(convertcgo, 0);
-		      if (sobj->shaderCGO){
-			CGOFree(convertcgo);
-		      } else {
-			sobj->shaderCGO = convertcgo;
-		      }
-		      sobj->shaderCGO->use_shader = use_shader;
-		    }
-		    {
-		      CShaderPrg *shaderPrg;
-		      float line_width = SettingGet_f(G, I->Obj.Setting, NULL, cSetting_line_width);
-		      float radius = SceneGetLineWidthForCylinders(G, info, line_width);
-		      shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-		      CShaderPrg_Set1f(shaderPrg, "uni_radius", radius);
-		      glVertexAttrib4f(CYLINDER_COLOR, color[0], color[1], color[2], 1.f);
-		      glVertexAttrib4f(CYLINDER_COLOR2, color[0], color[1], color[2], 1.f);
-		      CGORenderGL(sobj->shaderCGO, color, NULL, NULL, info, NULL);
-		      CShaderPrg_Disable(shaderPrg);
-		      return;
-		    }
-		  } else {
-		    CGORenderGL(sobj->std, color, I->Obj.Setting, NULL, info, NULL);
-		  }
-		}
-              }
-              glEnable(GL_LIGHTING);
+
+        if (!sobj->primitiveCGO)
+          continue;
+
+	if(ray) {
+	    CGORenderRay(sobj->primitiveCGO, ray, info, color, NULL, I->Obj.Setting, NULL);
+	} else if(G->HaveGUI && G->ValidContext) {
+#ifndef PURE_OPENGL_ES_2
+	  if(!info->line_lighting)
+	    glDisable(GL_LIGHTING);
+#endif
+	  SceneResetNormal(G, true);
+          bool use_shader = SettingGetGlobal_b(G, cSetting_use_shaders);
+
+          CGO * cgo = NULL;
+
+          if (use_shader) {
+            bool as_cylinders =
+              SettingGetGlobal_b(G, cSetting_alignment_as_cylinders) &&
+              SettingGetGlobal_b(G, cSetting_render_as_cylinders);
+
+            bool trilines = !as_cylinders && SettingGetGlobal_b(G, cSetting_trilines);
+
+            if (sobj->renderCGO && (
+                  (as_cylinders ^ sobj->renderCGO_has_cylinders) ||
+                  (trilines ^ sobj->renderCGO_has_trilines))){
+              CGOFree(sobj->renderCGO);
             }
+
+            if (!sobj->renderCGO) {
+              int shader =
+                as_cylinders    ? GL_CYLINDER_SHADER :
+                trilines        ? GL_TRILINES_SHADER : GL_LINE_SHADER;
+
+              CGO *tmpCGO = CGONew(G), *tmp2CGO = NULL;
+              CGOEnable(tmpCGO, shader);
+              CGOSpecial(tmpCGO, SET_ALIGNMENT_UNIFORMS_ATTRIBS);
+
+              if (as_cylinders) {
+                tmp2CGO = CGOConvertLinesToCylinderShader(sobj->primitiveCGO, tmpCGO, false);
+              } else if (trilines) {
+                tmp2CGO = CGOConvertToTrilinesShader(sobj->primitiveCGO, tmpCGO, false);
+              } else {
+                tmp2CGO = CGOConvertToLinesShader(sobj->primitiveCGO, tmpCGO, false);
+              }
+
+              tmpCGO->free_append(tmp2CGO);
+
+              CGODisable(tmpCGO, shader);
+
+              sobj->renderCGO = tmpCGO;
+              sobj->renderCGO_has_cylinders = as_cylinders;
+              sobj->renderCGO_has_trilines = trilines;
+            }
+
+            cgo = sobj->renderCGO;
+          } else {
+            cgo = sobj->primitiveCGO;
+          }
+
+          if (cgo) {
+            CGORenderGL(cgo, color, I->Obj.Setting, NULL, info, NULL);
+          }
+
+#ifndef PURE_OPENGL_ES_2
+	  glEnable(GL_LIGHTING);
+#endif
+	}
       }
     }
   }
@@ -1161,6 +1141,7 @@ static void ObjectAlignmentInvalidate(ObjectAlignment * I, int rep, int level, i
     for(StateIterator iter(I->Obj.G, I->Obj.Setting, state, I->NState); iter.next();) {
       ObjectAlignmentState *sobj = I->State + iter.state;
       sobj->valid = false;
+      CGOFree(sobj->renderCGO);
     }
   }
 }

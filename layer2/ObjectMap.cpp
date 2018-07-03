@@ -1784,6 +1784,7 @@ void ObjectMapStatePurge(PyMOLGlobals * G, ObjectMapState * I)
   FreeP(I->Dim);
   FreeP(I->Range);
   FreeP(I->Grid);
+  CGOFree(I->shaderCGO);
 
   if(I->Symmetry) {
     SymmetryFree(I->Symmetry);
@@ -1825,9 +1826,78 @@ static void ObjectMapInvalidate(ObjectMap * I, int rep, int level, int state)
     for(a = 0; a < I->NState; a++) {
       if(I->State[a].Active)
         I->State[a].have_range = false;
+      CGOFree(I->State[a].shaderCGO);
     }
   }
   SceneInvalidate(I->Obj.G);
+}
+
+/* Has no prototype */
+static CGO* ObjectMapCGOGenerate(PyMOLGlobals *G, float* corner)
+{
+  int ok = true;
+  CGO *convertCGO = NULL;
+  CGO *shaderCGO = CGONewSized(G, 0);
+  CGOBegin(shaderCGO, GL_LINES);
+
+  CGOVertexv(shaderCGO, corner + 3 * 0);
+  CGOVertexv(shaderCGO, corner + 3 * 1);
+
+  CGOVertexv(shaderCGO, corner + 3 * 0);
+  CGOVertexv(shaderCGO, corner + 3 * 2);
+
+  CGOVertexv(shaderCGO, corner + 3 * 2);
+  CGOVertexv(shaderCGO, corner + 3 * 3);
+
+  CGOVertexv(shaderCGO, corner + 3 * 1);
+  CGOVertexv(shaderCGO, corner + 3 * 3);
+
+  CGOVertexv(shaderCGO, corner + 3 * 0);
+  CGOVertexv(shaderCGO, corner + 3 * 4);
+
+  CGOVertexv(shaderCGO, corner + 3 * 1);
+  CGOVertexv(shaderCGO, corner + 3 * 5);
+
+  CGOVertexv(shaderCGO, corner + 3 * 2);
+  CGOVertexv(shaderCGO, corner + 3 * 6);
+
+  CGOVertexv(shaderCGO, corner + 3 * 3);
+  CGOVertexv(shaderCGO, corner + 3 * 7);
+
+  CGOVertexv(shaderCGO, corner + 3 * 4);
+  CGOVertexv(shaderCGO, corner + 3 * 5);
+
+  CGOVertexv(shaderCGO, corner + 3 * 4);
+  CGOVertexv(shaderCGO, corner + 3 * 6);
+
+  CGOVertexv(shaderCGO, corner + 3 * 6);
+  CGOVertexv(shaderCGO, corner + 3 * 7);
+
+  CGOVertexv(shaderCGO, corner + 3 * 5);
+  CGOVertexv(shaderCGO, corner + 3 * 7);
+
+  CGOEnd(shaderCGO);
+
+  CGOStop(shaderCGO);
+
+  convertCGO = CGOCombineBeginEnd(shaderCGO, 0);
+  CHECKOK(ok, convertCGO);
+  CGOFree(shaderCGO);
+  
+  shaderCGO = convertCGO;
+  if (ok)
+    convertCGO = CGOOptimizeToVBONotIndexedWithReturnedData(shaderCGO, 0, 0, NULL);
+  else
+    return NULL;
+  CHECKOK(ok, convertCGO);
+  if (!ok)
+    return NULL;
+  CGOFree(shaderCGO);
+  shaderCGO = convertCGO;
+
+  shaderCGO->use_shader = true;
+
+  return shaderCGO;
 }
 
 static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
@@ -1851,7 +1921,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
     if(ms) {
       float *corner = ms->Corner;
       float tr_corner[24];
-      ObjectPrepareContext(&I->Obj, ray);
+      ObjectPrepareContext(&I->Obj, info);
 
       if(ms->State.Matrix) {    /* transform the corners before drawing */
         int a;
@@ -1881,7 +1951,9 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
           ray->sausage3fv(corner + 3 * 5, corner + 3 * 7, radius, vc, vc);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
-          } else {
+#ifndef PURE_OPENGL_ES_2
+          } else if (!info->use_shaders) {
+            // immediate
             ObjectUseColor(&I->Obj);
             glDisable(GL_LIGHTING);
             glBegin(GL_LINES);
@@ -1923,6 +1995,23 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
 
             glEnd();
             glEnable(GL_LIGHTING);
+          } else {
+#endif
+            // shader
+            if (!ms->shaderCGO) {
+              ms->shaderCGO = ObjectMapCGOGenerate(G, corner);
+            }
+
+            if (ms->shaderCGO) {
+              CShaderPrg* shaderPrg = G->ShaderMgr->Enable_DefaultShader(info->pass);
+              if (shaderPrg) {
+                shaderPrg->SetLightingEnabled(0);
+
+                CGORenderGL(ms->shaderCGO, ColorGet(G, I->Obj.Color),
+                    NULL, NULL, info, NULL);
+                shaderPrg->Disable();
+              }
+            }
           }
         }
       }
@@ -2002,7 +2091,7 @@ static void ObjectMapRender(ObjectMap * I, RenderInfo * info)
               }
             } else if(G->HaveGUI && G->ValidContext) {
               if(pick) {
-              } else {
+              } else if (ALWAYS_IMMEDIATE_OR(!info->use_shaders)) {
                 if(gradients) {
                   raw_gradient = (float *) gradients->data;
                 } else {

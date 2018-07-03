@@ -30,53 +30,131 @@ Z* -------------------------------------------------------------------
 
 typedef struct RepWireBond {
   Rep R;
-  float *V, *VP;
-  /*  Pickable *P; */
-  int N, NP;
-  float Width, *VarWidth;
-  float Radius;
   CGO *shaderCGO;
+  CGO *primitiveCGO;
+  bool shaderCGO_has_cylinders;
 } RepWireBond;
 
 #include"ObjectMolecule.h"
 
 void RepWireBondFree(RepWireBond * I);
-static void RepValence(float *v, float *v1, float *v2, int *other, int a1,
-                       int a2, float *coord, float *color, int ord,
-                       float tube_size, int half_state, int fancy);
 
-static void RepAromatic(float *v1, float *v2, int *other,
-                        int a1, int a2, float *coord, float *color,
-                        float tube_size, int half_state, float **v_ptr, int *n_ptr)
+static int RepLine(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2, float *v1color, unsigned int b1, unsigned int b2, int a, float *v2color, bool b1masked, bool b2masked){
+  int ok = true;
+  if (s1 && s2){
+    CGOColorv(cgo, v1color);
+    CGOPickColor(cgo, b1, b1masked ? cPickableNoPick : a);
+    {
+      // if not ramped, then insert vertices so colors are not interpolated since lines interpolate by default
+      bool eq = equal3f(v1color, v2color);
+      bool split = !eq || b1 != b2;
+      if (split){
+        cgo->add<cgo::draw::splitline>(v1, v2, v2color, b2, b2masked ? cPickableNoPick : a, isRamped, b1==b2, eq);
+        cgo->current_pick_color_index = b2;
+        cgo->current_pick_color_bond = b2masked ? cPickableNoPick : a;
+      } else {
+        cgo->add<cgo::draw::line>(v1, v2);
+      }
+    }
+  } else {
+    // if half bond, then split for either s1 or s2
+    float h[3];
+    average3f(v1, v2, h);
+    if (s1){
+      CGOColorv(cgo, v1color);
+      CGOPickColor(cgo, b1, b1masked ? cPickableNoPick : a);
+      cgo->add<cgo::draw::line>(v1, h);
+    } else {
+      if (v2color)
+        CGOColorv(cgo, v2color);
+      if (b2)
+        CGOPickColor(cgo, b2, b2masked ? cPickableNoPick : a);
+      cgo->add<cgo::draw::line>(h, v2);
+    }
+  }
+  return ok;
+}
+
+static void RepValence(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2, int *other,
+                       int a1, int a2, float *coord, float *color1, float *color2, int ord,
+                       float tube_size, int fancy, unsigned int b1, unsigned int b2, int a, bool b1masked, bool b2masked)
+{
+
+  float d[3], t[3], p0[3], p1[3], p2[3];
+  int a3;
+  const float indent = tube_size;
+  /* direction vector */
+  subtract3f(v2, v1, p0);
+  copy3f(p0, d);
+  normalize3f(p0);
+  /* need a prioritized third atom to get planarity */
+  a3 = ObjectMoleculeGetPrioritizedOther(other, a1, a2, NULL);
+  if(a3 < 0) {
+    t[0] = p0[0];
+    t[1] = p0[1];
+    t[2] = -p0[2];
+  } else {
+    subtract3f(coord + 3 * a3, v1, t);
+    normalize3f(t);
+  }
+  cross_product3f(d, t, p1);
+  normalize3f(p1);
+  if(length3f(p1) == 0.0) {
+    p1[0] = p0[1];
+    p1[1] = p0[2];
+    p1[2] = p0[0];
+    cross_product3f(p0, p1, p2);
+    normalize3f(p2);
+  } else {
+    cross_product3f(d, p1, p2);
+    normalize3f(p2);
+  }
+  /* now we have a coordinate system */
+  mult3f(p2, tube_size, t);
+
+  bool ord3 = (ord == 3);
+  if (ord3)
+    mult3f(t, 2.f, t);
+  if (fancy || ord3){
+    RepLine(cgo, s1, s2, isRamped, v1, v2, color1, b1, b2, a, color2, b1masked, b2masked);
+  }
+  if(fancy) {
+    float f[] = { indent, 1.f - indent };
+    float f_1[] = { 1.f - f[0], 1.f - f[1] };
+    float vv1[] = { (f_1[0] * v1[0] + f[0] * v2[0]) - 2 * t[0],
+                    (f_1[0] * v1[1] + f[0] * v2[1]) - 2 * t[1],
+                    (f_1[0] * v1[2] + f[0] * v2[2]) - 2 * t[2] };
+    float vv2[] = { (f_1[1] * v1[0] + f[1] * v2[0]) - 2 * t[0],
+                    (f_1[1] * v1[1] + f[1] * v2[1]) - 2 * t[1],
+                    (f_1[1] * v1[2] + f[1] * v2[2]) - 2 * t[2] };
+    RepLine(cgo, s1, s2, isRamped, vv1, vv2, color1, b1, b2, a, color2, b1masked, b2masked);
+  } else {
+    float vv1[][3] = { { v1[0] - t[0], v1[1] - t[1], v1[2] - t[2] },
+                       { v1[0] + t[0], v1[1] + t[1], v1[2] + t[2] } };
+    float vv2[][3] = { { v2[0] - t[0], v2[1] - t[1], v2[2] - t[2] },
+                       { v2[0] + t[0], v2[1] + t[1], v2[2] + t[2] } };
+    RepLine(cgo, s1, s2, isRamped, vv1[0], vv2[0], color1, b1, b2, a, color2, b1masked, b2masked);
+    RepLine(cgo, s1, s2, isRamped, vv1[1], vv2[1], color1, b1, b2, a, color2, b1masked, b2masked);
+  }
+}
+
+static void RepAromatic(CGO *cgo, bool s1, bool s2, bool isRamped, float *v1, float *v2, int *other,
+                        int a1, int a2, float *coord, float *color1, float *color2,
+                        float tube_size, int half_state, unsigned int b1, unsigned int b2, int a, bool b1masked, bool b2masked)
 {
   float d[3], t[3], p0[3], p1[3], p2[3], *vv;
   int a3;
-  float *v = *v_ptr;
-  float f, f_1;
-  int n = *n_ptr;
   int double_sided;
 
-  v[0] = color[0];
-  v[1] = color[1];
-  v[2] = color[2];
-
-  v[9] = color[0];
-  v[10] = color[1];
-  v[11] = color[2];
-
   /* direction vector */
-
   p0[0] = (v2[0] - v1[0]);
   p0[1] = (v2[1] - v1[1]);
   p0[2] = (v2[2] - v1[2]);
-
   copy3f(p0, d);
   normalize3f(p0);
 
   /* need a prioritized third atom to get planarity */
-
   a3 = ObjectMoleculeGetPrioritizedOther(other, a1, a2, &double_sided);
-
   if(a3 < 0) {
     t[0] = p0[0];
     t[1] = p0[1];
@@ -88,11 +166,8 @@ static void RepAromatic(float *v1, float *v2, int *other,
     t[2] = *(vv++) - v1[2];
     normalize3f(t);
   }
-
   cross_product3f(d, t, p1);
-
   normalize3f(p1);
-
   if(length3f(p1) == 0.0) {
     p1[0] = p0[1];
     p1[1] = p0[2];
@@ -101,256 +176,61 @@ static void RepAromatic(float *v1, float *v2, int *other,
     normalize3f(p2);
   } else {
     cross_product3f(d, p1, p2);
-
     normalize3f(p2);
   }
 
-  switch (half_state) {
-  case 0:                      /* full bond */
-
     t[0] = p2[0] * tube_size * 2;
     t[1] = p2[1] * tube_size * 2;
     t[2] = p2[2] * tube_size * 2;
-
-    v[0] = color[0];
-    v[1] = color[1];
-    v[2] = color[2];
-
-    v[3] = v1[0];
-    v[4] = v1[1];
-    v[5] = v1[2];
-
-    v[6] = v2[0];
-    v[7] = v2[1];
-    v[8] = v2[2];
-
-    v[9] = color[0];
-    v[10] = color[1];
-    v[11] = color[2];
-
-    f = 0.14F;
-    f_1 = 1.0F - f;
-
-    v[12] = (f_1 * v1[0] + f * v2[0]) - t[0];
-    v[13] = (f_1 * v1[1] + f * v2[1]) - t[1];
-    v[14] = (f_1 * v1[2] + f * v2[2]) - t[2];
-
-    f = 0.4F;
-    f_1 = 1.0F - f;
-
-    v[15] = (f_1 * v1[0] + f * v2[0]) - t[0];
-    v[16] = (f_1 * v1[1] + f * v2[1]) - t[1];
-    v[17] = (f_1 * v1[2] + f * v2[2]) - t[2];
-
-    v[18] = color[0];
-    v[19] = color[1];
-    v[20] = color[2];
-
-    f = 0.6F;
-    f_1 = 1.0F - f;
-
-    v[21] = (f_1 * v1[0] + f * v2[0]) - t[0];
-    v[22] = (f_1 * v1[1] + f * v2[1]) - t[1];
-    v[23] = (f_1 * v1[2] + f * v2[2]) - t[2];
-
-    f = 0.86F;
-    f_1 = 1.0F - f;
-
-    v[24] = (f_1 * v1[0] + f * v2[0]) - t[0];
-    v[25] = (f_1 * v1[1] + f * v2[1]) - t[1];
-    v[26] = (f_1 * v1[2] + f * v2[2]) - t[2];
-
-    v += 27;
-    n += 3;
-
+  RepLine(cgo, s1, s2, isRamped, v1, v2, color1, b1, b2, a, color2, b1masked, b2masked);
+  if (s1){
+    CGOColorv(cgo, color1);
+    CGOPickColor(cgo, b1, b1masked ? cPickableNoPick : a);
+    float f[] = { 0.14F, 0.4F } ;
+    float f_1[] = { 1.0F - f[0], 1.0F - f[1] };
+    float pt1[] = { (f_1[0] * v1[0] + f[0] * v2[0]),
+                    (f_1[0] * v1[1] + f[0] * v2[1]),
+                    (f_1[0] * v1[2] + f[0] * v2[2]) };
+    float pt2[] = { (f_1[1] * v1[0] + f[1] * v2[0]),
+                    (f_1[1] * v1[1] + f[1] * v2[1]),
+                    (f_1[1] * v1[2] + f[1] * v2[2]) };
+    float p1[3], p2[3];
+    subtract3f(pt1, t, p1);
+    subtract3f(pt2, t, p2);
+    cgo->add<cgo::draw::line>(p1, p2);
     if(double_sided) {
-
-      v[0] = color[0];
-      v[1] = color[1];
-      v[2] = color[2];
-
-      f = 0.14F;
-      f_1 = 1.0F - f;
-
-      v[3] = (f_1 * v1[0] + f * v2[0]) + t[0];
-      v[4] = (f_1 * v1[1] + f * v2[1]) + t[1];
-      v[5] = (f_1 * v1[2] + f * v2[2]) + t[2];
-
-      f = 0.4F;
-      f_1 = 1.0F - f;
-
-      v[6] = (f_1 * v1[0] + f * v2[0]) + t[0];
-      v[7] = (f_1 * v1[1] + f * v2[1]) + t[1];
-      v[8] = (f_1 * v1[2] + f * v2[2]) + t[2];
-
-      v[9] = color[0];
-      v[10] = color[1];
-      v[11] = color[2];
-
-      f = 0.6F;
-      f_1 = 1.0F - f;
-
-      v[12] = (f_1 * v1[0] + f * v2[0]) + t[0];
-      v[13] = (f_1 * v1[1] + f * v2[1]) + t[1];
-      v[14] = (f_1 * v1[2] + f * v2[2]) + t[2];
-
-      f = 0.86F;
-      f_1 = 1.0F - f;
-
-      v[15] = (f_1 * v1[0] + f * v2[0]) + t[0];
-      v[16] = (f_1 * v1[1] + f * v2[1]) + t[1];
-      v[17] = (f_1 * v1[2] + f * v2[2]) + t[2];
-
-      v += 18;
-      n += 2;
-
+      add3f(pt1, t, p1);
+      add3f(pt2, t, p2);
+      cgo->add<cgo::draw::line>(p1, p2);
     }
-
-    break;
-  case 1:
-
-    t[0] = p2[0] * tube_size * 2;
-    t[1] = p2[1] * tube_size * 2;
-    t[2] = p2[2] * tube_size * 2;
-
-    v[0] = color[0];
-    v[1] = color[1];
-    v[2] = color[2];
-
-    v[3] = v1[0];
-    v[4] = v1[1];
-    v[5] = v1[2];
-
-    v[6] = (v2[0] + v1[0]) / 2.0F;
-    v[7] = (v2[1] + v1[1]) / 2.0F;
-    v[8] = (v2[2] + v1[2]) / 2.0F;
-
-    v[9] = color[0];
-    v[10] = color[1];
-    v[11] = color[2];
-
-    f = 0.14F;
-    f_1 = 1.0F - f;
-
-    v[12] = (f_1 * v1[0] + f * v2[0]) - t[0];
-    v[13] = (f_1 * v1[1] + f * v2[1]) - t[1];
-    v[14] = (f_1 * v1[2] + f * v2[2]) - t[2];
-
-    f = 0.4F;
-    f_1 = 1.0F - f;
-
-    v[15] = (f_1 * v1[0] + f * v2[0]) - t[0];
-    v[16] = (f_1 * v1[1] + f * v2[1]) - t[1];
-    v[17] = (f_1 * v1[2] + f * v2[2]) - t[2];
-
-    v += 18;
-    n += 2;
-
-    if(double_sided) {
-
-      v[0] = color[0];
-      v[1] = color[1];
-      v[2] = color[2];
-
-      f = 0.14F;
-      f_1 = 1.0F - f;
-
-      v[3] = (f_1 * v1[0] + f * v2[0]) + t[0];
-      v[4] = (f_1 * v1[1] + f * v2[1]) + t[1];
-      v[5] = (f_1 * v1[2] + f * v2[2]) + t[2];
-
-      f = 0.4F;
-      f_1 = 1.0F - f;
-
-      v[6] = (f_1 * v1[0] + f * v2[0]) + t[0];
-      v[7] = (f_1 * v1[1] + f * v2[1]) + t[1];
-      v[8] = (f_1 * v1[2] + f * v2[2]) + t[2];
-
-      v += 9;
-      n++;
-
-    }
-    break;
-  case 2:
-
-    t[0] = p2[0] * tube_size * 2;
-    t[1] = p2[1] * tube_size * 2;
-    t[2] = p2[2] * tube_size * 2;
-
-    v[0] = color[0];
-    v[1] = color[1];
-    v[2] = color[2];
-
-    v[3] = (v2[0] + v1[0]) / 2.0F;
-    v[4] = (v2[1] + v1[1]) / 2.0F;
-    v[5] = (v2[2] + v1[2]) / 2.0F;
-
-    v[6] = v2[0];
-    v[7] = v2[1];
-    v[8] = v2[2];
-
-    v[9] = color[0];
-    v[10] = color[1];
-    v[11] = color[2];
-
-    f = 0.60F;
-    f_1 = 1.0F - f;
-
-    v[12] = (f_1 * v1[0] + f * v2[0]) - t[0];
-    v[13] = (f_1 * v1[1] + f * v2[1]) - t[1];
-    v[14] = (f_1 * v1[2] + f * v2[2]) - t[2];
-
-    f = 0.86F;
-    f_1 = 1.0F - f;
-
-    v[15] = (f_1 * v1[0] + f * v2[0]) - t[0];
-    v[16] = (f_1 * v1[1] + f * v2[1]) - t[1];
-    v[17] = (f_1 * v1[2] + f * v2[2]) - t[2];
-
-    v += 18;
-    n += 2;
-
-    if(double_sided) {
-
-      v[0] = color[0];
-      v[1] = color[1];
-      v[2] = color[2];
-
-      f = 0.60F;
-      f_1 = 1.0F - f;
-
-      v[3] = (f_1 * v1[0] + f * v2[0]) + t[0];
-      v[4] = (f_1 * v1[1] + f * v2[1]) + t[1];
-      v[5] = (f_1 * v1[2] + f * v2[2]) + t[2];
-
-      f = 0.86F;
-      f_1 = 1.0F - f;
-
-      v[6] = (f_1 * v1[0] + f * v2[0]) + t[0];
-      v[7] = (f_1 * v1[1] + f * v2[1]) + t[1];
-      v[8] = (f_1 * v1[2] + f * v2[2]) + t[2];
-
-      v += 9;
-      n++;
-
-    }
-
-    break;
   }
-  *v_ptr = v;
-  *n_ptr = n;
-
+  if (s2){
+    CGOColorv(cgo, color2);
+    CGOPickColor(cgo, b2, b2masked ? cPickableNoPick : a);
+    float f[] = { 0.6F, 0.86F } ;
+    float f_1[] = { 1.0F - f[0], 1.0F - f[1] };
+    float pt1[] = { (f_1[0] * v1[0] + f[0] * v2[0]),
+                    (f_1[0] * v1[1] + f[0] * v2[1]),
+                    (f_1[0] * v1[2] + f[0] * v2[2]) };
+    float pt2[] = { (f_1[1] * v1[0] + f[1] * v2[0]),
+                    (f_1[1] * v1[1] + f[1] * v2[1]),
+                    (f_1[1] * v1[2] + f[1] * v2[2]) };
+    float p1[3], p2[3];
+    subtract3f(pt1, t, p1);
+    subtract3f(pt2, t, p2);
+    cgo->add<cgo::draw::line>(p1, p2);
+    if(double_sided) {
+      add3f(pt1, t, p1);
+      add3f(pt2, t, p2);
+      cgo->add<cgo::draw::line>(p1, p2);
+    }
+  }
 }
 
 void RepWireBondFree(RepWireBond * I)
 {
-  if (I->shaderCGO){
     CGOFree(I->shaderCGO);
-    I->shaderCGO = 0;
-  }
-  FreeP(I->VarWidth);
-  FreeP(I->VP);
-  FreeP(I->V);
+  CGOFree(I->primitiveCGO);
   RepPurge(&I->R);
   OOFreeP(I);
 }
@@ -472,322 +352,95 @@ void RepWireBondRenderImmediate(CoordSet * cs, RenderInfo * info)
   }
 }
 
+static int RepWireBondCGOGenerate(RepWireBond * I, RenderInfo * info)
+{
+  PyMOLGlobals *G = I->R.G;
+  CGO *convertcgo = NULL;
+  int ok = true;
+  short line_as_cylinders = 0;
+  line_as_cylinders = SettingGetGlobal_b(G, cSetting_use_shaders) && SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_line_as_cylinders);
+
+  {
+    if (ok && I->primitiveCGO){
+      if (line_as_cylinders){
+        CGO *tmpCGO = CGONew(G);
+
+        if (ok) ok &= CGOEnable(tmpCGO, GL_CYLINDER_SHADER);
+        if (ok) ok &= CGOSpecial(tmpCGO, CYLINDER_WIDTH_FOR_REPWIRE);
+        convertcgo = CGOConvertLinesToCylinderShader(I->primitiveCGO, tmpCGO);
+        I->shaderCGO_has_cylinders = true;
+
+        if (ok) ok &= CGOAppendNoStop(tmpCGO, convertcgo);
+
+        if (ok) ok &= CGODisable(tmpCGO, GL_CYLINDER_SHADER);
+        if (ok) ok &= CGOStop(tmpCGO);
+        CGOFreeWithoutVBOs(convertcgo);
+        convertcgo = tmpCGO;
+      } else {
+        bool trilines = SettingGetGlobal_b(G, cSetting_trilines);
+        CGO *tmpCGO = CGONew(G), *tmp2CGO;
+        int shader = trilines ? GL_TRILINES_SHADER : GL_LINE_SHADER;
+
+        if (ok) ok &= CGOEnable(tmpCGO, shader);
+        if (ok) ok &= CGODisable(tmpCGO, CGO_GL_LIGHTING);
+        if (trilines) {
+          if (ok) ok &= CGOSpecial(tmpCGO, LINEWIDTH_DYNAMIC_WITH_SCALE);
+          tmp2CGO = CGOConvertToTrilinesShader(I->primitiveCGO, tmpCGO);
+        } else {
+          tmp2CGO = CGOConvertToLinesShader(I->primitiveCGO, tmpCGO);
+        }
+        if (ok) ok &= CGOAppendNoStop(tmpCGO, tmp2CGO);
+        if (ok) ok &= CGODisable(tmpCGO, shader);
+        if (ok) ok &= CGOStop(tmpCGO);
+        CGOFreeWithoutVBOs(tmp2CGO);
+        convertcgo = tmpCGO;
+      }
+      convertcgo->use_shader = true;
+    }
+    CGOFree(I->shaderCGO);
+    I->shaderCGO = convertcgo;
+    CHECKOK(ok, I->shaderCGO);
+  }
+  return ok;
+}
+	  
 static void RepWireBondRender(RepWireBond * I, RenderInfo * info)
 {
   PyMOLGlobals *G = I->R.G;
   CRay *ray = info->ray;
   Picking **pick = info->pick;
-  float *v = I->V, *vw = I->VarWidth;
-  float last_width = -1.0F;
-  int c = I->N;
-  unsigned int i, j;
-  Pickable *p;
   int ok = true;
-  float line_width = SceneGetDynamicLineWidth(info, I->Width);
-  float line_width_setting =
-    SettingGetGlobal_f(G, cSetting_line_width);
-  // 0.018f is found by trial and error
-  // TODO: this is not sufficient to solve the problem of disappearing cylinders
-  float scale_bound = SettingGetGlobal_f(G, cSetting_field_of_view)  * cPI / 180.0f * 0.018f;
 
   if(ray) {
-
-    float radius;
-    float pixel_radius = ray->PixelRadius;
-    if (pixel_radius < scale_bound) {
-      pixel_radius = scale_bound;
-    }
-    if(I->Radius <= 0.0F) {
-      radius = ray->PixelRadius * line_width / 2.0F;
-    } else {
-      vw = NULL;
-      radius = I->Radius;
-    }
-
-    v = I->V;
-    c = I->N;
-
-    while(ok && c--) {
-      if(vw) {
-        if(last_width != *vw) {
-          last_width = *vw;
-          radius = ray->PixelRadius * last_width / 2.0F;
-        }
-        vw++;
-      }
-      /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]); */
-      ok &= ray->sausage3fv(v + 3, v + 6, radius, v, v);
-      v += 9;
-    }
-
+#ifndef _PYMOL_NO_RAY
+    CGORenderRay(I->primitiveCGO, ray, info, NULL, NULL, I->R.cs->Setting, I->R.cs->Obj->Obj.Setting);
+    ray->transparentf(0.0);
+#endif
   } else if(G->HaveGUI && G->ValidContext) {
-    int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
-
+    bool use_shader = SettingGetGlobal_b(G, cSetting_line_use_shader) &&
+                      SettingGetGlobal_b(G, cSetting_use_shaders);
     if(pick) {
-
-      i = (*pick)->src.index;
-
-      v = I->VP;
-      c = I->NP;
-      p = I->R.P;
-
-#ifdef PURE_OPENGL_ES_2
-      (void) nvidia_bugs;
-#else
-      glBegin(GL_LINES);
-
-      while(c--) {
-
-        i++;
-
-        if(!(*pick)[0].src.bond) {
-          /* pass 1 - low order bits */
-
-          glColor3ub((uchar) ((i & 0xF) << 4), (uchar) ((i & 0xF0) | 0x8), (uchar) ((i & 0xF00) >> 4)); /* we're encoding the index into the color */
-          VLACheck((*pick), Picking, i);
-          p++;
-          (*pick)[i].src = *p;  /* copy object and atom info */
-          (*pick)[i].context = I->R.context;
-
-        } else {
-          /* pass 2 - high order bits */
-
-          j = i >> 12;
-
-          glColor3ub((uchar) ((j & 0xF) << 4), (uchar) ((j & 0xF0) | 0x8),
-                     (uchar) ((j & 0xF00) >> 4));
-
-        }
-        if(nvidia_bugs) {
-          glFlush();
-        }
-        glVertex3fv(v);
-        v += 3;
-        glVertex3fv(v);
-        v += 3;
-
-      }
-      glEnd();
-#endif
-      (*pick)[0].src.index = i; /* pass the count */
+      CGORenderGLPicking(use_shader ? I->shaderCGO : I->primitiveCGO, info, &I->R.context, NULL, NULL, &I->R);
     } else { /* else not pick i.e., when rendering */
-      short use_shader, generate_shader_cgo = 0;
       short line_as_cylinders ;
-      int nvidia_bugs = SettingGetGlobal_i(G, cSetting_nvidia_bugs);
-      use_shader = SettingGetGlobal_b(G, cSetting_line_use_shader) & 
-                   SettingGetGlobal_b(G, cSetting_use_shaders);
-
       line_as_cylinders = SettingGetGlobal_b(G, cSetting_render_as_cylinders) && SettingGetGlobal_b(G, cSetting_line_as_cylinders);
-      if (!use_shader && I->shaderCGO){
-	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
-      }
-
-      if (I->shaderCGO && (line_as_cylinders ^ I->shaderCGO->has_draw_cylinder_buffers)){
-	CGOFree(I->shaderCGO);
-	I->shaderCGO = 0;
-      }
-
-      if (use_shader){
-	if (!I->shaderCGO){
-	  I->shaderCGO = CGONew(G);
-	  CHECKOK(ok, I->shaderCGO);
-	  if (ok)
-	    I->shaderCGO->use_shader = true;
-	  generate_shader_cgo = 1;
-	} else {
-	  CShaderPrg *shaderPrg;
-	  if (line_as_cylinders){
-	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	    if (!shaderPrg) return;
-	    if (vw){
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width_setting/ 2.f);
-	    } else {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
-	    }
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    if (!shaderPrg) return;
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	  }
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-	  
-	  CShaderPrg_Disable(shaderPrg);
-	  return;
-	}
-      }
-
-      v = I->V;
-      c = I->N;
-
-      if (ok && generate_shader_cgo){
-	ok &= CGOLinewidthSpecial(I->shaderCGO, LINEWIDTH_DYNAMIC_WITH_SCALE);
-	
-	if(ok && !info->line_lighting)
-	  ok &= CGODisable(I->shaderCGO, GL_LIGHTING);
-	ok &= CGOResetNormal(I->shaderCGO, true);
-      } else {
-
-	if(info->width_scale_flag)
-	  glLineWidth(line_width * info->width_scale);
-	else
-	  glLineWidth(line_width);
-	
-	if(!info->line_lighting)
-	  glDisable(GL_LIGHTING);
-	SceneResetNormal(G, true);
-      }
-
-      
-      if (generate_shader_cgo){
-	float curColor[3];
-	while(ok && c--) {
-	  //	  float cylinder_width = line_width;
-	  float cylinder_width = line_width_setting;
-	  if(vw) {
-	    if(last_width != *vw) {
-	      last_width = *vw;
-	      ok &= CGOLinewidth(I->shaderCGO, last_width);
-	    }
-	    cylinder_width = *vw;
-	    vw++;
-	  }
-	  if (ok){
-	    ok &= CGOColorv(I->shaderCGO, v);
-	    copy3f(v, curColor);
-	    v += 3;
-	  }
-	  if (ok){
-	    if (line_as_cylinders){
-	      float *origin, axis[3];
-	      origin = v;
-	      v += 3;
-	      axis[0] = v[0] - origin[0];
-	      axis[1] = v[1] - origin[1];
-	      axis[2] = v[2] - origin[2];
-	      v += 3;
-
-	      {
-		if (c && equal3f(&v[-3], &v[3]) && !equal3f(curColor, v)){
-		  /* if successive bonds share midpoint, then draw one cylinder with two colors */
-		  origin = &v[-6];
-		  axis[0] = v[6] - origin[0];
-		  axis[1] = v[7] - origin[1];
-		  axis[2] = v[8] - origin[2];
-		  // if next bond has same half-point, then draw one cylinder with two colors
-		  ok &= CGOShaderCylinder2ndColor(I->shaderCGO, origin, axis, cylinder_width/line_width_setting, 15, v);
-		  v += 9;
-		  c--;
-		} else {
-		  /* Storing the cylinder_width divided by the current line_width setting */
-		  ok &= CGOShaderCylinder(I->shaderCGO, origin, axis, cylinder_width/line_width_setting, 15);
-		}
-	      }
-	    } else {
-	      ok &= CGOBegin(I->shaderCGO, GL_LINES);
-	      if (ok){
-		ok &= CGOVertexv(I->shaderCGO, v);
-		v += 3;
-	      }
-	      if (ok){
-		ok &= CGOVertexv(I->shaderCGO, v);
-		v += 3;
-	      }
-	      if (ok)
-		ok &= CGOEnd(I->shaderCGO);
-	    }
-	  }
-	}
-      } else {
-	while(c--) {
-	  if(vw) {
-	    if(last_width != *vw) {
-	      last_width = *vw;
-	      glLineWidth(last_width);
-	    }
-	    vw++;
-	  }
-#ifdef PURE_OPENGL_ES_2
-    /* TODO */
-#else
-	  glBegin(GL_LINES);
-	  glColor3fv(v);
-	  v += 3;
-	  if(nvidia_bugs) {
-	    glFlush();
-	  }
-	  glVertex3fv(v);
-	  v += 3;
-	  glVertex3fv(v);
-	  v += 3;
-	  glEnd();
-#endif
-	}
-      }
-      if (generate_shader_cgo){
-	if (ok)
-	  ok &= CGOEnable(I->shaderCGO, GL_LIGHTING);
-      } else {
-	glEnable(GL_LIGHTING);
-      }
-      if (use_shader) {
-	if (ok && generate_shader_cgo){
-	  CGO *convertcgo = NULL;
-	  if (ok)
-	    ok &= CGOStop(I->shaderCGO);
-	  if (ok){
-	    convertcgo = CGOCombineBeginEnd(I->shaderCGO, 0);    
-	    CGOFree(I->shaderCGO);    
-	    I->shaderCGO = convertcgo;
-	    CHECKOK(ok, I->shaderCGO);
-	    convertcgo = NULL;
-	  }
-	  if (ok && I->shaderCGO){
-	    if (line_as_cylinders){
-              convertcgo = CGOOptimizeGLSLCylindersToVBOIndexed(I->shaderCGO, 0);
-	    } else {
-              convertcgo = CGOOptimizeToVBONotIndexed(I->shaderCGO, 0);
-	    }
-	  }
+      if (I->shaderCGO && (!use_shader || (line_as_cylinders ^ I->shaderCGO_has_cylinders))){
       CGOFree(I->shaderCGO);
-      I->shaderCGO = convertcgo;
-      CHECKOK(ok, I->shaderCGO);
+        I->shaderCGO_has_cylinders = 0;
 	}
-	
 	if (ok){
-	  CShaderPrg *shaderPrg;
-	  if (line_as_cylinders){
-	    // vertex scale is bound so that cylinders cannot disappear when it gets too low
-	    float pixel_scale_value = SettingGetGlobal_f(G, cSetting_ray_pixel_scale);
-	    if(pixel_scale_value < 0)
-	      pixel_scale_value = 1.0F;
-	    shaderPrg = CShaderPrg_Enable_CylinderShader(G);
-	    if (!shaderPrg) return;
-	    if (vw){
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width_setting/ 2.f);
+        if (use_shader) {
+          if (!I->shaderCGO)
+            ok &= RepWireBondCGOGenerate(I, info);
+          CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
 	    } else {
-	      CShaderPrg_Set1f(shaderPrg, "uni_radius", info->vertex_scale * pixel_scale_value * line_width/ 2.f);
-	    }
-	  } else {
-	    shaderPrg = CShaderPrg_Enable_DefaultShader(G);
-	    if (!shaderPrg) return;
-	    CShaderPrg_SetLightingEnabled(shaderPrg, 0);
-	  }	 
-	  
-	  CGORenderGL(I->shaderCGO, NULL, NULL, NULL, info, &I->R);
-	  
-	  CShaderPrg_Disable(shaderPrg);
+          CGORenderGL(I->primitiveCGO, NULL, NULL, NULL, info, &I->R);
 	}
       }
     }
   }
   if (!ok){
     CGOFree(I->shaderCGO);
-    I->shaderCGO = NULL;
     I->R.fInvalidate(&I->R, I->R.cs, cRepInvPurge);
     I->R.cs->Active[cRepLine] = false;
   }
@@ -820,24 +473,122 @@ bool IsBondTerminal(ObjectMolecule *obj, int b1, int b2){
   return false;
 }
 
+static int RepWireZeroOrderBond(CGO *cgo, bool s1, bool s2, float *v1, float *v2, float *rgb1, float *rgb2,
+                                unsigned int b1, unsigned int b2, int a, float dash_gap, float dash_length, bool b1masked, bool b2masked)
+{
+  int ok = true;
+  float axis[3], naxis[3];
+  subtract3f(v2, v1, axis);
+  copy3f(axis, naxis);
+  normalize3f(naxis);
+  float blen = length3f(axis);
+  float dash_tot = dash_gap + dash_length;
+  int ndashes = blen / dash_tot;
+
+  // only do even number of dashes
+  if (ndashes < 2) {
+    ndashes = 2;
+  } else if (ndashes % 2) {
+    --ndashes;
+  }
+
+  float remspace = blen - (ndashes * dash_length); // remaining space for first gaps
+  float dgap = remspace / (ndashes - 1.f); // endpoints at each vertex, therefore only account for ndashes-1 spaces
+  float placep[3], placep2[3], adddlen[3], adddtot[3];
+  float dplace;
+  int ndashes_drawn = 0;
+  bool color2_set = false;
+  mult3f(naxis, dash_length, adddlen); // adddlen - length of dash as x/y/z vector
+  mult3f(naxis, dash_length + dgap, adddtot); // adddtot - length of dash plus gap as x/y/z vector
+
+  copy3f(v1, placep);
+  if (s1){
+    ok &= CGOColorv(cgo, rgb1);
+    ok &= CGOPickColor(cgo, b1, b1masked ? cPickableNoPick : a);
+    for (dplace = 0.f; (dplace+dash_length) < blen / 2.f; ){
+      add3f(placep, adddlen, placep2);
+      cgo->add<cgo::draw::line>(placep, placep2);
+      add3f(placep, adddtot, placep);
+      dplace += dash_length + dgap;
+      ++ndashes_drawn;
+    }
+    if (!s2){
+      if (dplace < blen / 2.f){
+        // if we are behind the mid-point, only s1, so draw a half-bond
+        add3f(placep, adddlen, placep2);
+        cgo->add<cgo::draw::line>(placep, placep2);
+        add3f(placep, adddtot, placep);
+        dplace += dash_length + dgap;
+        ++ndashes_drawn;
+      }
+    }
+  } else {
+    float tmpp[3];
+    dplace = (ndashes/2) * (dash_length + dgap);
+    mult3f(naxis, dplace, tmpp);
+    add3f(v1, tmpp, placep);
+    ndashes_drawn = ndashes/2;
+    // if !s1, then definitely s2, so draw half-bond
+    if (dplace <= blen / 2.f){
+      // if no s1, and we are behind the mid-point, draw half-bond with only s2
+      add3f(placep, adddlen, placep2);
+      ok &= CGOColorv(cgo, rgb2);
+      ok &= CGOPickColor(cgo, b2, b2masked ? cPickableNoPick : a);
+      color2_set = true;
+      cgo->add<cgo::draw::line>(placep, placep2);
+      add3f(placep, adddtot, placep);
+      dplace += dash_length + dgap;
+      ++ndashes_drawn;
+    }
+  }
+  if (s2){
+    if (dplace < blen / 2.f){
+      // if we are behind the mid-point, draw a split cylinder with both colors
+      float tmpp[3];
+      mult3f(axis, .5f, tmpp);
+      add3f(v1, tmpp, tmpp);
+      cgo->add<cgo::draw::line>(placep, tmpp);
+      add3f(placep, adddlen, placep2);
+      if (!color2_set){
+        ok &= CGOColorv(cgo, rgb2);
+        ok &= CGOPickColor(cgo, b2, b2masked ? cPickableNoPick : a);
+      }
+      cgo->add<cgo::draw::line>(tmpp, placep2);
+      add3f(placep, adddtot, placep);
+      dplace += dash_length + dgap;
+      ++ndashes_drawn;
+    } else if (!color2_set){
+      ok &= CGOColorv(cgo, rgb2);
+      ok &= CGOPickColor(cgo, b2, b2masked ? cPickableNoPick : a);
+    }
+    while (ndashes_drawn < ndashes){
+      add3f(placep, adddlen, placep2);
+      cgo->add<cgo::draw::line>(placep, placep2);
+      add3f(placep, adddtot, placep);
+      dplace += dash_length + dgap;
+      ++ndashes_drawn;
+    }
+  }
+
+  return ok;
+}
+
 Rep *RepWireBondNew(CoordSet * cs, int state)
 {
   PyMOLGlobals *G = cs->State.G;
   ObjectMolecule *obj = cs->Obj;
-  int a1, a2, b1, b2;
-  int a, c1, c2, s1, s2, ord;
+  int a1, a2;
+  unsigned int b1, b2;
+  int a, c1, c2, ord;
+  bool s1, s2;
   BondType *b;
   int half_bonds, *other = NULL;
   float valence;
-  float *v, *v0, *v1, *v2, h[3];
+  float *v1, *v2;
   int visFlag;
-  int maxSegment = 0;
-  int maxBond = 0;
-  float tmpColor[3];
   float line_width;
   int valence_flag = false;
-  Pickable *rp;
-  AtomInfoType *ai1, *ai2;
+  AtomInfoType *ai1;
   int cartoon_side_chain_helper = 0;
   int ribbon_side_chain_helper = 0;
   int line_stick_helper = 0;
@@ -845,13 +596,13 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   bool *marked = NULL;
   int valence_found = false;
   int variable_width = false;
-  int n_line_width = 0;
+  float last_line_width = -1.f;
   int line_color;
   int hide_long = false;
   int fancy;
   const float _0p9 = 0.9F;
   int ok = true;
-
+  unsigned int line_counter = 0;
   OOAlloc(G, RepWireBond);
   CHECKOK(ok, I);
   PRINTFD(G, FB_RepWireBond)
@@ -859,15 +610,16 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
   visFlag = false;
   b = obj->Bond;
+  ai1 = obj->AtomInfo;
   if(ok && GET_BIT(obj->RepVisCache,cRepLine)){
     for(a = 0; a < obj->NBond; a++) {
       b1 = b->index[0];
       b2 = b->index[1];
-      b++;
-      if(GET_BIT(obj->AtomInfo[b1].visRep,cRepLine) || GET_BIT(obj->AtomInfo[b2].visRep,cRepLine)) {
+      if((cRepLineBit & ai1[b1].visRep & ai1[b2].visRep)) {
         visFlag = true;
         break;
       }
+      b++;
     }
   }
   if(!visFlag) {
@@ -902,6 +654,8 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
   int na_mode_ribbon =
     SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_ribbon_nucleic_acid_mode);
   fancy = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_valence_mode) == 1;
+  auto valence_zero_mode =
+    SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_valence_zero_mode);
   
   b = obj->Bond;
   
@@ -922,22 +676,16 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
       a2 = cs->AtmToIdx[b2];
     }
     if((a1 >= 0) && (a2 >= 0)) {
-      if((!variable_width) && AtomInfoCheckBondSetting(G, b, cSetting_line_width))
-        variable_width = true;
+      if(!variable_width)
+        if (AtomInfoCheckBondSetting(G, b, cSetting_line_width)){
+          variable_width = true;
+          if (valence_found) break;
+        }
       auto bd_valence_flag = BondSettingGetWD(G, b, cSetting_valence, valence_flag);
       if(bd_valence_flag) {
-
         valence_found = true;
-        if((b->order > 0) && (b->order < 4)) {
-          maxSegment += 2 * b->order;
-        } else if(b->order == 4) {      /* aromatic */
-          maxSegment += 10;
-        } else {
-          maxSegment += 2;
-        }
-      } else
-        maxSegment += 2;
-      maxBond++;
+        if (variable_width) break;
+      }
     }
     b++;
   }
@@ -946,34 +694,26 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
 
   I->R.fRender = (void (*)(struct Rep *, RenderInfo * info)) RepWireBondRender;
   I->R.fFree = (void (*)(struct Rep *)) RepWireBondFree;
-  I->Width = line_width;
-  I->Radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_line_radius);
 
   I->shaderCGO = 0;
-  I->N = 0;
-  I->NP = 0;
-  I->V = NULL;
-  I->VP = NULL;
-  I->VarWidth = NULL;
+  I->shaderCGO_has_cylinders = 0;
   I->R.P = NULL;
   I->R.fRecolor = NULL;
   I->R.context.object = (void *) obj;
   I->R.context.state = state;
   I->R.cs = cs;
 
+  I->primitiveCGO = CGONew(G);
+
+  CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 0.f);
+
+  CGOSpecial(I->primitiveCGO, LINEWIDTH_FOR_LINES);
+  CGOBegin(I->primitiveCGO, GL_LINES);
+
   if(obj->NBond) {
 
     if(valence_found)           /* build list of up to 2 connected atoms for each atom */
       other = ObjectMoleculeGetPrioritizedOtherIndexList(obj, cs);
-
-    if(variable_width) {
-      I->VarWidth = Alloc(float, maxSegment);
-      CHECKOK(ok, I->VarWidth);
-    }
-
-    if (ok)
-      I->V = Alloc(float, maxSegment * 9);
-    CHECKOK(ok, I->V);
 
     if(ok && (cartoon_side_chain_helper || ribbon_side_chain_helper)) {
       SideChainHelperMarkNonCartoonBonded(marked, obj, cs,
@@ -981,20 +721,17 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           ribbon_side_chain_helper);
     }
 
-    v = I->V;
+
     b = obj->Bond;
 
-    for(a = 0; ok && a < obj->NBond; a++) {
-
+    for(a = 0; ok && a < obj->NBond; ++a, ++b) {
       b1 = b->index[0];
       b2 = b->index[1];
       ord = b->order;
 
-      /*
-         b1 = *(b++);
-         b2 = *(b++);
-         ord = (*(b++));
-       */
+      if (ord == 0 && valence_zero_mode == 0)
+        continue;
+
       if(obj->DiscreteFlag) {
         if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
           a1 = obj->DiscreteAtmToIdx[b1];
@@ -1012,33 +749,33 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
         AtomInfoType *ati1 = obj->AtomInfo + b1;
         AtomInfoType *ati2 = obj->AtomInfo + b2;
 
-        s1 = GET_BIT(ati1->visRep,cRepLine);
-        s2 = GET_BIT(ati2->visRep,cRepLine);
+        s1 = (ati1->visRep & cRepLineBit);
+        s2 = (ati2->visRep & cRepLineBit);
 
-        if((s1 || s2) && !(s1 && s2))
+        if(s1 ^ s2){
           if(!half_bonds) {
             if(line_stick_helper &&
-               (((!s1) && GET_BIT(ati1->visRep,cRepCyl) && (!GET_BIT(ati2->visRep,cRepCyl))) ||
-                ((!s2) && GET_BIT(ati2->visRep,cRepCyl) && (!GET_BIT(ati1->visRep,cRepCyl)))))
+               (((!s1) && (cRepCylBit & ati1->visRep) && !(cRepCylBit & ati2->visRep)) ||
+                ((!s2) && (cRepCylBit & ati2->visRep) && !(cRepCylBit & ati1->visRep))))
               s1 = s2 = 1;      /* turn on line when both stick and line are alternately shown */
             else {
               s1 = 0;
               s2 = 0;
             }
           }
+        }
 
         if(hide_long && (s1 || s2)) {
           float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
           v1 = cs->Coord + 3 * a1;
           v2 = cs->Coord + 3 * a2;
           ai1 = obj->AtomInfo + b1;
-          ai2 = obj->AtomInfo + b2;
           if(!within3f(v1, v2, cutoff)) /* atoms separated by more than 90% of the sum of their vdw radii */
             s1 = s2 = 0;
         }
 
         if(s1 || s2) {
-          float bd_line_width = line_width;
+          float rgb1[3], rgb2[3];
           int terminal = false;
 
           auto bd_valence_flag = BondSettingGetWD(G, b, cSetting_valence, valence_flag);
@@ -1049,7 +786,11 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
           }
 
           if(variable_width) {
-            bd_line_width = BondSettingGetWD(G, b, cSetting_line_width, line_width);
+            auto bd_line_width = BondSettingGetWD(G, b, cSetting_line_width, line_width);
+            if (last_line_width!=bd_line_width){
+              CGOSpecialWithArg(I->primitiveCGO, LINEWIDTH_FOR_LINES, bd_line_width);
+              last_line_width = bd_line_width;
+            }
           }
 
           if(bd_line_color < 0) {
@@ -1097,488 +838,41 @@ Rep *RepWireBondNew(CoordSet * cs, int state)
             }
           }
 
-          if((c1 == c2) && s1 && s2 && (!ColorCheckRamped(G, c1))) {
+          bool isRamped = false;
+          isRamped = ColorGetCheckRamped(G, c1, v1, rgb1, state);
+          isRamped = ColorGetCheckRamped(G, c2, v2, rgb2, state) | isRamped;
+          if (s1 || s2){
+            if (ord == 0 && valence_zero_mode == 2) {
+              ord = 1;
+            }
 
-            v0 = ColorGet(G, c1);
-
-            if((bd_valence_flag) && (ord > 1) && (ord < 4)) {
-              RepValence(v, v1, v2, other, a1, a2, cs->Coord, v0, ord, valence, 0, fancy
-                         && !terminal);
-              v += ord * 9;
-              I->N += ord;
-            } else if(bd_valence_flag && (ord == 4)) {  /* aromatic */
-              RepAromatic(v1, v2, other, a1, a2, cs->Coord, v0, valence, 0, &v, &I->N);
+            if (!ord){
+              RepWireZeroOrderBond(I->primitiveCGO, s1, s2, v1, v2, rgb1, rgb2, b1, b2, a, .15f, .15f, ati1->masked, ati2->masked);
+            } else if (!bd_valence_flag || ord <= 1){
+              RepLine(I->primitiveCGO, s1, s2, isRamped, v1, v2, rgb1, b1, b2, a, rgb2, ati1->masked, ati2->masked);
             } else {
-              I->N++;
-              *(v++) = *(v0++);
-              *(v++) = *(v0++);
-              *(v++) = *(v0++);
-
-              *(v++) = *(v1++);
-              *(v++) = *(v1++);
-              *(v++) = *(v1++);
-
-              *(v++) = *(v2++);
-              *(v++) = *(v2++);
-              *(v++) = *(v2++);
-            }
-          } else {
-
-            h[0] = (v1[0] + v2[0]) / 2;
-            h[1] = (v1[1] + v2[1]) / 2;
-            h[2] = (v1[2] + v2[2]) / 2;
-
-            if(s1) {
-
-              if(ColorCheckRamped(G, c1)) {
-                ColorGetRamped(G, c1, v1, tmpColor, state);
-                v0 = tmpColor;
+              if (ord == 4){
+                RepAromatic(I->primitiveCGO, s1, s2, isRamped, v1, v2, other, a1, a2, cs->Coord, rgb1, rgb2, valence, 0, b1, b2, a, ati1->masked, ati2->masked);
               } else {
-                v0 = ColorGet(G, c1);
-              }
-
-              if((bd_valence_flag) && (ord > 1) && (ord < 4)) {
-                RepValence(v, v1, h, other, a1, a2, cs->Coord, v0, ord, valence, 1, fancy
-                           && !terminal);
-                v += ord * 9;
-                I->N += ord;
-              } else if(bd_valence_flag && (ord == 4)) {
-                RepAromatic(v1, v2, other, a1, a2, cs->Coord, v0, valence, 1, &v, &I->N);
-              } else {
-
-                I->N++;
-                *(v++) = *(v0++);
-                *(v++) = *(v0++);
-                *(v++) = *(v0++);
-
-                *(v++) = *(v1++);
-                *(v++) = *(v1++);
-                *(v++) = *(v1++);
-
-                *(v++) = h[0];
-                *(v++) = h[1];
-                *(v++) = h[2];
+                RepValence(I->primitiveCGO, s1, s2, isRamped, v1, v2, other, a1, a2, cs->Coord, rgb1, rgb2, ord, valence, fancy && !terminal, b1, b2, a, ati1->masked, ati2->masked);
               }
             }
-            if(s2) {
-              if(ColorCheckRamped(G, c2)) {
-                ColorGetRamped(G, c2, v2, tmpColor, state);
-                v0 = tmpColor;
-              } else {
-                v0 = ColorGet(G, c2);
-              }
-              if((bd_valence_flag) && (ord > 1) && (ord < 4)) {
-                RepValence(v, h, v2, other, a1, a2, cs->Coord, v0, ord, valence, 2, fancy
-                           && !terminal);
-                v += ord * 9;
-                I->N += ord;
-              } else if(bd_valence_flag && (ord == 4)) {
-                RepAromatic(v1, v2, other, a1, a2, cs->Coord, v0, valence, 2, &v, &I->N);
-              } else {
-                I->N++;
-                *(v++) = *(v0++);
-                *(v++) = *(v0++);
-                *(v++) = *(v0++);
-
-                *(v++) = h[0];
-                *(v++) = h[1];
-                *(v++) = h[2];
-
-                *(v++) = *(v2++);
-                *(v++) = *(v2++);
-                *(v++) = *(v2++);
-              }
-
-            }
-          }
-
-          /* record effective line_widths for these segments */
-
-          if(variable_width) {
-            while(n_line_width < I->N) {
-              I->VarWidth[n_line_width] = bd_line_width;
-              n_line_width++;
-            }
+            line_counter++;
           }
         }
       }
-      b++;
       ok &= !G->Interrupt;
     }
-    if (ok)
-      I->V = ReallocForSure(I->V, float, (v - I->V));
-    CHECKOK(ok, I->V);
-    if(ok && I->VarWidth) {
-      I->VarWidth = ReallocForSure(I->VarWidth, float, n_line_width);
-      CHECKOK(ok, I->VarWidth);
-    }
-
-    /* now create pickable verson */
-
-    if(ok && SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_pickable)) {
-      I->VP = Alloc(float, maxBond * 6 * 2);
-      CHECKOK(ok, I->VP);
-
-      if (ok)
-	I->R.P = Alloc(Pickable, 2 * maxBond + 1);
-      CHECKOK(ok, I->R.P);
-      if (ok){
-	rp = I->R.P + 1;          /* skip first record! */
-
-	v = I->VP;
-	b = obj->Bond;
-      }
-      for(a = 0; ok && a < obj->NBond; a++) {
-
-        b1 = b->index[0];
-        b2 = b->index[1];
-        b++;
-        if(obj->DiscreteFlag) {
-          if((cs == obj->DiscreteCSet[b1]) && (cs == obj->DiscreteCSet[b2])) {
-            a1 = obj->DiscreteAtmToIdx[b1];
-            a2 = obj->DiscreteAtmToIdx[b2];
-          } else {
-            a1 = -1;
-            a2 = -1;
-          }
-        } else {
-          a1 = cs->AtmToIdx[b1];
-          a2 = cs->AtmToIdx[b2];
-        }
-        if((a1 >= 0) && (a2 >= 0)) {
-
-          ai1 = obj->AtomInfo + b1;
-          ai2 = obj->AtomInfo + b2;
-          s1 = GET_BIT(ai1->visRep,cRepLine);
-          s2 = GET_BIT(ai2->visRep,cRepLine);
-
-          if(!(s1 && s2)) {
-            if(!half_bonds) {
-              s1 = 0;
-              s2 = 0;
-            }
-          }
-
-          if(hide_long && (s1 || s2)) {
-            float cutoff = (ai1->vdw + ai2->vdw) * _0p9;
-            v1 = cs->Coord + 3 * a1;
-            v2 = cs->Coord + 3 * a2;
-            ai1 = obj->AtomInfo + b1;
-            ai2 = obj->AtomInfo + b2;
-            if(!within3f(v1, v2, cutoff))       /* atoms separated by more than 90% of the sum of their vdw radii */
-              s1 = s2 = 0;
-          }
-
-          if(s1 || s2) {
-
-            v1 = cs->Coord + 3 * a1;
-            v2 = cs->Coord + 3 * a2;
-
-            h[0] = (v1[0] + v2[0]) / 2;
-            h[1] = (v1[1] + v2[1]) / 2;
-            h[2] = (v1[2] + v2[2]) / 2;
-
-            if(s1 & (!ai1->masked)) {
-
-              I->NP++;
-              rp->index = b1;
-              rp->bond = a;
-              rp++;
-
-              *(v++) = *(v1++);
-              *(v++) = *(v1++);
-              *(v++) = *(v1++);
-
-              *(v++) = h[0];
-              *(v++) = h[1];
-              *(v++) = h[2];
-            }
-            if(s2 & (!ai2->masked)) {
-
-              I->NP++;
-              rp->index = b2;
-              rp->bond = a;
-              rp++;
-
-              *(v++) = h[0];
-              *(v++) = h[1];
-              *(v++) = h[2];
-
-              *(v++) = *(v2++);
-              *(v++) = *(v2++);
-              *(v++) = *(v2++);
-            }
-          }
-        }
-	ok &= !G->Interrupt;
-      }
-      if (ok){
-	I->R.P = Realloc(I->R.P, Pickable, I->NP + 1);
-	CHECKOK(ok, I->R.P);
-	if (ok)
-	  I->R.P[0].index = I->NP;
-      }
-      if (ok)
-	I->VP = ReallocForSure(I->VP, float, (v - I->VP));
-      CHECKOK(ok, I->VP);
-    }
   }
+  CGOEnd(I->primitiveCGO);
+  CGOSpecialWithArg(I->primitiveCGO, LINE_LIGHTING, 1.f);
+  CGOStop(I->primitiveCGO);
   FreeP(marked);
   FreeP(other);
-  if (!ok){
+  if (!ok || !line_counter){
     RepWireBondFree(I);
     I = NULL;
   }
   return (Rep *) I;
 }
 
-static void RepValence(float *v, float *v1, float *v2, int *other,
-                       int a1, int a2, float *coord, float *color, int ord,
-                       float tube_size, int half_state, int fancy)
-{
-
-  float d[3], t[3], p0[3], p1[3], p2[3], *vv;
-  int a3;
-  const float indent = tube_size;
-
-  v[0] = color[0];
-  v[1] = color[1];
-  v[2] = color[2];
-
-  v[9] = color[0];
-  v[10] = color[1];
-  v[11] = color[2];
-
-  /* direction vector */
-
-  p0[0] = (v2[0] - v1[0]);
-  p0[1] = (v2[1] - v1[1]);
-  p0[2] = (v2[2] - v1[2]);
-
-  copy3f(p0, d);
-  normalize3f(p0);
-
-  /* need a prioritized third atom to get planarity */
-
-  a3 = ObjectMoleculeGetPrioritizedOther(other, a1, a2, NULL);
-
-  if(a3 < 0) {
-    t[0] = p0[0];
-    t[1] = p0[1];
-    t[2] = -p0[2];
-  } else {
-    vv = coord + 3 * a3;
-    t[0] = *(vv++) - v1[0];
-    t[1] = *(vv++) - v1[1];
-    t[2] = *(vv++) - v1[2];
-    normalize3f(t);
-  }
-
-  cross_product3f(d, t, p1);
-
-  normalize3f(p1);
-
-  if(length3f(p1) == 0.0) {
-    p1[0] = p0[1];
-    p1[1] = p0[2];
-    p1[2] = p0[0];
-    cross_product3f(p0, p1, p2);
-    normalize3f(p2);
-  } else {
-    cross_product3f(d, p1, p2);
-
-    normalize3f(p2);
-  }
-
-  /* now we have a coordinate system */
-
-  t[0] = p2[0] * tube_size;
-  t[1] = p2[1] * tube_size;
-  t[2] = p2[2] * tube_size;
-
-  switch (ord) {
-  case 2:
-    v[0] = color[0];
-    v[1] = color[1];
-    v[2] = color[2];
-
-    v[9] = color[0];
-    v[10] = color[1];
-    v[11] = color[2];
-
-    if(fancy) {
-
-      float f, f_1;
-      v[3] = v1[0];
-      v[4] = v1[1];
-      v[5] = v1[2];
-
-      v[6] = v2[0];
-      v[7] = v2[1];
-      v[8] = v2[2];
-
-      if(half_state == 2) {
-        v[12] = v1[0] - 2 * t[0];
-        v[13] = v1[1] - 2 * t[1];
-        v[14] = v1[2] - 2 * t[2];
-      } else {
-        if(half_state == 1)
-          f = indent * 2;
-        else
-          f = indent;
-
-        f_1 = 1.0F - f;
-
-        v[12] = (f_1 * v1[0] + f * v2[0]) - 2 * t[0];
-        v[13] = (f_1 * v1[1] + f * v2[1]) - 2 * t[1];
-        v[14] = (f_1 * v1[2] + f * v2[2]) - 2 * t[2];
-      }
-
-      if(half_state == 1) {
-        v[15] = v2[0] - 2 * t[0];
-        v[16] = v2[1] - 2 * t[1];
-        v[17] = v2[2] - 2 * t[2];
-
-      } else {
-        if(half_state == 2)
-          f = 1.0 - 2 * indent;
-        else
-          f = 1.0 - indent;
-        f_1 = 1.0F - f;
-        v[15] = (f_1 * v1[0] + f * v2[0]) - 2 * t[0];
-        v[16] = (f_1 * v1[1] + f * v2[1]) - 2 * t[1];
-        v[17] = (f_1 * v1[2] + f * v2[2]) - 2 * t[2];
-      }
-
-    } else {
-      v[3] = v1[0] - t[0];
-      v[4] = v1[1] - t[1];
-      v[5] = v1[2] - t[2];
-
-      v[6] = v2[0] - t[0];
-      v[7] = v2[1] - t[1];
-      v[8] = v2[2] - t[2];
-
-      v[12] = v1[0] + t[0];
-      v[13] = v1[1] + t[1];
-      v[14] = v1[2] + t[2];
-
-      v[15] = v2[0] + t[0];
-      v[16] = v2[1] + t[1];
-      v[17] = v2[2] + t[2];
-    }
-    break;
-  case 3:
-    t[0] = t[0] * 2;
-    t[1] = t[1] * 2;
-    t[2] = t[2] * 2;
-
-    v[0] = color[0];
-    v[1] = color[1];
-    v[2] = color[2];
-
-    if(fancy) {
-      float f, f_1;
-
-      if(half_state == 2) {
-        v[3] = v1[0] - t[0];
-        v[4] = v1[1] - t[1];
-        v[5] = v1[2] - t[2];
-      } else {
-        if(half_state == 1)
-          f = indent * 2;
-        else
-          f = indent;
-
-        f_1 = 1.0F - f;
-
-        v[3] = (f_1 * v1[0] + f * v2[0]) - t[0];
-        v[4] = (f_1 * v1[1] + f * v2[1]) - t[1];
-        v[5] = (f_1 * v1[2] + f * v2[2]) - t[2];
-      }
-
-      if(half_state == 1) {
-        v[6] = v2[0] - t[0];
-        v[7] = v2[1] - t[1];
-        v[8] = v2[2] - t[2];
-
-      } else {
-        if(half_state == 2)
-          f = 1.0 - 2 * indent;
-        else
-          f = 1.0 - indent;
-        f_1 = 1.0F - f;
-        v[6] = (f_1 * v1[0] + f * v2[0]) - t[0];
-        v[7] = (f_1 * v1[1] + f * v2[1]) - t[1];
-        v[8] = (f_1 * v1[2] + f * v2[2]) - t[2];
-      }
-
-      if(half_state == 2) {
-        v[12] = v1[0] + t[0];
-        v[13] = v1[1] + t[1];
-        v[14] = v1[2] + t[2];
-      } else {
-        if(half_state == 1)
-          f = indent * 2;
-        else
-          f = indent;
-
-        f_1 = 1.0F - f;
-
-        v[12] = (f_1 * v1[0] + f * v2[0]) + t[0];
-        v[13] = (f_1 * v1[1] + f * v2[1]) + t[1];
-        v[14] = (f_1 * v1[2] + f * v2[2]) + t[2];
-      }
-
-      if(half_state == 1) {
-        v[15] = v2[0] + t[0];
-        v[16] = v2[1] + t[1];
-        v[17] = v2[2] + t[2];
-      } else {
-        if(half_state == 2)
-          f = 1.0 - 2 * indent;
-        else
-          f = 1.0 - indent;
-        f_1 = 1.0F - f;
-        v[15] = (f_1 * v1[0] + f * v2[0]) + t[0];
-        v[16] = (f_1 * v1[1] + f * v2[1]) + t[1];
-        v[17] = (f_1 * v1[2] + f * v2[2]) + t[2];
-      }
-    } else {
-
-      v[3] = v1[0] - t[0];
-      v[4] = v1[1] - t[1];
-      v[5] = v1[2] - t[2];
-
-      v[6] = v2[0] - t[0];
-      v[7] = v2[1] - t[1];
-      v[8] = v2[2] - t[2];
-
-      v[12] = v1[0] + t[0];
-      v[13] = v1[1] + t[1];
-      v[14] = v1[2] + t[2];
-
-      v[15] = v2[0] + t[0];
-      v[16] = v2[1] + t[1];
-      v[17] = v2[2] + t[2];
-
-    }
-
-    v[9] = color[0];
-    v[10] = color[1];
-    v[11] = color[2];
-
-    v[18] = color[0];
-    v[19] = color[1];
-    v[20] = color[2];
-
-    v[21] = v1[0];
-    v[22] = v1[1];
-    v[23] = v1[2];
-
-    v[24] = v2[0];
-    v[25] = v2[1];
-    v[26] = v2[2];
-    break;
-  }
-}
