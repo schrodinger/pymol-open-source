@@ -554,8 +554,6 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int n_state1, n_state2;
   int frozen1 = -1, frozen2 = -1;
   ObjectDist *I;
-  
-  CObject * query_obj = NULL;
 
   /* if the distance name we presented exists and is an object, just
    * overwrite it by resetting it; otherwise intialize the
@@ -654,7 +652,6 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
   ObjectDist *I;
 
   int frozen1=-1, frozen2=-1, frozen3=-1;
-  CObject * query_obj = NULL;
   if(!oldObj)                   /* create object if new */
     I = ObjectDistNew(G);
   else {                        /* otherwise, use existing object */

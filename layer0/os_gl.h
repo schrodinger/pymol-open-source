@@ -358,6 +358,10 @@ void p_glutMainLoop(void);
 #define GL_FRAGMENT_PROGRAM_ARB                         0x8804
 #endif
 
+#ifndef GLAPIENTRY
+#define GLAPIENTRY
+#endif
+
 #define hasFrameBufferBinding() false
 
 #endif

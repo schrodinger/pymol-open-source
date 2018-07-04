@@ -510,6 +510,10 @@ struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
 int ObjectMoleculeUpdateAtomTypeInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize, int format);
 #endif
 
+#ifdef _PYMOL_IP_EXTRAS
+int ObjectMoleculeUpdateMMStereoInfoForState(PyMOLGlobals * G, ObjectMolecule * obj, int state, int initialize=1);
+#endif
+
 #ifndef _PYMOL_NO_UNDO
 void ObjectMoleculeSetAtomBondInfoTypeOldId(PyMOLGlobals * G, ObjectMolecule * obj);
 void ObjectMoleculeSetAtomBondInfoTypeOldIdToNegOne(PyMOLGlobals * G, ObjectMolecule * obj);

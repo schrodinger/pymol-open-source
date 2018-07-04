@@ -8092,7 +8092,7 @@ void CGORenderGLAlpha(CGO * I, RenderInfo * info, bool calcDepth)
         float range_factor;
         float *base = I->op;
         float *pc = base;
-        int op, i, ii;
+        int op, i;
         int *start = I->i_start;
         int delta = 1, ntris = 0;
         /* bin the triangles */
@@ -8136,7 +8136,7 @@ void CGORenderGLAlpha(CGO * I, RenderInfo * info, bool calcDepth)
 #ifndef PURE_OPENGL_ES_2
         glBegin(mode);
         for(i = 0; i < i_size; i++) {
-          ii = *start;
+          int ii = *start;
           start += delta;
           while(ii) {
             pc = base + ii;
