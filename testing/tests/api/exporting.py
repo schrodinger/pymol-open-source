@@ -320,3 +320,27 @@ class TestExporting(testing.PyMOLTestCase):
 
         self.assertEqual(color_list, [B, R, R, B, B, B, B])
         self.assertEqual(reps_list, [S, D, D, S, S, S, S])
+
+    @testing.requires_version('2.1')
+    def testMMTFExportSele(self):
+        cmd.fab('ACDE')
+
+        with testing.mktemp('.mmtf') as filename:
+            cmd.save(filename, 'resn CYS+ASP')
+            cmd.delete('*')
+            cmd.load(filename)
+
+        self.assertEqual(cmd.count_atoms(), 23)
+        self.assertEqual(cmd.count_atoms('bound_to ASP/CG'), 3)
+        self.assertEqual(cmd.get_model('ASP/CG ASP/OD1').bond[0].order, 2)
+        self.assertEqual(cmd.get_model('ASP/CG ASP/OD2').bond[0].order, 1)
+        self.assertEqual(cmd.get_model('CYS/C ASP/N').bond[0].order, 1)
+
+    @testing.requires_version('2.1')
+    def testMMTFExportEmpty(self):
+        with testing.mktemp('.mmtf') as filename:
+            cmd.save(filename)
+            cmd.load(filename, 'm1')
+
+        self.assertEqual(cmd.count_atoms(), 0)
+        self.assertEqual(cmd.get_names(), ['m1'])
