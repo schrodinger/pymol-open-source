@@ -12109,7 +12109,9 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(ok && isNew) {
         I->Obj.Color = AtomInfoUpdateAutoColor(G);
 
-        if (pdb_info->variant == PDB_VARIANT_VDB) {
+        if (pdb_info->variant == PDB_VARIANT_VDB ||
+            pdb_info->variant == PDB_VARIANT_PQR) {
+          // pqr files have no chain identifier by default
           // vdb files have same chain identifiers in all symmetry copies
           SettingSet(cSetting_retain_order, 1, (CObject *) I);
         }
