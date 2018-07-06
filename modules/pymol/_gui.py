@@ -398,6 +398,15 @@ class PyMOLDesktopGUI(object):
                         ('Object Names Only', 0),
                         ('No Labels', 3),
                     ]
+                ] + [
+                    ('separator',),
+                ] + [
+                    ('radio', lab, 'seq_view_gap_mode', val)
+                    for lab, val in [
+                        ('No Gaps', 0),
+                        ('All Gaps', 1),
+                        ('Single Gap', 2),
+                    ]
                 ]),
                 ('separator',),
                 ('check', 'Internal GUI', 'internal_gui', 1),

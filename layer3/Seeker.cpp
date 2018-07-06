@@ -1197,6 +1197,7 @@ void SeekerUpdate(PyMOLGlobals * G)
   int max_row = 50;
   int default_color = 0;
   int align_sele = -1;          /* alignment selection */
+  constexpr int MAXCONSECUTIVEGAPS = 10;
   CSeqRow *row_vla, *row, *lab = NULL;
   row_vla = VLACalloc(CSeqRow, 10);
   /* FIRST PASS: get all the residues represented properly */
@@ -1222,6 +1223,7 @@ void SeekerUpdate(PyMOLGlobals * G)
       CoordSet *cs = obj->DiscreteFlag ? NULL : ObjectMoleculeGetCoordSet(obj, std::max(0, obj->getState()));
       bool atom_in_state;
 
+      int gapMode = SettingGet_i(G, obj->Obj.Setting, nullptr, cSetting_seq_view_gap_mode);
       int min_pad = -1;
       CSeqCol *r1 = NULL, *l1 = NULL;   /* *col */
 
@@ -1442,6 +1444,34 @@ void SeekerUpdate(PyMOLGlobals * G)
 
         atom_in_state = (cs && a < cs->NAtIndex && cs->AtmToIdx[a] >= 0);
 
+        int gapsNeeded{0};
+
+        if(gapMode != GapMode::NONE
+           && AtomInfoSameChainP(G, ai, last)
+           && (ai->flags & last->flags & cAtomFlag_polymer)
+           && align_sele < 0){
+            gapsNeeded = ai->resv - last->resv - 1;
+
+            if(gapsNeeded > 1 && gapMode == GapMode::SINGLE){
+              gapsNeeded = 1;
+            }
+        }
+
+        auto push_gap = [&](const std::string& str)
+          {
+            UtilConcatVLA(&row->txt, &row->len, str.c_str());
+            VLACheck(row->col, CSeqCol, nCol + str.size());
+            r1 = row->col + nCol;
+            for(int i = 0; i < str.size(); i++){
+                r1->color = missing_color;
+                r1->spacer = true;
+                r1->stop = r1->start + 1;
+                auto lastStop = r1->stop;
+                nCol++;
+                r1 = row->col + nCol;
+                r1->start = lastStop;
+            }
+          };
         switch (codes) {
         case 0:                /* one letter residue codes */
           if(!AtomInfoSameResidueP(G, last, ai)) {
@@ -1451,6 +1481,17 @@ void SeekerUpdate(PyMOLGlobals * G)
             VLACheck(row->col, CSeqCol, nCol);
             r1 = row->col + nCol;
             r1->start = row->len;
+
+            //Only include non-consecutive gaps when not doing alignment
+            if(gapsNeeded > 0 && gapsNeeded <= MAXCONSECUTIVEGAPS){
+              for(int g = 0; g < gapsNeeded; ++g){
+                push_gap("-");
+              }
+            }
+            else if(gapsNeeded > MAXCONSECUTIVEGAPS){
+                push_gap("---...---");
+            }
+
             if(obj->DiscreteFlag)
               r1->state = ai->discrete_state;
 
@@ -1511,6 +1552,16 @@ void SeekerUpdate(PyMOLGlobals * G)
             if(obj->DiscreteFlag)
               r1->state = ai->discrete_state;
             first_atom_in_label = true;
+
+            //Only include non-consecutive gaps when not doing alignment
+            if(gapsNeeded > 0 && gapsNeeded <= MAXCONSECUTIVEGAPS){
+              for(int g = 0; g < gapsNeeded; ++g){
+                  push_gap("--- ");
+              }
+            }
+            else if(gapsNeeded > MAXCONSECUTIVEGAPS){
+                push_gap("---...--- ");
+            }
 
             if(ai->resn)
               UtilConcatVLA(&row->txt, &row->len, LexStr(G, ai->resn));
@@ -2008,6 +2059,8 @@ void SeekerUpdate(PyMOLGlobals * G)
         obj = row->obj;
         div = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_label_spacing);
         sub = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_label_start);
+        int gapMode = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_gap_mode);
+
         for(b = 0; b < nCol; b++) {
           CSeqCol *r1 = row->col + b;
           CSeqCol *l1 = lab->col + b;

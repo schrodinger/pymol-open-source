@@ -1941,6 +1941,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, const char *sele, i
   case cSetting_seq_view_format:
   case cSetting_seq_view_color:
   case cSetting_seq_view_unaligned_mode:
+  case cSetting_seq_view_gap_mode:
     SeqChanged(G);
     break;
   case cSetting_seq_view_fill_color:

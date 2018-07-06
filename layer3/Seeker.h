@@ -25,6 +25,14 @@ void SeekerFree(PyMOLGlobals * G);
 void SeekerUpdate(PyMOLGlobals * G);
 char SeekerGetAbbr(PyMOLGlobals * G, const char *abbr, char water, char unknown);
 
+namespace GapMode{
+enum {
+    NONE      = 0,
+    ALL       = 1,
+    SINGLE    = 2
+};
+}//namespace GapMode
+
 PyObject *SeekerGetRawAlignment(PyMOLGlobals * G, int align_sele, int active_only);
 
 #endif
