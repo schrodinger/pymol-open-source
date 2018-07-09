@@ -178,7 +178,6 @@ CField *FieldNewCopy(PyMOLGlobals * G, const CField * src)
 CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
 {
   int ok = true;
-  int ll;
   int *I_dim = NULL;
   int *I_stride = NULL;
 
@@ -188,8 +187,6 @@ CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list)
     ok = (list != NULL);
   if(ok)
     ok = PyList_Check(list);
-  if(ok)
-    ll = PyList_Size(list);
   if(ok)
     ok = PConvPyIntToInt(PyList_GetItem(list, 0), &I->type);
   if(ok)

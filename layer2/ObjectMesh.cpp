@@ -217,7 +217,6 @@ static int ObjectMeshAllStatesFromPyList(ObjectMesh * I, PyObject * list)
 int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** result)
 {
   int ok = true;
-  int ll;
   ObjectMesh *I = NULL;
   (*result) = NULL;
 
@@ -225,8 +224,6 @@ int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** res
     ok = (list != NULL);
   if(ok)
     ok = PyList_Check(list);
-  if(ok)
-    ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 

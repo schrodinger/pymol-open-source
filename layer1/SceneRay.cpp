@@ -9,9 +9,6 @@
 #include"ListMacros.h"
 #include"Color.h"
 #include"P.h"
-#ifdef _PYMOL_IP_EXTRAS
-#include "IncentiveCopyToClipboard.h"
-#endif
 
 static double accumTiming = 0.0;
 

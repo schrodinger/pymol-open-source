@@ -497,7 +497,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   int cartoon_side_chain_helper = 0;
   int ribbon_side_chain_helper = 0;
   AtomInfoType *ati1;
-  int sphere_mode;
+  int sphere_mode = 0;
   bool *marked = NULL;
   float transp;
   int variable_alpha = false;

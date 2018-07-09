@@ -219,7 +219,7 @@ int CoordSetFromPyList(PyMOLGlobals * G, PyObject * list, CoordSet ** cs)
     if(!ok) {
       if(I)
         I->fFree();
-        *cs = NULL;
+      *cs = NULL;
     } else {
       *cs = I;
     }

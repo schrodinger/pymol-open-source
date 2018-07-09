@@ -145,7 +145,6 @@ int DistSetMoveWithObject(DistSet * I, struct ObjectMolecule *obj)
   PRINTFD(G, FB_DistSet)
     " DistSet: done updating distance set's vertex\n" ENDFD;
 
-ok_except1:
   return rVal;
 }
 

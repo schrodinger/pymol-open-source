@@ -1486,7 +1486,6 @@ int ObjectStateFromPyList(PyMOLGlobals * G, PyObject * list, CObjectState * I)
 {
   PyObject *tmp;
   int ok = true;
-  int ll = 0;
 
   ObjectStateInit(G, I);
 
@@ -1495,8 +1494,6 @@ int ObjectStateFromPyList(PyMOLGlobals * G, PyObject * list, CObjectState * I)
       ok = (list != NULL);
     if(ok)
       ok = PyList_Check(list);
-    if(ok)
-      ll = PyList_Size(list);
     /* TO SUPPORT BACKWARDS COMPATIBILITY...
        Always check ll when adding new PyList_GetItem's */
     if(ok) {

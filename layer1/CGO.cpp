@@ -1662,7 +1662,7 @@ CGO *CGOCombineBeginEnd(const CGO * I, int est, bool do_not_split_lines)
 	if (nverts>0 && !err){
 	  int pl = 0, plc = 0, pla = 0;
 	  float *vertexVals;
-	  float *normalVals, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0, *accessibilityVals = 0;
+	  float *normalVals = 0, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0, *accessibilityVals = 0;
 	  short notHaveValue = 0, nxtn = 3;
 	  if (hasFirstAlpha || hasFirstColor){
 	    if (hasFirstAlpha){
@@ -5985,7 +5985,7 @@ static void CGO_gl_draw_arrays(CCGORenderer * I, float **pc){
   } else {
 
     int pl, pla, plc;
-    float *vertexVals;
+    float *vertexVals = nullptr;
     float *colorVals = 0, *normalVals = 0, *tmp_ptr, alpha ;
     uchar *pickColorVals = 0, *tmp_pc_ptr;
     alpha = I->alpha;
@@ -7407,6 +7407,7 @@ void SetUCColorToZero_16bit(uchar *color){
   color[3] = 255;
 }
 
+#if 0
 static
 void SetUCColorToPrev(uchar *color){
   color[0] = color[-4];
@@ -7422,6 +7423,7 @@ void SetUCColorToPrev8(uchar *color){
   color[2] = color[-6];
   color[3] = color[-5];
 }
+#endif
 
 static
 void SetUCColorToPrevN(int n, uchar *color){
@@ -7559,7 +7561,11 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
             pickcolors_are_set_ptr = &pickcolors_are_set;
 
           if (reset_colors || !*pickcolors_are_set_ptr){ // only if picking info is invalid
-            int nverts, nvertsperfrag = 1, v, pl, bnd = cPickableNoPick, pbnd = cPickableNoPick, chg = 0;
+            int nverts = 0;
+            int nvertsperfrag = 1;
+            int v, pl;
+            int bnd = cPickableNoPick, pbnd = cPickableNoPick;
+            int chg = 0;
             unsigned int idx = 0, pidx = 0;
             int srcp;
             float *pca;
@@ -7857,7 +7863,7 @@ void CGORenderGL(CGO * I, const float *color, CSetting * set1, CSetting * set2,
                 cgo::draw::arrays * sp = reinterpret_cast<decltype(sp)>(pc);
 		int mode = sp->mode, arrays = sp->arraybits, nverts = sp->nverts;
 		float *vertexVals = 0, *nxtVals = 0, *colorVals = 0, *normalVals;
-		float *vertexVals_tmp = 0, *colorVals_tmp = 0, *normalVals_tmp;
+		float *vertexVals_tmp = 0, *colorVals_tmp = 0, *normalVals_tmp = 0;
 		int step;
 		short nxtn = 3;
 		nxtVals = vertexVals = vertexVals_tmp = sp->floatdata;

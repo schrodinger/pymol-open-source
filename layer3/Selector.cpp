@@ -8645,11 +8645,11 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
 
       if((matcher = WordMatcherNew(G, base[1].text, &options, true))) {
 	AtomInfoType * ai;
-        int prevmodel;
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
 
-	prevmodel = -1;
+#ifndef NO_MMLIBS
+#endif
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
           ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
 #ifndef NO_MMLIBS
@@ -8692,7 +8692,6 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
   case SELE_STRO:
     {
       CWordMatchOptions options;
-      int prevmodel;
       WordMatchOptionsConfigAlphaList(&options, wildcard[0], ignore_case);
 
       table_a = i_table + cNDummyAtoms;
@@ -8702,7 +8701,8 @@ static int SelectorSelect1(PyMOLGlobals * G, EvalElem * base, int quiet)
       if((matcher = WordMatcherNew(G, base[1].text, &options, true))) {
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
-	prevmodel = -1;
+#ifndef NO_MMLIBS
+#endif
         for(a = cNDummyAtoms; a < I_NAtom; a++) {
 #ifndef NO_MMLIBS
 #endif

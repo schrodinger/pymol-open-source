@@ -273,14 +273,11 @@ ok_except1:
 
 int ObjectCallbackNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectCallback ** result)
 {
-  int ll;
   ObjectCallback *I;
   PyObject *val;
 
   ok_assert(1, list != NULL);
   ok_assert(1, PyList_Check(list));
-
-  ll = PyList_Size(list);
 
   ok_assert(1, I = ObjectCallbackNew(G));
 

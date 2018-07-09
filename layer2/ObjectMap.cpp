@@ -1567,7 +1567,6 @@ PyObject *ObjectMapAsPyList(ObjectMap * I)
 int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** result)
 {
   int ok = true;
-  int ll;
   ObjectMap *I = NULL;
   (*result) = NULL;
 
@@ -1575,8 +1574,6 @@ int ObjectMapNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMap ** resul
     ok = (list != NULL);
   if(ok)
     ok = PyList_Check(list);
-  if(ok)
-    ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
   I = ObjectMapNew(G);
@@ -5649,6 +5646,7 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals * G, ObjectMapState * ms,
                 dens = *((float*)ptr);
                 break;
               default:
+                dens = 0.0;
                 printf("no itemsize match\n");
             }
 #else

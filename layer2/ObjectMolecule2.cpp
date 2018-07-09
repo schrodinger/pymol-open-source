@@ -1827,7 +1827,7 @@ static void ObjectMoleculePDBStr2CoordSetPASS1(PyMOLGlobals * G, int *ok,
  */
 typedef struct {
   int n_ss;         // number of ss_list items
-  int *(ss[256]);   // one array for each chain identifier
+  int* ss[256];     // one array for each chain identifier
   SSEntry *ss_list; // VLA
 } SSHash;
 
@@ -3681,14 +3681,14 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule * I, PyObject * list)
       if(ok)
         bond->has_setting = (short int) has_setting;
       if(ok && bond->unique_id) {       /* reserve existing IDs */
-        bond->unique_id = SettingUniqueConvertOldSessionID(I->Obj.G, bond->unique_id);
+        bond->unique_id = SettingUniqueConvertOldSessionID(G, bond->unique_id);
       }
     }
     bond++;
   }
   }
-  PRINTFB(I->Obj.G, FB_ObjectMolecule, FB_Debugging)
-    " ObjectMoleculeBondFromPyList: ok %d after restore\n", ok ENDFB(I->Obj.G);
+  PRINTFB(G, FB_ObjectMolecule, FB_Debugging)
+    " ObjectMoleculeBondFromPyList: ok %d after restore\n", ok ENDFB(G);
 
   return (ok);
 }
@@ -3780,7 +3780,7 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule * I, PyObject * list)
 {
   PyMOLGlobals *G = I->Obj.G;
   int ok = true;
-  int a, ll;
+  int a, ll = 0;
   AtomInfoType *ai;
 
   if(ok)
@@ -3871,13 +3871,10 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals * G, PyObject * list,
   int ok = true;
   ObjectMolecule *I = NULL;
   int discrete_flag = 0;
-  int ll;
   (*result) = NULL;
 
   if(ok)
     ok = PyList_Check(list);
-  if(ok)
-    ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
   if(ok)
@@ -4086,7 +4083,7 @@ int ObjectMoleculeConnect(ObjectMolecule * I, int *nbond, BondType ** bond, Atom
   PyMOLGlobals *G = I->Obj.G;
   int a, b, c, d, e, f, i, j;
   int a1, a2;
-  float *v1, *v2, dst;
+  float *v1, *v2;
   int maxBond;
   MapType *map;
   int nBond;

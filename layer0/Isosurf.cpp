@@ -61,7 +61,7 @@ Z* -------------------------------------------------------------------
 typedef struct PointType {
   float Point[3];
   int NLink;
-  struct PointType *(Link[4]);
+  struct PointType* Link[4];
 } PointType;
 
 #define EdgePtPtr(field,P2,P3,P4,P5) ((PointType*)Fvoid4p(field,P2,P3,P4,P5))
@@ -156,15 +156,12 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list)
   int ok = true;
   int dim4[4];
   int a;
-  int ll;
 
   Isofield *result = NULL;
   if(ok)
     ok = (list != NULL);
   if(ok)
     ok = PyList_Check(list);
-  if(ok)
-    ll = PyList_Size(list);
   /* TO ENABLE BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
   if(ok)

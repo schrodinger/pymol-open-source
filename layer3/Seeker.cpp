@@ -117,7 +117,7 @@ static void SeekerSelectionToggleRange(PyMOLGlobals * G, CSeqRow * rowVLA, int r
       VLAFreeP(atom_vla);
 
       {
-        char *sele_mode_kw;
+        const char *sele_mode_kw;
         sele_mode_kw = SceneGetSeleModeKeyword(G);
 
         if(logging)
@@ -187,7 +187,7 @@ static void SeekerSelectionToggle(PyMOLGlobals * G, CSeqRow * rowVLA, int row_nu
     col = row->col + col_num;
     if(!col->spacer)
       if(ExecutiveFindObjectByName(G, row->name)) {
-        char *sele_mode_kw;
+        const char *sele_mode_kw;
         atom_list = row->atom_lists + col->atom_at;
 
         /* build up a selection consisting of residue atoms */
@@ -2059,7 +2059,6 @@ void SeekerUpdate(PyMOLGlobals * G)
         obj = row->obj;
         div = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_label_spacing);
         sub = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_label_start);
-        int gapMode = SettingGet_i(G, obj->Obj.Setting, NULL, cSetting_seq_view_gap_mode);
 
         for(b = 0; b < nCol; b++) {
           CSeqCol *r1 = row->col + b;

@@ -420,7 +420,6 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
   int n_ext = 0;
   int a;
   int ok = true;
-  int ll;
   CColor *I = G->Color;
   PyObject *rec;
   ExtRec *ext;
@@ -441,8 +440,6 @@ int ColorExtFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore)
   if(ok)
     ok = PyList_Check(list);
 
-  if(ok)
-    ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 

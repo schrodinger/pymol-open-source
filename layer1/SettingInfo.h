@@ -1,3 +1,5 @@
+// vi:sw=2:expandtab
+// clang-format off
 /*
  * Setting info table and indices
  *

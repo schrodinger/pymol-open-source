@@ -3550,7 +3550,7 @@ int RayTraceThread(CRayThreadInfo * T)
   }
   for(yy = T->y_start; (yy < T->y_stop); yy++) {
     float perc, bkrd[4];
-    unsigned int bkrd_value;
+    unsigned int bkrd_value = 0;
     short isOutsideInY = 0;
 
     if(I->G->Interrupt)

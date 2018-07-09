@@ -9619,11 +9619,12 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       }
       break;
     case OMOP_AddHydrogens:
-      if (ok)
+      if (ok) {
         if (!op->i2)
           ok &= ObjectMoleculeAddSeleHydrogensRefactored(I, sele, op->i1);
         else
-	ok &= ObjectMoleculeAddSeleHydrogens(I, sele, -1);      /* state? */
+          ok &= ObjectMoleculeAddSeleHydrogens(I, sele, -1);      /* state? */
+      }
       break;
     case OMOP_FixHydrogens:
       if (ok)

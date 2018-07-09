@@ -90,7 +90,6 @@ int GadgetSetSetVertex(GadgetSet * I, int index, int base, float *v)
 int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int version)
 {
   int ok = true;
-  int ll;
   GadgetSet *I = NULL;
   PyObject *tmp = NULL;
 
@@ -111,8 +110,6 @@ int GadgetSetFromPyList(PyMOLGlobals * G, PyObject * list, GadgetSet ** gs, int 
       ok = (list != NULL);
     if(ok)
       ok = PyList_Check(list);
-    if(ok)
-      ll = PyList_Size(list);
     /* TO SUPPORT BACKWARDS COMPATIBILITY...
        Always check ll when adding new PyList_GetItem's */
 

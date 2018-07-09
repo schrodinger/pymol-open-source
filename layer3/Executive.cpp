@@ -7571,8 +7571,7 @@ void ExecutiveSelectRect(PyMOLGlobals * G, BlockRect * rect, int mode)
   char prefix[3] = "";
   int log_box = 0;
   int logging;
-  char empty_string[1] = "";
-  char *sel_mode_kw = empty_string;
+  const char *sel_mode_kw = "";
 
   logging = SettingGetGlobal_i(G, cSetting_logging);
   if(logging)

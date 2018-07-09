@@ -468,6 +468,7 @@ static void ObjectDistRender(ObjectDist * I, RenderInfo * info)
     }
 }
 
+#if 0
 static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
 {
   if(state < 0) {
@@ -476,6 +477,7 @@ static CSetting **ObjectDistGetSettingHandle(ObjectDist * I, int state)
     return (NULL);
   }
 }
+#endif
 
 static void ObjectDistInvalidate(CObject * Iarg, int rep, int level, int state){
   ObjectDist * I = (ObjectDist*)Iarg;
@@ -579,7 +581,6 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
   mn = (n_state2>n_state1) ? n_state2 : n_state1;
 
   /* updated state handling */
-  /* determine the selected object */
   frozen1 = checkFrozenState(G, sele1, state1);
   frozen2 = checkFrozenState(G, sele2, state2);
 
@@ -678,7 +679,6 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
     mn = n_state3;
 
   /* updated state handling */
-  /* determine the selected object */
   frozen1 = checkFrozenState(G, sele1, state1);
   frozen2 = checkFrozenState(G, sele2, state2);
   frozen3 = checkFrozenState(G, sele3, state3);
@@ -745,11 +745,11 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
   int a, mn;
   float angle_sum = 0.0;
   int angle_cnt = 0;
-  int n_state1, n_state2, n_state3, n_state4, state1, state2, state3, state4;
+  int n_state1, n_state2, n_state3, n_state4;
+  int state1 = -1, state2 = -1, state3 = -1, state4 = -1;
   ObjectDist *I;
 
   int frozen1=-1, frozen2=-1, frozen3=-1, frozen4=-1;
-  CObject * query_obj = NULL;
 
   if(!oldObj)                   /* create object if new */
     I = ObjectDistNew(G);
@@ -781,37 +781,10 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
     mn = n_state4;
 
   /* updated state handling */
-  /* determine the selected object */
-  if(sele1 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele1);
-  if(query_obj) {
-    frozen1 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state1);
-    state1--;
-  }
-  /* updated state handling */
-  /* determine the selected object */
-  if(sele2 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele2);
-  if(query_obj) {
-    frozen2 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state2);
-    state2--;
-  }
-  /* updated state handling */
-  /* determine the selected object */
-  if(sele3 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele3);
-  if(query_obj) {
-    frozen3 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state3);
-    state3--;
-  }
-  /* updated state handling */
-  /* determine the selected object */
-  if(sele4 >= 0)
-    query_obj = (CObject*) SelectorGetSingleObjectMolecule(G, sele4);
-  if(query_obj) {
-    frozen4 = SettingGetIfDefined_i(query_obj->G, query_obj->Setting, cSetting_state, &state4);
-    state4--;
-  }
+  frozen1 = checkFrozenState(G, sele1, state1);
+  frozen2 = checkFrozenState(G, sele2, state2);
+  frozen3 = checkFrozenState(G, sele3, state3);
+  frozen4 = checkFrozenState(G, sele4, state4);
 
   if(mn) {
     for(a = 0; a < mn; a++) {

@@ -96,7 +96,6 @@ static int ObjectSliceStateFromPyList(PyMOLGlobals * G, ObjectSliceState * I,
 {
   int ok = true;
 
-  int ll;
   if(ok)
     ok = (list != NULL);
   if(ok) {
@@ -108,8 +107,6 @@ static int ObjectSliceStateFromPyList(PyMOLGlobals * G, ObjectSliceState * I,
         ok = (list != NULL);
       if(ok)
         ok = PyList_Check(list);
-      if(ok)
-        ll = PyList_Size(list);
       /* TO SUPPORT BACKWARDS COMPATIBILITY...
          Always check ll when adding new PyList_GetItem's */
 
@@ -161,7 +158,6 @@ static int ObjectSliceAllStatesFromPyList(ObjectSlice * I, PyObject * list)
 int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** result)
 {
   int ok = true;
-  int ll;
   ObjectSlice *I = NULL;
   (*result) = NULL;
 
@@ -169,8 +165,6 @@ int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** r
     ok = (list != NULL);
   if(ok)
     ok = PyList_Check(list);
-  if(ok)
-    ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 

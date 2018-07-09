@@ -296,13 +296,10 @@ int ObjectGadgetInitFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget *
                                int version)
 {
   int ok = true;
-  int ll;
   if(ok)
     ok = (I != NULL) && (list != NULL);
   if(ok)
     ok = PyList_Check(list);
-  if(ok)
-    ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
   if(ok)

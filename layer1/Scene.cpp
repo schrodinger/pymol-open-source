@@ -62,10 +62,6 @@ Z* -------------------------------------------------------------------
 #include <vector>
 #include <algorithm>
 
-#ifdef _PYMOL_IP_EXTRAS
-#include "IncentiveCopyToClipboard.h"
-#endif
-
 #include <algorithm>
 #include <iostream>
 
@@ -3514,8 +3510,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
   WordType selName = "";
   int mode = 0;        /* trying to work around something... */
   int atIndex;
-  char empty_string[1] = "";
-  char *sel_mode_kw = empty_string;
+  const char *sel_mode_kw = "";
   int is_single_click = ((button == P_GLUT_SINGLE_LEFT) ||
                          (button == P_GLUT_SINGLE_MIDDLE) ||
                          (button == P_GLUT_SINGLE_RIGHT));

@@ -258,15 +258,12 @@ static int ObjectVolumeAllStatesFromPyList(ObjectVolume * I, PyObject * list)
 int ObjectVolumeNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectVolume ** result)
 {
   int ok = true;
-  int ll;
   ObjectVolume *I = NULL;
   (*result) = NULL;
   if(ok)
     ok = (list != NULL);
   if(ok)
     ok = PyList_Check(list);
-  if(ok)
-    ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
   I = ObjectVolumeNew(G);

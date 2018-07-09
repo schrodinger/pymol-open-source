@@ -34,7 +34,8 @@ void RepSphere_Generate_Triangles(PyMOLGlobals *G, RepSphere *I,
 
   // generate the CGO
   if (use_shader) {
-    CGO *convertcgo = CGOSimplify(I->primitiveCGO, 0, sphere_quality), *convertcgo2;
+    CGO *convertcgo = CGOSimplify(I->primitiveCGO, 0, sphere_quality);
+    CGO *convertcgo2 = nullptr;
     CHECKOK(ok, convertcgo);
     if (ok)
       convertcgo2 = CGOCombineBeginEnd(convertcgo, 0);

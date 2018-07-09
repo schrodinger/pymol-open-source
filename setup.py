@@ -273,7 +273,6 @@ lib_dirs = []
 ext_comp_args = [
     "-Wno-narrowing",
     # legacy stuff
-    '-Wno-unused-function',
     '-Wno-char-subscripts',
     # optimizations
     "-ffast-math",
