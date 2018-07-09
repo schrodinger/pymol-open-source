@@ -384,6 +384,9 @@ void renderTarget_t::layout(std::vector<rt_layout_t> &&desc,
     case rt_layout_t::FLOAT:
       type = tex::data_type::FLOAT;
       break;
+    default:
+      printf("Error: %s:%d\n", __FILE__, __LINE__);
+      return;
     }
 
     tex::format format;
@@ -400,6 +403,9 @@ void renderTarget_t::layout(std::vector<rt_layout_t> &&desc,
     case 4:
       format = tex::format::RGBA;
       break;
+    default:
+      printf("Error: %s:%d\n", __FILE__, __LINE__);
+      return;
     }
 
     _textures.push_back(new textureBuffer_t(

@@ -314,7 +314,11 @@ namespace cgo {
       buffers_indexed(int _mode, short _arrays, int _nindices,
                       int _nverts, size_t _vboid, size_t _iboid, int _n_data, size_t _pickvboid = 0) :
         mode(_mode), arraybits(_arrays), narrays(0), nindices(_nindices),
-        nverts(_nverts), vboid(_vboid), iboid(_iboid), n_data(_n_data), pickvboid(_pickvboid), pickcolorsset(0) {
+        nverts(_nverts), vboid(_vboid), iboid(_iboid)
+        , pickvboid(_pickvboid)
+        , pickcolorsset(0)
+        , n_data(_n_data)
+      {
         short bit;
         for (bit = 0; bit < 4; bit++){
           if ((1 << bit) & arraybits){
@@ -427,7 +431,11 @@ namespace cgo {
     struct labels : op_with_data, op_with_draw_buffers {
       static const int op_code = CGO_DRAW_LABELS;
       labels(int _ntextures, size_t _vboid, size_t _pickvboid) :
-        ntextures(_ntextures), vboid(_vboid), pickvboid(_pickvboid), pickcolorsset(0) {};
+        vboid(_vboid)
+        , pickvboid(_pickvboid)
+        , ntextures(_ntextures)
+        , pickcolorsset(0)
+      {}
       size_t vboid;
       size_t pickvboid;
       int ntextures;
@@ -501,9 +509,12 @@ namespace cgo {
 
     struct custom : op_with_data, op_with_draw_buffers {
       static const int op_code = CGO_DRAW_CUSTOM;
-    custom(int _mode, int _nverts, size_t _vboid, size_t _pickvboid, int _vertsperpickinfo=1, int _npickbufs=1, size_t _iboid=0, int _nindices=0) : 
-      mode(_mode), nverts(_nverts), vboid(_vboid), pickvboid(_pickvboid), npickbufs(_npickbufs),
-        vertsperpickinfo(_vertsperpickinfo), iboid(_iboid), nindices(_nindices), pickcolorsset(0){};
+      custom(int _mode, int _nverts, size_t _vboid, size_t _pickvboid,
+          int _vertsperpickinfo = 1, int _npickbufs = 1, size_t _iboid = 0,
+          int _nindices = 0)
+          : mode(_mode), nverts(_nverts), vboid(_vboid), pickvboid(_pickvboid),
+            pickcolorsset(0), iboid(_iboid), nindices(_nindices),
+            npickbufs(_npickbufs), vertsperpickinfo(_vertsperpickinfo){};
       int mode;
       int nverts;
       size_t vboid;

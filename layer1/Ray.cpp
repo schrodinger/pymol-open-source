@@ -3280,7 +3280,6 @@ int RayTraceThread(CRayThreadInfo * T)
   const float _persistLimit = 0.0001F;
   float legacy_1m = _1 - legacy;
   int n_basis = I->NBasis;
-  unsigned int back_mask;
   int bg_image_mode = SettingGetGlobal_i(I->G, cSetting_bg_image_mode);
   int bg_image_linear = SettingGetGlobal_b(I->G, cSetting_bg_image_linear);
   auto bg_image_tilesize = SettingGet<const float*>(I->G, cSetting_bg_image_tilesize);
@@ -3538,18 +3537,18 @@ int RayTraceThread(CRayThreadInfo * T)
   } else {
     border_offset = 0.0F;
   }
+
+  unsigned int back_mask = 0x00000000;
   if (T->bkrd_is_gradient){
     if(opaque_back) {
       if(I->BigEndian)
 	back_mask = 0x000000FF;
       else
 	back_mask = 0xFF000000;
-    } else {
-      back_mask = 0x00000000;
     }
   }
   for(yy = T->y_start; (yy < T->y_stop); yy++) {
-    float perc, bkrd[4];
+    float perc, bkrd[4] = {0.f, 0.f, 0.f, 1.f};
     unsigned int bkrd_value = 0;
     short isOutsideInY = 0;
 

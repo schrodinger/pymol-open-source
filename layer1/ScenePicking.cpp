@@ -397,7 +397,7 @@ void SceneRenderPickingMultiPick(PyMOLGlobals * G, SceneUnitContext *context, Mu
   unsigned int index;
   void *lastPtr = NULL;
   int nPick;
-  int nHighBits, nLowBits;
+  int nHighBits = 0, nLowBits;
   bool bits32 = SceneHas32BitColor(G);
 
   SceneGLClearColor(0.0, 0.0, 0.0, 0.0);

@@ -129,16 +129,15 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 	      c = *(n++);
 	      if (mesh_as_cylinders){
 		float *origin, axis[3];
-		if (c--){
+		for (; ok && c > 1; --c) {
 		  origin = v;
 		  v += 3;
-		}
-		while(ok && c--) {
 		  axis[0] = v[0] - origin[0];
 		  axis[1] = v[1] - origin[1];
 		  axis[2] = v[2] - origin[2];
 		  ok &= (bool)I->shaderCGO->add<cgo::draw::shadercylinder>(origin, axis, 1.f, 15);
-		  origin = v;
+		}
+		if (c == 1) {
 		  v += 3;
 		}
 	      } else {
@@ -158,14 +157,12 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 	    c = *(n++);
 	    if (mesh_as_cylinders){
 	      float *origin, axis[3], *color;
-	      if (c--){
+	      for (; ok && c > 1; --c) {
 		ok &= CGOColorv(I->shaderCGO, vc);
 		color = vc;
 		origin = v;
 		vc += 3;
 		v += 3;
-	      }
-	      while(ok && c--) {
 		axis[0] = v[0] - origin[0];
 		axis[1] = v[1] - origin[1];
 		axis[2] = v[2] - origin[2];
@@ -174,12 +171,9 @@ static int RepMeshCGOGenerate(RepMesh * I, RenderInfo * info)
 		} else {
                   ok &= (bool)I->shaderCGO->add<cgo::draw::shadercylinder>(origin, axis, 1.f, 15);
 		}
-		origin = v;
+	      }
+	      if (c == 1) {
 		v += 3;
-		if (c){
-		  ok &= CGOColorv(I->shaderCGO, vc);
-		  color = vc;
-		}
 		vc += 3;
 	      }
 	    } else {

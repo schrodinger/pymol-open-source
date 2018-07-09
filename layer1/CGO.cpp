@@ -97,13 +97,11 @@ extern "C" void firePyMOLLimitationWarning();
   if ((err = glGetError())!=0 || I->G->Interrupt != 0){		\
       if (err)        \
 	PRINTFB(I->G, FB_CGO, FB_Errors) printstr, err ENDFB(I->G);	   \
-      ok = false; \
   }
 #else
 #define CHECK_GL_ERROR_OK(printstr)	\
   if ((err = glGetError()) != 0){						\
      PRINTFB(I->G, FB_CGO, FB_Errors) printstr, err ENDFB(I->G);	   \
-     ok = false; \
   }
 #endif
 
@@ -4263,7 +4261,7 @@ CGO *CGOSimplify(const CGO * I, int est, short sphere_quality, bool stick_round_
 	if (nverts>0 && !err){
 	  int pl = 0, plc = 0, pla = 0;
 	  float *vertexVals, *tmp_ptr;
-	  float *normalVals, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0, *accessibilityVals = 0;
+	  float *normalVals = 0, *colorVals = 0, *nxtVals = 0, *pickColorVals = 0, *accessibilityVals = 0;
 	  short notHaveValue = 0, nxtn = 3;
 	  if (hasFirstAlpha || hasFirstColor){
 	    if (hasFirstAlpha){
@@ -6060,7 +6058,6 @@ static void CGO_gl_draw_buffers_indexed(CCGORenderer * I, float **pc){
   size_t vboid = sp->vboid, iboid = sp->iboid;
   VertexBuffer * vbo = I->G->ShaderMgr->getGPUBuffer<VertexBuffer>(vboid);
   IndexBuffer * ibo  = I->G->ShaderMgr->getGPUBuffer<IndexBuffer>(iboid);
-  int ok = true;
   GLenum err ;
   CHECK_GL_ERROR_OK("beginning of CGO_gl_draw_buffers_indexed err=%d\n");
 
@@ -6422,7 +6419,6 @@ static void CGO_gl_draw_connectors(CCGORenderer * I, float **pc) {
   }
   {
     GLenum err ;
-    int ok = true;
     CHECK_GL_ERROR_OK("ERROR: CGO_gl_draw_connectors begin returns err=%d\n");
   }
 
@@ -6466,7 +6462,6 @@ static void CGO_gl_draw_connectors(CCGORenderer * I, float **pc) {
   vbo->unbind();
   {
     GLenum err ;
-    int ok = true;
     CHECK_GL_ERROR_OK("ERROR: CGO_gl_draw_connectors end returns err=%d\n");
   }
 }
@@ -7568,7 +7563,7 @@ void CGORenderGLPicking(CGO * I, RenderInfo *info, PickContext * context, CSetti
             int chg = 0;
             unsigned int idx = 0, pidx = 0;
             int srcp;
-            float *pca;
+            float *pca = nullptr;
             int *pickDataSrc ;
             uchar *pickColorDestUC = NULL;
             bool free_pick_color_dest = false;
@@ -9978,21 +9973,20 @@ CGO *CGOGenerateNormalsForTriangles(const CGO * I){
   auto cgo = CGONewSized(G, I->c);
 
   float vertices[3][3];
-  float current_color[3], colors[3][3];
+  float current_color[3] = {0.f, 0.f, 0.f}, colors[3][3];
   float current_normal[3];
-  float current_alpha, alphas[3];
+  float current_alpha = 0, alphas[3];
 
   bool has_alpha = false;
   bool has_color = false;
 
   int mode = 0;
   bool inside_begin_triangles = false;
-  int current_i;
-  int vertex_count;
-  bool flip;
+  int current_i = 0;
+  int vertex_count = 0;
+  bool flip = false;
   bool emit;
 
-  const int * indices;
   const int indices_regular[] = {0, 1, 2};
   const int indices_flipped[] = {0, 2, 1};
 
@@ -10010,7 +10004,6 @@ CGO *CGOGenerateNormalsForTriangles(const CGO * I){
           current_i = 0;
           vertex_count = 0;
           flip = false;
-          indices = indices_regular;
           inside_begin_triangles = true;
 
           CGOBegin(cgo, GL_TRIANGLES);
@@ -10051,8 +10044,9 @@ CGO *CGOGenerateNormalsForTriangles(const CGO * I){
         }
 
         if (emit) {
+          auto * indices = flip ? indices_flipped : indices_regular;
+
           if (mode != GL_TRIANGLES) {
-            indices = flip ? indices_flipped : indices_regular;
             flip = !flip;
           }
 
@@ -10584,7 +10578,6 @@ CGO *CGOConvertLinesToTrilines(const CGO * I, bool addshaders){
   }
 
   if (nLines){
-    int ok = 1;
     int err = 0;
     glGenBuffers(1, &glbuff);
     glBindBuffer(GL_ARRAY_BUFFER, glbuff);

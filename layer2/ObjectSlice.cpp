@@ -802,6 +802,7 @@ int ObjectSliceGetVertex(ObjectSlice * I, int index, int base, float *v)
   return (result);
 }
 
+#if 0
 static int ObjectSliceAddSlicePoint(float *pt0, float *pt1, float *zaxis, float d,
 			     float *coords, float *origin)
 {
@@ -829,6 +830,8 @@ static int ObjectSliceAddSlicePoint(float *pt0, float *pt1, float *zaxis, float 
   return 0;
 }
 
+#ifndef PURE_OPENGL_ES_2
+static
 void ObjectSliceDrawSlice(CGO *cgo, float *points, int n_points, float *zaxis)
 {
   float center[3], v[3], w[3], q[3];
@@ -895,6 +898,7 @@ void ObjectSliceDrawSlice(CGO *cgo, float *points, int n_points, float *zaxis)
   }
 }
 
+static
 void GenerateOutlineOfSlice(PyMOLGlobals *G, ObjectSliceState *oss, CGO *cgo){
   int n_points = oss->outline_n_points;
   float *points = oss->outline_points;
@@ -934,6 +938,8 @@ void GenerateOutlineOfSlice(PyMOLGlobals *G, ObjectSliceState *oss, CGO *cgo){
   }
   ObjectSliceDrawSlice(cgo, points, n_points/3, zaxis);
 }
+#endif
+#endif
 
 
 static void ObjectSliceRender(ObjectSlice * I, RenderInfo * info)

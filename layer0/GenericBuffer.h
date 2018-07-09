@@ -111,7 +111,13 @@ using AttribOpFuncDataDesc = std::vector< AttribOpFuncData >;
  */
 struct AttribOp {
   AttribOp(unsigned short _op, size_t _order, size_t _conv_type, size_t _offset, size_t _incr_vertices=0, int _copyFromAttr=-1)
-    : op(_op), offset(_offset), conv_type(_conv_type), order(_order), incr_vertices(_incr_vertices), copyFromAttr(_copyFromAttr){}
+    : op(_op)
+    , order(_order)
+    , offset(_offset)
+    , conv_type(_conv_type)
+    , incr_vertices(_incr_vertices)
+    , copyFromAttr(_copyFromAttr)
+    {}
   unsigned short op { 0 };
   size_t order { 0 };
   size_t offset  { 0 };
@@ -145,7 +151,13 @@ using AttribDataOp = std::vector< AttribOp >;
  */
 struct AttribDesc {
   AttribDesc(const char * _attr_name, GLenum _type_size, size_t _type_dim, bool _data_norm, AttribDataOp _attrOps={})
-    : attr_name(_attr_name), type_size(_type_size), type_dim(_type_dim), data_norm(_data_norm), attrOps(_attrOps), default_value(NULL){}
+    : attr_name(_attr_name)
+    , attrOps(_attrOps)
+    , default_value(NULL)
+    , type_size(_type_size)
+    , type_dim(_type_dim)
+    , data_norm(_data_norm)
+    {}
   const char * attr_name { nullptr };
   int order { 0 };
   AttribDataOp attrOps { };

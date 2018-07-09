@@ -2326,7 +2326,7 @@ int CartoonExtrudeArrow(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling, f
 static
 int CartoonExtrudeDumbbell(PyMOLGlobals *G, CExtrude *ex, CGO *cgo, int sampling, float dumbbell_width, float dumbbell_length, int highlight_color, int loop_quality, float dumbbell_radius, short use_cylinders_for_strands){
   int ok;
-  CExtrude *ex1;
+  CExtrude *ex1 = nullptr;
   if(highlight_color < 0) {
     ok = ExtrudeDumbbell1(ex, dumbbell_width, dumbbell_length, 0);
     if (ok)
