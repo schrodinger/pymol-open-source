@@ -10900,7 +10900,7 @@ void CheckAttributesForUsage(const CGO *I, AttribDataDesc &attrData, AttribDataD
     //   - remove attribute from attrData description so that it isn't included in VBO
     AttribDataDesc attrDataNew;
     for (auto idx = 0; idx < attrIdx; ++idx){
-      if (!attrData[idx].repeat_value && (!allAttrIdxUsed & (1 << idx))){
+      if (!attrData[idx].repeat_value && !(allAttrIdxUsed & (1 << idx))) {
         // attribute not used, need to create glVertexAttrib
         if (attrData[idx].default_value){
           // need to add glVertexAttrib CGO OP
@@ -11280,7 +11280,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
           if (!nvert && attrBS!=allAttrBS){
             // for the first vertex, all attributes should be set
             for (auto idx = 0; idx < attrData.size(); ++idx){
-              if (!attrBS & (1 << idx)){
+              if (!(attrBS & (1 << idx))) {
                 if (!attrData[idx].default_value){
                   std::cerr << "WARNING: attribute #" << idx << " not set for first vertex and does not have default value: allAttrBS=" << allAttrBS << " attrBS=" << attrBS << std::endl;
                 }
@@ -11290,7 +11290,7 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
           if (nvert && attrBS!=allAttrBS){
             // for each vertex that hasn't been written for the current vertex, copy it from the previous vertex
             for (auto idx = 0; idx < attrData.size(); ++idx){
-              if (!attrBS & (1 << idx)){
+              if (!(attrBS & (1 << idx))) {
                 copyAttributeForVertex(isInterleaved, nvert, attrData[idx], vertexDataSize, dataPtrs, attrOffset);
               }
             }
