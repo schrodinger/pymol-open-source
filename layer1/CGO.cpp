@@ -4662,7 +4662,7 @@ CGO *CGOConvertToLabelShader(const CGO *I, CGO * addTo){
 
   AttribDataDesc attrDesc = { { "attr_worldpos",          GL_FLOAT, 3, GL_FALSE, world_pos_op },
                               { "attr_targetpos",         GL_FLOAT, 3, GL_FALSE, target_pos_op },
-                              { "attr_screenoffset",      GL_FLOAT, 3, GL_FALSE, screen_offset_op },
+                              { "attr_screenoffset",      GL_FLOAT, 3, GL_FALSE, screen_min_op },
                               { "attr_texcoords",         GL_FLOAT, 2, GL_FALSE, text_extent_op },
                               { "attr_screenworldoffset", GL_FLOAT, 3, GL_FALSE, screen_offset_op },
                               { "attr_relative_mode",     GL_FLOAT, 1, GL_FALSE, relative_mode_op } };
@@ -11282,7 +11282,9 @@ CGO *CGOConvertToShader(const CGO *I, AttribDataDesc &attrData, AttribDataDesc &
             for (auto idx = 0; idx < attrData.size(); ++idx){
               if (!(attrBS & (1 << idx))) {
                 if (!attrData[idx].default_value){
-                  std::cerr << "WARNING: attribute #" << idx << " not set for first vertex and does not have default value: allAttrBS=" << allAttrBS << " attrBS=" << attrBS << std::endl;
+                  std::cerr << "WARNING: attribute #" << idx <<
+                    " (" << attrData[idx].attr_name << ") not set for first"
+                    " vertex and does not have default value" << std::endl;
                 }
               }
             }
