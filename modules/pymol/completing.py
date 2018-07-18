@@ -116,6 +116,8 @@ def get_auto_arg_list(self_cmd=cmd):
         'get'            : aa_set_c,
         'get_area'       : aa_sel_e,
         'get_bond'       : aa_set_c,
+        'get_chains'     : aa_sel_e,
+        'get_extent'     : aa_sel_e,
         'get_property_list' : aa_obj_c,
         'get_symmetry'   : aa_obj_c,
         'gradient'       : [ self_cmd.object_sc              , 'gradient'        , ', ' ],
