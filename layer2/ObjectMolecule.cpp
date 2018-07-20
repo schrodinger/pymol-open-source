@@ -7218,18 +7218,6 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
       }
 
       if(ok) {
-        char resi[8];
-        tmp = PyObject_GetAttrString(atom, "resi");
-        if(tmp)
-          ok = PConvPyObjectToStrMaxClean(tmp, resi, sizeof(resi) - 1);
-        if(!ok)
-          ErrMessage(G, "ObjectMoleculeChemPyModel2CoordSet", "can't read resi");
-        else
-          ai->setResi(resi);
-        Py_XDECREF(tmp);
-      }
-
-      if(ok) {
         tmp = PyObject_GetAttrString(atom, "ins_code");
         if(tmp) {
           ResIdent tmp_ins_code;

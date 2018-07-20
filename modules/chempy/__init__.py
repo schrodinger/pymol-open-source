@@ -21,14 +21,37 @@ import copy
 # Basic chempy types
 #
 
-class Atom:
+class Atom(object):
+
+    def __reduce__(self):
+        # for loading new-style class pickle with PyMOL <= 2.2
+        return (self.__class__, (), self.__dict__)
+
+    def __setstate__(self, state):
+        # for loading PyMOL <= 2.2 pickles
+        self.__dict__.update(state)
+        if 'resi' in state:
+            self.resi = self.__dict__.pop('resi')
+
+    @property
+    def resi(self):
+        return str(self.resi_number) + self.ins_code
+
+    @resi.setter
+    def resi(self, resi):
+        if isinstance(resi, str) and resi and not resi[-1].isdigit():
+            self.ins_code = resi[-1]
+            resi = resi[:-1]
+        else:
+            self.__dict__.pop('ins_code', None)
+        self.resi_number = int(resi or 0)
 
     # these must be immutables
     symbol              = 'X'
     name                = ''
     resn                = 'UNK'
     resn_code           = 'X'
-    resi                = '1'
+    ins_code            = ''
     resi_number         = 1
     b                   = 0.0
     q                   = 1.0
@@ -87,7 +110,7 @@ class Atom:
         if self.has('chain'):       newat.chain       = self.chain
         if self.has('resn'):        newat.resn        = self.resn
         if self.has('resn_code'):   newat.resn_code   = self.resn_code
-        if self.has('resi'):        newat.resi        = self.resi
+        if self.has('ins_code'):    newat.ins_code    = self.ins_code
         if self.has('resi_number'): newat.resi_number = self.resi_number
         if self.has('hetatm'):      newat.hetatm      = self.hetatm
         return newat
@@ -102,7 +125,7 @@ class Atom:
                 cmp(self.segi, other.segi) or \
                 cmp(self.chain, other.chain) or \
                 cmp(self.resi_number, other.resi_number) or \
-                cmp(self.resi, other.resi) or \
+                cmp(self.ins_code, other.ins_code) or \
                 cmp(self.resn, other.resn) or \
                 cmp(self.symbol, other.symbol) or \
                 cmp(self.name, other.name) or \

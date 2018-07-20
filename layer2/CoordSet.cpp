@@ -1032,25 +1032,35 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
       RotateU(matrix, tmp_array);
     }
 
-    char resi[8];
-    AtomResiFromResv(resi, sizeof(resi), ai);
-
     PConvFloat3ToPyObjAttr(atom, "coord", v);
     if(ref)
       PConvFloat3ToPyObjAttr(atom, "ref_coord", ref);
+    if (ai->name)
     PConvStringToPyObjAttr(atom, "name", LexStr(G, ai->name));
     PConvStringToPyObjAttr(atom, "symbol", ai->elem);
+// TODO defaults to UNK    if (ai->resn)
     PConvStringToPyObjAttr(atom, "resn", LexStr(G, ai->resn));
-    PConvStringToPyObjAttr(atom, "resi", resi);
+    if (ai->inscode) {
+      char ins_code[2] = {ai->inscode, 0};
+      PConvStringToPyObjAttr(atom, "ins_code", ins_code);
+    }
+    if (ai->ssType[0])
     PConvStringToPyObjAttr(atom, "ss", ai->ssType);
+// TODO defaults to 1    if (ai->resv)
     PConvIntToPyObjAttr(atom, "resi_number", ai->resv);
+    if (ai->stereo)
     PConvIntToPyObjAttr(atom, "stereo", ai->stereo);
+    if (ai->chain)
     PConvStringToPyObjAttr(atom, "chain", LexStr(G, ai->chain));
     if(ai->alt[0])
       PConvStringToPyObjAttr(atom, "alt", ai->alt);
+    if (ai->segi)
     PConvStringToPyObjAttr(atom, "segi", LexStr(G, ai->segi));
+    if (ai->q != 1.)
     PConvFloatToPyObjAttr(atom, "q", ai->q);
+    if (ai->b)
     PConvFloatToPyObjAttr(atom, "b", ai->b);
+    if (ai->anisou)
     {
       {
         PyObject *tmp_obj = PConvFloatArrayToPyList(tmp_array, 6);
@@ -1061,12 +1071,18 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals * G, AtomInfoType * ai, const fl
       }
     }
     PConvFloatToPyObjAttr(atom, "vdw", ai->vdw);
+    if (ai->elec_radius)
     PConvFloatToPyObjAttr(atom, "elec_radius", ai->elec_radius);
+    if (ai->partialCharge)
     PConvFloatToPyObjAttr(atom, "partial_charge", ai->partialCharge);
+    if (ai->formalCharge)
     PConvIntToPyObjAttr(atom, "formal_charge", ai->formalCharge);
+// TODO customType=0 from most files
     if(ai->customType != -9999)
       PConvIntToPyObjAttr(atom, "numeric_type", ai->customType);
+    if (ai->textType)
     PConvStringToPyObjAttr(atom, "text_type", LexStr(G, ai->textType));
+    if (ai->custom)
     PConvStringToPyObjAttr(atom, "custom", LexStr(G, ai->custom));
 
     PConvIntToPyObjAttr(atom, "hetatm", ai->hetatm);
