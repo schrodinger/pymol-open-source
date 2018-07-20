@@ -733,8 +733,12 @@ SEE ALSO
 
 	fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
             '''
-            _self = kw.get('_self',cmd)
+            _self = kw.pop('_self',cmd)
             quiet = int(kw.pop('quiet', 0))
+
+            if kw:
+                raise pymol.CmdException('unexpected keyword arguments: ' + str(list(kw)))
+
             r = DEFAULT_ERROR	   
             if len(arg) < 2:
                 raise pymol.CmdException('need at least 2 selection')
