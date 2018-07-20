@@ -11683,7 +11683,8 @@ float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode
 
 
 /*========================================================================*/
-float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode)
+float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode,
+    bool quiet)
 {
   int sele1, sele2;
   int a, c;
@@ -11752,6 +11753,8 @@ float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode)
         rms = MatrixFitRMSTTTf(G, op1.nvv1, op1.vv1, op2.vv1, NULL, op2.ttt);
       else
         rms = MatrixGetRMS(G, op1.nvv1, op1.vv1, op2.vv1, NULL);
+
+      if (!quiet)
       PRINTFB(G, FB_Executive, FB_Results)
         " ExecutiveRMS: RMSD = %8.3f (%d to %d atoms)\n", rms, op1.nvv1, op2.nvv1 ENDFB(G);
 

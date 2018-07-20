@@ -4972,7 +4972,8 @@ static PyObject *CmdFitPairs(PyObject * self, PyObject * args)
   PyObject *result = NULL;
   float valu = -1.0F;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "OO", &self, &list);
+  int quiet = 0;
+  ok = PyArg_ParseTuple(args, "OOi", &self, &list, &quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -4998,7 +4999,7 @@ static PyObject *CmdFitPairs(PyObject * self, PyObject * args)
         a++;
       }
       if((ok = APIEnterNotModal(G))) {
-        valu = ExecutiveRMSPairs(G, word, ln / 2, 2);
+        valu = ExecutiveRMSPairs(G, word, ln / 2, 2, quiet);
         APIExit(G);
       }
       result = Py_BuildValue("f", valu);

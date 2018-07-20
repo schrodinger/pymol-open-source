@@ -734,6 +734,7 @@ SEE ALSO
 	fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
             '''
             _self = kw.get('_self',cmd)
+            quiet = int(kw.pop('quiet', 0))
             r = DEFAULT_ERROR	   
             if len(arg) < 2:
                 raise pymol.CmdException('need at least 2 selection')
@@ -742,7 +743,7 @@ SEE ALSO
             new_arg = list(map(selector.process, arg))
             try:
                 _self.lock(_self)	
-                r = _cmd.fit_pairs(_self._COb,new_arg)
+                r = _cmd.fit_pairs(_self._COb,new_arg, quiet)
             finally:
                 _self.unlock(r,_self)
             if _self._raising(r,_self): raise pymol.CmdException		 

@@ -304,7 +304,7 @@ int ExecutiveRMS(PyMOLGlobals * G, const char *sele1, const char *sele2, int mod
 
 void ExecutiveUpdateCmd(PyMOLGlobals * G, const char *sele1, const char *sele2, int sta1, int sta2,
                         int method, int quiet);
-float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode);
+float ExecutiveRMSPairs(PyMOLGlobals * G, WordType * sele, int pairs, int mode, bool quiet);
 float *ExecutiveRMSStates(PyMOLGlobals * G, const char *s1, int target, int mode, int quiet,
                           int mix);
 int *ExecutiveIdentify(PyMOLGlobals * G, const char *s1, int mode);
