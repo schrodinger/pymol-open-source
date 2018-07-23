@@ -101,7 +101,7 @@ class CleanWizard(ActionWizard):
                 self.cmd.unpick()
                 self.cmd.set_wizard()
                 self.cmd.refresh_wizard()
-                self.cmd.do("_ cmd.clean('%s',message='''Cleaning %s...''',async=1)"%(active_sele,obj_list[0]))
+                self.cmd.do("_ cmd.clean('%s',message='''Cleaning %s...''',async_=1)"%(active_sele,obj_list[0]))
 
     def do_pick(self, bondFlag):
         if active_sele in self.cmd.get_names("selections"):
