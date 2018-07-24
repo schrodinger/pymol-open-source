@@ -3,26 +3,16 @@
 INSTALLATION VIA COMPILATION 
 ----------------------------------------------------------------------
 
-There is currently only one officially-supported approach for building
-and installing PyMOL from the open-source code:
-
-    Using Python Disutils under an open-source environment, such as:
-
-        Linux
-        FreeBSD
-        Mac OS X under X11 (with Fink or similar)
-
-    See also: http://pymolwiki.org/index.php/Linux_Install
+See also: http://pymolwiki.org/index.php/Linux_Install
 
 REQUIREMENTS
 
-    - C++11 compiler (e.g. gcc 4.4+)
-    - Python 2.6+
-    - Tcl/Tk (via tkinter)
-    - Pmw (Python Megawidgets)
+    - C++11 compiler (e.g. gcc 4.7+)
+    - Python 2.7+
+    - Pmw (Python Megawidgets) (optional, for legacy GUI/plugins)
     - OpenGL
     - GLEW
-    - GLUT (freeglut)
+    - GLUT (freeglut) (optional, disable with --no-glut)
     - libpng
     - freetype
     - libxml2 (optional, for COLLADA export, disable with --no-libxml)
@@ -56,8 +46,6 @@ SETUP OPTIONS
 INSTALLATION
 
     python setup.py install --prefix=~/someplace
-
-    Note: under Fink, "python" above must be Fink's python.
 
 RUNNING PyMOL
 
