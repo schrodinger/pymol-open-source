@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2018-07-24 Thomas Holder, Jarrett Johnson
+
+	* 2.2.0
+
+	* Wizard > Mutagenesis > Nucleic Acids
+
+	* load format "pqr": retain_order=1
+
 2018-07-03 Thomas Holder, Blaine Bell, Gabriel Marques
 
 	* Graphics refactoring, ported from Incentive PyMOL
