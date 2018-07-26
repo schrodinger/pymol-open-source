@@ -63,6 +63,8 @@ class Atom(object):
     coord               = (9999.999,9999.999,9999.999)
     formal_charge       = 0.0
     partial_charge      = 0.0
+    elec_radius         = 0.0
+    custom              = ''
 # Flags
     flags               = 0
 # Force-fields
