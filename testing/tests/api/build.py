@@ -6,7 +6,7 @@ from pymol import cmd, testing
 @testing.requires_version('2.3')
 class TestNucBuilder(testing.PyMOLTestCase):
     def testCanInit(self):
-        self.assertEqual(1, 1)
+        self.assertEqual(cmd.fnab("A"), None)
 
     def testSingleDNAFASTA(self):
         cmd.fnab(input="ATTG", type="RNA", form="B", dbl_helix=-1)
