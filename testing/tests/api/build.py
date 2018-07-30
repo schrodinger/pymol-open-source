@@ -9,10 +9,16 @@ class TestNucBuilder(testing.PyMOLTestCase):
         self.assertEqual(cmd.fnab("A"), None)
 
     def testSingleDNAFASTA(self):
-        cmd.fnab(input="ATTG", type="RNA", form="B", dbl_helix=-1)
-        self.assertEqual("ATTG", "ATTG")
+        dna = "ATGC"
+        cmd.fnab(input=dna, type="DNA", form="B", dbl_helix=-1)
+        fasta_str = cmd.get_fastastr().splitlines()
+        self.assertEqual(dna, fasta_str[1])
+
     def testSingleRNAFASTA(self):
-        cmd.fnab(input="AUTG", type="RNA")
+        rna = "AUGC"
+        cmd.fnab(input=rna, type="RNA")
+        fasta_str = cmd.get_fastastr().splitlines()
+        self.assertEqual(rna, fasta_str[1])
 
     def testDoubleDNAFASTA(self):
         dna = "ATCCCCG"
@@ -41,14 +47,6 @@ class TestNucBuilder(testing.PyMOLTestCase):
         self.assertEqual(len(fasta_str), 2)        
         sense_strand = fasta_str[1]
         self.assertEqual(rna, sense_strand)
-
-    def testSkipBadResidues(self):
-        dna = "ATTTTZTTGCCCGGXXG"
-        cmd.fnab(input=dna)
-        fasta_str = cmd.get_fastastr().splitlines()
-        fasta_raw = (fasta_str[1], fasta_str[3])
-        sense_strand = fasta_str[1]
-        self.assertEqual("ATTTTTTGCCCGGG", sense_strand)
 
     def testMixedCase(self):
         dna = "AtG"
