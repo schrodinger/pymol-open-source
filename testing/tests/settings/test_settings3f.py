@@ -6,7 +6,6 @@ Testing settings for simple getting/setting
 import unittest
 from pymol import cmd, testing, stored
 
-@testing.requires('properties')
 class TestSettings3f(testing.PyMOLTestCase):
     @testing.foreach.product((tuple, list), (((1.,2.,3.), (3.,4.,5.),), ((6.,7.,8.),(9.,0.,1.),),),)
     def test_set_object_settings_3f(self, f, data):

@@ -34,7 +34,6 @@ class TestSettings(testing.PyMOLTestCase):
         self.assertImageHasNotColor('green', img)
 
     @testing.requires_version('1.7.5')
-    @testing.requires('incentive')
     @testing.requires('no_edu')
     @testing.requires('gui')
     def testTransparencyMode3(self):
@@ -92,7 +91,6 @@ class TestSettings(testing.PyMOLTestCase):
 
     @testing.foreach(0, 1)
     @testing.requires_version('1.7.5')
-    @testing.requires('incentive')
     @testing.requires('gui')
     def testTrilines(self, trilines):
         cmd.viewport(100, 100)
@@ -121,7 +119,6 @@ class TestSettings(testing.PyMOLTestCase):
         self.assertTrue(0.14 < ratio < 0.165, msg)
 
     @testing.requires_version('1.7.5')
-    @testing.requires('incentive')
     @testing.requires('gui')
     def testChromadepth(self):
         cmd.viewport(100, 100)
