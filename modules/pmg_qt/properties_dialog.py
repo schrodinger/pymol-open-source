@@ -75,7 +75,7 @@ def props_dialog(parent):  #noqa
 
     item_astate = make_cat(form.treeWidget, "Atom-State-Level")
     item_astate_builtins = make_cat(item_astate, "Properties (built-in)")
-    item_astate_settings = Ellipsis  # Incentive PyMOL only
+    item_astate_settings = make_cat(item_astate, "Settings")
 
     keys_atom_identifiers = ['model', 'index', 'segi', 'chain', 'resi',
                              'resn', 'name', 'alt', 'ID', 'rank']
@@ -209,6 +209,7 @@ def props_dialog(parent):  #noqa
         for key in keys_astate_builtins:
             value = ns[key]
             items[key].setText(1, str(value))
+        update_atom_settings(ns['s'], item_astate_settings)
 
     space = {
         'update_atom_fields': update_atom_fields,

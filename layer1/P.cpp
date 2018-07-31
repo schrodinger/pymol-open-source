@@ -444,7 +444,7 @@ PyObject *SettingWrapperObjectSubScript(PyObject *obj, PyObject *key){
 
   if (wobj->idx >= 0){
     // atom-state level
-    // (not supported in Open-Source PyMOL, skip to atom level setting)
+    ret = SettingGetIfDefinedPyObject(G, wobj->cs, wobj->idx, setting_id);
   }
 
   if (!ret){
@@ -495,9 +495,12 @@ int SettingWrapperObjectAssignSubScript(PyObject *obj, PyObject *key, PyObject *
 
   if (wobj->idx >= 0) {
     // atom-state level
-    PyErr_SetString(PyExc_NotImplementedError,
-        "atom-state-level settings not supported in Open-Source PyMOL");
-    return -1; // failure
+    if(!SettingLevelCheck(G, setting_id, cSettingLevel_astate)) {
+      PyErr_SetString(PyExc_TypeError,
+          "only atom-state level settings can be set in alter_state function");
+      return -1; // failure
+    } else if (CoordSetSetSettingFromPyObject(G, wobj->cs, wobj->idx, setting_id, val)) {
+    }
   } else {
     // atom level
     if(!SettingLevelCheck(G, setting_id, cSettingLevel_atom)) {
@@ -526,9 +529,9 @@ static PyObject* SettingWrapperObjectIter(PyObject *self)
   int unique_id = wobj->atomInfo->unique_id;
 
   if (wobj->idx >= 0) {
-    PyErr_SetString(PyExc_NotImplementedError,
-        "atom-state-level settings not supported in Open-Source PyMOL");
-    return NULL;
+    unique_id =
+      wobj->cs->atom_state_setting_id ?
+      wobj->cs->atom_state_setting_id[wobj->idx] : 0;
   }
 
   PyObject * items = SettingUniqueGetIndicesAsPyList(wobj->G, unique_id);
@@ -1304,7 +1307,7 @@ WrapperObject * WrapperObjectNew() {
   auto wobj = (WrapperObject *)PyType_GenericNew(&Wrapper_Type, Py_None, Py_None);
   wobj->dict = NULL;
   wobj->settingWrapperObject = NULL;
-#ifdef _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_PROPERTIES
   wobj->propertyWrapperObject = NULL;
 #endif
   return wobj;
@@ -2100,7 +2103,7 @@ void WrapperObjectReset(WrapperObject *wo){
     reinterpret_cast<SettingPropertyWrapperObject *>(wo->settingWrapperObject)->wobj = NULL;
     Py_DECREF(wo->settingWrapperObject);
   }
-#ifdef _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_PROPERTIES
   if (wo->propertyWrapperObject) {
     reinterpret_cast<SettingPropertyWrapperObject *>(wo->propertyWrapperObject)->wobj = NULL;
     Py_DECREF(wo->propertyWrapperObject);
