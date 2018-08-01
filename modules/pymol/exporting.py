@@ -647,8 +647,19 @@ ARGUMENTS
         '''
 DESCRIPTION
 
+    Like "get_bytes" but return a unicode string.
+        '''
+        assert format not in ('mmtf',), 'binary format, use get_bytes'
+        b = get_bytes(format, selection, state, ref, ref_state, multi, quiet, _self)
+        return b.decode('utf-8')
+
+    def get_bytes(format, selection='(all)', state=-1, ref='',
+             ref_state=-1, multi=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
     API-only function which exports the selection to a molecular file
-    format and returns it as a string.
+    format and returns it as a binary ("bytes") string.
 
 ARGUMENTS
 
@@ -670,6 +681,8 @@ ARGUMENTS
                     int(state) - 1, str(ref), int(ref_state),
                     int(multi), int(quiet))
 
+    if sys.version_info[0] == 2:
+        get_str = get_bytes
 
     def multifilesave(filename, selection='*', state=-1, format='', ref='',
              ref_state=-1, quiet=1, _self=cmd):
@@ -952,7 +965,7 @@ SEE ALSO
         'mol2': get_str,
         'mae': get_str,
         'mol': get_str,
-        'mmtf': 'pymol.lazyio:get_mmtfstr',
+        'mmtf': get_bytes,
 
         'pse': get_psestr,
         'psw': get_psestr,

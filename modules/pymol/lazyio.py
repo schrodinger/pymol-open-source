@@ -227,6 +227,8 @@ def get_mmtfstr(selection='all', state=1, _self=cmd):
     '''
 DESCRIPTION
 
+    DEPRECATED: Use cmd.get_bytes('mmtf')
+
     Export an atom selection to MMTF format.
     '''
     import simplemmtf

@@ -10,6 +10,11 @@
 #include <cstdarg>
 #include <clocale>
 
+#ifndef _PYMOL_NO_MSGPACKC
+#include <mmtf.hpp>
+#include <mmtf/export_helpers.hpp>
+#endif
+
 #include "os_std.h"
 
 #include "MoleculeExporter.h"
@@ -1272,6 +1277,107 @@ struct MoleculeExporterXYZ : public MoleculeExporter {
   }
 };
 
+// ---------------------------------------------------------------------------------- //
+
+#ifndef _PYMOL_NO_MSGPACKC
+class MoleculeExporterMMTF : public MoleculeExporter {
+  mmtf::StructureData m_raw;
+  mmtf::GroupType * m_residue = nullptr;
+  const AtomInfoType * m_last_ai = nullptr;
+  ElemCanonicalizer m_elemGetter;
+
+  std::vector<int32_t> colorList;
+  std::vector<int32_t> repsList;
+
+public:
+  int getMultiDefault() const {
+    return cMolExportGlobal;
+  }
+
+  void beginCoordSet() {
+    m_raw.chainsPerModel.emplace_back(0);
+    m_last_ai = nullptr;
+  }
+
+  void writeAtom() {
+    const AtomInfoType * ai = m_iter.getAtomInfo();
+
+    m_raw.xCoordList.emplace_back(m_coord[0]);
+    m_raw.yCoordList.emplace_back(m_coord[1]);
+    m_raw.zCoordList.emplace_back(m_coord[2]);
+
+    // PyMOL customs
+    colorList.emplace_back(ai->color);
+    repsList.emplace_back(ai->visRep);
+
+    bool is_same_residue = false;
+    bool is_same_chain = AtomInfoSameChainP(G, ai, m_last_ai);
+
+    if (!is_same_chain) {
+      m_raw.chainsPerModel.back() += 1;
+      m_raw.groupsPerChain.emplace_back(0); // increment with every group
+      m_raw.chainIdList.emplace_back(LexStr(G, ai->segi));
+      m_raw.chainNameList.emplace_back(LexStr(G, ai->chain));
+    } else {
+      is_same_residue = AtomInfoSameResidueP(G, ai, m_last_ai);
+    }
+
+    if (!is_same_residue) {
+      m_raw.groupsPerChain.back() += 1;
+      m_raw.groupTypeList.emplace_back(m_raw.groupList.size());
+      m_raw.groupIdList.emplace_back(ai->resv);
+      m_raw.insCodeList.emplace_back(ai->inscode);
+      m_raw.secStructList.emplace_back(
+          ai->ssType[0] == 'H' ? 2 :
+          ai->ssType[0] == 'S' ? 3 : -1);
+
+      m_raw.groupList.emplace_back();
+      m_residue = &m_raw.groupList.back();
+      m_residue->groupName = LexStr(G, ai->resn);
+    }
+
+    m_residue->formalChargeList.emplace_back(ai->formalCharge);
+    m_residue->atomNameList.emplace_back(LexStr(G, ai->name));
+    m_residue->elementList.emplace_back(m_elemGetter(ai));
+
+    m_last_ai = ai;
+  }
+
+  void writeBonds() {
+    m_raw.numAtoms = m_raw.xCoordList.size();
+    m_raw.numGroups = m_raw.groupIdList.size();
+    m_raw.numChains = m_raw.chainIdList.size();
+    m_raw.numModels = m_raw.chainsPerModel.size();
+
+    mmtf::BondAdder bondadder(m_raw);
+
+    for (const auto &bond : m_bonds) {
+      bondadder(bond.id1 - 1, bond.id2 - 1, bond.ref->order);
+    }
+
+    mmtf::compressGroupList(m_raw);
+
+    packMsgpack();
+  }
+
+  void packMsgpack() {
+    msgpack::zone _zone;
+
+    auto data_map = mmtf::encodeToMap(m_raw, _zone);
+    data_map["pymolColorList"] = msgpack::object(colorList, _zone);
+    data_map["pymolRepsList"] = msgpack::object(repsList, _zone);
+
+    std::stringstream stream;
+    msgpack::pack(stream, data_map);
+    auto buffer = stream.str();
+    auto bufferSize = buffer.size();
+    VLACheck(m_buffer, char, bufferSize);
+    std::memcpy(m_buffer, buffer.data(), bufferSize);
+    m_offset = bufferSize;
+  }
+};
+#endif
+
 /*========================================================================*/
 
 /*
@@ -1334,6 +1440,14 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
     exporter = new MoleculeExporterXYZ;
   } else if (strcmp(format, "mae") == 0) {
     exporter = new MoleculeExporterMAE;
+  } else if (strcmp(format, "mmtf") == 0) {
+#ifndef _PYMOL_NO_MSGPACKC
+    exporter = new MoleculeExporterMMTF;
+#else
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      " Error: This build has no fast MMTF support.\n" ENDFB(G);
+    return NULL;
+#endif
   } else {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       " Error: unknown format: '%s'\n", format ENDFB(G);
@@ -1351,6 +1465,7 @@ unique_vla_ptr<char> MoleculeExporterGetStr(PyMOLGlobals * G,
 
   char * charVLA = NULL;
   std::swap(charVLA, exporter->m_buffer);
+  VLASize(charVLA, char, exporter->m_offset);
 
   delete exporter;
 

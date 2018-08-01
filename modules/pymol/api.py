@@ -165,6 +165,7 @@ from .exporting import \
       cache,              \
       export_coords,      \
       get_str,            \
+      get_bytes,          \
       get_pdbstr,         \
       get_cifstr,         \
       get_session,        \

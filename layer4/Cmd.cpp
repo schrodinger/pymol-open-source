@@ -4847,7 +4847,7 @@ static PyObject *CmdGetStr(PyObject * self, PyObject * args)
       ref, ref_state, multi, quiet);
 
   ok_assert(2, vla);
-  result = PyString_FromString(vla);
+  result = PyBytes_FromStringAndSize(vla, VLAGetSize(vla));
 
 ok_except2:
   APIExit(G);
