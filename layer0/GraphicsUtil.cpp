@@ -67,6 +67,18 @@ void GLAPIENTRY gl_debug_proc(
   }
 #endif
 }
+void GLAPIENTRY gl_debug_proc(
+    GLenum source,
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar *msg,
+    void* userParams)
+{
+    gl_debug_proc(source, type, id, severity, length, msg,
+                  const_cast<const void*>(userParams));
+}
 
 // Returns the size in bytes of the opengl type
 size_t gl_sizeof(GLenum type){
