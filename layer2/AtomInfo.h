@@ -230,10 +230,7 @@ typedef struct BondType {
 } BondType;
 
 typedef struct AtomInfoType {
-  union {
-    float * anisou;               // only allocate with get_anisou
-    int64_t dummyanisou;
-  };
+  float * anisou;               // only allocate with get_anisou
 
   lexidx_t segi;
   lexidx_t chain;
