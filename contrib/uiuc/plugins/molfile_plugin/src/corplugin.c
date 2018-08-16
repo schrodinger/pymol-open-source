@@ -127,7 +127,7 @@ static FILE *open_cor_file(const char *fname, int *natom, int *iofoext) {
       return NULL;
     }
 
-    if (sscanf(inbuf, "%10c", header) != 1) {
+    if (sscanf(inbuf, "%10s", header) != 1) {
       fclose(f);
       printf("corplugin) Error opening file: improperly formatted line.\n");
       return NULL;
