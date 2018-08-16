@@ -16,10 +16,10 @@ REQUIREMENTS
     - libpng
     - freetype
     - libxml2 (optional, for COLLADA export, disable with --no-libxml)
-    - msgpack-c 1.0+ (optional, for fast MMTF loading, disable with
-        --use-msgpackc=no)
+    - msgpack-c 2.1.5+ (optional, for fast MMTF loading and export,
+        disable with --use-msgpackc=no)
+    - mmtf-cpp (for fast MMTF export, disable with --use-msgpackc=no)
     - PyQt5, PyQt4, or PySide (optional, will fall back to Tk interface)
-    - simplemmtf (optional, for MMTF export)
     - glm
 
 SETUP OPTIONS
@@ -35,7 +35,7 @@ SETUP OPTIONS
 
     Environment variables:
       PREFIX_PATH   Colon-delimited list of paths to search for headers and
-                    libraries, e.g. /opt/local:/opt/X11
+                    libraries, e.g. $HOME/mmtf-cpp:$HOME/msgpack-c:/opt/local
       CXX           C++ compiler command
       CC            C compiler command
       CXXFLAGS      C++ compiler flags

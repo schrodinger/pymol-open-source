@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2018-08-16 Thomas Holder, Jarrett Johnson
+
+	* fast MMTF export (requires mmtf-cpp)
+
+	* new setting: seq_view_gap_mode
+
+	* 2.3.0a0 (unstable/experimental)
+
 2018-07-24 Thomas Holder, Jarrett Johnson
 
 	* 2.2.0
