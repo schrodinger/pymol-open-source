@@ -397,8 +397,19 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
             ms->Origin = Calloc(float, 3);
             ms->Range = Alloc(float, 3);
 
+            // special case: orthogonal & cartesian-aligned
+            // -> don't use State.Matrix which causes trouble for e.g. CCP4 export
+            // (non-standard header) and ObjectSlice (incomplete implementation)
+            bool aligned_axes =
+              fabs(v->xaxis[1]) <= R_SMALL4 && fabs(v->xaxis[2]) <= R_SMALL4 &&
+              fabs(v->yaxis[0]) <= R_SMALL4 && fabs(v->yaxis[2]) <= R_SMALL4 &&
+              fabs(v->zaxis[0]) <= R_SMALL4 && fabs(v->zaxis[1]) <= R_SMALL4;
+
             // set corners to a unit cube, and manage world space with the state matrix
-            {
+            if (!aligned_axes) {
+              PRINTFB(G, FB_ObjectMap, FB_Warnings)
+                " Warning: Axes not aligned, using map-state matrix\n" ENDFB(G);
+
               double m44d[16];
 
               if(!ms->State.Matrix)
@@ -435,6 +446,32 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
                 // corner enumeration
                 for(int b = 0; b < 8; b++)
                   ms->Corner[3 * b + a] = (b >> a) & 0x1;
+              }
+            }
+
+            if (aligned_axes) {
+              ms->Grid[0] = v->xaxis[0] / (ms->FDim[0] - 1);
+              ms->Grid[1] = v->yaxis[1] / (ms->FDim[1] - 1);
+              ms->Grid[2] = v->zaxis[2] / (ms->FDim[2] - 1);
+
+              for(int a = 0; a < 3; a++) {
+                ms->Origin[a] = v->origin[a];
+                ms->Range[a] = ms->Grid[a] * (ms->Dim[a] - 1);
+                ms->ExtentMin[a] = ms->Origin[a];
+                ms->ExtentMax[a] = ms->Origin[a] + ms->Grid[a] * ms->Max[a];
+              }
+
+              // corners
+              for(int c = 0, d = 0; c < ms->FDim[2]; c += ms->FDim[2] - 1) {
+                float v[3];
+                v[2] = ms->Origin[2] + ms->Grid[2] * c;
+                for(int b = 0; b < ms->FDim[1]; b += ms->FDim[1] - 1) {
+                  v[1] = ms->Origin[1] + ms->Grid[1] * b;
+                  for(int a = 0; a < ms->FDim[0]; a += ms->FDim[0] - 1, ++d) {
+                    v[0] = ms->Origin[0] + ms->Grid[0] * a;
+                    copy3f(v, ms->Corner + 3 * d);
+                  }
+                }
               }
             }
 
