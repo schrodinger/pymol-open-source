@@ -145,6 +145,29 @@ static void write_data_to_buffer(png_structp png_ptr,
 #endif
 }
 
+/*
+ * Use with png_set_read_fn instead of png_init_io, allows mixing of
+ * Visual Studio versions
+ */
+static void read_data_from_file(
+    png_structp png_ptr,
+    png_bytep buffer,
+    png_size_t count) {
+  auto fp = static_cast<FILE*>(png_get_io_ptr(png_ptr));
+  fread(buffer, 1, count, fp);
+}
+
+/*
+ * Use with png_set_write_fn instead of png_init_io, allows mixing of
+ * Visual Studio versions
+ */
+static void write_data_to_file(
+    png_structp png_ptr,
+    png_bytep buffer,
+    png_size_t count) {
+  auto fp = static_cast<FILE*>(png_get_io_ptr(png_ptr));
+  fwrite(buffer, 1, count, fp);
+}
 #endif
 
 int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *data_ptr,
@@ -221,7 +244,7 @@ int MyPNGWrite(PyMOLGlobals * G, const char *file_name, const unsigned char *dat
         png_set_write_fn(png_ptr, (void*) io_ptr, write_data_to_buffer, NULL);
       } else {
         /* set up the output control if you are using standard C streams */
-        png_init_io(png_ptr, fp);
+        png_set_write_fn(png_ptr, (void*) fp, write_data_to_file, NULL);
       }
 
       /* Set the image information here.  Width and height are up to 2^31,
@@ -410,7 +433,7 @@ int MyPNGRead(const char *file_name, unsigned char **p_ptr, unsigned int *width_
     if(data.h) {
       png_set_read_fn(png_ptr, (void*) &data, read_data_from_buffer);
     } else {
-      png_init_io(png_ptr, png_file);
+      png_set_read_fn(png_ptr, (void*) png_file, read_data_from_file);
     }
 
     png_set_sig_bytes(png_ptr, 8);      /* we already read the 8 signature bytes */
