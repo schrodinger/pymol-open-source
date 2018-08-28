@@ -1072,6 +1072,12 @@ SEE ALSO
         with _self.lockcm:
             return _cmd.scene_order(_self._COb, names, sort, location)
 
+    def _scene_get_current_message(_self=cmd):
+        wiz = _self.get_wizard()
+        return '\n'.join(wiz.message) if (wiz is not None
+                and wiz.__class__.__name__ == 'Message'
+                and hasattr(wiz, 'from_scene')) else None
+
     def scene_recall_message(message, _self=cmd):
         '''
         INTERNAL, DO NOT USE.
@@ -1154,6 +1160,11 @@ SEE ALSO
         if key == 'auto':
             if action == 'recall':
                 action = 'next'
+
+        # preserve message on update
+        if action == 'update':
+            if message is None:
+                message = _scene_get_current_message(_self)
 
         # aliases (DEPRECATED)
         if action == 'clear':
